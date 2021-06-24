@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  arch/sparc64/mm/init.c
  *
@@ -6,60 +7,60 @@
  *  Copyright (C) 1997-1999 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
  
-#include <linux/extable.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/string.h>
-#include <linux/init.h>
-#include <linux/memblock.h>
-#include <linux/mm.h>
-#include <linux/hugetlb.h>
-#include <linux/initrd.h>
-#include <linux/swap.h>
-#include <linux/pagemap.h>
-#include <linux/poison.h>
-#include <linux/fs.h>
-#include <linux/seq_file.h>
-#include <linux/kprobes.h>
-#include <linux/cache.h>
-#include <linux/sort.h>
-#include <linux/ioport.h>
-#include <linux/percpu.h>
-#include <linux/mmzone.h>
-#include <linux/gfp.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/poison.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/gfp.h>
 
-#include <asm/head.h>
-#include <asm/page.h>
-#include <asm/pgalloc.h>
-#include <asm/oplib.h>
-#include <asm/iommu.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
-#include <asm/mmu_context.h>
-#include <asm/tlbflush.h>
-#include <asm/dma.h>
-#include <asm/starfire.h>
-#include <asm/tlb.h>
-#include <asm/spitfire.h>
-#include <asm/sections.h>
-#include <asm/tsb.h>
-#include <asm/hypervisor.h>
-#include <asm/prom.h>
-#include <asm/mdesc.h>
-#include <asm/cpudata.h>
-#include <asm/setup.h>
-#include <asm/irq.h>
+#समावेश <यंत्र/head.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/starfire.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/spitfire.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/tsb.h>
+#समावेश <यंत्र/hypervisor.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/mdesc.h>
+#समावेश <यंत्र/cpudata.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/irq.h>
 
-#include "init_64.h"
+#समावेश "init_64.h"
 
-unsigned long kern_linear_pte_xor[4] __read_mostly;
-static unsigned long page_cache4v_flag;
+अचिन्हित दीर्घ kern_linear_pte_xor[4] __पढ़ो_mostly;
+अटल अचिन्हित दीर्घ page_cache4v_flag;
 
-/* A bitmap, two bits for every 256MB of physical memory.  These two
- * bits determine what page size we use for kernel linear
- * translations.  They form an index into kern_linear_pte_xor[].  The
- * value in the indexed slot is XOR'd with the TLB miss virtual
- * address to form the resulting TTE.  The mapping is:
+/* A biपंचांगap, two bits क्रम every 256MB of physical memory.  These two
+ * bits determine what page size we use क्रम kernel linear
+ * translations.  They क्रमm an index पूर्णांकo kern_linear_pte_xor[].  The
+ * value in the indexed slot is XOR'd with the TLB miss भव
+ * address to क्रमm the resulting TTE.  The mapping is:
  *
  *	0	==>	4MB
  *	1	==>	256MB
@@ -69,166 +70,166 @@ static unsigned long page_cache4v_flag;
  * All sun4v chips support 256MB pages.  Only SPARC-T4 and later
  * support 2GB pages, and hopefully future cpus will support the 16GB
  * pages as well.  For slots 2 and 3, we encode a 256MB TTE xor there
- * if these larger page sizes are not supported by the cpu.
+ * अगर these larger page sizes are not supported by the cpu.
  *
  * It would be nice to determine this from the machine description
- * 'cpu' properties, but we need to have this table setup before the
+ * 'cpu' properties, but we need to have this table setup beक्रमe the
  * MDESC is initialized.
  */
 
-#ifndef CONFIG_DEBUG_PAGEALLOC
-/* A special kernel TSB for 4MB, 256MB, 2GB and 16GB linear mappings.
- * Space is allocated for this right after the trap table in
+#अगर_अघोषित CONFIG_DEBUG_PAGEALLOC
+/* A special kernel TSB क्रम 4MB, 256MB, 2GB and 16GB linear mappings.
+ * Space is allocated क्रम this right after the trap table in
  * arch/sparc64/kernel/head.S
  */
-extern struct tsb swapper_4m_tsb[KERNEL_TSB4M_NENTRIES];
-#endif
-extern struct tsb swapper_tsb[KERNEL_TSB_NENTRIES];
+बाह्य काष्ठा tsb swapper_4m_tsb[KERNEL_TSB4M_NENTRIES];
+#पूर्ण_अगर
+बाह्य काष्ठा tsb swapper_tsb[KERNEL_TSB_NENTRIES];
 
-static unsigned long cpu_pgsz_mask;
+अटल अचिन्हित दीर्घ cpu_pgsz_mask;
 
-#define MAX_BANKS	1024
+#घोषणा MAX_BANKS	1024
 
-static struct linux_prom64_registers pavail[MAX_BANKS];
-static int pavail_ents;
+अटल काष्ठा linux_prom64_रेजिस्टरs pavail[MAX_BANKS];
+अटल पूर्णांक pavail_ents;
 
 u64 numa_latency[MAX_NUMNODES][MAX_NUMNODES];
 
-static int cmp_p64(const void *a, const void *b)
-{
-	const struct linux_prom64_registers *x = a, *y = b;
+अटल पूर्णांक cmp_p64(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	स्थिर काष्ठा linux_prom64_रेजिस्टरs *x = a, *y = b;
 
-	if (x->phys_addr > y->phys_addr)
-		return 1;
-	if (x->phys_addr < y->phys_addr)
-		return -1;
-	return 0;
-}
+	अगर (x->phys_addr > y->phys_addr)
+		वापस 1;
+	अगर (x->phys_addr < y->phys_addr)
+		वापस -1;
+	वापस 0;
+पूर्ण
 
-static void __init read_obp_memory(const char *property,
-				   struct linux_prom64_registers *regs,
-				   int *num_ents)
-{
+अटल व्योम __init पढ़ो_obp_memory(स्थिर अक्षर *property,
+				   काष्ठा linux_prom64_रेजिस्टरs *regs,
+				   पूर्णांक *num_ents)
+अणु
 	phandle node = prom_finddevice("/memory");
-	int prop_size = prom_getproplen(node, property);
-	int ents, ret, i;
+	पूर्णांक prop_size = prom_getproplen(node, property);
+	पूर्णांक ents, ret, i;
 
-	ents = prop_size / sizeof(struct linux_prom64_registers);
-	if (ents > MAX_BANKS) {
-		prom_printf("The machine has more %s property entries than "
+	ents = prop_size / माप(काष्ठा linux_prom64_रेजिस्टरs);
+	अगर (ents > MAX_BANKS) अणु
+		prom_म_लिखो("The machine has more %s property entries than "
 			    "this kernel can support (%d).\n",
 			    property, MAX_BANKS);
 		prom_halt();
-	}
+	पूर्ण
 
-	ret = prom_getproperty(node, property, (char *) regs, prop_size);
-	if (ret == -1) {
-		prom_printf("Couldn't get %s property from /memory.\n",
+	ret = prom_getproperty(node, property, (अक्षर *) regs, prop_size);
+	अगर (ret == -1) अणु
+		prom_म_लिखो("Couldn't get %s property from /memory.\n",
 				property);
 		prom_halt();
-	}
+	पूर्ण
 
 	/* Sanitize what we got from the firmware, by page aligning
 	 * everything.
 	 */
-	for (i = 0; i < ents; i++) {
-		unsigned long base, size;
+	क्रम (i = 0; i < ents; i++) अणु
+		अचिन्हित दीर्घ base, size;
 
 		base = regs[i].phys_addr;
 		size = regs[i].reg_size;
 
 		size &= PAGE_MASK;
-		if (base & ~PAGE_MASK) {
-			unsigned long new_base = PAGE_ALIGN(base);
+		अगर (base & ~PAGE_MASK) अणु
+			अचिन्हित दीर्घ new_base = PAGE_ALIGN(base);
 
 			size -= new_base - base;
-			if ((long) size < 0L)
+			अगर ((दीर्घ) size < 0L)
 				size = 0UL;
 			base = new_base;
-		}
-		if (size == 0UL) {
+		पूर्ण
+		अगर (size == 0UL) अणु
 			/* If it is empty, simply get rid of it.
-			 * This simplifies the logic of the other
+			 * This simplअगरies the logic of the other
 			 * functions that process these arrays.
 			 */
-			memmove(&regs[i], &regs[i + 1],
-				(ents - i - 1) * sizeof(regs[0]));
+			स_हटाओ(&regs[i], &regs[i + 1],
+				(ents - i - 1) * माप(regs[0]));
 			i--;
 			ents--;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		regs[i].phys_addr = base;
 		regs[i].reg_size = size;
-	}
+	पूर्ण
 
 	*num_ents = ents;
 
-	sort(regs, ents, sizeof(struct linux_prom64_registers),
-	     cmp_p64, NULL);
-}
+	sort(regs, ents, माप(काष्ठा linux_prom64_रेजिस्टरs),
+	     cmp_p64, शून्य);
+पूर्ण
 
 /* Kernel physical address base and size in bytes.  */
-unsigned long kern_base __read_mostly;
-unsigned long kern_size __read_mostly;
+अचिन्हित दीर्घ kern_base __पढ़ो_mostly;
+अचिन्हित दीर्घ kern_size __पढ़ो_mostly;
 
 /* Initial ramdisk setup */
-extern unsigned long sparc_ramdisk_image64;
-extern unsigned int sparc_ramdisk_image;
-extern unsigned int sparc_ramdisk_size;
+बाह्य अचिन्हित दीर्घ sparc_ramdisk_image64;
+बाह्य अचिन्हित पूर्णांक sparc_ramdisk_image;
+बाह्य अचिन्हित पूर्णांक sparc_ramdisk_size;
 
-struct page *mem_map_zero __read_mostly;
+काष्ठा page *mem_map_zero __पढ़ो_mostly;
 EXPORT_SYMBOL(mem_map_zero);
 
-unsigned int sparc64_highest_unlocked_tlb_ent __read_mostly;
+अचिन्हित पूर्णांक sparc64_highest_unlocked_tlb_ent __पढ़ो_mostly;
 
-unsigned long sparc64_kern_pri_context __read_mostly;
-unsigned long sparc64_kern_pri_nuc_bits __read_mostly;
-unsigned long sparc64_kern_sec_context __read_mostly;
+अचिन्हित दीर्घ sparc64_kern_pri_context __पढ़ो_mostly;
+अचिन्हित दीर्घ sparc64_kern_pri_nuc_bits __पढ़ो_mostly;
+अचिन्हित दीर्घ sparc64_kern_sec_context __पढ़ो_mostly;
 
-int num_kernel_image_mappings;
+पूर्णांक num_kernel_image_mappings;
 
-#ifdef CONFIG_DEBUG_DCFLUSH
+#अगर_घोषित CONFIG_DEBUG_DCFLUSH
 atomic_t dcpage_flushes = ATOMIC_INIT(0);
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 atomic_t dcpage_flushes_xcall = ATOMIC_INIT(0);
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-inline void flush_dcache_page_impl(struct page *page)
-{
+अंतरभूत व्योम flush_dcache_page_impl(काष्ठा page *page)
+अणु
 	BUG_ON(tlb_type == hypervisor);
-#ifdef CONFIG_DEBUG_DCFLUSH
+#अगर_घोषित CONFIG_DEBUG_DCFLUSH
 	atomic_inc(&dcpage_flushes);
-#endif
+#पूर्ण_अगर
 
-#ifdef DCACHE_ALIASING_POSSIBLE
+#अगर_घोषित DCACHE_ALIASING_POSSIBLE
 	__flush_dcache_page(page_address(page),
 			    ((tlb_type == spitfire) &&
-			     page_mapping_file(page) != NULL));
-#else
-	if (page_mapping_file(page) != NULL &&
+			     page_mapping_file(page) != शून्य));
+#अन्यथा
+	अगर (page_mapping_file(page) != शून्य &&
 	    tlb_type == spitfire)
 		__flush_icache_page(__pa(page_address(page)));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#define PG_dcache_dirty		PG_arch_1
-#define PG_dcache_cpu_shift	32UL
-#define PG_dcache_cpu_mask	\
-	((1UL<<ilog2(roundup_pow_of_two(NR_CPUS)))-1UL)
+#घोषणा PG_dcache_dirty		PG_arch_1
+#घोषणा PG_dcache_cpu_shअगरt	32UL
+#घोषणा PG_dcache_cpu_mask	\
+	((1UL<<ilog2(roundup_घात_of_two(NR_CPUS)))-1UL)
 
-#define dcache_dirty_cpu(page) \
-	(((page)->flags >> PG_dcache_cpu_shift) & PG_dcache_cpu_mask)
+#घोषणा dcache_dirty_cpu(page) \
+	(((page)->flags >> PG_dcache_cpu_shअगरt) & PG_dcache_cpu_mask)
 
-static inline void set_dcache_dirty(struct page *page, int this_cpu)
-{
-	unsigned long mask = this_cpu;
-	unsigned long non_cpu_bits;
+अटल अंतरभूत व्योम set_dcache_dirty(काष्ठा page *page, पूर्णांक this_cpu)
+अणु
+	अचिन्हित दीर्घ mask = this_cpu;
+	अचिन्हित दीर्घ non_cpu_bits;
 
-	non_cpu_bits = ~(PG_dcache_cpu_mask << PG_dcache_cpu_shift);
-	mask = (mask << PG_dcache_cpu_shift) | (1UL << PG_dcache_dirty);
+	non_cpu_bits = ~(PG_dcache_cpu_mask << PG_dcache_cpu_shअगरt);
+	mask = (mask << PG_dcache_cpu_shअगरt) | (1UL << PG_dcache_dirty);
 
-	__asm__ __volatile__("1:\n\t"
+	__यंत्र__ __अस्थिर__("1:\n\t"
 			     "ldx	[%2], %%g7\n\t"
 			     "and	%%g7, %1, %%g1\n\t"
 			     "or	%%g1, %0, %%g1\n\t"
@@ -236,16 +237,16 @@ static inline void set_dcache_dirty(struct page *page, int this_cpu)
 			     "cmp	%%g7, %%g1\n\t"
 			     "bne,pn	%%xcc, 1b\n\t"
 			     " nop"
-			     : /* no outputs */
+			     : /* no outमाला_दो */
 			     : "r" (mask), "r" (non_cpu_bits), "r" (&page->flags)
 			     : "g1", "g7");
-}
+पूर्ण
 
-static inline void clear_dcache_dirty_cpu(struct page *page, unsigned long cpu)
-{
-	unsigned long mask = (1UL << PG_dcache_dirty);
+अटल अंतरभूत व्योम clear_dcache_dirty_cpu(काष्ठा page *page, अचिन्हित दीर्घ cpu)
+अणु
+	अचिन्हित दीर्घ mask = (1UL << PG_dcache_dirty);
 
-	__asm__ __volatile__("! test_and_clear_dcache_dirty\n"
+	__यंत्र__ __अस्थिर__("! test_and_clear_dcache_dirty\n"
 			     "1:\n\t"
 			     "ldx	[%2], %%g7\n\t"
 			     "srlx	%%g7, %4, %%g1\n\t"
@@ -258,514 +259,514 @@ static inline void clear_dcache_dirty_cpu(struct page *page, unsigned long cpu)
 			     "bne,pn	%%xcc, 1b\n\t"
 			     " nop\n"
 			     "2:"
-			     : /* no outputs */
+			     : /* no outमाला_दो */
 			     : "r" (cpu), "r" (mask), "r" (&page->flags),
 			       "i" (PG_dcache_cpu_mask),
-			       "i" (PG_dcache_cpu_shift)
+			       "i" (PG_dcache_cpu_shअगरt)
 			     : "g1", "g7");
-}
+पूर्ण
 
-static inline void tsb_insert(struct tsb *ent, unsigned long tag, unsigned long pte)
-{
-	unsigned long tsb_addr = (unsigned long) ent;
+अटल अंतरभूत व्योम tsb_insert(काष्ठा tsb *ent, अचिन्हित दीर्घ tag, अचिन्हित दीर्घ pte)
+अणु
+	अचिन्हित दीर्घ tsb_addr = (अचिन्हित दीर्घ) ent;
 
-	if (tlb_type == cheetah_plus || tlb_type == hypervisor)
+	अगर (tlb_type == cheetah_plus || tlb_type == hypervisor)
 		tsb_addr = __pa(tsb_addr);
 
 	__tsb_insert(tsb_addr, tag, pte);
-}
+पूर्ण
 
-unsigned long _PAGE_ALL_SZ_BITS __read_mostly;
+अचिन्हित दीर्घ _PAGE_ALL_SZ_BITS __पढ़ो_mostly;
 
-static void flush_dcache(unsigned long pfn)
-{
-	struct page *page;
+अटल व्योम flush_dcache(अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा page *page;
 
 	page = pfn_to_page(pfn);
-	if (page) {
-		unsigned long pg_flags;
+	अगर (page) अणु
+		अचिन्हित दीर्घ pg_flags;
 
 		pg_flags = page->flags;
-		if (pg_flags & (1UL << PG_dcache_dirty)) {
-			int cpu = ((pg_flags >> PG_dcache_cpu_shift) &
+		अगर (pg_flags & (1UL << PG_dcache_dirty)) अणु
+			पूर्णांक cpu = ((pg_flags >> PG_dcache_cpu_shअगरt) &
 				   PG_dcache_cpu_mask);
-			int this_cpu = get_cpu();
+			पूर्णांक this_cpu = get_cpu();
 
 			/* This is just to optimize away some function calls
-			 * in the SMP case.
+			 * in the SMP हाल.
 			 */
-			if (cpu == this_cpu)
+			अगर (cpu == this_cpu)
 				flush_dcache_page_impl(page);
-			else
+			अन्यथा
 				smp_flush_dcache_page_impl(page, cpu);
 
 			clear_dcache_dirty_cpu(page, cpu);
 
 			put_cpu();
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* mm->context.lock must be held */
-static void __update_mmu_tsb_insert(struct mm_struct *mm, unsigned long tsb_index,
-				    unsigned long tsb_hash_shift, unsigned long address,
-				    unsigned long tte)
-{
-	struct tsb *tsb = mm->context.tsb_block[tsb_index].tsb;
-	unsigned long tag;
+अटल व्योम __update_mmu_tsb_insert(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ tsb_index,
+				    अचिन्हित दीर्घ tsb_hash_shअगरt, अचिन्हित दीर्घ address,
+				    अचिन्हित दीर्घ tte)
+अणु
+	काष्ठा tsb *tsb = mm->context.tsb_block[tsb_index].tsb;
+	अचिन्हित दीर्घ tag;
 
-	if (unlikely(!tsb))
-		return;
+	अगर (unlikely(!tsb))
+		वापस;
 
-	tsb += ((address >> tsb_hash_shift) &
+	tsb += ((address >> tsb_hash_shअगरt) &
 		(mm->context.tsb_block[tsb_index].tsb_nentries - 1UL));
 	tag = (address >> 22UL);
 	tsb_insert(tsb, tag, tte);
-}
+पूर्ण
 
-#ifdef CONFIG_HUGETLB_PAGE
-static int __init hugetlbpage_init(void)
-{
+#अगर_घोषित CONFIG_HUGETLB_PAGE
+अटल पूर्णांक __init hugetlbpage_init(व्योम)
+अणु
 	hugetlb_add_hstate(HPAGE_64K_SHIFT - PAGE_SHIFT);
 	hugetlb_add_hstate(HPAGE_SHIFT - PAGE_SHIFT);
 	hugetlb_add_hstate(HPAGE_256MB_SHIFT - PAGE_SHIFT);
 	hugetlb_add_hstate(HPAGE_2GB_SHIFT - PAGE_SHIFT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 arch_initcall(hugetlbpage_init);
 
-static void __init pud_huge_patch(void)
-{
-	struct pud_huge_patch_entry *p;
-	unsigned long addr;
+अटल व्योम __init pud_huge_patch(व्योम)
+अणु
+	काष्ठा pud_huge_patch_entry *p;
+	अचिन्हित दीर्घ addr;
 
 	p = &__pud_huge_patch;
 	addr = p->addr;
-	*(unsigned int *)addr = p->insn;
+	*(अचिन्हित पूर्णांक *)addr = p->insn;
 
-	__asm__ __volatile__("flush %0" : : "r" (addr));
-}
+	__यंत्र__ __अस्थिर__("flush %0" : : "r" (addr));
+पूर्ण
 
-bool __init arch_hugetlb_valid_size(unsigned long size)
-{
-	unsigned int hugepage_shift = ilog2(size);
-	unsigned short hv_pgsz_idx;
-	unsigned int hv_pgsz_mask;
+bool __init arch_hugetlb_valid_size(अचिन्हित दीर्घ size)
+अणु
+	अचिन्हित पूर्णांक hugepage_shअगरt = ilog2(size);
+	अचिन्हित लघु hv_pgsz_idx;
+	अचिन्हित पूर्णांक hv_pgsz_mask;
 
-	switch (hugepage_shift) {
-	case HPAGE_16GB_SHIFT:
+	चयन (hugepage_shअगरt) अणु
+	हाल HPAGE_16GB_SHIFT:
 		hv_pgsz_mask = HV_PGSZ_MASK_16GB;
 		hv_pgsz_idx = HV_PGSZ_IDX_16GB;
 		pud_huge_patch();
-		break;
-	case HPAGE_2GB_SHIFT:
+		अवरोध;
+	हाल HPAGE_2GB_SHIFT:
 		hv_pgsz_mask = HV_PGSZ_MASK_2GB;
 		hv_pgsz_idx = HV_PGSZ_IDX_2GB;
-		break;
-	case HPAGE_256MB_SHIFT:
+		अवरोध;
+	हाल HPAGE_256MB_SHIFT:
 		hv_pgsz_mask = HV_PGSZ_MASK_256MB;
 		hv_pgsz_idx = HV_PGSZ_IDX_256MB;
-		break;
-	case HPAGE_SHIFT:
+		अवरोध;
+	हाल HPAGE_SHIFT:
 		hv_pgsz_mask = HV_PGSZ_MASK_4MB;
 		hv_pgsz_idx = HV_PGSZ_IDX_4MB;
-		break;
-	case HPAGE_64K_SHIFT:
+		अवरोध;
+	हाल HPAGE_64K_SHIFT:
 		hv_pgsz_mask = HV_PGSZ_MASK_64K;
 		hv_pgsz_idx = HV_PGSZ_IDX_64K;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		hv_pgsz_mask = 0;
-	}
+	पूर्ण
 
-	if ((hv_pgsz_mask & cpu_pgsz_mask) == 0U)
-		return false;
+	अगर ((hv_pgsz_mask & cpu_pgsz_mask) == 0U)
+		वापस false;
 
-	return true;
-}
-#endif	/* CONFIG_HUGETLB_PAGE */
+	वापस true;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_HUGETLB_PAGE */
 
-void update_mmu_cache(struct vm_area_struct *vma, unsigned long address, pte_t *ptep)
-{
-	struct mm_struct *mm;
-	unsigned long flags;
+व्योम update_mmu_cache(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address, pte_t *ptep)
+अणु
+	काष्ठा mm_काष्ठा *mm;
+	अचिन्हित दीर्घ flags;
 	bool is_huge_tsb;
 	pte_t pte = *ptep;
 
-	if (tlb_type != hypervisor) {
-		unsigned long pfn = pte_pfn(pte);
+	अगर (tlb_type != hypervisor) अणु
+		अचिन्हित दीर्घ pfn = pte_pfn(pte);
 
-		if (pfn_valid(pfn))
+		अगर (pfn_valid(pfn))
 			flush_dcache(pfn);
-	}
+	पूर्ण
 
 	mm = vma->vm_mm;
 
 	/* Don't insert a non-valid PTE into the TSB, we'll deadlock.  */
-	if (!pte_accessible(mm, pte))
-		return;
+	अगर (!pte_accessible(mm, pte))
+		वापस;
 
 	spin_lock_irqsave(&mm->context.lock, flags);
 
 	is_huge_tsb = false;
-#if defined(CONFIG_HUGETLB_PAGE) || defined(CONFIG_TRANSPARENT_HUGEPAGE)
-	if (mm->context.hugetlb_pte_count || mm->context.thp_pte_count) {
-		unsigned long hugepage_size = PAGE_SIZE;
+#अगर defined(CONFIG_HUGETLB_PAGE) || defined(CONFIG_TRANSPARENT_HUGEPAGE)
+	अगर (mm->context.hugetlb_pte_count || mm->context.thp_pte_count) अणु
+		अचिन्हित दीर्घ hugepage_size = PAGE_SIZE;
 
-		if (is_vm_hugetlb_page(vma))
+		अगर (is_vm_hugetlb_page(vma))
 			hugepage_size = huge_page_size(hstate_vma(vma));
 
-		if (hugepage_size >= PUD_SIZE) {
-			unsigned long mask = 0x1ffc00000UL;
+		अगर (hugepage_size >= PUD_SIZE) अणु
+			अचिन्हित दीर्घ mask = 0x1ffc00000UL;
 
 			/* Transfer bits [32:22] from address to resolve
 			 * at 4M granularity.
 			 */
 			pte_val(pte) &= ~mask;
 			pte_val(pte) |= (address & mask);
-		} else if (hugepage_size >= PMD_SIZE) {
+		पूर्ण अन्यथा अगर (hugepage_size >= PMD_SIZE) अणु
 			/* We are fabricating 8MB pages using 4MB
 			 * real hw pages.
 			 */
 			pte_val(pte) |= (address & (1UL << REAL_HPAGE_SHIFT));
-		}
+		पूर्ण
 
-		if (hugepage_size >= PMD_SIZE) {
+		अगर (hugepage_size >= PMD_SIZE) अणु
 			__update_mmu_tsb_insert(mm, MM_TSB_HUGE,
 				REAL_HPAGE_SHIFT, address, pte_val(pte));
 			is_huge_tsb = true;
-		}
-	}
-#endif
-	if (!is_huge_tsb)
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	अगर (!is_huge_tsb)
 		__update_mmu_tsb_insert(mm, MM_TSB_BASE, PAGE_SHIFT,
 					address, pte_val(pte));
 
 	spin_unlock_irqrestore(&mm->context.lock, flags);
-}
+पूर्ण
 
-void flush_dcache_page(struct page *page)
-{
-	struct address_space *mapping;
-	int this_cpu;
+व्योम flush_dcache_page(काष्ठा page *page)
+अणु
+	काष्ठा address_space *mapping;
+	पूर्णांक this_cpu;
 
-	if (tlb_type == hypervisor)
-		return;
+	अगर (tlb_type == hypervisor)
+		वापस;
 
-	/* Do not bother with the expensive D-cache flush if it
-	 * is merely the zero page.  The 'bigcore' testcase in GDB
-	 * causes this case to run millions of times.
+	/* Do not bother with the expensive D-cache flush अगर it
+	 * is merely the zero page.  The 'bigcore' testहाल in GDB
+	 * causes this हाल to run millions of बार.
 	 */
-	if (page == ZERO_PAGE(0))
-		return;
+	अगर (page == ZERO_PAGE(0))
+		वापस;
 
 	this_cpu = get_cpu();
 
 	mapping = page_mapping_file(page);
-	if (mapping && !mapping_mapped(mapping)) {
-		int dirty = test_bit(PG_dcache_dirty, &page->flags);
-		if (dirty) {
-			int dirty_cpu = dcache_dirty_cpu(page);
+	अगर (mapping && !mapping_mapped(mapping)) अणु
+		पूर्णांक dirty = test_bit(PG_dcache_dirty, &page->flags);
+		अगर (dirty) अणु
+			पूर्णांक dirty_cpu = dcache_dirty_cpu(page);
 
-			if (dirty_cpu == this_cpu)
-				goto out;
+			अगर (dirty_cpu == this_cpu)
+				जाओ out;
 			smp_flush_dcache_page_impl(page, dirty_cpu);
-		}
+		पूर्ण
 		set_dcache_dirty(page, this_cpu);
-	} else {
-		/* We could delay the flush for the !page_mapping
-		 * case too.  But that case is for exec env/arg
+	पूर्ण अन्यथा अणु
+		/* We could delay the flush क्रम the !page_mapping
+		 * हाल too.  But that हाल is क्रम exec env/arg
 		 * pages and those are %99 certainly going to get
-		 * faulted into the tlb (and thus flushed) anyways.
+		 * faulted पूर्णांकo the tlb (and thus flushed) anyways.
 		 */
 		flush_dcache_page_impl(page);
-	}
+	पूर्ण
 
 out:
 	put_cpu();
-}
+पूर्ण
 EXPORT_SYMBOL(flush_dcache_page);
 
-void __kprobes flush_icache_range(unsigned long start, unsigned long end)
-{
-	/* Cheetah and Hypervisor platform cpus have coherent I-cache. */
-	if (tlb_type == spitfire) {
-		unsigned long kaddr;
+व्योम __kprobes flush_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	/* Cheetah and Hypervisor platक्रमm cpus have coherent I-cache. */
+	अगर (tlb_type == spitfire) अणु
+		अचिन्हित दीर्घ kaddr;
 
 		/* This code only runs on Spitfire cpus so this is
 		 * why we can assume _PAGE_PADDR_4U.
 		 */
-		for (kaddr = start; kaddr < end; kaddr += PAGE_SIZE) {
-			unsigned long paddr, mask = _PAGE_PADDR_4U;
+		क्रम (kaddr = start; kaddr < end; kaddr += PAGE_SIZE) अणु
+			अचिन्हित दीर्घ paddr, mask = _PAGE_PADDR_4U;
 
-			if (kaddr >= PAGE_OFFSET)
+			अगर (kaddr >= PAGE_OFFSET)
 				paddr = kaddr & mask;
-			else {
+			अन्यथा अणु
 				pte_t *ptep = virt_to_kpte(kaddr);
 
 				paddr = pte_val(*ptep) & mask;
-			}
+			पूर्ण
 			__flush_icache_page(paddr);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(flush_icache_range);
 
-void mmu_info(struct seq_file *m)
-{
-	static const char *pgsz_strings[] = {
+व्योम mmu_info(काष्ठा seq_file *m)
+अणु
+	अटल स्थिर अक्षर *pgsz_strings[] = अणु
 		"8K", "64K", "512K", "4MB", "32MB",
 		"256MB", "2GB", "16GB",
-	};
-	int i, printed;
+	पूर्ण;
+	पूर्णांक i, prपूर्णांकed;
 
-	if (tlb_type == cheetah)
-		seq_printf(m, "MMU Type\t: Cheetah\n");
-	else if (tlb_type == cheetah_plus)
-		seq_printf(m, "MMU Type\t: Cheetah+\n");
-	else if (tlb_type == spitfire)
-		seq_printf(m, "MMU Type\t: Spitfire\n");
-	else if (tlb_type == hypervisor)
-		seq_printf(m, "MMU Type\t: Hypervisor (sun4v)\n");
-	else
-		seq_printf(m, "MMU Type\t: ???\n");
+	अगर (tlb_type == cheetah)
+		seq_म_लिखो(m, "MMU Type\t: Cheetah\n");
+	अन्यथा अगर (tlb_type == cheetah_plus)
+		seq_म_लिखो(m, "MMU Type\t: Cheetah+\n");
+	अन्यथा अगर (tlb_type == spitfire)
+		seq_म_लिखो(m, "MMU Type\t: Spitfire\n");
+	अन्यथा अगर (tlb_type == hypervisor)
+		seq_म_लिखो(m, "MMU Type\t: Hypervisor (sun4v)\n");
+	अन्यथा
+		seq_म_लिखो(m, "MMU Type\t: ???\n");
 
-	seq_printf(m, "MMU PGSZs\t: ");
-	printed = 0;
-	for (i = 0; i < ARRAY_SIZE(pgsz_strings); i++) {
-		if (cpu_pgsz_mask & (1UL << i)) {
-			seq_printf(m, "%s%s",
-				   printed ? "," : "", pgsz_strings[i]);
-			printed++;
-		}
-	}
-	seq_putc(m, '\n');
+	seq_म_लिखो(m, "MMU PGSZs\t: ");
+	prपूर्णांकed = 0;
+	क्रम (i = 0; i < ARRAY_SIZE(pgsz_strings); i++) अणु
+		अगर (cpu_pgsz_mask & (1UL << i)) अणु
+			seq_म_लिखो(m, "%s%s",
+				   prपूर्णांकed ? "," : "", pgsz_strings[i]);
+			prपूर्णांकed++;
+		पूर्ण
+	पूर्ण
+	seq_अ_दो(m, '\n');
 
-#ifdef CONFIG_DEBUG_DCFLUSH
-	seq_printf(m, "DCPageFlushes\t: %d\n",
-		   atomic_read(&dcpage_flushes));
-#ifdef CONFIG_SMP
-	seq_printf(m, "DCPageFlushesXC\t: %d\n",
-		   atomic_read(&dcpage_flushes_xcall));
-#endif /* CONFIG_SMP */
-#endif /* CONFIG_DEBUG_DCFLUSH */
-}
+#अगर_घोषित CONFIG_DEBUG_DCFLUSH
+	seq_म_लिखो(m, "DCPageFlushes\t: %d\n",
+		   atomic_पढ़ो(&dcpage_flushes));
+#अगर_घोषित CONFIG_SMP
+	seq_म_लिखो(m, "DCPageFlushesXC\t: %d\n",
+		   atomic_पढ़ो(&dcpage_flushes_xcall));
+#पूर्ण_अगर /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_DEBUG_DCFLUSH */
+पूर्ण
 
-struct linux_prom_translation prom_trans[512] __read_mostly;
-unsigned int prom_trans_ents __read_mostly;
+काष्ठा linux_prom_translation prom_trans[512] __पढ़ो_mostly;
+अचिन्हित पूर्णांक prom_trans_ents __पढ़ो_mostly;
 
-unsigned long kern_locked_tte_data;
+अचिन्हित दीर्घ kern_locked_tte_data;
 
 /* The obp translations are saved based on 8k pagesize, since obp can
  * use a mixture of pagesizes. Misses to the LOW_OBP_ADDRESS ->
  * HI_OBP_ADDRESS range are handled in ktlb.S.
  */
-static inline int in_obp_range(unsigned long vaddr)
-{
-	return (vaddr >= LOW_OBP_ADDRESS &&
+अटल अंतरभूत पूर्णांक in_obp_range(अचिन्हित दीर्घ vaddr)
+अणु
+	वापस (vaddr >= LOW_OBP_ADDRESS &&
 		vaddr < HI_OBP_ADDRESS);
-}
+पूर्ण
 
-static int cmp_ptrans(const void *a, const void *b)
-{
-	const struct linux_prom_translation *x = a, *y = b;
+अटल पूर्णांक cmp_ptrans(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	स्थिर काष्ठा linux_prom_translation *x = a, *y = b;
 
-	if (x->virt > y->virt)
-		return 1;
-	if (x->virt < y->virt)
-		return -1;
-	return 0;
-}
+	अगर (x->virt > y->virt)
+		वापस 1;
+	अगर (x->virt < y->virt)
+		वापस -1;
+	वापस 0;
+पूर्ण
 
-/* Read OBP translations property into 'prom_trans[]'.  */
-static void __init read_obp_translations(void)
-{
-	int n, node, ents, first, last, i;
+/* Read OBP translations property पूर्णांकo 'prom_trans[]'.  */
+अटल व्योम __init पढ़ो_obp_translations(व्योम)
+अणु
+	पूर्णांक n, node, ents, first, last, i;
 
 	node = prom_finddevice("/virtual-memory");
 	n = prom_getproplen(node, "translations");
-	if (unlikely(n == 0 || n == -1)) {
-		prom_printf("prom_mappings: Couldn't get size.\n");
+	अगर (unlikely(n == 0 || n == -1)) अणु
+		prom_म_लिखो("prom_mappings: Couldn't get size.\n");
 		prom_halt();
-	}
-	if (unlikely(n > sizeof(prom_trans))) {
-		prom_printf("prom_mappings: Size %d is too big.\n", n);
+	पूर्ण
+	अगर (unlikely(n > माप(prom_trans))) अणु
+		prom_म_लिखो("prom_mappings: Size %d is too big.\n", n);
 		prom_halt();
-	}
+	पूर्ण
 
-	if ((n = prom_getproperty(node, "translations",
-				  (char *)&prom_trans[0],
-				  sizeof(prom_trans))) == -1) {
-		prom_printf("prom_mappings: Couldn't get property.\n");
+	अगर ((n = prom_getproperty(node, "translations",
+				  (अक्षर *)&prom_trans[0],
+				  माप(prom_trans))) == -1) अणु
+		prom_म_लिखो("prom_mappings: Couldn't get property.\n");
 		prom_halt();
-	}
+	पूर्ण
 
-	n = n / sizeof(struct linux_prom_translation);
+	n = n / माप(काष्ठा linux_prom_translation);
 
 	ents = n;
 
-	sort(prom_trans, ents, sizeof(struct linux_prom_translation),
-	     cmp_ptrans, NULL);
+	sort(prom_trans, ents, माप(काष्ठा linux_prom_translation),
+	     cmp_ptrans, शून्य);
 
 	/* Now kick out all the non-OBP entries.  */
-	for (i = 0; i < ents; i++) {
-		if (in_obp_range(prom_trans[i].virt))
-			break;
-	}
+	क्रम (i = 0; i < ents; i++) अणु
+		अगर (in_obp_range(prom_trans[i].virt))
+			अवरोध;
+	पूर्ण
 	first = i;
-	for (; i < ents; i++) {
-		if (!in_obp_range(prom_trans[i].virt))
-			break;
-	}
+	क्रम (; i < ents; i++) अणु
+		अगर (!in_obp_range(prom_trans[i].virt))
+			अवरोध;
+	पूर्ण
 	last = i;
 
-	for (i = 0; i < (last - first); i++) {
-		struct linux_prom_translation *src = &prom_trans[i + first];
-		struct linux_prom_translation *dest = &prom_trans[i];
+	क्रम (i = 0; i < (last - first); i++) अणु
+		काष्ठा linux_prom_translation *src = &prom_trans[i + first];
+		काष्ठा linux_prom_translation *dest = &prom_trans[i];
 
 		*dest = *src;
-	}
-	for (; i < ents; i++) {
-		struct linux_prom_translation *dest = &prom_trans[i];
+	पूर्ण
+	क्रम (; i < ents; i++) अणु
+		काष्ठा linux_prom_translation *dest = &prom_trans[i];
 		dest->virt = dest->size = dest->data = 0x0UL;
-	}
+	पूर्ण
 
 	prom_trans_ents = last - first;
 
-	if (tlb_type == spitfire) {
+	अगर (tlb_type == spitfire) अणु
 		/* Clear diag TTE bits. */
-		for (i = 0; i < prom_trans_ents; i++)
+		क्रम (i = 0; i < prom_trans_ents; i++)
 			prom_trans[i].data &= ~0x0003fe0000000000UL;
-	}
+	पूर्ण
 
 	/* Force execute bit on.  */
-	for (i = 0; i < prom_trans_ents; i++)
+	क्रम (i = 0; i < prom_trans_ents; i++)
 		prom_trans[i].data |= (tlb_type == hypervisor ?
 				       _PAGE_EXEC_4V : _PAGE_EXEC_4U);
-}
+पूर्ण
 
-static void __init hypervisor_tlb_lock(unsigned long vaddr,
-				       unsigned long pte,
-				       unsigned long mmu)
-{
-	unsigned long ret = sun4v_mmu_map_perm_addr(vaddr, 0, pte, mmu);
+अटल व्योम __init hypervisor_tlb_lock(अचिन्हित दीर्घ vaddr,
+				       अचिन्हित दीर्घ pte,
+				       अचिन्हित दीर्घ mmu)
+अणु
+	अचिन्हित दीर्घ ret = sun4v_mmu_map_perm_addr(vaddr, 0, pte, mmu);
 
-	if (ret != 0) {
-		prom_printf("hypervisor_tlb_lock[%lx:%x:%lx:%lx]: "
+	अगर (ret != 0) अणु
+		prom_म_लिखो("hypervisor_tlb_lock[%lx:%x:%lx:%lx]: "
 			    "errors with %lx\n", vaddr, 0, pte, mmu, ret);
 		prom_halt();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned long kern_large_tte(unsigned long paddr);
+अटल अचिन्हित दीर्घ kern_large_tte(अचिन्हित दीर्घ paddr);
 
-static void __init remap_kernel(void)
-{
-	unsigned long phys_page, tte_vaddr, tte_data;
-	int i, tlb_ent = sparc64_highest_locked_tlbent();
+अटल व्योम __init remap_kernel(व्योम)
+अणु
+	अचिन्हित दीर्घ phys_page, tte_vaddr, tte_data;
+	पूर्णांक i, tlb_ent = sparc64_highest_locked_tlbent();
 
-	tte_vaddr = (unsigned long) KERNBASE;
+	tte_vaddr = (अचिन्हित दीर्घ) KERNBASE;
 	phys_page = (prom_boot_mapping_phys_low >> ILOG2_4MB) << ILOG2_4MB;
 	tte_data = kern_large_tte(phys_page);
 
 	kern_locked_tte_data = tte_data;
 
-	/* Now lock us into the TLBs via Hypervisor or OBP. */
-	if (tlb_type == hypervisor) {
-		for (i = 0; i < num_kernel_image_mappings; i++) {
+	/* Now lock us पूर्णांकo the TLBs via Hypervisor or OBP. */
+	अगर (tlb_type == hypervisor) अणु
+		क्रम (i = 0; i < num_kernel_image_mappings; i++) अणु
 			hypervisor_tlb_lock(tte_vaddr, tte_data, HV_MMU_DMMU);
 			hypervisor_tlb_lock(tte_vaddr, tte_data, HV_MMU_IMMU);
 			tte_vaddr += 0x400000;
 			tte_data += 0x400000;
-		}
-	} else {
-		for (i = 0; i < num_kernel_image_mappings; i++) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < num_kernel_image_mappings; i++) अणु
 			prom_dtlb_load(tlb_ent - i, tte_data, tte_vaddr);
 			prom_itlb_load(tlb_ent - i, tte_data, tte_vaddr);
 			tte_vaddr += 0x400000;
 			tte_data += 0x400000;
-		}
+		पूर्ण
 		sparc64_highest_unlocked_tlb_ent = tlb_ent - i;
-	}
-	if (tlb_type == cheetah_plus) {
+	पूर्ण
+	अगर (tlb_type == cheetah_plus) अणु
 		sparc64_kern_pri_context = (CTX_CHEETAH_PLUS_CTX0 |
 					    CTX_CHEETAH_PLUS_NUC);
 		sparc64_kern_pri_nuc_bits = CTX_CHEETAH_PLUS_NUC;
 		sparc64_kern_sec_context = CTX_CHEETAH_PLUS_CTX0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void __init inherit_prom_mappings(void)
-{
+अटल व्योम __init inherit_prom_mappings(व्योम)
+अणु
 	/* Now fixup OBP's idea about where we really are mapped. */
-	printk("Remapping the kernel... ");
+	prपूर्णांकk("Remapping the kernel... ");
 	remap_kernel();
-	printk("done.\n");
-}
+	prपूर्णांकk("done.\n");
+पूर्ण
 
-void prom_world(int enter)
-{
-	if (!enter)
+व्योम prom_world(पूर्णांक enter)
+अणु
+	अगर (!enter)
 		set_fs(get_fs());
 
-	__asm__ __volatile__("flushw");
-}
+	__यंत्र__ __अस्थिर__("flushw");
+पूर्ण
 
-void __flush_dcache_range(unsigned long start, unsigned long end)
-{
-	unsigned long va;
+व्योम __flush_dcache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ va;
 
-	if (tlb_type == spitfire) {
-		int n = 0;
+	अगर (tlb_type == spitfire) अणु
+		पूर्णांक n = 0;
 
-		for (va = start; va < end; va += 32) {
+		क्रम (va = start; va < end; va += 32) अणु
 			spitfire_put_dcache_tag(va & 0x3fe0, 0x0);
-			if (++n >= 512)
-				break;
-		}
-	} else if (tlb_type == cheetah || tlb_type == cheetah_plus) {
+			अगर (++n >= 512)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (tlb_type == cheetah || tlb_type == cheetah_plus) अणु
 		start = __pa(start);
 		end = __pa(end);
-		for (va = start; va < end; va += 32)
-			__asm__ __volatile__("stxa %%g0, [%0] %1\n\t"
+		क्रम (va = start; va < end; va += 32)
+			__यंत्र__ __अस्थिर__("stxa %%g0, [%0] %1\n\t"
 					     "membar #Sync"
-					     : /* no outputs */
+					     : /* no outमाला_दो */
 					     : "r" (va),
 					       "i" (ASI_DCACHE_INVALIDATE));
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(__flush_dcache_range);
 
 /* get_new_mmu_context() uses "cache + 1".  */
 DEFINE_SPINLOCK(ctx_alloc_lock);
-unsigned long tlb_context_cache = CTX_FIRST_VERSION;
-#define MAX_CTX_NR	(1UL << CTX_NR_BITS)
-#define CTX_BMAP_SLOTS	BITS_TO_LONGS(MAX_CTX_NR)
+अचिन्हित दीर्घ tlb_context_cache = CTX_FIRST_VERSION;
+#घोषणा MAX_CTX_NR	(1UL << CTX_NR_BITS)
+#घोषणा CTX_BMAP_SLOTS	BITS_TO_LONGS(MAX_CTX_NR)
 DECLARE_BITMAP(mmu_context_bmap, MAX_CTX_NR);
-DEFINE_PER_CPU(struct mm_struct *, per_cpu_secondary_mm) = {0};
+DEFINE_PER_CPU(काष्ठा mm_काष्ठा *, per_cpu_secondary_mm) = अणु0पूर्ण;
 
-static void mmu_context_wrap(void)
-{
-	unsigned long old_ver = tlb_context_cache & CTX_VERSION_MASK;
-	unsigned long new_ver, new_ctx, old_ctx;
-	struct mm_struct *mm;
-	int cpu;
+अटल व्योम mmu_context_wrap(व्योम)
+अणु
+	अचिन्हित दीर्घ old_ver = tlb_context_cache & CTX_VERSION_MASK;
+	अचिन्हित दीर्घ new_ver, new_ctx, old_ctx;
+	काष्ठा mm_काष्ठा *mm;
+	पूर्णांक cpu;
 
-	bitmap_zero(mmu_context_bmap, 1 << CTX_NR_BITS);
+	biपंचांगap_zero(mmu_context_bmap, 1 << CTX_NR_BITS);
 
 	/* Reserve kernel context */
 	set_bit(0, mmu_context_bmap);
 
 	new_ver = (tlb_context_cache & CTX_VERSION_MASK) + CTX_FIRST_VERSION;
-	if (unlikely(new_ver == 0))
+	अगर (unlikely(new_ver == 0))
 		new_ver = CTX_FIRST_VERSION;
 	tlb_context_cache = new_ver;
 
 	/*
-	 * Make sure that any new mm that are added into per_cpu_secondary_mm,
+	 * Make sure that any new mm that are added पूर्णांकo per_cpu_secondary_mm,
 	 * are going to go through get_new_mmu_context() path.
 	 */
 	mb();
@@ -774,57 +775,57 @@ static void mmu_context_wrap(void)
 	 * Updated versions to current on those CPUs that had valid secondary
 	 * contexts
 	 */
-	for_each_online_cpu(cpu) {
+	क्रम_each_online_cpu(cpu) अणु
 		/*
 		 * If a new mm is stored after we took this mm from the array,
-		 * it will go into get_new_mmu_context() path, because we
-		 * already bumped the version in tlb_context_cache.
+		 * it will go पूर्णांकo get_new_mmu_context() path, because we
+		 * alपढ़ोy bumped the version in tlb_context_cache.
 		 */
 		mm = per_cpu(per_cpu_secondary_mm, cpu);
 
-		if (unlikely(!mm || mm == &init_mm))
-			continue;
+		अगर (unlikely(!mm || mm == &init_mm))
+			जारी;
 
 		old_ctx = mm->context.sparc64_ctx_val;
-		if (likely((old_ctx & CTX_VERSION_MASK) == old_ver)) {
+		अगर (likely((old_ctx & CTX_VERSION_MASK) == old_ver)) अणु
 			new_ctx = (old_ctx & ~CTX_VERSION_MASK) | new_ver;
 			set_bit(new_ctx & CTX_NR_MASK, mmu_context_bmap);
 			mm->context.sparc64_ctx_val = new_ctx;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* Caller does TLB context flushing on local CPU if necessary.
+/* Caller करोes TLB context flushing on local CPU अगर necessary.
  * The caller also ensures that CTX_VALID(mm->context) is false.
  *
- * We must be careful about boundary cases so that we never
+ * We must be careful about boundary हालs so that we never
  * let the user have CTX 0 (nucleus) or we ever use a CTX
  * version of zero (and thus NO_CONTEXT would not be caught
  * by version mis-match tests in mmu_context.h).
  *
- * Always invoked with interrupts disabled.
+ * Always invoked with पूर्णांकerrupts disabled.
  */
-void get_new_mmu_context(struct mm_struct *mm)
-{
-	unsigned long ctx, new_ctx;
-	unsigned long orig_pgsz_bits;
+व्योम get_new_mmu_context(काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ ctx, new_ctx;
+	अचिन्हित दीर्घ orig_pgsz_bits;
 
 	spin_lock(&ctx_alloc_lock);
 retry:
-	/* wrap might have happened, test again if our context became valid */
-	if (unlikely(CTX_VALID(mm->context)))
-		goto out;
+	/* wrap might have happened, test again अगर our context became valid */
+	अगर (unlikely(CTX_VALID(mm->context)))
+		जाओ out;
 	orig_pgsz_bits = (mm->context.sparc64_ctx_val & CTX_PGSZ_MASK);
 	ctx = (tlb_context_cache + 1) & CTX_NR_MASK;
 	new_ctx = find_next_zero_bit(mmu_context_bmap, 1 << CTX_NR_BITS, ctx);
-	if (new_ctx >= (1 << CTX_NR_BITS)) {
+	अगर (new_ctx >= (1 << CTX_NR_BITS)) अणु
 		new_ctx = find_next_zero_bit(mmu_context_bmap, ctx, 1);
-		if (new_ctx >= ctx) {
+		अगर (new_ctx >= ctx) अणु
 			mmu_context_wrap();
-			goto retry;
-		}
-	}
-	if (mm->context.sparc64_ctx_val)
+			जाओ retry;
+		पूर्ण
+	पूर्ण
+	अगर (mm->context.sparc64_ctx_val)
 		cpumask_clear(mm_cpumask(mm));
 	mmu_context_bmap[new_ctx>>6] |= (1UL << (new_ctx & 63));
 	new_ctx |= (tlb_context_cache & CTX_VERSION_MASK);
@@ -832,46 +833,46 @@ retry:
 	mm->context.sparc64_ctx_val = new_ctx | orig_pgsz_bits;
 out:
 	spin_unlock(&ctx_alloc_lock);
-}
+पूर्ण
 
-static int numa_enabled = 1;
-static int numa_debug;
+अटल पूर्णांक numa_enabled = 1;
+अटल पूर्णांक numa_debug;
 
-static int __init early_numa(char *p)
-{
-	if (!p)
-		return 0;
+अटल पूर्णांक __init early_numa(अक्षर *p)
+अणु
+	अगर (!p)
+		वापस 0;
 
-	if (strstr(p, "off"))
+	अगर (म_माला(p, "off"))
 		numa_enabled = 0;
 
-	if (strstr(p, "debug"))
+	अगर (म_माला(p, "debug"))
 		numa_debug = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("numa", early_numa);
 
-#define numadbg(f, a...) \
-do {	if (numa_debug) \
-		printk(KERN_INFO f, ## a); \
-} while (0)
+#घोषणा numadbg(f, a...) \
+करो अणु	अगर (numa_debug) \
+		prपूर्णांकk(KERN_INFO f, ## a); \
+पूर्ण जबतक (0)
 
-static void __init find_ramdisk(unsigned long phys_base)
-{
-#ifdef CONFIG_BLK_DEV_INITRD
-	if (sparc_ramdisk_image || sparc_ramdisk_image64) {
-		unsigned long ramdisk_image;
+अटल व्योम __init find_ramdisk(अचिन्हित दीर्घ phys_base)
+अणु
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+	अगर (sparc_ramdisk_image || sparc_ramdisk_image64) अणु
+		अचिन्हित दीर्घ ramdisk_image;
 
 		/* Older versions of the bootloader only supported a
-		 * 32-bit physical address for the ramdisk image
+		 * 32-bit physical address क्रम the ramdisk image
 		 * location, stored at sparc_ramdisk_image.  Newer
 		 * SILO versions set sparc_ramdisk_image to zero and
 		 * provide a full 64-bit physical address at
 		 * sparc_ramdisk_image64.
 		 */
 		ramdisk_image = sparc_ramdisk_image;
-		if (!ramdisk_image)
+		अगर (!ramdisk_image)
 			ramdisk_image = sparc_ramdisk_image64;
 
 		/* Another bootloader quirk.  The bootloader normalizes
@@ -892,152 +893,152 @@ static void __init find_ramdisk(unsigned long phys_base)
 
 		initrd_start += PAGE_OFFSET;
 		initrd_end += PAGE_OFFSET;
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-struct node_mem_mask {
-	unsigned long mask;
-	unsigned long match;
-};
-static struct node_mem_mask node_masks[MAX_NUMNODES];
-static int num_node_masks;
+काष्ठा node_mem_mask अणु
+	अचिन्हित दीर्घ mask;
+	अचिन्हित दीर्घ match;
+पूर्ण;
+अटल काष्ठा node_mem_mask node_masks[MAX_NUMNODES];
+अटल पूर्णांक num_node_masks;
 
-#ifdef CONFIG_NEED_MULTIPLE_NODES
+#अगर_घोषित CONFIG_NEED_MULTIPLE_NODES
 
-struct mdesc_mlgroup {
+काष्ठा mdesc_mlgroup अणु
 	u64	node;
 	u64	latency;
 	u64	match;
 	u64	mask;
-};
+पूर्ण;
 
-static struct mdesc_mlgroup *mlgroups;
-static int num_mlgroups;
+अटल काष्ठा mdesc_mlgroup *mlgroups;
+अटल पूर्णांक num_mlgroups;
 
-int numa_cpu_lookup_table[NR_CPUS];
+पूर्णांक numa_cpu_lookup_table[NR_CPUS];
 cpumask_t numa_cpumask_lookup_table[MAX_NUMNODES];
 
-struct mdesc_mblock {
+काष्ठा mdesc_mblock अणु
 	u64	base;
 	u64	size;
 	u64	offset; /* RA-to-PA */
-};
-static struct mdesc_mblock *mblocks;
-static int num_mblocks;
+पूर्ण;
+अटल काष्ठा mdesc_mblock *mblocks;
+अटल पूर्णांक num_mblocks;
 
-static struct mdesc_mblock * __init addr_to_mblock(unsigned long addr)
-{
-	struct mdesc_mblock *m = NULL;
-	int i;
+अटल काष्ठा mdesc_mblock * __init addr_to_mblock(अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा mdesc_mblock *m = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; i < num_mblocks; i++) {
+	क्रम (i = 0; i < num_mblocks; i++) अणु
 		m = &mblocks[i];
 
-		if (addr >= m->base &&
-		    addr < (m->base + m->size)) {
-			break;
-		}
-	}
+		अगर (addr >= m->base &&
+		    addr < (m->base + m->size)) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return m;
-}
+	वापस m;
+पूर्ण
 
-static u64 __init memblock_nid_range_sun4u(u64 start, u64 end, int *nid)
-{
-	int prev_nid, new_nid;
+अटल u64 __init memblock_nid_range_sun4u(u64 start, u64 end, पूर्णांक *nid)
+अणु
+	पूर्णांक prev_nid, new_nid;
 
 	prev_nid = NUMA_NO_NODE;
-	for ( ; start < end; start += PAGE_SIZE) {
-		for (new_nid = 0; new_nid < num_node_masks; new_nid++) {
-			struct node_mem_mask *p = &node_masks[new_nid];
+	क्रम ( ; start < end; start += PAGE_SIZE) अणु
+		क्रम (new_nid = 0; new_nid < num_node_masks; new_nid++) अणु
+			काष्ठा node_mem_mask *p = &node_masks[new_nid];
 
-			if ((start & p->mask) == p->match) {
-				if (prev_nid == NUMA_NO_NODE)
+			अगर ((start & p->mask) == p->match) अणु
+				अगर (prev_nid == NUMA_NO_NODE)
 					prev_nid = new_nid;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (new_nid == num_node_masks) {
+		अगर (new_nid == num_node_masks) अणु
 			prev_nid = 0;
 			WARN_ONCE(1, "addr[%Lx] doesn't match a NUMA node rule. Some memory will be owned by node 0.",
 				  start);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (prev_nid != new_nid)
-			break;
-	}
+		अगर (prev_nid != new_nid)
+			अवरोध;
+	पूर्ण
 	*nid = prev_nid;
 
-	return start > end ? end : start;
-}
+	वापस start > end ? end : start;
+पूर्ण
 
-static u64 __init memblock_nid_range(u64 start, u64 end, int *nid)
-{
+अटल u64 __init memblock_nid_range(u64 start, u64 end, पूर्णांक *nid)
+अणु
 	u64 ret_end, pa_start, m_mask, m_match, m_end;
-	struct mdesc_mblock *mblock;
-	int _nid, i;
+	काष्ठा mdesc_mblock *mblock;
+	पूर्णांक _nid, i;
 
-	if (tlb_type != hypervisor)
-		return memblock_nid_range_sun4u(start, end, nid);
+	अगर (tlb_type != hypervisor)
+		वापस memblock_nid_range_sun4u(start, end, nid);
 
 	mblock = addr_to_mblock(start);
-	if (!mblock) {
+	अगर (!mblock) अणु
 		WARN_ONCE(1, "memblock_nid_range: Can't find mblock addr[%Lx]",
 			  start);
 
 		_nid = 0;
 		ret_end = end;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	pa_start = start + mblock->offset;
 	m_match = 0;
 	m_mask = 0;
 
-	for (_nid = 0; _nid < num_node_masks; _nid++) {
-		struct node_mem_mask *const m = &node_masks[_nid];
+	क्रम (_nid = 0; _nid < num_node_masks; _nid++) अणु
+		काष्ठा node_mem_mask *स्थिर m = &node_masks[_nid];
 
-		if ((pa_start & m->mask) == m->match) {
+		अगर ((pa_start & m->mask) == m->match) अणु
 			m_match = m->match;
 			m_mask = m->mask;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (num_node_masks == _nid) {
-		/* We could not find NUMA group, so default to 0, but lets
-		 * search for latency group, so we could calculate the correct
-		 * end address that we return
+	अगर (num_node_masks == _nid) अणु
+		/* We could not find NUMA group, so शेष to 0, but lets
+		 * search क्रम latency group, so we could calculate the correct
+		 * end address that we वापस
 		 */
 		_nid = 0;
 
-		for (i = 0; i < num_mlgroups; i++) {
-			struct mdesc_mlgroup *const m = &mlgroups[i];
+		क्रम (i = 0; i < num_mlgroups; i++) अणु
+			काष्ठा mdesc_mlgroup *स्थिर m = &mlgroups[i];
 
-			if ((pa_start & m->mask) == m->match) {
+			अगर ((pa_start & m->mask) == m->match) अणु
 				m_match = m->match;
 				m_mask = m->mask;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (i == num_mlgroups) {
+		अगर (i == num_mlgroups) अणु
 			WARN_ONCE(1, "memblock_nid_range: Can't find latency group addr[%Lx]",
 				  start);
 
 			ret_end = end;
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Each latency group has match and mask, and each memory block has an
-	 * offset.  An address belongs to a latency group if its address matches
-	 * the following formula: ((addr + offset) & mask) == match
-	 * It is, however, slow to check every single page if it matches a
+	 * offset.  An address beदीर्घs to a latency group अगर its address matches
+	 * the following क्रमmula: ((addr + offset) & mask) == match
+	 * It is, however, slow to check every single page अगर it matches a
 	 * particular latency group. As optimization we calculate end value by
 	 * using bit arithmetics.
 	 */
@@ -1045,44 +1046,44 @@ static u64 __init memblock_nid_range(u64 start, u64 end, int *nid)
 	m_end += pa_start & ~((1ul << fls64(m_mask)) - 1);
 	ret_end = m_end > end ? end : m_end;
 
-done:
+करोne:
 	*nid = _nid;
-	return ret_end;
-}
-#endif
+	वापस ret_end;
+पूर्ण
+#पूर्ण_अगर
 
-/* This must be invoked after performing all of the necessary
- * memblock_set_node() calls for 'nid'.  We need to be able to get
- * correct data from get_pfn_range_for_nid().
+/* This must be invoked after perक्रमming all of the necessary
+ * memblock_set_node() calls क्रम 'nid'.  We need to be able to get
+ * correct data from get_pfn_range_क्रम_nid().
  */
-static void __init allocate_node_data(int nid)
-{
-	struct pglist_data *p;
-	unsigned long start_pfn, end_pfn;
-#ifdef CONFIG_NEED_MULTIPLE_NODES
+अटल व्योम __init allocate_node_data(पूर्णांक nid)
+अणु
+	काष्ठा pglist_data *p;
+	अचिन्हित दीर्घ start_pfn, end_pfn;
+#अगर_घोषित CONFIG_NEED_MULTIPLE_NODES
 
-	NODE_DATA(nid) = memblock_alloc_node(sizeof(struct pglist_data),
+	NODE_DATA(nid) = memblock_alloc_node(माप(काष्ठा pglist_data),
 					     SMP_CACHE_BYTES, nid);
-	if (!NODE_DATA(nid)) {
-		prom_printf("Cannot allocate pglist_data for nid[%d]\n", nid);
+	अगर (!NODE_DATA(nid)) अणु
+		prom_म_लिखो("Cannot allocate pglist_data for nid[%d]\n", nid);
 		prom_halt();
-	}
+	पूर्ण
 
 	NODE_DATA(nid)->node_id = nid;
-#endif
+#पूर्ण_अगर
 
 	p = NODE_DATA(nid);
 
-	get_pfn_range_for_nid(nid, &start_pfn, &end_pfn);
+	get_pfn_range_क्रम_nid(nid, &start_pfn, &end_pfn);
 	p->node_start_pfn = start_pfn;
 	p->node_spanned_pages = end_pfn - start_pfn;
-}
+पूर्ण
 
-static void init_node_masks_nonnuma(void)
-{
-#ifdef CONFIG_NEED_MULTIPLE_NODES
-	int i;
-#endif
+अटल व्योम init_node_masks_nonnuma(व्योम)
+अणु
+#अगर_घोषित CONFIG_NEED_MULTIPLE_NODES
+	पूर्णांक i;
+#पूर्ण_अगर
 
 	numadbg("Initializing tables for non-numa.\n");
 
@@ -1090,86 +1091,86 @@ static void init_node_masks_nonnuma(void)
 	node_masks[0].match = 0;
 	num_node_masks = 1;
 
-#ifdef CONFIG_NEED_MULTIPLE_NODES
-	for (i = 0; i < NR_CPUS; i++)
+#अगर_घोषित CONFIG_NEED_MULTIPLE_NODES
+	क्रम (i = 0; i < NR_CPUS; i++)
 		numa_cpu_lookup_table[i] = 0;
 
 	cpumask_setall(&numa_cpumask_lookup_table[0]);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_NEED_MULTIPLE_NODES
-struct pglist_data *node_data[MAX_NUMNODES];
+#अगर_घोषित CONFIG_NEED_MULTIPLE_NODES
+काष्ठा pglist_data *node_data[MAX_NUMNODES];
 
 EXPORT_SYMBOL(numa_cpu_lookup_table);
 EXPORT_SYMBOL(numa_cpumask_lookup_table);
 EXPORT_SYMBOL(node_data);
 
-static int scan_pio_for_cfg_handle(struct mdesc_handle *md, u64 pio,
+अटल पूर्णांक scan_pio_क्रम_cfg_handle(काष्ठा mdesc_handle *md, u64 pio,
 				   u32 cfg_handle)
-{
+अणु
 	u64 arc;
 
-	mdesc_for_each_arc(arc, md, pio, MDESC_ARC_TYPE_FWD) {
+	mdesc_क्रम_each_arc(arc, md, pio, MDESC_ARC_TYPE_FWD) अणु
 		u64 target = mdesc_arc_target(md, arc);
-		const u64 *val;
+		स्थिर u64 *val;
 
 		val = mdesc_get_property(md, target,
-					 "cfg-handle", NULL);
-		if (val && *val == cfg_handle)
-			return 0;
-	}
-	return -ENODEV;
-}
+					 "cfg-handle", शून्य);
+		अगर (val && *val == cfg_handle)
+			वापस 0;
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
 
-static int scan_arcs_for_cfg_handle(struct mdesc_handle *md, u64 grp,
+अटल पूर्णांक scan_arcs_क्रम_cfg_handle(काष्ठा mdesc_handle *md, u64 grp,
 				    u32 cfg_handle)
-{
+अणु
 	u64 arc, candidate, best_latency = ~(u64)0;
 
-	candidate = MDESC_NODE_NULL;
-	mdesc_for_each_arc(arc, md, grp, MDESC_ARC_TYPE_FWD) {
+	candidate = MDESC_NODE_शून्य;
+	mdesc_क्रम_each_arc(arc, md, grp, MDESC_ARC_TYPE_FWD) अणु
 		u64 target = mdesc_arc_target(md, arc);
-		const char *name = mdesc_node_name(md, target);
-		const u64 *val;
+		स्थिर अक्षर *name = mdesc_node_name(md, target);
+		स्थिर u64 *val;
 
-		if (strcmp(name, "pio-latency-group"))
-			continue;
+		अगर (म_भेद(name, "pio-latency-group"))
+			जारी;
 
-		val = mdesc_get_property(md, target, "latency", NULL);
-		if (!val)
-			continue;
+		val = mdesc_get_property(md, target, "latency", शून्य);
+		अगर (!val)
+			जारी;
 
-		if (*val < best_latency) {
+		अगर (*val < best_latency) अणु
 			candidate = target;
 			best_latency = *val;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (candidate == MDESC_NODE_NULL)
-		return -ENODEV;
+	अगर (candidate == MDESC_NODE_शून्य)
+		वापस -ENODEV;
 
-	return scan_pio_for_cfg_handle(md, candidate, cfg_handle);
-}
+	वापस scan_pio_क्रम_cfg_handle(md, candidate, cfg_handle);
+पूर्ण
 
-int of_node_to_nid(struct device_node *dp)
-{
-	const struct linux_prom64_registers *regs;
-	struct mdesc_handle *md;
+पूर्णांक of_node_to_nid(काष्ठा device_node *dp)
+अणु
+	स्थिर काष्ठा linux_prom64_रेजिस्टरs *regs;
+	काष्ठा mdesc_handle *md;
 	u32 cfg_handle;
-	int count, nid;
+	पूर्णांक count, nid;
 	u64 grp;
 
-	/* This is the right thing to do on currently supported
-	 * SUN4U NUMA platforms as well, as the PCI controller does
+	/* This is the right thing to करो on currently supported
+	 * SUN4U NUMA platक्रमms as well, as the PCI controller करोes
 	 * not sit behind any particular memory controller.
 	 */
-	if (!mlgroups)
-		return -1;
+	अगर (!mlgroups)
+		वापस -1;
 
-	regs = of_get_property(dp, "reg", NULL);
-	if (!regs)
-		return -1;
+	regs = of_get_property(dp, "reg", शून्य);
+	अगर (!regs)
+		वापस -1;
 
 	cfg_handle = (regs->phys_addr >> 32UL) & 0x0fffffff;
 
@@ -1177,32 +1178,32 @@ int of_node_to_nid(struct device_node *dp)
 
 	count = 0;
 	nid = NUMA_NO_NODE;
-	mdesc_for_each_node_by_name(md, grp, "group") {
-		if (!scan_arcs_for_cfg_handle(md, grp, cfg_handle)) {
+	mdesc_क्रम_each_node_by_name(md, grp, "group") अणु
+		अगर (!scan_arcs_क्रम_cfg_handle(md, grp, cfg_handle)) अणु
 			nid = count;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		count++;
-	}
+	पूर्ण
 
 	mdesc_release(md);
 
-	return nid;
-}
+	वापस nid;
+पूर्ण
 
-static void __init add_node_ranges(void)
-{
+अटल व्योम __init add_node_ranges(व्योम)
+अणु
 	phys_addr_t start, end;
-	unsigned long prev_max;
+	अचिन्हित दीर्घ prev_max;
 	u64 i;
 
 memblock_resized:
 	prev_max = memblock.memory.max;
 
-	for_each_mem_range(i, &start, &end) {
-		while (start < end) {
-			unsigned long this_end;
-			int nid;
+	क्रम_each_mem_range(i, &start, &end) अणु
+		जबतक (start < end) अणु
+			अचिन्हित दीर्घ this_end;
+			पूर्णांक nid;
 
 			this_end = memblock_nid_range(start, end, &nid);
 
@@ -1212,201 +1213,201 @@ memblock_resized:
 
 			memblock_set_node(start, this_end - start,
 					  &memblock.memory, nid);
-			if (memblock.memory.max != prev_max)
-				goto memblock_resized;
+			अगर (memblock.memory.max != prev_max)
+				जाओ memblock_resized;
 			start = this_end;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int __init grab_mlgroups(struct mdesc_handle *md)
-{
-	unsigned long paddr;
-	int count = 0;
+अटल पूर्णांक __init grab_mlgroups(काष्ठा mdesc_handle *md)
+अणु
+	अचिन्हित दीर्घ paddr;
+	पूर्णांक count = 0;
 	u64 node;
 
-	mdesc_for_each_node_by_name(md, node, "memory-latency-group")
+	mdesc_क्रम_each_node_by_name(md, node, "memory-latency-group")
 		count++;
-	if (!count)
-		return -ENOENT;
+	अगर (!count)
+		वापस -ENOENT;
 
-	paddr = memblock_phys_alloc(count * sizeof(struct mdesc_mlgroup),
+	paddr = memblock_phys_alloc(count * माप(काष्ठा mdesc_mlgroup),
 				    SMP_CACHE_BYTES);
-	if (!paddr)
-		return -ENOMEM;
+	अगर (!paddr)
+		वापस -ENOMEM;
 
 	mlgroups = __va(paddr);
 	num_mlgroups = count;
 
 	count = 0;
-	mdesc_for_each_node_by_name(md, node, "memory-latency-group") {
-		struct mdesc_mlgroup *m = &mlgroups[count++];
-		const u64 *val;
+	mdesc_क्रम_each_node_by_name(md, node, "memory-latency-group") अणु
+		काष्ठा mdesc_mlgroup *m = &mlgroups[count++];
+		स्थिर u64 *val;
 
 		m->node = node;
 
-		val = mdesc_get_property(md, node, "latency", NULL);
+		val = mdesc_get_property(md, node, "latency", शून्य);
 		m->latency = *val;
-		val = mdesc_get_property(md, node, "address-match", NULL);
+		val = mdesc_get_property(md, node, "address-match", शून्य);
 		m->match = *val;
-		val = mdesc_get_property(md, node, "address-mask", NULL);
+		val = mdesc_get_property(md, node, "address-mask", शून्य);
 		m->mask = *val;
 
 		numadbg("MLGROUP[%d]: node[%llx] latency[%llx] "
 			"match[%llx] mask[%llx]\n",
 			count - 1, m->node, m->latency, m->match, m->mask);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init grab_mblocks(struct mdesc_handle *md)
-{
-	unsigned long paddr;
-	int count = 0;
+अटल पूर्णांक __init grab_mblocks(काष्ठा mdesc_handle *md)
+अणु
+	अचिन्हित दीर्घ paddr;
+	पूर्णांक count = 0;
 	u64 node;
 
-	mdesc_for_each_node_by_name(md, node, "mblock")
+	mdesc_क्रम_each_node_by_name(md, node, "mblock")
 		count++;
-	if (!count)
-		return -ENOENT;
+	अगर (!count)
+		वापस -ENOENT;
 
-	paddr = memblock_phys_alloc(count * sizeof(struct mdesc_mblock),
+	paddr = memblock_phys_alloc(count * माप(काष्ठा mdesc_mblock),
 				    SMP_CACHE_BYTES);
-	if (!paddr)
-		return -ENOMEM;
+	अगर (!paddr)
+		वापस -ENOMEM;
 
 	mblocks = __va(paddr);
 	num_mblocks = count;
 
 	count = 0;
-	mdesc_for_each_node_by_name(md, node, "mblock") {
-		struct mdesc_mblock *m = &mblocks[count++];
-		const u64 *val;
+	mdesc_क्रम_each_node_by_name(md, node, "mblock") अणु
+		काष्ठा mdesc_mblock *m = &mblocks[count++];
+		स्थिर u64 *val;
 
-		val = mdesc_get_property(md, node, "base", NULL);
+		val = mdesc_get_property(md, node, "base", शून्य);
 		m->base = *val;
-		val = mdesc_get_property(md, node, "size", NULL);
+		val = mdesc_get_property(md, node, "size", शून्य);
 		m->size = *val;
 		val = mdesc_get_property(md, node,
-					 "address-congruence-offset", NULL);
+					 "address-congruence-offset", शून्य);
 
 		/* The address-congruence-offset property is optional.
-		 * Explicity zero it be identifty this.
+		 * Explicity zero it be identअगरty this.
 		 */
-		if (val)
+		अगर (val)
 			m->offset = *val;
-		else
+		अन्यथा
 			m->offset = 0UL;
 
 		numadbg("MBLOCK[%d]: base[%llx] size[%llx] offset[%llx]\n",
 			count - 1, m->base, m->size, m->offset);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init numa_parse_mdesc_group_cpus(struct mdesc_handle *md,
+अटल व्योम __init numa_parse_mdesc_group_cpus(काष्ठा mdesc_handle *md,
 					       u64 grp, cpumask_t *mask)
-{
+अणु
 	u64 arc;
 
 	cpumask_clear(mask);
 
-	mdesc_for_each_arc(arc, md, grp, MDESC_ARC_TYPE_BACK) {
+	mdesc_क्रम_each_arc(arc, md, grp, MDESC_ARC_TYPE_BACK) अणु
 		u64 target = mdesc_arc_target(md, arc);
-		const char *name = mdesc_node_name(md, target);
-		const u64 *id;
+		स्थिर अक्षर *name = mdesc_node_name(md, target);
+		स्थिर u64 *id;
 
-		if (strcmp(name, "cpu"))
-			continue;
-		id = mdesc_get_property(md, target, "id", NULL);
-		if (*id < nr_cpu_ids)
+		अगर (म_भेद(name, "cpu"))
+			जारी;
+		id = mdesc_get_property(md, target, "id", शून्य);
+		अगर (*id < nr_cpu_ids)
 			cpumask_set_cpu(*id, mask);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct mdesc_mlgroup * __init find_mlgroup(u64 node)
-{
-	int i;
+अटल काष्ठा mdesc_mlgroup * __init find_mlgroup(u64 node)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_mlgroups; i++) {
-		struct mdesc_mlgroup *m = &mlgroups[i];
-		if (m->node == node)
-			return m;
-	}
-	return NULL;
-}
+	क्रम (i = 0; i < num_mlgroups; i++) अणु
+		काष्ठा mdesc_mlgroup *m = &mlgroups[i];
+		अगर (m->node == node)
+			वापस m;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-int __node_distance(int from, int to)
-{
-	if ((from >= MAX_NUMNODES) || (to >= MAX_NUMNODES)) {
+पूर्णांक __node_distance(पूर्णांक from, पूर्णांक to)
+अणु
+	अगर ((from >= MAX_NUMNODES) || (to >= MAX_NUMNODES)) अणु
 		pr_warn("Returning default NUMA distance value for %d->%d\n",
 			from, to);
-		return (from == to) ? LOCAL_DISTANCE : REMOTE_DISTANCE;
-	}
-	return numa_latency[from][to];
-}
+		वापस (from == to) ? LOCAL_DISTANCE : REMOTE_DISTANCE;
+	पूर्ण
+	वापस numa_latency[from][to];
+पूर्ण
 EXPORT_SYMBOL(__node_distance);
 
-static int __init find_best_numa_node_for_mlgroup(struct mdesc_mlgroup *grp)
-{
-	int i;
+अटल पूर्णांक __init find_best_numa_node_क्रम_mlgroup(काष्ठा mdesc_mlgroup *grp)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_NUMNODES; i++) {
-		struct node_mem_mask *n = &node_masks[i];
+	क्रम (i = 0; i < MAX_NUMNODES; i++) अणु
+		काष्ठा node_mem_mask *n = &node_masks[i];
 
-		if ((grp->mask == n->mask) && (grp->match == n->match))
-			break;
-	}
-	return i;
-}
+		अगर ((grp->mask == n->mask) && (grp->match == n->match))
+			अवरोध;
+	पूर्ण
+	वापस i;
+पूर्ण
 
-static void __init find_numa_latencies_for_group(struct mdesc_handle *md,
-						 u64 grp, int index)
-{
+अटल व्योम __init find_numa_latencies_क्रम_group(काष्ठा mdesc_handle *md,
+						 u64 grp, पूर्णांक index)
+अणु
 	u64 arc;
 
-	mdesc_for_each_arc(arc, md, grp, MDESC_ARC_TYPE_FWD) {
-		int tnode;
+	mdesc_क्रम_each_arc(arc, md, grp, MDESC_ARC_TYPE_FWD) अणु
+		पूर्णांक tnode;
 		u64 target = mdesc_arc_target(md, arc);
-		struct mdesc_mlgroup *m = find_mlgroup(target);
+		काष्ठा mdesc_mlgroup *m = find_mlgroup(target);
 
-		if (!m)
-			continue;
-		tnode = find_best_numa_node_for_mlgroup(m);
-		if (tnode == MAX_NUMNODES)
-			continue;
+		अगर (!m)
+			जारी;
+		tnode = find_best_numa_node_क्रम_mlgroup(m);
+		अगर (tnode == MAX_NUMNODES)
+			जारी;
 		numa_latency[index][tnode] = m->latency;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init numa_attach_mlgroup(struct mdesc_handle *md, u64 grp,
-				      int index)
-{
-	struct mdesc_mlgroup *candidate = NULL;
+अटल पूर्णांक __init numa_attach_mlgroup(काष्ठा mdesc_handle *md, u64 grp,
+				      पूर्णांक index)
+अणु
+	काष्ठा mdesc_mlgroup *candidate = शून्य;
 	u64 arc, best_latency = ~(u64)0;
-	struct node_mem_mask *n;
+	काष्ठा node_mem_mask *n;
 
-	mdesc_for_each_arc(arc, md, grp, MDESC_ARC_TYPE_FWD) {
+	mdesc_क्रम_each_arc(arc, md, grp, MDESC_ARC_TYPE_FWD) अणु
 		u64 target = mdesc_arc_target(md, arc);
-		struct mdesc_mlgroup *m = find_mlgroup(target);
-		if (!m)
-			continue;
-		if (m->latency < best_latency) {
+		काष्ठा mdesc_mlgroup *m = find_mlgroup(target);
+		अगर (!m)
+			जारी;
+		अगर (m->latency < best_latency) अणु
 			candidate = m;
 			best_latency = m->latency;
-		}
-	}
-	if (!candidate)
-		return -ENOENT;
+		पूर्ण
+	पूर्ण
+	अगर (!candidate)
+		वापस -ENOENT;
 
-	if (num_node_masks != index) {
-		printk(KERN_ERR "Inconsistent NUMA state, "
+	अगर (num_node_masks != index) अणु
+		prपूर्णांकk(KERN_ERR "Inconsistent NUMA state, "
 		       "index[%d] != num_node_masks[%d]\n",
 		       index, num_node_masks);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	n = &node_masks[num_node_masks++];
 
@@ -1416,482 +1417,482 @@ static int __init numa_attach_mlgroup(struct mdesc_handle *md, u64 grp,
 	numadbg("NUMA NODE[%d]: mask[%lx] match[%lx] (latency[%llx])\n",
 		index, n->mask, n->match, candidate->latency);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init numa_parse_mdesc_group(struct mdesc_handle *md, u64 grp,
-					 int index)
-{
+अटल पूर्णांक __init numa_parse_mdesc_group(काष्ठा mdesc_handle *md, u64 grp,
+					 पूर्णांक index)
+अणु
 	cpumask_t mask;
-	int cpu;
+	पूर्णांक cpu;
 
 	numa_parse_mdesc_group_cpus(md, grp, &mask);
 
-	for_each_cpu(cpu, &mask)
+	क्रम_each_cpu(cpu, &mask)
 		numa_cpu_lookup_table[cpu] = index;
 	cpumask_copy(&numa_cpumask_lookup_table[index], &mask);
 
-	if (numa_debug) {
-		printk(KERN_INFO "NUMA GROUP[%d]: cpus [ ", index);
-		for_each_cpu(cpu, &mask)
-			printk("%d ", cpu);
-		printk("]\n");
-	}
+	अगर (numa_debug) अणु
+		prपूर्णांकk(KERN_INFO "NUMA GROUP[%d]: cpus [ ", index);
+		क्रम_each_cpu(cpu, &mask)
+			prपूर्णांकk("%d ", cpu);
+		prपूर्णांकk("]\n");
+	पूर्ण
 
-	return numa_attach_mlgroup(md, grp, index);
-}
+	वापस numa_attach_mlgroup(md, grp, index);
+पूर्ण
 
-static int __init numa_parse_mdesc(void)
-{
-	struct mdesc_handle *md = mdesc_grab();
-	int i, j, err, count;
+अटल पूर्णांक __init numa_parse_mdesc(व्योम)
+अणु
+	काष्ठा mdesc_handle *md = mdesc_grab();
+	पूर्णांक i, j, err, count;
 	u64 node;
 
-	node = mdesc_node_by_name(md, MDESC_NODE_NULL, "latency-groups");
-	if (node == MDESC_NODE_NULL) {
+	node = mdesc_node_by_name(md, MDESC_NODE_शून्य, "latency-groups");
+	अगर (node == MDESC_NODE_शून्य) अणु
 		mdesc_release(md);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	err = grab_mblocks(md);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
 	err = grab_mlgroups(md);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
 	count = 0;
-	mdesc_for_each_node_by_name(md, node, "group") {
+	mdesc_क्रम_each_node_by_name(md, node, "group") अणु
 		err = numa_parse_mdesc_group(md, node, count);
-		if (err < 0)
-			break;
+		अगर (err < 0)
+			अवरोध;
 		count++;
-	}
+	पूर्ण
 
 	count = 0;
-	mdesc_for_each_node_by_name(md, node, "group") {
-		find_numa_latencies_for_group(md, node, count);
+	mdesc_क्रम_each_node_by_name(md, node, "group") अणु
+		find_numa_latencies_क्रम_group(md, node, count);
 		count++;
-	}
+	पूर्ण
 
 	/* Normalize numa latency matrix according to ACPI SLIT spec. */
-	for (i = 0; i < MAX_NUMNODES; i++) {
+	क्रम (i = 0; i < MAX_NUMNODES; i++) अणु
 		u64 self_latency = numa_latency[i][i];
 
-		for (j = 0; j < MAX_NUMNODES; j++) {
+		क्रम (j = 0; j < MAX_NUMNODES; j++) अणु
 			numa_latency[i][j] =
 				(numa_latency[i][j] * LOCAL_DISTANCE) /
 				self_latency;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	add_node_ranges();
 
-	for (i = 0; i < num_node_masks; i++) {
+	क्रम (i = 0; i < num_node_masks; i++) अणु
 		allocate_node_data(i);
 		node_set_online(i);
-	}
+	पूर्ण
 
 	err = 0;
 out:
 	mdesc_release(md);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __init numa_parse_jbus(void)
-{
-	unsigned long cpu, index;
+अटल पूर्णांक __init numa_parse_jbus(व्योम)
+अणु
+	अचिन्हित दीर्घ cpu, index;
 
 	/* NUMA node id is encoded in bits 36 and higher, and there is
 	 * a 1-to-1 mapping from CPU ID to NUMA node ID.
 	 */
 	index = 0;
-	for_each_present_cpu(cpu) {
+	क्रम_each_present_cpu(cpu) अणु
 		numa_cpu_lookup_table[cpu] = index;
 		cpumask_copy(&numa_cpumask_lookup_table[index], cpumask_of(cpu));
 		node_masks[index].mask = ~((1UL << 36UL) - 1UL);
 		node_masks[index].match = cpu << 36UL;
 
 		index++;
-	}
+	पूर्ण
 	num_node_masks = index;
 
 	add_node_ranges();
 
-	for (index = 0; index < num_node_masks; index++) {
+	क्रम (index = 0; index < num_node_masks; index++) अणु
 		allocate_node_data(index);
 		node_set_online(index);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init numa_parse_sun4u(void)
-{
-	if (tlb_type == cheetah || tlb_type == cheetah_plus) {
-		unsigned long ver;
+अटल पूर्णांक __init numa_parse_sun4u(व्योम)
+अणु
+	अगर (tlb_type == cheetah || tlb_type == cheetah_plus) अणु
+		अचिन्हित दीर्घ ver;
 
-		__asm__ ("rdpr %%ver, %0" : "=r" (ver));
-		if ((ver >> 32UL) == __JALAPENO_ID ||
+		__यंत्र__ ("rdpr %%ver, %0" : "=r" (ver));
+		अगर ((ver >> 32UL) == __JALAPENO_ID ||
 		    (ver >> 32UL) == __SERRANO_ID)
-			return numa_parse_jbus();
-	}
-	return -1;
-}
+			वापस numa_parse_jbus();
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int __init bootmem_init_numa(void)
-{
-	int i, j;
-	int err = -1;
+अटल पूर्णांक __init booपंचांगem_init_numa(व्योम)
+अणु
+	पूर्णांक i, j;
+	पूर्णांक err = -1;
 
 	numadbg("bootmem_init_numa()\n");
 
-	/* Some sane defaults for numa latency values */
-	for (i = 0; i < MAX_NUMNODES; i++) {
-		for (j = 0; j < MAX_NUMNODES; j++)
+	/* Some sane शेषs क्रम numa latency values */
+	क्रम (i = 0; i < MAX_NUMNODES; i++) अणु
+		क्रम (j = 0; j < MAX_NUMNODES; j++)
 			numa_latency[i][j] = (i == j) ?
 				LOCAL_DISTANCE : REMOTE_DISTANCE;
-	}
+	पूर्ण
 
-	if (numa_enabled) {
-		if (tlb_type == hypervisor)
+	अगर (numa_enabled) अणु
+		अगर (tlb_type == hypervisor)
 			err = numa_parse_mdesc();
-		else
+		अन्यथा
 			err = numa_parse_sun4u();
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-#else
+#अन्यथा
 
-static int bootmem_init_numa(void)
-{
-	return -1;
-}
+अटल पूर्णांक booपंचांगem_init_numa(व्योम)
+अणु
+	वापस -1;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static void __init bootmem_init_nonnuma(void)
-{
-	unsigned long top_of_ram = memblock_end_of_DRAM();
-	unsigned long total_ram = memblock_phys_mem_size();
+अटल व्योम __init booपंचांगem_init_nonnuma(व्योम)
+अणु
+	अचिन्हित दीर्घ top_of_ram = memblock_end_of_DRAM();
+	अचिन्हित दीर्घ total_ram = memblock_phys_mem_size();
 
 	numadbg("bootmem_init_nonnuma()\n");
 
-	printk(KERN_INFO "Top of RAM: 0x%lx, Total RAM: 0x%lx\n",
+	prपूर्णांकk(KERN_INFO "Top of RAM: 0x%lx, Total RAM: 0x%lx\n",
 	       top_of_ram, total_ram);
-	printk(KERN_INFO "Memory hole size: %ldMB\n",
+	prपूर्णांकk(KERN_INFO "Memory hole size: %ldMB\n",
 	       (top_of_ram - total_ram) >> 20);
 
 	init_node_masks_nonnuma();
 	memblock_set_node(0, PHYS_ADDR_MAX, &memblock.memory, 0);
 	allocate_node_data(0);
 	node_set_online(0);
-}
+पूर्ण
 
-static unsigned long __init bootmem_init(unsigned long phys_base)
-{
-	unsigned long end_pfn;
+अटल अचिन्हित दीर्घ __init booपंचांगem_init(अचिन्हित दीर्घ phys_base)
+अणु
+	अचिन्हित दीर्घ end_pfn;
 
 	end_pfn = memblock_end_of_DRAM() >> PAGE_SHIFT;
 	max_pfn = max_low_pfn = end_pfn;
 	min_low_pfn = (phys_base >> PAGE_SHIFT);
 
-	if (bootmem_init_numa() < 0)
-		bootmem_init_nonnuma();
+	अगर (booपंचांगem_init_numa() < 0)
+		booपंचांगem_init_nonnuma();
 
 	/* Dump memblock with node info. */
 	memblock_dump_all();
 
-	/* XXX cpu notifier XXX */
+	/* XXX cpu notअगरier XXX */
 
 	sparse_init();
 
-	return end_pfn;
-}
+	वापस end_pfn;
+पूर्ण
 
-static struct linux_prom64_registers pall[MAX_BANKS] __initdata;
-static int pall_ents __initdata;
+अटल काष्ठा linux_prom64_रेजिस्टरs pall[MAX_BANKS] __initdata;
+अटल पूर्णांक pall_ents __initdata;
 
-static unsigned long max_phys_bits = 40;
+अटल अचिन्हित दीर्घ max_phys_bits = 40;
 
-bool kern_addr_valid(unsigned long addr)
-{
+bool kern_addr_valid(अचिन्हित दीर्घ addr)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
 
-	if ((long)addr < 0L) {
-		unsigned long pa = __pa(addr);
+	अगर ((दीर्घ)addr < 0L) अणु
+		अचिन्हित दीर्घ pa = __pa(addr);
 
-		if ((pa >> max_phys_bits) != 0UL)
-			return false;
+		अगर ((pa >> max_phys_bits) != 0UL)
+			वापस false;
 
-		return pfn_valid(pa >> PAGE_SHIFT);
-	}
+		वापस pfn_valid(pa >> PAGE_SHIFT);
+	पूर्ण
 
-	if (addr >= (unsigned long) KERNBASE &&
-	    addr < (unsigned long)&_end)
-		return true;
+	अगर (addr >= (अचिन्हित दीर्घ) KERNBASE &&
+	    addr < (अचिन्हित दीर्घ)&_end)
+		वापस true;
 
 	pgd = pgd_offset_k(addr);
-	if (pgd_none(*pgd))
-		return false;
+	अगर (pgd_none(*pgd))
+		वापस false;
 
 	p4d = p4d_offset(pgd, addr);
-	if (p4d_none(*p4d))
-		return false;
+	अगर (p4d_none(*p4d))
+		वापस false;
 
 	pud = pud_offset(p4d, addr);
-	if (pud_none(*pud))
-		return false;
+	अगर (pud_none(*pud))
+		वापस false;
 
-	if (pud_large(*pud))
-		return pfn_valid(pud_pfn(*pud));
+	अगर (pud_large(*pud))
+		वापस pfn_valid(pud_pfn(*pud));
 
 	pmd = pmd_offset(pud, addr);
-	if (pmd_none(*pmd))
-		return false;
+	अगर (pmd_none(*pmd))
+		वापस false;
 
-	if (pmd_large(*pmd))
-		return pfn_valid(pmd_pfn(*pmd));
+	अगर (pmd_large(*pmd))
+		वापस pfn_valid(pmd_pfn(*pmd));
 
 	pte = pte_offset_kernel(pmd, addr);
-	if (pte_none(*pte))
-		return false;
+	अगर (pte_none(*pte))
+		वापस false;
 
-	return pfn_valid(pte_pfn(*pte));
-}
+	वापस pfn_valid(pte_pfn(*pte));
+पूर्ण
 EXPORT_SYMBOL(kern_addr_valid);
 
-static unsigned long __ref kernel_map_hugepud(unsigned long vstart,
-					      unsigned long vend,
+अटल अचिन्हित दीर्घ __ref kernel_map_hugepud(अचिन्हित दीर्घ vstart,
+					      अचिन्हित दीर्घ vend,
 					      pud_t *pud)
-{
-	const unsigned long mask16gb = (1UL << 34) - 1UL;
+अणु
+	स्थिर अचिन्हित दीर्घ mask16gb = (1UL << 34) - 1UL;
 	u64 pte_val = vstart;
 
 	/* Each PUD is 8GB */
-	if ((vstart & mask16gb) ||
-	    (vend - vstart <= mask16gb)) {
+	अगर ((vstart & mask16gb) ||
+	    (vend - vstart <= mask16gb)) अणु
 		pte_val ^= kern_linear_pte_xor[2];
 		pud_val(*pud) = pte_val | _PAGE_PUD_HUGE;
 
-		return vstart + PUD_SIZE;
-	}
+		वापस vstart + PUD_SIZE;
+	पूर्ण
 
 	pte_val ^= kern_linear_pte_xor[3];
 	pte_val |= _PAGE_PUD_HUGE;
 
 	vend = vstart + mask16gb + 1UL;
-	while (vstart < vend) {
+	जबतक (vstart < vend) अणु
 		pud_val(*pud) = pte_val;
 
 		pte_val += PUD_SIZE;
 		vstart += PUD_SIZE;
 		pud++;
-	}
-	return vstart;
-}
+	पूर्ण
+	वापस vstart;
+पूर्ण
 
-static bool kernel_can_map_hugepud(unsigned long vstart, unsigned long vend,
+अटल bool kernel_can_map_hugepud(अचिन्हित दीर्घ vstart, अचिन्हित दीर्घ vend,
 				   bool guard)
-{
-	if (guard && !(vstart & ~PUD_MASK) && (vend - vstart) >= PUD_SIZE)
-		return true;
+अणु
+	अगर (guard && !(vstart & ~PUD_MASK) && (vend - vstart) >= PUD_SIZE)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static unsigned long __ref kernel_map_hugepmd(unsigned long vstart,
-					      unsigned long vend,
+अटल अचिन्हित दीर्घ __ref kernel_map_hugepmd(अचिन्हित दीर्घ vstart,
+					      अचिन्हित दीर्घ vend,
 					      pmd_t *pmd)
-{
-	const unsigned long mask256mb = (1UL << 28) - 1UL;
-	const unsigned long mask2gb = (1UL << 31) - 1UL;
+अणु
+	स्थिर अचिन्हित दीर्घ mask256mb = (1UL << 28) - 1UL;
+	स्थिर अचिन्हित दीर्घ mask2gb = (1UL << 31) - 1UL;
 	u64 pte_val = vstart;
 
 	/* Each PMD is 8MB */
-	if ((vstart & mask256mb) ||
-	    (vend - vstart <= mask256mb)) {
+	अगर ((vstart & mask256mb) ||
+	    (vend - vstart <= mask256mb)) अणु
 		pte_val ^= kern_linear_pte_xor[0];
 		pmd_val(*pmd) = pte_val | _PAGE_PMD_HUGE;
 
-		return vstart + PMD_SIZE;
-	}
+		वापस vstart + PMD_SIZE;
+	पूर्ण
 
-	if ((vstart & mask2gb) ||
-	    (vend - vstart <= mask2gb)) {
+	अगर ((vstart & mask2gb) ||
+	    (vend - vstart <= mask2gb)) अणु
 		pte_val ^= kern_linear_pte_xor[1];
 		pte_val |= _PAGE_PMD_HUGE;
 		vend = vstart + mask256mb + 1UL;
-	} else {
+	पूर्ण अन्यथा अणु
 		pte_val ^= kern_linear_pte_xor[2];
 		pte_val |= _PAGE_PMD_HUGE;
 		vend = vstart + mask2gb + 1UL;
-	}
+	पूर्ण
 
-	while (vstart < vend) {
+	जबतक (vstart < vend) अणु
 		pmd_val(*pmd) = pte_val;
 
 		pte_val += PMD_SIZE;
 		vstart += PMD_SIZE;
 		pmd++;
-	}
+	पूर्ण
 
-	return vstart;
-}
+	वापस vstart;
+पूर्ण
 
-static bool kernel_can_map_hugepmd(unsigned long vstart, unsigned long vend,
+अटल bool kernel_can_map_hugepmd(अचिन्हित दीर्घ vstart, अचिन्हित दीर्घ vend,
 				   bool guard)
-{
-	if (guard && !(vstart & ~PMD_MASK) && (vend - vstart) >= PMD_SIZE)
-		return true;
+अणु
+	अगर (guard && !(vstart & ~PMD_MASK) && (vend - vstart) >= PMD_SIZE)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static unsigned long __ref kernel_map_range(unsigned long pstart,
-					    unsigned long pend, pgprot_t prot,
+अटल अचिन्हित दीर्घ __ref kernel_map_range(अचिन्हित दीर्घ pstart,
+					    अचिन्हित दीर्घ pend, pgprot_t prot,
 					    bool use_huge)
-{
-	unsigned long vstart = PAGE_OFFSET + pstart;
-	unsigned long vend = PAGE_OFFSET + pend;
-	unsigned long alloc_bytes = 0UL;
+अणु
+	अचिन्हित दीर्घ vstart = PAGE_OFFSET + pstart;
+	अचिन्हित दीर्घ vend = PAGE_OFFSET + pend;
+	अचिन्हित दीर्घ alloc_bytes = 0UL;
 
-	if ((vstart & ~PAGE_MASK) || (vend & ~PAGE_MASK)) {
-		prom_printf("kernel_map: Unaligned physmem[%lx:%lx]\n",
+	अगर ((vstart & ~PAGE_MASK) || (vend & ~PAGE_MASK)) अणु
+		prom_म_लिखो("kernel_map: Unaligned physmem[%lx:%lx]\n",
 			    vstart, vend);
 		prom_halt();
-	}
+	पूर्ण
 
-	while (vstart < vend) {
-		unsigned long this_end, paddr = __pa(vstart);
+	जबतक (vstart < vend) अणु
+		अचिन्हित दीर्घ this_end, paddr = __pa(vstart);
 		pgd_t *pgd = pgd_offset_k(vstart);
 		p4d_t *p4d;
 		pud_t *pud;
 		pmd_t *pmd;
 		pte_t *pte;
 
-		if (pgd_none(*pgd)) {
+		अगर (pgd_none(*pgd)) अणु
 			pud_t *new;
 
 			new = memblock_alloc_from(PAGE_SIZE, PAGE_SIZE,
 						  PAGE_SIZE);
-			if (!new)
-				goto err_alloc;
+			अगर (!new)
+				जाओ err_alloc;
 			alloc_bytes += PAGE_SIZE;
 			pgd_populate(&init_mm, pgd, new);
-		}
+		पूर्ण
 
 		p4d = p4d_offset(pgd, vstart);
-		if (p4d_none(*p4d)) {
+		अगर (p4d_none(*p4d)) अणु
 			pud_t *new;
 
 			new = memblock_alloc_from(PAGE_SIZE, PAGE_SIZE,
 						  PAGE_SIZE);
-			if (!new)
-				goto err_alloc;
+			अगर (!new)
+				जाओ err_alloc;
 			alloc_bytes += PAGE_SIZE;
 			p4d_populate(&init_mm, p4d, new);
-		}
+		पूर्ण
 
 		pud = pud_offset(p4d, vstart);
-		if (pud_none(*pud)) {
+		अगर (pud_none(*pud)) अणु
 			pmd_t *new;
 
-			if (kernel_can_map_hugepud(vstart, vend, use_huge)) {
+			अगर (kernel_can_map_hugepud(vstart, vend, use_huge)) अणु
 				vstart = kernel_map_hugepud(vstart, vend, pud);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			new = memblock_alloc_from(PAGE_SIZE, PAGE_SIZE,
 						  PAGE_SIZE);
-			if (!new)
-				goto err_alloc;
+			अगर (!new)
+				जाओ err_alloc;
 			alloc_bytes += PAGE_SIZE;
 			pud_populate(&init_mm, pud, new);
-		}
+		पूर्ण
 
 		pmd = pmd_offset(pud, vstart);
-		if (pmd_none(*pmd)) {
+		अगर (pmd_none(*pmd)) अणु
 			pte_t *new;
 
-			if (kernel_can_map_hugepmd(vstart, vend, use_huge)) {
+			अगर (kernel_can_map_hugepmd(vstart, vend, use_huge)) अणु
 				vstart = kernel_map_hugepmd(vstart, vend, pmd);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			new = memblock_alloc_from(PAGE_SIZE, PAGE_SIZE,
 						  PAGE_SIZE);
-			if (!new)
-				goto err_alloc;
+			अगर (!new)
+				जाओ err_alloc;
 			alloc_bytes += PAGE_SIZE;
 			pmd_populate_kernel(&init_mm, pmd, new);
-		}
+		पूर्ण
 
 		pte = pte_offset_kernel(pmd, vstart);
 		this_end = (vstart + PMD_SIZE) & PMD_MASK;
-		if (this_end > vend)
+		अगर (this_end > vend)
 			this_end = vend;
 
-		while (vstart < this_end) {
+		जबतक (vstart < this_end) अणु
 			pte_val(*pte) = (paddr | pgprot_val(prot));
 
 			vstart += PAGE_SIZE;
 			paddr += PAGE_SIZE;
 			pte++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return alloc_bytes;
+	वापस alloc_bytes;
 
 err_alloc:
 	panic("%s: Failed to allocate %lu bytes align=%lx from=%lx\n",
 	      __func__, PAGE_SIZE, PAGE_SIZE, PAGE_SIZE);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void __init flush_all_kernel_tsbs(void)
-{
-	int i;
+अटल व्योम __init flush_all_kernel_tsbs(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < KERNEL_TSB_NENTRIES; i++) {
-		struct tsb *ent = &swapper_tsb[i];
-
-		ent->tag = (1UL << TSB_TAG_INVALID_BIT);
-	}
-#ifndef CONFIG_DEBUG_PAGEALLOC
-	for (i = 0; i < KERNEL_TSB4M_NENTRIES; i++) {
-		struct tsb *ent = &swapper_4m_tsb[i];
+	क्रम (i = 0; i < KERNEL_TSB_NENTRIES; i++) अणु
+		काष्ठा tsb *ent = &swapper_tsb[i];
 
 		ent->tag = (1UL << TSB_TAG_INVALID_BIT);
-	}
-#endif
-}
+	पूर्ण
+#अगर_अघोषित CONFIG_DEBUG_PAGEALLOC
+	क्रम (i = 0; i < KERNEL_TSB4M_NENTRIES; i++) अणु
+		काष्ठा tsb *ent = &swapper_4m_tsb[i];
 
-extern unsigned int kvmap_linear_patch[1];
+		ent->tag = (1UL << TSB_TAG_INVALID_BIT);
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static void __init kernel_physical_mapping_init(void)
-{
-	unsigned long i, mem_alloced = 0UL;
+बाह्य अचिन्हित पूर्णांक kvmap_linear_patch[1];
+
+अटल व्योम __init kernel_physical_mapping_init(व्योम)
+अणु
+	अचिन्हित दीर्घ i, mem_alloced = 0UL;
 	bool use_huge = true;
 
-#ifdef CONFIG_DEBUG_PAGEALLOC
+#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
 	use_huge = false;
-#endif
-	for (i = 0; i < pall_ents; i++) {
-		unsigned long phys_start, phys_end;
+#पूर्ण_अगर
+	क्रम (i = 0; i < pall_ents; i++) अणु
+		अचिन्हित दीर्घ phys_start, phys_end;
 
 		phys_start = pall[i].phys_addr;
 		phys_end = phys_start + pall[i].reg_size;
 
 		mem_alloced += kernel_map_range(phys_start, phys_end,
 						PAGE_KERNEL, use_huge);
-	}
+	पूर्ण
 
-	printk("Allocated %ld bytes for kernel page tables.\n",
+	prपूर्णांकk("Allocated %ld bytes for kernel page tables.\n",
 	       mem_alloced);
 
 	kvmap_linear_patch[0] = 0x01000000; /* nop */
@@ -1900,13 +1901,13 @@ static void __init kernel_physical_mapping_init(void)
 	flush_all_kernel_tsbs();
 
 	__flush_tlb_all();
-}
+पूर्ण
 
-#ifdef CONFIG_DEBUG_PAGEALLOC
-void __kernel_map_pages(struct page *page, int numpages, int enable)
-{
-	unsigned long phys_start = page_to_pfn(page) << PAGE_SHIFT;
-	unsigned long phys_end = phys_start + (numpages * PAGE_SIZE);
+#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
+व्योम __kernel_map_pages(काष्ठा page *page, पूर्णांक numpages, पूर्णांक enable)
+अणु
+	अचिन्हित दीर्घ phys_start = page_to_pfn(page) << PAGE_SHIFT;
+	अचिन्हित दीर्घ phys_end = phys_start + (numpages * PAGE_SIZE);
 
 	kernel_map_range(phys_start, phys_end,
 			 (enable ? PAGE_KERNEL : __pgprot(0)), false);
@@ -1914,39 +1915,39 @@ void __kernel_map_pages(struct page *page, int numpages, int enable)
 	flush_tsb_kernel_range(PAGE_OFFSET + phys_start,
 			       PAGE_OFFSET + phys_end);
 
-	/* we should perform an IPI and flush all tlbs,
+	/* we should perक्रमm an IPI and flush all tlbs,
 	 * but that can deadlock->flush only current cpu.
 	 */
 	__flush_tlb_kernel_range(PAGE_OFFSET + phys_start,
 				 PAGE_OFFSET + phys_end);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-unsigned long __init find_ecache_flush_span(unsigned long size)
-{
-	int i;
+अचिन्हित दीर्घ __init find_ecache_flush_span(अचिन्हित दीर्घ size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pavail_ents; i++) {
-		if (pavail[i].reg_size >= size)
-			return pavail[i].phys_addr;
-	}
+	क्रम (i = 0; i < pavail_ents; i++) अणु
+		अगर (pavail[i].reg_size >= size)
+			वापस pavail[i].phys_addr;
+	पूर्ण
 
-	return ~0UL;
-}
+	वापस ~0UL;
+पूर्ण
 
-unsigned long PAGE_OFFSET;
+अचिन्हित दीर्घ PAGE_OFFSET;
 EXPORT_SYMBOL(PAGE_OFFSET);
 
-unsigned long VMALLOC_END   = 0x0000010000000000UL;
+अचिन्हित दीर्घ VMALLOC_END   = 0x0000010000000000UL;
 EXPORT_SYMBOL(VMALLOC_END);
 
-unsigned long sparc64_va_hole_top =    0xfffff80000000000UL;
-unsigned long sparc64_va_hole_bottom = 0x0000080000000000UL;
+अचिन्हित दीर्घ sparc64_va_hole_top =    0xfffff80000000000UL;
+अचिन्हित दीर्घ sparc64_va_hole_bottom = 0x0000080000000000UL;
 
-static void __init setup_page_offset(void)
-{
-	if (tlb_type == cheetah || tlb_type == cheetah_plus) {
-		/* Cheetah/Panther support a full 64-bit virtual
+अटल व्योम __init setup_page_offset(व्योम)
+अणु
+	अगर (tlb_type == cheetah || tlb_type == cheetah_plus) अणु
+		/* Cheetah/Panther support a full 64-bit भव
 		 * address, so we can use all that our page tables
 		 * support.
 		 */
@@ -1954,42 +1955,42 @@ static void __init setup_page_offset(void)
 		sparc64_va_hole_bottom = 0x0010000000000000UL;
 
 		max_phys_bits = 42;
-	} else if (tlb_type == hypervisor) {
-		switch (sun4v_chip_type) {
-		case SUN4V_CHIP_NIAGARA1:
-		case SUN4V_CHIP_NIAGARA2:
-			/* T1 and T2 support 48-bit virtual addresses.  */
+	पूर्ण अन्यथा अगर (tlb_type == hypervisor) अणु
+		चयन (sun4v_chip_type) अणु
+		हाल SUN4V_CHIP_NIAGARA1:
+		हाल SUN4V_CHIP_NIAGARA2:
+			/* T1 and T2 support 48-bit भव addresses.  */
 			sparc64_va_hole_top =    0xffff800000000000UL;
 			sparc64_va_hole_bottom = 0x0000800000000000UL;
 
 			max_phys_bits = 39;
-			break;
-		case SUN4V_CHIP_NIAGARA3:
-			/* T3 supports 48-bit virtual addresses.  */
+			अवरोध;
+		हाल SUN4V_CHIP_NIAGARA3:
+			/* T3 supports 48-bit भव addresses.  */
 			sparc64_va_hole_top =    0xffff800000000000UL;
 			sparc64_va_hole_bottom = 0x0000800000000000UL;
 
 			max_phys_bits = 43;
-			break;
-		case SUN4V_CHIP_NIAGARA4:
-		case SUN4V_CHIP_NIAGARA5:
-		case SUN4V_CHIP_SPARC64X:
-		case SUN4V_CHIP_SPARC_M6:
-			/* T4 and later support 52-bit virtual addresses.  */
+			अवरोध;
+		हाल SUN4V_CHIP_NIAGARA4:
+		हाल SUN4V_CHIP_NIAGARA5:
+		हाल SUN4V_CHIP_SPARC64X:
+		हाल SUN4V_CHIP_SPARC_M6:
+			/* T4 and later support 52-bit भव addresses.  */
 			sparc64_va_hole_top =    0xfff8000000000000UL;
 			sparc64_va_hole_bottom = 0x0008000000000000UL;
 			max_phys_bits = 47;
-			break;
-		case SUN4V_CHIP_SPARC_M7:
-		case SUN4V_CHIP_SPARC_SN:
-			/* M7 and later support 52-bit virtual addresses.  */
+			अवरोध;
+		हाल SUN4V_CHIP_SPARC_M7:
+		हाल SUN4V_CHIP_SPARC_SN:
+			/* M7 and later support 52-bit भव addresses.  */
 			sparc64_va_hole_top =    0xfff8000000000000UL;
 			sparc64_va_hole_bottom = 0x0008000000000000UL;
 			max_phys_bits = 49;
-			break;
-		case SUN4V_CHIP_SPARC_M8:
-		default:
-			/* M8 and later support 54-bit virtual addresses.
+			अवरोध;
+		हाल SUN4V_CHIP_SPARC_M8:
+		शेष:
+			/* M8 and later support 54-bit भव addresses.
 			 * However, restricting M8 and above VA bits to 53
 			 * as 4-level page table cannot support more than
 			 * 53 VA bits.
@@ -1997,15 +1998,15 @@ static void __init setup_page_offset(void)
 			sparc64_va_hole_top =    0xfff0000000000000UL;
 			sparc64_va_hole_bottom = 0x0010000000000000UL;
 			max_phys_bits = 51;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (max_phys_bits > MAX_PHYS_ADDRESS_BITS) {
-		prom_printf("MAX_PHYS_ADDRESS_BITS is too small, need %lu\n",
+	अगर (max_phys_bits > MAX_PHYS_ADDRESS_BITS) अणु
+		prom_म_लिखो("MAX_PHYS_ADDRESS_BITS is too small, need %lu\n",
 			    max_phys_bits);
 		prom_halt();
-	}
+	पूर्ण
 
 	PAGE_OFFSET = sparc64_va_hole_top;
 	VMALLOC_END = ((sparc64_va_hole_bottom >> 1) +
@@ -2017,50 +2018,50 @@ static void __init setup_page_offset(void)
 		VMALLOC_START, VMALLOC_END);
 	pr_info("MM: VMEMMAP [0x%016lx --> 0x%016lx]\n",
 		VMEMMAP_BASE, VMEMMAP_BASE << 1);
-}
+पूर्ण
 
-static void __init tsb_phys_patch(void)
-{
-	struct tsb_ldquad_phys_patch_entry *pquad;
-	struct tsb_phys_patch_entry *p;
+अटल व्योम __init tsb_phys_patch(व्योम)
+अणु
+	काष्ठा tsb_ldquad_phys_patch_entry *pquad;
+	काष्ठा tsb_phys_patch_entry *p;
 
 	pquad = &__tsb_ldquad_phys_patch;
-	while (pquad < &__tsb_ldquad_phys_patch_end) {
-		unsigned long addr = pquad->addr;
+	जबतक (pquad < &__tsb_ldquad_phys_patch_end) अणु
+		अचिन्हित दीर्घ addr = pquad->addr;
 
-		if (tlb_type == hypervisor)
-			*(unsigned int *) addr = pquad->sun4v_insn;
-		else
-			*(unsigned int *) addr = pquad->sun4u_insn;
+		अगर (tlb_type == hypervisor)
+			*(अचिन्हित पूर्णांक *) addr = pquad->sun4v_insn;
+		अन्यथा
+			*(अचिन्हित पूर्णांक *) addr = pquad->sun4u_insn;
 		wmb();
-		__asm__ __volatile__("flush	%0"
-				     : /* no outputs */
+		__यंत्र__ __अस्थिर__("flush	%0"
+				     : /* no outमाला_दो */
 				     : "r" (addr));
 
 		pquad++;
-	}
+	पूर्ण
 
 	p = &__tsb_phys_patch;
-	while (p < &__tsb_phys_patch_end) {
-		unsigned long addr = p->addr;
+	जबतक (p < &__tsb_phys_patch_end) अणु
+		अचिन्हित दीर्घ addr = p->addr;
 
-		*(unsigned int *) addr = p->insn;
+		*(अचिन्हित पूर्णांक *) addr = p->insn;
 		wmb();
-		__asm__ __volatile__("flush	%0"
-				     : /* no outputs */
+		__यंत्र__ __अस्थिर__("flush	%0"
+				     : /* no outमाला_दो */
 				     : "r" (addr));
 
 		p++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Don't mark as init, we give this to the Hypervisor.  */
-#ifndef CONFIG_DEBUG_PAGEALLOC
-#define NUM_KTSB_DESCR	2
-#else
-#define NUM_KTSB_DESCR	1
-#endif
-static struct hv_tsb_descr ktsb_descr[NUM_KTSB_DESCR];
+#अगर_अघोषित CONFIG_DEBUG_PAGEALLOC
+#घोषणा NUM_KTSB_DESCR	2
+#अन्यथा
+#घोषणा NUM_KTSB_DESCR	1
+#पूर्ण_अगर
+अटल काष्ठा hv_tsb_descr ktsb_descr[NUM_KTSB_DESCR];
 
 /* The swapper TSBs are loaded with a base sequence of:
  *
@@ -2071,86 +2072,86 @@ static struct hv_tsb_descr ktsb_descr[NUM_KTSB_DESCR];
  *	sllx	REG1, 32, REG1
  *	or	REG1, REG2, REG1
  *
- * When we use physical addressing for the TSB accesses, we patch the
- * first four instructions in the above sequence.
+ * When we use physical addressing क्रम the TSB accesses, we patch the
+ * first four inकाष्ठाions in the above sequence.
  */
 
-static void patch_one_ktsb_phys(unsigned int *start, unsigned int *end, unsigned long pa)
-{
-	unsigned long high_bits, low_bits;
+अटल व्योम patch_one_ktsb_phys(अचिन्हित पूर्णांक *start, अचिन्हित पूर्णांक *end, अचिन्हित दीर्घ pa)
+अणु
+	अचिन्हित दीर्घ high_bits, low_bits;
 
 	high_bits = (pa >> 32) & 0xffffffff;
 	low_bits = (pa >> 0) & 0xffffffff;
 
-	while (start < end) {
-		unsigned int *ia = (unsigned int *)(unsigned long)*start;
+	जबतक (start < end) अणु
+		अचिन्हित पूर्णांक *ia = (अचिन्हित पूर्णांक *)(अचिन्हित दीर्घ)*start;
 
 		ia[0] = (ia[0] & ~0x3fffff) | (high_bits >> 10);
-		__asm__ __volatile__("flush	%0" : : "r" (ia));
+		__यंत्र__ __अस्थिर__("flush	%0" : : "r" (ia));
 
 		ia[1] = (ia[1] & ~0x3fffff) | (low_bits >> 10);
-		__asm__ __volatile__("flush	%0" : : "r" (ia + 1));
+		__यंत्र__ __अस्थिर__("flush	%0" : : "r" (ia + 1));
 
 		ia[2] = (ia[2] & ~0x1fff) | (high_bits & 0x3ff);
-		__asm__ __volatile__("flush	%0" : : "r" (ia + 2));
+		__यंत्र__ __अस्थिर__("flush	%0" : : "r" (ia + 2));
 
 		ia[3] = (ia[3] & ~0x1fff) | (low_bits & 0x3ff);
-		__asm__ __volatile__("flush	%0" : : "r" (ia + 3));
+		__यंत्र__ __अस्थिर__("flush	%0" : : "r" (ia + 3));
 
 		start++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ktsb_phys_patch(void)
-{
-	extern unsigned int __swapper_tsb_phys_patch;
-	extern unsigned int __swapper_tsb_phys_patch_end;
-	unsigned long ktsb_pa;
+अटल व्योम ktsb_phys_patch(व्योम)
+अणु
+	बाह्य अचिन्हित पूर्णांक __swapper_tsb_phys_patch;
+	बाह्य अचिन्हित पूर्णांक __swapper_tsb_phys_patch_end;
+	अचिन्हित दीर्घ ktsb_pa;
 
-	ktsb_pa = kern_base + ((unsigned long)&swapper_tsb[0] - KERNBASE);
+	ktsb_pa = kern_base + ((अचिन्हित दीर्घ)&swapper_tsb[0] - KERNBASE);
 	patch_one_ktsb_phys(&__swapper_tsb_phys_patch,
 			    &__swapper_tsb_phys_patch_end, ktsb_pa);
-#ifndef CONFIG_DEBUG_PAGEALLOC
-	{
-	extern unsigned int __swapper_4m_tsb_phys_patch;
-	extern unsigned int __swapper_4m_tsb_phys_patch_end;
+#अगर_अघोषित CONFIG_DEBUG_PAGEALLOC
+	अणु
+	बाह्य अचिन्हित पूर्णांक __swapper_4m_tsb_phys_patch;
+	बाह्य अचिन्हित पूर्णांक __swapper_4m_tsb_phys_patch_end;
 	ktsb_pa = (kern_base +
-		   ((unsigned long)&swapper_4m_tsb[0] - KERNBASE));
+		   ((अचिन्हित दीर्घ)&swapper_4m_tsb[0] - KERNBASE));
 	patch_one_ktsb_phys(&__swapper_4m_tsb_phys_patch,
 			    &__swapper_4m_tsb_phys_patch_end, ktsb_pa);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static void __init sun4v_ktsb_init(void)
-{
-	unsigned long ktsb_pa;
+अटल व्योम __init sun4v_ktsb_init(व्योम)
+अणु
+	अचिन्हित दीर्घ ktsb_pa;
 
-	/* First KTSB for PAGE_SIZE mappings.  */
-	ktsb_pa = kern_base + ((unsigned long)&swapper_tsb[0] - KERNBASE);
+	/* First KTSB क्रम PAGE_SIZE mappings.  */
+	ktsb_pa = kern_base + ((अचिन्हित दीर्घ)&swapper_tsb[0] - KERNBASE);
 
-	switch (PAGE_SIZE) {
-	case 8 * 1024:
-	default:
+	चयन (PAGE_SIZE) अणु
+	हाल 8 * 1024:
+	शेष:
 		ktsb_descr[0].pgsz_idx = HV_PGSZ_IDX_8K;
 		ktsb_descr[0].pgsz_mask = HV_PGSZ_MASK_8K;
-		break;
+		अवरोध;
 
-	case 64 * 1024:
+	हाल 64 * 1024:
 		ktsb_descr[0].pgsz_idx = HV_PGSZ_IDX_64K;
 		ktsb_descr[0].pgsz_mask = HV_PGSZ_MASK_64K;
-		break;
+		अवरोध;
 
-	case 512 * 1024:
+	हाल 512 * 1024:
 		ktsb_descr[0].pgsz_idx = HV_PGSZ_IDX_512K;
 		ktsb_descr[0].pgsz_mask = HV_PGSZ_MASK_512K;
-		break;
+		अवरोध;
 
-	case 4 * 1024 * 1024:
+	हाल 4 * 1024 * 1024:
 		ktsb_descr[0].pgsz_idx = HV_PGSZ_IDX_4MB;
 		ktsb_descr[0].pgsz_mask = HV_PGSZ_MASK_4MB;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ktsb_descr[0].assoc = 1;
 	ktsb_descr[0].num_ttes = KERNEL_TSB_NENTRIES;
@@ -2158,10 +2159,10 @@ static void __init sun4v_ktsb_init(void)
 	ktsb_descr[0].tsb_base = ktsb_pa;
 	ktsb_descr[0].resv = 0;
 
-#ifndef CONFIG_DEBUG_PAGEALLOC
-	/* Second KTSB for 4MB/256MB/2GB/16GB mappings.  */
+#अगर_अघोषित CONFIG_DEBUG_PAGEALLOC
+	/* Second KTSB क्रम 4MB/256MB/2GB/16GB mappings.  */
 	ktsb_pa = (kern_base +
-		   ((unsigned long)&swapper_4m_tsb[0] - KERNBASE));
+		   ((अचिन्हित दीर्घ)&swapper_4m_tsb[0] - KERNBASE));
 
 	ktsb_descr[1].pgsz_idx = HV_PGSZ_IDX_4MB;
 	ktsb_descr[1].pgsz_mask = ((HV_PGSZ_MASK_4MB |
@@ -2174,122 +2175,122 @@ static void __init sun4v_ktsb_init(void)
 	ktsb_descr[1].ctx_idx = 0;
 	ktsb_descr[1].tsb_base = ktsb_pa;
 	ktsb_descr[1].resv = 0;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void sun4v_ktsb_register(void)
-{
-	unsigned long pa, ret;
+व्योम sun4v_ktsb_रेजिस्टर(व्योम)
+अणु
+	अचिन्हित दीर्घ pa, ret;
 
-	pa = kern_base + ((unsigned long)&ktsb_descr[0] - KERNBASE);
+	pa = kern_base + ((अचिन्हित दीर्घ)&ktsb_descr[0] - KERNBASE);
 
 	ret = sun4v_mmu_tsb_ctx0(NUM_KTSB_DESCR, pa);
-	if (ret != 0) {
-		prom_printf("hypervisor_mmu_tsb_ctx0[%lx]: "
+	अगर (ret != 0) अणु
+		prom_म_लिखो("hypervisor_mmu_tsb_ctx0[%lx]: "
 			    "errors with %lx\n", pa, ret);
 		prom_halt();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init sun4u_linear_pte_xor_finalize(void)
-{
-#ifndef CONFIG_DEBUG_PAGEALLOC
-	/* This is where we would add Panther support for
+अटल व्योम __init sun4u_linear_pte_xor_finalize(व्योम)
+अणु
+#अगर_अघोषित CONFIG_DEBUG_PAGEALLOC
+	/* This is where we would add Panther support क्रम
 	 * 32MB and 256MB pages.
 	 */
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void __init sun4v_linear_pte_xor_finalize(void)
-{
-	unsigned long pagecv_flag;
+अटल व्योम __init sun4v_linear_pte_xor_finalize(व्योम)
+अणु
+	अचिन्हित दीर्घ pagecv_flag;
 
-	/* Bit 9 of TTE is no longer CV bit on M7 processor and it instead
+	/* Bit 9 of TTE is no दीर्घer CV bit on M7 processor and it instead
 	 * enables MCD error. Do not set bit 9 on M7 processor.
 	 */
-	switch (sun4v_chip_type) {
-	case SUN4V_CHIP_SPARC_M7:
-	case SUN4V_CHIP_SPARC_M8:
-	case SUN4V_CHIP_SPARC_SN:
+	चयन (sun4v_chip_type) अणु
+	हाल SUN4V_CHIP_SPARC_M7:
+	हाल SUN4V_CHIP_SPARC_M8:
+	हाल SUN4V_CHIP_SPARC_SN:
 		pagecv_flag = 0x00;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pagecv_flag = _PAGE_CV_4V;
-		break;
-	}
-#ifndef CONFIG_DEBUG_PAGEALLOC
-	if (cpu_pgsz_mask & HV_PGSZ_MASK_256MB) {
+		अवरोध;
+	पूर्ण
+#अगर_अघोषित CONFIG_DEBUG_PAGEALLOC
+	अगर (cpu_pgsz_mask & HV_PGSZ_MASK_256MB) अणु
 		kern_linear_pte_xor[1] = (_PAGE_VALID | _PAGE_SZ256MB_4V) ^
 			PAGE_OFFSET;
 		kern_linear_pte_xor[1] |= (_PAGE_CP_4V | pagecv_flag |
 					   _PAGE_P_4V | _PAGE_W_4V);
-	} else {
+	पूर्ण अन्यथा अणु
 		kern_linear_pte_xor[1] = kern_linear_pte_xor[0];
-	}
+	पूर्ण
 
-	if (cpu_pgsz_mask & HV_PGSZ_MASK_2GB) {
+	अगर (cpu_pgsz_mask & HV_PGSZ_MASK_2GB) अणु
 		kern_linear_pte_xor[2] = (_PAGE_VALID | _PAGE_SZ2GB_4V) ^
 			PAGE_OFFSET;
 		kern_linear_pte_xor[2] |= (_PAGE_CP_4V | pagecv_flag |
 					   _PAGE_P_4V | _PAGE_W_4V);
-	} else {
+	पूर्ण अन्यथा अणु
 		kern_linear_pte_xor[2] = kern_linear_pte_xor[1];
-	}
+	पूर्ण
 
-	if (cpu_pgsz_mask & HV_PGSZ_MASK_16GB) {
+	अगर (cpu_pgsz_mask & HV_PGSZ_MASK_16GB) अणु
 		kern_linear_pte_xor[3] = (_PAGE_VALID | _PAGE_SZ16GB_4V) ^
 			PAGE_OFFSET;
 		kern_linear_pte_xor[3] |= (_PAGE_CP_4V | pagecv_flag |
 					   _PAGE_P_4V | _PAGE_W_4V);
-	} else {
+	पूर्ण अन्यथा अणु
 		kern_linear_pte_xor[3] = kern_linear_pte_xor[2];
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /* paging_init() sets up the page tables */
 
-static unsigned long last_valid_pfn;
+अटल अचिन्हित दीर्घ last_valid_pfn;
 
-static void sun4u_pgprot_init(void);
-static void sun4v_pgprot_init(void);
+अटल व्योम sun4u_pgprot_init(व्योम);
+अटल व्योम sun4v_pgprot_init(व्योम);
 
-#define _PAGE_CACHE_4U	(_PAGE_CP_4U | _PAGE_CV_4U)
-#define _PAGE_CACHE_4V	(_PAGE_CP_4V | _PAGE_CV_4V)
-#define __DIRTY_BITS_4U	 (_PAGE_MODIFIED_4U | _PAGE_WRITE_4U | _PAGE_W_4U)
-#define __DIRTY_BITS_4V	 (_PAGE_MODIFIED_4V | _PAGE_WRITE_4V | _PAGE_W_4V)
-#define __ACCESS_BITS_4U (_PAGE_ACCESSED_4U | _PAGE_READ_4U | _PAGE_R)
-#define __ACCESS_BITS_4V (_PAGE_ACCESSED_4V | _PAGE_READ_4V | _PAGE_R)
+#घोषणा _PAGE_CACHE_4U	(_PAGE_CP_4U | _PAGE_CV_4U)
+#घोषणा _PAGE_CACHE_4V	(_PAGE_CP_4V | _PAGE_CV_4V)
+#घोषणा __सूचीTY_BITS_4U	 (_PAGE_MODIFIED_4U | _PAGE_WRITE_4U | _PAGE_W_4U)
+#घोषणा __सूचीTY_BITS_4V	 (_PAGE_MODIFIED_4V | _PAGE_WRITE_4V | _PAGE_W_4V)
+#घोषणा __ACCESS_BITS_4U (_PAGE_ACCESSED_4U | _PAGE_READ_4U | _PAGE_R)
+#घोषणा __ACCESS_BITS_4V (_PAGE_ACCESSED_4V | _PAGE_READ_4V | _PAGE_R)
 
 /* We need to exclude reserved regions. This exclusion will include
  * vmlinux and initrd. To be more precise the initrd size could be used to
- * compute a new lower limit because it is freed later during initialization.
+ * compute a new lower limit because it is मुक्तd later during initialization.
  */
-static void __init reduce_memory(phys_addr_t limit_ram)
-{
+अटल व्योम __init reduce_memory(phys_addr_t limit_ram)
+अणु
 	limit_ram += memblock_reserved_size();
-	memblock_enforce_memory_limit(limit_ram);
-}
+	memblock_enक्रमce_memory_limit(limit_ram);
+पूर्ण
 
-void __init paging_init(void)
-{
-	unsigned long end_pfn, shift, phys_base;
-	unsigned long real_end, i;
+व्योम __init paging_init(व्योम)
+अणु
+	अचिन्हित दीर्घ end_pfn, shअगरt, phys_base;
+	अचिन्हित दीर्घ real_end, i;
 
 	setup_page_offset();
 
-	/* These build time checkes make sure that the dcache_dirty_cpu()
+	/* These build समय checkes make sure that the dcache_dirty_cpu()
 	 * page->flags usage will work.
 	 *
-	 * When a page gets marked as dcache-dirty, we store the
+	 * When a page माला_लो marked as dcache-dirty, we store the
 	 * cpu number starting at bit 32 in the page->flags.  Also,
 	 * functions like clear_dcache_dirty_cpu use the cpu mask
-	 * in 13-bit signed-immediate instruction fields.
+	 * in 13-bit चिन्हित-immediate inकाष्ठाion fields.
 	 */
 
 	/*
-	 * Page flags must not reach into upper 32 bits that are used
-	 * for the cpu number
+	 * Page flags must not reach पूर्णांकo upper 32 bits that are used
+	 * क्रम the cpu number
 	 */
 	BUILD_BUG_ON(NR_PAGEFLAGS > 32);
 
@@ -2299,78 +2300,78 @@ void __init paging_init(void)
 	 * at the 32 bit boundary.
 	 */
 	BUILD_BUG_ON(SECTIONS_WIDTH + NODES_WIDTH + ZONES_WIDTH +
-		ilog2(roundup_pow_of_two(NR_CPUS)) > 32);
+		ilog2(roundup_घात_of_two(NR_CPUS)) > 32);
 
 	BUILD_BUG_ON(NR_CPUS > 4096);
 
 	kern_base = (prom_boot_mapping_phys_low >> ILOG2_4MB) << ILOG2_4MB;
-	kern_size = (unsigned long)&_end - (unsigned long)KERNBASE;
+	kern_size = (अचिन्हित दीर्घ)&_end - (अचिन्हित दीर्घ)KERNBASE;
 
 	/* Invalidate both kernel TSBs.  */
-	memset(swapper_tsb, 0x40, sizeof(swapper_tsb));
-#ifndef CONFIG_DEBUG_PAGEALLOC
-	memset(swapper_4m_tsb, 0x40, sizeof(swapper_4m_tsb));
-#endif
+	स_रखो(swapper_tsb, 0x40, माप(swapper_tsb));
+#अगर_अघोषित CONFIG_DEBUG_PAGEALLOC
+	स_रखो(swapper_4m_tsb, 0x40, माप(swapper_4m_tsb));
+#पूर्ण_अगर
 
 	/* TTE.cv bit on sparc v9 occupies the same position as TTE.mcde
 	 * bit on M7 processor. This is a conflicting usage of the same
 	 * bit. Enabling TTE.cv on M7 would turn on Memory Corruption
 	 * Detection error on all pages and this will lead to problems
-	 * later. Kernel does not run with MCD enabled and hence rest
+	 * later. Kernel करोes not run with MCD enabled and hence rest
 	 * of the required steps to fully configure memory corruption
 	 * detection are not taken. We need to ensure TTE.mcde is not
 	 * set on M7 processor. Compute the value of cacheability
-	 * flag for use later taking this into consideration.
+	 * flag क्रम use later taking this पूर्णांकo consideration.
 	 */
-	switch (sun4v_chip_type) {
-	case SUN4V_CHIP_SPARC_M7:
-	case SUN4V_CHIP_SPARC_M8:
-	case SUN4V_CHIP_SPARC_SN:
+	चयन (sun4v_chip_type) अणु
+	हाल SUN4V_CHIP_SPARC_M7:
+	हाल SUN4V_CHIP_SPARC_M8:
+	हाल SUN4V_CHIP_SPARC_SN:
 		page_cache4v_flag = _PAGE_CP_4V;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		page_cache4v_flag = _PAGE_CACHE_4V;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (tlb_type == hypervisor)
+	अगर (tlb_type == hypervisor)
 		sun4v_pgprot_init();
-	else
+	अन्यथा
 		sun4u_pgprot_init();
 
-	if (tlb_type == cheetah_plus ||
-	    tlb_type == hypervisor) {
+	अगर (tlb_type == cheetah_plus ||
+	    tlb_type == hypervisor) अणु
 		tsb_phys_patch();
 		ktsb_phys_patch();
-	}
+	पूर्ण
 
-	if (tlb_type == hypervisor)
+	अगर (tlb_type == hypervisor)
 		sun4v_patch_tlb_handlers();
 
 	/* Find available physical memory...
 	 *
-	 * Read it twice in order to work around a bug in openfirmware.
-	 * The call to grab this table itself can cause openfirmware to
+	 * Read it twice in order to work around a bug in खोलोfirmware.
+	 * The call to grab this table itself can cause खोलोfirmware to
 	 * allocate memory, which in turn can take away some space from
 	 * the list of available memory.  Reading it twice makes sure
-	 * we really do get the final value.
+	 * we really करो get the final value.
 	 */
-	read_obp_translations();
-	read_obp_memory("reg", &pall[0], &pall_ents);
-	read_obp_memory("available", &pavail[0], &pavail_ents);
-	read_obp_memory("available", &pavail[0], &pavail_ents);
+	पढ़ो_obp_translations();
+	पढ़ो_obp_memory("reg", &pall[0], &pall_ents);
+	पढ़ो_obp_memory("available", &pavail[0], &pavail_ents);
+	पढ़ो_obp_memory("available", &pavail[0], &pavail_ents);
 
 	phys_base = 0xffffffffffffffffUL;
-	for (i = 0; i < pavail_ents; i++) {
+	क्रम (i = 0; i < pavail_ents; i++) अणु
 		phys_base = min(phys_base, pavail[i].phys_addr);
 		memblock_add(pavail[i].phys_addr, pavail[i].reg_size);
-	}
+	पूर्ण
 
 	memblock_reserve(kern_base, kern_size);
 
 	find_ramdisk(phys_base);
 
-	if (cmdline_memory_size)
+	अगर (cmdline_memory_size)
 		reduce_memory(cmdline_memory_size);
 
 	memblock_allow_resize();
@@ -2378,214 +2379,214 @@ void __init paging_init(void)
 
 	set_bit(0, mmu_context_bmap);
 
-	shift = kern_base + PAGE_OFFSET - ((unsigned long)KERNBASE);
+	shअगरt = kern_base + PAGE_OFFSET - ((अचिन्हित दीर्घ)KERNBASE);
 
-	real_end = (unsigned long)_end;
+	real_end = (अचिन्हित दीर्घ)_end;
 	num_kernel_image_mappings = DIV_ROUND_UP(real_end - KERNBASE, 1 << ILOG2_4MB);
-	printk("Kernel: Using %d locked TLB entries for main kernel image.\n",
+	prपूर्णांकk("Kernel: Using %d locked TLB entries for main kernel image.\n",
 	       num_kernel_image_mappings);
 
 	/* Set kernel pgd to upper alias so physical page computations
 	 * work.
 	 */
-	init_mm.pgd += ((shift) / (sizeof(pgd_t)));
+	init_mm.pgd += ((shअगरt) / (माप(pgd_t)));
 	
-	memset(swapper_pg_dir, 0, sizeof(swapper_pg_dir));
+	स_रखो(swapper_pg_dir, 0, माप(swapper_pg_dir));
 
 	inherit_prom_mappings();
 	
-	/* Ok, we can use our TLB miss and window trap handlers safely.  */
+	/* Ok, we can use our TLB miss and winकरोw trap handlers safely.  */
 	setup_tba();
 
 	__flush_tlb_all();
 
 	prom_build_devicetree();
 	of_populate_present_mask();
-#ifndef CONFIG_SMP
+#अगर_अघोषित CONFIG_SMP
 	of_fill_in_cpu_data();
-#endif
+#पूर्ण_अगर
 
-	if (tlb_type == hypervisor) {
+	अगर (tlb_type == hypervisor) अणु
 		sun4v_mdesc_init();
 		mdesc_populate_present_mask(cpu_all_mask);
-#ifndef CONFIG_SMP
+#अगर_अघोषित CONFIG_SMP
 		mdesc_fill_in_cpu_data(cpu_all_mask);
-#endif
+#पूर्ण_अगर
 		mdesc_get_page_sizes(cpu_all_mask, &cpu_pgsz_mask);
 
 		sun4v_linear_pte_xor_finalize();
 
 		sun4v_ktsb_init();
-		sun4v_ktsb_register();
-	} else {
-		unsigned long impl, ver;
+		sun4v_ktsb_रेजिस्टर();
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ impl, ver;
 
 		cpu_pgsz_mask = (HV_PGSZ_MASK_8K | HV_PGSZ_MASK_64K |
 				 HV_PGSZ_MASK_512K | HV_PGSZ_MASK_4MB);
 
-		__asm__ __volatile__("rdpr %%ver, %0" : "=r" (ver));
+		__यंत्र__ __अस्थिर__("rdpr %%ver, %0" : "=r" (ver));
 		impl = ((ver >> 32) & 0xffff);
-		if (impl == PANTHER_IMPL)
+		अगर (impl == PANTHER_IMPL)
 			cpu_pgsz_mask |= (HV_PGSZ_MASK_32MB |
 					  HV_PGSZ_MASK_256MB);
 
 		sun4u_linear_pte_xor_finalize();
-	}
+	पूर्ण
 
 	/* Flush the TLBs and the 4M TSB so that the updated linear
-	 * pte XOR settings are realized for all mappings.
+	 * pte XOR settings are realized क्रम all mappings.
 	 */
 	__flush_tlb_all();
-#ifndef CONFIG_DEBUG_PAGEALLOC
-	memset(swapper_4m_tsb, 0x40, sizeof(swapper_4m_tsb));
-#endif
+#अगर_अघोषित CONFIG_DEBUG_PAGEALLOC
+	स_रखो(swapper_4m_tsb, 0x40, माप(swapper_4m_tsb));
+#पूर्ण_अगर
 	__flush_tlb_all();
 
-	/* Setup bootmem... */
-	last_valid_pfn = end_pfn = bootmem_init(phys_base);
+	/* Setup booपंचांगem... */
+	last_valid_pfn = end_pfn = booपंचांगem_init(phys_base);
 
 	kernel_physical_mapping_init();
 
-	{
-		unsigned long max_zone_pfns[MAX_NR_ZONES];
+	अणु
+		अचिन्हित दीर्घ max_zone_pfns[MAX_NR_ZONES];
 
-		memset(max_zone_pfns, 0, sizeof(max_zone_pfns));
+		स_रखो(max_zone_pfns, 0, माप(max_zone_pfns));
 
 		max_zone_pfns[ZONE_NORMAL] = end_pfn;
 
-		free_area_init(max_zone_pfns);
-	}
+		मुक्त_area_init(max_zone_pfns);
+	पूर्ण
 
-	printk("Booting Linux...\n");
-}
+	prपूर्णांकk("Booting Linux...\n");
+पूर्ण
 
-int page_in_phys_avail(unsigned long paddr)
-{
-	int i;
+पूर्णांक page_in_phys_avail(अचिन्हित दीर्घ paddr)
+अणु
+	पूर्णांक i;
 
 	paddr &= PAGE_MASK;
 
-	for (i = 0; i < pavail_ents; i++) {
-		unsigned long start, end;
+	क्रम (i = 0; i < pavail_ents; i++) अणु
+		अचिन्हित दीर्घ start, end;
 
 		start = pavail[i].phys_addr;
 		end = start + pavail[i].reg_size;
 
-		if (paddr >= start && paddr < end)
-			return 1;
-	}
-	if (paddr >= kern_base && paddr < (kern_base + kern_size))
-		return 1;
-#ifdef CONFIG_BLK_DEV_INITRD
-	if (paddr >= __pa(initrd_start) &&
+		अगर (paddr >= start && paddr < end)
+			वापस 1;
+	पूर्ण
+	अगर (paddr >= kern_base && paddr < (kern_base + kern_size))
+		वापस 1;
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+	अगर (paddr >= __pa(initrd_start) &&
 	    paddr < __pa(PAGE_ALIGN(initrd_end)))
-		return 1;
-#endif
+		वापस 1;
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init register_page_bootmem_info(void)
-{
-#ifdef CONFIG_NEED_MULTIPLE_NODES
-	int i;
+अटल व्योम __init रेजिस्टर_page_booपंचांगem_info(व्योम)
+अणु
+#अगर_घोषित CONFIG_NEED_MULTIPLE_NODES
+	पूर्णांक i;
 
-	for_each_online_node(i)
-		if (NODE_DATA(i)->node_spanned_pages)
-			register_page_bootmem_info_node(NODE_DATA(i));
-#endif
-}
-void __init mem_init(void)
-{
+	क्रम_each_online_node(i)
+		अगर (NODE_DATA(i)->node_spanned_pages)
+			रेजिस्टर_page_booपंचांगem_info_node(NODE_DATA(i));
+#पूर्ण_अगर
+पूर्ण
+व्योम __init mem_init(व्योम)
+अणु
 	high_memory = __va(last_valid_pfn << PAGE_SHIFT);
 
-	memblock_free_all();
+	memblock_मुक्त_all();
 
 	/*
-	 * Must be done after boot memory is put on freelist, because here we
-	 * might set fields in deferred struct pages that have not yet been
-	 * initialized, and memblock_free_all() initializes all the reserved
-	 * deferred pages for us.
+	 * Must be करोne after boot memory is put on मुक्तlist, because here we
+	 * might set fields in deferred काष्ठा pages that have not yet been
+	 * initialized, and memblock_मुक्त_all() initializes all the reserved
+	 * deferred pages क्रम us.
 	 */
-	register_page_bootmem_info();
+	रेजिस्टर_page_booपंचांगem_info();
 
 	/*
 	 * Set up the zero page, mark it reserved, so that page count
-	 * is not manipulated when freeing the page from user ptes.
+	 * is not manipulated when मुक्तing the page from user ptes.
 	 */
 	mem_map_zero = alloc_pages(GFP_KERNEL|__GFP_ZERO, 0);
-	if (mem_map_zero == NULL) {
-		prom_printf("paging_init: Cannot alloc zero page.\n");
+	अगर (mem_map_zero == शून्य) अणु
+		prom_म_लिखो("paging_init: Cannot alloc zero page.\n");
 		prom_halt();
-	}
+	पूर्ण
 	mark_page_reserved(mem_map_zero);
 
 
-	if (tlb_type == cheetah || tlb_type == cheetah_plus)
+	अगर (tlb_type == cheetah || tlb_type == cheetah_plus)
 		cheetah_ecache_flush_init();
-}
+पूर्ण
 
-void free_initmem(void)
-{
-	unsigned long addr, initend;
-	int do_free = 1;
+व्योम मुक्त_iniपंचांगem(व्योम)
+अणु
+	अचिन्हित दीर्घ addr, initend;
+	पूर्णांक करो_मुक्त = 1;
 
 	/* If the physical memory maps were trimmed by kernel command
-	 * line options, don't even try freeing this initmem stuff up.
+	 * line options, करोn't even try मुक्तing this iniपंचांगem stuff up.
 	 * The kernel image could have been in the trimmed out region
-	 * and if so the freeing below will free invalid page structs.
+	 * and अगर so the मुक्तing below will मुक्त invalid page काष्ठाs.
 	 */
-	if (cmdline_memory_size)
-		do_free = 0;
+	अगर (cmdline_memory_size)
+		करो_मुक्त = 0;
 
 	/*
-	 * The init section is aligned to 8k in vmlinux.lds. Page align for >8k pagesizes.
+	 * The init section is aligned to 8k in vmlinux.lds. Page align क्रम >8k pagesizes.
 	 */
-	addr = PAGE_ALIGN((unsigned long)(__init_begin));
-	initend = (unsigned long)(__init_end) & PAGE_MASK;
-	for (; addr < initend; addr += PAGE_SIZE) {
-		unsigned long page;
+	addr = PAGE_ALIGN((अचिन्हित दीर्घ)(__init_begin));
+	initend = (अचिन्हित दीर्घ)(__init_end) & PAGE_MASK;
+	क्रम (; addr < initend; addr += PAGE_SIZE) अणु
+		अचिन्हित दीर्घ page;
 
 		page = (addr +
-			((unsigned long) __va(kern_base)) -
-			((unsigned long) KERNBASE));
-		memset((void *)addr, POISON_FREE_INITMEM, PAGE_SIZE);
+			((अचिन्हित दीर्घ) __va(kern_base)) -
+			((अचिन्हित दीर्घ) KERNBASE));
+		स_रखो((व्योम *)addr, POISON_FREE_INITMEM, PAGE_SIZE);
 
-		if (do_free)
-			free_reserved_page(virt_to_page(page));
-	}
-}
+		अगर (करो_मुक्त)
+			मुक्त_reserved_page(virt_to_page(page));
+	पूर्ण
+पूर्ण
 
-pgprot_t PAGE_KERNEL __read_mostly;
+pgprot_t PAGE_KERNEL __पढ़ो_mostly;
 EXPORT_SYMBOL(PAGE_KERNEL);
 
-pgprot_t PAGE_KERNEL_LOCKED __read_mostly;
-pgprot_t PAGE_COPY __read_mostly;
+pgprot_t PAGE_KERNEL_LOCKED __पढ़ो_mostly;
+pgprot_t PAGE_COPY __पढ़ो_mostly;
 
-pgprot_t PAGE_SHARED __read_mostly;
+pgprot_t PAGE_SHARED __पढ़ो_mostly;
 EXPORT_SYMBOL(PAGE_SHARED);
 
-unsigned long pg_iobits __read_mostly;
+अचिन्हित दीर्घ pg_iobits __पढ़ो_mostly;
 
-unsigned long _PAGE_IE __read_mostly;
+अचिन्हित दीर्घ _PAGE_IE __पढ़ो_mostly;
 EXPORT_SYMBOL(_PAGE_IE);
 
-unsigned long _PAGE_E __read_mostly;
+अचिन्हित दीर्घ _PAGE_E __पढ़ो_mostly;
 EXPORT_SYMBOL(_PAGE_E);
 
-unsigned long _PAGE_CACHE __read_mostly;
+अचिन्हित दीर्घ _PAGE_CACHE __पढ़ो_mostly;
 EXPORT_SYMBOL(_PAGE_CACHE);
 
-#ifdef CONFIG_SPARSEMEM_VMEMMAP
-int __meminit vmemmap_populate(unsigned long vstart, unsigned long vend,
-			       int node, struct vmem_altmap *altmap)
-{
-	unsigned long pte_base;
+#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
+पूर्णांक __meminit vmemmap_populate(अचिन्हित दीर्घ vstart, अचिन्हित दीर्घ vend,
+			       पूर्णांक node, काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	अचिन्हित दीर्घ pte_base;
 
 	pte_base = (_PAGE_VALID | _PAGE_SZ4MB_4U |
 		    _PAGE_CP_4U | _PAGE_CV_4U |
 		    _PAGE_P_4U | _PAGE_W_4U);
-	if (tlb_type == hypervisor)
+	अगर (tlb_type == hypervisor)
 		pte_base = (_PAGE_VALID | _PAGE_SZ4MB_4V |
 			    page_cache4v_flag | _PAGE_P_4V | _PAGE_W_4V);
 
@@ -2593,104 +2594,104 @@ int __meminit vmemmap_populate(unsigned long vstart, unsigned long vend,
 
 	vstart = vstart & PMD_MASK;
 	vend = ALIGN(vend, PMD_SIZE);
-	for (; vstart < vend; vstart += PMD_SIZE) {
+	क्रम (; vstart < vend; vstart += PMD_SIZE) अणु
 		pgd_t *pgd = vmemmap_pgd_populate(vstart, node);
-		unsigned long pte;
+		अचिन्हित दीर्घ pte;
 		p4d_t *p4d;
 		pud_t *pud;
 		pmd_t *pmd;
 
-		if (!pgd)
-			return -ENOMEM;
+		अगर (!pgd)
+			वापस -ENOMEM;
 
 		p4d = vmemmap_p4d_populate(pgd, vstart, node);
-		if (!p4d)
-			return -ENOMEM;
+		अगर (!p4d)
+			वापस -ENOMEM;
 
 		pud = vmemmap_pud_populate(p4d, vstart, node);
-		if (!pud)
-			return -ENOMEM;
+		अगर (!pud)
+			वापस -ENOMEM;
 
 		pmd = pmd_offset(pud, vstart);
 		pte = pmd_val(*pmd);
-		if (!(pte & _PAGE_VALID)) {
-			void *block = vmemmap_alloc_block(PMD_SIZE, node);
+		अगर (!(pte & _PAGE_VALID)) अणु
+			व्योम *block = vmemmap_alloc_block(PMD_SIZE, node);
 
-			if (!block)
-				return -ENOMEM;
+			अगर (!block)
+				वापस -ENOMEM;
 
 			pmd_val(*pmd) = pte_base | __pa(block);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vmemmap_free(unsigned long start, unsigned long end,
-		struct vmem_altmap *altmap)
-{
-}
-#endif /* CONFIG_SPARSEMEM_VMEMMAP */
+व्योम vmemmap_मुक्त(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+		काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SPARSEMEM_VMEMMAP */
 
-static void prot_init_common(unsigned long page_none,
-			     unsigned long page_shared,
-			     unsigned long page_copy,
-			     unsigned long page_readonly,
-			     unsigned long page_exec_bit)
-{
+अटल व्योम prot_init_common(अचिन्हित दीर्घ page_none,
+			     अचिन्हित दीर्घ page_shared,
+			     अचिन्हित दीर्घ page_copy,
+			     अचिन्हित दीर्घ page_पढ़ोonly,
+			     अचिन्हित दीर्घ page_exec_bit)
+अणु
 	PAGE_COPY = __pgprot(page_copy);
 	PAGE_SHARED = __pgprot(page_shared);
 
 	protection_map[0x0] = __pgprot(page_none);
-	protection_map[0x1] = __pgprot(page_readonly & ~page_exec_bit);
+	protection_map[0x1] = __pgprot(page_पढ़ोonly & ~page_exec_bit);
 	protection_map[0x2] = __pgprot(page_copy & ~page_exec_bit);
 	protection_map[0x3] = __pgprot(page_copy & ~page_exec_bit);
-	protection_map[0x4] = __pgprot(page_readonly);
-	protection_map[0x5] = __pgprot(page_readonly);
+	protection_map[0x4] = __pgprot(page_पढ़ोonly);
+	protection_map[0x5] = __pgprot(page_पढ़ोonly);
 	protection_map[0x6] = __pgprot(page_copy);
 	protection_map[0x7] = __pgprot(page_copy);
 	protection_map[0x8] = __pgprot(page_none);
-	protection_map[0x9] = __pgprot(page_readonly & ~page_exec_bit);
+	protection_map[0x9] = __pgprot(page_पढ़ोonly & ~page_exec_bit);
 	protection_map[0xa] = __pgprot(page_shared & ~page_exec_bit);
 	protection_map[0xb] = __pgprot(page_shared & ~page_exec_bit);
-	protection_map[0xc] = __pgprot(page_readonly);
-	protection_map[0xd] = __pgprot(page_readonly);
+	protection_map[0xc] = __pgprot(page_पढ़ोonly);
+	protection_map[0xd] = __pgprot(page_पढ़ोonly);
 	protection_map[0xe] = __pgprot(page_shared);
 	protection_map[0xf] = __pgprot(page_shared);
-}
+पूर्ण
 
-static void __init sun4u_pgprot_init(void)
-{
-	unsigned long page_none, page_shared, page_copy, page_readonly;
-	unsigned long page_exec_bit;
-	int i;
+अटल व्योम __init sun4u_pgprot_init(व्योम)
+अणु
+	अचिन्हित दीर्घ page_none, page_shared, page_copy, page_पढ़ोonly;
+	अचिन्हित दीर्घ page_exec_bit;
+	पूर्णांक i;
 
 	PAGE_KERNEL = __pgprot (_PAGE_PRESENT_4U | _PAGE_VALID |
 				_PAGE_CACHE_4U | _PAGE_P_4U |
-				__ACCESS_BITS_4U | __DIRTY_BITS_4U |
+				__ACCESS_BITS_4U | __सूचीTY_BITS_4U |
 				_PAGE_EXEC_4U);
 	PAGE_KERNEL_LOCKED = __pgprot (_PAGE_PRESENT_4U | _PAGE_VALID |
 				       _PAGE_CACHE_4U | _PAGE_P_4U |
-				       __ACCESS_BITS_4U | __DIRTY_BITS_4U |
+				       __ACCESS_BITS_4U | __सूचीTY_BITS_4U |
 				       _PAGE_EXEC_4U | _PAGE_L_4U);
 
 	_PAGE_IE = _PAGE_IE_4U;
 	_PAGE_E = _PAGE_E_4U;
 	_PAGE_CACHE = _PAGE_CACHE_4U;
 
-	pg_iobits = (_PAGE_VALID | _PAGE_PRESENT_4U | __DIRTY_BITS_4U |
+	pg_iobits = (_PAGE_VALID | _PAGE_PRESENT_4U | __सूचीTY_BITS_4U |
 		     __ACCESS_BITS_4U | _PAGE_E_4U);
 
-#ifdef CONFIG_DEBUG_PAGEALLOC
+#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
 	kern_linear_pte_xor[0] = _PAGE_VALID ^ PAGE_OFFSET;
-#else
+#अन्यथा
 	kern_linear_pte_xor[0] = (_PAGE_VALID | _PAGE_SZ4MB_4U) ^
 		PAGE_OFFSET;
-#endif
+#पूर्ण_अगर
 	kern_linear_pte_xor[0] |= (_PAGE_CP_4U | _PAGE_CV_4U |
 				   _PAGE_P_4U | _PAGE_W_4U);
 
-	for (i = 1; i < 4; i++)
+	क्रम (i = 1; i < 4; i++)
 		kern_linear_pte_xor[i] = kern_linear_pte_xor[0];
 
 	_PAGE_ALL_SZ_BITS =  (_PAGE_SZ4MB_4U | _PAGE_SZ512K_4U |
@@ -2703,24 +2704,24 @@ static void __init sun4u_pgprot_init(void)
 		       __ACCESS_BITS_4U | _PAGE_WRITE_4U | _PAGE_EXEC_4U);
 	page_copy   = (_PAGE_VALID | _PAGE_PRESENT_4U | _PAGE_CACHE_4U |
 		       __ACCESS_BITS_4U | _PAGE_EXEC_4U);
-	page_readonly   = (_PAGE_VALID | _PAGE_PRESENT_4U | _PAGE_CACHE_4U |
+	page_पढ़ोonly   = (_PAGE_VALID | _PAGE_PRESENT_4U | _PAGE_CACHE_4U |
 			   __ACCESS_BITS_4U | _PAGE_EXEC_4U);
 
 	page_exec_bit = _PAGE_EXEC_4U;
 
-	prot_init_common(page_none, page_shared, page_copy, page_readonly,
+	prot_init_common(page_none, page_shared, page_copy, page_पढ़ोonly,
 			 page_exec_bit);
-}
+पूर्ण
 
-static void __init sun4v_pgprot_init(void)
-{
-	unsigned long page_none, page_shared, page_copy, page_readonly;
-	unsigned long page_exec_bit;
-	int i;
+अटल व्योम __init sun4v_pgprot_init(व्योम)
+अणु
+	अचिन्हित दीर्घ page_none, page_shared, page_copy, page_पढ़ोonly;
+	अचिन्हित दीर्घ page_exec_bit;
+	पूर्णांक i;
 
 	PAGE_KERNEL = __pgprot (_PAGE_PRESENT_4V | _PAGE_VALID |
 				page_cache4v_flag | _PAGE_P_4V |
-				__ACCESS_BITS_4V | __DIRTY_BITS_4V |
+				__ACCESS_BITS_4V | __सूचीTY_BITS_4V |
 				_PAGE_EXEC_4V);
 	PAGE_KERNEL_LOCKED = PAGE_KERNEL;
 
@@ -2728,19 +2729,19 @@ static void __init sun4v_pgprot_init(void)
 	_PAGE_E = _PAGE_E_4V;
 	_PAGE_CACHE = page_cache4v_flag;
 
-#ifdef CONFIG_DEBUG_PAGEALLOC
+#अगर_घोषित CONFIG_DEBUG_PAGEALLOC
 	kern_linear_pte_xor[0] = _PAGE_VALID ^ PAGE_OFFSET;
-#else
+#अन्यथा
 	kern_linear_pte_xor[0] = (_PAGE_VALID | _PAGE_SZ4MB_4V) ^
 		PAGE_OFFSET;
-#endif
+#पूर्ण_अगर
 	kern_linear_pte_xor[0] |= (page_cache4v_flag | _PAGE_P_4V |
 				   _PAGE_W_4V);
 
-	for (i = 1; i < 4; i++)
+	क्रम (i = 1; i < 4; i++)
 		kern_linear_pte_xor[i] = kern_linear_pte_xor[0];
 
-	pg_iobits = (_PAGE_VALID | _PAGE_PRESENT_4V | __DIRTY_BITS_4V |
+	pg_iobits = (_PAGE_VALID | _PAGE_PRESENT_4V | __सूचीTY_BITS_4V |
 		     __ACCESS_BITS_4V | _PAGE_E_4V);
 
 	_PAGE_ALL_SZ_BITS = (_PAGE_SZ16GB_4V | _PAGE_SZ2GB_4V |
@@ -2753,194 +2754,194 @@ static void __init sun4v_pgprot_init(void)
 		       __ACCESS_BITS_4V | _PAGE_WRITE_4V | _PAGE_EXEC_4V);
 	page_copy   = (_PAGE_VALID | _PAGE_PRESENT_4V | page_cache4v_flag |
 		       __ACCESS_BITS_4V | _PAGE_EXEC_4V);
-	page_readonly = (_PAGE_VALID | _PAGE_PRESENT_4V | page_cache4v_flag |
+	page_पढ़ोonly = (_PAGE_VALID | _PAGE_PRESENT_4V | page_cache4v_flag |
 			 __ACCESS_BITS_4V | _PAGE_EXEC_4V);
 
 	page_exec_bit = _PAGE_EXEC_4V;
 
-	prot_init_common(page_none, page_shared, page_copy, page_readonly,
+	prot_init_common(page_none, page_shared, page_copy, page_पढ़ोonly,
 			 page_exec_bit);
-}
+पूर्ण
 
-unsigned long pte_sz_bits(unsigned long sz)
-{
-	if (tlb_type == hypervisor) {
-		switch (sz) {
-		case 8 * 1024:
-		default:
-			return _PAGE_SZ8K_4V;
-		case 64 * 1024:
-			return _PAGE_SZ64K_4V;
-		case 512 * 1024:
-			return _PAGE_SZ512K_4V;
-		case 4 * 1024 * 1024:
-			return _PAGE_SZ4MB_4V;
-		}
-	} else {
-		switch (sz) {
-		case 8 * 1024:
-		default:
-			return _PAGE_SZ8K_4U;
-		case 64 * 1024:
-			return _PAGE_SZ64K_4U;
-		case 512 * 1024:
-			return _PAGE_SZ512K_4U;
-		case 4 * 1024 * 1024:
-			return _PAGE_SZ4MB_4U;
-		}
-	}
-}
+अचिन्हित दीर्घ pte_sz_bits(अचिन्हित दीर्घ sz)
+अणु
+	अगर (tlb_type == hypervisor) अणु
+		चयन (sz) अणु
+		हाल 8 * 1024:
+		शेष:
+			वापस _PAGE_SZ8K_4V;
+		हाल 64 * 1024:
+			वापस _PAGE_SZ64K_4V;
+		हाल 512 * 1024:
+			वापस _PAGE_SZ512K_4V;
+		हाल 4 * 1024 * 1024:
+			वापस _PAGE_SZ4MB_4V;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (sz) अणु
+		हाल 8 * 1024:
+		शेष:
+			वापस _PAGE_SZ8K_4U;
+		हाल 64 * 1024:
+			वापस _PAGE_SZ64K_4U;
+		हाल 512 * 1024:
+			वापस _PAGE_SZ512K_4U;
+		हाल 4 * 1024 * 1024:
+			वापस _PAGE_SZ4MB_4U;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-pte_t mk_pte_io(unsigned long page, pgprot_t prot, int space, unsigned long page_size)
-{
+pte_t mk_pte_io(अचिन्हित दीर्घ page, pgprot_t prot, पूर्णांक space, अचिन्हित दीर्घ page_size)
+अणु
 	pte_t pte;
 
 	pte_val(pte)  = page | pgprot_val(pgprot_noncached(prot));
-	pte_val(pte) |= (((unsigned long)space) << 32);
+	pte_val(pte) |= (((अचिन्हित दीर्घ)space) << 32);
 	pte_val(pte) |= pte_sz_bits(page_size);
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static unsigned long kern_large_tte(unsigned long paddr)
-{
-	unsigned long val;
+अटल अचिन्हित दीर्घ kern_large_tte(अचिन्हित दीर्घ paddr)
+अणु
+	अचिन्हित दीर्घ val;
 
 	val = (_PAGE_VALID | _PAGE_SZ4MB_4U |
 	       _PAGE_CP_4U | _PAGE_CV_4U | _PAGE_P_4U |
 	       _PAGE_EXEC_4U | _PAGE_L_4U | _PAGE_W_4U);
-	if (tlb_type == hypervisor)
+	अगर (tlb_type == hypervisor)
 		val = (_PAGE_VALID | _PAGE_SZ4MB_4V |
 		       page_cache4v_flag | _PAGE_P_4V |
 		       _PAGE_EXEC_4V | _PAGE_W_4V);
 
-	return val | paddr;
-}
+	वापस val | paddr;
+पूर्ण
 
 /* If not locked, zap it. */
-void __flush_tlb_all(void)
-{
-	unsigned long pstate;
-	int i;
+व्योम __flush_tlb_all(व्योम)
+अणु
+	अचिन्हित दीर्घ pstate;
+	पूर्णांक i;
 
-	__asm__ __volatile__("flushw\n\t"
+	__यंत्र__ __अस्थिर__("flushw\n\t"
 			     "rdpr	%%pstate, %0\n\t"
 			     "wrpr	%0, %1, %%pstate"
 			     : "=r" (pstate)
 			     : "i" (PSTATE_IE));
-	if (tlb_type == hypervisor) {
+	अगर (tlb_type == hypervisor) अणु
 		sun4v_mmu_demap_all();
-	} else if (tlb_type == spitfire) {
-		for (i = 0; i < 64; i++) {
+	पूर्ण अन्यथा अगर (tlb_type == spitfire) अणु
+		क्रम (i = 0; i < 64; i++) अणु
 			/* Spitfire Errata #32 workaround */
 			/* NOTE: Always runs on spitfire, so no
 			 *       cheetah+ page size encodings.
 			 */
-			__asm__ __volatile__("stxa	%0, [%1] %2\n\t"
+			__यंत्र__ __अस्थिर__("stxa	%0, [%1] %2\n\t"
 					     "flush	%%g6"
-					     : /* No outputs */
+					     : /* No outमाला_दो */
 					     : "r" (0),
 					     "r" (PRIMARY_CONTEXT), "i" (ASI_DMMU));
 
-			if (!(spitfire_get_dtlb_data(i) & _PAGE_L_4U)) {
-				__asm__ __volatile__("stxa %%g0, [%0] %1\n\t"
+			अगर (!(spitfire_get_dtlb_data(i) & _PAGE_L_4U)) अणु
+				__यंत्र__ __अस्थिर__("stxa %%g0, [%0] %1\n\t"
 						     "membar #Sync"
-						     : /* no outputs */
+						     : /* no outमाला_दो */
 						     : "r" (TLB_TAG_ACCESS), "i" (ASI_DMMU));
 				spitfire_put_dtlb_data(i, 0x0UL);
-			}
+			पूर्ण
 
 			/* Spitfire Errata #32 workaround */
 			/* NOTE: Always runs on spitfire, so no
 			 *       cheetah+ page size encodings.
 			 */
-			__asm__ __volatile__("stxa	%0, [%1] %2\n\t"
+			__यंत्र__ __अस्थिर__("stxa	%0, [%1] %2\n\t"
 					     "flush	%%g6"
-					     : /* No outputs */
+					     : /* No outमाला_दो */
 					     : "r" (0),
 					     "r" (PRIMARY_CONTEXT), "i" (ASI_DMMU));
 
-			if (!(spitfire_get_itlb_data(i) & _PAGE_L_4U)) {
-				__asm__ __volatile__("stxa %%g0, [%0] %1\n\t"
+			अगर (!(spitfire_get_itlb_data(i) & _PAGE_L_4U)) अणु
+				__यंत्र__ __अस्थिर__("stxa %%g0, [%0] %1\n\t"
 						     "membar #Sync"
-						     : /* no outputs */
+						     : /* no outमाला_दो */
 						     : "r" (TLB_TAG_ACCESS), "i" (ASI_IMMU));
 				spitfire_put_itlb_data(i, 0x0UL);
-			}
-		}
-	} else if (tlb_type == cheetah || tlb_type == cheetah_plus) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (tlb_type == cheetah || tlb_type == cheetah_plus) अणु
 		cheetah_flush_dtlb_all();
 		cheetah_flush_itlb_all();
-	}
-	__asm__ __volatile__("wrpr	%0, 0, %%pstate"
+	पूर्ण
+	__यंत्र__ __अस्थिर__("wrpr	%0, 0, %%pstate"
 			     : : "r" (pstate));
-}
+पूर्ण
 
-pte_t *pte_alloc_one_kernel(struct mm_struct *mm)
-{
-	struct page *page = alloc_page(GFP_KERNEL | __GFP_ZERO);
-	pte_t *pte = NULL;
+pte_t *pte_alloc_one_kernel(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा page *page = alloc_page(GFP_KERNEL | __GFP_ZERO);
+	pte_t *pte = शून्य;
 
-	if (page)
+	अगर (page)
 		pte = (pte_t *) page_address(page);
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-pgtable_t pte_alloc_one(struct mm_struct *mm)
-{
-	struct page *page = alloc_page(GFP_KERNEL | __GFP_ZERO);
-	if (!page)
-		return NULL;
-	if (!pgtable_pte_page_ctor(page)) {
-		__free_page(page);
-		return NULL;
-	}
-	return (pte_t *) page_address(page);
-}
+pgtable_t pte_alloc_one(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा page *page = alloc_page(GFP_KERNEL | __GFP_ZERO);
+	अगर (!page)
+		वापस शून्य;
+	अगर (!pgtable_pte_page_ctor(page)) अणु
+		__मुक्त_page(page);
+		वापस शून्य;
+	पूर्ण
+	वापस (pte_t *) page_address(page);
+पूर्ण
 
-void pte_free_kernel(struct mm_struct *mm, pte_t *pte)
-{
-	free_page((unsigned long)pte);
-}
+व्योम pte_मुक्त_kernel(काष्ठा mm_काष्ठा *mm, pte_t *pte)
+अणु
+	मुक्त_page((अचिन्हित दीर्घ)pte);
+पूर्ण
 
-static void __pte_free(pgtable_t pte)
-{
-	struct page *page = virt_to_page(pte);
+अटल व्योम __pte_मुक्त(pgtable_t pte)
+अणु
+	काष्ठा page *page = virt_to_page(pte);
 
 	pgtable_pte_page_dtor(page);
-	__free_page(page);
-}
+	__मुक्त_page(page);
+पूर्ण
 
-void pte_free(struct mm_struct *mm, pgtable_t pte)
-{
-	__pte_free(pte);
-}
+व्योम pte_मुक्त(काष्ठा mm_काष्ठा *mm, pgtable_t pte)
+अणु
+	__pte_मुक्त(pte);
+पूर्ण
 
-void pgtable_free(void *table, bool is_page)
-{
-	if (is_page)
-		__pte_free(table);
-	else
-		kmem_cache_free(pgtable_cache, table);
-}
+व्योम pgtable_मुक्त(व्योम *table, bool is_page)
+अणु
+	अगर (is_page)
+		__pte_मुक्त(table);
+	अन्यथा
+		kmem_cache_मुक्त(pgtable_cache, table);
+पूर्ण
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-void update_mmu_cache_pmd(struct vm_area_struct *vma, unsigned long addr,
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+व्योम update_mmu_cache_pmd(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
 			  pmd_t *pmd)
-{
-	unsigned long pte, flags;
-	struct mm_struct *mm;
+अणु
+	अचिन्हित दीर्घ pte, flags;
+	काष्ठा mm_काष्ठा *mm;
 	pmd_t entry = *pmd;
 
-	if (!pmd_large(entry) || !pmd_young(entry))
-		return;
+	अगर (!pmd_large(entry) || !pmd_young(entry))
+		वापस;
 
 	pte = pmd_val(entry);
 
 	/* Don't insert a non-valid PMD into the TSB, we'll deadlock.  */
-	if (!(pte & _PAGE_VALID))
-		return;
+	अगर (!(pte & _PAGE_VALID))
+		वापस;
 
 	/* We are fabricating 8MB pages using 4MB real hw pages.  */
 	pte |= (addr & (1UL << REAL_HPAGE_SHIFT));
@@ -2949,54 +2950,54 @@ void update_mmu_cache_pmd(struct vm_area_struct *vma, unsigned long addr,
 
 	spin_lock_irqsave(&mm->context.lock, flags);
 
-	if (mm->context.tsb_block[MM_TSB_HUGE].tsb != NULL)
+	अगर (mm->context.tsb_block[MM_TSB_HUGE].tsb != शून्य)
 		__update_mmu_tsb_insert(mm, MM_TSB_HUGE, REAL_HPAGE_SHIFT,
 					addr, pte);
 
 	spin_unlock_irqrestore(&mm->context.lock, flags);
-}
-#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
 
-#if defined(CONFIG_HUGETLB_PAGE) || defined(CONFIG_TRANSPARENT_HUGEPAGE)
-static void context_reload(void *__data)
-{
-	struct mm_struct *mm = __data;
+#अगर defined(CONFIG_HUGETLB_PAGE) || defined(CONFIG_TRANSPARENT_HUGEPAGE)
+अटल व्योम context_reload(व्योम *__data)
+अणु
+	काष्ठा mm_काष्ठा *mm = __data;
 
-	if (mm == current->mm)
+	अगर (mm == current->mm)
 		load_secondary_context(mm);
-}
+पूर्ण
 
-void hugetlb_setup(struct pt_regs *regs)
-{
-	struct mm_struct *mm = current->mm;
-	struct tsb_config *tp;
+व्योम hugetlb_setup(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा tsb_config *tp;
 
-	if (faulthandler_disabled() || !mm) {
-		const struct exception_table_entry *entry;
+	अगर (faulthandler_disabled() || !mm) अणु
+		स्थिर काष्ठा exception_table_entry *entry;
 
 		entry = search_exception_tables(regs->tpc);
-		if (entry) {
+		अगर (entry) अणु
 			regs->tpc = entry->fixup;
 			regs->tnpc = regs->tpc + 4;
-			return;
-		}
+			वापस;
+		पूर्ण
 		pr_alert("Unexpected HugeTLB setup in atomic context.\n");
-		die_if_kernel("HugeTSB in atomic", regs);
-	}
+		die_अगर_kernel("HugeTSB in atomic", regs);
+	पूर्ण
 
 	tp = &mm->context.tsb_block[MM_TSB_HUGE];
-	if (likely(tp->tsb == NULL))
+	अगर (likely(tp->tsb == शून्य))
 		tsb_grow(mm, MM_TSB_HUGE, 0);
 
-	tsb_context_switch(mm);
+	tsb_context_चयन(mm);
 	smp_tsb_sync(mm);
 
 	/* On UltraSPARC-III+ and later, configure the second half of
-	 * the Data-TLB for huge pages.
+	 * the Data-TLB क्रम huge pages.
 	 */
-	if (tlb_type == cheetah_plus) {
+	अगर (tlb_type == cheetah_plus) अणु
 		bool need_context_reload = false;
-		unsigned long ctx;
+		अचिन्हित दीर्घ ctx;
 
 		spin_lock_irq(&ctx_alloc_lock);
 		ctx = mm->context.sparc64_ctx_val;
@@ -3004,120 +3005,120 @@ void hugetlb_setup(struct pt_regs *regs)
 		ctx |= CTX_PGSZ_BASE << CTX_PGSZ0_SHIFT;
 		ctx |= CTX_PGSZ_HUGE << CTX_PGSZ1_SHIFT;
 
-		if (ctx != mm->context.sparc64_ctx_val) {
+		अगर (ctx != mm->context.sparc64_ctx_val) अणु
 			/* When changing the page size fields, we
-			 * must perform a context flush so that no
+			 * must perक्रमm a context flush so that no
 			 * stale entries match.  This flush must
-			 * occur with the original context register
+			 * occur with the original context रेजिस्टर
 			 * settings.
 			 */
-			do_flush_tlb_mm(mm);
+			करो_flush_tlb_mm(mm);
 
-			/* Reload the context register of all processors
+			/* Reload the context रेजिस्टर of all processors
 			 * also executing in this address space.
 			 */
 			mm->context.sparc64_ctx_val = ctx;
 			need_context_reload = true;
-		}
+		पूर्ण
 		spin_unlock_irq(&ctx_alloc_lock);
 
-		if (need_context_reload)
+		अगर (need_context_reload)
 			on_each_cpu(context_reload, mm, 0);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static struct resource code_resource = {
+अटल काष्ठा resource code_resource = अणु
 	.name	= "Kernel code",
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
-};
+पूर्ण;
 
-static struct resource data_resource = {
+अटल काष्ठा resource data_resource = अणु
 	.name	= "Kernel data",
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
-};
+पूर्ण;
 
-static struct resource bss_resource = {
+अटल काष्ठा resource bss_resource = अणु
 	.name	= "Kernel bss",
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
-};
+पूर्ण;
 
-static inline resource_size_t compute_kern_paddr(void *addr)
-{
-	return (resource_size_t) (addr - KERNBASE + kern_base);
-}
+अटल अंतरभूत resource_माप_प्रकार compute_kern_paddr(व्योम *addr)
+अणु
+	वापस (resource_माप_प्रकार) (addr - KERNBASE + kern_base);
+पूर्ण
 
-static void __init kernel_lds_init(void)
-{
+अटल व्योम __init kernel_lds_init(व्योम)
+अणु
 	code_resource.start = compute_kern_paddr(_text);
 	code_resource.end   = compute_kern_paddr(_etext - 1);
 	data_resource.start = compute_kern_paddr(_etext);
 	data_resource.end   = compute_kern_paddr(_edata - 1);
 	bss_resource.start  = compute_kern_paddr(__bss_start);
 	bss_resource.end    = compute_kern_paddr(_end - 1);
-}
+पूर्ण
 
-static int __init report_memory(void)
-{
-	int i;
-	struct resource *res;
+अटल पूर्णांक __init report_memory(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा resource *res;
 
 	kernel_lds_init();
 
-	for (i = 0; i < pavail_ents; i++) {
-		res = kzalloc(sizeof(struct resource), GFP_KERNEL);
+	क्रम (i = 0; i < pavail_ents; i++) अणु
+		res = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
 
-		if (!res) {
+		अगर (!res) अणु
 			pr_warn("Failed to allocate source.\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		res->name = "System RAM";
 		res->start = pavail[i].phys_addr;
 		res->end = pavail[i].phys_addr + pavail[i].reg_size - 1;
 		res->flags = IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM;
 
-		if (insert_resource(&iomem_resource, res) < 0) {
+		अगर (insert_resource(&iomem_resource, res) < 0) अणु
 			pr_warn("Resource insertion failed.\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		insert_resource(res, &code_resource);
 		insert_resource(res, &data_resource);
 		insert_resource(res, &bss_resource);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(report_memory);
 
-#ifdef CONFIG_SMP
-#define do_flush_tlb_kernel_range	smp_flush_tlb_kernel_range
-#else
-#define do_flush_tlb_kernel_range	__flush_tlb_kernel_range
-#endif
+#अगर_घोषित CONFIG_SMP
+#घोषणा करो_flush_tlb_kernel_range	smp_flush_tlb_kernel_range
+#अन्यथा
+#घोषणा करो_flush_tlb_kernel_range	__flush_tlb_kernel_range
+#पूर्ण_अगर
 
-void flush_tlb_kernel_range(unsigned long start, unsigned long end)
-{
-	if (start < HI_OBP_ADDRESS && end > LOW_OBP_ADDRESS) {
-		if (start < LOW_OBP_ADDRESS) {
+व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अगर (start < HI_OBP_ADDRESS && end > LOW_OBP_ADDRESS) अणु
+		अगर (start < LOW_OBP_ADDRESS) अणु
 			flush_tsb_kernel_range(start, LOW_OBP_ADDRESS);
-			do_flush_tlb_kernel_range(start, LOW_OBP_ADDRESS);
-		}
-		if (end > HI_OBP_ADDRESS) {
+			करो_flush_tlb_kernel_range(start, LOW_OBP_ADDRESS);
+		पूर्ण
+		अगर (end > HI_OBP_ADDRESS) अणु
 			flush_tsb_kernel_range(HI_OBP_ADDRESS, end);
-			do_flush_tlb_kernel_range(HI_OBP_ADDRESS, end);
-		}
-	} else {
+			करो_flush_tlb_kernel_range(HI_OBP_ADDRESS, end);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		flush_tsb_kernel_range(start, end);
-		do_flush_tlb_kernel_range(start, end);
-	}
-}
+		करो_flush_tlb_kernel_range(start, end);
+	पूर्ण
+पूर्ण
 
-void copy_user_highpage(struct page *to, struct page *from,
-	unsigned long vaddr, struct vm_area_struct *vma)
-{
-	char *vfrom, *vto;
+व्योम copy_user_highpage(काष्ठा page *to, काष्ठा page *from,
+	अचिन्हित दीर्घ vaddr, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अक्षर *vfrom, *vto;
 
 	vfrom = kmap_atomic(from);
 	vto = kmap_atomic(to);
@@ -3128,30 +3129,30 @@ void copy_user_highpage(struct page *to, struct page *from,
 	/* If this page has ADI enabled, copy over any ADI tags
 	 * as well
 	 */
-	if (vma->vm_flags & VM_SPARC_ADI) {
-		unsigned long pfrom, pto, i, adi_tag;
+	अगर (vma->vm_flags & VM_SPARC_ADI) अणु
+		अचिन्हित दीर्घ pfrom, pto, i, adi_tag;
 
 		pfrom = page_to_phys(from);
 		pto = page_to_phys(to);
 
-		for (i = pfrom; i < (pfrom + PAGE_SIZE); i += adi_blksize()) {
-			asm volatile("ldxa [%1] %2, %0\n\t"
+		क्रम (i = pfrom; i < (pfrom + PAGE_SIZE); i += adi_blksize()) अणु
+			यंत्र अस्थिर("ldxa [%1] %2, %0\n\t"
 					: "=r" (adi_tag)
 					:  "r" (i), "i" (ASI_MCD_REAL));
-			asm volatile("stxa %0, [%1] %2\n\t"
+			यंत्र अस्थिर("stxa %0, [%1] %2\n\t"
 					:
 					: "r" (adi_tag), "r" (pto),
 					  "i" (ASI_MCD_REAL));
 			pto += adi_blksize();
-		}
-		asm volatile("membar #Sync\n\t");
-	}
-}
+		पूर्ण
+		यंत्र अस्थिर("membar #Sync\n\t");
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(copy_user_highpage);
 
-void copy_highpage(struct page *to, struct page *from)
-{
-	char *vfrom, *vto;
+व्योम copy_highpage(काष्ठा page *to, काष्ठा page *from)
+अणु
+	अक्षर *vfrom, *vto;
 
 	vfrom = kmap_atomic(from);
 	vto = kmap_atomic(to);
@@ -3159,26 +3160,26 @@ void copy_highpage(struct page *to, struct page *from)
 	kunmap_atomic(vto);
 	kunmap_atomic(vfrom);
 
-	/* If this platform is ADI enabled, copy any ADI tags
+	/* If this platक्रमm is ADI enabled, copy any ADI tags
 	 * as well
 	 */
-	if (adi_capable()) {
-		unsigned long pfrom, pto, i, adi_tag;
+	अगर (adi_capable()) अणु
+		अचिन्हित दीर्घ pfrom, pto, i, adi_tag;
 
 		pfrom = page_to_phys(from);
 		pto = page_to_phys(to);
 
-		for (i = pfrom; i < (pfrom + PAGE_SIZE); i += adi_blksize()) {
-			asm volatile("ldxa [%1] %2, %0\n\t"
+		क्रम (i = pfrom; i < (pfrom + PAGE_SIZE); i += adi_blksize()) अणु
+			यंत्र अस्थिर("ldxa [%1] %2, %0\n\t"
 					: "=r" (adi_tag)
 					:  "r" (i), "i" (ASI_MCD_REAL));
-			asm volatile("stxa %0, [%1] %2\n\t"
+			यंत्र अस्थिर("stxa %0, [%1] %2\n\t"
 					:
 					: "r" (adi_tag), "r" (pto),
 					  "i" (ASI_MCD_REAL));
 			pto += adi_blksize();
-		}
-		asm volatile("membar #Sync\n\t");
-	}
-}
+		पूर्ण
+		यंत्र अस्थिर("membar #Sync\n\t");
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(copy_highpage);

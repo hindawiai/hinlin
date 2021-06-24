@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  linux/fs/hfs/string.c
  *
@@ -5,29 +6,29 @@
  * (C) 2003 Ardis Technologies <roman@ardistech.com>
  * This file may be distributed under the terms of the GNU General Public License.
  *
- * This file contains the string comparison function for the
- * Macintosh character set.
+ * This file contains the string comparison function क्रम the
+ * Macपूर्णांकosh अक्षरacter set.
  *
  * The code in this file is derived from code which is copyright
  * 1986, 1989, 1990 by Abacus Research and Development, Inc. (ARDI)
- * It is used here by the permission of ARDI's president Cliff Matthews.
+ * It is used here by the permission of ARDI's president Clअगरf Matthews.
  */
 
-#include "hfs_fs.h"
-#include <linux/dcache.h>
+#समावेश "hfs_fs.h"
+#समावेश <linux/dcache.h>
 
 /*================ File-local variables ================*/
 
 /*
- * unsigned char caseorder[]
+ * अचिन्हित अक्षर हालorder[]
  *
- * Defines the lexical ordering of characters on the Macintosh
+ * Defines the lexical ordering of अक्षरacters on the Macपूर्णांकosh
  *
  * Composition of the 'casefold' and 'order' tables from ARDI's code
- * with the entry for 0x20 changed to match that for 0xCA to remove
- * special case for those two characters.
+ * with the entry क्रम 0x20 changed to match that क्रम 0xCA to हटाओ
+ * special हाल क्रम those two अक्षरacters.
  */
-static unsigned char caseorder[256] = {
+अटल अचिन्हित अक्षर हालorder[256] = अणु
 	0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
 	0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,
 	0x20,0x22,0x23,0x28,0x29,0x2A,0x2B,0x2C,0x2F,0x30,0x31,0x32,0x33,0x34,0x35,0x36,
@@ -44,71 +45,71 @@ static unsigned char caseorder[256] = {
 	0xD5,0xD6,0x24,0x25,0x2D,0x2E,0xD7,0xD8,0xA6,0xD9,0xDA,0xDB,0xDC,0xDD,0xDE,0xDF,
 	0xE0,0xE1,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7,0xE8,0xE9,0xEA,0xEB,0xEC,0xED,0xEE,0xEF,
 	0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF
-};
+पूर्ण;
 
 /*================ Global functions ================*/
 
 /*
- * Hash a string to an integer in a case-independent way
+ * Hash a string to an पूर्णांकeger in a हाल-independent way
  */
-int hfs_hash_dentry(const struct dentry *dentry, struct qstr *this)
-{
-	const unsigned char *name = this->name;
-	unsigned int hash, len = this->len;
+पूर्णांक hfs_hash_dentry(स्थिर काष्ठा dentry *dentry, काष्ठा qstr *this)
+अणु
+	स्थिर अचिन्हित अक्षर *name = this->name;
+	अचिन्हित पूर्णांक hash, len = this->len;
 
-	if (len > HFS_NAMELEN)
+	अगर (len > HFS_NAMELEN)
 		len = HFS_NAMELEN;
 
 	hash = init_name_hash(dentry);
-	for (; len; len--)
-		hash = partial_name_hash(caseorder[*name++], hash);
+	क्रम (; len; len--)
+		hash = partial_name_hash(हालorder[*name++], hash);
 	this->hash = end_name_hash(hash);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Compare two strings in the HFS filename character ordering
+ * Compare two strings in the HFS filename अक्षरacter ordering
  * Returns positive, negative, or zero, not just 0 or (+/-)1
  *
  * Equivalent to ARDI's call:
  *	ROMlib_RelString(s1+1, s2+1, true, false, (s1[0]<<16) | s2[0])
  */
-int hfs_strcmp(const unsigned char *s1, unsigned int len1,
-	       const unsigned char *s2, unsigned int len2)
-{
-	int len, tmp;
+पूर्णांक hfs_म_भेद(स्थिर अचिन्हित अक्षर *s1, अचिन्हित पूर्णांक len1,
+	       स्थिर अचिन्हित अक्षर *s2, अचिन्हित पूर्णांक len2)
+अणु
+	पूर्णांक len, पंचांगp;
 
 	len = (len1 > len2) ? len2 : len1;
 
-	while (len--) {
-		tmp = (int)caseorder[*(s1++)] - (int)caseorder[*(s2++)];
-		if (tmp)
-			return tmp;
-	}
-	return len1 - len2;
-}
+	जबतक (len--) अणु
+		पंचांगp = (पूर्णांक)हालorder[*(s1++)] - (पूर्णांक)हालorder[*(s2++)];
+		अगर (पंचांगp)
+			वापस पंचांगp;
+	पूर्ण
+	वापस len1 - len2;
+पूर्ण
 
 /*
- * Test for equality of two strings in the HFS filename character ordering.
- * return 1 on failure and 0 on success
+ * Test क्रम equality of two strings in the HFS filename अक्षरacter ordering.
+ * वापस 1 on failure and 0 on success
  */
-int hfs_compare_dentry(const struct dentry *dentry,
-		unsigned int len, const char *str, const struct qstr *name)
-{
-	const unsigned char *n1, *n2;
+पूर्णांक hfs_compare_dentry(स्थिर काष्ठा dentry *dentry,
+		अचिन्हित पूर्णांक len, स्थिर अक्षर *str, स्थिर काष्ठा qstr *name)
+अणु
+	स्थिर अचिन्हित अक्षर *n1, *n2;
 
-	if (len >= HFS_NAMELEN) {
-		if (name->len < HFS_NAMELEN)
-			return 1;
+	अगर (len >= HFS_NAMELEN) अणु
+		अगर (name->len < HFS_NAMELEN)
+			वापस 1;
 		len = HFS_NAMELEN;
-	} else if (len != name->len)
-		return 1;
+	पूर्ण अन्यथा अगर (len != name->len)
+		वापस 1;
 
 	n1 = str;
 	n2 = name->name;
-	while (len--) {
-		if (caseorder[*n1++] != caseorder[*n2++])
-			return 1;
-	}
-	return 0;
-}
+	जबतक (len--) अणु
+		अगर (हालorder[*n1++] != हालorder[*n2++])
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण

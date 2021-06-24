@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Rockchip Video Decoder driver
  *
@@ -8,112 +9,112 @@
  * Based on s5p-mfc driver by Samsung Electronics Co., Ltd.
  * Copyright (C) 2011 Samsung Electronics Co., Ltd.
  */
-#ifndef RKVDEC_H_
-#define RKVDEC_H_
+#अगर_अघोषित RKVDEC_H_
+#घोषणा RKVDEC_H_
 
-#include <linux/platform_device.h>
-#include <linux/videodev2.h>
-#include <linux/wait.h>
-#include <linux/clk.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/clk.h>
 
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/videobuf2-core.h>
-#include <media/videobuf2-dma-contig.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/videobuf2-core.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-struct rkvdec_ctx;
+काष्ठा rkvdec_ctx;
 
-struct rkvdec_ctrl_desc {
-	struct v4l2_ctrl_config cfg;
-};
+काष्ठा rkvdec_ctrl_desc अणु
+	काष्ठा v4l2_ctrl_config cfg;
+पूर्ण;
 
-struct rkvdec_ctrls {
-	const struct rkvdec_ctrl_desc *ctrls;
-	unsigned int num_ctrls;
-};
+काष्ठा rkvdec_ctrls अणु
+	स्थिर काष्ठा rkvdec_ctrl_desc *ctrls;
+	अचिन्हित पूर्णांक num_ctrls;
+पूर्ण;
 
-struct rkvdec_run {
-	struct {
-		struct vb2_v4l2_buffer *src;
-		struct vb2_v4l2_buffer *dst;
-	} bufs;
-};
+काष्ठा rkvdec_run अणु
+	काष्ठा अणु
+		काष्ठा vb2_v4l2_buffer *src;
+		काष्ठा vb2_v4l2_buffer *dst;
+	पूर्ण bufs;
+पूर्ण;
 
-struct rkvdec_vp9_decoded_buffer_info {
+काष्ठा rkvdec_vp9_decoded_buffer_info अणु
 	/* Info needed when the decoded frame serves as a reference frame. */
 	u16 width;
 	u16 height;
 	u32 bit_depth : 4;
-};
+पूर्ण;
 
-struct rkvdec_decoded_buffer {
-	/* Must be the first field in this struct. */
-	struct v4l2_m2m_buffer base;
-};
+काष्ठा rkvdec_decoded_buffer अणु
+	/* Must be the first field in this काष्ठा. */
+	काष्ठा v4l2_m2m_buffer base;
+पूर्ण;
 
-static inline struct rkvdec_decoded_buffer *
-vb2_to_rkvdec_decoded_buf(struct vb2_buffer *buf)
-{
-	return container_of(buf, struct rkvdec_decoded_buffer,
+अटल अंतरभूत काष्ठा rkvdec_decoded_buffer *
+vb2_to_rkvdec_decoded_buf(काष्ठा vb2_buffer *buf)
+अणु
+	वापस container_of(buf, काष्ठा rkvdec_decoded_buffer,
 			    base.vb.vb2_buf);
-}
+पूर्ण
 
-struct rkvdec_coded_fmt_ops {
-	int (*adjust_fmt)(struct rkvdec_ctx *ctx,
-			  struct v4l2_format *f);
-	int (*start)(struct rkvdec_ctx *ctx);
-	void (*stop)(struct rkvdec_ctx *ctx);
-	int (*run)(struct rkvdec_ctx *ctx);
-	void (*done)(struct rkvdec_ctx *ctx, struct vb2_v4l2_buffer *src_buf,
-		     struct vb2_v4l2_buffer *dst_buf,
-		     enum vb2_buffer_state result);
-};
+काष्ठा rkvdec_coded_fmt_ops अणु
+	पूर्णांक (*adjust_fmt)(काष्ठा rkvdec_ctx *ctx,
+			  काष्ठा v4l2_क्रमmat *f);
+	पूर्णांक (*start)(काष्ठा rkvdec_ctx *ctx);
+	व्योम (*stop)(काष्ठा rkvdec_ctx *ctx);
+	पूर्णांक (*run)(काष्ठा rkvdec_ctx *ctx);
+	व्योम (*करोne)(काष्ठा rkvdec_ctx *ctx, काष्ठा vb2_v4l2_buffer *src_buf,
+		     काष्ठा vb2_v4l2_buffer *dst_buf,
+		     क्रमागत vb2_buffer_state result);
+पूर्ण;
 
-struct rkvdec_coded_fmt_desc {
+काष्ठा rkvdec_coded_fmt_desc अणु
 	u32 fourcc;
-	struct v4l2_frmsize_stepwise frmsize;
-	const struct rkvdec_ctrls *ctrls;
-	const struct rkvdec_coded_fmt_ops *ops;
-	unsigned int num_decoded_fmts;
-	const u32 *decoded_fmts;
-};
+	काष्ठा v4l2_frmsize_stepwise frmsize;
+	स्थिर काष्ठा rkvdec_ctrls *ctrls;
+	स्थिर काष्ठा rkvdec_coded_fmt_ops *ops;
+	अचिन्हित पूर्णांक num_decoded_fmts;
+	स्थिर u32 *decoded_fmts;
+पूर्ण;
 
-struct rkvdec_dev {
-	struct v4l2_device v4l2_dev;
-	struct media_device mdev;
-	struct video_device vdev;
-	struct v4l2_m2m_dev *m2m_dev;
-	struct device *dev;
-	struct clk_bulk_data *clocks;
-	void __iomem *regs;
-	struct mutex vdev_lock; /* serializes ioctls */
-	struct delayed_work watchdog_work;
-};
+काष्ठा rkvdec_dev अणु
+	काष्ठा v4l2_device v4l2_dev;
+	काष्ठा media_device mdev;
+	काष्ठा video_device vdev;
+	काष्ठा v4l2_m2m_dev *m2m_dev;
+	काष्ठा device *dev;
+	काष्ठा clk_bulk_data *घड़ीs;
+	व्योम __iomem *regs;
+	काष्ठा mutex vdev_lock; /* serializes ioctls */
+	काष्ठा delayed_work watchकरोg_work;
+पूर्ण;
 
-struct rkvdec_ctx {
-	struct v4l2_fh fh;
-	struct v4l2_format coded_fmt;
-	struct v4l2_format decoded_fmt;
-	const struct rkvdec_coded_fmt_desc *coded_fmt_desc;
-	struct v4l2_ctrl_handler ctrl_hdl;
-	struct rkvdec_dev *dev;
-	void *priv;
-};
+काष्ठा rkvdec_ctx अणु
+	काष्ठा v4l2_fh fh;
+	काष्ठा v4l2_क्रमmat coded_fmt;
+	काष्ठा v4l2_क्रमmat decoded_fmt;
+	स्थिर काष्ठा rkvdec_coded_fmt_desc *coded_fmt_desc;
+	काष्ठा v4l2_ctrl_handler ctrl_hdl;
+	काष्ठा rkvdec_dev *dev;
+	व्योम *priv;
+पूर्ण;
 
-static inline struct rkvdec_ctx *fh_to_rkvdec_ctx(struct v4l2_fh *fh)
-{
-	return container_of(fh, struct rkvdec_ctx, fh);
-}
+अटल अंतरभूत काष्ठा rkvdec_ctx *fh_to_rkvdec_ctx(काष्ठा v4l2_fh *fh)
+अणु
+	वापस container_of(fh, काष्ठा rkvdec_ctx, fh);
+पूर्ण
 
-struct rkvdec_aux_buf {
-	void *cpu;
+काष्ठा rkvdec_aux_buf अणु
+	व्योम *cpu;
 	dma_addr_t dma;
-	size_t size;
-};
+	माप_प्रकार size;
+पूर्ण;
 
-void rkvdec_run_preamble(struct rkvdec_ctx *ctx, struct rkvdec_run *run);
-void rkvdec_run_postamble(struct rkvdec_ctx *ctx, struct rkvdec_run *run);
+व्योम rkvdec_run_preamble(काष्ठा rkvdec_ctx *ctx, काष्ठा rkvdec_run *run);
+व्योम rkvdec_run_postamble(काष्ठा rkvdec_ctx *ctx, काष्ठा rkvdec_run *run);
 
-extern const struct rkvdec_coded_fmt_ops rkvdec_h264_fmt_ops;
-#endif /* RKVDEC_H_ */
+बाह्य स्थिर काष्ठा rkvdec_coded_fmt_ops rkvdec_h264_fmt_ops;
+#पूर्ण_अगर /* RKVDEC_H_ */

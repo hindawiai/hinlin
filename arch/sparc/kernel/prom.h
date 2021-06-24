@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PROM_H
-#define __PROM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PROM_H
+#घोषणा __PROM_H
 
-#include <linux/spinlock.h>
-#include <asm/prom.h>
+#समावेश <linux/spinlock.h>
+#समावेश <यंत्र/prom.h>
 
-void of_console_init(void);
+व्योम of_console_init(व्योम);
 
-extern unsigned int prom_early_allocated;
+बाह्य अचिन्हित पूर्णांक prom_early_allocated;
 
-#endif /* __PROM_H */
+#पूर्ण_अगर /* __PROM_H */

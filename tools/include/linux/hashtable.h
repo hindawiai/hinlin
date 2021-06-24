@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Statically sized hash table implementation
  * (C) 2012  Sasha Levin <levinsasha928@gmail.com>
  */
 
-#ifndef _LINUX_HASHTABLE_H
-#define _LINUX_HASHTABLE_H
+#अगर_अघोषित _LINUX_HASHTABLE_H
+#घोषणा _LINUX_HASHTABLE_H
 
-#include <linux/list.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/bitops.h>
-#include <linux/hash.h>
-#include <linux/log2.h>
+#समावेश <linux/list.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/log2.h>
 
-#define DEFINE_HASHTABLE(name, bits)						\
-	struct hlist_head name[1 << (bits)] =					\
-			{ [0 ... ((1 << (bits)) - 1)] = HLIST_HEAD_INIT }
+#घोषणा DEFINE_HASHTABLE(name, bits)						\
+	काष्ठा hlist_head name[1 << (bits)] =					\
+			अणु [0 ... ((1 << (bits)) - 1)] = HLIST_HEAD_INIT पूर्ण
 
-#define DECLARE_HASHTABLE(name, bits)                                   	\
-	struct hlist_head name[1 << (bits)]
+#घोषणा DECLARE_HASHTABLE(name, bits)                                   	\
+	काष्ठा hlist_head name[1 << (bits)]
 
-#define HASH_SIZE(name) (ARRAY_SIZE(name))
-#define HASH_BITS(name) ilog2(HASH_SIZE(name))
+#घोषणा HASH_SIZE(name) (ARRAY_SIZE(name))
+#घोषणा HASH_BITS(name) ilog2(HASH_SIZE(name))
 
-/* Use hash_32 when possible to allow for fast 32bit hashing in 64bit kernels. */
-#define hash_min(val, bits)							\
-	(sizeof(val) <= 4 ? hash_32(val, bits) : hash_long(val, bits))
+/* Use hash_32 when possible to allow क्रम fast 32bit hashing in 64bit kernels. */
+#घोषणा hash_min(val, bits)							\
+	(माप(val) <= 4 ? hash_32(val, bits) : hash_दीर्घ(val, bits))
 
-static inline void __hash_init(struct hlist_head *ht, unsigned int sz)
-{
-	unsigned int i;
+अटल अंतरभूत व्योम __hash_init(काष्ठा hlist_head *ht, अचिन्हित पूर्णांक sz)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < sz; i++)
+	क्रम (i = 0; i < sz; i++)
 		INIT_HLIST_HEAD(&ht[i]);
-}
+पूर्ण
 
 /**
  * hash_init - initialize a hash table
@@ -43,107 +44,107 @@ static inline void __hash_init(struct hlist_head *ht, unsigned int sz)
  * Calculates the size of the hashtable from the given parameter, otherwise
  * same as hash_init_size.
  *
- * This has to be a macro since HASH_BITS() will not work on pointers since
+ * This has to be a macro since HASH_BITS() will not work on poपूर्णांकers since
  * it calculates the size during preprocessing.
  */
-#define hash_init(hashtable) __hash_init(hashtable, HASH_SIZE(hashtable))
+#घोषणा hash_init(hashtable) __hash_init(hashtable, HASH_SIZE(hashtable))
 
 /**
  * hash_add - add an object to a hashtable
  * @hashtable: hashtable to add to
- * @node: the &struct hlist_node of the object to be added
+ * @node: the &काष्ठा hlist_node of the object to be added
  * @key: the key of the object to be added
  */
-#define hash_add(hashtable, node, key)						\
+#घोषणा hash_add(hashtable, node, key)						\
 	hlist_add_head(node, &hashtable[hash_min(key, HASH_BITS(hashtable))])
 
 /**
  * hash_hashed - check whether an object is in any hashtable
- * @node: the &struct hlist_node of the object to be checked
+ * @node: the &काष्ठा hlist_node of the object to be checked
  */
-static inline bool hash_hashed(struct hlist_node *node)
-{
-	return !hlist_unhashed(node);
-}
+अटल अंतरभूत bool hash_hashed(काष्ठा hlist_node *node)
+अणु
+	वापस !hlist_unhashed(node);
+पूर्ण
 
-static inline bool __hash_empty(struct hlist_head *ht, unsigned int sz)
-{
-	unsigned int i;
+अटल अंतरभूत bool __hash_empty(काष्ठा hlist_head *ht, अचिन्हित पूर्णांक sz)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < sz; i++)
-		if (!hlist_empty(&ht[i]))
-			return false;
+	क्रम (i = 0; i < sz; i++)
+		अगर (!hlist_empty(&ht[i]))
+			वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * hash_empty - check whether a hashtable is empty
  * @hashtable: hashtable to check
  *
- * This has to be a macro since HASH_BITS() will not work on pointers since
+ * This has to be a macro since HASH_BITS() will not work on poपूर्णांकers since
  * it calculates the size during preprocessing.
  */
-#define hash_empty(hashtable) __hash_empty(hashtable, HASH_SIZE(hashtable))
+#घोषणा hash_empty(hashtable) __hash_empty(hashtable, HASH_SIZE(hashtable))
 
 /**
- * hash_del - remove an object from a hashtable
- * @node: &struct hlist_node of the object to remove
+ * hash_del - हटाओ an object from a hashtable
+ * @node: &काष्ठा hlist_node of the object to हटाओ
  */
-static inline void hash_del(struct hlist_node *node)
-{
+अटल अंतरभूत व्योम hash_del(काष्ठा hlist_node *node)
+अणु
 	hlist_del_init(node);
-}
+पूर्ण
 
 /**
- * hash_for_each - iterate over a hashtable
+ * hash_क्रम_each - iterate over a hashtable
  * @name: hashtable to iterate
- * @bkt: integer to use as bucket loop cursor
- * @obj: the type * to use as a loop cursor for each entry
- * @member: the name of the hlist_node within the struct
+ * @bkt: पूर्णांकeger to use as bucket loop cursor
+ * @obj: the type * to use as a loop cursor क्रम each entry
+ * @member: the name of the hlist_node within the काष्ठा
  */
-#define hash_for_each(name, bkt, obj, member)				\
-	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < HASH_SIZE(name);\
+#घोषणा hash_क्रम_each(name, bkt, obj, member)				\
+	क्रम ((bkt) = 0, obj = शून्य; obj == शून्य && (bkt) < HASH_SIZE(name);\
 			(bkt)++)\
-		hlist_for_each_entry(obj, &name[bkt], member)
+		hlist_क्रम_each_entry(obj, &name[bkt], member)
 
 /**
- * hash_for_each_safe - iterate over a hashtable safe against removal of
+ * hash_क्रम_each_safe - iterate over a hashtable safe against removal of
  * hash entry
  * @name: hashtable to iterate
- * @bkt: integer to use as bucket loop cursor
- * @tmp: a &struct used for temporary storage
- * @obj: the type * to use as a loop cursor for each entry
- * @member: the name of the hlist_node within the struct
+ * @bkt: पूर्णांकeger to use as bucket loop cursor
+ * @पंचांगp: a &काष्ठा used क्रम temporary storage
+ * @obj: the type * to use as a loop cursor क्रम each entry
+ * @member: the name of the hlist_node within the काष्ठा
  */
-#define hash_for_each_safe(name, bkt, tmp, obj, member)			\
-	for ((bkt) = 0, obj = NULL; obj == NULL && (bkt) < HASH_SIZE(name);\
+#घोषणा hash_क्रम_each_safe(name, bkt, पंचांगp, obj, member)			\
+	क्रम ((bkt) = 0, obj = शून्य; obj == शून्य && (bkt) < HASH_SIZE(name);\
 			(bkt)++)\
-		hlist_for_each_entry_safe(obj, tmp, &name[bkt], member)
+		hlist_क्रम_each_entry_safe(obj, पंचांगp, &name[bkt], member)
 
 /**
- * hash_for_each_possible - iterate over all possible objects hashing to the
+ * hash_क्रम_each_possible - iterate over all possible objects hashing to the
  * same bucket
  * @name: hashtable to iterate
- * @obj: the type * to use as a loop cursor for each entry
- * @member: the name of the hlist_node within the struct
+ * @obj: the type * to use as a loop cursor क्रम each entry
+ * @member: the name of the hlist_node within the काष्ठा
  * @key: the key of the objects to iterate over
  */
-#define hash_for_each_possible(name, obj, member, key)			\
-	hlist_for_each_entry(obj, &name[hash_min(key, HASH_BITS(name))], member)
+#घोषणा hash_क्रम_each_possible(name, obj, member, key)			\
+	hlist_क्रम_each_entry(obj, &name[hash_min(key, HASH_BITS(name))], member)
 
 /**
- * hash_for_each_possible_safe - iterate over all possible objects hashing to the
+ * hash_क्रम_each_possible_safe - iterate over all possible objects hashing to the
  * same bucket safe against removals
  * @name: hashtable to iterate
- * @obj: the type * to use as a loop cursor for each entry
- * @tmp: a &struct used for temporary storage
- * @member: the name of the hlist_node within the struct
+ * @obj: the type * to use as a loop cursor क्रम each entry
+ * @पंचांगp: a &काष्ठा used क्रम temporary storage
+ * @member: the name of the hlist_node within the काष्ठा
  * @key: the key of the objects to iterate over
  */
-#define hash_for_each_possible_safe(name, obj, tmp, member, key)	\
-	hlist_for_each_entry_safe(obj, tmp,\
+#घोषणा hash_क्रम_each_possible_safe(name, obj, पंचांगp, member, key)	\
+	hlist_क्रम_each_entry_safe(obj, पंचांगp,\
 		&name[hash_min(key, HASH_BITS(name))], member)
 
 
-#endif
+#पूर्ण_अगर

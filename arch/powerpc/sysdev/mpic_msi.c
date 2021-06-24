@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2006-2007, Michael Ellerman, IBM Corporation.
  */
 
-#include <linux/irq.h>
-#include <linux/bitmap.h>
-#include <linux/msi.h>
-#include <asm/mpic.h>
-#include <asm/prom.h>
-#include <asm/hw_irq.h>
-#include <asm/ppc-pci.h>
-#include <asm/msi_bitmap.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/msi.h>
+#समावेश <यंत्र/mpic.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/hw_irq.h>
+#समावेश <यंत्र/ppc-pci.h>
+#समावेश <यंत्र/msi_biपंचांगap.h>
 
-#include <sysdev/mpic.h>
+#समावेश <sysdev/mpic.h>
 
-void mpic_msi_reserve_hwirq(struct mpic *mpic, irq_hw_number_t hwirq)
-{
+व्योम mpic_msi_reserve_hwirq(काष्ठा mpic *mpic, irq_hw_number_t hwirq)
+अणु
 	/* The mpic calls this even when there is no allocator setup */
-	if (!mpic->msi_bitmap.bitmap)
-		return;
+	अगर (!mpic->msi_biपंचांगap.biपंचांगap)
+		वापस;
 
-	msi_bitmap_reserve_hwirq(&mpic->msi_bitmap, hwirq);
-}
+	msi_biपंचांगap_reserve_hwirq(&mpic->msi_biपंचांगap, hwirq);
+पूर्ण
 
-#ifdef CONFIG_MPIC_U3_HT_IRQS
-static int mpic_msi_reserve_u3_hwirqs(struct mpic *mpic)
-{
+#अगर_घोषित CONFIG_MPIC_U3_HT_IRQS
+अटल पूर्णांक mpic_msi_reserve_u3_hwirqs(काष्ठा mpic *mpic)
+अणु
 	irq_hw_number_t hwirq;
-	const struct irq_domain_ops *ops = mpic->irqhost->ops;
-	struct device_node *np;
-	int flags, index, i;
-	struct of_phandle_args oirq;
+	स्थिर काष्ठा irq_करोमुख्य_ops *ops = mpic->irqhost->ops;
+	काष्ठा device_node *np;
+	पूर्णांक flags, index, i;
+	काष्ठा of_phandle_args oirq;
 
 	pr_debug("mpic: found U3, guessing msi allocator setup\n");
 
@@ -38,61 +39,61 @@ static int mpic_msi_reserve_u3_hwirqs(struct mpic *mpic)
 	 *
 	 * This is a bit of a mix of U3 and U4 reserves but that's going
 	 * to work fine, we have plenty enugh numbers left so let's just
-	 * mark anything we don't like reserved.
+	 * mark anything we करोn't like reserved.
 	 */
-	for (i = 0;   i < 8;   i++)
-		msi_bitmap_reserve_hwirq(&mpic->msi_bitmap, i);
+	क्रम (i = 0;   i < 8;   i++)
+		msi_biपंचांगap_reserve_hwirq(&mpic->msi_biपंचांगap, i);
 
-	for (i = 42;  i < 46;  i++)
-		msi_bitmap_reserve_hwirq(&mpic->msi_bitmap, i);
+	क्रम (i = 42;  i < 46;  i++)
+		msi_biपंचांगap_reserve_hwirq(&mpic->msi_biपंचांगap, i);
 
-	for (i = 100; i < 105; i++)
-		msi_bitmap_reserve_hwirq(&mpic->msi_bitmap, i);
+	क्रम (i = 100; i < 105; i++)
+		msi_biपंचांगap_reserve_hwirq(&mpic->msi_biपंचांगap, i);
 
-	for (i = 124; i < mpic->num_sources; i++)
-		msi_bitmap_reserve_hwirq(&mpic->msi_bitmap, i);
+	क्रम (i = 124; i < mpic->num_sources; i++)
+		msi_biपंचांगap_reserve_hwirq(&mpic->msi_biपंचांगap, i);
 
 
-	np = NULL;
-	while ((np = of_find_all_nodes(np))) {
+	np = शून्य;
+	जबतक ((np = of_find_all_nodes(np))) अणु
 		pr_debug("mpic: mapping hwirqs for %pOF\n", np);
 
 		index = 0;
-		while (of_irq_parse_one(np, index++, &oirq) == 0) {
-			ops->xlate(mpic->irqhost, NULL, oirq.args,
+		जबतक (of_irq_parse_one(np, index++, &oirq) == 0) अणु
+			ops->xlate(mpic->irqhost, शून्य, oirq.args,
 						oirq.args_count, &hwirq, &flags);
-			msi_bitmap_reserve_hwirq(&mpic->msi_bitmap, hwirq);
-		}
-	}
+			msi_biपंचांगap_reserve_hwirq(&mpic->msi_biपंचांगap, hwirq);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
-#else
-static int mpic_msi_reserve_u3_hwirqs(struct mpic *mpic)
-{
-	return -1;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक mpic_msi_reserve_u3_hwirqs(काष्ठा mpic *mpic)
+अणु
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
 
-int mpic_msi_init_allocator(struct mpic *mpic)
-{
-	int rc;
+पूर्णांक mpic_msi_init_allocator(काष्ठा mpic *mpic)
+अणु
+	पूर्णांक rc;
 
-	rc = msi_bitmap_alloc(&mpic->msi_bitmap, mpic->num_sources,
-			      irq_domain_get_of_node(mpic->irqhost));
-	if (rc)
-		return rc;
+	rc = msi_biपंचांगap_alloc(&mpic->msi_biपंचांगap, mpic->num_sources,
+			      irq_करोमुख्य_get_of_node(mpic->irqhost));
+	अगर (rc)
+		वापस rc;
 
-	rc = msi_bitmap_reserve_dt_hwirqs(&mpic->msi_bitmap);
-	if (rc > 0) {
-		if (mpic->flags & MPIC_U3_HT_IRQS)
+	rc = msi_biपंचांगap_reserve_dt_hwirqs(&mpic->msi_biपंचांगap);
+	अगर (rc > 0) अणु
+		अगर (mpic->flags & MPIC_U3_HT_IRQS)
 			rc = mpic_msi_reserve_u3_hwirqs(mpic);
 
-		if (rc) {
-			msi_bitmap_free(&mpic->msi_bitmap);
-			return rc;
-		}
-	}
+		अगर (rc) अणु
+			msi_biपंचांगap_मुक्त(&mpic->msi_biपंचांगap);
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

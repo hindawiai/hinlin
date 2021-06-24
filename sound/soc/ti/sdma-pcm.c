@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/dmaengine_pcm.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/dmaengine_pcm.h>
 
-#include "sdma-pcm.h"
+#समावेश "sdma-pcm.h"
 
-static const struct snd_pcm_hardware sdma_pcm_hardware = {
+अटल स्थिर काष्ठा snd_pcm_hardware sdma_pcm_hardware = अणु
 	.info			= SNDRV_PCM_INFO_MMAP |
 				  SNDRV_PCM_INFO_MMAP_VALID |
 				  SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME |
@@ -25,46 +26,46 @@ static const struct snd_pcm_hardware sdma_pcm_hardware = {
 	.buffer_bytes_max	= 128 * 1024,
 	.periods_min		= 2,
 	.periods_max		= 255,
-};
+पूर्ण;
 
-static const struct snd_dmaengine_pcm_config sdma_dmaengine_pcm_config = {
+अटल स्थिर काष्ठा snd_dmaengine_pcm_config sdma_dmaengine_pcm_config = अणु
 	.pcm_hardware = &sdma_pcm_hardware,
 	.prepare_slave_config = snd_dmaengine_pcm_prepare_slave_config,
-	.prealloc_buffer_size = 128 * 1024,
-};
+	.pपुनः_स्मृति_buffer_size = 128 * 1024,
+पूर्ण;
 
-int sdma_pcm_platform_register(struct device *dev,
-			       char *txdmachan, char *rxdmachan)
-{
-	struct snd_dmaengine_pcm_config *config;
-	unsigned int flags = 0;
+पूर्णांक sdma_pcm_platक्रमm_रेजिस्टर(काष्ठा device *dev,
+			       अक्षर *txdmachan, अक्षर *rxdmachan)
+अणु
+	काष्ठा snd_dmaengine_pcm_config *config;
+	अचिन्हित पूर्णांक flags = 0;
 
-	/* Standard names for the directions: 'tx' and 'rx' */
-	if (!txdmachan && !rxdmachan)
-		return devm_snd_dmaengine_pcm_register(dev,
+	/* Standard names क्रम the directions: 'tx' and 'rx' */
+	अगर (!txdmachan && !rxdmachan)
+		वापस devm_snd_dmaengine_pcm_रेजिस्टर(dev,
 						&sdma_dmaengine_pcm_config, 0);
 
-	config = devm_kzalloc(dev, sizeof(*config), GFP_KERNEL);
-	if (!config)
-		return -ENOMEM;
+	config = devm_kzalloc(dev, माप(*config), GFP_KERNEL);
+	अगर (!config)
+		वापस -ENOMEM;
 
 	*config = sdma_dmaengine_pcm_config;
 
-	if (!txdmachan || !rxdmachan) {
+	अगर (!txdmachan || !rxdmachan) अणु
 		/* One direction only PCM */
 		flags |= SND_DMAENGINE_PCM_FLAG_HALF_DUPLEX;
-		if (!txdmachan) {
+		अगर (!txdmachan) अणु
 			txdmachan = rxdmachan;
-			rxdmachan = NULL;
-		}
-	}
+			rxdmachan = शून्य;
+		पूर्ण
+	पूर्ण
 
 	config->chan_names[0] = txdmachan;
 	config->chan_names[1] = rxdmachan;
 
-	return devm_snd_dmaengine_pcm_register(dev, config, flags);
-}
-EXPORT_SYMBOL_GPL(sdma_pcm_platform_register);
+	वापस devm_snd_dmaengine_pcm_रेजिस्टर(dev, config, flags);
+पूर्ण
+EXPORT_SYMBOL_GPL(sdma_pcm_platक्रमm_रेजिस्टर);
 
 MODULE_AUTHOR("Peter Ujfalusi <peter.ujfalusi@ti.com>");
 MODULE_DESCRIPTION("sDMA PCM ASoC platform driver");

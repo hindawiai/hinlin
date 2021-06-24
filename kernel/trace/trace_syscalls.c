@@ -1,825 +1,826 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <trace/syscall.h>
-#include <trace/events/syscalls.h>
-#include <linux/syscalls.h>
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/module.h>	/* for MODULE_NAME_LEN via KSYM_SYMBOL_LEN */
-#include <linux/ftrace.h>
-#include <linux/perf_event.h>
-#include <linux/xarray.h>
-#include <asm/syscall.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <trace/syscall.h>
+#समावेश <trace/events/syscalls.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>	/* क्रम MODULE_NAME_LEN via KSYM_SYMBOL_LEN */
+#समावेश <linux/ftrace.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/xarray.h>
+#समावेश <यंत्र/syscall.h>
 
-#include "trace_output.h"
-#include "trace.h"
+#समावेश "trace_output.h"
+#समावेश "trace.h"
 
-static DEFINE_MUTEX(syscall_trace_lock);
+अटल DEFINE_MUTEX(syscall_trace_lock);
 
-static int syscall_enter_register(struct trace_event_call *event,
-				 enum trace_reg type, void *data);
-static int syscall_exit_register(struct trace_event_call *event,
-				 enum trace_reg type, void *data);
+अटल पूर्णांक syscall_enter_रेजिस्टर(काष्ठा trace_event_call *event,
+				 क्रमागत trace_reg type, व्योम *data);
+अटल पूर्णांक syscall_निकास_रेजिस्टर(काष्ठा trace_event_call *event,
+				 क्रमागत trace_reg type, व्योम *data);
 
-static struct list_head *
-syscall_get_enter_fields(struct trace_event_call *call)
-{
-	struct syscall_metadata *entry = call->data;
+अटल काष्ठा list_head *
+syscall_get_enter_fields(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा syscall_metadata *entry = call->data;
 
-	return &entry->enter_fields;
-}
+	वापस &entry->enter_fields;
+पूर्ण
 
-extern struct syscall_metadata *__start_syscalls_metadata[];
-extern struct syscall_metadata *__stop_syscalls_metadata[];
+बाह्य काष्ठा syscall_metadata *__start_syscalls_metadata[];
+बाह्य काष्ठा syscall_metadata *__stop_syscalls_metadata[];
 
-static DEFINE_XARRAY(syscalls_metadata_sparse);
-static struct syscall_metadata **syscalls_metadata;
+अटल DEFINE_XARRAY(syscalls_metadata_sparse);
+अटल काष्ठा syscall_metadata **syscalls_metadata;
 
-#ifndef ARCH_HAS_SYSCALL_MATCH_SYM_NAME
-static inline bool arch_syscall_match_sym_name(const char *sym, const char *name)
-{
+#अगर_अघोषित ARCH_HAS_SYSCALL_MATCH_SYM_NAME
+अटल अंतरभूत bool arch_syscall_match_sym_name(स्थिर अक्षर *sym, स्थिर अक्षर *name)
+अणु
 	/*
 	 * Only compare after the "sys" prefix. Archs that use
 	 * syscall wrappers may have syscalls symbols aliases prefixed
 	 * with ".SyS" or ".sys" instead of "sys", leading to an unwanted
 	 * mismatch.
 	 */
-	return !strcmp(sym + 3, name + 3);
-}
-#endif
+	वापस !म_भेद(sym + 3, name + 3);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef ARCH_TRACE_IGNORE_COMPAT_SYSCALLS
+#अगर_घोषित ARCH_TRACE_IGNORE_COMPAT_SYSCALLS
 /*
- * Some architectures that allow for 32bit applications
- * to run on a 64bit kernel, do not map the syscalls for
- * the 32bit tasks the same as they do for 64bit tasks.
+ * Some architectures that allow क्रम 32bit applications
+ * to run on a 64bit kernel, करो not map the syscalls क्रम
+ * the 32bit tasks the same as they करो क्रम 64bit tasks.
  *
  *     *cough*x86*cough*
  *
- * In such a case, instead of reporting the wrong syscalls,
+ * In such a हाल, instead of reporting the wrong syscalls,
  * simply ignore them.
  *
  * For an arch to ignore the compat syscalls it needs to
  * define ARCH_TRACE_IGNORE_COMPAT_SYSCALLS as well as
  * define the function arch_trace_is_compat_syscall() to let
- * the tracing system know that it should ignore it.
+ * the tracing प्रणाली know that it should ignore it.
  */
-static int
-trace_get_syscall_nr(struct task_struct *task, struct pt_regs *regs)
-{
-	if (unlikely(arch_trace_is_compat_syscall(regs)))
-		return -1;
+अटल पूर्णांक
+trace_get_syscall_nr(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
+अणु
+	अगर (unlikely(arch_trace_is_compat_syscall(regs)))
+		वापस -1;
 
-	return syscall_get_nr(task, regs);
-}
-#else
-static inline int
-trace_get_syscall_nr(struct task_struct *task, struct pt_regs *regs)
-{
-	return syscall_get_nr(task, regs);
-}
-#endif /* ARCH_TRACE_IGNORE_COMPAT_SYSCALLS */
+	वापस syscall_get_nr(task, regs);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+trace_get_syscall_nr(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
+अणु
+	वापस syscall_get_nr(task, regs);
+पूर्ण
+#पूर्ण_अगर /* ARCH_TRACE_IGNORE_COMPAT_SYSCALLS */
 
-static __init struct syscall_metadata *
-find_syscall_meta(unsigned long syscall)
-{
-	struct syscall_metadata **start;
-	struct syscall_metadata **stop;
-	char str[KSYM_SYMBOL_LEN];
+अटल __init काष्ठा syscall_metadata *
+find_syscall_meta(अचिन्हित दीर्घ syscall)
+अणु
+	काष्ठा syscall_metadata **start;
+	काष्ठा syscall_metadata **stop;
+	अक्षर str[KSYM_SYMBOL_LEN];
 
 
 	start = __start_syscalls_metadata;
 	stop = __stop_syscalls_metadata;
-	kallsyms_lookup(syscall, NULL, NULL, NULL, str);
+	kallsyms_lookup(syscall, शून्य, शून्य, शून्य, str);
 
-	if (arch_syscall_match_sym_name(str, "sys_ni_syscall"))
-		return NULL;
+	अगर (arch_syscall_match_sym_name(str, "sys_ni_syscall"))
+		वापस शून्य;
 
-	for ( ; start < stop; start++) {
-		if ((*start)->name && arch_syscall_match_sym_name(str, (*start)->name))
-			return *start;
-	}
-	return NULL;
-}
+	क्रम ( ; start < stop; start++) अणु
+		अगर ((*start)->name && arch_syscall_match_sym_name(str, (*start)->name))
+			वापस *start;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct syscall_metadata *syscall_nr_to_meta(int nr)
-{
-	if (IS_ENABLED(CONFIG_HAVE_SPARSE_SYSCALL_NR))
-		return xa_load(&syscalls_metadata_sparse, (unsigned long)nr);
+अटल काष्ठा syscall_metadata *syscall_nr_to_meta(पूर्णांक nr)
+अणु
+	अगर (IS_ENABLED(CONFIG_HAVE_SPARSE_SYSCALL_NR))
+		वापस xa_load(&syscalls_metadata_sparse, (अचिन्हित दीर्घ)nr);
 
-	if (!syscalls_metadata || nr >= NR_syscalls || nr < 0)
-		return NULL;
+	अगर (!syscalls_metadata || nr >= NR_syscalls || nr < 0)
+		वापस शून्य;
 
-	return syscalls_metadata[nr];
-}
+	वापस syscalls_metadata[nr];
+पूर्ण
 
-const char *get_syscall_name(int syscall)
-{
-	struct syscall_metadata *entry;
+स्थिर अक्षर *get_syscall_name(पूर्णांक syscall)
+अणु
+	काष्ठा syscall_metadata *entry;
 
 	entry = syscall_nr_to_meta(syscall);
-	if (!entry)
-		return NULL;
+	अगर (!entry)
+		वापस शून्य;
 
-	return entry->name;
-}
+	वापस entry->name;
+पूर्ण
 
-static enum print_line_t
-print_syscall_enter(struct trace_iterator *iter, int flags,
-		    struct trace_event *event)
-{
-	struct trace_array *tr = iter->tr;
-	struct trace_seq *s = &iter->seq;
-	struct trace_entry *ent = iter->ent;
-	struct syscall_trace_enter *trace;
-	struct syscall_metadata *entry;
-	int i, syscall;
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_syscall_enter(काष्ठा trace_iterator *iter, पूर्णांक flags,
+		    काष्ठा trace_event *event)
+अणु
+	काष्ठा trace_array *tr = iter->tr;
+	काष्ठा trace_seq *s = &iter->seq;
+	काष्ठा trace_entry *ent = iter->ent;
+	काष्ठा syscall_trace_enter *trace;
+	काष्ठा syscall_metadata *entry;
+	पूर्णांक i, syscall;
 
 	trace = (typeof(trace))ent;
 	syscall = trace->nr;
 	entry = syscall_nr_to_meta(syscall);
 
-	if (!entry)
-		goto end;
+	अगर (!entry)
+		जाओ end;
 
-	if (entry->enter_event->event.type != ent->type) {
+	अगर (entry->enter_event->event.type != ent->type) अणु
 		WARN_ON_ONCE(1);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	trace_seq_printf(s, "%s(", entry->name);
+	trace_seq_म_लिखो(s, "%s(", entry->name);
 
-	for (i = 0; i < entry->nb_args; i++) {
+	क्रम (i = 0; i < entry->nb_args; i++) अणु
 
-		if (trace_seq_has_overflowed(s))
-			goto end;
+		अगर (trace_seq_has_overflowed(s))
+			जाओ end;
 
 		/* parameter types */
-		if (tr->trace_flags & TRACE_ITER_VERBOSE)
-			trace_seq_printf(s, "%s ", entry->types[i]);
+		अगर (tr->trace_flags & TRACE_ITER_VERBOSE)
+			trace_seq_म_लिखो(s, "%s ", entry->types[i]);
 
 		/* parameter values */
-		trace_seq_printf(s, "%s: %lx%s", entry->args[i],
+		trace_seq_म_लिखो(s, "%s: %lx%s", entry->args[i],
 				 trace->args[i],
 				 i == entry->nb_args - 1 ? "" : ", ");
-	}
+	पूर्ण
 
-	trace_seq_putc(s, ')');
+	trace_seq_अ_दो(s, ')');
 end:
-	trace_seq_putc(s, '\n');
+	trace_seq_अ_दो(s, '\n');
 
-	return trace_handle_return(s);
-}
+	वापस trace_handle_वापस(s);
+पूर्ण
 
-static enum print_line_t
-print_syscall_exit(struct trace_iterator *iter, int flags,
-		   struct trace_event *event)
-{
-	struct trace_seq *s = &iter->seq;
-	struct trace_entry *ent = iter->ent;
-	struct syscall_trace_exit *trace;
-	int syscall;
-	struct syscall_metadata *entry;
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_syscall_निकास(काष्ठा trace_iterator *iter, पूर्णांक flags,
+		   काष्ठा trace_event *event)
+अणु
+	काष्ठा trace_seq *s = &iter->seq;
+	काष्ठा trace_entry *ent = iter->ent;
+	काष्ठा syscall_trace_निकास *trace;
+	पूर्णांक syscall;
+	काष्ठा syscall_metadata *entry;
 
 	trace = (typeof(trace))ent;
 	syscall = trace->nr;
 	entry = syscall_nr_to_meta(syscall);
 
-	if (!entry) {
-		trace_seq_putc(s, '\n');
-		goto out;
-	}
+	अगर (!entry) अणु
+		trace_seq_अ_दो(s, '\n');
+		जाओ out;
+	पूर्ण
 
-	if (entry->exit_event->event.type != ent->type) {
+	अगर (entry->निकास_event->event.type != ent->type) अणु
 		WARN_ON_ONCE(1);
-		return TRACE_TYPE_UNHANDLED;
-	}
+		वापस TRACE_TYPE_UNHANDLED;
+	पूर्ण
 
-	trace_seq_printf(s, "%s -> 0x%lx\n", entry->name,
+	trace_seq_म_लिखो(s, "%s -> 0x%lx\n", entry->name,
 				trace->ret);
 
  out:
-	return trace_handle_return(s);
-}
+	वापस trace_handle_वापस(s);
+पूर्ण
 
-extern char *__bad_type_size(void);
+बाह्य अक्षर *__bad_type_size(व्योम);
 
-#define SYSCALL_FIELD(_type, _name) {					\
+#घोषणा SYSCALL_FIELD(_type, _name) अणु					\
 	.type = #_type, .name = #_name,					\
-	.size = sizeof(_type), .align = __alignof__(_type),		\
-	.is_signed = is_signed_type(_type), .filter_type = FILTER_OTHER }
+	.size = माप(_type), .align = __alignof__(_type),		\
+	.is_चिन्हित = is_चिन्हित_type(_type), .filter_type = FILTER_OTHER पूर्ण
 
-static int __init
-__set_enter_print_fmt(struct syscall_metadata *entry, char *buf, int len)
-{
-	int i;
-	int pos = 0;
+अटल पूर्णांक __init
+__set_enter_prपूर्णांक_fmt(काष्ठा syscall_metadata *entry, अक्षर *buf, पूर्णांक len)
+अणु
+	पूर्णांक i;
+	पूर्णांक pos = 0;
 
 	/* When len=0, we just calculate the needed length */
-#define LEN_OR_ZERO (len ? len - pos : 0)
+#घोषणा LEN_OR_ZERO (len ? len - pos : 0)
 
-	pos += snprintf(buf + pos, LEN_OR_ZERO, "\"");
-	for (i = 0; i < entry->nb_args; i++) {
-		pos += snprintf(buf + pos, LEN_OR_ZERO, "%s: 0x%%0%zulx%s",
-				entry->args[i], sizeof(unsigned long),
+	pos += snम_लिखो(buf + pos, LEN_OR_ZERO, "\"");
+	क्रम (i = 0; i < entry->nb_args; i++) अणु
+		pos += snम_लिखो(buf + pos, LEN_OR_ZERO, "%s: 0x%%0%zulx%s",
+				entry->args[i], माप(अचिन्हित दीर्घ),
 				i == entry->nb_args - 1 ? "" : ", ");
-	}
-	pos += snprintf(buf + pos, LEN_OR_ZERO, "\"");
+	पूर्ण
+	pos += snम_लिखो(buf + pos, LEN_OR_ZERO, "\"");
 
-	for (i = 0; i < entry->nb_args; i++) {
-		pos += snprintf(buf + pos, LEN_OR_ZERO,
+	क्रम (i = 0; i < entry->nb_args; i++) अणु
+		pos += snम_लिखो(buf + pos, LEN_OR_ZERO,
 				", ((unsigned long)(REC->%s))", entry->args[i]);
-	}
+	पूर्ण
 
-#undef LEN_OR_ZERO
+#अघोषित LEN_OR_ZERO
 
-	/* return the length of print_fmt */
-	return pos;
-}
+	/* वापस the length of prपूर्णांक_fmt */
+	वापस pos;
+पूर्ण
 
-static int __init set_syscall_print_fmt(struct trace_event_call *call)
-{
-	char *print_fmt;
-	int len;
-	struct syscall_metadata *entry = call->data;
+अटल पूर्णांक __init set_syscall_prपूर्णांक_fmt(काष्ठा trace_event_call *call)
+अणु
+	अक्षर *prपूर्णांक_fmt;
+	पूर्णांक len;
+	काष्ठा syscall_metadata *entry = call->data;
 
-	if (entry->enter_event != call) {
-		call->print_fmt = "\"0x%lx\", REC->ret";
-		return 0;
-	}
+	अगर (entry->enter_event != call) अणु
+		call->prपूर्णांक_fmt = "\"0x%lx\", REC->ret";
+		वापस 0;
+	पूर्ण
 
 	/* First: called with 0 length to calculate the needed length */
-	len = __set_enter_print_fmt(entry, NULL, 0);
+	len = __set_enter_prपूर्णांक_fmt(entry, शून्य, 0);
 
-	print_fmt = kmalloc(len + 1, GFP_KERNEL);
-	if (!print_fmt)
-		return -ENOMEM;
+	prपूर्णांक_fmt = kदो_स्मृति(len + 1, GFP_KERNEL);
+	अगर (!prपूर्णांक_fmt)
+		वापस -ENOMEM;
 
-	/* Second: actually write the @print_fmt */
-	__set_enter_print_fmt(entry, print_fmt, len + 1);
-	call->print_fmt = print_fmt;
+	/* Second: actually ग_लिखो the @prपूर्णांक_fmt */
+	__set_enter_prपूर्णांक_fmt(entry, prपूर्णांक_fmt, len + 1);
+	call->prपूर्णांक_fmt = prपूर्णांक_fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init free_syscall_print_fmt(struct trace_event_call *call)
-{
-	struct syscall_metadata *entry = call->data;
+अटल व्योम __init मुक्त_syscall_prपूर्णांक_fmt(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा syscall_metadata *entry = call->data;
 
-	if (entry->enter_event == call)
-		kfree(call->print_fmt);
-}
+	अगर (entry->enter_event == call)
+		kमुक्त(call->prपूर्णांक_fmt);
+पूर्ण
 
-static int __init syscall_enter_define_fields(struct trace_event_call *call)
-{
-	struct syscall_trace_enter trace;
-	struct syscall_metadata *meta = call->data;
-	int offset = offsetof(typeof(trace), args);
-	int ret = 0;
-	int i;
+अटल पूर्णांक __init syscall_enter_define_fields(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा syscall_trace_enter trace;
+	काष्ठा syscall_metadata *meta = call->data;
+	पूर्णांक offset = दुरत्व(typeof(trace), args);
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < meta->nb_args; i++) {
+	क्रम (i = 0; i < meta->nb_args; i++) अणु
 		ret = trace_define_field(call, meta->types[i],
 					 meta->args[i], offset,
-					 sizeof(unsigned long), 0,
+					 माप(अचिन्हित दीर्घ), 0,
 					 FILTER_OTHER);
-		if (ret)
-			break;
-		offset += sizeof(unsigned long);
-	}
+		अगर (ret)
+			अवरोध;
+		offset += माप(अचिन्हित दीर्घ);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ftrace_syscall_enter(void *data, struct pt_regs *regs, long id)
-{
-	struct trace_array *tr = data;
-	struct trace_event_file *trace_file;
-	struct syscall_trace_enter *entry;
-	struct syscall_metadata *sys_data;
-	struct ring_buffer_event *event;
-	struct trace_buffer *buffer;
-	unsigned int trace_ctx;
-	unsigned long args[6];
-	int syscall_nr;
-	int size;
+अटल व्योम ftrace_syscall_enter(व्योम *data, काष्ठा pt_regs *regs, दीर्घ id)
+अणु
+	काष्ठा trace_array *tr = data;
+	काष्ठा trace_event_file *trace_file;
+	काष्ठा syscall_trace_enter *entry;
+	काष्ठा syscall_metadata *sys_data;
+	काष्ठा ring_buffer_event *event;
+	काष्ठा trace_buffer *buffer;
+	अचिन्हित पूर्णांक trace_ctx;
+	अचिन्हित दीर्घ args[6];
+	पूर्णांक syscall_nr;
+	पूर्णांक size;
 
 	syscall_nr = trace_get_syscall_nr(current, regs);
-	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-		return;
+	अगर (syscall_nr < 0 || syscall_nr >= NR_syscalls)
+		वापस;
 
-	/* Here we're inside tp handler's rcu_read_lock_sched (__DO_TRACE) */
+	/* Here we're inside tp handler's rcu_पढ़ो_lock_sched (__DO_TRACE) */
 	trace_file = rcu_dereference_sched(tr->enter_syscall_files[syscall_nr]);
-	if (!trace_file)
-		return;
+	अगर (!trace_file)
+		वापस;
 
-	if (trace_trigger_soft_disabled(trace_file))
-		return;
+	अगर (trace_trigger_soft_disabled(trace_file))
+		वापस;
 
 	sys_data = syscall_nr_to_meta(syscall_nr);
-	if (!sys_data)
-		return;
+	अगर (!sys_data)
+		वापस;
 
-	size = sizeof(*entry) + sizeof(unsigned long) * sys_data->nb_args;
+	size = माप(*entry) + माप(अचिन्हित दीर्घ) * sys_data->nb_args;
 
 	trace_ctx = tracing_gen_ctx();
 
 	buffer = tr->array_buffer.buffer;
 	event = trace_buffer_lock_reserve(buffer,
 			sys_data->enter_event->event.type, size, trace_ctx);
-	if (!event)
-		return;
+	अगर (!event)
+		वापस;
 
 	entry = ring_buffer_event_data(event);
 	entry->nr = syscall_nr;
 	syscall_get_arguments(current, regs, args);
-	memcpy(entry->args, args, sizeof(unsigned long) * sys_data->nb_args);
+	स_नकल(entry->args, args, माप(अचिन्हित दीर्घ) * sys_data->nb_args);
 
 	event_trigger_unlock_commit(trace_file, buffer, event, entry,
 				    trace_ctx);
-}
+पूर्ण
 
-static void ftrace_syscall_exit(void *data, struct pt_regs *regs, long ret)
-{
-	struct trace_array *tr = data;
-	struct trace_event_file *trace_file;
-	struct syscall_trace_exit *entry;
-	struct syscall_metadata *sys_data;
-	struct ring_buffer_event *event;
-	struct trace_buffer *buffer;
-	unsigned int trace_ctx;
-	int syscall_nr;
+अटल व्योम ftrace_syscall_निकास(व्योम *data, काष्ठा pt_regs *regs, दीर्घ ret)
+अणु
+	काष्ठा trace_array *tr = data;
+	काष्ठा trace_event_file *trace_file;
+	काष्ठा syscall_trace_निकास *entry;
+	काष्ठा syscall_metadata *sys_data;
+	काष्ठा ring_buffer_event *event;
+	काष्ठा trace_buffer *buffer;
+	अचिन्हित पूर्णांक trace_ctx;
+	पूर्णांक syscall_nr;
 
 	syscall_nr = trace_get_syscall_nr(current, regs);
-	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-		return;
+	अगर (syscall_nr < 0 || syscall_nr >= NR_syscalls)
+		वापस;
 
-	/* Here we're inside tp handler's rcu_read_lock_sched (__DO_TRACE()) */
-	trace_file = rcu_dereference_sched(tr->exit_syscall_files[syscall_nr]);
-	if (!trace_file)
-		return;
+	/* Here we're inside tp handler's rcu_पढ़ो_lock_sched (__DO_TRACE()) */
+	trace_file = rcu_dereference_sched(tr->निकास_syscall_files[syscall_nr]);
+	अगर (!trace_file)
+		वापस;
 
-	if (trace_trigger_soft_disabled(trace_file))
-		return;
+	अगर (trace_trigger_soft_disabled(trace_file))
+		वापस;
 
 	sys_data = syscall_nr_to_meta(syscall_nr);
-	if (!sys_data)
-		return;
+	अगर (!sys_data)
+		वापस;
 
 	trace_ctx = tracing_gen_ctx();
 
 	buffer = tr->array_buffer.buffer;
 	event = trace_buffer_lock_reserve(buffer,
-			sys_data->exit_event->event.type, sizeof(*entry),
+			sys_data->निकास_event->event.type, माप(*entry),
 			trace_ctx);
-	if (!event)
-		return;
+	अगर (!event)
+		वापस;
 
 	entry = ring_buffer_event_data(event);
 	entry->nr = syscall_nr;
-	entry->ret = syscall_get_return_value(current, regs);
+	entry->ret = syscall_get_वापस_value(current, regs);
 
 	event_trigger_unlock_commit(trace_file, buffer, event, entry,
 				    trace_ctx);
-}
+पूर्ण
 
-static int reg_event_syscall_enter(struct trace_event_file *file,
-				   struct trace_event_call *call)
-{
-	struct trace_array *tr = file->tr;
-	int ret = 0;
-	int num;
+अटल पूर्णांक reg_event_syscall_enter(काष्ठा trace_event_file *file,
+				   काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_array *tr = file->tr;
+	पूर्णांक ret = 0;
+	पूर्णांक num;
 
-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
-	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
-		return -ENOSYS;
+	num = ((काष्ठा syscall_metadata *)call->data)->syscall_nr;
+	अगर (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
+		वापस -ENOSYS;
 	mutex_lock(&syscall_trace_lock);
-	if (!tr->sys_refcount_enter)
-		ret = register_trace_sys_enter(ftrace_syscall_enter, tr);
-	if (!ret) {
-		rcu_assign_pointer(tr->enter_syscall_files[num], file);
+	अगर (!tr->sys_refcount_enter)
+		ret = रेजिस्टर_trace_sys_enter(ftrace_syscall_enter, tr);
+	अगर (!ret) अणु
+		rcu_assign_poपूर्णांकer(tr->enter_syscall_files[num], file);
 		tr->sys_refcount_enter++;
-	}
+	पूर्ण
 	mutex_unlock(&syscall_trace_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void unreg_event_syscall_enter(struct trace_event_file *file,
-				      struct trace_event_call *call)
-{
-	struct trace_array *tr = file->tr;
-	int num;
+अटल व्योम unreg_event_syscall_enter(काष्ठा trace_event_file *file,
+				      काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_array *tr = file->tr;
+	पूर्णांक num;
 
-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
-	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
-		return;
+	num = ((काष्ठा syscall_metadata *)call->data)->syscall_nr;
+	अगर (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
+		वापस;
 	mutex_lock(&syscall_trace_lock);
 	tr->sys_refcount_enter--;
-	RCU_INIT_POINTER(tr->enter_syscall_files[num], NULL);
-	if (!tr->sys_refcount_enter)
-		unregister_trace_sys_enter(ftrace_syscall_enter, tr);
+	RCU_INIT_POINTER(tr->enter_syscall_files[num], शून्य);
+	अगर (!tr->sys_refcount_enter)
+		unरेजिस्टर_trace_sys_enter(ftrace_syscall_enter, tr);
 	mutex_unlock(&syscall_trace_lock);
-}
+पूर्ण
 
-static int reg_event_syscall_exit(struct trace_event_file *file,
-				  struct trace_event_call *call)
-{
-	struct trace_array *tr = file->tr;
-	int ret = 0;
-	int num;
+अटल पूर्णांक reg_event_syscall_निकास(काष्ठा trace_event_file *file,
+				  काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_array *tr = file->tr;
+	पूर्णांक ret = 0;
+	पूर्णांक num;
 
-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
-	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
-		return -ENOSYS;
+	num = ((काष्ठा syscall_metadata *)call->data)->syscall_nr;
+	अगर (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
+		वापस -ENOSYS;
 	mutex_lock(&syscall_trace_lock);
-	if (!tr->sys_refcount_exit)
-		ret = register_trace_sys_exit(ftrace_syscall_exit, tr);
-	if (!ret) {
-		rcu_assign_pointer(tr->exit_syscall_files[num], file);
-		tr->sys_refcount_exit++;
-	}
+	अगर (!tr->sys_refcount_निकास)
+		ret = रेजिस्टर_trace_sys_निकास(ftrace_syscall_निकास, tr);
+	अगर (!ret) अणु
+		rcu_assign_poपूर्णांकer(tr->निकास_syscall_files[num], file);
+		tr->sys_refcount_निकास++;
+	पूर्ण
 	mutex_unlock(&syscall_trace_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void unreg_event_syscall_exit(struct trace_event_file *file,
-				     struct trace_event_call *call)
-{
-	struct trace_array *tr = file->tr;
-	int num;
+अटल व्योम unreg_event_syscall_निकास(काष्ठा trace_event_file *file,
+				     काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_array *tr = file->tr;
+	पूर्णांक num;
 
-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
-	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
-		return;
+	num = ((काष्ठा syscall_metadata *)call->data)->syscall_nr;
+	अगर (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
+		वापस;
 	mutex_lock(&syscall_trace_lock);
-	tr->sys_refcount_exit--;
-	RCU_INIT_POINTER(tr->exit_syscall_files[num], NULL);
-	if (!tr->sys_refcount_exit)
-		unregister_trace_sys_exit(ftrace_syscall_exit, tr);
+	tr->sys_refcount_निकास--;
+	RCU_INIT_POINTER(tr->निकास_syscall_files[num], शून्य);
+	अगर (!tr->sys_refcount_निकास)
+		unरेजिस्टर_trace_sys_निकास(ftrace_syscall_निकास, tr);
 	mutex_unlock(&syscall_trace_lock);
-}
+पूर्ण
 
-static int __init init_syscall_trace(struct trace_event_call *call)
-{
-	int id;
-	int num;
+अटल पूर्णांक __init init_syscall_trace(काष्ठा trace_event_call *call)
+अणु
+	पूर्णांक id;
+	पूर्णांक num;
 
-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
-	if (num < 0 || num >= NR_syscalls) {
+	num = ((काष्ठा syscall_metadata *)call->data)->syscall_nr;
+	अगर (num < 0 || num >= NR_syscalls) अणु
 		pr_debug("syscall %s metadata not mapped, disabling ftrace event\n",
-				((struct syscall_metadata *)call->data)->name);
-		return -ENOSYS;
-	}
+				((काष्ठा syscall_metadata *)call->data)->name);
+		वापस -ENOSYS;
+	पूर्ण
 
-	if (set_syscall_print_fmt(call) < 0)
-		return -ENOMEM;
+	अगर (set_syscall_prपूर्णांक_fmt(call) < 0)
+		वापस -ENOMEM;
 
 	id = trace_event_raw_init(call);
 
-	if (id < 0) {
-		free_syscall_print_fmt(call);
-		return id;
-	}
+	अगर (id < 0) अणु
+		मुक्त_syscall_prपूर्णांक_fmt(call);
+		वापस id;
+	पूर्ण
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
-static struct trace_event_fields __refdata syscall_enter_fields_array[] = {
-	SYSCALL_FIELD(int, __syscall_nr),
-	{ .type = TRACE_FUNCTION_TYPE,
-	  .define_fields = syscall_enter_define_fields },
-	{}
-};
+अटल काष्ठा trace_event_fields __refdata syscall_enter_fields_array[] = अणु
+	SYSCALL_FIELD(पूर्णांक, __syscall_nr),
+	अणु .type = TRACE_FUNCTION_TYPE,
+	  .define_fields = syscall_enter_define_fields पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-struct trace_event_functions enter_syscall_print_funcs = {
-	.trace		= print_syscall_enter,
-};
+काष्ठा trace_event_functions enter_syscall_prपूर्णांक_funcs = अणु
+	.trace		= prपूर्णांक_syscall_enter,
+पूर्ण;
 
-struct trace_event_functions exit_syscall_print_funcs = {
-	.trace		= print_syscall_exit,
-};
+काष्ठा trace_event_functions निकास_syscall_prपूर्णांक_funcs = अणु
+	.trace		= prपूर्णांक_syscall_निकास,
+पूर्ण;
 
-struct trace_event_class __refdata event_class_syscall_enter = {
-	.system		= "syscalls",
-	.reg		= syscall_enter_register,
+काष्ठा trace_event_class __refdata event_class_syscall_enter = अणु
+	.प्रणाली		= "syscalls",
+	.reg		= syscall_enter_रेजिस्टर,
 	.fields_array	= syscall_enter_fields_array,
 	.get_fields	= syscall_get_enter_fields,
 	.raw_init	= init_syscall_trace,
-};
+पूर्ण;
 
-struct trace_event_class __refdata event_class_syscall_exit = {
-	.system		= "syscalls",
-	.reg		= syscall_exit_register,
-	.fields_array	= (struct trace_event_fields[]){
-		SYSCALL_FIELD(int, __syscall_nr),
-		SYSCALL_FIELD(long, ret),
-		{}
-	},
-	.fields		= LIST_HEAD_INIT(event_class_syscall_exit.fields),
+काष्ठा trace_event_class __refdata event_class_syscall_निकास = अणु
+	.प्रणाली		= "syscalls",
+	.reg		= syscall_निकास_रेजिस्टर,
+	.fields_array	= (काष्ठा trace_event_fields[])अणु
+		SYSCALL_FIELD(पूर्णांक, __syscall_nr),
+		SYSCALL_FIELD(दीर्घ, ret),
+		अणुपूर्ण
+	पूर्ण,
+	.fields		= LIST_HEAD_INIT(event_class_syscall_निकास.fields),
 	.raw_init	= init_syscall_trace,
-};
+पूर्ण;
 
-unsigned long __init __weak arch_syscall_addr(int nr)
-{
-	return (unsigned long)sys_call_table[nr];
-}
+अचिन्हित दीर्घ __init __weak arch_syscall_addr(पूर्णांक nr)
+अणु
+	वापस (अचिन्हित दीर्घ)sys_call_table[nr];
+पूर्ण
 
-void __init init_ftrace_syscalls(void)
-{
-	struct syscall_metadata *meta;
-	unsigned long addr;
-	int i;
-	void *ret;
+व्योम __init init_ftrace_syscalls(व्योम)
+अणु
+	काष्ठा syscall_metadata *meta;
+	अचिन्हित दीर्घ addr;
+	पूर्णांक i;
+	व्योम *ret;
 
-	if (!IS_ENABLED(CONFIG_HAVE_SPARSE_SYSCALL_NR)) {
-		syscalls_metadata = kcalloc(NR_syscalls,
-					sizeof(*syscalls_metadata),
+	अगर (!IS_ENABLED(CONFIG_HAVE_SPARSE_SYSCALL_NR)) अणु
+		syscalls_metadata = kसुस्मृति(NR_syscalls,
+					माप(*syscalls_metadata),
 					GFP_KERNEL);
-		if (!syscalls_metadata) {
+		अगर (!syscalls_metadata) अणु
 			WARN_ON(1);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < NR_syscalls; i++) {
+	क्रम (i = 0; i < NR_syscalls; i++) अणु
 		addr = arch_syscall_addr(i);
 		meta = find_syscall_meta(addr);
-		if (!meta)
-			continue;
+		अगर (!meta)
+			जारी;
 
 		meta->syscall_nr = i;
 
-		if (!IS_ENABLED(CONFIG_HAVE_SPARSE_SYSCALL_NR)) {
+		अगर (!IS_ENABLED(CONFIG_HAVE_SPARSE_SYSCALL_NR)) अणु
 			syscalls_metadata[i] = meta;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = xa_store(&syscalls_metadata_sparse, i, meta,
 					GFP_KERNEL);
 			WARN(xa_is_err(ret),
 				"Syscall memory allocation failed\n");
-		}
+		पूर्ण
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PERF_EVENTS
+#अगर_घोषित CONFIG_PERF_EVENTS
 
-static DECLARE_BITMAP(enabled_perf_enter_syscalls, NR_syscalls);
-static DECLARE_BITMAP(enabled_perf_exit_syscalls, NR_syscalls);
-static int sys_perf_refcount_enter;
-static int sys_perf_refcount_exit;
+अटल DECLARE_BITMAP(enabled_perf_enter_syscalls, NR_syscalls);
+अटल DECLARE_BITMAP(enabled_perf_निकास_syscalls, NR_syscalls);
+अटल पूर्णांक sys_perf_refcount_enter;
+अटल पूर्णांक sys_perf_refcount_निकास;
 
-static int perf_call_bpf_enter(struct trace_event_call *call, struct pt_regs *regs,
-			       struct syscall_metadata *sys_data,
-			       struct syscall_trace_enter *rec)
-{
-	struct syscall_tp_t {
-		unsigned long long regs;
-		unsigned long syscall_nr;
-		unsigned long args[SYSCALL_DEFINE_MAXARGS];
-	} param;
-	int i;
+अटल पूर्णांक perf_call_bpf_enter(काष्ठा trace_event_call *call, काष्ठा pt_regs *regs,
+			       काष्ठा syscall_metadata *sys_data,
+			       काष्ठा syscall_trace_enter *rec)
+अणु
+	काष्ठा syscall_tp_t अणु
+		अचिन्हित दीर्घ दीर्घ regs;
+		अचिन्हित दीर्घ syscall_nr;
+		अचिन्हित दीर्घ args[SYSCALL_DEFINE_MAXARGS];
+	पूर्ण param;
+	पूर्णांक i;
 
-	*(struct pt_regs **)&param = regs;
+	*(काष्ठा pt_regs **)&param = regs;
 	param.syscall_nr = rec->nr;
-	for (i = 0; i < sys_data->nb_args; i++)
+	क्रम (i = 0; i < sys_data->nb_args; i++)
 		param.args[i] = rec->args[i];
-	return trace_call_bpf(call, &param);
-}
+	वापस trace_call_bpf(call, &param);
+पूर्ण
 
-static void perf_syscall_enter(void *ignore, struct pt_regs *regs, long id)
-{
-	struct syscall_metadata *sys_data;
-	struct syscall_trace_enter *rec;
-	struct hlist_head *head;
-	unsigned long args[6];
+अटल व्योम perf_syscall_enter(व्योम *ignore, काष्ठा pt_regs *regs, दीर्घ id)
+अणु
+	काष्ठा syscall_metadata *sys_data;
+	काष्ठा syscall_trace_enter *rec;
+	काष्ठा hlist_head *head;
+	अचिन्हित दीर्घ args[6];
 	bool valid_prog_array;
-	int syscall_nr;
-	int rctx;
-	int size;
+	पूर्णांक syscall_nr;
+	पूर्णांक rctx;
+	पूर्णांक size;
 
 	syscall_nr = trace_get_syscall_nr(current, regs);
-	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-		return;
-	if (!test_bit(syscall_nr, enabled_perf_enter_syscalls))
-		return;
+	अगर (syscall_nr < 0 || syscall_nr >= NR_syscalls)
+		वापस;
+	अगर (!test_bit(syscall_nr, enabled_perf_enter_syscalls))
+		वापस;
 
 	sys_data = syscall_nr_to_meta(syscall_nr);
-	if (!sys_data)
-		return;
+	अगर (!sys_data)
+		वापस;
 
 	head = this_cpu_ptr(sys_data->enter_event->perf_events);
 	valid_prog_array = bpf_prog_array_valid(sys_data->enter_event);
-	if (!valid_prog_array && hlist_empty(head))
-		return;
+	अगर (!valid_prog_array && hlist_empty(head))
+		वापस;
 
 	/* get the size after alignment with the u32 buffer size field */
-	size = sizeof(unsigned long) * sys_data->nb_args + sizeof(*rec);
-	size = ALIGN(size + sizeof(u32), sizeof(u64));
-	size -= sizeof(u32);
+	size = माप(अचिन्हित दीर्घ) * sys_data->nb_args + माप(*rec);
+	size = ALIGN(size + माप(u32), माप(u64));
+	size -= माप(u32);
 
-	rec = perf_trace_buf_alloc(size, NULL, &rctx);
-	if (!rec)
-		return;
+	rec = perf_trace_buf_alloc(size, शून्य, &rctx);
+	अगर (!rec)
+		वापस;
 
 	rec->nr = syscall_nr;
 	syscall_get_arguments(current, regs, args);
-	memcpy(&rec->args, args, sizeof(unsigned long) * sys_data->nb_args);
+	स_नकल(&rec->args, args, माप(अचिन्हित दीर्घ) * sys_data->nb_args);
 
-	if ((valid_prog_array &&
+	अगर ((valid_prog_array &&
 	     !perf_call_bpf_enter(sys_data->enter_event, regs, sys_data, rec)) ||
-	    hlist_empty(head)) {
+	    hlist_empty(head)) अणु
 		perf_swevent_put_recursion_context(rctx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	perf_trace_buf_submit(rec, size, rctx,
 			      sys_data->enter_event->event.type, 1, regs,
-			      head, NULL);
-}
+			      head, शून्य);
+पूर्ण
 
-static int perf_sysenter_enable(struct trace_event_call *call)
-{
-	int ret = 0;
-	int num;
+अटल पूर्णांक perf_sysenter_enable(काष्ठा trace_event_call *call)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक num;
 
-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
+	num = ((काष्ठा syscall_metadata *)call->data)->syscall_nr;
 
 	mutex_lock(&syscall_trace_lock);
-	if (!sys_perf_refcount_enter)
-		ret = register_trace_sys_enter(perf_syscall_enter, NULL);
-	if (ret) {
+	अगर (!sys_perf_refcount_enter)
+		ret = रेजिस्टर_trace_sys_enter(perf_syscall_enter, शून्य);
+	अगर (ret) अणु
 		pr_info("event trace: Could not activate syscall entry trace point");
-	} else {
+	पूर्ण अन्यथा अणु
 		set_bit(num, enabled_perf_enter_syscalls);
 		sys_perf_refcount_enter++;
-	}
+	पूर्ण
 	mutex_unlock(&syscall_trace_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void perf_sysenter_disable(struct trace_event_call *call)
-{
-	int num;
+अटल व्योम perf_sysenter_disable(काष्ठा trace_event_call *call)
+अणु
+	पूर्णांक num;
 
-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
+	num = ((काष्ठा syscall_metadata *)call->data)->syscall_nr;
 
 	mutex_lock(&syscall_trace_lock);
 	sys_perf_refcount_enter--;
 	clear_bit(num, enabled_perf_enter_syscalls);
-	if (!sys_perf_refcount_enter)
-		unregister_trace_sys_enter(perf_syscall_enter, NULL);
+	अगर (!sys_perf_refcount_enter)
+		unरेजिस्टर_trace_sys_enter(perf_syscall_enter, शून्य);
 	mutex_unlock(&syscall_trace_lock);
-}
+पूर्ण
 
-static int perf_call_bpf_exit(struct trace_event_call *call, struct pt_regs *regs,
-			      struct syscall_trace_exit *rec)
-{
-	struct syscall_tp_t {
-		unsigned long long regs;
-		unsigned long syscall_nr;
-		unsigned long ret;
-	} param;
+अटल पूर्णांक perf_call_bpf_निकास(काष्ठा trace_event_call *call, काष्ठा pt_regs *regs,
+			      काष्ठा syscall_trace_निकास *rec)
+अणु
+	काष्ठा syscall_tp_t अणु
+		अचिन्हित दीर्घ दीर्घ regs;
+		अचिन्हित दीर्घ syscall_nr;
+		अचिन्हित दीर्घ ret;
+	पूर्ण param;
 
-	*(struct pt_regs **)&param = regs;
+	*(काष्ठा pt_regs **)&param = regs;
 	param.syscall_nr = rec->nr;
 	param.ret = rec->ret;
-	return trace_call_bpf(call, &param);
-}
+	वापस trace_call_bpf(call, &param);
+पूर्ण
 
-static void perf_syscall_exit(void *ignore, struct pt_regs *regs, long ret)
-{
-	struct syscall_metadata *sys_data;
-	struct syscall_trace_exit *rec;
-	struct hlist_head *head;
+अटल व्योम perf_syscall_निकास(व्योम *ignore, काष्ठा pt_regs *regs, दीर्घ ret)
+अणु
+	काष्ठा syscall_metadata *sys_data;
+	काष्ठा syscall_trace_निकास *rec;
+	काष्ठा hlist_head *head;
 	bool valid_prog_array;
-	int syscall_nr;
-	int rctx;
-	int size;
+	पूर्णांक syscall_nr;
+	पूर्णांक rctx;
+	पूर्णांक size;
 
 	syscall_nr = trace_get_syscall_nr(current, regs);
-	if (syscall_nr < 0 || syscall_nr >= NR_syscalls)
-		return;
-	if (!test_bit(syscall_nr, enabled_perf_exit_syscalls))
-		return;
+	अगर (syscall_nr < 0 || syscall_nr >= NR_syscalls)
+		वापस;
+	अगर (!test_bit(syscall_nr, enabled_perf_निकास_syscalls))
+		वापस;
 
 	sys_data = syscall_nr_to_meta(syscall_nr);
-	if (!sys_data)
-		return;
+	अगर (!sys_data)
+		वापस;
 
-	head = this_cpu_ptr(sys_data->exit_event->perf_events);
-	valid_prog_array = bpf_prog_array_valid(sys_data->exit_event);
-	if (!valid_prog_array && hlist_empty(head))
-		return;
+	head = this_cpu_ptr(sys_data->निकास_event->perf_events);
+	valid_prog_array = bpf_prog_array_valid(sys_data->निकास_event);
+	अगर (!valid_prog_array && hlist_empty(head))
+		वापस;
 
-	/* We can probably do that at build time */
-	size = ALIGN(sizeof(*rec) + sizeof(u32), sizeof(u64));
-	size -= sizeof(u32);
+	/* We can probably करो that at build समय */
+	size = ALIGN(माप(*rec) + माप(u32), माप(u64));
+	size -= माप(u32);
 
-	rec = perf_trace_buf_alloc(size, NULL, &rctx);
-	if (!rec)
-		return;
+	rec = perf_trace_buf_alloc(size, शून्य, &rctx);
+	अगर (!rec)
+		वापस;
 
 	rec->nr = syscall_nr;
-	rec->ret = syscall_get_return_value(current, regs);
+	rec->ret = syscall_get_वापस_value(current, regs);
 
-	if ((valid_prog_array &&
-	     !perf_call_bpf_exit(sys_data->exit_event, regs, rec)) ||
-	    hlist_empty(head)) {
+	अगर ((valid_prog_array &&
+	     !perf_call_bpf_निकास(sys_data->निकास_event, regs, rec)) ||
+	    hlist_empty(head)) अणु
 		perf_swevent_put_recursion_context(rctx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	perf_trace_buf_submit(rec, size, rctx, sys_data->exit_event->event.type,
-			      1, regs, head, NULL);
-}
+	perf_trace_buf_submit(rec, size, rctx, sys_data->निकास_event->event.type,
+			      1, regs, head, शून्य);
+पूर्ण
 
-static int perf_sysexit_enable(struct trace_event_call *call)
-{
-	int ret = 0;
-	int num;
+अटल पूर्णांक perf_sysनिकास_enable(काष्ठा trace_event_call *call)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक num;
 
-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
+	num = ((काष्ठा syscall_metadata *)call->data)->syscall_nr;
 
 	mutex_lock(&syscall_trace_lock);
-	if (!sys_perf_refcount_exit)
-		ret = register_trace_sys_exit(perf_syscall_exit, NULL);
-	if (ret) {
+	अगर (!sys_perf_refcount_निकास)
+		ret = रेजिस्टर_trace_sys_निकास(perf_syscall_निकास, शून्य);
+	अगर (ret) अणु
 		pr_info("event trace: Could not activate syscall exit trace point");
-	} else {
-		set_bit(num, enabled_perf_exit_syscalls);
-		sys_perf_refcount_exit++;
-	}
+	पूर्ण अन्यथा अणु
+		set_bit(num, enabled_perf_निकास_syscalls);
+		sys_perf_refcount_निकास++;
+	पूर्ण
 	mutex_unlock(&syscall_trace_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void perf_sysexit_disable(struct trace_event_call *call)
-{
-	int num;
+अटल व्योम perf_sysनिकास_disable(काष्ठा trace_event_call *call)
+अणु
+	पूर्णांक num;
 
-	num = ((struct syscall_metadata *)call->data)->syscall_nr;
+	num = ((काष्ठा syscall_metadata *)call->data)->syscall_nr;
 
 	mutex_lock(&syscall_trace_lock);
-	sys_perf_refcount_exit--;
-	clear_bit(num, enabled_perf_exit_syscalls);
-	if (!sys_perf_refcount_exit)
-		unregister_trace_sys_exit(perf_syscall_exit, NULL);
+	sys_perf_refcount_निकास--;
+	clear_bit(num, enabled_perf_निकास_syscalls);
+	अगर (!sys_perf_refcount_निकास)
+		unरेजिस्टर_trace_sys_निकास(perf_syscall_निकास, शून्य);
 	mutex_unlock(&syscall_trace_lock);
-}
+पूर्ण
 
-#endif /* CONFIG_PERF_EVENTS */
+#पूर्ण_अगर /* CONFIG_PERF_EVENTS */
 
-static int syscall_enter_register(struct trace_event_call *event,
-				 enum trace_reg type, void *data)
-{
-	struct trace_event_file *file = data;
+अटल पूर्णांक syscall_enter_रेजिस्टर(काष्ठा trace_event_call *event,
+				 क्रमागत trace_reg type, व्योम *data)
+अणु
+	काष्ठा trace_event_file *file = data;
 
-	switch (type) {
-	case TRACE_REG_REGISTER:
-		return reg_event_syscall_enter(file, event);
-	case TRACE_REG_UNREGISTER:
+	चयन (type) अणु
+	हाल TRACE_REG_REGISTER:
+		वापस reg_event_syscall_enter(file, event);
+	हाल TRACE_REG_UNREGISTER:
 		unreg_event_syscall_enter(file, event);
-		return 0;
+		वापस 0;
 
-#ifdef CONFIG_PERF_EVENTS
-	case TRACE_REG_PERF_REGISTER:
-		return perf_sysenter_enable(event);
-	case TRACE_REG_PERF_UNREGISTER:
+#अगर_घोषित CONFIG_PERF_EVENTS
+	हाल TRACE_REG_PERF_REGISTER:
+		वापस perf_sysenter_enable(event);
+	हाल TRACE_REG_PERF_UNREGISTER:
 		perf_sysenter_disable(event);
-		return 0;
-	case TRACE_REG_PERF_OPEN:
-	case TRACE_REG_PERF_CLOSE:
-	case TRACE_REG_PERF_ADD:
-	case TRACE_REG_PERF_DEL:
-		return 0;
-#endif
-	}
-	return 0;
-}
+		वापस 0;
+	हाल TRACE_REG_PERF_OPEN:
+	हाल TRACE_REG_PERF_CLOSE:
+	हाल TRACE_REG_PERF_ADD:
+	हाल TRACE_REG_PERF_DEL:
+		वापस 0;
+#पूर्ण_अगर
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int syscall_exit_register(struct trace_event_call *event,
-				 enum trace_reg type, void *data)
-{
-	struct trace_event_file *file = data;
+अटल पूर्णांक syscall_निकास_रेजिस्टर(काष्ठा trace_event_call *event,
+				 क्रमागत trace_reg type, व्योम *data)
+अणु
+	काष्ठा trace_event_file *file = data;
 
-	switch (type) {
-	case TRACE_REG_REGISTER:
-		return reg_event_syscall_exit(file, event);
-	case TRACE_REG_UNREGISTER:
-		unreg_event_syscall_exit(file, event);
-		return 0;
+	चयन (type) अणु
+	हाल TRACE_REG_REGISTER:
+		वापस reg_event_syscall_निकास(file, event);
+	हाल TRACE_REG_UNREGISTER:
+		unreg_event_syscall_निकास(file, event);
+		वापस 0;
 
-#ifdef CONFIG_PERF_EVENTS
-	case TRACE_REG_PERF_REGISTER:
-		return perf_sysexit_enable(event);
-	case TRACE_REG_PERF_UNREGISTER:
-		perf_sysexit_disable(event);
-		return 0;
-	case TRACE_REG_PERF_OPEN:
-	case TRACE_REG_PERF_CLOSE:
-	case TRACE_REG_PERF_ADD:
-	case TRACE_REG_PERF_DEL:
-		return 0;
-#endif
-	}
-	return 0;
-}
+#अगर_घोषित CONFIG_PERF_EVENTS
+	हाल TRACE_REG_PERF_REGISTER:
+		वापस perf_sysनिकास_enable(event);
+	हाल TRACE_REG_PERF_UNREGISTER:
+		perf_sysनिकास_disable(event);
+		वापस 0;
+	हाल TRACE_REG_PERF_OPEN:
+	हाल TRACE_REG_PERF_CLOSE:
+	हाल TRACE_REG_PERF_ADD:
+	हाल TRACE_REG_PERF_DEL:
+		वापस 0;
+#पूर्ण_अगर
+	पूर्ण
+	वापस 0;
+पूर्ण

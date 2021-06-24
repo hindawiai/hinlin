@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2020 Facebook
-#define _GNU_SOURCE
-#include <pthread.h>
-#include <sched.h>
-#include <test_progs.h>
-#include "perf_event_stackmap.skel.h"
+#घोषणा _GNU_SOURCE
+#समावेश <pthपढ़ो.h>
+#समावेश <sched.h>
+#समावेश <test_progs.h>
+#समावेश "perf_event_stackmap.skel.h"
 
-#ifndef noinline
-#define noinline __attribute__((noinline))
-#endif
+#अगर_अघोषित noअंतरभूत
+#घोषणा noअंतरभूत __attribute__((noअंतरभूत))
+#पूर्ण_अगर
 
-noinline int func_1(void)
-{
-	static int val = 1;
+noअंतरभूत पूर्णांक func_1(व्योम)
+अणु
+	अटल पूर्णांक val = 1;
 
 	val += 1;
 
 	usleep(100);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-noinline int func_2(void)
-{
-	return func_1();
-}
+noअंतरभूत पूर्णांक func_2(व्योम)
+अणु
+	वापस func_1();
+पूर्ण
 
-noinline int func_3(void)
-{
-	return func_2();
-}
+noअंतरभूत पूर्णांक func_3(व्योम)
+अणु
+	वापस func_2();
+पूर्ण
 
-noinline int func_4(void)
-{
-	return func_3();
-}
+noअंतरभूत पूर्णांक func_4(व्योम)
+अणु
+	वापस func_3();
+पूर्ण
 
-noinline int func_5(void)
-{
-	return func_4();
-}
+noअंतरभूत पूर्णांक func_5(व्योम)
+अणु
+	वापस func_4();
+पूर्ण
 
-noinline int func_6(void)
-{
-	int i, val = 1;
+noअंतरभूत पूर्णांक func_6(व्योम)
+अणु
+	पूर्णांक i, val = 1;
 
-	for (i = 0; i < 100; i++)
+	क्रम (i = 0; i < 100; i++)
 		val += func_5();
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-void test_perf_event_stackmap(void)
-{
-	struct perf_event_attr attr = {
+व्योम test_perf_event_stackmap(व्योम)
+अणु
+	काष्ठा perf_event_attr attr = अणु
 		/* .type = PERF_TYPE_SOFTWARE, */
 		.type = PERF_TYPE_HARDWARE,
 		.config = PERF_COUNT_HW_CPU_CYCLES,
@@ -64,46 +65,46 @@ void test_perf_event_stackmap(void)
 			PERF_SAMPLE_BRANCH_NO_CYCLES |
 			PERF_SAMPLE_BRANCH_CALL_STACK,
 		.sample_period = 5000,
-		.size = sizeof(struct perf_event_attr),
-	};
-	struct perf_event_stackmap *skel;
+		.size = माप(काष्ठा perf_event_attr),
+	पूर्ण;
+	काष्ठा perf_event_stackmap *skel;
 	__u32 duration = 0;
 	cpu_set_t cpu_set;
-	int pmu_fd, err;
+	पूर्णांक pmu_fd, err;
 
-	skel = perf_event_stackmap__open();
+	skel = perf_event_stackmap__खोलो();
 
-	if (CHECK(!skel, "skel_open", "skeleton open failed\n"))
-		return;
+	अगर (CHECK(!skel, "skel_open", "skeleton open failed\n"))
+		वापस;
 
 	err = perf_event_stackmap__load(skel);
-	if (CHECK(err, "skel_load", "skeleton load failed: %d\n", err))
-		goto cleanup;
+	अगर (CHECK(err, "skel_load", "skeleton load failed: %d\n", err))
+		जाओ cleanup;
 
 	CPU_ZERO(&cpu_set);
 	CPU_SET(0, &cpu_set);
-	err = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set);
-	if (CHECK(err, "set_affinity", "err %d, errno %d\n", err, errno))
-		goto cleanup;
+	err = pthपढ़ो_setaffinity_np(pthपढ़ो_self(), माप(cpu_set), &cpu_set);
+	अगर (CHECK(err, "set_affinity", "err %d, errno %d\n", err, त्रुटि_सं))
+		जाओ cleanup;
 
-	pmu_fd = syscall(__NR_perf_event_open, &attr, -1 /* pid */,
+	pmu_fd = syscall(__NR_perf_event_खोलो, &attr, -1 /* pid */,
 			 0 /* cpu 0 */, -1 /* group id */,
 			 0 /* flags */);
-	if (pmu_fd < 0) {
-		printf("%s:SKIP:cpu doesn't support the event\n", __func__);
+	अगर (pmu_fd < 0) अणु
+		म_लिखो("%s:SKIP:cpu doesn't support the event\n", __func__);
 		test__skip();
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	skel->links.oncpu = bpf_program__attach_perf_event(skel->progs.oncpu,
 							   pmu_fd);
-	if (CHECK(IS_ERR(skel->links.oncpu), "attach_perf_event",
-		  "err %ld\n", PTR_ERR(skel->links.oncpu))) {
-		close(pmu_fd);
-		goto cleanup;
-	}
+	अगर (CHECK(IS_ERR(skel->links.oncpu), "attach_perf_event",
+		  "err %ld\n", PTR_ERR(skel->links.oncpu))) अणु
+		बंद(pmu_fd);
+		जाओ cleanup;
+	पूर्ण
 
-	/* create kernel and user stack traces for testing */
+	/* create kernel and user stack traces क्रम testing */
 	func_6();
 
 	CHECK(skel->data->stackid_kernel != 2, "get_stackid_kernel", "failed\n");
@@ -113,4 +114,4 @@ void test_perf_event_stackmap(void)
 
 cleanup:
 	perf_event_stackmap__destroy(skel);
-}
+पूर्ण

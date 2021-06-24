@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 Glider bvba
  */
-#ifndef __DT_BINDINGS_POWER_R8A7779_SYSC_H__
-#define __DT_BINDINGS_POWER_R8A7779_SYSC_H__
+#अगर_अघोषित __DT_BINDINGS_POWER_R8A7779_SYSC_H__
+#घोषणा __DT_BINDINGS_POWER_R8A7779_SYSC_H__
 
 /*
- * These power domain indices match the numbers of the interrupt bits
- * representing the power areas in the various Interrupt Registers
+ * These घातer करोमुख्य indices match the numbers of the पूर्णांकerrupt bits
+ * representing the घातer areas in the various Interrupt Registers
  * (e.g. SYSCISR, Interrupt Status Register)
  */
 
-#define R8A7779_PD_ARM1			 1
-#define R8A7779_PD_ARM2			 2
-#define R8A7779_PD_ARM3			 3
-#define R8A7779_PD_SGX			20
-#define R8A7779_PD_VDP			21
-#define R8A7779_PD_IMP			24
+#घोषणा R8A7779_PD_ARM1			 1
+#घोषणा R8A7779_PD_ARM2			 2
+#घोषणा R8A7779_PD_ARM3			 3
+#घोषणा R8A7779_PD_SGX			20
+#घोषणा R8A7779_PD_VDP			21
+#घोषणा R8A7779_PD_IMP			24
 
-/* Always-on power area */
-#define R8A7779_PD_ALWAYS_ON		32
+/* Always-on घातer area */
+#घोषणा R8A7779_PD_ALWAYS_ON		32
 
-#endif /* __DT_BINDINGS_POWER_R8A7779_SYSC_H__ */
+#पूर्ण_अगर /* __DT_BINDINGS_POWER_R8A7779_SYSC_H__ */

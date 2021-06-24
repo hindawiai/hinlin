@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Maxtor Shared Storage II Board Setup
  *
- * Maintainer: Sylver Bruneau <sylver.bruneau@googlemail.com>
+ * Maपूर्णांकainer: Sylver Bruneau <sylver.bruneau@googlemail.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/pci.h>
-#include <linux/irq.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/pci.h>
-#include "orion5x.h"
-#include "bridge-regs.h"
-#include "common.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/irq.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/pci.h>
+#समावेश "orion5x.h"
+#समावेश "bridge-regs.h"
+#समावेश "common.h"
 
 /*****************************************************************************
  * Maxtor Shared Storage II Info
@@ -24,63 +25,63 @@
 /****************************************************************************
  * PCI setup
  ****************************************************************************/
-static int __init mss2_pci_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	int irq;
+अटल पूर्णांक __init mss2_pci_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	पूर्णांक irq;
 
 	/*
-	 * Check for devices with hard-wired IRQs.
+	 * Check क्रम devices with hard-wired IRQs.
 	 */
 	irq = orion5x_pci_map_irq(dev, slot, pin);
-	if (irq != -1)
-		return irq;
+	अगर (irq != -1)
+		वापस irq;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static struct hw_pci mss2_pci __initdata = {
+अटल काष्ठा hw_pci mss2_pci __initdata = अणु
 	.nr_controllers = 2,
 	.setup		= orion5x_pci_sys_setup,
 	.scan		= orion5x_pci_sys_scan_bus,
 	.map_irq	= mss2_pci_map_irq,
-};
+पूर्ण;
 
-static int __init mss2_pci_init(void)
-{
-	if (machine_is_mss2())
+अटल पूर्णांक __init mss2_pci_init(व्योम)
+अणु
+	अगर (machine_is_mss2())
 		pci_common_init(&mss2_pci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(mss2_pci_init);
 
 /*****************************************************************************
- * MSS2 power off method
+ * MSS2 घातer off method
  ****************************************************************************/
 /*
- * On the Maxtor Shared Storage II, the shutdown process is the following :
- * - Userland modifies U-boot env to tell U-boot to go idle at next boot
+ * On the Maxtor Shared Storage II, the shutकरोwn process is the following :
+ * - Userland modअगरies U-boot env to tell U-boot to go idle at next boot
  * - The board reboots
- * - U-boot starts and go into an idle mode until the user press "power"
+ * - U-boot starts and go पूर्णांकo an idle mode until the user press "power"
  */
-static void mss2_power_off(void)
-{
+अटल व्योम mss2_घातer_off(व्योम)
+अणु
 	u32 reg;
 
 	/*
 	 * Enable and issue soft reset
 	 */
-	reg = readl(RSTOUTn_MASK);
+	reg = पढ़ोl(RSTOUTn_MASK);
 	reg |= 1 << 2;
-	writel(reg, RSTOUTn_MASK);
+	ग_लिखोl(reg, RSTOUTn_MASK);
 
-	reg = readl(CPU_SOFT_RESET);
+	reg = पढ़ोl(CPU_SOFT_RESET);
 	reg |= 1;
-	writel(reg, CPU_SOFT_RESET);
-}
+	ग_लिखोl(reg, CPU_SOFT_RESET);
+पूर्ण
 
-void __init mss2_init(void)
-{
-	/* register mss2 specific power-off method */
-	pm_power_off = mss2_power_off;
-}
+व्योम __init mss2_init(व्योम)
+अणु
+	/* रेजिस्टर mss2 specअगरic घातer-off method */
+	pm_घातer_off = mss2_घातer_off;
+पूर्ण

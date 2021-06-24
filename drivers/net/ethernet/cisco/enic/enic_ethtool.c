@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -16,38 +17,38 @@
  *
  */
 
-#include <linux/netdevice.h>
-#include <linux/ethtool.h>
-#include <linux/net_tstamp.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/net_tstamp.h>
 
-#include "enic_res.h"
-#include "enic.h"
-#include "enic_dev.h"
-#include "enic_clsf.h"
-#include "vnic_rss.h"
-#include "vnic_stats.h"
+#समावेश "enic_res.h"
+#समावेश "enic.h"
+#समावेश "enic_dev.h"
+#समावेश "enic_clsf.h"
+#समावेश "vnic_rss.h"
+#समावेश "vnic_stats.h"
 
-struct enic_stat {
-	char name[ETH_GSTRING_LEN];
-	unsigned int index;
-};
+काष्ठा enic_stat अणु
+	अक्षर name[ETH_GSTRING_LEN];
+	अचिन्हित पूर्णांक index;
+पूर्ण;
 
-#define ENIC_TX_STAT(stat) { \
+#घोषणा ENIC_TX_STAT(stat) अणु \
 	.name = #stat, \
-	.index = offsetof(struct vnic_tx_stats, stat) / sizeof(u64) \
-}
+	.index = दुरत्व(काष्ठा vnic_tx_stats, stat) / माप(u64) \
+पूर्ण
 
-#define ENIC_RX_STAT(stat) { \
+#घोषणा ENIC_RX_STAT(stat) अणु \
 	.name = #stat, \
-	.index = offsetof(struct vnic_rx_stats, stat) / sizeof(u64) \
-}
+	.index = दुरत्व(काष्ठा vnic_rx_stats, stat) / माप(u64) \
+पूर्ण
 
-#define ENIC_GEN_STAT(stat) { \
+#घोषणा ENIC_GEN_STAT(stat) अणु \
 	.name = #stat, \
-	.index = offsetof(struct vnic_gen_stats, stat) / sizeof(u64)\
-}
+	.index = दुरत्व(काष्ठा vnic_gen_stats, stat) / माप(u64)\
+पूर्ण
 
-static const struct enic_stat enic_tx_stats[] = {
+अटल स्थिर काष्ठा enic_stat enic_tx_stats[] = अणु
 	ENIC_TX_STAT(tx_frames_ok),
 	ENIC_TX_STAT(tx_unicast_frames_ok),
 	ENIC_TX_STAT(tx_multicast_frames_ok),
@@ -59,9 +60,9 @@ static const struct enic_stat enic_tx_stats[] = {
 	ENIC_TX_STAT(tx_drops),
 	ENIC_TX_STAT(tx_errors),
 	ENIC_TX_STAT(tx_tso),
-};
+पूर्ण;
 
-static const struct enic_stat enic_rx_stats[] = {
+अटल स्थिर काष्ठा enic_stat enic_rx_stats[] = अणु
 	ENIC_RX_STAT(rx_frames_ok),
 	ENIC_RX_STAT(rx_frames_total),
 	ENIC_RX_STAT(rx_unicast_frames_ok),
@@ -83,32 +84,32 @@ static const struct enic_stat enic_rx_stats[] = {
 	ENIC_RX_STAT(rx_frames_1023),
 	ENIC_RX_STAT(rx_frames_1518),
 	ENIC_RX_STAT(rx_frames_to_max),
-};
+पूर्ण;
 
-static const struct enic_stat enic_gen_stats[] = {
+अटल स्थिर काष्ठा enic_stat enic_gen_stats[] = अणु
 	ENIC_GEN_STAT(dma_map_error),
-};
+पूर्ण;
 
-static const unsigned int enic_n_tx_stats = ARRAY_SIZE(enic_tx_stats);
-static const unsigned int enic_n_rx_stats = ARRAY_SIZE(enic_rx_stats);
-static const unsigned int enic_n_gen_stats = ARRAY_SIZE(enic_gen_stats);
+अटल स्थिर अचिन्हित पूर्णांक enic_n_tx_stats = ARRAY_SIZE(enic_tx_stats);
+अटल स्थिर अचिन्हित पूर्णांक enic_n_rx_stats = ARRAY_SIZE(enic_rx_stats);
+अटल स्थिर अचिन्हित पूर्णांक enic_n_gen_stats = ARRAY_SIZE(enic_gen_stats);
 
-static void enic_intr_coal_set_rx(struct enic *enic, u32 timer)
-{
-	int i;
-	int intr;
+अटल व्योम enic_पूर्णांकr_coal_set_rx(काष्ठा enic *enic, u32 समयr)
+अणु
+	पूर्णांक i;
+	पूर्णांक पूर्णांकr;
 
-	for (i = 0; i < enic->rq_count; i++) {
-		intr = enic_msix_rq_intr(enic, i);
-		vnic_intr_coalescing_timer_set(&enic->intr[intr], timer);
-	}
-}
+	क्रम (i = 0; i < enic->rq_count; i++) अणु
+		पूर्णांकr = enic_msix_rq_पूर्णांकr(enic, i);
+		vnic_पूर्णांकr_coalescing_समयr_set(&enic->पूर्णांकr[पूर्णांकr], समयr);
+	पूर्ण
+पूर्ण
 
-static int enic_get_ksettings(struct net_device *netdev,
-			      struct ethtool_link_ksettings *ecmd)
-{
-	struct enic *enic = netdev_priv(netdev);
-	struct ethtool_link_settings *base = &ecmd->base;
+अटल पूर्णांक enic_get_ksettings(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_link_ksettings *ecmd)
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
+	काष्ठा ethtool_link_settings *base = &ecmd->base;
 
 	ethtool_link_ksettings_add_link_mode(ecmd, supported,
 					     10000baseT_Full);
@@ -118,247 +119,247 @@ static int enic_get_ksettings(struct net_device *netdev,
 	ethtool_link_ksettings_add_link_mode(ecmd, advertising, FIBRE);
 	base->port = PORT_FIBRE;
 
-	if (netif_carrier_ok(netdev)) {
+	अगर (netअगर_carrier_ok(netdev)) अणु
 		base->speed = vnic_dev_port_speed(enic->vdev);
 		base->duplex = DUPLEX_FULL;
-	} else {
+	पूर्ण अन्यथा अणु
 		base->speed = SPEED_UNKNOWN;
 		base->duplex = DUPLEX_UNKNOWN;
-	}
+	पूर्ण
 
-	base->autoneg = AUTONEG_DISABLE;
+	base->स्वतःneg = AUTONEG_DISABLE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enic_get_drvinfo(struct net_device *netdev,
-	struct ethtool_drvinfo *drvinfo)
-{
-	struct enic *enic = netdev_priv(netdev);
-	struct vnic_devcmd_fw_info *fw_info;
-	int err;
+अटल व्योम enic_get_drvinfo(काष्ठा net_device *netdev,
+	काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
+	काष्ठा vnic_devcmd_fw_info *fw_info;
+	पूर्णांक err;
 
 	err = enic_dev_fw_info(enic, &fw_info);
-	/* return only when pci_zalloc_consistent fails in vnic_dev_fw_info
-	 * For other failures, like devcmd failure, we return previously
+	/* वापस only when pci_zalloc_consistent fails in vnic_dev_fw_info
+	 * For other failures, like devcmd failure, we वापस previously
 	 * recorded info.
 	 */
-	if (err == -ENOMEM)
-		return;
+	अगर (err == -ENOMEM)
+		वापस;
 
-	strlcpy(drvinfo->driver, DRV_NAME, sizeof(drvinfo->driver));
+	strlcpy(drvinfo->driver, DRV_NAME, माप(drvinfo->driver));
 	strlcpy(drvinfo->fw_version, fw_info->fw_version,
-		sizeof(drvinfo->fw_version));
+		माप(drvinfo->fw_version));
 	strlcpy(drvinfo->bus_info, pci_name(enic->pdev),
-		sizeof(drvinfo->bus_info));
-}
+		माप(drvinfo->bus_info));
+पूर्ण
 
-static void enic_get_strings(struct net_device *netdev, u32 stringset,
+अटल व्योम enic_get_strings(काष्ठा net_device *netdev, u32 stringset,
 	u8 *data)
-{
-	unsigned int i;
+अणु
+	अचिन्हित पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < enic_n_tx_stats; i++) {
-			memcpy(data, enic_tx_stats[i].name, ETH_GSTRING_LEN);
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < enic_n_tx_stats; i++) अणु
+			स_नकल(data, enic_tx_stats[i].name, ETH_GSTRING_LEN);
 			data += ETH_GSTRING_LEN;
-		}
-		for (i = 0; i < enic_n_rx_stats; i++) {
-			memcpy(data, enic_rx_stats[i].name, ETH_GSTRING_LEN);
+		पूर्ण
+		क्रम (i = 0; i < enic_n_rx_stats; i++) अणु
+			स_नकल(data, enic_rx_stats[i].name, ETH_GSTRING_LEN);
 			data += ETH_GSTRING_LEN;
-		}
-		for (i = 0; i < enic_n_gen_stats; i++) {
-			memcpy(data, enic_gen_stats[i].name, ETH_GSTRING_LEN);
+		पूर्ण
+		क्रम (i = 0; i < enic_n_gen_stats; i++) अणु
+			स_नकल(data, enic_gen_stats[i].name, ETH_GSTRING_LEN);
 			data += ETH_GSTRING_LEN;
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void enic_get_ringparam(struct net_device *netdev,
-			       struct ethtool_ringparam *ring)
-{
-	struct enic *enic = netdev_priv(netdev);
-	struct vnic_enet_config *c = &enic->config;
+अटल व्योम enic_get_ringparam(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
+	काष्ठा vnic_enet_config *c = &enic->config;
 
 	ring->rx_max_pending = ENIC_MAX_RQ_DESCS;
 	ring->rx_pending = c->rq_desc_count;
 	ring->tx_max_pending = ENIC_MAX_WQ_DESCS;
 	ring->tx_pending = c->wq_desc_count;
-}
+पूर्ण
 
-static int enic_set_ringparam(struct net_device *netdev,
-			      struct ethtool_ringparam *ring)
-{
-	struct enic *enic = netdev_priv(netdev);
-	struct vnic_enet_config *c = &enic->config;
-	int running = netif_running(netdev);
-	unsigned int rx_pending;
-	unsigned int tx_pending;
-	int err = 0;
+अटल पूर्णांक enic_set_ringparam(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
+	काष्ठा vnic_enet_config *c = &enic->config;
+	पूर्णांक running = netअगर_running(netdev);
+	अचिन्हित पूर्णांक rx_pending;
+	अचिन्हित पूर्णांक tx_pending;
+	पूर्णांक err = 0;
 
-	if (ring->rx_mini_max_pending || ring->rx_mini_pending) {
+	अगर (ring->rx_mini_max_pending || ring->rx_mini_pending) अणु
 		netdev_info(netdev,
 			    "modifying mini ring params is not supported");
-		return -EINVAL;
-	}
-	if (ring->rx_jumbo_max_pending || ring->rx_jumbo_pending) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (ring->rx_jumbo_max_pending || ring->rx_jumbo_pending) अणु
 		netdev_info(netdev,
 			    "modifying jumbo ring params is not supported");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	rx_pending = c->rq_desc_count;
 	tx_pending = c->wq_desc_count;
-	if (ring->rx_pending > ENIC_MAX_RQ_DESCS ||
-	    ring->rx_pending < ENIC_MIN_RQ_DESCS) {
+	अगर (ring->rx_pending > ENIC_MAX_RQ_DESCS ||
+	    ring->rx_pending < ENIC_MIN_RQ_DESCS) अणु
 		netdev_info(netdev, "rx pending (%u) not in range [%u,%u]",
 			    ring->rx_pending, ENIC_MIN_RQ_DESCS,
 			    ENIC_MAX_RQ_DESCS);
-		return -EINVAL;
-	}
-	if (ring->tx_pending > ENIC_MAX_WQ_DESCS ||
-	    ring->tx_pending < ENIC_MIN_WQ_DESCS) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (ring->tx_pending > ENIC_MAX_WQ_DESCS ||
+	    ring->tx_pending < ENIC_MIN_WQ_DESCS) अणु
 		netdev_info(netdev, "tx pending (%u) not in range [%u,%u]",
 			    ring->tx_pending, ENIC_MIN_WQ_DESCS,
 			    ENIC_MAX_WQ_DESCS);
-		return -EINVAL;
-	}
-	if (running)
-		dev_close(netdev);
+		वापस -EINVAL;
+	पूर्ण
+	अगर (running)
+		dev_बंद(netdev);
 	c->rq_desc_count =
 		ring->rx_pending & 0xffffffe0; /* must be aligned to groups of 32 */
 	c->wq_desc_count =
 		ring->tx_pending & 0xffffffe0; /* must be aligned to groups of 32 */
-	enic_free_vnic_resources(enic);
+	enic_मुक्त_vnic_resources(enic);
 	err = enic_alloc_vnic_resources(enic);
-	if (err) {
+	अगर (err) अणु
 		netdev_err(netdev,
 			   "Failed to alloc vNIC resources, aborting\n");
-		enic_free_vnic_resources(enic);
-		goto err_out;
-	}
+		enic_मुक्त_vnic_resources(enic);
+		जाओ err_out;
+	पूर्ण
 	enic_init_vnic_resources(enic);
-	if (running) {
-		err = dev_open(netdev, NULL);
-		if (err)
-			goto err_out;
-	}
-	return 0;
+	अगर (running) अणु
+		err = dev_खोलो(netdev, शून्य);
+		अगर (err)
+			जाओ err_out;
+	पूर्ण
+	वापस 0;
 err_out:
 	c->rq_desc_count = rx_pending;
 	c->wq_desc_count = tx_pending;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int enic_get_sset_count(struct net_device *netdev, int sset)
-{
-	switch (sset) {
-	case ETH_SS_STATS:
-		return enic_n_tx_stats + enic_n_rx_stats + enic_n_gen_stats;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक enic_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		वापस enic_n_tx_stats + enic_n_rx_stats + enic_n_gen_stats;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void enic_get_ethtool_stats(struct net_device *netdev,
-	struct ethtool_stats *stats, u64 *data)
-{
-	struct enic *enic = netdev_priv(netdev);
-	struct vnic_stats *vstats;
-	unsigned int i;
-	int err;
+अटल व्योम enic_get_ethtool_stats(काष्ठा net_device *netdev,
+	काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
+	काष्ठा vnic_stats *vstats;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
 	err = enic_dev_stats_dump(enic, &vstats);
-	/* return only when pci_zalloc_consistent fails in vnic_dev_stats_dump
-	 * For other failures, like devcmd failure, we return previously
+	/* वापस only when pci_zalloc_consistent fails in vnic_dev_stats_dump
+	 * For other failures, like devcmd failure, we वापस previously
 	 * recorded stats.
 	 */
-	if (err == -ENOMEM)
-		return;
+	अगर (err == -ENOMEM)
+		वापस;
 
-	for (i = 0; i < enic_n_tx_stats; i++)
+	क्रम (i = 0; i < enic_n_tx_stats; i++)
 		*(data++) = ((u64 *)&vstats->tx)[enic_tx_stats[i].index];
-	for (i = 0; i < enic_n_rx_stats; i++)
+	क्रम (i = 0; i < enic_n_rx_stats; i++)
 		*(data++) = ((u64 *)&vstats->rx)[enic_rx_stats[i].index];
-	for (i = 0; i < enic_n_gen_stats; i++)
+	क्रम (i = 0; i < enic_n_gen_stats; i++)
 		*(data++) = ((u64 *)&enic->gen_stats)[enic_gen_stats[i].index];
-}
+पूर्ण
 
-static u32 enic_get_msglevel(struct net_device *netdev)
-{
-	struct enic *enic = netdev_priv(netdev);
-	return enic->msg_enable;
-}
+अटल u32 enic_get_msglevel(काष्ठा net_device *netdev)
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
+	वापस enic->msg_enable;
+पूर्ण
 
-static void enic_set_msglevel(struct net_device *netdev, u32 value)
-{
-	struct enic *enic = netdev_priv(netdev);
+अटल व्योम enic_set_msglevel(काष्ठा net_device *netdev, u32 value)
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
 	enic->msg_enable = value;
-}
+पूर्ण
 
-static int enic_get_coalesce(struct net_device *netdev,
-	struct ethtool_coalesce *ecmd)
-{
-	struct enic *enic = netdev_priv(netdev);
-	struct enic_rx_coal *rxcoal = &enic->rx_coalesce_setting;
+अटल पूर्णांक enic_get_coalesce(काष्ठा net_device *netdev,
+	काष्ठा ethtool_coalesce *ecmd)
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
+	काष्ठा enic_rx_coal *rxcoal = &enic->rx_coalesce_setting;
 
-	if (vnic_dev_get_intr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX)
+	अगर (vnic_dev_get_पूर्णांकr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX)
 		ecmd->tx_coalesce_usecs = enic->tx_coalesce_usecs;
 	ecmd->rx_coalesce_usecs = enic->rx_coalesce_usecs;
-	if (rxcoal->use_adaptive_rx_coalesce)
+	अगर (rxcoal->use_adaptive_rx_coalesce)
 		ecmd->use_adaptive_rx_coalesce = 1;
 	ecmd->rx_coalesce_usecs_low = rxcoal->small_pkt_range_start;
 	ecmd->rx_coalesce_usecs_high = rxcoal->range_end;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enic_coalesce_valid(struct enic *enic,
-			       struct ethtool_coalesce *ec)
-{
-	u32 coalesce_usecs_max = vnic_dev_get_intr_coal_timer_max(enic->vdev);
+अटल पूर्णांक enic_coalesce_valid(काष्ठा enic *enic,
+			       काष्ठा ethtool_coalesce *ec)
+अणु
+	u32 coalesce_usecs_max = vnic_dev_get_पूर्णांकr_coal_समयr_max(enic->vdev);
 	u32 rx_coalesce_usecs_high = min_t(u32, coalesce_usecs_max,
 					   ec->rx_coalesce_usecs_high);
 	u32 rx_coalesce_usecs_low = min_t(u32, coalesce_usecs_max,
 					  ec->rx_coalesce_usecs_low);
 
-	if ((vnic_dev_get_intr_mode(enic->vdev) != VNIC_DEV_INTR_MODE_MSIX) &&
+	अगर ((vnic_dev_get_पूर्णांकr_mode(enic->vdev) != VNIC_DEV_INTR_MODE_MSIX) &&
 	    ec->tx_coalesce_usecs)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if ((ec->tx_coalesce_usecs > coalesce_usecs_max)	||
+	अगर ((ec->tx_coalesce_usecs > coalesce_usecs_max)	||
 	    (ec->rx_coalesce_usecs > coalesce_usecs_max)	||
 	    (ec->rx_coalesce_usecs_low > coalesce_usecs_max)	||
 	    (ec->rx_coalesce_usecs_high > coalesce_usecs_max))
 		netdev_info(enic->netdev, "ethtool_set_coalesce: adaptor supports max coalesce value of %d. Setting max value.\n",
 			    coalesce_usecs_max);
 
-	if (ec->rx_coalesce_usecs_high &&
+	अगर (ec->rx_coalesce_usecs_high &&
 	    (rx_coalesce_usecs_high <
 	     rx_coalesce_usecs_low + ENIC_AIC_LARGE_PKT_DIFF))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enic_set_coalesce(struct net_device *netdev,
-	struct ethtool_coalesce *ecmd)
-{
-	struct enic *enic = netdev_priv(netdev);
+अटल पूर्णांक enic_set_coalesce(काष्ठा net_device *netdev,
+	काष्ठा ethtool_coalesce *ecmd)
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
 	u32 tx_coalesce_usecs;
 	u32 rx_coalesce_usecs;
 	u32 rx_coalesce_usecs_low;
 	u32 rx_coalesce_usecs_high;
 	u32 coalesce_usecs_max;
-	unsigned int i, intr;
-	int ret;
-	struct enic_rx_coal *rxcoal = &enic->rx_coalesce_setting;
+	अचिन्हित पूर्णांक i, पूर्णांकr;
+	पूर्णांक ret;
+	काष्ठा enic_rx_coal *rxcoal = &enic->rx_coalesce_setting;
 
 	ret = enic_coalesce_valid(enic, ecmd);
-	if (ret)
-		return ret;
-	coalesce_usecs_max = vnic_dev_get_intr_coal_timer_max(enic->vdev);
+	अगर (ret)
+		वापस ret;
+	coalesce_usecs_max = vnic_dev_get_पूर्णांकr_coal_समयr_max(enic->vdev);
 	tx_coalesce_usecs = min_t(u32, ecmd->tx_coalesce_usecs,
 				  coalesce_usecs_max);
 	rx_coalesce_usecs = min_t(u32, ecmd->rx_coalesce_usecs,
@@ -369,72 +370,72 @@ static int enic_set_coalesce(struct net_device *netdev,
 	rx_coalesce_usecs_high = min_t(u32, ecmd->rx_coalesce_usecs_high,
 				       coalesce_usecs_max);
 
-	if (vnic_dev_get_intr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX) {
-		for (i = 0; i < enic->wq_count; i++) {
-			intr = enic_msix_wq_intr(enic, i);
-			vnic_intr_coalescing_timer_set(&enic->intr[intr],
+	अगर (vnic_dev_get_पूर्णांकr_mode(enic->vdev) == VNIC_DEV_INTR_MODE_MSIX) अणु
+		क्रम (i = 0; i < enic->wq_count; i++) अणु
+			पूर्णांकr = enic_msix_wq_पूर्णांकr(enic, i);
+			vnic_पूर्णांकr_coalescing_समयr_set(&enic->पूर्णांकr[पूर्णांकr],
 						       tx_coalesce_usecs);
-		}
+		पूर्ण
 		enic->tx_coalesce_usecs = tx_coalesce_usecs;
-	}
+	पूर्ण
 	rxcoal->use_adaptive_rx_coalesce = !!ecmd->use_adaptive_rx_coalesce;
-	if (!rxcoal->use_adaptive_rx_coalesce)
-		enic_intr_coal_set_rx(enic, rx_coalesce_usecs);
-	if (ecmd->rx_coalesce_usecs_high) {
+	अगर (!rxcoal->use_adaptive_rx_coalesce)
+		enic_पूर्णांकr_coal_set_rx(enic, rx_coalesce_usecs);
+	अगर (ecmd->rx_coalesce_usecs_high) अणु
 		rxcoal->range_end = rx_coalesce_usecs_high;
 		rxcoal->small_pkt_range_start = rx_coalesce_usecs_low;
 		rxcoal->large_pkt_range_start = rx_coalesce_usecs_low +
 						ENIC_AIC_LARGE_PKT_DIFF;
-	}
+	पूर्ण
 
 	enic->rx_coalesce_usecs = rx_coalesce_usecs;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enic_grxclsrlall(struct enic *enic, struct ethtool_rxnfc *cmd,
+अटल पूर्णांक enic_grxclsrlall(काष्ठा enic *enic, काष्ठा ethtool_rxnfc *cmd,
 			    u32 *rule_locs)
-{
-	int j, ret = 0, cnt = 0;
+अणु
+	पूर्णांक j, ret = 0, cnt = 0;
 
-	cmd->data = enic->rfs_h.max - enic->rfs_h.free;
-	for (j = 0; j < (1 << ENIC_RFS_FLW_BITSHIFT); j++) {
-		struct hlist_head *hhead;
-		struct hlist_node *tmp;
-		struct enic_rfs_fltr_node *n;
+	cmd->data = enic->rfs_h.max - enic->rfs_h.मुक्त;
+	क्रम (j = 0; j < (1 << ENIC_RFS_FLW_BITSHIFT); j++) अणु
+		काष्ठा hlist_head *hhead;
+		काष्ठा hlist_node *पंचांगp;
+		काष्ठा enic_rfs_fltr_node *n;
 
 		hhead = &enic->rfs_h.ht_head[j];
-		hlist_for_each_entry_safe(n, tmp, hhead, node) {
-			if (cnt == cmd->rule_cnt)
-				return -EMSGSIZE;
+		hlist_क्रम_each_entry_safe(n, पंचांगp, hhead, node) अणु
+			अगर (cnt == cmd->rule_cnt)
+				वापस -EMSGSIZE;
 			rule_locs[cnt] = n->fltr_id;
 			cnt++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	cmd->rule_cnt = cnt;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int enic_grxclsrule(struct enic *enic, struct ethtool_rxnfc *cmd)
-{
-	struct ethtool_rx_flow_spec *fsp =
-				(struct ethtool_rx_flow_spec *)&cmd->fs;
-	struct enic_rfs_fltr_node *n;
+अटल पूर्णांक enic_grxclsrule(काष्ठा enic *enic, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा ethtool_rx_flow_spec *fsp =
+				(काष्ठा ethtool_rx_flow_spec *)&cmd->fs;
+	काष्ठा enic_rfs_fltr_node *n;
 
 	n = htbl_fltr_search(enic, (u16)fsp->location);
-	if (!n)
-		return -EINVAL;
-	switch (n->keys.basic.ip_proto) {
-	case IPPROTO_TCP:
+	अगर (!n)
+		वापस -EINVAL;
+	चयन (n->keys.basic.ip_proto) अणु
+	हाल IPPROTO_TCP:
 		fsp->flow_type = TCP_V4_FLOW;
-		break;
-	case IPPROTO_UDP:
+		अवरोध;
+	हाल IPPROTO_UDP:
 		fsp->flow_type = UDP_V4_FLOW;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	fsp->h_u.tcp_ip4_spec.ip4src = flow_get_u32_src(&n->keys);
 	fsp->m_u.tcp_ip4_spec.ip4src = (__u32)~0;
@@ -450,171 +451,171 @@ static int enic_grxclsrule(struct enic *enic, struct ethtool_rxnfc *cmd)
 
 	fsp->ring_cookie = n->rq_id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enic_get_rx_flow_hash(struct enic *enic, struct ethtool_rxnfc *cmd)
-{
+अटल पूर्णांक enic_get_rx_flow_hash(काष्ठा enic *enic, काष्ठा ethtool_rxnfc *cmd)
+अणु
 	u8 rss_hash_type = 0;
 	cmd->data = 0;
 
 	spin_lock_bh(&enic->devcmd_lock);
-	(void)vnic_dev_capable_rss_hash_type(enic->vdev, &rss_hash_type);
+	(व्योम)vnic_dev_capable_rss_hash_type(enic->vdev, &rss_hash_type);
 	spin_unlock_bh(&enic->devcmd_lock);
-	switch (cmd->flow_type) {
-	case TCP_V6_FLOW:
-	case TCP_V4_FLOW:
+	चयन (cmd->flow_type) अणु
+	हाल TCP_V6_FLOW:
+	हाल TCP_V4_FLOW:
 		cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3 |
 			     RXH_IP_SRC | RXH_IP_DST;
-		break;
-	case UDP_V6_FLOW:
+		अवरोध;
+	हाल UDP_V6_FLOW:
 		cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-		if (rss_hash_type & NIC_CFG_RSS_HASH_TYPE_UDP_IPV6)
+		अगर (rss_hash_type & NIC_CFG_RSS_HASH_TYPE_UDP_IPV6)
 			cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
-		break;
-	case UDP_V4_FLOW:
+		अवरोध;
+	हाल UDP_V4_FLOW:
 		cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-		if (rss_hash_type & NIC_CFG_RSS_HASH_TYPE_UDP_IPV4)
+		अगर (rss_hash_type & NIC_CFG_RSS_HASH_TYPE_UDP_IPV4)
 			cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
-		break;
-	case SCTP_V4_FLOW:
-	case AH_ESP_V4_FLOW:
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
-	case SCTP_V6_FLOW:
-	case AH_ESP_V6_FLOW:
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-	case IPV4_FLOW:
-	case IPV6_FLOW:
+		अवरोध;
+	हाल SCTP_V4_FLOW:
+	हाल AH_ESP_V4_FLOW:
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
+	हाल SCTP_V6_FLOW:
+	हाल AH_ESP_V6_FLOW:
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+	हाल IPV4_FLOW:
+	हाल IPV6_FLOW:
 		cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enic_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd,
+अटल पूर्णांक enic_get_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd,
 			  u32 *rule_locs)
-{
-	struct enic *enic = netdev_priv(dev);
-	int ret = 0;
+अणु
+	काष्ठा enic *enic = netdev_priv(dev);
+	पूर्णांक ret = 0;
 
-	switch (cmd->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		cmd->data = enic->rq_count;
-		break;
-	case ETHTOOL_GRXCLSRLCNT:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRLCNT:
 		spin_lock_bh(&enic->rfs_h.lock);
-		cmd->rule_cnt = enic->rfs_h.max - enic->rfs_h.free;
+		cmd->rule_cnt = enic->rfs_h.max - enic->rfs_h.मुक्त;
 		cmd->data = enic->rfs_h.max;
 		spin_unlock_bh(&enic->rfs_h.lock);
-		break;
-	case ETHTOOL_GRXCLSRLALL:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRLALL:
 		spin_lock_bh(&enic->rfs_h.lock);
 		ret = enic_grxclsrlall(enic, cmd, rule_locs);
 		spin_unlock_bh(&enic->rfs_h.lock);
-		break;
-	case ETHTOOL_GRXCLSRULE:
+		अवरोध;
+	हाल ETHTOOL_GRXCLSRULE:
 		spin_lock_bh(&enic->rfs_h.lock);
 		ret = enic_grxclsrule(enic, cmd);
 		spin_unlock_bh(&enic->rfs_h.lock);
-		break;
-	case ETHTOOL_GRXFH:
+		अवरोध;
+	हाल ETHTOOL_GRXFH:
 		ret = enic_get_rx_flow_hash(enic, cmd);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int enic_get_tunable(struct net_device *dev,
-			    const struct ethtool_tunable *tuna, void *data)
-{
-	struct enic *enic = netdev_priv(dev);
-	int ret = 0;
+अटल पूर्णांक enic_get_tunable(काष्ठा net_device *dev,
+			    स्थिर काष्ठा ethtool_tunable *tuna, व्योम *data)
+अणु
+	काष्ठा enic *enic = netdev_priv(dev);
+	पूर्णांक ret = 0;
 
-	switch (tuna->id) {
-	case ETHTOOL_RX_COPYBREAK:
-		*(u32 *)data = enic->rx_copybreak;
-		break;
-	default:
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_RX_COPYBREAK:
+		*(u32 *)data = enic->rx_copyअवरोध;
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int enic_set_tunable(struct net_device *dev,
-			    const struct ethtool_tunable *tuna,
-			    const void *data)
-{
-	struct enic *enic = netdev_priv(dev);
-	int ret = 0;
+अटल पूर्णांक enic_set_tunable(काष्ठा net_device *dev,
+			    स्थिर काष्ठा ethtool_tunable *tuna,
+			    स्थिर व्योम *data)
+अणु
+	काष्ठा enic *enic = netdev_priv(dev);
+	पूर्णांक ret = 0;
 
-	switch (tuna->id) {
-	case ETHTOOL_RX_COPYBREAK:
-		enic->rx_copybreak = *(u32 *)data;
-		break;
-	default:
+	चयन (tuna->id) अणु
+	हाल ETHTOOL_RX_COPYBREAK:
+		enic->rx_copyअवरोध = *(u32 *)data;
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 enic_get_rxfh_key_size(struct net_device *netdev)
-{
-	return ENIC_RSS_LEN;
-}
+अटल u32 enic_get_rxfh_key_size(काष्ठा net_device *netdev)
+अणु
+	वापस ENIC_RSS_LEN;
+पूर्ण
 
-static int enic_get_rxfh(struct net_device *netdev, u32 *indir, u8 *hkey,
+अटल पूर्णांक enic_get_rxfh(काष्ठा net_device *netdev, u32 *indir, u8 *hkey,
 			 u8 *hfunc)
-{
-	struct enic *enic = netdev_priv(netdev);
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
 
-	if (hkey)
-		memcpy(hkey, enic->rss_key, ENIC_RSS_LEN);
+	अगर (hkey)
+		स_नकल(hkey, enic->rss_key, ENIC_RSS_LEN);
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enic_set_rxfh(struct net_device *netdev, const u32 *indir,
-			 const u8 *hkey, const u8 hfunc)
-{
-	struct enic *enic = netdev_priv(netdev);
+अटल पूर्णांक enic_set_rxfh(काष्ठा net_device *netdev, स्थिर u32 *indir,
+			 स्थिर u8 *hkey, स्थिर u8 hfunc)
+अणु
+	काष्ठा enic *enic = netdev_priv(netdev);
 
-	if ((hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP) ||
+	अगर ((hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP) ||
 	    indir)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (hkey)
-		memcpy(enic->rss_key, hkey, ENIC_RSS_LEN);
+	अगर (hkey)
+		स_नकल(enic->rss_key, hkey, ENIC_RSS_LEN);
 
-	return __enic_set_rsskey(enic);
-}
+	वापस __enic_set_rsskey(enic);
+पूर्ण
 
-static int enic_get_ts_info(struct net_device *netdev,
-			    struct ethtool_ts_info *info)
-{
-	info->so_timestamping = SOF_TIMESTAMPING_TX_SOFTWARE |
+अटल पूर्णांक enic_get_ts_info(काष्ठा net_device *netdev,
+			    काष्ठा ethtool_ts_info *info)
+अणु
+	info->so_बारtamping = SOF_TIMESTAMPING_TX_SOFTWARE |
 				SOF_TIMESTAMPING_RX_SOFTWARE |
 				SOF_TIMESTAMPING_SOFTWARE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ethtool_ops enic_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops enic_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_USE_ADAPTIVE_RX |
 				     ETHTOOL_COALESCE_RX_USECS_LOW |
@@ -638,9 +639,9 @@ static const struct ethtool_ops enic_ethtool_ops = {
 	.set_rxfh = enic_set_rxfh,
 	.get_link_ksettings = enic_get_ksettings,
 	.get_ts_info = enic_get_ts_info,
-};
+पूर्ण;
 
-void enic_set_ethtool_ops(struct net_device *netdev)
-{
+व्योम enic_set_ethtool_ops(काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = &enic_ethtool_ops;
-}
+पूर्ण

@@ -1,85 +1,86 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_STRING_H
-#define _ASM_POWERPC_STRING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_STRING_H
+#घोषणा _ASM_POWERPC_STRING_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#ifndef CONFIG_KASAN
-#define __HAVE_ARCH_STRNCPY
-#define __HAVE_ARCH_STRNCMP
-#define __HAVE_ARCH_MEMCHR
-#define __HAVE_ARCH_MEMCMP
-#define __HAVE_ARCH_MEMSET16
-#endif
+#अगर_अघोषित CONFIG_KASAN
+#घोषणा __HAVE_ARCH_STRNCPY
+#घोषणा __HAVE_ARCH_STRNCMP
+#घोषणा __HAVE_ARCH_MEMCHR
+#घोषणा __HAVE_ARCH_MEMCMP
+#घोषणा __HAVE_ARCH_MEMSET16
+#पूर्ण_अगर
 
-#define __HAVE_ARCH_MEMSET
-#define __HAVE_ARCH_MEMCPY
-#define __HAVE_ARCH_MEMMOVE
-#define __HAVE_ARCH_MEMCPY_FLUSHCACHE
+#घोषणा __HAVE_ARCH_MEMSET
+#घोषणा __HAVE_ARCH_MEMCPY
+#घोषणा __HAVE_ARCH_MEMMOVE
+#घोषणा __HAVE_ARCH_MEMCPY_FLUSHCACHE
 
-extern char * strcpy(char *,const char *);
-extern char * strncpy(char *,const char *, __kernel_size_t);
-extern __kernel_size_t strlen(const char *);
-extern int strcmp(const char *,const char *);
-extern int strncmp(const char *, const char *, __kernel_size_t);
-extern char * strcat(char *, const char *);
-extern void * memset(void *,int,__kernel_size_t);
-extern void * memcpy(void *,const void *,__kernel_size_t);
-extern void * memmove(void *,const void *,__kernel_size_t);
-extern int memcmp(const void *,const void *,__kernel_size_t);
-extern void * memchr(const void *,int,__kernel_size_t);
-void memcpy_flushcache(void *dest, const void *src, size_t size);
+बाह्य अक्षर * म_नकल(अक्षर *,स्थिर अक्षर *);
+बाह्य अक्षर * म_नकलन(अक्षर *,स्थिर अक्षर *, __kernel_माप_प्रकार);
+बाह्य __kernel_माप_प्रकार म_माप(स्थिर अक्षर *);
+बाह्य पूर्णांक म_भेद(स्थिर अक्षर *,स्थिर अक्षर *);
+बाह्य पूर्णांक म_भेदन(स्थिर अक्षर *, स्थिर अक्षर *, __kernel_माप_प्रकार);
+बाह्य अक्षर * म_जोड़ो(अक्षर *, स्थिर अक्षर *);
+बाह्य व्योम * स_रखो(व्योम *,पूर्णांक,__kernel_माप_प्रकार);
+बाह्य व्योम * स_नकल(व्योम *,स्थिर व्योम *,__kernel_माप_प्रकार);
+बाह्य व्योम * स_हटाओ(व्योम *,स्थिर व्योम *,__kernel_माप_प्रकार);
+बाह्य पूर्णांक स_भेद(स्थिर व्योम *,स्थिर व्योम *,__kernel_माप_प्रकार);
+बाह्य व्योम * स_प्रथम(स्थिर व्योम *,पूर्णांक,__kernel_माप_प्रकार);
+व्योम स_नकल_flushcache(व्योम *dest, स्थिर व्योम *src, माप_प्रकार size);
 
-void *__memset(void *s, int c, __kernel_size_t count);
-void *__memcpy(void *to, const void *from, __kernel_size_t n);
-void *__memmove(void *to, const void *from, __kernel_size_t n);
+व्योम *__स_रखो(व्योम *s, पूर्णांक c, __kernel_माप_प्रकार count);
+व्योम *__स_नकल(व्योम *to, स्थिर व्योम *from, __kernel_माप_प्रकार n);
+व्योम *__स_हटाओ(व्योम *to, स्थिर व्योम *from, __kernel_माप_प्रकार n);
 
-#if defined(CONFIG_KASAN) && !defined(__SANITIZE_ADDRESS__)
+#अगर defined(CONFIG_KASAN) && !defined(__SANITIZE_ADDRESS__)
 /*
  * For files that are not instrumented (e.g. mm/slub.c) we
  * should use not instrumented version of mem* functions.
  */
-#define memcpy(dst, src, len) __memcpy(dst, src, len)
-#define memmove(dst, src, len) __memmove(dst, src, len)
-#define memset(s, c, n) __memset(s, c, n)
+#घोषणा स_नकल(dst, src, len) __स_नकल(dst, src, len)
+#घोषणा स_हटाओ(dst, src, len) __स_हटाओ(dst, src, len)
+#घोषणा स_रखो(s, c, n) __स_रखो(s, c, n)
 
-#ifndef __NO_FORTIFY
-#define __NO_FORTIFY /* FORTIFY_SOURCE uses __builtin_memcpy, etc. */
-#endif
+#अगर_अघोषित __NO_FORTIFY
+#घोषणा __NO_FORTIFY /* FORTIFY_SOURCE uses __builtin_स_नकल, etc. */
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC64
-#ifndef CONFIG_KASAN
-#define __HAVE_ARCH_MEMSET32
-#define __HAVE_ARCH_MEMSET64
+#अगर_घोषित CONFIG_PPC64
+#अगर_अघोषित CONFIG_KASAN
+#घोषणा __HAVE_ARCH_MEMSET32
+#घोषणा __HAVE_ARCH_MEMSET64
 
-extern void *__memset16(uint16_t *, uint16_t v, __kernel_size_t);
-extern void *__memset32(uint32_t *, uint32_t v, __kernel_size_t);
-extern void *__memset64(uint64_t *, uint64_t v, __kernel_size_t);
+बाह्य व्योम *__स_रखो16(uपूर्णांक16_t *, uपूर्णांक16_t v, __kernel_माप_प्रकार);
+बाह्य व्योम *__स_रखो32(uपूर्णांक32_t *, uपूर्णांक32_t v, __kernel_माप_प्रकार);
+बाह्य व्योम *__स_रखो64(uपूर्णांक64_t *, uपूर्णांक64_t v, __kernel_माप_प्रकार);
 
-static inline void *memset16(uint16_t *p, uint16_t v, __kernel_size_t n)
-{
-	return __memset16(p, v, n * 2);
-}
+अटल अंतरभूत व्योम *स_रखो16(uपूर्णांक16_t *p, uपूर्णांक16_t v, __kernel_माप_प्रकार n)
+अणु
+	वापस __स_रखो16(p, v, n * 2);
+पूर्ण
 
-static inline void *memset32(uint32_t *p, uint32_t v, __kernel_size_t n)
-{
-	return __memset32(p, v, n * 4);
-}
+अटल अंतरभूत व्योम *स_रखो32(uपूर्णांक32_t *p, uपूर्णांक32_t v, __kernel_माप_प्रकार n)
+अणु
+	वापस __स_रखो32(p, v, n * 4);
+पूर्ण
 
-static inline void *memset64(uint64_t *p, uint64_t v, __kernel_size_t n)
-{
-	return __memset64(p, v, n * 8);
-}
-#endif
-#else
-#ifndef CONFIG_KASAN
-#define __HAVE_ARCH_STRLEN
-#endif
+अटल अंतरभूत व्योम *स_रखो64(uपूर्णांक64_t *p, uपूर्णांक64_t v, __kernel_माप_प्रकार n)
+अणु
+	वापस __स_रखो64(p, v, n * 8);
+पूर्ण
+#पूर्ण_अगर
+#अन्यथा
+#अगर_अघोषित CONFIG_KASAN
+#घोषणा __HAVE_ARCH_STRLEN
+#पूर्ण_अगर
 
-extern void *memset16(uint16_t *, uint16_t, __kernel_size_t);
-#endif
-#endif /* __KERNEL__ */
+बाह्य व्योम *स_रखो16(uपूर्णांक16_t *, uपूर्णांक16_t, __kernel_माप_प्रकार);
+#पूर्ण_अगर
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif	/* _ASM_POWERPC_STRING_H */
+#पूर्ण_अगर	/* _ASM_POWERPC_STRING_H */

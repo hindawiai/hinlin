@@ -1,43 +1,44 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
 
-#ifndef __I915_SELFTESTS_IGT_SPINNER_H__
-#define __I915_SELFTESTS_IGT_SPINNER_H__
+#अगर_अघोषित __I915_SELFTESTS_IGT_SPINNER_H__
+#घोषणा __I915_SELFTESTS_IGT_SPINNER_H__
 
-#include "gem/i915_gem_context.h"
-#include "gt/intel_engine.h"
+#समावेश "gem/i915_gem_context.h"
+#समावेश "gt/intel_engine.h"
 
-#include "i915_drv.h"
-#include "i915_request.h"
-#include "i915_selftest.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_request.h"
+#समावेश "i915_selftest.h"
 
-struct intel_gt;
+काष्ठा पूर्णांकel_gt;
 
-struct igt_spinner {
-	struct intel_gt *gt;
-	struct drm_i915_gem_object *hws;
-	struct drm_i915_gem_object *obj;
-	struct intel_context *ce;
-	struct i915_vma *hws_vma, *batch_vma;
+काष्ठा igt_spinner अणु
+	काष्ठा पूर्णांकel_gt *gt;
+	काष्ठा drm_i915_gem_object *hws;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा पूर्णांकel_context *ce;
+	काष्ठा i915_vma *hws_vma, *batch_vma;
 	u32 *batch;
-	void *seqno;
-};
+	व्योम *seqno;
+पूर्ण;
 
-int igt_spinner_init(struct igt_spinner *spin, struct intel_gt *gt);
-int igt_spinner_pin(struct igt_spinner *spin,
-		    struct intel_context *ce,
-		    struct i915_gem_ww_ctx *ww);
-void igt_spinner_fini(struct igt_spinner *spin);
+पूर्णांक igt_spinner_init(काष्ठा igt_spinner *spin, काष्ठा पूर्णांकel_gt *gt);
+पूर्णांक igt_spinner_pin(काष्ठा igt_spinner *spin,
+		    काष्ठा पूर्णांकel_context *ce,
+		    काष्ठा i915_gem_ww_ctx *ww);
+व्योम igt_spinner_fini(काष्ठा igt_spinner *spin);
 
-struct i915_request *
-igt_spinner_create_request(struct igt_spinner *spin,
-			   struct intel_context *ce,
+काष्ठा i915_request *
+igt_spinner_create_request(काष्ठा igt_spinner *spin,
+			   काष्ठा पूर्णांकel_context *ce,
 			   u32 arbitration_command);
-void igt_spinner_end(struct igt_spinner *spin);
+व्योम igt_spinner_end(काष्ठा igt_spinner *spin);
 
-bool igt_wait_for_spinner(struct igt_spinner *spin, struct i915_request *rq);
+bool igt_रुको_क्रम_spinner(काष्ठा igt_spinner *spin, काष्ठा i915_request *rq);
 
-#endif
+#पूर्ण_अगर

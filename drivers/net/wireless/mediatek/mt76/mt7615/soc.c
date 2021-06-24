@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /* Copyright (C) 2019 MediaTek Inc.
  *
  * Author: Ryder Lee <ryder.lee@mediatek.com>
  *         Felix Fietkau <nbd@nbd.name>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of.h>
-#include "mt7615.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of.h>
+#समावेश "mt7615.h"
 
-int mt7622_wmac_init(struct mt7615_dev *dev)
-{
-	struct device_node *np = dev->mt76.dev->of_node;
+पूर्णांक mt7622_wmac_init(काष्ठा mt7615_dev *dev)
+अणु
+	काष्ठा device_node *np = dev->mt76.dev->of_node;
 
-	if (!is_mt7622(&dev->mt76))
-		return 0;
+	अगर (!is_mt7622(&dev->mt76))
+		वापस 0;
 
 	dev->infracfg = syscon_regmap_lookup_by_phandle(np, "mediatek,infracfg");
-	if (IS_ERR(dev->infracfg)) {
+	अगर (IS_ERR(dev->infracfg)) अणु
 		dev_err(dev->mt76.dev, "Cannot find infracfg controller\n");
-		return PTR_ERR(dev->infracfg);
-	}
+		वापस PTR_ERR(dev->infracfg);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mt7622_wmac_probe(struct platform_device *pdev)
-{
-	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	void __iomem *mem_base;
-	int irq;
+अटल पूर्णांक mt7622_wmac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	व्योम __iomem *mem_base;
+	पूर्णांक irq;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	mem_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(mem_base))
-		return PTR_ERR(mem_base);
+	अगर (IS_ERR(mem_base))
+		वापस PTR_ERR(mem_base);
 
-	return mt7615_mmio_probe(&pdev->dev, mem_base, irq, mt7615e_reg_map);
-}
+	वापस mt7615_mmio_probe(&pdev->dev, mem_base, irq, mt7615e_reg_map);
+पूर्ण
 
-static int mt7622_wmac_remove(struct platform_device *pdev)
-{
-	struct mt7615_dev *dev = platform_get_drvdata(pdev);
+अटल पूर्णांक mt7622_wmac_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mt7615_dev *dev = platक्रमm_get_drvdata(pdev);
 
-	mt7615_unregister_device(dev);
+	mt7615_unरेजिस्टर_device(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mt7622_wmac_of_match[] = {
-	{ .compatible = "mediatek,mt7622-wmac" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id mt7622_wmac_of_match[] = अणु
+	अणु .compatible = "mediatek,mt7622-wmac" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-struct platform_driver mt7622_wmac_driver = {
-	.driver = {
+काष्ठा platक्रमm_driver mt7622_wmac_driver = अणु
+	.driver = अणु
 		.name = "mt7622-wmac",
 		.of_match_table = mt7622_wmac_of_match,
-	},
+	पूर्ण,
 	.probe = mt7622_wmac_probe,
-	.remove = mt7622_wmac_remove,
-};
+	.हटाओ = mt7622_wmac_हटाओ,
+पूर्ण;
 
 MODULE_FIRMWARE(MT7622_FIRMWARE_N9);
 MODULE_FIRMWARE(MT7622_ROM_PATCH);

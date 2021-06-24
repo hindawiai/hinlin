@@ -1,271 +1,272 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  sst_mfld_platform.c - Intel MID Platform driver
+ *  sst_mfld_platक्रमm.c - Intel MID Platक्रमm driver
  *
  *  Copyright (C) 2010-2014 Intel Corp
- *  Author: Vinod Koul <vinod.koul@intel.com>
+ *  Author: Vinod Koul <vinod.koul@पूर्णांकel.com>
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/compress_driver.h>
-#include "sst-mfld-platform.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/compress_driver.h>
+#समावेश "sst-mfld-platform.h"
 
 /* compress stream operations */
-static void sst_compr_fragment_elapsed(void *arg)
-{
-	struct snd_compr_stream *cstream = (struct snd_compr_stream *)arg;
+अटल व्योम sst_compr_fragment_elapsed(व्योम *arg)
+अणु
+	काष्ठा snd_compr_stream *cstream = (काष्ठा snd_compr_stream *)arg;
 
 	pr_debug("fragment elapsed by driver\n");
-	if (cstream)
+	अगर (cstream)
 		snd_compr_fragment_elapsed(cstream);
-}
+पूर्ण
 
-static void sst_drain_notify(void *arg)
-{
-	struct snd_compr_stream *cstream = (struct snd_compr_stream *)arg;
+अटल व्योम sst_drain_notअगरy(व्योम *arg)
+अणु
+	काष्ठा snd_compr_stream *cstream = (काष्ठा snd_compr_stream *)arg;
 
 	pr_debug("drain notify by driver\n");
-	if (cstream)
-		snd_compr_drain_notify(cstream);
-}
+	अगर (cstream)
+		snd_compr_drain_notअगरy(cstream);
+पूर्ण
 
-static int sst_platform_compr_open(struct snd_soc_component *component,
-				   struct snd_compr_stream *cstream)
-{
-	int ret_val;
-	struct snd_compr_runtime *runtime = cstream->runtime;
-	struct sst_runtime_stream *stream;
+अटल पूर्णांक sst_platक्रमm_compr_खोलो(काष्ठा snd_soc_component *component,
+				   काष्ठा snd_compr_stream *cstream)
+अणु
+	पूर्णांक ret_val;
+	काष्ठा snd_compr_runसमय *runसमय = cstream->runसमय;
+	काष्ठा sst_runसमय_stream *stream;
 
-	stream = kzalloc(sizeof(*stream), GFP_KERNEL);
-	if (!stream)
-		return -ENOMEM;
+	stream = kzalloc(माप(*stream), GFP_KERNEL);
+	अगर (!stream)
+		वापस -ENOMEM;
 
 	spin_lock_init(&stream->status_lock);
 
 	/* get the sst ops */
-	if (!sst || !try_module_get(sst->dev->driver->owner)) {
+	अगर (!sst || !try_module_get(sst->dev->driver->owner)) अणु
 		pr_err("no device available to run\n");
 		ret_val = -ENODEV;
-		goto out_ops;
-	}
+		जाओ out_ops;
+	पूर्ण
 	stream->compr_ops = sst->compr_ops;
 	stream->id = 0;
 
 	/* Turn on LPE */
-	sst->compr_ops->power(sst->dev, true);
+	sst->compr_ops->घातer(sst->dev, true);
 
 	sst_set_stream_status(stream, SST_PLATFORM_INIT);
-	runtime->private_data = stream;
-	return 0;
+	runसमय->निजी_data = stream;
+	वापस 0;
 out_ops:
-	kfree(stream);
-	return ret_val;
-}
+	kमुक्त(stream);
+	वापस ret_val;
+पूर्ण
 
-static int sst_platform_compr_free(struct snd_soc_component *component,
-				   struct snd_compr_stream *cstream)
-{
-	struct sst_runtime_stream *stream;
-	int ret_val = 0, str_id;
+अटल पूर्णांक sst_platक्रमm_compr_मुक्त(काष्ठा snd_soc_component *component,
+				   काष्ठा snd_compr_stream *cstream)
+अणु
+	काष्ठा sst_runसमय_stream *stream;
+	पूर्णांक ret_val = 0, str_id;
 
-	stream = cstream->runtime->private_data;
+	stream = cstream->runसमय->निजी_data;
 	/* Turn off LPE */
-	sst->compr_ops->power(sst->dev, false);
+	sst->compr_ops->घातer(sst->dev, false);
 
 	/*need to check*/
 	str_id = stream->id;
-	if (str_id)
-		ret_val = stream->compr_ops->close(sst->dev, str_id);
+	अगर (str_id)
+		ret_val = stream->compr_ops->बंद(sst->dev, str_id);
 	module_put(sst->dev->driver->owner);
-	kfree(stream);
+	kमुक्त(stream);
 	pr_debug("%s: %d\n", __func__, ret_val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sst_platform_compr_set_params(struct snd_soc_component *component,
-					 struct snd_compr_stream *cstream,
-					 struct snd_compr_params *params)
-{
-	struct sst_runtime_stream *stream;
-	int retval;
-	struct snd_sst_params str_params;
-	struct sst_compress_cb cb;
-	struct sst_data *ctx = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक sst_platक्रमm_compr_set_params(काष्ठा snd_soc_component *component,
+					 काष्ठा snd_compr_stream *cstream,
+					 काष्ठा snd_compr_params *params)
+अणु
+	काष्ठा sst_runसमय_stream *stream;
+	पूर्णांक retval;
+	काष्ठा snd_sst_params str_params;
+	काष्ठा sst_compress_cb cb;
+	काष्ठा sst_data *ctx = snd_soc_component_get_drvdata(component);
 
-	stream = cstream->runtime->private_data;
-	/* construct fw structure for this*/
-	memset(&str_params, 0, sizeof(str_params));
+	stream = cstream->runसमय->निजी_data;
+	/* स्थिरruct fw काष्ठाure क्रम this*/
+	स_रखो(&str_params, 0, माप(str_params));
 
 	/* fill the device type and stream id to pass to SST driver */
 	retval = sst_fill_stream_params(cstream, ctx, &str_params, true);
 	pr_debug("compr_set_params: fill stream params ret_val = 0x%x\n", retval);
-	if (retval < 0)
-		return retval;
+	अगर (retval < 0)
+		वापस retval;
 
-	switch (params->codec.id) {
-	case SND_AUDIOCODEC_MP3: {
+	चयन (params->codec.id) अणु
+	हाल SND_AUDIOCODEC_MP3: अणु
 		str_params.codec = SST_CODEC_TYPE_MP3;
 		str_params.sparams.uc.mp3_params.num_chan = params->codec.ch_in;
 		str_params.sparams.uc.mp3_params.pcm_wd_sz = 16;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case SND_AUDIOCODEC_AAC: {
+	हाल SND_AUDIOCODEC_AAC: अणु
 		str_params.codec = SST_CODEC_TYPE_AAC;
 		str_params.sparams.uc.aac_params.num_chan = params->codec.ch_in;
 		str_params.sparams.uc.aac_params.pcm_wd_sz = 16;
-		if (params->codec.format == SND_AUDIOSTREAMFORMAT_MP4ADTS)
-			str_params.sparams.uc.aac_params.bs_format =
+		अगर (params->codec.क्रमmat == SND_AUDIOSTREAMFORMAT_MP4ADTS)
+			str_params.sparams.uc.aac_params.bs_क्रमmat =
 							AAC_BIT_STREAM_ADTS;
-		else if (params->codec.format == SND_AUDIOSTREAMFORMAT_RAW)
-			str_params.sparams.uc.aac_params.bs_format =
+		अन्यथा अगर (params->codec.क्रमmat == SND_AUDIOSTREAMFORMAT_RAW)
+			str_params.sparams.uc.aac_params.bs_क्रमmat =
 							AAC_BIT_STREAM_RAW;
-		else {
-			pr_err("Undefined format%d\n", params->codec.format);
-			return -EINVAL;
-		}
-		str_params.sparams.uc.aac_params.externalsr =
+		अन्यथा अणु
+			pr_err("Undefined format%d\n", params->codec.क्रमmat);
+			वापस -EINVAL;
+		पूर्ण
+		str_params.sparams.uc.aac_params.बाह्यalsr =
 						params->codec.sample_rate;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		pr_err("codec not supported, id =%d\n", params->codec.id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	str_params.aparams.ring_buf_info[0].addr  =
-					virt_to_phys(cstream->runtime->buffer);
+					virt_to_phys(cstream->runसमय->buffer);
 	str_params.aparams.ring_buf_info[0].size =
-					cstream->runtime->buffer_size;
+					cstream->runसमय->buffer_size;
 	str_params.aparams.sg_count = 1;
-	str_params.aparams.frag_size = cstream->runtime->fragment_size;
+	str_params.aparams.frag_size = cstream->runसमय->fragment_size;
 
 	cb.param = cstream;
 	cb.compr_cb = sst_compr_fragment_elapsed;
 	cb.drain_cb_param = cstream;
-	cb.drain_notify = sst_drain_notify;
+	cb.drain_notअगरy = sst_drain_notअगरy;
 
-	retval = stream->compr_ops->open(sst->dev, &str_params, &cb);
-	if (retval < 0) {
+	retval = stream->compr_ops->खोलो(sst->dev, &str_params, &cb);
+	अगर (retval < 0) अणु
 		pr_err("stream allocation failed %d\n", retval);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	stream->id = retval;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sst_platform_compr_trigger(struct snd_soc_component *component,
-				      struct snd_compr_stream *cstream, int cmd)
-{
-	struct sst_runtime_stream *stream = cstream->runtime->private_data;
+अटल पूर्णांक sst_platक्रमm_compr_trigger(काष्ठा snd_soc_component *component,
+				      काष्ठा snd_compr_stream *cstream, पूर्णांक cmd)
+अणु
+	काष्ठा sst_runसमय_stream *stream = cstream->runसमय->निजी_data;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-		if (stream->compr_ops->stream_start)
-			return stream->compr_ops->stream_start(sst->dev, stream->id);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-		if (stream->compr_ops->stream_drop)
-			return stream->compr_ops->stream_drop(sst->dev, stream->id);
-		break;
-	case SND_COMPR_TRIGGER_DRAIN:
-		if (stream->compr_ops->stream_drain)
-			return stream->compr_ops->stream_drain(sst->dev, stream->id);
-		break;
-	case SND_COMPR_TRIGGER_PARTIAL_DRAIN:
-		if (stream->compr_ops->stream_partial_drain)
-			return stream->compr_ops->stream_partial_drain(sst->dev, stream->id);
-		break;
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		if (stream->compr_ops->stream_pause)
-			return stream->compr_ops->stream_pause(sst->dev, stream->id);
-		break;
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		if (stream->compr_ops->stream_pause_release)
-			return stream->compr_ops->stream_pause_release(sst->dev, stream->id);
-		break;
-	}
-	return -EINVAL;
-}
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+		अगर (stream->compr_ops->stream_start)
+			वापस stream->compr_ops->stream_start(sst->dev, stream->id);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		अगर (stream->compr_ops->stream_drop)
+			वापस stream->compr_ops->stream_drop(sst->dev, stream->id);
+		अवरोध;
+	हाल SND_COMPR_TRIGGER_DRAIN:
+		अगर (stream->compr_ops->stream_drain)
+			वापस stream->compr_ops->stream_drain(sst->dev, stream->id);
+		अवरोध;
+	हाल SND_COMPR_TRIGGER_PARTIAL_DRAIN:
+		अगर (stream->compr_ops->stream_partial_drain)
+			वापस stream->compr_ops->stream_partial_drain(sst->dev, stream->id);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		अगर (stream->compr_ops->stream_छोड़ो)
+			वापस stream->compr_ops->stream_छोड़ो(sst->dev, stream->id);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		अगर (stream->compr_ops->stream_छोड़ो_release)
+			वापस stream->compr_ops->stream_छोड़ो_release(sst->dev, stream->id);
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int sst_platform_compr_pointer(struct snd_soc_component *component,
-				      struct snd_compr_stream *cstream,
-				      struct snd_compr_tstamp *tstamp)
-{
-	struct sst_runtime_stream *stream;
+अटल पूर्णांक sst_platक्रमm_compr_poपूर्णांकer(काष्ठा snd_soc_component *component,
+				      काष्ठा snd_compr_stream *cstream,
+				      काष्ठा snd_compr_tstamp *tstamp)
+अणु
+	काष्ठा sst_runसमय_stream *stream;
 
-	stream  = cstream->runtime->private_data;
+	stream  = cstream->runसमय->निजी_data;
 	stream->compr_ops->tstamp(sst->dev, stream->id, tstamp);
 	tstamp->byte_offset = tstamp->copied_total %
-				 (u32)cstream->runtime->buffer_size;
+				 (u32)cstream->runसमय->buffer_size;
 	pr_debug("calc bytes offset/copied bytes as %d\n", tstamp->byte_offset);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sst_platform_compr_ack(struct snd_soc_component *component,
-				  struct snd_compr_stream *cstream,
-				  size_t bytes)
-{
-	struct sst_runtime_stream *stream;
+अटल पूर्णांक sst_platक्रमm_compr_ack(काष्ठा snd_soc_component *component,
+				  काष्ठा snd_compr_stream *cstream,
+				  माप_प्रकार bytes)
+अणु
+	काष्ठा sst_runसमय_stream *stream;
 
-	stream  = cstream->runtime->private_data;
-	stream->compr_ops->ack(sst->dev, stream->id, (unsigned long)bytes);
+	stream  = cstream->runसमय->निजी_data;
+	stream->compr_ops->ack(sst->dev, stream->id, (अचिन्हित दीर्घ)bytes);
 	stream->bytes_written += bytes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sst_platform_compr_get_caps(struct snd_soc_component *component,
-				       struct snd_compr_stream *cstream,
-				       struct snd_compr_caps *caps)
-{
-	struct sst_runtime_stream *stream =
-		cstream->runtime->private_data;
+अटल पूर्णांक sst_platक्रमm_compr_get_caps(काष्ठा snd_soc_component *component,
+				       काष्ठा snd_compr_stream *cstream,
+				       काष्ठा snd_compr_caps *caps)
+अणु
+	काष्ठा sst_runसमय_stream *stream =
+		cstream->runसमय->निजी_data;
 
-	return stream->compr_ops->get_caps(caps);
-}
+	वापस stream->compr_ops->get_caps(caps);
+पूर्ण
 
-static int sst_platform_compr_get_codec_caps(struct snd_soc_component *component,
-					     struct snd_compr_stream *cstream,
-					     struct snd_compr_codec_caps *codec)
-{
-	struct sst_runtime_stream *stream =
-		cstream->runtime->private_data;
+अटल पूर्णांक sst_platक्रमm_compr_get_codec_caps(काष्ठा snd_soc_component *component,
+					     काष्ठा snd_compr_stream *cstream,
+					     काष्ठा snd_compr_codec_caps *codec)
+अणु
+	काष्ठा sst_runसमय_stream *stream =
+		cstream->runसमय->निजी_data;
 
-	return stream->compr_ops->get_codec_caps(codec);
-}
+	वापस stream->compr_ops->get_codec_caps(codec);
+पूर्ण
 
-static int sst_platform_compr_set_metadata(struct snd_soc_component *component,
-					   struct snd_compr_stream *cstream,
-					   struct snd_compr_metadata *metadata)
-{
-	struct sst_runtime_stream *stream  =
-		 cstream->runtime->private_data;
+अटल पूर्णांक sst_platक्रमm_compr_set_metadata(काष्ठा snd_soc_component *component,
+					   काष्ठा snd_compr_stream *cstream,
+					   काष्ठा snd_compr_metadata *metadata)
+अणु
+	काष्ठा sst_runसमय_stream *stream  =
+		 cstream->runसमय->निजी_data;
 
-	return stream->compr_ops->set_metadata(sst->dev, stream->id, metadata);
-}
+	वापस stream->compr_ops->set_metadata(sst->dev, stream->id, metadata);
+पूर्ण
 
-const struct snd_compress_ops sst_platform_compress_ops = {
+स्थिर काष्ठा snd_compress_ops sst_platक्रमm_compress_ops = अणु
 
-	.open = sst_platform_compr_open,
-	.free = sst_platform_compr_free,
-	.set_params = sst_platform_compr_set_params,
-	.set_metadata = sst_platform_compr_set_metadata,
-	.trigger = sst_platform_compr_trigger,
-	.pointer = sst_platform_compr_pointer,
-	.ack = sst_platform_compr_ack,
-	.get_caps = sst_platform_compr_get_caps,
-	.get_codec_caps = sst_platform_compr_get_codec_caps,
-};
+	.खोलो = sst_platक्रमm_compr_खोलो,
+	.मुक्त = sst_platक्रमm_compr_मुक्त,
+	.set_params = sst_platक्रमm_compr_set_params,
+	.set_metadata = sst_platक्रमm_compr_set_metadata,
+	.trigger = sst_platक्रमm_compr_trigger,
+	.poपूर्णांकer = sst_platक्रमm_compr_poपूर्णांकer,
+	.ack = sst_platक्रमm_compr_ack,
+	.get_caps = sst_platक्रमm_compr_get_caps,
+	.get_codec_caps = sst_platक्रमm_compr_get_codec_caps,
+पूर्ण;

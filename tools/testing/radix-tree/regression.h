@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __REGRESSION_H__
-#define __REGRESSION_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __REGRESSION_H__
+#घोषणा __REGRESSION_H__
 
-void regression1_test(void);
-void regression2_test(void);
-void regression3_test(void);
-void regression4_test(void);
+व्योम regression1_test(व्योम);
+व्योम regression2_test(व्योम);
+व्योम regression3_test(व्योम);
+व्योम regression4_test(व्योम);
 
-#endif
+#पूर्ण_अगर

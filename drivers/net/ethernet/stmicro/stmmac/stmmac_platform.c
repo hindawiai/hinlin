@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*******************************************************************************
-  This contains the functions to handle the platform driver.
+  This contains the functions to handle the platक्रमm driver.
 
   Copyright (C) 2007-2011  STMicroelectronics Ltd
 
@@ -8,135 +9,135 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
-#include <linux/platform_device.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_net.h>
-#include <linux/of_device.h>
-#include <linux/of_mdio.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_mdपन.स>
 
-#include "stmmac.h"
-#include "stmmac_platform.h"
+#समावेश "stmmac.h"
+#समावेश "stmmac_platform.h"
 
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 
 /**
  * dwmac1000_validate_mcast_bins - validates the number of Multicast filter bins
- * @dev: struct device of the platform device
+ * @dev: काष्ठा device of the platक्रमm device
  * @mcast_bins: Multicast filtering bins
  * Description:
- * this function validates the number of Multicast filtering bins specified
+ * this function validates the number of Multicast filtering bins specअगरied
  * by the configuration through the device tree. The Synopsys GMAC supports
- * 64 bins, 128 bins, or 256 bins. "bins" refer to the division of CRC
+ * 64 bins, 128 bins, or 256 bins. "bins" refer to the भागision of CRC
  * number space. 64 bins correspond to 6 bits of the CRC, 128 corresponds
  * to 7 bits, and 256 refers to 8 bits of the CRC. Any other setting is
  * invalid and will cause the filtering algorithm to use Multicast
  * promiscuous mode.
  */
-static int dwmac1000_validate_mcast_bins(struct device *dev, int mcast_bins)
-{
-	int x = mcast_bins;
+अटल पूर्णांक dwmac1000_validate_mcast_bins(काष्ठा device *dev, पूर्णांक mcast_bins)
+अणु
+	पूर्णांक x = mcast_bins;
 
-	switch (x) {
-	case HASH_TABLE_SIZE:
-	case 128:
-	case 256:
-		break;
-	default:
+	चयन (x) अणु
+	हाल HASH_TABLE_SIZE:
+	हाल 128:
+	हाल 256:
+		अवरोध;
+	शेष:
 		x = 0;
 		dev_info(dev, "Hash table entries set to unexpected value %d\n",
 			 mcast_bins);
-		break;
-	}
-	return x;
-}
+		अवरोध;
+	पूर्ण
+	वापस x;
+पूर्ण
 
 /**
  * dwmac1000_validate_ucast_entries - validate the Unicast address entries
- * @dev: struct device of the platform device
+ * @dev: काष्ठा device of the platक्रमm device
  * @ucast_entries: number of Unicast address entries
  * Description:
  * This function validates the number of Unicast address entries supported
  * by a particular Synopsys 10/100/1000 controller. The Synopsys controller
- * supports 1..32, 64, or 128 Unicast filter entries for it's Unicast filter
+ * supports 1..32, 64, or 128 Unicast filter entries क्रम it's Unicast filter
  * logic. This function validates a valid, supported configuration is
- * selected, and defaults to 1 Unicast address if an unsupported
+ * selected, and शेषs to 1 Unicast address अगर an unsupported
  * configuration is selected.
  */
-static int dwmac1000_validate_ucast_entries(struct device *dev,
-					    int ucast_entries)
-{
-	int x = ucast_entries;
+अटल पूर्णांक dwmac1000_validate_ucast_entries(काष्ठा device *dev,
+					    पूर्णांक ucast_entries)
+अणु
+	पूर्णांक x = ucast_entries;
 
-	switch (x) {
-	case 1 ... 32:
-	case 64:
-	case 128:
-		break;
-	default:
+	चयन (x) अणु
+	हाल 1 ... 32:
+	हाल 64:
+	हाल 128:
+		अवरोध;
+	शेष:
 		x = 1;
 		dev_info(dev, "Unicast table entries set to unexpected value %d\n",
 			 ucast_entries);
-		break;
-	}
-	return x;
-}
+		अवरोध;
+	पूर्ण
+	वापस x;
+पूर्ण
 
 /**
- * stmmac_axi_setup - parse DT parameters for programming the AXI register
- * @pdev: platform device
+ * sपंचांगmac_axi_setup - parse DT parameters क्रम programming the AXI रेजिस्टर
+ * @pdev: platक्रमm device
  * Description:
- * if required, from device-tree the AXI internal register can be tuned
- * by using platform parameters.
+ * अगर required, from device-tree the AXI पूर्णांकernal रेजिस्टर can be tuned
+ * by using platक्रमm parameters.
  */
-static struct stmmac_axi *stmmac_axi_setup(struct platform_device *pdev)
-{
-	struct device_node *np;
-	struct stmmac_axi *axi;
+अटल काष्ठा sपंचांगmac_axi *sपंचांगmac_axi_setup(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा sपंचांगmac_axi *axi;
 
 	np = of_parse_phandle(pdev->dev.of_node, "snps,axi-config", 0);
-	if (!np)
-		return NULL;
+	अगर (!np)
+		वापस शून्य;
 
-	axi = devm_kzalloc(&pdev->dev, sizeof(*axi), GFP_KERNEL);
-	if (!axi) {
+	axi = devm_kzalloc(&pdev->dev, माप(*axi), GFP_KERNEL);
+	अगर (!axi) अणु
 		of_node_put(np);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	axi->axi_lpi_en = of_property_read_bool(np, "snps,lpi_en");
-	axi->axi_xit_frm = of_property_read_bool(np, "snps,xit_frm");
-	axi->axi_kbbe = of_property_read_bool(np, "snps,axi_kbbe");
-	axi->axi_fb = of_property_read_bool(np, "snps,axi_fb");
-	axi->axi_mb = of_property_read_bool(np, "snps,axi_mb");
-	axi->axi_rb =  of_property_read_bool(np, "snps,axi_rb");
+	axi->axi_lpi_en = of_property_पढ़ो_bool(np, "snps,lpi_en");
+	axi->axi_xit_frm = of_property_पढ़ो_bool(np, "snps,xit_frm");
+	axi->axi_kbbe = of_property_पढ़ो_bool(np, "snps,axi_kbbe");
+	axi->axi_fb = of_property_पढ़ो_bool(np, "snps,axi_fb");
+	axi->axi_mb = of_property_पढ़ो_bool(np, "snps,axi_mb");
+	axi->axi_rb =  of_property_पढ़ो_bool(np, "snps,axi_rb");
 
-	if (of_property_read_u32(np, "snps,wr_osr_lmt", &axi->axi_wr_osr_lmt))
+	अगर (of_property_पढ़ो_u32(np, "snps,wr_osr_lmt", &axi->axi_wr_osr_lmt))
 		axi->axi_wr_osr_lmt = 1;
-	if (of_property_read_u32(np, "snps,rd_osr_lmt", &axi->axi_rd_osr_lmt))
+	अगर (of_property_पढ़ो_u32(np, "snps,rd_osr_lmt", &axi->axi_rd_osr_lmt))
 		axi->axi_rd_osr_lmt = 1;
-	of_property_read_u32_array(np, "snps,blen", axi->axi_blen, AXI_BLEN);
+	of_property_पढ़ो_u32_array(np, "snps,blen", axi->axi_blen, AXI_BLEN);
 	of_node_put(np);
 
-	return axi;
-}
+	वापस axi;
+पूर्ण
 
 /**
- * stmmac_mtl_setup - parse DT parameters for multiple queues configuration
- * @pdev: platform device
+ * sपंचांगmac_mtl_setup - parse DT parameters क्रम multiple queues configuration
+ * @pdev: platक्रमm device
  * @plat: enet data
  */
-static int stmmac_mtl_setup(struct platform_device *pdev,
-			    struct plat_stmmacenet_data *plat)
-{
-	struct device_node *q_node;
-	struct device_node *rx_node;
-	struct device_node *tx_node;
+अटल पूर्णांक sपंचांगmac_mtl_setup(काष्ठा platक्रमm_device *pdev,
+			    काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	काष्ठा device_node *q_node;
+	काष्ठा device_node *rx_node;
+	काष्ठा device_node *tx_node;
 	u8 queue = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	/* For backwards-compatibility with device trees that don't have any
+	/* For backwards-compatibility with device trees that करोn't have any
 	 * snps,mtl-rx-config or snps,mtl-tx-config properties, we fall back
 	 * to one RX and TX queues each.
 	 */
@@ -144,165 +145,165 @@ static int stmmac_mtl_setup(struct platform_device *pdev,
 	plat->tx_queues_to_use = 1;
 
 	/* First Queue must always be in DCB mode. As MTL_QUEUE_DCB = 1 we need
-	 * to always set this, otherwise Queue will be classified as AVB
+	 * to always set this, otherwise Queue will be classअगरied as AVB
 	 * (because MTL_QUEUE_AVB = 0).
 	 */
 	plat->rx_queues_cfg[0].mode_to_use = MTL_QUEUE_DCB;
 	plat->tx_queues_cfg[0].mode_to_use = MTL_QUEUE_DCB;
 
 	rx_node = of_parse_phandle(pdev->dev.of_node, "snps,mtl-rx-config", 0);
-	if (!rx_node)
-		return ret;
+	अगर (!rx_node)
+		वापस ret;
 
 	tx_node = of_parse_phandle(pdev->dev.of_node, "snps,mtl-tx-config", 0);
-	if (!tx_node) {
+	अगर (!tx_node) अणु
 		of_node_put(rx_node);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Processing RX queues common config */
-	if (of_property_read_u32(rx_node, "snps,rx-queues-to-use",
+	अगर (of_property_पढ़ो_u32(rx_node, "snps,rx-queues-to-use",
 				 &plat->rx_queues_to_use))
 		plat->rx_queues_to_use = 1;
 
-	if (of_property_read_bool(rx_node, "snps,rx-sched-sp"))
+	अगर (of_property_पढ़ो_bool(rx_node, "snps,rx-sched-sp"))
 		plat->rx_sched_algorithm = MTL_RX_ALGORITHM_SP;
-	else if (of_property_read_bool(rx_node, "snps,rx-sched-wsp"))
+	अन्यथा अगर (of_property_पढ़ो_bool(rx_node, "snps,rx-sched-wsp"))
 		plat->rx_sched_algorithm = MTL_RX_ALGORITHM_WSP;
-	else
+	अन्यथा
 		plat->rx_sched_algorithm = MTL_RX_ALGORITHM_SP;
 
-	/* Processing individual RX queue config */
-	for_each_child_of_node(rx_node, q_node) {
-		if (queue >= plat->rx_queues_to_use)
-			break;
+	/* Processing inभागidual RX queue config */
+	क्रम_each_child_of_node(rx_node, q_node) अणु
+		अगर (queue >= plat->rx_queues_to_use)
+			अवरोध;
 
-		if (of_property_read_bool(q_node, "snps,dcb-algorithm"))
+		अगर (of_property_पढ़ो_bool(q_node, "snps,dcb-algorithm"))
 			plat->rx_queues_cfg[queue].mode_to_use = MTL_QUEUE_DCB;
-		else if (of_property_read_bool(q_node, "snps,avb-algorithm"))
+		अन्यथा अगर (of_property_पढ़ो_bool(q_node, "snps,avb-algorithm"))
 			plat->rx_queues_cfg[queue].mode_to_use = MTL_QUEUE_AVB;
-		else
+		अन्यथा
 			plat->rx_queues_cfg[queue].mode_to_use = MTL_QUEUE_DCB;
 
-		if (of_property_read_u32(q_node, "snps,map-to-dma-channel",
+		अगर (of_property_पढ़ो_u32(q_node, "snps,map-to-dma-channel",
 					 &plat->rx_queues_cfg[queue].chan))
 			plat->rx_queues_cfg[queue].chan = queue;
 		/* TODO: Dynamic mapping to be included in the future */
 
-		if (of_property_read_u32(q_node, "snps,priority",
-					&plat->rx_queues_cfg[queue].prio)) {
+		अगर (of_property_पढ़ो_u32(q_node, "snps,priority",
+					&plat->rx_queues_cfg[queue].prio)) अणु
 			plat->rx_queues_cfg[queue].prio = 0;
 			plat->rx_queues_cfg[queue].use_prio = false;
-		} else {
+		पूर्ण अन्यथा अणु
 			plat->rx_queues_cfg[queue].use_prio = true;
-		}
+		पूर्ण
 
-		/* RX queue specific packet type routing */
-		if (of_property_read_bool(q_node, "snps,route-avcp"))
+		/* RX queue specअगरic packet type routing */
+		अगर (of_property_पढ़ो_bool(q_node, "snps,route-avcp"))
 			plat->rx_queues_cfg[queue].pkt_route = PACKET_AVCPQ;
-		else if (of_property_read_bool(q_node, "snps,route-ptp"))
+		अन्यथा अगर (of_property_पढ़ो_bool(q_node, "snps,route-ptp"))
 			plat->rx_queues_cfg[queue].pkt_route = PACKET_PTPQ;
-		else if (of_property_read_bool(q_node, "snps,route-dcbcp"))
+		अन्यथा अगर (of_property_पढ़ो_bool(q_node, "snps,route-dcbcp"))
 			plat->rx_queues_cfg[queue].pkt_route = PACKET_DCBCPQ;
-		else if (of_property_read_bool(q_node, "snps,route-up"))
+		अन्यथा अगर (of_property_पढ़ो_bool(q_node, "snps,route-up"))
 			plat->rx_queues_cfg[queue].pkt_route = PACKET_UPQ;
-		else if (of_property_read_bool(q_node, "snps,route-multi-broad"))
+		अन्यथा अगर (of_property_पढ़ो_bool(q_node, "snps,route-multi-broad"))
 			plat->rx_queues_cfg[queue].pkt_route = PACKET_MCBCQ;
-		else
+		अन्यथा
 			plat->rx_queues_cfg[queue].pkt_route = 0x0;
 
 		queue++;
-	}
-	if (queue != plat->rx_queues_to_use) {
+	पूर्ण
+	अगर (queue != plat->rx_queues_to_use) अणु
 		ret = -EINVAL;
 		dev_err(&pdev->dev, "Not all RX queues were configured\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Processing TX queues common config */
-	if (of_property_read_u32(tx_node, "snps,tx-queues-to-use",
+	अगर (of_property_पढ़ो_u32(tx_node, "snps,tx-queues-to-use",
 				 &plat->tx_queues_to_use))
 		plat->tx_queues_to_use = 1;
 
-	if (of_property_read_bool(tx_node, "snps,tx-sched-wrr"))
+	अगर (of_property_पढ़ो_bool(tx_node, "snps,tx-sched-wrr"))
 		plat->tx_sched_algorithm = MTL_TX_ALGORITHM_WRR;
-	else if (of_property_read_bool(tx_node, "snps,tx-sched-wfq"))
+	अन्यथा अगर (of_property_पढ़ो_bool(tx_node, "snps,tx-sched-wfq"))
 		plat->tx_sched_algorithm = MTL_TX_ALGORITHM_WFQ;
-	else if (of_property_read_bool(tx_node, "snps,tx-sched-dwrr"))
+	अन्यथा अगर (of_property_पढ़ो_bool(tx_node, "snps,tx-sched-dwrr"))
 		plat->tx_sched_algorithm = MTL_TX_ALGORITHM_DWRR;
-	else if (of_property_read_bool(tx_node, "snps,tx-sched-sp"))
+	अन्यथा अगर (of_property_पढ़ो_bool(tx_node, "snps,tx-sched-sp"))
 		plat->tx_sched_algorithm = MTL_TX_ALGORITHM_SP;
-	else
+	अन्यथा
 		plat->tx_sched_algorithm = MTL_TX_ALGORITHM_SP;
 
 	queue = 0;
 
-	/* Processing individual TX queue config */
-	for_each_child_of_node(tx_node, q_node) {
-		if (queue >= plat->tx_queues_to_use)
-			break;
+	/* Processing inभागidual TX queue config */
+	क्रम_each_child_of_node(tx_node, q_node) अणु
+		अगर (queue >= plat->tx_queues_to_use)
+			अवरोध;
 
-		if (of_property_read_u32(q_node, "snps,weight",
+		अगर (of_property_पढ़ो_u32(q_node, "snps,weight",
 					 &plat->tx_queues_cfg[queue].weight))
 			plat->tx_queues_cfg[queue].weight = 0x10 + queue;
 
-		if (of_property_read_bool(q_node, "snps,dcb-algorithm")) {
+		अगर (of_property_पढ़ो_bool(q_node, "snps,dcb-algorithm")) अणु
 			plat->tx_queues_cfg[queue].mode_to_use = MTL_QUEUE_DCB;
-		} else if (of_property_read_bool(q_node,
-						 "snps,avb-algorithm")) {
+		पूर्ण अन्यथा अगर (of_property_पढ़ो_bool(q_node,
+						 "snps,avb-algorithm")) अणु
 			plat->tx_queues_cfg[queue].mode_to_use = MTL_QUEUE_AVB;
 
 			/* Credit Base Shaper parameters used by AVB */
-			if (of_property_read_u32(q_node, "snps,send_slope",
+			अगर (of_property_पढ़ो_u32(q_node, "snps,send_slope",
 				&plat->tx_queues_cfg[queue].send_slope))
 				plat->tx_queues_cfg[queue].send_slope = 0x0;
-			if (of_property_read_u32(q_node, "snps,idle_slope",
+			अगर (of_property_पढ़ो_u32(q_node, "snps,idle_slope",
 				&plat->tx_queues_cfg[queue].idle_slope))
 				plat->tx_queues_cfg[queue].idle_slope = 0x0;
-			if (of_property_read_u32(q_node, "snps,high_credit",
+			अगर (of_property_पढ़ो_u32(q_node, "snps,high_credit",
 				&plat->tx_queues_cfg[queue].high_credit))
 				plat->tx_queues_cfg[queue].high_credit = 0x0;
-			if (of_property_read_u32(q_node, "snps,low_credit",
+			अगर (of_property_पढ़ो_u32(q_node, "snps,low_credit",
 				&plat->tx_queues_cfg[queue].low_credit))
 				plat->tx_queues_cfg[queue].low_credit = 0x0;
-		} else {
+		पूर्ण अन्यथा अणु
 			plat->tx_queues_cfg[queue].mode_to_use = MTL_QUEUE_DCB;
-		}
+		पूर्ण
 
-		if (of_property_read_u32(q_node, "snps,priority",
-					&plat->tx_queues_cfg[queue].prio)) {
+		अगर (of_property_पढ़ो_u32(q_node, "snps,priority",
+					&plat->tx_queues_cfg[queue].prio)) अणु
 			plat->tx_queues_cfg[queue].prio = 0;
 			plat->tx_queues_cfg[queue].use_prio = false;
-		} else {
+		पूर्ण अन्यथा अणु
 			plat->tx_queues_cfg[queue].use_prio = true;
-		}
+		पूर्ण
 
 		queue++;
-	}
-	if (queue != plat->tx_queues_to_use) {
+	पूर्ण
+	अगर (queue != plat->tx_queues_to_use) अणु
 		ret = -EINVAL;
 		dev_err(&pdev->dev, "Not all TX queues were configured\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
 	of_node_put(rx_node);
 	of_node_put(tx_node);
 	of_node_put(q_node);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * stmmac_dt_phy - parse device-tree driver parameters to allocate PHY resources
- * @plat: driver data platform structure
+ * sपंचांगmac_dt_phy - parse device-tree driver parameters to allocate PHY resources
+ * @plat: driver data platक्रमm काष्ठाure
  * @np: device tree node
- * @dev: device pointer
+ * @dev: device poपूर्णांकer
  * Description:
- * The mdio bus will be allocated in case of a phy transceiver is on board;
- * it will be NULL if the fixed-link is configured.
+ * The mdio bus will be allocated in हाल of a phy transceiver is on board;
+ * it will be शून्य अगर the fixed-link is configured.
  * If there is the "snps,dwmac-mdio" sub-node the mdio will be allocated
- * in any case (for DSA, mdio must be registered even if fixed-link).
+ * in any हाल (क्रम DSA, mdio must be रेजिस्टरed even अगर fixed-link).
  * The table below sums the supported configurations:
  *	-------------------------------
  *	snps,phy-addr	|     Y
@@ -312,192 +313,192 @@ out:
  *	fixed-link	|     N
  *	-------------------------------
  *	snps,dwmac-mdio	|
- *	  even if	|     Y
+ *	  even अगर	|     Y
  *	fixed-link	|
  *	-------------------------------
  *
- * It returns 0 in case of success otherwise -ENODEV.
+ * It वापसs 0 in हाल of success otherwise -ENODEV.
  */
-static int stmmac_dt_phy(struct plat_stmmacenet_data *plat,
-			 struct device_node *np, struct device *dev)
-{
+अटल पूर्णांक sपंचांगmac_dt_phy(काष्ठा plat_sपंचांगmacenet_data *plat,
+			 काष्ठा device_node *np, काष्ठा device *dev)
+अणु
 	bool mdio = !of_phy_is_fixed_link(np);
-	static const struct of_device_id need_mdio_ids[] = {
-		{ .compatible = "snps,dwc-qos-ethernet-4.10" },
-		{},
-	};
+	अटल स्थिर काष्ठा of_device_id need_mdio_ids[] = अणु
+		अणु .compatible = "snps,dwc-qos-ethernet-4.10" पूर्ण,
+		अणुपूर्ण,
+	पूर्ण;
 
-	if (of_match_node(need_mdio_ids, np)) {
+	अगर (of_match_node(need_mdio_ids, np)) अणु
 		plat->mdio_node = of_get_child_by_name(np, "mdio");
-	} else {
+	पूर्ण अन्यथा अणु
 		/**
-		 * If snps,dwmac-mdio is passed from DT, always register
+		 * If snps,dwmac-mdio is passed from DT, always रेजिस्टर
 		 * the MDIO
 		 */
-		for_each_child_of_node(np, plat->mdio_node) {
-			if (of_device_is_compatible(plat->mdio_node,
+		क्रम_each_child_of_node(np, plat->mdio_node) अणु
+			अगर (of_device_is_compatible(plat->mdio_node,
 						    "snps,dwmac-mdio"))
-				break;
-		}
-	}
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (plat->mdio_node) {
+	अगर (plat->mdio_node) अणु
 		dev_dbg(dev, "Found MDIO subnode\n");
 		mdio = true;
-	}
+	पूर्ण
 
-	if (mdio) {
+	अगर (mdio) अणु
 		plat->mdio_bus_data =
-			devm_kzalloc(dev, sizeof(struct stmmac_mdio_bus_data),
+			devm_kzalloc(dev, माप(काष्ठा sपंचांगmac_mdio_bus_data),
 				     GFP_KERNEL);
-		if (!plat->mdio_bus_data)
-			return -ENOMEM;
+		अगर (!plat->mdio_bus_data)
+			वापस -ENOMEM;
 
 		plat->mdio_bus_data->needs_reset = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * stmmac_of_get_mac_mode - retrieves the interface of the MAC
+ * sपंचांगmac_of_get_mac_mode - retrieves the पूर्णांकerface of the MAC
  * @np: - device-tree node
  * Description:
  * Similar to `of_get_phy_mode()`, this function will retrieve (from
- * the device-tree) the interface mode on the MAC side. This assumes
+ * the device-tree) the पूर्णांकerface mode on the MAC side. This assumes
  * that there is mode converter in-between the MAC & PHY
  * (e.g. GMII-to-RGMII).
  */
-static int stmmac_of_get_mac_mode(struct device_node *np)
-{
-	const char *pm;
-	int err, i;
+अटल पूर्णांक sपंचांगmac_of_get_mac_mode(काष्ठा device_node *np)
+अणु
+	स्थिर अक्षर *pm;
+	पूर्णांक err, i;
 
-	err = of_property_read_string(np, "mac-mode", &pm);
-	if (err < 0)
-		return err;
+	err = of_property_पढ़ो_string(np, "mac-mode", &pm);
+	अगर (err < 0)
+		वापस err;
 
-	for (i = 0; i < PHY_INTERFACE_MODE_MAX; i++) {
-		if (!strcasecmp(pm, phy_modes(i)))
-			return i;
-	}
+	क्रम (i = 0; i < PHY_INTERFACE_MODE_MAX; i++) अणु
+		अगर (!strहालcmp(pm, phy_modes(i)))
+			वापस i;
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /**
- * stmmac_probe_config_dt - parse device-tree driver parameters
- * @pdev: platform_device structure
+ * sपंचांगmac_probe_config_dt - parse device-tree driver parameters
+ * @pdev: platक्रमm_device काष्ठाure
  * @mac: MAC address to use
  * Description:
- * this function is to read the driver parameters from device-tree and
- * set some private fields that will be used by the main at runtime.
+ * this function is to पढ़ो the driver parameters from device-tree and
+ * set some निजी fields that will be used by the मुख्य at runसमय.
  */
-struct plat_stmmacenet_data *
-stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct plat_stmmacenet_data *plat;
-	struct stmmac_dma_cfg *dma_cfg;
-	void *ret;
-	int rc;
+काष्ठा plat_sपंचांगmacenet_data *
+sपंचांगmac_probe_config_dt(काष्ठा platक्रमm_device *pdev, u8 *mac)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा plat_sपंचांगmacenet_data *plat;
+	काष्ठा sपंचांगmac_dma_cfg *dma_cfg;
+	व्योम *ret;
+	पूर्णांक rc;
 
-	plat = devm_kzalloc(&pdev->dev, sizeof(*plat), GFP_KERNEL);
-	if (!plat)
-		return ERR_PTR(-ENOMEM);
+	plat = devm_kzalloc(&pdev->dev, माप(*plat), GFP_KERNEL);
+	अगर (!plat)
+		वापस ERR_PTR(-ENOMEM);
 
 	rc = of_get_mac_address(np, mac);
-	if (rc) {
-		if (rc == -EPROBE_DEFER)
-			return ERR_PTR(rc);
+	अगर (rc) अणु
+		अगर (rc == -EPROBE_DEFER)
+			वापस ERR_PTR(rc);
 
 		eth_zero_addr(mac);
-	}
+	पूर्ण
 
-	plat->phy_interface = device_get_phy_mode(&pdev->dev);
-	if (plat->phy_interface < 0)
-		return ERR_PTR(plat->phy_interface);
+	plat->phy_पूर्णांकerface = device_get_phy_mode(&pdev->dev);
+	अगर (plat->phy_पूर्णांकerface < 0)
+		वापस ERR_PTR(plat->phy_पूर्णांकerface);
 
-	plat->interface = stmmac_of_get_mac_mode(np);
-	if (plat->interface < 0)
-		plat->interface = plat->phy_interface;
+	plat->पूर्णांकerface = sपंचांगmac_of_get_mac_mode(np);
+	अगर (plat->पूर्णांकerface < 0)
+		plat->पूर्णांकerface = plat->phy_पूर्णांकerface;
 
-	/* Some wrapper drivers still rely on phy_node. Let's save it while
+	/* Some wrapper drivers still rely on phy_node. Let's save it जबतक
 	 * they are not converted to phylink. */
 	plat->phy_node = of_parse_phandle(np, "phy-handle", 0);
 
-	/* PHYLINK automatically parses the phy-handle property */
+	/* PHYLINK स्वतःmatically parses the phy-handle property */
 	plat->phylink_node = np;
 
 	/* Get max speed of operation from device tree */
-	if (of_property_read_u32(np, "max-speed", &plat->max_speed))
+	अगर (of_property_पढ़ो_u32(np, "max-speed", &plat->max_speed))
 		plat->max_speed = -1;
 
 	plat->bus_id = of_alias_get_id(np, "ethernet");
-	if (plat->bus_id < 0)
+	अगर (plat->bus_id < 0)
 		plat->bus_id = 0;
 
-	/* Default to phy auto-detection */
+	/* Default to phy स्वतः-detection */
 	plat->phy_addr = -1;
 
-	/* Default to get clk_csr from stmmac_clk_crs_set(),
+	/* Default to get clk_csr from sपंचांगmac_clk_crs_set(),
 	 * or get clk_csr from device tree.
 	 */
 	plat->clk_csr = -1;
-	of_property_read_u32(np, "clk_csr", &plat->clk_csr);
+	of_property_पढ़ो_u32(np, "clk_csr", &plat->clk_csr);
 
 	/* "snps,phy-addr" is not a standard property. Mark it as deprecated
 	 * and warn of its use. Remove this when phy node support is added.
 	 */
-	if (of_property_read_u32(np, "snps,phy-addr", &plat->phy_addr) == 0)
+	अगर (of_property_पढ़ो_u32(np, "snps,phy-addr", &plat->phy_addr) == 0)
 		dev_warn(&pdev->dev, "snps,phy-addr property is deprecated\n");
 
 	/* To Configure PHY by using all device-tree supported properties */
-	rc = stmmac_dt_phy(plat, np, &pdev->dev);
-	if (rc)
-		return ERR_PTR(rc);
+	rc = sपंचांगmac_dt_phy(plat, np, &pdev->dev);
+	अगर (rc)
+		वापस ERR_PTR(rc);
 
-	of_property_read_u32(np, "tx-fifo-depth", &plat->tx_fifo_size);
+	of_property_पढ़ो_u32(np, "tx-fifo-depth", &plat->tx_fअगरo_size);
 
-	of_property_read_u32(np, "rx-fifo-depth", &plat->rx_fifo_size);
+	of_property_पढ़ो_u32(np, "rx-fifo-depth", &plat->rx_fअगरo_size);
 
-	plat->force_sf_dma_mode =
-		of_property_read_bool(np, "snps,force_sf_dma_mode");
+	plat->क्रमce_sf_dma_mode =
+		of_property_पढ़ो_bool(np, "snps,force_sf_dma_mode");
 
-	plat->en_tx_lpi_clockgating =
-		of_property_read_bool(np, "snps,en-tx-lpi-clockgating");
+	plat->en_tx_lpi_घड़ीgating =
+		of_property_पढ़ो_bool(np, "snps,en-tx-lpi-clockgating");
 
-	/* Set the maxmtu to a default of JUMBO_LEN in case the
+	/* Set the maxmtu to a शेष of JUMBO_LEN in हाल the
 	 * parameter is not present in the device tree.
 	 */
 	plat->maxmtu = JUMBO_LEN;
 
-	/* Set default value for multicast hash bins */
+	/* Set शेष value क्रम multicast hash bins */
 	plat->multicast_filter_bins = HASH_TABLE_SIZE;
 
-	/* Set default value for unicast filter entries */
+	/* Set शेष value क्रम unicast filter entries */
 	plat->unicast_filter_entries = 1;
 
 	/*
 	 * Currently only the properties needed on SPEAr600
 	 * are provided. All other properties should be added
-	 * once needed on other platforms.
+	 * once needed on other platक्रमms.
 	 */
-	if (of_device_is_compatible(np, "st,spear600-gmac") ||
+	अगर (of_device_is_compatible(np, "st,spear600-gmac") ||
 		of_device_is_compatible(np, "snps,dwmac-3.50a") ||
 		of_device_is_compatible(np, "snps,dwmac-3.70a") ||
-		of_device_is_compatible(np, "snps,dwmac")) {
+		of_device_is_compatible(np, "snps,dwmac")) अणु
 		/* Note that the max-frame-size parameter as defined in the
 		 * ePAPR v1.1 spec is defined as max-frame-size, it's
 		 * actually used as the IEEE definition of MAC Client
-		 * data, or MTU. The ePAPR specification is confusing as
+		 * data, or MTU. The ePAPR specअगरication is confusing as
 		 * the definition is max-frame-size, but usage examples
 		 * are clearly MTUs
 		 */
-		of_property_read_u32(np, "max-frame-size", &plat->maxmtu);
-		of_property_read_u32(np, "snps,multicast-filter-bins",
+		of_property_पढ़ो_u32(np, "max-frame-size", &plat->maxmtu);
+		of_property_पढ़ो_u32(np, "snps,multicast-filter-bins",
 				     &plat->multicast_filter_bins);
-		of_property_read_u32(np, "snps,perfect-filter-entries",
+		of_property_पढ़ो_u32(np, "snps,perfect-filter-entries",
 				     &plat->unicast_filter_entries);
 		plat->unicast_filter_entries = dwmac1000_validate_ucast_entries(
 				&pdev->dev, plat->unicast_filter_entries);
@@ -505,270 +506,270 @@ stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
 				&pdev->dev, plat->multicast_filter_bins);
 		plat->has_gmac = 1;
 		plat->pmt = 1;
-	}
+	पूर्ण
 
-	if (of_device_is_compatible(np, "snps,dwmac-4.00") ||
+	अगर (of_device_is_compatible(np, "snps,dwmac-4.00") ||
 	    of_device_is_compatible(np, "snps,dwmac-4.10a") ||
 	    of_device_is_compatible(np, "snps,dwmac-4.20a") ||
-	    of_device_is_compatible(np, "snps,dwmac-5.10a")) {
+	    of_device_is_compatible(np, "snps,dwmac-5.10a")) अणु
 		plat->has_gmac4 = 1;
 		plat->has_gmac = 0;
 		plat->pmt = 1;
-		plat->tso_en = of_property_read_bool(np, "snps,tso");
-	}
+		plat->tso_en = of_property_पढ़ो_bool(np, "snps,tso");
+	पूर्ण
 
-	if (of_device_is_compatible(np, "snps,dwmac-3.610") ||
-		of_device_is_compatible(np, "snps,dwmac-3.710")) {
+	अगर (of_device_is_compatible(np, "snps,dwmac-3.610") ||
+		of_device_is_compatible(np, "snps,dwmac-3.710")) अणु
 		plat->enh_desc = 1;
 		plat->bugged_jumbo = 1;
-		plat->force_sf_dma_mode = 1;
-	}
+		plat->क्रमce_sf_dma_mode = 1;
+	पूर्ण
 
-	if (of_device_is_compatible(np, "snps,dwxgmac")) {
+	अगर (of_device_is_compatible(np, "snps,dwxgmac")) अणु
 		plat->has_xgmac = 1;
 		plat->pmt = 1;
-		plat->tso_en = of_property_read_bool(np, "snps,tso");
-	}
+		plat->tso_en = of_property_पढ़ो_bool(np, "snps,tso");
+	पूर्ण
 
-	dma_cfg = devm_kzalloc(&pdev->dev, sizeof(*dma_cfg),
+	dma_cfg = devm_kzalloc(&pdev->dev, माप(*dma_cfg),
 			       GFP_KERNEL);
-	if (!dma_cfg) {
-		stmmac_remove_config_dt(pdev, plat);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!dma_cfg) अणु
+		sपंचांगmac_हटाओ_config_dt(pdev, plat);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	plat->dma_cfg = dma_cfg;
 
-	of_property_read_u32(np, "snps,pbl", &dma_cfg->pbl);
-	if (!dma_cfg->pbl)
+	of_property_पढ़ो_u32(np, "snps,pbl", &dma_cfg->pbl);
+	अगर (!dma_cfg->pbl)
 		dma_cfg->pbl = DEFAULT_DMA_PBL;
-	of_property_read_u32(np, "snps,txpbl", &dma_cfg->txpbl);
-	of_property_read_u32(np, "snps,rxpbl", &dma_cfg->rxpbl);
-	dma_cfg->pblx8 = !of_property_read_bool(np, "snps,no-pbl-x8");
+	of_property_पढ़ो_u32(np, "snps,txpbl", &dma_cfg->txpbl);
+	of_property_पढ़ो_u32(np, "snps,rxpbl", &dma_cfg->rxpbl);
+	dma_cfg->pblx8 = !of_property_पढ़ो_bool(np, "snps,no-pbl-x8");
 
-	dma_cfg->aal = of_property_read_bool(np, "snps,aal");
-	dma_cfg->fixed_burst = of_property_read_bool(np, "snps,fixed-burst");
-	dma_cfg->mixed_burst = of_property_read_bool(np, "snps,mixed-burst");
+	dma_cfg->aal = of_property_पढ़ो_bool(np, "snps,aal");
+	dma_cfg->fixed_burst = of_property_पढ़ो_bool(np, "snps,fixed-burst");
+	dma_cfg->mixed_burst = of_property_पढ़ो_bool(np, "snps,mixed-burst");
 
-	plat->force_thresh_dma_mode = of_property_read_bool(np, "snps,force_thresh_dma_mode");
-	if (plat->force_thresh_dma_mode) {
-		plat->force_sf_dma_mode = 0;
+	plat->क्रमce_thresh_dma_mode = of_property_पढ़ो_bool(np, "snps,force_thresh_dma_mode");
+	अगर (plat->क्रमce_thresh_dma_mode) अणु
+		plat->क्रमce_sf_dma_mode = 0;
 		dev_warn(&pdev->dev,
 			 "force_sf_dma_mode is ignored if force_thresh_dma_mode is set.\n");
-	}
+	पूर्ण
 
-	of_property_read_u32(np, "snps,ps-speed", &plat->mac_port_sel_speed);
+	of_property_पढ़ो_u32(np, "snps,ps-speed", &plat->mac_port_sel_speed);
 
-	plat->axi = stmmac_axi_setup(pdev);
+	plat->axi = sपंचांगmac_axi_setup(pdev);
 
-	rc = stmmac_mtl_setup(pdev, plat);
-	if (rc) {
-		stmmac_remove_config_dt(pdev, plat);
-		return ERR_PTR(rc);
-	}
+	rc = sपंचांगmac_mtl_setup(pdev, plat);
+	अगर (rc) अणु
+		sपंचांगmac_हटाओ_config_dt(pdev, plat);
+		वापस ERR_PTR(rc);
+	पूर्ण
 
-	/* clock setup */
-	if (!of_device_is_compatible(np, "snps,dwc-qos-ethernet-4.10")) {
-		plat->stmmac_clk = devm_clk_get(&pdev->dev,
+	/* घड़ी setup */
+	अगर (!of_device_is_compatible(np, "snps,dwc-qos-ethernet-4.10")) अणु
+		plat->sपंचांगmac_clk = devm_clk_get(&pdev->dev,
 						STMMAC_RESOURCE_NAME);
-		if (IS_ERR(plat->stmmac_clk)) {
+		अगर (IS_ERR(plat->sपंचांगmac_clk)) अणु
 			dev_warn(&pdev->dev, "Cannot get CSR clock\n");
-			plat->stmmac_clk = NULL;
-		}
-		clk_prepare_enable(plat->stmmac_clk);
-	}
+			plat->sपंचांगmac_clk = शून्य;
+		पूर्ण
+		clk_prepare_enable(plat->sपंचांगmac_clk);
+	पूर्ण
 
 	plat->pclk = devm_clk_get_optional(&pdev->dev, "pclk");
-	if (IS_ERR(plat->pclk)) {
+	अगर (IS_ERR(plat->pclk)) अणु
 		ret = plat->pclk;
-		goto error_pclk_get;
-	}
+		जाओ error_pclk_get;
+	पूर्ण
 	clk_prepare_enable(plat->pclk);
 
-	/* Fall-back to main clock in case of no PTP ref is passed */
+	/* Fall-back to मुख्य घड़ी in हाल of no PTP ref is passed */
 	plat->clk_ptp_ref = devm_clk_get(&pdev->dev, "ptp_ref");
-	if (IS_ERR(plat->clk_ptp_ref)) {
-		plat->clk_ptp_rate = clk_get_rate(plat->stmmac_clk);
-		plat->clk_ptp_ref = NULL;
+	अगर (IS_ERR(plat->clk_ptp_ref)) अणु
+		plat->clk_ptp_rate = clk_get_rate(plat->sपंचांगmac_clk);
+		plat->clk_ptp_ref = शून्य;
 		dev_info(&pdev->dev, "PTP uses main clock\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		plat->clk_ptp_rate = clk_get_rate(plat->clk_ptp_ref);
 		dev_dbg(&pdev->dev, "PTP rate %d\n", plat->clk_ptp_rate);
-	}
+	पूर्ण
 
-	plat->stmmac_rst = devm_reset_control_get_optional(&pdev->dev,
+	plat->sपंचांगmac_rst = devm_reset_control_get_optional(&pdev->dev,
 							   STMMAC_RESOURCE_NAME);
-	if (IS_ERR(plat->stmmac_rst)) {
-		ret = plat->stmmac_rst;
-		goto error_hw_init;
-	}
+	अगर (IS_ERR(plat->sपंचांगmac_rst)) अणु
+		ret = plat->sपंचांगmac_rst;
+		जाओ error_hw_init;
+	पूर्ण
 
-	return plat;
+	वापस plat;
 
 error_hw_init:
 	clk_disable_unprepare(plat->pclk);
 error_pclk_get:
-	clk_disable_unprepare(plat->stmmac_clk);
+	clk_disable_unprepare(plat->sपंचांगmac_clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * stmmac_remove_config_dt - undo the effects of stmmac_probe_config_dt()
- * @pdev: platform_device structure
- * @plat: driver data platform structure
+ * sपंचांगmac_हटाओ_config_dt - unकरो the effects of sपंचांगmac_probe_config_dt()
+ * @pdev: platक्रमm_device काष्ठाure
+ * @plat: driver data platक्रमm काष्ठाure
  *
- * Release resources claimed by stmmac_probe_config_dt().
+ * Release resources claimed by sपंचांगmac_probe_config_dt().
  */
-void stmmac_remove_config_dt(struct platform_device *pdev,
-			     struct plat_stmmacenet_data *plat)
-{
-	clk_disable_unprepare(plat->stmmac_clk);
+व्योम sपंचांगmac_हटाओ_config_dt(काष्ठा platक्रमm_device *pdev,
+			     काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+	clk_disable_unprepare(plat->sपंचांगmac_clk);
 	clk_disable_unprepare(plat->pclk);
 	of_node_put(plat->phy_node);
 	of_node_put(plat->mdio_node);
-}
-#else
-struct plat_stmmacenet_data *
-stmmac_probe_config_dt(struct platform_device *pdev, u8 *mac)
-{
-	return ERR_PTR(-EINVAL);
-}
+पूर्ण
+#अन्यथा
+काष्ठा plat_sपंचांगmacenet_data *
+sपंचांगmac_probe_config_dt(काष्ठा platक्रमm_device *pdev, u8 *mac)
+अणु
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-void stmmac_remove_config_dt(struct platform_device *pdev,
-			     struct plat_stmmacenet_data *plat)
-{
-}
-#endif /* CONFIG_OF */
-EXPORT_SYMBOL_GPL(stmmac_probe_config_dt);
-EXPORT_SYMBOL_GPL(stmmac_remove_config_dt);
+व्योम sपंचांगmac_हटाओ_config_dt(काष्ठा platक्रमm_device *pdev,
+			     काष्ठा plat_sपंचांगmacenet_data *plat)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF */
+EXPORT_SYMBOL_GPL(sपंचांगmac_probe_config_dt);
+EXPORT_SYMBOL_GPL(sपंचांगmac_हटाओ_config_dt);
 
-int stmmac_get_platform_resources(struct platform_device *pdev,
-				  struct stmmac_resources *stmmac_res)
-{
-	memset(stmmac_res, 0, sizeof(*stmmac_res));
+पूर्णांक sपंचांगmac_get_platक्रमm_resources(काष्ठा platक्रमm_device *pdev,
+				  काष्ठा sपंचांगmac_resources *sपंचांगmac_res)
+अणु
+	स_रखो(sपंचांगmac_res, 0, माप(*sपंचांगmac_res));
 
-	/* Get IRQ information early to have an ability to ask for deferred
-	 * probe if needed before we went too far with resource allocation.
+	/* Get IRQ inक्रमmation early to have an ability to ask क्रम deferred
+	 * probe अगर needed beक्रमe we went too far with resource allocation.
 	 */
-	stmmac_res->irq = platform_get_irq_byname(pdev, "macirq");
-	if (stmmac_res->irq < 0)
-		return stmmac_res->irq;
+	sपंचांगmac_res->irq = platक्रमm_get_irq_byname(pdev, "macirq");
+	अगर (sपंचांगmac_res->irq < 0)
+		वापस sपंचांगmac_res->irq;
 
-	/* On some platforms e.g. SPEAr the wake up irq differs from the mac irq
-	 * The external wake up irq can be passed through the platform code
+	/* On some platक्रमms e.g. SPEAr the wake up irq dअगरfers from the mac irq
+	 * The बाह्यal wake up irq can be passed through the platक्रमm code
 	 * named as "eth_wake_irq"
 	 *
-	 * In case the wake up interrupt is not passed from the platform
-	 * so the driver will continue to use the mac irq (ndev->irq)
+	 * In हाल the wake up पूर्णांकerrupt is not passed from the platक्रमm
+	 * so the driver will जारी to use the mac irq (ndev->irq)
 	 */
-	stmmac_res->wol_irq =
-		platform_get_irq_byname_optional(pdev, "eth_wake_irq");
-	if (stmmac_res->wol_irq < 0) {
-		if (stmmac_res->wol_irq == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+	sपंचांगmac_res->wol_irq =
+		platक्रमm_get_irq_byname_optional(pdev, "eth_wake_irq");
+	अगर (sपंचांगmac_res->wol_irq < 0) अणु
+		अगर (sपंचांगmac_res->wol_irq == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 		dev_info(&pdev->dev, "IRQ eth_wake_irq not found\n");
-		stmmac_res->wol_irq = stmmac_res->irq;
-	}
+		sपंचांगmac_res->wol_irq = sपंचांगmac_res->irq;
+	पूर्ण
 
-	stmmac_res->lpi_irq =
-		platform_get_irq_byname_optional(pdev, "eth_lpi");
-	if (stmmac_res->lpi_irq < 0) {
-		if (stmmac_res->lpi_irq == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+	sपंचांगmac_res->lpi_irq =
+		platक्रमm_get_irq_byname_optional(pdev, "eth_lpi");
+	अगर (sपंचांगmac_res->lpi_irq < 0) अणु
+		अगर (sपंचांगmac_res->lpi_irq == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 		dev_info(&pdev->dev, "IRQ eth_lpi not found\n");
-	}
+	पूर्ण
 
-	stmmac_res->addr = devm_platform_ioremap_resource(pdev, 0);
+	sपंचांगmac_res->addr = devm_platक्रमm_ioremap_resource(pdev, 0);
 
-	return PTR_ERR_OR_ZERO(stmmac_res->addr);
-}
-EXPORT_SYMBOL_GPL(stmmac_get_platform_resources);
+	वापस PTR_ERR_OR_ZERO(sपंचांगmac_res->addr);
+पूर्ण
+EXPORT_SYMBOL_GPL(sपंचांगmac_get_platक्रमm_resources);
 
 /**
- * stmmac_pltfr_remove
- * @pdev: platform device pointer
- * Description: this function calls the main to free the net resources
- * and calls the platforms hook and release the resources (e.g. mem).
+ * sपंचांगmac_pltfr_हटाओ
+ * @pdev: platक्रमm device poपूर्णांकer
+ * Description: this function calls the मुख्य to मुक्त the net resources
+ * and calls the platक्रमms hook and release the resources (e.g. mem).
  */
-int stmmac_pltfr_remove(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct plat_stmmacenet_data *plat = priv->plat;
-	int ret = stmmac_dvr_remove(&pdev->dev);
+पूर्णांक sपंचांगmac_pltfr_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	काष्ठा plat_sपंचांगmacenet_data *plat = priv->plat;
+	पूर्णांक ret = sपंचांगmac_dvr_हटाओ(&pdev->dev);
 
-	if (plat->exit)
-		plat->exit(pdev, plat->bsp_priv);
+	अगर (plat->निकास)
+		plat->निकास(pdev, plat->bsp_priv);
 
-	stmmac_remove_config_dt(pdev, plat);
+	sपंचांगmac_हटाओ_config_dt(pdev, plat);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(stmmac_pltfr_remove);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(sपंचांगmac_pltfr_हटाओ);
 
 /**
- * stmmac_pltfr_suspend
- * @dev: device pointer
+ * sपंचांगmac_pltfr_suspend
+ * @dev: device poपूर्णांकer
  * Description: this function is invoked when suspend the driver and it direcly
- * call the main suspend function and then, if required, on some platform, it
- * can call an exit helper.
+ * call the मुख्य suspend function and then, अगर required, on some platक्रमm, it
+ * can call an निकास helper.
  */
-static int __maybe_unused stmmac_pltfr_suspend(struct device *dev)
-{
-	int ret;
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct platform_device *pdev = to_platform_device(dev);
+अटल पूर्णांक __maybe_unused sपंचांगmac_pltfr_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
 
-	ret = stmmac_suspend(dev);
-	if (priv->plat->exit)
-		priv->plat->exit(pdev, priv->plat->bsp_priv);
+	ret = sपंचांगmac_suspend(dev);
+	अगर (priv->plat->निकास)
+		priv->plat->निकास(pdev, priv->plat->bsp_priv);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * stmmac_pltfr_resume
- * @dev: device pointer
- * Description: this function is invoked when resume the driver before calling
- * the main resume function, on some platforms, it can call own init helper
- * if required.
+ * sपंचांगmac_pltfr_resume
+ * @dev: device poपूर्णांकer
+ * Description: this function is invoked when resume the driver beक्रमe calling
+ * the मुख्य resume function, on some platक्रमms, it can call own init helper
+ * अगर required.
  */
-static int __maybe_unused stmmac_pltfr_resume(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct platform_device *pdev = to_platform_device(dev);
+अटल पूर्णांक __maybe_unused sपंचांगmac_pltfr_resume(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
 
-	if (priv->plat->init)
+	अगर (priv->plat->init)
 		priv->plat->init(pdev, priv->plat->bsp_priv);
 
-	return stmmac_resume(dev);
-}
+	वापस sपंचांगmac_resume(dev);
+पूर्ण
 
-static int __maybe_unused stmmac_runtime_suspend(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct stmmac_priv *priv = netdev_priv(ndev);
+अटल पूर्णांक __maybe_unused sपंचांगmac_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
 
-	stmmac_bus_clks_config(priv, false);
+	sपंचांगmac_bus_clks_config(priv, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stmmac_runtime_resume(struct device *dev)
-{
-	struct net_device *ndev = dev_get_drvdata(dev);
-	struct stmmac_priv *priv = netdev_priv(ndev);
+अटल पूर्णांक __maybe_unused sपंचांगmac_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *ndev = dev_get_drvdata(dev);
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
 
-	return stmmac_bus_clks_config(priv, true);
-}
+	वापस sपंचांगmac_bus_clks_config(priv, true);
+पूर्ण
 
-const struct dev_pm_ops stmmac_pltfr_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(stmmac_pltfr_suspend, stmmac_pltfr_resume)
-	SET_RUNTIME_PM_OPS(stmmac_runtime_suspend, stmmac_runtime_resume, NULL)
-};
-EXPORT_SYMBOL_GPL(stmmac_pltfr_pm_ops);
+स्थिर काष्ठा dev_pm_ops sपंचांगmac_pltfr_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(sपंचांगmac_pltfr_suspend, sपंचांगmac_pltfr_resume)
+	SET_RUNTIME_PM_OPS(sपंचांगmac_runसमय_suspend, sपंचांगmac_runसमय_resume, शून्य)
+पूर्ण;
+EXPORT_SYMBOL_GPL(sपंचांगmac_pltfr_pm_ops);
 
 MODULE_DESCRIPTION("STMMAC 10/100/1000 Ethernet platform support");
 MODULE_AUTHOR("Giuseppe Cavallaro <peppe.cavallaro@st.com>");

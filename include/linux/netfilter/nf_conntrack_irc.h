@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_CONNTRACK_IRC_H
-#define _NF_CONNTRACK_IRC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_CONNTRACK_IRC_H
+#घोषणा _NF_CONNTRACK_IRC_H
 
-#include <linux/netfilter.h>
-#include <linux/skbuff.h>
-#include <net/netfilter/nf_conntrack_expect.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
 
-#define IRC_PORT	6667
+#घोषणा IRC_PORT	6667
 
-extern unsigned int (*nf_nat_irc_hook)(struct sk_buff *skb,
-				       enum ip_conntrack_info ctinfo,
-				       unsigned int protoff,
-				       unsigned int matchoff,
-				       unsigned int matchlen,
-				       struct nf_conntrack_expect *exp);
+बाह्य अचिन्हित पूर्णांक (*nf_nat_irc_hook)(काष्ठा sk_buff *skb,
+				       क्रमागत ip_conntrack_info ctinfo,
+				       अचिन्हित पूर्णांक protoff,
+				       अचिन्हित पूर्णांक matchoff,
+				       अचिन्हित पूर्णांक matchlen,
+				       काष्ठा nf_conntrack_expect *exp);
 
-#endif /* _NF_CONNTRACK_IRC_H */
+#पूर्ण_अगर /* _NF_CONNTRACK_IRC_H */

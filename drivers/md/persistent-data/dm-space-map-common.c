@@ -1,637 +1,638 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2011 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
 
-#include "dm-space-map-common.h"
-#include "dm-transaction-manager.h"
+#समावेश "dm-space-map-common.h"
+#समावेश "dm-transaction-manager.h"
 
-#include <linux/bitops.h>
-#include <linux/device-mapper.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device-mapper.h>
 
-#define DM_MSG_PREFIX "space map common"
+#घोषणा DM_MSG_PREFIX "space map common"
 
 /*----------------------------------------------------------------*/
 
 /*
  * Index validator.
  */
-#define INDEX_CSUM_XOR 160478
+#घोषणा INDEX_CSUM_XOR 160478
 
-static void index_prepare_for_write(struct dm_block_validator *v,
-				    struct dm_block *b,
-				    size_t block_size)
-{
-	struct disk_metadata_index *mi_le = dm_block_data(b);
+अटल व्योम index_prepare_क्रम_ग_लिखो(काष्ठा dm_block_validator *v,
+				    काष्ठा dm_block *b,
+				    माप_प्रकार block_size)
+अणु
+	काष्ठा disk_metadata_index *mi_le = dm_block_data(b);
 
 	mi_le->blocknr = cpu_to_le64(dm_block_location(b));
 	mi_le->csum = cpu_to_le32(dm_bm_checksum(&mi_le->padding,
-						 block_size - sizeof(__le32),
+						 block_size - माप(__le32),
 						 INDEX_CSUM_XOR));
-}
+पूर्ण
 
-static int index_check(struct dm_block_validator *v,
-		       struct dm_block *b,
-		       size_t block_size)
-{
-	struct disk_metadata_index *mi_le = dm_block_data(b);
+अटल पूर्णांक index_check(काष्ठा dm_block_validator *v,
+		       काष्ठा dm_block *b,
+		       माप_प्रकार block_size)
+अणु
+	काष्ठा disk_metadata_index *mi_le = dm_block_data(b);
 	__le32 csum_disk;
 
-	if (dm_block_location(b) != le64_to_cpu(mi_le->blocknr)) {
+	अगर (dm_block_location(b) != le64_to_cpu(mi_le->blocknr)) अणु
 		DMERR_LIMIT("index_check failed: blocknr %llu != wanted %llu",
 			    le64_to_cpu(mi_le->blocknr), dm_block_location(b));
-		return -ENOTBLK;
-	}
+		वापस -ENOTBLK;
+	पूर्ण
 
 	csum_disk = cpu_to_le32(dm_bm_checksum(&mi_le->padding,
-					       block_size - sizeof(__le32),
+					       block_size - माप(__le32),
 					       INDEX_CSUM_XOR));
-	if (csum_disk != mi_le->csum) {
+	अगर (csum_disk != mi_le->csum) अणु
 		DMERR_LIMIT("index_check failed: csum %u != wanted %u",
 			    le32_to_cpu(csum_disk), le32_to_cpu(mi_le->csum));
-		return -EILSEQ;
-	}
+		वापस -EILSEQ;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dm_block_validator index_validator = {
+अटल काष्ठा dm_block_validator index_validator = अणु
 	.name = "index",
-	.prepare_for_write = index_prepare_for_write,
+	.prepare_क्रम_ग_लिखो = index_prepare_क्रम_ग_लिखो,
 	.check = index_check
-};
+पूर्ण;
 
 /*----------------------------------------------------------------*/
 
 /*
- * Bitmap validator
+ * Biपंचांगap validator
  */
-#define BITMAP_CSUM_XOR 240779
+#घोषणा BITMAP_CSUM_XOR 240779
 
-static void dm_bitmap_prepare_for_write(struct dm_block_validator *v,
-					struct dm_block *b,
-					size_t block_size)
-{
-	struct disk_bitmap_header *disk_header = dm_block_data(b);
+अटल व्योम dm_biपंचांगap_prepare_क्रम_ग_लिखो(काष्ठा dm_block_validator *v,
+					काष्ठा dm_block *b,
+					माप_प्रकार block_size)
+अणु
+	काष्ठा disk_biपंचांगap_header *disk_header = dm_block_data(b);
 
 	disk_header->blocknr = cpu_to_le64(dm_block_location(b));
 	disk_header->csum = cpu_to_le32(dm_bm_checksum(&disk_header->not_used,
-						       block_size - sizeof(__le32),
+						       block_size - माप(__le32),
 						       BITMAP_CSUM_XOR));
-}
+पूर्ण
 
-static int dm_bitmap_check(struct dm_block_validator *v,
-			   struct dm_block *b,
-			   size_t block_size)
-{
-	struct disk_bitmap_header *disk_header = dm_block_data(b);
+अटल पूर्णांक dm_biपंचांगap_check(काष्ठा dm_block_validator *v,
+			   काष्ठा dm_block *b,
+			   माप_प्रकार block_size)
+अणु
+	काष्ठा disk_biपंचांगap_header *disk_header = dm_block_data(b);
 	__le32 csum_disk;
 
-	if (dm_block_location(b) != le64_to_cpu(disk_header->blocknr)) {
+	अगर (dm_block_location(b) != le64_to_cpu(disk_header->blocknr)) अणु
 		DMERR_LIMIT("bitmap check failed: blocknr %llu != wanted %llu",
 			    le64_to_cpu(disk_header->blocknr), dm_block_location(b));
-		return -ENOTBLK;
-	}
+		वापस -ENOTBLK;
+	पूर्ण
 
 	csum_disk = cpu_to_le32(dm_bm_checksum(&disk_header->not_used,
-					       block_size - sizeof(__le32),
+					       block_size - माप(__le32),
 					       BITMAP_CSUM_XOR));
-	if (csum_disk != disk_header->csum) {
+	अगर (csum_disk != disk_header->csum) अणु
 		DMERR_LIMIT("bitmap check failed: csum %u != wanted %u",
 			    le32_to_cpu(csum_disk), le32_to_cpu(disk_header->csum));
-		return -EILSEQ;
-	}
+		वापस -EILSEQ;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dm_block_validator dm_sm_bitmap_validator = {
+अटल काष्ठा dm_block_validator dm_sm_biपंचांगap_validator = अणु
 	.name = "sm_bitmap",
-	.prepare_for_write = dm_bitmap_prepare_for_write,
-	.check = dm_bitmap_check,
-};
+	.prepare_क्रम_ग_लिखो = dm_biपंचांगap_prepare_क्रम_ग_लिखो,
+	.check = dm_biपंचांगap_check,
+पूर्ण;
 
 /*----------------------------------------------------------------*/
 
-#define ENTRIES_PER_WORD 32
-#define ENTRIES_SHIFT	5
+#घोषणा ENTRIES_PER_WORD 32
+#घोषणा ENTRIES_SHIFT	5
 
-static void *dm_bitmap_data(struct dm_block *b)
-{
-	return dm_block_data(b) + sizeof(struct disk_bitmap_header);
-}
+अटल व्योम *dm_biपंचांगap_data(काष्ठा dm_block *b)
+अणु
+	वापस dm_block_data(b) + माप(काष्ठा disk_biपंचांगap_header);
+पूर्ण
 
-#define WORD_MASK_HIGH 0xAAAAAAAAAAAAAAAAULL
+#घोषणा WORD_MASK_HIGH 0xAAAAAAAAAAAAAAAAULL
 
-static unsigned dm_bitmap_word_used(void *addr, unsigned b)
-{
+अटल अचिन्हित dm_biपंचांगap_word_used(व्योम *addr, अचिन्हित b)
+अणु
 	__le64 *words_le = addr;
 	__le64 *w_le = words_le + (b >> ENTRIES_SHIFT);
 
-	uint64_t bits = le64_to_cpu(*w_le);
-	uint64_t mask = (bits + WORD_MASK_HIGH + 1) & WORD_MASK_HIGH;
+	uपूर्णांक64_t bits = le64_to_cpu(*w_le);
+	uपूर्णांक64_t mask = (bits + WORD_MASK_HIGH + 1) & WORD_MASK_HIGH;
 
-	return !(~bits & mask);
-}
+	वापस !(~bits & mask);
+पूर्ण
 
-static unsigned sm_lookup_bitmap(void *addr, unsigned b)
-{
+अटल अचिन्हित sm_lookup_biपंचांगap(व्योम *addr, अचिन्हित b)
+अणु
 	__le64 *words_le = addr;
 	__le64 *w_le = words_le + (b >> ENTRIES_SHIFT);
-	unsigned hi, lo;
+	अचिन्हित hi, lo;
 
 	b = (b & (ENTRIES_PER_WORD - 1)) << 1;
-	hi = !!test_bit_le(b, (void *) w_le);
-	lo = !!test_bit_le(b + 1, (void *) w_le);
-	return (hi << 1) | lo;
-}
+	hi = !!test_bit_le(b, (व्योम *) w_le);
+	lo = !!test_bit_le(b + 1, (व्योम *) w_le);
+	वापस (hi << 1) | lo;
+पूर्ण
 
-static void sm_set_bitmap(void *addr, unsigned b, unsigned val)
-{
+अटल व्योम sm_set_biपंचांगap(व्योम *addr, अचिन्हित b, अचिन्हित val)
+अणु
 	__le64 *words_le = addr;
 	__le64 *w_le = words_le + (b >> ENTRIES_SHIFT);
 
 	b = (b & (ENTRIES_PER_WORD - 1)) << 1;
 
-	if (val & 2)
-		__set_bit_le(b, (void *) w_le);
-	else
-		__clear_bit_le(b, (void *) w_le);
+	अगर (val & 2)
+		__set_bit_le(b, (व्योम *) w_le);
+	अन्यथा
+		__clear_bit_le(b, (व्योम *) w_le);
 
-	if (val & 1)
-		__set_bit_le(b + 1, (void *) w_le);
-	else
-		__clear_bit_le(b + 1, (void *) w_le);
-}
+	अगर (val & 1)
+		__set_bit_le(b + 1, (व्योम *) w_le);
+	अन्यथा
+		__clear_bit_le(b + 1, (व्योम *) w_le);
+पूर्ण
 
-static int sm_find_free(void *addr, unsigned begin, unsigned end,
-			unsigned *result)
-{
-	while (begin < end) {
-		if (!(begin & (ENTRIES_PER_WORD - 1)) &&
-		    dm_bitmap_word_used(addr, begin)) {
+अटल पूर्णांक sm_find_मुक्त(व्योम *addr, अचिन्हित begin, अचिन्हित end,
+			अचिन्हित *result)
+अणु
+	जबतक (begin < end) अणु
+		अगर (!(begin & (ENTRIES_PER_WORD - 1)) &&
+		    dm_biपंचांगap_word_used(addr, begin)) अणु
 			begin += ENTRIES_PER_WORD;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!sm_lookup_bitmap(addr, begin)) {
+		अगर (!sm_lookup_biपंचांगap(addr, begin)) अणु
 			*result = begin;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		begin++;
-	}
+	पूर्ण
 
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-static int sm_ll_init(struct ll_disk *ll, struct dm_transaction_manager *tm)
-{
-	memset(ll, 0, sizeof(struct ll_disk));
+अटल पूर्णांक sm_ll_init(काष्ठा ll_disk *ll, काष्ठा dm_transaction_manager *पंचांग)
+अणु
+	स_रखो(ll, 0, माप(काष्ठा ll_disk));
 
-	ll->tm = tm;
+	ll->पंचांग = पंचांग;
 
-	ll->bitmap_info.tm = tm;
-	ll->bitmap_info.levels = 1;
+	ll->biपंचांगap_info.पंचांग = पंचांग;
+	ll->biपंचांगap_info.levels = 1;
 
 	/*
-	 * Because the new bitmap blocks are created via a shadow
-	 * operation, the old entry has already had its reference count
-	 * decremented and we don't need the btree to do any bookkeeping.
+	 * Because the new biपंचांगap blocks are created via a shaकरोw
+	 * operation, the old entry has alपढ़ोy had its reference count
+	 * decremented and we करोn't need the btree to करो any bookkeeping.
 	 */
-	ll->bitmap_info.value_type.size = sizeof(struct disk_index_entry);
-	ll->bitmap_info.value_type.inc = NULL;
-	ll->bitmap_info.value_type.dec = NULL;
-	ll->bitmap_info.value_type.equal = NULL;
+	ll->biपंचांगap_info.value_type.size = माप(काष्ठा disk_index_entry);
+	ll->biपंचांगap_info.value_type.inc = शून्य;
+	ll->biपंचांगap_info.value_type.dec = शून्य;
+	ll->biपंचांगap_info.value_type.equal = शून्य;
 
-	ll->ref_count_info.tm = tm;
+	ll->ref_count_info.पंचांग = पंचांग;
 	ll->ref_count_info.levels = 1;
-	ll->ref_count_info.value_type.size = sizeof(uint32_t);
-	ll->ref_count_info.value_type.inc = NULL;
-	ll->ref_count_info.value_type.dec = NULL;
-	ll->ref_count_info.value_type.equal = NULL;
+	ll->ref_count_info.value_type.size = माप(uपूर्णांक32_t);
+	ll->ref_count_info.value_type.inc = शून्य;
+	ll->ref_count_info.value_type.dec = शून्य;
+	ll->ref_count_info.value_type.equal = शून्य;
 
-	ll->block_size = dm_bm_block_size(dm_tm_get_bm(tm));
+	ll->block_size = dm_bm_block_size(dm_पंचांग_get_bm(पंचांग));
 
-	if (ll->block_size > (1 << 30)) {
+	अगर (ll->block_size > (1 << 30)) अणु
 		DMERR("block size too big to hold bitmaps");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ll->entries_per_block = (ll->block_size - sizeof(struct disk_bitmap_header)) *
+	ll->entries_per_block = (ll->block_size - माप(काष्ठा disk_biपंचांगap_header)) *
 		ENTRIES_PER_BYTE;
 	ll->nr_blocks = 0;
-	ll->bitmap_root = 0;
+	ll->biपंचांगap_root = 0;
 	ll->ref_count_root = 0;
-	ll->bitmap_index_changed = false;
+	ll->biपंचांगap_index_changed = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sm_ll_extend(struct ll_disk *ll, dm_block_t extra_blocks)
-{
-	int r;
+पूर्णांक sm_ll_extend(काष्ठा ll_disk *ll, dm_block_t extra_blocks)
+अणु
+	पूर्णांक r;
 	dm_block_t i, nr_blocks, nr_indexes;
-	unsigned old_blocks, blocks;
+	अचिन्हित old_blocks, blocks;
 
 	nr_blocks = ll->nr_blocks + extra_blocks;
-	old_blocks = dm_sector_div_up(ll->nr_blocks, ll->entries_per_block);
-	blocks = dm_sector_div_up(nr_blocks, ll->entries_per_block);
+	old_blocks = dm_sector_भाग_up(ll->nr_blocks, ll->entries_per_block);
+	blocks = dm_sector_भाग_up(nr_blocks, ll->entries_per_block);
 
-	nr_indexes = dm_sector_div_up(nr_blocks, ll->entries_per_block);
-	if (nr_indexes > ll->max_entries(ll)) {
+	nr_indexes = dm_sector_भाग_up(nr_blocks, ll->entries_per_block);
+	अगर (nr_indexes > ll->max_entries(ll)) अणु
 		DMERR("space map too large");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * We need to set this before the dm_tm_new_block() call below.
+	 * We need to set this beक्रमe the dm_पंचांग_new_block() call below.
 	 */
 	ll->nr_blocks = nr_blocks;
-	for (i = old_blocks; i < blocks; i++) {
-		struct dm_block *b;
-		struct disk_index_entry idx;
+	क्रम (i = old_blocks; i < blocks; i++) अणु
+		काष्ठा dm_block *b;
+		काष्ठा disk_index_entry idx;
 
-		r = dm_tm_new_block(ll->tm, &dm_sm_bitmap_validator, &b);
-		if (r < 0)
-			return r;
+		r = dm_पंचांग_new_block(ll->पंचांग, &dm_sm_biपंचांगap_validator, &b);
+		अगर (r < 0)
+			वापस r;
 
 		idx.blocknr = cpu_to_le64(dm_block_location(b));
 
-		dm_tm_unlock(ll->tm, b);
+		dm_पंचांग_unlock(ll->पंचांग, b);
 
-		idx.nr_free = cpu_to_le32(ll->entries_per_block);
-		idx.none_free_before = 0;
+		idx.nr_मुक्त = cpu_to_le32(ll->entries_per_block);
+		idx.none_मुक्त_beक्रमe = 0;
 
 		r = ll->save_ie(ll, i, &idx);
-		if (r < 0)
-			return r;
-	}
+		अगर (r < 0)
+			वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sm_ll_lookup_bitmap(struct ll_disk *ll, dm_block_t b, uint32_t *result)
-{
-	int r;
+पूर्णांक sm_ll_lookup_biपंचांगap(काष्ठा ll_disk *ll, dm_block_t b, uपूर्णांक32_t *result)
+अणु
+	पूर्णांक r;
 	dm_block_t index = b;
-	struct disk_index_entry ie_disk;
-	struct dm_block *blk;
+	काष्ठा disk_index_entry ie_disk;
+	काष्ठा dm_block *blk;
 
-	b = do_div(index, ll->entries_per_block);
+	b = करो_भाग(index, ll->entries_per_block);
 	r = ll->load_ie(ll, index, &ie_disk);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	r = dm_tm_read_lock(ll->tm, le64_to_cpu(ie_disk.blocknr),
-			    &dm_sm_bitmap_validator, &blk);
-	if (r < 0)
-		return r;
+	r = dm_पंचांग_पढ़ो_lock(ll->पंचांग, le64_to_cpu(ie_disk.blocknr),
+			    &dm_sm_biपंचांगap_validator, &blk);
+	अगर (r < 0)
+		वापस r;
 
-	*result = sm_lookup_bitmap(dm_bitmap_data(blk), b);
+	*result = sm_lookup_biपंचांगap(dm_biपंचांगap_data(blk), b);
 
-	dm_tm_unlock(ll->tm, blk);
+	dm_पंचांग_unlock(ll->पंचांग, blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sm_ll_lookup_big_ref_count(struct ll_disk *ll, dm_block_t b,
-				      uint32_t *result)
-{
+अटल पूर्णांक sm_ll_lookup_big_ref_count(काष्ठा ll_disk *ll, dm_block_t b,
+				      uपूर्णांक32_t *result)
+अणु
 	__le32 le_rc;
-	int r;
+	पूर्णांक r;
 
 	r = dm_btree_lookup(&ll->ref_count_info, ll->ref_count_root, &b, &le_rc);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	*result = le32_to_cpu(le_rc);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int sm_ll_lookup(struct ll_disk *ll, dm_block_t b, uint32_t *result)
-{
-	int r = sm_ll_lookup_bitmap(ll, b, result);
+पूर्णांक sm_ll_lookup(काष्ठा ll_disk *ll, dm_block_t b, uपूर्णांक32_t *result)
+अणु
+	पूर्णांक r = sm_ll_lookup_biपंचांगap(ll, b, result);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	if (*result != 3)
-		return r;
+	अगर (*result != 3)
+		वापस r;
 
-	return sm_ll_lookup_big_ref_count(ll, b, result);
-}
+	वापस sm_ll_lookup_big_ref_count(ll, b, result);
+पूर्ण
 
-int sm_ll_find_free_block(struct ll_disk *ll, dm_block_t begin,
+पूर्णांक sm_ll_find_मुक्त_block(काष्ठा ll_disk *ll, dm_block_t begin,
 			  dm_block_t end, dm_block_t *result)
-{
-	int r;
-	struct disk_index_entry ie_disk;
+अणु
+	पूर्णांक r;
+	काष्ठा disk_index_entry ie_disk;
 	dm_block_t i, index_begin = begin;
-	dm_block_t index_end = dm_sector_div_up(end, ll->entries_per_block);
+	dm_block_t index_end = dm_sector_भाग_up(end, ll->entries_per_block);
 
 	/*
-	 * FIXME: Use shifts
+	 * FIXME: Use shअगरts
 	 */
-	begin = do_div(index_begin, ll->entries_per_block);
-	end = do_div(end, ll->entries_per_block);
-	if (end == 0)
+	begin = करो_भाग(index_begin, ll->entries_per_block);
+	end = करो_भाग(end, ll->entries_per_block);
+	अगर (end == 0)
 		end = ll->entries_per_block;
 
-	for (i = index_begin; i < index_end; i++, begin = 0) {
-		struct dm_block *blk;
-		unsigned position;
-		uint32_t bit_end;
+	क्रम (i = index_begin; i < index_end; i++, begin = 0) अणु
+		काष्ठा dm_block *blk;
+		अचिन्हित position;
+		uपूर्णांक32_t bit_end;
 
 		r = ll->load_ie(ll, i, &ie_disk);
-		if (r < 0)
-			return r;
+		अगर (r < 0)
+			वापस r;
 
-		if (le32_to_cpu(ie_disk.nr_free) == 0)
-			continue;
+		अगर (le32_to_cpu(ie_disk.nr_मुक्त) == 0)
+			जारी;
 
-		r = dm_tm_read_lock(ll->tm, le64_to_cpu(ie_disk.blocknr),
-				    &dm_sm_bitmap_validator, &blk);
-		if (r < 0)
-			return r;
+		r = dm_पंचांग_पढ़ो_lock(ll->पंचांग, le64_to_cpu(ie_disk.blocknr),
+				    &dm_sm_biपंचांगap_validator, &blk);
+		अगर (r < 0)
+			वापस r;
 
 		bit_end = (i == index_end - 1) ?  end : ll->entries_per_block;
 
-		r = sm_find_free(dm_bitmap_data(blk),
-				 max_t(unsigned, begin, le32_to_cpu(ie_disk.none_free_before)),
+		r = sm_find_मुक्त(dm_biपंचांगap_data(blk),
+				 max_t(अचिन्हित, begin, le32_to_cpu(ie_disk.none_मुक्त_beक्रमe)),
 				 bit_end, &position);
-		if (r == -ENOSPC) {
+		अगर (r == -ENOSPC) अणु
 			/*
 			 * This might happen because we started searching
-			 * part way through the bitmap.
+			 * part way through the biपंचांगap.
 			 */
-			dm_tm_unlock(ll->tm, blk);
-			continue;
-		}
+			dm_पंचांग_unlock(ll->पंचांग, blk);
+			जारी;
+		पूर्ण
 
-		dm_tm_unlock(ll->tm, blk);
+		dm_पंचांग_unlock(ll->पंचांग, blk);
 
 		*result = i * ll->entries_per_block + (dm_block_t) position;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
-int sm_ll_find_common_free_block(struct ll_disk *old_ll, struct ll_disk *new_ll,
+पूर्णांक sm_ll_find_common_मुक्त_block(काष्ठा ll_disk *old_ll, काष्ठा ll_disk *new_ll,
 	                         dm_block_t begin, dm_block_t end, dm_block_t *b)
-{
-	int r;
-	uint32_t count;
+अणु
+	पूर्णांक r;
+	uपूर्णांक32_t count;
 
-	do {
-		r = sm_ll_find_free_block(new_ll, begin, new_ll->nr_blocks, b);
-		if (r)
-			break;
+	करो अणु
+		r = sm_ll_find_मुक्त_block(new_ll, begin, new_ll->nr_blocks, b);
+		अगर (r)
+			अवरोध;
 
-		/* double check this block wasn't used in the old transaction */
-		if (*b >= old_ll->nr_blocks)
+		/* द्विगुन check this block wasn't used in the old transaction */
+		अगर (*b >= old_ll->nr_blocks)
 			count = 0;
-		else {
+		अन्यथा अणु
 			r = sm_ll_lookup(old_ll, *b, &count);
-			if (r)
-				break;
+			अगर (r)
+				अवरोध;
 
-			if (count)
+			अगर (count)
 				begin = *b + 1;
-		}
-	} while (count);
+		पूर्ण
+	पूर्ण जबतक (count);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int sm_ll_mutate(struct ll_disk *ll, dm_block_t b,
-			int (*mutator)(void *context, uint32_t old, uint32_t *new),
-			void *context, enum allocation_event *ev)
-{
-	int r;
-	uint32_t bit, old, ref_count;
-	struct dm_block *nb;
+अटल पूर्णांक sm_ll_mutate(काष्ठा ll_disk *ll, dm_block_t b,
+			पूर्णांक (*mutator)(व्योम *context, uपूर्णांक32_t old, uपूर्णांक32_t *new),
+			व्योम *context, क्रमागत allocation_event *ev)
+अणु
+	पूर्णांक r;
+	uपूर्णांक32_t bit, old, ref_count;
+	काष्ठा dm_block *nb;
 	dm_block_t index = b;
-	struct disk_index_entry ie_disk;
-	void *bm_le;
-	int inc;
+	काष्ठा disk_index_entry ie_disk;
+	व्योम *bm_le;
+	पूर्णांक inc;
 
-	bit = do_div(index, ll->entries_per_block);
+	bit = करो_भाग(index, ll->entries_per_block);
 	r = ll->load_ie(ll, index, &ie_disk);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	r = dm_tm_shadow_block(ll->tm, le64_to_cpu(ie_disk.blocknr),
-			       &dm_sm_bitmap_validator, &nb, &inc);
-	if (r < 0) {
+	r = dm_पंचांग_shaकरोw_block(ll->पंचांग, le64_to_cpu(ie_disk.blocknr),
+			       &dm_sm_biपंचांगap_validator, &nb, &inc);
+	अगर (r < 0) अणु
 		DMERR("dm_tm_shadow_block() failed");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	ie_disk.blocknr = cpu_to_le64(dm_block_location(nb));
 
-	bm_le = dm_bitmap_data(nb);
-	old = sm_lookup_bitmap(bm_le, bit);
+	bm_le = dm_biपंचांगap_data(nb);
+	old = sm_lookup_biपंचांगap(bm_le, bit);
 
-	if (old > 2) {
+	अगर (old > 2) अणु
 		r = sm_ll_lookup_big_ref_count(ll, b, &old);
-		if (r < 0) {
-			dm_tm_unlock(ll->tm, nb);
-			return r;
-		}
-	}
+		अगर (r < 0) अणु
+			dm_पंचांग_unlock(ll->पंचांग, nb);
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	r = mutator(context, old, &ref_count);
-	if (r) {
-		dm_tm_unlock(ll->tm, nb);
-		return r;
-	}
+	अगर (r) अणु
+		dm_पंचांग_unlock(ll->पंचांग, nb);
+		वापस r;
+	पूर्ण
 
-	if (ref_count <= 2) {
-		sm_set_bitmap(bm_le, bit, ref_count);
+	अगर (ref_count <= 2) अणु
+		sm_set_biपंचांगap(bm_le, bit, ref_count);
 
-		dm_tm_unlock(ll->tm, nb);
+		dm_पंचांग_unlock(ll->पंचांग, nb);
 
-		if (old > 2) {
-			r = dm_btree_remove(&ll->ref_count_info,
+		अगर (old > 2) अणु
+			r = dm_btree_हटाओ(&ll->ref_count_info,
 					    ll->ref_count_root,
 					    &b, &ll->ref_count_root);
-			if (r)
-				return r;
-		}
+			अगर (r)
+				वापस r;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		__le32 le_rc = cpu_to_le32(ref_count);
 
-		sm_set_bitmap(bm_le, bit, 3);
-		dm_tm_unlock(ll->tm, nb);
+		sm_set_biपंचांगap(bm_le, bit, 3);
+		dm_पंचांग_unlock(ll->पंचांग, nb);
 
-		__dm_bless_for_disk(&le_rc);
+		__dm_bless_क्रम_disk(&le_rc);
 		r = dm_btree_insert(&ll->ref_count_info, ll->ref_count_root,
 				    &b, &le_rc, &ll->ref_count_root);
-		if (r < 0) {
+		अगर (r < 0) अणु
 			DMERR("ref count insert failed");
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
-	if (ref_count && !old) {
+	अगर (ref_count && !old) अणु
 		*ev = SM_ALLOC;
 		ll->nr_allocated++;
-		le32_add_cpu(&ie_disk.nr_free, -1);
-		if (le32_to_cpu(ie_disk.none_free_before) == bit)
-			ie_disk.none_free_before = cpu_to_le32(bit + 1);
+		le32_add_cpu(&ie_disk.nr_मुक्त, -1);
+		अगर (le32_to_cpu(ie_disk.none_मुक्त_beक्रमe) == bit)
+			ie_disk.none_मुक्त_beक्रमe = cpu_to_le32(bit + 1);
 
-	} else if (old && !ref_count) {
+	पूर्ण अन्यथा अगर (old && !ref_count) अणु
 		*ev = SM_FREE;
 		ll->nr_allocated--;
-		le32_add_cpu(&ie_disk.nr_free, 1);
-		ie_disk.none_free_before = cpu_to_le32(min(le32_to_cpu(ie_disk.none_free_before), bit));
-	} else
+		le32_add_cpu(&ie_disk.nr_मुक्त, 1);
+		ie_disk.none_मुक्त_beक्रमe = cpu_to_le32(min(le32_to_cpu(ie_disk.none_मुक्त_beक्रमe), bit));
+	पूर्ण अन्यथा
 		*ev = SM_NONE;
 
-	return ll->save_ie(ll, index, &ie_disk);
-}
+	वापस ll->save_ie(ll, index, &ie_disk);
+पूर्ण
 
-static int set_ref_count(void *context, uint32_t old, uint32_t *new)
-{
-	*new = *((uint32_t *) context);
-	return 0;
-}
+अटल पूर्णांक set_ref_count(व्योम *context, uपूर्णांक32_t old, uपूर्णांक32_t *new)
+अणु
+	*new = *((uपूर्णांक32_t *) context);
+	वापस 0;
+पूर्ण
 
-int sm_ll_insert(struct ll_disk *ll, dm_block_t b,
-		 uint32_t ref_count, enum allocation_event *ev)
-{
-	return sm_ll_mutate(ll, b, set_ref_count, &ref_count, ev);
-}
+पूर्णांक sm_ll_insert(काष्ठा ll_disk *ll, dm_block_t b,
+		 uपूर्णांक32_t ref_count, क्रमागत allocation_event *ev)
+अणु
+	वापस sm_ll_mutate(ll, b, set_ref_count, &ref_count, ev);
+पूर्ण
 
-static int inc_ref_count(void *context, uint32_t old, uint32_t *new)
-{
+अटल पूर्णांक inc_ref_count(व्योम *context, uपूर्णांक32_t old, uपूर्णांक32_t *new)
+अणु
 	*new = old + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sm_ll_inc(struct ll_disk *ll, dm_block_t b, enum allocation_event *ev)
-{
-	return sm_ll_mutate(ll, b, inc_ref_count, NULL, ev);
-}
+पूर्णांक sm_ll_inc(काष्ठा ll_disk *ll, dm_block_t b, क्रमागत allocation_event *ev)
+अणु
+	वापस sm_ll_mutate(ll, b, inc_ref_count, शून्य, ev);
+पूर्ण
 
-static int dec_ref_count(void *context, uint32_t old, uint32_t *new)
-{
-	if (!old) {
+अटल पूर्णांक dec_ref_count(व्योम *context, uपूर्णांक32_t old, uपूर्णांक32_t *new)
+अणु
+	अगर (!old) अणु
 		DMERR_LIMIT("unable to decrement a reference count below 0");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*new = old - 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sm_ll_dec(struct ll_disk *ll, dm_block_t b, enum allocation_event *ev)
-{
-	return sm_ll_mutate(ll, b, dec_ref_count, NULL, ev);
-}
+पूर्णांक sm_ll_dec(काष्ठा ll_disk *ll, dm_block_t b, क्रमागत allocation_event *ev)
+अणु
+	वापस sm_ll_mutate(ll, b, dec_ref_count, शून्य, ev);
+पूर्ण
 
-int sm_ll_commit(struct ll_disk *ll)
-{
-	int r = 0;
+पूर्णांक sm_ll_commit(काष्ठा ll_disk *ll)
+अणु
+	पूर्णांक r = 0;
 
-	if (ll->bitmap_index_changed) {
+	अगर (ll->biपंचांगap_index_changed) अणु
 		r = ll->commit(ll);
-		if (!r)
-			ll->bitmap_index_changed = false;
-	}
+		अगर (!r)
+			ll->biपंचांगap_index_changed = false;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-static int metadata_ll_load_ie(struct ll_disk *ll, dm_block_t index,
-			       struct disk_index_entry *ie)
-{
-	memcpy(ie, ll->mi_le.index + index, sizeof(*ie));
-	return 0;
-}
+अटल पूर्णांक metadata_ll_load_ie(काष्ठा ll_disk *ll, dm_block_t index,
+			       काष्ठा disk_index_entry *ie)
+अणु
+	स_नकल(ie, ll->mi_le.index + index, माप(*ie));
+	वापस 0;
+पूर्ण
 
-static int metadata_ll_save_ie(struct ll_disk *ll, dm_block_t index,
-			       struct disk_index_entry *ie)
-{
-	ll->bitmap_index_changed = true;
-	memcpy(ll->mi_le.index + index, ie, sizeof(*ie));
-	return 0;
-}
+अटल पूर्णांक metadata_ll_save_ie(काष्ठा ll_disk *ll, dm_block_t index,
+			       काष्ठा disk_index_entry *ie)
+अणु
+	ll->biपंचांगap_index_changed = true;
+	स_नकल(ll->mi_le.index + index, ie, माप(*ie));
+	वापस 0;
+पूर्ण
 
-static int metadata_ll_init_index(struct ll_disk *ll)
-{
-	int r;
-	struct dm_block *b;
+अटल पूर्णांक metadata_ll_init_index(काष्ठा ll_disk *ll)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_block *b;
 
-	r = dm_tm_new_block(ll->tm, &index_validator, &b);
-	if (r < 0)
-		return r;
+	r = dm_पंचांग_new_block(ll->पंचांग, &index_validator, &b);
+	अगर (r < 0)
+		वापस r;
 
-	ll->bitmap_root = dm_block_location(b);
+	ll->biपंचांगap_root = dm_block_location(b);
 
-	dm_tm_unlock(ll->tm, b);
+	dm_पंचांग_unlock(ll->पंचांग, b);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int metadata_ll_open(struct ll_disk *ll)
-{
-	int r;
-	struct dm_block *block;
+अटल पूर्णांक metadata_ll_खोलो(काष्ठा ll_disk *ll)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_block *block;
 
-	r = dm_tm_read_lock(ll->tm, ll->bitmap_root,
+	r = dm_पंचांग_पढ़ो_lock(ll->पंचांग, ll->biपंचांगap_root,
 			    &index_validator, &block);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	memcpy(&ll->mi_le, dm_block_data(block), sizeof(ll->mi_le));
-	dm_tm_unlock(ll->tm, block);
+	स_नकल(&ll->mi_le, dm_block_data(block), माप(ll->mi_le));
+	dm_पंचांग_unlock(ll->पंचांग, block);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static dm_block_t metadata_ll_max_entries(struct ll_disk *ll)
-{
-	return MAX_METADATA_BITMAPS;
-}
+अटल dm_block_t metadata_ll_max_entries(काष्ठा ll_disk *ll)
+अणु
+	वापस MAX_METADATA_BITMAPS;
+पूर्ण
 
-static int metadata_ll_commit(struct ll_disk *ll)
-{
-	int r, inc;
-	struct dm_block *b;
+अटल पूर्णांक metadata_ll_commit(काष्ठा ll_disk *ll)
+अणु
+	पूर्णांक r, inc;
+	काष्ठा dm_block *b;
 
-	r = dm_tm_shadow_block(ll->tm, ll->bitmap_root, &index_validator, &b, &inc);
-	if (r)
-		return r;
+	r = dm_पंचांग_shaकरोw_block(ll->पंचांग, ll->biपंचांगap_root, &index_validator, &b, &inc);
+	अगर (r)
+		वापस r;
 
-	memcpy(dm_block_data(b), &ll->mi_le, sizeof(ll->mi_le));
-	ll->bitmap_root = dm_block_location(b);
+	स_नकल(dm_block_data(b), &ll->mi_le, माप(ll->mi_le));
+	ll->biपंचांगap_root = dm_block_location(b);
 
-	dm_tm_unlock(ll->tm, b);
+	dm_पंचांग_unlock(ll->पंचांग, b);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sm_ll_new_metadata(struct ll_disk *ll, struct dm_transaction_manager *tm)
-{
-	int r;
+पूर्णांक sm_ll_new_metadata(काष्ठा ll_disk *ll, काष्ठा dm_transaction_manager *पंचांग)
+अणु
+	पूर्णांक r;
 
-	r = sm_ll_init(ll, tm);
-	if (r < 0)
-		return r;
+	r = sm_ll_init(ll, पंचांग);
+	अगर (r < 0)
+		वापस r;
 
 	ll->load_ie = metadata_ll_load_ie;
 	ll->save_ie = metadata_ll_save_ie;
 	ll->init_index = metadata_ll_init_index;
-	ll->open_index = metadata_ll_open;
+	ll->खोलो_index = metadata_ll_खोलो;
 	ll->max_entries = metadata_ll_max_entries;
 	ll->commit = metadata_ll_commit;
 
@@ -639,101 +640,101 @@ int sm_ll_new_metadata(struct ll_disk *ll, struct dm_transaction_manager *tm)
 	ll->nr_allocated = 0;
 
 	r = ll->init_index(ll);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	r = dm_btree_empty(&ll->ref_count_info, &ll->ref_count_root);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sm_ll_open_metadata(struct ll_disk *ll, struct dm_transaction_manager *tm,
-			void *root_le, size_t len)
-{
-	int r;
-	struct disk_sm_root smr;
+पूर्णांक sm_ll_खोलो_metadata(काष्ठा ll_disk *ll, काष्ठा dm_transaction_manager *पंचांग,
+			व्योम *root_le, माप_प्रकार len)
+अणु
+	पूर्णांक r;
+	काष्ठा disk_sm_root smr;
 
-	if (len < sizeof(struct disk_sm_root)) {
+	अगर (len < माप(काष्ठा disk_sm_root)) अणु
 		DMERR("sm_metadata root too small");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * We don't know the alignment of the root_le buffer, so need to
-	 * copy into a new structure.
+	 * We करोn't know the alignment of the root_le buffer, so need to
+	 * copy पूर्णांकo a new काष्ठाure.
 	 */
-	memcpy(&smr, root_le, sizeof(smr));
+	स_नकल(&smr, root_le, माप(smr));
 
-	r = sm_ll_init(ll, tm);
-	if (r < 0)
-		return r;
+	r = sm_ll_init(ll, पंचांग);
+	अगर (r < 0)
+		वापस r;
 
 	ll->load_ie = metadata_ll_load_ie;
 	ll->save_ie = metadata_ll_save_ie;
 	ll->init_index = metadata_ll_init_index;
-	ll->open_index = metadata_ll_open;
+	ll->खोलो_index = metadata_ll_खोलो;
 	ll->max_entries = metadata_ll_max_entries;
 	ll->commit = metadata_ll_commit;
 
 	ll->nr_blocks = le64_to_cpu(smr.nr_blocks);
 	ll->nr_allocated = le64_to_cpu(smr.nr_allocated);
-	ll->bitmap_root = le64_to_cpu(smr.bitmap_root);
+	ll->biपंचांगap_root = le64_to_cpu(smr.biपंचांगap_root);
 	ll->ref_count_root = le64_to_cpu(smr.ref_count_root);
 
-	return ll->open_index(ll);
-}
+	वापस ll->खोलो_index(ll);
+पूर्ण
 
 /*----------------------------------------------------------------*/
 
-static int disk_ll_load_ie(struct ll_disk *ll, dm_block_t index,
-			   struct disk_index_entry *ie)
-{
-	return dm_btree_lookup(&ll->bitmap_info, ll->bitmap_root, &index, ie);
-}
+अटल पूर्णांक disk_ll_load_ie(काष्ठा ll_disk *ll, dm_block_t index,
+			   काष्ठा disk_index_entry *ie)
+अणु
+	वापस dm_btree_lookup(&ll->biपंचांगap_info, ll->biपंचांगap_root, &index, ie);
+पूर्ण
 
-static int disk_ll_save_ie(struct ll_disk *ll, dm_block_t index,
-			   struct disk_index_entry *ie)
-{
-	__dm_bless_for_disk(ie);
-	return dm_btree_insert(&ll->bitmap_info, ll->bitmap_root,
-			       &index, ie, &ll->bitmap_root);
-}
+अटल पूर्णांक disk_ll_save_ie(काष्ठा ll_disk *ll, dm_block_t index,
+			   काष्ठा disk_index_entry *ie)
+अणु
+	__dm_bless_क्रम_disk(ie);
+	वापस dm_btree_insert(&ll->biपंचांगap_info, ll->biपंचांगap_root,
+			       &index, ie, &ll->biपंचांगap_root);
+पूर्ण
 
-static int disk_ll_init_index(struct ll_disk *ll)
-{
-	return dm_btree_empty(&ll->bitmap_info, &ll->bitmap_root);
-}
+अटल पूर्णांक disk_ll_init_index(काष्ठा ll_disk *ll)
+अणु
+	वापस dm_btree_empty(&ll->biपंचांगap_info, &ll->biपंचांगap_root);
+पूर्ण
 
-static int disk_ll_open(struct ll_disk *ll)
-{
-	/* nothing to do */
-	return 0;
-}
+अटल पूर्णांक disk_ll_खोलो(काष्ठा ll_disk *ll)
+अणु
+	/* nothing to करो */
+	वापस 0;
+पूर्ण
 
-static dm_block_t disk_ll_max_entries(struct ll_disk *ll)
-{
-	return -1ULL;
-}
+अटल dm_block_t disk_ll_max_entries(काष्ठा ll_disk *ll)
+अणु
+	वापस -1ULL;
+पूर्ण
 
-static int disk_ll_commit(struct ll_disk *ll)
-{
-	return 0;
-}
+अटल पूर्णांक disk_ll_commit(काष्ठा ll_disk *ll)
+अणु
+	वापस 0;
+पूर्ण
 
-int sm_ll_new_disk(struct ll_disk *ll, struct dm_transaction_manager *tm)
-{
-	int r;
+पूर्णांक sm_ll_new_disk(काष्ठा ll_disk *ll, काष्ठा dm_transaction_manager *पंचांग)
+अणु
+	पूर्णांक r;
 
-	r = sm_ll_init(ll, tm);
-	if (r < 0)
-		return r;
+	r = sm_ll_init(ll, पंचांग);
+	अगर (r < 0)
+		वापस r;
 
 	ll->load_ie = disk_ll_load_ie;
 	ll->save_ie = disk_ll_save_ie;
 	ll->init_index = disk_ll_init_index;
-	ll->open_index = disk_ll_open;
+	ll->खोलो_index = disk_ll_खोलो;
 	ll->max_entries = disk_ll_max_entries;
 	ll->commit = disk_ll_commit;
 
@@ -741,44 +742,44 @@ int sm_ll_new_disk(struct ll_disk *ll, struct dm_transaction_manager *tm)
 	ll->nr_allocated = 0;
 
 	r = ll->init_index(ll);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	r = dm_btree_empty(&ll->ref_count_info, &ll->ref_count_root);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sm_ll_open_disk(struct ll_disk *ll, struct dm_transaction_manager *tm,
-		    void *root_le, size_t len)
-{
-	int r;
-	struct disk_sm_root *smr = root_le;
+पूर्णांक sm_ll_खोलो_disk(काष्ठा ll_disk *ll, काष्ठा dm_transaction_manager *पंचांग,
+		    व्योम *root_le, माप_प्रकार len)
+अणु
+	पूर्णांक r;
+	काष्ठा disk_sm_root *smr = root_le;
 
-	if (len < sizeof(struct disk_sm_root)) {
+	अगर (len < माप(काष्ठा disk_sm_root)) अणु
 		DMERR("sm_metadata root too small");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	r = sm_ll_init(ll, tm);
-	if (r < 0)
-		return r;
+	r = sm_ll_init(ll, पंचांग);
+	अगर (r < 0)
+		वापस r;
 
 	ll->load_ie = disk_ll_load_ie;
 	ll->save_ie = disk_ll_save_ie;
 	ll->init_index = disk_ll_init_index;
-	ll->open_index = disk_ll_open;
+	ll->खोलो_index = disk_ll_खोलो;
 	ll->max_entries = disk_ll_max_entries;
 	ll->commit = disk_ll_commit;
 
 	ll->nr_blocks = le64_to_cpu(smr->nr_blocks);
 	ll->nr_allocated = le64_to_cpu(smr->nr_allocated);
-	ll->bitmap_root = le64_to_cpu(smr->bitmap_root);
+	ll->biपंचांगap_root = le64_to_cpu(smr->biपंचांगap_root);
 	ll->ref_count_root = le64_to_cpu(smr->ref_count_root);
 
-	return ll->open_index(ll);
-}
+	वापस ll->खोलो_index(ll);
+पूर्ण
 
 /*----------------------------------------------------------------*/

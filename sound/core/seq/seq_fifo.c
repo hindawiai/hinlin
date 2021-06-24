@@ -1,242 +1,243 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   ALSA sequencer FIFO
  *   Copyright (c) 1998 by Frank van de Pol <fvdpol@coil.demon.nl>
  */
 
-#include <sound/core.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
+#समावेश <sound/core.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include "seq_fifo.h"
-#include "seq_lock.h"
+#समावेश "seq_fifo.h"
+#समावेश "seq_lock.h"
 
 
 /* FIFO */
 
-/* create new fifo */
-struct snd_seq_fifo *snd_seq_fifo_new(int poolsize)
-{
-	struct snd_seq_fifo *f;
+/* create new fअगरo */
+काष्ठा snd_seq_fअगरo *snd_seq_fअगरo_new(पूर्णांक poolsize)
+अणु
+	काष्ठा snd_seq_fअगरo *f;
 
-	f = kzalloc(sizeof(*f), GFP_KERNEL);
-	if (!f)
-		return NULL;
+	f = kzalloc(माप(*f), GFP_KERNEL);
+	अगर (!f)
+		वापस शून्य;
 
 	f->pool = snd_seq_pool_new(poolsize);
-	if (f->pool == NULL) {
-		kfree(f);
-		return NULL;
-	}
-	if (snd_seq_pool_init(f->pool) < 0) {
+	अगर (f->pool == शून्य) अणु
+		kमुक्त(f);
+		वापस शून्य;
+	पूर्ण
+	अगर (snd_seq_pool_init(f->pool) < 0) अणु
 		snd_seq_pool_delete(&f->pool);
-		kfree(f);
-		return NULL;
-	}
+		kमुक्त(f);
+		वापस शून्य;
+	पूर्ण
 
 	spin_lock_init(&f->lock);
 	snd_use_lock_init(&f->use_lock);
-	init_waitqueue_head(&f->input_sleep);
+	init_रुकोqueue_head(&f->input_sleep);
 	atomic_set(&f->overflow, 0);
 
-	f->head = NULL;
-	f->tail = NULL;
+	f->head = शून्य;
+	f->tail = शून्य;
 	f->cells = 0;
 	
-	return f;
-}
+	वापस f;
+पूर्ण
 
-void snd_seq_fifo_delete(struct snd_seq_fifo **fifo)
-{
-	struct snd_seq_fifo *f;
+व्योम snd_seq_fअगरo_delete(काष्ठा snd_seq_fअगरo **fअगरo)
+अणु
+	काष्ठा snd_seq_fअगरo *f;
 
-	if (snd_BUG_ON(!fifo))
-		return;
-	f = *fifo;
-	if (snd_BUG_ON(!f))
-		return;
-	*fifo = NULL;
+	अगर (snd_BUG_ON(!fअगरo))
+		वापस;
+	f = *fअगरo;
+	अगर (snd_BUG_ON(!f))
+		वापस;
+	*fअगरo = शून्य;
 
-	if (f->pool)
+	अगर (f->pool)
 		snd_seq_pool_mark_closing(f->pool);
 
-	snd_seq_fifo_clear(f);
+	snd_seq_fअगरo_clear(f);
 
-	/* wake up clients if any */
-	if (waitqueue_active(&f->input_sleep))
+	/* wake up clients अगर any */
+	अगर (रुकोqueue_active(&f->input_sleep))
 		wake_up(&f->input_sleep);
 
 	/* release resources...*/
 	/*....................*/
 
-	if (f->pool) {
-		snd_seq_pool_done(f->pool);
+	अगर (f->pool) अणु
+		snd_seq_pool_करोne(f->pool);
 		snd_seq_pool_delete(&f->pool);
-	}
+	पूर्ण
 	
-	kfree(f);
-}
+	kमुक्त(f);
+पूर्ण
 
-static struct snd_seq_event_cell *fifo_cell_out(struct snd_seq_fifo *f);
+अटल काष्ठा snd_seq_event_cell *fअगरo_cell_out(काष्ठा snd_seq_fअगरo *f);
 
 /* clear queue */
-void snd_seq_fifo_clear(struct snd_seq_fifo *f)
-{
-	struct snd_seq_event_cell *cell;
+व्योम snd_seq_fअगरo_clear(काष्ठा snd_seq_fअगरo *f)
+अणु
+	काष्ठा snd_seq_event_cell *cell;
 
 	/* clear overflow flag */
 	atomic_set(&f->overflow, 0);
 
 	snd_use_lock_sync(&f->use_lock);
 	spin_lock_irq(&f->lock);
-	/* drain the fifo */
-	while ((cell = fifo_cell_out(f)) != NULL) {
-		snd_seq_cell_free(cell);
-	}
+	/* drain the fअगरo */
+	जबतक ((cell = fअगरo_cell_out(f)) != शून्य) अणु
+		snd_seq_cell_मुक्त(cell);
+	पूर्ण
 	spin_unlock_irq(&f->lock);
-}
+पूर्ण
 
 
-/* enqueue event to fifo */
-int snd_seq_fifo_event_in(struct snd_seq_fifo *f,
-			  struct snd_seq_event *event)
-{
-	struct snd_seq_event_cell *cell;
-	unsigned long flags;
-	int err;
+/* enqueue event to fअगरo */
+पूर्णांक snd_seq_fअगरo_event_in(काष्ठा snd_seq_fअगरo *f,
+			  काष्ठा snd_seq_event *event)
+अणु
+	काष्ठा snd_seq_event_cell *cell;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
-	if (snd_BUG_ON(!f))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!f))
+		वापस -EINVAL;
 
 	snd_use_lock_use(&f->use_lock);
-	err = snd_seq_event_dup(f->pool, event, &cell, 1, NULL, NULL); /* always non-blocking */
-	if (err < 0) {
-		if ((err == -ENOMEM) || (err == -EAGAIN))
+	err = snd_seq_event_dup(f->pool, event, &cell, 1, शून्य, शून्य); /* always non-blocking */
+	अगर (err < 0) अणु
+		अगर ((err == -ENOMEM) || (err == -EAGAIN))
 			atomic_inc(&f->overflow);
-		snd_use_lock_free(&f->use_lock);
-		return err;
-	}
+		snd_use_lock_मुक्त(&f->use_lock);
+		वापस err;
+	पूर्ण
 		
-	/* append new cells to fifo */
+	/* append new cells to fअगरo */
 	spin_lock_irqsave(&f->lock, flags);
-	if (f->tail != NULL)
+	अगर (f->tail != शून्य)
 		f->tail->next = cell;
 	f->tail = cell;
-	if (f->head == NULL)
+	अगर (f->head == शून्य)
 		f->head = cell;
-	cell->next = NULL;
+	cell->next = शून्य;
 	f->cells++;
 	spin_unlock_irqrestore(&f->lock, flags);
 
 	/* wakeup client */
-	if (waitqueue_active(&f->input_sleep))
+	अगर (रुकोqueue_active(&f->input_sleep))
 		wake_up(&f->input_sleep);
 
-	snd_use_lock_free(&f->use_lock);
+	snd_use_lock_मुक्त(&f->use_lock);
 
-	return 0; /* success */
+	वापस 0; /* success */
 
-}
+पूर्ण
 
-/* dequeue cell from fifo */
-static struct snd_seq_event_cell *fifo_cell_out(struct snd_seq_fifo *f)
-{
-	struct snd_seq_event_cell *cell;
+/* dequeue cell from fअगरo */
+अटल काष्ठा snd_seq_event_cell *fअगरo_cell_out(काष्ठा snd_seq_fअगरo *f)
+अणु
+	काष्ठा snd_seq_event_cell *cell;
 
-	if ((cell = f->head) != NULL) {
+	अगर ((cell = f->head) != शून्य) अणु
 		f->head = cell->next;
 
-		/* reset tail if this was the last element */
-		if (f->tail == cell)
-			f->tail = NULL;
+		/* reset tail अगर this was the last element */
+		अगर (f->tail == cell)
+			f->tail = शून्य;
 
-		cell->next = NULL;
+		cell->next = शून्य;
 		f->cells--;
-	}
+	पूर्ण
 
-	return cell;
-}
+	वापस cell;
+पूर्ण
 
-/* dequeue cell from fifo and copy on user space */
-int snd_seq_fifo_cell_out(struct snd_seq_fifo *f,
-			  struct snd_seq_event_cell **cellp, int nonblock)
-{
-	struct snd_seq_event_cell *cell;
-	unsigned long flags;
-	wait_queue_entry_t wait;
+/* dequeue cell from fअगरo and copy on user space */
+पूर्णांक snd_seq_fअगरo_cell_out(काष्ठा snd_seq_fअगरo *f,
+			  काष्ठा snd_seq_event_cell **cellp, पूर्णांक nonblock)
+अणु
+	काष्ठा snd_seq_event_cell *cell;
+	अचिन्हित दीर्घ flags;
+	रुको_queue_entry_t रुको;
 
-	if (snd_BUG_ON(!f))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!f))
+		वापस -EINVAL;
 
-	*cellp = NULL;
-	init_waitqueue_entry(&wait, current);
+	*cellp = शून्य;
+	init_रुकोqueue_entry(&रुको, current);
 	spin_lock_irqsave(&f->lock, flags);
-	while ((cell = fifo_cell_out(f)) == NULL) {
-		if (nonblock) {
-			/* non-blocking - return immediately */
+	जबतक ((cell = fअगरo_cell_out(f)) == शून्य) अणु
+		अगर (nonblock) अणु
+			/* non-blocking - वापस immediately */
 			spin_unlock_irqrestore(&f->lock, flags);
-			return -EAGAIN;
-		}
+			वापस -EAGAIN;
+		पूर्ण
 		set_current_state(TASK_INTERRUPTIBLE);
-		add_wait_queue(&f->input_sleep, &wait);
+		add_रुको_queue(&f->input_sleep, &रुको);
 		spin_unlock_irqrestore(&f->lock, flags);
 		schedule();
 		spin_lock_irqsave(&f->lock, flags);
-		remove_wait_queue(&f->input_sleep, &wait);
-		if (signal_pending(current)) {
+		हटाओ_रुको_queue(&f->input_sleep, &रुको);
+		अगर (संकेत_pending(current)) अणु
 			spin_unlock_irqrestore(&f->lock, flags);
-			return -ERESTARTSYS;
-		}
-	}
+			वापस -ERESTARTSYS;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&f->lock, flags);
 	*cellp = cell;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-void snd_seq_fifo_cell_putback(struct snd_seq_fifo *f,
-			       struct snd_seq_event_cell *cell)
-{
-	unsigned long flags;
+व्योम snd_seq_fअगरo_cell_putback(काष्ठा snd_seq_fअगरo *f,
+			       काष्ठा snd_seq_event_cell *cell)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (cell) {
+	अगर (cell) अणु
 		spin_lock_irqsave(&f->lock, flags);
 		cell->next = f->head;
 		f->head = cell;
-		if (!f->tail)
+		अगर (!f->tail)
 			f->tail = cell;
 		f->cells++;
 		spin_unlock_irqrestore(&f->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-/* polling; return non-zero if queue is available */
-int snd_seq_fifo_poll_wait(struct snd_seq_fifo *f, struct file *file,
-			   poll_table *wait)
-{
-	poll_wait(file, &f->input_sleep, wait);
-	return (f->cells > 0);
-}
+/* polling; वापस non-zero अगर queue is available */
+पूर्णांक snd_seq_fअगरo_poll_रुको(काष्ठा snd_seq_fअगरo *f, काष्ठा file *file,
+			   poll_table *रुको)
+अणु
+	poll_रुको(file, &f->input_sleep, रुको);
+	वापस (f->cells > 0);
+पूर्ण
 
-/* change the size of pool; all old events are removed */
-int snd_seq_fifo_resize(struct snd_seq_fifo *f, int poolsize)
-{
-	struct snd_seq_pool *newpool, *oldpool;
-	struct snd_seq_event_cell *cell, *next, *oldhead;
+/* change the size of pool; all old events are हटाओd */
+पूर्णांक snd_seq_fअगरo_resize(काष्ठा snd_seq_fअगरo *f, पूर्णांक poolsize)
+अणु
+	काष्ठा snd_seq_pool *newpool, *oldpool;
+	काष्ठा snd_seq_event_cell *cell, *next, *oldhead;
 
-	if (snd_BUG_ON(!f || !f->pool))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!f || !f->pool))
+		वापस -EINVAL;
 
 	/* allocate new pool */
 	newpool = snd_seq_pool_new(poolsize);
-	if (newpool == NULL)
-		return -ENOMEM;
-	if (snd_seq_pool_init(newpool) < 0) {
+	अगर (newpool == शून्य)
+		वापस -ENOMEM;
+	अगर (snd_seq_pool_init(newpool) < 0) अणु
 		snd_seq_pool_delete(&newpool);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	spin_lock_irq(&f->lock);
 	/* remember old pool */
@@ -244,39 +245,39 @@ int snd_seq_fifo_resize(struct snd_seq_fifo *f, int poolsize)
 	oldhead = f->head;
 	/* exchange pools */
 	f->pool = newpool;
-	f->head = NULL;
-	f->tail = NULL;
+	f->head = शून्य;
+	f->tail = शून्य;
 	f->cells = 0;
 	/* NOTE: overflow flag is not cleared */
 	spin_unlock_irq(&f->lock);
 
-	/* close the old pool and wait until all users are gone */
+	/* बंद the old pool and रुको until all users are gone */
 	snd_seq_pool_mark_closing(oldpool);
 	snd_use_lock_sync(&f->use_lock);
 
 	/* release cells in old pool */
-	for (cell = oldhead; cell; cell = next) {
+	क्रम (cell = oldhead; cell; cell = next) अणु
 		next = cell->next;
-		snd_seq_cell_free(cell);
-	}
+		snd_seq_cell_मुक्त(cell);
+	पूर्ण
 	snd_seq_pool_delete(&oldpool);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* get the number of unused cells safely */
-int snd_seq_fifo_unused_cells(struct snd_seq_fifo *f)
-{
-	unsigned long flags;
-	int cells;
+पूर्णांक snd_seq_fअगरo_unused_cells(काष्ठा snd_seq_fअगरo *f)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक cells;
 
-	if (!f)
-		return 0;
+	अगर (!f)
+		वापस 0;
 
 	snd_use_lock_use(&f->use_lock);
 	spin_lock_irqsave(&f->lock, flags);
 	cells = snd_seq_unused_cells(f->pool);
 	spin_unlock_irqrestore(&f->lock, flags);
-	snd_use_lock_free(&f->use_lock);
-	return cells;
-}
+	snd_use_lock_मुक्त(&f->use_lock);
+	वापस cells;
+पूर्ण

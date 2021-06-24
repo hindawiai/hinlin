@@ -1,204 +1,205 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * MCT (Magic Control Technology Corp.) USB RS232 Converter Driver
  *
- *   Copyright (C) 2000 Wolfgang Grandegger (wolfgang@ces.ch)
+ *   Copyright (C) 2000 Wolfgang Gअक्रमegger (wolfgang@ces.ch)
  *
  * This program is largely derived from the Belkin USB Serial Adapter Driver
- * (see belkin_sa.[ch]). All of the information about the device was acquired
- * by using SniffUSB on Windows98. For technical details see mct_u232.h.
+ * (see belkin_sa.[ch]). All of the inक्रमmation about the device was acquired
+ * by using SnअगरfUSB on Winकरोws98. For technical details see mct_u232.h.
  *
- * William G. Greathouse and Greg Kroah-Hartman provided great help on how to
- * do the reverse engineering and how to write a USB serial device driver.
+ * William G. Greathouse and Greg Kroah-Harपंचांगan provided great help on how to
+ * करो the reverse engineering and how to ग_लिखो a USB serial device driver.
  *
  * TO BE DONE, TO BE CHECKED:
- *   DTR/RTS signal handling may be incomplete or incorrect. I have mainly
- *   implemented what I have seen with SniffUSB or found in belkin_sa.c.
+ *   DTR/RTS संकेत handling may be incomplete or incorrect. I have मुख्यly
+ *   implemented what I have seen with SnअगरfUSB or found in belkin_sa.c.
  *   For further TODOs check also belkin_sa.c.
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/tty_flip.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/uaccess.h>
-#include <asm/unaligned.h>
-#include <linux/usb.h>
-#include <linux/usb/serial.h>
-#include <linux/serial.h>
-#include "mct_u232.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/serial.h>
+#समावेश <linux/serial.h>
+#समावेश "mct_u232.h"
 
-#define DRIVER_AUTHOR "Wolfgang Grandegger <wolfgang@ces.ch>"
-#define DRIVER_DESC "Magic Control Technology USB-RS232 converter driver"
+#घोषणा DRIVER_AUTHOR "Wolfgang Grandegger <wolfgang@ces.ch>"
+#घोषणा DRIVER_DESC "Magic Control Technology USB-RS232 converter driver"
 
 /*
  * Function prototypes
  */
-static int  mct_u232_port_probe(struct usb_serial_port *port);
-static void mct_u232_port_remove(struct usb_serial_port *remove);
-static int  mct_u232_open(struct tty_struct *tty, struct usb_serial_port *port);
-static void mct_u232_close(struct usb_serial_port *port);
-static void mct_u232_dtr_rts(struct usb_serial_port *port, int on);
-static void mct_u232_read_int_callback(struct urb *urb);
-static void mct_u232_set_termios(struct tty_struct *tty,
-			struct usb_serial_port *port, struct ktermios *old);
-static void mct_u232_break_ctl(struct tty_struct *tty, int break_state);
-static int  mct_u232_tiocmget(struct tty_struct *tty);
-static int  mct_u232_tiocmset(struct tty_struct *tty,
-			unsigned int set, unsigned int clear);
-static void mct_u232_throttle(struct tty_struct *tty);
-static void mct_u232_unthrottle(struct tty_struct *tty);
+अटल पूर्णांक  mct_u232_port_probe(काष्ठा usb_serial_port *port);
+अटल व्योम mct_u232_port_हटाओ(काष्ठा usb_serial_port *हटाओ);
+अटल पूर्णांक  mct_u232_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port);
+अटल व्योम mct_u232_बंद(काष्ठा usb_serial_port *port);
+अटल व्योम mct_u232_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on);
+अटल व्योम mct_u232_पढ़ो_पूर्णांक_callback(काष्ठा urb *urb);
+अटल व्योम mct_u232_set_termios(काष्ठा tty_काष्ठा *tty,
+			काष्ठा usb_serial_port *port, काष्ठा ktermios *old);
+अटल व्योम mct_u232_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state);
+अटल पूर्णांक  mct_u232_tiocmget(काष्ठा tty_काष्ठा *tty);
+अटल पूर्णांक  mct_u232_tiocmset(काष्ठा tty_काष्ठा *tty,
+			अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear);
+अटल व्योम mct_u232_throttle(काष्ठा tty_काष्ठा *tty);
+अटल व्योम mct_u232_unthrottle(काष्ठा tty_काष्ठा *tty);
 
 
 /*
- * All of the device info needed for the MCT USB-RS232 converter.
+ * All of the device info needed क्रम the MCT USB-RS232 converter.
  */
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(MCT_U232_VID, MCT_U232_PID) },
-	{ USB_DEVICE(MCT_U232_VID, MCT_U232_SITECOM_PID) },
-	{ USB_DEVICE(MCT_U232_VID, MCT_U232_DU_H3SP_PID) },
-	{ USB_DEVICE(MCT_U232_BELKIN_F5U109_VID, MCT_U232_BELKIN_F5U109_PID) },
-	{ }		/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(MCT_U232_VID, MCT_U232_PID) पूर्ण,
+	अणु USB_DEVICE(MCT_U232_VID, MCT_U232_SITECOM_PID) पूर्ण,
+	अणु USB_DEVICE(MCT_U232_VID, MCT_U232_DU_H3SP_PID) पूर्ण,
+	अणु USB_DEVICE(MCT_U232_BELKIN_F5U109_VID, MCT_U232_BELKIN_F5U109_PID) पूर्ण,
+	अणु पूर्ण		/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, id_table);
 
-static struct usb_serial_driver mct_u232_device = {
-	.driver = {
+अटल काष्ठा usb_serial_driver mct_u232_device = अणु
+	.driver = अणु
 		.owner =	THIS_MODULE,
 		.name =		"mct_u232",
-	},
+	पूर्ण,
 	.description =	     "MCT U232",
 	.id_table =	     id_table,
 	.num_ports =	     1,
-	.open =		     mct_u232_open,
-	.close =	     mct_u232_close,
+	.खोलो =		     mct_u232_खोलो,
+	.बंद =	     mct_u232_बंद,
 	.dtr_rts =	     mct_u232_dtr_rts,
 	.throttle =	     mct_u232_throttle,
 	.unthrottle =	     mct_u232_unthrottle,
-	.read_int_callback = mct_u232_read_int_callback,
+	.पढ़ो_पूर्णांक_callback = mct_u232_पढ़ो_पूर्णांक_callback,
 	.set_termios =	     mct_u232_set_termios,
-	.break_ctl =	     mct_u232_break_ctl,
+	.अवरोध_ctl =	     mct_u232_अवरोध_ctl,
 	.tiocmget =	     mct_u232_tiocmget,
 	.tiocmset =	     mct_u232_tiocmset,
-	.tiocmiwait =        usb_serial_generic_tiocmiwait,
+	.tiocmiरुको =        usb_serial_generic_tiocmiरुको,
 	.port_probe =        mct_u232_port_probe,
-	.port_remove =       mct_u232_port_remove,
+	.port_हटाओ =       mct_u232_port_हटाओ,
 	.get_icount =        usb_serial_generic_get_icount,
-};
+पूर्ण;
 
-static struct usb_serial_driver * const serial_drivers[] = {
-	&mct_u232_device, NULL
-};
+अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
+	&mct_u232_device, शून्य
+पूर्ण;
 
-struct mct_u232_private {
-	struct urb *read_urb;
+काष्ठा mct_u232_निजी अणु
+	काष्ठा urb *पढ़ो_urb;
 	spinlock_t lock;
-	unsigned int	     control_state; /* Modem Line Setting (TIOCM) */
-	unsigned char        last_lcr;      /* Line Control Register */
-	unsigned char	     last_lsr;      /* Line Status Register */
-	unsigned char	     last_msr;      /* Modem Status Register */
-	unsigned int	     rx_flags;      /* Throttling flags */
-};
+	अचिन्हित पूर्णांक	     control_state; /* Modem Line Setting (TIOCM) */
+	अचिन्हित अक्षर        last_lcr;      /* Line Control Register */
+	अचिन्हित अक्षर	     last_lsr;      /* Line Status Register */
+	अचिन्हित अक्षर	     last_msr;      /* Modem Status Register */
+	अचिन्हित पूर्णांक	     rx_flags;      /* Throttling flags */
+पूर्ण;
 
-#define THROTTLED		0x01
+#घोषणा THROTTLED		0x01
 
 /*
- * Handle vendor specific USB requests
+ * Handle venकरोr specअगरic USB requests
  */
 
-#define WDR_TIMEOUT 5000 /* default urb timeout */
+#घोषणा WDR_TIMEOUT 5000 /* शेष urb समयout */
 
 /*
  * Later day 2.6.0-test kernels have new baud rates like B230400 which
- * we do not know how to support. We ignore them for the moment.
+ * we करो not know how to support. We ignore them क्रम the moment.
  */
-static int mct_u232_calculate_baud_rate(struct usb_serial *serial,
+अटल पूर्णांक mct_u232_calculate_baud_rate(काष्ठा usb_serial *serial,
 					speed_t value, speed_t *result)
-{
+अणु
 	*result = value;
 
-	if (le16_to_cpu(serial->dev->descriptor.idProduct) == MCT_U232_SITECOM_PID
-		|| le16_to_cpu(serial->dev->descriptor.idProduct) == MCT_U232_BELKIN_F5U109_PID) {
-		switch (value) {
-		case 300:
-			return 0x01;
-		case 600:
-			return 0x02; /* this one not tested */
-		case 1200:
-			return 0x03;
-		case 2400:
-			return 0x04;
-		case 4800:
-			return 0x06;
-		case 9600:
-			return 0x08;
-		case 19200:
-			return 0x09;
-		case 38400:
-			return 0x0a;
-		case 57600:
-			return 0x0b;
-		case 115200:
-			return 0x0c;
-		default:
+	अगर (le16_to_cpu(serial->dev->descriptor.idProduct) == MCT_U232_SITECOM_PID
+		|| le16_to_cpu(serial->dev->descriptor.idProduct) == MCT_U232_BELKIN_F5U109_PID) अणु
+		चयन (value) अणु
+		हाल 300:
+			वापस 0x01;
+		हाल 600:
+			वापस 0x02; /* this one not tested */
+		हाल 1200:
+			वापस 0x03;
+		हाल 2400:
+			वापस 0x04;
+		हाल 4800:
+			वापस 0x06;
+		हाल 9600:
+			वापस 0x08;
+		हाल 19200:
+			वापस 0x09;
+		हाल 38400:
+			वापस 0x0a;
+		हाल 57600:
+			वापस 0x0b;
+		हाल 115200:
+			वापस 0x0c;
+		शेष:
 			*result = 9600;
-			return 0x08;
-		}
-	} else {
-		/* FIXME: Can we use any divider - should we do
-		   divider = 115200/value;
-		   real baud = 115200/divider */
-		switch (value) {
-		case 300: break;
-		case 600: break;
-		case 1200: break;
-		case 2400: break;
-		case 4800: break;
-		case 9600: break;
-		case 19200: break;
-		case 38400: break;
-		case 57600: break;
-		case 115200: break;
-		default:
+			वापस 0x08;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* FIXME: Can we use any भागider - should we करो
+		   भागider = 115200/value;
+		   real baud = 115200/भागider */
+		चयन (value) अणु
+		हाल 300: अवरोध;
+		हाल 600: अवरोध;
+		हाल 1200: अवरोध;
+		हाल 2400: अवरोध;
+		हाल 4800: अवरोध;
+		हाल 9600: अवरोध;
+		हाल 19200: अवरोध;
+		हाल 38400: अवरोध;
+		हाल 57600: अवरोध;
+		हाल 115200: अवरोध;
+		शेष:
 			value = 9600;
 			*result = 9600;
-		}
-		return 115200/value;
-	}
-}
+		पूर्ण
+		वापस 115200/value;
+	पूर्ण
+पूर्ण
 
-static int mct_u232_set_baud_rate(struct tty_struct *tty,
-	struct usb_serial *serial, struct usb_serial_port *port, speed_t value)
-{
-	unsigned int divisor;
-	int rc;
-	unsigned char *buf;
-	unsigned char cts_enable_byte = 0;
+अटल पूर्णांक mct_u232_set_baud_rate(काष्ठा tty_काष्ठा *tty,
+	काष्ठा usb_serial *serial, काष्ठा usb_serial_port *port, speed_t value)
+अणु
+	अचिन्हित पूर्णांक भागisor;
+	पूर्णांक rc;
+	अचिन्हित अक्षर *buf;
+	अचिन्हित अक्षर cts_enable_byte = 0;
 	speed_t speed;
 
-	buf = kmalloc(MCT_U232_MAX_SIZE, GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	buf = kदो_स्मृति(MCT_U232_MAX_SIZE, GFP_KERNEL);
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
-	divisor = mct_u232_calculate_baud_rate(serial, value, &speed);
-	put_unaligned_le32(divisor, buf);
+	भागisor = mct_u232_calculate_baud_rate(serial, value, &speed);
+	put_unaligned_le32(भागisor, buf);
 	rc = usb_control_msg(serial->dev, usb_sndctrlpipe(serial->dev, 0),
 				MCT_U232_SET_BAUD_RATE_REQUEST,
 				MCT_U232_SET_REQUEST_TYPE,
 				0, 0, buf, MCT_U232_SET_BAUD_RATE_SIZE,
 				WDR_TIMEOUT);
-	if (rc < 0)	/*FIXME: What value speed results */
+	अगर (rc < 0)	/*FIXME: What value speed results */
 		dev_err(&port->dev, "Set BAUD RATE %d failed (error = %d)\n",
 			value, rc);
-	else
+	अन्यथा
 		tty_encode_baud_rate(tty, speed, speed);
-	dev_dbg(&port->dev, "set_baud_rate: value: 0x%x, divisor: 0x%x\n", value, divisor);
+	dev_dbg(&port->dev, "set_baud_rate: value: 0x%x, divisor: 0x%x\n", value, भागisor);
 
-	/* Mimic the MCT-supplied Windows driver (version 1.21P.0104), which
+	/* Mimic the MCT-supplied Winकरोws driver (version 1.21P.0104), which
 	   always sends two extra USB 'device request' messages after the
 	   'baud rate change' message.  The actual functionality of the
 	   request codes in these messages is not fully understood but these
@@ -207,12 +208,12 @@ static int mct_u232_set_baud_rate(struct tty_struct *tty,
 	   In the first message, the value of this byte is always zero.
 
 	   The second message has been determined experimentally to control
-	   whether data will be transmitted to a device which is not asserting
+	   whether data will be transmitted to a device which is not निश्चितing
 	   the 'CTS' signal.  If the second message's data byte is zero, data
-	   will be transmitted even if 'CTS' is not asserted (i.e. no hardware
-	   flow control).  if the second message's data byte is nonzero (a
+	   will be transmitted even अगर 'CTS' is not निश्चितed (i.e. no hardware
+	   flow control).  अगर the second message's data byte is nonzero (a
 	   value of 1 is used by this driver), data will not be transmitted to
-	   a device which is not asserting 'CTS'.
+	   a device which is not निश्चितing 'CTS'.
 	*/
 
 	buf[0] = 0;
@@ -221,12 +222,12 @@ static int mct_u232_set_baud_rate(struct tty_struct *tty,
 				MCT_U232_SET_REQUEST_TYPE,
 				0, 0, buf, MCT_U232_SET_UNKNOWN1_SIZE,
 				WDR_TIMEOUT);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(&port->dev, "Sending USB device request code %d "
 			"failed (error = %d)\n", MCT_U232_SET_UNKNOWN1_REQUEST,
 			rc);
 
-	if (port && C_CRTSCTS(tty))
+	अगर (port && C_CRTSCTS(tty))
 	   cts_enable_byte = 1;
 
 	dev_dbg(&port->dev, "set_baud_rate: send second control message, data = %02X\n",
@@ -237,23 +238,23 @@ static int mct_u232_set_baud_rate(struct tty_struct *tty,
 			MCT_U232_SET_REQUEST_TYPE,
 			0, 0, buf, MCT_U232_SET_CTS_SIZE,
 			WDR_TIMEOUT);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(&port->dev, "Sending USB device request code %d "
 			"failed (error = %d)\n", MCT_U232_SET_CTS_REQUEST, rc);
 
-	kfree(buf);
-	return rc;
-} /* mct_u232_set_baud_rate */
+	kमुक्त(buf);
+	वापस rc;
+पूर्ण /* mct_u232_set_baud_rate */
 
-static int mct_u232_set_line_ctrl(struct usb_serial_port *port,
-				  unsigned char lcr)
-{
-	int rc;
-	unsigned char *buf;
+अटल पूर्णांक mct_u232_set_line_ctrl(काष्ठा usb_serial_port *port,
+				  अचिन्हित अक्षर lcr)
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर *buf;
 
-	buf = kmalloc(MCT_U232_MAX_SIZE, GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	buf = kदो_स्मृति(MCT_U232_MAX_SIZE, GFP_KERNEL);
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
 	buf[0] = lcr;
 	rc = usb_control_msg(port->serial->dev, usb_sndctrlpipe(port->serial->dev, 0),
@@ -261,28 +262,28 @@ static int mct_u232_set_line_ctrl(struct usb_serial_port *port,
 			MCT_U232_SET_REQUEST_TYPE,
 			0, 0, buf, MCT_U232_SET_LINE_CTRL_SIZE,
 			WDR_TIMEOUT);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(&port->dev, "Set LINE CTRL 0x%x failed (error = %d)\n", lcr, rc);
 	dev_dbg(&port->dev, "set_line_ctrl: 0x%x\n", lcr);
-	kfree(buf);
-	return rc;
-} /* mct_u232_set_line_ctrl */
+	kमुक्त(buf);
+	वापस rc;
+पूर्ण /* mct_u232_set_line_ctrl */
 
-static int mct_u232_set_modem_ctrl(struct usb_serial_port *port,
-				   unsigned int control_state)
-{
-	int rc;
-	unsigned char mcr;
-	unsigned char *buf;
+अटल पूर्णांक mct_u232_set_modem_ctrl(काष्ठा usb_serial_port *port,
+				   अचिन्हित पूर्णांक control_state)
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर mcr;
+	अचिन्हित अक्षर *buf;
 
-	buf = kmalloc(MCT_U232_MAX_SIZE, GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	buf = kदो_स्मृति(MCT_U232_MAX_SIZE, GFP_KERNEL);
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
 	mcr = MCT_U232_MCR_NONE;
-	if (control_state & TIOCM_DTR)
+	अगर (control_state & TIOCM_DTR)
 		mcr |= MCT_U232_MCR_DTR;
-	if (control_state & TIOCM_RTS)
+	अगर (control_state & TIOCM_RTS)
 		mcr |= MCT_U232_MCR_RTS;
 
 	buf[0] = mcr;
@@ -291,151 +292,151 @@ static int mct_u232_set_modem_ctrl(struct usb_serial_port *port,
 			MCT_U232_SET_REQUEST_TYPE,
 			0, 0, buf, MCT_U232_SET_MODEM_CTRL_SIZE,
 			WDR_TIMEOUT);
-	kfree(buf);
+	kमुक्त(buf);
 
 	dev_dbg(&port->dev, "set_modem_ctrl: state=0x%x ==> mcr=0x%x\n", control_state, mcr);
 
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(&port->dev, "Set MODEM CTRL 0x%x failed (error = %d)\n", mcr, rc);
-		return rc;
-	}
-	return 0;
-} /* mct_u232_set_modem_ctrl */
+		वापस rc;
+	पूर्ण
+	वापस 0;
+पूर्ण /* mct_u232_set_modem_ctrl */
 
-static int mct_u232_get_modem_stat(struct usb_serial_port *port,
-				   unsigned char *msr)
-{
-	int rc;
-	unsigned char *buf;
+अटल पूर्णांक mct_u232_get_modem_stat(काष्ठा usb_serial_port *port,
+				   अचिन्हित अक्षर *msr)
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर *buf;
 
-	buf = kmalloc(MCT_U232_MAX_SIZE, GFP_KERNEL);
-	if (buf == NULL) {
+	buf = kदो_स्मृति(MCT_U232_MAX_SIZE, GFP_KERNEL);
+	अगर (buf == शून्य) अणु
 		*msr = 0;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	rc = usb_control_msg(port->serial->dev, usb_rcvctrlpipe(port->serial->dev, 0),
 			MCT_U232_GET_MODEM_STAT_REQUEST,
 			MCT_U232_GET_REQUEST_TYPE,
 			0, 0, buf, MCT_U232_GET_MODEM_STAT_SIZE,
 			WDR_TIMEOUT);
-	if (rc < MCT_U232_GET_MODEM_STAT_SIZE) {
+	अगर (rc < MCT_U232_GET_MODEM_STAT_SIZE) अणु
 		dev_err(&port->dev, "Get MODEM STATus failed (error = %d)\n", rc);
 
-		if (rc >= 0)
+		अगर (rc >= 0)
 			rc = -EIO;
 
 		*msr = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		*msr = buf[0];
-	}
+	पूर्ण
 	dev_dbg(&port->dev, "get_modem_stat: 0x%x\n", *msr);
-	kfree(buf);
-	return rc;
-} /* mct_u232_get_modem_stat */
+	kमुक्त(buf);
+	वापस rc;
+पूर्ण /* mct_u232_get_modem_stat */
 
-static void mct_u232_msr_to_icount(struct async_icount *icount,
-						unsigned char msr)
-{
+अटल व्योम mct_u232_msr_to_icount(काष्ठा async_icount *icount,
+						अचिन्हित अक्षर msr)
+अणु
 	/* Translate Control Line states */
-	if (msr & MCT_U232_MSR_DDSR)
+	अगर (msr & MCT_U232_MSR_DDSR)
 		icount->dsr++;
-	if (msr & MCT_U232_MSR_DCTS)
+	अगर (msr & MCT_U232_MSR_DCTS)
 		icount->cts++;
-	if (msr & MCT_U232_MSR_DRI)
+	अगर (msr & MCT_U232_MSR_DRI)
 		icount->rng++;
-	if (msr & MCT_U232_MSR_DCD)
+	अगर (msr & MCT_U232_MSR_DCD)
 		icount->dcd++;
-} /* mct_u232_msr_to_icount */
+पूर्ण /* mct_u232_msr_to_icount */
 
-static void mct_u232_msr_to_state(struct usb_serial_port *port,
-				  unsigned int *control_state, unsigned char msr)
-{
+अटल व्योम mct_u232_msr_to_state(काष्ठा usb_serial_port *port,
+				  अचिन्हित पूर्णांक *control_state, अचिन्हित अक्षर msr)
+अणु
 	/* Translate Control Line states */
-	if (msr & MCT_U232_MSR_DSR)
+	अगर (msr & MCT_U232_MSR_DSR)
 		*control_state |=  TIOCM_DSR;
-	else
+	अन्यथा
 		*control_state &= ~TIOCM_DSR;
-	if (msr & MCT_U232_MSR_CTS)
+	अगर (msr & MCT_U232_MSR_CTS)
 		*control_state |=  TIOCM_CTS;
-	else
+	अन्यथा
 		*control_state &= ~TIOCM_CTS;
-	if (msr & MCT_U232_MSR_RI)
+	अगर (msr & MCT_U232_MSR_RI)
 		*control_state |=  TIOCM_RI;
-	else
+	अन्यथा
 		*control_state &= ~TIOCM_RI;
-	if (msr & MCT_U232_MSR_CD)
+	अगर (msr & MCT_U232_MSR_CD)
 		*control_state |=  TIOCM_CD;
-	else
+	अन्यथा
 		*control_state &= ~TIOCM_CD;
 	dev_dbg(&port->dev, "msr_to_state: msr=0x%x ==> state=0x%x\n", msr, *control_state);
-} /* mct_u232_msr_to_state */
+पूर्ण /* mct_u232_msr_to_state */
 
 /*
- * Driver's tty interface functions
+ * Driver's tty पूर्णांकerface functions
  */
 
-static int mct_u232_port_probe(struct usb_serial_port *port)
-{
-	struct usb_serial *serial = port->serial;
-	struct mct_u232_private *priv;
+अटल पूर्णांक mct_u232_port_probe(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा mct_u232_निजी *priv;
 
-	/* check first to simplify error handling */
-	if (!serial->port[1] || !serial->port[1]->interrupt_in_urb) {
+	/* check first to simplअगरy error handling */
+	अगर (!serial->port[1] || !serial->port[1]->पूर्णांकerrupt_in_urb) अणु
 		dev_err(&port->dev, "expected endpoint missing\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	/* Use second interrupt-in endpoint for reading. */
-	priv->read_urb = serial->port[1]->interrupt_in_urb;
-	priv->read_urb->context = port;
+	/* Use second पूर्णांकerrupt-in endpoपूर्णांक क्रम पढ़ोing. */
+	priv->पढ़ो_urb = serial->port[1]->पूर्णांकerrupt_in_urb;
+	priv->पढ़ो_urb->context = port;
 
 	spin_lock_init(&priv->lock);
 
 	usb_set_serial_port_data(port, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mct_u232_port_remove(struct usb_serial_port *port)
-{
-	struct mct_u232_private *priv;
+अटल व्योम mct_u232_port_हटाओ(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा mct_u232_निजी *priv;
 
 	priv = usb_get_serial_port_data(port);
-	kfree(priv);
-}
+	kमुक्त(priv);
+पूर्ण
 
-static int  mct_u232_open(struct tty_struct *tty, struct usb_serial_port *port)
-{
-	struct usb_serial *serial = port->serial;
-	struct mct_u232_private *priv = usb_get_serial_port_data(port);
-	int retval = 0;
-	unsigned int control_state;
-	unsigned long flags;
-	unsigned char last_lcr;
-	unsigned char last_msr;
+अटल पूर्णांक  mct_u232_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा mct_u232_निजी *priv = usb_get_serial_port_data(port);
+	पूर्णांक retval = 0;
+	अचिन्हित पूर्णांक control_state;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर last_lcr;
+	अचिन्हित अक्षर last_msr;
 
-	/* Compensate for a hardware bug: although the Sitecom U232-P25
+	/* Compensate क्रम a hardware bug: although the Sitecom U232-P25
 	 * device reports a maximum output packet size of 32 bytes,
 	 * it seems to be able to accept only 16 bytes (and that's what
-	 * SniffUSB says too...)
+	 * SnअगरfUSB says too...)
 	 */
-	if (le16_to_cpu(serial->dev->descriptor.idProduct)
+	अगर (le16_to_cpu(serial->dev->descriptor.idProduct)
 						== MCT_U232_SITECOM_PID)
 		port->bulk_out_size = 16;
 
 	/* Do a defined restart: the normal serial device seems to
-	 * always turn on DTR and RTS here, so do the same. I'm not
-	 * sure if this is really necessary. But it should not harm
+	 * always turn on DTR and RTS here, so करो the same. I'm not
+	 * sure अगर this is really necessary. But it should not harm
 	 * either.
 	 */
 	spin_lock_irqsave(&priv->lock, flags);
-	if (tty && C_BAUD(tty))
+	अगर (tty && C_BAUD(tty))
 		priv->control_state = TIOCM_DTR | TIOCM_RTS;
-	else
+	अन्यथा
 		priv->control_state = 0;
 
 	priv->last_lcr = (MCT_U232_DATA_BITS_8 |
@@ -454,98 +455,98 @@ static int  mct_u232_open(struct tty_struct *tty, struct usb_serial_port *port)
 	mct_u232_msr_to_state(port, &priv->control_state, priv->last_msr);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	retval = usb_submit_urb(priv->read_urb, GFP_KERNEL);
-	if (retval) {
+	retval = usb_submit_urb(priv->पढ़ो_urb, GFP_KERNEL);
+	अगर (retval) अणु
 		dev_err(&port->dev,
 			"usb_submit_urb(read) failed pipe 0x%x err %d\n",
-			port->read_urb->pipe, retval);
-		goto error;
-	}
+			port->पढ़ो_urb->pipe, retval);
+		जाओ error;
+	पूर्ण
 
-	retval = usb_submit_urb(port->interrupt_in_urb, GFP_KERNEL);
-	if (retval) {
-		usb_kill_urb(priv->read_urb);
+	retval = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_KERNEL);
+	अगर (retval) अणु
+		usb_समाप्त_urb(priv->पढ़ो_urb);
 		dev_err(&port->dev,
 			"usb_submit_urb(read int) failed pipe 0x%x err %d",
-			port->interrupt_in_urb->pipe, retval);
-		goto error;
-	}
-	return 0;
+			port->पूर्णांकerrupt_in_urb->pipe, retval);
+		जाओ error;
+	पूर्ण
+	वापस 0;
 
 error:
-	return retval;
-} /* mct_u232_open */
+	वापस retval;
+पूर्ण /* mct_u232_खोलो */
 
-static void mct_u232_dtr_rts(struct usb_serial_port *port, int on)
-{
-	unsigned int control_state;
-	struct mct_u232_private *priv = usb_get_serial_port_data(port);
+अटल व्योम mct_u232_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on)
+अणु
+	अचिन्हित पूर्णांक control_state;
+	काष्ठा mct_u232_निजी *priv = usb_get_serial_port_data(port);
 
 	spin_lock_irq(&priv->lock);
-	if (on)
+	अगर (on)
 		priv->control_state |= TIOCM_DTR | TIOCM_RTS;
-	else
+	अन्यथा
 		priv->control_state &= ~(TIOCM_DTR | TIOCM_RTS);
 	control_state = priv->control_state;
 	spin_unlock_irq(&priv->lock);
 
 	mct_u232_set_modem_ctrl(port, control_state);
-}
+पूर्ण
 
-static void mct_u232_close(struct usb_serial_port *port)
-{
-	struct mct_u232_private *priv = usb_get_serial_port_data(port);
+अटल व्योम mct_u232_बंद(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा mct_u232_निजी *priv = usb_get_serial_port_data(port);
 
-	usb_kill_urb(priv->read_urb);
-	usb_kill_urb(port->interrupt_in_urb);
+	usb_समाप्त_urb(priv->पढ़ो_urb);
+	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
 
-	usb_serial_generic_close(port);
-} /* mct_u232_close */
+	usb_serial_generic_बंद(port);
+पूर्ण /* mct_u232_बंद */
 
 
-static void mct_u232_read_int_callback(struct urb *urb)
-{
-	struct usb_serial_port *port = urb->context;
-	struct mct_u232_private *priv = usb_get_serial_port_data(port);
-	unsigned char *data = urb->transfer_buffer;
-	int retval;
-	int status = urb->status;
-	unsigned long flags;
+अटल व्योम mct_u232_पढ़ो_पूर्णांक_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_serial_port *port = urb->context;
+	काष्ठा mct_u232_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित अक्षर *data = urb->transfer_buffer;
+	पूर्णांक retval;
+	पूर्णांक status = urb->status;
+	अचिन्हित दीर्घ flags;
 
-	switch (status) {
-	case 0:
+	चयन (status) अणु
+	हाल 0:
 		/* success */
-		break;
-	case -ECONNRESET:
-	case -ENOENT:
-	case -ESHUTDOWN:
+		अवरोध;
+	हाल -ECONNRESET:
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
 		/* this urb is terminated, clean up */
 		dev_dbg(&port->dev, "%s - urb shutting down with status: %d\n",
 			__func__, status);
-		return;
-	default:
+		वापस;
+	शेष:
 		dev_dbg(&port->dev, "%s - nonzero urb status received: %d\n",
 			__func__, status);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	usb_serial_debug_data(&port->dev, __func__, urb->actual_length, data);
 
 	/*
 	 * Work-a-round: handle the 'usual' bulk-in pipe here
 	 */
-	if (urb->transfer_buffer_length > 2) {
-		if (urb->actual_length) {
+	अगर (urb->transfer_buffer_length > 2) अणु
+		अगर (urb->actual_length) अणु
 			tty_insert_flip_string(&port->port, data,
 					urb->actual_length);
 			tty_flip_buffer_push(&port->port);
-		}
-		goto exit;
-	}
+		पूर्ण
+		जाओ निकास;
+	पूर्ण
 
 	/*
-	 * The interrupt-in pipe signals exceptional conditions (modem line
-	 * signal changes and errors). data[0] holds MSR, data[1] holds LSR.
+	 * The पूर्णांकerrupt-in pipe संकेतs exceptional conditions (modem line
+	 * संकेत changes and errors). data[0] holds MSR, data[1] holds LSR.
 	 */
 	spin_lock_irqsave(&priv->lock, flags);
 	priv->last_msr = data[MCT_U232_MSR_INDEX];
@@ -555,54 +556,54 @@ static void mct_u232_read_int_callback(struct urb *urb)
 
 	mct_u232_msr_to_icount(&port->icount, priv->last_msr);
 
-#if 0
-	/* Not yet handled. See belkin_sa.c for further information */
+#अगर 0
+	/* Not yet handled. See belkin_sa.c क्रम further inक्रमmation */
 	/* Now to report any errors */
 	priv->last_lsr = data[MCT_U232_LSR_INDEX];
 	/*
-	 * fill in the flip buffer here, but I do not know the relation
-	 * to the current/next receive buffer or characters.  I need
-	 * to look in to this before committing any code.
+	 * fill in the flip buffer here, but I करो not know the relation
+	 * to the current/next receive buffer or अक्षरacters.  I need
+	 * to look in to this beक्रमe committing any code.
 	 */
-	if (priv->last_lsr & MCT_U232_LSR_ERR) {
+	अगर (priv->last_lsr & MCT_U232_LSR_ERR) अणु
 		tty = tty_port_tty_get(&port->port);
 		/* Overrun Error */
-		if (priv->last_lsr & MCT_U232_LSR_OE) {
-		}
+		अगर (priv->last_lsr & MCT_U232_LSR_OE) अणु
+		पूर्ण
 		/* Parity Error */
-		if (priv->last_lsr & MCT_U232_LSR_PE) {
-		}
+		अगर (priv->last_lsr & MCT_U232_LSR_PE) अणु
+		पूर्ण
 		/* Framing Error */
-		if (priv->last_lsr & MCT_U232_LSR_FE) {
-		}
+		अगर (priv->last_lsr & MCT_U232_LSR_FE) अणु
+		पूर्ण
 		/* Break Indicator */
-		if (priv->last_lsr & MCT_U232_LSR_BI) {
-		}
+		अगर (priv->last_lsr & MCT_U232_LSR_BI) अणु
+		पूर्ण
 		tty_kref_put(tty);
-	}
-#endif
-	wake_up_interruptible(&port->port.delta_msr_wait);
+	पूर्ण
+#पूर्ण_अगर
+	wake_up_पूर्णांकerruptible(&port->port.delta_msr_रुको);
 	spin_unlock_irqrestore(&priv->lock, flags);
-exit:
+निकास:
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
-	if (retval)
+	अगर (retval)
 		dev_err(&port->dev,
 			"%s - usb_submit_urb failed with result %d\n",
 			__func__, retval);
-} /* mct_u232_read_int_callback */
+पूर्ण /* mct_u232_पढ़ो_पूर्णांक_callback */
 
-static void mct_u232_set_termios(struct tty_struct *tty,
-				 struct usb_serial_port *port,
-				 struct ktermios *old_termios)
-{
-	struct usb_serial *serial = port->serial;
-	struct mct_u232_private *priv = usb_get_serial_port_data(port);
-	struct ktermios *termios = &tty->termios;
-	unsigned int cflag = termios->c_cflag;
-	unsigned int old_cflag = old_termios->c_cflag;
-	unsigned long flags;
-	unsigned int control_state;
-	unsigned char last_lcr;
+अटल व्योम mct_u232_set_termios(काष्ठा tty_काष्ठा *tty,
+				 काष्ठा usb_serial_port *port,
+				 काष्ठा ktermios *old_termios)
+अणु
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा mct_u232_निजी *priv = usb_get_serial_port_data(port);
+	काष्ठा ktermios *termios = &tty->termios;
+	अचिन्हित पूर्णांक cflag = termios->c_cflag;
+	अचिन्हित पूर्णांक old_cflag = old_termios->c_cflag;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक control_state;
+	अचिन्हित अक्षर last_lcr;
 
 	/* get a local copy of the current port settings */
 	spin_lock_irqsave(&priv->lock, flags);
@@ -617,49 +618,49 @@ static void mct_u232_set_termios(struct tty_struct *tty,
 	 * Premature optimization is the root of all evil.
 	 */
 
-	/* reassert DTR and RTS on transition from B0 */
-	if ((old_cflag & CBAUD) == B0) {
+	/* reनिश्चित DTR and RTS on transition from B0 */
+	अगर ((old_cflag & CBAUD) == B0) अणु
 		dev_dbg(&port->dev, "%s: baud was B0\n", __func__);
 		control_state |= TIOCM_DTR | TIOCM_RTS;
 		mct_u232_set_modem_ctrl(port, control_state);
-	}
+	पूर्ण
 
 	mct_u232_set_baud_rate(tty, serial, port, tty_get_baud_rate(tty));
 
-	if ((cflag & CBAUD) == B0) {
+	अगर ((cflag & CBAUD) == B0) अणु
 		dev_dbg(&port->dev, "%s: baud is B0\n", __func__);
 		/* Drop RTS and DTR */
 		control_state &= ~(TIOCM_DTR | TIOCM_RTS);
 		mct_u232_set_modem_ctrl(port, control_state);
-	}
+	पूर्ण
 
 	/*
-	 * Update line control register (LCR)
+	 * Update line control रेजिस्टर (LCR)
 	 */
 
 	/* set the parity */
-	if (cflag & PARENB)
+	अगर (cflag & PARENB)
 		last_lcr |= (cflag & PARODD) ?
 			MCT_U232_PARITY_ODD : MCT_U232_PARITY_EVEN;
-	else
+	अन्यथा
 		last_lcr |= MCT_U232_PARITY_NONE;
 
 	/* set the number of data bits */
-	switch (cflag & CSIZE) {
-	case CS5:
-		last_lcr |= MCT_U232_DATA_BITS_5; break;
-	case CS6:
-		last_lcr |= MCT_U232_DATA_BITS_6; break;
-	case CS7:
-		last_lcr |= MCT_U232_DATA_BITS_7; break;
-	case CS8:
-		last_lcr |= MCT_U232_DATA_BITS_8; break;
-	default:
+	चयन (cflag & CSIZE) अणु
+	हाल CS5:
+		last_lcr |= MCT_U232_DATA_BITS_5; अवरोध;
+	हाल CS6:
+		last_lcr |= MCT_U232_DATA_BITS_6; अवरोध;
+	हाल CS7:
+		last_lcr |= MCT_U232_DATA_BITS_7; अवरोध;
+	हाल CS8:
+		last_lcr |= MCT_U232_DATA_BITS_8; अवरोध;
+	शेष:
 		dev_err(&port->dev,
 			"CSIZE was not CS5-CS8, using default of 8\n");
 		last_lcr |= MCT_U232_DATA_BITS_8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	termios->c_cflag &= ~CMSPAR;
 
@@ -669,105 +670,105 @@ static void mct_u232_set_termios(struct tty_struct *tty,
 
 	mct_u232_set_line_ctrl(port, last_lcr);
 
-	/* save off the modified port settings */
+	/* save off the modअगरied port settings */
 	spin_lock_irqsave(&priv->lock, flags);
 	priv->control_state = control_state;
 	priv->last_lcr = last_lcr;
 	spin_unlock_irqrestore(&priv->lock, flags);
-} /* mct_u232_set_termios */
+पूर्ण /* mct_u232_set_termios */
 
-static void mct_u232_break_ctl(struct tty_struct *tty, int break_state)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct mct_u232_private *priv = usb_get_serial_port_data(port);
-	unsigned char lcr;
-	unsigned long flags;
+अटल व्योम mct_u232_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा mct_u232_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित अक्षर lcr;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	lcr = priv->last_lcr;
 
-	if (break_state)
+	अगर (अवरोध_state)
 		lcr |= MCT_U232_SET_BREAK;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
 	mct_u232_set_line_ctrl(port, lcr);
-} /* mct_u232_break_ctl */
+पूर्ण /* mct_u232_अवरोध_ctl */
 
 
-static int mct_u232_tiocmget(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct mct_u232_private *priv = usb_get_serial_port_data(port);
-	unsigned int control_state;
-	unsigned long flags;
+अटल पूर्णांक mct_u232_tiocmget(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा mct_u232_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित पूर्णांक control_state;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	control_state = priv->control_state;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return control_state;
-}
+	वापस control_state;
+पूर्ण
 
-static int mct_u232_tiocmset(struct tty_struct *tty,
-			      unsigned int set, unsigned int clear)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct mct_u232_private *priv = usb_get_serial_port_data(port);
-	unsigned int control_state;
-	unsigned long flags;
+अटल पूर्णांक mct_u232_tiocmset(काष्ठा tty_काष्ठा *tty,
+			      अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा mct_u232_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित पूर्णांक control_state;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	control_state = priv->control_state;
 
-	if (set & TIOCM_RTS)
+	अगर (set & TIOCM_RTS)
 		control_state |= TIOCM_RTS;
-	if (set & TIOCM_DTR)
+	अगर (set & TIOCM_DTR)
 		control_state |= TIOCM_DTR;
-	if (clear & TIOCM_RTS)
+	अगर (clear & TIOCM_RTS)
 		control_state &= ~TIOCM_RTS;
-	if (clear & TIOCM_DTR)
+	अगर (clear & TIOCM_DTR)
 		control_state &= ~TIOCM_DTR;
 
 	priv->control_state = control_state;
 	spin_unlock_irqrestore(&priv->lock, flags);
-	return mct_u232_set_modem_ctrl(port, control_state);
-}
+	वापस mct_u232_set_modem_ctrl(port, control_state);
+पूर्ण
 
-static void mct_u232_throttle(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct mct_u232_private *priv = usb_get_serial_port_data(port);
-	unsigned int control_state;
+अटल व्योम mct_u232_throttle(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा mct_u232_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित पूर्णांक control_state;
 
 	spin_lock_irq(&priv->lock);
 	priv->rx_flags |= THROTTLED;
-	if (C_CRTSCTS(tty)) {
+	अगर (C_CRTSCTS(tty)) अणु
 		priv->control_state &= ~TIOCM_RTS;
 		control_state = priv->control_state;
 		spin_unlock_irq(&priv->lock);
 		mct_u232_set_modem_ctrl(port, control_state);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irq(&priv->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mct_u232_unthrottle(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct mct_u232_private *priv = usb_get_serial_port_data(port);
-	unsigned int control_state;
+अटल व्योम mct_u232_unthrottle(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा mct_u232_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित पूर्णांक control_state;
 
 	spin_lock_irq(&priv->lock);
-	if ((priv->rx_flags & THROTTLED) && C_CRTSCTS(tty)) {
+	अगर ((priv->rx_flags & THROTTLED) && C_CRTSCTS(tty)) अणु
 		priv->rx_flags &= ~THROTTLED;
 		priv->control_state |= TIOCM_RTS;
 		control_state = priv->control_state;
 		spin_unlock_irq(&priv->lock);
 		mct_u232_set_modem_ctrl(port, control_state);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irq(&priv->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 module_usb_serial_driver(serial_drivers, id_table);
 

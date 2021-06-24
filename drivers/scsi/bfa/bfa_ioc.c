@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2005-2014 Brocade Communications Systems, Inc.
  * Copyright (c) 2014- QLogic Corporation.
  * All rights reserved
  * www.qlogic.com
  *
- * Linux driver for QLogic BR-series Fibre Channel Host Bus Adapter.
+ * Linux driver क्रम QLogic BR-series Fibre Channel Host Bus Adapter.
  */
 
-#include "bfad_drv.h"
-#include "bfad_im.h"
-#include "bfa_ioc.h"
-#include "bfi_reg.h"
-#include "bfa_defs.h"
-#include "bfa_defs_svc.h"
-#include "bfi.h"
+#समावेश "bfad_drv.h"
+#समावेश "bfad_im.h"
+#समावेश "bfa_ioc.h"
+#समावेश "bfi_reg.h"
+#समावेश "bfa_defs.h"
+#समावेश "bfa_defs_svc.h"
+#समावेश "bfi.h"
 
-BFA_TRC_FILE(CNA, IOC);
+BFA_TRC_खाता(CNA, IOC);
 
 /*
  * IOC local definitions
  */
-#define BFA_IOC_TOV		3000	/* msecs */
-#define BFA_IOC_HWSEM_TOV	500	/* msecs */
-#define BFA_IOC_HB_TOV		500	/* msecs */
-#define BFA_IOC_TOV_RECOVER	 BFA_IOC_HB_TOV
-#define BFA_IOC_POLL_TOV	BFA_TIMER_FREQ
+#घोषणा BFA_IOC_TOV		3000	/* msecs */
+#घोषणा BFA_IOC_HWSEM_TOV	500	/* msecs */
+#घोषणा BFA_IOC_HB_TOV		500	/* msecs */
+#घोषणा BFA_IOC_TOV_RECOVER	 BFA_IOC_HB_TOV
+#घोषणा BFA_IOC_POLL_TOV	BFA_TIMER_FREQ
 
-#define bfa_ioc_timer_start(__ioc)					\
-	bfa_timer_begin((__ioc)->timer_mod, &(__ioc)->ioc_timer,	\
-			bfa_ioc_timeout, (__ioc), BFA_IOC_TOV)
-#define bfa_ioc_timer_stop(__ioc)   bfa_timer_stop(&(__ioc)->ioc_timer)
+#घोषणा bfa_ioc_समयr_start(__ioc)					\
+	bfa_समयr_begin((__ioc)->समयr_mod, &(__ioc)->ioc_समयr,	\
+			bfa_ioc_समयout, (__ioc), BFA_IOC_TOV)
+#घोषणा bfa_ioc_समयr_stop(__ioc)   bfa_समयr_stop(&(__ioc)->ioc_समयr)
 
-#define bfa_hb_timer_start(__ioc)					\
-	bfa_timer_begin((__ioc)->timer_mod, &(__ioc)->hb_timer,		\
+#घोषणा bfa_hb_समयr_start(__ioc)					\
+	bfa_समयr_begin((__ioc)->समयr_mod, &(__ioc)->hb_समयr,		\
 			bfa_ioc_hb_check, (__ioc), BFA_IOC_HB_TOV)
-#define bfa_hb_timer_stop(__ioc)	bfa_timer_stop(&(__ioc)->hb_timer)
+#घोषणा bfa_hb_समयr_stop(__ioc)	bfa_समयr_stop(&(__ioc)->hb_समयr)
 
-#define BFA_DBG_FWTRC_OFF(_fn)	(BFI_IOC_TRC_OFF + BFA_DBG_FWTRC_LEN * (_fn))
+#घोषणा BFA_DBG_FWTRC_OFF(_fn)	(BFI_IOC_TRC_OFF + BFA_DBG_FWTRC_LEN * (_fn))
 
-#define bfa_ioc_state_disabled(__sm)		\
+#घोषणा bfa_ioc_state_disabled(__sm)		\
 	(((__sm) == BFI_IOC_UNINIT) ||		\
 	((__sm) == BFI_IOC_INITING) ||		\
 	((__sm) == BFI_IOC_HWINIT) ||		\
@@ -48,73 +49,73 @@ BFA_TRC_FILE(CNA, IOC);
 	((__sm) == BFI_IOC_CFG_DISABLED))
 
 /*
- * Asic specific macros : see bfa_hw_cb.c and bfa_hw_ct.c for details.
+ * Asic specअगरic macros : see bfa_hw_cb.c and bfa_hw_ct.c क्रम details.
  */
 
-#define bfa_ioc_firmware_lock(__ioc)			\
-			((__ioc)->ioc_hwif->ioc_firmware_lock(__ioc))
-#define bfa_ioc_firmware_unlock(__ioc)			\
-			((__ioc)->ioc_hwif->ioc_firmware_unlock(__ioc))
-#define bfa_ioc_reg_init(__ioc) ((__ioc)->ioc_hwif->ioc_reg_init(__ioc))
-#define bfa_ioc_map_port(__ioc) ((__ioc)->ioc_hwif->ioc_map_port(__ioc))
-#define bfa_ioc_notify_fail(__ioc)              \
-			((__ioc)->ioc_hwif->ioc_notify_fail(__ioc))
-#define bfa_ioc_sync_start(__ioc)               \
-			((__ioc)->ioc_hwif->ioc_sync_start(__ioc))
-#define bfa_ioc_sync_join(__ioc)                \
-			((__ioc)->ioc_hwif->ioc_sync_join(__ioc))
-#define bfa_ioc_sync_leave(__ioc)               \
-			((__ioc)->ioc_hwif->ioc_sync_leave(__ioc))
-#define bfa_ioc_sync_ack(__ioc)                 \
-			((__ioc)->ioc_hwif->ioc_sync_ack(__ioc))
-#define bfa_ioc_sync_complete(__ioc)            \
-			((__ioc)->ioc_hwif->ioc_sync_complete(__ioc))
-#define bfa_ioc_set_cur_ioc_fwstate(__ioc, __fwstate)		\
-			((__ioc)->ioc_hwif->ioc_set_fwstate(__ioc, __fwstate))
-#define bfa_ioc_get_cur_ioc_fwstate(__ioc)		\
-			((__ioc)->ioc_hwif->ioc_get_fwstate(__ioc))
-#define bfa_ioc_set_alt_ioc_fwstate(__ioc, __fwstate)		\
-		((__ioc)->ioc_hwif->ioc_set_alt_fwstate(__ioc, __fwstate))
-#define bfa_ioc_get_alt_ioc_fwstate(__ioc)		\
-			((__ioc)->ioc_hwif->ioc_get_alt_fwstate(__ioc))
+#घोषणा bfa_ioc_firmware_lock(__ioc)			\
+			((__ioc)->ioc_hwअगर->ioc_firmware_lock(__ioc))
+#घोषणा bfa_ioc_firmware_unlock(__ioc)			\
+			((__ioc)->ioc_hwअगर->ioc_firmware_unlock(__ioc))
+#घोषणा bfa_ioc_reg_init(__ioc) ((__ioc)->ioc_hwअगर->ioc_reg_init(__ioc))
+#घोषणा bfa_ioc_map_port(__ioc) ((__ioc)->ioc_hwअगर->ioc_map_port(__ioc))
+#घोषणा bfa_ioc_notअगरy_fail(__ioc)              \
+			((__ioc)->ioc_hwअगर->ioc_notअगरy_fail(__ioc))
+#घोषणा bfa_ioc_sync_start(__ioc)               \
+			((__ioc)->ioc_hwअगर->ioc_sync_start(__ioc))
+#घोषणा bfa_ioc_sync_join(__ioc)                \
+			((__ioc)->ioc_hwअगर->ioc_sync_join(__ioc))
+#घोषणा bfa_ioc_sync_leave(__ioc)               \
+			((__ioc)->ioc_hwअगर->ioc_sync_leave(__ioc))
+#घोषणा bfa_ioc_sync_ack(__ioc)                 \
+			((__ioc)->ioc_hwअगर->ioc_sync_ack(__ioc))
+#घोषणा bfa_ioc_sync_complete(__ioc)            \
+			((__ioc)->ioc_hwअगर->ioc_sync_complete(__ioc))
+#घोषणा bfa_ioc_set_cur_ioc_fwstate(__ioc, __fwstate)		\
+			((__ioc)->ioc_hwअगर->ioc_set_fwstate(__ioc, __fwstate))
+#घोषणा bfa_ioc_get_cur_ioc_fwstate(__ioc)		\
+			((__ioc)->ioc_hwअगर->ioc_get_fwstate(__ioc))
+#घोषणा bfa_ioc_set_alt_ioc_fwstate(__ioc, __fwstate)		\
+		((__ioc)->ioc_hwअगर->ioc_set_alt_fwstate(__ioc, __fwstate))
+#घोषणा bfa_ioc_get_alt_ioc_fwstate(__ioc)		\
+			((__ioc)->ioc_hwअगर->ioc_get_alt_fwstate(__ioc))
 
-#define bfa_ioc_mbox_cmd_pending(__ioc)		\
+#घोषणा bfa_ioc_mbox_cmd_pending(__ioc)		\
 			(!list_empty(&((__ioc)->mbox_mod.cmd_q)) || \
-			readl((__ioc)->ioc_regs.hfn_mbox_cmd))
+			पढ़ोl((__ioc)->ioc_regs.hfn_mbox_cmd))
 
-bfa_boolean_t bfa_auto_recover = BFA_TRUE;
+bfa_boolean_t bfa_स्वतः_recover = BFA_TRUE;
 
 /*
- * forward declarations
+ * क्रमward declarations
  */
-static void bfa_ioc_hw_sem_get(struct bfa_ioc_s *ioc);
-static void bfa_ioc_hwinit(struct bfa_ioc_s *ioc, bfa_boolean_t force);
-static void bfa_ioc_timeout(void *ioc);
-static void bfa_ioc_poll_fwinit(struct bfa_ioc_s *ioc);
-static void bfa_ioc_send_enable(struct bfa_ioc_s *ioc);
-static void bfa_ioc_send_disable(struct bfa_ioc_s *ioc);
-static void bfa_ioc_send_getattr(struct bfa_ioc_s *ioc);
-static void bfa_ioc_hb_monitor(struct bfa_ioc_s *ioc);
-static void bfa_ioc_mbox_poll(struct bfa_ioc_s *ioc);
-static void bfa_ioc_mbox_flush(struct bfa_ioc_s *ioc);
-static void bfa_ioc_recover(struct bfa_ioc_s *ioc);
-static void bfa_ioc_event_notify(struct bfa_ioc_s *ioc ,
-				enum bfa_ioc_event_e event);
-static void bfa_ioc_disable_comp(struct bfa_ioc_s *ioc);
-static void bfa_ioc_lpu_stop(struct bfa_ioc_s *ioc);
-static void bfa_ioc_fail_notify(struct bfa_ioc_s *ioc);
-static void bfa_ioc_pf_fwmismatch(struct bfa_ioc_s *ioc);
-static enum bfi_ioc_img_ver_cmp_e bfa_ioc_fw_ver_patch_cmp(
-				struct bfi_ioc_image_hdr_s *base_fwhdr,
-				struct bfi_ioc_image_hdr_s *fwhdr_to_cmp);
-static enum bfi_ioc_img_ver_cmp_e bfa_ioc_flash_fwver_cmp(
-				struct bfa_ioc_s *ioc,
-				struct bfi_ioc_image_hdr_s *base_fwhdr);
+अटल व्योम bfa_ioc_hw_sem_get(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_hwinit(काष्ठा bfa_ioc_s *ioc, bfa_boolean_t क्रमce);
+अटल व्योम bfa_ioc_समयout(व्योम *ioc);
+अटल व्योम bfa_ioc_poll_fwinit(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_send_enable(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_send_disable(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_send_getattr(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_hb_monitor(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_mbox_poll(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_mbox_flush(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_recover(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_event_notअगरy(काष्ठा bfa_ioc_s *ioc ,
+				क्रमागत bfa_ioc_event_e event);
+अटल व्योम bfa_ioc_disable_comp(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_lpu_stop(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_fail_notअगरy(काष्ठा bfa_ioc_s *ioc);
+अटल व्योम bfa_ioc_pf_fwmismatch(काष्ठा bfa_ioc_s *ioc);
+अटल क्रमागत bfi_ioc_img_ver_cmp_e bfa_ioc_fw_ver_patch_cmp(
+				काष्ठा bfi_ioc_image_hdr_s *base_fwhdr,
+				काष्ठा bfi_ioc_image_hdr_s *fwhdr_to_cmp);
+अटल क्रमागत bfi_ioc_img_ver_cmp_e bfa_ioc_flash_fwver_cmp(
+				काष्ठा bfa_ioc_s *ioc,
+				काष्ठा bfi_ioc_image_hdr_s *base_fwhdr);
 
 /*
  * IOC state machine definitions/declarations
  */
-enum ioc_event {
+क्रमागत ioc_event अणु
 	IOC_E_RESET		= 1,	/*  IOC reset request		*/
 	IOC_E_ENABLE		= 2,	/*  IOC enable request		*/
 	IOC_E_DISABLE		= 3,	/*  IOC disable request	*/
@@ -124,126 +125,126 @@ enum ioc_event {
 	IOC_E_DISABLED		= 7,	/*  f/w disabled		*/
 	IOC_E_PFFAILED		= 8,	/*  failure notice by iocpf sm	*/
 	IOC_E_HBFAIL		= 9,	/*  heartbeat failure		*/
-	IOC_E_HWERROR		= 10,	/*  hardware error interrupt	*/
-	IOC_E_TIMEOUT		= 11,	/*  timeout			*/
+	IOC_E_HWERROR		= 10,	/*  hardware error पूर्णांकerrupt	*/
+	IOC_E_TIMEOUT		= 11,	/*  समयout			*/
 	IOC_E_HWFAILED		= 12,	/*  PCI mapping failure notice	*/
-};
+पूर्ण;
 
-bfa_fsm_state_decl(bfa_ioc, uninit, struct bfa_ioc_s, enum ioc_event);
-bfa_fsm_state_decl(bfa_ioc, reset, struct bfa_ioc_s, enum ioc_event);
-bfa_fsm_state_decl(bfa_ioc, enabling, struct bfa_ioc_s, enum ioc_event);
-bfa_fsm_state_decl(bfa_ioc, getattr, struct bfa_ioc_s, enum ioc_event);
-bfa_fsm_state_decl(bfa_ioc, op, struct bfa_ioc_s, enum ioc_event);
-bfa_fsm_state_decl(bfa_ioc, fail_retry, struct bfa_ioc_s, enum ioc_event);
-bfa_fsm_state_decl(bfa_ioc, fail, struct bfa_ioc_s, enum ioc_event);
-bfa_fsm_state_decl(bfa_ioc, disabling, struct bfa_ioc_s, enum ioc_event);
-bfa_fsm_state_decl(bfa_ioc, disabled, struct bfa_ioc_s, enum ioc_event);
-bfa_fsm_state_decl(bfa_ioc, hwfail, struct bfa_ioc_s, enum ioc_event);
+bfa_fsm_state_decl(bfa_ioc, uninit, काष्ठा bfa_ioc_s, क्रमागत ioc_event);
+bfa_fsm_state_decl(bfa_ioc, reset, काष्ठा bfa_ioc_s, क्रमागत ioc_event);
+bfa_fsm_state_decl(bfa_ioc, enabling, काष्ठा bfa_ioc_s, क्रमागत ioc_event);
+bfa_fsm_state_decl(bfa_ioc, getattr, काष्ठा bfa_ioc_s, क्रमागत ioc_event);
+bfa_fsm_state_decl(bfa_ioc, op, काष्ठा bfa_ioc_s, क्रमागत ioc_event);
+bfa_fsm_state_decl(bfa_ioc, fail_retry, काष्ठा bfa_ioc_s, क्रमागत ioc_event);
+bfa_fsm_state_decl(bfa_ioc, fail, काष्ठा bfa_ioc_s, क्रमागत ioc_event);
+bfa_fsm_state_decl(bfa_ioc, disabling, काष्ठा bfa_ioc_s, क्रमागत ioc_event);
+bfa_fsm_state_decl(bfa_ioc, disabled, काष्ठा bfa_ioc_s, क्रमागत ioc_event);
+bfa_fsm_state_decl(bfa_ioc, hwfail, काष्ठा bfa_ioc_s, क्रमागत ioc_event);
 
-static struct bfa_sm_table_s ioc_sm_table[] = {
-	{BFA_SM(bfa_ioc_sm_uninit), BFA_IOC_UNINIT},
-	{BFA_SM(bfa_ioc_sm_reset), BFA_IOC_RESET},
-	{BFA_SM(bfa_ioc_sm_enabling), BFA_IOC_ENABLING},
-	{BFA_SM(bfa_ioc_sm_getattr), BFA_IOC_GETATTR},
-	{BFA_SM(bfa_ioc_sm_op), BFA_IOC_OPERATIONAL},
-	{BFA_SM(bfa_ioc_sm_fail_retry), BFA_IOC_INITFAIL},
-	{BFA_SM(bfa_ioc_sm_fail), BFA_IOC_FAIL},
-	{BFA_SM(bfa_ioc_sm_disabling), BFA_IOC_DISABLING},
-	{BFA_SM(bfa_ioc_sm_disabled), BFA_IOC_DISABLED},
-	{BFA_SM(bfa_ioc_sm_hwfail), BFA_IOC_HWFAIL},
-};
+अटल काष्ठा bfa_sm_table_s ioc_sm_table[] = अणु
+	अणुBFA_SM(bfa_ioc_sm_uninit), BFA_IOC_UNINITपूर्ण,
+	अणुBFA_SM(bfa_ioc_sm_reset), BFA_IOC_RESETपूर्ण,
+	अणुBFA_SM(bfa_ioc_sm_enabling), BFA_IOC_ENABLINGपूर्ण,
+	अणुBFA_SM(bfa_ioc_sm_getattr), BFA_IOC_GETATTRपूर्ण,
+	अणुBFA_SM(bfa_ioc_sm_op), BFA_IOC_OPERATIONALपूर्ण,
+	अणुBFA_SM(bfa_ioc_sm_fail_retry), BFA_IOC_INITFAILपूर्ण,
+	अणुBFA_SM(bfa_ioc_sm_fail), BFA_IOC_FAILपूर्ण,
+	अणुBFA_SM(bfa_ioc_sm_disabling), BFA_IOC_DISABLINGपूर्ण,
+	अणुBFA_SM(bfa_ioc_sm_disabled), BFA_IOC_DISABLEDपूर्ण,
+	अणुBFA_SM(bfa_ioc_sm_hwfail), BFA_IOC_HWFAILपूर्ण,
+पूर्ण;
 
 /*
  * IOCPF state machine definitions/declarations
  */
 
-#define bfa_iocpf_timer_start(__ioc)					\
-	bfa_timer_begin((__ioc)->timer_mod, &(__ioc)->ioc_timer,	\
-			bfa_iocpf_timeout, (__ioc), BFA_IOC_TOV)
-#define bfa_iocpf_timer_stop(__ioc)	bfa_timer_stop(&(__ioc)->ioc_timer)
+#घोषणा bfa_iocpf_समयr_start(__ioc)					\
+	bfa_समयr_begin((__ioc)->समयr_mod, &(__ioc)->ioc_समयr,	\
+			bfa_iocpf_समयout, (__ioc), BFA_IOC_TOV)
+#घोषणा bfa_iocpf_समयr_stop(__ioc)	bfa_समयr_stop(&(__ioc)->ioc_समयr)
 
-#define bfa_iocpf_poll_timer_start(__ioc)				\
-	bfa_timer_begin((__ioc)->timer_mod, &(__ioc)->ioc_timer,	\
-			bfa_iocpf_poll_timeout, (__ioc), BFA_IOC_POLL_TOV)
+#घोषणा bfa_iocpf_poll_समयr_start(__ioc)				\
+	bfa_समयr_begin((__ioc)->समयr_mod, &(__ioc)->ioc_समयr,	\
+			bfa_iocpf_poll_समयout, (__ioc), BFA_IOC_POLL_TOV)
 
-#define bfa_sem_timer_start(__ioc)					\
-	bfa_timer_begin((__ioc)->timer_mod, &(__ioc)->sem_timer,	\
-			bfa_iocpf_sem_timeout, (__ioc), BFA_IOC_HWSEM_TOV)
-#define bfa_sem_timer_stop(__ioc)	bfa_timer_stop(&(__ioc)->sem_timer)
+#घोषणा bfa_sem_समयr_start(__ioc)					\
+	bfa_समयr_begin((__ioc)->समयr_mod, &(__ioc)->sem_समयr,	\
+			bfa_iocpf_sem_समयout, (__ioc), BFA_IOC_HWSEM_TOV)
+#घोषणा bfa_sem_समयr_stop(__ioc)	bfa_समयr_stop(&(__ioc)->sem_समयr)
 
 /*
- * Forward declareations for iocpf state machine
+ * Forward declareations क्रम iocpf state machine
  */
-static void bfa_iocpf_timeout(void *ioc_arg);
-static void bfa_iocpf_sem_timeout(void *ioc_arg);
-static void bfa_iocpf_poll_timeout(void *ioc_arg);
+अटल व्योम bfa_iocpf_समयout(व्योम *ioc_arg);
+अटल व्योम bfa_iocpf_sem_समयout(व्योम *ioc_arg);
+अटल व्योम bfa_iocpf_poll_समयout(व्योम *ioc_arg);
 
 /*
  * IOCPF state machine events
  */
-enum iocpf_event {
+क्रमागत iocpf_event अणु
 	IOCPF_E_ENABLE		= 1,	/*  IOCPF enable request	*/
 	IOCPF_E_DISABLE		= 2,	/*  IOCPF disable request	*/
 	IOCPF_E_STOP		= 3,	/*  stop on driver detach	*/
-	IOCPF_E_FWREADY		= 4,	/*  f/w initialization done	*/
+	IOCPF_E_FWREADY		= 4,	/*  f/w initialization करोne	*/
 	IOCPF_E_FWRSP_ENABLE	= 5,	/*  enable f/w response	*/
 	IOCPF_E_FWRSP_DISABLE	= 6,	/*  disable f/w response	*/
 	IOCPF_E_FAIL		= 7,	/*  failure notice by ioc sm	*/
 	IOCPF_E_INITFAIL	= 8,	/*  init fail notice by ioc sm	*/
 	IOCPF_E_GETATTRFAIL	= 9,	/*  init fail notice by ioc sm	*/
 	IOCPF_E_SEMLOCKED	= 10,	/*  h/w semaphore is locked	*/
-	IOCPF_E_TIMEOUT		= 11,	/*  f/w response timeout	*/
+	IOCPF_E_TIMEOUT		= 11,	/*  f/w response समयout	*/
 	IOCPF_E_SEM_ERROR	= 12,	/*  h/w sem mapping error	*/
-};
+पूर्ण;
 
 /*
  * IOCPF states
  */
-enum bfa_iocpf_state {
+क्रमागत bfa_iocpf_state अणु
 	BFA_IOCPF_RESET		= 1,	/*  IOC is in reset state */
-	BFA_IOCPF_SEMWAIT	= 2,	/*  Waiting for IOC h/w semaphore */
+	BFA_IOCPF_SEMWAIT	= 2,	/*  Waiting क्रम IOC h/w semaphore */
 	BFA_IOCPF_HWINIT	= 3,	/*  IOC h/w is being initialized */
 	BFA_IOCPF_READY		= 4,	/*  IOCPF is initialized */
 	BFA_IOCPF_INITFAIL	= 5,	/*  IOCPF failed */
 	BFA_IOCPF_FAIL		= 6,	/*  IOCPF failed */
 	BFA_IOCPF_DISABLING	= 7,	/*  IOCPF is being disabled */
 	BFA_IOCPF_DISABLED	= 8,	/*  IOCPF is disabled */
-	BFA_IOCPF_FWMISMATCH	= 9,	/*  IOC f/w different from drivers */
-};
+	BFA_IOCPF_FWMISMATCH	= 9,	/*  IOC f/w dअगरferent from drivers */
+पूर्ण;
 
-bfa_fsm_state_decl(bfa_iocpf, reset, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, fwcheck, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, mismatch, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, semwait, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, hwinit, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, enabling, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, ready, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, initfail_sync, struct bfa_iocpf_s,
-						enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, initfail, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, fail_sync, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, fail, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, disabling, struct bfa_iocpf_s, enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, disabling_sync, struct bfa_iocpf_s,
-						enum iocpf_event);
-bfa_fsm_state_decl(bfa_iocpf, disabled, struct bfa_iocpf_s, enum iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, reset, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, fwcheck, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, mismatch, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, semरुको, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, hwinit, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, enabling, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, पढ़ोy, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, initfail_sync, काष्ठा bfa_iocpf_s,
+						क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, initfail, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, fail_sync, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, fail, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, disabling, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, disabling_sync, काष्ठा bfa_iocpf_s,
+						क्रमागत iocpf_event);
+bfa_fsm_state_decl(bfa_iocpf, disabled, काष्ठा bfa_iocpf_s, क्रमागत iocpf_event);
 
-static struct bfa_sm_table_s iocpf_sm_table[] = {
-	{BFA_SM(bfa_iocpf_sm_reset), BFA_IOCPF_RESET},
-	{BFA_SM(bfa_iocpf_sm_fwcheck), BFA_IOCPF_FWMISMATCH},
-	{BFA_SM(bfa_iocpf_sm_mismatch), BFA_IOCPF_FWMISMATCH},
-	{BFA_SM(bfa_iocpf_sm_semwait), BFA_IOCPF_SEMWAIT},
-	{BFA_SM(bfa_iocpf_sm_hwinit), BFA_IOCPF_HWINIT},
-	{BFA_SM(bfa_iocpf_sm_enabling), BFA_IOCPF_HWINIT},
-	{BFA_SM(bfa_iocpf_sm_ready), BFA_IOCPF_READY},
-	{BFA_SM(bfa_iocpf_sm_initfail_sync), BFA_IOCPF_INITFAIL},
-	{BFA_SM(bfa_iocpf_sm_initfail), BFA_IOCPF_INITFAIL},
-	{BFA_SM(bfa_iocpf_sm_fail_sync), BFA_IOCPF_FAIL},
-	{BFA_SM(bfa_iocpf_sm_fail), BFA_IOCPF_FAIL},
-	{BFA_SM(bfa_iocpf_sm_disabling), BFA_IOCPF_DISABLING},
-	{BFA_SM(bfa_iocpf_sm_disabling_sync), BFA_IOCPF_DISABLING},
-	{BFA_SM(bfa_iocpf_sm_disabled), BFA_IOCPF_DISABLED},
-};
+अटल काष्ठा bfa_sm_table_s iocpf_sm_table[] = अणु
+	अणुBFA_SM(bfa_iocpf_sm_reset), BFA_IOCPF_RESETपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_fwcheck), BFA_IOCPF_FWMISMATCHपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_mismatch), BFA_IOCPF_FWMISMATCHपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_semरुको), BFA_IOCPF_SEMWAITपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_hwinit), BFA_IOCPF_HWINITपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_enabling), BFA_IOCPF_HWINITपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_पढ़ोy), BFA_IOCPF_READYपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_initfail_sync), BFA_IOCPF_INITFAILपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_initfail), BFA_IOCPF_INITFAILपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_fail_sync), BFA_IOCPF_FAILपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_fail), BFA_IOCPF_FAILपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_disabling), BFA_IOCPF_DISABLINGपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_disabling_sync), BFA_IOCPF_DISABLINGपूर्ण,
+	अणुBFA_SM(bfa_iocpf_sm_disabled), BFA_IOCPF_DISABLEDपूर्ण,
+पूर्ण;
 
 /*
  * IOC State Machine
@@ -253,409 +254,409 @@ static struct bfa_sm_table_s iocpf_sm_table[] = {
  * Beginning state. IOC uninit state.
  */
 
-static void
-bfa_ioc_sm_uninit_entry(struct bfa_ioc_s *ioc)
-{
-}
+अटल व्योम
+bfa_ioc_sm_uninit_entry(काष्ठा bfa_ioc_s *ioc)
+अणु
+पूर्ण
 
 /*
  * IOC is in uninit state.
  */
-static void
-bfa_ioc_sm_uninit(struct bfa_ioc_s *ioc, enum ioc_event event)
-{
+अटल व्योम
+bfa_ioc_sm_uninit(काष्ठा bfa_ioc_s *ioc, क्रमागत ioc_event event)
+अणु
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOC_E_RESET:
+	चयन (event) अणु
+	हाल IOC_E_RESET:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_reset);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 /*
  * Reset entry actions -- initialize state machine
  */
-static void
-bfa_ioc_sm_reset_entry(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_sm_reset_entry(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_fsm_set_state(&ioc->iocpf, bfa_iocpf_sm_reset);
-}
+पूर्ण
 
 /*
  * IOC is in reset state.
  */
-static void
-bfa_ioc_sm_reset(struct bfa_ioc_s *ioc, enum ioc_event event)
-{
+अटल व्योम
+bfa_ioc_sm_reset(काष्ठा bfa_ioc_s *ioc, क्रमागत ioc_event event)
+अणु
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOC_E_ENABLE:
+	चयन (event) अणु
+	हाल IOC_E_ENABLE:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_enabling);
-		break;
+		अवरोध;
 
-	case IOC_E_DISABLE:
+	हाल IOC_E_DISABLE:
 		bfa_ioc_disable_comp(ioc);
-		break;
+		अवरोध;
 
-	case IOC_E_DETACH:
+	हाल IOC_E_DETACH:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_uninit);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void
-bfa_ioc_sm_enabling_entry(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_sm_enabling_entry(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_ENABLE);
-}
+पूर्ण
 
 /*
- * Host IOC function is being enabled, awaiting response from firmware.
+ * Host IOC function is being enabled, aरुकोing response from firmware.
  * Semaphore is acquired.
  */
-static void
-bfa_ioc_sm_enabling(struct bfa_ioc_s *ioc, enum ioc_event event)
-{
+अटल व्योम
+bfa_ioc_sm_enabling(काष्ठा bfa_ioc_s *ioc, क्रमागत ioc_event event)
+अणु
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOC_E_ENABLED:
+	चयन (event) अणु
+	हाल IOC_E_ENABLED:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_getattr);
-		break;
+		अवरोध;
 
-	case IOC_E_PFFAILED:
+	हाल IOC_E_PFFAILED:
 		/* !!! fall through !!! */
-	case IOC_E_HWERROR:
+	हाल IOC_E_HWERROR:
 		ioc->cbfn->enable_cbfn(ioc->bfa, BFA_STATUS_IOC_FAILURE);
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_fail);
-		if (event != IOC_E_PFFAILED)
+		अगर (event != IOC_E_PFFAILED)
 			bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_INITFAIL);
-		break;
+		अवरोध;
 
-	case IOC_E_HWFAILED:
+	हाल IOC_E_HWFAILED:
 		ioc->cbfn->enable_cbfn(ioc->bfa, BFA_STATUS_IOC_FAILURE);
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_hwfail);
-		break;
+		अवरोध;
 
-	case IOC_E_DISABLE:
+	हाल IOC_E_DISABLE:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_disabling);
-		break;
+		अवरोध;
 
-	case IOC_E_DETACH:
+	हाल IOC_E_DETACH:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_uninit);
 		bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_STOP);
-		break;
+		अवरोध;
 
-	case IOC_E_ENABLE:
-		break;
+	हाल IOC_E_ENABLE:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void
-bfa_ioc_sm_getattr_entry(struct bfa_ioc_s *ioc)
-{
-	bfa_ioc_timer_start(ioc);
+अटल व्योम
+bfa_ioc_sm_getattr_entry(काष्ठा bfa_ioc_s *ioc)
+अणु
+	bfa_ioc_समयr_start(ioc);
 	bfa_ioc_send_getattr(ioc);
-}
+पूर्ण
 
 /*
  * IOC configuration in progress. Timer is active.
  */
-static void
-bfa_ioc_sm_getattr(struct bfa_ioc_s *ioc, enum ioc_event event)
-{
+अटल व्योम
+bfa_ioc_sm_getattr(काष्ठा bfa_ioc_s *ioc, क्रमागत ioc_event event)
+अणु
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOC_E_FWRSP_GETATTR:
-		bfa_ioc_timer_stop(ioc);
+	चयन (event) अणु
+	हाल IOC_E_FWRSP_GETATTR:
+		bfa_ioc_समयr_stop(ioc);
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_op);
-		break;
+		अवरोध;
 
-	case IOC_E_PFFAILED:
-	case IOC_E_HWERROR:
-		bfa_ioc_timer_stop(ioc);
+	हाल IOC_E_PFFAILED:
+	हाल IOC_E_HWERROR:
+		bfa_ioc_समयr_stop(ioc);
 		fallthrough;
-	case IOC_E_TIMEOUT:
+	हाल IOC_E_TIMEOUT:
 		ioc->cbfn->enable_cbfn(ioc->bfa, BFA_STATUS_IOC_FAILURE);
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_fail);
-		if (event != IOC_E_PFFAILED)
+		अगर (event != IOC_E_PFFAILED)
 			bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_GETATTRFAIL);
-		break;
+		अवरोध;
 
-	case IOC_E_DISABLE:
-		bfa_ioc_timer_stop(ioc);
+	हाल IOC_E_DISABLE:
+		bfa_ioc_समयr_stop(ioc);
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_disabling);
-		break;
+		अवरोध;
 
-	case IOC_E_ENABLE:
-		break;
+	हाल IOC_E_ENABLE:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_ioc_sm_op_entry(struct bfa_ioc_s *ioc)
-{
-	struct bfad_s *bfad = (struct bfad_s *)ioc->bfa->bfad;
+अटल व्योम
+bfa_ioc_sm_op_entry(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfad_s *bfad = (काष्ठा bfad_s *)ioc->bfa->bfad;
 
 	ioc->cbfn->enable_cbfn(ioc->bfa, BFA_STATUS_OK);
-	bfa_ioc_event_notify(ioc, BFA_IOC_E_ENABLED);
+	bfa_ioc_event_notअगरy(ioc, BFA_IOC_E_ENABLED);
 	bfa_ioc_hb_monitor(ioc);
 	BFA_LOG(KERN_INFO, bfad, bfa_log_level, "IOC enabled\n");
 	bfa_ioc_aen_post(ioc, BFA_IOC_AEN_ENABLE);
-}
+पूर्ण
 
-static void
-bfa_ioc_sm_op(struct bfa_ioc_s *ioc, enum ioc_event event)
-{
+अटल व्योम
+bfa_ioc_sm_op(काष्ठा bfa_ioc_s *ioc, क्रमागत ioc_event event)
+अणु
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOC_E_ENABLE:
-		break;
+	चयन (event) अणु
+	हाल IOC_E_ENABLE:
+		अवरोध;
 
-	case IOC_E_DISABLE:
-		bfa_hb_timer_stop(ioc);
+	हाल IOC_E_DISABLE:
+		bfa_hb_समयr_stop(ioc);
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_disabling);
-		break;
+		अवरोध;
 
-	case IOC_E_PFFAILED:
-	case IOC_E_HWERROR:
-		bfa_hb_timer_stop(ioc);
+	हाल IOC_E_PFFAILED:
+	हाल IOC_E_HWERROR:
+		bfa_hb_समयr_stop(ioc);
 		fallthrough;
-	case IOC_E_HBFAIL:
-		if (ioc->iocpf.auto_recover)
+	हाल IOC_E_HBFAIL:
+		अगर (ioc->iocpf.स्वतः_recover)
 			bfa_fsm_set_state(ioc, bfa_ioc_sm_fail_retry);
-		else
+		अन्यथा
 			bfa_fsm_set_state(ioc, bfa_ioc_sm_fail);
 
-		bfa_ioc_fail_notify(ioc);
+		bfa_ioc_fail_notअगरy(ioc);
 
-		if (event != IOC_E_PFFAILED)
+		अगर (event != IOC_E_PFFAILED)
 			bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_FAIL);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void
-bfa_ioc_sm_disabling_entry(struct bfa_ioc_s *ioc)
-{
-	struct bfad_s *bfad = (struct bfad_s *)ioc->bfa->bfad;
+अटल व्योम
+bfa_ioc_sm_disabling_entry(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfad_s *bfad = (काष्ठा bfad_s *)ioc->bfa->bfad;
 	bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_DISABLE);
 	BFA_LOG(KERN_INFO, bfad, bfa_log_level, "IOC disabled\n");
 	bfa_ioc_aen_post(ioc, BFA_IOC_AEN_DISABLE);
-}
+पूर्ण
 
 /*
  * IOC is being disabled
  */
-static void
-bfa_ioc_sm_disabling(struct bfa_ioc_s *ioc, enum ioc_event event)
-{
+अटल व्योम
+bfa_ioc_sm_disabling(काष्ठा bfa_ioc_s *ioc, क्रमागत ioc_event event)
+अणु
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOC_E_DISABLED:
+	चयन (event) अणु
+	हाल IOC_E_DISABLED:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_disabled);
-		break;
+		अवरोध;
 
-	case IOC_E_HWERROR:
+	हाल IOC_E_HWERROR:
 		/*
 		 * No state change.  Will move to disabled state
 		 * after iocpf sm completes failure processing and
 		 * moves to disabled state.
 		 */
 		bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_FAIL);
-		break;
+		अवरोध;
 
-	case IOC_E_HWFAILED:
+	हाल IOC_E_HWFAILED:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_hwfail);
 		bfa_ioc_disable_comp(ioc);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * IOC disable completion entry.
  */
-static void
-bfa_ioc_sm_disabled_entry(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_sm_disabled_entry(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_ioc_disable_comp(ioc);
-}
+पूर्ण
 
-static void
-bfa_ioc_sm_disabled(struct bfa_ioc_s *ioc, enum ioc_event event)
-{
+अटल व्योम
+bfa_ioc_sm_disabled(काष्ठा bfa_ioc_s *ioc, क्रमागत ioc_event event)
+अणु
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOC_E_ENABLE:
+	चयन (event) अणु
+	हाल IOC_E_ENABLE:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_enabling);
-		break;
+		अवरोध;
 
-	case IOC_E_DISABLE:
+	हाल IOC_E_DISABLE:
 		ioc->cbfn->disable_cbfn(ioc->bfa);
-		break;
+		अवरोध;
 
-	case IOC_E_DETACH:
+	हाल IOC_E_DETACH:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_uninit);
 		bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_STOP);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void
-bfa_ioc_sm_fail_retry_entry(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_sm_fail_retry_entry(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_trc(ioc, 0);
-}
+पूर्ण
 
 /*
  * Hardware initialization retry.
  */
-static void
-bfa_ioc_sm_fail_retry(struct bfa_ioc_s *ioc, enum ioc_event event)
-{
+अटल व्योम
+bfa_ioc_sm_fail_retry(काष्ठा bfa_ioc_s *ioc, क्रमागत ioc_event event)
+अणु
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOC_E_ENABLED:
+	चयन (event) अणु
+	हाल IOC_E_ENABLED:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_getattr);
-		break;
+		अवरोध;
 
-	case IOC_E_PFFAILED:
-	case IOC_E_HWERROR:
+	हाल IOC_E_PFFAILED:
+	हाल IOC_E_HWERROR:
 		/*
 		 * Initialization retry failed.
 		 */
 		ioc->cbfn->enable_cbfn(ioc->bfa, BFA_STATUS_IOC_FAILURE);
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_fail);
-		if (event != IOC_E_PFFAILED)
+		अगर (event != IOC_E_PFFAILED)
 			bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_INITFAIL);
-		break;
+		अवरोध;
 
-	case IOC_E_HWFAILED:
+	हाल IOC_E_HWFAILED:
 		ioc->cbfn->enable_cbfn(ioc->bfa, BFA_STATUS_IOC_FAILURE);
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_hwfail);
-		break;
+		अवरोध;
 
-	case IOC_E_ENABLE:
-		break;
+	हाल IOC_E_ENABLE:
+		अवरोध;
 
-	case IOC_E_DISABLE:
+	हाल IOC_E_DISABLE:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_disabling);
-		break;
+		अवरोध;
 
-	case IOC_E_DETACH:
+	हाल IOC_E_DETACH:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_uninit);
 		bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_STOP);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void
-bfa_ioc_sm_fail_entry(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_sm_fail_entry(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_trc(ioc, 0);
-}
+पूर्ण
 
 /*
  * IOC failure.
  */
-static void
-bfa_ioc_sm_fail(struct bfa_ioc_s *ioc, enum ioc_event event)
-{
+अटल व्योम
+bfa_ioc_sm_fail(काष्ठा bfa_ioc_s *ioc, क्रमागत ioc_event event)
+अणु
 	bfa_trc(ioc, event);
 
-	switch (event) {
+	चयन (event) अणु
 
-	case IOC_E_ENABLE:
+	हाल IOC_E_ENABLE:
 		ioc->cbfn->enable_cbfn(ioc->bfa, BFA_STATUS_IOC_FAILURE);
-		break;
+		अवरोध;
 
-	case IOC_E_DISABLE:
+	हाल IOC_E_DISABLE:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_disabling);
-		break;
+		अवरोध;
 
-	case IOC_E_DETACH:
+	हाल IOC_E_DETACH:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_uninit);
 		bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_STOP);
-		break;
+		अवरोध;
 
-	case IOC_E_HWERROR:
-	case IOC_E_HWFAILED:
+	हाल IOC_E_HWERROR:
+	हाल IOC_E_HWFAILED:
 		/*
-		 * HB failure / HW error notification, ignore.
+		 * HB failure / HW error notअगरication, ignore.
 		 */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_ioc_sm_hwfail_entry(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_sm_hwfail_entry(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_trc(ioc, 0);
-}
+पूर्ण
 
-static void
-bfa_ioc_sm_hwfail(struct bfa_ioc_s *ioc, enum ioc_event event)
-{
+अटल व्योम
+bfa_ioc_sm_hwfail(काष्ठा bfa_ioc_s *ioc, क्रमागत ioc_event event)
+अणु
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOC_E_ENABLE:
+	चयन (event) अणु
+	हाल IOC_E_ENABLE:
 		ioc->cbfn->enable_cbfn(ioc->bfa, BFA_STATUS_IOC_FAILURE);
-		break;
+		अवरोध;
 
-	case IOC_E_DISABLE:
+	हाल IOC_E_DISABLE:
 		ioc->cbfn->disable_cbfn(ioc->bfa);
-		break;
+		अवरोध;
 
-	case IOC_E_DETACH:
+	हाल IOC_E_DETACH:
 		bfa_fsm_set_state(ioc, bfa_ioc_sm_uninit);
-		break;
+		अवरोध;
 
-	case IOC_E_HWERROR:
-		/* Ignore - already in hwfail state */
-		break;
+	हाल IOC_E_HWERROR:
+		/* Ignore - alपढ़ोy in hwfail state */
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * IOCPF State Machine
@@ -664,79 +665,79 @@ bfa_ioc_sm_hwfail(struct bfa_ioc_s *ioc, enum ioc_event event)
 /*
  * Reset entry actions -- initialize state machine
  */
-static void
-bfa_iocpf_sm_reset_entry(struct bfa_iocpf_s *iocpf)
-{
-	iocpf->fw_mismatch_notified = BFA_FALSE;
-	iocpf->auto_recover = bfa_auto_recover;
-}
+अटल व्योम
+bfa_iocpf_sm_reset_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
+	iocpf->fw_mismatch_notअगरied = BFA_FALSE;
+	iocpf->स्वतः_recover = bfa_स्वतः_recover;
+पूर्ण
 
 /*
  * Beginning state. IOC is in reset state.
  */
-static void
-bfa_iocpf_sm_reset(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_reset(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_ENABLE:
+	चयन (event) अणु
+	हाल IOCPF_E_ENABLE:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_fwcheck);
-		break;
+		अवरोध;
 
-	case IOCPF_E_STOP:
-		break;
+	हाल IOCPF_E_STOP:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Semaphore should be acquired for version check.
+ * Semaphore should be acquired क्रम version check.
  */
-static void
-bfa_iocpf_sm_fwcheck_entry(struct bfa_iocpf_s *iocpf)
-{
-	struct bfi_ioc_image_hdr_s	fwhdr;
+अटल व्योम
+bfa_iocpf_sm_fwcheck_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
+	काष्ठा bfi_ioc_image_hdr_s	fwhdr;
 	u32	r32, fwstate, pgnum, loff = 0;
-	int	i;
+	पूर्णांक	i;
 
 	/*
 	 * Spin on init semaphore to serialize.
 	 */
-	r32 = readl(iocpf->ioc->ioc_regs.ioc_init_sem_reg);
-	while (r32 & 0x1) {
+	r32 = पढ़ोl(iocpf->ioc->ioc_regs.ioc_init_sem_reg);
+	जबतक (r32 & 0x1) अणु
 		udelay(20);
-		r32 = readl(iocpf->ioc->ioc_regs.ioc_init_sem_reg);
-	}
+		r32 = पढ़ोl(iocpf->ioc->ioc_regs.ioc_init_sem_reg);
+	पूर्ण
 
 	/* h/w sem init */
 	fwstate = bfa_ioc_get_cur_ioc_fwstate(iocpf->ioc);
-	if (fwstate == BFI_IOC_UNINIT) {
-		writel(1, iocpf->ioc->ioc_regs.ioc_init_sem_reg);
-		goto sem_get;
-	}
+	अगर (fwstate == BFI_IOC_UNINIT) अणु
+		ग_लिखोl(1, iocpf->ioc->ioc_regs.ioc_init_sem_reg);
+		जाओ sem_get;
+	पूर्ण
 
 	bfa_ioc_fwver_get(iocpf->ioc, &fwhdr);
 
-	if (swab32(fwhdr.exec) == BFI_FWBOOT_TYPE_NORMAL) {
-		writel(1, iocpf->ioc->ioc_regs.ioc_init_sem_reg);
-		goto sem_get;
-	}
+	अगर (swab32(fwhdr.exec) == BFI_FWBOOT_TYPE_NORMAL) अणु
+		ग_लिखोl(1, iocpf->ioc->ioc_regs.ioc_init_sem_reg);
+		जाओ sem_get;
+	पूर्ण
 
 	/*
 	 * Clear fwver hdr
 	 */
 	pgnum = PSS_SMEM_PGNUM(iocpf->ioc->ioc_regs.smem_pg0, loff);
-	writel(pgnum, iocpf->ioc->ioc_regs.host_page_num_fn);
+	ग_लिखोl(pgnum, iocpf->ioc->ioc_regs.host_page_num_fn);
 
-	for (i = 0; i < sizeof(struct bfi_ioc_image_hdr_s) / sizeof(u32); i++) {
-		bfa_mem_write(iocpf->ioc->ioc_regs.smem_page_start, loff, 0);
-		loff += sizeof(u32);
-	}
+	क्रम (i = 0; i < माप(काष्ठा bfi_ioc_image_hdr_s) / माप(u32); i++) अणु
+		bfa_mem_ग_लिखो(iocpf->ioc->ioc_regs.smem_page_start, loff, 0);
+		loff += माप(u32);
+	पूर्ण
 
 	bfa_trc(iocpf->ioc, fwstate);
 	bfa_trc(iocpf->ioc, swab32(fwhdr.exec));
@@ -751,467 +752,467 @@ bfa_iocpf_sm_fwcheck_entry(struct bfa_iocpf_s *iocpf)
 	/*
 	 * unlock init semaphore.
 	 */
-	writel(1, iocpf->ioc->ioc_regs.ioc_init_sem_reg);
+	ग_लिखोl(1, iocpf->ioc->ioc_regs.ioc_init_sem_reg);
 
 sem_get:
 	bfa_ioc_hw_sem_get(iocpf->ioc);
-}
+पूर्ण
 
 /*
- * Awaiting h/w semaphore to continue with version check.
+ * Aरुकोing h/w semaphore to जारी with version check.
  */
-static void
-bfa_iocpf_sm_fwcheck(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_fwcheck(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_SEMLOCKED:
-		if (bfa_ioc_firmware_lock(ioc)) {
-			if (bfa_ioc_sync_start(ioc)) {
+	चयन (event) अणु
+	हाल IOCPF_E_SEMLOCKED:
+		अगर (bfa_ioc_firmware_lock(ioc)) अणु
+			अगर (bfa_ioc_sync_start(ioc)) अणु
 				bfa_ioc_sync_join(ioc);
 				bfa_fsm_set_state(iocpf, bfa_iocpf_sm_hwinit);
-			} else {
+			पूर्ण अन्यथा अणु
 				bfa_ioc_firmware_unlock(ioc);
-				writel(1, ioc->ioc_regs.ioc_sem_reg);
-				bfa_sem_timer_start(ioc);
-			}
-		} else {
-			writel(1, ioc->ioc_regs.ioc_sem_reg);
+				ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
+				bfa_sem_समयr_start(ioc);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
 			bfa_fsm_set_state(iocpf, bfa_iocpf_sm_mismatch);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case IOCPF_E_SEM_ERROR:
+	हाल IOCPF_E_SEM_ERROR:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_fail);
 		bfa_fsm_send_event(ioc, IOC_E_HWFAILED);
-		break;
+		अवरोध;
 
-	case IOCPF_E_DISABLE:
-		bfa_sem_timer_stop(ioc);
+	हाल IOCPF_E_DISABLE:
+		bfa_sem_समयr_stop(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_reset);
 		bfa_fsm_send_event(ioc, IOC_E_DISABLED);
-		break;
+		अवरोध;
 
-	case IOCPF_E_STOP:
-		bfa_sem_timer_stop(ioc);
+	हाल IOCPF_E_STOP:
+		bfa_sem_समयr_stop(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_reset);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Notify enable completion callback.
+ * Notअगरy enable completion callback.
  */
-static void
-bfa_iocpf_sm_mismatch_entry(struct bfa_iocpf_s *iocpf)
-{
+अटल व्योम
+bfa_iocpf_sm_mismatch_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
 	/*
-	 * Call only the first time sm enters fwmismatch state.
+	 * Call only the first समय sm enters fwmismatch state.
 	 */
-	if (iocpf->fw_mismatch_notified == BFA_FALSE)
+	अगर (iocpf->fw_mismatch_notअगरied == BFA_FALSE)
 		bfa_ioc_pf_fwmismatch(iocpf->ioc);
 
-	iocpf->fw_mismatch_notified = BFA_TRUE;
-	bfa_iocpf_timer_start(iocpf->ioc);
-}
+	iocpf->fw_mismatch_notअगरied = BFA_TRUE;
+	bfa_iocpf_समयr_start(iocpf->ioc);
+पूर्ण
 
 /*
- * Awaiting firmware version match.
+ * Aरुकोing firmware version match.
  */
-static void
-bfa_iocpf_sm_mismatch(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_mismatch(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_TIMEOUT:
+	चयन (event) अणु
+	हाल IOCPF_E_TIMEOUT:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_fwcheck);
-		break;
+		अवरोध;
 
-	case IOCPF_E_DISABLE:
-		bfa_iocpf_timer_stop(ioc);
+	हाल IOCPF_E_DISABLE:
+		bfa_iocpf_समयr_stop(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_reset);
 		bfa_fsm_send_event(ioc, IOC_E_DISABLED);
-		break;
+		अवरोध;
 
-	case IOCPF_E_STOP:
-		bfa_iocpf_timer_stop(ioc);
+	हाल IOCPF_E_STOP:
+		bfa_iocpf_समयr_stop(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_reset);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Request for semaphore.
+ * Request क्रम semaphore.
  */
-static void
-bfa_iocpf_sm_semwait_entry(struct bfa_iocpf_s *iocpf)
-{
+अटल व्योम
+bfa_iocpf_sm_semरुको_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
 	bfa_ioc_hw_sem_get(iocpf->ioc);
-}
+पूर्ण
 
 /*
- * Awaiting semaphore for h/w initialzation.
+ * Aरुकोing semaphore क्रम h/w initialzation.
  */
-static void
-bfa_iocpf_sm_semwait(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_semरुको(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_SEMLOCKED:
-		if (bfa_ioc_sync_complete(ioc)) {
+	चयन (event) अणु
+	हाल IOCPF_E_SEMLOCKED:
+		अगर (bfa_ioc_sync_complete(ioc)) अणु
 			bfa_ioc_sync_join(ioc);
 			bfa_fsm_set_state(iocpf, bfa_iocpf_sm_hwinit);
-		} else {
-			writel(1, ioc->ioc_regs.ioc_sem_reg);
-			bfa_sem_timer_start(ioc);
-		}
-		break;
+		पूर्ण अन्यथा अणु
+			ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
+			bfa_sem_समयr_start(ioc);
+		पूर्ण
+		अवरोध;
 
-	case IOCPF_E_SEM_ERROR:
+	हाल IOCPF_E_SEM_ERROR:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_fail);
 		bfa_fsm_send_event(ioc, IOC_E_HWFAILED);
-		break;
+		अवरोध;
 
-	case IOCPF_E_DISABLE:
-		bfa_sem_timer_stop(ioc);
+	हाल IOCPF_E_DISABLE:
+		bfa_sem_समयr_stop(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabling_sync);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_iocpf_sm_hwinit_entry(struct bfa_iocpf_s *iocpf)
-{
-	iocpf->poll_time = 0;
+अटल व्योम
+bfa_iocpf_sm_hwinit_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
+	iocpf->poll_समय = 0;
 	bfa_ioc_hwinit(iocpf->ioc, BFA_FALSE);
-}
+पूर्ण
 
 /*
  * Hardware is being initialized. Interrupts are enabled.
  * Holding hardware semaphore lock.
  */
-static void
-bfa_iocpf_sm_hwinit(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_hwinit(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_FWREADY:
+	चयन (event) अणु
+	हाल IOCPF_E_FWREADY:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_enabling);
-		break;
+		अवरोध;
 
-	case IOCPF_E_TIMEOUT:
-		writel(1, ioc->ioc_regs.ioc_sem_reg);
+	हाल IOCPF_E_TIMEOUT:
+		ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
 		bfa_fsm_send_event(ioc, IOC_E_PFFAILED);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_initfail_sync);
-		break;
+		अवरोध;
 
-	case IOCPF_E_DISABLE:
-		bfa_iocpf_timer_stop(ioc);
+	हाल IOCPF_E_DISABLE:
+		bfa_iocpf_समयr_stop(ioc);
 		bfa_ioc_sync_leave(ioc);
-		writel(1, ioc->ioc_regs.ioc_sem_reg);
+		ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabled);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_iocpf_sm_enabling_entry(struct bfa_iocpf_s *iocpf)
-{
-	bfa_iocpf_timer_start(iocpf->ioc);
+अटल व्योम
+bfa_iocpf_sm_enabling_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
+	bfa_iocpf_समयr_start(iocpf->ioc);
 	/*
-	 * Enable Interrupts before sending fw IOC ENABLE cmd.
+	 * Enable Interrupts beक्रमe sending fw IOC ENABLE cmd.
 	 */
 	iocpf->ioc->cbfn->reset_cbfn(iocpf->ioc->bfa);
 	bfa_ioc_send_enable(iocpf->ioc);
-}
+पूर्ण
 
 /*
- * Host IOC function is being enabled, awaiting response from firmware.
+ * Host IOC function is being enabled, aरुकोing response from firmware.
  * Semaphore is acquired.
  */
-static void
-bfa_iocpf_sm_enabling(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_enabling(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_FWRSP_ENABLE:
-		bfa_iocpf_timer_stop(ioc);
-		writel(1, ioc->ioc_regs.ioc_sem_reg);
-		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_ready);
-		break;
+	चयन (event) अणु
+	हाल IOCPF_E_FWRSP_ENABLE:
+		bfa_iocpf_समयr_stop(ioc);
+		ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
+		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_पढ़ोy);
+		अवरोध;
 
-	case IOCPF_E_INITFAIL:
-		bfa_iocpf_timer_stop(ioc);
+	हाल IOCPF_E_INITFAIL:
+		bfa_iocpf_समयr_stop(ioc);
 		fallthrough;
 
-	case IOCPF_E_TIMEOUT:
-		writel(1, ioc->ioc_regs.ioc_sem_reg);
-		if (event == IOCPF_E_TIMEOUT)
+	हाल IOCPF_E_TIMEOUT:
+		ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
+		अगर (event == IOCPF_E_TIMEOUT)
 			bfa_fsm_send_event(ioc, IOC_E_PFFAILED);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_initfail_sync);
-		break;
+		अवरोध;
 
-	case IOCPF_E_DISABLE:
-		bfa_iocpf_timer_stop(ioc);
-		writel(1, ioc->ioc_regs.ioc_sem_reg);
+	हाल IOCPF_E_DISABLE:
+		bfa_iocpf_समयr_stop(ioc);
+		ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabling);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_iocpf_sm_ready_entry(struct bfa_iocpf_s *iocpf)
-{
+अटल व्योम
+bfa_iocpf_sm_पढ़ोy_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
 	bfa_fsm_send_event(iocpf->ioc, IOC_E_ENABLED);
-}
+पूर्ण
 
-static void
-bfa_iocpf_sm_ready(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_पढ़ोy(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_DISABLE:
+	चयन (event) अणु
+	हाल IOCPF_E_DISABLE:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabling);
-		break;
+		अवरोध;
 
-	case IOCPF_E_GETATTRFAIL:
+	हाल IOCPF_E_GETATTRFAIL:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_initfail_sync);
-		break;
+		अवरोध;
 
-	case IOCPF_E_FAIL:
+	हाल IOCPF_E_FAIL:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_fail_sync);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_iocpf_sm_disabling_entry(struct bfa_iocpf_s *iocpf)
-{
-	bfa_iocpf_timer_start(iocpf->ioc);
+अटल व्योम
+bfa_iocpf_sm_disabling_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
+	bfa_iocpf_समयr_start(iocpf->ioc);
 	bfa_ioc_send_disable(iocpf->ioc);
-}
+पूर्ण
 
 /*
  * IOC is being disabled
  */
-static void
-bfa_iocpf_sm_disabling(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_disabling(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_FWRSP_DISABLE:
-		bfa_iocpf_timer_stop(ioc);
+	चयन (event) अणु
+	हाल IOCPF_E_FWRSP_DISABLE:
+		bfa_iocpf_समयr_stop(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabling_sync);
-		break;
+		अवरोध;
 
-	case IOCPF_E_FAIL:
-		bfa_iocpf_timer_stop(ioc);
+	हाल IOCPF_E_FAIL:
+		bfa_iocpf_समयr_stop(ioc);
 		fallthrough;
 
-	case IOCPF_E_TIMEOUT:
+	हाल IOCPF_E_TIMEOUT:
 		bfa_ioc_set_cur_ioc_fwstate(ioc, BFI_IOC_FAIL);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabling_sync);
-		break;
+		अवरोध;
 
-	case IOCPF_E_FWRSP_ENABLE:
-		break;
+	हाल IOCPF_E_FWRSP_ENABLE:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_iocpf_sm_disabling_sync_entry(struct bfa_iocpf_s *iocpf)
-{
+अटल व्योम
+bfa_iocpf_sm_disabling_sync_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
 	bfa_ioc_hw_sem_get(iocpf->ioc);
-}
+पूर्ण
 
 /*
- * IOC hb ack request is being removed.
+ * IOC hb ack request is being हटाओd.
  */
-static void
-bfa_iocpf_sm_disabling_sync(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_disabling_sync(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_SEMLOCKED:
+	चयन (event) अणु
+	हाल IOCPF_E_SEMLOCKED:
 		bfa_ioc_sync_leave(ioc);
-		writel(1, ioc->ioc_regs.ioc_sem_reg);
+		ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabled);
-		break;
+		अवरोध;
 
-	case IOCPF_E_SEM_ERROR:
+	हाल IOCPF_E_SEM_ERROR:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_fail);
 		bfa_fsm_send_event(ioc, IOC_E_HWFAILED);
-		break;
+		अवरोध;
 
-	case IOCPF_E_FAIL:
-		break;
+	हाल IOCPF_E_FAIL:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * IOC disable completion entry.
  */
-static void
-bfa_iocpf_sm_disabled_entry(struct bfa_iocpf_s *iocpf)
-{
+अटल व्योम
+bfa_iocpf_sm_disabled_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
 	bfa_ioc_mbox_flush(iocpf->ioc);
 	bfa_fsm_send_event(iocpf->ioc, IOC_E_DISABLED);
-}
+पूर्ण
 
-static void
-bfa_iocpf_sm_disabled(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_disabled(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_ENABLE:
-		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_semwait);
-		break;
+	चयन (event) अणु
+	हाल IOCPF_E_ENABLE:
+		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_semरुको);
+		अवरोध;
 
-	case IOCPF_E_STOP:
+	हाल IOCPF_E_STOP:
 		bfa_ioc_firmware_unlock(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_reset);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_iocpf_sm_initfail_sync_entry(struct bfa_iocpf_s *iocpf)
-{
+अटल व्योम
+bfa_iocpf_sm_initfail_sync_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
 	bfa_ioc_debug_save_ftrc(iocpf->ioc);
 	bfa_ioc_hw_sem_get(iocpf->ioc);
-}
+पूर्ण
 
 /*
  * Hardware initialization failed.
  */
-static void
-bfa_iocpf_sm_initfail_sync(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_initfail_sync(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_SEMLOCKED:
-		bfa_ioc_notify_fail(ioc);
+	चयन (event) अणु
+	हाल IOCPF_E_SEMLOCKED:
+		bfa_ioc_notअगरy_fail(ioc);
 		bfa_ioc_sync_leave(ioc);
 		bfa_ioc_set_cur_ioc_fwstate(ioc, BFI_IOC_FAIL);
-		writel(1, ioc->ioc_regs.ioc_sem_reg);
+		ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_initfail);
-		break;
+		अवरोध;
 
-	case IOCPF_E_SEM_ERROR:
+	हाल IOCPF_E_SEM_ERROR:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_fail);
 		bfa_fsm_send_event(ioc, IOC_E_HWFAILED);
-		break;
+		अवरोध;
 
-	case IOCPF_E_DISABLE:
-		bfa_sem_timer_stop(ioc);
+	हाल IOCPF_E_DISABLE:
+		bfa_sem_समयr_stop(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabling_sync);
-		break;
+		अवरोध;
 
-	case IOCPF_E_STOP:
-		bfa_sem_timer_stop(ioc);
+	हाल IOCPF_E_STOP:
+		bfa_sem_समयr_stop(ioc);
 		bfa_ioc_firmware_unlock(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_reset);
-		break;
+		अवरोध;
 
-	case IOCPF_E_FAIL:
-		break;
+	हाल IOCPF_E_FAIL:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_iocpf_sm_initfail_entry(struct bfa_iocpf_s *iocpf)
-{
+अटल व्योम
+bfa_iocpf_sm_initfail_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
 	bfa_trc(iocpf->ioc, 0);
-}
+पूर्ण
 
 /*
  * Hardware initialization failed.
  */
-static void
-bfa_iocpf_sm_initfail(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_initfail(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_DISABLE:
+	चयन (event) अणु
+	हाल IOCPF_E_DISABLE:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabled);
-		break;
+		अवरोध;
 
-	case IOCPF_E_STOP:
+	हाल IOCPF_E_STOP:
 		bfa_ioc_firmware_unlock(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_reset);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_iocpf_sm_fail_sync_entry(struct bfa_iocpf_s *iocpf)
-{
+अटल व्योम
+bfa_iocpf_sm_fail_sync_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
 	/*
 	 * Mark IOC as failed in hardware and stop firmware.
 	 */
@@ -1223,482 +1224,482 @@ bfa_iocpf_sm_fail_sync_entry(struct bfa_iocpf_s *iocpf)
 	bfa_ioc_mbox_flush(iocpf->ioc);
 
 	bfa_ioc_hw_sem_get(iocpf->ioc);
-}
+पूर्ण
 
-static void
-bfa_iocpf_sm_fail_sync(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_fail_sync(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_SEMLOCKED:
+	चयन (event) अणु
+	हाल IOCPF_E_SEMLOCKED:
 		bfa_ioc_sync_ack(ioc);
-		bfa_ioc_notify_fail(ioc);
-		if (!iocpf->auto_recover) {
+		bfa_ioc_notअगरy_fail(ioc);
+		अगर (!iocpf->स्वतः_recover) अणु
 			bfa_ioc_sync_leave(ioc);
 			bfa_ioc_set_cur_ioc_fwstate(ioc, BFI_IOC_FAIL);
-			writel(1, ioc->ioc_regs.ioc_sem_reg);
+			ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
 			bfa_fsm_set_state(iocpf, bfa_iocpf_sm_fail);
-		} else {
-			if (bfa_ioc_sync_complete(ioc))
+		पूर्ण अन्यथा अणु
+			अगर (bfa_ioc_sync_complete(ioc))
 				bfa_fsm_set_state(iocpf, bfa_iocpf_sm_hwinit);
-			else {
-				writel(1, ioc->ioc_regs.ioc_sem_reg);
-				bfa_fsm_set_state(iocpf, bfa_iocpf_sm_semwait);
-			}
-		}
-		break;
+			अन्यथा अणु
+				ग_लिखोl(1, ioc->ioc_regs.ioc_sem_reg);
+				bfa_fsm_set_state(iocpf, bfa_iocpf_sm_semरुको);
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case IOCPF_E_SEM_ERROR:
+	हाल IOCPF_E_SEM_ERROR:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_fail);
 		bfa_fsm_send_event(ioc, IOC_E_HWFAILED);
-		break;
+		अवरोध;
 
-	case IOCPF_E_DISABLE:
-		bfa_sem_timer_stop(ioc);
+	हाल IOCPF_E_DISABLE:
+		bfa_sem_समयr_stop(ioc);
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabling_sync);
-		break;
+		अवरोध;
 
-	case IOCPF_E_FAIL:
-		break;
+	हाल IOCPF_E_FAIL:
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_iocpf_sm_fail_entry(struct bfa_iocpf_s *iocpf)
-{
+अटल व्योम
+bfa_iocpf_sm_fail_entry(काष्ठा bfa_iocpf_s *iocpf)
+अणु
 	bfa_trc(iocpf->ioc, 0);
-}
+पूर्ण
 
 /*
  * IOC is in failed state.
  */
-static void
-bfa_iocpf_sm_fail(struct bfa_iocpf_s *iocpf, enum iocpf_event event)
-{
-	struct bfa_ioc_s *ioc = iocpf->ioc;
+अटल व्योम
+bfa_iocpf_sm_fail(काष्ठा bfa_iocpf_s *iocpf, क्रमागत iocpf_event event)
+अणु
+	काष्ठा bfa_ioc_s *ioc = iocpf->ioc;
 
 	bfa_trc(ioc, event);
 
-	switch (event) {
-	case IOCPF_E_DISABLE:
+	चयन (event) अणु
+	हाल IOCPF_E_DISABLE:
 		bfa_fsm_set_state(iocpf, bfa_iocpf_sm_disabled);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(ioc, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *  BFA IOC private functions
+ *  BFA IOC निजी functions
  */
 
 /*
- * Notify common modules registered for notification.
+ * Notअगरy common modules रेजिस्टरed क्रम notअगरication.
  */
-static void
-bfa_ioc_event_notify(struct bfa_ioc_s *ioc, enum bfa_ioc_event_e event)
-{
-	struct bfa_ioc_notify_s	*notify;
-	struct list_head	*qe;
+अटल व्योम
+bfa_ioc_event_notअगरy(काष्ठा bfa_ioc_s *ioc, क्रमागत bfa_ioc_event_e event)
+अणु
+	काष्ठा bfa_ioc_notअगरy_s	*notअगरy;
+	काष्ठा list_head	*qe;
 
-	list_for_each(qe, &ioc->notify_q) {
-		notify = (struct bfa_ioc_notify_s *)qe;
-		notify->cbfn(notify->cbarg, event);
-	}
-}
+	list_क्रम_each(qe, &ioc->notअगरy_q) अणु
+		notअगरy = (काष्ठा bfa_ioc_notअगरy_s *)qe;
+		notअगरy->cbfn(notअगरy->cbarg, event);
+	पूर्ण
+पूर्ण
 
-static void
-bfa_ioc_disable_comp(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_disable_comp(काष्ठा bfa_ioc_s *ioc)
+अणु
 	ioc->cbfn->disable_cbfn(ioc->bfa);
-	bfa_ioc_event_notify(ioc, BFA_IOC_E_DISABLED);
-}
+	bfa_ioc_event_notअगरy(ioc, BFA_IOC_E_DISABLED);
+पूर्ण
 
 bfa_boolean_t
-bfa_ioc_sem_get(void __iomem *sem_reg)
-{
+bfa_ioc_sem_get(व्योम __iomem *sem_reg)
+अणु
 	u32 r32;
-	int cnt = 0;
-#define BFA_SEM_SPINCNT	3000
+	पूर्णांक cnt = 0;
+#घोषणा BFA_SEM_SPINCNT	3000
 
-	r32 = readl(sem_reg);
+	r32 = पढ़ोl(sem_reg);
 
-	while ((r32 & 1) && (cnt < BFA_SEM_SPINCNT)) {
+	जबतक ((r32 & 1) && (cnt < BFA_SEM_SPINCNT)) अणु
 		cnt++;
 		udelay(2);
-		r32 = readl(sem_reg);
-	}
+		r32 = पढ़ोl(sem_reg);
+	पूर्ण
 
-	if (!(r32 & 1))
-		return BFA_TRUE;
+	अगर (!(r32 & 1))
+		वापस BFA_TRUE;
 
-	return BFA_FALSE;
-}
+	वापस BFA_FALSE;
+पूर्ण
 
-static void
-bfa_ioc_hw_sem_get(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_hw_sem_get(काष्ठा bfa_ioc_s *ioc)
+अणु
 	u32	r32;
 
 	/*
-	 * First read to the semaphore register will return 0, subsequent reads
-	 * will return 1. Semaphore is released by writing 1 to the register
+	 * First पढ़ो to the semaphore रेजिस्टर will वापस 0, subsequent पढ़ोs
+	 * will वापस 1. Semaphore is released by writing 1 to the रेजिस्टर
 	 */
-	r32 = readl(ioc->ioc_regs.ioc_sem_reg);
-	if (r32 == ~0) {
+	r32 = पढ़ोl(ioc->ioc_regs.ioc_sem_reg);
+	अगर (r32 == ~0) अणु
 		WARN_ON(r32 == ~0);
 		bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_SEM_ERROR);
-		return;
-	}
-	if (!(r32 & 1)) {
+		वापस;
+	पूर्ण
+	अगर (!(r32 & 1)) अणु
 		bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_SEMLOCKED);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bfa_sem_timer_start(ioc);
-}
+	bfa_sem_समयr_start(ioc);
+पूर्ण
 
 /*
  * Initialize LPU local memory (aka secondary memory / SRAM)
  */
-static void
-bfa_ioc_lmem_init(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_lmem_init(काष्ठा bfa_ioc_s *ioc)
+अणु
 	u32	pss_ctl;
-	int		i;
-#define PSS_LMEM_INIT_TIME  10000
+	पूर्णांक		i;
+#घोषणा PSS_LMEM_INIT_TIME  10000
 
-	pss_ctl = readl(ioc->ioc_regs.pss_ctl_reg);
+	pss_ctl = पढ़ोl(ioc->ioc_regs.pss_ctl_reg);
 	pss_ctl &= ~__PSS_LMEM_RESET;
 	pss_ctl |= __PSS_LMEM_INIT_EN;
 
 	/*
-	 * i2c workaround 12.5khz clock
+	 * i2c workaround 12.5khz घड़ी
 	 */
 	pss_ctl |= __PSS_I2C_CLK_DIV(3UL);
-	writel(pss_ctl, ioc->ioc_regs.pss_ctl_reg);
+	ग_लिखोl(pss_ctl, ioc->ioc_regs.pss_ctl_reg);
 
 	/*
-	 * wait for memory initialization to be complete
+	 * रुको क्रम memory initialization to be complete
 	 */
 	i = 0;
-	do {
-		pss_ctl = readl(ioc->ioc_regs.pss_ctl_reg);
+	करो अणु
+		pss_ctl = पढ़ोl(ioc->ioc_regs.pss_ctl_reg);
 		i++;
-	} while (!(pss_ctl & __PSS_LMEM_INIT_DONE) && (i < PSS_LMEM_INIT_TIME));
+	पूर्ण जबतक (!(pss_ctl & __PSS_LMEM_INIT_DONE) && (i < PSS_LMEM_INIT_TIME));
 
 	/*
-	 * If memory initialization is not successful, IOC timeout will catch
+	 * If memory initialization is not successful, IOC समयout will catch
 	 * such failures.
 	 */
 	WARN_ON(!(pss_ctl & __PSS_LMEM_INIT_DONE));
 	bfa_trc(ioc, pss_ctl);
 
 	pss_ctl &= ~(__PSS_LMEM_INIT_DONE | __PSS_LMEM_INIT_EN);
-	writel(pss_ctl, ioc->ioc_regs.pss_ctl_reg);
-}
+	ग_लिखोl(pss_ctl, ioc->ioc_regs.pss_ctl_reg);
+पूर्ण
 
-static void
-bfa_ioc_lpu_start(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_lpu_start(काष्ठा bfa_ioc_s *ioc)
+अणु
 	u32	pss_ctl;
 
 	/*
 	 * Take processor out of reset.
 	 */
-	pss_ctl = readl(ioc->ioc_regs.pss_ctl_reg);
+	pss_ctl = पढ़ोl(ioc->ioc_regs.pss_ctl_reg);
 	pss_ctl &= ~__PSS_LPU0_RESET;
 
-	writel(pss_ctl, ioc->ioc_regs.pss_ctl_reg);
-}
+	ग_लिखोl(pss_ctl, ioc->ioc_regs.pss_ctl_reg);
+पूर्ण
 
-static void
-bfa_ioc_lpu_stop(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_lpu_stop(काष्ठा bfa_ioc_s *ioc)
+अणु
 	u32	pss_ctl;
 
 	/*
 	 * Put processors in reset.
 	 */
-	pss_ctl = readl(ioc->ioc_regs.pss_ctl_reg);
+	pss_ctl = पढ़ोl(ioc->ioc_regs.pss_ctl_reg);
 	pss_ctl |= (__PSS_LPU0_RESET | __PSS_LPU1_RESET);
 
-	writel(pss_ctl, ioc->ioc_regs.pss_ctl_reg);
-}
+	ग_लिखोl(pss_ctl, ioc->ioc_regs.pss_ctl_reg);
+पूर्ण
 
 /*
  * Get driver and firmware versions.
  */
-void
-bfa_ioc_fwver_get(struct bfa_ioc_s *ioc, struct bfi_ioc_image_hdr_s *fwhdr)
-{
+व्योम
+bfa_ioc_fwver_get(काष्ठा bfa_ioc_s *ioc, काष्ठा bfi_ioc_image_hdr_s *fwhdr)
+अणु
 	u32	pgnum;
 	u32	loff = 0;
-	int		i;
+	पूर्णांक		i;
 	u32	*fwsig = (u32 *) fwhdr;
 
 	pgnum = PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, loff);
-	writel(pgnum, ioc->ioc_regs.host_page_num_fn);
+	ग_लिखोl(pgnum, ioc->ioc_regs.host_page_num_fn);
 
-	for (i = 0; i < (sizeof(struct bfi_ioc_image_hdr_s) / sizeof(u32));
-	     i++) {
+	क्रम (i = 0; i < (माप(काष्ठा bfi_ioc_image_hdr_s) / माप(u32));
+	     i++) अणु
 		fwsig[i] =
-			bfa_mem_read(ioc->ioc_regs.smem_page_start, loff);
-		loff += sizeof(u32);
-	}
-}
+			bfa_mem_पढ़ो(ioc->ioc_regs.smem_page_start, loff);
+		loff += माप(u32);
+	पूर्ण
+पूर्ण
 
 /*
- * Returns TRUE if driver is willing to work with current smem f/w version.
+ * Returns TRUE अगर driver is willing to work with current smem f/w version.
  */
 bfa_boolean_t
-bfa_ioc_fwver_cmp(struct bfa_ioc_s *ioc,
-		struct bfi_ioc_image_hdr_s *smem_fwhdr)
-{
-	struct bfi_ioc_image_hdr_s *drv_fwhdr;
-	enum bfi_ioc_img_ver_cmp_e smem_flash_cmp, drv_smem_cmp;
+bfa_ioc_fwver_cmp(काष्ठा bfa_ioc_s *ioc,
+		काष्ठा bfi_ioc_image_hdr_s *smem_fwhdr)
+अणु
+	काष्ठा bfi_ioc_image_hdr_s *drv_fwhdr;
+	क्रमागत bfi_ioc_img_ver_cmp_e smem_flash_cmp, drv_smem_cmp;
 
-	drv_fwhdr = (struct bfi_ioc_image_hdr_s *)
+	drv_fwhdr = (काष्ठा bfi_ioc_image_hdr_s *)
 		bfa_cb_image_get_chunk(bfa_ioc_asic_gen(ioc), 0);
 
 	/*
 	 * If smem is incompatible or old, driver should not work with it.
 	 */
 	drv_smem_cmp = bfa_ioc_fw_ver_patch_cmp(drv_fwhdr, smem_fwhdr);
-	if (drv_smem_cmp == BFI_IOC_IMG_VER_INCOMP ||
-		drv_smem_cmp == BFI_IOC_IMG_VER_OLD) {
-		return BFA_FALSE;
-	}
+	अगर (drv_smem_cmp == BFI_IOC_IMG_VER_INCOMP ||
+		drv_smem_cmp == BFI_IOC_IMG_VER_OLD) अणु
+		वापस BFA_FALSE;
+	पूर्ण
 
 	/*
-	 * IF Flash has a better F/W than smem do not work with smem.
+	 * IF Flash has a better F/W than smem करो not work with smem.
 	 * If smem f/w == flash f/w, as smem f/w not old | incmp, work with it.
-	 * If Flash is old or incomp work with smem iff smem f/w == drv f/w.
+	 * If Flash is old or incomp work with smem अगरf smem f/w == drv f/w.
 	 */
 	smem_flash_cmp = bfa_ioc_flash_fwver_cmp(ioc, smem_fwhdr);
 
-	if (smem_flash_cmp == BFI_IOC_IMG_VER_BETTER) {
-		return BFA_FALSE;
-	} else if (smem_flash_cmp == BFI_IOC_IMG_VER_SAME) {
-		return BFA_TRUE;
-	} else {
-		return (drv_smem_cmp == BFI_IOC_IMG_VER_SAME) ?
+	अगर (smem_flash_cmp == BFI_IOC_IMG_VER_BETTER) अणु
+		वापस BFA_FALSE;
+	पूर्ण अन्यथा अगर (smem_flash_cmp == BFI_IOC_IMG_VER_SAME) अणु
+		वापस BFA_TRUE;
+	पूर्ण अन्यथा अणु
+		वापस (drv_smem_cmp == BFI_IOC_IMG_VER_SAME) ?
 			BFA_TRUE : BFA_FALSE;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Return true if current running version is valid. Firmware signature and
+ * Return true अगर current running version is valid. Firmware signature and
  * execution context (driver/bios) must match.
  */
-static bfa_boolean_t
-bfa_ioc_fwver_valid(struct bfa_ioc_s *ioc, u32 boot_env)
-{
-	struct bfi_ioc_image_hdr_s fwhdr;
+अटल bfa_boolean_t
+bfa_ioc_fwver_valid(काष्ठा bfa_ioc_s *ioc, u32 boot_env)
+अणु
+	काष्ठा bfi_ioc_image_hdr_s fwhdr;
 
 	bfa_ioc_fwver_get(ioc, &fwhdr);
 
-	if (swab32(fwhdr.bootenv) != boot_env) {
+	अगर (swab32(fwhdr.bootenv) != boot_env) अणु
 		bfa_trc(ioc, fwhdr.bootenv);
 		bfa_trc(ioc, boot_env);
-		return BFA_FALSE;
-	}
+		वापस BFA_FALSE;
+	पूर्ण
 
-	return bfa_ioc_fwver_cmp(ioc, &fwhdr);
-}
+	वापस bfa_ioc_fwver_cmp(ioc, &fwhdr);
+पूर्ण
 
-static bfa_boolean_t
-bfa_ioc_fwver_md5_check(struct bfi_ioc_image_hdr_s *fwhdr_1,
-				struct bfi_ioc_image_hdr_s *fwhdr_2)
-{
-	int i;
+अटल bfa_boolean_t
+bfa_ioc_fwver_md5_check(काष्ठा bfi_ioc_image_hdr_s *fwhdr_1,
+				काष्ठा bfi_ioc_image_hdr_s *fwhdr_2)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BFI_IOC_MD5SUM_SZ; i++)
-		if (fwhdr_1->md5sum[i] != fwhdr_2->md5sum[i])
-			return BFA_FALSE;
+	क्रम (i = 0; i < BFI_IOC_MD5SUM_SZ; i++)
+		अगर (fwhdr_1->md5sum[i] != fwhdr_2->md5sum[i])
+			वापस BFA_FALSE;
 
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
 /*
- * Returns TRUE if major minor and maintainence are same.
- * If patch versions are same, check for MD5 Checksum to be same.
+ * Returns TRUE अगर major minor and मुख्यtainence are same.
+ * If patch versions are same, check क्रम MD5 Checksum to be same.
  */
-static bfa_boolean_t
-bfa_ioc_fw_ver_compatible(struct bfi_ioc_image_hdr_s *drv_fwhdr,
-				struct bfi_ioc_image_hdr_s *fwhdr_to_cmp)
-{
-	if (drv_fwhdr->signature != fwhdr_to_cmp->signature)
-		return BFA_FALSE;
+अटल bfa_boolean_t
+bfa_ioc_fw_ver_compatible(काष्ठा bfi_ioc_image_hdr_s *drv_fwhdr,
+				काष्ठा bfi_ioc_image_hdr_s *fwhdr_to_cmp)
+अणु
+	अगर (drv_fwhdr->signature != fwhdr_to_cmp->signature)
+		वापस BFA_FALSE;
 
-	if (drv_fwhdr->fwver.major != fwhdr_to_cmp->fwver.major)
-		return BFA_FALSE;
+	अगर (drv_fwhdr->fwver.major != fwhdr_to_cmp->fwver.major)
+		वापस BFA_FALSE;
 
-	if (drv_fwhdr->fwver.minor != fwhdr_to_cmp->fwver.minor)
-		return BFA_FALSE;
+	अगर (drv_fwhdr->fwver.minor != fwhdr_to_cmp->fwver.minor)
+		वापस BFA_FALSE;
 
-	if (drv_fwhdr->fwver.maint != fwhdr_to_cmp->fwver.maint)
-		return BFA_FALSE;
+	अगर (drv_fwhdr->fwver.मुख्यt != fwhdr_to_cmp->fwver.मुख्यt)
+		वापस BFA_FALSE;
 
-	if (drv_fwhdr->fwver.patch == fwhdr_to_cmp->fwver.patch &&
+	अगर (drv_fwhdr->fwver.patch == fwhdr_to_cmp->fwver.patch &&
 		drv_fwhdr->fwver.phase == fwhdr_to_cmp->fwver.phase &&
-		drv_fwhdr->fwver.build == fwhdr_to_cmp->fwver.build) {
-		return bfa_ioc_fwver_md5_check(drv_fwhdr, fwhdr_to_cmp);
-	}
+		drv_fwhdr->fwver.build == fwhdr_to_cmp->fwver.build) अणु
+		वापस bfa_ioc_fwver_md5_check(drv_fwhdr, fwhdr_to_cmp);
+	पूर्ण
 
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
-static bfa_boolean_t
-bfa_ioc_flash_fwver_valid(struct bfi_ioc_image_hdr_s *flash_fwhdr)
-{
-	if (flash_fwhdr->fwver.major == 0 || flash_fwhdr->fwver.major == 0xFF)
-		return BFA_FALSE;
+अटल bfa_boolean_t
+bfa_ioc_flash_fwver_valid(काष्ठा bfi_ioc_image_hdr_s *flash_fwhdr)
+अणु
+	अगर (flash_fwhdr->fwver.major == 0 || flash_fwhdr->fwver.major == 0xFF)
+		वापस BFA_FALSE;
 
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
-static bfa_boolean_t fwhdr_is_ga(struct bfi_ioc_image_hdr_s *fwhdr)
-{
-	if (fwhdr->fwver.phase == 0 &&
+अटल bfa_boolean_t fwhdr_is_ga(काष्ठा bfi_ioc_image_hdr_s *fwhdr)
+अणु
+	अगर (fwhdr->fwver.phase == 0 &&
 		fwhdr->fwver.build == 0)
-		return BFA_TRUE;
+		वापस BFA_TRUE;
 
-	return BFA_FALSE;
-}
+	वापस BFA_FALSE;
+पूर्ण
 
 /*
- * Returns TRUE if both are compatible and patch of fwhdr_to_cmp is better.
+ * Returns TRUE अगर both are compatible and patch of fwhdr_to_cmp is better.
  */
-static enum bfi_ioc_img_ver_cmp_e
-bfa_ioc_fw_ver_patch_cmp(struct bfi_ioc_image_hdr_s *base_fwhdr,
-				struct bfi_ioc_image_hdr_s *fwhdr_to_cmp)
-{
-	if (bfa_ioc_fw_ver_compatible(base_fwhdr, fwhdr_to_cmp) == BFA_FALSE)
-		return BFI_IOC_IMG_VER_INCOMP;
+अटल क्रमागत bfi_ioc_img_ver_cmp_e
+bfa_ioc_fw_ver_patch_cmp(काष्ठा bfi_ioc_image_hdr_s *base_fwhdr,
+				काष्ठा bfi_ioc_image_hdr_s *fwhdr_to_cmp)
+अणु
+	अगर (bfa_ioc_fw_ver_compatible(base_fwhdr, fwhdr_to_cmp) == BFA_FALSE)
+		वापस BFI_IOC_IMG_VER_INCOMP;
 
-	if (fwhdr_to_cmp->fwver.patch > base_fwhdr->fwver.patch)
-		return BFI_IOC_IMG_VER_BETTER;
+	अगर (fwhdr_to_cmp->fwver.patch > base_fwhdr->fwver.patch)
+		वापस BFI_IOC_IMG_VER_BETTER;
 
-	else if (fwhdr_to_cmp->fwver.patch < base_fwhdr->fwver.patch)
-		return BFI_IOC_IMG_VER_OLD;
+	अन्यथा अगर (fwhdr_to_cmp->fwver.patch < base_fwhdr->fwver.patch)
+		वापस BFI_IOC_IMG_VER_OLD;
 
 	/*
-	 * GA takes priority over internal builds of the same patch stream.
-	 * At this point major minor maint and patch numbers are same.
+	 * GA takes priority over पूर्णांकernal builds of the same patch stream.
+	 * At this poपूर्णांक major minor मुख्यt and patch numbers are same.
 	 */
 
-	if (fwhdr_is_ga(base_fwhdr) == BFA_TRUE) {
-		if (fwhdr_is_ga(fwhdr_to_cmp))
-			return BFI_IOC_IMG_VER_SAME;
-		else
-			return BFI_IOC_IMG_VER_OLD;
-	} else {
-		if (fwhdr_is_ga(fwhdr_to_cmp))
-			return BFI_IOC_IMG_VER_BETTER;
-	}
+	अगर (fwhdr_is_ga(base_fwhdr) == BFA_TRUE) अणु
+		अगर (fwhdr_is_ga(fwhdr_to_cmp))
+			वापस BFI_IOC_IMG_VER_SAME;
+		अन्यथा
+			वापस BFI_IOC_IMG_VER_OLD;
+	पूर्ण अन्यथा अणु
+		अगर (fwhdr_is_ga(fwhdr_to_cmp))
+			वापस BFI_IOC_IMG_VER_BETTER;
+	पूर्ण
 
-	if (fwhdr_to_cmp->fwver.phase > base_fwhdr->fwver.phase)
-		return BFI_IOC_IMG_VER_BETTER;
-	else if (fwhdr_to_cmp->fwver.phase < base_fwhdr->fwver.phase)
-		return BFI_IOC_IMG_VER_OLD;
+	अगर (fwhdr_to_cmp->fwver.phase > base_fwhdr->fwver.phase)
+		वापस BFI_IOC_IMG_VER_BETTER;
+	अन्यथा अगर (fwhdr_to_cmp->fwver.phase < base_fwhdr->fwver.phase)
+		वापस BFI_IOC_IMG_VER_OLD;
 
-	if (fwhdr_to_cmp->fwver.build > base_fwhdr->fwver.build)
-		return BFI_IOC_IMG_VER_BETTER;
-	else if (fwhdr_to_cmp->fwver.build < base_fwhdr->fwver.build)
-		return BFI_IOC_IMG_VER_OLD;
+	अगर (fwhdr_to_cmp->fwver.build > base_fwhdr->fwver.build)
+		वापस BFI_IOC_IMG_VER_BETTER;
+	अन्यथा अगर (fwhdr_to_cmp->fwver.build < base_fwhdr->fwver.build)
+		वापस BFI_IOC_IMG_VER_OLD;
 
 	/*
 	 * All Version Numbers are equal.
-	 * Md5 check to be done as a part of compatibility check.
+	 * Md5 check to be करोne as a part of compatibility check.
 	 */
-	return BFI_IOC_IMG_VER_SAME;
-}
+	वापस BFI_IOC_IMG_VER_SAME;
+पूर्ण
 
-#define BFA_FLASH_PART_FWIMG_ADDR	0x100000 /* fw image address */
+#घोषणा BFA_FLASH_PART_FWIMG_ADDR	0x100000 /* fw image address */
 
 bfa_status_t
-bfa_ioc_flash_img_get_chnk(struct bfa_ioc_s *ioc, u32 off,
+bfa_ioc_flash_img_get_chnk(काष्ठा bfa_ioc_s *ioc, u32 off,
 				u32 *fwimg)
-{
-	return bfa_flash_raw_read(ioc->pcidev.pci_bar_kva,
-			BFA_FLASH_PART_FWIMG_ADDR + (off * sizeof(u32)),
-			(char *)fwimg, BFI_FLASH_CHUNK_SZ);
-}
+अणु
+	वापस bfa_flash_raw_पढ़ो(ioc->pcidev.pci_bar_kva,
+			BFA_FLASH_PART_FWIMG_ADDR + (off * माप(u32)),
+			(अक्षर *)fwimg, BFI_FLASH_CHUNK_SZ);
+पूर्ण
 
-static enum bfi_ioc_img_ver_cmp_e
-bfa_ioc_flash_fwver_cmp(struct bfa_ioc_s *ioc,
-			struct bfi_ioc_image_hdr_s *base_fwhdr)
-{
-	struct bfi_ioc_image_hdr_s *flash_fwhdr;
+अटल क्रमागत bfi_ioc_img_ver_cmp_e
+bfa_ioc_flash_fwver_cmp(काष्ठा bfa_ioc_s *ioc,
+			काष्ठा bfi_ioc_image_hdr_s *base_fwhdr)
+अणु
+	काष्ठा bfi_ioc_image_hdr_s *flash_fwhdr;
 	bfa_status_t status;
 	u32 fwimg[BFI_FLASH_CHUNK_SZ_WORDS];
 
 	status = bfa_ioc_flash_img_get_chnk(ioc, 0, fwimg);
-	if (status != BFA_STATUS_OK)
-		return BFI_IOC_IMG_VER_INCOMP;
+	अगर (status != BFA_STATUS_OK)
+		वापस BFI_IOC_IMG_VER_INCOMP;
 
-	flash_fwhdr = (struct bfi_ioc_image_hdr_s *) fwimg;
-	if (bfa_ioc_flash_fwver_valid(flash_fwhdr) == BFA_TRUE)
-		return bfa_ioc_fw_ver_patch_cmp(base_fwhdr, flash_fwhdr);
-	else
-		return BFI_IOC_IMG_VER_INCOMP;
-}
+	flash_fwhdr = (काष्ठा bfi_ioc_image_hdr_s *) fwimg;
+	अगर (bfa_ioc_flash_fwver_valid(flash_fwhdr) == BFA_TRUE)
+		वापस bfa_ioc_fw_ver_patch_cmp(base_fwhdr, flash_fwhdr);
+	अन्यथा
+		वापस BFI_IOC_IMG_VER_INCOMP;
+पूर्ण
 
 
 /*
  * Invalidate fwver signature
  */
 bfa_status_t
-bfa_ioc_fwsig_invalidate(struct bfa_ioc_s *ioc)
-{
+bfa_ioc_fwsig_invalidate(काष्ठा bfa_ioc_s *ioc)
+अणु
 
 	u32	pgnum;
 	u32	loff = 0;
-	enum bfi_ioc_state ioc_fwstate;
+	क्रमागत bfi_ioc_state ioc_fwstate;
 
 	ioc_fwstate = bfa_ioc_get_cur_ioc_fwstate(ioc);
-	if (!bfa_ioc_state_disabled(ioc_fwstate))
-		return BFA_STATUS_ADAPTER_ENABLED;
+	अगर (!bfa_ioc_state_disabled(ioc_fwstate))
+		वापस BFA_STATUS_ADAPTER_ENABLED;
 
 	pgnum = PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, loff);
-	writel(pgnum, ioc->ioc_regs.host_page_num_fn);
-	bfa_mem_write(ioc->ioc_regs.smem_page_start, loff, BFA_IOC_FW_INV_SIGN);
+	ग_लिखोl(pgnum, ioc->ioc_regs.host_page_num_fn);
+	bfa_mem_ग_लिखो(ioc->ioc_regs.smem_page_start, loff, BFA_IOC_FW_INV_SIGN);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Conditionally flush any pending message from firmware at start.
  */
-static void
-bfa_ioc_msgflush(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_msgflush(काष्ठा bfa_ioc_s *ioc)
+अणु
 	u32	r32;
 
-	r32 = readl(ioc->ioc_regs.lpu_mbox_cmd);
-	if (r32)
-		writel(1, ioc->ioc_regs.lpu_mbox_cmd);
-}
+	r32 = पढ़ोl(ioc->ioc_regs.lpu_mbox_cmd);
+	अगर (r32)
+		ग_लिखोl(1, ioc->ioc_regs.lpu_mbox_cmd);
+पूर्ण
 
-static void
-bfa_ioc_hwinit(struct bfa_ioc_s *ioc, bfa_boolean_t force)
-{
-	enum bfi_ioc_state ioc_fwstate;
+अटल व्योम
+bfa_ioc_hwinit(काष्ठा bfa_ioc_s *ioc, bfa_boolean_t क्रमce)
+अणु
+	क्रमागत bfi_ioc_state ioc_fwstate;
 	bfa_boolean_t fwvalid;
 	u32 boot_type;
 	u32 boot_env;
 
 	ioc_fwstate = bfa_ioc_get_cur_ioc_fwstate(ioc);
 
-	if (force)
+	अगर (क्रमce)
 		ioc_fwstate = BFI_IOC_UNINIT;
 
 	bfa_trc(ioc, ioc_fwstate);
@@ -1707,25 +1708,25 @@ bfa_ioc_hwinit(struct bfa_ioc_s *ioc, bfa_boolean_t force)
 	boot_env = BFI_FWBOOT_ENV_OS;
 
 	/*
-	 * check if firmware is valid
+	 * check अगर firmware is valid
 	 */
 	fwvalid = (ioc_fwstate == BFI_IOC_UNINIT) ?
 		BFA_FALSE : bfa_ioc_fwver_valid(ioc, boot_env);
 
-	if (!fwvalid) {
-		if (bfa_ioc_boot(ioc, boot_type, boot_env) == BFA_STATUS_OK)
+	अगर (!fwvalid) अणु
+		अगर (bfa_ioc_boot(ioc, boot_type, boot_env) == BFA_STATUS_OK)
 			bfa_ioc_poll_fwinit(ioc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * If hardware initialization is in progress (initialized by other IOC),
-	 * just wait for an initialization completion interrupt.
+	 * just रुको क्रम an initialization completion पूर्णांकerrupt.
 	 */
-	if (ioc_fwstate == BFI_IOC_INITING) {
+	अगर (ioc_fwstate == BFI_IOC_INITING) अणु
 		bfa_ioc_poll_fwinit(ioc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * If IOC function is disabled and firmware version is same,
@@ -1735,36 +1736,36 @@ bfa_ioc_hwinit(struct bfa_ioc_s *ioc, bfa_boolean_t force)
 	 * convergence, IOC will be in operational state when 2nd driver
 	 * is loaded.
 	 */
-	if (ioc_fwstate == BFI_IOC_DISABLED || ioc_fwstate == BFI_IOC_OP) {
+	अगर (ioc_fwstate == BFI_IOC_DISABLED || ioc_fwstate == BFI_IOC_OP) अणु
 
 		/*
-		 * When using MSI-X any pending firmware ready event should
-		 * be flushed. Otherwise MSI-X interrupts are not delivered.
+		 * When using MSI-X any pending firmware पढ़ोy event should
+		 * be flushed. Otherwise MSI-X पूर्णांकerrupts are not delivered.
 		 */
 		bfa_ioc_msgflush(ioc);
 		bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_FWREADY);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Initialize the h/w for any other states.
+	 * Initialize the h/w क्रम any other states.
 	 */
-	if (bfa_ioc_boot(ioc, boot_type, boot_env) == BFA_STATUS_OK)
+	अगर (bfa_ioc_boot(ioc, boot_type, boot_env) == BFA_STATUS_OK)
 		bfa_ioc_poll_fwinit(ioc);
-}
+पूर्ण
 
-static void
-bfa_ioc_timeout(void *ioc_arg)
-{
-	struct bfa_ioc_s  *ioc = (struct bfa_ioc_s *) ioc_arg;
+अटल व्योम
+bfa_ioc_समयout(व्योम *ioc_arg)
+अणु
+	काष्ठा bfa_ioc_s  *ioc = (काष्ठा bfa_ioc_s *) ioc_arg;
 
 	bfa_trc(ioc, 0);
 	bfa_fsm_send_event(ioc, IOC_E_TIMEOUT);
-}
+पूर्ण
 
-void
-bfa_ioc_mbox_send(struct bfa_ioc_s *ioc, void *ioc_msg, int len)
-{
+व्योम
+bfa_ioc_mbox_send(काष्ठा bfa_ioc_s *ioc, व्योम *ioc_msg, पूर्णांक len)
+अणु
 	u32 *msgp = (u32 *) ioc_msg;
 	u32 i;
 
@@ -1774,91 +1775,91 @@ bfa_ioc_mbox_send(struct bfa_ioc_s *ioc, void *ioc_msg, int len)
 	WARN_ON(len > BFI_IOC_MSGLEN_MAX);
 
 	/*
-	 * first write msg to mailbox registers
+	 * first ग_लिखो msg to mailbox रेजिस्टरs
 	 */
-	for (i = 0; i < len / sizeof(u32); i++)
-		writel(cpu_to_le32(msgp[i]),
-			ioc->ioc_regs.hfn_mbox + i * sizeof(u32));
+	क्रम (i = 0; i < len / माप(u32); i++)
+		ग_लिखोl(cpu_to_le32(msgp[i]),
+			ioc->ioc_regs.hfn_mbox + i * माप(u32));
 
-	for (; i < BFI_IOC_MSGLEN_MAX / sizeof(u32); i++)
-		writel(0, ioc->ioc_regs.hfn_mbox + i * sizeof(u32));
+	क्रम (; i < BFI_IOC_MSGLEN_MAX / माप(u32); i++)
+		ग_लिखोl(0, ioc->ioc_regs.hfn_mbox + i * माप(u32));
 
 	/*
-	 * write 1 to mailbox CMD to trigger LPU event
+	 * ग_लिखो 1 to mailbox CMD to trigger LPU event
 	 */
-	writel(1, ioc->ioc_regs.hfn_mbox_cmd);
-	(void) readl(ioc->ioc_regs.hfn_mbox_cmd);
-}
+	ग_लिखोl(1, ioc->ioc_regs.hfn_mbox_cmd);
+	(व्योम) पढ़ोl(ioc->ioc_regs.hfn_mbox_cmd);
+पूर्ण
 
-static void
-bfa_ioc_send_enable(struct bfa_ioc_s *ioc)
-{
-	struct bfi_ioc_ctrl_req_s enable_req;
+अटल व्योम
+bfa_ioc_send_enable(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfi_ioc_ctrl_req_s enable_req;
 
 	bfi_h2i_set(enable_req.mh, BFI_MC_IOC, BFI_IOC_H2I_ENABLE_REQ,
 		    bfa_ioc_portid(ioc));
 	enable_req.clscode = cpu_to_be16(ioc->clscode);
-	/* unsigned 32-bit time_t overflow in y2106 */
-	enable_req.tv_sec = be32_to_cpu(ktime_get_real_seconds());
-	bfa_ioc_mbox_send(ioc, &enable_req, sizeof(struct bfi_ioc_ctrl_req_s));
-}
+	/* अचिन्हित 32-bit समय_प्रकार overflow in y2106 */
+	enable_req.tv_sec = be32_to_cpu(kसमय_get_real_seconds());
+	bfa_ioc_mbox_send(ioc, &enable_req, माप(काष्ठा bfi_ioc_ctrl_req_s));
+पूर्ण
 
-static void
-bfa_ioc_send_disable(struct bfa_ioc_s *ioc)
-{
-	struct bfi_ioc_ctrl_req_s disable_req;
+अटल व्योम
+bfa_ioc_send_disable(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfi_ioc_ctrl_req_s disable_req;
 
 	bfi_h2i_set(disable_req.mh, BFI_MC_IOC, BFI_IOC_H2I_DISABLE_REQ,
 		    bfa_ioc_portid(ioc));
 	disable_req.clscode = cpu_to_be16(ioc->clscode);
-	/* unsigned 32-bit time_t overflow in y2106 */
-	disable_req.tv_sec = be32_to_cpu(ktime_get_real_seconds());
-	bfa_ioc_mbox_send(ioc, &disable_req, sizeof(struct bfi_ioc_ctrl_req_s));
-}
+	/* अचिन्हित 32-bit समय_प्रकार overflow in y2106 */
+	disable_req.tv_sec = be32_to_cpu(kसमय_get_real_seconds());
+	bfa_ioc_mbox_send(ioc, &disable_req, माप(काष्ठा bfi_ioc_ctrl_req_s));
+पूर्ण
 
-static void
-bfa_ioc_send_getattr(struct bfa_ioc_s *ioc)
-{
-	struct bfi_ioc_getattr_req_s	attr_req;
+अटल व्योम
+bfa_ioc_send_getattr(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfi_ioc_getattr_req_s	attr_req;
 
 	bfi_h2i_set(attr_req.mh, BFI_MC_IOC, BFI_IOC_H2I_GETATTR_REQ,
 		    bfa_ioc_portid(ioc));
 	bfa_dma_be_addr_set(attr_req.attr_addr, ioc->attr_dma.pa);
-	bfa_ioc_mbox_send(ioc, &attr_req, sizeof(attr_req));
-}
+	bfa_ioc_mbox_send(ioc, &attr_req, माप(attr_req));
+पूर्ण
 
-static void
-bfa_ioc_hb_check(void *cbarg)
-{
-	struct bfa_ioc_s  *ioc = cbarg;
+अटल व्योम
+bfa_ioc_hb_check(व्योम *cbarg)
+अणु
+	काष्ठा bfa_ioc_s  *ioc = cbarg;
 	u32	hb_count;
 
-	hb_count = readl(ioc->ioc_regs.heartbeat);
-	if (ioc->hb_count == hb_count) {
+	hb_count = पढ़ोl(ioc->ioc_regs.heartbeat);
+	अगर (ioc->hb_count == hb_count) अणु
 		bfa_ioc_recover(ioc);
-		return;
-	} else {
+		वापस;
+	पूर्ण अन्यथा अणु
 		ioc->hb_count = hb_count;
-	}
+	पूर्ण
 
 	bfa_ioc_mbox_poll(ioc);
-	bfa_hb_timer_start(ioc);
-}
+	bfa_hb_समयr_start(ioc);
+पूर्ण
 
-static void
-bfa_ioc_hb_monitor(struct bfa_ioc_s *ioc)
-{
-	ioc->hb_count = readl(ioc->ioc_regs.heartbeat);
-	bfa_hb_timer_start(ioc);
-}
+अटल व्योम
+bfa_ioc_hb_monitor(काष्ठा bfa_ioc_s *ioc)
+अणु
+	ioc->hb_count = पढ़ोl(ioc->ioc_regs.heartbeat);
+	bfa_hb_समयr_start(ioc);
+पूर्ण
 
 /*
- *	Initiate a full firmware download.
+ *	Initiate a full firmware करोwnload.
  */
-static bfa_status_t
-bfa_ioc_download_fw(struct bfa_ioc_s *ioc, u32 boot_type,
+अटल bfa_status_t
+bfa_ioc_करोwnload_fw(काष्ठा bfa_ioc_s *ioc, u32 boot_type,
 		    u32 boot_env)
-{
+अणु
 	u32 *fwimg;
 	u32 pgnum;
 	u32 loff = 0;
@@ -1869,96 +1870,96 @@ bfa_ioc_download_fw(struct bfa_ioc_s *ioc, u32 boot_type,
 	u32 fwimg_buf[BFI_FLASH_CHUNK_SZ_WORDS];
 	bfa_status_t status;
 
-	if (boot_env == BFI_FWBOOT_ENV_OS &&
-		boot_type == BFI_FWBOOT_TYPE_FLASH) {
-		fwimg_size = BFI_FLASH_IMAGE_SZ/sizeof(u32);
+	अगर (boot_env == BFI_FWBOOT_ENV_OS &&
+		boot_type == BFI_FWBOOT_TYPE_FLASH) अणु
+		fwimg_size = BFI_FLASH_IMAGE_SZ/माप(u32);
 
 		status = bfa_ioc_flash_img_get_chnk(ioc,
 			BFA_IOC_FLASH_CHUNK_ADDR(chunkno), fwimg_buf);
-		if (status != BFA_STATUS_OK)
-			return status;
+		अगर (status != BFA_STATUS_OK)
+			वापस status;
 
 		fwimg = fwimg_buf;
-	} else {
+	पूर्ण अन्यथा अणु
 		fwimg_size = bfa_cb_image_get_size(bfa_ioc_asic_gen(ioc));
 		fwimg = bfa_cb_image_get_chunk(bfa_ioc_asic_gen(ioc),
 					BFA_IOC_FLASH_CHUNK_ADDR(chunkno));
-	}
+	पूर्ण
 
 	bfa_trc(ioc, fwimg_size);
 
 
 	pgnum = PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, loff);
-	writel(pgnum, ioc->ioc_regs.host_page_num_fn);
+	ग_लिखोl(pgnum, ioc->ioc_regs.host_page_num_fn);
 
-	for (i = 0; i < fwimg_size; i++) {
+	क्रम (i = 0; i < fwimg_size; i++) अणु
 
-		if (BFA_IOC_FLASH_CHUNK_NO(i) != chunkno) {
+		अगर (BFA_IOC_FLASH_CHUNK_NO(i) != chunkno) अणु
 			chunkno = BFA_IOC_FLASH_CHUNK_NO(i);
 
-			if (boot_env == BFI_FWBOOT_ENV_OS &&
-				boot_type == BFI_FWBOOT_TYPE_FLASH) {
+			अगर (boot_env == BFI_FWBOOT_ENV_OS &&
+				boot_type == BFI_FWBOOT_TYPE_FLASH) अणु
 				status = bfa_ioc_flash_img_get_chnk(ioc,
 					BFA_IOC_FLASH_CHUNK_ADDR(chunkno),
 					fwimg_buf);
-				if (status != BFA_STATUS_OK)
-					return status;
+				अगर (status != BFA_STATUS_OK)
+					वापस status;
 
 				fwimg = fwimg_buf;
-			} else {
+			पूर्ण अन्यथा अणु
 				fwimg = bfa_cb_image_get_chunk(
 					bfa_ioc_asic_gen(ioc),
 					BFA_IOC_FLASH_CHUNK_ADDR(chunkno));
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * write smem
+		 * ग_लिखो smem
 		 */
-		bfa_mem_write(ioc->ioc_regs.smem_page_start, loff,
+		bfa_mem_ग_लिखो(ioc->ioc_regs.smem_page_start, loff,
 			      fwimg[BFA_IOC_FLASH_OFFSET_IN_CHUNK(i)]);
 
-		loff += sizeof(u32);
+		loff += माप(u32);
 
 		/*
 		 * handle page offset wrap around
 		 */
 		loff = PSS_SMEM_PGOFF(loff);
-		if (loff == 0) {
+		अगर (loff == 0) अणु
 			pgnum++;
-			writel(pgnum, ioc->ioc_regs.host_page_num_fn);
-		}
-	}
+			ग_लिखोl(pgnum, ioc->ioc_regs.host_page_num_fn);
+		पूर्ण
+	पूर्ण
 
-	writel(PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, 0),
+	ग_लिखोl(PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, 0),
 			ioc->ioc_regs.host_page_num_fn);
 
 	/*
 	 * Set boot type, env and device mode at the end.
 	 */
-	if (boot_env == BFI_FWBOOT_ENV_OS &&
-		boot_type == BFI_FWBOOT_TYPE_FLASH) {
+	अगर (boot_env == BFI_FWBOOT_ENV_OS &&
+		boot_type == BFI_FWBOOT_TYPE_FLASH) अणु
 		boot_type = BFI_FWBOOT_TYPE_NORMAL;
-	}
+	पूर्ण
 	asicmode = BFI_FWBOOT_DEVMODE(ioc->asic_gen, ioc->asic_mode,
 				ioc->port0_mode, ioc->port1_mode);
-	bfa_mem_write(ioc->ioc_regs.smem_page_start, BFI_FWBOOT_DEVMODE_OFF,
+	bfa_mem_ग_लिखो(ioc->ioc_regs.smem_page_start, BFI_FWBOOT_DEVMODE_OFF,
 			swab32(asicmode));
-	bfa_mem_write(ioc->ioc_regs.smem_page_start, BFI_FWBOOT_TYPE_OFF,
+	bfa_mem_ग_लिखो(ioc->ioc_regs.smem_page_start, BFI_FWBOOT_TYPE_OFF,
 			swab32(boot_type));
-	bfa_mem_write(ioc->ioc_regs.smem_page_start, BFI_FWBOOT_ENV_OFF,
+	bfa_mem_ग_लिखो(ioc->ioc_regs.smem_page_start, BFI_FWBOOT_ENV_OFF,
 			swab32(boot_env));
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 
 /*
  * Update BFA configuration from firmware configuration.
  */
-static void
-bfa_ioc_getattr_reply(struct bfa_ioc_s *ioc)
-{
-	struct bfi_ioc_attr_s	*attr = ioc->attr;
+अटल व्योम
+bfa_ioc_getattr_reply(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfi_ioc_attr_s	*attr = ioc->attr;
 
 	attr->adapter_prop  = be32_to_cpu(attr->adapter_prop);
 	attr->card_type     = be32_to_cpu(attr->card_type);
@@ -1967,81 +1968,81 @@ bfa_ioc_getattr_reply(struct bfa_ioc_s *ioc)
 	attr->mfg_year	= be16_to_cpu(attr->mfg_year);
 
 	bfa_fsm_send_event(ioc, IOC_E_FWRSP_GETATTR);
-}
+पूर्ण
 
 /*
- * Attach time initialization of mbox logic.
+ * Attach समय initialization of mbox logic.
  */
-static void
-bfa_ioc_mbox_attach(struct bfa_ioc_s *ioc)
-{
-	struct bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
-	int	mc;
+अटल व्योम
+bfa_ioc_mbox_attach(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
+	पूर्णांक	mc;
 
 	INIT_LIST_HEAD(&mod->cmd_q);
-	for (mc = 0; mc < BFI_MC_MAX; mc++) {
-		mod->mbhdlr[mc].cbfn = NULL;
+	क्रम (mc = 0; mc < BFI_MC_MAX; mc++) अणु
+		mod->mbhdlr[mc].cbfn = शून्य;
 		mod->mbhdlr[mc].cbarg = ioc->bfa;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Mbox poll timer -- restarts any pending mailbox requests.
+ * Mbox poll समयr -- restarts any pending mailbox requests.
  */
-static void
-bfa_ioc_mbox_poll(struct bfa_ioc_s *ioc)
-{
-	struct bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
-	struct bfa_mbox_cmd_s		*cmd;
+अटल व्योम
+bfa_ioc_mbox_poll(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
+	काष्ठा bfa_mbox_cmd_s		*cmd;
 	u32			stat;
 
 	/*
-	 * If no command pending, do nothing
+	 * If no command pending, करो nothing
 	 */
-	if (list_empty(&mod->cmd_q))
-		return;
+	अगर (list_empty(&mod->cmd_q))
+		वापस;
 
 	/*
-	 * If previous command is not yet fetched by firmware, do nothing
+	 * If previous command is not yet fetched by firmware, करो nothing
 	 */
-	stat = readl(ioc->ioc_regs.hfn_mbox_cmd);
-	if (stat)
-		return;
+	stat = पढ़ोl(ioc->ioc_regs.hfn_mbox_cmd);
+	अगर (stat)
+		वापस;
 
 	/*
 	 * Enqueue command to firmware.
 	 */
 	bfa_q_deq(&mod->cmd_q, &cmd);
-	bfa_ioc_mbox_send(ioc, cmd->msg, sizeof(cmd->msg));
-}
+	bfa_ioc_mbox_send(ioc, cmd->msg, माप(cmd->msg));
+पूर्ण
 
 /*
  * Cleanup any pending requests.
  */
-static void
-bfa_ioc_mbox_flush(struct bfa_ioc_s *ioc)
-{
-	struct bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
-	struct bfa_mbox_cmd_s		*cmd;
+अटल व्योम
+bfa_ioc_mbox_flush(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
+	काष्ठा bfa_mbox_cmd_s		*cmd;
 
-	while (!list_empty(&mod->cmd_q))
+	जबतक (!list_empty(&mod->cmd_q))
 		bfa_q_deq(&mod->cmd_q, &cmd);
-}
+पूर्ण
 
 /*
  * Read data from SMEM to host through PCI memmap
  *
- * @param[in]	ioc	memory for IOC
+ * @param[in]	ioc	memory क्रम IOC
  * @param[in]	tbuf	app memory to store data from smem
  * @param[in]	soff	smem offset
  * @param[in]	sz	size of smem in bytes
  */
-static bfa_status_t
-bfa_ioc_smem_read(struct bfa_ioc_s *ioc, void *tbuf, u32 soff, u32 sz)
-{
+अटल bfa_status_t
+bfa_ioc_smem_पढ़ो(काष्ठा bfa_ioc_s *ioc, व्योम *tbuf, u32 soff, u32 sz)
+अणु
 	u32 pgnum, loff;
 	__be32 r32;
-	int i, len;
+	पूर्णांक i, len;
 	u32 *buf = tbuf;
 
 	pgnum = PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, soff);
@@ -2053,52 +2054,52 @@ bfa_ioc_smem_read(struct bfa_ioc_s *ioc, void *tbuf, u32 soff, u32 sz)
 	/*
 	 *  Hold semaphore to serialize pll init and fwtrc.
 	 */
-	if (BFA_FALSE == bfa_ioc_sem_get(ioc->ioc_regs.ioc_init_sem_reg)) {
+	अगर (BFA_FALSE == bfa_ioc_sem_get(ioc->ioc_regs.ioc_init_sem_reg)) अणु
 		bfa_trc(ioc, 0);
-		return BFA_STATUS_FAILED;
-	}
+		वापस BFA_STATUS_FAILED;
+	पूर्ण
 
-	writel(pgnum, ioc->ioc_regs.host_page_num_fn);
+	ग_लिखोl(pgnum, ioc->ioc_regs.host_page_num_fn);
 
-	len = sz/sizeof(u32);
+	len = sz/माप(u32);
 	bfa_trc(ioc, len);
-	for (i = 0; i < len; i++) {
-		r32 = bfa_mem_read(ioc->ioc_regs.smem_page_start, loff);
+	क्रम (i = 0; i < len; i++) अणु
+		r32 = bfa_mem_पढ़ो(ioc->ioc_regs.smem_page_start, loff);
 		buf[i] = swab32(r32);
-		loff += sizeof(u32);
+		loff += माप(u32);
 
 		/*
 		 * handle page offset wrap around
 		 */
 		loff = PSS_SMEM_PGOFF(loff);
-		if (loff == 0) {
+		अगर (loff == 0) अणु
 			pgnum++;
-			writel(pgnum, ioc->ioc_regs.host_page_num_fn);
-		}
-	}
-	writel(PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, 0),
+			ग_लिखोl(pgnum, ioc->ioc_regs.host_page_num_fn);
+		पूर्ण
+	पूर्ण
+	ग_लिखोl(PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, 0),
 			ioc->ioc_regs.host_page_num_fn);
 	/*
 	 *  release semaphore.
 	 */
-	readl(ioc->ioc_regs.ioc_init_sem_reg);
-	writel(1, ioc->ioc_regs.ioc_init_sem_reg);
+	पढ़ोl(ioc->ioc_regs.ioc_init_sem_reg);
+	ग_लिखोl(1, ioc->ioc_regs.ioc_init_sem_reg);
 
 	bfa_trc(ioc, pgnum);
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Clear SMEM data from host through PCI memmap
  *
- * @param[in]	ioc	memory for IOC
+ * @param[in]	ioc	memory क्रम IOC
  * @param[in]	soff	smem offset
  * @param[in]	sz	size of smem in bytes
  */
-static bfa_status_t
-bfa_ioc_smem_clr(struct bfa_ioc_s *ioc, u32 soff, u32 sz)
-{
-	int i, len;
+अटल bfa_status_t
+bfa_ioc_smem_clr(काष्ठा bfa_ioc_s *ioc, u32 soff, u32 sz)
+अणु
+	पूर्णांक i, len;
 	u32 pgnum, loff;
 
 	pgnum = PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, soff);
@@ -2110,50 +2111,50 @@ bfa_ioc_smem_clr(struct bfa_ioc_s *ioc, u32 soff, u32 sz)
 	/*
 	 *  Hold semaphore to serialize pll init and fwtrc.
 	 */
-	if (BFA_FALSE == bfa_ioc_sem_get(ioc->ioc_regs.ioc_init_sem_reg)) {
+	अगर (BFA_FALSE == bfa_ioc_sem_get(ioc->ioc_regs.ioc_init_sem_reg)) अणु
 		bfa_trc(ioc, 0);
-		return BFA_STATUS_FAILED;
-	}
+		वापस BFA_STATUS_FAILED;
+	पूर्ण
 
-	writel(pgnum, ioc->ioc_regs.host_page_num_fn);
+	ग_लिखोl(pgnum, ioc->ioc_regs.host_page_num_fn);
 
-	len = sz/sizeof(u32); /* len in words */
+	len = sz/माप(u32); /* len in words */
 	bfa_trc(ioc, len);
-	for (i = 0; i < len; i++) {
-		bfa_mem_write(ioc->ioc_regs.smem_page_start, loff, 0);
-		loff += sizeof(u32);
+	क्रम (i = 0; i < len; i++) अणु
+		bfa_mem_ग_लिखो(ioc->ioc_regs.smem_page_start, loff, 0);
+		loff += माप(u32);
 
 		/*
 		 * handle page offset wrap around
 		 */
 		loff = PSS_SMEM_PGOFF(loff);
-		if (loff == 0) {
+		अगर (loff == 0) अणु
 			pgnum++;
-			writel(pgnum, ioc->ioc_regs.host_page_num_fn);
-		}
-	}
-	writel(PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, 0),
+			ग_लिखोl(pgnum, ioc->ioc_regs.host_page_num_fn);
+		पूर्ण
+	पूर्ण
+	ग_लिखोl(PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, 0),
 			ioc->ioc_regs.host_page_num_fn);
 
 	/*
 	 *  release semaphore.
 	 */
-	readl(ioc->ioc_regs.ioc_init_sem_reg);
-	writel(1, ioc->ioc_regs.ioc_init_sem_reg);
+	पढ़ोl(ioc->ioc_regs.ioc_init_sem_reg);
+	ग_लिखोl(1, ioc->ioc_regs.ioc_init_sem_reg);
 	bfa_trc(ioc, pgnum);
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
-static void
-bfa_ioc_fail_notify(struct bfa_ioc_s *ioc)
-{
-	struct bfad_s *bfad = (struct bfad_s *)ioc->bfa->bfad;
+अटल व्योम
+bfa_ioc_fail_notअगरy(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfad_s *bfad = (काष्ठा bfad_s *)ioc->bfa->bfad;
 
 	/*
-	 * Notify driver and common modules registered for notification.
+	 * Notअगरy driver and common modules रेजिस्टरed क्रम notअगरication.
 	 */
 	ioc->cbfn->hbfail_cbfn(ioc->bfa);
-	bfa_ioc_event_notify(ioc, BFA_IOC_E_FAILED);
+	bfa_ioc_event_notअगरy(ioc, BFA_IOC_E_FAILED);
 
 	bfa_ioc_debug_save_ftrc(ioc);
 
@@ -2161,12 +2162,12 @@ bfa_ioc_fail_notify(struct bfa_ioc_s *ioc)
 		"Heart Beat of IOC has failed\n");
 	bfa_ioc_aen_post(ioc, BFA_IOC_AEN_HBFAIL);
 
-}
+पूर्ण
 
-static void
-bfa_ioc_pf_fwmismatch(struct bfa_ioc_s *ioc)
-{
-	struct bfad_s *bfad = (struct bfad_s *)ioc->bfa->bfad;
+अटल व्योम
+bfa_ioc_pf_fwmismatch(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfad_s *bfad = (काष्ठा bfad_s *)ioc->bfa->bfad;
 	/*
 	 * Provide enable completion callback.
 	 */
@@ -2175,11 +2176,11 @@ bfa_ioc_pf_fwmismatch(struct bfa_ioc_s *ioc)
 		"Running firmware version is incompatible "
 		"with the driver version\n");
 	bfa_ioc_aen_post(ioc, BFA_IOC_AEN_FWMISMATCH);
-}
+पूर्ण
 
 bfa_status_t
-bfa_ioc_pll_init(struct bfa_ioc_s *ioc)
-{
+bfa_ioc_pll_init(काष्ठा bfa_ioc_s *ioc)
+अणु
 
 	/*
 	 *  Hold semaphore so that nobody can access the chip during init.
@@ -2198,199 +2199,199 @@ bfa_ioc_pll_init(struct bfa_ioc_s *ioc)
 	/*
 	 *  release semaphore.
 	 */
-	readl(ioc->ioc_regs.ioc_init_sem_reg);
-	writel(1, ioc->ioc_regs.ioc_init_sem_reg);
+	पढ़ोl(ioc->ioc_regs.ioc_init_sem_reg);
+	ग_लिखोl(1, ioc->ioc_regs.ioc_init_sem_reg);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
- * Interface used by diag module to do firmware boot with memory test
+ * Interface used by diag module to करो firmware boot with memory test
  * as the entry vector.
  */
 bfa_status_t
-bfa_ioc_boot(struct bfa_ioc_s *ioc, u32 boot_type, u32 boot_env)
-{
-	struct bfi_ioc_image_hdr_s *drv_fwhdr;
+bfa_ioc_boot(काष्ठा bfa_ioc_s *ioc, u32 boot_type, u32 boot_env)
+अणु
+	काष्ठा bfi_ioc_image_hdr_s *drv_fwhdr;
 	bfa_status_t status;
 	bfa_ioc_stats(ioc, ioc_boots);
 
-	if (bfa_ioc_pll_init(ioc) != BFA_STATUS_OK)
-		return BFA_STATUS_FAILED;
+	अगर (bfa_ioc_pll_init(ioc) != BFA_STATUS_OK)
+		वापस BFA_STATUS_FAILED;
 
-	if (boot_env == BFI_FWBOOT_ENV_OS &&
-		boot_type == BFI_FWBOOT_TYPE_NORMAL) {
+	अगर (boot_env == BFI_FWBOOT_ENV_OS &&
+		boot_type == BFI_FWBOOT_TYPE_NORMAL) अणु
 
-		drv_fwhdr = (struct bfi_ioc_image_hdr_s *)
+		drv_fwhdr = (काष्ठा bfi_ioc_image_hdr_s *)
 			bfa_cb_image_get_chunk(bfa_ioc_asic_gen(ioc), 0);
 
 		/*
-		 * Work with Flash iff flash f/w is better than driver f/w.
+		 * Work with Flash अगरf flash f/w is better than driver f/w.
 		 * Otherwise push drivers firmware.
 		 */
-		if (bfa_ioc_flash_fwver_cmp(ioc, drv_fwhdr) ==
+		अगर (bfa_ioc_flash_fwver_cmp(ioc, drv_fwhdr) ==
 						BFI_IOC_IMG_VER_BETTER)
 			boot_type = BFI_FWBOOT_TYPE_FLASH;
-	}
+	पूर्ण
 
 	/*
 	 * Initialize IOC state of all functions on a chip reset.
 	 */
-	if (boot_type == BFI_FWBOOT_TYPE_MEMTEST) {
+	अगर (boot_type == BFI_FWBOOT_TYPE_MEMTEST) अणु
 		bfa_ioc_set_cur_ioc_fwstate(ioc, BFI_IOC_MEMTEST);
 		bfa_ioc_set_alt_ioc_fwstate(ioc, BFI_IOC_MEMTEST);
-	} else {
+	पूर्ण अन्यथा अणु
 		bfa_ioc_set_cur_ioc_fwstate(ioc, BFI_IOC_INITING);
 		bfa_ioc_set_alt_ioc_fwstate(ioc, BFI_IOC_INITING);
-	}
+	पूर्ण
 
 	bfa_ioc_msgflush(ioc);
-	status = bfa_ioc_download_fw(ioc, boot_type, boot_env);
-	if (status == BFA_STATUS_OK)
+	status = bfa_ioc_करोwnload_fw(ioc, boot_type, boot_env);
+	अगर (status == BFA_STATUS_OK)
 		bfa_ioc_lpu_start(ioc);
-	else {
+	अन्यथा अणु
 		WARN_ON(boot_type == BFI_FWBOOT_TYPE_MEMTEST);
-		bfa_iocpf_timeout(ioc);
-	}
-	return status;
-}
+		bfa_iocpf_समयout(ioc);
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /*
- * Enable/disable IOC failure auto recovery.
+ * Enable/disable IOC failure स्वतः recovery.
  */
-void
-bfa_ioc_auto_recover(bfa_boolean_t auto_recover)
-{
-	bfa_auto_recover = auto_recover;
-}
+व्योम
+bfa_ioc_स्वतः_recover(bfa_boolean_t स्वतः_recover)
+अणु
+	bfa_स्वतः_recover = स्वतः_recover;
+पूर्ण
 
 
 
 bfa_boolean_t
-bfa_ioc_is_operational(struct bfa_ioc_s *ioc)
-{
-	return bfa_fsm_cmp_state(ioc, bfa_ioc_sm_op);
-}
+bfa_ioc_is_operational(काष्ठा bfa_ioc_s *ioc)
+अणु
+	वापस bfa_fsm_cmp_state(ioc, bfa_ioc_sm_op);
+पूर्ण
 
 bfa_boolean_t
-bfa_ioc_is_initialized(struct bfa_ioc_s *ioc)
-{
+bfa_ioc_is_initialized(काष्ठा bfa_ioc_s *ioc)
+अणु
 	u32 r32 = bfa_ioc_get_cur_ioc_fwstate(ioc);
 
-	return ((r32 != BFI_IOC_UNINIT) &&
+	वापस ((r32 != BFI_IOC_UNINIT) &&
 		(r32 != BFI_IOC_INITING) &&
 		(r32 != BFI_IOC_MEMTEST));
-}
+पूर्ण
 
 bfa_boolean_t
-bfa_ioc_msgget(struct bfa_ioc_s *ioc, void *mbmsg)
-{
+bfa_ioc_msgget(काष्ठा bfa_ioc_s *ioc, व्योम *mbmsg)
+अणु
 	__be32	*msgp = mbmsg;
 	u32	r32;
-	int		i;
+	पूर्णांक		i;
 
-	r32 = readl(ioc->ioc_regs.lpu_mbox_cmd);
-	if ((r32 & 1) == 0)
-		return BFA_FALSE;
+	r32 = पढ़ोl(ioc->ioc_regs.lpu_mbox_cmd);
+	अगर ((r32 & 1) == 0)
+		वापस BFA_FALSE;
 
 	/*
-	 * read the MBOX msg
+	 * पढ़ो the MBOX msg
 	 */
-	for (i = 0; i < (sizeof(union bfi_ioc_i2h_msg_u) / sizeof(u32));
-	     i++) {
-		r32 = readl(ioc->ioc_regs.lpu_mbox +
-				   i * sizeof(u32));
+	क्रम (i = 0; i < (माप(जोड़ bfi_ioc_i2h_msg_u) / माप(u32));
+	     i++) अणु
+		r32 = पढ़ोl(ioc->ioc_regs.lpu_mbox +
+				   i * माप(u32));
 		msgp[i] = cpu_to_be32(r32);
-	}
+	पूर्ण
 
 	/*
-	 * turn off mailbox interrupt by clearing mailbox status
+	 * turn off mailbox पूर्णांकerrupt by clearing mailbox status
 	 */
-	writel(1, ioc->ioc_regs.lpu_mbox_cmd);
-	readl(ioc->ioc_regs.lpu_mbox_cmd);
+	ग_लिखोl(1, ioc->ioc_regs.lpu_mbox_cmd);
+	पढ़ोl(ioc->ioc_regs.lpu_mbox_cmd);
 
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
-void
-bfa_ioc_isr(struct bfa_ioc_s *ioc, struct bfi_mbmsg_s *m)
-{
-	union bfi_ioc_i2h_msg_u	*msg;
-	struct bfa_iocpf_s *iocpf = &ioc->iocpf;
+व्योम
+bfa_ioc_isr(काष्ठा bfa_ioc_s *ioc, काष्ठा bfi_mbmsg_s *m)
+अणु
+	जोड़ bfi_ioc_i2h_msg_u	*msg;
+	काष्ठा bfa_iocpf_s *iocpf = &ioc->iocpf;
 
-	msg = (union bfi_ioc_i2h_msg_u *) m;
+	msg = (जोड़ bfi_ioc_i2h_msg_u *) m;
 
 	bfa_ioc_stats(ioc, ioc_isrs);
 
-	switch (msg->mh.msg_id) {
-	case BFI_IOC_I2H_HBEAT:
-		break;
+	चयन (msg->mh.msg_id) अणु
+	हाल BFI_IOC_I2H_HBEAT:
+		अवरोध;
 
-	case BFI_IOC_I2H_ENABLE_REPLY:
+	हाल BFI_IOC_I2H_ENABLE_REPLY:
 		ioc->port_mode = ioc->port_mode_cfg =
-				(enum bfa_mode_s)msg->fw_event.port_mode;
+				(क्रमागत bfa_mode_s)msg->fw_event.port_mode;
 		ioc->ad_cap_bm = msg->fw_event.cap_bm;
 		bfa_fsm_send_event(iocpf, IOCPF_E_FWRSP_ENABLE);
-		break;
+		अवरोध;
 
-	case BFI_IOC_I2H_DISABLE_REPLY:
+	हाल BFI_IOC_I2H_DISABLE_REPLY:
 		bfa_fsm_send_event(iocpf, IOCPF_E_FWRSP_DISABLE);
-		break;
+		अवरोध;
 
-	case BFI_IOC_I2H_GETATTR_REPLY:
+	हाल BFI_IOC_I2H_GETATTR_REPLY:
 		bfa_ioc_getattr_reply(ioc);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_trc(ioc, msg->mh.msg_id);
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * IOC attach time initialization and setup.
+ * IOC attach समय initialization and setup.
  *
- * @param[in]	ioc	memory for IOC
- * @param[in]	bfa	driver instance structure
+ * @param[in]	ioc	memory क्रम IOC
+ * @param[in]	bfa	driver instance काष्ठाure
  */
-void
-bfa_ioc_attach(struct bfa_ioc_s *ioc, void *bfa, struct bfa_ioc_cbfn_s *cbfn,
-	       struct bfa_timer_mod_s *timer_mod)
-{
+व्योम
+bfa_ioc_attach(काष्ठा bfa_ioc_s *ioc, व्योम *bfa, काष्ठा bfa_ioc_cbfn_s *cbfn,
+	       काष्ठा bfa_समयr_mod_s *समयr_mod)
+अणु
 	ioc->bfa	= bfa;
 	ioc->cbfn	= cbfn;
-	ioc->timer_mod	= timer_mod;
+	ioc->समयr_mod	= समयr_mod;
 	ioc->fcmode	= BFA_FALSE;
 	ioc->pllinit	= BFA_FALSE;
 	ioc->dbg_fwsave_once = BFA_TRUE;
 	ioc->iocpf.ioc	= ioc;
 
 	bfa_ioc_mbox_attach(ioc);
-	INIT_LIST_HEAD(&ioc->notify_q);
+	INIT_LIST_HEAD(&ioc->notअगरy_q);
 
 	bfa_fsm_set_state(ioc, bfa_ioc_sm_uninit);
 	bfa_fsm_send_event(ioc, IOC_E_RESET);
-}
+पूर्ण
 
 /*
- * Driver detach time IOC cleanup.
+ * Driver detach समय IOC cleanup.
  */
-void
-bfa_ioc_detach(struct bfa_ioc_s *ioc)
-{
+व्योम
+bfa_ioc_detach(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_fsm_send_event(ioc, IOC_E_DETACH);
-	INIT_LIST_HEAD(&ioc->notify_q);
-}
+	INIT_LIST_HEAD(&ioc->notअगरy_q);
+पूर्ण
 
 /*
  * Setup IOC PCI properties.
  *
- * @param[in]	pcidev	PCI device information for this IOC
+ * @param[in]	pcidev	PCI device inक्रमmation क्रम this IOC
  */
-void
-bfa_ioc_pci_init(struct bfa_ioc_s *ioc, struct bfa_pcidev_s *pcidev,
-		enum bfi_pcifn_class clscode)
-{
+व्योम
+bfa_ioc_pci_init(काष्ठा bfa_ioc_s *ioc, काष्ठा bfa_pcidev_s *pcidev,
+		क्रमागत bfi_pcअगरn_class clscode)
+अणु
 	ioc->clscode	= clscode;
 	ioc->pcidev	= *pcidev;
 
@@ -2400,125 +2401,125 @@ bfa_ioc_pci_init(struct bfa_ioc_s *ioc, struct bfa_pcidev_s *pcidev,
 	ioc->port0_mode = ioc->port1_mode = BFI_PORT_MODE_FC;
 	ioc->asic_mode  = BFI_ASIC_MODE_FC;
 
-	switch (pcidev->device_id) {
-	case BFA_PCI_DEVICE_ID_FC_8G1P:
-	case BFA_PCI_DEVICE_ID_FC_8G2P:
+	चयन (pcidev->device_id) अणु
+	हाल BFA_PCI_DEVICE_ID_FC_8G1P:
+	हाल BFA_PCI_DEVICE_ID_FC_8G2P:
 		ioc->asic_gen = BFI_ASIC_GEN_CB;
 		ioc->fcmode = BFA_TRUE;
 		ioc->port_mode = ioc->port_mode_cfg = BFA_MODE_HBA;
 		ioc->ad_cap_bm = BFA_CM_HBA;
-		break;
+		अवरोध;
 
-	case BFA_PCI_DEVICE_ID_CT:
+	हाल BFA_PCI_DEVICE_ID_CT:
 		ioc->asic_gen = BFI_ASIC_GEN_CT;
 		ioc->port0_mode = ioc->port1_mode = BFI_PORT_MODE_ETH;
 		ioc->asic_mode  = BFI_ASIC_MODE_ETH;
 		ioc->port_mode = ioc->port_mode_cfg = BFA_MODE_CNA;
 		ioc->ad_cap_bm = BFA_CM_CNA;
-		break;
+		अवरोध;
 
-	case BFA_PCI_DEVICE_ID_CT_FC:
+	हाल BFA_PCI_DEVICE_ID_CT_FC:
 		ioc->asic_gen = BFI_ASIC_GEN_CT;
 		ioc->fcmode = BFA_TRUE;
 		ioc->port_mode = ioc->port_mode_cfg = BFA_MODE_HBA;
 		ioc->ad_cap_bm = BFA_CM_HBA;
-		break;
+		अवरोध;
 
-	case BFA_PCI_DEVICE_ID_CT2:
-	case BFA_PCI_DEVICE_ID_CT2_QUAD:
+	हाल BFA_PCI_DEVICE_ID_CT2:
+	हाल BFA_PCI_DEVICE_ID_CT2_QUAD:
 		ioc->asic_gen = BFI_ASIC_GEN_CT2;
-		if (clscode == BFI_PCIFN_CLASS_FC &&
-		    pcidev->ssid == BFA_PCI_CT2_SSID_FC) {
+		अगर (clscode == BFI_PCIFN_CLASS_FC &&
+		    pcidev->ssid == BFA_PCI_CT2_SSID_FC) अणु
 			ioc->asic_mode  = BFI_ASIC_MODE_FC16;
 			ioc->fcmode = BFA_TRUE;
 			ioc->port_mode = ioc->port_mode_cfg = BFA_MODE_HBA;
 			ioc->ad_cap_bm = BFA_CM_HBA;
-		} else {
+		पूर्ण अन्यथा अणु
 			ioc->port0_mode = ioc->port1_mode = BFI_PORT_MODE_ETH;
 			ioc->asic_mode  = BFI_ASIC_MODE_ETH;
-			if (pcidev->ssid == BFA_PCI_CT2_SSID_FCoE) {
+			अगर (pcidev->ssid == BFA_PCI_CT2_SSID_FCoE) अणु
 				ioc->port_mode =
 				ioc->port_mode_cfg = BFA_MODE_CNA;
 				ioc->ad_cap_bm = BFA_CM_CNA;
-			} else {
+			पूर्ण अन्यथा अणु
 				ioc->port_mode =
 				ioc->port_mode_cfg = BFA_MODE_NIC;
 				ioc->ad_cap_bm = BFA_CM_NIC;
-			}
-		}
-		break;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 
 	/*
-	 * Set asic specific interfaces. See bfa_ioc_cb.c and bfa_ioc_ct.c
+	 * Set asic specअगरic पूर्णांकerfaces. See bfa_ioc_cb.c and bfa_ioc_ct.c
 	 */
-	if (ioc->asic_gen == BFI_ASIC_GEN_CB)
-		bfa_ioc_set_cb_hwif(ioc);
-	else if (ioc->asic_gen == BFI_ASIC_GEN_CT)
-		bfa_ioc_set_ct_hwif(ioc);
-	else {
+	अगर (ioc->asic_gen == BFI_ASIC_GEN_CB)
+		bfa_ioc_set_cb_hwअगर(ioc);
+	अन्यथा अगर (ioc->asic_gen == BFI_ASIC_GEN_CT)
+		bfa_ioc_set_ct_hwअगर(ioc);
+	अन्यथा अणु
 		WARN_ON(ioc->asic_gen != BFI_ASIC_GEN_CT2);
-		bfa_ioc_set_ct2_hwif(ioc);
-		bfa_ioc_ct2_poweron(ioc);
-	}
+		bfa_ioc_set_ct2_hwअगर(ioc);
+		bfa_ioc_ct2_घातeron(ioc);
+	पूर्ण
 
 	bfa_ioc_map_port(ioc);
 	bfa_ioc_reg_init(ioc);
-}
+पूर्ण
 
 /*
  * Initialize IOC dma memory
  *
- * @param[in]	dm_kva	kernel virtual address of IOC dma memory
+ * @param[in]	dm_kva	kernel भव address of IOC dma memory
  * @param[in]	dm_pa	physical address of IOC dma memory
  */
-void
-bfa_ioc_mem_claim(struct bfa_ioc_s *ioc,  u8 *dm_kva, u64 dm_pa)
-{
+व्योम
+bfa_ioc_mem_claim(काष्ठा bfa_ioc_s *ioc,  u8 *dm_kva, u64 dm_pa)
+अणु
 	/*
-	 * dma memory for firmware attribute
+	 * dma memory क्रम firmware attribute
 	 */
 	ioc->attr_dma.kva = dm_kva;
 	ioc->attr_dma.pa = dm_pa;
-	ioc->attr = (struct bfi_ioc_attr_s *) dm_kva;
-}
+	ioc->attr = (काष्ठा bfi_ioc_attr_s *) dm_kva;
+पूर्ण
 
-void
-bfa_ioc_enable(struct bfa_ioc_s *ioc)
-{
+व्योम
+bfa_ioc_enable(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_ioc_stats(ioc, ioc_enables);
 	ioc->dbg_fwsave_once = BFA_TRUE;
 
 	bfa_fsm_send_event(ioc, IOC_E_ENABLE);
-}
+पूर्ण
 
-void
-bfa_ioc_disable(struct bfa_ioc_s *ioc)
-{
+व्योम
+bfa_ioc_disable(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_ioc_stats(ioc, ioc_disables);
 	bfa_fsm_send_event(ioc, IOC_E_DISABLE);
-}
+पूर्ण
 
-void
-bfa_ioc_suspend(struct bfa_ioc_s *ioc)
-{
+व्योम
+bfa_ioc_suspend(काष्ठा bfa_ioc_s *ioc)
+अणु
 	ioc->dbg_fwsave_once = BFA_TRUE;
 	bfa_fsm_send_event(ioc, IOC_E_HWERROR);
-}
+पूर्ण
 
 /*
- * Initialize memory for saving firmware trace. Driver must initialize
- * trace memory before call bfa_ioc_enable().
+ * Initialize memory क्रम saving firmware trace. Driver must initialize
+ * trace memory beक्रमe call bfa_ioc_enable().
  */
-void
-bfa_ioc_debug_memclaim(struct bfa_ioc_s *ioc, void *dbg_fwsave)
-{
+व्योम
+bfa_ioc_debug_memclaim(काष्ठा bfa_ioc_s *ioc, व्योम *dbg_fwsave)
+अणु
 	ioc->dbg_fwsave	    = dbg_fwsave;
 	ioc->dbg_fwsave_len = BFA_DBG_FWTRC_LEN;
-}
+पूर्ण
 
 /*
  * Register mailbox message handler functions
@@ -2526,169 +2527,169 @@ bfa_ioc_debug_memclaim(struct bfa_ioc_s *ioc, void *dbg_fwsave)
  * @param[in]	ioc		IOC instance
  * @param[in]	mcfuncs		message class handler functions
  */
-void
-bfa_ioc_mbox_register(struct bfa_ioc_s *ioc, bfa_ioc_mbox_mcfunc_t *mcfuncs)
-{
-	struct bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
-	int				mc;
+व्योम
+bfa_ioc_mbox_रेजिस्टर(काष्ठा bfa_ioc_s *ioc, bfa_ioc_mbox_mcfunc_t *mcfuncs)
+अणु
+	काष्ठा bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
+	पूर्णांक				mc;
 
-	for (mc = 0; mc < BFI_MC_MAX; mc++)
+	क्रम (mc = 0; mc < BFI_MC_MAX; mc++)
 		mod->mbhdlr[mc].cbfn = mcfuncs[mc];
-}
+पूर्ण
 
 /*
  * Register mailbox message handler function, to be called by common modules
  */
-void
-bfa_ioc_mbox_regisr(struct bfa_ioc_s *ioc, enum bfi_mclass mc,
-		    bfa_ioc_mbox_mcfunc_t cbfn, void *cbarg)
-{
-	struct bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
+व्योम
+bfa_ioc_mbox_regisr(काष्ठा bfa_ioc_s *ioc, क्रमागत bfi_mclass mc,
+		    bfa_ioc_mbox_mcfunc_t cbfn, व्योम *cbarg)
+अणु
+	काष्ठा bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
 
 	mod->mbhdlr[mc].cbfn	= cbfn;
 	mod->mbhdlr[mc].cbarg	= cbarg;
-}
+पूर्ण
 
 /*
- * Queue a mailbox command request to firmware. Waits if mailbox is busy.
+ * Queue a mailbox command request to firmware. Waits अगर mailbox is busy.
  * Responsibility of caller to serialize
  *
  * @param[in]	ioc	IOC instance
  * @param[i]	cmd	Mailbox command
  */
-void
-bfa_ioc_mbox_queue(struct bfa_ioc_s *ioc, struct bfa_mbox_cmd_s *cmd)
-{
-	struct bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
+व्योम
+bfa_ioc_mbox_queue(काष्ठा bfa_ioc_s *ioc, काष्ठा bfa_mbox_cmd_s *cmd)
+अणु
+	काष्ठा bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
 	u32			stat;
 
 	/*
 	 * If a previous command is pending, queue new command
 	 */
-	if (!list_empty(&mod->cmd_q)) {
+	अगर (!list_empty(&mod->cmd_q)) अणु
 		list_add_tail(&cmd->qe, &mod->cmd_q);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If mailbox is busy, queue command for poll timer
+	 * If mailbox is busy, queue command क्रम poll समयr
 	 */
-	stat = readl(ioc->ioc_regs.hfn_mbox_cmd);
-	if (stat) {
+	stat = पढ़ोl(ioc->ioc_regs.hfn_mbox_cmd);
+	अगर (stat) अणु
 		list_add_tail(&cmd->qe, &mod->cmd_q);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * mailbox is free -- queue command to firmware
+	 * mailbox is मुक्त -- queue command to firmware
 	 */
-	bfa_ioc_mbox_send(ioc, cmd->msg, sizeof(cmd->msg));
-}
+	bfa_ioc_mbox_send(ioc, cmd->msg, माप(cmd->msg));
+पूर्ण
 
 /*
- * Handle mailbox interrupts
+ * Handle mailbox पूर्णांकerrupts
  */
-void
-bfa_ioc_mbox_isr(struct bfa_ioc_s *ioc)
-{
-	struct bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
-	struct bfi_mbmsg_s		m;
-	int				mc;
+व्योम
+bfa_ioc_mbox_isr(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfa_ioc_mbox_mod_s	*mod = &ioc->mbox_mod;
+	काष्ठा bfi_mbmsg_s		m;
+	पूर्णांक				mc;
 
-	if (bfa_ioc_msgget(ioc, &m)) {
+	अगर (bfa_ioc_msgget(ioc, &m)) अणु
 		/*
 		 * Treat IOC message class as special.
 		 */
 		mc = m.mh.msg_class;
-		if (mc == BFI_MC_IOC) {
+		अगर (mc == BFI_MC_IOC) अणु
 			bfa_ioc_isr(ioc, &m);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if ((mc >= BFI_MC_MAX) || (mod->mbhdlr[mc].cbfn == NULL))
-			return;
+		अगर ((mc >= BFI_MC_MAX) || (mod->mbhdlr[mc].cbfn == शून्य))
+			वापस;
 
 		mod->mbhdlr[mc].cbfn(mod->mbhdlr[mc].cbarg, &m);
-	}
+	पूर्ण
 
-	bfa_ioc_lpu_read_stat(ioc);
+	bfa_ioc_lpu_पढ़ो_stat(ioc);
 
 	/*
 	 * Try to send pending mailbox commands
 	 */
 	bfa_ioc_mbox_poll(ioc);
-}
+पूर्ण
 
-void
-bfa_ioc_error_isr(struct bfa_ioc_s *ioc)
-{
+व्योम
+bfa_ioc_error_isr(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_ioc_stats(ioc, ioc_hbfails);
 	ioc->stats.hb_count = ioc->hb_count;
 	bfa_fsm_send_event(ioc, IOC_E_HWERROR);
-}
+पूर्ण
 
 /*
- * return true if IOC is disabled
+ * वापस true अगर IOC is disabled
  */
 bfa_boolean_t
-bfa_ioc_is_disabled(struct bfa_ioc_s *ioc)
-{
-	return bfa_fsm_cmp_state(ioc, bfa_ioc_sm_disabling) ||
+bfa_ioc_is_disabled(काष्ठा bfa_ioc_s *ioc)
+अणु
+	वापस bfa_fsm_cmp_state(ioc, bfa_ioc_sm_disabling) ||
 		bfa_fsm_cmp_state(ioc, bfa_ioc_sm_disabled);
-}
+पूर्ण
 
 /*
- * return true if IOC firmware is different.
+ * वापस true अगर IOC firmware is dअगरferent.
  */
 bfa_boolean_t
-bfa_ioc_fw_mismatch(struct bfa_ioc_s *ioc)
-{
-	return bfa_fsm_cmp_state(ioc, bfa_ioc_sm_reset) ||
+bfa_ioc_fw_mismatch(काष्ठा bfa_ioc_s *ioc)
+अणु
+	वापस bfa_fsm_cmp_state(ioc, bfa_ioc_sm_reset) ||
 		bfa_fsm_cmp_state(&ioc->iocpf, bfa_iocpf_sm_fwcheck) ||
 		bfa_fsm_cmp_state(&ioc->iocpf, bfa_iocpf_sm_mismatch);
-}
+पूर्ण
 
 /*
- * Check if adapter is disabled -- both IOCs should be in a disabled
+ * Check अगर adapter is disabled -- both IOCs should be in a disabled
  * state.
  */
 bfa_boolean_t
-bfa_ioc_adapter_is_disabled(struct bfa_ioc_s *ioc)
-{
+bfa_ioc_adapter_is_disabled(काष्ठा bfa_ioc_s *ioc)
+अणु
 	u32	ioc_state;
 
-	if (!bfa_fsm_cmp_state(ioc, bfa_ioc_sm_disabled))
-		return BFA_FALSE;
+	अगर (!bfa_fsm_cmp_state(ioc, bfa_ioc_sm_disabled))
+		वापस BFA_FALSE;
 
 	ioc_state = bfa_ioc_get_cur_ioc_fwstate(ioc);
-	if (!bfa_ioc_state_disabled(ioc_state))
-		return BFA_FALSE;
+	अगर (!bfa_ioc_state_disabled(ioc_state))
+		वापस BFA_FALSE;
 
-	if (ioc->pcidev.device_id != BFA_PCI_DEVICE_ID_FC_8G1P) {
+	अगर (ioc->pcidev.device_id != BFA_PCI_DEVICE_ID_FC_8G1P) अणु
 		ioc_state = bfa_ioc_get_cur_ioc_fwstate(ioc);
-		if (!bfa_ioc_state_disabled(ioc_state))
-			return BFA_FALSE;
-	}
+		अगर (!bfa_ioc_state_disabled(ioc_state))
+			वापस BFA_FALSE;
+	पूर्ण
 
-	return BFA_TRUE;
-}
+	वापस BFA_TRUE;
+पूर्ण
 
 /*
- * Reset IOC fwstate registers.
+ * Reset IOC fwstate रेजिस्टरs.
  */
-void
-bfa_ioc_reset_fwstate(struct bfa_ioc_s *ioc)
-{
+व्योम
+bfa_ioc_reset_fwstate(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_ioc_set_cur_ioc_fwstate(ioc, BFI_IOC_UNINIT);
 	bfa_ioc_set_alt_ioc_fwstate(ioc, BFI_IOC_UNINIT);
-}
+पूर्ण
 
-#define BFA_MFG_NAME "QLogic"
-void
-bfa_ioc_get_adapter_attr(struct bfa_ioc_s *ioc,
-			 struct bfa_adapter_attr_s *ad_attr)
-{
-	struct bfi_ioc_attr_s	*ioc_attr;
+#घोषणा BFA_MFG_NAME "QLogic"
+व्योम
+bfa_ioc_get_adapter_attr(काष्ठा bfa_ioc_s *ioc,
+			 काष्ठा bfa_adapter_attr_s *ad_attr)
+अणु
+	काष्ठा bfi_ioc_attr_s	*ioc_attr;
 
 	ioc_attr = ioc->attr;
 
@@ -2696,8 +2697,8 @@ bfa_ioc_get_adapter_attr(struct bfa_ioc_s *ioc,
 	bfa_ioc_get_adapter_fw_ver(ioc, ad_attr->fw_ver);
 	bfa_ioc_get_adapter_optrom_ver(ioc, ad_attr->optrom_ver);
 	bfa_ioc_get_adapter_manufacturer(ioc, ad_attr->manufacturer);
-	memcpy(&ad_attr->vpd, &ioc_attr->vpd,
-		      sizeof(struct bfa_mfg_vpd_s));
+	स_नकल(&ad_attr->vpd, &ioc_attr->vpd,
+		      माप(काष्ठा bfa_mfg_vpd_s));
 
 	ad_attr->nports = bfa_ioc_get_nports(ioc);
 	ad_attr->max_speed = bfa_ioc_speed_sup(ioc);
@@ -2709,9 +2710,9 @@ bfa_ioc_get_adapter_attr(struct bfa_ioc_s *ioc,
 	ad_attr->card_type = ioc_attr->card_type;
 	ad_attr->is_mezz = bfa_mfg_is_mezz(ioc_attr->card_type);
 
-	if (BFI_ADAPTER_IS_SPECIAL(ioc_attr->adapter_prop))
+	अगर (BFI_ADAPTER_IS_SPECIAL(ioc_attr->adapter_prop))
 		ad_attr->prototype = 1;
-	else
+	अन्यथा
 		ad_attr->prototype = 0;
 
 	ad_attr->pwwn = ioc->attr->pwwn;
@@ -2730,43 +2731,43 @@ bfa_ioc_get_adapter_attr(struct bfa_ioc_s *ioc,
 	ad_attr->mfg_day = ioc_attr->mfg_day;
 	ad_attr->mfg_month = ioc_attr->mfg_month;
 	ad_attr->mfg_year = ioc_attr->mfg_year;
-	memcpy(ad_attr->uuid, ioc_attr->uuid, BFA_ADAPTER_UUID_LEN);
-}
+	स_नकल(ad_attr->uuid, ioc_attr->uuid, BFA_ADAPTER_UUID_LEN);
+पूर्ण
 
-enum bfa_ioc_type_e
-bfa_ioc_get_type(struct bfa_ioc_s *ioc)
-{
-	if (ioc->clscode == BFI_PCIFN_CLASS_ETH)
-		return BFA_IOC_TYPE_LL;
+क्रमागत bfa_ioc_type_e
+bfa_ioc_get_type(काष्ठा bfa_ioc_s *ioc)
+अणु
+	अगर (ioc->clscode == BFI_PCIFN_CLASS_ETH)
+		वापस BFA_IOC_TYPE_LL;
 
 	WARN_ON(ioc->clscode != BFI_PCIFN_CLASS_FC);
 
-	return (ioc->attr->port_mode == BFI_PORT_MODE_FC)
+	वापस (ioc->attr->port_mode == BFI_PORT_MODE_FC)
 		? BFA_IOC_TYPE_FC : BFA_IOC_TYPE_FCoE;
-}
+पूर्ण
 
-void
-bfa_ioc_get_adapter_serial_num(struct bfa_ioc_s *ioc, char *serial_num)
-{
-	memset((void *)serial_num, 0, BFA_ADAPTER_SERIAL_NUM_LEN);
-	memcpy((void *)serial_num,
-			(void *)ioc->attr->brcd_serialnum,
+व्योम
+bfa_ioc_get_adapter_serial_num(काष्ठा bfa_ioc_s *ioc, अक्षर *serial_num)
+अणु
+	स_रखो((व्योम *)serial_num, 0, BFA_ADAPTER_SERIAL_NUM_LEN);
+	स_नकल((व्योम *)serial_num,
+			(व्योम *)ioc->attr->brcd_serialnum,
 			BFA_ADAPTER_SERIAL_NUM_LEN);
-}
+पूर्ण
 
-void
-bfa_ioc_get_adapter_fw_ver(struct bfa_ioc_s *ioc, char *fw_ver)
-{
-	memset((void *)fw_ver, 0, BFA_VERSION_LEN);
-	memcpy(fw_ver, ioc->attr->fw_version, BFA_VERSION_LEN);
-}
+व्योम
+bfa_ioc_get_adapter_fw_ver(काष्ठा bfa_ioc_s *ioc, अक्षर *fw_ver)
+अणु
+	स_रखो((व्योम *)fw_ver, 0, BFA_VERSION_LEN);
+	स_नकल(fw_ver, ioc->attr->fw_version, BFA_VERSION_LEN);
+पूर्ण
 
-void
-bfa_ioc_get_pci_chip_rev(struct bfa_ioc_s *ioc, char *chip_rev)
-{
+व्योम
+bfa_ioc_get_pci_chip_rev(काष्ठा bfa_ioc_s *ioc, अक्षर *chip_rev)
+अणु
 	WARN_ON(!chip_rev);
 
-	memset((void *)chip_rev, 0, BFA_IOC_CHIP_REV_LEN);
+	स_रखो((व्योम *)chip_rev, 0, BFA_IOC_CHIP_REV_LEN);
 
 	chip_rev[0] = 'R';
 	chip_rev[1] = 'e';
@@ -2774,87 +2775,87 @@ bfa_ioc_get_pci_chip_rev(struct bfa_ioc_s *ioc, char *chip_rev)
 	chip_rev[3] = '-';
 	chip_rev[4] = ioc->attr->asic_rev;
 	chip_rev[5] = '\0';
-}
+पूर्ण
 
-void
-bfa_ioc_get_adapter_optrom_ver(struct bfa_ioc_s *ioc, char *optrom_ver)
-{
-	memset((void *)optrom_ver, 0, BFA_VERSION_LEN);
-	memcpy(optrom_ver, ioc->attr->optrom_version,
+व्योम
+bfa_ioc_get_adapter_optrom_ver(काष्ठा bfa_ioc_s *ioc, अक्षर *optrom_ver)
+अणु
+	स_रखो((व्योम *)optrom_ver, 0, BFA_VERSION_LEN);
+	स_नकल(optrom_ver, ioc->attr->optrom_version,
 		      BFA_VERSION_LEN);
-}
+पूर्ण
 
-void
-bfa_ioc_get_adapter_manufacturer(struct bfa_ioc_s *ioc, char *manufacturer)
-{
-	memset((void *)manufacturer, 0, BFA_ADAPTER_MFG_NAME_LEN);
+व्योम
+bfa_ioc_get_adapter_manufacturer(काष्ठा bfa_ioc_s *ioc, अक्षर *manufacturer)
+अणु
+	स_रखो((व्योम *)manufacturer, 0, BFA_ADAPTER_MFG_NAME_LEN);
 	strlcpy(manufacturer, BFA_MFG_NAME, BFA_ADAPTER_MFG_NAME_LEN);
-}
+पूर्ण
 
-void
-bfa_ioc_get_adapter_model(struct bfa_ioc_s *ioc, char *model)
-{
-	struct bfi_ioc_attr_s	*ioc_attr;
+व्योम
+bfa_ioc_get_adapter_model(काष्ठा bfa_ioc_s *ioc, अक्षर *model)
+अणु
+	काष्ठा bfi_ioc_attr_s	*ioc_attr;
 	u8 nports = bfa_ioc_get_nports(ioc);
 
 	WARN_ON(!model);
-	memset((void *)model, 0, BFA_ADAPTER_MODEL_NAME_LEN);
+	स_रखो((व्योम *)model, 0, BFA_ADAPTER_MODEL_NAME_LEN);
 
 	ioc_attr = ioc->attr;
 
-	if (bfa_asic_id_ct2(ioc->pcidev.device_id) &&
+	अगर (bfa_asic_id_ct2(ioc->pcidev.device_id) &&
 		(!bfa_mfg_is_mezz(ioc_attr->card_type)))
-		snprintf(model, BFA_ADAPTER_MODEL_NAME_LEN, "%s-%u-%u%s",
+		snम_लिखो(model, BFA_ADAPTER_MODEL_NAME_LEN, "%s-%u-%u%s",
 			BFA_MFG_NAME, ioc_attr->card_type, nports, "p");
-	else
-		snprintf(model, BFA_ADAPTER_MODEL_NAME_LEN, "%s-%u",
+	अन्यथा
+		snम_लिखो(model, BFA_ADAPTER_MODEL_NAME_LEN, "%s-%u",
 			BFA_MFG_NAME, ioc_attr->card_type);
-}
+पूर्ण
 
-enum bfa_ioc_state
-bfa_ioc_get_state(struct bfa_ioc_s *ioc)
-{
-	enum bfa_iocpf_state iocpf_st;
-	enum bfa_ioc_state ioc_st = bfa_sm_to_state(ioc_sm_table, ioc->fsm);
+क्रमागत bfa_ioc_state
+bfa_ioc_get_state(काष्ठा bfa_ioc_s *ioc)
+अणु
+	क्रमागत bfa_iocpf_state iocpf_st;
+	क्रमागत bfa_ioc_state ioc_st = bfa_sm_to_state(ioc_sm_table, ioc->fsm);
 
-	if (ioc_st == BFA_IOC_ENABLING ||
-		ioc_st == BFA_IOC_FAIL || ioc_st == BFA_IOC_INITFAIL) {
+	अगर (ioc_st == BFA_IOC_ENABLING ||
+		ioc_st == BFA_IOC_FAIL || ioc_st == BFA_IOC_INITFAIL) अणु
 
 		iocpf_st = bfa_sm_to_state(iocpf_sm_table, ioc->iocpf.fsm);
 
-		switch (iocpf_st) {
-		case BFA_IOCPF_SEMWAIT:
+		चयन (iocpf_st) अणु
+		हाल BFA_IOCPF_SEMWAIT:
 			ioc_st = BFA_IOC_SEMWAIT;
-			break;
+			अवरोध;
 
-		case BFA_IOCPF_HWINIT:
+		हाल BFA_IOCPF_HWINIT:
 			ioc_st = BFA_IOC_HWINIT;
-			break;
+			अवरोध;
 
-		case BFA_IOCPF_FWMISMATCH:
+		हाल BFA_IOCPF_FWMISMATCH:
 			ioc_st = BFA_IOC_FWMISMATCH;
-			break;
+			अवरोध;
 
-		case BFA_IOCPF_FAIL:
+		हाल BFA_IOCPF_FAIL:
 			ioc_st = BFA_IOC_FAIL;
-			break;
+			अवरोध;
 
-		case BFA_IOCPF_INITFAIL:
+		हाल BFA_IOCPF_INITFAIL:
 			ioc_st = BFA_IOC_INITFAIL;
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ioc_st;
-}
+	वापस ioc_st;
+पूर्ण
 
-void
-bfa_ioc_get_attr(struct bfa_ioc_s *ioc, struct bfa_ioc_attr_s *ioc_attr)
-{
-	memset((void *)ioc_attr, 0, sizeof(struct bfa_ioc_attr_s));
+व्योम
+bfa_ioc_get_attr(काष्ठा bfa_ioc_s *ioc, काष्ठा bfa_ioc_attr_s *ioc_attr)
+अणु
+	स_रखो((व्योम *)ioc_attr, 0, माप(काष्ठा bfa_ioc_attr_s));
 
 	ioc_attr->state = bfa_ioc_get_state(ioc);
 	ioc_attr->port_id = bfa_ioc_portid(ioc);
@@ -2867,400 +2868,400 @@ bfa_ioc_get_attr(struct bfa_ioc_s *ioc, struct bfa_ioc_attr_s *ioc_attr)
 	bfa_ioc_get_adapter_attr(ioc, &ioc_attr->adapter_attr);
 
 	ioc_attr->pci_attr.device_id = bfa_ioc_devid(ioc);
-	ioc_attr->pci_attr.pcifn = bfa_ioc_pcifn(ioc);
-	ioc_attr->def_fn = (bfa_ioc_pcifn(ioc) == bfa_ioc_portid(ioc));
+	ioc_attr->pci_attr.pcअगरn = bfa_ioc_pcअगरn(ioc);
+	ioc_attr->def_fn = (bfa_ioc_pcअगरn(ioc) == bfa_ioc_portid(ioc));
 	bfa_ioc_get_pci_chip_rev(ioc, ioc_attr->pci_attr.chip_rev);
-}
+पूर्ण
 
 mac_t
-bfa_ioc_get_mac(struct bfa_ioc_s *ioc)
-{
+bfa_ioc_get_mac(काष्ठा bfa_ioc_s *ioc)
+अणु
 	/*
-	 * Check the IOC type and return the appropriate MAC
+	 * Check the IOC type and वापस the appropriate MAC
 	 */
-	if (bfa_ioc_get_type(ioc) == BFA_IOC_TYPE_FCoE)
-		return ioc->attr->fcoe_mac;
-	else
-		return ioc->attr->mac;
-}
+	अगर (bfa_ioc_get_type(ioc) == BFA_IOC_TYPE_FCoE)
+		वापस ioc->attr->fcoe_mac;
+	अन्यथा
+		वापस ioc->attr->mac;
+पूर्ण
 
 mac_t
-bfa_ioc_get_mfg_mac(struct bfa_ioc_s *ioc)
-{
+bfa_ioc_get_mfg_mac(काष्ठा bfa_ioc_s *ioc)
+अणु
 	mac_t	m;
 
 	m = ioc->attr->mfg_mac;
-	if (bfa_mfg_is_old_wwn_mac_model(ioc->attr->card_type))
-		m.mac[MAC_ADDRLEN - 1] += bfa_ioc_pcifn(ioc);
-	else
+	अगर (bfa_mfg_is_old_wwn_mac_model(ioc->attr->card_type))
+		m.mac[MAC_ADDRLEN - 1] += bfa_ioc_pcअगरn(ioc);
+	अन्यथा
 		bfa_mfg_increment_wwn_mac(&(m.mac[MAC_ADDRLEN-3]),
-			bfa_ioc_pcifn(ioc));
+			bfa_ioc_pcअगरn(ioc));
 
-	return m;
-}
+	वापस m;
+पूर्ण
 
 /*
- * Send AEN notification
+ * Send AEN notअगरication
  */
-void
-bfa_ioc_aen_post(struct bfa_ioc_s *ioc, enum bfa_ioc_aen_event event)
-{
-	struct bfad_s *bfad = (struct bfad_s *)ioc->bfa->bfad;
-	struct bfa_aen_entry_s	*aen_entry;
-	enum bfa_ioc_type_e ioc_type;
+व्योम
+bfa_ioc_aen_post(काष्ठा bfa_ioc_s *ioc, क्रमागत bfa_ioc_aen_event event)
+अणु
+	काष्ठा bfad_s *bfad = (काष्ठा bfad_s *)ioc->bfa->bfad;
+	काष्ठा bfa_aen_entry_s	*aen_entry;
+	क्रमागत bfa_ioc_type_e ioc_type;
 
 	bfad_get_aen_entry(bfad, aen_entry);
-	if (!aen_entry)
-		return;
+	अगर (!aen_entry)
+		वापस;
 
 	ioc_type = bfa_ioc_get_type(ioc);
-	switch (ioc_type) {
-	case BFA_IOC_TYPE_FC:
+	चयन (ioc_type) अणु
+	हाल BFA_IOC_TYPE_FC:
 		aen_entry->aen_data.ioc.pwwn = ioc->attr->pwwn;
-		break;
-	case BFA_IOC_TYPE_FCoE:
+		अवरोध;
+	हाल BFA_IOC_TYPE_FCoE:
 		aen_entry->aen_data.ioc.pwwn = ioc->attr->pwwn;
 		aen_entry->aen_data.ioc.mac = bfa_ioc_get_mac(ioc);
-		break;
-	case BFA_IOC_TYPE_LL:
+		अवरोध;
+	हाल BFA_IOC_TYPE_LL:
 		aen_entry->aen_data.ioc.mac = bfa_ioc_get_mac(ioc);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(ioc_type != BFA_IOC_TYPE_FC);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Send the AEN notification */
+	/* Send the AEN notअगरication */
 	aen_entry->aen_data.ioc.ioc_type = ioc_type;
-	bfad_im_post_vendor_event(aen_entry, bfad, ++ioc->ioc_aen_seq,
+	bfad_im_post_venकरोr_event(aen_entry, bfad, ++ioc->ioc_aen_seq,
 				  BFA_AEN_CAT_IOC, event);
-}
+पूर्ण
 
 /*
  * Retrieve saved firmware trace from a prior IOC failure.
  */
 bfa_status_t
-bfa_ioc_debug_fwsave(struct bfa_ioc_s *ioc, void *trcdata, int *trclen)
-{
-	int	tlen;
+bfa_ioc_debug_fwsave(काष्ठा bfa_ioc_s *ioc, व्योम *trcdata, पूर्णांक *trclen)
+अणु
+	पूर्णांक	tlen;
 
-	if (ioc->dbg_fwsave_len == 0)
-		return BFA_STATUS_ENOFSAVE;
+	अगर (ioc->dbg_fwsave_len == 0)
+		वापस BFA_STATUS_ENOFSAVE;
 
 	tlen = *trclen;
-	if (tlen > ioc->dbg_fwsave_len)
+	अगर (tlen > ioc->dbg_fwsave_len)
 		tlen = ioc->dbg_fwsave_len;
 
-	memcpy(trcdata, ioc->dbg_fwsave, tlen);
+	स_नकल(trcdata, ioc->dbg_fwsave, tlen);
 	*trclen = tlen;
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 
 /*
  * Retrieve saved firmware trace from a prior IOC failure.
  */
 bfa_status_t
-bfa_ioc_debug_fwtrc(struct bfa_ioc_s *ioc, void *trcdata, int *trclen)
-{
+bfa_ioc_debug_fwtrc(काष्ठा bfa_ioc_s *ioc, व्योम *trcdata, पूर्णांक *trclen)
+अणु
 	u32 loff = BFA_DBG_FWTRC_OFF(bfa_ioc_portid(ioc));
-	int tlen;
+	पूर्णांक tlen;
 	bfa_status_t status;
 
 	bfa_trc(ioc, *trclen);
 
 	tlen = *trclen;
-	if (tlen > BFA_DBG_FWTRC_LEN)
+	अगर (tlen > BFA_DBG_FWTRC_LEN)
 		tlen = BFA_DBG_FWTRC_LEN;
 
-	status = bfa_ioc_smem_read(ioc, trcdata, loff, tlen);
+	status = bfa_ioc_smem_पढ़ो(ioc, trcdata, loff, tlen);
 	*trclen = tlen;
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void
-bfa_ioc_send_fwsync(struct bfa_ioc_s *ioc)
-{
-	struct bfa_mbox_cmd_s cmd;
-	struct bfi_ioc_ctrl_req_s *req = (struct bfi_ioc_ctrl_req_s *) cmd.msg;
+अटल व्योम
+bfa_ioc_send_fwsync(काष्ठा bfa_ioc_s *ioc)
+अणु
+	काष्ठा bfa_mbox_cmd_s cmd;
+	काष्ठा bfi_ioc_ctrl_req_s *req = (काष्ठा bfi_ioc_ctrl_req_s *) cmd.msg;
 
 	bfi_h2i_set(req->mh, BFI_MC_IOC, BFI_IOC_H2I_DBG_SYNC,
 		    bfa_ioc_portid(ioc));
 	req->clscode = cpu_to_be16(ioc->clscode);
 	bfa_ioc_mbox_queue(ioc, &cmd);
-}
+पूर्ण
 
-static void
-bfa_ioc_fwsync(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_fwsync(काष्ठा bfa_ioc_s *ioc)
+अणु
 	u32 fwsync_iter = 1000;
 
 	bfa_ioc_send_fwsync(ioc);
 
 	/*
-	 * After sending a fw sync mbox command wait for it to
-	 * take effect.  We will not wait for a response because
-	 *    1. fw_sync mbox cmd doesn't have a response.
-	 *    2. Even if we implement that,  interrupts might not
+	 * After sending a fw sync mbox command रुको क्रम it to
+	 * take effect.  We will not रुको क्रम a response because
+	 *    1. fw_sync mbox cmd करोesn't have a response.
+	 *    2. Even अगर we implement that,  पूर्णांकerrupts might not
 	 *	 be enabled when we call this function.
-	 * So, just keep checking if any mbox cmd is pending, and
-	 * after waiting for a reasonable amount of time, go ahead.
+	 * So, just keep checking अगर any mbox cmd is pending, and
+	 * after रुकोing क्रम a reasonable amount of समय, go ahead.
 	 * It is possible that fw has crashed and the mbox command
 	 * is never acknowledged.
 	 */
-	while (bfa_ioc_mbox_cmd_pending(ioc) && fwsync_iter > 0)
+	जबतक (bfa_ioc_mbox_cmd_pending(ioc) && fwsync_iter > 0)
 		fwsync_iter--;
-}
+पूर्ण
 
 /*
  * Dump firmware smem
  */
 bfa_status_t
-bfa_ioc_debug_fwcore(struct bfa_ioc_s *ioc, void *buf,
-				u32 *offset, int *buflen)
-{
+bfa_ioc_debug_fwcore(काष्ठा bfa_ioc_s *ioc, व्योम *buf,
+				u32 *offset, पूर्णांक *buflen)
+अणु
 	u32 loff;
-	int dlen;
+	पूर्णांक dlen;
 	bfa_status_t status;
 	u32 smem_len = BFA_IOC_FW_SMEM_SIZE(ioc);
 
-	if (*offset >= smem_len) {
+	अगर (*offset >= smem_len) अणु
 		*offset = *buflen = 0;
-		return BFA_STATUS_EINVAL;
-	}
+		वापस BFA_STATUS_EINVAL;
+	पूर्ण
 
 	loff = *offset;
 	dlen = *buflen;
 
 	/*
-	 * First smem read, sync smem before proceeding
-	 * No need to sync before reading every chunk.
+	 * First smem पढ़ो, sync smem beक्रमe proceeding
+	 * No need to sync beक्रमe पढ़ोing every chunk.
 	 */
-	if (loff == 0)
+	अगर (loff == 0)
 		bfa_ioc_fwsync(ioc);
 
-	if ((loff + dlen) >= smem_len)
+	अगर ((loff + dlen) >= smem_len)
 		dlen = smem_len - loff;
 
-	status = bfa_ioc_smem_read(ioc, buf, loff, dlen);
+	status = bfa_ioc_smem_पढ़ो(ioc, buf, loff, dlen);
 
-	if (status != BFA_STATUS_OK) {
+	अगर (status != BFA_STATUS_OK) अणु
 		*offset = *buflen = 0;
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
 	*offset += dlen;
 
-	if (*offset >= smem_len)
+	अगर (*offset >= smem_len)
 		*offset = 0;
 
 	*buflen = dlen;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  * Firmware statistics
  */
 bfa_status_t
-bfa_ioc_fw_stats_get(struct bfa_ioc_s *ioc, void *stats)
-{
+bfa_ioc_fw_stats_get(काष्ठा bfa_ioc_s *ioc, व्योम *stats)
+अणु
 	u32 loff = BFI_IOC_FWSTATS_OFF + \
 		BFI_IOC_FWSTATS_SZ * (bfa_ioc_portid(ioc));
-	int tlen;
+	पूर्णांक tlen;
 	bfa_status_t status;
 
-	if (ioc->stats_busy) {
+	अगर (ioc->stats_busy) अणु
 		bfa_trc(ioc, ioc->stats_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 	ioc->stats_busy = BFA_TRUE;
 
-	tlen = sizeof(struct bfa_fw_stats_s);
-	status = bfa_ioc_smem_read(ioc, stats, loff, tlen);
+	tlen = माप(काष्ठा bfa_fw_stats_s);
+	status = bfa_ioc_smem_पढ़ो(ioc, stats, loff, tlen);
 
 	ioc->stats_busy = BFA_FALSE;
-	return status;
-}
+	वापस status;
+पूर्ण
 
 bfa_status_t
-bfa_ioc_fw_stats_clear(struct bfa_ioc_s *ioc)
-{
+bfa_ioc_fw_stats_clear(काष्ठा bfa_ioc_s *ioc)
+अणु
 	u32 loff = BFI_IOC_FWSTATS_OFF + \
 		BFI_IOC_FWSTATS_SZ * (bfa_ioc_portid(ioc));
-	int tlen;
+	पूर्णांक tlen;
 	bfa_status_t status;
 
-	if (ioc->stats_busy) {
+	अगर (ioc->stats_busy) अणु
 		bfa_trc(ioc, ioc->stats_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 	ioc->stats_busy = BFA_TRUE;
 
-	tlen = sizeof(struct bfa_fw_stats_s);
+	tlen = माप(काष्ठा bfa_fw_stats_s);
 	status = bfa_ioc_smem_clr(ioc, loff, tlen);
 
 	ioc->stats_busy = BFA_FALSE;
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- * Save firmware trace if configured.
+ * Save firmware trace अगर configured.
  */
-void
-bfa_ioc_debug_save_ftrc(struct bfa_ioc_s *ioc)
-{
-	int		tlen;
+व्योम
+bfa_ioc_debug_save_ftrc(काष्ठा bfa_ioc_s *ioc)
+अणु
+	पूर्णांक		tlen;
 
-	if (ioc->dbg_fwsave_once) {
+	अगर (ioc->dbg_fwsave_once) अणु
 		ioc->dbg_fwsave_once = BFA_FALSE;
-		if (ioc->dbg_fwsave_len) {
+		अगर (ioc->dbg_fwsave_len) अणु
 			tlen = ioc->dbg_fwsave_len;
 			bfa_ioc_debug_fwtrc(ioc, ioc->dbg_fwsave, &tlen);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Firmware failure detected. Start recovery actions.
  */
-static void
-bfa_ioc_recover(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_recover(काष्ठा bfa_ioc_s *ioc)
+अणु
 	bfa_ioc_stats(ioc, ioc_hbfails);
 	ioc->stats.hb_count = ioc->hb_count;
 	bfa_fsm_send_event(ioc, IOC_E_HBFAIL);
-}
+पूर्ण
 
 /*
- *  BFA IOC PF private functions
+ *  BFA IOC PF निजी functions
  */
-static void
-bfa_iocpf_timeout(void *ioc_arg)
-{
-	struct bfa_ioc_s  *ioc = (struct bfa_ioc_s *) ioc_arg;
+अटल व्योम
+bfa_iocpf_समयout(व्योम *ioc_arg)
+अणु
+	काष्ठा bfa_ioc_s  *ioc = (काष्ठा bfa_ioc_s *) ioc_arg;
 
 	bfa_trc(ioc, 0);
 	bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_TIMEOUT);
-}
+पूर्ण
 
-static void
-bfa_iocpf_sem_timeout(void *ioc_arg)
-{
-	struct bfa_ioc_s  *ioc = (struct bfa_ioc_s *) ioc_arg;
+अटल व्योम
+bfa_iocpf_sem_समयout(व्योम *ioc_arg)
+अणु
+	काष्ठा bfa_ioc_s  *ioc = (काष्ठा bfa_ioc_s *) ioc_arg;
 
 	bfa_ioc_hw_sem_get(ioc);
-}
+पूर्ण
 
-static void
-bfa_ioc_poll_fwinit(struct bfa_ioc_s *ioc)
-{
+अटल व्योम
+bfa_ioc_poll_fwinit(काष्ठा bfa_ioc_s *ioc)
+अणु
 	u32 fwstate = bfa_ioc_get_cur_ioc_fwstate(ioc);
 
 	bfa_trc(ioc, fwstate);
 
-	if (fwstate == BFI_IOC_DISABLED) {
+	अगर (fwstate == BFI_IOC_DISABLED) अणु
 		bfa_fsm_send_event(&ioc->iocpf, IOCPF_E_FWREADY);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ioc->iocpf.poll_time >= (3 * BFA_IOC_TOV))
-		bfa_iocpf_timeout(ioc);
-	else {
-		ioc->iocpf.poll_time += BFA_IOC_POLL_TOV;
-		bfa_iocpf_poll_timer_start(ioc);
-	}
-}
+	अगर (ioc->iocpf.poll_समय >= (3 * BFA_IOC_TOV))
+		bfa_iocpf_समयout(ioc);
+	अन्यथा अणु
+		ioc->iocpf.poll_समय += BFA_IOC_POLL_TOV;
+		bfa_iocpf_poll_समयr_start(ioc);
+	पूर्ण
+पूर्ण
 
-static void
-bfa_iocpf_poll_timeout(void *ioc_arg)
-{
-	struct bfa_ioc_s *ioc = (struct bfa_ioc_s *) ioc_arg;
+अटल व्योम
+bfa_iocpf_poll_समयout(व्योम *ioc_arg)
+अणु
+	काष्ठा bfa_ioc_s *ioc = (काष्ठा bfa_ioc_s *) ioc_arg;
 
 	bfa_ioc_poll_fwinit(ioc);
-}
+पूर्ण
 
 /*
- *  bfa timer function
+ *  bfa समयr function
  */
-void
-bfa_timer_beat(struct bfa_timer_mod_s *mod)
-{
-	struct list_head *qh = &mod->timer_q;
-	struct list_head *qe, *qe_next;
-	struct bfa_timer_s *elem;
-	struct list_head timedout_q;
+व्योम
+bfa_समयr_beat(काष्ठा bfa_समयr_mod_s *mod)
+अणु
+	काष्ठा list_head *qh = &mod->समयr_q;
+	काष्ठा list_head *qe, *qe_next;
+	काष्ठा bfa_समयr_s *elem;
+	काष्ठा list_head समयकरोut_q;
 
-	INIT_LIST_HEAD(&timedout_q);
+	INIT_LIST_HEAD(&समयकरोut_q);
 
 	qe = bfa_q_next(qh);
 
-	while (qe != qh) {
+	जबतक (qe != qh) अणु
 		qe_next = bfa_q_next(qe);
 
-		elem = (struct bfa_timer_s *) qe;
-		if (elem->timeout <= BFA_TIMER_FREQ) {
-			elem->timeout = 0;
+		elem = (काष्ठा bfa_समयr_s *) qe;
+		अगर (elem->समयout <= BFA_TIMER_FREQ) अणु
+			elem->समयout = 0;
 			list_del(&elem->qe);
-			list_add_tail(&elem->qe, &timedout_q);
-		} else {
-			elem->timeout -= BFA_TIMER_FREQ;
-		}
+			list_add_tail(&elem->qe, &समयकरोut_q);
+		पूर्ण अन्यथा अणु
+			elem->समयout -= BFA_TIMER_FREQ;
+		पूर्ण
 
 		qe = qe_next;	/* go to next elem */
-	}
+	पूर्ण
 
 	/*
-	 * Pop all the timeout entries
+	 * Pop all the समयout entries
 	 */
-	while (!list_empty(&timedout_q)) {
-		bfa_q_deq(&timedout_q, &elem);
-		elem->timercb(elem->arg);
-	}
-}
+	जबतक (!list_empty(&समयकरोut_q)) अणु
+		bfa_q_deq(&समयकरोut_q, &elem);
+		elem->समयrcb(elem->arg);
+	पूर्ण
+पूर्ण
 
 /*
  * Should be called with lock protection
  */
-void
-bfa_timer_begin(struct bfa_timer_mod_s *mod, struct bfa_timer_s *timer,
-		    void (*timercb) (void *), void *arg, unsigned int timeout)
-{
+व्योम
+bfa_समयr_begin(काष्ठा bfa_समयr_mod_s *mod, काष्ठा bfa_समयr_s *समयr,
+		    व्योम (*समयrcb) (व्योम *), व्योम *arg, अचिन्हित पूर्णांक समयout)
+अणु
 
-	WARN_ON(timercb == NULL);
-	WARN_ON(bfa_q_is_on_q(&mod->timer_q, timer));
+	WARN_ON(समयrcb == शून्य);
+	WARN_ON(bfa_q_is_on_q(&mod->समयr_q, समयr));
 
-	timer->timeout = timeout;
-	timer->timercb = timercb;
-	timer->arg = arg;
+	समयr->समयout = समयout;
+	समयr->समयrcb = समयrcb;
+	समयr->arg = arg;
 
-	list_add_tail(&timer->qe, &mod->timer_q);
-}
+	list_add_tail(&समयr->qe, &mod->समयr_q);
+पूर्ण
 
 /*
  * Should be called with lock protection
  */
-void
-bfa_timer_stop(struct bfa_timer_s *timer)
-{
-	WARN_ON(list_empty(&timer->qe));
+व्योम
+bfa_समयr_stop(काष्ठा bfa_समयr_s *समयr)
+अणु
+	WARN_ON(list_empty(&समयr->qe));
 
-	list_del(&timer->qe);
-}
+	list_del(&समयr->qe);
+पूर्ण
 
 /*
  *	ASIC block related
  */
-static void
-bfa_ablk_config_swap(struct bfa_ablk_cfg_s *cfg)
-{
-	struct bfa_ablk_cfg_inst_s *cfg_inst;
-	int i, j;
+अटल व्योम
+bfa_ablk_config_swap(काष्ठा bfa_ablk_cfg_s *cfg)
+अणु
+	काष्ठा bfa_ablk_cfg_inst_s *cfg_inst;
+	पूर्णांक i, j;
 	u16	be16;
 
-	for (i = 0; i < BFA_ABLK_MAX; i++) {
+	क्रम (i = 0; i < BFA_ABLK_MAX; i++) अणु
 		cfg_inst = &cfg->inst[i];
-		for (j = 0; j < BFA_ABLK_MAX_PFS; j++) {
+		क्रम (j = 0; j < BFA_ABLK_MAX_PFS; j++) अणु
 			be16 = cfg_inst->pf_cfg[j].pers;
 			cfg_inst->pf_cfg[j].pers = be16_to_cpu(be16);
 			be16 = cfg_inst->pf_cfg[j].num_qpairs;
@@ -3271,170 +3272,170 @@ bfa_ablk_config_swap(struct bfa_ablk_cfg_s *cfg)
 			cfg_inst->pf_cfg[j].bw_min = be16_to_cpu(be16);
 			be16 = cfg_inst->pf_cfg[j].bw_max;
 			cfg_inst->pf_cfg[j].bw_max = be16_to_cpu(be16);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void
-bfa_ablk_isr(void *cbarg, struct bfi_mbmsg_s *msg)
-{
-	struct bfa_ablk_s *ablk = (struct bfa_ablk_s *)cbarg;
-	struct bfi_ablk_i2h_rsp_s *rsp = (struct bfi_ablk_i2h_rsp_s *)msg;
+अटल व्योम
+bfa_ablk_isr(व्योम *cbarg, काष्ठा bfi_mbmsg_s *msg)
+अणु
+	काष्ठा bfa_ablk_s *ablk = (काष्ठा bfa_ablk_s *)cbarg;
+	काष्ठा bfi_ablk_i2h_rsp_s *rsp = (काष्ठा bfi_ablk_i2h_rsp_s *)msg;
 	bfa_ablk_cbfn_t cbfn;
 
 	WARN_ON(msg->mh.msg_class != BFI_MC_ABLK);
 	bfa_trc(ablk->ioc, msg->mh.msg_id);
 
-	switch (msg->mh.msg_id) {
-	case BFI_ABLK_I2H_QUERY:
-		if (rsp->status == BFA_STATUS_OK) {
-			memcpy(ablk->cfg, ablk->dma_addr.kva,
-				sizeof(struct bfa_ablk_cfg_s));
+	चयन (msg->mh.msg_id) अणु
+	हाल BFI_ABLK_I2H_QUERY:
+		अगर (rsp->status == BFA_STATUS_OK) अणु
+			स_नकल(ablk->cfg, ablk->dma_addr.kva,
+				माप(काष्ठा bfa_ablk_cfg_s));
 			bfa_ablk_config_swap(ablk->cfg);
-			ablk->cfg = NULL;
-		}
-		break;
+			ablk->cfg = शून्य;
+		पूर्ण
+		अवरोध;
 
-	case BFI_ABLK_I2H_ADPT_CONFIG:
-	case BFI_ABLK_I2H_PORT_CONFIG:
+	हाल BFI_ABLK_I2H_ADPT_CONFIG:
+	हाल BFI_ABLK_I2H_PORT_CONFIG:
 		/* update config port mode */
 		ablk->ioc->port_mode_cfg = rsp->port_mode;
-		break;
+		अवरोध;
 
-	case BFI_ABLK_I2H_PF_DELETE:
-	case BFI_ABLK_I2H_PF_UPDATE:
-	case BFI_ABLK_I2H_OPTROM_ENABLE:
-	case BFI_ABLK_I2H_OPTROM_DISABLE:
+	हाल BFI_ABLK_I2H_PF_DELETE:
+	हाल BFI_ABLK_I2H_PF_UPDATE:
+	हाल BFI_ABLK_I2H_OPTROM_ENABLE:
+	हाल BFI_ABLK_I2H_OPTROM_DISABLE:
 		/* No-op */
-		break;
+		अवरोध;
 
-	case BFI_ABLK_I2H_PF_CREATE:
-		*(ablk->pcifn) = rsp->pcifn;
-		ablk->pcifn = NULL;
-		break;
+	हाल BFI_ABLK_I2H_PF_CREATE:
+		*(ablk->pcअगरn) = rsp->pcअगरn;
+		ablk->pcअगरn = शून्य;
+		अवरोध;
 
-	default:
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 
 	ablk->busy = BFA_FALSE;
-	if (ablk->cbfn) {
+	अगर (ablk->cbfn) अणु
 		cbfn = ablk->cbfn;
-		ablk->cbfn = NULL;
+		ablk->cbfn = शून्य;
 		cbfn(ablk->cbarg, rsp->status);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_ablk_notify(void *cbarg, enum bfa_ioc_event_e event)
-{
-	struct bfa_ablk_s *ablk = (struct bfa_ablk_s *)cbarg;
+अटल व्योम
+bfa_ablk_notअगरy(व्योम *cbarg, क्रमागत bfa_ioc_event_e event)
+अणु
+	काष्ठा bfa_ablk_s *ablk = (काष्ठा bfa_ablk_s *)cbarg;
 
 	bfa_trc(ablk->ioc, event);
 
-	switch (event) {
-	case BFA_IOC_E_ENABLED:
+	चयन (event) अणु
+	हाल BFA_IOC_E_ENABLED:
 		WARN_ON(ablk->busy != BFA_FALSE);
-		break;
+		अवरोध;
 
-	case BFA_IOC_E_DISABLED:
-	case BFA_IOC_E_FAILED:
+	हाल BFA_IOC_E_DISABLED:
+	हाल BFA_IOC_E_FAILED:
 		/* Fail any pending requests */
-		ablk->pcifn = NULL;
-		if (ablk->busy) {
-			if (ablk->cbfn)
+		ablk->pcअगरn = शून्य;
+		अगर (ablk->busy) अणु
+			अगर (ablk->cbfn)
 				ablk->cbfn(ablk->cbarg, BFA_STATUS_FAILED);
-			ablk->cbfn = NULL;
+			ablk->cbfn = शून्य;
 			ablk->busy = BFA_FALSE;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		WARN_ON(1);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 u32
-bfa_ablk_meminfo(void)
-{
-	return BFA_ROUNDUP(sizeof(struct bfa_ablk_cfg_s), BFA_DMA_ALIGN_SZ);
-}
+bfa_ablk_meminfo(व्योम)
+अणु
+	वापस BFA_ROUNDUP(माप(काष्ठा bfa_ablk_cfg_s), BFA_DMA_ALIGN_SZ);
+पूर्ण
 
-void
-bfa_ablk_memclaim(struct bfa_ablk_s *ablk, u8 *dma_kva, u64 dma_pa)
-{
+व्योम
+bfa_ablk_memclaim(काष्ठा bfa_ablk_s *ablk, u8 *dma_kva, u64 dma_pa)
+अणु
 	ablk->dma_addr.kva = dma_kva;
 	ablk->dma_addr.pa  = dma_pa;
-}
+पूर्ण
 
-void
-bfa_ablk_attach(struct bfa_ablk_s *ablk, struct bfa_ioc_s *ioc)
-{
+व्योम
+bfa_ablk_attach(काष्ठा bfa_ablk_s *ablk, काष्ठा bfa_ioc_s *ioc)
+अणु
 	ablk->ioc = ioc;
 
 	bfa_ioc_mbox_regisr(ablk->ioc, BFI_MC_ABLK, bfa_ablk_isr, ablk);
-	bfa_q_qe_init(&ablk->ioc_notify);
-	bfa_ioc_notify_init(&ablk->ioc_notify, bfa_ablk_notify, ablk);
-	list_add_tail(&ablk->ioc_notify.qe, &ablk->ioc->notify_q);
-}
+	bfa_q_qe_init(&ablk->ioc_notअगरy);
+	bfa_ioc_notअगरy_init(&ablk->ioc_notअगरy, bfa_ablk_notअगरy, ablk);
+	list_add_tail(&ablk->ioc_notअगरy.qe, &ablk->ioc->notअगरy_q);
+पूर्ण
 
 bfa_status_t
-bfa_ablk_query(struct bfa_ablk_s *ablk, struct bfa_ablk_cfg_s *ablk_cfg,
-		bfa_ablk_cbfn_t cbfn, void *cbarg)
-{
-	struct bfi_ablk_h2i_query_s *m;
+bfa_ablk_query(काष्ठा bfa_ablk_s *ablk, काष्ठा bfa_ablk_cfg_s *ablk_cfg,
+		bfa_ablk_cbfn_t cbfn, व्योम *cbarg)
+अणु
+	काष्ठा bfi_ablk_h2i_query_s *m;
 
 	WARN_ON(!ablk_cfg);
 
-	if (!bfa_ioc_is_operational(ablk->ioc)) {
+	अगर (!bfa_ioc_is_operational(ablk->ioc)) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_IOC_FAILURE);
-		return BFA_STATUS_IOC_FAILURE;
-	}
+		वापस BFA_STATUS_IOC_FAILURE;
+	पूर्ण
 
-	if (ablk->busy) {
+	अगर (ablk->busy) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_DEVBUSY);
-		return  BFA_STATUS_DEVBUSY;
-	}
+		वापस  BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	ablk->cfg = ablk_cfg;
 	ablk->cbfn  = cbfn;
 	ablk->cbarg = cbarg;
 	ablk->busy  = BFA_TRUE;
 
-	m = (struct bfi_ablk_h2i_query_s *)ablk->mb.msg;
+	m = (काष्ठा bfi_ablk_h2i_query_s *)ablk->mb.msg;
 	bfi_h2i_set(m->mh, BFI_MC_ABLK, BFI_ABLK_H2I_QUERY,
 		    bfa_ioc_portid(ablk->ioc));
 	bfa_dma_be_addr_set(m->addr, ablk->dma_addr.pa);
 	bfa_ioc_mbox_queue(ablk->ioc, &ablk->mb);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 bfa_status_t
-bfa_ablk_pf_create(struct bfa_ablk_s *ablk, u16 *pcifn,
-		u8 port, enum bfi_pcifn_class personality,
+bfa_ablk_pf_create(काष्ठा bfa_ablk_s *ablk, u16 *pcअगरn,
+		u8 port, क्रमागत bfi_pcअगरn_class personality,
 		u16 bw_min, u16 bw_max,
-		bfa_ablk_cbfn_t cbfn, void *cbarg)
-{
-	struct bfi_ablk_h2i_pf_req_s *m;
+		bfa_ablk_cbfn_t cbfn, व्योम *cbarg)
+अणु
+	काष्ठा bfi_ablk_h2i_pf_req_s *m;
 
-	if (!bfa_ioc_is_operational(ablk->ioc)) {
+	अगर (!bfa_ioc_is_operational(ablk->ioc)) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_IOC_FAILURE);
-		return BFA_STATUS_IOC_FAILURE;
-	}
+		वापस BFA_STATUS_IOC_FAILURE;
+	पूर्ण
 
-	if (ablk->busy) {
+	अगर (ablk->busy) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_DEVBUSY);
-		return  BFA_STATUS_DEVBUSY;
-	}
+		वापस  BFA_STATUS_DEVBUSY;
+	पूर्ण
 
-	ablk->pcifn = pcifn;
+	ablk->pcअगरn = pcअगरn;
 	ablk->cbfn = cbfn;
 	ablk->cbarg = cbarg;
 	ablk->busy  = BFA_TRUE;
 
-	m = (struct bfi_ablk_h2i_pf_req_s *)ablk->mb.msg;
+	m = (काष्ठा bfi_ablk_h2i_pf_req_s *)ablk->mb.msg;
 	bfi_h2i_set(m->mh, BFI_MC_ABLK, BFI_ABLK_H2I_PF_CREATE,
 		    bfa_ioc_portid(ablk->ioc));
 	m->pers = cpu_to_be16((u16)personality);
@@ -3443,59 +3444,59 @@ bfa_ablk_pf_create(struct bfa_ablk_s *ablk, u16 *pcifn,
 	m->port = port;
 	bfa_ioc_mbox_queue(ablk->ioc, &ablk->mb);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 bfa_status_t
-bfa_ablk_pf_delete(struct bfa_ablk_s *ablk, int pcifn,
-		bfa_ablk_cbfn_t cbfn, void *cbarg)
-{
-	struct bfi_ablk_h2i_pf_req_s *m;
+bfa_ablk_pf_delete(काष्ठा bfa_ablk_s *ablk, पूर्णांक pcअगरn,
+		bfa_ablk_cbfn_t cbfn, व्योम *cbarg)
+अणु
+	काष्ठा bfi_ablk_h2i_pf_req_s *m;
 
-	if (!bfa_ioc_is_operational(ablk->ioc)) {
+	अगर (!bfa_ioc_is_operational(ablk->ioc)) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_IOC_FAILURE);
-		return BFA_STATUS_IOC_FAILURE;
-	}
+		वापस BFA_STATUS_IOC_FAILURE;
+	पूर्ण
 
-	if (ablk->busy) {
+	अगर (ablk->busy) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_DEVBUSY);
-		return  BFA_STATUS_DEVBUSY;
-	}
+		वापस  BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	ablk->cbfn  = cbfn;
 	ablk->cbarg = cbarg;
 	ablk->busy  = BFA_TRUE;
 
-	m = (struct bfi_ablk_h2i_pf_req_s *)ablk->mb.msg;
+	m = (काष्ठा bfi_ablk_h2i_pf_req_s *)ablk->mb.msg;
 	bfi_h2i_set(m->mh, BFI_MC_ABLK, BFI_ABLK_H2I_PF_DELETE,
 		    bfa_ioc_portid(ablk->ioc));
-	m->pcifn = (u8)pcifn;
+	m->pcअगरn = (u8)pcअगरn;
 	bfa_ioc_mbox_queue(ablk->ioc, &ablk->mb);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 bfa_status_t
-bfa_ablk_adapter_config(struct bfa_ablk_s *ablk, enum bfa_mode_s mode,
-		int max_pf, int max_vf, bfa_ablk_cbfn_t cbfn, void *cbarg)
-{
-	struct bfi_ablk_h2i_cfg_req_s *m;
+bfa_ablk_adapter_config(काष्ठा bfa_ablk_s *ablk, क्रमागत bfa_mode_s mode,
+		पूर्णांक max_pf, पूर्णांक max_vf, bfa_ablk_cbfn_t cbfn, व्योम *cbarg)
+अणु
+	काष्ठा bfi_ablk_h2i_cfg_req_s *m;
 
-	if (!bfa_ioc_is_operational(ablk->ioc)) {
+	अगर (!bfa_ioc_is_operational(ablk->ioc)) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_IOC_FAILURE);
-		return BFA_STATUS_IOC_FAILURE;
-	}
+		वापस BFA_STATUS_IOC_FAILURE;
+	पूर्ण
 
-	if (ablk->busy) {
+	अगर (ablk->busy) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_DEVBUSY);
-		return  BFA_STATUS_DEVBUSY;
-	}
+		वापस  BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	ablk->cbfn  = cbfn;
 	ablk->cbarg = cbarg;
 	ablk->busy  = BFA_TRUE;
 
-	m = (struct bfi_ablk_h2i_cfg_req_s *)ablk->mb.msg;
+	m = (काष्ठा bfi_ablk_h2i_cfg_req_s *)ablk->mb.msg;
 	bfi_h2i_set(m->mh, BFI_MC_ABLK, BFI_ABLK_H2I_ADPT_CONFIG,
 		    bfa_ioc_portid(ablk->ioc));
 	m->mode = (u8)mode;
@@ -3503,30 +3504,30 @@ bfa_ablk_adapter_config(struct bfa_ablk_s *ablk, enum bfa_mode_s mode,
 	m->max_vf = (u8)max_vf;
 	bfa_ioc_mbox_queue(ablk->ioc, &ablk->mb);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 bfa_status_t
-bfa_ablk_port_config(struct bfa_ablk_s *ablk, int port, enum bfa_mode_s mode,
-		int max_pf, int max_vf, bfa_ablk_cbfn_t cbfn, void *cbarg)
-{
-	struct bfi_ablk_h2i_cfg_req_s *m;
+bfa_ablk_port_config(काष्ठा bfa_ablk_s *ablk, पूर्णांक port, क्रमागत bfa_mode_s mode,
+		पूर्णांक max_pf, पूर्णांक max_vf, bfa_ablk_cbfn_t cbfn, व्योम *cbarg)
+अणु
+	काष्ठा bfi_ablk_h2i_cfg_req_s *m;
 
-	if (!bfa_ioc_is_operational(ablk->ioc)) {
+	अगर (!bfa_ioc_is_operational(ablk->ioc)) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_IOC_FAILURE);
-		return BFA_STATUS_IOC_FAILURE;
-	}
+		वापस BFA_STATUS_IOC_FAILURE;
+	पूर्ण
 
-	if (ablk->busy) {
+	अगर (ablk->busy) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_DEVBUSY);
-		return  BFA_STATUS_DEVBUSY;
-	}
+		वापस  BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	ablk->cbfn  = cbfn;
 	ablk->cbarg = cbarg;
 	ablk->busy  = BFA_TRUE;
 
-	m = (struct bfi_ablk_h2i_cfg_req_s *)ablk->mb.msg;
+	m = (काष्ठा bfi_ablk_h2i_cfg_req_s *)ablk->mb.msg;
 	bfi_h2i_set(m->mh, BFI_MC_ABLK, BFI_ABLK_H2I_PORT_CONFIG,
 		bfa_ioc_portid(ablk->ioc));
 	m->port = (u8)port;
@@ -3535,224 +3536,224 @@ bfa_ablk_port_config(struct bfa_ablk_s *ablk, int port, enum bfa_mode_s mode,
 	m->max_vf = (u8)max_vf;
 	bfa_ioc_mbox_queue(ablk->ioc, &ablk->mb);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 bfa_status_t
-bfa_ablk_pf_update(struct bfa_ablk_s *ablk, int pcifn, u16 bw_min,
-		   u16 bw_max, bfa_ablk_cbfn_t cbfn, void *cbarg)
-{
-	struct bfi_ablk_h2i_pf_req_s *m;
+bfa_ablk_pf_update(काष्ठा bfa_ablk_s *ablk, पूर्णांक pcअगरn, u16 bw_min,
+		   u16 bw_max, bfa_ablk_cbfn_t cbfn, व्योम *cbarg)
+अणु
+	काष्ठा bfi_ablk_h2i_pf_req_s *m;
 
-	if (!bfa_ioc_is_operational(ablk->ioc)) {
+	अगर (!bfa_ioc_is_operational(ablk->ioc)) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_IOC_FAILURE);
-		return BFA_STATUS_IOC_FAILURE;
-	}
+		वापस BFA_STATUS_IOC_FAILURE;
+	पूर्ण
 
-	if (ablk->busy) {
+	अगर (ablk->busy) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_DEVBUSY);
-		return  BFA_STATUS_DEVBUSY;
-	}
+		वापस  BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	ablk->cbfn  = cbfn;
 	ablk->cbarg = cbarg;
 	ablk->busy  = BFA_TRUE;
 
-	m = (struct bfi_ablk_h2i_pf_req_s *)ablk->mb.msg;
+	m = (काष्ठा bfi_ablk_h2i_pf_req_s *)ablk->mb.msg;
 	bfi_h2i_set(m->mh, BFI_MC_ABLK, BFI_ABLK_H2I_PF_UPDATE,
 		bfa_ioc_portid(ablk->ioc));
-	m->pcifn = (u8)pcifn;
+	m->pcअगरn = (u8)pcअगरn;
 	m->bw_min = cpu_to_be16(bw_min);
 	m->bw_max = cpu_to_be16(bw_max);
 	bfa_ioc_mbox_queue(ablk->ioc, &ablk->mb);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 bfa_status_t
-bfa_ablk_optrom_en(struct bfa_ablk_s *ablk, bfa_ablk_cbfn_t cbfn, void *cbarg)
-{
-	struct bfi_ablk_h2i_optrom_s *m;
+bfa_ablk_optrom_en(काष्ठा bfa_ablk_s *ablk, bfa_ablk_cbfn_t cbfn, व्योम *cbarg)
+अणु
+	काष्ठा bfi_ablk_h2i_optrom_s *m;
 
-	if (!bfa_ioc_is_operational(ablk->ioc)) {
+	अगर (!bfa_ioc_is_operational(ablk->ioc)) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_IOC_FAILURE);
-		return BFA_STATUS_IOC_FAILURE;
-	}
+		वापस BFA_STATUS_IOC_FAILURE;
+	पूर्ण
 
-	if (ablk->busy) {
+	अगर (ablk->busy) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_DEVBUSY);
-		return  BFA_STATUS_DEVBUSY;
-	}
+		वापस  BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	ablk->cbfn  = cbfn;
 	ablk->cbarg = cbarg;
 	ablk->busy  = BFA_TRUE;
 
-	m = (struct bfi_ablk_h2i_optrom_s *)ablk->mb.msg;
+	m = (काष्ठा bfi_ablk_h2i_optrom_s *)ablk->mb.msg;
 	bfi_h2i_set(m->mh, BFI_MC_ABLK, BFI_ABLK_H2I_OPTROM_ENABLE,
 		bfa_ioc_portid(ablk->ioc));
 	bfa_ioc_mbox_queue(ablk->ioc, &ablk->mb);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 bfa_status_t
-bfa_ablk_optrom_dis(struct bfa_ablk_s *ablk, bfa_ablk_cbfn_t cbfn, void *cbarg)
-{
-	struct bfi_ablk_h2i_optrom_s *m;
+bfa_ablk_optrom_dis(काष्ठा bfa_ablk_s *ablk, bfa_ablk_cbfn_t cbfn, व्योम *cbarg)
+अणु
+	काष्ठा bfi_ablk_h2i_optrom_s *m;
 
-	if (!bfa_ioc_is_operational(ablk->ioc)) {
+	अगर (!bfa_ioc_is_operational(ablk->ioc)) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_IOC_FAILURE);
-		return BFA_STATUS_IOC_FAILURE;
-	}
+		वापस BFA_STATUS_IOC_FAILURE;
+	पूर्ण
 
-	if (ablk->busy) {
+	अगर (ablk->busy) अणु
 		bfa_trc(ablk->ioc, BFA_STATUS_DEVBUSY);
-		return  BFA_STATUS_DEVBUSY;
-	}
+		वापस  BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	ablk->cbfn  = cbfn;
 	ablk->cbarg = cbarg;
 	ablk->busy  = BFA_TRUE;
 
-	m = (struct bfi_ablk_h2i_optrom_s *)ablk->mb.msg;
+	m = (काष्ठा bfi_ablk_h2i_optrom_s *)ablk->mb.msg;
 	bfi_h2i_set(m->mh, BFI_MC_ABLK, BFI_ABLK_H2I_OPTROM_DISABLE,
 		bfa_ioc_portid(ablk->ioc));
 	bfa_ioc_mbox_queue(ablk->ioc, &ablk->mb);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
- *	SFP module specific
+ *	SFP module specअगरic
  */
 
-/* forward declarations */
-static void bfa_sfp_getdata_send(struct bfa_sfp_s *sfp);
-static void bfa_sfp_media_get(struct bfa_sfp_s *sfp);
-static bfa_status_t bfa_sfp_speed_valid(struct bfa_sfp_s *sfp,
-				enum bfa_port_speed portspeed);
+/* क्रमward declarations */
+अटल व्योम bfa_sfp_getdata_send(काष्ठा bfa_sfp_s *sfp);
+अटल व्योम bfa_sfp_media_get(काष्ठा bfa_sfp_s *sfp);
+अटल bfa_status_t bfa_sfp_speed_valid(काष्ठा bfa_sfp_s *sfp,
+				क्रमागत bfa_port_speed portspeed);
 
-static void
-bfa_cb_sfp_show(struct bfa_sfp_s *sfp)
-{
+अटल व्योम
+bfa_cb_sfp_show(काष्ठा bfa_sfp_s *sfp)
+अणु
 	bfa_trc(sfp, sfp->lock);
-	if (sfp->cbfn)
+	अगर (sfp->cbfn)
 		sfp->cbfn(sfp->cbarg, sfp->status);
 	sfp->lock = 0;
-	sfp->cbfn = NULL;
-}
+	sfp->cbfn = शून्य;
+पूर्ण
 
-static void
-bfa_cb_sfp_state_query(struct bfa_sfp_s *sfp)
-{
+अटल व्योम
+bfa_cb_sfp_state_query(काष्ठा bfa_sfp_s *sfp)
+अणु
 	bfa_trc(sfp, sfp->portspeed);
-	if (sfp->media) {
+	अगर (sfp->media) अणु
 		bfa_sfp_media_get(sfp);
-		if (sfp->state_query_cbfn)
+		अगर (sfp->state_query_cbfn)
 			sfp->state_query_cbfn(sfp->state_query_cbarg,
 					sfp->status);
-		sfp->media = NULL;
-	}
+		sfp->media = शून्य;
+	पूर्ण
 
-	if (sfp->portspeed) {
+	अगर (sfp->portspeed) अणु
 		sfp->status = bfa_sfp_speed_valid(sfp, sfp->portspeed);
-		if (sfp->state_query_cbfn)
+		अगर (sfp->state_query_cbfn)
 			sfp->state_query_cbfn(sfp->state_query_cbarg,
 					sfp->status);
 		sfp->portspeed = BFA_PORT_SPEED_UNKNOWN;
-	}
+	पूर्ण
 
 	sfp->state_query_lock = 0;
-	sfp->state_query_cbfn = NULL;
-}
+	sfp->state_query_cbfn = शून्य;
+पूर्ण
 
 /*
  *	IOC event handler.
  */
-static void
-bfa_sfp_notify(void *sfp_arg, enum bfa_ioc_event_e event)
-{
-	struct bfa_sfp_s *sfp = sfp_arg;
+अटल व्योम
+bfa_sfp_notअगरy(व्योम *sfp_arg, क्रमागत bfa_ioc_event_e event)
+अणु
+	काष्ठा bfa_sfp_s *sfp = sfp_arg;
 
 	bfa_trc(sfp, event);
 	bfa_trc(sfp, sfp->lock);
 	bfa_trc(sfp, sfp->state_query_lock);
 
-	switch (event) {
-	case BFA_IOC_E_DISABLED:
-	case BFA_IOC_E_FAILED:
-		if (sfp->lock) {
+	चयन (event) अणु
+	हाल BFA_IOC_E_DISABLED:
+	हाल BFA_IOC_E_FAILED:
+		अगर (sfp->lock) अणु
 			sfp->status = BFA_STATUS_IOC_FAILURE;
 			bfa_cb_sfp_show(sfp);
-		}
+		पूर्ण
 
-		if (sfp->state_query_lock) {
+		अगर (sfp->state_query_lock) अणु
 			sfp->status = BFA_STATUS_IOC_FAILURE;
 			bfa_cb_sfp_state_query(sfp);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * SFP's State Change Notification post to AEN
+ * SFP's State Change Notअगरication post to AEN
  */
-static void
-bfa_sfp_scn_aen_post(struct bfa_sfp_s *sfp, struct bfi_sfp_scn_s *rsp)
-{
-	struct bfad_s *bfad = (struct bfad_s *)sfp->ioc->bfa->bfad;
-	struct bfa_aen_entry_s  *aen_entry;
-	enum bfa_port_aen_event aen_evt = 0;
+अटल व्योम
+bfa_sfp_scn_aen_post(काष्ठा bfa_sfp_s *sfp, काष्ठा bfi_sfp_scn_s *rsp)
+अणु
+	काष्ठा bfad_s *bfad = (काष्ठा bfad_s *)sfp->ioc->bfa->bfad;
+	काष्ठा bfa_aen_entry_s  *aen_entry;
+	क्रमागत bfa_port_aen_event aen_evt = 0;
 
 	bfa_trc(sfp, (((u64)rsp->pomlvl) << 16) | (((u64)rsp->sfpid) << 8) |
 		      ((u64)rsp->event));
 
 	bfad_get_aen_entry(bfad, aen_entry);
-	if (!aen_entry)
-		return;
+	अगर (!aen_entry)
+		वापस;
 
 	aen_entry->aen_data.port.ioc_type = bfa_ioc_get_type(sfp->ioc);
 	aen_entry->aen_data.port.pwwn = sfp->ioc->attr->pwwn;
 	aen_entry->aen_data.port.mac = bfa_ioc_get_mac(sfp->ioc);
 
-	switch (rsp->event) {
-	case BFA_SFP_SCN_INSERTED:
+	चयन (rsp->event) अणु
+	हाल BFA_SFP_SCN_INSERTED:
 		aen_evt = BFA_PORT_AEN_SFP_INSERT;
-		break;
-	case BFA_SFP_SCN_REMOVED:
+		अवरोध;
+	हाल BFA_SFP_SCN_REMOVED:
 		aen_evt = BFA_PORT_AEN_SFP_REMOVE;
-		break;
-	case BFA_SFP_SCN_FAILED:
+		अवरोध;
+	हाल BFA_SFP_SCN_FAILED:
 		aen_evt = BFA_PORT_AEN_SFP_ACCESS_ERROR;
-		break;
-	case BFA_SFP_SCN_UNSUPPORT:
+		अवरोध;
+	हाल BFA_SFP_SCN_UNSUPPORT:
 		aen_evt = BFA_PORT_AEN_SFP_UNSUPPORT;
-		break;
-	case BFA_SFP_SCN_POM:
+		अवरोध;
+	हाल BFA_SFP_SCN_POM:
 		aen_evt = BFA_PORT_AEN_SFP_POM;
 		aen_entry->aen_data.port.level = rsp->pomlvl;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		bfa_trc(sfp, rsp->event);
 		WARN_ON(1);
-	}
+	पूर्ण
 
-	/* Send the AEN notification */
-	bfad_im_post_vendor_event(aen_entry, bfad, ++sfp->ioc->ioc_aen_seq,
+	/* Send the AEN notअगरication */
+	bfad_im_post_venकरोr_event(aen_entry, bfad, ++sfp->ioc->ioc_aen_seq,
 				  BFA_AEN_CAT_PORT, aen_evt);
-}
+पूर्ण
 
 /*
  *	SFP get data send
  */
-static void
-bfa_sfp_getdata_send(struct bfa_sfp_s *sfp)
-{
-	struct bfi_sfp_req_s *req = (struct bfi_sfp_req_s *)sfp->mbcmd.msg;
+अटल व्योम
+bfa_sfp_getdata_send(काष्ठा bfa_sfp_s *sfp)
+अणु
+	काष्ठा bfi_sfp_req_s *req = (काष्ठा bfi_sfp_req_s *)sfp->mbcmd.msg;
 
 	bfa_trc(sfp, req->memtype);
 
@@ -3762,15 +3763,15 @@ bfa_sfp_getdata_send(struct bfa_sfp_s *sfp)
 
 	/* send mbox cmd */
 	bfa_ioc_mbox_queue(sfp->ioc, &sfp->mbcmd);
-}
+पूर्ण
 
 /*
- *	SFP is valid, read sfp data
+ *	SFP is valid, पढ़ो sfp data
  */
-static void
-bfa_sfp_getdata(struct bfa_sfp_s *sfp, enum bfi_sfp_mem_e memtype)
-{
-	struct bfi_sfp_req_s *req = (struct bfi_sfp_req_s *)sfp->mbcmd.msg;
+अटल व्योम
+bfa_sfp_getdata(काष्ठा bfa_sfp_s *sfp, क्रमागत bfi_sfp_mem_e memtype)
+अणु
+	काष्ठा bfi_sfp_req_s *req = (काष्ठा bfi_sfp_req_s *)sfp->mbcmd.msg;
 
 	WARN_ON(sfp->lock != 0);
 	bfa_trc(sfp, sfp->state);
@@ -3780,118 +3781,118 @@ bfa_sfp_getdata(struct bfa_sfp_s *sfp, enum bfi_sfp_mem_e memtype)
 	req->memtype = memtype;
 
 	/* Setup SG list */
-	bfa_alen_set(&req->alen, sizeof(struct sfp_mem_s), sfp->dbuf_pa);
+	bfa_alen_set(&req->alen, माप(काष्ठा sfp_mem_s), sfp->dbuf_pa);
 
 	bfa_sfp_getdata_send(sfp);
-}
+पूर्ण
 
 /*
  *	SFP scn handler
  */
-static void
-bfa_sfp_scn(struct bfa_sfp_s *sfp, struct bfi_mbmsg_s *msg)
-{
-	struct bfi_sfp_scn_s *rsp = (struct bfi_sfp_scn_s *) msg;
+अटल व्योम
+bfa_sfp_scn(काष्ठा bfa_sfp_s *sfp, काष्ठा bfi_mbmsg_s *msg)
+अणु
+	काष्ठा bfi_sfp_scn_s *rsp = (काष्ठा bfi_sfp_scn_s *) msg;
 
-	switch (rsp->event) {
-	case BFA_SFP_SCN_INSERTED:
+	चयन (rsp->event) अणु
+	हाल BFA_SFP_SCN_INSERTED:
 		sfp->state = BFA_SFP_STATE_INSERTED;
 		sfp->data_valid = 0;
 		bfa_sfp_scn_aen_post(sfp, rsp);
-		break;
-	case BFA_SFP_SCN_REMOVED:
+		अवरोध;
+	हाल BFA_SFP_SCN_REMOVED:
 		sfp->state = BFA_SFP_STATE_REMOVED;
 		sfp->data_valid = 0;
 		bfa_sfp_scn_aen_post(sfp, rsp);
-		break;
-	case BFA_SFP_SCN_FAILED:
+		अवरोध;
+	हाल BFA_SFP_SCN_FAILED:
 		sfp->state = BFA_SFP_STATE_FAILED;
 		sfp->data_valid = 0;
 		bfa_sfp_scn_aen_post(sfp, rsp);
-		break;
-	case BFA_SFP_SCN_UNSUPPORT:
+		अवरोध;
+	हाल BFA_SFP_SCN_UNSUPPORT:
 		sfp->state = BFA_SFP_STATE_UNSUPPORT;
 		bfa_sfp_scn_aen_post(sfp, rsp);
-		if (!sfp->lock)
+		अगर (!sfp->lock)
 			bfa_sfp_getdata(sfp, BFI_SFP_MEM_ALL);
-		break;
-	case BFA_SFP_SCN_POM:
+		अवरोध;
+	हाल BFA_SFP_SCN_POM:
 		bfa_sfp_scn_aen_post(sfp, rsp);
-		break;
-	case BFA_SFP_SCN_VALID:
+		अवरोध;
+	हाल BFA_SFP_SCN_VALID:
 		sfp->state = BFA_SFP_STATE_VALID;
-		if (!sfp->lock)
+		अगर (!sfp->lock)
 			bfa_sfp_getdata(sfp, BFI_SFP_MEM_ALL);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		bfa_trc(sfp, rsp->event);
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * SFP show complete
  */
-static void
-bfa_sfp_show_comp(struct bfa_sfp_s *sfp, struct bfi_mbmsg_s *msg)
-{
-	struct bfi_sfp_rsp_s *rsp = (struct bfi_sfp_rsp_s *) msg;
+अटल व्योम
+bfa_sfp_show_comp(काष्ठा bfa_sfp_s *sfp, काष्ठा bfi_mbmsg_s *msg)
+अणु
+	काष्ठा bfi_sfp_rsp_s *rsp = (काष्ठा bfi_sfp_rsp_s *) msg;
 
-	if (!sfp->lock) {
+	अगर (!sfp->lock) अणु
 		/*
 		 * receiving response after ioc failure
 		 */
 		bfa_trc(sfp, sfp->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bfa_trc(sfp, rsp->status);
-	if (rsp->status == BFA_STATUS_OK) {
+	अगर (rsp->status == BFA_STATUS_OK) अणु
 		sfp->data_valid = 1;
-		if (sfp->state == BFA_SFP_STATE_VALID)
+		अगर (sfp->state == BFA_SFP_STATE_VALID)
 			sfp->status = BFA_STATUS_OK;
-		else if (sfp->state == BFA_SFP_STATE_UNSUPPORT)
+		अन्यथा अगर (sfp->state == BFA_SFP_STATE_UNSUPPORT)
 			sfp->status = BFA_STATUS_SFP_UNSUPP;
-		else
+		अन्यथा
 			bfa_trc(sfp, sfp->state);
-	} else {
+	पूर्ण अन्यथा अणु
 		sfp->data_valid = 0;
 		sfp->status = rsp->status;
 		/* sfpshow shouldn't change sfp state */
-	}
+	पूर्ण
 
 	bfa_trc(sfp, sfp->memtype);
-	if (sfp->memtype == BFI_SFP_MEM_DIAGEXT) {
+	अगर (sfp->memtype == BFI_SFP_MEM_DIAGEXT) अणु
 		bfa_trc(sfp, sfp->data_valid);
-		if (sfp->data_valid) {
-			u32	size = sizeof(struct sfp_mem_s);
+		अगर (sfp->data_valid) अणु
+			u32	size = माप(काष्ठा sfp_mem_s);
 			u8 *des = (u8 *)(sfp->sfpmem);
-			memcpy(des, sfp->dbuf_kva, size);
-		}
+			स_नकल(des, sfp->dbuf_kva, size);
+		पूर्ण
 		/*
 		 * Queue completion callback.
 		 */
 		bfa_cb_sfp_show(sfp);
-	} else
+	पूर्ण अन्यथा
 		sfp->lock = 0;
 
 	bfa_trc(sfp, sfp->state_query_lock);
-	if (sfp->state_query_lock) {
+	अगर (sfp->state_query_lock) अणु
 		sfp->state = rsp->state;
 		/* Complete callback */
 		bfa_cb_sfp_state_query(sfp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	SFP query fw sfp state
  */
-static void
-bfa_sfp_state_query(struct bfa_sfp_s *sfp)
-{
-	struct bfi_sfp_req_s *req = (struct bfi_sfp_req_s *)sfp->mbcmd.msg;
+अटल व्योम
+bfa_sfp_state_query(काष्ठा bfa_sfp_s *sfp)
+अणु
+	काष्ठा bfi_sfp_req_s *req = (काष्ठा bfi_sfp_req_s *)sfp->mbcmd.msg;
 
-	/* Should not be doing query if not in _INIT state */
+	/* Should not be करोing query अगर not in _INIT state */
 	WARN_ON(sfp->state != BFA_SFP_STATE_INIT);
 	WARN_ON(sfp->state_query_lock != 0);
 	bfa_trc(sfp, sfp->state);
@@ -3899,22 +3900,22 @@ bfa_sfp_state_query(struct bfa_sfp_s *sfp)
 	sfp->state_query_lock = 1;
 	req->memtype = 0;
 
-	if (!sfp->lock)
+	अगर (!sfp->lock)
 		bfa_sfp_getdata(sfp, BFI_SFP_MEM_ALL);
-}
+पूर्ण
 
-static void
-bfa_sfp_media_get(struct bfa_sfp_s *sfp)
-{
-	enum bfa_defs_sfp_media_e *media = sfp->media;
+अटल व्योम
+bfa_sfp_media_get(काष्ठा bfa_sfp_s *sfp)
+अणु
+	क्रमागत bfa_defs_sfp_media_e *media = sfp->media;
 
 	*media = BFA_SFP_MEDIA_UNKNOWN;
 
-	if (sfp->state == BFA_SFP_STATE_UNSUPPORT)
+	अगर (sfp->state == BFA_SFP_STATE_UNSUPPORT)
 		*media = BFA_SFP_MEDIA_UNSUPPORT;
-	else if (sfp->state == BFA_SFP_STATE_VALID) {
-		union sfp_xcvr_e10g_code_u e10g;
-		struct sfp_mem_s *sfpmem = (struct sfp_mem_s *)sfp->dbuf_kva;
+	अन्यथा अगर (sfp->state == BFA_SFP_STATE_VALID) अणु
+		जोड़ sfp_xcvr_e10g_code_u e10g;
+		काष्ठा sfp_mem_s *sfpmem = (काष्ठा sfp_mem_s *)sfp->dbuf_kva;
 		u16 xmtr_tech = (sfpmem->srlid_base.xcvr[4] & 0x3) << 7 |
 				(sfpmem->srlid_base.xcvr[5] >> 1);
 
@@ -3922,138 +3923,138 @@ bfa_sfp_media_get(struct bfa_sfp_s *sfp)
 		bfa_trc(sfp, e10g.b);
 		bfa_trc(sfp, xmtr_tech);
 		/* check fc transmitter tech */
-		if ((xmtr_tech & SFP_XMTR_TECH_CU) ||
+		अगर ((xmtr_tech & SFP_XMTR_TECH_CU) ||
 		    (xmtr_tech & SFP_XMTR_TECH_CP) ||
 		    (xmtr_tech & SFP_XMTR_TECH_CA))
 			*media = BFA_SFP_MEDIA_CU;
-		else if ((xmtr_tech & SFP_XMTR_TECH_EL_INTRA) ||
+		अन्यथा अगर ((xmtr_tech & SFP_XMTR_TECH_EL_INTRA) ||
 			 (xmtr_tech & SFP_XMTR_TECH_EL_INTER))
 			*media = BFA_SFP_MEDIA_EL;
-		else if ((xmtr_tech & SFP_XMTR_TECH_LL) ||
+		अन्यथा अगर ((xmtr_tech & SFP_XMTR_TECH_LL) ||
 			 (xmtr_tech & SFP_XMTR_TECH_LC))
 			*media = BFA_SFP_MEDIA_LW;
-		else if ((xmtr_tech & SFP_XMTR_TECH_SL) ||
+		अन्यथा अगर ((xmtr_tech & SFP_XMTR_TECH_SL) ||
 			 (xmtr_tech & SFP_XMTR_TECH_SN) ||
 			 (xmtr_tech & SFP_XMTR_TECH_SA))
 			*media = BFA_SFP_MEDIA_SW;
 		/* Check 10G Ethernet Compilance code */
-		else if (e10g.r.e10g_sr)
+		अन्यथा अगर (e10g.r.e10g_sr)
 			*media = BFA_SFP_MEDIA_SW;
-		else if (e10g.r.e10g_lrm && e10g.r.e10g_lr)
+		अन्यथा अगर (e10g.r.e10g_lrm && e10g.r.e10g_lr)
 			*media = BFA_SFP_MEDIA_LW;
-		else if (e10g.r.e10g_unall)
+		अन्यथा अगर (e10g.r.e10g_unall)
 			*media = BFA_SFP_MEDIA_UNKNOWN;
-		else
+		अन्यथा
 			bfa_trc(sfp, 0);
-	} else
+	पूर्ण अन्यथा
 		bfa_trc(sfp, sfp->state);
-}
+पूर्ण
 
-static bfa_status_t
-bfa_sfp_speed_valid(struct bfa_sfp_s *sfp, enum bfa_port_speed portspeed)
-{
-	struct sfp_mem_s *sfpmem = (struct sfp_mem_s *)sfp->dbuf_kva;
-	struct sfp_xcvr_s *xcvr = (struct sfp_xcvr_s *) sfpmem->srlid_base.xcvr;
-	union sfp_xcvr_fc3_code_u fc3 = xcvr->fc3;
-	union sfp_xcvr_e10g_code_u e10g = xcvr->e10g;
+अटल bfa_status_t
+bfa_sfp_speed_valid(काष्ठा bfa_sfp_s *sfp, क्रमागत bfa_port_speed portspeed)
+अणु
+	काष्ठा sfp_mem_s *sfpmem = (काष्ठा sfp_mem_s *)sfp->dbuf_kva;
+	काष्ठा sfp_xcvr_s *xcvr = (काष्ठा sfp_xcvr_s *) sfpmem->srlid_base.xcvr;
+	जोड़ sfp_xcvr_fc3_code_u fc3 = xcvr->fc3;
+	जोड़ sfp_xcvr_e10g_code_u e10g = xcvr->e10g;
 
-	if (portspeed == BFA_PORT_SPEED_10GBPS) {
-		if (e10g.r.e10g_sr || e10g.r.e10g_lr)
-			return BFA_STATUS_OK;
-		else {
+	अगर (portspeed == BFA_PORT_SPEED_10GBPS) अणु
+		अगर (e10g.r.e10g_sr || e10g.r.e10g_lr)
+			वापस BFA_STATUS_OK;
+		अन्यथा अणु
 			bfa_trc(sfp, e10g.b);
-			return BFA_STATUS_UNSUPP_SPEED;
-		}
-	}
-	if (((portspeed & BFA_PORT_SPEED_16GBPS) && fc3.r.mb1600) ||
+			वापस BFA_STATUS_UNSUPP_SPEED;
+		पूर्ण
+	पूर्ण
+	अगर (((portspeed & BFA_PORT_SPEED_16GBPS) && fc3.r.mb1600) ||
 	    ((portspeed & BFA_PORT_SPEED_8GBPS) && fc3.r.mb800) ||
 	    ((portspeed & BFA_PORT_SPEED_4GBPS) && fc3.r.mb400) ||
 	    ((portspeed & BFA_PORT_SPEED_2GBPS) && fc3.r.mb200) ||
 	    ((portspeed & BFA_PORT_SPEED_1GBPS) && fc3.r.mb100))
-		return BFA_STATUS_OK;
-	else {
+		वापस BFA_STATUS_OK;
+	अन्यथा अणु
 		bfa_trc(sfp, portspeed);
 		bfa_trc(sfp, fc3.b);
 		bfa_trc(sfp, e10g.b);
-		return BFA_STATUS_UNSUPP_SPEED;
-	}
-}
+		वापस BFA_STATUS_UNSUPP_SPEED;
+	पूर्ण
+पूर्ण
 
 /*
  *	SFP hmbox handler
  */
-void
-bfa_sfp_intr(void *sfparg, struct bfi_mbmsg_s *msg)
-{
-	struct bfa_sfp_s *sfp = sfparg;
+व्योम
+bfa_sfp_पूर्णांकr(व्योम *sfparg, काष्ठा bfi_mbmsg_s *msg)
+अणु
+	काष्ठा bfa_sfp_s *sfp = sfparg;
 
-	switch (msg->mh.msg_id) {
-	case BFI_SFP_I2H_SHOW:
+	चयन (msg->mh.msg_id) अणु
+	हाल BFI_SFP_I2H_SHOW:
 		bfa_sfp_show_comp(sfp, msg);
-		break;
+		अवरोध;
 
-	case BFI_SFP_I2H_SCN:
+	हाल BFI_SFP_I2H_SCN:
 		bfa_sfp_scn(sfp, msg);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_trc(sfp, msg->mh.msg_id);
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	Return DMA memory needed by sfp module.
  */
 u32
-bfa_sfp_meminfo(void)
-{
-	return BFA_ROUNDUP(sizeof(struct sfp_mem_s), BFA_DMA_ALIGN_SZ);
-}
+bfa_sfp_meminfo(व्योम)
+अणु
+	वापस BFA_ROUNDUP(माप(काष्ठा sfp_mem_s), BFA_DMA_ALIGN_SZ);
+पूर्ण
 
 /*
- *	Attach virtual and physical memory for SFP.
+ *	Attach भव and physical memory क्रम SFP.
  */
-void
-bfa_sfp_attach(struct bfa_sfp_s *sfp, struct bfa_ioc_s *ioc, void *dev,
-		struct bfa_trc_mod_s *trcmod)
-{
+व्योम
+bfa_sfp_attach(काष्ठा bfa_sfp_s *sfp, काष्ठा bfa_ioc_s *ioc, व्योम *dev,
+		काष्ठा bfa_trc_mod_s *trcmod)
+अणु
 	sfp->dev = dev;
 	sfp->ioc = ioc;
 	sfp->trcmod = trcmod;
 
-	sfp->cbfn = NULL;
-	sfp->cbarg = NULL;
-	sfp->sfpmem = NULL;
+	sfp->cbfn = शून्य;
+	sfp->cbarg = शून्य;
+	sfp->sfpmem = शून्य;
 	sfp->lock = 0;
 	sfp->data_valid = 0;
 	sfp->state = BFA_SFP_STATE_INIT;
 	sfp->state_query_lock = 0;
-	sfp->state_query_cbfn = NULL;
-	sfp->state_query_cbarg = NULL;
-	sfp->media = NULL;
+	sfp->state_query_cbfn = शून्य;
+	sfp->state_query_cbarg = शून्य;
+	sfp->media = शून्य;
 	sfp->portspeed = BFA_PORT_SPEED_UNKNOWN;
 	sfp->is_elb = BFA_FALSE;
 
-	bfa_ioc_mbox_regisr(sfp->ioc, BFI_MC_SFP, bfa_sfp_intr, sfp);
-	bfa_q_qe_init(&sfp->ioc_notify);
-	bfa_ioc_notify_init(&sfp->ioc_notify, bfa_sfp_notify, sfp);
-	list_add_tail(&sfp->ioc_notify.qe, &sfp->ioc->notify_q);
-}
+	bfa_ioc_mbox_regisr(sfp->ioc, BFI_MC_SFP, bfa_sfp_पूर्णांकr, sfp);
+	bfa_q_qe_init(&sfp->ioc_notअगरy);
+	bfa_ioc_notअगरy_init(&sfp->ioc_notअगरy, bfa_sfp_notअगरy, sfp);
+	list_add_tail(&sfp->ioc_notअगरy.qe, &sfp->ioc->notअगरy_q);
+पूर्ण
 
 /*
- *	Claim Memory for SFP
+ *	Claim Memory क्रम SFP
  */
-void
-bfa_sfp_memclaim(struct bfa_sfp_s *sfp, u8 *dm_kva, u64 dm_pa)
-{
+व्योम
+bfa_sfp_memclaim(काष्ठा bfa_sfp_s *sfp, u8 *dm_kva, u64 dm_pa)
+अणु
 	sfp->dbuf_kva   = dm_kva;
 	sfp->dbuf_pa    = dm_pa;
-	memset(sfp->dbuf_kva, 0, sizeof(struct sfp_mem_s));
+	स_रखो(sfp->dbuf_kva, 0, माप(काष्ठा sfp_mem_s));
 
-	dm_kva += BFA_ROUNDUP(sizeof(struct sfp_mem_s), BFA_DMA_ALIGN_SZ);
-	dm_pa += BFA_ROUNDUP(sizeof(struct sfp_mem_s), BFA_DMA_ALIGN_SZ);
-}
+	dm_kva += BFA_ROUNDUP(माप(काष्ठा sfp_mem_s), BFA_DMA_ALIGN_SZ);
+	dm_pa += BFA_ROUNDUP(माप(काष्ठा sfp_mem_s), BFA_DMA_ALIGN_SZ);
+पूर्ण
 
 /*
  * Show SFP eeprom content
@@ -4064,27 +4065,27 @@ bfa_sfp_memclaim(struct bfa_sfp_s *sfp, u8 *dm_kva, u64 dm_pa)
  *
  */
 bfa_status_t
-bfa_sfp_show(struct bfa_sfp_s *sfp, struct sfp_mem_s *sfpmem,
-		bfa_cb_sfp_t cbfn, void *cbarg)
-{
+bfa_sfp_show(काष्ठा bfa_sfp_s *sfp, काष्ठा sfp_mem_s *sfpmem,
+		bfa_cb_sfp_t cbfn, व्योम *cbarg)
+अणु
 
-	if (!bfa_ioc_is_operational(sfp->ioc)) {
+	अगर (!bfa_ioc_is_operational(sfp->ioc)) अणु
 		bfa_trc(sfp, 0);
-		return BFA_STATUS_IOC_NON_OP;
-	}
+		वापस BFA_STATUS_IOC_NON_OP;
+	पूर्ण
 
-	if (sfp->lock) {
+	अगर (sfp->lock) अणु
 		bfa_trc(sfp, 0);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	sfp->cbfn = cbfn;
 	sfp->cbarg = cbarg;
 	sfp->sfpmem = sfpmem;
 
 	bfa_sfp_getdata(sfp, BFI_SFP_MEM_DIAGEXT);
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Return SFP Media type
@@ -4095,174 +4096,174 @@ bfa_sfp_show(struct bfa_sfp_s *sfp, struct sfp_mem_s *sfpmem,
  *
  */
 bfa_status_t
-bfa_sfp_media(struct bfa_sfp_s *sfp, enum bfa_defs_sfp_media_e *media,
-		bfa_cb_sfp_t cbfn, void *cbarg)
-{
-	if (!bfa_ioc_is_operational(sfp->ioc)) {
+bfa_sfp_media(काष्ठा bfa_sfp_s *sfp, क्रमागत bfa_defs_sfp_media_e *media,
+		bfa_cb_sfp_t cbfn, व्योम *cbarg)
+अणु
+	अगर (!bfa_ioc_is_operational(sfp->ioc)) अणु
 		bfa_trc(sfp, 0);
-		return BFA_STATUS_IOC_NON_OP;
-	}
+		वापस BFA_STATUS_IOC_NON_OP;
+	पूर्ण
 
 	sfp->media = media;
-	if (sfp->state == BFA_SFP_STATE_INIT) {
-		if (sfp->state_query_lock) {
+	अगर (sfp->state == BFA_SFP_STATE_INIT) अणु
+		अगर (sfp->state_query_lock) अणु
 			bfa_trc(sfp, 0);
-			return BFA_STATUS_DEVBUSY;
-		} else {
+			वापस BFA_STATUS_DEVBUSY;
+		पूर्ण अन्यथा अणु
 			sfp->state_query_cbfn = cbfn;
 			sfp->state_query_cbarg = cbarg;
 			bfa_sfp_state_query(sfp);
-			return BFA_STATUS_SFP_NOT_READY;
-		}
-	}
+			वापस BFA_STATUS_SFP_NOT_READY;
+		पूर्ण
+	पूर्ण
 
 	bfa_sfp_media_get(sfp);
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
- * Check if user set port speed is allowed by the SFP
+ * Check अगर user set port speed is allowed by the SFP
  *
  * @param[in] sfp   - bfa sfp module
  * @param[in] portspeed - port speed from user
  *
  */
 bfa_status_t
-bfa_sfp_speed(struct bfa_sfp_s *sfp, enum bfa_port_speed portspeed,
-		bfa_cb_sfp_t cbfn, void *cbarg)
-{
+bfa_sfp_speed(काष्ठा bfa_sfp_s *sfp, क्रमागत bfa_port_speed portspeed,
+		bfa_cb_sfp_t cbfn, व्योम *cbarg)
+अणु
 	WARN_ON(portspeed == BFA_PORT_SPEED_UNKNOWN);
 
-	if (!bfa_ioc_is_operational(sfp->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(sfp->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
 	/* For Mezz card, all speed is allowed */
-	if (bfa_mfg_is_mezz(sfp->ioc->attr->card_type))
-		return BFA_STATUS_OK;
+	अगर (bfa_mfg_is_mezz(sfp->ioc->attr->card_type))
+		वापस BFA_STATUS_OK;
 
 	/* Check SFP state */
 	sfp->portspeed = portspeed;
-	if (sfp->state == BFA_SFP_STATE_INIT) {
-		if (sfp->state_query_lock) {
+	अगर (sfp->state == BFA_SFP_STATE_INIT) अणु
+		अगर (sfp->state_query_lock) अणु
 			bfa_trc(sfp, 0);
-			return BFA_STATUS_DEVBUSY;
-		} else {
+			वापस BFA_STATUS_DEVBUSY;
+		पूर्ण अन्यथा अणु
 			sfp->state_query_cbfn = cbfn;
 			sfp->state_query_cbarg = cbarg;
 			bfa_sfp_state_query(sfp);
-			return BFA_STATUS_SFP_NOT_READY;
-		}
-	}
+			वापस BFA_STATUS_SFP_NOT_READY;
+		पूर्ण
+	पूर्ण
 
-	if (sfp->state == BFA_SFP_STATE_REMOVED ||
-	    sfp->state == BFA_SFP_STATE_FAILED) {
+	अगर (sfp->state == BFA_SFP_STATE_REMOVED ||
+	    sfp->state == BFA_SFP_STATE_FAILED) अणु
 		bfa_trc(sfp, sfp->state);
-		return BFA_STATUS_NO_SFP_DEV;
-	}
+		वापस BFA_STATUS_NO_SFP_DEV;
+	पूर्ण
 
-	if (sfp->state == BFA_SFP_STATE_INSERTED) {
+	अगर (sfp->state == BFA_SFP_STATE_INSERTED) अणु
 		bfa_trc(sfp, sfp->state);
-		return BFA_STATUS_DEVBUSY;  /* sfp is reading data */
-	}
+		वापस BFA_STATUS_DEVBUSY;  /* sfp is पढ़ोing data */
+	पूर्ण
 
 	/* For eloopback, all speed is allowed */
-	if (sfp->is_elb)
-		return BFA_STATUS_OK;
+	अगर (sfp->is_elb)
+		वापस BFA_STATUS_OK;
 
-	return bfa_sfp_speed_valid(sfp, portspeed);
-}
+	वापस bfa_sfp_speed_valid(sfp, portspeed);
+पूर्ण
 
 /*
- *	Flash module specific
+ *	Flash module specअगरic
  */
 
 /*
  * FLASH DMA buffer should be big enough to hold both MFG block and
- * asic block(64k) at the same time and also should be 2k aligned to
- * avoid write segement to cross sector boundary.
+ * asic block(64k) at the same समय and also should be 2k aligned to
+ * aव्योम ग_लिखो segement to cross sector boundary.
  */
-#define BFA_FLASH_SEG_SZ	2048
-#define BFA_FLASH_DMA_BUF_SZ	\
-	BFA_ROUNDUP(0x010000 + sizeof(struct bfa_mfg_block_s), BFA_FLASH_SEG_SZ)
+#घोषणा BFA_FLASH_SEG_SZ	2048
+#घोषणा BFA_FLASH_DMA_BUF_SZ	\
+	BFA_ROUNDUP(0x010000 + माप(काष्ठा bfa_mfg_block_s), BFA_FLASH_SEG_SZ)
 
-static void
-bfa_flash_aen_audit_post(struct bfa_ioc_s *ioc, enum bfa_audit_aen_event event,
-			int inst, int type)
-{
-	struct bfad_s *bfad = (struct bfad_s *)ioc->bfa->bfad;
-	struct bfa_aen_entry_s  *aen_entry;
+अटल व्योम
+bfa_flash_aen_audit_post(काष्ठा bfa_ioc_s *ioc, क्रमागत bfa_audit_aen_event event,
+			पूर्णांक inst, पूर्णांक type)
+अणु
+	काष्ठा bfad_s *bfad = (काष्ठा bfad_s *)ioc->bfa->bfad;
+	काष्ठा bfa_aen_entry_s  *aen_entry;
 
 	bfad_get_aen_entry(bfad, aen_entry);
-	if (!aen_entry)
-		return;
+	अगर (!aen_entry)
+		वापस;
 
 	aen_entry->aen_data.audit.pwwn = ioc->attr->pwwn;
 	aen_entry->aen_data.audit.partition_inst = inst;
 	aen_entry->aen_data.audit.partition_type = type;
 
-	/* Send the AEN notification */
-	bfad_im_post_vendor_event(aen_entry, bfad, ++ioc->ioc_aen_seq,
+	/* Send the AEN notअगरication */
+	bfad_im_post_venकरोr_event(aen_entry, bfad, ++ioc->ioc_aen_seq,
 				  BFA_AEN_CAT_AUDIT, event);
-}
+पूर्ण
 
-static void
-bfa_flash_cb(struct bfa_flash_s *flash)
-{
+अटल व्योम
+bfa_flash_cb(काष्ठा bfa_flash_s *flash)
+अणु
 	flash->op_busy = 0;
-	if (flash->cbfn)
+	अगर (flash->cbfn)
 		flash->cbfn(flash->cbarg, flash->status);
-}
+पूर्ण
 
-static void
-bfa_flash_notify(void *cbarg, enum bfa_ioc_event_e event)
-{
-	struct bfa_flash_s	*flash = cbarg;
+अटल व्योम
+bfa_flash_notअगरy(व्योम *cbarg, क्रमागत bfa_ioc_event_e event)
+अणु
+	काष्ठा bfa_flash_s	*flash = cbarg;
 
 	bfa_trc(flash, event);
-	switch (event) {
-	case BFA_IOC_E_DISABLED:
-	case BFA_IOC_E_FAILED:
-		if (flash->op_busy) {
+	चयन (event) अणु
+	हाल BFA_IOC_E_DISABLED:
+	हाल BFA_IOC_E_FAILED:
+		अगर (flash->op_busy) अणु
 			flash->status = BFA_STATUS_IOC_FAILURE;
 			flash->cbfn(flash->cbarg, flash->status);
 			flash->op_busy = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * Send flash attribute query request.
  *
  * @param[in] cbarg - callback argument
  */
-static void
-bfa_flash_query_send(void *cbarg)
-{
-	struct bfa_flash_s *flash = cbarg;
-	struct bfi_flash_query_req_s *msg =
-			(struct bfi_flash_query_req_s *) flash->mb.msg;
+अटल व्योम
+bfa_flash_query_send(व्योम *cbarg)
+अणु
+	काष्ठा bfa_flash_s *flash = cbarg;
+	काष्ठा bfi_flash_query_req_s *msg =
+			(काष्ठा bfi_flash_query_req_s *) flash->mb.msg;
 
 	bfi_h2i_set(msg->mh, BFI_MC_FLASH, BFI_FLASH_H2I_QUERY_REQ,
 		bfa_ioc_portid(flash->ioc));
-	bfa_alen_set(&msg->alen, sizeof(struct bfa_flash_attr_s),
+	bfa_alen_set(&msg->alen, माप(काष्ठा bfa_flash_attr_s),
 		flash->dbuf_pa);
 	bfa_ioc_mbox_queue(flash->ioc, &flash->mb);
-}
+पूर्ण
 
 /*
- * Send flash write request.
+ * Send flash ग_लिखो request.
  *
  * @param[in] cbarg - callback argument
  */
-static void
-bfa_flash_write_send(struct bfa_flash_s *flash)
-{
-	struct bfi_flash_write_req_s *msg =
-			(struct bfi_flash_write_req_s *) flash->mb.msg;
+अटल व्योम
+bfa_flash_ग_लिखो_send(काष्ठा bfa_flash_s *flash)
+अणु
+	काष्ठा bfi_flash_ग_लिखो_req_s *msg =
+			(काष्ठा bfi_flash_ग_लिखो_req_s *) flash->mb.msg;
 	u32	len;
 
 	msg->type = be32_to_cpu(flash->type);
@@ -4272,30 +4273,30 @@ bfa_flash_write_send(struct bfa_flash_s *flash)
 		flash->residue : BFA_FLASH_DMA_BUF_SZ;
 	msg->length = be32_to_cpu(len);
 
-	/* indicate if it's the last msg of the whole write operation */
+	/* indicate अगर it's the last msg of the whole ग_लिखो operation */
 	msg->last = (len == flash->residue) ? 1 : 0;
 
 	bfi_h2i_set(msg->mh, BFI_MC_FLASH, BFI_FLASH_H2I_WRITE_REQ,
 			bfa_ioc_portid(flash->ioc));
 	bfa_alen_set(&msg->alen, len, flash->dbuf_pa);
-	memcpy(flash->dbuf_kva, flash->ubuf + flash->offset, len);
+	स_नकल(flash->dbuf_kva, flash->ubuf + flash->offset, len);
 	bfa_ioc_mbox_queue(flash->ioc, &flash->mb);
 
 	flash->residue -= len;
 	flash->offset += len;
-}
+पूर्ण
 
 /*
- * Send flash read request.
+ * Send flash पढ़ो request.
  *
  * @param[in] cbarg - callback argument
  */
-static void
-bfa_flash_read_send(void *cbarg)
-{
-	struct bfa_flash_s *flash = cbarg;
-	struct bfi_flash_read_req_s *msg =
-			(struct bfi_flash_read_req_s *) flash->mb.msg;
+अटल व्योम
+bfa_flash_पढ़ो_send(व्योम *cbarg)
+अणु
+	काष्ठा bfa_flash_s *flash = cbarg;
+	काष्ठा bfi_flash_पढ़ो_req_s *msg =
+			(काष्ठा bfi_flash_पढ़ो_req_s *) flash->mb.msg;
 	u32	len;
 
 	msg->type = be32_to_cpu(flash->type);
@@ -4308,72 +4309,72 @@ bfa_flash_read_send(void *cbarg)
 		bfa_ioc_portid(flash->ioc));
 	bfa_alen_set(&msg->alen, len, flash->dbuf_pa);
 	bfa_ioc_mbox_queue(flash->ioc, &flash->mb);
-}
+पूर्ण
 
 /*
  * Send flash erase request.
  *
  * @param[in] cbarg - callback argument
  */
-static void
-bfa_flash_erase_send(void *cbarg)
-{
-	struct bfa_flash_s *flash = cbarg;
-	struct bfi_flash_erase_req_s *msg =
-			(struct bfi_flash_erase_req_s *) flash->mb.msg;
+अटल व्योम
+bfa_flash_erase_send(व्योम *cbarg)
+अणु
+	काष्ठा bfa_flash_s *flash = cbarg;
+	काष्ठा bfi_flash_erase_req_s *msg =
+			(काष्ठा bfi_flash_erase_req_s *) flash->mb.msg;
 
 	msg->type = be32_to_cpu(flash->type);
 	msg->instance = flash->instance;
 	bfi_h2i_set(msg->mh, BFI_MC_FLASH, BFI_FLASH_H2I_ERASE_REQ,
 			bfa_ioc_portid(flash->ioc));
 	bfa_ioc_mbox_queue(flash->ioc, &flash->mb);
-}
+पूर्ण
 
 /*
- * Process flash response messages upon receiving interrupts.
+ * Process flash response messages upon receiving पूर्णांकerrupts.
  *
- * @param[in] flasharg - flash structure
- * @param[in] msg - message structure
+ * @param[in] flasharg - flash काष्ठाure
+ * @param[in] msg - message काष्ठाure
  */
-static void
-bfa_flash_intr(void *flasharg, struct bfi_mbmsg_s *msg)
-{
-	struct bfa_flash_s *flash = flasharg;
+अटल व्योम
+bfa_flash_पूर्णांकr(व्योम *flasharg, काष्ठा bfi_mbmsg_s *msg)
+अणु
+	काष्ठा bfa_flash_s *flash = flasharg;
 	u32	status;
 
-	union {
-		struct bfi_flash_query_rsp_s *query;
-		struct bfi_flash_erase_rsp_s *erase;
-		struct bfi_flash_write_rsp_s *write;
-		struct bfi_flash_read_rsp_s *read;
-		struct bfi_flash_event_s *event;
-		struct bfi_mbmsg_s   *msg;
-	} m;
+	जोड़ अणु
+		काष्ठा bfi_flash_query_rsp_s *query;
+		काष्ठा bfi_flash_erase_rsp_s *erase;
+		काष्ठा bfi_flash_ग_लिखो_rsp_s *ग_लिखो;
+		काष्ठा bfi_flash_पढ़ो_rsp_s *पढ़ो;
+		काष्ठा bfi_flash_event_s *event;
+		काष्ठा bfi_mbmsg_s   *msg;
+	पूर्ण m;
 
 	m.msg = msg;
 	bfa_trc(flash, msg->mh.msg_id);
 
-	if (!flash->op_busy && msg->mh.msg_id != BFI_FLASH_I2H_EVENT) {
+	अगर (!flash->op_busy && msg->mh.msg_id != BFI_FLASH_I2H_EVENT) अणु
 		/* receiving response after ioc failure */
 		bfa_trc(flash, 0x9999);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (msg->mh.msg_id) {
-	case BFI_FLASH_I2H_QUERY_RSP:
+	चयन (msg->mh.msg_id) अणु
+	हाल BFI_FLASH_I2H_QUERY_RSP:
 		status = be32_to_cpu(m.query->status);
 		bfa_trc(flash, status);
-		if (status == BFA_STATUS_OK) {
+		अगर (status == BFA_STATUS_OK) अणु
 			u32	i;
-			struct bfa_flash_attr_s *attr, *f;
+			काष्ठा bfa_flash_attr_s *attr, *f;
 
-			attr = (struct bfa_flash_attr_s *) flash->ubuf;
-			f = (struct bfa_flash_attr_s *) flash->dbuf_kva;
+			attr = (काष्ठा bfa_flash_attr_s *) flash->ubuf;
+			f = (काष्ठा bfa_flash_attr_s *) flash->dbuf_kva;
 			attr->status = be32_to_cpu(f->status);
 			attr->npart = be32_to_cpu(f->npart);
 			bfa_trc(flash, attr->status);
 			bfa_trc(flash, attr->npart);
-			for (i = 0; i < attr->npart; i++) {
+			क्रम (i = 0; i < attr->npart; i++) अणु
 				attr->part[i].part_type =
 					be32_to_cpu(f->part[i].part_type);
 				attr->part[i].part_instance =
@@ -4386,69 +4387,69 @@ bfa_flash_intr(void *flasharg, struct bfi_mbmsg_s *msg)
 					be32_to_cpu(f->part[i].part_len);
 				attr->part[i].part_status =
 					be32_to_cpu(f->part[i].part_status);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		flash->status = status;
 		bfa_flash_cb(flash);
-		break;
-	case BFI_FLASH_I2H_ERASE_RSP:
+		अवरोध;
+	हाल BFI_FLASH_I2H_ERASE_RSP:
 		status = be32_to_cpu(m.erase->status);
 		bfa_trc(flash, status);
 		flash->status = status;
 		bfa_flash_cb(flash);
-		break;
-	case BFI_FLASH_I2H_WRITE_RSP:
-		status = be32_to_cpu(m.write->status);
+		अवरोध;
+	हाल BFI_FLASH_I2H_WRITE_RSP:
+		status = be32_to_cpu(m.ग_लिखो->status);
 		bfa_trc(flash, status);
-		if (status != BFA_STATUS_OK || flash->residue == 0) {
+		अगर (status != BFA_STATUS_OK || flash->residue == 0) अणु
 			flash->status = status;
 			bfa_flash_cb(flash);
-		} else {
+		पूर्ण अन्यथा अणु
 			bfa_trc(flash, flash->offset);
-			bfa_flash_write_send(flash);
-		}
-		break;
-	case BFI_FLASH_I2H_READ_RSP:
-		status = be32_to_cpu(m.read->status);
+			bfa_flash_ग_लिखो_send(flash);
+		पूर्ण
+		अवरोध;
+	हाल BFI_FLASH_I2H_READ_RSP:
+		status = be32_to_cpu(m.पढ़ो->status);
 		bfa_trc(flash, status);
-		if (status != BFA_STATUS_OK) {
+		अगर (status != BFA_STATUS_OK) अणु
 			flash->status = status;
 			bfa_flash_cb(flash);
-		} else {
-			u32 len = be32_to_cpu(m.read->length);
+		पूर्ण अन्यथा अणु
+			u32 len = be32_to_cpu(m.पढ़ो->length);
 			bfa_trc(flash, flash->offset);
 			bfa_trc(flash, len);
-			memcpy(flash->ubuf + flash->offset,
+			स_नकल(flash->ubuf + flash->offset,
 				flash->dbuf_kva, len);
 			flash->residue -= len;
 			flash->offset += len;
-			if (flash->residue == 0) {
+			अगर (flash->residue == 0) अणु
 				flash->status = status;
 				bfa_flash_cb(flash);
-			} else
-				bfa_flash_read_send(flash);
-		}
-		break;
-	case BFI_FLASH_I2H_BOOT_VER_RSP:
-		break;
-	case BFI_FLASH_I2H_EVENT:
+			पूर्ण अन्यथा
+				bfa_flash_पढ़ो_send(flash);
+		पूर्ण
+		अवरोध;
+	हाल BFI_FLASH_I2H_BOOT_VER_RSP:
+		अवरोध;
+	हाल BFI_FLASH_I2H_EVENT:
 		status = be32_to_cpu(m.event->status);
 		bfa_trc(flash, status);
-		if (status == BFA_STATUS_BAD_FWCFG)
+		अगर (status == BFA_STATUS_BAD_FWCFG)
 			bfa_ioc_aen_post(flash->ioc, BFA_IOC_AEN_FWCFG_ERROR);
-		else if (status == BFA_STATUS_INVALID_VENDOR) {
+		अन्यथा अगर (status == BFA_STATUS_INVALID_VENDOR) अणु
 			u32 param;
 			param = be32_to_cpu(m.event->param);
 			bfa_trc(flash, param);
 			bfa_ioc_aen_post(flash->ioc,
 				BFA_IOC_AEN_INVALID_VENDOR);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Flash memory info API.
@@ -4457,89 +4458,89 @@ bfa_flash_intr(void *flasharg, struct bfi_mbmsg_s *msg)
  */
 u32
 bfa_flash_meminfo(bfa_boolean_t mincfg)
-{
-	/* min driver doesn't need flash */
-	if (mincfg)
-		return 0;
-	return BFA_ROUNDUP(BFA_FLASH_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
-}
+अणु
+	/* min driver करोesn't need flash */
+	अगर (mincfg)
+		वापस 0;
+	वापस BFA_ROUNDUP(BFA_FLASH_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
+पूर्ण
 
 /*
  * Flash attach API.
  *
- * @param[in] flash - flash structure
- * @param[in] ioc  - ioc structure
- * @param[in] dev  - device structure
+ * @param[in] flash - flash काष्ठाure
+ * @param[in] ioc  - ioc काष्ठाure
+ * @param[in] dev  - device काष्ठाure
  * @param[in] trcmod - trace module
  * @param[in] logmod - log module
  */
-void
-bfa_flash_attach(struct bfa_flash_s *flash, struct bfa_ioc_s *ioc, void *dev,
-		struct bfa_trc_mod_s *trcmod, bfa_boolean_t mincfg)
-{
+व्योम
+bfa_flash_attach(काष्ठा bfa_flash_s *flash, काष्ठा bfa_ioc_s *ioc, व्योम *dev,
+		काष्ठा bfa_trc_mod_s *trcmod, bfa_boolean_t mincfg)
+अणु
 	flash->ioc = ioc;
 	flash->trcmod = trcmod;
-	flash->cbfn = NULL;
-	flash->cbarg = NULL;
+	flash->cbfn = शून्य;
+	flash->cbarg = शून्य;
 	flash->op_busy = 0;
 
-	bfa_ioc_mbox_regisr(flash->ioc, BFI_MC_FLASH, bfa_flash_intr, flash);
-	bfa_q_qe_init(&flash->ioc_notify);
-	bfa_ioc_notify_init(&flash->ioc_notify, bfa_flash_notify, flash);
-	list_add_tail(&flash->ioc_notify.qe, &flash->ioc->notify_q);
+	bfa_ioc_mbox_regisr(flash->ioc, BFI_MC_FLASH, bfa_flash_पूर्णांकr, flash);
+	bfa_q_qe_init(&flash->ioc_notअगरy);
+	bfa_ioc_notअगरy_init(&flash->ioc_notअगरy, bfa_flash_notअगरy, flash);
+	list_add_tail(&flash->ioc_notअगरy.qe, &flash->ioc->notअगरy_q);
 
-	/* min driver doesn't need flash */
-	if (mincfg) {
-		flash->dbuf_kva = NULL;
+	/* min driver करोesn't need flash */
+	अगर (mincfg) अणु
+		flash->dbuf_kva = शून्य;
 		flash->dbuf_pa = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Claim memory for flash
+ * Claim memory क्रम flash
  *
- * @param[in] flash - flash structure
- * @param[in] dm_kva - pointer to virtual memory address
+ * @param[in] flash - flash काष्ठाure
+ * @param[in] dm_kva - poपूर्णांकer to भव memory address
  * @param[in] dm_pa - physical memory address
  * @param[in] mincfg - minimal cfg variable
  */
-void
-bfa_flash_memclaim(struct bfa_flash_s *flash, u8 *dm_kva, u64 dm_pa,
+व्योम
+bfa_flash_memclaim(काष्ठा bfa_flash_s *flash, u8 *dm_kva, u64 dm_pa,
 		bfa_boolean_t mincfg)
-{
-	if (mincfg)
-		return;
+अणु
+	अगर (mincfg)
+		वापस;
 
 	flash->dbuf_kva = dm_kva;
 	flash->dbuf_pa = dm_pa;
-	memset(flash->dbuf_kva, 0, BFA_FLASH_DMA_BUF_SZ);
+	स_रखो(flash->dbuf_kva, 0, BFA_FLASH_DMA_BUF_SZ);
 	dm_kva += BFA_ROUNDUP(BFA_FLASH_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
 	dm_pa += BFA_ROUNDUP(BFA_FLASH_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
-}
+पूर्ण
 
 /*
  * Get flash attribute.
  *
- * @param[in] flash - flash structure
- * @param[in] attr - flash attribute structure
+ * @param[in] flash - flash काष्ठाure
+ * @param[in] attr - flash attribute काष्ठाure
  * @param[in] cbfn - callback function
  * @param[in] cbarg - callback argument
  *
  * Return status.
  */
 bfa_status_t
-bfa_flash_get_attr(struct bfa_flash_s *flash, struct bfa_flash_attr_s *attr,
-		bfa_cb_flash_t cbfn, void *cbarg)
-{
+bfa_flash_get_attr(काष्ठा bfa_flash_s *flash, काष्ठा bfa_flash_attr_s *attr,
+		bfa_cb_flash_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(flash, BFI_FLASH_H2I_QUERY_REQ);
 
-	if (!bfa_ioc_is_operational(flash->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(flash->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (flash->op_busy) {
+	अगर (flash->op_busy) अणु
 		bfa_trc(flash, flash->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	flash->op_busy = 1;
 	flash->cbfn = cbfn;
@@ -4547,13 +4548,13 @@ bfa_flash_get_attr(struct bfa_flash_s *flash, struct bfa_flash_attr_s *attr,
 	flash->ubuf = (u8 *) attr;
 	bfa_flash_query_send(flash);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Erase flash partition.
  *
- * @param[in] flash - flash structure
+ * @param[in] flash - flash काष्ठाure
  * @param[in] type - flash partition type
  * @param[in] instance - flash partition instance
  * @param[in] cbfn - callback function
@@ -4562,20 +4563,20 @@ bfa_flash_get_attr(struct bfa_flash_s *flash, struct bfa_flash_attr_s *attr,
  * Return status.
  */
 bfa_status_t
-bfa_flash_erase_part(struct bfa_flash_s *flash, enum bfa_flash_part_type type,
-		u8 instance, bfa_cb_flash_t cbfn, void *cbarg)
-{
+bfa_flash_erase_part(काष्ठा bfa_flash_s *flash, क्रमागत bfa_flash_part_type type,
+		u8 instance, bfa_cb_flash_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(flash, BFI_FLASH_H2I_ERASE_REQ);
 	bfa_trc(flash, type);
 	bfa_trc(flash, instance);
 
-	if (!bfa_ioc_is_operational(flash->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(flash->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (flash->op_busy) {
+	अगर (flash->op_busy) अणु
 		bfa_trc(flash, flash->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	flash->op_busy = 1;
 	flash->cbfn = cbfn;
@@ -4586,13 +4587,13 @@ bfa_flash_erase_part(struct bfa_flash_s *flash, enum bfa_flash_part_type type,
 	bfa_flash_erase_send(flash);
 	bfa_flash_aen_audit_post(flash->ioc, BFA_AUDIT_AEN_FLASH_ERASE,
 				instance, type);
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Update flash partition.
  *
- * @param[in] flash - flash structure
+ * @param[in] flash - flash काष्ठाure
  * @param[in] type - flash partition type
  * @param[in] instance - flash partition instance
  * @param[in] buf - update data buffer
@@ -4604,33 +4605,33 @@ bfa_flash_erase_part(struct bfa_flash_s *flash, enum bfa_flash_part_type type,
  * Return status.
  */
 bfa_status_t
-bfa_flash_update_part(struct bfa_flash_s *flash, enum bfa_flash_part_type type,
-		u8 instance, void *buf, u32 len, u32 offset,
-		bfa_cb_flash_t cbfn, void *cbarg)
-{
+bfa_flash_update_part(काष्ठा bfa_flash_s *flash, क्रमागत bfa_flash_part_type type,
+		u8 instance, व्योम *buf, u32 len, u32 offset,
+		bfa_cb_flash_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(flash, BFI_FLASH_H2I_WRITE_REQ);
 	bfa_trc(flash, type);
 	bfa_trc(flash, instance);
 	bfa_trc(flash, len);
 	bfa_trc(flash, offset);
 
-	if (!bfa_ioc_is_operational(flash->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(flash->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
 	/*
 	 * 'len' must be in word (4-byte) boundary
 	 * 'offset' must be in sector (16kb) boundary
 	 */
-	if (!len || (len & 0x03) || (offset & 0x00003FFF))
-		return BFA_STATUS_FLASH_BAD_LEN;
+	अगर (!len || (len & 0x03) || (offset & 0x00003FFF))
+		वापस BFA_STATUS_FLASH_BAD_LEN;
 
-	if (type == BFA_FLASH_PART_MFG)
-		return BFA_STATUS_EINVAL;
+	अगर (type == BFA_FLASH_PART_MFG)
+		वापस BFA_STATUS_EINVAL;
 
-	if (flash->op_busy) {
+	अगर (flash->op_busy) अणु
 		bfa_trc(flash, flash->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	flash->op_busy = 1;
 	flash->cbfn = cbfn;
@@ -4642,17 +4643,17 @@ bfa_flash_update_part(struct bfa_flash_s *flash, enum bfa_flash_part_type type,
 	flash->addr_off = offset;
 	flash->ubuf = buf;
 
-	bfa_flash_write_send(flash);
-	return BFA_STATUS_OK;
-}
+	bfa_flash_ग_लिखो_send(flash);
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Read flash partition.
  *
- * @param[in] flash - flash structure
+ * @param[in] flash - flash काष्ठाure
  * @param[in] type - flash partition type
  * @param[in] instance - flash partition instance
- * @param[in] buf - read data buffer
+ * @param[in] buf - पढ़ो data buffer
  * @param[in] len - data buffer length
  * @param[in] offset - offset relative to the partition starting address
  * @param[in] cbfn - callback function
@@ -4661,30 +4662,30 @@ bfa_flash_update_part(struct bfa_flash_s *flash, enum bfa_flash_part_type type,
  * Return status.
  */
 bfa_status_t
-bfa_flash_read_part(struct bfa_flash_s *flash, enum bfa_flash_part_type type,
-		u8 instance, void *buf, u32 len, u32 offset,
-		bfa_cb_flash_t cbfn, void *cbarg)
-{
+bfa_flash_पढ़ो_part(काष्ठा bfa_flash_s *flash, क्रमागत bfa_flash_part_type type,
+		u8 instance, व्योम *buf, u32 len, u32 offset,
+		bfa_cb_flash_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(flash, BFI_FLASH_H2I_READ_REQ);
 	bfa_trc(flash, type);
 	bfa_trc(flash, instance);
 	bfa_trc(flash, len);
 	bfa_trc(flash, offset);
 
-	if (!bfa_ioc_is_operational(flash->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(flash->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
 	/*
 	 * 'len' must be in word (4-byte) boundary
 	 * 'offset' must be in sector (16kb) boundary
 	 */
-	if (!len || (len & 0x03) || (offset & 0x00003FFF))
-		return BFA_STATUS_FLASH_BAD_LEN;
+	अगर (!len || (len & 0x03) || (offset & 0x00003FFF))
+		वापस BFA_STATUS_FLASH_BAD_LEN;
 
-	if (flash->op_busy) {
+	अगर (flash->op_busy) अणु
 		bfa_trc(flash, flash->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	flash->op_busy = 1;
 	flash->cbfn = cbfn;
@@ -4695,82 +4696,82 @@ bfa_flash_read_part(struct bfa_flash_s *flash, enum bfa_flash_part_type type,
 	flash->offset = 0;
 	flash->addr_off = offset;
 	flash->ubuf = buf;
-	bfa_flash_read_send(flash);
+	bfa_flash_पढ़ो_send(flash);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
- *	DIAG module specific
+ *	DIAG module specअगरic
  */
 
-#define BFA_DIAG_MEMTEST_TOV	50000	/* memtest timeout in msec */
-#define CT2_BFA_DIAG_MEMTEST_TOV	(9*30*1000)  /* 4.5 min */
+#घोषणा BFA_DIAG_MEMTEST_TOV	50000	/* memtest समयout in msec */
+#घोषणा CT2_BFA_DIAG_MEMTEST_TOV	(9*30*1000)  /* 4.5 min */
 
 /* IOC event handler */
-static void
-bfa_diag_notify(void *diag_arg, enum bfa_ioc_event_e event)
-{
-	struct bfa_diag_s *diag = diag_arg;
+अटल व्योम
+bfa_diag_notअगरy(व्योम *diag_arg, क्रमागत bfa_ioc_event_e event)
+अणु
+	काष्ठा bfa_diag_s *diag = diag_arg;
 
 	bfa_trc(diag, event);
 	bfa_trc(diag, diag->block);
 	bfa_trc(diag, diag->fwping.lock);
 	bfa_trc(diag, diag->tsensor.lock);
 
-	switch (event) {
-	case BFA_IOC_E_DISABLED:
-	case BFA_IOC_E_FAILED:
-		if (diag->fwping.lock) {
+	चयन (event) अणु
+	हाल BFA_IOC_E_DISABLED:
+	हाल BFA_IOC_E_FAILED:
+		अगर (diag->fwping.lock) अणु
 			diag->fwping.status = BFA_STATUS_IOC_FAILURE;
 			diag->fwping.cbfn(diag->fwping.cbarg,
 					diag->fwping.status);
 			diag->fwping.lock = 0;
-		}
+		पूर्ण
 
-		if (diag->tsensor.lock) {
+		अगर (diag->tsensor.lock) अणु
 			diag->tsensor.status = BFA_STATUS_IOC_FAILURE;
 			diag->tsensor.cbfn(diag->tsensor.cbarg,
 					   diag->tsensor.status);
 			diag->tsensor.lock = 0;
-		}
+		पूर्ण
 
-		if (diag->block) {
-			if (diag->timer_active) {
-				bfa_timer_stop(&diag->timer);
-				diag->timer_active = 0;
-			}
+		अगर (diag->block) अणु
+			अगर (diag->समयr_active) अणु
+				bfa_समयr_stop(&diag->समयr);
+				diag->समयr_active = 0;
+			पूर्ण
 
 			diag->status = BFA_STATUS_IOC_FAILURE;
 			diag->cbfn(diag->cbarg, diag->status);
 			diag->block = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-bfa_diag_memtest_done(void *cbarg)
-{
-	struct bfa_diag_s *diag = cbarg;
-	struct bfa_ioc_s  *ioc = diag->ioc;
-	struct bfa_diag_memtest_result *res = diag->result;
+अटल व्योम
+bfa_diag_memtest_करोne(व्योम *cbarg)
+अणु
+	काष्ठा bfa_diag_s *diag = cbarg;
+	काष्ठा bfa_ioc_s  *ioc = diag->ioc;
+	काष्ठा bfa_diag_memtest_result *res = diag->result;
 	u32	loff = BFI_BOOT_MEMTEST_RES_ADDR;
 	u32	pgnum, i;
 
 	pgnum = PSS_SMEM_PGNUM(ioc->ioc_regs.smem_pg0, loff);
-	writel(pgnum, ioc->ioc_regs.host_page_num_fn);
+	ग_लिखोl(pgnum, ioc->ioc_regs.host_page_num_fn);
 
-	for (i = 0; i < (sizeof(struct bfa_diag_memtest_result) /
-			 sizeof(u32)); i++) {
-		/* read test result from smem */
+	क्रम (i = 0; i < (माप(काष्ठा bfa_diag_memtest_result) /
+			 माप(u32)); i++) अणु
+		/* पढ़ो test result from smem */
 		*((u32 *) res + i) =
-			bfa_mem_read(ioc->ioc_regs.smem_page_start, loff);
-		loff += sizeof(u32);
-	}
+			bfa_mem_पढ़ो(ioc->ioc_regs.smem_page_start, loff);
+		loff += माप(u32);
+	पूर्ण
 
 	/* Reset IOC fwstates to BFI_IOC_UNINIT */
 	bfa_ioc_reset_fwstate(ioc);
@@ -4778,9 +4779,9 @@ bfa_diag_memtest_done(void *cbarg)
 	res->status = swab32(res->status);
 	bfa_trc(diag, res->status);
 
-	if (res->status == BFI_BOOT_MEMTEST_RES_SIG)
+	अगर (res->status == BFI_BOOT_MEMTEST_RES_SIG)
 		diag->status = BFA_STATUS_OK;
-	else {
+	अन्यथा अणु
 		diag->status = BFA_STATUS_MEMTEST_FAILED;
 		res->addr = swab32(res->addr);
 		res->exp = swab32(res->exp);
@@ -4794,33 +4795,33 @@ bfa_diag_memtest_done(void *cbarg)
 		bfa_trc(diag, res->err_status);
 		bfa_trc(diag, res->err_status1);
 		bfa_trc(diag, res->err_addr);
-	}
-	diag->timer_active = 0;
+	पूर्ण
+	diag->समयr_active = 0;
 	diag->cbfn(diag->cbarg, diag->status);
 	diag->block = 0;
-}
+पूर्ण
 
 /*
  * Firmware ping
  */
 
 /*
- * Perform DMA test directly
+ * Perक्रमm DMA test directly
  */
-static void
-diag_fwping_send(struct bfa_diag_s *diag)
-{
-	struct bfi_diag_fwping_req_s *fwping_req;
+अटल व्योम
+diag_fwping_send(काष्ठा bfa_diag_s *diag)
+अणु
+	काष्ठा bfi_diag_fwping_req_s *fwping_req;
 	u32	i;
 
 	bfa_trc(diag, diag->fwping.dbuf_pa);
 
 	/* fill DMA area with pattern */
-	for (i = 0; i < (BFI_DIAG_DMA_BUF_SZ >> 2); i++)
+	क्रम (i = 0; i < (BFI_DIAG_DMA_BUF_SZ >> 2); i++)
 		*((u32 *)diag->fwping.dbuf_kva + i) = diag->fwping.data;
 
 	/* Fill mbox msg */
-	fwping_req = (struct bfi_diag_fwping_req_s *)diag->fwping.mbcmd.msg;
+	fwping_req = (काष्ठा bfi_diag_fwping_req_s *)diag->fwping.mbcmd.msg;
 
 	/* Setup SG list */
 	bfa_alen_set(&fwping_req->alen, BFI_DIAG_DMA_BUF_SZ,
@@ -4836,24 +4837,24 @@ diag_fwping_send(struct bfa_diag_s *diag)
 
 	/* send mbox cmd */
 	bfa_ioc_mbox_queue(diag->ioc, &diag->fwping.mbcmd);
-}
+पूर्ण
 
-static void
-diag_fwping_comp(struct bfa_diag_s *diag,
-		 struct bfi_diag_fwping_rsp_s *diag_rsp)
-{
+अटल व्योम
+diag_fwping_comp(काष्ठा bfa_diag_s *diag,
+		 काष्ठा bfi_diag_fwping_rsp_s *diag_rsp)
+अणु
 	u32	rsp_data = diag_rsp->data;
 	u8	rsp_dma_status = diag_rsp->dma_status;
 
 	bfa_trc(diag, rsp_data);
 	bfa_trc(diag, rsp_dma_status);
 
-	if (rsp_dma_status == BFA_STATUS_OK) {
+	अगर (rsp_dma_status == BFA_STATUS_OK) अणु
 		u32	i, pat;
 		pat = (diag->fwping.count & 0x1) ? ~(diag->fwping.data) :
 			diag->fwping.data;
 		/* Check mbox data */
-		if (diag->fwping.data != rsp_data) {
+		अगर (diag->fwping.data != rsp_data) अणु
 			bfa_trc(diag, rsp_data);
 			diag->fwping.result->dmastatus =
 					BFA_STATUS_DATACORRUPTED;
@@ -4861,11 +4862,11 @@ diag_fwping_comp(struct bfa_diag_s *diag,
 			diag->fwping.cbfn(diag->fwping.cbarg,
 					diag->fwping.status);
 			diag->fwping.lock = 0;
-			return;
-		}
+			वापस;
+		पूर्ण
 		/* Check dma pattern */
-		for (i = 0; i < (BFI_DIAG_DMA_BUF_SZ >> 2); i++) {
-			if (*((u32 *)diag->fwping.dbuf_kva + i) != pat) {
+		क्रम (i = 0; i < (BFI_DIAG_DMA_BUF_SZ >> 2); i++) अणु
+			अगर (*((u32 *)diag->fwping.dbuf_kva + i) != pat) अणु
 				bfa_trc(diag, i);
 				bfa_trc(diag, pat);
 				bfa_trc(diag,
@@ -4876,64 +4877,64 @@ diag_fwping_comp(struct bfa_diag_s *diag,
 				diag->fwping.cbfn(diag->fwping.cbarg,
 						diag->fwping.status);
 				diag->fwping.lock = 0;
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 		diag->fwping.result->dmastatus = BFA_STATUS_OK;
 		diag->fwping.status = BFA_STATUS_OK;
 		diag->fwping.cbfn(diag->fwping.cbarg, diag->fwping.status);
 		diag->fwping.lock = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		diag->fwping.status = BFA_STATUS_HDMA_FAILED;
 		diag->fwping.cbfn(diag->fwping.cbarg, diag->fwping.status);
 		diag->fwping.lock = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Temperature Sensor
  */
 
-static void
-diag_tempsensor_send(struct bfa_diag_s *diag)
-{
-	struct bfi_diag_ts_req_s *msg;
+अटल व्योम
+diag_tempsensor_send(काष्ठा bfa_diag_s *diag)
+अणु
+	काष्ठा bfi_diag_ts_req_s *msg;
 
-	msg = (struct bfi_diag_ts_req_s *)diag->tsensor.mbcmd.msg;
+	msg = (काष्ठा bfi_diag_ts_req_s *)diag->tsensor.mbcmd.msg;
 	bfa_trc(diag, msg->temp);
 	/* build host command */
 	bfi_h2i_set(msg->mh, BFI_MC_DIAG, BFI_DIAG_H2I_TEMPSENSOR,
 		bfa_ioc_portid(diag->ioc));
 	/* send mbox cmd */
 	bfa_ioc_mbox_queue(diag->ioc, &diag->tsensor.mbcmd);
-}
+पूर्ण
 
-static void
-diag_tempsensor_comp(struct bfa_diag_s *diag, bfi_diag_ts_rsp_t *rsp)
-{
-	if (!diag->tsensor.lock) {
+अटल व्योम
+diag_tempsensor_comp(काष्ठा bfa_diag_s *diag, bfi_diag_ts_rsp_t *rsp)
+अणु
+	अगर (!diag->tsensor.lock) अणु
 		/* receiving response after ioc failure */
 		bfa_trc(diag, diag->tsensor.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * ASIC junction tempsensor is a reg read operation
-	 * it will always return OK
+	 * ASIC junction tempsensor is a reg पढ़ो operation
+	 * it will always वापस OK
 	 */
 	diag->tsensor.temp->temp = be16_to_cpu(rsp->temp);
 	diag->tsensor.temp->ts_junc = rsp->ts_junc;
 	diag->tsensor.temp->ts_brd = rsp->ts_brd;
 
-	if (rsp->ts_brd) {
+	अगर (rsp->ts_brd) अणु
 		/* tsensor.temp->status is brd_temp status */
 		diag->tsensor.temp->status = rsp->status;
-		if (rsp->status == BFA_STATUS_OK) {
+		अगर (rsp->status == BFA_STATUS_OK) अणु
 			diag->tsensor.temp->brd_temp =
 				be16_to_cpu(rsp->brd_temp);
-		} else
+		पूर्ण अन्यथा
 			diag->tsensor.temp->brd_temp = 0;
-	}
+	पूर्ण
 
 	bfa_trc(diag, rsp->status);
 	bfa_trc(diag, rsp->ts_junc);
@@ -4945,33 +4946,33 @@ diag_tempsensor_comp(struct bfa_diag_s *diag, bfi_diag_ts_rsp_t *rsp)
 	diag->tsensor.status = BFA_STATUS_OK;
 	diag->tsensor.cbfn(diag->tsensor.cbarg, diag->tsensor.status);
 	diag->tsensor.lock = 0;
-}
+पूर्ण
 
 /*
  *	LED Test command
  */
-static void
-diag_ledtest_send(struct bfa_diag_s *diag, struct bfa_diag_ledtest_s *ledtest)
-{
-	struct bfi_diag_ledtest_req_s  *msg;
+अटल व्योम
+diag_ledtest_send(काष्ठा bfa_diag_s *diag, काष्ठा bfa_diag_ledtest_s *ledtest)
+अणु
+	काष्ठा bfi_diag_ledtest_req_s  *msg;
 
-	msg = (struct bfi_diag_ledtest_req_s *)diag->ledtest.mbcmd.msg;
+	msg = (काष्ठा bfi_diag_ledtest_req_s *)diag->ledtest.mbcmd.msg;
 	/* build host command */
 	bfi_h2i_set(msg->mh, BFI_MC_DIAG, BFI_DIAG_H2I_LEDTEST,
 			bfa_ioc_portid(diag->ioc));
 
 	/*
 	 * convert the freq from N blinks per 10 sec to
-	 * crossbow ontime value. We do it here because division is need
+	 * crossbow onसमय value. We करो it here because भागision is need
 	 */
-	if (ledtest->freq)
+	अगर (ledtest->freq)
 		ledtest->freq = 500 / ledtest->freq;
 
-	if (ledtest->freq == 0)
+	अगर (ledtest->freq == 0)
 		ledtest->freq = 1;
 
 	bfa_trc(diag, ledtest->freq);
-	/* mcpy(&ledtest_req->req, ledtest, sizeof(bfa_diag_ledtest_t)); */
+	/* mcpy(&ledtest_req->req, ledtest, माप(bfa_diag_ledtest_t)); */
 	msg->cmd = (u8) ledtest->cmd;
 	msg->color = (u8) ledtest->color;
 	msg->portid = bfa_ioc_portid(diag->ioc);
@@ -4980,25 +4981,25 @@ diag_ledtest_send(struct bfa_diag_s *diag, struct bfa_diag_ledtest_s *ledtest)
 
 	/* send mbox cmd */
 	bfa_ioc_mbox_queue(diag->ioc, &diag->ledtest.mbcmd);
-}
+पूर्ण
 
-static void
-diag_ledtest_comp(struct bfa_diag_s *diag, struct bfi_diag_ledtest_rsp_s *msg)
-{
+अटल व्योम
+diag_ledtest_comp(काष्ठा bfa_diag_s *diag, काष्ठा bfi_diag_ledtest_rsp_s *msg)
+अणु
 	bfa_trc(diag, diag->ledtest.lock);
 	diag->ledtest.lock = BFA_FALSE;
-	/* no bfa_cb_queue is needed because driver is not waiting */
-}
+	/* no bfa_cb_queue is needed because driver is not रुकोing */
+पूर्ण
 
 /*
  * Port beaconing
  */
-static void
-diag_portbeacon_send(struct bfa_diag_s *diag, bfa_boolean_t beacon, u32 sec)
-{
-	struct bfi_diag_portbeacon_req_s *msg;
+अटल व्योम
+diag_portbeacon_send(काष्ठा bfa_diag_s *diag, bfa_boolean_t beacon, u32 sec)
+अणु
+	काष्ठा bfi_diag_portbeacon_req_s *msg;
 
-	msg = (struct bfi_diag_portbeacon_req_s *)diag->beacon.mbcmd.msg;
+	msg = (काष्ठा bfi_diag_portbeacon_req_s *)diag->beacon.mbcmd.msg;
 	/* build host command */
 	bfi_h2i_set(msg->mh, BFI_MC_DIAG, BFI_DIAG_H2I_PORTBEACON,
 		bfa_ioc_portid(diag->ioc));
@@ -5006,48 +5007,48 @@ diag_portbeacon_send(struct bfa_diag_s *diag, bfa_boolean_t beacon, u32 sec)
 	msg->period = cpu_to_be32(sec);
 	/* send mbox cmd */
 	bfa_ioc_mbox_queue(diag->ioc, &diag->beacon.mbcmd);
-}
+पूर्ण
 
-static void
-diag_portbeacon_comp(struct bfa_diag_s *diag)
-{
+अटल व्योम
+diag_portbeacon_comp(काष्ठा bfa_diag_s *diag)
+अणु
 	bfa_trc(diag, diag->beacon.state);
 	diag->beacon.state = BFA_FALSE;
-	if (diag->cbfn_beacon)
+	अगर (diag->cbfn_beacon)
 		diag->cbfn_beacon(diag->dev, BFA_FALSE, diag->beacon.link_e2e);
-}
+पूर्ण
 
 /*
  *	Diag hmbox handler
  */
-static void
-bfa_diag_intr(void *diagarg, struct bfi_mbmsg_s *msg)
-{
-	struct bfa_diag_s *diag = diagarg;
+अटल व्योम
+bfa_diag_पूर्णांकr(व्योम *diagarg, काष्ठा bfi_mbmsg_s *msg)
+अणु
+	काष्ठा bfa_diag_s *diag = diagarg;
 
-	switch (msg->mh.msg_id) {
-	case BFI_DIAG_I2H_PORTBEACON:
+	चयन (msg->mh.msg_id) अणु
+	हाल BFI_DIAG_I2H_PORTBEACON:
 		diag_portbeacon_comp(diag);
-		break;
-	case BFI_DIAG_I2H_FWPING:
-		diag_fwping_comp(diag, (struct bfi_diag_fwping_rsp_s *) msg);
-		break;
-	case BFI_DIAG_I2H_TEMPSENSOR:
+		अवरोध;
+	हाल BFI_DIAG_I2H_FWPING:
+		diag_fwping_comp(diag, (काष्ठा bfi_diag_fwping_rsp_s *) msg);
+		अवरोध;
+	हाल BFI_DIAG_I2H_TEMPSENSOR:
 		diag_tempsensor_comp(diag, (bfi_diag_ts_rsp_t *) msg);
-		break;
-	case BFI_DIAG_I2H_LEDTEST:
-		diag_ledtest_comp(diag, (struct bfi_diag_ledtest_rsp_s *) msg);
-		break;
-	default:
+		अवरोध;
+	हाल BFI_DIAG_I2H_LEDTEST:
+		diag_ledtest_comp(diag, (काष्ठा bfi_diag_ledtest_rsp_s *) msg);
+		अवरोध;
+	शेष:
 		bfa_trc(diag, msg->mh.msg_id);
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Gen RAM Test
  *
- *   @param[in] *diag           - diag data struct
+ *   @param[in] *diag           - diag data काष्ठा
  *   @param[in] *memtest        - mem test params input from upper layer,
  *   @param[in] pattern         - mem test pattern
  *   @param[in] *result         - mem test result
@@ -5057,72 +5058,72 @@ bfa_diag_intr(void *diagarg, struct bfi_mbmsg_s *msg)
  *   @param[out]
  */
 bfa_status_t
-bfa_diag_memtest(struct bfa_diag_s *diag, struct bfa_diag_memtest_s *memtest,
-		u32 pattern, struct bfa_diag_memtest_result *result,
-		bfa_cb_diag_t cbfn, void *cbarg)
-{
+bfa_diag_memtest(काष्ठा bfa_diag_s *diag, काष्ठा bfa_diag_memtest_s *memtest,
+		u32 pattern, काष्ठा bfa_diag_memtest_result *result,
+		bfa_cb_diag_t cbfn, व्योम *cbarg)
+अणु
 	u32	memtest_tov;
 
 	bfa_trc(diag, pattern);
 
-	if (!bfa_ioc_adapter_is_disabled(diag->ioc))
-		return BFA_STATUS_ADAPTER_ENABLED;
+	अगर (!bfa_ioc_adapter_is_disabled(diag->ioc))
+		वापस BFA_STATUS_ADAPTER_ENABLED;
 
-	/* check to see if there is another destructive diag cmd running */
-	if (diag->block) {
+	/* check to see अगर there is another deकाष्ठाive diag cmd running */
+	अगर (diag->block) अणु
 		bfa_trc(diag, diag->block);
-		return BFA_STATUS_DEVBUSY;
-	} else
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण अन्यथा
 		diag->block = 1;
 
 	diag->result = result;
 	diag->cbfn = cbfn;
 	diag->cbarg = cbarg;
 
-	/* download memtest code and take LPU0 out of reset */
+	/* करोwnload memtest code and take LPU0 out of reset */
 	bfa_ioc_boot(diag->ioc, BFI_FWBOOT_TYPE_MEMTEST, BFI_FWBOOT_ENV_OS);
 
 	memtest_tov = (bfa_ioc_asic_gen(diag->ioc) == BFI_ASIC_GEN_CT2) ?
 		       CT2_BFA_DIAG_MEMTEST_TOV : BFA_DIAG_MEMTEST_TOV;
-	bfa_timer_begin(diag->ioc->timer_mod, &diag->timer,
-			bfa_diag_memtest_done, diag, memtest_tov);
-	diag->timer_active = 1;
-	return BFA_STATUS_OK;
-}
+	bfa_समयr_begin(diag->ioc->समयr_mod, &diag->समयr,
+			bfa_diag_memtest_करोne, diag, memtest_tov);
+	diag->समयr_active = 1;
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * DIAG firmware ping command
  *
- *   @param[in] *diag           - diag data struct
- *   @param[in] cnt             - dma loop count for testing PCIE
+ *   @param[in] *diag           - diag data काष्ठा
+ *   @param[in] cnt             - dma loop count क्रम testing PCIE
  *   @param[in] data            - data pattern to pass in fw
- *   @param[in] *result         - pt to bfa_diag_fwping_result_t data struct
+ *   @param[in] *result         - pt to bfa_diag_fwping_result_t data काष्ठा
  *   @param[in] cbfn            - callback function
  *   @param[in] *cbarg          - callback functioin arg
  *
  *   @param[out]
  */
 bfa_status_t
-bfa_diag_fwping(struct bfa_diag_s *diag, u32 cnt, u32 data,
-		struct bfa_diag_results_fwping *result, bfa_cb_diag_t cbfn,
-		void *cbarg)
-{
+bfa_diag_fwping(काष्ठा bfa_diag_s *diag, u32 cnt, u32 data,
+		काष्ठा bfa_diag_results_fwping *result, bfa_cb_diag_t cbfn,
+		व्योम *cbarg)
+अणु
 	bfa_trc(diag, cnt);
 	bfa_trc(diag, data);
 
-	if (!bfa_ioc_is_operational(diag->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(diag->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (bfa_asic_id_ct2(bfa_ioc_devid((diag->ioc))) &&
+	अगर (bfa_asic_id_ct2(bfa_ioc_devid((diag->ioc))) &&
 	    ((diag->ioc)->clscode == BFI_PCIFN_CLASS_ETH))
-		return BFA_STATUS_CMD_NOTSUPP;
+		वापस BFA_STATUS_CMD_NOTSUPP;
 
-	/* check to see if there is another destructive diag cmd running */
-	if (diag->block || diag->fwping.lock) {
+	/* check to see अगर there is another deकाष्ठाive diag cmd running */
+	अगर (diag->block || diag->fwping.lock) अणु
 		bfa_trc(diag, diag->block);
 		bfa_trc(diag, diag->fwping.lock);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	/* Initialization */
 	diag->fwping.lock = 1;
@@ -5138,33 +5139,33 @@ bfa_diag_fwping(struct bfa_diag_s *diag, u32 cnt, u32 data,
 
 	/* kick off the first ping */
 	diag_fwping_send(diag);
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Read Temperature Sensor
  *
- *   @param[in] *diag           - diag data struct
- *   @param[in] *result         - pt to bfa_diag_temp_t data struct
+ *   @param[in] *diag           - diag data काष्ठा
+ *   @param[in] *result         - pt to bfa_diag_temp_t data काष्ठा
  *   @param[in] cbfn            - callback function
  *   @param[in] *cbarg          - callback functioin arg
  *
  *   @param[out]
  */
 bfa_status_t
-bfa_diag_tsensor_query(struct bfa_diag_s *diag,
-		struct bfa_diag_results_tempsensor_s *result,
-		bfa_cb_diag_t cbfn, void *cbarg)
-{
-	/* check to see if there is a destructive diag cmd running */
-	if (diag->block || diag->tsensor.lock) {
+bfa_diag_tsensor_query(काष्ठा bfa_diag_s *diag,
+		काष्ठा bfa_diag_results_tempsensor_s *result,
+		bfa_cb_diag_t cbfn, व्योम *cbarg)
+अणु
+	/* check to see अगर there is a deकाष्ठाive diag cmd running */
+	अगर (diag->block || diag->tsensor.lock) अणु
 		bfa_trc(diag, diag->block);
 		bfa_trc(diag, diag->tsensor.lock);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
-	if (!bfa_ioc_is_operational(diag->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(diag->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
 	/* Init diag mod params */
 	diag->tsensor.lock = 1;
@@ -5176,42 +5177,42 @@ bfa_diag_tsensor_query(struct bfa_diag_s *diag,
 	/* Send msg to fw */
 	diag_tempsensor_send(diag);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * LED Test command
  *
- *   @param[in] *diag           - diag data struct
- *   @param[in] *ledtest        - pt to ledtest data structure
+ *   @param[in] *diag           - diag data काष्ठा
+ *   @param[in] *ledtest        - pt to ledtest data काष्ठाure
  *
  *   @param[out]
  */
 bfa_status_t
-bfa_diag_ledtest(struct bfa_diag_s *diag, struct bfa_diag_ledtest_s *ledtest)
-{
+bfa_diag_ledtest(काष्ठा bfa_diag_s *diag, काष्ठा bfa_diag_ledtest_s *ledtest)
+अणु
 	bfa_trc(diag, ledtest->cmd);
 
-	if (!bfa_ioc_is_operational(diag->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(diag->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (diag->beacon.state)
-		return BFA_STATUS_BEACON_ON;
+	अगर (diag->beacon.state)
+		वापस BFA_STATUS_BEACON_ON;
 
-	if (diag->ledtest.lock)
-		return BFA_STATUS_LEDTEST_OP;
+	अगर (diag->ledtest.lock)
+		वापस BFA_STATUS_LEDTEST_OP;
 
 	/* Send msg to fw */
 	diag->ledtest.lock = BFA_TRUE;
 	diag_ledtest_send(diag, ledtest);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Port beaconing command
  *
- *   @param[in] *diag           - diag data struct
+ *   @param[in] *diag           - diag data काष्ठा
  *   @param[in] beacon          - port beaconing 1:ON   0:OFF
  *   @param[in] link_e2e_beacon - link beaconing 1:ON   0:OFF
  *   @param[in] sec             - beaconing duration in seconds
@@ -5219,149 +5220,149 @@ bfa_diag_ledtest(struct bfa_diag_s *diag, struct bfa_diag_ledtest_s *ledtest)
  *   @param[out]
  */
 bfa_status_t
-bfa_diag_beacon_port(struct bfa_diag_s *diag, bfa_boolean_t beacon,
-		bfa_boolean_t link_e2e_beacon, uint32_t sec)
-{
+bfa_diag_beacon_port(काष्ठा bfa_diag_s *diag, bfa_boolean_t beacon,
+		bfa_boolean_t link_e2e_beacon, uपूर्णांक32_t sec)
+अणु
 	bfa_trc(diag, beacon);
 	bfa_trc(diag, link_e2e_beacon);
 	bfa_trc(diag, sec);
 
-	if (!bfa_ioc_is_operational(diag->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(diag->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (diag->ledtest.lock)
-		return BFA_STATUS_LEDTEST_OP;
+	अगर (diag->ledtest.lock)
+		वापस BFA_STATUS_LEDTEST_OP;
 
-	if (diag->beacon.state && beacon)       /* beacon alread on */
-		return BFA_STATUS_BEACON_ON;
+	अगर (diag->beacon.state && beacon)       /* beacon alपढ़ो on */
+		वापस BFA_STATUS_BEACON_ON;
 
 	diag->beacon.state	= beacon;
 	diag->beacon.link_e2e	= link_e2e_beacon;
-	if (diag->cbfn_beacon)
+	अगर (diag->cbfn_beacon)
 		diag->cbfn_beacon(diag->dev, beacon, link_e2e_beacon);
 
 	/* Send msg to fw */
 	diag_portbeacon_send(diag, beacon, sec);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Return DMA memory needed by diag module.
  */
 u32
-bfa_diag_meminfo(void)
-{
-	return BFA_ROUNDUP(BFI_DIAG_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
-}
+bfa_diag_meminfo(व्योम)
+अणु
+	वापस BFA_ROUNDUP(BFI_DIAG_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
+पूर्ण
 
 /*
- *	Attach virtual and physical memory for Diag.
+ *	Attach भव and physical memory क्रम Diag.
  */
-void
-bfa_diag_attach(struct bfa_diag_s *diag, struct bfa_ioc_s *ioc, void *dev,
-	bfa_cb_diag_beacon_t cbfn_beacon, struct bfa_trc_mod_s *trcmod)
-{
+व्योम
+bfa_diag_attach(काष्ठा bfa_diag_s *diag, काष्ठा bfa_ioc_s *ioc, व्योम *dev,
+	bfa_cb_diag_beacon_t cbfn_beacon, काष्ठा bfa_trc_mod_s *trcmod)
+अणु
 	diag->dev = dev;
 	diag->ioc = ioc;
 	diag->trcmod = trcmod;
 
 	diag->block = 0;
-	diag->cbfn = NULL;
-	diag->cbarg = NULL;
-	diag->result = NULL;
+	diag->cbfn = शून्य;
+	diag->cbarg = शून्य;
+	diag->result = शून्य;
 	diag->cbfn_beacon = cbfn_beacon;
 
-	bfa_ioc_mbox_regisr(diag->ioc, BFI_MC_DIAG, bfa_diag_intr, diag);
-	bfa_q_qe_init(&diag->ioc_notify);
-	bfa_ioc_notify_init(&diag->ioc_notify, bfa_diag_notify, diag);
-	list_add_tail(&diag->ioc_notify.qe, &diag->ioc->notify_q);
-}
+	bfa_ioc_mbox_regisr(diag->ioc, BFI_MC_DIAG, bfa_diag_पूर्णांकr, diag);
+	bfa_q_qe_init(&diag->ioc_notअगरy);
+	bfa_ioc_notअगरy_init(&diag->ioc_notअगरy, bfa_diag_notअगरy, diag);
+	list_add_tail(&diag->ioc_notअगरy.qe, &diag->ioc->notअगरy_q);
+पूर्ण
 
-void
-bfa_diag_memclaim(struct bfa_diag_s *diag, u8 *dm_kva, u64 dm_pa)
-{
+व्योम
+bfa_diag_memclaim(काष्ठा bfa_diag_s *diag, u8 *dm_kva, u64 dm_pa)
+अणु
 	diag->fwping.dbuf_kva = dm_kva;
 	diag->fwping.dbuf_pa = dm_pa;
-	memset(diag->fwping.dbuf_kva, 0, BFI_DIAG_DMA_BUF_SZ);
-}
+	स_रखो(diag->fwping.dbuf_kva, 0, BFI_DIAG_DMA_BUF_SZ);
+पूर्ण
 
 /*
- *	PHY module specific
+ *	PHY module specअगरic
  */
-#define BFA_PHY_DMA_BUF_SZ	0x02000         /* 8k dma buffer */
-#define BFA_PHY_LOCK_STATUS	0x018878        /* phy semaphore status reg */
+#घोषणा BFA_PHY_DMA_BUF_SZ	0x02000         /* 8k dma buffer */
+#घोषणा BFA_PHY_LOCK_STATUS	0x018878        /* phy semaphore status reg */
 
-static void
-bfa_phy_ntoh32(u32 *obuf, u32 *ibuf, int sz)
-{
-	int i, m = sz >> 2;
+अटल व्योम
+bfa_phy_ntoh32(u32 *obuf, u32 *ibuf, पूर्णांक sz)
+अणु
+	पूर्णांक i, m = sz >> 2;
 
-	for (i = 0; i < m; i++)
+	क्रम (i = 0; i < m; i++)
 		obuf[i] = be32_to_cpu(ibuf[i]);
-}
+पूर्ण
 
-static bfa_boolean_t
-bfa_phy_present(struct bfa_phy_s *phy)
-{
-	return (phy->ioc->attr->card_type == BFA_MFG_TYPE_LIGHTNING);
-}
+अटल bfa_boolean_t
+bfa_phy_present(काष्ठा bfa_phy_s *phy)
+अणु
+	वापस (phy->ioc->attr->card_type == BFA_MFG_TYPE_LIGHTNING);
+पूर्ण
 
-static void
-bfa_phy_notify(void *cbarg, enum bfa_ioc_event_e event)
-{
-	struct bfa_phy_s *phy = cbarg;
+अटल व्योम
+bfa_phy_notअगरy(व्योम *cbarg, क्रमागत bfa_ioc_event_e event)
+अणु
+	काष्ठा bfa_phy_s *phy = cbarg;
 
 	bfa_trc(phy, event);
 
-	switch (event) {
-	case BFA_IOC_E_DISABLED:
-	case BFA_IOC_E_FAILED:
-		if (phy->op_busy) {
+	चयन (event) अणु
+	हाल BFA_IOC_E_DISABLED:
+	हाल BFA_IOC_E_FAILED:
+		अगर (phy->op_busy) अणु
 			phy->status = BFA_STATUS_IOC_FAILURE;
 			phy->cbfn(phy->cbarg, phy->status);
 			phy->op_busy = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * Send phy attribute query request.
  *
  * @param[in] cbarg - callback argument
  */
-static void
-bfa_phy_query_send(void *cbarg)
-{
-	struct bfa_phy_s *phy = cbarg;
-	struct bfi_phy_query_req_s *msg =
-			(struct bfi_phy_query_req_s *) phy->mb.msg;
+अटल व्योम
+bfa_phy_query_send(व्योम *cbarg)
+अणु
+	काष्ठा bfa_phy_s *phy = cbarg;
+	काष्ठा bfi_phy_query_req_s *msg =
+			(काष्ठा bfi_phy_query_req_s *) phy->mb.msg;
 
 	msg->instance = phy->instance;
 	bfi_h2i_set(msg->mh, BFI_MC_PHY, BFI_PHY_H2I_QUERY_REQ,
 		bfa_ioc_portid(phy->ioc));
-	bfa_alen_set(&msg->alen, sizeof(struct bfa_phy_attr_s), phy->dbuf_pa);
+	bfa_alen_set(&msg->alen, माप(काष्ठा bfa_phy_attr_s), phy->dbuf_pa);
 	bfa_ioc_mbox_queue(phy->ioc, &phy->mb);
-}
+पूर्ण
 
 /*
- * Send phy write request.
+ * Send phy ग_लिखो request.
  *
  * @param[in] cbarg - callback argument
  */
-static void
-bfa_phy_write_send(void *cbarg)
-{
-	struct bfa_phy_s *phy = cbarg;
-	struct bfi_phy_write_req_s *msg =
-			(struct bfi_phy_write_req_s *) phy->mb.msg;
+अटल व्योम
+bfa_phy_ग_लिखो_send(व्योम *cbarg)
+अणु
+	काष्ठा bfa_phy_s *phy = cbarg;
+	काष्ठा bfi_phy_ग_लिखो_req_s *msg =
+			(काष्ठा bfi_phy_ग_लिखो_req_s *) phy->mb.msg;
 	u32	len;
 	u16	*buf, *dbuf;
-	int	i, sz;
+	पूर्णांक	i, sz;
 
 	msg->instance = phy->instance;
 	msg->offset = cpu_to_be32(phy->addr_off + phy->offset);
@@ -5369,7 +5370,7 @@ bfa_phy_write_send(void *cbarg)
 			phy->residue : BFA_PHY_DMA_BUF_SZ;
 	msg->length = cpu_to_be32(len);
 
-	/* indicate if it's the last msg of the whole write operation */
+	/* indicate अगर it's the last msg of the whole ग_लिखो operation */
 	msg->last = (len == phy->residue) ? 1 : 0;
 
 	bfi_h2i_set(msg->mh, BFI_MC_PHY, BFI_PHY_H2I_WRITE_REQ,
@@ -5379,26 +5380,26 @@ bfa_phy_write_send(void *cbarg)
 	buf = (u16 *) (phy->ubuf + phy->offset);
 	dbuf = (u16 *)phy->dbuf_kva;
 	sz = len >> 1;
-	for (i = 0; i < sz; i++)
+	क्रम (i = 0; i < sz; i++)
 		buf[i] = cpu_to_be16(dbuf[i]);
 
 	bfa_ioc_mbox_queue(phy->ioc, &phy->mb);
 
 	phy->residue -= len;
 	phy->offset += len;
-}
+पूर्ण
 
 /*
- * Send phy read request.
+ * Send phy पढ़ो request.
  *
  * @param[in] cbarg - callback argument
  */
-static void
-bfa_phy_read_send(void *cbarg)
-{
-	struct bfa_phy_s *phy = cbarg;
-	struct bfi_phy_read_req_s *msg =
-			(struct bfi_phy_read_req_s *) phy->mb.msg;
+अटल व्योम
+bfa_phy_पढ़ो_send(व्योम *cbarg)
+अणु
+	काष्ठा bfa_phy_s *phy = cbarg;
+	काष्ठा bfi_phy_पढ़ो_req_s *msg =
+			(काष्ठा bfi_phy_पढ़ो_req_s *) phy->mb.msg;
 	u32	len;
 
 	msg->instance = phy->instance;
@@ -5410,26 +5411,26 @@ bfa_phy_read_send(void *cbarg)
 		bfa_ioc_portid(phy->ioc));
 	bfa_alen_set(&msg->alen, len, phy->dbuf_pa);
 	bfa_ioc_mbox_queue(phy->ioc, &phy->mb);
-}
+पूर्ण
 
 /*
  * Send phy stats request.
  *
  * @param[in] cbarg - callback argument
  */
-static void
-bfa_phy_stats_send(void *cbarg)
-{
-	struct bfa_phy_s *phy = cbarg;
-	struct bfi_phy_stats_req_s *msg =
-			(struct bfi_phy_stats_req_s *) phy->mb.msg;
+अटल व्योम
+bfa_phy_stats_send(व्योम *cbarg)
+अणु
+	काष्ठा bfa_phy_s *phy = cbarg;
+	काष्ठा bfi_phy_stats_req_s *msg =
+			(काष्ठा bfi_phy_stats_req_s *) phy->mb.msg;
 
 	msg->instance = phy->instance;
 	bfi_h2i_set(msg->mh, BFI_MC_PHY, BFI_PHY_H2I_STATS_REQ,
 		bfa_ioc_portid(phy->ioc));
-	bfa_alen_set(&msg->alen, sizeof(struct bfa_phy_stats_s), phy->dbuf_pa);
+	bfa_alen_set(&msg->alen, माप(काष्ठा bfa_phy_stats_s), phy->dbuf_pa);
 	bfa_ioc_mbox_queue(phy->ioc, &phy->mb);
-}
+पूर्ण
 
 /*
  * Flash memory info API.
@@ -5438,143 +5439,143 @@ bfa_phy_stats_send(void *cbarg)
  */
 u32
 bfa_phy_meminfo(bfa_boolean_t mincfg)
-{
-	/* min driver doesn't need phy */
-	if (mincfg)
-		return 0;
+अणु
+	/* min driver करोesn't need phy */
+	अगर (mincfg)
+		वापस 0;
 
-	return BFA_ROUNDUP(BFA_PHY_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
-}
+	वापस BFA_ROUNDUP(BFA_PHY_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
+पूर्ण
 
 /*
  * Flash attach API.
  *
- * @param[in] phy - phy structure
- * @param[in] ioc  - ioc structure
- * @param[in] dev  - device structure
+ * @param[in] phy - phy काष्ठाure
+ * @param[in] ioc  - ioc काष्ठाure
+ * @param[in] dev  - device काष्ठाure
  * @param[in] trcmod - trace module
  * @param[in] logmod - log module
  */
-void
-bfa_phy_attach(struct bfa_phy_s *phy, struct bfa_ioc_s *ioc, void *dev,
-		struct bfa_trc_mod_s *trcmod, bfa_boolean_t mincfg)
-{
+व्योम
+bfa_phy_attach(काष्ठा bfa_phy_s *phy, काष्ठा bfa_ioc_s *ioc, व्योम *dev,
+		काष्ठा bfa_trc_mod_s *trcmod, bfa_boolean_t mincfg)
+अणु
 	phy->ioc = ioc;
 	phy->trcmod = trcmod;
-	phy->cbfn = NULL;
-	phy->cbarg = NULL;
+	phy->cbfn = शून्य;
+	phy->cbarg = शून्य;
 	phy->op_busy = 0;
 
-	bfa_ioc_mbox_regisr(phy->ioc, BFI_MC_PHY, bfa_phy_intr, phy);
-	bfa_q_qe_init(&phy->ioc_notify);
-	bfa_ioc_notify_init(&phy->ioc_notify, bfa_phy_notify, phy);
-	list_add_tail(&phy->ioc_notify.qe, &phy->ioc->notify_q);
+	bfa_ioc_mbox_regisr(phy->ioc, BFI_MC_PHY, bfa_phy_पूर्णांकr, phy);
+	bfa_q_qe_init(&phy->ioc_notअगरy);
+	bfa_ioc_notअगरy_init(&phy->ioc_notअगरy, bfa_phy_notअगरy, phy);
+	list_add_tail(&phy->ioc_notअगरy.qe, &phy->ioc->notअगरy_q);
 
-	/* min driver doesn't need phy */
-	if (mincfg) {
-		phy->dbuf_kva = NULL;
+	/* min driver करोesn't need phy */
+	अगर (mincfg) अणु
+		phy->dbuf_kva = शून्य;
 		phy->dbuf_pa = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Claim memory for phy
+ * Claim memory क्रम phy
  *
- * @param[in] phy - phy structure
- * @param[in] dm_kva - pointer to virtual memory address
+ * @param[in] phy - phy काष्ठाure
+ * @param[in] dm_kva - poपूर्णांकer to भव memory address
  * @param[in] dm_pa - physical memory address
  * @param[in] mincfg - minimal cfg variable
  */
-void
-bfa_phy_memclaim(struct bfa_phy_s *phy, u8 *dm_kva, u64 dm_pa,
+व्योम
+bfa_phy_memclaim(काष्ठा bfa_phy_s *phy, u8 *dm_kva, u64 dm_pa,
 		bfa_boolean_t mincfg)
-{
-	if (mincfg)
-		return;
+अणु
+	अगर (mincfg)
+		वापस;
 
 	phy->dbuf_kva = dm_kva;
 	phy->dbuf_pa = dm_pa;
-	memset(phy->dbuf_kva, 0, BFA_PHY_DMA_BUF_SZ);
+	स_रखो(phy->dbuf_kva, 0, BFA_PHY_DMA_BUF_SZ);
 	dm_kva += BFA_ROUNDUP(BFA_PHY_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
 	dm_pa += BFA_ROUNDUP(BFA_PHY_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
-}
+पूर्ण
 
 bfa_boolean_t
-bfa_phy_busy(struct bfa_ioc_s *ioc)
-{
-	void __iomem	*rb;
+bfa_phy_busy(काष्ठा bfa_ioc_s *ioc)
+अणु
+	व्योम __iomem	*rb;
 
 	rb = bfa_ioc_bar0(ioc);
-	return readl(rb + BFA_PHY_LOCK_STATUS);
-}
+	वापस पढ़ोl(rb + BFA_PHY_LOCK_STATUS);
+पूर्ण
 
 /*
  * Get phy attribute.
  *
- * @param[in] phy - phy structure
- * @param[in] attr - phy attribute structure
+ * @param[in] phy - phy काष्ठाure
+ * @param[in] attr - phy attribute काष्ठाure
  * @param[in] cbfn - callback function
  * @param[in] cbarg - callback argument
  *
  * Return status.
  */
 bfa_status_t
-bfa_phy_get_attr(struct bfa_phy_s *phy, u8 instance,
-		struct bfa_phy_attr_s *attr, bfa_cb_phy_t cbfn, void *cbarg)
-{
+bfa_phy_get_attr(काष्ठा bfa_phy_s *phy, u8 instance,
+		काष्ठा bfa_phy_attr_s *attr, bfa_cb_phy_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(phy, BFI_PHY_H2I_QUERY_REQ);
 	bfa_trc(phy, instance);
 
-	if (!bfa_phy_present(phy))
-		return BFA_STATUS_PHY_NOT_PRESENT;
+	अगर (!bfa_phy_present(phy))
+		वापस BFA_STATUS_PHY_NOT_PRESENT;
 
-	if (!bfa_ioc_is_operational(phy->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(phy->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (phy->op_busy || bfa_phy_busy(phy->ioc)) {
+	अगर (phy->op_busy || bfa_phy_busy(phy->ioc)) अणु
 		bfa_trc(phy, phy->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	phy->op_busy = 1;
 	phy->cbfn = cbfn;
 	phy->cbarg = cbarg;
 	phy->instance = instance;
-	phy->ubuf = (uint8_t *) attr;
+	phy->ubuf = (uपूर्णांक8_t *) attr;
 	bfa_phy_query_send(phy);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Get phy stats.
  *
- * @param[in] phy - phy structure
+ * @param[in] phy - phy काष्ठाure
  * @param[in] instance - phy image instance
- * @param[in] stats - pointer to phy stats
+ * @param[in] stats - poपूर्णांकer to phy stats
  * @param[in] cbfn - callback function
  * @param[in] cbarg - callback argument
  *
  * Return status.
  */
 bfa_status_t
-bfa_phy_get_stats(struct bfa_phy_s *phy, u8 instance,
-		struct bfa_phy_stats_s *stats,
-		bfa_cb_phy_t cbfn, void *cbarg)
-{
+bfa_phy_get_stats(काष्ठा bfa_phy_s *phy, u8 instance,
+		काष्ठा bfa_phy_stats_s *stats,
+		bfa_cb_phy_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(phy, BFI_PHY_H2I_STATS_REQ);
 	bfa_trc(phy, instance);
 
-	if (!bfa_phy_present(phy))
-		return BFA_STATUS_PHY_NOT_PRESENT;
+	अगर (!bfa_phy_present(phy))
+		वापस BFA_STATUS_PHY_NOT_PRESENT;
 
-	if (!bfa_ioc_is_operational(phy->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(phy->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (phy->op_busy || bfa_phy_busy(phy->ioc)) {
+	अगर (phy->op_busy || bfa_phy_busy(phy->ioc)) अणु
 		bfa_trc(phy, phy->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	phy->op_busy = 1;
 	phy->cbfn = cbfn;
@@ -5583,13 +5584,13 @@ bfa_phy_get_stats(struct bfa_phy_s *phy, u8 instance,
 	phy->ubuf = (u8 *) stats;
 	bfa_phy_stats_send(phy);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Update phy image.
  *
- * @param[in] phy - phy structure
+ * @param[in] phy - phy काष्ठाure
  * @param[in] instance - phy image instance
  * @param[in] buf - update data buffer
  * @param[in] len - data buffer length
@@ -5600,29 +5601,29 @@ bfa_phy_get_stats(struct bfa_phy_s *phy, u8 instance,
  * Return status.
  */
 bfa_status_t
-bfa_phy_update(struct bfa_phy_s *phy, u8 instance,
-		void *buf, u32 len, u32 offset,
-		bfa_cb_phy_t cbfn, void *cbarg)
-{
+bfa_phy_update(काष्ठा bfa_phy_s *phy, u8 instance,
+		व्योम *buf, u32 len, u32 offset,
+		bfa_cb_phy_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(phy, BFI_PHY_H2I_WRITE_REQ);
 	bfa_trc(phy, instance);
 	bfa_trc(phy, len);
 	bfa_trc(phy, offset);
 
-	if (!bfa_phy_present(phy))
-		return BFA_STATUS_PHY_NOT_PRESENT;
+	अगर (!bfa_phy_present(phy))
+		वापस BFA_STATUS_PHY_NOT_PRESENT;
 
-	if (!bfa_ioc_is_operational(phy->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(phy->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
 	/* 'len' must be in word (4-byte) boundary */
-	if (!len || (len & 0x03))
-		return BFA_STATUS_FAILED;
+	अगर (!len || (len & 0x03))
+		वापस BFA_STATUS_FAILED;
 
-	if (phy->op_busy || bfa_phy_busy(phy->ioc)) {
+	अगर (phy->op_busy || bfa_phy_busy(phy->ioc)) अणु
 		bfa_trc(phy, phy->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	phy->op_busy = 1;
 	phy->cbfn = cbfn;
@@ -5633,16 +5634,16 @@ bfa_phy_update(struct bfa_phy_s *phy, u8 instance,
 	phy->addr_off = offset;
 	phy->ubuf = buf;
 
-	bfa_phy_write_send(phy);
-	return BFA_STATUS_OK;
-}
+	bfa_phy_ग_लिखो_send(phy);
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Read phy image.
  *
- * @param[in] phy - phy structure
+ * @param[in] phy - phy काष्ठाure
  * @param[in] instance - phy image instance
- * @param[in] buf - read data buffer
+ * @param[in] buf - पढ़ो data buffer
  * @param[in] len - data buffer length
  * @param[in] offset - offset relative to starting address
  * @param[in] cbfn - callback function
@@ -5651,29 +5652,29 @@ bfa_phy_update(struct bfa_phy_s *phy, u8 instance,
  * Return status.
  */
 bfa_status_t
-bfa_phy_read(struct bfa_phy_s *phy, u8 instance,
-		void *buf, u32 len, u32 offset,
-		bfa_cb_phy_t cbfn, void *cbarg)
-{
+bfa_phy_पढ़ो(काष्ठा bfa_phy_s *phy, u8 instance,
+		व्योम *buf, u32 len, u32 offset,
+		bfa_cb_phy_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(phy, BFI_PHY_H2I_READ_REQ);
 	bfa_trc(phy, instance);
 	bfa_trc(phy, len);
 	bfa_trc(phy, offset);
 
-	if (!bfa_phy_present(phy))
-		return BFA_STATUS_PHY_NOT_PRESENT;
+	अगर (!bfa_phy_present(phy))
+		वापस BFA_STATUS_PHY_NOT_PRESENT;
 
-	if (!bfa_ioc_is_operational(phy->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(phy->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
 	/* 'len' must be in word (4-byte) boundary */
-	if (!len || (len & 0x03))
-		return BFA_STATUS_FAILED;
+	अगर (!len || (len & 0x03))
+		वापस BFA_STATUS_FAILED;
 
-	if (phy->op_busy || bfa_phy_busy(phy->ioc)) {
+	अगर (phy->op_busy || bfa_phy_busy(phy->ioc)) अणु
 		bfa_trc(phy, phy->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	phy->op_busy = 1;
 	phy->cbfn = cbfn;
@@ -5683,540 +5684,540 @@ bfa_phy_read(struct bfa_phy_s *phy, u8 instance,
 	phy->offset = 0;
 	phy->addr_off = offset;
 	phy->ubuf = buf;
-	bfa_phy_read_send(phy);
+	bfa_phy_पढ़ो_send(phy);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
- * Process phy response messages upon receiving interrupts.
+ * Process phy response messages upon receiving पूर्णांकerrupts.
  *
- * @param[in] phyarg - phy structure
- * @param[in] msg - message structure
+ * @param[in] phyarg - phy काष्ठाure
+ * @param[in] msg - message काष्ठाure
  */
-void
-bfa_phy_intr(void *phyarg, struct bfi_mbmsg_s *msg)
-{
-	struct bfa_phy_s *phy = phyarg;
+व्योम
+bfa_phy_पूर्णांकr(व्योम *phyarg, काष्ठा bfi_mbmsg_s *msg)
+अणु
+	काष्ठा bfa_phy_s *phy = phyarg;
 	u32	status;
 
-	union {
-		struct bfi_phy_query_rsp_s *query;
-		struct bfi_phy_stats_rsp_s *stats;
-		struct bfi_phy_write_rsp_s *write;
-		struct bfi_phy_read_rsp_s *read;
-		struct bfi_mbmsg_s   *msg;
-	} m;
+	जोड़ अणु
+		काष्ठा bfi_phy_query_rsp_s *query;
+		काष्ठा bfi_phy_stats_rsp_s *stats;
+		काष्ठा bfi_phy_ग_लिखो_rsp_s *ग_लिखो;
+		काष्ठा bfi_phy_पढ़ो_rsp_s *पढ़ो;
+		काष्ठा bfi_mbmsg_s   *msg;
+	पूर्ण m;
 
 	m.msg = msg;
 	bfa_trc(phy, msg->mh.msg_id);
 
-	if (!phy->op_busy) {
+	अगर (!phy->op_busy) अणु
 		/* receiving response after ioc failure */
 		bfa_trc(phy, 0x9999);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (msg->mh.msg_id) {
-	case BFI_PHY_I2H_QUERY_RSP:
+	चयन (msg->mh.msg_id) अणु
+	हाल BFI_PHY_I2H_QUERY_RSP:
 		status = be32_to_cpu(m.query->status);
 		bfa_trc(phy, status);
 
-		if (status == BFA_STATUS_OK) {
-			struct bfa_phy_attr_s *attr =
-				(struct bfa_phy_attr_s *) phy->ubuf;
+		अगर (status == BFA_STATUS_OK) अणु
+			काष्ठा bfa_phy_attr_s *attr =
+				(काष्ठा bfa_phy_attr_s *) phy->ubuf;
 			bfa_phy_ntoh32((u32 *)attr, (u32 *)phy->dbuf_kva,
-					sizeof(struct bfa_phy_attr_s));
+					माप(काष्ठा bfa_phy_attr_s));
 			bfa_trc(phy, attr->status);
 			bfa_trc(phy, attr->length);
-		}
+		पूर्ण
 
 		phy->status = status;
 		phy->op_busy = 0;
-		if (phy->cbfn)
+		अगर (phy->cbfn)
 			phy->cbfn(phy->cbarg, phy->status);
-		break;
-	case BFI_PHY_I2H_STATS_RSP:
+		अवरोध;
+	हाल BFI_PHY_I2H_STATS_RSP:
 		status = be32_to_cpu(m.stats->status);
 		bfa_trc(phy, status);
 
-		if (status == BFA_STATUS_OK) {
-			struct bfa_phy_stats_s *stats =
-				(struct bfa_phy_stats_s *) phy->ubuf;
+		अगर (status == BFA_STATUS_OK) अणु
+			काष्ठा bfa_phy_stats_s *stats =
+				(काष्ठा bfa_phy_stats_s *) phy->ubuf;
 			bfa_phy_ntoh32((u32 *)stats, (u32 *)phy->dbuf_kva,
-				sizeof(struct bfa_phy_stats_s));
+				माप(काष्ठा bfa_phy_stats_s));
 			bfa_trc(phy, stats->status);
-		}
+		पूर्ण
 
 		phy->status = status;
 		phy->op_busy = 0;
-		if (phy->cbfn)
+		अगर (phy->cbfn)
 			phy->cbfn(phy->cbarg, phy->status);
-		break;
-	case BFI_PHY_I2H_WRITE_RSP:
-		status = be32_to_cpu(m.write->status);
+		अवरोध;
+	हाल BFI_PHY_I2H_WRITE_RSP:
+		status = be32_to_cpu(m.ग_लिखो->status);
 		bfa_trc(phy, status);
 
-		if (status != BFA_STATUS_OK || phy->residue == 0) {
+		अगर (status != BFA_STATUS_OK || phy->residue == 0) अणु
 			phy->status = status;
 			phy->op_busy = 0;
-			if (phy->cbfn)
+			अगर (phy->cbfn)
 				phy->cbfn(phy->cbarg, phy->status);
-		} else {
+		पूर्ण अन्यथा अणु
 			bfa_trc(phy, phy->offset);
-			bfa_phy_write_send(phy);
-		}
-		break;
-	case BFI_PHY_I2H_READ_RSP:
-		status = be32_to_cpu(m.read->status);
+			bfa_phy_ग_लिखो_send(phy);
+		पूर्ण
+		अवरोध;
+	हाल BFI_PHY_I2H_READ_RSP:
+		status = be32_to_cpu(m.पढ़ो->status);
 		bfa_trc(phy, status);
 
-		if (status != BFA_STATUS_OK) {
+		अगर (status != BFA_STATUS_OK) अणु
 			phy->status = status;
 			phy->op_busy = 0;
-			if (phy->cbfn)
+			अगर (phy->cbfn)
 				phy->cbfn(phy->cbarg, phy->status);
-		} else {
-			u32 len = be32_to_cpu(m.read->length);
+		पूर्ण अन्यथा अणु
+			u32 len = be32_to_cpu(m.पढ़ो->length);
 			u16 *buf = (u16 *)(phy->ubuf + phy->offset);
 			u16 *dbuf = (u16 *)phy->dbuf_kva;
-			int i, sz = len >> 1;
+			पूर्णांक i, sz = len >> 1;
 
 			bfa_trc(phy, phy->offset);
 			bfa_trc(phy, len);
 
-			for (i = 0; i < sz; i++)
+			क्रम (i = 0; i < sz; i++)
 				buf[i] = be16_to_cpu(dbuf[i]);
 
 			phy->residue -= len;
 			phy->offset += len;
 
-			if (phy->residue == 0) {
+			अगर (phy->residue == 0) अणु
 				phy->status = status;
 				phy->op_busy = 0;
-				if (phy->cbfn)
+				अगर (phy->cbfn)
 					phy->cbfn(phy->cbarg, phy->status);
-			} else
-				bfa_phy_read_send(phy);
-		}
-		break;
-	default:
+			पूर्ण अन्यथा
+				bfa_phy_पढ़ो_send(phy);
+		पूर्ण
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * DCONF state machine events
  */
-enum bfa_dconf_event {
+क्रमागत bfa_dconf_event अणु
 	BFA_DCONF_SM_INIT		= 1,	/* dconf Init */
-	BFA_DCONF_SM_FLASH_COMP		= 2,	/* read/write to flash */
+	BFA_DCONF_SM_FLASH_COMP		= 2,	/* पढ़ो/ग_लिखो to flash */
 	BFA_DCONF_SM_WR			= 3,	/* binding change, map */
-	BFA_DCONF_SM_TIMEOUT		= 4,	/* Start timer */
-	BFA_DCONF_SM_EXIT		= 5,	/* exit dconf module */
+	BFA_DCONF_SM_TIMEOUT		= 4,	/* Start समयr */
+	BFA_DCONF_SM_EXIT		= 5,	/* निकास dconf module */
 	BFA_DCONF_SM_IOCDISABLE		= 6,	/* IOC disable event */
-};
+पूर्ण;
 
-/* forward declaration of DCONF state machine */
-static void bfa_dconf_sm_uninit(struct bfa_dconf_mod_s *dconf,
-				enum bfa_dconf_event event);
-static void bfa_dconf_sm_flash_read(struct bfa_dconf_mod_s *dconf,
-				enum bfa_dconf_event event);
-static void bfa_dconf_sm_ready(struct bfa_dconf_mod_s *dconf,
-				enum bfa_dconf_event event);
-static void bfa_dconf_sm_dirty(struct bfa_dconf_mod_s *dconf,
-				enum bfa_dconf_event event);
-static void bfa_dconf_sm_sync(struct bfa_dconf_mod_s *dconf,
-				enum bfa_dconf_event event);
-static void bfa_dconf_sm_final_sync(struct bfa_dconf_mod_s *dconf,
-				enum bfa_dconf_event event);
-static void bfa_dconf_sm_iocdown_dirty(struct bfa_dconf_mod_s *dconf,
-				enum bfa_dconf_event event);
+/* क्रमward declaration of DCONF state machine */
+अटल व्योम bfa_dconf_sm_uninit(काष्ठा bfa_dconf_mod_s *dconf,
+				क्रमागत bfa_dconf_event event);
+अटल व्योम bfa_dconf_sm_flash_पढ़ो(काष्ठा bfa_dconf_mod_s *dconf,
+				क्रमागत bfa_dconf_event event);
+अटल व्योम bfa_dconf_sm_पढ़ोy(काष्ठा bfa_dconf_mod_s *dconf,
+				क्रमागत bfa_dconf_event event);
+अटल व्योम bfa_dconf_sm_dirty(काष्ठा bfa_dconf_mod_s *dconf,
+				क्रमागत bfa_dconf_event event);
+अटल व्योम bfa_dconf_sm_sync(काष्ठा bfa_dconf_mod_s *dconf,
+				क्रमागत bfa_dconf_event event);
+अटल व्योम bfa_dconf_sm_final_sync(काष्ठा bfa_dconf_mod_s *dconf,
+				क्रमागत bfa_dconf_event event);
+अटल व्योम bfa_dconf_sm_iocकरोwn_dirty(काष्ठा bfa_dconf_mod_s *dconf,
+				क्रमागत bfa_dconf_event event);
 
-static void bfa_dconf_cbfn(void *dconf, bfa_status_t status);
-static void bfa_dconf_timer(void *cbarg);
-static bfa_status_t bfa_dconf_flash_write(struct bfa_dconf_mod_s *dconf);
-static void bfa_dconf_init_cb(void *arg, bfa_status_t status);
+अटल व्योम bfa_dconf_cbfn(व्योम *dconf, bfa_status_t status);
+अटल व्योम bfa_dconf_समयr(व्योम *cbarg);
+अटल bfa_status_t bfa_dconf_flash_ग_लिखो(काष्ठा bfa_dconf_mod_s *dconf);
+अटल व्योम bfa_dconf_init_cb(व्योम *arg, bfa_status_t status);
 
 /*
- * Beginning state of dconf module. Waiting for an event to start.
+ * Beginning state of dconf module. Waiting क्रम an event to start.
  */
-static void
-bfa_dconf_sm_uninit(struct bfa_dconf_mod_s *dconf, enum bfa_dconf_event event)
-{
+अटल व्योम
+bfa_dconf_sm_uninit(काष्ठा bfa_dconf_mod_s *dconf, क्रमागत bfa_dconf_event event)
+अणु
 	bfa_status_t bfa_status;
 	bfa_trc(dconf->bfa, event);
 
-	switch (event) {
-	case BFA_DCONF_SM_INIT:
-		if (dconf->min_cfg) {
+	चयन (event) अणु
+	हाल BFA_DCONF_SM_INIT:
+		अगर (dconf->min_cfg) अणु
 			bfa_trc(dconf->bfa, dconf->min_cfg);
 			bfa_fsm_send_event(&dconf->bfa->iocfc,
 					IOCFC_E_DCONF_DONE);
-			return;
-		}
-		bfa_sm_set_state(dconf, bfa_dconf_sm_flash_read);
-		bfa_timer_start(dconf->bfa, &dconf->timer,
-			bfa_dconf_timer, dconf, 2 * BFA_DCONF_UPDATE_TOV);
-		bfa_status = bfa_flash_read_part(BFA_FLASH(dconf->bfa),
+			वापस;
+		पूर्ण
+		bfa_sm_set_state(dconf, bfa_dconf_sm_flash_पढ़ो);
+		bfa_समयr_start(dconf->bfa, &dconf->समयr,
+			bfa_dconf_समयr, dconf, 2 * BFA_DCONF_UPDATE_TOV);
+		bfa_status = bfa_flash_पढ़ो_part(BFA_FLASH(dconf->bfa),
 					BFA_FLASH_PART_DRV, dconf->instance,
 					dconf->dconf,
-					sizeof(struct bfa_dconf_s), 0,
+					माप(काष्ठा bfa_dconf_s), 0,
 					bfa_dconf_init_cb, dconf->bfa);
-		if (bfa_status != BFA_STATUS_OK) {
-			bfa_timer_stop(&dconf->timer);
+		अगर (bfa_status != BFA_STATUS_OK) अणु
+			bfa_समयr_stop(&dconf->समयr);
 			bfa_dconf_init_cb(dconf->bfa, BFA_STATUS_FAILED);
 			bfa_sm_set_state(dconf, bfa_dconf_sm_uninit);
-			return;
-		}
-		break;
-	case BFA_DCONF_SM_EXIT:
+			वापस;
+		पूर्ण
+		अवरोध;
+	हाल BFA_DCONF_SM_EXIT:
 		bfa_fsm_send_event(&dconf->bfa->iocfc, IOCFC_E_DCONF_DONE);
-		break;
-	case BFA_DCONF_SM_IOCDISABLE:
-	case BFA_DCONF_SM_WR:
-	case BFA_DCONF_SM_FLASH_COMP:
-		break;
-	default:
+		अवरोध;
+	हाल BFA_DCONF_SM_IOCDISABLE:
+	हाल BFA_DCONF_SM_WR:
+	हाल BFA_DCONF_SM_FLASH_COMP:
+		अवरोध;
+	शेष:
 		bfa_sm_fault(dconf->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Read flash for dconf entries and make a call back to the driver once done.
+ * Read flash क्रम dconf entries and make a call back to the driver once करोne.
  */
-static void
-bfa_dconf_sm_flash_read(struct bfa_dconf_mod_s *dconf,
-			enum bfa_dconf_event event)
-{
+अटल व्योम
+bfa_dconf_sm_flash_पढ़ो(काष्ठा bfa_dconf_mod_s *dconf,
+			क्रमागत bfa_dconf_event event)
+अणु
 	bfa_trc(dconf->bfa, event);
 
-	switch (event) {
-	case BFA_DCONF_SM_FLASH_COMP:
-		bfa_timer_stop(&dconf->timer);
-		bfa_sm_set_state(dconf, bfa_dconf_sm_ready);
-		break;
-	case BFA_DCONF_SM_TIMEOUT:
-		bfa_sm_set_state(dconf, bfa_dconf_sm_ready);
+	चयन (event) अणु
+	हाल BFA_DCONF_SM_FLASH_COMP:
+		bfa_समयr_stop(&dconf->समयr);
+		bfa_sm_set_state(dconf, bfa_dconf_sm_पढ़ोy);
+		अवरोध;
+	हाल BFA_DCONF_SM_TIMEOUT:
+		bfa_sm_set_state(dconf, bfa_dconf_sm_पढ़ोy);
 		bfa_ioc_suspend(&dconf->bfa->ioc);
-		break;
-	case BFA_DCONF_SM_EXIT:
-		bfa_timer_stop(&dconf->timer);
+		अवरोध;
+	हाल BFA_DCONF_SM_EXIT:
+		bfa_समयr_stop(&dconf->समयr);
 		bfa_sm_set_state(dconf, bfa_dconf_sm_uninit);
 		bfa_fsm_send_event(&dconf->bfa->iocfc, IOCFC_E_DCONF_DONE);
-		break;
-	case BFA_DCONF_SM_IOCDISABLE:
-		bfa_timer_stop(&dconf->timer);
+		अवरोध;
+	हाल BFA_DCONF_SM_IOCDISABLE:
+		bfa_समयr_stop(&dconf->समयr);
 		bfa_sm_set_state(dconf, bfa_dconf_sm_uninit);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		bfa_sm_fault(dconf->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * DCONF Module is in ready state. Has completed the initialization.
+ * DCONF Module is in पढ़ोy state. Has completed the initialization.
  */
-static void
-bfa_dconf_sm_ready(struct bfa_dconf_mod_s *dconf, enum bfa_dconf_event event)
-{
+अटल व्योम
+bfa_dconf_sm_पढ़ोy(काष्ठा bfa_dconf_mod_s *dconf, क्रमागत bfa_dconf_event event)
+अणु
 	bfa_trc(dconf->bfa, event);
 
-	switch (event) {
-	case BFA_DCONF_SM_WR:
-		bfa_timer_start(dconf->bfa, &dconf->timer,
-			bfa_dconf_timer, dconf, BFA_DCONF_UPDATE_TOV);
+	चयन (event) अणु
+	हाल BFA_DCONF_SM_WR:
+		bfa_समयr_start(dconf->bfa, &dconf->समयr,
+			bfa_dconf_समयr, dconf, BFA_DCONF_UPDATE_TOV);
 		bfa_sm_set_state(dconf, bfa_dconf_sm_dirty);
-		break;
-	case BFA_DCONF_SM_EXIT:
+		अवरोध;
+	हाल BFA_DCONF_SM_EXIT:
 		bfa_sm_set_state(dconf, bfa_dconf_sm_uninit);
 		bfa_fsm_send_event(&dconf->bfa->iocfc, IOCFC_E_DCONF_DONE);
-		break;
-	case BFA_DCONF_SM_INIT:
-	case BFA_DCONF_SM_IOCDISABLE:
-		break;
-	default:
+		अवरोध;
+	हाल BFA_DCONF_SM_INIT:
+	हाल BFA_DCONF_SM_IOCDISABLE:
+		अवरोध;
+	शेष:
 		bfa_sm_fault(dconf->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * entries are dirty, write back to the flash.
+ * entries are dirty, ग_लिखो back to the flash.
  */
 
-static void
-bfa_dconf_sm_dirty(struct bfa_dconf_mod_s *dconf, enum bfa_dconf_event event)
-{
+अटल व्योम
+bfa_dconf_sm_dirty(काष्ठा bfa_dconf_mod_s *dconf, क्रमागत bfa_dconf_event event)
+अणु
 	bfa_trc(dconf->bfa, event);
 
-	switch (event) {
-	case BFA_DCONF_SM_TIMEOUT:
+	चयन (event) अणु
+	हाल BFA_DCONF_SM_TIMEOUT:
 		bfa_sm_set_state(dconf, bfa_dconf_sm_sync);
-		bfa_dconf_flash_write(dconf);
-		break;
-	case BFA_DCONF_SM_WR:
-		bfa_timer_stop(&dconf->timer);
-		bfa_timer_start(dconf->bfa, &dconf->timer,
-			bfa_dconf_timer, dconf, BFA_DCONF_UPDATE_TOV);
-		break;
-	case BFA_DCONF_SM_EXIT:
-		bfa_timer_stop(&dconf->timer);
-		bfa_timer_start(dconf->bfa, &dconf->timer,
-			bfa_dconf_timer, dconf, BFA_DCONF_UPDATE_TOV);
+		bfa_dconf_flash_ग_लिखो(dconf);
+		अवरोध;
+	हाल BFA_DCONF_SM_WR:
+		bfa_समयr_stop(&dconf->समयr);
+		bfa_समयr_start(dconf->bfa, &dconf->समयr,
+			bfa_dconf_समयr, dconf, BFA_DCONF_UPDATE_TOV);
+		अवरोध;
+	हाल BFA_DCONF_SM_EXIT:
+		bfa_समयr_stop(&dconf->समयr);
+		bfa_समयr_start(dconf->bfa, &dconf->समयr,
+			bfa_dconf_समयr, dconf, BFA_DCONF_UPDATE_TOV);
 		bfa_sm_set_state(dconf, bfa_dconf_sm_final_sync);
-		bfa_dconf_flash_write(dconf);
-		break;
-	case BFA_DCONF_SM_FLASH_COMP:
-		break;
-	case BFA_DCONF_SM_IOCDISABLE:
-		bfa_timer_stop(&dconf->timer);
-		bfa_sm_set_state(dconf, bfa_dconf_sm_iocdown_dirty);
-		break;
-	default:
+		bfa_dconf_flash_ग_लिखो(dconf);
+		अवरोध;
+	हाल BFA_DCONF_SM_FLASH_COMP:
+		अवरोध;
+	हाल BFA_DCONF_SM_IOCDISABLE:
+		bfa_समयr_stop(&dconf->समयr);
+		bfa_sm_set_state(dconf, bfa_dconf_sm_iocकरोwn_dirty);
+		अवरोध;
+	शेष:
 		bfa_sm_fault(dconf->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Sync the dconf entries to the flash.
  */
-static void
-bfa_dconf_sm_final_sync(struct bfa_dconf_mod_s *dconf,
-			enum bfa_dconf_event event)
-{
+अटल व्योम
+bfa_dconf_sm_final_sync(काष्ठा bfa_dconf_mod_s *dconf,
+			क्रमागत bfa_dconf_event event)
+अणु
 	bfa_trc(dconf->bfa, event);
 
-	switch (event) {
-	case BFA_DCONF_SM_IOCDISABLE:
-	case BFA_DCONF_SM_FLASH_COMP:
-		bfa_timer_stop(&dconf->timer);
+	चयन (event) अणु
+	हाल BFA_DCONF_SM_IOCDISABLE:
+	हाल BFA_DCONF_SM_FLASH_COMP:
+		bfa_समयr_stop(&dconf->समयr);
 		fallthrough;
-	case BFA_DCONF_SM_TIMEOUT:
+	हाल BFA_DCONF_SM_TIMEOUT:
 		bfa_sm_set_state(dconf, bfa_dconf_sm_uninit);
 		bfa_fsm_send_event(&dconf->bfa->iocfc, IOCFC_E_DCONF_DONE);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		bfa_sm_fault(dconf->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_dconf_sm_sync(struct bfa_dconf_mod_s *dconf, enum bfa_dconf_event event)
-{
+अटल व्योम
+bfa_dconf_sm_sync(काष्ठा bfa_dconf_mod_s *dconf, क्रमागत bfa_dconf_event event)
+अणु
 	bfa_trc(dconf->bfa, event);
 
-	switch (event) {
-	case BFA_DCONF_SM_FLASH_COMP:
-		bfa_sm_set_state(dconf, bfa_dconf_sm_ready);
-		break;
-	case BFA_DCONF_SM_WR:
-		bfa_timer_start(dconf->bfa, &dconf->timer,
-			bfa_dconf_timer, dconf, BFA_DCONF_UPDATE_TOV);
+	चयन (event) अणु
+	हाल BFA_DCONF_SM_FLASH_COMP:
+		bfa_sm_set_state(dconf, bfa_dconf_sm_पढ़ोy);
+		अवरोध;
+	हाल BFA_DCONF_SM_WR:
+		bfa_समयr_start(dconf->bfa, &dconf->समयr,
+			bfa_dconf_समयr, dconf, BFA_DCONF_UPDATE_TOV);
 		bfa_sm_set_state(dconf, bfa_dconf_sm_dirty);
-		break;
-	case BFA_DCONF_SM_EXIT:
-		bfa_timer_start(dconf->bfa, &dconf->timer,
-			bfa_dconf_timer, dconf, BFA_DCONF_UPDATE_TOV);
+		अवरोध;
+	हाल BFA_DCONF_SM_EXIT:
+		bfa_समयr_start(dconf->bfa, &dconf->समयr,
+			bfa_dconf_समयr, dconf, BFA_DCONF_UPDATE_TOV);
 		bfa_sm_set_state(dconf, bfa_dconf_sm_final_sync);
-		break;
-	case BFA_DCONF_SM_IOCDISABLE:
-		bfa_sm_set_state(dconf, bfa_dconf_sm_iocdown_dirty);
-		break;
-	default:
+		अवरोध;
+	हाल BFA_DCONF_SM_IOCDISABLE:
+		bfa_sm_set_state(dconf, bfa_dconf_sm_iocकरोwn_dirty);
+		अवरोध;
+	शेष:
 		bfa_sm_fault(dconf->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_dconf_sm_iocdown_dirty(struct bfa_dconf_mod_s *dconf,
-			enum bfa_dconf_event event)
-{
+अटल व्योम
+bfa_dconf_sm_iocकरोwn_dirty(काष्ठा bfa_dconf_mod_s *dconf,
+			क्रमागत bfa_dconf_event event)
+अणु
 	bfa_trc(dconf->bfa, event);
 
-	switch (event) {
-	case BFA_DCONF_SM_INIT:
-		bfa_timer_start(dconf->bfa, &dconf->timer,
-			bfa_dconf_timer, dconf, BFA_DCONF_UPDATE_TOV);
+	चयन (event) अणु
+	हाल BFA_DCONF_SM_INIT:
+		bfa_समयr_start(dconf->bfa, &dconf->समयr,
+			bfa_dconf_समयr, dconf, BFA_DCONF_UPDATE_TOV);
 		bfa_sm_set_state(dconf, bfa_dconf_sm_dirty);
-		break;
-	case BFA_DCONF_SM_EXIT:
+		अवरोध;
+	हाल BFA_DCONF_SM_EXIT:
 		bfa_sm_set_state(dconf, bfa_dconf_sm_uninit);
 		bfa_fsm_send_event(&dconf->bfa->iocfc, IOCFC_E_DCONF_DONE);
-		break;
-	case BFA_DCONF_SM_IOCDISABLE:
-		break;
-	default:
+		अवरोध;
+	हाल BFA_DCONF_SM_IOCDISABLE:
+		अवरोध;
+	शेष:
 		bfa_sm_fault(dconf->bfa, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Compute and return memory needed by DRV_CFG module.
+ * Compute and वापस memory needed by DRV_CFG module.
  */
-void
-bfa_dconf_meminfo(struct bfa_iocfc_cfg_s *cfg, struct bfa_meminfo_s *meminfo,
-		  struct bfa_s *bfa)
-{
-	struct bfa_mem_kva_s *dconf_kva = BFA_MEM_DCONF_KVA(bfa);
+व्योम
+bfa_dconf_meminfo(काष्ठा bfa_iocfc_cfg_s *cfg, काष्ठा bfa_meminfo_s *meminfo,
+		  काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_mem_kva_s *dconf_kva = BFA_MEM_DCONF_KVA(bfa);
 
-	if (cfg->drvcfg.min_cfg)
+	अगर (cfg->drvcfg.min_cfg)
 		bfa_mem_kva_setup(meminfo, dconf_kva,
-				sizeof(struct bfa_dconf_hdr_s));
-	else
+				माप(काष्ठा bfa_dconf_hdr_s));
+	अन्यथा
 		bfa_mem_kva_setup(meminfo, dconf_kva,
-				sizeof(struct bfa_dconf_s));
-}
+				माप(काष्ठा bfa_dconf_s));
+पूर्ण
 
-void
-bfa_dconf_attach(struct bfa_s *bfa, void *bfad, struct bfa_iocfc_cfg_s *cfg)
-{
-	struct bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
+व्योम
+bfa_dconf_attach(काष्ठा bfa_s *bfa, व्योम *bfad, काष्ठा bfa_iocfc_cfg_s *cfg)
+अणु
+	काष्ठा bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
 
 	dconf->bfad = bfad;
 	dconf->bfa = bfa;
 	dconf->instance = bfa->ioc.port_id;
 	bfa_trc(bfa, dconf->instance);
 
-	dconf->dconf = (struct bfa_dconf_s *) bfa_mem_kva_curp(dconf);
-	if (cfg->drvcfg.min_cfg) {
-		bfa_mem_kva_curp(dconf) += sizeof(struct bfa_dconf_hdr_s);
+	dconf->dconf = (काष्ठा bfa_dconf_s *) bfa_mem_kva_curp(dconf);
+	अगर (cfg->drvcfg.min_cfg) अणु
+		bfa_mem_kva_curp(dconf) += माप(काष्ठा bfa_dconf_hdr_s);
 		dconf->min_cfg = BFA_TRUE;
-	} else {
+	पूर्ण अन्यथा अणु
 		dconf->min_cfg = BFA_FALSE;
-		bfa_mem_kva_curp(dconf) += sizeof(struct bfa_dconf_s);
-	}
+		bfa_mem_kva_curp(dconf) += माप(काष्ठा bfa_dconf_s);
+	पूर्ण
 
-	bfa_dconf_read_data_valid(bfa) = BFA_FALSE;
+	bfa_dconf_पढ़ो_data_valid(bfa) = BFA_FALSE;
 	bfa_sm_set_state(dconf, bfa_dconf_sm_uninit);
-}
+पूर्ण
 
-static void
-bfa_dconf_init_cb(void *arg, bfa_status_t status)
-{
-	struct bfa_s *bfa = arg;
-	struct bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
+अटल व्योम
+bfa_dconf_init_cb(व्योम *arg, bfa_status_t status)
+अणु
+	काष्ठा bfa_s *bfa = arg;
+	काष्ठा bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
 
-	if (status == BFA_STATUS_OK) {
-		bfa_dconf_read_data_valid(bfa) = BFA_TRUE;
-		if (dconf->dconf->hdr.signature != BFI_DCONF_SIGNATURE)
+	अगर (status == BFA_STATUS_OK) अणु
+		bfa_dconf_पढ़ो_data_valid(bfa) = BFA_TRUE;
+		अगर (dconf->dconf->hdr.signature != BFI_DCONF_SIGNATURE)
 			dconf->dconf->hdr.signature = BFI_DCONF_SIGNATURE;
-		if (dconf->dconf->hdr.version != BFI_DCONF_VERSION)
+		अगर (dconf->dconf->hdr.version != BFI_DCONF_VERSION)
 			dconf->dconf->hdr.version = BFI_DCONF_VERSION;
-	}
+	पूर्ण
 	bfa_sm_send_event(dconf, BFA_DCONF_SM_FLASH_COMP);
 	bfa_fsm_send_event(&bfa->iocfc, IOCFC_E_DCONF_DONE);
-}
+पूर्ण
 
-void
-bfa_dconf_modinit(struct bfa_s *bfa)
-{
-	struct bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
+व्योम
+bfa_dconf_modinit(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
 	bfa_sm_send_event(dconf, BFA_DCONF_SM_INIT);
-}
+पूर्ण
 
-static void bfa_dconf_timer(void *cbarg)
-{
-	struct bfa_dconf_mod_s *dconf = cbarg;
+अटल व्योम bfa_dconf_समयr(व्योम *cbarg)
+अणु
+	काष्ठा bfa_dconf_mod_s *dconf = cbarg;
 	bfa_sm_send_event(dconf, BFA_DCONF_SM_TIMEOUT);
-}
+पूर्ण
 
-void
-bfa_dconf_iocdisable(struct bfa_s *bfa)
-{
-	struct bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
+व्योम
+bfa_dconf_iocdisable(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
 	bfa_sm_send_event(dconf, BFA_DCONF_SM_IOCDISABLE);
-}
+पूर्ण
 
-static bfa_status_t
-bfa_dconf_flash_write(struct bfa_dconf_mod_s *dconf)
-{
+अटल bfa_status_t
+bfa_dconf_flash_ग_लिखो(काष्ठा bfa_dconf_mod_s *dconf)
+अणु
 	bfa_status_t bfa_status;
 	bfa_trc(dconf->bfa, 0);
 
 	bfa_status = bfa_flash_update_part(BFA_FLASH(dconf->bfa),
 				BFA_FLASH_PART_DRV, dconf->instance,
-				dconf->dconf,  sizeof(struct bfa_dconf_s), 0,
+				dconf->dconf,  माप(काष्ठा bfa_dconf_s), 0,
 				bfa_dconf_cbfn, dconf);
-	if (bfa_status != BFA_STATUS_OK)
+	अगर (bfa_status != BFA_STATUS_OK)
 		WARN_ON(bfa_status);
 	bfa_trc(dconf->bfa, bfa_status);
 
-	return bfa_status;
-}
+	वापस bfa_status;
+पूर्ण
 
 bfa_status_t
-bfa_dconf_update(struct bfa_s *bfa)
-{
-	struct bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
+bfa_dconf_update(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
 	bfa_trc(dconf->bfa, 0);
-	if (bfa_sm_cmp_state(dconf, bfa_dconf_sm_iocdown_dirty))
-		return BFA_STATUS_FAILED;
+	अगर (bfa_sm_cmp_state(dconf, bfa_dconf_sm_iocकरोwn_dirty))
+		वापस BFA_STATUS_FAILED;
 
-	if (dconf->min_cfg) {
+	अगर (dconf->min_cfg) अणु
 		bfa_trc(dconf->bfa, dconf->min_cfg);
-		return BFA_STATUS_FAILED;
-	}
+		वापस BFA_STATUS_FAILED;
+	पूर्ण
 
 	bfa_sm_send_event(dconf, BFA_DCONF_SM_WR);
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
-static void
-bfa_dconf_cbfn(void *arg, bfa_status_t status)
-{
-	struct bfa_dconf_mod_s *dconf = arg;
+अटल व्योम
+bfa_dconf_cbfn(व्योम *arg, bfa_status_t status)
+अणु
+	काष्ठा bfa_dconf_mod_s *dconf = arg;
 	WARN_ON(status);
 	bfa_sm_send_event(dconf, BFA_DCONF_SM_FLASH_COMP);
-}
+पूर्ण
 
-void
-bfa_dconf_modexit(struct bfa_s *bfa)
-{
-	struct bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
+व्योम
+bfa_dconf_modनिकास(काष्ठा bfa_s *bfa)
+अणु
+	काष्ठा bfa_dconf_mod_s *dconf = BFA_DCONF_MOD(bfa);
 	bfa_sm_send_event(dconf, BFA_DCONF_SM_EXIT);
-}
+पूर्ण
 
 /*
- * FRU specific functions
+ * FRU specअगरic functions
  */
 
-#define BFA_FRU_DMA_BUF_SZ	0x02000		/* 8k dma buffer */
-#define BFA_FRU_CHINOOK_MAX_SIZE 0x10000
-#define BFA_FRU_LIGHTNING_MAX_SIZE 0x200
+#घोषणा BFA_FRU_DMA_BUF_SZ	0x02000		/* 8k dma buffer */
+#घोषणा BFA_FRU_CHINOOK_MAX_SIZE 0x10000
+#घोषणा BFA_FRU_LIGHTNING_MAX_SIZE 0x200
 
-static void
-bfa_fru_notify(void *cbarg, enum bfa_ioc_event_e event)
-{
-	struct bfa_fru_s *fru = cbarg;
+अटल व्योम
+bfa_fru_notअगरy(व्योम *cbarg, क्रमागत bfa_ioc_event_e event)
+अणु
+	काष्ठा bfa_fru_s *fru = cbarg;
 
 	bfa_trc(fru, event);
 
-	switch (event) {
-	case BFA_IOC_E_DISABLED:
-	case BFA_IOC_E_FAILED:
-		if (fru->op_busy) {
+	चयन (event) अणु
+	हाल BFA_IOC_E_DISABLED:
+	हाल BFA_IOC_E_FAILED:
+		अगर (fru->op_busy) अणु
 			fru->status = BFA_STATUS_IOC_FAILURE;
 			fru->cbfn(fru->cbarg, fru->status);
 			fru->op_busy = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * Send fru write request.
+ * Send fru ग_लिखो request.
  *
  * @param[in] cbarg - callback argument
  */
-static void
-bfa_fru_write_send(void *cbarg, enum bfi_fru_h2i_msgs msg_type)
-{
-	struct bfa_fru_s *fru = cbarg;
-	struct bfi_fru_write_req_s *msg =
-			(struct bfi_fru_write_req_s *) fru->mb.msg;
+अटल व्योम
+bfa_fru_ग_लिखो_send(व्योम *cbarg, क्रमागत bfi_fru_h2i_msgs msg_type)
+अणु
+	काष्ठा bfa_fru_s *fru = cbarg;
+	काष्ठा bfi_fru_ग_लिखो_req_s *msg =
+			(काष्ठा bfi_fru_ग_लिखो_req_s *) fru->mb.msg;
 	u32 len;
 
 	msg->offset = cpu_to_be32(fru->addr_off + fru->offset);
@@ -6225,7 +6226,7 @@ bfa_fru_write_send(void *cbarg, enum bfi_fru_h2i_msgs msg_type)
 	msg->length = cpu_to_be32(len);
 
 	/*
-	 * indicate if it's the last msg of the whole write operation
+	 * indicate अगर it's the last msg of the whole ग_लिखो operation
 	 */
 	msg->last = (len == fru->residue) ? 1 : 0;
 
@@ -6233,24 +6234,24 @@ bfa_fru_write_send(void *cbarg, enum bfi_fru_h2i_msgs msg_type)
 	bfi_h2i_set(msg->mh, BFI_MC_FRU, msg_type, bfa_ioc_portid(fru->ioc));
 	bfa_alen_set(&msg->alen, len, fru->dbuf_pa);
 
-	memcpy(fru->dbuf_kva, fru->ubuf + fru->offset, len);
+	स_नकल(fru->dbuf_kva, fru->ubuf + fru->offset, len);
 	bfa_ioc_mbox_queue(fru->ioc, &fru->mb);
 
 	fru->residue -= len;
 	fru->offset += len;
-}
+पूर्ण
 
 /*
- * Send fru read request.
+ * Send fru पढ़ो request.
  *
  * @param[in] cbarg - callback argument
  */
-static void
-bfa_fru_read_send(void *cbarg, enum bfi_fru_h2i_msgs msg_type)
-{
-	struct bfa_fru_s *fru = cbarg;
-	struct bfi_fru_read_req_s *msg =
-			(struct bfi_fru_read_req_s *) fru->mb.msg;
+अटल व्योम
+bfa_fru_पढ़ो_send(व्योम *cbarg, क्रमागत bfi_fru_h2i_msgs msg_type)
+अणु
+	काष्ठा bfa_fru_s *fru = cbarg;
+	काष्ठा bfi_fru_पढ़ो_req_s *msg =
+			(काष्ठा bfi_fru_पढ़ो_req_s *) fru->mb.msg;
 	u32 len;
 
 	msg->offset = cpu_to_be32(fru->addr_off + fru->offset);
@@ -6260,7 +6261,7 @@ bfa_fru_read_send(void *cbarg, enum bfi_fru_h2i_msgs msg_type)
 	bfi_h2i_set(msg->mh, BFI_MC_FRU, msg_type, bfa_ioc_portid(fru->ioc));
 	bfa_alen_set(&msg->alen, len, fru->dbuf_pa);
 	bfa_ioc_mbox_queue(fru->ioc, &fru->mb);
-}
+पूर्ण
 
 /*
  * Flash memory info API.
@@ -6269,71 +6270,71 @@ bfa_fru_read_send(void *cbarg, enum bfi_fru_h2i_msgs msg_type)
  */
 u32
 bfa_fru_meminfo(bfa_boolean_t mincfg)
-{
-	/* min driver doesn't need fru */
-	if (mincfg)
-		return 0;
+अणु
+	/* min driver करोesn't need fru */
+	अगर (mincfg)
+		वापस 0;
 
-	return BFA_ROUNDUP(BFA_FRU_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
-}
+	वापस BFA_ROUNDUP(BFA_FRU_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
+पूर्ण
 
 /*
  * Flash attach API.
  *
- * @param[in] fru - fru structure
- * @param[in] ioc  - ioc structure
- * @param[in] dev  - device structure
+ * @param[in] fru - fru काष्ठाure
+ * @param[in] ioc  - ioc काष्ठाure
+ * @param[in] dev  - device काष्ठाure
  * @param[in] trcmod - trace module
  * @param[in] logmod - log module
  */
-void
-bfa_fru_attach(struct bfa_fru_s *fru, struct bfa_ioc_s *ioc, void *dev,
-	struct bfa_trc_mod_s *trcmod, bfa_boolean_t mincfg)
-{
+व्योम
+bfa_fru_attach(काष्ठा bfa_fru_s *fru, काष्ठा bfa_ioc_s *ioc, व्योम *dev,
+	काष्ठा bfa_trc_mod_s *trcmod, bfa_boolean_t mincfg)
+अणु
 	fru->ioc = ioc;
 	fru->trcmod = trcmod;
-	fru->cbfn = NULL;
-	fru->cbarg = NULL;
+	fru->cbfn = शून्य;
+	fru->cbarg = शून्य;
 	fru->op_busy = 0;
 
-	bfa_ioc_mbox_regisr(fru->ioc, BFI_MC_FRU, bfa_fru_intr, fru);
-	bfa_q_qe_init(&fru->ioc_notify);
-	bfa_ioc_notify_init(&fru->ioc_notify, bfa_fru_notify, fru);
-	list_add_tail(&fru->ioc_notify.qe, &fru->ioc->notify_q);
+	bfa_ioc_mbox_regisr(fru->ioc, BFI_MC_FRU, bfa_fru_पूर्णांकr, fru);
+	bfa_q_qe_init(&fru->ioc_notअगरy);
+	bfa_ioc_notअगरy_init(&fru->ioc_notअगरy, bfa_fru_notअगरy, fru);
+	list_add_tail(&fru->ioc_notअगरy.qe, &fru->ioc->notअगरy_q);
 
-	/* min driver doesn't need fru */
-	if (mincfg) {
-		fru->dbuf_kva = NULL;
+	/* min driver करोesn't need fru */
+	अगर (mincfg) अणु
+		fru->dbuf_kva = शून्य;
 		fru->dbuf_pa = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Claim memory for fru
+ * Claim memory क्रम fru
  *
- * @param[in] fru - fru structure
- * @param[in] dm_kva - pointer to virtual memory address
+ * @param[in] fru - fru काष्ठाure
+ * @param[in] dm_kva - poपूर्णांकer to भव memory address
  * @param[in] dm_pa - frusical memory address
  * @param[in] mincfg - minimal cfg variable
  */
-void
-bfa_fru_memclaim(struct bfa_fru_s *fru, u8 *dm_kva, u64 dm_pa,
+व्योम
+bfa_fru_memclaim(काष्ठा bfa_fru_s *fru, u8 *dm_kva, u64 dm_pa,
 	bfa_boolean_t mincfg)
-{
-	if (mincfg)
-		return;
+अणु
+	अगर (mincfg)
+		वापस;
 
 	fru->dbuf_kva = dm_kva;
 	fru->dbuf_pa = dm_pa;
-	memset(fru->dbuf_kva, 0, BFA_FRU_DMA_BUF_SZ);
+	स_रखो(fru->dbuf_kva, 0, BFA_FRU_DMA_BUF_SZ);
 	dm_kva += BFA_ROUNDUP(BFA_FRU_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
 	dm_pa += BFA_ROUNDUP(BFA_FRU_DMA_BUF_SZ, BFA_DMA_ALIGN_SZ);
-}
+पूर्ण
 
 /*
  * Update fru vpd image.
  *
- * @param[in] fru - fru structure
+ * @param[in] fru - fru काष्ठाure
  * @param[in] buf - update data buffer
  * @param[in] len - data buffer length
  * @param[in] offset - offset relative to starting address
@@ -6343,27 +6344,27 @@ bfa_fru_memclaim(struct bfa_fru_s *fru, u8 *dm_kva, u64 dm_pa,
  * Return status.
  */
 bfa_status_t
-bfa_fruvpd_update(struct bfa_fru_s *fru, void *buf, u32 len, u32 offset,
-		  bfa_cb_fru_t cbfn, void *cbarg, u8 trfr_cmpl)
-{
+bfa_fruvpd_update(काष्ठा bfa_fru_s *fru, व्योम *buf, u32 len, u32 offset,
+		  bfa_cb_fru_t cbfn, व्योम *cbarg, u8 trfr_cmpl)
+अणु
 	bfa_trc(fru, BFI_FRUVPD_H2I_WRITE_REQ);
 	bfa_trc(fru, len);
 	bfa_trc(fru, offset);
 
-	if (fru->ioc->asic_gen != BFI_ASIC_GEN_CT2 &&
+	अगर (fru->ioc->asic_gen != BFI_ASIC_GEN_CT2 &&
 		fru->ioc->attr->card_type != BFA_MFG_TYPE_CHINOOK2)
-		return BFA_STATUS_FRU_NOT_PRESENT;
+		वापस BFA_STATUS_FRU_NOT_PRESENT;
 
-	if (fru->ioc->attr->card_type != BFA_MFG_TYPE_CHINOOK)
-		return BFA_STATUS_CMD_NOTSUPP;
+	अगर (fru->ioc->attr->card_type != BFA_MFG_TYPE_CHINOOK)
+		वापस BFA_STATUS_CMD_NOTSUPP;
 
-	if (!bfa_ioc_is_operational(fru->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(fru->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (fru->op_busy) {
+	अगर (fru->op_busy) अणु
 		bfa_trc(fru, fru->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	fru->op_busy = 1;
 
@@ -6375,16 +6376,16 @@ bfa_fruvpd_update(struct bfa_fru_s *fru, void *buf, u32 len, u32 offset,
 	fru->ubuf = buf;
 	fru->trfr_cmpl = trfr_cmpl;
 
-	bfa_fru_write_send(fru, BFI_FRUVPD_H2I_WRITE_REQ);
+	bfa_fru_ग_लिखो_send(fru, BFI_FRUVPD_H2I_WRITE_REQ);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Read fru vpd image.
  *
- * @param[in] fru - fru structure
- * @param[in] buf - read data buffer
+ * @param[in] fru - fru काष्ठाure
+ * @param[in] buf - पढ़ो data buffer
  * @param[in] len - data buffer length
  * @param[in] offset - offset relative to starting address
  * @param[in] cbfn - callback function
@@ -6393,27 +6394,27 @@ bfa_fruvpd_update(struct bfa_fru_s *fru, void *buf, u32 len, u32 offset,
  * Return status.
  */
 bfa_status_t
-bfa_fruvpd_read(struct bfa_fru_s *fru, void *buf, u32 len, u32 offset,
-		bfa_cb_fru_t cbfn, void *cbarg)
-{
+bfa_fruvpd_पढ़ो(काष्ठा bfa_fru_s *fru, व्योम *buf, u32 len, u32 offset,
+		bfa_cb_fru_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(fru, BFI_FRUVPD_H2I_READ_REQ);
 	bfa_trc(fru, len);
 	bfa_trc(fru, offset);
 
-	if (fru->ioc->asic_gen != BFI_ASIC_GEN_CT2)
-		return BFA_STATUS_FRU_NOT_PRESENT;
+	अगर (fru->ioc->asic_gen != BFI_ASIC_GEN_CT2)
+		वापस BFA_STATUS_FRU_NOT_PRESENT;
 
-	if (fru->ioc->attr->card_type != BFA_MFG_TYPE_CHINOOK &&
+	अगर (fru->ioc->attr->card_type != BFA_MFG_TYPE_CHINOOK &&
 		fru->ioc->attr->card_type != BFA_MFG_TYPE_CHINOOK2)
-		return BFA_STATUS_CMD_NOTSUPP;
+		वापस BFA_STATUS_CMD_NOTSUPP;
 
-	if (!bfa_ioc_is_operational(fru->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(fru->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (fru->op_busy) {
+	अगर (fru->op_busy) अणु
 		bfa_trc(fru, fru->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	fru->op_busy = 1;
 
@@ -6423,39 +6424,39 @@ bfa_fruvpd_read(struct bfa_fru_s *fru, void *buf, u32 len, u32 offset,
 	fru->offset = 0;
 	fru->addr_off = offset;
 	fru->ubuf = buf;
-	bfa_fru_read_send(fru, BFI_FRUVPD_H2I_READ_REQ);
+	bfa_fru_पढ़ो_send(fru, BFI_FRUVPD_H2I_READ_REQ);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
  * Get maximum size fru vpd image.
  *
- * @param[in] fru - fru structure
+ * @param[in] fru - fru काष्ठाure
  * @param[out] size - maximum size of fru vpd data
  *
  * Return status.
  */
 bfa_status_t
-bfa_fruvpd_get_max_size(struct bfa_fru_s *fru, u32 *max_size)
-{
-	if (fru->ioc->asic_gen != BFI_ASIC_GEN_CT2)
-		return BFA_STATUS_FRU_NOT_PRESENT;
+bfa_fruvpd_get_max_size(काष्ठा bfa_fru_s *fru, u32 *max_size)
+अणु
+	अगर (fru->ioc->asic_gen != BFI_ASIC_GEN_CT2)
+		वापस BFA_STATUS_FRU_NOT_PRESENT;
 
-	if (!bfa_ioc_is_operational(fru->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(fru->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (fru->ioc->attr->card_type == BFA_MFG_TYPE_CHINOOK ||
+	अगर (fru->ioc->attr->card_type == BFA_MFG_TYPE_CHINOOK ||
 		fru->ioc->attr->card_type == BFA_MFG_TYPE_CHINOOK2)
 		*max_size = BFA_FRU_CHINOOK_MAX_SIZE;
-	else
-		return BFA_STATUS_CMD_NOTSUPP;
-	return BFA_STATUS_OK;
-}
+	अन्यथा
+		वापस BFA_STATUS_CMD_NOTSUPP;
+	वापस BFA_STATUS_OK;
+पूर्ण
 /*
- * tfru write.
+ * tfru ग_लिखो.
  *
- * @param[in] fru - fru structure
+ * @param[in] fru - fru काष्ठाure
  * @param[in] buf - update data buffer
  * @param[in] len - data buffer length
  * @param[in] offset - offset relative to starting address
@@ -6465,24 +6466,24 @@ bfa_fruvpd_get_max_size(struct bfa_fru_s *fru, u32 *max_size)
  * Return status.
  */
 bfa_status_t
-bfa_tfru_write(struct bfa_fru_s *fru, void *buf, u32 len, u32 offset,
-	       bfa_cb_fru_t cbfn, void *cbarg)
-{
+bfa_tfru_ग_लिखो(काष्ठा bfa_fru_s *fru, व्योम *buf, u32 len, u32 offset,
+	       bfa_cb_fru_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(fru, BFI_TFRU_H2I_WRITE_REQ);
 	bfa_trc(fru, len);
 	bfa_trc(fru, offset);
 	bfa_trc(fru, *((u8 *) buf));
 
-	if (fru->ioc->asic_gen != BFI_ASIC_GEN_CT2)
-		return BFA_STATUS_FRU_NOT_PRESENT;
+	अगर (fru->ioc->asic_gen != BFI_ASIC_GEN_CT2)
+		वापस BFA_STATUS_FRU_NOT_PRESENT;
 
-	if (!bfa_ioc_is_operational(fru->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(fru->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (fru->op_busy) {
+	अगर (fru->op_busy) अणु
 		bfa_trc(fru, fru->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	fru->op_busy = 1;
 
@@ -6493,16 +6494,16 @@ bfa_tfru_write(struct bfa_fru_s *fru, void *buf, u32 len, u32 offset,
 	fru->addr_off = offset;
 	fru->ubuf = buf;
 
-	bfa_fru_write_send(fru, BFI_TFRU_H2I_WRITE_REQ);
+	bfa_fru_ग_लिखो_send(fru, BFI_TFRU_H2I_WRITE_REQ);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
- * tfru read.
+ * tfru पढ़ो.
  *
- * @param[in] fru - fru structure
- * @param[in] buf - read data buffer
+ * @param[in] fru - fru काष्ठाure
+ * @param[in] buf - पढ़ो data buffer
  * @param[in] len - data buffer length
  * @param[in] offset - offset relative to starting address
  * @param[in] cbfn - callback function
@@ -6511,23 +6512,23 @@ bfa_tfru_write(struct bfa_fru_s *fru, void *buf, u32 len, u32 offset,
  * Return status.
  */
 bfa_status_t
-bfa_tfru_read(struct bfa_fru_s *fru, void *buf, u32 len, u32 offset,
-	      bfa_cb_fru_t cbfn, void *cbarg)
-{
+bfa_tfru_पढ़ो(काष्ठा bfa_fru_s *fru, व्योम *buf, u32 len, u32 offset,
+	      bfa_cb_fru_t cbfn, व्योम *cbarg)
+अणु
 	bfa_trc(fru, BFI_TFRU_H2I_READ_REQ);
 	bfa_trc(fru, len);
 	bfa_trc(fru, offset);
 
-	if (fru->ioc->asic_gen != BFI_ASIC_GEN_CT2)
-		return BFA_STATUS_FRU_NOT_PRESENT;
+	अगर (fru->ioc->asic_gen != BFI_ASIC_GEN_CT2)
+		वापस BFA_STATUS_FRU_NOT_PRESENT;
 
-	if (!bfa_ioc_is_operational(fru->ioc))
-		return BFA_STATUS_IOC_NON_OP;
+	अगर (!bfa_ioc_is_operational(fru->ioc))
+		वापस BFA_STATUS_IOC_NON_OP;
 
-	if (fru->op_busy) {
+	अगर (fru->op_busy) अणु
 		bfa_trc(fru, fru->op_busy);
-		return BFA_STATUS_DEVBUSY;
-	}
+		वापस BFA_STATUS_DEVBUSY;
+	पूर्ण
 
 	fru->op_busy = 1;
 
@@ -6537,273 +6538,273 @@ bfa_tfru_read(struct bfa_fru_s *fru, void *buf, u32 len, u32 offset,
 	fru->offset = 0;
 	fru->addr_off = offset;
 	fru->ubuf = buf;
-	bfa_fru_read_send(fru, BFI_TFRU_H2I_READ_REQ);
+	bfa_fru_पढ़ो_send(fru, BFI_TFRU_H2I_READ_REQ);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण
 
 /*
- * Process fru response messages upon receiving interrupts.
+ * Process fru response messages upon receiving पूर्णांकerrupts.
  *
- * @param[in] fruarg - fru structure
- * @param[in] msg - message structure
+ * @param[in] fruarg - fru काष्ठाure
+ * @param[in] msg - message काष्ठाure
  */
-void
-bfa_fru_intr(void *fruarg, struct bfi_mbmsg_s *msg)
-{
-	struct bfa_fru_s *fru = fruarg;
-	struct bfi_fru_rsp_s *rsp = (struct bfi_fru_rsp_s *)msg;
+व्योम
+bfa_fru_पूर्णांकr(व्योम *fruarg, काष्ठा bfi_mbmsg_s *msg)
+अणु
+	काष्ठा bfa_fru_s *fru = fruarg;
+	काष्ठा bfi_fru_rsp_s *rsp = (काष्ठा bfi_fru_rsp_s *)msg;
 	u32 status;
 
 	bfa_trc(fru, msg->mh.msg_id);
 
-	if (!fru->op_busy) {
+	अगर (!fru->op_busy) अणु
 		/*
 		 * receiving response after ioc failure
 		 */
 		bfa_trc(fru, 0x9999);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (msg->mh.msg_id) {
-	case BFI_FRUVPD_I2H_WRITE_RSP:
-	case BFI_TFRU_I2H_WRITE_RSP:
+	चयन (msg->mh.msg_id) अणु
+	हाल BFI_FRUVPD_I2H_WRITE_RSP:
+	हाल BFI_TFRU_I2H_WRITE_RSP:
 		status = be32_to_cpu(rsp->status);
 		bfa_trc(fru, status);
 
-		if (status != BFA_STATUS_OK || fru->residue == 0) {
+		अगर (status != BFA_STATUS_OK || fru->residue == 0) अणु
 			fru->status = status;
 			fru->op_busy = 0;
-			if (fru->cbfn)
+			अगर (fru->cbfn)
 				fru->cbfn(fru->cbarg, fru->status);
-		} else {
+		पूर्ण अन्यथा अणु
 			bfa_trc(fru, fru->offset);
-			if (msg->mh.msg_id == BFI_FRUVPD_I2H_WRITE_RSP)
-				bfa_fru_write_send(fru,
+			अगर (msg->mh.msg_id == BFI_FRUVPD_I2H_WRITE_RSP)
+				bfa_fru_ग_लिखो_send(fru,
 					BFI_FRUVPD_H2I_WRITE_REQ);
-			else
-				bfa_fru_write_send(fru,
+			अन्यथा
+				bfa_fru_ग_लिखो_send(fru,
 					BFI_TFRU_H2I_WRITE_REQ);
-		}
-		break;
-	case BFI_FRUVPD_I2H_READ_RSP:
-	case BFI_TFRU_I2H_READ_RSP:
+		पूर्ण
+		अवरोध;
+	हाल BFI_FRUVPD_I2H_READ_RSP:
+	हाल BFI_TFRU_I2H_READ_RSP:
 		status = be32_to_cpu(rsp->status);
 		bfa_trc(fru, status);
 
-		if (status != BFA_STATUS_OK) {
+		अगर (status != BFA_STATUS_OK) अणु
 			fru->status = status;
 			fru->op_busy = 0;
-			if (fru->cbfn)
+			अगर (fru->cbfn)
 				fru->cbfn(fru->cbarg, fru->status);
-		} else {
+		पूर्ण अन्यथा अणु
 			u32 len = be32_to_cpu(rsp->length);
 
 			bfa_trc(fru, fru->offset);
 			bfa_trc(fru, len);
 
-			memcpy(fru->ubuf + fru->offset, fru->dbuf_kva, len);
+			स_नकल(fru->ubuf + fru->offset, fru->dbuf_kva, len);
 			fru->residue -= len;
 			fru->offset += len;
 
-			if (fru->residue == 0) {
+			अगर (fru->residue == 0) अणु
 				fru->status = status;
 				fru->op_busy = 0;
-				if (fru->cbfn)
+				अगर (fru->cbfn)
 					fru->cbfn(fru->cbarg, fru->status);
-			} else {
-				if (msg->mh.msg_id == BFI_FRUVPD_I2H_READ_RSP)
-					bfa_fru_read_send(fru,
+			पूर्ण अन्यथा अणु
+				अगर (msg->mh.msg_id == BFI_FRUVPD_I2H_READ_RSP)
+					bfa_fru_पढ़ो_send(fru,
 						BFI_FRUVPD_H2I_READ_REQ);
-				else
-					bfa_fru_read_send(fru,
+				अन्यथा
+					bfa_fru_पढ़ो_send(fru,
 						BFI_TFRU_H2I_READ_REQ);
-			}
-		}
-		break;
-	default:
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * register definitions
+ * रेजिस्टर definitions
  */
-#define FLI_CMD_REG			0x0001d000
-#define FLI_RDDATA_REG			0x0001d010
-#define FLI_ADDR_REG			0x0001d004
-#define FLI_DEV_STATUS_REG		0x0001d014
+#घोषणा FLI_CMD_REG			0x0001d000
+#घोषणा FLI_RDDATA_REG			0x0001d010
+#घोषणा FLI_ADDR_REG			0x0001d004
+#घोषणा FLI_DEV_STATUS_REG		0x0001d014
 
-#define BFA_FLASH_FIFO_SIZE		128	/* fifo size */
-#define BFA_FLASH_CHECK_MAX		10000	/* max # of status check */
-#define BFA_FLASH_BLOCKING_OP_MAX	1000000	/* max # of blocking op check */
-#define BFA_FLASH_WIP_MASK		0x01	/* write in progress bit mask */
+#घोषणा BFA_FLASH_FIFO_SIZE		128	/* fअगरo size */
+#घोषणा BFA_FLASH_CHECK_MAX		10000	/* max # of status check */
+#घोषणा BFA_FLASH_BLOCKING_OP_MAX	1000000	/* max # of blocking op check */
+#घोषणा BFA_FLASH_WIP_MASK		0x01	/* ग_लिखो in progress bit mask */
 
-enum bfa_flash_cmd {
-	BFA_FLASH_FAST_READ	= 0x0b,	/* fast read */
-	BFA_FLASH_READ_STATUS	= 0x05,	/* read status */
-};
+क्रमागत bfa_flash_cmd अणु
+	BFA_FLASH_FAST_READ	= 0x0b,	/* fast पढ़ो */
+	BFA_FLASH_READ_STATUS	= 0x05,	/* पढ़ो status */
+पूर्ण;
 
 /*
  * Hardware error definition
  */
-enum bfa_flash_err {
+क्रमागत bfa_flash_err अणु
 	BFA_FLASH_NOT_PRESENT	= -1,	/*!< flash not present */
 	BFA_FLASH_UNINIT	= -2,	/*!< flash not initialized */
 	BFA_FLASH_BAD		= -3,	/*!< flash bad */
 	BFA_FLASH_BUSY		= -4,	/*!< flash busy */
 	BFA_FLASH_ERR_CMD_ACT	= -5,	/*!< command active never cleared */
-	BFA_FLASH_ERR_FIFO_CNT	= -6,	/*!< fifo count never cleared */
-	BFA_FLASH_ERR_WIP	= -7,	/*!< write-in-progress never cleared */
-	BFA_FLASH_ERR_TIMEOUT	= -8,	/*!< fli timeout */
+	BFA_FLASH_ERR_FIFO_CNT	= -6,	/*!< fअगरo count never cleared */
+	BFA_FLASH_ERR_WIP	= -7,	/*!< ग_लिखो-in-progress never cleared */
+	BFA_FLASH_ERR_TIMEOUT	= -8,	/*!< fli समयout */
 	BFA_FLASH_ERR_LEN	= -9,	/*!< invalid length */
-};
+पूर्ण;
 
 /*
- * Flash command register data structure
+ * Flash command रेजिस्टर data काष्ठाure
  */
-union bfa_flash_cmd_reg_u {
-	struct {
-#ifdef __BIG_ENDIAN
+जोड़ bfa_flash_cmd_reg_u अणु
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN
 		u32	act:1;
 		u32	rsv:1;
-		u32	write_cnt:9;
-		u32	read_cnt:9;
+		u32	ग_लिखो_cnt:9;
+		u32	पढ़ो_cnt:9;
 		u32	addr_cnt:4;
 		u32	cmd:8;
-#else
+#अन्यथा
 		u32	cmd:8;
 		u32	addr_cnt:4;
-		u32	read_cnt:9;
-		u32	write_cnt:9;
+		u32	पढ़ो_cnt:9;
+		u32	ग_लिखो_cnt:9;
 		u32	rsv:1;
 		u32	act:1;
-#endif
-	} r;
+#पूर्ण_अगर
+	पूर्ण r;
 	u32	i;
-};
+पूर्ण;
 
 /*
- * Flash device status register data structure
+ * Flash device status रेजिस्टर data काष्ठाure
  */
-union bfa_flash_dev_status_reg_u {
-	struct {
-#ifdef __BIG_ENDIAN
+जोड़ bfa_flash_dev_status_reg_u अणु
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN
 		u32	rsv:21;
-		u32	fifo_cnt:6;
+		u32	fअगरo_cnt:6;
 		u32	busy:1;
 		u32	init_status:1;
 		u32	present:1;
 		u32	bad:1;
 		u32	good:1;
-#else
+#अन्यथा
 		u32	good:1;
 		u32	bad:1;
 		u32	present:1;
 		u32	init_status:1;
 		u32	busy:1;
-		u32	fifo_cnt:6;
+		u32	fअगरo_cnt:6;
 		u32	rsv:21;
-#endif
-	} r;
+#पूर्ण_अगर
+	पूर्ण r;
 	u32	i;
-};
+पूर्ण;
 
 /*
- * Flash address register data structure
+ * Flash address रेजिस्टर data काष्ठाure
  */
-union bfa_flash_addr_reg_u {
-	struct {
-#ifdef __BIG_ENDIAN
+जोड़ bfa_flash_addr_reg_u अणु
+	काष्ठा अणु
+#अगर_घोषित __BIG_ENDIAN
 		u32	addr:24;
 		u32	dummy:8;
-#else
+#अन्यथा
 		u32	dummy:8;
 		u32	addr:24;
-#endif
-	} r;
+#पूर्ण_अगर
+	पूर्ण r;
 	u32	i;
-};
+पूर्ण;
 
 /*
- * dg flash_raw_private Flash raw private functions
+ * dg flash_raw_निजी Flash raw निजी functions
  */
-static void
-bfa_flash_set_cmd(void __iomem *pci_bar, u8 wr_cnt,
+अटल व्योम
+bfa_flash_set_cmd(व्योम __iomem *pci_bar, u8 wr_cnt,
 		  u8 rd_cnt, u8 ad_cnt, u8 op)
-{
-	union bfa_flash_cmd_reg_u cmd;
+अणु
+	जोड़ bfa_flash_cmd_reg_u cmd;
 
 	cmd.i = 0;
 	cmd.r.act = 1;
-	cmd.r.write_cnt = wr_cnt;
-	cmd.r.read_cnt = rd_cnt;
+	cmd.r.ग_लिखो_cnt = wr_cnt;
+	cmd.r.पढ़ो_cnt = rd_cnt;
 	cmd.r.addr_cnt = ad_cnt;
 	cmd.r.cmd = op;
-	writel(cmd.i, (pci_bar + FLI_CMD_REG));
-}
+	ग_लिखोl(cmd.i, (pci_bar + FLI_CMD_REG));
+पूर्ण
 
-static void
-bfa_flash_set_addr(void __iomem *pci_bar, u32 address)
-{
-	union bfa_flash_addr_reg_u addr;
+अटल व्योम
+bfa_flash_set_addr(व्योम __iomem *pci_bar, u32 address)
+अणु
+	जोड़ bfa_flash_addr_reg_u addr;
 
 	addr.r.addr = address & 0x00ffffff;
 	addr.r.dummy = 0;
-	writel(addr.i, (pci_bar + FLI_ADDR_REG));
-}
+	ग_लिखोl(addr.i, (pci_bar + FLI_ADDR_REG));
+पूर्ण
 
-static int
-bfa_flash_cmd_act_check(void __iomem *pci_bar)
-{
-	union bfa_flash_cmd_reg_u cmd;
+अटल पूर्णांक
+bfa_flash_cmd_act_check(व्योम __iomem *pci_bar)
+अणु
+	जोड़ bfa_flash_cmd_reg_u cmd;
 
-	cmd.i = readl(pci_bar + FLI_CMD_REG);
+	cmd.i = पढ़ोl(pci_bar + FLI_CMD_REG);
 
-	if (cmd.r.act)
-		return BFA_FLASH_ERR_CMD_ACT;
+	अगर (cmd.r.act)
+		वापस BFA_FLASH_ERR_CMD_ACT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * @brief
- * Flush FLI data fifo.
+ * Flush FLI data fअगरo.
  *
  * @param[in] pci_bar - pci bar address
  * @param[in] dev_status - device status
  *
  * Return 0 on success, negative error number on error.
  */
-static u32
-bfa_flash_fifo_flush(void __iomem *pci_bar)
-{
+अटल u32
+bfa_flash_fअगरo_flush(व्योम __iomem *pci_bar)
+अणु
 	u32 i;
-	union bfa_flash_dev_status_reg_u dev_status;
+	जोड़ bfa_flash_dev_status_reg_u dev_status;
 
-	dev_status.i = readl(pci_bar + FLI_DEV_STATUS_REG);
+	dev_status.i = पढ़ोl(pci_bar + FLI_DEV_STATUS_REG);
 
-	if (!dev_status.r.fifo_cnt)
-		return 0;
+	अगर (!dev_status.r.fअगरo_cnt)
+		वापस 0;
 
-	/* fifo counter in terms of words */
-	for (i = 0; i < dev_status.r.fifo_cnt; i++)
-		readl(pci_bar + FLI_RDDATA_REG);
+	/* fअगरo counter in terms of words */
+	क्रम (i = 0; i < dev_status.r.fअगरo_cnt; i++)
+		पढ़ोl(pci_bar + FLI_RDDATA_REG);
 
 	/*
-	 * Check the device status. It may take some time.
+	 * Check the device status. It may take some समय.
 	 */
-	for (i = 0; i < BFA_FLASH_CHECK_MAX; i++) {
-		dev_status.i = readl(pci_bar + FLI_DEV_STATUS_REG);
-		if (!dev_status.r.fifo_cnt)
-			break;
-	}
+	क्रम (i = 0; i < BFA_FLASH_CHECK_MAX; i++) अणु
+		dev_status.i = पढ़ोl(pci_bar + FLI_DEV_STATUS_REG);
+		अगर (!dev_status.r.fअगरo_cnt)
+			अवरोध;
+	पूर्ण
 
-	if (dev_status.r.fifo_cnt)
-		return BFA_FLASH_ERR_FIFO_CNT;
+	अगर (dev_status.r.fअगरo_cnt)
+		वापस BFA_FLASH_ERR_FIFO_CNT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * @brief
@@ -6813,220 +6814,220 @@ bfa_flash_fifo_flush(void __iomem *pci_bar)
  *
  * Return 0 on success, negative error number on error.
 */
-static u32
-bfa_flash_status_read(void __iomem *pci_bar)
-{
-	union bfa_flash_dev_status_reg_u	dev_status;
-	int				status;
+अटल u32
+bfa_flash_status_पढ़ो(व्योम __iomem *pci_bar)
+अणु
+	जोड़ bfa_flash_dev_status_reg_u	dev_status;
+	पूर्णांक				status;
 	u32			ret_status;
-	int				i;
+	पूर्णांक				i;
 
-	status = bfa_flash_fifo_flush(pci_bar);
-	if (status < 0)
-		return status;
+	status = bfa_flash_fअगरo_flush(pci_bar);
+	अगर (status < 0)
+		वापस status;
 
 	bfa_flash_set_cmd(pci_bar, 0, 4, 0, BFA_FLASH_READ_STATUS);
 
-	for (i = 0; i < BFA_FLASH_CHECK_MAX; i++) {
+	क्रम (i = 0; i < BFA_FLASH_CHECK_MAX; i++) अणु
 		status = bfa_flash_cmd_act_check(pci_bar);
-		if (!status)
-			break;
-	}
+		अगर (!status)
+			अवरोध;
+	पूर्ण
 
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	dev_status.i = readl(pci_bar + FLI_DEV_STATUS_REG);
-	if (!dev_status.r.fifo_cnt)
-		return BFA_FLASH_BUSY;
+	dev_status.i = पढ़ोl(pci_bar + FLI_DEV_STATUS_REG);
+	अगर (!dev_status.r.fअगरo_cnt)
+		वापस BFA_FLASH_BUSY;
 
-	ret_status = readl(pci_bar + FLI_RDDATA_REG);
+	ret_status = पढ़ोl(pci_bar + FLI_RDDATA_REG);
 	ret_status >>= 24;
 
-	status = bfa_flash_fifo_flush(pci_bar);
-	if (status < 0)
-		return status;
+	status = bfa_flash_fअगरo_flush(pci_bar);
+	अगर (status < 0)
+		वापस status;
 
-	return ret_status;
-}
+	वापस ret_status;
+पूर्ण
 
 /*
  * @brief
- * Start flash read operation.
+ * Start flash पढ़ो operation.
  *
  * @param[in] pci_bar - pci bar address
  * @param[in] offset - flash address offset
- * @param[in] len - read data length
- * @param[in] buf - read data buffer
+ * @param[in] len - पढ़ो data length
+ * @param[in] buf - पढ़ो data buffer
  *
  * Return 0 on success, negative error number on error.
  */
-static u32
-bfa_flash_read_start(void __iomem *pci_bar, u32 offset, u32 len,
-			 char *buf)
-{
-	int status;
+अटल u32
+bfa_flash_पढ़ो_start(व्योम __iomem *pci_bar, u32 offset, u32 len,
+			 अक्षर *buf)
+अणु
+	पूर्णांक status;
 
 	/*
-	 * len must be mutiple of 4 and not exceeding fifo size
+	 * len must be mutiple of 4 and not exceeding fअगरo size
 	 */
-	if (len == 0 || len > BFA_FLASH_FIFO_SIZE || (len & 0x03) != 0)
-		return BFA_FLASH_ERR_LEN;
+	अगर (len == 0 || len > BFA_FLASH_FIFO_SIZE || (len & 0x03) != 0)
+		वापस BFA_FLASH_ERR_LEN;
 
 	/*
 	 * check status
 	 */
-	status = bfa_flash_status_read(pci_bar);
-	if (status == BFA_FLASH_BUSY)
-		status = bfa_flash_status_read(pci_bar);
+	status = bfa_flash_status_पढ़ो(pci_bar);
+	अगर (status == BFA_FLASH_BUSY)
+		status = bfa_flash_status_पढ़ो(pci_bar);
 
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
 	/*
-	 * check if write-in-progress bit is cleared
+	 * check अगर ग_लिखो-in-progress bit is cleared
 	 */
-	if (status & BFA_FLASH_WIP_MASK)
-		return BFA_FLASH_ERR_WIP;
+	अगर (status & BFA_FLASH_WIP_MASK)
+		वापस BFA_FLASH_ERR_WIP;
 
 	bfa_flash_set_addr(pci_bar, offset);
 
 	bfa_flash_set_cmd(pci_bar, 0, (u8)len, 4, BFA_FLASH_FAST_READ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * @brief
- * Check flash read operation.
+ * Check flash पढ़ो operation.
  *
  * @param[in] pci_bar - pci bar address
  *
- * Return flash device status, 1 if busy, 0 if not.
+ * Return flash device status, 1 अगर busy, 0 अगर not.
  */
-static u32
-bfa_flash_read_check(void __iomem *pci_bar)
-{
-	if (bfa_flash_cmd_act_check(pci_bar))
-		return 1;
+अटल u32
+bfa_flash_पढ़ो_check(व्योम __iomem *pci_bar)
+अणु
+	अगर (bfa_flash_cmd_act_check(pci_bar))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * @brief
- * End flash read operation.
+ * End flash पढ़ो operation.
  *
  * @param[in] pci_bar - pci bar address
- * @param[in] len - read data length
- * @param[in] buf - read data buffer
+ * @param[in] len - पढ़ो data length
+ * @param[in] buf - पढ़ो data buffer
  *
  */
-static void
-bfa_flash_read_end(void __iomem *pci_bar, u32 len, char *buf)
-{
+अटल व्योम
+bfa_flash_पढ़ो_end(व्योम __iomem *pci_bar, u32 len, अक्षर *buf)
+अणु
 
 	u32 i;
 
 	/*
-	 * read data fifo up to 32 words
+	 * पढ़ो data fअगरo up to 32 words
 	 */
-	for (i = 0; i < len; i += 4) {
-		u32 w = readl(pci_bar + FLI_RDDATA_REG);
+	क्रम (i = 0; i < len; i += 4) अणु
+		u32 w = पढ़ोl(pci_bar + FLI_RDDATA_REG);
 		*((u32 *) (buf + i)) = swab32(w);
-	}
+	पूर्ण
 
-	bfa_flash_fifo_flush(pci_bar);
-}
+	bfa_flash_fअगरo_flush(pci_bar);
+पूर्ण
 
 /*
  * @brief
- * Perform flash raw read.
+ * Perक्रमm flash raw पढ़ो.
  *
  * @param[in] pci_bar - pci bar address
  * @param[in] offset - flash partition address offset
- * @param[in] buf - read data buffer
- * @param[in] len - read data length
+ * @param[in] buf - पढ़ो data buffer
+ * @param[in] len - पढ़ो data length
  *
  * Return status.
  */
 
 
-#define FLASH_BLOCKING_OP_MAX   500
-#define FLASH_SEM_LOCK_REG	0x18820
+#घोषणा FLASH_BLOCKING_OP_MAX   500
+#घोषणा FLASH_SEM_LOCK_REG	0x18820
 
-static int
-bfa_raw_sem_get(void __iomem *bar)
-{
-	int	locked;
+अटल पूर्णांक
+bfa_raw_sem_get(व्योम __iomem *bar)
+अणु
+	पूर्णांक	locked;
 
-	locked = readl((bar + FLASH_SEM_LOCK_REG));
-	return !locked;
+	locked = पढ़ोl((bar + FLASH_SEM_LOCK_REG));
+	वापस !locked;
 
-}
+पूर्ण
 
-static bfa_status_t
-bfa_flash_sem_get(void __iomem *bar)
-{
+अटल bfa_status_t
+bfa_flash_sem_get(व्योम __iomem *bar)
+अणु
 	u32 n = FLASH_BLOCKING_OP_MAX;
 
-	while (!bfa_raw_sem_get(bar)) {
-		if (--n <= 0)
-			return BFA_STATUS_BADFLASH;
+	जबतक (!bfa_raw_sem_get(bar)) अणु
+		अगर (--n <= 0)
+			वापस BFA_STATUS_BADFLASH;
 		mdelay(10);
-	}
-	return BFA_STATUS_OK;
-}
+	पूर्ण
+	वापस BFA_STATUS_OK;
+पूर्ण
 
-static void
-bfa_flash_sem_put(void __iomem *bar)
-{
-	writel(0, (bar + FLASH_SEM_LOCK_REG));
-}
+अटल व्योम
+bfa_flash_sem_put(व्योम __iomem *bar)
+अणु
+	ग_लिखोl(0, (bar + FLASH_SEM_LOCK_REG));
+पूर्ण
 
 bfa_status_t
-bfa_flash_raw_read(void __iomem *pci_bar, u32 offset, char *buf,
+bfa_flash_raw_पढ़ो(व्योम __iomem *pci_bar, u32 offset, अक्षर *buf,
 		       u32 len)
-{
+अणु
 	u32 n;
-	int status;
-	u32 off, l, s, residue, fifo_sz;
+	पूर्णांक status;
+	u32 off, l, s, residue, fअगरo_sz;
 
 	residue = len;
 	off = 0;
-	fifo_sz = BFA_FLASH_FIFO_SIZE;
+	fअगरo_sz = BFA_FLASH_FIFO_SIZE;
 	status = bfa_flash_sem_get(pci_bar);
-	if (status != BFA_STATUS_OK)
-		return status;
+	अगर (status != BFA_STATUS_OK)
+		वापस status;
 
-	while (residue) {
+	जबतक (residue) अणु
 		s = offset + off;
-		n = s / fifo_sz;
-		l = (n + 1) * fifo_sz - s;
-		if (l > residue)
+		n = s / fअगरo_sz;
+		l = (n + 1) * fअगरo_sz - s;
+		अगर (l > residue)
 			l = residue;
 
-		status = bfa_flash_read_start(pci_bar, offset + off, l,
+		status = bfa_flash_पढ़ो_start(pci_bar, offset + off, l,
 								&buf[off]);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			bfa_flash_sem_put(pci_bar);
-			return BFA_STATUS_FAILED;
-		}
+			वापस BFA_STATUS_FAILED;
+		पूर्ण
 
 		n = BFA_FLASH_BLOCKING_OP_MAX;
-		while (bfa_flash_read_check(pci_bar)) {
-			if (--n <= 0) {
+		जबतक (bfa_flash_पढ़ो_check(pci_bar)) अणु
+			अगर (--n <= 0) अणु
 				bfa_flash_sem_put(pci_bar);
-				return BFA_STATUS_FAILED;
-			}
-		}
+				वापस BFA_STATUS_FAILED;
+			पूर्ण
+		पूर्ण
 
-		bfa_flash_read_end(pci_bar, l, &buf[off]);
+		bfa_flash_पढ़ो_end(pci_bar, l, &buf[off]);
 
 		residue -= l;
 		off += l;
-	}
+	पूर्ण
 	bfa_flash_sem_put(pci_bar);
 
-	return BFA_STATUS_OK;
-}
+	वापस BFA_STATUS_OK;
+पूर्ण

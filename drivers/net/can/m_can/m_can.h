@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* CAN bus driver for Bosch M_CAN controller
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* CAN bus driver क्रम Bosch M_CAN controller
  * Copyright (C) 2018 Texas Instruments Incorporated - http://www.ti.com/
  */
 
-#ifndef _CAN_M_CAN_H_
-#define _CAN_M_CAN_H_
+#अगर_अघोषित _CAN_M_CAN_H_
+#घोषणा _CAN_M_CAN_H_
 
-#include <linux/can/core.h>
-#include <linux/can/led.h>
-#include <linux/can/rx-offload.h>
-#include <linux/completion.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/freezer.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/iopoll.h>
-#include <linux/can/dev.h>
-#include <linux/pinctrl/consumer.h>
+#समावेश <linux/can/core.h>
+#समावेश <linux/can/led.h>
+#समावेश <linux/can/rx-offload.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/can/dev.h>
+#समावेश <linux/pinctrl/consumer.h>
 
 /* m_can lec values */
-enum m_can_lec_type {
+क्रमागत m_can_lec_type अणु
 	LEC_NO_ERROR = 0,
 	LEC_STUFF_ERROR,
 	LEC_FORM_ERROR,
@@ -39,9 +40,9 @@ enum m_can_lec_type {
 	LEC_BIT0_ERROR,
 	LEC_CRC_ERROR,
 	LEC_UNUSED,
-};
+पूर्ण;
 
-enum m_can_mram_cfg {
+क्रमागत m_can_mram_cfg अणु
 	MRAM_SIDF = 0,
 	MRAM_XIDF,
 	MRAM_RXF0,
@@ -50,60 +51,60 @@ enum m_can_mram_cfg {
 	MRAM_TXE,
 	MRAM_TXB,
 	MRAM_CFG_NUM,
-};
+पूर्ण;
 
-/* address offset and element number for each FIFO/Buffer in the Message RAM */
-struct mram_cfg {
+/* address offset and element number क्रम each FIFO/Buffer in the Message RAM */
+काष्ठा mram_cfg अणु
 	u16 off;
 	u8  num;
-};
+पूर्ण;
 
-struct m_can_classdev;
-struct m_can_ops {
-	/* Device specific call backs */
-	int (*clear_interrupts)(struct m_can_classdev *cdev);
-	u32 (*read_reg)(struct m_can_classdev *cdev, int reg);
-	int (*write_reg)(struct m_can_classdev *cdev, int reg, int val);
-	u32 (*read_fifo)(struct m_can_classdev *cdev, int addr_offset);
-	int (*write_fifo)(struct m_can_classdev *cdev, int addr_offset,
-			  int val);
-	int (*init)(struct m_can_classdev *cdev);
-};
+काष्ठा m_can_classdev;
+काष्ठा m_can_ops अणु
+	/* Device specअगरic call backs */
+	पूर्णांक (*clear_पूर्णांकerrupts)(काष्ठा m_can_classdev *cdev);
+	u32 (*पढ़ो_reg)(काष्ठा m_can_classdev *cdev, पूर्णांक reg);
+	पूर्णांक (*ग_लिखो_reg)(काष्ठा m_can_classdev *cdev, पूर्णांक reg, पूर्णांक val);
+	u32 (*पढ़ो_fअगरo)(काष्ठा m_can_classdev *cdev, पूर्णांक addr_offset);
+	पूर्णांक (*ग_लिखो_fअगरo)(काष्ठा m_can_classdev *cdev, पूर्णांक addr_offset,
+			  पूर्णांक val);
+	पूर्णांक (*init)(काष्ठा m_can_classdev *cdev);
+पूर्ण;
 
-struct m_can_classdev {
-	struct can_priv can;
-	struct can_rx_offload offload;
-	struct napi_struct napi;
-	struct net_device *net;
-	struct device *dev;
-	struct clk *hclk;
-	struct clk *cclk;
+काष्ठा m_can_classdev अणु
+	काष्ठा can_priv can;
+	काष्ठा can_rx_offload offload;
+	काष्ठा napi_काष्ठा napi;
+	काष्ठा net_device *net;
+	काष्ठा device *dev;
+	काष्ठा clk *hclk;
+	काष्ठा clk *cclk;
 
-	struct workqueue_struct *tx_wq;
-	struct work_struct tx_work;
-	struct sk_buff *tx_skb;
+	काष्ठा workqueue_काष्ठा *tx_wq;
+	काष्ठा work_काष्ठा tx_work;
+	काष्ठा sk_buff *tx_skb;
 
-	struct can_bittiming_const *bit_timing;
-	struct can_bittiming_const *data_timing;
+	काष्ठा can_bittiming_स्थिर *bit_timing;
+	काष्ठा can_bittiming_स्थिर *data_timing;
 
-	struct m_can_ops *ops;
+	काष्ठा m_can_ops *ops;
 
-	int version;
+	पूर्णांक version;
 	u32 irqstatus;
 
-	int pm_clock_support;
-	int is_peripheral;
+	पूर्णांक pm_घड़ी_support;
+	पूर्णांक is_peripheral;
 
-	struct mram_cfg mcfg[MRAM_CFG_NUM];
-};
+	काष्ठा mram_cfg mcfg[MRAM_CFG_NUM];
+पूर्ण;
 
-struct m_can_classdev *m_can_class_allocate_dev(struct device *dev, int sizeof_priv);
-void m_can_class_free_dev(struct net_device *net);
-int m_can_class_register(struct m_can_classdev *cdev);
-void m_can_class_unregister(struct m_can_classdev *cdev);
-int m_can_class_get_clocks(struct m_can_classdev *cdev);
-void m_can_init_ram(struct m_can_classdev *priv);
+काष्ठा m_can_classdev *m_can_class_allocate_dev(काष्ठा device *dev, पूर्णांक माप_priv);
+व्योम m_can_class_मुक्त_dev(काष्ठा net_device *net);
+पूर्णांक m_can_class_रेजिस्टर(काष्ठा m_can_classdev *cdev);
+व्योम m_can_class_unरेजिस्टर(काष्ठा m_can_classdev *cdev);
+पूर्णांक m_can_class_get_घड़ीs(काष्ठा m_can_classdev *cdev);
+व्योम m_can_init_ram(काष्ठा m_can_classdev *priv);
 
-int m_can_class_suspend(struct device *dev);
-int m_can_class_resume(struct device *dev);
-#endif	/* _CAN_M_H_ */
+पूर्णांक m_can_class_suspend(काष्ठा device *dev);
+पूर्णांक m_can_class_resume(काष्ठा device *dev);
+#पूर्ण_अगर	/* _CAN_M_H_ */

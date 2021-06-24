@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	Copyright (C) 2014 Linaro Ltd.
  *	Author:	Ashwin Chaugule <ashwin.chaugule@linaro.org>
  *
- *  PCC (Platform Communication Channel) is defined in the ACPI 5.0+
- *  specification. It is a mailbox like mechanism to allow clients
- *  such as CPPC (Collaborative Processor Performance Control), RAS
+ *  PCC (Platक्रमm Communication Channel) is defined in the ACPI 5.0+
+ *  specअगरication. It is a mailbox like mechanism to allow clients
+ *  such as CPPC (Collaborative Processor Perक्रमmance Control), RAS
  *  (Reliability, Availability and Serviceability) and MPST (Memory
- *  Node Power State Table) to talk to the platform (e.g. BMC) through
+ *  Node Power State Table) to talk to the platक्रमm (e.g. BMC) through
  *  shared memory regions as defined in the PCC table entries. The PCC
- *  specification supports a Doorbell mechanism for the PCC clients
- *  to notify the platform about new data. This Doorbell information
- *  is also specified in each PCC table entry.
+ *  specअगरication supports a Doorbell mechanism क्रम the PCC clients
+ *  to notअगरy the platक्रमm about new data. This Doorbell inक्रमmation
+ *  is also specअगरied in each PCC table entry.
  *
  *  Typical high level flow of operation is:
  *
  *  PCC Reads:
  *  * Client tries to acquire a channel lock.
- *  * After it is acquired it writes READ cmd in communication region cmd
+ *  * After it is acquired it ग_लिखोs READ cmd in communication region cmd
  *		address.
- *  * Client issues mbox_send_message() which rings the PCC doorbell
- *		for its PCC channel.
+ *  * Client issues mbox_send_message() which rings the PCC करोorbell
+ *		क्रम its PCC channel.
  *  * If command completes, then client has control over channel and
- *		it can proceed with its reads.
+ *		it can proceed with its पढ़ोs.
  *  * Client releases lock.
  *
  *  PCC Writes:
  *  * Client tries to acquire channel lock.
- *  * Client writes to its communication region after it acquires a
+ *  * Client ग_लिखोs to its communication region after it acquires a
  *		channel lock.
- *  * Client writes WRITE cmd in communication region cmd address.
- *  * Client issues mbox_send_message() which rings the PCC doorbell
- *		for its PCC channel.
- *  * If command completes, then writes have succeeded and it can release
+ *  * Client ग_लिखोs WRITE cmd in communication region cmd address.
+ *  * Client issues mbox_send_message() which rings the PCC करोorbell
+ *		क्रम its PCC channel.
+ *  * If command completes, then ग_लिखोs have succeeded and it can release
  *		the channel lock.
  *
- *  There is a Nominal latency defined for each channel which indicates
- *  how long to wait until a command completes. If command is not complete
+ *  There is a Nominal latency defined क्रम each channel which indicates
+ *  how दीर्घ to रुको until a command completes. If command is not complete
  *  the client needs to retry or assume failure.
  *
- *	For more details about PCC, please see the ACPI specification from
+ *	For more details about PCC, please see the ACPI specअगरication from
  *  http://www.uefi.org/ACPIv5.1 Section 14.
  *
- *  This file implements PCC as a Mailbox controller and allows for PCC
+ *  This file implements PCC as a Mailbox controller and allows क्रम PCC
  *  clients to be implemented as its Mailbox Client Channels.
  */
 
-#include <linux/acpi.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/platform_device.h>
-#include <linux/mailbox_controller.h>
-#include <linux/mailbox_client.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <acpi/pcc.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mailbox_controller.h>
+#समावेश <linux/mailbox_client.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <acpi/pcc.h>
 
-#include "mailbox.h"
+#समावेश "mailbox.h"
 
-#define MBOX_IRQ_NAME		"pcc-mbox"
+#घोषणा MBOX_IRQ_NAME		"pcc-mbox"
 
-static struct mbox_chan *pcc_mbox_channels;
+अटल काष्ठा mbox_chan *pcc_mbox_channels;
 
-/* Array of cached virtual address for doorbell registers */
-static void __iomem **pcc_doorbell_vaddr;
-/* Array of cached virtual address for doorbell ack registers */
-static void __iomem **pcc_doorbell_ack_vaddr;
-/* Array of doorbell interrupts */
-static int *pcc_doorbell_irq;
+/* Array of cached भव address क्रम करोorbell रेजिस्टरs */
+अटल व्योम __iomem **pcc_करोorbell_vaddr;
+/* Array of cached भव address क्रम करोorbell ack रेजिस्टरs */
+अटल व्योम __iomem **pcc_करोorbell_ack_vaddr;
+/* Array of करोorbell पूर्णांकerrupts */
+अटल पूर्णांक *pcc_करोorbell_irq;
 
-static struct mbox_controller pcc_mbox_ctrl = {};
+अटल काष्ठा mbox_controller pcc_mbox_ctrl = अणुपूर्ण;
 /**
  * get_pcc_channel - Given a PCC subspace idx, get
  *	the respective mbox_channel.
  * @id: PCC subspace index.
  *
- * Return: ERR_PTR(errno) if error, else pointer
+ * Return: ERR_PTR(त्रुटि_सं) अगर error, अन्यथा poपूर्णांकer
  *	to mbox channel.
  */
-static struct mbox_chan *get_pcc_channel(int id)
-{
-	if (id < 0 || id >= pcc_mbox_ctrl.num_chans)
-		return ERR_PTR(-ENOENT);
+अटल काष्ठा mbox_chan *get_pcc_channel(पूर्णांक id)
+अणु
+	अगर (id < 0 || id >= pcc_mbox_ctrl.num_chans)
+		वापस ERR_PTR(-ENOENT);
 
-	return &pcc_mbox_channels[id];
-}
+	वापस &pcc_mbox_channels[id];
+पूर्ण
 
 /*
  * PCC can be used with perf critical drivers such as CPPC
- * So it makes sense to locally cache the virtual address and
- * use it to read/write to PCC registers such as doorbell register
+ * So it makes sense to locally cache the भव address and
+ * use it to पढ़ो/ग_लिखो to PCC रेजिस्टरs such as करोorbell रेजिस्टर
  *
- * The below read_register and write_registers are used to read and
- * write from perf critical registers such as PCC doorbell register
+ * The below पढ़ो_रेजिस्टर and ग_लिखो_रेजिस्टरs are used to पढ़ो and
+ * ग_लिखो from perf critical रेजिस्टरs such as PCC करोorbell रेजिस्टर
  */
-static int read_register(void __iomem *vaddr, u64 *val, unsigned int bit_width)
-{
-	int ret_val = 0;
+अटल पूर्णांक पढ़ो_रेजिस्टर(व्योम __iomem *vaddr, u64 *val, अचिन्हित पूर्णांक bit_width)
+अणु
+	पूर्णांक ret_val = 0;
 
-	switch (bit_width) {
-	case 8:
-		*val = readb(vaddr);
-		break;
-	case 16:
-		*val = readw(vaddr);
-		break;
-	case 32:
-		*val = readl(vaddr);
-		break;
-	case 64:
-		*val = readq(vaddr);
-		break;
-	default:
+	चयन (bit_width) अणु
+	हाल 8:
+		*val = पढ़ोb(vaddr);
+		अवरोध;
+	हाल 16:
+		*val = पढ़ोw(vaddr);
+		अवरोध;
+	हाल 32:
+		*val = पढ़ोl(vaddr);
+		अवरोध;
+	हाल 64:
+		*val = पढ़ोq(vaddr);
+		अवरोध;
+	शेष:
 		pr_debug("Error: Cannot read register of %u bit width",
 			bit_width);
 		ret_val = -EFAULT;
-		break;
-	}
-	return ret_val;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret_val;
+पूर्ण
 
-static int write_register(void __iomem *vaddr, u64 val, unsigned int bit_width)
-{
-	int ret_val = 0;
+अटल पूर्णांक ग_लिखो_रेजिस्टर(व्योम __iomem *vaddr, u64 val, अचिन्हित पूर्णांक bit_width)
+अणु
+	पूर्णांक ret_val = 0;
 
-	switch (bit_width) {
-	case 8:
-		writeb(val, vaddr);
-		break;
-	case 16:
-		writew(val, vaddr);
-		break;
-	case 32:
-		writel(val, vaddr);
-		break;
-	case 64:
-		writeq(val, vaddr);
-		break;
-	default:
+	चयन (bit_width) अणु
+	हाल 8:
+		ग_लिखोb(val, vaddr);
+		अवरोध;
+	हाल 16:
+		ग_लिखोw(val, vaddr);
+		अवरोध;
+	हाल 32:
+		ग_लिखोl(val, vaddr);
+		अवरोध;
+	हाल 64:
+		ग_लिखोq(val, vaddr);
+		अवरोध;
+	शेष:
 		pr_debug("Error: Cannot write register of %u bit width",
 			bit_width);
 		ret_val = -EFAULT;
-		break;
-	}
-	return ret_val;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret_val;
+पूर्ण
 
 /**
- * pcc_map_interrupt - Map a PCC subspace GSI to a linux IRQ number
- * @interrupt: GSI number.
- * @flags: interrupt flags
+ * pcc_map_पूर्णांकerrupt - Map a PCC subspace GSI to a linux IRQ number
+ * @पूर्णांकerrupt: GSI number.
+ * @flags: पूर्णांकerrupt flags
  *
  * Returns: a valid linux IRQ number on success
  *		0 or -EINVAL on failure
  */
-static int pcc_map_interrupt(u32 interrupt, u32 flags)
-{
-	int trigger, polarity;
+अटल पूर्णांक pcc_map_पूर्णांकerrupt(u32 पूर्णांकerrupt, u32 flags)
+अणु
+	पूर्णांक trigger, polarity;
 
-	if (!interrupt)
-		return 0;
+	अगर (!पूर्णांकerrupt)
+		वापस 0;
 
 	trigger = (flags & ACPI_PCCT_INTERRUPT_MODE) ? ACPI_EDGE_SENSITIVE
 			: ACPI_LEVEL_SENSITIVE;
@@ -169,443 +170,443 @@ static int pcc_map_interrupt(u32 interrupt, u32 flags)
 	polarity = (flags & ACPI_PCCT_INTERRUPT_POLARITY) ? ACPI_ACTIVE_LOW
 			: ACPI_ACTIVE_HIGH;
 
-	return acpi_register_gsi(NULL, interrupt, trigger, polarity);
-}
+	वापस acpi_रेजिस्टर_gsi(शून्य, पूर्णांकerrupt, trigger, polarity);
+पूर्ण
 
 /**
- * pcc_mbox_irq - PCC mailbox interrupt handler
+ * pcc_mbox_irq - PCC mailbox पूर्णांकerrupt handler
  */
-static irqreturn_t pcc_mbox_irq(int irq, void *p)
-{
-	struct acpi_generic_address *doorbell_ack;
-	struct acpi_pcct_hw_reduced *pcct_ss;
-	struct mbox_chan *chan = p;
-	u64 doorbell_ack_preserve;
-	u64 doorbell_ack_write;
-	u64 doorbell_ack_val;
-	int ret;
+अटल irqवापस_t pcc_mbox_irq(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा acpi_generic_address *करोorbell_ack;
+	काष्ठा acpi_pcct_hw_reduced *pcct_ss;
+	काष्ठा mbox_chan *chan = p;
+	u64 करोorbell_ack_preserve;
+	u64 करोorbell_ack_ग_लिखो;
+	u64 करोorbell_ack_val;
+	पूर्णांक ret;
 
 	pcct_ss = chan->con_priv;
 
-	mbox_chan_received_data(chan, NULL);
+	mbox_chan_received_data(chan, शून्य);
 
-	if (pcct_ss->header.type == ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE_TYPE2) {
-		struct acpi_pcct_hw_reduced_type2 *pcct2_ss = chan->con_priv;
+	अगर (pcct_ss->header.type == ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE_TYPE2) अणु
+		काष्ठा acpi_pcct_hw_reduced_type2 *pcct2_ss = chan->con_priv;
 		u32 id = chan - pcc_mbox_channels;
 
-		doorbell_ack = &pcct2_ss->platform_ack_register;
-		doorbell_ack_preserve = pcct2_ss->ack_preserve_mask;
-		doorbell_ack_write = pcct2_ss->ack_write_mask;
+		करोorbell_ack = &pcct2_ss->platक्रमm_ack_रेजिस्टर;
+		करोorbell_ack_preserve = pcct2_ss->ack_preserve_mask;
+		करोorbell_ack_ग_लिखो = pcct2_ss->ack_ग_लिखो_mask;
 
-		ret = read_register(pcc_doorbell_ack_vaddr[id],
-				    &doorbell_ack_val,
-				    doorbell_ack->bit_width);
-		if (ret)
-			return IRQ_NONE;
+		ret = पढ़ो_रेजिस्टर(pcc_करोorbell_ack_vaddr[id],
+				    &करोorbell_ack_val,
+				    करोorbell_ack->bit_width);
+		अगर (ret)
+			वापस IRQ_NONE;
 
-		ret = write_register(pcc_doorbell_ack_vaddr[id],
-				     (doorbell_ack_val & doorbell_ack_preserve)
-					| doorbell_ack_write,
-				     doorbell_ack->bit_width);
-		if (ret)
-			return IRQ_NONE;
-	}
+		ret = ग_लिखो_रेजिस्टर(pcc_करोorbell_ack_vaddr[id],
+				     (करोorbell_ack_val & करोorbell_ack_preserve)
+					| करोorbell_ack_ग_लिखो,
+				     करोorbell_ack->bit_width);
+		अगर (ret)
+			वापस IRQ_NONE;
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * pcc_mbox_request_channel - PCC clients call this function to
- *		request a pointer to their PCC subspace, from which they
+ *		request a poपूर्णांकer to their PCC subspace, from which they
  *		can get the details of communicating with the remote.
- * @cl: Pointer to Mailbox client, so we know where to bind the
+ * @cl: Poपूर्णांकer to Mailbox client, so we know where to bind the
  *		Channel.
  * @subspace_id: The PCC Subspace index as parsed in the PCC client
  *		ACPI package. This is used to lookup the array of PCC
  *		subspaces as parsed by the PCC Mailbox controller.
  *
- * Return: Pointer to the Mailbox Channel if successful or
+ * Return: Poपूर्णांकer to the Mailbox Channel अगर successful or
  *		ERR_PTR.
  */
-struct mbox_chan *pcc_mbox_request_channel(struct mbox_client *cl,
-		int subspace_id)
-{
-	struct device *dev = pcc_mbox_ctrl.dev;
-	struct mbox_chan *chan;
-	unsigned long flags;
+काष्ठा mbox_chan *pcc_mbox_request_channel(काष्ठा mbox_client *cl,
+		पूर्णांक subspace_id)
+अणु
+	काष्ठा device *dev = pcc_mbox_ctrl.dev;
+	काष्ठा mbox_chan *chan;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * Each PCC Subspace is a Mailbox Channel.
 	 * The PCC Clients get their PCC Subspace ID
 	 * from their own tables and pass it here.
-	 * This returns a pointer to the PCC subspace
-	 * for the Client to operate on.
+	 * This वापसs a poपूर्णांकer to the PCC subspace
+	 * क्रम the Client to operate on.
 	 */
 	chan = get_pcc_channel(subspace_id);
 
-	if (IS_ERR(chan) || chan->cl) {
+	अगर (IS_ERR(chan) || chan->cl) अणु
 		dev_err(dev, "Channel not found for idx: %d\n", subspace_id);
-		return ERR_PTR(-EBUSY);
-	}
+		वापस ERR_PTR(-EBUSY);
+	पूर्ण
 
 	spin_lock_irqsave(&chan->lock, flags);
-	chan->msg_free = 0;
+	chan->msg_मुक्त = 0;
 	chan->msg_count = 0;
-	chan->active_req = NULL;
+	chan->active_req = शून्य;
 	chan->cl = cl;
 	init_completion(&chan->tx_complete);
 
-	if (chan->txdone_method == TXDONE_BY_POLL && cl->knows_txdone)
-		chan->txdone_method = TXDONE_BY_ACK;
+	अगर (chan->txकरोne_method == TXDONE_BY_POLL && cl->knows_txकरोne)
+		chan->txकरोne_method = TXDONE_BY_ACK;
 
 	spin_unlock_irqrestore(&chan->lock, flags);
 
-	if (pcc_doorbell_irq[subspace_id] > 0) {
-		int rc;
+	अगर (pcc_करोorbell_irq[subspace_id] > 0) अणु
+		पूर्णांक rc;
 
-		rc = devm_request_irq(dev, pcc_doorbell_irq[subspace_id],
+		rc = devm_request_irq(dev, pcc_करोorbell_irq[subspace_id],
 				      pcc_mbox_irq, 0, MBOX_IRQ_NAME, chan);
-		if (unlikely(rc)) {
+		अगर (unlikely(rc)) अणु
 			dev_err(dev, "failed to register PCC interrupt %d\n",
-				pcc_doorbell_irq[subspace_id]);
-			pcc_mbox_free_channel(chan);
+				pcc_करोorbell_irq[subspace_id]);
+			pcc_mbox_मुक्त_channel(chan);
 			chan = ERR_PTR(rc);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return chan;
-}
+	वापस chan;
+पूर्ण
 EXPORT_SYMBOL_GPL(pcc_mbox_request_channel);
 
 /**
- * pcc_mbox_free_channel - Clients call this to free their Channel.
+ * pcc_mbox_मुक्त_channel - Clients call this to मुक्त their Channel.
  *
- * @chan: Pointer to the mailbox channel as returned by
+ * @chan: Poपूर्णांकer to the mailbox channel as वापसed by
  *		pcc_mbox_request_channel()
  */
-void pcc_mbox_free_channel(struct mbox_chan *chan)
-{
+व्योम pcc_mbox_मुक्त_channel(काष्ठा mbox_chan *chan)
+अणु
 	u32 id = chan - pcc_mbox_channels;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (!chan || !chan->cl)
-		return;
+	अगर (!chan || !chan->cl)
+		वापस;
 
-	if (id >= pcc_mbox_ctrl.num_chans) {
+	अगर (id >= pcc_mbox_ctrl.num_chans) अणु
 		pr_debug("pcc_mbox_free_channel: Invalid mbox_chan passed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (pcc_doorbell_irq[id] > 0)
-		devm_free_irq(chan->mbox->dev, pcc_doorbell_irq[id], chan);
+	अगर (pcc_करोorbell_irq[id] > 0)
+		devm_मुक्त_irq(chan->mbox->dev, pcc_करोorbell_irq[id], chan);
 
 	spin_lock_irqsave(&chan->lock, flags);
-	chan->cl = NULL;
-	chan->active_req = NULL;
-	if (chan->txdone_method == TXDONE_BY_ACK)
-		chan->txdone_method = TXDONE_BY_POLL;
+	chan->cl = शून्य;
+	chan->active_req = शून्य;
+	अगर (chan->txकरोne_method == TXDONE_BY_ACK)
+		chan->txकरोne_method = TXDONE_BY_POLL;
 
 	spin_unlock_irqrestore(&chan->lock, flags);
-}
-EXPORT_SYMBOL_GPL(pcc_mbox_free_channel);
+पूर्ण
+EXPORT_SYMBOL_GPL(pcc_mbox_मुक्त_channel);
 
 /**
  * pcc_send_data - Called from Mailbox Controller code. Used
- *		here only to ring the channel doorbell. The PCC client
- *		specific read/write is done in the client driver in
- *		order to maintain atomicity over PCC channel once
- *		OS has control over it. See above for flow of operations.
- * @chan: Pointer to Mailbox channel over which to send data.
- * @data: Client specific data written over channel. Used here
- *		only for debug after PCC transaction completes.
+ *		here only to ring the channel करोorbell. The PCC client
+ *		specअगरic पढ़ो/ग_लिखो is करोne in the client driver in
+ *		order to मुख्यtain atomicity over PCC channel once
+ *		OS has control over it. See above क्रम flow of operations.
+ * @chan: Poपूर्णांकer to Mailbox channel over which to send data.
+ * @data: Client specअगरic data written over channel. Used here
+ *		only क्रम debug after PCC transaction completes.
  *
- * Return: Err if something failed else 0 for success.
+ * Return: Err अगर something failed अन्यथा 0 क्रम success.
  */
-static int pcc_send_data(struct mbox_chan *chan, void *data)
-{
-	struct acpi_pcct_hw_reduced *pcct_ss = chan->con_priv;
-	struct acpi_generic_address *doorbell;
-	u64 doorbell_preserve;
-	u64 doorbell_val;
-	u64 doorbell_write;
+अटल पूर्णांक pcc_send_data(काष्ठा mbox_chan *chan, व्योम *data)
+अणु
+	काष्ठा acpi_pcct_hw_reduced *pcct_ss = chan->con_priv;
+	काष्ठा acpi_generic_address *करोorbell;
+	u64 करोorbell_preserve;
+	u64 करोorbell_val;
+	u64 करोorbell_ग_लिखो;
 	u32 id = chan - pcc_mbox_channels;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (id >= pcc_mbox_ctrl.num_chans) {
+	अगर (id >= pcc_mbox_ctrl.num_chans) अणु
 		pr_debug("pcc_send_data: Invalid mbox_chan passed\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	doorbell = &pcct_ss->doorbell_register;
-	doorbell_preserve = pcct_ss->preserve_mask;
-	doorbell_write = pcct_ss->write_mask;
+	करोorbell = &pcct_ss->करोorbell_रेजिस्टर;
+	करोorbell_preserve = pcct_ss->preserve_mask;
+	करोorbell_ग_लिखो = pcct_ss->ग_लिखो_mask;
 
-	/* Sync notification from OS to Platform. */
-	if (pcc_doorbell_vaddr[id]) {
-		ret = read_register(pcc_doorbell_vaddr[id], &doorbell_val,
-			doorbell->bit_width);
-		if (ret)
-			return ret;
-		ret = write_register(pcc_doorbell_vaddr[id],
-			(doorbell_val & doorbell_preserve) | doorbell_write,
-			doorbell->bit_width);
-	} else {
-		ret = acpi_read(&doorbell_val, doorbell);
-		if (ret)
-			return ret;
-		ret = acpi_write((doorbell_val & doorbell_preserve) | doorbell_write,
-			doorbell);
-	}
-	return ret;
-}
+	/* Sync notअगरication from OS to Platक्रमm. */
+	अगर (pcc_करोorbell_vaddr[id]) अणु
+		ret = पढ़ो_रेजिस्टर(pcc_करोorbell_vaddr[id], &करोorbell_val,
+			करोorbell->bit_width);
+		अगर (ret)
+			वापस ret;
+		ret = ग_लिखो_रेजिस्टर(pcc_करोorbell_vaddr[id],
+			(करोorbell_val & करोorbell_preserve) | करोorbell_ग_लिखो,
+			करोorbell->bit_width);
+	पूर्ण अन्यथा अणु
+		ret = acpi_पढ़ो(&करोorbell_val, करोorbell);
+		अगर (ret)
+			वापस ret;
+		ret = acpi_ग_लिखो((करोorbell_val & करोorbell_preserve) | करोorbell_ग_लिखो,
+			करोorbell);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct mbox_chan_ops pcc_chan_ops = {
+अटल स्थिर काष्ठा mbox_chan_ops pcc_chan_ops = अणु
 	.send_data = pcc_send_data,
-};
+पूर्ण;
 
 /**
  * parse_pcc_subspaces -- Count PCC subspaces defined
- * @header: Pointer to the ACPI subtable header under the PCCT.
+ * @header: Poपूर्णांकer to the ACPI subtable header under the PCCT.
  * @end: End of subtable entry.
  *
- * Return: If we find a PCC subspace entry of a valid type, return 0.
- *	Otherwise, return -EINVAL.
+ * Return: If we find a PCC subspace entry of a valid type, वापस 0.
+ *	Otherwise, वापस -EINVAL.
  *
- * This gets called for each entry in the PCC table.
+ * This माला_लो called क्रम each entry in the PCC table.
  */
-static int parse_pcc_subspace(union acpi_subtable_headers *header,
-		const unsigned long end)
-{
-	struct acpi_pcct_subspace *ss = (struct acpi_pcct_subspace *) header;
+अटल पूर्णांक parse_pcc_subspace(जोड़ acpi_subtable_headers *header,
+		स्थिर अचिन्हित दीर्घ end)
+अणु
+	काष्ठा acpi_pcct_subspace *ss = (काष्ठा acpi_pcct_subspace *) header;
 
-	if (ss->header.type < ACPI_PCCT_TYPE_RESERVED)
-		return 0;
+	अगर (ss->header.type < ACPI_PCCT_TYPE_RESERVED)
+		वापस 0;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
- * pcc_parse_subspace_irq - Parse the PCC IRQ and PCC ACK register
+ * pcc_parse_subspace_irq - Parse the PCC IRQ and PCC ACK रेजिस्टर
  *		There should be one entry per PCC client.
  * @id: PCC subspace index.
- * @pcct_ss: Pointer to the ACPI subtable header under the PCCT.
+ * @pcct_ss: Poपूर्णांकer to the ACPI subtable header under the PCCT.
  *
- * Return: 0 for Success, else errno.
+ * Return: 0 क्रम Success, अन्यथा त्रुटि_सं.
  *
- * This gets called for each entry in the PCC table.
+ * This माला_लो called क्रम each entry in the PCC table.
  */
-static int pcc_parse_subspace_irq(int id,
-				  struct acpi_pcct_hw_reduced *pcct_ss)
-{
-	pcc_doorbell_irq[id] = pcc_map_interrupt(pcct_ss->platform_interrupt,
+अटल पूर्णांक pcc_parse_subspace_irq(पूर्णांक id,
+				  काष्ठा acpi_pcct_hw_reduced *pcct_ss)
+अणु
+	pcc_करोorbell_irq[id] = pcc_map_पूर्णांकerrupt(pcct_ss->platक्रमm_पूर्णांकerrupt,
 						 (u32)pcct_ss->flags);
-	if (pcc_doorbell_irq[id] <= 0) {
+	अगर (pcc_करोorbell_irq[id] <= 0) अणु
 		pr_err("PCC GSI %d not registered\n",
-		       pcct_ss->platform_interrupt);
-		return -EINVAL;
-	}
+		       pcct_ss->platक्रमm_पूर्णांकerrupt);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pcct_ss->header.type
-		== ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE_TYPE2) {
-		struct acpi_pcct_hw_reduced_type2 *pcct2_ss = (void *)pcct_ss;
+	अगर (pcct_ss->header.type
+		== ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE_TYPE2) अणु
+		काष्ठा acpi_pcct_hw_reduced_type2 *pcct2_ss = (व्योम *)pcct_ss;
 
-		pcc_doorbell_ack_vaddr[id] = acpi_os_ioremap(
-				pcct2_ss->platform_ack_register.address,
-				pcct2_ss->platform_ack_register.bit_width / 8);
-		if (!pcc_doorbell_ack_vaddr[id]) {
+		pcc_करोorbell_ack_vaddr[id] = acpi_os_ioremap(
+				pcct2_ss->platक्रमm_ack_रेजिस्टर.address,
+				pcct2_ss->platक्रमm_ack_रेजिस्टर.bit_width / 8);
+		अगर (!pcc_करोorbell_ack_vaddr[id]) अणु
 			pr_err("Failed to ioremap PCC ACK register\n");
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * acpi_pcc_probe - Parse the ACPI tree for the PCCT.
+ * acpi_pcc_probe - Parse the ACPI tree क्रम the PCCT.
  *
- * Return: 0 for Success, else errno.
+ * Return: 0 क्रम Success, अन्यथा त्रुटि_सं.
  */
-static int __init acpi_pcc_probe(void)
-{
-	struct acpi_table_header *pcct_tbl;
-	struct acpi_subtable_header *pcct_entry;
-	struct acpi_table_pcct *acpi_pcct_tbl;
-	struct acpi_subtable_proc proc[ACPI_PCCT_TYPE_RESERVED];
-	int count, i, rc;
+अटल पूर्णांक __init acpi_pcc_probe(व्योम)
+अणु
+	काष्ठा acpi_table_header *pcct_tbl;
+	काष्ठा acpi_subtable_header *pcct_entry;
+	काष्ठा acpi_table_pcct *acpi_pcct_tbl;
+	काष्ठा acpi_subtable_proc proc[ACPI_PCCT_TYPE_RESERVED];
+	पूर्णांक count, i, rc;
 	acpi_status status = AE_OK;
 
-	/* Search for PCCT */
+	/* Search क्रम PCCT */
 	status = acpi_get_table(ACPI_SIG_PCCT, 0, &pcct_tbl);
 
-	if (ACPI_FAILURE(status) || !pcct_tbl)
-		return -ENODEV;
+	अगर (ACPI_FAILURE(status) || !pcct_tbl)
+		वापस -ENODEV;
 
 	/* Set up the subtable handlers */
-	for (i = ACPI_PCCT_TYPE_GENERIC_SUBSPACE;
-	     i < ACPI_PCCT_TYPE_RESERVED; i++) {
+	क्रम (i = ACPI_PCCT_TYPE_GENERIC_SUBSPACE;
+	     i < ACPI_PCCT_TYPE_RESERVED; i++) अणु
 		proc[i].id = i;
 		proc[i].count = 0;
 		proc[i].handler = parse_pcc_subspace;
-	}
+	पूर्ण
 
 	count = acpi_table_parse_entries_array(ACPI_SIG_PCCT,
-			sizeof(struct acpi_table_pcct), proc,
+			माप(काष्ठा acpi_table_pcct), proc,
 			ACPI_PCCT_TYPE_RESERVED, MAX_PCC_SUBSPACES);
-	if (count <= 0 || count > MAX_PCC_SUBSPACES) {
-		if (count < 0)
+	अगर (count <= 0 || count > MAX_PCC_SUBSPACES) अणु
+		अगर (count < 0)
 			pr_warn("Error parsing PCC subspaces from PCCT\n");
-		else
+		अन्यथा
 			pr_warn("Invalid PCCT: %d PCC subspaces\n", count);
 
 		rc = -EINVAL;
-		goto err_put_pcct;
-	}
+		जाओ err_put_pcct;
+	पूर्ण
 
-	pcc_mbox_channels = kcalloc(count, sizeof(struct mbox_chan),
+	pcc_mbox_channels = kसुस्मृति(count, माप(काष्ठा mbox_chan),
 				    GFP_KERNEL);
-	if (!pcc_mbox_channels) {
+	अगर (!pcc_mbox_channels) अणु
 		pr_err("Could not allocate space for PCC mbox channels\n");
 		rc = -ENOMEM;
-		goto err_put_pcct;
-	}
+		जाओ err_put_pcct;
+	पूर्ण
 
-	pcc_doorbell_vaddr = kcalloc(count, sizeof(void *), GFP_KERNEL);
-	if (!pcc_doorbell_vaddr) {
+	pcc_करोorbell_vaddr = kसुस्मृति(count, माप(व्योम *), GFP_KERNEL);
+	अगर (!pcc_करोorbell_vaddr) अणु
 		rc = -ENOMEM;
-		goto err_free_mbox;
-	}
+		जाओ err_मुक्त_mbox;
+	पूर्ण
 
-	pcc_doorbell_ack_vaddr = kcalloc(count, sizeof(void *), GFP_KERNEL);
-	if (!pcc_doorbell_ack_vaddr) {
+	pcc_करोorbell_ack_vaddr = kसुस्मृति(count, माप(व्योम *), GFP_KERNEL);
+	अगर (!pcc_करोorbell_ack_vaddr) अणु
 		rc = -ENOMEM;
-		goto err_free_db_vaddr;
-	}
+		जाओ err_मुक्त_db_vaddr;
+	पूर्ण
 
-	pcc_doorbell_irq = kcalloc(count, sizeof(int), GFP_KERNEL);
-	if (!pcc_doorbell_irq) {
+	pcc_करोorbell_irq = kसुस्मृति(count, माप(पूर्णांक), GFP_KERNEL);
+	अगर (!pcc_करोorbell_irq) अणु
 		rc = -ENOMEM;
-		goto err_free_db_ack_vaddr;
-	}
+		जाओ err_मुक्त_db_ack_vaddr;
+	पूर्ण
 
-	/* Point to the first PCC subspace entry */
-	pcct_entry = (struct acpi_subtable_header *) (
-		(unsigned long) pcct_tbl + sizeof(struct acpi_table_pcct));
+	/* Poपूर्णांक to the first PCC subspace entry */
+	pcct_entry = (काष्ठा acpi_subtable_header *) (
+		(अचिन्हित दीर्घ) pcct_tbl + माप(काष्ठा acpi_table_pcct));
 
-	acpi_pcct_tbl = (struct acpi_table_pcct *) pcct_tbl;
-	if (acpi_pcct_tbl->flags & ACPI_PCCT_DOORBELL)
-		pcc_mbox_ctrl.txdone_irq = true;
+	acpi_pcct_tbl = (काष्ठा acpi_table_pcct *) pcct_tbl;
+	अगर (acpi_pcct_tbl->flags & ACPI_PCCT_DOORBELL)
+		pcc_mbox_ctrl.txकरोne_irq = true;
 
-	for (i = 0; i < count; i++) {
-		struct acpi_generic_address *db_reg;
-		struct acpi_pcct_subspace *pcct_ss;
+	क्रम (i = 0; i < count; i++) अणु
+		काष्ठा acpi_generic_address *db_reg;
+		काष्ठा acpi_pcct_subspace *pcct_ss;
 		pcc_mbox_channels[i].con_priv = pcct_entry;
 
-		if (pcct_entry->type == ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE ||
-		    pcct_entry->type == ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE_TYPE2) {
-			struct acpi_pcct_hw_reduced *pcct_hrss;
+		अगर (pcct_entry->type == ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE ||
+		    pcct_entry->type == ACPI_PCCT_TYPE_HW_REDUCED_SUBSPACE_TYPE2) अणु
+			काष्ठा acpi_pcct_hw_reduced *pcct_hrss;
 
-			pcct_hrss = (struct acpi_pcct_hw_reduced *) pcct_entry;
+			pcct_hrss = (काष्ठा acpi_pcct_hw_reduced *) pcct_entry;
 
-			if (pcc_mbox_ctrl.txdone_irq) {
+			अगर (pcc_mbox_ctrl.txकरोne_irq) अणु
 				rc = pcc_parse_subspace_irq(i, pcct_hrss);
-				if (rc < 0)
-					goto err;
-			}
-		}
-		pcct_ss = (struct acpi_pcct_subspace *) pcct_entry;
+				अगर (rc < 0)
+					जाओ err;
+			पूर्ण
+		पूर्ण
+		pcct_ss = (काष्ठा acpi_pcct_subspace *) pcct_entry;
 
-		/* If doorbell is in system memory cache the virt address */
-		db_reg = &pcct_ss->doorbell_register;
-		if (db_reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
-			pcc_doorbell_vaddr[i] = acpi_os_ioremap(db_reg->address,
+		/* If करोorbell is in प्रणाली memory cache the virt address */
+		db_reg = &pcct_ss->करोorbell_रेजिस्टर;
+		अगर (db_reg->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
+			pcc_करोorbell_vaddr[i] = acpi_os_ioremap(db_reg->address,
 							db_reg->bit_width/8);
-		pcct_entry = (struct acpi_subtable_header *)
-			((unsigned long) pcct_entry + pcct_entry->length);
-	}
+		pcct_entry = (काष्ठा acpi_subtable_header *)
+			((अचिन्हित दीर्घ) pcct_entry + pcct_entry->length);
+	पूर्ण
 
 	pcc_mbox_ctrl.num_chans = count;
 
 	pr_info("Detected %d PCC Subspaces\n", pcc_mbox_ctrl.num_chans);
 
-	return 0;
+	वापस 0;
 
 err:
-	kfree(pcc_doorbell_irq);
-err_free_db_ack_vaddr:
-	kfree(pcc_doorbell_ack_vaddr);
-err_free_db_vaddr:
-	kfree(pcc_doorbell_vaddr);
-err_free_mbox:
-	kfree(pcc_mbox_channels);
+	kमुक्त(pcc_करोorbell_irq);
+err_मुक्त_db_ack_vaddr:
+	kमुक्त(pcc_करोorbell_ack_vaddr);
+err_मुक्त_db_vaddr:
+	kमुक्त(pcc_करोorbell_vaddr);
+err_मुक्त_mbox:
+	kमुक्त(pcc_mbox_channels);
 err_put_pcct:
 	acpi_put_table(pcct_tbl);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * pcc_mbox_probe - Called when we find a match for the
- *	PCCT platform device. This is purely used to represent
- *	the PCCT as a virtual device for registering with the
+ * pcc_mbox_probe - Called when we find a match क्रम the
+ *	PCCT platक्रमm device. This is purely used to represent
+ *	the PCCT as a भव device क्रम रेजिस्टरing with the
  *	generic Mailbox framework.
  *
- * @pdev: Pointer to platform device returned when a match
+ * @pdev: Poपूर्णांकer to platक्रमm device वापसed when a match
  *	is found.
  *
- *	Return: 0 for Success, else errno.
+ *	Return: 0 क्रम Success, अन्यथा त्रुटि_सं.
  */
-static int pcc_mbox_probe(struct platform_device *pdev)
-{
-	int ret = 0;
+अटल पूर्णांक pcc_mbox_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret = 0;
 
 	pcc_mbox_ctrl.chans = pcc_mbox_channels;
 	pcc_mbox_ctrl.ops = &pcc_chan_ops;
 	pcc_mbox_ctrl.dev = &pdev->dev;
 
 	pr_info("Registering PCC driver as Mailbox controller\n");
-	ret = mbox_controller_register(&pcc_mbox_ctrl);
+	ret = mbox_controller_रेजिस्टर(&pcc_mbox_ctrl);
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Err registering PCC as Mailbox controller: %d\n", ret);
 		ret = -ENODEV;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver pcc_mbox_driver = {
+अटल काष्ठा platक्रमm_driver pcc_mbox_driver = अणु
 	.probe = pcc_mbox_probe,
-	.driver = {
+	.driver = अणु
 		.name = "PCCT",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init pcc_init(void)
-{
-	int ret;
-	struct platform_device *pcc_pdev;
+अटल पूर्णांक __init pcc_init(व्योम)
+अणु
+	पूर्णांक ret;
+	काष्ठा platक्रमm_device *pcc_pdev;
 
-	if (acpi_disabled)
-		return -ENODEV;
+	अगर (acpi_disabled)
+		वापस -ENODEV;
 
-	/* Check if PCC support is available. */
+	/* Check अगर PCC support is available. */
 	ret = acpi_pcc_probe();
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_debug("ACPI PCC probe failed.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	pcc_pdev = platform_create_bundle(&pcc_mbox_driver,
-			pcc_mbox_probe, NULL, 0, NULL, 0);
+	pcc_pdev = platक्रमm_create_bundle(&pcc_mbox_driver,
+			pcc_mbox_probe, शून्य, 0, शून्य, 0);
 
-	if (IS_ERR(pcc_pdev)) {
+	अगर (IS_ERR(pcc_pdev)) अणु
 		pr_debug("Err creating PCC platform bundle\n");
-		return PTR_ERR(pcc_pdev);
-	}
+		वापस PTR_ERR(pcc_pdev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Make PCC init postcore so that users of this mailbox

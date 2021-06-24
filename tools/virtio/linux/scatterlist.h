@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef SCATTERLIST_H
-#define SCATTERLIST_H
-#include <linux/kernel.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित SCATTERLIST_H
+#घोषणा SCATTERLIST_H
+#समावेश <linux/kernel.h>
 
-struct scatterlist {
-	unsigned long	page_link;
-	unsigned int	offset;
-	unsigned int	length;
+काष्ठा scatterlist अणु
+	अचिन्हित दीर्घ	page_link;
+	अचिन्हित पूर्णांक	offset;
+	अचिन्हित पूर्णांक	length;
 	dma_addr_t	dma_address;
-};
+पूर्ण;
 
 /* Scatterlist helpers, stolen from linux/scatterlist.h */
-#define sg_is_chain(sg)		((sg)->page_link & 0x01)
-#define sg_is_last(sg)		((sg)->page_link & 0x02)
-#define sg_chain_ptr(sg)	\
-	((struct scatterlist *) ((sg)->page_link & ~0x03))
+#घोषणा sg_is_chain(sg)		((sg)->page_link & 0x01)
+#घोषणा sg_is_last(sg)		((sg)->page_link & 0x02)
+#घोषणा sg_chain_ptr(sg)	\
+	((काष्ठा scatterlist *) ((sg)->page_link & ~0x03))
 
 /**
  * sg_assign_page - Assign a given page to an SG entry
@@ -26,56 +27,56 @@ struct scatterlist {
  *   variant.
  *
  **/
-static inline void sg_assign_page(struct scatterlist *sg, struct page *page)
-{
-	unsigned long page_link = sg->page_link & 0x3;
+अटल अंतरभूत व्योम sg_assign_page(काष्ठा scatterlist *sg, काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ page_link = sg->page_link & 0x3;
 
 	/*
-	 * In order for the low bit stealing approach to work, pages
+	 * In order क्रम the low bit stealing approach to work, pages
 	 * must be aligned at a 32-bit boundary as a minimum.
 	 */
-	BUG_ON((unsigned long) page & 0x03);
-#ifdef CONFIG_DEBUG_SG
+	BUG_ON((अचिन्हित दीर्घ) page & 0x03);
+#अगर_घोषित CONFIG_DEBUG_SG
 	BUG_ON(sg_is_chain(sg));
-#endif
-	sg->page_link = page_link | (unsigned long) page;
-}
+#पूर्ण_अगर
+	sg->page_link = page_link | (अचिन्हित दीर्घ) page;
+पूर्ण
 
 /**
- * sg_set_page - Set sg entry to point at given page
+ * sg_set_page - Set sg entry to poपूर्णांक at given page
  * @sg:		 SG entry
  * @page:	 The page
  * @len:	 Length of data
- * @offset:	 Offset into page
+ * @offset:	 Offset पूर्णांकo page
  *
  * Description:
- *   Use this function to set an sg entry pointing at a page, never assign
- *   the page directly. We encode sg table information in the lower bits
- *   of the page pointer. See sg_page() for looking up the page belonging
+ *   Use this function to set an sg entry poपूर्णांकing at a page, never assign
+ *   the page directly. We encode sg table inक्रमmation in the lower bits
+ *   of the page poपूर्णांकer. See sg_page() क्रम looking up the page beदीर्घing
  *   to an sg entry.
  *
  **/
-static inline void sg_set_page(struct scatterlist *sg, struct page *page,
-			       unsigned int len, unsigned int offset)
-{
+अटल अंतरभूत व्योम sg_set_page(काष्ठा scatterlist *sg, काष्ठा page *page,
+			       अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक offset)
+अणु
 	sg_assign_page(sg, page);
 	sg->offset = offset;
 	sg->length = len;
-}
+पूर्ण
 
-static inline struct page *sg_page(struct scatterlist *sg)
-{
-#ifdef CONFIG_DEBUG_SG
+अटल अंतरभूत काष्ठा page *sg_page(काष्ठा scatterlist *sg)
+अणु
+#अगर_घोषित CONFIG_DEBUG_SG
 	BUG_ON(sg_is_chain(sg));
-#endif
-	return (struct page *)((sg)->page_link & ~0x3);
-}
+#पूर्ण_अगर
+	वापस (काष्ठा page *)((sg)->page_link & ~0x3);
+पूर्ण
 
 /*
- * Loop over each sg element, following the pointer to a new list if necessary
+ * Loop over each sg element, following the poपूर्णांकer to a new list अगर necessary
  */
-#define for_each_sg(sglist, sg, nr, __i)	\
-	for (__i = 0, sg = (sglist); __i < (nr); __i++, sg = sg_next(sg))
+#घोषणा क्रम_each_sg(sglist, sg, nr, __i)	\
+	क्रम (__i = 0, sg = (sglist); __i < (nr); __i++, sg = sg_next(sg))
 
 /**
  * sg_chain - Chain two sglists together
@@ -84,89 +85,89 @@ static inline struct page *sg_page(struct scatterlist *sg)
  * @sgl:	Second scatterlist
  *
  * Description:
- *   Links @prv@ and @sgl@ together, to form a longer scatterlist.
+ *   Links @prv@ and @sgl@ together, to क्रमm a दीर्घer scatterlist.
  *
  **/
-static inline void sg_chain(struct scatterlist *prv, unsigned int prv_nents,
-			    struct scatterlist *sgl)
-{
+अटल अंतरभूत व्योम sg_chain(काष्ठा scatterlist *prv, अचिन्हित पूर्णांक prv_nents,
+			    काष्ठा scatterlist *sgl)
+अणु
 	/*
-	 * offset and length are unused for chain entry.  Clear them.
+	 * offset and length are unused क्रम chain entry.  Clear them.
 	 */
 	prv[prv_nents - 1].offset = 0;
 	prv[prv_nents - 1].length = 0;
 
 	/*
-	 * Set lowest bit to indicate a link pointer, and make sure to clear
-	 * the termination bit if it happens to be set.
+	 * Set lowest bit to indicate a link poपूर्णांकer, and make sure to clear
+	 * the termination bit अगर it happens to be set.
 	 */
-	prv[prv_nents - 1].page_link = ((unsigned long) sgl | 0x01) & ~0x02;
-}
+	prv[prv_nents - 1].page_link = ((अचिन्हित दीर्घ) sgl | 0x01) & ~0x02;
+पूर्ण
 
 /**
  * sg_mark_end - Mark the end of the scatterlist
  * @sg:		 SG entryScatterlist
  *
  * Description:
- *   Marks the passed in sg entry as the termination point for the sg
- *   table. A call to sg_next() on this entry will return NULL.
+ *   Marks the passed in sg entry as the termination poपूर्णांक क्रम the sg
+ *   table. A call to sg_next() on this entry will वापस शून्य.
  *
  **/
-static inline void sg_mark_end(struct scatterlist *sg)
-{
+अटल अंतरभूत व्योम sg_mark_end(काष्ठा scatterlist *sg)
+अणु
 	/*
 	 * Set termination bit, clear potential chain bit
 	 */
 	sg->page_link |= 0x02;
 	sg->page_link &= ~0x01;
-}
+पूर्ण
 
 /**
- * sg_unmark_end - Undo setting the end of the scatterlist
+ * sg_unmark_end - Unकरो setting the end of the scatterlist
  * @sg:		 SG entryScatterlist
  *
  * Description:
  *   Removes the termination marker from the given entry of the scatterlist.
  *
  **/
-static inline void sg_unmark_end(struct scatterlist *sg)
-{
+अटल अंतरभूत व्योम sg_unmark_end(काष्ठा scatterlist *sg)
+अणु
 	sg->page_link &= ~0x02;
-}
+पूर्ण
 
-static inline struct scatterlist *sg_next(struct scatterlist *sg)
-{
-	if (sg_is_last(sg))
-		return NULL;
+अटल अंतरभूत काष्ठा scatterlist *sg_next(काष्ठा scatterlist *sg)
+अणु
+	अगर (sg_is_last(sg))
+		वापस शून्य;
 
 	sg++;
-	if (unlikely(sg_is_chain(sg)))
+	अगर (unlikely(sg_is_chain(sg)))
 		sg = sg_chain_ptr(sg);
 
-	return sg;
-}
+	वापस sg;
+पूर्ण
 
-static inline void sg_init_table(struct scatterlist *sgl, unsigned int nents)
-{
-	memset(sgl, 0, sizeof(*sgl) * nents);
+अटल अंतरभूत व्योम sg_init_table(काष्ठा scatterlist *sgl, अचिन्हित पूर्णांक nents)
+अणु
+	स_रखो(sgl, 0, माप(*sgl) * nents);
 	sg_mark_end(&sgl[nents - 1]);
-}
+पूर्ण
 
-static inline dma_addr_t sg_phys(struct scatterlist *sg)
-{
-	return page_to_phys(sg_page(sg)) + sg->offset;
-}
+अटल अंतरभूत dma_addr_t sg_phys(काष्ठा scatterlist *sg)
+अणु
+	वापस page_to_phys(sg_page(sg)) + sg->offset;
+पूर्ण
 
-static inline void sg_set_buf(struct scatterlist *sg, const void *buf,
-			      unsigned int buflen)
-{
+अटल अंतरभूत व्योम sg_set_buf(काष्ठा scatterlist *sg, स्थिर व्योम *buf,
+			      अचिन्हित पूर्णांक buflen)
+अणु
 	sg_set_page(sg, virt_to_page(buf), buflen, offset_in_page(buf));
-}
+पूर्ण
 
-static inline void sg_init_one(struct scatterlist *sg,
-			       const void *buf, unsigned int buflen)
-{
+अटल अंतरभूत व्योम sg_init_one(काष्ठा scatterlist *sg,
+			       स्थिर व्योम *buf, अचिन्हित पूर्णांक buflen)
+अणु
 	sg_init_table(sg, 1);
 	sg_set_buf(sg, buf, buflen);
-}
-#endif /* SCATTERLIST_H */
+पूर्ण
+#पूर्ण_अगर /* SCATTERLIST_H */

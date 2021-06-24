@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio T4 Ethernet driver for Linux.
+ * This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
  *
  * Copyright (c) 2003-2014 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,39 +33,39 @@
  * SOFTWARE.
  */
 
-#ifndef __CXGB4_DEBUGFS_H
-#define __CXGB4_DEBUGFS_H
+#अगर_अघोषित __CXGB4_DEBUGFS_H
+#घोषणा __CXGB4_DEBUGFS_H
 
-#include <linux/export.h>
+#समावेश <linux/export.h>
 
-struct t4_debugfs_entry {
-	const char *name;
-	const struct file_operations *ops;
+काष्ठा t4_debugfs_entry अणु
+	स्थिर अक्षर *name;
+	स्थिर काष्ठा file_operations *ops;
 	umode_t mode;
-	unsigned char data;
-};
+	अचिन्हित अक्षर data;
+पूर्ण;
 
-struct seq_tab {
-	int (*show)(struct seq_file *seq, void *v, int idx);
-	unsigned int rows;        /* # of entries */
-	unsigned char width;      /* size in bytes of each entry */
-	unsigned char skip_first; /* whether the first line is a header */
-	char data[];             /* the table data */
-};
+काष्ठा seq_tab अणु
+	पूर्णांक (*show)(काष्ठा seq_file *seq, व्योम *v, पूर्णांक idx);
+	अचिन्हित पूर्णांक rows;        /* # of entries */
+	अचिन्हित अक्षर width;      /* size in bytes of each entry */
+	अचिन्हित अक्षर skip_first; /* whether the first line is a header */
+	अक्षर data[];             /* the table data */
+पूर्ण;
 
-static inline unsigned int hex2val(char c)
-{
-	return isdigit(c) ? c - '0' : tolower(c) - 'a' + 10;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक hex2val(अक्षर c)
+अणु
+	वापस है_अंक(c) ? c - '0' : tolower(c) - 'a' + 10;
+पूर्ण
 
-struct seq_tab *seq_open_tab(struct file *f, unsigned int rows,
-			     unsigned int width, unsigned int have_header,
-			     int (*show)(struct seq_file *seq, void *v, int i));
+काष्ठा seq_tab *seq_खोलो_tab(काष्ठा file *f, अचिन्हित पूर्णांक rows,
+			     अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक have_header,
+			     पूर्णांक (*show)(काष्ठा seq_file *seq, व्योम *v, पूर्णांक i));
 
-int t4_setup_debugfs(struct adapter *adap);
-void add_debugfs_files(struct adapter *adap,
-		       struct t4_debugfs_entry *files,
-		       unsigned int nfiles);
-int mem_open(struct inode *inode, struct file *file);
+पूर्णांक t4_setup_debugfs(काष्ठा adapter *adap);
+व्योम add_debugfs_files(काष्ठा adapter *adap,
+		       काष्ठा t4_debugfs_entry *files,
+		       अचिन्हित पूर्णांक nfiles);
+पूर्णांक mem_खोलो(काष्ठा inode *inode, काष्ठा file *file);
 
-#endif
+#पूर्ण_अगर

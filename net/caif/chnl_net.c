@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Authors:	Sjur Brendeland
  *		Daniel Martensson
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/if_ether.h>
-#include <linux/ip.h>
-#include <linux/sched.h>
-#include <linux/sockios.h>
-#include <linux/caif/if_caif.h>
-#include <net/rtnetlink.h>
-#include <net/caif/caif_layer.h>
-#include <net/caif/cfpkt.h>
-#include <net/caif/caif_dev.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sockios.h>
+#समावेश <linux/caअगर/अगर_caअगर.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/cfpkt.h>
+#समावेश <net/caअगर/caअगर_dev.h>
 
 /* GPRS PDP connection has MTU to 1500 */
-#define GPRS_PDP_MTU 1500
-/* 5 sec. connect timeout */
-#define CONNECT_TIMEOUT (5 * HZ)
-#define CAIF_NET_DEFAULT_QUEUE_LEN 500
-#define UNDEF_CONNID 0xffffffff
+#घोषणा GPRS_PDP_MTU 1500
+/* 5 sec. connect समयout */
+#घोषणा CONNECT_TIMEOUT (5 * HZ)
+#घोषणा CAIF_NET_DEFAULT_QUEUE_LEN 500
+#घोषणा UNDEF_CONNID 0xffffffff
 
-/*This list is protected by the rtnl lock. */
-static LIST_HEAD(chnl_net_list);
+/*This list is रक्षित by the rtnl lock. */
+अटल LIST_HEAD(chnl_net_list);
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_RTNL_LINK("caif");
 
-enum caif_states {
+क्रमागत caअगर_states अणु
 	CAIF_CONNECTED		= 1,
 	CAIF_CONNECTING,
 	CAIF_DISCONNECTED,
 	CAIF_SHUTDOWN
-};
+पूर्ण;
 
-struct chnl_net {
-	struct cflayer chnl;
-	struct caif_connect_request conn_req;
-	struct list_head list_field;
-	struct net_device *netdev;
-	char name[256];
-	wait_queue_head_t netmgmt_wq;
+काष्ठा chnl_net अणु
+	काष्ठा cflayer chnl;
+	काष्ठा caअगर_connect_request conn_req;
+	काष्ठा list_head list_field;
+	काष्ठा net_device *netdev;
+	अक्षर name[256];
+	रुको_queue_head_t neपंचांगgmt_wq;
 	/* Flow status to remember and control the transmission. */
 	bool flowenabled;
-	enum caif_states state;
-};
+	क्रमागत caअगर_states state;
+पूर्ण;
 
-static void robust_list_del(struct list_head *delete_node)
-{
-	struct list_head *list_node;
-	struct list_head *n;
+अटल व्योम robust_list_del(काष्ठा list_head *delete_node)
+अणु
+	काष्ठा list_head *list_node;
+	काष्ठा list_head *n;
 	ASSERT_RTNL();
-	list_for_each_safe(list_node, n, &chnl_net_list) {
-		if (list_node == delete_node) {
+	list_क्रम_each_safe(list_node, n, &chnl_net_list) अणु
+		अगर (list_node == delete_node) अणु
 			list_del(list_node);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	WARN_ON(1);
-}
+पूर्ण
 
-static int chnl_recv_cb(struct cflayer *layr, struct cfpkt *pkt)
-{
-	struct sk_buff *skb;
-	struct chnl_net *priv;
-	int pktlen;
-	const u8 *ip_version;
+अटल पूर्णांक chnl_recv_cb(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा chnl_net *priv;
+	पूर्णांक pktlen;
+	स्थिर u8 *ip_version;
 	u8 buf;
 
-	priv = container_of(layr, struct chnl_net, chnl);
-	if (!priv)
-		return -EINVAL;
+	priv = container_of(layr, काष्ठा chnl_net, chnl);
+	अगर (!priv)
+		वापस -EINVAL;
 
-	skb = (struct sk_buff *) cfpkt_tonative(pkt);
+	skb = (काष्ठा sk_buff *) cfpkt_tonative(pkt);
 
 	/* Get length of CAIF packet. */
 	pktlen = skb->len;
 
-	/* Pass some minimum information and
+	/* Pass some minimum inक्रमmation and
 	 * send the packet to the net stack.
 	 */
 	skb->dev = priv->netdev;
 
 	/* check the version of IP */
-	ip_version = skb_header_pointer(skb, 0, 1, &buf);
-	if (!ip_version) {
-		kfree_skb(skb);
-		return -EINVAL;
-	}
+	ip_version = skb_header_poपूर्णांकer(skb, 0, 1, &buf);
+	अगर (!ip_version) अणु
+		kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (*ip_version >> 4) {
-	case 4:
+	चयन (*ip_version >> 4) अणु
+	हाल 4:
 		skb->protocol = htons(ETH_P_IP);
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		skb->protocol = htons(ETH_P_IPV6);
-		break;
-	default:
-		kfree_skb(skb);
+		अवरोध;
+	शेष:
+		kमुक्त_skb(skb);
 		priv->netdev->stats.rx_errors++;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* If we change the header in loop mode, the checksum is corrupted. */
-	if (priv->conn_req.protocol == CAIFPROTO_DATAGRAM_LOOP)
+	अगर (priv->conn_req.protocol == CAIFPROTO_DATAGRAM_LOOP)
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
-	else
+	अन्यथा
 		skb->ip_summed = CHECKSUM_NONE;
 
-	netif_rx_any_context(skb);
+	netअगर_rx_any_context(skb);
 
 	/* Update statistics. */
 	priv->netdev->stats.rx_packets++;
 	priv->netdev->stats.rx_bytes += pktlen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int delete_device(struct chnl_net *dev)
-{
+अटल पूर्णांक delete_device(काष्ठा chnl_net *dev)
+अणु
 	ASSERT_RTNL();
-	if (dev->netdev)
-		unregister_netdevice(dev->netdev);
-	return 0;
-}
+	अगर (dev->netdev)
+		unरेजिस्टर_netdevice(dev->netdev);
+	वापस 0;
+पूर्ण
 
-static void close_work(struct work_struct *work)
-{
-	struct chnl_net *dev = NULL;
-	struct list_head *list_node;
-	struct list_head *_tmp;
+अटल व्योम बंद_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा chnl_net *dev = शून्य;
+	काष्ठा list_head *list_node;
+	काष्ठा list_head *_पंचांगp;
 
 	rtnl_lock();
-	list_for_each_safe(list_node, _tmp, &chnl_net_list) {
-		dev = list_entry(list_node, struct chnl_net, list_field);
-		if (dev->state == CAIF_SHUTDOWN)
-			dev_close(dev->netdev);
-	}
+	list_क्रम_each_safe(list_node, _पंचांगp, &chnl_net_list) अणु
+		dev = list_entry(list_node, काष्ठा chnl_net, list_field);
+		अगर (dev->state == CAIF_SHUTDOWN)
+			dev_बंद(dev->netdev);
+	पूर्ण
 	rtnl_unlock();
-}
-static DECLARE_WORK(close_worker, close_work);
+पूर्ण
+अटल DECLARE_WORK(बंद_worker, बंद_work);
 
-static void chnl_hold(struct cflayer *lyr)
-{
-	struct chnl_net *priv = container_of(lyr, struct chnl_net, chnl);
+अटल व्योम chnl_hold(काष्ठा cflayer *lyr)
+अणु
+	काष्ठा chnl_net *priv = container_of(lyr, काष्ठा chnl_net, chnl);
 	dev_hold(priv->netdev);
-}
+पूर्ण
 
-static void chnl_put(struct cflayer *lyr)
-{
-	struct chnl_net *priv = container_of(lyr, struct chnl_net, chnl);
+अटल व्योम chnl_put(काष्ठा cflayer *lyr)
+अणु
+	काष्ठा chnl_net *priv = container_of(lyr, काष्ठा chnl_net, chnl);
 	dev_put(priv->netdev);
-}
+पूर्ण
 
-static void chnl_flowctrl_cb(struct cflayer *layr, enum caif_ctrlcmd flow,
-			     int phyid)
-{
-	struct chnl_net *priv = container_of(layr, struct chnl_net, chnl);
+अटल व्योम chnl_flowctrl_cb(काष्ठा cflayer *layr, क्रमागत caअगर_ctrlcmd flow,
+			     पूर्णांक phyid)
+अणु
+	काष्ठा chnl_net *priv = container_of(layr, काष्ठा chnl_net, chnl);
 	pr_debug("NET flowctrl func called flow: %s\n",
 		flow == CAIF_CTRLCMD_FLOW_ON_IND ? "ON" :
 		flow == CAIF_CTRLCMD_INIT_RSP ? "INIT" :
@@ -175,228 +176,228 @@ static void chnl_flowctrl_cb(struct cflayer *layr, enum caif_ctrlcmd flow,
 
 
 
-	switch (flow) {
-	case CAIF_CTRLCMD_FLOW_OFF_IND:
+	चयन (flow) अणु
+	हाल CAIF_CTRLCMD_FLOW_OFF_IND:
 		priv->flowenabled = false;
-		netif_stop_queue(priv->netdev);
-		break;
-	case CAIF_CTRLCMD_DEINIT_RSP:
+		netअगर_stop_queue(priv->netdev);
+		अवरोध;
+	हाल CAIF_CTRLCMD_DEINIT_RSP:
 		priv->state = CAIF_DISCONNECTED;
-		break;
-	case CAIF_CTRLCMD_INIT_FAIL_RSP:
+		अवरोध;
+	हाल CAIF_CTRLCMD_INIT_FAIL_RSP:
 		priv->state = CAIF_DISCONNECTED;
-		wake_up_interruptible(&priv->netmgmt_wq);
-		break;
-	case CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND:
+		wake_up_पूर्णांकerruptible(&priv->neपंचांगgmt_wq);
+		अवरोध;
+	हाल CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND:
 		priv->state = CAIF_SHUTDOWN;
-		netif_tx_disable(priv->netdev);
-		schedule_work(&close_worker);
-		break;
-	case CAIF_CTRLCMD_FLOW_ON_IND:
+		netअगर_tx_disable(priv->netdev);
+		schedule_work(&बंद_worker);
+		अवरोध;
+	हाल CAIF_CTRLCMD_FLOW_ON_IND:
 		priv->flowenabled = true;
-		netif_wake_queue(priv->netdev);
-		break;
-	case CAIF_CTRLCMD_INIT_RSP:
-		caif_client_register_refcnt(&priv->chnl, chnl_hold, chnl_put);
+		netअगर_wake_queue(priv->netdev);
+		अवरोध;
+	हाल CAIF_CTRLCMD_INIT_RSP:
+		caअगर_client_रेजिस्टर_refcnt(&priv->chnl, chnl_hold, chnl_put);
 		priv->state = CAIF_CONNECTED;
 		priv->flowenabled = true;
-		netif_wake_queue(priv->netdev);
-		wake_up_interruptible(&priv->netmgmt_wq);
-		break;
-	default:
-		break;
-	}
-}
+		netअगर_wake_queue(priv->netdev);
+		wake_up_पूर्णांकerruptible(&priv->neपंचांगgmt_wq);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static netdev_tx_t chnl_net_start_xmit(struct sk_buff *skb,
-				       struct net_device *dev)
-{
-	struct chnl_net *priv;
-	struct cfpkt *pkt = NULL;
-	int len;
-	int result = -1;
-	/* Get our private data. */
+अटल netdev_tx_t chnl_net_start_xmit(काष्ठा sk_buff *skb,
+				       काष्ठा net_device *dev)
+अणु
+	काष्ठा chnl_net *priv;
+	काष्ठा cfpkt *pkt = शून्य;
+	पूर्णांक len;
+	पूर्णांक result = -1;
+	/* Get our निजी data. */
 	priv = netdev_priv(dev);
 
-	if (skb->len > priv->netdev->mtu) {
+	अगर (skb->len > priv->netdev->mtu) अणु
 		pr_warn("Size of skb exceeded MTU\n");
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 		dev->stats.tx_errors++;
-		return NETDEV_TX_OK;
-	}
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	if (!priv->flowenabled) {
+	अगर (!priv->flowenabled) अणु
 		pr_debug("dropping packets flow off\n");
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 		dev->stats.tx_dropped++;
-		return NETDEV_TX_OK;
-	}
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	if (priv->conn_req.protocol == CAIFPROTO_DATAGRAM_LOOP)
+	अगर (priv->conn_req.protocol == CAIFPROTO_DATAGRAM_LOOP)
 		swap(ip_hdr(skb)->saddr, ip_hdr(skb)->daddr);
 
 	/* Store original SKB length. */
 	len = skb->len;
 
-	pkt = cfpkt_fromnative(CAIF_DIR_OUT, (void *) skb);
+	pkt = cfpkt_fromnative(CAIF_सूची_OUT, (व्योम *) skb);
 
-	/* Send the packet down the stack. */
+	/* Send the packet करोwn the stack. */
 	result = priv->chnl.dn->transmit(priv->chnl.dn, pkt);
-	if (result) {
+	अगर (result) अणु
 		dev->stats.tx_dropped++;
-		return NETDEV_TX_OK;
-	}
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	/* Update statistics. */
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += len;
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int chnl_net_open(struct net_device *dev)
-{
-	struct chnl_net *priv = NULL;
-	int result = -1;
-	int llifindex, headroom, tailroom, mtu;
-	struct net_device *lldev;
+अटल पूर्णांक chnl_net_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा chnl_net *priv = शून्य;
+	पूर्णांक result = -1;
+	पूर्णांक llअगरindex, headroom, tailroom, mtu;
+	काष्ठा net_device *lldev;
 	ASSERT_RTNL();
 	priv = netdev_priv(dev);
-	if (!priv) {
+	अगर (!priv) अणु
 		pr_debug("chnl_net_open: no priv\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (priv->state != CAIF_CONNECTING) {
+	अगर (priv->state != CAIF_CONNECTING) अणु
 		priv->state = CAIF_CONNECTING;
-		result = caif_connect_client(dev_net(dev), &priv->conn_req,
-						&priv->chnl, &llifindex,
+		result = caअगर_connect_client(dev_net(dev), &priv->conn_req,
+						&priv->chnl, &llअगरindex,
 						&headroom, &tailroom);
-		if (result != 0) {
+		अगर (result != 0) अणु
 				pr_debug("err: "
 					 "Unable to register and open device,"
 					 " Err:%d\n",
 					 result);
-				goto error;
-		}
+				जाओ error;
+		पूर्ण
 
-		lldev = __dev_get_by_index(dev_net(dev), llifindex);
+		lldev = __dev_get_by_index(dev_net(dev), llअगरindex);
 
-		if (lldev == NULL) {
+		अगर (lldev == शून्य) अणु
 			pr_debug("no interface?\n");
 			result = -ENODEV;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		dev->needed_tailroom = tailroom + lldev->needed_tailroom;
 		dev->hard_header_len = headroom + lldev->hard_header_len +
 			lldev->needed_tailroom;
 
 		/*
-		 * MTU, head-room etc is not know before we have a
+		 * MTU, head-room etc is not know beक्रमe we have a
 		 * CAIF link layer device available. MTU calculation may
 		 * override initial RTNL configuration.
 		 * MTU is minimum of current mtu, link layer mtu pluss
 		 * CAIF head and tail, and PDP GPRS contexts max MTU.
 		 */
-		mtu = min_t(int, dev->mtu, lldev->mtu - (headroom + tailroom));
-		mtu = min_t(int, GPRS_PDP_MTU, mtu);
+		mtu = min_t(पूर्णांक, dev->mtu, lldev->mtu - (headroom + tailroom));
+		mtu = min_t(पूर्णांक, GPRS_PDP_MTU, mtu);
 		dev_set_mtu(dev, mtu);
 
-		if (mtu < 100) {
+		अगर (mtu < 100) अणु
 			pr_warn("CAIF Interface MTU too small (%d)\n", mtu);
 			result = -ENODEV;
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	rtnl_unlock();  /* Release RTNL lock during connect wait */
+	rtnl_unlock();  /* Release RTNL lock during connect रुको */
 
-	result = wait_event_interruptible_timeout(priv->netmgmt_wq,
+	result = रुको_event_पूर्णांकerruptible_समयout(priv->neपंचांगgmt_wq,
 						priv->state != CAIF_CONNECTING,
 						CONNECT_TIMEOUT);
 
 	rtnl_lock();
 
-	if (result == -ERESTARTSYS) {
+	अगर (result == -ERESTARTSYS) अणु
 		pr_debug("wait_event_interruptible woken by a signal\n");
 		result = -ERESTARTSYS;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (result == 0) {
+	अगर (result == 0) अणु
 		pr_debug("connect timeout\n");
-		caif_disconnect_client(dev_net(dev), &priv->chnl);
+		caअगर_disconnect_client(dev_net(dev), &priv->chnl);
 		priv->state = CAIF_DISCONNECTED;
 		pr_debug("state disconnected\n");
 		result = -ETIMEDOUT;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (priv->state != CAIF_CONNECTED) {
+	अगर (priv->state != CAIF_CONNECTED) अणु
 		pr_debug("connect failed\n");
 		result = -ECONNREFUSED;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	pr_debug("CAIF Netdevice connected\n");
-	return 0;
+	वापस 0;
 
 error:
-	caif_disconnect_client(dev_net(dev), &priv->chnl);
+	caअगर_disconnect_client(dev_net(dev), &priv->chnl);
 	priv->state = CAIF_DISCONNECTED;
 	pr_debug("state disconnected\n");
-	return result;
+	वापस result;
 
-}
+पूर्ण
 
-static int chnl_net_stop(struct net_device *dev)
-{
-	struct chnl_net *priv;
+अटल पूर्णांक chnl_net_stop(काष्ठा net_device *dev)
+अणु
+	काष्ठा chnl_net *priv;
 
 	ASSERT_RTNL();
 	priv = netdev_priv(dev);
 	priv->state = CAIF_DISCONNECTED;
-	caif_disconnect_client(dev_net(dev), &priv->chnl);
-	return 0;
-}
+	caअगर_disconnect_client(dev_net(dev), &priv->chnl);
+	वापस 0;
+पूर्ण
 
-static int chnl_net_init(struct net_device *dev)
-{
-	struct chnl_net *priv;
+अटल पूर्णांक chnl_net_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा chnl_net *priv;
 	ASSERT_RTNL();
 	priv = netdev_priv(dev);
-	strncpy(priv->name, dev->name, sizeof(priv->name));
-	return 0;
-}
+	म_नकलन(priv->name, dev->name, माप(priv->name));
+	वापस 0;
+पूर्ण
 
-static void chnl_net_uninit(struct net_device *dev)
-{
-	struct chnl_net *priv;
+अटल व्योम chnl_net_uninit(काष्ठा net_device *dev)
+अणु
+	काष्ठा chnl_net *priv;
 	ASSERT_RTNL();
 	priv = netdev_priv(dev);
 	robust_list_del(&priv->list_field);
-}
+पूर्ण
 
-static const struct net_device_ops netdev_ops = {
-	.ndo_open = chnl_net_open,
-	.ndo_stop = chnl_net_stop,
-	.ndo_init = chnl_net_init,
-	.ndo_uninit = chnl_net_uninit,
-	.ndo_start_xmit = chnl_net_start_xmit,
-};
+अटल स्थिर काष्ठा net_device_ops netdev_ops = अणु
+	.nकरो_खोलो = chnl_net_खोलो,
+	.nकरो_stop = chnl_net_stop,
+	.nकरो_init = chnl_net_init,
+	.nकरो_uninit = chnl_net_uninit,
+	.nकरो_start_xmit = chnl_net_start_xmit,
+पूर्ण;
 
-static void chnl_net_destructor(struct net_device *dev)
-{
-	struct chnl_net *priv = netdev_priv(dev);
-	caif_free_client(&priv->chnl);
-}
+अटल व्योम chnl_net_deकाष्ठाor(काष्ठा net_device *dev)
+अणु
+	काष्ठा chnl_net *priv = netdev_priv(dev);
+	caअगर_मुक्त_client(&priv->chnl);
+पूर्ण
 
-static void ipcaif_net_setup(struct net_device *dev)
-{
-	struct chnl_net *priv;
+अटल व्योम ipcaअगर_net_setup(काष्ठा net_device *dev)
+अणु
+	काष्ठा chnl_net *priv;
 	dev->netdev_ops = &netdev_ops;
-	dev->needs_free_netdev = true;
-	dev->priv_destructor = chnl_net_destructor;
+	dev->needs_मुक्त_netdev = true;
+	dev->priv_deकाष्ठाor = chnl_net_deकाष्ठाor;
 	dev->flags |= IFF_NOARP;
 	dev->flags |= IFF_POINTOPOINT;
 	dev->mtu = GPRS_PDP_MTU;
@@ -413,89 +414,89 @@ static void ipcaif_net_setup(struct net_device *dev)
 	priv->conn_req.sockaddr.u.dgm.connection_id = UNDEF_CONNID;
 	priv->flowenabled = false;
 
-	init_waitqueue_head(&priv->netmgmt_wq);
-}
+	init_रुकोqueue_head(&priv->neपंचांगgmt_wq);
+पूर्ण
 
 
-static int ipcaif_fill_info(struct sk_buff *skb, const struct net_device *dev)
-{
-	struct chnl_net *priv;
+अटल पूर्णांक ipcaअगर_fill_info(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा chnl_net *priv;
 	u8 loop;
 	priv = netdev_priv(dev);
-	if (nla_put_u32(skb, IFLA_CAIF_IPV4_CONNID,
+	अगर (nla_put_u32(skb, IFLA_CAIF_IPV4_CONNID,
 			priv->conn_req.sockaddr.u.dgm.connection_id) ||
 	    nla_put_u32(skb, IFLA_CAIF_IPV6_CONNID,
 			priv->conn_req.sockaddr.u.dgm.connection_id))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 	loop = priv->conn_req.protocol == CAIFPROTO_DATAGRAM_LOOP;
-	if (nla_put_u8(skb, IFLA_CAIF_LOOPBACK, loop))
-		goto nla_put_failure;
-	return 0;
+	अगर (nla_put_u8(skb, IFLA_CAIF_LOOPBACK, loop))
+		जाओ nla_put_failure;
+	वापस 0;
 nla_put_failure:
-	return -EMSGSIZE;
+	वापस -EMSGSIZE;
 
-}
+पूर्ण
 
-static void caif_netlink_parms(struct nlattr *data[],
-			       struct caif_connect_request *conn_req)
-{
-	if (!data) {
+अटल व्योम caअगर_netlink_parms(काष्ठा nlattr *data[],
+			       काष्ठा caअगर_connect_request *conn_req)
+अणु
+	अगर (!data) अणु
 		pr_warn("no params data found\n");
-		return;
-	}
-	if (data[IFLA_CAIF_IPV4_CONNID])
+		वापस;
+	पूर्ण
+	अगर (data[IFLA_CAIF_IPV4_CONNID])
 		conn_req->sockaddr.u.dgm.connection_id =
 			nla_get_u32(data[IFLA_CAIF_IPV4_CONNID]);
-	if (data[IFLA_CAIF_IPV6_CONNID])
+	अगर (data[IFLA_CAIF_IPV6_CONNID])
 		conn_req->sockaddr.u.dgm.connection_id =
 			nla_get_u32(data[IFLA_CAIF_IPV6_CONNID]);
-	if (data[IFLA_CAIF_LOOPBACK]) {
-		if (nla_get_u8(data[IFLA_CAIF_LOOPBACK]))
+	अगर (data[IFLA_CAIF_LOOPBACK]) अणु
+		अगर (nla_get_u8(data[IFLA_CAIF_LOOPBACK]))
 			conn_req->protocol = CAIFPROTO_DATAGRAM_LOOP;
-		else
+		अन्यथा
 			conn_req->protocol = CAIFPROTO_DATAGRAM;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ipcaif_newlink(struct net *src_net, struct net_device *dev,
-			  struct nlattr *tb[], struct nlattr *data[],
-			  struct netlink_ext_ack *extack)
-{
-	int ret;
-	struct chnl_net *caifdev;
+अटल पूर्णांक ipcaअगर_newlink(काष्ठा net *src_net, काष्ठा net_device *dev,
+			  काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक ret;
+	काष्ठा chnl_net *caअगरdev;
 	ASSERT_RTNL();
-	caifdev = netdev_priv(dev);
-	caif_netlink_parms(data, &caifdev->conn_req);
+	caअगरdev = netdev_priv(dev);
+	caअगर_netlink_parms(data, &caअगरdev->conn_req);
 
-	ret = register_netdevice(dev);
-	if (ret)
+	ret = रेजिस्टर_netdevice(dev);
+	अगर (ret)
 		pr_warn("device rtml registration failed\n");
-	else
-		list_add(&caifdev->list_field, &chnl_net_list);
+	अन्यथा
+		list_add(&caअगरdev->list_field, &chnl_net_list);
 
-	/* Use ifindex as connection id, and use loopback channel default. */
-	if (caifdev->conn_req.sockaddr.u.dgm.connection_id == UNDEF_CONNID) {
-		caifdev->conn_req.sockaddr.u.dgm.connection_id = dev->ifindex;
-		caifdev->conn_req.protocol = CAIFPROTO_DATAGRAM_LOOP;
-	}
-	return ret;
-}
+	/* Use अगरindex as connection id, and use loopback channel शेष. */
+	अगर (caअगरdev->conn_req.sockaddr.u.dgm.connection_id == UNDEF_CONNID) अणु
+		caअगरdev->conn_req.sockaddr.u.dgm.connection_id = dev->अगरindex;
+		caअगरdev->conn_req.protocol = CAIFPROTO_DATAGRAM_LOOP;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ipcaif_changelink(struct net_device *dev, struct nlattr *tb[],
-			     struct nlattr *data[],
-			     struct netlink_ext_ack *extack)
-{
-	struct chnl_net *caifdev;
+अटल पूर्णांक ipcaअगर_changelink(काष्ठा net_device *dev, काष्ठा nlattr *tb[],
+			     काष्ठा nlattr *data[],
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा chnl_net *caअगरdev;
 	ASSERT_RTNL();
-	caifdev = netdev_priv(dev);
-	caif_netlink_parms(data, &caifdev->conn_req);
+	caअगरdev = netdev_priv(dev);
+	caअगर_netlink_parms(data, &caअगरdev->conn_req);
 	netdev_state_change(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static size_t ipcaif_get_size(const struct net_device *dev)
-{
-	return
+अटल माप_प्रकार ipcaअगर_get_size(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस
 		/* IFLA_CAIF_IPV4_CONNID */
 		nla_total_size(4) +
 		/* IFLA_CAIF_IPV6_CONNID */
@@ -503,47 +504,47 @@ static size_t ipcaif_get_size(const struct net_device *dev)
 		/* IFLA_CAIF_LOOPBACK */
 		nla_total_size(2) +
 		0;
-}
+पूर्ण
 
-static const struct nla_policy ipcaif_policy[IFLA_CAIF_MAX + 1] = {
-	[IFLA_CAIF_IPV4_CONNID]	      = { .type = NLA_U32 },
-	[IFLA_CAIF_IPV6_CONNID]	      = { .type = NLA_U32 },
-	[IFLA_CAIF_LOOPBACK]	      = { .type = NLA_U8 }
-};
+अटल स्थिर काष्ठा nla_policy ipcaअगर_policy[IFLA_CAIF_MAX + 1] = अणु
+	[IFLA_CAIF_IPV4_CONNID]	      = अणु .type = NLA_U32 पूर्ण,
+	[IFLA_CAIF_IPV6_CONNID]	      = अणु .type = NLA_U32 पूर्ण,
+	[IFLA_CAIF_LOOPBACK]	      = अणु .type = NLA_U8 पूर्ण
+पूर्ण;
 
 
-static struct rtnl_link_ops ipcaif_link_ops __read_mostly = {
+अटल काष्ठा rtnl_link_ops ipcaअगर_link_ops __पढ़ो_mostly = अणु
 	.kind		= "caif",
-	.priv_size	= sizeof(struct chnl_net),
-	.setup		= ipcaif_net_setup,
+	.priv_size	= माप(काष्ठा chnl_net),
+	.setup		= ipcaअगर_net_setup,
 	.maxtype	= IFLA_CAIF_MAX,
-	.policy		= ipcaif_policy,
-	.newlink	= ipcaif_newlink,
-	.changelink	= ipcaif_changelink,
-	.get_size	= ipcaif_get_size,
-	.fill_info	= ipcaif_fill_info,
+	.policy		= ipcaअगर_policy,
+	.newlink	= ipcaअगर_newlink,
+	.changelink	= ipcaअगर_changelink,
+	.get_size	= ipcaअगर_get_size,
+	.fill_info	= ipcaअगर_fill_info,
 
-};
+पूर्ण;
 
-static int __init chnl_init_module(void)
-{
-	return rtnl_link_register(&ipcaif_link_ops);
-}
+अटल पूर्णांक __init chnl_init_module(व्योम)
+अणु
+	वापस rtnl_link_रेजिस्टर(&ipcaअगर_link_ops);
+पूर्ण
 
-static void __exit chnl_exit_module(void)
-{
-	struct chnl_net *dev = NULL;
-	struct list_head *list_node;
-	struct list_head *_tmp;
-	rtnl_link_unregister(&ipcaif_link_ops);
+अटल व्योम __निकास chnl_निकास_module(व्योम)
+अणु
+	काष्ठा chnl_net *dev = शून्य;
+	काष्ठा list_head *list_node;
+	काष्ठा list_head *_पंचांगp;
+	rtnl_link_unरेजिस्टर(&ipcaअगर_link_ops);
 	rtnl_lock();
-	list_for_each_safe(list_node, _tmp, &chnl_net_list) {
-		dev = list_entry(list_node, struct chnl_net, list_field);
+	list_क्रम_each_safe(list_node, _पंचांगp, &chnl_net_list) अणु
+		dev = list_entry(list_node, काष्ठा chnl_net, list_field);
 		list_del(list_node);
 		delete_device(dev);
-	}
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
 module_init(chnl_init_module);
-module_exit(chnl_exit_module);
+module_निकास(chnl_निकास_module);

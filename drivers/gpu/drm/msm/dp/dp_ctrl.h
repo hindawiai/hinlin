@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _DP_CTRL_H_
-#define _DP_CTRL_H_
+#अगर_अघोषित _DP_CTRL_H_
+#घोषणा _DP_CTRL_H_
 
-#include "dp_aux.h"
-#include "dp_panel.h"
-#include "dp_link.h"
-#include "dp_parser.h"
-#include "dp_power.h"
-#include "dp_catalog.h"
+#समावेश "dp_aux.h"
+#समावेश "dp_panel.h"
+#समावेश "dp_link.h"
+#समावेश "dp_parser.h"
+#समावेश "dp_power.h"
+#समावेश "dp_catalog.h"
 
-struct dp_ctrl {
+काष्ठा dp_ctrl अणु
 	bool orientation;
-	atomic_t aborted;
+	atomic_t पातed;
 	u32 pixel_rate;
-};
+पूर्ण;
 
-int dp_ctrl_host_init(struct dp_ctrl *dp_ctrl, bool flip, bool reset);
-void dp_ctrl_host_deinit(struct dp_ctrl *dp_ctrl);
-int dp_ctrl_on_link(struct dp_ctrl *dp_ctrl);
-int dp_ctrl_on_stream(struct dp_ctrl *dp_ctrl);
-int dp_ctrl_off(struct dp_ctrl *dp_ctrl);
-void dp_ctrl_push_idle(struct dp_ctrl *dp_ctrl);
-void dp_ctrl_isr(struct dp_ctrl *dp_ctrl);
-void dp_ctrl_handle_sink_request(struct dp_ctrl *dp_ctrl);
-struct dp_ctrl *dp_ctrl_get(struct device *dev, struct dp_link *link,
-			struct dp_panel *panel,	struct drm_dp_aux *aux,
-			struct dp_power *power, struct dp_catalog *catalog,
-			struct dp_parser *parser);
-void dp_ctrl_put(struct dp_ctrl *dp_ctrl);
+पूर्णांक dp_ctrl_host_init(काष्ठा dp_ctrl *dp_ctrl, bool flip, bool reset);
+व्योम dp_ctrl_host_deinit(काष्ठा dp_ctrl *dp_ctrl);
+पूर्णांक dp_ctrl_on_link(काष्ठा dp_ctrl *dp_ctrl);
+पूर्णांक dp_ctrl_on_stream(काष्ठा dp_ctrl *dp_ctrl);
+पूर्णांक dp_ctrl_off(काष्ठा dp_ctrl *dp_ctrl);
+व्योम dp_ctrl_push_idle(काष्ठा dp_ctrl *dp_ctrl);
+व्योम dp_ctrl_isr(काष्ठा dp_ctrl *dp_ctrl);
+व्योम dp_ctrl_handle_sink_request(काष्ठा dp_ctrl *dp_ctrl);
+काष्ठा dp_ctrl *dp_ctrl_get(काष्ठा device *dev, काष्ठा dp_link *link,
+			काष्ठा dp_panel *panel,	काष्ठा drm_dp_aux *aux,
+			काष्ठा dp_घातer *घातer, काष्ठा dp_catalog *catalog,
+			काष्ठा dp_parser *parser);
+व्योम dp_ctrl_put(काष्ठा dp_ctrl *dp_ctrl);
 
-#endif /* _DP_CTRL_H_ */
+#पूर्ण_अगर /* _DP_CTRL_H_ */

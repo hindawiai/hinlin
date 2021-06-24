@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2007-2017 Nicira, Inc.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include "flow.h"
-#include "datapath.h"
-#include <linux/uaccess.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include <net/llc_pdu.h>
-#include <linux/kernel.h>
-#include <linux/jhash.h>
-#include <linux/jiffies.h>
-#include <linux/llc.h>
-#include <linux/module.h>
-#include <linux/in.h>
-#include <linux/rcupdate.h>
-#include <linux/if_arp.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/sctp.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/icmp.h>
-#include <linux/icmpv6.h>
-#include <linux/rculist.h>
-#include <net/geneve.h>
-#include <net/ip.h>
-#include <net/ipv6.h>
-#include <net/ndisc.h>
-#include <net/mpls.h>
-#include <net/vxlan.h>
-#include <net/tun_proto.h>
-#include <net/erspan.h>
+#समावेश "flow.h"
+#समावेश "datapath.h"
+#समावेश <linux/uaccess.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/llc_pdu.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/llc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/in.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/sctp.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/rculist.h>
+#समावेश <net/geneve.h>
+#समावेश <net/ip.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/ndisc.h>
+#समावेश <net/mpls.h>
+#समावेश <net/vxlan.h>
+#समावेश <net/tun_proto.h>
+#समावेश <net/erspan.h>
 
-#include "flow_netlink.h"
+#समावेश "flow_netlink.h"
 
-struct ovs_len_tbl {
-	int len;
-	const struct ovs_len_tbl *next;
-};
+काष्ठा ovs_len_tbl अणु
+	पूर्णांक len;
+	स्थिर काष्ठा ovs_len_tbl *next;
+पूर्ण;
 
-#define OVS_ATTR_NESTED -1
-#define OVS_ATTR_VARIABLE -2
+#घोषणा OVS_ATTR_NESTED -1
+#घोषणा OVS_ATTR_VARIABLE -2
 
-static bool actions_may_change_flow(const struct nlattr *actions)
-{
-	struct nlattr *nla;
-	int rem;
+अटल bool actions_may_change_flow(स्थिर काष्ठा nlattr *actions)
+अणु
+	काष्ठा nlattr *nla;
+	पूर्णांक rem;
 
-	nla_for_each_nested(nla, actions, rem) {
+	nla_क्रम_each_nested(nla, actions, rem) अणु
 		u16 action = nla_type(nla);
 
-		switch (action) {
-		case OVS_ACTION_ATTR_OUTPUT:
-		case OVS_ACTION_ATTR_RECIRC:
-		case OVS_ACTION_ATTR_TRUNC:
-		case OVS_ACTION_ATTR_USERSPACE:
-			break;
+		चयन (action) अणु
+		हाल OVS_ACTION_ATTR_OUTPUT:
+		हाल OVS_ACTION_ATTR_RECIRC:
+		हाल OVS_ACTION_ATTR_TRUNC:
+		हाल OVS_ACTION_ATTR_USERSPACE:
+			अवरोध;
 
-		case OVS_ACTION_ATTR_CT:
-		case OVS_ACTION_ATTR_CT_CLEAR:
-		case OVS_ACTION_ATTR_HASH:
-		case OVS_ACTION_ATTR_POP_ETH:
-		case OVS_ACTION_ATTR_POP_MPLS:
-		case OVS_ACTION_ATTR_POP_NSH:
-		case OVS_ACTION_ATTR_POP_VLAN:
-		case OVS_ACTION_ATTR_PUSH_ETH:
-		case OVS_ACTION_ATTR_PUSH_MPLS:
-		case OVS_ACTION_ATTR_PUSH_NSH:
-		case OVS_ACTION_ATTR_PUSH_VLAN:
-		case OVS_ACTION_ATTR_SAMPLE:
-		case OVS_ACTION_ATTR_SET:
-		case OVS_ACTION_ATTR_SET_MASKED:
-		case OVS_ACTION_ATTR_METER:
-		case OVS_ACTION_ATTR_CHECK_PKT_LEN:
-		case OVS_ACTION_ATTR_ADD_MPLS:
-		case OVS_ACTION_ATTR_DEC_TTL:
-		default:
-			return true;
-		}
-	}
-	return false;
-}
+		हाल OVS_ACTION_ATTR_CT:
+		हाल OVS_ACTION_ATTR_CT_CLEAR:
+		हाल OVS_ACTION_ATTR_HASH:
+		हाल OVS_ACTION_ATTR_POP_ETH:
+		हाल OVS_ACTION_ATTR_POP_MPLS:
+		हाल OVS_ACTION_ATTR_POP_NSH:
+		हाल OVS_ACTION_ATTR_POP_VLAN:
+		हाल OVS_ACTION_ATTR_PUSH_ETH:
+		हाल OVS_ACTION_ATTR_PUSH_MPLS:
+		हाल OVS_ACTION_ATTR_PUSH_NSH:
+		हाल OVS_ACTION_ATTR_PUSH_VLAN:
+		हाल OVS_ACTION_ATTR_SAMPLE:
+		हाल OVS_ACTION_ATTR_SET:
+		हाल OVS_ACTION_ATTR_SET_MASKED:
+		हाल OVS_ACTION_ATTR_METER:
+		हाल OVS_ACTION_ATTR_CHECK_PKT_LEN:
+		हाल OVS_ACTION_ATTR_ADD_MPLS:
+		हाल OVS_ACTION_ATTR_DEC_TTL:
+		शेष:
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static void update_range(struct sw_flow_match *match,
-			 size_t offset, size_t size, bool is_mask)
-{
-	struct sw_flow_key_range *range;
-	size_t start = rounddown(offset, sizeof(long));
-	size_t end = roundup(offset + size, sizeof(long));
+अटल व्योम update_range(काष्ठा sw_flow_match *match,
+			 माप_प्रकार offset, माप_प्रकार size, bool is_mask)
+अणु
+	काष्ठा sw_flow_key_range *range;
+	माप_प्रकार start = roundकरोwn(offset, माप(दीर्घ));
+	माप_प्रकार end = roundup(offset + size, माप(दीर्घ));
 
-	if (!is_mask)
+	अगर (!is_mask)
 		range = &match->range;
-	else
+	अन्यथा
 		range = &match->mask->range;
 
-	if (range->start == range->end) {
+	अगर (range->start == range->end) अणु
 		range->start = start;
 		range->end = end;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (range->start > start)
+	अगर (range->start > start)
 		range->start = start;
 
-	if (range->end < end)
+	अगर (range->end < end)
 		range->end = end;
-}
+पूर्ण
 
-#define SW_FLOW_KEY_PUT(match, field, value, is_mask) \
-	do { \
-		update_range(match, offsetof(struct sw_flow_key, field),    \
-			     sizeof((match)->key->field), is_mask);	    \
-		if (is_mask)						    \
+#घोषणा SW_FLOW_KEY_PUT(match, field, value, is_mask) \
+	करो अणु \
+		update_range(match, दुरत्व(काष्ठा sw_flow_key, field),    \
+			     माप((match)->key->field), is_mask);	    \
+		अगर (is_mask)						    \
 			(match)->mask->key.field = value;		    \
-		else							    \
+		अन्यथा							    \
 			(match)->key->field = value;		            \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define SW_FLOW_KEY_MEMCPY_OFFSET(match, offset, value_p, len, is_mask)	    \
-	do {								    \
+#घोषणा SW_FLOW_KEY_MEMCPY_OFFSET(match, offset, value_p, len, is_mask)	    \
+	करो अणु								    \
 		update_range(match, offset, len, is_mask);		    \
-		if (is_mask)						    \
-			memcpy((u8 *)&(match)->mask->key + offset, value_p, \
+		अगर (is_mask)						    \
+			स_नकल((u8 *)&(match)->mask->key + offset, value_p, \
 			       len);					   \
-		else							    \
-			memcpy((u8 *)(match)->key + offset, value_p, len);  \
-	} while (0)
+		अन्यथा							    \
+			स_नकल((u8 *)(match)->key + offset, value_p, len);  \
+	पूर्ण जबतक (0)
 
-#define SW_FLOW_KEY_MEMCPY(match, field, value_p, len, is_mask)		      \
-	SW_FLOW_KEY_MEMCPY_OFFSET(match, offsetof(struct sw_flow_key, field), \
+#घोषणा SW_FLOW_KEY_MEMCPY(match, field, value_p, len, is_mask)		      \
+	SW_FLOW_KEY_MEMCPY_OFFSET(match, दुरत्व(काष्ठा sw_flow_key, field), \
 				  value_p, len, is_mask)
 
-#define SW_FLOW_KEY_MEMSET_FIELD(match, field, value, is_mask)		    \
-	do {								    \
-		update_range(match, offsetof(struct sw_flow_key, field),    \
-			     sizeof((match)->key->field), is_mask);	    \
-		if (is_mask)						    \
-			memset((u8 *)&(match)->mask->key.field, value,      \
-			       sizeof((match)->mask->key.field));	    \
-		else							    \
-			memset((u8 *)&(match)->key->field, value,           \
-			       sizeof((match)->key->field));                \
-	} while (0)
+#घोषणा SW_FLOW_KEY_MEMSET_FIELD(match, field, value, is_mask)		    \
+	करो अणु								    \
+		update_range(match, दुरत्व(काष्ठा sw_flow_key, field),    \
+			     माप((match)->key->field), is_mask);	    \
+		अगर (is_mask)						    \
+			स_रखो((u8 *)&(match)->mask->key.field, value,      \
+			       माप((match)->mask->key.field));	    \
+		अन्यथा							    \
+			स_रखो((u8 *)&(match)->key->field, value,           \
+			       माप((match)->key->field));                \
+	पूर्ण जबतक (0)
 
-static bool match_validate(const struct sw_flow_match *match,
+अटल bool match_validate(स्थिर काष्ठा sw_flow_match *match,
 			   u64 key_attrs, u64 mask_attrs, bool log)
-{
+अणु
 	u64 key_expected = 0;
 	u64 mask_allowed = key_attrs;  /* At most allow all key attributes */
 
-	/* The following mask attributes allowed only if they
+	/* The following mask attributes allowed only अगर they
 	 * pass the validation tests. */
 	mask_allowed &= ~((1 << OVS_KEY_ATTR_IPV4)
 			| (1 << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4)
@@ -178,140 +179,140 @@ static bool match_validate(const struct sw_flow_match *match,
 		       | (1 << OVS_KEY_ATTR_ETHERTYPE));
 
 	/* Check key attributes. */
-	if (match->key->eth.type == htons(ETH_P_ARP)
-			|| match->key->eth.type == htons(ETH_P_RARP)) {
+	अगर (match->key->eth.type == htons(ETH_P_ARP)
+			|| match->key->eth.type == htons(ETH_P_RARP)) अणु
 		key_expected |= 1 << OVS_KEY_ATTR_ARP;
-		if (match->mask && (match->mask->key.eth.type == htons(0xffff)))
+		अगर (match->mask && (match->mask->key.eth.type == htons(0xffff)))
 			mask_allowed |= 1 << OVS_KEY_ATTR_ARP;
-	}
+	पूर्ण
 
-	if (eth_p_mpls(match->key->eth.type)) {
+	अगर (eth_p_mpls(match->key->eth.type)) अणु
 		key_expected |= 1 << OVS_KEY_ATTR_MPLS;
-		if (match->mask && (match->mask->key.eth.type == htons(0xffff)))
+		अगर (match->mask && (match->mask->key.eth.type == htons(0xffff)))
 			mask_allowed |= 1 << OVS_KEY_ATTR_MPLS;
-	}
+	पूर्ण
 
-	if (match->key->eth.type == htons(ETH_P_IP)) {
+	अगर (match->key->eth.type == htons(ETH_P_IP)) अणु
 		key_expected |= 1 << OVS_KEY_ATTR_IPV4;
-		if (match->mask && match->mask->key.eth.type == htons(0xffff)) {
+		अगर (match->mask && match->mask->key.eth.type == htons(0xffff)) अणु
 			mask_allowed |= 1 << OVS_KEY_ATTR_IPV4;
 			mask_allowed |= 1 << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4;
-		}
+		पूर्ण
 
-		if (match->key->ip.frag != OVS_FRAG_TYPE_LATER) {
-			if (match->key->ip.proto == IPPROTO_UDP) {
+		अगर (match->key->ip.frag != OVS_FRAG_TYPE_LATER) अणु
+			अगर (match->key->ip.proto == IPPROTO_UDP) अणु
 				key_expected |= 1 << OVS_KEY_ATTR_UDP;
-				if (match->mask && (match->mask->key.ip.proto == 0xff))
+				अगर (match->mask && (match->mask->key.ip.proto == 0xff))
 					mask_allowed |= 1 << OVS_KEY_ATTR_UDP;
-			}
+			पूर्ण
 
-			if (match->key->ip.proto == IPPROTO_SCTP) {
+			अगर (match->key->ip.proto == IPPROTO_SCTP) अणु
 				key_expected |= 1 << OVS_KEY_ATTR_SCTP;
-				if (match->mask && (match->mask->key.ip.proto == 0xff))
+				अगर (match->mask && (match->mask->key.ip.proto == 0xff))
 					mask_allowed |= 1 << OVS_KEY_ATTR_SCTP;
-			}
+			पूर्ण
 
-			if (match->key->ip.proto == IPPROTO_TCP) {
+			अगर (match->key->ip.proto == IPPROTO_TCP) अणु
 				key_expected |= 1 << OVS_KEY_ATTR_TCP;
 				key_expected |= 1 << OVS_KEY_ATTR_TCP_FLAGS;
-				if (match->mask && (match->mask->key.ip.proto == 0xff)) {
+				अगर (match->mask && (match->mask->key.ip.proto == 0xff)) अणु
 					mask_allowed |= 1 << OVS_KEY_ATTR_TCP;
 					mask_allowed |= 1 << OVS_KEY_ATTR_TCP_FLAGS;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if (match->key->ip.proto == IPPROTO_ICMP) {
+			अगर (match->key->ip.proto == IPPROTO_ICMP) अणु
 				key_expected |= 1 << OVS_KEY_ATTR_ICMP;
-				if (match->mask && (match->mask->key.ip.proto == 0xff))
+				अगर (match->mask && (match->mask->key.ip.proto == 0xff))
 					mask_allowed |= 1 << OVS_KEY_ATTR_ICMP;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (match->key->eth.type == htons(ETH_P_IPV6)) {
+	अगर (match->key->eth.type == htons(ETH_P_IPV6)) अणु
 		key_expected |= 1 << OVS_KEY_ATTR_IPV6;
-		if (match->mask && match->mask->key.eth.type == htons(0xffff)) {
+		अगर (match->mask && match->mask->key.eth.type == htons(0xffff)) अणु
 			mask_allowed |= 1 << OVS_KEY_ATTR_IPV6;
 			mask_allowed |= 1 << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6;
-		}
+		पूर्ण
 
-		if (match->key->ip.frag != OVS_FRAG_TYPE_LATER) {
-			if (match->key->ip.proto == IPPROTO_UDP) {
+		अगर (match->key->ip.frag != OVS_FRAG_TYPE_LATER) अणु
+			अगर (match->key->ip.proto == IPPROTO_UDP) अणु
 				key_expected |= 1 << OVS_KEY_ATTR_UDP;
-				if (match->mask && (match->mask->key.ip.proto == 0xff))
+				अगर (match->mask && (match->mask->key.ip.proto == 0xff))
 					mask_allowed |= 1 << OVS_KEY_ATTR_UDP;
-			}
+			पूर्ण
 
-			if (match->key->ip.proto == IPPROTO_SCTP) {
+			अगर (match->key->ip.proto == IPPROTO_SCTP) अणु
 				key_expected |= 1 << OVS_KEY_ATTR_SCTP;
-				if (match->mask && (match->mask->key.ip.proto == 0xff))
+				अगर (match->mask && (match->mask->key.ip.proto == 0xff))
 					mask_allowed |= 1 << OVS_KEY_ATTR_SCTP;
-			}
+			पूर्ण
 
-			if (match->key->ip.proto == IPPROTO_TCP) {
+			अगर (match->key->ip.proto == IPPROTO_TCP) अणु
 				key_expected |= 1 << OVS_KEY_ATTR_TCP;
 				key_expected |= 1 << OVS_KEY_ATTR_TCP_FLAGS;
-				if (match->mask && (match->mask->key.ip.proto == 0xff)) {
+				अगर (match->mask && (match->mask->key.ip.proto == 0xff)) अणु
 					mask_allowed |= 1 << OVS_KEY_ATTR_TCP;
 					mask_allowed |= 1 << OVS_KEY_ATTR_TCP_FLAGS;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if (match->key->ip.proto == IPPROTO_ICMPV6) {
+			अगर (match->key->ip.proto == IPPROTO_ICMPV6) अणु
 				key_expected |= 1 << OVS_KEY_ATTR_ICMPV6;
-				if (match->mask && (match->mask->key.ip.proto == 0xff))
+				अगर (match->mask && (match->mask->key.ip.proto == 0xff))
 					mask_allowed |= 1 << OVS_KEY_ATTR_ICMPV6;
 
-				if (match->key->tp.src ==
+				अगर (match->key->tp.src ==
 						htons(NDISC_NEIGHBOUR_SOLICITATION) ||
-				    match->key->tp.src == htons(NDISC_NEIGHBOUR_ADVERTISEMENT)) {
+				    match->key->tp.src == htons(NDISC_NEIGHBOUR_ADVERTISEMENT)) अणु
 					key_expected |= 1 << OVS_KEY_ATTR_ND;
 					/* Original direction conntrack tuple
 					 * uses the same space as the ND fields
 					 * in the key, so both are not allowed
-					 * at the same time.
+					 * at the same समय.
 					 */
 					mask_allowed &= ~(1ULL << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6);
-					if (match->mask && (match->mask->key.tp.src == htons(0xff)))
+					अगर (match->mask && (match->mask->key.tp.src == htons(0xff)))
 						mask_allowed |= 1 << OVS_KEY_ATTR_ND;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (match->key->eth.type == htons(ETH_P_NSH)) {
+	अगर (match->key->eth.type == htons(ETH_P_NSH)) अणु
 		key_expected |= 1 << OVS_KEY_ATTR_NSH;
-		if (match->mask &&
-		    match->mask->key.eth.type == htons(0xffff)) {
+		अगर (match->mask &&
+		    match->mask->key.eth.type == htons(0xffff)) अणु
 			mask_allowed |= 1 << OVS_KEY_ATTR_NSH;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if ((key_attrs & key_expected) != key_expected) {
+	अगर ((key_attrs & key_expected) != key_expected) अणु
 		/* Key attributes check failed. */
 		OVS_NLERR(log, "Missing key (keys=%llx, expected=%llx)",
-			  (unsigned long long)key_attrs,
-			  (unsigned long long)key_expected);
-		return false;
-	}
+			  (अचिन्हित दीर्घ दीर्घ)key_attrs,
+			  (अचिन्हित दीर्घ दीर्घ)key_expected);
+		वापस false;
+	पूर्ण
 
-	if ((mask_attrs & mask_allowed) != mask_attrs) {
+	अगर ((mask_attrs & mask_allowed) != mask_attrs) अणु
 		/* Mask attributes check failed. */
 		OVS_NLERR(log, "Unexpected mask (mask=%llx, allowed=%llx)",
-			  (unsigned long long)mask_attrs,
-			  (unsigned long long)mask_allowed);
-		return false;
-	}
+			  (अचिन्हित दीर्घ दीर्घ)mask_attrs,
+			  (अचिन्हित दीर्घ दीर्घ)mask_allowed);
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-size_t ovs_tun_key_attr_size(void)
-{
+माप_प्रकार ovs_tun_key_attr_size(व्योम)
+अणु
 	/* Whenever adding new OVS_TUNNEL_KEY_ FIELDS, we should consider
 	 * updating this function.
 	 */
-	return    nla_total_size_64bit(8) /* OVS_TUNNEL_KEY_ATTR_ID */
+	वापस    nla_total_size_64bit(8) /* OVS_TUNNEL_KEY_ATTR_ID */
 		+ nla_total_size(16)   /* OVS_TUNNEL_KEY_ATTR_IPV[46]_SRC */
 		+ nla_total_size(16)   /* OVS_TUNNEL_KEY_ATTR_IPV[46]_DST */
 		+ nla_total_size(1)    /* OVS_TUNNEL_KEY_ATTR_TOS */
@@ -326,29 +327,29 @@ size_t ovs_tun_key_attr_size(void)
 		 */
 		+ nla_total_size(2)    /* OVS_TUNNEL_KEY_ATTR_TP_SRC */
 		+ nla_total_size(2);   /* OVS_TUNNEL_KEY_ATTR_TP_DST */
-}
+पूर्ण
 
-static size_t ovs_nsh_key_attr_size(void)
-{
+अटल माप_प्रकार ovs_nsh_key_attr_size(व्योम)
+अणु
 	/* Whenever adding new OVS_NSH_KEY_ FIELDS, we should consider
 	 * updating this function.
 	 */
-	return  nla_total_size(NSH_BASE_HDR_LEN) /* OVS_NSH_KEY_ATTR_BASE */
+	वापस  nla_total_size(NSH_BASE_HDR_LEN) /* OVS_NSH_KEY_ATTR_BASE */
 		/* OVS_NSH_KEY_ATTR_MD1 and OVS_NSH_KEY_ATTR_MD2 are
 		 * mutually exclusive, so the bigger one can cover
 		 * the small one.
 		 */
 		+ nla_total_size(NSH_CTX_HDRS_MAX_LEN);
-}
+पूर्ण
 
-size_t ovs_key_attr_size(void)
-{
+माप_प्रकार ovs_key_attr_size(व्योम)
+अणु
 	/* Whenever adding new OVS_KEY_ FIELDS, we should consider
 	 * updating this function.
 	 */
 	BUILD_BUG_ON(OVS_KEY_ATTR_TUNNEL_INFO != 29);
 
-	return    nla_total_size(4)   /* OVS_KEY_ATTR_PRIORITY */
+	वापस    nla_total_size(4)   /* OVS_KEY_ATTR_PRIORITY */
 		+ nla_total_size(0)   /* OVS_KEY_ATTR_TUNNEL */
 		  + ovs_tun_key_attr_size()
 		+ nla_total_size(4)   /* OVS_KEY_ATTR_IN_PORT */
@@ -370,660 +371,660 @@ size_t ovs_key_attr_size(void)
 		+ nla_total_size(40)  /* OVS_KEY_ATTR_IPV6 */
 		+ nla_total_size(2)   /* OVS_KEY_ATTR_ICMPV6 */
 		+ nla_total_size(28); /* OVS_KEY_ATTR_ND */
-}
+पूर्ण
 
-static const struct ovs_len_tbl ovs_vxlan_ext_key_lens[OVS_VXLAN_EXT_MAX + 1] = {
-	[OVS_VXLAN_EXT_GBP]	    = { .len = sizeof(u32) },
-};
+अटल स्थिर काष्ठा ovs_len_tbl ovs_vxlan_ext_key_lens[OVS_VXLAN_EXT_MAX + 1] = अणु
+	[OVS_VXLAN_EXT_GBP]	    = अणु .len = माप(u32) पूर्ण,
+पूर्ण;
 
-static const struct ovs_len_tbl ovs_tunnel_key_lens[OVS_TUNNEL_KEY_ATTR_MAX + 1] = {
-	[OVS_TUNNEL_KEY_ATTR_ID]	    = { .len = sizeof(u64) },
-	[OVS_TUNNEL_KEY_ATTR_IPV4_SRC]	    = { .len = sizeof(u32) },
-	[OVS_TUNNEL_KEY_ATTR_IPV4_DST]	    = { .len = sizeof(u32) },
-	[OVS_TUNNEL_KEY_ATTR_TOS]	    = { .len = 1 },
-	[OVS_TUNNEL_KEY_ATTR_TTL]	    = { .len = 1 },
-	[OVS_TUNNEL_KEY_ATTR_DONT_FRAGMENT] = { .len = 0 },
-	[OVS_TUNNEL_KEY_ATTR_CSUM]	    = { .len = 0 },
-	[OVS_TUNNEL_KEY_ATTR_TP_SRC]	    = { .len = sizeof(u16) },
-	[OVS_TUNNEL_KEY_ATTR_TP_DST]	    = { .len = sizeof(u16) },
-	[OVS_TUNNEL_KEY_ATTR_OAM]	    = { .len = 0 },
-	[OVS_TUNNEL_KEY_ATTR_GENEVE_OPTS]   = { .len = OVS_ATTR_VARIABLE },
-	[OVS_TUNNEL_KEY_ATTR_VXLAN_OPTS]    = { .len = OVS_ATTR_NESTED,
-						.next = ovs_vxlan_ext_key_lens },
-	[OVS_TUNNEL_KEY_ATTR_IPV6_SRC]      = { .len = sizeof(struct in6_addr) },
-	[OVS_TUNNEL_KEY_ATTR_IPV6_DST]      = { .len = sizeof(struct in6_addr) },
-	[OVS_TUNNEL_KEY_ATTR_ERSPAN_OPTS]   = { .len = OVS_ATTR_VARIABLE },
-	[OVS_TUNNEL_KEY_ATTR_IPV4_INFO_BRIDGE]   = { .len = 0 },
-};
+अटल स्थिर काष्ठा ovs_len_tbl ovs_tunnel_key_lens[OVS_TUNNEL_KEY_ATTR_MAX + 1] = अणु
+	[OVS_TUNNEL_KEY_ATTR_ID]	    = अणु .len = माप(u64) पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_IPV4_SRC]	    = अणु .len = माप(u32) पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_IPV4_DST]	    = अणु .len = माप(u32) पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_TOS]	    = अणु .len = 1 पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_TTL]	    = अणु .len = 1 पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_DONT_FRAGMENT] = अणु .len = 0 पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_CSUM]	    = अणु .len = 0 पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_TP_SRC]	    = अणु .len = माप(u16) पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_TP_DST]	    = अणु .len = माप(u16) पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_OAM]	    = अणु .len = 0 पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_GENEVE_OPTS]   = अणु .len = OVS_ATTR_VARIABLE पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_VXLAN_OPTS]    = अणु .len = OVS_ATTR_NESTED,
+						.next = ovs_vxlan_ext_key_lens पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_IPV6_SRC]      = अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_IPV6_DST]      = अणु .len = माप(काष्ठा in6_addr) पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_ERSPAN_OPTS]   = अणु .len = OVS_ATTR_VARIABLE पूर्ण,
+	[OVS_TUNNEL_KEY_ATTR_IPV4_INFO_BRIDGE]   = अणु .len = 0 पूर्ण,
+पूर्ण;
 
-static const struct ovs_len_tbl
-ovs_nsh_key_attr_lens[OVS_NSH_KEY_ATTR_MAX + 1] = {
-	[OVS_NSH_KEY_ATTR_BASE] = { .len = sizeof(struct ovs_nsh_key_base) },
-	[OVS_NSH_KEY_ATTR_MD1]  = { .len = sizeof(struct ovs_nsh_key_md1) },
-	[OVS_NSH_KEY_ATTR_MD2]  = { .len = OVS_ATTR_VARIABLE },
-};
+अटल स्थिर काष्ठा ovs_len_tbl
+ovs_nsh_key_attr_lens[OVS_NSH_KEY_ATTR_MAX + 1] = अणु
+	[OVS_NSH_KEY_ATTR_BASE] = अणु .len = माप(काष्ठा ovs_nsh_key_base) पूर्ण,
+	[OVS_NSH_KEY_ATTR_MD1]  = अणु .len = माप(काष्ठा ovs_nsh_key_md1) पूर्ण,
+	[OVS_NSH_KEY_ATTR_MD2]  = अणु .len = OVS_ATTR_VARIABLE पूर्ण,
+पूर्ण;
 
-/* The size of the argument for each %OVS_KEY_ATTR_* Netlink attribute.  */
-static const struct ovs_len_tbl ovs_key_lens[OVS_KEY_ATTR_MAX + 1] = {
-	[OVS_KEY_ATTR_ENCAP]	 = { .len = OVS_ATTR_NESTED },
-	[OVS_KEY_ATTR_PRIORITY]	 = { .len = sizeof(u32) },
-	[OVS_KEY_ATTR_IN_PORT]	 = { .len = sizeof(u32) },
-	[OVS_KEY_ATTR_SKB_MARK]	 = { .len = sizeof(u32) },
-	[OVS_KEY_ATTR_ETHERNET]	 = { .len = sizeof(struct ovs_key_ethernet) },
-	[OVS_KEY_ATTR_VLAN]	 = { .len = sizeof(__be16) },
-	[OVS_KEY_ATTR_ETHERTYPE] = { .len = sizeof(__be16) },
-	[OVS_KEY_ATTR_IPV4]	 = { .len = sizeof(struct ovs_key_ipv4) },
-	[OVS_KEY_ATTR_IPV6]	 = { .len = sizeof(struct ovs_key_ipv6) },
-	[OVS_KEY_ATTR_TCP]	 = { .len = sizeof(struct ovs_key_tcp) },
-	[OVS_KEY_ATTR_TCP_FLAGS] = { .len = sizeof(__be16) },
-	[OVS_KEY_ATTR_UDP]	 = { .len = sizeof(struct ovs_key_udp) },
-	[OVS_KEY_ATTR_SCTP]	 = { .len = sizeof(struct ovs_key_sctp) },
-	[OVS_KEY_ATTR_ICMP]	 = { .len = sizeof(struct ovs_key_icmp) },
-	[OVS_KEY_ATTR_ICMPV6]	 = { .len = sizeof(struct ovs_key_icmpv6) },
-	[OVS_KEY_ATTR_ARP]	 = { .len = sizeof(struct ovs_key_arp) },
-	[OVS_KEY_ATTR_ND]	 = { .len = sizeof(struct ovs_key_nd) },
-	[OVS_KEY_ATTR_RECIRC_ID] = { .len = sizeof(u32) },
-	[OVS_KEY_ATTR_DP_HASH]	 = { .len = sizeof(u32) },
-	[OVS_KEY_ATTR_TUNNEL]	 = { .len = OVS_ATTR_NESTED,
-				     .next = ovs_tunnel_key_lens, },
-	[OVS_KEY_ATTR_MPLS]	 = { .len = OVS_ATTR_VARIABLE },
-	[OVS_KEY_ATTR_CT_STATE]	 = { .len = sizeof(u32) },
-	[OVS_KEY_ATTR_CT_ZONE]	 = { .len = sizeof(u16) },
-	[OVS_KEY_ATTR_CT_MARK]	 = { .len = sizeof(u32) },
-	[OVS_KEY_ATTR_CT_LABELS] = { .len = sizeof(struct ovs_key_ct_labels) },
-	[OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4] = {
-		.len = sizeof(struct ovs_key_ct_tuple_ipv4) },
-	[OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6] = {
-		.len = sizeof(struct ovs_key_ct_tuple_ipv6) },
-	[OVS_KEY_ATTR_NSH]       = { .len = OVS_ATTR_NESTED,
-				     .next = ovs_nsh_key_attr_lens, },
-};
+/* The size of the argument क्रम each %OVS_KEY_ATTR_* Netlink attribute.  */
+अटल स्थिर काष्ठा ovs_len_tbl ovs_key_lens[OVS_KEY_ATTR_MAX + 1] = अणु
+	[OVS_KEY_ATTR_ENCAP]	 = अणु .len = OVS_ATTR_NESTED पूर्ण,
+	[OVS_KEY_ATTR_PRIORITY]	 = अणु .len = माप(u32) पूर्ण,
+	[OVS_KEY_ATTR_IN_PORT]	 = अणु .len = माप(u32) पूर्ण,
+	[OVS_KEY_ATTR_SKB_MARK]	 = अणु .len = माप(u32) पूर्ण,
+	[OVS_KEY_ATTR_ETHERNET]	 = अणु .len = माप(काष्ठा ovs_key_ethernet) पूर्ण,
+	[OVS_KEY_ATTR_VLAN]	 = अणु .len = माप(__be16) पूर्ण,
+	[OVS_KEY_ATTR_ETHERTYPE] = अणु .len = माप(__be16) पूर्ण,
+	[OVS_KEY_ATTR_IPV4]	 = अणु .len = माप(काष्ठा ovs_key_ipv4) पूर्ण,
+	[OVS_KEY_ATTR_IPV6]	 = अणु .len = माप(काष्ठा ovs_key_ipv6) पूर्ण,
+	[OVS_KEY_ATTR_TCP]	 = अणु .len = माप(काष्ठा ovs_key_tcp) पूर्ण,
+	[OVS_KEY_ATTR_TCP_FLAGS] = अणु .len = माप(__be16) पूर्ण,
+	[OVS_KEY_ATTR_UDP]	 = अणु .len = माप(काष्ठा ovs_key_udp) पूर्ण,
+	[OVS_KEY_ATTR_SCTP]	 = अणु .len = माप(काष्ठा ovs_key_sctp) पूर्ण,
+	[OVS_KEY_ATTR_ICMP]	 = अणु .len = माप(काष्ठा ovs_key_icmp) पूर्ण,
+	[OVS_KEY_ATTR_ICMPV6]	 = अणु .len = माप(काष्ठा ovs_key_icmpv6) पूर्ण,
+	[OVS_KEY_ATTR_ARP]	 = अणु .len = माप(काष्ठा ovs_key_arp) पूर्ण,
+	[OVS_KEY_ATTR_ND]	 = अणु .len = माप(काष्ठा ovs_key_nd) पूर्ण,
+	[OVS_KEY_ATTR_RECIRC_ID] = अणु .len = माप(u32) पूर्ण,
+	[OVS_KEY_ATTR_DP_HASH]	 = अणु .len = माप(u32) पूर्ण,
+	[OVS_KEY_ATTR_TUNNEL]	 = अणु .len = OVS_ATTR_NESTED,
+				     .next = ovs_tunnel_key_lens, पूर्ण,
+	[OVS_KEY_ATTR_MPLS]	 = अणु .len = OVS_ATTR_VARIABLE पूर्ण,
+	[OVS_KEY_ATTR_CT_STATE]	 = अणु .len = माप(u32) पूर्ण,
+	[OVS_KEY_ATTR_CT_ZONE]	 = अणु .len = माप(u16) पूर्ण,
+	[OVS_KEY_ATTR_CT_MARK]	 = अणु .len = माप(u32) पूर्ण,
+	[OVS_KEY_ATTR_CT_LABELS] = अणु .len = माप(काष्ठा ovs_key_ct_labels) पूर्ण,
+	[OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4] = अणु
+		.len = माप(काष्ठा ovs_key_ct_tuple_ipv4) पूर्ण,
+	[OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6] = अणु
+		.len = माप(काष्ठा ovs_key_ct_tuple_ipv6) पूर्ण,
+	[OVS_KEY_ATTR_NSH]       = अणु .len = OVS_ATTR_NESTED,
+				     .next = ovs_nsh_key_attr_lens, पूर्ण,
+पूर्ण;
 
-static bool check_attr_len(unsigned int attr_len, unsigned int expected_len)
-{
-	return expected_len == attr_len ||
+अटल bool check_attr_len(अचिन्हित पूर्णांक attr_len, अचिन्हित पूर्णांक expected_len)
+अणु
+	वापस expected_len == attr_len ||
 	       expected_len == OVS_ATTR_NESTED ||
 	       expected_len == OVS_ATTR_VARIABLE;
-}
+पूर्ण
 
-static bool is_all_zero(const u8 *fp, size_t size)
-{
-	int i;
+अटल bool is_all_zero(स्थिर u8 *fp, माप_प्रकार size)
+अणु
+	पूर्णांक i;
 
-	if (!fp)
-		return false;
+	अगर (!fp)
+		वापस false;
 
-	for (i = 0; i < size; i++)
-		if (fp[i])
-			return false;
+	क्रम (i = 0; i < size; i++)
+		अगर (fp[i])
+			वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int __parse_flow_nlattrs(const struct nlattr *attr,
-				const struct nlattr *a[],
+अटल पूर्णांक __parse_flow_nlattrs(स्थिर काष्ठा nlattr *attr,
+				स्थिर काष्ठा nlattr *a[],
 				u64 *attrsp, bool log, bool nz)
-{
-	const struct nlattr *nla;
+अणु
+	स्थिर काष्ठा nlattr *nla;
 	u64 attrs;
-	int rem;
+	पूर्णांक rem;
 
 	attrs = *attrsp;
-	nla_for_each_nested(nla, attr, rem) {
+	nla_क्रम_each_nested(nla, attr, rem) अणु
 		u16 type = nla_type(nla);
-		int expected_len;
+		पूर्णांक expected_len;
 
-		if (type > OVS_KEY_ATTR_MAX) {
+		अगर (type > OVS_KEY_ATTR_MAX) अणु
 			OVS_NLERR(log, "Key type %d is out of range max %d",
 				  type, OVS_KEY_ATTR_MAX);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (attrs & (1 << type)) {
+		अगर (attrs & (1 << type)) अणु
 			OVS_NLERR(log, "Duplicate key (type %d).", type);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		expected_len = ovs_key_lens[type].len;
-		if (!check_attr_len(nla_len(nla), expected_len)) {
+		अगर (!check_attr_len(nla_len(nla), expected_len)) अणु
 			OVS_NLERR(log, "Key %d has unexpected len %d expected %d",
 				  type, nla_len(nla), expected_len);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!nz || !is_all_zero(nla_data(nla), nla_len(nla))) {
+		अगर (!nz || !is_all_zero(nla_data(nla), nla_len(nla))) अणु
 			attrs |= 1 << type;
 			a[type] = nla;
-		}
-	}
-	if (rem) {
+		पूर्ण
+	पूर्ण
+	अगर (rem) अणु
 		OVS_NLERR(log, "Message has %d unknown bytes.", rem);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*attrsp = attrs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int parse_flow_mask_nlattrs(const struct nlattr *attr,
-				   const struct nlattr *a[], u64 *attrsp,
+अटल पूर्णांक parse_flow_mask_nlattrs(स्थिर काष्ठा nlattr *attr,
+				   स्थिर काष्ठा nlattr *a[], u64 *attrsp,
 				   bool log)
-{
-	return __parse_flow_nlattrs(attr, a, attrsp, log, true);
-}
+अणु
+	वापस __parse_flow_nlattrs(attr, a, attrsp, log, true);
+पूर्ण
 
-int parse_flow_nlattrs(const struct nlattr *attr, const struct nlattr *a[],
+पूर्णांक parse_flow_nlattrs(स्थिर काष्ठा nlattr *attr, स्थिर काष्ठा nlattr *a[],
 		       u64 *attrsp, bool log)
-{
-	return __parse_flow_nlattrs(attr, a, attrsp, log, false);
-}
+अणु
+	वापस __parse_flow_nlattrs(attr, a, attrsp, log, false);
+पूर्ण
 
-static int genev_tun_opt_from_nlattr(const struct nlattr *a,
-				     struct sw_flow_match *match, bool is_mask,
+अटल पूर्णांक genev_tun_opt_from_nlattr(स्थिर काष्ठा nlattr *a,
+				     काष्ठा sw_flow_match *match, bool is_mask,
 				     bool log)
-{
-	unsigned long opt_key_offset;
+अणु
+	अचिन्हित दीर्घ opt_key_offset;
 
-	if (nla_len(a) > sizeof(match->key->tun_opts)) {
+	अगर (nla_len(a) > माप(match->key->tun_opts)) अणु
 		OVS_NLERR(log, "Geneve option length err (len %d, max %zu).",
-			  nla_len(a), sizeof(match->key->tun_opts));
-		return -EINVAL;
-	}
+			  nla_len(a), माप(match->key->tun_opts));
+		वापस -EINVAL;
+	पूर्ण
 
-	if (nla_len(a) % 4 != 0) {
+	अगर (nla_len(a) % 4 != 0) अणु
 		OVS_NLERR(log, "Geneve opt len %d is not a multiple of 4.",
 			  nla_len(a));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* We need to record the length of the options passed
-	 * down, otherwise packets with the same format but
+	 * करोwn, otherwise packets with the same क्रमmat but
 	 * additional options will be silently matched.
 	 */
-	if (!is_mask) {
+	अगर (!is_mask) अणु
 		SW_FLOW_KEY_PUT(match, tun_opts_len, nla_len(a),
 				false);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* This is somewhat unusual because it looks at
-		 * both the key and mask while parsing the
+		 * both the key and mask जबतक parsing the
 		 * attributes (and by extension assumes the key
-		 * is parsed first). Normally, we would verify
+		 * is parsed first). Normally, we would verअगरy
 		 * that each is the correct length and that the
 		 * attributes line up in the validate function.
-		 * However, that is difficult because this is
+		 * However, that is dअगरficult because this is
 		 * variable length and we won't have the
-		 * information later.
+		 * inक्रमmation later.
 		 */
-		if (match->key->tun_opts_len != nla_len(a)) {
+		अगर (match->key->tun_opts_len != nla_len(a)) अणु
 			OVS_NLERR(log, "Geneve option len %d != mask len %d",
 				  match->key->tun_opts_len, nla_len(a));
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		SW_FLOW_KEY_PUT(match, tun_opts_len, 0xff, true);
-	}
+	पूर्ण
 
 	opt_key_offset = TUN_METADATA_OFFSET(nla_len(a));
 	SW_FLOW_KEY_MEMCPY_OFFSET(match, opt_key_offset, nla_data(a),
 				  nla_len(a), is_mask);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vxlan_tun_opt_from_nlattr(const struct nlattr *attr,
-				     struct sw_flow_match *match, bool is_mask,
+अटल पूर्णांक vxlan_tun_opt_from_nlattr(स्थिर काष्ठा nlattr *attr,
+				     काष्ठा sw_flow_match *match, bool is_mask,
 				     bool log)
-{
-	struct nlattr *a;
-	int rem;
-	unsigned long opt_key_offset;
-	struct vxlan_metadata opts;
+अणु
+	काष्ठा nlattr *a;
+	पूर्णांक rem;
+	अचिन्हित दीर्घ opt_key_offset;
+	काष्ठा vxlan_metadata opts;
 
-	BUILD_BUG_ON(sizeof(opts) > sizeof(match->key->tun_opts));
+	BUILD_BUG_ON(माप(opts) > माप(match->key->tun_opts));
 
-	memset(&opts, 0, sizeof(opts));
-	nla_for_each_nested(a, attr, rem) {
-		int type = nla_type(a);
+	स_रखो(&opts, 0, माप(opts));
+	nla_क्रम_each_nested(a, attr, rem) अणु
+		पूर्णांक type = nla_type(a);
 
-		if (type > OVS_VXLAN_EXT_MAX) {
+		अगर (type > OVS_VXLAN_EXT_MAX) अणु
 			OVS_NLERR(log, "VXLAN extension %d out of range max %d",
 				  type, OVS_VXLAN_EXT_MAX);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!check_attr_len(nla_len(a),
-				    ovs_vxlan_ext_key_lens[type].len)) {
+		अगर (!check_attr_len(nla_len(a),
+				    ovs_vxlan_ext_key_lens[type].len)) अणु
 			OVS_NLERR(log, "VXLAN extension %d has unexpected len %d expected %d",
 				  type, nla_len(a),
 				  ovs_vxlan_ext_key_lens[type].len);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (type) {
-		case OVS_VXLAN_EXT_GBP:
+		चयन (type) अणु
+		हाल OVS_VXLAN_EXT_GBP:
 			opts.gbp = nla_get_u32(a);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			OVS_NLERR(log, "Unknown VXLAN extension attribute %d",
 				  type);
-			return -EINVAL;
-		}
-	}
-	if (rem) {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	अगर (rem) अणु
 		OVS_NLERR(log, "VXLAN extension message has %d unknown bytes.",
 			  rem);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!is_mask)
-		SW_FLOW_KEY_PUT(match, tun_opts_len, sizeof(opts), false);
-	else
+	अगर (!is_mask)
+		SW_FLOW_KEY_PUT(match, tun_opts_len, माप(opts), false);
+	अन्यथा
 		SW_FLOW_KEY_PUT(match, tun_opts_len, 0xff, true);
 
-	opt_key_offset = TUN_METADATA_OFFSET(sizeof(opts));
-	SW_FLOW_KEY_MEMCPY_OFFSET(match, opt_key_offset, &opts, sizeof(opts),
+	opt_key_offset = TUN_METADATA_OFFSET(माप(opts));
+	SW_FLOW_KEY_MEMCPY_OFFSET(match, opt_key_offset, &opts, माप(opts),
 				  is_mask);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int erspan_tun_opt_from_nlattr(const struct nlattr *a,
-				      struct sw_flow_match *match, bool is_mask,
+अटल पूर्णांक erspan_tun_opt_from_nlattr(स्थिर काष्ठा nlattr *a,
+				      काष्ठा sw_flow_match *match, bool is_mask,
 				      bool log)
-{
-	unsigned long opt_key_offset;
+अणु
+	अचिन्हित दीर्घ opt_key_offset;
 
-	BUILD_BUG_ON(sizeof(struct erspan_metadata) >
-		     sizeof(match->key->tun_opts));
+	BUILD_BUG_ON(माप(काष्ठा erspan_metadata) >
+		     माप(match->key->tun_opts));
 
-	if (nla_len(a) > sizeof(match->key->tun_opts)) {
+	अगर (nla_len(a) > माप(match->key->tun_opts)) अणु
 		OVS_NLERR(log, "ERSPAN option length err (len %d, max %zu).",
-			  nla_len(a), sizeof(match->key->tun_opts));
-		return -EINVAL;
-	}
+			  nla_len(a), माप(match->key->tun_opts));
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!is_mask)
+	अगर (!is_mask)
 		SW_FLOW_KEY_PUT(match, tun_opts_len,
-				sizeof(struct erspan_metadata), false);
-	else
+				माप(काष्ठा erspan_metadata), false);
+	अन्यथा
 		SW_FLOW_KEY_PUT(match, tun_opts_len, 0xff, true);
 
 	opt_key_offset = TUN_METADATA_OFFSET(nla_len(a));
 	SW_FLOW_KEY_MEMCPY_OFFSET(match, opt_key_offset, nla_data(a),
 				  nla_len(a), is_mask);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip_tun_from_nlattr(const struct nlattr *attr,
-			      struct sw_flow_match *match, bool is_mask,
+अटल पूर्णांक ip_tun_from_nlattr(स्थिर काष्ठा nlattr *attr,
+			      काष्ठा sw_flow_match *match, bool is_mask,
 			      bool log)
-{
+अणु
 	bool ttl = false, ipv4 = false, ipv6 = false;
 	bool info_bridge_mode = false;
 	__be16 tun_flags = 0;
-	int opts_type = 0;
-	struct nlattr *a;
-	int rem;
+	पूर्णांक opts_type = 0;
+	काष्ठा nlattr *a;
+	पूर्णांक rem;
 
-	nla_for_each_nested(a, attr, rem) {
-		int type = nla_type(a);
-		int err;
+	nla_क्रम_each_nested(a, attr, rem) अणु
+		पूर्णांक type = nla_type(a);
+		पूर्णांक err;
 
-		if (type > OVS_TUNNEL_KEY_ATTR_MAX) {
+		अगर (type > OVS_TUNNEL_KEY_ATTR_MAX) अणु
 			OVS_NLERR(log, "Tunnel attr %d out of range max %d",
 				  type, OVS_TUNNEL_KEY_ATTR_MAX);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!check_attr_len(nla_len(a),
-				    ovs_tunnel_key_lens[type].len)) {
+		अगर (!check_attr_len(nla_len(a),
+				    ovs_tunnel_key_lens[type].len)) अणु
 			OVS_NLERR(log, "Tunnel attr %d has unexpected len %d expected %d",
 				  type, nla_len(a), ovs_tunnel_key_lens[type].len);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (type) {
-		case OVS_TUNNEL_KEY_ATTR_ID:
+		चयन (type) अणु
+		हाल OVS_TUNNEL_KEY_ATTR_ID:
 			SW_FLOW_KEY_PUT(match, tun_key.tun_id,
 					nla_get_be64(a), is_mask);
 			tun_flags |= TUNNEL_KEY;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_IPV4_SRC:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_IPV4_SRC:
 			SW_FLOW_KEY_PUT(match, tun_key.u.ipv4.src,
 					nla_get_in_addr(a), is_mask);
 			ipv4 = true;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_IPV4_DST:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_IPV4_DST:
 			SW_FLOW_KEY_PUT(match, tun_key.u.ipv4.dst,
 					nla_get_in_addr(a), is_mask);
 			ipv4 = true;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_IPV6_SRC:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_IPV6_SRC:
 			SW_FLOW_KEY_PUT(match, tun_key.u.ipv6.src,
 					nla_get_in6_addr(a), is_mask);
 			ipv6 = true;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_IPV6_DST:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_IPV6_DST:
 			SW_FLOW_KEY_PUT(match, tun_key.u.ipv6.dst,
 					nla_get_in6_addr(a), is_mask);
 			ipv6 = true;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_TOS:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_TOS:
 			SW_FLOW_KEY_PUT(match, tun_key.tos,
 					nla_get_u8(a), is_mask);
-			break;
-		case OVS_TUNNEL_KEY_ATTR_TTL:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_TTL:
 			SW_FLOW_KEY_PUT(match, tun_key.ttl,
 					nla_get_u8(a), is_mask);
 			ttl = true;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_DONT_FRAGMENT:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_DONT_FRAGMENT:
 			tun_flags |= TUNNEL_DONT_FRAGMENT;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_CSUM:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_CSUM:
 			tun_flags |= TUNNEL_CSUM;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_TP_SRC:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_TP_SRC:
 			SW_FLOW_KEY_PUT(match, tun_key.tp_src,
 					nla_get_be16(a), is_mask);
-			break;
-		case OVS_TUNNEL_KEY_ATTR_TP_DST:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_TP_DST:
 			SW_FLOW_KEY_PUT(match, tun_key.tp_dst,
 					nla_get_be16(a), is_mask);
-			break;
-		case OVS_TUNNEL_KEY_ATTR_OAM:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_OAM:
 			tun_flags |= TUNNEL_OAM;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_GENEVE_OPTS:
-			if (opts_type) {
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_GENEVE_OPTS:
+			अगर (opts_type) अणु
 				OVS_NLERR(log, "Multiple metadata blocks provided");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			err = genev_tun_opt_from_nlattr(a, match, is_mask, log);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 
 			tun_flags |= TUNNEL_GENEVE_OPT;
 			opts_type = type;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_VXLAN_OPTS:
-			if (opts_type) {
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_VXLAN_OPTS:
+			अगर (opts_type) अणु
 				OVS_NLERR(log, "Multiple metadata blocks provided");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			err = vxlan_tun_opt_from_nlattr(a, match, is_mask, log);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 
 			tun_flags |= TUNNEL_VXLAN_OPT;
 			opts_type = type;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_PAD:
-			break;
-		case OVS_TUNNEL_KEY_ATTR_ERSPAN_OPTS:
-			if (opts_type) {
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_PAD:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_ERSPAN_OPTS:
+			अगर (opts_type) अणु
 				OVS_NLERR(log, "Multiple metadata blocks provided");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			err = erspan_tun_opt_from_nlattr(a, match, is_mask,
 							 log);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 
 			tun_flags |= TUNNEL_ERSPAN_OPT;
 			opts_type = type;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_IPV4_INFO_BRIDGE:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_IPV4_INFO_BRIDGE:
 			info_bridge_mode = true;
 			ipv4 = true;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			OVS_NLERR(log, "Unknown IP tunnel attribute %d",
 				  type);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	SW_FLOW_KEY_PUT(match, tun_key.tun_flags, tun_flags, is_mask);
-	if (is_mask)
+	अगर (is_mask)
 		SW_FLOW_KEY_MEMSET_FIELD(match, tun_proto, 0xff, true);
-	else
+	अन्यथा
 		SW_FLOW_KEY_PUT(match, tun_proto, ipv6 ? AF_INET6 : AF_INET,
 				false);
 
-	if (rem > 0) {
+	अगर (rem > 0) अणु
 		OVS_NLERR(log, "IP tunnel attribute has %d unknown bytes.",
 			  rem);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ipv4 && ipv6) {
+	अगर (ipv4 && ipv6) अणु
 		OVS_NLERR(log, "Mixed IPv4 and IPv6 tunnel attributes");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!is_mask) {
-		if (!ipv4 && !ipv6) {
+	अगर (!is_mask) अणु
+		अगर (!ipv4 && !ipv6) अणु
 			OVS_NLERR(log, "IP tunnel dst address not specified");
-			return -EINVAL;
-		}
-		if (ipv4) {
-			if (info_bridge_mode) {
-				if (match->key->tun_key.u.ipv4.src ||
+			वापस -EINVAL;
+		पूर्ण
+		अगर (ipv4) अणु
+			अगर (info_bridge_mode) अणु
+				अगर (match->key->tun_key.u.ipv4.src ||
 				    match->key->tun_key.u.ipv4.dst ||
 				    match->key->tun_key.tp_src ||
 				    match->key->tun_key.tp_dst ||
 				    match->key->tun_key.ttl ||
 				    match->key->tun_key.tos ||
-				    tun_flags & ~TUNNEL_KEY) {
+				    tun_flags & ~TUNNEL_KEY) अणु
 					OVS_NLERR(log, "IPv4 tun info is not correct");
-					return -EINVAL;
-				}
-			} else if (!match->key->tun_key.u.ipv4.dst) {
+					वापस -EINVAL;
+				पूर्ण
+			पूर्ण अन्यथा अगर (!match->key->tun_key.u.ipv4.dst) अणु
 				OVS_NLERR(log, "IPv4 tunnel dst address is zero");
-				return -EINVAL;
-			}
-		}
-		if (ipv6 && ipv6_addr_any(&match->key->tun_key.u.ipv6.dst)) {
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+		अगर (ipv6 && ipv6_addr_any(&match->key->tun_key.u.ipv6.dst)) अणु
 			OVS_NLERR(log, "IPv6 tunnel dst address is zero");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!ttl && !info_bridge_mode) {
+		अगर (!ttl && !info_bridge_mode) अणु
 			OVS_NLERR(log, "IP tunnel TTL not specified.");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return opts_type;
-}
+	वापस opts_type;
+पूर्ण
 
-static int vxlan_opt_to_nlattr(struct sk_buff *skb,
-			       const void *tun_opts, int swkey_tun_opts_len)
-{
-	const struct vxlan_metadata *opts = tun_opts;
-	struct nlattr *nla;
+अटल पूर्णांक vxlan_opt_to_nlattr(काष्ठा sk_buff *skb,
+			       स्थिर व्योम *tun_opts, पूर्णांक swkey_tun_opts_len)
+अणु
+	स्थिर काष्ठा vxlan_metadata *opts = tun_opts;
+	काष्ठा nlattr *nla;
 
 	nla = nla_nest_start_noflag(skb, OVS_TUNNEL_KEY_ATTR_VXLAN_OPTS);
-	if (!nla)
-		return -EMSGSIZE;
+	अगर (!nla)
+		वापस -EMSGSIZE;
 
-	if (nla_put_u32(skb, OVS_VXLAN_EXT_GBP, opts->gbp) < 0)
-		return -EMSGSIZE;
+	अगर (nla_put_u32(skb, OVS_VXLAN_EXT_GBP, opts->gbp) < 0)
+		वापस -EMSGSIZE;
 
 	nla_nest_end(skb, nla);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __ip_tun_to_nlattr(struct sk_buff *skb,
-			      const struct ip_tunnel_key *output,
-			      const void *tun_opts, int swkey_tun_opts_len,
-			      unsigned short tun_proto, u8 mode)
-{
-	if (output->tun_flags & TUNNEL_KEY &&
+अटल पूर्णांक __ip_tun_to_nlattr(काष्ठा sk_buff *skb,
+			      स्थिर काष्ठा ip_tunnel_key *output,
+			      स्थिर व्योम *tun_opts, पूर्णांक swkey_tun_opts_len,
+			      अचिन्हित लघु tun_proto, u8 mode)
+अणु
+	अगर (output->tun_flags & TUNNEL_KEY &&
 	    nla_put_be64(skb, OVS_TUNNEL_KEY_ATTR_ID, output->tun_id,
 			 OVS_TUNNEL_KEY_ATTR_PAD))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	if (mode & IP_TUNNEL_INFO_BRIDGE)
-		return nla_put_flag(skb, OVS_TUNNEL_KEY_ATTR_IPV4_INFO_BRIDGE)
+	अगर (mode & IP_TUNNEL_INFO_BRIDGE)
+		वापस nla_put_flag(skb, OVS_TUNNEL_KEY_ATTR_IPV4_INFO_BRIDGE)
 		       ? -EMSGSIZE : 0;
 
-	switch (tun_proto) {
-	case AF_INET:
-		if (output->u.ipv4.src &&
+	चयन (tun_proto) अणु
+	हाल AF_INET:
+		अगर (output->u.ipv4.src &&
 		    nla_put_in_addr(skb, OVS_TUNNEL_KEY_ATTR_IPV4_SRC,
 				    output->u.ipv4.src))
-			return -EMSGSIZE;
-		if (output->u.ipv4.dst &&
+			वापस -EMSGSIZE;
+		अगर (output->u.ipv4.dst &&
 		    nla_put_in_addr(skb, OVS_TUNNEL_KEY_ATTR_IPV4_DST,
 				    output->u.ipv4.dst))
-			return -EMSGSIZE;
-		break;
-	case AF_INET6:
-		if (!ipv6_addr_any(&output->u.ipv6.src) &&
+			वापस -EMSGSIZE;
+		अवरोध;
+	हाल AF_INET6:
+		अगर (!ipv6_addr_any(&output->u.ipv6.src) &&
 		    nla_put_in6_addr(skb, OVS_TUNNEL_KEY_ATTR_IPV6_SRC,
 				     &output->u.ipv6.src))
-			return -EMSGSIZE;
-		if (!ipv6_addr_any(&output->u.ipv6.dst) &&
+			वापस -EMSGSIZE;
+		अगर (!ipv6_addr_any(&output->u.ipv6.dst) &&
 		    nla_put_in6_addr(skb, OVS_TUNNEL_KEY_ATTR_IPV6_DST,
 				     &output->u.ipv6.dst))
-			return -EMSGSIZE;
-		break;
-	}
-	if (output->tos &&
+			वापस -EMSGSIZE;
+		अवरोध;
+	पूर्ण
+	अगर (output->tos &&
 	    nla_put_u8(skb, OVS_TUNNEL_KEY_ATTR_TOS, output->tos))
-		return -EMSGSIZE;
-	if (nla_put_u8(skb, OVS_TUNNEL_KEY_ATTR_TTL, output->ttl))
-		return -EMSGSIZE;
-	if ((output->tun_flags & TUNNEL_DONT_FRAGMENT) &&
+		वापस -EMSGSIZE;
+	अगर (nla_put_u8(skb, OVS_TUNNEL_KEY_ATTR_TTL, output->ttl))
+		वापस -EMSGSIZE;
+	अगर ((output->tun_flags & TUNNEL_DONT_FRAGMENT) &&
 	    nla_put_flag(skb, OVS_TUNNEL_KEY_ATTR_DONT_FRAGMENT))
-		return -EMSGSIZE;
-	if ((output->tun_flags & TUNNEL_CSUM) &&
+		वापस -EMSGSIZE;
+	अगर ((output->tun_flags & TUNNEL_CSUM) &&
 	    nla_put_flag(skb, OVS_TUNNEL_KEY_ATTR_CSUM))
-		return -EMSGSIZE;
-	if (output->tp_src &&
+		वापस -EMSGSIZE;
+	अगर (output->tp_src &&
 	    nla_put_be16(skb, OVS_TUNNEL_KEY_ATTR_TP_SRC, output->tp_src))
-		return -EMSGSIZE;
-	if (output->tp_dst &&
+		वापस -EMSGSIZE;
+	अगर (output->tp_dst &&
 	    nla_put_be16(skb, OVS_TUNNEL_KEY_ATTR_TP_DST, output->tp_dst))
-		return -EMSGSIZE;
-	if ((output->tun_flags & TUNNEL_OAM) &&
+		वापस -EMSGSIZE;
+	अगर ((output->tun_flags & TUNNEL_OAM) &&
 	    nla_put_flag(skb, OVS_TUNNEL_KEY_ATTR_OAM))
-		return -EMSGSIZE;
-	if (swkey_tun_opts_len) {
-		if (output->tun_flags & TUNNEL_GENEVE_OPT &&
+		वापस -EMSGSIZE;
+	अगर (swkey_tun_opts_len) अणु
+		अगर (output->tun_flags & TUNNEL_GENEVE_OPT &&
 		    nla_put(skb, OVS_TUNNEL_KEY_ATTR_GENEVE_OPTS,
 			    swkey_tun_opts_len, tun_opts))
-			return -EMSGSIZE;
-		else if (output->tun_flags & TUNNEL_VXLAN_OPT &&
+			वापस -EMSGSIZE;
+		अन्यथा अगर (output->tun_flags & TUNNEL_VXLAN_OPT &&
 			 vxlan_opt_to_nlattr(skb, tun_opts, swkey_tun_opts_len))
-			return -EMSGSIZE;
-		else if (output->tun_flags & TUNNEL_ERSPAN_OPT &&
+			वापस -EMSGSIZE;
+		अन्यथा अगर (output->tun_flags & TUNNEL_ERSPAN_OPT &&
 			 nla_put(skb, OVS_TUNNEL_KEY_ATTR_ERSPAN_OPTS,
 				 swkey_tun_opts_len, tun_opts))
-			return -EMSGSIZE;
-	}
+			वापस -EMSGSIZE;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip_tun_to_nlattr(struct sk_buff *skb,
-			    const struct ip_tunnel_key *output,
-			    const void *tun_opts, int swkey_tun_opts_len,
-			    unsigned short tun_proto, u8 mode)
-{
-	struct nlattr *nla;
-	int err;
+अटल पूर्णांक ip_tun_to_nlattr(काष्ठा sk_buff *skb,
+			    स्थिर काष्ठा ip_tunnel_key *output,
+			    स्थिर व्योम *tun_opts, पूर्णांक swkey_tun_opts_len,
+			    अचिन्हित लघु tun_proto, u8 mode)
+अणु
+	काष्ठा nlattr *nla;
+	पूर्णांक err;
 
 	nla = nla_nest_start_noflag(skb, OVS_KEY_ATTR_TUNNEL);
-	if (!nla)
-		return -EMSGSIZE;
+	अगर (!nla)
+		वापस -EMSGSIZE;
 
 	err = __ip_tun_to_nlattr(skb, output, tun_opts, swkey_tun_opts_len,
 				 tun_proto, mode);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	nla_nest_end(skb, nla);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ovs_nla_put_tunnel_info(struct sk_buff *skb,
-			    struct ip_tunnel_info *tun_info)
-{
-	return __ip_tun_to_nlattr(skb, &tun_info->key,
+पूर्णांक ovs_nla_put_tunnel_info(काष्ठा sk_buff *skb,
+			    काष्ठा ip_tunnel_info *tun_info)
+अणु
+	वापस __ip_tun_to_nlattr(skb, &tun_info->key,
 				  ip_tunnel_info_opts(tun_info),
 				  tun_info->options_len,
 				  ip_tunnel_info_af(tun_info), tun_info->mode);
-}
+पूर्ण
 
-static int encode_vlan_from_nlattrs(struct sw_flow_match *match,
-				    const struct nlattr *a[],
+अटल पूर्णांक encode_vlan_from_nlattrs(काष्ठा sw_flow_match *match,
+				    स्थिर काष्ठा nlattr *a[],
 				    bool is_mask, bool inner)
-{
+अणु
 	__be16 tci = 0;
 	__be16 tpid = 0;
 
-	if (a[OVS_KEY_ATTR_VLAN])
+	अगर (a[OVS_KEY_ATTR_VLAN])
 		tci = nla_get_be16(a[OVS_KEY_ATTR_VLAN]);
 
-	if (a[OVS_KEY_ATTR_ETHERTYPE])
+	अगर (a[OVS_KEY_ATTR_ETHERTYPE])
 		tpid = nla_get_be16(a[OVS_KEY_ATTR_ETHERTYPE]);
 
-	if (likely(!inner)) {
+	अगर (likely(!inner)) अणु
 		SW_FLOW_KEY_PUT(match, eth.vlan.tpid, tpid, is_mask);
 		SW_FLOW_KEY_PUT(match, eth.vlan.tci, tci, is_mask);
-	} else {
+	पूर्ण अन्यथा अणु
 		SW_FLOW_KEY_PUT(match, eth.cvlan.tpid, tpid, is_mask);
 		SW_FLOW_KEY_PUT(match, eth.cvlan.tci, tci, is_mask);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int validate_vlan_from_nlattrs(const struct sw_flow_match *match,
+अटल पूर्णांक validate_vlan_from_nlattrs(स्थिर काष्ठा sw_flow_match *match,
 				      u64 key_attrs, bool inner,
-				      const struct nlattr **a, bool log)
-{
+				      स्थिर काष्ठा nlattr **a, bool log)
+अणु
 	__be16 tci = 0;
 
-	if (!((key_attrs & (1 << OVS_KEY_ATTR_ETHERNET)) &&
+	अगर (!((key_attrs & (1 << OVS_KEY_ATTR_ETHERNET)) &&
 	      (key_attrs & (1 << OVS_KEY_ATTR_ETHERTYPE)) &&
-	       eth_type_vlan(nla_get_be16(a[OVS_KEY_ATTR_ETHERTYPE])))) {
+	       eth_type_vlan(nla_get_be16(a[OVS_KEY_ATTR_ETHERTYPE])))) अणु
 		/* Not a VLAN. */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!((key_attrs & (1 << OVS_KEY_ATTR_VLAN)) &&
-	      (key_attrs & (1 << OVS_KEY_ATTR_ENCAP)))) {
+	अगर (!((key_attrs & (1 << OVS_KEY_ATTR_VLAN)) &&
+	      (key_attrs & (1 << OVS_KEY_ATTR_ENCAP)))) अणु
 		OVS_NLERR(log, "Invalid %s frame", (inner) ? "C-VLAN" : "VLAN");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (a[OVS_KEY_ATTR_VLAN])
+	अगर (a[OVS_KEY_ATTR_VLAN])
 		tci = nla_get_be16(a[OVS_KEY_ATTR_VLAN]);
 
-	if (!(tci & htons(VLAN_CFI_MASK))) {
-		if (tci) {
+	अगर (!(tci & htons(VLAN_CFI_MASK))) अणु
+		अगर (tci) अणु
 			OVS_NLERR(log, "%s TCI does not have VLAN_CFI_MASK bit set.",
 				  (inner) ? "C-VLAN" : "VLAN");
-			return -EINVAL;
-		} else if (nla_len(a[OVS_KEY_ATTR_ENCAP])) {
-			/* Corner case for truncated VLAN header. */
+			वापस -EINVAL;
+		पूर्ण अन्यथा अगर (nla_len(a[OVS_KEY_ATTR_ENCAP])) अणु
+			/* Corner हाल क्रम truncated VLAN header. */
 			OVS_NLERR(log, "Truncated %s header has non-zero encap attribute.",
 				  (inner) ? "C-VLAN" : "VLAN");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int validate_vlan_mask_from_nlattrs(const struct sw_flow_match *match,
+अटल पूर्णांक validate_vlan_mask_from_nlattrs(स्थिर काष्ठा sw_flow_match *match,
 					   u64 key_attrs, bool inner,
-					   const struct nlattr **a, bool log)
-{
+					   स्थिर काष्ठा nlattr **a, bool log)
+अणु
 	__be16 tci = 0;
 	__be16 tpid = 0;
 	bool encap_valid = !!(match->key->eth.vlan.tci &
@@ -1031,57 +1032,57 @@ static int validate_vlan_mask_from_nlattrs(const struct sw_flow_match *match,
 	bool i_encap_valid = !!(match->key->eth.cvlan.tci &
 				htons(VLAN_CFI_MASK));
 
-	if (!(key_attrs & (1 << OVS_KEY_ATTR_ENCAP))) {
+	अगर (!(key_attrs & (1 << OVS_KEY_ATTR_ENCAP))) अणु
 		/* Not a VLAN. */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if ((!inner && !encap_valid) || (inner && !i_encap_valid)) {
+	अगर ((!inner && !encap_valid) || (inner && !i_encap_valid)) अणु
 		OVS_NLERR(log, "Encap mask attribute is set for non-%s frame.",
 			  (inner) ? "C-VLAN" : "VLAN");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (a[OVS_KEY_ATTR_VLAN])
+	अगर (a[OVS_KEY_ATTR_VLAN])
 		tci = nla_get_be16(a[OVS_KEY_ATTR_VLAN]);
 
-	if (a[OVS_KEY_ATTR_ETHERTYPE])
+	अगर (a[OVS_KEY_ATTR_ETHERTYPE])
 		tpid = nla_get_be16(a[OVS_KEY_ATTR_ETHERTYPE]);
 
-	if (tpid != htons(0xffff)) {
+	अगर (tpid != htons(0xffff)) अणु
 		OVS_NLERR(log, "Must have an exact match on %s TPID (mask=%x).",
 			  (inner) ? "C-VLAN" : "VLAN", ntohs(tpid));
-		return -EINVAL;
-	}
-	if (!(tci & htons(VLAN_CFI_MASK))) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!(tci & htons(VLAN_CFI_MASK))) अणु
 		OVS_NLERR(log, "%s TCI mask does not have exact match for VLAN_CFI_MASK bit.",
 			  (inner) ? "C-VLAN" : "VLAN");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int __parse_vlan_from_nlattrs(struct sw_flow_match *match,
+अटल पूर्णांक __parse_vlan_from_nlattrs(काष्ठा sw_flow_match *match,
 				     u64 *key_attrs, bool inner,
-				     const struct nlattr **a, bool is_mask,
+				     स्थिर काष्ठा nlattr **a, bool is_mask,
 				     bool log)
-{
-	int err;
-	const struct nlattr *encap;
+अणु
+	पूर्णांक err;
+	स्थिर काष्ठा nlattr *encap;
 
-	if (!is_mask)
+	अगर (!is_mask)
 		err = validate_vlan_from_nlattrs(match, *key_attrs, inner,
 						 a, log);
-	else
+	अन्यथा
 		err = validate_vlan_mask_from_nlattrs(match, *key_attrs, inner,
 						      a, log);
-	if (err <= 0)
-		return err;
+	अगर (err <= 0)
+		वापस err;
 
 	err = encode_vlan_from_nlattrs(match, a, is_mask, inner);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	*key_attrs &= ~(1 << OVS_KEY_ATTR_ENCAP);
 	*key_attrs &= ~(1 << OVS_KEY_ATTR_VLAN);
@@ -1089,152 +1090,152 @@ static int __parse_vlan_from_nlattrs(struct sw_flow_match *match,
 
 	encap = a[OVS_KEY_ATTR_ENCAP];
 
-	if (!is_mask)
+	अगर (!is_mask)
 		err = parse_flow_nlattrs(encap, a, key_attrs, log);
-	else
+	अन्यथा
 		err = parse_flow_mask_nlattrs(encap, a, key_attrs, log);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int parse_vlan_from_nlattrs(struct sw_flow_match *match,
-				   u64 *key_attrs, const struct nlattr **a,
+अटल पूर्णांक parse_vlan_from_nlattrs(काष्ठा sw_flow_match *match,
+				   u64 *key_attrs, स्थिर काष्ठा nlattr **a,
 				   bool is_mask, bool log)
-{
-	int err;
+अणु
+	पूर्णांक err;
 	bool encap_valid = false;
 
 	err = __parse_vlan_from_nlattrs(match, key_attrs, false, a,
 					is_mask, log);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	encap_valid = !!(match->key->eth.vlan.tci & htons(VLAN_CFI_MASK));
-	if (encap_valid) {
+	अगर (encap_valid) अणु
 		err = __parse_vlan_from_nlattrs(match, key_attrs, true, a,
 						is_mask, log);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int parse_eth_type_from_nlattrs(struct sw_flow_match *match,
-				       u64 *attrs, const struct nlattr **a,
+अटल पूर्णांक parse_eth_type_from_nlattrs(काष्ठा sw_flow_match *match,
+				       u64 *attrs, स्थिर काष्ठा nlattr **a,
 				       bool is_mask, bool log)
-{
+अणु
 	__be16 eth_type;
 
 	eth_type = nla_get_be16(a[OVS_KEY_ATTR_ETHERTYPE]);
-	if (is_mask) {
+	अगर (is_mask) अणु
 		/* Always exact match EtherType. */
 		eth_type = htons(0xffff);
-	} else if (!eth_proto_is_802_3(eth_type)) {
+	पूर्ण अन्यथा अगर (!eth_proto_is_802_3(eth_type)) अणु
 		OVS_NLERR(log, "EtherType %x is less than min %x",
 				ntohs(eth_type), ETH_P_802_3_MIN);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	SW_FLOW_KEY_PUT(match, eth.type, eth_type, is_mask);
 	*attrs &= ~(1 << OVS_KEY_ATTR_ETHERTYPE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int metadata_from_nlattrs(struct net *net, struct sw_flow_match *match,
-				 u64 *attrs, const struct nlattr **a,
+अटल पूर्णांक metadata_from_nlattrs(काष्ठा net *net, काष्ठा sw_flow_match *match,
+				 u64 *attrs, स्थिर काष्ठा nlattr **a,
 				 bool is_mask, bool log)
-{
+अणु
 	u8 mac_proto = MAC_PROTO_ETHERNET;
 
-	if (*attrs & (1 << OVS_KEY_ATTR_DP_HASH)) {
+	अगर (*attrs & (1 << OVS_KEY_ATTR_DP_HASH)) अणु
 		u32 hash_val = nla_get_u32(a[OVS_KEY_ATTR_DP_HASH]);
 
 		SW_FLOW_KEY_PUT(match, ovs_flow_hash, hash_val, is_mask);
 		*attrs &= ~(1 << OVS_KEY_ATTR_DP_HASH);
-	}
+	पूर्ण
 
-	if (*attrs & (1 << OVS_KEY_ATTR_RECIRC_ID)) {
+	अगर (*attrs & (1 << OVS_KEY_ATTR_RECIRC_ID)) अणु
 		u32 recirc_id = nla_get_u32(a[OVS_KEY_ATTR_RECIRC_ID]);
 
 		SW_FLOW_KEY_PUT(match, recirc_id, recirc_id, is_mask);
 		*attrs &= ~(1 << OVS_KEY_ATTR_RECIRC_ID);
-	}
+	पूर्ण
 
-	if (*attrs & (1 << OVS_KEY_ATTR_PRIORITY)) {
+	अगर (*attrs & (1 << OVS_KEY_ATTR_PRIORITY)) अणु
 		SW_FLOW_KEY_PUT(match, phy.priority,
 			  nla_get_u32(a[OVS_KEY_ATTR_PRIORITY]), is_mask);
 		*attrs &= ~(1 << OVS_KEY_ATTR_PRIORITY);
-	}
+	पूर्ण
 
-	if (*attrs & (1 << OVS_KEY_ATTR_IN_PORT)) {
+	अगर (*attrs & (1 << OVS_KEY_ATTR_IN_PORT)) अणु
 		u32 in_port = nla_get_u32(a[OVS_KEY_ATTR_IN_PORT]);
 
-		if (is_mask) {
+		अगर (is_mask) अणु
 			in_port = 0xffffffff; /* Always exact match in_port. */
-		} else if (in_port >= DP_MAX_PORTS) {
+		पूर्ण अन्यथा अगर (in_port >= DP_MAX_PORTS) अणु
 			OVS_NLERR(log, "Port %d exceeds max allowable %d",
 				  in_port, DP_MAX_PORTS);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		SW_FLOW_KEY_PUT(match, phy.in_port, in_port, is_mask);
 		*attrs &= ~(1 << OVS_KEY_ATTR_IN_PORT);
-	} else if (!is_mask) {
+	पूर्ण अन्यथा अगर (!is_mask) अणु
 		SW_FLOW_KEY_PUT(match, phy.in_port, DP_MAX_PORTS, is_mask);
-	}
+	पूर्ण
 
-	if (*attrs & (1 << OVS_KEY_ATTR_SKB_MARK)) {
-		uint32_t mark = nla_get_u32(a[OVS_KEY_ATTR_SKB_MARK]);
+	अगर (*attrs & (1 << OVS_KEY_ATTR_SKB_MARK)) अणु
+		uपूर्णांक32_t mark = nla_get_u32(a[OVS_KEY_ATTR_SKB_MARK]);
 
 		SW_FLOW_KEY_PUT(match, phy.skb_mark, mark, is_mask);
 		*attrs &= ~(1 << OVS_KEY_ATTR_SKB_MARK);
-	}
-	if (*attrs & (1 << OVS_KEY_ATTR_TUNNEL)) {
-		if (ip_tun_from_nlattr(a[OVS_KEY_ATTR_TUNNEL], match,
+	पूर्ण
+	अगर (*attrs & (1 << OVS_KEY_ATTR_TUNNEL)) अणु
+		अगर (ip_tun_from_nlattr(a[OVS_KEY_ATTR_TUNNEL], match,
 				       is_mask, log) < 0)
-			return -EINVAL;
+			वापस -EINVAL;
 		*attrs &= ~(1 << OVS_KEY_ATTR_TUNNEL);
-	}
+	पूर्ण
 
-	if (*attrs & (1 << OVS_KEY_ATTR_CT_STATE) &&
-	    ovs_ct_verify(net, OVS_KEY_ATTR_CT_STATE)) {
+	अगर (*attrs & (1 << OVS_KEY_ATTR_CT_STATE) &&
+	    ovs_ct_verअगरy(net, OVS_KEY_ATTR_CT_STATE)) अणु
 		u32 ct_state = nla_get_u32(a[OVS_KEY_ATTR_CT_STATE]);
 
-		if (ct_state & ~CT_SUPPORTED_MASK) {
+		अगर (ct_state & ~CT_SUPPORTED_MASK) अणु
 			OVS_NLERR(log, "ct_state flags %08x unsupported",
 				  ct_state);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		SW_FLOW_KEY_PUT(match, ct_state, ct_state, is_mask);
 		*attrs &= ~(1ULL << OVS_KEY_ATTR_CT_STATE);
-	}
-	if (*attrs & (1 << OVS_KEY_ATTR_CT_ZONE) &&
-	    ovs_ct_verify(net, OVS_KEY_ATTR_CT_ZONE)) {
+	पूर्ण
+	अगर (*attrs & (1 << OVS_KEY_ATTR_CT_ZONE) &&
+	    ovs_ct_verअगरy(net, OVS_KEY_ATTR_CT_ZONE)) अणु
 		u16 ct_zone = nla_get_u16(a[OVS_KEY_ATTR_CT_ZONE]);
 
 		SW_FLOW_KEY_PUT(match, ct_zone, ct_zone, is_mask);
 		*attrs &= ~(1ULL << OVS_KEY_ATTR_CT_ZONE);
-	}
-	if (*attrs & (1 << OVS_KEY_ATTR_CT_MARK) &&
-	    ovs_ct_verify(net, OVS_KEY_ATTR_CT_MARK)) {
+	पूर्ण
+	अगर (*attrs & (1 << OVS_KEY_ATTR_CT_MARK) &&
+	    ovs_ct_verअगरy(net, OVS_KEY_ATTR_CT_MARK)) अणु
 		u32 mark = nla_get_u32(a[OVS_KEY_ATTR_CT_MARK]);
 
 		SW_FLOW_KEY_PUT(match, ct.mark, mark, is_mask);
 		*attrs &= ~(1ULL << OVS_KEY_ATTR_CT_MARK);
-	}
-	if (*attrs & (1 << OVS_KEY_ATTR_CT_LABELS) &&
-	    ovs_ct_verify(net, OVS_KEY_ATTR_CT_LABELS)) {
-		const struct ovs_key_ct_labels *cl;
+	पूर्ण
+	अगर (*attrs & (1 << OVS_KEY_ATTR_CT_LABELS) &&
+	    ovs_ct_verअगरy(net, OVS_KEY_ATTR_CT_LABELS)) अणु
+		स्थिर काष्ठा ovs_key_ct_labels *cl;
 
 		cl = nla_data(a[OVS_KEY_ATTR_CT_LABELS]);
 		SW_FLOW_KEY_MEMCPY(match, ct.labels, cl->ct_labels,
-				   sizeof(*cl), is_mask);
+				   माप(*cl), is_mask);
 		*attrs &= ~(1ULL << OVS_KEY_ATTR_CT_LABELS);
-	}
-	if (*attrs & (1ULL << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4)) {
-		const struct ovs_key_ct_tuple_ipv4 *ct;
+	पूर्ण
+	अगर (*attrs & (1ULL << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4)) अणु
+		स्थिर काष्ठा ovs_key_ct_tuple_ipv4 *ct;
 
 		ct = nla_data(a[OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4]);
 
@@ -1244,162 +1245,162 @@ static int metadata_from_nlattrs(struct net *net, struct sw_flow_match *match,
 		SW_FLOW_KEY_PUT(match, ct.orig_tp.dst, ct->dst_port, is_mask);
 		SW_FLOW_KEY_PUT(match, ct_orig_proto, ct->ipv4_proto, is_mask);
 		*attrs &= ~(1ULL << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4);
-	}
-	if (*attrs & (1ULL << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6)) {
-		const struct ovs_key_ct_tuple_ipv6 *ct;
+	पूर्ण
+	अगर (*attrs & (1ULL << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6)) अणु
+		स्थिर काष्ठा ovs_key_ct_tuple_ipv6 *ct;
 
 		ct = nla_data(a[OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6]);
 
 		SW_FLOW_KEY_MEMCPY(match, ipv6.ct_orig.src, &ct->ipv6_src,
-				   sizeof(match->key->ipv6.ct_orig.src),
+				   माप(match->key->ipv6.ct_orig.src),
 				   is_mask);
 		SW_FLOW_KEY_MEMCPY(match, ipv6.ct_orig.dst, &ct->ipv6_dst,
-				   sizeof(match->key->ipv6.ct_orig.dst),
+				   माप(match->key->ipv6.ct_orig.dst),
 				   is_mask);
 		SW_FLOW_KEY_PUT(match, ct.orig_tp.src, ct->src_port, is_mask);
 		SW_FLOW_KEY_PUT(match, ct.orig_tp.dst, ct->dst_port, is_mask);
 		SW_FLOW_KEY_PUT(match, ct_orig_proto, ct->ipv6_proto, is_mask);
 		*attrs &= ~(1ULL << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6);
-	}
+	पूर्ण
 
 	/* For layer 3 packets the Ethernet type is provided
 	 * and treated as metadata but no MAC addresses are provided.
 	 */
-	if (!(*attrs & (1ULL << OVS_KEY_ATTR_ETHERNET)) &&
+	अगर (!(*attrs & (1ULL << OVS_KEY_ATTR_ETHERNET)) &&
 	    (*attrs & (1ULL << OVS_KEY_ATTR_ETHERTYPE)))
 		mac_proto = MAC_PROTO_NONE;
 
 	/* Always exact match mac_proto */
 	SW_FLOW_KEY_PUT(match, mac_proto, is_mask ? 0xff : mac_proto, is_mask);
 
-	if (mac_proto == MAC_PROTO_NONE)
-		return parse_eth_type_from_nlattrs(match, attrs, a, is_mask,
+	अगर (mac_proto == MAC_PROTO_NONE)
+		वापस parse_eth_type_from_nlattrs(match, attrs, a, is_mask,
 						   log);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int nsh_hdr_from_nlattr(const struct nlattr *attr,
-			struct nshhdr *nh, size_t size)
-{
-	struct nlattr *a;
-	int rem;
+पूर्णांक nsh_hdr_from_nlattr(स्थिर काष्ठा nlattr *attr,
+			काष्ठा nshhdr *nh, माप_प्रकार size)
+अणु
+	काष्ठा nlattr *a;
+	पूर्णांक rem;
 	u8 flags = 0;
 	u8 ttl = 0;
-	int mdlen = 0;
+	पूर्णांक mdlen = 0;
 
-	/* validate_nsh has check this, so we needn't do duplicate check here
+	/* validate_nsh has check this, so we needn't करो duplicate check here
 	 */
-	if (size < NSH_BASE_HDR_LEN)
-		return -ENOBUFS;
+	अगर (size < NSH_BASE_HDR_LEN)
+		वापस -ENOBUFS;
 
-	nla_for_each_nested(a, attr, rem) {
-		int type = nla_type(a);
+	nla_क्रम_each_nested(a, attr, rem) अणु
+		पूर्णांक type = nla_type(a);
 
-		switch (type) {
-		case OVS_NSH_KEY_ATTR_BASE: {
-			const struct ovs_nsh_key_base *base = nla_data(a);
+		चयन (type) अणु
+		हाल OVS_NSH_KEY_ATTR_BASE: अणु
+			स्थिर काष्ठा ovs_nsh_key_base *base = nla_data(a);
 
 			flags = base->flags;
 			ttl = base->ttl;
 			nh->np = base->np;
 			nh->mdtype = base->mdtype;
 			nh->path_hdr = base->path_hdr;
-			break;
-		}
-		case OVS_NSH_KEY_ATTR_MD1:
+			अवरोध;
+		पूर्ण
+		हाल OVS_NSH_KEY_ATTR_MD1:
 			mdlen = nla_len(a);
-			if (mdlen > size - NSH_BASE_HDR_LEN)
-				return -ENOBUFS;
-			memcpy(&nh->md1, nla_data(a), mdlen);
-			break;
+			अगर (mdlen > size - NSH_BASE_HDR_LEN)
+				वापस -ENOBUFS;
+			स_नकल(&nh->md1, nla_data(a), mdlen);
+			अवरोध;
 
-		case OVS_NSH_KEY_ATTR_MD2:
+		हाल OVS_NSH_KEY_ATTR_MD2:
 			mdlen = nla_len(a);
-			if (mdlen > size - NSH_BASE_HDR_LEN)
-				return -ENOBUFS;
-			memcpy(&nh->md2, nla_data(a), mdlen);
-			break;
+			अगर (mdlen > size - NSH_BASE_HDR_LEN)
+				वापस -ENOBUFS;
+			स_नकल(&nh->md2, nla_data(a), mdlen);
+			अवरोध;
 
-		default:
-			return -EINVAL;
-		}
-	}
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* nsh header length  = NSH_BASE_HDR_LEN + mdlen */
 	nh->ver_flags_ttl_len = 0;
 	nsh_set_flags_ttl_len(nh, flags, ttl, NSH_BASE_HDR_LEN + mdlen);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int nsh_key_from_nlattr(const struct nlattr *attr,
-			struct ovs_key_nsh *nsh, struct ovs_key_nsh *nsh_mask)
-{
-	struct nlattr *a;
-	int rem;
+पूर्णांक nsh_key_from_nlattr(स्थिर काष्ठा nlattr *attr,
+			काष्ठा ovs_key_nsh *nsh, काष्ठा ovs_key_nsh *nsh_mask)
+अणु
+	काष्ठा nlattr *a;
+	पूर्णांक rem;
 
-	/* validate_nsh has check this, so we needn't do duplicate check here
+	/* validate_nsh has check this, so we needn't करो duplicate check here
 	 */
-	nla_for_each_nested(a, attr, rem) {
-		int type = nla_type(a);
+	nla_क्रम_each_nested(a, attr, rem) अणु
+		पूर्णांक type = nla_type(a);
 
-		switch (type) {
-		case OVS_NSH_KEY_ATTR_BASE: {
-			const struct ovs_nsh_key_base *base = nla_data(a);
-			const struct ovs_nsh_key_base *base_mask = base + 1;
+		चयन (type) अणु
+		हाल OVS_NSH_KEY_ATTR_BASE: अणु
+			स्थिर काष्ठा ovs_nsh_key_base *base = nla_data(a);
+			स्थिर काष्ठा ovs_nsh_key_base *base_mask = base + 1;
 
 			nsh->base = *base;
 			nsh_mask->base = *base_mask;
-			break;
-		}
-		case OVS_NSH_KEY_ATTR_MD1: {
-			const struct ovs_nsh_key_md1 *md1 = nla_data(a);
-			const struct ovs_nsh_key_md1 *md1_mask = md1 + 1;
+			अवरोध;
+		पूर्ण
+		हाल OVS_NSH_KEY_ATTR_MD1: अणु
+			स्थिर काष्ठा ovs_nsh_key_md1 *md1 = nla_data(a);
+			स्थिर काष्ठा ovs_nsh_key_md1 *md1_mask = md1 + 1;
 
-			memcpy(nsh->context, md1->context, sizeof(*md1));
-			memcpy(nsh_mask->context, md1_mask->context,
-			       sizeof(*md1_mask));
-			break;
-		}
-		case OVS_NSH_KEY_ATTR_MD2:
+			स_नकल(nsh->context, md1->context, माप(*md1));
+			स_नकल(nsh_mask->context, md1_mask->context,
+			       माप(*md1_mask));
+			अवरोध;
+		पूर्ण
+		हाल OVS_NSH_KEY_ATTR_MD2:
 			/* Not supported yet */
-			return -ENOTSUPP;
-		default:
-			return -EINVAL;
-		}
-	}
+			वापस -ENOTSUPP;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nsh_key_put_from_nlattr(const struct nlattr *attr,
-				   struct sw_flow_match *match, bool is_mask,
+अटल पूर्णांक nsh_key_put_from_nlattr(स्थिर काष्ठा nlattr *attr,
+				   काष्ठा sw_flow_match *match, bool is_mask,
 				   bool is_push_nsh, bool log)
-{
-	struct nlattr *a;
-	int rem;
+अणु
+	काष्ठा nlattr *a;
+	पूर्णांक rem;
 	bool has_base = false;
 	bool has_md1 = false;
 	bool has_md2 = false;
 	u8 mdtype = 0;
-	int mdlen = 0;
+	पूर्णांक mdlen = 0;
 
-	if (WARN_ON(is_push_nsh && is_mask))
-		return -EINVAL;
+	अगर (WARN_ON(is_push_nsh && is_mask))
+		वापस -EINVAL;
 
-	nla_for_each_nested(a, attr, rem) {
-		int type = nla_type(a);
-		int i;
+	nla_क्रम_each_nested(a, attr, rem) अणु
+		पूर्णांक type = nla_type(a);
+		पूर्णांक i;
 
-		if (type > OVS_NSH_KEY_ATTR_MAX) {
+		अगर (type > OVS_NSH_KEY_ATTR_MAX) अणु
 			OVS_NLERR(log, "nsh attr %d is out of range max %d",
 				  type, OVS_NSH_KEY_ATTR_MAX);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!check_attr_len(nla_len(a),
-				    ovs_nsh_key_attr_lens[type].len)) {
+		अगर (!check_attr_len(nla_len(a),
+				    ovs_nsh_key_attr_lens[type].len)) अणु
 			OVS_NLERR(
 			    log,
 			    "nsh attr %d has unexpected len %d expected %d",
@@ -1407,12 +1408,12 @@ static int nsh_key_put_from_nlattr(const struct nlattr *attr,
 			    nla_len(a),
 			    ovs_nsh_key_attr_lens[type].len
 			);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (type) {
-		case OVS_NSH_KEY_ATTR_BASE: {
-			const struct ovs_nsh_key_base *base = nla_data(a);
+		चयन (type) अणु
+		हाल OVS_NSH_KEY_ATTR_BASE: अणु
+			स्थिर काष्ठा ovs_nsh_key_base *base = nla_data(a);
 
 			has_base = true;
 			mdtype = base->mdtype;
@@ -1426,86 +1427,86 @@ static int nsh_key_put_from_nlattr(const struct nlattr *attr,
 					base->np, is_mask);
 			SW_FLOW_KEY_PUT(match, nsh.base.path_hdr,
 					base->path_hdr, is_mask);
-			break;
-		}
-		case OVS_NSH_KEY_ATTR_MD1: {
-			const struct ovs_nsh_key_md1 *md1 = nla_data(a);
+			अवरोध;
+		पूर्ण
+		हाल OVS_NSH_KEY_ATTR_MD1: अणु
+			स्थिर काष्ठा ovs_nsh_key_md1 *md1 = nla_data(a);
 
 			has_md1 = true;
-			for (i = 0; i < NSH_MD1_CONTEXT_SIZE; i++)
+			क्रम (i = 0; i < NSH_MD1_CONTEXT_SIZE; i++)
 				SW_FLOW_KEY_PUT(match, nsh.context[i],
 						md1->context[i], is_mask);
-			break;
-		}
-		case OVS_NSH_KEY_ATTR_MD2:
-			if (!is_push_nsh) /* Not supported MD type 2 yet */
-				return -ENOTSUPP;
+			अवरोध;
+		पूर्ण
+		हाल OVS_NSH_KEY_ATTR_MD2:
+			अगर (!is_push_nsh) /* Not supported MD type 2 yet */
+				वापस -ENOTSUPP;
 
 			has_md2 = true;
 			mdlen = nla_len(a);
-			if (mdlen > NSH_CTX_HDRS_MAX_LEN || mdlen <= 0) {
+			अगर (mdlen > NSH_CTX_HDRS_MAX_LEN || mdlen <= 0) अणु
 				OVS_NLERR(
 				    log,
 				    "Invalid MD length %d for MD type %d",
 				    mdlen,
 				    mdtype
 				);
-				return -EINVAL;
-			}
-			break;
-		default:
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		शेष:
 			OVS_NLERR(log, "Unknown nsh attribute %d",
 				  type);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (rem > 0) {
+	अगर (rem > 0) अणु
 		OVS_NLERR(log, "nsh attribute has %d unknown bytes.", rem);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (has_md1 && has_md2) {
+	अगर (has_md1 && has_md2) अणु
 		OVS_NLERR(
 		    1,
 		    "invalid nsh attribute: md1 and md2 are exclusive."
 		);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!is_mask) {
-		if ((has_md1 && mdtype != NSH_M_TYPE1) ||
-		    (has_md2 && mdtype != NSH_M_TYPE2)) {
+	अगर (!is_mask) अणु
+		अगर ((has_md1 && mdtype != NSH_M_TYPE1) ||
+		    (has_md2 && mdtype != NSH_M_TYPE2)) अणु
 			OVS_NLERR(1, "nsh attribute has unmatched MD type %d.",
 				  mdtype);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (is_push_nsh &&
-		    (!has_base || (!has_md1 && !has_md2))) {
+		अगर (is_push_nsh &&
+		    (!has_base || (!has_md1 && !has_md2))) अणु
 			OVS_NLERR(
 			    1,
 			    "push_nsh: missing base or metadata attributes"
 			);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ovs_key_from_nlattrs(struct net *net, struct sw_flow_match *match,
-				u64 attrs, const struct nlattr **a,
+अटल पूर्णांक ovs_key_from_nlattrs(काष्ठा net *net, काष्ठा sw_flow_match *match,
+				u64 attrs, स्थिर काष्ठा nlattr **a,
 				bool is_mask, bool log)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
 	err = metadata_from_nlattrs(net, match, &attrs, a, is_mask, log);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (attrs & (1 << OVS_KEY_ATTR_ETHERNET)) {
-		const struct ovs_key_ethernet *eth_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_ETHERNET)) अणु
+		स्थिर काष्ठा ovs_key_ethernet *eth_key;
 
 		eth_key = nla_data(a[OVS_KEY_ATTR_ETHERNET]);
 		SW_FLOW_KEY_MEMCPY(match, eth.src,
@@ -1514,36 +1515,36 @@ static int ovs_key_from_nlattrs(struct net *net, struct sw_flow_match *match,
 				eth_key->eth_dst, ETH_ALEN, is_mask);
 		attrs &= ~(1 << OVS_KEY_ATTR_ETHERNET);
 
-		if (attrs & (1 << OVS_KEY_ATTR_VLAN)) {
-			/* VLAN attribute is always parsed before getting here since it
-			 * may occur multiple times.
+		अगर (attrs & (1 << OVS_KEY_ATTR_VLAN)) अणु
+			/* VLAN attribute is always parsed beक्रमe getting here since it
+			 * may occur multiple बार.
 			 */
 			OVS_NLERR(log, "VLAN attribute unexpected.");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (attrs & (1 << OVS_KEY_ATTR_ETHERTYPE)) {
+		अगर (attrs & (1 << OVS_KEY_ATTR_ETHERTYPE)) अणु
 			err = parse_eth_type_from_nlattrs(match, &attrs, a, is_mask,
 							  log);
-			if (err)
-				return err;
-		} else if (!is_mask) {
+			अगर (err)
+				वापस err;
+		पूर्ण अन्यथा अगर (!is_mask) अणु
 			SW_FLOW_KEY_PUT(match, eth.type, htons(ETH_P_802_2), is_mask);
-		}
-	} else if (!match->key->eth.type) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (!match->key->eth.type) अणु
 		OVS_NLERR(log, "Either Ethernet header or EtherType is required.");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_IPV4)) {
-		const struct ovs_key_ipv4 *ipv4_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_IPV4)) अणु
+		स्थिर काष्ठा ovs_key_ipv4 *ipv4_key;
 
 		ipv4_key = nla_data(a[OVS_KEY_ATTR_IPV4]);
-		if (!is_mask && ipv4_key->ipv4_frag > OVS_FRAG_TYPE_MAX) {
+		अगर (!is_mask && ipv4_key->ipv4_frag > OVS_FRAG_TYPE_MAX) अणु
 			OVS_NLERR(log, "IPv4 frag type %d is out of range max %d",
 				  ipv4_key->ipv4_frag, OVS_FRAG_TYPE_MAX);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		SW_FLOW_KEY_PUT(match, ip.proto,
 				ipv4_key->ipv4_proto, is_mask);
 		SW_FLOW_KEY_PUT(match, ip.tos,
@@ -1557,23 +1558,23 @@ static int ovs_key_from_nlattrs(struct net *net, struct sw_flow_match *match,
 		SW_FLOW_KEY_PUT(match, ipv4.addr.dst,
 				ipv4_key->ipv4_dst, is_mask);
 		attrs &= ~(1 << OVS_KEY_ATTR_IPV4);
-	}
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_IPV6)) {
-		const struct ovs_key_ipv6 *ipv6_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_IPV6)) अणु
+		स्थिर काष्ठा ovs_key_ipv6 *ipv6_key;
 
 		ipv6_key = nla_data(a[OVS_KEY_ATTR_IPV6]);
-		if (!is_mask && ipv6_key->ipv6_frag > OVS_FRAG_TYPE_MAX) {
+		अगर (!is_mask && ipv6_key->ipv6_frag > OVS_FRAG_TYPE_MAX) अणु
 			OVS_NLERR(log, "IPv6 frag type %d is out of range max %d",
 				  ipv6_key->ipv6_frag, OVS_FRAG_TYPE_MAX);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!is_mask && ipv6_key->ipv6_label & htonl(0xFFF00000)) {
+		अगर (!is_mask && ipv6_key->ipv6_label & htonl(0xFFF00000)) अणु
 			OVS_NLERR(log, "IPv6 flow label %x is out of range (max=%x)",
 				  ntohl(ipv6_key->ipv6_label), (1 << 20) - 1);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		SW_FLOW_KEY_PUT(match, ipv6.label,
 				ipv6_key->ipv6_label, is_mask);
@@ -1587,25 +1588,25 @@ static int ovs_key_from_nlattrs(struct net *net, struct sw_flow_match *match,
 				ipv6_key->ipv6_frag, is_mask);
 		SW_FLOW_KEY_MEMCPY(match, ipv6.addr.src,
 				ipv6_key->ipv6_src,
-				sizeof(match->key->ipv6.addr.src),
+				माप(match->key->ipv6.addr.src),
 				is_mask);
 		SW_FLOW_KEY_MEMCPY(match, ipv6.addr.dst,
 				ipv6_key->ipv6_dst,
-				sizeof(match->key->ipv6.addr.dst),
+				माप(match->key->ipv6.addr.dst),
 				is_mask);
 
 		attrs &= ~(1 << OVS_KEY_ATTR_IPV6);
-	}
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_ARP)) {
-		const struct ovs_key_arp *arp_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_ARP)) अणु
+		स्थिर काष्ठा ovs_key_arp *arp_key;
 
 		arp_key = nla_data(a[OVS_KEY_ATTR_ARP]);
-		if (!is_mask && (arp_key->arp_op & htons(0xff00))) {
+		अगर (!is_mask && (arp_key->arp_op & htons(0xff00))) अणु
 			OVS_NLERR(log, "Unknown ARP opcode (opcode=%d).",
 				  arp_key->arp_op);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		SW_FLOW_KEY_PUT(match, ipv4.addr.src,
 				arp_key->arp_sip, is_mask);
@@ -1619,31 +1620,31 @@ static int ovs_key_from_nlattrs(struct net *net, struct sw_flow_match *match,
 				arp_key->arp_tha, ETH_ALEN, is_mask);
 
 		attrs &= ~(1 << OVS_KEY_ATTR_ARP);
-	}
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_NSH)) {
-		if (nsh_key_put_from_nlattr(a[OVS_KEY_ATTR_NSH], match,
+	अगर (attrs & (1 << OVS_KEY_ATTR_NSH)) अणु
+		अगर (nsh_key_put_from_nlattr(a[OVS_KEY_ATTR_NSH], match,
 					    is_mask, false, log) < 0)
-			return -EINVAL;
+			वापस -EINVAL;
 		attrs &= ~(1 << OVS_KEY_ATTR_NSH);
-	}
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_MPLS)) {
-		const struct ovs_key_mpls *mpls_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_MPLS)) अणु
+		स्थिर काष्ठा ovs_key_mpls *mpls_key;
 		u32 hdr_len;
 		u32 label_count, label_count_mask, i;
 
 		mpls_key = nla_data(a[OVS_KEY_ATTR_MPLS]);
 		hdr_len = nla_len(a[OVS_KEY_ATTR_MPLS]);
-		label_count = hdr_len / sizeof(struct ovs_key_mpls);
+		label_count = hdr_len / माप(काष्ठा ovs_key_mpls);
 
-		if (label_count == 0 || label_count > MPLS_LABEL_DEPTH ||
-		    hdr_len % sizeof(struct ovs_key_mpls))
-			return -EINVAL;
+		अगर (label_count == 0 || label_count > MPLS_LABEL_DEPTH ||
+		    hdr_len % माप(काष्ठा ovs_key_mpls))
+			वापस -EINVAL;
 
 		label_count_mask =  GENMASK(label_count - 1, 0);
 
-		for (i = 0 ; i < label_count; i++)
+		क्रम (i = 0 ; i < label_count; i++)
 			SW_FLOW_KEY_PUT(match, mpls.lse[i],
 					mpls_key[i].mpls_lse, is_mask);
 
@@ -1651,44 +1652,44 @@ static int ovs_key_from_nlattrs(struct net *net, struct sw_flow_match *match,
 				label_count_mask, is_mask);
 
 		attrs &= ~(1 << OVS_KEY_ATTR_MPLS);
-	 }
+	 पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_TCP)) {
-		const struct ovs_key_tcp *tcp_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_TCP)) अणु
+		स्थिर काष्ठा ovs_key_tcp *tcp_key;
 
 		tcp_key = nla_data(a[OVS_KEY_ATTR_TCP]);
 		SW_FLOW_KEY_PUT(match, tp.src, tcp_key->tcp_src, is_mask);
 		SW_FLOW_KEY_PUT(match, tp.dst, tcp_key->tcp_dst, is_mask);
 		attrs &= ~(1 << OVS_KEY_ATTR_TCP);
-	}
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_TCP_FLAGS)) {
+	अगर (attrs & (1 << OVS_KEY_ATTR_TCP_FLAGS)) अणु
 		SW_FLOW_KEY_PUT(match, tp.flags,
 				nla_get_be16(a[OVS_KEY_ATTR_TCP_FLAGS]),
 				is_mask);
 		attrs &= ~(1 << OVS_KEY_ATTR_TCP_FLAGS);
-	}
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_UDP)) {
-		const struct ovs_key_udp *udp_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_UDP)) अणु
+		स्थिर काष्ठा ovs_key_udp *udp_key;
 
 		udp_key = nla_data(a[OVS_KEY_ATTR_UDP]);
 		SW_FLOW_KEY_PUT(match, tp.src, udp_key->udp_src, is_mask);
 		SW_FLOW_KEY_PUT(match, tp.dst, udp_key->udp_dst, is_mask);
 		attrs &= ~(1 << OVS_KEY_ATTR_UDP);
-	}
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_SCTP)) {
-		const struct ovs_key_sctp *sctp_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_SCTP)) अणु
+		स्थिर काष्ठा ovs_key_sctp *sctp_key;
 
 		sctp_key = nla_data(a[OVS_KEY_ATTR_SCTP]);
 		SW_FLOW_KEY_PUT(match, tp.src, sctp_key->sctp_src, is_mask);
 		SW_FLOW_KEY_PUT(match, tp.dst, sctp_key->sctp_dst, is_mask);
 		attrs &= ~(1 << OVS_KEY_ATTR_SCTP);
-	}
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_ICMP)) {
-		const struct ovs_key_icmp *icmp_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_ICMP)) अणु
+		स्थिर काष्ठा ovs_key_icmp *icmp_key;
 
 		icmp_key = nla_data(a[OVS_KEY_ATTR_ICMP]);
 		SW_FLOW_KEY_PUT(match, tp.src,
@@ -1696,10 +1697,10 @@ static int ovs_key_from_nlattrs(struct net *net, struct sw_flow_match *match,
 		SW_FLOW_KEY_PUT(match, tp.dst,
 				htons(icmp_key->icmp_code), is_mask);
 		attrs &= ~(1 << OVS_KEY_ATTR_ICMP);
-	}
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_ICMPV6)) {
-		const struct ovs_key_icmpv6 *icmpv6_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_ICMPV6)) अणु
+		स्थिर काष्ठा ovs_key_icmpv6 *icmpv6_key;
 
 		icmpv6_key = nla_data(a[OVS_KEY_ATTR_ICMPV6]);
 		SW_FLOW_KEY_PUT(match, tp.src,
@@ -1707,101 +1708,101 @@ static int ovs_key_from_nlattrs(struct net *net, struct sw_flow_match *match,
 		SW_FLOW_KEY_PUT(match, tp.dst,
 				htons(icmpv6_key->icmpv6_code), is_mask);
 		attrs &= ~(1 << OVS_KEY_ATTR_ICMPV6);
-	}
+	पूर्ण
 
-	if (attrs & (1 << OVS_KEY_ATTR_ND)) {
-		const struct ovs_key_nd *nd_key;
+	अगर (attrs & (1 << OVS_KEY_ATTR_ND)) अणु
+		स्थिर काष्ठा ovs_key_nd *nd_key;
 
 		nd_key = nla_data(a[OVS_KEY_ATTR_ND]);
 		SW_FLOW_KEY_MEMCPY(match, ipv6.nd.target,
 			nd_key->nd_target,
-			sizeof(match->key->ipv6.nd.target),
+			माप(match->key->ipv6.nd.target),
 			is_mask);
 		SW_FLOW_KEY_MEMCPY(match, ipv6.nd.sll,
 			nd_key->nd_sll, ETH_ALEN, is_mask);
 		SW_FLOW_KEY_MEMCPY(match, ipv6.nd.tll,
 				nd_key->nd_tll, ETH_ALEN, is_mask);
 		attrs &= ~(1 << OVS_KEY_ATTR_ND);
-	}
+	पूर्ण
 
-	if (attrs != 0) {
+	अगर (attrs != 0) अणु
 		OVS_NLERR(log, "Unknown key attributes %llx",
-			  (unsigned long long)attrs);
-		return -EINVAL;
-	}
+			  (अचिन्हित दीर्घ दीर्घ)attrs);
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nlattr_set(struct nlattr *attr, u8 val,
-		       const struct ovs_len_tbl *tbl)
-{
-	struct nlattr *nla;
-	int rem;
+अटल व्योम nlattr_set(काष्ठा nlattr *attr, u8 val,
+		       स्थिर काष्ठा ovs_len_tbl *tbl)
+अणु
+	काष्ठा nlattr *nla;
+	पूर्णांक rem;
 
-	/* The nlattr stream should already have been validated */
-	nla_for_each_nested(nla, attr, rem) {
-		if (tbl[nla_type(nla)].len == OVS_ATTR_NESTED)
+	/* The nlattr stream should alपढ़ोy have been validated */
+	nla_क्रम_each_nested(nla, attr, rem) अणु
+		अगर (tbl[nla_type(nla)].len == OVS_ATTR_NESTED)
 			nlattr_set(nla, val, tbl[nla_type(nla)].next ? : tbl);
-		else
-			memset(nla_data(nla), val, nla_len(nla));
+		अन्यथा
+			स_रखो(nla_data(nla), val, nla_len(nla));
 
-		if (nla_type(nla) == OVS_KEY_ATTR_CT_STATE)
+		अगर (nla_type(nla) == OVS_KEY_ATTR_CT_STATE)
 			*(u32 *)nla_data(nla) &= CT_SUPPORTED_MASK;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mask_set_nlattr(struct nlattr *attr, u8 val)
-{
+अटल व्योम mask_set_nlattr(काष्ठा nlattr *attr, u8 val)
+अणु
 	nlattr_set(attr, val, ovs_key_lens);
-}
+पूर्ण
 
 /**
- * ovs_nla_get_match - parses Netlink attributes into a flow key and
- * mask. In case the 'mask' is NULL, the flow is treated as exact match
+ * ovs_nla_get_match - parses Netlink attributes पूर्णांकo a flow key and
+ * mask. In हाल the 'mask' is शून्य, the flow is treated as exact match
  * flow. Otherwise, it is treated as a wildcarded flow, except the mask
- * does not include any don't care bit.
+ * करोes not include any करोn't care bit.
  * @net: Used to determine per-namespace field support.
- * @match: receives the extracted flow match information.
+ * @match: receives the extracted flow match inक्रमmation.
  * @nla_key: Netlink attribute holding nested %OVS_KEY_ATTR_* Netlink attribute
  * sequence. The fields should of the packet that triggered the creation
  * of this flow.
  * @nla_mask: Optional. Netlink attribute holding nested %OVS_KEY_ATTR_*
- * Netlink attribute specifies the mask field of the wildcarded flow.
+ * Netlink attribute specअगरies the mask field of the wildcarded flow.
  * @log: Boolean to allow kernel error logging.  Normally true, but when
- * probing for feature compatibility this should be passed in as false to
+ * probing क्रम feature compatibility this should be passed in as false to
  * suppress unnecessary error logging.
  */
-int ovs_nla_get_match(struct net *net, struct sw_flow_match *match,
-		      const struct nlattr *nla_key,
-		      const struct nlattr *nla_mask,
+पूर्णांक ovs_nla_get_match(काष्ठा net *net, काष्ठा sw_flow_match *match,
+		      स्थिर काष्ठा nlattr *nla_key,
+		      स्थिर काष्ठा nlattr *nla_mask,
 		      bool log)
-{
-	const struct nlattr *a[OVS_KEY_ATTR_MAX + 1];
-	struct nlattr *newmask = NULL;
+अणु
+	स्थिर काष्ठा nlattr *a[OVS_KEY_ATTR_MAX + 1];
+	काष्ठा nlattr *newmask = शून्य;
 	u64 key_attrs = 0;
 	u64 mask_attrs = 0;
-	int err;
+	पूर्णांक err;
 
 	err = parse_flow_nlattrs(nla_key, a, &key_attrs, log);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = parse_vlan_from_nlattrs(match, &key_attrs, a, false, log);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = ovs_key_from_nlattrs(net, match, key_attrs, a, false, log);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (match->mask) {
-		if (!nla_mask) {
+	अगर (match->mask) अणु
+		अगर (!nla_mask) अणु
 			/* Create an exact match mask. We need to set to 0xff
 			 * all the 'match->mask' fields that have been touched
-			 * in 'match->key'. We cannot simply memset
+			 * in 'match->key'. We cannot simply स_रखो
 			 * 'match->mask', because padding bytes and fields not
-			 * specified in 'match->key' should be left to 0.
+			 * specअगरied in 'match->key' should be left to 0.
 			 * Instead, we use a stream of netlink attributes,
 			 * copied from 'key' and set to 0xff.
 			 * ovs_key_from_nlattrs() will take care of filling
@@ -1810,286 +1811,286 @@ int ovs_nla_get_match(struct net *net, struct sw_flow_match *match,
 			newmask = kmemdup(nla_key,
 					  nla_total_size(nla_len(nla_key)),
 					  GFP_KERNEL);
-			if (!newmask)
-				return -ENOMEM;
+			अगर (!newmask)
+				वापस -ENOMEM;
 
 			mask_set_nlattr(newmask, 0xff);
 
-			/* The userspace does not send tunnel attributes that
+			/* The userspace करोes not send tunnel attributes that
 			 * are 0, but we should not wildcard them nonetheless.
 			 */
-			if (match->key->tun_proto)
+			अगर (match->key->tun_proto)
 				SW_FLOW_KEY_MEMSET_FIELD(match, tun_key,
 							 0xff, true);
 
 			nla_mask = newmask;
-		}
+		पूर्ण
 
 		err = parse_flow_mask_nlattrs(nla_mask, a, &mask_attrs, log);
-		if (err)
-			goto free_newmask;
+		अगर (err)
+			जाओ मुक्त_newmask;
 
 		/* Always match on tci. */
 		SW_FLOW_KEY_PUT(match, eth.vlan.tci, htons(0xffff), true);
 		SW_FLOW_KEY_PUT(match, eth.cvlan.tci, htons(0xffff), true);
 
 		err = parse_vlan_from_nlattrs(match, &mask_attrs, a, true, log);
-		if (err)
-			goto free_newmask;
+		अगर (err)
+			जाओ मुक्त_newmask;
 
 		err = ovs_key_from_nlattrs(net, match, mask_attrs, a, true,
 					   log);
-		if (err)
-			goto free_newmask;
-	}
+		अगर (err)
+			जाओ मुक्त_newmask;
+	पूर्ण
 
-	if (!match_validate(match, key_attrs, mask_attrs, log))
+	अगर (!match_validate(match, key_attrs, mask_attrs, log))
 		err = -EINVAL;
 
-free_newmask:
-	kfree(newmask);
-	return err;
-}
+मुक्त_newmask:
+	kमुक्त(newmask);
+	वापस err;
+पूर्ण
 
-static size_t get_ufid_len(const struct nlattr *attr, bool log)
-{
-	size_t len;
+अटल माप_प्रकार get_ufid_len(स्थिर काष्ठा nlattr *attr, bool log)
+अणु
+	माप_प्रकार len;
 
-	if (!attr)
-		return 0;
+	अगर (!attr)
+		वापस 0;
 
 	len = nla_len(attr);
-	if (len < 1 || len > MAX_UFID_LENGTH) {
+	अगर (len < 1 || len > MAX_UFID_LENGTH) अणु
 		OVS_NLERR(log, "ufid size %u bytes exceeds the range (1, %d)",
 			  nla_len(attr), MAX_UFID_LENGTH);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /* Initializes 'flow->ufid', returning true if 'attr' contains a valid UFID,
  * or false otherwise.
  */
-bool ovs_nla_get_ufid(struct sw_flow_id *sfid, const struct nlattr *attr,
+bool ovs_nla_get_ufid(काष्ठा sw_flow_id *sfid, स्थिर काष्ठा nlattr *attr,
 		      bool log)
-{
+अणु
 	sfid->ufid_len = get_ufid_len(attr, log);
-	if (sfid->ufid_len)
-		memcpy(sfid->ufid, nla_data(attr), sfid->ufid_len);
+	अगर (sfid->ufid_len)
+		स_नकल(sfid->ufid, nla_data(attr), sfid->ufid_len);
 
-	return sfid->ufid_len;
-}
+	वापस sfid->ufid_len;
+पूर्ण
 
-int ovs_nla_get_identifier(struct sw_flow_id *sfid, const struct nlattr *ufid,
-			   const struct sw_flow_key *key, bool log)
-{
-	struct sw_flow_key *new_key;
+पूर्णांक ovs_nla_get_identअगरier(काष्ठा sw_flow_id *sfid, स्थिर काष्ठा nlattr *ufid,
+			   स्थिर काष्ठा sw_flow_key *key, bool log)
+अणु
+	काष्ठा sw_flow_key *new_key;
 
-	if (ovs_nla_get_ufid(sfid, ufid, log))
-		return 0;
+	अगर (ovs_nla_get_ufid(sfid, ufid, log))
+		वापस 0;
 
 	/* If UFID was not provided, use unmasked key. */
-	new_key = kmalloc(sizeof(*new_key), GFP_KERNEL);
-	if (!new_key)
-		return -ENOMEM;
-	memcpy(new_key, key, sizeof(*key));
+	new_key = kदो_स्मृति(माप(*new_key), GFP_KERNEL);
+	अगर (!new_key)
+		वापस -ENOMEM;
+	स_नकल(new_key, key, माप(*key));
 	sfid->unmasked_key = new_key;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u32 ovs_nla_get_ufid_flags(const struct nlattr *attr)
-{
-	return attr ? nla_get_u32(attr) : 0;
-}
+u32 ovs_nla_get_ufid_flags(स्थिर काष्ठा nlattr *attr)
+अणु
+	वापस attr ? nla_get_u32(attr) : 0;
+पूर्ण
 
 /**
- * ovs_nla_get_flow_metadata - parses Netlink attributes into a flow key.
+ * ovs_nla_get_flow_metadata - parses Netlink attributes पूर्णांकo a flow key.
  * @net: Network namespace.
  * @key: Receives extracted in_port, priority, tun_key, skb_mark and conntrack
  * metadata.
  * @a: Array of netlink attributes holding parsed %OVS_KEY_ATTR_* Netlink
  * attributes.
- * @attrs: Bit mask for the netlink attributes included in @a.
+ * @attrs: Bit mask क्रम the netlink attributes included in @a.
  * @log: Boolean to allow kernel error logging.  Normally true, but when
- * probing for feature compatibility this should be passed in as false to
+ * probing क्रम feature compatibility this should be passed in as false to
  * suppress unnecessary error logging.
  *
- * This parses a series of Netlink attributes that form a flow key, which must
- * take the same form accepted by flow_from_nlattrs(), but only enough of it to
+ * This parses a series of Netlink attributes that क्रमm a flow key, which must
+ * take the same क्रमm accepted by flow_from_nlattrs(), but only enough of it to
  * get the metadata, that is, the parts of the flow key that cannot be
  * extracted from the packet itself.
  *
- * This must be called before the packet key fields are filled in 'key'.
+ * This must be called beक्रमe the packet key fields are filled in 'key'.
  */
 
-int ovs_nla_get_flow_metadata(struct net *net,
-			      const struct nlattr *a[OVS_KEY_ATTR_MAX + 1],
-			      u64 attrs, struct sw_flow_key *key, bool log)
-{
-	struct sw_flow_match match;
+पूर्णांक ovs_nla_get_flow_metadata(काष्ठा net *net,
+			      स्थिर काष्ठा nlattr *a[OVS_KEY_ATTR_MAX + 1],
+			      u64 attrs, काष्ठा sw_flow_key *key, bool log)
+अणु
+	काष्ठा sw_flow_match match;
 
-	memset(&match, 0, sizeof(match));
+	स_रखो(&match, 0, माप(match));
 	match.key = key;
 
 	key->ct_state = 0;
 	key->ct_zone = 0;
 	key->ct_orig_proto = 0;
-	memset(&key->ct, 0, sizeof(key->ct));
-	memset(&key->ipv4.ct_orig, 0, sizeof(key->ipv4.ct_orig));
-	memset(&key->ipv6.ct_orig, 0, sizeof(key->ipv6.ct_orig));
+	स_रखो(&key->ct, 0, माप(key->ct));
+	स_रखो(&key->ipv4.ct_orig, 0, माप(key->ipv4.ct_orig));
+	स_रखो(&key->ipv6.ct_orig, 0, माप(key->ipv6.ct_orig));
 
 	key->phy.in_port = DP_MAX_PORTS;
 
-	return metadata_from_nlattrs(net, &match, &attrs, a, false, log);
-}
+	वापस metadata_from_nlattrs(net, &match, &attrs, a, false, log);
+पूर्ण
 
-static int ovs_nla_put_vlan(struct sk_buff *skb, const struct vlan_head *vh,
+अटल पूर्णांक ovs_nla_put_vlan(काष्ठा sk_buff *skb, स्थिर काष्ठा vlan_head *vh,
 			    bool is_mask)
-{
+अणु
 	__be16 eth_type = !is_mask ? vh->tpid : htons(0xffff);
 
-	if (nla_put_be16(skb, OVS_KEY_ATTR_ETHERTYPE, eth_type) ||
+	अगर (nla_put_be16(skb, OVS_KEY_ATTR_ETHERTYPE, eth_type) ||
 	    nla_put_be16(skb, OVS_KEY_ATTR_VLAN, vh->tci))
-		return -EMSGSIZE;
-	return 0;
-}
+		वापस -EMSGSIZE;
+	वापस 0;
+पूर्ण
 
-static int nsh_key_to_nlattr(const struct ovs_key_nsh *nsh, bool is_mask,
-			     struct sk_buff *skb)
-{
-	struct nlattr *start;
+अटल पूर्णांक nsh_key_to_nlattr(स्थिर काष्ठा ovs_key_nsh *nsh, bool is_mask,
+			     काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *start;
 
 	start = nla_nest_start_noflag(skb, OVS_KEY_ATTR_NSH);
-	if (!start)
-		return -EMSGSIZE;
+	अगर (!start)
+		वापस -EMSGSIZE;
 
-	if (nla_put(skb, OVS_NSH_KEY_ATTR_BASE, sizeof(nsh->base), &nsh->base))
-		goto nla_put_failure;
+	अगर (nla_put(skb, OVS_NSH_KEY_ATTR_BASE, माप(nsh->base), &nsh->base))
+		जाओ nla_put_failure;
 
-	if (is_mask || nsh->base.mdtype == NSH_M_TYPE1) {
-		if (nla_put(skb, OVS_NSH_KEY_ATTR_MD1,
-			    sizeof(nsh->context), nsh->context))
-			goto nla_put_failure;
-	}
+	अगर (is_mask || nsh->base.mdtype == NSH_M_TYPE1) अणु
+		अगर (nla_put(skb, OVS_NSH_KEY_ATTR_MD1,
+			    माप(nsh->context), nsh->context))
+			जाओ nla_put_failure;
+	पूर्ण
 
 	/* Don't support MD type 2 yet */
 
 	nla_nest_end(skb, start);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int __ovs_nla_put_key(const struct sw_flow_key *swkey,
-			     const struct sw_flow_key *output, bool is_mask,
-			     struct sk_buff *skb)
-{
-	struct ovs_key_ethernet *eth_key;
-	struct nlattr *nla;
-	struct nlattr *encap = NULL;
-	struct nlattr *in_encap = NULL;
+अटल पूर्णांक __ovs_nla_put_key(स्थिर काष्ठा sw_flow_key *swkey,
+			     स्थिर काष्ठा sw_flow_key *output, bool is_mask,
+			     काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ovs_key_ethernet *eth_key;
+	काष्ठा nlattr *nla;
+	काष्ठा nlattr *encap = शून्य;
+	काष्ठा nlattr *in_encap = शून्य;
 
-	if (nla_put_u32(skb, OVS_KEY_ATTR_RECIRC_ID, output->recirc_id))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, OVS_KEY_ATTR_RECIRC_ID, output->recirc_id))
+		जाओ nla_put_failure;
 
-	if (nla_put_u32(skb, OVS_KEY_ATTR_DP_HASH, output->ovs_flow_hash))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, OVS_KEY_ATTR_DP_HASH, output->ovs_flow_hash))
+		जाओ nla_put_failure;
 
-	if (nla_put_u32(skb, OVS_KEY_ATTR_PRIORITY, output->phy.priority))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, OVS_KEY_ATTR_PRIORITY, output->phy.priority))
+		जाओ nla_put_failure;
 
-	if ((swkey->tun_proto || is_mask)) {
-		const void *opts = NULL;
+	अगर ((swkey->tun_proto || is_mask)) अणु
+		स्थिर व्योम *opts = शून्य;
 
-		if (output->tun_key.tun_flags & TUNNEL_OPTIONS_PRESENT)
+		अगर (output->tun_key.tun_flags & TUNNEL_OPTIONS_PRESENT)
 			opts = TUN_METADATA_OPTS(output, swkey->tun_opts_len);
 
-		if (ip_tun_to_nlattr(skb, &output->tun_key, opts,
+		अगर (ip_tun_to_nlattr(skb, &output->tun_key, opts,
 				     swkey->tun_opts_len, swkey->tun_proto, 0))
-			goto nla_put_failure;
-	}
+			जाओ nla_put_failure;
+	पूर्ण
 
-	if (swkey->phy.in_port == DP_MAX_PORTS) {
-		if (is_mask && (output->phy.in_port == 0xffff))
-			if (nla_put_u32(skb, OVS_KEY_ATTR_IN_PORT, 0xffffffff))
-				goto nla_put_failure;
-	} else {
+	अगर (swkey->phy.in_port == DP_MAX_PORTS) अणु
+		अगर (is_mask && (output->phy.in_port == 0xffff))
+			अगर (nla_put_u32(skb, OVS_KEY_ATTR_IN_PORT, 0xffffffff))
+				जाओ nla_put_failure;
+	पूर्ण अन्यथा अणु
 		u16 upper_u16;
 		upper_u16 = !is_mask ? 0 : 0xffff;
 
-		if (nla_put_u32(skb, OVS_KEY_ATTR_IN_PORT,
+		अगर (nla_put_u32(skb, OVS_KEY_ATTR_IN_PORT,
 				(upper_u16 << 16) | output->phy.in_port))
-			goto nla_put_failure;
-	}
+			जाओ nla_put_failure;
+	पूर्ण
 
-	if (nla_put_u32(skb, OVS_KEY_ATTR_SKB_MARK, output->phy.skb_mark))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, OVS_KEY_ATTR_SKB_MARK, output->phy.skb_mark))
+		जाओ nla_put_failure;
 
-	if (ovs_ct_put_key(swkey, output, skb))
-		goto nla_put_failure;
+	अगर (ovs_ct_put_key(swkey, output, skb))
+		जाओ nla_put_failure;
 
-	if (ovs_key_mac_proto(swkey) == MAC_PROTO_ETHERNET) {
-		nla = nla_reserve(skb, OVS_KEY_ATTR_ETHERNET, sizeof(*eth_key));
-		if (!nla)
-			goto nla_put_failure;
+	अगर (ovs_key_mac_proto(swkey) == MAC_PROTO_ETHERNET) अणु
+		nla = nla_reserve(skb, OVS_KEY_ATTR_ETHERNET, माप(*eth_key));
+		अगर (!nla)
+			जाओ nla_put_failure;
 
 		eth_key = nla_data(nla);
 		ether_addr_copy(eth_key->eth_src, output->eth.src);
 		ether_addr_copy(eth_key->eth_dst, output->eth.dst);
 
-		if (swkey->eth.vlan.tci || eth_type_vlan(swkey->eth.type)) {
-			if (ovs_nla_put_vlan(skb, &output->eth.vlan, is_mask))
-				goto nla_put_failure;
+		अगर (swkey->eth.vlan.tci || eth_type_vlan(swkey->eth.type)) अणु
+			अगर (ovs_nla_put_vlan(skb, &output->eth.vlan, is_mask))
+				जाओ nla_put_failure;
 			encap = nla_nest_start_noflag(skb, OVS_KEY_ATTR_ENCAP);
-			if (!swkey->eth.vlan.tci)
-				goto unencap;
+			अगर (!swkey->eth.vlan.tci)
+				जाओ unencap;
 
-			if (swkey->eth.cvlan.tci || eth_type_vlan(swkey->eth.type)) {
-				if (ovs_nla_put_vlan(skb, &output->eth.cvlan, is_mask))
-					goto nla_put_failure;
+			अगर (swkey->eth.cvlan.tci || eth_type_vlan(swkey->eth.type)) अणु
+				अगर (ovs_nla_put_vlan(skb, &output->eth.cvlan, is_mask))
+					जाओ nla_put_failure;
 				in_encap = nla_nest_start_noflag(skb,
 								 OVS_KEY_ATTR_ENCAP);
-				if (!swkey->eth.cvlan.tci)
-					goto unencap;
-			}
-		}
+				अगर (!swkey->eth.cvlan.tci)
+					जाओ unencap;
+			पूर्ण
+		पूर्ण
 
-		if (swkey->eth.type == htons(ETH_P_802_2)) {
+		अगर (swkey->eth.type == htons(ETH_P_802_2)) अणु
 			/*
 			* Ethertype 802.2 is represented in the netlink with omitted
 			* OVS_KEY_ATTR_ETHERTYPE in the flow key attribute, and
 			* 0xffff in the mask attribute.  Ethertype can also
 			* be wildcarded.
 			*/
-			if (is_mask && output->eth.type)
-				if (nla_put_be16(skb, OVS_KEY_ATTR_ETHERTYPE,
+			अगर (is_mask && output->eth.type)
+				अगर (nla_put_be16(skb, OVS_KEY_ATTR_ETHERTYPE,
 							output->eth.type))
-					goto nla_put_failure;
-			goto unencap;
-		}
-	}
+					जाओ nla_put_failure;
+			जाओ unencap;
+		पूर्ण
+	पूर्ण
 
-	if (nla_put_be16(skb, OVS_KEY_ATTR_ETHERTYPE, output->eth.type))
-		goto nla_put_failure;
+	अगर (nla_put_be16(skb, OVS_KEY_ATTR_ETHERTYPE, output->eth.type))
+		जाओ nla_put_failure;
 
-	if (eth_type_vlan(swkey->eth.type)) {
-		/* There are 3 VLAN tags, we don't know anything about the rest
+	अगर (eth_type_vlan(swkey->eth.type)) अणु
+		/* There are 3 VLAN tags, we करोn't know anything about the rest
 		 * of the packet, so truncate here.
 		 */
 		WARN_ON_ONCE(!(encap && in_encap));
-		goto unencap;
-	}
+		जाओ unencap;
+	पूर्ण
 
-	if (swkey->eth.type == htons(ETH_P_IP)) {
-		struct ovs_key_ipv4 *ipv4_key;
+	अगर (swkey->eth.type == htons(ETH_P_IP)) अणु
+		काष्ठा ovs_key_ipv4 *ipv4_key;
 
-		nla = nla_reserve(skb, OVS_KEY_ATTR_IPV4, sizeof(*ipv4_key));
-		if (!nla)
-			goto nla_put_failure;
+		nla = nla_reserve(skb, OVS_KEY_ATTR_IPV4, माप(*ipv4_key));
+		अगर (!nla)
+			जाओ nla_put_failure;
 		ipv4_key = nla_data(nla);
 		ipv4_key->ipv4_src = output->ipv4.addr.src;
 		ipv4_key->ipv4_dst = output->ipv4.addr.dst;
@@ -2097,381 +2098,381 @@ static int __ovs_nla_put_key(const struct sw_flow_key *swkey,
 		ipv4_key->ipv4_tos = output->ip.tos;
 		ipv4_key->ipv4_ttl = output->ip.ttl;
 		ipv4_key->ipv4_frag = output->ip.frag;
-	} else if (swkey->eth.type == htons(ETH_P_IPV6)) {
-		struct ovs_key_ipv6 *ipv6_key;
+	पूर्ण अन्यथा अगर (swkey->eth.type == htons(ETH_P_IPV6)) अणु
+		काष्ठा ovs_key_ipv6 *ipv6_key;
 
-		nla = nla_reserve(skb, OVS_KEY_ATTR_IPV6, sizeof(*ipv6_key));
-		if (!nla)
-			goto nla_put_failure;
+		nla = nla_reserve(skb, OVS_KEY_ATTR_IPV6, माप(*ipv6_key));
+		अगर (!nla)
+			जाओ nla_put_failure;
 		ipv6_key = nla_data(nla);
-		memcpy(ipv6_key->ipv6_src, &output->ipv6.addr.src,
-				sizeof(ipv6_key->ipv6_src));
-		memcpy(ipv6_key->ipv6_dst, &output->ipv6.addr.dst,
-				sizeof(ipv6_key->ipv6_dst));
+		स_नकल(ipv6_key->ipv6_src, &output->ipv6.addr.src,
+				माप(ipv6_key->ipv6_src));
+		स_नकल(ipv6_key->ipv6_dst, &output->ipv6.addr.dst,
+				माप(ipv6_key->ipv6_dst));
 		ipv6_key->ipv6_label = output->ipv6.label;
 		ipv6_key->ipv6_proto = output->ip.proto;
 		ipv6_key->ipv6_tclass = output->ip.tos;
 		ipv6_key->ipv6_hlimit = output->ip.ttl;
 		ipv6_key->ipv6_frag = output->ip.frag;
-	} else if (swkey->eth.type == htons(ETH_P_NSH)) {
-		if (nsh_key_to_nlattr(&output->nsh, is_mask, skb))
-			goto nla_put_failure;
-	} else if (swkey->eth.type == htons(ETH_P_ARP) ||
-		   swkey->eth.type == htons(ETH_P_RARP)) {
-		struct ovs_key_arp *arp_key;
+	पूर्ण अन्यथा अगर (swkey->eth.type == htons(ETH_P_NSH)) अणु
+		अगर (nsh_key_to_nlattr(&output->nsh, is_mask, skb))
+			जाओ nla_put_failure;
+	पूर्ण अन्यथा अगर (swkey->eth.type == htons(ETH_P_ARP) ||
+		   swkey->eth.type == htons(ETH_P_RARP)) अणु
+		काष्ठा ovs_key_arp *arp_key;
 
-		nla = nla_reserve(skb, OVS_KEY_ATTR_ARP, sizeof(*arp_key));
-		if (!nla)
-			goto nla_put_failure;
+		nla = nla_reserve(skb, OVS_KEY_ATTR_ARP, माप(*arp_key));
+		अगर (!nla)
+			जाओ nla_put_failure;
 		arp_key = nla_data(nla);
-		memset(arp_key, 0, sizeof(struct ovs_key_arp));
+		स_रखो(arp_key, 0, माप(काष्ठा ovs_key_arp));
 		arp_key->arp_sip = output->ipv4.addr.src;
 		arp_key->arp_tip = output->ipv4.addr.dst;
 		arp_key->arp_op = htons(output->ip.proto);
 		ether_addr_copy(arp_key->arp_sha, output->ipv4.arp.sha);
 		ether_addr_copy(arp_key->arp_tha, output->ipv4.arp.tha);
-	} else if (eth_p_mpls(swkey->eth.type)) {
+	पूर्ण अन्यथा अगर (eth_p_mpls(swkey->eth.type)) अणु
 		u8 i, num_labels;
-		struct ovs_key_mpls *mpls_key;
+		काष्ठा ovs_key_mpls *mpls_key;
 
-		num_labels = hweight_long(output->mpls.num_labels_mask);
+		num_labels = hweight_दीर्घ(output->mpls.num_labels_mask);
 		nla = nla_reserve(skb, OVS_KEY_ATTR_MPLS,
-				  num_labels * sizeof(*mpls_key));
-		if (!nla)
-			goto nla_put_failure;
+				  num_labels * माप(*mpls_key));
+		अगर (!nla)
+			जाओ nla_put_failure;
 
 		mpls_key = nla_data(nla);
-		for (i = 0; i < num_labels; i++)
+		क्रम (i = 0; i < num_labels; i++)
 			mpls_key[i].mpls_lse = output->mpls.lse[i];
-	}
+	पूर्ण
 
-	if ((swkey->eth.type == htons(ETH_P_IP) ||
+	अगर ((swkey->eth.type == htons(ETH_P_IP) ||
 	     swkey->eth.type == htons(ETH_P_IPV6)) &&
-	     swkey->ip.frag != OVS_FRAG_TYPE_LATER) {
+	     swkey->ip.frag != OVS_FRAG_TYPE_LATER) अणु
 
-		if (swkey->ip.proto == IPPROTO_TCP) {
-			struct ovs_key_tcp *tcp_key;
+		अगर (swkey->ip.proto == IPPROTO_TCP) अणु
+			काष्ठा ovs_key_tcp *tcp_key;
 
-			nla = nla_reserve(skb, OVS_KEY_ATTR_TCP, sizeof(*tcp_key));
-			if (!nla)
-				goto nla_put_failure;
+			nla = nla_reserve(skb, OVS_KEY_ATTR_TCP, माप(*tcp_key));
+			अगर (!nla)
+				जाओ nla_put_failure;
 			tcp_key = nla_data(nla);
 			tcp_key->tcp_src = output->tp.src;
 			tcp_key->tcp_dst = output->tp.dst;
-			if (nla_put_be16(skb, OVS_KEY_ATTR_TCP_FLAGS,
+			अगर (nla_put_be16(skb, OVS_KEY_ATTR_TCP_FLAGS,
 					 output->tp.flags))
-				goto nla_put_failure;
-		} else if (swkey->ip.proto == IPPROTO_UDP) {
-			struct ovs_key_udp *udp_key;
+				जाओ nla_put_failure;
+		पूर्ण अन्यथा अगर (swkey->ip.proto == IPPROTO_UDP) अणु
+			काष्ठा ovs_key_udp *udp_key;
 
-			nla = nla_reserve(skb, OVS_KEY_ATTR_UDP, sizeof(*udp_key));
-			if (!nla)
-				goto nla_put_failure;
+			nla = nla_reserve(skb, OVS_KEY_ATTR_UDP, माप(*udp_key));
+			अगर (!nla)
+				जाओ nla_put_failure;
 			udp_key = nla_data(nla);
 			udp_key->udp_src = output->tp.src;
 			udp_key->udp_dst = output->tp.dst;
-		} else if (swkey->ip.proto == IPPROTO_SCTP) {
-			struct ovs_key_sctp *sctp_key;
+		पूर्ण अन्यथा अगर (swkey->ip.proto == IPPROTO_SCTP) अणु
+			काष्ठा ovs_key_sctp *sctp_key;
 
-			nla = nla_reserve(skb, OVS_KEY_ATTR_SCTP, sizeof(*sctp_key));
-			if (!nla)
-				goto nla_put_failure;
+			nla = nla_reserve(skb, OVS_KEY_ATTR_SCTP, माप(*sctp_key));
+			अगर (!nla)
+				जाओ nla_put_failure;
 			sctp_key = nla_data(nla);
 			sctp_key->sctp_src = output->tp.src;
 			sctp_key->sctp_dst = output->tp.dst;
-		} else if (swkey->eth.type == htons(ETH_P_IP) &&
-			   swkey->ip.proto == IPPROTO_ICMP) {
-			struct ovs_key_icmp *icmp_key;
+		पूर्ण अन्यथा अगर (swkey->eth.type == htons(ETH_P_IP) &&
+			   swkey->ip.proto == IPPROTO_ICMP) अणु
+			काष्ठा ovs_key_icmp *icmp_key;
 
-			nla = nla_reserve(skb, OVS_KEY_ATTR_ICMP, sizeof(*icmp_key));
-			if (!nla)
-				goto nla_put_failure;
+			nla = nla_reserve(skb, OVS_KEY_ATTR_ICMP, माप(*icmp_key));
+			अगर (!nla)
+				जाओ nla_put_failure;
 			icmp_key = nla_data(nla);
 			icmp_key->icmp_type = ntohs(output->tp.src);
 			icmp_key->icmp_code = ntohs(output->tp.dst);
-		} else if (swkey->eth.type == htons(ETH_P_IPV6) &&
-			   swkey->ip.proto == IPPROTO_ICMPV6) {
-			struct ovs_key_icmpv6 *icmpv6_key;
+		पूर्ण अन्यथा अगर (swkey->eth.type == htons(ETH_P_IPV6) &&
+			   swkey->ip.proto == IPPROTO_ICMPV6) अणु
+			काष्ठा ovs_key_icmpv6 *icmpv6_key;
 
 			nla = nla_reserve(skb, OVS_KEY_ATTR_ICMPV6,
-						sizeof(*icmpv6_key));
-			if (!nla)
-				goto nla_put_failure;
+						माप(*icmpv6_key));
+			अगर (!nla)
+				जाओ nla_put_failure;
 			icmpv6_key = nla_data(nla);
 			icmpv6_key->icmpv6_type = ntohs(output->tp.src);
 			icmpv6_key->icmpv6_code = ntohs(output->tp.dst);
 
-			if (icmpv6_key->icmpv6_type == NDISC_NEIGHBOUR_SOLICITATION ||
-			    icmpv6_key->icmpv6_type == NDISC_NEIGHBOUR_ADVERTISEMENT) {
-				struct ovs_key_nd *nd_key;
+			अगर (icmpv6_key->icmpv6_type == NDISC_NEIGHBOUR_SOLICITATION ||
+			    icmpv6_key->icmpv6_type == NDISC_NEIGHBOUR_ADVERTISEMENT) अणु
+				काष्ठा ovs_key_nd *nd_key;
 
-				nla = nla_reserve(skb, OVS_KEY_ATTR_ND, sizeof(*nd_key));
-				if (!nla)
-					goto nla_put_failure;
+				nla = nla_reserve(skb, OVS_KEY_ATTR_ND, माप(*nd_key));
+				अगर (!nla)
+					जाओ nla_put_failure;
 				nd_key = nla_data(nla);
-				memcpy(nd_key->nd_target, &output->ipv6.nd.target,
-							sizeof(nd_key->nd_target));
+				स_नकल(nd_key->nd_target, &output->ipv6.nd.target,
+							माप(nd_key->nd_target));
 				ether_addr_copy(nd_key->nd_sll, output->ipv6.nd.sll);
 				ether_addr_copy(nd_key->nd_tll, output->ipv6.nd.tll);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 unencap:
-	if (in_encap)
+	अगर (in_encap)
 		nla_nest_end(skb, in_encap);
-	if (encap)
+	अगर (encap)
 		nla_nest_end(skb, encap);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-int ovs_nla_put_key(const struct sw_flow_key *swkey,
-		    const struct sw_flow_key *output, int attr, bool is_mask,
-		    struct sk_buff *skb)
-{
-	int err;
-	struct nlattr *nla;
+पूर्णांक ovs_nla_put_key(स्थिर काष्ठा sw_flow_key *swkey,
+		    स्थिर काष्ठा sw_flow_key *output, पूर्णांक attr, bool is_mask,
+		    काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err;
+	काष्ठा nlattr *nla;
 
 	nla = nla_nest_start_noflag(skb, attr);
-	if (!nla)
-		return -EMSGSIZE;
+	अगर (!nla)
+		वापस -EMSGSIZE;
 	err = __ovs_nla_put_key(swkey, output, is_mask, skb);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	nla_nest_end(skb, nla);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Called with ovs_mutex or RCU read lock. */
-int ovs_nla_put_identifier(const struct sw_flow *flow, struct sk_buff *skb)
-{
-	if (ovs_identifier_is_ufid(&flow->id))
-		return nla_put(skb, OVS_FLOW_ATTR_UFID, flow->id.ufid_len,
+/* Called with ovs_mutex or RCU पढ़ो lock. */
+पूर्णांक ovs_nla_put_identअगरier(स्थिर काष्ठा sw_flow *flow, काष्ठा sk_buff *skb)
+अणु
+	अगर (ovs_identअगरier_is_ufid(&flow->id))
+		वापस nla_put(skb, OVS_FLOW_ATTR_UFID, flow->id.ufid_len,
 			       flow->id.ufid);
 
-	return ovs_nla_put_key(flow->id.unmasked_key, flow->id.unmasked_key,
+	वापस ovs_nla_put_key(flow->id.unmasked_key, flow->id.unmasked_key,
 			       OVS_FLOW_ATTR_KEY, false, skb);
-}
+पूर्ण
 
-/* Called with ovs_mutex or RCU read lock. */
-int ovs_nla_put_masked_key(const struct sw_flow *flow, struct sk_buff *skb)
-{
-	return ovs_nla_put_key(&flow->key, &flow->key,
+/* Called with ovs_mutex or RCU पढ़ो lock. */
+पूर्णांक ovs_nla_put_masked_key(स्थिर काष्ठा sw_flow *flow, काष्ठा sk_buff *skb)
+अणु
+	वापस ovs_nla_put_key(&flow->key, &flow->key,
 				OVS_FLOW_ATTR_KEY, false, skb);
-}
+पूर्ण
 
-/* Called with ovs_mutex or RCU read lock. */
-int ovs_nla_put_mask(const struct sw_flow *flow, struct sk_buff *skb)
-{
-	return ovs_nla_put_key(&flow->key, &flow->mask->key,
+/* Called with ovs_mutex or RCU पढ़ो lock. */
+पूर्णांक ovs_nla_put_mask(स्थिर काष्ठा sw_flow *flow, काष्ठा sk_buff *skb)
+अणु
+	वापस ovs_nla_put_key(&flow->key, &flow->mask->key,
 				OVS_FLOW_ATTR_MASK, true, skb);
-}
+पूर्ण
 
-#define MAX_ACTIONS_BUFSIZE	(32 * 1024)
+#घोषणा MAX_ACTIONS_बफ_मानE	(32 * 1024)
 
-static struct sw_flow_actions *nla_alloc_flow_actions(int size)
-{
-	struct sw_flow_actions *sfa;
+अटल काष्ठा sw_flow_actions *nla_alloc_flow_actions(पूर्णांक size)
+अणु
+	काष्ठा sw_flow_actions *sfa;
 
-	WARN_ON_ONCE(size > MAX_ACTIONS_BUFSIZE);
+	WARN_ON_ONCE(size > MAX_ACTIONS_बफ_मानE);
 
-	sfa = kmalloc(sizeof(*sfa) + size, GFP_KERNEL);
-	if (!sfa)
-		return ERR_PTR(-ENOMEM);
+	sfa = kदो_स्मृति(माप(*sfa) + size, GFP_KERNEL);
+	अगर (!sfa)
+		वापस ERR_PTR(-ENOMEM);
 
 	sfa->actions_len = 0;
-	return sfa;
-}
+	वापस sfa;
+पूर्ण
 
-static void ovs_nla_free_set_action(const struct nlattr *a)
-{
-	const struct nlattr *ovs_key = nla_data(a);
-	struct ovs_tunnel_info *ovs_tun;
+अटल व्योम ovs_nla_मुक्त_set_action(स्थिर काष्ठा nlattr *a)
+अणु
+	स्थिर काष्ठा nlattr *ovs_key = nla_data(a);
+	काष्ठा ovs_tunnel_info *ovs_tun;
 
-	switch (nla_type(ovs_key)) {
-	case OVS_KEY_ATTR_TUNNEL_INFO:
+	चयन (nla_type(ovs_key)) अणु
+	हाल OVS_KEY_ATTR_TUNNEL_INFO:
 		ovs_tun = nla_data(ovs_key);
-		dst_release((struct dst_entry *)ovs_tun->tun_dst);
-		break;
-	}
-}
+		dst_release((काष्ठा dst_entry *)ovs_tun->tun_dst);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void ovs_nla_free_flow_actions(struct sw_flow_actions *sf_acts)
-{
-	const struct nlattr *a;
-	int rem;
+व्योम ovs_nla_मुक्त_flow_actions(काष्ठा sw_flow_actions *sf_acts)
+अणु
+	स्थिर काष्ठा nlattr *a;
+	पूर्णांक rem;
 
-	if (!sf_acts)
-		return;
+	अगर (!sf_acts)
+		वापस;
 
-	nla_for_each_attr(a, sf_acts->actions, sf_acts->actions_len, rem) {
-		switch (nla_type(a)) {
-		case OVS_ACTION_ATTR_SET:
-			ovs_nla_free_set_action(a);
-			break;
-		case OVS_ACTION_ATTR_CT:
-			ovs_ct_free_action(a);
-			break;
-		}
-	}
+	nla_क्रम_each_attr(a, sf_acts->actions, sf_acts->actions_len, rem) अणु
+		चयन (nla_type(a)) अणु
+		हाल OVS_ACTION_ATTR_SET:
+			ovs_nla_मुक्त_set_action(a);
+			अवरोध;
+		हाल OVS_ACTION_ATTR_CT:
+			ovs_ct_मुक्त_action(a);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	kfree(sf_acts);
-}
+	kमुक्त(sf_acts);
+पूर्ण
 
-static void __ovs_nla_free_flow_actions(struct rcu_head *head)
-{
-	ovs_nla_free_flow_actions(container_of(head, struct sw_flow_actions, rcu));
-}
+अटल व्योम __ovs_nla_मुक्त_flow_actions(काष्ठा rcu_head *head)
+अणु
+	ovs_nla_मुक्त_flow_actions(container_of(head, काष्ठा sw_flow_actions, rcu));
+पूर्ण
 
-/* Schedules 'sf_acts' to be freed after the next RCU grace period.
- * The caller must hold rcu_read_lock for this to be sensible. */
-void ovs_nla_free_flow_actions_rcu(struct sw_flow_actions *sf_acts)
-{
-	call_rcu(&sf_acts->rcu, __ovs_nla_free_flow_actions);
-}
+/* Schedules 'sf_acts' to be मुक्तd after the next RCU grace period.
+ * The caller must hold rcu_पढ़ो_lock क्रम this to be sensible. */
+व्योम ovs_nla_मुक्त_flow_actions_rcu(काष्ठा sw_flow_actions *sf_acts)
+अणु
+	call_rcu(&sf_acts->rcu, __ovs_nla_मुक्त_flow_actions);
+पूर्ण
 
-static struct nlattr *reserve_sfa_size(struct sw_flow_actions **sfa,
-				       int attr_len, bool log)
-{
+अटल काष्ठा nlattr *reserve_sfa_size(काष्ठा sw_flow_actions **sfa,
+				       पूर्णांक attr_len, bool log)
+अणु
 
-	struct sw_flow_actions *acts;
-	int new_acts_size;
-	size_t req_size = NLA_ALIGN(attr_len);
-	int next_offset = offsetof(struct sw_flow_actions, actions) +
+	काष्ठा sw_flow_actions *acts;
+	पूर्णांक new_acts_size;
+	माप_प्रकार req_size = NLA_ALIGN(attr_len);
+	पूर्णांक next_offset = दुरत्व(काष्ठा sw_flow_actions, actions) +
 					(*sfa)->actions_len;
 
-	if (req_size <= (ksize(*sfa) - next_offset))
-		goto out;
+	अगर (req_size <= (ksize(*sfa) - next_offset))
+		जाओ out;
 
 	new_acts_size = max(next_offset + req_size, ksize(*sfa) * 2);
 
-	if (new_acts_size > MAX_ACTIONS_BUFSIZE) {
-		if ((MAX_ACTIONS_BUFSIZE - next_offset) < req_size) {
+	अगर (new_acts_size > MAX_ACTIONS_बफ_मानE) अणु
+		अगर ((MAX_ACTIONS_बफ_मानE - next_offset) < req_size) अणु
 			OVS_NLERR(log, "Flow action size exceeds max %u",
-				  MAX_ACTIONS_BUFSIZE);
-			return ERR_PTR(-EMSGSIZE);
-		}
-		new_acts_size = MAX_ACTIONS_BUFSIZE;
-	}
+				  MAX_ACTIONS_बफ_मानE);
+			वापस ERR_PTR(-EMSGSIZE);
+		पूर्ण
+		new_acts_size = MAX_ACTIONS_बफ_मानE;
+	पूर्ण
 
 	acts = nla_alloc_flow_actions(new_acts_size);
-	if (IS_ERR(acts))
-		return (void *)acts;
+	अगर (IS_ERR(acts))
+		वापस (व्योम *)acts;
 
-	memcpy(acts->actions, (*sfa)->actions, (*sfa)->actions_len);
+	स_नकल(acts->actions, (*sfa)->actions, (*sfa)->actions_len);
 	acts->actions_len = (*sfa)->actions_len;
 	acts->orig_len = (*sfa)->orig_len;
-	kfree(*sfa);
+	kमुक्त(*sfa);
 	*sfa = acts;
 
 out:
 	(*sfa)->actions_len += req_size;
-	return  (struct nlattr *) ((unsigned char *)(*sfa) + next_offset);
-}
+	वापस  (काष्ठा nlattr *) ((अचिन्हित अक्षर *)(*sfa) + next_offset);
+पूर्ण
 
-static struct nlattr *__add_action(struct sw_flow_actions **sfa,
-				   int attrtype, void *data, int len, bool log)
-{
-	struct nlattr *a;
+अटल काष्ठा nlattr *__add_action(काष्ठा sw_flow_actions **sfa,
+				   पूर्णांक attrtype, व्योम *data, पूर्णांक len, bool log)
+अणु
+	काष्ठा nlattr *a;
 
 	a = reserve_sfa_size(sfa, nla_attr_size(len), log);
-	if (IS_ERR(a))
-		return a;
+	अगर (IS_ERR(a))
+		वापस a;
 
 	a->nla_type = attrtype;
 	a->nla_len = nla_attr_size(len);
 
-	if (data)
-		memcpy(nla_data(a), data, len);
-	memset((unsigned char *) a + a->nla_len, 0, nla_padlen(len));
+	अगर (data)
+		स_नकल(nla_data(a), data, len);
+	स_रखो((अचिन्हित अक्षर *) a + a->nla_len, 0, nla_padlen(len));
 
-	return a;
-}
+	वापस a;
+पूर्ण
 
-int ovs_nla_add_action(struct sw_flow_actions **sfa, int attrtype, void *data,
-		       int len, bool log)
-{
-	struct nlattr *a;
+पूर्णांक ovs_nla_add_action(काष्ठा sw_flow_actions **sfa, पूर्णांक attrtype, व्योम *data,
+		       पूर्णांक len, bool log)
+अणु
+	काष्ठा nlattr *a;
 
 	a = __add_action(sfa, attrtype, data, len, log);
 
-	return PTR_ERR_OR_ZERO(a);
-}
+	वापस PTR_ERR_OR_ZERO(a);
+पूर्ण
 
-static inline int add_nested_action_start(struct sw_flow_actions **sfa,
-					  int attrtype, bool log)
-{
-	int used = (*sfa)->actions_len;
-	int err;
+अटल अंतरभूत पूर्णांक add_nested_action_start(काष्ठा sw_flow_actions **sfa,
+					  पूर्णांक attrtype, bool log)
+अणु
+	पूर्णांक used = (*sfa)->actions_len;
+	पूर्णांक err;
 
-	err = ovs_nla_add_action(sfa, attrtype, NULL, 0, log);
-	if (err)
-		return err;
+	err = ovs_nla_add_action(sfa, attrtype, शून्य, 0, log);
+	अगर (err)
+		वापस err;
 
-	return used;
-}
+	वापस used;
+पूर्ण
 
-static inline void add_nested_action_end(struct sw_flow_actions *sfa,
-					 int st_offset)
-{
-	struct nlattr *a = (struct nlattr *) ((unsigned char *)sfa->actions +
+अटल अंतरभूत व्योम add_nested_action_end(काष्ठा sw_flow_actions *sfa,
+					 पूर्णांक st_offset)
+अणु
+	काष्ठा nlattr *a = (काष्ठा nlattr *) ((अचिन्हित अक्षर *)sfa->actions +
 							       st_offset);
 
 	a->nla_len = sfa->actions_len - st_offset;
-}
+पूर्ण
 
-static int __ovs_nla_copy_actions(struct net *net, const struct nlattr *attr,
-				  const struct sw_flow_key *key,
-				  struct sw_flow_actions **sfa,
+अटल पूर्णांक __ovs_nla_copy_actions(काष्ठा net *net, स्थिर काष्ठा nlattr *attr,
+				  स्थिर काष्ठा sw_flow_key *key,
+				  काष्ठा sw_flow_actions **sfa,
 				  __be16 eth_type, __be16 vlan_tci,
 				  u32 mpls_label_count, bool log);
 
-static int validate_and_copy_sample(struct net *net, const struct nlattr *attr,
-				    const struct sw_flow_key *key,
-				    struct sw_flow_actions **sfa,
+अटल पूर्णांक validate_and_copy_sample(काष्ठा net *net, स्थिर काष्ठा nlattr *attr,
+				    स्थिर काष्ठा sw_flow_key *key,
+				    काष्ठा sw_flow_actions **sfa,
 				    __be16 eth_type, __be16 vlan_tci,
 				    u32 mpls_label_count, bool log, bool last)
-{
-	const struct nlattr *attrs[OVS_SAMPLE_ATTR_MAX + 1];
-	const struct nlattr *probability, *actions;
-	const struct nlattr *a;
-	int rem, start, err;
-	struct sample_arg arg;
+अणु
+	स्थिर काष्ठा nlattr *attrs[OVS_SAMPLE_ATTR_MAX + 1];
+	स्थिर काष्ठा nlattr *probability, *actions;
+	स्थिर काष्ठा nlattr *a;
+	पूर्णांक rem, start, err;
+	काष्ठा sample_arg arg;
 
-	memset(attrs, 0, sizeof(attrs));
-	nla_for_each_nested(a, attr, rem) {
-		int type = nla_type(a);
-		if (!type || type > OVS_SAMPLE_ATTR_MAX || attrs[type])
-			return -EINVAL;
+	स_रखो(attrs, 0, माप(attrs));
+	nla_क्रम_each_nested(a, attr, rem) अणु
+		पूर्णांक type = nla_type(a);
+		अगर (!type || type > OVS_SAMPLE_ATTR_MAX || attrs[type])
+			वापस -EINVAL;
 		attrs[type] = a;
-	}
-	if (rem)
-		return -EINVAL;
+	पूर्ण
+	अगर (rem)
+		वापस -EINVAL;
 
 	probability = attrs[OVS_SAMPLE_ATTR_PROBABILITY];
-	if (!probability || nla_len(probability) != sizeof(u32))
-		return -EINVAL;
+	अगर (!probability || nla_len(probability) != माप(u32))
+		वापस -EINVAL;
 
 	actions = attrs[OVS_SAMPLE_ATTR_ACTIONS];
-	if (!actions || (nla_len(actions) && nla_len(actions) < NLA_HDRLEN))
-		return -EINVAL;
+	अगर (!actions || (nla_len(actions) && nla_len(actions) < NLA_HDRLEN))
+		वापस -EINVAL;
 
-	/* validation done, copy sample action. */
+	/* validation करोne, copy sample action. */
 	start = add_nested_action_start(sfa, OVS_ACTION_ATTR_SAMPLE, log);
-	if (start < 0)
-		return start;
+	अगर (start < 0)
+		वापस start;
 
 	/* When both skb and flow may be changed, put the sample
-	 * into a deferred fifo. On the other hand, if only skb
-	 * may be modified, the actions can be executed in place.
+	 * पूर्णांकo a deferred fअगरo. On the other hand, अगर only skb
+	 * may be modअगरied, the actions can be executed in place.
 	 *
-	 * Do this analysis at the flow installation time.
-	 * Set 'clone_action->exec' to true if the actions can be
+	 * Do this analysis at the flow installation समय.
+	 * Set 'clone_action->exec' to true अगर the actions can be
 	 * executed without being deferred.
 	 *
 	 * If the sample is the last action, it can always be excuted
@@ -2480,841 +2481,841 @@ static int validate_and_copy_sample(struct net *net, const struct nlattr *attr,
 	arg.exec = last || !actions_may_change_flow(actions);
 	arg.probability = nla_get_u32(probability);
 
-	err = ovs_nla_add_action(sfa, OVS_SAMPLE_ATTR_ARG, &arg, sizeof(arg),
+	err = ovs_nla_add_action(sfa, OVS_SAMPLE_ATTR_ARG, &arg, माप(arg),
 				 log);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = __ovs_nla_copy_actions(net, actions, key, sfa,
 				     eth_type, vlan_tci, mpls_label_count, log);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	add_nested_action_end(*sfa, start);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int validate_and_copy_dec_ttl(struct net *net,
-				     const struct nlattr *attr,
-				     const struct sw_flow_key *key,
-				     struct sw_flow_actions **sfa,
+अटल पूर्णांक validate_and_copy_dec_ttl(काष्ठा net *net,
+				     स्थिर काष्ठा nlattr *attr,
+				     स्थिर काष्ठा sw_flow_key *key,
+				     काष्ठा sw_flow_actions **sfa,
 				     __be16 eth_type, __be16 vlan_tci,
 				     u32 mpls_label_count, bool log)
-{
-	const struct nlattr *attrs[OVS_DEC_TTL_ATTR_MAX + 1];
-	int start, action_start, err, rem;
-	const struct nlattr *a, *actions;
+अणु
+	स्थिर काष्ठा nlattr *attrs[OVS_DEC_TTL_ATTR_MAX + 1];
+	पूर्णांक start, action_start, err, rem;
+	स्थिर काष्ठा nlattr *a, *actions;
 
-	memset(attrs, 0, sizeof(attrs));
-	nla_for_each_nested(a, attr, rem) {
-		int type = nla_type(a);
+	स_रखो(attrs, 0, माप(attrs));
+	nla_क्रम_each_nested(a, attr, rem) अणु
+		पूर्णांक type = nla_type(a);
 
 		/* Ignore unknown attributes to be future proof. */
-		if (type > OVS_DEC_TTL_ATTR_MAX)
-			continue;
+		अगर (type > OVS_DEC_TTL_ATTR_MAX)
+			जारी;
 
-		if (!type || attrs[type]) {
+		अगर (!type || attrs[type]) अणु
 			OVS_NLERR(log, "Duplicate or invalid key (type %d).",
 				  type);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		attrs[type] = a;
-	}
+	पूर्ण
 
-	if (rem) {
+	अगर (rem) अणु
 		OVS_NLERR(log, "Message has %d unknown bytes.", rem);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	actions = attrs[OVS_DEC_TTL_ATTR_ACTION];
-	if (!actions || (nla_len(actions) && nla_len(actions) < NLA_HDRLEN)) {
+	अगर (!actions || (nla_len(actions) && nla_len(actions) < NLA_HDRLEN)) अणु
 		OVS_NLERR(log, "Missing valid actions attribute.");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	start = add_nested_action_start(sfa, OVS_ACTION_ATTR_DEC_TTL, log);
-	if (start < 0)
-		return start;
+	अगर (start < 0)
+		वापस start;
 
 	action_start = add_nested_action_start(sfa, OVS_DEC_TTL_ATTR_ACTION, log);
-	if (action_start < 0)
-		return action_start;
+	अगर (action_start < 0)
+		वापस action_start;
 
 	err = __ovs_nla_copy_actions(net, actions, key, sfa, eth_type,
 				     vlan_tci, mpls_label_count, log);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	add_nested_action_end(*sfa, action_start);
 	add_nested_action_end(*sfa, start);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int validate_and_copy_clone(struct net *net,
-				   const struct nlattr *attr,
-				   const struct sw_flow_key *key,
-				   struct sw_flow_actions **sfa,
+अटल पूर्णांक validate_and_copy_clone(काष्ठा net *net,
+				   स्थिर काष्ठा nlattr *attr,
+				   स्थिर काष्ठा sw_flow_key *key,
+				   काष्ठा sw_flow_actions **sfa,
 				   __be16 eth_type, __be16 vlan_tci,
 				   u32 mpls_label_count, bool log, bool last)
-{
-	int start, err;
+अणु
+	पूर्णांक start, err;
 	u32 exec;
 
-	if (nla_len(attr) && nla_len(attr) < NLA_HDRLEN)
-		return -EINVAL;
+	अगर (nla_len(attr) && nla_len(attr) < NLA_HDRLEN)
+		वापस -EINVAL;
 
 	start = add_nested_action_start(sfa, OVS_ACTION_ATTR_CLONE, log);
-	if (start < 0)
-		return start;
+	अगर (start < 0)
+		वापस start;
 
 	exec = last || !actions_may_change_flow(attr);
 
 	err = ovs_nla_add_action(sfa, OVS_CLONE_ATTR_EXEC, &exec,
-				 sizeof(exec), log);
-	if (err)
-		return err;
+				 माप(exec), log);
+	अगर (err)
+		वापस err;
 
 	err = __ovs_nla_copy_actions(net, attr, key, sfa,
 				     eth_type, vlan_tci, mpls_label_count, log);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	add_nested_action_end(*sfa, start);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ovs_match_init(struct sw_flow_match *match,
-		    struct sw_flow_key *key,
+व्योम ovs_match_init(काष्ठा sw_flow_match *match,
+		    काष्ठा sw_flow_key *key,
 		    bool reset_key,
-		    struct sw_flow_mask *mask)
-{
-	memset(match, 0, sizeof(*match));
+		    काष्ठा sw_flow_mask *mask)
+अणु
+	स_रखो(match, 0, माप(*match));
 	match->key = key;
 	match->mask = mask;
 
-	if (reset_key)
-		memset(key, 0, sizeof(*key));
+	अगर (reset_key)
+		स_रखो(key, 0, माप(*key));
 
-	if (mask) {
-		memset(&mask->key, 0, sizeof(mask->key));
+	अगर (mask) अणु
+		स_रखो(&mask->key, 0, माप(mask->key));
 		mask->range.start = mask->range.end = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int validate_geneve_opts(struct sw_flow_key *key)
-{
-	struct geneve_opt *option;
-	int opts_len = key->tun_opts_len;
+अटल पूर्णांक validate_geneve_opts(काष्ठा sw_flow_key *key)
+अणु
+	काष्ठा geneve_opt *option;
+	पूर्णांक opts_len = key->tun_opts_len;
 	bool crit_opt = false;
 
-	option = (struct geneve_opt *)TUN_METADATA_OPTS(key, key->tun_opts_len);
-	while (opts_len > 0) {
-		int len;
+	option = (काष्ठा geneve_opt *)TUN_METADATA_OPTS(key, key->tun_opts_len);
+	जबतक (opts_len > 0) अणु
+		पूर्णांक len;
 
-		if (opts_len < sizeof(*option))
-			return -EINVAL;
+		अगर (opts_len < माप(*option))
+			वापस -EINVAL;
 
-		len = sizeof(*option) + option->length * 4;
-		if (len > opts_len)
-			return -EINVAL;
+		len = माप(*option) + option->length * 4;
+		अगर (len > opts_len)
+			वापस -EINVAL;
 
 		crit_opt |= !!(option->type & GENEVE_CRIT_OPT_TYPE);
 
-		option = (struct geneve_opt *)((u8 *)option + len);
+		option = (काष्ठा geneve_opt *)((u8 *)option + len);
 		opts_len -= len;
-	}
+	पूर्ण
 
 	key->tun_key.tun_flags |= crit_opt ? TUNNEL_CRIT_OPT : 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int validate_and_copy_set_tun(const struct nlattr *attr,
-				     struct sw_flow_actions **sfa, bool log)
-{
-	struct sw_flow_match match;
-	struct sw_flow_key key;
-	struct metadata_dst *tun_dst;
-	struct ip_tunnel_info *tun_info;
-	struct ovs_tunnel_info *ovs_tun;
-	struct nlattr *a;
-	int err = 0, start, opts_type;
+अटल पूर्णांक validate_and_copy_set_tun(स्थिर काष्ठा nlattr *attr,
+				     काष्ठा sw_flow_actions **sfa, bool log)
+अणु
+	काष्ठा sw_flow_match match;
+	काष्ठा sw_flow_key key;
+	काष्ठा metadata_dst *tun_dst;
+	काष्ठा ip_tunnel_info *tun_info;
+	काष्ठा ovs_tunnel_info *ovs_tun;
+	काष्ठा nlattr *a;
+	पूर्णांक err = 0, start, opts_type;
 	__be16 dst_opt_type;
 
 	dst_opt_type = 0;
-	ovs_match_init(&match, &key, true, NULL);
+	ovs_match_init(&match, &key, true, शून्य);
 	opts_type = ip_tun_from_nlattr(nla_data(attr), &match, false, log);
-	if (opts_type < 0)
-		return opts_type;
+	अगर (opts_type < 0)
+		वापस opts_type;
 
-	if (key.tun_opts_len) {
-		switch (opts_type) {
-		case OVS_TUNNEL_KEY_ATTR_GENEVE_OPTS:
+	अगर (key.tun_opts_len) अणु
+		चयन (opts_type) अणु
+		हाल OVS_TUNNEL_KEY_ATTR_GENEVE_OPTS:
 			err = validate_geneve_opts(&key);
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 			dst_opt_type = TUNNEL_GENEVE_OPT;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_VXLAN_OPTS:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_VXLAN_OPTS:
 			dst_opt_type = TUNNEL_VXLAN_OPT;
-			break;
-		case OVS_TUNNEL_KEY_ATTR_ERSPAN_OPTS:
+			अवरोध;
+		हाल OVS_TUNNEL_KEY_ATTR_ERSPAN_OPTS:
 			dst_opt_type = TUNNEL_ERSPAN_OPT;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	start = add_nested_action_start(sfa, OVS_ACTION_ATTR_SET, log);
-	if (start < 0)
-		return start;
+	अगर (start < 0)
+		वापस start;
 
 	tun_dst = metadata_dst_alloc(key.tun_opts_len, METADATA_IP_TUNNEL,
 				     GFP_KERNEL);
 
-	if (!tun_dst)
-		return -ENOMEM;
+	अगर (!tun_dst)
+		वापस -ENOMEM;
 
 	err = dst_cache_init(&tun_dst->u.tun_info.dst_cache, GFP_KERNEL);
-	if (err) {
-		dst_release((struct dst_entry *)tun_dst);
-		return err;
-	}
+	अगर (err) अणु
+		dst_release((काष्ठा dst_entry *)tun_dst);
+		वापस err;
+	पूर्ण
 
-	a = __add_action(sfa, OVS_KEY_ATTR_TUNNEL_INFO, NULL,
-			 sizeof(*ovs_tun), log);
-	if (IS_ERR(a)) {
-		dst_release((struct dst_entry *)tun_dst);
-		return PTR_ERR(a);
-	}
+	a = __add_action(sfa, OVS_KEY_ATTR_TUNNEL_INFO, शून्य,
+			 माप(*ovs_tun), log);
+	अगर (IS_ERR(a)) अणु
+		dst_release((काष्ठा dst_entry *)tun_dst);
+		वापस PTR_ERR(a);
+	पूर्ण
 
 	ovs_tun = nla_data(a);
 	ovs_tun->tun_dst = tun_dst;
 
 	tun_info = &tun_dst->u.tun_info;
 	tun_info->mode = IP_TUNNEL_INFO_TX;
-	if (key.tun_proto == AF_INET6)
+	अगर (key.tun_proto == AF_INET6)
 		tun_info->mode |= IP_TUNNEL_INFO_IPV6;
-	else if (key.tun_proto == AF_INET && key.tun_key.u.ipv4.dst == 0)
+	अन्यथा अगर (key.tun_proto == AF_INET && key.tun_key.u.ipv4.dst == 0)
 		tun_info->mode |= IP_TUNNEL_INFO_BRIDGE;
 	tun_info->key = key.tun_key;
 
 	/* We need to store the options in the action itself since
-	 * everything else will go away after flow setup. We can append
-	 * it to tun_info and then point there.
+	 * everything अन्यथा will go away after flow setup. We can append
+	 * it to tun_info and then poपूर्णांक there.
 	 */
 	ip_tunnel_info_opts_set(tun_info,
 				TUN_METADATA_OPTS(&key, key.tun_opts_len),
 				key.tun_opts_len, dst_opt_type);
 	add_nested_action_end(*sfa, start);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool validate_nsh(const struct nlattr *attr, bool is_mask,
+अटल bool validate_nsh(स्थिर काष्ठा nlattr *attr, bool is_mask,
 			 bool is_push_nsh, bool log)
-{
-	struct sw_flow_match match;
-	struct sw_flow_key key;
-	int ret = 0;
+अणु
+	काष्ठा sw_flow_match match;
+	काष्ठा sw_flow_key key;
+	पूर्णांक ret = 0;
 
-	ovs_match_init(&match, &key, true, NULL);
+	ovs_match_init(&match, &key, true, शून्य);
 	ret = nsh_key_put_from_nlattr(attr, &match, is_mask,
 				      is_push_nsh, log);
-	return !ret;
-}
+	वापस !ret;
+पूर्ण
 
-/* Return false if there are any non-masked bits set.
- * Mask follows data immediately, before any netlink padding.
+/* Return false अगर there are any non-masked bits set.
+ * Mask follows data immediately, beक्रमe any netlink padding.
  */
-static bool validate_masked(u8 *data, int len)
-{
+अटल bool validate_masked(u8 *data, पूर्णांक len)
+अणु
 	u8 *mask = data + len;
 
-	while (len--)
-		if (*data++ & ~*mask++)
-			return false;
+	जबतक (len--)
+		अगर (*data++ & ~*mask++)
+			वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int validate_set(const struct nlattr *a,
-			const struct sw_flow_key *flow_key,
-			struct sw_flow_actions **sfa, bool *skip_copy,
+अटल पूर्णांक validate_set(स्थिर काष्ठा nlattr *a,
+			स्थिर काष्ठा sw_flow_key *flow_key,
+			काष्ठा sw_flow_actions **sfa, bool *skip_copy,
 			u8 mac_proto, __be16 eth_type, bool masked, bool log)
-{
-	const struct nlattr *ovs_key = nla_data(a);
-	int key_type = nla_type(ovs_key);
-	size_t key_len;
+अणु
+	स्थिर काष्ठा nlattr *ovs_key = nla_data(a);
+	पूर्णांक key_type = nla_type(ovs_key);
+	माप_प्रकार key_len;
 
 	/* There can be only one key in a action */
-	if (nla_total_size(nla_len(ovs_key)) != nla_len(a))
-		return -EINVAL;
+	अगर (nla_total_size(nla_len(ovs_key)) != nla_len(a))
+		वापस -EINVAL;
 
 	key_len = nla_len(ovs_key);
-	if (masked)
+	अगर (masked)
 		key_len /= 2;
 
-	if (key_type > OVS_KEY_ATTR_MAX ||
+	अगर (key_type > OVS_KEY_ATTR_MAX ||
 	    !check_attr_len(key_len, ovs_key_lens[key_type].len))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (masked && !validate_masked(nla_data(ovs_key), key_len))
-		return -EINVAL;
+	अगर (masked && !validate_masked(nla_data(ovs_key), key_len))
+		वापस -EINVAL;
 
-	switch (key_type) {
-	case OVS_KEY_ATTR_PRIORITY:
-	case OVS_KEY_ATTR_SKB_MARK:
-	case OVS_KEY_ATTR_CT_MARK:
-	case OVS_KEY_ATTR_CT_LABELS:
-		break;
+	चयन (key_type) अणु
+	हाल OVS_KEY_ATTR_PRIORITY:
+	हाल OVS_KEY_ATTR_SKB_MARK:
+	हाल OVS_KEY_ATTR_CT_MARK:
+	हाल OVS_KEY_ATTR_CT_LABELS:
+		अवरोध;
 
-	case OVS_KEY_ATTR_ETHERNET:
-		if (mac_proto != MAC_PROTO_ETHERNET)
-			return -EINVAL;
-		break;
+	हाल OVS_KEY_ATTR_ETHERNET:
+		अगर (mac_proto != MAC_PROTO_ETHERNET)
+			वापस -EINVAL;
+		अवरोध;
 
-	case OVS_KEY_ATTR_TUNNEL: {
-		int err;
+	हाल OVS_KEY_ATTR_TUNNEL: अणु
+		पूर्णांक err;
 
-		if (masked)
-			return -EINVAL; /* Masked tunnel set not supported. */
+		अगर (masked)
+			वापस -EINVAL; /* Masked tunnel set not supported. */
 
 		*skip_copy = true;
 		err = validate_and_copy_set_tun(a, sfa, log);
-		if (err)
-			return err;
-		break;
-	}
-	case OVS_KEY_ATTR_IPV4: {
-		const struct ovs_key_ipv4 *ipv4_key;
+		अगर (err)
+			वापस err;
+		अवरोध;
+	पूर्ण
+	हाल OVS_KEY_ATTR_IPV4: अणु
+		स्थिर काष्ठा ovs_key_ipv4 *ipv4_key;
 
-		if (eth_type != htons(ETH_P_IP))
-			return -EINVAL;
+		अगर (eth_type != htons(ETH_P_IP))
+			वापस -EINVAL;
 
 		ipv4_key = nla_data(ovs_key);
 
-		if (masked) {
-			const struct ovs_key_ipv4 *mask = ipv4_key + 1;
+		अगर (masked) अणु
+			स्थिर काष्ठा ovs_key_ipv4 *mask = ipv4_key + 1;
 
-			/* Non-writeable fields. */
-			if (mask->ipv4_proto || mask->ipv4_frag)
-				return -EINVAL;
-		} else {
-			if (ipv4_key->ipv4_proto != flow_key->ip.proto)
-				return -EINVAL;
+			/* Non-ग_लिखोable fields. */
+			अगर (mask->ipv4_proto || mask->ipv4_frag)
+				वापस -EINVAL;
+		पूर्ण अन्यथा अणु
+			अगर (ipv4_key->ipv4_proto != flow_key->ip.proto)
+				वापस -EINVAL;
 
-			if (ipv4_key->ipv4_frag != flow_key->ip.frag)
-				return -EINVAL;
-		}
-		break;
-	}
-	case OVS_KEY_ATTR_IPV6: {
-		const struct ovs_key_ipv6 *ipv6_key;
+			अगर (ipv4_key->ipv4_frag != flow_key->ip.frag)
+				वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल OVS_KEY_ATTR_IPV6: अणु
+		स्थिर काष्ठा ovs_key_ipv6 *ipv6_key;
 
-		if (eth_type != htons(ETH_P_IPV6))
-			return -EINVAL;
+		अगर (eth_type != htons(ETH_P_IPV6))
+			वापस -EINVAL;
 
 		ipv6_key = nla_data(ovs_key);
 
-		if (masked) {
-			const struct ovs_key_ipv6 *mask = ipv6_key + 1;
+		अगर (masked) अणु
+			स्थिर काष्ठा ovs_key_ipv6 *mask = ipv6_key + 1;
 
-			/* Non-writeable fields. */
-			if (mask->ipv6_proto || mask->ipv6_frag)
-				return -EINVAL;
+			/* Non-ग_लिखोable fields. */
+			अगर (mask->ipv6_proto || mask->ipv6_frag)
+				वापस -EINVAL;
 
 			/* Invalid bits in the flow label mask? */
-			if (ntohl(mask->ipv6_label) & 0xFFF00000)
-				return -EINVAL;
-		} else {
-			if (ipv6_key->ipv6_proto != flow_key->ip.proto)
-				return -EINVAL;
+			अगर (ntohl(mask->ipv6_label) & 0xFFF00000)
+				वापस -EINVAL;
+		पूर्ण अन्यथा अणु
+			अगर (ipv6_key->ipv6_proto != flow_key->ip.proto)
+				वापस -EINVAL;
 
-			if (ipv6_key->ipv6_frag != flow_key->ip.frag)
-				return -EINVAL;
-		}
-		if (ntohl(ipv6_key->ipv6_label) & 0xFFF00000)
-			return -EINVAL;
+			अगर (ipv6_key->ipv6_frag != flow_key->ip.frag)
+				वापस -EINVAL;
+		पूर्ण
+		अगर (ntohl(ipv6_key->ipv6_label) & 0xFFF00000)
+			वापस -EINVAL;
 
-		break;
-	}
-	case OVS_KEY_ATTR_TCP:
-		if ((eth_type != htons(ETH_P_IP) &&
+		अवरोध;
+	पूर्ण
+	हाल OVS_KEY_ATTR_TCP:
+		अगर ((eth_type != htons(ETH_P_IP) &&
 		     eth_type != htons(ETH_P_IPV6)) ||
 		    flow_key->ip.proto != IPPROTO_TCP)
-			return -EINVAL;
+			वापस -EINVAL;
 
-		break;
+		अवरोध;
 
-	case OVS_KEY_ATTR_UDP:
-		if ((eth_type != htons(ETH_P_IP) &&
+	हाल OVS_KEY_ATTR_UDP:
+		अगर ((eth_type != htons(ETH_P_IP) &&
 		     eth_type != htons(ETH_P_IPV6)) ||
 		    flow_key->ip.proto != IPPROTO_UDP)
-			return -EINVAL;
+			वापस -EINVAL;
 
-		break;
+		अवरोध;
 
-	case OVS_KEY_ATTR_MPLS:
-		if (!eth_p_mpls(eth_type))
-			return -EINVAL;
-		break;
+	हाल OVS_KEY_ATTR_MPLS:
+		अगर (!eth_p_mpls(eth_type))
+			वापस -EINVAL;
+		अवरोध;
 
-	case OVS_KEY_ATTR_SCTP:
-		if ((eth_type != htons(ETH_P_IP) &&
+	हाल OVS_KEY_ATTR_SCTP:
+		अगर ((eth_type != htons(ETH_P_IP) &&
 		     eth_type != htons(ETH_P_IPV6)) ||
 		    flow_key->ip.proto != IPPROTO_SCTP)
-			return -EINVAL;
+			वापस -EINVAL;
 
-		break;
+		अवरोध;
 
-	case OVS_KEY_ATTR_NSH:
-		if (eth_type != htons(ETH_P_NSH))
-			return -EINVAL;
-		if (!validate_nsh(nla_data(a), masked, false, log))
-			return -EINVAL;
-		break;
+	हाल OVS_KEY_ATTR_NSH:
+		अगर (eth_type != htons(ETH_P_NSH))
+			वापस -EINVAL;
+		अगर (!validate_nsh(nla_data(a), masked, false, log))
+			वापस -EINVAL;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Convert non-masked non-tunnel set actions to masked set actions. */
-	if (!masked && key_type != OVS_KEY_ATTR_TUNNEL) {
-		int start, len = key_len * 2;
-		struct nlattr *at;
+	अगर (!masked && key_type != OVS_KEY_ATTR_TUNNEL) अणु
+		पूर्णांक start, len = key_len * 2;
+		काष्ठा nlattr *at;
 
 		*skip_copy = true;
 
 		start = add_nested_action_start(sfa,
 						OVS_ACTION_ATTR_SET_TO_MASKED,
 						log);
-		if (start < 0)
-			return start;
+		अगर (start < 0)
+			वापस start;
 
-		at = __add_action(sfa, key_type, NULL, len, log);
-		if (IS_ERR(at))
-			return PTR_ERR(at);
+		at = __add_action(sfa, key_type, शून्य, len, log);
+		अगर (IS_ERR(at))
+			वापस PTR_ERR(at);
 
-		memcpy(nla_data(at), nla_data(ovs_key), key_len); /* Key. */
-		memset(nla_data(at) + key_len, 0xff, key_len);    /* Mask. */
-		/* Clear non-writeable bits from otherwise writeable fields. */
-		if (key_type == OVS_KEY_ATTR_IPV6) {
-			struct ovs_key_ipv6 *mask = nla_data(at) + key_len;
+		स_नकल(nla_data(at), nla_data(ovs_key), key_len); /* Key. */
+		स_रखो(nla_data(at) + key_len, 0xff, key_len);    /* Mask. */
+		/* Clear non-ग_लिखोable bits from otherwise ग_लिखोable fields. */
+		अगर (key_type == OVS_KEY_ATTR_IPV6) अणु
+			काष्ठा ovs_key_ipv6 *mask = nla_data(at) + key_len;
 
 			mask->ipv6_label &= htonl(0x000FFFFF);
-		}
+		पूर्ण
 		add_nested_action_end(*sfa, start);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int validate_userspace(const struct nlattr *attr)
-{
-	static const struct nla_policy userspace_policy[OVS_USERSPACE_ATTR_MAX + 1] = {
-		[OVS_USERSPACE_ATTR_PID] = {.type = NLA_U32 },
-		[OVS_USERSPACE_ATTR_USERDATA] = {.type = NLA_UNSPEC },
-		[OVS_USERSPACE_ATTR_EGRESS_TUN_PORT] = {.type = NLA_U32 },
-	};
-	struct nlattr *a[OVS_USERSPACE_ATTR_MAX + 1];
-	int error;
+अटल पूर्णांक validate_userspace(स्थिर काष्ठा nlattr *attr)
+अणु
+	अटल स्थिर काष्ठा nla_policy userspace_policy[OVS_USERSPACE_ATTR_MAX + 1] = अणु
+		[OVS_USERSPACE_ATTR_PID] = अणु.type = NLA_U32 पूर्ण,
+		[OVS_USERSPACE_ATTR_USERDATA] = अणु.type = NLA_UNSPEC पूर्ण,
+		[OVS_USERSPACE_ATTR_EGRESS_TUN_PORT] = अणु.type = NLA_U32 पूर्ण,
+	पूर्ण;
+	काष्ठा nlattr *a[OVS_USERSPACE_ATTR_MAX + 1];
+	पूर्णांक error;
 
 	error = nla_parse_nested_deprecated(a, OVS_USERSPACE_ATTR_MAX, attr,
-					    userspace_policy, NULL);
-	if (error)
-		return error;
+					    userspace_policy, शून्य);
+	अगर (error)
+		वापस error;
 
-	if (!a[OVS_USERSPACE_ATTR_PID] ||
+	अगर (!a[OVS_USERSPACE_ATTR_PID] ||
 	    !nla_get_u32(a[OVS_USERSPACE_ATTR_PID]))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nla_policy cpl_policy[OVS_CHECK_PKT_LEN_ATTR_MAX + 1] = {
-	[OVS_CHECK_PKT_LEN_ATTR_PKT_LEN] = {.type = NLA_U16 },
-	[OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_GREATER] = {.type = NLA_NESTED },
-	[OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_LESS_EQUAL] = {.type = NLA_NESTED },
-};
+अटल स्थिर काष्ठा nla_policy cpl_policy[OVS_CHECK_PKT_LEN_ATTR_MAX + 1] = अणु
+	[OVS_CHECK_PKT_LEN_ATTR_PKT_LEN] = अणु.type = NLA_U16 पूर्ण,
+	[OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_GREATER] = अणु.type = NLA_NESTED पूर्ण,
+	[OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_LESS_EQUAL] = अणु.type = NLA_NESTED पूर्ण,
+पूर्ण;
 
-static int validate_and_copy_check_pkt_len(struct net *net,
-					   const struct nlattr *attr,
-					   const struct sw_flow_key *key,
-					   struct sw_flow_actions **sfa,
+अटल पूर्णांक validate_and_copy_check_pkt_len(काष्ठा net *net,
+					   स्थिर काष्ठा nlattr *attr,
+					   स्थिर काष्ठा sw_flow_key *key,
+					   काष्ठा sw_flow_actions **sfa,
 					   __be16 eth_type, __be16 vlan_tci,
 					   u32 mpls_label_count,
 					   bool log, bool last)
-{
-	const struct nlattr *acts_if_greater, *acts_if_lesser_eq;
-	struct nlattr *a[OVS_CHECK_PKT_LEN_ATTR_MAX + 1];
-	struct check_pkt_len_arg arg;
-	int nested_acts_start;
-	int start, err;
+अणु
+	स्थिर काष्ठा nlattr *acts_अगर_greater, *acts_अगर_lesser_eq;
+	काष्ठा nlattr *a[OVS_CHECK_PKT_LEN_ATTR_MAX + 1];
+	काष्ठा check_pkt_len_arg arg;
+	पूर्णांक nested_acts_start;
+	पूर्णांक start, err;
 
 	err = nla_parse_deprecated_strict(a, OVS_CHECK_PKT_LEN_ATTR_MAX,
 					  nla_data(attr), nla_len(attr),
-					  cpl_policy, NULL);
-	if (err)
-		return err;
+					  cpl_policy, शून्य);
+	अगर (err)
+		वापस err;
 
-	if (!a[OVS_CHECK_PKT_LEN_ATTR_PKT_LEN] ||
+	अगर (!a[OVS_CHECK_PKT_LEN_ATTR_PKT_LEN] ||
 	    !nla_get_u16(a[OVS_CHECK_PKT_LEN_ATTR_PKT_LEN]))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	acts_if_lesser_eq = a[OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_LESS_EQUAL];
-	acts_if_greater = a[OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_GREATER];
+	acts_अगर_lesser_eq = a[OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_LESS_EQUAL];
+	acts_अगर_greater = a[OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_GREATER];
 
 	/* Both the nested action should be present. */
-	if (!acts_if_greater || !acts_if_lesser_eq)
-		return -EINVAL;
+	अगर (!acts_अगर_greater || !acts_अगर_lesser_eq)
+		वापस -EINVAL;
 
-	/* validation done, copy the nested actions. */
+	/* validation करोne, copy the nested actions. */
 	start = add_nested_action_start(sfa, OVS_ACTION_ATTR_CHECK_PKT_LEN,
 					log);
-	if (start < 0)
-		return start;
+	अगर (start < 0)
+		वापस start;
 
 	arg.pkt_len = nla_get_u16(a[OVS_CHECK_PKT_LEN_ATTR_PKT_LEN]);
-	arg.exec_for_lesser_equal =
-		last || !actions_may_change_flow(acts_if_lesser_eq);
-	arg.exec_for_greater =
-		last || !actions_may_change_flow(acts_if_greater);
+	arg.exec_क्रम_lesser_equal =
+		last || !actions_may_change_flow(acts_अगर_lesser_eq);
+	arg.exec_क्रम_greater =
+		last || !actions_may_change_flow(acts_अगर_greater);
 
 	err = ovs_nla_add_action(sfa, OVS_CHECK_PKT_LEN_ATTR_ARG, &arg,
-				 sizeof(arg), log);
-	if (err)
-		return err;
+				 माप(arg), log);
+	अगर (err)
+		वापस err;
 
 	nested_acts_start = add_nested_action_start(sfa,
 		OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_LESS_EQUAL, log);
-	if (nested_acts_start < 0)
-		return nested_acts_start;
+	अगर (nested_acts_start < 0)
+		वापस nested_acts_start;
 
-	err = __ovs_nla_copy_actions(net, acts_if_lesser_eq, key, sfa,
+	err = __ovs_nla_copy_actions(net, acts_अगर_lesser_eq, key, sfa,
 				     eth_type, vlan_tci, mpls_label_count, log);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	add_nested_action_end(*sfa, nested_acts_start);
 
 	nested_acts_start = add_nested_action_start(sfa,
 		OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_GREATER, log);
-	if (nested_acts_start < 0)
-		return nested_acts_start;
+	अगर (nested_acts_start < 0)
+		वापस nested_acts_start;
 
-	err = __ovs_nla_copy_actions(net, acts_if_greater, key, sfa,
+	err = __ovs_nla_copy_actions(net, acts_अगर_greater, key, sfa,
 				     eth_type, vlan_tci, mpls_label_count, log);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	add_nested_action_end(*sfa, nested_acts_start);
 	add_nested_action_end(*sfa, start);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int copy_action(const struct nlattr *from,
-		       struct sw_flow_actions **sfa, bool log)
-{
-	int totlen = NLA_ALIGN(from->nla_len);
-	struct nlattr *to;
+अटल पूर्णांक copy_action(स्थिर काष्ठा nlattr *from,
+		       काष्ठा sw_flow_actions **sfa, bool log)
+अणु
+	पूर्णांक totlen = NLA_ALIGN(from->nla_len);
+	काष्ठा nlattr *to;
 
 	to = reserve_sfa_size(sfa, from->nla_len, log);
-	if (IS_ERR(to))
-		return PTR_ERR(to);
+	अगर (IS_ERR(to))
+		वापस PTR_ERR(to);
 
-	memcpy(to, from, totlen);
-	return 0;
-}
+	स_नकल(to, from, totlen);
+	वापस 0;
+पूर्ण
 
-static int __ovs_nla_copy_actions(struct net *net, const struct nlattr *attr,
-				  const struct sw_flow_key *key,
-				  struct sw_flow_actions **sfa,
+अटल पूर्णांक __ovs_nla_copy_actions(काष्ठा net *net, स्थिर काष्ठा nlattr *attr,
+				  स्थिर काष्ठा sw_flow_key *key,
+				  काष्ठा sw_flow_actions **sfa,
 				  __be16 eth_type, __be16 vlan_tci,
 				  u32 mpls_label_count, bool log)
-{
+अणु
 	u8 mac_proto = ovs_key_mac_proto(key);
-	const struct nlattr *a;
-	int rem, err;
+	स्थिर काष्ठा nlattr *a;
+	पूर्णांक rem, err;
 
-	nla_for_each_nested(a, attr, rem) {
-		/* Expected argument lengths, (u32)-1 for variable length. */
-		static const u32 action_lens[OVS_ACTION_ATTR_MAX + 1] = {
-			[OVS_ACTION_ATTR_OUTPUT] = sizeof(u32),
-			[OVS_ACTION_ATTR_RECIRC] = sizeof(u32),
+	nla_क्रम_each_nested(a, attr, rem) अणु
+		/* Expected argument lengths, (u32)-1 क्रम variable length. */
+		अटल स्थिर u32 action_lens[OVS_ACTION_ATTR_MAX + 1] = अणु
+			[OVS_ACTION_ATTR_OUTPUT] = माप(u32),
+			[OVS_ACTION_ATTR_RECIRC] = माप(u32),
 			[OVS_ACTION_ATTR_USERSPACE] = (u32)-1,
-			[OVS_ACTION_ATTR_PUSH_MPLS] = sizeof(struct ovs_action_push_mpls),
-			[OVS_ACTION_ATTR_POP_MPLS] = sizeof(__be16),
-			[OVS_ACTION_ATTR_PUSH_VLAN] = sizeof(struct ovs_action_push_vlan),
+			[OVS_ACTION_ATTR_PUSH_MPLS] = माप(काष्ठा ovs_action_push_mpls),
+			[OVS_ACTION_ATTR_POP_MPLS] = माप(__be16),
+			[OVS_ACTION_ATTR_PUSH_VLAN] = माप(काष्ठा ovs_action_push_vlan),
 			[OVS_ACTION_ATTR_POP_VLAN] = 0,
 			[OVS_ACTION_ATTR_SET] = (u32)-1,
 			[OVS_ACTION_ATTR_SET_MASKED] = (u32)-1,
 			[OVS_ACTION_ATTR_SAMPLE] = (u32)-1,
-			[OVS_ACTION_ATTR_HASH] = sizeof(struct ovs_action_hash),
+			[OVS_ACTION_ATTR_HASH] = माप(काष्ठा ovs_action_hash),
 			[OVS_ACTION_ATTR_CT] = (u32)-1,
 			[OVS_ACTION_ATTR_CT_CLEAR] = 0,
-			[OVS_ACTION_ATTR_TRUNC] = sizeof(struct ovs_action_trunc),
-			[OVS_ACTION_ATTR_PUSH_ETH] = sizeof(struct ovs_action_push_eth),
+			[OVS_ACTION_ATTR_TRUNC] = माप(काष्ठा ovs_action_trunc),
+			[OVS_ACTION_ATTR_PUSH_ETH] = माप(काष्ठा ovs_action_push_eth),
 			[OVS_ACTION_ATTR_POP_ETH] = 0,
 			[OVS_ACTION_ATTR_PUSH_NSH] = (u32)-1,
 			[OVS_ACTION_ATTR_POP_NSH] = 0,
-			[OVS_ACTION_ATTR_METER] = sizeof(u32),
+			[OVS_ACTION_ATTR_METER] = माप(u32),
 			[OVS_ACTION_ATTR_CLONE] = (u32)-1,
 			[OVS_ACTION_ATTR_CHECK_PKT_LEN] = (u32)-1,
-			[OVS_ACTION_ATTR_ADD_MPLS] = sizeof(struct ovs_action_add_mpls),
+			[OVS_ACTION_ATTR_ADD_MPLS] = माप(काष्ठा ovs_action_add_mpls),
 			[OVS_ACTION_ATTR_DEC_TTL] = (u32)-1,
-		};
-		const struct ovs_action_push_vlan *vlan;
-		int type = nla_type(a);
+		पूर्ण;
+		स्थिर काष्ठा ovs_action_push_vlan *vlan;
+		पूर्णांक type = nla_type(a);
 		bool skip_copy;
 
-		if (type > OVS_ACTION_ATTR_MAX ||
+		अगर (type > OVS_ACTION_ATTR_MAX ||
 		    (action_lens[type] != nla_len(a) &&
 		     action_lens[type] != (u32)-1))
-			return -EINVAL;
+			वापस -EINVAL;
 
 		skip_copy = false;
-		switch (type) {
-		case OVS_ACTION_ATTR_UNSPEC:
-			return -EINVAL;
+		चयन (type) अणु
+		हाल OVS_ACTION_ATTR_UNSPEC:
+			वापस -EINVAL;
 
-		case OVS_ACTION_ATTR_USERSPACE:
+		हाल OVS_ACTION_ATTR_USERSPACE:
 			err = validate_userspace(a);
-			if (err)
-				return err;
-			break;
+			अगर (err)
+				वापस err;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_OUTPUT:
-			if (nla_get_u32(a) >= DP_MAX_PORTS)
-				return -EINVAL;
-			break;
+		हाल OVS_ACTION_ATTR_OUTPUT:
+			अगर (nla_get_u32(a) >= DP_MAX_PORTS)
+				वापस -EINVAL;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_TRUNC: {
-			const struct ovs_action_trunc *trunc = nla_data(a);
+		हाल OVS_ACTION_ATTR_TRUNC: अणु
+			स्थिर काष्ठा ovs_action_trunc *trunc = nla_data(a);
 
-			if (trunc->max_len < ETH_HLEN)
-				return -EINVAL;
-			break;
-		}
+			अगर (trunc->max_len < ETH_HLEN)
+				वापस -EINVAL;
+			अवरोध;
+		पूर्ण
 
-		case OVS_ACTION_ATTR_HASH: {
-			const struct ovs_action_hash *act_hash = nla_data(a);
+		हाल OVS_ACTION_ATTR_HASH: अणु
+			स्थिर काष्ठा ovs_action_hash *act_hash = nla_data(a);
 
-			switch (act_hash->hash_alg) {
-			case OVS_HASH_ALG_L4:
-				break;
-			default:
-				return  -EINVAL;
-			}
+			चयन (act_hash->hash_alg) अणु
+			हाल OVS_HASH_ALG_L4:
+				अवरोध;
+			शेष:
+				वापस  -EINVAL;
+			पूर्ण
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case OVS_ACTION_ATTR_POP_VLAN:
-			if (mac_proto != MAC_PROTO_ETHERNET)
-				return -EINVAL;
+		हाल OVS_ACTION_ATTR_POP_VLAN:
+			अगर (mac_proto != MAC_PROTO_ETHERNET)
+				वापस -EINVAL;
 			vlan_tci = htons(0);
-			break;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_PUSH_VLAN:
-			if (mac_proto != MAC_PROTO_ETHERNET)
-				return -EINVAL;
+		हाल OVS_ACTION_ATTR_PUSH_VLAN:
+			अगर (mac_proto != MAC_PROTO_ETHERNET)
+				वापस -EINVAL;
 			vlan = nla_data(a);
-			if (!eth_type_vlan(vlan->vlan_tpid))
-				return -EINVAL;
-			if (!(vlan->vlan_tci & htons(VLAN_CFI_MASK)))
-				return -EINVAL;
+			अगर (!eth_type_vlan(vlan->vlan_tpid))
+				वापस -EINVAL;
+			अगर (!(vlan->vlan_tci & htons(VLAN_CFI_MASK)))
+				वापस -EINVAL;
 			vlan_tci = vlan->vlan_tci;
-			break;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_RECIRC:
-			break;
+		हाल OVS_ACTION_ATTR_RECIRC:
+			अवरोध;
 
-		case OVS_ACTION_ATTR_ADD_MPLS: {
-			const struct ovs_action_add_mpls *mpls = nla_data(a);
+		हाल OVS_ACTION_ATTR_ADD_MPLS: अणु
+			स्थिर काष्ठा ovs_action_add_mpls *mpls = nla_data(a);
 
-			if (!eth_p_mpls(mpls->mpls_ethertype))
-				return -EINVAL;
+			अगर (!eth_p_mpls(mpls->mpls_ethertype))
+				वापस -EINVAL;
 
-			if (mpls->tun_flags & OVS_MPLS_L3_TUNNEL_FLAG_MASK) {
-				if (vlan_tci & htons(VLAN_CFI_MASK) ||
+			अगर (mpls->tun_flags & OVS_MPLS_L3_TUNNEL_FLAG_MASK) अणु
+				अगर (vlan_tci & htons(VLAN_CFI_MASK) ||
 				    (eth_type != htons(ETH_P_IP) &&
 				     eth_type != htons(ETH_P_IPV6) &&
 				     eth_type != htons(ETH_P_ARP) &&
 				     eth_type != htons(ETH_P_RARP) &&
 				     !eth_p_mpls(eth_type)))
-					return -EINVAL;
+					वापस -EINVAL;
 				mpls_label_count++;
-			} else {
-				if (mac_proto == MAC_PROTO_ETHERNET) {
+			पूर्ण अन्यथा अणु
+				अगर (mac_proto == MAC_PROTO_ETHERNET) अणु
 					mpls_label_count = 1;
 					mac_proto = MAC_PROTO_NONE;
-				} else {
+				पूर्ण अन्यथा अणु
 					mpls_label_count++;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			eth_type = mpls->mpls_ethertype;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case OVS_ACTION_ATTR_PUSH_MPLS: {
-			const struct ovs_action_push_mpls *mpls = nla_data(a);
+		हाल OVS_ACTION_ATTR_PUSH_MPLS: अणु
+			स्थिर काष्ठा ovs_action_push_mpls *mpls = nla_data(a);
 
-			if (!eth_p_mpls(mpls->mpls_ethertype))
-				return -EINVAL;
+			अगर (!eth_p_mpls(mpls->mpls_ethertype))
+				वापस -EINVAL;
 			/* Prohibit push MPLS other than to a white list
-			 * for packets that have a known tag order.
+			 * क्रम packets that have a known tag order.
 			 */
-			if (vlan_tci & htons(VLAN_CFI_MASK) ||
+			अगर (vlan_tci & htons(VLAN_CFI_MASK) ||
 			    (eth_type != htons(ETH_P_IP) &&
 			     eth_type != htons(ETH_P_IPV6) &&
 			     eth_type != htons(ETH_P_ARP) &&
 			     eth_type != htons(ETH_P_RARP) &&
 			     !eth_p_mpls(eth_type)))
-				return -EINVAL;
+				वापस -EINVAL;
 			eth_type = mpls->mpls_ethertype;
 			mpls_label_count++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case OVS_ACTION_ATTR_POP_MPLS: {
+		हाल OVS_ACTION_ATTR_POP_MPLS: अणु
 			__be16  proto;
-			if (vlan_tci & htons(VLAN_CFI_MASK) ||
+			अगर (vlan_tci & htons(VLAN_CFI_MASK) ||
 			    !eth_p_mpls(eth_type))
-				return -EINVAL;
+				वापस -EINVAL;
 
 			/* Disallow subsequent L2.5+ set actions and mpls_pop
 			 * actions once the last MPLS label in the packet is
 			 * is popped as there is no check here to ensure that
 			 * the new eth type is valid and thus set actions could
-			 * write off the end of the packet or otherwise corrupt
+			 * ग_लिखो off the end of the packet or otherwise corrupt
 			 * it.
 			 *
-			 * Support for these actions is planned using packet
+			 * Support क्रम these actions is planned using packet
 			 * recirculation.
 			 */
 			proto = nla_get_be16(a);
 
-			if (proto == htons(ETH_P_TEB) &&
+			अगर (proto == htons(ETH_P_TEB) &&
 			    mac_proto != MAC_PROTO_NONE)
-				return -EINVAL;
+				वापस -EINVAL;
 
 			mpls_label_count--;
 
-			if (!eth_p_mpls(proto) || !mpls_label_count)
+			अगर (!eth_p_mpls(proto) || !mpls_label_count)
 				eth_type = htons(0);
-			else
+			अन्यथा
 				eth_type =  proto;
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case OVS_ACTION_ATTR_SET:
+		हाल OVS_ACTION_ATTR_SET:
 			err = validate_set(a, key, sfa,
 					   &skip_copy, mac_proto, eth_type,
 					   false, log);
-			if (err)
-				return err;
-			break;
+			अगर (err)
+				वापस err;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_SET_MASKED:
+		हाल OVS_ACTION_ATTR_SET_MASKED:
 			err = validate_set(a, key, sfa,
 					   &skip_copy, mac_proto, eth_type,
 					   true, log);
-			if (err)
-				return err;
-			break;
+			अगर (err)
+				वापस err;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_SAMPLE: {
+		हाल OVS_ACTION_ATTR_SAMPLE: अणु
 			bool last = nla_is_last(a, rem);
 
 			err = validate_and_copy_sample(net, a, key, sfa,
 						       eth_type, vlan_tci,
 						       mpls_label_count,
 						       log, last);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			skip_copy = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case OVS_ACTION_ATTR_CT:
+		हाल OVS_ACTION_ATTR_CT:
 			err = ovs_ct_copy_action(net, a, key, sfa, log);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			skip_copy = true;
-			break;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_CT_CLEAR:
-			break;
+		हाल OVS_ACTION_ATTR_CT_CLEAR:
+			अवरोध;
 
-		case OVS_ACTION_ATTR_PUSH_ETH:
-			/* Disallow pushing an Ethernet header if one
-			 * is already present */
-			if (mac_proto != MAC_PROTO_NONE)
-				return -EINVAL;
+		हाल OVS_ACTION_ATTR_PUSH_ETH:
+			/* Disallow pushing an Ethernet header अगर one
+			 * is alपढ़ोy present */
+			अगर (mac_proto != MAC_PROTO_NONE)
+				वापस -EINVAL;
 			mac_proto = MAC_PROTO_ETHERNET;
-			break;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_POP_ETH:
-			if (mac_proto != MAC_PROTO_ETHERNET)
-				return -EINVAL;
-			if (vlan_tci & htons(VLAN_CFI_MASK))
-				return -EINVAL;
+		हाल OVS_ACTION_ATTR_POP_ETH:
+			अगर (mac_proto != MAC_PROTO_ETHERNET)
+				वापस -EINVAL;
+			अगर (vlan_tci & htons(VLAN_CFI_MASK))
+				वापस -EINVAL;
 			mac_proto = MAC_PROTO_NONE;
-			break;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_PUSH_NSH:
-			if (mac_proto != MAC_PROTO_ETHERNET) {
+		हाल OVS_ACTION_ATTR_PUSH_NSH:
+			अगर (mac_proto != MAC_PROTO_ETHERNET) अणु
 				u8 next_proto;
 
 				next_proto = tun_p_from_eth_p(eth_type);
-				if (!next_proto)
-					return -EINVAL;
-			}
+				अगर (!next_proto)
+					वापस -EINVAL;
+			पूर्ण
 			mac_proto = MAC_PROTO_NONE;
-			if (!validate_nsh(nla_data(a), false, true, true))
-				return -EINVAL;
-			break;
+			अगर (!validate_nsh(nla_data(a), false, true, true))
+				वापस -EINVAL;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_POP_NSH: {
+		हाल OVS_ACTION_ATTR_POP_NSH: अणु
 			__be16 inner_proto;
 
-			if (eth_type != htons(ETH_P_NSH))
-				return -EINVAL;
+			अगर (eth_type != htons(ETH_P_NSH))
+				वापस -EINVAL;
 			inner_proto = tun_p_to_eth_p(key->nsh.base.np);
-			if (!inner_proto)
-				return -EINVAL;
-			if (key->nsh.base.np == TUN_P_ETHERNET)
+			अगर (!inner_proto)
+				वापस -EINVAL;
+			अगर (key->nsh.base.np == TUN_P_ETHERNET)
 				mac_proto = MAC_PROTO_ETHERNET;
-			else
+			अन्यथा
 				mac_proto = MAC_PROTO_NONE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case OVS_ACTION_ATTR_METER:
+		हाल OVS_ACTION_ATTR_METER:
 			/* Non-existent meters are simply ignored.  */
-			break;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_CLONE: {
+		हाल OVS_ACTION_ATTR_CLONE: अणु
 			bool last = nla_is_last(a, rem);
 
 			err = validate_and_copy_clone(net, a, key, sfa,
 						      eth_type, vlan_tci,
 						      mpls_label_count,
 						      log, last);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			skip_copy = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case OVS_ACTION_ATTR_CHECK_PKT_LEN: {
+		हाल OVS_ACTION_ATTR_CHECK_PKT_LEN: अणु
 			bool last = nla_is_last(a, rem);
 
 			err = validate_and_copy_check_pkt_len(net, a, key, sfa,
@@ -3322,134 +3323,134 @@ static int __ovs_nla_copy_actions(struct net *net, const struct nlattr *attr,
 							      vlan_tci,
 							      mpls_label_count,
 							      log, last);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			skip_copy = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case OVS_ACTION_ATTR_DEC_TTL:
+		हाल OVS_ACTION_ATTR_DEC_TTL:
 			err = validate_and_copy_dec_ttl(net, a, key, sfa,
 							eth_type, vlan_tci,
 							mpls_label_count, log);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			skip_copy = true;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			OVS_NLERR(log, "Unknown Action type %d", type);
-			return -EINVAL;
-		}
-		if (!skip_copy) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (!skip_copy) अणु
 			err = copy_action(a, sfa, log);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (rem > 0)
-		return -EINVAL;
+	अगर (rem > 0)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* 'key' must be the masked key. */
-int ovs_nla_copy_actions(struct net *net, const struct nlattr *attr,
-			 const struct sw_flow_key *key,
-			 struct sw_flow_actions **sfa, bool log)
-{
-	int err;
+पूर्णांक ovs_nla_copy_actions(काष्ठा net *net, स्थिर काष्ठा nlattr *attr,
+			 स्थिर काष्ठा sw_flow_key *key,
+			 काष्ठा sw_flow_actions **sfa, bool log)
+अणु
+	पूर्णांक err;
 	u32 mpls_label_count = 0;
 
-	*sfa = nla_alloc_flow_actions(min(nla_len(attr), MAX_ACTIONS_BUFSIZE));
-	if (IS_ERR(*sfa))
-		return PTR_ERR(*sfa);
+	*sfa = nla_alloc_flow_actions(min(nla_len(attr), MAX_ACTIONS_बफ_मानE));
+	अगर (IS_ERR(*sfa))
+		वापस PTR_ERR(*sfa);
 
-	if (eth_p_mpls(key->eth.type))
-		mpls_label_count = hweight_long(key->mpls.num_labels_mask);
+	अगर (eth_p_mpls(key->eth.type))
+		mpls_label_count = hweight_दीर्घ(key->mpls.num_labels_mask);
 
 	(*sfa)->orig_len = nla_len(attr);
 	err = __ovs_nla_copy_actions(net, attr, key, sfa, key->eth.type,
 				     key->eth.vlan.tci, mpls_label_count, log);
-	if (err)
-		ovs_nla_free_flow_actions(*sfa);
+	अगर (err)
+		ovs_nla_मुक्त_flow_actions(*sfa);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int sample_action_to_attr(const struct nlattr *attr,
-				 struct sk_buff *skb)
-{
-	struct nlattr *start, *ac_start = NULL, *sample_arg;
-	int err = 0, rem = nla_len(attr);
-	const struct sample_arg *arg;
-	struct nlattr *actions;
+अटल पूर्णांक sample_action_to_attr(स्थिर काष्ठा nlattr *attr,
+				 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *start, *ac_start = शून्य, *sample_arg;
+	पूर्णांक err = 0, rem = nla_len(attr);
+	स्थिर काष्ठा sample_arg *arg;
+	काष्ठा nlattr *actions;
 
 	start = nla_nest_start_noflag(skb, OVS_ACTION_ATTR_SAMPLE);
-	if (!start)
-		return -EMSGSIZE;
+	अगर (!start)
+		वापस -EMSGSIZE;
 
 	sample_arg = nla_data(attr);
 	arg = nla_data(sample_arg);
 	actions = nla_next(sample_arg, &rem);
 
-	if (nla_put_u32(skb, OVS_SAMPLE_ATTR_PROBABILITY, arg->probability)) {
+	अगर (nla_put_u32(skb, OVS_SAMPLE_ATTR_PROBABILITY, arg->probability)) अणु
 		err = -EMSGSIZE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ac_start = nla_nest_start_noflag(skb, OVS_SAMPLE_ATTR_ACTIONS);
-	if (!ac_start) {
+	अगर (!ac_start) अणु
 		err = -EMSGSIZE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = ovs_nla_put_actions(actions, rem, skb);
 
 out:
-	if (err) {
+	अगर (err) अणु
 		nla_nest_cancel(skb, ac_start);
 		nla_nest_cancel(skb, start);
-	} else {
+	पूर्ण अन्यथा अणु
 		nla_nest_end(skb, ac_start);
 		nla_nest_end(skb, start);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int clone_action_to_attr(const struct nlattr *attr,
-				struct sk_buff *skb)
-{
-	struct nlattr *start;
-	int err = 0, rem = nla_len(attr);
+अटल पूर्णांक clone_action_to_attr(स्थिर काष्ठा nlattr *attr,
+				काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *start;
+	पूर्णांक err = 0, rem = nla_len(attr);
 
 	start = nla_nest_start_noflag(skb, OVS_ACTION_ATTR_CLONE);
-	if (!start)
-		return -EMSGSIZE;
+	अगर (!start)
+		वापस -EMSGSIZE;
 
 	err = ovs_nla_put_actions(nla_data(attr), rem, skb);
 
-	if (err)
+	अगर (err)
 		nla_nest_cancel(skb, start);
-	else
+	अन्यथा
 		nla_nest_end(skb, start);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int check_pkt_len_action_to_attr(const struct nlattr *attr,
-					struct sk_buff *skb)
-{
-	struct nlattr *start, *ac_start = NULL;
-	const struct check_pkt_len_arg *arg;
-	const struct nlattr *a, *cpl_arg;
-	int err = 0, rem = nla_len(attr);
+अटल पूर्णांक check_pkt_len_action_to_attr(स्थिर काष्ठा nlattr *attr,
+					काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *start, *ac_start = शून्य;
+	स्थिर काष्ठा check_pkt_len_arg *arg;
+	स्थिर काष्ठा nlattr *a, *cpl_arg;
+	पूर्णांक err = 0, rem = nla_len(attr);
 
 	start = nla_nest_start_noflag(skb, OVS_ACTION_ATTR_CHECK_PKT_LEN);
-	if (!start)
-		return -EMSGSIZE;
+	अगर (!start)
+		वापस -EMSGSIZE;
 
 	/* The first nested attribute in 'attr' is always
 	 * 'OVS_CHECK_PKT_LEN_ATTR_ARG'.
@@ -3457,10 +3458,10 @@ static int check_pkt_len_action_to_attr(const struct nlattr *attr,
 	cpl_arg = nla_data(attr);
 	arg = nla_data(cpl_arg);
 
-	if (nla_put_u16(skb, OVS_CHECK_PKT_LEN_ATTR_PKT_LEN, arg->pkt_len)) {
+	अगर (nla_put_u16(skb, OVS_CHECK_PKT_LEN_ATTR_PKT_LEN, arg->pkt_len)) अणु
 		err = -EMSGSIZE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Second nested attribute in 'attr' is always
 	 * 'OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_LESS_EQUAL'.
@@ -3468,18 +3469,18 @@ static int check_pkt_len_action_to_attr(const struct nlattr *attr,
 	a = nla_next(cpl_arg, &rem);
 	ac_start =  nla_nest_start_noflag(skb,
 					  OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_LESS_EQUAL);
-	if (!ac_start) {
+	अगर (!ac_start) अणु
 		err = -EMSGSIZE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = ovs_nla_put_actions(nla_data(a), nla_len(a), skb);
-	if (err) {
+	अगर (err) अणु
 		nla_nest_cancel(skb, ac_start);
-		goto out;
-	} else {
+		जाओ out;
+	पूर्ण अन्यथा अणु
 		nla_nest_end(skb, ac_start);
-	}
+	पूर्ण
 
 	/* Third nested attribute in 'attr' is always
 	 * OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_GREATER.
@@ -3487,181 +3488,181 @@ static int check_pkt_len_action_to_attr(const struct nlattr *attr,
 	a = nla_next(a, &rem);
 	ac_start =  nla_nest_start_noflag(skb,
 					  OVS_CHECK_PKT_LEN_ATTR_ACTIONS_IF_GREATER);
-	if (!ac_start) {
+	अगर (!ac_start) अणु
 		err = -EMSGSIZE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = ovs_nla_put_actions(nla_data(a), nla_len(a), skb);
-	if (err) {
+	अगर (err) अणु
 		nla_nest_cancel(skb, ac_start);
-		goto out;
-	} else {
+		जाओ out;
+	पूर्ण अन्यथा अणु
 		nla_nest_end(skb, ac_start);
-	}
+	पूर्ण
 
 	nla_nest_end(skb, start);
-	return 0;
+	वापस 0;
 
 out:
 	nla_nest_cancel(skb, start);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dec_ttl_action_to_attr(const struct nlattr *attr,
-				  struct sk_buff *skb)
-{
-	struct nlattr *start, *action_start;
-	const struct nlattr *a;
-	int err = 0, rem;
+अटल पूर्णांक dec_ttl_action_to_attr(स्थिर काष्ठा nlattr *attr,
+				  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *start, *action_start;
+	स्थिर काष्ठा nlattr *a;
+	पूर्णांक err = 0, rem;
 
 	start = nla_nest_start_noflag(skb, OVS_ACTION_ATTR_DEC_TTL);
-	if (!start)
-		return -EMSGSIZE;
+	अगर (!start)
+		वापस -EMSGSIZE;
 
-	nla_for_each_attr(a, nla_data(attr), nla_len(attr), rem) {
-		switch (nla_type(a)) {
-		case OVS_DEC_TTL_ATTR_ACTION:
+	nla_क्रम_each_attr(a, nla_data(attr), nla_len(attr), rem) अणु
+		चयन (nla_type(a)) अणु
+		हाल OVS_DEC_TTL_ATTR_ACTION:
 
 			action_start = nla_nest_start_noflag(skb, OVS_DEC_TTL_ATTR_ACTION);
-			if (!action_start) {
+			अगर (!action_start) अणु
 				err = -EMSGSIZE;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			err = ovs_nla_put_actions(nla_data(a), nla_len(a), skb);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
 			nla_nest_end(skb, action_start);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			/* Ignore all other option to be future compatible */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	nla_nest_end(skb, start);
-	return 0;
+	वापस 0;
 
 out:
 	nla_nest_cancel(skb, start);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int set_action_to_attr(const struct nlattr *a, struct sk_buff *skb)
-{
-	const struct nlattr *ovs_key = nla_data(a);
-	int key_type = nla_type(ovs_key);
-	struct nlattr *start;
-	int err;
+अटल पूर्णांक set_action_to_attr(स्थिर काष्ठा nlattr *a, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा nlattr *ovs_key = nla_data(a);
+	पूर्णांक key_type = nla_type(ovs_key);
+	काष्ठा nlattr *start;
+	पूर्णांक err;
 
-	switch (key_type) {
-	case OVS_KEY_ATTR_TUNNEL_INFO: {
-		struct ovs_tunnel_info *ovs_tun = nla_data(ovs_key);
-		struct ip_tunnel_info *tun_info = &ovs_tun->tun_dst->u.tun_info;
+	चयन (key_type) अणु
+	हाल OVS_KEY_ATTR_TUNNEL_INFO: अणु
+		काष्ठा ovs_tunnel_info *ovs_tun = nla_data(ovs_key);
+		काष्ठा ip_tunnel_info *tun_info = &ovs_tun->tun_dst->u.tun_info;
 
 		start = nla_nest_start_noflag(skb, OVS_ACTION_ATTR_SET);
-		if (!start)
-			return -EMSGSIZE;
+		अगर (!start)
+			वापस -EMSGSIZE;
 
 		err =  ip_tun_to_nlattr(skb, &tun_info->key,
 					ip_tunnel_info_opts(tun_info),
 					tun_info->options_len,
 					ip_tunnel_info_af(tun_info), tun_info->mode);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		nla_nest_end(skb, start);
-		break;
-	}
-	default:
-		if (nla_put(skb, OVS_ACTION_ATTR_SET, nla_len(a), ovs_key))
-			return -EMSGSIZE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		अगर (nla_put(skb, OVS_ACTION_ATTR_SET, nla_len(a), ovs_key))
+			वापस -EMSGSIZE;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int masked_set_action_to_set_action_attr(const struct nlattr *a,
-						struct sk_buff *skb)
-{
-	const struct nlattr *ovs_key = nla_data(a);
-	struct nlattr *nla;
-	size_t key_len = nla_len(ovs_key) / 2;
+अटल पूर्णांक masked_set_action_to_set_action_attr(स्थिर काष्ठा nlattr *a,
+						काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा nlattr *ovs_key = nla_data(a);
+	काष्ठा nlattr *nla;
+	माप_प्रकार key_len = nla_len(ovs_key) / 2;
 
 	/* Revert the conversion we did from a non-masked set action to
 	 * masked set action.
 	 */
 	nla = nla_nest_start_noflag(skb, OVS_ACTION_ATTR_SET);
-	if (!nla)
-		return -EMSGSIZE;
+	अगर (!nla)
+		वापस -EMSGSIZE;
 
-	if (nla_put(skb, nla_type(ovs_key), key_len, nla_data(ovs_key)))
-		return -EMSGSIZE;
+	अगर (nla_put(skb, nla_type(ovs_key), key_len, nla_data(ovs_key)))
+		वापस -EMSGSIZE;
 
 	nla_nest_end(skb, nla);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ovs_nla_put_actions(const struct nlattr *attr, int len, struct sk_buff *skb)
-{
-	const struct nlattr *a;
-	int rem, err;
+पूर्णांक ovs_nla_put_actions(स्थिर काष्ठा nlattr *attr, पूर्णांक len, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा nlattr *a;
+	पूर्णांक rem, err;
 
-	nla_for_each_attr(a, attr, len, rem) {
-		int type = nla_type(a);
+	nla_क्रम_each_attr(a, attr, len, rem) अणु
+		पूर्णांक type = nla_type(a);
 
-		switch (type) {
-		case OVS_ACTION_ATTR_SET:
+		चयन (type) अणु
+		हाल OVS_ACTION_ATTR_SET:
 			err = set_action_to_attr(a, skb);
-			if (err)
-				return err;
-			break;
+			अगर (err)
+				वापस err;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_SET_TO_MASKED:
+		हाल OVS_ACTION_ATTR_SET_TO_MASKED:
 			err = masked_set_action_to_set_action_attr(a, skb);
-			if (err)
-				return err;
-			break;
+			अगर (err)
+				वापस err;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_SAMPLE:
+		हाल OVS_ACTION_ATTR_SAMPLE:
 			err = sample_action_to_attr(a, skb);
-			if (err)
-				return err;
-			break;
+			अगर (err)
+				वापस err;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_CT:
+		हाल OVS_ACTION_ATTR_CT:
 			err = ovs_ct_action_to_attr(nla_data(a), skb);
-			if (err)
-				return err;
-			break;
+			अगर (err)
+				वापस err;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_CLONE:
+		हाल OVS_ACTION_ATTR_CLONE:
 			err = clone_action_to_attr(a, skb);
-			if (err)
-				return err;
-			break;
+			अगर (err)
+				वापस err;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_CHECK_PKT_LEN:
+		हाल OVS_ACTION_ATTR_CHECK_PKT_LEN:
 			err = check_pkt_len_action_to_attr(a, skb);
-			if (err)
-				return err;
-			break;
+			अगर (err)
+				वापस err;
+			अवरोध;
 
-		case OVS_ACTION_ATTR_DEC_TTL:
+		हाल OVS_ACTION_ATTR_DEC_TTL:
 			err = dec_ttl_action_to_attr(a, skb);
-			if (err)
-				return err;
-			break;
+			अगर (err)
+				वापस err;
+			अवरोध;
 
-		default:
-			if (nla_put(skb, type, nla_len(a), nla_data(a)))
-				return -EMSGSIZE;
-			break;
-		}
-	}
+		शेष:
+			अगर (nla_put(skb, type, nla_len(a), nla_data(a)))
+				वापस -EMSGSIZE;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

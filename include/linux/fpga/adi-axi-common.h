@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Analog Devices AXI common registers & definitions
+ * Analog Devices AXI common रेजिस्टरs & definitions
  *
  * Copyright 2019 Analog Devices Inc.
  *
- * https://wiki.analog.com/resources/fpga/docs/axi_ip
- * https://wiki.analog.com/resources/fpga/docs/hdl/regmap
+ * https://wiki.analog.com/resources/fpga/करोcs/axi_ip
+ * https://wiki.analog.com/resources/fpga/करोcs/hdl/regmap
  */
 
-#ifndef ADI_AXI_COMMON_H_
-#define ADI_AXI_COMMON_H_
+#अगर_अघोषित ADI_AXI_COMMON_H_
+#घोषणा ADI_AXI_COMMON_H_
 
-#define ADI_AXI_REG_VERSION			0x0000
+#घोषणा ADI_AXI_REG_VERSION			0x0000
 
-#define ADI_AXI_PCORE_VER(major, minor, patch)	\
+#घोषणा ADI_AXI_PCORE_VER(major, minor, patch)	\
 	(((major) << 16) | ((minor) << 8) | (patch))
 
-#define ADI_AXI_PCORE_VER_MAJOR(version)	(((version) >> 16) & 0xff)
-#define ADI_AXI_PCORE_VER_MINOR(version)	(((version) >> 8) & 0xff)
-#define ADI_AXI_PCORE_VER_PATCH(version)	((version) & 0xff)
+#घोषणा ADI_AXI_PCORE_VER_MAJOR(version)	(((version) >> 16) & 0xff)
+#घोषणा ADI_AXI_PCORE_VER_MINOR(version)	(((version) >> 8) & 0xff)
+#घोषणा ADI_AXI_PCORE_VER_PATCH(version)	((version) & 0xff)
 
-#endif /* ADI_AXI_COMMON_H_ */
+#पूर्ण_अगर /* ADI_AXI_COMMON_H_ */

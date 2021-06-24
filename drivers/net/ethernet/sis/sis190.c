@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
    sis190.c: Silicon Integrated Systems SiS190 ethernet driver
 
@@ -13,74 +14,74 @@
    Drivers based on or derived from this code fall under the GPL and must
    retain the authorship, copyright and license notice.  This file is not
    a complete program and may only be used when the entire operating
-   system is licensed under the GPL.
+   प्रणाली is licensed under the GPL.
 
-   See the file COPYING in this distribution for more information.
+   See the file COPYING in this distribution क्रम more inक्रमmation.
 
 */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/netdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/pci.h>
-#include <linux/mii.h>
-#include <linux/delay.h>
-#include <linux/crc32.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <asm/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/irq.h>
 
-#define PHY_MAX_ADDR		32
-#define PHY_ID_ANY		0x1f
-#define MII_REG_ANY		0x1f
+#घोषणा PHY_MAX_ADDR		32
+#घोषणा PHY_ID_ANY		0x1f
+#घोषणा MII_REG_ANY		0x1f
 
-#define DRV_VERSION		"1.4"
-#define DRV_NAME		"sis190"
-#define SIS190_DRIVER_NAME	DRV_NAME " Gigabit Ethernet driver " DRV_VERSION
+#घोषणा DRV_VERSION		"1.4"
+#घोषणा DRV_NAME		"sis190"
+#घोषणा SIS190_DRIVER_NAME	DRV_NAME " Gigabit Ethernet driver " DRV_VERSION
 
-#define sis190_rx_skb			netif_rx
-#define sis190_rx_quota(count, quota)	count
+#घोषणा sis190_rx_skb			netअगर_rx
+#घोषणा sis190_rx_quota(count, quota)	count
 
-#define NUM_TX_DESC		64	/* [8..1024] */
-#define NUM_RX_DESC		64	/* [8..8192] */
-#define TX_RING_BYTES		(NUM_TX_DESC * sizeof(struct TxDesc))
-#define RX_RING_BYTES		(NUM_RX_DESC * sizeof(struct RxDesc))
-#define RX_BUF_SIZE		1536
-#define RX_BUF_MASK		0xfff8
+#घोषणा NUM_TX_DESC		64	/* [8..1024] */
+#घोषणा NUM_RX_DESC		64	/* [8..8192] */
+#घोषणा TX_RING_BYTES		(NUM_TX_DESC * माप(काष्ठा TxDesc))
+#घोषणा RX_RING_BYTES		(NUM_RX_DESC * माप(काष्ठा RxDesc))
+#घोषणा RX_BUF_SIZE		1536
+#घोषणा RX_BUF_MASK		0xfff8
 
-#define SIS190_REGS_SIZE	0x80
-#define SIS190_TX_TIMEOUT	(6*HZ)
-#define SIS190_PHY_TIMEOUT	(10*HZ)
-#define SIS190_MSG_DEFAULT	(NETIF_MSG_DRV | NETIF_MSG_PROBE | \
+#घोषणा SIS190_REGS_SIZE	0x80
+#घोषणा SIS190_TX_TIMEOUT	(6*HZ)
+#घोषणा SIS190_PHY_TIMEOUT	(10*HZ)
+#घोषणा SIS190_MSG_DEFAULT	(NETIF_MSG_DRV | NETIF_MSG_PROBE | \
 				 NETIF_MSG_LINK | NETIF_MSG_IFUP | \
 				 NETIF_MSG_IFDOWN)
 
-/* Enhanced PHY access register bit definitions */
-#define EhnMIIread		0x0000
-#define EhnMIIwrite		0x0020
-#define EhnMIIdataShift		16
-#define EhnMIIpmdShift		6	/* 7016 only */
-#define EhnMIIregShift		11
-#define EhnMIIreq		0x0010
-#define EhnMIInotDone		0x0010
+/* Enhanced PHY access रेजिस्टर bit definitions */
+#घोषणा EhnMIIपढ़ो		0x0000
+#घोषणा EhnMIIग_लिखो		0x0020
+#घोषणा EhnMIIdataShअगरt		16
+#घोषणा EhnMIIpmdShअगरt		6	/* 7016 only */
+#घोषणा EhnMIIregShअगरt		11
+#घोषणा EhnMIIreq		0x0010
+#घोषणा EhnMIInotDone		0x0010
 
-/* Write/read MMIO register */
-#define SIS_W8(reg, val)	writeb ((val), ioaddr + (reg))
-#define SIS_W16(reg, val)	writew ((val), ioaddr + (reg))
-#define SIS_W32(reg, val)	writel ((val), ioaddr + (reg))
-#define SIS_R8(reg)		readb (ioaddr + (reg))
-#define SIS_R16(reg)		readw (ioaddr + (reg))
-#define SIS_R32(reg)		readl (ioaddr + (reg))
+/* Write/पढ़ो MMIO रेजिस्टर */
+#घोषणा SIS_W8(reg, val)	ग_लिखोb ((val), ioaddr + (reg))
+#घोषणा SIS_W16(reg, val)	ग_लिखोw ((val), ioaddr + (reg))
+#घोषणा SIS_W32(reg, val)	ग_लिखोl ((val), ioaddr + (reg))
+#घोषणा SIS_R8(reg)		पढ़ोb (ioaddr + (reg))
+#घोषणा SIS_R16(reg)		पढ़ोw (ioaddr + (reg))
+#घोषणा SIS_R32(reg)		पढ़ोl (ioaddr + (reg))
 
-#define SIS_PCI_COMMIT()	SIS_R32(IntrControl)
+#घोषणा SIS_PCI_COMMIT()	SIS_R32(IntrControl)
 
-enum sis190_registers {
+क्रमागत sis190_रेजिस्टरs अणु
 	TxControl		= 0x00,
 	TxDescStartAddr		= 0x04,
 	rsv0			= 0x08,	// reserved
@@ -108,14 +109,14 @@ enum sis190_registers {
 	RxMacControl		= 0x60,
 	RxMacAddr		= 0x62,
 	RxHashTable		= 0x68,
-	// Undocumented		= 0x6c,
+	// Unकरोcumented		= 0x6c,
 	RxWolCtrl		= 0x70,
 	RxWolData		= 0x74, // unused (Rx WOL Data Access)
 	RxMPSControl		= 0x78,	// unused (Rx MPS Control)
 	rsv4			= 0x7c, // reserved
-};
+पूर्ण;
 
-enum sis190_register_content {
+क्रमागत sis190_रेजिस्टर_content अणु
 	/* IntrStatus */
 	SoftInt			= 0x40000000,	// unused
 	Timeup			= 0x20000000,	// unused
@@ -132,7 +133,7 @@ enum sis190_register_content {
 	RxHalt			= 0x00000002,
 	TxHalt			= 0x00000001,
 
-	/* {Rx/Tx}CmdBits */
+	/* अणुRx/Txपूर्णCmdBits */
 	CmdReset		= 0x10,
 	CmdRxEnb		= 0x08,		// unused
 	CmdTxEnb		= 0x01,
@@ -151,35 +152,35 @@ enum sis190_register_content {
 	AcceptAllPhys		= 0x0100,
 
 	/* RxConfigBits */
-	RxCfgFIFOShift		= 13,
-	RxCfgDMAShift		= 8,		// 0x1a in RxControl ?
+	RxCfgFIFOShअगरt		= 13,
+	RxCfgDMAShअगरt		= 8,		// 0x1a in RxControl ?
 
 	/* TxConfigBits */
-	TxInterFrameGapShift	= 24,
-	TxDMAShift		= 8, /* DMA burst value (0-7) is shift this many bits */
+	TxInterFrameGapShअगरt	= 24,
+	TxDMAShअगरt		= 8, /* DMA burst value (0-7) is shअगरt this many bits */
 
 	LinkStatus		= 0x02,		// unused
 	FullDup			= 0x01,		// unused
 
 	/* TBICSRBit */
 	TBILinkOK		= 0x02000000,	// unused
-};
+पूर्ण;
 
-struct TxDesc {
+काष्ठा TxDesc अणु
 	__le32 PSize;
 	__le32 status;
 	__le32 addr;
 	__le32 size;
-};
+पूर्ण;
 
-struct RxDesc {
+काष्ठा RxDesc अणु
 	__le32 PSize;
 	__le32 status;
 	__le32 addr;
 	__le32 size;
-};
+पूर्ण;
 
-enum _DescStatusBit {
+क्रमागत _DescStatusBit अणु
 	/* _Desc.status */
 	OWNbit		= 0x80000000, // RXOWN/TXOWN
 	INTbit		= 0x40000000, // RXINT/TXINT
@@ -232,13 +233,13 @@ enum _DescStatusBit {
 	CRCOK		= 0x00010000,
 	RxSizeMask	= 0x0000ffff
 	/*
-	 * The asic could apparently do vlan, TSO, jumbo (sis191 only) and
-	 * provide two (unused with Linux) Tx queues. No publicly
-	 * available documentation alas.
+	 * The asic could apparently करो vlan, TSO, jumbo (sis191 only) and
+	 * provide two (unused with Linux) Tx queues. No खुलाly
+	 * available करोcumentation alas.
 	 */
-};
+पूर्ण;
 
-enum sis190_eeprom_access_register_bits {
+क्रमागत sis190_eeprom_access_रेजिस्टर_bits अणु
 	EECS	= 0x00000001,	// unused
 	EECLK	= 0x00000002,	// unused
 	EEDO	= 0x00000008,	// unused
@@ -246,26 +247,26 @@ enum sis190_eeprom_access_register_bits {
 	EEREQ	= 0x00000080,
 	EEROP	= 0x00000200,
 	EEWOP	= 0x00000100	// unused
-};
+पूर्ण;
 
 /* EEPROM Addresses */
-enum sis190_eeprom_address {
+क्रमागत sis190_eeprom_address अणु
 	EEPROMSignature	= 0x00,
 	EEPROMCLK	= 0x01,	// unused
 	EEPROMInfo	= 0x02,
 	EEPROMMACAddr	= 0x03
-};
+पूर्ण;
 
-enum sis190_feature {
+क्रमागत sis190_feature अणु
 	F_HAS_RGMII	= 1,
 	F_PHY_88E1111	= 2,
 	F_PHY_BCM5461	= 4
-};
+पूर्ण;
 
-struct sis190_private {
-	void __iomem *mmio_addr;
-	struct pci_dev *pci_dev;
-	struct net_device *dev;
+काष्ठा sis190_निजी अणु
+	व्योम __iomem *mmio_addr;
+	काष्ठा pci_dev *pci_dev;
+	काष्ठा net_device *dev;
 	spinlock_t lock;
 	u32 rx_buf_sz;
 	u32 cur_rx;
@@ -274,355 +275,355 @@ struct sis190_private {
 	u32 dirty_tx;
 	dma_addr_t rx_dma;
 	dma_addr_t tx_dma;
-	struct RxDesc *RxDescRing;
-	struct TxDesc *TxDescRing;
-	struct sk_buff *Rx_skbuff[NUM_RX_DESC];
-	struct sk_buff *Tx_skbuff[NUM_TX_DESC];
-	struct work_struct phy_task;
-	struct timer_list timer;
+	काष्ठा RxDesc *RxDescRing;
+	काष्ठा TxDesc *TxDescRing;
+	काष्ठा sk_buff *Rx_skbuff[NUM_RX_DESC];
+	काष्ठा sk_buff *Tx_skbuff[NUM_TX_DESC];
+	काष्ठा work_काष्ठा phy_task;
+	काष्ठा समयr_list समयr;
 	u32 msg_enable;
-	struct mii_if_info mii_if;
-	struct list_head first_phy;
+	काष्ठा mii_अगर_info mii_अगर;
+	काष्ठा list_head first_phy;
 	u32 features;
 	u32 negotiated_lpa;
-	enum {
+	क्रमागत अणु
 		LNK_OFF,
 		LNK_ON,
 		LNK_AUTONEG,
-	} link_status;
-};
+	पूर्ण link_status;
+पूर्ण;
 
-struct sis190_phy {
-	struct list_head list;
-	int phy_id;
+काष्ठा sis190_phy अणु
+	काष्ठा list_head list;
+	पूर्णांक phy_id;
 	u16 id[2];
 	u16 status;
 	u8  type;
-};
+पूर्ण;
 
-enum sis190_phy_type {
+क्रमागत sis190_phy_type अणु
 	UNKNOWN	= 0x00,
 	HOME	= 0x01,
 	LAN	= 0x02,
 	MIX	= 0x03
-};
+पूर्ण;
 
-static struct mii_chip_info {
-        const char *name;
+अटल काष्ठा mii_chip_info अणु
+        स्थिर अक्षर *name;
         u16 id[2];
-        unsigned int type;
+        अचिन्हित पूर्णांक type;
 	u32 feature;
-} mii_chip_table[] = {
-	{ "Atheros PHY",          { 0x004d, 0xd010 }, LAN, 0 },
-	{ "Atheros PHY AR8012",   { 0x004d, 0xd020 }, LAN, 0 },
-	{ "Broadcom PHY BCM5461", { 0x0020, 0x60c0 }, LAN, F_PHY_BCM5461 },
-	{ "Broadcom PHY AC131",   { 0x0143, 0xbc70 }, LAN, 0 },
-	{ "Agere PHY ET1101B",    { 0x0282, 0xf010 }, LAN, 0 },
-	{ "Marvell PHY 88E1111",  { 0x0141, 0x0cc0 }, LAN, F_PHY_88E1111 },
-	{ "Realtek PHY RTL8201",  { 0x0000, 0x8200 }, LAN, 0 },
-	{ NULL, }
-};
+पूर्ण mii_chip_table[] = अणु
+	अणु "Atheros PHY",          अणु 0x004d, 0xd010 पूर्ण, LAN, 0 पूर्ण,
+	अणु "Atheros PHY AR8012",   अणु 0x004d, 0xd020 पूर्ण, LAN, 0 पूर्ण,
+	अणु "Broadcom PHY BCM5461", अणु 0x0020, 0x60c0 पूर्ण, LAN, F_PHY_BCM5461 पूर्ण,
+	अणु "Broadcom PHY AC131",   अणु 0x0143, 0xbc70 पूर्ण, LAN, 0 पूर्ण,
+	अणु "Agere PHY ET1101B",    अणु 0x0282, 0xf010 पूर्ण, LAN, 0 पूर्ण,
+	अणु "Marvell PHY 88E1111",  अणु 0x0141, 0x0cc0 पूर्ण, LAN, F_PHY_88E1111 पूर्ण,
+	अणु "Realtek PHY RTL8201",  अणु 0x0000, 0x8200 पूर्ण, LAN, 0 पूर्ण,
+	अणु शून्य, पूर्ण
+पूर्ण;
 
-static const struct {
-	const char *name;
-} sis_chip_info[] = {
-	{ "SiS 190 PCI Fast Ethernet adapter" },
-	{ "SiS 191 PCI Gigabit Ethernet adapter" },
-};
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
+पूर्ण sis_chip_info[] = अणु
+	अणु "SiS 190 PCI Fast Ethernet adapter" पूर्ण,
+	अणु "SiS 191 PCI Gigabit Ethernet adapter" पूर्ण,
+पूर्ण;
 
-static const struct pci_device_id sis190_pci_tbl[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_SI, 0x0190), 0, 0, 0 },
-	{ PCI_DEVICE(PCI_VENDOR_ID_SI, 0x0191), 0, 0, 1 },
-	{ 0, },
-};
+अटल स्थिर काष्ठा pci_device_id sis190_pci_tbl[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_SI, 0x0190), 0, 0, 0 पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_SI, 0x0191), 0, 0, 1 पूर्ण,
+	अणु 0, पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, sis190_pci_tbl);
 
-static int rx_copybreak = 200;
+अटल पूर्णांक rx_copyअवरोध = 200;
 
-static struct {
+अटल काष्ठा अणु
 	u32 msg_enable;
-} debug = { -1 };
+पूर्ण debug = अणु -1 पूर्ण;
 
 MODULE_DESCRIPTION("SiS sis190/191 Gigabit Ethernet driver");
-module_param(rx_copybreak, int, 0);
-MODULE_PARM_DESC(rx_copybreak, "Copy breakpoint for copy-only-tiny-frames");
-module_param_named(debug, debug.msg_enable, int, 0);
+module_param(rx_copyअवरोध, पूर्णांक, 0);
+MODULE_PARM_DESC(rx_copyअवरोध, "Copy breakpoint for copy-only-tiny-frames");
+module_param_named(debug, debug.msg_enable, पूर्णांक, 0);
 MODULE_PARM_DESC(debug, "Debug verbosity level (0=none, ..., 16=all)");
 MODULE_AUTHOR("K.M. Liu <kmliu@sis.com>, Ueimor <romieu@fr.zoreil.com>");
 MODULE_VERSION(DRV_VERSION);
 MODULE_LICENSE("GPL");
 
-static const u32 sis190_intr_mask =
+अटल स्थिर u32 sis190_पूर्णांकr_mask =
 	RxQEmpty | RxQInt | TxQ1Int | TxQ0Int | RxHalt | TxHalt | LinkChange;
 
 /*
  * Maximum number of multicast addresses to filter (vs. Rx-all-multicast).
  * The chips use a 64 element hash table based on the Ethernet CRC.
  */
-static const int multicast_filter_limit = 32;
+अटल स्थिर पूर्णांक multicast_filter_limit = 32;
 
-static void __mdio_cmd(void __iomem *ioaddr, u32 ctl)
-{
-	unsigned int i;
+अटल व्योम __mdio_cmd(व्योम __iomem *ioaddr, u32 ctl)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	SIS_W32(GMIIControl, ctl);
 
 	msleep(1);
 
-	for (i = 0; i < 100; i++) {
-		if (!(SIS_R32(GMIIControl) & EhnMIInotDone))
-			break;
+	क्रम (i = 0; i < 100; i++) अणु
+		अगर (!(SIS_R32(GMIIControl) & EhnMIInotDone))
+			अवरोध;
 		msleep(1);
-	}
+	पूर्ण
 
-	if (i > 99)
+	अगर (i > 99)
 		pr_err("PHY command failed !\n");
-}
+पूर्ण
 
-static void mdio_write(void __iomem *ioaddr, int phy_id, int reg, int val)
-{
-	__mdio_cmd(ioaddr, EhnMIIreq | EhnMIIwrite |
-		(((u32) reg) << EhnMIIregShift) | (phy_id << EhnMIIpmdShift) |
-		(((u32) val) << EhnMIIdataShift));
-}
+अटल व्योम mdio_ग_लिखो(व्योम __iomem *ioaddr, पूर्णांक phy_id, पूर्णांक reg, पूर्णांक val)
+अणु
+	__mdio_cmd(ioaddr, EhnMIIreq | EhnMIIग_लिखो |
+		(((u32) reg) << EhnMIIregShअगरt) | (phy_id << EhnMIIpmdShअगरt) |
+		(((u32) val) << EhnMIIdataShअगरt));
+पूर्ण
 
-static int mdio_read(void __iomem *ioaddr, int phy_id, int reg)
-{
-	__mdio_cmd(ioaddr, EhnMIIreq | EhnMIIread |
-		(((u32) reg) << EhnMIIregShift) | (phy_id << EhnMIIpmdShift));
+अटल पूर्णांक mdio_पढ़ो(व्योम __iomem *ioaddr, पूर्णांक phy_id, पूर्णांक reg)
+अणु
+	__mdio_cmd(ioaddr, EhnMIIreq | EhnMIIपढ़ो |
+		(((u32) reg) << EhnMIIregShअगरt) | (phy_id << EhnMIIpmdShअगरt));
 
-	return (u16) (SIS_R32(GMIIControl) >> EhnMIIdataShift);
-}
+	वापस (u16) (SIS_R32(GMIIControl) >> EhnMIIdataShअगरt);
+पूर्ण
 
-static void __mdio_write(struct net_device *dev, int phy_id, int reg, int val)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल व्योम __mdio_ग_लिखो(काष्ठा net_device *dev, पूर्णांक phy_id, पूर्णांक reg, पूर्णांक val)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	mdio_write(tp->mmio_addr, phy_id, reg, val);
-}
+	mdio_ग_लिखो(tp->mmio_addr, phy_id, reg, val);
+पूर्ण
 
-static int __mdio_read(struct net_device *dev, int phy_id, int reg)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल पूर्णांक __mdio_पढ़ो(काष्ठा net_device *dev, पूर्णांक phy_id, पूर्णांक reg)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	return mdio_read(tp->mmio_addr, phy_id, reg);
-}
+	वापस mdio_पढ़ो(tp->mmio_addr, phy_id, reg);
+पूर्ण
 
-static u16 mdio_read_latched(void __iomem *ioaddr, int phy_id, int reg)
-{
-	mdio_read(ioaddr, phy_id, reg);
-	return mdio_read(ioaddr, phy_id, reg);
-}
+अटल u16 mdio_पढ़ो_latched(व्योम __iomem *ioaddr, पूर्णांक phy_id, पूर्णांक reg)
+अणु
+	mdio_पढ़ो(ioaddr, phy_id, reg);
+	वापस mdio_पढ़ो(ioaddr, phy_id, reg);
+पूर्ण
 
-static u16 sis190_read_eeprom(void __iomem *ioaddr, u32 reg)
-{
+अटल u16 sis190_पढ़ो_eeprom(व्योम __iomem *ioaddr, u32 reg)
+अणु
 	u16 data = 0xffff;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	if (!(SIS_R32(ROMControl) & 0x0002))
-		return 0;
+	अगर (!(SIS_R32(ROMControl) & 0x0002))
+		वापस 0;
 
 	SIS_W32(ROMInterface, EEREQ | EEROP | (reg << 10));
 
-	for (i = 0; i < 200; i++) {
-		if (!(SIS_R32(ROMInterface) & EEREQ)) {
+	क्रम (i = 0; i < 200; i++) अणु
+		अगर (!(SIS_R32(ROMInterface) & EEREQ)) अणु
 			data = (SIS_R32(ROMInterface) & 0xffff0000) >> 16;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		msleep(1);
-	}
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static void sis190_irq_mask_and_ack(void __iomem *ioaddr)
-{
+अटल व्योम sis190_irq_mask_and_ack(व्योम __iomem *ioaddr)
+अणु
 	SIS_W32(IntrMask, 0x00);
 	SIS_W32(IntrStatus, 0xffffffff);
 	SIS_PCI_COMMIT();
-}
+पूर्ण
 
-static void sis190_asic_down(void __iomem *ioaddr)
-{
+अटल व्योम sis190_asic_करोwn(व्योम __iomem *ioaddr)
+अणु
 	/* Stop the chip's Tx and Rx DMA processes. */
 
 	SIS_W32(TxControl, 0x1a00);
 	SIS_W32(RxControl, 0x1a00);
 
 	sis190_irq_mask_and_ack(ioaddr);
-}
+पूर्ण
 
-static void sis190_mark_as_last_descriptor(struct RxDesc *desc)
-{
+अटल व्योम sis190_mark_as_last_descriptor(काष्ठा RxDesc *desc)
+अणु
 	desc->size |= cpu_to_le32(RingEnd);
-}
+पूर्ण
 
-static inline void sis190_give_to_asic(struct RxDesc *desc, u32 rx_buf_sz)
-{
+अटल अंतरभूत व्योम sis190_give_to_asic(काष्ठा RxDesc *desc, u32 rx_buf_sz)
+अणु
 	u32 eor = le32_to_cpu(desc->size) & RingEnd;
 
 	desc->PSize = 0x0;
 	desc->size = cpu_to_le32((rx_buf_sz & RX_BUF_MASK) | eor);
 	wmb();
 	desc->status = cpu_to_le32(OWNbit | INTbit);
-}
+पूर्ण
 
-static inline void sis190_map_to_asic(struct RxDesc *desc, dma_addr_t mapping,
+अटल अंतरभूत व्योम sis190_map_to_asic(काष्ठा RxDesc *desc, dma_addr_t mapping,
 				      u32 rx_buf_sz)
-{
+अणु
 	desc->addr = cpu_to_le32(mapping);
 	sis190_give_to_asic(desc, rx_buf_sz);
-}
+पूर्ण
 
-static inline void sis190_make_unusable_by_asic(struct RxDesc *desc)
-{
+अटल अंतरभूत व्योम sis190_make_unusable_by_asic(काष्ठा RxDesc *desc)
+अणु
 	desc->PSize = 0x0;
 	desc->addr = cpu_to_le32(0xdeadbeef);
 	desc->size &= cpu_to_le32(RingEnd);
 	wmb();
 	desc->status = 0x0;
-}
+पूर्ण
 
-static struct sk_buff *sis190_alloc_rx_skb(struct sis190_private *tp,
-					   struct RxDesc *desc)
-{
+अटल काष्ठा sk_buff *sis190_alloc_rx_skb(काष्ठा sis190_निजी *tp,
+					   काष्ठा RxDesc *desc)
+अणु
 	u32 rx_buf_sz = tp->rx_buf_sz;
-	struct sk_buff *skb;
+	काष्ठा sk_buff *skb;
 	dma_addr_t mapping;
 
 	skb = netdev_alloc_skb(tp->dev, rx_buf_sz);
-	if (unlikely(!skb))
-		goto skb_alloc_failed;
+	अगर (unlikely(!skb))
+		जाओ skb_alloc_failed;
 	mapping = dma_map_single(&tp->pci_dev->dev, skb->data, tp->rx_buf_sz,
 				 DMA_FROM_DEVICE);
-	if (dma_mapping_error(&tp->pci_dev->dev, mapping))
-		goto out;
+	अगर (dma_mapping_error(&tp->pci_dev->dev, mapping))
+		जाओ out;
 	sis190_map_to_asic(desc, mapping, rx_buf_sz);
 
-	return skb;
+	वापस skb;
 
 out:
-	dev_kfree_skb_any(skb);
+	dev_kमुक्त_skb_any(skb);
 skb_alloc_failed:
 	sis190_make_unusable_by_asic(desc);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static u32 sis190_rx_fill(struct sis190_private *tp, struct net_device *dev,
+अटल u32 sis190_rx_fill(काष्ठा sis190_निजी *tp, काष्ठा net_device *dev,
 			  u32 start, u32 end)
-{
+अणु
 	u32 cur;
 
-	for (cur = start; cur < end; cur++) {
-		unsigned int i = cur % NUM_RX_DESC;
+	क्रम (cur = start; cur < end; cur++) अणु
+		अचिन्हित पूर्णांक i = cur % NUM_RX_DESC;
 
-		if (tp->Rx_skbuff[i])
-			continue;
+		अगर (tp->Rx_skbuff[i])
+			जारी;
 
 		tp->Rx_skbuff[i] = sis190_alloc_rx_skb(tp, tp->RxDescRing + i);
 
-		if (!tp->Rx_skbuff[i])
-			break;
-	}
-	return cur - start;
-}
+		अगर (!tp->Rx_skbuff[i])
+			अवरोध;
+	पूर्ण
+	वापस cur - start;
+पूर्ण
 
-static bool sis190_try_rx_copy(struct sis190_private *tp,
-			       struct sk_buff **sk_buff, int pkt_size,
+अटल bool sis190_try_rx_copy(काष्ठा sis190_निजी *tp,
+			       काष्ठा sk_buff **sk_buff, पूर्णांक pkt_size,
 			       dma_addr_t addr)
-{
-	struct sk_buff *skb;
-	bool done = false;
+अणु
+	काष्ठा sk_buff *skb;
+	bool करोne = false;
 
-	if (pkt_size >= rx_copybreak)
-		goto out;
+	अगर (pkt_size >= rx_copyअवरोध)
+		जाओ out;
 
 	skb = netdev_alloc_skb_ip_align(tp->dev, pkt_size);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
-	dma_sync_single_for_cpu(&tp->pci_dev->dev, addr, tp->rx_buf_sz,
+	dma_sync_single_क्रम_cpu(&tp->pci_dev->dev, addr, tp->rx_buf_sz,
 				DMA_FROM_DEVICE);
 	skb_copy_to_linear_data(skb, sk_buff[0]->data, pkt_size);
 	*sk_buff = skb;
-	done = true;
+	करोne = true;
 out:
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-static inline int sis190_rx_pkt_err(u32 status, struct net_device_stats *stats)
-{
-#define ErrMask	(OVRUN | SHORT | LIMIT | MIIER | NIBON | COLON | ABORT)
+अटल अंतरभूत पूर्णांक sis190_rx_pkt_err(u32 status, काष्ठा net_device_stats *stats)
+अणु
+#घोषणा ErrMask	(OVRUN | SHORT | LIMIT | MIIER | NIBON | COLON | ABORT)
 
-	if ((status & CRCOK) && !(status & ErrMask))
-		return 0;
+	अगर ((status & CRCOK) && !(status & ErrMask))
+		वापस 0;
 
-	if (!(status & CRCOK))
+	अगर (!(status & CRCOK))
 		stats->rx_crc_errors++;
-	else if (status & OVRUN)
+	अन्यथा अगर (status & OVRUN)
 		stats->rx_over_errors++;
-	else if (status & (SHORT | LIMIT))
+	अन्यथा अगर (status & (SHORT | LIMIT))
 		stats->rx_length_errors++;
-	else if (status & (MIIER | NIBON | COLON))
+	अन्यथा अगर (status & (MIIER | NIBON | COLON))
 		stats->rx_frame_errors++;
 
 	stats->rx_errors++;
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int sis190_rx_interrupt(struct net_device *dev,
-			       struct sis190_private *tp, void __iomem *ioaddr)
-{
-	struct net_device_stats *stats = &dev->stats;
+अटल पूर्णांक sis190_rx_पूर्णांकerrupt(काष्ठा net_device *dev,
+			       काष्ठा sis190_निजी *tp, व्योम __iomem *ioaddr)
+अणु
+	काष्ठा net_device_stats *stats = &dev->stats;
 	u32 rx_left, cur_rx = tp->cur_rx;
 	u32 delta, count;
 
 	rx_left = NUM_RX_DESC + tp->dirty_rx - cur_rx;
 	rx_left = sis190_rx_quota(rx_left, (u32) dev->quota);
 
-	for (; rx_left > 0; rx_left--, cur_rx++) {
-		unsigned int entry = cur_rx % NUM_RX_DESC;
-		struct RxDesc *desc = tp->RxDescRing + entry;
+	क्रम (; rx_left > 0; rx_left--, cur_rx++) अणु
+		अचिन्हित पूर्णांक entry = cur_rx % NUM_RX_DESC;
+		काष्ठा RxDesc *desc = tp->RxDescRing + entry;
 		u32 status;
 
-		if (le32_to_cpu(desc->status) & OWNbit)
-			break;
+		अगर (le32_to_cpu(desc->status) & OWNbit)
+			अवरोध;
 
 		status = le32_to_cpu(desc->PSize);
 
-		//netif_info(tp, intr, dev, "Rx PSize = %08x\n", status);
+		//netअगर_info(tp, पूर्णांकr, dev, "Rx PSize = %08x\n", status);
 
-		if (sis190_rx_pkt_err(status, stats) < 0)
+		अगर (sis190_rx_pkt_err(status, stats) < 0)
 			sis190_give_to_asic(desc, tp->rx_buf_sz);
-		else {
-			struct sk_buff *skb = tp->Rx_skbuff[entry];
+		अन्यथा अणु
+			काष्ठा sk_buff *skb = tp->Rx_skbuff[entry];
 			dma_addr_t addr = le32_to_cpu(desc->addr);
-			int pkt_size = (status & RxSizeMask) - 4;
-			struct pci_dev *pdev = tp->pci_dev;
+			पूर्णांक pkt_size = (status & RxSizeMask) - 4;
+			काष्ठा pci_dev *pdev = tp->pci_dev;
 
-			if (unlikely(pkt_size > tp->rx_buf_sz)) {
-				netif_info(tp, intr, dev,
+			अगर (unlikely(pkt_size > tp->rx_buf_sz)) अणु
+				netअगर_info(tp, पूर्णांकr, dev,
 					   "(frag) status = %08x\n", status);
 				stats->rx_dropped++;
 				stats->rx_length_errors++;
 				sis190_give_to_asic(desc, tp->rx_buf_sz);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 
-			if (sis190_try_rx_copy(tp, &skb, pkt_size, addr)) {
-				dma_sync_single_for_device(&pdev->dev, addr,
+			अगर (sis190_try_rx_copy(tp, &skb, pkt_size, addr)) अणु
+				dma_sync_single_क्रम_device(&pdev->dev, addr,
 							   tp->rx_buf_sz,
 							   DMA_FROM_DEVICE);
 				sis190_give_to_asic(desc, tp->rx_buf_sz);
-			} else {
+			पूर्ण अन्यथा अणु
 				dma_unmap_single(&pdev->dev, addr,
 						 tp->rx_buf_sz,
 						 DMA_FROM_DEVICE);
-				tp->Rx_skbuff[entry] = NULL;
+				tp->Rx_skbuff[entry] = शून्य;
 				sis190_make_unusable_by_asic(desc);
-			}
+			पूर्ण
 
 			skb_put(skb, pkt_size);
 			skb->protocol = eth_type_trans(skb, dev);
@@ -631,237 +632,237 @@ static int sis190_rx_interrupt(struct net_device *dev,
 
 			stats->rx_packets++;
 			stats->rx_bytes += pkt_size;
-			if ((status & BCAST) == MCAST)
+			अगर ((status & BCAST) == MCAST)
 				stats->multicast++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	count = cur_rx - tp->cur_rx;
 	tp->cur_rx = cur_rx;
 
 	delta = sis190_rx_fill(tp, dev, tp->dirty_rx, tp->cur_rx);
-	if (!delta && count)
-		netif_info(tp, intr, dev, "no Rx buffer allocated\n");
+	अगर (!delta && count)
+		netअगर_info(tp, पूर्णांकr, dev, "no Rx buffer allocated\n");
 	tp->dirty_rx += delta;
 
-	if ((tp->dirty_rx + NUM_RX_DESC) == tp->cur_rx)
-		netif_emerg(tp, intr, dev, "Rx buffers exhausted\n");
+	अगर ((tp->dirty_rx + NUM_RX_DESC) == tp->cur_rx)
+		netअगर_emerg(tp, पूर्णांकr, dev, "Rx buffers exhausted\n");
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void sis190_unmap_tx_skb(struct pci_dev *pdev, struct sk_buff *skb,
-				struct TxDesc *desc)
-{
-	unsigned int len;
+अटल व्योम sis190_unmap_tx_skb(काष्ठा pci_dev *pdev, काष्ठा sk_buff *skb,
+				काष्ठा TxDesc *desc)
+अणु
+	अचिन्हित पूर्णांक len;
 
 	len = skb->len < ETH_ZLEN ? ETH_ZLEN : skb->len;
 
 	dma_unmap_single(&pdev->dev, le32_to_cpu(desc->addr), len,
 			 DMA_TO_DEVICE);
 
-	memset(desc, 0x00, sizeof(*desc));
-}
+	स_रखो(desc, 0x00, माप(*desc));
+पूर्ण
 
-static inline int sis190_tx_pkt_err(u32 status, struct net_device_stats *stats)
-{
-#define TxErrMask	(WND | TABRT | FIFO | LINK)
+अटल अंतरभूत पूर्णांक sis190_tx_pkt_err(u32 status, काष्ठा net_device_stats *stats)
+अणु
+#घोषणा TxErrMask	(WND | TABRT | FIFO | LINK)
 
-	if (!unlikely(status & TxErrMask))
-		return 0;
+	अगर (!unlikely(status & TxErrMask))
+		वापस 0;
 
-	if (status & WND)
-		stats->tx_window_errors++;
-	if (status & TABRT)
-		stats->tx_aborted_errors++;
-	if (status & FIFO)
-		stats->tx_fifo_errors++;
-	if (status & LINK)
+	अगर (status & WND)
+		stats->tx_winकरोw_errors++;
+	अगर (status & TABRT)
+		stats->tx_पातed_errors++;
+	अगर (status & FIFO)
+		stats->tx_fअगरo_errors++;
+	अगर (status & LINK)
 		stats->tx_carrier_errors++;
 
 	stats->tx_errors++;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void sis190_tx_interrupt(struct net_device *dev,
-				struct sis190_private *tp, void __iomem *ioaddr)
-{
-	struct net_device_stats *stats = &dev->stats;
+अटल व्योम sis190_tx_पूर्णांकerrupt(काष्ठा net_device *dev,
+				काष्ठा sis190_निजी *tp, व्योम __iomem *ioaddr)
+अणु
+	काष्ठा net_device_stats *stats = &dev->stats;
 	u32 pending, dirty_tx = tp->dirty_tx;
 	/*
-	 * It would not be needed if queueing was allowed to be enabled
-	 * again too early (hint: think preempt and unclocked smp systems).
+	 * It would not be needed अगर queueing was allowed to be enabled
+	 * again too early (hपूर्णांक: think preempt and unघड़ीed smp प्रणालीs).
 	 */
-	unsigned int queue_stopped;
+	अचिन्हित पूर्णांक queue_stopped;
 
 	smp_rmb();
 	pending = tp->cur_tx - dirty_tx;
 	queue_stopped = (pending == NUM_TX_DESC);
 
-	for (; pending; pending--, dirty_tx++) {
-		unsigned int entry = dirty_tx % NUM_TX_DESC;
-		struct TxDesc *txd = tp->TxDescRing + entry;
+	क्रम (; pending; pending--, dirty_tx++) अणु
+		अचिन्हित पूर्णांक entry = dirty_tx % NUM_TX_DESC;
+		काष्ठा TxDesc *txd = tp->TxDescRing + entry;
 		u32 status = le32_to_cpu(txd->status);
-		struct sk_buff *skb;
+		काष्ठा sk_buff *skb;
 
-		if (status & OWNbit)
-			break;
+		अगर (status & OWNbit)
+			अवरोध;
 
 		skb = tp->Tx_skbuff[entry];
 
-		if (likely(sis190_tx_pkt_err(status, stats) == 0)) {
+		अगर (likely(sis190_tx_pkt_err(status, stats) == 0)) अणु
 			stats->tx_packets++;
 			stats->tx_bytes += skb->len;
 			stats->collisions += ((status & ColCountMask) - 1);
-		}
+		पूर्ण
 
 		sis190_unmap_tx_skb(tp->pci_dev, skb, txd);
-		tp->Tx_skbuff[entry] = NULL;
+		tp->Tx_skbuff[entry] = शून्य;
 		dev_consume_skb_irq(skb);
-	}
+	पूर्ण
 
-	if (tp->dirty_tx != dirty_tx) {
+	अगर (tp->dirty_tx != dirty_tx) अणु
 		tp->dirty_tx = dirty_tx;
 		smp_wmb();
-		if (queue_stopped)
-			netif_wake_queue(dev);
-	}
-}
+		अगर (queue_stopped)
+			netअगर_wake_queue(dev);
+	पूर्ण
+पूर्ण
 
 /*
- * The interrupt handler does all of the Rx thread work and cleans up after
- * the Tx thread.
+ * The पूर्णांकerrupt handler करोes all of the Rx thपढ़ो work and cleans up after
+ * the Tx thपढ़ो.
  */
-static irqreturn_t sis190_irq(int irq, void *__dev)
-{
-	struct net_device *dev = __dev;
-	struct sis190_private *tp = netdev_priv(dev);
-	void __iomem *ioaddr = tp->mmio_addr;
-	unsigned int handled = 0;
+अटल irqवापस_t sis190_irq(पूर्णांक irq, व्योम *__dev)
+अणु
+	काष्ठा net_device *dev = __dev;
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = tp->mmio_addr;
+	अचिन्हित पूर्णांक handled = 0;
 	u32 status;
 
 	status = SIS_R32(IntrStatus);
 
-	if ((status == 0xffffffff) || !status)
-		goto out;
+	अगर ((status == 0xffffffff) || !status)
+		जाओ out;
 
 	handled = 1;
 
-	if (unlikely(!netif_running(dev))) {
-		sis190_asic_down(ioaddr);
-		goto out;
-	}
+	अगर (unlikely(!netअगर_running(dev))) अणु
+		sis190_asic_करोwn(ioaddr);
+		जाओ out;
+	पूर्ण
 
 	SIS_W32(IntrStatus, status);
 
-//	netif_info(tp, intr, dev, "status = %08x\n", status);
+//	netअगर_info(tp, पूर्णांकr, dev, "status = %08x\n", status);
 
-	if (status & LinkChange) {
-		netif_info(tp, intr, dev, "link change\n");
-		del_timer(&tp->timer);
+	अगर (status & LinkChange) अणु
+		netअगर_info(tp, पूर्णांकr, dev, "link change\n");
+		del_समयr(&tp->समयr);
 		schedule_work(&tp->phy_task);
-	}
+	पूर्ण
 
-	if (status & RxQInt)
-		sis190_rx_interrupt(dev, tp, ioaddr);
+	अगर (status & RxQInt)
+		sis190_rx_पूर्णांकerrupt(dev, tp, ioaddr);
 
-	if (status & TxQ0Int)
-		sis190_tx_interrupt(dev, tp, ioaddr);
+	अगर (status & TxQ0Int)
+		sis190_tx_पूर्णांकerrupt(dev, tp, ioaddr);
 out:
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-static void sis190_netpoll(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	const int irq = tp->pci_dev->irq;
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+अटल व्योम sis190_netpoll(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	स्थिर पूर्णांक irq = tp->pci_dev->irq;
 
 	disable_irq(irq);
 	sis190_irq(irq, dev);
 	enable_irq(irq);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void sis190_free_rx_skb(struct sis190_private *tp,
-			       struct sk_buff **sk_buff, struct RxDesc *desc)
-{
-	struct pci_dev *pdev = tp->pci_dev;
+अटल व्योम sis190_मुक्त_rx_skb(काष्ठा sis190_निजी *tp,
+			       काष्ठा sk_buff **sk_buff, काष्ठा RxDesc *desc)
+अणु
+	काष्ठा pci_dev *pdev = tp->pci_dev;
 
 	dma_unmap_single(&pdev->dev, le32_to_cpu(desc->addr), tp->rx_buf_sz,
 			 DMA_FROM_DEVICE);
-	dev_kfree_skb(*sk_buff);
-	*sk_buff = NULL;
+	dev_kमुक्त_skb(*sk_buff);
+	*sk_buff = शून्य;
 	sis190_make_unusable_by_asic(desc);
-}
+पूर्ण
 
-static void sis190_rx_clear(struct sis190_private *tp)
-{
-	unsigned int i;
+अटल व्योम sis190_rx_clear(काष्ठा sis190_निजी *tp)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < NUM_RX_DESC; i++) {
-		if (!tp->Rx_skbuff[i])
-			continue;
-		sis190_free_rx_skb(tp, tp->Rx_skbuff + i, tp->RxDescRing + i);
-	}
-}
+	क्रम (i = 0; i < NUM_RX_DESC; i++) अणु
+		अगर (!tp->Rx_skbuff[i])
+			जारी;
+		sis190_मुक्त_rx_skb(tp, tp->Rx_skbuff + i, tp->RxDescRing + i);
+	पूर्ण
+पूर्ण
 
-static void sis190_init_ring_indexes(struct sis190_private *tp)
-{
+अटल व्योम sis190_init_ring_indexes(काष्ठा sis190_निजी *tp)
+अणु
 	tp->dirty_tx = tp->dirty_rx = tp->cur_tx = tp->cur_rx = 0;
-}
+पूर्ण
 
-static int sis190_init_ring(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल पूर्णांक sis190_init_ring(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
 	sis190_init_ring_indexes(tp);
 
-	memset(tp->Tx_skbuff, 0x0, NUM_TX_DESC * sizeof(struct sk_buff *));
-	memset(tp->Rx_skbuff, 0x0, NUM_RX_DESC * sizeof(struct sk_buff *));
+	स_रखो(tp->Tx_skbuff, 0x0, NUM_TX_DESC * माप(काष्ठा sk_buff *));
+	स_रखो(tp->Rx_skbuff, 0x0, NUM_RX_DESC * माप(काष्ठा sk_buff *));
 
-	if (sis190_rx_fill(tp, dev, 0, NUM_RX_DESC) != NUM_RX_DESC)
-		goto err_rx_clear;
+	अगर (sis190_rx_fill(tp, dev, 0, NUM_RX_DESC) != NUM_RX_DESC)
+		जाओ err_rx_clear;
 
 	sis190_mark_as_last_descriptor(tp->RxDescRing + NUM_RX_DESC - 1);
 
-	return 0;
+	वापस 0;
 
 err_rx_clear:
 	sis190_rx_clear(tp);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void sis190_set_rx_mode(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	void __iomem *ioaddr = tp->mmio_addr;
-	unsigned long flags;
+अटल व्योम sis190_set_rx_mode(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = tp->mmio_addr;
+	अचिन्हित दीर्घ flags;
 	u32 mc_filter[2];	/* Multicast hash filter */
 	u16 rx_mode;
 
-	if (dev->flags & IFF_PROMISC) {
+	अगर (dev->flags & IFF_PROMISC) अणु
 		rx_mode =
 			AcceptBroadcast | AcceptMulticast | AcceptMyPhys |
 			AcceptAllPhys;
 		mc_filter[1] = mc_filter[0] = 0xffffffff;
-	} else if ((netdev_mc_count(dev) > multicast_filter_limit) ||
-		   (dev->flags & IFF_ALLMULTI)) {
+	पूर्ण अन्यथा अगर ((netdev_mc_count(dev) > multicast_filter_limit) ||
+		   (dev->flags & IFF_ALLMULTI)) अणु
 		/* Too many to filter perfectly -- accept all multicasts. */
 		rx_mode = AcceptBroadcast | AcceptMulticast | AcceptMyPhys;
 		mc_filter[1] = mc_filter[0] = 0xffffffff;
-	} else {
-		struct netdev_hw_addr *ha;
+	पूर्ण अन्यथा अणु
+		काष्ठा netdev_hw_addr *ha;
 
 		rx_mode = AcceptBroadcast | AcceptMyPhys;
 		mc_filter[1] = mc_filter[0] = 0;
-		netdev_for_each_mc_addr(ha, dev) {
-			int bit_nr =
+		netdev_क्रम_each_mc_addr(ha, dev) अणु
+			पूर्णांक bit_nr =
 				ether_crc(ETH_ALEN, ha->addr) & 0x3f;
 			mc_filter[bit_nr >> 5] |= 1 << (bit_nr & 31);
 			rx_mode |= AcceptMulticast;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&tp->lock, flags);
 
@@ -870,20 +871,20 @@ static void sis190_set_rx_mode(struct net_device *dev)
 	SIS_W32(RxHashTable + 4, mc_filter[1]);
 
 	spin_unlock_irqrestore(&tp->lock, flags);
-}
+पूर्ण
 
-static void sis190_soft_reset(void __iomem *ioaddr)
-{
+अटल व्योम sis190_soft_reset(व्योम __iomem *ioaddr)
+अणु
 	SIS_W32(IntrControl, 0x8000);
 	SIS_PCI_COMMIT();
 	SIS_W32(IntrControl, 0x0);
-	sis190_asic_down(ioaddr);
-}
+	sis190_asic_करोwn(ioaddr);
+पूर्ण
 
-static void sis190_hw_start(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	void __iomem *ioaddr = tp->mmio_addr;
+अटल व्योम sis190_hw_start(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = tp->mmio_addr;
 
 	sis190_soft_reset(ioaddr);
 
@@ -904,167 +905,167 @@ static void sis190_hw_start(struct net_device *dev)
 
 	sis190_set_rx_mode(dev);
 
-	/* Enable all known interrupts by setting the interrupt mask. */
-	SIS_W32(IntrMask, sis190_intr_mask);
+	/* Enable all known पूर्णांकerrupts by setting the पूर्णांकerrupt mask. */
+	SIS_W32(IntrMask, sis190_पूर्णांकr_mask);
 
 	SIS_W32(TxControl, 0x1a00 | CmdTxEnb);
 	SIS_W32(RxControl, 0x1a1d);
 
-	netif_start_queue(dev);
-}
+	netअगर_start_queue(dev);
+पूर्ण
 
-static void sis190_phy_task(struct work_struct *work)
-{
-	struct sis190_private *tp =
-		container_of(work, struct sis190_private, phy_task);
-	struct net_device *dev = tp->dev;
-	void __iomem *ioaddr = tp->mmio_addr;
-	int phy_id = tp->mii_if.phy_id;
+अटल व्योम sis190_phy_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा sis190_निजी *tp =
+		container_of(work, काष्ठा sis190_निजी, phy_task);
+	काष्ठा net_device *dev = tp->dev;
+	व्योम __iomem *ioaddr = tp->mmio_addr;
+	पूर्णांक phy_id = tp->mii_अगर.phy_id;
 	u16 val;
 
 	rtnl_lock();
 
-	if (!netif_running(dev))
-		goto out_unlock;
+	अगर (!netअगर_running(dev))
+		जाओ out_unlock;
 
-	val = mdio_read(ioaddr, phy_id, MII_BMCR);
-	if (val & BMCR_RESET) {
+	val = mdio_पढ़ो(ioaddr, phy_id, MII_BMCR);
+	अगर (val & BMCR_RESET) अणु
 		// FIXME: needlessly high ?  -- FR 02/07/2005
-		mod_timer(&tp->timer, jiffies + HZ/10);
-		goto out_unlock;
-	}
+		mod_समयr(&tp->समयr, jअगरfies + HZ/10);
+		जाओ out_unlock;
+	पूर्ण
 
-	val = mdio_read_latched(ioaddr, phy_id, MII_BMSR);
-	if (!(val & BMSR_ANEGCOMPLETE) && tp->link_status != LNK_AUTONEG) {
-		netif_carrier_off(dev);
-		netif_warn(tp, link, dev, "auto-negotiating...\n");
+	val = mdio_पढ़ो_latched(ioaddr, phy_id, MII_BMSR);
+	अगर (!(val & BMSR_ANEGCOMPLETE) && tp->link_status != LNK_AUTONEG) अणु
+		netअगर_carrier_off(dev);
+		netअगर_warn(tp, link, dev, "auto-negotiating...\n");
 		tp->link_status = LNK_AUTONEG;
-	} else if ((val & BMSR_LSTATUS) && tp->link_status != LNK_ON) {
+	पूर्ण अन्यथा अगर ((val & BMSR_LSTATUS) && tp->link_status != LNK_ON) अणु
 		/* Rejoice ! */
-		struct {
-			int val;
+		काष्ठा अणु
+			पूर्णांक val;
 			u32 ctl;
-			const char *msg;
-		} reg31[] = {
-			{ LPA_1000FULL, 0x07000c00 | 0x00001000,
-				"1000 Mbps Full Duplex" },
-			{ LPA_1000HALF, 0x07000c00,
-				"1000 Mbps Half Duplex" },
-			{ LPA_100FULL, 0x04000800 | 0x00001000,
-				"100 Mbps Full Duplex" },
-			{ LPA_100HALF, 0x04000800,
-				"100 Mbps Half Duplex" },
-			{ LPA_10FULL, 0x04000400 | 0x00001000,
-				"10 Mbps Full Duplex" },
-			{ LPA_10HALF, 0x04000400,
-				"10 Mbps Half Duplex" },
-			{ 0, 0x04000400, "unknown" }
-		}, *p = NULL;
-		u16 adv, autoexp, gigadv, gigrec;
+			स्थिर अक्षर *msg;
+		पूर्ण reg31[] = अणु
+			अणु LPA_1000FULL, 0x07000c00 | 0x00001000,
+				"1000 Mbps Full Duplex" पूर्ण,
+			अणु LPA_1000HALF, 0x07000c00,
+				"1000 Mbps Half Duplex" पूर्ण,
+			अणु LPA_100FULL, 0x04000800 | 0x00001000,
+				"100 Mbps Full Duplex" पूर्ण,
+			अणु LPA_100HALF, 0x04000800,
+				"100 Mbps Half Duplex" पूर्ण,
+			अणु LPA_10FULL, 0x04000400 | 0x00001000,
+				"10 Mbps Full Duplex" पूर्ण,
+			अणु LPA_10HALF, 0x04000400,
+				"10 Mbps Half Duplex" पूर्ण,
+			अणु 0, 0x04000400, "unknown" पूर्ण
+		पूर्ण, *p = शून्य;
+		u16 adv, स्वतःexp, gigadv, gigrec;
 
-		val = mdio_read(ioaddr, phy_id, 0x1f);
-		netif_info(tp, link, dev, "mii ext = %04x\n", val);
+		val = mdio_पढ़ो(ioaddr, phy_id, 0x1f);
+		netअगर_info(tp, link, dev, "mii ext = %04x\n", val);
 
-		val = mdio_read(ioaddr, phy_id, MII_LPA);
-		adv = mdio_read(ioaddr, phy_id, MII_ADVERTISE);
-		autoexp = mdio_read(ioaddr, phy_id, MII_EXPANSION);
-		netif_info(tp, link, dev, "mii lpa=%04x adv=%04x exp=%04x\n",
-			   val, adv, autoexp);
+		val = mdio_पढ़ो(ioaddr, phy_id, MII_LPA);
+		adv = mdio_पढ़ो(ioaddr, phy_id, MII_ADVERTISE);
+		स्वतःexp = mdio_पढ़ो(ioaddr, phy_id, MII_EXPANSION);
+		netअगर_info(tp, link, dev, "mii lpa=%04x adv=%04x exp=%04x\n",
+			   val, adv, स्वतःexp);
 
-		if (val & LPA_NPAGE && autoexp & EXPANSION_NWAY) {
-			/* check for gigabit speed */
-			gigadv = mdio_read(ioaddr, phy_id, MII_CTRL1000);
-			gigrec = mdio_read(ioaddr, phy_id, MII_STAT1000);
+		अगर (val & LPA_NPAGE && स्वतःexp & EXPANSION_NWAY) अणु
+			/* check क्रम gigabit speed */
+			gigadv = mdio_पढ़ो(ioaddr, phy_id, MII_CTRL1000);
+			gigrec = mdio_पढ़ो(ioaddr, phy_id, MII_STAT1000);
 			val = (gigadv & (gigrec >> 2));
-			if (val & ADVERTISE_1000FULL)
+			अगर (val & ADVERTISE_1000FULL)
 				p = reg31;
-			else if (val & ADVERTISE_1000HALF)
+			अन्यथा अगर (val & ADVERTISE_1000HALF)
 				p = reg31 + 1;
-		}
-		if (!p) {
+		पूर्ण
+		अगर (!p) अणु
 			val &= adv;
 
-			for (p = reg31; p->val; p++) {
-				if ((val & p->val) == p->val)
-					break;
-			}
-		}
+			क्रम (p = reg31; p->val; p++) अणु
+				अगर ((val & p->val) == p->val)
+					अवरोध;
+			पूर्ण
+		पूर्ण
 
 		p->ctl |= SIS_R32(StationControl) & ~0x0f001c00;
 
-		if ((tp->features & F_HAS_RGMII) &&
-		    (tp->features & F_PHY_BCM5461)) {
+		अगर ((tp->features & F_HAS_RGMII) &&
+		    (tp->features & F_PHY_BCM5461)) अणु
 			// Set Tx Delay in RGMII mode.
-			mdio_write(ioaddr, phy_id, 0x18, 0xf1c7);
+			mdio_ग_लिखो(ioaddr, phy_id, 0x18, 0xf1c7);
 			udelay(200);
-			mdio_write(ioaddr, phy_id, 0x1c, 0x8c00);
+			mdio_ग_लिखो(ioaddr, phy_id, 0x1c, 0x8c00);
 			p->ctl |= 0x03000000;
-		}
+		पूर्ण
 
 		SIS_W32(StationControl, p->ctl);
 
-		if (tp->features & F_HAS_RGMII) {
+		अगर (tp->features & F_HAS_RGMII) अणु
 			SIS_W32(RGDelay, 0x0441);
 			SIS_W32(RGDelay, 0x0440);
-		}
+		पूर्ण
 
 		tp->negotiated_lpa = p->val;
 
-		netif_info(tp, link, dev, "link on %s mode\n", p->msg);
-		netif_carrier_on(dev);
+		netअगर_info(tp, link, dev, "link on %s mode\n", p->msg);
+		netअगर_carrier_on(dev);
 		tp->link_status = LNK_ON;
-	} else if (!(val & BMSR_LSTATUS) && tp->link_status != LNK_AUTONEG)
+	पूर्ण अन्यथा अगर (!(val & BMSR_LSTATUS) && tp->link_status != LNK_AUTONEG)
 		tp->link_status = LNK_OFF;
-	mod_timer(&tp->timer, jiffies + SIS190_PHY_TIMEOUT);
+	mod_समयr(&tp->समयr, jअगरfies + SIS190_PHY_TIMEOUT);
 
 out_unlock:
 	rtnl_unlock();
-}
+पूर्ण
 
-static void sis190_phy_timer(struct timer_list *t)
-{
-	struct sis190_private *tp = from_timer(tp, t, timer);
-	struct net_device *dev = tp->dev;
+अटल व्योम sis190_phy_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sis190_निजी *tp = from_समयr(tp, t, समयr);
+	काष्ठा net_device *dev = tp->dev;
 
-	if (likely(netif_running(dev)))
+	अगर (likely(netअगर_running(dev)))
 		schedule_work(&tp->phy_task);
-}
+पूर्ण
 
-static inline void sis190_delete_timer(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल अंतरभूत व्योम sis190_delete_समयr(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	del_timer_sync(&tp->timer);
-}
+	del_समयr_sync(&tp->समयr);
+पूर्ण
 
-static inline void sis190_request_timer(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	struct timer_list *timer = &tp->timer;
+अटल अंतरभूत व्योम sis190_request_समयr(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	काष्ठा समयr_list *समयr = &tp->समयr;
 
-	timer_setup(timer, sis190_phy_timer, 0);
-	timer->expires = jiffies + SIS190_PHY_TIMEOUT;
-	add_timer(timer);
-}
+	समयr_setup(समयr, sis190_phy_समयr, 0);
+	समयr->expires = jअगरfies + SIS190_PHY_TIMEOUT;
+	add_समयr(समयr);
+पूर्ण
 
-static void sis190_set_rxbufsize(struct sis190_private *tp,
-				 struct net_device *dev)
-{
-	unsigned int mtu = dev->mtu;
+अटल व्योम sis190_set_rxbufsize(काष्ठा sis190_निजी *tp,
+				 काष्ठा net_device *dev)
+अणु
+	अचिन्हित पूर्णांक mtu = dev->mtu;
 
 	tp->rx_buf_sz = (mtu > RX_BUF_SIZE) ? mtu + ETH_HLEN + 8 : RX_BUF_SIZE;
-	/* RxDesc->size has a licence to kill the lower bits */
-	if (tp->rx_buf_sz & 0x07) {
+	/* RxDesc->size has a licence to समाप्त the lower bits */
+	अगर (tp->rx_buf_sz & 0x07) अणु
 		tp->rx_buf_sz += 8;
 		tp->rx_buf_sz &= RX_BUF_MASK;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sis190_open(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	struct pci_dev *pdev = tp->pci_dev;
-	int rc = -ENOMEM;
+अटल पूर्णांक sis190_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	काष्ठा pci_dev *pdev = tp->pci_dev;
+	पूर्णांक rc = -ENOMEM;
 
 	sis190_set_rxbufsize(tp, dev);
 
@@ -1074,145 +1075,145 @@ static int sis190_open(struct net_device *dev)
 	 */
 	tp->TxDescRing = dma_alloc_coherent(&pdev->dev, TX_RING_BYTES,
 					    &tp->tx_dma, GFP_KERNEL);
-	if (!tp->TxDescRing)
-		goto out;
+	अगर (!tp->TxDescRing)
+		जाओ out;
 
 	tp->RxDescRing = dma_alloc_coherent(&pdev->dev, RX_RING_BYTES,
 					    &tp->rx_dma, GFP_KERNEL);
-	if (!tp->RxDescRing)
-		goto err_free_tx_0;
+	अगर (!tp->RxDescRing)
+		जाओ err_मुक्त_tx_0;
 
 	rc = sis190_init_ring(dev);
-	if (rc < 0)
-		goto err_free_rx_1;
+	अगर (rc < 0)
+		जाओ err_मुक्त_rx_1;
 
-	sis190_request_timer(dev);
+	sis190_request_समयr(dev);
 
 	rc = request_irq(pdev->irq, sis190_irq, IRQF_SHARED, dev->name, dev);
-	if (rc < 0)
-		goto err_release_timer_2;
+	अगर (rc < 0)
+		जाओ err_release_समयr_2;
 
 	sis190_hw_start(dev);
 out:
-	return rc;
+	वापस rc;
 
-err_release_timer_2:
-	sis190_delete_timer(dev);
+err_release_समयr_2:
+	sis190_delete_समयr(dev);
 	sis190_rx_clear(tp);
-err_free_rx_1:
-	dma_free_coherent(&pdev->dev, RX_RING_BYTES, tp->RxDescRing,
+err_मुक्त_rx_1:
+	dma_मुक्त_coherent(&pdev->dev, RX_RING_BYTES, tp->RxDescRing,
 			  tp->rx_dma);
-err_free_tx_0:
-	dma_free_coherent(&pdev->dev, TX_RING_BYTES, tp->TxDescRing,
+err_मुक्त_tx_0:
+	dma_मुक्त_coherent(&pdev->dev, TX_RING_BYTES, tp->TxDescRing,
 			  tp->tx_dma);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static void sis190_tx_clear(struct sis190_private *tp)
-{
-	unsigned int i;
+अटल व्योम sis190_tx_clear(काष्ठा sis190_निजी *tp)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < NUM_TX_DESC; i++) {
-		struct sk_buff *skb = tp->Tx_skbuff[i];
+	क्रम (i = 0; i < NUM_TX_DESC; i++) अणु
+		काष्ठा sk_buff *skb = tp->Tx_skbuff[i];
 
-		if (!skb)
-			continue;
+		अगर (!skb)
+			जारी;
 
 		sis190_unmap_tx_skb(tp->pci_dev, skb, tp->TxDescRing + i);
-		tp->Tx_skbuff[i] = NULL;
-		dev_kfree_skb(skb);
+		tp->Tx_skbuff[i] = शून्य;
+		dev_kमुक्त_skb(skb);
 
 		tp->dev->stats.tx_dropped++;
-	}
+	पूर्ण
 	tp->cur_tx = tp->dirty_tx = 0;
-}
+पूर्ण
 
-static void sis190_down(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	void __iomem *ioaddr = tp->mmio_addr;
-	unsigned int poll_locked = 0;
+अटल व्योम sis190_करोwn(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = tp->mmio_addr;
+	अचिन्हित पूर्णांक poll_locked = 0;
 
-	sis190_delete_timer(dev);
+	sis190_delete_समयr(dev);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
-	do {
+	करो अणु
 		spin_lock_irq(&tp->lock);
 
-		sis190_asic_down(ioaddr);
+		sis190_asic_करोwn(ioaddr);
 
 		spin_unlock_irq(&tp->lock);
 
 		synchronize_irq(tp->pci_dev->irq);
 
-		if (!poll_locked)
+		अगर (!poll_locked)
 			poll_locked++;
 
 		synchronize_rcu();
 
-	} while (SIS_R32(IntrMask));
+	पूर्ण जबतक (SIS_R32(IntrMask));
 
 	sis190_tx_clear(tp);
 	sis190_rx_clear(tp);
-}
+पूर्ण
 
-static int sis190_close(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	struct pci_dev *pdev = tp->pci_dev;
+अटल पूर्णांक sis190_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	काष्ठा pci_dev *pdev = tp->pci_dev;
 
-	sis190_down(dev);
+	sis190_करोwn(dev);
 
-	free_irq(pdev->irq, dev);
+	मुक्त_irq(pdev->irq, dev);
 
-	dma_free_coherent(&pdev->dev, TX_RING_BYTES, tp->TxDescRing,
+	dma_मुक्त_coherent(&pdev->dev, TX_RING_BYTES, tp->TxDescRing,
 			  tp->tx_dma);
-	dma_free_coherent(&pdev->dev, RX_RING_BYTES, tp->RxDescRing,
+	dma_मुक्त_coherent(&pdev->dev, RX_RING_BYTES, tp->RxDescRing,
 			  tp->rx_dma);
 
-	tp->TxDescRing = NULL;
-	tp->RxDescRing = NULL;
+	tp->TxDescRing = शून्य;
+	tp->RxDescRing = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t sis190_start_xmit(struct sk_buff *skb,
-				     struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	void __iomem *ioaddr = tp->mmio_addr;
+अटल netdev_tx_t sis190_start_xmit(काष्ठा sk_buff *skb,
+				     काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = tp->mmio_addr;
 	u32 len, entry, dirty_tx;
-	struct TxDesc *desc;
+	काष्ठा TxDesc *desc;
 	dma_addr_t mapping;
 
-	if (unlikely(skb->len < ETH_ZLEN)) {
-		if (skb_padto(skb, ETH_ZLEN)) {
+	अगर (unlikely(skb->len < ETH_ZLEN)) अणु
+		अगर (skb_padto(skb, ETH_ZLEN)) अणु
 			dev->stats.tx_dropped++;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		len = ETH_ZLEN;
-	} else {
+	पूर्ण अन्यथा अणु
 		len = skb->len;
-	}
+	पूर्ण
 
 	entry = tp->cur_tx % NUM_TX_DESC;
 	desc = tp->TxDescRing + entry;
 
-	if (unlikely(le32_to_cpu(desc->status) & OWNbit)) {
-		netif_stop_queue(dev);
-		netif_err(tp, tx_err, dev,
+	अगर (unlikely(le32_to_cpu(desc->status) & OWNbit)) अणु
+		netअगर_stop_queue(dev);
+		netअगर_err(tp, tx_err, dev,
 			  "BUG! Tx Ring full when queue awake!\n");
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	mapping = dma_map_single(&tp->pci_dev->dev, skb->data, len,
 				 DMA_TO_DEVICE);
-	if (dma_mapping_error(&tp->pci_dev->dev, mapping)) {
-		netif_err(tp, tx_err, dev,
+	अगर (dma_mapping_error(&tp->pci_dev->dev, mapping)) अणु
+		netअगर_err(tp, tx_err, dev,
 				"PCI mapping failed, dropping packet");
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	tp->Tx_skbuff[entry] = skb;
 
@@ -1220,18 +1221,18 @@ static netdev_tx_t sis190_start_xmit(struct sk_buff *skb,
 	desc->addr = cpu_to_le32(mapping);
 
 	desc->size = cpu_to_le32(len);
-	if (entry == (NUM_TX_DESC - 1))
+	अगर (entry == (NUM_TX_DESC - 1))
 		desc->size |= cpu_to_le32(RingEnd);
 
 	wmb();
 
 	desc->status = cpu_to_le32(OWNbit | INTbit | DEFbit | CRCbit | PADbit);
-	if (tp->negotiated_lpa & (LPA_1000HALF | LPA_100HALF | LPA_10HALF)) {
+	अगर (tp->negotiated_lpa & (LPA_1000HALF | LPA_100HALF | LPA_10HALF)) अणु
 		/* Half Duplex */
 		desc->status |= cpu_to_le32(COLEN | CRSEN | BKFEN);
-		if (tp->negotiated_lpa & (LPA_1000HALF | LPA_1000FULL))
+		अगर (tp->negotiated_lpa & (LPA_1000HALF | LPA_1000FULL))
 			desc->status |= cpu_to_le32(EXTEN | BSTEN); /* gigabit HD */
-	}
+	पूर्ण
 
 	tp->cur_tx++;
 
@@ -1240,292 +1241,292 @@ static netdev_tx_t sis190_start_xmit(struct sk_buff *skb,
 	SIS_W32(TxControl, 0x1a00 | CmdReset | CmdTxEnb);
 
 	dirty_tx = tp->dirty_tx;
-	if ((tp->cur_tx - NUM_TX_DESC) == dirty_tx) {
-		netif_stop_queue(dev);
+	अगर ((tp->cur_tx - NUM_TX_DESC) == dirty_tx) अणु
+		netअगर_stop_queue(dev);
 		smp_rmb();
-		if (dirty_tx != tp->dirty_tx)
-			netif_wake_queue(dev);
-	}
+		अगर (dirty_tx != tp->dirty_tx)
+			netअगर_wake_queue(dev);
+	पूर्ण
 out:
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void sis190_free_phy(struct list_head *first_phy)
-{
-	struct sis190_phy *cur, *next;
+अटल व्योम sis190_मुक्त_phy(काष्ठा list_head *first_phy)
+अणु
+	काष्ठा sis190_phy *cur, *next;
 
-	list_for_each_entry_safe(cur, next, first_phy, list) {
-		kfree(cur);
-	}
-}
+	list_क्रम_each_entry_safe(cur, next, first_phy, list) अणु
+		kमुक्त(cur);
+	पूर्ण
+पूर्ण
 
 /**
- *	sis190_default_phy - Select default PHY for sis190 mac.
- *	@dev: the net device to probe for
+ *	sis190_शेष_phy - Select शेष PHY क्रम sis190 mac.
+ *	@dev: the net device to probe क्रम
  *
- *	Select first detected PHY with link as default.
- *	If no one is link on, select PHY whose types is HOME as default.
- *	If HOME doesn't exist, select LAN.
+ *	Select first detected PHY with link as शेष.
+ *	If no one is link on, select PHY whose types is HOME as शेष.
+ *	If HOME करोesn't exist, select LAN.
  */
-static u16 sis190_default_phy(struct net_device *dev)
-{
-	struct sis190_phy *phy, *phy_home, *phy_default, *phy_lan;
-	struct sis190_private *tp = netdev_priv(dev);
-	struct mii_if_info *mii_if = &tp->mii_if;
-	void __iomem *ioaddr = tp->mmio_addr;
+अटल u16 sis190_शेष_phy(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_phy *phy, *phy_home, *phy_शेष, *phy_lan;
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	काष्ठा mii_अगर_info *mii_अगर = &tp->mii_अगर;
+	व्योम __iomem *ioaddr = tp->mmio_addr;
 	u16 status;
 
-	phy_home = phy_default = phy_lan = NULL;
+	phy_home = phy_शेष = phy_lan = शून्य;
 
-	list_for_each_entry(phy, &tp->first_phy, list) {
-		status = mdio_read_latched(ioaddr, phy->phy_id, MII_BMSR);
+	list_क्रम_each_entry(phy, &tp->first_phy, list) अणु
+		status = mdio_पढ़ो_latched(ioaddr, phy->phy_id, MII_BMSR);
 
-		// Link ON & Not select default PHY & not ghost PHY.
-		if ((status & BMSR_LSTATUS) &&
-		    !phy_default &&
-		    (phy->type != UNKNOWN)) {
-			phy_default = phy;
-		} else {
-			status = mdio_read(ioaddr, phy->phy_id, MII_BMCR);
-			mdio_write(ioaddr, phy->phy_id, MII_BMCR,
+		// Link ON & Not select शेष PHY & not ghost PHY.
+		अगर ((status & BMSR_LSTATUS) &&
+		    !phy_शेष &&
+		    (phy->type != UNKNOWN)) अणु
+			phy_शेष = phy;
+		पूर्ण अन्यथा अणु
+			status = mdio_पढ़ो(ioaddr, phy->phy_id, MII_BMCR);
+			mdio_ग_लिखो(ioaddr, phy->phy_id, MII_BMCR,
 				   status | BMCR_ANENABLE | BMCR_ISOLATE);
-			if (phy->type == HOME)
+			अगर (phy->type == HOME)
 				phy_home = phy;
-			else if (phy->type == LAN)
+			अन्यथा अगर (phy->type == LAN)
 				phy_lan = phy;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!phy_default) {
-		if (phy_home)
-			phy_default = phy_home;
-		else if (phy_lan)
-			phy_default = phy_lan;
-		else
-			phy_default = list_first_entry(&tp->first_phy,
-						 struct sis190_phy, list);
-	}
+	अगर (!phy_शेष) अणु
+		अगर (phy_home)
+			phy_शेष = phy_home;
+		अन्यथा अगर (phy_lan)
+			phy_शेष = phy_lan;
+		अन्यथा
+			phy_शेष = list_first_entry(&tp->first_phy,
+						 काष्ठा sis190_phy, list);
+	पूर्ण
 
-	if (mii_if->phy_id != phy_default->phy_id) {
-		mii_if->phy_id = phy_default->phy_id;
-		if (netif_msg_probe(tp))
+	अगर (mii_अगर->phy_id != phy_शेष->phy_id) अणु
+		mii_अगर->phy_id = phy_शेष->phy_id;
+		अगर (netअगर_msg_probe(tp))
 			pr_info("%s: Using transceiver at address %d as default\n",
-				pci_name(tp->pci_dev), mii_if->phy_id);
-	}
+				pci_name(tp->pci_dev), mii_अगर->phy_id);
+	पूर्ण
 
-	status = mdio_read(ioaddr, mii_if->phy_id, MII_BMCR);
+	status = mdio_पढ़ो(ioaddr, mii_अगर->phy_id, MII_BMCR);
 	status &= (~BMCR_ISOLATE);
 
-	mdio_write(ioaddr, mii_if->phy_id, MII_BMCR, status);
-	status = mdio_read_latched(ioaddr, mii_if->phy_id, MII_BMSR);
+	mdio_ग_लिखो(ioaddr, mii_अगर->phy_id, MII_BMCR, status);
+	status = mdio_पढ़ो_latched(ioaddr, mii_अगर->phy_id, MII_BMSR);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void sis190_init_phy(struct net_device *dev, struct sis190_private *tp,
-			    struct sis190_phy *phy, unsigned int phy_id,
+अटल व्योम sis190_init_phy(काष्ठा net_device *dev, काष्ठा sis190_निजी *tp,
+			    काष्ठा sis190_phy *phy, अचिन्हित पूर्णांक phy_id,
 			    u16 mii_status)
-{
-	void __iomem *ioaddr = tp->mmio_addr;
-	struct mii_chip_info *p;
+अणु
+	व्योम __iomem *ioaddr = tp->mmio_addr;
+	काष्ठा mii_chip_info *p;
 
 	INIT_LIST_HEAD(&phy->list);
 	phy->status = mii_status;
 	phy->phy_id = phy_id;
 
-	phy->id[0] = mdio_read(ioaddr, phy_id, MII_PHYSID1);
-	phy->id[1] = mdio_read(ioaddr, phy_id, MII_PHYSID2);
+	phy->id[0] = mdio_पढ़ो(ioaddr, phy_id, MII_PHYSID1);
+	phy->id[1] = mdio_पढ़ो(ioaddr, phy_id, MII_PHYSID2);
 
-	for (p = mii_chip_table; p->type; p++) {
-		if ((p->id[0] == phy->id[0]) &&
-		    (p->id[1] == (phy->id[1] & 0xfff0))) {
-			break;
-		}
-	}
+	क्रम (p = mii_chip_table; p->type; p++) अणु
+		अगर ((p->id[0] == phy->id[0]) &&
+		    (p->id[1] == (phy->id[1] & 0xfff0))) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (p->id[1]) {
+	अगर (p->id[1]) अणु
 		phy->type = (p->type == MIX) ?
 			((mii_status & (BMSR_100FULL | BMSR_100HALF)) ?
 				LAN : HOME) : p->type;
 		tp->features |= p->feature;
-		if (netif_msg_probe(tp))
+		अगर (netअगर_msg_probe(tp))
 			pr_info("%s: %s transceiver at address %d\n",
 				pci_name(tp->pci_dev), p->name, phy_id);
-	} else {
+	पूर्ण अन्यथा अणु
 		phy->type = UNKNOWN;
-		if (netif_msg_probe(tp))
+		अगर (netअगर_msg_probe(tp))
 			pr_info("%s: unknown PHY 0x%x:0x%x transceiver at address %d\n",
 				pci_name(tp->pci_dev),
 				phy->id[0], (phy->id[1] & 0xfff0), phy_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sis190_mii_probe_88e1111_fixup(struct sis190_private *tp)
-{
-	if (tp->features & F_PHY_88E1111) {
-		void __iomem *ioaddr = tp->mmio_addr;
-		int phy_id = tp->mii_if.phy_id;
-		u16 reg[2][2] = {
-			{ 0x808b, 0x0ce1 },
-			{ 0x808f, 0x0c60 }
-		}, *p;
+अटल व्योम sis190_mii_probe_88e1111_fixup(काष्ठा sis190_निजी *tp)
+अणु
+	अगर (tp->features & F_PHY_88E1111) अणु
+		व्योम __iomem *ioaddr = tp->mmio_addr;
+		पूर्णांक phy_id = tp->mii_अगर.phy_id;
+		u16 reg[2][2] = अणु
+			अणु 0x808b, 0x0ce1 पूर्ण,
+			अणु 0x808f, 0x0c60 पूर्ण
+		पूर्ण, *p;
 
 		p = (tp->features & F_HAS_RGMII) ? reg[0] : reg[1];
 
-		mdio_write(ioaddr, phy_id, 0x1b, p[0]);
+		mdio_ग_लिखो(ioaddr, phy_id, 0x1b, p[0]);
 		udelay(200);
-		mdio_write(ioaddr, phy_id, 0x14, p[1]);
+		mdio_ग_लिखो(ioaddr, phy_id, 0x14, p[1]);
 		udelay(200);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- *	sis190_mii_probe - Probe MII PHY for sis190
- *	@dev: the net device to probe for
+ *	sis190_mii_probe - Probe MII PHY क्रम sis190
+ *	@dev: the net device to probe क्रम
  *
- *	Search for total of 32 possible mii phy addresses.
- *	Identify and set current phy if found one,
- *	return error if it failed to found.
+ *	Search क्रम total of 32 possible mii phy addresses.
+ *	Identअगरy and set current phy अगर found one,
+ *	वापस error अगर it failed to found.
  */
-static int sis190_mii_probe(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	struct mii_if_info *mii_if = &tp->mii_if;
-	void __iomem *ioaddr = tp->mmio_addr;
-	int phy_id;
-	int rc = 0;
+अटल पूर्णांक sis190_mii_probe(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	काष्ठा mii_अगर_info *mii_अगर = &tp->mii_अगर;
+	व्योम __iomem *ioaddr = tp->mmio_addr;
+	पूर्णांक phy_id;
+	पूर्णांक rc = 0;
 
 	INIT_LIST_HEAD(&tp->first_phy);
 
-	for (phy_id = 0; phy_id < PHY_MAX_ADDR; phy_id++) {
-		struct sis190_phy *phy;
+	क्रम (phy_id = 0; phy_id < PHY_MAX_ADDR; phy_id++) अणु
+		काष्ठा sis190_phy *phy;
 		u16 status;
 
-		status = mdio_read_latched(ioaddr, phy_id, MII_BMSR);
+		status = mdio_पढ़ो_latched(ioaddr, phy_id, MII_BMSR);
 
-		// Try next mii if the current one is not accessible.
-		if (status == 0xffff || status == 0x0000)
-			continue;
+		// Try next mii अगर the current one is not accessible.
+		अगर (status == 0xffff || status == 0x0000)
+			जारी;
 
-		phy = kmalloc(sizeof(*phy), GFP_KERNEL);
-		if (!phy) {
-			sis190_free_phy(&tp->first_phy);
+		phy = kदो_स्मृति(माप(*phy), GFP_KERNEL);
+		अगर (!phy) अणु
+			sis190_मुक्त_phy(&tp->first_phy);
 			rc = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		sis190_init_phy(dev, tp, phy, phy_id, status);
 
 		list_add(&tp->first_phy, &phy->list);
-	}
+	पूर्ण
 
-	if (list_empty(&tp->first_phy)) {
-		if (netif_msg_probe(tp))
+	अगर (list_empty(&tp->first_phy)) अणु
+		अगर (netअगर_msg_probe(tp))
 			pr_info("%s: No MII transceivers found!\n",
 				pci_name(tp->pci_dev));
 		rc = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Select default PHY for mac */
-	sis190_default_phy(dev);
+	/* Select शेष PHY क्रम mac */
+	sis190_शेष_phy(dev);
 
 	sis190_mii_probe_88e1111_fixup(tp);
 
-	mii_if->dev = dev;
-	mii_if->mdio_read = __mdio_read;
-	mii_if->mdio_write = __mdio_write;
-	mii_if->phy_id_mask = PHY_ID_ANY;
-	mii_if->reg_num_mask = MII_REG_ANY;
+	mii_अगर->dev = dev;
+	mii_अगर->mdio_पढ़ो = __mdio_पढ़ो;
+	mii_अगर->mdio_ग_लिखो = __mdio_ग_लिखो;
+	mii_अगर->phy_id_mask = PHY_ID_ANY;
+	mii_अगर->reg_num_mask = MII_REG_ANY;
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void sis190_mii_remove(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल व्योम sis190_mii_हटाओ(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	sis190_free_phy(&tp->first_phy);
-}
+	sis190_मुक्त_phy(&tp->first_phy);
+पूर्ण
 
-static void sis190_release_board(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
-	struct sis190_private *tp = netdev_priv(dev);
+अटल व्योम sis190_release_board(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
 	iounmap(tp->mmio_addr);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-	free_netdev(dev);
-}
+	मुक्त_netdev(dev);
+पूर्ण
 
-static struct net_device *sis190_init_board(struct pci_dev *pdev)
-{
-	struct sis190_private *tp;
-	struct net_device *dev;
-	void __iomem *ioaddr;
-	int rc;
+अटल काष्ठा net_device *sis190_init_board(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा sis190_निजी *tp;
+	काष्ठा net_device *dev;
+	व्योम __iomem *ioaddr;
+	पूर्णांक rc;
 
-	dev = alloc_etherdev(sizeof(*tp));
-	if (!dev) {
+	dev = alloc_etherdev(माप(*tp));
+	अगर (!dev) अणु
 		rc = -ENOMEM;
-		goto err_out_0;
-	}
+		जाओ err_out_0;
+	पूर्ण
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	tp = netdev_priv(dev);
 	tp->dev = dev;
-	tp->msg_enable = netif_msg_init(debug.msg_enable, SIS190_MSG_DEFAULT);
+	tp->msg_enable = netअगर_msg_init(debug.msg_enable, SIS190_MSG_DEFAULT);
 
 	rc = pci_enable_device(pdev);
-	if (rc < 0) {
-		if (netif_msg_probe(tp))
+	अगर (rc < 0) अणु
+		अगर (netअगर_msg_probe(tp))
 			pr_err("%s: enable failure\n", pci_name(pdev));
-		goto err_free_dev_1;
-	}
+		जाओ err_मुक्त_dev_1;
+	पूर्ण
 
 	rc = -ENODEV;
 
-	if (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) {
-		if (netif_msg_probe(tp))
+	अगर (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM)) अणु
+		अगर (netअगर_msg_probe(tp))
 			pr_err("%s: region #0 is no MMIO resource\n",
 			       pci_name(pdev));
-		goto err_pci_disable_2;
-	}
-	if (pci_resource_len(pdev, 0) < SIS190_REGS_SIZE) {
-		if (netif_msg_probe(tp))
+		जाओ err_pci_disable_2;
+	पूर्ण
+	अगर (pci_resource_len(pdev, 0) < SIS190_REGS_SIZE) अणु
+		अगर (netअगर_msg_probe(tp))
 			pr_err("%s: invalid PCI region size(s)\n",
 			       pci_name(pdev));
-		goto err_pci_disable_2;
-	}
+		जाओ err_pci_disable_2;
+	पूर्ण
 
 	rc = pci_request_regions(pdev, DRV_NAME);
-	if (rc < 0) {
-		if (netif_msg_probe(tp))
+	अगर (rc < 0) अणु
+		अगर (netअगर_msg_probe(tp))
 			pr_err("%s: could not request regions\n",
 			       pci_name(pdev));
-		goto err_pci_disable_2;
-	}
+		जाओ err_pci_disable_2;
+	पूर्ण
 
 	rc = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-	if (rc < 0) {
-		if (netif_msg_probe(tp))
+	अगर (rc < 0) अणु
+		अगर (netअगर_msg_probe(tp))
 			pr_err("%s: DMA configuration failed\n",
 			       pci_name(pdev));
-		goto err_free_res_3;
-	}
+		जाओ err_मुक्त_res_3;
+	पूर्ण
 
 	pci_set_master(pdev);
 
 	ioaddr = ioremap(pci_resource_start(pdev, 0), SIS190_REGS_SIZE);
-	if (!ioaddr) {
-		if (netif_msg_probe(tp))
+	अगर (!ioaddr) अणु
+		अगर (netअगर_msg_probe(tp))
 			pr_err("%s: cannot remap MMIO, aborting\n",
 			       pci_name(pdev));
 		rc = -EIO;
-		goto err_free_res_3;
-	}
+		जाओ err_मुक्त_res_3;
+	पूर्ण
 
 	tp->pci_dev = pdev;
 	tp->mmio_addr = ioaddr;
@@ -1535,37 +1536,37 @@ static struct net_device *sis190_init_board(struct pci_dev *pdev)
 
 	sis190_soft_reset(ioaddr);
 out:
-	return dev;
+	वापस dev;
 
-err_free_res_3:
+err_मुक्त_res_3:
 	pci_release_regions(pdev);
 err_pci_disable_2:
 	pci_disable_device(pdev);
-err_free_dev_1:
-	free_netdev(dev);
+err_मुक्त_dev_1:
+	मुक्त_netdev(dev);
 err_out_0:
 	dev = ERR_PTR(rc);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static void sis190_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	void __iomem *ioaddr = tp->mmio_addr;
-	u8 tmp8;
+अटल व्योम sis190_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = tp->mmio_addr;
+	u8 पंचांगp8;
 
-	/* Disable Tx, if not already */
-	tmp8 = SIS_R8(TxControl);
-	if (tmp8 & CmdTxEnb)
-		SIS_W8(TxControl, tmp8 & ~CmdTxEnb);
+	/* Disable Tx, अगर not alपढ़ोy */
+	पंचांगp8 = SIS_R8(TxControl);
+	अगर (पंचांगp8 & CmdTxEnb)
+		SIS_W8(TxControl, पंचांगp8 & ~CmdTxEnb);
 
-	netif_info(tp, tx_err, dev, "Transmit timeout, status %08x %08x\n",
+	netअगर_info(tp, tx_err, dev, "Transmit timeout, status %08x %08x\n",
 		   SIS_R32(TxControl), SIS_R32(TxSts));
 
-	/* Disable interrupts by clearing the interrupt mask. */
+	/* Disable पूर्णांकerrupts by clearing the पूर्णांकerrupt mask. */
 	SIS_W32(IntrMask, 0x0000);
 
-	/* Stop a shared interrupt from scavenging while we are. */
+	/* Stop a shared पूर्णांकerrupt from scavenging जबतक we are. */
 	spin_lock_irq(&tp->lock);
 	sis190_tx_clear(tp);
 	spin_unlock_irq(&tp->lock);
@@ -1573,92 +1574,92 @@ static void sis190_tx_timeout(struct net_device *dev, unsigned int txqueue)
 	/* ...and finally, reset everything. */
 	sis190_hw_start(dev);
 
-	netif_wake_queue(dev);
-}
+	netअगर_wake_queue(dev);
+पूर्ण
 
-static void sis190_set_rgmii(struct sis190_private *tp, u8 reg)
-{
+अटल व्योम sis190_set_rgmii(काष्ठा sis190_निजी *tp, u8 reg)
+अणु
 	tp->features |= (reg & 0x80) ? F_HAS_RGMII : 0;
-}
+पूर्ण
 
-static int sis190_get_mac_addr_from_eeprom(struct pci_dev *pdev,
-					   struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	void __iomem *ioaddr = tp->mmio_addr;
+अटल पूर्णांक sis190_get_mac_addr_from_eeprom(काष्ठा pci_dev *pdev,
+					   काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = tp->mmio_addr;
 	u16 sig;
-	int i;
+	पूर्णांक i;
 
-	if (netif_msg_probe(tp))
+	अगर (netअगर_msg_probe(tp))
 		pr_info("%s: Read MAC address from EEPROM\n", pci_name(pdev));
 
-	/* Check to see if there is a sane EEPROM */
-	sig = (u16) sis190_read_eeprom(ioaddr, EEPROMSignature);
+	/* Check to see अगर there is a sane EEPROM */
+	sig = (u16) sis190_पढ़ो_eeprom(ioaddr, EEPROMSignature);
 
-	if ((sig == 0xffff) || (sig == 0x0000)) {
-		if (netif_msg_probe(tp))
+	अगर ((sig == 0xffff) || (sig == 0x0000)) अणु
+		अगर (netअगर_msg_probe(tp))
 			pr_info("%s: Error EEPROM read %x\n",
 				pci_name(pdev), sig);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* Get MAC address from EEPROM */
-	for (i = 0; i < ETH_ALEN / 2; i++) {
-		u16 w = sis190_read_eeprom(ioaddr, EEPROMMACAddr + i);
+	क्रम (i = 0; i < ETH_ALEN / 2; i++) अणु
+		u16 w = sis190_पढ़ो_eeprom(ioaddr, EEPROMMACAddr + i);
 
 		((__le16 *)dev->dev_addr)[i] = cpu_to_le16(w);
-	}
+	पूर्ण
 
-	sis190_set_rgmii(tp, sis190_read_eeprom(ioaddr, EEPROMInfo));
+	sis190_set_rgmii(tp, sis190_पढ़ो_eeprom(ioaddr, EEPROMInfo));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	sis190_get_mac_addr_from_apc - Get MAC address for SiS96x model
+ *	sis190_get_mac_addr_from_apc - Get MAC address क्रम SiS96x model
  *	@pdev: PCI device
- *	@dev:  network device to get address for
+ *	@dev:  network device to get address क्रम
  *
  *	SiS96x model, use APC CMOS RAM to store MAC address.
  *	APC CMOS RAM is accessed through ISA bridge.
- *	MAC address is read into @net_dev->dev_addr.
+ *	MAC address is पढ़ो पूर्णांकo @net_dev->dev_addr.
  */
-static int sis190_get_mac_addr_from_apc(struct pci_dev *pdev,
-					struct net_device *dev)
-{
-	static const u16 ids[] = { 0x0965, 0x0966, 0x0968 };
-	struct sis190_private *tp = netdev_priv(dev);
-	struct pci_dev *isa_bridge;
-	u8 reg, tmp8;
-	unsigned int i;
+अटल पूर्णांक sis190_get_mac_addr_from_apc(काष्ठा pci_dev *pdev,
+					काष्ठा net_device *dev)
+अणु
+	अटल स्थिर u16 ids[] = अणु 0x0965, 0x0966, 0x0968 पूर्ण;
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	काष्ठा pci_dev *isa_bridge;
+	u8 reg, पंचांगp8;
+	अचिन्हित पूर्णांक i;
 
-	if (netif_msg_probe(tp))
+	अगर (netअगर_msg_probe(tp))
 		pr_info("%s: Read MAC address from APC\n", pci_name(pdev));
 
-	for (i = 0; i < ARRAY_SIZE(ids); i++) {
-		isa_bridge = pci_get_device(PCI_VENDOR_ID_SI, ids[i], NULL);
-		if (isa_bridge)
-			break;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(ids); i++) अणु
+		isa_bridge = pci_get_device(PCI_VENDOR_ID_SI, ids[i], शून्य);
+		अगर (isa_bridge)
+			अवरोध;
+	पूर्ण
 
-	if (!isa_bridge) {
-		if (netif_msg_probe(tp))
+	अगर (!isa_bridge) अणु
+		अगर (netअगर_msg_probe(tp))
 			pr_info("%s: Can not find ISA bridge\n",
 				pci_name(pdev));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* Enable port 78h & 79h to access APC Registers. */
-	pci_read_config_byte(isa_bridge, 0x48, &tmp8);
-	reg = (tmp8 & ~0x02);
-	pci_write_config_byte(isa_bridge, 0x48, reg);
+	pci_पढ़ो_config_byte(isa_bridge, 0x48, &पंचांगp8);
+	reg = (पंचांगp8 & ~0x02);
+	pci_ग_लिखो_config_byte(isa_bridge, 0x48, reg);
 	udelay(50);
-	pci_read_config_byte(isa_bridge, 0x48, &reg);
+	pci_पढ़ो_config_byte(isa_bridge, 0x48, &reg);
 
-        for (i = 0; i < ETH_ALEN; i++) {
+        क्रम (i = 0; i < ETH_ALEN; i++) अणु
                 outb(0x9 + i, 0x78);
                 dev->dev_addr[i] = inb(0x79);
-        }
+        पूर्ण
 
 	outb(0x12, 0x78);
 	reg = inb(0x79);
@@ -1666,11 +1667,11 @@ static int sis190_get_mac_addr_from_apc(struct pci_dev *pdev,
 	sis190_set_rgmii(tp, reg);
 
 	/* Restore the value to ISA Bridge */
-	pci_write_config_byte(isa_bridge, 0x48, tmp8);
+	pci_ग_लिखो_config_byte(isa_bridge, 0x48, पंचांगp8);
 	pci_dev_put(isa_bridge);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *      sis190_init_rxfilter - Initialize the Rx filter
@@ -1679,136 +1680,136 @@ static int sis190_get_mac_addr_from_apc(struct pci_dev *pdev,
  *      Set receive filter address to our MAC address
  *      and enable packet filtering.
  */
-static inline void sis190_init_rxfilter(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	void __iomem *ioaddr = tp->mmio_addr;
+अटल अंतरभूत व्योम sis190_init_rxfilter(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = tp->mmio_addr;
 	u16 ctl;
-	int i;
+	पूर्णांक i;
 
 	ctl = SIS_R16(RxMacControl);
 	/*
-	 * Disable packet filtering before setting filter.
-	 * Note: SiS's driver writes 32 bits but RxMacControl is 16 bits
+	 * Disable packet filtering beक्रमe setting filter.
+	 * Note: SiS's driver ग_लिखोs 32 bits but RxMacControl is 16 bits
 	 * only and followed by RxMacAddr (6 bytes). Strange. -- FR
 	 */
 	SIS_W16(RxMacControl, ctl & ~0x0f00);
 
-	for (i = 0; i < ETH_ALEN; i++)
+	क्रम (i = 0; i < ETH_ALEN; i++)
 		SIS_W8(RxMacAddr + i, dev->dev_addr[i]);
 
 	SIS_W16(RxMacControl, ctl);
 	SIS_PCI_COMMIT();
-}
+पूर्ण
 
-static int sis190_get_mac_addr(struct pci_dev *pdev, struct net_device *dev)
-{
-	int rc;
+अटल पूर्णांक sis190_get_mac_addr(काष्ठा pci_dev *pdev, काष्ठा net_device *dev)
+अणु
+	पूर्णांक rc;
 
 	rc = sis190_get_mac_addr_from_eeprom(pdev, dev);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		u8 reg;
 
-		pci_read_config_byte(pdev, 0x73, &reg);
+		pci_पढ़ो_config_byte(pdev, 0x73, &reg);
 
-		if (reg & 0x00000001)
+		अगर (reg & 0x00000001)
 			rc = sis190_get_mac_addr_from_apc(pdev, dev);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void sis190_set_speed_auto(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	void __iomem *ioaddr = tp->mmio_addr;
-	int phy_id = tp->mii_if.phy_id;
-	int val;
+अटल व्योम sis190_set_speed_स्वतः(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = tp->mmio_addr;
+	पूर्णांक phy_id = tp->mii_अगर.phy_id;
+	पूर्णांक val;
 
-	netif_info(tp, link, dev, "Enabling Auto-negotiation\n");
+	netअगर_info(tp, link, dev, "Enabling Auto-negotiation\n");
 
-	val = mdio_read(ioaddr, phy_id, MII_ADVERTISE);
+	val = mdio_पढ़ो(ioaddr, phy_id, MII_ADVERTISE);
 
 	// Enable 10/100 Full/Half Mode, leave MII_ADVERTISE bit4:0
 	// unchanged.
-	mdio_write(ioaddr, phy_id, MII_ADVERTISE, (val & ADVERTISE_SLCT) |
+	mdio_ग_लिखो(ioaddr, phy_id, MII_ADVERTISE, (val & ADVERTISE_SLCT) |
 		   ADVERTISE_100FULL | ADVERTISE_10FULL |
 		   ADVERTISE_100HALF | ADVERTISE_10HALF);
 
 	// Enable 1000 Full Mode.
-	mdio_write(ioaddr, phy_id, MII_CTRL1000, ADVERTISE_1000FULL);
+	mdio_ग_लिखो(ioaddr, phy_id, MII_CTRL1000, ADVERTISE_1000FULL);
 
-	// Enable auto-negotiation and restart auto-negotiation.
-	mdio_write(ioaddr, phy_id, MII_BMCR,
+	// Enable स्वतः-negotiation and restart स्वतः-negotiation.
+	mdio_ग_लिखो(ioaddr, phy_id, MII_BMCR,
 		   BMCR_ANENABLE | BMCR_ANRESTART | BMCR_RESET);
-}
+पूर्ण
 
-static int sis190_get_link_ksettings(struct net_device *dev,
-				     struct ethtool_link_ksettings *cmd)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल पूर्णांक sis190_get_link_ksettings(काष्ठा net_device *dev,
+				     काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	mii_ethtool_get_link_ksettings(&tp->mii_if, cmd);
+	mii_ethtool_get_link_ksettings(&tp->mii_अगर, cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sis190_set_link_ksettings(struct net_device *dev,
-				     const struct ethtool_link_ksettings *cmd)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल पूर्णांक sis190_set_link_ksettings(काष्ठा net_device *dev,
+				     स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	return mii_ethtool_set_link_ksettings(&tp->mii_if, cmd);
-}
+	वापस mii_ethtool_set_link_ksettings(&tp->mii_अगर, cmd);
+पूर्ण
 
-static void sis190_get_drvinfo(struct net_device *dev,
-			       struct ethtool_drvinfo *info)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल व्योम sis190_get_drvinfo(काष्ठा net_device *dev,
+			       काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
-	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
+	strlcpy(info->driver, DRV_NAME, माप(info->driver));
+	strlcpy(info->version, DRV_VERSION, माप(info->version));
 	strlcpy(info->bus_info, pci_name(tp->pci_dev),
-		sizeof(info->bus_info));
-}
+		माप(info->bus_info));
+पूर्ण
 
-static int sis190_get_regs_len(struct net_device *dev)
-{
-	return SIS190_REGS_SIZE;
-}
+अटल पूर्णांक sis190_get_regs_len(काष्ठा net_device *dev)
+अणु
+	वापस SIS190_REGS_SIZE;
+पूर्ण
 
-static void sis190_get_regs(struct net_device *dev, struct ethtool_regs *regs,
-			    void *p)
-{
-	struct sis190_private *tp = netdev_priv(dev);
-	unsigned long flags;
+अटल व्योम sis190_get_regs(काष्ठा net_device *dev, काष्ठा ethtool_regs *regs,
+			    व्योम *p)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&tp->lock, flags);
-	memcpy_fromio(p, tp->mmio_addr, regs->len);
+	स_नकल_fromio(p, tp->mmio_addr, regs->len);
 	spin_unlock_irqrestore(&tp->lock, flags);
-}
+पूर्ण
 
-static int sis190_nway_reset(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल पूर्णांक sis190_nway_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	return mii_nway_restart(&tp->mii_if);
-}
+	वापस mii_nway_restart(&tp->mii_अगर);
+पूर्ण
 
-static u32 sis190_get_msglevel(struct net_device *dev)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल u32 sis190_get_msglevel(काष्ठा net_device *dev)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	return tp->msg_enable;
-}
+	वापस tp->msg_enable;
+पूर्ण
 
-static void sis190_set_msglevel(struct net_device *dev, u32 value)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल व्योम sis190_set_msglevel(काष्ठा net_device *dev, u32 value)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
 	tp->msg_enable = value;
-}
+पूर्ण
 
-static const struct ethtool_ops sis190_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops sis190_ethtool_ops = अणु
 	.get_drvinfo	= sis190_get_drvinfo,
 	.get_regs_len	= sis190_get_regs_len,
 	.get_regs	= sis190_get_regs,
@@ -1818,60 +1819,60 @@ static const struct ethtool_ops sis190_ethtool_ops = {
 	.nway_reset	= sis190_nway_reset,
 	.get_link_ksettings = sis190_get_link_ksettings,
 	.set_link_ksettings = sis190_set_link_ksettings,
-};
+पूर्ण;
 
-static int sis190_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	struct sis190_private *tp = netdev_priv(dev);
+अटल पूर्णांक sis190_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	return !netif_running(dev) ? -EINVAL :
-		generic_mii_ioctl(&tp->mii_if, if_mii(ifr), cmd, NULL);
-}
+	वापस !netअगर_running(dev) ? -EINVAL :
+		generic_mii_ioctl(&tp->mii_अगर, अगर_mii(अगरr), cmd, शून्य);
+पूर्ण
 
-static int sis190_mac_addr(struct net_device  *dev, void *p)
-{
-	int rc;
+अटल पूर्णांक sis190_mac_addr(काष्ठा net_device  *dev, व्योम *p)
+अणु
+	पूर्णांक rc;
 
 	rc = eth_mac_addr(dev, p);
-	if (!rc)
+	अगर (!rc)
 		sis190_init_rxfilter(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct net_device_ops sis190_netdev_ops = {
-	.ndo_open		= sis190_open,
-	.ndo_stop		= sis190_close,
-	.ndo_do_ioctl		= sis190_ioctl,
-	.ndo_start_xmit		= sis190_start_xmit,
-	.ndo_tx_timeout		= sis190_tx_timeout,
-	.ndo_set_rx_mode	= sis190_set_rx_mode,
-	.ndo_set_mac_address	= sis190_mac_addr,
-	.ndo_validate_addr	= eth_validate_addr,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	 = sis190_netpoll,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops sis190_netdev_ops = अणु
+	.nकरो_खोलो		= sis190_खोलो,
+	.nकरो_stop		= sis190_बंद,
+	.nकरो_करो_ioctl		= sis190_ioctl,
+	.nकरो_start_xmit		= sis190_start_xmit,
+	.nकरो_tx_समयout		= sis190_tx_समयout,
+	.nकरो_set_rx_mode	= sis190_set_rx_mode,
+	.nकरो_set_mac_address	= sis190_mac_addr,
+	.nकरो_validate_addr	= eth_validate_addr,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	 = sis190_netpoll,
+#पूर्ण_अगर
+पूर्ण;
 
-static int sis190_init_one(struct pci_dev *pdev,
-			   const struct pci_device_id *ent)
-{
-	static int printed_version = 0;
-	struct sis190_private *tp;
-	struct net_device *dev;
-	void __iomem *ioaddr;
-	int rc;
+अटल पूर्णांक sis190_init_one(काष्ठा pci_dev *pdev,
+			   स्थिर काष्ठा pci_device_id *ent)
+अणु
+	अटल पूर्णांक prपूर्णांकed_version = 0;
+	काष्ठा sis190_निजी *tp;
+	काष्ठा net_device *dev;
+	व्योम __iomem *ioaddr;
+	पूर्णांक rc;
 
-	if (!printed_version) {
-		if (netif_msg_drv(&debug))
+	अगर (!prपूर्णांकed_version) अणु
+		अगर (netअगर_msg_drv(&debug))
 			pr_info(SIS190_DRIVER_NAME " loaded\n");
-		printed_version = 1;
-	}
+		prपूर्णांकed_version = 1;
+	पूर्ण
 
 	dev = sis190_init_board(pdev);
-	if (IS_ERR(dev)) {
+	अगर (IS_ERR(dev)) अणु
 		rc = PTR_ERR(dev);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pci_set_drvdata(pdev, dev);
 
@@ -1879,8 +1880,8 @@ static int sis190_init_one(struct pci_dev *pdev,
 	ioaddr = tp->mmio_addr;
 
 	rc = sis190_get_mac_addr(pdev, dev);
-	if (rc < 0)
-		goto err_release_board;
+	अगर (rc < 0)
+		जाओ err_release_board;
 
 	sis190_init_rxfilter(dev);
 
@@ -1889,56 +1890,56 @@ static int sis190_init_one(struct pci_dev *pdev,
 	dev->netdev_ops = &sis190_netdev_ops;
 
 	dev->ethtool_ops = &sis190_ethtool_ops;
-	dev->watchdog_timeo = SIS190_TX_TIMEOUT;
+	dev->watchकरोg_समयo = SIS190_TX_TIMEOUT;
 
 	spin_lock_init(&tp->lock);
 
 	rc = sis190_mii_probe(dev);
-	if (rc < 0)
-		goto err_release_board;
+	अगर (rc < 0)
+		जाओ err_release_board;
 
-	rc = register_netdev(dev);
-	if (rc < 0)
-		goto err_remove_mii;
+	rc = रेजिस्टर_netdev(dev);
+	अगर (rc < 0)
+		जाओ err_हटाओ_mii;
 
-	if (netif_msg_probe(tp)) {
+	अगर (netअगर_msg_probe(tp)) अणु
 		netdev_info(dev, "%s: %s at %p (IRQ: %d), %pM\n",
 			    pci_name(pdev),
 			    sis_chip_info[ent->driver_data].name,
 			    ioaddr, pdev->irq, dev->dev_addr);
 		netdev_info(dev, "%s mode.\n",
 			    (tp->features & F_HAS_RGMII) ? "RGMII" : "GMII");
-	}
+	पूर्ण
 
-	netif_carrier_off(dev);
+	netअगर_carrier_off(dev);
 
-	sis190_set_speed_auto(dev);
+	sis190_set_speed_स्वतः(dev);
 out:
-	return rc;
+	वापस rc;
 
-err_remove_mii:
-	sis190_mii_remove(dev);
+err_हटाओ_mii:
+	sis190_mii_हटाओ(dev);
 err_release_board:
 	sis190_release_board(pdev);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static void sis190_remove_one(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
-	struct sis190_private *tp = netdev_priv(dev);
+अटल व्योम sis190_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
+	काष्ठा sis190_निजी *tp = netdev_priv(dev);
 
-	sis190_mii_remove(dev);
+	sis190_mii_हटाओ(dev);
 	cancel_work_sync(&tp->phy_task);
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 	sis190_release_board(pdev);
-}
+पूर्ण
 
-static struct pci_driver sis190_pci_driver = {
+अटल काष्ठा pci_driver sis190_pci_driver = अणु
 	.name		= DRV_NAME,
 	.id_table	= sis190_pci_tbl,
 	.probe		= sis190_init_one,
-	.remove		= sis190_remove_one,
-};
+	.हटाओ		= sis190_हटाओ_one,
+पूर्ण;
 
 module_pci_driver(sis190_pci_driver);

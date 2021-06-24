@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MPL-1.1)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MPL-1.1)
 /*======================================================================
 
-    A driver for PCMCIA serial devices
+    A driver क्रम PCMCIA serial devices
 
     serial_cs.c 1.134 2002/05/04 05:48:53
 
@@ -12,44 +13,44 @@
 
     Software distributed under the License is distributed on an "AS
     IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
-    implied. See the License for the specific language governing
+    implied. See the License क्रम the specअगरic language governing
     rights and limitations under the License.
 
     The initial developer of the original code is David A. Hinds
-    <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
+    <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
     are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
 
     Alternatively, the contents of this file may be used under the
     terms of the GNU General Public License version 2 (the "GPL"), in which
-    case the provisions of the GPL are applicable instead of the
+    हाल the provisions of the GPL are applicable instead of the
     above.  If you wish to allow the use of your version of this file
     only under the terms of the GPL and not to allow others to use
     your version of this file under the MPL, indicate your decision
     by deleting the provisions above and replace them with the notice
-    and other provisions required by the GPL.  If you do not delete
+    and other provisions required by the GPL.  If you करो not delete
     the provisions above, a recipient may use your version of this
     file under either the MPL or the GPL.
 
 ======================================================================*/
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/ptrace.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/serial_core.h>
-#include <linux/delay.h>
-#include <linux/major.h>
-#include <asm/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/major.h>
+#समावेश <यंत्र/पन.स>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/ciscode.h>
-#include <pcmcia/ds.h>
-#include <pcmcia/cisreg.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/ciscode.h>
+#समावेश <pcmcia/ds.h>
+#समावेश <pcmcia/cisreg.h>
 
-#include "8250.h"
+#समावेश "8250.h"
 
 
 /*====================================================================*/
@@ -57,107 +58,107 @@
 /* Parameters that can be set with 'insmod' */
 
 /* Enable the speaker? */
-static int do_sound = 1;
+अटल पूर्णांक करो_sound = 1;
 /* Skip strict UART tests? */
-static int buggy_uart;
+अटल पूर्णांक buggy_uart;
 
-module_param(do_sound, int, 0444);
-module_param(buggy_uart, int, 0444);
+module_param(करो_sound, पूर्णांक, 0444);
+module_param(buggy_uart, पूर्णांक, 0444);
 
 /*====================================================================*/
 
 /* Table of multi-port card ID's */
 
-struct serial_quirk {
-	unsigned int manfid;
-	unsigned int prodid;
-	int multi;		/* 1 = multifunction, > 1 = # ports */
-	void (*config)(struct pcmcia_device *);
-	void (*setup)(struct pcmcia_device *, struct uart_8250_port *);
-	void (*wakeup)(struct pcmcia_device *);
-	int (*post)(struct pcmcia_device *);
-};
+काष्ठा serial_quirk अणु
+	अचिन्हित पूर्णांक manfid;
+	अचिन्हित पूर्णांक prodid;
+	पूर्णांक multi;		/* 1 = multअगरunction, > 1 = # ports */
+	व्योम (*config)(काष्ठा pcmcia_device *);
+	व्योम (*setup)(काष्ठा pcmcia_device *, काष्ठा uart_8250_port *);
+	व्योम (*wakeup)(काष्ठा pcmcia_device *);
+	पूर्णांक (*post)(काष्ठा pcmcia_device *);
+पूर्ण;
 
-struct serial_info {
-	struct pcmcia_device	*p_dev;
-	int			ndev;
-	int			multi;
-	int			slave;
-	int			manfid;
-	int			prodid;
-	int			c950ctrl;
-	int			line[4];
-	const struct serial_quirk *quirk;
-};
+काष्ठा serial_info अणु
+	काष्ठा pcmcia_device	*p_dev;
+	पूर्णांक			ndev;
+	पूर्णांक			multi;
+	पूर्णांक			slave;
+	पूर्णांक			manfid;
+	पूर्णांक			prodid;
+	पूर्णांक			c950ctrl;
+	पूर्णांक			line[4];
+	स्थिर काष्ठा serial_quirk *quirk;
+पूर्ण;
 
-struct serial_cfg_mem {
+काष्ठा serial_cfg_mem अणु
 	tuple_t tuple;
 	cisparse_t parse;
-	u_char buf[256];
-};
+	u_अक्षर buf[256];
+पूर्ण;
 
 /*
  * vers_1 5.0, "Brain Boxes", "2-Port RS232 card", "r6"
  * manfid 0x0160, 0x0104
- * This card appears to have a 14.7456MHz clock.
+ * This card appears to have a 14.7456MHz घड़ी.
  */
 /* Generic Modem: MD55x (GPRS/EDGE) have
  * Elan VPU16551 UART with 14.7456MHz oscillator
  * manfid 0x015D, 0x4C45
  */
-static void quirk_setup_brainboxes_0104(struct pcmcia_device *link, struct uart_8250_port *uart)
-{
+अटल व्योम quirk_setup_brainboxes_0104(काष्ठा pcmcia_device *link, काष्ठा uart_8250_port *uart)
+अणु
 	uart->port.uartclk = 14745600;
-}
+पूर्ण
 
-static int quirk_post_ibm(struct pcmcia_device *link)
-{
+अटल पूर्णांक quirk_post_ibm(काष्ठा pcmcia_device *link)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = pcmcia_read_config_byte(link, 0x800, &val);
-	if (ret)
-		goto failed;
+	ret = pcmcia_पढ़ो_config_byte(link, 0x800, &val);
+	अगर (ret)
+		जाओ failed;
 
-	ret = pcmcia_write_config_byte(link, 0x800, val | 1);
-	if (ret)
-		goto failed;
-	return 0;
+	ret = pcmcia_ग_लिखो_config_byte(link, 0x800, val | 1);
+	अगर (ret)
+		जाओ failed;
+	वापस 0;
 
  failed:
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /*
  * Nokia cards are not really multiport cards.  Shouldn't this
  * be handled by setting the quirk entry .multi = 0 | 1 ?
  */
-static void quirk_config_nokia(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
+अटल व्योम quirk_config_nokia(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
 
-	if (info->multi > 1)
+	अगर (info->multi > 1)
 		info->multi = 1;
-}
+पूर्ण
 
-static void quirk_wakeup_oxsemi(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
+अटल व्योम quirk_wakeup_oxsemi(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
 
-	if (info->c950ctrl)
+	अगर (info->c950ctrl)
 		outb(12, info->c950ctrl + 1);
-}
+पूर्ण
 
-/* request_region? oxsemi branch does no request_region too... */
+/* request_region? oxsemi branch करोes no request_region too... */
 /*
  * This sequence is needed to properly initialize MC45 attached to OXCF950.
  * I tried decreasing these msleep()s, but it worked properly (survived
- * 1000 stop/start operations) with these timeouts (or bigger).
+ * 1000 stop/start operations) with these समयouts (or bigger).
  */
-static void quirk_wakeup_possio_gcc(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
-	unsigned int ctrl = info->c950ctrl;
+अटल व्योम quirk_wakeup_possio_gcc(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
+	अचिन्हित पूर्णांक ctrl = info->c950ctrl;
 
 	outb(0xA, ctrl + 1);
 	msleep(100);
@@ -172,511 +173,511 @@ static void quirk_wakeup_possio_gcc(struct pcmcia_device *link)
 	outb(0xE, ctrl + 1);
 	msleep(100);
 	outb(0xC, ctrl + 1);
-}
+पूर्ण
 
 /*
- * Socket Dual IO: this enables irq's for second port
+ * Socket Dual IO: this enables irq's क्रम second port
  */
-static void quirk_config_socket(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
+अटल व्योम quirk_config_socket(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
 
-	if (info->multi)
+	अगर (info->multi)
 		link->config_flags |= CONF_ENABLE_ESR;
-}
+पूर्ण
 
-static const struct serial_quirk quirks[] = {
-	{
+अटल स्थिर काष्ठा serial_quirk quirks[] = अणु
+	अणु
 		.manfid	= 0x0160,
 		.prodid	= 0x0104,
 		.multi	= -1,
 		.setup	= quirk_setup_brainboxes_0104,
-	}, {
+	पूर्ण, अणु
 		.manfid	= 0x015D,
 		.prodid	= 0x4C45,
 		.multi	= -1,
 		.setup	= quirk_setup_brainboxes_0104,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_IBM,
 		.prodid	= ~0,
 		.multi	= -1,
 		.post	= quirk_post_ibm,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_INTEL,
 		.prodid	= PRODID_INTEL_DUAL_RS232,
 		.multi	= 2,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_NATINST,
 		.prodid	= PRODID_NATINST_QUAD_RS232,
 		.multi	= 4,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_NOKIA,
 		.prodid	= ~0,
 		.multi	= -1,
 		.config	= quirk_config_nokia,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_OMEGA,
 		.prodid	= PRODID_OMEGA_QSP_100,
 		.multi	= 4,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_OXSEMI,
 		.prodid	= ~0,
 		.multi	= -1,
 		.wakeup	= quirk_wakeup_oxsemi,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_POSSIO,
 		.prodid	= PRODID_POSSIO_GCC,
 		.multi	= -1,
 		.wakeup	= quirk_wakeup_possio_gcc,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_QUATECH,
 		.prodid	= PRODID_QUATECH_DUAL_RS232,
 		.multi	= 2,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_QUATECH,
 		.prodid	= PRODID_QUATECH_DUAL_RS232_D1,
 		.multi	= 2,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_QUATECH,
 		.prodid	= PRODID_QUATECH_DUAL_RS232_G,
 		.multi	= 2,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_QUATECH,
 		.prodid	= PRODID_QUATECH_QUAD_RS232,
 		.multi	= 4,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_SOCKET,
 		.prodid	= PRODID_SOCKET_DUAL_RS232,
 		.multi	= 2,
 		.config	= quirk_config_socket,
-	}, {
+	पूर्ण, अणु
 		.manfid	= MANFID_SOCKET,
 		.prodid	= ~0,
 		.multi	= -1,
 		.config	= quirk_config_socket,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 
-static int serial_config(struct pcmcia_device *link);
+अटल पूर्णांक serial_config(काष्ठा pcmcia_device *link);
 
 
-static void serial_remove(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
-	int i;
+अटल व्योम serial_हटाओ(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
+	पूर्णांक i;
 
 	dev_dbg(&link->dev, "serial_release\n");
 
 	/*
-	 * Recheck to see if the device is still configured.
+	 * Recheck to see अगर the device is still configured.
 	 */
-	for (i = 0; i < info->ndev; i++)
-		serial8250_unregister_port(info->line[i]);
+	क्रम (i = 0; i < info->ndev; i++)
+		serial8250_unरेजिस्टर_port(info->line[i]);
 
-	if (!info->slave)
+	अगर (!info->slave)
 		pcmcia_disable_device(link);
-}
+पूर्ण
 
-static int serial_suspend(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
-	int i;
+अटल पूर्णांक serial_suspend(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
+	पूर्णांक i;
 
-	for (i = 0; i < info->ndev; i++)
+	क्रम (i = 0; i < info->ndev; i++)
 		serial8250_suspend_port(info->line[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int serial_resume(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
-	int i;
+अटल पूर्णांक serial_resume(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
+	पूर्णांक i;
 
-	for (i = 0; i < info->ndev; i++)
+	क्रम (i = 0; i < info->ndev; i++)
 		serial8250_resume_port(info->line[i]);
 
-	if (info->quirk && info->quirk->wakeup)
+	अगर (info->quirk && info->quirk->wakeup)
 		info->quirk->wakeup(link);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int serial_probe(struct pcmcia_device *link)
-{
-	struct serial_info *info;
+अटल पूर्णांक serial_probe(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info;
 
 	dev_dbg(&link->dev, "serial_attach()\n");
 
 	/* Create new serial device */
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 	info->p_dev = link;
 	link->priv = info;
 
 	link->config_flags |= CONF_ENABLE_IRQ | CONF_AUTO_SET_IO;
-	if (do_sound)
+	अगर (करो_sound)
 		link->config_flags |= CONF_ENABLE_SPKR;
 
-	return serial_config(link);
-}
+	वापस serial_config(link);
+पूर्ण
 
-static void serial_detach(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
+अटल व्योम serial_detach(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
 
 	dev_dbg(&link->dev, "serial_detach\n");
 
 	/*
 	 * Ensure that the ports have been released.
 	 */
-	serial_remove(link);
+	serial_हटाओ(link);
 
-	/* free bits */
-	kfree(info);
-}
+	/* मुक्त bits */
+	kमुक्त(info);
+पूर्ण
 
 /*====================================================================*/
 
-static int setup_serial(struct pcmcia_device *handle, struct serial_info *info,
-			unsigned int iobase, int irq)
-{
-	struct uart_8250_port uart;
-	int line;
+अटल पूर्णांक setup_serial(काष्ठा pcmcia_device *handle, काष्ठा serial_info *info,
+			अचिन्हित पूर्णांक iobase, पूर्णांक irq)
+अणु
+	काष्ठा uart_8250_port uart;
+	पूर्णांक line;
 
-	memset(&uart, 0, sizeof(uart));
+	स_रखो(&uart, 0, माप(uart));
 	uart.port.iobase = iobase;
 	uart.port.irq = irq;
 	uart.port.flags = UPF_BOOT_AUTOCONF | UPF_SKIP_TEST | UPF_SHARE_IRQ;
 	uart.port.uartclk = 1843200;
 	uart.port.dev = &handle->dev;
-	if (buggy_uart)
+	अगर (buggy_uart)
 		uart.port.flags |= UPF_BUGGY_UART;
 
-	if (info->quirk && info->quirk->setup)
+	अगर (info->quirk && info->quirk->setup)
 		info->quirk->setup(handle, &uart);
 
-	line = serial8250_register_8250_port(&uart);
-	if (line < 0) {
+	line = serial8250_रेजिस्टर_8250_port(&uart);
+	अगर (line < 0) अणु
 		pr_err("serial_cs: serial8250_register_8250_port() at 0x%04lx, irq %d failed\n",
-							(unsigned long)iobase, irq);
-		return -EINVAL;
-	}
+							(अचिन्हित दीर्घ)iobase, irq);
+		वापस -EINVAL;
+	पूर्ण
 
 	info->line[info->ndev] = line;
 	info->ndev++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*====================================================================*/
 
-static int pfc_config(struct pcmcia_device *p_dev)
-{
-	unsigned int port = 0;
-	struct serial_info *info = p_dev->priv;
+अटल पूर्णांक pfc_config(काष्ठा pcmcia_device *p_dev)
+अणु
+	अचिन्हित पूर्णांक port = 0;
+	काष्ठा serial_info *info = p_dev->priv;
 
-	if ((p_dev->resource[1]->end != 0) &&
-		(resource_size(p_dev->resource[1]) == 8)) {
+	अगर ((p_dev->resource[1]->end != 0) &&
+		(resource_size(p_dev->resource[1]) == 8)) अणु
 		port = p_dev->resource[1]->start;
 		info->slave = 1;
-	} else if ((info->manfid == MANFID_OSITECH) &&
-		(resource_size(p_dev->resource[0]) == 0x40)) {
+	पूर्ण अन्यथा अगर ((info->manfid == MANFID_OSITECH) &&
+		(resource_size(p_dev->resource[0]) == 0x40)) अणु
 		port = p_dev->resource[0]->start + 0x28;
 		info->slave = 1;
-	}
-	if (info->slave)
-		return setup_serial(p_dev, info, port, p_dev->irq);
+	पूर्ण
+	अगर (info->slave)
+		वापस setup_serial(p_dev, info, port, p_dev->irq);
 
 	dev_warn(&p_dev->dev, "no usable port range found, giving up\n");
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int simple_config_check(struct pcmcia_device *p_dev, void *priv_data)
-{
-	static const int size_table[2] = { 8, 16 };
-	int *try = priv_data;
+अटल पूर्णांक simple_config_check(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
+अणु
+	अटल स्थिर पूर्णांक माप_प्रकारable[2] = अणु 8, 16 पूर्ण;
+	पूर्णांक *try = priv_data;
 
-	if (p_dev->resource[0]->start == 0)
-		return -ENODEV;
+	अगर (p_dev->resource[0]->start == 0)
+		वापस -ENODEV;
 
-	if ((*try & 0x1) == 0)
+	अगर ((*try & 0x1) == 0)
 		p_dev->io_lines = 16;
 
-	if (p_dev->resource[0]->end != size_table[(*try >> 1)])
-		return -ENODEV;
+	अगर (p_dev->resource[0]->end != माप_प्रकारable[(*try >> 1)])
+		वापस -ENODEV;
 
 	p_dev->resource[0]->end = 8;
 	p_dev->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
 	p_dev->resource[0]->flags |= IO_DATA_PATH_WIDTH_8;
 
-	return pcmcia_request_io(p_dev);
-}
+	वापस pcmcia_request_io(p_dev);
+पूर्ण
 
-static int simple_config_check_notpicky(struct pcmcia_device *p_dev,
-					void *priv_data)
-{
-	static const unsigned int base[5] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8, 0x0 };
-	int j;
+अटल पूर्णांक simple_config_check_notpicky(काष्ठा pcmcia_device *p_dev,
+					व्योम *priv_data)
+अणु
+	अटल स्थिर अचिन्हित पूर्णांक base[5] = अणु 0x3f8, 0x2f8, 0x3e8, 0x2e8, 0x0 पूर्ण;
+	पूर्णांक j;
 
-	if (p_dev->io_lines > 3)
-		return -ENODEV;
+	अगर (p_dev->io_lines > 3)
+		वापस -ENODEV;
 
 	p_dev->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
 	p_dev->resource[0]->flags |= IO_DATA_PATH_WIDTH_8;
 	p_dev->resource[0]->end = 8;
 
-	for (j = 0; j < 5; j++) {
+	क्रम (j = 0; j < 5; j++) अणु
 		p_dev->resource[0]->start = base[j];
 		p_dev->io_lines = base[j] ? 16 : 3;
-		if (!pcmcia_request_io(p_dev))
-			return 0;
-	}
-	return -ENODEV;
-}
+		अगर (!pcmcia_request_io(p_dev))
+			वापस 0;
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
 
-static int simple_config(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
-	int ret, try;
+अटल पूर्णांक simple_config(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
+	पूर्णांक ret, try;
 
 	/*
-	 * First pass: look for a config entry that looks normal.
+	 * First pass: look क्रम a config entry that looks normal.
 	 * Two tries: without IO aliases, then with aliases.
 	 */
 	link->config_flags |= CONF_AUTO_SET_VPP;
-	for (try = 0; try < 4; try++)
-		if (!pcmcia_loop_config(link, simple_config_check, &try))
-			goto found_port;
+	क्रम (try = 0; try < 4; try++)
+		अगर (!pcmcia_loop_config(link, simple_config_check, &try))
+			जाओ found_port;
 
 	/*
 	 * Second pass: try to find an entry that isn't picky about
 	 * its base address, then try to grab any standard serial port
-	 * address, and finally try to get any free port.
+	 * address, and finally try to get any मुक्त port.
 	 */
-	ret = pcmcia_loop_config(link, simple_config_check_notpicky, NULL);
-	if (ret) {
+	ret = pcmcia_loop_config(link, simple_config_check_notpicky, शून्य);
+	अगर (ret) अणु
 		dev_warn(&link->dev, "no usable port range found, giving up\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 found_port:
-	if (info->multi && (info->manfid == MANFID_3COM))
+	अगर (info->multi && (info->manfid == MANFID_3COM))
 		link->config_index &= ~(0x08);
 
 	/*
 	 * Apply any configuration quirks.
 	 */
-	if (info->quirk && info->quirk->config)
+	अगर (info->quirk && info->quirk->config)
 		info->quirk->config(link);
 
 	ret = pcmcia_enable_device(link);
-	if (ret != 0)
-		return ret;
-	return setup_serial(link, info, link->resource[0]->start, link->irq);
-}
+	अगर (ret != 0)
+		वापस ret;
+	वापस setup_serial(link, info, link->resource[0]->start, link->irq);
+पूर्ण
 
-static int multi_config_check(struct pcmcia_device *p_dev, void *priv_data)
-{
-	int *multi = priv_data;
+अटल पूर्णांक multi_config_check(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
+अणु
+	पूर्णांक *multi = priv_data;
 
-	if (p_dev->resource[1]->end)
-		return -EINVAL;
+	अगर (p_dev->resource[1]->end)
+		वापस -EINVAL;
 
 	/*
-	 * The quad port cards have bad CIS's, so just look for a
-	 * window larger than 8 ports and assume it will be right.
+	 * The quad port cards have bad CIS's, so just look क्रम a
+	 * winकरोw larger than 8 ports and assume it will be right.
 	 */
-	if (p_dev->resource[0]->end <= 8)
-		return -EINVAL;
+	अगर (p_dev->resource[0]->end <= 8)
+		वापस -EINVAL;
 
 	p_dev->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
 	p_dev->resource[0]->flags |= IO_DATA_PATH_WIDTH_8;
 	p_dev->resource[0]->end = *multi * 8;
 
-	if (pcmcia_request_io(p_dev))
-		return -ENODEV;
-	return 0;
-}
+	अगर (pcmcia_request_io(p_dev))
+		वापस -ENODEV;
+	वापस 0;
+पूर्ण
 
-static int multi_config_check_notpicky(struct pcmcia_device *p_dev,
-				       void *priv_data)
-{
-	int *base2 = priv_data;
+अटल पूर्णांक multi_config_check_notpicky(काष्ठा pcmcia_device *p_dev,
+				       व्योम *priv_data)
+अणु
+	पूर्णांक *base2 = priv_data;
 
-	if (!p_dev->resource[0]->end || !p_dev->resource[1]->end ||
+	अगर (!p_dev->resource[0]->end || !p_dev->resource[1]->end ||
 		p_dev->resource[0]->start + 8 != p_dev->resource[1]->start)
-		return -ENODEV;
+		वापस -ENODEV;
 
 	p_dev->resource[0]->end = p_dev->resource[1]->end = 8;
 	p_dev->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
 	p_dev->resource[0]->flags |= IO_DATA_PATH_WIDTH_8;
 
-	if (pcmcia_request_io(p_dev))
-		return -ENODEV;
+	अगर (pcmcia_request_io(p_dev))
+		वापस -ENODEV;
 
 	*base2 = p_dev->resource[0]->start + 8;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int multi_config(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
-	int i, base2 = 0;
+अटल पूर्णांक multi_config(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
+	पूर्णांक i, base2 = 0;
 
-	/* First, look for a generic full-sized window */
-	if (!pcmcia_loop_config(link, multi_config_check, &info->multi))
+	/* First, look क्रम a generic full-sized winकरोw */
+	अगर (!pcmcia_loop_config(link, multi_config_check, &info->multi))
 		base2 = link->resource[0]->start + 8;
-	else {
-		/* If that didn't work, look for two windows */
+	अन्यथा अणु
+		/* If that didn't work, look क्रम two winकरोws */
 		info->multi = 2;
-		if (pcmcia_loop_config(link, multi_config_check_notpicky,
-				       &base2)) {
+		अगर (pcmcia_loop_config(link, multi_config_check_notpicky,
+				       &base2)) अणु
 			dev_warn(&link->dev,
 				 "no usable port range found, giving up\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	if (!link->irq)
+	अगर (!link->irq)
 		dev_warn(&link->dev, "no usable IRQ found, continuing...\n");
 
 	/*
 	 * Apply any configuration quirks.
 	 */
-	if (info->quirk && info->quirk->config)
+	अगर (info->quirk && info->quirk->config)
 		info->quirk->config(link);
 
 	i = pcmcia_enable_device(link);
-	if (i != 0)
-		return -ENODEV;
+	अगर (i != 0)
+		वापस -ENODEV;
 
-	/* The Oxford Semiconductor OXCF950 cards are in fact single-port:
-	 * 8 registers are for the UART, the others are extra registers.
+	/* The Oxक्रमd Semiconductor OXCF950 cards are in fact single-port:
+	 * 8 रेजिस्टरs are क्रम the UART, the others are extra रेजिस्टरs.
 	 * Siemen's MC45 PCMCIA (Possio's GCC) is OXCF950 based too.
 	 */
-	if (info->manfid == MANFID_OXSEMI || (info->manfid == MANFID_POSSIO &&
-				info->prodid == PRODID_POSSIO_GCC)) {
-		if (link->config_index == 1 ||
-		    link->config_index == 3) {
+	अगर (info->manfid == MANFID_OXSEMI || (info->manfid == MANFID_POSSIO &&
+				info->prodid == PRODID_POSSIO_GCC)) अणु
+		अगर (link->config_index == 1 ||
+		    link->config_index == 3) अणु
 			setup_serial(link, info, base2, link->irq);
 			base2 = link->resource[0]->start;
-		} else {
+		पूर्ण अन्यथा अणु
 			setup_serial(link, info, link->resource[0]->start,
 				     link->irq);
-		}
+		पूर्ण
 		info->c950ctrl = base2;
 
 		/*
 		 * FIXME: We really should wake up the port prior to
 		 * handing it over to the serial layer.
 		 */
-		if (info->quirk && info->quirk->wakeup)
+		अगर (info->quirk && info->quirk->wakeup)
 			info->quirk->wakeup(link);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	setup_serial(link, info, link->resource[0]->start, link->irq);
-	for (i = 0; i < info->multi - 1; i++)
+	क्रम (i = 0; i < info->multi - 1; i++)
 		setup_serial(link, info, base2 + (8 * i),
 				link->irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int serial_check_for_multi(struct pcmcia_device *p_dev,  void *priv_data)
-{
-	struct serial_info *info = p_dev->priv;
+अटल पूर्णांक serial_check_क्रम_multi(काष्ठा pcmcia_device *p_dev,  व्योम *priv_data)
+अणु
+	काष्ठा serial_info *info = p_dev->priv;
 
-	if (!p_dev->resource[0]->end)
-		return -EINVAL;
+	अगर (!p_dev->resource[0]->end)
+		वापस -EINVAL;
 
-	if ((!p_dev->resource[1]->end) && (p_dev->resource[0]->end % 8 == 0))
+	अगर ((!p_dev->resource[1]->end) && (p_dev->resource[0]->end % 8 == 0))
 		info->multi = p_dev->resource[0]->end >> 3;
 
-	if ((p_dev->resource[1]->end) && (p_dev->resource[0]->end == 8)
+	अगर ((p_dev->resource[1]->end) && (p_dev->resource[0]->end == 8)
 		&& (p_dev->resource[1]->end == 8))
 		info->multi = 2;
 
-	return 0; /* break */
-}
+	वापस 0; /* अवरोध */
+पूर्ण
 
 
-static int serial_config(struct pcmcia_device *link)
-{
-	struct serial_info *info = link->priv;
-	int i;
+अटल पूर्णांक serial_config(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा serial_info *info = link->priv;
+	पूर्णांक i;
 
 	dev_dbg(&link->dev, "serial_config\n");
 
-	/* Is this a compliant multifunction card? */
+	/* Is this a compliant multअगरunction card? */
 	info->multi = (link->socket->functions > 1);
 
 	/* Is this a multiport card? */
 	info->manfid = link->manf_id;
 	info->prodid = link->card_id;
 
-	for (i = 0; i < ARRAY_SIZE(quirks); i++)
-		if ((quirks[i].manfid == ~0 ||
+	क्रम (i = 0; i < ARRAY_SIZE(quirks); i++)
+		अगर ((quirks[i].manfid == ~0 ||
 		     quirks[i].manfid == info->manfid) &&
 		    (quirks[i].prodid == ~0 ||
-		     quirks[i].prodid == info->prodid)) {
+		     quirks[i].prodid == info->prodid)) अणु
 			info->quirk = &quirks[i];
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 	/*
-	 * Another check for dual-serial cards: look for either serial or
-	 * multifunction cards that ask for appropriate IO port ranges.
+	 * Another check क्रम dual-serial cards: look क्रम either serial or
+	 * multअगरunction cards that ask क्रम appropriate IO port ranges.
 	 */
-	if ((info->multi == 0) &&
+	अगर ((info->multi == 0) &&
 	    (link->has_func_id) &&
 	    (link->socket->pcmcia_pfc == 0) &&
 	    ((link->func_id == CISTPL_FUNCID_MULTI) ||
-	     (link->func_id == CISTPL_FUNCID_SERIAL))) {
-		if (pcmcia_loop_config(link, serial_check_for_multi, info))
-			goto failed;
-	}
+	     (link->func_id == CISTPL_FUNCID_SERIAL))) अणु
+		अगर (pcmcia_loop_config(link, serial_check_क्रम_multi, info))
+			जाओ failed;
+	पूर्ण
 
 	/*
 	 * Apply any multi-port quirk.
 	 */
-	if (info->quirk && info->quirk->multi != -1)
+	अगर (info->quirk && info->quirk->multi != -1)
 		info->multi = info->quirk->multi;
 
 	dev_info(&link->dev,
 		"trying to set up [0x%04x:0x%04x] (pfc: %d, multi: %d, quirk: %p)\n",
 		link->manf_id, link->card_id,
 		link->socket->pcmcia_pfc, info->multi, info->quirk);
-	if (link->socket->pcmcia_pfc)
+	अगर (link->socket->pcmcia_pfc)
 		i = pfc_config(link);
-	else if (info->multi > 1)
+	अन्यथा अगर (info->multi > 1)
 		i = multi_config(link);
-	else
+	अन्यथा
 		i = simple_config(link);
 
-	if (i || info->ndev == 0)
-		goto failed;
+	अगर (i || info->ndev == 0)
+		जाओ failed;
 
 	/*
 	 * Apply any post-init quirk.  FIXME: This should really happen
-	 * before we register the port, since it might already be in use.
+	 * beक्रमe we रेजिस्टर the port, since it might alपढ़ोy be in use.
 	 */
-	if (info->quirk && info->quirk->post)
-		if (info->quirk->post(link))
-			goto failed;
+	अगर (info->quirk && info->quirk->post)
+		अगर (info->quirk->post(link))
+			जाओ failed;
 
-	return 0;
+	वापस 0;
 
 failed:
 	dev_warn(&link->dev, "failed to initialize\n");
-	serial_remove(link);
-	return -ENODEV;
-}
+	serial_हटाओ(link);
+	वापस -ENODEV;
+पूर्ण
 
-static const struct pcmcia_device_id serial_ids[] = {
+अटल स्थिर काष्ठा pcmcia_device_id serial_ids[] = अणु
 	PCMCIA_PFC_DEVICE_MANF_CARD(1, 0x0057, 0x0021),
 	PCMCIA_PFC_DEVICE_MANF_CARD(1, 0x0089, 0x110a),
 	PCMCIA_PFC_DEVICE_MANF_CARD(1, 0x0104, 0x000a),
@@ -834,8 +835,8 @@ static const struct pcmcia_device_id serial_ids[] = {
 	/* PCMCIA_MFC_DEVICE_MANF_CARD(0, 0x0160, 0x0002), */
 	/* PCMCIA_MFC_DEVICE_MANF_CARD(1, 0x0160, 0x0002), */
 	PCMCIA_DEVICE_FUNC_ID(2),
-	PCMCIA_DEVICE_NULL,
-};
+	PCMCIA_DEVICE_शून्य,
+पूर्ण;
 MODULE_DEVICE_TABLE(pcmcia, serial_ids);
 
 MODULE_FIRMWARE("cis/PCMLM28.cis");
@@ -850,15 +851,15 @@ MODULE_FIRMWARE("cis/COMpad2.cis");
 MODULE_FIRMWARE("cis/COMpad4.cis");
 MODULE_FIRMWARE("cis/RS-COM-2P.cis");
 
-static struct pcmcia_driver serial_cs_driver = {
+अटल काष्ठा pcmcia_driver serial_cs_driver = अणु
 	.owner		= THIS_MODULE,
 	.name		= "serial_cs",
 	.probe		= serial_probe,
-	.remove		= serial_detach,
+	.हटाओ		= serial_detach,
 	.id_table	= serial_ids,
 	.suspend	= serial_suspend,
 	.resume		= serial_resume,
-};
+पूर्ण;
 module_pcmcia_driver(serial_cs_driver);
 
 MODULE_LICENSE("GPL");

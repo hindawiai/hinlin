@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* IEEE754 floating point arithmetic
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* IEEE754 भग्नing poपूर्णांक arithmetic
  * single precision
  */
 /*
- * MIPS floating point support
+ * MIPS भग्नing poपूर्णांक support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  */
 
-#include "ieee754sp.h"
+#समावेश "ieee754sp.h"
 
-union ieee754sp ieee754sp_div(union ieee754sp x, union ieee754sp y)
-{
-	unsigned int rm;
-	int re;
-	unsigned int bm;
+जोड़ ieee754sp ieee754sp_भाग(जोड़ ieee754sp x, जोड़ ieee754sp y)
+अणु
+	अचिन्हित पूर्णांक rm;
+	पूर्णांक re;
+	अचिन्हित पूर्णांक bm;
 
 	COMPXSP;
 	COMPYSP;
@@ -26,85 +27,85 @@ union ieee754sp ieee754sp_div(union ieee754sp x, union ieee754sp y)
 	FLUSHXSP;
 	FLUSHYSP;
 
-	switch (CLPAIR(xc, yc)) {
-	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_SNAN):
-	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_SNAN):
-	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_SNAN):
-	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_SNAN):
-	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_SNAN):
-		return ieee754sp_nanxcpt(y);
+	चयन (CLPAIR(xc, yc)) अणु
+	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_Sन_अंक):
+	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_Sन_अंक):
+	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_Sन_अंक):
+	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_Sन_अंक):
+	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_Sन_अंक):
+		वापस ieee754sp_nanxcpt(y);
 
-	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_SNAN):
-	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_QNAN):
-	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_ZERO):
-	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_NORM):
-	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_DNORM):
-	case CLPAIR(IEEE754_CLASS_SNAN, IEEE754_CLASS_INF):
-		return ieee754sp_nanxcpt(x);
+	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_Sन_अंक):
+	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_Qन_अंक):
+	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_ZERO):
+	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_NORM):
+	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_DNORM):
+	हाल CLPAIR(IEEE754_CLASS_Sन_अंक, IEEE754_CLASS_INF):
+		वापस ieee754sp_nanxcpt(x);
 
-	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_QNAN):
-	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_QNAN):
-	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_QNAN):
-	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_QNAN):
-		return y;
+	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_Qन_अंक):
+	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_Qन_अंक):
+	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_Qन_अंक):
+	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_Qन_अंक):
+		वापस y;
 
-	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_QNAN):
-	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_ZERO):
-	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_NORM):
-	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_DNORM):
-	case CLPAIR(IEEE754_CLASS_QNAN, IEEE754_CLASS_INF):
-		return x;
+	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_Qन_अंक):
+	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_ZERO):
+	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_NORM):
+	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_DNORM):
+	हाल CLPAIR(IEEE754_CLASS_Qन_अंक, IEEE754_CLASS_INF):
+		वापस x;
 
 
 	/*
 	 * Infinity handling
 	 */
-	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_INF):
+	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_INF):
 		ieee754_setcx(IEEE754_INVALID_OPERATION);
-		return ieee754sp_indef();
+		वापस ieee754sp_indef();
 
-	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_INF):
-	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_INF):
-	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_INF):
-		return ieee754sp_zero(xs ^ ys);
+	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_INF):
+	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_INF):
+	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_INF):
+		वापस ieee754sp_zero(xs ^ ys);
 
-	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_ZERO):
-	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_NORM):
-	case CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_DNORM):
-		return ieee754sp_inf(xs ^ ys);
+	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_ZERO):
+	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_NORM):
+	हाल CLPAIR(IEEE754_CLASS_INF, IEEE754_CLASS_DNORM):
+		वापस ieee754sp_inf(xs ^ ys);
 
 	/*
 	 * Zero handling
 	 */
-	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_ZERO):
+	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_ZERO):
 		ieee754_setcx(IEEE754_INVALID_OPERATION);
-		return ieee754sp_indef();
+		वापस ieee754sp_indef();
 
-	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_ZERO):
-	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_ZERO):
+	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_ZERO):
+	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_ZERO):
 		ieee754_setcx(IEEE754_ZERO_DIVIDE);
-		return ieee754sp_inf(xs ^ ys);
+		वापस ieee754sp_inf(xs ^ ys);
 
-	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_NORM):
-	case CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_DNORM):
-		return ieee754sp_zero(xs == ys ? 0 : 1);
+	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_NORM):
+	हाल CLPAIR(IEEE754_CLASS_ZERO, IEEE754_CLASS_DNORM):
+		वापस ieee754sp_zero(xs == ys ? 0 : 1);
 
-	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_DNORM):
+	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_DNORM):
 		SPDNORMX;
 		fallthrough;
-	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_DNORM):
+	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_DNORM):
 		SPDNORMY;
-		break;
+		अवरोध;
 
-	case CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_NORM):
+	हाल CLPAIR(IEEE754_CLASS_DNORM, IEEE754_CLASS_NORM):
 		SPDNORMX;
-		break;
+		अवरोध;
 
-	case CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_NORM):
-		break;
-	}
-	assert(xm & SP_HIDDEN_BIT);
-	assert(ym & SP_HIDDEN_BIT);
+	हाल CLPAIR(IEEE754_CLASS_NORM, IEEE754_CLASS_NORM):
+		अवरोध;
+	पूर्ण
+	निश्चित(xm & SP_HIDDEN_BIT);
+	निश्चित(ym & SP_HIDDEN_BIT);
 
 	/* provide rounding space */
 	xm <<= 3;
@@ -115,28 +116,28 @@ union ieee754sp ieee754sp_div(union ieee754sp x, union ieee754sp y)
 	rm = 0;
 	re = xe - ye;
 
-	for (bm = SP_MBIT(SP_FBITS + 2); bm; bm >>= 1) {
-		if (xm >= ym) {
+	क्रम (bm = SP_MBIT(SP_FBITS + 2); bm; bm >>= 1) अणु
+		अगर (xm >= ym) अणु
 			xm -= ym;
 			rm |= bm;
-			if (xm == 0)
-				break;
-		}
+			अगर (xm == 0)
+				अवरोध;
+		पूर्ण
 		xm <<= 1;
-	}
+	पूर्ण
 
 	rm <<= 1;
-	if (xm)
-		rm |= 1;	/* have remainder, set sticky */
+	अगर (xm)
+		rm |= 1;	/* have reमुख्यder, set sticky */
 
-	assert(rm);
+	निश्चित(rm);
 
 	/* normalise rm to rounding precision ?
 	 */
-	while ((rm >> (SP_FBITS + 3)) == 0) {
+	जबतक ((rm >> (SP_FBITS + 3)) == 0) अणु
 		rm <<= 1;
 		re--;
-	}
+	पूर्ण
 
-	return ieee754sp_format(xs == ys ? 0 : 1, re, rm);
-}
+	वापस ieee754sp_क्रमmat(xs == ys ? 0 : 1, re, rm);
+पूर्ण

@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2019 Sven Van Asbroeck
  */
 
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/mfd/tps6105x.h>
-#include <linux/regmap.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mfd/tps6105x.h>
+#समावेश <linux/regmap.h>
 
-struct tps6105x_priv {
-	struct regmap *regmap;
-	struct led_classdev cdev;
-	struct fwnode_handle *fwnode;
-};
+काष्ठा tps6105x_priv अणु
+	काष्ठा regmap *regmap;
+	काष्ठा led_classdev cdev;
+	काष्ठा fwnode_handle *fwnode;
+पूर्ण;
 
-static void tps6105x_handle_put(void *data)
-{
-	struct tps6105x_priv *priv = data;
+अटल व्योम tps6105x_handle_put(व्योम *data)
+अणु
+	काष्ठा tps6105x_priv *priv = data;
 
 	fwnode_handle_put(priv->fwnode);
-}
+पूर्ण
 
-static int tps6105x_brightness_set(struct led_classdev *cdev,
-				  enum led_brightness brightness)
-{
-	struct tps6105x_priv *priv = container_of(cdev, struct tps6105x_priv,
+अटल पूर्णांक tps6105x_brightness_set(काष्ठा led_classdev *cdev,
+				  क्रमागत led_brightness brightness)
+अणु
+	काष्ठा tps6105x_priv *priv = container_of(cdev, काष्ठा tps6105x_priv,
 							cdev);
 
-	return regmap_update_bits(priv->regmap, TPS6105X_REG_0,
+	वापस regmap_update_bits(priv->regmap, TPS6105X_REG_0,
 				  TPS6105X_REG0_TORCHC_MASK,
 				  brightness << TPS6105X_REG0_TORCHC_SHIFT);
-}
+पूर्ण
 
-static int tps6105x_led_probe(struct platform_device *pdev)
-{
-	struct tps6105x *tps6105x = dev_get_platdata(&pdev->dev);
-	struct tps6105x_platform_data *pdata = tps6105x->pdata;
-	struct led_init_data init_data = { };
-	struct tps6105x_priv *priv;
-	int ret;
+अटल पूर्णांक tps6105x_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tps6105x *tps6105x = dev_get_platdata(&pdev->dev);
+	काष्ठा tps6105x_platक्रमm_data *pdata = tps6105x->pdata;
+	काष्ठा led_init_data init_data = अणु पूर्ण;
+	काष्ठा tps6105x_priv *priv;
+	पूर्णांक ret;
 
-	/* This instance is not set for torch mode so bail out */
-	if (pdata->mode != TPS6105X_MODE_TORCH) {
+	/* This instance is not set क्रम torch mode so bail out */
+	अगर (pdata->mode != TPS6105X_MODE_TORCH) अणु
 		dev_info(&pdev->dev,
 			"chip not in torch mode, exit probe");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
-	/* fwnode/devicetree is optional. NULL is allowed for priv->fwnode */
-	priv->fwnode = device_get_next_child_node(pdev->dev.parent, NULL);
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
+	/* fwnode/devicetree is optional. शून्य is allowed क्रम priv->fwnode */
+	priv->fwnode = device_get_next_child_node(pdev->dev.parent, शून्य);
 	ret = devm_add_action_or_reset(&pdev->dev, tps6105x_handle_put, priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	priv->regmap = tps6105x->regmap;
 	priv->cdev.brightness_set_blocking = tps6105x_brightness_set;
 	priv->cdev.max_brightness = 7;
 	init_data.devicename = "tps6105x";
-	init_data.default_label = ":torch";
+	init_data.शेष_label = ":torch";
 	init_data.fwnode = priv->fwnode;
 
 	ret = regmap_update_bits(tps6105x->regmap, TPS6105X_REG_0,
@@ -68,21 +69,21 @@ static int tps6105x_led_probe(struct platform_device *pdev)
 					TPS6105X_REG0_TORCHC_MASK,
 				 TPS6105X_REG0_MODE_TORCH <<
 					TPS6105X_REG0_MODE_SHIFT);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return devm_led_classdev_register_ext(&pdev->dev, &priv->cdev,
+	वापस devm_led_classdev_रेजिस्टर_ext(&pdev->dev, &priv->cdev,
 					      &init_data);
-}
+पूर्ण
 
-static struct platform_driver led_driver = {
+अटल काष्ठा platक्रमm_driver led_driver = अणु
 	.probe = tps6105x_led_probe,
-	.driver = {
+	.driver = अणु
 		.name = "tps6105x-leds",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(led_driver);
+module_platक्रमm_driver(led_driver);
 
 MODULE_DESCRIPTION("TPS6105x LED driver");
 MODULE_AUTHOR("Sven Van Asbroeck <TheSven73@gmail.com>");

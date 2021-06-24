@@ -1,27 +1,28 @@
+<शैली गुरु>
 /*
- * OMAP SoC specific OPP Data helpers
+ * OMAP SoC specअगरic OPP Data helpers
  *
  * Copyright (C) 2009-2010 Texas Instruments Incorporated - https://www.ti.com/
  *	Nishanth Menon
  *	Kevin Hilman
  * Copyright (C) 2010 Nokia Corporation.
- *      Eduardo Valentin
+ *      Eduarकरो Valentin
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
-#ifndef __ARCH_ARM_MACH_OMAP2_OMAP_OPP_DATA_H
-#define __ARCH_ARM_MACH_OMAP2_OMAP_OPP_DATA_H
+#अगर_अघोषित __ARCH_ARM_MACH_OMAP2_OMAP_OPP_DATA_H
+#घोषणा __ARCH_ARM_MACH_OMAP2_OMAP_OPP_DATA_H
 
-#include "omap_hwmod.h"
+#समावेश "omap_hwmod.h"
 
-#include "voltage.h"
+#समावेश "voltage.h"
 
 /*
  * *BIG FAT WARNING*:
@@ -30,70 +31,70 @@
  */
 
 /**
- * struct omap_opp_def - OMAP OPP Definition
- * @hwmod_name:	Name of the hwmod for this domain
+ * काष्ठा omap_opp_def - OMAP OPP Definition
+ * @hwmod_name:	Name of the hwmod क्रम this करोमुख्य
  * @freq:	Frequency in hertz corresponding to this OPP
  * @u_volt:	Nominal voltage in microvolts corresponding to this OPP
- * @default_available:	True/false - is this OPP available by default
+ * @शेष_available:	True/false - is this OPP available by शेष
  *
  * OMAP SOCs have a standard set of tuples consisting of frequency and voltage
- * pairs that the device will support per voltage domain. This is called
- * Operating Points or OPP. The actual definitions of OMAP Operating Points
- * varies over silicon within the same family of devices. For a specific
- * domain, you can have a set of {frequency, voltage} pairs and this is denoted
- * by an array of omap_opp_def. As the kernel boots and more information is
+ * pairs that the device will support per voltage करोमुख्य. This is called
+ * Operating Poपूर्णांकs or OPP. The actual definitions of OMAP Operating Poपूर्णांकs
+ * varies over silicon within the same family of devices. For a specअगरic
+ * करोमुख्य, you can have a set of अणुfrequency, voltageपूर्ण pairs and this is denoted
+ * by an array of omap_opp_def. As the kernel boots and more inक्रमmation is
  * available, a set of these are activated based on the precise nature of
- * device the kernel boots up on. It is interesting to remember that each IP
- * which belongs to a voltage domain may define their own set of OPPs on top
+ * device the kernel boots up on. It is पूर्णांकeresting to remember that each IP
+ * which beदीर्घs to a voltage करोमुख्य may define their own set of OPPs on top
  * of this - but this is handled by the appropriate driver.
  */
-struct omap_opp_def {
-	char *hwmod_name;
+काष्ठा omap_opp_def अणु
+	अक्षर *hwmod_name;
 
-	unsigned long freq;
-	unsigned long u_volt;
+	अचिन्हित दीर्घ freq;
+	अचिन्हित दीर्घ u_volt;
 
-	bool default_available;
-};
+	bool शेष_available;
+पूर्ण;
 
 /*
- * Initialization wrapper used to define an OPP for OMAP variants.
+ * Initialization wrapper used to define an OPP क्रम OMAP variants.
  */
-#define OPP_INITIALIZER(_hwmod_name, _enabled, _freq, _uv)	\
-{								\
+#घोषणा OPP_INITIALIZER(_hwmod_name, _enabled, _freq, _uv)	\
+अणु								\
 	.hwmod_name	= _hwmod_name,				\
-	.default_available	= _enabled,			\
+	.शेष_available	= _enabled,			\
 	.freq		= _freq,				\
 	.u_volt		= _uv,					\
-}
+पूर्ण
 
 /*
  * Initialization wrapper used to define SmartReflex process data
  * XXX Is this needed?  Just use C99 initializers in data files?
  */
-#define VOLT_DATA_DEFINE(_v_nom, _efuse_offs, _errminlimit, _errgain)  \
-{								       \
+#घोषणा VOLT_DATA_DEFINE(_v_nom, _efuse_offs, _errminlimit, _errgain)  \
+अणु								       \
 	.volt_nominal	= _v_nom,				       \
 	.sr_efuse_offs	= _efuse_offs,				       \
 	.sr_errminlimit = _errminlimit,				       \
 	.vp_errgain	= _errgain				       \
-}
+पूर्ण
 
-/* Use this to initialize the default table */
-extern int __init omap_init_opp_table(struct omap_opp_def *opp_def,
+/* Use this to initialize the शेष table */
+बाह्य पूर्णांक __init omap_init_opp_table(काष्ठा omap_opp_def *opp_def,
 		u32 opp_def_size);
 
 
-extern struct omap_volt_data omap34xx_vddmpu_volt_data[];
-extern struct omap_volt_data omap34xx_vddcore_volt_data[];
-extern struct omap_volt_data omap36xx_vddmpu_volt_data[];
-extern struct omap_volt_data omap36xx_vddcore_volt_data[];
+बाह्य काष्ठा omap_volt_data omap34xx_vddmpu_volt_data[];
+बाह्य काष्ठा omap_volt_data omap34xx_vddcore_volt_data[];
+बाह्य काष्ठा omap_volt_data omap36xx_vddmpu_volt_data[];
+बाह्य काष्ठा omap_volt_data omap36xx_vddcore_volt_data[];
 
-extern struct omap_volt_data omap443x_vdd_mpu_volt_data[];
-extern struct omap_volt_data omap443x_vdd_iva_volt_data[];
-extern struct omap_volt_data omap443x_vdd_core_volt_data[];
-extern struct omap_volt_data omap446x_vdd_mpu_volt_data[];
-extern struct omap_volt_data omap446x_vdd_iva_volt_data[];
-extern struct omap_volt_data omap446x_vdd_core_volt_data[];
+बाह्य काष्ठा omap_volt_data omap443x_vdd_mpu_volt_data[];
+बाह्य काष्ठा omap_volt_data omap443x_vdd_iva_volt_data[];
+बाह्य काष्ठा omap_volt_data omap443x_vdd_core_volt_data[];
+बाह्य काष्ठा omap_volt_data omap446x_vdd_mpu_volt_data[];
+बाह्य काष्ठा omap_volt_data omap446x_vdd_iva_volt_data[];
+बाह्य काष्ठा omap_volt_data omap446x_vdd_core_volt_data[];
 
-#endif		/* __ARCH_ARM_MACH_OMAP2_OMAP_OPP_DATA_H */
+#पूर्ण_अगर		/* __ARCH_ARM_MACH_OMAP2_OMAP_OPP_DATA_H */

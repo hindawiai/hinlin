@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright IBM Corp. 2006, 2015
  * Author(s): Jan Glauber <jan.glauber@de.ibm.com>
  *	      Harald Freudenberger <freude@de.ibm.com>
- * Driver for the s390 pseudo random number generator
+ * Driver क्रम the s390 pseuकरो अक्रमom number generator
  */
 
-#define KMSG_COMPONENT "prng"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "prng"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/fs.h>
-#include <linux/fips.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/miscdevice.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/mutex.h>
-#include <linux/cpufeature.h>
-#include <linux/random.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/fips.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/cpufeature.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <asm/debug.h>
-#include <linux/uaccess.h>
-#include <asm/timex.h>
-#include <asm/cpacf.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/समयx.h>
+#समावेश <यंत्र/cpacf.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("IBM Corporation");
 MODULE_DESCRIPTION("s390 PRNG interface");
 
 
-#define PRNG_MODE_AUTO	  0
-#define PRNG_MODE_TDES	  1
-#define PRNG_MODE_SHA512  2
+#घोषणा PRNG_MODE_AUTO	  0
+#घोषणा PRNG_MODE_TDES	  1
+#घोषणा PRNG_MODE_SHA512  2
 
-static unsigned int prng_mode = PRNG_MODE_AUTO;
-module_param_named(mode, prng_mode, int, 0);
+अटल अचिन्हित पूर्णांक prng_mode = PRNG_MODE_AUTO;
+module_param_named(mode, prng_mode, पूर्णांक, 0);
 MODULE_PARM_DESC(prng_mode, "PRNG mode: 0 - auto, 1 - TDES, 2 - SHA512");
 
 
-#define PRNG_CHUNKSIZE_TDES_MIN   8
-#define PRNG_CHUNKSIZE_TDES_MAX   (64*1024)
-#define PRNG_CHUNKSIZE_SHA512_MIN 64
-#define PRNG_CHUNKSIZE_SHA512_MAX (64*1024)
+#घोषणा PRNG_CHUNKSIZE_TDES_MIN   8
+#घोषणा PRNG_CHUNKSIZE_TDES_MAX   (64*1024)
+#घोषणा PRNG_CHUNKSIZE_SHA512_MIN 64
+#घोषणा PRNG_CHUNKSIZE_SHA512_MAX (64*1024)
 
-static unsigned int prng_chunk_size = 256;
-module_param_named(chunksize, prng_chunk_size, int, 0);
+अटल अचिन्हित पूर्णांक prng_chunk_size = 256;
+module_param_named(chunksize, prng_chunk_size, पूर्णांक, 0);
 MODULE_PARM_DESC(prng_chunk_size, "PRNG read chunk size in bytes");
 
 
-#define PRNG_RESEED_LIMIT_TDES		 4096
-#define PRNG_RESEED_LIMIT_TDES_LOWER	 4096
-#define PRNG_RESEED_LIMIT_SHA512       100000
-#define PRNG_RESEED_LIMIT_SHA512_LOWER	10000
+#घोषणा PRNG_RESEED_LIMIT_TDES		 4096
+#घोषणा PRNG_RESEED_LIMIT_TDES_LOWER	 4096
+#घोषणा PRNG_RESEED_LIMIT_SHA512       100000
+#घोषणा PRNG_RESEED_LIMIT_SHA512_LOWER	10000
 
-static unsigned int prng_reseed_limit;
-module_param_named(reseed_limit, prng_reseed_limit, int, 0);
+अटल अचिन्हित पूर्णांक prng_reseed_limit;
+module_param_named(reseed_limit, prng_reseed_limit, पूर्णांक, 0);
 MODULE_PARM_DESC(prng_reseed_limit, "PRNG reseed limit");
 
-static bool trng_available;
+अटल bool trng_available;
 
 /*
- * Any one who considers arithmetical methods of producing random digits is,
+ * Any one who considers arithmetical methods of producing अक्रमom digits is,
  * of course, in a state of sin. -- John von Neumann
  */
 
-static int prng_errorflag;
+अटल पूर्णांक prng_errorflag;
 
-#define PRNG_GEN_ENTROPY_FAILED  1
-#define PRNG_SELFTEST_FAILED	 2
-#define PRNG_INSTANTIATE_FAILED  3
-#define PRNG_SEED_FAILED	 4
-#define PRNG_RESEED_FAILED	 5
-#define PRNG_GEN_FAILED		 6
+#घोषणा PRNG_GEN_ENTROPY_FAILED  1
+#घोषणा PRNG_SELFTEST_FAILED	 2
+#घोषणा PRNG_INSTANTIATE_FAILED  3
+#घोषणा PRNG_SEED_FAILED	 4
+#घोषणा PRNG_RESEED_FAILED	 5
+#घोषणा PRNG_GEN_FAILED		 6
 
-struct prng_ws_s {
+काष्ठा prng_ws_s अणु
 	u8  parm_block[32];
 	u32 reseed_counter;
 	u64 byte_counter;
-};
+पूर्ण;
 
-struct prno_ws_s {
+काष्ठा prno_ws_s अणु
 	u32 res;
 	u32 reseed_counter;
 	u64 stream_bytes;
 	u8  V[112];
 	u8  C[112];
-};
+पूर्ण;
 
-struct prng_data_s {
-	struct mutex mutex;
-	union {
-		struct prng_ws_s prngws;
-		struct prno_ws_s prnows;
-	};
+काष्ठा prng_data_s अणु
+	काष्ठा mutex mutex;
+	जोड़ अणु
+		काष्ठा prng_ws_s prngws;
+		काष्ठा prno_ws_s prnows;
+	पूर्ण;
 	u8 *buf;
 	u32 rest;
 	u8 *prev;
-};
+पूर्ण;
 
-static struct prng_data_s *prng_data;
+अटल काष्ठा prng_data_s *prng_data;
 
-/* initial parameter block for tdes mode, copied from libica */
-static const u8 initial_parm_block[32] __initconst = {
+/* initial parameter block क्रम tdes mode, copied from libica */
+अटल स्थिर u8 initial_parm_block[32] __initस्थिर = अणु
 	0x0F, 0x2B, 0x8E, 0x63, 0x8C, 0x8E, 0xD2, 0x52,
 	0x64, 0xB7, 0xA0, 0x7B, 0x75, 0x28, 0xB8, 0xF4,
 	0x75, 0x5F, 0xD2, 0xA6, 0x8D, 0x97, 0x11, 0xFF,
-	0x49, 0xD8, 0x23, 0xF3, 0x7E, 0x21, 0xEC, 0xA0 };
+	0x49, 0xD8, 0x23, 0xF3, 0x7E, 0x21, 0xEC, 0xA0 पूर्ण;
 
 
 /*** helper functions ***/
 
 /*
  * generate_entropy:
- * This function fills a given buffer with random bytes. The entropy within
- * the random bytes given back is assumed to have at least 50% - meaning
+ * This function fills a given buffer with अक्रमom bytes. The entropy within
+ * the अक्रमom bytes given back is assumed to have at least 50% - meaning
  * a 64 bytes buffer has at least 64 * 8 / 2 = 256 bits of entropy.
- * Within the function the entropy generation is done in junks of 64 bytes.
- * So the caller should also ask for buffer fill in multiples of 64 bytes.
+ * Within the function the entropy generation is करोne in junks of 64 bytes.
+ * So the caller should also ask क्रम buffer fill in multiples of 64 bytes.
  * The generation of the entropy is based on the assumption that every stckf()
  * invocation produces 0.5 bits of entropy. To accumulate 256 bits of entropy
  * at least 512 stckf() values are needed. The entropy relevant part of the
  * stckf value is bit 51 (counting starts at the left with bit nr 0) so
- * here we use the lower 4 bytes and exor the values into 2k of bufferspace.
- * To be on the save side, if there is ever a problem with stckf() the
- * other half of the page buffer is filled with bytes from urandom via
- * get_random_bytes(), so this function consumes 2k of urandom for each
- * requested 64 bytes output data. Finally the buffer page is condensed into
+ * here we use the lower 4 bytes and exor the values पूर्णांकo 2k of bufferspace.
+ * To be on the save side, अगर there is ever a problem with stckf() the
+ * other half of the page buffer is filled with bytes from uअक्रमom via
+ * get_अक्रमom_bytes(), so this function consumes 2k of uअक्रमom क्रम each
+ * requested 64 bytes output data. Finally the buffer page is condensed पूर्णांकo
  * a 64 byte value by hashing with a SHA512 hash.
  */
-static int generate_entropy(u8 *ebuf, size_t nbytes)
-{
-	int n, ret = 0;
-	u8 *pg, pblock[80] = {
+अटल पूर्णांक generate_entropy(u8 *ebuf, माप_प्रकार nbytes)
+अणु
+	पूर्णांक n, ret = 0;
+	u8 *pg, pblock[80] = अणु
 		/* 8 x 64 bit init values */
 		0x6A, 0x09, 0xE6, 0x67, 0xF3, 0xBC, 0xC9, 0x08,
 		0xBB, 0x67, 0xAE, 0x85, 0x84, 0xCA, 0xA7, 0x3B,
@@ -147,125 +148,125 @@ static int generate_entropy(u8 *ebuf, size_t nbytes)
 		0x5B, 0xE0, 0xCD, 0x19, 0x13, 0x7E, 0x21, 0x79,
 		/* 128 bit counter total message bit length */
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00 };
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00 पूर्ण;
 
 	/* allocate one page stckf buffer */
-	pg = (u8 *) __get_free_page(GFP_KERNEL);
-	if (!pg) {
+	pg = (u8 *) __get_मुक्त_page(GFP_KERNEL);
+	अगर (!pg) अणु
 		prng_errorflag = PRNG_GEN_ENTROPY_FAILED;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* fill the ebuf in chunks of 64 byte each */
-	while (nbytes) {
-		/* fill lower 2k with urandom bytes */
-		get_random_bytes(pg, PAGE_SIZE / 2);
+	जबतक (nbytes) अणु
+		/* fill lower 2k with uअक्रमom bytes */
+		get_अक्रमom_bytes(pg, PAGE_SIZE / 2);
 		/* exor upper 2k with 512 stckf values, offset 4 bytes each */
-		for (n = 0; n < 512; n++) {
-			int offset = (PAGE_SIZE / 2) + (n * 4) - 4;
+		क्रम (n = 0; n < 512; n++) अणु
+			पूर्णांक offset = (PAGE_SIZE / 2) + (n * 4) - 4;
 			u64 *p = (u64 *)(pg + offset);
-			*p ^= get_tod_clock_fast();
-		}
+			*p ^= get_tod_घड़ी_fast();
+		पूर्ण
 		/* hash over the filled page */
 		cpacf_klmd(CPACF_KLMD_SHA_512, pblock, pg, PAGE_SIZE);
 		n = (nbytes < 64) ? nbytes : 64;
-		memcpy(ebuf, pblock, n);
+		स_नकल(ebuf, pblock, n);
 		ret += n;
 		ebuf += n;
 		nbytes -= n;
-	}
+	पूर्ण
 
-	memzero_explicit(pblock, sizeof(pblock));
+	memzero_explicit(pblock, माप(pblock));
 	memzero_explicit(pg, PAGE_SIZE);
-	free_page((unsigned long)pg);
-	return ret;
-}
+	मुक्त_page((अचिन्हित दीर्घ)pg);
+	वापस ret;
+पूर्ण
 
 
 /*** tdes functions ***/
 
-static void prng_tdes_add_entropy(void)
-{
+अटल व्योम prng_tdes_add_entropy(व्योम)
+अणु
 	__u64 entropy[4];
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < 16; i++) {
+	क्रम (i = 0; i < 16; i++) अणु
 		cpacf_kmc(CPACF_KMC_PRNG, prng_data->prngws.parm_block,
-			  (char *) entropy, (char *) entropy,
-			  sizeof(entropy));
-		memcpy(prng_data->prngws.parm_block, entropy, sizeof(entropy));
-	}
-}
+			  (अक्षर *) entropy, (अक्षर *) entropy,
+			  माप(entropy));
+		स_नकल(prng_data->prngws.parm_block, entropy, माप(entropy));
+	पूर्ण
+पूर्ण
 
 
-static void prng_tdes_seed(int nbytes)
-{
-	char buf[16];
-	int i = 0;
+अटल व्योम prng_tdes_seed(पूर्णांक nbytes)
+अणु
+	अक्षर buf[16];
+	पूर्णांक i = 0;
 
-	BUG_ON(nbytes > sizeof(buf));
+	BUG_ON(nbytes > माप(buf));
 
-	get_random_bytes(buf, nbytes);
+	get_अक्रमom_bytes(buf, nbytes);
 
 	/* Add the entropy */
-	while (nbytes >= 8) {
+	जबतक (nbytes >= 8) अणु
 		*((__u64 *)prng_data->prngws.parm_block) ^= *((__u64 *)(buf+i));
 		prng_tdes_add_entropy();
 		i += 8;
 		nbytes -= 8;
-	}
+	पूर्ण
 	prng_tdes_add_entropy();
 	prng_data->prngws.reseed_counter = 0;
-}
+पूर्ण
 
 
-static int __init prng_tdes_instantiate(void)
-{
-	int datalen;
+अटल पूर्णांक __init prng_tdes_instantiate(व्योम)
+अणु
+	पूर्णांक datalen;
 
 	pr_debug("prng runs in TDES mode with "
 		 "chunksize=%d and reseed_limit=%u\n",
 		 prng_chunk_size, prng_reseed_limit);
 
-	/* memory allocation, prng_data struct init, mutex init */
-	datalen = sizeof(struct prng_data_s) + prng_chunk_size;
+	/* memory allocation, prng_data काष्ठा init, mutex init */
+	datalen = माप(काष्ठा prng_data_s) + prng_chunk_size;
 	prng_data = kzalloc(datalen, GFP_KERNEL);
-	if (!prng_data) {
+	अगर (!prng_data) अणु
 		prng_errorflag = PRNG_INSTANTIATE_FAILED;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	mutex_init(&prng_data->mutex);
-	prng_data->buf = ((u8 *)prng_data) + sizeof(struct prng_data_s);
-	memcpy(prng_data->prngws.parm_block, initial_parm_block, 32);
+	prng_data->buf = ((u8 *)prng_data) + माप(काष्ठा prng_data_s);
+	स_नकल(prng_data->prngws.parm_block, initial_parm_block, 32);
 
 	/* initialize the PRNG, add 128 bits of entropy */
 	prng_tdes_seed(16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void prng_tdes_deinstantiate(void)
-{
+अटल व्योम prng_tdes_deinstantiate(व्योम)
+अणु
 	pr_debug("The prng module stopped "
 		 "after running in triple DES mode\n");
-	kfree_sensitive(prng_data);
-}
+	kमुक्त_sensitive(prng_data);
+पूर्ण
 
 
 /*** sha512 functions ***/
 
-static int __init prng_sha512_selftest(void)
-{
-	/* NIST DRBG testvector for Hash Drbg, Sha-512, Count #0 */
-	static const u8 seed[] __initconst = {
+अटल पूर्णांक __init prng_sha512_selftest(व्योम)
+अणु
+	/* NIST DRBG testvector क्रम Hash Drbg, Sha-512, Count #0 */
+	अटल स्थिर u8 seed[] __initस्थिर = अणु
 		0x6b, 0x50, 0xa7, 0xd8, 0xf8, 0xa5, 0x5d, 0x7a,
 		0x3d, 0xf8, 0xbb, 0x40, 0xbc, 0xc3, 0xb7, 0x22,
 		0xd8, 0x70, 0x8d, 0xe6, 0x7f, 0xda, 0x01, 0x0b,
 		0x03, 0xc4, 0xc8, 0x4d, 0x72, 0x09, 0x6f, 0x8c,
 		0x3e, 0xc6, 0x49, 0xcc, 0x62, 0x56, 0xd9, 0xfa,
-		0x31, 0xdb, 0x7a, 0x29, 0x04, 0xaa, 0xf0, 0x25 };
-	static const u8 V0[] __initconst = {
+		0x31, 0xdb, 0x7a, 0x29, 0x04, 0xaa, 0xf0, 0x25 पूर्ण;
+	अटल स्थिर u8 V0[] __initस्थिर = अणु
 		0x00, 0xad, 0xe3, 0x6f, 0x9a, 0x01, 0xc7, 0x76,
 		0x61, 0x34, 0x35, 0xf5, 0x4e, 0x24, 0x74, 0x22,
 		0x21, 0x9a, 0x29, 0x89, 0xc7, 0x93, 0x2e, 0x60,
@@ -279,8 +280,8 @@ static int __init prng_sha512_selftest(void)
 		0x57, 0x4b, 0xf1, 0x5c, 0xca, 0x7e, 0x09, 0xc0,
 		0xd3, 0x89, 0xc6, 0xe0, 0xda, 0xc4, 0x81, 0x7e,
 		0x5b, 0xf9, 0xe1, 0x01, 0xc1, 0x92, 0x05, 0xea,
-		0xf5, 0x2f, 0xc6, 0xc6, 0xc7, 0x8f, 0xbc, 0xf4 };
-	static const u8 C0[] __initconst = {
+		0xf5, 0x2f, 0xc6, 0xc6, 0xc7, 0x8f, 0xbc, 0xf4 पूर्ण;
+	अटल स्थिर u8 C0[] __initस्थिर = अणु
 		0x00, 0xf4, 0xa3, 0xe5, 0xa0, 0x72, 0x63, 0x95,
 		0xc6, 0x4f, 0x48, 0xd0, 0x8b, 0x5b, 0x5f, 0x8e,
 		0x6b, 0x96, 0x1f, 0x16, 0xed, 0xbc, 0x66, 0x94,
@@ -294,8 +295,8 @@ static int __init prng_sha512_selftest(void)
 		0xcc, 0x45, 0xa5, 0xdb, 0x69, 0x0d, 0x81, 0xc9,
 		0x32, 0x92, 0xbc, 0x8f, 0x33, 0xe6, 0xf6, 0x09,
 		0x7c, 0x8e, 0x05, 0x19, 0x0d, 0xf1, 0xb6, 0xcc,
-		0xf3, 0x02, 0x21, 0x90, 0x25, 0xec, 0xed, 0x0e };
-	static const u8 random[] __initconst = {
+		0xf3, 0x02, 0x21, 0x90, 0x25, 0xec, 0xed, 0x0e पूर्ण;
+	अटल स्थिर u8 अक्रमom[] __initस्थिर = अणु
 		0x95, 0xb7, 0xf1, 0x7e, 0x98, 0x02, 0xd3, 0x57,
 		0x73, 0x92, 0xc6, 0xa9, 0xc0, 0x80, 0x83, 0xb6,
 		0x7d, 0xd1, 0x29, 0x22, 0x65, 0xb5, 0xf4, 0x2d,
@@ -327,80 +328,80 @@ static int __init prng_sha512_selftest(void)
 		0x63, 0xb4, 0x03, 0xdd, 0xf8, 0x8e, 0x12, 0x1b,
 		0x6e, 0x81, 0x9a, 0xc3, 0x81, 0x22, 0x6c, 0x13,
 		0x21, 0xe4, 0xb0, 0x86, 0x44, 0xf6, 0x72, 0x7c,
-		0x36, 0x8c, 0x5a, 0x9f, 0x7a, 0x4b, 0x3e, 0xe2 };
+		0x36, 0x8c, 0x5a, 0x9f, 0x7a, 0x4b, 0x3e, 0xe2 पूर्ण;
 
-	u8 buf[sizeof(random)];
-	struct prno_ws_s ws;
+	u8 buf[माप(अक्रमom)];
+	काष्ठा prno_ws_s ws;
 
-	memset(&ws, 0, sizeof(ws));
+	स_रखो(&ws, 0, माप(ws));
 
 	/* initial seed */
 	cpacf_prno(CPACF_PRNO_SHA512_DRNG_SEED,
-		   &ws, NULL, 0, seed, sizeof(seed));
+		   &ws, शून्य, 0, seed, माप(seed));
 
 	/* check working states V and C */
-	if (memcmp(ws.V, V0, sizeof(V0)) != 0
-	    || memcmp(ws.C, C0, sizeof(C0)) != 0) {
+	अगर (स_भेद(ws.V, V0, माप(V0)) != 0
+	    || स_भेद(ws.C, C0, माप(C0)) != 0) अणु
 		pr_err("The prng self test state test "
 		       "for the SHA-512 mode failed\n");
 		prng_errorflag = PRNG_SELFTEST_FAILED;
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	/* generate random bytes */
+	/* generate अक्रमom bytes */
 	cpacf_prno(CPACF_PRNO_SHA512_DRNG_GEN,
-		   &ws, buf, sizeof(buf), NULL, 0);
+		   &ws, buf, माप(buf), शून्य, 0);
 	cpacf_prno(CPACF_PRNO_SHA512_DRNG_GEN,
-		   &ws, buf, sizeof(buf), NULL, 0);
+		   &ws, buf, माप(buf), शून्य, 0);
 
 	/* check against expected data */
-	if (memcmp(buf, random, sizeof(random)) != 0) {
+	अगर (स_भेद(buf, अक्रमom, माप(अक्रमom)) != 0) अणु
 		pr_err("The prng self test data test "
 		       "for the SHA-512 mode failed\n");
 		prng_errorflag = PRNG_SELFTEST_FAILED;
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int __init prng_sha512_instantiate(void)
-{
-	int ret, datalen, seedlen;
+अटल पूर्णांक __init prng_sha512_instantiate(व्योम)
+अणु
+	पूर्णांक ret, datalen, seedlen;
 	u8 seed[128 + 16];
 
 	pr_debug("prng runs in SHA-512 mode "
 		 "with chunksize=%d and reseed_limit=%u\n",
 		 prng_chunk_size, prng_reseed_limit);
 
-	/* memory allocation, prng_data struct init, mutex init */
-	datalen = sizeof(struct prng_data_s) + prng_chunk_size;
-	if (fips_enabled)
+	/* memory allocation, prng_data काष्ठा init, mutex init */
+	datalen = माप(काष्ठा prng_data_s) + prng_chunk_size;
+	अगर (fips_enabled)
 		datalen += prng_chunk_size;
 	prng_data = kzalloc(datalen, GFP_KERNEL);
-	if (!prng_data) {
+	अगर (!prng_data) अणु
 		prng_errorflag = PRNG_INSTANTIATE_FAILED;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	mutex_init(&prng_data->mutex);
-	prng_data->buf = ((u8 *)prng_data) + sizeof(struct prng_data_s);
+	prng_data->buf = ((u8 *)prng_data) + माप(काष्ठा prng_data_s);
 
 	/* selftest */
 	ret = prng_sha512_selftest();
-	if (ret)
-		goto outfree;
+	अगर (ret)
+		जाओ outमुक्त;
 
 	/* generate initial seed, we need at least  256 + 128 bits entropy. */
-	if (trng_available) {
+	अगर (trng_available) अणु
 		/*
 		 * Trng available, so use it. The trng works in chunks of
 		 * 32 bytes and produces 100% entropy. So we pull 64 bytes
 		 * which gives us 512 bits entropy.
 		 */
 		seedlen = 2 * 32;
-		cpacf_trng(NULL, 0, seed, seedlen);
-	} else {
+		cpacf_trng(शून्य, 0, seed, seedlen);
+	पूर्ण अन्यथा अणु
 		/*
 		 * No trng available, so use the generate_entropy() function.
 		 * This function works in 64 byte junks and produces
@@ -409,159 +410,159 @@ static int __init prng_sha512_instantiate(void)
 		 */
 		seedlen = 2 * 64;
 		ret = generate_entropy(seed, seedlen);
-		if (ret != seedlen)
-			goto outfree;
-	}
+		अगर (ret != seedlen)
+			जाओ outमुक्त;
+	पूर्ण
 
 	/* append the seed by 16 bytes of unique nonce */
-	store_tod_clock_ext((union tod_clock *)(seed + seedlen));
+	store_tod_घड़ी_ext((जोड़ tod_घड़ी *)(seed + seedlen));
 	seedlen += 16;
 
 	/* now initial seed of the prno drng */
 	cpacf_prno(CPACF_PRNO_SHA512_DRNG_SEED,
-		   &prng_data->prnows, NULL, 0, seed, seedlen);
-	memzero_explicit(seed, sizeof(seed));
+		   &prng_data->prnows, शून्य, 0, seed, seedlen);
+	memzero_explicit(seed, माप(seed));
 
-	/* if fips mode is enabled, generate a first block of random
-	   bytes for the FIPS 140-2 Conditional Self Test */
-	if (fips_enabled) {
+	/* अगर fips mode is enabled, generate a first block of अक्रमom
+	   bytes क्रम the FIPS 140-2 Conditional Self Test */
+	अगर (fips_enabled) अणु
 		prng_data->prev = prng_data->buf + prng_chunk_size;
 		cpacf_prno(CPACF_PRNO_SHA512_DRNG_GEN,
 			   &prng_data->prnows,
-			   prng_data->prev, prng_chunk_size, NULL, 0);
-	}
+			   prng_data->prev, prng_chunk_size, शून्य, 0);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-outfree:
-	kfree(prng_data);
-	return ret;
-}
+outमुक्त:
+	kमुक्त(prng_data);
+	वापस ret;
+पूर्ण
 
 
-static void prng_sha512_deinstantiate(void)
-{
+अटल व्योम prng_sha512_deinstantiate(व्योम)
+अणु
 	pr_debug("The prng module stopped after running in SHA-512 mode\n");
-	kfree_sensitive(prng_data);
-}
+	kमुक्त_sensitive(prng_data);
+पूर्ण
 
 
-static int prng_sha512_reseed(void)
-{
-	int ret, seedlen;
+अटल पूर्णांक prng_sha512_reseed(व्योम)
+अणु
+	पूर्णांक ret, seedlen;
 	u8 seed[64];
 
-	/* We need at least 256 bits of fresh entropy for reseeding */
-	if (trng_available) {
+	/* We need at least 256 bits of fresh entropy क्रम reseeding */
+	अगर (trng_available) अणु
 		/* trng produces 256 bits entropy in 32 bytes */
 		seedlen = 32;
-		cpacf_trng(NULL, 0, seed, seedlen);
-	} else {
+		cpacf_trng(शून्य, 0, seed, seedlen);
+	पूर्ण अन्यथा अणु
 		/* generate_entropy() produces 256 bits entropy in 64 bytes */
 		seedlen = 64;
 		ret = generate_entropy(seed, seedlen);
-		if (ret != sizeof(seed))
-			return ret;
-	}
+		अगर (ret != माप(seed))
+			वापस ret;
+	पूर्ण
 
-	/* do a reseed of the prno drng with this bytestring */
+	/* करो a reseed of the prno drng with this bytestring */
 	cpacf_prno(CPACF_PRNO_SHA512_DRNG_SEED,
-		   &prng_data->prnows, NULL, 0, seed, seedlen);
-	memzero_explicit(seed, sizeof(seed));
+		   &prng_data->prnows, शून्य, 0, seed, seedlen);
+	memzero_explicit(seed, माप(seed));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int prng_sha512_generate(u8 *buf, size_t nbytes)
-{
-	int ret;
+अटल पूर्णांक prng_sha512_generate(u8 *buf, माप_प्रकार nbytes)
+अणु
+	पूर्णांक ret;
 
 	/* reseed needed ? */
-	if (prng_data->prnows.reseed_counter > prng_reseed_limit) {
+	अगर (prng_data->prnows.reseed_counter > prng_reseed_limit) अणु
 		ret = prng_sha512_reseed();
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* PRNO generate */
 	cpacf_prno(CPACF_PRNO_SHA512_DRNG_GEN,
-		   &prng_data->prnows, buf, nbytes, NULL, 0);
+		   &prng_data->prnows, buf, nbytes, शून्य, 0);
 
 	/* FIPS 140-2 Conditional Self Test */
-	if (fips_enabled) {
-		if (!memcmp(prng_data->prev, buf, nbytes)) {
+	अगर (fips_enabled) अणु
+		अगर (!स_भेद(prng_data->prev, buf, nbytes)) अणु
 			prng_errorflag = PRNG_GEN_FAILED;
-			return -EILSEQ;
-		}
-		memcpy(prng_data->prev, buf, nbytes);
-	}
+			वापस -EILSEQ;
+		पूर्ण
+		स_नकल(prng_data->prev, buf, nbytes);
+	पूर्ण
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
 
 /*** file io functions ***/
 
-static int prng_open(struct inode *inode, struct file *file)
-{
-	return nonseekable_open(inode, file);
-}
+अटल पूर्णांक prng_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस nonseekable_खोलो(inode, file);
+पूर्ण
 
 
-static ssize_t prng_tdes_read(struct file *file, char __user *ubuf,
-			      size_t nbytes, loff_t *ppos)
-{
-	int chunk, n, ret = 0;
+अटल sमाप_प्रकार prng_tdes_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+			      माप_प्रकार nbytes, loff_t *ppos)
+अणु
+	पूर्णांक chunk, n, ret = 0;
 
-	/* lock prng_data struct */
-	if (mutex_lock_interruptible(&prng_data->mutex))
-		return -ERESTARTSYS;
+	/* lock prng_data काष्ठा */
+	अगर (mutex_lock_पूर्णांकerruptible(&prng_data->mutex))
+		वापस -ERESTARTSYS;
 
-	while (nbytes) {
-		if (need_resched()) {
-			if (signal_pending(current)) {
-				if (ret == 0)
+	जबतक (nbytes) अणु
+		अगर (need_resched()) अणु
+			अगर (संकेत_pending(current)) अणु
+				अगर (ret == 0)
 					ret = -ERESTARTSYS;
-				break;
-			}
-			/* give mutex free before calling schedule() */
+				अवरोध;
+			पूर्ण
+			/* give mutex मुक्त beक्रमe calling schedule() */
 			mutex_unlock(&prng_data->mutex);
 			schedule();
 			/* occopy mutex again */
-			if (mutex_lock_interruptible(&prng_data->mutex)) {
-				if (ret == 0)
+			अगर (mutex_lock_पूर्णांकerruptible(&prng_data->mutex)) अणु
+				अगर (ret == 0)
 					ret = -ERESTARTSYS;
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * we lose some random bytes if an attacker issues
-		 * reads < 8 bytes, but we don't care
+		 * we lose some अक्रमom bytes अगर an attacker issues
+		 * पढ़ोs < 8 bytes, but we करोn't care
 		 */
-		chunk = min_t(int, nbytes, prng_chunk_size);
+		chunk = min_t(पूर्णांक, nbytes, prng_chunk_size);
 
 		/* PRNG only likes multiples of 8 bytes */
 		n = (chunk + 7) & -8;
 
-		if (prng_data->prngws.reseed_counter > prng_reseed_limit)
+		अगर (prng_data->prngws.reseed_counter > prng_reseed_limit)
 			prng_tdes_seed(8);
 
-		/* if the CPU supports PRNG stckf is present too */
-		*((unsigned long long *)prng_data->buf) = get_tod_clock_fast();
+		/* अगर the CPU supports PRNG stckf is present too */
+		*((अचिन्हित दीर्घ दीर्घ *)prng_data->buf) = get_tod_घड़ी_fast();
 
 		/*
-		 * Beside the STCKF the input for the TDES-EDE is the output
-		 * of the last operation. We differ here from X9.17 since we
-		 * only store one timestamp into the buffer. Padding the whole
-		 * buffer with timestamps does not improve security, since
-		 * successive stckf have nearly constant offsets.
-		 * If an attacker knows the first timestamp it would be
-		 * trivial to guess the additional values. One timestamp
-		 * is therefore enough and still guarantees unique input values.
+		 * Beside the STCKF the input क्रम the TDES-EDE is the output
+		 * of the last operation. We dअगरfer here from X9.17 since we
+		 * only store one बारtamp पूर्णांकo the buffer. Padding the whole
+		 * buffer with बारtamps करोes not improve security, since
+		 * successive stckf have nearly स्थिरant offsets.
+		 * If an attacker knows the first बारtamp it would be
+		 * trivial to guess the additional values. One बारtamp
+		 * is thereक्रमe enough and still guarantees unique input values.
 		 *
-		 * Note: you can still get strict X9.17 conformity by setting
+		 * Note: you can still get strict X9.17 conक्रमmity by setting
 		 * prng_chunk_size to 8 bytes.
 		 */
 		cpacf_kmc(CPACF_KMC_PRNG, prng_data->prngws.parm_block,
@@ -570,214 +571,214 @@ static ssize_t prng_tdes_read(struct file *file, char __user *ubuf,
 		prng_data->prngws.byte_counter += n;
 		prng_data->prngws.reseed_counter += n;
 
-		if (copy_to_user(ubuf, prng_data->buf, chunk)) {
+		अगर (copy_to_user(ubuf, prng_data->buf, chunk)) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		nbytes -= chunk;
 		ret += chunk;
 		ubuf += chunk;
-	}
+	पूर्ण
 
-	/* unlock prng_data struct */
+	/* unlock prng_data काष्ठा */
 	mutex_unlock(&prng_data->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static ssize_t prng_sha512_read(struct file *file, char __user *ubuf,
-				size_t nbytes, loff_t *ppos)
-{
-	int n, ret = 0;
+अटल sमाप_प्रकार prng_sha512_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+				माप_प्रकार nbytes, loff_t *ppos)
+अणु
+	पूर्णांक n, ret = 0;
 	u8 *p;
 
-	/* if errorflag is set do nothing and return 'broken pipe' */
-	if (prng_errorflag)
-		return -EPIPE;
+	/* अगर errorflag is set करो nothing and वापस 'broken pipe' */
+	अगर (prng_errorflag)
+		वापस -EPIPE;
 
-	/* lock prng_data struct */
-	if (mutex_lock_interruptible(&prng_data->mutex))
-		return -ERESTARTSYS;
+	/* lock prng_data काष्ठा */
+	अगर (mutex_lock_पूर्णांकerruptible(&prng_data->mutex))
+		वापस -ERESTARTSYS;
 
-	while (nbytes) {
-		if (need_resched()) {
-			if (signal_pending(current)) {
-				if (ret == 0)
+	जबतक (nbytes) अणु
+		अगर (need_resched()) अणु
+			अगर (संकेत_pending(current)) अणु
+				अगर (ret == 0)
 					ret = -ERESTARTSYS;
-				break;
-			}
-			/* give mutex free before calling schedule() */
+				अवरोध;
+			पूर्ण
+			/* give mutex मुक्त beक्रमe calling schedule() */
 			mutex_unlock(&prng_data->mutex);
 			schedule();
 			/* occopy mutex again */
-			if (mutex_lock_interruptible(&prng_data->mutex)) {
-				if (ret == 0)
+			अगर (mutex_lock_पूर्णांकerruptible(&prng_data->mutex)) अणु
+				अगर (ret == 0)
 					ret = -ERESTARTSYS;
-				return ret;
-			}
-		}
-		if (prng_data->rest) {
-			/* push left over random bytes from the previous read */
+				वापस ret;
+			पूर्ण
+		पूर्ण
+		अगर (prng_data->rest) अणु
+			/* push left over अक्रमom bytes from the previous पढ़ो */
 			p = prng_data->buf + prng_chunk_size - prng_data->rest;
 			n = (nbytes < prng_data->rest) ?
 				nbytes : prng_data->rest;
 			prng_data->rest -= n;
-		} else {
-			/* generate one chunk of random bytes into read buf */
+		पूर्ण अन्यथा अणु
+			/* generate one chunk of अक्रमom bytes पूर्णांकo पढ़ो buf */
 			p = prng_data->buf;
 			n = prng_sha512_generate(p, prng_chunk_size);
-			if (n < 0) {
+			अगर (n < 0) अणु
 				ret = n;
-				break;
-			}
-			if (nbytes < prng_chunk_size) {
+				अवरोध;
+			पूर्ण
+			अगर (nbytes < prng_chunk_size) अणु
 				n = nbytes;
 				prng_data->rest = prng_chunk_size - n;
-			} else {
+			पूर्ण अन्यथा अणु
 				n = prng_chunk_size;
 				prng_data->rest = 0;
-			}
-		}
-		if (copy_to_user(ubuf, p, n)) {
+			पूर्ण
+		पूर्ण
+		अगर (copy_to_user(ubuf, p, n)) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		memzero_explicit(p, n);
 		ubuf += n;
 		nbytes -= n;
 		ret += n;
-	}
+	पूर्ण
 
-	/* unlock prng_data struct */
+	/* unlock prng_data काष्ठा */
 	mutex_unlock(&prng_data->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /*** sysfs stuff ***/
 
-static const struct file_operations prng_sha512_fops = {
+अटल स्थिर काष्ठा file_operations prng_sha512_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= &prng_open,
-	.release	= NULL,
-	.read		= &prng_sha512_read,
+	.खोलो		= &prng_खोलो,
+	.release	= शून्य,
+	.पढ़ो		= &prng_sha512_पढ़ो,
 	.llseek		= noop_llseek,
-};
-static const struct file_operations prng_tdes_fops = {
+पूर्ण;
+अटल स्थिर काष्ठा file_operations prng_tdes_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= &prng_open,
-	.release	= NULL,
-	.read		= &prng_tdes_read,
+	.खोलो		= &prng_खोलो,
+	.release	= शून्य,
+	.पढ़ो		= &prng_tdes_पढ़ो,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
 /* chunksize attribute (ro) */
-static ssize_t prng_chunksize_show(struct device *dev,
-				   struct device_attribute *attr,
-				   char *buf)
-{
-	return scnprintf(buf, PAGE_SIZE, "%u\n", prng_chunk_size);
-}
-static DEVICE_ATTR(chunksize, 0444, prng_chunksize_show, NULL);
+अटल sमाप_प्रकार prng_chunksize_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   अक्षर *buf)
+अणु
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", prng_chunk_size);
+पूर्ण
+अटल DEVICE_ATTR(chunksize, 0444, prng_chunksize_show, शून्य);
 
 /* counter attribute (ro) */
-static ssize_t prng_counter_show(struct device *dev,
-				 struct device_attribute *attr,
-				 char *buf)
-{
+अटल sमाप_प्रकार prng_counter_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 अक्षर *buf)
+अणु
 	u64 counter;
 
-	if (mutex_lock_interruptible(&prng_data->mutex))
-		return -ERESTARTSYS;
-	if (prng_mode == PRNG_MODE_SHA512)
+	अगर (mutex_lock_पूर्णांकerruptible(&prng_data->mutex))
+		वापस -ERESTARTSYS;
+	अगर (prng_mode == PRNG_MODE_SHA512)
 		counter = prng_data->prnows.stream_bytes;
-	else
+	अन्यथा
 		counter = prng_data->prngws.byte_counter;
 	mutex_unlock(&prng_data->mutex);
 
-	return scnprintf(buf, PAGE_SIZE, "%llu\n", counter);
-}
-static DEVICE_ATTR(byte_counter, 0444, prng_counter_show, NULL);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%llu\n", counter);
+पूर्ण
+अटल DEVICE_ATTR(byte_counter, 0444, prng_counter_show, शून्य);
 
 /* errorflag attribute (ro) */
-static ssize_t prng_errorflag_show(struct device *dev,
-				   struct device_attribute *attr,
-				   char *buf)
-{
-	return scnprintf(buf, PAGE_SIZE, "%d\n", prng_errorflag);
-}
-static DEVICE_ATTR(errorflag, 0444, prng_errorflag_show, NULL);
+अटल sमाप_प्रकार prng_errorflag_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   अक्षर *buf)
+अणु
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", prng_errorflag);
+पूर्ण
+अटल DEVICE_ATTR(errorflag, 0444, prng_errorflag_show, शून्य);
 
 /* mode attribute (ro) */
-static ssize_t prng_mode_show(struct device *dev,
-			      struct device_attribute *attr,
-			      char *buf)
-{
-	if (prng_mode == PRNG_MODE_TDES)
-		return scnprintf(buf, PAGE_SIZE, "TDES\n");
-	else
-		return scnprintf(buf, PAGE_SIZE, "SHA512\n");
-}
-static DEVICE_ATTR(mode, 0444, prng_mode_show, NULL);
+अटल sमाप_प्रकार prng_mode_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	अगर (prng_mode == PRNG_MODE_TDES)
+		वापस scnम_लिखो(buf, PAGE_SIZE, "TDES\n");
+	अन्यथा
+		वापस scnम_लिखो(buf, PAGE_SIZE, "SHA512\n");
+पूर्ण
+अटल DEVICE_ATTR(mode, 0444, prng_mode_show, शून्य);
 
 /* reseed attribute (w) */
-static ssize_t prng_reseed_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	if (mutex_lock_interruptible(&prng_data->mutex))
-		return -ERESTARTSYS;
+अटल sमाप_प्रकार prng_reseed_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अगर (mutex_lock_पूर्णांकerruptible(&prng_data->mutex))
+		वापस -ERESTARTSYS;
 	prng_sha512_reseed();
 	mutex_unlock(&prng_data->mutex);
 
-	return count;
-}
-static DEVICE_ATTR(reseed, 0200, NULL, prng_reseed_store);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR(reseed, 0200, शून्य, prng_reseed_store);
 
 /* reseed limit attribute (rw) */
-static ssize_t prng_reseed_limit_show(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	return scnprintf(buf, PAGE_SIZE, "%u\n", prng_reseed_limit);
-}
-static ssize_t prng_reseed_limit_store(struct device *dev,
-				       struct device_attribute *attr,
-				       const char *buf, size_t count)
-{
-	unsigned limit;
+अटल sमाप_प्रकार prng_reseed_limit_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", prng_reseed_limit);
+पूर्ण
+अटल sमाप_प्रकार prng_reseed_limit_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित limit;
 
-	if (sscanf(buf, "%u\n", &limit) != 1)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%u\n", &limit) != 1)
+		वापस -EINVAL;
 
-	if (prng_mode == PRNG_MODE_SHA512) {
-		if (limit < PRNG_RESEED_LIMIT_SHA512_LOWER)
-			return -EINVAL;
-	} else {
-		if (limit < PRNG_RESEED_LIMIT_TDES_LOWER)
-			return -EINVAL;
-	}
+	अगर (prng_mode == PRNG_MODE_SHA512) अणु
+		अगर (limit < PRNG_RESEED_LIMIT_SHA512_LOWER)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (limit < PRNG_RESEED_LIMIT_TDES_LOWER)
+			वापस -EINVAL;
+	पूर्ण
 
 	prng_reseed_limit = limit;
 
-	return count;
-}
-static DEVICE_ATTR(reseed_limit, 0644,
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR(reseed_limit, 0644,
 		   prng_reseed_limit_show, prng_reseed_limit_store);
 
 /* strength attribute (ro) */
-static ssize_t prng_strength_show(struct device *dev,
-				  struct device_attribute *attr,
-				  char *buf)
-{
-	return scnprintf(buf, PAGE_SIZE, "256\n");
-}
-static DEVICE_ATTR(strength, 0444, prng_strength_show, NULL);
+अटल sमाप_प्रकार prng_strength_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  अक्षर *buf)
+अणु
+	वापस scnम_लिखो(buf, PAGE_SIZE, "256\n");
+पूर्ण
+अटल DEVICE_ATTR(strength, 0444, prng_strength_show, शून्य);
 
-static struct attribute *prng_sha512_dev_attrs[] = {
+अटल काष्ठा attribute *prng_sha512_dev_attrs[] = अणु
 	&dev_attr_errorflag.attr,
 	&dev_attr_chunksize.attr,
 	&dev_attr_byte_counter.attr,
@@ -785,127 +786,127 @@ static struct attribute *prng_sha512_dev_attrs[] = {
 	&dev_attr_reseed.attr,
 	&dev_attr_reseed_limit.attr,
 	&dev_attr_strength.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(prng_sha512_dev);
 
-static struct attribute *prng_tdes_dev_attrs[] = {
+अटल काष्ठा attribute *prng_tdes_dev_attrs[] = अणु
 	&dev_attr_chunksize.attr,
 	&dev_attr_byte_counter.attr,
 	&dev_attr_mode.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(prng_tdes_dev);
 
-static struct miscdevice prng_sha512_dev = {
+अटल काष्ठा miscdevice prng_sha512_dev = अणु
 	.name	= "prandom",
 	.minor	= MISC_DYNAMIC_MINOR,
 	.mode	= 0644,
 	.fops	= &prng_sha512_fops,
 	.groups = prng_sha512_dev_groups,
-};
+पूर्ण;
 
-static struct miscdevice prng_tdes_dev = {
+अटल काष्ठा miscdevice prng_tdes_dev = अणु
 	.name	= "prandom",
 	.minor	= MISC_DYNAMIC_MINOR,
 	.mode	= 0644,
 	.fops	= &prng_tdes_fops,
 	.groups = prng_tdes_dev_groups,
-};
+पूर्ण;
 
 
-/*** module init and exit ***/
+/*** module init and निकास ***/
 
-static int __init prng_init(void)
-{
-	int ret;
+अटल पूर्णांक __init prng_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	/* check if the CPU has a PRNG */
-	if (!cpacf_query_func(CPACF_KMC, CPACF_KMC_PRNG))
-		return -ENODEV;
+	/* check अगर the CPU has a PRNG */
+	अगर (!cpacf_query_func(CPACF_KMC, CPACF_KMC_PRNG))
+		वापस -ENODEV;
 
-	/* check if TRNG subfunction is available */
-	if (cpacf_query_func(CPACF_PRNO, CPACF_PRNO_TRNG))
+	/* check अगर TRNG subfunction is available */
+	अगर (cpacf_query_func(CPACF_PRNO, CPACF_PRNO_TRNG))
 		trng_available = true;
 
 	/* choose prng mode */
-	if (prng_mode != PRNG_MODE_TDES) {
-		/* check for MSA5 support for PRNO operations */
-		if (!cpacf_query_func(CPACF_PRNO, CPACF_PRNO_SHA512_DRNG_GEN)) {
-			if (prng_mode == PRNG_MODE_SHA512) {
+	अगर (prng_mode != PRNG_MODE_TDES) अणु
+		/* check क्रम MSA5 support क्रम PRNO operations */
+		अगर (!cpacf_query_func(CPACF_PRNO, CPACF_PRNO_SHA512_DRNG_GEN)) अणु
+			अगर (prng_mode == PRNG_MODE_SHA512) अणु
 				pr_err("The prng module cannot "
 				       "start in SHA-512 mode\n");
-				return -ENODEV;
-			}
+				वापस -ENODEV;
+			पूर्ण
 			prng_mode = PRNG_MODE_TDES;
-		} else
+		पूर्ण अन्यथा
 			prng_mode = PRNG_MODE_SHA512;
-	}
+	पूर्ण
 
-	if (prng_mode == PRNG_MODE_SHA512) {
+	अगर (prng_mode == PRNG_MODE_SHA512) अणु
 
 		/* SHA512 mode */
 
-		if (prng_chunk_size < PRNG_CHUNKSIZE_SHA512_MIN
+		अगर (prng_chunk_size < PRNG_CHUNKSIZE_SHA512_MIN
 		    || prng_chunk_size > PRNG_CHUNKSIZE_SHA512_MAX)
-			return -EINVAL;
+			वापस -EINVAL;
 		prng_chunk_size = (prng_chunk_size + 0x3f) & ~0x3f;
 
-		if (prng_reseed_limit == 0)
+		अगर (prng_reseed_limit == 0)
 			prng_reseed_limit = PRNG_RESEED_LIMIT_SHA512;
-		else if (prng_reseed_limit < PRNG_RESEED_LIMIT_SHA512_LOWER)
-			return -EINVAL;
+		अन्यथा अगर (prng_reseed_limit < PRNG_RESEED_LIMIT_SHA512_LOWER)
+			वापस -EINVAL;
 
 		ret = prng_sha512_instantiate();
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
-		ret = misc_register(&prng_sha512_dev);
-		if (ret) {
+		ret = misc_रेजिस्टर(&prng_sha512_dev);
+		अगर (ret) अणु
 			prng_sha512_deinstantiate();
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 
 		/* TDES mode */
 
-		if (prng_chunk_size < PRNG_CHUNKSIZE_TDES_MIN
+		अगर (prng_chunk_size < PRNG_CHUNKSIZE_TDES_MIN
 		    || prng_chunk_size > PRNG_CHUNKSIZE_TDES_MAX)
-			return -EINVAL;
+			वापस -EINVAL;
 		prng_chunk_size = (prng_chunk_size + 0x07) & ~0x07;
 
-		if (prng_reseed_limit == 0)
+		अगर (prng_reseed_limit == 0)
 			prng_reseed_limit = PRNG_RESEED_LIMIT_TDES;
-		else if (prng_reseed_limit < PRNG_RESEED_LIMIT_TDES_LOWER)
-			return -EINVAL;
+		अन्यथा अगर (prng_reseed_limit < PRNG_RESEED_LIMIT_TDES_LOWER)
+			वापस -EINVAL;
 
 		ret = prng_tdes_instantiate();
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
-		ret = misc_register(&prng_tdes_dev);
-		if (ret) {
+		ret = misc_रेजिस्टर(&prng_tdes_dev);
+		अगर (ret) अणु
 			prng_tdes_deinstantiate();
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static void __exit prng_exit(void)
-{
-	if (prng_mode == PRNG_MODE_SHA512) {
-		misc_deregister(&prng_sha512_dev);
+अटल व्योम __निकास prng_निकास(व्योम)
+अणु
+	अगर (prng_mode == PRNG_MODE_SHA512) अणु
+		misc_deरेजिस्टर(&prng_sha512_dev);
 		prng_sha512_deinstantiate();
-	} else {
-		misc_deregister(&prng_tdes_dev);
+	पूर्ण अन्यथा अणु
+		misc_deरेजिस्टर(&prng_tdes_dev);
 		prng_tdes_deinstantiate();
-	}
-}
+	पूर्ण
+पूर्ण
 
 module_cpu_feature_match(MSA, prng_init);
-module_exit(prng_exit);
+module_निकास(prng_निकास);

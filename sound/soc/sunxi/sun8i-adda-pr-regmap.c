@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * This driver provides regmap to access to analog part of audio codec
  * found on Allwinner A23, A31s, A33, H3 and A64 Socs
@@ -7,93 +8,93 @@
  * Copyright (C) 2018 Vasily Khoruzhick <anarsoul@gmail.com>
  */
 
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
 
-#include "sun8i-adda-pr-regmap.h"
+#समावेश "sun8i-adda-pr-regmap.h"
 
-/* Analog control register access bits */
-#define ADDA_PR			0x0		/* PRCM base + 0x1c0 */
-#define ADDA_PR_RESET			BIT(28)
-#define ADDA_PR_WRITE			BIT(24)
-#define ADDA_PR_ADDR_SHIFT		16
-#define ADDA_PR_ADDR_MASK		GENMASK(4, 0)
-#define ADDA_PR_DATA_IN_SHIFT		8
-#define ADDA_PR_DATA_IN_MASK		GENMASK(7, 0)
-#define ADDA_PR_DATA_OUT_SHIFT		0
-#define ADDA_PR_DATA_OUT_MASK		GENMASK(7, 0)
+/* Analog control रेजिस्टर access bits */
+#घोषणा ADDA_PR			0x0		/* PRCM base + 0x1c0 */
+#घोषणा ADDA_PR_RESET			BIT(28)
+#घोषणा ADDA_PR_WRITE			BIT(24)
+#घोषणा ADDA_PR_ADDR_SHIFT		16
+#घोषणा ADDA_PR_ADDR_MASK		GENMASK(4, 0)
+#घोषणा ADDA_PR_DATA_IN_SHIFT		8
+#घोषणा ADDA_PR_DATA_IN_MASK		GENMASK(7, 0)
+#घोषणा ADDA_PR_DATA_OUT_SHIFT		0
+#घोषणा ADDA_PR_DATA_OUT_MASK		GENMASK(7, 0)
 
 /* regmap access bits */
-static int adda_reg_read(void *context, unsigned int reg, unsigned int *val)
-{
-	void __iomem *base = (void __iomem *)context;
-	u32 tmp;
+अटल पूर्णांक adda_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val)
+अणु
+	व्योम __iomem *base = (व्योम __iomem *)context;
+	u32 पंचांगp;
 
-	/* De-assert reset */
-	writel(readl(base) | ADDA_PR_RESET, base);
+	/* De-निश्चित reset */
+	ग_लिखोl(पढ़ोl(base) | ADDA_PR_RESET, base);
 
-	/* Clear write bit */
-	writel(readl(base) & ~ADDA_PR_WRITE, base);
+	/* Clear ग_लिखो bit */
+	ग_लिखोl(पढ़ोl(base) & ~ADDA_PR_WRITE, base);
 
-	/* Set register address */
-	tmp = readl(base);
-	tmp &= ~(ADDA_PR_ADDR_MASK << ADDA_PR_ADDR_SHIFT);
-	tmp |= (reg & ADDA_PR_ADDR_MASK) << ADDA_PR_ADDR_SHIFT;
-	writel(tmp, base);
+	/* Set रेजिस्टर address */
+	पंचांगp = पढ़ोl(base);
+	पंचांगp &= ~(ADDA_PR_ADDR_MASK << ADDA_PR_ADDR_SHIFT);
+	पंचांगp |= (reg & ADDA_PR_ADDR_MASK) << ADDA_PR_ADDR_SHIFT;
+	ग_लिखोl(पंचांगp, base);
 
 	/* Read back value */
-	*val = readl(base) & ADDA_PR_DATA_OUT_MASK;
+	*val = पढ़ोl(base) & ADDA_PR_DATA_OUT_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adda_reg_write(void *context, unsigned int reg, unsigned int val)
-{
-	void __iomem *base = (void __iomem *)context;
-	u32 tmp;
+अटल पूर्णांक adda_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
+अणु
+	व्योम __iomem *base = (व्योम __iomem *)context;
+	u32 पंचांगp;
 
-	/* De-assert reset */
-	writel(readl(base) | ADDA_PR_RESET, base);
+	/* De-निश्चित reset */
+	ग_लिखोl(पढ़ोl(base) | ADDA_PR_RESET, base);
 
-	/* Set register address */
-	tmp = readl(base);
-	tmp &= ~(ADDA_PR_ADDR_MASK << ADDA_PR_ADDR_SHIFT);
-	tmp |= (reg & ADDA_PR_ADDR_MASK) << ADDA_PR_ADDR_SHIFT;
-	writel(tmp, base);
+	/* Set रेजिस्टर address */
+	पंचांगp = पढ़ोl(base);
+	पंचांगp &= ~(ADDA_PR_ADDR_MASK << ADDA_PR_ADDR_SHIFT);
+	पंचांगp |= (reg & ADDA_PR_ADDR_MASK) << ADDA_PR_ADDR_SHIFT;
+	ग_लिखोl(पंचांगp, base);
 
-	/* Set data to write */
-	tmp = readl(base);
-	tmp &= ~(ADDA_PR_DATA_IN_MASK << ADDA_PR_DATA_IN_SHIFT);
-	tmp |= (val & ADDA_PR_DATA_IN_MASK) << ADDA_PR_DATA_IN_SHIFT;
-	writel(tmp, base);
+	/* Set data to ग_लिखो */
+	पंचांगp = पढ़ोl(base);
+	पंचांगp &= ~(ADDA_PR_DATA_IN_MASK << ADDA_PR_DATA_IN_SHIFT);
+	पंचांगp |= (val & ADDA_PR_DATA_IN_MASK) << ADDA_PR_DATA_IN_SHIFT;
+	ग_लिखोl(पंचांगp, base);
 
-	/* Set write bit to signal a write */
-	writel(readl(base) | ADDA_PR_WRITE, base);
+	/* Set ग_लिखो bit to संकेत a ग_लिखो */
+	ग_लिखोl(पढ़ोl(base) | ADDA_PR_WRITE, base);
 
-	/* Clear write bit */
-	writel(readl(base) & ~ADDA_PR_WRITE, base);
+	/* Clear ग_लिखो bit */
+	ग_लिखोl(पढ़ोl(base) & ~ADDA_PR_WRITE, base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regmap_config adda_pr_regmap_cfg = {
+अटल स्थिर काष्ठा regmap_config adda_pr_regmap_cfg = अणु
 	.name		= "adda-pr",
 	.reg_bits	= 5,
 	.reg_stride	= 1,
 	.val_bits	= 8,
-	.reg_read	= adda_reg_read,
-	.reg_write	= adda_reg_write,
+	.reg_पढ़ो	= adda_reg_पढ़ो,
+	.reg_ग_लिखो	= adda_reg_ग_लिखो,
 	.fast_io	= true,
-	.max_register	= 31,
-};
+	.max_रेजिस्टर	= 31,
+पूर्ण;
 
-struct regmap *sun8i_adda_pr_regmap_init(struct device *dev,
-					 void __iomem *base)
-{
-	return devm_regmap_init(dev, NULL, base, &adda_pr_regmap_cfg);
-}
+काष्ठा regmap *sun8i_adda_pr_regmap_init(काष्ठा device *dev,
+					 व्योम __iomem *base)
+अणु
+	वापस devm_regmap_init(dev, शून्य, base, &adda_pr_regmap_cfg);
+पूर्ण
 EXPORT_SYMBOL_GPL(sun8i_adda_pr_regmap_init);
 
 MODULE_DESCRIPTION("Allwinner analog audio codec regmap driver");

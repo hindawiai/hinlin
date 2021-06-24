@@ -1,386 +1,387 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#define _GNU_SOURCE
-#include <sched.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <linux/compiler.h>
+#घोषणा _GNU_SOURCE
+#समावेश <sched.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/socket.h>
+#समावेश <linux/compiler.h>
 
-#include "test_progs.h"
-#include "cgroup_helpers.h"
-#include "network_helpers.h"
-#include "test_tcp_hdr_options.h"
-#include "test_tcp_hdr_options.skel.h"
-#include "test_misc_tcp_hdr_options.skel.h"
+#समावेश "test_progs.h"
+#समावेश "cgroup_helpers.h"
+#समावेश "network_helpers.h"
+#समावेश "test_tcp_hdr_options.h"
+#समावेश "test_tcp_hdr_options.skel.h"
+#समावेश "test_misc_tcp_hdr_options.skel.h"
 
-#define LO_ADDR6 "::1"
-#define CG_NAME "/tcpbpf-hdr-opt-test"
+#घोषणा LO_ADDR6 "::1"
+#घोषणा CG_NAME "/tcpbpf-hdr-opt-test"
 
-static struct bpf_test_option exp_passive_estab_in;
-static struct bpf_test_option exp_active_estab_in;
-static struct bpf_test_option exp_passive_fin_in;
-static struct bpf_test_option exp_active_fin_in;
-static struct hdr_stg exp_passive_hdr_stg;
-static struct hdr_stg exp_active_hdr_stg = { .active = true, };
+अटल काष्ठा bpf_test_option exp_passive_estab_in;
+अटल काष्ठा bpf_test_option exp_active_estab_in;
+अटल काष्ठा bpf_test_option exp_passive_fin_in;
+अटल काष्ठा bpf_test_option exp_active_fin_in;
+अटल काष्ठा hdr_stg exp_passive_hdr_stg;
+अटल काष्ठा hdr_stg exp_active_hdr_stg = अणु .active = true, पूर्ण;
 
-static struct test_misc_tcp_hdr_options *misc_skel;
-static struct test_tcp_hdr_options *skel;
-static int lport_linum_map_fd;
-static int hdr_stg_map_fd;
-static __u32 duration;
-static int cg_fd;
+अटल काष्ठा test_misc_tcp_hdr_options *misc_skel;
+अटल काष्ठा test_tcp_hdr_options *skel;
+अटल पूर्णांक lport_linum_map_fd;
+अटल पूर्णांक hdr_stg_map_fd;
+अटल __u32 duration;
+अटल पूर्णांक cg_fd;
 
-struct sk_fds {
-	int srv_fd;
-	int passive_fd;
-	int active_fd;
-	int passive_lport;
-	int active_lport;
-};
+काष्ठा sk_fds अणु
+	पूर्णांक srv_fd;
+	पूर्णांक passive_fd;
+	पूर्णांक active_fd;
+	पूर्णांक passive_lport;
+	पूर्णांक active_lport;
+पूर्ण;
 
-static int create_netns(void)
-{
-	if (CHECK(unshare(CLONE_NEWNET), "create netns",
+अटल पूर्णांक create_netns(व्योम)
+अणु
+	अगर (CHECK(unshare(CLONE_NEWNET), "create netns",
 		  "unshare(CLONE_NEWNET): %s (%d)",
-		  strerror(errno), errno))
-		return -1;
+		  म_त्रुटि(त्रुटि_सं), त्रुटि_सं))
+		वापस -1;
 
-	if (CHECK(system("ip link set dev lo up"), "run ip cmd",
+	अगर (CHECK(प्रणाली("ip link set dev lo up"), "run ip cmd",
 		  "failed to bring lo link up\n"))
-		return -1;
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int write_sysctl(const char *sysctl, const char *value)
-{
-	int fd, err, len;
+अटल पूर्णांक ग_लिखो_sysctl(स्थिर अक्षर *sysctl, स्थिर अक्षर *value)
+अणु
+	पूर्णांक fd, err, len;
 
-	fd = open(sysctl, O_WRONLY);
-	if (CHECK(fd == -1, "open sysctl", "open(%s): %s (%d)\n",
-		  sysctl, strerror(errno), errno))
-		return -1;
+	fd = खोलो(sysctl, O_WRONLY);
+	अगर (CHECK(fd == -1, "open sysctl", "open(%s): %s (%d)\n",
+		  sysctl, म_त्रुटि(त्रुटि_सं), त्रुटि_सं))
+		वापस -1;
 
-	len = strlen(value);
-	err = write(fd, value, len);
-	close(fd);
-	if (CHECK(err != len, "write sysctl",
+	len = म_माप(value);
+	err = ग_लिखो(fd, value, len);
+	बंद(fd);
+	अगर (CHECK(err != len, "write sysctl",
 		  "write(%s, %s): err:%d %s (%d)\n",
-		  sysctl, value, err, strerror(errno), errno))
-		return -1;
+		  sysctl, value, err, म_त्रुटि(त्रुटि_सं), त्रुटि_सं))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void print_hdr_stg(const struct hdr_stg *hdr_stg, const char *prefix)
-{
-	fprintf(stderr, "%s{active:%u, resend_syn:%u, syncookie:%u, fastopen:%u}\n",
+अटल व्योम prपूर्णांक_hdr_stg(स्थिर काष्ठा hdr_stg *hdr_stg, स्थिर अक्षर *prefix)
+अणु
+	ख_लिखो(मानक_त्रुटि, "%s{active:%u, resend_syn:%u, syncookie:%u, fastopen:%u}\n",
 		prefix ? : "", hdr_stg->active, hdr_stg->resend_syn,
-		hdr_stg->syncookie, hdr_stg->fastopen);
-}
+		hdr_stg->syncookie, hdr_stg->fastखोलो);
+पूर्ण
 
-static void print_option(const struct bpf_test_option *opt, const char *prefix)
-{
-	fprintf(stderr, "%s{flags:0x%x, max_delack_ms:%u, rand:0x%x}\n",
-		prefix ? : "", opt->flags, opt->max_delack_ms, opt->rand);
-}
+अटल व्योम prपूर्णांक_option(स्थिर काष्ठा bpf_test_option *opt, स्थिर अक्षर *prefix)
+अणु
+	ख_लिखो(मानक_त्रुटि, "%s{flags:0x%x, max_delack_ms:%u, rand:0x%x}\n",
+		prefix ? : "", opt->flags, opt->max_delack_ms, opt->अक्रम);
+पूर्ण
 
-static void sk_fds_close(struct sk_fds *sk_fds)
-{
-	close(sk_fds->srv_fd);
-	close(sk_fds->passive_fd);
-	close(sk_fds->active_fd);
-}
+अटल व्योम sk_fds_बंद(काष्ठा sk_fds *sk_fds)
+अणु
+	बंद(sk_fds->srv_fd);
+	बंद(sk_fds->passive_fd);
+	बंद(sk_fds->active_fd);
+पूर्ण
 
-static int sk_fds_shutdown(struct sk_fds *sk_fds)
-{
-	int ret, abyte;
+अटल पूर्णांक sk_fds_shutकरोwn(काष्ठा sk_fds *sk_fds)
+अणु
+	पूर्णांक ret, abyte;
 
-	shutdown(sk_fds->active_fd, SHUT_WR);
-	ret = read(sk_fds->passive_fd, &abyte, sizeof(abyte));
-	if (CHECK(ret != 0, "read-after-shutdown(passive_fd):",
+	shutकरोwn(sk_fds->active_fd, SHUT_WR);
+	ret = पढ़ो(sk_fds->passive_fd, &abyte, माप(abyte));
+	अगर (CHECK(ret != 0, "read-after-shutdown(passive_fd):",
 		  "ret:%d %s (%d)\n",
-		  ret, strerror(errno), errno))
-		return -1;
+		  ret, म_त्रुटि(त्रुटि_सं), त्रुटि_सं))
+		वापस -1;
 
-	shutdown(sk_fds->passive_fd, SHUT_WR);
-	ret = read(sk_fds->active_fd, &abyte, sizeof(abyte));
-	if (CHECK(ret != 0, "read-after-shutdown(active_fd):",
+	shutकरोwn(sk_fds->passive_fd, SHUT_WR);
+	ret = पढ़ो(sk_fds->active_fd, &abyte, माप(abyte));
+	अगर (CHECK(ret != 0, "read-after-shutdown(active_fd):",
 		  "ret:%d %s (%d)\n",
-		  ret, strerror(errno), errno))
-		return -1;
+		  ret, म_त्रुटि(त्रुटि_सं), त्रुटि_सं))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sk_fds_connect(struct sk_fds *sk_fds, bool fast_open)
-{
-	const char fast[] = "FAST!!!";
-	struct sockaddr_in6 addr6;
+अटल पूर्णांक sk_fds_connect(काष्ठा sk_fds *sk_fds, bool fast_खोलो)
+अणु
+	स्थिर अक्षर fast[] = "FAST!!!";
+	काष्ठा sockaddr_in6 addr6;
 	socklen_t len;
 
 	sk_fds->srv_fd = start_server(AF_INET6, SOCK_STREAM, LO_ADDR6, 0, 0);
-	if (CHECK(sk_fds->srv_fd == -1, "start_server", "%s (%d)\n",
-		  strerror(errno), errno))
-		goto error;
+	अगर (CHECK(sk_fds->srv_fd == -1, "start_server", "%s (%d)\n",
+		  म_त्रुटि(त्रुटि_सं), त्रुटि_सं))
+		जाओ error;
 
-	if (fast_open)
-		sk_fds->active_fd = fastopen_connect(sk_fds->srv_fd, fast,
-						     sizeof(fast), 0);
-	else
+	अगर (fast_खोलो)
+		sk_fds->active_fd = fastखोलो_connect(sk_fds->srv_fd, fast,
+						     माप(fast), 0);
+	अन्यथा
 		sk_fds->active_fd = connect_to_fd(sk_fds->srv_fd, 0);
 
-	if (CHECK_FAIL(sk_fds->active_fd == -1)) {
-		close(sk_fds->srv_fd);
-		goto error;
-	}
+	अगर (CHECK_FAIL(sk_fds->active_fd == -1)) अणु
+		बंद(sk_fds->srv_fd);
+		जाओ error;
+	पूर्ण
 
-	len = sizeof(addr6);
-	if (CHECK(getsockname(sk_fds->srv_fd, (struct sockaddr *)&addr6,
+	len = माप(addr6);
+	अगर (CHECK(माला_लोockname(sk_fds->srv_fd, (काष्ठा sockaddr *)&addr6,
 			      &len), "getsockname(srv_fd)", "%s (%d)\n",
-		  strerror(errno), errno))
-		goto error_close;
+		  म_त्रुटि(त्रुटि_सं), त्रुटि_सं))
+		जाओ error_बंद;
 	sk_fds->passive_lport = ntohs(addr6.sin6_port);
 
-	len = sizeof(addr6);
-	if (CHECK(getsockname(sk_fds->active_fd, (struct sockaddr *)&addr6,
+	len = माप(addr6);
+	अगर (CHECK(माला_लोockname(sk_fds->active_fd, (काष्ठा sockaddr *)&addr6,
 			      &len), "getsockname(active_fd)", "%s (%d)\n",
-		  strerror(errno), errno))
-		goto error_close;
+		  म_त्रुटि(त्रुटि_सं), त्रुटि_सं))
+		जाओ error_बंद;
 	sk_fds->active_lport = ntohs(addr6.sin6_port);
 
-	sk_fds->passive_fd = accept(sk_fds->srv_fd, NULL, 0);
-	if (CHECK(sk_fds->passive_fd == -1, "accept(srv_fd)", "%s (%d)\n",
-		  strerror(errno), errno))
-		goto error_close;
+	sk_fds->passive_fd = accept(sk_fds->srv_fd, शून्य, 0);
+	अगर (CHECK(sk_fds->passive_fd == -1, "accept(srv_fd)", "%s (%d)\n",
+		  म_त्रुटि(त्रुटि_सं), त्रुटि_सं))
+		जाओ error_बंद;
 
-	if (fast_open) {
-		char bytes_in[sizeof(fast)];
-		int ret;
+	अगर (fast_खोलो) अणु
+		अक्षर bytes_in[माप(fast)];
+		पूर्णांक ret;
 
-		ret = read(sk_fds->passive_fd, bytes_in, sizeof(bytes_in));
-		if (CHECK(ret != sizeof(fast), "read fastopen syn data",
-			  "expected=%lu actual=%d\n", sizeof(fast), ret)) {
-			close(sk_fds->passive_fd);
-			goto error_close;
-		}
-	}
+		ret = पढ़ो(sk_fds->passive_fd, bytes_in, माप(bytes_in));
+		अगर (CHECK(ret != माप(fast), "read fastopen syn data",
+			  "expected=%lu actual=%d\n", माप(fast), ret)) अणु
+			बंद(sk_fds->passive_fd);
+			जाओ error_बंद;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-error_close:
-	close(sk_fds->active_fd);
-	close(sk_fds->srv_fd);
+error_बंद:
+	बंद(sk_fds->active_fd);
+	बंद(sk_fds->srv_fd);
 
 error:
-	memset(sk_fds, -1, sizeof(*sk_fds));
-	return -1;
-}
+	स_रखो(sk_fds, -1, माप(*sk_fds));
+	वापस -1;
+पूर्ण
 
-static int check_hdr_opt(const struct bpf_test_option *exp,
-			 const struct bpf_test_option *act,
-			 const char *hdr_desc)
-{
-	if (CHECK(memcmp(exp, act, sizeof(*exp)),
-		  "expected-vs-actual", "unexpected %s\n", hdr_desc)) {
-		print_option(exp, "expected: ");
-		print_option(act, "  actual: ");
-		return -1;
-	}
+अटल पूर्णांक check_hdr_opt(स्थिर काष्ठा bpf_test_option *exp,
+			 स्थिर काष्ठा bpf_test_option *act,
+			 स्थिर अक्षर *hdr_desc)
+अणु
+	अगर (CHECK(स_भेद(exp, act, माप(*exp)),
+		  "expected-vs-actual", "unexpected %s\n", hdr_desc)) अणु
+		prपूर्णांक_option(exp, "expected: ");
+		prपूर्णांक_option(act, "  actual: ");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_hdr_stg(const struct hdr_stg *exp, int fd,
-			 const char *stg_desc)
-{
-	struct hdr_stg act;
+अटल पूर्णांक check_hdr_stg(स्थिर काष्ठा hdr_stg *exp, पूर्णांक fd,
+			 स्थिर अक्षर *stg_desc)
+अणु
+	काष्ठा hdr_stg act;
 
-	if (CHECK(bpf_map_lookup_elem(hdr_stg_map_fd, &fd, &act),
+	अगर (CHECK(bpf_map_lookup_elem(hdr_stg_map_fd, &fd, &act),
 		  "map_lookup(hdr_stg_map_fd)", "%s %s (%d)\n",
-		  stg_desc, strerror(errno), errno))
-		return -1;
+		  stg_desc, म_त्रुटि(त्रुटि_सं), त्रुटि_सं))
+		वापस -1;
 
-	if (CHECK(memcmp(exp, &act, sizeof(*exp)),
-		  "expected-vs-actual", "unexpected %s\n", stg_desc)) {
-		print_hdr_stg(exp, "expected: ");
-		print_hdr_stg(&act, "  actual: ");
-		return -1;
-	}
+	अगर (CHECK(स_भेद(exp, &act, माप(*exp)),
+		  "expected-vs-actual", "unexpected %s\n", stg_desc)) अणु
+		prपूर्णांक_hdr_stg(exp, "expected: ");
+		prपूर्णांक_hdr_stg(&act, "  actual: ");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_error_linum(const struct sk_fds *sk_fds)
-{
-	unsigned int nr_errors = 0;
-	struct linum_err linum_err;
-	int lport;
+अटल पूर्णांक check_error_linum(स्थिर काष्ठा sk_fds *sk_fds)
+अणु
+	अचिन्हित पूर्णांक nr_errors = 0;
+	काष्ठा linum_err linum_err;
+	पूर्णांक lport;
 
 	lport = sk_fds->passive_lport;
-	if (!bpf_map_lookup_elem(lport_linum_map_fd, &lport, &linum_err)) {
-		fprintf(stderr,
+	अगर (!bpf_map_lookup_elem(lport_linum_map_fd, &lport, &linum_err)) अणु
+		ख_लिखो(मानक_त्रुटि,
 			"bpf prog error out at lport:passive(%d), linum:%u err:%d\n",
 			lport, linum_err.linum, linum_err.err);
 		nr_errors++;
-	}
+	पूर्ण
 
 	lport = sk_fds->active_lport;
-	if (!bpf_map_lookup_elem(lport_linum_map_fd, &lport, &linum_err)) {
-		fprintf(stderr,
+	अगर (!bpf_map_lookup_elem(lport_linum_map_fd, &lport, &linum_err)) अणु
+		ख_लिखो(मानक_त्रुटि,
 			"bpf prog error out at lport:active(%d), linum:%u err:%d\n",
 			lport, linum_err.linum, linum_err.err);
 		nr_errors++;
-	}
+	पूर्ण
 
-	return nr_errors;
-}
+	वापस nr_errors;
+पूर्ण
 
-static void check_hdr_and_close_fds(struct sk_fds *sk_fds)
-{
-	const __u32 expected_inherit_cb_flags =
+अटल व्योम check_hdr_and_बंद_fds(काष्ठा sk_fds *sk_fds)
+अणु
+	स्थिर __u32 expected_inherit_cb_flags =
 		BPF_SOCK_OPS_PARSE_UNKNOWN_HDR_OPT_CB_FLAG |
 		BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG |
 		BPF_SOCK_OPS_STATE_CB_FLAG;
 
-	if (sk_fds_shutdown(sk_fds))
-		goto check_linum;
+	अगर (sk_fds_shutकरोwn(sk_fds))
+		जाओ check_linum;
 
-	if (CHECK(expected_inherit_cb_flags != skel->bss->inherit_cb_flags,
+	अगर (CHECK(expected_inherit_cb_flags != skel->bss->inherit_cb_flags,
 		  "Unexpected inherit_cb_flags", "0x%x != 0x%x\n",
 		  skel->bss->inherit_cb_flags, expected_inherit_cb_flags))
-		goto check_linum;
+		जाओ check_linum;
 
-	if (check_hdr_stg(&exp_passive_hdr_stg, sk_fds->passive_fd,
+	अगर (check_hdr_stg(&exp_passive_hdr_stg, sk_fds->passive_fd,
 			  "passive_hdr_stg"))
-		goto check_linum;
+		जाओ check_linum;
 
-	if (check_hdr_stg(&exp_active_hdr_stg, sk_fds->active_fd,
+	अगर (check_hdr_stg(&exp_active_hdr_stg, sk_fds->active_fd,
 			  "active_hdr_stg"))
-		goto check_linum;
+		जाओ check_linum;
 
-	if (check_hdr_opt(&exp_passive_estab_in, &skel->bss->passive_estab_in,
+	अगर (check_hdr_opt(&exp_passive_estab_in, &skel->bss->passive_estab_in,
 			  "passive_estab_in"))
-		goto check_linum;
+		जाओ check_linum;
 
-	if (check_hdr_opt(&exp_active_estab_in, &skel->bss->active_estab_in,
+	अगर (check_hdr_opt(&exp_active_estab_in, &skel->bss->active_estab_in,
 			  "active_estab_in"))
-		goto check_linum;
+		जाओ check_linum;
 
-	if (check_hdr_opt(&exp_passive_fin_in, &skel->bss->passive_fin_in,
+	अगर (check_hdr_opt(&exp_passive_fin_in, &skel->bss->passive_fin_in,
 			  "passive_fin_in"))
-		goto check_linum;
+		जाओ check_linum;
 
 	check_hdr_opt(&exp_active_fin_in, &skel->bss->active_fin_in,
 		      "active_fin_in");
 
 check_linum:
 	CHECK_FAIL(check_error_linum(sk_fds));
-	sk_fds_close(sk_fds);
-}
+	sk_fds_बंद(sk_fds);
+पूर्ण
 
-static void prepare_out(void)
-{
+अटल व्योम prepare_out(व्योम)
+अणु
 	skel->bss->active_syn_out = exp_passive_estab_in;
 	skel->bss->passive_synack_out = exp_active_estab_in;
 
 	skel->bss->active_fin_out = exp_passive_fin_in;
 	skel->bss->passive_fin_out = exp_active_fin_in;
-}
+पूर्ण
 
-static void reset_test(void)
-{
-	size_t optsize = sizeof(struct bpf_test_option);
-	int lport, err;
+अटल व्योम reset_test(व्योम)
+अणु
+	माप_प्रकार optsize = माप(काष्ठा bpf_test_option);
+	पूर्णांक lport, err;
 
-	memset(&skel->bss->passive_synack_out, 0, optsize);
-	memset(&skel->bss->passive_fin_out, 0, optsize);
+	स_रखो(&skel->bss->passive_synack_out, 0, optsize);
+	स_रखो(&skel->bss->passive_fin_out, 0, optsize);
 
-	memset(&skel->bss->passive_estab_in, 0, optsize);
-	memset(&skel->bss->passive_fin_in, 0, optsize);
+	स_रखो(&skel->bss->passive_estab_in, 0, optsize);
+	स_रखो(&skel->bss->passive_fin_in, 0, optsize);
 
-	memset(&skel->bss->active_syn_out, 0, optsize);
-	memset(&skel->bss->active_fin_out, 0, optsize);
+	स_रखो(&skel->bss->active_syn_out, 0, optsize);
+	स_रखो(&skel->bss->active_fin_out, 0, optsize);
 
-	memset(&skel->bss->active_estab_in, 0, optsize);
-	memset(&skel->bss->active_fin_in, 0, optsize);
+	स_रखो(&skel->bss->active_estab_in, 0, optsize);
+	स_रखो(&skel->bss->active_fin_in, 0, optsize);
 
 	skel->bss->inherit_cb_flags = 0;
 
 	skel->data->test_kind = TCPOPT_EXP;
 	skel->data->test_magic = 0xeB9F;
 
-	memset(&exp_passive_estab_in, 0, optsize);
-	memset(&exp_active_estab_in, 0, optsize);
-	memset(&exp_passive_fin_in, 0, optsize);
-	memset(&exp_active_fin_in, 0, optsize);
+	स_रखो(&exp_passive_estab_in, 0, optsize);
+	स_रखो(&exp_active_estab_in, 0, optsize);
+	स_रखो(&exp_passive_fin_in, 0, optsize);
+	स_रखो(&exp_active_fin_in, 0, optsize);
 
-	memset(&exp_passive_hdr_stg, 0, sizeof(exp_passive_hdr_stg));
-	memset(&exp_active_hdr_stg, 0, sizeof(exp_active_hdr_stg));
+	स_रखो(&exp_passive_hdr_stg, 0, माप(exp_passive_hdr_stg));
+	स_रखो(&exp_active_hdr_stg, 0, माप(exp_active_hdr_stg));
 	exp_active_hdr_stg.active = true;
 
-	err = bpf_map_get_next_key(lport_linum_map_fd, NULL, &lport);
-	while (!err) {
+	err = bpf_map_get_next_key(lport_linum_map_fd, शून्य, &lport);
+	जबतक (!err) अणु
 		bpf_map_delete_elem(lport_linum_map_fd, &lport);
 		err = bpf_map_get_next_key(lport_linum_map_fd, &lport, &lport);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fastopen_estab(void)
-{
-	struct bpf_link *link;
-	struct sk_fds sk_fds;
+अटल व्योम fastखोलो_estab(व्योम)
+अणु
+	काष्ठा bpf_link *link;
+	काष्ठा sk_fds sk_fds;
 
 	hdr_stg_map_fd = bpf_map__fd(skel->maps.hdr_stg_map);
 	lport_linum_map_fd = bpf_map__fd(skel->maps.lport_linum_map);
 
 	exp_passive_estab_in.flags = OPTION_F_RAND | OPTION_F_MAX_DELACK_MS;
-	exp_passive_estab_in.rand = 0xfa;
+	exp_passive_estab_in.अक्रम = 0xfa;
 	exp_passive_estab_in.max_delack_ms = 11;
 
 	exp_active_estab_in.flags = OPTION_F_RAND | OPTION_F_MAX_DELACK_MS;
-	exp_active_estab_in.rand = 0xce;
+	exp_active_estab_in.अक्रम = 0xce;
 	exp_active_estab_in.max_delack_ms = 22;
 
-	exp_passive_hdr_stg.fastopen = true;
+	exp_passive_hdr_stg.fastखोलो = true;
 
 	prepare_out();
 
-	/* Allow fastopen without fastopen cookie */
-	if (write_sysctl("/proc/sys/net/ipv4/tcp_fastopen", "1543"))
-		return;
+	/* Allow fastखोलो without fastखोलो cookie */
+	अगर (ग_लिखो_sysctl("/proc/sys/net/ipv4/tcp_fastopen", "1543"))
+		वापस;
 
 	link = bpf_program__attach_cgroup(skel->progs.estab, cg_fd);
-	if (CHECK(IS_ERR(link), "attach_cgroup(estab)", "err: %ld\n",
+	अगर (CHECK(IS_ERR(link), "attach_cgroup(estab)", "err: %ld\n",
 		  PTR_ERR(link)))
-		return;
+		वापस;
 
-	if (sk_fds_connect(&sk_fds, true)) {
+	अगर (sk_fds_connect(&sk_fds, true)) अणु
 		bpf_link__destroy(link);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	check_hdr_and_close_fds(&sk_fds);
+	check_hdr_and_बंद_fds(&sk_fds);
 	bpf_link__destroy(link);
-}
+पूर्ण
 
-static void syncookie_estab(void)
-{
-	struct bpf_link *link;
-	struct sk_fds sk_fds;
+अटल व्योम syncookie_estab(व्योम)
+अणु
+	काष्ठा bpf_link *link;
+	काष्ठा sk_fds sk_fds;
 
 	hdr_stg_map_fd = bpf_map__fd(skel->maps.hdr_stg_map);
 	lport_linum_map_fd = bpf_map__fd(skel->maps.lport_linum_map);
 
 	exp_passive_estab_in.flags = OPTION_F_RAND | OPTION_F_MAX_DELACK_MS;
-	exp_passive_estab_in.rand = 0xfa;
+	exp_passive_estab_in.अक्रम = 0xfa;
 	exp_passive_estab_in.max_delack_ms = 11;
 
 	exp_active_estab_in.flags = OPTION_F_RAND | OPTION_F_MAX_DELACK_MS |
 					OPTION_F_RESEND;
-	exp_active_estab_in.rand = 0xce;
+	exp_active_estab_in.अक्रम = 0xce;
 	exp_active_estab_in.max_delack_ms = 22;
 
 	exp_passive_hdr_stg.syncookie = true;
@@ -393,147 +394,147 @@ static void syncookie_estab(void)
 	 */
 	skel->bss->passive_synack_out.flags &= ~OPTION_F_RESEND;
 
-	/* Enforce syncookie mode */
-	if (write_sysctl("/proc/sys/net/ipv4/tcp_syncookies", "2"))
-		return;
+	/* Enक्रमce syncookie mode */
+	अगर (ग_लिखो_sysctl("/proc/sys/net/ipv4/tcp_syncookies", "2"))
+		वापस;
 
 	link = bpf_program__attach_cgroup(skel->progs.estab, cg_fd);
-	if (CHECK(IS_ERR(link), "attach_cgroup(estab)", "err: %ld\n",
+	अगर (CHECK(IS_ERR(link), "attach_cgroup(estab)", "err: %ld\n",
 		  PTR_ERR(link)))
-		return;
+		वापस;
 
-	if (sk_fds_connect(&sk_fds, false)) {
+	अगर (sk_fds_connect(&sk_fds, false)) अणु
 		bpf_link__destroy(link);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	check_hdr_and_close_fds(&sk_fds);
+	check_hdr_and_बंद_fds(&sk_fds);
 	bpf_link__destroy(link);
-}
+पूर्ण
 
-static void fin(void)
-{
-	struct bpf_link *link;
-	struct sk_fds sk_fds;
+अटल व्योम fin(व्योम)
+अणु
+	काष्ठा bpf_link *link;
+	काष्ठा sk_fds sk_fds;
 
 	hdr_stg_map_fd = bpf_map__fd(skel->maps.hdr_stg_map);
 	lport_linum_map_fd = bpf_map__fd(skel->maps.lport_linum_map);
 
 	exp_passive_fin_in.flags = OPTION_F_RAND;
-	exp_passive_fin_in.rand = 0xfa;
+	exp_passive_fin_in.अक्रम = 0xfa;
 
 	exp_active_fin_in.flags = OPTION_F_RAND;
-	exp_active_fin_in.rand = 0xce;
+	exp_active_fin_in.अक्रम = 0xce;
 
 	prepare_out();
 
-	if (write_sysctl("/proc/sys/net/ipv4/tcp_syncookies", "1"))
-		return;
+	अगर (ग_लिखो_sysctl("/proc/sys/net/ipv4/tcp_syncookies", "1"))
+		वापस;
 
 	link = bpf_program__attach_cgroup(skel->progs.estab, cg_fd);
-	if (CHECK(IS_ERR(link), "attach_cgroup(estab)", "err: %ld\n",
+	अगर (CHECK(IS_ERR(link), "attach_cgroup(estab)", "err: %ld\n",
 		  PTR_ERR(link)))
-		return;
+		वापस;
 
-	if (sk_fds_connect(&sk_fds, false)) {
+	अगर (sk_fds_connect(&sk_fds, false)) अणु
 		bpf_link__destroy(link);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	check_hdr_and_close_fds(&sk_fds);
+	check_hdr_and_बंद_fds(&sk_fds);
 	bpf_link__destroy(link);
-}
+पूर्ण
 
-static void __simple_estab(bool exprm)
-{
-	struct bpf_link *link;
-	struct sk_fds sk_fds;
+अटल व्योम __simple_estab(bool exprm)
+अणु
+	काष्ठा bpf_link *link;
+	काष्ठा sk_fds sk_fds;
 
 	hdr_stg_map_fd = bpf_map__fd(skel->maps.hdr_stg_map);
 	lport_linum_map_fd = bpf_map__fd(skel->maps.lport_linum_map);
 
 	exp_passive_estab_in.flags = OPTION_F_RAND | OPTION_F_MAX_DELACK_MS;
-	exp_passive_estab_in.rand = 0xfa;
+	exp_passive_estab_in.अक्रम = 0xfa;
 	exp_passive_estab_in.max_delack_ms = 11;
 
 	exp_active_estab_in.flags = OPTION_F_RAND | OPTION_F_MAX_DELACK_MS;
-	exp_active_estab_in.rand = 0xce;
+	exp_active_estab_in.अक्रम = 0xce;
 	exp_active_estab_in.max_delack_ms = 22;
 
 	prepare_out();
 
-	if (!exprm) {
+	अगर (!exprm) अणु
 		skel->data->test_kind = 0xB9;
 		skel->data->test_magic = 0;
-	}
+	पूर्ण
 
-	if (write_sysctl("/proc/sys/net/ipv4/tcp_syncookies", "1"))
-		return;
+	अगर (ग_लिखो_sysctl("/proc/sys/net/ipv4/tcp_syncookies", "1"))
+		वापस;
 
 	link = bpf_program__attach_cgroup(skel->progs.estab, cg_fd);
-	if (CHECK(IS_ERR(link), "attach_cgroup(estab)", "err: %ld\n",
+	अगर (CHECK(IS_ERR(link), "attach_cgroup(estab)", "err: %ld\n",
 		  PTR_ERR(link)))
-		return;
+		वापस;
 
-	if (sk_fds_connect(&sk_fds, false)) {
+	अगर (sk_fds_connect(&sk_fds, false)) अणु
 		bpf_link__destroy(link);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	check_hdr_and_close_fds(&sk_fds);
+	check_hdr_and_बंद_fds(&sk_fds);
 	bpf_link__destroy(link);
-}
+पूर्ण
 
-static void no_exprm_estab(void)
-{
+अटल व्योम no_exprm_estab(व्योम)
+अणु
 	__simple_estab(false);
-}
+पूर्ण
 
-static void simple_estab(void)
-{
+अटल व्योम simple_estab(व्योम)
+अणु
 	__simple_estab(true);
-}
+पूर्ण
 
-static void misc(void)
-{
-	const char send_msg[] = "MISC!!!";
-	char recv_msg[sizeof(send_msg)];
-	const unsigned int nr_data = 2;
-	struct bpf_link *link;
-	struct sk_fds sk_fds;
-	int i, ret;
+अटल व्योम misc(व्योम)
+अणु
+	स्थिर अक्षर send_msg[] = "MISC!!!";
+	अक्षर recv_msg[माप(send_msg)];
+	स्थिर अचिन्हित पूर्णांक nr_data = 2;
+	काष्ठा bpf_link *link;
+	काष्ठा sk_fds sk_fds;
+	पूर्णांक i, ret;
 
 	lport_linum_map_fd = bpf_map__fd(misc_skel->maps.lport_linum_map);
 
-	if (write_sysctl("/proc/sys/net/ipv4/tcp_syncookies", "1"))
-		return;
+	अगर (ग_लिखो_sysctl("/proc/sys/net/ipv4/tcp_syncookies", "1"))
+		वापस;
 
 	link = bpf_program__attach_cgroup(misc_skel->progs.misc_estab, cg_fd);
-	if (CHECK(IS_ERR(link), "attach_cgroup(misc_estab)", "err: %ld\n",
+	अगर (CHECK(IS_ERR(link), "attach_cgroup(misc_estab)", "err: %ld\n",
 		  PTR_ERR(link)))
-		return;
+		वापस;
 
-	if (sk_fds_connect(&sk_fds, false)) {
+	अगर (sk_fds_connect(&sk_fds, false)) अणु
 		bpf_link__destroy(link);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < nr_data; i++) {
+	क्रम (i = 0; i < nr_data; i++) अणु
 		/* MSG_EOR to ensure skb will not be combined */
-		ret = send(sk_fds.active_fd, send_msg, sizeof(send_msg),
+		ret = send(sk_fds.active_fd, send_msg, माप(send_msg),
 			   MSG_EOR);
-		if (CHECK(ret != sizeof(send_msg), "send(msg)", "ret:%d\n",
+		अगर (CHECK(ret != माप(send_msg), "send(msg)", "ret:%d\n",
 			  ret))
-			goto check_linum;
+			जाओ check_linum;
 
-		ret = read(sk_fds.passive_fd, recv_msg, sizeof(recv_msg));
-		if (CHECK(ret != sizeof(send_msg), "read(msg)", "ret:%d\n",
+		ret = पढ़ो(sk_fds.passive_fd, recv_msg, माप(recv_msg));
+		अगर (CHECK(ret != माप(send_msg), "read(msg)", "ret:%d\n",
 			  ret))
-			goto check_linum;
-	}
+			जाओ check_linum;
+	पूर्ण
 
-	if (sk_fds_shutdown(&sk_fds))
-		goto check_linum;
+	अगर (sk_fds_shutकरोwn(&sk_fds))
+		जाओ check_linum;
 
 	CHECK(misc_skel->bss->nr_syn != 1, "unexpected nr_syn",
 	      "expected (1) != actual (%u)\n",
@@ -556,55 +557,55 @@ static void misc(void)
 
 check_linum:
 	CHECK_FAIL(check_error_linum(&sk_fds));
-	sk_fds_close(&sk_fds);
+	sk_fds_बंद(&sk_fds);
 	bpf_link__destroy(link);
-}
+पूर्ण
 
-struct test {
-	const char *desc;
-	void (*run)(void);
-};
+काष्ठा test अणु
+	स्थिर अक्षर *desc;
+	व्योम (*run)(व्योम);
+पूर्ण;
 
-#define DEF_TEST(name) { #name, name }
-static struct test tests[] = {
+#घोषणा DEF_TEST(name) अणु #name, name पूर्ण
+अटल काष्ठा test tests[] = अणु
 	DEF_TEST(simple_estab),
 	DEF_TEST(no_exprm_estab),
 	DEF_TEST(syncookie_estab),
-	DEF_TEST(fastopen_estab),
+	DEF_TEST(fastखोलो_estab),
 	DEF_TEST(fin),
 	DEF_TEST(misc),
-};
+पूर्ण;
 
-void test_tcp_hdr_options(void)
-{
-	int i;
+व्योम test_tcp_hdr_options(व्योम)
+अणु
+	पूर्णांक i;
 
-	skel = test_tcp_hdr_options__open_and_load();
-	if (CHECK(!skel, "open and load skel", "failed"))
-		return;
+	skel = test_tcp_hdr_options__खोलो_and_load();
+	अगर (CHECK(!skel, "open and load skel", "failed"))
+		वापस;
 
-	misc_skel = test_misc_tcp_hdr_options__open_and_load();
-	if (CHECK(!misc_skel, "open and load misc test skel", "failed"))
-		goto skel_destroy;
+	misc_skel = test_misc_tcp_hdr_options__खोलो_and_load();
+	अगर (CHECK(!misc_skel, "open and load misc test skel", "failed"))
+		जाओ skel_destroy;
 
 	cg_fd = test__join_cgroup(CG_NAME);
-	if (CHECK_FAIL(cg_fd < 0))
-		goto skel_destroy;
+	अगर (CHECK_FAIL(cg_fd < 0))
+		जाओ skel_destroy;
 
-	for (i = 0; i < ARRAY_SIZE(tests); i++) {
-		if (!test__start_subtest(tests[i].desc))
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(tests); i++) अणु
+		अगर (!test__start_subtest(tests[i].desc))
+			जारी;
 
-		if (create_netns())
-			break;
+		अगर (create_netns())
+			अवरोध;
 
 		tests[i].run();
 
 		reset_test();
-	}
+	पूर्ण
 
-	close(cg_fd);
+	बंद(cg_fd);
 skel_destroy:
 	test_misc_tcp_hdr_options__destroy(misc_skel);
 	test_tcp_hdr_options__destroy(skel);
-}
+पूर्ण

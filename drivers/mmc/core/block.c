@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Block driver for media (i.e., flash cards)
+ * Block driver क्रम media (i.e., flash cards)
  *
  * Copyright 2002 Hewlett-Packard Company
  * Copyright 2005-2008 Pierre Ossman
@@ -17,467 +18,467 @@
  * Author:  Andrew Christian
  *          28 May 2002
  */
-#include <linux/moduleparam.h>
-#include <linux/module.h>
-#include <linux/init.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
 
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/hdreg.h>
-#include <linux/kdev_t.h>
-#include <linux/blkdev.h>
-#include <linux/cdev.h>
-#include <linux/mutex.h>
-#include <linux/scatterlist.h>
-#include <linux/string_helpers.h>
-#include <linux/delay.h>
-#include <linux/capability.h>
-#include <linux/compat.h>
-#include <linux/pm_runtime.h>
-#include <linux/idr.h>
-#include <linux/debugfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/string_helpers.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/idr.h>
+#समावेश <linux/debugfs.h>
 
-#include <linux/mmc/ioctl.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/mmc.h>
-#include <linux/mmc/sd.h>
+#समावेश <linux/mmc/ioctl.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/mmc.h>
+#समावेश <linux/mmc/sd.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "queue.h"
-#include "block.h"
-#include "core.h"
-#include "card.h"
-#include "crypto.h"
-#include "host.h"
-#include "bus.h"
-#include "mmc_ops.h"
-#include "quirks.h"
-#include "sd_ops.h"
+#समावेश "queue.h"
+#समावेश "block.h"
+#समावेश "core.h"
+#समावेश "card.h"
+#समावेश "crypto.h"
+#समावेश "host.h"
+#समावेश "bus.h"
+#समावेश "mmc_ops.h"
+#समावेश "quirks.h"
+#समावेश "sd_ops.h"
 
 MODULE_ALIAS("mmc:block");
-#ifdef MODULE_PARAM_PREFIX
-#undef MODULE_PARAM_PREFIX
-#endif
-#define MODULE_PARAM_PREFIX "mmcblk."
+#अगर_घोषित MODULE_PARAM_PREFIX
+#अघोषित MODULE_PARAM_PREFIX
+#पूर्ण_अगर
+#घोषणा MODULE_PARAM_PREFIX "mmcblk."
 
 /*
- * Set a 10 second timeout for polling write request busy state. Note, mmc core
- * is setting a 3 second timeout for SD cards, and SDHCI has long had a 10
- * second software timer to timeout the whole request, so 10 seconds should be
+ * Set a 10 second समयout क्रम polling ग_लिखो request busy state. Note, mmc core
+ * is setting a 3 second समयout क्रम SD cards, and SDHCI has दीर्घ had a 10
+ * second software समयr to समयout the whole request, so 10 seconds should be
  * ample.
  */
-#define MMC_BLK_TIMEOUT_MS  (10 * 1000)
-#define MMC_EXTRACT_INDEX_FROM_ARG(x) ((x & 0x00FF0000) >> 16)
-#define MMC_EXTRACT_VALUE_FROM_ARG(x) ((x & 0x0000FF00) >> 8)
+#घोषणा MMC_BLK_TIMEOUT_MS  (10 * 1000)
+#घोषणा MMC_EXTRACT_INDEX_FROM_ARG(x) ((x & 0x00FF0000) >> 16)
+#घोषणा MMC_EXTRACT_VALUE_FROM_ARG(x) ((x & 0x0000FF00) >> 8)
 
-#define mmc_req_rel_wr(req)	((req->cmd_flags & REQ_FUA) && \
+#घोषणा mmc_req_rel_wr(req)	((req->cmd_flags & REQ_FUA) && \
 				  (rq_data_dir(req) == WRITE))
-static DEFINE_MUTEX(block_mutex);
+अटल DEFINE_MUTEX(block_mutex);
 
 /*
- * The defaults come from config options but can be overriden by module
+ * The शेषs come from config options but can be overriden by module
  * or bootarg options.
  */
-static int perdev_minors = CONFIG_MMC_BLOCK_MINORS;
+अटल पूर्णांक perdev_minors = CONFIG_MMC_BLOCK_MINORS;
 
 /*
  * We've only got one major, so number of mmcblk devices is
  * limited to (1 << 20) / number of minors per device.  It is also
  * limited by the MAX_DEVICES below.
  */
-static int max_devices;
+अटल पूर्णांक max_devices;
 
-#define MAX_DEVICES 256
+#घोषणा MAX_DEVICES 256
 
-static DEFINE_IDA(mmc_blk_ida);
-static DEFINE_IDA(mmc_rpmb_ida);
+अटल DEFINE_IDA(mmc_blk_ida);
+अटल DEFINE_IDA(mmc_rpmb_ida);
 
 /*
  * There is one mmc_blk_data per slot.
  */
-struct mmc_blk_data {
-	struct device	*parent;
-	struct gendisk	*disk;
-	struct mmc_queue queue;
-	struct list_head part;
-	struct list_head rpmbs;
+काष्ठा mmc_blk_data अणु
+	काष्ठा device	*parent;
+	काष्ठा gendisk	*disk;
+	काष्ठा mmc_queue queue;
+	काष्ठा list_head part;
+	काष्ठा list_head rpmbs;
 
-	unsigned int	flags;
-#define MMC_BLK_CMD23	(1 << 0)	/* Can do SET_BLOCK_COUNT for multiblock */
-#define MMC_BLK_REL_WR	(1 << 1)	/* MMC Reliable write support */
+	अचिन्हित पूर्णांक	flags;
+#घोषणा MMC_BLK_CMD23	(1 << 0)	/* Can करो SET_BLOCK_COUNT क्रम multiblock */
+#घोषणा MMC_BLK_REL_WR	(1 << 1)	/* MMC Reliable ग_लिखो support */
 
-	unsigned int	usage;
-	unsigned int	read_only;
-	unsigned int	part_type;
-	unsigned int	reset_done;
-#define MMC_BLK_READ		BIT(0)
-#define MMC_BLK_WRITE		BIT(1)
-#define MMC_BLK_DISCARD		BIT(2)
-#define MMC_BLK_SECDISCARD	BIT(3)
-#define MMC_BLK_CQE_RECOVERY	BIT(4)
+	अचिन्हित पूर्णांक	usage;
+	अचिन्हित पूर्णांक	पढ़ो_only;
+	अचिन्हित पूर्णांक	part_type;
+	अचिन्हित पूर्णांक	reset_करोne;
+#घोषणा MMC_BLK_READ		BIT(0)
+#घोषणा MMC_BLK_WRITE		BIT(1)
+#घोषणा MMC_BLK_DISCARD		BIT(2)
+#घोषणा MMC_BLK_SECDISCARD	BIT(3)
+#घोषणा MMC_BLK_CQE_RECOVERY	BIT(4)
 
 	/*
-	 * Only set in main mmc_blk_data associated
+	 * Only set in मुख्य mmc_blk_data associated
 	 * with mmc_card with dev_set_drvdata, and keeps
 	 * track of the current selected device partition.
 	 */
-	unsigned int	part_curr;
-	struct device_attribute force_ro;
-	struct device_attribute power_ro_lock;
-	int	area_type;
+	अचिन्हित पूर्णांक	part_curr;
+	काष्ठा device_attribute क्रमce_ro;
+	काष्ठा device_attribute घातer_ro_lock;
+	पूर्णांक	area_type;
 
-	/* debugfs files (only in main mmc_blk_data) */
-	struct dentry *status_dentry;
-	struct dentry *ext_csd_dentry;
-};
+	/* debugfs files (only in मुख्य mmc_blk_data) */
+	काष्ठा dentry *status_dentry;
+	काष्ठा dentry *ext_csd_dentry;
+पूर्ण;
 
-/* Device type for RPMB character devices */
-static dev_t mmc_rpmb_devt;
+/* Device type क्रम RPMB अक्षरacter devices */
+अटल dev_t mmc_rpmb_devt;
 
-/* Bus type for RPMB character devices */
-static struct bus_type mmc_rpmb_bus_type = {
+/* Bus type क्रम RPMB अक्षरacter devices */
+अटल काष्ठा bus_type mmc_rpmb_bus_type = अणु
 	.name = "mmc_rpmb",
-};
+पूर्ण;
 
 /**
- * struct mmc_rpmb_data - special RPMB device type for these areas
- * @dev: the device for the RPMB area
- * @chrdev: character device for the RPMB area
+ * काष्ठा mmc_rpmb_data - special RPMB device type क्रम these areas
+ * @dev: the device क्रम the RPMB area
+ * @chrdev: अक्षरacter device क्रम the RPMB area
  * @id: unique device ID number
  * @part_index: partition index (0 on first)
  * @md: parent MMC block device
  * @node: list item, so we can put this device on a list
  */
-struct mmc_rpmb_data {
-	struct device dev;
-	struct cdev chrdev;
-	int id;
-	unsigned int part_index;
-	struct mmc_blk_data *md;
-	struct list_head node;
-};
+काष्ठा mmc_rpmb_data अणु
+	काष्ठा device dev;
+	काष्ठा cdev chrdev;
+	पूर्णांक id;
+	अचिन्हित पूर्णांक part_index;
+	काष्ठा mmc_blk_data *md;
+	काष्ठा list_head node;
+पूर्ण;
 
-static DEFINE_MUTEX(open_lock);
+अटल DEFINE_MUTEX(खोलो_lock);
 
-module_param(perdev_minors, int, 0444);
+module_param(perdev_minors, पूर्णांक, 0444);
 MODULE_PARM_DESC(perdev_minors, "Minors numbers to allocate per device");
 
-static inline int mmc_blk_part_switch(struct mmc_card *card,
-				      unsigned int part_type);
-static void mmc_blk_rw_rq_prep(struct mmc_queue_req *mqrq,
-			       struct mmc_card *card,
-			       int disable_multi,
-			       struct mmc_queue *mq);
-static void mmc_blk_hsq_req_done(struct mmc_request *mrq);
+अटल अंतरभूत पूर्णांक mmc_blk_part_चयन(काष्ठा mmc_card *card,
+				      अचिन्हित पूर्णांक part_type);
+अटल व्योम mmc_blk_rw_rq_prep(काष्ठा mmc_queue_req *mqrq,
+			       काष्ठा mmc_card *card,
+			       पूर्णांक disable_multi,
+			       काष्ठा mmc_queue *mq);
+अटल व्योम mmc_blk_hsq_req_करोne(काष्ठा mmc_request *mrq);
 
-static struct mmc_blk_data *mmc_blk_get(struct gendisk *disk)
-{
-	struct mmc_blk_data *md;
+अटल काष्ठा mmc_blk_data *mmc_blk_get(काष्ठा gendisk *disk)
+अणु
+	काष्ठा mmc_blk_data *md;
 
-	mutex_lock(&open_lock);
-	md = disk->private_data;
-	if (md && md->usage == 0)
-		md = NULL;
-	if (md)
+	mutex_lock(&खोलो_lock);
+	md = disk->निजी_data;
+	अगर (md && md->usage == 0)
+		md = शून्य;
+	अगर (md)
 		md->usage++;
-	mutex_unlock(&open_lock);
+	mutex_unlock(&खोलो_lock);
 
-	return md;
-}
+	वापस md;
+पूर्ण
 
-static inline int mmc_get_devidx(struct gendisk *disk)
-{
-	int devidx = disk->first_minor / perdev_minors;
-	return devidx;
-}
+अटल अंतरभूत पूर्णांक mmc_get_devidx(काष्ठा gendisk *disk)
+अणु
+	पूर्णांक devidx = disk->first_minor / perdev_minors;
+	वापस devidx;
+पूर्ण
 
-static void mmc_blk_put(struct mmc_blk_data *md)
-{
-	mutex_lock(&open_lock);
+अटल व्योम mmc_blk_put(काष्ठा mmc_blk_data *md)
+अणु
+	mutex_lock(&खोलो_lock);
 	md->usage--;
-	if (md->usage == 0) {
-		int devidx = mmc_get_devidx(md->disk);
+	अगर (md->usage == 0) अणु
+		पूर्णांक devidx = mmc_get_devidx(md->disk);
 		blk_put_queue(md->queue.queue);
-		ida_simple_remove(&mmc_blk_ida, devidx);
+		ida_simple_हटाओ(&mmc_blk_ida, devidx);
 		put_disk(md->disk);
-		kfree(md);
-	}
-	mutex_unlock(&open_lock);
-}
+		kमुक्त(md);
+	पूर्ण
+	mutex_unlock(&खोलो_lock);
+पूर्ण
 
-static ssize_t power_ro_lock_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	int ret;
-	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
-	struct mmc_card *card = md->queue.card;
-	int locked = 0;
+अटल sमाप_प्रकार घातer_ro_lock_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक ret;
+	काष्ठा mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
+	काष्ठा mmc_card *card = md->queue.card;
+	पूर्णांक locked = 0;
 
-	if (card->ext_csd.boot_ro_lock & EXT_CSD_BOOT_WP_B_PERM_WP_EN)
+	अगर (card->ext_csd.boot_ro_lock & EXT_CSD_BOOT_WP_B_PERM_WP_EN)
 		locked = 2;
-	else if (card->ext_csd.boot_ro_lock & EXT_CSD_BOOT_WP_B_PWR_WP_EN)
+	अन्यथा अगर (card->ext_csd.boot_ro_lock & EXT_CSD_BOOT_WP_B_PWR_WP_EN)
 		locked = 1;
 
-	ret = snprintf(buf, PAGE_SIZE, "%d\n", locked);
+	ret = snम_लिखो(buf, PAGE_SIZE, "%d\n", locked);
 
 	mmc_blk_put(md);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t power_ro_lock_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	int ret;
-	struct mmc_blk_data *md, *part_md;
-	struct mmc_queue *mq;
-	struct request *req;
-	unsigned long set;
+अटल sमाप_प्रकार घातer_ro_lock_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक ret;
+	काष्ठा mmc_blk_data *md, *part_md;
+	काष्ठा mmc_queue *mq;
+	काष्ठा request *req;
+	अचिन्हित दीर्घ set;
 
-	if (kstrtoul(buf, 0, &set))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &set))
+		वापस -EINVAL;
 
-	if (set != 1)
-		return count;
+	अगर (set != 1)
+		वापस count;
 
 	md = mmc_blk_get(dev_to_disk(dev));
 	mq = &md->queue;
 
 	/* Dispatch locking to the block layer */
 	req = blk_get_request(mq->queue, REQ_OP_DRV_OUT, 0);
-	if (IS_ERR(req)) {
+	अगर (IS_ERR(req)) अणु
 		count = PTR_ERR(req);
-		goto out_put;
-	}
+		जाओ out_put;
+	पूर्ण
 	req_to_mmc_queue_req(req)->drv_op = MMC_DRV_OP_BOOT_WP;
-	blk_execute_rq(NULL, req, 0);
+	blk_execute_rq(शून्य, req, 0);
 	ret = req_to_mmc_queue_req(req)->drv_op_result;
 	blk_put_request(req);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		pr_info("%s: Locking boot partition ro until next power on\n",
 			md->disk->disk_name);
 		set_disk_ro(md->disk, 1);
 
-		list_for_each_entry(part_md, &md->part, part)
-			if (part_md->area_type == MMC_BLK_DATA_AREA_BOOT) {
+		list_क्रम_each_entry(part_md, &md->part, part)
+			अगर (part_md->area_type == MMC_BLK_DATA_AREA_BOOT) अणु
 				pr_info("%s: Locking boot partition ro until next power on\n", part_md->disk->disk_name);
 				set_disk_ro(part_md->disk, 1);
-			}
-	}
+			पूर्ण
+	पूर्ण
 out_put:
 	mmc_blk_put(md);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t force_ro_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	int ret;
-	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
+अटल sमाप_प्रकार क्रमce_ro_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	पूर्णांक ret;
+	काष्ठा mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
 
-	ret = snprintf(buf, PAGE_SIZE, "%d\n",
+	ret = snम_लिखो(buf, PAGE_SIZE, "%d\n",
 		       get_disk_ro(dev_to_disk(dev)) ^
-		       md->read_only);
+		       md->पढ़ो_only);
 	mmc_blk_put(md);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t force_ro_store(struct device *dev, struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	int ret;
-	char *end;
-	struct mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
-	unsigned long set = simple_strtoul(buf, &end, 0);
-	if (end == buf) {
+अटल sमाप_प्रकार क्रमce_ro_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक ret;
+	अक्षर *end;
+	काष्ठा mmc_blk_data *md = mmc_blk_get(dev_to_disk(dev));
+	अचिन्हित दीर्घ set = simple_म_से_अदीर्घ(buf, &end, 0);
+	अगर (end == buf) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	set_disk_ro(dev_to_disk(dev), set || md->read_only);
+	set_disk_ro(dev_to_disk(dev), set || md->पढ़ो_only);
 	ret = count;
 out:
 	mmc_blk_put(md);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mmc_blk_open(struct block_device *bdev, fmode_t mode)
-{
-	struct mmc_blk_data *md = mmc_blk_get(bdev->bd_disk);
-	int ret = -ENXIO;
+अटल पूर्णांक mmc_blk_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
+अणु
+	काष्ठा mmc_blk_data *md = mmc_blk_get(bdev->bd_disk);
+	पूर्णांक ret = -ENXIO;
 
 	mutex_lock(&block_mutex);
-	if (md) {
+	अगर (md) अणु
 		ret = 0;
-		if ((mode & FMODE_WRITE) && md->read_only) {
+		अगर ((mode & FMODE_WRITE) && md->पढ़ो_only) अणु
 			mmc_blk_put(md);
 			ret = -EROFS;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&block_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mmc_blk_release(struct gendisk *disk, fmode_t mode)
-{
-	struct mmc_blk_data *md = disk->private_data;
+अटल व्योम mmc_blk_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
+अणु
+	काष्ठा mmc_blk_data *md = disk->निजी_data;
 
 	mutex_lock(&block_mutex);
 	mmc_blk_put(md);
 	mutex_unlock(&block_mutex);
-}
+पूर्ण
 
-static int
-mmc_blk_getgeo(struct block_device *bdev, struct hd_geometry *geo)
-{
+अटल पूर्णांक
+mmc_blk_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
+अणु
 	geo->cylinders = get_capacity(bdev->bd_disk) / (4 * 16);
 	geo->heads = 4;
 	geo->sectors = 16;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct mmc_blk_ioc_data {
-	struct mmc_ioc_cmd ic;
-	unsigned char *buf;
+काष्ठा mmc_blk_ioc_data अणु
+	काष्ठा mmc_ioc_cmd ic;
+	अचिन्हित अक्षर *buf;
 	u64 buf_bytes;
-	struct mmc_rpmb_data *rpmb;
-};
+	काष्ठा mmc_rpmb_data *rpmb;
+पूर्ण;
 
-static struct mmc_blk_ioc_data *mmc_blk_ioctl_copy_from_user(
-	struct mmc_ioc_cmd __user *user)
-{
-	struct mmc_blk_ioc_data *idata;
-	int err;
+अटल काष्ठा mmc_blk_ioc_data *mmc_blk_ioctl_copy_from_user(
+	काष्ठा mmc_ioc_cmd __user *user)
+अणु
+	काष्ठा mmc_blk_ioc_data *idata;
+	पूर्णांक err;
 
-	idata = kmalloc(sizeof(*idata), GFP_KERNEL);
-	if (!idata) {
+	idata = kदो_स्मृति(माप(*idata), GFP_KERNEL);
+	अगर (!idata) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (copy_from_user(&idata->ic, user, sizeof(idata->ic))) {
+	अगर (copy_from_user(&idata->ic, user, माप(idata->ic))) अणु
 		err = -EFAULT;
-		goto idata_err;
-	}
+		जाओ idata_err;
+	पूर्ण
 
 	idata->buf_bytes = (u64) idata->ic.blksz * idata->ic.blocks;
-	if (idata->buf_bytes > MMC_IOC_MAX_BYTES) {
+	अगर (idata->buf_bytes > MMC_IOC_MAX_BYTES) अणु
 		err = -EOVERFLOW;
-		goto idata_err;
-	}
+		जाओ idata_err;
+	पूर्ण
 
-	if (!idata->buf_bytes) {
-		idata->buf = NULL;
-		return idata;
-	}
+	अगर (!idata->buf_bytes) अणु
+		idata->buf = शून्य;
+		वापस idata;
+	पूर्ण
 
-	idata->buf = memdup_user((void __user *)(unsigned long)
+	idata->buf = memdup_user((व्योम __user *)(अचिन्हित दीर्घ)
 				 idata->ic.data_ptr, idata->buf_bytes);
-	if (IS_ERR(idata->buf)) {
+	अगर (IS_ERR(idata->buf)) अणु
 		err = PTR_ERR(idata->buf);
-		goto idata_err;
-	}
+		जाओ idata_err;
+	पूर्ण
 
-	return idata;
+	वापस idata;
 
 idata_err:
-	kfree(idata);
+	kमुक्त(idata);
 out:
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static int mmc_blk_ioctl_copy_to_user(struct mmc_ioc_cmd __user *ic_ptr,
-				      struct mmc_blk_ioc_data *idata)
-{
-	struct mmc_ioc_cmd *ic = &idata->ic;
+अटल पूर्णांक mmc_blk_ioctl_copy_to_user(काष्ठा mmc_ioc_cmd __user *ic_ptr,
+				      काष्ठा mmc_blk_ioc_data *idata)
+अणु
+	काष्ठा mmc_ioc_cmd *ic = &idata->ic;
 
-	if (copy_to_user(&(ic_ptr->response), ic->response,
-			 sizeof(ic->response)))
-		return -EFAULT;
+	अगर (copy_to_user(&(ic_ptr->response), ic->response,
+			 माप(ic->response)))
+		वापस -EFAULT;
 
-	if (!idata->ic.write_flag) {
-		if (copy_to_user((void __user *)(unsigned long)ic->data_ptr,
+	अगर (!idata->ic.ग_लिखो_flag) अणु
+		अगर (copy_to_user((व्योम __user *)(अचिन्हित दीर्घ)ic->data_ptr,
 				 idata->buf, idata->buf_bytes))
-			return -EFAULT;
-	}
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int card_busy_detect(struct mmc_card *card, unsigned int timeout_ms,
+अटल पूर्णांक card_busy_detect(काष्ठा mmc_card *card, अचिन्हित पूर्णांक समयout_ms,
 			    u32 *resp_errs)
-{
-	unsigned long timeout = jiffies + msecs_to_jiffies(timeout_ms);
-	int err = 0;
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(समयout_ms);
+	पूर्णांक err = 0;
 	u32 status;
 
-	do {
-		bool done = time_after(jiffies, timeout);
+	करो अणु
+		bool करोne = समय_after(jअगरfies, समयout);
 
 		err = __mmc_send_status(card, &status, 5);
-		if (err) {
+		अगर (err) अणु
 			dev_err(mmc_dev(card->host),
 				"error %d requesting status\n", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		/* Accumulate any response error bits seen */
-		if (resp_errs)
+		अगर (resp_errs)
 			*resp_errs |= status;
 
 		/*
-		 * Timeout if the device never becomes ready for data and never
+		 * Timeout अगर the device never becomes पढ़ोy क्रम data and never
 		 * leaves the program state.
 		 */
-		if (done) {
+		अगर (करोne) अणु
 			dev_err(mmc_dev(card->host),
 				"Card stuck in wrong state! %s status: %#x\n",
 				 __func__, status);
-			return -ETIMEDOUT;
-		}
-	} while (!mmc_ready_for_data(status));
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण जबतक (!mmc_पढ़ोy_क्रम_data(status));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __mmc_blk_ioctl_cmd(struct mmc_card *card, struct mmc_blk_data *md,
-			       struct mmc_blk_ioc_data *idata)
-{
-	struct mmc_command cmd = {}, sbc = {};
-	struct mmc_data data = {};
-	struct mmc_request mrq = {};
-	struct scatterlist sg;
-	int err;
-	unsigned int target_part;
+अटल पूर्णांक __mmc_blk_ioctl_cmd(काष्ठा mmc_card *card, काष्ठा mmc_blk_data *md,
+			       काष्ठा mmc_blk_ioc_data *idata)
+अणु
+	काष्ठा mmc_command cmd = अणुपूर्ण, sbc = अणुपूर्ण;
+	काष्ठा mmc_data data = अणुपूर्ण;
+	काष्ठा mmc_request mrq = अणुपूर्ण;
+	काष्ठा scatterlist sg;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक target_part;
 
-	if (!card || !md || !idata)
-		return -EINVAL;
+	अगर (!card || !md || !idata)
+		वापस -EINVAL;
 
 	/*
-	 * The RPMB accesses comes in from the character device, so we
+	 * The RPMB accesses comes in from the अक्षरacter device, so we
 	 * need to target these explicitly. Else we just target the
-	 * partition type for the block device the ioctl() was issued
+	 * partition type क्रम the block device the ioctl() was issued
 	 * on.
 	 */
-	if (idata->rpmb) {
+	अगर (idata->rpmb) अणु
 		/* Support multiple RPMB partitions */
 		target_part = idata->rpmb->part_index;
 		target_part |= EXT_CSD_PART_CONFIG_ACC_RPMB;
-	} else {
+	पूर्ण अन्यथा अणु
 		target_part = md->part_type;
-	}
+	पूर्ण
 
 	cmd.opcode = idata->ic.opcode;
 	cmd.arg = idata->ic.arg;
 	cmd.flags = idata->ic.flags;
 
-	if (idata->buf_bytes) {
+	अगर (idata->buf_bytes) अणु
 		data.sg = &sg;
 		data.sg_len = 1;
 		data.blksz = idata->ic.blksz;
@@ -485,407 +486,407 @@ static int __mmc_blk_ioctl_cmd(struct mmc_card *card, struct mmc_blk_data *md,
 
 		sg_init_one(data.sg, idata->buf, idata->buf_bytes);
 
-		if (idata->ic.write_flag)
+		अगर (idata->ic.ग_लिखो_flag)
 			data.flags = MMC_DATA_WRITE;
-		else
+		अन्यथा
 			data.flags = MMC_DATA_READ;
 
-		/* data.flags must already be set before doing this. */
-		mmc_set_data_timeout(&data, card);
+		/* data.flags must alपढ़ोy be set beक्रमe करोing this. */
+		mmc_set_data_समयout(&data, card);
 
-		/* Allow overriding the timeout_ns for empirical tuning. */
-		if (idata->ic.data_timeout_ns)
-			data.timeout_ns = idata->ic.data_timeout_ns;
+		/* Allow overriding the समयout_ns क्रम empirical tuning. */
+		अगर (idata->ic.data_समयout_ns)
+			data.समयout_ns = idata->ic.data_समयout_ns;
 
-		if ((cmd.flags & MMC_RSP_R1B) == MMC_RSP_R1B) {
+		अगर ((cmd.flags & MMC_RSP_R1B) == MMC_RSP_R1B) अणु
 			/*
 			 * Pretend this is a data transfer and rely on the
-			 * host driver to compute timeout.  When all host
-			 * drivers support cmd.cmd_timeout for R1B, this
+			 * host driver to compute समयout.  When all host
+			 * drivers support cmd.cmd_समयout क्रम R1B, this
 			 * can be changed to:
 			 *
-			 *     mrq.data = NULL;
-			 *     cmd.cmd_timeout = idata->ic.cmd_timeout_ms;
+			 *     mrq.data = शून्य;
+			 *     cmd.cmd_समयout = idata->ic.cmd_समयout_ms;
 			 */
-			data.timeout_ns = idata->ic.cmd_timeout_ms * 1000000;
-		}
+			data.समयout_ns = idata->ic.cmd_समयout_ms * 1000000;
+		पूर्ण
 
 		mrq.data = &data;
-	}
+	पूर्ण
 
 	mrq.cmd = &cmd;
 
-	err = mmc_blk_part_switch(card, target_part);
-	if (err)
-		return err;
+	err = mmc_blk_part_चयन(card, target_part);
+	अगर (err)
+		वापस err;
 
-	if (idata->ic.is_acmd) {
+	अगर (idata->ic.is_acmd) अणु
 		err = mmc_app_cmd(card->host, card);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (idata->rpmb) {
+	अगर (idata->rpmb) अणु
 		sbc.opcode = MMC_SET_BLOCK_COUNT;
 		/*
-		 * We don't do any blockcount validation because the max size
+		 * We करोn't करो any blockcount validation because the max size
 		 * may be increased by a future standard. We just copy the
 		 * 'Reliable Write' bit here.
 		 */
-		sbc.arg = data.blocks | (idata->ic.write_flag & BIT(31));
+		sbc.arg = data.blocks | (idata->ic.ग_लिखो_flag & BIT(31));
 		sbc.flags = MMC_RSP_R1 | MMC_CMD_AC;
 		mrq.sbc = &sbc;
-	}
+	पूर्ण
 
-	if ((MMC_EXTRACT_INDEX_FROM_ARG(cmd.arg) == EXT_CSD_SANITIZE_START) &&
+	अगर ((MMC_EXTRACT_INDEX_FROM_ARG(cmd.arg) == EXT_CSD_SANITIZE_START) &&
 	    (cmd.opcode == MMC_SWITCH))
-		return mmc_sanitize(card, idata->ic.cmd_timeout_ms);
+		वापस mmc_sanitize(card, idata->ic.cmd_समयout_ms);
 
-	mmc_wait_for_req(card->host, &mrq);
+	mmc_रुको_क्रम_req(card->host, &mrq);
 
-	if (cmd.error) {
+	अगर (cmd.error) अणु
 		dev_err(mmc_dev(card->host), "%s: cmd error %d\n",
 						__func__, cmd.error);
-		return cmd.error;
-	}
-	if (data.error) {
+		वापस cmd.error;
+	पूर्ण
+	अगर (data.error) अणु
 		dev_err(mmc_dev(card->host), "%s: data error %d\n",
 						__func__, data.error);
-		return data.error;
-	}
+		वापस data.error;
+	पूर्ण
 
 	/*
-	 * Make sure the cache of the PARTITION_CONFIG register and
-	 * PARTITION_ACCESS bits is updated in case the ioctl ext_csd write
+	 * Make sure the cache of the PARTITION_CONFIG रेजिस्टर and
+	 * PARTITION_ACCESS bits is updated in हाल the ioctl ext_csd ग_लिखो
 	 * changed it successfully.
 	 */
-	if ((MMC_EXTRACT_INDEX_FROM_ARG(cmd.arg) == EXT_CSD_PART_CONFIG) &&
-	    (cmd.opcode == MMC_SWITCH)) {
-		struct mmc_blk_data *main_md = dev_get_drvdata(&card->dev);
+	अगर ((MMC_EXTRACT_INDEX_FROM_ARG(cmd.arg) == EXT_CSD_PART_CONFIG) &&
+	    (cmd.opcode == MMC_SWITCH)) अणु
+		काष्ठा mmc_blk_data *मुख्य_md = dev_get_drvdata(&card->dev);
 		u8 value = MMC_EXTRACT_VALUE_FROM_ARG(cmd.arg);
 
 		/*
-		 * Update cache so the next mmc_blk_part_switch call operates
+		 * Update cache so the next mmc_blk_part_चयन call operates
 		 * on up-to-date data.
 		 */
 		card->ext_csd.part_config = value;
-		main_md->part_curr = value & EXT_CSD_PART_CONFIG_ACC_MASK;
-	}
+		मुख्य_md->part_curr = value & EXT_CSD_PART_CONFIG_ACC_MASK;
+	पूर्ण
 
 	/*
-	 * Make sure to update CACHE_CTRL in case it was changed. The cache
-	 * will get turned back on if the card is re-initialized, e.g.
+	 * Make sure to update CACHE_CTRL in हाल it was changed. The cache
+	 * will get turned back on अगर the card is re-initialized, e.g.
 	 * suspend/resume or hw reset in recovery.
 	 */
-	if ((MMC_EXTRACT_INDEX_FROM_ARG(cmd.arg) == EXT_CSD_CACHE_CTRL) &&
-	    (cmd.opcode == MMC_SWITCH)) {
+	अगर ((MMC_EXTRACT_INDEX_FROM_ARG(cmd.arg) == EXT_CSD_CACHE_CTRL) &&
+	    (cmd.opcode == MMC_SWITCH)) अणु
 		u8 value = MMC_EXTRACT_VALUE_FROM_ARG(cmd.arg) & 1;
 
 		card->ext_csd.cache_ctrl = value;
-	}
+	पूर्ण
 
 	/*
 	 * According to the SD specs, some commands require a delay after
 	 * issuing the command.
 	 */
-	if (idata->ic.postsleep_min_us)
+	अगर (idata->ic.postsleep_min_us)
 		usleep_range(idata->ic.postsleep_min_us, idata->ic.postsleep_max_us);
 
-	memcpy(&(idata->ic.response), cmd.resp, sizeof(cmd.resp));
+	स_नकल(&(idata->ic.response), cmd.resp, माप(cmd.resp));
 
-	if (idata->rpmb || (cmd.flags & MMC_RSP_R1B) == MMC_RSP_R1B) {
+	अगर (idata->rpmb || (cmd.flags & MMC_RSP_R1B) == MMC_RSP_R1B) अणु
 		/*
 		 * Ensure RPMB/R1B command has completed by polling CMD13
 		 * "Send Status".
 		 */
-		err = card_busy_detect(card, MMC_BLK_TIMEOUT_MS, NULL);
-	}
+		err = card_busy_detect(card, MMC_BLK_TIMEOUT_MS, शून्य);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_blk_ioctl_cmd(struct mmc_blk_data *md,
-			     struct mmc_ioc_cmd __user *ic_ptr,
-			     struct mmc_rpmb_data *rpmb)
-{
-	struct mmc_blk_ioc_data *idata;
-	struct mmc_blk_ioc_data *idatas[1];
-	struct mmc_queue *mq;
-	struct mmc_card *card;
-	int err = 0, ioc_err = 0;
-	struct request *req;
+अटल पूर्णांक mmc_blk_ioctl_cmd(काष्ठा mmc_blk_data *md,
+			     काष्ठा mmc_ioc_cmd __user *ic_ptr,
+			     काष्ठा mmc_rpmb_data *rpmb)
+अणु
+	काष्ठा mmc_blk_ioc_data *idata;
+	काष्ठा mmc_blk_ioc_data *idatas[1];
+	काष्ठा mmc_queue *mq;
+	काष्ठा mmc_card *card;
+	पूर्णांक err = 0, ioc_err = 0;
+	काष्ठा request *req;
 
 	idata = mmc_blk_ioctl_copy_from_user(ic_ptr);
-	if (IS_ERR(idata))
-		return PTR_ERR(idata);
-	/* This will be NULL on non-RPMB ioctl():s */
+	अगर (IS_ERR(idata))
+		वापस PTR_ERR(idata);
+	/* This will be शून्य on non-RPMB ioctl():s */
 	idata->rpmb = rpmb;
 
 	card = md->queue.card;
-	if (IS_ERR(card)) {
+	अगर (IS_ERR(card)) अणु
 		err = PTR_ERR(card);
-		goto cmd_done;
-	}
+		जाओ cmd_करोne;
+	पूर्ण
 
 	/*
-	 * Dispatch the ioctl() into the block request queue.
+	 * Dispatch the ioctl() पूर्णांकo the block request queue.
 	 */
 	mq = &md->queue;
 	req = blk_get_request(mq->queue,
-		idata->ic.write_flag ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
-	if (IS_ERR(req)) {
+		idata->ic.ग_लिखो_flag ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
+	अगर (IS_ERR(req)) अणु
 		err = PTR_ERR(req);
-		goto cmd_done;
-	}
+		जाओ cmd_करोne;
+	पूर्ण
 	idatas[0] = idata;
 	req_to_mmc_queue_req(req)->drv_op =
 		rpmb ? MMC_DRV_OP_IOCTL_RPMB : MMC_DRV_OP_IOCTL;
 	req_to_mmc_queue_req(req)->drv_op_data = idatas;
 	req_to_mmc_queue_req(req)->ioc_count = 1;
-	blk_execute_rq(NULL, req, 0);
+	blk_execute_rq(शून्य, req, 0);
 	ioc_err = req_to_mmc_queue_req(req)->drv_op_result;
 	err = mmc_blk_ioctl_copy_to_user(ic_ptr, idata);
 	blk_put_request(req);
 
-cmd_done:
-	kfree(idata->buf);
-	kfree(idata);
-	return ioc_err ? ioc_err : err;
-}
+cmd_करोne:
+	kमुक्त(idata->buf);
+	kमुक्त(idata);
+	वापस ioc_err ? ioc_err : err;
+पूर्ण
 
-static int mmc_blk_ioctl_multi_cmd(struct mmc_blk_data *md,
-				   struct mmc_ioc_multi_cmd __user *user,
-				   struct mmc_rpmb_data *rpmb)
-{
-	struct mmc_blk_ioc_data **idata = NULL;
-	struct mmc_ioc_cmd __user *cmds = user->cmds;
-	struct mmc_card *card;
-	struct mmc_queue *mq;
-	int i, err = 0, ioc_err = 0;
+अटल पूर्णांक mmc_blk_ioctl_multi_cmd(काष्ठा mmc_blk_data *md,
+				   काष्ठा mmc_ioc_multi_cmd __user *user,
+				   काष्ठा mmc_rpmb_data *rpmb)
+अणु
+	काष्ठा mmc_blk_ioc_data **idata = शून्य;
+	काष्ठा mmc_ioc_cmd __user *cmds = user->cmds;
+	काष्ठा mmc_card *card;
+	काष्ठा mmc_queue *mq;
+	पूर्णांक i, err = 0, ioc_err = 0;
 	__u64 num_of_cmds;
-	struct request *req;
+	काष्ठा request *req;
 
-	if (copy_from_user(&num_of_cmds, &user->num_of_cmds,
-			   sizeof(num_of_cmds)))
-		return -EFAULT;
+	अगर (copy_from_user(&num_of_cmds, &user->num_of_cmds,
+			   माप(num_of_cmds)))
+		वापस -EFAULT;
 
-	if (!num_of_cmds)
-		return 0;
+	अगर (!num_of_cmds)
+		वापस 0;
 
-	if (num_of_cmds > MMC_IOC_MAX_CMDS)
-		return -EINVAL;
+	अगर (num_of_cmds > MMC_IOC_MAX_CMDS)
+		वापस -EINVAL;
 
-	idata = kcalloc(num_of_cmds, sizeof(*idata), GFP_KERNEL);
-	if (!idata)
-		return -ENOMEM;
+	idata = kसुस्मृति(num_of_cmds, माप(*idata), GFP_KERNEL);
+	अगर (!idata)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_of_cmds; i++) {
+	क्रम (i = 0; i < num_of_cmds; i++) अणु
 		idata[i] = mmc_blk_ioctl_copy_from_user(&cmds[i]);
-		if (IS_ERR(idata[i])) {
+		अगर (IS_ERR(idata[i])) अणु
 			err = PTR_ERR(idata[i]);
 			num_of_cmds = i;
-			goto cmd_err;
-		}
-		/* This will be NULL on non-RPMB ioctl():s */
+			जाओ cmd_err;
+		पूर्ण
+		/* This will be शून्य on non-RPMB ioctl():s */
 		idata[i]->rpmb = rpmb;
-	}
+	पूर्ण
 
 	card = md->queue.card;
-	if (IS_ERR(card)) {
+	अगर (IS_ERR(card)) अणु
 		err = PTR_ERR(card);
-		goto cmd_err;
-	}
+		जाओ cmd_err;
+	पूर्ण
 
 
 	/*
-	 * Dispatch the ioctl()s into the block request queue.
+	 * Dispatch the ioctl()s पूर्णांकo the block request queue.
 	 */
 	mq = &md->queue;
 	req = blk_get_request(mq->queue,
-		idata[0]->ic.write_flag ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
-	if (IS_ERR(req)) {
+		idata[0]->ic.ग_लिखो_flag ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
+	अगर (IS_ERR(req)) अणु
 		err = PTR_ERR(req);
-		goto cmd_err;
-	}
+		जाओ cmd_err;
+	पूर्ण
 	req_to_mmc_queue_req(req)->drv_op =
 		rpmb ? MMC_DRV_OP_IOCTL_RPMB : MMC_DRV_OP_IOCTL;
 	req_to_mmc_queue_req(req)->drv_op_data = idata;
 	req_to_mmc_queue_req(req)->ioc_count = num_of_cmds;
-	blk_execute_rq(NULL, req, 0);
+	blk_execute_rq(शून्य, req, 0);
 	ioc_err = req_to_mmc_queue_req(req)->drv_op_result;
 
-	/* copy to user if data and response */
-	for (i = 0; i < num_of_cmds && !err; i++)
+	/* copy to user अगर data and response */
+	क्रम (i = 0; i < num_of_cmds && !err; i++)
 		err = mmc_blk_ioctl_copy_to_user(&cmds[i], idata[i]);
 
 	blk_put_request(req);
 
 cmd_err:
-	for (i = 0; i < num_of_cmds; i++) {
-		kfree(idata[i]->buf);
-		kfree(idata[i]);
-	}
-	kfree(idata);
-	return ioc_err ? ioc_err : err;
-}
+	क्रम (i = 0; i < num_of_cmds; i++) अणु
+		kमुक्त(idata[i]->buf);
+		kमुक्त(idata[i]);
+	पूर्ण
+	kमुक्त(idata);
+	वापस ioc_err ? ioc_err : err;
+पूर्ण
 
-static int mmc_blk_check_blkdev(struct block_device *bdev)
-{
+अटल पूर्णांक mmc_blk_check_blkdev(काष्ठा block_device *bdev)
+अणु
 	/*
 	 * The caller must have CAP_SYS_RAWIO, and must be calling this on the
 	 * whole block device, not on a partition.  This prevents overspray
 	 * between sibling partitions.
 	 */
-	if (!capable(CAP_SYS_RAWIO) || bdev_is_partition(bdev))
-		return -EPERM;
-	return 0;
-}
+	अगर (!capable(CAP_SYS_RAWIO) || bdev_is_partition(bdev))
+		वापस -EPERM;
+	वापस 0;
+पूर्ण
 
-static int mmc_blk_ioctl(struct block_device *bdev, fmode_t mode,
-	unsigned int cmd, unsigned long arg)
-{
-	struct mmc_blk_data *md;
-	int ret;
+अटल पूर्णांक mmc_blk_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+	अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा mmc_blk_data *md;
+	पूर्णांक ret;
 
-	switch (cmd) {
-	case MMC_IOC_CMD:
+	चयन (cmd) अणु
+	हाल MMC_IOC_CMD:
 		ret = mmc_blk_check_blkdev(bdev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		md = mmc_blk_get(bdev->bd_disk);
-		if (!md)
-			return -EINVAL;
+		अगर (!md)
+			वापस -EINVAL;
 		ret = mmc_blk_ioctl_cmd(md,
-					(struct mmc_ioc_cmd __user *)arg,
-					NULL);
+					(काष्ठा mmc_ioc_cmd __user *)arg,
+					शून्य);
 		mmc_blk_put(md);
-		return ret;
-	case MMC_IOC_MULTI_CMD:
+		वापस ret;
+	हाल MMC_IOC_MULTI_CMD:
 		ret = mmc_blk_check_blkdev(bdev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		md = mmc_blk_get(bdev->bd_disk);
-		if (!md)
-			return -EINVAL;
+		अगर (!md)
+			वापस -EINVAL;
 		ret = mmc_blk_ioctl_multi_cmd(md,
-					(struct mmc_ioc_multi_cmd __user *)arg,
-					NULL);
+					(काष्ठा mmc_ioc_multi_cmd __user *)arg,
+					शून्य);
 		mmc_blk_put(md);
-		return ret;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस ret;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static int mmc_blk_compat_ioctl(struct block_device *bdev, fmode_t mode,
-	unsigned int cmd, unsigned long arg)
-{
-	return mmc_blk_ioctl(bdev, mode, cmd, (unsigned long) compat_ptr(arg));
-}
-#endif
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक mmc_blk_compat_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+	अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस mmc_blk_ioctl(bdev, mode, cmd, (अचिन्हित दीर्घ) compat_ptr(arg));
+पूर्ण
+#पूर्ण_अगर
 
-static const struct block_device_operations mmc_bdops = {
-	.open			= mmc_blk_open,
+अटल स्थिर काष्ठा block_device_operations mmc_bकरोps = अणु
+	.खोलो			= mmc_blk_खोलो,
 	.release		= mmc_blk_release,
 	.getgeo			= mmc_blk_getgeo,
 	.owner			= THIS_MODULE,
 	.ioctl			= mmc_blk_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl		= mmc_blk_compat_ioctl,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int mmc_blk_part_switch_pre(struct mmc_card *card,
-				   unsigned int part_type)
-{
-	int ret = 0;
+अटल पूर्णांक mmc_blk_part_चयन_pre(काष्ठा mmc_card *card,
+				   अचिन्हित पूर्णांक part_type)
+अणु
+	पूर्णांक ret = 0;
 
-	if (part_type == EXT_CSD_PART_CONFIG_ACC_RPMB) {
-		if (card->ext_csd.cmdq_en) {
+	अगर (part_type == EXT_CSD_PART_CONFIG_ACC_RPMB) अणु
+		अगर (card->ext_csd.cmdq_en) अणु
 			ret = mmc_cmdq_disable(card);
-			if (ret)
-				return ret;
-		}
-		mmc_retune_pause(card->host);
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+		mmc_retune_छोड़ो(card->host);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mmc_blk_part_switch_post(struct mmc_card *card,
-				    unsigned int part_type)
-{
-	int ret = 0;
+अटल पूर्णांक mmc_blk_part_चयन_post(काष्ठा mmc_card *card,
+				    अचिन्हित पूर्णांक part_type)
+अणु
+	पूर्णांक ret = 0;
 
-	if (part_type == EXT_CSD_PART_CONFIG_ACC_RPMB) {
-		mmc_retune_unpause(card->host);
-		if (card->reenable_cmdq && !card->ext_csd.cmdq_en)
+	अगर (part_type == EXT_CSD_PART_CONFIG_ACC_RPMB) अणु
+		mmc_retune_unछोड़ो(card->host);
+		अगर (card->reenable_cmdq && !card->ext_csd.cmdq_en)
 			ret = mmc_cmdq_enable(card);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int mmc_blk_part_switch(struct mmc_card *card,
-				      unsigned int part_type)
-{
-	int ret = 0;
-	struct mmc_blk_data *main_md = dev_get_drvdata(&card->dev);
+अटल अंतरभूत पूर्णांक mmc_blk_part_चयन(काष्ठा mmc_card *card,
+				      अचिन्हित पूर्णांक part_type)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा mmc_blk_data *मुख्य_md = dev_get_drvdata(&card->dev);
 
-	if (main_md->part_curr == part_type)
-		return 0;
+	अगर (मुख्य_md->part_curr == part_type)
+		वापस 0;
 
-	if (mmc_card_mmc(card)) {
+	अगर (mmc_card_mmc(card)) अणु
 		u8 part_config = card->ext_csd.part_config;
 
-		ret = mmc_blk_part_switch_pre(card, part_type);
-		if (ret)
-			return ret;
+		ret = mmc_blk_part_चयन_pre(card, part_type);
+		अगर (ret)
+			वापस ret;
 
 		part_config &= ~EXT_CSD_PART_CONFIG_ACC_MASK;
 		part_config |= part_type;
 
-		ret = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
+		ret = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
 				 EXT_CSD_PART_CONFIG, part_config,
-				 card->ext_csd.part_time);
-		if (ret) {
-			mmc_blk_part_switch_post(card, part_type);
-			return ret;
-		}
+				 card->ext_csd.part_समय);
+		अगर (ret) अणु
+			mmc_blk_part_चयन_post(card, part_type);
+			वापस ret;
+		पूर्ण
 
 		card->ext_csd.part_config = part_config;
 
-		ret = mmc_blk_part_switch_post(card, main_md->part_curr);
-	}
+		ret = mmc_blk_part_चयन_post(card, मुख्य_md->part_curr);
+	पूर्ण
 
-	main_md->part_curr = part_type;
-	return ret;
-}
+	मुख्य_md->part_curr = part_type;
+	वापस ret;
+पूर्ण
 
-static int mmc_sd_num_wr_blocks(struct mmc_card *card, u32 *written_blocks)
-{
-	int err;
+अटल पूर्णांक mmc_sd_num_wr_blocks(काष्ठा mmc_card *card, u32 *written_blocks)
+अणु
+	पूर्णांक err;
 	u32 result;
 	__be32 *blocks;
 
-	struct mmc_request mrq = {};
-	struct mmc_command cmd = {};
-	struct mmc_data data = {};
+	काष्ठा mmc_request mrq = अणुपूर्ण;
+	काष्ठा mmc_command cmd = अणुपूर्ण;
+	काष्ठा mmc_data data = अणुपूर्ण;
 
-	struct scatterlist sg;
+	काष्ठा scatterlist sg;
 
 	cmd.opcode = MMC_APP_CMD;
 	cmd.arg = card->rca << 16;
 	cmd.flags = MMC_RSP_SPI_R1 | MMC_RSP_R1 | MMC_CMD_AC;
 
-	err = mmc_wait_for_cmd(card->host, &cmd, 0);
-	if (err)
-		return err;
-	if (!mmc_host_is_spi(card->host) && !(cmd.resp[0] & R1_APP_CMD))
-		return -EIO;
+	err = mmc_रुको_क्रम_cmd(card->host, &cmd, 0);
+	अगर (err)
+		वापस err;
+	अगर (!mmc_host_is_spi(card->host) && !(cmd.resp[0] & R1_APP_CMD))
+		वापस -EIO;
 
-	memset(&cmd, 0, sizeof(struct mmc_command));
+	स_रखो(&cmd, 0, माप(काष्ठा mmc_command));
 
 	cmd.opcode = SD_APP_SEND_NUM_WR_BLKS;
 	cmd.arg = 0;
@@ -896,369 +897,369 @@ static int mmc_sd_num_wr_blocks(struct mmc_card *card, u32 *written_blocks)
 	data.flags = MMC_DATA_READ;
 	data.sg = &sg;
 	data.sg_len = 1;
-	mmc_set_data_timeout(&data, card);
+	mmc_set_data_समयout(&data, card);
 
 	mrq.cmd = &cmd;
 	mrq.data = &data;
 
-	blocks = kmalloc(4, GFP_KERNEL);
-	if (!blocks)
-		return -ENOMEM;
+	blocks = kदो_स्मृति(4, GFP_KERNEL);
+	अगर (!blocks)
+		वापस -ENOMEM;
 
 	sg_init_one(&sg, blocks, 4);
 
-	mmc_wait_for_req(card->host, &mrq);
+	mmc_रुको_क्रम_req(card->host, &mrq);
 
 	result = ntohl(*blocks);
-	kfree(blocks);
+	kमुक्त(blocks);
 
-	if (cmd.error || data.error)
-		return -EIO;
+	अगर (cmd.error || data.error)
+		वापस -EIO;
 
 	*written_blocks = result;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int mmc_blk_clock_khz(struct mmc_host *host)
-{
-	if (host->actual_clock)
-		return host->actual_clock / 1000;
+अटल अचिन्हित पूर्णांक mmc_blk_घड़ी_khz(काष्ठा mmc_host *host)
+अणु
+	अगर (host->actual_घड़ी)
+		वापस host->actual_घड़ी / 1000;
 
-	/* Clock may be subject to a divisor, fudge it by a factor of 2. */
-	if (host->ios.clock)
-		return host->ios.clock / 2000;
+	/* Clock may be subject to a भागisor, fudge it by a factor of 2. */
+	अगर (host->ios.घड़ी)
+		वापस host->ios.घड़ी / 2000;
 
-	/* How can there be no clock */
+	/* How can there be no घड़ी */
 	WARN_ON_ONCE(1);
-	return 100; /* 100 kHz is minimum possible value */
-}
+	वापस 100; /* 100 kHz is minimum possible value */
+पूर्ण
 
-static unsigned int mmc_blk_data_timeout_ms(struct mmc_host *host,
-					    struct mmc_data *data)
-{
-	unsigned int ms = DIV_ROUND_UP(data->timeout_ns, 1000000);
-	unsigned int khz;
+अटल अचिन्हित पूर्णांक mmc_blk_data_समयout_ms(काष्ठा mmc_host *host,
+					    काष्ठा mmc_data *data)
+अणु
+	अचिन्हित पूर्णांक ms = DIV_ROUND_UP(data->समयout_ns, 1000000);
+	अचिन्हित पूर्णांक khz;
 
-	if (data->timeout_clks) {
-		khz = mmc_blk_clock_khz(host);
-		ms += DIV_ROUND_UP(data->timeout_clks, khz);
-	}
+	अगर (data->समयout_clks) अणु
+		khz = mmc_blk_घड़ी_khz(host);
+		ms += DIV_ROUND_UP(data->समयout_clks, khz);
+	पूर्ण
 
-	return ms;
-}
+	वापस ms;
+पूर्ण
 
-static int mmc_blk_reset(struct mmc_blk_data *md, struct mmc_host *host,
-			 int type)
-{
-	int err;
+अटल पूर्णांक mmc_blk_reset(काष्ठा mmc_blk_data *md, काष्ठा mmc_host *host,
+			 पूर्णांक type)
+अणु
+	पूर्णांक err;
 
-	if (md->reset_done & type)
-		return -EEXIST;
+	अगर (md->reset_करोne & type)
+		वापस -EEXIST;
 
-	md->reset_done |= type;
+	md->reset_करोne |= type;
 	err = mmc_hw_reset(host);
-	/* Ensure we switch back to the correct partition */
-	if (err) {
-		struct mmc_blk_data *main_md =
+	/* Ensure we चयन back to the correct partition */
+	अगर (err) अणु
+		काष्ठा mmc_blk_data *मुख्य_md =
 			dev_get_drvdata(&host->card->dev);
-		int part_err;
+		पूर्णांक part_err;
 
-		main_md->part_curr = main_md->part_type;
-		part_err = mmc_blk_part_switch(host->card, md->part_type);
-		if (part_err) {
+		मुख्य_md->part_curr = मुख्य_md->part_type;
+		part_err = mmc_blk_part_चयन(host->card, md->part_type);
+		अगर (part_err) अणु
 			/*
-			 * We have failed to get back into the correct
-			 * partition, so we need to abort the whole request.
+			 * We have failed to get back पूर्णांकo the correct
+			 * partition, so we need to पात the whole request.
 			 */
-			return -ENODEV;
-		}
-	}
-	return err;
-}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static inline void mmc_blk_reset_success(struct mmc_blk_data *md, int type)
-{
-	md->reset_done &= ~type;
-}
+अटल अंतरभूत व्योम mmc_blk_reset_success(काष्ठा mmc_blk_data *md, पूर्णांक type)
+अणु
+	md->reset_करोne &= ~type;
+पूर्ण
 
 /*
  * The non-block commands come back from the block layer after it queued it and
  * processed it with all other requests and then they get issued in this
  * function.
  */
-static void mmc_blk_issue_drv_op(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_queue_req *mq_rq;
-	struct mmc_card *card = mq->card;
-	struct mmc_blk_data *md = mq->blkdata;
-	struct mmc_blk_ioc_data **idata;
+अटल व्योम mmc_blk_issue_drv_op(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mq_rq;
+	काष्ठा mmc_card *card = mq->card;
+	काष्ठा mmc_blk_data *md = mq->blkdata;
+	काष्ठा mmc_blk_ioc_data **idata;
 	bool rpmb_ioctl;
 	u8 **ext_csd;
 	u32 status;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	mq_rq = req_to_mmc_queue_req(req);
 	rpmb_ioctl = (mq_rq->drv_op == MMC_DRV_OP_IOCTL_RPMB);
 
-	switch (mq_rq->drv_op) {
-	case MMC_DRV_OP_IOCTL:
-	case MMC_DRV_OP_IOCTL_RPMB:
+	चयन (mq_rq->drv_op) अणु
+	हाल MMC_DRV_OP_IOCTL:
+	हाल MMC_DRV_OP_IOCTL_RPMB:
 		idata = mq_rq->drv_op_data;
-		for (i = 0, ret = 0; i < mq_rq->ioc_count; i++) {
+		क्रम (i = 0, ret = 0; i < mq_rq->ioc_count; i++) अणु
 			ret = __mmc_blk_ioctl_cmd(card, md, idata[i]);
-			if (ret)
-				break;
-		}
-		/* Always switch back to main area after RPMB access */
-		if (rpmb_ioctl)
-			mmc_blk_part_switch(card, 0);
-		break;
-	case MMC_DRV_OP_BOOT_WP:
-		ret = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BOOT_WP,
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+		/* Always चयन back to मुख्य area after RPMB access */
+		अगर (rpmb_ioctl)
+			mmc_blk_part_चयन(card, 0);
+		अवरोध;
+	हाल MMC_DRV_OP_BOOT_WP:
+		ret = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BOOT_WP,
 				 card->ext_csd.boot_ro_lock |
 				 EXT_CSD_BOOT_WP_B_PWR_WP_EN,
-				 card->ext_csd.part_time);
-		if (ret)
+				 card->ext_csd.part_समय);
+		अगर (ret)
 			pr_err("%s: Locking boot partition ro until next power on failed: %d\n",
 			       md->disk->disk_name, ret);
-		else
+		अन्यथा
 			card->ext_csd.boot_ro_lock |=
 				EXT_CSD_BOOT_WP_B_PWR_WP_EN;
-		break;
-	case MMC_DRV_OP_GET_CARD_STATUS:
+		अवरोध;
+	हाल MMC_DRV_OP_GET_CARD_STATUS:
 		ret = mmc_send_status(card, &status);
-		if (!ret)
+		अगर (!ret)
 			ret = status;
-		break;
-	case MMC_DRV_OP_GET_EXT_CSD:
+		अवरोध;
+	हाल MMC_DRV_OP_GET_EXT_CSD:
 		ext_csd = mq_rq->drv_op_data;
 		ret = mmc_get_ext_csd(card, ext_csd);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("%s: unknown driver specific operation\n",
 		       md->disk->disk_name);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mq_rq->drv_op_result = ret;
 	blk_mq_end_request(req, ret ? BLK_STS_IOERR : BLK_STS_OK);
-}
+पूर्ण
 
-static void mmc_blk_issue_discard_rq(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_blk_data *md = mq->blkdata;
-	struct mmc_card *card = md->queue.card;
-	unsigned int from, nr;
-	int err = 0, type = MMC_BLK_DISCARD;
+अटल व्योम mmc_blk_issue_discard_rq(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_blk_data *md = mq->blkdata;
+	काष्ठा mmc_card *card = md->queue.card;
+	अचिन्हित पूर्णांक from, nr;
+	पूर्णांक err = 0, type = MMC_BLK_DISCARD;
 	blk_status_t status = BLK_STS_OK;
 
-	if (!mmc_can_erase(card)) {
+	अगर (!mmc_can_erase(card)) अणु
 		status = BLK_STS_NOTSUPP;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	from = blk_rq_pos(req);
 	nr = blk_rq_sectors(req);
 
-	do {
+	करो अणु
 		err = 0;
-		if (card->quirks & MMC_QUIRK_INAND_CMD38) {
-			err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
-					 INAND_CMD38_ARG_EXT_CSD,
+		अगर (card->quirks & MMC_QUIRK_Iन_अंकD_CMD38) अणु
+			err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
+					 Iन_अंकD_CMD38_ARG_EXT_CSD,
 					 card->erase_arg == MMC_TRIM_ARG ?
-					 INAND_CMD38_ARG_TRIM :
-					 INAND_CMD38_ARG_ERASE,
-					 card->ext_csd.generic_cmd6_time);
-		}
-		if (!err)
+					 Iन_अंकD_CMD38_ARG_TRIM :
+					 Iन_अंकD_CMD38_ARG_ERASE,
+					 card->ext_csd.generic_cmd6_समय);
+		पूर्ण
+		अगर (!err)
 			err = mmc_erase(card, from, nr, card->erase_arg);
-	} while (err == -EIO && !mmc_blk_reset(md, card->host, type));
-	if (err)
+	पूर्ण जबतक (err == -EIO && !mmc_blk_reset(md, card->host, type));
+	अगर (err)
 		status = BLK_STS_IOERR;
-	else
+	अन्यथा
 		mmc_blk_reset_success(md, type);
 fail:
 	blk_mq_end_request(req, status);
-}
+पूर्ण
 
-static void mmc_blk_issue_secdiscard_rq(struct mmc_queue *mq,
-				       struct request *req)
-{
-	struct mmc_blk_data *md = mq->blkdata;
-	struct mmc_card *card = md->queue.card;
-	unsigned int from, nr, arg;
-	int err = 0, type = MMC_BLK_SECDISCARD;
+अटल व्योम mmc_blk_issue_secdiscard_rq(काष्ठा mmc_queue *mq,
+				       काष्ठा request *req)
+अणु
+	काष्ठा mmc_blk_data *md = mq->blkdata;
+	काष्ठा mmc_card *card = md->queue.card;
+	अचिन्हित पूर्णांक from, nr, arg;
+	पूर्णांक err = 0, type = MMC_BLK_SECDISCARD;
 	blk_status_t status = BLK_STS_OK;
 
-	if (!(mmc_can_secure_erase_trim(card))) {
+	अगर (!(mmc_can_secure_erase_trim(card))) अणु
 		status = BLK_STS_NOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	from = blk_rq_pos(req);
 	nr = blk_rq_sectors(req);
 
-	if (mmc_can_trim(card) && !mmc_erase_group_aligned(card, from, nr))
+	अगर (mmc_can_trim(card) && !mmc_erase_group_aligned(card, from, nr))
 		arg = MMC_SECURE_TRIM1_ARG;
-	else
+	अन्यथा
 		arg = MMC_SECURE_ERASE_ARG;
 
 retry:
-	if (card->quirks & MMC_QUIRK_INAND_CMD38) {
-		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
-				 INAND_CMD38_ARG_EXT_CSD,
+	अगर (card->quirks & MMC_QUIRK_Iन_अंकD_CMD38) अणु
+		err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
+				 Iन_अंकD_CMD38_ARG_EXT_CSD,
 				 arg == MMC_SECURE_TRIM1_ARG ?
-				 INAND_CMD38_ARG_SECTRIM1 :
-				 INAND_CMD38_ARG_SECERASE,
-				 card->ext_csd.generic_cmd6_time);
-		if (err)
-			goto out_retry;
-	}
+				 Iन_अंकD_CMD38_ARG_SECTRIM1 :
+				 Iन_अंकD_CMD38_ARG_SECERASE,
+				 card->ext_csd.generic_cmd6_समय);
+		अगर (err)
+			जाओ out_retry;
+	पूर्ण
 
 	err = mmc_erase(card, from, nr, arg);
-	if (err == -EIO)
-		goto out_retry;
-	if (err) {
+	अगर (err == -EIO)
+		जाओ out_retry;
+	अगर (err) अणु
 		status = BLK_STS_IOERR;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (arg == MMC_SECURE_TRIM1_ARG) {
-		if (card->quirks & MMC_QUIRK_INAND_CMD38) {
-			err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
-					 INAND_CMD38_ARG_EXT_CSD,
-					 INAND_CMD38_ARG_SECTRIM2,
-					 card->ext_csd.generic_cmd6_time);
-			if (err)
-				goto out_retry;
-		}
+	अगर (arg == MMC_SECURE_TRIM1_ARG) अणु
+		अगर (card->quirks & MMC_QUIRK_Iन_अंकD_CMD38) अणु
+			err = mmc_चयन(card, EXT_CSD_CMD_SET_NORMAL,
+					 Iन_अंकD_CMD38_ARG_EXT_CSD,
+					 Iन_अंकD_CMD38_ARG_SECTRIM2,
+					 card->ext_csd.generic_cmd6_समय);
+			अगर (err)
+				जाओ out_retry;
+		पूर्ण
 
 		err = mmc_erase(card, from, nr, MMC_SECURE_TRIM2_ARG);
-		if (err == -EIO)
-			goto out_retry;
-		if (err) {
+		अगर (err == -EIO)
+			जाओ out_retry;
+		अगर (err) अणु
 			status = BLK_STS_IOERR;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 out_retry:
-	if (err && !mmc_blk_reset(md, card->host, type))
-		goto retry;
-	if (!err)
+	अगर (err && !mmc_blk_reset(md, card->host, type))
+		जाओ retry;
+	अगर (!err)
 		mmc_blk_reset_success(md, type);
 out:
 	blk_mq_end_request(req, status);
-}
+पूर्ण
 
-static void mmc_blk_issue_flush(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_blk_data *md = mq->blkdata;
-	struct mmc_card *card = md->queue.card;
-	int ret = 0;
+अटल व्योम mmc_blk_issue_flush(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_blk_data *md = mq->blkdata;
+	काष्ठा mmc_card *card = md->queue.card;
+	पूर्णांक ret = 0;
 
 	ret = mmc_flush_cache(card);
 	blk_mq_end_request(req, ret ? BLK_STS_IOERR : BLK_STS_OK);
-}
+पूर्ण
 
 /*
- * Reformat current write as a reliable write, supporting
- * both legacy and the enhanced reliable write MMC cards.
+ * Reक्रमmat current ग_लिखो as a reliable ग_लिखो, supporting
+ * both legacy and the enhanced reliable ग_लिखो MMC cards.
  * In each transfer we'll handle only as much as a single
- * reliable write can handle, thus finish the request in
+ * reliable ग_लिखो can handle, thus finish the request in
  * partial completions.
  */
-static inline void mmc_apply_rel_rw(struct mmc_blk_request *brq,
-				    struct mmc_card *card,
-				    struct request *req)
-{
-	if (!(card->ext_csd.rel_param & EXT_CSD_WR_REL_PARAM_EN)) {
+अटल अंतरभूत व्योम mmc_apply_rel_rw(काष्ठा mmc_blk_request *brq,
+				    काष्ठा mmc_card *card,
+				    काष्ठा request *req)
+अणु
+	अगर (!(card->ext_csd.rel_param & EXT_CSD_WR_REL_PARAM_EN)) अणु
 		/* Legacy mode imposes restrictions on transfers. */
-		if (!IS_ALIGNED(blk_rq_pos(req), card->ext_csd.rel_sectors))
+		अगर (!IS_ALIGNED(blk_rq_pos(req), card->ext_csd.rel_sectors))
 			brq->data.blocks = 1;
 
-		if (brq->data.blocks > card->ext_csd.rel_sectors)
+		अगर (brq->data.blocks > card->ext_csd.rel_sectors)
 			brq->data.blocks = card->ext_csd.rel_sectors;
-		else if (brq->data.blocks < card->ext_csd.rel_sectors)
+		अन्यथा अगर (brq->data.blocks < card->ext_csd.rel_sectors)
 			brq->data.blocks = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define CMD_ERRORS_EXCL_OOR						\
+#घोषणा CMD_ERRORS_EXCL_OOR						\
 	(R1_ADDRESS_ERROR |	/* Misaligned address */		\
 	 R1_BLOCK_LEN_ERROR |	/* Transferred block length incorrect */\
-	 R1_WP_VIOLATION |	/* Tried to write to protected block */	\
+	 R1_WP_VIOLATION |	/* Tried to ग_लिखो to रक्षित block */	\
 	 R1_CARD_ECC_FAILED |	/* Card ECC failed */			\
 	 R1_CC_ERROR |		/* Card controller error */		\
 	 R1_ERROR)		/* General/unknown error */
 
-#define CMD_ERRORS							\
+#घोषणा CMD_ERRORS							\
 	(CMD_ERRORS_EXCL_OOR |						\
 	 R1_OUT_OF_RANGE)	/* Command argument out of range */	\
 
-static void mmc_blk_eval_resp_error(struct mmc_blk_request *brq)
-{
+अटल व्योम mmc_blk_eval_resp_error(काष्ठा mmc_blk_request *brq)
+अणु
 	u32 val;
 
 	/*
-	 * Per the SD specification(physical layer version 4.10)[1],
+	 * Per the SD specअगरication(physical layer version 4.10)[1],
 	 * section 4.3.3, it explicitly states that "When the last
-	 * block of user area is read using CMD18, the host should
+	 * block of user area is पढ़ो using CMD18, the host should
 	 * ignore OUT_OF_RANGE error that may occur even the sequence
-	 * is correct". And JESD84-B51 for eMMC also has a similar
+	 * is correct". And JESD84-B51 क्रम eMMC also has a similar
 	 * statement on section 6.8.3.
 	 *
-	 * Multiple block read/write could be done by either predefined
-	 * method, namely CMD23, or open-ending mode. For open-ending mode,
+	 * Multiple block पढ़ो/ग_लिखो could be करोne by either predefined
+	 * method, namely CMD23, or खोलो-ending mode. For खोलो-ending mode,
 	 * we should ignore the OUT_OF_RANGE error as it's normal behaviour.
 	 *
-	 * However the spec[1] doesn't tell us whether we should also
-	 * ignore that for predefined method. But per the spec[1], section
+	 * However the spec[1] करोesn't tell us whether we should also
+	 * ignore that क्रम predefined method. But per the spec[1], section
 	 * 4.15 Set Block Count Command, it says"If illegal block count
-	 * is set, out of range error will be indicated during read/write
+	 * is set, out of range error will be indicated during पढ़ो/ग_लिखो
 	 * operation (For example, data transfer is stopped at user area
 	 * boundary)." In another word, we could expect a out of range error
-	 * in the response for the following CMD18/25. And if argument of
+	 * in the response क्रम the following CMD18/25. And अगर argument of
 	 * CMD23 + the argument of CMD18/25 exceed the max number of blocks,
 	 * we could also expect to get a -ETIMEDOUT or any error number from
-	 * the host drivers due to missing data response(for write)/data(for
-	 * read), as the cards will stop the data transfer by itself per the
-	 * spec. So we only need to check R1_OUT_OF_RANGE for open-ending mode.
+	 * the host drivers due to missing data response(क्रम ग_लिखो)/data(क्रम
+	 * पढ़ो), as the cards will stop the data transfer by itself per the
+	 * spec. So we only need to check R1_OUT_OF_RANGE क्रम खोलो-ending mode.
 	 */
 
-	if (!brq->stop.error) {
-		bool oor_with_open_end;
+	अगर (!brq->stop.error) अणु
+		bool oor_with_खोलो_end;
 		/* If there is no error yet, check R1 response */
 
 		val = brq->stop.resp[0] & CMD_ERRORS;
-		oor_with_open_end = val & R1_OUT_OF_RANGE && !brq->mrq.sbc;
+		oor_with_खोलो_end = val & R1_OUT_OF_RANGE && !brq->mrq.sbc;
 
-		if (val && !oor_with_open_end)
+		अगर (val && !oor_with_खोलो_end)
 			brq->stop.error = -EIO;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mmc_blk_data_prep(struct mmc_queue *mq, struct mmc_queue_req *mqrq,
-			      int disable_multi, bool *do_rel_wr_p,
-			      bool *do_data_tag_p)
-{
-	struct mmc_blk_data *md = mq->blkdata;
-	struct mmc_card *card = md->queue.card;
-	struct mmc_blk_request *brq = &mqrq->brq;
-	struct request *req = mmc_queue_req_to_req(mqrq);
-	bool do_rel_wr, do_data_tag;
+अटल व्योम mmc_blk_data_prep(काष्ठा mmc_queue *mq, काष्ठा mmc_queue_req *mqrq,
+			      पूर्णांक disable_multi, bool *करो_rel_wr_p,
+			      bool *करो_data_tag_p)
+अणु
+	काष्ठा mmc_blk_data *md = mq->blkdata;
+	काष्ठा mmc_card *card = md->queue.card;
+	काष्ठा mmc_blk_request *brq = &mqrq->brq;
+	काष्ठा request *req = mmc_queue_req_to_req(mqrq);
+	bool करो_rel_wr, करो_data_tag;
 
 	/*
-	 * Reliable writes are used to implement Forced Unit Access and
+	 * Reliable ग_लिखोs are used to implement Forced Unit Access and
 	 * are supported only on MMCs.
 	 */
-	do_rel_wr = (req->cmd_flags & REQ_FUA) &&
+	करो_rel_wr = (req->cmd_flags & REQ_FUA) &&
 		    rq_data_dir(req) == WRITE &&
 		    (md->flags & MMC_BLK_REL_WR);
 
-	memset(brq, 0, sizeof(struct mmc_blk_request));
+	स_रखो(brq, 0, माप(काष्ठा mmc_blk_request));
 
 	mmc_crypto_prepare_req(mqrq);
 
@@ -1268,13 +1269,13 @@ static void mmc_blk_data_prep(struct mmc_queue *mq, struct mmc_queue_req *mqrq,
 	brq->stop.opcode = MMC_STOP_TRANSMISSION;
 	brq->stop.arg = 0;
 
-	if (rq_data_dir(req) == READ) {
+	अगर (rq_data_dir(req) == READ) अणु
 		brq->data.flags = MMC_DATA_READ;
 		brq->stop.flags = MMC_RSP_SPI_R1 | MMC_RSP_R1 | MMC_CMD_AC;
-	} else {
+	पूर्ण अन्यथा अणु
 		brq->data.flags = MMC_DATA_WRITE;
 		brq->stop.flags = MMC_RSP_SPI_R1B | MMC_RSP_R1B | MMC_CMD_AC;
-	}
+	पूर्ण
 
 	brq->data.blksz = 512;
 	brq->data.blocks = blk_rq_sectors(req);
@@ -1288,62 +1289,62 @@ static void mmc_blk_data_prep(struct mmc_queue *mq, struct mmc_queue_req *mqrq,
 	 */
 
 	/*
-	 * The block layer doesn't support all sector count
-	 * restrictions, so we need to be prepared for too big
+	 * The block layer करोesn't support all sector count
+	 * restrictions, so we need to be prepared क्रम too big
 	 * requests.
 	 */
-	if (brq->data.blocks > card->host->max_blk_count)
+	अगर (brq->data.blocks > card->host->max_blk_count)
 		brq->data.blocks = card->host->max_blk_count;
 
-	if (brq->data.blocks > 1) {
+	अगर (brq->data.blocks > 1) अणु
 		/*
-		 * Some SD cards in SPI mode return a CRC error or even lock up
-		 * completely when trying to read the last block using a
-		 * multiblock read command.
+		 * Some SD cards in SPI mode वापस a CRC error or even lock up
+		 * completely when trying to पढ़ो the last block using a
+		 * multiblock पढ़ो command.
 		 */
-		if (mmc_host_is_spi(card->host) && (rq_data_dir(req) == READ) &&
+		अगर (mmc_host_is_spi(card->host) && (rq_data_dir(req) == READ) &&
 		    (blk_rq_pos(req) + blk_rq_sectors(req) ==
 		     get_capacity(md->disk)))
 			brq->data.blocks--;
 
 		/*
-		 * After a read error, we redo the request one sector
-		 * at a time in order to accurately determine which
-		 * sectors can be read successfully.
+		 * After a पढ़ो error, we reकरो the request one sector
+		 * at a समय in order to accurately determine which
+		 * sectors can be पढ़ो successfully.
 		 */
-		if (disable_multi)
+		अगर (disable_multi)
 			brq->data.blocks = 1;
 
 		/*
-		 * Some controllers have HW issues while operating
+		 * Some controllers have HW issues जबतक operating
 		 * in multiple I/O mode
 		 */
-		if (card->host->ops->multi_io_quirk)
+		अगर (card->host->ops->multi_io_quirk)
 			brq->data.blocks = card->host->ops->multi_io_quirk(card,
 						(rq_data_dir(req) == READ) ?
 						MMC_DATA_READ : MMC_DATA_WRITE,
 						brq->data.blocks);
-	}
+	पूर्ण
 
-	if (do_rel_wr) {
+	अगर (करो_rel_wr) अणु
 		mmc_apply_rel_rw(brq, card, req);
 		brq->data.flags |= MMC_DATA_REL_WR;
-	}
+	पूर्ण
 
 	/*
 	 * Data tag is used only during writing meta data to speed
-	 * up write and any subsequent read of this meta data
+	 * up ग_लिखो and any subsequent पढ़ो of this meta data
 	 */
-	do_data_tag = card->ext_csd.data_tag_unit_size &&
+	करो_data_tag = card->ext_csd.data_tag_unit_size &&
 		      (req->cmd_flags & REQ_META) &&
 		      (rq_data_dir(req) == WRITE) &&
 		      ((brq->data.blocks * brq->data.blksz) >=
 		       card->ext_csd.data_tag_unit_size);
 
-	if (do_data_tag)
+	अगर (करो_data_tag)
 		brq->data.flags |= MMC_DATA_DAT_TAG;
 
-	mmc_set_data_timeout(&brq->data, card);
+	mmc_set_data_समयout(&brq->data, card);
 
 	brq->data.sg = mqrq->sg;
 	brq->data.sg_len = mmc_queue_map_sg(mq, mqrq);
@@ -1352,63 +1353,63 @@ static void mmc_blk_data_prep(struct mmc_queue *mq, struct mmc_queue_req *mqrq,
 	 * Adjust the sg list so it is the same size as the
 	 * request.
 	 */
-	if (brq->data.blocks != blk_rq_sectors(req)) {
-		int i, data_size = brq->data.blocks << 9;
-		struct scatterlist *sg;
+	अगर (brq->data.blocks != blk_rq_sectors(req)) अणु
+		पूर्णांक i, data_size = brq->data.blocks << 9;
+		काष्ठा scatterlist *sg;
 
-		for_each_sg(brq->data.sg, sg, brq->data.sg_len, i) {
+		क्रम_each_sg(brq->data.sg, sg, brq->data.sg_len, i) अणु
 			data_size -= sg->length;
-			if (data_size <= 0) {
+			अगर (data_size <= 0) अणु
 				sg->length += data_size;
 				i++;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		brq->data.sg_len = i;
-	}
+	पूर्ण
 
-	if (do_rel_wr_p)
-		*do_rel_wr_p = do_rel_wr;
+	अगर (करो_rel_wr_p)
+		*करो_rel_wr_p = करो_rel_wr;
 
-	if (do_data_tag_p)
-		*do_data_tag_p = do_data_tag;
-}
+	अगर (करो_data_tag_p)
+		*करो_data_tag_p = करो_data_tag;
+पूर्ण
 
-#define MMC_CQE_RETRIES 2
+#घोषणा MMC_CQE_RETRIES 2
 
-static void mmc_blk_cqe_complete_rq(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_request *mrq = &mqrq->brq.mrq;
-	struct request_queue *q = req->q;
-	struct mmc_host *host = mq->card->host;
-	enum mmc_issue_type issue_type = mmc_issue_type(mq, req);
-	unsigned long flags;
+अटल व्योम mmc_blk_cqe_complete_rq(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_request *mrq = &mqrq->brq.mrq;
+	काष्ठा request_queue *q = req->q;
+	काष्ठा mmc_host *host = mq->card->host;
+	क्रमागत mmc_issue_type issue_type = mmc_issue_type(mq, req);
+	अचिन्हित दीर्घ flags;
 	bool put_card;
-	int err;
+	पूर्णांक err;
 
 	mmc_cqe_post_req(host, mrq);
 
-	if (mrq->cmd && mrq->cmd->error)
+	अगर (mrq->cmd && mrq->cmd->error)
 		err = mrq->cmd->error;
-	else if (mrq->data && mrq->data->error)
+	अन्यथा अगर (mrq->data && mrq->data->error)
 		err = mrq->data->error;
-	else
+	अन्यथा
 		err = 0;
 
-	if (err) {
-		if (mqrq->retries++ < MMC_CQE_RETRIES)
+	अगर (err) अणु
+		अगर (mqrq->retries++ < MMC_CQE_RETRIES)
 			blk_mq_requeue_request(req, true);
-		else
+		अन्यथा
 			blk_mq_end_request(req, BLK_STS_IOERR);
-	} else if (mrq->data) {
-		if (blk_update_request(req, BLK_STS_OK, mrq->data->bytes_xfered))
+	पूर्ण अन्यथा अगर (mrq->data) अणु
+		अगर (blk_update_request(req, BLK_STS_OK, mrq->data->bytes_xfered))
 			blk_mq_requeue_request(req, true);
-		else
+		अन्यथा
 			__blk_mq_end_request(req, BLK_STS_OK);
-	} else {
+	पूर्ण अन्यथा अणु
 		blk_mq_end_request(req, BLK_STS_OK);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&mq->lock, flags);
 
@@ -1420,73 +1421,73 @@ static void mmc_blk_cqe_complete_rq(struct mmc_queue *mq, struct request *req)
 
 	spin_unlock_irqrestore(&mq->lock, flags);
 
-	if (!mq->cqe_busy)
+	अगर (!mq->cqe_busy)
 		blk_mq_run_hw_queues(q, true);
 
-	if (put_card)
+	अगर (put_card)
 		mmc_put_card(mq->card, &mq->ctx);
-}
+पूर्ण
 
-void mmc_blk_cqe_recovery(struct mmc_queue *mq)
-{
-	struct mmc_card *card = mq->card;
-	struct mmc_host *host = card->host;
-	int err;
+व्योम mmc_blk_cqe_recovery(काष्ठा mmc_queue *mq)
+अणु
+	काष्ठा mmc_card *card = mq->card;
+	काष्ठा mmc_host *host = card->host;
+	पूर्णांक err;
 
 	pr_debug("%s: CQE recovery start\n", mmc_hostname(host));
 
 	err = mmc_cqe_recovery(host);
-	if (err)
+	अगर (err)
 		mmc_blk_reset(mq->blkdata, host, MMC_BLK_CQE_RECOVERY);
-	else
+	अन्यथा
 		mmc_blk_reset_success(mq->blkdata, MMC_BLK_CQE_RECOVERY);
 
 	pr_debug("%s: CQE recovery done\n", mmc_hostname(host));
-}
+पूर्ण
 
-static void mmc_blk_cqe_req_done(struct mmc_request *mrq)
-{
-	struct mmc_queue_req *mqrq = container_of(mrq, struct mmc_queue_req,
+अटल व्योम mmc_blk_cqe_req_करोne(काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा mmc_queue_req *mqrq = container_of(mrq, काष्ठा mmc_queue_req,
 						  brq.mrq);
-	struct request *req = mmc_queue_req_to_req(mqrq);
-	struct request_queue *q = req->q;
-	struct mmc_queue *mq = q->queuedata;
+	काष्ठा request *req = mmc_queue_req_to_req(mqrq);
+	काष्ठा request_queue *q = req->q;
+	काष्ठा mmc_queue *mq = q->queuedata;
 
 	/*
-	 * Block layer timeouts race with completions which means the normal
+	 * Block layer समयouts race with completions which means the normal
 	 * completion path cannot be used during recovery.
 	 */
-	if (mq->in_recovery)
+	अगर (mq->in_recovery)
 		mmc_blk_cqe_complete_rq(mq, req);
-	else if (likely(!blk_should_fake_timeout(req->q)))
+	अन्यथा अगर (likely(!blk_should_fake_समयout(req->q)))
 		blk_mq_complete_request(req);
-}
+पूर्ण
 
-static int mmc_blk_cqe_start_req(struct mmc_host *host, struct mmc_request *mrq)
-{
-	mrq->done		= mmc_blk_cqe_req_done;
-	mrq->recovery_notifier	= mmc_cqe_recovery_notifier;
+अटल पूर्णांक mmc_blk_cqe_start_req(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	mrq->करोne		= mmc_blk_cqe_req_करोne;
+	mrq->recovery_notअगरier	= mmc_cqe_recovery_notअगरier;
 
-	return mmc_cqe_start_req(host, mrq);
-}
+	वापस mmc_cqe_start_req(host, mrq);
+पूर्ण
 
-static struct mmc_request *mmc_blk_cqe_prep_dcmd(struct mmc_queue_req *mqrq,
-						 struct request *req)
-{
-	struct mmc_blk_request *brq = &mqrq->brq;
+अटल काष्ठा mmc_request *mmc_blk_cqe_prep_dcmd(काष्ठा mmc_queue_req *mqrq,
+						 काष्ठा request *req)
+अणु
+	काष्ठा mmc_blk_request *brq = &mqrq->brq;
 
-	memset(brq, 0, sizeof(*brq));
+	स_रखो(brq, 0, माप(*brq));
 
 	brq->mrq.cmd = &brq->cmd;
 	brq->mrq.tag = req->tag;
 
-	return &brq->mrq;
-}
+	वापस &brq->mrq;
+पूर्ण
 
-static int mmc_blk_cqe_issue_flush(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_request *mrq = mmc_blk_cqe_prep_dcmd(mqrq, req);
+अटल पूर्णांक mmc_blk_cqe_issue_flush(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_request *mrq = mmc_blk_cqe_prep_dcmd(mqrq, req);
 
 	mrq->cmd->opcode = MMC_SWITCH;
 	mrq->cmd->arg = (MMC_SWITCH_MODE_WRITE_BYTE << 24) |
@@ -1495,430 +1496,430 @@ static int mmc_blk_cqe_issue_flush(struct mmc_queue *mq, struct request *req)
 			EXT_CSD_CMD_SET_NORMAL;
 	mrq->cmd->flags = MMC_CMD_AC | MMC_RSP_R1B;
 
-	return mmc_blk_cqe_start_req(mq->card->host, mrq);
-}
+	वापस mmc_blk_cqe_start_req(mq->card->host, mrq);
+पूर्ण
 
-static int mmc_blk_hsq_issue_rw_rq(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_host *host = mq->card->host;
-	int err;
+अटल पूर्णांक mmc_blk_hsq_issue_rw_rq(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_host *host = mq->card->host;
+	पूर्णांक err;
 
 	mmc_blk_rw_rq_prep(mqrq, mq->card, 0, mq);
-	mqrq->brq.mrq.done = mmc_blk_hsq_req_done;
+	mqrq->brq.mrq.करोne = mmc_blk_hsq_req_करोne;
 	mmc_pre_req(host, &mqrq->brq.mrq);
 
 	err = mmc_cqe_start_req(host, &mqrq->brq.mrq);
-	if (err)
+	अगर (err)
 		mmc_post_req(host, &mqrq->brq.mrq, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_blk_cqe_issue_rw_rq(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_host *host = mq->card->host;
+अटल पूर्णांक mmc_blk_cqe_issue_rw_rq(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_host *host = mq->card->host;
 
-	if (host->hsq_enabled)
-		return mmc_blk_hsq_issue_rw_rq(mq, req);
+	अगर (host->hsq_enabled)
+		वापस mmc_blk_hsq_issue_rw_rq(mq, req);
 
-	mmc_blk_data_prep(mq, mqrq, 0, NULL, NULL);
+	mmc_blk_data_prep(mq, mqrq, 0, शून्य, शून्य);
 
-	return mmc_blk_cqe_start_req(mq->card->host, &mqrq->brq.mrq);
-}
+	वापस mmc_blk_cqe_start_req(mq->card->host, &mqrq->brq.mrq);
+पूर्ण
 
-static void mmc_blk_rw_rq_prep(struct mmc_queue_req *mqrq,
-			       struct mmc_card *card,
-			       int disable_multi,
-			       struct mmc_queue *mq)
-{
-	u32 readcmd, writecmd;
-	struct mmc_blk_request *brq = &mqrq->brq;
-	struct request *req = mmc_queue_req_to_req(mqrq);
-	struct mmc_blk_data *md = mq->blkdata;
-	bool do_rel_wr, do_data_tag;
+अटल व्योम mmc_blk_rw_rq_prep(काष्ठा mmc_queue_req *mqrq,
+			       काष्ठा mmc_card *card,
+			       पूर्णांक disable_multi,
+			       काष्ठा mmc_queue *mq)
+अणु
+	u32 पढ़ोcmd, ग_लिखोcmd;
+	काष्ठा mmc_blk_request *brq = &mqrq->brq;
+	काष्ठा request *req = mmc_queue_req_to_req(mqrq);
+	काष्ठा mmc_blk_data *md = mq->blkdata;
+	bool करो_rel_wr, करो_data_tag;
 
-	mmc_blk_data_prep(mq, mqrq, disable_multi, &do_rel_wr, &do_data_tag);
+	mmc_blk_data_prep(mq, mqrq, disable_multi, &करो_rel_wr, &करो_data_tag);
 
 	brq->mrq.cmd = &brq->cmd;
 
 	brq->cmd.arg = blk_rq_pos(req);
-	if (!mmc_card_blockaddr(card))
+	अगर (!mmc_card_blockaddr(card))
 		brq->cmd.arg <<= 9;
 	brq->cmd.flags = MMC_RSP_SPI_R1 | MMC_RSP_R1 | MMC_CMD_ADTC;
 
-	if (brq->data.blocks > 1 || do_rel_wr) {
-		/* SPI multiblock writes terminate using a special
+	अगर (brq->data.blocks > 1 || करो_rel_wr) अणु
+		/* SPI multiblock ग_लिखोs terminate using a special
 		 * token, not a STOP_TRANSMISSION request.
 		 */
-		if (!mmc_host_is_spi(card->host) ||
+		अगर (!mmc_host_is_spi(card->host) ||
 		    rq_data_dir(req) == READ)
 			brq->mrq.stop = &brq->stop;
-		readcmd = MMC_READ_MULTIPLE_BLOCK;
-		writecmd = MMC_WRITE_MULTIPLE_BLOCK;
-	} else {
-		brq->mrq.stop = NULL;
-		readcmd = MMC_READ_SINGLE_BLOCK;
-		writecmd = MMC_WRITE_BLOCK;
-	}
-	brq->cmd.opcode = rq_data_dir(req) == READ ? readcmd : writecmd;
+		पढ़ोcmd = MMC_READ_MULTIPLE_BLOCK;
+		ग_लिखोcmd = MMC_WRITE_MULTIPLE_BLOCK;
+	पूर्ण अन्यथा अणु
+		brq->mrq.stop = शून्य;
+		पढ़ोcmd = MMC_READ_SINGLE_BLOCK;
+		ग_लिखोcmd = MMC_WRITE_BLOCK;
+	पूर्ण
+	brq->cmd.opcode = rq_data_dir(req) == READ ? पढ़ोcmd : ग_लिखोcmd;
 
 	/*
 	 * Pre-defined multi-block transfers are preferable to
-	 * open ended-ones (and necessary for reliable writes).
+	 * खोलो ended-ones (and necessary क्रम reliable ग_लिखोs).
 	 * However, it is not sufficient to just send CMD23,
-	 * and avoid the final CMD12, as on an error condition
+	 * and aव्योम the final CMD12, as on an error condition
 	 * CMD12 (stop) needs to be sent anyway. This, coupled
 	 * with Auto-CMD23 enhancements provided by some
-	 * hosts, means that the complexity of dealing
+	 * hosts, means that the complनिकासy of dealing
 	 * with this is best left to the host. If CMD23 is
 	 * supported by card and host, we'll fill sbc in and let
 	 * the host deal with handling it correctly. This means
-	 * that for hosts that don't expose MMC_CAP_CMD23, no
+	 * that क्रम hosts that करोn't expose MMC_CAP_CMD23, no
 	 * change of behavior will be observed.
 	 *
 	 * N.B: Some MMC cards experience perf degradation.
-	 * We'll avoid using CMD23-bounded multiblock writes for
-	 * these, while retaining features like reliable writes.
+	 * We'll aव्योम using CMD23-bounded multiblock ग_लिखोs क्रम
+	 * these, जबतक retaining features like reliable ग_लिखोs.
 	 */
-	if ((md->flags & MMC_BLK_CMD23) && mmc_op_multi(brq->cmd.opcode) &&
-	    (do_rel_wr || !(card->quirks & MMC_QUIRK_BLK_NO_CMD23) ||
-	     do_data_tag)) {
+	अगर ((md->flags & MMC_BLK_CMD23) && mmc_op_multi(brq->cmd.opcode) &&
+	    (करो_rel_wr || !(card->quirks & MMC_QUIRK_BLK_NO_CMD23) ||
+	     करो_data_tag)) अणु
 		brq->sbc.opcode = MMC_SET_BLOCK_COUNT;
 		brq->sbc.arg = brq->data.blocks |
-			(do_rel_wr ? (1 << 31) : 0) |
-			(do_data_tag ? (1 << 29) : 0);
+			(करो_rel_wr ? (1 << 31) : 0) |
+			(करो_data_tag ? (1 << 29) : 0);
 		brq->sbc.flags = MMC_RSP_R1 | MMC_CMD_AC;
 		brq->mrq.sbc = &brq->sbc;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define MMC_MAX_RETRIES		5
-#define MMC_DATA_RETRIES	2
-#define MMC_NO_RETRIES		(MMC_MAX_RETRIES + 1)
+#घोषणा MMC_MAX_RETRIES		5
+#घोषणा MMC_DATA_RETRIES	2
+#घोषणा MMC_NO_RETRIES		(MMC_MAX_RETRIES + 1)
 
-static int mmc_blk_send_stop(struct mmc_card *card, unsigned int timeout)
-{
-	struct mmc_command cmd = {
+अटल पूर्णांक mmc_blk_send_stop(काष्ठा mmc_card *card, अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा mmc_command cmd = अणु
 		.opcode = MMC_STOP_TRANSMISSION,
 		.flags = MMC_RSP_SPI_R1 | MMC_RSP_R1 | MMC_CMD_AC,
-		/* Some hosts wait for busy anyway, so provide a busy timeout */
-		.busy_timeout = timeout,
-	};
+		/* Some hosts रुको क्रम busy anyway, so provide a busy समयout */
+		.busy_समयout = समयout,
+	पूर्ण;
 
-	return mmc_wait_for_cmd(card->host, &cmd, 5);
-}
+	वापस mmc_रुको_क्रम_cmd(card->host, &cmd, 5);
+पूर्ण
 
-static int mmc_blk_fix_state(struct mmc_card *card, struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_blk_request *brq = &mqrq->brq;
-	unsigned int timeout = mmc_blk_data_timeout_ms(card->host, &brq->data);
-	int err;
+अटल पूर्णांक mmc_blk_fix_state(काष्ठा mmc_card *card, काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_blk_request *brq = &mqrq->brq;
+	अचिन्हित पूर्णांक समयout = mmc_blk_data_समयout_ms(card->host, &brq->data);
+	पूर्णांक err;
 
 	mmc_retune_hold_now(card->host);
 
-	mmc_blk_send_stop(card, timeout);
+	mmc_blk_send_stop(card, समयout);
 
-	err = card_busy_detect(card, timeout, NULL);
+	err = card_busy_detect(card, समयout, शून्य);
 
 	mmc_retune_release(card->host);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#define MMC_READ_SINGLE_RETRIES	2
+#घोषणा MMC_READ_SINGLE_RETRIES	2
 
-/* Single sector read during recovery */
-static void mmc_blk_read_single(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_request *mrq = &mqrq->brq.mrq;
-	struct mmc_card *card = mq->card;
-	struct mmc_host *host = card->host;
+/* Single sector पढ़ो during recovery */
+अटल व्योम mmc_blk_पढ़ो_single(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_request *mrq = &mqrq->brq.mrq;
+	काष्ठा mmc_card *card = mq->card;
+	काष्ठा mmc_host *host = card->host;
 	blk_status_t error = BLK_STS_OK;
-	int retries = 0;
+	पूर्णांक retries = 0;
 
-	do {
+	करो अणु
 		u32 status;
-		int err;
+		पूर्णांक err;
 
 		mmc_blk_rw_rq_prep(mqrq, card, 1, mq);
 
-		mmc_wait_for_req(host, mrq);
+		mmc_रुको_क्रम_req(host, mrq);
 
 		err = mmc_send_status(card, &status);
-		if (err)
-			goto error_exit;
+		अगर (err)
+			जाओ error_निकास;
 
-		if (!mmc_host_is_spi(host) &&
-		    !mmc_ready_for_data(status)) {
+		अगर (!mmc_host_is_spi(host) &&
+		    !mmc_पढ़ोy_क्रम_data(status)) अणु
 			err = mmc_blk_fix_state(card, req);
-			if (err)
-				goto error_exit;
-		}
+			अगर (err)
+				जाओ error_निकास;
+		पूर्ण
 
-		if (mrq->cmd->error && retries++ < MMC_READ_SINGLE_RETRIES)
-			continue;
+		अगर (mrq->cmd->error && retries++ < MMC_READ_SINGLE_RETRIES)
+			जारी;
 
 		retries = 0;
 
-		if (mrq->cmd->error ||
+		अगर (mrq->cmd->error ||
 		    mrq->data->error ||
 		    (!mmc_host_is_spi(host) &&
 		     (mrq->cmd->resp[0] & CMD_ERRORS || status & CMD_ERRORS)))
 			error = BLK_STS_IOERR;
-		else
+		अन्यथा
 			error = BLK_STS_OK;
 
-	} while (blk_update_request(req, error, 512));
+	पूर्ण जबतक (blk_update_request(req, error, 512));
 
-	return;
+	वापस;
 
-error_exit:
+error_निकास:
 	mrq->data->bytes_xfered = 0;
 	blk_update_request(req, BLK_STS_IOERR, 512);
-	/* Let it try the remaining request again */
-	if (mqrq->retries > MMC_MAX_RETRIES - 1)
+	/* Let it try the reमुख्यing request again */
+	अगर (mqrq->retries > MMC_MAX_RETRIES - 1)
 		mqrq->retries = MMC_MAX_RETRIES - 1;
-}
+पूर्ण
 
-static inline bool mmc_blk_oor_valid(struct mmc_blk_request *brq)
-{
-	return !!brq->mrq.sbc;
-}
+अटल अंतरभूत bool mmc_blk_oor_valid(काष्ठा mmc_blk_request *brq)
+अणु
+	वापस !!brq->mrq.sbc;
+पूर्ण
 
-static inline u32 mmc_blk_stop_err_bits(struct mmc_blk_request *brq)
-{
-	return mmc_blk_oor_valid(brq) ? CMD_ERRORS : CMD_ERRORS_EXCL_OOR;
-}
+अटल अंतरभूत u32 mmc_blk_stop_err_bits(काष्ठा mmc_blk_request *brq)
+अणु
+	वापस mmc_blk_oor_valid(brq) ? CMD_ERRORS : CMD_ERRORS_EXCL_OOR;
+पूर्ण
 
 /*
- * Check for errors the host controller driver might not have seen such as
+ * Check क्रम errors the host controller driver might not have seen such as
  * response mode errors or invalid card state.
  */
-static bool mmc_blk_status_error(struct request *req, u32 status)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_blk_request *brq = &mqrq->brq;
-	struct mmc_queue *mq = req->q->queuedata;
+अटल bool mmc_blk_status_error(काष्ठा request *req, u32 status)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_blk_request *brq = &mqrq->brq;
+	काष्ठा mmc_queue *mq = req->q->queuedata;
 	u32 stop_err_bits;
 
-	if (mmc_host_is_spi(mq->card->host))
-		return false;
+	अगर (mmc_host_is_spi(mq->card->host))
+		वापस false;
 
 	stop_err_bits = mmc_blk_stop_err_bits(brq);
 
-	return brq->cmd.resp[0]  & CMD_ERRORS    ||
+	वापस brq->cmd.resp[0]  & CMD_ERRORS    ||
 	       brq->stop.resp[0] & stop_err_bits ||
 	       status            & stop_err_bits ||
-	       (rq_data_dir(req) == WRITE && !mmc_ready_for_data(status));
-}
+	       (rq_data_dir(req) == WRITE && !mmc_पढ़ोy_क्रम_data(status));
+पूर्ण
 
-static inline bool mmc_blk_cmd_started(struct mmc_blk_request *brq)
-{
-	return !brq->sbc.error && !brq->cmd.error &&
+अटल अंतरभूत bool mmc_blk_cmd_started(काष्ठा mmc_blk_request *brq)
+अणु
+	वापस !brq->sbc.error && !brq->cmd.error &&
 	       !(brq->cmd.resp[0] & CMD_ERRORS);
-}
+पूर्ण
 
 /*
  * Requests are completed by mmc_blk_mq_complete_rq() which sets simple
  * policy:
  * 1. A request that has transferred at least some data is considered
- * successful and will be requeued if there is remaining data to
+ * successful and will be requeued अगर there is reमुख्यing data to
  * transfer.
  * 2. Otherwise the number of retries is incremented and the request
- * will be requeued if there are remaining retries.
+ * will be requeued अगर there are reमुख्यing retries.
  * 3. Otherwise the request will be errored out.
  * That means mmc_blk_mq_complete_rq() is controlled by bytes_xfered and
  * mqrq->retries. So there are only 4 possible actions here:
- *	1. do not accept the bytes_xfered value i.e. set it to zero
+ *	1. करो not accept the bytes_xfered value i.e. set it to zero
  *	2. change mqrq->retries to determine the number of retries
  *	3. try to reset the card
- *	4. read one sector at a time
+ *	4. पढ़ो one sector at a समय
  */
-static void mmc_blk_mq_rw_recovery(struct mmc_queue *mq, struct request *req)
-{
-	int type = rq_data_dir(req) == READ ? MMC_BLK_READ : MMC_BLK_WRITE;
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_blk_request *brq = &mqrq->brq;
-	struct mmc_blk_data *md = mq->blkdata;
-	struct mmc_card *card = mq->card;
+अटल व्योम mmc_blk_mq_rw_recovery(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	पूर्णांक type = rq_data_dir(req) == READ ? MMC_BLK_READ : MMC_BLK_WRITE;
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_blk_request *brq = &mqrq->brq;
+	काष्ठा mmc_blk_data *md = mq->blkdata;
+	काष्ठा mmc_card *card = mq->card;
 	u32 status;
 	u32 blocks;
-	int err;
+	पूर्णांक err;
 
 	/*
 	 * Some errors the host driver might not have seen. Set the number of
-	 * bytes transferred to zero in that case.
+	 * bytes transferred to zero in that हाल.
 	 */
 	err = __mmc_send_status(card, &status, 0);
-	if (err || mmc_blk_status_error(req, status))
+	अगर (err || mmc_blk_status_error(req, status))
 		brq->data.bytes_xfered = 0;
 
 	mmc_retune_release(card->host);
 
 	/*
-	 * Try again to get the status. This also provides an opportunity for
+	 * Try again to get the status. This also provides an opportunity क्रम
 	 * re-tuning.
 	 */
-	if (err)
+	अगर (err)
 		err = __mmc_send_status(card, &status, 0);
 
 	/*
-	 * Nothing more to do after the number of bytes transferred has been
+	 * Nothing more to करो after the number of bytes transferred has been
 	 * updated and there is no card.
 	 */
-	if (err && mmc_detect_card_removed(card->host))
-		return;
+	अगर (err && mmc_detect_card_हटाओd(card->host))
+		वापस;
 
 	/* Try to get back to "tran" state */
-	if (!mmc_host_is_spi(mq->card->host) &&
-	    (err || !mmc_ready_for_data(status)))
+	अगर (!mmc_host_is_spi(mq->card->host) &&
+	    (err || !mmc_पढ़ोy_क्रम_data(status)))
 		err = mmc_blk_fix_state(mq->card, req);
 
 	/*
-	 * Special case for SD cards where the card might record the number of
+	 * Special हाल क्रम SD cards where the card might record the number of
 	 * blocks written.
 	 */
-	if (!err && mmc_blk_cmd_started(brq) && mmc_card_sd(card) &&
-	    rq_data_dir(req) == WRITE) {
-		if (mmc_sd_num_wr_blocks(card, &blocks))
+	अगर (!err && mmc_blk_cmd_started(brq) && mmc_card_sd(card) &&
+	    rq_data_dir(req) == WRITE) अणु
+		अगर (mmc_sd_num_wr_blocks(card, &blocks))
 			brq->data.bytes_xfered = 0;
-		else
+		अन्यथा
 			brq->data.bytes_xfered = blocks << 9;
-	}
+	पूर्ण
 
-	/* Reset if the card is in a bad state */
-	if (!mmc_host_is_spi(mq->card->host) &&
-	    err && mmc_blk_reset(md, card->host, type)) {
+	/* Reset अगर the card is in a bad state */
+	अगर (!mmc_host_is_spi(mq->card->host) &&
+	    err && mmc_blk_reset(md, card->host, type)) अणु
 		pr_err("%s: recovery failed!\n", req->rq_disk->disk_name);
 		mqrq->retries = MMC_NO_RETRIES;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If anything was done, just return and if there is anything remaining
+	 * If anything was करोne, just वापस and अगर there is anything reमुख्यing
 	 * on the request it will get requeued.
 	 */
-	if (brq->data.bytes_xfered)
-		return;
+	अगर (brq->data.bytes_xfered)
+		वापस;
 
-	/* Reset before last retry */
-	if (mqrq->retries + 1 == MMC_MAX_RETRIES)
+	/* Reset beक्रमe last retry */
+	अगर (mqrq->retries + 1 == MMC_MAX_RETRIES)
 		mmc_blk_reset(md, card->host, type);
 
 	/* Command errors fail fast, so use all MMC_MAX_RETRIES */
-	if (brq->sbc.error || brq->cmd.error)
-		return;
+	अगर (brq->sbc.error || brq->cmd.error)
+		वापस;
 
-	/* Reduce the remaining retries for data errors */
-	if (mqrq->retries < MMC_MAX_RETRIES - MMC_DATA_RETRIES) {
+	/* Reduce the reमुख्यing retries क्रम data errors */
+	अगर (mqrq->retries < MMC_MAX_RETRIES - MMC_DATA_RETRIES) अणु
 		mqrq->retries = MMC_MAX_RETRIES - MMC_DATA_RETRIES;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* FIXME: Missing single sector read for large sector size */
-	if (!mmc_large_sector(card) && rq_data_dir(req) == READ &&
-	    brq->data.blocks > 1) {
-		/* Read one sector at a time */
-		mmc_blk_read_single(mq, req);
-		return;
-	}
-}
+	/* FIXME: Missing single sector पढ़ो क्रम large sector size */
+	अगर (!mmc_large_sector(card) && rq_data_dir(req) == READ &&
+	    brq->data.blocks > 1) अणु
+		/* Read one sector at a समय */
+		mmc_blk_पढ़ो_single(mq, req);
+		वापस;
+	पूर्ण
+पूर्ण
 
-static inline bool mmc_blk_rq_error(struct mmc_blk_request *brq)
-{
+अटल अंतरभूत bool mmc_blk_rq_error(काष्ठा mmc_blk_request *brq)
+अणु
 	mmc_blk_eval_resp_error(brq);
 
-	return brq->sbc.error || brq->cmd.error || brq->stop.error ||
+	वापस brq->sbc.error || brq->cmd.error || brq->stop.error ||
 	       brq->data.error || brq->cmd.resp[0] & CMD_ERRORS;
-}
+पूर्ण
 
-static int mmc_blk_card_busy(struct mmc_card *card, struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+अटल पूर्णांक mmc_blk_card_busy(काष्ठा mmc_card *card, काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
 	u32 status = 0;
-	int err;
+	पूर्णांक err;
 
-	if (mmc_host_is_spi(card->host) || rq_data_dir(req) == READ)
-		return 0;
+	अगर (mmc_host_is_spi(card->host) || rq_data_dir(req) == READ)
+		वापस 0;
 
 	err = card_busy_detect(card, MMC_BLK_TIMEOUT_MS, &status);
 
 	/*
-	 * Do not assume data transferred correctly if there are any error bits
+	 * Do not assume data transferred correctly अगर there are any error bits
 	 * set.
 	 */
-	if (status & mmc_blk_stop_err_bits(&mqrq->brq)) {
+	अगर (status & mmc_blk_stop_err_bits(&mqrq->brq)) अणु
 		mqrq->brq.data.bytes_xfered = 0;
 		err = err ? err : -EIO;
-	}
+	पूर्ण
 
 	/* Copy the exception bit so it will be seen later on */
-	if (mmc_card_mmc(card) && status & R1_EXCEPTION_EVENT)
+	अगर (mmc_card_mmc(card) && status & R1_EXCEPTION_EVENT)
 		mqrq->brq.cmd.resp[0] |= R1_EXCEPTION_EVENT;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline void mmc_blk_rw_reset_success(struct mmc_queue *mq,
-					    struct request *req)
-{
-	int type = rq_data_dir(req) == READ ? MMC_BLK_READ : MMC_BLK_WRITE;
+अटल अंतरभूत व्योम mmc_blk_rw_reset_success(काष्ठा mmc_queue *mq,
+					    काष्ठा request *req)
+अणु
+	पूर्णांक type = rq_data_dir(req) == READ ? MMC_BLK_READ : MMC_BLK_WRITE;
 
 	mmc_blk_reset_success(mq->blkdata, type);
-}
+पूर्ण
 
-static void mmc_blk_mq_complete_rq(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	unsigned int nr_bytes = mqrq->brq.data.bytes_xfered;
+अटल व्योम mmc_blk_mq_complete_rq(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	अचिन्हित पूर्णांक nr_bytes = mqrq->brq.data.bytes_xfered;
 
-	if (nr_bytes) {
-		if (blk_update_request(req, BLK_STS_OK, nr_bytes))
+	अगर (nr_bytes) अणु
+		अगर (blk_update_request(req, BLK_STS_OK, nr_bytes))
 			blk_mq_requeue_request(req, true);
-		else
+		अन्यथा
 			__blk_mq_end_request(req, BLK_STS_OK);
-	} else if (!blk_rq_bytes(req)) {
+	पूर्ण अन्यथा अगर (!blk_rq_bytes(req)) अणु
 		__blk_mq_end_request(req, BLK_STS_IOERR);
-	} else if (mqrq->retries++ < MMC_MAX_RETRIES) {
+	पूर्ण अन्यथा अगर (mqrq->retries++ < MMC_MAX_RETRIES) अणु
 		blk_mq_requeue_request(req, true);
-	} else {
-		if (mmc_card_removed(mq->card))
+	पूर्ण अन्यथा अणु
+		अगर (mmc_card_हटाओd(mq->card))
 			req->rq_flags |= RQF_QUIET;
 		blk_mq_end_request(req, BLK_STS_IOERR);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool mmc_blk_urgent_bkops_needed(struct mmc_queue *mq,
-					struct mmc_queue_req *mqrq)
-{
-	return mmc_card_mmc(mq->card) && !mmc_host_is_spi(mq->card->host) &&
+अटल bool mmc_blk_urgent_bkops_needed(काष्ठा mmc_queue *mq,
+					काष्ठा mmc_queue_req *mqrq)
+अणु
+	वापस mmc_card_mmc(mq->card) && !mmc_host_is_spi(mq->card->host) &&
 	       (mqrq->brq.cmd.resp[0] & R1_EXCEPTION_EVENT ||
 		mqrq->brq.stop.resp[0] & R1_EXCEPTION_EVENT);
-}
+पूर्ण
 
-static void mmc_blk_urgent_bkops(struct mmc_queue *mq,
-				 struct mmc_queue_req *mqrq)
-{
-	if (mmc_blk_urgent_bkops_needed(mq, mqrq))
+अटल व्योम mmc_blk_urgent_bkops(काष्ठा mmc_queue *mq,
+				 काष्ठा mmc_queue_req *mqrq)
+अणु
+	अगर (mmc_blk_urgent_bkops_needed(mq, mqrq))
 		mmc_run_bkops(mq->card);
-}
+पूर्ण
 
-static void mmc_blk_hsq_req_done(struct mmc_request *mrq)
-{
-	struct mmc_queue_req *mqrq =
-		container_of(mrq, struct mmc_queue_req, brq.mrq);
-	struct request *req = mmc_queue_req_to_req(mqrq);
-	struct request_queue *q = req->q;
-	struct mmc_queue *mq = q->queuedata;
-	struct mmc_host *host = mq->card->host;
-	unsigned long flags;
+अटल व्योम mmc_blk_hsq_req_करोne(काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा mmc_queue_req *mqrq =
+		container_of(mrq, काष्ठा mmc_queue_req, brq.mrq);
+	काष्ठा request *req = mmc_queue_req_to_req(mqrq);
+	काष्ठा request_queue *q = req->q;
+	काष्ठा mmc_queue *mq = q->queuedata;
+	काष्ठा mmc_host *host = mq->card->host;
+	अचिन्हित दीर्घ flags;
 
-	if (mmc_blk_rq_error(&mqrq->brq) ||
-	    mmc_blk_urgent_bkops_needed(mq, mqrq)) {
+	अगर (mmc_blk_rq_error(&mqrq->brq) ||
+	    mmc_blk_urgent_bkops_needed(mq, mqrq)) अणु
 		spin_lock_irqsave(&mq->lock, flags);
 		mq->recovery_needed = true;
 		mq->recovery_req = req;
@@ -1927,52 +1928,52 @@ static void mmc_blk_hsq_req_done(struct mmc_request *mrq)
 		host->cqe_ops->cqe_recovery_start(host);
 
 		schedule_work(&mq->recovery_work);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mmc_blk_rw_reset_success(mq, req);
 
 	/*
-	 * Block layer timeouts race with completions which means the normal
+	 * Block layer समयouts race with completions which means the normal
 	 * completion path cannot be used during recovery.
 	 */
-	if (mq->in_recovery)
+	अगर (mq->in_recovery)
 		mmc_blk_cqe_complete_rq(mq, req);
-	else if (likely(!blk_should_fake_timeout(req->q)))
+	अन्यथा अगर (likely(!blk_should_fake_समयout(req->q)))
 		blk_mq_complete_request(req);
-}
+पूर्ण
 
-void mmc_blk_mq_complete(struct request *req)
-{
-	struct mmc_queue *mq = req->q->queuedata;
-	struct mmc_host *host = mq->card->host;
+व्योम mmc_blk_mq_complete(काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue *mq = req->q->queuedata;
+	काष्ठा mmc_host *host = mq->card->host;
 
-	if (host->cqe_enabled)
+	अगर (host->cqe_enabled)
 		mmc_blk_cqe_complete_rq(mq, req);
-	else if (likely(!blk_should_fake_timeout(req->q)))
+	अन्यथा अगर (likely(!blk_should_fake_समयout(req->q)))
 		mmc_blk_mq_complete_rq(mq, req);
-}
+पूर्ण
 
-static void mmc_blk_mq_poll_completion(struct mmc_queue *mq,
-				       struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_host *host = mq->card->host;
+अटल व्योम mmc_blk_mq_poll_completion(काष्ठा mmc_queue *mq,
+				       काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_host *host = mq->card->host;
 
-	if (mmc_blk_rq_error(&mqrq->brq) ||
-	    mmc_blk_card_busy(mq->card, req)) {
+	अगर (mmc_blk_rq_error(&mqrq->brq) ||
+	    mmc_blk_card_busy(mq->card, req)) अणु
 		mmc_blk_mq_rw_recovery(mq, req);
-	} else {
+	पूर्ण अन्यथा अणु
 		mmc_blk_rw_reset_success(mq, req);
 		mmc_retune_release(host);
-	}
+	पूर्ण
 
 	mmc_blk_urgent_bkops(mq, mqrq);
-}
+पूर्ण
 
-static void mmc_blk_mq_dec_in_flight(struct mmc_queue *mq, struct request *req)
-{
-	unsigned long flags;
+अटल व्योम mmc_blk_mq_dec_in_flight(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool put_card;
 
 	spin_lock_irqsave(&mq->lock, flags);
@@ -1983,305 +1984,305 @@ static void mmc_blk_mq_dec_in_flight(struct mmc_queue *mq, struct request *req)
 
 	spin_unlock_irqrestore(&mq->lock, flags);
 
-	if (put_card)
+	अगर (put_card)
 		mmc_put_card(mq->card, &mq->ctx);
-}
+पूर्ण
 
-static void mmc_blk_mq_post_req(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_request *mrq = &mqrq->brq.mrq;
-	struct mmc_host *host = mq->card->host;
+अटल व्योम mmc_blk_mq_post_req(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_request *mrq = &mqrq->brq.mrq;
+	काष्ठा mmc_host *host = mq->card->host;
 
 	mmc_post_req(host, mrq, 0);
 
 	/*
-	 * Block layer timeouts race with completions which means the normal
+	 * Block layer समयouts race with completions which means the normal
 	 * completion path cannot be used during recovery.
 	 */
-	if (mq->in_recovery)
+	अगर (mq->in_recovery)
 		mmc_blk_mq_complete_rq(mq, req);
-	else if (likely(!blk_should_fake_timeout(req->q)))
+	अन्यथा अगर (likely(!blk_should_fake_समयout(req->q)))
 		blk_mq_complete_request(req);
 
 	mmc_blk_mq_dec_in_flight(mq, req);
-}
+पूर्ण
 
-void mmc_blk_mq_recovery(struct mmc_queue *mq)
-{
-	struct request *req = mq->recovery_req;
-	struct mmc_host *host = mq->card->host;
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+व्योम mmc_blk_mq_recovery(काष्ठा mmc_queue *mq)
+अणु
+	काष्ठा request *req = mq->recovery_req;
+	काष्ठा mmc_host *host = mq->card->host;
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
 
-	mq->recovery_req = NULL;
-	mq->rw_wait = false;
+	mq->recovery_req = शून्य;
+	mq->rw_रुको = false;
 
-	if (mmc_blk_rq_error(&mqrq->brq)) {
+	अगर (mmc_blk_rq_error(&mqrq->brq)) अणु
 		mmc_retune_hold_now(host);
 		mmc_blk_mq_rw_recovery(mq, req);
-	}
+	पूर्ण
 
 	mmc_blk_urgent_bkops(mq, mqrq);
 
 	mmc_blk_mq_post_req(mq, req);
-}
+पूर्ण
 
-static void mmc_blk_mq_complete_prev_req(struct mmc_queue *mq,
-					 struct request **prev_req)
-{
-	if (mmc_host_done_complete(mq->card->host))
-		return;
+अटल व्योम mmc_blk_mq_complete_prev_req(काष्ठा mmc_queue *mq,
+					 काष्ठा request **prev_req)
+अणु
+	अगर (mmc_host_करोne_complete(mq->card->host))
+		वापस;
 
 	mutex_lock(&mq->complete_lock);
 
-	if (!mq->complete_req)
-		goto out_unlock;
+	अगर (!mq->complete_req)
+		जाओ out_unlock;
 
 	mmc_blk_mq_poll_completion(mq, mq->complete_req);
 
-	if (prev_req)
+	अगर (prev_req)
 		*prev_req = mq->complete_req;
-	else
+	अन्यथा
 		mmc_blk_mq_post_req(mq, mq->complete_req);
 
-	mq->complete_req = NULL;
+	mq->complete_req = शून्य;
 
 out_unlock:
 	mutex_unlock(&mq->complete_lock);
-}
+पूर्ण
 
-void mmc_blk_mq_complete_work(struct work_struct *work)
-{
-	struct mmc_queue *mq = container_of(work, struct mmc_queue,
+व्योम mmc_blk_mq_complete_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mmc_queue *mq = container_of(work, काष्ठा mmc_queue,
 					    complete_work);
 
-	mmc_blk_mq_complete_prev_req(mq, NULL);
-}
+	mmc_blk_mq_complete_prev_req(mq, शून्य);
+पूर्ण
 
-static void mmc_blk_mq_req_done(struct mmc_request *mrq)
-{
-	struct mmc_queue_req *mqrq = container_of(mrq, struct mmc_queue_req,
+अटल व्योम mmc_blk_mq_req_करोne(काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा mmc_queue_req *mqrq = container_of(mrq, काष्ठा mmc_queue_req,
 						  brq.mrq);
-	struct request *req = mmc_queue_req_to_req(mqrq);
-	struct request_queue *q = req->q;
-	struct mmc_queue *mq = q->queuedata;
-	struct mmc_host *host = mq->card->host;
-	unsigned long flags;
+	काष्ठा request *req = mmc_queue_req_to_req(mqrq);
+	काष्ठा request_queue *q = req->q;
+	काष्ठा mmc_queue *mq = q->queuedata;
+	काष्ठा mmc_host *host = mq->card->host;
+	अचिन्हित दीर्घ flags;
 
-	if (!mmc_host_done_complete(host)) {
-		bool waiting;
+	अगर (!mmc_host_करोne_complete(host)) अणु
+		bool रुकोing;
 
 		/*
 		 * We cannot complete the request in this context, so record
 		 * that there is a request to complete, and that a following
-		 * request does not need to wait (although it does need to
+		 * request करोes not need to रुको (although it करोes need to
 		 * complete complete_req first).
 		 */
 		spin_lock_irqsave(&mq->lock, flags);
 		mq->complete_req = req;
-		mq->rw_wait = false;
-		waiting = mq->waiting;
+		mq->rw_रुको = false;
+		रुकोing = mq->रुकोing;
 		spin_unlock_irqrestore(&mq->lock, flags);
 
 		/*
-		 * If 'waiting' then the waiting task will complete this
-		 * request, otherwise queue a work to do it. Note that
+		 * If 'waiting' then the रुकोing task will complete this
+		 * request, otherwise queue a work to करो it. Note that
 		 * complete_work may still race with the dispatch of a following
 		 * request.
 		 */
-		if (waiting)
-			wake_up(&mq->wait);
-		else
+		अगर (रुकोing)
+			wake_up(&mq->रुको);
+		अन्यथा
 			queue_work(mq->card->complete_wq, &mq->complete_work);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Take the recovery path for errors or urgent background operations */
-	if (mmc_blk_rq_error(&mqrq->brq) ||
-	    mmc_blk_urgent_bkops_needed(mq, mqrq)) {
+	/* Take the recovery path क्रम errors or urgent background operations */
+	अगर (mmc_blk_rq_error(&mqrq->brq) ||
+	    mmc_blk_urgent_bkops_needed(mq, mqrq)) अणु
 		spin_lock_irqsave(&mq->lock, flags);
 		mq->recovery_needed = true;
 		mq->recovery_req = req;
 		spin_unlock_irqrestore(&mq->lock, flags);
-		wake_up(&mq->wait);
+		wake_up(&mq->रुको);
 		schedule_work(&mq->recovery_work);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mmc_blk_rw_reset_success(mq, req);
 
-	mq->rw_wait = false;
-	wake_up(&mq->wait);
+	mq->rw_रुको = false;
+	wake_up(&mq->रुको);
 
 	mmc_blk_mq_post_req(mq, req);
-}
+पूर्ण
 
-static bool mmc_blk_rw_wait_cond(struct mmc_queue *mq, int *err)
-{
-	unsigned long flags;
-	bool done;
+अटल bool mmc_blk_rw_रुको_cond(काष्ठा mmc_queue *mq, पूर्णांक *err)
+अणु
+	अचिन्हित दीर्घ flags;
+	bool करोne;
 
 	/*
-	 * Wait while there is another request in progress, but not if recovery
-	 * is needed. Also indicate whether there is a request waiting to start.
+	 * Wait जबतक there is another request in progress, but not अगर recovery
+	 * is needed. Also indicate whether there is a request रुकोing to start.
 	 */
 	spin_lock_irqsave(&mq->lock, flags);
-	if (mq->recovery_needed) {
+	अगर (mq->recovery_needed) अणु
 		*err = -EBUSY;
-		done = true;
-	} else {
-		done = !mq->rw_wait;
-	}
-	mq->waiting = !done;
+		करोne = true;
+	पूर्ण अन्यथा अणु
+		करोne = !mq->rw_रुको;
+	पूर्ण
+	mq->रुकोing = !करोne;
 	spin_unlock_irqrestore(&mq->lock, flags);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-static int mmc_blk_rw_wait(struct mmc_queue *mq, struct request **prev_req)
-{
-	int err = 0;
+अटल पूर्णांक mmc_blk_rw_रुको(काष्ठा mmc_queue *mq, काष्ठा request **prev_req)
+अणु
+	पूर्णांक err = 0;
 
-	wait_event(mq->wait, mmc_blk_rw_wait_cond(mq, &err));
+	रुको_event(mq->रुको, mmc_blk_rw_रुको_cond(mq, &err));
 
-	/* Always complete the previous request if there is one */
+	/* Always complete the previous request अगर there is one */
 	mmc_blk_mq_complete_prev_req(mq, prev_req);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_blk_mq_issue_rw_rq(struct mmc_queue *mq,
-				  struct request *req)
-{
-	struct mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
-	struct mmc_host *host = mq->card->host;
-	struct request *prev_req = NULL;
-	int err = 0;
+अटल पूर्णांक mmc_blk_mq_issue_rw_rq(काष्ठा mmc_queue *mq,
+				  काष्ठा request *req)
+अणु
+	काष्ठा mmc_queue_req *mqrq = req_to_mmc_queue_req(req);
+	काष्ठा mmc_host *host = mq->card->host;
+	काष्ठा request *prev_req = शून्य;
+	पूर्णांक err = 0;
 
 	mmc_blk_rw_rq_prep(mqrq, mq->card, 0, mq);
 
-	mqrq->brq.mrq.done = mmc_blk_mq_req_done;
+	mqrq->brq.mrq.करोne = mmc_blk_mq_req_करोne;
 
 	mmc_pre_req(host, &mqrq->brq.mrq);
 
-	err = mmc_blk_rw_wait(mq, &prev_req);
-	if (err)
-		goto out_post_req;
+	err = mmc_blk_rw_रुको(mq, &prev_req);
+	अगर (err)
+		जाओ out_post_req;
 
-	mq->rw_wait = true;
+	mq->rw_रुको = true;
 
 	err = mmc_start_request(host, &mqrq->brq.mrq);
 
-	if (prev_req)
+	अगर (prev_req)
 		mmc_blk_mq_post_req(mq, prev_req);
 
-	if (err)
-		mq->rw_wait = false;
+	अगर (err)
+		mq->rw_रुको = false;
 
 	/* Release re-tuning here where there is no synchronization required */
-	if (err || mmc_host_done_complete(host))
+	अगर (err || mmc_host_करोne_complete(host))
 		mmc_retune_release(host);
 
 out_post_req:
-	if (err)
+	अगर (err)
 		mmc_post_req(host, &mqrq->brq.mrq, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_blk_wait_for_idle(struct mmc_queue *mq, struct mmc_host *host)
-{
-	if (host->cqe_enabled)
-		return host->cqe_ops->cqe_wait_for_idle(host);
+अटल पूर्णांक mmc_blk_रुको_क्रम_idle(काष्ठा mmc_queue *mq, काष्ठा mmc_host *host)
+अणु
+	अगर (host->cqe_enabled)
+		वापस host->cqe_ops->cqe_रुको_क्रम_idle(host);
 
-	return mmc_blk_rw_wait(mq, NULL);
-}
+	वापस mmc_blk_rw_रुको(mq, शून्य);
+पूर्ण
 
-enum mmc_issued mmc_blk_mq_issue_rq(struct mmc_queue *mq, struct request *req)
-{
-	struct mmc_blk_data *md = mq->blkdata;
-	struct mmc_card *card = md->queue.card;
-	struct mmc_host *host = card->host;
-	int ret;
+क्रमागत mmc_issued mmc_blk_mq_issue_rq(काष्ठा mmc_queue *mq, काष्ठा request *req)
+अणु
+	काष्ठा mmc_blk_data *md = mq->blkdata;
+	काष्ठा mmc_card *card = md->queue.card;
+	काष्ठा mmc_host *host = card->host;
+	पूर्णांक ret;
 
-	ret = mmc_blk_part_switch(card, md->part_type);
-	if (ret)
-		return MMC_REQ_FAILED_TO_START;
+	ret = mmc_blk_part_चयन(card, md->part_type);
+	अगर (ret)
+		वापस MMC_REQ_FAILED_TO_START;
 
-	switch (mmc_issue_type(mq, req)) {
-	case MMC_ISSUE_SYNC:
-		ret = mmc_blk_wait_for_idle(mq, host);
-		if (ret)
-			return MMC_REQ_BUSY;
-		switch (req_op(req)) {
-		case REQ_OP_DRV_IN:
-		case REQ_OP_DRV_OUT:
+	चयन (mmc_issue_type(mq, req)) अणु
+	हाल MMC_ISSUE_SYNC:
+		ret = mmc_blk_रुको_क्रम_idle(mq, host);
+		अगर (ret)
+			वापस MMC_REQ_BUSY;
+		चयन (req_op(req)) अणु
+		हाल REQ_OP_DRV_IN:
+		हाल REQ_OP_DRV_OUT:
 			mmc_blk_issue_drv_op(mq, req);
-			break;
-		case REQ_OP_DISCARD:
+			अवरोध;
+		हाल REQ_OP_DISCARD:
 			mmc_blk_issue_discard_rq(mq, req);
-			break;
-		case REQ_OP_SECURE_ERASE:
+			अवरोध;
+		हाल REQ_OP_SECURE_ERASE:
 			mmc_blk_issue_secdiscard_rq(mq, req);
-			break;
-		case REQ_OP_FLUSH:
+			अवरोध;
+		हाल REQ_OP_FLUSH:
 			mmc_blk_issue_flush(mq, req);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WARN_ON_ONCE(1);
-			return MMC_REQ_FAILED_TO_START;
-		}
-		return MMC_REQ_FINISHED;
-	case MMC_ISSUE_DCMD:
-	case MMC_ISSUE_ASYNC:
-		switch (req_op(req)) {
-		case REQ_OP_FLUSH:
-			if (!mmc_cache_enabled(host)) {
+			वापस MMC_REQ_FAILED_TO_START;
+		पूर्ण
+		वापस MMC_REQ_FINISHED;
+	हाल MMC_ISSUE_DCMD:
+	हाल MMC_ISSUE_ASYNC:
+		चयन (req_op(req)) अणु
+		हाल REQ_OP_FLUSH:
+			अगर (!mmc_cache_enabled(host)) अणु
 				blk_mq_end_request(req, BLK_STS_OK);
-				return MMC_REQ_FINISHED;
-			}
+				वापस MMC_REQ_FINISHED;
+			पूर्ण
 			ret = mmc_blk_cqe_issue_flush(mq, req);
-			break;
-		case REQ_OP_READ:
-		case REQ_OP_WRITE:
-			if (host->cqe_enabled)
+			अवरोध;
+		हाल REQ_OP_READ:
+		हाल REQ_OP_WRITE:
+			अगर (host->cqe_enabled)
 				ret = mmc_blk_cqe_issue_rw_rq(mq, req);
-			else
+			अन्यथा
 				ret = mmc_blk_mq_issue_rw_rq(mq, req);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WARN_ON_ONCE(1);
 			ret = -EINVAL;
-		}
-		if (!ret)
-			return MMC_REQ_STARTED;
-		return ret == -EBUSY ? MMC_REQ_BUSY : MMC_REQ_FAILED_TO_START;
-	default:
+		पूर्ण
+		अगर (!ret)
+			वापस MMC_REQ_STARTED;
+		वापस ret == -EBUSY ? MMC_REQ_BUSY : MMC_REQ_FAILED_TO_START;
+	शेष:
 		WARN_ON_ONCE(1);
-		return MMC_REQ_FAILED_TO_START;
-	}
-}
+		वापस MMC_REQ_FAILED_TO_START;
+	पूर्ण
+पूर्ण
 
-static inline int mmc_blk_readonly(struct mmc_card *card)
-{
-	return mmc_card_readonly(card) ||
+अटल अंतरभूत पूर्णांक mmc_blk_पढ़ोonly(काष्ठा mmc_card *card)
+अणु
+	वापस mmc_card_पढ़ोonly(card) ||
 	       !(card->csd.cmdclass & CCC_BLOCK_WRITE);
-}
+पूर्ण
 
-static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
-					      struct device *parent,
+अटल काष्ठा mmc_blk_data *mmc_blk_alloc_req(काष्ठा mmc_card *card,
+					      काष्ठा device *parent,
 					      sector_t size,
-					      bool default_ro,
-					      const char *subname,
-					      int area_type)
-{
-	struct mmc_blk_data *md;
-	int devidx, ret;
-	char cap_str[10];
+					      bool शेष_ro,
+					      स्थिर अक्षर *subname,
+					      पूर्णांक area_type)
+अणु
+	काष्ठा mmc_blk_data *md;
+	पूर्णांक devidx, ret;
+	अक्षर cap_str[10];
 
 	devidx = ida_simple_get(&mmc_blk_ida, 0, max_devices, GFP_KERNEL);
-	if (devidx < 0) {
+	अगर (devidx < 0) अणु
 		/*
 		 * We get -ENOSPC because there are no more any available
 		 * devidx. The reason may be that, either userspace haven't yet
@@ -2289,267 +2290,267 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 		 * from being called, or the device has more partitions than
 		 * what we support.
 		 */
-		if (devidx == -ENOSPC)
+		अगर (devidx == -ENOSPC)
 			dev_err(mmc_dev(card->host),
 				"no more device IDs available\n");
 
-		return ERR_PTR(devidx);
-	}
+		वापस ERR_PTR(devidx);
+	पूर्ण
 
-	md = kzalloc(sizeof(struct mmc_blk_data), GFP_KERNEL);
-	if (!md) {
+	md = kzalloc(माप(काष्ठा mmc_blk_data), GFP_KERNEL);
+	अगर (!md) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	md->area_type = area_type;
 
 	/*
-	 * Set the read-only status based on the supported commands
-	 * and the write protect switch.
+	 * Set the पढ़ो-only status based on the supported commands
+	 * and the ग_लिखो protect चयन.
 	 */
-	md->read_only = mmc_blk_readonly(card);
+	md->पढ़ो_only = mmc_blk_पढ़ोonly(card);
 
 	md->disk = alloc_disk(perdev_minors);
-	if (md->disk == NULL) {
+	अगर (md->disk == शून्य) अणु
 		ret = -ENOMEM;
-		goto err_kfree;
-	}
+		जाओ err_kमुक्त;
+	पूर्ण
 
 	INIT_LIST_HEAD(&md->part);
 	INIT_LIST_HEAD(&md->rpmbs);
 	md->usage = 1;
 
 	ret = mmc_init_queue(&md->queue, card);
-	if (ret)
-		goto err_putdisk;
+	अगर (ret)
+		जाओ err_putdisk;
 
 	md->queue.blkdata = md;
 
 	/*
-	 * Keep an extra reference to the queue so that we can shutdown the
-	 * queue (i.e. call blk_cleanup_queue()) while there are still
+	 * Keep an extra reference to the queue so that we can shutकरोwn the
+	 * queue (i.e. call blk_cleanup_queue()) जबतक there are still
 	 * references to the 'md'. The corresponding blk_put_queue() is in
 	 * mmc_blk_put().
 	 */
-	if (!blk_get_queue(md->queue.queue)) {
+	अगर (!blk_get_queue(md->queue.queue)) अणु
 		mmc_cleanup_queue(&md->queue);
 		ret = -ENODEV;
-		goto err_putdisk;
-	}
+		जाओ err_putdisk;
+	पूर्ण
 
 	md->disk->major	= MMC_BLOCK_MAJOR;
 	md->disk->first_minor = devidx * perdev_minors;
-	md->disk->fops = &mmc_bdops;
-	md->disk->private_data = md;
+	md->disk->fops = &mmc_bकरोps;
+	md->disk->निजी_data = md;
 	md->disk->queue = md->queue.queue;
 	md->parent = parent;
-	set_disk_ro(md->disk, md->read_only || default_ro);
+	set_disk_ro(md->disk, md->पढ़ो_only || शेष_ro);
 	md->disk->flags = GENHD_FL_EXT_DEVT;
-	if (area_type & (MMC_BLK_DATA_AREA_RPMB | MMC_BLK_DATA_AREA_BOOT))
+	अगर (area_type & (MMC_BLK_DATA_AREA_RPMB | MMC_BLK_DATA_AREA_BOOT))
 		md->disk->flags |= GENHD_FL_NO_PART_SCAN
 				   | GENHD_FL_SUPPRESS_PARTITION_INFO;
 
 	/*
 	 * As discussed on lkml, GENHD_FL_REMOVABLE should:
 	 *
-	 * - be set for removable media with permanent block devices
-	 * - be unset for removable block devices with permanent media
+	 * - be set क्रम removable media with permanent block devices
+	 * - be unset क्रम removable block devices with permanent media
 	 *
 	 * Since MMC block devices clearly fall under the second
-	 * case, we do not set GENHD_FL_REMOVABLE.  Userspace
-	 * should use the block device creation/destruction hotplug
+	 * हाल, we करो not set GENHD_FL_REMOVABLE.  Userspace
+	 * should use the block device creation/deकाष्ठाion hotplug
 	 * messages to tell when the card is present.
 	 */
 
-	snprintf(md->disk->disk_name, sizeof(md->disk->disk_name),
+	snम_लिखो(md->disk->disk_name, माप(md->disk->disk_name),
 		 "mmcblk%u%s", card->host->index, subname ? subname : "");
 
 	set_capacity(md->disk, size);
 
-	if (mmc_host_cmd23(card->host)) {
-		if ((mmc_card_mmc(card) &&
+	अगर (mmc_host_cmd23(card->host)) अणु
+		अगर ((mmc_card_mmc(card) &&
 		     card->csd.mmca_vsn >= CSD_SPEC_VER_3) ||
 		    (mmc_card_sd(card) &&
 		     card->scr.cmds & SD_SCR_CMD23_SUPPORT))
 			md->flags |= MMC_BLK_CMD23;
-	}
+	पूर्ण
 
-	if (mmc_card_mmc(card) &&
+	अगर (mmc_card_mmc(card) &&
 	    md->flags & MMC_BLK_CMD23 &&
 	    ((card->ext_csd.rel_param & EXT_CSD_WR_REL_PARAM_EN) ||
-	     card->ext_csd.rel_sectors)) {
+	     card->ext_csd.rel_sectors)) अणु
 		md->flags |= MMC_BLK_REL_WR;
-		blk_queue_write_cache(md->queue.queue, true, true);
-	}
+		blk_queue_ग_लिखो_cache(md->queue.queue, true, true);
+	पूर्ण
 
 	string_get_size((u64)size, 512, STRING_UNITS_2,
-			cap_str, sizeof(cap_str));
+			cap_str, माप(cap_str));
 	pr_info("%s: %s %s %s %s\n",
 		md->disk->disk_name, mmc_card_id(card), mmc_card_name(card),
-		cap_str, md->read_only ? "(ro)" : "");
+		cap_str, md->पढ़ो_only ? "(ro)" : "");
 
-	return md;
+	वापस md;
 
  err_putdisk:
 	put_disk(md->disk);
- err_kfree:
-	kfree(md);
+ err_kमुक्त:
+	kमुक्त(md);
  out:
-	ida_simple_remove(&mmc_blk_ida, devidx);
-	return ERR_PTR(ret);
-}
+	ida_simple_हटाओ(&mmc_blk_ida, devidx);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static struct mmc_blk_data *mmc_blk_alloc(struct mmc_card *card)
-{
+अटल काष्ठा mmc_blk_data *mmc_blk_alloc(काष्ठा mmc_card *card)
+अणु
 	sector_t size;
 
-	if (!mmc_card_sd(card) && mmc_card_blockaddr(card)) {
+	अगर (!mmc_card_sd(card) && mmc_card_blockaddr(card)) अणु
 		/*
 		 * The EXT_CSD sector count is in number or 512 byte
 		 * sectors.
 		 */
 		size = card->ext_csd.sectors;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * The CSD capacity field is in units of read_blkbits.
+		 * The CSD capacity field is in units of पढ़ो_blkbits.
 		 * set_capacity takes units of 512 bytes.
 		 */
 		size = (typeof(sector_t))card->csd.capacity
-			<< (card->csd.read_blkbits - 9);
-	}
+			<< (card->csd.पढ़ो_blkbits - 9);
+	पूर्ण
 
-	return mmc_blk_alloc_req(card, &card->dev, size, false, NULL,
+	वापस mmc_blk_alloc_req(card, &card->dev, size, false, शून्य,
 					MMC_BLK_DATA_AREA_MAIN);
-}
+पूर्ण
 
-static int mmc_blk_alloc_part(struct mmc_card *card,
-			      struct mmc_blk_data *md,
-			      unsigned int part_type,
+अटल पूर्णांक mmc_blk_alloc_part(काष्ठा mmc_card *card,
+			      काष्ठा mmc_blk_data *md,
+			      अचिन्हित पूर्णांक part_type,
 			      sector_t size,
-			      bool default_ro,
-			      const char *subname,
-			      int area_type)
-{
-	struct mmc_blk_data *part_md;
+			      bool शेष_ro,
+			      स्थिर अक्षर *subname,
+			      पूर्णांक area_type)
+अणु
+	काष्ठा mmc_blk_data *part_md;
 
-	part_md = mmc_blk_alloc_req(card, disk_to_dev(md->disk), size, default_ro,
+	part_md = mmc_blk_alloc_req(card, disk_to_dev(md->disk), size, शेष_ro,
 				    subname, area_type);
-	if (IS_ERR(part_md))
-		return PTR_ERR(part_md);
+	अगर (IS_ERR(part_md))
+		वापस PTR_ERR(part_md);
 	part_md->part_type = part_type;
 	list_add(&part_md->part, &md->part);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mmc_rpmb_ioctl() - ioctl handler for the RPMB chardev
- * @filp: the character device file
+ * mmc_rpmb_ioctl() - ioctl handler क्रम the RPMB अक्षरdev
+ * @filp: the अक्षरacter device file
  * @cmd: the ioctl() command
  * @arg: the argument from userspace
  *
  * This will essentially just redirect the ioctl()s coming in over to
- * the main block device spawning the RPMB character device.
+ * the मुख्य block device spawning the RPMB अक्षरacter device.
  */
-static long mmc_rpmb_ioctl(struct file *filp, unsigned int cmd,
-			   unsigned long arg)
-{
-	struct mmc_rpmb_data *rpmb = filp->private_data;
-	int ret;
+अटल दीर्घ mmc_rpmb_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
+			   अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा mmc_rpmb_data *rpmb = filp->निजी_data;
+	पूर्णांक ret;
 
-	switch (cmd) {
-	case MMC_IOC_CMD:
+	चयन (cmd) अणु
+	हाल MMC_IOC_CMD:
 		ret = mmc_blk_ioctl_cmd(rpmb->md,
-					(struct mmc_ioc_cmd __user *)arg,
+					(काष्ठा mmc_ioc_cmd __user *)arg,
 					rpmb);
-		break;
-	case MMC_IOC_MULTI_CMD:
+		अवरोध;
+	हाल MMC_IOC_MULTI_CMD:
 		ret = mmc_blk_ioctl_multi_cmd(rpmb->md,
-					(struct mmc_ioc_multi_cmd __user *)arg,
+					(काष्ठा mmc_ioc_multi_cmd __user *)arg,
 					rpmb);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long mmc_rpmb_ioctl_compat(struct file *filp, unsigned int cmd,
-			      unsigned long arg)
-{
-	return mmc_rpmb_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
-}
-#endif
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ mmc_rpmb_ioctl_compat(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
+			      अचिन्हित दीर्घ arg)
+अणु
+	वापस mmc_rpmb_ioctl(filp, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
+पूर्ण
+#पूर्ण_अगर
 
-static int mmc_rpmb_chrdev_open(struct inode *inode, struct file *filp)
-{
-	struct mmc_rpmb_data *rpmb = container_of(inode->i_cdev,
-						  struct mmc_rpmb_data, chrdev);
+अटल पूर्णांक mmc_rpmb_chrdev_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा mmc_rpmb_data *rpmb = container_of(inode->i_cdev,
+						  काष्ठा mmc_rpmb_data, chrdev);
 
 	get_device(&rpmb->dev);
-	filp->private_data = rpmb;
+	filp->निजी_data = rpmb;
 	mmc_blk_get(rpmb->md->disk);
 
-	return nonseekable_open(inode, filp);
-}
+	वापस nonseekable_खोलो(inode, filp);
+पूर्ण
 
-static int mmc_rpmb_chrdev_release(struct inode *inode, struct file *filp)
-{
-	struct mmc_rpmb_data *rpmb = container_of(inode->i_cdev,
-						  struct mmc_rpmb_data, chrdev);
+अटल पूर्णांक mmc_rpmb_chrdev_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा mmc_rpmb_data *rpmb = container_of(inode->i_cdev,
+						  काष्ठा mmc_rpmb_data, chrdev);
 
 	mmc_blk_put(rpmb->md);
 	put_device(&rpmb->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations mmc_rpmb_fileops = {
+अटल स्थिर काष्ठा file_operations mmc_rpmb_fileops = अणु
 	.release = mmc_rpmb_chrdev_release,
-	.open = mmc_rpmb_chrdev_open,
+	.खोलो = mmc_rpmb_chrdev_खोलो,
 	.owner = THIS_MODULE,
 	.llseek = no_llseek,
 	.unlocked_ioctl = mmc_rpmb_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl = mmc_rpmb_ioctl_compat,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static void mmc_blk_rpmb_device_release(struct device *dev)
-{
-	struct mmc_rpmb_data *rpmb = dev_get_drvdata(dev);
+अटल व्योम mmc_blk_rpmb_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा mmc_rpmb_data *rpmb = dev_get_drvdata(dev);
 
-	ida_simple_remove(&mmc_rpmb_ida, rpmb->id);
-	kfree(rpmb);
-}
+	ida_simple_हटाओ(&mmc_rpmb_ida, rpmb->id);
+	kमुक्त(rpmb);
+पूर्ण
 
-static int mmc_blk_alloc_rpmb_part(struct mmc_card *card,
-				   struct mmc_blk_data *md,
-				   unsigned int part_index,
+अटल पूर्णांक mmc_blk_alloc_rpmb_part(काष्ठा mmc_card *card,
+				   काष्ठा mmc_blk_data *md,
+				   अचिन्हित पूर्णांक part_index,
 				   sector_t size,
-				   const char *subname)
-{
-	int devidx, ret;
-	char rpmb_name[DISK_NAME_LEN];
-	char cap_str[10];
-	struct mmc_rpmb_data *rpmb;
+				   स्थिर अक्षर *subname)
+अणु
+	पूर्णांक devidx, ret;
+	अक्षर rpmb_name[DISK_NAME_LEN];
+	अक्षर cap_str[10];
+	काष्ठा mmc_rpmb_data *rpmb;
 
-	/* This creates the minor number for the RPMB char device */
+	/* This creates the minor number क्रम the RPMB अक्षर device */
 	devidx = ida_simple_get(&mmc_rpmb_ida, 0, max_devices, GFP_KERNEL);
-	if (devidx < 0)
-		return devidx;
+	अगर (devidx < 0)
+		वापस devidx;
 
-	rpmb = kzalloc(sizeof(*rpmb), GFP_KERNEL);
-	if (!rpmb) {
-		ida_simple_remove(&mmc_rpmb_ida, devidx);
-		return -ENOMEM;
-	}
+	rpmb = kzalloc(माप(*rpmb), GFP_KERNEL);
+	अगर (!rpmb) अणु
+		ida_simple_हटाओ(&mmc_rpmb_ida, devidx);
+		वापस -ENOMEM;
+	पूर्ण
 
-	snprintf(rpmb_name, sizeof(rpmb_name),
+	snम_लिखो(rpmb_name, माप(rpmb_name),
 		 "mmcblk%u%s", card->host->index, subname ? subname : "");
 
 	rpmb->id = devidx;
@@ -2566,33 +2567,33 @@ static int mmc_blk_alloc_rpmb_part(struct mmc_card *card,
 	cdev_init(&rpmb->chrdev, &mmc_rpmb_fileops);
 	rpmb->chrdev.owner = THIS_MODULE;
 	ret = cdev_device_add(&rpmb->chrdev, &rpmb->dev);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s: could not add character device\n", rpmb_name);
-		goto out_put_device;
-	}
+		जाओ out_put_device;
+	पूर्ण
 
 	list_add(&rpmb->node, &md->rpmbs);
 
 	string_get_size((u64)size, 512, STRING_UNITS_2,
-			cap_str, sizeof(cap_str));
+			cap_str, माप(cap_str));
 
 	pr_info("%s: %s %s %s, chardev (%d:%d)\n",
 		rpmb_name, mmc_card_id(card), mmc_card_name(card), cap_str,
 		MAJOR(mmc_rpmb_devt), rpmb->id);
 
-	return 0;
+	वापस 0;
 
 out_put_device:
 	put_device(&rpmb->dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mmc_blk_remove_rpmb_part(struct mmc_rpmb_data *rpmb)
+अटल व्योम mmc_blk_हटाओ_rpmb_part(काष्ठा mmc_rpmb_data *rpmb)
 
-{
+अणु
 	cdev_device_del(&rpmb->chrdev, &rpmb->dev);
 	put_device(&rpmb->dev);
-}
+पूर्ण
 
 /* MMC Physical partitions consist of two boot partitions and
  * up to four general purpose partitions.
@@ -2600,491 +2601,491 @@ static void mmc_blk_remove_rpmb_part(struct mmc_rpmb_data *rpmb)
  * to provide access to the partition.
  */
 
-static int mmc_blk_alloc_parts(struct mmc_card *card, struct mmc_blk_data *md)
-{
-	int idx, ret;
+अटल पूर्णांक mmc_blk_alloc_parts(काष्ठा mmc_card *card, काष्ठा mmc_blk_data *md)
+अणु
+	पूर्णांक idx, ret;
 
-	if (!mmc_card_mmc(card))
-		return 0;
+	अगर (!mmc_card_mmc(card))
+		वापस 0;
 
-	for (idx = 0; idx < card->nr_parts; idx++) {
-		if (card->part[idx].area_type & MMC_BLK_DATA_AREA_RPMB) {
+	क्रम (idx = 0; idx < card->nr_parts; idx++) अणु
+		अगर (card->part[idx].area_type & MMC_BLK_DATA_AREA_RPMB) अणु
 			/*
-			 * RPMB partitions does not provide block access, they
+			 * RPMB partitions करोes not provide block access, they
 			 * are only accessed using ioctl():s. Thus create
-			 * special RPMB block devices that do not have a
-			 * backing block queue for these.
+			 * special RPMB block devices that करो not have a
+			 * backing block queue क्रम these.
 			 */
 			ret = mmc_blk_alloc_rpmb_part(card, md,
 				card->part[idx].part_cfg,
 				card->part[idx].size >> 9,
 				card->part[idx].name);
-			if (ret)
-				return ret;
-		} else if (card->part[idx].size) {
+			अगर (ret)
+				वापस ret;
+		पूर्ण अन्यथा अगर (card->part[idx].size) अणु
 			ret = mmc_blk_alloc_part(card, md,
 				card->part[idx].part_cfg,
 				card->part[idx].size >> 9,
-				card->part[idx].force_ro,
+				card->part[idx].क्रमce_ro,
 				card->part[idx].name,
 				card->part[idx].area_type);
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mmc_blk_remove_req(struct mmc_blk_data *md)
-{
-	struct mmc_card *card;
+अटल व्योम mmc_blk_हटाओ_req(काष्ठा mmc_blk_data *md)
+अणु
+	काष्ठा mmc_card *card;
 
-	if (md) {
+	अगर (md) अणु
 		/*
-		 * Flush remaining requests and free queues. It
-		 * is freeing the queue that stops new requests
+		 * Flush reमुख्यing requests and मुक्त queues. It
+		 * is मुक्तing the queue that stops new requests
 		 * from being accepted.
 		 */
 		card = md->queue.card;
-		if (md->disk->flags & GENHD_FL_UP) {
-			device_remove_file(disk_to_dev(md->disk), &md->force_ro);
-			if ((md->area_type & MMC_BLK_DATA_AREA_BOOT) &&
+		अगर (md->disk->flags & GENHD_FL_UP) अणु
+			device_हटाओ_file(disk_to_dev(md->disk), &md->क्रमce_ro);
+			अगर ((md->area_type & MMC_BLK_DATA_AREA_BOOT) &&
 					card->ext_csd.boot_ro_lockable)
-				device_remove_file(disk_to_dev(md->disk),
-					&md->power_ro_lock);
+				device_हटाओ_file(disk_to_dev(md->disk),
+					&md->घातer_ro_lock);
 
 			del_gendisk(md->disk);
-		}
+		पूर्ण
 		mmc_cleanup_queue(&md->queue);
 		mmc_blk_put(md);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mmc_blk_remove_parts(struct mmc_card *card,
-				 struct mmc_blk_data *md)
-{
-	struct list_head *pos, *q;
-	struct mmc_blk_data *part_md;
-	struct mmc_rpmb_data *rpmb;
+अटल व्योम mmc_blk_हटाओ_parts(काष्ठा mmc_card *card,
+				 काष्ठा mmc_blk_data *md)
+अणु
+	काष्ठा list_head *pos, *q;
+	काष्ठा mmc_blk_data *part_md;
+	काष्ठा mmc_rpmb_data *rpmb;
 
 	/* Remove RPMB partitions */
-	list_for_each_safe(pos, q, &md->rpmbs) {
-		rpmb = list_entry(pos, struct mmc_rpmb_data, node);
+	list_क्रम_each_safe(pos, q, &md->rpmbs) अणु
+		rpmb = list_entry(pos, काष्ठा mmc_rpmb_data, node);
 		list_del(pos);
-		mmc_blk_remove_rpmb_part(rpmb);
-	}
+		mmc_blk_हटाओ_rpmb_part(rpmb);
+	पूर्ण
 	/* Remove block partitions */
-	list_for_each_safe(pos, q, &md->part) {
-		part_md = list_entry(pos, struct mmc_blk_data, part);
+	list_क्रम_each_safe(pos, q, &md->part) अणु
+		part_md = list_entry(pos, काष्ठा mmc_blk_data, part);
 		list_del(pos);
-		mmc_blk_remove_req(part_md);
-	}
-}
+		mmc_blk_हटाओ_req(part_md);
+	पूर्ण
+पूर्ण
 
-static int mmc_add_disk(struct mmc_blk_data *md)
-{
-	int ret;
-	struct mmc_card *card = md->queue.card;
+अटल पूर्णांक mmc_add_disk(काष्ठा mmc_blk_data *md)
+अणु
+	पूर्णांक ret;
+	काष्ठा mmc_card *card = md->queue.card;
 
-	device_add_disk(md->parent, md->disk, NULL);
-	md->force_ro.show = force_ro_show;
-	md->force_ro.store = force_ro_store;
-	sysfs_attr_init(&md->force_ro.attr);
-	md->force_ro.attr.name = "force_ro";
-	md->force_ro.attr.mode = S_IRUGO | S_IWUSR;
-	ret = device_create_file(disk_to_dev(md->disk), &md->force_ro);
-	if (ret)
-		goto force_ro_fail;
+	device_add_disk(md->parent, md->disk, शून्य);
+	md->क्रमce_ro.show = क्रमce_ro_show;
+	md->क्रमce_ro.store = क्रमce_ro_store;
+	sysfs_attr_init(&md->क्रमce_ro.attr);
+	md->क्रमce_ro.attr.name = "force_ro";
+	md->क्रमce_ro.attr.mode = S_IRUGO | S_IWUSR;
+	ret = device_create_file(disk_to_dev(md->disk), &md->क्रमce_ro);
+	अगर (ret)
+		जाओ क्रमce_ro_fail;
 
-	if ((md->area_type & MMC_BLK_DATA_AREA_BOOT) &&
-	     card->ext_csd.boot_ro_lockable) {
+	अगर ((md->area_type & MMC_BLK_DATA_AREA_BOOT) &&
+	     card->ext_csd.boot_ro_lockable) अणु
 		umode_t mode;
 
-		if (card->ext_csd.boot_ro_lock & EXT_CSD_BOOT_WP_B_PWR_WP_DIS)
+		अगर (card->ext_csd.boot_ro_lock & EXT_CSD_BOOT_WP_B_PWR_WP_DIS)
 			mode = S_IRUGO;
-		else
+		अन्यथा
 			mode = S_IRUGO | S_IWUSR;
 
-		md->power_ro_lock.show = power_ro_lock_show;
-		md->power_ro_lock.store = power_ro_lock_store;
-		sysfs_attr_init(&md->power_ro_lock.attr);
-		md->power_ro_lock.attr.mode = mode;
-		md->power_ro_lock.attr.name =
+		md->घातer_ro_lock.show = घातer_ro_lock_show;
+		md->घातer_ro_lock.store = घातer_ro_lock_store;
+		sysfs_attr_init(&md->घातer_ro_lock.attr);
+		md->घातer_ro_lock.attr.mode = mode;
+		md->घातer_ro_lock.attr.name =
 					"ro_lock_until_next_power_on";
 		ret = device_create_file(disk_to_dev(md->disk),
-				&md->power_ro_lock);
-		if (ret)
-			goto power_ro_lock_fail;
-	}
-	return ret;
+				&md->घातer_ro_lock);
+		अगर (ret)
+			जाओ घातer_ro_lock_fail;
+	पूर्ण
+	वापस ret;
 
-power_ro_lock_fail:
-	device_remove_file(disk_to_dev(md->disk), &md->force_ro);
-force_ro_fail:
+घातer_ro_lock_fail:
+	device_हटाओ_file(disk_to_dev(md->disk), &md->क्रमce_ro);
+क्रमce_ro_fail:
 	del_gendisk(md->disk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-static int mmc_dbg_card_status_get(void *data, u64 *val)
-{
-	struct mmc_card *card = data;
-	struct mmc_blk_data *md = dev_get_drvdata(&card->dev);
-	struct mmc_queue *mq = &md->queue;
-	struct request *req;
-	int ret;
+अटल पूर्णांक mmc_dbg_card_status_get(व्योम *data, u64 *val)
+अणु
+	काष्ठा mmc_card *card = data;
+	काष्ठा mmc_blk_data *md = dev_get_drvdata(&card->dev);
+	काष्ठा mmc_queue *mq = &md->queue;
+	काष्ठा request *req;
+	पूर्णांक ret;
 
 	/* Ask the block layer about the card status */
 	req = blk_get_request(mq->queue, REQ_OP_DRV_IN, 0);
-	if (IS_ERR(req))
-		return PTR_ERR(req);
+	अगर (IS_ERR(req))
+		वापस PTR_ERR(req);
 	req_to_mmc_queue_req(req)->drv_op = MMC_DRV_OP_GET_CARD_STATUS;
-	blk_execute_rq(NULL, req, 0);
+	blk_execute_rq(शून्य, req, 0);
 	ret = req_to_mmc_queue_req(req)->drv_op_result;
-	if (ret >= 0) {
+	अगर (ret >= 0) अणु
 		*val = ret;
 		ret = 0;
-	}
+	पूर्ण
 	blk_put_request(req);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 DEFINE_DEBUGFS_ATTRIBUTE(mmc_dbg_card_status_fops, mmc_dbg_card_status_get,
-			 NULL, "%08llx\n");
+			 शून्य, "%08llx\n");
 
-/* That is two digits * 512 + 1 for newline */
-#define EXT_CSD_STR_LEN 1025
+/* That is two digits * 512 + 1 क्रम newline */
+#घोषणा EXT_CSD_STR_LEN 1025
 
-static int mmc_ext_csd_open(struct inode *inode, struct file *filp)
-{
-	struct mmc_card *card = inode->i_private;
-	struct mmc_blk_data *md = dev_get_drvdata(&card->dev);
-	struct mmc_queue *mq = &md->queue;
-	struct request *req;
-	char *buf;
-	ssize_t n = 0;
+अटल पूर्णांक mmc_ext_csd_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा mmc_card *card = inode->i_निजी;
+	काष्ठा mmc_blk_data *md = dev_get_drvdata(&card->dev);
+	काष्ठा mmc_queue *mq = &md->queue;
+	काष्ठा request *req;
+	अक्षर *buf;
+	sमाप_प्रकार n = 0;
 	u8 *ext_csd;
-	int err, i;
+	पूर्णांक err, i;
 
-	buf = kmalloc(EXT_CSD_STR_LEN + 1, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(EXT_CSD_STR_LEN + 1, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	/* Ask the block layer for the EXT CSD */
+	/* Ask the block layer क्रम the EXT CSD */
 	req = blk_get_request(mq->queue, REQ_OP_DRV_IN, 0);
-	if (IS_ERR(req)) {
+	अगर (IS_ERR(req)) अणु
 		err = PTR_ERR(req);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 	req_to_mmc_queue_req(req)->drv_op = MMC_DRV_OP_GET_EXT_CSD;
 	req_to_mmc_queue_req(req)->drv_op_data = &ext_csd;
-	blk_execute_rq(NULL, req, 0);
+	blk_execute_rq(शून्य, req, 0);
 	err = req_to_mmc_queue_req(req)->drv_op_result;
 	blk_put_request(req);
-	if (err) {
+	अगर (err) अणु
 		pr_err("FAILED %d\n", err);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	for (i = 0; i < 512; i++)
-		n += sprintf(buf + n, "%02x", ext_csd[i]);
-	n += sprintf(buf + n, "\n");
+	क्रम (i = 0; i < 512; i++)
+		n += प्र_लिखो(buf + n, "%02x", ext_csd[i]);
+	n += प्र_लिखो(buf + n, "\n");
 
-	if (n != EXT_CSD_STR_LEN) {
+	अगर (n != EXT_CSD_STR_LEN) अणु
 		err = -EINVAL;
-		kfree(ext_csd);
-		goto out_free;
-	}
+		kमुक्त(ext_csd);
+		जाओ out_मुक्त;
+	पूर्ण
 
-	filp->private_data = buf;
-	kfree(ext_csd);
-	return 0;
+	filp->निजी_data = buf;
+	kमुक्त(ext_csd);
+	वापस 0;
 
-out_free:
-	kfree(buf);
-	return err;
-}
+out_मुक्त:
+	kमुक्त(buf);
+	वापस err;
+पूर्ण
 
-static ssize_t mmc_ext_csd_read(struct file *filp, char __user *ubuf,
-				size_t cnt, loff_t *ppos)
-{
-	char *buf = filp->private_data;
+अटल sमाप_प्रकार mmc_ext_csd_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf,
+				माप_प्रकार cnt, loff_t *ppos)
+अणु
+	अक्षर *buf = filp->निजी_data;
 
-	return simple_read_from_buffer(ubuf, cnt, ppos,
+	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos,
 				       buf, EXT_CSD_STR_LEN);
-}
+पूर्ण
 
-static int mmc_ext_csd_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-	return 0;
-}
+अटल पूर्णांक mmc_ext_csd_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	kमुक्त(file->निजी_data);
+	वापस 0;
+पूर्ण
 
-static const struct file_operations mmc_dbg_ext_csd_fops = {
-	.open		= mmc_ext_csd_open,
-	.read		= mmc_ext_csd_read,
+अटल स्थिर काष्ठा file_operations mmc_dbg_ext_csd_fops = अणु
+	.खोलो		= mmc_ext_csd_खोलो,
+	.पढ़ो		= mmc_ext_csd_पढ़ो,
 	.release	= mmc_ext_csd_release,
-	.llseek		= default_llseek,
-};
+	.llseek		= शेष_llseek,
+पूर्ण;
 
-static int mmc_blk_add_debugfs(struct mmc_card *card, struct mmc_blk_data *md)
-{
-	struct dentry *root;
+अटल पूर्णांक mmc_blk_add_debugfs(काष्ठा mmc_card *card, काष्ठा mmc_blk_data *md)
+अणु
+	काष्ठा dentry *root;
 
-	if (!card->debugfs_root)
-		return 0;
+	अगर (!card->debugfs_root)
+		वापस 0;
 
 	root = card->debugfs_root;
 
-	if (mmc_card_mmc(card) || mmc_card_sd(card)) {
+	अगर (mmc_card_mmc(card) || mmc_card_sd(card)) अणु
 		md->status_dentry =
 			debugfs_create_file_unsafe("status", 0400, root,
 						   card,
 						   &mmc_dbg_card_status_fops);
-		if (!md->status_dentry)
-			return -EIO;
-	}
+		अगर (!md->status_dentry)
+			वापस -EIO;
+	पूर्ण
 
-	if (mmc_card_mmc(card)) {
+	अगर (mmc_card_mmc(card)) अणु
 		md->ext_csd_dentry =
 			debugfs_create_file("ext_csd", S_IRUSR, root, card,
 					    &mmc_dbg_ext_csd_fops);
-		if (!md->ext_csd_dentry)
-			return -EIO;
-	}
+		अगर (!md->ext_csd_dentry)
+			वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mmc_blk_remove_debugfs(struct mmc_card *card,
-				   struct mmc_blk_data *md)
-{
-	if (!card->debugfs_root)
-		return;
+अटल व्योम mmc_blk_हटाओ_debugfs(काष्ठा mmc_card *card,
+				   काष्ठा mmc_blk_data *md)
+अणु
+	अगर (!card->debugfs_root)
+		वापस;
 
-	if (!IS_ERR_OR_NULL(md->status_dentry)) {
-		debugfs_remove(md->status_dentry);
-		md->status_dentry = NULL;
-	}
+	अगर (!IS_ERR_OR_शून्य(md->status_dentry)) अणु
+		debugfs_हटाओ(md->status_dentry);
+		md->status_dentry = शून्य;
+	पूर्ण
 
-	if (!IS_ERR_OR_NULL(md->ext_csd_dentry)) {
-		debugfs_remove(md->ext_csd_dentry);
-		md->ext_csd_dentry = NULL;
-	}
-}
+	अगर (!IS_ERR_OR_शून्य(md->ext_csd_dentry)) अणु
+		debugfs_हटाओ(md->ext_csd_dentry);
+		md->ext_csd_dentry = शून्य;
+	पूर्ण
+पूर्ण
 
-#else
+#अन्यथा
 
-static int mmc_blk_add_debugfs(struct mmc_card *card, struct mmc_blk_data *md)
-{
-	return 0;
-}
+अटल पूर्णांक mmc_blk_add_debugfs(काष्ठा mmc_card *card, काष्ठा mmc_blk_data *md)
+अणु
+	वापस 0;
+पूर्ण
 
-static void mmc_blk_remove_debugfs(struct mmc_card *card,
-				   struct mmc_blk_data *md)
-{
-}
+अटल व्योम mmc_blk_हटाओ_debugfs(काष्ठा mmc_card *card,
+				   काष्ठा mmc_blk_data *md)
+अणु
+पूर्ण
 
-#endif /* CONFIG_DEBUG_FS */
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-static int mmc_blk_probe(struct mmc_card *card)
-{
-	struct mmc_blk_data *md, *part_md;
-	int ret = 0;
+अटल पूर्णांक mmc_blk_probe(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_blk_data *md, *part_md;
+	पूर्णांक ret = 0;
 
 	/*
 	 * Check that the card supports the command class(es) we need.
 	 */
-	if (!(card->csd.cmdclass & CCC_BLOCK_READ))
-		return -ENODEV;
+	अगर (!(card->csd.cmdclass & CCC_BLOCK_READ))
+		वापस -ENODEV;
 
 	mmc_fixup_device(card, mmc_blk_fixups);
 
 	card->complete_wq = alloc_workqueue("mmc_complete",
 					WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
-	if (!card->complete_wq) {
+	अगर (!card->complete_wq) अणु
 		pr_err("Failed to create mmc completion workqueue");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	md = mmc_blk_alloc(card);
-	if (IS_ERR(md)) {
+	अगर (IS_ERR(md)) अणु
 		ret = PTR_ERR(md);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	ret = mmc_blk_alloc_parts(card, md);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	dev_set_drvdata(&card->dev, md);
 
 	ret = mmc_add_disk(md);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	list_for_each_entry(part_md, &md->part, part) {
+	list_क्रम_each_entry(part_md, &md->part, part) अणु
 		ret = mmc_add_disk(part_md);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	/* Add two debugfs entries */
 	mmc_blk_add_debugfs(card, md);
 
-	pm_runtime_set_autosuspend_delay(&card->dev, 3000);
-	pm_runtime_use_autosuspend(&card->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&card->dev, 3000);
+	pm_runसमय_use_स्वतःsuspend(&card->dev);
 
 	/*
-	 * Don't enable runtime PM for SD-combo cards here. Leave that
+	 * Don't enable runसमय PM क्रम SD-combo cards here. Leave that
 	 * decision to be taken during the SDIO init sequence instead.
 	 */
-	if (card->type != MMC_TYPE_SD_COMBO) {
-		pm_runtime_set_active(&card->dev);
-		pm_runtime_enable(&card->dev);
-	}
+	अगर (card->type != MMC_TYPE_SD_COMBO) अणु
+		pm_runसमय_set_active(&card->dev);
+		pm_runसमय_enable(&card->dev);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
-	mmc_blk_remove_parts(card, md);
-	mmc_blk_remove_req(md);
-out_free:
+	mmc_blk_हटाओ_parts(card, md);
+	mmc_blk_हटाओ_req(md);
+out_मुक्त:
 	destroy_workqueue(card->complete_wq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mmc_blk_remove(struct mmc_card *card)
-{
-	struct mmc_blk_data *md = dev_get_drvdata(&card->dev);
+अटल व्योम mmc_blk_हटाओ(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_blk_data *md = dev_get_drvdata(&card->dev);
 
-	mmc_blk_remove_debugfs(card, md);
-	mmc_blk_remove_parts(card, md);
-	pm_runtime_get_sync(&card->dev);
-	if (md->part_curr != md->part_type) {
+	mmc_blk_हटाओ_debugfs(card, md);
+	mmc_blk_हटाओ_parts(card, md);
+	pm_runसमय_get_sync(&card->dev);
+	अगर (md->part_curr != md->part_type) अणु
 		mmc_claim_host(card->host);
-		mmc_blk_part_switch(card, md->part_type);
+		mmc_blk_part_चयन(card, md->part_type);
 		mmc_release_host(card->host);
-	}
-	if (card->type != MMC_TYPE_SD_COMBO)
-		pm_runtime_disable(&card->dev);
-	pm_runtime_put_noidle(&card->dev);
-	mmc_blk_remove_req(md);
-	dev_set_drvdata(&card->dev, NULL);
+	पूर्ण
+	अगर (card->type != MMC_TYPE_SD_COMBO)
+		pm_runसमय_disable(&card->dev);
+	pm_runसमय_put_noidle(&card->dev);
+	mmc_blk_हटाओ_req(md);
+	dev_set_drvdata(&card->dev, शून्य);
 	destroy_workqueue(card->complete_wq);
-}
+पूर्ण
 
-static int _mmc_blk_suspend(struct mmc_card *card)
-{
-	struct mmc_blk_data *part_md;
-	struct mmc_blk_data *md = dev_get_drvdata(&card->dev);
+अटल पूर्णांक _mmc_blk_suspend(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_blk_data *part_md;
+	काष्ठा mmc_blk_data *md = dev_get_drvdata(&card->dev);
 
-	if (md) {
+	अगर (md) अणु
 		mmc_queue_suspend(&md->queue);
-		list_for_each_entry(part_md, &md->part, part) {
+		list_क्रम_each_entry(part_md, &md->part, part) अणु
 			mmc_queue_suspend(&part_md->queue);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void mmc_blk_shutdown(struct mmc_card *card)
-{
+अटल व्योम mmc_blk_shutकरोwn(काष्ठा mmc_card *card)
+अणु
 	_mmc_blk_suspend(card);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int mmc_blk_suspend(struct device *dev)
-{
-	struct mmc_card *card = mmc_dev_to_card(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mmc_blk_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mmc_card *card = mmc_dev_to_card(dev);
 
-	return _mmc_blk_suspend(card);
-}
+	वापस _mmc_blk_suspend(card);
+पूर्ण
 
-static int mmc_blk_resume(struct device *dev)
-{
-	struct mmc_blk_data *part_md;
-	struct mmc_blk_data *md = dev_get_drvdata(dev);
+अटल पूर्णांक mmc_blk_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mmc_blk_data *part_md;
+	काष्ठा mmc_blk_data *md = dev_get_drvdata(dev);
 
-	if (md) {
+	अगर (md) अणु
 		/*
-		 * Resume involves the card going into idle state,
-		 * so current partition is always the main one.
+		 * Resume involves the card going पूर्णांकo idle state,
+		 * so current partition is always the मुख्य one.
 		 */
 		md->part_curr = md->part_type;
 		mmc_queue_resume(&md->queue);
-		list_for_each_entry(part_md, &md->part, part) {
+		list_क्रम_each_entry(part_md, &md->part, part) अणु
 			mmc_queue_resume(&part_md->queue);
-		}
-	}
-	return 0;
-}
-#endif
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(mmc_blk_pm_ops, mmc_blk_suspend, mmc_blk_resume);
+अटल SIMPLE_DEV_PM_OPS(mmc_blk_pm_ops, mmc_blk_suspend, mmc_blk_resume);
 
-static struct mmc_driver mmc_driver = {
-	.drv		= {
+अटल काष्ठा mmc_driver mmc_driver = अणु
+	.drv		= अणु
 		.name	= "mmcblk",
 		.pm	= &mmc_blk_pm_ops,
-	},
+	पूर्ण,
 	.probe		= mmc_blk_probe,
-	.remove		= mmc_blk_remove,
-	.shutdown	= mmc_blk_shutdown,
-};
+	.हटाओ		= mmc_blk_हटाओ,
+	.shutकरोwn	= mmc_blk_shutकरोwn,
+पूर्ण;
 
-static int __init mmc_blk_init(void)
-{
-	int res;
+अटल पूर्णांक __init mmc_blk_init(व्योम)
+अणु
+	पूर्णांक res;
 
-	res  = bus_register(&mmc_rpmb_bus_type);
-	if (res < 0) {
+	res  = bus_रेजिस्टर(&mmc_rpmb_bus_type);
+	अगर (res < 0) अणु
 		pr_err("mmcblk: could not register RPMB bus type\n");
-		return res;
-	}
+		वापस res;
+	पूर्ण
 	res = alloc_chrdev_region(&mmc_rpmb_devt, 0, MAX_DEVICES, "rpmb");
-	if (res < 0) {
+	अगर (res < 0) अणु
 		pr_err("mmcblk: failed to allocate rpmb chrdev region\n");
-		goto out_bus_unreg;
-	}
+		जाओ out_bus_unreg;
+	पूर्ण
 
-	if (perdev_minors != CONFIG_MMC_BLOCK_MINORS)
+	अगर (perdev_minors != CONFIG_MMC_BLOCK_MINORS)
 		pr_info("mmcblk: using %d minors per device\n", perdev_minors);
 
 	max_devices = min(MAX_DEVICES, (1 << MINORBITS) / perdev_minors);
 
-	res = register_blkdev(MMC_BLOCK_MAJOR, "mmc");
-	if (res)
-		goto out_chrdev_unreg;
+	res = रेजिस्टर_blkdev(MMC_BLOCK_MAJOR, "mmc");
+	अगर (res)
+		जाओ out_chrdev_unreg;
 
-	res = mmc_register_driver(&mmc_driver);
-	if (res)
-		goto out_blkdev_unreg;
+	res = mmc_रेजिस्टर_driver(&mmc_driver);
+	अगर (res)
+		जाओ out_blkdev_unreg;
 
-	return 0;
+	वापस 0;
 
 out_blkdev_unreg:
-	unregister_blkdev(MMC_BLOCK_MAJOR, "mmc");
+	unरेजिस्टर_blkdev(MMC_BLOCK_MAJOR, "mmc");
 out_chrdev_unreg:
-	unregister_chrdev_region(mmc_rpmb_devt, MAX_DEVICES);
+	unरेजिस्टर_chrdev_region(mmc_rpmb_devt, MAX_DEVICES);
 out_bus_unreg:
-	bus_unregister(&mmc_rpmb_bus_type);
-	return res;
-}
+	bus_unरेजिस्टर(&mmc_rpmb_bus_type);
+	वापस res;
+पूर्ण
 
-static void __exit mmc_blk_exit(void)
-{
-	mmc_unregister_driver(&mmc_driver);
-	unregister_blkdev(MMC_BLOCK_MAJOR, "mmc");
-	unregister_chrdev_region(mmc_rpmb_devt, MAX_DEVICES);
-	bus_unregister(&mmc_rpmb_bus_type);
-}
+अटल व्योम __निकास mmc_blk_निकास(व्योम)
+अणु
+	mmc_unरेजिस्टर_driver(&mmc_driver);
+	unरेजिस्टर_blkdev(MMC_BLOCK_MAJOR, "mmc");
+	unरेजिस्टर_chrdev_region(mmc_rpmb_devt, MAX_DEVICES);
+	bus_unरेजिस्टर(&mmc_rpmb_bus_type);
+पूर्ण
 
 module_init(mmc_blk_init);
-module_exit(mmc_blk_exit);
+module_निकास(mmc_blk_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Multimedia Card (MMC) block device driver");

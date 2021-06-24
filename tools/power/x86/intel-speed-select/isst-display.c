@@ -1,791 +1,792 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel dynamic_speed_select -- Enumerate and control features
  * Copyright (c) 2019 Intel Corporation.
  */
 
-#include "isst.h"
+#समावेश "isst.h"
 
-static void printcpulist(int str_len, char *str, int mask_size,
+अटल व्योम prपूर्णांकcpulist(पूर्णांक str_len, अक्षर *str, पूर्णांक mask_size,
 			 cpu_set_t *cpu_mask)
-{
-	int i, first, curr_index, index;
+अणु
+	पूर्णांक i, first, curr_index, index;
 
-	if (!CPU_COUNT_S(mask_size, cpu_mask)) {
-		snprintf(str, str_len, "none");
-		return;
-	}
+	अगर (!CPU_COUNT_S(mask_size, cpu_mask)) अणु
+		snम_लिखो(str, str_len, "none");
+		वापस;
+	पूर्ण
 
 	curr_index = 0;
 	first = 1;
-	for (i = 0; i < get_topo_max_cpus(); ++i) {
-		if (!CPU_ISSET_S(i, mask_size, cpu_mask))
-			continue;
-		if (!first) {
-			index = snprintf(&str[curr_index],
+	क्रम (i = 0; i < get_topo_max_cpus(); ++i) अणु
+		अगर (!CPU_ISSET_S(i, mask_size, cpu_mask))
+			जारी;
+		अगर (!first) अणु
+			index = snम_लिखो(&str[curr_index],
 					 str_len - curr_index, ",");
 			curr_index += index;
-			if (curr_index >= str_len)
-				break;
-		}
-		index = snprintf(&str[curr_index], str_len - curr_index, "%d",
+			अगर (curr_index >= str_len)
+				अवरोध;
+		पूर्ण
+		index = snम_लिखो(&str[curr_index], str_len - curr_index, "%d",
 				 i);
 		curr_index += index;
-		if (curr_index >= str_len)
-			break;
+		अगर (curr_index >= str_len)
+			अवरोध;
 		first = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void printcpumask(int str_len, char *str, int mask_size,
+अटल व्योम prपूर्णांकcpumask(पूर्णांक str_len, अक्षर *str, पूर्णांक mask_size,
 			 cpu_set_t *cpu_mask)
-{
-	int i, max_cpus = get_topo_max_cpus();
-	unsigned int *mask;
-	int size, index, curr_index;
+अणु
+	पूर्णांक i, max_cpus = get_topo_max_cpus();
+	अचिन्हित पूर्णांक *mask;
+	पूर्णांक size, index, curr_index;
 
-	size = max_cpus / (sizeof(unsigned int) * 8);
-	if (max_cpus % (sizeof(unsigned int) * 8))
+	size = max_cpus / (माप(अचिन्हित पूर्णांक) * 8);
+	अगर (max_cpus % (माप(अचिन्हित पूर्णांक) * 8))
 		size++;
 
-	mask = calloc(size, sizeof(unsigned int));
-	if (!mask)
-		return;
+	mask = सुस्मृति(size, माप(अचिन्हित पूर्णांक));
+	अगर (!mask)
+		वापस;
 
-	for (i = 0; i < max_cpus; ++i) {
-		int mask_index, bit_index;
+	क्रम (i = 0; i < max_cpus; ++i) अणु
+		पूर्णांक mask_index, bit_index;
 
-		if (!CPU_ISSET_S(i, mask_size, cpu_mask))
-			continue;
+		अगर (!CPU_ISSET_S(i, mask_size, cpu_mask))
+			जारी;
 
-		mask_index = i / (sizeof(unsigned int) * 8);
-		bit_index = i % (sizeof(unsigned int) * 8);
+		mask_index = i / (माप(अचिन्हित पूर्णांक) * 8);
+		bit_index = i % (माप(अचिन्हित पूर्णांक) * 8);
 		mask[mask_index] |= BIT(bit_index);
-	}
+	पूर्ण
 
 	curr_index = 0;
-	for (i = size - 1; i >= 0; --i) {
-		index = snprintf(&str[curr_index], str_len - curr_index, "%08x",
+	क्रम (i = size - 1; i >= 0; --i) अणु
+		index = snम_लिखो(&str[curr_index], str_len - curr_index, "%08x",
 				 mask[i]);
 		curr_index += index;
-		if (curr_index >= str_len)
-			break;
-		if (i) {
-			strncat(&str[curr_index], ",", str_len - curr_index);
+		अगर (curr_index >= str_len)
+			अवरोध;
+		अगर (i) अणु
+			म_जोड़न(&str[curr_index], ",", str_len - curr_index);
 			curr_index++;
-		}
-		if (curr_index >= str_len)
-			break;
-	}
+		पूर्ण
+		अगर (curr_index >= str_len)
+			अवरोध;
+	पूर्ण
 
-	free(mask);
-}
+	मुक्त(mask);
+पूर्ण
 
-static void format_and_print_txt(FILE *outf, int level, char *header,
-				 char *value)
-{
-	char *spaces = "  ";
-	static char delimiters[256];
-	int i, j = 0;
+अटल व्योम क्रमmat_and_prपूर्णांक_txt(खाता *outf, पूर्णांक level, अक्षर *header,
+				 अक्षर *value)
+अणु
+	अक्षर *spaces = "  ";
+	अटल अक्षर delimiters[256];
+	पूर्णांक i, j = 0;
 
-	if (!level)
-		return;
+	अगर (!level)
+		वापस;
 
-	if (level == 1) {
-		strcpy(delimiters, " ");
-	} else {
-		for (i = 0; i < level - 1; ++i)
-			j += snprintf(&delimiters[j], sizeof(delimiters) - j,
+	अगर (level == 1) अणु
+		म_नकल(delimiters, " ");
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < level - 1; ++i)
+			j += snम_लिखो(&delimiters[j], माप(delimiters) - j,
 				      "%s", spaces);
-	}
+	पूर्ण
 
-	if (header && value) {
-		fprintf(outf, "%s", delimiters);
-		fprintf(outf, "%s:%s\n", header, value);
-	} else if (header) {
-		fprintf(outf, "%s", delimiters);
-		fprintf(outf, "%s\n", header);
-	}
-}
+	अगर (header && value) अणु
+		ख_लिखो(outf, "%s", delimiters);
+		ख_लिखो(outf, "%s:%s\n", header, value);
+	पूर्ण अन्यथा अगर (header) अणु
+		ख_लिखो(outf, "%s", delimiters);
+		ख_लिखो(outf, "%s\n", header);
+	पूर्ण
+पूर्ण
 
-static int last_level;
-static void format_and_print(FILE *outf, int level, char *header, char *value)
-{
-	char *spaces = "  ";
-	static char delimiters[256];
-	int i;
+अटल पूर्णांक last_level;
+अटल व्योम क्रमmat_and_prपूर्णांक(खाता *outf, पूर्णांक level, अक्षर *header, अक्षर *value)
+अणु
+	अक्षर *spaces = "  ";
+	अटल अक्षर delimiters[256];
+	पूर्णांक i;
 
-	if (!out_format_is_json()) {
-		format_and_print_txt(outf, level, header, value);
-		return;
-	}
+	अगर (!out_क्रमmat_is_json()) अणु
+		क्रमmat_and_prपूर्णांक_txt(outf, level, header, value);
+		वापस;
+	पूर्ण
 
-	if (level == 0) {
-		if (header)
-			fprintf(outf, "{");
-		else
-			fprintf(outf, "\n}\n");
+	अगर (level == 0) अणु
+		अगर (header)
+			ख_लिखो(outf, "{");
+		अन्यथा
+			ख_लिखो(outf, "\n}\n");
 
-	} else {
-		int j = 0;
+	पूर्ण अन्यथा अणु
+		पूर्णांक j = 0;
 
-		for (i = 0; i < level; ++i)
-			j += snprintf(&delimiters[j], sizeof(delimiters) - j,
+		क्रम (i = 0; i < level; ++i)
+			j += snम_लिखो(&delimiters[j], माप(delimiters) - j,
 				      "%s", spaces);
 
-		if (last_level == level)
-			fprintf(outf, ",\n");
+		अगर (last_level == level)
+			ख_लिखो(outf, ",\n");
 
-		if (value) {
-			if (last_level != level)
-				fprintf(outf, "\n");
+		अगर (value) अणु
+			अगर (last_level != level)
+				ख_लिखो(outf, "\n");
 
-			fprintf(outf, "%s\"%s\": ", delimiters, header);
-			fprintf(outf, "\"%s\"", value);
-		} else {
-			for (i = last_level - 1; i >= level; --i) {
-				int k = 0;
+			ख_लिखो(outf, "%s\"%s\": ", delimiters, header);
+			ख_लिखो(outf, "\"%s\"", value);
+		पूर्ण अन्यथा अणु
+			क्रम (i = last_level - 1; i >= level; --i) अणु
+				पूर्णांक k = 0;
 
-				for (j = i; j > 0; --j)
-					k += snprintf(&delimiters[k],
-						      sizeof(delimiters) - k,
+				क्रम (j = i; j > 0; --j)
+					k += snम_लिखो(&delimiters[k],
+						      माप(delimiters) - k,
 						      "%s", spaces);
-				if (i == level && header)
-					fprintf(outf, "\n%s},", delimiters);
-				else
-					fprintf(outf, "\n%s}", delimiters);
-			}
-			if (abs(last_level - level) < 3)
-				fprintf(outf, "\n");
-			if (header)
-				fprintf(outf, "%s\"%s\": {", delimiters,
+				अगर (i == level && header)
+					ख_लिखो(outf, "\n%s},", delimiters);
+				अन्यथा
+					ख_लिखो(outf, "\n%s}", delimiters);
+			पूर्ण
+			अगर (असल(last_level - level) < 3)
+				ख_लिखो(outf, "\n");
+			अगर (header)
+				ख_लिखो(outf, "%s\"%s\": {", delimiters,
 					header);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	last_level = level;
-}
+पूर्ण
 
-static int print_package_info(int cpu, FILE *outf)
-{
-	char header[256];
+अटल पूर्णांक prपूर्णांक_package_info(पूर्णांक cpu, खाता *outf)
+अणु
+	अक्षर header[256];
 
-	if (out_format_is_json()) {
-		snprintf(header, sizeof(header), "package-%d:die-%d:cpu-%d",
+	अगर (out_क्रमmat_is_json()) अणु
+		snम_लिखो(header, माप(header), "package-%d:die-%d:cpu-%d",
 			 get_physical_package_id(cpu), get_physical_die_id(cpu),
 			 cpu);
-		format_and_print(outf, 1, header, NULL);
-		return 1;
-	}
-	snprintf(header, sizeof(header), "package-%d",
+		क्रमmat_and_prपूर्णांक(outf, 1, header, शून्य);
+		वापस 1;
+	पूर्ण
+	snम_लिखो(header, माप(header), "package-%d",
 		 get_physical_package_id(cpu));
-	format_and_print(outf, 1, header, NULL);
-	snprintf(header, sizeof(header), "die-%d", get_physical_die_id(cpu));
-	format_and_print(outf, 2, header, NULL);
-	snprintf(header, sizeof(header), "cpu-%d", cpu);
-	format_and_print(outf, 3, header, NULL);
+	क्रमmat_and_prपूर्णांक(outf, 1, header, शून्य);
+	snम_लिखो(header, माप(header), "die-%d", get_physical_die_id(cpu));
+	क्रमmat_and_prपूर्णांक(outf, 2, header, शून्य);
+	snम_लिखो(header, माप(header), "cpu-%d", cpu);
+	क्रमmat_and_prपूर्णांक(outf, 3, header, शून्य);
 
-	return 3;
-}
+	वापस 3;
+पूर्ण
 
-static void _isst_pbf_display_information(int cpu, FILE *outf, int level,
-					  struct isst_pbf_info *pbf_info,
-					  int disp_level)
-{
-	char header[256];
-	char value[512];
+अटल व्योम _isst_pbf_display_inक्रमmation(पूर्णांक cpu, खाता *outf, पूर्णांक level,
+					  काष्ठा isst_pbf_info *pbf_info,
+					  पूर्णांक disp_level)
+अणु
+	अक्षर header[256];
+	अक्षर value[512];
 
-	snprintf(header, sizeof(header), "speed-select-base-freq-properties");
-	format_and_print(outf, disp_level, header, NULL);
+	snम_लिखो(header, माप(header), "speed-select-base-freq-properties");
+	क्रमmat_and_prपूर्णांक(outf, disp_level, header, शून्य);
 
-	snprintf(header, sizeof(header), "high-priority-base-frequency(MHz)");
-	snprintf(value, sizeof(value), "%d",
+	snम_लिखो(header, माप(header), "high-priority-base-frequency(MHz)");
+	snम_लिखो(value, माप(value), "%d",
 		 pbf_info->p1_high * DISP_FREQ_MULTIPLIER);
-	format_and_print(outf, disp_level + 1, header, value);
+	क्रमmat_and_prपूर्णांक(outf, disp_level + 1, header, value);
 
-	snprintf(header, sizeof(header), "high-priority-cpu-mask");
-	printcpumask(sizeof(value), value, pbf_info->core_cpumask_size,
+	snम_लिखो(header, माप(header), "high-priority-cpu-mask");
+	prपूर्णांकcpumask(माप(value), value, pbf_info->core_cpumask_size,
 		     pbf_info->core_cpumask);
-	format_and_print(outf, disp_level + 1, header, value);
+	क्रमmat_and_prपूर्णांक(outf, disp_level + 1, header, value);
 
-	snprintf(header, sizeof(header), "high-priority-cpu-list");
-	printcpulist(sizeof(value), value,
+	snम_लिखो(header, माप(header), "high-priority-cpu-list");
+	prपूर्णांकcpulist(माप(value), value,
 		     pbf_info->core_cpumask_size,
 		     pbf_info->core_cpumask);
-	format_and_print(outf, disp_level + 1, header, value);
+	क्रमmat_and_prपूर्णांक(outf, disp_level + 1, header, value);
 
-	snprintf(header, sizeof(header), "low-priority-base-frequency(MHz)");
-	snprintf(value, sizeof(value), "%d",
+	snम_लिखो(header, माप(header), "low-priority-base-frequency(MHz)");
+	snम_लिखो(value, माप(value), "%d",
 		 pbf_info->p1_low * DISP_FREQ_MULTIPLIER);
-	format_and_print(outf, disp_level + 1, header, value);
+	क्रमmat_and_prपूर्णांक(outf, disp_level + 1, header, value);
 
-	if (is_clx_n_platform())
-		return;
+	अगर (is_clx_n_platक्रमm())
+		वापस;
 
-	snprintf(header, sizeof(header), "tjunction-temperature(C)");
-	snprintf(value, sizeof(value), "%d", pbf_info->t_prochot);
-	format_and_print(outf, disp_level + 1, header, value);
+	snम_लिखो(header, माप(header), "tjunction-temperature(C)");
+	snम_लिखो(value, माप(value), "%d", pbf_info->t_prochot);
+	क्रमmat_and_prपूर्णांक(outf, disp_level + 1, header, value);
 
-	snprintf(header, sizeof(header), "thermal-design-power(W)");
-	snprintf(value, sizeof(value), "%d", pbf_info->tdp);
-	format_and_print(outf, disp_level + 1, header, value);
-}
+	snम_लिखो(header, माप(header), "thermal-design-power(W)");
+	snम_लिखो(value, माप(value), "%d", pbf_info->tdp);
+	क्रमmat_and_prपूर्णांक(outf, disp_level + 1, header, value);
+पूर्ण
 
-static void _isst_fact_display_information(int cpu, FILE *outf, int level,
-					   int fact_bucket, int fact_avx,
-					   struct isst_fact_info *fact_info,
-					   int base_level)
-{
-	struct isst_fact_bucket_info *bucket_info = fact_info->bucket_info;
-	char header[256];
-	char value[256];
-	int print = 0, j;
+अटल व्योम _isst_fact_display_inक्रमmation(पूर्णांक cpu, खाता *outf, पूर्णांक level,
+					   पूर्णांक fact_bucket, पूर्णांक fact_avx,
+					   काष्ठा isst_fact_info *fact_info,
+					   पूर्णांक base_level)
+अणु
+	काष्ठा isst_fact_bucket_info *bucket_info = fact_info->bucket_info;
+	अक्षर header[256];
+	अक्षर value[256];
+	पूर्णांक prपूर्णांक = 0, j;
 
-	for (j = 0; j < ISST_FACT_MAX_BUCKETS; ++j) {
-		if (fact_bucket != 0xff && fact_bucket != j)
-			continue;
+	क्रम (j = 0; j < ISST_FACT_MAX_BUCKETS; ++j) अणु
+		अगर (fact_bucket != 0xff && fact_bucket != j)
+			जारी;
 
-		if (!bucket_info[j].high_priority_cores_count)
-			break;
+		अगर (!bucket_info[j].high_priority_cores_count)
+			अवरोध;
 
-		print = 1;
-	}
-	if (!print) {
-		fprintf(stderr, "Invalid bucket\n");
-		return;
-	}
+		prपूर्णांक = 1;
+	पूर्ण
+	अगर (!prपूर्णांक) अणु
+		ख_लिखो(मानक_त्रुटि, "Invalid bucket\n");
+		वापस;
+	पूर्ण
 
-	snprintf(header, sizeof(header), "speed-select-turbo-freq-properties");
-	format_and_print(outf, base_level, header, NULL);
-	for (j = 0; j < ISST_FACT_MAX_BUCKETS; ++j) {
-		if (fact_bucket != 0xff && fact_bucket != j)
-			continue;
+	snम_लिखो(header, माप(header), "speed-select-turbo-freq-properties");
+	क्रमmat_and_prपूर्णांक(outf, base_level, header, शून्य);
+	क्रम (j = 0; j < ISST_FACT_MAX_BUCKETS; ++j) अणु
+		अगर (fact_bucket != 0xff && fact_bucket != j)
+			जारी;
 
-		if (!bucket_info[j].high_priority_cores_count)
-			break;
+		अगर (!bucket_info[j].high_priority_cores_count)
+			अवरोध;
 
-		snprintf(header, sizeof(header), "bucket-%d", j);
-		format_and_print(outf, base_level + 1, header, NULL);
+		snम_लिखो(header, माप(header), "bucket-%d", j);
+		क्रमmat_and_prपूर्णांक(outf, base_level + 1, header, शून्य);
 
-		snprintf(header, sizeof(header), "high-priority-cores-count");
-		snprintf(value, sizeof(value), "%d",
+		snम_लिखो(header, माप(header), "high-priority-cores-count");
+		snम_लिखो(value, माप(value), "%d",
 			 bucket_info[j].high_priority_cores_count);
-		format_and_print(outf, base_level + 2, header, value);
+		क्रमmat_and_prपूर्णांक(outf, base_level + 2, header, value);
 
-		if (fact_avx & 0x01) {
-			snprintf(header, sizeof(header),
+		अगर (fact_avx & 0x01) अणु
+			snम_लिखो(header, माप(header),
 				 "high-priority-max-frequency(MHz)");
-			snprintf(value, sizeof(value), "%d",
+			snम_लिखो(value, माप(value), "%d",
 				 bucket_info[j].sse_trl * DISP_FREQ_MULTIPLIER);
-			format_and_print(outf, base_level + 2, header, value);
-		}
+			क्रमmat_and_prपूर्णांक(outf, base_level + 2, header, value);
+		पूर्ण
 
-		if (fact_avx & 0x02) {
-			snprintf(header, sizeof(header),
+		अगर (fact_avx & 0x02) अणु
+			snम_लिखो(header, माप(header),
 				 "high-priority-max-avx2-frequency(MHz)");
-			snprintf(value, sizeof(value), "%d",
+			snम_लिखो(value, माप(value), "%d",
 				 bucket_info[j].avx_trl * DISP_FREQ_MULTIPLIER);
-			format_and_print(outf, base_level + 2, header, value);
-		}
+			क्रमmat_and_prपूर्णांक(outf, base_level + 2, header, value);
+		पूर्ण
 
-		if (fact_avx & 0x04) {
-			snprintf(header, sizeof(header),
+		अगर (fact_avx & 0x04) अणु
+			snम_लिखो(header, माप(header),
 				 "high-priority-max-avx512-frequency(MHz)");
-			snprintf(value, sizeof(value), "%d",
+			snम_लिखो(value, माप(value), "%d",
 				 bucket_info[j].avx512_trl *
 					 DISP_FREQ_MULTIPLIER);
-			format_and_print(outf, base_level + 2, header, value);
-		}
-	}
-	snprintf(header, sizeof(header),
+			क्रमmat_and_prपूर्णांक(outf, base_level + 2, header, value);
+		पूर्ण
+	पूर्ण
+	snम_लिखो(header, माप(header),
 		 "speed-select-turbo-freq-clip-frequencies");
-	format_and_print(outf, base_level + 1, header, NULL);
-	snprintf(header, sizeof(header), "low-priority-max-frequency(MHz)");
-	snprintf(value, sizeof(value), "%d",
+	क्रमmat_and_prपूर्णांक(outf, base_level + 1, header, शून्य);
+	snम_लिखो(header, माप(header), "low-priority-max-frequency(MHz)");
+	snम_लिखो(value, माप(value), "%d",
 		 fact_info->lp_clipping_ratio_license_sse *
 			 DISP_FREQ_MULTIPLIER);
-	format_and_print(outf, base_level + 2, header, value);
-	snprintf(header, sizeof(header),
+	क्रमmat_and_prपूर्णांक(outf, base_level + 2, header, value);
+	snम_लिखो(header, माप(header),
 		 "low-priority-max-avx2-frequency(MHz)");
-	snprintf(value, sizeof(value), "%d",
+	snम_लिखो(value, माप(value), "%d",
 		 fact_info->lp_clipping_ratio_license_avx2 *
 			 DISP_FREQ_MULTIPLIER);
-	format_and_print(outf, base_level + 2, header, value);
-	snprintf(header, sizeof(header),
+	क्रमmat_and_prपूर्णांक(outf, base_level + 2, header, value);
+	snम_लिखो(header, माप(header),
 		 "low-priority-max-avx512-frequency(MHz)");
-	snprintf(value, sizeof(value), "%d",
+	snम_लिखो(value, माप(value), "%d",
 		 fact_info->lp_clipping_ratio_license_avx512 *
 			 DISP_FREQ_MULTIPLIER);
-	format_and_print(outf, base_level + 2, header, value);
-}
+	क्रमmat_and_prपूर्णांक(outf, base_level + 2, header, value);
+पूर्ण
 
-void isst_ctdp_display_core_info(int cpu, FILE *outf, char *prefix,
-				 unsigned int val, char *str0, char *str1)
-{
-	char header[256];
-	char value[256];
-	int level = 1;
+व्योम isst_ctdp_display_core_info(पूर्णांक cpu, खाता *outf, अक्षर *prefix,
+				 अचिन्हित पूर्णांक val, अक्षर *str0, अक्षर *str1)
+अणु
+	अक्षर header[256];
+	अक्षर value[256];
+	पूर्णांक level = 1;
 
-	if (out_format_is_json()) {
-		snprintf(header, sizeof(header), "package-%d:die-%d:cpu-%d",
+	अगर (out_क्रमmat_is_json()) अणु
+		snम_लिखो(header, माप(header), "package-%d:die-%d:cpu-%d",
 			 get_physical_package_id(cpu), get_physical_die_id(cpu),
 			 cpu);
-		format_and_print(outf, level++, header, NULL);
-	} else {
-		snprintf(header, sizeof(header), "package-%d",
+		क्रमmat_and_prपूर्णांक(outf, level++, header, शून्य);
+	पूर्ण अन्यथा अणु
+		snम_लिखो(header, माप(header), "package-%d",
 			 get_physical_package_id(cpu));
-		format_and_print(outf, level++, header, NULL);
-		snprintf(header, sizeof(header), "die-%d",
+		क्रमmat_and_prपूर्णांक(outf, level++, header, शून्य);
+		snम_लिखो(header, माप(header), "die-%d",
 			 get_physical_die_id(cpu));
-		format_and_print(outf, level++, header, NULL);
-		snprintf(header, sizeof(header), "cpu-%d", cpu);
-		format_and_print(outf, level++, header, NULL);
-	}
+		क्रमmat_and_prपूर्णांक(outf, level++, header, शून्य);
+		snम_लिखो(header, माप(header), "cpu-%d", cpu);
+		क्रमmat_and_prपूर्णांक(outf, level++, header, शून्य);
+	पूर्ण
 
-	if (str0 && !val)
-		snprintf(value, sizeof(value), "%s", str0);
-	else if (str1 && val)
-		snprintf(value, sizeof(value), "%s", str1);
-	else
-		snprintf(value, sizeof(value), "%u", val);
-	format_and_print(outf, level, prefix, value);
+	अगर (str0 && !val)
+		snम_लिखो(value, माप(value), "%s", str0);
+	अन्यथा अगर (str1 && val)
+		snम_लिखो(value, माप(value), "%s", str1);
+	अन्यथा
+		snम_लिखो(value, माप(value), "%u", val);
+	क्रमmat_and_prपूर्णांक(outf, level, prefix, value);
 
-	format_and_print(outf, 1, NULL, NULL);
-}
+	क्रमmat_and_prपूर्णांक(outf, 1, शून्य, शून्य);
+पूर्ण
 
-void isst_ctdp_display_information(int cpu, FILE *outf, int tdp_level,
-				   struct isst_pkg_ctdp *pkg_dev)
-{
-	char header[256];
-	char value[512];
-	static int level;
-	int i;
+व्योम isst_ctdp_display_inक्रमmation(पूर्णांक cpu, खाता *outf, पूर्णांक tdp_level,
+				   काष्ठा isst_pkg_ctdp *pkg_dev)
+अणु
+	अक्षर header[256];
+	अक्षर value[512];
+	अटल पूर्णांक level;
+	पूर्णांक i;
 
-	if (pkg_dev->processed)
-		level = print_package_info(cpu, outf);
+	अगर (pkg_dev->processed)
+		level = prपूर्णांक_package_info(cpu, outf);
 
-	for (i = 0; i <= pkg_dev->levels; ++i) {
-		struct isst_pkg_ctdp_level_info *ctdp_level;
-		int j;
+	क्रम (i = 0; i <= pkg_dev->levels; ++i) अणु
+		काष्ठा isst_pkg_ctdp_level_info *ctdp_level;
+		पूर्णांक j;
 
 		ctdp_level = &pkg_dev->ctdp_level[i];
-		if (!ctdp_level->processed)
-			continue;
+		अगर (!ctdp_level->processed)
+			जारी;
 
-		snprintf(header, sizeof(header), "perf-profile-level-%d",
+		snम_लिखो(header, माप(header), "perf-profile-level-%d",
 			 ctdp_level->level);
-		format_and_print(outf, level + 1, header, NULL);
+		क्रमmat_and_prपूर्णांक(outf, level + 1, header, शून्य);
 
-		snprintf(header, sizeof(header), "cpu-count");
+		snम_लिखो(header, माप(header), "cpu-count");
 		j = get_cpu_count(get_physical_die_id(cpu),
 				  get_physical_die_id(cpu));
-		snprintf(value, sizeof(value), "%d", j);
-		format_and_print(outf, level + 2, header, value);
+		snम_लिखो(value, माप(value), "%d", j);
+		क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
 		j = CPU_COUNT_S(ctdp_level->core_cpumask_size,
 				ctdp_level->core_cpumask);
-		if (j) {
-			snprintf(header, sizeof(header), "enable-cpu-count");
-			snprintf(value, sizeof(value), "%d", j);
-			format_and_print(outf, level + 2, header, value);
-		}
+		अगर (j) अणु
+			snम_लिखो(header, माप(header), "enable-cpu-count");
+			snम_लिखो(value, माप(value), "%d", j);
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
+		पूर्ण
 
-		if (ctdp_level->core_cpumask_size) {
-			snprintf(header, sizeof(header), "enable-cpu-mask");
-			printcpumask(sizeof(value), value,
+		अगर (ctdp_level->core_cpumask_size) अणु
+			snम_लिखो(header, माप(header), "enable-cpu-mask");
+			prपूर्णांकcpumask(माप(value), value,
 				     ctdp_level->core_cpumask_size,
 				     ctdp_level->core_cpumask);
-			format_and_print(outf, level + 2, header, value);
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-			snprintf(header, sizeof(header), "enable-cpu-list");
-			printcpulist(sizeof(value), value,
+			snम_लिखो(header, माप(header), "enable-cpu-list");
+			prपूर्णांकcpulist(माप(value), value,
 				     ctdp_level->core_cpumask_size,
 				     ctdp_level->core_cpumask);
-			format_and_print(outf, level + 2, header, value);
-		}
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
+		पूर्ण
 
-		snprintf(header, sizeof(header), "thermal-design-power-ratio");
-		snprintf(value, sizeof(value), "%d", ctdp_level->tdp_ratio);
-		format_and_print(outf, level + 2, header, value);
+		snम_लिखो(header, माप(header), "thermal-design-power-ratio");
+		snम_लिखो(value, माप(value), "%d", ctdp_level->tdp_ratio);
+		क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-		snprintf(header, sizeof(header), "base-frequency(MHz)");
-		if (!ctdp_level->sse_p1)
+		snम_लिखो(header, माप(header), "base-frequency(MHz)");
+		अगर (!ctdp_level->sse_p1)
 			ctdp_level->sse_p1 = ctdp_level->tdp_ratio;
-		snprintf(value, sizeof(value), "%d",
+		snम_लिखो(value, माप(value), "%d",
 			  ctdp_level->sse_p1 * DISP_FREQ_MULTIPLIER);
-		format_and_print(outf, level + 2, header, value);
+		क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-		if (ctdp_level->avx2_p1) {
-			snprintf(header, sizeof(header), "base-frequency-avx2(MHz)");
-			snprintf(value, sizeof(value), "%d",
+		अगर (ctdp_level->avx2_p1) अणु
+			snम_लिखो(header, माप(header), "base-frequency-avx2(MHz)");
+			snम_लिखो(value, माप(value), "%d",
 				 ctdp_level->avx2_p1 * DISP_FREQ_MULTIPLIER);
-			format_and_print(outf, level + 2, header, value);
-		}
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
+		पूर्ण
 
-		if (ctdp_level->avx512_p1) {
-			snprintf(header, sizeof(header), "base-frequency-avx512(MHz)");
-			snprintf(value, sizeof(value), "%d",
+		अगर (ctdp_level->avx512_p1) अणु
+			snम_लिखो(header, माप(header), "base-frequency-avx512(MHz)");
+			snम_लिखो(value, माप(value), "%d",
 				 ctdp_level->avx512_p1 * DISP_FREQ_MULTIPLIER);
-			format_and_print(outf, level + 2, header, value);
-		}
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
+		पूर्ण
 
-		if (ctdp_level->uncore_p1) {
-			snprintf(header, sizeof(header), "uncore-frequency-min(MHz)");
-			snprintf(value, sizeof(value), "%d",
+		अगर (ctdp_level->uncore_p1) अणु
+			snम_लिखो(header, माप(header), "uncore-frequency-min(MHz)");
+			snम_लिखो(value, माप(value), "%d",
 				 ctdp_level->uncore_p1 * DISP_FREQ_MULTIPLIER);
-			format_and_print(outf, level + 2, header, value);
-		}
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
+		पूर्ण
 
-		if (ctdp_level->uncore_p0) {
-			snprintf(header, sizeof(header), "uncore-frequency-max(MHz)");
-			snprintf(value, sizeof(value), "%d",
+		अगर (ctdp_level->uncore_p0) अणु
+			snम_लिखो(header, माप(header), "uncore-frequency-max(MHz)");
+			snम_लिखो(value, माप(value), "%d",
 				 ctdp_level->uncore_p0 * DISP_FREQ_MULTIPLIER);
-			format_and_print(outf, level + 2, header, value);
-		}
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
+		पूर्ण
 
-		if (ctdp_level->mem_freq) {
-			snprintf(header, sizeof(header), "mem-frequency(MHz)");
-			snprintf(value, sizeof(value), "%d",
+		अगर (ctdp_level->mem_freq) अणु
+			snम_लिखो(header, माप(header), "mem-frequency(MHz)");
+			snम_लिखो(value, माप(value), "%d",
 				 ctdp_level->mem_freq * DISP_FREQ_MULTIPLIER);
-			format_and_print(outf, level + 2, header, value);
-		}
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
+		पूर्ण
 
-		snprintf(header, sizeof(header),
+		snम_लिखो(header, माप(header),
 			 "speed-select-turbo-freq");
-		if (ctdp_level->fact_support) {
-			if (ctdp_level->fact_enabled)
-				snprintf(value, sizeof(value), "enabled");
-			else
-				snprintf(value, sizeof(value), "disabled");
-		} else
-			snprintf(value, sizeof(value), "unsupported");
-		format_and_print(outf, level + 2, header, value);
+		अगर (ctdp_level->fact_support) अणु
+			अगर (ctdp_level->fact_enabled)
+				snम_लिखो(value, माप(value), "enabled");
+			अन्यथा
+				snम_लिखो(value, माप(value), "disabled");
+		पूर्ण अन्यथा
+			snम_लिखो(value, माप(value), "unsupported");
+		क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-		snprintf(header, sizeof(header),
+		snम_लिखो(header, माप(header),
 			 "speed-select-base-freq");
-		if (ctdp_level->pbf_support) {
-			if (ctdp_level->pbf_enabled)
-				snprintf(value, sizeof(value), "enabled");
-			else
-				snprintf(value, sizeof(value), "disabled");
-		} else
-			snprintf(value, sizeof(value), "unsupported");
-		format_and_print(outf, level + 2, header, value);
+		अगर (ctdp_level->pbf_support) अणु
+			अगर (ctdp_level->pbf_enabled)
+				snम_लिखो(value, माप(value), "enabled");
+			अन्यथा
+				snम_लिखो(value, माप(value), "disabled");
+		पूर्ण अन्यथा
+			snम_लिखो(value, माप(value), "unsupported");
+		क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-		snprintf(header, sizeof(header),
+		snम_लिखो(header, माप(header),
 			 "speed-select-core-power");
-		if (ctdp_level->sst_cp_support) {
-			if (ctdp_level->sst_cp_enabled)
-				snprintf(value, sizeof(value), "enabled");
-			else
-				snprintf(value, sizeof(value), "disabled");
-		} else
-			snprintf(value, sizeof(value), "unsupported");
-		format_and_print(outf, level + 2, header, value);
+		अगर (ctdp_level->sst_cp_support) अणु
+			अगर (ctdp_level->sst_cp_enabled)
+				snम_लिखो(value, माप(value), "enabled");
+			अन्यथा
+				snम_लिखो(value, माप(value), "disabled");
+		पूर्ण अन्यथा
+			snम_लिखो(value, माप(value), "unsupported");
+		क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-		if (is_clx_n_platform()) {
-			if (ctdp_level->pbf_support)
-				_isst_pbf_display_information(cpu, outf,
+		अगर (is_clx_n_platक्रमm()) अणु
+			अगर (ctdp_level->pbf_support)
+				_isst_pbf_display_inक्रमmation(cpu, outf,
 							      tdp_level,
 							  &ctdp_level->pbf_info,
 							      level + 2);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (ctdp_level->pkg_tdp) {
-			snprintf(header, sizeof(header), "thermal-design-power(W)");
-			snprintf(value, sizeof(value), "%d", ctdp_level->pkg_tdp);
-			format_and_print(outf, level + 2, header, value);
-		}
+		अगर (ctdp_level->pkg_tdp) अणु
+			snम_लिखो(header, माप(header), "thermal-design-power(W)");
+			snम_लिखो(value, माप(value), "%d", ctdp_level->pkg_tdp);
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
+		पूर्ण
 
-		if (ctdp_level->t_proc_hot) {
-			snprintf(header, sizeof(header), "tjunction-max(C)");
-			snprintf(value, sizeof(value), "%d", ctdp_level->t_proc_hot);
-			format_and_print(outf, level + 2, header, value);
-		}
+		अगर (ctdp_level->t_proc_hot) अणु
+			snम_लिखो(header, माप(header), "tjunction-max(C)");
+			snम_लिखो(value, माप(value), "%d", ctdp_level->t_proc_hot);
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
+		पूर्ण
 
-		snprintf(header, sizeof(header), "turbo-ratio-limits-sse");
-		format_and_print(outf, level + 2, header, NULL);
-		for (j = 0; j < 8; ++j) {
-			snprintf(header, sizeof(header), "bucket-%d", j);
-			format_and_print(outf, level + 3, header, NULL);
+		snम_लिखो(header, माप(header), "turbo-ratio-limits-sse");
+		क्रमmat_and_prपूर्णांक(outf, level + 2, header, शून्य);
+		क्रम (j = 0; j < 8; ++j) अणु
+			snम_लिखो(header, माप(header), "bucket-%d", j);
+			क्रमmat_and_prपूर्णांक(outf, level + 3, header, शून्य);
 
-			snprintf(header, sizeof(header), "core-count");
-			snprintf(value, sizeof(value), "%llu", (ctdp_level->buckets_info >> (j * 8)) & 0xff);
-			format_and_print(outf, level + 4, header, value);
+			snम_लिखो(header, माप(header), "core-count");
+			snम_लिखो(value, माप(value), "%llu", (ctdp_level->buckets_info >> (j * 8)) & 0xff);
+			क्रमmat_and_prपूर्णांक(outf, level + 4, header, value);
 
-			snprintf(header, sizeof(header),
+			snम_लिखो(header, माप(header),
 				"max-turbo-frequency(MHz)");
-			snprintf(value, sizeof(value), "%d",
+			snम_लिखो(value, माप(value), "%d",
 				 ctdp_level->trl_sse_active_cores[j] *
 				  DISP_FREQ_MULTIPLIER);
-			format_and_print(outf, level + 4, header, value);
-		}
+			क्रमmat_and_prपूर्णांक(outf, level + 4, header, value);
+		पूर्ण
 
-		if (ctdp_level->trl_avx_active_cores[0]) {
-			snprintf(header, sizeof(header), "turbo-ratio-limits-avx2");
-			format_and_print(outf, level + 2, header, NULL);
-			for (j = 0; j < 8; ++j) {
-				snprintf(header, sizeof(header), "bucket-%d", j);
-				format_and_print(outf, level + 3, header, NULL);
+		अगर (ctdp_level->trl_avx_active_cores[0]) अणु
+			snम_लिखो(header, माप(header), "turbo-ratio-limits-avx2");
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, शून्य);
+			क्रम (j = 0; j < 8; ++j) अणु
+				snम_लिखो(header, माप(header), "bucket-%d", j);
+				क्रमmat_and_prपूर्णांक(outf, level + 3, header, शून्य);
 
-				snprintf(header, sizeof(header), "core-count");
-				snprintf(value, sizeof(value), "%llu", (ctdp_level->buckets_info >> (j * 8)) & 0xff);
-				format_and_print(outf, level + 4, header, value);
+				snम_लिखो(header, माप(header), "core-count");
+				snम_लिखो(value, माप(value), "%llu", (ctdp_level->buckets_info >> (j * 8)) & 0xff);
+				क्रमmat_and_prपूर्णांक(outf, level + 4, header, value);
 
-				snprintf(header, sizeof(header), "max-turbo-frequency(MHz)");
-				snprintf(value, sizeof(value), "%d", ctdp_level->trl_avx_active_cores[j] * DISP_FREQ_MULTIPLIER);
-				format_and_print(outf, level + 4, header, value);
-			}
-		}
+				snम_लिखो(header, माप(header), "max-turbo-frequency(MHz)");
+				snम_लिखो(value, माप(value), "%d", ctdp_level->trl_avx_active_cores[j] * DISP_FREQ_MULTIPLIER);
+				क्रमmat_and_prपूर्णांक(outf, level + 4, header, value);
+			पूर्ण
+		पूर्ण
 
-		if (ctdp_level->trl_avx_512_active_cores[0]) {
-			snprintf(header, sizeof(header), "turbo-ratio-limits-avx512");
-			format_and_print(outf, level + 2, header, NULL);
-			for (j = 0; j < 8; ++j) {
-				snprintf(header, sizeof(header), "bucket-%d", j);
-				format_and_print(outf, level + 3, header, NULL);
+		अगर (ctdp_level->trl_avx_512_active_cores[0]) अणु
+			snम_लिखो(header, माप(header), "turbo-ratio-limits-avx512");
+			क्रमmat_and_prपूर्णांक(outf, level + 2, header, शून्य);
+			क्रम (j = 0; j < 8; ++j) अणु
+				snम_लिखो(header, माप(header), "bucket-%d", j);
+				क्रमmat_and_prपूर्णांक(outf, level + 3, header, शून्य);
 
-				snprintf(header, sizeof(header), "core-count");
-				snprintf(value, sizeof(value), "%llu", (ctdp_level->buckets_info >> (j * 8)) & 0xff);
-				format_and_print(outf, level + 4, header, value);
+				snम_लिखो(header, माप(header), "core-count");
+				snम_लिखो(value, माप(value), "%llu", (ctdp_level->buckets_info >> (j * 8)) & 0xff);
+				क्रमmat_and_prपूर्णांक(outf, level + 4, header, value);
 
-				snprintf(header, sizeof(header), "max-turbo-frequency(MHz)");
-				snprintf(value, sizeof(value), "%d", ctdp_level->trl_avx_512_active_cores[j] * DISP_FREQ_MULTIPLIER);
-				format_and_print(outf, level + 4, header, value);
-			}
-		}
+				snम_लिखो(header, माप(header), "max-turbo-frequency(MHz)");
+				snम_लिखो(value, माप(value), "%d", ctdp_level->trl_avx_512_active_cores[j] * DISP_FREQ_MULTIPLIER);
+				क्रमmat_and_prपूर्णांक(outf, level + 4, header, value);
+			पूर्ण
+		पूर्ण
 
-		if (ctdp_level->pbf_support)
-			_isst_pbf_display_information(cpu, outf, i,
+		अगर (ctdp_level->pbf_support)
+			_isst_pbf_display_inक्रमmation(cpu, outf, i,
 						      &ctdp_level->pbf_info,
 						      level + 2);
-		if (ctdp_level->fact_support)
-			_isst_fact_display_information(cpu, outf, i, 0xff, 0xff,
+		अगर (ctdp_level->fact_support)
+			_isst_fact_display_inक्रमmation(cpu, outf, i, 0xff, 0xff,
 						       &ctdp_level->fact_info,
 						       level + 2);
-	}
+	पूर्ण
 
-	format_and_print(outf, 1, NULL, NULL);
-}
+	क्रमmat_and_prपूर्णांक(outf, 1, शून्य, शून्य);
+पूर्ण
 
-static int start;
-void isst_ctdp_display_information_start(FILE *outf)
-{
+अटल पूर्णांक start;
+व्योम isst_ctdp_display_inक्रमmation_start(खाता *outf)
+अणु
 	last_level = 0;
-	format_and_print(outf, 0, "start", NULL);
+	क्रमmat_and_prपूर्णांक(outf, 0, "start", शून्य);
 	start = 1;
-}
+पूर्ण
 
-void isst_ctdp_display_information_end(FILE *outf)
-{
-	format_and_print(outf, 0, NULL, NULL);
+व्योम isst_ctdp_display_inक्रमmation_end(खाता *outf)
+अणु
+	क्रमmat_and_prपूर्णांक(outf, 0, शून्य, शून्य);
 	start = 0;
-}
+पूर्ण
 
-void isst_pbf_display_information(int cpu, FILE *outf, int level,
-				  struct isst_pbf_info *pbf_info)
-{
-	int _level;
+व्योम isst_pbf_display_inक्रमmation(पूर्णांक cpu, खाता *outf, पूर्णांक level,
+				  काष्ठा isst_pbf_info *pbf_info)
+अणु
+	पूर्णांक _level;
 
-	_level = print_package_info(cpu, outf);
-	_isst_pbf_display_information(cpu, outf, level, pbf_info, _level + 1);
-	format_and_print(outf, 1, NULL, NULL);
-}
+	_level = prपूर्णांक_package_info(cpu, outf);
+	_isst_pbf_display_inक्रमmation(cpu, outf, level, pbf_info, _level + 1);
+	क्रमmat_and_prपूर्णांक(outf, 1, शून्य, शून्य);
+पूर्ण
 
-void isst_fact_display_information(int cpu, FILE *outf, int level,
-				   int fact_bucket, int fact_avx,
-				   struct isst_fact_info *fact_info)
-{
-	int _level;
+व्योम isst_fact_display_inक्रमmation(पूर्णांक cpu, खाता *outf, पूर्णांक level,
+				   पूर्णांक fact_bucket, पूर्णांक fact_avx,
+				   काष्ठा isst_fact_info *fact_info)
+अणु
+	पूर्णांक _level;
 
-	_level = print_package_info(cpu, outf);
-	_isst_fact_display_information(cpu, outf, level, fact_bucket, fact_avx,
+	_level = prपूर्णांक_package_info(cpu, outf);
+	_isst_fact_display_inक्रमmation(cpu, outf, level, fact_bucket, fact_avx,
 				       fact_info, _level + 1);
-	format_and_print(outf, 1, NULL, NULL);
-}
+	क्रमmat_and_prपूर्णांक(outf, 1, शून्य, शून्य);
+पूर्ण
 
-void isst_clos_display_information(int cpu, FILE *outf, int clos,
-				   struct isst_clos_config *clos_config)
-{
-	char header[256];
-	char value[256];
-	int level;
+व्योम isst_clos_display_inक्रमmation(पूर्णांक cpu, खाता *outf, पूर्णांक clos,
+				   काष्ठा isst_clos_config *clos_config)
+अणु
+	अक्षर header[256];
+	अक्षर value[256];
+	पूर्णांक level;
 
-	level = print_package_info(cpu, outf);
+	level = prपूर्णांक_package_info(cpu, outf);
 
-	snprintf(header, sizeof(header), "core-power");
-	format_and_print(outf, level + 1, header, NULL);
+	snम_लिखो(header, माप(header), "core-power");
+	क्रमmat_and_prपूर्णांक(outf, level + 1, header, शून्य);
 
-	snprintf(header, sizeof(header), "clos");
-	snprintf(value, sizeof(value), "%d", clos);
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "clos");
+	snम_लिखो(value, माप(value), "%d", clos);
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	snprintf(header, sizeof(header), "epp");
-	snprintf(value, sizeof(value), "%d", clos_config->epp);
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "epp");
+	snम_लिखो(value, माप(value), "%d", clos_config->epp);
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	snprintf(header, sizeof(header), "clos-proportional-priority");
-	snprintf(value, sizeof(value), "%d", clos_config->clos_prop_prio);
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "clos-proportional-priority");
+	snम_लिखो(value, माप(value), "%d", clos_config->clos_prop_prio);
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	snprintf(header, sizeof(header), "clos-min");
-	snprintf(value, sizeof(value), "%d MHz", clos_config->clos_min * DISP_FREQ_MULTIPLIER);
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "clos-min");
+	snम_लिखो(value, माप(value), "%d MHz", clos_config->clos_min * DISP_FREQ_MULTIPLIER);
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	snprintf(header, sizeof(header), "clos-max");
-	if (clos_config->clos_max == 0xff)
-		snprintf(value, sizeof(value), "Max Turbo frequency");
-	else
-		snprintf(value, sizeof(value), "%d MHz", clos_config->clos_max * DISP_FREQ_MULTIPLIER);
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "clos-max");
+	अगर (clos_config->clos_max == 0xff)
+		snम_लिखो(value, माप(value), "Max Turbo frequency");
+	अन्यथा
+		snम_लिखो(value, माप(value), "%d MHz", clos_config->clos_max * DISP_FREQ_MULTIPLIER);
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	snprintf(header, sizeof(header), "clos-desired");
-	snprintf(value, sizeof(value), "%d MHz", clos_config->clos_desired * DISP_FREQ_MULTIPLIER);
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "clos-desired");
+	snम_लिखो(value, माप(value), "%d MHz", clos_config->clos_desired * DISP_FREQ_MULTIPLIER);
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	format_and_print(outf, level, NULL, NULL);
-}
+	क्रमmat_and_prपूर्णांक(outf, level, शून्य, शून्य);
+पूर्ण
 
-void isst_clos_display_clos_information(int cpu, FILE *outf,
-					int clos_enable, int type,
-					int state, int cap)
-{
-	char header[256];
-	char value[256];
-	int level;
+व्योम isst_clos_display_clos_inक्रमmation(पूर्णांक cpu, खाता *outf,
+					पूर्णांक clos_enable, पूर्णांक type,
+					पूर्णांक state, पूर्णांक cap)
+अणु
+	अक्षर header[256];
+	अक्षर value[256];
+	पूर्णांक level;
 
-	level = print_package_info(cpu, outf);
+	level = prपूर्णांक_package_info(cpu, outf);
 
-	snprintf(header, sizeof(header), "core-power");
-	format_and_print(outf, level + 1, header, NULL);
+	snम_लिखो(header, माप(header), "core-power");
+	क्रमmat_and_prपूर्णांक(outf, level + 1, header, शून्य);
 
-	snprintf(header, sizeof(header), "support-status");
-	if (cap)
-		snprintf(value, sizeof(value), "supported");
-	else
-		snprintf(value, sizeof(value), "unsupported");
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "support-status");
+	अगर (cap)
+		snम_लिखो(value, माप(value), "supported");
+	अन्यथा
+		snम_लिखो(value, माप(value), "unsupported");
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	snprintf(header, sizeof(header), "enable-status");
-	if (state)
-		snprintf(value, sizeof(value), "enabled");
-	else
-		snprintf(value, sizeof(value), "disabled");
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "enable-status");
+	अगर (state)
+		snम_लिखो(value, माप(value), "enabled");
+	अन्यथा
+		snम_लिखो(value, माप(value), "disabled");
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	snprintf(header, sizeof(header), "clos-enable-status");
-	if (clos_enable)
-		snprintf(value, sizeof(value), "enabled");
-	else
-		snprintf(value, sizeof(value), "disabled");
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "clos-enable-status");
+	अगर (clos_enable)
+		snम_लिखो(value, माप(value), "enabled");
+	अन्यथा
+		snम_लिखो(value, माप(value), "disabled");
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	snprintf(header, sizeof(header), "priority-type");
-	if (type)
-		snprintf(value, sizeof(value), "ordered");
-	else
-		snprintf(value, sizeof(value), "proportional");
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "priority-type");
+	अगर (type)
+		snम_लिखो(value, माप(value), "ordered");
+	अन्यथा
+		snम_लिखो(value, माप(value), "proportional");
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	format_and_print(outf, level, NULL, NULL);
-}
+	क्रमmat_and_prपूर्णांक(outf, level, शून्य, शून्य);
+पूर्ण
 
-void isst_clos_display_assoc_information(int cpu, FILE *outf, int clos)
-{
-	char header[256];
-	char value[256];
-	int level;
+व्योम isst_clos_display_assoc_inक्रमmation(पूर्णांक cpu, खाता *outf, पूर्णांक clos)
+अणु
+	अक्षर header[256];
+	अक्षर value[256];
+	पूर्णांक level;
 
-	level = print_package_info(cpu, outf);
+	level = prपूर्णांक_package_info(cpu, outf);
 
-	snprintf(header, sizeof(header), "get-assoc");
-	format_and_print(outf, level + 1, header, NULL);
+	snम_लिखो(header, माप(header), "get-assoc");
+	क्रमmat_and_prपूर्णांक(outf, level + 1, header, शून्य);
 
-	snprintf(header, sizeof(header), "clos");
-	snprintf(value, sizeof(value), "%d", clos);
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "clos");
+	snम_लिखो(value, माप(value), "%d", clos);
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	format_and_print(outf, level, NULL, NULL);
-}
+	क्रमmat_and_prपूर्णांक(outf, level, शून्य, शून्य);
+पूर्ण
 
-void isst_display_result(int cpu, FILE *outf, char *feature, char *cmd,
-			 int result)
-{
-	char header[256];
-	char value[256];
-	int level = 3;
+व्योम isst_display_result(पूर्णांक cpu, खाता *outf, अक्षर *feature, अक्षर *cmd,
+			 पूर्णांक result)
+अणु
+	अक्षर header[256];
+	अक्षर value[256];
+	पूर्णांक level = 3;
 
-	if (cpu >= 0)
-		level = print_package_info(cpu, outf);
+	अगर (cpu >= 0)
+		level = prपूर्णांक_package_info(cpu, outf);
 
-	snprintf(header, sizeof(header), "%s", feature);
-	format_and_print(outf, level + 1, header, NULL);
-	snprintf(header, sizeof(header), "%s", cmd);
-	if (!result)
-		snprintf(value, sizeof(value), "success");
-	else
-		snprintf(value, sizeof(value), "failed(error %d)", result);
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "%s", feature);
+	क्रमmat_and_prपूर्णांक(outf, level + 1, header, शून्य);
+	snम_लिखो(header, माप(header), "%s", cmd);
+	अगर (!result)
+		snम_लिखो(value, माप(value), "success");
+	अन्यथा
+		snम_लिखो(value, माप(value), "failed(error %d)", result);
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	format_and_print(outf, level, NULL, NULL);
-}
+	क्रमmat_and_prपूर्णांक(outf, level, शून्य, शून्य);
+पूर्ण
 
-void isst_display_error_info_message(int error, char *msg, int arg_valid, int arg)
-{
-	FILE *outf = get_output_file();
-	static int error_index;
-	char header[256];
-	char value[256];
+व्योम isst_display_error_info_message(पूर्णांक error, अक्षर *msg, पूर्णांक arg_valid, पूर्णांक arg)
+अणु
+	खाता *outf = get_output_file();
+	अटल पूर्णांक error_index;
+	अक्षर header[256];
+	अक्षर value[256];
 
-	if (!out_format_is_json()) {
-		if (arg_valid)
-			snprintf(value, sizeof(value), "%s %d", msg, arg);
-		else
-			snprintf(value, sizeof(value), "%s", msg);
+	अगर (!out_क्रमmat_is_json()) अणु
+		अगर (arg_valid)
+			snम_लिखो(value, माप(value), "%s %d", msg, arg);
+		अन्यथा
+			snम_लिखो(value, माप(value), "%s", msg);
 
-		if (error)
-			fprintf(outf, "Error: %s\n", value);
-		else
-			fprintf(outf, "Information: %s\n", value);
-		return;
-	}
+		अगर (error)
+			ख_लिखो(outf, "Error: %s\n", value);
+		अन्यथा
+			ख_लिखो(outf, "Information: %s\n", value);
+		वापस;
+	पूर्ण
 
-	if (!start)
-		format_and_print(outf, 0, "start", NULL);
+	अगर (!start)
+		क्रमmat_and_prपूर्णांक(outf, 0, "start", शून्य);
 
-	if (error)
-		snprintf(header, sizeof(header), "Error%d", error_index++);
-	else
-		snprintf(header, sizeof(header), "Information:%d", error_index++);
-	format_and_print(outf, 1, header, NULL);
+	अगर (error)
+		snम_लिखो(header, माप(header), "Error%d", error_index++);
+	अन्यथा
+		snम_लिखो(header, माप(header), "Information:%d", error_index++);
+	क्रमmat_and_prपूर्णांक(outf, 1, header, शून्य);
 
-	snprintf(header, sizeof(header), "message");
-	if (arg_valid)
-		snprintf(value, sizeof(value), "%s %d", msg, arg);
-	else
-		snprintf(value, sizeof(value), "%s", msg);
+	snम_लिखो(header, माप(header), "message");
+	अगर (arg_valid)
+		snम_लिखो(value, माप(value), "%s %d", msg, arg);
+	अन्यथा
+		snम_लिखो(value, माप(value), "%s", msg);
 
-	format_and_print(outf, 2, header, value);
-	format_and_print(outf, 1, NULL, NULL);
-	if (!start)
-		format_and_print(outf, 0, NULL, NULL);
-}
+	क्रमmat_and_prपूर्णांक(outf, 2, header, value);
+	क्रमmat_and_prपूर्णांक(outf, 1, शून्य, शून्य);
+	अगर (!start)
+		क्रमmat_and_prपूर्णांक(outf, 0, शून्य, शून्य);
+पूर्ण
 
-void isst_trl_display_information(int cpu, FILE *outf, unsigned long long trl)
-{
-	char header[256];
-	char value[256];
-	int level;
+व्योम isst_trl_display_inक्रमmation(पूर्णांक cpu, खाता *outf, अचिन्हित दीर्घ दीर्घ trl)
+अणु
+	अक्षर header[256];
+	अक्षर value[256];
+	पूर्णांक level;
 
-	level = print_package_info(cpu, outf);
+	level = prपूर्णांक_package_info(cpu, outf);
 
-	snprintf(header, sizeof(header), "get-trl");
-	format_and_print(outf, level + 1, header, NULL);
+	snम_लिखो(header, माप(header), "get-trl");
+	क्रमmat_and_prपूर्णांक(outf, level + 1, header, शून्य);
 
-	snprintf(header, sizeof(header), "trl");
-	snprintf(value, sizeof(value), "0x%llx", trl);
-	format_and_print(outf, level + 2, header, value);
+	snम_लिखो(header, माप(header), "trl");
+	snम_लिखो(value, माप(value), "0x%llx", trl);
+	क्रमmat_and_prपूर्णांक(outf, level + 2, header, value);
 
-	format_and_print(outf, level, NULL, NULL);
-}
+	क्रमmat_and_prपूर्णांक(outf, level, शून्य, शून्य);
+पूर्ण

@@ -1,378 +1,379 @@
+<शैली गुरु>
 /*
  * Allwinner A1X SoCs pinctrl driver.
  *
  * Copyright (C) 2012 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef __PINCTRL_SUNXI_H
-#define __PINCTRL_SUNXI_H
+#अगर_अघोषित __PINCTRL_SUNXI_H
+#घोषणा __PINCTRL_SUNXI_H
 
-#include <linux/kernel.h>
-#include <linux/spinlock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/spinlock.h>
 
-#define PA_BASE	0
-#define PB_BASE	32
-#define PC_BASE	64
-#define PD_BASE	96
-#define PE_BASE	128
-#define PF_BASE	160
-#define PG_BASE	192
-#define PH_BASE	224
-#define PI_BASE	256
-#define PL_BASE	352
-#define PM_BASE	384
-#define PN_BASE	416
+#घोषणा PA_BASE	0
+#घोषणा PB_BASE	32
+#घोषणा PC_BASE	64
+#घोषणा PD_BASE	96
+#घोषणा PE_BASE	128
+#घोषणा PF_BASE	160
+#घोषणा PG_BASE	192
+#घोषणा PH_BASE	224
+#घोषणा PI_BASE	256
+#घोषणा PL_BASE	352
+#घोषणा PM_BASE	384
+#घोषणा PN_BASE	416
 
-#define SUNXI_PINCTRL_PIN(bank, pin)		\
+#घोषणा SUNXI_PINCTRL_PIN(bank, pin)		\
 	PINCTRL_PIN(P ## bank ## _BASE + (pin), "P" #bank #pin)
 
-#define SUNXI_PIN_NAME_MAX_LEN	5
+#घोषणा SUNXI_PIN_NAME_MAX_LEN	5
 
-#define BANK_MEM_SIZE		0x24
-#define MUX_REGS_OFFSET		0x0
-#define DATA_REGS_OFFSET	0x10
-#define DLEVEL_REGS_OFFSET	0x14
-#define PULL_REGS_OFFSET	0x1c
+#घोषणा BANK_MEM_SIZE		0x24
+#घोषणा MUX_REGS_OFFSET		0x0
+#घोषणा DATA_REGS_OFFSET	0x10
+#घोषणा DLEVEL_REGS_OFFSET	0x14
+#घोषणा PULL_REGS_OFFSET	0x1c
 
-#define PINS_PER_BANK		32
-#define MUX_PINS_PER_REG	8
-#define MUX_PINS_BITS		4
-#define MUX_PINS_MASK		0x0f
-#define DATA_PINS_PER_REG	32
-#define DATA_PINS_BITS		1
-#define DATA_PINS_MASK		0x01
-#define DLEVEL_PINS_PER_REG	16
-#define DLEVEL_PINS_BITS	2
-#define DLEVEL_PINS_MASK	0x03
-#define PULL_PINS_PER_REG	16
-#define PULL_PINS_BITS		2
-#define PULL_PINS_MASK		0x03
+#घोषणा PINS_PER_BANK		32
+#घोषणा MUX_PINS_PER_REG	8
+#घोषणा MUX_PINS_BITS		4
+#घोषणा MUX_PINS_MASK		0x0f
+#घोषणा DATA_PINS_PER_REG	32
+#घोषणा DATA_PINS_BITS		1
+#घोषणा DATA_PINS_MASK		0x01
+#घोषणा DLEVEL_PINS_PER_REG	16
+#घोषणा DLEVEL_PINS_BITS	2
+#घोषणा DLEVEL_PINS_MASK	0x03
+#घोषणा PULL_PINS_PER_REG	16
+#घोषणा PULL_PINS_BITS		2
+#घोषणा PULL_PINS_MASK		0x03
 
-#define IRQ_PER_BANK		32
+#घोषणा IRQ_PER_BANK		32
 
-#define IRQ_CFG_REG		0x200
-#define IRQ_CFG_IRQ_PER_REG		8
-#define IRQ_CFG_IRQ_BITS		4
-#define IRQ_CFG_IRQ_MASK		((1 << IRQ_CFG_IRQ_BITS) - 1)
-#define IRQ_CTRL_REG		0x210
-#define IRQ_CTRL_IRQ_PER_REG		32
-#define IRQ_CTRL_IRQ_BITS		1
-#define IRQ_CTRL_IRQ_MASK		((1 << IRQ_CTRL_IRQ_BITS) - 1)
-#define IRQ_STATUS_REG		0x214
-#define IRQ_STATUS_IRQ_PER_REG		32
-#define IRQ_STATUS_IRQ_BITS		1
-#define IRQ_STATUS_IRQ_MASK		((1 << IRQ_STATUS_IRQ_BITS) - 1)
+#घोषणा IRQ_CFG_REG		0x200
+#घोषणा IRQ_CFG_IRQ_PER_REG		8
+#घोषणा IRQ_CFG_IRQ_BITS		4
+#घोषणा IRQ_CFG_IRQ_MASK		((1 << IRQ_CFG_IRQ_BITS) - 1)
+#घोषणा IRQ_CTRL_REG		0x210
+#घोषणा IRQ_CTRL_IRQ_PER_REG		32
+#घोषणा IRQ_CTRL_IRQ_BITS		1
+#घोषणा IRQ_CTRL_IRQ_MASK		((1 << IRQ_CTRL_IRQ_BITS) - 1)
+#घोषणा IRQ_STATUS_REG		0x214
+#घोषणा IRQ_STATUS_IRQ_PER_REG		32
+#घोषणा IRQ_STATUS_IRQ_BITS		1
+#घोषणा IRQ_STATUS_IRQ_MASK		((1 << IRQ_STATUS_IRQ_BITS) - 1)
 
-#define IRQ_DEBOUNCE_REG	0x218
+#घोषणा IRQ_DEBOUNCE_REG	0x218
 
-#define IRQ_MEM_SIZE		0x20
+#घोषणा IRQ_MEM_SIZE		0x20
 
-#define IRQ_EDGE_RISING		0x00
-#define IRQ_EDGE_FALLING	0x01
-#define IRQ_LEVEL_HIGH		0x02
-#define IRQ_LEVEL_LOW		0x03
-#define IRQ_EDGE_BOTH		0x04
+#घोषणा IRQ_EDGE_RISING		0x00
+#घोषणा IRQ_EDGE_FALLING	0x01
+#घोषणा IRQ_LEVEL_HIGH		0x02
+#घोषणा IRQ_LEVEL_LOW		0x03
+#घोषणा IRQ_EDGE_BOTH		0x04
 
-#define GRP_CFG_REG		0x300
+#घोषणा GRP_CFG_REG		0x300
 
-#define IO_BIAS_MASK		GENMASK(3, 0)
+#घोषणा IO_BIAS_MASK		GENMASK(3, 0)
 
-#define SUN4I_FUNC_INPUT	0
-#define SUN4I_FUNC_IRQ		6
+#घोषणा SUN4I_FUNC_INPUT	0
+#घोषणा SUN4I_FUNC_IRQ		6
 
-#define PINCTRL_SUN5I_A10S	BIT(1)
-#define PINCTRL_SUN5I_A13	BIT(2)
-#define PINCTRL_SUN5I_GR8	BIT(3)
-#define PINCTRL_SUN6I_A31	BIT(4)
-#define PINCTRL_SUN6I_A31S	BIT(5)
-#define PINCTRL_SUN4I_A10	BIT(6)
-#define PINCTRL_SUN7I_A20	BIT(7)
-#define PINCTRL_SUN8I_R40	BIT(8)
-#define PINCTRL_SUN8I_V3	BIT(9)
-#define PINCTRL_SUN8I_V3S	BIT(10)
+#घोषणा PINCTRL_SUN5I_A10S	BIT(1)
+#घोषणा PINCTRL_SUN5I_A13	BIT(2)
+#घोषणा PINCTRL_SUN5I_GR8	BIT(3)
+#घोषणा PINCTRL_SUN6I_A31	BIT(4)
+#घोषणा PINCTRL_SUN6I_A31S	BIT(5)
+#घोषणा PINCTRL_SUN4I_A10	BIT(6)
+#घोषणा PINCTRL_SUN7I_A20	BIT(7)
+#घोषणा PINCTRL_SUN8I_R40	BIT(8)
+#घोषणा PINCTRL_SUN8I_V3	BIT(9)
+#घोषणा PINCTRL_SUN8I_V3S	BIT(10)
 
-#define PIO_POW_MOD_SEL_REG	0x340
+#घोषणा PIO_POW_MOD_SEL_REG	0x340
 
-enum sunxi_desc_bias_voltage {
+क्रमागत sunxi_desc_bias_voltage अणु
 	BIAS_VOLTAGE_NONE,
 	/*
-	 * Bias voltage configuration is done through
-	 * Pn_GRP_CONFIG registers, as seen on A80 SoC.
+	 * Bias voltage configuration is करोne through
+	 * Pn_GRP_CONFIG रेजिस्टरs, as seen on A80 SoC.
 	 */
 	BIAS_VOLTAGE_GRP_CONFIG,
 	/*
 	 * Bias voltage is set through PIO_POW_MOD_SEL_REG
-	 * register, as seen on H6 SoC, for example.
+	 * रेजिस्टर, as seen on H6 SoC, क्रम example.
 	 */
 	BIAS_VOLTAGE_PIO_POW_MODE_SEL,
-};
+पूर्ण;
 
-struct sunxi_desc_function {
-	unsigned long	variant;
-	const char	*name;
+काष्ठा sunxi_desc_function अणु
+	अचिन्हित दीर्घ	variant;
+	स्थिर अक्षर	*name;
 	u8		muxval;
 	u8		irqbank;
 	u8		irqnum;
-};
+पूर्ण;
 
-struct sunxi_desc_pin {
-	struct pinctrl_pin_desc		pin;
-	unsigned long			variant;
-	struct sunxi_desc_function	*functions;
-};
+काष्ठा sunxi_desc_pin अणु
+	काष्ठा pinctrl_pin_desc		pin;
+	अचिन्हित दीर्घ			variant;
+	काष्ठा sunxi_desc_function	*functions;
+पूर्ण;
 
-struct sunxi_pinctrl_desc {
-	const struct sunxi_desc_pin	*pins;
-	int				npins;
-	unsigned			pin_base;
-	unsigned			irq_banks;
-	const unsigned int		*irq_bank_map;
-	bool				irq_read_needs_mux;
+काष्ठा sunxi_pinctrl_desc अणु
+	स्थिर काष्ठा sunxi_desc_pin	*pins;
+	पूर्णांक				npins;
+	अचिन्हित			pin_base;
+	अचिन्हित			irq_banks;
+	स्थिर अचिन्हित पूर्णांक		*irq_bank_map;
+	bool				irq_पढ़ो_needs_mux;
 	bool				disable_strict_mode;
-	enum sunxi_desc_bias_voltage	io_bias_cfg_variant;
-};
+	क्रमागत sunxi_desc_bias_voltage	io_bias_cfg_variant;
+पूर्ण;
 
-struct sunxi_pinctrl_function {
-	const char	*name;
-	const char	**groups;
-	unsigned	ngroups;
-};
+काष्ठा sunxi_pinctrl_function अणु
+	स्थिर अक्षर	*name;
+	स्थिर अक्षर	**groups;
+	अचिन्हित	ngroups;
+पूर्ण;
 
-struct sunxi_pinctrl_group {
-	const char	*name;
-	unsigned	pin;
-};
+काष्ठा sunxi_pinctrl_group अणु
+	स्थिर अक्षर	*name;
+	अचिन्हित	pin;
+पूर्ण;
 
-struct sunxi_pinctrl_regulator {
-	struct regulator	*regulator;
+काष्ठा sunxi_pinctrl_regulator अणु
+	काष्ठा regulator	*regulator;
 	refcount_t		refcount;
-};
+पूर्ण;
 
-struct sunxi_pinctrl {
-	void __iomem			*membase;
-	struct gpio_chip		*chip;
-	const struct sunxi_pinctrl_desc	*desc;
-	struct device			*dev;
-	struct sunxi_pinctrl_regulator	regulators[9];
-	struct irq_domain		*domain;
-	struct sunxi_pinctrl_function	*functions;
-	unsigned			nfunctions;
-	struct sunxi_pinctrl_group	*groups;
-	unsigned			ngroups;
-	int				*irq;
-	unsigned			*irq_array;
+काष्ठा sunxi_pinctrl अणु
+	व्योम __iomem			*membase;
+	काष्ठा gpio_chip		*chip;
+	स्थिर काष्ठा sunxi_pinctrl_desc	*desc;
+	काष्ठा device			*dev;
+	काष्ठा sunxi_pinctrl_regulator	regulators[9];
+	काष्ठा irq_करोमुख्य		*करोमुख्य;
+	काष्ठा sunxi_pinctrl_function	*functions;
+	अचिन्हित			nfunctions;
+	काष्ठा sunxi_pinctrl_group	*groups;
+	अचिन्हित			ngroups;
+	पूर्णांक				*irq;
+	अचिन्हित			*irq_array;
 	raw_spinlock_t			lock;
-	struct pinctrl_dev		*pctl_dev;
-	unsigned long			variant;
-};
+	काष्ठा pinctrl_dev		*pctl_dev;
+	अचिन्हित दीर्घ			variant;
+पूर्ण;
 
-#define SUNXI_PIN(_pin, ...)					\
-	{							\
+#घोषणा SUNXI_PIN(_pin, ...)					\
+	अणु							\
 		.pin = _pin,					\
-		.functions = (struct sunxi_desc_function[]){	\
-			__VA_ARGS__, { } },			\
-	}
+		.functions = (काष्ठा sunxi_desc_function[])अणु	\
+			__VA_ARGS__, अणु पूर्ण पूर्ण,			\
+	पूर्ण
 
-#define SUNXI_PIN_VARIANT(_pin, _variant, ...)			\
-	{							\
+#घोषणा SUNXI_PIN_VARIANT(_pin, _variant, ...)			\
+	अणु							\
 		.pin = _pin,					\
 		.variant = _variant,				\
-		.functions = (struct sunxi_desc_function[]){	\
-			__VA_ARGS__, { } },			\
-	}
+		.functions = (काष्ठा sunxi_desc_function[])अणु	\
+			__VA_ARGS__, अणु पूर्ण पूर्ण,			\
+	पूर्ण
 
-#define SUNXI_FUNCTION(_val, _name)				\
-	{							\
+#घोषणा SUNXI_FUNCTION(_val, _name)				\
+	अणु							\
 		.name = _name,					\
 		.muxval = _val,					\
-	}
+	पूर्ण
 
-#define SUNXI_FUNCTION_VARIANT(_val, _name, _variant)		\
-	{							\
+#घोषणा SUNXI_FUNCTION_VARIANT(_val, _name, _variant)		\
+	अणु							\
 		.name = _name,					\
 		.muxval = _val,					\
 		.variant = _variant,				\
-	}
+	पूर्ण
 
-#define SUNXI_FUNCTION_IRQ(_val, _irq)				\
-	{							\
+#घोषणा SUNXI_FUNCTION_IRQ(_val, _irq)				\
+	अणु							\
 		.name = "irq",					\
 		.muxval = _val,					\
 		.irqnum = _irq,					\
-	}
+	पूर्ण
 
-#define SUNXI_FUNCTION_IRQ_BANK(_val, _bank, _irq)		\
-	{							\
+#घोषणा SUNXI_FUNCTION_IRQ_BANK(_val, _bank, _irq)		\
+	अणु							\
 		.name = "irq",					\
 		.muxval = _val,					\
 		.irqbank = _bank,				\
 		.irqnum = _irq,					\
-	}
+	पूर्ण
 
 /*
- * The sunXi PIO registers are organized as is:
+ * The sunXi PIO रेजिस्टरs are organized as is:
  * 0x00 - 0x0c	Muxing values.
- *		8 pins per register, each pin having a 4bits value
+ *		8 pins per रेजिस्टर, each pin having a 4bits value
  * 0x10		Pin values
- *		32 bits per register, each pin corresponding to one bit
+ *		32 bits per रेजिस्टर, each pin corresponding to one bit
  * 0x14 - 0x18	Drive level
- *		16 pins per register, each pin having a 2bits value
+ *		16 pins per रेजिस्टर, each pin having a 2bits value
  * 0x1c - 0x20	Pull-Up values
- *		16 pins per register, each pin having a 2bits value
+ *		16 pins per रेजिस्टर, each pin having a 2bits value
  *
- * This is for the first bank. Each bank will have the same layout,
+ * This is क्रम the first bank. Each bank will have the same layout,
  * with an offset being a multiple of 0x24.
  *
- * The following functions calculate from the pin number the register
+ * The following functions calculate from the pin number the रेजिस्टर
  * and the bit offset that we should access.
  */
-static inline u32 sunxi_mux_reg(u16 pin)
-{
+अटल अंतरभूत u32 sunxi_mux_reg(u16 pin)
+अणु
 	u8 bank = pin / PINS_PER_BANK;
 	u32 offset = bank * BANK_MEM_SIZE;
 	offset += MUX_REGS_OFFSET;
 	offset += pin % PINS_PER_BANK / MUX_PINS_PER_REG * 0x04;
-	return round_down(offset, 4);
-}
+	वापस round_करोwn(offset, 4);
+पूर्ण
 
-static inline u32 sunxi_mux_offset(u16 pin)
-{
+अटल अंतरभूत u32 sunxi_mux_offset(u16 pin)
+अणु
 	u32 pin_num = pin % MUX_PINS_PER_REG;
-	return pin_num * MUX_PINS_BITS;
-}
+	वापस pin_num * MUX_PINS_BITS;
+पूर्ण
 
-static inline u32 sunxi_data_reg(u16 pin)
-{
+अटल अंतरभूत u32 sunxi_data_reg(u16 pin)
+अणु
 	u8 bank = pin / PINS_PER_BANK;
 	u32 offset = bank * BANK_MEM_SIZE;
 	offset += DATA_REGS_OFFSET;
 	offset += pin % PINS_PER_BANK / DATA_PINS_PER_REG * 0x04;
-	return round_down(offset, 4);
-}
+	वापस round_करोwn(offset, 4);
+पूर्ण
 
-static inline u32 sunxi_data_offset(u16 pin)
-{
+अटल अंतरभूत u32 sunxi_data_offset(u16 pin)
+अणु
 	u32 pin_num = pin % DATA_PINS_PER_REG;
-	return pin_num * DATA_PINS_BITS;
-}
+	वापस pin_num * DATA_PINS_BITS;
+पूर्ण
 
-static inline u32 sunxi_dlevel_reg(u16 pin)
-{
+अटल अंतरभूत u32 sunxi_dlevel_reg(u16 pin)
+अणु
 	u8 bank = pin / PINS_PER_BANK;
 	u32 offset = bank * BANK_MEM_SIZE;
 	offset += DLEVEL_REGS_OFFSET;
 	offset += pin % PINS_PER_BANK / DLEVEL_PINS_PER_REG * 0x04;
-	return round_down(offset, 4);
-}
+	वापस round_करोwn(offset, 4);
+पूर्ण
 
-static inline u32 sunxi_dlevel_offset(u16 pin)
-{
+अटल अंतरभूत u32 sunxi_dlevel_offset(u16 pin)
+अणु
 	u32 pin_num = pin % DLEVEL_PINS_PER_REG;
-	return pin_num * DLEVEL_PINS_BITS;
-}
+	वापस pin_num * DLEVEL_PINS_BITS;
+पूर्ण
 
-static inline u32 sunxi_pull_reg(u16 pin)
-{
+अटल अंतरभूत u32 sunxi_pull_reg(u16 pin)
+अणु
 	u8 bank = pin / PINS_PER_BANK;
 	u32 offset = bank * BANK_MEM_SIZE;
 	offset += PULL_REGS_OFFSET;
 	offset += pin % PINS_PER_BANK / PULL_PINS_PER_REG * 0x04;
-	return round_down(offset, 4);
-}
+	वापस round_करोwn(offset, 4);
+पूर्ण
 
-static inline u32 sunxi_pull_offset(u16 pin)
-{
+अटल अंतरभूत u32 sunxi_pull_offset(u16 pin)
+अणु
 	u32 pin_num = pin % PULL_PINS_PER_REG;
-	return pin_num * PULL_PINS_BITS;
-}
+	वापस pin_num * PULL_PINS_BITS;
+पूर्ण
 
-static inline u32 sunxi_irq_hw_bank_num(const struct sunxi_pinctrl_desc *desc, u8 bank)
-{
-	if (!desc->irq_bank_map)
-		return bank;
-	else
-		return desc->irq_bank_map[bank];
-}
+अटल अंतरभूत u32 sunxi_irq_hw_bank_num(स्थिर काष्ठा sunxi_pinctrl_desc *desc, u8 bank)
+अणु
+	अगर (!desc->irq_bank_map)
+		वापस bank;
+	अन्यथा
+		वापस desc->irq_bank_map[bank];
+पूर्ण
 
-static inline u32 sunxi_irq_cfg_reg(const struct sunxi_pinctrl_desc *desc,
+अटल अंतरभूत u32 sunxi_irq_cfg_reg(स्थिर काष्ठा sunxi_pinctrl_desc *desc,
 				    u16 irq)
-{
+अणु
 	u8 bank = irq / IRQ_PER_BANK;
 	u8 reg = (irq % IRQ_PER_BANK) / IRQ_CFG_IRQ_PER_REG * 0x04;
 
-	return IRQ_CFG_REG +
+	वापस IRQ_CFG_REG +
 	       sunxi_irq_hw_bank_num(desc, bank) * IRQ_MEM_SIZE + reg;
-}
+पूर्ण
 
-static inline u32 sunxi_irq_cfg_offset(u16 irq)
-{
+अटल अंतरभूत u32 sunxi_irq_cfg_offset(u16 irq)
+अणु
 	u32 irq_num = irq % IRQ_CFG_IRQ_PER_REG;
-	return irq_num * IRQ_CFG_IRQ_BITS;
-}
+	वापस irq_num * IRQ_CFG_IRQ_BITS;
+पूर्ण
 
-static inline u32 sunxi_irq_ctrl_reg_from_bank(const struct sunxi_pinctrl_desc *desc, u8 bank)
-{
-	return IRQ_CTRL_REG + sunxi_irq_hw_bank_num(desc, bank) * IRQ_MEM_SIZE;
-}
+अटल अंतरभूत u32 sunxi_irq_ctrl_reg_from_bank(स्थिर काष्ठा sunxi_pinctrl_desc *desc, u8 bank)
+अणु
+	वापस IRQ_CTRL_REG + sunxi_irq_hw_bank_num(desc, bank) * IRQ_MEM_SIZE;
+पूर्ण
 
-static inline u32 sunxi_irq_ctrl_reg(const struct sunxi_pinctrl_desc *desc,
+अटल अंतरभूत u32 sunxi_irq_ctrl_reg(स्थिर काष्ठा sunxi_pinctrl_desc *desc,
 				     u16 irq)
-{
+अणु
 	u8 bank = irq / IRQ_PER_BANK;
 
-	return sunxi_irq_ctrl_reg_from_bank(desc, bank);
-}
+	वापस sunxi_irq_ctrl_reg_from_bank(desc, bank);
+पूर्ण
 
-static inline u32 sunxi_irq_ctrl_offset(u16 irq)
-{
+अटल अंतरभूत u32 sunxi_irq_ctrl_offset(u16 irq)
+अणु
 	u32 irq_num = irq % IRQ_CTRL_IRQ_PER_REG;
-	return irq_num * IRQ_CTRL_IRQ_BITS;
-}
+	वापस irq_num * IRQ_CTRL_IRQ_BITS;
+पूर्ण
 
-static inline u32 sunxi_irq_debounce_reg_from_bank(const struct sunxi_pinctrl_desc *desc, u8 bank)
-{
-	return IRQ_DEBOUNCE_REG +
+अटल अंतरभूत u32 sunxi_irq_debounce_reg_from_bank(स्थिर काष्ठा sunxi_pinctrl_desc *desc, u8 bank)
+अणु
+	वापस IRQ_DEBOUNCE_REG +
 	       sunxi_irq_hw_bank_num(desc, bank) * IRQ_MEM_SIZE;
-}
+पूर्ण
 
-static inline u32 sunxi_irq_status_reg_from_bank(const struct sunxi_pinctrl_desc *desc, u8 bank)
-{
-	return IRQ_STATUS_REG +
+अटल अंतरभूत u32 sunxi_irq_status_reg_from_bank(स्थिर काष्ठा sunxi_pinctrl_desc *desc, u8 bank)
+अणु
+	वापस IRQ_STATUS_REG +
 	       sunxi_irq_hw_bank_num(desc, bank) * IRQ_MEM_SIZE;
-}
+पूर्ण
 
-static inline u32 sunxi_irq_status_reg(const struct sunxi_pinctrl_desc *desc,
+अटल अंतरभूत u32 sunxi_irq_status_reg(स्थिर काष्ठा sunxi_pinctrl_desc *desc,
 				       u16 irq)
-{
+अणु
 	u8 bank = irq / IRQ_PER_BANK;
 
-	return sunxi_irq_status_reg_from_bank(desc, bank);
-}
+	वापस sunxi_irq_status_reg_from_bank(desc, bank);
+पूर्ण
 
-static inline u32 sunxi_irq_status_offset(u16 irq)
-{
+अटल अंतरभूत u32 sunxi_irq_status_offset(u16 irq)
+अणु
 	u32 irq_num = irq % IRQ_STATUS_IRQ_PER_REG;
-	return irq_num * IRQ_STATUS_IRQ_BITS;
-}
+	वापस irq_num * IRQ_STATUS_IRQ_BITS;
+पूर्ण
 
-static inline u32 sunxi_grp_config_reg(u16 pin)
-{
+अटल अंतरभूत u32 sunxi_grp_config_reg(u16 pin)
+अणु
 	u8 bank = pin / PINS_PER_BANK;
 
-	return GRP_CFG_REG + bank * 0x4;
-}
+	वापस GRP_CFG_REG + bank * 0x4;
+पूर्ण
 
-int sunxi_pinctrl_init_with_variant(struct platform_device *pdev,
-				    const struct sunxi_pinctrl_desc *desc,
-				    unsigned long variant);
+पूर्णांक sunxi_pinctrl_init_with_variant(काष्ठा platक्रमm_device *pdev,
+				    स्थिर काष्ठा sunxi_pinctrl_desc *desc,
+				    अचिन्हित दीर्घ variant);
 
-#define sunxi_pinctrl_init(_dev, _desc) \
+#घोषणा sunxi_pinctrl_init(_dev, _desc) \
 	sunxi_pinctrl_init_with_variant(_dev, _desc, 0)
 
-#endif /* __PINCTRL_SUNXI_H */
+#पूर्ण_अगर /* __PINCTRL_SUNXI_H */

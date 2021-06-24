@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NFT_REJECT_H_
-#define _NFT_REJECT_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NFT_REJECT_H_
+#घोषणा _NFT_REJECT_H_
 
-#include <linux/types.h>
-#include <net/netlink.h>
-#include <net/netfilter/nf_tables.h>
-#include <uapi/linux/netfilter/nf_tables.h>
+#समावेश <linux/types.h>
+#समावेश <net/netlink.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <uapi/linux/netfilter/nf_tables.h>
 
-struct nft_reject {
-	enum nft_reject_types	type:8;
+काष्ठा nft_reject अणु
+	क्रमागत nft_reject_types	type:8;
 	u8			icmp_code;
-};
+पूर्ण;
 
-extern const struct nla_policy nft_reject_policy[];
+बाह्य स्थिर काष्ठा nla_policy nft_reject_policy[];
 
-int nft_reject_validate(const struct nft_ctx *ctx,
-			const struct nft_expr *expr,
-			const struct nft_data **data);
+पूर्णांक nft_reject_validate(स्थिर काष्ठा nft_ctx *ctx,
+			स्थिर काष्ठा nft_expr *expr,
+			स्थिर काष्ठा nft_data **data);
 
-int nft_reject_init(const struct nft_ctx *ctx,
-		    const struct nft_expr *expr,
-		    const struct nlattr * const tb[]);
+पूर्णांक nft_reject_init(स्थिर काष्ठा nft_ctx *ctx,
+		    स्थिर काष्ठा nft_expr *expr,
+		    स्थिर काष्ठा nlattr * स्थिर tb[]);
 
-int nft_reject_dump(struct sk_buff *skb, const struct nft_expr *expr);
+पूर्णांक nft_reject_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr);
 
-int nft_reject_icmp_code(u8 code);
-int nft_reject_icmpv6_code(u8 code);
+पूर्णांक nft_reject_icmp_code(u8 code);
+पूर्णांक nft_reject_icmpv6_code(u8 code);
 
-#endif
+#पूर्ण_अगर

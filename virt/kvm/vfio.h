@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __KVM_VFIO_H
-#define __KVM_VFIO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __KVM_VFIO_H
+#घोषणा __KVM_VFIO_H
 
-#ifdef CONFIG_KVM_VFIO
-int kvm_vfio_ops_init(void);
-void kvm_vfio_ops_exit(void);
-#else
-static inline int kvm_vfio_ops_init(void)
-{
-	return 0;
-}
-static inline void kvm_vfio_ops_exit(void)
-{
-}
-#endif
+#अगर_घोषित CONFIG_KVM_VFIO
+पूर्णांक kvm_vfio_ops_init(व्योम);
+व्योम kvm_vfio_ops_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक kvm_vfio_ops_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम kvm_vfio_ops_निकास(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

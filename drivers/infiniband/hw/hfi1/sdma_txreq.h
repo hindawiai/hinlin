@@ -1,41 +1,42 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2016 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
+ *  - Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,92 +46,92 @@
  *
  */
 
-#ifndef HFI1_SDMA_TXREQ_H
-#define HFI1_SDMA_TXREQ_H
+#अगर_अघोषित HFI1_SDMA_TXREQ_H
+#घोषणा HFI1_SDMA_TXREQ_H
 
-/* increased for AHG */
-#define NUM_DESC 6
+/* increased क्रम AHG */
+#घोषणा NUM_DESC 6
 
 /*
- * struct sdma_desc - canonical fragment descriptor
+ * काष्ठा sdma_desc - canonical fragment descriptor
  *
  * This is the descriptor carried in the tx request
  * corresponding to each fragment.
  *
  */
-struct sdma_desc {
-	/* private:  don't use directly */
+काष्ठा sdma_desc अणु
+	/* निजी:  करोn't use directly */
 	u64 qw[2];
-};
+पूर्ण;
 
 /**
- * struct sdma_txreq - the sdma_txreq structure (one per packet)
- * @list: for use by user and by queuing for wait
+ * काष्ठा sdma_txreq - the sdma_txreq काष्ठाure (one per packet)
+ * @list: क्रम use by user and by queuing क्रम रुको
  *
  * This is the representation of a packet which consists of some
- * number of fragments.   Storage is provided to within the structure.
- * for all fragments.
+ * number of fragments.   Storage is provided to within the काष्ठाure.
+ * क्रम all fragments.
  *
- * The storage for the descriptors are automatically extended as needed
+ * The storage क्रम the descriptors are स्वतःmatically extended as needed
  * when the currently allocation is exceeded.
  *
- * The user (Verbs or PSM) may overload this structure with fields
- * specific to their use by putting this struct first in their struct.
- * The method of allocation of the overloaded structure is user dependent
+ * The user (Verbs or PSM) may overload this काष्ठाure with fields
+ * specअगरic to their use by putting this काष्ठा first in their काष्ठा.
+ * The method of allocation of the overloaded काष्ठाure is user dependent
  *
- * The list is the only public field in the structure.
+ * The list is the only खुला field in the काष्ठाure.
  *
  */
 
-#define SDMA_TXREQ_S_OK        0
-#define SDMA_TXREQ_S_SENDERROR 1
-#define SDMA_TXREQ_S_ABORTED   2
-#define SDMA_TXREQ_S_SHUTDOWN  3
+#घोषणा SDMA_TXREQ_S_OK        0
+#घोषणा SDMA_TXREQ_S_SENDERROR 1
+#घोषणा SDMA_TXREQ_S_ABORTED   2
+#घोषणा SDMA_TXREQ_S_SHUTDOWN  3
 
 /* flags bits */
-#define SDMA_TXREQ_F_URGENT       0x0001
-#define SDMA_TXREQ_F_AHG_COPY     0x0002
-#define SDMA_TXREQ_F_USE_AHG      0x0004
-#define SDMA_TXREQ_F_VIP          0x0010
+#घोषणा SDMA_TXREQ_F_URGENT       0x0001
+#घोषणा SDMA_TXREQ_F_AHG_COPY     0x0002
+#घोषणा SDMA_TXREQ_F_USE_AHG      0x0004
+#घोषणा SDMA_TXREQ_F_VIP          0x0010
 
-struct sdma_txreq;
-typedef void (*callback_t)(struct sdma_txreq *, int);
+काष्ठा sdma_txreq;
+प्रकार व्योम (*callback_t)(काष्ठा sdma_txreq *, पूर्णांक);
 
-struct iowait;
-struct sdma_txreq {
-	struct list_head list;
-	/* private: */
-	struct sdma_desc *descp;
-	/* private: */
-	void *coalesce_buf;
-	/* private: */
-	struct iowait *wait;
-	/* private: */
+काष्ठा ioरुको;
+काष्ठा sdma_txreq अणु
+	काष्ठा list_head list;
+	/* निजी: */
+	काष्ठा sdma_desc *descp;
+	/* निजी: */
+	व्योम *coalesce_buf;
+	/* निजी: */
+	काष्ठा ioरुको *रुको;
+	/* निजी: */
 	callback_t                  complete;
-#ifdef CONFIG_HFI1_DEBUG_SDMA_ORDER
+#अगर_घोषित CONFIG_HFI1_DEBUG_SDMA_ORDER
 	u64 sn;
-#endif
-	/* private: - used in coalesce/pad processing */
+#पूर्ण_अगर
+	/* निजी: - used in coalesce/pad processing */
 	u16                         packet_len;
-	/* private: - down-counted to trigger last */
+	/* निजी: - करोwn-counted to trigger last */
 	u16                         tlen;
-	/* private: */
+	/* निजी: */
 	u16                         num_desc;
-	/* private: */
+	/* निजी: */
 	u16                         desc_limit;
-	/* private: */
+	/* निजी: */
 	u16                         next_descq_idx;
-	/* private: */
+	/* निजी: */
 	u16 coalesce_idx;
-	/* private: flags */
+	/* निजी: flags */
 	u16                         flags;
-	/* private: */
-	struct sdma_desc descs[NUM_DESC];
-};
+	/* निजी: */
+	काष्ठा sdma_desc descs[NUM_DESC];
+पूर्ण;
 
-static inline int sdma_txreq_built(struct sdma_txreq *tx)
-{
-	return tx->num_desc;
-}
+अटल अंतरभूत पूर्णांक sdma_txreq_built(काष्ठा sdma_txreq *tx)
+अणु
+	वापस tx->num_desc;
+पूर्ण
 
-#endif                          /* HFI1_SDMA_TXREQ_H */
+#पूर्ण_अगर                          /* HFI1_SDMA_TXREQ_H */

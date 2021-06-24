@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Map driver for Intel XScale PXA2xx platforms.
+ * Map driver क्रम Intel XScale PXA2xx platक्रमms.
  *
  * Author:	Nicolas Pitre
  * Copyright:	(C) 2001 MontaVista Software Inc.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/map.h>
-#include <linux/mtd/partitions.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/map.h>
+#समावेश <linux/mtd/partitions.h>
 
-#include <asm/io.h>
-#include <mach/hardware.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <mach/hardware.h>
 
-#include <asm/mach/flash.h>
+#समावेश <यंत्र/mach/flash.h>
 
-#define CACHELINESIZE	32
+#घोषणा CACHELINESIZE	32
 
-static void pxa2xx_map_inval_cache(struct map_info *map, unsigned long from,
-				      ssize_t len)
-{
-	unsigned long start = (unsigned long)map->cached + from;
-	unsigned long end = start + len;
+अटल व्योम pxa2xx_map_inval_cache(काष्ठा map_info *map, अचिन्हित दीर्घ from,
+				      sमाप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ)map->cached + from;
+	अचिन्हित दीर्घ end = start + len;
 
 	start &= ~(CACHELINESIZE - 1);
-	while (start < end) {
+	जबतक (start < end) अणु
 		/* invalidate D cache line */
-		asm volatile ("mcr p15, 0, %0, c7, c6, 1" : : "r" (start));
+		यंत्र अस्थिर ("mcr p15, 0, %0, c7, c6, 1" : : "r" (start));
 		start += CACHELINESIZE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct pxa2xx_flash_info {
-	struct mtd_info		*mtd;
-	struct map_info		map;
-};
+काष्ठा pxa2xx_flash_info अणु
+	काष्ठा mtd_info		*mtd;
+	काष्ठा map_info		map;
+पूर्ण;
 
-static const char * const probes[] = { "RedBoot", "cmdlinepart", NULL };
+अटल स्थिर अक्षर * स्थिर probes[] = अणु "RedBoot", "cmdlinepart", शून्य पूर्ण;
 
-static int pxa2xx_flash_probe(struct platform_device *pdev)
-{
-	struct flash_platform_data *flash = dev_get_platdata(&pdev->dev);
-	struct pxa2xx_flash_info *info;
-	struct resource *res;
+अटल पूर्णांक pxa2xx_flash_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा flash_platक्रमm_data *flash = dev_get_platdata(&pdev->dev);
+	काष्ठा pxa2xx_flash_info *info;
+	काष्ठा resource *res;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
-	info = kzalloc(sizeof(struct pxa2xx_flash_info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kzalloc(माप(काष्ठा pxa2xx_flash_info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->map.name = flash->name;
 	info->map.bankwidth = flash->width;
@@ -63,77 +64,77 @@ static int pxa2xx_flash_probe(struct platform_device *pdev)
 	info->map.size = resource_size(res);
 
 	info->map.virt = ioremap(info->map.phys, info->map.size);
-	if (!info->map.virt) {
-		printk(KERN_WARNING "Failed to ioremap %s\n",
+	अगर (!info->map.virt) अणु
+		prपूर्णांकk(KERN_WARNING "Failed to ioremap %s\n",
 		       info->map.name);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	info->map.cached = ioremap_cache(info->map.phys, info->map.size);
-	if (!info->map.cached)
-		printk(KERN_WARNING "Failed to ioremap cached %s\n",
+	अगर (!info->map.cached)
+		prपूर्णांकk(KERN_WARNING "Failed to ioremap cached %s\n",
 		       info->map.name);
 	info->map.inval_cache = pxa2xx_map_inval_cache;
 	simple_map_init(&info->map);
 
-	printk(KERN_NOTICE
+	prपूर्णांकk(KERN_NOTICE
 	       "Probing %s at physical address 0x%08lx"
 	       " (%d-bit bankwidth)\n",
-	       info->map.name, (unsigned long)info->map.phys,
+	       info->map.name, (अचिन्हित दीर्घ)info->map.phys,
 	       info->map.bankwidth * 8);
 
-	info->mtd = do_map_probe(flash->map_name, &info->map);
+	info->mtd = करो_map_probe(flash->map_name, &info->map);
 
-	if (!info->mtd) {
-		iounmap((void *)info->map.virt);
-		if (info->map.cached)
+	अगर (!info->mtd) अणु
+		iounmap((व्योम *)info->map.virt);
+		अगर (info->map.cached)
 			iounmap(info->map.cached);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	info->mtd->dev.parent = &pdev->dev;
 
-	mtd_device_parse_register(info->mtd, probes, NULL, flash->parts,
+	mtd_device_parse_रेजिस्टर(info->mtd, probes, शून्य, flash->parts,
 				  flash->nr_parts);
 
-	platform_set_drvdata(pdev, info);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, info);
+	वापस 0;
+पूर्ण
 
-static int pxa2xx_flash_remove(struct platform_device *dev)
-{
-	struct pxa2xx_flash_info *info = platform_get_drvdata(dev);
+अटल पूर्णांक pxa2xx_flash_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा pxa2xx_flash_info *info = platक्रमm_get_drvdata(dev);
 
-	mtd_device_unregister(info->mtd);
+	mtd_device_unरेजिस्टर(info->mtd);
 
 	map_destroy(info->mtd);
 	iounmap(info->map.virt);
-	if (info->map.cached)
+	अगर (info->map.cached)
 		iounmap(info->map.cached);
-	kfree(info);
-	return 0;
-}
+	kमुक्त(info);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static void pxa2xx_flash_shutdown(struct platform_device *dev)
-{
-	struct pxa2xx_flash_info *info = platform_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल व्योम pxa2xx_flash_shutकरोwn(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा pxa2xx_flash_info *info = platक्रमm_get_drvdata(dev);
 
-	if (info && mtd_suspend(info->mtd) == 0)
+	अगर (info && mtd_suspend(info->mtd) == 0)
 		mtd_resume(info->mtd);
-}
-#else
-#define pxa2xx_flash_shutdown NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा pxa2xx_flash_shutकरोwn शून्य
+#पूर्ण_अगर
 
-static struct platform_driver pxa2xx_flash_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver pxa2xx_flash_driver = अणु
+	.driver = अणु
 		.name		= "pxa2xx-flash",
-	},
+	पूर्ण,
 	.probe		= pxa2xx_flash_probe,
-	.remove		= pxa2xx_flash_remove,
-	.shutdown	= pxa2xx_flash_shutdown,
-};
+	.हटाओ		= pxa2xx_flash_हटाओ,
+	.shutकरोwn	= pxa2xx_flash_shutकरोwn,
+पूर्ण;
 
-module_platform_driver(pxa2xx_flash_driver);
+module_platक्रमm_driver(pxa2xx_flash_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Nicolas Pitre <nico@fluxnic.net>");

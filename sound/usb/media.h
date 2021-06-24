@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * media.h - Media Controller specific ALSA driver code
+ * media.h - Media Controller specअगरic ALSA driver code
  *
  * Copyright (c) 2019 Shuah Khan <shuah@kernel.org>
  *
@@ -12,63 +13,63 @@
  * and V4L2 drivers that control the media device.
  *
  * The media device is created based on the existing quirks framework.
- * Using this approach, the media controller API usage can be added for
- * a specific device.
+ * Using this approach, the media controller API usage can be added क्रम
+ * a specअगरic device.
  */
-#ifndef __MEDIA_H
+#अगर_अघोषित __MEDIA_H
 
-#ifdef CONFIG_SND_USB_AUDIO_USE_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_SND_USB_AUDIO_USE_MEDIA_CONTROLLER
 
-#include <linux/media.h>
-#include <media/media-device.h>
-#include <media/media-entity.h>
-#include <media/media-dev-allocator.h>
-#include <sound/asound.h>
+#समावेश <linux/media.h>
+#समावेश <media/media-device.h>
+#समावेश <media/media-entity.h>
+#समावेश <media/media-dev-allocator.h>
+#समावेश <sound/asound.h>
 
-struct media_ctl {
-	struct media_device *media_dev;
-	struct media_entity media_entity;
-	struct media_intf_devnode *intf_devnode;
-	struct media_link *intf_link;
-	struct media_pad media_pad;
-	struct media_pipeline media_pipe;
-};
+काष्ठा media_ctl अणु
+	काष्ठा media_device *media_dev;
+	काष्ठा media_entity media_entity;
+	काष्ठा media_पूर्णांकf_devnode *पूर्णांकf_devnode;
+	काष्ठा media_link *पूर्णांकf_link;
+	काष्ठा media_pad media_pad;
+	काष्ठा media_pipeline media_pipe;
+पूर्ण;
 
 /*
- * One source pad each for SNDRV_PCM_STREAM_CAPTURE and
- * SNDRV_PCM_STREAM_PLAYBACK. One for sink pad to link
+ * One source pad each क्रम SNDRV_PCM_STREAM_CAPTURE and
+ * SNDRV_PCM_STREAM_PLAYBACK. One क्रम sink pad to link
  * to AUDIO Source
  */
-#define MEDIA_MIXER_PAD_MAX    (SNDRV_PCM_STREAM_LAST + 2)
+#घोषणा MEDIA_MIXER_PAD_MAX    (SNDRV_PCM_STREAM_LAST + 2)
 
-struct media_mixer_ctl {
-	struct media_device *media_dev;
-	struct media_entity media_entity;
-	struct media_intf_devnode *intf_devnode;
-	struct media_link *intf_link;
-	struct media_pad media_pad[MEDIA_MIXER_PAD_MAX];
-	struct media_pipeline media_pipe;
-};
+काष्ठा media_mixer_ctl अणु
+	काष्ठा media_device *media_dev;
+	काष्ठा media_entity media_entity;
+	काष्ठा media_पूर्णांकf_devnode *पूर्णांकf_devnode;
+	काष्ठा media_link *पूर्णांकf_link;
+	काष्ठा media_pad media_pad[MEDIA_MIXER_PAD_MAX];
+	काष्ठा media_pipeline media_pipe;
+पूर्ण;
 
-int snd_media_device_create(struct snd_usb_audio *chip,
-			    struct usb_interface *iface);
-void snd_media_device_delete(struct snd_usb_audio *chip);
-int snd_media_stream_init(struct snd_usb_substream *subs, struct snd_pcm *pcm,
-			  int stream);
-void snd_media_stream_delete(struct snd_usb_substream *subs);
-int snd_media_start_pipeline(struct snd_usb_substream *subs);
-void snd_media_stop_pipeline(struct snd_usb_substream *subs);
-#else
-static inline int snd_media_device_create(struct snd_usb_audio *chip,
-					  struct usb_interface *iface)
-						{ return 0; }
-static inline void snd_media_device_delete(struct snd_usb_audio *chip) { }
-static inline int snd_media_stream_init(struct snd_usb_substream *subs,
-					struct snd_pcm *pcm, int stream)
-						{ return 0; }
-static inline void snd_media_stream_delete(struct snd_usb_substream *subs) { }
-static inline int snd_media_start_pipeline(struct snd_usb_substream *subs)
-					{ return 0; }
-static inline void snd_media_stop_pipeline(struct snd_usb_substream *subs) { }
-#endif
-#endif /* __MEDIA_H */
+पूर्णांक snd_media_device_create(काष्ठा snd_usb_audio *chip,
+			    काष्ठा usb_पूर्णांकerface *अगरace);
+व्योम snd_media_device_delete(काष्ठा snd_usb_audio *chip);
+पूर्णांक snd_media_stream_init(काष्ठा snd_usb_substream *subs, काष्ठा snd_pcm *pcm,
+			  पूर्णांक stream);
+व्योम snd_media_stream_delete(काष्ठा snd_usb_substream *subs);
+पूर्णांक snd_media_start_pipeline(काष्ठा snd_usb_substream *subs);
+व्योम snd_media_stop_pipeline(काष्ठा snd_usb_substream *subs);
+#अन्यथा
+अटल अंतरभूत पूर्णांक snd_media_device_create(काष्ठा snd_usb_audio *chip,
+					  काष्ठा usb_पूर्णांकerface *अगरace)
+						अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम snd_media_device_delete(काष्ठा snd_usb_audio *chip) अणु पूर्ण
+अटल अंतरभूत पूर्णांक snd_media_stream_init(काष्ठा snd_usb_substream *subs,
+					काष्ठा snd_pcm *pcm, पूर्णांक stream)
+						अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम snd_media_stream_delete(काष्ठा snd_usb_substream *subs) अणु पूर्ण
+अटल अंतरभूत पूर्णांक snd_media_start_pipeline(काष्ठा snd_usb_substream *subs)
+					अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम snd_media_stop_pipeline(काष्ठा snd_usb_substream *subs) अणु पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर /* __MEDIA_H */

@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2020 Oracle. All rights reserved.
  */
 
-#include <linux/sunrpc/svc_rdma.h>
-#include <linux/sunrpc/rpc_rdma.h>
+#समावेश <linux/sunrpc/svc_rdma.h>
+#समावेश <linux/sunrpc/rpc_rdma.h>
 
-#include "xprt_rdma.h"
-#include <trace/events/rpcrdma.h>
+#समावेश "xprt_rdma.h"
+#समावेश <trace/events/rpcrdma.h>
 
 /**
- * pcl_free - Release all memory associated with a parsed chunk list
+ * pcl_मुक्त - Release all memory associated with a parsed chunk list
  * @pcl: parsed chunk list
  *
  */
-void pcl_free(struct svc_rdma_pcl *pcl)
-{
-	while (!list_empty(&pcl->cl_chunks)) {
-		struct svc_rdma_chunk *chunk;
+व्योम pcl_मुक्त(काष्ठा svc_rdma_pcl *pcl)
+अणु
+	जबतक (!list_empty(&pcl->cl_chunks)) अणु
+		काष्ठा svc_rdma_chunk *chunk;
 
 		chunk = pcl_first_chunk(pcl);
 		list_del(&chunk->ch_list);
-		kfree(chunk);
-	}
-}
+		kमुक्त(chunk);
+	पूर्ण
+पूर्ण
 
-static struct svc_rdma_chunk *pcl_alloc_chunk(u32 segcount, u32 position)
-{
-	struct svc_rdma_chunk *chunk;
+अटल काष्ठा svc_rdma_chunk *pcl_alloc_chunk(u32 segcount, u32 position)
+अणु
+	काष्ठा svc_rdma_chunk *chunk;
 
-	chunk = kmalloc(struct_size(chunk, ch_segments, segcount), GFP_KERNEL);
-	if (!chunk)
-		return NULL;
+	chunk = kदो_स्मृति(काष्ठा_size(chunk, ch_segments, segcount), GFP_KERNEL);
+	अगर (!chunk)
+		वापस शून्य;
 
 	chunk->ch_position = position;
 	chunk->ch_length = 0;
 	chunk->ch_payload_length = 0;
 	chunk->ch_segcount = 0;
-	return chunk;
-}
+	वापस chunk;
+पूर्ण
 
-static struct svc_rdma_chunk *
-pcl_lookup_position(struct svc_rdma_pcl *pcl, u32 position)
-{
-	struct svc_rdma_chunk *pos;
+अटल काष्ठा svc_rdma_chunk *
+pcl_lookup_position(काष्ठा svc_rdma_pcl *pcl, u32 position)
+अणु
+	काष्ठा svc_rdma_chunk *pos;
 
-	pcl_for_each_chunk(pos, pcl) {
-		if (pos->ch_position == position)
-			return pos;
-	}
-	return NULL;
-}
+	pcl_क्रम_each_chunk(pos, pcl) अणु
+		अगर (pos->ch_position == position)
+			वापस pos;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void pcl_insert_position(struct svc_rdma_pcl *pcl,
-				struct svc_rdma_chunk *chunk)
-{
-	struct svc_rdma_chunk *pos;
+अटल व्योम pcl_insert_position(काष्ठा svc_rdma_pcl *pcl,
+				काष्ठा svc_rdma_chunk *chunk)
+अणु
+	काष्ठा svc_rdma_chunk *pos;
 
-	pcl_for_each_chunk(pos, pcl) {
-		if (pos->ch_position > chunk->ch_position)
-			break;
-	}
+	pcl_क्रम_each_chunk(pos, pcl) अणु
+		अगर (pos->ch_position > chunk->ch_position)
+			अवरोध;
+	पूर्ण
 	__list_add(&chunk->ch_list, pos->ch_list.prev, &pos->ch_list);
 	pcl->cl_count++;
-}
+पूर्ण
 
-static void pcl_set_read_segment(const struct svc_rdma_recv_ctxt *rctxt,
-				 struct svc_rdma_chunk *chunk,
+अटल व्योम pcl_set_पढ़ो_segment(स्थिर काष्ठा svc_rdma_recv_ctxt *rctxt,
+				 काष्ठा svc_rdma_chunk *chunk,
 				 u32 handle, u32 length, u64 offset)
-{
-	struct svc_rdma_segment *segment;
+अणु
+	काष्ठा svc_rdma_segment *segment;
 
 	segment = &chunk->ch_segments[chunk->ch_segcount];
 	segment->rs_handle = handle;
@@ -80,142 +81,142 @@ static void pcl_set_read_segment(const struct svc_rdma_recv_ctxt *rctxt,
 
 	chunk->ch_length += length;
 	chunk->ch_segcount++;
-}
+पूर्ण
 
 /**
- * pcl_alloc_call - Construct a parsed chunk list for the Call body
+ * pcl_alloc_call - Conकाष्ठा a parsed chunk list क्रम the Call body
  * @rctxt: Ingress receive context
  * @p: Start of an un-decoded Read list
  *
  * Assumptions:
- * - The incoming Read list has already been sanity checked.
- * - cl_count is already set to the number of segments in
+ * - The incoming Read list has alपढ़ोy been sanity checked.
+ * - cl_count is alपढ़ोy set to the number of segments in
  *   the un-decoded list.
  * - The list might not be in order by position.
  *
  * Return values:
- *       %true: Parsed chunk list was successfully constructed, and
+ *       %true: Parsed chunk list was successfully स्थिरructed, and
  *              cl_count is updated to be the number of chunks (ie.
  *              unique positions) in the Read list.
  *      %false: Memory allocation failed.
  */
-bool pcl_alloc_call(struct svc_rdma_recv_ctxt *rctxt, __be32 *p)
-{
-	struct svc_rdma_pcl *pcl = &rctxt->rc_call_pcl;
-	unsigned int i, segcount = pcl->cl_count;
+bool pcl_alloc_call(काष्ठा svc_rdma_recv_ctxt *rctxt, __be32 *p)
+अणु
+	काष्ठा svc_rdma_pcl *pcl = &rctxt->rc_call_pcl;
+	अचिन्हित पूर्णांक i, segcount = pcl->cl_count;
 
 	pcl->cl_count = 0;
-	for (i = 0; i < segcount; i++) {
-		struct svc_rdma_chunk *chunk;
+	क्रम (i = 0; i < segcount; i++) अणु
+		काष्ठा svc_rdma_chunk *chunk;
 		u32 position, handle, length;
 		u64 offset;
 
 		p++;	/* skip the list discriminator */
-		p = xdr_decode_read_segment(p, &position, &handle,
+		p = xdr_decode_पढ़ो_segment(p, &position, &handle,
 					    &length, &offset);
-		if (position != 0)
-			continue;
+		अगर (position != 0)
+			जारी;
 
-		if (pcl_is_empty(pcl)) {
+		अगर (pcl_is_empty(pcl)) अणु
 			chunk = pcl_alloc_chunk(segcount, position);
-			if (!chunk)
-				return false;
+			अगर (!chunk)
+				वापस false;
 			pcl_insert_position(pcl, chunk);
-		} else {
+		पूर्ण अन्यथा अणु
 			chunk = list_first_entry(&pcl->cl_chunks,
-						 struct svc_rdma_chunk,
+						 काष्ठा svc_rdma_chunk,
 						 ch_list);
-		}
+		पूर्ण
 
-		pcl_set_read_segment(rctxt, chunk, handle, length, offset);
-	}
+		pcl_set_पढ़ो_segment(rctxt, chunk, handle, length, offset);
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * pcl_alloc_read - Construct a parsed chunk list for normal Read chunks
+ * pcl_alloc_पढ़ो - Conकाष्ठा a parsed chunk list क्रम normal Read chunks
  * @rctxt: Ingress receive context
  * @p: Start of an un-decoded Read list
  *
  * Assumptions:
- * - The incoming Read list has already been sanity checked.
- * - cl_count is already set to the number of segments in
+ * - The incoming Read list has alपढ़ोy been sanity checked.
+ * - cl_count is alपढ़ोy set to the number of segments in
  *   the un-decoded list.
  * - The list might not be in order by position.
  *
  * Return values:
- *       %true: Parsed chunk list was successfully constructed, and
+ *       %true: Parsed chunk list was successfully स्थिरructed, and
  *              cl_count is updated to be the number of chunks (ie.
  *              unique position values) in the Read list.
  *      %false: Memory allocation failed.
  *
  * TODO:
- * - Check for chunk range overlaps
+ * - Check क्रम chunk range overlaps
  */
-bool pcl_alloc_read(struct svc_rdma_recv_ctxt *rctxt, __be32 *p)
-{
-	struct svc_rdma_pcl *pcl = &rctxt->rc_read_pcl;
-	unsigned int i, segcount = pcl->cl_count;
+bool pcl_alloc_पढ़ो(काष्ठा svc_rdma_recv_ctxt *rctxt, __be32 *p)
+अणु
+	काष्ठा svc_rdma_pcl *pcl = &rctxt->rc_पढ़ो_pcl;
+	अचिन्हित पूर्णांक i, segcount = pcl->cl_count;
 
 	pcl->cl_count = 0;
-	for (i = 0; i < segcount; i++) {
-		struct svc_rdma_chunk *chunk;
+	क्रम (i = 0; i < segcount; i++) अणु
+		काष्ठा svc_rdma_chunk *chunk;
 		u32 position, handle, length;
 		u64 offset;
 
 		p++;	/* skip the list discriminator */
-		p = xdr_decode_read_segment(p, &position, &handle,
+		p = xdr_decode_पढ़ो_segment(p, &position, &handle,
 					    &length, &offset);
-		if (position == 0)
-			continue;
+		अगर (position == 0)
+			जारी;
 
 		chunk = pcl_lookup_position(pcl, position);
-		if (!chunk) {
+		अगर (!chunk) अणु
 			chunk = pcl_alloc_chunk(segcount, position);
-			if (!chunk)
-				return false;
+			अगर (!chunk)
+				वापस false;
 			pcl_insert_position(pcl, chunk);
-		}
+		पूर्ण
 
-		pcl_set_read_segment(rctxt, chunk, handle, length, offset);
-	}
+		pcl_set_पढ़ो_segment(rctxt, chunk, handle, length, offset);
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * pcl_alloc_write - Construct a parsed chunk list from a Write list
+ * pcl_alloc_ग_लिखो - Conकाष्ठा a parsed chunk list from a Write list
  * @rctxt: Ingress receive context
  * @pcl: Parsed chunk list to populate
  * @p: Start of an un-decoded Write list
  *
  * Assumptions:
- * - The incoming Write list has already been sanity checked, and
+ * - The incoming Write list has alपढ़ोy been sanity checked, and
  * - cl_count is set to the number of chunks in the un-decoded list.
  *
  * Return values:
- *       %true: Parsed chunk list was successfully constructed.
+ *       %true: Parsed chunk list was successfully स्थिरructed.
  *      %false: Memory allocation failed.
  */
-bool pcl_alloc_write(struct svc_rdma_recv_ctxt *rctxt,
-		     struct svc_rdma_pcl *pcl, __be32 *p)
-{
-	struct svc_rdma_segment *segment;
-	struct svc_rdma_chunk *chunk;
-	unsigned int i, j;
+bool pcl_alloc_ग_लिखो(काष्ठा svc_rdma_recv_ctxt *rctxt,
+		     काष्ठा svc_rdma_pcl *pcl, __be32 *p)
+अणु
+	काष्ठा svc_rdma_segment *segment;
+	काष्ठा svc_rdma_chunk *chunk;
+	अचिन्हित पूर्णांक i, j;
 	u32 segcount;
 
-	for (i = 0; i < pcl->cl_count; i++) {
+	क्रम (i = 0; i < pcl->cl_count; i++) अणु
 		p++;	/* skip the list discriminator */
 		segcount = be32_to_cpup(p++);
 
 		chunk = pcl_alloc_chunk(segcount, 0);
-		if (!chunk)
-			return false;
+		अगर (!chunk)
+			वापस false;
 		list_add_tail(&chunk->ch_list, &pcl->cl_chunks);
 
-		for (j = 0; j < segcount; j++) {
+		क्रम (j = 0; j < segcount; j++) अणु
 			segment = &chunk->ch_segments[j];
 			p = xdr_decode_rdma_segment(p, &segment->rs_handle,
 						    &segment->rs_length,
@@ -224,34 +225,34 @@ bool pcl_alloc_write(struct svc_rdma_recv_ctxt *rctxt,
 
 			chunk->ch_length += segment->rs_length;
 			chunk->ch_segcount++;
-		}
-	}
-	return true;
-}
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static int pcl_process_region(const struct xdr_buf *xdr,
-			      unsigned int offset, unsigned int length,
-			      int (*actor)(const struct xdr_buf *, void *),
-			      void *data)
-{
-	struct xdr_buf subbuf;
+अटल पूर्णांक pcl_process_region(स्थिर काष्ठा xdr_buf *xdr,
+			      अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक length,
+			      पूर्णांक (*actor)(स्थिर काष्ठा xdr_buf *, व्योम *),
+			      व्योम *data)
+अणु
+	काष्ठा xdr_buf subbuf;
 
-	if (!length)
-		return 0;
-	if (xdr_buf_subsegment(xdr, &subbuf, offset, length))
-		return -EMSGSIZE;
-	return actor(&subbuf, data);
-}
+	अगर (!length)
+		वापस 0;
+	अगर (xdr_buf_subsegment(xdr, &subbuf, offset, length))
+		वापस -EMSGSIZE;
+	वापस actor(&subbuf, data);
+पूर्ण
 
 /**
  * pcl_process_nonpayloads - Process non-payload regions inside @xdr
  * @pcl: Chunk list to process
  * @xdr: xdr_buf to process
  * @actor: Function to invoke on each non-payload region
- * @data: Arguments for @actor
+ * @data: Arguments क्रम @actor
  *
- * This mechanism must ignore not only result payloads that were already
- * sent via RDMA Write, but also XDR padding for those payloads that
+ * This mechanism must ignore not only result payloads that were alपढ़ोy
+ * sent via RDMA Write, but also XDR padding क्रम those payloads that
  * the upper layer has added.
  *
  * Assumptions:
@@ -260,47 +261,47 @@ static int pcl_process_region(const struct xdr_buf *xdr,
  * Returns:
  *   On success, zero,
  *   %-EMSGSIZE on XDR buffer overflow, or
- *   The return value of @actor
+ *   The वापस value of @actor
  */
-int pcl_process_nonpayloads(const struct svc_rdma_pcl *pcl,
-			    const struct xdr_buf *xdr,
-			    int (*actor)(const struct xdr_buf *, void *),
-			    void *data)
-{
-	struct svc_rdma_chunk *chunk, *next;
-	unsigned int start;
-	int ret;
+पूर्णांक pcl_process_nonpayloads(स्थिर काष्ठा svc_rdma_pcl *pcl,
+			    स्थिर काष्ठा xdr_buf *xdr,
+			    पूर्णांक (*actor)(स्थिर काष्ठा xdr_buf *, व्योम *),
+			    व्योम *data)
+अणु
+	काष्ठा svc_rdma_chunk *chunk, *next;
+	अचिन्हित पूर्णांक start;
+	पूर्णांक ret;
 
 	chunk = pcl_first_chunk(pcl);
 
 	/* No result payloads were generated */
-	if (!chunk || !chunk->ch_payload_length)
-		return actor(xdr, data);
+	अगर (!chunk || !chunk->ch_payload_length)
+		वापस actor(xdr, data);
 
-	/* Process the region before the first result payload */
+	/* Process the region beक्रमe the first result payload */
 	ret = pcl_process_region(xdr, 0, chunk->ch_position, actor, data);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Process the regions between each middle result payload */
-	while ((next = pcl_next_chunk(pcl, chunk))) {
-		if (!next->ch_payload_length)
-			break;
+	जबतक ((next = pcl_next_chunk(pcl, chunk))) अणु
+		अगर (!next->ch_payload_length)
+			अवरोध;
 
 		start = pcl_chunk_end_offset(chunk);
 		ret = pcl_process_region(xdr, start, next->ch_position - start,
 					 actor, data);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		chunk = next;
-	}
+	पूर्ण
 
 	/* Process the region after the last result payload */
 	start = pcl_chunk_end_offset(chunk);
 	ret = pcl_process_region(xdr, start, xdr->len - start, actor, data);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,95 +1,96 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2017 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#ifndef _CHECK_H
-#define _CHECK_H
+#अगर_अघोषित _CHECK_H
+#घोषणा _CHECK_H
 
-#include <stdbool.h>
-#include <objtool/cfi.h>
-#include <objtool/arch.h>
+#समावेश <stdbool.h>
+#समावेश <objtool/cfi.h>
+#समावेश <objtool/arch.h>
 
-struct insn_state {
-	struct cfi_state cfi;
-	unsigned int uaccess_stack;
+काष्ठा insn_state अणु
+	काष्ठा cfi_state cfi;
+	अचिन्हित पूर्णांक uaccess_stack;
 	bool uaccess;
 	bool df;
 	bool noinstr;
 	s8 instr;
-};
+पूर्ण;
 
-struct alt_group {
+काष्ठा alt_group अणु
 	/*
-	 * Pointer from a replacement group to the original group.  NULL if it
+	 * Poपूर्णांकer from a replacement group to the original group.  शून्य अगर it
 	 * *is* the original group.
 	 */
-	struct alt_group *orig_group;
+	काष्ठा alt_group *orig_group;
 
-	/* First and last instructions in the group */
-	struct instruction *first_insn, *last_insn;
+	/* First and last inकाष्ठाions in the group */
+	काष्ठा inकाष्ठाion *first_insn, *last_insn;
 
 	/*
-	 * Byte-offset-addressed len-sized array of pointers to CFI structs.
+	 * Byte-offset-addressed len-sized array of poपूर्णांकers to CFI काष्ठाs.
 	 * This is shared with the other alt_groups in the same alternative.
 	 */
-	struct cfi_state **cfi;
-};
+	काष्ठा cfi_state **cfi;
+पूर्ण;
 
-struct instruction {
-	struct list_head list;
-	struct hlist_node hash;
-	struct list_head call_node;
-	struct list_head mcount_loc_node;
-	struct section *sec;
-	unsigned long offset;
-	unsigned int len;
-	enum insn_type type;
-	unsigned long immediate;
+काष्ठा inकाष्ठाion अणु
+	काष्ठा list_head list;
+	काष्ठा hlist_node hash;
+	काष्ठा list_head call_node;
+	काष्ठा list_head mcount_loc_node;
+	काष्ठा section *sec;
+	अचिन्हित दीर्घ offset;
+	अचिन्हित पूर्णांक len;
+	क्रमागत insn_type type;
+	अचिन्हित दीर्घ immediate;
 	bool dead_end, ignore, ignore_alts;
-	bool hint;
+	bool hपूर्णांक;
 	bool retpoline_safe;
 	s8 instr;
 	u8 visited;
-	struct alt_group *alt_group;
-	struct symbol *call_dest;
-	struct instruction *jump_dest;
-	struct instruction *first_jump_src;
-	struct reloc *jump_table;
-	struct reloc *reloc;
-	struct list_head alts;
-	struct symbol *func;
-	struct list_head stack_ops;
-	struct cfi_state cfi;
-};
+	काष्ठा alt_group *alt_group;
+	काष्ठा symbol *call_dest;
+	काष्ठा inकाष्ठाion *jump_dest;
+	काष्ठा inकाष्ठाion *first_jump_src;
+	काष्ठा reloc *jump_table;
+	काष्ठा reloc *reloc;
+	काष्ठा list_head alts;
+	काष्ठा symbol *func;
+	काष्ठा list_head stack_ops;
+	काष्ठा cfi_state cfi;
+पूर्ण;
 
-static inline bool is_static_jump(struct instruction *insn)
-{
-	return insn->type == INSN_JUMP_CONDITIONAL ||
+अटल अंतरभूत bool is_अटल_jump(काष्ठा inकाष्ठाion *insn)
+अणु
+	वापस insn->type == INSN_JUMP_CONDITIONAL ||
 	       insn->type == INSN_JUMP_UNCONDITIONAL;
-}
+पूर्ण
 
-static inline bool is_dynamic_jump(struct instruction *insn)
-{
-	return insn->type == INSN_JUMP_DYNAMIC ||
+अटल अंतरभूत bool is_dynamic_jump(काष्ठा inकाष्ठाion *insn)
+अणु
+	वापस insn->type == INSN_JUMP_DYNAMIC ||
 	       insn->type == INSN_JUMP_DYNAMIC_CONDITIONAL;
-}
+पूर्ण
 
-static inline bool is_jump(struct instruction *insn)
-{
-	return is_static_jump(insn) || is_dynamic_jump(insn);
-}
+अटल अंतरभूत bool is_jump(काष्ठा inकाष्ठाion *insn)
+अणु
+	वापस is_अटल_jump(insn) || is_dynamic_jump(insn);
+पूर्ण
 
-struct instruction *find_insn(struct objtool_file *file,
-			      struct section *sec, unsigned long offset);
+काष्ठा inकाष्ठाion *find_insn(काष्ठा objtool_file *file,
+			      काष्ठा section *sec, अचिन्हित दीर्घ offset);
 
-#define for_each_insn(file, insn)					\
-	list_for_each_entry(insn, &file->insn_list, list)
+#घोषणा क्रम_each_insn(file, insn)					\
+	list_क्रम_each_entry(insn, &file->insn_list, list)
 
-#define sec_for_each_insn(file, sec, insn)				\
-	for (insn = find_insn(file, sec, 0);				\
+#घोषणा sec_क्रम_each_insn(file, sec, insn)				\
+	क्रम (insn = find_insn(file, sec, 0);				\
 	     insn && &insn->list != &file->insn_list &&			\
 			insn->sec == sec;				\
 	     insn = list_next_entry(insn, list))
 
-#endif /* _CHECK_H */
+#पूर्ण_अगर /* _CHECK_H */

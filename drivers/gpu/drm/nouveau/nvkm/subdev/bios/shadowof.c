@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,65 +21,65 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/pci.h>
+#समावेश <core/pci.h>
 
-#if defined(__powerpc__)
-struct priv {
-	const void __iomem *data;
-	int size;
-};
+#अगर defined(__घातerpc__)
+काष्ठा priv अणु
+	स्थिर व्योम __iomem *data;
+	पूर्णांक size;
+पूर्ण;
 
-static u32
-of_read(void *data, u32 offset, u32 length, struct nvkm_bios *bios)
-{
-	struct priv *priv = data;
-	if (offset < priv->size) {
+अटल u32
+of_पढ़ो(व्योम *data, u32 offset, u32 length, काष्ठा nvkm_bios *bios)
+अणु
+	काष्ठा priv *priv = data;
+	अगर (offset < priv->size) अणु
 		length = min_t(u32, length, priv->size - offset);
-		memcpy_fromio(bios->data + offset, priv->data + offset, length);
-		return length;
-	}
-	return 0;
-}
+		स_नकल_fromio(bios->data + offset, priv->data + offset, length);
+		वापस length;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static u32
-of_size(void *data)
-{
-	struct priv *priv = data;
-	return priv->size;
-}
+अटल u32
+of_size(व्योम *data)
+अणु
+	काष्ठा priv *priv = data;
+	वापस priv->size;
+पूर्ण
 
-static void *
-of_init(struct nvkm_bios *bios, const char *name)
-{
-	struct nvkm_device *device = bios->subdev.device;
-	struct pci_dev *pdev = device->func->pci(device)->pdev;
-	struct device_node *dn;
-	struct priv *priv;
-	if (!(dn = pci_device_to_OF_node(pdev)))
-		return ERR_PTR(-ENODEV);
-	if (!(priv = kzalloc(sizeof(*priv), GFP_KERNEL)))
-		return ERR_PTR(-ENOMEM);
-	if ((priv->data = of_get_property(dn, "NVDA,BMP", &priv->size)))
-		return priv;
-	kfree(priv);
-	return ERR_PTR(-EINVAL);
-}
+अटल व्योम *
+of_init(काष्ठा nvkm_bios *bios, स्थिर अक्षर *name)
+अणु
+	काष्ठा nvkm_device *device = bios->subdev.device;
+	काष्ठा pci_dev *pdev = device->func->pci(device)->pdev;
+	काष्ठा device_node *dn;
+	काष्ठा priv *priv;
+	अगर (!(dn = pci_device_to_OF_node(pdev)))
+		वापस ERR_PTR(-ENODEV);
+	अगर (!(priv = kzalloc(माप(*priv), GFP_KERNEL)))
+		वापस ERR_PTR(-ENOMEM);
+	अगर ((priv->data = of_get_property(dn, "NVDA,BMP", &priv->size)))
+		वापस priv;
+	kमुक्त(priv);
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-const struct nvbios_source
-nvbios_of = {
+स्थिर काष्ठा nvbios_source
+nvbios_of = अणु
 	.name = "OpenFirmware",
 	.init = of_init,
-	.fini = (void(*)(void *))kfree,
-	.read = of_read,
+	.fini = (व्योम(*)(व्योम *))kमुक्त,
+	.पढ़ो = of_पढ़ो,
 	.size = of_size,
 	.rw = false,
 	.ignore_checksum = true,
 	.no_pcir = true,
-};
-#else
-const struct nvbios_source
-nvbios_of = {
-};
-#endif
+पूर्ण;
+#अन्यथा
+स्थिर काष्ठा nvbios_source
+nvbios_of = अणु
+पूर्ण;
+#पूर्ण_अगर

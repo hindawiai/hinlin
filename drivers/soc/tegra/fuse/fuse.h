@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2010 Google, Inc.
  * Copyright (c) 2013, NVIDIA CORPORATION.  All rights reserved.
@@ -7,125 +8,125 @@
  *	Colin Cross <ccross@android.com>
  */
 
-#ifndef __DRIVERS_MISC_TEGRA_FUSE_H
-#define __DRIVERS_MISC_TEGRA_FUSE_H
+#अगर_अघोषित __DRIVERS_MISC_TEGRA_FUSE_H
+#घोषणा __DRIVERS_MISC_TEGRA_FUSE_H
 
-#include <linux/dmaengine.h>
-#include <linux/types.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/types.h>
 
-struct nvmem_cell_lookup;
-struct nvmem_device;
-struct tegra_fuse;
+काष्ठा nvmem_cell_lookup;
+काष्ठा nvmem_device;
+काष्ठा tegra_fuse;
 
-struct tegra_fuse_info {
-	u32 (*read)(struct tegra_fuse *fuse, unsigned int offset);
-	unsigned int size;
-	unsigned int spare;
-};
+काष्ठा tegra_fuse_info अणु
+	u32 (*पढ़ो)(काष्ठा tegra_fuse *fuse, अचिन्हित पूर्णांक offset);
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक spare;
+पूर्ण;
 
-struct tegra_fuse_soc {
-	void (*init)(struct tegra_fuse *fuse);
-	void (*speedo_init)(struct tegra_sku_info *info);
-	int (*probe)(struct tegra_fuse *fuse);
+काष्ठा tegra_fuse_soc अणु
+	व्योम (*init)(काष्ठा tegra_fuse *fuse);
+	व्योम (*speeकरो_init)(काष्ठा tegra_sku_info *info);
+	पूर्णांक (*probe)(काष्ठा tegra_fuse *fuse);
 
-	const struct tegra_fuse_info *info;
+	स्थिर काष्ठा tegra_fuse_info *info;
 
-	const struct nvmem_cell_lookup *lookups;
-	unsigned int num_lookups;
+	स्थिर काष्ठा nvmem_cell_lookup *lookups;
+	अचिन्हित पूर्णांक num_lookups;
 
-	const struct attribute_group *soc_attr_group;
-};
+	स्थिर काष्ठा attribute_group *soc_attr_group;
+पूर्ण;
 
-struct tegra_fuse {
-	struct device *dev;
-	void __iomem *base;
+काष्ठा tegra_fuse अणु
+	काष्ठा device *dev;
+	व्योम __iomem *base;
 	phys_addr_t phys;
-	struct clk *clk;
+	काष्ठा clk *clk;
 
-	u32 (*read_early)(struct tegra_fuse *fuse, unsigned int offset);
-	u32 (*read)(struct tegra_fuse *fuse, unsigned int offset);
-	const struct tegra_fuse_soc *soc;
+	u32 (*पढ़ो_early)(काष्ठा tegra_fuse *fuse, अचिन्हित पूर्णांक offset);
+	u32 (*पढ़ो)(काष्ठा tegra_fuse *fuse, अचिन्हित पूर्णांक offset);
+	स्थिर काष्ठा tegra_fuse_soc *soc;
 
 	/* APBDMA on Tegra20 */
-	struct {
-		struct mutex lock;
-		struct completion wait;
-		struct dma_chan *chan;
-		struct dma_slave_config config;
+	काष्ठा अणु
+		काष्ठा mutex lock;
+		काष्ठा completion रुको;
+		काष्ठा dma_chan *chan;
+		काष्ठा dma_slave_config config;
 		dma_addr_t phys;
 		u32 *virt;
-	} apbdma;
+	पूर्ण apbdma;
 
-	struct nvmem_device *nvmem;
-	struct nvmem_cell_lookup *lookups;
-};
+	काष्ठा nvmem_device *nvmem;
+	काष्ठा nvmem_cell_lookup *lookups;
+पूर्ण;
 
-void tegra_init_revision(void);
-void tegra_init_apbmisc(void);
+व्योम tegra_init_revision(व्योम);
+व्योम tegra_init_apbmisc(व्योम);
 
-bool __init tegra_fuse_read_spare(unsigned int spare);
-u32 __init tegra_fuse_read_early(unsigned int offset);
+bool __init tegra_fuse_पढ़ो_spare(अचिन्हित पूर्णांक spare);
+u32 __init tegra_fuse_पढ़ो_early(अचिन्हित पूर्णांक offset);
 
-u8 tegra_get_major_rev(void);
-u8 tegra_get_minor_rev(void);
+u8 tegra_get_major_rev(व्योम);
+u8 tegra_get_minor_rev(व्योम);
 
-extern const struct attribute_group tegra_soc_attr_group;
+बाह्य स्थिर काष्ठा attribute_group tegra_soc_attr_group;
 
-#ifdef CONFIG_ARCH_TEGRA_2x_SOC
-void tegra20_init_speedo_data(struct tegra_sku_info *sku_info);
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_2x_SOC
+व्योम tegra20_init_speeकरो_data(काष्ठा tegra_sku_info *sku_info);
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_TEGRA_3x_SOC
-void tegra30_init_speedo_data(struct tegra_sku_info *sku_info);
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_3x_SOC
+व्योम tegra30_init_speeकरो_data(काष्ठा tegra_sku_info *sku_info);
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_TEGRA_114_SOC
-void tegra114_init_speedo_data(struct tegra_sku_info *sku_info);
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_114_SOC
+व्योम tegra114_init_speeकरो_data(काष्ठा tegra_sku_info *sku_info);
+#पूर्ण_अगर
 
-#if defined(CONFIG_ARCH_TEGRA_124_SOC) || defined(CONFIG_ARCH_TEGRA_132_SOC)
-void tegra124_init_speedo_data(struct tegra_sku_info *sku_info);
-#endif
+#अगर defined(CONFIG_ARCH_TEGRA_124_SOC) || defined(CONFIG_ARCH_TEGRA_132_SOC)
+व्योम tegra124_init_speeकरो_data(काष्ठा tegra_sku_info *sku_info);
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_TEGRA_210_SOC
-void tegra210_init_speedo_data(struct tegra_sku_info *sku_info);
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_210_SOC
+व्योम tegra210_init_speeकरो_data(काष्ठा tegra_sku_info *sku_info);
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_TEGRA_2x_SOC
-extern const struct tegra_fuse_soc tegra20_fuse_soc;
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_2x_SOC
+बाह्य स्थिर काष्ठा tegra_fuse_soc tegra20_fuse_soc;
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_TEGRA_3x_SOC
-extern const struct tegra_fuse_soc tegra30_fuse_soc;
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_3x_SOC
+बाह्य स्थिर काष्ठा tegra_fuse_soc tegra30_fuse_soc;
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_TEGRA_114_SOC
-extern const struct tegra_fuse_soc tegra114_fuse_soc;
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_114_SOC
+बाह्य स्थिर काष्ठा tegra_fuse_soc tegra114_fuse_soc;
+#पूर्ण_अगर
 
-#if defined(CONFIG_ARCH_TEGRA_124_SOC) || defined(CONFIG_ARCH_TEGRA_132_SOC)
-extern const struct tegra_fuse_soc tegra124_fuse_soc;
-#endif
+#अगर defined(CONFIG_ARCH_TEGRA_124_SOC) || defined(CONFIG_ARCH_TEGRA_132_SOC)
+बाह्य स्थिर काष्ठा tegra_fuse_soc tegra124_fuse_soc;
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_TEGRA_210_SOC
-extern const struct tegra_fuse_soc tegra210_fuse_soc;
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_210_SOC
+बाह्य स्थिर काष्ठा tegra_fuse_soc tegra210_fuse_soc;
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_TEGRA_186_SOC
-extern const struct tegra_fuse_soc tegra186_fuse_soc;
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_186_SOC
+बाह्य स्थिर काष्ठा tegra_fuse_soc tegra186_fuse_soc;
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_ARCH_TEGRA_194_SOC) || \
+#अगर IS_ENABLED(CONFIG_ARCH_TEGRA_194_SOC) || \
     IS_ENABLED(CONFIG_ARCH_TEGRA_234_SOC)
-extern const struct attribute_group tegra194_soc_attr_group;
-#endif
+बाह्य स्थिर काष्ठा attribute_group tegra194_soc_attr_group;
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_TEGRA_194_SOC
-extern const struct tegra_fuse_soc tegra194_fuse_soc;
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_194_SOC
+बाह्य स्थिर काष्ठा tegra_fuse_soc tegra194_fuse_soc;
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_TEGRA_234_SOC
-extern const struct tegra_fuse_soc tegra234_fuse_soc;
-#endif
+#अगर_घोषित CONFIG_ARCH_TEGRA_234_SOC
+बाह्य स्थिर काष्ठा tegra_fuse_soc tegra234_fuse_soc;
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

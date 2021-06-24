@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#include <linux/ptrace.h>
-#include <linux/tracehook.h>
-#include <linux/sched/task_stack.h>
-#include <linux/regset.h>
-#include <linux/unistd.h>
-#include <linux/elf.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/regset.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/elf.h>
 
-static struct callee_regs *task_callee_regs(struct task_struct *tsk)
-{
-	struct callee_regs *tmp = (struct callee_regs *)tsk->thread.callee_reg;
-	return tmp;
-}
+अटल काष्ठा callee_regs *task_callee_regs(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा callee_regs *पंचांगp = (काष्ठा callee_regs *)tsk->thपढ़ो.callee_reg;
+	वापस पंचांगp;
+पूर्ण
 
-static int genregs_get(struct task_struct *target,
-		       const struct user_regset *regset,
-		       struct membuf to)
-{
-	const struct pt_regs *ptregs = task_pt_regs(target);
-	const struct callee_regs *cregs = task_callee_regs(target);
-	unsigned int stop_pc_val;
+अटल पूर्णांक genregs_get(काष्ठा task_काष्ठा *target,
+		       स्थिर काष्ठा user_regset *regset,
+		       काष्ठा membuf to)
+अणु
+	स्थिर काष्ठा pt_regs *ptregs = task_pt_regs(target);
+	स्थिर काष्ठा callee_regs *cregs = task_callee_regs(target);
+	अचिन्हित पूर्णांक stop_pc_val;
 
 	membuf_zero(&to, 4);	// pad
 	membuf_store(&to, ptregs->bta);
@@ -62,47 +63,47 @@ static int genregs_get(struct task_struct *target,
 	membuf_store(&to, cregs->r15);
 	membuf_store(&to, cregs->r14);
 	membuf_store(&to, cregs->r13);
-	membuf_store(&to, target->thread.fault_address); // efa
+	membuf_store(&to, target->thपढ़ो.fault_address); // efa
 
-	if (in_brkpt_trap(ptregs)) {
-		stop_pc_val = target->thread.fault_address;
+	अगर (in_brkpt_trap(ptregs)) अणु
+		stop_pc_val = target->thपढ़ो.fault_address;
 		pr_debug("\t\tstop_pc (brk-pt)\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		stop_pc_val = ptregs->ret;
 		pr_debug("\t\tstop_pc (others)\n");
-	}
+	पूर्ण
 
-	return membuf_store(&to, stop_pc_val); // stop_pc
-}
+	वापस membuf_store(&to, stop_pc_val); // stop_pc
+पूर्ण
 
-static int genregs_set(struct task_struct *target,
-		       const struct user_regset *regset,
-		       unsigned int pos, unsigned int count,
-		       const void *kbuf, const void __user *ubuf)
-{
-	const struct pt_regs *ptregs = task_pt_regs(target);
-	const struct callee_regs *cregs = task_callee_regs(target);
-	int ret = 0;
+अटल पूर्णांक genregs_set(काष्ठा task_काष्ठा *target,
+		       स्थिर काष्ठा user_regset *regset,
+		       अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		       स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	स्थिर काष्ठा pt_regs *ptregs = task_pt_regs(target);
+	स्थिर काष्ठा callee_regs *cregs = task_callee_regs(target);
+	पूर्णांक ret = 0;
 
-#define REG_IN_CHUNK(FIRST, NEXT, PTR)	\
-	if (!ret)			\
+#घोषणा REG_IN_CHUNK(FIRST, NEXT, PTR)	\
+	अगर (!ret)			\
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, \
-			(void *)(PTR), \
-			offsetof(struct user_regs_struct, FIRST), \
-			offsetof(struct user_regs_struct, NEXT));
+			(व्योम *)(PTR), \
+			दुरत्व(काष्ठा user_regs_काष्ठा, FIRST), \
+			दुरत्व(काष्ठा user_regs_काष्ठा, NEXT));
 
-#define REG_IN_ONE(LOC, PTR)		\
-	if (!ret)			\
+#घोषणा REG_IN_ONE(LOC, PTR)		\
+	अगर (!ret)			\
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, \
-			(void *)(PTR), \
-			offsetof(struct user_regs_struct, LOC), \
-			offsetof(struct user_regs_struct, LOC) + 4);
+			(व्योम *)(PTR), \
+			दुरत्व(काष्ठा user_regs_काष्ठा, LOC), \
+			दुरत्व(काष्ठा user_regs_काष्ठा, LOC) + 4);
 
-#define REG_IGNORE_ONE(LOC)		\
-	if (!ret)			\
+#घोषणा REG_IGNORE_ONE(LOC)		\
+	अगर (!ret)			\
 		ret = user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf, \
-			offsetof(struct user_regs_struct, LOC), \
-			offsetof(struct user_regs_struct, LOC) + 4);
+			दुरत्व(काष्ठा user_regs_काष्ठा, LOC), \
+			दुरत्व(काष्ठा user_regs_काष्ठा, LOC) + 4);
 
 	REG_IGNORE_ONE(pad);
 
@@ -151,120 +152,120 @@ static int genregs_set(struct task_struct *target,
 	REG_IGNORE_ONE(efa);			/* efa update invalid */
 	REG_IGNORE_ONE(stop_pc);		/* PC updated via @ret */
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_ISA_ARCV2
-static int arcv2regs_get(struct task_struct *target,
-		       const struct user_regset *regset,
-		       struct membuf to)
-{
-	const struct pt_regs *regs = task_pt_regs(target);
+#अगर_घोषित CONFIG_ISA_ARCV2
+अटल पूर्णांक arcv2regs_get(काष्ठा task_काष्ठा *target,
+		       स्थिर काष्ठा user_regset *regset,
+		       काष्ठा membuf to)
+अणु
+	स्थिर काष्ठा pt_regs *regs = task_pt_regs(target);
 
-	if (IS_ENABLED(CONFIG_ARC_HAS_ACCL_REGS))
+	अगर (IS_ENABLED(CONFIG_ARC_HAS_ACCL_REGS))
 		/*
 		 * itemized copy not needed like above as layout of regs (r30,r58,r59)
 		 * is exactly same in kernel (pt_regs) and userspace (user_regs_arcv2)
 		 */
-		return membuf_write(&to, &regs->r30, sizeof(struct user_regs_arcv2));
+		वापस membuf_ग_लिखो(&to, &regs->r30, माप(काष्ठा user_regs_arcv2));
 
 
-	membuf_write(&to, &regs->r30, 4); /* r30 only */
-	return membuf_zero(&to, sizeof(struct user_regs_arcv2) - 4);
-}
+	membuf_ग_लिखो(&to, &regs->r30, 4); /* r30 only */
+	वापस membuf_zero(&to, माप(काष्ठा user_regs_arcv2) - 4);
+पूर्ण
 
-static int arcv2regs_set(struct task_struct *target,
-		       const struct user_regset *regset,
-		       unsigned int pos, unsigned int count,
-		       const void *kbuf, const void __user *ubuf)
-{
-	const struct pt_regs *regs = task_pt_regs(target);
-	int ret, copy_sz;
+अटल पूर्णांक arcv2regs_set(काष्ठा task_काष्ठा *target,
+		       स्थिर काष्ठा user_regset *regset,
+		       अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		       स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	स्थिर काष्ठा pt_regs *regs = task_pt_regs(target);
+	पूर्णांक ret, copy_sz;
 
-	if (IS_ENABLED(CONFIG_ARC_HAS_ACCL_REGS))
-		copy_sz = sizeof(struct user_regs_arcv2);
-	else
+	अगर (IS_ENABLED(CONFIG_ARC_HAS_ACCL_REGS))
+		copy_sz = माप(काष्ठा user_regs_arcv2);
+	अन्यथा
 		copy_sz = 4;	/* r30 only */
 
-	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, (void *)&regs->r30,
+	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, (व्योम *)&regs->r30,
 				  0, copy_sz);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-enum arc_getset {
+क्रमागत arc_माला_लोet अणु
 	REGSET_CMN,
 	REGSET_ARCV2,
-};
+पूर्ण;
 
-static const struct user_regset arc_regsets[] = {
-	[REGSET_CMN] = {
+अटल स्थिर काष्ठा user_regset arc_regsets[] = अणु
+	[REGSET_CMN] = अणु
 	       .core_note_type = NT_PRSTATUS,
 	       .n = ELF_NGREG,
-	       .size = sizeof(unsigned long),
-	       .align = sizeof(unsigned long),
+	       .size = माप(अचिन्हित दीर्घ),
+	       .align = माप(अचिन्हित दीर्घ),
 	       .regset_get = genregs_get,
 	       .set = genregs_set,
-	},
-#ifdef CONFIG_ISA_ARCV2
-	[REGSET_ARCV2] = {
+	पूर्ण,
+#अगर_घोषित CONFIG_ISA_ARCV2
+	[REGSET_ARCV2] = अणु
 	       .core_note_type = NT_ARC_V2,
 	       .n = ELF_ARCV2REG,
-	       .size = sizeof(unsigned long),
-	       .align = sizeof(unsigned long),
+	       .size = माप(अचिन्हित दीर्घ),
+	       .align = माप(अचिन्हित दीर्घ),
 	       .regset_get = arcv2regs_get,
 	       .set = arcv2regs_set,
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct user_regset_view user_arc_view = {
+अटल स्थिर काष्ठा user_regset_view user_arc_view = अणु
 	.name		= "arc",
 	.e_machine	= EM_ARC_INUSE,
 	.regsets	= arc_regsets,
 	.n		= ARRAY_SIZE(arc_regsets)
-};
+पूर्ण;
 
-const struct user_regset_view *task_user_regset_view(struct task_struct *task)
-{
-	return &user_arc_view;
-}
+स्थिर काष्ठा user_regset_view *task_user_regset_view(काष्ठा task_काष्ठा *task)
+अणु
+	वापस &user_arc_view;
+पूर्ण
 
-void ptrace_disable(struct task_struct *child)
-{
-}
+व्योम ptrace_disable(काष्ठा task_काष्ठा *child)
+अणु
+पूर्ण
 
-long arch_ptrace(struct task_struct *child, long request,
-		 unsigned long addr, unsigned long data)
-{
-	int ret = -EIO;
+दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
+		 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
+अणु
+	पूर्णांक ret = -EIO;
 
 	pr_debug("REQ=%ld: ADDR =0x%lx, DATA=0x%lx)\n", request, addr, data);
 
-	switch (request) {
-	case PTRACE_GET_THREAD_AREA:
-		ret = put_user(task_thread_info(child)->thr_ptr,
-			       (unsigned long __user *)data);
-		break;
-	default:
+	चयन (request) अणु
+	हाल PTRACE_GET_THREAD_AREA:
+		ret = put_user(task_thपढ़ो_info(child)->thr_ptr,
+			       (अचिन्हित दीर्घ __user *)data);
+		अवरोध;
+	शेष:
 		ret = ptrace_request(child, request, addr, data);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-asmlinkage int syscall_trace_entry(struct pt_regs *regs)
-{
-	if (tracehook_report_syscall_entry(regs))
-		return ULONG_MAX;
+यंत्रlinkage पूर्णांक syscall_trace_entry(काष्ठा pt_regs *regs)
+अणु
+	अगर (tracehook_report_syscall_entry(regs))
+		वापस अच_दीर्घ_उच्च;
 
-	return regs->r8;
-}
+	वापस regs->r8;
+पूर्ण
 
-asmlinkage void syscall_trace_exit(struct pt_regs *regs)
-{
-	tracehook_report_syscall_exit(regs, 0);
-}
+यंत्रlinkage व्योम syscall_trace_निकास(काष्ठा pt_regs *regs)
+अणु
+	tracehook_report_syscall_निकास(regs, 0);
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -26,23 +27,23 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  */
 
-#include <linux/console.h>
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/console.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_gem_vram_helper.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_gem_vram_helper.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#include "ast_drv.h"
+#समावेश "ast_drv.h"
 
-int ast_modeset = -1;
+पूर्णांक ast_modeset = -1;
 
 MODULE_PARM_DESC(modeset, "Disable/Enable modesetting");
-module_param_named(modeset, ast_modeset, int, 0400);
+module_param_named(modeset, ast_modeset, पूर्णांक, 0400);
 
 /*
  * DRM driver
@@ -50,7 +51,7 @@ module_param_named(modeset, ast_modeset, int, 0400);
 
 DEFINE_DRM_GEM_FOPS(ast_fops);
 
-static const struct drm_driver ast_driver = {
+अटल स्थिर काष्ठा drm_driver ast_driver = अणु
 	.driver_features = DRIVER_ATOMIC |
 			   DRIVER_GEM |
 			   DRIVER_MODESET,
@@ -64,192 +65,192 @@ static const struct drm_driver ast_driver = {
 	.patchlevel = DRIVER_PATCHLEVEL,
 
 	DRM_GEM_VRAM_DRIVER
-};
+पूर्ण;
 
 /*
  * PCI driver
  */
 
-#define PCI_VENDOR_ASPEED 0x1a03
+#घोषणा PCI_VENDOR_ASPEED 0x1a03
 
-#define AST_VGA_DEVICE(id, info) {		\
+#घोषणा AST_VGA_DEVICE(id, info) अणु		\
 	.class = PCI_BASE_CLASS_DISPLAY << 16,	\
 	.class_mask = 0xff0000,			\
-	.vendor = PCI_VENDOR_ASPEED,			\
+	.venकरोr = PCI_VENDOR_ASPEED,			\
 	.device = id,				\
-	.subvendor = PCI_ANY_ID,		\
+	.subvenकरोr = PCI_ANY_ID,		\
 	.subdevice = PCI_ANY_ID,		\
-	.driver_data = (unsigned long) info }
+	.driver_data = (अचिन्हित दीर्घ) info पूर्ण
 
-static const struct pci_device_id ast_pciidlist[] = {
-	AST_VGA_DEVICE(PCI_CHIP_AST2000, NULL),
-	AST_VGA_DEVICE(PCI_CHIP_AST2100, NULL),
-	{0, 0, 0},
-};
+अटल स्थिर काष्ठा pci_device_id ast_pciidlist[] = अणु
+	AST_VGA_DEVICE(PCI_CHIP_AST2000, शून्य),
+	AST_VGA_DEVICE(PCI_CHIP_AST2100, शून्य),
+	अणु0, 0, 0पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, ast_pciidlist);
 
-static void ast_kick_out_firmware_fb(struct pci_dev *pdev)
-{
-	struct apertures_struct *ap;
+अटल व्योम ast_kick_out_firmware_fb(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा apertures_काष्ठा *ap;
 	bool primary = false;
 
 	ap = alloc_apertures(1);
-	if (!ap)
-		return;
+	अगर (!ap)
+		वापस;
 
 	ap->ranges[0].base = pci_resource_start(pdev, 0);
 	ap->ranges[0].size = pci_resource_len(pdev, 0);
 
-#ifdef CONFIG_X86
+#अगर_घोषित CONFIG_X86
 	primary = pdev->resource[PCI_ROM_RESOURCE].flags & IORESOURCE_ROM_SHADOW;
-#endif
-	drm_fb_helper_remove_conflicting_framebuffers(ap, "astdrmfb", primary);
-	kfree(ap);
-}
+#पूर्ण_अगर
+	drm_fb_helper_हटाओ_conflicting_framebuffers(ap, "astdrmfb", primary);
+	kमुक्त(ap);
+पूर्ण
 
-static int ast_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	struct ast_private *ast;
-	struct drm_device *dev;
-	int ret;
+अटल पूर्णांक ast_pci_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा ast_निजी *ast;
+	काष्ठा drm_device *dev;
+	पूर्णांक ret;
 
 	ast_kick_out_firmware_fb(pdev);
 
 	ret = pcim_enable_device(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ast = ast_device_create(&ast_driver, pdev, ent->driver_data);
-	if (IS_ERR(ast))
-		return PTR_ERR(ast);
+	अगर (IS_ERR(ast))
+		वापस PTR_ERR(ast);
 	dev = &ast->base;
 
-	ret = drm_dev_register(dev, ent->driver_data);
-	if (ret)
-		return ret;
+	ret = drm_dev_रेजिस्टर(dev, ent->driver_data);
+	अगर (ret)
+		वापस ret;
 
 	drm_fbdev_generic_setup(dev, 32);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ast_pci_remove(struct pci_dev *pdev)
-{
-	struct drm_device *dev = pci_get_drvdata(pdev);
+अटल व्योम ast_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा drm_device *dev = pci_get_drvdata(pdev);
 
-	drm_dev_unregister(dev);
-	drm_atomic_helper_shutdown(dev);
-}
+	drm_dev_unरेजिस्टर(dev);
+	drm_atomic_helper_shutकरोwn(dev);
+पूर्ण
 
-static int ast_drm_freeze(struct drm_device *dev)
-{
-	int error;
+अटल पूर्णांक ast_drm_मुक्तze(काष्ठा drm_device *dev)
+अणु
+	पूर्णांक error;
 
 	error = drm_mode_config_helper_suspend(dev);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	pci_save_state(to_pci_dev(dev->dev));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ast_drm_thaw(struct drm_device *dev)
-{
+अटल पूर्णांक ast_drm_thaw(काष्ठा drm_device *dev)
+अणु
 	ast_post_gpu(dev);
 
-	return drm_mode_config_helper_resume(dev);
-}
+	वापस drm_mode_config_helper_resume(dev);
+पूर्ण
 
-static int ast_drm_resume(struct drm_device *dev)
-{
-	int ret;
+अटल पूर्णांक ast_drm_resume(काष्ठा drm_device *dev)
+अणु
+	पूर्णांक ret;
 
-	if (pci_enable_device(to_pci_dev(dev->dev)))
-		return -EIO;
+	अगर (pci_enable_device(to_pci_dev(dev->dev)))
+		वापस -EIO;
 
 	ret = ast_drm_thaw(dev);
-	if (ret)
-		return ret;
-	return 0;
-}
+	अगर (ret)
+		वापस ret;
+	वापस 0;
+पूर्ण
 
-static int ast_pm_suspend(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct drm_device *ddev = pci_get_drvdata(pdev);
-	int error;
+अटल पूर्णांक ast_pm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा drm_device *ddev = pci_get_drvdata(pdev);
+	पूर्णांक error;
 
-	error = ast_drm_freeze(ddev);
-	if (error)
-		return error;
+	error = ast_drm_मुक्तze(ddev);
+	अगर (error)
+		वापस error;
 
 	pci_disable_device(pdev);
-	pci_set_power_state(pdev, PCI_D3hot);
-	return 0;
-}
+	pci_set_घातer_state(pdev, PCI_D3hot);
+	वापस 0;
+पूर्ण
 
-static int ast_pm_resume(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct drm_device *ddev = pci_get_drvdata(pdev);
-	return ast_drm_resume(ddev);
-}
+अटल पूर्णांक ast_pm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा drm_device *ddev = pci_get_drvdata(pdev);
+	वापस ast_drm_resume(ddev);
+पूर्ण
 
-static int ast_pm_freeze(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct drm_device *ddev = pci_get_drvdata(pdev);
-	return ast_drm_freeze(ddev);
-}
+अटल पूर्णांक ast_pm_मुक्तze(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा drm_device *ddev = pci_get_drvdata(pdev);
+	वापस ast_drm_मुक्तze(ddev);
+पूर्ण
 
-static int ast_pm_thaw(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct drm_device *ddev = pci_get_drvdata(pdev);
-	return ast_drm_thaw(ddev);
-}
+अटल पूर्णांक ast_pm_thaw(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा drm_device *ddev = pci_get_drvdata(pdev);
+	वापस ast_drm_thaw(ddev);
+पूर्ण
 
-static int ast_pm_poweroff(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct drm_device *ddev = pci_get_drvdata(pdev);
+अटल पूर्णांक ast_pm_घातeroff(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा drm_device *ddev = pci_get_drvdata(pdev);
 
-	return ast_drm_freeze(ddev);
-}
+	वापस ast_drm_मुक्तze(ddev);
+पूर्ण
 
-static const struct dev_pm_ops ast_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops ast_pm_ops = अणु
 	.suspend = ast_pm_suspend,
 	.resume = ast_pm_resume,
-	.freeze = ast_pm_freeze,
+	.मुक्तze = ast_pm_मुक्तze,
 	.thaw = ast_pm_thaw,
-	.poweroff = ast_pm_poweroff,
+	.घातeroff = ast_pm_घातeroff,
 	.restore = ast_pm_resume,
-};
+पूर्ण;
 
-static struct pci_driver ast_pci_driver = {
+अटल काष्ठा pci_driver ast_pci_driver = अणु
 	.name = DRIVER_NAME,
 	.id_table = ast_pciidlist,
 	.probe = ast_pci_probe,
-	.remove = ast_pci_remove,
+	.हटाओ = ast_pci_हटाओ,
 	.driver.pm = &ast_pm_ops,
-};
+पूर्ण;
 
-static int __init ast_init(void)
-{
-	if (vgacon_text_force() && ast_modeset == -1)
-		return -EINVAL;
+अटल पूर्णांक __init ast_init(व्योम)
+अणु
+	अगर (vgacon_text_क्रमce() && ast_modeset == -1)
+		वापस -EINVAL;
 
-	if (ast_modeset == 0)
-		return -EINVAL;
-	return pci_register_driver(&ast_pci_driver);
-}
-static void __exit ast_exit(void)
-{
-	pci_unregister_driver(&ast_pci_driver);
-}
+	अगर (ast_modeset == 0)
+		वापस -EINVAL;
+	वापस pci_रेजिस्टर_driver(&ast_pci_driver);
+पूर्ण
+अटल व्योम __निकास ast_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&ast_pci_driver);
+पूर्ण
 
 module_init(ast_init);
-module_exit(ast_exit);
+module_निकास(ast_निकास);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);

@@ -1,18 +1,19 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
 
-#ifndef __I915_SELFTESTS_IGT_RESET_H__
-#define __I915_SELFTESTS_IGT_RESET_H__
+#अगर_अघोषित __I915_SELFTESTS_IGT_RESET_H__
+#घोषणा __I915_SELFTESTS_IGT_RESET_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct intel_gt;
+काष्ठा पूर्णांकel_gt;
 
-void igt_global_reset_lock(struct intel_gt *gt);
-void igt_global_reset_unlock(struct intel_gt *gt);
-bool igt_force_reset(struct intel_gt *gt);
+व्योम igt_global_reset_lock(काष्ठा पूर्णांकel_gt *gt);
+व्योम igt_global_reset_unlock(काष्ठा पूर्णांकel_gt *gt);
+bool igt_क्रमce_reset(काष्ठा पूर्णांकel_gt *gt);
 
-#endif
+#पूर्ण_अगर

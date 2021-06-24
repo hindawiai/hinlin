@@ -1,221 +1,222 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *	Wrapper functions for 16bit uid back compatibility. All nicely tied
- *	together in the faint hope we can take the out in five years time.
+ *	Wrapper functions क्रम 16bit uid back compatibility. All nicely tied
+ *	together in the faपूर्णांक hope we can take the out in five years समय.
  */
 
-#include <linux/mm.h>
-#include <linux/mman.h>
-#include <linux/notifier.h>
-#include <linux/reboot.h>
-#include <linux/prctl.h>
-#include <linux/capability.h>
-#include <linux/init.h>
-#include <linux/highuid.h>
-#include <linux/security.h>
-#include <linux/cred.h>
-#include <linux/syscalls.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/prctl.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/init.h>
+#समावेश <linux/highuid.h>
+#समावेश <linux/security.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/syscalls.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "uid16.h"
+#समावेश "uid16.h"
 
-SYSCALL_DEFINE3(chown16, const char __user *, filename, old_uid_t, user, old_gid_t, group)
-{
-	return ksys_chown(filename, low2highuid(user), low2highgid(group));
-}
+SYSCALL_DEFINE3(chown16, स्थिर अक्षर __user *, filename, old_uid_t, user, old_gid_t, group)
+अणु
+	वापस ksys_chown(filename, low2highuid(user), low2highgid(group));
+पूर्ण
 
-SYSCALL_DEFINE3(lchown16, const char __user *, filename, old_uid_t, user, old_gid_t, group)
-{
-	return ksys_lchown(filename, low2highuid(user), low2highgid(group));
-}
+SYSCALL_DEFINE3(lchown16, स्थिर अक्षर __user *, filename, old_uid_t, user, old_gid_t, group)
+अणु
+	वापस ksys_lchown(filename, low2highuid(user), low2highgid(group));
+पूर्ण
 
-SYSCALL_DEFINE3(fchown16, unsigned int, fd, old_uid_t, user, old_gid_t, group)
-{
-	return ksys_fchown(fd, low2highuid(user), low2highgid(group));
-}
+SYSCALL_DEFINE3(fchown16, अचिन्हित पूर्णांक, fd, old_uid_t, user, old_gid_t, group)
+अणु
+	वापस ksys_fchown(fd, low2highuid(user), low2highgid(group));
+पूर्ण
 
 SYSCALL_DEFINE2(setregid16, old_gid_t, rgid, old_gid_t, egid)
-{
-	return __sys_setregid(low2highgid(rgid), low2highgid(egid));
-}
+अणु
+	वापस __sys_setregid(low2highgid(rgid), low2highgid(egid));
+पूर्ण
 
 SYSCALL_DEFINE1(setgid16, old_gid_t, gid)
-{
-	return __sys_setgid(low2highgid(gid));
-}
+अणु
+	वापस __sys_setgid(low2highgid(gid));
+पूर्ण
 
 SYSCALL_DEFINE2(setreuid16, old_uid_t, ruid, old_uid_t, euid)
-{
-	return __sys_setreuid(low2highuid(ruid), low2highuid(euid));
-}
+अणु
+	वापस __sys_setreuid(low2highuid(ruid), low2highuid(euid));
+पूर्ण
 
 SYSCALL_DEFINE1(setuid16, old_uid_t, uid)
-{
-	return __sys_setuid(low2highuid(uid));
-}
+अणु
+	वापस __sys_setuid(low2highuid(uid));
+पूर्ण
 
 SYSCALL_DEFINE3(setresuid16, old_uid_t, ruid, old_uid_t, euid, old_uid_t, suid)
-{
-	return __sys_setresuid(low2highuid(ruid), low2highuid(euid),
+अणु
+	वापस __sys_setresuid(low2highuid(ruid), low2highuid(euid),
 				 low2highuid(suid));
-}
+पूर्ण
 
 SYSCALL_DEFINE3(getresuid16, old_uid_t __user *, ruidp, old_uid_t __user *, euidp, old_uid_t __user *, suidp)
-{
-	const struct cred *cred = current_cred();
-	int retval;
+अणु
+	स्थिर काष्ठा cred *cred = current_cred();
+	पूर्णांक retval;
 	old_uid_t ruid, euid, suid;
 
 	ruid = high2lowuid(from_kuid_munged(cred->user_ns, cred->uid));
 	euid = high2lowuid(from_kuid_munged(cred->user_ns, cred->euid));
 	suid = high2lowuid(from_kuid_munged(cred->user_ns, cred->suid));
 
-	if (!(retval   = put_user(ruid, ruidp)) &&
+	अगर (!(retval   = put_user(ruid, ruidp)) &&
 	    !(retval   = put_user(euid, euidp)))
 		retval = put_user(suid, suidp);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SYSCALL_DEFINE3(setresgid16, old_gid_t, rgid, old_gid_t, egid, old_gid_t, sgid)
-{
-	return __sys_setresgid(low2highgid(rgid), low2highgid(egid),
+अणु
+	वापस __sys_setresgid(low2highgid(rgid), low2highgid(egid),
 				 low2highgid(sgid));
-}
+पूर्ण
 
 SYSCALL_DEFINE3(getresgid16, old_gid_t __user *, rgidp, old_gid_t __user *, egidp, old_gid_t __user *, sgidp)
-{
-	const struct cred *cred = current_cred();
-	int retval;
+अणु
+	स्थिर काष्ठा cred *cred = current_cred();
+	पूर्णांक retval;
 	old_gid_t rgid, egid, sgid;
 
 	rgid = high2lowgid(from_kgid_munged(cred->user_ns, cred->gid));
 	egid = high2lowgid(from_kgid_munged(cred->user_ns, cred->egid));
 	sgid = high2lowgid(from_kgid_munged(cred->user_ns, cred->sgid));
 
-	if (!(retval   = put_user(rgid, rgidp)) &&
+	अगर (!(retval   = put_user(rgid, rgidp)) &&
 	    !(retval   = put_user(egid, egidp)))
 		retval = put_user(sgid, sgidp);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SYSCALL_DEFINE1(setfsuid16, old_uid_t, uid)
-{
-	return __sys_setfsuid(low2highuid(uid));
-}
+अणु
+	वापस __sys_setfsuid(low2highuid(uid));
+पूर्ण
 
 SYSCALL_DEFINE1(setfsgid16, old_gid_t, gid)
-{
-	return __sys_setfsgid(low2highgid(gid));
-}
+अणु
+	वापस __sys_setfsgid(low2highgid(gid));
+पूर्ण
 
-static int groups16_to_user(old_gid_t __user *grouplist,
-    struct group_info *group_info)
-{
-	struct user_namespace *user_ns = current_user_ns();
-	int i;
+अटल पूर्णांक groups16_to_user(old_gid_t __user *grouplist,
+    काष्ठा group_info *group_info)
+अणु
+	काष्ठा user_namespace *user_ns = current_user_ns();
+	पूर्णांक i;
 	old_gid_t group;
 	kgid_t kgid;
 
-	for (i = 0; i < group_info->ngroups; i++) {
+	क्रम (i = 0; i < group_info->ngroups; i++) अणु
 		kgid = group_info->gid[i];
 		group = high2lowgid(from_kgid_munged(user_ns, kgid));
-		if (put_user(group, grouplist+i))
-			return -EFAULT;
-	}
+		अगर (put_user(group, grouplist+i))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int groups16_from_user(struct group_info *group_info,
+अटल पूर्णांक groups16_from_user(काष्ठा group_info *group_info,
     old_gid_t __user *grouplist)
-{
-	struct user_namespace *user_ns = current_user_ns();
-	int i;
+अणु
+	काष्ठा user_namespace *user_ns = current_user_ns();
+	पूर्णांक i;
 	old_gid_t group;
 	kgid_t kgid;
 
-	for (i = 0; i < group_info->ngroups; i++) {
-		if (get_user(group, grouplist+i))
-			return  -EFAULT;
+	क्रम (i = 0; i < group_info->ngroups; i++) अणु
+		अगर (get_user(group, grouplist+i))
+			वापस  -EFAULT;
 
 		kgid = make_kgid(user_ns, low2highgid(group));
-		if (!gid_valid(kgid))
-			return -EINVAL;
+		अगर (!gid_valid(kgid))
+			वापस -EINVAL;
 
 		group_info->gid[i] = kgid;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-SYSCALL_DEFINE2(getgroups16, int, gidsetsize, old_gid_t __user *, grouplist)
-{
-	const struct cred *cred = current_cred();
-	int i;
+SYSCALL_DEFINE2(getgroups16, पूर्णांक, gidsetsize, old_gid_t __user *, grouplist)
+अणु
+	स्थिर काष्ठा cred *cred = current_cred();
+	पूर्णांक i;
 
-	if (gidsetsize < 0)
-		return -EINVAL;
+	अगर (gidsetsize < 0)
+		वापस -EINVAL;
 
 	i = cred->group_info->ngroups;
-	if (gidsetsize) {
-		if (i > gidsetsize) {
+	अगर (gidsetsize) अणु
+		अगर (i > gidsetsize) अणु
 			i = -EINVAL;
-			goto out;
-		}
-		if (groups16_to_user(grouplist, cred->group_info)) {
+			जाओ out;
+		पूर्ण
+		अगर (groups16_to_user(grouplist, cred->group_info)) अणु
 			i = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out:
-	return i;
-}
+	वापस i;
+पूर्ण
 
-SYSCALL_DEFINE2(setgroups16, int, gidsetsize, old_gid_t __user *, grouplist)
-{
-	struct group_info *group_info;
-	int retval;
+SYSCALL_DEFINE2(setgroups16, पूर्णांक, gidsetsize, old_gid_t __user *, grouplist)
+अणु
+	काष्ठा group_info *group_info;
+	पूर्णांक retval;
 
-	if (!may_setgroups())
-		return -EPERM;
-	if ((unsigned)gidsetsize > NGROUPS_MAX)
-		return -EINVAL;
+	अगर (!may_setgroups())
+		वापस -EPERM;
+	अगर ((अचिन्हित)gidsetsize > NGROUPS_MAX)
+		वापस -EINVAL;
 
 	group_info = groups_alloc(gidsetsize);
-	if (!group_info)
-		return -ENOMEM;
+	अगर (!group_info)
+		वापस -ENOMEM;
 	retval = groups16_from_user(group_info, grouplist);
-	if (retval) {
+	अगर (retval) अणु
 		put_group_info(group_info);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	groups_sort(group_info);
 	retval = set_current_groups(group_info);
 	put_group_info(group_info);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 SYSCALL_DEFINE0(getuid16)
-{
-	return high2lowuid(from_kuid_munged(current_user_ns(), current_uid()));
-}
+अणु
+	वापस high2lowuid(from_kuid_munged(current_user_ns(), current_uid()));
+पूर्ण
 
 SYSCALL_DEFINE0(geteuid16)
-{
-	return high2lowuid(from_kuid_munged(current_user_ns(), current_euid()));
-}
+अणु
+	वापस high2lowuid(from_kuid_munged(current_user_ns(), current_euid()));
+पूर्ण
 
 SYSCALL_DEFINE0(getgid16)
-{
-	return high2lowgid(from_kgid_munged(current_user_ns(), current_gid()));
-}
+अणु
+	वापस high2lowgid(from_kgid_munged(current_user_ns(), current_gid()));
+पूर्ण
 
 SYSCALL_DEFINE0(getegid16)
-{
-	return high2lowgid(from_kgid_munged(current_user_ns(), current_egid()));
-}
+अणु
+	वापस high2lowgid(from_kgid_munged(current_user_ns(), current_egid()));
+पूर्ण

@@ -1,346 +1,347 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Au1000/Au1500/Au1100 AC97C controller driver for ASoC
+ * Au1000/Au1500/Au1100 AC97C controller driver क्रम ASoC
  *
  * (c) 2011 Manuel Lauss <manuel.lauss@googlemail.com>
  *
  * based on the old ALSA driver originally written by
- *			Charles Eidsness <charles@cooper-street.com>
+ *			Charles Eidsness <अक्षरles@cooper-street.com>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/delay.h>
-#include <linux/mutex.h>
-#include <linux/platform_device.h>
-#include <linux/suspend.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/initval.h>
-#include <sound/soc.h>
-#include <asm/mach-au1x00/au1000.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/suspend.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/soc.h>
+#समावेश <यंत्र/mach-au1x00/au1000.h>
 
-#include "psc.h"
+#समावेश "psc.h"
 
-/* register offsets and bits */
-#define AC97_CONFIG	0x00
-#define AC97_STATUS	0x04
-#define AC97_DATA	0x08
-#define AC97_CMDRESP	0x0c
-#define AC97_ENABLE	0x10
+/* रेजिस्टर offsets and bits */
+#घोषणा AC97_CONFIG	0x00
+#घोषणा AC97_STATUS	0x04
+#घोषणा AC97_DATA	0x08
+#घोषणा AC97_CMDRESP	0x0c
+#घोषणा AC97_ENABLE	0x10
 
-#define CFG_RC(x)	(((x) & 0x3ff) << 13)	/* valid rx slots mask */
-#define CFG_XS(x)	(((x) & 0x3ff) << 3)	/* valid tx slots mask */
-#define CFG_SG		(1 << 2)	/* sync gate */
-#define CFG_SN		(1 << 1)	/* sync control */
-#define CFG_RS		(1 << 0)	/* acrst# control */
-#define STAT_XU		(1 << 11)	/* tx underflow */
-#define STAT_XO		(1 << 10)	/* tx overflow */
-#define STAT_RU		(1 << 9)	/* rx underflow */
-#define STAT_RO		(1 << 8)	/* rx overflow */
-#define STAT_RD		(1 << 7)	/* codec ready */
-#define STAT_CP		(1 << 6)	/* command pending */
-#define STAT_TE		(1 << 4)	/* tx fifo empty */
-#define STAT_TF		(1 << 3)	/* tx fifo full */
-#define STAT_RE		(1 << 1)	/* rx fifo empty */
-#define STAT_RF		(1 << 0)	/* rx fifo full */
-#define CMD_SET_DATA(x)	(((x) & 0xffff) << 16)
-#define CMD_GET_DATA(x)	((x) & 0xffff)
-#define CMD_READ	(1 << 7)
-#define CMD_WRITE	(0 << 7)
-#define CMD_IDX(x)	((x) & 0x7f)
-#define EN_D		(1 << 1)	/* DISable bit */
-#define EN_CE		(1 << 0)	/* clock enable bit */
+#घोषणा CFG_RC(x)	(((x) & 0x3ff) << 13)	/* valid rx slots mask */
+#घोषणा CFG_XS(x)	(((x) & 0x3ff) << 3)	/* valid tx slots mask */
+#घोषणा CFG_SG		(1 << 2)	/* sync gate */
+#घोषणा CFG_SN		(1 << 1)	/* sync control */
+#घोषणा CFG_RS		(1 << 0)	/* acrst# control */
+#घोषणा STAT_XU		(1 << 11)	/* tx underflow */
+#घोषणा STAT_XO		(1 << 10)	/* tx overflow */
+#घोषणा STAT_RU		(1 << 9)	/* rx underflow */
+#घोषणा STAT_RO		(1 << 8)	/* rx overflow */
+#घोषणा STAT_RD		(1 << 7)	/* codec पढ़ोy */
+#घोषणा STAT_CP		(1 << 6)	/* command pending */
+#घोषणा STAT_TE		(1 << 4)	/* tx fअगरo empty */
+#घोषणा STAT_TF		(1 << 3)	/* tx fअगरo full */
+#घोषणा STAT_RE		(1 << 1)	/* rx fअगरo empty */
+#घोषणा STAT_RF		(1 << 0)	/* rx fअगरo full */
+#घोषणा CMD_SET_DATA(x)	(((x) & 0xffff) << 16)
+#घोषणा CMD_GET_DATA(x)	((x) & 0xffff)
+#घोषणा CMD_READ	(1 << 7)
+#घोषणा CMD_WRITE	(0 << 7)
+#घोषणा CMD_IDX(x)	((x) & 0x7f)
+#घोषणा EN_D		(1 << 1)	/* DISable bit */
+#घोषणा EN_CE		(1 << 0)	/* घड़ी enable bit */
 
-/* how often to retry failed codec register reads/writes */
-#define AC97_RW_RETRIES	5
+/* how often to retry failed codec रेजिस्टर पढ़ोs/ग_लिखोs */
+#घोषणा AC97_RW_RETRIES	5
 
-#define AC97_RATES	\
+#घोषणा AC97_RATES	\
 	SNDRV_PCM_RATE_CONTINUOUS
 
-#define AC97_FMTS	\
+#घोषणा AC97_FMTS	\
 	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE)
 
-/* instance data. There can be only one, MacLeod!!!!, fortunately there IS only
+/* instance data. There can be only one, MacLeod!!!!, क्रमtunately there IS only
  * once AC97C on early Alchemy chips. The newer ones aren't so lucky.
  */
-static struct au1xpsc_audio_data *ac97c_workdata;
-#define ac97_to_ctx(x)		ac97c_workdata
+अटल काष्ठा au1xpsc_audio_data *ac97c_workdata;
+#घोषणा ac97_to_ctx(x)		ac97c_workdata
 
-static inline unsigned long RD(struct au1xpsc_audio_data *ctx, int reg)
-{
-	return __raw_readl(ctx->mmio + reg);
-}
+अटल अंतरभूत अचिन्हित दीर्घ RD(काष्ठा au1xpsc_audio_data *ctx, पूर्णांक reg)
+अणु
+	वापस __raw_पढ़ोl(ctx->mmio + reg);
+पूर्ण
 
-static inline void WR(struct au1xpsc_audio_data *ctx, int reg, unsigned long v)
-{
-	__raw_writel(v, ctx->mmio + reg);
+अटल अंतरभूत व्योम WR(काष्ठा au1xpsc_audio_data *ctx, पूर्णांक reg, अचिन्हित दीर्घ v)
+अणु
+	__raw_ग_लिखोl(v, ctx->mmio + reg);
 	wmb();
-}
+पूर्ण
 
-static unsigned short au1xac97c_ac97_read(struct snd_ac97 *ac97,
-					  unsigned short r)
-{
-	struct au1xpsc_audio_data *ctx = ac97_to_ctx(ac97);
-	unsigned int tmo, retry;
-	unsigned long data;
+अटल अचिन्हित लघु au1xac97c_ac97_पढ़ो(काष्ठा snd_ac97 *ac97,
+					  अचिन्हित लघु r)
+अणु
+	काष्ठा au1xpsc_audio_data *ctx = ac97_to_ctx(ac97);
+	अचिन्हित पूर्णांक पंचांगo, retry;
+	अचिन्हित दीर्घ data;
 
 	data = ~0;
 	retry = AC97_RW_RETRIES;
-	do {
+	करो अणु
 		mutex_lock(&ctx->lock);
 
-		tmo = 6;
-		while ((RD(ctx, AC97_STATUS) & STAT_CP) && --tmo)
-			udelay(21);	/* wait an ac97 frame time */
-		if (!tmo) {
+		पंचांगo = 6;
+		जबतक ((RD(ctx, AC97_STATUS) & STAT_CP) && --पंचांगo)
+			udelay(21);	/* रुको an ac97 frame समय */
+		अगर (!पंचांगo) अणु
 			pr_debug("ac97rd timeout #1\n");
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
 		WR(ctx, AC97_CMDRESP, CMD_IDX(r) | CMD_READ);
 
-		/* stupid errata: data is only valid for 21us, so
+		/* stupid errata: data is only valid क्रम 21us, so
 		 * poll, Forrest, poll...
 		 */
-		tmo = 0x10000;
-		while ((RD(ctx, AC97_STATUS) & STAT_CP) && --tmo)
-			asm volatile ("nop");
+		पंचांगo = 0x10000;
+		जबतक ((RD(ctx, AC97_STATUS) & STAT_CP) && --पंचांगo)
+			यंत्र अस्थिर ("nop");
 		data = RD(ctx, AC97_CMDRESP);
 
-		if (!tmo)
+		अगर (!पंचांगo)
 			pr_debug("ac97rd timeout #2\n");
 
 next:
 		mutex_unlock(&ctx->lock);
-	} while (--retry && !tmo);
+	पूर्ण जबतक (--retry && !पंचांगo);
 
 	pr_debug("AC97RD %04x %04lx %d\n", r, data, retry);
 
-	return retry ? data & 0xffff : 0xffff;
-}
+	वापस retry ? data & 0xffff : 0xffff;
+पूर्ण
 
-static void au1xac97c_ac97_write(struct snd_ac97 *ac97, unsigned short r,
-				 unsigned short v)
-{
-	struct au1xpsc_audio_data *ctx = ac97_to_ctx(ac97);
-	unsigned int tmo, retry;
+अटल व्योम au1xac97c_ac97_ग_लिखो(काष्ठा snd_ac97 *ac97, अचिन्हित लघु r,
+				 अचिन्हित लघु v)
+अणु
+	काष्ठा au1xpsc_audio_data *ctx = ac97_to_ctx(ac97);
+	अचिन्हित पूर्णांक पंचांगo, retry;
 
 	retry = AC97_RW_RETRIES;
-	do {
+	करो अणु
 		mutex_lock(&ctx->lock);
 
-		for (tmo = 5; (RD(ctx, AC97_STATUS) & STAT_CP) && tmo; tmo--)
+		क्रम (पंचांगo = 5; (RD(ctx, AC97_STATUS) & STAT_CP) && पंचांगo; पंचांगo--)
 			udelay(21);
-		if (!tmo) {
+		अगर (!पंचांगo) अणु
 			pr_debug("ac97wr timeout #1\n");
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
 		WR(ctx, AC97_CMDRESP, CMD_WRITE | CMD_IDX(r) | CMD_SET_DATA(v));
 
-		for (tmo = 10; (RD(ctx, AC97_STATUS) & STAT_CP) && tmo; tmo--)
+		क्रम (पंचांगo = 10; (RD(ctx, AC97_STATUS) & STAT_CP) && पंचांगo; पंचांगo--)
 			udelay(21);
-		if (!tmo)
+		अगर (!पंचांगo)
 			pr_debug("ac97wr timeout #2\n");
 next:
 		mutex_unlock(&ctx->lock);
-	} while (--retry && !tmo);
+	पूर्ण जबतक (--retry && !पंचांगo);
 
 	pr_debug("AC97WR %04x %04x %d\n", r, v, retry);
-}
+पूर्ण
 
-static void au1xac97c_ac97_warm_reset(struct snd_ac97 *ac97)
-{
-	struct au1xpsc_audio_data *ctx = ac97_to_ctx(ac97);
+अटल व्योम au1xac97c_ac97_warm_reset(काष्ठा snd_ac97 *ac97)
+अणु
+	काष्ठा au1xpsc_audio_data *ctx = ac97_to_ctx(ac97);
 
 	WR(ctx, AC97_CONFIG, ctx->cfg | CFG_SG | CFG_SN);
 	msleep(20);
 	WR(ctx, AC97_CONFIG, ctx->cfg | CFG_SG);
 	WR(ctx, AC97_CONFIG, ctx->cfg);
-}
+पूर्ण
 
-static void au1xac97c_ac97_cold_reset(struct snd_ac97 *ac97)
-{
-	struct au1xpsc_audio_data *ctx = ac97_to_ctx(ac97);
-	int i;
+अटल व्योम au1xac97c_ac97_cold_reset(काष्ठा snd_ac97 *ac97)
+अणु
+	काष्ठा au1xpsc_audio_data *ctx = ac97_to_ctx(ac97);
+	पूर्णांक i;
 
 	WR(ctx, AC97_CONFIG, ctx->cfg | CFG_RS);
 	msleep(500);
 	WR(ctx, AC97_CONFIG, ctx->cfg);
 
-	/* wait for codec ready */
+	/* रुको क्रम codec पढ़ोy */
 	i = 50;
-	while (((RD(ctx, AC97_STATUS) & STAT_RD) == 0) && --i)
+	जबतक (((RD(ctx, AC97_STATUS) & STAT_RD) == 0) && --i)
 		msleep(20);
-	if (!i)
-		printk(KERN_ERR "ac97c: codec not ready after cold reset\n");
-}
+	अगर (!i)
+		prपूर्णांकk(KERN_ERR "ac97c: codec not ready after cold reset\n");
+पूर्ण
 
 /* AC97 controller operations */
-static struct snd_ac97_bus_ops ac97c_bus_ops = {
-	.read		= au1xac97c_ac97_read,
-	.write		= au1xac97c_ac97_write,
+अटल काष्ठा snd_ac97_bus_ops ac97c_bus_ops = अणु
+	.पढ़ो		= au1xac97c_ac97_पढ़ो,
+	.ग_लिखो		= au1xac97c_ac97_ग_लिखो,
 	.reset		= au1xac97c_ac97_cold_reset,
 	.warm_reset	= au1xac97c_ac97_warm_reset,
-};
+पूर्ण;
 
-static int alchemy_ac97c_startup(struct snd_pcm_substream *substream,
-				 struct snd_soc_dai *dai)
-{
-	struct au1xpsc_audio_data *ctx = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक alchemy_ac97c_startup(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा au1xpsc_audio_data *ctx = snd_soc_dai_get_drvdata(dai);
 	snd_soc_dai_set_dma_data(dai, substream, &ctx->dmaids[0]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops alchemy_ac97c_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops alchemy_ac97c_ops = अणु
 	.startup		= alchemy_ac97c_startup,
-};
+पूर्ण;
 
-static int au1xac97c_dai_probe(struct snd_soc_dai *dai)
-{
-	return ac97c_workdata ? 0 : -ENODEV;
-}
+अटल पूर्णांक au1xac97c_dai_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	वापस ac97c_workdata ? 0 : -ENODEV;
+पूर्ण
 
-static struct snd_soc_dai_driver au1xac97c_dai_driver = {
+अटल काष्ठा snd_soc_dai_driver au1xac97c_dai_driver = अणु
 	.name			= "alchemy-ac97c",
 	.probe			= au1xac97c_dai_probe,
-	.playback = {
+	.playback = अणु
 		.rates		= AC97_RATES,
-		.formats	= AC97_FMTS,
+		.क्रमmats	= AC97_FMTS,
 		.channels_min	= 2,
 		.channels_max	= 2,
-	},
-	.capture = {
+	पूर्ण,
+	.capture = अणु
 		.rates		= AC97_RATES,
-		.formats	= AC97_FMTS,
+		.क्रमmats	= AC97_FMTS,
 		.channels_min	= 2,
 		.channels_max	= 2,
-	},
+	पूर्ण,
 	.ops			= &alchemy_ac97c_ops,
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver au1xac97c_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver au1xac97c_component = अणु
 	.name		= "au1xac97c",
-};
+पूर्ण;
 
-static int au1xac97c_drvprobe(struct platform_device *pdev)
-{
-	int ret;
-	struct resource *iores, *dmares;
-	struct au1xpsc_audio_data *ctx;
+अटल पूर्णांक au1xac97c_drvprobe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा resource *iores, *dmares;
+	काष्ठा au1xpsc_audio_data *ctx;
 
-	ctx = devm_kzalloc(&pdev->dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = devm_kzalloc(&pdev->dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	mutex_init(&ctx->lock);
 
-	iores = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!iores)
-		return -ENODEV;
+	iores = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!iores)
+		वापस -ENODEV;
 
-	if (!devm_request_mem_region(&pdev->dev, iores->start,
+	अगर (!devm_request_mem_region(&pdev->dev, iores->start,
 				     resource_size(iores),
 				     pdev->name))
-		return -EBUSY;
+		वापस -EBUSY;
 
 	ctx->mmio = devm_ioremap(&pdev->dev, iores->start,
 					 resource_size(iores));
-	if (!ctx->mmio)
-		return -EBUSY;
+	अगर (!ctx->mmio)
+		वापस -EBUSY;
 
-	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 0);
-	if (!dmares)
-		return -EBUSY;
+	dmares = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 0);
+	अगर (!dmares)
+		वापस -EBUSY;
 	ctx->dmaids[SNDRV_PCM_STREAM_PLAYBACK] = dmares->start;
 
-	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 1);
-	if (!dmares)
-		return -EBUSY;
+	dmares = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 1);
+	अगर (!dmares)
+		वापस -EBUSY;
 	ctx->dmaids[SNDRV_PCM_STREAM_CAPTURE] = dmares->start;
 
-	/* switch it on */
+	/* चयन it on */
 	WR(ctx, AC97_ENABLE, EN_D | EN_CE);
 	WR(ctx, AC97_ENABLE, EN_CE);
 
 	ctx->cfg = CFG_RC(3) | CFG_XS(3);
 	WR(ctx, AC97_CONFIG, ctx->cfg);
 
-	platform_set_drvdata(pdev, ctx);
+	platक्रमm_set_drvdata(pdev, ctx);
 
 	ret = snd_soc_set_ac97_ops(&ac97c_bus_ops);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = snd_soc_register_component(&pdev->dev, &au1xac97c_component,
+	ret = snd_soc_रेजिस्टर_component(&pdev->dev, &au1xac97c_component,
 					 &au1xac97c_dai_driver, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ac97c_workdata = ctx;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int au1xac97c_drvremove(struct platform_device *pdev)
-{
-	struct au1xpsc_audio_data *ctx = platform_get_drvdata(pdev);
+अटल पूर्णांक au1xac97c_drvहटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा au1xpsc_audio_data *ctx = platक्रमm_get_drvdata(pdev);
 
-	snd_soc_unregister_component(&pdev->dev);
+	snd_soc_unरेजिस्टर_component(&pdev->dev);
 
-	WR(ctx, AC97_ENABLE, EN_D);	/* clock off, disable */
+	WR(ctx, AC97_ENABLE, EN_D);	/* घड़ी off, disable */
 
-	ac97c_workdata = NULL;	/* MDEV */
+	ac97c_workdata = शून्य;	/* MDEV */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int au1xac97c_drvsuspend(struct device *dev)
-{
-	struct au1xpsc_audio_data *ctx = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक au1xac97c_drvsuspend(काष्ठा device *dev)
+अणु
+	काष्ठा au1xpsc_audio_data *ctx = dev_get_drvdata(dev);
 
-	WR(ctx, AC97_ENABLE, EN_D);	/* clock off, disable */
+	WR(ctx, AC97_ENABLE, EN_D);	/* घड़ी off, disable */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int au1xac97c_drvresume(struct device *dev)
-{
-	struct au1xpsc_audio_data *ctx = dev_get_drvdata(dev);
+अटल पूर्णांक au1xac97c_drvresume(काष्ठा device *dev)
+अणु
+	काष्ठा au1xpsc_audio_data *ctx = dev_get_drvdata(dev);
 
 	WR(ctx, AC97_ENABLE, EN_D | EN_CE);
 	WR(ctx, AC97_ENABLE, EN_CE);
 	WR(ctx, AC97_CONFIG, ctx->cfg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops au1xpscac97_pmops = {
+अटल स्थिर काष्ठा dev_pm_ops au1xpscac97_pmops = अणु
 	.suspend	= au1xac97c_drvsuspend,
 	.resume		= au1xac97c_drvresume,
-};
+पूर्ण;
 
-#define AU1XPSCAC97_PMOPS (&au1xpscac97_pmops)
+#घोषणा AU1XPSCAC97_PMOPS (&au1xpscac97_pmops)
 
-#else
+#अन्यथा
 
-#define AU1XPSCAC97_PMOPS NULL
+#घोषणा AU1XPSCAC97_PMOPS शून्य
 
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver au1xac97c_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver au1xac97c_driver = अणु
+	.driver	= अणु
 		.name	= "alchemy-ac97c",
 		.pm	= AU1XPSCAC97_PMOPS,
-	},
+	पूर्ण,
 	.probe		= au1xac97c_drvprobe,
-	.remove		= au1xac97c_drvremove,
-};
+	.हटाओ		= au1xac97c_drvहटाओ,
+पूर्ण;
 
-module_platform_driver(au1xac97c_driver);
+module_platक्रमm_driver(au1xac97c_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Au1000/1500/1100 AC97C ASoC driver");

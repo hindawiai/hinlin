@@ -1,126 +1,127 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Greybus Camera protocol driver.
  *
  * Copyright 2015 Google Inc.
  */
-#ifndef __GB_CAMERA_H
-#define __GB_CAMERA_H
+#अगर_अघोषित __GB_CAMERA_H
+#घोषणा __GB_CAMERA_H
 
-#include <linux/v4l2-mediabus.h>
+#समावेश <linux/v4l2-mediabus.h>
 
 /* Input flags need to be set from the caller */
-#define GB_CAMERA_IN_FLAG_TEST		(1 << 0)
-/* Output flags returned */
-#define GB_CAMERA_OUT_FLAG_ADJUSTED	(1 << 0)
+#घोषणा GB_CAMERA_IN_FLAG_TEST		(1 << 0)
+/* Output flags वापसed */
+#घोषणा GB_CAMERA_OUT_FLAG_ADJUSTED	(1 << 0)
 
 /**
- * struct gb_camera_stream - Represents greybus camera stream.
+ * काष्ठा gb_camera_stream - Represents greybus camera stream.
  * @width: Stream width in pixels.
  * @height: Stream height in pixels.
  * @pixel_code: Media bus pixel code.
- * @vc: MIPI CSI virtual channel.
- * @dt: MIPI CSI data types. Most formats use a single data type, in which case
+ * @vc: MIPI CSI भव channel.
+ * @dt: MIPI CSI data types. Most क्रमmats use a single data type, in which हाल
  *      the second element will be ignored.
  * @max_size: Maximum size of a frame in bytes. The camera module guarantees
- *            that all data between the Frame Start and Frame End packet for
- *            the associated virtual channel and data type(s) will not exceed
+ *            that all data between the Frame Start and Frame End packet क्रम
+ *            the associated भव channel and data type(s) will not exceed
  *            this size.
  */
-struct gb_camera_stream {
-	unsigned int width;
-	unsigned int height;
-	enum v4l2_mbus_pixelcode pixel_code;
-	unsigned int vc;
-	unsigned int dt[2];
-	unsigned int max_size;
-};
+काष्ठा gb_camera_stream अणु
+	अचिन्हित पूर्णांक width;
+	अचिन्हित पूर्णांक height;
+	क्रमागत v4l2_mbus_pixelcode pixel_code;
+	अचिन्हित पूर्णांक vc;
+	अचिन्हित पूर्णांक dt[2];
+	अचिन्हित पूर्णांक max_size;
+पूर्ण;
 
 /**
- * struct gb_camera_csi_params - CSI configuration parameters
+ * काष्ठा gb_camera_csi_params - CSI configuration parameters
  * @num_lanes: number of CSI data lanes
- * @clk_freq: CSI clock frequency in Hz
+ * @clk_freq: CSI घड़ी frequency in Hz
  */
-struct gb_camera_csi_params {
-	unsigned int num_lanes;
-	unsigned int clk_freq;
-};
+काष्ठा gb_camera_csi_params अणु
+	अचिन्हित पूर्णांक num_lanes;
+	अचिन्हित पूर्णांक clk_freq;
+पूर्ण;
 
 /**
- * struct gb_camera_ops - Greybus camera operations, used by the Greybus camera
+ * काष्ठा gb_camera_ops - Greybus camera operations, used by the Greybus camera
  *                        driver to expose operations to the host camera driver.
  * @capabilities: Retrieve camera capabilities and store them in the buffer
- *                'buf' capabilities. The buffer maximum size is specified by
+ *                'buf' capabilities. The buffer maximum size is specअगरied by
  *                the caller in the 'size' parameter, and the effective
- *                capabilities size is returned from the function. If the buffer
+ *                capabilities size is वापसed from the function. If the buffer
  *                size is too small to hold the capabilities an error is
- *                returned and the buffer is left untouched.
+ *                वापसed and the buffer is left untouched.
  *
- * @configure_streams: Negotiate configuration and prepare the module for video
- *                     capture. The caller specifies the number of streams it
+ * @configure_streams: Negotiate configuration and prepare the module क्रम video
+ *                     capture. The caller specअगरies the number of streams it
  *                     requests in the 'nstreams' argument and the associated
  *                     streams configurations in the 'streams' argument. The
  *                     GB_CAMERA_IN_FLAG_TEST 'flag' can be set to test a
  *                     configuration without applying it, otherwise the
  *                     configuration is applied by the module. The module can
- *                     decide to modify the requested configuration, including
- *                     using a different number of streams. In that case the
- *                     modified configuration won't be applied, the
+ *                     decide to modअगरy the requested configuration, including
+ *                     using a dअगरferent number of streams. In that हाल the
+ *                     modअगरied configuration won't be applied, the
  *                     GB_CAMERA_OUT_FLAG_ADJUSTED 'flag' will be set upon
- *                     return, and the modified configuration and number of
+ *                     वापस, and the modअगरied configuration and number of
  *                     streams stored in 'streams' and 'array'. The module
- *                     returns its CSI-2 bus parameters in the 'csi_params'
- *                     structure in all cases.
+ *                     वापसs its CSI-2 bus parameters in the 'csi_params'
+ *                     काष्ठाure in all हालs.
  *
  * @capture: Submit a capture request. The supplied 'request_id' must be unique
  *           and higher than the IDs of all the previously submitted requests.
- *           The 'streams' argument specifies which streams are affected by the
- *           request in the form of a bitmask, with bits corresponding to the
+ *           The 'streams' argument specअगरies which streams are affected by the
+ *           request in the क्रमm of a biपंचांगask, with bits corresponding to the
  *           configured streams indexes. If the request contains settings, the
- *           'settings' argument points to the settings buffer and its size is
- *           specified by the 'settings_size' argument. Otherwise the 'settings'
- *           argument should be set to NULL and 'settings_size' to 0.
+ *           'settings' argument poपूर्णांकs to the settings buffer and its size is
+ *           specअगरied by the 'settings_size' argument. Otherwise the 'settings'
+ *           argument should be set to शून्य and 'settings_size' to 0.
  *
  * @flush: Flush the capture requests queue. Return the ID of the last request
- *         that will processed by the device before it stops transmitting video
- *         frames. All queued capture requests with IDs higher than the returned
+ *         that will processed by the device beक्रमe it stops transmitting video
+ *         frames. All queued capture requests with IDs higher than the वापसed
  *         ID will be dropped without being processed.
  */
-struct gb_camera_ops {
-	ssize_t (*capabilities)(void *priv, char *buf, size_t len);
-	int (*configure_streams)(void *priv, unsigned int *nstreams,
-			unsigned int *flags, struct gb_camera_stream *streams,
-			struct gb_camera_csi_params *csi_params);
-	int (*capture)(void *priv, u32 request_id,
-			unsigned int streams, unsigned int num_frames,
-			size_t settings_size, const void *settings);
-	int (*flush)(void *priv, u32 *request_id);
-};
+काष्ठा gb_camera_ops अणु
+	sमाप_प्रकार (*capabilities)(व्योम *priv, अक्षर *buf, माप_प्रकार len);
+	पूर्णांक (*configure_streams)(व्योम *priv, अचिन्हित पूर्णांक *nstreams,
+			अचिन्हित पूर्णांक *flags, काष्ठा gb_camera_stream *streams,
+			काष्ठा gb_camera_csi_params *csi_params);
+	पूर्णांक (*capture)(व्योम *priv, u32 request_id,
+			अचिन्हित पूर्णांक streams, अचिन्हित पूर्णांक num_frames,
+			माप_प्रकार settings_size, स्थिर व्योम *settings);
+	पूर्णांक (*flush)(व्योम *priv, u32 *request_id);
+पूर्ण;
 
 /**
- * struct gb_camera_module - Represents greybus camera module.
- * @priv: Module private data, passed to all camera operations.
+ * काष्ठा gb_camera_module - Represents greybus camera module.
+ * @priv: Module निजी data, passed to all camera operations.
  * @ops: Greybus camera operation callbacks.
- * @interface_id: Interface id of the module.
+ * @पूर्णांकerface_id: Interface id of the module.
  * @refcount: Reference counting object.
  * @release: Module release function.
  * @list: List entry in the camera modules list.
  */
-struct gb_camera_module {
-	void *priv;
-	const struct gb_camera_ops *ops;
+काष्ठा gb_camera_module अणु
+	व्योम *priv;
+	स्थिर काष्ठा gb_camera_ops *ops;
 
-	unsigned int interface_id;
-	struct kref refcount;
-	void (*release)(struct kref *kref);
-	struct list_head list; /* Global list */
-};
+	अचिन्हित पूर्णांक पूर्णांकerface_id;
+	काष्ठा kref refcount;
+	व्योम (*release)(काष्ठा kref *kref);
+	काष्ठा list_head list; /* Global list */
+पूर्ण;
 
-#define gb_camera_call(f, op, args...)      \
+#घोषणा gb_camera_call(f, op, args...)      \
 	(!(f) ? -ENODEV : (((f)->ops->op) ?  \
 	(f)->ops->op((f)->priv, ##args) : -ENOIOCTLCMD))
 
-int gb_camera_register(struct gb_camera_module *module);
-int gb_camera_unregister(struct gb_camera_module *module);
+पूर्णांक gb_camera_रेजिस्टर(काष्ठा gb_camera_module *module);
+पूर्णांक gb_camera_unरेजिस्टर(काष्ठा gb_camera_module *module);
 
-#endif /* __GB_CAMERA_H */
+#पूर्ण_अगर /* __GB_CAMERA_H */

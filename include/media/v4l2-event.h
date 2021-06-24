@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * v4l2-event.h
  *
@@ -9,200 +10,200 @@
  * Contact: Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#ifndef V4L2_EVENT_H
-#define V4L2_EVENT_H
+#अगर_अघोषित V4L2_EVENT_H
+#घोषणा V4L2_EVENT_H
 
-#include <linux/types.h>
-#include <linux/videodev2.h>
-#include <linux/wait.h>
+#समावेश <linux/types.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/रुको.h>
 
-struct v4l2_fh;
-struct v4l2_subdev;
-struct v4l2_subscribed_event;
-struct video_device;
+काष्ठा v4l2_fh;
+काष्ठा v4l2_subdev;
+काष्ठा v4l2_subscribed_event;
+काष्ठा video_device;
 
 /**
- * struct v4l2_kevent - Internal kernel event struct.
- * @list:	List node for the v4l2_fh->available list.
- * @sev:	Pointer to parent v4l2_subscribed_event.
+ * काष्ठा v4l2_kevent - Internal kernel event काष्ठा.
+ * @list:	List node क्रम the v4l2_fh->available list.
+ * @sev:	Poपूर्णांकer to parent v4l2_subscribed_event.
  * @event:	The event itself.
- * @ts:		The timestamp of the event.
+ * @ts:		The बारtamp of the event.
  */
-struct v4l2_kevent {
-	struct list_head	list;
-	struct v4l2_subscribed_event *sev;
-	struct v4l2_event	event;
+काष्ठा v4l2_kevent अणु
+	काष्ठा list_head	list;
+	काष्ठा v4l2_subscribed_event *sev;
+	काष्ठा v4l2_event	event;
 	u64			ts;
-};
+पूर्ण;
 
 /**
- * struct v4l2_subscribed_event_ops - Subscribed event operations.
+ * काष्ठा v4l2_subscribed_event_ops - Subscribed event operations.
  *
  * @add:	Optional callback, called when a new listener is added
  * @del:	Optional callback, called when a listener stops listening
  * @replace:	Optional callback that can replace event 'old' with event 'new'.
  * @merge:	Optional callback that can merge event 'old' into event 'new'.
  */
-struct v4l2_subscribed_event_ops {
-	int  (*add)(struct v4l2_subscribed_event *sev, unsigned int elems);
-	void (*del)(struct v4l2_subscribed_event *sev);
-	void (*replace)(struct v4l2_event *old, const struct v4l2_event *new);
-	void (*merge)(const struct v4l2_event *old, struct v4l2_event *new);
-};
+काष्ठा v4l2_subscribed_event_ops अणु
+	पूर्णांक  (*add)(काष्ठा v4l2_subscribed_event *sev, अचिन्हित पूर्णांक elems);
+	व्योम (*del)(काष्ठा v4l2_subscribed_event *sev);
+	व्योम (*replace)(काष्ठा v4l2_event *old, स्थिर काष्ठा v4l2_event *new);
+	व्योम (*merge)(स्थिर काष्ठा v4l2_event *old, काष्ठा v4l2_event *new);
+पूर्ण;
 
 /**
- * struct v4l2_subscribed_event - Internal struct representing a subscribed
+ * काष्ठा v4l2_subscribed_event - Internal काष्ठा representing a subscribed
  *		event.
  *
- * @list:	List node for the v4l2_fh->subscribed list.
+ * @list:	List node क्रम the v4l2_fh->subscribed list.
  * @type:	Event type.
- * @id:	Associated object ID (e.g. control ID). 0 if there isn't any.
+ * @id:	Associated object ID (e.g. control ID). 0 अगर there isn't any.
  * @flags:	Copy of v4l2_event_subscription->flags.
  * @fh:	Filehandle that subscribed to this event.
- * @node:	List node that hooks into the object's event list
- *		(if there is one).
+ * @node:	List node that hooks पूर्णांकo the object's event list
+ *		(अगर there is one).
  * @ops:	v4l2_subscribed_event_ops
  * @elems:	The number of elements in the events array.
  * @first:	The index of the events containing the oldest available event.
  * @in_use:	The number of queued events.
  * @events:	An array of @elems events.
  */
-struct v4l2_subscribed_event {
-	struct list_head	list;
+काष्ठा v4l2_subscribed_event अणु
+	काष्ठा list_head	list;
 	u32			type;
 	u32			id;
 	u32			flags;
-	struct v4l2_fh		*fh;
-	struct list_head	node;
-	const struct v4l2_subscribed_event_ops *ops;
-	unsigned int		elems;
-	unsigned int		first;
-	unsigned int		in_use;
-	struct v4l2_kevent	events[];
-};
+	काष्ठा v4l2_fh		*fh;
+	काष्ठा list_head	node;
+	स्थिर काष्ठा v4l2_subscribed_event_ops *ops;
+	अचिन्हित पूर्णांक		elems;
+	अचिन्हित पूर्णांक		first;
+	अचिन्हित पूर्णांक		in_use;
+	काष्ठा v4l2_kevent	events[];
+पूर्ण;
 
 /**
  * v4l2_event_dequeue - Dequeue events from video device.
  *
- * @fh: pointer to struct v4l2_fh
- * @event: pointer to struct v4l2_event
- * @nonblocking: if not zero, waits for an event to arrive
+ * @fh: poपूर्णांकer to काष्ठा v4l2_fh
+ * @event: poपूर्णांकer to काष्ठा v4l2_event
+ * @nonblocking: अगर not zero, रुकोs क्रम an event to arrive
  */
-int v4l2_event_dequeue(struct v4l2_fh *fh, struct v4l2_event *event,
-		       int nonblocking);
+पूर्णांक v4l2_event_dequeue(काष्ठा v4l2_fh *fh, काष्ठा v4l2_event *event,
+		       पूर्णांक nonblocking);
 
 /**
  * v4l2_event_queue - Queue events to video device.
  *
- * @vdev: pointer to &struct video_device
- * @ev: pointer to &struct v4l2_event
+ * @vdev: poपूर्णांकer to &काष्ठा video_device
+ * @ev: poपूर्णांकer to &काष्ठा v4l2_event
  *
- * The event will be queued for all &struct v4l2_fh file handlers.
+ * The event will be queued क्रम all &काष्ठा v4l2_fh file handlers.
  *
  * .. note::
  *    The driver's only responsibility is to fill in the type and the data
  *    fields. The other fields will be filled in by V4L2.
  */
-void v4l2_event_queue(struct video_device *vdev, const struct v4l2_event *ev);
+व्योम v4l2_event_queue(काष्ठा video_device *vdev, स्थिर काष्ठा v4l2_event *ev);
 
 /**
  * v4l2_event_queue_fh - Queue events to video device.
  *
- * @fh: pointer to &struct v4l2_fh
- * @ev: pointer to &struct v4l2_event
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
+ * @ev: poपूर्णांकer to &काष्ठा v4l2_event
  *
  *
- * The event will be queued only for the specified &struct v4l2_fh file handler.
+ * The event will be queued only क्रम the specअगरied &काष्ठा v4l2_fh file handler.
  *
  * .. note::
  *    The driver's only responsibility is to fill in the type and the data
  *    fields. The other fields will be filled in by V4L2.
  */
-void v4l2_event_queue_fh(struct v4l2_fh *fh, const struct v4l2_event *ev);
+व्योम v4l2_event_queue_fh(काष्ठा v4l2_fh *fh, स्थिर काष्ठा v4l2_event *ev);
 
 /**
  * v4l2_event_wake_all - Wake all filehandles.
  *
- * Used when unregistering a video device.
+ * Used when unरेजिस्टरing a video device.
  *
- * @vdev: pointer to &struct video_device
+ * @vdev: poपूर्णांकer to &काष्ठा video_device
  */
-void v4l2_event_wake_all(struct video_device *vdev);
+व्योम v4l2_event_wake_all(काष्ठा video_device *vdev);
 
 /**
- * v4l2_event_pending - Check if an event is available
+ * v4l2_event_pending - Check अगर an event is available
  *
- * @fh: pointer to &struct v4l2_fh
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
  *
  * Returns the number of pending events.
  */
-int v4l2_event_pending(struct v4l2_fh *fh);
+पूर्णांक v4l2_event_pending(काष्ठा v4l2_fh *fh);
 
 /**
  * v4l2_event_subscribe - Subscribes to an event
  *
- * @fh: pointer to &struct v4l2_fh
- * @sub: pointer to &struct v4l2_event_subscription
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
+ * @sub: poपूर्णांकer to &काष्ठा v4l2_event_subscription
  * @elems: size of the events queue
- * @ops: pointer to &v4l2_subscribed_event_ops
+ * @ops: poपूर्णांकer to &v4l2_subscribed_event_ops
  *
  * .. note::
  *
- *    if @elems is zero, the framework will fill in a default value,
+ *    अगर @elems is zero, the framework will fill in a शेष value,
  *    with is currently 1 element.
  */
-int v4l2_event_subscribe(struct v4l2_fh *fh,
-			 const struct v4l2_event_subscription *sub,
-			 unsigned int elems,
-			 const struct v4l2_subscribed_event_ops *ops);
+पूर्णांक v4l2_event_subscribe(काष्ठा v4l2_fh *fh,
+			 स्थिर काष्ठा v4l2_event_subscription *sub,
+			 अचिन्हित पूर्णांक elems,
+			 स्थिर काष्ठा v4l2_subscribed_event_ops *ops);
 /**
  * v4l2_event_unsubscribe - Unsubscribes to an event
  *
- * @fh: pointer to &struct v4l2_fh
- * @sub: pointer to &struct v4l2_event_subscription
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
+ * @sub: poपूर्णांकer to &काष्ठा v4l2_event_subscription
  */
-int v4l2_event_unsubscribe(struct v4l2_fh *fh,
-			   const struct v4l2_event_subscription *sub);
+पूर्णांक v4l2_event_unsubscribe(काष्ठा v4l2_fh *fh,
+			   स्थिर काष्ठा v4l2_event_subscription *sub);
 /**
  * v4l2_event_unsubscribe_all - Unsubscribes to all events
  *
- * @fh: pointer to &struct v4l2_fh
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
  */
-void v4l2_event_unsubscribe_all(struct v4l2_fh *fh);
+व्योम v4l2_event_unsubscribe_all(काष्ठा v4l2_fh *fh);
 
 /**
  * v4l2_event_subdev_unsubscribe - Subdev variant of v4l2_event_unsubscribe()
  *
- * @sd: pointer to &struct v4l2_subdev
- * @fh: pointer to &struct v4l2_fh
- * @sub: pointer to &struct v4l2_event_subscription
+ * @sd: poपूर्णांकer to &काष्ठा v4l2_subdev
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
+ * @sub: poपूर्णांकer to &काष्ठा v4l2_event_subscription
  *
  * .. note::
  *
- *	This function should be used for the &struct v4l2_subdev_core_ops
+ *	This function should be used क्रम the &काष्ठा v4l2_subdev_core_ops
  *	%unsubscribe_event field.
  */
-int v4l2_event_subdev_unsubscribe(struct v4l2_subdev *sd,
-				  struct v4l2_fh *fh,
-				  struct v4l2_event_subscription *sub);
+पूर्णांक v4l2_event_subdev_unsubscribe(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_fh *fh,
+				  काष्ठा v4l2_event_subscription *sub);
 /**
  * v4l2_src_change_event_subscribe - helper function that calls
- *	v4l2_event_subscribe() if the event is %V4L2_EVENT_SOURCE_CHANGE.
+ *	v4l2_event_subscribe() अगर the event is %V4L2_EVENT_SOURCE_CHANGE.
  *
- * @fh: pointer to struct v4l2_fh
- * @sub: pointer to &struct v4l2_event_subscription
+ * @fh: poपूर्णांकer to काष्ठा v4l2_fh
+ * @sub: poपूर्णांकer to &काष्ठा v4l2_event_subscription
  */
-int v4l2_src_change_event_subscribe(struct v4l2_fh *fh,
-				    const struct v4l2_event_subscription *sub);
+पूर्णांक v4l2_src_change_event_subscribe(काष्ठा v4l2_fh *fh,
+				    स्थिर काष्ठा v4l2_event_subscription *sub);
 /**
  * v4l2_src_change_event_subdev_subscribe - Variant of v4l2_event_subscribe(),
  *	meant to subscribe only events of the type %V4L2_EVENT_SOURCE_CHANGE.
  *
- * @sd: pointer to &struct v4l2_subdev
- * @fh: pointer to &struct v4l2_fh
- * @sub: pointer to &struct v4l2_event_subscription
+ * @sd: poपूर्णांकer to &काष्ठा v4l2_subdev
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
+ * @sub: poपूर्णांकer to &काष्ठा v4l2_event_subscription
  */
-int v4l2_src_change_event_subdev_subscribe(struct v4l2_subdev *sd,
-					   struct v4l2_fh *fh,
-					   struct v4l2_event_subscription *sub);
-#endif /* V4L2_EVENT_H */
+पूर्णांक v4l2_src_change_event_subdev_subscribe(काष्ठा v4l2_subdev *sd,
+					   काष्ठा v4l2_fh *fh,
+					   काष्ठा v4l2_event_subscription *sub);
+#पूर्ण_अगर /* V4L2_EVENT_H */

@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#ifndef __NDS32_MMU_H
-#define __NDS32_MMU_H
+#अगर_अघोषित __NDS32_MMU_H
+#घोषणा __NDS32_MMU_H
 
-typedef struct {
-	unsigned int id;
-	void *vdso;
-} mm_context_t;
+प्रकार काष्ठा अणु
+	अचिन्हित पूर्णांक id;
+	व्योम *vdso;
+पूर्ण mm_context_t;
 
-#endif
+#पूर्ण_अगर

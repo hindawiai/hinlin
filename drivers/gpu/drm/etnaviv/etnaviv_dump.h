@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2015 Etnaviv Project
  */
 
-#ifndef ETNAVIV_DUMP_H
-#define ETNAVIV_DUMP_H
+#अगर_अघोषित ETNAVIV_DUMP_H
+#घोषणा ETNAVIV_DUMP_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum {
+क्रमागत अणु
 	ETDUMP_MAGIC = 0x414e5445,
 	ETDUMP_BUF_REG = 0,
 	ETDUMP_BUF_MMU,
@@ -17,26 +18,26 @@ enum {
 	ETDUMP_BUF_BOMAP,
 	ETDUMP_BUF_BO,
 	ETDUMP_BUF_END,
-};
+पूर्ण;
 
-struct etnaviv_dump_object_header {
+काष्ठा etnaviv_dump_object_header अणु
 	__le32 magic;
 	__le32 type;
 	__le32 file_offset;
 	__le32 file_size;
 	__le64 iova;
 	__le32 data[2];
-};
+पूर्ण;
 
 /* Registers object, an array of these */
-struct etnaviv_dump_registers {
+काष्ठा etnaviv_dump_रेजिस्टरs अणु
 	__le32 reg;
 	__le32 value;
-};
+पूर्ण;
 
-#ifdef __KERNEL__
-struct etnaviv_gem_submit;
-void etnaviv_core_dump(struct etnaviv_gem_submit *submit);
-#endif
+#अगर_घोषित __KERNEL__
+काष्ठा etnaviv_gem_submit;
+व्योम etnaviv_core_dump(काष्ठा etnaviv_gem_submit *submit);
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

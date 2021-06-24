@@ -1,261 +1,262 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 // Copyright (c) 2019, 2020 Cloudflare
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#समावेश <stdbool.h>
+#समावेश <मानकघोष.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <माला.स>
 
-#include <linux/bpf.h>
-#include <linux/icmp.h>
-#include <linux/icmpv6.h>
-#include <linux/if_ether.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/pkt_cls.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/pkt_cls.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
 
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
 
-#include "test_cls_redirect.h"
+#समावेश "test_cls_redirect.h"
 
-#ifdef SUBPROGS
-#define INLINING __noinline
-#else
-#define INLINING __always_inline
-#endif
+#अगर_घोषित SUBPROGS
+#घोषणा INLINING __noअंतरभूत
+#अन्यथा
+#घोषणा INLINING __always_अंतरभूत
+#पूर्ण_अगर
 
-#define offsetofend(TYPE, MEMBER) \
-	(offsetof(TYPE, MEMBER) + sizeof((((TYPE *)0)->MEMBER)))
+#घोषणा दुरत्वend(TYPE, MEMBER) \
+	(दुरत्व(TYPE, MEMBER) + माप((((TYPE *)0)->MEMBER)))
 
-#define IP_OFFSET_MASK (0x1FFF)
-#define IP_MF (0x2000)
+#घोषणा IP_OFFSET_MASK (0x1FFF)
+#घोषणा IP_MF (0x2000)
 
-char _license[] SEC("license") = "Dual BSD/GPL";
+अक्षर _license[] SEC("license") = "Dual BSD/GPL";
 
 /**
- * Destination port and IP used for UDP encapsulation.
+ * Destination port and IP used क्रम UDP encapsulation.
  */
-static volatile const __be16 ENCAPSULATION_PORT;
-static volatile const __be32 ENCAPSULATION_IP;
+अटल अस्थिर स्थिर __be16 ENCAPSULATION_PORT;
+अटल अस्थिर स्थिर __be32 ENCAPSULATION_IP;
 
-typedef struct {
-	uint64_t processed_packets_total;
-	uint64_t l3_protocol_packets_total_ipv4;
-	uint64_t l3_protocol_packets_total_ipv6;
-	uint64_t l4_protocol_packets_total_tcp;
-	uint64_t l4_protocol_packets_total_udp;
-	uint64_t accepted_packets_total_syn;
-	uint64_t accepted_packets_total_syn_cookies;
-	uint64_t accepted_packets_total_last_hop;
-	uint64_t accepted_packets_total_icmp_echo_request;
-	uint64_t accepted_packets_total_established;
-	uint64_t forwarded_packets_total_gue;
-	uint64_t forwarded_packets_total_gre;
+प्रकार काष्ठा अणु
+	uपूर्णांक64_t processed_packets_total;
+	uपूर्णांक64_t l3_protocol_packets_total_ipv4;
+	uपूर्णांक64_t l3_protocol_packets_total_ipv6;
+	uपूर्णांक64_t l4_protocol_packets_total_tcp;
+	uपूर्णांक64_t l4_protocol_packets_total_udp;
+	uपूर्णांक64_t accepted_packets_total_syn;
+	uपूर्णांक64_t accepted_packets_total_syn_cookies;
+	uपूर्णांक64_t accepted_packets_total_last_hop;
+	uपूर्णांक64_t accepted_packets_total_icmp_echo_request;
+	uपूर्णांक64_t accepted_packets_total_established;
+	uपूर्णांक64_t क्रमwarded_packets_total_gue;
+	uपूर्णांक64_t क्रमwarded_packets_total_gre;
 
-	uint64_t errors_total_unknown_l3_proto;
-	uint64_t errors_total_unknown_l4_proto;
-	uint64_t errors_total_malformed_ip;
-	uint64_t errors_total_fragmented_ip;
-	uint64_t errors_total_malformed_icmp;
-	uint64_t errors_total_unwanted_icmp;
-	uint64_t errors_total_malformed_icmp_pkt_too_big;
-	uint64_t errors_total_malformed_tcp;
-	uint64_t errors_total_malformed_udp;
-	uint64_t errors_total_icmp_echo_replies;
-	uint64_t errors_total_malformed_encapsulation;
-	uint64_t errors_total_encap_adjust_failed;
-	uint64_t errors_total_encap_buffer_too_small;
-	uint64_t errors_total_redirect_loop;
-	uint64_t errors_total_encap_mtu_violate;
-} metrics_t;
+	uपूर्णांक64_t errors_total_unknown_l3_proto;
+	uपूर्णांक64_t errors_total_unknown_l4_proto;
+	uपूर्णांक64_t errors_total_malक्रमmed_ip;
+	uपूर्णांक64_t errors_total_fragmented_ip;
+	uपूर्णांक64_t errors_total_malक्रमmed_icmp;
+	uपूर्णांक64_t errors_total_unwanted_icmp;
+	uपूर्णांक64_t errors_total_malक्रमmed_icmp_pkt_too_big;
+	uपूर्णांक64_t errors_total_malक्रमmed_tcp;
+	uपूर्णांक64_t errors_total_malक्रमmed_udp;
+	uपूर्णांक64_t errors_total_icmp_echo_replies;
+	uपूर्णांक64_t errors_total_malक्रमmed_encapsulation;
+	uपूर्णांक64_t errors_total_encap_adjust_failed;
+	uपूर्णांक64_t errors_total_encap_buffer_too_small;
+	uपूर्णांक64_t errors_total_redirect_loop;
+	uपूर्णांक64_t errors_total_encap_mtu_violate;
+पूर्ण metrics_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	INVALID = 0,
 	UNKNOWN,
 	ECHO_REQUEST,
 	SYN,
 	SYN_COOKIE,
 	ESTABLISHED,
-} verdict_t;
+पूर्ण verdict_t;
 
-typedef struct {
-	uint16_t src, dst;
-} flow_ports_t;
+प्रकार काष्ठा अणु
+	uपूर्णांक16_t src, dst;
+पूर्ण flow_ports_t;
 
-_Static_assert(
-	sizeof(flow_ports_t) !=
-		offsetofend(struct bpf_sock_tuple, ipv4.dport) -
-			offsetof(struct bpf_sock_tuple, ipv4.sport) - 1,
+_Static_निश्चित(
+	माप(flow_ports_t) !=
+		दुरत्वend(काष्ठा bpf_sock_tuple, ipv4.dport) -
+			दुरत्व(काष्ठा bpf_sock_tuple, ipv4.sport) - 1,
 	"flow_ports_t must match sport and dport in struct bpf_sock_tuple");
-_Static_assert(
-	sizeof(flow_ports_t) !=
-		offsetofend(struct bpf_sock_tuple, ipv6.dport) -
-			offsetof(struct bpf_sock_tuple, ipv6.sport) - 1,
+_Static_निश्चित(
+	माप(flow_ports_t) !=
+		दुरत्वend(काष्ठा bpf_sock_tuple, ipv6.dport) -
+			दुरत्व(काष्ठा bpf_sock_tuple, ipv6.sport) - 1,
 	"flow_ports_t must match sport and dport in struct bpf_sock_tuple");
 
-typedef int ret_t;
+प्रकार पूर्णांक ret_t;
 
-/* This is a bit of a hack. We need a return value which allows us to
- * indicate that the regular flow of the program should continue,
- * while allowing functions to use XDP_PASS and XDP_DROP, etc.
+/* This is a bit of a hack. We need a वापस value which allows us to
+ * indicate that the regular flow of the program should जारी,
+ * जबतक allowing functions to use XDP_PASS and XDP_DROP, etc.
  */
-static const ret_t CONTINUE_PROCESSING = -1;
+अटल स्थिर ret_t CONTINUE_PROCESSING = -1;
 
-/* Convenience macro to call functions which return ret_t.
+/* Convenience macro to call functions which वापस ret_t.
  */
-#define MAYBE_RETURN(x)                           \
-	do {                                      \
+#घोषणा MAYBE_RETURN(x)                           \
+	करो अणु                                      \
 		ret_t __ret = x;                  \
-		if (__ret != CONTINUE_PROCESSING) \
-			return __ret;             \
-	} while (0)
+		अगर (__ret != CONTINUE_PROCESSING) \
+			वापस __ret;             \
+	पूर्ण जबतक (0)
 
-/* Linux packet pointers are either aligned to NET_IP_ALIGN (aka 2 bytes),
- * or not aligned if the arch supports efficient unaligned access.
+/* Linux packet poपूर्णांकers are either aligned to NET_IP_ALIGN (aka 2 bytes),
+ * or not aligned अगर the arch supports efficient unaligned access.
  *
- * Since the verifier ensures that eBPF packet accesses follow these rules,
- * we can tell LLVM to emit code as if we always had a larger alignment.
- * It will yell at us if we end up on a platform where this is not valid.
+ * Since the verअगरier ensures that eBPF packet accesses follow these rules,
+ * we can tell LLVM to emit code as अगर we always had a larger alignment.
+ * It will yell at us अगर we end up on a platक्रमm where this is not valid.
  */
-typedef uint8_t *net_ptr __attribute__((align_value(8)));
+प्रकार uपूर्णांक8_t *net_ptr __attribute__((align_value(8)));
 
-typedef struct buf {
-	struct __sk_buff *skb;
+प्रकार काष्ठा buf अणु
+	काष्ठा __sk_buff *skb;
 	net_ptr head;
 	/* NB: tail musn't have alignment other than 1, otherwise
 	* LLVM will go and eliminate code, e.g. when checking packet lengths.
 	*/
-	uint8_t *const tail;
-} buf_t;
+	uपूर्णांक8_t *स्थिर tail;
+पूर्ण buf_t;
 
-static __always_inline size_t buf_off(const buf_t *buf)
-{
-	/* Clang seems to optimize constructs like
+अटल __always_अंतरभूत माप_प्रकार buf_off(स्थिर buf_t *buf)
+अणु
+	/* Clang seems to optimize स्थिरructs like
 	 *    a - b + c
-	 * if c is known:
+	 * अगर c is known:
 	 *    r? = c
 	 *    r? -= b
 	 *    r? += a
 	 *
-	 * This is a problem if a and b are packet pointers,
-	 * since the verifier allows subtracting two pointers to
-	 * get a scalar, but not a scalar and a pointer.
+	 * This is a problem अगर a and b are packet poपूर्णांकers,
+	 * since the verअगरier allows subtracting two poपूर्णांकers to
+	 * get a scalar, but not a scalar and a poपूर्णांकer.
 	 *
-	 * Use inline asm to break this optimization.
+	 * Use अंतरभूत यंत्र to अवरोध this optimization.
 	 */
-	size_t off = (size_t)buf->head;
-	asm("%0 -= %1" : "+r"(off) : "r"(buf->skb->data));
-	return off;
-}
+	माप_प्रकार off = (माप_प्रकार)buf->head;
+	यंत्र("%0 -= %1" : "+r"(off) : "r"(buf->skb->data));
+	वापस off;
+पूर्ण
 
-static __always_inline bool buf_copy(buf_t *buf, void *dst, size_t len)
-{
-	if (bpf_skb_load_bytes(buf->skb, buf_off(buf), dst, len)) {
-		return false;
-	}
+अटल __always_अंतरभूत bool buf_copy(buf_t *buf, व्योम *dst, माप_प्रकार len)
+अणु
+	अगर (bpf_skb_load_bytes(buf->skb, buf_off(buf), dst, len)) अणु
+		वापस false;
+	पूर्ण
 
 	buf->head += len;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static __always_inline bool buf_skip(buf_t *buf, const size_t len)
-{
+अटल __always_अंतरभूत bool buf_skip(buf_t *buf, स्थिर माप_प्रकार len)
+अणु
 	/* Check whether off + len is valid in the non-linear part. */
-	if (buf_off(buf) + len > buf->skb->len) {
-		return false;
-	}
+	अगर (buf_off(buf) + len > buf->skb->len) अणु
+		वापस false;
+	पूर्ण
 
 	buf->head += len;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* Returns a pointer to the start of buf, or NULL if len is
- * larger than the remaining data. Consumes len bytes on a successful
+/* Returns a poपूर्णांकer to the start of buf, or शून्य अगर len is
+ * larger than the reमुख्यing data. Consumes len bytes on a successful
  * call.
  *
- * If scratch is not NULL, the function will attempt to load non-linear
- * data via bpf_skb_load_bytes. On success, scratch is returned.
+ * If scratch is not शून्य, the function will attempt to load non-linear
+ * data via bpf_skb_load_bytes. On success, scratch is वापसed.
  */
-static __always_inline void *buf_assign(buf_t *buf, const size_t len, void *scratch)
-{
-	if (buf->head + len > buf->tail) {
-		if (scratch == NULL) {
-			return NULL;
-		}
+अटल __always_अंतरभूत व्योम *buf_assign(buf_t *buf, स्थिर माप_प्रकार len, व्योम *scratch)
+अणु
+	अगर (buf->head + len > buf->tail) अणु
+		अगर (scratch == शून्य) अणु
+			वापस शून्य;
+		पूर्ण
 
-		return buf_copy(buf, scratch, len) ? scratch : NULL;
-	}
+		वापस buf_copy(buf, scratch, len) ? scratch : शून्य;
+	पूर्ण
 
-	void *ptr = buf->head;
+	व्योम *ptr = buf->head;
 	buf->head += len;
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static INLINING bool pkt_skip_ipv4_options(buf_t *buf, const struct iphdr *ipv4)
-{
-	if (ipv4->ihl <= 5) {
-		return true;
-	}
+अटल INLINING bool pkt_skip_ipv4_options(buf_t *buf, स्थिर काष्ठा iphdr *ipv4)
+अणु
+	अगर (ipv4->ihl <= 5) अणु
+		वापस true;
+	पूर्ण
 
-	return buf_skip(buf, (ipv4->ihl - 5) * 4);
-}
+	वापस buf_skip(buf, (ipv4->ihl - 5) * 4);
+पूर्ण
 
-static INLINING bool ipv4_is_fragment(const struct iphdr *ip)
-{
-	uint16_t frag_off = ip->frag_off & bpf_htons(IP_OFFSET_MASK);
-	return (ip->frag_off & bpf_htons(IP_MF)) != 0 || frag_off > 0;
-}
+अटल INLINING bool ipv4_is_fragment(स्थिर काष्ठा iphdr *ip)
+अणु
+	uपूर्णांक16_t frag_off = ip->frag_off & bpf_htons(IP_OFFSET_MASK);
+	वापस (ip->frag_off & bpf_htons(IP_MF)) != 0 || frag_off > 0;
+पूर्ण
 
-static __always_inline struct iphdr *pkt_parse_ipv4(buf_t *pkt, struct iphdr *scratch)
-{
-	struct iphdr *ipv4 = buf_assign(pkt, sizeof(*ipv4), scratch);
-	if (ipv4 == NULL) {
-		return NULL;
-	}
+अटल __always_अंतरभूत काष्ठा iphdr *pkt_parse_ipv4(buf_t *pkt, काष्ठा iphdr *scratch)
+अणु
+	काष्ठा iphdr *ipv4 = buf_assign(pkt, माप(*ipv4), scratch);
+	अगर (ipv4 == शून्य) अणु
+		वापस शून्य;
+	पूर्ण
 
-	if (ipv4->ihl < 5) {
-		return NULL;
-	}
+	अगर (ipv4->ihl < 5) अणु
+		वापस शून्य;
+	पूर्ण
 
-	if (!pkt_skip_ipv4_options(pkt, ipv4)) {
-		return NULL;
-	}
+	अगर (!pkt_skip_ipv4_options(pkt, ipv4)) अणु
+		वापस शून्य;
+	पूर्ण
 
-	return ipv4;
-}
+	वापस ipv4;
+पूर्ण
 
 /* Parse the L4 ports from a packet, assuming a layout like TCP or UDP. */
-static INLINING bool pkt_parse_icmp_l4_ports(buf_t *pkt, flow_ports_t *ports)
-{
-	if (!buf_copy(pkt, ports, sizeof(*ports))) {
-		return false;
-	}
+अटल INLINING bool pkt_parse_icmp_l4_ports(buf_t *pkt, flow_ports_t *ports)
+अणु
+	अगर (!buf_copy(pkt, ports, माप(*ports))) अणु
+		वापस false;
+	पूर्ण
 
 	/* Ports in the L4 headers are reversed, since we are parsing an ICMP
 	 * payload which is going towards the eyeball.
 	 */
-	uint16_t dst = ports->src;
+	uपूर्णांक16_t dst = ports->src;
 	ports->src = ports->dst;
 	ports->dst = dst;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static INLINING uint16_t pkt_checksum_fold(uint32_t csum)
-{
-	/* The highest reasonable value for an IPv4 header
-	 * checksum requires two folds, so we just do that always.
+अटल INLINING uपूर्णांक16_t pkt_checksum_fold(uपूर्णांक32_t csum)
+अणु
+	/* The highest reasonable value क्रम an IPv4 header
+	 * checksum requires two folds, so we just करो that always.
 	 */
 	csum = (csum & 0xffff) + (csum >> 16);
 	csum = (csum & 0xffff) + (csum >> 16);
-	return (uint16_t)~csum;
-}
+	वापस (uपूर्णांक16_t)~csum;
+पूर्ण
 
-static INLINING void pkt_ipv4_checksum(struct iphdr *iph)
-{
+अटल INLINING व्योम pkt_ipv4_checksum(काष्ठा iphdr *iph)
+अणु
 	iph->check = 0;
 
 	/* An IP header without options is 20 bytes. Two of those
@@ -263,63 +264,63 @@ static INLINING void pkt_ipv4_checksum(struct iphdr *iph)
 	 * the maximum accumulated value is 18 / 2 * 0xffff = 0x8fff7,
 	 * which fits in 32 bit.
 	 */
-	_Static_assert(sizeof(struct iphdr) == 20, "iphdr must be 20 bytes");
-	uint32_t acc = 0;
-	uint16_t *ipw = (uint16_t *)iph;
+	_Static_निश्चित(माप(काष्ठा iphdr) == 20, "iphdr must be 20 bytes");
+	uपूर्णांक32_t acc = 0;
+	uपूर्णांक16_t *ipw = (uपूर्णांक16_t *)iph;
 
-#pragma clang loop unroll(full)
-	for (size_t i = 0; i < sizeof(struct iphdr) / 2; i++) {
+#आशय clang loop unroll(full)
+	क्रम (माप_प्रकार i = 0; i < माप(काष्ठा iphdr) / 2; i++) अणु
 		acc += ipw[i];
-	}
+	पूर्ण
 
 	iph->check = pkt_checksum_fold(acc);
-}
+पूर्ण
 
-static INLINING
+अटल INLINING
 bool pkt_skip_ipv6_extension_headers(buf_t *pkt,
-				     const struct ipv6hdr *ipv6,
-				     uint8_t *upper_proto,
+				     स्थिर काष्ठा ipv6hdr *ipv6,
+				     uपूर्णांक8_t *upper_proto,
 				     bool *is_fragment)
-{
+अणु
 	/* We understand five extension headers.
-	 * https://tools.ietf.org/html/rfc8200#section-4.1 states that all
+	 * https://tools.ietf.org/hपंचांगl/rfc8200#section-4.1 states that all
 	 * headers should occur once, except Destination Options, which may
 	 * occur twice. Hence we give up after 6 headers.
 	 */
-	struct {
-		uint8_t next;
-		uint8_t len;
-	} exthdr = {
+	काष्ठा अणु
+		uपूर्णांक8_t next;
+		uपूर्णांक8_t len;
+	पूर्ण exthdr = अणु
 		.next = ipv6->nexthdr,
-	};
+	पूर्ण;
 	*is_fragment = false;
 
-#pragma clang loop unroll(full)
-	for (int i = 0; i < 6; i++) {
-		switch (exthdr.next) {
-		case IPPROTO_FRAGMENT:
+#आशय clang loop unroll(full)
+	क्रम (पूर्णांक i = 0; i < 6; i++) अणु
+		चयन (exthdr.next) अणु
+		हाल IPPROTO_FRAGMENT:
 			*is_fragment = true;
-			/* NB: We don't check that hdrlen == 0 as per spec. */
+			/* NB: We करोn't check that hdrlen == 0 as per spec. */
 			/* fallthrough; */
 
-		case IPPROTO_HOPOPTS:
-		case IPPROTO_ROUTING:
-		case IPPROTO_DSTOPTS:
-		case IPPROTO_MH:
-			if (!buf_copy(pkt, &exthdr, sizeof(exthdr))) {
-				return false;
-			}
+		हाल IPPROTO_HOPOPTS:
+		हाल IPPROTO_ROUTING:
+		हाल IPPROTO_DSTOPTS:
+		हाल IPPROTO_MH:
+			अगर (!buf_copy(pkt, &exthdr, माप(exthdr))) अणु
+				वापस false;
+			पूर्ण
 
 			/* hdrlen is in 8-octet units, and excludes the first 8 octets. */
-			if (!buf_skip(pkt,
-				      (exthdr.len + 1) * 8 - sizeof(exthdr))) {
-				return false;
-			}
+			अगर (!buf_skip(pkt,
+				      (exthdr.len + 1) * 8 - माप(exthdr))) अणु
+				वापस false;
+			पूर्ण
 
 			/* Decode next header */
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			/* The next header is not one of the known extension
 			 * headers, treat it as the upper layer header.
 			 *
@@ -328,188 +329,188 @@ bool pkt_skip_ipv6_extension_headers(buf_t *pkt,
 			 * Encapsulating Security Payload (50) and Authentication
 			 * Header (51) also end up here (and will trigger an
 			 * unknown proto error later). They have a custom header
-			 * format and seem too esoteric to care about.
+			 * क्रमmat and seem too esoteric to care about.
 			 */
 			*upper_proto = exthdr.next;
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
 	/* We never found an upper layer header. */
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* This function has to be inlined, because the verifier otherwise rejects it
- * due to returning a pointer to the stack. This is technically correct, since
+/* This function has to be अंतरभूतd, because the verअगरier otherwise rejects it
+ * due to वापसing a poपूर्णांकer to the stack. This is technically correct, since
  * scratch is allocated on the stack. However, this usage should be safe since
  * it's the callers stack after all.
  */
-static __always_inline struct ipv6hdr *
-pkt_parse_ipv6(buf_t *pkt, struct ipv6hdr *scratch, uint8_t *proto,
+अटल __always_अंतरभूत काष्ठा ipv6hdr *
+pkt_parse_ipv6(buf_t *pkt, काष्ठा ipv6hdr *scratch, uपूर्णांक8_t *proto,
 	       bool *is_fragment)
-{
-	struct ipv6hdr *ipv6 = buf_assign(pkt, sizeof(*ipv6), scratch);
-	if (ipv6 == NULL) {
-		return NULL;
-	}
+अणु
+	काष्ठा ipv6hdr *ipv6 = buf_assign(pkt, माप(*ipv6), scratch);
+	अगर (ipv6 == शून्य) अणु
+		वापस शून्य;
+	पूर्ण
 
-	if (!pkt_skip_ipv6_extension_headers(pkt, ipv6, proto, is_fragment)) {
-		return NULL;
-	}
+	अगर (!pkt_skip_ipv6_extension_headers(pkt, ipv6, proto, is_fragment)) अणु
+		वापस शून्य;
+	पूर्ण
 
-	return ipv6;
-}
+	वापस ipv6;
+पूर्ण
 
 /* Global metrics, per CPU
  */
-struct {
-	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-	__uint(max_entries, 1);
-	__type(key, unsigned int);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uपूर्णांक(max_entries, 1);
+	__type(key, अचिन्हित पूर्णांक);
 	__type(value, metrics_t);
-} metrics_map SEC(".maps");
+पूर्ण metrics_map SEC(".maps");
 
-static INLINING metrics_t *get_global_metrics(void)
-{
-	uint64_t key = 0;
-	return bpf_map_lookup_elem(&metrics_map, &key);
-}
+अटल INLINING metrics_t *get_global_metrics(व्योम)
+अणु
+	uपूर्णांक64_t key = 0;
+	वापस bpf_map_lookup_elem(&metrics_map, &key);
+पूर्ण
 
-static INLINING ret_t accept_locally(struct __sk_buff *skb, encap_headers_t *encap)
-{
-	const int payload_off =
-		sizeof(*encap) +
-		sizeof(struct in_addr) * encap->unigue.hop_count;
-	int32_t encap_overhead = payload_off - sizeof(struct ethhdr);
+अटल INLINING ret_t accept_locally(काष्ठा __sk_buff *skb, encap_headers_t *encap)
+अणु
+	स्थिर पूर्णांक payload_off =
+		माप(*encap) +
+		माप(काष्ठा in_addr) * encap->unigue.hop_count;
+	पूर्णांक32_t encap_overhead = payload_off - माप(काष्ठा ethhdr);
 
-	// Changing the ethertype if the encapsulated packet is ipv6
-	if (encap->gue.proto_ctype == IPPROTO_IPV6) {
+	// Changing the ethertype अगर the encapsulated packet is ipv6
+	अगर (encap->gue.proto_ctype == IPPROTO_IPV6) अणु
 		encap->eth.h_proto = bpf_htons(ETH_P_IPV6);
-	}
+	पूर्ण
 
-	if (bpf_skb_adjust_room(skb, -encap_overhead, BPF_ADJ_ROOM_MAC,
+	अगर (bpf_skb_adjust_room(skb, -encap_overhead, BPF_ADJ_ROOM_MAC,
 				BPF_F_ADJ_ROOM_FIXED_GSO |
 				BPF_F_ADJ_ROOM_NO_CSUM_RESET) ||
 	    bpf_csum_level(skb, BPF_CSUM_LEVEL_DEC))
-		return TC_ACT_SHOT;
+		वापस TC_ACT_SHOT;
 
-	return bpf_redirect(skb->ifindex, BPF_F_INGRESS);
-}
+	वापस bpf_redirect(skb->अगरindex, BPF_F_INGRESS);
+पूर्ण
 
-static INLINING ret_t forward_with_gre(struct __sk_buff *skb, encap_headers_t *encap,
-				       struct in_addr *next_hop, metrics_t *metrics)
-{
-	metrics->forwarded_packets_total_gre++;
+अटल INLINING ret_t क्रमward_with_gre(काष्ठा __sk_buff *skb, encap_headers_t *encap,
+				       काष्ठा in_addr *next_hop, metrics_t *metrics)
+अणु
+	metrics->क्रमwarded_packets_total_gre++;
 
-	const int payload_off =
-		sizeof(*encap) +
-		sizeof(struct in_addr) * encap->unigue.hop_count;
-	int32_t encap_overhead =
-		payload_off - sizeof(struct ethhdr) - sizeof(struct iphdr);
-	int32_t delta = sizeof(struct gre_base_hdr) - encap_overhead;
-	uint16_t proto = ETH_P_IP;
-	uint32_t mtu_len = 0;
+	स्थिर पूर्णांक payload_off =
+		माप(*encap) +
+		माप(काष्ठा in_addr) * encap->unigue.hop_count;
+	पूर्णांक32_t encap_overhead =
+		payload_off - माप(काष्ठा ethhdr) - माप(काष्ठा iphdr);
+	पूर्णांक32_t delta = माप(काष्ठा gre_base_hdr) - encap_overhead;
+	uपूर्णांक16_t proto = ETH_P_IP;
+	uपूर्णांक32_t mtu_len = 0;
 
 	/* Loop protection: the inner packet's TTL is decremented as a safeguard
-	 * against any forwarding loop. As the only interesting field is the TTL
-	 * hop limit for IPv6, it is easier to use bpf_skb_load_bytes/bpf_skb_store_bytes
-	 * as they handle the split packets if needed (no need for the data to be
+	 * against any क्रमwarding loop. As the only पूर्णांकeresting field is the TTL
+	 * hop limit क्रम IPv6, it is easier to use bpf_skb_load_bytes/bpf_skb_store_bytes
+	 * as they handle the split packets अगर needed (no need क्रम the data to be
 	 * in the linear section).
 	 */
-	if (encap->gue.proto_ctype == IPPROTO_IPV6) {
+	अगर (encap->gue.proto_ctype == IPPROTO_IPV6) अणु
 		proto = ETH_P_IPV6;
-		uint8_t ttl;
-		int rc;
+		uपूर्णांक8_t ttl;
+		पूर्णांक rc;
 
 		rc = bpf_skb_load_bytes(
-			skb, payload_off + offsetof(struct ipv6hdr, hop_limit),
+			skb, payload_off + दुरत्व(काष्ठा ipv6hdr, hop_limit),
 			&ttl, 1);
-		if (rc != 0) {
-			metrics->errors_total_malformed_encapsulation++;
-			return TC_ACT_SHOT;
-		}
+		अगर (rc != 0) अणु
+			metrics->errors_total_malक्रमmed_encapsulation++;
+			वापस TC_ACT_SHOT;
+		पूर्ण
 
-		if (ttl == 0) {
+		अगर (ttl == 0) अणु
 			metrics->errors_total_redirect_loop++;
-			return TC_ACT_SHOT;
-		}
+			वापस TC_ACT_SHOT;
+		पूर्ण
 
 		ttl--;
 		rc = bpf_skb_store_bytes(
-			skb, payload_off + offsetof(struct ipv6hdr, hop_limit),
+			skb, payload_off + दुरत्व(काष्ठा ipv6hdr, hop_limit),
 			&ttl, 1, 0);
-		if (rc != 0) {
-			metrics->errors_total_malformed_encapsulation++;
-			return TC_ACT_SHOT;
-		}
-	} else {
-		uint8_t ttl;
-		int rc;
+		अगर (rc != 0) अणु
+			metrics->errors_total_malक्रमmed_encapsulation++;
+			वापस TC_ACT_SHOT;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		uपूर्णांक8_t ttl;
+		पूर्णांक rc;
 
 		rc = bpf_skb_load_bytes(
-			skb, payload_off + offsetof(struct iphdr, ttl), &ttl,
+			skb, payload_off + दुरत्व(काष्ठा iphdr, ttl), &ttl,
 			1);
-		if (rc != 0) {
-			metrics->errors_total_malformed_encapsulation++;
-			return TC_ACT_SHOT;
-		}
+		अगर (rc != 0) अणु
+			metrics->errors_total_malक्रमmed_encapsulation++;
+			वापस TC_ACT_SHOT;
+		पूर्ण
 
-		if (ttl == 0) {
+		अगर (ttl == 0) अणु
 			metrics->errors_total_redirect_loop++;
-			return TC_ACT_SHOT;
-		}
+			वापस TC_ACT_SHOT;
+		पूर्ण
 
 		/* IPv4 also has a checksum to patch. While the TTL is only one byte,
-		 * this function only works for 2 and 4 bytes arguments (the result is
+		 * this function only works क्रम 2 and 4 bytes arguments (the result is
 		 * the same).
 		 */
 		rc = bpf_l3_csum_replace(
-			skb, payload_off + offsetof(struct iphdr, check), ttl,
+			skb, payload_off + दुरत्व(काष्ठा iphdr, check), ttl,
 			ttl - 1, 2);
-		if (rc != 0) {
-			metrics->errors_total_malformed_encapsulation++;
-			return TC_ACT_SHOT;
-		}
+		अगर (rc != 0) अणु
+			metrics->errors_total_malक्रमmed_encapsulation++;
+			वापस TC_ACT_SHOT;
+		पूर्ण
 
 		ttl--;
 		rc = bpf_skb_store_bytes(
-			skb, payload_off + offsetof(struct iphdr, ttl), &ttl, 1,
+			skb, payload_off + दुरत्व(काष्ठा iphdr, ttl), &ttl, 1,
 			0);
-		if (rc != 0) {
-			metrics->errors_total_malformed_encapsulation++;
-			return TC_ACT_SHOT;
-		}
-	}
+		अगर (rc != 0) अणु
+			metrics->errors_total_malक्रमmed_encapsulation++;
+			वापस TC_ACT_SHOT;
+		पूर्ण
+	पूर्ण
 
-	if (bpf_check_mtu(skb, skb->ifindex, &mtu_len, delta, 0)) {
+	अगर (bpf_check_mtu(skb, skb->अगरindex, &mtu_len, delta, 0)) अणु
 		metrics->errors_total_encap_mtu_violate++;
-		return TC_ACT_SHOT;
-	}
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	if (bpf_skb_adjust_room(skb, delta, BPF_ADJ_ROOM_NET,
+	अगर (bpf_skb_adjust_room(skb, delta, BPF_ADJ_ROOM_NET,
 				BPF_F_ADJ_ROOM_FIXED_GSO |
 				BPF_F_ADJ_ROOM_NO_CSUM_RESET) ||
-	    bpf_csum_level(skb, BPF_CSUM_LEVEL_INC)) {
+	    bpf_csum_level(skb, BPF_CSUM_LEVEL_INC)) अणु
 		metrics->errors_total_encap_adjust_failed++;
-		return TC_ACT_SHOT;
-	}
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	if (bpf_skb_pull_data(skb, sizeof(encap_gre_t))) {
+	अगर (bpf_skb_pull_data(skb, माप(encap_gre_t))) अणु
 		metrics->errors_total_encap_buffer_too_small++;
-		return TC_ACT_SHOT;
-	}
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	buf_t pkt = {
+	buf_t pkt = अणु
 		.skb = skb,
-		.head = (uint8_t *)(long)skb->data,
-		.tail = (uint8_t *)(long)skb->data_end,
-	};
+		.head = (uपूर्णांक8_t *)(दीर्घ)skb->data,
+		.tail = (uपूर्णांक8_t *)(दीर्घ)skb->data_end,
+	पूर्ण;
 
-	encap_gre_t *encap_gre = buf_assign(&pkt, sizeof(encap_gre_t), NULL);
-	if (encap_gre == NULL) {
+	encap_gre_t *encap_gre = buf_assign(&pkt, माप(encap_gre_t), शून्य);
+	अगर (encap_gre == शून्य) अणु
 		metrics->errors_total_encap_buffer_too_small++;
-		return TC_ACT_SHOT;
-	}
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
 	encap_gre->ip.protocol = IPPROTO_GRE;
 	encap_gre->ip.daddr = next_hop->s_addr;
@@ -518,558 +519,558 @@ static INLINING ret_t forward_with_gre(struct __sk_buff *skb, encap_headers_t *e
 		bpf_htons(bpf_ntohs(encap_gre->ip.tot_len) + delta);
 	encap_gre->gre.flags = 0;
 	encap_gre->gre.protocol = bpf_htons(proto);
-	pkt_ipv4_checksum((void *)&encap_gre->ip);
+	pkt_ipv4_checksum((व्योम *)&encap_gre->ip);
 
-	return bpf_redirect(skb->ifindex, 0);
-}
+	वापस bpf_redirect(skb->अगरindex, 0);
+पूर्ण
 
-static INLINING ret_t forward_to_next_hop(struct __sk_buff *skb, encap_headers_t *encap,
-					  struct in_addr *next_hop, metrics_t *metrics)
-{
+अटल INLINING ret_t क्रमward_to_next_hop(काष्ठा __sk_buff *skb, encap_headers_t *encap,
+					  काष्ठा in_addr *next_hop, metrics_t *metrics)
+अणु
 	/* swap L2 addresses */
 	/* This assumes that packets are received from a router.
 	 * So just swapping the MAC addresses here will make the packet go back to
 	 * the router, which will send it to the appropriate machine.
 	 */
-	unsigned char temp[ETH_ALEN];
-	memcpy(temp, encap->eth.h_dest, sizeof(temp));
-	memcpy(encap->eth.h_dest, encap->eth.h_source,
-	       sizeof(encap->eth.h_dest));
-	memcpy(encap->eth.h_source, temp, sizeof(encap->eth.h_source));
+	अचिन्हित अक्षर temp[ETH_ALEN];
+	स_नकल(temp, encap->eth.h_dest, माप(temp));
+	स_नकल(encap->eth.h_dest, encap->eth.h_source,
+	       माप(encap->eth.h_dest));
+	स_नकल(encap->eth.h_source, temp, माप(encap->eth.h_source));
 
-	if (encap->unigue.next_hop == encap->unigue.hop_count - 1 &&
-	    encap->unigue.last_hop_gre) {
-		return forward_with_gre(skb, encap, next_hop, metrics);
-	}
+	अगर (encap->unigue.next_hop == encap->unigue.hop_count - 1 &&
+	    encap->unigue.last_hop_gre) अणु
+		वापस क्रमward_with_gre(skb, encap, next_hop, metrics);
+	पूर्ण
 
-	metrics->forwarded_packets_total_gue++;
-	uint32_t old_saddr = encap->ip.saddr;
+	metrics->क्रमwarded_packets_total_gue++;
+	uपूर्णांक32_t old_saddr = encap->ip.saddr;
 	encap->ip.saddr = encap->ip.daddr;
 	encap->ip.daddr = next_hop->s_addr;
-	if (encap->unigue.next_hop < encap->unigue.hop_count) {
+	अगर (encap->unigue.next_hop < encap->unigue.hop_count) अणु
 		encap->unigue.next_hop++;
-	}
+	पूर्ण
 
 	/* Remove ip->saddr, add next_hop->s_addr */
-	const uint64_t off = offsetof(typeof(*encap), ip.check);
-	int ret = bpf_l3_csum_replace(skb, off, old_saddr, next_hop->s_addr, 4);
-	if (ret < 0) {
-		return TC_ACT_SHOT;
-	}
+	स्थिर uपूर्णांक64_t off = दुरत्व(typeof(*encap), ip.check);
+	पूर्णांक ret = bpf_l3_csum_replace(skb, off, old_saddr, next_hop->s_addr, 4);
+	अगर (ret < 0) अणु
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	return bpf_redirect(skb->ifindex, 0);
-}
+	वापस bpf_redirect(skb->अगरindex, 0);
+पूर्ण
 
-static INLINING ret_t skip_next_hops(buf_t *pkt, int n)
-{
-	switch (n) {
-	case 1:
-		if (!buf_skip(pkt, sizeof(struct in_addr)))
-			return TC_ACT_SHOT;
-	case 0:
-		return CONTINUE_PROCESSING;
+अटल INLINING ret_t skip_next_hops(buf_t *pkt, पूर्णांक n)
+अणु
+	चयन (n) अणु
+	हाल 1:
+		अगर (!buf_skip(pkt, माप(काष्ठा in_addr)))
+			वापस TC_ACT_SHOT;
+	हाल 0:
+		वापस CONTINUE_PROCESSING;
 
-	default:
-		return TC_ACT_SHOT;
-	}
-}
+	शेष:
+		वापस TC_ACT_SHOT;
+	पूर्ण
+पूर्ण
 
 /* Get the next hop from the GLB header.
  *
- * Sets next_hop->s_addr to 0 if there are no more hops left.
+ * Sets next_hop->s_addr to 0 अगर there are no more hops left.
  * pkt is positioned just after the variable length GLB header
- * iff the call is successful.
+ * अगरf the call is successful.
  */
-static INLINING ret_t get_next_hop(buf_t *pkt, encap_headers_t *encap,
-				   struct in_addr *next_hop)
-{
-	if (encap->unigue.next_hop > encap->unigue.hop_count) {
-		return TC_ACT_SHOT;
-	}
+अटल INLINING ret_t get_next_hop(buf_t *pkt, encap_headers_t *encap,
+				   काष्ठा in_addr *next_hop)
+अणु
+	अगर (encap->unigue.next_hop > encap->unigue.hop_count) अणु
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
 	/* Skip "used" next hops. */
 	MAYBE_RETURN(skip_next_hops(pkt, encap->unigue.next_hop));
 
-	if (encap->unigue.next_hop == encap->unigue.hop_count) {
+	अगर (encap->unigue.next_hop == encap->unigue.hop_count) अणु
 		/* No more next hops, we are at the end of the GLB header. */
 		next_hop->s_addr = 0;
-		return CONTINUE_PROCESSING;
-	}
+		वापस CONTINUE_PROCESSING;
+	पूर्ण
 
-	if (!buf_copy(pkt, next_hop, sizeof(*next_hop))) {
-		return TC_ACT_SHOT;
-	}
+	अगर (!buf_copy(pkt, next_hop, माप(*next_hop))) अणु
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	/* Skip the remainig next hops (may be zero). */
-	return skip_next_hops(pkt, encap->unigue.hop_count -
+	/* Skip the reमुख्यig next hops (may be zero). */
+	वापस skip_next_hops(pkt, encap->unigue.hop_count -
 					   encap->unigue.next_hop - 1);
-}
+पूर्ण
 
 /* Fill a bpf_sock_tuple to be used with the socket lookup functions.
- * This is a kludge that let's us work around verifier limitations:
+ * This is a kludge that let's us work around verअगरier limitations:
  *
- *    fill_tuple(&t, foo, sizeof(struct iphdr), 123, 321)
+ *    fill_tuple(&t, foo, माप(काष्ठा iphdr), 123, 321)
  *
- * clang will substitue a costant for sizeof, which allows the verifier
- * to track it's value. Based on this, it can figure out the constant
- * return value, and calling code works while still being "generic" to
+ * clang will substitue a costant क्रम माप, which allows the verअगरier
+ * to track it's value. Based on this, it can figure out the स्थिरant
+ * वापस value, and calling code works जबतक still being "generic" to
  * IPv4 and IPv6.
  */
-static INLINING uint64_t fill_tuple(struct bpf_sock_tuple *tuple, void *iph,
-				    uint64_t iphlen, uint16_t sport, uint16_t dport)
-{
-	switch (iphlen) {
-	case sizeof(struct iphdr): {
-		struct iphdr *ipv4 = (struct iphdr *)iph;
+अटल INLINING uपूर्णांक64_t fill_tuple(काष्ठा bpf_sock_tuple *tuple, व्योम *iph,
+				    uपूर्णांक64_t iphlen, uपूर्णांक16_t sport, uपूर्णांक16_t dport)
+अणु
+	चयन (iphlen) अणु
+	हाल माप(काष्ठा iphdr): अणु
+		काष्ठा iphdr *ipv4 = (काष्ठा iphdr *)iph;
 		tuple->ipv4.daddr = ipv4->daddr;
 		tuple->ipv4.saddr = ipv4->saddr;
 		tuple->ipv4.sport = sport;
 		tuple->ipv4.dport = dport;
-		return sizeof(tuple->ipv4);
-	}
+		वापस माप(tuple->ipv4);
+	पूर्ण
 
-	case sizeof(struct ipv6hdr): {
-		struct ipv6hdr *ipv6 = (struct ipv6hdr *)iph;
-		memcpy(&tuple->ipv6.daddr, &ipv6->daddr,
-		       sizeof(tuple->ipv6.daddr));
-		memcpy(&tuple->ipv6.saddr, &ipv6->saddr,
-		       sizeof(tuple->ipv6.saddr));
+	हाल माप(काष्ठा ipv6hdr): अणु
+		काष्ठा ipv6hdr *ipv6 = (काष्ठा ipv6hdr *)iph;
+		स_नकल(&tuple->ipv6.daddr, &ipv6->daddr,
+		       माप(tuple->ipv6.daddr));
+		स_नकल(&tuple->ipv6.saddr, &ipv6->saddr,
+		       माप(tuple->ipv6.saddr));
 		tuple->ipv6.sport = sport;
 		tuple->ipv6.dport = dport;
-		return sizeof(tuple->ipv6);
-	}
+		वापस माप(tuple->ipv6);
+	पूर्ण
 
-	default:
-		return 0;
-	}
-}
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static INLINING verdict_t classify_tcp(struct __sk_buff *skb,
-				       struct bpf_sock_tuple *tuple, uint64_t tuplen,
-				       void *iph, struct tcphdr *tcp)
-{
-	struct bpf_sock *sk =
+अटल INLINING verdict_t classअगरy_tcp(काष्ठा __sk_buff *skb,
+				       काष्ठा bpf_sock_tuple *tuple, uपूर्णांक64_t tuplen,
+				       व्योम *iph, काष्ठा tcphdr *tcp)
+अणु
+	काष्ठा bpf_sock *sk =
 		bpf_skc_lookup_tcp(skb, tuple, tuplen, BPF_F_CURRENT_NETNS, 0);
-	if (sk == NULL) {
-		return UNKNOWN;
-	}
+	अगर (sk == शून्य) अणु
+		वापस UNKNOWN;
+	पूर्ण
 
-	if (sk->state != BPF_TCP_LISTEN) {
+	अगर (sk->state != BPF_TCP_LISTEN) अणु
 		bpf_sk_release(sk);
-		return ESTABLISHED;
-	}
+		वापस ESTABLISHED;
+	पूर्ण
 
-	if (iph != NULL && tcp != NULL) {
+	अगर (iph != शून्य && tcp != शून्य) अणु
 		/* Kludge: we've run out of arguments, but need the length of the ip header. */
-		uint64_t iphlen = sizeof(struct iphdr);
-		if (tuplen == sizeof(tuple->ipv6)) {
-			iphlen = sizeof(struct ipv6hdr);
-		}
+		uपूर्णांक64_t iphlen = माप(काष्ठा iphdr);
+		अगर (tuplen == माप(tuple->ipv6)) अणु
+			iphlen = माप(काष्ठा ipv6hdr);
+		पूर्ण
 
-		if (bpf_tcp_check_syncookie(sk, iph, iphlen, tcp,
-					    sizeof(*tcp)) == 0) {
+		अगर (bpf_tcp_check_syncookie(sk, iph, iphlen, tcp,
+					    माप(*tcp)) == 0) अणु
 			bpf_sk_release(sk);
-			return SYN_COOKIE;
-		}
-	}
+			वापस SYN_COOKIE;
+		पूर्ण
+	पूर्ण
 
 	bpf_sk_release(sk);
-	return UNKNOWN;
-}
+	वापस UNKNOWN;
+पूर्ण
 
-static INLINING verdict_t classify_udp(struct __sk_buff *skb,
-				       struct bpf_sock_tuple *tuple, uint64_t tuplen)
-{
-	struct bpf_sock *sk =
+अटल INLINING verdict_t classअगरy_udp(काष्ठा __sk_buff *skb,
+				       काष्ठा bpf_sock_tuple *tuple, uपूर्णांक64_t tuplen)
+अणु
+	काष्ठा bpf_sock *sk =
 		bpf_sk_lookup_udp(skb, tuple, tuplen, BPF_F_CURRENT_NETNS, 0);
-	if (sk == NULL) {
-		return UNKNOWN;
-	}
+	अगर (sk == शून्य) अणु
+		वापस UNKNOWN;
+	पूर्ण
 
-	if (sk->state == BPF_TCP_ESTABLISHED) {
+	अगर (sk->state == BPF_TCP_ESTABLISHED) अणु
 		bpf_sk_release(sk);
-		return ESTABLISHED;
-	}
+		वापस ESTABLISHED;
+	पूर्ण
 
 	bpf_sk_release(sk);
-	return UNKNOWN;
-}
+	वापस UNKNOWN;
+पूर्ण
 
-static INLINING verdict_t classify_icmp(struct __sk_buff *skb, uint8_t proto,
-					struct bpf_sock_tuple *tuple, uint64_t tuplen,
+अटल INLINING verdict_t classअगरy_icmp(काष्ठा __sk_buff *skb, uपूर्णांक8_t proto,
+					काष्ठा bpf_sock_tuple *tuple, uपूर्णांक64_t tuplen,
 					metrics_t *metrics)
-{
-	switch (proto) {
-	case IPPROTO_TCP:
-		return classify_tcp(skb, tuple, tuplen, NULL, NULL);
+अणु
+	चयन (proto) अणु
+	हाल IPPROTO_TCP:
+		वापस classअगरy_tcp(skb, tuple, tuplen, शून्य, शून्य);
 
-	case IPPROTO_UDP:
-		return classify_udp(skb, tuple, tuplen);
+	हाल IPPROTO_UDP:
+		वापस classअगरy_udp(skb, tuple, tuplen);
 
-	default:
-		metrics->errors_total_malformed_icmp++;
-		return INVALID;
-	}
-}
+	शेष:
+		metrics->errors_total_malक्रमmed_icmp++;
+		वापस INVALID;
+	पूर्ण
+पूर्ण
 
-static INLINING verdict_t process_icmpv4(buf_t *pkt, metrics_t *metrics)
-{
-	struct icmphdr icmp;
-	if (!buf_copy(pkt, &icmp, sizeof(icmp))) {
-		metrics->errors_total_malformed_icmp++;
-		return INVALID;
-	}
+अटल INLINING verdict_t process_icmpv4(buf_t *pkt, metrics_t *metrics)
+अणु
+	काष्ठा icmphdr icmp;
+	अगर (!buf_copy(pkt, &icmp, माप(icmp))) अणु
+		metrics->errors_total_malक्रमmed_icmp++;
+		वापस INVALID;
+	पूर्ण
 
 	/* We should never receive encapsulated echo replies. */
-	if (icmp.type == ICMP_ECHOREPLY) {
+	अगर (icmp.type == ICMP_ECHOREPLY) अणु
 		metrics->errors_total_icmp_echo_replies++;
-		return INVALID;
-	}
+		वापस INVALID;
+	पूर्ण
 
-	if (icmp.type == ICMP_ECHO) {
-		return ECHO_REQUEST;
-	}
+	अगर (icmp.type == ICMP_ECHO) अणु
+		वापस ECHO_REQUEST;
+	पूर्ण
 
-	if (icmp.type != ICMP_DEST_UNREACH || icmp.code != ICMP_FRAG_NEEDED) {
+	अगर (icmp.type != ICMP_DEST_UNREACH || icmp.code != ICMP_FRAG_NEEDED) अणु
 		metrics->errors_total_unwanted_icmp++;
-		return INVALID;
-	}
+		वापस INVALID;
+	पूर्ण
 
-	struct iphdr _ip4;
-	const struct iphdr *ipv4 = pkt_parse_ipv4(pkt, &_ip4);
-	if (ipv4 == NULL) {
-		metrics->errors_total_malformed_icmp_pkt_too_big++;
-		return INVALID;
-	}
+	काष्ठा iphdr _ip4;
+	स्थिर काष्ठा iphdr *ipv4 = pkt_parse_ipv4(pkt, &_ip4);
+	अगर (ipv4 == शून्य) अणु
+		metrics->errors_total_malक्रमmed_icmp_pkt_too_big++;
+		वापस INVALID;
+	पूर्ण
 
 	/* The source address in the outer IP header is from the entity that
 	 * originated the ICMP message. Use the original IP header to restore
 	 * the correct flow tuple.
 	 */
-	struct bpf_sock_tuple tuple;
+	काष्ठा bpf_sock_tuple tuple;
 	tuple.ipv4.saddr = ipv4->daddr;
 	tuple.ipv4.daddr = ipv4->saddr;
 
-	if (!pkt_parse_icmp_l4_ports(pkt, (flow_ports_t *)&tuple.ipv4.sport)) {
-		metrics->errors_total_malformed_icmp_pkt_too_big++;
-		return INVALID;
-	}
+	अगर (!pkt_parse_icmp_l4_ports(pkt, (flow_ports_t *)&tuple.ipv4.sport)) अणु
+		metrics->errors_total_malक्रमmed_icmp_pkt_too_big++;
+		वापस INVALID;
+	पूर्ण
 
-	return classify_icmp(pkt->skb, ipv4->protocol, &tuple,
-			     sizeof(tuple.ipv4), metrics);
-}
+	वापस classअगरy_icmp(pkt->skb, ipv4->protocol, &tuple,
+			     माप(tuple.ipv4), metrics);
+पूर्ण
 
-static INLINING verdict_t process_icmpv6(buf_t *pkt, metrics_t *metrics)
-{
-	struct icmp6hdr icmp6;
-	if (!buf_copy(pkt, &icmp6, sizeof(icmp6))) {
-		metrics->errors_total_malformed_icmp++;
-		return INVALID;
-	}
+अटल INLINING verdict_t process_icmpv6(buf_t *pkt, metrics_t *metrics)
+अणु
+	काष्ठा icmp6hdr icmp6;
+	अगर (!buf_copy(pkt, &icmp6, माप(icmp6))) अणु
+		metrics->errors_total_malक्रमmed_icmp++;
+		वापस INVALID;
+	पूर्ण
 
 	/* We should never receive encapsulated echo replies. */
-	if (icmp6.icmp6_type == ICMPV6_ECHO_REPLY) {
+	अगर (icmp6.icmp6_type == ICMPV6_ECHO_REPLY) अणु
 		metrics->errors_total_icmp_echo_replies++;
-		return INVALID;
-	}
+		वापस INVALID;
+	पूर्ण
 
-	if (icmp6.icmp6_type == ICMPV6_ECHO_REQUEST) {
-		return ECHO_REQUEST;
-	}
+	अगर (icmp6.icmp6_type == ICMPV6_ECHO_REQUEST) अणु
+		वापस ECHO_REQUEST;
+	पूर्ण
 
-	if (icmp6.icmp6_type != ICMPV6_PKT_TOOBIG) {
+	अगर (icmp6.icmp6_type != ICMPV6_PKT_TOOBIG) अणु
 		metrics->errors_total_unwanted_icmp++;
-		return INVALID;
-	}
+		वापस INVALID;
+	पूर्ण
 
 	bool is_fragment;
-	uint8_t l4_proto;
-	struct ipv6hdr _ipv6;
-	const struct ipv6hdr *ipv6 =
+	uपूर्णांक8_t l4_proto;
+	काष्ठा ipv6hdr _ipv6;
+	स्थिर काष्ठा ipv6hdr *ipv6 =
 		pkt_parse_ipv6(pkt, &_ipv6, &l4_proto, &is_fragment);
-	if (ipv6 == NULL) {
-		metrics->errors_total_malformed_icmp_pkt_too_big++;
-		return INVALID;
-	}
+	अगर (ipv6 == शून्य) अणु
+		metrics->errors_total_malक्रमmed_icmp_pkt_too_big++;
+		वापस INVALID;
+	पूर्ण
 
-	if (is_fragment) {
+	अगर (is_fragment) अणु
 		metrics->errors_total_fragmented_ip++;
-		return INVALID;
-	}
+		वापस INVALID;
+	पूर्ण
 
 	/* Swap source and dest addresses. */
-	struct bpf_sock_tuple tuple;
-	memcpy(&tuple.ipv6.saddr, &ipv6->daddr, sizeof(tuple.ipv6.saddr));
-	memcpy(&tuple.ipv6.daddr, &ipv6->saddr, sizeof(tuple.ipv6.daddr));
+	काष्ठा bpf_sock_tuple tuple;
+	स_नकल(&tuple.ipv6.saddr, &ipv6->daddr, माप(tuple.ipv6.saddr));
+	स_नकल(&tuple.ipv6.daddr, &ipv6->saddr, माप(tuple.ipv6.daddr));
 
-	if (!pkt_parse_icmp_l4_ports(pkt, (flow_ports_t *)&tuple.ipv6.sport)) {
-		metrics->errors_total_malformed_icmp_pkt_too_big++;
-		return INVALID;
-	}
+	अगर (!pkt_parse_icmp_l4_ports(pkt, (flow_ports_t *)&tuple.ipv6.sport)) अणु
+		metrics->errors_total_malक्रमmed_icmp_pkt_too_big++;
+		वापस INVALID;
+	पूर्ण
 
-	return classify_icmp(pkt->skb, l4_proto, &tuple, sizeof(tuple.ipv6),
+	वापस classअगरy_icmp(pkt->skb, l4_proto, &tuple, माप(tuple.ipv6),
 			     metrics);
-}
+पूर्ण
 
-static INLINING verdict_t process_tcp(buf_t *pkt, void *iph, uint64_t iphlen,
+अटल INLINING verdict_t process_tcp(buf_t *pkt, व्योम *iph, uपूर्णांक64_t iphlen,
 				      metrics_t *metrics)
-{
+अणु
 	metrics->l4_protocol_packets_total_tcp++;
 
-	struct tcphdr _tcp;
-	struct tcphdr *tcp = buf_assign(pkt, sizeof(_tcp), &_tcp);
-	if (tcp == NULL) {
-		metrics->errors_total_malformed_tcp++;
-		return INVALID;
-	}
+	काष्ठा tcphdr _tcp;
+	काष्ठा tcphdr *tcp = buf_assign(pkt, माप(_tcp), &_tcp);
+	अगर (tcp == शून्य) अणु
+		metrics->errors_total_malक्रमmed_tcp++;
+		वापस INVALID;
+	पूर्ण
 
-	if (tcp->syn) {
-		return SYN;
-	}
+	अगर (tcp->syn) अणु
+		वापस SYN;
+	पूर्ण
 
-	struct bpf_sock_tuple tuple;
-	uint64_t tuplen =
+	काष्ठा bpf_sock_tuple tuple;
+	uपूर्णांक64_t tuplen =
 		fill_tuple(&tuple, iph, iphlen, tcp->source, tcp->dest);
-	return classify_tcp(pkt->skb, &tuple, tuplen, iph, tcp);
-}
+	वापस classअगरy_tcp(pkt->skb, &tuple, tuplen, iph, tcp);
+पूर्ण
 
-static INLINING verdict_t process_udp(buf_t *pkt, void *iph, uint64_t iphlen,
+अटल INLINING verdict_t process_udp(buf_t *pkt, व्योम *iph, uपूर्णांक64_t iphlen,
 				      metrics_t *metrics)
-{
+अणु
 	metrics->l4_protocol_packets_total_udp++;
 
-	struct udphdr _udp;
-	struct udphdr *udph = buf_assign(pkt, sizeof(_udp), &_udp);
-	if (udph == NULL) {
-		metrics->errors_total_malformed_udp++;
-		return INVALID;
-	}
+	काष्ठा udphdr _udp;
+	काष्ठा udphdr *udph = buf_assign(pkt, माप(_udp), &_udp);
+	अगर (udph == शून्य) अणु
+		metrics->errors_total_malक्रमmed_udp++;
+		वापस INVALID;
+	पूर्ण
 
-	struct bpf_sock_tuple tuple;
-	uint64_t tuplen =
+	काष्ठा bpf_sock_tuple tuple;
+	uपूर्णांक64_t tuplen =
 		fill_tuple(&tuple, iph, iphlen, udph->source, udph->dest);
-	return classify_udp(pkt->skb, &tuple, tuplen);
-}
+	वापस classअगरy_udp(pkt->skb, &tuple, tuplen);
+पूर्ण
 
-static INLINING verdict_t process_ipv4(buf_t *pkt, metrics_t *metrics)
-{
+अटल INLINING verdict_t process_ipv4(buf_t *pkt, metrics_t *metrics)
+अणु
 	metrics->l3_protocol_packets_total_ipv4++;
 
-	struct iphdr _ip4;
-	struct iphdr *ipv4 = pkt_parse_ipv4(pkt, &_ip4);
-	if (ipv4 == NULL) {
-		metrics->errors_total_malformed_ip++;
-		return INVALID;
-	}
+	काष्ठा iphdr _ip4;
+	काष्ठा iphdr *ipv4 = pkt_parse_ipv4(pkt, &_ip4);
+	अगर (ipv4 == शून्य) अणु
+		metrics->errors_total_malक्रमmed_ip++;
+		वापस INVALID;
+	पूर्ण
 
-	if (ipv4->version != 4) {
-		metrics->errors_total_malformed_ip++;
-		return INVALID;
-	}
+	अगर (ipv4->version != 4) अणु
+		metrics->errors_total_malक्रमmed_ip++;
+		वापस INVALID;
+	पूर्ण
 
-	if (ipv4_is_fragment(ipv4)) {
+	अगर (ipv4_is_fragment(ipv4)) अणु
 		metrics->errors_total_fragmented_ip++;
-		return INVALID;
-	}
+		वापस INVALID;
+	पूर्ण
 
-	switch (ipv4->protocol) {
-	case IPPROTO_ICMP:
-		return process_icmpv4(pkt, metrics);
+	चयन (ipv4->protocol) अणु
+	हाल IPPROTO_ICMP:
+		वापस process_icmpv4(pkt, metrics);
 
-	case IPPROTO_TCP:
-		return process_tcp(pkt, ipv4, sizeof(*ipv4), metrics);
+	हाल IPPROTO_TCP:
+		वापस process_tcp(pkt, ipv4, माप(*ipv4), metrics);
 
-	case IPPROTO_UDP:
-		return process_udp(pkt, ipv4, sizeof(*ipv4), metrics);
+	हाल IPPROTO_UDP:
+		वापस process_udp(pkt, ipv4, माप(*ipv4), metrics);
 
-	default:
+	शेष:
 		metrics->errors_total_unknown_l4_proto++;
-		return INVALID;
-	}
-}
+		वापस INVALID;
+	पूर्ण
+पूर्ण
 
-static INLINING verdict_t process_ipv6(buf_t *pkt, metrics_t *metrics)
-{
+अटल INLINING verdict_t process_ipv6(buf_t *pkt, metrics_t *metrics)
+अणु
 	metrics->l3_protocol_packets_total_ipv6++;
 
-	uint8_t l4_proto;
+	uपूर्णांक8_t l4_proto;
 	bool is_fragment;
-	struct ipv6hdr _ipv6;
-	struct ipv6hdr *ipv6 =
+	काष्ठा ipv6hdr _ipv6;
+	काष्ठा ipv6hdr *ipv6 =
 		pkt_parse_ipv6(pkt, &_ipv6, &l4_proto, &is_fragment);
-	if (ipv6 == NULL) {
-		metrics->errors_total_malformed_ip++;
-		return INVALID;
-	}
+	अगर (ipv6 == शून्य) अणु
+		metrics->errors_total_malक्रमmed_ip++;
+		वापस INVALID;
+	पूर्ण
 
-	if (ipv6->version != 6) {
-		metrics->errors_total_malformed_ip++;
-		return INVALID;
-	}
+	अगर (ipv6->version != 6) अणु
+		metrics->errors_total_malक्रमmed_ip++;
+		वापस INVALID;
+	पूर्ण
 
-	if (is_fragment) {
+	अगर (is_fragment) अणु
 		metrics->errors_total_fragmented_ip++;
-		return INVALID;
-	}
+		वापस INVALID;
+	पूर्ण
 
-	switch (l4_proto) {
-	case IPPROTO_ICMPV6:
-		return process_icmpv6(pkt, metrics);
+	चयन (l4_proto) अणु
+	हाल IPPROTO_ICMPV6:
+		वापस process_icmpv6(pkt, metrics);
 
-	case IPPROTO_TCP:
-		return process_tcp(pkt, ipv6, sizeof(*ipv6), metrics);
+	हाल IPPROTO_TCP:
+		वापस process_tcp(pkt, ipv6, माप(*ipv6), metrics);
 
-	case IPPROTO_UDP:
-		return process_udp(pkt, ipv6, sizeof(*ipv6), metrics);
+	हाल IPPROTO_UDP:
+		वापस process_udp(pkt, ipv6, माप(*ipv6), metrics);
 
-	default:
+	शेष:
 		metrics->errors_total_unknown_l4_proto++;
-		return INVALID;
-	}
-}
+		वापस INVALID;
+	पूर्ण
+पूर्ण
 
 SEC("classifier/cls_redirect")
-int cls_redirect(struct __sk_buff *skb)
-{
+पूर्णांक cls_redirect(काष्ठा __sk_buff *skb)
+अणु
 	metrics_t *metrics = get_global_metrics();
-	if (metrics == NULL) {
-		return TC_ACT_SHOT;
-	}
+	अगर (metrics == शून्य) अणु
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
 	metrics->processed_packets_total++;
 
-	/* Pass bogus packets as long as we're not sure they're
-	 * destined for us.
+	/* Pass bogus packets as दीर्घ as we're not sure they're
+	 * destined क्रम us.
 	 */
-	if (skb->protocol != bpf_htons(ETH_P_IP)) {
-		return TC_ACT_OK;
-	}
+	अगर (skb->protocol != bpf_htons(ETH_P_IP)) अणु
+		वापस TC_ACT_OK;
+	पूर्ण
 
 	encap_headers_t *encap;
 
 	/* Make sure that all encapsulation headers are available in
 	 * the linear portion of the skb. This makes it easy to manipulate them.
 	 */
-	if (bpf_skb_pull_data(skb, sizeof(*encap))) {
-		return TC_ACT_OK;
-	}
+	अगर (bpf_skb_pull_data(skb, माप(*encap))) अणु
+		वापस TC_ACT_OK;
+	पूर्ण
 
-	buf_t pkt = {
+	buf_t pkt = अणु
 		.skb = skb,
-		.head = (uint8_t *)(long)skb->data,
-		.tail = (uint8_t *)(long)skb->data_end,
-	};
+		.head = (uपूर्णांक8_t *)(दीर्घ)skb->data,
+		.tail = (uपूर्णांक8_t *)(दीर्घ)skb->data_end,
+	पूर्ण;
 
-	encap = buf_assign(&pkt, sizeof(*encap), NULL);
-	if (encap == NULL) {
-		return TC_ACT_OK;
-	}
+	encap = buf_assign(&pkt, माप(*encap), शून्य);
+	अगर (encap == शून्य) अणु
+		वापस TC_ACT_OK;
+	पूर्ण
 
-	if (encap->ip.ihl != 5) {
+	अगर (encap->ip.ihl != 5) अणु
 		/* We never have any options. */
-		return TC_ACT_OK;
-	}
+		वापस TC_ACT_OK;
+	पूर्ण
 
-	if (encap->ip.daddr != ENCAPSULATION_IP ||
-	    encap->ip.protocol != IPPROTO_UDP) {
-		return TC_ACT_OK;
-	}
+	अगर (encap->ip.daddr != ENCAPSULATION_IP ||
+	    encap->ip.protocol != IPPROTO_UDP) अणु
+		वापस TC_ACT_OK;
+	पूर्ण
 
 	/* TODO Check UDP length? */
-	if (encap->udp.dest != ENCAPSULATION_PORT) {
-		return TC_ACT_OK;
-	}
+	अगर (encap->udp.dest != ENCAPSULATION_PORT) अणु
+		वापस TC_ACT_OK;
+	पूर्ण
 
 	/* We now know that the packet is destined to us, we can
 	 * drop bogus ones.
 	 */
-	if (ipv4_is_fragment((void *)&encap->ip)) {
+	अगर (ipv4_is_fragment((व्योम *)&encap->ip)) अणु
 		metrics->errors_total_fragmented_ip++;
-		return TC_ACT_SHOT;
-	}
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	if (encap->gue.variant != 0) {
-		metrics->errors_total_malformed_encapsulation++;
-		return TC_ACT_SHOT;
-	}
+	अगर (encap->gue.variant != 0) अणु
+		metrics->errors_total_malक्रमmed_encapsulation++;
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	if (encap->gue.control != 0) {
-		metrics->errors_total_malformed_encapsulation++;
-		return TC_ACT_SHOT;
-	}
+	अगर (encap->gue.control != 0) अणु
+		metrics->errors_total_malक्रमmed_encapsulation++;
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	if (encap->gue.flags != 0) {
-		metrics->errors_total_malformed_encapsulation++;
-		return TC_ACT_SHOT;
-	}
+	अगर (encap->gue.flags != 0) अणु
+		metrics->errors_total_malक्रमmed_encapsulation++;
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	if (encap->gue.hlen !=
-	    sizeof(encap->unigue) / 4 + encap->unigue.hop_count) {
-		metrics->errors_total_malformed_encapsulation++;
-		return TC_ACT_SHOT;
-	}
+	अगर (encap->gue.hlen !=
+	    माप(encap->unigue) / 4 + encap->unigue.hop_count) अणु
+		metrics->errors_total_malक्रमmed_encapsulation++;
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	if (encap->unigue.version != 0) {
-		metrics->errors_total_malformed_encapsulation++;
-		return TC_ACT_SHOT;
-	}
+	अगर (encap->unigue.version != 0) अणु
+		metrics->errors_total_malक्रमmed_encapsulation++;
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	if (encap->unigue.reserved != 0) {
-		return TC_ACT_SHOT;
-	}
+	अगर (encap->unigue.reserved != 0) अणु
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	struct in_addr next_hop;
+	काष्ठा in_addr next_hop;
 	MAYBE_RETURN(get_next_hop(&pkt, encap, &next_hop));
 
-	if (next_hop.s_addr == 0) {
+	अगर (next_hop.s_addr == 0) अणु
 		metrics->accepted_packets_total_last_hop++;
-		return accept_locally(skb, encap);
-	}
+		वापस accept_locally(skb, encap);
+	पूर्ण
 
 	verdict_t verdict;
-	switch (encap->gue.proto_ctype) {
-	case IPPROTO_IPIP:
+	चयन (encap->gue.proto_ctype) अणु
+	हाल IPPROTO_IPIP:
 		verdict = process_ipv4(&pkt, metrics);
-		break;
+		अवरोध;
 
-	case IPPROTO_IPV6:
+	हाल IPPROTO_IPV6:
 		verdict = process_ipv6(&pkt, metrics);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		metrics->errors_total_unknown_l3_proto++;
-		return TC_ACT_SHOT;
-	}
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	switch (verdict) {
-	case INVALID:
-		/* metrics have already been bumped */
-		return TC_ACT_SHOT;
+	चयन (verdict) अणु
+	हाल INVALID:
+		/* metrics have alपढ़ोy been bumped */
+		वापस TC_ACT_SHOT;
 
-	case UNKNOWN:
-		return forward_to_next_hop(skb, encap, &next_hop, metrics);
+	हाल UNKNOWN:
+		वापस क्रमward_to_next_hop(skb, encap, &next_hop, metrics);
 
-	case ECHO_REQUEST:
+	हाल ECHO_REQUEST:
 		metrics->accepted_packets_total_icmp_echo_request++;
-		break;
+		अवरोध;
 
-	case SYN:
-		if (encap->unigue.forward_syn) {
-			return forward_to_next_hop(skb, encap, &next_hop,
+	हाल SYN:
+		अगर (encap->unigue.क्रमward_syn) अणु
+			वापस क्रमward_to_next_hop(skb, encap, &next_hop,
 						   metrics);
-		}
+		पूर्ण
 
 		metrics->accepted_packets_total_syn++;
-		break;
+		अवरोध;
 
-	case SYN_COOKIE:
+	हाल SYN_COOKIE:
 		metrics->accepted_packets_total_syn_cookies++;
-		break;
+		अवरोध;
 
-	case ESTABLISHED:
+	हाल ESTABLISHED:
 		metrics->accepted_packets_total_established++;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return accept_locally(skb, encap);
-}
+	वापस accept_locally(skb, encap);
+पूर्ण

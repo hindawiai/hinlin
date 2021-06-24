@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AppArmor security module
  *
@@ -8,96 +9,96 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
-#include <linux/tty.h>
-#include <linux/fdtable.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/mount.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/fdtable.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
 
-#include "include/apparmor.h"
-#include "include/audit.h"
-#include "include/cred.h"
-#include "include/file.h"
-#include "include/match.h"
-#include "include/net.h"
-#include "include/path.h"
-#include "include/policy.h"
-#include "include/label.h"
+#समावेश "include/apparmor.h"
+#समावेश "include/audit.h"
+#समावेश "include/cred.h"
+#समावेश "include/file.h"
+#समावेश "include/match.h"
+#समावेश "include/net.h"
+#समावेश "include/path.h"
+#समावेश "include/policy.h"
+#समावेश "include/label.h"
 
-static u32 map_mask_to_chr_mask(u32 mask)
-{
+अटल u32 map_mask_to_chr_mask(u32 mask)
+अणु
 	u32 m = mask & PERMS_CHRS_MASK;
 
-	if (mask & AA_MAY_GETATTR)
+	अगर (mask & AA_MAY_GETATTR)
 		m |= MAY_READ;
-	if (mask & (AA_MAY_SETATTR | AA_MAY_CHMOD | AA_MAY_CHOWN))
+	अगर (mask & (AA_MAY_SETATTR | AA_MAY_CHMOD | AA_MAY_CHOWN))
 		m |= MAY_WRITE;
 
-	return m;
-}
+	वापस m;
+पूर्ण
 
 /**
- * file_audit_cb - call back for file specific audit fields
- * @ab: audit_buffer  (NOT NULL)
- * @va: audit struct to audit values of  (NOT NULL)
+ * file_audit_cb - call back क्रम file specअगरic audit fields
+ * @ab: audit_buffer  (NOT शून्य)
+ * @va: audit काष्ठा to audit values of  (NOT शून्य)
  */
-static void file_audit_cb(struct audit_buffer *ab, void *va)
-{
-	struct common_audit_data *sa = va;
+अटल व्योम file_audit_cb(काष्ठा audit_buffer *ab, व्योम *va)
+अणु
+	काष्ठा common_audit_data *sa = va;
 	kuid_t fsuid = current_fsuid();
-	char str[10];
+	अक्षर str[10];
 
-	if (aad(sa)->request & AA_AUDIT_FILE_MASK) {
-		aa_perm_mask_to_str(str, sizeof(str), aa_file_perm_chrs,
+	अगर (aad(sa)->request & AA_AUDIT_खाता_MASK) अणु
+		aa_perm_mask_to_str(str, माप(str), aa_file_perm_chrs,
 				    map_mask_to_chr_mask(aad(sa)->request));
-		audit_log_format(ab, " requested_mask=\"%s\"", str);
-	}
-	if (aad(sa)->denied & AA_AUDIT_FILE_MASK) {
-		aa_perm_mask_to_str(str, sizeof(str), aa_file_perm_chrs,
+		audit_log_क्रमmat(ab, " requested_mask=\"%s\"", str);
+	पूर्ण
+	अगर (aad(sa)->denied & AA_AUDIT_खाता_MASK) अणु
+		aa_perm_mask_to_str(str, माप(str), aa_file_perm_chrs,
 				    map_mask_to_chr_mask(aad(sa)->denied));
-		audit_log_format(ab, " denied_mask=\"%s\"", str);
-	}
-	if (aad(sa)->request & AA_AUDIT_FILE_MASK) {
-		audit_log_format(ab, " fsuid=%d",
+		audit_log_क्रमmat(ab, " denied_mask=\"%s\"", str);
+	पूर्ण
+	अगर (aad(sa)->request & AA_AUDIT_खाता_MASK) अणु
+		audit_log_क्रमmat(ab, " fsuid=%d",
 				 from_kuid(&init_user_ns, fsuid));
-		audit_log_format(ab, " ouid=%d",
+		audit_log_क्रमmat(ab, " ouid=%d",
 				 from_kuid(&init_user_ns, aad(sa)->fs.ouid));
-	}
+	पूर्ण
 
-	if (aad(sa)->peer) {
-		audit_log_format(ab, " target=");
+	अगर (aad(sa)->peer) अणु
+		audit_log_क्रमmat(ab, " target=");
 		aa_label_xaudit(ab, labels_ns(aad(sa)->label), aad(sa)->peer,
 				FLAG_VIEW_SUBNS, GFP_KERNEL);
-	} else if (aad(sa)->fs.target) {
-		audit_log_format(ab, " target=");
+	पूर्ण अन्यथा अगर (aad(sa)->fs.target) अणु
+		audit_log_क्रमmat(ab, " target=");
 		audit_log_untrustedstring(ab, aad(sa)->fs.target);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * aa_audit_file - handle the auditing of file operations
- * @profile: the profile being enforced  (NOT NULL)
- * @perms: the permissions computed for the request (NOT NULL)
+ * @profile: the profile being enक्रमced  (NOT शून्य)
+ * @perms: the permissions computed क्रम the request (NOT शून्य)
  * @op: operation being mediated
  * @request: permissions requested
- * @name: name of object being mediated (MAYBE NULL)
- * @target: name of target (MAYBE NULL)
- * @tlabel: target label (MAY BE NULL)
+ * @name: name of object being mediated (MAYBE शून्य)
+ * @target: name of target (MAYBE शून्य)
+ * @tlabel: target label (MAY BE शून्य)
  * @ouid: object uid
- * @info: extra information message (MAYBE NULL)
- * @error: 0 if operation allowed else failure error code
+ * @info: extra inक्रमmation message (MAYBE शून्य)
+ * @error: 0 अगर operation allowed अन्यथा failure error code
  *
  * Returns: %0 or error on failure
  */
-int aa_audit_file(struct aa_profile *profile, struct aa_perms *perms,
-		  const char *op, u32 request, const char *name,
-		  const char *target, struct aa_label *tlabel,
-		  kuid_t ouid, const char *info, int error)
-{
-	int type = AUDIT_APPARMOR_AUTO;
+पूर्णांक aa_audit_file(काष्ठा aa_profile *profile, काष्ठा aa_perms *perms,
+		  स्थिर अक्षर *op, u32 request, स्थिर अक्षर *name,
+		  स्थिर अक्षर *target, काष्ठा aa_label *tlabel,
+		  kuid_t ouid, स्थिर अक्षर *info, पूर्णांक error)
+अणु
+	पूर्णांक type = AUDIT_APPARMOR_AUTO;
 	DEFINE_AUDIT_DATA(sa, LSM_AUDIT_DATA_TASK, op);
 
-	sa.u.tsk = NULL;
+	sa.u.tsk = शून्य;
 	aad(&sa)->request = request;
 	aad(&sa)->name = name;
 	aad(&sa)->fs.target = target;
@@ -105,74 +106,74 @@ int aa_audit_file(struct aa_profile *profile, struct aa_perms *perms,
 	aad(&sa)->fs.ouid = ouid;
 	aad(&sa)->info = info;
 	aad(&sa)->error = error;
-	sa.u.tsk = NULL;
+	sa.u.tsk = शून्य;
 
-	if (likely(!aad(&sa)->error)) {
+	अगर (likely(!aad(&sa)->error)) अणु
 		u32 mask = perms->audit;
 
-		if (unlikely(AUDIT_MODE(profile) == AUDIT_ALL))
+		अगर (unlikely(AUDIT_MODE(profile) == AUDIT_ALL))
 			mask = 0xffff;
 
-		/* mask off perms that are not being force audited */
+		/* mask off perms that are not being क्रमce audited */
 		aad(&sa)->request &= mask;
 
-		if (likely(!aad(&sa)->request))
-			return 0;
+		अगर (likely(!aad(&sa)->request))
+			वापस 0;
 		type = AUDIT_APPARMOR_AUDIT;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* only report permissions that were denied */
 		aad(&sa)->request = aad(&sa)->request & ~perms->allow;
 		AA_BUG(!aad(&sa)->request);
 
-		if (aad(&sa)->request & perms->kill)
+		अगर (aad(&sa)->request & perms->समाप्त)
 			type = AUDIT_APPARMOR_KILL;
 
-		/* quiet known rejects, assumes quiet and kill do not overlap */
-		if ((aad(&sa)->request & perms->quiet) &&
+		/* quiet known rejects, assumes quiet and समाप्त करो not overlap */
+		अगर ((aad(&sa)->request & perms->quiet) &&
 		    AUDIT_MODE(profile) != AUDIT_NOQUIET &&
 		    AUDIT_MODE(profile) != AUDIT_ALL)
 			aad(&sa)->request &= ~perms->quiet;
 
-		if (!aad(&sa)->request)
-			return aad(&sa)->error;
-	}
+		अगर (!aad(&sa)->request)
+			वापस aad(&sa)->error;
+	पूर्ण
 
 	aad(&sa)->denied = aad(&sa)->request & ~perms->allow;
-	return aa_audit(type, profile, &sa, file_audit_cb);
-}
+	वापस aa_audit(type, profile, &sa, file_audit_cb);
+पूर्ण
 
 /**
- * is_deleted - test if a file has been completely unlinked
- * @dentry: dentry of file to test for deletion  (NOT NULL)
+ * is_deleted - test अगर a file has been completely unlinked
+ * @dentry: dentry of file to test क्रम deletion  (NOT शून्य)
  *
- * Returns: true if deleted else false
+ * Returns: true अगर deleted अन्यथा false
  */
-static inline bool is_deleted(struct dentry *dentry)
-{
-	if (d_unlinked(dentry) && d_backing_inode(dentry)->i_nlink == 0)
-		return true;
-	return false;
-}
+अटल अंतरभूत bool is_deleted(काष्ठा dentry *dentry)
+अणु
+	अगर (d_unlinked(dentry) && d_backing_inode(dentry)->i_nlink == 0)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static int path_name(const char *op, struct aa_label *label,
-		     const struct path *path, int flags, char *buffer,
-		     const char **name, struct path_cond *cond, u32 request)
-{
-	struct aa_profile *profile;
-	const char *info = NULL;
-	int error;
+अटल पूर्णांक path_name(स्थिर अक्षर *op, काष्ठा aa_label *label,
+		     स्थिर काष्ठा path *path, पूर्णांक flags, अक्षर *buffer,
+		     स्थिर अक्षर **name, काष्ठा path_cond *cond, u32 request)
+अणु
+	काष्ठा aa_profile *profile;
+	स्थिर अक्षर *info = शून्य;
+	पूर्णांक error;
 
 	error = aa_path_name(path, flags, buffer, name, &info,
 			     labels_profile(label)->disconnected);
-	if (error) {
-		fn_for_each_confined(label, profile,
+	अगर (error) अणु
+		fn_क्रम_each_confined(label, profile,
 			aa_audit_file(profile, &nullperms, op, request, *name,
-				      NULL, NULL, cond->uid, info, error));
-		return error;
-	}
+				      शून्य, शून्य, cond->uid, info, error));
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * map_old_perms - map old file perms layout to the new layout
@@ -180,232 +181,232 @@ static int path_name(const char *op, struct aa_label *label,
  *
  * Returns: new permission mapping
  */
-static u32 map_old_perms(u32 old)
-{
+अटल u32 map_old_perms(u32 old)
+अणु
 	u32 new = old & 0xf;
-	if (old & MAY_READ)
+	अगर (old & MAY_READ)
 		new |= AA_MAY_GETATTR | AA_MAY_OPEN;
-	if (old & MAY_WRITE)
+	अगर (old & MAY_WRITE)
 		new |= AA_MAY_SETATTR | AA_MAY_CREATE | AA_MAY_DELETE |
 		       AA_MAY_CHMOD | AA_MAY_CHOWN | AA_MAY_OPEN;
-	if (old & 0x10)
+	अगर (old & 0x10)
 		new |= AA_MAY_LINK;
 	/* the old mapping lock and link_subset flags where overlaid
 	 * and use was determined by part of a pair that they were in
 	 */
-	if (old & 0x20)
+	अगर (old & 0x20)
 		new |= AA_MAY_LOCK | AA_LINK_SUBSET;
-	if (old & 0x40)	/* AA_EXEC_MMAP */
+	अगर (old & 0x40)	/* AA_EXEC_MMAP */
 		new |= AA_EXEC_MMAP;
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
 /**
- * aa_compute_fperms - convert dfa compressed perms to internal perms
- * @dfa: dfa to compute perms for   (NOT NULL)
+ * aa_compute_fperms - convert dfa compressed perms to पूर्णांकernal perms
+ * @dfa: dfa to compute perms क्रम   (NOT शून्य)
  * @state: state in dfa
- * @cond:  conditions to consider  (NOT NULL)
+ * @cond:  conditions to consider  (NOT शून्य)
  *
- * TODO: convert from dfa + state to permission entry, do computation conversion
- *       at load time.
+ * TODO: convert from dfa + state to permission entry, करो computation conversion
+ *       at load समय.
  *
  * Returns: computed permission set
  */
-struct aa_perms aa_compute_fperms(struct aa_dfa *dfa, unsigned int state,
-				  struct path_cond *cond)
-{
-	/* FIXME: change over to new dfa format
-	 * currently file perms are encoded in the dfa, new format
+काष्ठा aa_perms aa_compute_fperms(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक state,
+				  काष्ठा path_cond *cond)
+अणु
+	/* FIXME: change over to new dfa क्रमmat
+	 * currently file perms are encoded in the dfa, new क्रमmat
 	 * splits the permissions from the dfa.  This mapping can be
-	 * done at profile load
+	 * करोne at profile load
 	 */
-	struct aa_perms perms = { };
+	काष्ठा aa_perms perms = अणु पूर्ण;
 
-	if (uid_eq(current_fsuid(), cond->uid)) {
+	अगर (uid_eq(current_fsuid(), cond->uid)) अणु
 		perms.allow = map_old_perms(dfa_user_allow(dfa, state));
 		perms.audit = map_old_perms(dfa_user_audit(dfa, state));
 		perms.quiet = map_old_perms(dfa_user_quiet(dfa, state));
 		perms.xindex = dfa_user_xindex(dfa, state);
-	} else {
+	पूर्ण अन्यथा अणु
 		perms.allow = map_old_perms(dfa_other_allow(dfa, state));
 		perms.audit = map_old_perms(dfa_other_audit(dfa, state));
 		perms.quiet = map_old_perms(dfa_other_quiet(dfa, state));
 		perms.xindex = dfa_other_xindex(dfa, state);
-	}
+	पूर्ण
 	perms.allow |= AA_MAY_GETATTR;
 
 	/* change_profile wasn't determined by ownership in old mapping */
-	if (ACCEPT_TABLE(dfa)[state] & 0x80000000)
-		perms.allow |= AA_MAY_CHANGE_PROFILE;
-	if (ACCEPT_TABLE(dfa)[state] & 0x40000000)
+	अगर (ACCEPT_TABLE(dfa)[state] & 0x80000000)
+		perms.allow |= AA_MAY_CHANGE_PROखाता;
+	अगर (ACCEPT_TABLE(dfa)[state] & 0x40000000)
 		perms.allow |= AA_MAY_ONEXEC;
 
-	return perms;
-}
+	वापस perms;
+पूर्ण
 
 /**
  * aa_str_perms - find permission that match @name
- * @dfa: to match against  (MAYBE NULL)
+ * @dfa: to match against  (MAYBE शून्य)
  * @state: state to start matching in
- * @name: string to match against dfa  (NOT NULL)
- * @cond: conditions to consider for permission set computation  (NOT NULL)
+ * @name: string to match against dfa  (NOT शून्य)
+ * @cond: conditions to consider क्रम permission set computation  (NOT शून्य)
  * @perms: Returns - the permissions found when matching @name
  *
  * Returns: the final state in @dfa when beginning @start and walking @name
  */
-unsigned int aa_str_perms(struct aa_dfa *dfa, unsigned int start,
-			  const char *name, struct path_cond *cond,
-			  struct aa_perms *perms)
-{
-	unsigned int state;
+अचिन्हित पूर्णांक aa_str_perms(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक start,
+			  स्थिर अक्षर *name, काष्ठा path_cond *cond,
+			  काष्ठा aa_perms *perms)
+अणु
+	अचिन्हित पूर्णांक state;
 	state = aa_dfa_match(dfa, start, name);
 	*perms = aa_compute_fperms(dfa, state, cond);
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
-int __aa_path_perm(const char *op, struct aa_profile *profile, const char *name,
-		   u32 request, struct path_cond *cond, int flags,
-		   struct aa_perms *perms)
-{
-	int e = 0;
+पूर्णांक __aa_path_perm(स्थिर अक्षर *op, काष्ठा aa_profile *profile, स्थिर अक्षर *name,
+		   u32 request, काष्ठा path_cond *cond, पूर्णांक flags,
+		   काष्ठा aa_perms *perms)
+अणु
+	पूर्णांक e = 0;
 
-	if (profile_unconfined(profile))
-		return 0;
+	अगर (profile_unconfined(profile))
+		वापस 0;
 	aa_str_perms(profile->file.dfa, profile->file.start, name, cond, perms);
-	if (request & ~perms->allow)
+	अगर (request & ~perms->allow)
 		e = -EACCES;
-	return aa_audit_file(profile, perms, op, request, name, NULL, NULL,
-			     cond->uid, NULL, e);
-}
+	वापस aa_audit_file(profile, perms, op, request, name, शून्य, शून्य,
+			     cond->uid, शून्य, e);
+पूर्ण
 
 
-static int profile_path_perm(const char *op, struct aa_profile *profile,
-			     const struct path *path, char *buffer, u32 request,
-			     struct path_cond *cond, int flags,
-			     struct aa_perms *perms)
-{
-	const char *name;
-	int error;
+अटल पूर्णांक profile_path_perm(स्थिर अक्षर *op, काष्ठा aa_profile *profile,
+			     स्थिर काष्ठा path *path, अक्षर *buffer, u32 request,
+			     काष्ठा path_cond *cond, पूर्णांक flags,
+			     काष्ठा aa_perms *perms)
+अणु
+	स्थिर अक्षर *name;
+	पूर्णांक error;
 
-	if (profile_unconfined(profile))
-		return 0;
+	अगर (profile_unconfined(profile))
+		वापस 0;
 
 	error = path_name(op, &profile->label, path,
 			  flags | profile->path_flags, buffer, &name, cond,
 			  request);
-	if (error)
-		return error;
-	return __aa_path_perm(op, profile, name, request, cond, flags,
+	अगर (error)
+		वापस error;
+	वापस __aa_path_perm(op, profile, name, request, cond, flags,
 			      perms);
-}
+पूर्ण
 
 /**
- * aa_path_perm - do permissions check & audit for @path
+ * aa_path_perm - करो permissions check & audit क्रम @path
  * @op: operation being checked
- * @label: profile being enforced  (NOT NULL)
- * @path: path to check permissions of  (NOT NULL)
- * @flags: any additional path flags beyond what the profile specifies
+ * @label: profile being enक्रमced  (NOT शून्य)
+ * @path: path to check permissions of  (NOT शून्य)
+ * @flags: any additional path flags beyond what the profile specअगरies
  * @request: requested permissions
- * @cond: conditional info for this request  (NOT NULL)
+ * @cond: conditional info क्रम this request  (NOT शून्य)
  *
- * Returns: %0 else error if access denied or other error
+ * Returns: %0 अन्यथा error अगर access denied or other error
  */
-int aa_path_perm(const char *op, struct aa_label *label,
-		 const struct path *path, int flags, u32 request,
-		 struct path_cond *cond)
-{
-	struct aa_perms perms = {};
-	struct aa_profile *profile;
-	char *buffer = NULL;
-	int error;
+पूर्णांक aa_path_perm(स्थिर अक्षर *op, काष्ठा aa_label *label,
+		 स्थिर काष्ठा path *path, पूर्णांक flags, u32 request,
+		 काष्ठा path_cond *cond)
+अणु
+	काष्ठा aa_perms perms = अणुपूर्ण;
+	काष्ठा aa_profile *profile;
+	अक्षर *buffer = शून्य;
+	पूर्णांक error;
 
-	flags |= PATH_DELEGATE_DELETED | (S_ISDIR(cond->mode) ? PATH_IS_DIR :
+	flags |= PATH_DELEGATE_DELETED | (S_ISसूची(cond->mode) ? PATH_IS_सूची :
 								0);
 	buffer = aa_get_buffer(false);
-	if (!buffer)
-		return -ENOMEM;
-	error = fn_for_each_confined(label, profile,
+	अगर (!buffer)
+		वापस -ENOMEM;
+	error = fn_क्रम_each_confined(label, profile,
 			profile_path_perm(op, profile, path, buffer, request,
 					  cond, flags, &perms));
 
 	aa_put_buffer(buffer);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * xindex_is_subset - helper for aa_path_link
+ * xindex_is_subset - helper क्रम aa_path_link
  * @link: link permission set
  * @target: target permission set
  *
  * test target x permissions are equal OR a subset of link x permissions
- * this is done as part of the subset test, where a hardlink must have
+ * this is करोne as part of the subset test, where a hardlink must have
  * a subset of permissions that the target has.
  *
- * Returns: true if subset else false
+ * Returns: true अगर subset अन्यथा false
  */
-static inline bool xindex_is_subset(u32 link, u32 target)
-{
-	if (((link & ~AA_X_UNSAFE) != (target & ~AA_X_UNSAFE)) ||
+अटल अंतरभूत bool xindex_is_subset(u32 link, u32 target)
+अणु
+	अगर (((link & ~AA_X_UNSAFE) != (target & ~AA_X_UNSAFE)) ||
 	    ((link & AA_X_UNSAFE) && !(target & AA_X_UNSAFE)))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int profile_path_link(struct aa_profile *profile,
-			     const struct path *link, char *buffer,
-			     const struct path *target, char *buffer2,
-			     struct path_cond *cond)
-{
-	const char *lname, *tname = NULL;
-	struct aa_perms lperms = {}, perms;
-	const char *info = NULL;
+अटल पूर्णांक profile_path_link(काष्ठा aa_profile *profile,
+			     स्थिर काष्ठा path *link, अक्षर *buffer,
+			     स्थिर काष्ठा path *target, अक्षर *buffer2,
+			     काष्ठा path_cond *cond)
+अणु
+	स्थिर अक्षर *lname, *tname = शून्य;
+	काष्ठा aa_perms lperms = अणुपूर्ण, perms;
+	स्थिर अक्षर *info = शून्य;
 	u32 request = AA_MAY_LINK;
-	unsigned int state;
-	int error;
+	अचिन्हित पूर्णांक state;
+	पूर्णांक error;
 
 	error = path_name(OP_LINK, &profile->label, link, profile->path_flags,
 			  buffer, &lname, cond, AA_MAY_LINK);
-	if (error)
-		goto audit;
+	अगर (error)
+		जाओ audit;
 
-	/* buffer2 freed below, tname is pointer in buffer2 */
+	/* buffer2 मुक्तd below, tname is poपूर्णांकer in buffer2 */
 	error = path_name(OP_LINK, &profile->label, target, profile->path_flags,
 			  buffer2, &tname, cond, AA_MAY_LINK);
-	if (error)
-		goto audit;
+	अगर (error)
+		जाओ audit;
 
 	error = -EACCES;
-	/* aa_str_perms - handles the case of the dfa being NULL */
+	/* aa_str_perms - handles the हाल of the dfa being शून्य */
 	state = aa_str_perms(profile->file.dfa, profile->file.start, lname,
 			     cond, &lperms);
 
-	if (!(lperms.allow & AA_MAY_LINK))
-		goto audit;
+	अगर (!(lperms.allow & AA_MAY_LINK))
+		जाओ audit;
 
-	/* test to see if target can be paired with link */
+	/* test to see अगर target can be paired with link */
 	state = aa_dfa_null_transition(profile->file.dfa, state);
 	aa_str_perms(profile->file.dfa, state, tname, cond, &perms);
 
-	/* force audit/quiet masks for link are stored in the second entry
+	/* क्रमce audit/quiet masks क्रम link are stored in the second entry
 	 * in the link pair.
 	 */
 	lperms.audit = perms.audit;
 	lperms.quiet = perms.quiet;
-	lperms.kill = perms.kill;
+	lperms.समाप्त = perms.समाप्त;
 
-	if (!(perms.allow & AA_MAY_LINK)) {
+	अगर (!(perms.allow & AA_MAY_LINK)) अणु
 		info = "target restricted";
 		lperms = perms;
-		goto audit;
-	}
+		जाओ audit;
+	पूर्ण
 
-	/* done if link subset test is not required */
-	if (!(perms.allow & AA_LINK_SUBSET))
-		goto done_tests;
+	/* करोne अगर link subset test is not required */
+	अगर (!(perms.allow & AA_LINK_SUBSET))
+		जाओ करोne_tests;
 
 	/* Do link perm subset test requiring allowed permission on link are
 	 * a subset of the allowed permissions on target.
@@ -417,295 +418,295 @@ static int profile_path_link(struct aa_profile *profile,
 	request = lperms.allow & ~AA_MAY_LINK;
 	lperms.allow &= perms.allow | AA_MAY_LINK;
 
-	request |= AA_AUDIT_FILE_MASK & (lperms.allow & ~perms.allow);
-	if (request & ~lperms.allow) {
-		goto audit;
-	} else if ((lperms.allow & MAY_EXEC) &&
-		   !xindex_is_subset(lperms.xindex, perms.xindex)) {
+	request |= AA_AUDIT_खाता_MASK & (lperms.allow & ~perms.allow);
+	अगर (request & ~lperms.allow) अणु
+		जाओ audit;
+	पूर्ण अन्यथा अगर ((lperms.allow & MAY_EXEC) &&
+		   !xindex_is_subset(lperms.xindex, perms.xindex)) अणु
 		lperms.allow &= ~MAY_EXEC;
 		request |= MAY_EXEC;
 		info = "link not subset of target";
-		goto audit;
-	}
+		जाओ audit;
+	पूर्ण
 
-done_tests:
+करोne_tests:
 	error = 0;
 
 audit:
-	return aa_audit_file(profile, &lperms, OP_LINK, request, lname, tname,
-			     NULL, cond->uid, info, error);
-}
+	वापस aa_audit_file(profile, &lperms, OP_LINK, request, lname, tname,
+			     शून्य, cond->uid, info, error);
+पूर्ण
 
 /**
  * aa_path_link - Handle hard link permission check
- * @label: the label being enforced  (NOT NULL)
- * @old_dentry: the target dentry  (NOT NULL)
- * @new_dir: directory the new link will be created in  (NOT NULL)
- * @new_dentry: the link being created  (NOT NULL)
+ * @label: the label being enक्रमced  (NOT शून्य)
+ * @old_dentry: the target dentry  (NOT शून्य)
+ * @new_dir: directory the new link will be created in  (NOT शून्य)
+ * @new_dentry: the link being created  (NOT शून्य)
  *
- * Handle the permission test for a link & target pair.  Permission
+ * Handle the permission test क्रम a link & target pair.  Permission
  * is encoded as a pair where the link permission is determined
- * first, and if allowed, the target is tested.  The target test
- * is done from the point of the link match (not start of DFA)
+ * first, and अगर allowed, the target is tested.  The target test
+ * is करोne from the poपूर्णांक of the link match (not start of DFA)
  * making the target permission dependent on the link permission match.
  *
- * The subset test if required forces that permissions granted
+ * The subset test अगर required क्रमces that permissions granted
  * on link are a subset of the permission granted to target.
  *
- * Returns: %0 if allowed else error
+ * Returns: %0 अगर allowed अन्यथा error
  */
-int aa_path_link(struct aa_label *label, struct dentry *old_dentry,
-		 const struct path *new_dir, struct dentry *new_dentry)
-{
-	struct path link = { .mnt = new_dir->mnt, .dentry = new_dentry };
-	struct path target = { .mnt = new_dir->mnt, .dentry = old_dentry };
-	struct path_cond cond = {
+पूर्णांक aa_path_link(काष्ठा aa_label *label, काष्ठा dentry *old_dentry,
+		 स्थिर काष्ठा path *new_dir, काष्ठा dentry *new_dentry)
+अणु
+	काष्ठा path link = अणु .mnt = new_dir->mnt, .dentry = new_dentry पूर्ण;
+	काष्ठा path target = अणु .mnt = new_dir->mnt, .dentry = old_dentry पूर्ण;
+	काष्ठा path_cond cond = अणु
 		d_backing_inode(old_dentry)->i_uid,
 		d_backing_inode(old_dentry)->i_mode
-	};
-	char *buffer = NULL, *buffer2 = NULL;
-	struct aa_profile *profile;
-	int error;
+	पूर्ण;
+	अक्षर *buffer = शून्य, *buffer2 = शून्य;
+	काष्ठा aa_profile *profile;
+	पूर्णांक error;
 
-	/* buffer freed below, lname is pointer in buffer */
+	/* buffer मुक्तd below, lname is poपूर्णांकer in buffer */
 	buffer = aa_get_buffer(false);
 	buffer2 = aa_get_buffer(false);
 	error = -ENOMEM;
-	if (!buffer || !buffer2)
-		goto out;
+	अगर (!buffer || !buffer2)
+		जाओ out;
 
-	error = fn_for_each_confined(label, profile,
+	error = fn_क्रम_each_confined(label, profile,
 			profile_path_link(profile, &link, buffer, &target,
 					  buffer2, &cond));
 out:
 	aa_put_buffer(buffer);
 	aa_put_buffer(buffer2);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void update_file_ctx(struct aa_file_ctx *fctx, struct aa_label *label,
+अटल व्योम update_file_ctx(काष्ठा aa_file_ctx *fctx, काष्ठा aa_label *label,
 			    u32 request)
-{
-	struct aa_label *l, *old;
+अणु
+	काष्ठा aa_label *l, *old;
 
 	/* update caching of label on file_ctx */
 	spin_lock(&fctx->lock);
-	old = rcu_dereference_protected(fctx->label,
+	old = rcu_dereference_रक्षित(fctx->label,
 					lockdep_is_held(&fctx->lock));
 	l = aa_label_merge(old, label, GFP_ATOMIC);
-	if (l) {
-		if (l != old) {
-			rcu_assign_pointer(fctx->label, l);
+	अगर (l) अणु
+		अगर (l != old) अणु
+			rcu_assign_poपूर्णांकer(fctx->label, l);
 			aa_put_label(old);
-		} else
+		पूर्ण अन्यथा
 			aa_put_label(l);
 		fctx->allow |= request;
-	}
+	पूर्ण
 	spin_unlock(&fctx->lock);
-}
+पूर्ण
 
-static int __file_path_perm(const char *op, struct aa_label *label,
-			    struct aa_label *flabel, struct file *file,
+अटल पूर्णांक __file_path_perm(स्थिर अक्षर *op, काष्ठा aa_label *label,
+			    काष्ठा aa_label *flabel, काष्ठा file *file,
 			    u32 request, u32 denied, bool in_atomic)
-{
-	struct aa_profile *profile;
-	struct aa_perms perms = {};
-	struct path_cond cond = {
-		.uid = i_uid_into_mnt(file_mnt_user_ns(file), file_inode(file)),
+अणु
+	काष्ठा aa_profile *profile;
+	काष्ठा aa_perms perms = अणुपूर्ण;
+	काष्ठा path_cond cond = अणु
+		.uid = i_uid_पूर्णांकo_mnt(file_mnt_user_ns(file), file_inode(file)),
 		.mode = file_inode(file)->i_mode
-	};
-	char *buffer;
-	int flags, error;
+	पूर्ण;
+	अक्षर *buffer;
+	पूर्णांक flags, error;
 
-	/* revalidation due to label out of date. No revocation at this time */
-	if (!denied && aa_label_is_subset(flabel, label))
-		/* TODO: check for revocation on stale profiles */
-		return 0;
+	/* revalidation due to label out of date. No revocation at this समय */
+	अगर (!denied && aa_label_is_subset(flabel, label))
+		/* TODO: check क्रम revocation on stale profiles */
+		वापस 0;
 
-	flags = PATH_DELEGATE_DELETED | (S_ISDIR(cond.mode) ? PATH_IS_DIR : 0);
+	flags = PATH_DELEGATE_DELETED | (S_ISसूची(cond.mode) ? PATH_IS_सूची : 0);
 	buffer = aa_get_buffer(in_atomic);
-	if (!buffer)
-		return -ENOMEM;
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	/* check every profile in task label not in current cache */
-	error = fn_for_each_not_in_set(flabel, label, profile,
+	error = fn_क्रम_each_not_in_set(flabel, label, profile,
 			profile_path_perm(op, profile, &file->f_path, buffer,
 					  request, &cond, flags, &perms));
-	if (denied && !error) {
+	अगर (denied && !error) अणु
 		/*
 		 * check every profile in file label that was not tested
 		 * in the initial check above.
 		 *
 		 * TODO: cache full perms so this only happens because of
 		 * conditionals
-		 * TODO: don't audit here
+		 * TODO: करोn't audit here
 		 */
-		if (label == flabel)
-			error = fn_for_each(label, profile,
+		अगर (label == flabel)
+			error = fn_क्रम_each(label, profile,
 				profile_path_perm(op, profile, &file->f_path,
 						  buffer, request, &cond, flags,
 						  &perms));
-		else
-			error = fn_for_each_not_in_set(label, flabel, profile,
+		अन्यथा
+			error = fn_क्रम_each_not_in_set(label, flabel, profile,
 				profile_path_perm(op, profile, &file->f_path,
 						  buffer, request, &cond, flags,
 						  &perms));
-	}
-	if (!error)
+	पूर्ण
+	अगर (!error)
 		update_file_ctx(file_ctx(file), label, request);
 
 	aa_put_buffer(buffer);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int __file_sock_perm(const char *op, struct aa_label *label,
-			    struct aa_label *flabel, struct file *file,
+अटल पूर्णांक __file_sock_perm(स्थिर अक्षर *op, काष्ठा aa_label *label,
+			    काष्ठा aa_label *flabel, काष्ठा file *file,
 			    u32 request, u32 denied)
-{
-	struct socket *sock = (struct socket *) file->private_data;
-	int error;
+अणु
+	काष्ठा socket *sock = (काष्ठा socket *) file->निजी_data;
+	पूर्णांक error;
 
 	AA_BUG(!sock);
 
-	/* revalidation due to label out of date. No revocation at this time */
-	if (!denied && aa_label_is_subset(flabel, label))
-		return 0;
+	/* revalidation due to label out of date. No revocation at this समय */
+	अगर (!denied && aa_label_is_subset(flabel, label))
+		वापस 0;
 
 	/* TODO: improve to skip profiles cached in flabel */
 	error = aa_sock_file_perm(label, op, request, sock);
-	if (denied) {
+	अगर (denied) अणु
 		/* TODO: improve to skip profiles checked above */
 		/* check every profile in file label to is cached */
 		last_error(error, aa_sock_file_perm(flabel, op, request, sock));
-	}
-	if (!error)
+	पूर्ण
+	अगर (!error)
 		update_file_ctx(file_ctx(file), label, request);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * aa_file_perm - do permission revalidation check & audit for @file
+ * aa_file_perm - करो permission revalidation check & audit क्रम @file
  * @op: operation being checked
- * @label: label being enforced   (NOT NULL)
- * @file: file to revalidate access permissions on  (NOT NULL)
+ * @label: label being enक्रमced   (NOT शून्य)
+ * @file: file to revalidate access permissions on  (NOT शून्य)
  * @request: requested permissions
- * @in_atomic: whether allocations need to be done in atomic context
+ * @in_atomic: whether allocations need to be करोne in atomic context
  *
- * Returns: %0 if access allowed else error
+ * Returns: %0 अगर access allowed अन्यथा error
  */
-int aa_file_perm(const char *op, struct aa_label *label, struct file *file,
+पूर्णांक aa_file_perm(स्थिर अक्षर *op, काष्ठा aa_label *label, काष्ठा file *file,
 		 u32 request, bool in_atomic)
-{
-	struct aa_file_ctx *fctx;
-	struct aa_label *flabel;
+अणु
+	काष्ठा aa_file_ctx *fctx;
+	काष्ठा aa_label *flabel;
 	u32 denied;
-	int error = 0;
+	पूर्णांक error = 0;
 
 	AA_BUG(!label);
 	AA_BUG(!file);
 
 	fctx = file_ctx(file);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	flabel  = rcu_dereference(fctx->label);
 	AA_BUG(!flabel);
 
-	/* revalidate access, if task is unconfined, or the cached cred
-	 * doesn't match or if the request is for more permissions than
+	/* revalidate access, अगर task is unconfined, or the cached cred
+	 * करोesn't match or अगर the request is क्रम more permissions than
 	 * was granted.
 	 *
-	 * Note: the test for !unconfined(flabel) is to handle file
+	 * Note: the test क्रम !unconfined(flabel) is to handle file
 	 *       delegation from unconfined tasks
 	 */
 	denied = request & ~fctx->allow;
-	if (unconfined(label) || unconfined(flabel) ||
-	    (!denied && aa_label_is_subset(flabel, label))) {
-		rcu_read_unlock();
-		goto done;
-	}
+	अगर (unconfined(label) || unconfined(flabel) ||
+	    (!denied && aa_label_is_subset(flabel, label))) अणु
+		rcu_पढ़ो_unlock();
+		जाओ करोne;
+	पूर्ण
 
 	flabel  = aa_get_newest_label(flabel);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	/* TODO: label cross check */
 
-	if (file->f_path.mnt && path_mediated_fs(file->f_path.dentry))
+	अगर (file->f_path.mnt && path_mediated_fs(file->f_path.dentry))
 		error = __file_path_perm(op, label, flabel, file, request,
 					 denied, in_atomic);
 
-	else if (S_ISSOCK(file_inode(file)->i_mode))
+	अन्यथा अगर (S_ISSOCK(file_inode(file)->i_mode))
 		error = __file_sock_perm(op, label, flabel, file, request,
 					 denied);
 	aa_put_label(flabel);
 
-done:
-	return error;
-}
+करोne:
+	वापस error;
+पूर्ण
 
-static void revalidate_tty(struct aa_label *label)
-{
-	struct tty_struct *tty;
-	int drop_tty = 0;
+अटल व्योम revalidate_tty(काष्ठा aa_label *label)
+अणु
+	काष्ठा tty_काष्ठा *tty;
+	पूर्णांक drop_tty = 0;
 
 	tty = get_current_tty();
-	if (!tty)
-		return;
+	अगर (!tty)
+		वापस;
 
 	spin_lock(&tty->files_lock);
-	if (!list_empty(&tty->tty_files)) {
-		struct tty_file_private *file_priv;
-		struct file *file;
+	अगर (!list_empty(&tty->tty_files)) अणु
+		काष्ठा tty_file_निजी *file_priv;
+		काष्ठा file *file;
 		/* TODO: Revalidate access to controlling tty. */
 		file_priv = list_first_entry(&tty->tty_files,
-					     struct tty_file_private, list);
+					     काष्ठा tty_file_निजी, list);
 		file = file_priv->file;
 
-		if (aa_file_perm(OP_INHERIT, label, file, MAY_READ | MAY_WRITE,
+		अगर (aa_file_perm(OP_INHERIT, label, file, MAY_READ | MAY_WRITE,
 				 IN_ATOMIC))
 			drop_tty = 1;
-	}
+	पूर्ण
 	spin_unlock(&tty->files_lock);
 	tty_kref_put(tty);
 
-	if (drop_tty)
+	अगर (drop_tty)
 		no_tty();
-}
+पूर्ण
 
-static int match_file(const void *p, struct file *file, unsigned int fd)
-{
-	struct aa_label *label = (struct aa_label *)p;
+अटल पूर्णांक match_file(स्थिर व्योम *p, काष्ठा file *file, अचिन्हित पूर्णांक fd)
+अणु
+	काष्ठा aa_label *label = (काष्ठा aa_label *)p;
 
-	if (aa_file_perm(OP_INHERIT, label, file, aa_map_file_to_perms(file),
+	अगर (aa_file_perm(OP_INHERIT, label, file, aa_map_file_to_perms(file),
 			 IN_ATOMIC))
-		return fd + 1;
-	return 0;
-}
+		वापस fd + 1;
+	वापस 0;
+पूर्ण
 
 
 /* based on selinux's flush_unauthorized_files */
-void aa_inherit_files(const struct cred *cred, struct files_struct *files)
-{
-	struct aa_label *label = aa_get_newest_cred_label(cred);
-	struct file *devnull = NULL;
-	unsigned int n;
+व्योम aa_inherit_files(स्थिर काष्ठा cred *cred, काष्ठा files_काष्ठा *files)
+अणु
+	काष्ठा aa_label *label = aa_get_newest_cred_label(cred);
+	काष्ठा file *devnull = शून्य;
+	अचिन्हित पूर्णांक n;
 
 	revalidate_tty(label);
 
-	/* Revalidate access to inherited open files. */
+	/* Revalidate access to inherited खोलो files. */
 	n = iterate_fd(files, 0, match_file, label);
-	if (!n) /* none found? */
-		goto out;
+	अगर (!n) /* none found? */
+		जाओ out;
 
-	devnull = dentry_open(&aa_null, O_RDWR, cred);
-	if (IS_ERR(devnull))
-		devnull = NULL;
+	devnull = dentry_खोलो(&aa_null, O_RDWR, cred);
+	अगर (IS_ERR(devnull))
+		devnull = शून्य;
 	/* replace all the matching ones with this */
-	do {
+	करो अणु
 		replace_fd(n - 1, devnull, 0);
-	} while ((n = iterate_fd(files, n, match_file, label)) != 0);
-	if (devnull)
+	पूर्ण जबतक ((n = iterate_fd(files, n, match_file, label)) != 0);
+	अगर (devnull)
 		fput(devnull);
 out:
 	aa_put_label(label);
-}
+पूर्ण

@@ -1,42 +1,43 @@
+<शैली गुरु>
 /*
- * Common values for SM3 algorithm
+ * Common values क्रम SM3 algorithm
  */
 
-#ifndef _CRYPTO_SM3_H
-#define _CRYPTO_SM3_H
+#अगर_अघोषित _CRYPTO_SM3_H
+#घोषणा _CRYPTO_SM3_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define SM3_DIGEST_SIZE	32
-#define SM3_BLOCK_SIZE	64
+#घोषणा SM3_DIGEST_SIZE	32
+#घोषणा SM3_BLOCK_SIZE	64
 
-#define SM3_T1		0x79CC4519
-#define SM3_T2		0x7A879D8A
+#घोषणा SM3_T1		0x79CC4519
+#घोषणा SM3_T2		0x7A879D8A
 
-#define SM3_IVA		0x7380166f
-#define SM3_IVB		0x4914b2b9
-#define SM3_IVC		0x172442d7
-#define SM3_IVD		0xda8a0600
-#define SM3_IVE		0xa96f30bc
-#define SM3_IVF		0x163138aa
-#define SM3_IVG		0xe38dee4d
-#define SM3_IVH		0xb0fb0e4e
+#घोषणा SM3_IVA		0x7380166f
+#घोषणा SM3_IVB		0x4914b2b9
+#घोषणा SM3_IVC		0x172442d7
+#घोषणा SM3_IVD		0xda8a0600
+#घोषणा SM3_IVE		0xa96f30bc
+#घोषणा SM3_IVF		0x163138aa
+#घोषणा SM3_IVG		0xe38dee4d
+#घोषणा SM3_IVH		0xb0fb0e4e
 
-extern const u8 sm3_zero_message_hash[SM3_DIGEST_SIZE];
+बाह्य स्थिर u8 sm3_zero_message_hash[SM3_DIGEST_SIZE];
 
-struct sm3_state {
+काष्ठा sm3_state अणु
 	u32 state[SM3_DIGEST_SIZE / 4];
 	u64 count;
 	u8 buffer[SM3_BLOCK_SIZE];
-};
+पूर्ण;
 
-struct shash_desc;
+काष्ठा shash_desc;
 
-extern int crypto_sm3_update(struct shash_desc *desc, const u8 *data,
-			      unsigned int len);
+बाह्य पूर्णांक crypto_sm3_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			      अचिन्हित पूर्णांक len);
 
-extern int crypto_sm3_final(struct shash_desc *desc, u8 *out);
+बाह्य पूर्णांक crypto_sm3_final(काष्ठा shash_desc *desc, u8 *out);
 
-extern int crypto_sm3_finup(struct shash_desc *desc, const u8 *data,
-			     unsigned int len, u8 *hash);
-#endif
+बाह्य पूर्णांक crypto_sm3_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			     अचिन्हित पूर्णांक len, u8 *hash);
+#पूर्ण_अगर

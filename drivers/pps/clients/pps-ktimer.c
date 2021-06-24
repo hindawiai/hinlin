@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * pps-ktimer.c -- kernel timer test client
+ * pps-kसमयr.c -- kernel समयr test client
  *
- * Copyright (C) 2005-2006   Rodolfo Giometti <giometti@linux.it>
+ * Copyright (C) 2005-2006   Roकरोlfo Giometti <giometti@linux.it>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/time.h>
-#include <linux/timer.h>
-#include <linux/pps_kernel.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/pps_kernel.h>
 
 /*
  * Global variables
  */
 
-static struct pps_device *pps;
-static struct timer_list ktimer;
+अटल काष्ठा pps_device *pps;
+अटल काष्ठा समयr_list kसमयr;
 
 /*
- * The kernel timer
+ * The kernel समयr
  */
 
-static void pps_ktimer_event(struct timer_list *unused)
-{
-	struct pps_event_time ts;
+अटल व्योम pps_kसमयr_event(काष्ठा समयr_list *unused)
+अणु
+	काष्ठा pps_event_समय ts;
 
-	/* First of all we get the time stamp... */
+	/* First of all we get the समय stamp... */
 	pps_get_ts(&ts);
 
-	pps_event(pps, &ts, PPS_CAPTUREASSERT, NULL);
+	pps_event(pps, &ts, PPS_CAPTUREASSERT, शून्य);
 
-	mod_timer(&ktimer, jiffies + HZ);
-}
+	mod_समयr(&kसमयr, jअगरfies + HZ);
+पूर्ण
 
 /*
- * The PPS info struct
+ * The PPS info काष्ठा
  */
 
-static struct pps_source_info pps_ktimer_info = {
+अटल काष्ठा pps_source_info pps_kसमयr_info = अणु
 	.name		= "ktimer",
 	.path		= "",
 	.mode		= PPS_CAPTUREASSERT | PPS_OFFSETASSERT |
 			  PPS_ECHOASSERT |
 			  PPS_CANWAIT | PPS_TSFMT_TSPEC,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
 /*
  * Module staff
  */
 
-static void __exit pps_ktimer_exit(void)
-{
+अटल व्योम __निकास pps_kसमयr_निकास(व्योम)
+अणु
 	dev_info(pps->dev, "ktimer PPS source unregistered\n");
 
-	del_timer_sync(&ktimer);
-	pps_unregister_source(pps);
-}
+	del_समयr_sync(&kसमयr);
+	pps_unरेजिस्टर_source(pps);
+पूर्ण
 
-static int __init pps_ktimer_init(void)
-{
-	pps = pps_register_source(&pps_ktimer_info,
+अटल पूर्णांक __init pps_kसमयr_init(व्योम)
+अणु
+	pps = pps_रेजिस्टर_source(&pps_kसमयr_info,
 				PPS_CAPTUREASSERT | PPS_OFFSETASSERT);
-	if (IS_ERR(pps)) {
+	अगर (IS_ERR(pps)) अणु
 		pr_err("cannot register PPS source\n");
-		return PTR_ERR(pps);
-	}
+		वापस PTR_ERR(pps);
+	पूर्ण
 
-	timer_setup(&ktimer, pps_ktimer_event, 0);
-	mod_timer(&ktimer, jiffies + HZ);
+	समयr_setup(&kसमयr, pps_kसमयr_event, 0);
+	mod_समयr(&kसमयr, jअगरfies + HZ);
 
 	dev_info(pps->dev, "ktimer PPS source registered\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-module_init(pps_ktimer_init);
-module_exit(pps_ktimer_exit);
+module_init(pps_kसमयr_init);
+module_निकास(pps_kसमयr_निकास);
 
 MODULE_AUTHOR("Rodolfo Giometti <giometti@linux.it>");
 MODULE_DESCRIPTION("dummy PPS source by using a kernel timer (just for debug)");

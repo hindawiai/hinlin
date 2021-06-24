@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,35 +20,35 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "ior.h"
+#समावेश "ior.h"
 
-#include <subdev/timer.h>
+#समावेश <subdev/समयr.h>
 
-void
-tu102_sor_dp_vcpi(struct nvkm_ior *sor, int head,
+व्योम
+tu102_sor_dp_vcpi(काष्ठा nvkm_ior *sor, पूर्णांक head,
 		  u8 slot, u8 slot_nr, u16 pbn, u16 aligned)
-{
-	struct nvkm_device *device = sor->disp->engine.subdev.device;
-	const u32 hoff = head * 0x800;
+अणु
+	काष्ठा nvkm_device *device = sor->disp->engine.subdev.device;
+	स्थिर u32 hoff = head * 0x800;
 
 	nvkm_mask(device, 0x61657c + hoff, 0xffffffff, (aligned << 16) | pbn);
 	nvkm_mask(device, 0x616578 + hoff, 0x00003f3f, (slot_nr << 8) | slot);
-}
+पूर्ण
 
-static int
-tu102_sor_dp_links(struct nvkm_ior *sor, struct nvkm_i2c_aux *aux)
-{
-	struct nvkm_device *device = sor->disp->engine.subdev.device;
-	const u32 soff = nv50_ior_base(sor);
-	const u32 loff = nv50_sor_link(sor);
+अटल पूर्णांक
+tu102_sor_dp_links(काष्ठा nvkm_ior *sor, काष्ठा nvkm_i2c_aux *aux)
+अणु
+	काष्ठा nvkm_device *device = sor->disp->engine.subdev.device;
+	स्थिर u32 soff = nv50_ior_base(sor);
+	स्थिर u32 loff = nv50_sor_link(sor);
 	u32 dpctrl = 0x00000000;
 	u32 clksor = 0x00000000;
 
 	clksor |= sor->dp.bw << 18;
 	dpctrl |= ((1 << sor->dp.nr) - 1) << 16;
-	if (sor->dp.mst)
+	अगर (sor->dp.mst)
 		dpctrl |= 0x40000000;
-	if (sor->dp.ef)
+	अगर (sor->dp.ef)
 		dpctrl |= 0x00004000;
 
 	nvkm_mask(device, 0x612300 + soff, 0x007c0000, clksor);
@@ -58,72 +59,72 @@ tu102_sor_dp_links(struct nvkm_ior *sor, struct nvkm_i2c_aux *aux)
 	nvkm_mask(device, 0x61c10c + loff, 0x00000003, 0x00000001);
 
 	nvkm_mask(device, 0x61c10c + loff, 0x401f4000, dpctrl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_ior_func
-tu102_sor_hda = {
-	.route = {
+अटल स्थिर काष्ठा nvkm_ior_func
+tu102_sor_hda = अणु
+	.route = अणु
 		.get = gm200_sor_route_get,
 		.set = gm200_sor_route_set,
-	},
+	पूर्ण,
 	.state = gv100_sor_state,
-	.power = nv50_sor_power,
-	.clock = gf119_sor_clock,
-	.hdmi = {
+	.घातer = nv50_sor_घातer,
+	.घड़ी = gf119_sor_घड़ी,
+	.hdmi = अणु
 		.ctrl = gv100_hdmi_ctrl,
 		.scdc = gm200_hdmi_scdc,
-	},
-	.dp = {
-		.lanes = { 0, 1, 2, 3 },
+	पूर्ण,
+	.dp = अणु
+		.lanes = अणु 0, 1, 2, 3 पूर्ण,
 		.links = tu102_sor_dp_links,
-		.power = g94_sor_dp_power,
+		.घातer = g94_sor_dp_घातer,
 		.pattern = gm107_sor_dp_pattern,
 		.drive = gm200_sor_dp_drive,
 		.vcpi = tu102_sor_dp_vcpi,
 		.audio = gv100_sor_dp_audio,
 		.audio_sym = gv100_sor_dp_audio_sym,
 		.watermark = gv100_sor_dp_watermark,
-	},
-	.hda = {
+	पूर्ण,
+	.hda = अणु
 		.hpd = gf119_hda_hpd,
 		.eld = gf119_hda_eld,
 		.device_entry = gv100_hda_device_entry,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct nvkm_ior_func
-tu102_sor = {
-	.route = {
+अटल स्थिर काष्ठा nvkm_ior_func
+tu102_sor = अणु
+	.route = अणु
 		.get = gm200_sor_route_get,
 		.set = gm200_sor_route_set,
-	},
+	पूर्ण,
 	.state = gv100_sor_state,
-	.power = nv50_sor_power,
-	.clock = gf119_sor_clock,
-	.hdmi = {
+	.घातer = nv50_sor_घातer,
+	.घड़ी = gf119_sor_घड़ी,
+	.hdmi = अणु
 		.ctrl = gv100_hdmi_ctrl,
 		.scdc = gm200_hdmi_scdc,
-	},
-	.dp = {
-		.lanes = { 0, 1, 2, 3 },
+	पूर्ण,
+	.dp = अणु
+		.lanes = अणु 0, 1, 2, 3 पूर्ण,
 		.links = tu102_sor_dp_links,
-		.power = g94_sor_dp_power,
+		.घातer = g94_sor_dp_घातer,
 		.pattern = gm107_sor_dp_pattern,
 		.drive = gm200_sor_dp_drive,
 		.vcpi = tu102_sor_dp_vcpi,
 		.audio = gv100_sor_dp_audio,
 		.audio_sym = gv100_sor_dp_audio_sym,
 		.watermark = gv100_sor_dp_watermark,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int
-tu102_sor_new(struct nvkm_disp *disp, int id)
-{
-	struct nvkm_device *device = disp->engine.subdev.device;
+पूर्णांक
+tu102_sor_new(काष्ठा nvkm_disp *disp, पूर्णांक id)
+अणु
+	काष्ठा nvkm_device *device = disp->engine.subdev.device;
 	u32 hda = nvkm_rd32(device, 0x08a15c);
-	if (hda & BIT(id))
-		return nvkm_ior_new_(&tu102_sor_hda, disp, SOR, id);
-	return nvkm_ior_new_(&tu102_sor, disp, SOR, id);
-}
+	अगर (hda & BIT(id))
+		वापस nvkm_ior_new_(&tu102_sor_hda, disp, SOR, id);
+	वापस nvkm_ior_new_(&tu102_sor, disp, SOR, id);
+पूर्ण

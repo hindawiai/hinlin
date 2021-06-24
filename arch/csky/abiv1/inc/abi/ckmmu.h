@@ -1,101 +1,102 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_CKMMUV1_H
-#define __ASM_CSKY_CKMMUV1_H
-#include <abi/reg_ops.h>
+#अगर_अघोषित __ASM_CSKY_CKMMUV1_H
+#घोषणा __ASM_CSKY_CKMMUV1_H
+#समावेश <abi/reg_ops.h>
 
-static inline int read_mmu_index(void)
-{
-	return cprcr("cpcr0");
-}
+अटल अंतरभूत पूर्णांक पढ़ो_mmu_index(व्योम)
+अणु
+	वापस cprcr("cpcr0");
+पूर्ण
 
-static inline void write_mmu_index(int value)
-{
+अटल अंतरभूत व्योम ग_लिखो_mmu_index(पूर्णांक value)
+अणु
 	cpwcr("cpcr0", value);
-}
+पूर्ण
 
-static inline int read_mmu_entrylo0(void)
-{
-	return cprcr("cpcr2") << 6;
-}
+अटल अंतरभूत पूर्णांक पढ़ो_mmu_entrylo0(व्योम)
+अणु
+	वापस cprcr("cpcr2") << 6;
+पूर्ण
 
-static inline int read_mmu_entrylo1(void)
-{
-	return cprcr("cpcr3") << 6;
-}
+अटल अंतरभूत पूर्णांक पढ़ो_mmu_entrylo1(व्योम)
+अणु
+	वापस cprcr("cpcr3") << 6;
+पूर्ण
 
-static inline void write_mmu_pagemask(int value)
-{
+अटल अंतरभूत व्योम ग_लिखो_mmu_pagemask(पूर्णांक value)
+अणु
 	cpwcr("cpcr6", value);
-}
+पूर्ण
 
-static inline int read_mmu_entryhi(void)
-{
-	return cprcr("cpcr4");
-}
+अटल अंतरभूत पूर्णांक पढ़ो_mmu_entryhi(व्योम)
+अणु
+	वापस cprcr("cpcr4");
+पूर्ण
 
-static inline void write_mmu_entryhi(int value)
-{
+अटल अंतरभूत व्योम ग_लिखो_mmu_entryhi(पूर्णांक value)
+अणु
 	cpwcr("cpcr4", value);
-}
+पूर्ण
 
-static inline unsigned long read_mmu_msa0(void)
-{
-	return cprcr("cpcr30");
-}
+अटल अंतरभूत अचिन्हित दीर्घ पढ़ो_mmu_msa0(व्योम)
+अणु
+	वापस cprcr("cpcr30");
+पूर्ण
 
-static inline void write_mmu_msa0(unsigned long value)
-{
+अटल अंतरभूत व्योम ग_लिखो_mmu_msa0(अचिन्हित दीर्घ value)
+अणु
 	cpwcr("cpcr30", value);
-}
+पूर्ण
 
-static inline unsigned long read_mmu_msa1(void)
-{
-	return cprcr("cpcr31");
-}
+अटल अंतरभूत अचिन्हित दीर्घ पढ़ो_mmu_msa1(व्योम)
+अणु
+	वापस cprcr("cpcr31");
+पूर्ण
 
-static inline void write_mmu_msa1(unsigned long value)
-{
+अटल अंतरभूत व्योम ग_लिखो_mmu_msa1(अचिन्हित दीर्घ value)
+अणु
 	cpwcr("cpcr31", value);
-}
+पूर्ण
 
 /*
  * TLB operations.
  */
-static inline void tlb_probe(void)
-{
+अटल अंतरभूत व्योम tlb_probe(व्योम)
+अणु
 	cpwcr("cpcr8", 0x80000000);
-}
+पूर्ण
 
-static inline void tlb_read(void)
-{
+अटल अंतरभूत व्योम tlb_पढ़ो(व्योम)
+अणु
 	cpwcr("cpcr8", 0x40000000);
-}
+पूर्ण
 
-static inline void tlb_invalid_all(void)
-{
+अटल अंतरभूत व्योम tlb_invalid_all(व्योम)
+अणु
 	cpwcr("cpcr8", 0x04000000);
-}
+पूर्ण
 
 
-static inline void local_tlb_invalid_all(void)
-{
+अटल अंतरभूत व्योम local_tlb_invalid_all(व्योम)
+अणु
 	tlb_invalid_all();
-}
+पूर्ण
 
-static inline void tlb_invalid_indexed(void)
-{
+अटल अंतरभूत व्योम tlb_invalid_indexed(व्योम)
+अणु
 	cpwcr("cpcr8", 0x02000000);
-}
+पूर्ण
 
-static inline void setup_pgd(pgd_t *pgd, int asid)
-{
+अटल अंतरभूत व्योम setup_pgd(pgd_t *pgd, पूर्णांक asid)
+अणु
 	cpwcr("cpcr29", __pa(pgd) | BIT(0));
-	write_mmu_entryhi(asid);
-}
+	ग_लिखो_mmu_entryhi(asid);
+पूर्ण
 
-static inline pgd_t *get_pgd(void)
-{
-	return __va(cprcr("cpcr29") & ~BIT(0));
-}
-#endif /* __ASM_CSKY_CKMMUV1_H */
+अटल अंतरभूत pgd_t *get_pgd(व्योम)
+अणु
+	वापस __va(cprcr("cpcr29") & ~BIT(0));
+पूर्ण
+#पूर्ण_अगर /* __ASM_CSKY_CKMMUV1_H */

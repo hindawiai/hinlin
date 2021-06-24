@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_TCPOPTSTRIP_H
-#define _XT_TCPOPTSTRIP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_TCPOPTSTRIP_H
+#घोषणा _XT_TCPOPTSTRIP_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define tcpoptstrip_set_bit(bmap, idx) \
+#घोषणा tcpoptstrip_set_bit(bmap, idx) \
 	(bmap[(idx) >> 5] |= 1U << (idx & 31))
-#define tcpoptstrip_test_bit(bmap, idx) \
+#घोषणा tcpoptstrip_test_bit(bmap, idx) \
 	(((1U << (idx & 31)) & bmap[(idx) >> 5]) != 0)
 
-struct xt_tcpoptstrip_target_info {
+काष्ठा xt_tcpoptstrip_target_info अणु
 	__u32 strip_bmap[8];
-};
+पूर्ण;
 
-#endif /* _XT_TCPOPTSTRIP_H */
+#पूर्ण_अगर /* _XT_TCPOPTSTRIP_H */

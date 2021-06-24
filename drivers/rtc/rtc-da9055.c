@@ -1,397 +1,398 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Real time clock driver for DA9055
+ * Real समय घड़ी driver क्रम DA9055
  *
  * Copyright(c) 2012 Dialog Semiconductor Ltd.
  *
  * Author: Dajun Dajun Chen <dajun.chen@diasemi.com>
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/rtc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/rtc.h>
 
-#include <linux/mfd/da9055/core.h>
-#include <linux/mfd/da9055/reg.h>
-#include <linux/mfd/da9055/pdata.h>
+#समावेश <linux/mfd/da9055/core.h>
+#समावेश <linux/mfd/da9055/reg.h>
+#समावेश <linux/mfd/da9055/pdata.h>
 
-struct da9055_rtc {
-	struct rtc_device *rtc;
-	struct da9055 *da9055;
-	int alarm_enable;
-};
+काष्ठा da9055_rtc अणु
+	काष्ठा rtc_device *rtc;
+	काष्ठा da9055 *da9055;
+	पूर्णांक alarm_enable;
+पूर्ण;
 
-static int da9055_rtc_enable_alarm(struct da9055_rtc *rtc, bool enable)
-{
-	int ret;
-	if (enable) {
+अटल पूर्णांक da9055_rtc_enable_alarm(काष्ठा da9055_rtc *rtc, bool enable)
+अणु
+	पूर्णांक ret;
+	अगर (enable) अणु
 		ret = da9055_reg_update(rtc->da9055, DA9055_REG_ALARM_Y,
 					DA9055_RTC_ALM_EN,
 					DA9055_RTC_ALM_EN);
-		if (ret != 0)
+		अगर (ret != 0)
 			dev_err(rtc->da9055->dev, "Failed to enable ALM: %d\n",
 				ret);
 		rtc->alarm_enable = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = da9055_reg_update(rtc->da9055, DA9055_REG_ALARM_Y,
 					DA9055_RTC_ALM_EN, 0);
-		if (ret != 0)
+		अगर (ret != 0)
 			dev_err(rtc->da9055->dev,
 				"Failed to disable ALM: %d\n", ret);
 		rtc->alarm_enable = 0;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static irqreturn_t da9055_rtc_alm_irq(int irq, void *data)
-{
-	struct da9055_rtc *rtc = data;
+अटल irqवापस_t da9055_rtc_alm_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा da9055_rtc *rtc = data;
 
 	da9055_rtc_enable_alarm(rtc, 0);
 	rtc_update_irq(rtc->rtc, 1, RTC_IRQF | RTC_AF);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int da9055_read_alarm(struct da9055 *da9055, struct rtc_time *rtc_tm)
-{
-	int ret;
-	uint8_t v[5];
+अटल पूर्णांक da9055_पढ़ो_alarm(काष्ठा da9055 *da9055, काष्ठा rtc_समय *rtc_पंचांग)
+अणु
+	पूर्णांक ret;
+	uपूर्णांक8_t v[5];
 
-	ret = da9055_group_read(da9055, DA9055_REG_ALARM_MI, 5, v);
-	if (ret != 0) {
+	ret = da9055_group_पढ़ो(da9055, DA9055_REG_ALARM_MI, 5, v);
+	अगर (ret != 0) अणु
 		dev_err(da9055->dev, "Failed to group read ALM: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	rtc_tm->tm_year = (v[4] & DA9055_RTC_ALM_YEAR) + 100;
-	rtc_tm->tm_mon  = (v[3] & DA9055_RTC_ALM_MONTH) - 1;
-	rtc_tm->tm_mday = v[2] & DA9055_RTC_ALM_DAY;
-	rtc_tm->tm_hour = v[1] & DA9055_RTC_ALM_HOUR;
-	rtc_tm->tm_min  = v[0] & DA9055_RTC_ALM_MIN;
-	rtc_tm->tm_sec = 0;
+	rtc_पंचांग->पंचांग_year = (v[4] & DA9055_RTC_ALM_YEAR) + 100;
+	rtc_पंचांग->पंचांग_mon  = (v[3] & DA9055_RTC_ALM_MONTH) - 1;
+	rtc_पंचांग->पंचांग_mday = v[2] & DA9055_RTC_ALM_DAY;
+	rtc_पंचांग->पंचांग_hour = v[1] & DA9055_RTC_ALM_HOUR;
+	rtc_पंचांग->पंचांग_min  = v[0] & DA9055_RTC_ALM_MIN;
+	rtc_पंचांग->पंचांग_sec = 0;
 
-	return rtc_valid_tm(rtc_tm);
-}
+	वापस rtc_valid_पंचांग(rtc_पंचांग);
+पूर्ण
 
-static int da9055_set_alarm(struct da9055 *da9055, struct rtc_time *rtc_tm)
-{
-	int ret;
-	uint8_t v[2];
+अटल पूर्णांक da9055_set_alarm(काष्ठा da9055 *da9055, काष्ठा rtc_समय *rtc_पंचांग)
+अणु
+	पूर्णांक ret;
+	uपूर्णांक8_t v[2];
 
-	rtc_tm->tm_year -= 100;
-	rtc_tm->tm_mon += 1;
+	rtc_पंचांग->पंचांग_year -= 100;
+	rtc_पंचांग->पंचांग_mon += 1;
 
 	ret = da9055_reg_update(da9055, DA9055_REG_ALARM_MI,
-				DA9055_RTC_ALM_MIN, rtc_tm->tm_min);
-	if (ret != 0) {
+				DA9055_RTC_ALM_MIN, rtc_पंचांग->पंचांग_min);
+	अगर (ret != 0) अणु
 		dev_err(da9055->dev, "Failed to write ALRM MIN: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	v[0] = rtc_tm->tm_hour;
-	v[1] = rtc_tm->tm_mday;
+	v[0] = rtc_पंचांग->पंचांग_hour;
+	v[1] = rtc_पंचांग->पंचांग_mday;
 
-	ret = da9055_group_write(da9055, DA9055_REG_ALARM_H, 2, v);
-	if (ret < 0)
-		return ret;
+	ret = da9055_group_ग_लिखो(da9055, DA9055_REG_ALARM_H, 2, v);
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = da9055_reg_update(da9055, DA9055_REG_ALARM_MO,
-				DA9055_RTC_ALM_MONTH, rtc_tm->tm_mon);
-	if (ret < 0)
+				DA9055_RTC_ALM_MONTH, rtc_पंचांग->पंचांग_mon);
+	अगर (ret < 0)
 		dev_err(da9055->dev, "Failed to write ALM Month:%d\n", ret);
 
 	ret = da9055_reg_update(da9055, DA9055_REG_ALARM_Y,
-				DA9055_RTC_ALM_YEAR, rtc_tm->tm_year);
-	if (ret < 0)
+				DA9055_RTC_ALM_YEAR, rtc_पंचांग->पंचांग_year);
+	अगर (ret < 0)
 		dev_err(da9055->dev, "Failed to write ALM Year:%d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9055_rtc_get_alarm_status(struct da9055 *da9055)
-{
-	int ret;
+अटल पूर्णांक da9055_rtc_get_alarm_status(काष्ठा da9055 *da9055)
+अणु
+	पूर्णांक ret;
 
-	ret = da9055_reg_read(da9055, DA9055_REG_ALARM_Y);
-	if (ret < 0) {
+	ret = da9055_reg_पढ़ो(da9055, DA9055_REG_ALARM_Y);
+	अगर (ret < 0) अणु
 		dev_err(da9055->dev, "Failed to read ALM: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret &= DA9055_RTC_ALM_EN;
-	return (ret > 0) ? 1 : 0;
-}
+	वापस (ret > 0) ? 1 : 0;
+पूर्ण
 
-static int da9055_rtc_read_time(struct device *dev, struct rtc_time *rtc_tm)
-{
-	struct da9055_rtc *rtc = dev_get_drvdata(dev);
-	uint8_t v[6];
-	int ret;
+अटल पूर्णांक da9055_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *rtc_पंचांग)
+अणु
+	काष्ठा da9055_rtc *rtc = dev_get_drvdata(dev);
+	uपूर्णांक8_t v[6];
+	पूर्णांक ret;
 
-	ret = da9055_reg_read(rtc->da9055, DA9055_REG_COUNT_S);
-	if (ret < 0)
-		return ret;
+	ret = da9055_reg_पढ़ो(rtc->da9055, DA9055_REG_COUNT_S);
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
 	 * Registers are only valid when RTC_READ
-	 * status bit is asserted
+	 * status bit is निश्चितed
 	 */
-	if (!(ret & DA9055_RTC_READ))
-		return -EBUSY;
+	अगर (!(ret & DA9055_RTC_READ))
+		वापस -EBUSY;
 
-	ret = da9055_group_read(rtc->da9055, DA9055_REG_COUNT_S, 6, v);
-	if (ret < 0) {
+	ret = da9055_group_पढ़ो(rtc->da9055, DA9055_REG_COUNT_S, 6, v);
+	अगर (ret < 0) अणु
 		dev_err(rtc->da9055->dev, "Failed to read RTC time : %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	rtc_tm->tm_year = (v[5] & DA9055_RTC_YEAR) + 100;
-	rtc_tm->tm_mon  = (v[4] & DA9055_RTC_MONTH) - 1;
-	rtc_tm->tm_mday = v[3] & DA9055_RTC_DAY;
-	rtc_tm->tm_hour = v[2] & DA9055_RTC_HOUR;
-	rtc_tm->tm_min  = v[1] & DA9055_RTC_MIN;
-	rtc_tm->tm_sec  = v[0] & DA9055_RTC_SEC;
+	rtc_पंचांग->पंचांग_year = (v[5] & DA9055_RTC_YEAR) + 100;
+	rtc_पंचांग->पंचांग_mon  = (v[4] & DA9055_RTC_MONTH) - 1;
+	rtc_पंचांग->पंचांग_mday = v[3] & DA9055_RTC_DAY;
+	rtc_पंचांग->पंचांग_hour = v[2] & DA9055_RTC_HOUR;
+	rtc_पंचांग->पंचांग_min  = v[1] & DA9055_RTC_MIN;
+	rtc_पंचांग->पंचांग_sec  = v[0] & DA9055_RTC_SEC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9055_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct da9055_rtc *rtc;
-	uint8_t v[6];
+अटल पूर्णांक da9055_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा da9055_rtc *rtc;
+	uपूर्णांक8_t v[6];
 
 	rtc = dev_get_drvdata(dev);
 
-	v[0] = tm->tm_sec;
-	v[1] = tm->tm_min;
-	v[2] = tm->tm_hour;
-	v[3] = tm->tm_mday;
-	v[4] = tm->tm_mon + 1;
-	v[5] = tm->tm_year - 100;
+	v[0] = पंचांग->पंचांग_sec;
+	v[1] = पंचांग->पंचांग_min;
+	v[2] = पंचांग->पंचांग_hour;
+	v[3] = पंचांग->पंचांग_mday;
+	v[4] = पंचांग->पंचांग_mon + 1;
+	v[5] = पंचांग->पंचांग_year - 100;
 
-	return da9055_group_write(rtc->da9055, DA9055_REG_COUNT_S, 6, v);
-}
+	वापस da9055_group_ग_लिखो(rtc->da9055, DA9055_REG_COUNT_S, 6, v);
+पूर्ण
 
-static int da9055_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	int ret;
-	struct rtc_time *tm = &alrm->time;
-	struct da9055_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक da9055_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	पूर्णांक ret;
+	काष्ठा rtc_समय *पंचांग = &alrm->समय;
+	काष्ठा da9055_rtc *rtc = dev_get_drvdata(dev);
 
-	ret = da9055_read_alarm(rtc->da9055, tm);
+	ret = da9055_पढ़ो_alarm(rtc->da9055, पंचांग);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	alrm->enabled = da9055_rtc_get_alarm_status(rtc->da9055);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9055_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	int ret;
-	struct rtc_time *tm = &alrm->time;
-	struct da9055_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक da9055_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	पूर्णांक ret;
+	काष्ठा rtc_समय *पंचांग = &alrm->समय;
+	काष्ठा da9055_rtc *rtc = dev_get_drvdata(dev);
 
 	ret = da9055_rtc_enable_alarm(rtc, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = da9055_set_alarm(rtc->da9055, tm);
-	if (ret)
-		return ret;
+	ret = da9055_set_alarm(rtc->da9055, पंचांग);
+	अगर (ret)
+		वापस ret;
 
 	ret = da9055_rtc_enable_alarm(rtc, 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9055_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
-{
-	struct da9055_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक da9055_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा da9055_rtc *rtc = dev_get_drvdata(dev);
 
-	return da9055_rtc_enable_alarm(rtc, enabled);
-}
+	वापस da9055_rtc_enable_alarm(rtc, enabled);
+पूर्ण
 
-static const struct rtc_class_ops da9055_rtc_ops = {
-	.read_time	= da9055_rtc_read_time,
-	.set_time	= da9055_rtc_set_time,
-	.read_alarm	= da9055_rtc_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops da9055_rtc_ops = अणु
+	.पढ़ो_समय	= da9055_rtc_पढ़ो_समय,
+	.set_समय	= da9055_rtc_set_समय,
+	.पढ़ो_alarm	= da9055_rtc_पढ़ो_alarm,
 	.set_alarm	= da9055_rtc_set_alarm,
 	.alarm_irq_enable = da9055_rtc_alarm_irq_enable,
-};
+पूर्ण;
 
-static int da9055_rtc_device_init(struct da9055 *da9055,
-					struct da9055_pdata *pdata)
-{
-	int ret;
+अटल पूर्णांक da9055_rtc_device_init(काष्ठा da9055 *da9055,
+					काष्ठा da9055_pdata *pdata)
+अणु
+	पूर्णांक ret;
 
-	/* Enable RTC and the internal Crystal */
+	/* Enable RTC and the पूर्णांकernal Crystal */
 	ret = da9055_reg_update(da9055, DA9055_REG_CONTROL_B,
 				DA9055_RTC_EN, DA9055_RTC_EN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	ret = da9055_reg_update(da9055, DA9055_REG_EN_32K,
 				DA9055_CRYSTAL_EN, DA9055_CRYSTAL_EN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Enable RTC in Power Down mode */
 	ret = da9055_reg_update(da9055, DA9055_REG_CONTROL_B,
 				DA9055_RTC_MODE_PD, DA9055_RTC_MODE_PD);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Enable RTC in Reset mode */
-	if (pdata && pdata->reset_enable) {
+	अगर (pdata && pdata->reset_enable) अणु
 		ret = da9055_reg_update(da9055, DA9055_REG_CONTROL_B,
 					DA9055_RTC_MODE_SD,
 					DA9055_RTC_MODE_SD <<
 					DA9055_RTC_MODE_SD_SHIFT);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	/* Disable the RTC TICK ALM */
 	ret = da9055_reg_update(da9055, DA9055_REG_ALARM_MO,
 				DA9055_RTC_TICK_WAKE_MASK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int da9055_rtc_probe(struct platform_device *pdev)
-{
-	struct da9055_rtc *rtc;
-	struct da9055_pdata *pdata = NULL;
-	int ret, alm_irq;
+अटल पूर्णांक da9055_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा da9055_rtc *rtc;
+	काष्ठा da9055_pdata *pdata = शून्य;
+	पूर्णांक ret, alm_irq;
 
-	rtc = devm_kzalloc(&pdev->dev, sizeof(struct da9055_rtc), GFP_KERNEL);
-	if (!rtc)
-		return -ENOMEM;
+	rtc = devm_kzalloc(&pdev->dev, माप(काष्ठा da9055_rtc), GFP_KERNEL);
+	अगर (!rtc)
+		वापस -ENOMEM;
 
 	rtc->da9055 = dev_get_drvdata(pdev->dev.parent);
 	pdata = dev_get_platdata(rtc->da9055->dev);
-	platform_set_drvdata(pdev, rtc);
+	platक्रमm_set_drvdata(pdev, rtc);
 
 	ret = da9055_rtc_device_init(rtc->da9055, pdata);
-	if (ret < 0)
-		goto err_rtc;
+	अगर (ret < 0)
+		जाओ err_rtc;
 
-	ret = da9055_reg_read(rtc->da9055, DA9055_REG_ALARM_Y);
-	if (ret < 0)
-		goto err_rtc;
+	ret = da9055_reg_पढ़ो(rtc->da9055, DA9055_REG_ALARM_Y);
+	अगर (ret < 0)
+		जाओ err_rtc;
 
-	if (ret & DA9055_RTC_ALM_EN)
+	अगर (ret & DA9055_RTC_ALM_EN)
 		rtc->alarm_enable = 1;
 
 	device_init_wakeup(&pdev->dev, 1);
 
-	rtc->rtc = devm_rtc_device_register(&pdev->dev, pdev->name,
+	rtc->rtc = devm_rtc_device_रेजिस्टर(&pdev->dev, pdev->name,
 					&da9055_rtc_ops, THIS_MODULE);
-	if (IS_ERR(rtc->rtc)) {
+	अगर (IS_ERR(rtc->rtc)) अणु
 		ret = PTR_ERR(rtc->rtc);
-		goto err_rtc;
-	}
+		जाओ err_rtc;
+	पूर्ण
 
-	alm_irq = platform_get_irq_byname(pdev, "ALM");
-	if (alm_irq < 0)
-		return alm_irq;
+	alm_irq = platक्रमm_get_irq_byname(pdev, "ALM");
+	अगर (alm_irq < 0)
+		वापस alm_irq;
 
-	ret = devm_request_threaded_irq(&pdev->dev, alm_irq, NULL,
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, alm_irq, शून्य,
 					da9055_rtc_alm_irq,
 					IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 					"ALM", rtc);
-	if (ret != 0)
+	अगर (ret != 0)
 		dev_err(rtc->da9055->dev, "irq registration failed: %d\n", ret);
 
 err_rtc:
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-#ifdef CONFIG_PM
-/* Turn off the alarm if it should not be a wake source. */
-static int da9055_rtc_suspend(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct da9055_rtc *rtc = dev_get_drvdata(&pdev->dev);
-	int ret;
+#अगर_घोषित CONFIG_PM
+/* Turn off the alarm अगर it should not be a wake source. */
+अटल पूर्णांक da9055_rtc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा da9055_rtc *rtc = dev_get_drvdata(&pdev->dev);
+	पूर्णांक ret;
 
-	if (!device_may_wakeup(&pdev->dev)) {
+	अगर (!device_may_wakeup(&pdev->dev)) अणु
 		/* Disable the ALM IRQ */
 		ret = da9055_rtc_enable_alarm(rtc, 0);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_err(&pdev->dev, "Failed to disable RTC ALM\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Enable the alarm if it should be enabled (in case it was disabled to
+/* Enable the alarm अगर it should be enabled (in हाल it was disabled to
  * prevent use as a wake source).
  */
-static int da9055_rtc_resume(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct da9055_rtc *rtc = dev_get_drvdata(&pdev->dev);
-	int ret;
+अटल पूर्णांक da9055_rtc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा da9055_rtc *rtc = dev_get_drvdata(&pdev->dev);
+	पूर्णांक ret;
 
-	if (!device_may_wakeup(&pdev->dev)) {
-		if (rtc->alarm_enable) {
+	अगर (!device_may_wakeup(&pdev->dev)) अणु
+		अगर (rtc->alarm_enable) अणु
 			ret = da9055_rtc_enable_alarm(rtc, 1);
-			if (ret < 0)
+			अगर (ret < 0)
 				dev_err(&pdev->dev,
 					"Failed to restart RTC ALM\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Unconditionally disable the alarm */
-static int da9055_rtc_freeze(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct da9055_rtc *rtc = dev_get_drvdata(&pdev->dev);
-	int ret;
+अटल पूर्णांक da9055_rtc_मुक्तze(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा da9055_rtc *rtc = dev_get_drvdata(&pdev->dev);
+	पूर्णांक ret;
 
 	ret = da9055_rtc_enable_alarm(rtc, 0);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&pdev->dev, "Failed to freeze RTC ALMs\n");
 
-	return 0;
+	वापस 0;
 
-}
-#else
-#define da9055_rtc_suspend NULL
-#define da9055_rtc_resume NULL
-#define da9055_rtc_freeze NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा da9055_rtc_suspend शून्य
+#घोषणा da9055_rtc_resume शून्य
+#घोषणा da9055_rtc_मुक्तze शून्य
+#पूर्ण_अगर
 
-static const struct dev_pm_ops da9055_rtc_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops da9055_rtc_pm_ops = अणु
 	.suspend = da9055_rtc_suspend,
 	.resume = da9055_rtc_resume,
 
-	.freeze = da9055_rtc_freeze,
+	.मुक्तze = da9055_rtc_मुक्तze,
 	.thaw = da9055_rtc_resume,
 	.restore = da9055_rtc_resume,
 
-	.poweroff = da9055_rtc_suspend,
-};
+	.घातeroff = da9055_rtc_suspend,
+पूर्ण;
 
-static struct platform_driver da9055_rtc_driver = {
+अटल काष्ठा platक्रमm_driver da9055_rtc_driver = अणु
 	.probe  = da9055_rtc_probe,
-	.driver = {
+	.driver = अणु
 		.name   = "da9055-rtc",
 		.pm = &da9055_rtc_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(da9055_rtc_driver);
+module_platक्रमm_driver(da9055_rtc_driver);
 
 MODULE_AUTHOR("David Dajun Chen <dchen@diasemi.com>");
 MODULE_DESCRIPTION("RTC driver for Dialog DA9055 PMIC");

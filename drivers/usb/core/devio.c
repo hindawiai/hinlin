@@ -1,148 +1,149 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*****************************************************************************/
 
 /*
  *      devio.c  --  User space communication with USB devices.
  *
- *      Copyright (C) 1999-2000  Thomas Sailer (sailer@ife.ee.ethz.ch)
+ *      Copyright (C) 1999-2000  Thomas Sailer (sailer@अगरe.ee.ethz.ch)
  *
  *  This file implements the usbfs/x/y files, where
  *  x is the bus number and y the device number.
  *
  *  It allows user space programs/"drivers" to communicate directly
- *  with USB devices without intervening kernel driver.
+ *  with USB devices without पूर्णांकervening kernel driver.
  *
  *  Revision history
  *    22.12.1999   0.1   Initial release (split from proc_usb.c)
- *    04.01.2000   0.2   Turned into its own filesystem
+ *    04.01.2000   0.2   Turned पूर्णांकo its own fileप्रणाली
  *    30.09.2005   0.3   Fix user-triggerable oops in async URB delivery
  *    			 (CAN-2005-3055)
  */
 
 /*****************************************************************************/
 
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
-#include <linux/signal.h>
-#include <linux/poll.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/usb.h>
-#include <linux/usbdevice_fs.h>
-#include <linux/usb/hcd.h>	/* for usbcore internals */
-#include <linux/cdev.h>
-#include <linux/notifier.h>
-#include <linux/security.h>
-#include <linux/user_namespace.h>
-#include <linux/scatterlist.h>
-#include <linux/uaccess.h>
-#include <linux/dma-mapping.h>
-#include <asm/byteorder.h>
-#include <linux/moduleparam.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/poll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/usb.h>
+#समावेश <linux/usbdevice_fs.h>
+#समावेश <linux/usb/hcd.h>	/* क्रम usbcore पूर्णांकernals */
+#समावेश <linux/cdev.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/security.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/moduleparam.h>
 
-#include "usb.h"
+#समावेश "usb.h"
 
-#ifdef CONFIG_PM
-#define MAYBE_CAP_SUSPEND	USBDEVFS_CAP_SUSPEND
-#else
-#define MAYBE_CAP_SUSPEND	0
-#endif
+#अगर_घोषित CONFIG_PM
+#घोषणा MAYBE_CAP_SUSPEND	USBDEVFS_CAP_SUSPEND
+#अन्यथा
+#घोषणा MAYBE_CAP_SUSPEND	0
+#पूर्ण_अगर
 
-#define USB_MAXBUS			64
-#define USB_DEVICE_MAX			(USB_MAXBUS * 128)
-#define USB_SG_SIZE			16384 /* split-size for large txs */
+#घोषणा USB_MAXBUS			64
+#घोषणा USB_DEVICE_MAX			(USB_MAXBUS * 128)
+#घोषणा USB_SG_SIZE			16384 /* split-size क्रम large txs */
 
-/* Mutual exclusion for ps->list in resume vs. release and remove */
-static DEFINE_MUTEX(usbfs_mutex);
+/* Mutual exclusion क्रम ps->list in resume vs. release and हटाओ */
+अटल DEFINE_MUTEX(usbfs_mutex);
 
-struct usb_dev_state {
-	struct list_head list;      /* state list */
-	struct usb_device *dev;
-	struct file *file;
+काष्ठा usb_dev_state अणु
+	काष्ठा list_head list;      /* state list */
+	काष्ठा usb_device *dev;
+	काष्ठा file *file;
 	spinlock_t lock;            /* protects the async urb lists */
-	struct list_head async_pending;
-	struct list_head async_completed;
-	struct list_head memory_list;
-	wait_queue_head_t wait;     /* wake up if a request completed */
-	wait_queue_head_t wait_for_resume;   /* wake up upon runtime resume */
-	unsigned int discsignr;
-	struct pid *disc_pid;
-	const struct cred *cred;
+	काष्ठा list_head async_pending;
+	काष्ठा list_head async_completed;
+	काष्ठा list_head memory_list;
+	रुको_queue_head_t रुको;     /* wake up अगर a request completed */
+	रुको_queue_head_t रुको_क्रम_resume;   /* wake up upon runसमय resume */
+	अचिन्हित पूर्णांक discsignr;
+	काष्ठा pid *disc_pid;
+	स्थिर काष्ठा cred *cred;
 	sigval_t disccontext;
-	unsigned long ifclaimed;
+	अचिन्हित दीर्घ अगरclaimed;
 	u32 disabled_bulk_eps;
-	unsigned long interface_allowed_mask;
-	int not_yet_resumed;
+	अचिन्हित दीर्घ पूर्णांकerface_allowed_mask;
+	पूर्णांक not_yet_resumed;
 	bool suspend_allowed;
 	bool privileges_dropped;
-};
+पूर्ण;
 
-struct usb_memory {
-	struct list_head memlist;
-	int vma_use_count;
-	int urb_use_count;
+काष्ठा usb_memory अणु
+	काष्ठा list_head memlist;
+	पूर्णांक vma_use_count;
+	पूर्णांक urb_use_count;
 	u32 size;
-	void *mem;
+	व्योम *mem;
 	dma_addr_t dma_handle;
-	unsigned long vm_start;
-	struct usb_dev_state *ps;
-};
+	अचिन्हित दीर्घ vm_start;
+	काष्ठा usb_dev_state *ps;
+पूर्ण;
 
-struct async {
-	struct list_head asynclist;
-	struct usb_dev_state *ps;
-	struct pid *pid;
-	const struct cred *cred;
-	unsigned int signr;
-	unsigned int ifnum;
-	void __user *userbuffer;
-	void __user *userurb;
+काष्ठा async अणु
+	काष्ठा list_head asynclist;
+	काष्ठा usb_dev_state *ps;
+	काष्ठा pid *pid;
+	स्थिर काष्ठा cred *cred;
+	अचिन्हित पूर्णांक signr;
+	अचिन्हित पूर्णांक अगरnum;
+	व्योम __user *userbuffer;
+	व्योम __user *userurb;
 	sigval_t userurb_sigval;
-	struct urb *urb;
-	struct usb_memory *usbm;
-	unsigned int mem_usage;
-	int status;
+	काष्ठा urb *urb;
+	काष्ठा usb_memory *usbm;
+	अचिन्हित पूर्णांक mem_usage;
+	पूर्णांक status;
 	u8 bulk_addr;
 	u8 bulk_status;
-};
+पूर्ण;
 
-static bool usbfs_snoop;
+अटल bool usbfs_snoop;
 module_param(usbfs_snoop, bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(usbfs_snoop, "true to log all usbfs traffic");
 
-static unsigned usbfs_snoop_max = 65536;
-module_param(usbfs_snoop_max, uint, S_IRUGO | S_IWUSR);
+अटल अचिन्हित usbfs_snoop_max = 65536;
+module_param(usbfs_snoop_max, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(usbfs_snoop_max,
 		"maximum number of bytes to print while snooping");
 
-#define snoop(dev, format, arg...)				\
-	do {							\
-		if (usbfs_snoop)				\
-			dev_info(dev, format, ## arg);		\
-	} while (0)
+#घोषणा snoop(dev, क्रमmat, arg...)				\
+	करो अणु							\
+		अगर (usbfs_snoop)				\
+			dev_info(dev, क्रमmat, ## arg);		\
+	पूर्ण जबतक (0)
 
-enum snoop_when {
+क्रमागत snoop_when अणु
 	SUBMIT, COMPLETE
-};
+पूर्ण;
 
-#define USB_DEVICE_DEV		MKDEV(USB_DEVICE_MAJOR, 0)
+#घोषणा USB_DEVICE_DEV		MKDEV(USB_DEVICE_MAJOR, 0)
 
-/* Limit on the total amount of memory we can allocate for transfers */
-static u32 usbfs_memory_mb = 16;
-module_param(usbfs_memory_mb, uint, 0644);
+/* Limit on the total amount of memory we can allocate क्रम transfers */
+अटल u32 usbfs_memory_mb = 16;
+module_param(usbfs_memory_mb, uपूर्णांक, 0644);
 MODULE_PARM_DESC(usbfs_memory_mb,
 		"maximum MB allowed for usbfs buffers (0 = no limit)");
 
-/* Hard limit, necessary to avoid arithmetic overflow */
-#define USBFS_XFER_MAX         (UINT_MAX / 2 - 1000000)
+/* Hard limit, necessary to aव्योम arithmetic overflow */
+#घोषणा USBFS_XFER_MAX         (अच_पूर्णांक_उच्च / 2 - 1000000)
 
-static atomic64_t usbfs_memory_usage;	/* Total memory currently allocated */
+अटल atomic64_t usbfs_memory_usage;	/* Total memory currently allocated */
 
-/* Check whether it's okay to allocate more memory for a transfer */
-static int usbfs_increase_memory_usage(u64 amount)
-{
+/* Check whether it's okay to allocate more memory क्रम a transfer */
+अटल पूर्णांक usbfs_increase_memory_usage(u64 amount)
+अणु
 	u64 lim;
 
 	lim = READ_ONCE(usbfs_memory_mb);
@@ -150,98 +151,98 @@ static int usbfs_increase_memory_usage(u64 amount)
 
 	atomic64_add(amount, &usbfs_memory_usage);
 
-	if (lim > 0 && atomic64_read(&usbfs_memory_usage) > lim) {
+	अगर (lim > 0 && atomic64_पढ़ो(&usbfs_memory_usage) > lim) अणु
 		atomic64_sub(amount, &usbfs_memory_usage);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Memory for a transfer is being deallocated */
-static void usbfs_decrease_memory_usage(u64 amount)
-{
+/* Memory क्रम a transfer is being deallocated */
+अटल व्योम usbfs_decrease_memory_usage(u64 amount)
+अणु
 	atomic64_sub(amount, &usbfs_memory_usage);
-}
+पूर्ण
 
-static int connected(struct usb_dev_state *ps)
-{
-	return (!list_empty(&ps->list) &&
+अटल पूर्णांक connected(काष्ठा usb_dev_state *ps)
+अणु
+	वापस (!list_empty(&ps->list) &&
 			ps->dev->state != USB_STATE_NOTATTACHED);
-}
+पूर्ण
 
-static void dec_usb_memory_use_count(struct usb_memory *usbm, int *count)
-{
-	struct usb_dev_state *ps = usbm->ps;
-	unsigned long flags;
+अटल व्योम dec_usb_memory_use_count(काष्ठा usb_memory *usbm, पूर्णांक *count)
+अणु
+	काष्ठा usb_dev_state *ps = usbm->ps;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ps->lock, flags);
 	--*count;
-	if (usbm->urb_use_count == 0 && usbm->vma_use_count == 0) {
+	अगर (usbm->urb_use_count == 0 && usbm->vma_use_count == 0) अणु
 		list_del(&usbm->memlist);
 		spin_unlock_irqrestore(&ps->lock, flags);
 
-		usb_free_coherent(ps->dev, usbm->size, usbm->mem,
+		usb_मुक्त_coherent(ps->dev, usbm->size, usbm->mem,
 				usbm->dma_handle);
 		usbfs_decrease_memory_usage(
-			usbm->size + sizeof(struct usb_memory));
-		kfree(usbm);
-	} else {
+			usbm->size + माप(काष्ठा usb_memory));
+		kमुक्त(usbm);
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&ps->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void usbdev_vm_open(struct vm_area_struct *vma)
-{
-	struct usb_memory *usbm = vma->vm_private_data;
-	unsigned long flags;
+अटल व्योम usbdev_vm_खोलो(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा usb_memory *usbm = vma->vm_निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&usbm->ps->lock, flags);
 	++usbm->vma_use_count;
 	spin_unlock_irqrestore(&usbm->ps->lock, flags);
-}
+पूर्ण
 
-static void usbdev_vm_close(struct vm_area_struct *vma)
-{
-	struct usb_memory *usbm = vma->vm_private_data;
+अटल व्योम usbdev_vm_बंद(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा usb_memory *usbm = vma->vm_निजी_data;
 
 	dec_usb_memory_use_count(usbm, &usbm->vma_use_count);
-}
+पूर्ण
 
-static const struct vm_operations_struct usbdev_vm_ops = {
-	.open = usbdev_vm_open,
-	.close = usbdev_vm_close
-};
+अटल स्थिर काष्ठा vm_operations_काष्ठा usbdev_vm_ops = अणु
+	.खोलो = usbdev_vm_खोलो,
+	.बंद = usbdev_vm_बंद
+पूर्ण;
 
-static int usbdev_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	struct usb_memory *usbm = NULL;
-	struct usb_dev_state *ps = file->private_data;
-	struct usb_hcd *hcd = bus_to_hcd(ps->dev->bus);
-	size_t size = vma->vm_end - vma->vm_start;
-	void *mem;
-	unsigned long flags;
+अटल पूर्णांक usbdev_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा usb_memory *usbm = शून्य;
+	काष्ठा usb_dev_state *ps = file->निजी_data;
+	काष्ठा usb_hcd *hcd = bus_to_hcd(ps->dev->bus);
+	माप_प्रकार size = vma->vm_end - vma->vm_start;
+	व्योम *mem;
+	अचिन्हित दीर्घ flags;
 	dma_addr_t dma_handle;
-	int ret;
+	पूर्णांक ret;
 
-	ret = usbfs_increase_memory_usage(size + sizeof(struct usb_memory));
-	if (ret)
-		goto error;
+	ret = usbfs_increase_memory_usage(size + माप(काष्ठा usb_memory));
+	अगर (ret)
+		जाओ error;
 
-	usbm = kzalloc(sizeof(struct usb_memory), GFP_KERNEL);
-	if (!usbm) {
+	usbm = kzalloc(माप(काष्ठा usb_memory), GFP_KERNEL);
+	अगर (!usbm) अणु
 		ret = -ENOMEM;
-		goto error_decrease_mem;
-	}
+		जाओ error_decrease_mem;
+	पूर्ण
 
 	mem = usb_alloc_coherent(ps->dev, size, GFP_USER | __GFP_NOWARN,
 			&dma_handle);
-	if (!mem) {
+	अगर (!mem) अणु
 		ret = -ENOMEM;
-		goto error_free_usbm;
-	}
+		जाओ error_मुक्त_usbm;
+	पूर्ण
 
-	memset(mem, 0, size);
+	स_रखो(mem, 0, size);
 
 	usbm->mem = mem;
 	usbm->dma_handle = dma_handle;
@@ -251,340 +252,340 @@ static int usbdev_mmap(struct file *file, struct vm_area_struct *vma)
 	usbm->vma_use_count = 1;
 	INIT_LIST_HEAD(&usbm->memlist);
 
-	if (hcd->localmem_pool || !hcd_uses_dma(hcd)) {
-		if (remap_pfn_range(vma, vma->vm_start,
+	अगर (hcd->localmem_pool || !hcd_uses_dma(hcd)) अणु
+		अगर (remap_pfn_range(vma, vma->vm_start,
 				    virt_to_phys(usbm->mem) >> PAGE_SHIFT,
-				    size, vma->vm_page_prot) < 0) {
+				    size, vma->vm_page_prot) < 0) अणु
 			dec_usb_memory_use_count(usbm, &usbm->vma_use_count);
-			return -EAGAIN;
-		}
-	} else {
-		if (dma_mmap_coherent(hcd->self.sysdev, vma, mem, dma_handle,
-				      size)) {
+			वापस -EAGAIN;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (dma_mmap_coherent(hcd->self.sysdev, vma, mem, dma_handle,
+				      size)) अणु
 			dec_usb_memory_use_count(usbm, &usbm->vma_use_count);
-			return -EAGAIN;
-		}
-	}
+			वापस -EAGAIN;
+		पूर्ण
+	पूर्ण
 
 	vma->vm_flags |= VM_IO;
 	vma->vm_flags |= (VM_DONTEXPAND | VM_DONTDUMP);
 	vma->vm_ops = &usbdev_vm_ops;
-	vma->vm_private_data = usbm;
+	vma->vm_निजी_data = usbm;
 
 	spin_lock_irqsave(&ps->lock, flags);
 	list_add_tail(&usbm->memlist, &ps->memory_list);
 	spin_unlock_irqrestore(&ps->lock, flags);
 
-	return 0;
+	वापस 0;
 
-error_free_usbm:
-	kfree(usbm);
+error_मुक्त_usbm:
+	kमुक्त(usbm);
 error_decrease_mem:
-	usbfs_decrease_memory_usage(size + sizeof(struct usb_memory));
+	usbfs_decrease_memory_usage(size + माप(काष्ठा usb_memory));
 error:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t usbdev_read(struct file *file, char __user *buf, size_t nbytes,
+अटल sमाप_प्रकार usbdev_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार nbytes,
 			   loff_t *ppos)
-{
-	struct usb_dev_state *ps = file->private_data;
-	struct usb_device *dev = ps->dev;
-	ssize_t ret = 0;
-	unsigned len;
+अणु
+	काष्ठा usb_dev_state *ps = file->निजी_data;
+	काष्ठा usb_device *dev = ps->dev;
+	sमाप_प्रकार ret = 0;
+	अचिन्हित len;
 	loff_t pos;
-	int i;
+	पूर्णांक i;
 
 	pos = *ppos;
 	usb_lock_device(dev);
-	if (!connected(ps)) {
+	अगर (!connected(ps)) अणु
 		ret = -ENODEV;
-		goto err;
-	} else if (pos < 0) {
+		जाओ err;
+	पूर्ण अन्यथा अगर (pos < 0) अणु
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (pos < sizeof(struct usb_device_descriptor)) {
+	अगर (pos < माप(काष्ठा usb_device_descriptor)) अणु
 		/* 18 bytes - fits on the stack */
-		struct usb_device_descriptor temp_desc;
+		काष्ठा usb_device_descriptor temp_desc;
 
-		memcpy(&temp_desc, &dev->descriptor, sizeof(dev->descriptor));
+		स_नकल(&temp_desc, &dev->descriptor, माप(dev->descriptor));
 		le16_to_cpus(&temp_desc.bcdUSB);
-		le16_to_cpus(&temp_desc.idVendor);
+		le16_to_cpus(&temp_desc.idVenकरोr);
 		le16_to_cpus(&temp_desc.idProduct);
 		le16_to_cpus(&temp_desc.bcdDevice);
 
-		len = sizeof(struct usb_device_descriptor) - pos;
-		if (len > nbytes)
+		len = माप(काष्ठा usb_device_descriptor) - pos;
+		अगर (len > nbytes)
 			len = nbytes;
-		if (copy_to_user(buf, ((char *)&temp_desc) + pos, len)) {
+		अगर (copy_to_user(buf, ((अक्षर *)&temp_desc) + pos, len)) अणु
 			ret = -EFAULT;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		*ppos += len;
 		buf += len;
 		nbytes -= len;
 		ret += len;
-	}
+	पूर्ण
 
-	pos = sizeof(struct usb_device_descriptor);
-	for (i = 0; nbytes && i < dev->descriptor.bNumConfigurations; i++) {
-		struct usb_config_descriptor *config =
-			(struct usb_config_descriptor *)dev->rawdescriptors[i];
-		unsigned int length = le16_to_cpu(config->wTotalLength);
+	pos = माप(काष्ठा usb_device_descriptor);
+	क्रम (i = 0; nbytes && i < dev->descriptor.bNumConfigurations; i++) अणु
+		काष्ठा usb_config_descriptor *config =
+			(काष्ठा usb_config_descriptor *)dev->rawdescriptors[i];
+		अचिन्हित पूर्णांक length = le16_to_cpu(config->wTotalLength);
 
-		if (*ppos < pos + length) {
+		अगर (*ppos < pos + length) अणु
 
-			/* The descriptor may claim to be longer than it
+			/* The descriptor may claim to be दीर्घer than it
 			 * really is.  Here is the actual allocated length. */
-			unsigned alloclen =
+			अचिन्हित alloclen =
 				le16_to_cpu(dev->config[i].desc.wTotalLength);
 
 			len = length - (*ppos - pos);
-			if (len > nbytes)
+			अगर (len > nbytes)
 				len = nbytes;
 
-			/* Simply don't write (skip over) unallocated parts */
-			if (alloclen > (*ppos - pos)) {
+			/* Simply करोn't ग_लिखो (skip over) unallocated parts */
+			अगर (alloclen > (*ppos - pos)) अणु
 				alloclen -= (*ppos - pos);
-				if (copy_to_user(buf,
+				अगर (copy_to_user(buf,
 				    dev->rawdescriptors[i] + (*ppos - pos),
-				    min(len, alloclen))) {
+				    min(len, alloclen))) अणु
 					ret = -EFAULT;
-					goto err;
-				}
-			}
+					जाओ err;
+				पूर्ण
+			पूर्ण
 
 			*ppos += len;
 			buf += len;
 			nbytes -= len;
 			ret += len;
-		}
+		पूर्ण
 
 		pos += length;
-	}
+	पूर्ण
 
 err:
 	usb_unlock_device(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * async list handling
  */
 
-static struct async *alloc_async(unsigned int numisoframes)
-{
-	struct async *as;
+अटल काष्ठा async *alloc_async(अचिन्हित पूर्णांक numisoframes)
+अणु
+	काष्ठा async *as;
 
-	as = kzalloc(sizeof(struct async), GFP_KERNEL);
-	if (!as)
-		return NULL;
+	as = kzalloc(माप(काष्ठा async), GFP_KERNEL);
+	अगर (!as)
+		वापस शून्य;
 	as->urb = usb_alloc_urb(numisoframes, GFP_KERNEL);
-	if (!as->urb) {
-		kfree(as);
-		return NULL;
-	}
-	return as;
-}
+	अगर (!as->urb) अणु
+		kमुक्त(as);
+		वापस शून्य;
+	पूर्ण
+	वापस as;
+पूर्ण
 
-static void free_async(struct async *as)
-{
-	int i;
+अटल व्योम मुक्त_async(काष्ठा async *as)
+अणु
+	पूर्णांक i;
 
 	put_pid(as->pid);
-	if (as->cred)
+	अगर (as->cred)
 		put_cred(as->cred);
-	for (i = 0; i < as->urb->num_sgs; i++) {
-		if (sg_page(&as->urb->sg[i]))
-			kfree(sg_virt(&as->urb->sg[i]));
-	}
+	क्रम (i = 0; i < as->urb->num_sgs; i++) अणु
+		अगर (sg_page(&as->urb->sg[i]))
+			kमुक्त(sg_virt(&as->urb->sg[i]));
+	पूर्ण
 
-	kfree(as->urb->sg);
-	if (as->usbm == NULL)
-		kfree(as->urb->transfer_buffer);
-	else
+	kमुक्त(as->urb->sg);
+	अगर (as->usbm == शून्य)
+		kमुक्त(as->urb->transfer_buffer);
+	अन्यथा
 		dec_usb_memory_use_count(as->usbm, &as->usbm->urb_use_count);
 
-	kfree(as->urb->setup_packet);
-	usb_free_urb(as->urb);
+	kमुक्त(as->urb->setup_packet);
+	usb_मुक्त_urb(as->urb);
 	usbfs_decrease_memory_usage(as->mem_usage);
-	kfree(as);
-}
+	kमुक्त(as);
+पूर्ण
 
-static void async_newpending(struct async *as)
-{
-	struct usb_dev_state *ps = as->ps;
-	unsigned long flags;
+अटल व्योम async_newpending(काष्ठा async *as)
+अणु
+	काष्ठा usb_dev_state *ps = as->ps;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ps->lock, flags);
 	list_add_tail(&as->asynclist, &ps->async_pending);
 	spin_unlock_irqrestore(&ps->lock, flags);
-}
+पूर्ण
 
-static void async_removepending(struct async *as)
-{
-	struct usb_dev_state *ps = as->ps;
-	unsigned long flags;
+अटल व्योम async_हटाओpending(काष्ठा async *as)
+अणु
+	काष्ठा usb_dev_state *ps = as->ps;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ps->lock, flags);
 	list_del_init(&as->asynclist);
 	spin_unlock_irqrestore(&ps->lock, flags);
-}
+पूर्ण
 
-static struct async *async_getcompleted(struct usb_dev_state *ps)
-{
-	unsigned long flags;
-	struct async *as = NULL;
+अटल काष्ठा async *async_अ_लोompleted(काष्ठा usb_dev_state *ps)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा async *as = शून्य;
 
 	spin_lock_irqsave(&ps->lock, flags);
-	if (!list_empty(&ps->async_completed)) {
-		as = list_entry(ps->async_completed.next, struct async,
+	अगर (!list_empty(&ps->async_completed)) अणु
+		as = list_entry(ps->async_completed.next, काष्ठा async,
 				asynclist);
 		list_del_init(&as->asynclist);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&ps->lock, flags);
-	return as;
-}
+	वापस as;
+पूर्ण
 
-static struct async *async_getpending(struct usb_dev_state *ps,
-					     void __user *userurb)
-{
-	struct async *as;
+अटल काष्ठा async *async_getpending(काष्ठा usb_dev_state *ps,
+					     व्योम __user *userurb)
+अणु
+	काष्ठा async *as;
 
-	list_for_each_entry(as, &ps->async_pending, asynclist)
-		if (as->userurb == userurb) {
+	list_क्रम_each_entry(as, &ps->async_pending, asynclist)
+		अगर (as->userurb == userurb) अणु
 			list_del_init(&as->asynclist);
-			return as;
-		}
+			वापस as;
+		पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void snoop_urb(struct usb_device *udev,
-		void __user *userurb, int pipe, unsigned length,
-		int timeout_or_status, enum snoop_when when,
-		unsigned char *data, unsigned data_len)
-{
-	static const char *types[] = {"isoc", "int", "ctrl", "bulk"};
-	static const char *dirs[] = {"out", "in"};
-	int ep;
-	const char *t, *d;
+अटल व्योम snoop_urb(काष्ठा usb_device *udev,
+		व्योम __user *userurb, पूर्णांक pipe, अचिन्हित length,
+		पूर्णांक समयout_or_status, क्रमागत snoop_when when,
+		अचिन्हित अक्षर *data, अचिन्हित data_len)
+अणु
+	अटल स्थिर अक्षर *types[] = अणु"isoc", "int", "ctrl", "bulk"पूर्ण;
+	अटल स्थिर अक्षर *dirs[] = अणु"out", "in"पूर्ण;
+	पूर्णांक ep;
+	स्थिर अक्षर *t, *d;
 
-	if (!usbfs_snoop)
-		return;
+	अगर (!usbfs_snoop)
+		वापस;
 
-	ep = usb_pipeendpoint(pipe);
+	ep = usb_pipeendpoपूर्णांक(pipe);
 	t = types[usb_pipetype(pipe)];
 	d = dirs[!!usb_pipein(pipe)];
 
-	if (userurb) {		/* Async */
-		if (when == SUBMIT)
+	अगर (userurb) अणु		/* Async */
+		अगर (when == SUBMIT)
 			dev_info(&udev->dev, "userurb %px, ep%d %s-%s, "
 					"length %u\n",
 					userurb, ep, t, d, length);
-		else
+		अन्यथा
 			dev_info(&udev->dev, "userurb %px, ep%d %s-%s, "
 					"actual_length %u status %d\n",
 					userurb, ep, t, d, length,
-					timeout_or_status);
-	} else {
-		if (when == SUBMIT)
+					समयout_or_status);
+	पूर्ण अन्यथा अणु
+		अगर (when == SUBMIT)
 			dev_info(&udev->dev, "ep%d %s-%s, length %u, "
 					"timeout %d\n",
-					ep, t, d, length, timeout_or_status);
-		else
+					ep, t, d, length, समयout_or_status);
+		अन्यथा
 			dev_info(&udev->dev, "ep%d %s-%s, actual_length %u, "
 					"status %d\n",
-					ep, t, d, length, timeout_or_status);
-	}
+					ep, t, d, length, समयout_or_status);
+	पूर्ण
 
 	data_len = min(data_len, usbfs_snoop_max);
-	if (data && data_len > 0) {
-		print_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE, 32, 1,
+	अगर (data && data_len > 0) अणु
+		prपूर्णांक_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE, 32, 1,
 			data, data_len, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void snoop_urb_data(struct urb *urb, unsigned len)
-{
-	int i, size;
+अटल व्योम snoop_urb_data(काष्ठा urb *urb, अचिन्हित len)
+अणु
+	पूर्णांक i, size;
 
 	len = min(len, usbfs_snoop_max);
-	if (!usbfs_snoop || len == 0)
-		return;
+	अगर (!usbfs_snoop || len == 0)
+		वापस;
 
-	if (urb->num_sgs == 0) {
-		print_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE, 32, 1,
+	अगर (urb->num_sgs == 0) अणु
+		prपूर्णांक_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE, 32, 1,
 			urb->transfer_buffer, len, 1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < urb->num_sgs && len; i++) {
+	क्रम (i = 0; i < urb->num_sgs && len; i++) अणु
 		size = (len > USB_SG_SIZE) ? USB_SG_SIZE : len;
-		print_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE, 32, 1,
+		prपूर्णांक_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE, 32, 1,
 			sg_virt(&urb->sg[i]), size, 1);
 		len -= size;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int copy_urb_data_to_user(u8 __user *userbuffer, struct urb *urb)
-{
-	unsigned i, len, size;
+अटल पूर्णांक copy_urb_data_to_user(u8 __user *userbuffer, काष्ठा urb *urb)
+अणु
+	अचिन्हित i, len, size;
 
-	if (urb->number_of_packets > 0)		/* Isochronous */
+	अगर (urb->number_of_packets > 0)		/* Isochronous */
 		len = urb->transfer_buffer_length;
-	else					/* Non-Isoc */
+	अन्यथा					/* Non-Isoc */
 		len = urb->actual_length;
 
-	if (urb->num_sgs == 0) {
-		if (copy_to_user(userbuffer, urb->transfer_buffer, len))
-			return -EFAULT;
-		return 0;
-	}
+	अगर (urb->num_sgs == 0) अणु
+		अगर (copy_to_user(userbuffer, urb->transfer_buffer, len))
+			वापस -EFAULT;
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < urb->num_sgs && len; i++) {
+	क्रम (i = 0; i < urb->num_sgs && len; i++) अणु
 		size = (len > USB_SG_SIZE) ? USB_SG_SIZE : len;
-		if (copy_to_user(userbuffer, sg_virt(&urb->sg[i]), size))
-			return -EFAULT;
+		अगर (copy_to_user(userbuffer, sg_virt(&urb->sg[i]), size))
+			वापस -EFAULT;
 		userbuffer += size;
 		len -= size;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define AS_CONTINUATION	1
-#define AS_UNLINK	2
+#घोषणा AS_CONTINUATION	1
+#घोषणा AS_UNLINK	2
 
-static void cancel_bulk_urbs(struct usb_dev_state *ps, unsigned bulk_addr)
+अटल व्योम cancel_bulk_urbs(काष्ठा usb_dev_state *ps, अचिन्हित bulk_addr)
 __releases(ps->lock)
 __acquires(ps->lock)
-{
-	struct urb *urb;
-	struct async *as;
+अणु
+	काष्ठा urb *urb;
+	काष्ठा async *as;
 
 	/* Mark all the pending URBs that match bulk_addr, up to but not
 	 * including the first one without AS_CONTINUATION.  If such an
-	 * URB is encountered then a new transfer has already started so
-	 * the endpoint doesn't need to be disabled; otherwise it does.
+	 * URB is encountered then a new transfer has alपढ़ोy started so
+	 * the endpoपूर्णांक करोesn't need to be disabled; otherwise it करोes.
 	 */
-	list_for_each_entry(as, &ps->async_pending, asynclist) {
-		if (as->bulk_addr == bulk_addr) {
-			if (as->bulk_status != AS_CONTINUATION)
-				goto rescan;
+	list_क्रम_each_entry(as, &ps->async_pending, asynclist) अणु
+		अगर (as->bulk_addr == bulk_addr) अणु
+			अगर (as->bulk_status != AS_CONTINUATION)
+				जाओ rescan;
 			as->bulk_status = AS_UNLINK;
 			as->bulk_addr = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ps->disabled_bulk_eps |= (1 << bulk_addr);
 
 	/* Now carefully unlink all the marked pending URBs */
  rescan:
-	list_for_each_entry_reverse(as, &ps->async_pending, asynclist) {
-		if (as->bulk_status == AS_UNLINK) {
+	list_क्रम_each_entry_reverse(as, &ps->async_pending, asynclist) अणु
+		अगर (as->bulk_status == AS_UNLINK) अणु
 			as->bulk_status = 0;		/* Only once */
 			urb = as->urb;
 			usb_get_urb(urb);
@@ -592,484 +593,484 @@ __acquires(ps->lock)
 			usb_unlink_urb(urb);
 			usb_put_urb(urb);
 			spin_lock(&ps->lock);
-			goto rescan;
-		}
-	}
-}
+			जाओ rescan;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void async_completed(struct urb *urb)
-{
-	struct async *as = urb->context;
-	struct usb_dev_state *ps = as->ps;
-	struct pid *pid = NULL;
-	const struct cred *cred = NULL;
-	unsigned long flags;
+अटल व्योम async_completed(काष्ठा urb *urb)
+अणु
+	काष्ठा async *as = urb->context;
+	काष्ठा usb_dev_state *ps = as->ps;
+	काष्ठा pid *pid = शून्य;
+	स्थिर काष्ठा cred *cred = शून्य;
+	अचिन्हित दीर्घ flags;
 	sigval_t addr;
-	int signr, errno;
+	पूर्णांक signr, त्रुटि_सं;
 
 	spin_lock_irqsave(&ps->lock, flags);
 	list_move_tail(&as->asynclist, &ps->async_completed);
 	as->status = urb->status;
 	signr = as->signr;
-	if (signr) {
-		errno = as->status;
+	अगर (signr) अणु
+		त्रुटि_सं = as->status;
 		addr = as->userurb_sigval;
 		pid = get_pid(as->pid);
 		cred = get_cred(as->cred);
-	}
+	पूर्ण
 	snoop(&urb->dev->dev, "urb complete\n");
 	snoop_urb(urb->dev, as->userurb, urb->pipe, urb->actual_length,
-			as->status, COMPLETE, NULL, 0);
-	if (usb_urb_dir_in(urb))
+			as->status, COMPLETE, शून्य, 0);
+	अगर (usb_urb_dir_in(urb))
 		snoop_urb_data(urb, urb->actual_length);
 
-	if (as->status < 0 && as->bulk_addr && as->status != -ECONNRESET &&
+	अगर (as->status < 0 && as->bulk_addr && as->status != -ECONNRESET &&
 			as->status != -ENOENT)
 		cancel_bulk_urbs(ps, as->bulk_addr);
 
-	wake_up(&ps->wait);
+	wake_up(&ps->रुको);
 	spin_unlock_irqrestore(&ps->lock, flags);
 
-	if (signr) {
-		kill_pid_usb_asyncio(signr, errno, addr, pid, cred);
+	अगर (signr) अणु
+		समाप्त_pid_usb_asyncio(signr, त्रुटि_सं, addr, pid, cred);
 		put_pid(pid);
 		put_cred(cred);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void destroy_async(struct usb_dev_state *ps, struct list_head *list)
-{
-	struct urb *urb;
-	struct async *as;
-	unsigned long flags;
+अटल व्योम destroy_async(काष्ठा usb_dev_state *ps, काष्ठा list_head *list)
+अणु
+	काष्ठा urb *urb;
+	काष्ठा async *as;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ps->lock, flags);
-	while (!list_empty(list)) {
-		as = list_last_entry(list, struct async, asynclist);
+	जबतक (!list_empty(list)) अणु
+		as = list_last_entry(list, काष्ठा async, asynclist);
 		list_del_init(&as->asynclist);
 		urb = as->urb;
 		usb_get_urb(urb);
 
 		/* drop the spinlock so the completion handler can run */
 		spin_unlock_irqrestore(&ps->lock, flags);
-		usb_kill_urb(urb);
+		usb_समाप्त_urb(urb);
 		usb_put_urb(urb);
 		spin_lock_irqsave(&ps->lock, flags);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&ps->lock, flags);
-}
+पूर्ण
 
-static void destroy_async_on_interface(struct usb_dev_state *ps,
-				       unsigned int ifnum)
-{
-	struct list_head *p, *q, hitlist;
-	unsigned long flags;
+अटल व्योम destroy_async_on_पूर्णांकerface(काष्ठा usb_dev_state *ps,
+				       अचिन्हित पूर्णांक अगरnum)
+अणु
+	काष्ठा list_head *p, *q, hitlist;
+	अचिन्हित दीर्घ flags;
 
 	INIT_LIST_HEAD(&hitlist);
 	spin_lock_irqsave(&ps->lock, flags);
-	list_for_each_safe(p, q, &ps->async_pending)
-		if (ifnum == list_entry(p, struct async, asynclist)->ifnum)
+	list_क्रम_each_safe(p, q, &ps->async_pending)
+		अगर (अगरnum == list_entry(p, काष्ठा async, asynclist)->अगरnum)
 			list_move_tail(p, &hitlist);
 	spin_unlock_irqrestore(&ps->lock, flags);
 	destroy_async(ps, &hitlist);
-}
+पूर्ण
 
-static void destroy_all_async(struct usb_dev_state *ps)
-{
+अटल व्योम destroy_all_async(काष्ठा usb_dev_state *ps)
+अणु
 	destroy_async(ps, &ps->async_pending);
-}
+पूर्ण
 
 /*
- * interface claims are made only at the request of user level code,
+ * पूर्णांकerface claims are made only at the request of user level code,
  * which can also release them (explicitly or by closing files).
- * they're also undone when devices disconnect.
+ * they're also unकरोne when devices disconnect.
  */
 
-static int driver_probe(struct usb_interface *intf,
-			const struct usb_device_id *id)
-{
-	return -ENODEV;
-}
+अटल पूर्णांक driver_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static void driver_disconnect(struct usb_interface *intf)
-{
-	struct usb_dev_state *ps = usb_get_intfdata(intf);
-	unsigned int ifnum = intf->altsetting->desc.bInterfaceNumber;
+अटल व्योम driver_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा usb_dev_state *ps = usb_get_पूर्णांकfdata(पूर्णांकf);
+	अचिन्हित पूर्णांक अगरnum = पूर्णांकf->altsetting->desc.bInterfaceNumber;
 
-	if (!ps)
-		return;
+	अगर (!ps)
+		वापस;
 
 	/* NOTE:  this relies on usbcore having canceled and completed
-	 * all pending I/O requests; 2.6 does that.
+	 * all pending I/O requests; 2.6 करोes that.
 	 */
 
-	if (likely(ifnum < 8*sizeof(ps->ifclaimed)))
-		clear_bit(ifnum, &ps->ifclaimed);
-	else
-		dev_warn(&intf->dev, "interface number %u out of range\n",
-			 ifnum);
+	अगर (likely(अगरnum < 8*माप(ps->अगरclaimed)))
+		clear_bit(अगरnum, &ps->अगरclaimed);
+	अन्यथा
+		dev_warn(&पूर्णांकf->dev, "interface number %u out of range\n",
+			 अगरnum);
 
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 
-	/* force async requests to complete */
-	destroy_async_on_interface(ps, ifnum);
-}
+	/* क्रमce async requests to complete */
+	destroy_async_on_पूर्णांकerface(ps, अगरnum);
+पूर्ण
 
-/* We don't care about suspend/resume of claimed interfaces */
-static int driver_suspend(struct usb_interface *intf, pm_message_t msg)
-{
-	return 0;
-}
+/* We करोn't care about suspend/resume of claimed पूर्णांकerfaces */
+अटल पूर्णांक driver_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t msg)
+अणु
+	वापस 0;
+पूर्ण
 
-static int driver_resume(struct usb_interface *intf)
-{
-	return 0;
-}
+अटल पूर्णांक driver_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	वापस 0;
+पूर्ण
 
-/* The following routines apply to the entire device, not interfaces */
-void usbfs_notify_suspend(struct usb_device *udev)
-{
-	/* We don't need to handle this */
-}
+/* The following routines apply to the entire device, not पूर्णांकerfaces */
+व्योम usbfs_notअगरy_suspend(काष्ठा usb_device *udev)
+अणु
+	/* We करोn't need to handle this */
+पूर्ण
 
-void usbfs_notify_resume(struct usb_device *udev)
-{
-	struct usb_dev_state *ps;
+व्योम usbfs_notअगरy_resume(काष्ठा usb_device *udev)
+अणु
+	काष्ठा usb_dev_state *ps;
 
-	/* Protect against simultaneous remove or release */
+	/* Protect against simultaneous हटाओ or release */
 	mutex_lock(&usbfs_mutex);
-	list_for_each_entry(ps, &udev->filelist, list) {
+	list_क्रम_each_entry(ps, &udev->filelist, list) अणु
 		WRITE_ONCE(ps->not_yet_resumed, 0);
-		wake_up_all(&ps->wait_for_resume);
-	}
+		wake_up_all(&ps->रुको_क्रम_resume);
+	पूर्ण
 	mutex_unlock(&usbfs_mutex);
-}
+पूर्ण
 
-struct usb_driver usbfs_driver = {
+काष्ठा usb_driver usbfs_driver = अणु
 	.name =		"usbfs",
 	.probe =	driver_probe,
 	.disconnect =	driver_disconnect,
 	.suspend =	driver_suspend,
 	.resume =	driver_resume,
-	.supports_autosuspend = 1,
-};
+	.supports_स्वतःsuspend = 1,
+पूर्ण;
 
-static int claimintf(struct usb_dev_state *ps, unsigned int ifnum)
-{
-	struct usb_device *dev = ps->dev;
-	struct usb_interface *intf;
-	int err;
+अटल पूर्णांक claimपूर्णांकf(काष्ठा usb_dev_state *ps, अचिन्हित पूर्णांक अगरnum)
+अणु
+	काष्ठा usb_device *dev = ps->dev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	पूर्णांक err;
 
-	if (ifnum >= 8*sizeof(ps->ifclaimed))
-		return -EINVAL;
-	/* already claimed */
-	if (test_bit(ifnum, &ps->ifclaimed))
-		return 0;
+	अगर (अगरnum >= 8*माप(ps->अगरclaimed))
+		वापस -EINVAL;
+	/* alपढ़ोy claimed */
+	अगर (test_bit(अगरnum, &ps->अगरclaimed))
+		वापस 0;
 
-	if (ps->privileges_dropped &&
-			!test_bit(ifnum, &ps->interface_allowed_mask))
-		return -EACCES;
+	अगर (ps->privileges_dropped &&
+			!test_bit(अगरnum, &ps->पूर्णांकerface_allowed_mask))
+		वापस -EACCES;
 
-	intf = usb_ifnum_to_if(dev, ifnum);
-	if (!intf)
+	पूर्णांकf = usb_अगरnum_to_अगर(dev, अगरnum);
+	अगर (!पूर्णांकf)
 		err = -ENOENT;
-	else {
-		unsigned int old_suppress;
+	अन्यथा अणु
+		अचिन्हित पूर्णांक old_suppress;
 
-		/* suppress uevents while claiming interface */
-		old_suppress = dev_get_uevent_suppress(&intf->dev);
-		dev_set_uevent_suppress(&intf->dev, 1);
-		err = usb_driver_claim_interface(&usbfs_driver, intf, ps);
-		dev_set_uevent_suppress(&intf->dev, old_suppress);
-	}
-	if (err == 0)
-		set_bit(ifnum, &ps->ifclaimed);
-	return err;
-}
+		/* suppress uevents जबतक claiming पूर्णांकerface */
+		old_suppress = dev_get_uevent_suppress(&पूर्णांकf->dev);
+		dev_set_uevent_suppress(&पूर्णांकf->dev, 1);
+		err = usb_driver_claim_पूर्णांकerface(&usbfs_driver, पूर्णांकf, ps);
+		dev_set_uevent_suppress(&पूर्णांकf->dev, old_suppress);
+	पूर्ण
+	अगर (err == 0)
+		set_bit(अगरnum, &ps->अगरclaimed);
+	वापस err;
+पूर्ण
 
-static int releaseintf(struct usb_dev_state *ps, unsigned int ifnum)
-{
-	struct usb_device *dev;
-	struct usb_interface *intf;
-	int err;
+अटल पूर्णांक releaseपूर्णांकf(काष्ठा usb_dev_state *ps, अचिन्हित पूर्णांक अगरnum)
+अणु
+	काष्ठा usb_device *dev;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	पूर्णांक err;
 
 	err = -EINVAL;
-	if (ifnum >= 8*sizeof(ps->ifclaimed))
-		return err;
+	अगर (अगरnum >= 8*माप(ps->अगरclaimed))
+		वापस err;
 	dev = ps->dev;
-	intf = usb_ifnum_to_if(dev, ifnum);
-	if (!intf)
+	पूर्णांकf = usb_अगरnum_to_अगर(dev, अगरnum);
+	अगर (!पूर्णांकf)
 		err = -ENOENT;
-	else if (test_and_clear_bit(ifnum, &ps->ifclaimed)) {
-		unsigned int old_suppress;
+	अन्यथा अगर (test_and_clear_bit(अगरnum, &ps->अगरclaimed)) अणु
+		अचिन्हित पूर्णांक old_suppress;
 
-		/* suppress uevents while releasing interface */
-		old_suppress = dev_get_uevent_suppress(&intf->dev);
-		dev_set_uevent_suppress(&intf->dev, 1);
-		usb_driver_release_interface(&usbfs_driver, intf);
-		dev_set_uevent_suppress(&intf->dev, old_suppress);
+		/* suppress uevents जबतक releasing पूर्णांकerface */
+		old_suppress = dev_get_uevent_suppress(&पूर्णांकf->dev);
+		dev_set_uevent_suppress(&पूर्णांकf->dev, 1);
+		usb_driver_release_पूर्णांकerface(&usbfs_driver, पूर्णांकf);
+		dev_set_uevent_suppress(&पूर्णांकf->dev, old_suppress);
 		err = 0;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int checkintf(struct usb_dev_state *ps, unsigned int ifnum)
-{
-	if (ps->dev->state != USB_STATE_CONFIGURED)
-		return -EHOSTUNREACH;
-	if (ifnum >= 8*sizeof(ps->ifclaimed))
-		return -EINVAL;
-	if (test_bit(ifnum, &ps->ifclaimed))
-		return 0;
-	/* if not yet claimed, claim it for the driver */
+अटल पूर्णांक checkपूर्णांकf(काष्ठा usb_dev_state *ps, अचिन्हित पूर्णांक अगरnum)
+अणु
+	अगर (ps->dev->state != USB_STATE_CONFIGURED)
+		वापस -EHOSTUNREACH;
+	अगर (अगरnum >= 8*माप(ps->अगरclaimed))
+		वापस -EINVAL;
+	अगर (test_bit(अगरnum, &ps->अगरclaimed))
+		वापस 0;
+	/* अगर not yet claimed, claim it क्रम the driver */
 	dev_warn(&ps->dev->dev, "usbfs: process %d (%s) did not claim "
 		 "interface %u before use\n", task_pid_nr(current),
-		 current->comm, ifnum);
-	return claimintf(ps, ifnum);
-}
+		 current->comm, अगरnum);
+	वापस claimपूर्णांकf(ps, अगरnum);
+पूर्ण
 
-static int findintfep(struct usb_device *dev, unsigned int ep)
-{
-	unsigned int i, j, e;
-	struct usb_interface *intf;
-	struct usb_host_interface *alts;
-	struct usb_endpoint_descriptor *endpt;
+अटल पूर्णांक findपूर्णांकfep(काष्ठा usb_device *dev, अचिन्हित पूर्णांक ep)
+अणु
+	अचिन्हित पूर्णांक i, j, e;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	काष्ठा usb_host_पूर्णांकerface *alts;
+	काष्ठा usb_endpoपूर्णांक_descriptor *endpt;
 
-	if (ep & ~(USB_DIR_IN|0xf))
-		return -EINVAL;
-	if (!dev->actconfig)
-		return -ESRCH;
-	for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++) {
-		intf = dev->actconfig->interface[i];
-		for (j = 0; j < intf->num_altsetting; j++) {
-			alts = &intf->altsetting[j];
-			for (e = 0; e < alts->desc.bNumEndpoints; e++) {
-				endpt = &alts->endpoint[e].desc;
-				if (endpt->bEndpointAddress == ep)
-					return alts->desc.bInterfaceNumber;
-			}
-		}
-	}
-	return -ENOENT;
-}
+	अगर (ep & ~(USB_सूची_IN|0xf))
+		वापस -EINVAL;
+	अगर (!dev->actconfig)
+		वापस -ESRCH;
+	क्रम (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++) अणु
+		पूर्णांकf = dev->actconfig->पूर्णांकerface[i];
+		क्रम (j = 0; j < पूर्णांकf->num_altsetting; j++) अणु
+			alts = &पूर्णांकf->altsetting[j];
+			क्रम (e = 0; e < alts->desc.bNumEndpoपूर्णांकs; e++) अणु
+				endpt = &alts->endpoपूर्णांक[e].desc;
+				अगर (endpt->bEndpoपूर्णांकAddress == ep)
+					वापस alts->desc.bInterfaceNumber;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-static int check_ctrlrecip(struct usb_dev_state *ps, unsigned int requesttype,
-			   unsigned int request, unsigned int index)
-{
-	int ret = 0;
-	struct usb_host_interface *alt_setting;
+अटल पूर्णांक check_ctrlrecip(काष्ठा usb_dev_state *ps, अचिन्हित पूर्णांक requesttype,
+			   अचिन्हित पूर्णांक request, अचिन्हित पूर्णांक index)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा usb_host_पूर्णांकerface *alt_setting;
 
-	if (ps->dev->state != USB_STATE_UNAUTHENTICATED
+	अगर (ps->dev->state != USB_STATE_UNAUTHENTICATED
 	 && ps->dev->state != USB_STATE_ADDRESS
 	 && ps->dev->state != USB_STATE_CONFIGURED)
-		return -EHOSTUNREACH;
-	if (USB_TYPE_VENDOR == (USB_TYPE_MASK & requesttype))
-		return 0;
+		वापस -EHOSTUNREACH;
+	अगर (USB_TYPE_VENDOR == (USB_TYPE_MASK & requesttype))
+		वापस 0;
 
 	/*
-	 * check for the special corner case 'get_device_id' in the printer
-	 * class specification, which we always want to allow as it is used
+	 * check क्रम the special corner हाल 'get_device_id' in the prपूर्णांकer
+	 * class specअगरication, which we always want to allow as it is used
 	 * to query things like ink level, etc.
 	 */
-	if (requesttype == 0xa1 && request == 0) {
+	अगर (requesttype == 0xa1 && request == 0) अणु
 		alt_setting = usb_find_alt_setting(ps->dev->actconfig,
 						   index >> 8, index & 0xff);
-		if (alt_setting
+		अगर (alt_setting
 		 && alt_setting->desc.bInterfaceClass == USB_CLASS_PRINTER)
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
 	index &= 0xff;
-	switch (requesttype & USB_RECIP_MASK) {
-	case USB_RECIP_ENDPOINT:
-		if ((index & ~USB_DIR_IN) == 0)
-			return 0;
-		ret = findintfep(ps->dev, index);
-		if (ret < 0) {
+	चयन (requesttype & USB_RECIP_MASK) अणु
+	हाल USB_RECIP_ENDPOINT:
+		अगर ((index & ~USB_सूची_IN) == 0)
+			वापस 0;
+		ret = findपूर्णांकfep(ps->dev, index);
+		अगर (ret < 0) अणु
 			/*
 			 * Some not fully compliant Win apps seem to get
-			 * index wrong and have the endpoint number here
-			 * rather than the endpoint address (with the
-			 * correct direction). Win does let this through,
+			 * index wrong and have the endpoपूर्णांक number here
+			 * rather than the endpoपूर्णांक address (with the
+			 * correct direction). Win करोes let this through,
 			 * so we'll not reject it here but leave it to
-			 * the device to not break KVM. But we warn.
+			 * the device to not अवरोध KVM. But we warn.
 			 */
-			ret = findintfep(ps->dev, index ^ 0x80);
-			if (ret >= 0)
+			ret = findपूर्णांकfep(ps->dev, index ^ 0x80);
+			अगर (ret >= 0)
 				dev_info(&ps->dev->dev,
 					"%s: process %i (%s) requesting ep %02x but needs %02x\n",
 					__func__, task_pid_nr(current),
 					current->comm, index, index ^ 0x80);
-		}
-		if (ret >= 0)
-			ret = checkintf(ps, ret);
-		break;
+		पूर्ण
+		अगर (ret >= 0)
+			ret = checkपूर्णांकf(ps, ret);
+		अवरोध;
 
-	case USB_RECIP_INTERFACE:
-		ret = checkintf(ps, index);
-		break;
-	}
-	return ret;
-}
+	हाल USB_RECIP_INTERFACE:
+		ret = checkपूर्णांकf(ps, index);
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static struct usb_host_endpoint *ep_to_host_endpoint(struct usb_device *dev,
-						     unsigned char ep)
-{
-	if (ep & USB_ENDPOINT_DIR_MASK)
-		return dev->ep_in[ep & USB_ENDPOINT_NUMBER_MASK];
-	else
-		return dev->ep_out[ep & USB_ENDPOINT_NUMBER_MASK];
-}
+अटल काष्ठा usb_host_endpoपूर्णांक *ep_to_host_endpoपूर्णांक(काष्ठा usb_device *dev,
+						     अचिन्हित अक्षर ep)
+अणु
+	अगर (ep & USB_ENDPOINT_सूची_MASK)
+		वापस dev->ep_in[ep & USB_ENDPOINT_NUMBER_MASK];
+	अन्यथा
+		वापस dev->ep_out[ep & USB_ENDPOINT_NUMBER_MASK];
+पूर्ण
 
-static int parse_usbdevfs_streams(struct usb_dev_state *ps,
-				  struct usbdevfs_streams __user *streams,
-				  unsigned int *num_streams_ret,
-				  unsigned int *num_eps_ret,
-				  struct usb_host_endpoint ***eps_ret,
-				  struct usb_interface **intf_ret)
-{
-	unsigned int i, num_streams, num_eps;
-	struct usb_host_endpoint **eps;
-	struct usb_interface *intf = NULL;
-	unsigned char ep;
-	int ifnum, ret;
+अटल पूर्णांक parse_usbdevfs_streams(काष्ठा usb_dev_state *ps,
+				  काष्ठा usbdevfs_streams __user *streams,
+				  अचिन्हित पूर्णांक *num_streams_ret,
+				  अचिन्हित पूर्णांक *num_eps_ret,
+				  काष्ठा usb_host_endpoपूर्णांक ***eps_ret,
+				  काष्ठा usb_पूर्णांकerface **पूर्णांकf_ret)
+अणु
+	अचिन्हित पूर्णांक i, num_streams, num_eps;
+	काष्ठा usb_host_endpoपूर्णांक **eps;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = शून्य;
+	अचिन्हित अक्षर ep;
+	पूर्णांक अगरnum, ret;
 
-	if (get_user(num_streams, &streams->num_streams) ||
+	अगर (get_user(num_streams, &streams->num_streams) ||
 	    get_user(num_eps, &streams->num_eps))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	if (num_eps < 1 || num_eps > USB_MAXENDPOINTS)
-		return -EINVAL;
+	अगर (num_eps < 1 || num_eps > USB_MAXENDPOINTS)
+		वापस -EINVAL;
 
 	/* The XHCI controller allows max 2 ^ 16 streams */
-	if (num_streams_ret && (num_streams < 2 || num_streams > 65536))
-		return -EINVAL;
+	अगर (num_streams_ret && (num_streams < 2 || num_streams > 65536))
+		वापस -EINVAL;
 
-	eps = kmalloc_array(num_eps, sizeof(*eps), GFP_KERNEL);
-	if (!eps)
-		return -ENOMEM;
+	eps = kदो_स्मृति_array(num_eps, माप(*eps), GFP_KERNEL);
+	अगर (!eps)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_eps; i++) {
-		if (get_user(ep, &streams->eps[i])) {
+	क्रम (i = 0; i < num_eps; i++) अणु
+		अगर (get_user(ep, &streams->eps[i])) अणु
 			ret = -EFAULT;
-			goto error;
-		}
-		eps[i] = ep_to_host_endpoint(ps->dev, ep);
-		if (!eps[i]) {
+			जाओ error;
+		पूर्ण
+		eps[i] = ep_to_host_endpoपूर्णांक(ps->dev, ep);
+		अगर (!eps[i]) अणु
 			ret = -EINVAL;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		/* usb_alloc/free_streams operate on an usb_interface */
-		ifnum = findintfep(ps->dev, ep);
-		if (ifnum < 0) {
-			ret = ifnum;
-			goto error;
-		}
+		/* usb_alloc/मुक्त_streams operate on an usb_पूर्णांकerface */
+		अगरnum = findपूर्णांकfep(ps->dev, ep);
+		अगर (अगरnum < 0) अणु
+			ret = अगरnum;
+			जाओ error;
+		पूर्ण
 
-		if (i == 0) {
-			ret = checkintf(ps, ifnum);
-			if (ret < 0)
-				goto error;
-			intf = usb_ifnum_to_if(ps->dev, ifnum);
-		} else {
-			/* Verify all eps belong to the same interface */
-			if (ifnum != intf->altsetting->desc.bInterfaceNumber) {
+		अगर (i == 0) अणु
+			ret = checkपूर्णांकf(ps, अगरnum);
+			अगर (ret < 0)
+				जाओ error;
+			पूर्णांकf = usb_अगरnum_to_अगर(ps->dev, अगरnum);
+		पूर्ण अन्यथा अणु
+			/* Verअगरy all eps beदीर्घ to the same पूर्णांकerface */
+			अगर (अगरnum != पूर्णांकf->altsetting->desc.bInterfaceNumber) अणु
 				ret = -EINVAL;
-				goto error;
-			}
-		}
-	}
+				जाओ error;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (num_streams_ret)
+	अगर (num_streams_ret)
 		*num_streams_ret = num_streams;
 	*num_eps_ret = num_eps;
 	*eps_ret = eps;
-	*intf_ret = intf;
+	*पूर्णांकf_ret = पूर्णांकf;
 
-	return 0;
+	वापस 0;
 
 error:
-	kfree(eps);
-	return ret;
-}
+	kमुक्त(eps);
+	वापस ret;
+पूर्ण
 
-static struct usb_device *usbdev_lookup_by_devt(dev_t devt)
-{
-	struct device *dev;
+अटल काष्ठा usb_device *usbdev_lookup_by_devt(dev_t devt)
+अणु
+	काष्ठा device *dev;
 
 	dev = bus_find_device_by_devt(&usb_bus_type, devt);
-	if (!dev)
-		return NULL;
-	return to_usb_device(dev);
-}
+	अगर (!dev)
+		वापस शून्य;
+	वापस to_usb_device(dev);
+पूर्ण
 
 /*
  * file operations
  */
-static int usbdev_open(struct inode *inode, struct file *file)
-{
-	struct usb_device *dev = NULL;
-	struct usb_dev_state *ps;
-	int ret;
+अटल पूर्णांक usbdev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा usb_device *dev = शून्य;
+	काष्ठा usb_dev_state *ps;
+	पूर्णांक ret;
 
 	ret = -ENOMEM;
-	ps = kzalloc(sizeof(struct usb_dev_state), GFP_KERNEL);
-	if (!ps)
-		goto out_free_ps;
+	ps = kzalloc(माप(काष्ठा usb_dev_state), GFP_KERNEL);
+	अगर (!ps)
+		जाओ out_मुक्त_ps;
 
 	ret = -ENODEV;
 
 	/* usbdev device-node */
-	if (imajor(inode) == USB_DEVICE_MAJOR)
+	अगर (imajor(inode) == USB_DEVICE_MAJOR)
 		dev = usbdev_lookup_by_devt(inode->i_rdev);
-	if (!dev)
-		goto out_free_ps;
+	अगर (!dev)
+		जाओ out_मुक्त_ps;
 
 	usb_lock_device(dev);
-	if (dev->state == USB_STATE_NOTATTACHED)
-		goto out_unlock_device;
+	अगर (dev->state == USB_STATE_NOTATTACHED)
+		जाओ out_unlock_device;
 
-	ret = usb_autoresume_device(dev);
-	if (ret)
-		goto out_unlock_device;
+	ret = usb_स्वतःresume_device(dev);
+	अगर (ret)
+		जाओ out_unlock_device;
 
 	ps->dev = dev;
 	ps->file = file;
-	ps->interface_allowed_mask = 0xFFFFFFFF; /* 32 bits */
+	ps->पूर्णांकerface_allowed_mask = 0xFFFFFFFF; /* 32 bits */
 	spin_lock_init(&ps->lock);
 	INIT_LIST_HEAD(&ps->list);
 	INIT_LIST_HEAD(&ps->async_pending);
 	INIT_LIST_HEAD(&ps->async_completed);
 	INIT_LIST_HEAD(&ps->memory_list);
-	init_waitqueue_head(&ps->wait);
-	init_waitqueue_head(&ps->wait_for_resume);
+	init_रुकोqueue_head(&ps->रुको);
+	init_रुकोqueue_head(&ps->रुको_क्रम_resume);
 	ps->disc_pid = get_pid(task_pid(current));
 	ps->cred = get_current_cred();
 	smp_wmb();
 
-	/* Can't race with resume; the device is already active */
+	/* Can't race with resume; the device is alपढ़ोy active */
 	list_add_tail(&ps->list, &dev->filelist);
-	file->private_data = ps;
+	file->निजी_data = ps;
 	usb_unlock_device(dev);
 	snoop(&dev->dev, "opened by process %d: %s\n", task_pid_nr(current),
 			current->comm);
-	return ret;
+	वापस ret;
 
  out_unlock_device:
 	usb_unlock_device(dev);
 	usb_put_dev(dev);
- out_free_ps:
-	kfree(ps);
-	return ret;
-}
+ out_मुक्त_ps:
+	kमुक्त(ps);
+	वापस ret;
+पूर्ण
 
-static int usbdev_release(struct inode *inode, struct file *file)
-{
-	struct usb_dev_state *ps = file->private_data;
-	struct usb_device *dev = ps->dev;
-	unsigned int ifnum;
-	struct async *as;
+अटल पूर्णांक usbdev_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा usb_dev_state *ps = file->निजी_data;
+	काष्ठा usb_device *dev = ps->dev;
+	अचिन्हित पूर्णांक अगरnum;
+	काष्ठा async *as;
 
 	usb_lock_device(dev);
 	usb_hub_release_all_ports(dev, ps);
@@ -1079,517 +1080,517 @@ static int usbdev_release(struct inode *inode, struct file *file)
 	list_del_init(&ps->list);
 	mutex_unlock(&usbfs_mutex);
 
-	for (ifnum = 0; ps->ifclaimed && ifnum < 8*sizeof(ps->ifclaimed);
-			ifnum++) {
-		if (test_bit(ifnum, &ps->ifclaimed))
-			releaseintf(ps, ifnum);
-	}
+	क्रम (अगरnum = 0; ps->अगरclaimed && अगरnum < 8*माप(ps->अगरclaimed);
+			अगरnum++) अणु
+		अगर (test_bit(अगरnum, &ps->अगरclaimed))
+			releaseपूर्णांकf(ps, अगरnum);
+	पूर्ण
 	destroy_all_async(ps);
-	if (!ps->suspend_allowed)
-		usb_autosuspend_device(dev);
+	अगर (!ps->suspend_allowed)
+		usb_स्वतःsuspend_device(dev);
 	usb_unlock_device(dev);
 	usb_put_dev(dev);
 	put_pid(ps->disc_pid);
 	put_cred(ps->cred);
 
-	as = async_getcompleted(ps);
-	while (as) {
-		free_async(as);
-		as = async_getcompleted(ps);
-	}
+	as = async_अ_लोompleted(ps);
+	जबतक (as) अणु
+		मुक्त_async(as);
+		as = async_अ_लोompleted(ps);
+	पूर्ण
 
-	kfree(ps);
-	return 0;
-}
+	kमुक्त(ps);
+	वापस 0;
+पूर्ण
 
-static int do_proc_control(struct usb_dev_state *ps,
-		struct usbdevfs_ctrltransfer *ctrl)
-{
-	struct usb_device *dev = ps->dev;
-	unsigned int tmo;
-	unsigned char *tbuf;
-	unsigned wLength;
-	int i, pipe, ret;
+अटल पूर्णांक करो_proc_control(काष्ठा usb_dev_state *ps,
+		काष्ठा usbdevfs_ctrltransfer *ctrl)
+अणु
+	काष्ठा usb_device *dev = ps->dev;
+	अचिन्हित पूर्णांक पंचांगo;
+	अचिन्हित अक्षर *tbuf;
+	अचिन्हित wLength;
+	पूर्णांक i, pipe, ret;
 
 	ret = check_ctrlrecip(ps, ctrl->bRequestType, ctrl->bRequest,
 			      ctrl->wIndex);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	wLength = ctrl->wLength;	/* To suppress 64k PAGE_SIZE warning */
-	if (wLength > PAGE_SIZE)
-		return -EINVAL;
-	ret = usbfs_increase_memory_usage(PAGE_SIZE + sizeof(struct urb) +
-			sizeof(struct usb_ctrlrequest));
-	if (ret)
-		return ret;
-	tbuf = (unsigned char *)__get_free_page(GFP_KERNEL);
-	if (!tbuf) {
+	अगर (wLength > PAGE_SIZE)
+		वापस -EINVAL;
+	ret = usbfs_increase_memory_usage(PAGE_SIZE + माप(काष्ठा urb) +
+			माप(काष्ठा usb_ctrlrequest));
+	अगर (ret)
+		वापस ret;
+	tbuf = (अचिन्हित अक्षर *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!tbuf) अणु
 		ret = -ENOMEM;
-		goto done;
-	}
-	tmo = ctrl->timeout;
+		जाओ करोne;
+	पूर्ण
+	पंचांगo = ctrl->समयout;
 	snoop(&dev->dev, "control urb: bRequestType=%02x "
 		"bRequest=%02x wValue=%04x "
 		"wIndex=%04x wLength=%04x\n",
 		ctrl->bRequestType, ctrl->bRequest, ctrl->wValue,
 		ctrl->wIndex, ctrl->wLength);
-	if (ctrl->bRequestType & 0x80) {
+	अगर (ctrl->bRequestType & 0x80) अणु
 		pipe = usb_rcvctrlpipe(dev, 0);
-		snoop_urb(dev, NULL, pipe, ctrl->wLength, tmo, SUBMIT, NULL, 0);
+		snoop_urb(dev, शून्य, pipe, ctrl->wLength, पंचांगo, SUBMIT, शून्य, 0);
 
 		usb_unlock_device(dev);
 		i = usb_control_msg(dev, pipe, ctrl->bRequest,
 				    ctrl->bRequestType, ctrl->wValue, ctrl->wIndex,
-				    tbuf, ctrl->wLength, tmo);
+				    tbuf, ctrl->wLength, पंचांगo);
 		usb_lock_device(dev);
-		snoop_urb(dev, NULL, pipe, max(i, 0), min(i, 0), COMPLETE,
+		snoop_urb(dev, शून्य, pipe, max(i, 0), min(i, 0), COMPLETE,
 			  tbuf, max(i, 0));
-		if ((i > 0) && ctrl->wLength) {
-			if (copy_to_user(ctrl->data, tbuf, i)) {
+		अगर ((i > 0) && ctrl->wLength) अणु
+			अगर (copy_to_user(ctrl->data, tbuf, i)) अणु
 				ret = -EFAULT;
-				goto done;
-			}
-		}
-	} else {
-		if (ctrl->wLength) {
-			if (copy_from_user(tbuf, ctrl->data, ctrl->wLength)) {
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (ctrl->wLength) अणु
+			अगर (copy_from_user(tbuf, ctrl->data, ctrl->wLength)) अणु
 				ret = -EFAULT;
-				goto done;
-			}
-		}
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
 		pipe = usb_sndctrlpipe(dev, 0);
-		snoop_urb(dev, NULL, pipe, ctrl->wLength, tmo, SUBMIT,
+		snoop_urb(dev, शून्य, pipe, ctrl->wLength, पंचांगo, SUBMIT,
 			tbuf, ctrl->wLength);
 
 		usb_unlock_device(dev);
 		i = usb_control_msg(dev, usb_sndctrlpipe(dev, 0), ctrl->bRequest,
 				    ctrl->bRequestType, ctrl->wValue, ctrl->wIndex,
-				    tbuf, ctrl->wLength, tmo);
+				    tbuf, ctrl->wLength, पंचांगo);
 		usb_lock_device(dev);
-		snoop_urb(dev, NULL, pipe, max(i, 0), min(i, 0), COMPLETE, NULL, 0);
-	}
-	if (i < 0 && i != -EPIPE) {
-		dev_printk(KERN_DEBUG, &dev->dev, "usbfs: USBDEVFS_CONTROL "
+		snoop_urb(dev, शून्य, pipe, max(i, 0), min(i, 0), COMPLETE, शून्य, 0);
+	पूर्ण
+	अगर (i < 0 && i != -EPIPE) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &dev->dev, "usbfs: USBDEVFS_CONTROL "
 			   "failed cmd %s rqt %u rq %u len %u ret %d\n",
 			   current->comm, ctrl->bRequestType, ctrl->bRequest,
 			   ctrl->wLength, i);
-	}
+	पूर्ण
 	ret = i;
- done:
-	free_page((unsigned long) tbuf);
-	usbfs_decrease_memory_usage(PAGE_SIZE + sizeof(struct urb) +
-			sizeof(struct usb_ctrlrequest));
-	return ret;
-}
+ करोne:
+	मुक्त_page((अचिन्हित दीर्घ) tbuf);
+	usbfs_decrease_memory_usage(PAGE_SIZE + माप(काष्ठा urb) +
+			माप(काष्ठा usb_ctrlrequest));
+	वापस ret;
+पूर्ण
 
-static int proc_control(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_ctrltransfer ctrl;
+अटल पूर्णांक proc_control(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_ctrltransfer ctrl;
 
-	if (copy_from_user(&ctrl, arg, sizeof(ctrl)))
-		return -EFAULT;
-	return do_proc_control(ps, &ctrl);
-}
+	अगर (copy_from_user(&ctrl, arg, माप(ctrl)))
+		वापस -EFAULT;
+	वापस करो_proc_control(ps, &ctrl);
+पूर्ण
 
-static int do_proc_bulk(struct usb_dev_state *ps,
-		struct usbdevfs_bulktransfer *bulk)
-{
-	struct usb_device *dev = ps->dev;
-	unsigned int tmo, len1, pipe;
-	int len2;
-	unsigned char *tbuf;
-	int i, ret;
+अटल पूर्णांक करो_proc_bulk(काष्ठा usb_dev_state *ps,
+		काष्ठा usbdevfs_bulktransfer *bulk)
+अणु
+	काष्ठा usb_device *dev = ps->dev;
+	अचिन्हित पूर्णांक पंचांगo, len1, pipe;
+	पूर्णांक len2;
+	अचिन्हित अक्षर *tbuf;
+	पूर्णांक i, ret;
 
-	ret = findintfep(ps->dev, bulk->ep);
-	if (ret < 0)
-		return ret;
-	ret = checkintf(ps, ret);
-	if (ret)
-		return ret;
-	if (bulk->ep & USB_DIR_IN)
+	ret = findपूर्णांकfep(ps->dev, bulk->ep);
+	अगर (ret < 0)
+		वापस ret;
+	ret = checkपूर्णांकf(ps, ret);
+	अगर (ret)
+		वापस ret;
+	अगर (bulk->ep & USB_सूची_IN)
 		pipe = usb_rcvbulkpipe(dev, bulk->ep & 0x7f);
-	else
+	अन्यथा
 		pipe = usb_sndbulkpipe(dev, bulk->ep & 0x7f);
-	if (!usb_maxpacket(dev, pipe, !(bulk->ep & USB_DIR_IN)))
-		return -EINVAL;
+	अगर (!usb_maxpacket(dev, pipe, !(bulk->ep & USB_सूची_IN)))
+		वापस -EINVAL;
 	len1 = bulk->len;
-	if (len1 >= (INT_MAX - sizeof(struct urb)))
-		return -EINVAL;
-	ret = usbfs_increase_memory_usage(len1 + sizeof(struct urb));
-	if (ret)
-		return ret;
+	अगर (len1 >= (पूर्णांक_उच्च - माप(काष्ठा urb)))
+		वापस -EINVAL;
+	ret = usbfs_increase_memory_usage(len1 + माप(काष्ठा urb));
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * len1 can be almost arbitrarily large.  Don't WARN if it's
 	 * too big, just fail the request.
 	 */
-	tbuf = kmalloc(len1, GFP_KERNEL | __GFP_NOWARN);
-	if (!tbuf) {
+	tbuf = kदो_स्मृति(len1, GFP_KERNEL | __GFP_NOWARN);
+	अगर (!tbuf) अणु
 		ret = -ENOMEM;
-		goto done;
-	}
-	tmo = bulk->timeout;
-	if (bulk->ep & 0x80) {
-		snoop_urb(dev, NULL, pipe, len1, tmo, SUBMIT, NULL, 0);
+		जाओ करोne;
+	पूर्ण
+	पंचांगo = bulk->समयout;
+	अगर (bulk->ep & 0x80) अणु
+		snoop_urb(dev, शून्य, pipe, len1, पंचांगo, SUBMIT, शून्य, 0);
 
 		usb_unlock_device(dev);
-		i = usb_bulk_msg(dev, pipe, tbuf, len1, &len2, tmo);
+		i = usb_bulk_msg(dev, pipe, tbuf, len1, &len2, पंचांगo);
 		usb_lock_device(dev);
-		snoop_urb(dev, NULL, pipe, len2, i, COMPLETE, tbuf, len2);
+		snoop_urb(dev, शून्य, pipe, len2, i, COMPLETE, tbuf, len2);
 
-		if (!i && len2) {
-			if (copy_to_user(bulk->data, tbuf, len2)) {
+		अगर (!i && len2) अणु
+			अगर (copy_to_user(bulk->data, tbuf, len2)) अणु
 				ret = -EFAULT;
-				goto done;
-			}
-		}
-	} else {
-		if (len1) {
-			if (copy_from_user(tbuf, bulk->data, len1)) {
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (len1) अणु
+			अगर (copy_from_user(tbuf, bulk->data, len1)) अणु
 				ret = -EFAULT;
-				goto done;
-			}
-		}
-		snoop_urb(dev, NULL, pipe, len1, tmo, SUBMIT, tbuf, len1);
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
+		snoop_urb(dev, शून्य, pipe, len1, पंचांगo, SUBMIT, tbuf, len1);
 
 		usb_unlock_device(dev);
-		i = usb_bulk_msg(dev, pipe, tbuf, len1, &len2, tmo);
+		i = usb_bulk_msg(dev, pipe, tbuf, len1, &len2, पंचांगo);
 		usb_lock_device(dev);
-		snoop_urb(dev, NULL, pipe, len2, i, COMPLETE, NULL, 0);
-	}
+		snoop_urb(dev, शून्य, pipe, len2, i, COMPLETE, शून्य, 0);
+	पूर्ण
 	ret = (i < 0 ? i : len2);
- done:
-	kfree(tbuf);
-	usbfs_decrease_memory_usage(len1 + sizeof(struct urb));
-	return ret;
-}
+ करोne:
+	kमुक्त(tbuf);
+	usbfs_decrease_memory_usage(len1 + माप(काष्ठा urb));
+	वापस ret;
+पूर्ण
 
-static int proc_bulk(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_bulktransfer bulk;
+अटल पूर्णांक proc_bulk(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_bulktransfer bulk;
 
-	if (copy_from_user(&bulk, arg, sizeof(bulk)))
-		return -EFAULT;
-	return do_proc_bulk(ps, &bulk);
-}
+	अगर (copy_from_user(&bulk, arg, माप(bulk)))
+		वापस -EFAULT;
+	वापस करो_proc_bulk(ps, &bulk);
+पूर्ण
 
-static void check_reset_of_active_ep(struct usb_device *udev,
-		unsigned int epnum, char *ioctl_name)
-{
-	struct usb_host_endpoint **eps;
-	struct usb_host_endpoint *ep;
+अटल व्योम check_reset_of_active_ep(काष्ठा usb_device *udev,
+		अचिन्हित पूर्णांक epnum, अक्षर *ioctl_name)
+अणु
+	काष्ठा usb_host_endpoपूर्णांक **eps;
+	काष्ठा usb_host_endpoपूर्णांक *ep;
 
-	eps = (epnum & USB_DIR_IN) ? udev->ep_in : udev->ep_out;
+	eps = (epnum & USB_सूची_IN) ? udev->ep_in : udev->ep_out;
 	ep = eps[epnum & 0x0f];
-	if (ep && !list_empty(&ep->urb_list))
+	अगर (ep && !list_empty(&ep->urb_list))
 		dev_warn(&udev->dev, "Process %d (%s) called USBDEVFS_%s for active endpoint 0x%02x\n",
 				task_pid_nr(current), current->comm,
 				ioctl_name, epnum);
-}
+पूर्ण
 
-static int proc_resetep(struct usb_dev_state *ps, void __user *arg)
-{
-	unsigned int ep;
-	int ret;
+अटल पूर्णांक proc_resetep(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	अचिन्हित पूर्णांक ep;
+	पूर्णांक ret;
 
-	if (get_user(ep, (unsigned int __user *)arg))
-		return -EFAULT;
-	ret = findintfep(ps->dev, ep);
-	if (ret < 0)
-		return ret;
-	ret = checkintf(ps, ret);
-	if (ret)
-		return ret;
+	अगर (get_user(ep, (अचिन्हित पूर्णांक __user *)arg))
+		वापस -EFAULT;
+	ret = findपूर्णांकfep(ps->dev, ep);
+	अगर (ret < 0)
+		वापस ret;
+	ret = checkपूर्णांकf(ps, ret);
+	अगर (ret)
+		वापस ret;
 	check_reset_of_active_ep(ps->dev, ep, "RESETEP");
-	usb_reset_endpoint(ps->dev, ep);
-	return 0;
-}
+	usb_reset_endpoपूर्णांक(ps->dev, ep);
+	वापस 0;
+पूर्ण
 
-static int proc_clearhalt(struct usb_dev_state *ps, void __user *arg)
-{
-	unsigned int ep;
-	int pipe;
-	int ret;
+अटल पूर्णांक proc_clearhalt(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	अचिन्हित पूर्णांक ep;
+	पूर्णांक pipe;
+	पूर्णांक ret;
 
-	if (get_user(ep, (unsigned int __user *)arg))
-		return -EFAULT;
-	ret = findintfep(ps->dev, ep);
-	if (ret < 0)
-		return ret;
-	ret = checkintf(ps, ret);
-	if (ret)
-		return ret;
+	अगर (get_user(ep, (अचिन्हित पूर्णांक __user *)arg))
+		वापस -EFAULT;
+	ret = findपूर्णांकfep(ps->dev, ep);
+	अगर (ret < 0)
+		वापस ret;
+	ret = checkपूर्णांकf(ps, ret);
+	अगर (ret)
+		वापस ret;
 	check_reset_of_active_ep(ps->dev, ep, "CLEAR_HALT");
-	if (ep & USB_DIR_IN)
+	अगर (ep & USB_सूची_IN)
 		pipe = usb_rcvbulkpipe(ps->dev, ep & 0x7f);
-	else
+	अन्यथा
 		pipe = usb_sndbulkpipe(ps->dev, ep & 0x7f);
 
-	return usb_clear_halt(ps->dev, pipe);
-}
+	वापस usb_clear_halt(ps->dev, pipe);
+पूर्ण
 
-static int proc_getdriver(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_getdriver gd;
-	struct usb_interface *intf;
-	int ret;
+अटल पूर्णांक proc_getdriver(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_getdriver gd;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	पूर्णांक ret;
 
-	if (copy_from_user(&gd, arg, sizeof(gd)))
-		return -EFAULT;
-	intf = usb_ifnum_to_if(ps->dev, gd.interface);
-	if (!intf || !intf->dev.driver)
+	अगर (copy_from_user(&gd, arg, माप(gd)))
+		वापस -EFAULT;
+	पूर्णांकf = usb_अगरnum_to_अगर(ps->dev, gd.पूर्णांकerface);
+	अगर (!पूर्णांकf || !पूर्णांकf->dev.driver)
 		ret = -ENODATA;
-	else {
-		strlcpy(gd.driver, intf->dev.driver->name,
-				sizeof(gd.driver));
-		ret = (copy_to_user(arg, &gd, sizeof(gd)) ? -EFAULT : 0);
-	}
-	return ret;
-}
+	अन्यथा अणु
+		strlcpy(gd.driver, पूर्णांकf->dev.driver->name,
+				माप(gd.driver));
+		ret = (copy_to_user(arg, &gd, माप(gd)) ? -EFAULT : 0);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int proc_connectinfo(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_connectinfo ci;
+अटल पूर्णांक proc_connectinfo(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_connectinfo ci;
 
-	memset(&ci, 0, sizeof(ci));
+	स_रखो(&ci, 0, माप(ci));
 	ci.devnum = ps->dev->devnum;
 	ci.slow = ps->dev->speed == USB_SPEED_LOW;
 
-	if (copy_to_user(arg, &ci, sizeof(ci)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(arg, &ci, माप(ci)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int proc_conninfo_ex(struct usb_dev_state *ps,
-			    void __user *arg, size_t size)
-{
-	struct usbdevfs_conninfo_ex ci;
-	struct usb_device *udev = ps->dev;
+अटल पूर्णांक proc_conninfo_ex(काष्ठा usb_dev_state *ps,
+			    व्योम __user *arg, माप_प्रकार size)
+अणु
+	काष्ठा usbdevfs_conninfo_ex ci;
+	काष्ठा usb_device *udev = ps->dev;
 
-	if (size < sizeof(ci.size))
-		return -EINVAL;
+	अगर (size < माप(ci.size))
+		वापस -EINVAL;
 
-	memset(&ci, 0, sizeof(ci));
-	ci.size = sizeof(ci);
+	स_रखो(&ci, 0, माप(ci));
+	ci.size = माप(ci);
 	ci.busnum = udev->bus->busnum;
 	ci.devnum = udev->devnum;
 	ci.speed = udev->speed;
 
-	while (udev && udev->portnum != 0) {
-		if (++ci.num_ports <= ARRAY_SIZE(ci.ports))
+	जबतक (udev && udev->portnum != 0) अणु
+		अगर (++ci.num_ports <= ARRAY_SIZE(ci.ports))
 			ci.ports[ARRAY_SIZE(ci.ports) - ci.num_ports] =
 					udev->portnum;
 		udev = udev->parent;
-	}
+	पूर्ण
 
-	if (ci.num_ports < ARRAY_SIZE(ci.ports))
-		memmove(&ci.ports[0],
+	अगर (ci.num_ports < ARRAY_SIZE(ci.ports))
+		स_हटाओ(&ci.ports[0],
 			&ci.ports[ARRAY_SIZE(ci.ports) - ci.num_ports],
 			ci.num_ports);
 
-	if (copy_to_user(arg, &ci, min(sizeof(ci), size)))
-		return -EFAULT;
+	अगर (copy_to_user(arg, &ci, min(माप(ci), size)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int proc_resetdevice(struct usb_dev_state *ps)
-{
-	struct usb_host_config *actconfig = ps->dev->actconfig;
-	struct usb_interface *interface;
-	int i, number;
+अटल पूर्णांक proc_resetdevice(काष्ठा usb_dev_state *ps)
+अणु
+	काष्ठा usb_host_config *actconfig = ps->dev->actconfig;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
+	पूर्णांक i, number;
 
-	/* Don't allow a device reset if the process has dropped the
-	 * privilege to do such things and any of the interfaces are
+	/* Don't allow a device reset अगर the process has dropped the
+	 * privilege to करो such things and any of the पूर्णांकerfaces are
 	 * currently claimed.
 	 */
-	if (ps->privileges_dropped && actconfig) {
-		for (i = 0; i < actconfig->desc.bNumInterfaces; ++i) {
-			interface = actconfig->interface[i];
-			number = interface->cur_altsetting->desc.bInterfaceNumber;
-			if (usb_interface_claimed(interface) &&
-					!test_bit(number, &ps->ifclaimed)) {
+	अगर (ps->privileges_dropped && actconfig) अणु
+		क्रम (i = 0; i < actconfig->desc.bNumInterfaces; ++i) अणु
+			पूर्णांकerface = actconfig->पूर्णांकerface[i];
+			number = पूर्णांकerface->cur_altsetting->desc.bInterfaceNumber;
+			अगर (usb_पूर्णांकerface_claimed(पूर्णांकerface) &&
+					!test_bit(number, &ps->अगरclaimed)) अणु
 				dev_warn(&ps->dev->dev,
 					"usbfs: interface %d claimed by %s while '%s' resets device\n",
-					number,	interface->dev.driver->name, current->comm);
-				return -EACCES;
-			}
-		}
-	}
+					number,	पूर्णांकerface->dev.driver->name, current->comm);
+				वापस -EACCES;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return usb_reset_device(ps->dev);
-}
+	वापस usb_reset_device(ps->dev);
+पूर्ण
 
-static int proc_setintf(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_setinterface setintf;
-	int ret;
+अटल पूर्णांक proc_setपूर्णांकf(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_setपूर्णांकerface setपूर्णांकf;
+	पूर्णांक ret;
 
-	if (copy_from_user(&setintf, arg, sizeof(setintf)))
-		return -EFAULT;
-	ret = checkintf(ps, setintf.interface);
-	if (ret)
-		return ret;
+	अगर (copy_from_user(&setपूर्णांकf, arg, माप(setपूर्णांकf)))
+		वापस -EFAULT;
+	ret = checkपूर्णांकf(ps, setपूर्णांकf.पूर्णांकerface);
+	अगर (ret)
+		वापस ret;
 
-	destroy_async_on_interface(ps, setintf.interface);
+	destroy_async_on_पूर्णांकerface(ps, setपूर्णांकf.पूर्णांकerface);
 
-	return usb_set_interface(ps->dev, setintf.interface,
-			setintf.altsetting);
-}
+	वापस usb_set_पूर्णांकerface(ps->dev, setपूर्णांकf.पूर्णांकerface,
+			setपूर्णांकf.altsetting);
+पूर्ण
 
-static int proc_setconfig(struct usb_dev_state *ps, void __user *arg)
-{
-	int u;
-	int status = 0;
-	struct usb_host_config *actconfig;
+अटल पूर्णांक proc_setconfig(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	पूर्णांक u;
+	पूर्णांक status = 0;
+	काष्ठा usb_host_config *actconfig;
 
-	if (get_user(u, (int __user *)arg))
-		return -EFAULT;
+	अगर (get_user(u, (पूर्णांक __user *)arg))
+		वापस -EFAULT;
 
 	actconfig = ps->dev->actconfig;
 
-	/* Don't touch the device if any interfaces are claimed.
-	 * It could interfere with other drivers' operations, and if
-	 * an interface is claimed by usbfs it could easily deadlock.
+	/* Don't touch the device अगर any पूर्णांकerfaces are claimed.
+	 * It could पूर्णांकerfere with other drivers' operations, and अगर
+	 * an पूर्णांकerface is claimed by usbfs it could easily deadlock.
 	 */
-	if (actconfig) {
-		int i;
+	अगर (actconfig) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < actconfig->desc.bNumInterfaces; ++i) {
-			if (usb_interface_claimed(actconfig->interface[i])) {
+		क्रम (i = 0; i < actconfig->desc.bNumInterfaces; ++i) अणु
+			अगर (usb_पूर्णांकerface_claimed(actconfig->पूर्णांकerface[i])) अणु
 				dev_warn(&ps->dev->dev,
 					"usbfs: interface %d claimed by %s "
 					"while '%s' sets config #%d\n",
-					actconfig->interface[i]
+					actconfig->पूर्णांकerface[i]
 						->cur_altsetting
 						->desc.bInterfaceNumber,
-					actconfig->interface[i]
+					actconfig->पूर्णांकerface[i]
 						->dev.driver->name,
 					current->comm, u);
 				status = -EBUSY;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* SET_CONFIGURATION is often abused as a "cheap" driver reset,
-	 * so avoid usb_set_configuration()'s kick to sysfs
+	 * so aव्योम usb_set_configuration()'s kick to sysfs
 	 */
-	if (status == 0) {
-		if (actconfig && actconfig->desc.bConfigurationValue == u)
+	अगर (status == 0) अणु
+		अगर (actconfig && actconfig->desc.bConfigurationValue == u)
 			status = usb_reset_configuration(ps->dev);
-		else
+		अन्यथा
 			status = usb_set_configuration(ps->dev, u);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static struct usb_memory *
-find_memory_area(struct usb_dev_state *ps, const struct usbdevfs_urb *uurb)
-{
-	struct usb_memory *usbm = NULL, *iter;
-	unsigned long flags;
-	unsigned long uurb_start = (unsigned long)uurb->buffer;
+अटल काष्ठा usb_memory *
+find_memory_area(काष्ठा usb_dev_state *ps, स्थिर काष्ठा usbdevfs_urb *uurb)
+अणु
+	काष्ठा usb_memory *usbm = शून्य, *iter;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ uurb_start = (अचिन्हित दीर्घ)uurb->buffer;
 
 	spin_lock_irqsave(&ps->lock, flags);
-	list_for_each_entry(iter, &ps->memory_list, memlist) {
-		if (uurb_start >= iter->vm_start &&
-				uurb_start < iter->vm_start + iter->size) {
-			if (uurb->buffer_length > iter->vm_start + iter->size -
-					uurb_start) {
+	list_क्रम_each_entry(iter, &ps->memory_list, memlist) अणु
+		अगर (uurb_start >= iter->vm_start &&
+				uurb_start < iter->vm_start + iter->size) अणु
+			अगर (uurb->buffer_length > iter->vm_start + iter->size -
+					uurb_start) अणु
 				usbm = ERR_PTR(-EINVAL);
-			} else {
+			पूर्ण अन्यथा अणु
 				usbm = iter;
 				usbm->urb_use_count++;
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&ps->lock, flags);
-	return usbm;
-}
+	वापस usbm;
+पूर्ण
 
-static int proc_do_submiturb(struct usb_dev_state *ps, struct usbdevfs_urb *uurb,
-			struct usbdevfs_iso_packet_desc __user *iso_frame_desc,
-			void __user *arg, sigval_t userurb_sigval)
-{
-	struct usbdevfs_iso_packet_desc *isopkt = NULL;
-	struct usb_host_endpoint *ep;
-	struct async *as = NULL;
-	struct usb_ctrlrequest *dr = NULL;
-	unsigned int u, totlen, isofrmlen;
-	int i, ret, num_sgs = 0, ifnum = -1;
-	int number_of_packets = 0;
-	unsigned int stream_id = 0;
-	void *buf;
+अटल पूर्णांक proc_करो_submiturb(काष्ठा usb_dev_state *ps, काष्ठा usbdevfs_urb *uurb,
+			काष्ठा usbdevfs_iso_packet_desc __user *iso_frame_desc,
+			व्योम __user *arg, sigval_t userurb_sigval)
+अणु
+	काष्ठा usbdevfs_iso_packet_desc *isopkt = शून्य;
+	काष्ठा usb_host_endpoपूर्णांक *ep;
+	काष्ठा async *as = शून्य;
+	काष्ठा usb_ctrlrequest *dr = शून्य;
+	अचिन्हित पूर्णांक u, totlen, isofrmlen;
+	पूर्णांक i, ret, num_sgs = 0, अगरnum = -1;
+	पूर्णांक number_of_packets = 0;
+	अचिन्हित पूर्णांक stream_id = 0;
+	व्योम *buf;
 	bool is_in;
-	bool allow_short = false;
+	bool allow_लघु = false;
 	bool allow_zero = false;
-	unsigned long mask =	USBDEVFS_URB_SHORT_NOT_OK |
+	अचिन्हित दीर्घ mask =	USBDEVFS_URB_SHORT_NOT_OK |
 				USBDEVFS_URB_BULK_CONTINUATION |
 				USBDEVFS_URB_NO_FSBR |
 				USBDEVFS_URB_ZERO_PACKET |
 				USBDEVFS_URB_NO_INTERRUPT;
-	/* USBDEVFS_URB_ISO_ASAP is a special case */
-	if (uurb->type == USBDEVFS_URB_TYPE_ISO)
+	/* USBDEVFS_URB_ISO_ASAP is a special हाल */
+	अगर (uurb->type == USBDEVFS_URB_TYPE_ISO)
 		mask |= USBDEVFS_URB_ISO_ASAP;
 
-	if (uurb->flags & ~mask)
-			return -EINVAL;
+	अगर (uurb->flags & ~mask)
+			वापस -EINVAL;
 
-	if ((unsigned int)uurb->buffer_length >= USBFS_XFER_MAX)
-		return -EINVAL;
-	if (uurb->buffer_length > 0 && !uurb->buffer)
-		return -EINVAL;
-	if (!(uurb->type == USBDEVFS_URB_TYPE_CONTROL &&
-	    (uurb->endpoint & ~USB_ENDPOINT_DIR_MASK) == 0)) {
-		ifnum = findintfep(ps->dev, uurb->endpoint);
-		if (ifnum < 0)
-			return ifnum;
-		ret = checkintf(ps, ifnum);
-		if (ret)
-			return ret;
-	}
-	ep = ep_to_host_endpoint(ps->dev, uurb->endpoint);
-	if (!ep)
-		return -ENOENT;
-	is_in = (uurb->endpoint & USB_ENDPOINT_DIR_MASK) != 0;
+	अगर ((अचिन्हित पूर्णांक)uurb->buffer_length >= USBFS_XFER_MAX)
+		वापस -EINVAL;
+	अगर (uurb->buffer_length > 0 && !uurb->buffer)
+		वापस -EINVAL;
+	अगर (!(uurb->type == USBDEVFS_URB_TYPE_CONTROL &&
+	    (uurb->endpoपूर्णांक & ~USB_ENDPOINT_सूची_MASK) == 0)) अणु
+		अगरnum = findपूर्णांकfep(ps->dev, uurb->endpoपूर्णांक);
+		अगर (अगरnum < 0)
+			वापस अगरnum;
+		ret = checkपूर्णांकf(ps, अगरnum);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	ep = ep_to_host_endpoपूर्णांक(ps->dev, uurb->endpoपूर्णांक);
+	अगर (!ep)
+		वापस -ENOENT;
+	is_in = (uurb->endpoपूर्णांक & USB_ENDPOINT_सूची_MASK) != 0;
 
 	u = 0;
-	switch (uurb->type) {
-	case USBDEVFS_URB_TYPE_CONTROL:
-		if (!usb_endpoint_xfer_control(&ep->desc))
-			return -EINVAL;
+	चयन (uurb->type) अणु
+	हाल USBDEVFS_URB_TYPE_CONTROL:
+		अगर (!usb_endpoपूर्णांक_xfer_control(&ep->desc))
+			वापस -EINVAL;
 		/* min 8 byte setup packet */
-		if (uurb->buffer_length < 8)
-			return -EINVAL;
-		dr = kmalloc(sizeof(struct usb_ctrlrequest), GFP_KERNEL);
-		if (!dr)
-			return -ENOMEM;
-		if (copy_from_user(dr, uurb->buffer, 8)) {
+		अगर (uurb->buffer_length < 8)
+			वापस -EINVAL;
+		dr = kदो_स्मृति(माप(काष्ठा usb_ctrlrequest), GFP_KERNEL);
+		अगर (!dr)
+			वापस -ENOMEM;
+		अगर (copy_from_user(dr, uurb->buffer, 8)) अणु
 			ret = -EFAULT;
-			goto error;
-		}
-		if (uurb->buffer_length < (le16_to_cpu(dr->wLength) + 8)) {
+			जाओ error;
+		पूर्ण
+		अगर (uurb->buffer_length < (le16_to_cpu(dr->wLength) + 8)) अणु
 			ret = -EINVAL;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		ret = check_ctrlrecip(ps, dr->bRequestType, dr->bRequest,
 				      le16_to_cpu(dr->wIndex));
-		if (ret)
-			goto error;
+		अगर (ret)
+			जाओ error;
 		uurb->buffer_length = le16_to_cpu(dr->wLength);
 		uurb->buffer += 8;
-		if ((dr->bRequestType & USB_DIR_IN) && uurb->buffer_length) {
+		अगर ((dr->bRequestType & USB_सूची_IN) && uurb->buffer_length) अणु
 			is_in = true;
-			uurb->endpoint |= USB_DIR_IN;
-		} else {
+			uurb->endpoपूर्णांक |= USB_सूची_IN;
+		पूर्ण अन्यथा अणु
 			is_in = false;
-			uurb->endpoint &= ~USB_DIR_IN;
-		}
-		if (is_in)
-			allow_short = true;
+			uurb->endpoपूर्णांक &= ~USB_सूची_IN;
+		पूर्ण
+		अगर (is_in)
+			allow_लघु = true;
 		snoop(&ps->dev->dev, "control urb: bRequestType=%02x "
 			"bRequest=%02x wValue=%04x "
 			"wIndex=%04x wLength=%04x\n",
@@ -1597,485 +1598,485 @@ static int proc_do_submiturb(struct usb_dev_state *ps, struct usbdevfs_urb *uurb
 			__le16_to_cpu(dr->wValue),
 			__le16_to_cpu(dr->wIndex),
 			__le16_to_cpu(dr->wLength));
-		u = sizeof(struct usb_ctrlrequest);
-		break;
+		u = माप(काष्ठा usb_ctrlrequest);
+		अवरोध;
 
-	case USBDEVFS_URB_TYPE_BULK:
-		if (!is_in)
+	हाल USBDEVFS_URB_TYPE_BULK:
+		अगर (!is_in)
 			allow_zero = true;
-		else
-			allow_short = true;
-		switch (usb_endpoint_type(&ep->desc)) {
-		case USB_ENDPOINT_XFER_CONTROL:
-		case USB_ENDPOINT_XFER_ISOC:
-			return -EINVAL;
-		case USB_ENDPOINT_XFER_INT:
-			/* allow single-shot interrupt transfers */
+		अन्यथा
+			allow_लघु = true;
+		चयन (usb_endpoपूर्णांक_type(&ep->desc)) अणु
+		हाल USB_ENDPOINT_XFER_CONTROL:
+		हाल USB_ENDPOINT_XFER_ISOC:
+			वापस -EINVAL;
+		हाल USB_ENDPOINT_XFER_INT:
+			/* allow single-shot पूर्णांकerrupt transfers */
 			uurb->type = USBDEVFS_URB_TYPE_INTERRUPT;
-			goto interrupt_urb;
-		}
+			जाओ पूर्णांकerrupt_urb;
+		पूर्ण
 		num_sgs = DIV_ROUND_UP(uurb->buffer_length, USB_SG_SIZE);
-		if (num_sgs == 1 || num_sgs > ps->dev->bus->sg_tablesize)
+		अगर (num_sgs == 1 || num_sgs > ps->dev->bus->sg_tablesize)
 			num_sgs = 0;
-		if (ep->streams)
+		अगर (ep->streams)
 			stream_id = uurb->stream_id;
-		break;
+		अवरोध;
 
-	case USBDEVFS_URB_TYPE_INTERRUPT:
-		if (!usb_endpoint_xfer_int(&ep->desc))
-			return -EINVAL;
- interrupt_urb:
-		if (!is_in)
+	हाल USBDEVFS_URB_TYPE_INTERRUPT:
+		अगर (!usb_endpoपूर्णांक_xfer_पूर्णांक(&ep->desc))
+			वापस -EINVAL;
+ पूर्णांकerrupt_urb:
+		अगर (!is_in)
 			allow_zero = true;
-		else
-			allow_short = true;
-		break;
+		अन्यथा
+			allow_लघु = true;
+		अवरोध;
 
-	case USBDEVFS_URB_TYPE_ISO:
+	हाल USBDEVFS_URB_TYPE_ISO:
 		/* arbitrary limit */
-		if (uurb->number_of_packets < 1 ||
+		अगर (uurb->number_of_packets < 1 ||
 		    uurb->number_of_packets > 128)
-			return -EINVAL;
-		if (!usb_endpoint_xfer_isoc(&ep->desc))
-			return -EINVAL;
+			वापस -EINVAL;
+		अगर (!usb_endpoपूर्णांक_xfer_isoc(&ep->desc))
+			वापस -EINVAL;
 		number_of_packets = uurb->number_of_packets;
-		isofrmlen = sizeof(struct usbdevfs_iso_packet_desc) *
+		isofrmlen = माप(काष्ठा usbdevfs_iso_packet_desc) *
 				   number_of_packets;
 		isopkt = memdup_user(iso_frame_desc, isofrmlen);
-		if (IS_ERR(isopkt)) {
+		अगर (IS_ERR(isopkt)) अणु
 			ret = PTR_ERR(isopkt);
-			isopkt = NULL;
-			goto error;
-		}
-		for (totlen = u = 0; u < number_of_packets; u++) {
+			isopkt = शून्य;
+			जाओ error;
+		पूर्ण
+		क्रम (totlen = u = 0; u < number_of_packets; u++) अणु
 			/*
-			 * arbitrary limit need for USB 3.1 Gen2
+			 * arbitrary limit need क्रम USB 3.1 Gen2
 			 * sizemax: 96 DPs at SSP, 96 * 1024 = 98304
 			 */
-			if (isopkt[u].length > 98304) {
+			अगर (isopkt[u].length > 98304) अणु
 				ret = -EINVAL;
-				goto error;
-			}
+				जाओ error;
+			पूर्ण
 			totlen += isopkt[u].length;
-		}
-		u *= sizeof(struct usb_iso_packet_descriptor);
+		पूर्ण
+		u *= माप(काष्ठा usb_iso_packet_descriptor);
 		uurb->buffer_length = totlen;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (uurb->buffer_length > 0 &&
-			!access_ok(uurb->buffer, uurb->buffer_length)) {
+	अगर (uurb->buffer_length > 0 &&
+			!access_ok(uurb->buffer, uurb->buffer_length)) अणु
 		ret = -EFAULT;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	as = alloc_async(number_of_packets);
-	if (!as) {
+	अगर (!as) अणु
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	as->usbm = find_memory_area(ps, uurb);
-	if (IS_ERR(as->usbm)) {
+	अगर (IS_ERR(as->usbm)) अणु
 		ret = PTR_ERR(as->usbm);
-		as->usbm = NULL;
-		goto error;
-	}
+		as->usbm = शून्य;
+		जाओ error;
+	पूर्ण
 
-	/* do not use SG buffers when memory mapped segments
+	/* करो not use SG buffers when memory mapped segments
 	 * are in use
 	 */
-	if (as->usbm)
+	अगर (as->usbm)
 		num_sgs = 0;
 
-	u += sizeof(struct async) + sizeof(struct urb) +
+	u += माप(काष्ठा async) + माप(काष्ठा urb) +
 	     (as->usbm ? 0 : uurb->buffer_length) +
-	     num_sgs * sizeof(struct scatterlist);
+	     num_sgs * माप(काष्ठा scatterlist);
 	ret = usbfs_increase_memory_usage(u);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 	as->mem_usage = u;
 
-	if (num_sgs) {
-		as->urb->sg = kmalloc_array(num_sgs,
-					    sizeof(struct scatterlist),
+	अगर (num_sgs) अणु
+		as->urb->sg = kदो_स्मृति_array(num_sgs,
+					    माप(काष्ठा scatterlist),
 					    GFP_KERNEL | __GFP_NOWARN);
-		if (!as->urb->sg) {
+		अगर (!as->urb->sg) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		as->urb->num_sgs = num_sgs;
 		sg_init_table(as->urb->sg, as->urb->num_sgs);
 
 		totlen = uurb->buffer_length;
-		for (i = 0; i < as->urb->num_sgs; i++) {
+		क्रम (i = 0; i < as->urb->num_sgs; i++) अणु
 			u = (totlen > USB_SG_SIZE) ? USB_SG_SIZE : totlen;
-			buf = kmalloc(u, GFP_KERNEL);
-			if (!buf) {
+			buf = kदो_स्मृति(u, GFP_KERNEL);
+			अगर (!buf) अणु
 				ret = -ENOMEM;
-				goto error;
-			}
+				जाओ error;
+			पूर्ण
 			sg_set_buf(&as->urb->sg[i], buf, u);
 
-			if (!is_in) {
-				if (copy_from_user(buf, uurb->buffer, u)) {
+			अगर (!is_in) अणु
+				अगर (copy_from_user(buf, uurb->buffer, u)) अणु
 					ret = -EFAULT;
-					goto error;
-				}
+					जाओ error;
+				पूर्ण
 				uurb->buffer += u;
-			}
+			पूर्ण
 			totlen -= u;
-		}
-	} else if (uurb->buffer_length > 0) {
-		if (as->usbm) {
-			unsigned long uurb_start = (unsigned long)uurb->buffer;
+		पूर्ण
+	पूर्ण अन्यथा अगर (uurb->buffer_length > 0) अणु
+		अगर (as->usbm) अणु
+			अचिन्हित दीर्घ uurb_start = (अचिन्हित दीर्घ)uurb->buffer;
 
 			as->urb->transfer_buffer = as->usbm->mem +
 					(uurb_start - as->usbm->vm_start);
-		} else {
-			as->urb->transfer_buffer = kmalloc(uurb->buffer_length,
+		पूर्ण अन्यथा अणु
+			as->urb->transfer_buffer = kदो_स्मृति(uurb->buffer_length,
 					GFP_KERNEL | __GFP_NOWARN);
-			if (!as->urb->transfer_buffer) {
+			अगर (!as->urb->transfer_buffer) अणु
 				ret = -ENOMEM;
-				goto error;
-			}
-			if (!is_in) {
-				if (copy_from_user(as->urb->transfer_buffer,
+				जाओ error;
+			पूर्ण
+			अगर (!is_in) अणु
+				अगर (copy_from_user(as->urb->transfer_buffer,
 						   uurb->buffer,
-						   uurb->buffer_length)) {
+						   uurb->buffer_length)) अणु
 					ret = -EFAULT;
-					goto error;
-				}
-			} else if (uurb->type == USBDEVFS_URB_TYPE_ISO) {
+					जाओ error;
+				पूर्ण
+			पूर्ण अन्यथा अगर (uurb->type == USBDEVFS_URB_TYPE_ISO) अणु
 				/*
 				 * Isochronous input data may end up being
-				 * discontiguous if some of the packets are
-				 * short. Clear the buffer so that the gaps
-				 * don't leak kernel data to userspace.
+				 * discontiguous अगर some of the packets are
+				 * लघु. Clear the buffer so that the gaps
+				 * करोn't leak kernel data to userspace.
 				 */
-				memset(as->urb->transfer_buffer, 0,
+				स_रखो(as->urb->transfer_buffer, 0,
 						uurb->buffer_length);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	as->urb->dev = ps->dev;
 	as->urb->pipe = (uurb->type << 30) |
-			__create_pipe(ps->dev, uurb->endpoint & 0xf) |
-			(uurb->endpoint & USB_DIR_IN);
+			__create_pipe(ps->dev, uurb->endpoपूर्णांक & 0xf) |
+			(uurb->endpoपूर्णांक & USB_सूची_IN);
 
 	/* This tedious sequence is necessary because the URB_* flags
-	 * are internal to the kernel and subject to change, whereas
+	 * are पूर्णांकernal to the kernel and subject to change, whereas
 	 * the USBDEVFS_URB_* flags are a user API and must not be changed.
 	 */
-	u = (is_in ? URB_DIR_IN : URB_DIR_OUT);
-	if (uurb->flags & USBDEVFS_URB_ISO_ASAP)
+	u = (is_in ? URB_सूची_IN : URB_सूची_OUT);
+	अगर (uurb->flags & USBDEVFS_URB_ISO_ASAP)
 		u |= URB_ISO_ASAP;
-	if (allow_short && uurb->flags & USBDEVFS_URB_SHORT_NOT_OK)
+	अगर (allow_लघु && uurb->flags & USBDEVFS_URB_SHORT_NOT_OK)
 		u |= URB_SHORT_NOT_OK;
-	if (allow_zero && uurb->flags & USBDEVFS_URB_ZERO_PACKET)
+	अगर (allow_zero && uurb->flags & USBDEVFS_URB_ZERO_PACKET)
 		u |= URB_ZERO_PACKET;
-	if (uurb->flags & USBDEVFS_URB_NO_INTERRUPT)
+	अगर (uurb->flags & USBDEVFS_URB_NO_INTERRUPT)
 		u |= URB_NO_INTERRUPT;
 	as->urb->transfer_flags = u;
 
-	if (!allow_short && uurb->flags & USBDEVFS_URB_SHORT_NOT_OK)
+	अगर (!allow_लघु && uurb->flags & USBDEVFS_URB_SHORT_NOT_OK)
 		dev_warn(&ps->dev->dev, "Requested nonsensical USBDEVFS_URB_SHORT_NOT_OK.\n");
-	if (!allow_zero && uurb->flags & USBDEVFS_URB_ZERO_PACKET)
+	अगर (!allow_zero && uurb->flags & USBDEVFS_URB_ZERO_PACKET)
 		dev_warn(&ps->dev->dev, "Requested nonsensical USBDEVFS_URB_ZERO_PACKET.\n");
 
 	as->urb->transfer_buffer_length = uurb->buffer_length;
-	as->urb->setup_packet = (unsigned char *)dr;
-	dr = NULL;
+	as->urb->setup_packet = (अचिन्हित अक्षर *)dr;
+	dr = शून्य;
 	as->urb->start_frame = uurb->start_frame;
 	as->urb->number_of_packets = number_of_packets;
 	as->urb->stream_id = stream_id;
 
-	if (ep->desc.bInterval) {
-		if (uurb->type == USBDEVFS_URB_TYPE_ISO ||
+	अगर (ep->desc.bInterval) अणु
+		अगर (uurb->type == USBDEVFS_URB_TYPE_ISO ||
 				ps->dev->speed == USB_SPEED_HIGH ||
 				ps->dev->speed >= USB_SPEED_SUPER)
-			as->urb->interval = 1 <<
+			as->urb->पूर्णांकerval = 1 <<
 					min(15, ep->desc.bInterval - 1);
-		else
-			as->urb->interval = ep->desc.bInterval;
-	}
+		अन्यथा
+			as->urb->पूर्णांकerval = ep->desc.bInterval;
+	पूर्ण
 
 	as->urb->context = as;
 	as->urb->complete = async_completed;
-	for (totlen = u = 0; u < number_of_packets; u++) {
+	क्रम (totlen = u = 0; u < number_of_packets; u++) अणु
 		as->urb->iso_frame_desc[u].offset = totlen;
 		as->urb->iso_frame_desc[u].length = isopkt[u].length;
 		totlen += isopkt[u].length;
-	}
-	kfree(isopkt);
-	isopkt = NULL;
+	पूर्ण
+	kमुक्त(isopkt);
+	isopkt = शून्य;
 	as->ps = ps;
 	as->userurb = arg;
 	as->userurb_sigval = userurb_sigval;
-	if (as->usbm) {
-		unsigned long uurb_start = (unsigned long)uurb->buffer;
+	अगर (as->usbm) अणु
+		अचिन्हित दीर्घ uurb_start = (अचिन्हित दीर्घ)uurb->buffer;
 
 		as->urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 		as->urb->transfer_dma = as->usbm->dma_handle +
 				(uurb_start - as->usbm->vm_start);
-	} else if (is_in && uurb->buffer_length > 0)
+	पूर्ण अन्यथा अगर (is_in && uurb->buffer_length > 0)
 		as->userbuffer = uurb->buffer;
 	as->signr = uurb->signr;
-	as->ifnum = ifnum;
+	as->अगरnum = अगरnum;
 	as->pid = get_pid(task_pid(current));
 	as->cred = get_current_cred();
 	snoop_urb(ps->dev, as->userurb, as->urb->pipe,
 			as->urb->transfer_buffer_length, 0, SUBMIT,
-			NULL, 0);
-	if (!is_in)
+			शून्य, 0);
+	अगर (!is_in)
 		snoop_urb_data(as->urb, as->urb->transfer_buffer_length);
 
 	async_newpending(as);
 
-	if (usb_endpoint_xfer_bulk(&ep->desc)) {
+	अगर (usb_endpoपूर्णांक_xfer_bulk(&ep->desc)) अणु
 		spin_lock_irq(&ps->lock);
 
-		/* Not exactly the endpoint address; the direction bit is
-		 * shifted to the 0x10 position so that the value will be
+		/* Not exactly the endpoपूर्णांक address; the direction bit is
+		 * shअगरted to the 0x10 position so that the value will be
 		 * between 0 and 31.
 		 */
-		as->bulk_addr = usb_endpoint_num(&ep->desc) |
-			((ep->desc.bEndpointAddress & USB_ENDPOINT_DIR_MASK)
+		as->bulk_addr = usb_endpoपूर्णांक_num(&ep->desc) |
+			((ep->desc.bEndpoपूर्णांकAddress & USB_ENDPOINT_सूची_MASK)
 				>> 3);
 
 		/* If this bulk URB is the start of a new transfer, re-enable
-		 * the endpoint.  Otherwise mark it as a continuation URB.
+		 * the endpoपूर्णांक.  Otherwise mark it as a continuation URB.
 		 */
-		if (uurb->flags & USBDEVFS_URB_BULK_CONTINUATION)
+		अगर (uurb->flags & USBDEVFS_URB_BULK_CONTINUATION)
 			as->bulk_status = AS_CONTINUATION;
-		else
+		अन्यथा
 			ps->disabled_bulk_eps &= ~(1 << as->bulk_addr);
 
-		/* Don't accept continuation URBs if the endpoint is
+		/* Don't accept continuation URBs अगर the endpoपूर्णांक is
 		 * disabled because of an earlier error.
 		 */
-		if (ps->disabled_bulk_eps & (1 << as->bulk_addr))
+		अगर (ps->disabled_bulk_eps & (1 << as->bulk_addr))
 			ret = -EREMOTEIO;
-		else
+		अन्यथा
 			ret = usb_submit_urb(as->urb, GFP_ATOMIC);
 		spin_unlock_irq(&ps->lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = usb_submit_urb(as->urb, GFP_KERNEL);
-	}
+	पूर्ण
 
-	if (ret) {
-		dev_printk(KERN_DEBUG, &ps->dev->dev,
+	अगर (ret) अणु
+		dev_prपूर्णांकk(KERN_DEBUG, &ps->dev->dev,
 			   "usbfs: usb_submit_urb returned %d\n", ret);
 		snoop_urb(ps->dev, as->userurb, as->urb->pipe,
-				0, ret, COMPLETE, NULL, 0);
-		async_removepending(as);
-		goto error;
-	}
-	return 0;
+				0, ret, COMPLETE, शून्य, 0);
+		async_हटाओpending(as);
+		जाओ error;
+	पूर्ण
+	वापस 0;
 
  error:
-	kfree(isopkt);
-	kfree(dr);
-	if (as)
-		free_async(as);
-	return ret;
-}
+	kमुक्त(isopkt);
+	kमुक्त(dr);
+	अगर (as)
+		मुक्त_async(as);
+	वापस ret;
+पूर्ण
 
-static int proc_submiturb(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_urb uurb;
+अटल पूर्णांक proc_submiturb(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_urb uurb;
 	sigval_t userurb_sigval;
 
-	if (copy_from_user(&uurb, arg, sizeof(uurb)))
-		return -EFAULT;
+	अगर (copy_from_user(&uurb, arg, माप(uurb)))
+		वापस -EFAULT;
 
-	memset(&userurb_sigval, 0, sizeof(userurb_sigval));
+	स_रखो(&userurb_sigval, 0, माप(userurb_sigval));
 	userurb_sigval.sival_ptr = arg;
 
-	return proc_do_submiturb(ps, &uurb,
-			(((struct usbdevfs_urb __user *)arg)->iso_frame_desc),
+	वापस proc_करो_submiturb(ps, &uurb,
+			(((काष्ठा usbdevfs_urb __user *)arg)->iso_frame_desc),
 			arg, userurb_sigval);
-}
+पूर्ण
 
-static int proc_unlinkurb(struct usb_dev_state *ps, void __user *arg)
-{
-	struct urb *urb;
-	struct async *as;
-	unsigned long flags;
+अटल पूर्णांक proc_unlinkurb(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा urb *urb;
+	काष्ठा async *as;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ps->lock, flags);
 	as = async_getpending(ps, arg);
-	if (!as) {
+	अगर (!as) अणु
 		spin_unlock_irqrestore(&ps->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	urb = as->urb;
 	usb_get_urb(urb);
 	spin_unlock_irqrestore(&ps->lock, flags);
 
-	usb_kill_urb(urb);
+	usb_समाप्त_urb(urb);
 	usb_put_urb(urb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void compute_isochronous_actual_length(struct urb *urb)
-{
-	unsigned int i;
+अटल व्योम compute_isochronous_actual_length(काष्ठा urb *urb)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (urb->number_of_packets > 0) {
+	अगर (urb->number_of_packets > 0) अणु
 		urb->actual_length = 0;
-		for (i = 0; i < urb->number_of_packets; i++)
+		क्रम (i = 0; i < urb->number_of_packets; i++)
 			urb->actual_length +=
 					urb->iso_frame_desc[i].actual_length;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int processcompl(struct async *as, void __user * __user *arg)
-{
-	struct urb *urb = as->urb;
-	struct usbdevfs_urb __user *userurb = as->userurb;
-	void __user *addr = as->userurb;
-	unsigned int i;
+अटल पूर्णांक processcompl(काष्ठा async *as, व्योम __user * __user *arg)
+अणु
+	काष्ठा urb *urb = as->urb;
+	काष्ठा usbdevfs_urb __user *userurb = as->userurb;
+	व्योम __user *addr = as->userurb;
+	अचिन्हित पूर्णांक i;
 
 	compute_isochronous_actual_length(urb);
-	if (as->userbuffer && urb->actual_length) {
-		if (copy_urb_data_to_user(as->userbuffer, urb))
-			goto err_out;
-	}
-	if (put_user(as->status, &userurb->status))
-		goto err_out;
-	if (put_user(urb->actual_length, &userurb->actual_length))
-		goto err_out;
-	if (put_user(urb->error_count, &userurb->error_count))
-		goto err_out;
+	अगर (as->userbuffer && urb->actual_length) अणु
+		अगर (copy_urb_data_to_user(as->userbuffer, urb))
+			जाओ err_out;
+	पूर्ण
+	अगर (put_user(as->status, &userurb->status))
+		जाओ err_out;
+	अगर (put_user(urb->actual_length, &userurb->actual_length))
+		जाओ err_out;
+	अगर (put_user(urb->error_count, &userurb->error_count))
+		जाओ err_out;
 
-	if (usb_endpoint_xfer_isoc(&urb->ep->desc)) {
-		for (i = 0; i < urb->number_of_packets; i++) {
-			if (put_user(urb->iso_frame_desc[i].actual_length,
+	अगर (usb_endpoपूर्णांक_xfer_isoc(&urb->ep->desc)) अणु
+		क्रम (i = 0; i < urb->number_of_packets; i++) अणु
+			अगर (put_user(urb->iso_frame_desc[i].actual_length,
 				     &userurb->iso_frame_desc[i].actual_length))
-				goto err_out;
-			if (put_user(urb->iso_frame_desc[i].status,
+				जाओ err_out;
+			अगर (put_user(urb->iso_frame_desc[i].status,
 				     &userurb->iso_frame_desc[i].status))
-				goto err_out;
-		}
-	}
+				जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	if (put_user(addr, (void __user * __user *)arg))
-		return -EFAULT;
-	return 0;
+	अगर (put_user(addr, (व्योम __user * __user *)arg))
+		वापस -EFAULT;
+	वापस 0;
 
 err_out:
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-static struct async *reap_as(struct usb_dev_state *ps)
-{
-	DECLARE_WAITQUEUE(wait, current);
-	struct async *as = NULL;
-	struct usb_device *dev = ps->dev;
+अटल काष्ठा async *reap_as(काष्ठा usb_dev_state *ps)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
+	काष्ठा async *as = शून्य;
+	काष्ठा usb_device *dev = ps->dev;
 
-	add_wait_queue(&ps->wait, &wait);
-	for (;;) {
+	add_रुको_queue(&ps->रुको, &रुको);
+	क्रम (;;) अणु
 		__set_current_state(TASK_INTERRUPTIBLE);
-		as = async_getcompleted(ps);
-		if (as || !connected(ps))
-			break;
-		if (signal_pending(current))
-			break;
+		as = async_अ_लोompleted(ps);
+		अगर (as || !connected(ps))
+			अवरोध;
+		अगर (संकेत_pending(current))
+			अवरोध;
 		usb_unlock_device(dev);
 		schedule();
 		usb_lock_device(dev);
-	}
-	remove_wait_queue(&ps->wait, &wait);
+	पूर्ण
+	हटाओ_रुको_queue(&ps->रुको, &रुको);
 	set_current_state(TASK_RUNNING);
-	return as;
-}
+	वापस as;
+पूर्ण
 
-static int proc_reapurb(struct usb_dev_state *ps, void __user *arg)
-{
-	struct async *as = reap_as(ps);
+अटल पूर्णांक proc_reapurb(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा async *as = reap_as(ps);
 
-	if (as) {
-		int retval;
+	अगर (as) अणु
+		पूर्णांक retval;
 
 		snoop(&ps->dev->dev, "reap %px\n", as->userurb);
-		retval = processcompl(as, (void __user * __user *)arg);
-		free_async(as);
-		return retval;
-	}
-	if (signal_pending(current))
-		return -EINTR;
-	return -ENODEV;
-}
+		retval = processcompl(as, (व्योम __user * __user *)arg);
+		मुक्त_async(as);
+		वापस retval;
+	पूर्ण
+	अगर (संकेत_pending(current))
+		वापस -EINTR;
+	वापस -ENODEV;
+पूर्ण
 
-static int proc_reapurbnonblock(struct usb_dev_state *ps, void __user *arg)
-{
-	int retval;
-	struct async *as;
+अटल पूर्णांक proc_reapurbnonblock(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	पूर्णांक retval;
+	काष्ठा async *as;
 
-	as = async_getcompleted(ps);
-	if (as) {
+	as = async_अ_लोompleted(ps);
+	अगर (as) अणु
 		snoop(&ps->dev->dev, "reap %px\n", as->userurb);
-		retval = processcompl(as, (void __user * __user *)arg);
-		free_async(as);
-	} else {
+		retval = processcompl(as, (व्योम __user * __user *)arg);
+		मुक्त_async(as);
+	पूर्ण अन्यथा अणु
 		retval = (connected(ps) ? -EAGAIN : -ENODEV);
-	}
-	return retval;
-}
+	पूर्ण
+	वापस retval;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static int proc_control_compat(struct usb_dev_state *ps,
-				struct usbdevfs_ctrltransfer32 __user *p32)
-{
-	struct usbdevfs_ctrltransfer ctrl;
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक proc_control_compat(काष्ठा usb_dev_state *ps,
+				काष्ठा usbdevfs_ctrltransfer32 __user *p32)
+अणु
+	काष्ठा usbdevfs_ctrltransfer ctrl;
 	u32 udata;
 
-	if (copy_from_user(&ctrl, p32, sizeof(*p32) - sizeof(compat_caddr_t)) ||
+	अगर (copy_from_user(&ctrl, p32, माप(*p32) - माप(compat_caddr_t)) ||
 	    get_user(udata, &p32->data))
-		return -EFAULT;
+		वापस -EFAULT;
 	ctrl.data = compat_ptr(udata);
-	return do_proc_control(ps, &ctrl);
-}
+	वापस करो_proc_control(ps, &ctrl);
+पूर्ण
 
-static int proc_bulk_compat(struct usb_dev_state *ps,
-			struct usbdevfs_bulktransfer32 __user *p32)
-{
-	struct usbdevfs_bulktransfer bulk;
+अटल पूर्णांक proc_bulk_compat(काष्ठा usb_dev_state *ps,
+			काष्ठा usbdevfs_bulktransfer32 __user *p32)
+अणु
+	काष्ठा usbdevfs_bulktransfer bulk;
 	compat_caddr_t addr;
 
-	if (get_user(bulk.ep, &p32->ep) ||
+	अगर (get_user(bulk.ep, &p32->ep) ||
 	    get_user(bulk.len, &p32->len) ||
-	    get_user(bulk.timeout, &p32->timeout) ||
+	    get_user(bulk.समयout, &p32->समयout) ||
 	    get_user(addr, &p32->data))
-		return -EFAULT;
+		वापस -EFAULT;
 	bulk.data = compat_ptr(addr);
-	return do_proc_bulk(ps, &bulk);
-}
+	वापस करो_proc_bulk(ps, &bulk);
+पूर्ण
 
-static int proc_disconnectsignal_compat(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_disconnectsignal32 ds;
+अटल पूर्णांक proc_disconnectसंकेत_compat(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_disconnectसंकेत32 ds;
 
-	if (copy_from_user(&ds, arg, sizeof(ds)))
-		return -EFAULT;
+	अगर (copy_from_user(&ds, arg, माप(ds)))
+		वापस -EFAULT;
 	ps->discsignr = ds.signr;
-	ps->disccontext.sival_int = ds.context;
-	return 0;
-}
+	ps->disccontext.sival_पूर्णांक = ds.context;
+	वापस 0;
+पूर्ण
 
-static int get_urb32(struct usbdevfs_urb *kurb,
-		     struct usbdevfs_urb32 __user *uurb)
-{
-	struct usbdevfs_urb32 urb32;
-	if (copy_from_user(&urb32, uurb, sizeof(*uurb)))
-		return -EFAULT;
+अटल पूर्णांक get_urb32(काष्ठा usbdevfs_urb *kurb,
+		     काष्ठा usbdevfs_urb32 __user *uurb)
+अणु
+	काष्ठा usbdevfs_urb32 urb32;
+	अगर (copy_from_user(&urb32, uurb, माप(*uurb)))
+		वापस -EFAULT;
 	kurb->type = urb32.type;
-	kurb->endpoint = urb32.endpoint;
+	kurb->endpoपूर्णांक = urb32.endpoपूर्णांक;
 	kurb->status = urb32.status;
 	kurb->flags = urb32.flags;
 	kurb->buffer = compat_ptr(urb32.buffer);
@@ -2086,732 +2087,732 @@ static int get_urb32(struct usbdevfs_urb *kurb,
 	kurb->error_count = urb32.error_count;
 	kurb->signr = urb32.signr;
 	kurb->usercontext = compat_ptr(urb32.usercontext);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int proc_submiturb_compat(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_urb uurb;
+अटल पूर्णांक proc_submiturb_compat(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_urb uurb;
 	sigval_t userurb_sigval;
 
-	if (get_urb32(&uurb, (struct usbdevfs_urb32 __user *)arg))
-		return -EFAULT;
+	अगर (get_urb32(&uurb, (काष्ठा usbdevfs_urb32 __user *)arg))
+		वापस -EFAULT;
 
-	memset(&userurb_sigval, 0, sizeof(userurb_sigval));
-	userurb_sigval.sival_int = ptr_to_compat(arg);
+	स_रखो(&userurb_sigval, 0, माप(userurb_sigval));
+	userurb_sigval.sival_पूर्णांक = ptr_to_compat(arg);
 
-	return proc_do_submiturb(ps, &uurb,
-			((struct usbdevfs_urb32 __user *)arg)->iso_frame_desc,
+	वापस proc_करो_submiturb(ps, &uurb,
+			((काष्ठा usbdevfs_urb32 __user *)arg)->iso_frame_desc,
 			arg, userurb_sigval);
-}
+पूर्ण
 
-static int processcompl_compat(struct async *as, void __user * __user *arg)
-{
-	struct urb *urb = as->urb;
-	struct usbdevfs_urb32 __user *userurb = as->userurb;
-	void __user *addr = as->userurb;
-	unsigned int i;
+अटल पूर्णांक processcompl_compat(काष्ठा async *as, व्योम __user * __user *arg)
+अणु
+	काष्ठा urb *urb = as->urb;
+	काष्ठा usbdevfs_urb32 __user *userurb = as->userurb;
+	व्योम __user *addr = as->userurb;
+	अचिन्हित पूर्णांक i;
 
 	compute_isochronous_actual_length(urb);
-	if (as->userbuffer && urb->actual_length) {
-		if (copy_urb_data_to_user(as->userbuffer, urb))
-			return -EFAULT;
-	}
-	if (put_user(as->status, &userurb->status))
-		return -EFAULT;
-	if (put_user(urb->actual_length, &userurb->actual_length))
-		return -EFAULT;
-	if (put_user(urb->error_count, &userurb->error_count))
-		return -EFAULT;
+	अगर (as->userbuffer && urb->actual_length) अणु
+		अगर (copy_urb_data_to_user(as->userbuffer, urb))
+			वापस -EFAULT;
+	पूर्ण
+	अगर (put_user(as->status, &userurb->status))
+		वापस -EFAULT;
+	अगर (put_user(urb->actual_length, &userurb->actual_length))
+		वापस -EFAULT;
+	अगर (put_user(urb->error_count, &userurb->error_count))
+		वापस -EFAULT;
 
-	if (usb_endpoint_xfer_isoc(&urb->ep->desc)) {
-		for (i = 0; i < urb->number_of_packets; i++) {
-			if (put_user(urb->iso_frame_desc[i].actual_length,
+	अगर (usb_endpoपूर्णांक_xfer_isoc(&urb->ep->desc)) अणु
+		क्रम (i = 0; i < urb->number_of_packets; i++) अणु
+			अगर (put_user(urb->iso_frame_desc[i].actual_length,
 				     &userurb->iso_frame_desc[i].actual_length))
-				return -EFAULT;
-			if (put_user(urb->iso_frame_desc[i].status,
+				वापस -EFAULT;
+			अगर (put_user(urb->iso_frame_desc[i].status,
 				     &userurb->iso_frame_desc[i].status))
-				return -EFAULT;
-		}
-	}
+				वापस -EFAULT;
+		पूर्ण
+	पूर्ण
 
-	if (put_user(ptr_to_compat(addr), (u32 __user *)arg))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_user(ptr_to_compat(addr), (u32 __user *)arg))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int proc_reapurb_compat(struct usb_dev_state *ps, void __user *arg)
-{
-	struct async *as = reap_as(ps);
+अटल पूर्णांक proc_reapurb_compat(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा async *as = reap_as(ps);
 
-	if (as) {
-		int retval;
+	अगर (as) अणु
+		पूर्णांक retval;
 
 		snoop(&ps->dev->dev, "reap %px\n", as->userurb);
-		retval = processcompl_compat(as, (void __user * __user *)arg);
-		free_async(as);
-		return retval;
-	}
-	if (signal_pending(current))
-		return -EINTR;
-	return -ENODEV;
-}
+		retval = processcompl_compat(as, (व्योम __user * __user *)arg);
+		मुक्त_async(as);
+		वापस retval;
+	पूर्ण
+	अगर (संकेत_pending(current))
+		वापस -EINTR;
+	वापस -ENODEV;
+पूर्ण
 
-static int proc_reapurbnonblock_compat(struct usb_dev_state *ps, void __user *arg)
-{
-	int retval;
-	struct async *as;
+अटल पूर्णांक proc_reapurbnonblock_compat(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	पूर्णांक retval;
+	काष्ठा async *as;
 
-	as = async_getcompleted(ps);
-	if (as) {
+	as = async_अ_लोompleted(ps);
+	अगर (as) अणु
 		snoop(&ps->dev->dev, "reap %px\n", as->userurb);
-		retval = processcompl_compat(as, (void __user * __user *)arg);
-		free_async(as);
-	} else {
+		retval = processcompl_compat(as, (व्योम __user * __user *)arg);
+		मुक्त_async(as);
+	पूर्ण अन्यथा अणु
 		retval = (connected(ps) ? -EAGAIN : -ENODEV);
-	}
-	return retval;
-}
+	पूर्ण
+	वापस retval;
+पूर्ण
 
 
-#endif
+#पूर्ण_अगर
 
-static int proc_disconnectsignal(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_disconnectsignal ds;
+अटल पूर्णांक proc_disconnectसंकेत(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_disconnectसंकेत ds;
 
-	if (copy_from_user(&ds, arg, sizeof(ds)))
-		return -EFAULT;
+	अगर (copy_from_user(&ds, arg, माप(ds)))
+		वापस -EFAULT;
 	ps->discsignr = ds.signr;
 	ps->disccontext.sival_ptr = ds.context;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int proc_claiminterface(struct usb_dev_state *ps, void __user *arg)
-{
-	unsigned int ifnum;
+अटल पूर्णांक proc_claimपूर्णांकerface(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	अचिन्हित पूर्णांक अगरnum;
 
-	if (get_user(ifnum, (unsigned int __user *)arg))
-		return -EFAULT;
-	return claimintf(ps, ifnum);
-}
+	अगर (get_user(अगरnum, (अचिन्हित पूर्णांक __user *)arg))
+		वापस -EFAULT;
+	वापस claimपूर्णांकf(ps, अगरnum);
+पूर्ण
 
-static int proc_releaseinterface(struct usb_dev_state *ps, void __user *arg)
-{
-	unsigned int ifnum;
-	int ret;
+अटल पूर्णांक proc_releaseपूर्णांकerface(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	अचिन्हित पूर्णांक अगरnum;
+	पूर्णांक ret;
 
-	if (get_user(ifnum, (unsigned int __user *)arg))
-		return -EFAULT;
-	ret = releaseintf(ps, ifnum);
-	if (ret < 0)
-		return ret;
-	destroy_async_on_interface(ps, ifnum);
-	return 0;
-}
+	अगर (get_user(अगरnum, (अचिन्हित पूर्णांक __user *)arg))
+		वापस -EFAULT;
+	ret = releaseपूर्णांकf(ps, अगरnum);
+	अगर (ret < 0)
+		वापस ret;
+	destroy_async_on_पूर्णांकerface(ps, अगरnum);
+	वापस 0;
+पूर्ण
 
-static int proc_ioctl(struct usb_dev_state *ps, struct usbdevfs_ioctl *ctl)
-{
-	int			size;
-	void			*buf = NULL;
-	int			retval = 0;
-	struct usb_interface    *intf = NULL;
-	struct usb_driver       *driver = NULL;
+अटल पूर्णांक proc_ioctl(काष्ठा usb_dev_state *ps, काष्ठा usbdevfs_ioctl *ctl)
+अणु
+	पूर्णांक			size;
+	व्योम			*buf = शून्य;
+	पूर्णांक			retval = 0;
+	काष्ठा usb_पूर्णांकerface    *पूर्णांकf = शून्य;
+	काष्ठा usb_driver       *driver = शून्य;
 
-	if (ps->privileges_dropped)
-		return -EACCES;
+	अगर (ps->privileges_dropped)
+		वापस -EACCES;
 
-	if (!connected(ps))
-		return -ENODEV;
+	अगर (!connected(ps))
+		वापस -ENODEV;
 
 	/* alloc buffer */
 	size = _IOC_SIZE(ctl->ioctl_code);
-	if (size > 0) {
-		buf = kmalloc(size, GFP_KERNEL);
-		if (buf == NULL)
-			return -ENOMEM;
-		if ((_IOC_DIR(ctl->ioctl_code) & _IOC_WRITE)) {
-			if (copy_from_user(buf, ctl->data, size)) {
-				kfree(buf);
-				return -EFAULT;
-			}
-		} else {
-			memset(buf, 0, size);
-		}
-	}
+	अगर (size > 0) अणु
+		buf = kदो_स्मृति(size, GFP_KERNEL);
+		अगर (buf == शून्य)
+			वापस -ENOMEM;
+		अगर ((_IOC_सूची(ctl->ioctl_code) & _IOC_WRITE)) अणु
+			अगर (copy_from_user(buf, ctl->data, size)) अणु
+				kमुक्त(buf);
+				वापस -EFAULT;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			स_रखो(buf, 0, size);
+		पूर्ण
+	पूर्ण
 
-	if (ps->dev->state != USB_STATE_CONFIGURED)
+	अगर (ps->dev->state != USB_STATE_CONFIGURED)
 		retval = -EHOSTUNREACH;
-	else if (!(intf = usb_ifnum_to_if(ps->dev, ctl->ifno)))
+	अन्यथा अगर (!(पूर्णांकf = usb_अगरnum_to_अगर(ps->dev, ctl->अगरno)))
 		retval = -EINVAL;
-	else switch (ctl->ioctl_code) {
+	अन्यथा चयन (ctl->ioctl_code) अणु
 
-	/* disconnect kernel driver from interface */
-	case USBDEVFS_DISCONNECT:
-		if (intf->dev.driver) {
-			driver = to_usb_driver(intf->dev.driver);
-			dev_dbg(&intf->dev, "disconnect by usbfs\n");
-			usb_driver_release_interface(driver, intf);
-		} else
+	/* disconnect kernel driver from पूर्णांकerface */
+	हाल USBDEVFS_DISCONNECT:
+		अगर (पूर्णांकf->dev.driver) अणु
+			driver = to_usb_driver(पूर्णांकf->dev.driver);
+			dev_dbg(&पूर्णांकf->dev, "disconnect by usbfs\n");
+			usb_driver_release_पूर्णांकerface(driver, पूर्णांकf);
+		पूर्ण अन्यथा
 			retval = -ENODATA;
-		break;
+		अवरोध;
 
-	/* let kernel drivers try to (re)bind to the interface */
-	case USBDEVFS_CONNECT:
-		if (!intf->dev.driver)
-			retval = device_attach(&intf->dev);
-		else
+	/* let kernel drivers try to (re)bind to the पूर्णांकerface */
+	हाल USBDEVFS_CONNECT:
+		अगर (!पूर्णांकf->dev.driver)
+			retval = device_attach(&पूर्णांकf->dev);
+		अन्यथा
 			retval = -EBUSY;
-		break;
+		अवरोध;
 
-	/* talk directly to the interface's driver */
-	default:
-		if (intf->dev.driver)
-			driver = to_usb_driver(intf->dev.driver);
-		if (driver == NULL || driver->unlocked_ioctl == NULL) {
+	/* talk directly to the पूर्णांकerface's driver */
+	शेष:
+		अगर (पूर्णांकf->dev.driver)
+			driver = to_usb_driver(पूर्णांकf->dev.driver);
+		अगर (driver == शून्य || driver->unlocked_ioctl == शून्य) अणु
 			retval = -ENOTTY;
-		} else {
-			retval = driver->unlocked_ioctl(intf, ctl->ioctl_code, buf);
-			if (retval == -ENOIOCTLCMD)
+		पूर्ण अन्यथा अणु
+			retval = driver->unlocked_ioctl(पूर्णांकf, ctl->ioctl_code, buf);
+			अगर (retval == -ENOIOCTLCMD)
 				retval = -ENOTTY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* cleanup and return */
-	if (retval >= 0
-			&& (_IOC_DIR(ctl->ioctl_code) & _IOC_READ) != 0
+	/* cleanup and वापस */
+	अगर (retval >= 0
+			&& (_IOC_सूची(ctl->ioctl_code) & _IOC_READ) != 0
 			&& size > 0
 			&& copy_to_user(ctl->data, buf, size) != 0)
 		retval = -EFAULT;
 
-	kfree(buf);
-	return retval;
-}
+	kमुक्त(buf);
+	वापस retval;
+पूर्ण
 
-static int proc_ioctl_default(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_ioctl	ctrl;
+अटल पूर्णांक proc_ioctl_शेष(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_ioctl	ctrl;
 
-	if (copy_from_user(&ctrl, arg, sizeof(ctrl)))
-		return -EFAULT;
-	return proc_ioctl(ps, &ctrl);
-}
+	अगर (copy_from_user(&ctrl, arg, माप(ctrl)))
+		वापस -EFAULT;
+	वापस proc_ioctl(ps, &ctrl);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static int proc_ioctl_compat(struct usb_dev_state *ps, compat_uptr_t arg)
-{
-	struct usbdevfs_ioctl32 ioc32;
-	struct usbdevfs_ioctl ctrl;
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक proc_ioctl_compat(काष्ठा usb_dev_state *ps, compat_uptr_t arg)
+अणु
+	काष्ठा usbdevfs_ioctl32 ioc32;
+	काष्ठा usbdevfs_ioctl ctrl;
 
-	if (copy_from_user(&ioc32, compat_ptr(arg), sizeof(ioc32)))
-		return -EFAULT;
-	ctrl.ifno = ioc32.ifno;
+	अगर (copy_from_user(&ioc32, compat_ptr(arg), माप(ioc32)))
+		वापस -EFAULT;
+	ctrl.अगरno = ioc32.अगरno;
 	ctrl.ioctl_code = ioc32.ioctl_code;
 	ctrl.data = compat_ptr(ioc32.data);
-	return proc_ioctl(ps, &ctrl);
-}
-#endif
+	वापस proc_ioctl(ps, &ctrl);
+पूर्ण
+#पूर्ण_अगर
 
-static int proc_claim_port(struct usb_dev_state *ps, void __user *arg)
-{
-	unsigned portnum;
-	int rc;
+अटल पूर्णांक proc_claim_port(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	अचिन्हित portnum;
+	पूर्णांक rc;
 
-	if (get_user(portnum, (unsigned __user *) arg))
-		return -EFAULT;
+	अगर (get_user(portnum, (अचिन्हित __user *) arg))
+		वापस -EFAULT;
 	rc = usb_hub_claim_port(ps->dev, portnum, ps);
-	if (rc == 0)
+	अगर (rc == 0)
 		snoop(&ps->dev->dev, "port %d claimed by process %d: %s\n",
 			portnum, task_pid_nr(current), current->comm);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int proc_release_port(struct usb_dev_state *ps, void __user *arg)
-{
-	unsigned portnum;
+अटल पूर्णांक proc_release_port(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	अचिन्हित portnum;
 
-	if (get_user(portnum, (unsigned __user *) arg))
-		return -EFAULT;
-	return usb_hub_release_port(ps->dev, portnum, ps);
-}
+	अगर (get_user(portnum, (अचिन्हित __user *) arg))
+		वापस -EFAULT;
+	वापस usb_hub_release_port(ps->dev, portnum, ps);
+पूर्ण
 
-static int proc_get_capabilities(struct usb_dev_state *ps, void __user *arg)
-{
+अटल पूर्णांक proc_get_capabilities(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
 	__u32 caps;
 
 	caps = USBDEVFS_CAP_ZERO_PACKET | USBDEVFS_CAP_NO_PACKET_SIZE_LIM |
 			USBDEVFS_CAP_REAP_AFTER_DISCONNECT | USBDEVFS_CAP_MMAP |
 			USBDEVFS_CAP_DROP_PRIVILEGES |
 			USBDEVFS_CAP_CONNINFO_EX | MAYBE_CAP_SUSPEND;
-	if (!ps->dev->bus->no_stop_on_short)
+	अगर (!ps->dev->bus->no_stop_on_लघु)
 		caps |= USBDEVFS_CAP_BULK_CONTINUATION;
-	if (ps->dev->bus->sg_tablesize)
+	अगर (ps->dev->bus->sg_tablesize)
 		caps |= USBDEVFS_CAP_BULK_SCATTER_GATHER;
 
-	if (put_user(caps, (__u32 __user *)arg))
-		return -EFAULT;
+	अगर (put_user(caps, (__u32 __user *)arg))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int proc_disconnect_claim(struct usb_dev_state *ps, void __user *arg)
-{
-	struct usbdevfs_disconnect_claim dc;
-	struct usb_interface *intf;
+अटल पूर्णांक proc_disconnect_claim(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	काष्ठा usbdevfs_disconnect_claim dc;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
 
-	if (copy_from_user(&dc, arg, sizeof(dc)))
-		return -EFAULT;
+	अगर (copy_from_user(&dc, arg, माप(dc)))
+		वापस -EFAULT;
 
-	intf = usb_ifnum_to_if(ps->dev, dc.interface);
-	if (!intf)
-		return -EINVAL;
+	पूर्णांकf = usb_अगरnum_to_अगर(ps->dev, dc.पूर्णांकerface);
+	अगर (!पूर्णांकf)
+		वापस -EINVAL;
 
-	if (intf->dev.driver) {
-		struct usb_driver *driver = to_usb_driver(intf->dev.driver);
+	अगर (पूर्णांकf->dev.driver) अणु
+		काष्ठा usb_driver *driver = to_usb_driver(पूर्णांकf->dev.driver);
 
-		if (ps->privileges_dropped)
-			return -EACCES;
+		अगर (ps->privileges_dropped)
+			वापस -EACCES;
 
-		if ((dc.flags & USBDEVFS_DISCONNECT_CLAIM_IF_DRIVER) &&
-				strncmp(dc.driver, intf->dev.driver->name,
-					sizeof(dc.driver)) != 0)
-			return -EBUSY;
+		अगर ((dc.flags & USBDEVFS_DISCONNECT_CLAIM_IF_DRIVER) &&
+				म_भेदन(dc.driver, पूर्णांकf->dev.driver->name,
+					माप(dc.driver)) != 0)
+			वापस -EBUSY;
 
-		if ((dc.flags & USBDEVFS_DISCONNECT_CLAIM_EXCEPT_DRIVER) &&
-				strncmp(dc.driver, intf->dev.driver->name,
-					sizeof(dc.driver)) == 0)
-			return -EBUSY;
+		अगर ((dc.flags & USBDEVFS_DISCONNECT_CLAIM_EXCEPT_DRIVER) &&
+				म_भेदन(dc.driver, पूर्णांकf->dev.driver->name,
+					माप(dc.driver)) == 0)
+			वापस -EBUSY;
 
-		dev_dbg(&intf->dev, "disconnect by usbfs\n");
-		usb_driver_release_interface(driver, intf);
-	}
+		dev_dbg(&पूर्णांकf->dev, "disconnect by usbfs\n");
+		usb_driver_release_पूर्णांकerface(driver, पूर्णांकf);
+	पूर्ण
 
-	return claimintf(ps, dc.interface);
-}
+	वापस claimपूर्णांकf(ps, dc.पूर्णांकerface);
+पूर्ण
 
-static int proc_alloc_streams(struct usb_dev_state *ps, void __user *arg)
-{
-	unsigned num_streams, num_eps;
-	struct usb_host_endpoint **eps;
-	struct usb_interface *intf;
-	int r;
+अटल पूर्णांक proc_alloc_streams(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	अचिन्हित num_streams, num_eps;
+	काष्ठा usb_host_endpoपूर्णांक **eps;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	पूर्णांक r;
 
 	r = parse_usbdevfs_streams(ps, arg, &num_streams, &num_eps,
-				   &eps, &intf);
-	if (r)
-		return r;
+				   &eps, &पूर्णांकf);
+	अगर (r)
+		वापस r;
 
-	destroy_async_on_interface(ps,
-				   intf->altsetting[0].desc.bInterfaceNumber);
+	destroy_async_on_पूर्णांकerface(ps,
+				   पूर्णांकf->altsetting[0].desc.bInterfaceNumber);
 
-	r = usb_alloc_streams(intf, eps, num_eps, num_streams, GFP_KERNEL);
-	kfree(eps);
-	return r;
-}
+	r = usb_alloc_streams(पूर्णांकf, eps, num_eps, num_streams, GFP_KERNEL);
+	kमुक्त(eps);
+	वापस r;
+पूर्ण
 
-static int proc_free_streams(struct usb_dev_state *ps, void __user *arg)
-{
-	unsigned num_eps;
-	struct usb_host_endpoint **eps;
-	struct usb_interface *intf;
-	int r;
+अटल पूर्णांक proc_मुक्त_streams(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
+	अचिन्हित num_eps;
+	काष्ठा usb_host_endpoपूर्णांक **eps;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	पूर्णांक r;
 
-	r = parse_usbdevfs_streams(ps, arg, NULL, &num_eps, &eps, &intf);
-	if (r)
-		return r;
+	r = parse_usbdevfs_streams(ps, arg, शून्य, &num_eps, &eps, &पूर्णांकf);
+	अगर (r)
+		वापस r;
 
-	destroy_async_on_interface(ps,
-				   intf->altsetting[0].desc.bInterfaceNumber);
+	destroy_async_on_पूर्णांकerface(ps,
+				   पूर्णांकf->altsetting[0].desc.bInterfaceNumber);
 
-	r = usb_free_streams(intf, eps, num_eps, GFP_KERNEL);
-	kfree(eps);
-	return r;
-}
+	r = usb_मुक्त_streams(पूर्णांकf, eps, num_eps, GFP_KERNEL);
+	kमुक्त(eps);
+	वापस r;
+पूर्ण
 
-static int proc_drop_privileges(struct usb_dev_state *ps, void __user *arg)
-{
+अटल पूर्णांक proc_drop_privileges(काष्ठा usb_dev_state *ps, व्योम __user *arg)
+अणु
 	u32 data;
 
-	if (copy_from_user(&data, arg, sizeof(data)))
-		return -EFAULT;
+	अगर (copy_from_user(&data, arg, माप(data)))
+		वापस -EFAULT;
 
 	/* This is a one way operation. Once privileges are
 	 * dropped, you cannot regain them. You may however reissue
-	 * this ioctl to shrink the allowed interfaces mask.
+	 * this ioctl to shrink the allowed पूर्णांकerfaces mask.
 	 */
-	ps->interface_allowed_mask &= data;
+	ps->पूर्णांकerface_allowed_mask &= data;
 	ps->privileges_dropped = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int proc_forbid_suspend(struct usb_dev_state *ps)
-{
-	int ret = 0;
+अटल पूर्णांक proc_क्रमbid_suspend(काष्ठा usb_dev_state *ps)
+अणु
+	पूर्णांक ret = 0;
 
-	if (ps->suspend_allowed) {
-		ret = usb_autoresume_device(ps->dev);
-		if (ret == 0)
+	अगर (ps->suspend_allowed) अणु
+		ret = usb_स्वतःresume_device(ps->dev);
+		अगर (ret == 0)
 			ps->suspend_allowed = false;
-		else if (ret != -ENODEV)
+		अन्यथा अगर (ret != -ENODEV)
 			ret = -EIO;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int proc_allow_suspend(struct usb_dev_state *ps)
-{
-	if (!connected(ps))
-		return -ENODEV;
+अटल पूर्णांक proc_allow_suspend(काष्ठा usb_dev_state *ps)
+अणु
+	अगर (!connected(ps))
+		वापस -ENODEV;
 
 	WRITE_ONCE(ps->not_yet_resumed, 1);
-	if (!ps->suspend_allowed) {
-		usb_autosuspend_device(ps->dev);
+	अगर (!ps->suspend_allowed) अणु
+		usb_स्वतःsuspend_device(ps->dev);
 		ps->suspend_allowed = true;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int proc_wait_for_resume(struct usb_dev_state *ps)
-{
-	int ret;
+अटल पूर्णांक proc_रुको_क्रम_resume(काष्ठा usb_dev_state *ps)
+अणु
+	पूर्णांक ret;
 
 	usb_unlock_device(ps->dev);
-	ret = wait_event_interruptible(ps->wait_for_resume,
+	ret = रुको_event_पूर्णांकerruptible(ps->रुको_क्रम_resume,
 			READ_ONCE(ps->not_yet_resumed) == 0);
 	usb_lock_device(ps->dev);
 
-	if (ret != 0)
-		return -EINTR;
-	return proc_forbid_suspend(ps);
-}
+	अगर (ret != 0)
+		वापस -EINTR;
+	वापस proc_क्रमbid_suspend(ps);
+पूर्ण
 
 /*
- * NOTE:  All requests here that have interface numbers as parameters
+ * NOTE:  All requests here that have पूर्णांकerface numbers as parameters
  * are assuming that somehow the configuration has been prevented from
  * changing.  But there's no mechanism to ensure that...
  */
-static long usbdev_do_ioctl(struct file *file, unsigned int cmd,
-				void __user *p)
-{
-	struct usb_dev_state *ps = file->private_data;
-	struct inode *inode = file_inode(file);
-	struct usb_device *dev = ps->dev;
-	int ret = -ENOTTY;
+अटल दीर्घ usbdev_करो_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+				व्योम __user *p)
+अणु
+	काष्ठा usb_dev_state *ps = file->निजी_data;
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा usb_device *dev = ps->dev;
+	पूर्णांक ret = -ENOTTY;
 
-	if (!(file->f_mode & FMODE_WRITE))
-		return -EPERM;
+	अगर (!(file->f_mode & FMODE_WRITE))
+		वापस -EPERM;
 
 	usb_lock_device(dev);
 
 	/* Reap operations are allowed even after disconnection */
-	switch (cmd) {
-	case USBDEVFS_REAPURB:
+	चयन (cmd) अणु
+	हाल USBDEVFS_REAPURB:
 		snoop(&dev->dev, "%s: REAPURB\n", __func__);
 		ret = proc_reapurb(ps, p);
-		goto done;
+		जाओ करोne;
 
-	case USBDEVFS_REAPURBNDELAY:
+	हाल USBDEVFS_REAPURBNDELAY:
 		snoop(&dev->dev, "%s: REAPURBNDELAY\n", __func__);
 		ret = proc_reapurbnonblock(ps, p);
-		goto done;
+		जाओ करोne;
 
-#ifdef CONFIG_COMPAT
-	case USBDEVFS_REAPURB32:
+#अगर_घोषित CONFIG_COMPAT
+	हाल USBDEVFS_REAPURB32:
 		snoop(&dev->dev, "%s: REAPURB32\n", __func__);
 		ret = proc_reapurb_compat(ps, p);
-		goto done;
+		जाओ करोne;
 
-	case USBDEVFS_REAPURBNDELAY32:
+	हाल USBDEVFS_REAPURBNDELAY32:
 		snoop(&dev->dev, "%s: REAPURBNDELAY32\n", __func__);
 		ret = proc_reapurbnonblock_compat(ps, p);
-		goto done;
-#endif
-	}
+		जाओ करोne;
+#पूर्ण_अगर
+	पूर्ण
 
-	if (!connected(ps)) {
+	अगर (!connected(ps)) अणु
 		usb_unlock_device(dev);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	switch (cmd) {
-	case USBDEVFS_CONTROL:
+	चयन (cmd) अणु
+	हाल USBDEVFS_CONTROL:
 		snoop(&dev->dev, "%s: CONTROL\n", __func__);
 		ret = proc_control(ps, p);
-		if (ret >= 0)
-			inode->i_mtime = current_time(inode);
-		break;
+		अगर (ret >= 0)
+			inode->i_mसमय = current_समय(inode);
+		अवरोध;
 
-	case USBDEVFS_BULK:
+	हाल USBDEVFS_BULK:
 		snoop(&dev->dev, "%s: BULK\n", __func__);
 		ret = proc_bulk(ps, p);
-		if (ret >= 0)
-			inode->i_mtime = current_time(inode);
-		break;
+		अगर (ret >= 0)
+			inode->i_mसमय = current_समय(inode);
+		अवरोध;
 
-	case USBDEVFS_RESETEP:
+	हाल USBDEVFS_RESETEP:
 		snoop(&dev->dev, "%s: RESETEP\n", __func__);
 		ret = proc_resetep(ps, p);
-		if (ret >= 0)
-			inode->i_mtime = current_time(inode);
-		break;
+		अगर (ret >= 0)
+			inode->i_mसमय = current_समय(inode);
+		अवरोध;
 
-	case USBDEVFS_RESET:
+	हाल USBDEVFS_RESET:
 		snoop(&dev->dev, "%s: RESET\n", __func__);
 		ret = proc_resetdevice(ps);
-		break;
+		अवरोध;
 
-	case USBDEVFS_CLEAR_HALT:
+	हाल USBDEVFS_CLEAR_HALT:
 		snoop(&dev->dev, "%s: CLEAR_HALT\n", __func__);
 		ret = proc_clearhalt(ps, p);
-		if (ret >= 0)
-			inode->i_mtime = current_time(inode);
-		break;
+		अगर (ret >= 0)
+			inode->i_mसमय = current_समय(inode);
+		अवरोध;
 
-	case USBDEVFS_GETDRIVER:
+	हाल USBDEVFS_GETDRIVER:
 		snoop(&dev->dev, "%s: GETDRIVER\n", __func__);
 		ret = proc_getdriver(ps, p);
-		break;
+		अवरोध;
 
-	case USBDEVFS_CONNECTINFO:
+	हाल USBDEVFS_CONNECTINFO:
 		snoop(&dev->dev, "%s: CONNECTINFO\n", __func__);
 		ret = proc_connectinfo(ps, p);
-		break;
+		अवरोध;
 
-	case USBDEVFS_SETINTERFACE:
+	हाल USBDEVFS_SETINTERFACE:
 		snoop(&dev->dev, "%s: SETINTERFACE\n", __func__);
-		ret = proc_setintf(ps, p);
-		break;
+		ret = proc_setपूर्णांकf(ps, p);
+		अवरोध;
 
-	case USBDEVFS_SETCONFIGURATION:
+	हाल USBDEVFS_SETCONFIGURATION:
 		snoop(&dev->dev, "%s: SETCONFIGURATION\n", __func__);
 		ret = proc_setconfig(ps, p);
-		break;
+		अवरोध;
 
-	case USBDEVFS_SUBMITURB:
+	हाल USBDEVFS_SUBMITURB:
 		snoop(&dev->dev, "%s: SUBMITURB\n", __func__);
 		ret = proc_submiturb(ps, p);
-		if (ret >= 0)
-			inode->i_mtime = current_time(inode);
-		break;
+		अगर (ret >= 0)
+			inode->i_mसमय = current_समय(inode);
+		अवरोध;
 
-#ifdef CONFIG_COMPAT
-	case USBDEVFS_CONTROL32:
+#अगर_घोषित CONFIG_COMPAT
+	हाल USBDEVFS_CONTROL32:
 		snoop(&dev->dev, "%s: CONTROL32\n", __func__);
 		ret = proc_control_compat(ps, p);
-		if (ret >= 0)
-			inode->i_mtime = current_time(inode);
-		break;
+		अगर (ret >= 0)
+			inode->i_mसमय = current_समय(inode);
+		अवरोध;
 
-	case USBDEVFS_BULK32:
+	हाल USBDEVFS_BULK32:
 		snoop(&dev->dev, "%s: BULK32\n", __func__);
 		ret = proc_bulk_compat(ps, p);
-		if (ret >= 0)
-			inode->i_mtime = current_time(inode);
-		break;
+		अगर (ret >= 0)
+			inode->i_mसमय = current_समय(inode);
+		अवरोध;
 
-	case USBDEVFS_DISCSIGNAL32:
+	हाल USBDEVFS_DISCSIGNAL32:
 		snoop(&dev->dev, "%s: DISCSIGNAL32\n", __func__);
-		ret = proc_disconnectsignal_compat(ps, p);
-		break;
+		ret = proc_disconnectसंकेत_compat(ps, p);
+		अवरोध;
 
-	case USBDEVFS_SUBMITURB32:
+	हाल USBDEVFS_SUBMITURB32:
 		snoop(&dev->dev, "%s: SUBMITURB32\n", __func__);
 		ret = proc_submiturb_compat(ps, p);
-		if (ret >= 0)
-			inode->i_mtime = current_time(inode);
-		break;
+		अगर (ret >= 0)
+			inode->i_mसमय = current_समय(inode);
+		अवरोध;
 
-	case USBDEVFS_IOCTL32:
+	हाल USBDEVFS_IOCTL32:
 		snoop(&dev->dev, "%s: IOCTL32\n", __func__);
 		ret = proc_ioctl_compat(ps, ptr_to_compat(p));
-		break;
-#endif
+		अवरोध;
+#पूर्ण_अगर
 
-	case USBDEVFS_DISCARDURB:
+	हाल USBDEVFS_DISCARDURB:
 		snoop(&dev->dev, "%s: DISCARDURB %px\n", __func__, p);
 		ret = proc_unlinkurb(ps, p);
-		break;
+		अवरोध;
 
-	case USBDEVFS_DISCSIGNAL:
+	हाल USBDEVFS_DISCSIGNAL:
 		snoop(&dev->dev, "%s: DISCSIGNAL\n", __func__);
-		ret = proc_disconnectsignal(ps, p);
-		break;
+		ret = proc_disconnectसंकेत(ps, p);
+		अवरोध;
 
-	case USBDEVFS_CLAIMINTERFACE:
+	हाल USBDEVFS_CLAIMINTERFACE:
 		snoop(&dev->dev, "%s: CLAIMINTERFACE\n", __func__);
-		ret = proc_claiminterface(ps, p);
-		break;
+		ret = proc_claimपूर्णांकerface(ps, p);
+		अवरोध;
 
-	case USBDEVFS_RELEASEINTERFACE:
+	हाल USBDEVFS_RELEASEINTERFACE:
 		snoop(&dev->dev, "%s: RELEASEINTERFACE\n", __func__);
-		ret = proc_releaseinterface(ps, p);
-		break;
+		ret = proc_releaseपूर्णांकerface(ps, p);
+		अवरोध;
 
-	case USBDEVFS_IOCTL:
+	हाल USBDEVFS_IOCTL:
 		snoop(&dev->dev, "%s: IOCTL\n", __func__);
-		ret = proc_ioctl_default(ps, p);
-		break;
+		ret = proc_ioctl_शेष(ps, p);
+		अवरोध;
 
-	case USBDEVFS_CLAIM_PORT:
+	हाल USBDEVFS_CLAIM_PORT:
 		snoop(&dev->dev, "%s: CLAIM_PORT\n", __func__);
 		ret = proc_claim_port(ps, p);
-		break;
+		अवरोध;
 
-	case USBDEVFS_RELEASE_PORT:
+	हाल USBDEVFS_RELEASE_PORT:
 		snoop(&dev->dev, "%s: RELEASE_PORT\n", __func__);
 		ret = proc_release_port(ps, p);
-		break;
-	case USBDEVFS_GET_CAPABILITIES:
+		अवरोध;
+	हाल USBDEVFS_GET_CAPABILITIES:
 		ret = proc_get_capabilities(ps, p);
-		break;
-	case USBDEVFS_DISCONNECT_CLAIM:
+		अवरोध;
+	हाल USBDEVFS_DISCONNECT_CLAIM:
 		ret = proc_disconnect_claim(ps, p);
-		break;
-	case USBDEVFS_ALLOC_STREAMS:
+		अवरोध;
+	हाल USBDEVFS_ALLOC_STREAMS:
 		ret = proc_alloc_streams(ps, p);
-		break;
-	case USBDEVFS_FREE_STREAMS:
-		ret = proc_free_streams(ps, p);
-		break;
-	case USBDEVFS_DROP_PRIVILEGES:
+		अवरोध;
+	हाल USBDEVFS_FREE_STREAMS:
+		ret = proc_मुक्त_streams(ps, p);
+		अवरोध;
+	हाल USBDEVFS_DROP_PRIVILEGES:
 		ret = proc_drop_privileges(ps, p);
-		break;
-	case USBDEVFS_GET_SPEED:
+		अवरोध;
+	हाल USBDEVFS_GET_SPEED:
 		ret = ps->dev->speed;
-		break;
-	case USBDEVFS_FORBID_SUSPEND:
-		ret = proc_forbid_suspend(ps);
-		break;
-	case USBDEVFS_ALLOW_SUSPEND:
+		अवरोध;
+	हाल USBDEVFS_FORBID_SUSPEND:
+		ret = proc_क्रमbid_suspend(ps);
+		अवरोध;
+	हाल USBDEVFS_ALLOW_SUSPEND:
 		ret = proc_allow_suspend(ps);
-		break;
-	case USBDEVFS_WAIT_FOR_RESUME:
-		ret = proc_wait_for_resume(ps);
-		break;
-	}
+		अवरोध;
+	हाल USBDEVFS_WAIT_FOR_RESUME:
+		ret = proc_रुको_क्रम_resume(ps);
+		अवरोध;
+	पूर्ण
 
 	/* Handle variable-length commands */
-	switch (cmd & ~IOCSIZE_MASK) {
-	case USBDEVFS_CONNINFO_EX(0):
+	चयन (cmd & ~IOCSIZE_MASK) अणु
+	हाल USBDEVFS_CONNINFO_EX(0):
 		ret = proc_conninfo_ex(ps, p, _IOC_SIZE(cmd));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
- done:
+ करोne:
 	usb_unlock_device(dev);
-	if (ret >= 0)
-		inode->i_atime = current_time(inode);
-	return ret;
-}
+	अगर (ret >= 0)
+		inode->i_aसमय = current_समय(inode);
+	वापस ret;
+पूर्ण
 
-static long usbdev_ioctl(struct file *file, unsigned int cmd,
-			unsigned long arg)
-{
-	int ret;
+अटल दीर्घ usbdev_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret;
 
-	ret = usbdev_do_ioctl(file, cmd, (void __user *)arg);
+	ret = usbdev_करो_ioctl(file, cmd, (व्योम __user *)arg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* No kernel lock - fine */
-static __poll_t usbdev_poll(struct file *file,
-				struct poll_table_struct *wait)
-{
-	struct usb_dev_state *ps = file->private_data;
+अटल __poll_t usbdev_poll(काष्ठा file *file,
+				काष्ठा poll_table_काष्ठा *रुको)
+अणु
+	काष्ठा usb_dev_state *ps = file->निजी_data;
 	__poll_t mask = 0;
 
-	poll_wait(file, &ps->wait, wait);
-	if (file->f_mode & FMODE_WRITE && !list_empty(&ps->async_completed))
+	poll_रुको(file, &ps->रुको, रुको);
+	अगर (file->f_mode & FMODE_WRITE && !list_empty(&ps->async_completed))
 		mask |= EPOLLOUT | EPOLLWRNORM;
-	if (!connected(ps))
+	अगर (!connected(ps))
 		mask |= EPOLLHUP;
-	if (list_empty(&ps->list))
+	अगर (list_empty(&ps->list))
 		mask |= EPOLLERR;
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-const struct file_operations usbdev_file_operations = {
+स्थिर काष्ठा file_operations usbdev_file_operations = अणु
 	.owner =	  THIS_MODULE,
 	.llseek =	  no_seek_end_llseek,
-	.read =		  usbdev_read,
+	.पढ़ो =		  usbdev_पढ़ो,
 	.poll =		  usbdev_poll,
 	.unlocked_ioctl = usbdev_ioctl,
 	.compat_ioctl =   compat_ptr_ioctl,
 	.mmap =           usbdev_mmap,
-	.open =		  usbdev_open,
+	.खोलो =		  usbdev_खोलो,
 	.release =	  usbdev_release,
-};
+पूर्ण;
 
-static void usbdev_remove(struct usb_device *udev)
-{
-	struct usb_dev_state *ps;
+अटल व्योम usbdev_हटाओ(काष्ठा usb_device *udev)
+अणु
+	काष्ठा usb_dev_state *ps;
 
 	/* Protect against simultaneous resume */
 	mutex_lock(&usbfs_mutex);
-	while (!list_empty(&udev->filelist)) {
-		ps = list_entry(udev->filelist.next, struct usb_dev_state, list);
+	जबतक (!list_empty(&udev->filelist)) अणु
+		ps = list_entry(udev->filelist.next, काष्ठा usb_dev_state, list);
 		destroy_all_async(ps);
-		wake_up_all(&ps->wait);
+		wake_up_all(&ps->रुको);
 		WRITE_ONCE(ps->not_yet_resumed, 0);
-		wake_up_all(&ps->wait_for_resume);
+		wake_up_all(&ps->रुको_क्रम_resume);
 		list_del_init(&ps->list);
-		if (ps->discsignr)
-			kill_pid_usb_asyncio(ps->discsignr, EPIPE, ps->disccontext,
+		अगर (ps->discsignr)
+			समाप्त_pid_usb_asyncio(ps->discsignr, EPIPE, ps->disccontext,
 					     ps->disc_pid, ps->cred);
-	}
+	पूर्ण
 	mutex_unlock(&usbfs_mutex);
-}
+पूर्ण
 
-static int usbdev_notify(struct notifier_block *self,
-			       unsigned long action, void *dev)
-{
-	switch (action) {
-	case USB_DEVICE_ADD:
-		break;
-	case USB_DEVICE_REMOVE:
-		usbdev_remove(dev);
-		break;
-	}
-	return NOTIFY_OK;
-}
+अटल पूर्णांक usbdev_notअगरy(काष्ठा notअगरier_block *self,
+			       अचिन्हित दीर्घ action, व्योम *dev)
+अणु
+	चयन (action) अणु
+	हाल USB_DEVICE_ADD:
+		अवरोध;
+	हाल USB_DEVICE_REMOVE:
+		usbdev_हटाओ(dev);
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block usbdev_nb = {
-	.notifier_call =	usbdev_notify,
-};
+अटल काष्ठा notअगरier_block usbdev_nb = अणु
+	.notअगरier_call =	usbdev_notअगरy,
+पूर्ण;
 
-static struct cdev usb_device_cdev;
+अटल काष्ठा cdev usb_device_cdev;
 
-int __init usb_devio_init(void)
-{
-	int retval;
+पूर्णांक __init usb_devio_init(व्योम)
+अणु
+	पूर्णांक retval;
 
-	retval = register_chrdev_region(USB_DEVICE_DEV, USB_DEVICE_MAX,
+	retval = रेजिस्टर_chrdev_region(USB_DEVICE_DEV, USB_DEVICE_MAX,
 					"usb_device");
-	if (retval) {
-		printk(KERN_ERR "Unable to register minors for usb_device\n");
-		goto out;
-	}
+	अगर (retval) अणु
+		prपूर्णांकk(KERN_ERR "Unable to register minors for usb_device\n");
+		जाओ out;
+	पूर्ण
 	cdev_init(&usb_device_cdev, &usbdev_file_operations);
 	retval = cdev_add(&usb_device_cdev, USB_DEVICE_DEV, USB_DEVICE_MAX);
-	if (retval) {
-		printk(KERN_ERR "Unable to get usb_device major %d\n",
+	अगर (retval) अणु
+		prपूर्णांकk(KERN_ERR "Unable to get usb_device major %d\n",
 		       USB_DEVICE_MAJOR);
-		goto error_cdev;
-	}
-	usb_register_notify(&usbdev_nb);
+		जाओ error_cdev;
+	पूर्ण
+	usb_रेजिस्टर_notअगरy(&usbdev_nb);
 out:
-	return retval;
+	वापस retval;
 
 error_cdev:
-	unregister_chrdev_region(USB_DEVICE_DEV, USB_DEVICE_MAX);
-	goto out;
-}
+	unरेजिस्टर_chrdev_region(USB_DEVICE_DEV, USB_DEVICE_MAX);
+	जाओ out;
+पूर्ण
 
-void usb_devio_cleanup(void)
-{
-	usb_unregister_notify(&usbdev_nb);
+व्योम usb_devio_cleanup(व्योम)
+अणु
+	usb_unरेजिस्टर_notअगरy(&usbdev_nb);
 	cdev_del(&usb_device_cdev);
-	unregister_chrdev_region(USB_DEVICE_DEV, USB_DEVICE_MAX);
-}
+	unरेजिस्टर_chrdev_region(USB_DEVICE_DEV, USB_DEVICE_MAX);
+पूर्ण

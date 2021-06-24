@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * PAPR nvDimm Specific Methods (PDSM) and structs for libndctl
+ * PAPR nvDimm Specअगरic Methods (PDSM) and काष्ठाs क्रम libndctl
  *
  * (C) Copyright IBM 2020
  *
  * Author: Vaibhav Jain <vaibhav at linux.ibm.com>
  */
 
-#ifndef _UAPI_ASM_POWERPC_PAPR_PDSM_H_
-#define _UAPI_ASM_POWERPC_PAPR_PDSM_H_
+#अगर_अघोषित _UAPI_ASM_POWERPC_PAPR_PDSM_H_
+#घोषणा _UAPI_ASM_POWERPC_PAPR_PDSM_H_
 
-#include <linux/types.h>
-#include <linux/ndctl.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ndctl.h>
 
 /*
  * PDSM Envelope:
@@ -34,69 +35,69 @@
  *
  * ND Header:
  * This is the generic libnvdimm header described as 'struct nd_cmd_pkg'
- * which is interpreted by libnvdimm before passed on to papr_scm. Important
+ * which is पूर्णांकerpreted by libnvdimm beक्रमe passed on to papr_scm. Important
  * member fields used are:
  * 'nd_family'		: (In) NVDIMM_FAMILY_PAPR_SCM
  * 'nd_size_in'		: (In) PDSM-HEADER + PDSM-IN-PAYLOAD (usually 0)
  * 'nd_size_out'        : (In) PDSM-HEADER + PDSM-RETURN-PAYLOAD
  * 'nd_command'         : (In) One of PAPR_PDSM_XXX
- * 'nd_fw_size'         : (Out) PDSM-HEADER + size of actual payload returned
+ * 'nd_fw_size'         : (Out) PDSM-HEADER + size of actual payload वापसed
  *
  * PDSM Header:
- * This is papr-scm specific header that precedes the payload. This is defined
+ * This is papr-scm specअगरic header that precedes the payload. This is defined
  * as nd_cmd_pdsm_pkg.  Following fields aare available in this header:
  *
- * 'cmd_status'		: (Out) Errors if any encountered while servicing PDSM.
- * 'reserved'		: Not used, reserved for future and should be set to 0.
- * 'payload'            : A union of all the possible payload structs
+ * 'cmd_status'		: (Out) Errors अगर any encountered जबतक servicing PDSM.
+ * 'reserved'		: Not used, reserved क्रम future and should be set to 0.
+ * 'payload'            : A जोड़ of all the possible payload काष्ठाs
  *
  * PDSM Payload:
  *
- * The layout of the PDSM Payload is defined by various structs shared between
- * papr_scm and libndctl so that contents of payload can be interpreted. As such
- * its defined as a union of all possible payload structs as
+ * The layout of the PDSM Payload is defined by various काष्ठाs shared between
+ * papr_scm and libndctl so that contents of payload can be पूर्णांकerpreted. As such
+ * its defined as a जोड़ of all possible payload काष्ठाs as
  * 'union nd_pdsm_payload'. Based on the value of 'nd_cmd_pkg.nd_command'
- * appropriate member of the union is accessed.
+ * appropriate member of the जोड़ is accessed.
  */
 
 /* Max payload size that we can handle */
-#define ND_PDSM_PAYLOAD_MAX_SIZE 184
+#घोषणा ND_PDSM_PAYLOAD_MAX_SIZE 184
 
 /* Max payload size that we can handle */
-#define ND_PDSM_HDR_SIZE \
-	(sizeof(struct nd_pkg_pdsm) - ND_PDSM_PAYLOAD_MAX_SIZE)
+#घोषणा ND_PDSM_HDR_SIZE \
+	(माप(काष्ठा nd_pkg_pdsm) - ND_PDSM_PAYLOAD_MAX_SIZE)
 
 /* Various nvdimm health indicators */
-#define PAPR_PDSM_DIMM_HEALTHY       0
-#define PAPR_PDSM_DIMM_UNHEALTHY     1
-#define PAPR_PDSM_DIMM_CRITICAL      2
-#define PAPR_PDSM_DIMM_FATAL         3
+#घोषणा PAPR_PDSM_DIMM_HEALTHY       0
+#घोषणा PAPR_PDSM_DIMM_UNHEALTHY     1
+#घोषणा PAPR_PDSM_DIMM_CRITICAL      2
+#घोषणा PAPR_PDSM_DIMM_FATAL         3
 
-/* struct nd_papr_pdsm_health.extension_flags field flags */
+/* काष्ठा nd_papr_pdsm_health.extension_flags field flags */
 
 /* Indicate that the 'dimm_fuel_gauge' field is valid */
-#define PDSM_DIMM_HEALTH_RUN_GAUGE_VALID 1
+#घोषणा PDSM_DIMM_HEALTH_RUN_GAUGE_VALID 1
 
 /*
- * Struct exchanged between kernel & ndctl in for PAPR_PDSM_HEALTH
+ * Struct exchanged between kernel & ndctl in क्रम PAPR_PDSM_HEALTH
  * Various flags indicate the health status of the dimm.
  *
- * extension_flags	: Any extension fields present in the struct.
+ * extension_flags	: Any extension fields present in the काष्ठा.
  * dimm_unarmed		: Dimm not armed. So contents wont persist.
- * dimm_bad_shutdown	: Previous shutdown did not persist contents.
- * dimm_bad_restore	: Contents from previous shutdown werent restored.
+ * dimm_bad_shutकरोwn	: Previous shutकरोwn did not persist contents.
+ * dimm_bad_restore	: Contents from previous shutकरोwn werent restored.
  * dimm_scrubbed	: Contents of the dimm have been scrubbed.
- * dimm_locked		: Contents of the dimm cant be modified until CEC reboot
+ * dimm_locked		: Contents of the dimm cant be modअगरied until CEC reboot
  * dimm_encrypted	: Contents of dimm are encrypted.
  * dimm_health		: Dimm health indicator. One of PAPR_PDSM_DIMM_XXXX
- * dimm_fuel_gauge	: Life remaining of DIMM as a percentage from 0-100
+ * dimm_fuel_gauge	: Lअगरe reमुख्यing of DIMM as a percentage from 0-100
  */
-struct nd_papr_pdsm_health {
-	union {
-		struct {
+काष्ठा nd_papr_pdsm_health अणु
+	जोड़ अणु
+		काष्ठा अणु
 			__u32 extension_flags;
 			__u8 dimm_unarmed;
-			__u8 dimm_bad_shutdown;
+			__u8 dimm_bad_shutकरोwn;
 			__u8 dimm_bad_restore;
 			__u8 dimm_scrubbed;
 			__u8 dimm_locked;
@@ -105,37 +106,37 @@ struct nd_papr_pdsm_health {
 
 			/* Extension flag PDSM_DIMM_HEALTH_RUN_GAUGE_VALID */
 			__u16 dimm_fuel_gauge;
-		};
+		पूर्ण;
 		__u8 buf[ND_PDSM_PAYLOAD_MAX_SIZE];
-	};
-};
+	पूर्ण;
+पूर्ण;
 
 /*
  * Methods to be embedded in ND_CMD_CALL request. These are sent to the kernel
- * via 'nd_cmd_pkg.nd_command' member of the ioctl struct
+ * via 'nd_cmd_pkg.nd_command' member of the ioctl काष्ठा
  */
-enum papr_pdsm {
+क्रमागत papr_pdsm अणु
 	PAPR_PDSM_MIN = 0x0,
 	PAPR_PDSM_HEALTH,
 	PAPR_PDSM_MAX,
-};
+पूर्ण;
 
-/* Maximal union that can hold all possible payload types */
-union nd_pdsm_payload {
-	struct nd_papr_pdsm_health health;
+/* Maximal जोड़ that can hold all possible payload types */
+जोड़ nd_pdsm_payload अणु
+	काष्ठा nd_papr_pdsm_health health;
 	__u8 buf[ND_PDSM_PAYLOAD_MAX_SIZE];
-} __packed;
+पूर्ण __packed;
 
 /*
  * PDSM-header + payload expected with ND_CMD_CALL ioctl from libnvdimm
- * Valid member of union 'payload' is identified via 'nd_cmd_pkg.nd_command'
- * that should always precede this struct when sent to papr_scm via CMD_CALL
- * interface.
+ * Valid member of जोड़ 'payload' is identified via 'nd_cmd_pkg.nd_command'
+ * that should always precede this काष्ठा when sent to papr_scm via CMD_CALL
+ * पूर्णांकerface.
  */
-struct nd_pkg_pdsm {
-	__s32 cmd_status;	/* Out: Sub-cmd status returned back */
+काष्ठा nd_pkg_pdsm अणु
+	__s32 cmd_status;	/* Out: Sub-cmd status वापसed back */
 	__u16 reserved[2];	/* Ignored and to be set as '0' */
-	union nd_pdsm_payload payload;
-} __packed;
+	जोड़ nd_pdsm_payload payload;
+पूर्ण __packed;
 
-#endif /* _UAPI_ASM_POWERPC_PAPR_PDSM_H_ */
+#पूर्ण_अगर /* _UAPI_ASM_POWERPC_PAPR_PDSM_H_ */

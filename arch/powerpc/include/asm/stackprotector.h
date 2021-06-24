@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * GCC stack protector support.
  *
  */
 
-#ifndef _ASM_STACKPROTECTOR_H
-#define _ASM_STACKPROTECTOR_H
+#अगर_अघोषित _ASM_STACKPROTECTOR_H
+#घोषणा _ASM_STACKPROTECTOR_H
 
-#include <linux/random.h>
-#include <linux/version.h>
-#include <asm/reg.h>
-#include <asm/current.h>
-#include <asm/paca.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/version.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/paca.h>
 
 /*
  * Initialize the stackprotector canary value.
  *
- * NOTE: this must only be called from functions that never return,
- * and it must always be inlined.
+ * NOTE: this must only be called from functions that never वापस,
+ * and it must always be अंतरभूतd.
  */
-static __always_inline void boot_init_stack_canary(void)
-{
-	unsigned long canary;
+अटल __always_अंतरभूत व्योम boot_init_stack_canary(व्योम)
+अणु
+	अचिन्हित दीर्घ canary;
 
-	/* Try to get a semi random initial value. */
-	canary = get_random_canary();
+	/* Try to get a semi अक्रमom initial value. */
+	canary = get_अक्रमom_canary();
 	canary ^= mftb();
 	canary ^= LINUX_VERSION_CODE;
 	canary &= CANARY_MASK;
 
 	current->stack_canary = canary;
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 	get_paca()->canary = canary;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#endif	/* _ASM_STACKPROTECTOR_H */
+#पूर्ण_अगर	/* _ASM_STACKPROTECTOR_H */

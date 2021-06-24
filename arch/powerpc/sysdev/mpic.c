@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
- *  arch/powerpc/kernel/mpic.c
+ *  arch/घातerpc/kernel/mpic.c
  *
- *  Driver for interrupt controllers following the OpenPIC standard, the
+ *  Driver क्रम पूर्णांकerrupt controllers following the OpenPIC standard, the
  *  common implementation being IBM's MPIC. This driver also can deal
  *  with various broken implementations of this HW.
  *
@@ -9,65 +10,65 @@
  *  Copyright 2010-2012 Freescale Semiconductor, Inc.
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of this archive
- *  for more details.
+ *  License.  See the file COPYING in the मुख्य directory of this archive
+ *  क्रम more details.
  */
 
-#undef DEBUG
-#undef DEBUG_IPI
-#undef DEBUG_IRQ
-#undef DEBUG_LOW
+#अघोषित DEBUG
+#अघोषित DEBUG_IPI
+#अघोषित DEBUG_IRQ
+#अघोषित DEBUG_LOW
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/smp.h>
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/syscore_ops.h>
-#include <linux/ratelimit.h>
-#include <linux/pgtable.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/ptrace.h>
-#include <asm/signal.h>
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/machdep.h>
-#include <asm/mpic.h>
-#include <asm/smp.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/संकेत.स>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/mpic.h>
+#समावेश <यंत्र/smp.h>
 
-#include "mpic.h"
+#समावेश "mpic.h"
 
-#ifdef DEBUG
-#define DBG(fmt...) printk(fmt)
-#else
-#define DBG(fmt...)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा DBG(fmt...) prपूर्णांकk(fmt)
+#अन्यथा
+#घोषणा DBG(fmt...)
+#पूर्ण_अगर
 
-struct bus_type mpic_subsys = {
+काष्ठा bus_type mpic_subsys = अणु
 	.name = "mpic",
 	.dev_name = "mpic",
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(mpic_subsys);
 
-static struct mpic *mpics;
-static struct mpic *mpic_primary;
-static DEFINE_RAW_SPINLOCK(mpic_lock);
+अटल काष्ठा mpic *mpics;
+अटल काष्ठा mpic *mpic_primary;
+अटल DEFINE_RAW_SPINLOCK(mpic_lock);
 
-#ifdef CONFIG_PPC32	/* XXX for now */
-#ifdef CONFIG_IRQ_ALL_CPUS
-#define distribute_irqs	(1)
-#else
-#define distribute_irqs	(0)
-#endif
-#endif
+#अगर_घोषित CONFIG_PPC32	/* XXX क्रम now */
+#अगर_घोषित CONFIG_IRQ_ALL_CPUS
+#घोषणा distribute_irqs	(1)
+#अन्यथा
+#घोषणा distribute_irqs	(0)
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_MPIC_WEIRD
-static u32 mpic_infos[][MPIC_IDX_END] = {
-	[0] = {	/* Original OpenPIC compatible MPIC */
+#अगर_घोषित CONFIG_MPIC_WEIRD
+अटल u32 mpic_infos[][MPIC_IDX_END] = अणु
+	[0] = अणु	/* Original OpenPIC compatible MPIC */
 		MPIC_GREG_BASE,
 		MPIC_GREG_FEATURE_0,
 		MPIC_GREG_GLOBAL_CONF_0,
@@ -105,8 +106,8 @@ static u32 mpic_infos[][MPIC_IDX_END] = {
 		MPIC_VECPRI_POLARITY_MASK,
 		MPIC_VECPRI_SENSE_MASK,
 		MPIC_IRQ_DESTINATION
-	},
-	[1] = {	/* Tsi108/109 PIC */
+	पूर्ण,
+	[1] = अणु	/* Tsi108/109 PIC */
 		TSI108_GREG_BASE,
 		TSI108_GREG_FEATURE_0,
 		TSI108_GREG_GLOBAL_CONF_0,
@@ -144,166 +145,166 @@ static u32 mpic_infos[][MPIC_IDX_END] = {
 		TSI108_VECPRI_POLARITY_MASK,
 		TSI108_VECPRI_SENSE_MASK,
 		TSI108_IRQ_DESTINATION
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#define MPIC_INFO(name) mpic->hw_set[MPIC_IDX_##name]
+#घोषणा MPIC_INFO(name) mpic->hw_set[MPIC_IDX_##name]
 
-#else /* CONFIG_MPIC_WEIRD */
+#अन्यथा /* CONFIG_MPIC_WEIRD */
 
-#define MPIC_INFO(name) MPIC_##name
+#घोषणा MPIC_INFO(name) MPIC_##name
 
-#endif /* CONFIG_MPIC_WEIRD */
+#पूर्ण_अगर /* CONFIG_MPIC_WEIRD */
 
-static inline unsigned int mpic_processor_id(struct mpic *mpic)
-{
-	unsigned int cpu = 0;
+अटल अंतरभूत अचिन्हित पूर्णांक mpic_processor_id(काष्ठा mpic *mpic)
+अणु
+	अचिन्हित पूर्णांक cpu = 0;
 
-	if (!(mpic->flags & MPIC_SECONDARY))
+	अगर (!(mpic->flags & MPIC_SECONDARY))
 		cpu = hard_smp_processor_id();
 
-	return cpu;
-}
+	वापस cpu;
+पूर्ण
 
 /*
  * Register accessor functions
  */
 
 
-static inline u32 _mpic_read(enum mpic_reg_type type,
-			     struct mpic_reg_bank *rb,
-			     unsigned int reg)
-{
-	switch(type) {
-#ifdef CONFIG_PPC_DCR
-	case mpic_access_dcr:
-		return dcr_read(rb->dhost, reg);
-#endif
-	case mpic_access_mmio_be:
-		return in_be32(rb->base + (reg >> 2));
-	case mpic_access_mmio_le:
-	default:
-		return in_le32(rb->base + (reg >> 2));
-	}
-}
+अटल अंतरभूत u32 _mpic_पढ़ो(क्रमागत mpic_reg_type type,
+			     काष्ठा mpic_reg_bank *rb,
+			     अचिन्हित पूर्णांक reg)
+अणु
+	चयन(type) अणु
+#अगर_घोषित CONFIG_PPC_DCR
+	हाल mpic_access_dcr:
+		वापस dcr_पढ़ो(rb->dhost, reg);
+#पूर्ण_अगर
+	हाल mpic_access_mmio_be:
+		वापस in_be32(rb->base + (reg >> 2));
+	हाल mpic_access_mmio_le:
+	शेष:
+		वापस in_le32(rb->base + (reg >> 2));
+	पूर्ण
+पूर्ण
 
-static inline void _mpic_write(enum mpic_reg_type type,
-			       struct mpic_reg_bank *rb,
- 			       unsigned int reg, u32 value)
-{
-	switch(type) {
-#ifdef CONFIG_PPC_DCR
-	case mpic_access_dcr:
-		dcr_write(rb->dhost, reg, value);
-		break;
-#endif
-	case mpic_access_mmio_be:
+अटल अंतरभूत व्योम _mpic_ग_लिखो(क्रमागत mpic_reg_type type,
+			       काष्ठा mpic_reg_bank *rb,
+ 			       अचिन्हित पूर्णांक reg, u32 value)
+अणु
+	चयन(type) अणु
+#अगर_घोषित CONFIG_PPC_DCR
+	हाल mpic_access_dcr:
+		dcr_ग_लिखो(rb->dhost, reg, value);
+		अवरोध;
+#पूर्ण_अगर
+	हाल mpic_access_mmio_be:
 		out_be32(rb->base + (reg >> 2), value);
-		break;
-	case mpic_access_mmio_le:
-	default:
+		अवरोध;
+	हाल mpic_access_mmio_le:
+	शेष:
 		out_le32(rb->base + (reg >> 2), value);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static inline u32 _mpic_ipi_read(struct mpic *mpic, unsigned int ipi)
-{
-	enum mpic_reg_type type = mpic->reg_type;
-	unsigned int offset = MPIC_INFO(GREG_IPI_VECTOR_PRI_0) +
+अटल अंतरभूत u32 _mpic_ipi_पढ़ो(काष्ठा mpic *mpic, अचिन्हित पूर्णांक ipi)
+अणु
+	क्रमागत mpic_reg_type type = mpic->reg_type;
+	अचिन्हित पूर्णांक offset = MPIC_INFO(GREG_IPI_VECTOR_PRI_0) +
 			      (ipi * MPIC_INFO(GREG_IPI_STRIDE));
 
-	if ((mpic->flags & MPIC_BROKEN_IPI) && type == mpic_access_mmio_le)
+	अगर ((mpic->flags & MPIC_BROKEN_IPI) && type == mpic_access_mmio_le)
 		type = mpic_access_mmio_be;
-	return _mpic_read(type, &mpic->gregs, offset);
-}
+	वापस _mpic_पढ़ो(type, &mpic->gregs, offset);
+पूर्ण
 
-static inline void _mpic_ipi_write(struct mpic *mpic, unsigned int ipi, u32 value)
-{
-	unsigned int offset = MPIC_INFO(GREG_IPI_VECTOR_PRI_0) +
+अटल अंतरभूत व्योम _mpic_ipi_ग_लिखो(काष्ठा mpic *mpic, अचिन्हित पूर्णांक ipi, u32 value)
+अणु
+	अचिन्हित पूर्णांक offset = MPIC_INFO(GREG_IPI_VECTOR_PRI_0) +
 			      (ipi * MPIC_INFO(GREG_IPI_STRIDE));
 
-	_mpic_write(mpic->reg_type, &mpic->gregs, offset, value);
-}
+	_mpic_ग_लिखो(mpic->reg_type, &mpic->gregs, offset, value);
+पूर्ण
 
-static inline unsigned int mpic_tm_offset(struct mpic *mpic, unsigned int tm)
-{
-	return (tm >> 2) * MPIC_TIMER_GROUP_STRIDE +
-	       (tm & 3) * MPIC_INFO(TIMER_STRIDE);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक mpic_पंचांग_offset(काष्ठा mpic *mpic, अचिन्हित पूर्णांक पंचांग)
+अणु
+	वापस (पंचांग >> 2) * MPIC_TIMER_GROUP_STRIDE +
+	       (पंचांग & 3) * MPIC_INFO(TIMER_STRIDE);
+पूर्ण
 
-static inline u32 _mpic_tm_read(struct mpic *mpic, unsigned int tm)
-{
-	unsigned int offset = mpic_tm_offset(mpic, tm) +
+अटल अंतरभूत u32 _mpic_पंचांग_पढ़ो(काष्ठा mpic *mpic, अचिन्हित पूर्णांक पंचांग)
+अणु
+	अचिन्हित पूर्णांक offset = mpic_पंचांग_offset(mpic, पंचांग) +
 			      MPIC_INFO(TIMER_VECTOR_PRI);
 
-	return _mpic_read(mpic->reg_type, &mpic->tmregs, offset);
-}
+	वापस _mpic_पढ़ो(mpic->reg_type, &mpic->पंचांगregs, offset);
+पूर्ण
 
-static inline void _mpic_tm_write(struct mpic *mpic, unsigned int tm, u32 value)
-{
-	unsigned int offset = mpic_tm_offset(mpic, tm) +
+अटल अंतरभूत व्योम _mpic_पंचांग_ग_लिखो(काष्ठा mpic *mpic, अचिन्हित पूर्णांक पंचांग, u32 value)
+अणु
+	अचिन्हित पूर्णांक offset = mpic_पंचांग_offset(mpic, पंचांग) +
 			      MPIC_INFO(TIMER_VECTOR_PRI);
 
-	_mpic_write(mpic->reg_type, &mpic->tmregs, offset, value);
-}
+	_mpic_ग_लिखो(mpic->reg_type, &mpic->पंचांगregs, offset, value);
+पूर्ण
 
-static inline u32 _mpic_cpu_read(struct mpic *mpic, unsigned int reg)
-{
-	unsigned int cpu = mpic_processor_id(mpic);
+अटल अंतरभूत u32 _mpic_cpu_पढ़ो(काष्ठा mpic *mpic, अचिन्हित पूर्णांक reg)
+अणु
+	अचिन्हित पूर्णांक cpu = mpic_processor_id(mpic);
 
-	return _mpic_read(mpic->reg_type, &mpic->cpuregs[cpu], reg);
-}
+	वापस _mpic_पढ़ो(mpic->reg_type, &mpic->cpuregs[cpu], reg);
+पूर्ण
 
-static inline void _mpic_cpu_write(struct mpic *mpic, unsigned int reg, u32 value)
-{
-	unsigned int cpu = mpic_processor_id(mpic);
+अटल अंतरभूत व्योम _mpic_cpu_ग_लिखो(काष्ठा mpic *mpic, अचिन्हित पूर्णांक reg, u32 value)
+अणु
+	अचिन्हित पूर्णांक cpu = mpic_processor_id(mpic);
 
-	_mpic_write(mpic->reg_type, &mpic->cpuregs[cpu], reg, value);
-}
+	_mpic_ग_लिखो(mpic->reg_type, &mpic->cpuregs[cpu], reg, value);
+पूर्ण
 
-static inline u32 _mpic_irq_read(struct mpic *mpic, unsigned int src_no, unsigned int reg)
-{
-	unsigned int	isu = src_no >> mpic->isu_shift;
-	unsigned int	idx = src_no & mpic->isu_mask;
-	unsigned int	val;
+अटल अंतरभूत u32 _mpic_irq_पढ़ो(काष्ठा mpic *mpic, अचिन्हित पूर्णांक src_no, अचिन्हित पूर्णांक reg)
+अणु
+	अचिन्हित पूर्णांक	isu = src_no >> mpic->isu_shअगरt;
+	अचिन्हित पूर्णांक	idx = src_no & mpic->isu_mask;
+	अचिन्हित पूर्णांक	val;
 
-	val = _mpic_read(mpic->reg_type, &mpic->isus[isu],
+	val = _mpic_पढ़ो(mpic->reg_type, &mpic->isus[isu],
 			 reg + (idx * MPIC_INFO(IRQ_STRIDE)));
-#ifdef CONFIG_MPIC_BROKEN_REGREAD
-	if (reg == 0)
+#अगर_घोषित CONFIG_MPIC_BROKEN_REGREAD
+	अगर (reg == 0)
 		val = (val & (MPIC_VECPRI_MASK | MPIC_VECPRI_ACTIVITY)) |
-			mpic->isu_reg0_shadow[src_no];
-#endif
-	return val;
-}
+			mpic->isu_reg0_shaकरोw[src_no];
+#पूर्ण_अगर
+	वापस val;
+पूर्ण
 
-static inline void _mpic_irq_write(struct mpic *mpic, unsigned int src_no,
-				   unsigned int reg, u32 value)
-{
-	unsigned int	isu = src_no >> mpic->isu_shift;
-	unsigned int	idx = src_no & mpic->isu_mask;
+अटल अंतरभूत व्योम _mpic_irq_ग_लिखो(काष्ठा mpic *mpic, अचिन्हित पूर्णांक src_no,
+				   अचिन्हित पूर्णांक reg, u32 value)
+अणु
+	अचिन्हित पूर्णांक	isu = src_no >> mpic->isu_shअगरt;
+	अचिन्हित पूर्णांक	idx = src_no & mpic->isu_mask;
 
-	_mpic_write(mpic->reg_type, &mpic->isus[isu],
+	_mpic_ग_लिखो(mpic->reg_type, &mpic->isus[isu],
 		    reg + (idx * MPIC_INFO(IRQ_STRIDE)), value);
 
-#ifdef CONFIG_MPIC_BROKEN_REGREAD
-	if (reg == 0)
-		mpic->isu_reg0_shadow[src_no] =
+#अगर_घोषित CONFIG_MPIC_BROKEN_REGREAD
+	अगर (reg == 0)
+		mpic->isu_reg0_shaकरोw[src_no] =
 			value & ~(MPIC_VECPRI_MASK | MPIC_VECPRI_ACTIVITY);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#define mpic_read(b,r)		_mpic_read(mpic->reg_type,&(b),(r))
-#define mpic_write(b,r,v)	_mpic_write(mpic->reg_type,&(b),(r),(v))
-#define mpic_ipi_read(i)	_mpic_ipi_read(mpic,(i))
-#define mpic_ipi_write(i,v)	_mpic_ipi_write(mpic,(i),(v))
-#define mpic_tm_read(i)		_mpic_tm_read(mpic,(i))
-#define mpic_tm_write(i,v)	_mpic_tm_write(mpic,(i),(v))
-#define mpic_cpu_read(i)	_mpic_cpu_read(mpic,(i))
-#define mpic_cpu_write(i,v)	_mpic_cpu_write(mpic,(i),(v))
-#define mpic_irq_read(s,r)	_mpic_irq_read(mpic,(s),(r))
-#define mpic_irq_write(s,r,v)	_mpic_irq_write(mpic,(s),(r),(v))
+#घोषणा mpic_पढ़ो(b,r)		_mpic_पढ़ो(mpic->reg_type,&(b),(r))
+#घोषणा mpic_ग_लिखो(b,r,v)	_mpic_ग_लिखो(mpic->reg_type,&(b),(r),(v))
+#घोषणा mpic_ipi_पढ़ो(i)	_mpic_ipi_पढ़ो(mpic,(i))
+#घोषणा mpic_ipi_ग_लिखो(i,v)	_mpic_ipi_ग_लिखो(mpic,(i),(v))
+#घोषणा mpic_पंचांग_पढ़ो(i)		_mpic_पंचांग_पढ़ो(mpic,(i))
+#घोषणा mpic_पंचांग_ग_लिखो(i,v)	_mpic_पंचांग_ग_लिखो(mpic,(i),(v))
+#घोषणा mpic_cpu_पढ़ो(i)	_mpic_cpu_पढ़ो(mpic,(i))
+#घोषणा mpic_cpu_ग_लिखो(i,v)	_mpic_cpu_ग_लिखो(mpic,(i),(v))
+#घोषणा mpic_irq_पढ़ो(s,r)	_mpic_irq_पढ़ो(mpic,(s),(r))
+#घोषणा mpic_irq_ग_लिखो(s,r,v)	_mpic_irq_ग_लिखो(mpic,(s),(r),(v))
 
 
 /*
@@ -311,241 +312,241 @@ static inline void _mpic_irq_write(struct mpic *mpic, unsigned int src_no,
  */
 
 
-static void _mpic_map_mmio(struct mpic *mpic, phys_addr_t phys_addr,
-			   struct mpic_reg_bank *rb, unsigned int offset,
-			   unsigned int size)
-{
+अटल व्योम _mpic_map_mmio(काष्ठा mpic *mpic, phys_addr_t phys_addr,
+			   काष्ठा mpic_reg_bank *rb, अचिन्हित पूर्णांक offset,
+			   अचिन्हित पूर्णांक size)
+अणु
 	rb->base = ioremap(phys_addr + offset, size);
-	BUG_ON(rb->base == NULL);
-}
+	BUG_ON(rb->base == शून्य);
+पूर्ण
 
-#ifdef CONFIG_PPC_DCR
-static void _mpic_map_dcr(struct mpic *mpic, struct mpic_reg_bank *rb,
-			  unsigned int offset, unsigned int size)
-{
+#अगर_घोषित CONFIG_PPC_DCR
+अटल व्योम _mpic_map_dcr(काष्ठा mpic *mpic, काष्ठा mpic_reg_bank *rb,
+			  अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक size)
+अणु
 	phys_addr_t phys_addr = dcr_resource_start(mpic->node, 0);
 	rb->dhost = dcr_map(mpic->node, phys_addr + offset, size);
 	BUG_ON(!DCR_MAP_OK(rb->dhost));
-}
+पूर्ण
 
-static inline void mpic_map(struct mpic *mpic,
-			    phys_addr_t phys_addr, struct mpic_reg_bank *rb,
-			    unsigned int offset, unsigned int size)
-{
-	if (mpic->flags & MPIC_USES_DCR)
+अटल अंतरभूत व्योम mpic_map(काष्ठा mpic *mpic,
+			    phys_addr_t phys_addr, काष्ठा mpic_reg_bank *rb,
+			    अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक size)
+अणु
+	अगर (mpic->flags & MPIC_USES_DCR)
 		_mpic_map_dcr(mpic, rb, offset, size);
-	else
+	अन्यथा
 		_mpic_map_mmio(mpic, phys_addr, rb, offset, size);
-}
-#else /* CONFIG_PPC_DCR */
-#define mpic_map(m,p,b,o,s)	_mpic_map_mmio(m,p,b,o,s)
-#endif /* !CONFIG_PPC_DCR */
+पूर्ण
+#अन्यथा /* CONFIG_PPC_DCR */
+#घोषणा mpic_map(m,p,b,o,s)	_mpic_map_mmio(m,p,b,o,s)
+#पूर्ण_अगर /* !CONFIG_PPC_DCR */
 
 
 
-/* Check if we have one of those nice broken MPICs with a flipped endian on
- * reads from IPI registers
+/* Check अगर we have one of those nice broken MPICs with a flipped endian on
+ * पढ़ोs from IPI रेजिस्टरs
  */
-static void __init mpic_test_broken_ipi(struct mpic *mpic)
-{
+अटल व्योम __init mpic_test_broken_ipi(काष्ठा mpic *mpic)
+अणु
 	u32 r;
 
-	mpic_write(mpic->gregs, MPIC_INFO(GREG_IPI_VECTOR_PRI_0), MPIC_VECPRI_MASK);
-	r = mpic_read(mpic->gregs, MPIC_INFO(GREG_IPI_VECTOR_PRI_0));
+	mpic_ग_लिखो(mpic->gregs, MPIC_INFO(GREG_IPI_VECTOR_PRI_0), MPIC_VECPRI_MASK);
+	r = mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_IPI_VECTOR_PRI_0));
 
-	if (r == le32_to_cpu(MPIC_VECPRI_MASK)) {
-		printk(KERN_INFO "mpic: Detected reversed IPI registers\n");
+	अगर (r == le32_to_cpu(MPIC_VECPRI_MASK)) अणु
+		prपूर्णांकk(KERN_INFO "mpic: Detected reversed IPI registers\n");
 		mpic->flags |= MPIC_BROKEN_IPI;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_MPIC_U3_HT_IRQS
+#अगर_घोषित CONFIG_MPIC_U3_HT_IRQS
 
-/* Test if an interrupt is sourced from HyperTransport (used on broken U3s)
- * to force the edge setting on the MPIC and do the ack workaround.
+/* Test अगर an पूर्णांकerrupt is sourced from HyperTransport (used on broken U3s)
+ * to क्रमce the edge setting on the MPIC and करो the ack workaround.
  */
-static inline int mpic_is_ht_interrupt(struct mpic *mpic, unsigned int source)
-{
-	if (source >= 128 || !mpic->fixups)
-		return 0;
-	return mpic->fixups[source].base != NULL;
-}
+अटल अंतरभूत पूर्णांक mpic_is_ht_पूर्णांकerrupt(काष्ठा mpic *mpic, अचिन्हित पूर्णांक source)
+अणु
+	अगर (source >= 128 || !mpic->fixups)
+		वापस 0;
+	वापस mpic->fixups[source].base != शून्य;
+पूर्ण
 
 
-static inline void mpic_ht_end_irq(struct mpic *mpic, unsigned int source)
-{
-	struct mpic_irq_fixup *fixup = &mpic->fixups[source];
+अटल अंतरभूत व्योम mpic_ht_end_irq(काष्ठा mpic *mpic, अचिन्हित पूर्णांक source)
+अणु
+	काष्ठा mpic_irq_fixup *fixup = &mpic->fixups[source];
 
-	if (fixup->applebase) {
-		unsigned int soff = (fixup->index >> 3) & ~3;
-		unsigned int mask = 1U << (fixup->index & 0x1f);
-		writel(mask, fixup->applebase + soff);
-	} else {
+	अगर (fixup->applebase) अणु
+		अचिन्हित पूर्णांक soff = (fixup->index >> 3) & ~3;
+		अचिन्हित पूर्णांक mask = 1U << (fixup->index & 0x1f);
+		ग_लिखोl(mask, fixup->applebase + soff);
+	पूर्ण अन्यथा अणु
 		raw_spin_lock(&mpic->fixup_lock);
-		writeb(0x11 + 2 * fixup->index, fixup->base + 2);
-		writel(fixup->data, fixup->base + 4);
+		ग_लिखोb(0x11 + 2 * fixup->index, fixup->base + 2);
+		ग_लिखोl(fixup->data, fixup->base + 4);
 		raw_spin_unlock(&mpic->fixup_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mpic_startup_ht_interrupt(struct mpic *mpic, unsigned int source,
+अटल व्योम mpic_startup_ht_पूर्णांकerrupt(काष्ठा mpic *mpic, अचिन्हित पूर्णांक source,
 				      bool level)
-{
-	struct mpic_irq_fixup *fixup = &mpic->fixups[source];
-	unsigned long flags;
-	u32 tmp;
+अणु
+	काष्ठा mpic_irq_fixup *fixup = &mpic->fixups[source];
+	अचिन्हित दीर्घ flags;
+	u32 पंचांगp;
 
-	if (fixup->base == NULL)
-		return;
+	अगर (fixup->base == शून्य)
+		वापस;
 
 	DBG("startup_ht_interrupt(0x%x) index: %d\n",
 	    source, fixup->index);
 	raw_spin_lock_irqsave(&mpic->fixup_lock, flags);
 	/* Enable and configure */
-	writeb(0x10 + 2 * fixup->index, fixup->base + 2);
-	tmp = readl(fixup->base + 4);
-	tmp &= ~(0x23U);
-	if (level)
-		tmp |= 0x22;
-	writel(tmp, fixup->base + 4);
+	ग_लिखोb(0x10 + 2 * fixup->index, fixup->base + 2);
+	पंचांगp = पढ़ोl(fixup->base + 4);
+	पंचांगp &= ~(0x23U);
+	अगर (level)
+		पंचांगp |= 0x22;
+	ग_लिखोl(पंचांगp, fixup->base + 4);
 	raw_spin_unlock_irqrestore(&mpic->fixup_lock, flags);
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	/* use the lowest bit inverted to the actual HW,
-	 * set if this fixup was enabled, clear otherwise */
-	mpic->save_data[source].fixup_data = tmp | 1;
-#endif
-}
+	 * set अगर this fixup was enabled, clear otherwise */
+	mpic->save_data[source].fixup_data = पंचांगp | 1;
+#पूर्ण_अगर
+पूर्ण
 
-static void mpic_shutdown_ht_interrupt(struct mpic *mpic, unsigned int source)
-{
-	struct mpic_irq_fixup *fixup = &mpic->fixups[source];
-	unsigned long flags;
-	u32 tmp;
+अटल व्योम mpic_shutकरोwn_ht_पूर्णांकerrupt(काष्ठा mpic *mpic, अचिन्हित पूर्णांक source)
+अणु
+	काष्ठा mpic_irq_fixup *fixup = &mpic->fixups[source];
+	अचिन्हित दीर्घ flags;
+	u32 पंचांगp;
 
-	if (fixup->base == NULL)
-		return;
+	अगर (fixup->base == शून्य)
+		वापस;
 
 	DBG("shutdown_ht_interrupt(0x%x)\n", source);
 
 	/* Disable */
 	raw_spin_lock_irqsave(&mpic->fixup_lock, flags);
-	writeb(0x10 + 2 * fixup->index, fixup->base + 2);
-	tmp = readl(fixup->base + 4);
-	tmp |= 1;
-	writel(tmp, fixup->base + 4);
+	ग_लिखोb(0x10 + 2 * fixup->index, fixup->base + 2);
+	पंचांगp = पढ़ोl(fixup->base + 4);
+	पंचांगp |= 1;
+	ग_लिखोl(पंचांगp, fixup->base + 4);
 	raw_spin_unlock_irqrestore(&mpic->fixup_lock, flags);
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	/* use the lowest bit inverted to the actual HW,
-	 * set if this fixup was enabled, clear otherwise */
-	mpic->save_data[source].fixup_data = tmp & ~1;
-#endif
-}
+	 * set अगर this fixup was enabled, clear otherwise */
+	mpic->save_data[source].fixup_data = पंचांगp & ~1;
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_PCI_MSI
-static void __init mpic_scan_ht_msi(struct mpic *mpic, u8 __iomem *devbase,
-				    unsigned int devfn)
-{
+#अगर_घोषित CONFIG_PCI_MSI
+अटल व्योम __init mpic_scan_ht_msi(काष्ठा mpic *mpic, u8 __iomem *devbase,
+				    अचिन्हित पूर्णांक devfn)
+अणु
 	u8 __iomem *base;
 	u8 pos, flags;
 	u64 addr = 0;
 
-	for (pos = readb(devbase + PCI_CAPABILITY_LIST); pos != 0;
-	     pos = readb(devbase + pos + PCI_CAP_LIST_NEXT)) {
-		u8 id = readb(devbase + pos + PCI_CAP_LIST_ID);
-		if (id == PCI_CAP_ID_HT) {
-			id = readb(devbase + pos + 3);
-			if ((id & HT_5BIT_CAP_MASK) == HT_CAPTYPE_MSI_MAPPING)
-				break;
-		}
-	}
+	क्रम (pos = पढ़ोb(devbase + PCI_CAPABILITY_LIST); pos != 0;
+	     pos = पढ़ोb(devbase + pos + PCI_CAP_LIST_NEXT)) अणु
+		u8 id = पढ़ोb(devbase + pos + PCI_CAP_LIST_ID);
+		अगर (id == PCI_CAP_ID_HT) अणु
+			id = पढ़ोb(devbase + pos + 3);
+			अगर ((id & HT_5BIT_CAP_MASK) == HT_CAPTYPE_MSI_MAPPING)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (pos == 0)
-		return;
+	अगर (pos == 0)
+		वापस;
 
 	base = devbase + pos;
 
-	flags = readb(base + HT_MSI_FLAGS);
-	if (!(flags & HT_MSI_FLAGS_FIXED)) {
-		addr = readl(base + HT_MSI_ADDR_LO) & HT_MSI_ADDR_LO_MASK;
-		addr = addr | ((u64)readl(base + HT_MSI_ADDR_HI) << 32);
-	}
+	flags = पढ़ोb(base + HT_MSI_FLAGS);
+	अगर (!(flags & HT_MSI_FLAGS_FIXED)) अणु
+		addr = पढ़ोl(base + HT_MSI_ADDR_LO) & HT_MSI_ADDR_LO_MASK;
+		addr = addr | ((u64)पढ़ोl(base + HT_MSI_ADDR_HI) << 32);
+	पूर्ण
 
-	printk(KERN_DEBUG "mpic:   - HT:%02x.%x %s MSI mapping found @ 0x%llx\n",
+	prपूर्णांकk(KERN_DEBUG "mpic:   - HT:%02x.%x %s MSI mapping found @ 0x%llx\n",
 		PCI_SLOT(devfn), PCI_FUNC(devfn),
 		flags & HT_MSI_FLAGS_ENABLE ? "enabled" : "disabled", addr);
 
-	if (!(flags & HT_MSI_FLAGS_ENABLE))
-		writeb(flags | HT_MSI_FLAGS_ENABLE, base + HT_MSI_FLAGS);
-}
-#else
-static void __init mpic_scan_ht_msi(struct mpic *mpic, u8 __iomem *devbase,
-				    unsigned int devfn)
-{
-	return;
-}
-#endif
+	अगर (!(flags & HT_MSI_FLAGS_ENABLE))
+		ग_लिखोb(flags | HT_MSI_FLAGS_ENABLE, base + HT_MSI_FLAGS);
+पूर्ण
+#अन्यथा
+अटल व्योम __init mpic_scan_ht_msi(काष्ठा mpic *mpic, u8 __iomem *devbase,
+				    अचिन्हित पूर्णांक devfn)
+अणु
+	वापस;
+पूर्ण
+#पूर्ण_अगर
 
-static void __init mpic_scan_ht_pic(struct mpic *mpic, u8 __iomem *devbase,
-				    unsigned int devfn, u32 vdid)
-{
-	int i, irq, n;
+अटल व्योम __init mpic_scan_ht_pic(काष्ठा mpic *mpic, u8 __iomem *devbase,
+				    अचिन्हित पूर्णांक devfn, u32 vdid)
+अणु
+	पूर्णांक i, irq, n;
 	u8 __iomem *base;
-	u32 tmp;
+	u32 पंचांगp;
 	u8 pos;
 
-	for (pos = readb(devbase + PCI_CAPABILITY_LIST); pos != 0;
-	     pos = readb(devbase + pos + PCI_CAP_LIST_NEXT)) {
-		u8 id = readb(devbase + pos + PCI_CAP_LIST_ID);
-		if (id == PCI_CAP_ID_HT) {
-			id = readb(devbase + pos + 3);
-			if ((id & HT_5BIT_CAP_MASK) == HT_CAPTYPE_IRQ)
-				break;
-		}
-	}
-	if (pos == 0)
-		return;
+	क्रम (pos = पढ़ोb(devbase + PCI_CAPABILITY_LIST); pos != 0;
+	     pos = पढ़ोb(devbase + pos + PCI_CAP_LIST_NEXT)) अणु
+		u8 id = पढ़ोb(devbase + pos + PCI_CAP_LIST_ID);
+		अगर (id == PCI_CAP_ID_HT) अणु
+			id = पढ़ोb(devbase + pos + 3);
+			अगर ((id & HT_5BIT_CAP_MASK) == HT_CAPTYPE_IRQ)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (pos == 0)
+		वापस;
 
 	base = devbase + pos;
-	writeb(0x01, base + 2);
-	n = (readl(base + 4) >> 16) & 0xff;
+	ग_लिखोb(0x01, base + 2);
+	n = (पढ़ोl(base + 4) >> 16) & 0xff;
 
-	printk(KERN_INFO "mpic:   - HT:%02x.%x [0x%02x] vendor %04x device %04x"
+	prपूर्णांकk(KERN_INFO "mpic:   - HT:%02x.%x [0x%02x] vendor %04x device %04x"
 	       " has %d irqs\n",
 	       devfn >> 3, devfn & 0x7, pos, vdid & 0xffff, vdid >> 16, n + 1);
 
-	for (i = 0; i <= n; i++) {
-		writeb(0x10 + 2 * i, base + 2);
-		tmp = readl(base + 4);
-		irq = (tmp >> 16) & 0xff;
-		DBG("HT PIC index 0x%x, irq 0x%x, tmp: %08x\n", i, irq, tmp);
+	क्रम (i = 0; i <= n; i++) अणु
+		ग_लिखोb(0x10 + 2 * i, base + 2);
+		पंचांगp = पढ़ोl(base + 4);
+		irq = (पंचांगp >> 16) & 0xff;
+		DBG("HT PIC index 0x%x, irq 0x%x, tmp: %08x\n", i, irq, पंचांगp);
 		/* mask it , will be unmasked later */
-		tmp |= 0x1;
-		writel(tmp, base + 4);
+		पंचांगp |= 0x1;
+		ग_लिखोl(पंचांगp, base + 4);
 		mpic->fixups[irq].index = i;
 		mpic->fixups[irq].base = base;
-		/* Apple HT PIC has a non-standard way of doing EOIs */
-		if ((vdid & 0xffff) == 0x106b)
+		/* Apple HT PIC has a non-standard way of करोing EOIs */
+		अगर ((vdid & 0xffff) == 0x106b)
 			mpic->fixups[irq].applebase = devbase + 0x60;
-		else
-			mpic->fixups[irq].applebase = NULL;
-		writeb(0x11 + 2 * i, base + 2);
-		mpic->fixups[irq].data = readl(base + 4) | 0x80000000;
-	}
-}
+		अन्यथा
+			mpic->fixups[irq].applebase = शून्य;
+		ग_लिखोb(0x11 + 2 * i, base + 2);
+		mpic->fixups[irq].data = पढ़ोl(base + 4) | 0x80000000;
+	पूर्ण
+पूर्ण
 
 
-static void __init mpic_scan_ht_pics(struct mpic *mpic)
-{
-	unsigned int devfn;
+अटल व्योम __init mpic_scan_ht_pics(काष्ठा mpic *mpic)
+अणु
+	अचिन्हित पूर्णांक devfn;
 	u8 __iomem *cfgspace;
 
-	printk(KERN_INFO "mpic: Setting up HT PICs workarounds for U3/U4\n");
+	prपूर्णांकk(KERN_INFO "mpic: Setting up HT PICs workarounds for U3/U4\n");
 
 	/* Allocate fixups array */
-	mpic->fixups = kcalloc(128, sizeof(*mpic->fixups), GFP_KERNEL);
-	BUG_ON(mpic->fixups == NULL);
+	mpic->fixups = kसुस्मृति(128, माप(*mpic->fixups), GFP_KERNEL);
+	BUG_ON(mpic->fixups == शून्य);
 
 	/* Init spinlock */
 	raw_spin_lock_init(&mpic->fixup_lock);
@@ -554,521 +555,521 @@ static void __init mpic_scan_ht_pics(struct mpic *mpic)
 	 * so we only need to map 64kB.
 	 */
 	cfgspace = ioremap(0xf2000000, 0x10000);
-	BUG_ON(cfgspace == NULL);
+	BUG_ON(cfgspace == शून्य);
 
-	/* Now we scan all slots. We do a very quick scan, we read the header
-	 * type, vendor ID and device ID only, that's plenty enough
+	/* Now we scan all slots. We करो a very quick scan, we पढ़ो the header
+	 * type, venकरोr ID and device ID only, that's plenty enough
 	 */
-	for (devfn = 0; devfn < 0x100; devfn++) {
+	क्रम (devfn = 0; devfn < 0x100; devfn++) अणु
 		u8 __iomem *devbase = cfgspace + (devfn << 8);
-		u8 hdr_type = readb(devbase + PCI_HEADER_TYPE);
-		u32 l = readl(devbase + PCI_VENDOR_ID);
+		u8 hdr_type = पढ़ोb(devbase + PCI_HEADER_TYPE);
+		u32 l = पढ़ोl(devbase + PCI_VENDOR_ID);
 		u16 s;
 
 		DBG("devfn %x, l: %x\n", devfn, l);
 
 		/* If no device, skip */
-		if (l == 0xffffffff || l == 0x00000000 ||
+		अगर (l == 0xffffffff || l == 0x00000000 ||
 		    l == 0x0000ffff || l == 0xffff0000)
-			goto next;
-		/* Check if is supports capability lists */
-		s = readw(devbase + PCI_STATUS);
-		if (!(s & PCI_STATUS_CAP_LIST))
-			goto next;
+			जाओ next;
+		/* Check अगर is supports capability lists */
+		s = पढ़ोw(devbase + PCI_STATUS);
+		अगर (!(s & PCI_STATUS_CAP_LIST))
+			जाओ next;
 
 		mpic_scan_ht_pic(mpic, devbase, devfn, l);
 		mpic_scan_ht_msi(mpic, devbase, devfn);
 
 	next:
-		/* next device, if function 0 */
-		if (PCI_FUNC(devfn) == 0 && (hdr_type & 0x80) == 0)
+		/* next device, अगर function 0 */
+		अगर (PCI_FUNC(devfn) == 0 && (hdr_type & 0x80) == 0)
 			devfn += 7;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else /* CONFIG_MPIC_U3_HT_IRQS */
+#अन्यथा /* CONFIG_MPIC_U3_HT_IRQS */
 
-static inline int mpic_is_ht_interrupt(struct mpic *mpic, unsigned int source)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mpic_is_ht_पूर्णांकerrupt(काष्ठा mpic *mpic, अचिन्हित पूर्णांक source)
+अणु
+	वापस 0;
+पूर्ण
 
-static void __init mpic_scan_ht_pics(struct mpic *mpic)
-{
-}
+अटल व्योम __init mpic_scan_ht_pics(काष्ठा mpic *mpic)
+अणु
+पूर्ण
 
-#endif /* CONFIG_MPIC_U3_HT_IRQS */
+#पूर्ण_अगर /* CONFIG_MPIC_U3_HT_IRQS */
 
-/* Find an mpic associated with a given linux interrupt */
-static struct mpic *mpic_find(unsigned int irq)
-{
-	if (irq < NUM_ISA_INTERRUPTS)
-		return NULL;
+/* Find an mpic associated with a given linux पूर्णांकerrupt */
+अटल काष्ठा mpic *mpic_find(अचिन्हित पूर्णांक irq)
+अणु
+	अगर (irq < NUM_ISA_INTERRUPTS)
+		वापस शून्य;
 
-	return irq_get_chip_data(irq);
-}
+	वापस irq_get_chip_data(irq);
+पूर्ण
 
-/* Determine if the linux irq is an IPI */
-static unsigned int mpic_is_ipi(struct mpic *mpic, unsigned int src)
-{
-	return (src >= mpic->ipi_vecs[0] && src <= mpic->ipi_vecs[3]);
-}
+/* Determine अगर the linux irq is an IPI */
+अटल अचिन्हित पूर्णांक mpic_is_ipi(काष्ठा mpic *mpic, अचिन्हित पूर्णांक src)
+अणु
+	वापस (src >= mpic->ipi_vecs[0] && src <= mpic->ipi_vecs[3]);
+पूर्ण
 
-/* Determine if the linux irq is a timer */
-static unsigned int mpic_is_tm(struct mpic *mpic, unsigned int src)
-{
-	return (src >= mpic->timer_vecs[0] && src <= mpic->timer_vecs[7]);
-}
+/* Determine अगर the linux irq is a समयr */
+अटल अचिन्हित पूर्णांक mpic_is_पंचांग(काष्ठा mpic *mpic, अचिन्हित पूर्णांक src)
+अणु
+	वापस (src >= mpic->समयr_vecs[0] && src <= mpic->समयr_vecs[7]);
+पूर्ण
 
 /* Convert a cpu mask from logical to physical cpu numbers. */
-static inline u32 mpic_physmask(u32 cpumask)
-{
-	int i;
+अटल अंतरभूत u32 mpic_physmask(u32 cpumask)
+अणु
+	पूर्णांक i;
 	u32 mask = 0;
 
-	for (i = 0; i < min(32, NR_CPUS) && cpu_possible(i); ++i, cpumask >>= 1)
+	क्रम (i = 0; i < min(32, NR_CPUS) && cpu_possible(i); ++i, cpumask >>= 1)
 		mask |= (cpumask & 1) << get_hard_smp_processor_id(i);
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-#ifdef CONFIG_SMP
-/* Get the mpic structure from the IPI number */
-static inline struct mpic * mpic_from_ipi(struct irq_data *d)
-{
-	return irq_data_get_irq_chip_data(d);
-}
-#endif
+#अगर_घोषित CONFIG_SMP
+/* Get the mpic काष्ठाure from the IPI number */
+अटल अंतरभूत काष्ठा mpic * mpic_from_ipi(काष्ठा irq_data *d)
+अणु
+	वापस irq_data_get_irq_chip_data(d);
+पूर्ण
+#पूर्ण_अगर
 
-/* Get the mpic structure from the irq number */
-static inline struct mpic * mpic_from_irq(unsigned int irq)
-{
-	return irq_get_chip_data(irq);
-}
+/* Get the mpic काष्ठाure from the irq number */
+अटल अंतरभूत काष्ठा mpic * mpic_from_irq(अचिन्हित पूर्णांक irq)
+अणु
+	वापस irq_get_chip_data(irq);
+पूर्ण
 
-/* Get the mpic structure from the irq data */
-static inline struct mpic * mpic_from_irq_data(struct irq_data *d)
-{
-	return irq_data_get_irq_chip_data(d);
-}
+/* Get the mpic काष्ठाure from the irq data */
+अटल अंतरभूत काष्ठा mpic * mpic_from_irq_data(काष्ठा irq_data *d)
+अणु
+	वापस irq_data_get_irq_chip_data(d);
+पूर्ण
 
 /* Send an EOI */
-static inline void mpic_eoi(struct mpic *mpic)
-{
-	mpic_cpu_write(MPIC_INFO(CPU_EOI), 0);
-}
+अटल अंतरभूत व्योम mpic_eoi(काष्ठा mpic *mpic)
+अणु
+	mpic_cpu_ग_लिखो(MPIC_INFO(CPU_EOI), 0);
+पूर्ण
 
 /*
  * Linux descriptor level callbacks
  */
 
 
-void mpic_unmask_irq(struct irq_data *d)
-{
-	unsigned int loops = 100000;
-	struct mpic *mpic = mpic_from_irq_data(d);
-	unsigned int src = irqd_to_hwirq(d);
+व्योम mpic_unmask_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक loops = 100000;
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
+	अचिन्हित पूर्णांक src = irqd_to_hwirq(d);
 
 	DBG("%p: %s: enable_irq: %d (src %d)\n", mpic, mpic->name, d->irq, src);
 
-	mpic_irq_write(src, MPIC_INFO(IRQ_VECTOR_PRI),
-		       mpic_irq_read(src, MPIC_INFO(IRQ_VECTOR_PRI)) &
+	mpic_irq_ग_लिखो(src, MPIC_INFO(IRQ_VECTOR_PRI),
+		       mpic_irq_पढ़ो(src, MPIC_INFO(IRQ_VECTOR_PRI)) &
 		       ~MPIC_VECPRI_MASK);
-	/* make sure mask gets to controller before we return to user */
-	do {
-		if (!loops--) {
-			printk(KERN_ERR "%s: timeout on hwirq %u\n",
+	/* make sure mask माला_लो to controller beक्रमe we वापस to user */
+	करो अणु
+		अगर (!loops--) अणु
+			prपूर्णांकk(KERN_ERR "%s: timeout on hwirq %u\n",
 			       __func__, src);
-			break;
-		}
-	} while(mpic_irq_read(src, MPIC_INFO(IRQ_VECTOR_PRI)) & MPIC_VECPRI_MASK);
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक(mpic_irq_पढ़ो(src, MPIC_INFO(IRQ_VECTOR_PRI)) & MPIC_VECPRI_MASK);
+पूर्ण
 
-void mpic_mask_irq(struct irq_data *d)
-{
-	unsigned int loops = 100000;
-	struct mpic *mpic = mpic_from_irq_data(d);
-	unsigned int src = irqd_to_hwirq(d);
+व्योम mpic_mask_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक loops = 100000;
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
+	अचिन्हित पूर्णांक src = irqd_to_hwirq(d);
 
 	DBG("%s: disable_irq: %d (src %d)\n", mpic->name, d->irq, src);
 
-	mpic_irq_write(src, MPIC_INFO(IRQ_VECTOR_PRI),
-		       mpic_irq_read(src, MPIC_INFO(IRQ_VECTOR_PRI)) |
+	mpic_irq_ग_लिखो(src, MPIC_INFO(IRQ_VECTOR_PRI),
+		       mpic_irq_पढ़ो(src, MPIC_INFO(IRQ_VECTOR_PRI)) |
 		       MPIC_VECPRI_MASK);
 
-	/* make sure mask gets to controller before we return to user */
-	do {
-		if (!loops--) {
-			printk(KERN_ERR "%s: timeout on hwirq %u\n",
+	/* make sure mask माला_लो to controller beक्रमe we वापस to user */
+	करो अणु
+		अगर (!loops--) अणु
+			prपूर्णांकk(KERN_ERR "%s: timeout on hwirq %u\n",
 			       __func__, src);
-			break;
-		}
-	} while(!(mpic_irq_read(src, MPIC_INFO(IRQ_VECTOR_PRI)) & MPIC_VECPRI_MASK));
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक(!(mpic_irq_पढ़ो(src, MPIC_INFO(IRQ_VECTOR_PRI)) & MPIC_VECPRI_MASK));
+पूर्ण
 
-void mpic_end_irq(struct irq_data *d)
-{
-	struct mpic *mpic = mpic_from_irq_data(d);
+व्योम mpic_end_irq(काष्ठा irq_data *d)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
 
-#ifdef DEBUG_IRQ
+#अगर_घोषित DEBUG_IRQ
 	DBG("%s: end_irq: %d\n", mpic->name, d->irq);
-#endif
-	/* We always EOI on end_irq() even for edge interrupts since that
+#पूर्ण_अगर
+	/* We always EOI on end_irq() even क्रम edge पूर्णांकerrupts since that
 	 * should only lower the priority, the MPIC should have properly
-	 * latched another edge interrupt coming in anyway
+	 * latched another edge पूर्णांकerrupt coming in anyway
 	 */
 
 	mpic_eoi(mpic);
-}
+पूर्ण
 
-#ifdef CONFIG_MPIC_U3_HT_IRQS
+#अगर_घोषित CONFIG_MPIC_U3_HT_IRQS
 
-static void mpic_unmask_ht_irq(struct irq_data *d)
-{
-	struct mpic *mpic = mpic_from_irq_data(d);
-	unsigned int src = irqd_to_hwirq(d);
+अटल व्योम mpic_unmask_ht_irq(काष्ठा irq_data *d)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
+	अचिन्हित पूर्णांक src = irqd_to_hwirq(d);
 
 	mpic_unmask_irq(d);
 
-	if (irqd_is_level_type(d))
+	अगर (irqd_is_level_type(d))
 		mpic_ht_end_irq(mpic, src);
-}
+पूर्ण
 
-static unsigned int mpic_startup_ht_irq(struct irq_data *d)
-{
-	struct mpic *mpic = mpic_from_irq_data(d);
-	unsigned int src = irqd_to_hwirq(d);
+अटल अचिन्हित पूर्णांक mpic_startup_ht_irq(काष्ठा irq_data *d)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
+	अचिन्हित पूर्णांक src = irqd_to_hwirq(d);
 
 	mpic_unmask_irq(d);
-	mpic_startup_ht_interrupt(mpic, src, irqd_is_level_type(d));
+	mpic_startup_ht_पूर्णांकerrupt(mpic, src, irqd_is_level_type(d));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mpic_shutdown_ht_irq(struct irq_data *d)
-{
-	struct mpic *mpic = mpic_from_irq_data(d);
-	unsigned int src = irqd_to_hwirq(d);
+अटल व्योम mpic_shutकरोwn_ht_irq(काष्ठा irq_data *d)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
+	अचिन्हित पूर्णांक src = irqd_to_hwirq(d);
 
-	mpic_shutdown_ht_interrupt(mpic, src);
+	mpic_shutकरोwn_ht_पूर्णांकerrupt(mpic, src);
 	mpic_mask_irq(d);
-}
+पूर्ण
 
-static void mpic_end_ht_irq(struct irq_data *d)
-{
-	struct mpic *mpic = mpic_from_irq_data(d);
-	unsigned int src = irqd_to_hwirq(d);
+अटल व्योम mpic_end_ht_irq(काष्ठा irq_data *d)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
+	अचिन्हित पूर्णांक src = irqd_to_hwirq(d);
 
-#ifdef DEBUG_IRQ
+#अगर_घोषित DEBUG_IRQ
 	DBG("%s: end_irq: %d\n", mpic->name, d->irq);
-#endif
-	/* We always EOI on end_irq() even for edge interrupts since that
+#पूर्ण_अगर
+	/* We always EOI on end_irq() even क्रम edge पूर्णांकerrupts since that
 	 * should only lower the priority, the MPIC should have properly
-	 * latched another edge interrupt coming in anyway
+	 * latched another edge पूर्णांकerrupt coming in anyway
 	 */
 
-	if (irqd_is_level_type(d))
+	अगर (irqd_is_level_type(d))
 		mpic_ht_end_irq(mpic, src);
 	mpic_eoi(mpic);
-}
-#endif /* !CONFIG_MPIC_U3_HT_IRQS */
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_MPIC_U3_HT_IRQS */
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-static void mpic_unmask_ipi(struct irq_data *d)
-{
-	struct mpic *mpic = mpic_from_ipi(d);
-	unsigned int src = virq_to_hw(d->irq) - mpic->ipi_vecs[0];
+अटल व्योम mpic_unmask_ipi(काष्ठा irq_data *d)
+अणु
+	काष्ठा mpic *mpic = mpic_from_ipi(d);
+	अचिन्हित पूर्णांक src = virq_to_hw(d->irq) - mpic->ipi_vecs[0];
 
 	DBG("%s: enable_ipi: %d (ipi %d)\n", mpic->name, d->irq, src);
-	mpic_ipi_write(src, mpic_ipi_read(src) & ~MPIC_VECPRI_MASK);
-}
+	mpic_ipi_ग_लिखो(src, mpic_ipi_पढ़ो(src) & ~MPIC_VECPRI_MASK);
+पूर्ण
 
-static void mpic_mask_ipi(struct irq_data *d)
-{
+अटल व्योम mpic_mask_ipi(काष्ठा irq_data *d)
+अणु
 	/* NEVER disable an IPI... that's just plain wrong! */
-}
+पूर्ण
 
-static void mpic_end_ipi(struct irq_data *d)
-{
-	struct mpic *mpic = mpic_from_ipi(d);
+अटल व्योम mpic_end_ipi(काष्ठा irq_data *d)
+अणु
+	काष्ठा mpic *mpic = mpic_from_ipi(d);
 
 	/*
 	 * IPIs are marked IRQ_PER_CPU. This has the side effect of
 	 * preventing the IRQ_PENDING/IRQ_INPROGRESS logic from
-	 * applying to them. We EOI them late to avoid re-entering.
+	 * applying to them. We EOI them late to aव्योम re-entering.
 	 */
 	mpic_eoi(mpic);
-}
+पूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static void mpic_unmask_tm(struct irq_data *d)
-{
-	struct mpic *mpic = mpic_from_irq_data(d);
-	unsigned int src = virq_to_hw(d->irq) - mpic->timer_vecs[0];
+अटल व्योम mpic_unmask_पंचांग(काष्ठा irq_data *d)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
+	अचिन्हित पूर्णांक src = virq_to_hw(d->irq) - mpic->समयr_vecs[0];
 
 	DBG("%s: enable_tm: %d (tm %d)\n", mpic->name, d->irq, src);
-	mpic_tm_write(src, mpic_tm_read(src) & ~MPIC_VECPRI_MASK);
-	mpic_tm_read(src);
-}
+	mpic_पंचांग_ग_लिखो(src, mpic_पंचांग_पढ़ो(src) & ~MPIC_VECPRI_MASK);
+	mpic_पंचांग_पढ़ो(src);
+पूर्ण
 
-static void mpic_mask_tm(struct irq_data *d)
-{
-	struct mpic *mpic = mpic_from_irq_data(d);
-	unsigned int src = virq_to_hw(d->irq) - mpic->timer_vecs[0];
+अटल व्योम mpic_mask_पंचांग(काष्ठा irq_data *d)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
+	अचिन्हित पूर्णांक src = virq_to_hw(d->irq) - mpic->समयr_vecs[0];
 
-	mpic_tm_write(src, mpic_tm_read(src) | MPIC_VECPRI_MASK);
-	mpic_tm_read(src);
-}
+	mpic_पंचांग_ग_लिखो(src, mpic_पंचांग_पढ़ो(src) | MPIC_VECPRI_MASK);
+	mpic_पंचांग_पढ़ो(src);
+पूर्ण
 
-int mpic_set_affinity(struct irq_data *d, const struct cpumask *cpumask,
-		      bool force)
-{
-	struct mpic *mpic = mpic_from_irq_data(d);
-	unsigned int src = irqd_to_hwirq(d);
+पूर्णांक mpic_set_affinity(काष्ठा irq_data *d, स्थिर काष्ठा cpumask *cpumask,
+		      bool क्रमce)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
+	अचिन्हित पूर्णांक src = irqd_to_hwirq(d);
 
-	if (mpic->flags & MPIC_SINGLE_DEST_CPU) {
-		int cpuid = irq_choose_cpu(cpumask);
+	अगर (mpic->flags & MPIC_SINGLE_DEST_CPU) अणु
+		पूर्णांक cpuid = irq_choose_cpu(cpumask);
 
-		mpic_irq_write(src, MPIC_INFO(IRQ_DESTINATION), 1 << cpuid);
-	} else {
+		mpic_irq_ग_लिखो(src, MPIC_INFO(IRQ_DESTINATION), 1 << cpuid);
+	पूर्ण अन्यथा अणु
 		u32 mask = cpumask_bits(cpumask)[0];
 
 		mask &= cpumask_bits(cpu_online_mask)[0];
 
-		mpic_irq_write(src, MPIC_INFO(IRQ_DESTINATION),
+		mpic_irq_ग_लिखो(src, MPIC_INFO(IRQ_DESTINATION),
 			       mpic_physmask(mask));
-	}
+	पूर्ण
 
-	return IRQ_SET_MASK_OK;
-}
+	वापस IRQ_SET_MASK_OK;
+पूर्ण
 
-static unsigned int mpic_type_to_vecpri(struct mpic *mpic, unsigned int type)
-{
+अटल अचिन्हित पूर्णांक mpic_type_to_vecpri(काष्ठा mpic *mpic, अचिन्हित पूर्णांक type)
+अणु
 	/* Now convert sense value */
-	switch(type & IRQ_TYPE_SENSE_MASK) {
-	case IRQ_TYPE_EDGE_RISING:
-		return MPIC_INFO(VECPRI_SENSE_EDGE) |
+	चयन(type & IRQ_TYPE_SENSE_MASK) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
+		वापस MPIC_INFO(VECPRI_SENSE_EDGE) |
 		       MPIC_INFO(VECPRI_POLARITY_POSITIVE);
-	case IRQ_TYPE_EDGE_FALLING:
-	case IRQ_TYPE_EDGE_BOTH:
-		return MPIC_INFO(VECPRI_SENSE_EDGE) |
+	हाल IRQ_TYPE_EDGE_FALLING:
+	हाल IRQ_TYPE_EDGE_BOTH:
+		वापस MPIC_INFO(VECPRI_SENSE_EDGE) |
 		       MPIC_INFO(VECPRI_POLARITY_NEGATIVE);
-	case IRQ_TYPE_LEVEL_HIGH:
-		return MPIC_INFO(VECPRI_SENSE_LEVEL) |
+	हाल IRQ_TYPE_LEVEL_HIGH:
+		वापस MPIC_INFO(VECPRI_SENSE_LEVEL) |
 		       MPIC_INFO(VECPRI_POLARITY_POSITIVE);
-	case IRQ_TYPE_LEVEL_LOW:
-	default:
-		return MPIC_INFO(VECPRI_SENSE_LEVEL) |
+	हाल IRQ_TYPE_LEVEL_LOW:
+	शेष:
+		वापस MPIC_INFO(VECPRI_SENSE_LEVEL) |
 		       MPIC_INFO(VECPRI_POLARITY_NEGATIVE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int mpic_set_irq_type(struct irq_data *d, unsigned int flow_type)
-{
-	struct mpic *mpic = mpic_from_irq_data(d);
-	unsigned int src = irqd_to_hwirq(d);
-	unsigned int vecpri, vold, vnew;
+पूर्णांक mpic_set_irq_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक flow_type)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq_data(d);
+	अचिन्हित पूर्णांक src = irqd_to_hwirq(d);
+	अचिन्हित पूर्णांक vecpri, vold, vnew;
 
 	DBG("mpic: set_irq_type(mpic:@%p,virq:%d,src:0x%x,type:0x%x)\n",
 	    mpic, d->irq, src, flow_type);
 
-	if (src >= mpic->num_sources)
-		return -EINVAL;
+	अगर (src >= mpic->num_sources)
+		वापस -EINVAL;
 
-	vold = mpic_irq_read(src, MPIC_INFO(IRQ_VECTOR_PRI));
+	vold = mpic_irq_पढ़ो(src, MPIC_INFO(IRQ_VECTOR_PRI));
 
-	/* We don't support "none" type */
-	if (flow_type == IRQ_TYPE_NONE)
+	/* We करोn't support "none" type */
+	अगर (flow_type == IRQ_TYPE_NONE)
 		flow_type = IRQ_TYPE_DEFAULT;
 
-	/* Default: read HW settings */
-	if (flow_type == IRQ_TYPE_DEFAULT) {
-		int vold_ps;
+	/* Default: पढ़ो HW settings */
+	अगर (flow_type == IRQ_TYPE_DEFAULT) अणु
+		पूर्णांक vold_ps;
 
 		vold_ps = vold & (MPIC_INFO(VECPRI_POLARITY_MASK) |
 				  MPIC_INFO(VECPRI_SENSE_MASK));
 
-		if (vold_ps == (MPIC_INFO(VECPRI_SENSE_EDGE) |
+		अगर (vold_ps == (MPIC_INFO(VECPRI_SENSE_EDGE) |
 				MPIC_INFO(VECPRI_POLARITY_POSITIVE)))
 			flow_type = IRQ_TYPE_EDGE_RISING;
-		else if	(vold_ps == (MPIC_INFO(VECPRI_SENSE_EDGE) |
+		अन्यथा अगर	(vold_ps == (MPIC_INFO(VECPRI_SENSE_EDGE) |
 				     MPIC_INFO(VECPRI_POLARITY_NEGATIVE)))
 			flow_type = IRQ_TYPE_EDGE_FALLING;
-		else if (vold_ps == (MPIC_INFO(VECPRI_SENSE_LEVEL) |
+		अन्यथा अगर (vold_ps == (MPIC_INFO(VECPRI_SENSE_LEVEL) |
 				     MPIC_INFO(VECPRI_POLARITY_POSITIVE)))
 			flow_type = IRQ_TYPE_LEVEL_HIGH;
-		else if (vold_ps == (MPIC_INFO(VECPRI_SENSE_LEVEL) |
+		अन्यथा अगर (vold_ps == (MPIC_INFO(VECPRI_SENSE_LEVEL) |
 				     MPIC_INFO(VECPRI_POLARITY_NEGATIVE)))
 			flow_type = IRQ_TYPE_LEVEL_LOW;
-		else
+		अन्यथा
 			WARN_ONCE(1, "mpic: unknown IRQ type %d\n", vold);
-	}
+	पूर्ण
 
 	/* Apply to irq desc */
 	irqd_set_trigger_type(d, flow_type);
 
 	/* Apply to HW */
-	if (mpic_is_ht_interrupt(mpic, src))
+	अगर (mpic_is_ht_पूर्णांकerrupt(mpic, src))
 		vecpri = MPIC_VECPRI_POLARITY_POSITIVE |
 			MPIC_VECPRI_SENSE_EDGE;
-	else
+	अन्यथा
 		vecpri = mpic_type_to_vecpri(mpic, flow_type);
 
 	vnew = vold & ~(MPIC_INFO(VECPRI_POLARITY_MASK) |
 			MPIC_INFO(VECPRI_SENSE_MASK));
 	vnew |= vecpri;
-	if (vold != vnew)
-		mpic_irq_write(src, MPIC_INFO(IRQ_VECTOR_PRI), vnew);
+	अगर (vold != vnew)
+		mpic_irq_ग_लिखो(src, MPIC_INFO(IRQ_VECTOR_PRI), vnew);
 
-	return IRQ_SET_MASK_OK_NOCOPY;
-}
+	वापस IRQ_SET_MASK_OK_NOCOPY;
+पूर्ण
 
-void mpic_set_vector(unsigned int virq, unsigned int vector)
-{
-	struct mpic *mpic = mpic_from_irq(virq);
-	unsigned int src = virq_to_hw(virq);
-	unsigned int vecpri;
+व्योम mpic_set_vector(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक vector)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq(virq);
+	अचिन्हित पूर्णांक src = virq_to_hw(virq);
+	अचिन्हित पूर्णांक vecpri;
 
 	DBG("mpic: set_vector(mpic:@%p,virq:%d,src:%d,vector:0x%x)\n",
 	    mpic, virq, src, vector);
 
-	if (src >= mpic->num_sources)
-		return;
+	अगर (src >= mpic->num_sources)
+		वापस;
 
-	vecpri = mpic_irq_read(src, MPIC_INFO(IRQ_VECTOR_PRI));
+	vecpri = mpic_irq_पढ़ो(src, MPIC_INFO(IRQ_VECTOR_PRI));
 	vecpri = vecpri & ~MPIC_INFO(VECPRI_VECTOR_MASK);
 	vecpri |= vector;
-	mpic_irq_write(src, MPIC_INFO(IRQ_VECTOR_PRI), vecpri);
-}
+	mpic_irq_ग_लिखो(src, MPIC_INFO(IRQ_VECTOR_PRI), vecpri);
+पूर्ण
 
-static void mpic_set_destination(unsigned int virq, unsigned int cpuid)
-{
-	struct mpic *mpic = mpic_from_irq(virq);
-	unsigned int src = virq_to_hw(virq);
+अटल व्योम mpic_set_destination(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक cpuid)
+अणु
+	काष्ठा mpic *mpic = mpic_from_irq(virq);
+	अचिन्हित पूर्णांक src = virq_to_hw(virq);
 
 	DBG("mpic: set_destination(mpic:@%p,virq:%d,src:%d,cpuid:0x%x)\n",
 	    mpic, virq, src, cpuid);
 
-	if (src >= mpic->num_sources)
-		return;
+	अगर (src >= mpic->num_sources)
+		वापस;
 
-	mpic_irq_write(src, MPIC_INFO(IRQ_DESTINATION), 1 << cpuid);
-}
+	mpic_irq_ग_लिखो(src, MPIC_INFO(IRQ_DESTINATION), 1 << cpuid);
+पूर्ण
 
-static struct irq_chip mpic_irq_chip = {
+अटल काष्ठा irq_chip mpic_irq_chip = अणु
 	.irq_mask	= mpic_mask_irq,
 	.irq_unmask	= mpic_unmask_irq,
 	.irq_eoi	= mpic_end_irq,
 	.irq_set_type	= mpic_set_irq_type,
-};
+पूर्ण;
 
-#ifdef CONFIG_SMP
-static const struct irq_chip mpic_ipi_chip = {
+#अगर_घोषित CONFIG_SMP
+अटल स्थिर काष्ठा irq_chip mpic_ipi_chip = अणु
 	.irq_mask	= mpic_mask_ipi,
 	.irq_unmask	= mpic_unmask_ipi,
 	.irq_eoi	= mpic_end_ipi,
-};
-#endif /* CONFIG_SMP */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static struct irq_chip mpic_tm_chip = {
-	.irq_mask	= mpic_mask_tm,
-	.irq_unmask	= mpic_unmask_tm,
+अटल काष्ठा irq_chip mpic_पंचांग_chip = अणु
+	.irq_mask	= mpic_mask_पंचांग,
+	.irq_unmask	= mpic_unmask_पंचांग,
 	.irq_eoi	= mpic_end_irq,
-};
+पूर्ण;
 
-#ifdef CONFIG_MPIC_U3_HT_IRQS
-static const struct irq_chip mpic_irq_ht_chip = {
+#अगर_घोषित CONFIG_MPIC_U3_HT_IRQS
+अटल स्थिर काष्ठा irq_chip mpic_irq_ht_chip = अणु
 	.irq_startup	= mpic_startup_ht_irq,
-	.irq_shutdown	= mpic_shutdown_ht_irq,
+	.irq_shutकरोwn	= mpic_shutकरोwn_ht_irq,
 	.irq_mask	= mpic_mask_irq,
 	.irq_unmask	= mpic_unmask_ht_irq,
 	.irq_eoi	= mpic_end_ht_irq,
 	.irq_set_type	= mpic_set_irq_type,
-};
-#endif /* CONFIG_MPIC_U3_HT_IRQS */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_MPIC_U3_HT_IRQS */
 
 
-static int mpic_host_match(struct irq_domain *h, struct device_node *node,
-			   enum irq_domain_bus_token bus_token)
-{
-	/* Exact match, unless mpic node is NULL */
-	struct device_node *of_node = irq_domain_get_of_node(h);
-	return of_node == NULL || of_node == node;
-}
+अटल पूर्णांक mpic_host_match(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *node,
+			   क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
+	/* Exact match, unless mpic node is शून्य */
+	काष्ठा device_node *of_node = irq_करोमुख्य_get_of_node(h);
+	वापस of_node == शून्य || of_node == node;
+पूर्ण
 
-static int mpic_host_map(struct irq_domain *h, unsigned int virq,
+अटल पूर्णांक mpic_host_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
 			 irq_hw_number_t hw)
-{
-	struct mpic *mpic = h->host_data;
-	struct irq_chip *chip;
+अणु
+	काष्ठा mpic *mpic = h->host_data;
+	काष्ठा irq_chip *chip;
 
 	DBG("mpic: map virq %d, hwirq 0x%lx\n", virq, hw);
 
-	if (hw == mpic->spurious_vec)
-		return -EINVAL;
-	if (mpic->protected && test_bit(hw, mpic->protected)) {
+	अगर (hw == mpic->spurious_vec)
+		वापस -EINVAL;
+	अगर (mpic->रक्षित && test_bit(hw, mpic->रक्षित)) अणु
 		pr_warn("mpic: Mapping of source 0x%x failed, source protected by firmware !\n",
-			(unsigned int)hw);
-		return -EPERM;
-	}
+			(अचिन्हित पूर्णांक)hw);
+		वापस -EPERM;
+	पूर्ण
 
-#ifdef CONFIG_SMP
-	else if (hw >= mpic->ipi_vecs[0]) {
+#अगर_घोषित CONFIG_SMP
+	अन्यथा अगर (hw >= mpic->ipi_vecs[0]) अणु
 		WARN_ON(mpic->flags & MPIC_SECONDARY);
 
 		DBG("mpic: mapping as IPI\n");
 		irq_set_chip_data(virq, mpic);
 		irq_set_chip_and_handler(virq, &mpic->hc_ipi,
 					 handle_percpu_irq);
-		return 0;
-	}
-#endif /* CONFIG_SMP */
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-	if (hw >= mpic->timer_vecs[0] && hw <= mpic->timer_vecs[7]) {
+	अगर (hw >= mpic->समयr_vecs[0] && hw <= mpic->समयr_vecs[7]) अणु
 		WARN_ON(mpic->flags & MPIC_SECONDARY);
 
 		DBG("mpic: mapping as timer\n");
 		irq_set_chip_data(virq, mpic);
-		irq_set_chip_and_handler(virq, &mpic->hc_tm,
+		irq_set_chip_and_handler(virq, &mpic->hc_पंचांग,
 					 handle_fasteoi_irq);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (mpic_map_error_int(mpic, virq, hw))
-		return 0;
+	अगर (mpic_map_error_पूर्णांक(mpic, virq, hw))
+		वापस 0;
 
-	if (hw >= mpic->num_sources) {
+	अगर (hw >= mpic->num_sources) अणु
 		pr_warn("mpic: Mapping of source 0x%x failed, source out of range !\n",
-			(unsigned int)hw);
-		return -EINVAL;
-	}
+			(अचिन्हित पूर्णांक)hw);
+		वापस -EINVAL;
+	पूर्ण
 
 	mpic_msi_reserve_hwirq(mpic, hw);
 
 	/* Default chip */
 	chip = &mpic->hc_irq;
 
-#ifdef CONFIG_MPIC_U3_HT_IRQS
-	/* Check for HT interrupts, override vecpri */
-	if (mpic_is_ht_interrupt(mpic, hw))
+#अगर_घोषित CONFIG_MPIC_U3_HT_IRQS
+	/* Check क्रम HT पूर्णांकerrupts, override vecpri */
+	अगर (mpic_is_ht_पूर्णांकerrupt(mpic, hw))
 		chip = &mpic->hc_ht_irq;
-#endif /* CONFIG_MPIC_U3_HT_IRQS */
+#पूर्ण_अगर /* CONFIG_MPIC_U3_HT_IRQS */
 
 	DBG("mpic: mapping to irq chip @%p\n", chip);
 
 	irq_set_chip_data(virq, mpic);
 	irq_set_chip_and_handler(virq, chip, handle_fasteoi_irq);
 
-	/* Set default irq type */
+	/* Set शेष irq type */
 	irq_set_irq_type(virq, IRQ_TYPE_DEFAULT);
 
-	/* If the MPIC was reset, then all vectors have already been
+	/* If the MPIC was reset, then all vectors have alपढ़ोy been
 	 * initialized.  Otherwise, a per source lazy initialization
-	 * is done here.
+	 * is करोne here.
 	 */
-	if (!mpic_is_ipi(mpic, hw) && (mpic->flags & MPIC_NO_RESET)) {
-		int cpu;
+	अगर (!mpic_is_ipi(mpic, hw) && (mpic->flags & MPIC_NO_RESET)) अणु
+		पूर्णांक cpu;
 
 		preempt_disable();
 		cpu = mpic_processor_id(mpic);
@@ -1077,202 +1078,202 @@ static int mpic_host_map(struct irq_domain *h, unsigned int virq,
 		mpic_set_vector(virq, hw);
 		mpic_set_destination(virq, cpu);
 		mpic_irq_set_priority(virq, 8);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mpic_host_xlate(struct irq_domain *h, struct device_node *ct,
-			   const u32 *intspec, unsigned int intsize,
-			   irq_hw_number_t *out_hwirq, unsigned int *out_flags)
+अटल पूर्णांक mpic_host_xlate(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *ct,
+			   स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
+			   irq_hw_number_t *out_hwirq, अचिन्हित पूर्णांक *out_flags)
 
-{
-	struct mpic *mpic = h->host_data;
-	static unsigned char map_mpic_senses[4] = {
+अणु
+	काष्ठा mpic *mpic = h->host_data;
+	अटल अचिन्हित अक्षर map_mpic_senses[4] = अणु
 		IRQ_TYPE_EDGE_RISING,
 		IRQ_TYPE_LEVEL_LOW,
 		IRQ_TYPE_LEVEL_HIGH,
 		IRQ_TYPE_EDGE_FALLING,
-	};
+	पूर्ण;
 
-	*out_hwirq = intspec[0];
-	if (intsize >= 4 && (mpic->flags & MPIC_FSL)) {
+	*out_hwirq = पूर्णांकspec[0];
+	अगर (पूर्णांकsize >= 4 && (mpic->flags & MPIC_FSL)) अणु
 		/*
-		 * Freescale MPIC with extended intspec:
-		 * First two cells are as usual.  Third specifies
-		 * an "interrupt type".  Fourth is type-specific data.
+		 * Freescale MPIC with extended पूर्णांकspec:
+		 * First two cells are as usual.  Third specअगरies
+		 * an "interrupt type".  Fourth is type-specअगरic data.
 		 *
-		 * See Documentation/devicetree/bindings/powerpc/fsl/mpic.txt
+		 * See Documentation/devicetree/bindings/घातerpc/fsl/mpic.txt
 		 */
-		switch (intspec[2]) {
-		case 0:
-			break;
-		case 1:
-			if (!(mpic->flags & MPIC_FSL_HAS_EIMR))
-				break;
+		चयन (पूर्णांकspec[2]) अणु
+		हाल 0:
+			अवरोध;
+		हाल 1:
+			अगर (!(mpic->flags & MPIC_FSL_HAS_EIMR))
+				अवरोध;
 
-			if (intspec[3] >= ARRAY_SIZE(mpic->err_int_vecs))
-				return -EINVAL;
+			अगर (पूर्णांकspec[3] >= ARRAY_SIZE(mpic->err_पूर्णांक_vecs))
+				वापस -EINVAL;
 
-			*out_hwirq = mpic->err_int_vecs[intspec[3]];
+			*out_hwirq = mpic->err_पूर्णांक_vecs[पूर्णांकspec[3]];
 
-			break;
-		case 2:
-			if (intspec[0] >= ARRAY_SIZE(mpic->ipi_vecs))
-				return -EINVAL;
+			अवरोध;
+		हाल 2:
+			अगर (पूर्णांकspec[0] >= ARRAY_SIZE(mpic->ipi_vecs))
+				वापस -EINVAL;
 
-			*out_hwirq = mpic->ipi_vecs[intspec[0]];
-			break;
-		case 3:
-			if (intspec[0] >= ARRAY_SIZE(mpic->timer_vecs))
-				return -EINVAL;
+			*out_hwirq = mpic->ipi_vecs[पूर्णांकspec[0]];
+			अवरोध;
+		हाल 3:
+			अगर (पूर्णांकspec[0] >= ARRAY_SIZE(mpic->समयr_vecs))
+				वापस -EINVAL;
 
-			*out_hwirq = mpic->timer_vecs[intspec[0]];
-			break;
-		default:
+			*out_hwirq = mpic->समयr_vecs[पूर्णांकspec[0]];
+			अवरोध;
+		शेष:
 			pr_debug("%s: unknown irq type %u\n",
-				 __func__, intspec[2]);
-			return -EINVAL;
-		}
+				 __func__, पूर्णांकspec[2]);
+			वापस -EINVAL;
+		पूर्ण
 
-		*out_flags = map_mpic_senses[intspec[1] & 3];
-	} else if (intsize > 1) {
+		*out_flags = map_mpic_senses[पूर्णांकspec[1] & 3];
+	पूर्ण अन्यथा अगर (पूर्णांकsize > 1) अणु
 		u32 mask = 0x3;
 
 		/* Apple invented a new race of encoding on machines with
 		 * an HT APIC. They encode, among others, the index within
-		 * the HT APIC. We don't care about it here since thankfully,
-		 * it appears that they have the APIC already properly
-		 * configured, and thus our current fixup code that reads the
+		 * the HT APIC. We करोn't care about it here since thankfully,
+		 * it appears that they have the APIC alपढ़ोy properly
+		 * configured, and thus our current fixup code that पढ़ोs the
 		 * APIC config works fine. However, we still need to mask out
-		 * bits in the specifier to make sure we only get bit 0 which
+		 * bits in the specअगरier to make sure we only get bit 0 which
 		 * is the level/edge bit (the only sense bit exposed by Apple),
-		 * as their bit 1 means something else.
+		 * as their bit 1 means something अन्यथा.
 		 */
-		if (machine_is(powermac))
+		अगर (machine_is(घातermac))
 			mask = 0x1;
-		*out_flags = map_mpic_senses[intspec[1] & mask];
-	} else
+		*out_flags = map_mpic_senses[पूर्णांकspec[1] & mask];
+	पूर्ण अन्यथा
 		*out_flags = IRQ_TYPE_NONE;
 
 	DBG("mpic: xlate (%d cells: 0x%08x 0x%08x) to line 0x%lx sense 0x%x\n",
-	    intsize, intspec[0], intspec[1], *out_hwirq, *out_flags);
+	    पूर्णांकsize, पूर्णांकspec[0], पूर्णांकspec[1], *out_hwirq, *out_flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* IRQ handler for a secondary MPIC cascaded from another IRQ controller */
-static void mpic_cascade(struct irq_desc *desc)
-{
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct mpic *mpic = irq_desc_get_handler_data(desc);
-	unsigned int virq;
+/* IRQ handler क्रम a secondary MPIC cascaded from another IRQ controller */
+अटल व्योम mpic_cascade(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा mpic *mpic = irq_desc_get_handler_data(desc);
+	अचिन्हित पूर्णांक virq;
 
 	BUG_ON(!(mpic->flags & MPIC_SECONDARY));
 
 	virq = mpic_get_one_irq(mpic);
-	if (virq)
+	अगर (virq)
 		generic_handle_irq(virq);
 
 	chip->irq_eoi(&desc->irq_data);
-}
+पूर्ण
 
-static const struct irq_domain_ops mpic_host_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops mpic_host_ops = अणु
 	.match = mpic_host_match,
 	.map = mpic_host_map,
 	.xlate = mpic_host_xlate,
-};
+पूर्ण;
 
-static u32 fsl_mpic_get_version(struct mpic *mpic)
-{
+अटल u32 fsl_mpic_get_version(काष्ठा mpic *mpic)
+अणु
 	u32 brr1;
 
-	if (!(mpic->flags & MPIC_FSL))
-		return 0;
+	अगर (!(mpic->flags & MPIC_FSL))
+		वापस 0;
 
-	brr1 = _mpic_read(mpic->reg_type, &mpic->thiscpuregs,
+	brr1 = _mpic_पढ़ो(mpic->reg_type, &mpic->thiscpuregs,
 			MPIC_FSL_BRR1);
 
-	return brr1 & MPIC_FSL_BRR1_VER;
-}
+	वापस brr1 & MPIC_FSL_BRR1_VER;
+पूर्ण
 
 /*
  * Exported functions
  */
 
-u32 fsl_mpic_primary_get_version(void)
-{
-	struct mpic *mpic = mpic_primary;
+u32 fsl_mpic_primary_get_version(व्योम)
+अणु
+	काष्ठा mpic *mpic = mpic_primary;
 
-	if (mpic)
-		return fsl_mpic_get_version(mpic);
+	अगर (mpic)
+		वापस fsl_mpic_get_version(mpic);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct mpic * __init mpic_alloc(struct device_node *node,
+काष्ठा mpic * __init mpic_alloc(काष्ठा device_node *node,
 				phys_addr_t phys_addr,
-				unsigned int flags,
-				unsigned int isu_size,
-				unsigned int irq_count,
-				const char *name)
-{
-	int i, psize, intvec_top;
-	struct mpic *mpic;
+				अचिन्हित पूर्णांक flags,
+				अचिन्हित पूर्णांक isu_size,
+				अचिन्हित पूर्णांक irq_count,
+				स्थिर अक्षर *name)
+अणु
+	पूर्णांक i, psize, पूर्णांकvec_top;
+	काष्ठा mpic *mpic;
 	u32 greg_feature;
-	const char *vers;
-	const u32 *psrc;
+	स्थिर अक्षर *vers;
+	स्थिर u32 *psrc;
 	u32 last_irq;
 	u32 fsl_version = 0;
 
 	/* Default MPIC search parameters */
-	static const struct of_device_id __initconst mpic_device_id[] = {
-		{ .type	      = "open-pic", },
-		{ .compatible = "open-pic", },
-		{},
-	};
+	अटल स्थिर काष्ठा of_device_id __initस्थिर mpic_device_id[] = अणु
+		अणु .type	      = "open-pic", पूर्ण,
+		अणु .compatible = "open-pic", पूर्ण,
+		अणुपूर्ण,
+	पूर्ण;
 
 	/*
-	 * If we were not passed a device-tree node, then perform the default
-	 * search for standardized a standardized OpenPIC.
+	 * If we were not passed a device-tree node, then perक्रमm the शेष
+	 * search क्रम standardized a standardized OpenPIC.
 	 */
-	if (node) {
+	अगर (node) अणु
 		node = of_node_get(node);
-	} else {
-		node = of_find_matching_node(NULL, mpic_device_id);
-		if (!node)
-			return NULL;
-	}
+	पूर्ण अन्यथा अणु
+		node = of_find_matching_node(शून्य, mpic_device_id);
+		अगर (!node)
+			वापस शून्य;
+	पूर्ण
 
-	/* Pick the physical address from the device tree if unspecified */
-	if (!phys_addr) {
-		/* Check if it is DCR-based */
-		if (of_property_read_bool(node, "dcr-reg")) {
+	/* Pick the physical address from the device tree अगर unspecअगरied */
+	अगर (!phys_addr) अणु
+		/* Check अगर it is DCR-based */
+		अगर (of_property_पढ़ो_bool(node, "dcr-reg")) अणु
 			flags |= MPIC_USES_DCR;
-		} else {
-			struct resource r;
-			if (of_address_to_resource(node, 0, &r))
-				goto err_of_node_put;
+		पूर्ण अन्यथा अणु
+			काष्ठा resource r;
+			अगर (of_address_to_resource(node, 0, &r))
+				जाओ err_of_node_put;
 			phys_addr = r.start;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Read extra device-tree properties into the flags variable */
-	if (of_get_property(node, "big-endian", NULL))
+	/* Read extra device-tree properties पूर्णांकo the flags variable */
+	अगर (of_get_property(node, "big-endian", शून्य))
 		flags |= MPIC_BIG_ENDIAN;
-	if (of_get_property(node, "pic-no-reset", NULL))
+	अगर (of_get_property(node, "pic-no-reset", शून्य))
 		flags |= MPIC_NO_RESET;
-	if (of_get_property(node, "single-cpu-affinity", NULL))
+	अगर (of_get_property(node, "single-cpu-affinity", शून्य))
 		flags |= MPIC_SINGLE_DEST_CPU;
-	if (of_device_is_compatible(node, "fsl,mpic")) {
+	अगर (of_device_is_compatible(node, "fsl,mpic")) अणु
 		flags |= MPIC_FSL | MPIC_LARGE_VECTORS;
 		mpic_irq_chip.flags |= IRQCHIP_SKIP_SET_WAKE;
-		mpic_tm_chip.flags |= IRQCHIP_SKIP_SET_WAKE;
-	}
+		mpic_पंचांग_chip.flags |= IRQCHIP_SKIP_SET_WAKE;
+	पूर्ण
 
-	mpic = kzalloc(sizeof(struct mpic), GFP_KERNEL);
-	if (mpic == NULL)
-		goto err_of_node_put;
+	mpic = kzalloc(माप(काष्ठा mpic), GFP_KERNEL);
+	अगर (mpic == शून्य)
+		जाओ err_of_node_put;
 
 	mpic->name = name;
 	mpic->node = node;
@@ -1281,89 +1282,89 @@ struct mpic * __init mpic_alloc(struct device_node *node,
 
 	mpic->hc_irq = mpic_irq_chip;
 	mpic->hc_irq.name = name;
-	if (!(mpic->flags & MPIC_SECONDARY))
+	अगर (!(mpic->flags & MPIC_SECONDARY))
 		mpic->hc_irq.irq_set_affinity = mpic_set_affinity;
-#ifdef CONFIG_MPIC_U3_HT_IRQS
+#अगर_घोषित CONFIG_MPIC_U3_HT_IRQS
 	mpic->hc_ht_irq = mpic_irq_ht_chip;
 	mpic->hc_ht_irq.name = name;
-	if (!(mpic->flags & MPIC_SECONDARY))
+	अगर (!(mpic->flags & MPIC_SECONDARY))
 		mpic->hc_ht_irq.irq_set_affinity = mpic_set_affinity;
-#endif /* CONFIG_MPIC_U3_HT_IRQS */
+#पूर्ण_अगर /* CONFIG_MPIC_U3_HT_IRQS */
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	mpic->hc_ipi = mpic_ipi_chip;
 	mpic->hc_ipi.name = name;
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-	mpic->hc_tm = mpic_tm_chip;
-	mpic->hc_tm.name = name;
+	mpic->hc_पंचांग = mpic_पंचांग_chip;
+	mpic->hc_पंचांग.name = name;
 
 	mpic->num_sources = 0; /* so far */
 
-	if (mpic->flags & MPIC_LARGE_VECTORS)
-		intvec_top = 2047;
-	else
-		intvec_top = 255;
+	अगर (mpic->flags & MPIC_LARGE_VECTORS)
+		पूर्णांकvec_top = 2047;
+	अन्यथा
+		पूर्णांकvec_top = 255;
 
-	mpic->timer_vecs[0] = intvec_top - 12;
-	mpic->timer_vecs[1] = intvec_top - 11;
-	mpic->timer_vecs[2] = intvec_top - 10;
-	mpic->timer_vecs[3] = intvec_top - 9;
-	mpic->timer_vecs[4] = intvec_top - 8;
-	mpic->timer_vecs[5] = intvec_top - 7;
-	mpic->timer_vecs[6] = intvec_top - 6;
-	mpic->timer_vecs[7] = intvec_top - 5;
-	mpic->ipi_vecs[0]   = intvec_top - 4;
-	mpic->ipi_vecs[1]   = intvec_top - 3;
-	mpic->ipi_vecs[2]   = intvec_top - 2;
-	mpic->ipi_vecs[3]   = intvec_top - 1;
-	mpic->spurious_vec  = intvec_top;
+	mpic->समयr_vecs[0] = पूर्णांकvec_top - 12;
+	mpic->समयr_vecs[1] = पूर्णांकvec_top - 11;
+	mpic->समयr_vecs[2] = पूर्णांकvec_top - 10;
+	mpic->समयr_vecs[3] = पूर्णांकvec_top - 9;
+	mpic->समयr_vecs[4] = पूर्णांकvec_top - 8;
+	mpic->समयr_vecs[5] = पूर्णांकvec_top - 7;
+	mpic->समयr_vecs[6] = पूर्णांकvec_top - 6;
+	mpic->समयr_vecs[7] = पूर्णांकvec_top - 5;
+	mpic->ipi_vecs[0]   = पूर्णांकvec_top - 4;
+	mpic->ipi_vecs[1]   = पूर्णांकvec_top - 3;
+	mpic->ipi_vecs[2]   = पूर्णांकvec_top - 2;
+	mpic->ipi_vecs[3]   = पूर्णांकvec_top - 1;
+	mpic->spurious_vec  = पूर्णांकvec_top;
 
-	/* Look for protected sources */
+	/* Look क्रम रक्षित sources */
 	psrc = of_get_property(mpic->node, "protected-sources", &psize);
-	if (psrc) {
-		/* Allocate a bitmap with one bit per interrupt */
-		unsigned int mapsize = BITS_TO_LONGS(intvec_top + 1);
-		mpic->protected = kcalloc(mapsize, sizeof(long), GFP_KERNEL);
-		BUG_ON(mpic->protected == NULL);
-		for (i = 0; i < psize/sizeof(u32); i++) {
-			if (psrc[i] > intvec_top)
-				continue;
-			__set_bit(psrc[i], mpic->protected);
-		}
-	}
+	अगर (psrc) अणु
+		/* Allocate a biपंचांगap with one bit per पूर्णांकerrupt */
+		अचिन्हित पूर्णांक mapsize = BITS_TO_LONGS(पूर्णांकvec_top + 1);
+		mpic->रक्षित = kसुस्मृति(mapsize, माप(दीर्घ), GFP_KERNEL);
+		BUG_ON(mpic->रक्षित == शून्य);
+		क्रम (i = 0; i < psize/माप(u32); i++) अणु
+			अगर (psrc[i] > पूर्णांकvec_top)
+				जारी;
+			__set_bit(psrc[i], mpic->रक्षित);
+		पूर्ण
+	पूर्ण
 
-#ifdef CONFIG_MPIC_WEIRD
+#अगर_घोषित CONFIG_MPIC_WEIRD
 	mpic->hw_set = mpic_infos[MPIC_GET_REGSET(mpic->flags)];
-#endif
+#पूर्ण_अगर
 
-	/* default register type */
-	if (mpic->flags & MPIC_BIG_ENDIAN)
+	/* शेष रेजिस्टर type */
+	अगर (mpic->flags & MPIC_BIG_ENDIAN)
 		mpic->reg_type = mpic_access_mmio_be;
-	else
+	अन्यथा
 		mpic->reg_type = mpic_access_mmio_le;
 
 	/*
 	 * An MPIC with a "dcr-reg" property must be accessed that way, but
-	 * only if the kernel includes DCR support.
+	 * only अगर the kernel includes DCR support.
 	 */
-#ifdef CONFIG_PPC_DCR
-	if (mpic->flags & MPIC_USES_DCR)
+#अगर_घोषित CONFIG_PPC_DCR
+	अगर (mpic->flags & MPIC_USES_DCR)
 		mpic->reg_type = mpic_access_dcr;
-#else
+#अन्यथा
 	BUG_ON(mpic->flags & MPIC_USES_DCR);
-#endif
+#पूर्ण_अगर
 
-	/* Map the global registers */
+	/* Map the global रेजिस्टरs */
 	mpic_map(mpic, mpic->paddr, &mpic->gregs, MPIC_INFO(GREG_BASE), 0x1000);
-	mpic_map(mpic, mpic->paddr, &mpic->tmregs, MPIC_INFO(TIMER_BASE), 0x1000);
+	mpic_map(mpic, mpic->paddr, &mpic->पंचांगregs, MPIC_INFO(TIMER_BASE), 0x1000);
 
-	if (mpic->flags & MPIC_FSL) {
-		int ret;
+	अगर (mpic->flags & MPIC_FSL) अणु
+		पूर्णांक ret;
 
 		/*
-		 * Yes, Freescale really did put global registers in the
-		 * magic per-cpu area -- and they don't even show up in the
+		 * Yes, Freescale really did put global रेजिस्टरs in the
+		 * magic per-cpu area -- and they करोn't even show up in the
 		 * non-magic per-cpu copies that this driver normally uses.
 		 */
 		mpic_map(mpic, mpic->paddr, &mpic->thiscpuregs,
@@ -1371,170 +1372,170 @@ struct mpic * __init mpic_alloc(struct device_node *node,
 
 		fsl_version = fsl_mpic_get_version(mpic);
 
-		/* Error interrupt mask register (EIMR) is required for
-		 * handling individual device error interrupts. EIMR
+		/* Error पूर्णांकerrupt mask रेजिस्टर (EIMR) is required क्रम
+		 * handling inभागidual device error पूर्णांकerrupts. EIMR
 		 * was added in MPIC version 4.1.
 		 *
-		 * Over here we reserve vector number space for error
-		 * interrupt vectors. This space is stolen from the
-		 * global vector number space, as in case of ipis
-		 * and timer interrupts.
+		 * Over here we reserve vector number space क्रम error
+		 * पूर्णांकerrupt vectors. This space is stolen from the
+		 * global vector number space, as in हाल of ipis
+		 * and समयr पूर्णांकerrupts.
 		 *
-		 * Available vector space = intvec_top - 13, where 13
+		 * Available vector space = पूर्णांकvec_top - 13, where 13
 		 * is the number of vectors which have been consumed by
-		 * ipis, timer interrupts and spurious.
+		 * ipis, समयr पूर्णांकerrupts and spurious.
 		 */
-		if (fsl_version >= 0x401) {
-			ret = mpic_setup_error_int(mpic, intvec_top - 13);
-			if (ret)
-				return NULL;
-		}
+		अगर (fsl_version >= 0x401) अणु
+			ret = mpic_setup_error_पूर्णांक(mpic, पूर्णांकvec_top - 13);
+			अगर (ret)
+				वापस शून्य;
+		पूर्ण
 
-	}
+	पूर्ण
 
 	/*
 	 * EPR is only available starting with v4.0.  To support
-	 * platforms that don't know the MPIC version at compile-time,
-	 * such as qemu-e500, turn off coreint if this MPIC doesn't
-	 * support it.  Note that we never enable it if it wasn't
+	 * platक्रमms that करोn't know the MPIC version at compile-समय,
+	 * such as qemu-e500, turn off coreपूर्णांक अगर this MPIC करोesn't
+	 * support it.  Note that we never enable it अगर it wasn't
 	 * requested in the first place.
 	 *
-	 * This is done outside the MPIC_FSL check, so that we
-	 * also disable coreint if the MPIC node doesn't have
-	 * an "fsl,mpic" compatible at all.  This will be the case
+	 * This is करोne outside the MPIC_FSL check, so that we
+	 * also disable coreपूर्णांक अगर the MPIC node करोesn't have
+	 * an "fsl,mpic" compatible at all.  This will be the हाल
 	 * with device trees generated by older versions of QEMU.
-	 * fsl_version will be zero if MPIC_FSL is not set.
+	 * fsl_version will be zero अगर MPIC_FSL is not set.
 	 */
-	if (fsl_version < 0x400 && (flags & MPIC_ENABLE_COREINT)) {
-		WARN_ON(ppc_md.get_irq != mpic_get_coreint_irq);
+	अगर (fsl_version < 0x400 && (flags & MPIC_ENABLE_COREINT)) अणु
+		WARN_ON(ppc_md.get_irq != mpic_get_coreपूर्णांक_irq);
 		ppc_md.get_irq = mpic_get_irq;
-	}
+	पूर्ण
 
 	/* Reset */
 
-	/* When using a device-node, reset requests are only honored if the MPIC
+	/* When using a device-node, reset requests are only honored अगर the MPIC
 	 * is allowed to reset.
 	 */
-	if (!(mpic->flags & MPIC_NO_RESET)) {
-		printk(KERN_DEBUG "mpic: Resetting\n");
-		mpic_write(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0),
-			   mpic_read(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
+	अगर (!(mpic->flags & MPIC_NO_RESET)) अणु
+		prपूर्णांकk(KERN_DEBUG "mpic: Resetting\n");
+		mpic_ग_लिखो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0),
+			   mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
 			   | MPIC_GREG_GCONF_RESET);
-		while( mpic_read(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
+		जबतक( mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
 		       & MPIC_GREG_GCONF_RESET)
 			mb();
-	}
+	पूर्ण
 
 	/* CoreInt */
-	if (mpic->flags & MPIC_ENABLE_COREINT)
-		mpic_write(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0),
-			   mpic_read(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
+	अगर (mpic->flags & MPIC_ENABLE_COREINT)
+		mpic_ग_लिखो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0),
+			   mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
 			   | MPIC_GREG_GCONF_COREINT);
 
-	if (mpic->flags & MPIC_ENABLE_MCK)
-		mpic_write(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0),
-			   mpic_read(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
+	अगर (mpic->flags & MPIC_ENABLE_MCK)
+		mpic_ग_लिखो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0),
+			   mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
 			   | MPIC_GREG_GCONF_MCK);
 
 	/*
-	 * The MPIC driver will crash if there are more cores than we
+	 * The MPIC driver will crash अगर there are more cores than we
 	 * can initialize, so we may as well catch that problem here.
 	 */
 	BUG_ON(num_possible_cpus() > MPIC_MAX_CPUS);
 
-	/* Map the per-CPU registers */
-	for_each_possible_cpu(i) {
-		unsigned int cpu = get_hard_smp_processor_id(i);
+	/* Map the per-CPU रेजिस्टरs */
+	क्रम_each_possible_cpu(i) अणु
+		अचिन्हित पूर्णांक cpu = get_hard_smp_processor_id(i);
 
 		mpic_map(mpic, mpic->paddr, &mpic->cpuregs[cpu],
 			 MPIC_INFO(CPU_BASE) + cpu * MPIC_INFO(CPU_STRIDE),
 			 0x1000);
-	}
+	पूर्ण
 
 	/*
-	 * Read feature register.  For non-ISU MPICs, num sources as well. On
+	 * Read feature रेजिस्टर.  For non-ISU MPICs, num sources as well. On
 	 * ISU MPICs, sources are counted as ISUs are added
 	 */
-	greg_feature = mpic_read(mpic->gregs, MPIC_INFO(GREG_FEATURE_0));
+	greg_feature = mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_FEATURE_0));
 
 	/*
-	 * By default, the last source number comes from the MPIC, but the
+	 * By शेष, the last source number comes from the MPIC, but the
 	 * device-tree and board support code can override it on buggy hw.
 	 * If we get passed an isu_size (multi-isu MPIC) then we use that
-	 * as a default instead of the value read from the HW.
+	 * as a शेष instead of the value पढ़ो from the HW.
 	 */
 	last_irq = (greg_feature & MPIC_GREG_FEATURE_LAST_SRC_MASK)
 				>> MPIC_GREG_FEATURE_LAST_SRC_SHIFT;
-	if (isu_size)
+	अगर (isu_size)
 		last_irq = isu_size  * MPIC_MAX_ISU - 1;
-	of_property_read_u32(mpic->node, "last-interrupt-source", &last_irq);
-	if (irq_count)
+	of_property_पढ़ो_u32(mpic->node, "last-interrupt-source", &last_irq);
+	अगर (irq_count)
 		last_irq = irq_count - 1;
 
-	/* Initialize main ISU if none provided */
-	if (!isu_size) {
+	/* Initialize मुख्य ISU अगर none provided */
+	अगर (!isu_size) अणु
 		isu_size = last_irq + 1;
 		mpic->num_sources = isu_size;
 		mpic_map(mpic, mpic->paddr, &mpic->isus[0],
 				MPIC_INFO(IRQ_BASE),
 				MPIC_INFO(IRQ_STRIDE) * isu_size);
-	}
+	पूर्ण
 
 	mpic->isu_size = isu_size;
-	mpic->isu_shift = 1 + __ilog2(mpic->isu_size - 1);
-	mpic->isu_mask = (1 << mpic->isu_shift) - 1;
+	mpic->isu_shअगरt = 1 + __ilog2(mpic->isu_size - 1);
+	mpic->isu_mask = (1 << mpic->isu_shअगरt) - 1;
 
-	mpic->irqhost = irq_domain_add_linear(mpic->node,
-				       intvec_top,
+	mpic->irqhost = irq_करोमुख्य_add_linear(mpic->node,
+				       पूर्णांकvec_top,
 				       &mpic_host_ops, mpic);
 
 	/*
 	 * FIXME: The code leaks the MPIC object and mappings here; this
 	 * is very unlikely to fail but it ought to be fixed anyways.
 	 */
-	if (mpic->irqhost == NULL)
-		return NULL;
+	अगर (mpic->irqhost == शून्य)
+		वापस शून्य;
 
 	/* Display version */
-	switch (greg_feature & MPIC_GREG_FEATURE_VERSION_MASK) {
-	case 1:
+	चयन (greg_feature & MPIC_GREG_FEATURE_VERSION_MASK) अणु
+	हाल 1:
 		vers = "1.0";
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		vers = "1.2";
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		vers = "1.3";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		vers = "<unknown>";
-		break;
-	}
-	printk(KERN_INFO "mpic: Setting up MPIC \"%s\" version %s at %llx,"
+		अवरोध;
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "mpic: Setting up MPIC \"%s\" version %s at %llx,"
 	       " max %d CPUs\n",
-	       name, vers, (unsigned long long)mpic->paddr, num_possible_cpus());
-	printk(KERN_INFO "mpic: ISU size: %d, shift: %d, mask: %x\n",
-	       mpic->isu_size, mpic->isu_shift, mpic->isu_mask);
+	       name, vers, (अचिन्हित दीर्घ दीर्घ)mpic->paddr, num_possible_cpus());
+	prपूर्णांकk(KERN_INFO "mpic: ISU size: %d, shift: %d, mask: %x\n",
+	       mpic->isu_size, mpic->isu_shअगरt, mpic->isu_mask);
 
 	mpic->next = mpics;
 	mpics = mpic;
 
-	if (!(mpic->flags & MPIC_SECONDARY)) {
+	अगर (!(mpic->flags & MPIC_SECONDARY)) अणु
 		mpic_primary = mpic;
-		irq_set_default_host(mpic->irqhost);
-	}
+		irq_set_शेष_host(mpic->irqhost);
+	पूर्ण
 
-	return mpic;
+	वापस mpic;
 
 err_of_node_put:
 	of_node_put(node);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void __init mpic_assign_isu(struct mpic *mpic, unsigned int isu_num,
+व्योम __init mpic_assign_isu(काष्ठा mpic *mpic, अचिन्हित पूर्णांक isu_num,
 			    phys_addr_t paddr)
-{
-	unsigned int isu_first = isu_num * mpic->isu_size;
+अणु
+	अचिन्हित पूर्णांक isu_first = isu_num * mpic->isu_size;
 
 	BUG_ON(isu_num >= MPIC_MAX_ISU);
 
@@ -1542,350 +1543,350 @@ void __init mpic_assign_isu(struct mpic *mpic, unsigned int isu_num,
 		 paddr, &mpic->isus[isu_num], 0,
 		 MPIC_INFO(IRQ_STRIDE) * mpic->isu_size);
 
-	if ((isu_first + mpic->isu_size) > mpic->num_sources)
+	अगर ((isu_first + mpic->isu_size) > mpic->num_sources)
 		mpic->num_sources = isu_first + mpic->isu_size;
-}
+पूर्ण
 
-void __init mpic_init(struct mpic *mpic)
-{
-	int i, cpu;
-	int num_timers = 4;
+व्योम __init mpic_init(काष्ठा mpic *mpic)
+अणु
+	पूर्णांक i, cpu;
+	पूर्णांक num_समयrs = 4;
 
 	BUG_ON(mpic->num_sources == 0);
 
-	printk(KERN_INFO "mpic: Initializing for %d sources\n", mpic->num_sources);
+	prपूर्णांकk(KERN_INFO "mpic: Initializing for %d sources\n", mpic->num_sources);
 
 	/* Set current processor priority to max */
-	mpic_cpu_write(MPIC_INFO(CPU_CURRENT_TASK_PRI), 0xf);
+	mpic_cpu_ग_लिखो(MPIC_INFO(CPU_CURRENT_TASK_PRI), 0xf);
 
-	if (mpic->flags & MPIC_FSL) {
+	अगर (mpic->flags & MPIC_FSL) अणु
 		u32 version = fsl_mpic_get_version(mpic);
 
 		/*
 		 * Timer group B is present at the latest in MPIC 3.1 (e.g.
 		 * mpc8536).  It is not present in MPIC 2.0 (e.g. mpc8544).
-		 * I don't know about the status of intermediate versions (or
+		 * I करोn't know about the status of पूर्णांकermediate versions (or
 		 * whether they even exist).
 		 */
-		if (version >= 0x0301)
-			num_timers = 8;
-	}
+		अगर (version >= 0x0301)
+			num_समयrs = 8;
+	पूर्ण
 
-	/* Initialize timers to our reserved vectors and mask them for now */
-	for (i = 0; i < num_timers; i++) {
-		unsigned int offset = mpic_tm_offset(mpic, i);
+	/* Initialize समयrs to our reserved vectors and mask them क्रम now */
+	क्रम (i = 0; i < num_समयrs; i++) अणु
+		अचिन्हित पूर्णांक offset = mpic_पंचांग_offset(mpic, i);
 
-		mpic_write(mpic->tmregs,
+		mpic_ग_लिखो(mpic->पंचांगregs,
 			   offset + MPIC_INFO(TIMER_DESTINATION),
 			   1 << hard_smp_processor_id());
-		mpic_write(mpic->tmregs,
+		mpic_ग_लिखो(mpic->पंचांगregs,
 			   offset + MPIC_INFO(TIMER_VECTOR_PRI),
 			   MPIC_VECPRI_MASK |
 			   (9 << MPIC_VECPRI_PRIORITY_SHIFT) |
-			   (mpic->timer_vecs[0] + i));
-	}
+			   (mpic->समयr_vecs[0] + i));
+	पूर्ण
 
-	/* Initialize IPIs to our reserved vectors and mark them disabled for now */
+	/* Initialize IPIs to our reserved vectors and mark them disabled क्रम now */
 	mpic_test_broken_ipi(mpic);
-	for (i = 0; i < 4; i++) {
-		mpic_ipi_write(i,
+	क्रम (i = 0; i < 4; i++) अणु
+		mpic_ipi_ग_लिखो(i,
 			       MPIC_VECPRI_MASK |
 			       (10 << MPIC_VECPRI_PRIORITY_SHIFT) |
 			       (mpic->ipi_vecs[0] + i));
-	}
+	पूर्ण
 
 	/* Do the HT PIC fixups on U3 broken mpic */
 	DBG("MPIC flags: %x\n", mpic->flags);
-	if ((mpic->flags & MPIC_U3_HT_IRQS) && !(mpic->flags & MPIC_SECONDARY)) {
+	अगर ((mpic->flags & MPIC_U3_HT_IRQS) && !(mpic->flags & MPIC_SECONDARY)) अणु
 		mpic_scan_ht_pics(mpic);
 		mpic_u3msi_init(mpic);
-	}
+	पूर्ण
 
 	mpic_pasemi_msi_init(mpic);
 
 	cpu = mpic_processor_id(mpic);
 
-	if (!(mpic->flags & MPIC_NO_RESET)) {
-		for (i = 0; i < mpic->num_sources; i++) {
+	अगर (!(mpic->flags & MPIC_NO_RESET)) अणु
+		क्रम (i = 0; i < mpic->num_sources; i++) अणु
 			/* start with vector = source number, and masked */
 			u32 vecpri = MPIC_VECPRI_MASK | i |
 				(8 << MPIC_VECPRI_PRIORITY_SHIFT);
 
-			/* check if protected */
-			if (mpic->protected && test_bit(i, mpic->protected))
-				continue;
+			/* check अगर रक्षित */
+			अगर (mpic->रक्षित && test_bit(i, mpic->रक्षित))
+				जारी;
 			/* init hw */
-			mpic_irq_write(i, MPIC_INFO(IRQ_VECTOR_PRI), vecpri);
-			mpic_irq_write(i, MPIC_INFO(IRQ_DESTINATION), 1 << cpu);
-		}
-	}
+			mpic_irq_ग_लिखो(i, MPIC_INFO(IRQ_VECTOR_PRI), vecpri);
+			mpic_irq_ग_लिखो(i, MPIC_INFO(IRQ_DESTINATION), 1 << cpu);
+		पूर्ण
+	पूर्ण
 
 	/* Init spurious vector */
-	mpic_write(mpic->gregs, MPIC_INFO(GREG_SPURIOUS), mpic->spurious_vec);
+	mpic_ग_लिखो(mpic->gregs, MPIC_INFO(GREG_SPURIOUS), mpic->spurious_vec);
 
-	/* Disable 8259 passthrough, if supported */
-	if (!(mpic->flags & MPIC_NO_PTHROU_DIS))
-		mpic_write(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0),
-			   mpic_read(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
+	/* Disable 8259 passthrough, अगर supported */
+	अगर (!(mpic->flags & MPIC_NO_PTHROU_DIS))
+		mpic_ग_लिखो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0),
+			   mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
 			   | MPIC_GREG_GCONF_8259_PTHROU_DIS);
 
-	if (mpic->flags & MPIC_NO_BIAS)
-		mpic_write(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0),
-			mpic_read(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
+	अगर (mpic->flags & MPIC_NO_BIAS)
+		mpic_ग_लिखो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0),
+			mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_GLOBAL_CONF_0))
 			| MPIC_GREG_GCONF_NO_BIAS);
 
 	/* Set current processor priority to 0 */
-	mpic_cpu_write(MPIC_INFO(CPU_CURRENT_TASK_PRI), 0);
+	mpic_cpu_ग_लिखो(MPIC_INFO(CPU_CURRENT_TASK_PRI), 0);
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	/* allocate memory to save mpic state */
-	mpic->save_data = kmalloc_array(mpic->num_sources,
-				        sizeof(*mpic->save_data),
+	mpic->save_data = kदो_स्मृति_array(mpic->num_sources,
+				        माप(*mpic->save_data),
 				        GFP_KERNEL);
-	BUG_ON(mpic->save_data == NULL);
-#endif
+	BUG_ON(mpic->save_data == शून्य);
+#पूर्ण_अगर
 
-	/* Check if this MPIC is chained from a parent interrupt controller */
-	if (mpic->flags & MPIC_SECONDARY) {
-		int virq = irq_of_parse_and_map(mpic->node, 0);
-		if (virq) {
-			printk(KERN_INFO "%pOF: hooking up to IRQ %d\n",
+	/* Check अगर this MPIC is chained from a parent पूर्णांकerrupt controller */
+	अगर (mpic->flags & MPIC_SECONDARY) अणु
+		पूर्णांक virq = irq_of_parse_and_map(mpic->node, 0);
+		अगर (virq) अणु
+			prपूर्णांकk(KERN_INFO "%pOF: hooking up to IRQ %d\n",
 					mpic->node, virq);
 			irq_set_handler_data(virq, mpic);
 			irq_set_chained_handler(virq, &mpic_cascade);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* FSL mpic error interrupt initialization */
-	if (mpic->flags & MPIC_FSL_HAS_EIMR)
-		mpic_err_int_init(mpic, MPIC_FSL_ERR_INT);
-}
+	/* FSL mpic error पूर्णांकerrupt initialization */
+	अगर (mpic->flags & MPIC_FSL_HAS_EIMR)
+		mpic_err_पूर्णांक_init(mpic, MPIC_FSL_ERR_INT);
+पूर्ण
 
-void mpic_irq_set_priority(unsigned int irq, unsigned int pri)
-{
-	struct mpic *mpic = mpic_find(irq);
-	unsigned int src = virq_to_hw(irq);
-	unsigned long flags;
+व्योम mpic_irq_set_priority(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक pri)
+अणु
+	काष्ठा mpic *mpic = mpic_find(irq);
+	अचिन्हित पूर्णांक src = virq_to_hw(irq);
+	अचिन्हित दीर्घ flags;
 	u32 reg;
 
-	if (!mpic)
-		return;
+	अगर (!mpic)
+		वापस;
 
 	raw_spin_lock_irqsave(&mpic_lock, flags);
-	if (mpic_is_ipi(mpic, src)) {
-		reg = mpic_ipi_read(src - mpic->ipi_vecs[0]) &
+	अगर (mpic_is_ipi(mpic, src)) अणु
+		reg = mpic_ipi_पढ़ो(src - mpic->ipi_vecs[0]) &
 			~MPIC_VECPRI_PRIORITY_MASK;
-		mpic_ipi_write(src - mpic->ipi_vecs[0],
+		mpic_ipi_ग_लिखो(src - mpic->ipi_vecs[0],
 			       reg | (pri << MPIC_VECPRI_PRIORITY_SHIFT));
-	} else if (mpic_is_tm(mpic, src)) {
-		reg = mpic_tm_read(src - mpic->timer_vecs[0]) &
+	पूर्ण अन्यथा अगर (mpic_is_पंचांग(mpic, src)) अणु
+		reg = mpic_पंचांग_पढ़ो(src - mpic->समयr_vecs[0]) &
 			~MPIC_VECPRI_PRIORITY_MASK;
-		mpic_tm_write(src - mpic->timer_vecs[0],
+		mpic_पंचांग_ग_लिखो(src - mpic->समयr_vecs[0],
 			      reg | (pri << MPIC_VECPRI_PRIORITY_SHIFT));
-	} else {
-		reg = mpic_irq_read(src, MPIC_INFO(IRQ_VECTOR_PRI))
+	पूर्ण अन्यथा अणु
+		reg = mpic_irq_पढ़ो(src, MPIC_INFO(IRQ_VECTOR_PRI))
 			& ~MPIC_VECPRI_PRIORITY_MASK;
-		mpic_irq_write(src, MPIC_INFO(IRQ_VECTOR_PRI),
+		mpic_irq_ग_लिखो(src, MPIC_INFO(IRQ_VECTOR_PRI),
 			       reg | (pri << MPIC_VECPRI_PRIORITY_SHIFT));
-	}
+	पूर्ण
 	raw_spin_unlock_irqrestore(&mpic_lock, flags);
-}
+पूर्ण
 
-void mpic_setup_this_cpu(void)
-{
-#ifdef CONFIG_SMP
-	struct mpic *mpic = mpic_primary;
-	unsigned long flags;
+व्योम mpic_setup_this_cpu(व्योम)
+अणु
+#अगर_घोषित CONFIG_SMP
+	काष्ठा mpic *mpic = mpic_primary;
+	अचिन्हित दीर्घ flags;
 	u32 msk = 1 << hard_smp_processor_id();
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	BUG_ON(mpic == NULL);
+	BUG_ON(mpic == शून्य);
 
 	DBG("%s: setup_this_cpu(%d)\n", mpic->name, hard_smp_processor_id());
 
 	raw_spin_lock_irqsave(&mpic_lock, flags);
 
- 	/* let the mpic know we want intrs. default affinity is 0xffffffff
-	 * until changed via /proc. That's how it's done on x86. If we want
-	 * it differently, then we should make sure we also change the default
+ 	/* let the mpic know we want पूर्णांकrs. शेष affinity is 0xffffffff
+	 * until changed via /proc. That's how it's करोne on x86. If we want
+	 * it dअगरferently, then we should make sure we also change the शेष
 	 * values of irq_desc[].affinity in irq.c.
  	 */
-	if (distribute_irqs && !(mpic->flags & MPIC_SINGLE_DEST_CPU)) {
-	 	for (i = 0; i < mpic->num_sources ; i++)
-			mpic_irq_write(i, MPIC_INFO(IRQ_DESTINATION),
-				mpic_irq_read(i, MPIC_INFO(IRQ_DESTINATION)) | msk);
-	}
+	अगर (distribute_irqs && !(mpic->flags & MPIC_SINGLE_DEST_CPU)) अणु
+	 	क्रम (i = 0; i < mpic->num_sources ; i++)
+			mpic_irq_ग_लिखो(i, MPIC_INFO(IRQ_DESTINATION),
+				mpic_irq_पढ़ो(i, MPIC_INFO(IRQ_DESTINATION)) | msk);
+	पूर्ण
 
 	/* Set current processor priority to 0 */
-	mpic_cpu_write(MPIC_INFO(CPU_CURRENT_TASK_PRI), 0);
+	mpic_cpu_ग_लिखो(MPIC_INFO(CPU_CURRENT_TASK_PRI), 0);
 
 	raw_spin_unlock_irqrestore(&mpic_lock, flags);
-#endif /* CONFIG_SMP */
-}
+#पूर्ण_अगर /* CONFIG_SMP */
+पूर्ण
 
-int mpic_cpu_get_priority(void)
-{
-	struct mpic *mpic = mpic_primary;
+पूर्णांक mpic_cpu_get_priority(व्योम)
+अणु
+	काष्ठा mpic *mpic = mpic_primary;
 
-	return mpic_cpu_read(MPIC_INFO(CPU_CURRENT_TASK_PRI));
-}
+	वापस mpic_cpu_पढ़ो(MPIC_INFO(CPU_CURRENT_TASK_PRI));
+पूर्ण
 
-void mpic_cpu_set_priority(int prio)
-{
-	struct mpic *mpic = mpic_primary;
+व्योम mpic_cpu_set_priority(पूर्णांक prio)
+अणु
+	काष्ठा mpic *mpic = mpic_primary;
 
 	prio &= MPIC_CPU_TASKPRI_MASK;
-	mpic_cpu_write(MPIC_INFO(CPU_CURRENT_TASK_PRI), prio);
-}
+	mpic_cpu_ग_लिखो(MPIC_INFO(CPU_CURRENT_TASK_PRI), prio);
+पूर्ण
 
-void mpic_teardown_this_cpu(int secondary)
-{
-	struct mpic *mpic = mpic_primary;
-	unsigned long flags;
+व्योम mpic_tearकरोwn_this_cpu(पूर्णांक secondary)
+अणु
+	काष्ठा mpic *mpic = mpic_primary;
+	अचिन्हित दीर्घ flags;
 	u32 msk = 1 << hard_smp_processor_id();
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	BUG_ON(mpic == NULL);
+	BUG_ON(mpic == शून्य);
 
 	DBG("%s: teardown_this_cpu(%d)\n", mpic->name, hard_smp_processor_id());
 	raw_spin_lock_irqsave(&mpic_lock, flags);
 
-	/* let the mpic know we don't want intrs.  */
-	for (i = 0; i < mpic->num_sources ; i++)
-		mpic_irq_write(i, MPIC_INFO(IRQ_DESTINATION),
-			mpic_irq_read(i, MPIC_INFO(IRQ_DESTINATION)) & ~msk);
+	/* let the mpic know we करोn't want पूर्णांकrs.  */
+	क्रम (i = 0; i < mpic->num_sources ; i++)
+		mpic_irq_ग_लिखो(i, MPIC_INFO(IRQ_DESTINATION),
+			mpic_irq_पढ़ो(i, MPIC_INFO(IRQ_DESTINATION)) & ~msk);
 
 	/* Set current processor priority to max */
-	mpic_cpu_write(MPIC_INFO(CPU_CURRENT_TASK_PRI), 0xf);
-	/* We need to EOI the IPI since not all platforms reset the MPIC
-	 * on boot and new interrupts wouldn't get delivered otherwise.
+	mpic_cpu_ग_लिखो(MPIC_INFO(CPU_CURRENT_TASK_PRI), 0xf);
+	/* We need to EOI the IPI since not all platक्रमms reset the MPIC
+	 * on boot and new पूर्णांकerrupts wouldn't get delivered otherwise.
 	 */
 	mpic_eoi(mpic);
 
 	raw_spin_unlock_irqrestore(&mpic_lock, flags);
-}
+पूर्ण
 
 
-static unsigned int _mpic_get_one_irq(struct mpic *mpic, int reg)
-{
+अटल अचिन्हित पूर्णांक _mpic_get_one_irq(काष्ठा mpic *mpic, पूर्णांक reg)
+अणु
 	u32 src;
 
-	src = mpic_cpu_read(reg) & MPIC_INFO(VECPRI_VECTOR_MASK);
-#ifdef DEBUG_LOW
+	src = mpic_cpu_पढ़ो(reg) & MPIC_INFO(VECPRI_VECTOR_MASK);
+#अगर_घोषित DEBUG_LOW
 	DBG("%s: get_one_irq(reg 0x%x): %d\n", mpic->name, reg, src);
-#endif
-	if (unlikely(src == mpic->spurious_vec)) {
-		if (mpic->flags & MPIC_SPV_EOI)
+#पूर्ण_अगर
+	अगर (unlikely(src == mpic->spurious_vec)) अणु
+		अगर (mpic->flags & MPIC_SPV_EOI)
 			mpic_eoi(mpic);
-		return 0;
-	}
-	if (unlikely(mpic->protected && test_bit(src, mpic->protected))) {
-		printk_ratelimited(KERN_WARNING "%s: Got protected source %d !\n",
-				   mpic->name, (int)src);
+		वापस 0;
+	पूर्ण
+	अगर (unlikely(mpic->रक्षित && test_bit(src, mpic->रक्षित))) अणु
+		prपूर्णांकk_ratelimited(KERN_WARNING "%s: Got protected source %d !\n",
+				   mpic->name, (पूर्णांक)src);
 		mpic_eoi(mpic);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return irq_linear_revmap(mpic->irqhost, src);
-}
+	वापस irq_linear_revmap(mpic->irqhost, src);
+पूर्ण
 
-unsigned int mpic_get_one_irq(struct mpic *mpic)
-{
-	return _mpic_get_one_irq(mpic, MPIC_INFO(CPU_INTACK));
-}
+अचिन्हित पूर्णांक mpic_get_one_irq(काष्ठा mpic *mpic)
+अणु
+	वापस _mpic_get_one_irq(mpic, MPIC_INFO(CPU_INTACK));
+पूर्ण
 
-unsigned int mpic_get_irq(void)
-{
-	struct mpic *mpic = mpic_primary;
+अचिन्हित पूर्णांक mpic_get_irq(व्योम)
+अणु
+	काष्ठा mpic *mpic = mpic_primary;
 
-	BUG_ON(mpic == NULL);
+	BUG_ON(mpic == शून्य);
 
-	return mpic_get_one_irq(mpic);
-}
+	वापस mpic_get_one_irq(mpic);
+पूर्ण
 
-unsigned int mpic_get_coreint_irq(void)
-{
-#ifdef CONFIG_BOOKE
-	struct mpic *mpic = mpic_primary;
+अचिन्हित पूर्णांक mpic_get_coreपूर्णांक_irq(व्योम)
+अणु
+#अगर_घोषित CONFIG_BOOKE
+	काष्ठा mpic *mpic = mpic_primary;
 	u32 src;
 
-	BUG_ON(mpic == NULL);
+	BUG_ON(mpic == शून्य);
 
 	src = mfspr(SPRN_EPR);
 
-	if (unlikely(src == mpic->spurious_vec)) {
-		if (mpic->flags & MPIC_SPV_EOI)
+	अगर (unlikely(src == mpic->spurious_vec)) अणु
+		अगर (mpic->flags & MPIC_SPV_EOI)
 			mpic_eoi(mpic);
-		return 0;
-	}
-	if (unlikely(mpic->protected && test_bit(src, mpic->protected))) {
-		printk_ratelimited(KERN_WARNING "%s: Got protected source %d !\n",
-				   mpic->name, (int)src);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
+	अगर (unlikely(mpic->रक्षित && test_bit(src, mpic->रक्षित))) अणु
+		prपूर्णांकk_ratelimited(KERN_WARNING "%s: Got protected source %d !\n",
+				   mpic->name, (पूर्णांक)src);
+		वापस 0;
+	पूर्ण
 
-	return irq_linear_revmap(mpic->irqhost, src);
-#else
-	return 0;
-#endif
-}
+	वापस irq_linear_revmap(mpic->irqhost, src);
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-unsigned int mpic_get_mcirq(void)
-{
-	struct mpic *mpic = mpic_primary;
+अचिन्हित पूर्णांक mpic_get_mcirq(व्योम)
+अणु
+	काष्ठा mpic *mpic = mpic_primary;
 
-	BUG_ON(mpic == NULL);
+	BUG_ON(mpic == शून्य);
 
-	return _mpic_get_one_irq(mpic, MPIC_INFO(CPU_MCACK));
-}
+	वापस _mpic_get_one_irq(mpic, MPIC_INFO(CPU_MCACK));
+पूर्ण
 
-#ifdef CONFIG_SMP
-void mpic_request_ipis(void)
-{
-	struct mpic *mpic = mpic_primary;
-	int i;
-	BUG_ON(mpic == NULL);
+#अगर_घोषित CONFIG_SMP
+व्योम mpic_request_ipis(व्योम)
+अणु
+	काष्ठा mpic *mpic = mpic_primary;
+	पूर्णांक i;
+	BUG_ON(mpic == शून्य);
 
-	printk(KERN_INFO "mpic: requesting IPIs...\n");
+	prपूर्णांकk(KERN_INFO "mpic: requesting IPIs...\n");
 
-	for (i = 0; i < 4; i++) {
-		unsigned int vipi = irq_create_mapping(mpic->irqhost,
+	क्रम (i = 0; i < 4; i++) अणु
+		अचिन्हित पूर्णांक vipi = irq_create_mapping(mpic->irqhost,
 						       mpic->ipi_vecs[0] + i);
-		if (!vipi) {
-			printk(KERN_ERR "Failed to map %s\n", smp_ipi_name[i]);
-			continue;
-		}
+		अगर (!vipi) अणु
+			prपूर्णांकk(KERN_ERR "Failed to map %s\n", smp_ipi_name[i]);
+			जारी;
+		पूर्ण
 		smp_request_message_ipi(vipi, i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void smp_mpic_message_pass(int cpu, int msg)
-{
-	struct mpic *mpic = mpic_primary;
+व्योम smp_mpic_message_pass(पूर्णांक cpu, पूर्णांक msg)
+अणु
+	काष्ठा mpic *mpic = mpic_primary;
 	u32 physmask;
 
-	BUG_ON(mpic == NULL);
+	BUG_ON(mpic == शून्य);
 
 	/* make sure we're sending something that translates to an IPI */
-	if ((unsigned int)msg > 3) {
-		printk("SMP %d: smp_message_pass: unknown msg %d\n",
+	अगर ((अचिन्हित पूर्णांक)msg > 3) अणु
+		prपूर्णांकk("SMP %d: smp_message_pass: unknown msg %d\n",
 		       smp_processor_id(), msg);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-#ifdef DEBUG_IPI
+#अगर_घोषित DEBUG_IPI
 	DBG("%s: send_ipi(ipi_no: %d)\n", mpic->name, msg);
-#endif
+#पूर्ण_अगर
 
 	physmask = 1 << get_hard_smp_processor_id(cpu);
 
-	mpic_cpu_write(MPIC_INFO(CPU_IPI_DISPATCH_0) +
+	mpic_cpu_ग_लिखो(MPIC_INFO(CPU_IPI_DISPATCH_0) +
 		       msg * MPIC_INFO(CPU_IPI_DISPATCH_STRIDE), physmask);
-}
+पूर्ण
 
-void __init smp_mpic_probe(void)
-{
-	int nr_cpus;
+व्योम __init smp_mpic_probe(व्योम)
+अणु
+	पूर्णांक nr_cpus;
 
 	DBG("smp_mpic_probe()...\n");
 
@@ -1893,128 +1894,128 @@ void __init smp_mpic_probe(void)
 
 	DBG("nr_cpus: %d\n", nr_cpus);
 
-	if (nr_cpus > 1)
+	अगर (nr_cpus > 1)
 		mpic_request_ipis();
-}
+पूर्ण
 
-void smp_mpic_setup_cpu(int cpu)
-{
+व्योम smp_mpic_setup_cpu(पूर्णांक cpu)
+अणु
 	mpic_setup_this_cpu();
-}
+पूर्ण
 
-void mpic_reset_core(int cpu)
-{
-	struct mpic *mpic = mpic_primary;
+व्योम mpic_reset_core(पूर्णांक cpu)
+अणु
+	काष्ठा mpic *mpic = mpic_primary;
 	u32 pir;
-	int cpuid = get_hard_smp_processor_id(cpu);
-	int i;
+	पूर्णांक cpuid = get_hard_smp_processor_id(cpu);
+	पूर्णांक i;
 
-	/* Set target bit for core reset */
-	pir = mpic_read(mpic->gregs, MPIC_INFO(GREG_PROCESSOR_INIT));
+	/* Set target bit क्रम core reset */
+	pir = mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_PROCESSOR_INIT));
 	pir |= (1 << cpuid);
-	mpic_write(mpic->gregs, MPIC_INFO(GREG_PROCESSOR_INIT), pir);
-	mpic_read(mpic->gregs, MPIC_INFO(GREG_PROCESSOR_INIT));
+	mpic_ग_लिखो(mpic->gregs, MPIC_INFO(GREG_PROCESSOR_INIT), pir);
+	mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_PROCESSOR_INIT));
 
 	/* Restore target bit after reset complete */
 	pir &= ~(1 << cpuid);
-	mpic_write(mpic->gregs, MPIC_INFO(GREG_PROCESSOR_INIT), pir);
-	mpic_read(mpic->gregs, MPIC_INFO(GREG_PROCESSOR_INIT));
+	mpic_ग_लिखो(mpic->gregs, MPIC_INFO(GREG_PROCESSOR_INIT), pir);
+	mpic_पढ़ो(mpic->gregs, MPIC_INFO(GREG_PROCESSOR_INIT));
 
-	/* Perform 15 EOI on each reset core to clear pending interrupts.
-	 * This is required for FSL CoreNet based devices */
-	if (mpic->flags & MPIC_FSL) {
-		for (i = 0; i < 15; i++) {
-			_mpic_write(mpic->reg_type, &mpic->cpuregs[cpuid],
+	/* Perक्रमm 15 EOI on each reset core to clear pending पूर्णांकerrupts.
+	 * This is required क्रम FSL CoreNet based devices */
+	अगर (mpic->flags & MPIC_FSL) अणु
+		क्रम (i = 0; i < 15; i++) अणु
+			_mpic_ग_लिखो(mpic->reg_type, &mpic->cpuregs[cpuid],
 				      MPIC_CPU_EOI, 0);
-		}
-	}
-}
-#endif /* CONFIG_SMP */
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-#ifdef CONFIG_PM
-static void mpic_suspend_one(struct mpic *mpic)
-{
-	int i;
+#अगर_घोषित CONFIG_PM
+अटल व्योम mpic_suspend_one(काष्ठा mpic *mpic)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mpic->num_sources; i++) {
+	क्रम (i = 0; i < mpic->num_sources; i++) अणु
 		mpic->save_data[i].vecprio =
-			mpic_irq_read(i, MPIC_INFO(IRQ_VECTOR_PRI));
+			mpic_irq_पढ़ो(i, MPIC_INFO(IRQ_VECTOR_PRI));
 		mpic->save_data[i].dest =
-			mpic_irq_read(i, MPIC_INFO(IRQ_DESTINATION));
-	}
-}
+			mpic_irq_पढ़ो(i, MPIC_INFO(IRQ_DESTINATION));
+	पूर्ण
+पूर्ण
 
-static int mpic_suspend(void)
-{
-	struct mpic *mpic = mpics;
+अटल पूर्णांक mpic_suspend(व्योम)
+अणु
+	काष्ठा mpic *mpic = mpics;
 
-	while (mpic) {
+	जबतक (mpic) अणु
 		mpic_suspend_one(mpic);
 		mpic = mpic->next;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mpic_resume_one(struct mpic *mpic)
-{
-	int i;
+अटल व्योम mpic_resume_one(काष्ठा mpic *mpic)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mpic->num_sources; i++) {
-		mpic_irq_write(i, MPIC_INFO(IRQ_VECTOR_PRI),
+	क्रम (i = 0; i < mpic->num_sources; i++) अणु
+		mpic_irq_ग_लिखो(i, MPIC_INFO(IRQ_VECTOR_PRI),
 			       mpic->save_data[i].vecprio);
-		mpic_irq_write(i, MPIC_INFO(IRQ_DESTINATION),
+		mpic_irq_ग_लिखो(i, MPIC_INFO(IRQ_DESTINATION),
 			       mpic->save_data[i].dest);
 
-#ifdef CONFIG_MPIC_U3_HT_IRQS
-	if (mpic->fixups) {
-		struct mpic_irq_fixup *fixup = &mpic->fixups[i];
+#अगर_घोषित CONFIG_MPIC_U3_HT_IRQS
+	अगर (mpic->fixups) अणु
+		काष्ठा mpic_irq_fixup *fixup = &mpic->fixups[i];
 
-		if (fixup->base) {
+		अगर (fixup->base) अणु
 			/* we use the lowest bit in an inverted meaning */
-			if ((mpic->save_data[i].fixup_data & 1) == 0)
-				continue;
+			अगर ((mpic->save_data[i].fixup_data & 1) == 0)
+				जारी;
 
 			/* Enable and configure */
-			writeb(0x10 + 2 * fixup->index, fixup->base + 2);
+			ग_लिखोb(0x10 + 2 * fixup->index, fixup->base + 2);
 
-			writel(mpic->save_data[i].fixup_data & ~1,
+			ग_लिखोl(mpic->save_data[i].fixup_data & ~1,
 			       fixup->base + 4);
-		}
-	}
-#endif
-	} /* end for loop */
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	पूर्ण /* end क्रम loop */
+पूर्ण
 
-static void mpic_resume(void)
-{
-	struct mpic *mpic = mpics;
+अटल व्योम mpic_resume(व्योम)
+अणु
+	काष्ठा mpic *mpic = mpics;
 
-	while (mpic) {
+	जबतक (mpic) अणु
 		mpic_resume_one(mpic);
 		mpic = mpic->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct syscore_ops mpic_syscore_ops = {
+अटल काष्ठा syscore_ops mpic_syscore_ops = अणु
 	.resume = mpic_resume,
 	.suspend = mpic_suspend,
-};
+पूर्ण;
 
-static int mpic_init_sys(void)
-{
-	int rc;
+अटल पूर्णांक mpic_init_sys(व्योम)
+अणु
+	पूर्णांक rc;
 
-	register_syscore_ops(&mpic_syscore_ops);
-	rc = subsys_system_register(&mpic_subsys, NULL);
-	if (rc) {
-		unregister_syscore_ops(&mpic_syscore_ops);
+	रेजिस्टर_syscore_ops(&mpic_syscore_ops);
+	rc = subsys_प्रणाली_रेजिस्टर(&mpic_subsys, शून्य);
+	अगर (rc) अणु
+		unरेजिस्टर_syscore_ops(&mpic_syscore_ops);
 		pr_err("mpic: Failed to register subsystem!\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 device_initcall(mpic_init_sys);
-#endif
+#पूर्ण_अगर

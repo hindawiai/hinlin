@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Performance event callchain support - SuperH architecture code
+ * Perक्रमmance event callchain support - SuperH architecture code
  *
  * Copyright (C) 2009  Paul Mundt
  */
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/perf_event.h>
-#include <linux/percpu.h>
-#include <asm/unwinder.h>
-#include <asm/ptrace.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/percpu.h>
+#समावेश <यंत्र/unwinder.h>
+#समावेश <यंत्र/ptrace.h>
 
-static void callchain_address(void *data, unsigned long addr, int reliable)
-{
-	struct perf_callchain_entry_ctx *entry = data;
+अटल व्योम callchain_address(व्योम *data, अचिन्हित दीर्घ addr, पूर्णांक reliable)
+अणु
+	काष्ठा perf_callchain_entry_ctx *entry = data;
 
-	if (reliable)
+	अगर (reliable)
 		perf_callchain_store(entry, addr);
-}
+पूर्ण
 
-static const struct stacktrace_ops callchain_ops = {
+अटल स्थिर काष्ठा stacktrace_ops callchain_ops = अणु
 	.address	= callchain_address,
-};
+पूर्ण;
 
-void
-perf_callchain_kernel(struct perf_callchain_entry_ctx *entry, struct pt_regs *regs)
-{
+व्योम
+perf_callchain_kernel(काष्ठा perf_callchain_entry_ctx *entry, काष्ठा pt_regs *regs)
+अणु
 	perf_callchain_store(entry, regs->pc);
 
-	unwind_stack(NULL, regs, NULL, &callchain_ops, entry);
-}
+	unwind_stack(शून्य, regs, शून्य, &callchain_ops, entry);
+पूर्ण

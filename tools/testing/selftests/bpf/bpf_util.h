@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __BPF_UTIL__
-#define __BPF_UTIL__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __BPF_UTIL__
+#घोषणा __BPF_UTIL__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <bpf/libbpf.h> /* libbpf_num_possible_cpus */
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <bpf/libbpf.h> /* libbpf_num_possible_cpus */
 
-static inline unsigned int bpf_num_possible_cpus(void)
-{
-	int possible_cpus = libbpf_num_possible_cpus();
+अटल अंतरभूत अचिन्हित पूर्णांक bpf_num_possible_cpus(व्योम)
+अणु
+	पूर्णांक possible_cpus = libbpf_num_possible_cpus();
 
-	if (possible_cpus < 0) {
-		printf("Failed to get # of possible cpus: '%s'!\n",
-		       strerror(-possible_cpus));
-		exit(1);
-	}
-	return possible_cpus;
-}
+	अगर (possible_cpus < 0) अणु
+		म_लिखो("Failed to get # of possible cpus: '%s'!\n",
+		       म_त्रुटि(-possible_cpus));
+		निकास(1);
+	पूर्ण
+	वापस possible_cpus;
+पूर्ण
 
-#define __bpf_percpu_val_align	__attribute__((__aligned__(8)))
+#घोषणा __bpf_percpu_val_align	__attribute__((__aligned__(8)))
 
-#define BPF_DECLARE_PERCPU(type, name)				\
-	struct { type v; /* padding */ } __bpf_percpu_val_align	\
+#घोषणा BPF_DECLARE_PERCPU(type, name)				\
+	काष्ठा अणु type v; /* padding */ पूर्ण __bpf_percpu_val_align	\
 		name[bpf_num_possible_cpus()]
-#define bpf_percpu(name, cpu) name[(cpu)].v
+#घोषणा bpf_percpu(name, cpu) name[(cpu)].v
 
-#ifndef ARRAY_SIZE
-# define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-#endif
+#अगर_अघोषित ARRAY_SIZE
+# define ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
+#पूर्ण_अगर
 
-#ifndef sizeof_field
-#define sizeof_field(TYPE, MEMBER) sizeof((((TYPE *)0)->MEMBER))
-#endif
+#अगर_अघोषित माप_field
+#घोषणा माप_field(TYPE, MEMBER) माप((((TYPE *)0)->MEMBER))
+#पूर्ण_अगर
 
-#ifndef offsetofend
-#define offsetofend(TYPE, MEMBER) \
-	(offsetof(TYPE, MEMBER)	+ sizeof_field(TYPE, MEMBER))
-#endif
+#अगर_अघोषित दुरत्वend
+#घोषणा दुरत्वend(TYPE, MEMBER) \
+	(दुरत्व(TYPE, MEMBER)	+ माप_field(TYPE, MEMBER))
+#पूर्ण_अगर
 
-#endif /* __BPF_UTIL__ */
+#पूर्ण_अगर /* __BPF_UTIL__ */

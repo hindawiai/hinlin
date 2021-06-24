@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  (C) 2003 - 2004  Dominik Brodowski <linux@dominikbrodowski.de>
+ *  (C) 2003 - 2004  Dominik Broकरोwski <linux@करोminikbroकरोwski.de>
  *
  * Based on code found in
  * linux/arch/i386/kernel/cpu/cpufreq/speedstep-centrino.c
@@ -11,102 +12,102 @@
  *	  as argument.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
 
-#define MCPU	32
+#घोषणा MCPU	32
 
-#define MSR_IA32_PERF_STATUS	0x198
+#घोषणा MSR_IA32_PERF_STATUS	0x198
 
-static int rdmsr(unsigned int cpu, unsigned int msr,
-		 unsigned int *lo, unsigned int *hi)
-{
-	int fd;
-	char file[20];
-	unsigned long long val;
-	int retval = -1;
+अटल पूर्णांक rdmsr(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक msr,
+		 अचिन्हित पूर्णांक *lo, अचिन्हित पूर्णांक *hi)
+अणु
+	पूर्णांक fd;
+	अक्षर file[20];
+	अचिन्हित दीर्घ दीर्घ val;
+	पूर्णांक retval = -1;
 
 	*lo = *hi = 0;
 
-	if (cpu > MCPU)
-		goto err1;
+	अगर (cpu > MCPU)
+		जाओ err1;
 
-	sprintf(file, "/dev/cpu/%d/msr", cpu);
-	fd = open(file, O_RDONLY);
+	प्र_लिखो(file, "/dev/cpu/%d/msr", cpu);
+	fd = खोलो(file, O_RDONLY);
 
-	if (fd < 0)
-		goto err1;
+	अगर (fd < 0)
+		जाओ err1;
 
-	if (lseek(fd, msr, SEEK_CUR) == -1)
-		goto err2;
+	अगर (lseek(fd, msr, प्रस्तुत_से) == -1)
+		जाओ err2;
 
-	if (read(fd, &val, 8) != 8)
-		goto err2;
+	अगर (पढ़ो(fd, &val, 8) != 8)
+		जाओ err2;
 
-	*lo = (uint32_t )(val & 0xffffffffull);
-	*hi = (uint32_t )(val>>32 & 0xffffffffull);
+	*lo = (uपूर्णांक32_t )(val & 0xffffffffull);
+	*hi = (uपूर्णांक32_t )(val>>32 & 0xffffffffull);
 
 	retval = 0;
 err2:
-	close(fd);
+	बंद(fd);
 err1:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void decode (unsigned int msr)
-{
-	unsigned int multiplier;
-	unsigned int mv;
+अटल व्योम decode (अचिन्हित पूर्णांक msr)
+अणु
+	अचिन्हित पूर्णांक multiplier;
+	अचिन्हित पूर्णांक mv;
 
 	multiplier = ((msr >> 8) & 0xFF);
 
 	mv = (((msr & 0xFF) * 16) + 700);
 
-	printf("0x%x means multiplier %d @ %d mV\n", msr, multiplier, mv);
-}
+	म_लिखो("0x%x means multiplier %d @ %d mV\n", msr, multiplier, mv);
+पूर्ण
 
-static int decode_live(unsigned int cpu)
-{
-	unsigned int lo, hi;
-	int err;
+अटल पूर्णांक decode_live(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित पूर्णांक lo, hi;
+	पूर्णांक err;
 
 	err = rdmsr(cpu, MSR_IA32_PERF_STATUS, &lo, &hi);
 
-	if (err) {
-		printf("can't get MSR_IA32_PERF_STATUS for cpu %d\n", cpu);
-		printf("Possible trouble: you don't run an Enhanced SpeedStep capable cpu\n");
-		printf("or you are not root, or the msr driver is not present\n");
-		return 1;
-	}
+	अगर (err) अणु
+		म_लिखो("can't get MSR_IA32_PERF_STATUS for cpu %d\n", cpu);
+		म_लिखो("Possible trouble: you don't run an Enhanced SpeedStep capable cpu\n");
+		म_लिखो("or you are not root, or the msr driver is not present\n");
+		वापस 1;
+	पूर्ण
 
 	decode(lo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main (int argc, char **argv)
-{
-	unsigned int cpu, mode = 0;
+पूर्णांक मुख्य (पूर्णांक argc, अक्षर **argv)
+अणु
+	अचिन्हित पूर्णांक cpu, mode = 0;
 
-	if (argc < 2)
+	अगर (argc < 2)
 		cpu = 0;
-	else {
-		cpu = strtoul(argv[1], NULL, 0);
-		if (cpu >= MCPU)
+	अन्यथा अणु
+		cpu = म_से_अदीर्घ(argv[1], शून्य, 0);
+		अगर (cpu >= MCPU)
 			mode = 1;
-	}
+	पूर्ण
 
-	if (mode)
+	अगर (mode)
 		decode(cpu);
-	else
+	अन्यथा
 		decode_live(cpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

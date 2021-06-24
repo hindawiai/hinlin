@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * 25-Jul-1998 Major changes to allow for ip chain table
+ * 25-Jul-1998 Major changes to allow क्रम ip chain table
  *
- * 3-Jan-2000 Named tables to allow packet selection for different uses.
+ * 3-Jan-2000 Named tables to allow packet selection क्रम dअगरferent uses.
  */
 
 /*
@@ -12,80 +13,80 @@
  * 	flags are stored in host byte order (of course).
  * 	Port numbers are stored in HOST byte order.
  */
-#ifndef _IPTABLES_H
-#define _IPTABLES_H
+#अगर_अघोषित _IPTABLES_H
+#घोषणा _IPTABLES_H
 
-#include <linux/if.h>
-#include <linux/in.h>
-#include <linux/init.h>
-#include <linux/ip.h>
-#include <linux/skbuff.h>
-#include <uapi/linux/netfilter_ipv4/ip_tables.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/in.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/skbuff.h>
+#समावेश <uapi/linux/netfilter_ipv4/ip_tables.h>
 
-int ipt_register_table(struct net *net, const struct xt_table *table,
-		       const struct ipt_replace *repl,
-		       const struct nf_hook_ops *ops);
+पूर्णांक ipt_रेजिस्टर_table(काष्ठा net *net, स्थिर काष्ठा xt_table *table,
+		       स्थिर काष्ठा ipt_replace *repl,
+		       स्थिर काष्ठा nf_hook_ops *ops);
 
-void ipt_unregister_table_pre_exit(struct net *net, const char *name);
-void ipt_unregister_table_exit(struct net *net, const char *name);
+व्योम ipt_unरेजिस्टर_table_pre_निकास(काष्ठा net *net, स्थिर अक्षर *name);
+व्योम ipt_unरेजिस्टर_table_निकास(काष्ठा net *net, स्थिर अक्षर *name);
 
 /* Standard entry. */
-struct ipt_standard {
-	struct ipt_entry entry;
-	struct xt_standard_target target;
-};
+काष्ठा ipt_standard अणु
+	काष्ठा ipt_entry entry;
+	काष्ठा xt_standard_target target;
+पूर्ण;
 
-struct ipt_error {
-	struct ipt_entry entry;
-	struct xt_error_target target;
-};
+काष्ठा ipt_error अणु
+	काष्ठा ipt_entry entry;
+	काष्ठा xt_error_target target;
+पूर्ण;
 
-#define IPT_ENTRY_INIT(__size)						       \
-{									       \
-	.target_offset	= sizeof(struct ipt_entry),			       \
+#घोषणा IPT_ENTRY_INIT(__size)						       \
+अणु									       \
+	.target_offset	= माप(काष्ठा ipt_entry),			       \
 	.next_offset	= (__size),					       \
-}
+पूर्ण
 
-#define IPT_STANDARD_INIT(__verdict)					       \
-{									       \
-	.entry		= IPT_ENTRY_INIT(sizeof(struct ipt_standard)),	       \
+#घोषणा IPT_STANDARD_INIT(__verdict)					       \
+अणु									       \
+	.entry		= IPT_ENTRY_INIT(माप(काष्ठा ipt_standard)),	       \
 	.target		= XT_TARGET_INIT(XT_STANDARD_TARGET,		       \
-					 sizeof(struct xt_standard_target)),   \
+					 माप(काष्ठा xt_standard_target)),   \
 	.target.verdict	= -(__verdict) - 1,				       \
-}
+पूर्ण
 
-#define IPT_ERROR_INIT							       \
-{									       \
-	.entry		= IPT_ENTRY_INIT(sizeof(struct ipt_error)),	       \
+#घोषणा IPT_ERROR_INIT							       \
+अणु									       \
+	.entry		= IPT_ENTRY_INIT(माप(काष्ठा ipt_error)),	       \
 	.target		= XT_TARGET_INIT(XT_ERROR_TARGET,		       \
-					 sizeof(struct xt_error_target)),      \
+					 माप(काष्ठा xt_error_target)),      \
 	.target.errorname = "ERROR",					       \
-}
+पूर्ण
 
-extern void *ipt_alloc_initial_table(const struct xt_table *);
-extern unsigned int ipt_do_table(struct sk_buff *skb,
-				 const struct nf_hook_state *state,
-				 struct xt_table *table);
+बाह्य व्योम *ipt_alloc_initial_table(स्थिर काष्ठा xt_table *);
+बाह्य अचिन्हित पूर्णांक ipt_करो_table(काष्ठा sk_buff *skb,
+				 स्थिर काष्ठा nf_hook_state *state,
+				 काष्ठा xt_table *table);
 
-#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
-#include <net/compat.h>
+#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+#समावेश <net/compat.h>
 
-struct compat_ipt_entry {
-	struct ipt_ip ip;
-	compat_uint_t nfcache;
+काष्ठा compat_ipt_entry अणु
+	काष्ठा ipt_ip ip;
+	compat_uपूर्णांक_t nfcache;
 	__u16 target_offset;
 	__u16 next_offset;
-	compat_uint_t comefrom;
-	struct compat_xt_counters counters;
-	unsigned char elems[];
-};
+	compat_uपूर्णांक_t comefrom;
+	काष्ठा compat_xt_counters counters;
+	अचिन्हित अक्षर elems[];
+पूर्ण;
 
 /* Helper functions */
-static inline struct xt_entry_target *
-compat_ipt_get_target(struct compat_ipt_entry *e)
-{
-	return (void *)e + e->target_offset;
-}
+अटल अंतरभूत काष्ठा xt_entry_target *
+compat_ipt_get_target(काष्ठा compat_ipt_entry *e)
+अणु
+	वापस (व्योम *)e + e->target_offset;
+पूर्ण
 
-#endif /* CONFIG_COMPAT */
-#endif /* _IPTABLES_H */
+#पूर्ण_अगर /* CONFIG_COMPAT */
+#पूर्ण_अगर /* _IPTABLES_H */

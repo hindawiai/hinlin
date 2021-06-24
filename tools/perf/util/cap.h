@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_CAP_H
-#define __PERF_CAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_CAP_H
+#घोषणा __PERF_CAP_H
 
-#include <stdbool.h>
-#include <linux/capability.h>
-#include <linux/compiler.h>
+#समावेश <stdbool.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/compiler.h>
 
-#ifdef HAVE_LIBCAP_SUPPORT
+#अगर_घोषित HAVE_LIBCAP_SUPPORT
 
-#include <sys/capability.h>
+#समावेश <sys/capability.h>
 
 bool perf_cap__capable(cap_value_t cap);
 
-#else
+#अन्यथा
 
-#include <unistd.h>
-#include <sys/types.h>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
 
-static inline bool perf_cap__capable(int cap __maybe_unused)
-{
-	return geteuid() == 0;
-}
+अटल अंतरभूत bool perf_cap__capable(पूर्णांक cap __maybe_unused)
+अणु
+	वापस geteuid() == 0;
+पूर्ण
 
-#endif /* HAVE_LIBCAP_SUPPORT */
+#पूर्ण_अगर /* HAVE_LIBCAP_SUPPORT */
 
-/* For older systems */
-#ifndef CAP_SYSLOG
-#define CAP_SYSLOG	34
-#endif
+/* For older प्रणालीs */
+#अगर_अघोषित CAP_SYSLOG
+#घोषणा CAP_SYSLOG	34
+#पूर्ण_अगर
 
-#ifndef CAP_PERFMON
-#define CAP_PERFMON	38
-#endif
+#अगर_अघोषित CAP_PERFMON
+#घोषणा CAP_PERFMON	38
+#पूर्ण_अगर
 
-#endif /* __PERF_CAP_H */
+#पूर्ण_अगर /* __PERF_CAP_H */

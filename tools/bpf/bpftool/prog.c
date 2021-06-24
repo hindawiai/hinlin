@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
-#define _GNU_SOURCE
-#include <errno.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
+#घोषणा _GNU_SOURCE
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <संकेत.स>
+#समावेश <मानकतर्क.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <समय.स>
+#समावेश <unistd.h>
+#समावेश <net/अगर.h>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/syscall.h>
 
-#include <linux/err.h>
-#include <linux/perf_event.h>
-#include <linux/sizes.h>
+#समावेश <linux/err.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/sizes.h>
 
-#include <bpf/bpf.h>
-#include <bpf/btf.h>
-#include <bpf/libbpf.h>
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/btf.h>
+#समावेश <bpf/libbpf.h>
 
-#include "cfg.h"
-#include "main.h"
-#include "xlated_dumper.h"
+#समावेश "cfg.h"
+#समावेश "main.h"
+#समावेश "xlated_dumper.h"
 
-#define BPF_METADATA_PREFIX "bpf_metadata_"
-#define BPF_METADATA_PREFIX_LEN (sizeof(BPF_METADATA_PREFIX) - 1)
+#घोषणा BPF_METADATA_PREFIX "bpf_metadata_"
+#घोषणा BPF_METADATA_PREFIX_LEN (माप(BPF_METADATA_PREFIX) - 1)
 
-const char * const prog_type_name[] = {
+स्थिर अक्षर * स्थिर prog_type_name[] = अणु
 	[BPF_PROG_TYPE_UNSPEC]			= "unspec",
 	[BPF_PROG_TYPE_SOCKET_FILTER]		= "socket_filter",
 	[BPF_PROG_TYPE_KPROBE]			= "kprobe",
@@ -64,703 +65,703 @@ const char * const prog_type_name[] = {
 	[BPF_PROG_TYPE_EXT]			= "ext",
 	[BPF_PROG_TYPE_LSM]			= "lsm",
 	[BPF_PROG_TYPE_SK_LOOKUP]		= "sk_lookup",
-};
+पूर्ण;
 
-const size_t prog_type_name_size = ARRAY_SIZE(prog_type_name);
+स्थिर माप_प्रकार prog_type_name_size = ARRAY_SIZE(prog_type_name);
 
-enum dump_mode {
+क्रमागत dump_mode अणु
 	DUMP_JITED,
 	DUMP_XLATED,
-};
+पूर्ण;
 
-static const char * const attach_type_strings[] = {
+अटल स्थिर अक्षर * स्थिर attach_type_strings[] = अणु
 	[BPF_SK_SKB_STREAM_PARSER] = "stream_parser",
 	[BPF_SK_SKB_STREAM_VERDICT] = "stream_verdict",
 	[BPF_SK_SKB_VERDICT] = "skb_verdict",
 	[BPF_SK_MSG_VERDICT] = "msg_verdict",
 	[BPF_FLOW_DISSECTOR] = "flow_dissector",
-	[__MAX_BPF_ATTACH_TYPE] = NULL,
-};
+	[__MAX_BPF_ATTACH_TYPE] = शून्य,
+पूर्ण;
 
-static enum bpf_attach_type parse_attach_type(const char *str)
-{
-	enum bpf_attach_type type;
+अटल क्रमागत bpf_attach_type parse_attach_type(स्थिर अक्षर *str)
+अणु
+	क्रमागत bpf_attach_type type;
 
-	for (type = 0; type < __MAX_BPF_ATTACH_TYPE; type++) {
-		if (attach_type_strings[type] &&
+	क्रम (type = 0; type < __MAX_BPF_ATTACH_TYPE; type++) अणु
+		अगर (attach_type_strings[type] &&
 		    is_prefix(str, attach_type_strings[type]))
-			return type;
-	}
+			वापस type;
+	पूर्ण
 
-	return __MAX_BPF_ATTACH_TYPE;
-}
+	वापस __MAX_BPF_ATTACH_TYPE;
+पूर्ण
 
-static void print_boot_time(__u64 nsecs, char *buf, unsigned int size)
-{
-	struct timespec real_time_ts, boot_time_ts;
-	time_t wallclock_secs;
-	struct tm load_tm;
+अटल व्योम prपूर्णांक_boot_समय(__u64 nsecs, अक्षर *buf, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा बारpec real_समय_प्रकारs, boot_समय_प्रकारs;
+	समय_प्रकार wallघड़ी_secs;
+	काष्ठा पंचांग load_पंचांग;
 
 	buf[--size] = '\0';
 
-	if (clock_gettime(CLOCK_REALTIME, &real_time_ts) ||
-	    clock_gettime(CLOCK_BOOTTIME, &boot_time_ts)) {
-		perror("Can't read clocks");
-		snprintf(buf, size, "%llu", nsecs / 1000000000);
-		return;
-	}
+	अगर (घड़ी_समय_लो(CLOCK_REALTIME, &real_समय_प्रकारs) ||
+	    घड़ी_समय_लो(CLOCK_BOOTTIME, &boot_समय_प्रकारs)) अणु
+		लिखो_त्रुटि("Can't read clocks");
+		snम_लिखो(buf, size, "%llu", nsecs / 1000000000);
+		वापस;
+	पूर्ण
 
-	wallclock_secs = (real_time_ts.tv_sec - boot_time_ts.tv_sec) +
-		(real_time_ts.tv_nsec - boot_time_ts.tv_nsec + nsecs) /
+	wallघड़ी_secs = (real_समय_प्रकारs.tv_sec - boot_समय_प्रकारs.tv_sec) +
+		(real_समय_प्रकारs.tv_nsec - boot_समय_प्रकारs.tv_nsec + nsecs) /
 		1000000000;
 
 
-	if (!localtime_r(&wallclock_secs, &load_tm)) {
-		snprintf(buf, size, "%llu", nsecs / 1000000000);
-		return;
-	}
+	अगर (!स_स्थानीय_r(&wallघड़ी_secs, &load_पंचांग)) अणु
+		snम_लिखो(buf, size, "%llu", nsecs / 1000000000);
+		वापस;
+	पूर्ण
 
-	if (json_output)
-		strftime(buf, size, "%s", &load_tm);
-	else
-		strftime(buf, size, "%FT%T%z", &load_tm);
-}
+	अगर (json_output)
+		स_माला(buf, size, "%s", &load_पंचांग);
+	अन्यथा
+		स_माला(buf, size, "%FT%T%z", &load_पंचांग);
+पूर्ण
 
-static void show_prog_maps(int fd, __u32 num_maps)
-{
-	struct bpf_prog_info info = {};
-	__u32 len = sizeof(info);
+अटल व्योम show_prog_maps(पूर्णांक fd, __u32 num_maps)
+अणु
+	काष्ठा bpf_prog_info info = अणुपूर्ण;
+	__u32 len = माप(info);
 	__u32 map_ids[num_maps];
-	unsigned int i;
-	int err;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
 	info.nr_map_ids = num_maps;
 	info.map_ids = ptr_to_u64(map_ids);
 
 	err = bpf_obj_get_info_by_fd(fd, &info, &len);
-	if (err || !info.nr_map_ids)
-		return;
+	अगर (err || !info.nr_map_ids)
+		वापस;
 
-	if (json_output) {
+	अगर (json_output) अणु
 		jsonw_name(json_wtr, "map_ids");
 		jsonw_start_array(json_wtr);
-		for (i = 0; i < info.nr_map_ids; i++)
-			jsonw_uint(json_wtr, map_ids[i]);
+		क्रम (i = 0; i < info.nr_map_ids; i++)
+			jsonw_uपूर्णांक(json_wtr, map_ids[i]);
 		jsonw_end_array(json_wtr);
-	} else {
-		printf("  map_ids ");
-		for (i = 0; i < info.nr_map_ids; i++)
-			printf("%u%s", map_ids[i],
+	पूर्ण अन्यथा अणु
+		म_लिखो("  map_ids ");
+		क्रम (i = 0; i < info.nr_map_ids; i++)
+			म_लिखो("%u%s", map_ids[i],
 			       i == info.nr_map_ids - 1 ? "" : ",");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void *find_metadata(int prog_fd, struct bpf_map_info *map_info)
-{
-	struct bpf_prog_info prog_info;
+अटल व्योम *find_metadata(पूर्णांक prog_fd, काष्ठा bpf_map_info *map_info)
+अणु
+	काष्ठा bpf_prog_info prog_info;
 	__u32 prog_info_len;
 	__u32 map_info_len;
-	void *value = NULL;
+	व्योम *value = शून्य;
 	__u32 *map_ids;
-	int nr_maps;
-	int key = 0;
-	int map_fd;
-	int ret;
+	पूर्णांक nr_maps;
+	पूर्णांक key = 0;
+	पूर्णांक map_fd;
+	पूर्णांक ret;
 	__u32 i;
 
-	memset(&prog_info, 0, sizeof(prog_info));
-	prog_info_len = sizeof(prog_info);
+	स_रखो(&prog_info, 0, माप(prog_info));
+	prog_info_len = माप(prog_info);
 	ret = bpf_obj_get_info_by_fd(prog_fd, &prog_info, &prog_info_len);
-	if (ret)
-		return NULL;
+	अगर (ret)
+		वापस शून्य;
 
-	if (!prog_info.nr_map_ids)
-		return NULL;
+	अगर (!prog_info.nr_map_ids)
+		वापस शून्य;
 
-	map_ids = calloc(prog_info.nr_map_ids, sizeof(__u32));
-	if (!map_ids)
-		return NULL;
+	map_ids = सुस्मृति(prog_info.nr_map_ids, माप(__u32));
+	अगर (!map_ids)
+		वापस शून्य;
 
 	nr_maps = prog_info.nr_map_ids;
-	memset(&prog_info, 0, sizeof(prog_info));
+	स_रखो(&prog_info, 0, माप(prog_info));
 	prog_info.nr_map_ids = nr_maps;
 	prog_info.map_ids = ptr_to_u64(map_ids);
-	prog_info_len = sizeof(prog_info);
+	prog_info_len = माप(prog_info);
 
 	ret = bpf_obj_get_info_by_fd(prog_fd, &prog_info, &prog_info_len);
-	if (ret)
-		goto free_map_ids;
+	अगर (ret)
+		जाओ मुक्त_map_ids;
 
-	for (i = 0; i < prog_info.nr_map_ids; i++) {
+	क्रम (i = 0; i < prog_info.nr_map_ids; i++) अणु
 		map_fd = bpf_map_get_fd_by_id(map_ids[i]);
-		if (map_fd < 0)
-			goto free_map_ids;
+		अगर (map_fd < 0)
+			जाओ मुक्त_map_ids;
 
-		memset(map_info, 0, sizeof(*map_info));
-		map_info_len = sizeof(*map_info);
+		स_रखो(map_info, 0, माप(*map_info));
+		map_info_len = माप(*map_info);
 		ret = bpf_obj_get_info_by_fd(map_fd, map_info, &map_info_len);
-		if (ret < 0) {
-			close(map_fd);
-			goto free_map_ids;
-		}
+		अगर (ret < 0) अणु
+			बंद(map_fd);
+			जाओ मुक्त_map_ids;
+		पूर्ण
 
-		if (map_info->type != BPF_MAP_TYPE_ARRAY ||
-		    map_info->key_size != sizeof(int) ||
+		अगर (map_info->type != BPF_MAP_TYPE_ARRAY ||
+		    map_info->key_size != माप(पूर्णांक) ||
 		    map_info->max_entries != 1 ||
 		    !map_info->btf_value_type_id ||
-		    !strstr(map_info->name, ".rodata")) {
-			close(map_fd);
-			continue;
-		}
+		    !म_माला(map_info->name, ".rodata")) अणु
+			बंद(map_fd);
+			जारी;
+		पूर्ण
 
-		value = malloc(map_info->value_size);
-		if (!value) {
-			close(map_fd);
-			goto free_map_ids;
-		}
+		value = दो_स्मृति(map_info->value_size);
+		अगर (!value) अणु
+			बंद(map_fd);
+			जाओ मुक्त_map_ids;
+		पूर्ण
 
-		if (bpf_map_lookup_elem(map_fd, &key, value)) {
-			close(map_fd);
-			free(value);
-			value = NULL;
-			goto free_map_ids;
-		}
+		अगर (bpf_map_lookup_elem(map_fd, &key, value)) अणु
+			बंद(map_fd);
+			मुक्त(value);
+			value = शून्य;
+			जाओ मुक्त_map_ids;
+		पूर्ण
 
-		close(map_fd);
-		break;
-	}
+		बंद(map_fd);
+		अवरोध;
+	पूर्ण
 
-free_map_ids:
-	free(map_ids);
-	return value;
-}
+मुक्त_map_ids:
+	मुक्त(map_ids);
+	वापस value;
+पूर्ण
 
-static bool has_metadata_prefix(const char *s)
-{
-	return strncmp(s, BPF_METADATA_PREFIX, BPF_METADATA_PREFIX_LEN) == 0;
-}
+अटल bool has_metadata_prefix(स्थिर अक्षर *s)
+अणु
+	वापस म_भेदन(s, BPF_METADATA_PREFIX, BPF_METADATA_PREFIX_LEN) == 0;
+पूर्ण
 
-static void show_prog_metadata(int fd, __u32 num_maps)
-{
-	const struct btf_type *t_datasec, *t_var;
-	struct bpf_map_info map_info;
-	struct btf_var_secinfo *vsi;
-	bool printed_header = false;
-	struct btf *btf = NULL;
-	unsigned int i, vlen;
-	void *value = NULL;
-	const char *name;
-	int err;
+अटल व्योम show_prog_metadata(पूर्णांक fd, __u32 num_maps)
+अणु
+	स्थिर काष्ठा btf_type *t_datasec, *t_var;
+	काष्ठा bpf_map_info map_info;
+	काष्ठा btf_var_secinfo *vsi;
+	bool prपूर्णांकed_header = false;
+	काष्ठा btf *btf = शून्य;
+	अचिन्हित पूर्णांक i, vlen;
+	व्योम *value = शून्य;
+	स्थिर अक्षर *name;
+	पूर्णांक err;
 
-	if (!num_maps)
-		return;
+	अगर (!num_maps)
+		वापस;
 
-	memset(&map_info, 0, sizeof(map_info));
+	स_रखो(&map_info, 0, माप(map_info));
 	value = find_metadata(fd, &map_info);
-	if (!value)
-		return;
+	अगर (!value)
+		वापस;
 
 	err = btf__get_from_id(map_info.btf_id, &btf);
-	if (err || !btf)
-		goto out_free;
+	अगर (err || !btf)
+		जाओ out_मुक्त;
 
 	t_datasec = btf__type_by_id(btf, map_info.btf_value_type_id);
-	if (!btf_is_datasec(t_datasec))
-		goto out_free;
+	अगर (!btf_is_datasec(t_datasec))
+		जाओ out_मुक्त;
 
 	vlen = btf_vlen(t_datasec);
 	vsi = btf_var_secinfos(t_datasec);
 
-	/* We don't proceed to check the kinds of the elements of the DATASEC.
-	 * The verifier enforces them to be BTF_KIND_VAR.
+	/* We करोn't proceed to check the kinds of the elements of the DATASEC.
+	 * The verअगरier enक्रमces them to be BTF_KIND_VAR.
 	 */
 
-	if (json_output) {
-		struct btf_dumper d = {
+	अगर (json_output) अणु
+		काष्ठा btf_dumper d = अणु
 			.btf = btf,
 			.jw = json_wtr,
 			.is_plain_text = false,
-		};
+		पूर्ण;
 
-		for (i = 0; i < vlen; i++, vsi++) {
+		क्रम (i = 0; i < vlen; i++, vsi++) अणु
 			t_var = btf__type_by_id(btf, vsi->type);
 			name = btf__name_by_offset(btf, t_var->name_off);
 
-			if (!has_metadata_prefix(name))
-				continue;
+			अगर (!has_metadata_prefix(name))
+				जारी;
 
-			if (!printed_header) {
+			अगर (!prपूर्णांकed_header) अणु
 				jsonw_name(json_wtr, "metadata");
 				jsonw_start_object(json_wtr);
-				printed_header = true;
-			}
+				prपूर्णांकed_header = true;
+			पूर्ण
 
 			jsonw_name(json_wtr, name + BPF_METADATA_PREFIX_LEN);
 			err = btf_dumper_type(&d, t_var->type, value + vsi->offset);
-			if (err) {
+			अगर (err) अणु
 				p_err("btf dump failed: %d", err);
-				break;
-			}
-		}
-		if (printed_header)
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (prपूर्णांकed_header)
 			jsonw_end_object(json_wtr);
-	} else {
-		json_writer_t *btf_wtr = jsonw_new(stdout);
-		struct btf_dumper d = {
+	पूर्ण अन्यथा अणु
+		json_ग_लिखोr_t *btf_wtr = jsonw_new(मानक_निकास);
+		काष्ठा btf_dumper d = अणु
 			.btf = btf,
 			.jw = btf_wtr,
 			.is_plain_text = true,
-		};
+		पूर्ण;
 
-		if (!btf_wtr) {
+		अगर (!btf_wtr) अणु
 			p_err("jsonw alloc failed");
-			goto out_free;
-		}
+			जाओ out_मुक्त;
+		पूर्ण
 
-		for (i = 0; i < vlen; i++, vsi++) {
+		क्रम (i = 0; i < vlen; i++, vsi++) अणु
 			t_var = btf__type_by_id(btf, vsi->type);
 			name = btf__name_by_offset(btf, t_var->name_off);
 
-			if (!has_metadata_prefix(name))
-				continue;
+			अगर (!has_metadata_prefix(name))
+				जारी;
 
-			if (!printed_header) {
-				printf("\tmetadata:");
-				printed_header = true;
-			}
+			अगर (!prपूर्णांकed_header) अणु
+				म_लिखो("\tmetadata:");
+				prपूर्णांकed_header = true;
+			पूर्ण
 
-			printf("\n\t\t%s = ", name + BPF_METADATA_PREFIX_LEN);
+			म_लिखो("\n\t\t%s = ", name + BPF_METADATA_PREFIX_LEN);
 
 			jsonw_reset(btf_wtr);
 			err = btf_dumper_type(&d, t_var->type, value + vsi->offset);
-			if (err) {
+			अगर (err) अणु
 				p_err("btf dump failed: %d", err);
-				break;
-			}
-		}
-		if (printed_header)
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (prपूर्णांकed_header)
 			jsonw_destroy(&btf_wtr);
-	}
+	पूर्ण
 
-out_free:
-	btf__free(btf);
-	free(value);
-}
+out_मुक्त:
+	btf__मुक्त(btf);
+	मुक्त(value);
+पूर्ण
 
-static void print_prog_header_json(struct bpf_prog_info *info)
-{
-	jsonw_uint_field(json_wtr, "id", info->id);
-	if (info->type < ARRAY_SIZE(prog_type_name))
+अटल व्योम prपूर्णांक_prog_header_json(काष्ठा bpf_prog_info *info)
+अणु
+	jsonw_uपूर्णांक_field(json_wtr, "id", info->id);
+	अगर (info->type < ARRAY_SIZE(prog_type_name))
 		jsonw_string_field(json_wtr, "type",
 				   prog_type_name[info->type]);
-	else
-		jsonw_uint_field(json_wtr, "type", info->type);
+	अन्यथा
+		jsonw_uपूर्णांक_field(json_wtr, "type", info->type);
 
-	if (*info->name)
+	अगर (*info->name)
 		jsonw_string_field(json_wtr, "name", info->name);
 
 	jsonw_name(json_wtr, "tag");
-	jsonw_printf(json_wtr, "\"" BPF_TAG_FMT "\"",
+	jsonw_म_लिखो(json_wtr, "\"" BPF_TAG_FMT "\"",
 		     info->tag[0], info->tag[1], info->tag[2], info->tag[3],
 		     info->tag[4], info->tag[5], info->tag[6], info->tag[7]);
 
 	jsonw_bool_field(json_wtr, "gpl_compatible", info->gpl_compatible);
-	if (info->run_time_ns) {
-		jsonw_uint_field(json_wtr, "run_time_ns", info->run_time_ns);
-		jsonw_uint_field(json_wtr, "run_cnt", info->run_cnt);
-	}
-	if (info->recursion_misses)
-		jsonw_uint_field(json_wtr, "recursion_misses", info->recursion_misses);
-}
+	अगर (info->run_समय_ns) अणु
+		jsonw_uपूर्णांक_field(json_wtr, "run_time_ns", info->run_समय_ns);
+		jsonw_uपूर्णांक_field(json_wtr, "run_cnt", info->run_cnt);
+	पूर्ण
+	अगर (info->recursion_misses)
+		jsonw_uपूर्णांक_field(json_wtr, "recursion_misses", info->recursion_misses);
+पूर्ण
 
-static void print_prog_json(struct bpf_prog_info *info, int fd)
-{
-	char *memlock;
+अटल व्योम prपूर्णांक_prog_json(काष्ठा bpf_prog_info *info, पूर्णांक fd)
+अणु
+	अक्षर *memlock;
 
 	jsonw_start_object(json_wtr);
-	print_prog_header_json(info);
-	print_dev_json(info->ifindex, info->netns_dev, info->netns_ino);
+	prपूर्णांक_prog_header_json(info);
+	prपूर्णांक_dev_json(info->अगरindex, info->netns_dev, info->netns_ino);
 
-	if (info->load_time) {
-		char buf[32];
+	अगर (info->load_समय) अणु
+		अक्षर buf[32];
 
-		print_boot_time(info->load_time, buf, sizeof(buf));
+		prपूर्णांक_boot_समय(info->load_समय, buf, माप(buf));
 
-		/* Piggy back on load_time, since 0 uid is a valid one */
+		/* Piggy back on load_समय, since 0 uid is a valid one */
 		jsonw_name(json_wtr, "loaded_at");
-		jsonw_printf(json_wtr, "%s", buf);
-		jsonw_uint_field(json_wtr, "uid", info->created_by_uid);
-	}
+		jsonw_म_लिखो(json_wtr, "%s", buf);
+		jsonw_uपूर्णांक_field(json_wtr, "uid", info->created_by_uid);
+	पूर्ण
 
-	jsonw_uint_field(json_wtr, "bytes_xlated", info->xlated_prog_len);
+	jsonw_uपूर्णांक_field(json_wtr, "bytes_xlated", info->xlated_prog_len);
 
-	if (info->jited_prog_len) {
+	अगर (info->jited_prog_len) अणु
 		jsonw_bool_field(json_wtr, "jited", true);
-		jsonw_uint_field(json_wtr, "bytes_jited", info->jited_prog_len);
-	} else {
+		jsonw_uपूर्णांक_field(json_wtr, "bytes_jited", info->jited_prog_len);
+	पूर्ण अन्यथा अणु
 		jsonw_bool_field(json_wtr, "jited", false);
-	}
+	पूर्ण
 
 	memlock = get_fdinfo(fd, "memlock");
-	if (memlock)
-		jsonw_int_field(json_wtr, "bytes_memlock", atoi(memlock));
-	free(memlock);
+	अगर (memlock)
+		jsonw_पूर्णांक_field(json_wtr, "bytes_memlock", म_से_प(memlock));
+	मुक्त(memlock);
 
-	if (info->nr_map_ids)
+	अगर (info->nr_map_ids)
 		show_prog_maps(fd, info->nr_map_ids);
 
-	if (info->btf_id)
-		jsonw_int_field(json_wtr, "btf_id", info->btf_id);
+	अगर (info->btf_id)
+		jsonw_पूर्णांक_field(json_wtr, "btf_id", info->btf_id);
 
-	if (!hash_empty(prog_table.table)) {
-		struct pinned_obj *obj;
+	अगर (!hash_empty(prog_table.table)) अणु
+		काष्ठा pinned_obj *obj;
 
 		jsonw_name(json_wtr, "pinned");
 		jsonw_start_array(json_wtr);
-		hash_for_each_possible(prog_table.table, obj, hash, info->id) {
-			if (obj->id == info->id)
+		hash_क्रम_each_possible(prog_table.table, obj, hash, info->id) अणु
+			अगर (obj->id == info->id)
 				jsonw_string(json_wtr, obj->path);
-		}
+		पूर्ण
 		jsonw_end_array(json_wtr);
-	}
+	पूर्ण
 
 	emit_obj_refs_json(&refs_table, info->id, json_wtr);
 
 	show_prog_metadata(fd, info->nr_map_ids);
 
 	jsonw_end_object(json_wtr);
-}
+पूर्ण
 
-static void print_prog_header_plain(struct bpf_prog_info *info)
-{
-	printf("%u: ", info->id);
-	if (info->type < ARRAY_SIZE(prog_type_name))
-		printf("%s  ", prog_type_name[info->type]);
-	else
-		printf("type %u  ", info->type);
+अटल व्योम prपूर्णांक_prog_header_plain(काष्ठा bpf_prog_info *info)
+अणु
+	म_लिखो("%u: ", info->id);
+	अगर (info->type < ARRAY_SIZE(prog_type_name))
+		म_लिखो("%s  ", prog_type_name[info->type]);
+	अन्यथा
+		म_लिखो("type %u  ", info->type);
 
-	if (*info->name)
-		printf("name %s  ", info->name);
+	अगर (*info->name)
+		म_लिखो("name %s  ", info->name);
 
-	printf("tag ");
-	fprint_hex(stdout, info->tag, BPF_TAG_SIZE, "");
-	print_dev_plain(info->ifindex, info->netns_dev, info->netns_ino);
-	printf("%s", info->gpl_compatible ? "  gpl" : "");
-	if (info->run_time_ns)
-		printf(" run_time_ns %lld run_cnt %lld",
-		       info->run_time_ns, info->run_cnt);
-	if (info->recursion_misses)
-		printf(" recursion_misses %lld", info->recursion_misses);
-	printf("\n");
-}
+	म_लिखो("tag ");
+	fprपूर्णांक_hex(मानक_निकास, info->tag, BPF_TAG_SIZE, "");
+	prपूर्णांक_dev_plain(info->अगरindex, info->netns_dev, info->netns_ino);
+	म_लिखो("%s", info->gpl_compatible ? "  gpl" : "");
+	अगर (info->run_समय_ns)
+		म_लिखो(" run_time_ns %lld run_cnt %lld",
+		       info->run_समय_ns, info->run_cnt);
+	अगर (info->recursion_misses)
+		म_लिखो(" recursion_misses %lld", info->recursion_misses);
+	म_लिखो("\n");
+पूर्ण
 
-static void print_prog_plain(struct bpf_prog_info *info, int fd)
-{
-	char *memlock;
+अटल व्योम prपूर्णांक_prog_plain(काष्ठा bpf_prog_info *info, पूर्णांक fd)
+अणु
+	अक्षर *memlock;
 
-	print_prog_header_plain(info);
+	prपूर्णांक_prog_header_plain(info);
 
-	if (info->load_time) {
-		char buf[32];
+	अगर (info->load_समय) अणु
+		अक्षर buf[32];
 
-		print_boot_time(info->load_time, buf, sizeof(buf));
+		prपूर्णांक_boot_समय(info->load_समय, buf, माप(buf));
 
-		/* Piggy back on load_time, since 0 uid is a valid one */
-		printf("\tloaded_at %s  uid %u\n", buf, info->created_by_uid);
-	}
+		/* Piggy back on load_समय, since 0 uid is a valid one */
+		म_लिखो("\tloaded_at %s  uid %u\n", buf, info->created_by_uid);
+	पूर्ण
 
-	printf("\txlated %uB", info->xlated_prog_len);
+	म_लिखो("\txlated %uB", info->xlated_prog_len);
 
-	if (info->jited_prog_len)
-		printf("  jited %uB", info->jited_prog_len);
-	else
-		printf("  not jited");
+	अगर (info->jited_prog_len)
+		म_लिखो("  jited %uB", info->jited_prog_len);
+	अन्यथा
+		म_लिखो("  not jited");
 
 	memlock = get_fdinfo(fd, "memlock");
-	if (memlock)
-		printf("  memlock %sB", memlock);
-	free(memlock);
+	अगर (memlock)
+		म_लिखो("  memlock %sB", memlock);
+	मुक्त(memlock);
 
-	if (info->nr_map_ids)
+	अगर (info->nr_map_ids)
 		show_prog_maps(fd, info->nr_map_ids);
 
-	if (!hash_empty(prog_table.table)) {
-		struct pinned_obj *obj;
+	अगर (!hash_empty(prog_table.table)) अणु
+		काष्ठा pinned_obj *obj;
 
-		hash_for_each_possible(prog_table.table, obj, hash, info->id) {
-			if (obj->id == info->id)
-				printf("\n\tpinned %s", obj->path);
-		}
-	}
+		hash_क्रम_each_possible(prog_table.table, obj, hash, info->id) अणु
+			अगर (obj->id == info->id)
+				म_लिखो("\n\tpinned %s", obj->path);
+		पूर्ण
+	पूर्ण
 
-	if (info->btf_id)
-		printf("\n\tbtf_id %d", info->btf_id);
+	अगर (info->btf_id)
+		म_लिखो("\n\tbtf_id %d", info->btf_id);
 
 	emit_obj_refs_plain(&refs_table, info->id, "\n\tpids ");
 
-	printf("\n");
+	म_लिखो("\n");
 
 	show_prog_metadata(fd, info->nr_map_ids);
-}
+पूर्ण
 
-static int show_prog(int fd)
-{
-	struct bpf_prog_info info = {};
-	__u32 len = sizeof(info);
-	int err;
+अटल पूर्णांक show_prog(पूर्णांक fd)
+अणु
+	काष्ठा bpf_prog_info info = अणुपूर्ण;
+	__u32 len = माप(info);
+	पूर्णांक err;
 
 	err = bpf_obj_get_info_by_fd(fd, &info, &len);
-	if (err) {
-		p_err("can't get prog info: %s", strerror(errno));
-		return -1;
-	}
+	अगर (err) अणु
+		p_err("can't get prog info: %s", म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
-	if (json_output)
-		print_prog_json(&info, fd);
-	else
-		print_prog_plain(&info, fd);
+	अगर (json_output)
+		prपूर्णांक_prog_json(&info, fd);
+	अन्यथा
+		prपूर्णांक_prog_plain(&info, fd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_show_subset(int argc, char **argv)
-{
-	int *fds = NULL;
-	int nb_fds, i;
-	int err = -1;
+अटल पूर्णांक करो_show_subset(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक *fds = शून्य;
+	पूर्णांक nb_fds, i;
+	पूर्णांक err = -1;
 
-	fds = malloc(sizeof(int));
-	if (!fds) {
+	fds = दो_स्मृति(माप(पूर्णांक));
+	अगर (!fds) अणु
 		p_err("mem alloc failed");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	nb_fds = prog_parse_fds(&argc, &argv, &fds);
-	if (nb_fds < 1)
-		goto exit_free;
+	अगर (nb_fds < 1)
+		जाओ निकास_मुक्त;
 
-	if (json_output && nb_fds > 1)
+	अगर (json_output && nb_fds > 1)
 		jsonw_start_array(json_wtr);	/* root array */
-	for (i = 0; i < nb_fds; i++) {
+	क्रम (i = 0; i < nb_fds; i++) अणु
 		err = show_prog(fds[i]);
-		if (err) {
-			for (; i < nb_fds; i++)
-				close(fds[i]);
-			break;
-		}
-		close(fds[i]);
-	}
-	if (json_output && nb_fds > 1)
+		अगर (err) अणु
+			क्रम (; i < nb_fds; i++)
+				बंद(fds[i]);
+			अवरोध;
+		पूर्ण
+		बंद(fds[i]);
+	पूर्ण
+	अगर (json_output && nb_fds > 1)
 		jsonw_end_array(json_wtr);	/* root array */
 
-exit_free:
-	free(fds);
-	return err;
-}
+निकास_मुक्त:
+	मुक्त(fds);
+	वापस err;
+पूर्ण
 
-static int do_show(int argc, char **argv)
-{
+अटल पूर्णांक करो_show(पूर्णांक argc, अक्षर **argv)
+अणु
 	__u32 id = 0;
-	int err;
-	int fd;
+	पूर्णांक err;
+	पूर्णांक fd;
 
-	if (show_pinned)
+	अगर (show_pinned)
 		build_pinned_obj_table(&prog_table, BPF_OBJ_PROG);
 	build_obj_refs_table(&refs_table, BPF_OBJ_PROG);
 
-	if (argc == 2)
-		return do_show_subset(argc, argv);
+	अगर (argc == 2)
+		वापस करो_show_subset(argc, argv);
 
-	if (argc)
-		return BAD_ARG();
+	अगर (argc)
+		वापस BAD_ARG();
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_start_array(json_wtr);
-	while (true) {
+	जबतक (true) अणु
 		err = bpf_prog_get_next_id(id, &id);
-		if (err) {
-			if (errno == ENOENT) {
+		अगर (err) अणु
+			अगर (त्रुटि_सं == ENOENT) अणु
 				err = 0;
-				break;
-			}
-			p_err("can't get next program: %s%s", strerror(errno),
-			      errno == EINVAL ? " -- kernel too old?" : "");
+				अवरोध;
+			पूर्ण
+			p_err("can't get next program: %s%s", म_त्रुटि(त्रुटि_सं),
+			      त्रुटि_सं == EINVAL ? " -- kernel too old?" : "");
 			err = -1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		fd = bpf_prog_get_fd_by_id(id);
-		if (fd < 0) {
-			if (errno == ENOENT)
-				continue;
+		अगर (fd < 0) अणु
+			अगर (त्रुटि_सं == ENOENT)
+				जारी;
 			p_err("can't get prog by id (%u): %s",
-			      id, strerror(errno));
+			      id, म_त्रुटि(त्रुटि_सं));
 			err = -1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		err = show_prog(fd);
-		close(fd);
-		if (err)
-			break;
-	}
+		बंद(fd);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_end_array(json_wtr);
 
 	delete_obj_refs_table(&refs_table);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-prog_dump(struct bpf_prog_info *info, enum dump_mode mode,
-	  char *filepath, bool opcodes, bool visual, bool linum)
-{
-	struct bpf_prog_linfo *prog_linfo = NULL;
-	const char *disasm_opt = NULL;
-	struct dump_data dd = {};
-	void *func_info = NULL;
-	struct btf *btf = NULL;
-	char func_sig[1024];
-	unsigned char *buf;
+अटल पूर्णांक
+prog_dump(काष्ठा bpf_prog_info *info, क्रमागत dump_mode mode,
+	  अक्षर *filepath, bool opcodes, bool visual, bool linum)
+अणु
+	काष्ठा bpf_prog_linfo *prog_linfo = शून्य;
+	स्थिर अक्षर *disयंत्र_opt = शून्य;
+	काष्ठा dump_data dd = अणुपूर्ण;
+	व्योम *func_info = शून्य;
+	काष्ठा btf *btf = शून्य;
+	अक्षर func_sig[1024];
+	अचिन्हित अक्षर *buf;
 	__u32 member_len;
-	ssize_t n;
-	int fd;
+	sमाप_प्रकार n;
+	पूर्णांक fd;
 
-	if (mode == DUMP_JITED) {
-		if (info->jited_prog_len == 0 || !info->jited_prog_insns) {
+	अगर (mode == DUMP_JITED) अणु
+		अगर (info->jited_prog_len == 0 || !info->jited_prog_insns) अणु
 			p_info("no instructions returned");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		buf = u64_to_ptr(info->jited_prog_insns);
 		member_len = info->jited_prog_len;
-	} else {	/* DUMP_XLATED */
-		if (info->xlated_prog_len == 0 || !info->xlated_prog_insns) {
+	पूर्ण अन्यथा अणु	/* DUMP_XLATED */
+		अगर (info->xlated_prog_len == 0 || !info->xlated_prog_insns) अणु
 			p_err("error retrieving insn dump: kernel.kptr_restrict set?");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		buf = u64_to_ptr(info->xlated_prog_insns);
 		member_len = info->xlated_prog_len;
-	}
+	पूर्ण
 
-	if (info->btf_id && btf__get_from_id(info->btf_id, &btf)) {
+	अगर (info->btf_id && btf__get_from_id(info->btf_id, &btf)) अणु
 		p_err("failed to get btf");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	func_info = u64_to_ptr(info->func_info);
 
-	if (info->nr_line_info) {
+	अगर (info->nr_line_info) अणु
 		prog_linfo = bpf_prog_linfo__new(info);
-		if (!prog_linfo)
+		अगर (!prog_linfo)
 			p_info("error in processing bpf_line_info.  continue without it.");
-	}
+	पूर्ण
 
-	if (filepath) {
-		fd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-		if (fd < 0) {
+	अगर (filepath) अणु
+		fd = खोलो(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+		अगर (fd < 0) अणु
 			p_err("can't open file %s: %s", filepath,
-			      strerror(errno));
-			return -1;
-		}
+			      म_त्रुटि(त्रुटि_सं));
+			वापस -1;
+		पूर्ण
 
-		n = write(fd, buf, member_len);
-		close(fd);
-		if (n != (ssize_t)member_len) {
+		n = ग_लिखो(fd, buf, member_len);
+		बंद(fd);
+		अगर (n != (sमाप_प्रकार)member_len) अणु
 			p_err("error writing output file: %s",
-			      n < 0 ? strerror(errno) : "short write");
-			return -1;
-		}
+			      n < 0 ? म_त्रुटि(त्रुटि_सं) : "short write");
+			वापस -1;
+		पूर्ण
 
-		if (json_output)
+		अगर (json_output)
 			jsonw_null(json_wtr);
-	} else if (mode == DUMP_JITED) {
-		const char *name = NULL;
+	पूर्ण अन्यथा अगर (mode == DUMP_JITED) अणु
+		स्थिर अक्षर *name = शून्य;
 
-		if (info->ifindex) {
-			name = ifindex_to_bfd_params(info->ifindex,
+		अगर (info->अगरindex) अणु
+			name = अगरindex_to_bfd_params(info->अगरindex,
 						     info->netns_dev,
 						     info->netns_ino,
-						     &disasm_opt);
-			if (!name)
-				return -1;
-		}
+						     &disयंत्र_opt);
+			अगर (!name)
+				वापस -1;
+		पूर्ण
 
-		if (info->nr_jited_func_lens && info->jited_func_lens) {
-			struct kernel_sym *sym = NULL;
-			struct bpf_func_info *record;
-			char sym_name[SYM_MAX_NAME];
-			unsigned char *img = buf;
-			__u64 *ksyms = NULL;
+		अगर (info->nr_jited_func_lens && info->jited_func_lens) अणु
+			काष्ठा kernel_sym *sym = शून्य;
+			काष्ठा bpf_func_info *record;
+			अक्षर sym_name[SYM_MAX_NAME];
+			अचिन्हित अक्षर *img = buf;
+			__u64 *ksyms = शून्य;
 			__u32 *lens;
 			__u32 i;
-			if (info->nr_jited_ksyms) {
+			अगर (info->nr_jited_ksyms) अणु
 				kernel_syms_load(&dd);
 				ksyms = u64_to_ptr(info->jited_ksyms);
-			}
+			पूर्ण
 
-			if (json_output)
+			अगर (json_output)
 				jsonw_start_array(json_wtr);
 
 			lens = u64_to_ptr(info->jited_func_lens);
-			for (i = 0; i < info->nr_jited_func_lens; i++) {
-				if (ksyms) {
+			क्रम (i = 0; i < info->nr_jited_func_lens; i++) अणु
+				अगर (ksyms) अणु
 					sym = kernel_syms_search(&dd, ksyms[i]);
-					if (sym)
-						sprintf(sym_name, "%s", sym->name);
-					else
-						sprintf(sym_name, "0x%016llx", ksyms[i]);
-				} else {
-					strcpy(sym_name, "unknown");
-				}
+					अगर (sym)
+						प्र_लिखो(sym_name, "%s", sym->name);
+					अन्यथा
+						प्र_लिखो(sym_name, "0x%016llx", ksyms[i]);
+				पूर्ण अन्यथा अणु
+					म_नकल(sym_name, "unknown");
+				पूर्ण
 
-				if (func_info) {
+				अगर (func_info) अणु
 					record = func_info + i * info->func_info_rec_size;
 					btf_dumper_type_only(btf, record->type_id,
 							     func_sig,
-							     sizeof(func_sig));
-				}
+							     माप(func_sig));
+				पूर्ण
 
-				if (json_output) {
+				अगर (json_output) अणु
 					jsonw_start_object(json_wtr);
-					if (func_info && func_sig[0] != '\0') {
+					अगर (func_info && func_sig[0] != '\0') अणु
 						jsonw_name(json_wtr, "proto");
 						jsonw_string(json_wtr, func_sig);
-					}
+					पूर्ण
 					jsonw_name(json_wtr, "name");
 					jsonw_string(json_wtr, sym_name);
 					jsonw_name(json_wtr, "insns");
-				} else {
-					if (func_info && func_sig[0] != '\0')
-						printf("%s:\n", func_sig);
-					printf("%s:\n", sym_name);
-				}
+				पूर्ण अन्यथा अणु
+					अगर (func_info && func_sig[0] != '\0')
+						म_लिखो("%s:\n", func_sig);
+					म_लिखो("%s:\n", sym_name);
+				पूर्ण
 
-				disasm_print_insn(img, lens[i], opcodes,
-						  name, disasm_opt, btf,
+				disयंत्र_prपूर्णांक_insn(img, lens[i], opcodes,
+						  name, disयंत्र_opt, btf,
 						  prog_linfo, ksyms[i], i,
 						  linum);
 
 				img += lens[i];
 
-				if (json_output)
+				अगर (json_output)
 					jsonw_end_object(json_wtr);
-				else
-					printf("\n");
-			}
+				अन्यथा
+					म_लिखो("\n");
+			पूर्ण
 
-			if (json_output)
+			अगर (json_output)
 				jsonw_end_array(json_wtr);
-		} else {
-			disasm_print_insn(buf, member_len, opcodes, name,
-					  disasm_opt, btf, NULL, 0, 0, false);
-		}
-	} else if (visual) {
-		if (json_output)
+		पूर्ण अन्यथा अणु
+			disयंत्र_prपूर्णांक_insn(buf, member_len, opcodes, name,
+					  disयंत्र_opt, btf, शून्य, 0, 0, false);
+		पूर्ण
+	पूर्ण अन्यथा अगर (visual) अणु
+		अगर (json_output)
 			jsonw_null(json_wtr);
-		else
+		अन्यथा
 			dump_xlated_cfg(buf, member_len);
-	} else {
+	पूर्ण अन्यथा अणु
 		kernel_syms_load(&dd);
 		dd.nr_jited_ksyms = info->nr_jited_ksyms;
 		dd.jited_ksyms = u64_to_ptr(info->jited_ksyms);
@@ -769,92 +770,92 @@ prog_dump(struct bpf_prog_info *info, enum dump_mode mode,
 		dd.finfo_rec_size = info->func_info_rec_size;
 		dd.prog_linfo = prog_linfo;
 
-		if (json_output)
+		अगर (json_output)
 			dump_xlated_json(&dd, buf, member_len, opcodes,
 					 linum);
-		else
+		अन्यथा
 			dump_xlated_plain(&dd, buf, member_len, opcodes,
 					  linum);
 		kernel_syms_destroy(&dd);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_dump(int argc, char **argv)
-{
-	struct bpf_prog_info_linear *info_linear;
-	char *filepath = NULL;
+अटल पूर्णांक करो_dump(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा bpf_prog_info_linear *info_linear;
+	अक्षर *filepath = शून्य;
 	bool opcodes = false;
 	bool visual = false;
-	enum dump_mode mode;
+	क्रमागत dump_mode mode;
 	bool linum = false;
-	int *fds = NULL;
-	int nb_fds, i = 0;
-	int err = -1;
+	पूर्णांक *fds = शून्य;
+	पूर्णांक nb_fds, i = 0;
+	पूर्णांक err = -1;
 	__u64 arrays;
 
-	if (is_prefix(*argv, "jited")) {
-		if (disasm_init())
-			return -1;
+	अगर (is_prefix(*argv, "jited")) अणु
+		अगर (disयंत्र_init())
+			वापस -1;
 		mode = DUMP_JITED;
-	} else if (is_prefix(*argv, "xlated")) {
+	पूर्ण अन्यथा अगर (is_prefix(*argv, "xlated")) अणु
 		mode = DUMP_XLATED;
-	} else {
+	पूर्ण अन्यथा अणु
 		p_err("expected 'xlated' or 'jited', got: %s", *argv);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	NEXT_ARG();
 
-	if (argc < 2)
+	अगर (argc < 2)
 		usage();
 
-	fds = malloc(sizeof(int));
-	if (!fds) {
+	fds = दो_स्मृति(माप(पूर्णांक));
+	अगर (!fds) अणु
 		p_err("mem alloc failed");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	nb_fds = prog_parse_fds(&argc, &argv, &fds);
-	if (nb_fds < 1)
-		goto exit_free;
+	अगर (nb_fds < 1)
+		जाओ निकास_मुक्त;
 
-	if (is_prefix(*argv, "file")) {
+	अगर (is_prefix(*argv, "file")) अणु
 		NEXT_ARG();
-		if (!argc) {
+		अगर (!argc) अणु
 			p_err("expected file path");
-			goto exit_close;
-		}
-		if (nb_fds > 1) {
+			जाओ निकास_बंद;
+		पूर्ण
+		अगर (nb_fds > 1) अणु
 			p_err("several programs matched");
-			goto exit_close;
-		}
+			जाओ निकास_बंद;
+		पूर्ण
 
 		filepath = *argv;
 		NEXT_ARG();
-	} else if (is_prefix(*argv, "opcodes")) {
+	पूर्ण अन्यथा अगर (is_prefix(*argv, "opcodes")) अणु
 		opcodes = true;
 		NEXT_ARG();
-	} else if (is_prefix(*argv, "visual")) {
-		if (nb_fds > 1) {
+	पूर्ण अन्यथा अगर (is_prefix(*argv, "visual")) अणु
+		अगर (nb_fds > 1) अणु
 			p_err("several programs matched");
-			goto exit_close;
-		}
+			जाओ निकास_बंद;
+		पूर्ण
 
 		visual = true;
 		NEXT_ARG();
-	} else if (is_prefix(*argv, "linum")) {
+	पूर्ण अन्यथा अगर (is_prefix(*argv, "linum")) अणु
 		linum = true;
 		NEXT_ARG();
-	}
+	पूर्ण
 
-	if (argc) {
+	अगर (argc) अणु
 		usage();
-		goto exit_close;
-	}
+		जाओ निकास_बंद;
+	पूर्ण
 
-	if (mode == DUMP_JITED)
+	अगर (mode == DUMP_JITED)
 		arrays = 1UL << BPF_PROG_INFO_JITED_INSNS;
-	else
+	अन्यथा
 		arrays = 1UL << BPF_PROG_INFO_XLATED_INSNS;
 
 	arrays |= 1UL << BPF_PROG_INFO_JITED_KSYMS;
@@ -863,432 +864,432 @@ static int do_dump(int argc, char **argv)
 	arrays |= 1UL << BPF_PROG_INFO_LINE_INFO;
 	arrays |= 1UL << BPF_PROG_INFO_JITED_LINE_INFO;
 
-	if (json_output && nb_fds > 1)
+	अगर (json_output && nb_fds > 1)
 		jsonw_start_array(json_wtr);	/* root array */
-	for (i = 0; i < nb_fds; i++) {
+	क्रम (i = 0; i < nb_fds; i++) अणु
 		info_linear = bpf_program__get_prog_info_linear(fds[i], arrays);
-		if (IS_ERR_OR_NULL(info_linear)) {
-			p_err("can't get prog info: %s", strerror(errno));
-			break;
-		}
+		अगर (IS_ERR_OR_शून्य(info_linear)) अणु
+			p_err("can't get prog info: %s", म_त्रुटि(त्रुटि_सं));
+			अवरोध;
+		पूर्ण
 
-		if (json_output && nb_fds > 1) {
+		अगर (json_output && nb_fds > 1) अणु
 			jsonw_start_object(json_wtr);	/* prog object */
-			print_prog_header_json(&info_linear->info);
+			prपूर्णांक_prog_header_json(&info_linear->info);
 			jsonw_name(json_wtr, "insns");
-		} else if (nb_fds > 1) {
-			print_prog_header_plain(&info_linear->info);
-		}
+		पूर्ण अन्यथा अगर (nb_fds > 1) अणु
+			prपूर्णांक_prog_header_plain(&info_linear->info);
+		पूर्ण
 
 		err = prog_dump(&info_linear->info, mode, filepath, opcodes,
 				visual, linum);
 
-		if (json_output && nb_fds > 1)
+		अगर (json_output && nb_fds > 1)
 			jsonw_end_object(json_wtr);	/* prog object */
-		else if (i != nb_fds - 1 && nb_fds > 1)
-			printf("\n");
+		अन्यथा अगर (i != nb_fds - 1 && nb_fds > 1)
+			म_लिखो("\n");
 
-		free(info_linear);
-		if (err)
-			break;
-		close(fds[i]);
-	}
-	if (json_output && nb_fds > 1)
+		मुक्त(info_linear);
+		अगर (err)
+			अवरोध;
+		बंद(fds[i]);
+	पूर्ण
+	अगर (json_output && nb_fds > 1)
 		jsonw_end_array(json_wtr);	/* root array */
 
-exit_close:
-	for (; i < nb_fds; i++)
-		close(fds[i]);
-exit_free:
-	free(fds);
-	return err;
-}
+निकास_बंद:
+	क्रम (; i < nb_fds; i++)
+		बंद(fds[i]);
+निकास_मुक्त:
+	मुक्त(fds);
+	वापस err;
+पूर्ण
 
-static int do_pin(int argc, char **argv)
-{
-	int err;
+अटल पूर्णांक करो_pin(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक err;
 
-	err = do_pin_any(argc, argv, prog_parse_fd);
-	if (!err && json_output)
+	err = करो_pin_any(argc, argv, prog_parse_fd);
+	अगर (!err && json_output)
 		jsonw_null(json_wtr);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct map_replace {
-	int idx;
-	int fd;
-	char *name;
-};
+काष्ठा map_replace अणु
+	पूर्णांक idx;
+	पूर्णांक fd;
+	अक्षर *name;
+पूर्ण;
 
-static int map_replace_compar(const void *p1, const void *p2)
-{
-	const struct map_replace *a = p1, *b = p2;
+अटल पूर्णांक map_replace_compar(स्थिर व्योम *p1, स्थिर व्योम *p2)
+अणु
+	स्थिर काष्ठा map_replace *a = p1, *b = p2;
 
-	return a->idx - b->idx;
-}
+	वापस a->idx - b->idx;
+पूर्ण
 
-static int parse_attach_detach_args(int argc, char **argv, int *progfd,
-				    enum bpf_attach_type *attach_type,
-				    int *mapfd)
-{
-	if (!REQ_ARGS(3))
-		return -EINVAL;
+अटल पूर्णांक parse_attach_detach_args(पूर्णांक argc, अक्षर **argv, पूर्णांक *progfd,
+				    क्रमागत bpf_attach_type *attach_type,
+				    पूर्णांक *mapfd)
+अणु
+	अगर (!REQ_ARGS(3))
+		वापस -EINVAL;
 
 	*progfd = prog_parse_fd(&argc, &argv);
-	if (*progfd < 0)
-		return *progfd;
+	अगर (*progfd < 0)
+		वापस *progfd;
 
 	*attach_type = parse_attach_type(*argv);
-	if (*attach_type == __MAX_BPF_ATTACH_TYPE) {
+	अगर (*attach_type == __MAX_BPF_ATTACH_TYPE) अणु
 		p_err("invalid attach/detach type");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (*attach_type == BPF_FLOW_DISSECTOR) {
+	अगर (*attach_type == BPF_FLOW_DISSECTOR) अणु
 		*mapfd = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	NEXT_ARG();
-	if (!REQ_ARGS(2))
-		return -EINVAL;
+	अगर (!REQ_ARGS(2))
+		वापस -EINVAL;
 
 	*mapfd = map_parse_fd(&argc, &argv);
-	if (*mapfd < 0)
-		return *mapfd;
+	अगर (*mapfd < 0)
+		वापस *mapfd;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_attach(int argc, char **argv)
-{
-	enum bpf_attach_type attach_type;
-	int err, progfd;
-	int mapfd;
+अटल पूर्णांक करो_attach(पूर्णांक argc, अक्षर **argv)
+अणु
+	क्रमागत bpf_attach_type attach_type;
+	पूर्णांक err, progfd;
+	पूर्णांक mapfd;
 
 	err = parse_attach_detach_args(argc, argv,
 				       &progfd, &attach_type, &mapfd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = bpf_prog_attach(progfd, mapfd, attach_type, 0);
-	if (err) {
+	अगर (err) अणु
 		p_err("failed prog attach to map");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_null(json_wtr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_detach(int argc, char **argv)
-{
-	enum bpf_attach_type attach_type;
-	int err, progfd;
-	int mapfd;
+अटल पूर्णांक करो_detach(पूर्णांक argc, अक्षर **argv)
+अणु
+	क्रमागत bpf_attach_type attach_type;
+	पूर्णांक err, progfd;
+	पूर्णांक mapfd;
 
 	err = parse_attach_detach_args(argc, argv,
 				       &progfd, &attach_type, &mapfd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = bpf_prog_detach2(progfd, mapfd, attach_type);
-	if (err) {
+	अगर (err) अणु
 		p_err("failed prog detach from map");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_null(json_wtr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_single_stdin(char *file_data_in, char *file_ctx_in)
-{
-	if (file_data_in && file_ctx_in &&
-	    !strcmp(file_data_in, "-") && !strcmp(file_ctx_in, "-")) {
+अटल पूर्णांक check_single_मानक_निवेश(अक्षर *file_data_in, अक्षर *file_ctx_in)
+अणु
+	अगर (file_data_in && file_ctx_in &&
+	    !म_भेद(file_data_in, "-") && !म_भेद(file_ctx_in, "-")) अणु
 		p_err("cannot use standard input for both data_in and ctx_in");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_run_data(const char *fname, void **data_ptr, unsigned int *size)
-{
-	size_t block_size = 256;
-	size_t buf_size = block_size;
-	size_t nb_read = 0;
-	void *tmp;
-	FILE *f;
+अटल पूर्णांक get_run_data(स्थिर अक्षर *fname, व्योम **data_ptr, अचिन्हित पूर्णांक *size)
+अणु
+	माप_प्रकार block_size = 256;
+	माप_प्रकार buf_size = block_size;
+	माप_प्रकार nb_पढ़ो = 0;
+	व्योम *पंचांगp;
+	खाता *f;
 
-	if (!fname) {
-		*data_ptr = NULL;
+	अगर (!fname) अणु
+		*data_ptr = शून्य;
 		*size = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!strcmp(fname, "-"))
-		f = stdin;
-	else
-		f = fopen(fname, "r");
-	if (!f) {
-		p_err("failed to open %s: %s", fname, strerror(errno));
-		return -1;
-	}
+	अगर (!म_भेद(fname, "-"))
+		f = मानक_निवेश;
+	अन्यथा
+		f = ख_खोलो(fname, "r");
+	अगर (!f) अणु
+		p_err("failed to open %s: %s", fname, म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
-	*data_ptr = malloc(block_size);
-	if (!*data_ptr) {
+	*data_ptr = दो_स्मृति(block_size);
+	अगर (!*data_ptr) अणु
 		p_err("failed to allocate memory for data_in/ctx_in: %s",
-		      strerror(errno));
-		goto err_fclose;
-	}
+		      म_त्रुटि(त्रुटि_सं));
+		जाओ err_ख_बंद;
+	पूर्ण
 
-	while ((nb_read += fread(*data_ptr + nb_read, 1, block_size, f))) {
-		if (feof(f))
-			break;
-		if (ferror(f)) {
+	जबतक ((nb_पढ़ो += ख_पढ़ो(*data_ptr + nb_पढ़ो, 1, block_size, f))) अणु
+		अगर (ख_पूर्ण(f))
+			अवरोध;
+		अगर (ख_त्रुटि(f)) अणु
 			p_err("failed to read data_in/ctx_in from %s: %s",
-			      fname, strerror(errno));
-			goto err_free;
-		}
-		if (nb_read > buf_size - block_size) {
-			if (buf_size == UINT32_MAX) {
+			      fname, म_त्रुटि(त्रुटि_सं));
+			जाओ err_मुक्त;
+		पूर्ण
+		अगर (nb_पढ़ो > buf_size - block_size) अणु
+			अगर (buf_size == UINT32_MAX) अणु
 				p_err("data_in/ctx_in is too long (max: %d)",
 				      UINT32_MAX);
-				goto err_free;
-			}
-			/* No space for fread()-ing next chunk; realloc() */
+				जाओ err_मुक्त;
+			पूर्ण
+			/* No space क्रम ख_पढ़ो()-ing next chunk; पुनः_स्मृति() */
 			buf_size *= 2;
-			tmp = realloc(*data_ptr, buf_size);
-			if (!tmp) {
+			पंचांगp = पुनः_स्मृति(*data_ptr, buf_size);
+			अगर (!पंचांगp) अणु
 				p_err("failed to reallocate data_in/ctx_in: %s",
-				      strerror(errno));
-				goto err_free;
-			}
-			*data_ptr = tmp;
-		}
-	}
-	if (f != stdin)
-		fclose(f);
+				      म_त्रुटि(त्रुटि_सं));
+				जाओ err_मुक्त;
+			पूर्ण
+			*data_ptr = पंचांगp;
+		पूर्ण
+	पूर्ण
+	अगर (f != मानक_निवेश)
+		ख_बंद(f);
 
-	*size = nb_read;
-	return 0;
+	*size = nb_पढ़ो;
+	वापस 0;
 
-err_free:
-	free(*data_ptr);
-	*data_ptr = NULL;
-err_fclose:
-	if (f != stdin)
-		fclose(f);
-	return -1;
-}
+err_मुक्त:
+	मुक्त(*data_ptr);
+	*data_ptr = शून्य;
+err_ख_बंद:
+	अगर (f != मानक_निवेश)
+		ख_बंद(f);
+	वापस -1;
+पूर्ण
 
-static void hex_print(void *data, unsigned int size, FILE *f)
-{
-	size_t i, j;
-	char c;
+अटल व्योम hex_prपूर्णांक(व्योम *data, अचिन्हित पूर्णांक size, खाता *f)
+अणु
+	माप_प्रकार i, j;
+	अक्षर c;
 
-	for (i = 0; i < size; i += 16) {
+	क्रम (i = 0; i < size; i += 16) अणु
 		/* Row offset */
-		fprintf(f, "%07zx\t", i);
+		ख_लिखो(f, "%07zx\t", i);
 
 		/* Hexadecimal values */
-		for (j = i; j < i + 16 && j < size; j++)
-			fprintf(f, "%02x%s", *(uint8_t *)(data + j),
+		क्रम (j = i; j < i + 16 && j < size; j++)
+			ख_लिखो(f, "%02x%s", *(uपूर्णांक8_t *)(data + j),
 				j % 2 ? " " : "");
-		for (; j < i + 16; j++)
-			fprintf(f, "  %s", j % 2 ? " " : "");
+		क्रम (; j < i + 16; j++)
+			ख_लिखो(f, "  %s", j % 2 ? " " : "");
 
-		/* ASCII values (if relevant), '.' otherwise */
-		fprintf(f, "| ");
-		for (j = i; j < i + 16 && j < size; j++) {
-			c = *(char *)(data + j);
-			if (c < ' ' || c > '~')
+		/* ASCII values (अगर relevant), '.' otherwise */
+		ख_लिखो(f, "| ");
+		क्रम (j = i; j < i + 16 && j < size; j++) अणु
+			c = *(अक्षर *)(data + j);
+			अगर (c < ' ' || c > '~')
 				c = '.';
-			fprintf(f, "%c%s", c, j == i + 7 ? " " : "");
-		}
+			ख_लिखो(f, "%c%s", c, j == i + 7 ? " " : "");
+		पूर्ण
 
-		fprintf(f, "\n");
-	}
-}
+		ख_लिखो(f, "\n");
+	पूर्ण
+पूर्ण
 
-static int
-print_run_output(void *data, unsigned int size, const char *fname,
-		 const char *json_key)
-{
-	size_t nb_written;
-	FILE *f;
+अटल पूर्णांक
+prपूर्णांक_run_output(व्योम *data, अचिन्हित पूर्णांक size, स्थिर अक्षर *fname,
+		 स्थिर अक्षर *json_key)
+अणु
+	माप_प्रकार nb_written;
+	खाता *f;
 
-	if (!fname)
-		return 0;
+	अगर (!fname)
+		वापस 0;
 
-	if (!strcmp(fname, "-")) {
-		f = stdout;
-		if (json_output) {
+	अगर (!म_भेद(fname, "-")) अणु
+		f = मानक_निकास;
+		अगर (json_output) अणु
 			jsonw_name(json_wtr, json_key);
-			print_data_json(data, size);
-		} else {
-			hex_print(data, size, f);
-		}
-		return 0;
-	}
+			prपूर्णांक_data_json(data, size);
+		पूर्ण अन्यथा अणु
+			hex_prपूर्णांक(data, size, f);
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	f = fopen(fname, "w");
-	if (!f) {
-		p_err("failed to open %s: %s", fname, strerror(errno));
-		return -1;
-	}
+	f = ख_खोलो(fname, "w");
+	अगर (!f) अणु
+		p_err("failed to open %s: %s", fname, म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
-	nb_written = fwrite(data, 1, size, f);
-	fclose(f);
-	if (nb_written != size) {
-		p_err("failed to write output data/ctx: %s", strerror(errno));
-		return -1;
-	}
+	nb_written = ख_डालो(data, 1, size, f);
+	ख_बंद(f);
+	अगर (nb_written != size) अणु
+		p_err("failed to write output data/ctx: %s", म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int alloc_run_data(void **data_ptr, unsigned int size_out)
-{
-	*data_ptr = calloc(size_out, 1);
-	if (!*data_ptr) {
+अटल पूर्णांक alloc_run_data(व्योम **data_ptr, अचिन्हित पूर्णांक size_out)
+अणु
+	*data_ptr = सुस्मृति(size_out, 1);
+	अगर (!*data_ptr) अणु
 		p_err("failed to allocate memory for output data/ctx: %s",
-		      strerror(errno));
-		return -1;
-	}
+		      म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_run(int argc, char **argv)
-{
-	char *data_fname_in = NULL, *data_fname_out = NULL;
-	char *ctx_fname_in = NULL, *ctx_fname_out = NULL;
-	struct bpf_prog_test_run_attr test_attr = {0};
-	const unsigned int default_size = SZ_32K;
-	void *data_in = NULL, *data_out = NULL;
-	void *ctx_in = NULL, *ctx_out = NULL;
-	unsigned int repeat = 1;
-	int fd, err;
+अटल पूर्णांक करो_run(पूर्णांक argc, अक्षर **argv)
+अणु
+	अक्षर *data_fname_in = शून्य, *data_fname_out = शून्य;
+	अक्षर *ctx_fname_in = शून्य, *ctx_fname_out = शून्य;
+	काष्ठा bpf_prog_test_run_attr test_attr = अणु0पूर्ण;
+	स्थिर अचिन्हित पूर्णांक शेष_size = SZ_32K;
+	व्योम *data_in = शून्य, *data_out = शून्य;
+	व्योम *ctx_in = शून्य, *ctx_out = शून्य;
+	अचिन्हित पूर्णांक repeat = 1;
+	पूर्णांक fd, err;
 
-	if (!REQ_ARGS(4))
-		return -1;
+	अगर (!REQ_ARGS(4))
+		वापस -1;
 
 	fd = prog_parse_fd(&argc, &argv);
-	if (fd < 0)
-		return -1;
+	अगर (fd < 0)
+		वापस -1;
 
-	while (argc) {
-		if (detect_common_prefix(*argv, "data_in", "data_out",
-					 "data_size_out", NULL))
-			return -1;
-		if (detect_common_prefix(*argv, "ctx_in", "ctx_out",
-					 "ctx_size_out", NULL))
-			return -1;
+	जबतक (argc) अणु
+		अगर (detect_common_prefix(*argv, "data_in", "data_out",
+					 "data_size_out", शून्य))
+			वापस -1;
+		अगर (detect_common_prefix(*argv, "ctx_in", "ctx_out",
+					 "ctx_size_out", शून्य))
+			वापस -1;
 
-		if (is_prefix(*argv, "data_in")) {
+		अगर (is_prefix(*argv, "data_in")) अणु
 			NEXT_ARG();
-			if (!REQ_ARGS(1))
-				return -1;
+			अगर (!REQ_ARGS(1))
+				वापस -1;
 
 			data_fname_in = GET_ARG();
-			if (check_single_stdin(data_fname_in, ctx_fname_in))
-				return -1;
-		} else if (is_prefix(*argv, "data_out")) {
+			अगर (check_single_मानक_निवेश(data_fname_in, ctx_fname_in))
+				वापस -1;
+		पूर्ण अन्यथा अगर (is_prefix(*argv, "data_out")) अणु
 			NEXT_ARG();
-			if (!REQ_ARGS(1))
-				return -1;
+			अगर (!REQ_ARGS(1))
+				वापस -1;
 
 			data_fname_out = GET_ARG();
-		} else if (is_prefix(*argv, "data_size_out")) {
-			char *endptr;
+		पूर्ण अन्यथा अगर (is_prefix(*argv, "data_size_out")) अणु
+			अक्षर *endptr;
 
 			NEXT_ARG();
-			if (!REQ_ARGS(1))
-				return -1;
+			अगर (!REQ_ARGS(1))
+				वापस -1;
 
-			test_attr.data_size_out = strtoul(*argv, &endptr, 0);
-			if (*endptr) {
+			test_attr.data_size_out = म_से_अदीर्घ(*argv, &endptr, 0);
+			अगर (*endptr) अणु
 				p_err("can't parse %s as output data size",
 				      *argv);
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			NEXT_ARG();
-		} else if (is_prefix(*argv, "ctx_in")) {
+		पूर्ण अन्यथा अगर (is_prefix(*argv, "ctx_in")) अणु
 			NEXT_ARG();
-			if (!REQ_ARGS(1))
-				return -1;
+			अगर (!REQ_ARGS(1))
+				वापस -1;
 
 			ctx_fname_in = GET_ARG();
-			if (check_single_stdin(data_fname_in, ctx_fname_in))
-				return -1;
-		} else if (is_prefix(*argv, "ctx_out")) {
+			अगर (check_single_मानक_निवेश(data_fname_in, ctx_fname_in))
+				वापस -1;
+		पूर्ण अन्यथा अगर (is_prefix(*argv, "ctx_out")) अणु
 			NEXT_ARG();
-			if (!REQ_ARGS(1))
-				return -1;
+			अगर (!REQ_ARGS(1))
+				वापस -1;
 
 			ctx_fname_out = GET_ARG();
-		} else if (is_prefix(*argv, "ctx_size_out")) {
-			char *endptr;
+		पूर्ण अन्यथा अगर (is_prefix(*argv, "ctx_size_out")) अणु
+			अक्षर *endptr;
 
 			NEXT_ARG();
-			if (!REQ_ARGS(1))
-				return -1;
+			अगर (!REQ_ARGS(1))
+				वापस -1;
 
-			test_attr.ctx_size_out = strtoul(*argv, &endptr, 0);
-			if (*endptr) {
+			test_attr.ctx_size_out = म_से_अदीर्घ(*argv, &endptr, 0);
+			अगर (*endptr) अणु
 				p_err("can't parse %s as output context size",
 				      *argv);
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			NEXT_ARG();
-		} else if (is_prefix(*argv, "repeat")) {
-			char *endptr;
+		पूर्ण अन्यथा अगर (is_prefix(*argv, "repeat")) अणु
+			अक्षर *endptr;
 
 			NEXT_ARG();
-			if (!REQ_ARGS(1))
-				return -1;
+			अगर (!REQ_ARGS(1))
+				वापस -1;
 
-			repeat = strtoul(*argv, &endptr, 0);
-			if (*endptr) {
+			repeat = म_से_अदीर्घ(*argv, &endptr, 0);
+			अगर (*endptr) अणु
 				p_err("can't parse %s as repeat number",
 				      *argv);
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			NEXT_ARG();
-		} else {
+		पूर्ण अन्यथा अणु
 			p_err("expected no more arguments, 'data_in', 'data_out', 'data_size_out', 'ctx_in', 'ctx_out', 'ctx_size_out' or 'repeat', got: '%s'?",
 			      *argv);
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
 	err = get_run_data(data_fname_in, &data_in, &test_attr.data_size_in);
-	if (err)
-		return -1;
+	अगर (err)
+		वापस -1;
 
-	if (data_in) {
-		if (!test_attr.data_size_out)
-			test_attr.data_size_out = default_size;
+	अगर (data_in) अणु
+		अगर (!test_attr.data_size_out)
+			test_attr.data_size_out = शेष_size;
 		err = alloc_run_data(&data_out, test_attr.data_size_out);
-		if (err)
-			goto free_data_in;
-	}
+		अगर (err)
+			जाओ मुक्त_data_in;
+	पूर्ण
 
 	err = get_run_data(ctx_fname_in, &ctx_in, &test_attr.ctx_size_in);
-	if (err)
-		goto free_data_out;
+	अगर (err)
+		जाओ मुक्त_data_out;
 
-	if (ctx_in) {
-		if (!test_attr.ctx_size_out)
-			test_attr.ctx_size_out = default_size;
+	अगर (ctx_in) अणु
+		अगर (!test_attr.ctx_size_out)
+			test_attr.ctx_size_out = शेष_size;
 		err = alloc_run_data(&ctx_out, test_attr.ctx_size_out);
-		if (err)
-			goto free_ctx_in;
-	}
+		अगर (err)
+			जाओ मुक्त_ctx_in;
+	पूर्ण
 
 	test_attr.prog_fd	= fd;
 	test_attr.repeat	= repeat;
@@ -1298,815 +1299,815 @@ static int do_run(int argc, char **argv)
 	test_attr.ctx_out	= ctx_out;
 
 	err = bpf_prog_test_run_xattr(&test_attr);
-	if (err) {
-		p_err("failed to run program: %s", strerror(errno));
-		goto free_ctx_out;
-	}
+	अगर (err) अणु
+		p_err("failed to run program: %s", म_त्रुटि(त्रुटि_सं));
+		जाओ मुक्त_ctx_out;
+	पूर्ण
 
 	err = 0;
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_start_object(json_wtr);	/* root */
 
-	/* Do not exit on errors occurring when printing output data/context,
-	 * we still want to print return value and duration for program run.
+	/* Do not निकास on errors occurring when prपूर्णांकing output data/context,
+	 * we still want to prपूर्णांक वापस value and duration क्रम program run.
 	 */
-	if (test_attr.data_size_out)
-		err += print_run_output(test_attr.data_out,
+	अगर (test_attr.data_size_out)
+		err += prपूर्णांक_run_output(test_attr.data_out,
 					test_attr.data_size_out,
 					data_fname_out, "data_out");
-	if (test_attr.ctx_size_out)
-		err += print_run_output(test_attr.ctx_out,
+	अगर (test_attr.ctx_size_out)
+		err += prपूर्णांक_run_output(test_attr.ctx_out,
 					test_attr.ctx_size_out,
 					ctx_fname_out, "ctx_out");
 
-	if (json_output) {
-		jsonw_uint_field(json_wtr, "retval", test_attr.retval);
-		jsonw_uint_field(json_wtr, "duration", test_attr.duration);
+	अगर (json_output) अणु
+		jsonw_uपूर्णांक_field(json_wtr, "retval", test_attr.retval);
+		jsonw_uपूर्णांक_field(json_wtr, "duration", test_attr.duration);
 		jsonw_end_object(json_wtr);	/* root */
-	} else {
-		fprintf(stdout, "Return value: %u, duration%s: %uns\n",
+	पूर्ण अन्यथा अणु
+		ख_लिखो(मानक_निकास, "Return value: %u, duration%s: %uns\n",
 			test_attr.retval,
 			repeat > 1 ? " (average)" : "", test_attr.duration);
-	}
+	पूर्ण
 
-free_ctx_out:
-	free(ctx_out);
-free_ctx_in:
-	free(ctx_in);
-free_data_out:
-	free(data_out);
-free_data_in:
-	free(data_in);
+मुक्त_ctx_out:
+	मुक्त(ctx_out);
+मुक्त_ctx_in:
+	मुक्त(ctx_in);
+मुक्त_data_out:
+	मुक्त(data_out);
+मुक्त_data_in:
+	मुक्त(data_in);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-get_prog_type_by_name(const char *name, enum bpf_prog_type *prog_type,
-		      enum bpf_attach_type *expected_attach_type)
-{
-	libbpf_print_fn_t print_backup;
-	int ret;
+अटल पूर्णांक
+get_prog_type_by_name(स्थिर अक्षर *name, क्रमागत bpf_prog_type *prog_type,
+		      क्रमागत bpf_attach_type *expected_attach_type)
+अणु
+	libbpf_prपूर्णांक_fn_t prपूर्णांक_backup;
+	पूर्णांक ret;
 
 	ret = libbpf_prog_type_by_name(name, prog_type, expected_attach_type);
-	if (!ret)
-		return ret;
+	अगर (!ret)
+		वापस ret;
 
 	/* libbpf_prog_type_by_name() failed, let's re-run with debug level */
-	print_backup = libbpf_set_print(print_all_levels);
+	prपूर्णांक_backup = libbpf_set_prपूर्णांक(prपूर्णांक_all_levels);
 	ret = libbpf_prog_type_by_name(name, prog_type, expected_attach_type);
-	libbpf_set_print(print_backup);
+	libbpf_set_prपूर्णांक(prपूर्णांक_backup);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int load_with_options(int argc, char **argv, bool first_prog_only)
-{
-	enum bpf_prog_type common_prog_type = BPF_PROG_TYPE_UNSPEC;
-	DECLARE_LIBBPF_OPTS(bpf_object_open_opts, open_opts,
+अटल पूर्णांक load_with_options(पूर्णांक argc, अक्षर **argv, bool first_prog_only)
+अणु
+	क्रमागत bpf_prog_type common_prog_type = BPF_PROG_TYPE_UNSPEC;
+	DECLARE_LIBBPF_OPTS(bpf_object_खोलो_opts, खोलो_opts,
 		.relaxed_maps = relaxed_maps,
 	);
-	struct bpf_object_load_attr load_attr = { 0 };
-	enum bpf_attach_type expected_attach_type;
-	struct map_replace *map_replace = NULL;
-	struct bpf_program *prog = NULL, *pos;
-	unsigned int old_map_fds = 0;
-	const char *pinmaps = NULL;
-	struct bpf_object *obj;
-	struct bpf_map *map;
-	const char *pinfile;
-	unsigned int i, j;
-	__u32 ifindex = 0;
-	const char *file;
-	int idx, err;
+	काष्ठा bpf_object_load_attr load_attr = अणु 0 पूर्ण;
+	क्रमागत bpf_attach_type expected_attach_type;
+	काष्ठा map_replace *map_replace = शून्य;
+	काष्ठा bpf_program *prog = शून्य, *pos;
+	अचिन्हित पूर्णांक old_map_fds = 0;
+	स्थिर अक्षर *pinmaps = शून्य;
+	काष्ठा bpf_object *obj;
+	काष्ठा bpf_map *map;
+	स्थिर अक्षर *pinfile;
+	अचिन्हित पूर्णांक i, j;
+	__u32 अगरindex = 0;
+	स्थिर अक्षर *file;
+	पूर्णांक idx, err;
 
 
-	if (!REQ_ARGS(2))
-		return -1;
+	अगर (!REQ_ARGS(2))
+		वापस -1;
 	file = GET_ARG();
 	pinfile = GET_ARG();
 
-	while (argc) {
-		if (is_prefix(*argv, "type")) {
-			char *type;
+	जबतक (argc) अणु
+		अगर (is_prefix(*argv, "type")) अणु
+			अक्षर *type;
 
 			NEXT_ARG();
 
-			if (common_prog_type != BPF_PROG_TYPE_UNSPEC) {
+			अगर (common_prog_type != BPF_PROG_TYPE_UNSPEC) अणु
 				p_err("program type already specified");
-				goto err_free_reuse_maps;
-			}
-			if (!REQ_ARGS(1))
-				goto err_free_reuse_maps;
+				जाओ err_मुक्त_reuse_maps;
+			पूर्ण
+			अगर (!REQ_ARGS(1))
+				जाओ err_मुक्त_reuse_maps;
 
 			/* Put a '/' at the end of type to appease libbpf */
-			type = malloc(strlen(*argv) + 2);
-			if (!type) {
+			type = दो_स्मृति(म_माप(*argv) + 2);
+			अगर (!type) अणु
 				p_err("mem alloc failed");
-				goto err_free_reuse_maps;
-			}
+				जाओ err_मुक्त_reuse_maps;
+			पूर्ण
 			*type = 0;
-			strcat(type, *argv);
-			strcat(type, "/");
+			म_जोड़ो(type, *argv);
+			म_जोड़ो(type, "/");
 
 			err = get_prog_type_by_name(type, &common_prog_type,
 						    &expected_attach_type);
-			free(type);
-			if (err < 0)
-				goto err_free_reuse_maps;
+			मुक्त(type);
+			अगर (err < 0)
+				जाओ err_मुक्त_reuse_maps;
 
 			NEXT_ARG();
-		} else if (is_prefix(*argv, "map")) {
-			void *new_map_replace;
-			char *endptr, *name;
-			int fd;
+		पूर्ण अन्यथा अगर (is_prefix(*argv, "map")) अणु
+			व्योम *new_map_replace;
+			अक्षर *endptr, *name;
+			पूर्णांक fd;
 
 			NEXT_ARG();
 
-			if (!REQ_ARGS(4))
-				goto err_free_reuse_maps;
+			अगर (!REQ_ARGS(4))
+				जाओ err_मुक्त_reuse_maps;
 
-			if (is_prefix(*argv, "idx")) {
+			अगर (is_prefix(*argv, "idx")) अणु
 				NEXT_ARG();
 
-				idx = strtoul(*argv, &endptr, 0);
-				if (*endptr) {
+				idx = म_से_अदीर्घ(*argv, &endptr, 0);
+				अगर (*endptr) अणु
 					p_err("can't parse %s as IDX", *argv);
-					goto err_free_reuse_maps;
-				}
-				name = NULL;
-			} else if (is_prefix(*argv, "name")) {
+					जाओ err_मुक्त_reuse_maps;
+				पूर्ण
+				name = शून्य;
+			पूर्ण अन्यथा अगर (is_prefix(*argv, "name")) अणु
 				NEXT_ARG();
 
 				name = *argv;
 				idx = -1;
-			} else {
+			पूर्ण अन्यथा अणु
 				p_err("expected 'idx' or 'name', got: '%s'?",
 				      *argv);
-				goto err_free_reuse_maps;
-			}
+				जाओ err_मुक्त_reuse_maps;
+			पूर्ण
 			NEXT_ARG();
 
 			fd = map_parse_fd(&argc, &argv);
-			if (fd < 0)
-				goto err_free_reuse_maps;
+			अगर (fd < 0)
+				जाओ err_मुक्त_reuse_maps;
 
-			new_map_replace = reallocarray(map_replace,
+			new_map_replace = पुनः_स्मृतिarray(map_replace,
 						       old_map_fds + 1,
-						       sizeof(*map_replace));
-			if (!new_map_replace) {
+						       माप(*map_replace));
+			अगर (!new_map_replace) अणु
 				p_err("mem alloc failed");
-				goto err_free_reuse_maps;
-			}
+				जाओ err_मुक्त_reuse_maps;
+			पूर्ण
 			map_replace = new_map_replace;
 
 			map_replace[old_map_fds].idx = idx;
 			map_replace[old_map_fds].name = name;
 			map_replace[old_map_fds].fd = fd;
 			old_map_fds++;
-		} else if (is_prefix(*argv, "dev")) {
+		पूर्ण अन्यथा अगर (is_prefix(*argv, "dev")) अणु
 			NEXT_ARG();
 
-			if (ifindex) {
+			अगर (अगरindex) अणु
 				p_err("offload device already specified");
-				goto err_free_reuse_maps;
-			}
-			if (!REQ_ARGS(1))
-				goto err_free_reuse_maps;
+				जाओ err_मुक्त_reuse_maps;
+			पूर्ण
+			अगर (!REQ_ARGS(1))
+				जाओ err_मुक्त_reuse_maps;
 
-			ifindex = if_nametoindex(*argv);
-			if (!ifindex) {
+			अगरindex = अगर_nametoindex(*argv);
+			अगर (!अगरindex) अणु
 				p_err("unrecognized netdevice '%s': %s",
-				      *argv, strerror(errno));
-				goto err_free_reuse_maps;
-			}
+				      *argv, म_त्रुटि(त्रुटि_सं));
+				जाओ err_मुक्त_reuse_maps;
+			पूर्ण
 			NEXT_ARG();
-		} else if (is_prefix(*argv, "pinmaps")) {
+		पूर्ण अन्यथा अगर (is_prefix(*argv, "pinmaps")) अणु
 			NEXT_ARG();
 
-			if (!REQ_ARGS(1))
-				goto err_free_reuse_maps;
+			अगर (!REQ_ARGS(1))
+				जाओ err_मुक्त_reuse_maps;
 
 			pinmaps = GET_ARG();
-		} else {
+		पूर्ण अन्यथा अणु
 			p_err("expected no more arguments, 'type', 'map' or 'dev', got: '%s'?",
 			      *argv);
-			goto err_free_reuse_maps;
-		}
-	}
+			जाओ err_मुक्त_reuse_maps;
+		पूर्ण
+	पूर्ण
 
 	set_max_rlimit();
 
-	obj = bpf_object__open_file(file, &open_opts);
-	if (IS_ERR_OR_NULL(obj)) {
+	obj = bpf_object__खोलो_file(file, &खोलो_opts);
+	अगर (IS_ERR_OR_शून्य(obj)) अणु
 		p_err("failed to open object file");
-		goto err_free_reuse_maps;
-	}
+		जाओ err_मुक्त_reuse_maps;
+	पूर्ण
 
-	bpf_object__for_each_program(pos, obj) {
-		enum bpf_prog_type prog_type = common_prog_type;
+	bpf_object__क्रम_each_program(pos, obj) अणु
+		क्रमागत bpf_prog_type prog_type = common_prog_type;
 
-		if (prog_type == BPF_PROG_TYPE_UNSPEC) {
-			const char *sec_name = bpf_program__section_name(pos);
+		अगर (prog_type == BPF_PROG_TYPE_UNSPEC) अणु
+			स्थिर अक्षर *sec_name = bpf_program__section_name(pos);
 
 			err = get_prog_type_by_name(sec_name, &prog_type,
 						    &expected_attach_type);
-			if (err < 0)
-				goto err_close_obj;
-		}
+			अगर (err < 0)
+				जाओ err_बंद_obj;
+		पूर्ण
 
-		bpf_program__set_ifindex(pos, ifindex);
+		bpf_program__set_अगरindex(pos, अगरindex);
 		bpf_program__set_type(pos, prog_type);
 		bpf_program__set_expected_attach_type(pos, expected_attach_type);
-	}
+	पूर्ण
 
-	qsort(map_replace, old_map_fds, sizeof(*map_replace),
+	क्विक(map_replace, old_map_fds, माप(*map_replace),
 	      map_replace_compar);
 
 	/* After the sort maps by name will be first on the list, because they
 	 * have idx == -1.  Resolve them.
 	 */
 	j = 0;
-	while (j < old_map_fds && map_replace[j].name) {
+	जबतक (j < old_map_fds && map_replace[j].name) अणु
 		i = 0;
-		bpf_object__for_each_map(map, obj) {
-			if (!strcmp(bpf_map__name(map), map_replace[j].name)) {
+		bpf_object__क्रम_each_map(map, obj) अणु
+			अगर (!म_भेद(bpf_map__name(map), map_replace[j].name)) अणु
 				map_replace[j].idx = i;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			i++;
-		}
-		if (map_replace[j].idx == -1) {
+		पूर्ण
+		अगर (map_replace[j].idx == -1) अणु
 			p_err("unable to find map '%s'", map_replace[j].name);
-			goto err_close_obj;
-		}
+			जाओ err_बंद_obj;
+		पूर्ण
 		j++;
-	}
-	/* Resort if any names were resolved */
-	if (j)
-		qsort(map_replace, old_map_fds, sizeof(*map_replace),
+	पूर्ण
+	/* Resort अगर any names were resolved */
+	अगर (j)
+		क्विक(map_replace, old_map_fds, माप(*map_replace),
 		      map_replace_compar);
 
-	/* Set ifindex and name reuse */
+	/* Set अगरindex and name reuse */
 	j = 0;
 	idx = 0;
-	bpf_object__for_each_map(map, obj) {
-		if (!bpf_map__is_offload_neutral(map))
-			bpf_map__set_ifindex(map, ifindex);
+	bpf_object__क्रम_each_map(map, obj) अणु
+		अगर (!bpf_map__is_offload_neutral(map))
+			bpf_map__set_अगरindex(map, अगरindex);
 
-		if (j < old_map_fds && idx == map_replace[j].idx) {
+		अगर (j < old_map_fds && idx == map_replace[j].idx) अणु
 			err = bpf_map__reuse_fd(map, map_replace[j++].fd);
-			if (err) {
+			अगर (err) अणु
 				p_err("unable to set up map reuse: %d", err);
-				goto err_close_obj;
-			}
+				जाओ err_बंद_obj;
+			पूर्ण
 
 			/* Next reuse wants to apply to the same map */
-			if (j < old_map_fds && map_replace[j].idx == idx) {
+			अगर (j < old_map_fds && map_replace[j].idx == idx) अणु
 				p_err("replacement for map idx %d specified more than once",
 				      idx);
-				goto err_close_obj;
-			}
-		}
+				जाओ err_बंद_obj;
+			पूर्ण
+		पूर्ण
 
 		idx++;
-	}
-	if (j < old_map_fds) {
+	पूर्ण
+	अगर (j < old_map_fds) अणु
 		p_err("map idx '%d' not used", map_replace[j].idx);
-		goto err_close_obj;
-	}
+		जाओ err_बंद_obj;
+	पूर्ण
 
 	load_attr.obj = obj;
-	if (verifier_logs)
+	अगर (verअगरier_logs)
 		/* log_level1 + log_level2 + stats, but not stable UAPI */
 		load_attr.log_level = 1 + 2 + 4;
 
 	err = bpf_object__load_xattr(&load_attr);
-	if (err) {
+	अगर (err) अणु
 		p_err("failed to load object file");
-		goto err_close_obj;
-	}
+		जाओ err_बंद_obj;
+	पूर्ण
 
-	err = mount_bpffs_for_pin(pinfile);
-	if (err)
-		goto err_close_obj;
+	err = mount_bpffs_क्रम_pin(pinfile);
+	अगर (err)
+		जाओ err_बंद_obj;
 
-	if (first_prog_only) {
-		prog = bpf_program__next(NULL, obj);
-		if (!prog) {
+	अगर (first_prog_only) अणु
+		prog = bpf_program__next(शून्य, obj);
+		अगर (!prog) अणु
 			p_err("object file doesn't contain any bpf program");
-			goto err_close_obj;
-		}
+			जाओ err_बंद_obj;
+		पूर्ण
 
 		err = bpf_obj_pin(bpf_program__fd(prog), pinfile);
-		if (err) {
+		अगर (err) अणु
 			p_err("failed to pin program %s",
 			      bpf_program__section_name(prog));
-			goto err_close_obj;
-		}
-	} else {
+			जाओ err_बंद_obj;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		err = bpf_object__pin_programs(obj, pinfile);
-		if (err) {
+		अगर (err) अणु
 			p_err("failed to pin all programs");
-			goto err_close_obj;
-		}
-	}
+			जाओ err_बंद_obj;
+		पूर्ण
+	पूर्ण
 
-	if (pinmaps) {
+	अगर (pinmaps) अणु
 		err = bpf_object__pin_maps(obj, pinmaps);
-		if (err) {
+		अगर (err) अणु
 			p_err("failed to pin all maps");
-			goto err_unpin;
-		}
-	}
+			जाओ err_unpin;
+		पूर्ण
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_null(json_wtr);
 
-	bpf_object__close(obj);
-	for (i = 0; i < old_map_fds; i++)
-		close(map_replace[i].fd);
-	free(map_replace);
+	bpf_object__बंद(obj);
+	क्रम (i = 0; i < old_map_fds; i++)
+		बंद(map_replace[i].fd);
+	मुक्त(map_replace);
 
-	return 0;
+	वापस 0;
 
 err_unpin:
-	if (first_prog_only)
+	अगर (first_prog_only)
 		unlink(pinfile);
-	else
+	अन्यथा
 		bpf_object__unpin_programs(obj, pinfile);
-err_close_obj:
-	bpf_object__close(obj);
-err_free_reuse_maps:
-	for (i = 0; i < old_map_fds; i++)
-		close(map_replace[i].fd);
-	free(map_replace);
-	return -1;
-}
+err_बंद_obj:
+	bpf_object__बंद(obj);
+err_मुक्त_reuse_maps:
+	क्रम (i = 0; i < old_map_fds; i++)
+		बंद(map_replace[i].fd);
+	मुक्त(map_replace);
+	वापस -1;
+पूर्ण
 
-static int do_load(int argc, char **argv)
-{
-	return load_with_options(argc, argv, true);
-}
+अटल पूर्णांक करो_load(पूर्णांक argc, अक्षर **argv)
+अणु
+	वापस load_with_options(argc, argv, true);
+पूर्ण
 
-static int do_loadall(int argc, char **argv)
-{
-	return load_with_options(argc, argv, false);
-}
+अटल पूर्णांक करो_loadall(पूर्णांक argc, अक्षर **argv)
+अणु
+	वापस load_with_options(argc, argv, false);
+पूर्ण
 
-#ifdef BPFTOOL_WITHOUT_SKELETONS
+#अगर_घोषित BPFTOOL_WITHOUT_SKELETONS
 
-static int do_profile(int argc, char **argv)
-{
+अटल पूर्णांक करो_profile(पूर्णांक argc, अक्षर **argv)
+अणु
 	p_err("bpftool prog profile command is not supported. Please build bpftool with clang >= 10.0.0");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* BPFTOOL_WITHOUT_SKELETONS */
+#अन्यथा /* BPFTOOL_WITHOUT_SKELETONS */
 
-#include "profiler.skel.h"
+#समावेश "profiler.skel.h"
 
-struct profile_metric {
-	const char *name;
-	struct bpf_perf_event_value val;
-	struct perf_event_attr attr;
+काष्ठा profile_metric अणु
+	स्थिर अक्षर *name;
+	काष्ठा bpf_perf_event_value val;
+	काष्ठा perf_event_attr attr;
 	bool selected;
 
-	/* calculate ratios like instructions per cycle */
-	const int ratio_metric; /* 0 for N/A, 1 for index 0 (cycles) */
-	const char *ratio_desc;
-	const float ratio_mul;
-} metrics[] = {
-	{
+	/* calculate ratios like inकाष्ठाions per cycle */
+	स्थिर पूर्णांक ratio_metric; /* 0 क्रम N/A, 1 क्रम index 0 (cycles) */
+	स्थिर अक्षर *ratio_desc;
+	स्थिर भग्न ratio_mul;
+पूर्ण metrics[] = अणु
+	अणु
 		.name = "cycles",
-		.attr = {
+		.attr = अणु
 			.type = PERF_TYPE_HARDWARE,
 			.config = PERF_COUNT_HW_CPU_CYCLES,
 			.exclude_user = 1,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.name = "instructions",
-		.attr = {
+		.attr = अणु
 			.type = PERF_TYPE_HARDWARE,
 			.config = PERF_COUNT_HW_INSTRUCTIONS,
 			.exclude_user = 1,
-		},
+		पूर्ण,
 		.ratio_metric = 1,
 		.ratio_desc = "insns per cycle",
 		.ratio_mul = 1.0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "l1d_loads",
-		.attr = {
+		.attr = अणु
 			.type = PERF_TYPE_HW_CACHE,
 			.config =
 				PERF_COUNT_HW_CACHE_L1D |
 				(PERF_COUNT_HW_CACHE_OP_READ << 8) |
 				(PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16),
 			.exclude_user = 1,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.name = "llc_misses",
-		.attr = {
+		.attr = अणु
 			.type = PERF_TYPE_HW_CACHE,
 			.config =
 				PERF_COUNT_HW_CACHE_LL |
 				(PERF_COUNT_HW_CACHE_OP_READ << 8) |
 				(PERF_COUNT_HW_CACHE_RESULT_MISS << 16),
 			.exclude_user = 1
-		},
+		पूर्ण,
 		.ratio_metric = 2,
 		.ratio_desc = "LLC misses per million insns",
 		.ratio_mul = 1e6,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "itlb_misses",
-		.attr = {
+		.attr = अणु
 			.type = PERF_TYPE_HW_CACHE,
 			.config =
 				PERF_COUNT_HW_CACHE_ITLB |
 				(PERF_COUNT_HW_CACHE_OP_READ << 8) |
 				(PERF_COUNT_HW_CACHE_RESULT_MISS << 16),
 			.exclude_user = 1
-		},
+		पूर्ण,
 		.ratio_metric = 2,
 		.ratio_desc = "itlb misses per million insns",
 		.ratio_mul = 1e6,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "dtlb_misses",
-		.attr = {
+		.attr = अणु
 			.type = PERF_TYPE_HW_CACHE,
 			.config =
 				PERF_COUNT_HW_CACHE_DTLB |
 				(PERF_COUNT_HW_CACHE_OP_READ << 8) |
 				(PERF_COUNT_HW_CACHE_RESULT_MISS << 16),
 			.exclude_user = 1
-		},
+		पूर्ण,
 		.ratio_metric = 2,
 		.ratio_desc = "dtlb misses per million insns",
 		.ratio_mul = 1e6,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static __u64 profile_total_count;
+अटल __u64 profile_total_count;
 
-#define MAX_NUM_PROFILE_METRICS 4
+#घोषणा MAX_NUM_PROखाता_METRICS 4
 
-static int profile_parse_metrics(int argc, char **argv)
-{
-	unsigned int metric_cnt;
-	int selected_cnt = 0;
-	unsigned int i;
+अटल पूर्णांक profile_parse_metrics(पूर्णांक argc, अक्षर **argv)
+अणु
+	अचिन्हित पूर्णांक metric_cnt;
+	पूर्णांक selected_cnt = 0;
+	अचिन्हित पूर्णांक i;
 
-	metric_cnt = sizeof(metrics) / sizeof(struct profile_metric);
+	metric_cnt = माप(metrics) / माप(काष्ठा profile_metric);
 
-	while (argc > 0) {
-		for (i = 0; i < metric_cnt; i++) {
-			if (is_prefix(argv[0], metrics[i].name)) {
-				if (!metrics[i].selected)
+	जबतक (argc > 0) अणु
+		क्रम (i = 0; i < metric_cnt; i++) अणु
+			अगर (is_prefix(argv[0], metrics[i].name)) अणु
+				अगर (!metrics[i].selected)
 					selected_cnt++;
 				metrics[i].selected = true;
-				break;
-			}
-		}
-		if (i == metric_cnt) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i == metric_cnt) अणु
 			p_err("unknown metric %s", argv[0]);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		NEXT_ARG();
-	}
-	if (selected_cnt > MAX_NUM_PROFILE_METRICS) {
+	पूर्ण
+	अगर (selected_cnt > MAX_NUM_PROखाता_METRICS) अणु
 		p_err("too many (%d) metrics, please specify no more than %d metrics at at time",
-		      selected_cnt, MAX_NUM_PROFILE_METRICS);
-		return -1;
-	}
-	return selected_cnt;
-}
+		      selected_cnt, MAX_NUM_PROखाता_METRICS);
+		वापस -1;
+	पूर्ण
+	वापस selected_cnt;
+पूर्ण
 
-static void profile_read_values(struct profiler_bpf *obj)
-{
+अटल व्योम profile_पढ़ो_values(काष्ठा profiler_bpf *obj)
+अणु
 	__u32 m, cpu, num_cpu = obj->rodata->num_cpu;
-	int reading_map_fd, count_map_fd;
+	पूर्णांक पढ़ोing_map_fd, count_map_fd;
 	__u64 counts[num_cpu];
 	__u32 key = 0;
-	int err;
+	पूर्णांक err;
 
-	reading_map_fd = bpf_map__fd(obj->maps.accum_readings);
+	पढ़ोing_map_fd = bpf_map__fd(obj->maps.accum_पढ़ोings);
 	count_map_fd = bpf_map__fd(obj->maps.counts);
-	if (reading_map_fd < 0 || count_map_fd < 0) {
+	अगर (पढ़ोing_map_fd < 0 || count_map_fd < 0) अणु
 		p_err("failed to get fd for map");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	err = bpf_map_lookup_elem(count_map_fd, &key, counts);
-	if (err) {
-		p_err("failed to read count_map: %s", strerror(errno));
-		return;
-	}
+	अगर (err) अणु
+		p_err("failed to read count_map: %s", म_त्रुटि(त्रुटि_सं));
+		वापस;
+	पूर्ण
 
 	profile_total_count = 0;
-	for (cpu = 0; cpu < num_cpu; cpu++)
+	क्रम (cpu = 0; cpu < num_cpu; cpu++)
 		profile_total_count += counts[cpu];
 
-	for (m = 0; m < ARRAY_SIZE(metrics); m++) {
-		struct bpf_perf_event_value values[num_cpu];
+	क्रम (m = 0; m < ARRAY_SIZE(metrics); m++) अणु
+		काष्ठा bpf_perf_event_value values[num_cpu];
 
-		if (!metrics[m].selected)
-			continue;
+		अगर (!metrics[m].selected)
+			जारी;
 
-		err = bpf_map_lookup_elem(reading_map_fd, &key, values);
-		if (err) {
+		err = bpf_map_lookup_elem(पढ़ोing_map_fd, &key, values);
+		अगर (err) अणु
 			p_err("failed to read reading_map: %s",
-			      strerror(errno));
-			return;
-		}
-		for (cpu = 0; cpu < num_cpu; cpu++) {
+			      म_त्रुटि(त्रुटि_सं));
+			वापस;
+		पूर्ण
+		क्रम (cpu = 0; cpu < num_cpu; cpu++) अणु
 			metrics[m].val.counter += values[cpu].counter;
 			metrics[m].val.enabled += values[cpu].enabled;
 			metrics[m].val.running += values[cpu].running;
-		}
+		पूर्ण
 		key++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void profile_print_readings_json(void)
-{
+अटल व्योम profile_prपूर्णांक_पढ़ोings_json(व्योम)
+अणु
 	__u32 m;
 
 	jsonw_start_array(json_wtr);
-	for (m = 0; m < ARRAY_SIZE(metrics); m++) {
-		if (!metrics[m].selected)
-			continue;
+	क्रम (m = 0; m < ARRAY_SIZE(metrics); m++) अणु
+		अगर (!metrics[m].selected)
+			जारी;
 		jsonw_start_object(json_wtr);
 		jsonw_string_field(json_wtr, "metric", metrics[m].name);
-		jsonw_lluint_field(json_wtr, "run_cnt", profile_total_count);
-		jsonw_lluint_field(json_wtr, "value", metrics[m].val.counter);
-		jsonw_lluint_field(json_wtr, "enabled", metrics[m].val.enabled);
-		jsonw_lluint_field(json_wtr, "running", metrics[m].val.running);
+		jsonw_lluपूर्णांक_field(json_wtr, "run_cnt", profile_total_count);
+		jsonw_lluपूर्णांक_field(json_wtr, "value", metrics[m].val.counter);
+		jsonw_lluपूर्णांक_field(json_wtr, "enabled", metrics[m].val.enabled);
+		jsonw_lluपूर्णांक_field(json_wtr, "running", metrics[m].val.running);
 
 		jsonw_end_object(json_wtr);
-	}
+	पूर्ण
 	jsonw_end_array(json_wtr);
-}
+पूर्ण
 
-static void profile_print_readings_plain(void)
-{
+अटल व्योम profile_prपूर्णांक_पढ़ोings_plain(व्योम)
+अणु
 	__u32 m;
 
-	printf("\n%18llu %-20s\n", profile_total_count, "run_cnt");
-	for (m = 0; m < ARRAY_SIZE(metrics); m++) {
-		struct bpf_perf_event_value *val = &metrics[m].val;
-		int r;
+	म_लिखो("\n%18llu %-20s\n", profile_total_count, "run_cnt");
+	क्रम (m = 0; m < ARRAY_SIZE(metrics); m++) अणु
+		काष्ठा bpf_perf_event_value *val = &metrics[m].val;
+		पूर्णांक r;
 
-		if (!metrics[m].selected)
-			continue;
-		printf("%18llu %-20s", val->counter, metrics[m].name);
+		अगर (!metrics[m].selected)
+			जारी;
+		म_लिखो("%18llu %-20s", val->counter, metrics[m].name);
 
 		r = metrics[m].ratio_metric - 1;
-		if (r >= 0 && metrics[r].selected &&
-		    metrics[r].val.counter > 0) {
-			printf("# %8.2f %-30s",
+		अगर (r >= 0 && metrics[r].selected &&
+		    metrics[r].val.counter > 0) अणु
+			म_लिखो("# %8.2f %-30s",
 			       val->counter * metrics[m].ratio_mul /
 			       metrics[r].val.counter,
 			       metrics[m].ratio_desc);
-		} else {
-			printf("%-41s", "");
-		}
+		पूर्ण अन्यथा अणु
+			म_लिखो("%-41s", "");
+		पूर्ण
 
-		if (val->enabled > val->running)
-			printf("(%4.2f%%)",
+		अगर (val->enabled > val->running)
+			म_लिखो("(%4.2f%%)",
 			       val->running * 100.0 / val->enabled);
-		printf("\n");
-	}
-}
+		म_लिखो("\n");
+	पूर्ण
+पूर्ण
 
-static void profile_print_readings(void)
-{
-	if (json_output)
-		profile_print_readings_json();
-	else
-		profile_print_readings_plain();
-}
+अटल व्योम profile_prपूर्णांक_पढ़ोings(व्योम)
+अणु
+	अगर (json_output)
+		profile_prपूर्णांक_पढ़ोings_json();
+	अन्यथा
+		profile_prपूर्णांक_पढ़ोings_plain();
+पूर्ण
 
-static char *profile_target_name(int tgt_fd)
-{
-	struct bpf_prog_info_linear *info_linear;
-	struct bpf_func_info *func_info;
-	const struct btf_type *t;
-	char *name = NULL;
-	struct btf *btf;
+अटल अक्षर *profile_target_name(पूर्णांक tgt_fd)
+अणु
+	काष्ठा bpf_prog_info_linear *info_linear;
+	काष्ठा bpf_func_info *func_info;
+	स्थिर काष्ठा btf_type *t;
+	अक्षर *name = शून्य;
+	काष्ठा btf *btf;
 
 	info_linear = bpf_program__get_prog_info_linear(
 		tgt_fd, 1UL << BPF_PROG_INFO_FUNC_INFO);
-	if (IS_ERR_OR_NULL(info_linear)) {
+	अगर (IS_ERR_OR_शून्य(info_linear)) अणु
 		p_err("failed to get info_linear for prog FD %d", tgt_fd);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (info_linear->info.btf_id == 0 ||
-	    btf__get_from_id(info_linear->info.btf_id, &btf)) {
+	अगर (info_linear->info.btf_id == 0 ||
+	    btf__get_from_id(info_linear->info.btf_id, &btf)) अणु
 		p_err("prog FD %d doesn't have valid btf", tgt_fd);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	func_info = u64_to_ptr(info_linear->info.func_info);
 	t = btf__type_by_id(btf, func_info[0].type_id);
-	if (!t) {
+	अगर (!t) अणु
 		p_err("btf %d doesn't have type %d",
 		      info_linear->info.btf_id, func_info[0].type_id);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	name = strdup(btf__name_by_offset(btf, t->name_off));
 out:
-	free(info_linear);
-	return name;
-}
+	मुक्त(info_linear);
+	वापस name;
+पूर्ण
 
-static struct profiler_bpf *profile_obj;
-static int profile_tgt_fd = -1;
-static char *profile_tgt_name;
-static int *profile_perf_events;
-static int profile_perf_event_cnt;
+अटल काष्ठा profiler_bpf *profile_obj;
+अटल पूर्णांक profile_tgt_fd = -1;
+अटल अक्षर *profile_tgt_name;
+अटल पूर्णांक *profile_perf_events;
+अटल पूर्णांक profile_perf_event_cnt;
 
-static void profile_close_perf_events(struct profiler_bpf *obj)
-{
-	int i;
+अटल व्योम profile_बंद_perf_events(काष्ठा profiler_bpf *obj)
+अणु
+	पूर्णांक i;
 
-	for (i = profile_perf_event_cnt - 1; i >= 0; i--)
-		close(profile_perf_events[i]);
+	क्रम (i = profile_perf_event_cnt - 1; i >= 0; i--)
+		बंद(profile_perf_events[i]);
 
-	free(profile_perf_events);
+	मुक्त(profile_perf_events);
 	profile_perf_event_cnt = 0;
-}
+पूर्ण
 
-static int profile_open_perf_events(struct profiler_bpf *obj)
-{
-	unsigned int cpu, m;
-	int map_fd, pmu_fd;
+अटल पूर्णांक profile_खोलो_perf_events(काष्ठा profiler_bpf *obj)
+अणु
+	अचिन्हित पूर्णांक cpu, m;
+	पूर्णांक map_fd, pmu_fd;
 
-	profile_perf_events = calloc(
-		sizeof(int), obj->rodata->num_cpu * obj->rodata->num_metric);
-	if (!profile_perf_events) {
+	profile_perf_events = सुस्मृति(
+		माप(पूर्णांक), obj->rodata->num_cpu * obj->rodata->num_metric);
+	अगर (!profile_perf_events) अणु
 		p_err("failed to allocate memory for perf_event array: %s",
-		      strerror(errno));
-		return -1;
-	}
+		      म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 	map_fd = bpf_map__fd(obj->maps.events);
-	if (map_fd < 0) {
+	अगर (map_fd < 0) अणु
 		p_err("failed to get fd for events map");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	for (m = 0; m < ARRAY_SIZE(metrics); m++) {
-		if (!metrics[m].selected)
-			continue;
-		for (cpu = 0; cpu < obj->rodata->num_cpu; cpu++) {
-			pmu_fd = syscall(__NR_perf_event_open, &metrics[m].attr,
+	क्रम (m = 0; m < ARRAY_SIZE(metrics); m++) अणु
+		अगर (!metrics[m].selected)
+			जारी;
+		क्रम (cpu = 0; cpu < obj->rodata->num_cpu; cpu++) अणु
+			pmu_fd = syscall(__NR_perf_event_खोलो, &metrics[m].attr,
 					 -1/*pid*/, cpu, -1/*group_fd*/, 0);
-			if (pmu_fd < 0 ||
+			अगर (pmu_fd < 0 ||
 			    bpf_map_update_elem(map_fd, &profile_perf_event_cnt,
 						&pmu_fd, BPF_ANY) ||
-			    ioctl(pmu_fd, PERF_EVENT_IOC_ENABLE, 0)) {
+			    ioctl(pmu_fd, PERF_EVENT_IOC_ENABLE, 0)) अणु
 				p_err("failed to create event %s on cpu %d",
 				      metrics[m].name, cpu);
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			profile_perf_events[profile_perf_event_cnt++] = pmu_fd;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void profile_print_and_cleanup(void)
-{
-	profile_close_perf_events(profile_obj);
-	profile_read_values(profile_obj);
-	profile_print_readings();
+अटल व्योम profile_prपूर्णांक_and_cleanup(व्योम)
+अणु
+	profile_बंद_perf_events(profile_obj);
+	profile_पढ़ो_values(profile_obj);
+	profile_prपूर्णांक_पढ़ोings();
 	profiler_bpf__destroy(profile_obj);
 
-	close(profile_tgt_fd);
-	free(profile_tgt_name);
-}
+	बंद(profile_tgt_fd);
+	मुक्त(profile_tgt_name);
+पूर्ण
 
-static void int_exit(int signo)
-{
-	profile_print_and_cleanup();
-	exit(0);
-}
+अटल व्योम पूर्णांक_निकास(पूर्णांक signo)
+अणु
+	profile_prपूर्णांक_and_cleanup();
+	निकास(0);
+पूर्ण
 
-static int do_profile(int argc, char **argv)
-{
-	int num_metric, num_cpu, err = -1;
-	struct bpf_program *prog;
-	unsigned long duration;
-	char *endptr;
+अटल पूर्णांक करो_profile(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक num_metric, num_cpu, err = -1;
+	काष्ठा bpf_program *prog;
+	अचिन्हित दीर्घ duration;
+	अक्षर *endptr;
 
-	/* we at least need two args for the prog and one metric */
-	if (!REQ_ARGS(3))
-		return -EINVAL;
+	/* we at least need two args क्रम the prog and one metric */
+	अगर (!REQ_ARGS(3))
+		वापस -EINVAL;
 
 	/* parse target fd */
 	profile_tgt_fd = prog_parse_fd(&argc, &argv);
-	if (profile_tgt_fd < 0) {
+	अगर (profile_tgt_fd < 0) अणु
 		p_err("failed to parse fd");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/* parse profiling optional duration */
-	if (argc > 2 && is_prefix(argv[0], "duration")) {
+	अगर (argc > 2 && is_prefix(argv[0], "duration")) अणु
 		NEXT_ARG();
-		duration = strtoul(*argv, &endptr, 0);
-		if (*endptr)
+		duration = म_से_अदीर्घ(*argv, &endptr, 0);
+		अगर (*endptr)
 			usage();
 		NEXT_ARG();
-	} else {
-		duration = UINT_MAX;
-	}
+	पूर्ण अन्यथा अणु
+		duration = अच_पूर्णांक_उच्च;
+	पूर्ण
 
 	num_metric = profile_parse_metrics(argc, argv);
-	if (num_metric <= 0)
-		goto out;
+	अगर (num_metric <= 0)
+		जाओ out;
 
 	num_cpu = libbpf_num_possible_cpus();
-	if (num_cpu <= 0) {
+	अगर (num_cpu <= 0) अणु
 		p_err("failed to identify number of CPUs");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	profile_obj = profiler_bpf__open();
-	if (!profile_obj) {
+	profile_obj = profiler_bpf__खोलो();
+	अगर (!profile_obj) अणु
 		p_err("failed to open and/or load BPF object");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	profile_obj->rodata->num_cpu = num_cpu;
 	profile_obj->rodata->num_metric = num_metric;
 
 	/* adjust map sizes */
 	bpf_map__resize(profile_obj->maps.events, num_metric * num_cpu);
-	bpf_map__resize(profile_obj->maps.fentry_readings, num_metric);
-	bpf_map__resize(profile_obj->maps.accum_readings, num_metric);
+	bpf_map__resize(profile_obj->maps.fentry_पढ़ोings, num_metric);
+	bpf_map__resize(profile_obj->maps.accum_पढ़ोings, num_metric);
 	bpf_map__resize(profile_obj->maps.counts, 1);
 
 	/* change target name */
 	profile_tgt_name = profile_target_name(profile_tgt_fd);
-	if (!profile_tgt_name)
-		goto out;
+	अगर (!profile_tgt_name)
+		जाओ out;
 
-	bpf_object__for_each_program(prog, profile_obj->obj) {
+	bpf_object__क्रम_each_program(prog, profile_obj->obj) अणु
 		err = bpf_program__set_attach_target(prog, profile_tgt_fd,
 						     profile_tgt_name);
-		if (err) {
+		अगर (err) अणु
 			p_err("failed to set attach target\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	set_max_rlimit();
 	err = profiler_bpf__load(profile_obj);
-	if (err) {
+	अगर (err) अणु
 		p_err("failed to load profile_obj");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = profile_open_perf_events(profile_obj);
-	if (err)
-		goto out;
+	err = profile_खोलो_perf_events(profile_obj);
+	अगर (err)
+		जाओ out;
 
 	err = profiler_bpf__attach(profile_obj);
-	if (err) {
+	अगर (err) अणु
 		p_err("failed to attach profile_obj");
-		goto out;
-	}
-	signal(SIGINT, int_exit);
+		जाओ out;
+	पूर्ण
+	संकेत(संक_विघ्न, पूर्णांक_निकास);
 
 	sleep(duration);
-	profile_print_and_cleanup();
-	return 0;
+	profile_prपूर्णांक_and_cleanup();
+	वापस 0;
 
 out:
-	profile_close_perf_events(profile_obj);
-	if (profile_obj)
+	profile_बंद_perf_events(profile_obj);
+	अगर (profile_obj)
 		profiler_bpf__destroy(profile_obj);
-	close(profile_tgt_fd);
-	free(profile_tgt_name);
-	return err;
-}
+	बंद(profile_tgt_fd);
+	मुक्त(profile_tgt_name);
+	वापस err;
+पूर्ण
 
-#endif /* BPFTOOL_WITHOUT_SKELETONS */
+#पूर्ण_अगर /* BPFTOOL_WITHOUT_SKELETONS */
 
-static int do_help(int argc, char **argv)
-{
-	if (json_output) {
+अटल पूर्णांक करो_help(पूर्णांक argc, अक्षर **argv)
+अणु
+	अगर (json_output) अणु
 		jsonw_null(json_wtr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	fprintf(stderr,
+	ख_लिखो(मानक_त्रुटि,
 		"Usage: %1$s %2$s { show | list } [PROG]\n"
 		"       %1$s %2$s dump xlated PROG [{ file FILE | opcodes | visual | linum }]\n"
 		"       %1$s %2$s dump jited  PROG [{ file FILE | opcodes | linum }]\n"
@@ -2147,26 +2148,26 @@ static int do_help(int argc, char **argv)
 		"",
 		bin_name, argv[-2]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct cmd cmds[] = {
-	{ "show",	do_show },
-	{ "list",	do_show },
-	{ "help",	do_help },
-	{ "dump",	do_dump },
-	{ "pin",	do_pin },
-	{ "load",	do_load },
-	{ "loadall",	do_loadall },
-	{ "attach",	do_attach },
-	{ "detach",	do_detach },
-	{ "tracelog",	do_tracelog },
-	{ "run",	do_run },
-	{ "profile",	do_profile },
-	{ 0 }
-};
+अटल स्थिर काष्ठा cmd cmds[] = अणु
+	अणु "show",	करो_show पूर्ण,
+	अणु "list",	करो_show पूर्ण,
+	अणु "help",	करो_help पूर्ण,
+	अणु "dump",	करो_dump पूर्ण,
+	अणु "pin",	करो_pin पूर्ण,
+	अणु "load",	करो_load पूर्ण,
+	अणु "loadall",	करो_loadall पूर्ण,
+	अणु "attach",	करो_attach पूर्ण,
+	अणु "detach",	करो_detach पूर्ण,
+	अणु "tracelog",	करो_tracelog पूर्ण,
+	अणु "run",	करो_run पूर्ण,
+	अणु "profile",	करो_profile पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
-int do_prog(int argc, char **argv)
-{
-	return cmd_select(cmds, argc, argv, do_help);
-}
+पूर्णांक करो_prog(पूर्णांक argc, अक्षर **argv)
+अणु
+	वापस cmd_select(cmds, argc, argv, करो_help);
+पूर्ण

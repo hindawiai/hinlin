@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
- * include/asm-sh/shmparam.h
+ * include/यंत्र-sh/shmparam.h
  *
  * Copyright (C) 1999 Niibe Yutaka
  * Copyright (C) 2006 Paul Mundt
  */
-#ifndef __ASM_SH_SHMPARAM_H
-#define __ASM_SH_SHMPARAM_H
+#अगर_अघोषित __ASM_SH_SHMPARAM_H
+#घोषणा __ASM_SH_SHMPARAM_H
 
 /*
  * SH-4 and SH-3 7705 have an aliasing dcache. Bump this up to a sensible value
- * for everyone, and work out the specifics from the probed cache descriptor.
+ * क्रम everyone, and work out the specअगरics from the probed cache descriptor.
  */
-#define	SHMLBA	0x4000		 /* attach addr a multiple of this */
+#घोषणा	SHMLBA	0x4000		 /* attach addr a multiple of this */
 
-#define __ARCH_FORCE_SHMLBA
+#घोषणा __ARCH_FORCE_SHMLBA
 
-#endif /* __ASM_SH_SHMPARAM_H */
+#पूर्ण_अगर /* __ASM_SH_SHMPARAM_H */

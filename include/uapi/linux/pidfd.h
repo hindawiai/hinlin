@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 
-#ifndef _UAPI_LINUX_PIDFD_H
-#define _UAPI_LINUX_PIDFD_H
+#अगर_अघोषित _UAPI_LINUX_PIDFD_H
+#घोषणा _UAPI_LINUX_PIDFD_H
 
-#include <linux/types.h>
-#include <linux/fcntl.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
 
-/* Flags for pidfd_open().  */
-#define PIDFD_NONBLOCK O_NONBLOCK
+/* Flags क्रम pidfd_खोलो().  */
+#घोषणा PIDFD_NONBLOCK O_NONBLOCK
 
-#endif /* _UAPI_LINUX_PIDFD_H */
+#पूर्ण_अगर /* _UAPI_LINUX_PIDFD_H */

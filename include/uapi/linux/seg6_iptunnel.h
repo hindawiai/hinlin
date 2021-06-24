@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  *  SR-IPv6 implementation
  *
@@ -6,35 +7,35 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  *
  *
- *  This program is free software; you can redistribute it and/or
- *      modify it under the terms of the GNU General Public License
+ *  This program is मुक्त software; you can redistribute it and/or
+ *      modअगरy it under the terms of the GNU General Public License
  *      as published by the Free Software Foundation; either version
  *      2 of the License, or (at your option) any later version.
  */
 
-#ifndef _UAPI_LINUX_SEG6_IPTUNNEL_H
-#define _UAPI_LINUX_SEG6_IPTUNNEL_H
+#अगर_अघोषित _UAPI_LINUX_SEG6_IPTUNNEL_H
+#घोषणा _UAPI_LINUX_SEG6_IPTUNNEL_H
 
-#include <linux/seg6.h>		/* For struct ipv6_sr_hdr. */
+#समावेश <linux/seg6.h>		/* For काष्ठा ipv6_sr_hdr. */
 
-enum {
+क्रमागत अणु
 	SEG6_IPTUNNEL_UNSPEC,
 	SEG6_IPTUNNEL_SRH,
 	__SEG6_IPTUNNEL_MAX,
-};
-#define SEG6_IPTUNNEL_MAX (__SEG6_IPTUNNEL_MAX - 1)
+पूर्ण;
+#घोषणा SEG6_IPTUNNEL_MAX (__SEG6_IPTUNNEL_MAX - 1)
 
-struct seg6_iptunnel_encap {
-	int mode;
-	struct ipv6_sr_hdr srh[0];
-};
+काष्ठा seg6_iptunnel_encap अणु
+	पूर्णांक mode;
+	काष्ठा ipv6_sr_hdr srh[0];
+पूर्ण;
 
-#define SEG6_IPTUN_ENCAP_SIZE(x) ((sizeof(*x)) + (((x)->srh->hdrlen + 1) << 3))
+#घोषणा SEG6_IPTUN_ENCAP_SIZE(x) ((माप(*x)) + (((x)->srh->hdrlen + 1) << 3))
 
-enum {
+क्रमागत अणु
 	SEG6_IPTUN_MODE_INLINE,
 	SEG6_IPTUN_MODE_ENCAP,
 	SEG6_IPTUN_MODE_L2ENCAP,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

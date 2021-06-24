@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * arch/arm/mach-mvebu/include/mach/coherency.h
  *
  *
- * Coherency fabric (Aurora) support for Armada 370 and XP platforms.
+ * Coherency fabric (Aurora) support क्रम Armada 370 and XP platक्रमms.
  *
  * Copyright (C) 2012 Marvell
  *
@@ -11,14 +12,14 @@
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef __MACH_370_XP_COHERENCY_H
-#define __MACH_370_XP_COHERENCY_H
+#अगर_अघोषित __MACH_370_XP_COHERENCY_H
+#घोषणा __MACH_370_XP_COHERENCY_H
 
-extern void __iomem *coherency_base;	/* for coherency_ll.S */
-extern unsigned long coherency_phys_base;
-int set_cpu_coherent(void);
+बाह्य व्योम __iomem *coherency_base;	/* क्रम coherency_ll.S */
+बाह्य अचिन्हित दीर्घ coherency_phys_base;
+पूर्णांक set_cpu_coherent(व्योम);
 
-int coherency_init(void);
-int coherency_available(void);
+पूर्णांक coherency_init(व्योम);
+पूर्णांक coherency_available(व्योम);
 
-#endif	/* __MACH_370_XP_COHERENCY_H */
+#पूर्ण_अगर	/* __MACH_370_XP_COHERENCY_H */

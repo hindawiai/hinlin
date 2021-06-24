@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * linux/amba/pl08x.h - ARM PrimeCell DMA Controller driver
  *
  * Copyright (C) 2005 ARM Ltd
  * Copyright (C) 2010 ST-Ericsson SA
  *
- * pl08x information required by platform code
+ * pl08x inक्रमmation required by platक्रमm code
  *
  * Please credit ARM.com
  * Documentation: ARM DDI 0196D
  */
 
-#ifndef AMBA_PL08X_H
-#define AMBA_PL08X_H
+#अगर_अघोषित AMBA_PL08X_H
+#घोषणा AMBA_PL08X_H
 
-/* We need sizes of structs from this header */
-#include <linux/dmaengine.h>
-#include <linux/interrupt.h>
+/* We need sizes of काष्ठाs from this header */
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-struct pl08x_driver_data;
-struct pl08x_phy_chan;
-struct pl08x_txd;
+काष्ठा pl08x_driver_data;
+काष्ठा pl08x_phy_chan;
+काष्ठा pl08x_txd;
 
-/* Bitmasks for selecting AHB ports for DMA transfers */
-enum {
+/* Biपंचांगasks क्रम selecting AHB ports क्रम DMA transfers */
+क्रमागत अणु
 	PL08X_AHB1 = (1 << 0),
 	PL08X_AHB2 = (1 << 1)
-};
+पूर्ण;
 
 /**
- * struct pl08x_channel_data - data structure to pass info between
- * platform and PL08x driver regarding channel configuration
+ * काष्ठा pl08x_channel_data - data काष्ठाure to pass info between
+ * platक्रमm and PL08x driver regarding channel configuration
  * @bus_id: name of this device channel, not just a device name since
  * devices may have more than one channel e.g. "foo_tx"
- * @min_signal: the minimum DMA signal number to be muxed in for this
- * channel (for platforms supporting muxed signals). If you have
- * static assignments, make sure this is set to the assigned signal
- * number, PL08x have 16 possible signals in number 0 thru 15 so
+ * @min_संकेत: the minimum DMA संकेत number to be muxed in क्रम this
+ * channel (क्रम platक्रमms supporting muxed संकेतs). If you have
+ * अटल assignments, make sure this is set to the asचिन्हित संकेत
+ * number, PL08x have 16 possible संकेतs in number 0 thru 15 so
  * when these are not enough they often get muxed (in hardware)
- * disabling simultaneous use of the same channel for two devices.
- * @max_signal: the maximum DMA signal number to be muxed in for
- * the channel. Set to the same as min_signal for
- * devices with static assignments
- * @muxval: a number usually used to poke into some mux regiser to
- * mux in the signal to this channel
- * @addr: source/target address in physical memory for this DMA channel,
- * can be the address of a FIFO register for burst requests for example.
- * This can be left undefined if the PrimeCell API is used for configuring
+ * disabling simultaneous use of the same channel क्रम two devices.
+ * @max_संकेत: the maximum DMA संकेत number to be muxed in क्रम
+ * the channel. Set to the same as min_संकेत क्रम
+ * devices with अटल assignments
+ * @muxval: a number usually used to poke पूर्णांकo some mux regiser to
+ * mux in the संकेत to this channel
+ * @addr: source/target address in physical memory क्रम this DMA channel,
+ * can be the address of a FIFO रेजिस्टर क्रम burst requests क्रम example.
+ * This can be left undefined अगर the PrimeCell API is used क्रम configuring
  * this.
  * @single: the device connected to this channel will request single DMA
- * transfers, not bursts. (Bursts are default.)
+ * transfers, not bursts. (Bursts are शेष.)
  * @periph_buses: the device connected to this channel is accessible via
  * these buses (use PL08X_AHB1 | PL08X_AHB2).
  */
-struct pl08x_channel_data {
-	const char *bus_id;
-	int min_signal;
-	int max_signal;
+काष्ठा pl08x_channel_data अणु
+	स्थिर अक्षर *bus_id;
+	पूर्णांक min_संकेत;
+	पूर्णांक max_संकेत;
 	u32 muxval;
 	dma_addr_t addr;
 	bool single;
 	u8 periph_buses;
-};
+पूर्ण;
 
-enum pl08x_burst_size {
+क्रमागत pl08x_burst_size अणु
 	PL08X_BURST_SZ_1,
 	PL08X_BURST_SZ_4,
 	PL08X_BURST_SZ_8,
@@ -72,59 +73,59 @@ enum pl08x_burst_size {
 	PL08X_BURST_SZ_64,
 	PL08X_BURST_SZ_128,
 	PL08X_BURST_SZ_256,
-};
+पूर्ण;
 
-enum pl08x_bus_width {
+क्रमागत pl08x_bus_width अणु
 	PL08X_BUS_WIDTH_8_BITS,
 	PL08X_BUS_WIDTH_16_BITS,
 	PL08X_BUS_WIDTH_32_BITS,
-};
+पूर्ण;
 
 /**
- * struct pl08x_platform_data - the platform configuration for the PL08x
+ * काष्ठा pl08x_platक्रमm_data - the platक्रमm configuration क्रम the PL08x
  * PrimeCells.
- * @slave_channels: the channels defined for the different devices on the
- * platform, all inclusive, including multiplexed channels. The available
- * physical channels will be multiplexed around these signals as they are
- * requested, just enumerate all possible channels.
+ * @slave_channels: the channels defined क्रम the dअगरferent devices on the
+ * platक्रमm, all inclusive, including multiplexed channels. The available
+ * physical channels will be multiplexed around these संकेतs as they are
+ * requested, just क्रमागतerate all possible channels.
  * @num_slave_channels: number of elements in the slave channel array
- * @memcpy_burst_size: the appropriate burst size for memcpy operations
- * @memcpy_bus_width: memory bus width
- * @memcpy_prot_buff: whether memcpy DMA is bufferable
- * @memcpy_prot_cache: whether memcpy DMA is cacheable
- * @get_xfer_signal: request a physical signal to be used for a DMA transfer
- * immediately: if there is some multiplexing or similar blocking the use
- * of the channel the transfer can be denied by returning less than zero,
- * else it returns the allocated signal number
- * @put_xfer_signal: indicate to the platform that this physical signal is not
+ * @स_नकल_burst_size: the appropriate burst size क्रम स_नकल operations
+ * @स_नकल_bus_width: memory bus width
+ * @स_नकल_prot_buff: whether स_नकल DMA is bufferable
+ * @स_नकल_prot_cache: whether स_नकल DMA is cacheable
+ * @get_xfer_संकेत: request a physical संकेत to be used क्रम a DMA transfer
+ * immediately: अगर there is some multiplexing or similar blocking the use
+ * of the channel the transfer can be denied by वापसing less than zero,
+ * अन्यथा it वापसs the allocated संकेत number
+ * @put_xfer_संकेत: indicate to the platक्रमm that this physical संकेत is not
  * running any DMA transfer and multiplexing can be recycled
  * @lli_buses: buses which LLIs can be fetched from: PL08X_AHB1 | PL08X_AHB2
  * @mem_buses: buses which memory can be accessed from: PL08X_AHB1 | PL08X_AHB2
  * @slave_map: DMA slave matching table
  * @slave_map_len: number of elements in @slave_map
  */
-struct pl08x_platform_data {
-	struct pl08x_channel_data *slave_channels;
-	unsigned int num_slave_channels;
-	enum pl08x_burst_size memcpy_burst_size;
-	enum pl08x_bus_width memcpy_bus_width;
-	bool memcpy_prot_buff;
-	bool memcpy_prot_cache;
-	int (*get_xfer_signal)(const struct pl08x_channel_data *);
-	void (*put_xfer_signal)(const struct pl08x_channel_data *, int);
+काष्ठा pl08x_platक्रमm_data अणु
+	काष्ठा pl08x_channel_data *slave_channels;
+	अचिन्हित पूर्णांक num_slave_channels;
+	क्रमागत pl08x_burst_size स_नकल_burst_size;
+	क्रमागत pl08x_bus_width स_नकल_bus_width;
+	bool स_नकल_prot_buff;
+	bool स_नकल_prot_cache;
+	पूर्णांक (*get_xfer_संकेत)(स्थिर काष्ठा pl08x_channel_data *);
+	व्योम (*put_xfer_संकेत)(स्थिर काष्ठा pl08x_channel_data *, पूर्णांक);
 	u8 lli_buses;
 	u8 mem_buses;
-	const struct dma_slave_map *slave_map;
-	int slave_map_len;
-};
+	स्थिर काष्ठा dma_slave_map *slave_map;
+	पूर्णांक slave_map_len;
+पूर्ण;
 
-#ifdef CONFIG_AMBA_PL08X
-bool pl08x_filter_id(struct dma_chan *chan, void *chan_id);
-#else
-static inline bool pl08x_filter_id(struct dma_chan *chan, void *chan_id)
-{
-	return false;
-}
-#endif
+#अगर_घोषित CONFIG_AMBA_PL08X
+bool pl08x_filter_id(काष्ठा dma_chan *chan, व्योम *chan_id);
+#अन्यथा
+अटल अंतरभूत bool pl08x_filter_id(काष्ठा dma_chan *chan, व्योम *chan_id)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-#endif	/* AMBA_PL08X_H */
+#पूर्ण_अगर	/* AMBA_PL08X_H */

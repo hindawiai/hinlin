@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,165 +20,165 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Christian König
+ * Authors: Christian Kथघnig
  */
 
-#include <linux/dma-mapping.h>
-#include "amdgpu.h"
-#include "amdgpu_vm.h"
-#include "amdgpu_res_cursor.h"
-#include "amdgpu_atomfirmware.h"
-#include "atom.h"
+#समावेश <linux/dma-mapping.h>
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_vm.h"
+#समावेश "amdgpu_res_cursor.h"
+#समावेश "amdgpu_atomfirmware.h"
+#समावेश "atom.h"
 
-static inline struct amdgpu_vram_mgr *to_vram_mgr(struct ttm_resource_manager *man)
-{
-	return container_of(man, struct amdgpu_vram_mgr, manager);
-}
+अटल अंतरभूत काष्ठा amdgpu_vram_mgr *to_vram_mgr(काष्ठा tपंचांग_resource_manager *man)
+अणु
+	वापस container_of(man, काष्ठा amdgpu_vram_mgr, manager);
+पूर्ण
 
-static inline struct amdgpu_device *to_amdgpu_device(struct amdgpu_vram_mgr *mgr)
-{
-	return container_of(mgr, struct amdgpu_device, mman.vram_mgr);
-}
+अटल अंतरभूत काष्ठा amdgpu_device *to_amdgpu_device(काष्ठा amdgpu_vram_mgr *mgr)
+अणु
+	वापस container_of(mgr, काष्ठा amdgpu_device, mman.vram_mgr);
+पूर्ण
 
 /**
  * DOC: mem_info_vram_total
  *
- * The amdgpu driver provides a sysfs API for reporting current total VRAM
+ * The amdgpu driver provides a sysfs API क्रम reporting current total VRAM
  * available on the device
- * The file mem_info_vram_total is used for this and returns the total
+ * The file mem_info_vram_total is used क्रम this and वापसs the total
  * amount of VRAM in bytes
  */
-static ssize_t amdgpu_mem_info_vram_total_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
+अटल sमाप_प्रकार amdgpu_mem_info_vram_total_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
 
-	return sysfs_emit(buf, "%llu\n", adev->gmc.real_vram_size);
-}
+	वापस sysfs_emit(buf, "%llu\n", adev->gmc.real_vram_size);
+पूर्ण
 
 /**
  * DOC: mem_info_vis_vram_total
  *
- * The amdgpu driver provides a sysfs API for reporting current total
+ * The amdgpu driver provides a sysfs API क्रम reporting current total
  * visible VRAM available on the device
- * The file mem_info_vis_vram_total is used for this and returns the total
+ * The file mem_info_vis_vram_total is used क्रम this and वापसs the total
  * amount of visible VRAM in bytes
  */
-static ssize_t amdgpu_mem_info_vis_vram_total_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
+अटल sमाप_प्रकार amdgpu_mem_info_vis_vram_total_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
 
-	return sysfs_emit(buf, "%llu\n", adev->gmc.visible_vram_size);
-}
+	वापस sysfs_emit(buf, "%llu\n", adev->gmc.visible_vram_size);
+पूर्ण
 
 /**
  * DOC: mem_info_vram_used
  *
- * The amdgpu driver provides a sysfs API for reporting current total VRAM
+ * The amdgpu driver provides a sysfs API क्रम reporting current total VRAM
  * available on the device
- * The file mem_info_vram_used is used for this and returns the total
+ * The file mem_info_vram_used is used क्रम this and वापसs the total
  * amount of currently used VRAM in bytes
  */
-static ssize_t amdgpu_mem_info_vram_used_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	struct ttm_resource_manager *man = ttm_manager_type(&adev->mman.bdev, TTM_PL_VRAM);
+अटल sमाप_प्रकार amdgpu_mem_info_vram_used_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(&adev->mman.bdev, TTM_PL_VRAM);
 
-	return sysfs_emit(buf, "%llu\n", amdgpu_vram_mgr_usage(man));
-}
+	वापस sysfs_emit(buf, "%llu\n", amdgpu_vram_mgr_usage(man));
+पूर्ण
 
 /**
  * DOC: mem_info_vis_vram_used
  *
- * The amdgpu driver provides a sysfs API for reporting current total of
+ * The amdgpu driver provides a sysfs API क्रम reporting current total of
  * used visible VRAM
- * The file mem_info_vis_vram_used is used for this and returns the total
+ * The file mem_info_vis_vram_used is used क्रम this and वापसs the total
  * amount of currently used visible VRAM in bytes
  */
-static ssize_t amdgpu_mem_info_vis_vram_used_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	struct ttm_resource_manager *man = ttm_manager_type(&adev->mman.bdev, TTM_PL_VRAM);
+अटल sमाप_प्रकार amdgpu_mem_info_vis_vram_used_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(&adev->mman.bdev, TTM_PL_VRAM);
 
-	return sysfs_emit(buf, "%llu\n", amdgpu_vram_mgr_vis_usage(man));
-}
+	वापस sysfs_emit(buf, "%llu\n", amdgpu_vram_mgr_vis_usage(man));
+पूर्ण
 
-static ssize_t amdgpu_mem_info_vram_vendor(struct device *dev,
-						 struct device_attribute *attr,
-						 char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
+अटल sमाप_प्रकार amdgpu_mem_info_vram_venकरोr(काष्ठा device *dev,
+						 काष्ठा device_attribute *attr,
+						 अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
 
-	switch (adev->gmc.vram_vendor) {
-	case SAMSUNG:
-		return sysfs_emit(buf, "samsung\n");
-	case INFINEON:
-		return sysfs_emit(buf, "infineon\n");
-	case ELPIDA:
-		return sysfs_emit(buf, "elpida\n");
-	case ETRON:
-		return sysfs_emit(buf, "etron\n");
-	case NANYA:
-		return sysfs_emit(buf, "nanya\n");
-	case HYNIX:
-		return sysfs_emit(buf, "hynix\n");
-	case MOSEL:
-		return sysfs_emit(buf, "mosel\n");
-	case WINBOND:
-		return sysfs_emit(buf, "winbond\n");
-	case ESMT:
-		return sysfs_emit(buf, "esmt\n");
-	case MICRON:
-		return sysfs_emit(buf, "micron\n");
-	default:
-		return sysfs_emit(buf, "unknown\n");
-	}
-}
+	चयन (adev->gmc.vram_venकरोr) अणु
+	हाल SAMSUNG:
+		वापस sysfs_emit(buf, "samsung\n");
+	हाल INFINEON:
+		वापस sysfs_emit(buf, "infineon\n");
+	हाल ELPIDA:
+		वापस sysfs_emit(buf, "elpida\n");
+	हाल ETRON:
+		वापस sysfs_emit(buf, "etron\n");
+	हाल न_अंकYA:
+		वापस sysfs_emit(buf, "nanya\n");
+	हाल HYNIX:
+		वापस sysfs_emit(buf, "hynix\n");
+	हाल MOSEL:
+		वापस sysfs_emit(buf, "mosel\n");
+	हाल WINBOND:
+		वापस sysfs_emit(buf, "winbond\n");
+	हाल ESMT:
+		वापस sysfs_emit(buf, "esmt\n");
+	हाल MICRON:
+		वापस sysfs_emit(buf, "micron\n");
+	शेष:
+		वापस sysfs_emit(buf, "unknown\n");
+	पूर्ण
+पूर्ण
 
-static DEVICE_ATTR(mem_info_vram_total, S_IRUGO,
-		   amdgpu_mem_info_vram_total_show, NULL);
-static DEVICE_ATTR(mem_info_vis_vram_total, S_IRUGO,
-		   amdgpu_mem_info_vis_vram_total_show,NULL);
-static DEVICE_ATTR(mem_info_vram_used, S_IRUGO,
-		   amdgpu_mem_info_vram_used_show, NULL);
-static DEVICE_ATTR(mem_info_vis_vram_used, S_IRUGO,
-		   amdgpu_mem_info_vis_vram_used_show, NULL);
-static DEVICE_ATTR(mem_info_vram_vendor, S_IRUGO,
-		   amdgpu_mem_info_vram_vendor, NULL);
+अटल DEVICE_ATTR(mem_info_vram_total, S_IRUGO,
+		   amdgpu_mem_info_vram_total_show, शून्य);
+अटल DEVICE_ATTR(mem_info_vis_vram_total, S_IRUGO,
+		   amdgpu_mem_info_vis_vram_total_show,शून्य);
+अटल DEVICE_ATTR(mem_info_vram_used, S_IRUGO,
+		   amdgpu_mem_info_vram_used_show, शून्य);
+अटल DEVICE_ATTR(mem_info_vis_vram_used, S_IRUGO,
+		   amdgpu_mem_info_vis_vram_used_show, शून्य);
+अटल DEVICE_ATTR(mem_info_vram_venकरोr, S_IRUGO,
+		   amdgpu_mem_info_vram_venकरोr, शून्य);
 
-static const struct attribute *amdgpu_vram_mgr_attributes[] = {
+अटल स्थिर काष्ठा attribute *amdgpu_vram_mgr_attributes[] = अणु
 	&dev_attr_mem_info_vram_total.attr,
 	&dev_attr_mem_info_vis_vram_total.attr,
 	&dev_attr_mem_info_vram_used.attr,
 	&dev_attr_mem_info_vis_vram_used.attr,
-	&dev_attr_mem_info_vram_vendor.attr,
-	NULL
-};
+	&dev_attr_mem_info_vram_venकरोr.attr,
+	शून्य
+पूर्ण;
 
-static const struct ttm_resource_manager_func amdgpu_vram_mgr_func;
+अटल स्थिर काष्ठा tपंचांग_resource_manager_func amdgpu_vram_mgr_func;
 
 /**
  * amdgpu_vram_mgr_init - init VRAM manager and DRM MM
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Allocate and initialize the VRAM manager.
  */
-int amdgpu_vram_mgr_init(struct amdgpu_device *adev)
-{
-	struct amdgpu_vram_mgr *mgr = &adev->mman.vram_mgr;
-	struct ttm_resource_manager *man = &mgr->manager;
-	int ret;
+पूर्णांक amdgpu_vram_mgr_init(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_vram_mgr *mgr = &adev->mman.vram_mgr;
+	काष्ठा tपंचांग_resource_manager *man = &mgr->manager;
+	पूर्णांक ret;
 
-	ttm_resource_manager_init(man, adev->gmc.real_vram_size >> PAGE_SHIFT);
+	tपंचांग_resource_manager_init(man, adev->gmc.real_vram_size >> PAGE_SHIFT);
 
 	man->func = &amdgpu_vram_mgr_func;
 
@@ -188,72 +189,72 @@ int amdgpu_vram_mgr_init(struct amdgpu_device *adev)
 
 	/* Add the two VRAM-related sysfs files */
 	ret = sysfs_create_files(&adev->dev->kobj, amdgpu_vram_mgr_attributes);
-	if (ret)
+	अगर (ret)
 		DRM_ERROR("Failed to register sysfs\n");
 
-	ttm_set_driver_manager(&adev->mman.bdev, TTM_PL_VRAM, &mgr->manager);
-	ttm_resource_manager_set_used(man, true);
-	return 0;
-}
+	tपंचांग_set_driver_manager(&adev->mman.bdev, TTM_PL_VRAM, &mgr->manager);
+	tपंचांग_resource_manager_set_used(man, true);
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_vram_mgr_fini - free and destroy VRAM manager
+ * amdgpu_vram_mgr_fini - मुक्त and destroy VRAM manager
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Destroy and free the VRAM manager, returns -EBUSY if ranges are still
+ * Destroy and मुक्त the VRAM manager, वापसs -EBUSY अगर ranges are still
  * allocated inside it.
  */
-void amdgpu_vram_mgr_fini(struct amdgpu_device *adev)
-{
-	struct amdgpu_vram_mgr *mgr = &adev->mman.vram_mgr;
-	struct ttm_resource_manager *man = &mgr->manager;
-	int ret;
-	struct amdgpu_vram_reservation *rsv, *temp;
+व्योम amdgpu_vram_mgr_fini(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_vram_mgr *mgr = &adev->mman.vram_mgr;
+	काष्ठा tपंचांग_resource_manager *man = &mgr->manager;
+	पूर्णांक ret;
+	काष्ठा amdgpu_vram_reservation *rsv, *temp;
 
-	ttm_resource_manager_set_used(man, false);
+	tपंचांग_resource_manager_set_used(man, false);
 
-	ret = ttm_resource_manager_evict_all(&adev->mman.bdev, man);
-	if (ret)
-		return;
+	ret = tपंचांग_resource_manager_evict_all(&adev->mman.bdev, man);
+	अगर (ret)
+		वापस;
 
 	spin_lock(&mgr->lock);
-	list_for_each_entry_safe(rsv, temp, &mgr->reservations_pending, node)
-		kfree(rsv);
+	list_क्रम_each_entry_safe(rsv, temp, &mgr->reservations_pending, node)
+		kमुक्त(rsv);
 
-	list_for_each_entry_safe(rsv, temp, &mgr->reserved_pages, node) {
-		drm_mm_remove_node(&rsv->mm_node);
-		kfree(rsv);
-	}
-	drm_mm_takedown(&mgr->mm);
+	list_क्रम_each_entry_safe(rsv, temp, &mgr->reserved_pages, node) अणु
+		drm_mm_हटाओ_node(&rsv->mm_node);
+		kमुक्त(rsv);
+	पूर्ण
+	drm_mm_takeकरोwn(&mgr->mm);
 	spin_unlock(&mgr->lock);
 
-	sysfs_remove_files(&adev->dev->kobj, amdgpu_vram_mgr_attributes);
+	sysfs_हटाओ_files(&adev->dev->kobj, amdgpu_vram_mgr_attributes);
 
-	ttm_resource_manager_cleanup(man);
-	ttm_set_driver_manager(&adev->mman.bdev, TTM_PL_VRAM, NULL);
-}
+	tपंचांग_resource_manager_cleanup(man);
+	tपंचांग_set_driver_manager(&adev->mman.bdev, TTM_PL_VRAM, शून्य);
+पूर्ण
 
 /**
  * amdgpu_vram_mgr_vis_size - Calculate visible node size
  *
- * @adev: amdgpu_device pointer
- * @node: MM node structure
+ * @adev: amdgpu_device poपूर्णांकer
+ * @node: MM node काष्ठाure
  *
  * Calculate how many bytes of the MM node are inside visible VRAM
  */
-static u64 amdgpu_vram_mgr_vis_size(struct amdgpu_device *adev,
-				    struct drm_mm_node *node)
-{
-	uint64_t start = node->start << PAGE_SHIFT;
-	uint64_t end = (node->size + node->start) << PAGE_SHIFT;
+अटल u64 amdgpu_vram_mgr_vis_size(काष्ठा amdgpu_device *adev,
+				    काष्ठा drm_mm_node *node)
+अणु
+	uपूर्णांक64_t start = node->start << PAGE_SHIFT;
+	uपूर्णांक64_t end = (node->size + node->start) << PAGE_SHIFT;
 
-	if (start >= adev->gmc.visible_vram_size)
-		return 0;
+	अगर (start >= adev->gmc.visible_vram_size)
+		वापस 0;
 
-	return (end > adev->gmc.visible_vram_size ?
+	वापस (end > adev->gmc.visible_vram_size ?
 		adev->gmc.visible_vram_size : end) - start;
-}
+पूर्ण
 
 /**
  * amdgpu_vram_mgr_bo_visible_size - CPU visible BO size
@@ -263,37 +264,37 @@ static u64 amdgpu_vram_mgr_vis_size(struct amdgpu_device *adev,
  * Returns:
  * How much of the given &amdgpu_bo buffer object lies in CPU visible VRAM.
  */
-u64 amdgpu_vram_mgr_bo_visible_size(struct amdgpu_bo *bo)
-{
-	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
-	struct ttm_resource *mem = &bo->tbo.mem;
-	struct drm_mm_node *nodes = mem->mm_node;
-	unsigned pages = mem->num_pages;
+u64 amdgpu_vram_mgr_bo_visible_size(काष्ठा amdgpu_bo *bo)
+अणु
+	काष्ठा amdgpu_device *adev = amdgpu_tपंचांग_adev(bo->tbo.bdev);
+	काष्ठा tपंचांग_resource *mem = &bo->tbo.mem;
+	काष्ठा drm_mm_node *nodes = mem->mm_node;
+	अचिन्हित pages = mem->num_pages;
 	u64 usage;
 
-	if (amdgpu_gmc_vram_full_visible(&adev->gmc))
-		return amdgpu_bo_size(bo);
+	अगर (amdgpu_gmc_vram_full_visible(&adev->gmc))
+		वापस amdgpu_bo_size(bo);
 
-	if (mem->start >= adev->gmc.visible_vram_size >> PAGE_SHIFT)
-		return 0;
+	अगर (mem->start >= adev->gmc.visible_vram_size >> PAGE_SHIFT)
+		वापस 0;
 
-	for (usage = 0; nodes && pages; pages -= nodes->size, nodes++)
+	क्रम (usage = 0; nodes && pages; pages -= nodes->size, nodes++)
 		usage += amdgpu_vram_mgr_vis_size(adev, nodes);
 
-	return usage;
-}
+	वापस usage;
+पूर्ण
 
-static void amdgpu_vram_mgr_do_reserve(struct ttm_resource_manager *man)
-{
-	struct amdgpu_vram_mgr *mgr = to_vram_mgr(man);
-	struct amdgpu_device *adev = to_amdgpu_device(mgr);
-	struct drm_mm *mm = &mgr->mm;
-	struct amdgpu_vram_reservation *rsv, *temp;
-	uint64_t vis_usage;
+अटल व्योम amdgpu_vram_mgr_करो_reserve(काष्ठा tपंचांग_resource_manager *man)
+अणु
+	काष्ठा amdgpu_vram_mgr *mgr = to_vram_mgr(man);
+	काष्ठा amdgpu_device *adev = to_amdgpu_device(mgr);
+	काष्ठा drm_mm *mm = &mgr->mm;
+	काष्ठा amdgpu_vram_reservation *rsv, *temp;
+	uपूर्णांक64_t vis_usage;
 
-	list_for_each_entry_safe(rsv, temp, &mgr->reservations_pending, node) {
-		if (drm_mm_reserve_node(mm, &rsv->mm_node))
-			continue;
+	list_क्रम_each_entry_safe(rsv, temp, &mgr->reservations_pending, node) अणु
+		अगर (drm_mm_reserve_node(mm, &rsv->mm_node))
+			जारी;
 
 		dev_dbg(adev->dev, "Reservation 0x%llx - %lld, Succeeded\n",
 			rsv->mm_node.start, rsv->mm_node.size);
@@ -302,8 +303,8 @@ static void amdgpu_vram_mgr_do_reserve(struct ttm_resource_manager *man)
 		atomic64_add(vis_usage, &mgr->vis_usage);
 		atomic64_add(rsv->mm_node.size << PAGE_SHIFT, &mgr->usage);
 		list_move(&rsv->node, &mgr->reserved_pages);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * amdgpu_vram_mgr_reserve_range - Reserve a range from VRAM
@@ -312,17 +313,17 @@ static void amdgpu_vram_mgr_do_reserve(struct ttm_resource_manager *man)
  * @start: start address of the range in VRAM
  * @size: size of the range
  *
- * Reserve memory from start addess with the specified size in VRAM
+ * Reserve memory from start addess with the specअगरied size in VRAM
  */
-int amdgpu_vram_mgr_reserve_range(struct ttm_resource_manager *man,
-				  uint64_t start, uint64_t size)
-{
-	struct amdgpu_vram_mgr *mgr = to_vram_mgr(man);
-	struct amdgpu_vram_reservation *rsv;
+पूर्णांक amdgpu_vram_mgr_reserve_range(काष्ठा tपंचांग_resource_manager *man,
+				  uपूर्णांक64_t start, uपूर्णांक64_t size)
+अणु
+	काष्ठा amdgpu_vram_mgr *mgr = to_vram_mgr(man);
+	काष्ठा amdgpu_vram_reservation *rsv;
 
-	rsv = kzalloc(sizeof(*rsv), GFP_KERNEL);
-	if (!rsv)
-		return -ENOMEM;
+	rsv = kzalloc(माप(*rsv), GFP_KERNEL);
+	अगर (!rsv)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&rsv->node);
 	rsv->mm_node.start = start >> PAGE_SHIFT;
@@ -330,11 +331,11 @@ int amdgpu_vram_mgr_reserve_range(struct ttm_resource_manager *man,
 
 	spin_lock(&mgr->lock);
 	list_add_tail(&mgr->reservations_pending, &rsv->node);
-	amdgpu_vram_mgr_do_reserve(man);
+	amdgpu_vram_mgr_करो_reserve(man);
 	spin_unlock(&mgr->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * amdgpu_vram_mgr_query_page_status - query the reservation status
@@ -347,130 +348,130 @@ int amdgpu_vram_mgr_reserve_range(struct ttm_resource_manager *man,
  *	0: the page has been reserved
  *	-ENOENT: the input page is not a reservation
  */
-int amdgpu_vram_mgr_query_page_status(struct ttm_resource_manager *man,
-				      uint64_t start)
-{
-	struct amdgpu_vram_mgr *mgr = to_vram_mgr(man);
-	struct amdgpu_vram_reservation *rsv;
-	int ret;
+पूर्णांक amdgpu_vram_mgr_query_page_status(काष्ठा tपंचांग_resource_manager *man,
+				      uपूर्णांक64_t start)
+अणु
+	काष्ठा amdgpu_vram_mgr *mgr = to_vram_mgr(man);
+	काष्ठा amdgpu_vram_reservation *rsv;
+	पूर्णांक ret;
 
 	spin_lock(&mgr->lock);
 
-	list_for_each_entry(rsv, &mgr->reservations_pending, node) {
-		if ((rsv->mm_node.start <= start) &&
-		    (start < (rsv->mm_node.start + rsv->mm_node.size))) {
+	list_क्रम_each_entry(rsv, &mgr->reservations_pending, node) अणु
+		अगर ((rsv->mm_node.start <= start) &&
+		    (start < (rsv->mm_node.start + rsv->mm_node.size))) अणु
 			ret = -EBUSY;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(rsv, &mgr->reserved_pages, node) {
-		if ((rsv->mm_node.start <= start) &&
-		    (start < (rsv->mm_node.start + rsv->mm_node.size))) {
+	list_क्रम_each_entry(rsv, &mgr->reserved_pages, node) अणु
+		अगर ((rsv->mm_node.start <= start) &&
+		    (start < (rsv->mm_node.start + rsv->mm_node.size))) अणु
 			ret = 0;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	ret = -ENOENT;
 out:
 	spin_unlock(&mgr->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * amdgpu_vram_mgr_virt_start - update virtual start address
+ * amdgpu_vram_mgr_virt_start - update भव start address
  *
- * @mem: ttm_resource to update
+ * @mem: tपंचांग_resource to update
  * @node: just allocated node
  *
- * Calculate a virtual BO start address to easily check if everything is CPU
+ * Calculate a भव BO start address to easily check अगर everything is CPU
  * accessible.
  */
-static void amdgpu_vram_mgr_virt_start(struct ttm_resource *mem,
-				       struct drm_mm_node *node)
-{
-	unsigned long start;
+अटल व्योम amdgpu_vram_mgr_virt_start(काष्ठा tपंचांग_resource *mem,
+				       काष्ठा drm_mm_node *node)
+अणु
+	अचिन्हित दीर्घ start;
 
 	start = node->start + node->size;
-	if (start > mem->num_pages)
+	अगर (start > mem->num_pages)
 		start -= mem->num_pages;
-	else
+	अन्यथा
 		start = 0;
 	mem->start = max(mem->start, start);
-}
+पूर्ण
 
 /**
  * amdgpu_vram_mgr_new - allocate new ranges
  *
  * @man: TTM memory type manager
- * @tbo: TTM BO we need this range for
+ * @tbo: TTM BO we need this range क्रम
  * @place: placement flags and restrictions
  * @mem: the resulting mem object
  *
- * Allocate VRAM for the given BO.
+ * Allocate VRAM क्रम the given BO.
  */
-static int amdgpu_vram_mgr_new(struct ttm_resource_manager *man,
-			       struct ttm_buffer_object *tbo,
-			       const struct ttm_place *place,
-			       struct ttm_resource *mem)
-{
-	struct amdgpu_vram_mgr *mgr = to_vram_mgr(man);
-	struct amdgpu_device *adev = to_amdgpu_device(mgr);
-	struct drm_mm *mm = &mgr->mm;
-	struct drm_mm_node *nodes;
-	enum drm_mm_insert_mode mode;
-	unsigned long lpfn, num_nodes, pages_per_node, pages_left;
-	uint64_t vis_usage = 0, mem_bytes, max_bytes;
-	unsigned i;
-	int r;
+अटल पूर्णांक amdgpu_vram_mgr_new(काष्ठा tपंचांग_resource_manager *man,
+			       काष्ठा tपंचांग_buffer_object *tbo,
+			       स्थिर काष्ठा tपंचांग_place *place,
+			       काष्ठा tपंचांग_resource *mem)
+अणु
+	काष्ठा amdgpu_vram_mgr *mgr = to_vram_mgr(man);
+	काष्ठा amdgpu_device *adev = to_amdgpu_device(mgr);
+	काष्ठा drm_mm *mm = &mgr->mm;
+	काष्ठा drm_mm_node *nodes;
+	क्रमागत drm_mm_insert_mode mode;
+	अचिन्हित दीर्घ lpfn, num_nodes, pages_per_node, pages_left;
+	uपूर्णांक64_t vis_usage = 0, mem_bytes, max_bytes;
+	अचिन्हित i;
+	पूर्णांक r;
 
 	lpfn = place->lpfn;
-	if (!lpfn)
+	अगर (!lpfn)
 		lpfn = man->size;
 
 	max_bytes = adev->gmc.mc_vram_size;
-	if (tbo->type != ttm_bo_type_kernel)
+	अगर (tbo->type != tपंचांग_bo_type_kernel)
 		max_bytes -= AMDGPU_VM_RESERVED_VRAM;
 
-	/* bail out quickly if there's likely not enough VRAM for this BO */
+	/* bail out quickly अगर there's likely not enough VRAM क्रम this BO */
 	mem_bytes = (u64)mem->num_pages << PAGE_SHIFT;
-	if (atomic64_add_return(mem_bytes, &mgr->usage) > max_bytes) {
+	अगर (atomic64_add_वापस(mem_bytes, &mgr->usage) > max_bytes) अणु
 		atomic64_sub(mem_bytes, &mgr->usage);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	if (place->flags & TTM_PL_FLAG_CONTIGUOUS) {
+	अगर (place->flags & TTM_PL_FLAG_CONTIGUOUS) अणु
 		pages_per_node = ~0ul;
 		num_nodes = 1;
-	} else {
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 		pages_per_node = HPAGE_PMD_NR;
-#else
-		/* default to 2MB */
+#अन्यथा
+		/* शेष to 2MB */
 		pages_per_node = (2UL << (20UL - PAGE_SHIFT));
-#endif
-		pages_per_node = max((uint32_t)pages_per_node, mem->page_alignment);
+#पूर्ण_अगर
+		pages_per_node = max((uपूर्णांक32_t)pages_per_node, mem->page_alignment);
 		num_nodes = DIV_ROUND_UP(mem->num_pages, pages_per_node);
-	}
+	पूर्ण
 
-	nodes = kvmalloc_array((uint32_t)num_nodes, sizeof(*nodes),
+	nodes = kvदो_स्मृति_array((uपूर्णांक32_t)num_nodes, माप(*nodes),
 			       GFP_KERNEL | __GFP_ZERO);
-	if (!nodes) {
+	अगर (!nodes) अणु
 		atomic64_sub(mem_bytes, &mgr->usage);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	mode = DRM_MM_INSERT_BEST;
-	if (place->flags & TTM_PL_FLAG_TOPDOWN)
+	अगर (place->flags & TTM_PL_FLAG_TOPDOWN)
 		mode = DRM_MM_INSERT_HIGH;
 
 	mem->start = 0;
 	pages_left = mem->num_pages;
 
 	spin_lock(&mgr->lock);
-	for (i = 0; pages_left >= pages_per_node; ++i) {
-		unsigned long pages = rounddown_pow_of_two(pages_left);
+	क्रम (i = 0; pages_left >= pages_per_node; ++i) अणु
+		अचिन्हित दीर्घ pages = roundकरोwn_घात_of_two(pages_left);
 
 		/* Limit maximum size to 2GB due to SG table limitations */
 		pages = min(pages, (2UL << (30 - PAGE_SHIFT)));
@@ -479,92 +480,92 @@ static int amdgpu_vram_mgr_new(struct ttm_resource_manager *man,
 						pages_per_node, 0,
 						place->fpfn, lpfn,
 						mode);
-		if (unlikely(r))
-			break;
+		अगर (unlikely(r))
+			अवरोध;
 
 		vis_usage += amdgpu_vram_mgr_vis_size(adev, &nodes[i]);
 		amdgpu_vram_mgr_virt_start(mem, &nodes[i]);
 		pages_left -= pages;
-	}
+	पूर्ण
 
-	for (; pages_left; ++i) {
-		unsigned long pages = min(pages_left, pages_per_node);
-		uint32_t alignment = mem->page_alignment;
+	क्रम (; pages_left; ++i) अणु
+		अचिन्हित दीर्घ pages = min(pages_left, pages_per_node);
+		uपूर्णांक32_t alignment = mem->page_alignment;
 
-		if (pages == pages_per_node)
+		अगर (pages == pages_per_node)
 			alignment = pages_per_node;
 
 		r = drm_mm_insert_node_in_range(mm, &nodes[i],
 						pages, alignment, 0,
 						place->fpfn, lpfn,
 						mode);
-		if (unlikely(r))
-			goto error;
+		अगर (unlikely(r))
+			जाओ error;
 
 		vis_usage += amdgpu_vram_mgr_vis_size(adev, &nodes[i]);
 		amdgpu_vram_mgr_virt_start(mem, &nodes[i]);
 		pages_left -= pages;
-	}
+	पूर्ण
 	spin_unlock(&mgr->lock);
 
 	atomic64_add(vis_usage, &mgr->vis_usage);
 
 	mem->mm_node = nodes;
 
-	return 0;
+	वापस 0;
 
 error:
-	while (i--)
-		drm_mm_remove_node(&nodes[i]);
+	जबतक (i--)
+		drm_mm_हटाओ_node(&nodes[i]);
 	spin_unlock(&mgr->lock);
 	atomic64_sub(mem->num_pages << PAGE_SHIFT, &mgr->usage);
 
-	kvfree(nodes);
-	return r;
-}
+	kvमुक्त(nodes);
+	वापस r;
+पूर्ण
 
 /**
- * amdgpu_vram_mgr_del - free ranges
+ * amdgpu_vram_mgr_del - मुक्त ranges
  *
  * @man: TTM memory type manager
  * @mem: TTM memory object
  *
  * Free the allocated VRAM again.
  */
-static void amdgpu_vram_mgr_del(struct ttm_resource_manager *man,
-				struct ttm_resource *mem)
-{
-	struct amdgpu_vram_mgr *mgr = to_vram_mgr(man);
-	struct amdgpu_device *adev = to_amdgpu_device(mgr);
-	struct drm_mm_node *nodes = mem->mm_node;
-	uint64_t usage = 0, vis_usage = 0;
-	unsigned pages = mem->num_pages;
+अटल व्योम amdgpu_vram_mgr_del(काष्ठा tपंचांग_resource_manager *man,
+				काष्ठा tपंचांग_resource *mem)
+अणु
+	काष्ठा amdgpu_vram_mgr *mgr = to_vram_mgr(man);
+	काष्ठा amdgpu_device *adev = to_amdgpu_device(mgr);
+	काष्ठा drm_mm_node *nodes = mem->mm_node;
+	uपूर्णांक64_t usage = 0, vis_usage = 0;
+	अचिन्हित pages = mem->num_pages;
 
-	if (!mem->mm_node)
-		return;
+	अगर (!mem->mm_node)
+		वापस;
 
 	spin_lock(&mgr->lock);
-	while (pages) {
+	जबतक (pages) अणु
 		pages -= nodes->size;
-		drm_mm_remove_node(nodes);
+		drm_mm_हटाओ_node(nodes);
 		usage += nodes->size << PAGE_SHIFT;
 		vis_usage += amdgpu_vram_mgr_vis_size(adev, nodes);
 		++nodes;
-	}
-	amdgpu_vram_mgr_do_reserve(man);
+	पूर्ण
+	amdgpu_vram_mgr_करो_reserve(man);
 	spin_unlock(&mgr->lock);
 
 	atomic64_sub(usage, &mgr->usage);
 	atomic64_sub(vis_usage, &mgr->vis_usage);
 
-	kvfree(mem->mm_node);
-	mem->mm_node = NULL;
-}
+	kvमुक्त(mem->mm_node);
+	mem->mm_node = शून्य;
+पूर्ण
 
 /**
  * amdgpu_vram_mgr_alloc_sgt - allocate and fill a sg table
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  * @mem: TTM memory object
  * @offset: byte offset from the base of VRAM BO
  * @length: number of bytes to export in sg_table
@@ -574,117 +575,117 @@ static void amdgpu_vram_mgr_del(struct ttm_resource_manager *man,
  *
  * Allocate and fill a sg table from a VRAM allocation.
  */
-int amdgpu_vram_mgr_alloc_sgt(struct amdgpu_device *adev,
-			      struct ttm_resource *mem,
+पूर्णांक amdgpu_vram_mgr_alloc_sgt(काष्ठा amdgpu_device *adev,
+			      काष्ठा tपंचांग_resource *mem,
 			      u64 offset, u64 length,
-			      struct device *dev,
-			      enum dma_data_direction dir,
-			      struct sg_table **sgt)
-{
-	struct amdgpu_res_cursor cursor;
-	struct scatterlist *sg;
-	int num_entries = 0;
-	int i, r;
+			      काष्ठा device *dev,
+			      क्रमागत dma_data_direction dir,
+			      काष्ठा sg_table **sgt)
+अणु
+	काष्ठा amdgpu_res_cursor cursor;
+	काष्ठा scatterlist *sg;
+	पूर्णांक num_entries = 0;
+	पूर्णांक i, r;
 
-	*sgt = kmalloc(sizeof(**sgt), GFP_KERNEL);
-	if (!*sgt)
-		return -ENOMEM;
+	*sgt = kदो_स्मृति(माप(**sgt), GFP_KERNEL);
+	अगर (!*sgt)
+		वापस -ENOMEM;
 
 	/* Determine the number of DRM_MM nodes to export */
 	amdgpu_res_first(mem, offset, length, &cursor);
-	while (cursor.remaining) {
+	जबतक (cursor.reमुख्यing) अणु
 		num_entries++;
 		amdgpu_res_next(&cursor, cursor.size);
-	}
+	पूर्ण
 
 	r = sg_alloc_table(*sgt, num_entries, GFP_KERNEL);
-	if (r)
-		goto error_free;
+	अगर (r)
+		जाओ error_मुक्त;
 
 	/* Initialize scatterlist nodes of sg_table */
-	for_each_sgtable_sg((*sgt), sg, i)
+	क्रम_each_sgtable_sg((*sgt), sg, i)
 		sg->length = 0;
 
 	/*
-	 * Walk down DRM_MM nodes to populate scatterlist nodes
+	 * Walk करोwn DRM_MM nodes to populate scatterlist nodes
 	 * @note: Use iterator api to get first the DRM_MM node
 	 * and the number of bytes from it. Access the following
-	 * DRM_MM node(s) if more buffer needs to exported
+	 * DRM_MM node(s) अगर more buffer needs to exported
 	 */
 	amdgpu_res_first(mem, offset, length, &cursor);
-	for_each_sgtable_sg((*sgt), sg, i) {
+	क्रम_each_sgtable_sg((*sgt), sg, i) अणु
 		phys_addr_t phys = cursor.start + adev->gmc.aper_base;
-		size_t size = cursor.size;
+		माप_प्रकार size = cursor.size;
 		dma_addr_t addr;
 
 		addr = dma_map_resource(dev, phys, size, dir,
 					DMA_ATTR_SKIP_CPU_SYNC);
 		r = dma_mapping_error(dev, addr);
-		if (r)
-			goto error_unmap;
+		अगर (r)
+			जाओ error_unmap;
 
-		sg_set_page(sg, NULL, size, 0);
+		sg_set_page(sg, शून्य, size, 0);
 		sg_dma_address(sg) = addr;
 		sg_dma_len(sg) = size;
 
 		amdgpu_res_next(&cursor, cursor.size);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_unmap:
-	for_each_sgtable_sg((*sgt), sg, i) {
-		if (!sg->length)
-			continue;
+	क्रम_each_sgtable_sg((*sgt), sg, i) अणु
+		अगर (!sg->length)
+			जारी;
 
 		dma_unmap_resource(dev, sg->dma_address,
 				   sg->length, dir,
 				   DMA_ATTR_SKIP_CPU_SYNC);
-	}
-	sg_free_table(*sgt);
+	पूर्ण
+	sg_मुक्त_table(*sgt);
 
-error_free:
-	kfree(*sgt);
-	return r;
-}
+error_मुक्त:
+	kमुक्त(*sgt);
+	वापस r;
+पूर्ण
 
 /**
- * amdgpu_vram_mgr_free_sgt - allocate and fill a sg table
+ * amdgpu_vram_mgr_मुक्त_sgt - allocate and fill a sg table
  *
- * @dev: device pointer
+ * @dev: device poपूर्णांकer
  * @dir: data direction of resource to unmap
- * @sgt: sg table to free
+ * @sgt: sg table to मुक्त
  *
  * Free a previously allocate sg table.
  */
-void amdgpu_vram_mgr_free_sgt(struct device *dev,
-			      enum dma_data_direction dir,
-			      struct sg_table *sgt)
-{
-	struct scatterlist *sg;
-	int i;
+व्योम amdgpu_vram_mgr_मुक्त_sgt(काष्ठा device *dev,
+			      क्रमागत dma_data_direction dir,
+			      काष्ठा sg_table *sgt)
+अणु
+	काष्ठा scatterlist *sg;
+	पूर्णांक i;
 
-	for_each_sgtable_sg(sgt, sg, i)
+	क्रम_each_sgtable_sg(sgt, sg, i)
 		dma_unmap_resource(dev, sg->dma_address,
 				   sg->length, dir,
 				   DMA_ATTR_SKIP_CPU_SYNC);
-	sg_free_table(sgt);
-	kfree(sgt);
-}
+	sg_मुक्त_table(sgt);
+	kमुक्त(sgt);
+पूर्ण
 
 /**
- * amdgpu_vram_mgr_usage - how many bytes are used in this domain
+ * amdgpu_vram_mgr_usage - how many bytes are used in this करोमुख्य
  *
  * @man: TTM memory type manager
  *
- * Returns how many bytes are used in this domain.
+ * Returns how many bytes are used in this करोमुख्य.
  */
-uint64_t amdgpu_vram_mgr_usage(struct ttm_resource_manager *man)
-{
-	struct amdgpu_vram_mgr *mgr = to_vram_mgr(man);
+uपूर्णांक64_t amdgpu_vram_mgr_usage(काष्ठा tपंचांग_resource_manager *man)
+अणु
+	काष्ठा amdgpu_vram_mgr *mgr = to_vram_mgr(man);
 
-	return atomic64_read(&mgr->usage);
-}
+	वापस atomic64_पढ़ो(&mgr->usage);
+पूर्ण
 
 /**
  * amdgpu_vram_mgr_vis_usage - how many bytes are used in the visible part
@@ -693,37 +694,37 @@ uint64_t amdgpu_vram_mgr_usage(struct ttm_resource_manager *man)
  *
  * Returns how many bytes are used in the visible part of VRAM
  */
-uint64_t amdgpu_vram_mgr_vis_usage(struct ttm_resource_manager *man)
-{
-	struct amdgpu_vram_mgr *mgr = to_vram_mgr(man);
+uपूर्णांक64_t amdgpu_vram_mgr_vis_usage(काष्ठा tपंचांग_resource_manager *man)
+अणु
+	काष्ठा amdgpu_vram_mgr *mgr = to_vram_mgr(man);
 
-	return atomic64_read(&mgr->vis_usage);
-}
+	वापस atomic64_पढ़ो(&mgr->vis_usage);
+पूर्ण
 
 /**
  * amdgpu_vram_mgr_debug - dump VRAM table
  *
  * @man: TTM memory type manager
- * @printer: DRM printer to use
+ * @prपूर्णांकer: DRM prपूर्णांकer to use
  *
- * Dump the table content using printk.
+ * Dump the table content using prपूर्णांकk.
  */
-static void amdgpu_vram_mgr_debug(struct ttm_resource_manager *man,
-				  struct drm_printer *printer)
-{
-	struct amdgpu_vram_mgr *mgr = to_vram_mgr(man);
+अटल व्योम amdgpu_vram_mgr_debug(काष्ठा tपंचांग_resource_manager *man,
+				  काष्ठा drm_prपूर्णांकer *prपूर्णांकer)
+अणु
+	काष्ठा amdgpu_vram_mgr *mgr = to_vram_mgr(man);
 
 	spin_lock(&mgr->lock);
-	drm_mm_print(&mgr->mm, printer);
+	drm_mm_prपूर्णांक(&mgr->mm, prपूर्णांकer);
 	spin_unlock(&mgr->lock);
 
-	drm_printf(printer, "man size:%llu pages, ram usage:%lluMB, vis usage:%lluMB\n",
+	drm_म_लिखो(prपूर्णांकer, "man size:%llu pages, ram usage:%lluMB, vis usage:%lluMB\n",
 		   man->size, amdgpu_vram_mgr_usage(man) >> 20,
 		   amdgpu_vram_mgr_vis_usage(man) >> 20);
-}
+पूर्ण
 
-static const struct ttm_resource_manager_func amdgpu_vram_mgr_func = {
+अटल स्थिर काष्ठा tपंचांग_resource_manager_func amdgpu_vram_mgr_func = अणु
 	.alloc	= amdgpu_vram_mgr_new,
-	.free	= amdgpu_vram_mgr_del,
+	.मुक्त	= amdgpu_vram_mgr_del,
 	.debug	= amdgpu_vram_mgr_debug
-};
+पूर्ण;

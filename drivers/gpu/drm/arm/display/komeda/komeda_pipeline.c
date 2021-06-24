@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * (C) COPYRIGHT 2018 ARM Limited. All rights reserved.
  * Author: James.Qian.Wang <james.qian.wang@arm.com>
  *
  */
-#include <drm/drm_print.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "komeda_dev.h"
-#include "komeda_pipeline.h"
+#समावेश "komeda_dev.h"
+#समावेश "komeda_pipeline.h"
 
 /** komeda_pipeline_add - Add a pipeline to &komeda_dev */
-struct komeda_pipeline *
-komeda_pipeline_add(struct komeda_dev *mdev, size_t size,
-		    const struct komeda_pipeline_funcs *funcs)
-{
-	struct komeda_pipeline *pipe;
+काष्ठा komeda_pipeline *
+komeda_pipeline_add(काष्ठा komeda_dev *mdev, माप_प्रकार size,
+		    स्थिर काष्ठा komeda_pipeline_funcs *funcs)
+अणु
+	काष्ठा komeda_pipeline *pipe;
 
-	if (mdev->n_pipelines + 1 > KOMEDA_MAX_PIPELINES) {
+	अगर (mdev->n_pipelines + 1 > KOMEDA_MAX_PIPELINES) अणु
 		DRM_ERROR("Exceed max support %d pipelines.\n",
 			  KOMEDA_MAX_PIPELINES);
-		return ERR_PTR(-ENOSPC);
-	}
+		वापस ERR_PTR(-ENOSPC);
+	पूर्ण
 
-	if (size < sizeof(*pipe)) {
+	अगर (size < माप(*pipe)) अणु
 		DRM_ERROR("Request pipeline size too small.\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	pipe = devm_kzalloc(mdev->dev, size, GFP_KERNEL);
-	if (!pipe)
-		return ERR_PTR(-ENOMEM);
+	अगर (!pipe)
+		वापस ERR_PTR(-ENOMEM);
 
 	pipe->mdev = mdev;
 	pipe->id   = mdev->n_pipelines;
@@ -38,20 +39,20 @@ komeda_pipeline_add(struct komeda_dev *mdev, size_t size,
 	mdev->pipelines[mdev->n_pipelines] = pipe;
 	mdev->n_pipelines++;
 
-	return pipe;
-}
+	वापस pipe;
+पूर्ण
 
-void komeda_pipeline_destroy(struct komeda_dev *mdev,
-			     struct komeda_pipeline *pipe)
-{
-	struct komeda_component *c;
-	int i;
-	unsigned long avail_comps = pipe->avail_comps;
+व्योम komeda_pipeline_destroy(काष्ठा komeda_dev *mdev,
+			     काष्ठा komeda_pipeline *pipe)
+अणु
+	काष्ठा komeda_component *c;
+	पूर्णांक i;
+	अचिन्हित दीर्घ avail_comps = pipe->avail_comps;
 
-	for_each_set_bit(i, &avail_comps, 32) {
+	क्रम_each_set_bit(i, &avail_comps, 32) अणु
 		c = komeda_pipeline_get_component(pipe, i);
 		komeda_component_destroy(mdev, c);
-	}
+	पूर्ण
 
 	clk_put(pipe->pxlclk);
 
@@ -60,195 +61,195 @@ void komeda_pipeline_destroy(struct komeda_dev *mdev,
 	of_node_put(pipe->of_output_port);
 	of_node_put(pipe->of_node);
 
-	devm_kfree(mdev->dev, pipe);
-}
+	devm_kमुक्त(mdev->dev, pipe);
+पूर्ण
 
-static struct komeda_component **
-komeda_pipeline_get_component_pos(struct komeda_pipeline *pipe, int id)
-{
-	struct komeda_dev *mdev = pipe->mdev;
-	struct komeda_pipeline *temp = NULL;
-	struct komeda_component **pos = NULL;
+अटल काष्ठा komeda_component **
+komeda_pipeline_get_component_pos(काष्ठा komeda_pipeline *pipe, पूर्णांक id)
+अणु
+	काष्ठा komeda_dev *mdev = pipe->mdev;
+	काष्ठा komeda_pipeline *temp = शून्य;
+	काष्ठा komeda_component **pos = शून्य;
 
-	switch (id) {
-	case KOMEDA_COMPONENT_LAYER0:
-	case KOMEDA_COMPONENT_LAYER1:
-	case KOMEDA_COMPONENT_LAYER2:
-	case KOMEDA_COMPONENT_LAYER3:
+	चयन (id) अणु
+	हाल KOMEDA_COMPONENT_LAYER0:
+	हाल KOMEDA_COMPONENT_LAYER1:
+	हाल KOMEDA_COMPONENT_LAYER2:
+	हाल KOMEDA_COMPONENT_LAYER3:
 		pos = to_cpos(pipe->layers[id - KOMEDA_COMPONENT_LAYER0]);
-		break;
-	case KOMEDA_COMPONENT_WB_LAYER:
+		अवरोध;
+	हाल KOMEDA_COMPONENT_WB_LAYER:
 		pos = to_cpos(pipe->wb_layer);
-		break;
-	case KOMEDA_COMPONENT_COMPIZ0:
-	case KOMEDA_COMPONENT_COMPIZ1:
+		अवरोध;
+	हाल KOMEDA_COMPONENT_COMPIZ0:
+	हाल KOMEDA_COMPONENT_COMPIZ1:
 		temp = mdev->pipelines[id - KOMEDA_COMPONENT_COMPIZ0];
-		if (!temp) {
+		अगर (!temp) अणु
 			DRM_ERROR("compiz-%d doesn't exist.\n", id);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 		pos = to_cpos(temp->compiz);
-		break;
-	case KOMEDA_COMPONENT_SCALER0:
-	case KOMEDA_COMPONENT_SCALER1:
+		अवरोध;
+	हाल KOMEDA_COMPONENT_SCALER0:
+	हाल KOMEDA_COMPONENT_SCALER1:
 		pos = to_cpos(pipe->scalers[id - KOMEDA_COMPONENT_SCALER0]);
-		break;
-	case KOMEDA_COMPONENT_SPLITTER:
+		अवरोध;
+	हाल KOMEDA_COMPONENT_SPLITTER:
 		pos = to_cpos(pipe->splitter);
-		break;
-	case KOMEDA_COMPONENT_MERGER:
+		अवरोध;
+	हाल KOMEDA_COMPONENT_MERGER:
 		pos = to_cpos(pipe->merger);
-		break;
-	case KOMEDA_COMPONENT_IPS0:
-	case KOMEDA_COMPONENT_IPS1:
+		अवरोध;
+	हाल KOMEDA_COMPONENT_IPS0:
+	हाल KOMEDA_COMPONENT_IPS1:
 		temp = mdev->pipelines[id - KOMEDA_COMPONENT_IPS0];
-		if (!temp) {
+		अगर (!temp) अणु
 			DRM_ERROR("ips-%d doesn't exist.\n", id);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 		pos = to_cpos(temp->improc);
-		break;
-	case KOMEDA_COMPONENT_TIMING_CTRLR:
+		अवरोध;
+	हाल KOMEDA_COMPONENT_TIMING_CTRLR:
 		pos = to_cpos(pipe->ctrlr);
-		break;
-	default:
-		pos = NULL;
+		अवरोध;
+	शेष:
+		pos = शून्य;
 		DRM_ERROR("Unknown pipeline resource ID: %d.\n", id);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-struct komeda_component *
-komeda_pipeline_get_component(struct komeda_pipeline *pipe, int id)
-{
-	struct komeda_component **pos = NULL;
-	struct komeda_component *c = NULL;
+काष्ठा komeda_component *
+komeda_pipeline_get_component(काष्ठा komeda_pipeline *pipe, पूर्णांक id)
+अणु
+	काष्ठा komeda_component **pos = शून्य;
+	काष्ठा komeda_component *c = शून्य;
 
 	pos = komeda_pipeline_get_component_pos(pipe, id);
-	if (pos)
+	अगर (pos)
 		c = *pos;
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-struct komeda_component *
-komeda_pipeline_get_first_component(struct komeda_pipeline *pipe,
+काष्ठा komeda_component *
+komeda_pipeline_get_first_component(काष्ठा komeda_pipeline *pipe,
 				    u32 comp_mask)
-{
-	struct komeda_component *c = NULL;
-	unsigned long comp_mask_local = (unsigned long)comp_mask;
-	int id;
+अणु
+	काष्ठा komeda_component *c = शून्य;
+	अचिन्हित दीर्घ comp_mask_local = (अचिन्हित दीर्घ)comp_mask;
+	पूर्णांक id;
 
 	id = find_first_bit(&comp_mask_local, 32);
-	if (id < 32)
+	अगर (id < 32)
 		c = komeda_pipeline_get_component(pipe, id);
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static struct komeda_component *
-komeda_component_pickup_input(struct komeda_component *c, u32 avail_comps)
-{
-	u32 avail_inputs = c->supported_inputs & (avail_comps);
+अटल काष्ठा komeda_component *
+komeda_component_pickup_input(काष्ठा komeda_component *c, u32 avail_comps)
+अणु
+	u32 avail_inमाला_दो = c->supported_inमाला_दो & (avail_comps);
 
-	return komeda_pipeline_get_first_component(c->pipeline, avail_inputs);
-}
+	वापस komeda_pipeline_get_first_component(c->pipeline, avail_inमाला_दो);
+पूर्ण
 
 /** komeda_component_add - Add a component to &komeda_pipeline */
-struct komeda_component *
-komeda_component_add(struct komeda_pipeline *pipe,
-		     size_t comp_sz, u32 id, u32 hw_id,
-		     const struct komeda_component_funcs *funcs,
-		     u8 max_active_inputs, u32 supported_inputs,
-		     u8 max_active_outputs, u32 __iomem *reg,
-		     const char *name_fmt, ...)
-{
-	struct komeda_component **pos;
-	struct komeda_component *c;
-	int idx, *num = NULL;
+काष्ठा komeda_component *
+komeda_component_add(काष्ठा komeda_pipeline *pipe,
+		     माप_प्रकार comp_sz, u32 id, u32 hw_id,
+		     स्थिर काष्ठा komeda_component_funcs *funcs,
+		     u8 max_active_inमाला_दो, u32 supported_inमाला_दो,
+		     u8 max_active_outमाला_दो, u32 __iomem *reg,
+		     स्थिर अक्षर *name_fmt, ...)
+अणु
+	काष्ठा komeda_component **pos;
+	काष्ठा komeda_component *c;
+	पूर्णांक idx, *num = शून्य;
 
-	if (max_active_inputs > KOMEDA_COMPONENT_N_INPUTS) {
+	अगर (max_active_inमाला_दो > KOMEDA_COMPONENT_N_INPUTS) अणु
 		WARN(1, "please large KOMEDA_COMPONENT_N_INPUTS to %d.\n",
-		     max_active_inputs);
-		return ERR_PTR(-ENOSPC);
-	}
+		     max_active_inमाला_दो);
+		वापस ERR_PTR(-ENOSPC);
+	पूर्ण
 
 	pos = komeda_pipeline_get_component_pos(pipe, id);
-	if (!pos || (*pos))
-		return ERR_PTR(-EINVAL);
+	अगर (!pos || (*pos))
+		वापस ERR_PTR(-EINVAL);
 
-	if (has_bit(id, KOMEDA_PIPELINE_LAYERS)) {
+	अगर (has_bit(id, KOMEDA_PIPELINE_LAYERS)) अणु
 		idx = id - KOMEDA_COMPONENT_LAYER0;
 		num = &pipe->n_layers;
-		if (idx != pipe->n_layers) {
+		अगर (idx != pipe->n_layers) अणु
 			DRM_ERROR("please add Layer by id sequence.\n");
-			return ERR_PTR(-EINVAL);
-		}
-	} else if (has_bit(id,  KOMEDA_PIPELINE_SCALERS)) {
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
+	पूर्ण अन्यथा अगर (has_bit(id,  KOMEDA_PIPELINE_SCALERS)) अणु
 		idx = id - KOMEDA_COMPONENT_SCALER0;
 		num = &pipe->n_scalers;
-		if (idx != pipe->n_scalers) {
+		अगर (idx != pipe->n_scalers) अणु
 			DRM_ERROR("please add Scaler by id sequence.\n");
-			return ERR_PTR(-EINVAL);
-		}
-	}
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
+	पूर्ण
 
 	c = devm_kzalloc(pipe->mdev->dev, comp_sz, GFP_KERNEL);
-	if (!c)
-		return ERR_PTR(-ENOMEM);
+	अगर (!c)
+		वापस ERR_PTR(-ENOMEM);
 
 	c->id = id;
 	c->hw_id = hw_id;
 	c->reg = reg;
 	c->pipeline = pipe;
-	c->max_active_inputs = max_active_inputs;
-	c->max_active_outputs = max_active_outputs;
-	c->supported_inputs = supported_inputs;
+	c->max_active_inमाला_दो = max_active_inमाला_दो;
+	c->max_active_outमाला_दो = max_active_outमाला_दो;
+	c->supported_inमाला_दो = supported_inमाला_दो;
 	c->funcs = funcs;
 
-	if (name_fmt) {
-		va_list args;
+	अगर (name_fmt) अणु
+		बहु_सूची args;
 
-		va_start(args, name_fmt);
-		vsnprintf(c->name, sizeof(c->name), name_fmt, args);
-		va_end(args);
-	}
+		बहु_शुरू(args, name_fmt);
+		vsnम_लिखो(c->name, माप(c->name), name_fmt, args);
+		बहु_पूर्ण(args);
+	पूर्ण
 
-	if (num)
+	अगर (num)
 		*num = *num + 1;
 
 	pipe->avail_comps |= BIT(c->id);
 	*pos = c;
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-void komeda_component_destroy(struct komeda_dev *mdev,
-			      struct komeda_component *c)
-{
-	devm_kfree(mdev->dev, c);
-}
+व्योम komeda_component_destroy(काष्ठा komeda_dev *mdev,
+			      काष्ठा komeda_component *c)
+अणु
+	devm_kमुक्त(mdev->dev, c);
+पूर्ण
 
-static void komeda_component_dump(struct komeda_component *c)
-{
-	if (!c)
-		return;
+अटल व्योम komeda_component_dump(काष्ठा komeda_component *c)
+अणु
+	अगर (!c)
+		वापस;
 
 	DRM_DEBUG("	%s: ID %d-0x%08lx.\n",
 		  c->name, c->id, BIT(c->id));
 	DRM_DEBUG("		max_active_inputs:%d, supported_inputs: 0x%08x.\n",
-		  c->max_active_inputs, c->supported_inputs);
+		  c->max_active_inमाला_दो, c->supported_inमाला_दो);
 	DRM_DEBUG("		max_active_outputs:%d, supported_outputs: 0x%08x.\n",
-		  c->max_active_outputs, c->supported_outputs);
-}
+		  c->max_active_outमाला_दो, c->supported_outमाला_दो);
+पूर्ण
 
-static void komeda_pipeline_dump(struct komeda_pipeline *pipe)
-{
-	struct komeda_component *c;
-	int id;
-	unsigned long avail_comps = pipe->avail_comps;
+अटल व्योम komeda_pipeline_dump(काष्ठा komeda_pipeline *pipe)
+अणु
+	काष्ठा komeda_component *c;
+	पूर्णांक id;
+	अचिन्हित दीर्घ avail_comps = pipe->avail_comps;
 
 	DRM_INFO("Pipeline-%d: n_layers: %d, n_scalers: %d, output: %s.\n",
 		 pipe->id, pipe->n_layers, pipe->n_scalers,
@@ -260,118 +261,118 @@ static void komeda_pipeline_dump(struct komeda_pipeline *pipe)
 		 pipe->of_output_links[1] ?
 		 pipe->of_output_links[1]->full_name : "none");
 
-	for_each_set_bit(id, &avail_comps, 32) {
+	क्रम_each_set_bit(id, &avail_comps, 32) अणु
 		c = komeda_pipeline_get_component(pipe, id);
 
 		komeda_component_dump(c);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void komeda_component_verify_inputs(struct komeda_component *c)
-{
-	struct komeda_pipeline *pipe = c->pipeline;
-	struct komeda_component *input;
-	int id;
-	unsigned long supported_inputs = c->supported_inputs;
+अटल व्योम komeda_component_verअगरy_inमाला_दो(काष्ठा komeda_component *c)
+अणु
+	काष्ठा komeda_pipeline *pipe = c->pipeline;
+	काष्ठा komeda_component *input;
+	पूर्णांक id;
+	अचिन्हित दीर्घ supported_inमाला_दो = c->supported_inमाला_दो;
 
-	for_each_set_bit(id, &supported_inputs, 32) {
+	क्रम_each_set_bit(id, &supported_inमाला_दो, 32) अणु
 		input = komeda_pipeline_get_component(pipe, id);
-		if (!input) {
-			c->supported_inputs &= ~(BIT(id));
+		अगर (!input) अणु
+			c->supported_inमाला_दो &= ~(BIT(id));
 			DRM_WARN("Can not find input(ID-%d) for component: %s.\n",
 				 id, c->name);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		input->supported_outputs |= BIT(c->id);
-	}
-}
+		input->supported_outमाला_दो |= BIT(c->id);
+	पूर्ण
+पूर्ण
 
-static struct komeda_layer *
-komeda_get_layer_split_right_layer(struct komeda_pipeline *pipe,
-				   struct komeda_layer *left)
-{
-	int index = left->base.id - KOMEDA_COMPONENT_LAYER0;
-	int i;
+अटल काष्ठा komeda_layer *
+komeda_get_layer_split_right_layer(काष्ठा komeda_pipeline *pipe,
+				   काष्ठा komeda_layer *left)
+अणु
+	पूर्णांक index = left->base.id - KOMEDA_COMPONENT_LAYER0;
+	पूर्णांक i;
 
-	for (i = index + 1; i < pipe->n_layers; i++)
-		if (left->layer_type == pipe->layers[i]->layer_type)
-			return pipe->layers[i];
-	return NULL;
-}
+	क्रम (i = index + 1; i < pipe->n_layers; i++)
+		अगर (left->layer_type == pipe->layers[i]->layer_type)
+			वापस pipe->layers[i];
+	वापस शून्य;
+पूर्ण
 
-static void komeda_pipeline_assemble(struct komeda_pipeline *pipe)
-{
-	struct komeda_component *c;
-	struct komeda_layer *layer;
-	int i, id;
-	unsigned long avail_comps = pipe->avail_comps;
+अटल व्योम komeda_pipeline_assemble(काष्ठा komeda_pipeline *pipe)
+अणु
+	काष्ठा komeda_component *c;
+	काष्ठा komeda_layer *layer;
+	पूर्णांक i, id;
+	अचिन्हित दीर्घ avail_comps = pipe->avail_comps;
 
-	for_each_set_bit(id, &avail_comps, 32) {
+	क्रम_each_set_bit(id, &avail_comps, 32) अणु
 		c = komeda_pipeline_get_component(pipe, id);
-		komeda_component_verify_inputs(c);
-	}
-	/* calculate right layer for the layer split */
-	for (i = 0; i < pipe->n_layers; i++) {
+		komeda_component_verअगरy_inमाला_दो(c);
+	पूर्ण
+	/* calculate right layer क्रम the layer split */
+	क्रम (i = 0; i < pipe->n_layers; i++) अणु
 		layer = pipe->layers[i];
 
 		layer->right = komeda_get_layer_split_right_layer(pipe, layer);
-	}
+	पूर्ण
 
-	if (pipe->dual_link && !pipe->ctrlr->supports_dual_link) {
+	अगर (pipe->dual_link && !pipe->ctrlr->supports_dual_link) अणु
 		pipe->dual_link = false;
 		DRM_WARN("PIPE-%d doesn't support dual-link, ignore DT dual-link configuration.\n",
 			 pipe->id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* if pipeline_A accept another pipeline_B's component as input, treat
+/* अगर pipeline_A accept another pipeline_B's component as input, treat
  * pipeline_B as slave of pipeline_A.
  */
-struct komeda_pipeline *
-komeda_pipeline_get_slave(struct komeda_pipeline *master)
-{
-	struct komeda_component *slave;
+काष्ठा komeda_pipeline *
+komeda_pipeline_get_slave(काष्ठा komeda_pipeline *master)
+अणु
+	काष्ठा komeda_component *slave;
 
 	slave = komeda_component_pickup_input(&master->compiz->base,
 					      KOMEDA_PIPELINE_COMPIZS);
 
-	return slave ? slave->pipeline : NULL;
-}
+	वापस slave ? slave->pipeline : शून्य;
+पूर्ण
 
-int komeda_assemble_pipelines(struct komeda_dev *mdev)
-{
-	struct komeda_pipeline *pipe;
-	int i;
+पूर्णांक komeda_assemble_pipelines(काष्ठा komeda_dev *mdev)
+अणु
+	काष्ठा komeda_pipeline *pipe;
+	पूर्णांक i;
 
-	for (i = 0; i < mdev->n_pipelines; i++) {
+	क्रम (i = 0; i < mdev->n_pipelines; i++) अणु
 		pipe = mdev->pipelines[i];
 
 		komeda_pipeline_assemble(pipe);
 		komeda_pipeline_dump(pipe);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void komeda_pipeline_dump_register(struct komeda_pipeline *pipe,
-				   struct seq_file *sf)
-{
-	struct komeda_component *c;
+व्योम komeda_pipeline_dump_रेजिस्टर(काष्ठा komeda_pipeline *pipe,
+				   काष्ठा seq_file *sf)
+अणु
+	काष्ठा komeda_component *c;
 	u32 id;
-	unsigned long avail_comps;
+	अचिन्हित दीर्घ avail_comps;
 
-	seq_printf(sf, "\n======== Pipeline-%d ==========\n", pipe->id);
+	seq_म_लिखो(sf, "\n======== Pipeline-%d ==========\n", pipe->id);
 
-	if (pipe->funcs && pipe->funcs->dump_register)
-		pipe->funcs->dump_register(pipe, sf);
+	अगर (pipe->funcs && pipe->funcs->dump_रेजिस्टर)
+		pipe->funcs->dump_रेजिस्टर(pipe, sf);
 
 	avail_comps = pipe->avail_comps;
-	for_each_set_bit(id, &avail_comps, 32) {
+	क्रम_each_set_bit(id, &avail_comps, 32) अणु
 		c = komeda_pipeline_get_component(pipe, id);
 
-		seq_printf(sf, "\n------%s------\n", c->name);
-		if (c->funcs->dump_register)
-			c->funcs->dump_register(c, sf);
-	}
-}
+		seq_म_लिखो(sf, "\n------%s------\n", c->name);
+		अगर (c->funcs->dump_रेजिस्टर)
+			c->funcs->dump_रेजिस्टर(c, sf);
+	पूर्ण
+पूर्ण

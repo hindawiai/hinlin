@@ -1,177 +1,178 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * LPDDR2-NVM MTD driver. This module provides read, write, erase, lock/unlock
- * support for LPDDR2-NVM PCM memories
+ * LPDDR2-NVM MTD driver. This module provides पढ़ो, ग_लिखो, erase, lock/unlock
+ * support क्रम LPDDR2-NVM PCM memories
  *
- * Copyright © 2012 Micron Technology, Inc.
+ * Copyright तऊ 2012 Micron Technology, Inc.
  *
  * Vincenzo Aliberti <vincenzo.aliberti@gmail.com>
- * Domenico Manna <domenico.manna@gmail.com>
- * Many thanks to Andrea Vigilante for initial enabling
+ * Domenico Manna <करोmenico.manna@gmail.com>
+ * Many thanks to Andrea Vigilante क्रम initial enabling
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/mtd/map.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/ioport.h>
-#include <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mtd/map.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/err.h>
 
 /* Parameters */
-#define ERASE_BLOCKSIZE			(0x00020000/2)	/* in Word */
-#define WRITE_BUFFSIZE			(0x00000400/2)	/* in Word */
-#define OW_BASE_ADDRESS			0x00000000	/* OW offset */
-#define BUS_WIDTH			0x00000020	/* x32 devices */
+#घोषणा ERASE_BLOCKSIZE			(0x00020000/2)	/* in Word */
+#घोषणा WRITE_BUFFSIZE			(0x00000400/2)	/* in Word */
+#घोषणा OW_BASE_ADDRESS			0x00000000	/* OW offset */
+#घोषणा BUS_WIDTH			0x00000020	/* x32 devices */
 
 /* PFOW symbols address offset */
-#define PFOW_QUERY_STRING_P		(0x0000/2)	/* in Word */
-#define PFOW_QUERY_STRING_F		(0x0002/2)	/* in Word */
-#define PFOW_QUERY_STRING_O		(0x0004/2)	/* in Word */
-#define PFOW_QUERY_STRING_W		(0x0006/2)	/* in Word */
+#घोषणा PFOW_QUERY_STRING_P		(0x0000/2)	/* in Word */
+#घोषणा PFOW_QUERY_STRING_F		(0x0002/2)	/* in Word */
+#घोषणा PFOW_QUERY_STRING_O		(0x0004/2)	/* in Word */
+#घोषणा PFOW_QUERY_STRING_W		(0x0006/2)	/* in Word */
 
-/* OW registers address */
-#define CMD_CODE_OFS			(0x0080/2)	/* in Word */
-#define CMD_DATA_OFS			(0x0084/2)	/* in Word */
-#define CMD_ADD_L_OFS			(0x0088/2)	/* in Word */
-#define CMD_ADD_H_OFS			(0x008A/2)	/* in Word */
-#define MPR_L_OFS			(0x0090/2)	/* in Word */
-#define MPR_H_OFS			(0x0092/2)	/* in Word */
-#define CMD_EXEC_OFS			(0x00C0/2)	/* in Word */
-#define STATUS_REG_OFS			(0x00CC/2)	/* in Word */
-#define PRG_BUFFER_OFS			(0x0010/2)	/* in Word */
+/* OW रेजिस्टरs address */
+#घोषणा CMD_CODE_OFS			(0x0080/2)	/* in Word */
+#घोषणा CMD_DATA_OFS			(0x0084/2)	/* in Word */
+#घोषणा CMD_ADD_L_OFS			(0x0088/2)	/* in Word */
+#घोषणा CMD_ADD_H_OFS			(0x008A/2)	/* in Word */
+#घोषणा MPR_L_OFS			(0x0090/2)	/* in Word */
+#घोषणा MPR_H_OFS			(0x0092/2)	/* in Word */
+#घोषणा CMD_EXEC_OFS			(0x00C0/2)	/* in Word */
+#घोषणा STATUS_REG_OFS			(0x00CC/2)	/* in Word */
+#घोषणा PRG_BUFFER_OFS			(0x0010/2)	/* in Word */
 
 /* Datamask */
-#define MR_CFGMASK			0x8000
-#define SR_OK_DATAMASK			0x0080
+#घोषणा MR_CFGMASK			0x8000
+#घोषणा SR_OK_DATAMASK			0x0080
 
 /* LPDDR2-NVM Commands */
-#define LPDDR2_NVM_LOCK			0x0061
-#define LPDDR2_NVM_UNLOCK		0x0062
-#define LPDDR2_NVM_SW_PROGRAM		0x0041
-#define LPDDR2_NVM_SW_OVERWRITE		0x0042
-#define LPDDR2_NVM_BUF_PROGRAM		0x00E9
-#define LPDDR2_NVM_BUF_OVERWRITE	0x00EA
-#define LPDDR2_NVM_ERASE		0x0020
+#घोषणा LPDDR2_NVM_LOCK			0x0061
+#घोषणा LPDDR2_NVM_UNLOCK		0x0062
+#घोषणा LPDDR2_NVM_SW_PROGRAM		0x0041
+#घोषणा LPDDR2_NVM_SW_OVERWRITE		0x0042
+#घोषणा LPDDR2_NVM_BUF_PROGRAM		0x00E9
+#घोषणा LPDDR2_NVM_BUF_OVERWRITE	0x00EA
+#घोषणा LPDDR2_NVM_ERASE		0x0020
 
 /* LPDDR2-NVM Registers offset */
-#define LPDDR2_MODE_REG_DATA		0x0040
-#define LPDDR2_MODE_REG_CFG		0x0050
+#घोषणा LPDDR2_MODE_REG_DATA		0x0040
+#घोषणा LPDDR2_MODE_REG_CFG		0x0050
 
 /*
  * Internal Type Definitions
- * pcm_int_data contains memory controller details:
- * @reg_data : LPDDR2_MODE_REG_DATA register address after remapping
- * @reg_cfg  : LPDDR2_MODE_REG_CFG register address after remapping
+ * pcm_पूर्णांक_data contains memory controller details:
+ * @reg_data : LPDDR2_MODE_REG_DATA रेजिस्टर address after remapping
+ * @reg_cfg  : LPDDR2_MODE_REG_CFG रेजिस्टर address after remapping
  * &bus_width: memory bus-width (eg: x16 2 Bytes, x32 4 Bytes)
  */
-struct pcm_int_data {
-	void __iomem *ctl_regs;
-	int bus_width;
-};
+काष्ठा pcm_पूर्णांक_data अणु
+	व्योम __iomem *ctl_regs;
+	पूर्णांक bus_width;
+पूर्ण;
 
-static DEFINE_MUTEX(lpdd2_nvm_mutex);
+अटल DEFINE_MUTEX(lpdd2_nvm_mutex);
 
 /*
- * Build a map_word starting from an u_long
+ * Build a map_word starting from an u_दीर्घ
  */
-static inline map_word build_map_word(u_long myword)
-{
-	map_word val = { {0} };
+अटल अंतरभूत map_word build_map_word(u_दीर्घ myword)
+अणु
+	map_word val = अणु अणु0पूर्ण पूर्ण;
 	val.x[0] = myword;
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /*
  * Build Mode Register Configuration DataMask based on device bus-width
  */
-static inline u_int build_mr_cfgmask(u_int bus_width)
-{
-	u_int val = MR_CFGMASK;
+अटल अंतरभूत u_पूर्णांक build_mr_cfgmask(u_पूर्णांक bus_width)
+अणु
+	u_पूर्णांक val = MR_CFGMASK;
 
-	if (bus_width == 0x0004)		/* x32 device */
+	अगर (bus_width == 0x0004)		/* x32 device */
 		val = val << 16;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /*
  * Build Status Register OK DataMask based on device bus-width
  */
-static inline u_int build_sr_ok_datamask(u_int bus_width)
-{
-	u_int val = SR_OK_DATAMASK;
+अटल अंतरभूत u_पूर्णांक build_sr_ok_datamask(u_पूर्णांक bus_width)
+अणु
+	u_पूर्णांक val = SR_OK_DATAMASK;
 
-	if (bus_width == 0x0004)		/* x32 device */
+	अगर (bus_width == 0x0004)		/* x32 device */
 		val = (val << 16)+val;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /*
- * Evaluates Overlay Window Control Registers address
+ * Evaluates Overlay Winकरोw Control Registers address
  */
-static inline u_long ow_reg_add(struct map_info *map, u_long offset)
-{
-	u_long val = 0;
-	struct pcm_int_data *pcm_data = map->fldrv_priv;
+अटल अंतरभूत u_दीर्घ ow_reg_add(काष्ठा map_info *map, u_दीर्घ offset)
+अणु
+	u_दीर्घ val = 0;
+	काष्ठा pcm_पूर्णांक_data *pcm_data = map->fldrv_priv;
 
 	val = map->pfow_base + offset*pcm_data->bus_width;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /*
- * Enable lpddr2-nvm Overlay Window
- * Overlay Window is a memory mapped area containing all LPDDR2-NVM registers
+ * Enable lpddr2-nvm Overlay Winकरोw
+ * Overlay Winकरोw is a memory mapped area containing all LPDDR2-NVM रेजिस्टरs
  * used by device commands as well as uservisible resources like Device Status
  * Register, Device ID, etc
  */
-static inline void ow_enable(struct map_info *map)
-{
-	struct pcm_int_data *pcm_data = map->fldrv_priv;
+अटल अंतरभूत व्योम ow_enable(काष्ठा map_info *map)
+अणु
+	काष्ठा pcm_पूर्णांक_data *pcm_data = map->fldrv_priv;
 
-	writel_relaxed(build_mr_cfgmask(pcm_data->bus_width) | 0x18,
+	ग_लिखोl_relaxed(build_mr_cfgmask(pcm_data->bus_width) | 0x18,
 		pcm_data->ctl_regs + LPDDR2_MODE_REG_CFG);
-	writel_relaxed(0x01, pcm_data->ctl_regs + LPDDR2_MODE_REG_DATA);
-}
+	ग_लिखोl_relaxed(0x01, pcm_data->ctl_regs + LPDDR2_MODE_REG_DATA);
+पूर्ण
 
 /*
- * Disable lpddr2-nvm Overlay Window
- * Overlay Window is a memory mapped area containing all LPDDR2-NVM registers
+ * Disable lpddr2-nvm Overlay Winकरोw
+ * Overlay Winकरोw is a memory mapped area containing all LPDDR2-NVM रेजिस्टरs
  * used by device commands as well as uservisible resources like Device Status
  * Register, Device ID, etc
  */
-static inline void ow_disable(struct map_info *map)
-{
-	struct pcm_int_data *pcm_data = map->fldrv_priv;
+अटल अंतरभूत व्योम ow_disable(काष्ठा map_info *map)
+अणु
+	काष्ठा pcm_पूर्णांक_data *pcm_data = map->fldrv_priv;
 
-	writel_relaxed(build_mr_cfgmask(pcm_data->bus_width) | 0x18,
+	ग_लिखोl_relaxed(build_mr_cfgmask(pcm_data->bus_width) | 0x18,
 		pcm_data->ctl_regs + LPDDR2_MODE_REG_CFG);
-	writel_relaxed(0x02, pcm_data->ctl_regs + LPDDR2_MODE_REG_DATA);
-}
+	ग_लिखोl_relaxed(0x02, pcm_data->ctl_regs + LPDDR2_MODE_REG_DATA);
+पूर्ण
 
 /*
  * Execute lpddr2-nvm operations
  */
-static int lpddr2_nvm_do_op(struct map_info *map, u_long cmd_code,
-	u_long cmd_data, u_long cmd_add, u_long cmd_mpr, u_char *buf)
-{
-	map_word add_l = { {0} }, add_h = { {0} }, mpr_l = { {0} },
-		mpr_h = { {0} }, data_l = { {0} }, cmd = { {0} },
-		exec_cmd = { {0} }, sr;
-	map_word data_h = { {0} };	/* only for 2x x16 devices stacked */
-	u_long i, status_reg, prg_buff_ofs;
-	struct pcm_int_data *pcm_data = map->fldrv_priv;
-	u_int sr_ok_datamask = build_sr_ok_datamask(pcm_data->bus_width);
+अटल पूर्णांक lpddr2_nvm_करो_op(काष्ठा map_info *map, u_दीर्घ cmd_code,
+	u_दीर्घ cmd_data, u_दीर्घ cmd_add, u_दीर्घ cmd_mpr, u_अक्षर *buf)
+अणु
+	map_word add_l = अणु अणु0पूर्ण पूर्ण, add_h = अणु अणु0पूर्ण पूर्ण, mpr_l = अणु अणु0पूर्ण पूर्ण,
+		mpr_h = अणु अणु0पूर्ण पूर्ण, data_l = अणु अणु0पूर्ण पूर्ण, cmd = अणु अणु0पूर्ण पूर्ण,
+		exec_cmd = अणु अणु0पूर्ण पूर्ण, sr;
+	map_word data_h = अणु अणु0पूर्ण पूर्ण;	/* only क्रम 2x x16 devices stacked */
+	u_दीर्घ i, status_reg, prg_buff_ofs;
+	काष्ठा pcm_पूर्णांक_data *pcm_data = map->fldrv_priv;
+	u_पूर्णांक sr_ok_datamask = build_sr_ok_datamask(pcm_data->bus_width);
 
-	/* Builds low and high words for OW Control Registers */
+	/* Builds low and high words क्रम OW Control Registers */
 	add_l.x[0]	= cmd_add & 0x0000FFFF;
 	add_h.x[0]	= (cmd_add >> 16) & 0x0000FFFF;
 	mpr_l.x[0]	= cmd_mpr & 0x0000FFFF;
@@ -179,63 +180,63 @@ static int lpddr2_nvm_do_op(struct map_info *map, u_long cmd_code,
 	cmd.x[0]	= cmd_code & 0x0000FFFF;
 	exec_cmd.x[0]	= 0x0001;
 	data_l.x[0]	= cmd_data & 0x0000FFFF;
-	data_h.x[0]	= (cmd_data >> 16) & 0x0000FFFF; /* only for 2x x16 */
+	data_h.x[0]	= (cmd_data >> 16) & 0x0000FFFF; /* only क्रम 2x x16 */
 
-	/* Set Overlay Window Control Registers */
-	map_write(map, cmd, ow_reg_add(map, CMD_CODE_OFS));
-	map_write(map, data_l, ow_reg_add(map, CMD_DATA_OFS));
-	map_write(map, add_l, ow_reg_add(map, CMD_ADD_L_OFS));
-	map_write(map, add_h, ow_reg_add(map, CMD_ADD_H_OFS));
-	map_write(map, mpr_l, ow_reg_add(map, MPR_L_OFS));
-	map_write(map, mpr_h, ow_reg_add(map, MPR_H_OFS));
-	if (pcm_data->bus_width == 0x0004) {	/* 2x16 devices stacked */
-		map_write(map, cmd, ow_reg_add(map, CMD_CODE_OFS) + 2);
-		map_write(map, data_h, ow_reg_add(map, CMD_DATA_OFS) + 2);
-		map_write(map, add_l, ow_reg_add(map, CMD_ADD_L_OFS) + 2);
-		map_write(map, add_h, ow_reg_add(map, CMD_ADD_H_OFS) + 2);
-		map_write(map, mpr_l, ow_reg_add(map, MPR_L_OFS) + 2);
-		map_write(map, mpr_h, ow_reg_add(map, MPR_H_OFS) + 2);
-	}
+	/* Set Overlay Winकरोw Control Registers */
+	map_ग_लिखो(map, cmd, ow_reg_add(map, CMD_CODE_OFS));
+	map_ग_लिखो(map, data_l, ow_reg_add(map, CMD_DATA_OFS));
+	map_ग_लिखो(map, add_l, ow_reg_add(map, CMD_ADD_L_OFS));
+	map_ग_लिखो(map, add_h, ow_reg_add(map, CMD_ADD_H_OFS));
+	map_ग_लिखो(map, mpr_l, ow_reg_add(map, MPR_L_OFS));
+	map_ग_लिखो(map, mpr_h, ow_reg_add(map, MPR_H_OFS));
+	अगर (pcm_data->bus_width == 0x0004) अणु	/* 2x16 devices stacked */
+		map_ग_लिखो(map, cmd, ow_reg_add(map, CMD_CODE_OFS) + 2);
+		map_ग_लिखो(map, data_h, ow_reg_add(map, CMD_DATA_OFS) + 2);
+		map_ग_लिखो(map, add_l, ow_reg_add(map, CMD_ADD_L_OFS) + 2);
+		map_ग_लिखो(map, add_h, ow_reg_add(map, CMD_ADD_H_OFS) + 2);
+		map_ग_लिखो(map, mpr_l, ow_reg_add(map, MPR_L_OFS) + 2);
+		map_ग_लिखो(map, mpr_h, ow_reg_add(map, MPR_H_OFS) + 2);
+	पूर्ण
 
 	/* Fill Program Buffer */
-	if ((cmd_code == LPDDR2_NVM_BUF_PROGRAM) ||
-		(cmd_code == LPDDR2_NVM_BUF_OVERWRITE)) {
-		prg_buff_ofs = (map_read(map,
+	अगर ((cmd_code == LPDDR2_NVM_BUF_PROGRAM) ||
+		(cmd_code == LPDDR2_NVM_BUF_OVERWRITE)) अणु
+		prg_buff_ofs = (map_पढ़ो(map,
 			ow_reg_add(map, PRG_BUFFER_OFS))).x[0];
-		for (i = 0; i < cmd_mpr; i++) {
-			map_write(map, build_map_word(buf[i]), map->pfow_base +
+		क्रम (i = 0; i < cmd_mpr; i++) अणु
+			map_ग_लिखो(map, build_map_word(buf[i]), map->pfow_base +
 			prg_buff_ofs + i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Command Execute */
-	map_write(map, exec_cmd, ow_reg_add(map, CMD_EXEC_OFS));
-	if (pcm_data->bus_width == 0x0004)	/* 2x16 devices stacked */
-		map_write(map, exec_cmd, ow_reg_add(map, CMD_EXEC_OFS) + 2);
+	map_ग_लिखो(map, exec_cmd, ow_reg_add(map, CMD_EXEC_OFS));
+	अगर (pcm_data->bus_width == 0x0004)	/* 2x16 devices stacked */
+		map_ग_लिखो(map, exec_cmd, ow_reg_add(map, CMD_EXEC_OFS) + 2);
 
 	/* Status Register Check */
-	do {
-		sr = map_read(map, ow_reg_add(map, STATUS_REG_OFS));
+	करो अणु
+		sr = map_पढ़ो(map, ow_reg_add(map, STATUS_REG_OFS));
 		status_reg = sr.x[0];
-		if (pcm_data->bus_width == 0x0004) {/* 2x16 devices stacked */
-			sr = map_read(map, ow_reg_add(map,
+		अगर (pcm_data->bus_width == 0x0004) अणु/* 2x16 devices stacked */
+			sr = map_पढ़ो(map, ow_reg_add(map,
 				STATUS_REG_OFS) + 2);
 			status_reg += sr.x[0] << 16;
-		}
-	} while ((status_reg & sr_ok_datamask) != sr_ok_datamask);
+		पूर्ण
+	पूर्ण जबतक ((status_reg & sr_ok_datamask) != sr_ok_datamask);
 
-	return (((status_reg & sr_ok_datamask) == sr_ok_datamask) ? 0 : -EIO);
-}
+	वापस (((status_reg & sr_ok_datamask) == sr_ok_datamask) ? 0 : -EIO);
+पूर्ण
 
 /*
  * Execute lpddr2-nvm operations @ block level
  */
-static int lpddr2_nvm_do_block_op(struct mtd_info *mtd, loff_t start_add,
-	uint64_t len, u_char block_op)
-{
-	struct map_info *map = mtd->priv;
-	u_long add, end_add;
-	int ret = 0;
+अटल पूर्णांक lpddr2_nvm_करो_block_op(काष्ठा mtd_info *mtd, loff_t start_add,
+	uपूर्णांक64_t len, u_अक्षर block_op)
+अणु
+	काष्ठा map_info *map = mtd->priv;
+	u_दीर्घ add, end_add;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&lpdd2_nvm_mutex);
 
@@ -244,61 +245,61 @@ static int lpddr2_nvm_do_block_op(struct mtd_info *mtd, loff_t start_add,
 	add = start_add;
 	end_add = add + len;
 
-	do {
-		ret = lpddr2_nvm_do_op(map, block_op, 0x00, add, add, NULL);
-		if (ret)
-			goto out;
+	करो अणु
+		ret = lpddr2_nvm_करो_op(map, block_op, 0x00, add, add, शून्य);
+		अगर (ret)
+			जाओ out;
 		add += mtd->erasesize;
-	} while (add < end_add);
+	पूर्ण जबतक (add < end_add);
 
 out:
 	ow_disable(map);
 	mutex_unlock(&lpdd2_nvm_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * verify presence of PFOW string
+ * verअगरy presence of PFOW string
  */
-static int lpddr2_nvm_pfow_present(struct map_info *map)
-{
+अटल पूर्णांक lpddr2_nvm_pfow_present(काष्ठा map_info *map)
+अणु
 	map_word pfow_val[4];
-	unsigned int found = 1;
+	अचिन्हित पूर्णांक found = 1;
 
 	mutex_lock(&lpdd2_nvm_mutex);
 
 	ow_enable(map);
 
 	/* Load string from array */
-	pfow_val[0] = map_read(map, ow_reg_add(map, PFOW_QUERY_STRING_P));
-	pfow_val[1] = map_read(map, ow_reg_add(map, PFOW_QUERY_STRING_F));
-	pfow_val[2] = map_read(map, ow_reg_add(map, PFOW_QUERY_STRING_O));
-	pfow_val[3] = map_read(map, ow_reg_add(map, PFOW_QUERY_STRING_W));
+	pfow_val[0] = map_पढ़ो(map, ow_reg_add(map, PFOW_QUERY_STRING_P));
+	pfow_val[1] = map_पढ़ो(map, ow_reg_add(map, PFOW_QUERY_STRING_F));
+	pfow_val[2] = map_पढ़ो(map, ow_reg_add(map, PFOW_QUERY_STRING_O));
+	pfow_val[3] = map_पढ़ो(map, ow_reg_add(map, PFOW_QUERY_STRING_W));
 
-	/* Verify the string loaded vs expected */
-	if (!map_word_equal(map, build_map_word('P'), pfow_val[0]))
+	/* Verअगरy the string loaded vs expected */
+	अगर (!map_word_equal(map, build_map_word('P'), pfow_val[0]))
 		found = 0;
-	if (!map_word_equal(map, build_map_word('F'), pfow_val[1]))
+	अगर (!map_word_equal(map, build_map_word('F'), pfow_val[1]))
 		found = 0;
-	if (!map_word_equal(map, build_map_word('O'), pfow_val[2]))
+	अगर (!map_word_equal(map, build_map_word('O'), pfow_val[2]))
 		found = 0;
-	if (!map_word_equal(map, build_map_word('W'), pfow_val[3]))
+	अगर (!map_word_equal(map, build_map_word('W'), pfow_val[3]))
 		found = 0;
 
 	ow_disable(map);
 
 	mutex_unlock(&lpdd2_nvm_mutex);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
 /*
- * lpddr2_nvm driver read method
+ * lpddr2_nvm driver पढ़ो method
  */
-static int lpddr2_nvm_read(struct mtd_info *mtd, loff_t start_add,
-				size_t len, size_t *retlen, u_char *buf)
-{
-	struct map_info *map = mtd->priv;
+अटल पूर्णांक lpddr2_nvm_पढ़ो(काष्ठा mtd_info *mtd, loff_t start_add,
+				माप_प्रकार len, माप_प्रकार *retlen, u_अक्षर *buf)
+अणु
+	काष्ठा map_info *map = mtd->priv;
 
 	mutex_lock(&lpdd2_nvm_mutex);
 
@@ -307,135 +308,135 @@ static int lpddr2_nvm_read(struct mtd_info *mtd, loff_t start_add,
 	map_copy_from(map, buf, start_add, *retlen);
 
 	mutex_unlock(&lpdd2_nvm_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * lpddr2_nvm driver write method
+ * lpddr2_nvm driver ग_लिखो method
  */
-static int lpddr2_nvm_write(struct mtd_info *mtd, loff_t start_add,
-				size_t len, size_t *retlen, const u_char *buf)
-{
-	struct map_info *map = mtd->priv;
-	struct pcm_int_data *pcm_data = map->fldrv_priv;
-	u_long add, current_len, tot_len, target_len, my_data;
-	u_char *write_buf = (u_char *)buf;
-	int ret = 0;
+अटल पूर्णांक lpddr2_nvm_ग_लिखो(काष्ठा mtd_info *mtd, loff_t start_add,
+				माप_प्रकार len, माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
+अणु
+	काष्ठा map_info *map = mtd->priv;
+	काष्ठा pcm_पूर्णांक_data *pcm_data = map->fldrv_priv;
+	u_दीर्घ add, current_len, tot_len, target_len, my_data;
+	u_अक्षर *ग_लिखो_buf = (u_अक्षर *)buf;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&lpdd2_nvm_mutex);
 
 	ow_enable(map);
 
-	/* Set start value for the variables */
+	/* Set start value क्रम the variables */
 	add = start_add;
 	target_len = len;
 	tot_len = 0;
 
-	while (tot_len < target_len) {
-		if (!(IS_ALIGNED(add, mtd->writesize))) { /* do sw program */
-			my_data = write_buf[tot_len];
-			my_data += (write_buf[tot_len+1]) << 8;
-			if (pcm_data->bus_width == 0x0004) {/* 2x16 devices */
-				my_data += (write_buf[tot_len+2]) << 16;
-				my_data += (write_buf[tot_len+3]) << 24;
-			}
-			ret = lpddr2_nvm_do_op(map, LPDDR2_NVM_SW_OVERWRITE,
-				my_data, add, 0x00, NULL);
-			if (ret)
-				goto out;
+	जबतक (tot_len < target_len) अणु
+		अगर (!(IS_ALIGNED(add, mtd->ग_लिखोsize))) अणु /* करो sw program */
+			my_data = ग_लिखो_buf[tot_len];
+			my_data += (ग_लिखो_buf[tot_len+1]) << 8;
+			अगर (pcm_data->bus_width == 0x0004) अणु/* 2x16 devices */
+				my_data += (ग_लिखो_buf[tot_len+2]) << 16;
+				my_data += (ग_लिखो_buf[tot_len+3]) << 24;
+			पूर्ण
+			ret = lpddr2_nvm_करो_op(map, LPDDR2_NVM_SW_OVERWRITE,
+				my_data, add, 0x00, शून्य);
+			अगर (ret)
+				जाओ out;
 
 			add += pcm_data->bus_width;
 			tot_len += pcm_data->bus_width;
-		} else {		/* do buffer program */
+		पूर्ण अन्यथा अणु		/* करो buffer program */
 			current_len = min(target_len - tot_len,
-				(u_long) mtd->writesize);
-			ret = lpddr2_nvm_do_op(map, LPDDR2_NVM_BUF_OVERWRITE,
-				0x00, add, current_len, write_buf + tot_len);
-			if (ret)
-				goto out;
+				(u_दीर्घ) mtd->ग_लिखोsize);
+			ret = lpddr2_nvm_करो_op(map, LPDDR2_NVM_BUF_OVERWRITE,
+				0x00, add, current_len, ग_लिखो_buf + tot_len);
+			अगर (ret)
+				जाओ out;
 
 			add += current_len;
 			tot_len += current_len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	*retlen = tot_len;
 	ow_disable(map);
 	mutex_unlock(&lpdd2_nvm_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * lpddr2_nvm driver erase method
  */
-static int lpddr2_nvm_erase(struct mtd_info *mtd, struct erase_info *instr)
-{
-	return lpddr2_nvm_do_block_op(mtd, instr->addr, instr->len,
+अटल पूर्णांक lpddr2_nvm_erase(काष्ठा mtd_info *mtd, काष्ठा erase_info *instr)
+अणु
+	वापस lpddr2_nvm_करो_block_op(mtd, instr->addr, instr->len,
 				      LPDDR2_NVM_ERASE);
-}
+पूर्ण
 
 /*
  * lpddr2_nvm driver unlock method
  */
-static int lpddr2_nvm_unlock(struct mtd_info *mtd, loff_t start_add,
-	uint64_t len)
-{
-	return lpddr2_nvm_do_block_op(mtd, start_add, len, LPDDR2_NVM_UNLOCK);
-}
+अटल पूर्णांक lpddr2_nvm_unlock(काष्ठा mtd_info *mtd, loff_t start_add,
+	uपूर्णांक64_t len)
+अणु
+	वापस lpddr2_nvm_करो_block_op(mtd, start_add, len, LPDDR2_NVM_UNLOCK);
+पूर्ण
 
 /*
  * lpddr2_nvm driver lock method
  */
-static int lpddr2_nvm_lock(struct mtd_info *mtd, loff_t start_add,
-	uint64_t len)
-{
-	return lpddr2_nvm_do_block_op(mtd, start_add, len, LPDDR2_NVM_LOCK);
-}
+अटल पूर्णांक lpddr2_nvm_lock(काष्ठा mtd_info *mtd, loff_t start_add,
+	uपूर्णांक64_t len)
+अणु
+	वापस lpddr2_nvm_करो_block_op(mtd, start_add, len, LPDDR2_NVM_LOCK);
+पूर्ण
 
-static const struct mtd_info lpddr2_nvm_mtd_info = {
+अटल स्थिर काष्ठा mtd_info lpddr2_nvm_mtd_info = अणु
 	.type		= MTD_RAM,
-	.writesize	= 1,
+	.ग_लिखोsize	= 1,
 	.flags		= (MTD_CAP_NVRAM | MTD_POWERUP_LOCK),
-	._read		= lpddr2_nvm_read,
-	._write		= lpddr2_nvm_write,
+	._पढ़ो		= lpddr2_nvm_पढ़ो,
+	._ग_लिखो		= lpddr2_nvm_ग_लिखो,
 	._erase		= lpddr2_nvm_erase,
 	._unlock	= lpddr2_nvm_unlock,
 	._lock		= lpddr2_nvm_lock,
-};
+पूर्ण;
 
 /*
  * lpddr2_nvm driver probe method
  */
-static int lpddr2_nvm_probe(struct platform_device *pdev)
-{
-	struct map_info *map;
-	struct mtd_info *mtd;
-	struct resource *add_range;
-	struct resource *control_regs;
-	struct pcm_int_data *pcm_data;
+अटल पूर्णांक lpddr2_nvm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा map_info *map;
+	काष्ठा mtd_info *mtd;
+	काष्ठा resource *add_range;
+	काष्ठा resource *control_regs;
+	काष्ठा pcm_पूर्णांक_data *pcm_data;
 
-	/* Allocate memory control_regs data structures */
-	pcm_data = devm_kzalloc(&pdev->dev, sizeof(*pcm_data), GFP_KERNEL);
-	if (!pcm_data)
-		return -ENOMEM;
+	/* Allocate memory control_regs data काष्ठाures */
+	pcm_data = devm_kzalloc(&pdev->dev, माप(*pcm_data), GFP_KERNEL);
+	अगर (!pcm_data)
+		वापस -ENOMEM;
 
 	pcm_data->bus_width = BUS_WIDTH;
 
-	/* Allocate memory for map_info & mtd_info data structures */
-	map = devm_kzalloc(&pdev->dev, sizeof(*map), GFP_KERNEL);
-	if (!map)
-		return -ENOMEM;
+	/* Allocate memory क्रम map_info & mtd_info data काष्ठाures */
+	map = devm_kzalloc(&pdev->dev, माप(*map), GFP_KERNEL);
+	अगर (!map)
+		वापस -ENOMEM;
 
-	mtd = devm_kzalloc(&pdev->dev, sizeof(*mtd), GFP_KERNEL);
-	if (!mtd)
-		return -ENOMEM;
+	mtd = devm_kzalloc(&pdev->dev, माप(*mtd), GFP_KERNEL);
+	अगर (!mtd)
+		वापस -ENOMEM;
 
 	/* lpddr2_nvm address range */
-	add_range = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	add_range = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 
-	/* Populate map_info data structure */
-	*map = (struct map_info) {
+	/* Populate map_info data काष्ठाure */
+	*map = (काष्ठा map_info) अणु
 		.virt		= devm_ioremap_resource(&pdev->dev, add_range),
 		.name		= pdev->dev.init_name,
 		.phys		= add_range->start,
@@ -443,54 +444,54 @@ static int lpddr2_nvm_probe(struct platform_device *pdev)
 		.bankwidth	= pcm_data->bus_width / 2,
 		.pfow_base	= OW_BASE_ADDRESS,
 		.fldrv_priv	= pcm_data,
-	};
+	पूर्ण;
 
-	if (IS_ERR(map->virt))
-		return PTR_ERR(map->virt);
+	अगर (IS_ERR(map->virt))
+		वापस PTR_ERR(map->virt);
 
-	simple_map_init(map);	/* fill with default methods */
+	simple_map_init(map);	/* fill with शेष methods */
 
-	control_regs = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	control_regs = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 	pcm_data->ctl_regs = devm_ioremap_resource(&pdev->dev, control_regs);
-	if (IS_ERR(pcm_data->ctl_regs))
-		return PTR_ERR(pcm_data->ctl_regs);
+	अगर (IS_ERR(pcm_data->ctl_regs))
+		वापस PTR_ERR(pcm_data->ctl_regs);
 
-	/* Populate mtd_info data structure */
+	/* Populate mtd_info data काष्ठाure */
 	*mtd = lpddr2_nvm_mtd_info;
 	mtd->dev.parent		= &pdev->dev;
 	mtd->name		= pdev->dev.init_name;
 	mtd->priv		= map;
 	mtd->size		= resource_size(add_range);
 	mtd->erasesize		= ERASE_BLOCKSIZE * pcm_data->bus_width;
-	mtd->writebufsize	= WRITE_BUFFSIZE * pcm_data->bus_width;
+	mtd->ग_लिखोbufsize	= WRITE_BUFFSIZE * pcm_data->bus_width;
 
-	/* Verify the presence of the device looking for PFOW string */
-	if (!lpddr2_nvm_pfow_present(map)) {
+	/* Verअगरy the presence of the device looking क्रम PFOW string */
+	अगर (!lpddr2_nvm_pfow_present(map)) अणु
 		pr_err("device not recognized\n");
-		return -EINVAL;
-	}
-	/* Parse partitions and register the MTD device */
-	return mtd_device_register(mtd, NULL, 0);
-}
+		वापस -EINVAL;
+	पूर्ण
+	/* Parse partitions and रेजिस्टर the MTD device */
+	वापस mtd_device_रेजिस्टर(mtd, शून्य, 0);
+पूर्ण
 
 /*
- * lpddr2_nvm driver remove method
+ * lpddr2_nvm driver हटाओ method
  */
-static int lpddr2_nvm_remove(struct platform_device *pdev)
-{
-	return mtd_device_unregister(dev_get_drvdata(&pdev->dev));
-}
+अटल पूर्णांक lpddr2_nvm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस mtd_device_unरेजिस्टर(dev_get_drvdata(&pdev->dev));
+पूर्ण
 
-/* Initialize platform_driver data structure for lpddr2_nvm */
-static struct platform_driver lpddr2_nvm_drv = {
-	.driver		= {
+/* Initialize platक्रमm_driver data काष्ठाure क्रम lpddr2_nvm */
+अटल काष्ठा platक्रमm_driver lpddr2_nvm_drv = अणु
+	.driver		= अणु
 		.name	= "lpddr2_nvm",
-	},
+	पूर्ण,
 	.probe		= lpddr2_nvm_probe,
-	.remove		= lpddr2_nvm_remove,
-};
+	.हटाओ		= lpddr2_nvm_हटाओ,
+पूर्ण;
 
-module_platform_driver(lpddr2_nvm_drv);
+module_platक्रमm_driver(lpddr2_nvm_drv);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Vincenzo Aliberti <vincenzo.aliberti@gmail.com>");
 MODULE_DESCRIPTION("MTD driver for LPDDR2-NVM PCM memories");

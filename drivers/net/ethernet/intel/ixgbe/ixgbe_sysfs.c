@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
-#include "ixgbe.h"
-#include "ixgbe_common.h"
-#include "ixgbe_type.h"
+#समावेश "ixgbe.h"
+#समावेश "ixgbe_common.h"
+#समावेश "ixgbe_type.h"
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/sysfs.h>
-#include <linux/kobject.h>
-#include <linux/device.h>
-#include <linux/netdevice.h>
-#include <linux/hwmon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/device.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/hwmon.h>
 
 /* hwmon callback functions */
-static ssize_t ixgbe_hwmon_show_location(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct hwmon_attr *ixgbe_attr = container_of(attr, struct hwmon_attr,
+अटल sमाप_प्रकार ixgbe_hwmon_show_location(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा hwmon_attr *ixgbe_attr = container_of(attr, काष्ठा hwmon_attr,
 						     dev_attr);
-	return sprintf(buf, "loc%u\n",
+	वापस प्र_लिखो(buf, "loc%u\n",
 		       ixgbe_attr->sensor->location);
-}
+पूर्ण
 
-static ssize_t ixgbe_hwmon_show_temp(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct hwmon_attr *ixgbe_attr = container_of(attr, struct hwmon_attr,
+अटल sमाप_प्रकार ixgbe_hwmon_show_temp(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा hwmon_attr *ixgbe_attr = container_of(attr, काष्ठा hwmon_attr,
 						     dev_attr);
-	unsigned int value;
+	अचिन्हित पूर्णांक value;
 
 	/* reset the temp field */
 	ixgbe_attr->hw->mac.ops.get_thermal_sensor_data(ixgbe_attr->hw);
@@ -40,87 +41,87 @@ static ssize_t ixgbe_hwmon_show_temp(struct device *dev,
 	/* display millidegree */
 	value *= 1000;
 
-	return sprintf(buf, "%u\n", value);
-}
+	वापस प्र_लिखो(buf, "%u\n", value);
+पूर्ण
 
-static ssize_t ixgbe_hwmon_show_cautionthresh(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct hwmon_attr *ixgbe_attr = container_of(attr, struct hwmon_attr,
+अटल sमाप_प्रकार ixgbe_hwmon_show_cautionthresh(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा hwmon_attr *ixgbe_attr = container_of(attr, काष्ठा hwmon_attr,
 						     dev_attr);
-	unsigned int value = ixgbe_attr->sensor->caution_thresh;
+	अचिन्हित पूर्णांक value = ixgbe_attr->sensor->caution_thresh;
 
 	/* display millidegree */
 	value *= 1000;
 
-	return sprintf(buf, "%u\n", value);
-}
+	वापस प्र_लिखो(buf, "%u\n", value);
+पूर्ण
 
-static ssize_t ixgbe_hwmon_show_maxopthresh(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct hwmon_attr *ixgbe_attr = container_of(attr, struct hwmon_attr,
+अटल sमाप_प्रकार ixgbe_hwmon_show_maxopthresh(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा hwmon_attr *ixgbe_attr = container_of(attr, काष्ठा hwmon_attr,
 						     dev_attr);
-	unsigned int value = ixgbe_attr->sensor->max_op_thresh;
+	अचिन्हित पूर्णांक value = ixgbe_attr->sensor->max_op_thresh;
 
 	/* display millidegree */
 	value *= 1000;
 
-	return sprintf(buf, "%u\n", value);
-}
+	वापस प्र_लिखो(buf, "%u\n", value);
+पूर्ण
 
 /**
- * ixgbe_add_hwmon_attr - Create hwmon attr table for a hwmon sysfs file.
- * @adapter: pointer to the adapter structure
+ * ixgbe_add_hwmon_attr - Create hwmon attr table क्रम a hwmon sysfs file.
+ * @adapter: poपूर्णांकer to the adapter काष्ठाure
  * @offset: offset in the eeprom sensor data table
  * @type: type of sensor data to display
  *
- * For each file we want in hwmon's sysfs interface we need a device_attribute
- * This is included in our hwmon_attr struct that contains the references to
- * the data structures we need to get the data to display.
+ * For each file we want in hwmon's sysfs पूर्णांकerface we need a device_attribute
+ * This is included in our hwmon_attr काष्ठा that contains the references to
+ * the data काष्ठाures we need to get the data to display.
  */
-static int ixgbe_add_hwmon_attr(struct ixgbe_adapter *adapter,
-				unsigned int offset, int type) {
-	int rc;
-	unsigned int n_attr;
-	struct hwmon_attr *ixgbe_attr;
+अटल पूर्णांक ixgbe_add_hwmon_attr(काष्ठा ixgbe_adapter *adapter,
+				अचिन्हित पूर्णांक offset, पूर्णांक type) अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक n_attr;
+	काष्ठा hwmon_attr *ixgbe_attr;
 
 	n_attr = adapter->ixgbe_hwmon_buff->n_hwmon;
 	ixgbe_attr = &adapter->ixgbe_hwmon_buff->hwmon_list[n_attr];
 
-	switch (type) {
-	case IXGBE_HWMON_TYPE_LOC:
+	चयन (type) अणु
+	हाल IXGBE_HWMON_TYPE_LOC:
 		ixgbe_attr->dev_attr.show = ixgbe_hwmon_show_location;
-		snprintf(ixgbe_attr->name, sizeof(ixgbe_attr->name),
+		snम_लिखो(ixgbe_attr->name, माप(ixgbe_attr->name),
 			 "temp%u_label", offset + 1);
-		break;
-	case IXGBE_HWMON_TYPE_TEMP:
+		अवरोध;
+	हाल IXGBE_HWMON_TYPE_TEMP:
 		ixgbe_attr->dev_attr.show = ixgbe_hwmon_show_temp;
-		snprintf(ixgbe_attr->name, sizeof(ixgbe_attr->name),
+		snम_लिखो(ixgbe_attr->name, माप(ixgbe_attr->name),
 			 "temp%u_input", offset + 1);
-		break;
-	case IXGBE_HWMON_TYPE_CAUTION:
+		अवरोध;
+	हाल IXGBE_HWMON_TYPE_CAUTION:
 		ixgbe_attr->dev_attr.show = ixgbe_hwmon_show_cautionthresh;
-		snprintf(ixgbe_attr->name, sizeof(ixgbe_attr->name),
+		snम_लिखो(ixgbe_attr->name, माप(ixgbe_attr->name),
 			 "temp%u_max", offset + 1);
-		break;
-	case IXGBE_HWMON_TYPE_MAX:
+		अवरोध;
+	हाल IXGBE_HWMON_TYPE_MAX:
 		ixgbe_attr->dev_attr.show = ixgbe_hwmon_show_maxopthresh;
-		snprintf(ixgbe_attr->name, sizeof(ixgbe_attr->name),
+		snम_लिखो(ixgbe_attr->name, माप(ixgbe_attr->name),
 			 "temp%u_crit", offset + 1);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -EPERM;
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* These always the same regardless of type */
 	ixgbe_attr->sensor =
 		&adapter->hw.mac.thermal_sensor_data.sensor[offset];
 	ixgbe_attr->hw = &adapter->hw;
-	ixgbe_attr->dev_attr.store = NULL;
+	ixgbe_attr->dev_attr.store = शून्य;
 	ixgbe_attr->dev_attr.attr.mode = 0444;
 	ixgbe_attr->dev_attr.attr.name = ixgbe_attr->name;
 	sysfs_attr_init(&ixgbe_attr->dev_attr.attr);
@@ -129,77 +130,77 @@ static int ixgbe_add_hwmon_attr(struct ixgbe_adapter *adapter,
 
 	++adapter->ixgbe_hwmon_buff->n_hwmon;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ixgbe_sysfs_del_adapter(struct ixgbe_adapter *adapter)
-{
-}
+अटल व्योम ixgbe_sysfs_del_adapter(काष्ठा ixgbe_adapter *adapter)
+अणु
+पूर्ण
 
-/* called from ixgbe_main.c */
-void ixgbe_sysfs_exit(struct ixgbe_adapter *adapter)
-{
+/* called from ixgbe_मुख्य.c */
+व्योम ixgbe_sysfs_निकास(काष्ठा ixgbe_adapter *adapter)
+अणु
 	ixgbe_sysfs_del_adapter(adapter);
-}
+पूर्ण
 
-/* called from ixgbe_main.c */
-int ixgbe_sysfs_init(struct ixgbe_adapter *adapter)
-{
-	struct hwmon_buff *ixgbe_hwmon;
-	struct device *hwmon_dev;
-	unsigned int i;
-	int rc = 0;
+/* called from ixgbe_मुख्य.c */
+पूर्णांक ixgbe_sysfs_init(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा hwmon_buff *ixgbe_hwmon;
+	काष्ठा device *hwmon_dev;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक rc = 0;
 
 	/* If this method isn't defined we don't support thermals */
-	if (adapter->hw.mac.ops.init_thermal_sensor_thresh == NULL) {
-		goto exit;
-	}
+	अगर (adapter->hw.mac.ops.init_thermal_sensor_thresh == शून्य) अणु
+		जाओ निकास;
+	पूर्ण
 
-	/* Don't create thermal hwmon interface if no sensors present */
-	if (adapter->hw.mac.ops.init_thermal_sensor_thresh(&adapter->hw))
-		goto exit;
+	/* Don't create thermal hwmon पूर्णांकerface अगर no sensors present */
+	अगर (adapter->hw.mac.ops.init_thermal_sensor_thresh(&adapter->hw))
+		जाओ निकास;
 
-	ixgbe_hwmon = devm_kzalloc(&adapter->pdev->dev, sizeof(*ixgbe_hwmon),
+	ixgbe_hwmon = devm_kzalloc(&adapter->pdev->dev, माप(*ixgbe_hwmon),
 				   GFP_KERNEL);
-	if (ixgbe_hwmon == NULL) {
+	अगर (ixgbe_hwmon == शून्य) अणु
 		rc = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	adapter->ixgbe_hwmon_buff = ixgbe_hwmon;
 
-	for (i = 0; i < IXGBE_MAX_SENSORS; i++) {
+	क्रम (i = 0; i < IXGBE_MAX_SENSORS; i++) अणु
 		/*
-		 * Only create hwmon sysfs entries for sensors that have
-		 * meaningful data for.
+		 * Only create hwmon sysfs entries क्रम sensors that have
+		 * meaningful data क्रम.
 		 */
-		if (adapter->hw.mac.thermal_sensor_data.sensor[i].location == 0)
-			continue;
+		अगर (adapter->hw.mac.thermal_sensor_data.sensor[i].location == 0)
+			जारी;
 
-		/* Bail if any hwmon attr struct fails to initialize */
+		/* Bail अगर any hwmon attr काष्ठा fails to initialize */
 		rc = ixgbe_add_hwmon_attr(adapter, i, IXGBE_HWMON_TYPE_CAUTION);
-		if (rc)
-			goto exit;
+		अगर (rc)
+			जाओ निकास;
 		rc = ixgbe_add_hwmon_attr(adapter, i, IXGBE_HWMON_TYPE_LOC);
-		if (rc)
-			goto exit;
+		अगर (rc)
+			जाओ निकास;
 		rc = ixgbe_add_hwmon_attr(adapter, i, IXGBE_HWMON_TYPE_TEMP);
-		if (rc)
-			goto exit;
+		अगर (rc)
+			जाओ निकास;
 		rc = ixgbe_add_hwmon_attr(adapter, i, IXGBE_HWMON_TYPE_MAX);
-		if (rc)
-			goto exit;
-	}
+		अगर (rc)
+			जाओ निकास;
+	पूर्ण
 
 	ixgbe_hwmon->groups[0] = &ixgbe_hwmon->group;
 	ixgbe_hwmon->group.attrs = ixgbe_hwmon->attrs;
 
-	hwmon_dev = devm_hwmon_device_register_with_groups(&adapter->pdev->dev,
+	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(&adapter->pdev->dev,
 							   "ixgbe",
 							   ixgbe_hwmon,
 							   ixgbe_hwmon->groups);
-	if (IS_ERR(hwmon_dev))
+	अगर (IS_ERR(hwmon_dev))
 		rc = PTR_ERR(hwmon_dev);
-exit:
-	return rc;
-}
+निकास:
+	वापस rc;
+पूर्ण
 

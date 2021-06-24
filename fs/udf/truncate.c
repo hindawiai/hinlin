@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * truncate.c
  *
  * PURPOSE
- *	Truncate handling routines for the OSTA-UDF(tm) filesystem.
+ *	Truncate handling routines क्रम the OSTA-UDF(पंचांग) fileप्रणाली.
  *
  * COPYRIGHT
  *	This file is distributed under the terms of the GNU General Public
@@ -19,272 +20,272 @@
  *
  */
 
-#include "udfdecl.h"
-#include <linux/fs.h>
-#include <linux/mm.h>
+#समावेश "udfdecl.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
 
-#include "udf_i.h"
-#include "udf_sb.h"
+#समावेश "udf_i.h"
+#समावेश "udf_sb.h"
 
-static void extent_trunc(struct inode *inode, struct extent_position *epos,
-			 struct kernel_lb_addr *eloc, int8_t etype, uint32_t elen,
-			 uint32_t nelen)
-{
-	struct kernel_lb_addr neloc = {};
-	int last_block = (elen + inode->i_sb->s_blocksize - 1) >>
+अटल व्योम extent_trunc(काष्ठा inode *inode, काष्ठा extent_position *epos,
+			 काष्ठा kernel_lb_addr *eloc, पूर्णांक8_t etype, uपूर्णांक32_t elen,
+			 uपूर्णांक32_t nelen)
+अणु
+	काष्ठा kernel_lb_addr neloc = अणुपूर्ण;
+	पूर्णांक last_block = (elen + inode->i_sb->s_blocksize - 1) >>
 		inode->i_sb->s_blocksize_bits;
-	int first_block = (nelen + inode->i_sb->s_blocksize - 1) >>
+	पूर्णांक first_block = (nelen + inode->i_sb->s_blocksize - 1) >>
 		inode->i_sb->s_blocksize_bits;
 
-	if (nelen) {
-		if (etype == (EXT_NOT_RECORDED_ALLOCATED >> 30)) {
-			udf_free_blocks(inode->i_sb, inode, eloc, 0,
+	अगर (nelen) अणु
+		अगर (etype == (EXT_NOT_RECORDED_ALLOCATED >> 30)) अणु
+			udf_मुक्त_blocks(inode->i_sb, inode, eloc, 0,
 					last_block);
 			etype = (EXT_NOT_RECORDED_NOT_ALLOCATED >> 30);
-		} else
+		पूर्ण अन्यथा
 			neloc = *eloc;
 		nelen = (etype << 30) | nelen;
-	}
+	पूर्ण
 
-	if (elen != nelen) {
-		udf_write_aext(inode, epos, &neloc, nelen, 0);
-		if (last_block > first_block) {
-			if (etype == (EXT_RECORDED_ALLOCATED >> 30))
+	अगर (elen != nelen) अणु
+		udf_ग_लिखो_aext(inode, epos, &neloc, nelen, 0);
+		अगर (last_block > first_block) अणु
+			अगर (etype == (EXT_RECORDED_ALLOCATED >> 30))
 				mark_inode_dirty(inode);
 
-			if (etype != (EXT_NOT_RECORDED_NOT_ALLOCATED >> 30))
-				udf_free_blocks(inode->i_sb, inode, eloc,
+			अगर (etype != (EXT_NOT_RECORDED_NOT_ALLOCATED >> 30))
+				udf_मुक्त_blocks(inode->i_sb, inode, eloc,
 						first_block,
 						last_block - first_block);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Truncate the last extent to match i_size. This function assumes
- * that preallocation extent is already truncated.
+ * that pपुनः_स्मृतिation extent is alपढ़ोy truncated.
  */
-void udf_truncate_tail_extent(struct inode *inode)
-{
-	struct extent_position epos = {};
-	struct kernel_lb_addr eloc;
-	uint32_t elen, nelen;
-	uint64_t lbcount = 0;
-	int8_t etype = -1, netype;
-	int adsize;
-	struct udf_inode_info *iinfo = UDF_I(inode);
+व्योम udf_truncate_tail_extent(काष्ठा inode *inode)
+अणु
+	काष्ठा extent_position epos = अणुपूर्ण;
+	काष्ठा kernel_lb_addr eloc;
+	uपूर्णांक32_t elen, nelen;
+	uपूर्णांक64_t lbcount = 0;
+	पूर्णांक8_t etype = -1, netype;
+	पूर्णांक adsize;
+	काष्ठा udf_inode_info *iinfo = UDF_I(inode);
 
-	if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_IN_ICB ||
+	अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_IN_ICB ||
 	    inode->i_size == iinfo->i_lenExtents)
-		return;
+		वापस;
 	/* Are we going to delete the file anyway? */
-	if (inode->i_nlink == 0)
-		return;
+	अगर (inode->i_nlink == 0)
+		वापस;
 
-	if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
-		adsize = sizeof(struct short_ad);
-	else if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
-		adsize = sizeof(struct long_ad);
-	else
+	अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
+		adsize = माप(काष्ठा लघु_ad);
+	अन्यथा अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
+		adsize = माप(काष्ठा दीर्घ_ad);
+	अन्यथा
 		BUG();
 
 	/* Find the last extent in the file */
-	while ((netype = udf_next_aext(inode, &epos, &eloc, &elen, 1)) != -1) {
+	जबतक ((netype = udf_next_aext(inode, &epos, &eloc, &elen, 1)) != -1) अणु
 		etype = netype;
 		lbcount += elen;
-		if (lbcount > inode->i_size) {
-			if (lbcount - inode->i_size >= inode->i_sb->s_blocksize)
+		अगर (lbcount > inode->i_size) अणु
+			अगर (lbcount - inode->i_size >= inode->i_sb->s_blocksize)
 				udf_warn(inode->i_sb,
 					 "Too long extent after EOF in inode %u: i_size: %lld lbcount: %lld extent %u+%u\n",
-					 (unsigned)inode->i_ino,
-					 (long long)inode->i_size,
-					 (long long)lbcount,
-					 (unsigned)eloc.logicalBlockNum,
-					 (unsigned)elen);
+					 (अचिन्हित)inode->i_ino,
+					 (दीर्घ दीर्घ)inode->i_size,
+					 (दीर्घ दीर्घ)lbcount,
+					 (अचिन्हित)eloc.logicalBlockNum,
+					 (अचिन्हित)elen);
 			nelen = elen - (lbcount - inode->i_size);
 			epos.offset -= adsize;
 			extent_trunc(inode, &epos, &eloc, etype, elen, nelen);
 			epos.offset += adsize;
-			if (udf_next_aext(inode, &epos, &eloc, &elen, 1) != -1)
+			अगर (udf_next_aext(inode, &epos, &eloc, &elen, 1) != -1)
 				udf_err(inode->i_sb,
 					"Extent after EOF in inode %u\n",
-					(unsigned)inode->i_ino);
-			break;
-		}
-	}
-	/* This inode entry is in-memory only and thus we don't have to mark
+					(अचिन्हित)inode->i_ino);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	/* This inode entry is in-memory only and thus we करोn't have to mark
 	 * the inode dirty */
 	iinfo->i_lenExtents = inode->i_size;
-	brelse(epos.bh);
-}
+	brअन्यथा(epos.bh);
+पूर्ण
 
-void udf_discard_prealloc(struct inode *inode)
-{
-	struct extent_position epos = { NULL, 0, {0, 0} };
-	struct kernel_lb_addr eloc;
-	uint32_t elen;
-	uint64_t lbcount = 0;
-	int8_t etype = -1, netype;
-	int adsize;
-	struct udf_inode_info *iinfo = UDF_I(inode);
+व्योम udf_discard_pपुनः_स्मृति(काष्ठा inode *inode)
+अणु
+	काष्ठा extent_position epos = अणु शून्य, 0, अणु0, 0पूर्ण पूर्ण;
+	काष्ठा kernel_lb_addr eloc;
+	uपूर्णांक32_t elen;
+	uपूर्णांक64_t lbcount = 0;
+	पूर्णांक8_t etype = -1, netype;
+	पूर्णांक adsize;
+	काष्ठा udf_inode_info *iinfo = UDF_I(inode);
 
-	if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_IN_ICB ||
+	अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_IN_ICB ||
 	    inode->i_size == iinfo->i_lenExtents)
-		return;
+		वापस;
 
-	if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
-		adsize = sizeof(struct short_ad);
-	else if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
-		adsize = sizeof(struct long_ad);
-	else
+	अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
+		adsize = माप(काष्ठा लघु_ad);
+	अन्यथा अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
+		adsize = माप(काष्ठा दीर्घ_ad);
+	अन्यथा
 		adsize = 0;
 
 	epos.block = iinfo->i_location;
 
 	/* Find the last extent in the file */
-	while ((netype = udf_next_aext(inode, &epos, &eloc, &elen, 1)) != -1) {
+	जबतक ((netype = udf_next_aext(inode, &epos, &eloc, &elen, 1)) != -1) अणु
 		etype = netype;
 		lbcount += elen;
-	}
-	if (etype == (EXT_NOT_RECORDED_ALLOCATED >> 30)) {
+	पूर्ण
+	अगर (etype == (EXT_NOT_RECORDED_ALLOCATED >> 30)) अणु
 		epos.offset -= adsize;
 		lbcount -= elen;
 		extent_trunc(inode, &epos, &eloc, etype, elen, 0);
-		if (!epos.bh) {
+		अगर (!epos.bh) अणु
 			iinfo->i_lenAlloc =
 				epos.offset -
 				udf_file_entry_alloc_offset(inode);
 			mark_inode_dirty(inode);
-		} else {
-			struct allocExtDesc *aed =
-				(struct allocExtDesc *)(epos.bh->b_data);
+		पूर्ण अन्यथा अणु
+			काष्ठा allocExtDesc *aed =
+				(काष्ठा allocExtDesc *)(epos.bh->b_data);
 			aed->lengthAllocDescs =
 				cpu_to_le32(epos.offset -
-					    sizeof(struct allocExtDesc));
-			if (!UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_STRICT) ||
+					    माप(काष्ठा allocExtDesc));
+			अगर (!UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_STRICT) ||
 			    UDF_SB(inode->i_sb)->s_udfrev >= 0x0201)
 				udf_update_tag(epos.bh->b_data, epos.offset);
-			else
+			अन्यथा
 				udf_update_tag(epos.bh->b_data,
-					       sizeof(struct allocExtDesc));
+					       माप(काष्ठा allocExtDesc));
 			mark_buffer_dirty_inode(epos.bh, inode);
-		}
-	}
-	/* This inode entry is in-memory only and thus we don't have to mark
+		पूर्ण
+	पूर्ण
+	/* This inode entry is in-memory only and thus we करोn't have to mark
 	 * the inode dirty */
 	iinfo->i_lenExtents = lbcount;
-	brelse(epos.bh);
-}
+	brअन्यथा(epos.bh);
+पूर्ण
 
-static void udf_update_alloc_ext_desc(struct inode *inode,
-				      struct extent_position *epos,
+अटल व्योम udf_update_alloc_ext_desc(काष्ठा inode *inode,
+				      काष्ठा extent_position *epos,
 				      u32 lenalloc)
-{
-	struct super_block *sb = inode->i_sb;
-	struct udf_sb_info *sbi = UDF_SB(sb);
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा udf_sb_info *sbi = UDF_SB(sb);
 
-	struct allocExtDesc *aed = (struct allocExtDesc *) (epos->bh->b_data);
-	int len = sizeof(struct allocExtDesc);
+	काष्ठा allocExtDesc *aed = (काष्ठा allocExtDesc *) (epos->bh->b_data);
+	पूर्णांक len = माप(काष्ठा allocExtDesc);
 
 	aed->lengthAllocDescs =	cpu_to_le32(lenalloc);
-	if (!UDF_QUERY_FLAG(sb, UDF_FLAG_STRICT) || sbi->s_udfrev >= 0x0201)
+	अगर (!UDF_QUERY_FLAG(sb, UDF_FLAG_STRICT) || sbi->s_udfrev >= 0x0201)
 		len += lenalloc;
 
 	udf_update_tag(epos->bh->b_data, len);
 	mark_buffer_dirty_inode(epos->bh, inode);
-}
+पूर्ण
 
 /*
  * Truncate extents of inode to inode->i_size. This function can be used only
- * for making file shorter. For making file longer, udf_extend_file() has to
+ * क्रम making file लघुer. For making file दीर्घer, udf_extend_file() has to
  * be used.
  */
-int udf_truncate_extents(struct inode *inode)
-{
-	struct extent_position epos;
-	struct kernel_lb_addr eloc, neloc = {};
-	uint32_t elen, nelen = 0, indirect_ext_len = 0, lenalloc;
-	int8_t etype;
-	struct super_block *sb = inode->i_sb;
+पूर्णांक udf_truncate_extents(काष्ठा inode *inode)
+अणु
+	काष्ठा extent_position epos;
+	काष्ठा kernel_lb_addr eloc, neloc = अणुपूर्ण;
+	uपूर्णांक32_t elen, nelen = 0, indirect_ext_len = 0, lenalloc;
+	पूर्णांक8_t etype;
+	काष्ठा super_block *sb = inode->i_sb;
 	sector_t first_block = inode->i_size >> sb->s_blocksize_bits, offset;
 	loff_t byte_offset;
-	int adsize;
-	struct udf_inode_info *iinfo = UDF_I(inode);
+	पूर्णांक adsize;
+	काष्ठा udf_inode_info *iinfo = UDF_I(inode);
 
-	if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
-		adsize = sizeof(struct short_ad);
-	else if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
-		adsize = sizeof(struct long_ad);
-	else
+	अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
+		adsize = माप(काष्ठा लघु_ad);
+	अन्यथा अगर (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
+		adsize = माप(काष्ठा दीर्घ_ad);
+	अन्यथा
 		BUG();
 
 	etype = inode_bmap(inode, first_block, &epos, &eloc, &elen, &offset);
 	byte_offset = (offset << sb->s_blocksize_bits) +
 		(inode->i_size & (sb->s_blocksize - 1));
-	if (etype == -1) {
+	अगर (etype == -1) अणु
 		/* We should extend the file? */
 		WARN_ON(byte_offset);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	epos.offset -= adsize;
 	extent_trunc(inode, &epos, &eloc, etype, elen, byte_offset);
 	epos.offset += adsize;
-	if (byte_offset)
+	अगर (byte_offset)
 		lenalloc = epos.offset;
-	else
+	अन्यथा
 		lenalloc = epos.offset - adsize;
 
-	if (!epos.bh)
+	अगर (!epos.bh)
 		lenalloc -= udf_file_entry_alloc_offset(inode);
-	else
-		lenalloc -= sizeof(struct allocExtDesc);
+	अन्यथा
+		lenalloc -= माप(काष्ठा allocExtDesc);
 
-	while ((etype = udf_current_aext(inode, &epos, &eloc,
-					 &elen, 0)) != -1) {
-		if (etype == (EXT_NEXT_EXTENT_ALLOCDESCS >> 30)) {
-			udf_write_aext(inode, &epos, &neloc, nelen, 0);
-			if (indirect_ext_len) {
-				/* We managed to free all extents in the
-				 * indirect extent - free it too */
+	जबतक ((etype = udf_current_aext(inode, &epos, &eloc,
+					 &elen, 0)) != -1) अणु
+		अगर (etype == (EXT_NEXT_EXTENT_ALLOCDESCS >> 30)) अणु
+			udf_ग_लिखो_aext(inode, &epos, &neloc, nelen, 0);
+			अगर (indirect_ext_len) अणु
+				/* We managed to मुक्त all extents in the
+				 * indirect extent - मुक्त it too */
 				BUG_ON(!epos.bh);
-				udf_free_blocks(sb, NULL, &epos.block,
+				udf_मुक्त_blocks(sb, शून्य, &epos.block,
 						0, indirect_ext_len);
-			} else if (!epos.bh) {
+			पूर्ण अन्यथा अगर (!epos.bh) अणु
 				iinfo->i_lenAlloc = lenalloc;
 				mark_inode_dirty(inode);
-			} else
+			पूर्ण अन्यथा
 				udf_update_alloc_ext_desc(inode,
 						&epos, lenalloc);
-			brelse(epos.bh);
-			epos.offset = sizeof(struct allocExtDesc);
+			brअन्यथा(epos.bh);
+			epos.offset = माप(काष्ठा allocExtDesc);
 			epos.block = eloc;
-			epos.bh = udf_tread(sb,
+			epos.bh = udf_tपढ़ो(sb,
 					udf_get_lb_pblock(sb, &eloc, 0));
-			/* Error reading indirect block? */
-			if (!epos.bh)
-				return -EIO;
-			if (elen)
+			/* Error पढ़ोing indirect block? */
+			अगर (!epos.bh)
+				वापस -EIO;
+			अगर (elen)
 				indirect_ext_len =
 					(elen + sb->s_blocksize - 1) >>
 					sb->s_blocksize_bits;
-			else
+			अन्यथा
 				indirect_ext_len = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			extent_trunc(inode, &epos, &eloc, etype, elen, 0);
 			epos.offset += adsize;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (indirect_ext_len) {
+	अगर (indirect_ext_len) अणु
 		BUG_ON(!epos.bh);
-		udf_free_blocks(sb, NULL, &epos.block, 0, indirect_ext_len);
-	} else if (!epos.bh) {
+		udf_मुक्त_blocks(sb, शून्य, &epos.block, 0, indirect_ext_len);
+	पूर्ण अन्यथा अगर (!epos.bh) अणु
 		iinfo->i_lenAlloc = lenalloc;
 		mark_inode_dirty(inode);
-	} else
+	पूर्ण अन्यथा
 		udf_update_alloc_ext_desc(inode, &epos, lenalloc);
 	iinfo->i_lenExtents = inode->i_size;
 
-	brelse(epos.bh);
-	return 0;
-}
+	brअन्यथा(epos.bh);
+	वापस 0;
+पूर्ण

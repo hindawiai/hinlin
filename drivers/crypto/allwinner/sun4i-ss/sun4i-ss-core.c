@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * sun4i-ss-core.c - hardware cryptographic accelerator for Allwinner A20 SoC
+ * sun4i-ss-core.c - hardware cryptographic accelerator क्रम Allwinner A20 SoC
  *
  * Copyright (C) 2013-2015 Corentin LABBE <clabbe.montjoie@gmail.com>
  *
- * Core file which registers crypto algorithms supported by the SS.
+ * Core file which रेजिस्टरs crypto algorithms supported by the SS.
  *
- * You could find a link for the datasheet in Documentation/arm/sunxi.rst
+ * You could find a link क्रम the datasheet in Documentation/arm/sunxi.rst
  */
-#include <linux/clk.h>
-#include <linux/crypto.h>
-#include <linux/debugfs.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <crypto/scatterwalk.h>
-#include <linux/scatterlist.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <crypto/scatterwalk.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/reset.h>
 
-#include "sun4i-ss.h"
+#समावेश "sun4i-ss.h"
 
-static const struct ss_variant ss_a10_variant = {
+अटल स्थिर काष्ठा ss_variant ss_a10_variant = अणु
 	.sha1_in_be = false,
-};
+पूर्ण;
 
-static const struct ss_variant ss_a33_variant = {
+अटल स्थिर काष्ठा ss_variant ss_a33_variant = अणु
 	.sha1_in_be = true,
-};
+पूर्ण;
 
-static struct sun4i_ss_alg_template ss_algs[] = {
-{       .type = CRYPTO_ALG_TYPE_AHASH,
+अटल काष्ठा sun4i_ss_alg_ढाँचा ss_algs[] = अणु
+अणु       .type = CRYPTO_ALG_TYPE_AHASH,
 	.mode = SS_OP_MD5,
-	.alg.hash = {
+	.alg.hash = अणु
 		.init = sun4i_hash_init,
 		.update = sun4i_hash_update,
 		.final = sun4i_hash_final,
@@ -43,26 +44,26 @@ static struct sun4i_ss_alg_template ss_algs[] = {
 		.digest = sun4i_hash_digest,
 		.export = sun4i_hash_export_md5,
 		.import = sun4i_hash_import_md5,
-		.halg = {
+		.halg = अणु
 			.digestsize = MD5_DIGEST_SIZE,
-			.statesize = sizeof(struct md5_state),
-			.base = {
+			.statesize = माप(काष्ठा md5_state),
+			.base = अणु
 				.cra_name = "md5",
 				.cra_driver_name = "md5-sun4i-ss",
 				.cra_priority = 300,
 				.cra_alignmask = 3,
 				.cra_blocksize = MD5_HMAC_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct sun4i_req_ctx),
+				.cra_ctxsize = माप(काष्ठा sun4i_req_ctx),
 				.cra_module = THIS_MODULE,
 				.cra_init = sun4i_hash_crainit,
-				.cra_exit = sun4i_hash_craexit,
-			}
-		}
-	}
-},
-{       .type = CRYPTO_ALG_TYPE_AHASH,
+				.cra_निकास = sun4i_hash_craनिकास,
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण,
+अणु       .type = CRYPTO_ALG_TYPE_AHASH,
 	.mode = SS_OP_SHA1,
-	.alg.hash = {
+	.alg.hash = अणु
 		.init = sun4i_hash_init,
 		.update = sun4i_hash_update,
 		.final = sun4i_hash_final,
@@ -70,382 +71,382 @@ static struct sun4i_ss_alg_template ss_algs[] = {
 		.digest = sun4i_hash_digest,
 		.export = sun4i_hash_export_sha1,
 		.import = sun4i_hash_import_sha1,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA1_DIGEST_SIZE,
-			.statesize = sizeof(struct sha1_state),
-			.base = {
+			.statesize = माप(काष्ठा sha1_state),
+			.base = अणु
 				.cra_name = "sha1",
 				.cra_driver_name = "sha1-sun4i-ss",
 				.cra_priority = 300,
 				.cra_alignmask = 3,
 				.cra_blocksize = SHA1_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct sun4i_req_ctx),
+				.cra_ctxsize = माप(काष्ठा sun4i_req_ctx),
 				.cra_module = THIS_MODULE,
 				.cra_init = sun4i_hash_crainit,
-				.cra_exit = sun4i_hash_craexit,
-			}
-		}
-	}
-},
-{       .type = CRYPTO_ALG_TYPE_SKCIPHER,
-	.alg.crypto = {
+				.cra_निकास = sun4i_hash_craनिकास,
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण,
+अणु       .type = CRYPTO_ALG_TYPE_SKCIPHER,
+	.alg.crypto = अणु
 		.setkey         = sun4i_ss_aes_setkey,
 		.encrypt        = sun4i_ss_cbc_aes_encrypt,
 		.decrypt        = sun4i_ss_cbc_aes_decrypt,
 		.min_keysize	= AES_MIN_KEY_SIZE,
 		.max_keysize	= AES_MAX_KEY_SIZE,
 		.ivsize		= AES_BLOCK_SIZE,
-		.base = {
+		.base = अणु
 			.cra_name = "cbc(aes)",
 			.cra_driver_name = "cbc-aes-sun4i-ss",
 			.cra_priority = 300,
 			.cra_blocksize = AES_BLOCK_SIZE,
 			.cra_flags = CRYPTO_ALG_KERN_DRIVER_ONLY | CRYPTO_ALG_NEED_FALLBACK,
-			.cra_ctxsize = sizeof(struct sun4i_tfm_ctx),
+			.cra_ctxsize = माप(काष्ठा sun4i_tfm_ctx),
 			.cra_module = THIS_MODULE,
 			.cra_alignmask = 3,
 			.cra_init = sun4i_ss_cipher_init,
-			.cra_exit = sun4i_ss_cipher_exit,
-		}
-	}
-},
-{       .type = CRYPTO_ALG_TYPE_SKCIPHER,
-	.alg.crypto = {
+			.cra_निकास = sun4i_ss_cipher_निकास,
+		पूर्ण
+	पूर्ण
+पूर्ण,
+अणु       .type = CRYPTO_ALG_TYPE_SKCIPHER,
+	.alg.crypto = अणु
 		.setkey         = sun4i_ss_aes_setkey,
 		.encrypt        = sun4i_ss_ecb_aes_encrypt,
 		.decrypt        = sun4i_ss_ecb_aes_decrypt,
 		.min_keysize	= AES_MIN_KEY_SIZE,
 		.max_keysize	= AES_MAX_KEY_SIZE,
-		.base = {
+		.base = अणु
 			.cra_name = "ecb(aes)",
 			.cra_driver_name = "ecb-aes-sun4i-ss",
 			.cra_priority = 300,
 			.cra_blocksize = AES_BLOCK_SIZE,
 			.cra_flags = CRYPTO_ALG_KERN_DRIVER_ONLY | CRYPTO_ALG_NEED_FALLBACK,
-			.cra_ctxsize = sizeof(struct sun4i_tfm_ctx),
+			.cra_ctxsize = माप(काष्ठा sun4i_tfm_ctx),
 			.cra_module = THIS_MODULE,
 			.cra_alignmask = 3,
 			.cra_init = sun4i_ss_cipher_init,
-			.cra_exit = sun4i_ss_cipher_exit,
-		}
-	}
-},
-{       .type = CRYPTO_ALG_TYPE_SKCIPHER,
-	.alg.crypto = {
+			.cra_निकास = sun4i_ss_cipher_निकास,
+		पूर्ण
+	पूर्ण
+पूर्ण,
+अणु       .type = CRYPTO_ALG_TYPE_SKCIPHER,
+	.alg.crypto = अणु
 		.setkey         = sun4i_ss_des_setkey,
 		.encrypt        = sun4i_ss_cbc_des_encrypt,
 		.decrypt        = sun4i_ss_cbc_des_decrypt,
 		.min_keysize    = DES_KEY_SIZE,
 		.max_keysize    = DES_KEY_SIZE,
 		.ivsize         = DES_BLOCK_SIZE,
-		.base = {
+		.base = अणु
 			.cra_name = "cbc(des)",
 			.cra_driver_name = "cbc-des-sun4i-ss",
 			.cra_priority = 300,
 			.cra_blocksize = DES_BLOCK_SIZE,
 			.cra_flags = CRYPTO_ALG_KERN_DRIVER_ONLY | CRYPTO_ALG_NEED_FALLBACK,
-			.cra_ctxsize = sizeof(struct sun4i_req_ctx),
+			.cra_ctxsize = माप(काष्ठा sun4i_req_ctx),
 			.cra_module = THIS_MODULE,
 			.cra_alignmask = 3,
 			.cra_init = sun4i_ss_cipher_init,
-			.cra_exit = sun4i_ss_cipher_exit,
-		}
-	}
-},
-{       .type = CRYPTO_ALG_TYPE_SKCIPHER,
-	.alg.crypto = {
+			.cra_निकास = sun4i_ss_cipher_निकास,
+		पूर्ण
+	पूर्ण
+पूर्ण,
+अणु       .type = CRYPTO_ALG_TYPE_SKCIPHER,
+	.alg.crypto = अणु
 		.setkey         = sun4i_ss_des_setkey,
 		.encrypt        = sun4i_ss_ecb_des_encrypt,
 		.decrypt        = sun4i_ss_ecb_des_decrypt,
 		.min_keysize    = DES_KEY_SIZE,
 		.max_keysize    = DES_KEY_SIZE,
-		.base = {
+		.base = अणु
 			.cra_name = "ecb(des)",
 			.cra_driver_name = "ecb-des-sun4i-ss",
 			.cra_priority = 300,
 			.cra_blocksize = DES_BLOCK_SIZE,
 			.cra_flags = CRYPTO_ALG_KERN_DRIVER_ONLY | CRYPTO_ALG_NEED_FALLBACK,
-			.cra_ctxsize = sizeof(struct sun4i_req_ctx),
+			.cra_ctxsize = माप(काष्ठा sun4i_req_ctx),
 			.cra_module = THIS_MODULE,
 			.cra_alignmask = 3,
 			.cra_init = sun4i_ss_cipher_init,
-			.cra_exit = sun4i_ss_cipher_exit,
-		}
-	}
-},
-{       .type = CRYPTO_ALG_TYPE_SKCIPHER,
-	.alg.crypto = {
+			.cra_निकास = sun4i_ss_cipher_निकास,
+		पूर्ण
+	पूर्ण
+पूर्ण,
+अणु       .type = CRYPTO_ALG_TYPE_SKCIPHER,
+	.alg.crypto = अणु
 		.setkey         = sun4i_ss_des3_setkey,
 		.encrypt        = sun4i_ss_cbc_des3_encrypt,
 		.decrypt        = sun4i_ss_cbc_des3_decrypt,
 		.min_keysize    = DES3_EDE_KEY_SIZE,
 		.max_keysize    = DES3_EDE_KEY_SIZE,
 		.ivsize         = DES3_EDE_BLOCK_SIZE,
-		.base = {
+		.base = अणु
 			.cra_name = "cbc(des3_ede)",
 			.cra_driver_name = "cbc-des3-sun4i-ss",
 			.cra_priority = 300,
 			.cra_blocksize = DES3_EDE_BLOCK_SIZE,
 			.cra_flags = CRYPTO_ALG_KERN_DRIVER_ONLY | CRYPTO_ALG_NEED_FALLBACK,
-			.cra_ctxsize = sizeof(struct sun4i_req_ctx),
+			.cra_ctxsize = माप(काष्ठा sun4i_req_ctx),
 			.cra_module = THIS_MODULE,
 			.cra_alignmask = 3,
 			.cra_init = sun4i_ss_cipher_init,
-			.cra_exit = sun4i_ss_cipher_exit,
-		}
-	}
-},
-{       .type = CRYPTO_ALG_TYPE_SKCIPHER,
-	.alg.crypto = {
+			.cra_निकास = sun4i_ss_cipher_निकास,
+		पूर्ण
+	पूर्ण
+पूर्ण,
+अणु       .type = CRYPTO_ALG_TYPE_SKCIPHER,
+	.alg.crypto = अणु
 		.setkey         = sun4i_ss_des3_setkey,
 		.encrypt        = sun4i_ss_ecb_des3_encrypt,
 		.decrypt        = sun4i_ss_ecb_des3_decrypt,
 		.min_keysize    = DES3_EDE_KEY_SIZE,
 		.max_keysize    = DES3_EDE_KEY_SIZE,
-		.base = {
+		.base = अणु
 			.cra_name = "ecb(des3_ede)",
 			.cra_driver_name = "ecb-des3-sun4i-ss",
 			.cra_priority = 300,
 			.cra_blocksize = DES3_EDE_BLOCK_SIZE,
 			.cra_flags = CRYPTO_ALG_KERN_DRIVER_ONLY | CRYPTO_ALG_NEED_FALLBACK,
-			.cra_ctxsize = sizeof(struct sun4i_req_ctx),
+			.cra_ctxsize = माप(काष्ठा sun4i_req_ctx),
 			.cra_module = THIS_MODULE,
 			.cra_alignmask = 3,
 			.cra_init = sun4i_ss_cipher_init,
-			.cra_exit = sun4i_ss_cipher_exit,
-		}
-	}
-},
-#ifdef CONFIG_CRYPTO_DEV_SUN4I_SS_PRNG
-{
+			.cra_निकास = sun4i_ss_cipher_निकास,
+		पूर्ण
+	पूर्ण
+पूर्ण,
+#अगर_घोषित CONFIG_CRYPTO_DEV_SUN4I_SS_PRNG
+अणु
 	.type = CRYPTO_ALG_TYPE_RNG,
-	.alg.rng = {
-		.base = {
+	.alg.rng = अणु
+		.base = अणु
 			.cra_name		= "stdrng",
 			.cra_driver_name	= "sun4i_ss_rng",
 			.cra_priority		= 300,
 			.cra_ctxsize		= 0,
 			.cra_module		= THIS_MODULE,
-		},
+		पूर्ण,
 		.generate               = sun4i_ss_prng_generate,
 		.seed                   = sun4i_ss_prng_seed,
 		.seedsize               = SS_SEED_LEN / BITS_PER_BYTE,
-	}
-},
-#endif
-};
+	पूर्ण
+पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static int sun4i_ss_dbgfs_read(struct seq_file *seq, void *v)
-{
-	unsigned int i;
+अटल पूर्णांक sun4i_ss_dbgfs_पढ़ो(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ss_algs); i++) {
-		if (!ss_algs[i].ss)
-			continue;
-		switch (ss_algs[i].type) {
-		case CRYPTO_ALG_TYPE_SKCIPHER:
-			seq_printf(seq, "%s %s reqs=%lu opti=%lu fallback=%lu tsize=%lu\n",
+	क्रम (i = 0; i < ARRAY_SIZE(ss_algs); i++) अणु
+		अगर (!ss_algs[i].ss)
+			जारी;
+		चयन (ss_algs[i].type) अणु
+		हाल CRYPTO_ALG_TYPE_SKCIPHER:
+			seq_म_लिखो(seq, "%s %s reqs=%lu opti=%lu fallback=%lu tsize=%lu\n",
 				   ss_algs[i].alg.crypto.base.cra_driver_name,
 				   ss_algs[i].alg.crypto.base.cra_name,
 				   ss_algs[i].stat_req, ss_algs[i].stat_opti, ss_algs[i].stat_fb,
 				   ss_algs[i].stat_bytes);
-			break;
-		case CRYPTO_ALG_TYPE_RNG:
-			seq_printf(seq, "%s %s reqs=%lu tsize=%lu\n",
+			अवरोध;
+		हाल CRYPTO_ALG_TYPE_RNG:
+			seq_म_लिखो(seq, "%s %s reqs=%lu tsize=%lu\n",
 				   ss_algs[i].alg.rng.base.cra_driver_name,
 				   ss_algs[i].alg.rng.base.cra_name,
 				   ss_algs[i].stat_req, ss_algs[i].stat_bytes);
-			break;
-		case CRYPTO_ALG_TYPE_AHASH:
-			seq_printf(seq, "%s %s reqs=%lu\n",
+			अवरोध;
+		हाल CRYPTO_ALG_TYPE_AHASH:
+			seq_म_लिखो(seq, "%s %s reqs=%lu\n",
 				   ss_algs[i].alg.hash.halg.base.cra_driver_name,
 				   ss_algs[i].alg.hash.halg.base.cra_name,
 				   ss_algs[i].stat_req);
-			break;
-		}
-	}
-	return 0;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int sun4i_ss_dbgfs_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, sun4i_ss_dbgfs_read, inode->i_private);
-}
+अटल पूर्णांक sun4i_ss_dbgfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, sun4i_ss_dbgfs_पढ़ो, inode->i_निजी);
+पूर्ण
 
-static const struct file_operations sun4i_ss_debugfs_fops = {
+अटल स्थिर काष्ठा file_operations sun4i_ss_debugfs_fops = अणु
 	.owner = THIS_MODULE,
-	.open = sun4i_ss_dbgfs_open,
-	.read = seq_read,
+	.खोलो = sun4i_ss_dbgfs_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = single_release,
-};
+पूर्ण;
 
 /*
- * Power management strategy: The device is suspended unless a TFM exists for
+ * Power management strategy: The device is suspended unless a TFM exists क्रम
  * one of the algorithms proposed by this driver.
  */
-static int sun4i_ss_pm_suspend(struct device *dev)
-{
-	struct sun4i_ss_ctx *ss = dev_get_drvdata(dev);
+अटल पूर्णांक sun4i_ss_pm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sun4i_ss_ctx *ss = dev_get_drvdata(dev);
 
-	reset_control_assert(ss->reset);
+	reset_control_निश्चित(ss->reset);
 
 	clk_disable_unprepare(ss->ssclk);
 	clk_disable_unprepare(ss->busclk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_ss_pm_resume(struct device *dev)
-{
-	struct sun4i_ss_ctx *ss = dev_get_drvdata(dev);
+अटल पूर्णांक sun4i_ss_pm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sun4i_ss_ctx *ss = dev_get_drvdata(dev);
 
-	int err;
+	पूर्णांक err;
 
 	err = clk_prepare_enable(ss->busclk);
-	if (err) {
+	अगर (err) अणु
 		dev_err(ss->dev, "Cannot prepare_enable busclk\n");
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 
 	err = clk_prepare_enable(ss->ssclk);
-	if (err) {
+	अगर (err) अणु
 		dev_err(ss->dev, "Cannot prepare_enable ssclk\n");
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 
-	err = reset_control_deassert(ss->reset);
-	if (err) {
+	err = reset_control_deनिश्चित(ss->reset);
+	अगर (err) अणु
 		dev_err(ss->dev, "Cannot deassert reset control\n");
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 
-	return err;
+	वापस err;
 err_enable:
 	sun4i_ss_pm_suspend(dev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct dev_pm_ops sun4i_ss_pm_ops = {
-	SET_RUNTIME_PM_OPS(sun4i_ss_pm_suspend, sun4i_ss_pm_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops sun4i_ss_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(sun4i_ss_pm_suspend, sun4i_ss_pm_resume, शून्य)
+पूर्ण;
 
 /*
- * When power management is enabled, this function enables the PM and set the
+ * When घातer management is enabled, this function enables the PM and set the
  * device as suspended
- * When power management is disabled, this function just enables the device
+ * When घातer management is disabled, this function just enables the device
  */
-static int sun4i_ss_pm_init(struct sun4i_ss_ctx *ss)
-{
-	int err;
+अटल पूर्णांक sun4i_ss_pm_init(काष्ठा sun4i_ss_ctx *ss)
+अणु
+	पूर्णांक err;
 
-	pm_runtime_use_autosuspend(ss->dev);
-	pm_runtime_set_autosuspend_delay(ss->dev, 2000);
+	pm_runसमय_use_स्वतःsuspend(ss->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(ss->dev, 2000);
 
-	err = pm_runtime_set_suspended(ss->dev);
-	if (err)
-		return err;
-	pm_runtime_enable(ss->dev);
-	return err;
-}
+	err = pm_runसमय_set_suspended(ss->dev);
+	अगर (err)
+		वापस err;
+	pm_runसमय_enable(ss->dev);
+	वापस err;
+पूर्ण
 
-static void sun4i_ss_pm_exit(struct sun4i_ss_ctx *ss)
-{
-	pm_runtime_disable(ss->dev);
-}
+अटल व्योम sun4i_ss_pm_निकास(काष्ठा sun4i_ss_ctx *ss)
+अणु
+	pm_runसमय_disable(ss->dev);
+पूर्ण
 
-static int sun4i_ss_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक sun4i_ss_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	u32 v;
-	int err, i;
-	unsigned long cr;
-	const unsigned long cr_ahb = 24 * 1000 * 1000;
-	const unsigned long cr_mod = 150 * 1000 * 1000;
-	struct sun4i_ss_ctx *ss;
+	पूर्णांक err, i;
+	अचिन्हित दीर्घ cr;
+	स्थिर अचिन्हित दीर्घ cr_ahb = 24 * 1000 * 1000;
+	स्थिर अचिन्हित दीर्घ cr_mod = 150 * 1000 * 1000;
+	काष्ठा sun4i_ss_ctx *ss;
 
-	if (!pdev->dev.of_node)
-		return -ENODEV;
+	अगर (!pdev->dev.of_node)
+		वापस -ENODEV;
 
-	ss = devm_kzalloc(&pdev->dev, sizeof(*ss), GFP_KERNEL);
-	if (!ss)
-		return -ENOMEM;
+	ss = devm_kzalloc(&pdev->dev, माप(*ss), GFP_KERNEL);
+	अगर (!ss)
+		वापस -ENOMEM;
 
-	ss->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(ss->base)) {
+	ss->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(ss->base)) अणु
 		dev_err(&pdev->dev, "Cannot request MMIO\n");
-		return PTR_ERR(ss->base);
-	}
+		वापस PTR_ERR(ss->base);
+	पूर्ण
 
 	ss->variant = of_device_get_match_data(&pdev->dev);
-	if (!ss->variant) {
+	अगर (!ss->variant) अणु
 		dev_err(&pdev->dev, "Missing Security System variant\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ss->ssclk = devm_clk_get(&pdev->dev, "mod");
-	if (IS_ERR(ss->ssclk)) {
+	अगर (IS_ERR(ss->ssclk)) अणु
 		err = PTR_ERR(ss->ssclk);
 		dev_err(&pdev->dev, "Cannot get SS clock err=%d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	dev_dbg(&pdev->dev, "clock ss acquired\n");
 
 	ss->busclk = devm_clk_get(&pdev->dev, "ahb");
-	if (IS_ERR(ss->busclk)) {
+	अगर (IS_ERR(ss->busclk)) अणु
 		err = PTR_ERR(ss->busclk);
 		dev_err(&pdev->dev, "Cannot get AHB SS clock err=%d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	dev_dbg(&pdev->dev, "clock ahb_ss acquired\n");
 
 	ss->reset = devm_reset_control_get_optional(&pdev->dev, "ahb");
-	if (IS_ERR(ss->reset))
-		return PTR_ERR(ss->reset);
-	if (!ss->reset)
+	अगर (IS_ERR(ss->reset))
+		वापस PTR_ERR(ss->reset);
+	अगर (!ss->reset)
 		dev_info(&pdev->dev, "no reset control found\n");
 
 	/*
-	 * Check that clock have the correct rates given in the datasheet
-	 * Try to set the clock to the maximum allowed
+	 * Check that घड़ी have the correct rates given in the datasheet
+	 * Try to set the घड़ी to the maximum allowed
 	 */
 	err = clk_set_rate(ss->ssclk, cr_mod);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Cannot set clock rate to ssclk\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/*
-	 * The only impact on clocks below requirement are bad performance,
-	 * so do not print "errors"
-	 * warn on Overclocked clocks
+	 * The only impact on घड़ीs below requirement are bad perक्रमmance,
+	 * so करो not prपूर्णांक "errors"
+	 * warn on Overघड़ीed घड़ीs
 	 */
 	cr = clk_get_rate(ss->busclk);
-	if (cr >= cr_ahb)
+	अगर (cr >= cr_ahb)
 		dev_dbg(&pdev->dev, "Clock bus %lu (%lu MHz) (must be >= %lu)\n",
 			cr, cr / 1000000, cr_ahb);
-	else
+	अन्यथा
 		dev_warn(&pdev->dev, "Clock bus %lu (%lu MHz) (must be >= %lu)\n",
 			 cr, cr / 1000000, cr_ahb);
 
 	cr = clk_get_rate(ss->ssclk);
-	if (cr <= cr_mod)
-		if (cr < cr_mod)
+	अगर (cr <= cr_mod)
+		अगर (cr < cr_mod)
 			dev_warn(&pdev->dev, "Clock ss %lu (%lu MHz) (must be <= %lu)\n",
 				 cr, cr / 1000000, cr_mod);
-		else
+		अन्यथा
 			dev_dbg(&pdev->dev, "Clock ss %lu (%lu MHz) (must be <= %lu)\n",
 				cr, cr / 1000000, cr_mod);
-	else
+	अन्यथा
 		dev_warn(&pdev->dev, "Clock ss is at %lu (%lu MHz) (must be <= %lu)\n",
 			 cr, cr / 1000000, cr_mod);
 
 	ss->dev = &pdev->dev;
-	platform_set_drvdata(pdev, ss);
+	platक्रमm_set_drvdata(pdev, ss);
 
 	spin_lock_init(&ss->slock);
 
 	err = sun4i_ss_pm_init(ss);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/*
 	 * Datasheet named it "Die Bonding ID"
@@ -454,119 +455,119 @@ static int sun4i_ss_probe(struct platform_device *pdev)
 	 * this info could be useful
 	 */
 
-	err = pm_runtime_resume_and_get(ss->dev);
-	if (err < 0)
-		goto error_pm;
+	err = pm_runसमय_resume_and_get(ss->dev);
+	अगर (err < 0)
+		जाओ error_pm;
 
-	writel(SS_ENABLED, ss->base + SS_CTL);
-	v = readl(ss->base + SS_CTL);
+	ग_लिखोl(SS_ENABLED, ss->base + SS_CTL);
+	v = पढ़ोl(ss->base + SS_CTL);
 	v >>= 16;
 	v &= 0x07;
 	dev_info(&pdev->dev, "Die ID %d\n", v);
-	writel(0, ss->base + SS_CTL);
+	ग_लिखोl(0, ss->base + SS_CTL);
 
-	pm_runtime_put_sync(ss->dev);
+	pm_runसमय_put_sync(ss->dev);
 
-	for (i = 0; i < ARRAY_SIZE(ss_algs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(ss_algs); i++) अणु
 		ss_algs[i].ss = ss;
-		switch (ss_algs[i].type) {
-		case CRYPTO_ALG_TYPE_SKCIPHER:
-			err = crypto_register_skcipher(&ss_algs[i].alg.crypto);
-			if (err) {
+		चयन (ss_algs[i].type) अणु
+		हाल CRYPTO_ALG_TYPE_SKCIPHER:
+			err = crypto_रेजिस्टर_skcipher(&ss_algs[i].alg.crypto);
+			अगर (err) अणु
 				dev_err(ss->dev, "Fail to register %s\n",
 					ss_algs[i].alg.crypto.base.cra_name);
-				goto error_alg;
-			}
-			break;
-		case CRYPTO_ALG_TYPE_AHASH:
-			err = crypto_register_ahash(&ss_algs[i].alg.hash);
-			if (err) {
+				जाओ error_alg;
+			पूर्ण
+			अवरोध;
+		हाल CRYPTO_ALG_TYPE_AHASH:
+			err = crypto_रेजिस्टर_ahash(&ss_algs[i].alg.hash);
+			अगर (err) अणु
 				dev_err(ss->dev, "Fail to register %s\n",
 					ss_algs[i].alg.hash.halg.base.cra_name);
-				goto error_alg;
-			}
-			break;
-		case CRYPTO_ALG_TYPE_RNG:
-			err = crypto_register_rng(&ss_algs[i].alg.rng);
-			if (err) {
+				जाओ error_alg;
+			पूर्ण
+			अवरोध;
+		हाल CRYPTO_ALG_TYPE_RNG:
+			err = crypto_रेजिस्टर_rng(&ss_algs[i].alg.rng);
+			अगर (err) अणु
 				dev_err(ss->dev, "Fail to register %s\n",
 					ss_algs[i].alg.rng.base.cra_name);
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Ignore error of debugfs */
-	ss->dbgfs_dir = debugfs_create_dir("sun4i-ss", NULL);
+	ss->dbgfs_dir = debugfs_create_dir("sun4i-ss", शून्य);
 	ss->dbgfs_stats = debugfs_create_file("stats", 0444, ss->dbgfs_dir, ss,
 					      &sun4i_ss_debugfs_fops);
 
-	return 0;
+	वापस 0;
 error_alg:
 	i--;
-	for (; i >= 0; i--) {
-		switch (ss_algs[i].type) {
-		case CRYPTO_ALG_TYPE_SKCIPHER:
-			crypto_unregister_skcipher(&ss_algs[i].alg.crypto);
-			break;
-		case CRYPTO_ALG_TYPE_AHASH:
-			crypto_unregister_ahash(&ss_algs[i].alg.hash);
-			break;
-		case CRYPTO_ALG_TYPE_RNG:
-			crypto_unregister_rng(&ss_algs[i].alg.rng);
-			break;
-		}
-	}
+	क्रम (; i >= 0; i--) अणु
+		चयन (ss_algs[i].type) अणु
+		हाल CRYPTO_ALG_TYPE_SKCIPHER:
+			crypto_unरेजिस्टर_skcipher(&ss_algs[i].alg.crypto);
+			अवरोध;
+		हाल CRYPTO_ALG_TYPE_AHASH:
+			crypto_unरेजिस्टर_ahash(&ss_algs[i].alg.hash);
+			अवरोध;
+		हाल CRYPTO_ALG_TYPE_RNG:
+			crypto_unरेजिस्टर_rng(&ss_algs[i].alg.rng);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 error_pm:
-	sun4i_ss_pm_exit(ss);
-	return err;
-}
+	sun4i_ss_pm_निकास(ss);
+	वापस err;
+पूर्ण
 
-static int sun4i_ss_remove(struct platform_device *pdev)
-{
-	int i;
-	struct sun4i_ss_ctx *ss = platform_get_drvdata(pdev);
+अटल पूर्णांक sun4i_ss_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक i;
+	काष्ठा sun4i_ss_ctx *ss = platक्रमm_get_drvdata(pdev);
 
-	for (i = 0; i < ARRAY_SIZE(ss_algs); i++) {
-		switch (ss_algs[i].type) {
-		case CRYPTO_ALG_TYPE_SKCIPHER:
-			crypto_unregister_skcipher(&ss_algs[i].alg.crypto);
-			break;
-		case CRYPTO_ALG_TYPE_AHASH:
-			crypto_unregister_ahash(&ss_algs[i].alg.hash);
-			break;
-		case CRYPTO_ALG_TYPE_RNG:
-			crypto_unregister_rng(&ss_algs[i].alg.rng);
-			break;
-		}
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(ss_algs); i++) अणु
+		चयन (ss_algs[i].type) अणु
+		हाल CRYPTO_ALG_TYPE_SKCIPHER:
+			crypto_unरेजिस्टर_skcipher(&ss_algs[i].alg.crypto);
+			अवरोध;
+		हाल CRYPTO_ALG_TYPE_AHASH:
+			crypto_unरेजिस्टर_ahash(&ss_algs[i].alg.hash);
+			अवरोध;
+		हाल CRYPTO_ALG_TYPE_RNG:
+			crypto_unरेजिस्टर_rng(&ss_algs[i].alg.rng);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	sun4i_ss_pm_exit(ss);
-	return 0;
-}
+	sun4i_ss_pm_निकास(ss);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id a20ss_crypto_of_match_table[] = {
-	{ .compatible = "allwinner,sun4i-a10-crypto",
+अटल स्थिर काष्ठा of_device_id a20ss_crypto_of_match_table[] = अणु
+	अणु .compatible = "allwinner,sun4i-a10-crypto",
 	  .data = &ss_a10_variant
-	},
-	{ .compatible = "allwinner,sun8i-a33-crypto",
+	पूर्ण,
+	अणु .compatible = "allwinner,sun8i-a33-crypto",
 	  .data = &ss_a33_variant
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, a20ss_crypto_of_match_table);
 
-static struct platform_driver sun4i_ss_driver = {
+अटल काष्ठा platक्रमm_driver sun4i_ss_driver = अणु
 	.probe          = sun4i_ss_probe,
-	.remove         = sun4i_ss_remove,
-	.driver         = {
+	.हटाओ         = sun4i_ss_हटाओ,
+	.driver         = अणु
 		.name           = "sun4i-ss",
 		.pm		= &sun4i_ss_pm_ops,
 		.of_match_table	= a20ss_crypto_of_match_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(sun4i_ss_driver);
+module_platक्रमm_driver(sun4i_ss_driver);
 
 MODULE_ALIAS("platform:sun4i-ss");
 MODULE_DESCRIPTION("Allwinner Security System cryptographic accelerator");

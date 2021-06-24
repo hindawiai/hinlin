@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *
- *  Bluetooth support for Intel devices
+ *  Bluetooth support क्रम Intel devices
  *
  *  Copyright (C) 2015  Intel Corporation
  */
 
 /* List of tlv type */
-enum {
+क्रमागत अणु
 	INTEL_TLV_CNVI_TOP = 0x10,
 	INTEL_TLV_CNVR_TOP,
 	INTEL_TLV_CNVI_BT,
@@ -42,22 +43,22 @@ enum {
 	INTEL_TLV_SBE_TYPE,
 	INTEL_TLV_OTP_BDADDR,
 	INTEL_TLV_UNLOCKED_STATE
-};
+पूर्ण;
 
-struct intel_tlv {
+काष्ठा पूर्णांकel_tlv अणु
 	u8 type;
 	u8 len;
 	u8 val[];
-} __packed;
+पूर्ण __packed;
 
-struct intel_version_tlv {
+काष्ठा पूर्णांकel_version_tlv अणु
 	u32	cnvi_top;
 	u32	cnvr_top;
 	u32	cnvi_bt;
 	u32	cnvr_bt;
 	u16	dev_rev_id;
 	u8	img_type;
-	u16	timestamp;
+	u16	बारtamp;
 	u8	build_type;
 	u32	build_num;
 	u8	secure_boot;
@@ -70,11 +71,11 @@ struct intel_version_tlv {
 	u8	limited_cce;
 	u8	sbe_type;
 	bdaddr_t otp_bd_addr;
-};
+पूर्ण;
 
-struct intel_version {
+काष्ठा पूर्णांकel_version अणु
 	u8 status;
-	u8 hw_platform;
+	u8 hw_platक्रमm;
 	u8 hw_variant;
 	u8 hw_revision;
 	u8 fw_variant;
@@ -83,11 +84,11 @@ struct intel_version {
 	u8 fw_build_ww;
 	u8 fw_build_yy;
 	u8 fw_patch_num;
-} __packed;
+पूर्ण __packed;
 
-struct intel_boot_params {
+काष्ठा पूर्णांकel_boot_params अणु
 	__u8     status;
-	__u8     otp_format;
+	__u8     otp_क्रमmat;
 	__u8     otp_content;
 	__u8     otp_patch;
 	__le16   dev_revid;
@@ -103,208 +104,208 @@ struct intel_boot_params {
 	__u8     min_fw_build_yy;
 	__u8     limited_cce;
 	__u8     unlocked_state;
-} __packed;
+पूर्ण __packed;
 
-struct intel_bootup {
+काष्ठा पूर्णांकel_bootup अणु
 	__u8     zero;
 	__u8     num_cmds;
 	__u8     source;
 	__u8     reset_type;
 	__u8     reset_reason;
 	__u8     ddc_status;
-} __packed;
+पूर्ण __packed;
 
-struct intel_secure_send_result {
+काष्ठा पूर्णांकel_secure_send_result अणु
 	__u8     result;
 	__le16   opcode;
 	__u8     status;
-} __packed;
+पूर्ण __packed;
 
-struct intel_reset {
+काष्ठा पूर्णांकel_reset अणु
 	__u8     reset_type;
 	__u8     patch_enable;
 	__u8     ddc_reload;
 	__u8     boot_option;
 	__le32   boot_param;
-} __packed;
+पूर्ण __packed;
 
-struct intel_debug_features {
+काष्ठा पूर्णांकel_debug_features अणु
 	__u8    page1[16];
-} __packed;
+पूर्ण __packed;
 
-#define INTEL_HW_PLATFORM(cnvx_bt)	((u8)(((cnvx_bt) & 0x0000ff00) >> 8))
-#define INTEL_HW_VARIANT(cnvx_bt)	((u8)(((cnvx_bt) & 0x003f0000) >> 16))
-#define INTEL_CNVX_TOP_TYPE(cnvx_top)	((cnvx_top) & 0x00000fff)
-#define INTEL_CNVX_TOP_STEP(cnvx_top)	(((cnvx_top) & 0x0f000000) >> 24)
-#define INTEL_CNVX_TOP_PACK_SWAB(t, s)	__swab16(((__u16)(((t) << 4) | (s))))
+#घोषणा INTEL_HW_PLATFORM(cnvx_bt)	((u8)(((cnvx_bt) & 0x0000ff00) >> 8))
+#घोषणा INTEL_HW_VARIANT(cnvx_bt)	((u8)(((cnvx_bt) & 0x003f0000) >> 16))
+#घोषणा INTEL_CNVX_TOP_TYPE(cnvx_top)	((cnvx_top) & 0x00000fff)
+#घोषणा INTEL_CNVX_TOP_STEP(cnvx_top)	(((cnvx_top) & 0x0f000000) >> 24)
+#घोषणा INTEL_CNVX_TOP_PACK_SWAB(t, s)	__swab16(((__u16)(((t) << 4) | (s))))
 
-#if IS_ENABLED(CONFIG_BT_INTEL)
+#अगर IS_ENABLED(CONFIG_BT_INTEL)
 
-int btintel_check_bdaddr(struct hci_dev *hdev);
-int btintel_enter_mfg(struct hci_dev *hdev);
-int btintel_exit_mfg(struct hci_dev *hdev, bool reset, bool patched);
-int btintel_set_bdaddr(struct hci_dev *hdev, const bdaddr_t *bdaddr);
-int btintel_set_diag(struct hci_dev *hdev, bool enable);
-int btintel_set_diag_mfg(struct hci_dev *hdev, bool enable);
-void btintel_hw_error(struct hci_dev *hdev, u8 code);
+पूर्णांक btपूर्णांकel_check_bdaddr(काष्ठा hci_dev *hdev);
+पूर्णांक btपूर्णांकel_enter_mfg(काष्ठा hci_dev *hdev);
+पूर्णांक btपूर्णांकel_निकास_mfg(काष्ठा hci_dev *hdev, bool reset, bool patched);
+पूर्णांक btपूर्णांकel_set_bdaddr(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr);
+पूर्णांक btपूर्णांकel_set_diag(काष्ठा hci_dev *hdev, bool enable);
+पूर्णांक btपूर्णांकel_set_diag_mfg(काष्ठा hci_dev *hdev, bool enable);
+व्योम btपूर्णांकel_hw_error(काष्ठा hci_dev *hdev, u8 code);
 
-int btintel_version_info(struct hci_dev *hdev, struct intel_version *ver);
-int btintel_version_info_tlv(struct hci_dev *hdev, struct intel_version_tlv *version);
-int btintel_secure_send(struct hci_dev *hdev, u8 fragment_type, u32 plen,
-			const void *param);
-int btintel_load_ddc_config(struct hci_dev *hdev, const char *ddc_name);
-int btintel_set_event_mask(struct hci_dev *hdev, bool debug);
-int btintel_set_event_mask_mfg(struct hci_dev *hdev, bool debug);
-int btintel_read_version(struct hci_dev *hdev, struct intel_version *ver);
-int btintel_read_version_tlv(struct hci_dev *hdev, struct intel_version_tlv *ver);
+पूर्णांक btपूर्णांकel_version_info(काष्ठा hci_dev *hdev, काष्ठा पूर्णांकel_version *ver);
+पूर्णांक btपूर्णांकel_version_info_tlv(काष्ठा hci_dev *hdev, काष्ठा पूर्णांकel_version_tlv *version);
+पूर्णांक btपूर्णांकel_secure_send(काष्ठा hci_dev *hdev, u8 fragment_type, u32 plen,
+			स्थिर व्योम *param);
+पूर्णांक btपूर्णांकel_load_ddc_config(काष्ठा hci_dev *hdev, स्थिर अक्षर *ddc_name);
+पूर्णांक btपूर्णांकel_set_event_mask(काष्ठा hci_dev *hdev, bool debug);
+पूर्णांक btपूर्णांकel_set_event_mask_mfg(काष्ठा hci_dev *hdev, bool debug);
+पूर्णांक btपूर्णांकel_पढ़ो_version(काष्ठा hci_dev *hdev, काष्ठा पूर्णांकel_version *ver);
+पूर्णांक btपूर्णांकel_पढ़ो_version_tlv(काष्ठा hci_dev *hdev, काष्ठा पूर्णांकel_version_tlv *ver);
 
-struct regmap *btintel_regmap_init(struct hci_dev *hdev, u16 opcode_read,
-				   u16 opcode_write);
-int btintel_send_intel_reset(struct hci_dev *hdev, u32 boot_param);
-int btintel_read_boot_params(struct hci_dev *hdev,
-			     struct intel_boot_params *params);
-int btintel_download_firmware(struct hci_dev *dev, struct intel_version *ver,
-			      const struct firmware *fw, u32 *boot_param);
-int btintel_download_firmware_newgen(struct hci_dev *hdev,
-				     struct intel_version_tlv *ver,
-				     const struct firmware *fw,
+काष्ठा regmap *btपूर्णांकel_regmap_init(काष्ठा hci_dev *hdev, u16 opcode_पढ़ो,
+				   u16 opcode_ग_लिखो);
+पूर्णांक btपूर्णांकel_send_पूर्णांकel_reset(काष्ठा hci_dev *hdev, u32 boot_param);
+पूर्णांक btपूर्णांकel_पढ़ो_boot_params(काष्ठा hci_dev *hdev,
+			     काष्ठा पूर्णांकel_boot_params *params);
+पूर्णांक btपूर्णांकel_करोwnload_firmware(काष्ठा hci_dev *dev, काष्ठा पूर्णांकel_version *ver,
+			      स्थिर काष्ठा firmware *fw, u32 *boot_param);
+पूर्णांक btपूर्णांकel_करोwnload_firmware_newgen(काष्ठा hci_dev *hdev,
+				     काष्ठा पूर्णांकel_version_tlv *ver,
+				     स्थिर काष्ठा firmware *fw,
 				     u32 *boot_param, u8 hw_variant,
 				     u8 sbe_type);
-void btintel_reset_to_bootloader(struct hci_dev *hdev);
-int btintel_read_debug_features(struct hci_dev *hdev,
-				struct intel_debug_features *features);
-int btintel_set_debug_features(struct hci_dev *hdev,
-			       const struct intel_debug_features *features);
-#else
+व्योम btपूर्णांकel_reset_to_bootloader(काष्ठा hci_dev *hdev);
+पूर्णांक btपूर्णांकel_पढ़ो_debug_features(काष्ठा hci_dev *hdev,
+				काष्ठा पूर्णांकel_debug_features *features);
+पूर्णांक btपूर्णांकel_set_debug_features(काष्ठा hci_dev *hdev,
+			       स्थिर काष्ठा पूर्णांकel_debug_features *features);
+#अन्यथा
 
-static inline int btintel_check_bdaddr(struct hci_dev *hdev)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_check_bdaddr(काष्ठा hci_dev *hdev)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_enter_mfg(struct hci_dev *hdev)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_enter_mfg(काष्ठा hci_dev *hdev)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_exit_mfg(struct hci_dev *hdev, bool reset, bool patched)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_निकास_mfg(काष्ठा hci_dev *hdev, bool reset, bool patched)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_set_bdaddr(struct hci_dev *hdev, const bdaddr_t *bdaddr)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_set_bdaddr(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_set_diag(struct hci_dev *hdev, bool enable)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_set_diag(काष्ठा hci_dev *hdev, bool enable)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_set_diag_mfg(struct hci_dev *hdev, bool enable)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_set_diag_mfg(काष्ठा hci_dev *hdev, bool enable)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline void btintel_hw_error(struct hci_dev *hdev, u8 code)
-{
-}
+अटल अंतरभूत व्योम btपूर्णांकel_hw_error(काष्ठा hci_dev *hdev, u8 code)
+अणु
+पूर्ण
 
-static inline int btintel_version_info(struct hci_dev *hdev,
-				       struct intel_version *ver)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_version_info(काष्ठा hci_dev *hdev,
+				       काष्ठा पूर्णांकel_version *ver)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_version_info_tlv(struct hci_dev *hdev,
-					   struct intel_version_tlv *version)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_version_info_tlv(काष्ठा hci_dev *hdev,
+					   काष्ठा पूर्णांकel_version_tlv *version)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_secure_send(struct hci_dev *hdev, u8 fragment_type,
-				      u32 plen, const void *param)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_secure_send(काष्ठा hci_dev *hdev, u8 fragment_type,
+				      u32 plen, स्थिर व्योम *param)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_load_ddc_config(struct hci_dev *hdev,
-					  const char *ddc_name)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_load_ddc_config(काष्ठा hci_dev *hdev,
+					  स्थिर अक्षर *ddc_name)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_set_event_mask(struct hci_dev *hdev, bool debug)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_set_event_mask(काष्ठा hci_dev *hdev, bool debug)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_set_event_mask_mfg(struct hci_dev *hdev, bool debug)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_set_event_mask_mfg(काष्ठा hci_dev *hdev, bool debug)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_read_version(struct hci_dev *hdev,
-				       struct intel_version *ver)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_पढ़ो_version(काष्ठा hci_dev *hdev,
+				       काष्ठा पूर्णांकel_version *ver)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_read_version_tlv(struct hci_dev *hdev,
-					   struct intel_version_tlv *ver)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_पढ़ो_version_tlv(काष्ठा hci_dev *hdev,
+					   काष्ठा पूर्णांकel_version_tlv *ver)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline struct regmap *btintel_regmap_init(struct hci_dev *hdev,
-						 u16 opcode_read,
-						 u16 opcode_write)
-{
-	return ERR_PTR(-EINVAL);
-}
+अटल अंतरभूत काष्ठा regmap *btपूर्णांकel_regmap_init(काष्ठा hci_dev *hdev,
+						 u16 opcode_पढ़ो,
+						 u16 opcode_ग_लिखो)
+अणु
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static inline int btintel_send_intel_reset(struct hci_dev *hdev,
+अटल अंतरभूत पूर्णांक btपूर्णांकel_send_पूर्णांकel_reset(काष्ठा hci_dev *hdev,
 					   u32 reset_param)
-{
-	return -EOPNOTSUPP;
-}
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_read_boot_params(struct hci_dev *hdev,
-					   struct intel_boot_params *params)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_पढ़ो_boot_params(काष्ठा hci_dev *hdev,
+					   काष्ठा पूर्णांकel_boot_params *params)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_download_firmware(struct hci_dev *dev,
-					    const struct firmware *fw,
+अटल अंतरभूत पूर्णांक btपूर्णांकel_करोwnload_firmware(काष्ठा hci_dev *dev,
+					    स्थिर काष्ठा firmware *fw,
 					    u32 *boot_param)
-{
-	return -EOPNOTSUPP;
-}
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_download_firmware_newgen(struct hci_dev *hdev,
-						   const struct firmware *fw,
+अटल अंतरभूत पूर्णांक btपूर्णांकel_करोwnload_firmware_newgen(काष्ठा hci_dev *hdev,
+						   स्थिर काष्ठा firmware *fw,
 						   u32 *boot_param,
 						   u8 hw_variant, u8 sbe_type)
-{
-	return -EOPNOTSUPP;
-}
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline void btintel_reset_to_bootloader(struct hci_dev *hdev)
-{
-}
+अटल अंतरभूत व्योम btपूर्णांकel_reset_to_bootloader(काष्ठा hci_dev *hdev)
+अणु
+पूर्ण
 
-static inline int btintel_read_debug_features(struct hci_dev *hdev,
-					      struct intel_debug_features *features)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_पढ़ो_debug_features(काष्ठा hci_dev *hdev,
+					      काष्ठा पूर्णांकel_debug_features *features)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int btintel_set_debug_features(struct hci_dev *hdev,
-					     const struct intel_debug_features *features)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक btपूर्णांकel_set_debug_features(काष्ठा hci_dev *hdev,
+					     स्थिर काष्ठा पूर्णांकel_debug_features *features)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

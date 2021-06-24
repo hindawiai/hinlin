@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
- * Allwinner EMAC Fast Ethernet driver for Linux.
+ * Allwinner EMAC Fast Ethernet driver क्रम Linux.
  *
  * Copyright 2012-2013 Stefan Roese <sr@denx.de>
- * Copyright 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright 2013 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * Based on the Linux driver provided by Allwinner:
  * Copyright (C) 1997  Sten Wang
@@ -12,55 +13,55 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/clk.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/gpio.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/mii.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_mdio.h>
-#include <linux/of_net.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/phy.h>
-#include <linux/soc/sunxi/sunxi_sram.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_net.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/soc/sunxi/sunxi_sram.h>
 
-#include "sun4i-emac.h"
+#समावेश "sun4i-emac.h"
 
-#define DRV_NAME		"sun4i-emac"
+#घोषणा DRV_NAME		"sun4i-emac"
 
-#define EMAC_MAX_FRAME_LEN	0x0600
+#घोषणा EMAC_MAX_FRAME_LEN	0x0600
 
-#define EMAC_DEFAULT_MSG_ENABLE 0x0000
-static int debug = -1;     /* defaults above */;
-module_param(debug, int, 0);
+#घोषणा EMAC_DEFAULT_MSG_ENABLE 0x0000
+अटल पूर्णांक debug = -1;     /* शेषs above */;
+module_param(debug, पूर्णांक, 0);
 MODULE_PARM_DESC(debug, "debug message flags");
 
-/* Transmit timeout, default 5 seconds. */
-static int watchdog = 5000;
-module_param(watchdog, int, 0400);
-MODULE_PARM_DESC(watchdog, "transmit timeout in milliseconds");
+/* Transmit समयout, शेष 5 seconds. */
+अटल पूर्णांक watchकरोg = 5000;
+module_param(watchकरोg, पूर्णांक, 0400);
+MODULE_PARM_DESC(watchकरोg, "transmit timeout in milliseconds");
 
-/* EMAC register address locking.
+/* EMAC रेजिस्टर address locking.
  *
- * The EMAC uses an address register to control where data written
- * to the data register goes. This means that the address register
- * must be preserved over interrupts or similar calls.
+ * The EMAC uses an address रेजिस्टर to control where data written
+ * to the data रेजिस्टर goes. This means that the address रेजिस्टर
+ * must be preserved over पूर्णांकerrupts or similar calls.
  *
- * During interrupt and other critical calls, a spinlock is used to
- * protect the system, but the calls themselves save the address
- * in the address register in case they are interrupting another
+ * During पूर्णांकerrupt and other critical calls, a spinlock is used to
+ * protect the प्रणाली, but the calls themselves save the address
+ * in the address रेजिस्टर in हाल they are पूर्णांकerrupting another
  * access to the device.
  *
  * For general accesses a lock is provided so that calls which are
- * allowed to sleep are serialised so that the address register does
+ * allowed to sleep are serialised so that the address रेजिस्टर करोes
  * not need to be saved. This lock also serves to serialise access
- * to the EEPROM and PHY access registers which are shared between
+ * to the EEPROM and PHY access रेजिस्टरs which are shared between
  * these two devices.
  */
 
@@ -68,107 +69,107 @@ MODULE_PARM_DESC(watchdog, "transmit timeout in milliseconds");
  * devices, EMACA and EMACB.
  */
 
-struct emac_board_info {
-	struct clk		*clk;
-	struct device		*dev;
-	struct platform_device	*pdev;
+काष्ठा emac_board_info अणु
+	काष्ठा clk		*clk;
+	काष्ठा device		*dev;
+	काष्ठा platक्रमm_device	*pdev;
 	spinlock_t		lock;
-	void __iomem		*membase;
+	व्योम __iomem		*membase;
 	u32			msg_enable;
-	struct net_device	*ndev;
-	struct sk_buff		*skb_last;
-	u16			tx_fifo_stat;
+	काष्ठा net_device	*ndev;
+	काष्ठा sk_buff		*skb_last;
+	u16			tx_fअगरo_stat;
 
-	int			emacrx_completed_flag;
+	पूर्णांक			emacrx_completed_flag;
 
-	struct device_node	*phy_node;
-	unsigned int		link;
-	unsigned int		speed;
-	unsigned int		duplex;
+	काष्ठा device_node	*phy_node;
+	अचिन्हित पूर्णांक		link;
+	अचिन्हित पूर्णांक		speed;
+	अचिन्हित पूर्णांक		duplex;
 
-	phy_interface_t		phy_interface;
-};
+	phy_पूर्णांकerface_t		phy_पूर्णांकerface;
+पूर्ण;
 
-static void emac_update_speed(struct net_device *dev)
-{
-	struct emac_board_info *db = netdev_priv(dev);
-	unsigned int reg_val;
+अटल व्योम emac_update_speed(काष्ठा net_device *dev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
+	अचिन्हित पूर्णांक reg_val;
 
 	/* set EMAC SPEED, depend on PHY  */
-	reg_val = readl(db->membase + EMAC_MAC_SUPP_REG);
+	reg_val = पढ़ोl(db->membase + EMAC_MAC_SUPP_REG);
 	reg_val &= ~(0x1 << 8);
-	if (db->speed == SPEED_100)
+	अगर (db->speed == SPEED_100)
 		reg_val |= 1 << 8;
-	writel(reg_val, db->membase + EMAC_MAC_SUPP_REG);
-}
+	ग_लिखोl(reg_val, db->membase + EMAC_MAC_SUPP_REG);
+पूर्ण
 
-static void emac_update_duplex(struct net_device *dev)
-{
-	struct emac_board_info *db = netdev_priv(dev);
-	unsigned int reg_val;
+अटल व्योम emac_update_duplex(काष्ठा net_device *dev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
+	अचिन्हित पूर्णांक reg_val;
 
 	/* set duplex depend on phy */
-	reg_val = readl(db->membase + EMAC_MAC_CTL1_REG);
+	reg_val = पढ़ोl(db->membase + EMAC_MAC_CTL1_REG);
 	reg_val &= ~EMAC_MAC_CTL1_DUPLEX_EN;
-	if (db->duplex)
+	अगर (db->duplex)
 		reg_val |= EMAC_MAC_CTL1_DUPLEX_EN;
-	writel(reg_val, db->membase + EMAC_MAC_CTL1_REG);
-}
+	ग_लिखोl(reg_val, db->membase + EMAC_MAC_CTL1_REG);
+पूर्ण
 
-static void emac_handle_link_change(struct net_device *dev)
-{
-	struct emac_board_info *db = netdev_priv(dev);
-	struct phy_device *phydev = dev->phydev;
-	unsigned long flags;
-	int status_change = 0;
+अटल व्योम emac_handle_link_change(काष्ठा net_device *dev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
+	काष्ठा phy_device *phydev = dev->phydev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक status_change = 0;
 
-	if (phydev->link) {
-		if (db->speed != phydev->speed) {
+	अगर (phydev->link) अणु
+		अगर (db->speed != phydev->speed) अणु
 			spin_lock_irqsave(&db->lock, flags);
 			db->speed = phydev->speed;
 			emac_update_speed(dev);
 			spin_unlock_irqrestore(&db->lock, flags);
 			status_change = 1;
-		}
+		पूर्ण
 
-		if (db->duplex != phydev->duplex) {
+		अगर (db->duplex != phydev->duplex) अणु
 			spin_lock_irqsave(&db->lock, flags);
 			db->duplex = phydev->duplex;
 			emac_update_duplex(dev);
 			spin_unlock_irqrestore(&db->lock, flags);
 			status_change = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (phydev->link != db->link) {
-		if (!phydev->link) {
+	अगर (phydev->link != db->link) अणु
+		अगर (!phydev->link) अणु
 			db->speed = 0;
 			db->duplex = -1;
-		}
+		पूर्ण
 		db->link = phydev->link;
 
 		status_change = 1;
-	}
+	पूर्ण
 
-	if (status_change)
-		phy_print_status(phydev);
-}
+	अगर (status_change)
+		phy_prपूर्णांक_status(phydev);
+पूर्ण
 
-static int emac_mdio_probe(struct net_device *dev)
-{
-	struct emac_board_info *db = netdev_priv(dev);
-	struct phy_device *phydev;
+अटल पूर्णांक emac_mdio_probe(काष्ठा net_device *dev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
+	काष्ठा phy_device *phydev;
 
-	/* to-do: PHY interrupts are currently not supported */
+	/* to-करो: PHY पूर्णांकerrupts are currently not supported */
 
 	/* attach the mac to the phy */
 	phydev = of_phy_connect(db->ndev, db->phy_node,
 				&emac_handle_link_change, 0,
-				db->phy_interface);
-	if (!phydev) {
+				db->phy_पूर्णांकerface);
+	अगर (!phydev) अणु
 		netdev_err(db->ndev, "could not find the PHY\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* mask with MAC supported features */
 	phy_set_max_speed(phydev, SPEED_100);
@@ -177,160 +178,160 @@ static int emac_mdio_probe(struct net_device *dev)
 	db->speed = 0;
 	db->duplex = -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void emac_mdio_remove(struct net_device *dev)
-{
+अटल व्योम emac_mdio_हटाओ(काष्ठा net_device *dev)
+अणु
 	phy_disconnect(dev->phydev);
-}
+पूर्ण
 
-static void emac_reset(struct emac_board_info *db)
-{
+अटल व्योम emac_reset(काष्ठा emac_board_info *db)
+अणु
 	dev_dbg(db->dev, "resetting device\n");
 
 	/* RESET device */
-	writel(0, db->membase + EMAC_CTL_REG);
+	ग_लिखोl(0, db->membase + EMAC_CTL_REG);
 	udelay(200);
-	writel(EMAC_CTL_RESET, db->membase + EMAC_CTL_REG);
+	ग_लिखोl(EMAC_CTL_RESET, db->membase + EMAC_CTL_REG);
 	udelay(200);
-}
+पूर्ण
 
-static void emac_outblk_32bit(void __iomem *reg, void *data, int count)
-{
-	writesl(reg, data, round_up(count, 4) / 4);
-}
+अटल व्योम emac_outblk_32bit(व्योम __iomem *reg, व्योम *data, पूर्णांक count)
+अणु
+	ग_लिखोsl(reg, data, round_up(count, 4) / 4);
+पूर्ण
 
-static void emac_inblk_32bit(void __iomem *reg, void *data, int count)
-{
-	readsl(reg, data, round_up(count, 4) / 4);
-}
+अटल व्योम emac_inblk_32bit(व्योम __iomem *reg, व्योम *data, पूर्णांक count)
+अणु
+	पढ़ोsl(reg, data, round_up(count, 4) / 4);
+पूर्ण
 
 /* ethtool ops */
-static void emac_get_drvinfo(struct net_device *dev,
-			      struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
-	strlcpy(info->bus_info, dev_name(&dev->dev), sizeof(info->bus_info));
-}
+अटल व्योम emac_get_drvinfo(काष्ठा net_device *dev,
+			      काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, DRV_NAME, माप(info->driver));
+	strlcpy(info->bus_info, dev_name(&dev->dev), माप(info->bus_info));
+पूर्ण
 
-static u32 emac_get_msglevel(struct net_device *dev)
-{
-	struct emac_board_info *db = netdev_priv(dev);
+अटल u32 emac_get_msglevel(काष्ठा net_device *dev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
 
-	return db->msg_enable;
-}
+	वापस db->msg_enable;
+पूर्ण
 
-static void emac_set_msglevel(struct net_device *dev, u32 value)
-{
-	struct emac_board_info *db = netdev_priv(dev);
+अटल व्योम emac_set_msglevel(काष्ठा net_device *dev, u32 value)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
 
 	db->msg_enable = value;
-}
+पूर्ण
 
-static const struct ethtool_ops emac_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops emac_ethtool_ops = अणु
 	.get_drvinfo	= emac_get_drvinfo,
 	.get_link	= ethtool_op_get_link,
 	.get_link_ksettings = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
 	.get_msglevel	= emac_get_msglevel,
 	.set_msglevel	= emac_set_msglevel,
-};
+पूर्ण;
 
-static unsigned int emac_setup(struct net_device *ndev)
-{
-	struct emac_board_info *db = netdev_priv(ndev);
-	unsigned int reg_val;
+अटल अचिन्हित पूर्णांक emac_setup(काष्ठा net_device *ndev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(ndev);
+	अचिन्हित पूर्णांक reg_val;
 
 	/* set up TX */
-	reg_val = readl(db->membase + EMAC_TX_MODE_REG);
+	reg_val = पढ़ोl(db->membase + EMAC_TX_MODE_REG);
 
-	writel(reg_val | EMAC_TX_MODE_ABORTED_FRAME_EN,
+	ग_लिखोl(reg_val | EMAC_TX_MODE_ABORTED_FRAME_EN,
 		db->membase + EMAC_TX_MODE_REG);
 
 	/* set MAC */
 	/* set MAC CTL0 */
-	reg_val = readl(db->membase + EMAC_MAC_CTL0_REG);
-	writel(reg_val | EMAC_MAC_CTL0_RX_FLOW_CTL_EN |
+	reg_val = पढ़ोl(db->membase + EMAC_MAC_CTL0_REG);
+	ग_लिखोl(reg_val | EMAC_MAC_CTL0_RX_FLOW_CTL_EN |
 		EMAC_MAC_CTL0_TX_FLOW_CTL_EN,
 		db->membase + EMAC_MAC_CTL0_REG);
 
 	/* set MAC CTL1 */
-	reg_val = readl(db->membase + EMAC_MAC_CTL1_REG);
+	reg_val = पढ़ोl(db->membase + EMAC_MAC_CTL1_REG);
 	reg_val |= EMAC_MAC_CTL1_LEN_CHECK_EN;
 	reg_val |= EMAC_MAC_CTL1_CRC_EN;
 	reg_val |= EMAC_MAC_CTL1_PAD_EN;
-	writel(reg_val, db->membase + EMAC_MAC_CTL1_REG);
+	ग_लिखोl(reg_val, db->membase + EMAC_MAC_CTL1_REG);
 
 	/* set up IPGT */
-	writel(EMAC_MAC_IPGT_FULL_DUPLEX, db->membase + EMAC_MAC_IPGT_REG);
+	ग_लिखोl(EMAC_MAC_IPGT_FULL_DUPLEX, db->membase + EMAC_MAC_IPGT_REG);
 
 	/* set up IPGR */
-	writel((EMAC_MAC_IPGR_IPG1 << 8) | EMAC_MAC_IPGR_IPG2,
+	ग_लिखोl((EMAC_MAC_IPGR_IPG1 << 8) | EMAC_MAC_IPGR_IPG2,
 		db->membase + EMAC_MAC_IPGR_REG);
 
-	/* set up Collison window */
-	writel((EMAC_MAC_CLRT_COLLISION_WINDOW << 8) | EMAC_MAC_CLRT_RM,
+	/* set up Collison winकरोw */
+	ग_लिखोl((EMAC_MAC_CLRT_COLLISION_WINDOW << 8) | EMAC_MAC_CLRT_RM,
 		db->membase + EMAC_MAC_CLRT_REG);
 
 	/* set up Max Frame Length */
-	writel(EMAC_MAX_FRAME_LEN,
+	ग_लिखोl(EMAC_MAX_FRAME_LEN,
 		db->membase + EMAC_MAC_MAXF_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void emac_set_rx_mode(struct net_device *ndev)
-{
-	struct emac_board_info *db = netdev_priv(ndev);
-	unsigned int reg_val;
+अटल व्योम emac_set_rx_mode(काष्ठा net_device *ndev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(ndev);
+	अचिन्हित पूर्णांक reg_val;
 
 	/* set up RX */
-	reg_val = readl(db->membase + EMAC_RX_CTL_REG);
+	reg_val = पढ़ोl(db->membase + EMAC_RX_CTL_REG);
 
-	if (ndev->flags & IFF_PROMISC)
+	अगर (ndev->flags & IFF_PROMISC)
 		reg_val |= EMAC_RX_CTL_PASS_ALL_EN;
-	else
+	अन्यथा
 		reg_val &= ~EMAC_RX_CTL_PASS_ALL_EN;
 
-	writel(reg_val | EMAC_RX_CTL_PASS_LEN_OOR_EN |
+	ग_लिखोl(reg_val | EMAC_RX_CTL_PASS_LEN_OOR_EN |
 		EMAC_RX_CTL_ACCEPT_UNICAST_EN | EMAC_RX_CTL_DA_FILTER_EN |
 		EMAC_RX_CTL_ACCEPT_MULTICAST_EN |
 		EMAC_RX_CTL_ACCEPT_BROADCAST_EN,
 		db->membase + EMAC_RX_CTL_REG);
-}
+पूर्ण
 
-static unsigned int emac_powerup(struct net_device *ndev)
-{
-	struct emac_board_info *db = netdev_priv(ndev);
-	unsigned int reg_val;
+अटल अचिन्हित पूर्णांक emac_घातerup(काष्ठा net_device *ndev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(ndev);
+	अचिन्हित पूर्णांक reg_val;
 
 	/* initial EMAC */
 	/* flush RX FIFO */
-	reg_val = readl(db->membase + EMAC_RX_CTL_REG);
+	reg_val = पढ़ोl(db->membase + EMAC_RX_CTL_REG);
 	reg_val |= 0x8;
-	writel(reg_val, db->membase + EMAC_RX_CTL_REG);
+	ग_लिखोl(reg_val, db->membase + EMAC_RX_CTL_REG);
 	udelay(1);
 
 	/* initial MAC */
 	/* soft reset MAC */
-	reg_val = readl(db->membase + EMAC_MAC_CTL0_REG);
+	reg_val = पढ़ोl(db->membase + EMAC_MAC_CTL0_REG);
 	reg_val &= ~EMAC_MAC_CTL0_SOFT_RESET;
-	writel(reg_val, db->membase + EMAC_MAC_CTL0_REG);
+	ग_लिखोl(reg_val, db->membase + EMAC_MAC_CTL0_REG);
 
-	/* set MII clock */
-	reg_val = readl(db->membase + EMAC_MAC_MCFG_REG);
+	/* set MII घड़ी */
+	reg_val = पढ़ोl(db->membase + EMAC_MAC_MCFG_REG);
 	reg_val &= (~(0xf << 2));
 	reg_val |= (0xD << 2);
-	writel(reg_val, db->membase + EMAC_MAC_MCFG_REG);
+	ग_लिखोl(reg_val, db->membase + EMAC_MAC_MCFG_REG);
 
 	/* clear RX counter */
-	writel(0x0, db->membase + EMAC_RX_FBC_REG);
+	ग_लिखोl(0x0, db->membase + EMAC_RX_FBC_REG);
 
-	/* disable all interrupt and clear interrupt status */
-	writel(0, db->membase + EMAC_INT_CTL_REG);
-	reg_val = readl(db->membase + EMAC_INT_STA_REG);
-	writel(reg_val, db->membase + EMAC_INT_STA_REG);
+	/* disable all पूर्णांकerrupt and clear पूर्णांकerrupt status */
+	ग_लिखोl(0, db->membase + EMAC_INT_CTL_REG);
+	reg_val = पढ़ोl(db->membase + EMAC_INT_STA_REG);
+	ग_लिखोl(reg_val, db->membase + EMAC_INT_STA_REG);
 
 	udelay(1);
 
@@ -338,40 +339,40 @@ static unsigned int emac_powerup(struct net_device *ndev)
 	emac_setup(ndev);
 
 	/* set mac_address to chip */
-	writel(ndev->dev_addr[0] << 16 | ndev->dev_addr[1] << 8 | ndev->
+	ग_लिखोl(ndev->dev_addr[0] << 16 | ndev->dev_addr[1] << 8 | ndev->
 	       dev_addr[2], db->membase + EMAC_MAC_A1_REG);
-	writel(ndev->dev_addr[3] << 16 | ndev->dev_addr[4] << 8 | ndev->
+	ग_लिखोl(ndev->dev_addr[3] << 16 | ndev->dev_addr[4] << 8 | ndev->
 	       dev_addr[5], db->membase + EMAC_MAC_A0_REG);
 
 	mdelay(1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int emac_set_mac_address(struct net_device *dev, void *p)
-{
-	struct sockaddr *addr = p;
-	struct emac_board_info *db = netdev_priv(dev);
+अटल पूर्णांक emac_set_mac_address(काष्ठा net_device *dev, व्योम *p)
+अणु
+	काष्ठा sockaddr *addr = p;
+	काष्ठा emac_board_info *db = netdev_priv(dev);
 
-	if (netif_running(dev))
-		return -EBUSY;
+	अगर (netअगर_running(dev))
+		वापस -EBUSY;
 
-	memcpy(dev->dev_addr, addr->sa_data, ETH_ALEN);
+	स_नकल(dev->dev_addr, addr->sa_data, ETH_ALEN);
 
-	writel(dev->dev_addr[0] << 16 | dev->dev_addr[1] << 8 | dev->
+	ग_लिखोl(dev->dev_addr[0] << 16 | dev->dev_addr[1] << 8 | dev->
 	       dev_addr[2], db->membase + EMAC_MAC_A1_REG);
-	writel(dev->dev_addr[3] << 16 | dev->dev_addr[4] << 8 | dev->
+	ग_लिखोl(dev->dev_addr[3] << 16 | dev->dev_addr[4] << 8 | dev->
 	       dev_addr[5], db->membase + EMAC_MAC_A0_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Initialize emac board */
-static void emac_init_device(struct net_device *dev)
-{
-	struct emac_board_info *db = netdev_priv(dev);
-	unsigned long flags;
-	unsigned int reg_val;
+अटल व्योम emac_init_device(काष्ठा net_device *dev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक reg_val;
 
 	spin_lock_irqsave(&db->lock, flags);
 
@@ -379,248 +380,248 @@ static void emac_init_device(struct net_device *dev)
 	emac_update_duplex(dev);
 
 	/* enable RX/TX */
-	reg_val = readl(db->membase + EMAC_CTL_REG);
-	writel(reg_val | EMAC_CTL_RESET | EMAC_CTL_TX_EN | EMAC_CTL_RX_EN,
+	reg_val = पढ़ोl(db->membase + EMAC_CTL_REG);
+	ग_लिखोl(reg_val | EMAC_CTL_RESET | EMAC_CTL_TX_EN | EMAC_CTL_RX_EN,
 		db->membase + EMAC_CTL_REG);
 
-	/* enable RX/TX0/RX Hlevel interrup */
-	reg_val = readl(db->membase + EMAC_INT_CTL_REG);
+	/* enable RX/TX0/RX Hlevel पूर्णांकerrup */
+	reg_val = पढ़ोl(db->membase + EMAC_INT_CTL_REG);
 	reg_val |= (0xf << 0) | (0x01 << 8);
-	writel(reg_val, db->membase + EMAC_INT_CTL_REG);
+	ग_लिखोl(reg_val, db->membase + EMAC_INT_CTL_REG);
 
 	spin_unlock_irqrestore(&db->lock, flags);
-}
+पूर्ण
 
-/* Our watchdog timed out. Called by the networking layer */
-static void emac_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct emac_board_info *db = netdev_priv(dev);
-	unsigned long flags;
+/* Our watchकरोg समयd out. Called by the networking layer */
+अटल व्योम emac_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
+	अचिन्हित दीर्घ flags;
 
-	if (netif_msg_timer(db))
+	अगर (netअगर_msg_समयr(db))
 		dev_err(db->dev, "tx time out.\n");
 
-	/* Save previous register address */
+	/* Save previous रेजिस्टर address */
 	spin_lock_irqsave(&db->lock, flags);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	emac_reset(db);
 	emac_init_device(dev);
 	/* We can accept TX packets again */
-	netif_trans_update(dev);
-	netif_wake_queue(dev);
+	netअगर_trans_update(dev);
+	netअगर_wake_queue(dev);
 
-	/* Restore previous register address */
+	/* Restore previous रेजिस्टर address */
 	spin_unlock_irqrestore(&db->lock, flags);
-}
+पूर्ण
 
 /* Hardware start transmission.
  * Send a packet to media from the upper layer.
  */
-static netdev_tx_t emac_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct emac_board_info *db = netdev_priv(dev);
-	unsigned long channel;
-	unsigned long flags;
+अटल netdev_tx_t emac_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
+	अचिन्हित दीर्घ channel;
+	अचिन्हित दीर्घ flags;
 
-	channel = db->tx_fifo_stat & 3;
-	if (channel == 3)
-		return NETDEV_TX_BUSY;
+	channel = db->tx_fअगरo_stat & 3;
+	अगर (channel == 3)
+		वापस NETDEV_TX_BUSY;
 
 	channel = (channel == 1 ? 1 : 0);
 
 	spin_lock_irqsave(&db->lock, flags);
 
-	writel(channel, db->membase + EMAC_TX_INS_REG);
+	ग_लिखोl(channel, db->membase + EMAC_TX_INS_REG);
 
 	emac_outblk_32bit(db->membase + EMAC_TX_IO_DATA_REG,
 			skb->data, skb->len);
 	dev->stats.tx_bytes += skb->len;
 
-	db->tx_fifo_stat |= 1 << channel;
+	db->tx_fअगरo_stat |= 1 << channel;
 	/* TX control: First packet immediately send, second packet queue */
-	if (channel == 0) {
+	अगर (channel == 0) अणु
 		/* set TX len */
-		writel(skb->len, db->membase + EMAC_TX_PL0_REG);
-		/* start translate from fifo to phy */
-		writel(readl(db->membase + EMAC_TX_CTL0_REG) | 1,
+		ग_लिखोl(skb->len, db->membase + EMAC_TX_PL0_REG);
+		/* start translate from fअगरo to phy */
+		ग_लिखोl(पढ़ोl(db->membase + EMAC_TX_CTL0_REG) | 1,
 		       db->membase + EMAC_TX_CTL0_REG);
 
-		/* save the time stamp */
-		netif_trans_update(dev);
-	} else if (channel == 1) {
+		/* save the समय stamp */
+		netअगर_trans_update(dev);
+	पूर्ण अन्यथा अगर (channel == 1) अणु
 		/* set TX len */
-		writel(skb->len, db->membase + EMAC_TX_PL1_REG);
-		/* start translate from fifo to phy */
-		writel(readl(db->membase + EMAC_TX_CTL1_REG) | 1,
+		ग_लिखोl(skb->len, db->membase + EMAC_TX_PL1_REG);
+		/* start translate from fअगरo to phy */
+		ग_लिखोl(पढ़ोl(db->membase + EMAC_TX_CTL1_REG) | 1,
 		       db->membase + EMAC_TX_CTL1_REG);
 
-		/* save the time stamp */
-		netif_trans_update(dev);
-	}
+		/* save the समय stamp */
+		netअगर_trans_update(dev);
+	पूर्ण
 
-	if ((db->tx_fifo_stat & 3) == 3) {
+	अगर ((db->tx_fअगरo_stat & 3) == 3) अणु
 		/* Second packet */
-		netif_stop_queue(dev);
-	}
+		netअगर_stop_queue(dev);
+	पूर्ण
 
 	spin_unlock_irqrestore(&db->lock, flags);
 
-	/* free this SKB */
+	/* मुक्त this SKB */
 	dev_consume_skb_any(skb);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-/* EMAC interrupt handler
- * receive the packet to upper layer, free the transmitted packet
+/* EMAC पूर्णांकerrupt handler
+ * receive the packet to upper layer, मुक्त the transmitted packet
  */
-static void emac_tx_done(struct net_device *dev, struct emac_board_info *db,
-			  unsigned int tx_status)
-{
+अटल व्योम emac_tx_करोne(काष्ठा net_device *dev, काष्ठा emac_board_info *db,
+			  अचिन्हित पूर्णांक tx_status)
+अणु
 	/* One packet sent complete */
-	db->tx_fifo_stat &= ~(tx_status & 3);
-	if (3 == (tx_status & 3))
+	db->tx_fअगरo_stat &= ~(tx_status & 3);
+	अगर (3 == (tx_status & 3))
 		dev->stats.tx_packets += 2;
-	else
+	अन्यथा
 		dev->stats.tx_packets++;
 
-	if (netif_msg_tx_done(db))
+	अगर (netअगर_msg_tx_करोne(db))
 		dev_dbg(db->dev, "tx done, NSR %02x\n", tx_status);
 
-	netif_wake_queue(dev);
-}
+	netअगर_wake_queue(dev);
+पूर्ण
 
 /* Received a packet and pass to upper layer
  */
-static void emac_rx(struct net_device *dev)
-{
-	struct emac_board_info *db = netdev_priv(dev);
-	struct sk_buff *skb;
+अटल व्योम emac_rx(काष्ठा net_device *dev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
+	काष्ठा sk_buff *skb;
 	u8 *rdptr;
 	bool good_packet;
-	static int rxlen_last;
-	unsigned int reg_val;
+	अटल पूर्णांक rxlen_last;
+	अचिन्हित पूर्णांक reg_val;
 	u32 rxhdr, rxstatus, rxcount, rxlen;
 
-	/* Check packet ready or not */
-	while (1) {
+	/* Check packet पढ़ोy or not */
+	जबतक (1) अणु
 		/* race warning: the first packet might arrive with
-		 * the interrupts disabled, but the second will fix
+		 * the पूर्णांकerrupts disabled, but the second will fix
 		 * it
 		 */
-		rxcount = readl(db->membase + EMAC_RX_FBC_REG);
+		rxcount = पढ़ोl(db->membase + EMAC_RX_FBC_REG);
 
-		if (netif_msg_rx_status(db))
+		अगर (netअगर_msg_rx_status(db))
 			dev_dbg(db->dev, "RXCount: %x\n", rxcount);
 
-		if ((db->skb_last != NULL) && (rxlen_last > 0)) {
+		अगर ((db->skb_last != शून्य) && (rxlen_last > 0)) अणु
 			dev->stats.rx_bytes += rxlen_last;
 
 			/* Pass to upper layer */
 			db->skb_last->protocol = eth_type_trans(db->skb_last,
 								dev);
-			netif_rx(db->skb_last);
+			netअगर_rx(db->skb_last);
 			dev->stats.rx_packets++;
-			db->skb_last = NULL;
+			db->skb_last = शून्य;
 			rxlen_last = 0;
 
-			reg_val = readl(db->membase + EMAC_RX_CTL_REG);
+			reg_val = पढ़ोl(db->membase + EMAC_RX_CTL_REG);
 			reg_val &= ~EMAC_RX_CTL_DMA_EN;
-			writel(reg_val, db->membase + EMAC_RX_CTL_REG);
-		}
+			ग_लिखोl(reg_val, db->membase + EMAC_RX_CTL_REG);
+		पूर्ण
 
-		if (!rxcount) {
+		अगर (!rxcount) अणु
 			db->emacrx_completed_flag = 1;
-			reg_val = readl(db->membase + EMAC_INT_CTL_REG);
+			reg_val = पढ़ोl(db->membase + EMAC_INT_CTL_REG);
 			reg_val |= (0xf << 0) | (0x01 << 8);
-			writel(reg_val, db->membase + EMAC_INT_CTL_REG);
+			ग_लिखोl(reg_val, db->membase + EMAC_INT_CTL_REG);
 
 			/* had one stuck? */
-			rxcount = readl(db->membase + EMAC_RX_FBC_REG);
-			if (!rxcount)
-				return;
-		}
+			rxcount = पढ़ोl(db->membase + EMAC_RX_FBC_REG);
+			अगर (!rxcount)
+				वापस;
+		पूर्ण
 
-		reg_val = readl(db->membase + EMAC_RX_IO_DATA_REG);
-		if (netif_msg_rx_status(db))
+		reg_val = पढ़ोl(db->membase + EMAC_RX_IO_DATA_REG);
+		अगर (netअगर_msg_rx_status(db))
 			dev_dbg(db->dev, "receive header: %x\n", reg_val);
-		if (reg_val != EMAC_UNDOCUMENTED_MAGIC) {
+		अगर (reg_val != EMAC_UNDOCUMENTED_MAGIC) अणु
 			/* disable RX */
-			reg_val = readl(db->membase + EMAC_CTL_REG);
-			writel(reg_val & ~EMAC_CTL_RX_EN,
+			reg_val = पढ़ोl(db->membase + EMAC_CTL_REG);
+			ग_लिखोl(reg_val & ~EMAC_CTL_RX_EN,
 			       db->membase + EMAC_CTL_REG);
 
 			/* Flush RX FIFO */
-			reg_val = readl(db->membase + EMAC_RX_CTL_REG);
-			writel(reg_val | (1 << 3),
+			reg_val = पढ़ोl(db->membase + EMAC_RX_CTL_REG);
+			ग_लिखोl(reg_val | (1 << 3),
 			       db->membase + EMAC_RX_CTL_REG);
 
-			do {
-				reg_val = readl(db->membase + EMAC_RX_CTL_REG);
-			} while (reg_val & (1 << 3));
+			करो अणु
+				reg_val = पढ़ोl(db->membase + EMAC_RX_CTL_REG);
+			पूर्ण जबतक (reg_val & (1 << 3));
 
 			/* enable RX */
-			reg_val = readl(db->membase + EMAC_CTL_REG);
-			writel(reg_val | EMAC_CTL_RX_EN,
+			reg_val = पढ़ोl(db->membase + EMAC_CTL_REG);
+			ग_लिखोl(reg_val | EMAC_CTL_RX_EN,
 			       db->membase + EMAC_CTL_REG);
-			reg_val = readl(db->membase + EMAC_INT_CTL_REG);
+			reg_val = पढ़ोl(db->membase + EMAC_INT_CTL_REG);
 			reg_val |= (0xf << 0) | (0x01 << 8);
-			writel(reg_val, db->membase + EMAC_INT_CTL_REG);
+			ग_लिखोl(reg_val, db->membase + EMAC_INT_CTL_REG);
 
 			db->emacrx_completed_flag = 1;
 
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		/* A packet ready now  & Get status/length */
+		/* A packet पढ़ोy now  & Get status/length */
 		good_packet = true;
 
-		rxhdr = readl(db->membase + EMAC_RX_IO_DATA_REG);
+		rxhdr = पढ़ोl(db->membase + EMAC_RX_IO_DATA_REG);
 
-		if (netif_msg_rx_status(db))
-			dev_dbg(db->dev, "rxhdr: %x\n", *((int *)(&rxhdr)));
+		अगर (netअगर_msg_rx_status(db))
+			dev_dbg(db->dev, "rxhdr: %x\n", *((पूर्णांक *)(&rxhdr)));
 
 		rxlen = EMAC_RX_IO_DATA_LEN(rxhdr);
 		rxstatus = EMAC_RX_IO_DATA_STATUS(rxhdr);
 
-		if (netif_msg_rx_status(db))
+		अगर (netअगर_msg_rx_status(db))
 			dev_dbg(db->dev, "RX: status %02x, length %04x\n",
 				rxstatus, rxlen);
 
 		/* Packet Status check */
-		if (rxlen < 0x40) {
+		अगर (rxlen < 0x40) अणु
 			good_packet = false;
-			if (netif_msg_rx_err(db))
+			अगर (netअगर_msg_rx_err(db))
 				dev_dbg(db->dev, "RX: Bad Packet (runt)\n");
-		}
+		पूर्ण
 
-		if (unlikely(!(rxstatus & EMAC_RX_IO_DATA_STATUS_OK))) {
+		अगर (unlikely(!(rxstatus & EMAC_RX_IO_DATA_STATUS_OK))) अणु
 			good_packet = false;
 
-			if (rxstatus & EMAC_RX_IO_DATA_STATUS_CRC_ERR) {
-				if (netif_msg_rx_err(db))
+			अगर (rxstatus & EMAC_RX_IO_DATA_STATUS_CRC_ERR) अणु
+				अगर (netअगर_msg_rx_err(db))
 					dev_dbg(db->dev, "crc error\n");
 				dev->stats.rx_crc_errors++;
-			}
+			पूर्ण
 
-			if (rxstatus & EMAC_RX_IO_DATA_STATUS_LEN_ERR) {
-				if (netif_msg_rx_err(db))
+			अगर (rxstatus & EMAC_RX_IO_DATA_STATUS_LEN_ERR) अणु
+				अगर (netअगर_msg_rx_err(db))
 					dev_dbg(db->dev, "length error\n");
 				dev->stats.rx_length_errors++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* Move data from EMAC */
-		if (good_packet) {
+		अगर (good_packet) अणु
 			skb = netdev_alloc_skb(dev, rxlen + 4);
-			if (!skb)
-				continue;
+			अगर (!skb)
+				जारी;
 			skb_reserve(skb, 2);
 			rdptr = skb_put(skb, rxlen - 4);
 
 			/* Read received packet from RX SRAM */
-			if (netif_msg_rx_status(db))
+			अगर (netअगर_msg_rx_status(db))
 				dev_dbg(db->dev, "RxLen %x\n", rxlen);
 
 			emac_inblk_32bit(db->membase + EMAC_RX_IO_DATA_REG,
@@ -629,173 +630,173 @@ static void emac_rx(struct net_device *dev)
 
 			/* Pass to upper layer */
 			skb->protocol = eth_type_trans(skb, dev);
-			netif_rx(skb);
+			netअगर_rx(skb);
 			dev->stats.rx_packets++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t emac_interrupt(int irq, void *dev_id)
-{
-	struct net_device *dev = dev_id;
-	struct emac_board_info *db = netdev_priv(dev);
-	int int_status;
-	unsigned int reg_val;
+अटल irqवापस_t emac_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा emac_board_info *db = netdev_priv(dev);
+	पूर्णांक पूर्णांक_status;
+	अचिन्हित पूर्णांक reg_val;
 
-	/* A real interrupt coming */
+	/* A real पूर्णांकerrupt coming */
 
 	spin_lock(&db->lock);
 
-	/* Disable all interrupts */
-	writel(0, db->membase + EMAC_INT_CTL_REG);
+	/* Disable all पूर्णांकerrupts */
+	ग_लिखोl(0, db->membase + EMAC_INT_CTL_REG);
 
-	/* Got EMAC interrupt status */
+	/* Got EMAC पूर्णांकerrupt status */
 	/* Got ISR */
-	int_status = readl(db->membase + EMAC_INT_STA_REG);
+	पूर्णांक_status = पढ़ोl(db->membase + EMAC_INT_STA_REG);
 	/* Clear ISR status */
-	writel(int_status, db->membase + EMAC_INT_STA_REG);
+	ग_लिखोl(पूर्णांक_status, db->membase + EMAC_INT_STA_REG);
 
-	if (netif_msg_intr(db))
-		dev_dbg(db->dev, "emac interrupt %02x\n", int_status);
+	अगर (netअगर_msg_पूर्णांकr(db))
+		dev_dbg(db->dev, "emac interrupt %02x\n", पूर्णांक_status);
 
 	/* Received the coming packet */
-	if ((int_status & 0x100) && (db->emacrx_completed_flag == 1)) {
+	अगर ((पूर्णांक_status & 0x100) && (db->emacrx_completed_flag == 1)) अणु
 		/* carrier lost */
 		db->emacrx_completed_flag = 0;
 		emac_rx(dev);
-	}
+	पूर्ण
 
 	/* Transmit Interrupt check */
-	if (int_status & (0x01 | 0x02))
-		emac_tx_done(dev, db, int_status);
+	अगर (पूर्णांक_status & (0x01 | 0x02))
+		emac_tx_करोne(dev, db, पूर्णांक_status);
 
-	if (int_status & (0x04 | 0x08))
-		netdev_info(dev, " ab : %x\n", int_status);
+	अगर (पूर्णांक_status & (0x04 | 0x08))
+		netdev_info(dev, " ab : %x\n", पूर्णांक_status);
 
-	/* Re-enable interrupt mask */
-	if (db->emacrx_completed_flag == 1) {
-		reg_val = readl(db->membase + EMAC_INT_CTL_REG);
+	/* Re-enable पूर्णांकerrupt mask */
+	अगर (db->emacrx_completed_flag == 1) अणु
+		reg_val = पढ़ोl(db->membase + EMAC_INT_CTL_REG);
 		reg_val |= (0xf << 0) | (0x01 << 8);
-		writel(reg_val, db->membase + EMAC_INT_CTL_REG);
-	}
+		ग_लिखोl(reg_val, db->membase + EMAC_INT_CTL_REG);
+	पूर्ण
 	spin_unlock(&db->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
 /*
  * Used by netconsole
  */
-static void emac_poll_controller(struct net_device *dev)
-{
+अटल व्योम emac_poll_controller(काष्ठा net_device *dev)
+अणु
 	disable_irq(dev->irq);
-	emac_interrupt(dev->irq, dev);
+	emac_पूर्णांकerrupt(dev->irq, dev);
 	enable_irq(dev->irq);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-/*  Open the interface.
- *  The interface is opened whenever "ifconfig" actives it.
+/*  Open the पूर्णांकerface.
+ *  The पूर्णांकerface is खोलोed whenever "ifconfig" actives it.
  */
-static int emac_open(struct net_device *dev)
-{
-	struct emac_board_info *db = netdev_priv(dev);
-	int ret;
+अटल पूर्णांक emac_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(dev);
+	पूर्णांक ret;
 
-	if (netif_msg_ifup(db))
+	अगर (netअगर_msg_अगरup(db))
 		dev_dbg(db->dev, "enabling %s\n", dev->name);
 
-	if (request_irq(dev->irq, &emac_interrupt, 0, dev->name, dev))
-		return -EAGAIN;
+	अगर (request_irq(dev->irq, &emac_पूर्णांकerrupt, 0, dev->name, dev))
+		वापस -EAGAIN;
 
 	/* Initialize EMAC board */
 	emac_reset(db);
 	emac_init_device(dev);
 
 	ret = emac_mdio_probe(dev);
-	if (ret < 0) {
-		free_irq(dev->irq, dev);
+	अगर (ret < 0) अणु
+		मुक्त_irq(dev->irq, dev);
 		netdev_err(dev, "cannot probe MDIO bus\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	phy_start(dev->phydev);
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void emac_shutdown(struct net_device *dev)
-{
-	unsigned int reg_val;
-	struct emac_board_info *db = netdev_priv(dev);
+अटल व्योम emac_shutकरोwn(काष्ठा net_device *dev)
+अणु
+	अचिन्हित पूर्णांक reg_val;
+	काष्ठा emac_board_info *db = netdev_priv(dev);
 
-	/* Disable all interrupt */
-	writel(0, db->membase + EMAC_INT_CTL_REG);
+	/* Disable all पूर्णांकerrupt */
+	ग_लिखोl(0, db->membase + EMAC_INT_CTL_REG);
 
-	/* clear interrupt status */
-	reg_val = readl(db->membase + EMAC_INT_STA_REG);
-	writel(reg_val, db->membase + EMAC_INT_STA_REG);
+	/* clear पूर्णांकerrupt status */
+	reg_val = पढ़ोl(db->membase + EMAC_INT_STA_REG);
+	ग_लिखोl(reg_val, db->membase + EMAC_INT_STA_REG);
 
 	/* Disable RX/TX */
-	reg_val = readl(db->membase + EMAC_CTL_REG);
+	reg_val = पढ़ोl(db->membase + EMAC_CTL_REG);
 	reg_val &= ~(EMAC_CTL_TX_EN | EMAC_CTL_RX_EN | EMAC_CTL_RESET);
-	writel(reg_val, db->membase + EMAC_CTL_REG);
-}
+	ग_लिखोl(reg_val, db->membase + EMAC_CTL_REG);
+पूर्ण
 
-/* Stop the interface.
- * The interface is stopped when it is brought.
+/* Stop the पूर्णांकerface.
+ * The पूर्णांकerface is stopped when it is brought.
  */
-static int emac_stop(struct net_device *ndev)
-{
-	struct emac_board_info *db = netdev_priv(ndev);
+अटल पूर्णांक emac_stop(काष्ठा net_device *ndev)
+अणु
+	काष्ठा emac_board_info *db = netdev_priv(ndev);
 
-	if (netif_msg_ifdown(db))
+	अगर (netअगर_msg_अगरकरोwn(db))
 		dev_dbg(db->dev, "shutting down %s\n", ndev->name);
 
-	netif_stop_queue(ndev);
-	netif_carrier_off(ndev);
+	netअगर_stop_queue(ndev);
+	netअगर_carrier_off(ndev);
 
 	phy_stop(ndev->phydev);
 
-	emac_mdio_remove(ndev);
+	emac_mdio_हटाओ(ndev);
 
-	emac_shutdown(ndev);
+	emac_shutकरोwn(ndev);
 
-	free_irq(ndev->irq, ndev);
+	मुक्त_irq(ndev->irq, ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops emac_netdev_ops = {
-	.ndo_open		= emac_open,
-	.ndo_stop		= emac_stop,
-	.ndo_start_xmit		= emac_start_xmit,
-	.ndo_tx_timeout		= emac_timeout,
-	.ndo_set_rx_mode	= emac_set_rx_mode,
-	.ndo_do_ioctl		= phy_do_ioctl_running,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= emac_set_mac_address,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= emac_poll_controller,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops emac_netdev_ops = अणु
+	.nकरो_खोलो		= emac_खोलो,
+	.nकरो_stop		= emac_stop,
+	.nकरो_start_xmit		= emac_start_xmit,
+	.nकरो_tx_समयout		= emac_समयout,
+	.nकरो_set_rx_mode	= emac_set_rx_mode,
+	.nकरो_करो_ioctl		= phy_करो_ioctl_running,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= emac_set_mac_address,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	= emac_poll_controller,
+#पूर्ण_अगर
+पूर्ण;
 
-/* Search EMAC board, allocate space and register it
+/* Search EMAC board, allocate space and रेजिस्टर it
  */
-static int emac_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct emac_board_info *db;
-	struct net_device *ndev;
-	int ret = 0;
+अटल पूर्णांक emac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा emac_board_info *db;
+	काष्ठा net_device *ndev;
+	पूर्णांक ret = 0;
 
-	ndev = alloc_etherdev(sizeof(struct emac_board_info));
-	if (!ndev) {
+	ndev = alloc_etherdev(माप(काष्ठा emac_board_info));
+	अगर (!ndev) अणु
 		dev_err(&pdev->dev, "could not allocate device.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	SET_NETDEV_DEV(ndev, &pdev->dev);
 
@@ -804,86 +805,86 @@ static int emac_probe(struct platform_device *pdev)
 	db->dev = &pdev->dev;
 	db->ndev = ndev;
 	db->pdev = pdev;
-	db->msg_enable = netif_msg_init(debug, EMAC_DEFAULT_MSG_ENABLE);
+	db->msg_enable = netअगर_msg_init(debug, EMAC_DEFAULT_MSG_ENABLE);
 
 	spin_lock_init(&db->lock);
 
 	db->membase = of_iomap(np, 0);
-	if (!db->membase) {
+	अगर (!db->membase) अणु
 		dev_err(&pdev->dev, "failed to remap registers\n");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* fill in parameters for net-dev structure */
-	ndev->base_addr = (unsigned long)db->membase;
+	/* fill in parameters क्रम net-dev काष्ठाure */
+	ndev->base_addr = (अचिन्हित दीर्घ)db->membase;
 	ndev->irq = irq_of_parse_and_map(np, 0);
-	if (ndev->irq == -ENXIO) {
+	अगर (ndev->irq == -ENXIO) अणु
 		netdev_err(ndev, "No irq resource\n");
 		ret = ndev->irq;
-		goto out_iounmap;
-	}
+		जाओ out_iounmap;
+	पूर्ण
 
-	db->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(db->clk)) {
+	db->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(db->clk)) अणु
 		ret = PTR_ERR(db->clk);
-		goto out_dispose_mapping;
-	}
+		जाओ out_dispose_mapping;
+	पूर्ण
 
 	ret = clk_prepare_enable(db->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Error couldn't enable clock (%d)\n", ret);
-		goto out_dispose_mapping;
-	}
+		जाओ out_dispose_mapping;
+	पूर्ण
 
 	ret = sunxi_sram_claim(&pdev->dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Error couldn't map SRAM to device\n");
-		goto out_clk_disable_unprepare;
-	}
+		जाओ out_clk_disable_unprepare;
+	पूर्ण
 
 	db->phy_node = of_parse_phandle(np, "phy-handle", 0);
-	if (!db->phy_node)
+	अगर (!db->phy_node)
 		db->phy_node = of_parse_phandle(np, "phy", 0);
-	if (!db->phy_node) {
+	अगर (!db->phy_node) अणु
 		dev_err(&pdev->dev, "no associated PHY\n");
 		ret = -ENODEV;
-		goto out_release_sram;
-	}
+		जाओ out_release_sram;
+	पूर्ण
 
 	/* Read MAC-address from DT */
 	ret = of_get_mac_address(np, ndev->dev_addr);
-	if (ret) {
-		/* if the MAC address is invalid get a random one */
-		eth_hw_addr_random(ndev);
+	अगर (ret) अणु
+		/* अगर the MAC address is invalid get a अक्रमom one */
+		eth_hw_addr_अक्रमom(ndev);
 		dev_warn(&pdev->dev, "using random MAC address %pM\n",
 			 ndev->dev_addr);
-	}
+	पूर्ण
 
 	db->emacrx_completed_flag = 1;
-	emac_powerup(ndev);
+	emac_घातerup(ndev);
 	emac_reset(db);
 
 	ndev->netdev_ops = &emac_netdev_ops;
-	ndev->watchdog_timeo = msecs_to_jiffies(watchdog);
+	ndev->watchकरोg_समयo = msecs_to_jअगरfies(watchकरोg);
 	ndev->ethtool_ops = &emac_ethtool_ops;
 
-	platform_set_drvdata(pdev, ndev);
+	platक्रमm_set_drvdata(pdev, ndev);
 
-	/* Carrier starts down, phylib will bring it up */
-	netif_carrier_off(ndev);
+	/* Carrier starts करोwn, phylib will bring it up */
+	netअगर_carrier_off(ndev);
 
-	ret = register_netdev(ndev);
-	if (ret) {
+	ret = रेजिस्टर_netdev(ndev);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Registering netdev failed!\n");
 		ret = -ENODEV;
-		goto out_release_sram;
-	}
+		जाओ out_release_sram;
+	पूर्ण
 
 	dev_info(&pdev->dev, "%s: at %p, IRQ %d MAC: %pM\n",
 		 ndev->name, db->membase, ndev->irq, ndev->dev_addr);
 
-	return 0;
+	वापस 0;
 
 out_release_sram:
 	sunxi_sram_release(&pdev->dev);
@@ -896,72 +897,72 @@ out_iounmap:
 out:
 	dev_err(db->dev, "not found (%d).\n", ret);
 
-	free_netdev(ndev);
+	मुक्त_netdev(ndev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int emac_remove(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct emac_board_info *db = netdev_priv(ndev);
+अटल पूर्णांक emac_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(pdev);
+	काष्ठा emac_board_info *db = netdev_priv(ndev);
 
-	unregister_netdev(ndev);
+	unरेजिस्टर_netdev(ndev);
 	sunxi_sram_release(&pdev->dev);
 	clk_disable_unprepare(db->clk);
 	irq_dispose_mapping(ndev->irq);
 	iounmap(db->membase);
-	free_netdev(ndev);
+	मुक्त_netdev(ndev);
 
 	dev_dbg(&pdev->dev, "released and freed device\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int emac_suspend(struct platform_device *dev, pm_message_t state)
-{
-	struct net_device *ndev = platform_get_drvdata(dev);
+अटल पूर्णांक emac_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(dev);
 
-	netif_carrier_off(ndev);
-	netif_device_detach(ndev);
-	emac_shutdown(ndev);
+	netअगर_carrier_off(ndev);
+	netअगर_device_detach(ndev);
+	emac_shutकरोwn(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int emac_resume(struct platform_device *dev)
-{
-	struct net_device *ndev = platform_get_drvdata(dev);
-	struct emac_board_info *db = netdev_priv(ndev);
+अटल पूर्णांक emac_resume(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा net_device *ndev = platक्रमm_get_drvdata(dev);
+	काष्ठा emac_board_info *db = netdev_priv(ndev);
 
 	emac_reset(db);
 	emac_init_device(ndev);
-	netif_device_attach(ndev);
+	netअगर_device_attach(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id emac_of_match[] = {
-	{.compatible = "allwinner,sun4i-a10-emac",},
+अटल स्थिर काष्ठा of_device_id emac_of_match[] = अणु
+	अणु.compatible = "allwinner,sun4i-a10-emac",पूर्ण,
 
 	/* Deprecated */
-	{.compatible = "allwinner,sun4i-emac",},
-	{},
-};
+	अणु.compatible = "allwinner,sun4i-emac",पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, emac_of_match);
 
-static struct platform_driver emac_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver emac_driver = अणु
+	.driver = अणु
 		.name = "sun4i-emac",
 		.of_match_table = emac_of_match,
-	},
+	पूर्ण,
 	.probe = emac_probe,
-	.remove = emac_remove,
+	.हटाओ = emac_हटाओ,
 	.suspend = emac_suspend,
 	.resume = emac_resume,
-};
+पूर्ण;
 
-module_platform_driver(emac_driver);
+module_platक्रमm_driver(emac_driver);
 
 MODULE_AUTHOR("Stefan Roese <sr@denx.de>");
 MODULE_AUTHOR("Maxime Ripard <maxime.ripard@free-electrons.com>");

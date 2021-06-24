@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * TX3927 setup routines
  * Based on linux/arch/mips/txx9/jmr3927/setup.c
@@ -7,64 +8,64 @@
  * Copyright (C) 2007 Ralf Baechle (ralf@linux-mips.org)
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/param.h>
-#include <linux/io.h>
-#include <linux/mtd/physmap.h>
-#include <asm/mipsregs.h>
-#include <asm/txx9irq.h>
-#include <asm/txx9tmr.h>
-#include <asm/txx9pio.h>
-#include <asm/txx9/generic.h>
-#include <asm/txx9/tx3927.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/param.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/txx9irq.h>
+#समावेश <यंत्र/txx9पंचांगr.h>
+#समावेश <यंत्र/txx9pपन.स>
+#समावेश <यंत्र/txx9/generic.h>
+#समावेश <यंत्र/txx9/tx3927.h>
 
-void __init tx3927_wdt_init(void)
-{
+व्योम __init tx3927_wdt_init(व्योम)
+अणु
 	txx9_wdt_init(TX3927_TMR_REG(2));
-}
+पूर्ण
 
-void __init tx3927_setup(void)
-{
-	int i;
-	unsigned int conf;
+व्योम __init tx3927_setup(व्योम)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक conf;
 
 	txx9_reg_res_init(TX3927_REV_PCODE(), TX3927_REG_BASE,
 			  TX3927_REG_SIZE);
 
 	/* SDRAMC,ROMC are configured by PROM */
-	for (i = 0; i < 8; i++) {
-		if (!(tx3927_romcptr->cr[i] & 0x8))
-			continue;	/* disabled */
-		txx9_ce_res[i].start = (unsigned long)TX3927_ROMC_BA(i);
+	क्रम (i = 0; i < 8; i++) अणु
+		अगर (!(tx3927_romcptr->cr[i] & 0x8))
+			जारी;	/* disabled */
+		txx9_ce_res[i].start = (अचिन्हित दीर्घ)TX3927_ROMC_BA(i);
 		txx9_ce_res[i].end =
 			txx9_ce_res[i].start + TX3927_ROMC_SIZE(i) - 1;
 		request_resource(&iomem_resource, &txx9_ce_res[i]);
-	}
+	पूर्ण
 
-	/* clocks */
-	txx9_gbus_clock = txx9_cpu_clock / 2;
-	/* change default value to udelay/mdelay take reasonable time */
-	loops_per_jiffy = txx9_cpu_clock / HZ / 2;
+	/* घड़ीs */
+	txx9_gbus_घड़ी = txx9_cpu_घड़ी / 2;
+	/* change शेष value to udelay/mdelay take reasonable समय */
+	loops_per_jअगरfy = txx9_cpu_घड़ी / HZ / 2;
 
 	/* CCFG */
 	/* enable Timeout BusError */
-	if (txx9_ccfg_toeon)
+	अगर (txx9_ccfg_toeon)
 		tx3927_ccfgptr->ccfg |= TX3927_CCFG_TOE;
 
 	/* clear BusErrorOnWrite flag */
 	tx3927_ccfgptr->ccfg &= ~TX3927_CCFG_BEOW;
-	if (read_c0_conf() & TX39_CONF_WBON)
+	अगर (पढ़ो_c0_conf() & TX39_CONF_WBON)
 		/* Disable PCI snoop */
 		tx3927_ccfgptr->ccfg &= ~TX3927_CCFG_PSNP;
-	else
-		/* Enable PCI SNOOP - with write through only */
+	अन्यथा
+		/* Enable PCI SNOOP - with ग_लिखो through only */
 		tx3927_ccfgptr->ccfg |= TX3927_CCFG_PSNP;
-	/* do reset on watchdog */
+	/* करो reset on watchकरोg */
 	tx3927_ccfgptr->ccfg |= TX3927_CCFG_WR;
 
 	pr_info("TX3927 -- CRIR:%08lx CCFG:%08lx PCFG:%08lx\n",
@@ -72,65 +73,65 @@ void __init tx3927_setup(void)
 		tx3927_ccfgptr->pcfg);
 
 	/* TMR */
-	for (i = 0; i < TX3927_NR_TMR; i++)
-		txx9_tmr_init(TX3927_TMR_REG(i));
+	क्रम (i = 0; i < TX3927_NR_TMR; i++)
+		txx9_पंचांगr_init(TX3927_TMR_REG(i));
 
 	/* DMA */
 	tx3927_dmaptr->mcr = 0;
-	for (i = 0; i < ARRAY_SIZE(tx3927_dmaptr->ch); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(tx3927_dmaptr->ch); i++) अणु
 		/* reset channel */
 		tx3927_dmaptr->ch[i].ccr = TX3927_DMA_CCR_CHRST;
 		tx3927_dmaptr->ch[i].ccr = 0;
-	}
+	पूर्ण
 	/* enable DMA */
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 	tx3927_dmaptr->mcr = TX3927_DMA_MCR_MSTEN;
-#else
+#अन्यथा
 	tx3927_dmaptr->mcr = TX3927_DMA_MCR_MSTEN | TX3927_DMA_MCR_LE;
-#endif
+#पूर्ण_अगर
 
 	/* PIO */
-	__raw_writel(0, &tx3927_pioptr->maskcpu);
-	__raw_writel(0, &tx3927_pioptr->maskext);
+	__raw_ग_लिखोl(0, &tx3927_pioptr->maskcpu);
+	__raw_ग_लिखोl(0, &tx3927_pioptr->maskext);
 
-	conf = read_c0_conf();
-	if (conf & TX39_CONF_DCE) {
-		if (!(conf & TX39_CONF_WBON))
+	conf = पढ़ो_c0_conf();
+	अगर (conf & TX39_CONF_DCE) अणु
+		अगर (!(conf & TX39_CONF_WBON))
 			pr_info("TX3927 D-Cache WriteThrough.\n");
-		else if (!(conf & TX39_CONF_CWFON))
+		अन्यथा अगर (!(conf & TX39_CONF_CWFON))
 			pr_info("TX3927 D-Cache WriteBack.\n");
-		else
+		अन्यथा
 			pr_info("TX3927 D-Cache WriteBack (CWF) .\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init tx3927_time_init(unsigned int evt_tmrnr, unsigned int src_tmrnr)
-{
-	txx9_clockevent_init(TX3927_TMR_REG(evt_tmrnr),
-			     TXX9_IRQ_BASE + TX3927_IR_TMR(evt_tmrnr),
+व्योम __init tx3927_समय_init(अचिन्हित पूर्णांक evt_पंचांगrnr, अचिन्हित पूर्णांक src_पंचांगrnr)
+अणु
+	txx9_घड़ीevent_init(TX3927_TMR_REG(evt_पंचांगrnr),
+			     TXX9_IRQ_BASE + TX3927_IR_TMR(evt_पंचांगrnr),
 			     TXX9_IMCLK);
-	txx9_clocksource_init(TX3927_TMR_REG(src_tmrnr), TXX9_IMCLK);
-}
+	txx9_घड़ीsource_init(TX3927_TMR_REG(src_पंचांगrnr), TXX9_IMCLK);
+पूर्ण
 
-void __init tx3927_sio_init(unsigned int sclk, unsigned int cts_mask)
-{
-	int i;
+व्योम __init tx3927_sio_init(अचिन्हित पूर्णांक sclk, अचिन्हित पूर्णांक cts_mask)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		txx9_sio_init(TX3927_SIO_REG(i),
 			      TXX9_IRQ_BASE + TX3927_IR_SIO(i),
 			      i, sclk, (1 << i) & cts_mask);
-}
+पूर्ण
 
-void __init tx3927_mtd_init(int ch)
-{
-	struct physmap_flash_data pdata = {
+व्योम __init tx3927_mtd_init(पूर्णांक ch)
+अणु
+	काष्ठा physmap_flash_data pdata = अणु
 		.width = TX3927_ROMC_WIDTH(ch) / 8,
-	};
-	unsigned long start = txx9_ce_res[ch].start;
-	unsigned long size = txx9_ce_res[ch].end - start + 1;
+	पूर्ण;
+	अचिन्हित दीर्घ start = txx9_ce_res[ch].start;
+	अचिन्हित दीर्घ size = txx9_ce_res[ch].end - start + 1;
 
-	if (!(tx3927_romcptr->cr[ch] & 0x8))
-		return; /* disabled */
+	अगर (!(tx3927_romcptr->cr[ch] & 0x8))
+		वापस; /* disabled */
 	txx9_physmap_flash_init(ch, start, size, &pdata);
-}
+पूर्ण

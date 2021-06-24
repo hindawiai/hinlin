@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AppArmor security module
  *
@@ -8,150 +9,150 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
-#include <linux/ctype.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "include/audit.h"
-#include "include/apparmor.h"
-#include "include/lib.h"
-#include "include/perms.h"
-#include "include/policy.h"
+#समावेश "include/audit.h"
+#समावेश "include/apparmor.h"
+#समावेश "include/lib.h"
+#समावेश "include/perms.h"
+#समावेश "include/policy.h"
 
-struct aa_perms nullperms;
-struct aa_perms allperms = { .allow = ALL_PERMS_MASK,
+काष्ठा aa_perms nullperms;
+काष्ठा aa_perms allperms = अणु .allow = ALL_PERMS_MASK,
 			     .quiet = ALL_PERMS_MASK,
-			     .hide = ALL_PERMS_MASK };
+			     .hide = ALL_PERMS_MASK पूर्ण;
 
 /**
- * aa_split_fqname - split a fqname into a profile and namespace name
- * @fqname: a full qualified name in namespace profile format (NOT NULL)
- * @ns_name: pointer to portion of the string containing the ns name (NOT NULL)
+ * aa_split_fqname - split a fqname पूर्णांकo a profile and namespace name
+ * @fqname: a full qualअगरied name in namespace profile क्रमmat (NOT शून्य)
+ * @ns_name: poपूर्णांकer to portion of the string containing the ns name (NOT शून्य)
  *
- * Returns: profile name or NULL if one is not specified
+ * Returns: profile name or शून्य अगर one is not specअगरied
  *
- * Split a namespace name from a profile name (see policy.c for naming
- * description).  If a portion of the name is missing it returns NULL for
+ * Split a namespace name from a profile name (see policy.c क्रम naming
+ * description).  If a portion of the name is missing it वापसs शून्य क्रम
  * that portion.
  *
- * NOTE: may modify the @fqname string.  The pointers returned point
- *       into the @fqname string.
+ * NOTE: may modअगरy the @fqname string.  The poपूर्णांकers वापसed poपूर्णांक
+ *       पूर्णांकo the @fqname string.
  */
-char *aa_split_fqname(char *fqname, char **ns_name)
-{
-	char *name = strim(fqname);
+अक्षर *aa_split_fqname(अक्षर *fqname, अक्षर **ns_name)
+अणु
+	अक्षर *name = strim(fqname);
 
-	*ns_name = NULL;
-	if (name[0] == ':') {
-		char *split = strchr(&name[1], ':');
+	*ns_name = शून्य;
+	अगर (name[0] == ':') अणु
+		अक्षर *split = म_अक्षर(&name[1], ':');
 		*ns_name = skip_spaces(&name[1]);
-		if (split) {
-			/* overwrite ':' with \0 */
+		अगर (split) अणु
+			/* overग_लिखो ':' with \0 */
 			*split++ = 0;
-			if (strncmp(split, "//", 2) == 0)
+			अगर (म_भेदन(split, "//", 2) == 0)
 				split += 2;
 			name = skip_spaces(split);
-		} else
+		पूर्ण अन्यथा
 			/* a ns name without a following profile is allowed */
-			name = NULL;
-	}
-	if (name && *name == 0)
-		name = NULL;
+			name = शून्य;
+	पूर्ण
+	अगर (name && *name == 0)
+		name = शून्य;
 
-	return name;
-}
+	वापस name;
+पूर्ण
 
 /**
  * skipn_spaces - Removes leading whitespace from @str.
  * @str: The string to be stripped.
  *
- * Returns a pointer to the first non-whitespace character in @str.
- * if all whitespace will return NULL
+ * Returns a poपूर्णांकer to the first non-whitespace अक्षरacter in @str.
+ * अगर all whitespace will वापस शून्य
  */
 
-const char *skipn_spaces(const char *str, size_t n)
-{
-	for (; n && isspace(*str); --n)
+स्थिर अक्षर *skipn_spaces(स्थिर अक्षर *str, माप_प्रकार n)
+अणु
+	क्रम (; n && है_खाली(*str); --n)
 		++str;
-	if (n)
-		return (char *)str;
-	return NULL;
-}
+	अगर (n)
+		वापस (अक्षर *)str;
+	वापस शून्य;
+पूर्ण
 
-const char *aa_splitn_fqname(const char *fqname, size_t n, const char **ns_name,
-			     size_t *ns_len)
-{
-	const char *end = fqname + n;
-	const char *name = skipn_spaces(fqname, n);
+स्थिर अक्षर *aa_splitn_fqname(स्थिर अक्षर *fqname, माप_प्रकार n, स्थिर अक्षर **ns_name,
+			     माप_प्रकार *ns_len)
+अणु
+	स्थिर अक्षर *end = fqname + n;
+	स्थिर अक्षर *name = skipn_spaces(fqname, n);
 
-	*ns_name = NULL;
+	*ns_name = शून्य;
 	*ns_len = 0;
 
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
-	if (name[0] == ':') {
-		char *split = strnchr(&name[1], end - &name[1], ':');
+	अगर (name[0] == ':') अणु
+		अक्षर *split = strnchr(&name[1], end - &name[1], ':');
 		*ns_name = skipn_spaces(&name[1], end - &name[1]);
-		if (!*ns_name)
-			return NULL;
-		if (split) {
+		अगर (!*ns_name)
+			वापस शून्य;
+		अगर (split) अणु
 			*ns_len = split - *ns_name;
-			if (*ns_len == 0)
-				*ns_name = NULL;
+			अगर (*ns_len == 0)
+				*ns_name = शून्य;
 			split++;
-			if (end - split > 1 && strncmp(split, "//", 2) == 0)
+			अगर (end - split > 1 && म_भेदन(split, "//", 2) == 0)
 				split += 2;
 			name = skipn_spaces(split, end - split);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* a ns name without a following profile is allowed */
-			name = NULL;
+			name = शून्य;
 			*ns_len = end - *ns_name;
-		}
-	}
-	if (name && *name == 0)
-		name = NULL;
+		पूर्ण
+	पूर्ण
+	अगर (name && *name == 0)
+		name = शून्य;
 
-	return name;
-}
+	वापस name;
+पूर्ण
 
 /**
  * aa_info_message - log a none profile related status message
  * @str: message to log
  */
-void aa_info_message(const char *str)
-{
-	if (audit_enabled) {
-		DEFINE_AUDIT_DATA(sa, LSM_AUDIT_DATA_NONE, NULL);
+व्योम aa_info_message(स्थिर अक्षर *str)
+अणु
+	अगर (audit_enabled) अणु
+		DEFINE_AUDIT_DATA(sa, LSM_AUDIT_DATA_NONE, शून्य);
 
 		aad(&sa)->info = str;
-		aa_audit_msg(AUDIT_APPARMOR_STATUS, &sa, NULL);
-	}
-	printk(KERN_INFO "AppArmor: %s\n", str);
-}
+		aa_audit_msg(AUDIT_APPARMOR_STATUS, &sa, शून्य);
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "AppArmor: %s\n", str);
+पूर्ण
 
-__counted char *aa_str_alloc(int size, gfp_t gfp)
-{
-	struct counted_str *str;
+__counted अक्षर *aa_str_alloc(पूर्णांक size, gfp_t gfp)
+अणु
+	काष्ठा counted_str *str;
 
-	str = kmalloc(sizeof(struct counted_str) + size, gfp);
-	if (!str)
-		return NULL;
+	str = kदो_स्मृति(माप(काष्ठा counted_str) + size, gfp);
+	अगर (!str)
+		वापस शून्य;
 
 	kref_init(&str->count);
-	return str->name;
-}
+	वापस str->name;
+पूर्ण
 
-void aa_str_kref(struct kref *kref)
-{
-	kfree(container_of(kref, struct counted_str, count));
-}
+व्योम aa_str_kref(काष्ठा kref *kref)
+अणु
+	kमुक्त(container_of(kref, काष्ठा counted_str, count));
+पूर्ण
 
 
-const char aa_file_perm_chrs[] = "xwracd         km l     ";
-const char *aa_file_perm_names[] = {
+स्थिर अक्षर aa_file_perm_chrs[] = "xwracd         km l     ";
+स्थिर अक्षर *aa_file_perm_names[] = अणु
 	"exec",
 	"write",
 	"read",
@@ -191,212 +192,212 @@ const char *aa_file_perm_names[] = {
 	"change_onexec",
 	"change_profile",
 	"change_hat",
-};
+पूर्ण;
 
 /**
- * aa_perm_mask_to_str - convert a perm mask to its short string
- * @str: character buffer to store string in (at least 10 characters)
+ * aa_perm_mask_to_str - convert a perm mask to its लघु string
+ * @str: अक्षरacter buffer to store string in (at least 10 अक्षरacters)
  * @str_size: size of the @str buffer
- * @chrs: NUL-terminated character buffer of permission characters
+ * @chrs: NUL-terminated अक्षरacter buffer of permission अक्षरacters
  * @mask: permission mask to convert
  */
-void aa_perm_mask_to_str(char *str, size_t str_size, const char *chrs, u32 mask)
-{
-	unsigned int i, perm = 1;
-	size_t num_chrs = strlen(chrs);
+व्योम aa_perm_mask_to_str(अक्षर *str, माप_प्रकार str_size, स्थिर अक्षर *chrs, u32 mask)
+अणु
+	अचिन्हित पूर्णांक i, perm = 1;
+	माप_प्रकार num_chrs = म_माप(chrs);
 
-	for (i = 0; i < num_chrs; perm <<= 1, i++) {
-		if (mask & perm) {
-			/* Ensure that one byte is left for NUL-termination */
-			if (WARN_ON_ONCE(str_size <= 1))
-				break;
+	क्रम (i = 0; i < num_chrs; perm <<= 1, i++) अणु
+		अगर (mask & perm) अणु
+			/* Ensure that one byte is left क्रम NUL-termination */
+			अगर (WARN_ON_ONCE(str_size <= 1))
+				अवरोध;
 
 			*str++ = chrs[i];
 			str_size--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	*str = '\0';
-}
+पूर्ण
 
-void aa_audit_perm_names(struct audit_buffer *ab, const char * const *names,
+व्योम aa_audit_perm_names(काष्ठा audit_buffer *ab, स्थिर अक्षर * स्थिर *names,
 			 u32 mask)
-{
-	const char *fmt = "%s";
-	unsigned int i, perm = 1;
+अणु
+	स्थिर अक्षर *fmt = "%s";
+	अचिन्हित पूर्णांक i, perm = 1;
 	bool prev = false;
 
-	for (i = 0; i < 32; perm <<= 1, i++) {
-		if (mask & perm) {
-			audit_log_format(ab, fmt, names[i]);
-			if (!prev) {
+	क्रम (i = 0; i < 32; perm <<= 1, i++) अणु
+		अगर (mask & perm) अणु
+			audit_log_क्रमmat(ab, fmt, names[i]);
+			अगर (!prev) अणु
 				prev = true;
 				fmt = " %s";
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void aa_audit_perm_mask(struct audit_buffer *ab, u32 mask, const char *chrs,
-			u32 chrsmask, const char * const *names, u32 namesmask)
-{
-	char str[33];
+व्योम aa_audit_perm_mask(काष्ठा audit_buffer *ab, u32 mask, स्थिर अक्षर *chrs,
+			u32 chrsmask, स्थिर अक्षर * स्थिर *names, u32 namesmask)
+अणु
+	अक्षर str[33];
 
-	audit_log_format(ab, "\"");
-	if ((mask & chrsmask) && chrs) {
-		aa_perm_mask_to_str(str, sizeof(str), chrs, mask & chrsmask);
+	audit_log_क्रमmat(ab, "\"");
+	अगर ((mask & chrsmask) && chrs) अणु
+		aa_perm_mask_to_str(str, माप(str), chrs, mask & chrsmask);
 		mask &= ~chrsmask;
-		audit_log_format(ab, "%s", str);
-		if (mask & namesmask)
-			audit_log_format(ab, " ");
-	}
-	if ((mask & namesmask) && names)
+		audit_log_क्रमmat(ab, "%s", str);
+		अगर (mask & namesmask)
+			audit_log_क्रमmat(ab, " ");
+	पूर्ण
+	अगर ((mask & namesmask) && names)
 		aa_audit_perm_names(ab, names, mask & namesmask);
-	audit_log_format(ab, "\"");
-}
+	audit_log_क्रमmat(ab, "\"");
+पूर्ण
 
 /**
- * aa_audit_perms_cb - generic callback fn for auditing perms
- * @ab: audit buffer (NOT NULL)
- * @va: audit struct to audit values of (NOT NULL)
+ * aa_audit_perms_cb - generic callback fn क्रम auditing perms
+ * @ab: audit buffer (NOT शून्य)
+ * @va: audit काष्ठा to audit values of (NOT शून्य)
  */
-static void aa_audit_perms_cb(struct audit_buffer *ab, void *va)
-{
-	struct common_audit_data *sa = va;
+अटल व्योम aa_audit_perms_cb(काष्ठा audit_buffer *ab, व्योम *va)
+अणु
+	काष्ठा common_audit_data *sa = va;
 
-	if (aad(sa)->request) {
-		audit_log_format(ab, " requested_mask=");
+	अगर (aad(sa)->request) अणु
+		audit_log_क्रमmat(ab, " requested_mask=");
 		aa_audit_perm_mask(ab, aad(sa)->request, aa_file_perm_chrs,
 				   PERMS_CHRS_MASK, aa_file_perm_names,
 				   PERMS_NAMES_MASK);
-	}
-	if (aad(sa)->denied) {
-		audit_log_format(ab, "denied_mask=");
+	पूर्ण
+	अगर (aad(sa)->denied) अणु
+		audit_log_क्रमmat(ab, "denied_mask=");
 		aa_audit_perm_mask(ab, aad(sa)->denied, aa_file_perm_chrs,
 				   PERMS_CHRS_MASK, aa_file_perm_names,
 				   PERMS_NAMES_MASK);
-	}
-	audit_log_format(ab, " peer=");
+	पूर्ण
+	audit_log_क्रमmat(ab, " peer=");
 	aa_label_xaudit(ab, labels_ns(aad(sa)->label), aad(sa)->peer,
 				      FLAGS_NONE, GFP_ATOMIC);
-}
+पूर्ण
 
 /**
  * aa_apply_modes_to_perms - apply namespace and profile flags to perms
  * @profile: that perms where computed from
- * @perms: perms to apply mode modifiers to
+ * @perms: perms to apply mode modअगरiers to
  *
- * TODO: split into profile and ns based flags for when accumulating perms
+ * TODO: split पूर्णांकo profile and ns based flags क्रम when accumulating perms
  */
-void aa_apply_modes_to_perms(struct aa_profile *profile, struct aa_perms *perms)
-{
-	switch (AUDIT_MODE(profile)) {
-	case AUDIT_ALL:
+व्योम aa_apply_modes_to_perms(काष्ठा aa_profile *profile, काष्ठा aa_perms *perms)
+अणु
+	चयन (AUDIT_MODE(profile)) अणु
+	हाल AUDIT_ALL:
 		perms->audit = ALL_PERMS_MASK;
 		fallthrough;
-	case AUDIT_NOQUIET:
+	हाल AUDIT_NOQUIET:
 		perms->quiet = 0;
-		break;
-	case AUDIT_QUIET:
+		अवरोध;
+	हाल AUDIT_QUIET:
 		perms->audit = 0;
 		fallthrough;
-	case AUDIT_QUIET_DENIED:
+	हाल AUDIT_QUIET_DENIED:
 		perms->quiet = ALL_PERMS_MASK;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (KILL_MODE(profile))
-		perms->kill = ALL_PERMS_MASK;
-	else if (COMPLAIN_MODE(profile))
+	अगर (KILL_MODE(profile))
+		perms->समाप्त = ALL_PERMS_MASK;
+	अन्यथा अगर (COMPLAIN_MODE(profile))
 		perms->complain = ALL_PERMS_MASK;
 /*
  *  TODO:
- *	else if (PROMPT_MODE(profile))
+ *	अन्यथा अगर (PROMPT_MODE(profile))
  *		perms->prompt = ALL_PERMS_MASK;
  */
-}
+पूर्ण
 
-static u32 map_other(u32 x)
-{
-	return ((x & 0x3) << 8) |	/* SETATTR/GETATTR */
+अटल u32 map_other(u32 x)
+अणु
+	वापस ((x & 0x3) << 8) |	/* SETATTR/GETATTR */
 		((x & 0x1c) << 18) |	/* ACCEPT/BIND/LISTEN */
 		((x & 0x60) << 19);	/* SETOPT/GETOPT */
-}
+पूर्ण
 
-void aa_compute_perms(struct aa_dfa *dfa, unsigned int state,
-		      struct aa_perms *perms)
-{
-	*perms = (struct aa_perms) {
+व्योम aa_compute_perms(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक state,
+		      काष्ठा aa_perms *perms)
+अणु
+	*perms = (काष्ठा aa_perms) अणु
 		.allow = dfa_user_allow(dfa, state),
 		.audit = dfa_user_audit(dfa, state),
 		.quiet = dfa_user_quiet(dfa, state),
-	};
+	पूर्ण;
 
-	/* for v5 perm mapping in the policydb, the other set is used
+	/* क्रम v5 perm mapping in the policydb, the other set is used
 	 * to extend the general perm set
 	 */
 	perms->allow |= map_other(dfa_other_allow(dfa, state));
 	perms->audit |= map_other(dfa_other_audit(dfa, state));
 	perms->quiet |= map_other(dfa_other_quiet(dfa, state));
 //	perms->xindex = dfa_user_xindex(dfa, state);
-}
+पूर्ण
 
 /**
  * aa_perms_accum_raw - accumulate perms with out masking off overlapping perms
- * @accum - perms struct to accumulate into
- * @addend - perms struct to add to @accum
+ * @accum - perms काष्ठा to accumulate पूर्णांकo
+ * @addend - perms काष्ठा to add to @accum
  */
-void aa_perms_accum_raw(struct aa_perms *accum, struct aa_perms *addend)
-{
+व्योम aa_perms_accum_raw(काष्ठा aa_perms *accum, काष्ठा aa_perms *addend)
+अणु
 	accum->deny |= addend->deny;
 	accum->allow &= addend->allow & ~addend->deny;
 	accum->audit |= addend->audit & addend->allow;
 	accum->quiet &= addend->quiet & ~addend->allow;
-	accum->kill |= addend->kill & ~addend->allow;
+	accum->समाप्त |= addend->समाप्त & ~addend->allow;
 	accum->stop |= addend->stop & ~addend->allow;
 	accum->complain |= addend->complain & ~addend->allow & ~addend->deny;
 	accum->cond |= addend->cond & ~addend->allow & ~addend->deny;
 	accum->hide &= addend->hide & ~addend->allow;
 	accum->prompt |= addend->prompt & ~addend->allow & ~addend->deny;
-}
+पूर्ण
 
 /**
  * aa_perms_accum - accumulate perms, masking off overlapping perms
- * @accum - perms struct to accumulate into
- * @addend - perms struct to add to @accum
+ * @accum - perms काष्ठा to accumulate पूर्णांकo
+ * @addend - perms काष्ठा to add to @accum
  */
-void aa_perms_accum(struct aa_perms *accum, struct aa_perms *addend)
-{
+व्योम aa_perms_accum(काष्ठा aa_perms *accum, काष्ठा aa_perms *addend)
+अणु
 	accum->deny |= addend->deny;
 	accum->allow &= addend->allow & ~accum->deny;
 	accum->audit |= addend->audit & accum->allow;
 	accum->quiet &= addend->quiet & ~accum->allow;
-	accum->kill |= addend->kill & ~accum->allow;
+	accum->समाप्त |= addend->समाप्त & ~accum->allow;
 	accum->stop |= addend->stop & ~accum->allow;
 	accum->complain |= addend->complain & ~accum->allow & ~accum->deny;
 	accum->cond |= addend->cond & ~accum->allow & ~accum->deny;
 	accum->hide &= addend->hide & ~accum->allow;
 	accum->prompt |= addend->prompt & ~accum->allow & ~accum->deny;
-}
+पूर्ण
 
-void aa_profile_match_label(struct aa_profile *profile, struct aa_label *label,
-			    int type, u32 request, struct aa_perms *perms)
-{
-	/* TODO: doesn't yet handle extended types */
-	unsigned int state;
+व्योम aa_profile_match_label(काष्ठा aa_profile *profile, काष्ठा aa_label *label,
+			    पूर्णांक type, u32 request, काष्ठा aa_perms *perms)
+अणु
+	/* TODO: करोesn't yet handle extended types */
+	अचिन्हित पूर्णांक state;
 
 	state = aa_dfa_next(profile->policy.dfa,
 			    profile->policy.start[AA_CLASS_LABEL],
 			    type);
 	aa_label_match(profile, label, state, false, request, perms);
-}
+पूर्ण
 
 
 /* currently unused */
-int aa_profile_label_perm(struct aa_profile *profile, struct aa_profile *target,
-			  u32 request, int type, u32 *deny,
-			  struct common_audit_data *sa)
-{
-	struct aa_perms perms;
+पूर्णांक aa_profile_label_perm(काष्ठा aa_profile *profile, काष्ठा aa_profile *target,
+			  u32 request, पूर्णांक type, u32 *deny,
+			  काष्ठा common_audit_data *sa)
+अणु
+	काष्ठा aa_perms perms;
 
 	aad(sa)->label = &profile->label;
 	aad(sa)->peer = &target->label;
@@ -405,121 +406,121 @@ int aa_profile_label_perm(struct aa_profile *profile, struct aa_profile *target,
 	aa_profile_match_label(profile, &target->label, type, request, &perms);
 	aa_apply_modes_to_perms(profile, &perms);
 	*deny |= request & perms.deny;
-	return aa_check_perms(profile, &perms, request, sa, aa_audit_perms_cb);
-}
+	वापस aa_check_perms(profile, &perms, request, sa, aa_audit_perms_cb);
+पूर्ण
 
 /**
- * aa_check_perms - do audit mode selection based on perms set
+ * aa_check_perms - करो audit mode selection based on perms set
  * @profile: profile being checked
- * @perms: perms computed for the request
+ * @perms: perms computed क्रम the request
  * @request: requested perms
  * @deny: Returns: explicit deny set
- * @sa: initialized audit structure (MAY BE NULL if not auditing)
- * @cb: callback fn for type specific fields (MAY BE NULL)
+ * @sa: initialized audit काष्ठाure (MAY BE शून्य अगर not auditing)
+ * @cb: callback fn क्रम type specअगरic fields (MAY BE शून्य)
  *
- * Returns: 0 if permission else error code
+ * Returns: 0 अगर permission अन्यथा error code
  *
- * Note: profile audit modes need to be set before calling by setting the
+ * Note: profile audit modes need to be set beक्रमe calling by setting the
  *       perm masks appropriately.
  *
  *       If not auditing then complain mode is not enabled and the
  *       error code will indicate whether there was an explicit deny
  *	 with a positive value.
  */
-int aa_check_perms(struct aa_profile *profile, struct aa_perms *perms,
-		   u32 request, struct common_audit_data *sa,
-		   void (*cb)(struct audit_buffer *, void *))
-{
-	int type, error;
+पूर्णांक aa_check_perms(काष्ठा aa_profile *profile, काष्ठा aa_perms *perms,
+		   u32 request, काष्ठा common_audit_data *sa,
+		   व्योम (*cb)(काष्ठा audit_buffer *, व्योम *))
+अणु
+	पूर्णांक type, error;
 	u32 denied = request & (~perms->allow | perms->deny);
 
-	if (likely(!denied)) {
-		/* mask off perms that are not being force audited */
+	अगर (likely(!denied)) अणु
+		/* mask off perms that are not being क्रमce audited */
 		request &= perms->audit;
-		if (!request || !sa)
-			return 0;
+		अगर (!request || !sa)
+			वापस 0;
 
 		type = AUDIT_APPARMOR_AUDIT;
 		error = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		error = -EACCES;
 
-		if (denied & perms->kill)
+		अगर (denied & perms->समाप्त)
 			type = AUDIT_APPARMOR_KILL;
-		else if (denied == (denied & perms->complain))
+		अन्यथा अगर (denied == (denied & perms->complain))
 			type = AUDIT_APPARMOR_ALLOWED;
-		else
+		अन्यथा
 			type = AUDIT_APPARMOR_DENIED;
 
-		if (denied == (denied & perms->hide))
+		अगर (denied == (denied & perms->hide))
 			error = -ENOENT;
 
 		denied &= ~perms->quiet;
-		if (!sa || !denied)
-			return error;
-	}
+		अगर (!sa || !denied)
+			वापस error;
+	पूर्ण
 
-	if (sa) {
+	अगर (sa) अणु
 		aad(sa)->label = &profile->label;
 		aad(sa)->request = request;
 		aad(sa)->denied = denied;
 		aad(sa)->error = error;
 		aa_audit_msg(type, sa, cb);
-	}
+	पूर्ण
 
-	if (type == AUDIT_APPARMOR_ALLOWED)
+	अगर (type == AUDIT_APPARMOR_ALLOWED)
 		error = 0;
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 
 /**
- * aa_policy_init - initialize a policy structure
- * @policy: policy to initialize  (NOT NULL)
- * @prefix: prefix name if any is required.  (MAYBE NULL)
- * @name: name of the policy, init will make a copy of it  (NOT NULL)
+ * aa_policy_init - initialize a policy काष्ठाure
+ * @policy: policy to initialize  (NOT शून्य)
+ * @prefix: prefix name अगर any is required.  (MAYBE शून्य)
+ * @name: name of the policy, init will make a copy of it  (NOT शून्य)
  * @gfp: allocation mode
  *
  * Note: this fn creates a copy of strings passed in
  *
- * Returns: true if policy init successful
+ * Returns: true अगर policy init successful
  */
-bool aa_policy_init(struct aa_policy *policy, const char *prefix,
-		    const char *name, gfp_t gfp)
-{
-	char *hname;
+bool aa_policy_init(काष्ठा aa_policy *policy, स्थिर अक्षर *prefix,
+		    स्थिर अक्षर *name, gfp_t gfp)
+अणु
+	अक्षर *hname;
 
-	/* freed by policy_free */
-	if (prefix) {
-		hname = aa_str_alloc(strlen(prefix) + strlen(name) + 3, gfp);
-		if (hname)
-			sprintf(hname, "%s//%s", prefix, name);
-	} else {
-		hname = aa_str_alloc(strlen(name) + 1, gfp);
-		if (hname)
-			strcpy(hname, name);
-	}
-	if (!hname)
-		return false;
+	/* मुक्तd by policy_मुक्त */
+	अगर (prefix) अणु
+		hname = aa_str_alloc(म_माप(prefix) + म_माप(name) + 3, gfp);
+		अगर (hname)
+			प्र_लिखो(hname, "%s//%s", prefix, name);
+	पूर्ण अन्यथा अणु
+		hname = aa_str_alloc(म_माप(name) + 1, gfp);
+		अगर (hname)
+			म_नकल(hname, name);
+	पूर्ण
+	अगर (!hname)
+		वापस false;
 	policy->hname = hname;
 	/* base.name is a substring of fqname */
 	policy->name = basename(policy->hname);
 	INIT_LIST_HEAD(&policy->list);
 	INIT_LIST_HEAD(&policy->profiles);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * aa_policy_destroy - free the elements referenced by @policy
- * @policy: policy that is to have its elements freed  (NOT NULL)
+ * aa_policy_destroy - मुक्त the elements referenced by @policy
+ * @policy: policy that is to have its elements मुक्तd  (NOT शून्य)
  */
-void aa_policy_destroy(struct aa_policy *policy)
-{
+व्योम aa_policy_destroy(काष्ठा aa_policy *policy)
+अणु
 	AA_BUG(on_list_rcu(&policy->profiles));
 	AA_BUG(on_list_rcu(&policy->list));
 
-	/* don't free name as its a subset of hname */
+	/* करोn't मुक्त name as its a subset of hname */
 	aa_put_str(policy->hname);
-}
+पूर्ण

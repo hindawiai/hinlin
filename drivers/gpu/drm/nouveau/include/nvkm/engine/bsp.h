@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_BSP_H__
-#define __NVKM_BSP_H__
-#include <engine/xtensa.h>
-int g84_bsp_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_engine **);
-#endif
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_BSP_H__
+#घोषणा __NVKM_BSP_H__
+#समावेश <engine/xtensa.h>
+पूर्णांक g84_bsp_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_engine **);
+#पूर्ण_अगर

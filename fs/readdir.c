@@ -1,552 +1,553 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  linux/fs/readdir.c
+ *  linux/fs/सूची_पढ़ो.c
  *
  *  Copyright (C) 1995  Linus Torvalds
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/time.h>
-#include <linux/mm.h>
-#include <linux/errno.h>
-#include <linux/stat.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/fsnotify.h>
-#include <linux/dirent.h>
-#include <linux/security.h>
-#include <linux/syscalls.h>
-#include <linux/unistd.h>
-#include <linux/compat.h>
-#include <linux/uaccess.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/fsnotअगरy.h>
+#समावेश <linux/dirent.h>
+#समावेश <linux/security.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
 /*
- * Note the "unsafe_put_user() semantics: we goto a
- * label for errors.
+ * Note the "unsafe_put_user() semantics: we जाओ a
+ * label क्रम errors.
  */
-#define unsafe_copy_dirent_name(_dst, _src, _len, label) do {	\
-	char __user *dst = (_dst);				\
-	const char *src = (_src);				\
-	size_t len = (_len);					\
+#घोषणा unsafe_copy_dirent_name(_dst, _src, _len, label) करो अणु	\
+	अक्षर __user *dst = (_dst);				\
+	स्थिर अक्षर *src = (_src);				\
+	माप_प्रकार len = (_len);					\
 	unsafe_put_user(0, dst+len, label);			\
 	unsafe_copy_to_user(dst, src, len, label);		\
-} while (0)
+पूर्ण जबतक (0)
 
 
-int iterate_dir(struct file *file, struct dir_context *ctx)
-{
-	struct inode *inode = file_inode(file);
+पूर्णांक iterate_dir(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा inode *inode = file_inode(file);
 	bool shared = false;
-	int res = -ENOTDIR;
-	if (file->f_op->iterate_shared)
+	पूर्णांक res = -ENOTसूची;
+	अगर (file->f_op->iterate_shared)
 		shared = true;
-	else if (!file->f_op->iterate)
-		goto out;
+	अन्यथा अगर (!file->f_op->iterate)
+		जाओ out;
 
 	res = security_file_permission(file, MAY_READ);
-	if (res)
-		goto out;
+	अगर (res)
+		जाओ out;
 
-	if (shared)
-		res = down_read_killable(&inode->i_rwsem);
-	else
-		res = down_write_killable(&inode->i_rwsem);
-	if (res)
-		goto out;
+	अगर (shared)
+		res = करोwn_पढ़ो_समाप्तable(&inode->i_rwsem);
+	अन्यथा
+		res = करोwn_ग_लिखो_समाप्तable(&inode->i_rwsem);
+	अगर (res)
+		जाओ out;
 
 	res = -ENOENT;
-	if (!IS_DEADDIR(inode)) {
+	अगर (!IS_DEADसूची(inode)) अणु
 		ctx->pos = file->f_pos;
-		if (shared)
+		अगर (shared)
 			res = file->f_op->iterate_shared(file, ctx);
-		else
+		अन्यथा
 			res = file->f_op->iterate(file, ctx);
 		file->f_pos = ctx->pos;
-		fsnotify_access(file);
+		fsnotअगरy_access(file);
 		file_accessed(file);
-	}
-	if (shared)
+	पूर्ण
+	अगर (shared)
 		inode_unlock_shared(inode);
-	else
+	अन्यथा
 		inode_unlock(inode);
 out:
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(iterate_dir);
 
 /*
- * POSIX says that a dirent name cannot contain NULL or a '/'.
+ * POSIX says that a dirent name cannot contain शून्य or a '/'.
  *
- * It's not 100% clear what we should really do in this case.
- * The filesystem is clearly corrupted, but returning a hard
- * error means that you now don't see any of the other names
+ * It's not 100% clear what we should really करो in this हाल.
+ * The fileप्रणाली is clearly corrupted, but वापसing a hard
+ * error means that you now करोn't see any of the other names
  * either, so that isn't a perfect alternative.
  *
- * And if you return an error, what error do you use? Several
- * filesystems seem to have decided on EUCLEAN being the error
- * code for EFSCORRUPTED, and that may be the error to use. Or
+ * And अगर you वापस an error, what error करो you use? Several
+ * fileप्रणालीs seem to have decided on EUCLEAN being the error
+ * code क्रम EFSCORRUPTED, and that may be the error to use. Or
  * just EIO, which is perhaps more obvious to users.
  *
  * In order to see the other file names in the directory, the
  * caller might want to make this a "soft" error: skip the
- * entry, and return the error at the end instead.
+ * entry, and वापस the error at the end instead.
  *
- * Note that this should likely do a "memchr(name, 0, len)"
- * check too, since that would be filesystem corruption as
- * well. However, that case can't actually confuse user space,
- * which has to do a strlen() on the name anyway to find the
+ * Note that this should likely करो a "memchr(name, 0, len)"
+ * check too, since that would be fileप्रणाली corruption as
+ * well. However, that हाल can't actually confuse user space,
+ * which has to करो a म_माप() on the name anyway to find the
  * filename length, and the above "soft error" worry means
  * that it's probably better left alone until we have that
- * issue clarified.
+ * issue clarअगरied.
  *
  * Note the PATH_MAX check - it's arbitrary but the real
  * kernel limit on a possible path component, not NAME_MAX,
  * which is the technical standard limit.
  */
-static int verify_dirent_name(const char *name, int len)
-{
-	if (len <= 0 || len >= PATH_MAX)
-		return -EIO;
-	if (memchr(name, '/', len))
-		return -EIO;
-	return 0;
-}
+अटल पूर्णांक verअगरy_dirent_name(स्थिर अक्षर *name, पूर्णांक len)
+अणु
+	अगर (len <= 0 || len >= PATH_MAX)
+		वापस -EIO;
+	अगर (स_प्रथम(name, '/', len))
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
 /*
- * Traditional linux readdir() handling..
+ * Traditional linux सूची_पढ़ो() handling..
  *
- * "count=1" is a special case, meaning that the buffer is one
- * dirent-structure in size and that the code can't handle more
- * anyway. Thus the special "fillonedir()" function for that
- * case (the low-level handlers don't need to care about this).
+ * "count=1" is a special हाल, meaning that the buffer is one
+ * dirent-काष्ठाure in size and that the code can't handle more
+ * anyway. Thus the special "fillonedir()" function क्रम that
+ * हाल (the low-level handlers करोn't need to care about this).
  */
 
-#ifdef __ARCH_WANT_OLD_READDIR
+#अगर_घोषित __ARCH_WANT_OLD_READसूची
 
-struct old_linux_dirent {
-	unsigned long	d_ino;
-	unsigned long	d_offset;
-	unsigned short	d_namlen;
-	char		d_name[1];
-};
+काष्ठा old_linux_dirent अणु
+	अचिन्हित दीर्घ	d_ino;
+	अचिन्हित दीर्घ	d_offset;
+	अचिन्हित लघु	d_namlen;
+	अक्षर		d_name[1];
+पूर्ण;
 
-struct readdir_callback {
-	struct dir_context ctx;
-	struct old_linux_dirent __user * dirent;
-	int result;
-};
+काष्ठा सूची_पढ़ो_callback अणु
+	काष्ठा dir_context ctx;
+	काष्ठा old_linux_dirent __user * dirent;
+	पूर्णांक result;
+पूर्ण;
 
-static int fillonedir(struct dir_context *ctx, const char *name, int namlen,
-		      loff_t offset, u64 ino, unsigned int d_type)
-{
-	struct readdir_callback *buf =
-		container_of(ctx, struct readdir_callback, ctx);
-	struct old_linux_dirent __user * dirent;
-	unsigned long d_ino;
+अटल पूर्णांक fillonedir(काष्ठा dir_context *ctx, स्थिर अक्षर *name, पूर्णांक namlen,
+		      loff_t offset, u64 ino, अचिन्हित पूर्णांक d_type)
+अणु
+	काष्ठा सूची_पढ़ो_callback *buf =
+		container_of(ctx, काष्ठा सूची_पढ़ो_callback, ctx);
+	काष्ठा old_linux_dirent __user * dirent;
+	अचिन्हित दीर्घ d_ino;
 
-	if (buf->result)
-		return -EINVAL;
-	buf->result = verify_dirent_name(name, namlen);
-	if (buf->result < 0)
-		return buf->result;
+	अगर (buf->result)
+		वापस -EINVAL;
+	buf->result = verअगरy_dirent_name(name, namlen);
+	अगर (buf->result < 0)
+		वापस buf->result;
 	d_ino = ino;
-	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino) {
+	अगर (माप(d_ino) < माप(ino) && d_ino != ino) अणु
 		buf->result = -EOVERFLOW;
-		return -EOVERFLOW;
-	}
+		वापस -EOVERFLOW;
+	पूर्ण
 	buf->result++;
 	dirent = buf->dirent;
-	if (!user_write_access_begin(dirent,
-			(unsigned long)(dirent->d_name + namlen + 1) -
-				(unsigned long)dirent))
-		goto efault;
+	अगर (!user_ग_लिखो_access_begin(dirent,
+			(अचिन्हित दीर्घ)(dirent->d_name + namlen + 1) -
+				(अचिन्हित दीर्घ)dirent))
+		जाओ efault;
 	unsafe_put_user(d_ino, &dirent->d_ino, efault_end);
 	unsafe_put_user(offset, &dirent->d_offset, efault_end);
 	unsafe_put_user(namlen, &dirent->d_namlen, efault_end);
 	unsafe_copy_dirent_name(dirent->d_name, name, namlen, efault_end);
-	user_write_access_end();
-	return 0;
+	user_ग_लिखो_access_end();
+	वापस 0;
 efault_end:
-	user_write_access_end();
+	user_ग_लिखो_access_end();
 efault:
 	buf->result = -EFAULT;
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-SYSCALL_DEFINE3(old_readdir, unsigned int, fd,
-		struct old_linux_dirent __user *, dirent, unsigned int, count)
-{
-	int error;
-	struct fd f = fdget_pos(fd);
-	struct readdir_callback buf = {
+SYSCALL_DEFINE3(old_सूची_पढ़ो, अचिन्हित पूर्णांक, fd,
+		काष्ठा old_linux_dirent __user *, dirent, अचिन्हित पूर्णांक, count)
+अणु
+	पूर्णांक error;
+	काष्ठा fd f = fdget_pos(fd);
+	काष्ठा सूची_पढ़ो_callback buf = अणु
 		.ctx.actor = fillonedir,
 		.dirent = dirent
-	};
+	पूर्ण;
 
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
 	error = iterate_dir(f.file, &buf.ctx);
-	if (buf.result)
+	अगर (buf.result)
 		error = buf.result;
 
 	fdput_pos(f);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-#endif /* __ARCH_WANT_OLD_READDIR */
+#पूर्ण_अगर /* __ARCH_WANT_OLD_READसूची */
 
 /*
  * New, all-improved, singing, dancing, iBCS2-compliant getdents()
- * interface. 
+ * पूर्णांकerface. 
  */
-struct linux_dirent {
-	unsigned long	d_ino;
-	unsigned long	d_off;
-	unsigned short	d_reclen;
-	char		d_name[1];
-};
+काष्ठा linux_dirent अणु
+	अचिन्हित दीर्घ	d_ino;
+	अचिन्हित दीर्घ	d_off;
+	अचिन्हित लघु	d_reclen;
+	अक्षर		d_name[1];
+पूर्ण;
 
-struct getdents_callback {
-	struct dir_context ctx;
-	struct linux_dirent __user * current_dir;
-	int prev_reclen;
-	int count;
-	int error;
-};
+काष्ठा getdents_callback अणु
+	काष्ठा dir_context ctx;
+	काष्ठा linux_dirent __user * current_dir;
+	पूर्णांक prev_reclen;
+	पूर्णांक count;
+	पूर्णांक error;
+पूर्ण;
 
-static int filldir(struct dir_context *ctx, const char *name, int namlen,
-		   loff_t offset, u64 ino, unsigned int d_type)
-{
-	struct linux_dirent __user *dirent, *prev;
-	struct getdents_callback *buf =
-		container_of(ctx, struct getdents_callback, ctx);
-	unsigned long d_ino;
-	int reclen = ALIGN(offsetof(struct linux_dirent, d_name) + namlen + 2,
-		sizeof(long));
-	int prev_reclen;
+अटल पूर्णांक filldir(काष्ठा dir_context *ctx, स्थिर अक्षर *name, पूर्णांक namlen,
+		   loff_t offset, u64 ino, अचिन्हित पूर्णांक d_type)
+अणु
+	काष्ठा linux_dirent __user *dirent, *prev;
+	काष्ठा getdents_callback *buf =
+		container_of(ctx, काष्ठा getdents_callback, ctx);
+	अचिन्हित दीर्घ d_ino;
+	पूर्णांक reclen = ALIGN(दुरत्व(काष्ठा linux_dirent, d_name) + namlen + 2,
+		माप(दीर्घ));
+	पूर्णांक prev_reclen;
 
-	buf->error = verify_dirent_name(name, namlen);
-	if (unlikely(buf->error))
-		return buf->error;
-	buf->error = -EINVAL;	/* only used if we fail.. */
-	if (reclen > buf->count)
-		return -EINVAL;
+	buf->error = verअगरy_dirent_name(name, namlen);
+	अगर (unlikely(buf->error))
+		वापस buf->error;
+	buf->error = -EINVAL;	/* only used अगर we fail.. */
+	अगर (reclen > buf->count)
+		वापस -EINVAL;
 	d_ino = ino;
-	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino) {
+	अगर (माप(d_ino) < माप(ino) && d_ino != ino) अणु
 		buf->error = -EOVERFLOW;
-		return -EOVERFLOW;
-	}
+		वापस -EOVERFLOW;
+	पूर्ण
 	prev_reclen = buf->prev_reclen;
-	if (prev_reclen && signal_pending(current))
-		return -EINTR;
+	अगर (prev_reclen && संकेत_pending(current))
+		वापस -EINTR;
 	dirent = buf->current_dir;
-	prev = (void __user *) dirent - prev_reclen;
-	if (!user_write_access_begin(prev, reclen + prev_reclen))
-		goto efault;
+	prev = (व्योम __user *) dirent - prev_reclen;
+	अगर (!user_ग_लिखो_access_begin(prev, reclen + prev_reclen))
+		जाओ efault;
 
-	/* This might be 'dirent->d_off', but if so it will get overwritten */
+	/* This might be 'dirent->d_off', but अगर so it will get overwritten */
 	unsafe_put_user(offset, &prev->d_off, efault_end);
 	unsafe_put_user(d_ino, &dirent->d_ino, efault_end);
 	unsafe_put_user(reclen, &dirent->d_reclen, efault_end);
-	unsafe_put_user(d_type, (char __user *) dirent + reclen - 1, efault_end);
+	unsafe_put_user(d_type, (अक्षर __user *) dirent + reclen - 1, efault_end);
 	unsafe_copy_dirent_name(dirent->d_name, name, namlen, efault_end);
-	user_write_access_end();
+	user_ग_लिखो_access_end();
 
-	buf->current_dir = (void __user *)dirent + reclen;
+	buf->current_dir = (व्योम __user *)dirent + reclen;
 	buf->prev_reclen = reclen;
 	buf->count -= reclen;
-	return 0;
+	वापस 0;
 efault_end:
-	user_write_access_end();
+	user_ग_लिखो_access_end();
 efault:
 	buf->error = -EFAULT;
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-SYSCALL_DEFINE3(getdents, unsigned int, fd,
-		struct linux_dirent __user *, dirent, unsigned int, count)
-{
-	struct fd f;
-	struct getdents_callback buf = {
+SYSCALL_DEFINE3(getdents, अचिन्हित पूर्णांक, fd,
+		काष्ठा linux_dirent __user *, dirent, अचिन्हित पूर्णांक, count)
+अणु
+	काष्ठा fd f;
+	काष्ठा getdents_callback buf = अणु
 		.ctx.actor = filldir,
 		.count = count,
 		.current_dir = dirent
-	};
-	int error;
+	पूर्ण;
+	पूर्णांक error;
 
 	f = fdget_pos(fd);
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
 	error = iterate_dir(f.file, &buf.ctx);
-	if (error >= 0)
+	अगर (error >= 0)
 		error = buf.error;
-	if (buf.prev_reclen) {
-		struct linux_dirent __user * lastdirent;
-		lastdirent = (void __user *)buf.current_dir - buf.prev_reclen;
+	अगर (buf.prev_reclen) अणु
+		काष्ठा linux_dirent __user * lastdirent;
+		lastdirent = (व्योम __user *)buf.current_dir - buf.prev_reclen;
 
-		if (put_user(buf.ctx.pos, &lastdirent->d_off))
+		अगर (put_user(buf.ctx.pos, &lastdirent->d_off))
 			error = -EFAULT;
-		else
+		अन्यथा
 			error = count - buf.count;
-	}
+	पूर्ण
 	fdput_pos(f);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-struct getdents_callback64 {
-	struct dir_context ctx;
-	struct linux_dirent64 __user * current_dir;
-	int prev_reclen;
-	int count;
-	int error;
-};
+काष्ठा getdents_callback64 अणु
+	काष्ठा dir_context ctx;
+	काष्ठा linux_dirent64 __user * current_dir;
+	पूर्णांक prev_reclen;
+	पूर्णांक count;
+	पूर्णांक error;
+पूर्ण;
 
-static int filldir64(struct dir_context *ctx, const char *name, int namlen,
-		     loff_t offset, u64 ino, unsigned int d_type)
-{
-	struct linux_dirent64 __user *dirent, *prev;
-	struct getdents_callback64 *buf =
-		container_of(ctx, struct getdents_callback64, ctx);
-	int reclen = ALIGN(offsetof(struct linux_dirent64, d_name) + namlen + 1,
-		sizeof(u64));
-	int prev_reclen;
+अटल पूर्णांक filldir64(काष्ठा dir_context *ctx, स्थिर अक्षर *name, पूर्णांक namlen,
+		     loff_t offset, u64 ino, अचिन्हित पूर्णांक d_type)
+अणु
+	काष्ठा linux_dirent64 __user *dirent, *prev;
+	काष्ठा getdents_callback64 *buf =
+		container_of(ctx, काष्ठा getdents_callback64, ctx);
+	पूर्णांक reclen = ALIGN(दुरत्व(काष्ठा linux_dirent64, d_name) + namlen + 1,
+		माप(u64));
+	पूर्णांक prev_reclen;
 
-	buf->error = verify_dirent_name(name, namlen);
-	if (unlikely(buf->error))
-		return buf->error;
-	buf->error = -EINVAL;	/* only used if we fail.. */
-	if (reclen > buf->count)
-		return -EINVAL;
+	buf->error = verअगरy_dirent_name(name, namlen);
+	अगर (unlikely(buf->error))
+		वापस buf->error;
+	buf->error = -EINVAL;	/* only used अगर we fail.. */
+	अगर (reclen > buf->count)
+		वापस -EINVAL;
 	prev_reclen = buf->prev_reclen;
-	if (prev_reclen && signal_pending(current))
-		return -EINTR;
+	अगर (prev_reclen && संकेत_pending(current))
+		वापस -EINTR;
 	dirent = buf->current_dir;
-	prev = (void __user *)dirent - prev_reclen;
-	if (!user_write_access_begin(prev, reclen + prev_reclen))
-		goto efault;
+	prev = (व्योम __user *)dirent - prev_reclen;
+	अगर (!user_ग_लिखो_access_begin(prev, reclen + prev_reclen))
+		जाओ efault;
 
-	/* This might be 'dirent->d_off', but if so it will get overwritten */
+	/* This might be 'dirent->d_off', but अगर so it will get overwritten */
 	unsafe_put_user(offset, &prev->d_off, efault_end);
 	unsafe_put_user(ino, &dirent->d_ino, efault_end);
 	unsafe_put_user(reclen, &dirent->d_reclen, efault_end);
 	unsafe_put_user(d_type, &dirent->d_type, efault_end);
 	unsafe_copy_dirent_name(dirent->d_name, name, namlen, efault_end);
-	user_write_access_end();
+	user_ग_लिखो_access_end();
 
 	buf->prev_reclen = reclen;
-	buf->current_dir = (void __user *)dirent + reclen;
+	buf->current_dir = (व्योम __user *)dirent + reclen;
 	buf->count -= reclen;
-	return 0;
+	वापस 0;
 
 efault_end:
-	user_write_access_end();
+	user_ग_लिखो_access_end();
 efault:
 	buf->error = -EFAULT;
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-SYSCALL_DEFINE3(getdents64, unsigned int, fd,
-		struct linux_dirent64 __user *, dirent, unsigned int, count)
-{
-	struct fd f;
-	struct getdents_callback64 buf = {
+SYSCALL_DEFINE3(getdents64, अचिन्हित पूर्णांक, fd,
+		काष्ठा linux_dirent64 __user *, dirent, अचिन्हित पूर्णांक, count)
+अणु
+	काष्ठा fd f;
+	काष्ठा getdents_callback64 buf = अणु
 		.ctx.actor = filldir64,
 		.count = count,
 		.current_dir = dirent
-	};
-	int error;
+	पूर्ण;
+	पूर्णांक error;
 
 	f = fdget_pos(fd);
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
 	error = iterate_dir(f.file, &buf.ctx);
-	if (error >= 0)
+	अगर (error >= 0)
 		error = buf.error;
-	if (buf.prev_reclen) {
-		struct linux_dirent64 __user * lastdirent;
+	अगर (buf.prev_reclen) अणु
+		काष्ठा linux_dirent64 __user * lastdirent;
 		typeof(lastdirent->d_off) d_off = buf.ctx.pos;
 
-		lastdirent = (void __user *) buf.current_dir - buf.prev_reclen;
-		if (put_user(d_off, &lastdirent->d_off))
+		lastdirent = (व्योम __user *) buf.current_dir - buf.prev_reclen;
+		अगर (put_user(d_off, &lastdirent->d_off))
 			error = -EFAULT;
-		else
+		अन्यथा
 			error = count - buf.count;
-	}
+	पूर्ण
 	fdput_pos(f);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-struct compat_old_linux_dirent {
-	compat_ulong_t	d_ino;
-	compat_ulong_t	d_offset;
-	unsigned short	d_namlen;
-	char		d_name[1];
-};
+#अगर_घोषित CONFIG_COMPAT
+काष्ठा compat_old_linux_dirent अणु
+	compat_uदीर्घ_t	d_ino;
+	compat_uदीर्घ_t	d_offset;
+	अचिन्हित लघु	d_namlen;
+	अक्षर		d_name[1];
+पूर्ण;
 
-struct compat_readdir_callback {
-	struct dir_context ctx;
-	struct compat_old_linux_dirent __user *dirent;
-	int result;
-};
+काष्ठा compat_सूची_पढ़ो_callback अणु
+	काष्ठा dir_context ctx;
+	काष्ठा compat_old_linux_dirent __user *dirent;
+	पूर्णांक result;
+पूर्ण;
 
-static int compat_fillonedir(struct dir_context *ctx, const char *name,
-			     int namlen, loff_t offset, u64 ino,
-			     unsigned int d_type)
-{
-	struct compat_readdir_callback *buf =
-		container_of(ctx, struct compat_readdir_callback, ctx);
-	struct compat_old_linux_dirent __user *dirent;
-	compat_ulong_t d_ino;
+अटल पूर्णांक compat_fillonedir(काष्ठा dir_context *ctx, स्थिर अक्षर *name,
+			     पूर्णांक namlen, loff_t offset, u64 ino,
+			     अचिन्हित पूर्णांक d_type)
+अणु
+	काष्ठा compat_सूची_पढ़ो_callback *buf =
+		container_of(ctx, काष्ठा compat_सूची_पढ़ो_callback, ctx);
+	काष्ठा compat_old_linux_dirent __user *dirent;
+	compat_uदीर्घ_t d_ino;
 
-	if (buf->result)
-		return -EINVAL;
-	buf->result = verify_dirent_name(name, namlen);
-	if (buf->result < 0)
-		return buf->result;
+	अगर (buf->result)
+		वापस -EINVAL;
+	buf->result = verअगरy_dirent_name(name, namlen);
+	अगर (buf->result < 0)
+		वापस buf->result;
 	d_ino = ino;
-	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino) {
+	अगर (माप(d_ino) < माप(ino) && d_ino != ino) अणु
 		buf->result = -EOVERFLOW;
-		return -EOVERFLOW;
-	}
+		वापस -EOVERFLOW;
+	पूर्ण
 	buf->result++;
 	dirent = buf->dirent;
-	if (!user_write_access_begin(dirent,
-			(unsigned long)(dirent->d_name + namlen + 1) -
-				(unsigned long)dirent))
-		goto efault;
+	अगर (!user_ग_लिखो_access_begin(dirent,
+			(अचिन्हित दीर्घ)(dirent->d_name + namlen + 1) -
+				(अचिन्हित दीर्घ)dirent))
+		जाओ efault;
 	unsafe_put_user(d_ino, &dirent->d_ino, efault_end);
 	unsafe_put_user(offset, &dirent->d_offset, efault_end);
 	unsafe_put_user(namlen, &dirent->d_namlen, efault_end);
 	unsafe_copy_dirent_name(dirent->d_name, name, namlen, efault_end);
-	user_write_access_end();
-	return 0;
+	user_ग_लिखो_access_end();
+	वापस 0;
 efault_end:
-	user_write_access_end();
+	user_ग_लिखो_access_end();
 efault:
 	buf->result = -EFAULT;
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE3(old_readdir, unsigned int, fd,
-		struct compat_old_linux_dirent __user *, dirent, unsigned int, count)
-{
-	int error;
-	struct fd f = fdget_pos(fd);
-	struct compat_readdir_callback buf = {
+COMPAT_SYSCALL_DEFINE3(old_सूची_पढ़ो, अचिन्हित पूर्णांक, fd,
+		काष्ठा compat_old_linux_dirent __user *, dirent, अचिन्हित पूर्णांक, count)
+अणु
+	पूर्णांक error;
+	काष्ठा fd f = fdget_pos(fd);
+	काष्ठा compat_सूची_पढ़ो_callback buf = अणु
 		.ctx.actor = compat_fillonedir,
 		.dirent = dirent
-	};
+	पूर्ण;
 
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
 	error = iterate_dir(f.file, &buf.ctx);
-	if (buf.result)
+	अगर (buf.result)
 		error = buf.result;
 
 	fdput_pos(f);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-struct compat_linux_dirent {
-	compat_ulong_t	d_ino;
-	compat_ulong_t	d_off;
-	unsigned short	d_reclen;
-	char		d_name[1];
-};
+काष्ठा compat_linux_dirent अणु
+	compat_uदीर्घ_t	d_ino;
+	compat_uदीर्घ_t	d_off;
+	अचिन्हित लघु	d_reclen;
+	अक्षर		d_name[1];
+पूर्ण;
 
-struct compat_getdents_callback {
-	struct dir_context ctx;
-	struct compat_linux_dirent __user *current_dir;
-	int prev_reclen;
-	int count;
-	int error;
-};
+काष्ठा compat_getdents_callback अणु
+	काष्ठा dir_context ctx;
+	काष्ठा compat_linux_dirent __user *current_dir;
+	पूर्णांक prev_reclen;
+	पूर्णांक count;
+	पूर्णांक error;
+पूर्ण;
 
-static int compat_filldir(struct dir_context *ctx, const char *name, int namlen,
-		loff_t offset, u64 ino, unsigned int d_type)
-{
-	struct compat_linux_dirent __user *dirent, *prev;
-	struct compat_getdents_callback *buf =
-		container_of(ctx, struct compat_getdents_callback, ctx);
-	compat_ulong_t d_ino;
-	int reclen = ALIGN(offsetof(struct compat_linux_dirent, d_name) +
-		namlen + 2, sizeof(compat_long_t));
-	int prev_reclen;
+अटल पूर्णांक compat_filldir(काष्ठा dir_context *ctx, स्थिर अक्षर *name, पूर्णांक namlen,
+		loff_t offset, u64 ino, अचिन्हित पूर्णांक d_type)
+अणु
+	काष्ठा compat_linux_dirent __user *dirent, *prev;
+	काष्ठा compat_getdents_callback *buf =
+		container_of(ctx, काष्ठा compat_getdents_callback, ctx);
+	compat_uदीर्घ_t d_ino;
+	पूर्णांक reclen = ALIGN(दुरत्व(काष्ठा compat_linux_dirent, d_name) +
+		namlen + 2, माप(compat_दीर्घ_t));
+	पूर्णांक prev_reclen;
 
-	buf->error = verify_dirent_name(name, namlen);
-	if (unlikely(buf->error))
-		return buf->error;
-	buf->error = -EINVAL;	/* only used if we fail.. */
-	if (reclen > buf->count)
-		return -EINVAL;
+	buf->error = verअगरy_dirent_name(name, namlen);
+	अगर (unlikely(buf->error))
+		वापस buf->error;
+	buf->error = -EINVAL;	/* only used अगर we fail.. */
+	अगर (reclen > buf->count)
+		वापस -EINVAL;
 	d_ino = ino;
-	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino) {
+	अगर (माप(d_ino) < माप(ino) && d_ino != ino) अणु
 		buf->error = -EOVERFLOW;
-		return -EOVERFLOW;
-	}
+		वापस -EOVERFLOW;
+	पूर्ण
 	prev_reclen = buf->prev_reclen;
-	if (prev_reclen && signal_pending(current))
-		return -EINTR;
+	अगर (prev_reclen && संकेत_pending(current))
+		वापस -EINTR;
 	dirent = buf->current_dir;
-	prev = (void __user *) dirent - prev_reclen;
-	if (!user_write_access_begin(prev, reclen + prev_reclen))
-		goto efault;
+	prev = (व्योम __user *) dirent - prev_reclen;
+	अगर (!user_ग_लिखो_access_begin(prev, reclen + prev_reclen))
+		जाओ efault;
 
 	unsafe_put_user(offset, &prev->d_off, efault_end);
 	unsafe_put_user(d_ino, &dirent->d_ino, efault_end);
 	unsafe_put_user(reclen, &dirent->d_reclen, efault_end);
-	unsafe_put_user(d_type, (char __user *) dirent + reclen - 1, efault_end);
+	unsafe_put_user(d_type, (अक्षर __user *) dirent + reclen - 1, efault_end);
 	unsafe_copy_dirent_name(dirent->d_name, name, namlen, efault_end);
-	user_write_access_end();
+	user_ग_लिखो_access_end();
 
 	buf->prev_reclen = reclen;
-	buf->current_dir = (void __user *)dirent + reclen;
+	buf->current_dir = (व्योम __user *)dirent + reclen;
 	buf->count -= reclen;
-	return 0;
+	वापस 0;
 efault_end:
-	user_write_access_end();
+	user_ग_लिखो_access_end();
 efault:
 	buf->error = -EFAULT;
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE3(getdents, unsigned int, fd,
-		struct compat_linux_dirent __user *, dirent, unsigned int, count)
-{
-	struct fd f;
-	struct compat_getdents_callback buf = {
+COMPAT_SYSCALL_DEFINE3(getdents, अचिन्हित पूर्णांक, fd,
+		काष्ठा compat_linux_dirent __user *, dirent, अचिन्हित पूर्णांक, count)
+अणु
+	काष्ठा fd f;
+	काष्ठा compat_getdents_callback buf = अणु
 		.ctx.actor = compat_filldir,
 		.current_dir = dirent,
 		.count = count
-	};
-	int error;
+	पूर्ण;
+	पूर्णांक error;
 
 	f = fdget_pos(fd);
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
 	error = iterate_dir(f.file, &buf.ctx);
-	if (error >= 0)
+	अगर (error >= 0)
 		error = buf.error;
-	if (buf.prev_reclen) {
-		struct compat_linux_dirent __user * lastdirent;
-		lastdirent = (void __user *)buf.current_dir - buf.prev_reclen;
+	अगर (buf.prev_reclen) अणु
+		काष्ठा compat_linux_dirent __user * lastdirent;
+		lastdirent = (व्योम __user *)buf.current_dir - buf.prev_reclen;
 
-		if (put_user(buf.ctx.pos, &lastdirent->d_off))
+		अगर (put_user(buf.ctx.pos, &lastdirent->d_off))
 			error = -EFAULT;
-		else
+		अन्यथा
 			error = count - buf.count;
-	}
+	पूर्ण
 	fdput_pos(f);
-	return error;
-}
-#endif
+	वापस error;
+पूर्ण
+#पूर्ण_अगर

@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (C) 2016 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef __XFS_AG_RESV_H__
-#define	__XFS_AG_RESV_H__
+#अगर_अघोषित __XFS_AG_RESV_H__
+#घोषणा	__XFS_AG_RESV_H__
 
-int xfs_ag_resv_free(struct xfs_perag *pag);
-int xfs_ag_resv_init(struct xfs_perag *pag, struct xfs_trans *tp);
+पूर्णांक xfs_ag_resv_मुक्त(काष्ठा xfs_perag *pag);
+पूर्णांक xfs_ag_resv_init(काष्ठा xfs_perag *pag, काष्ठा xfs_trans *tp);
 
-bool xfs_ag_resv_critical(struct xfs_perag *pag, enum xfs_ag_resv_type type);
-xfs_extlen_t xfs_ag_resv_needed(struct xfs_perag *pag,
-		enum xfs_ag_resv_type type);
+bool xfs_ag_resv_critical(काष्ठा xfs_perag *pag, क्रमागत xfs_ag_resv_type type);
+xfs_extlen_t xfs_ag_resv_needed(काष्ठा xfs_perag *pag,
+		क्रमागत xfs_ag_resv_type type);
 
-void xfs_ag_resv_alloc_extent(struct xfs_perag *pag, enum xfs_ag_resv_type type,
-		struct xfs_alloc_arg *args);
-void xfs_ag_resv_free_extent(struct xfs_perag *pag, enum xfs_ag_resv_type type,
-		struct xfs_trans *tp, xfs_extlen_t len);
+व्योम xfs_ag_resv_alloc_extent(काष्ठा xfs_perag *pag, क्रमागत xfs_ag_resv_type type,
+		काष्ठा xfs_alloc_arg *args);
+व्योम xfs_ag_resv_मुक्त_extent(काष्ठा xfs_perag *pag, क्रमागत xfs_ag_resv_type type,
+		काष्ठा xfs_trans *tp, xfs_extlen_t len);
 
 /*
  * RMAPBT reservation accounting wrappers. Since rmapbt blocks are sourced from
- * the AGFL, they are allocated one at a time and the reservation updates don't
+ * the AGFL, they are allocated one at a समय and the reservation updates करोn't
  * require a transaction.
  */
-static inline void
+अटल अंतरभूत व्योम
 xfs_ag_resv_rmapbt_alloc(
-	struct xfs_mount	*mp,
+	काष्ठा xfs_mount	*mp,
 	xfs_agnumber_t		agno)
-{
-	struct xfs_alloc_arg	args = { NULL };
-	struct xfs_perag	*pag;
+अणु
+	काष्ठा xfs_alloc_arg	args = अणु शून्य पूर्ण;
+	काष्ठा xfs_perag	*pag;
 
 	args.len = 1;
 	pag = xfs_perag_get(mp, agno);
 	xfs_ag_resv_alloc_extent(pag, XFS_AG_RESV_RMAPBT, &args);
 	xfs_perag_put(pag);
-}
+पूर्ण
 
-#endif	/* __XFS_AG_RESV_H__ */
+#पूर्ण_अगर	/* __XFS_AG_RESV_H__ */

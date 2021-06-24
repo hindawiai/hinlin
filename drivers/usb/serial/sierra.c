@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
-  USB Driver for Sierra Wireless
+  USB Driver क्रम Sierra Wireless
 
   Copyright (C) 2006, 2007, 2008  Kevin Lloyd <klloyd@sierrawireless.com>,
 
@@ -14,335 +15,335 @@
   Whom based his on the Keyspan driver by Hugh Blemings <hugh@blemings.org>
 */
 /* Uncomment to log function calls */
-/* #define DEBUG */
+/* #घोषणा DEBUG */
 
-#define DRIVER_AUTHOR "Kevin Lloyd, Elina Pasheva, Matthew Safar, Rory Filer"
-#define DRIVER_DESC "USB Driver for Sierra Wireless USB modems"
+#घोषणा DRIVER_AUTHOR "Kevin Lloyd, Elina Pasheva, Matthew Safar, Rory Filer"
+#घोषणा DRIVER_DESC "USB Driver for Sierra Wireless USB modems"
 
-#include <linux/kernel.h>
-#include <linux/jiffies.h>
-#include <linux/errno.h>
-#include <linux/tty.h>
-#include <linux/slab.h>
-#include <linux/tty_flip.h>
-#include <linux/module.h>
-#include <linux/usb.h>
-#include <linux/usb/serial.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/tty.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/serial.h>
 
-#define SWIMS_USB_REQUEST_SetPower	0x00
-#define SWIMS_USB_REQUEST_SetNmea	0x07
+#घोषणा SWIMS_USB_REQUEST_SetPower	0x00
+#घोषणा SWIMS_USB_REQUEST_SetNmea	0x07
 
-#define N_IN_URB_HM	8
-#define N_OUT_URB_HM	64
-#define N_IN_URB	4
-#define N_OUT_URB	4
-#define IN_BUFLEN	4096
+#घोषणा N_IN_URB_HM	8
+#घोषणा N_OUT_URB_HM	64
+#घोषणा N_IN_URB	4
+#घोषणा N_OUT_URB	4
+#घोषणा IN_BUFLEN	4096
 
-#define MAX_TRANSFER		(PAGE_SIZE - 512)
+#घोषणा MAX_TRANSFER		(PAGE_SIZE - 512)
 /* MAX_TRANSFER is chosen so that the VM is not stressed by
    allocations > PAGE_SIZE and the number of packets in a page
-   is an integer 512 is the largest possible packet on EHCI */
+   is an पूर्णांकeger 512 is the largest possible packet on EHCI */
 
-static bool nmea;
+अटल bool nmea;
 
-struct sierra_iface_list {
-	const u8 *nums;		/* array of interface numbers */
-	size_t count;		/* number of elements in array */
-};
+काष्ठा sierra_अगरace_list अणु
+	स्थिर u8 *nums;		/* array of पूर्णांकerface numbers */
+	माप_प्रकार count;		/* number of elements in array */
+पूर्ण;
 
-struct sierra_intf_private {
+काष्ठा sierra_पूर्णांकf_निजी अणु
 	spinlock_t susp_lock;
-	unsigned int suspended:1;
-	int in_flight;
-	unsigned int open_ports;
-};
+	अचिन्हित पूर्णांक suspended:1;
+	पूर्णांक in_flight;
+	अचिन्हित पूर्णांक खोलो_ports;
+पूर्ण;
 
-static int sierra_set_power_state(struct usb_device *udev, __u16 swiState)
-{
-	return usb_control_msg(udev, usb_sndctrlpipe(udev, 0),
+अटल पूर्णांक sierra_set_घातer_state(काष्ठा usb_device *udev, __u16 swiState)
+अणु
+	वापस usb_control_msg(udev, usb_sndctrlpipe(udev, 0),
 			SWIMS_USB_REQUEST_SetPower,	/* __u8 request      */
 			USB_TYPE_VENDOR,		/* __u8 request type */
 			swiState,			/* __u16 value       */
 			0,				/* __u16 index       */
-			NULL,				/* void *data        */
+			शून्य,				/* व्योम *data        */
 			0,				/* __u16 size 	     */
-			USB_CTRL_SET_TIMEOUT);		/* int timeout 	     */
-}
+			USB_CTRL_SET_TIMEOUT);		/* पूर्णांक समयout 	     */
+पूर्ण
 
-static int sierra_vsc_set_nmea(struct usb_device *udev, __u16 enable)
-{
-	return usb_control_msg(udev, usb_sndctrlpipe(udev, 0),
+अटल पूर्णांक sierra_vsc_set_nmea(काष्ठा usb_device *udev, __u16 enable)
+अणु
+	वापस usb_control_msg(udev, usb_sndctrlpipe(udev, 0),
 			SWIMS_USB_REQUEST_SetNmea,	/* __u8 request      */
 			USB_TYPE_VENDOR,		/* __u8 request type */
 			enable,				/* __u16 value       */
 			0x0000,				/* __u16 index       */
-			NULL,				/* void *data        */
+			शून्य,				/* व्योम *data        */
 			0,				/* __u16 size 	     */
-			USB_CTRL_SET_TIMEOUT);		/* int timeout       */
-}
+			USB_CTRL_SET_TIMEOUT);		/* पूर्णांक समयout       */
+पूर्ण
 
-static int sierra_calc_num_ports(struct usb_serial *serial,
-					struct usb_serial_endpoints *epds)
-{
-	int num_ports = 0;
-	u8 ifnum, numendpoints;
+अटल पूर्णांक sierra_calc_num_ports(काष्ठा usb_serial *serial,
+					काष्ठा usb_serial_endpoपूर्णांकs *epds)
+अणु
+	पूर्णांक num_ports = 0;
+	u8 अगरnum, numendpoपूर्णांकs;
 
-	ifnum = serial->interface->cur_altsetting->desc.bInterfaceNumber;
-	numendpoints = serial->interface->cur_altsetting->desc.bNumEndpoints;
+	अगरnum = serial->पूर्णांकerface->cur_altsetting->desc.bInterfaceNumber;
+	numendpoपूर्णांकs = serial->पूर्णांकerface->cur_altsetting->desc.bNumEndpoपूर्णांकs;
 
-	/* Dummy interface present on some SKUs should be ignored */
-	if (ifnum == 0x99)
+	/* Dummy पूर्णांकerface present on some SKUs should be ignored */
+	अगर (अगरnum == 0x99)
 		num_ports = 0;
-	else if (numendpoints <= 3)
+	अन्यथा अगर (numendpoपूर्णांकs <= 3)
 		num_ports = 1;
-	else
-		num_ports = (numendpoints-1)/2;
-	return num_ports;
-}
+	अन्यथा
+		num_ports = (numendpoपूर्णांकs-1)/2;
+	वापस num_ports;
+पूर्ण
 
-static bool is_listed(const u8 ifnum, const struct sierra_iface_list *list)
-{
-	int i;
+अटल bool is_listed(स्थिर u8 अगरnum, स्थिर काष्ठा sierra_अगरace_list *list)
+अणु
+	पूर्णांक i;
 
-	if (!list)
-		return false;
+	अगर (!list)
+		वापस false;
 
-	for (i = 0; i < list->count; i++) {
-		if (list->nums[i] == ifnum)
-			return true;
-	}
+	क्रम (i = 0; i < list->count; i++) अणु
+		अगर (list->nums[i] == अगरnum)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static u8 sierra_interface_num(struct usb_serial *serial)
-{
-	return serial->interface->cur_altsetting->desc.bInterfaceNumber;
-}
+अटल u8 sierra_पूर्णांकerface_num(काष्ठा usb_serial *serial)
+अणु
+	वापस serial->पूर्णांकerface->cur_altsetting->desc.bInterfaceNumber;
+पूर्ण
 
-static int sierra_probe(struct usb_serial *serial,
-			const struct usb_device_id *id)
-{
-	const struct sierra_iface_list *ignore_list;
-	int result = 0;
-	struct usb_device *udev;
-	u8 ifnum;
+अटल पूर्णांक sierra_probe(काष्ठा usb_serial *serial,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	स्थिर काष्ठा sierra_अगरace_list *ignore_list;
+	पूर्णांक result = 0;
+	काष्ठा usb_device *udev;
+	u8 अगरnum;
 
 	udev = serial->dev;
-	ifnum = sierra_interface_num(serial);
+	अगरnum = sierra_पूर्णांकerface_num(serial);
 
 	/*
-	 * If this interface supports more than 1 alternate
+	 * If this पूर्णांकerface supports more than 1 alternate
 	 * select the 2nd one
 	 */
-	if (serial->interface->num_altsetting == 2) {
+	अगर (serial->पूर्णांकerface->num_altsetting == 2) अणु
 		dev_dbg(&udev->dev, "Selecting alt setting for interface %d\n",
-			ifnum);
-		/* We know the alternate setting is 1 for the MC8785 */
-		usb_set_interface(udev, ifnum, 1);
-	}
+			अगरnum);
+		/* We know the alternate setting is 1 क्रम the MC8785 */
+		usb_set_पूर्णांकerface(udev, अगरnum, 1);
+	पूर्ण
 
-	ignore_list = (const struct sierra_iface_list *)id->driver_info;
+	ignore_list = (स्थिर काष्ठा sierra_अगरace_list *)id->driver_info;
 
-	if (is_listed(ifnum, ignore_list)) {
-		dev_dbg(&serial->dev->dev, "Ignoring interface #%d\n", ifnum);
-		return -ENODEV;
-	}
+	अगर (is_listed(अगरnum, ignore_list)) अणु
+		dev_dbg(&serial->dev->dev, "Ignoring interface #%d\n", अगरnum);
+		वापस -ENODEV;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-/* interfaces with higher memory requirements */
-static const u8 hi_memory_typeA_ifaces[] = { 0, 2 };
-static const struct sierra_iface_list typeA_interface_list = {
-	.nums	= hi_memory_typeA_ifaces,
-	.count	= ARRAY_SIZE(hi_memory_typeA_ifaces),
-};
+/* पूर्णांकerfaces with higher memory requirements */
+अटल स्थिर u8 hi_memory_typeA_अगरaces[] = अणु 0, 2 पूर्ण;
+अटल स्थिर काष्ठा sierra_अगरace_list typeA_पूर्णांकerface_list = अणु
+	.nums	= hi_memory_typeA_अगरaces,
+	.count	= ARRAY_SIZE(hi_memory_typeA_अगरaces),
+पूर्ण;
 
-static const u8 hi_memory_typeB_ifaces[] = { 3, 4, 5, 6 };
-static const struct sierra_iface_list typeB_interface_list = {
-	.nums	= hi_memory_typeB_ifaces,
-	.count	= ARRAY_SIZE(hi_memory_typeB_ifaces),
-};
+अटल स्थिर u8 hi_memory_typeB_अगरaces[] = अणु 3, 4, 5, 6 पूर्ण;
+अटल स्थिर काष्ठा sierra_अगरace_list typeB_पूर्णांकerface_list = अणु
+	.nums	= hi_memory_typeB_अगरaces,
+	.count	= ARRAY_SIZE(hi_memory_typeB_अगरaces),
+पूर्ण;
 
-/* 'ignorelist' of interfaces not served by this driver */
-static const u8 direct_ip_non_serial_ifaces[] = { 7, 8, 9, 10, 11, 19, 20 };
-static const struct sierra_iface_list direct_ip_interface_ignore = {
-	.nums	= direct_ip_non_serial_ifaces,
-	.count	= ARRAY_SIZE(direct_ip_non_serial_ifaces),
-};
+/* 'ignorelist' of पूर्णांकerfaces not served by this driver */
+अटल स्थिर u8 direct_ip_non_serial_अगरaces[] = अणु 7, 8, 9, 10, 11, 19, 20 पूर्ण;
+अटल स्थिर काष्ठा sierra_अगरace_list direct_ip_पूर्णांकerface_ignore = अणु
+	.nums	= direct_ip_non_serial_अगरaces,
+	.count	= ARRAY_SIZE(direct_ip_non_serial_अगरaces),
+पूर्ण;
 
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(0x0F3D, 0x0112) }, /* Airprime/Sierra PC 5220 */
-	{ USB_DEVICE(0x03F0, 0x1B1D) },	/* HP ev2200 a.k.a MC5720 */
-	{ USB_DEVICE(0x03F0, 0x211D) }, /* HP ev2210 a.k.a MC5725 */
-	{ USB_DEVICE(0x03F0, 0x1E1D) },	/* HP hs2300 a.k.a MC8775 */
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(0x0F3D, 0x0112) पूर्ण, /* Airprime/Sierra PC 5220 */
+	अणु USB_DEVICE(0x03F0, 0x1B1D) पूर्ण,	/* HP ev2200 a.k.a MC5720 */
+	अणु USB_DEVICE(0x03F0, 0x211D) पूर्ण, /* HP ev2210 a.k.a MC5725 */
+	अणु USB_DEVICE(0x03F0, 0x1E1D) पूर्ण,	/* HP hs2300 a.k.a MC8775 */
 
-	{ USB_DEVICE(0x1199, 0x0017) },	/* Sierra Wireless EM5625 */
-	{ USB_DEVICE(0x1199, 0x0018) },	/* Sierra Wireless MC5720 */
-	{ USB_DEVICE(0x1199, 0x0218) },	/* Sierra Wireless MC5720 */
-	{ USB_DEVICE(0x1199, 0x0020) },	/* Sierra Wireless MC5725 */
-	{ USB_DEVICE(0x1199, 0x0220) },	/* Sierra Wireless MC5725 */
-	{ USB_DEVICE(0x1199, 0x0022) },	/* Sierra Wireless EM5725 */
-	{ USB_DEVICE(0x1199, 0x0024) },	/* Sierra Wireless MC5727 */
-	{ USB_DEVICE(0x1199, 0x0224) },	/* Sierra Wireless MC5727 */
-	{ USB_DEVICE(0x1199, 0x0019) },	/* Sierra Wireless AirCard 595 */
-	{ USB_DEVICE(0x1199, 0x0021) },	/* Sierra Wireless AirCard 597E */
-	{ USB_DEVICE(0x1199, 0x0112) }, /* Sierra Wireless AirCard 580 */
-	{ USB_DEVICE(0x1199, 0x0120) },	/* Sierra Wireless USB Dongle 595U */
-	{ USB_DEVICE(0x1199, 0x0301) },	/* Sierra Wireless USB Dongle 250U */
+	अणु USB_DEVICE(0x1199, 0x0017) पूर्ण,	/* Sierra Wireless EM5625 */
+	अणु USB_DEVICE(0x1199, 0x0018) पूर्ण,	/* Sierra Wireless MC5720 */
+	अणु USB_DEVICE(0x1199, 0x0218) पूर्ण,	/* Sierra Wireless MC5720 */
+	अणु USB_DEVICE(0x1199, 0x0020) पूर्ण,	/* Sierra Wireless MC5725 */
+	अणु USB_DEVICE(0x1199, 0x0220) पूर्ण,	/* Sierra Wireless MC5725 */
+	अणु USB_DEVICE(0x1199, 0x0022) पूर्ण,	/* Sierra Wireless EM5725 */
+	अणु USB_DEVICE(0x1199, 0x0024) पूर्ण,	/* Sierra Wireless MC5727 */
+	अणु USB_DEVICE(0x1199, 0x0224) पूर्ण,	/* Sierra Wireless MC5727 */
+	अणु USB_DEVICE(0x1199, 0x0019) पूर्ण,	/* Sierra Wireless AirCard 595 */
+	अणु USB_DEVICE(0x1199, 0x0021) पूर्ण,	/* Sierra Wireless AirCard 597E */
+	अणु USB_DEVICE(0x1199, 0x0112) पूर्ण, /* Sierra Wireless AirCard 580 */
+	अणु USB_DEVICE(0x1199, 0x0120) पूर्ण,	/* Sierra Wireless USB Dongle 595U */
+	अणु USB_DEVICE(0x1199, 0x0301) पूर्ण,	/* Sierra Wireless USB Dongle 250U */
 	/* Sierra Wireless C597 */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x0023, 0xFF, 0xFF, 0xFF) },
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x0023, 0xFF, 0xFF, 0xFF) पूर्ण,
 	/* Sierra Wireless T598 */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x0025, 0xFF, 0xFF, 0xFF) },
-	{ USB_DEVICE(0x1199, 0x0026) }, /* Sierra Wireless T11 */
-	{ USB_DEVICE(0x1199, 0x0027) }, /* Sierra Wireless AC402 */
-	{ USB_DEVICE(0x1199, 0x0028) }, /* Sierra Wireless MC5728 */
-	{ USB_DEVICE(0x1199, 0x0029) }, /* Sierra Wireless Device */
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x0025, 0xFF, 0xFF, 0xFF) पूर्ण,
+	अणु USB_DEVICE(0x1199, 0x0026) पूर्ण, /* Sierra Wireless T11 */
+	अणु USB_DEVICE(0x1199, 0x0027) पूर्ण, /* Sierra Wireless AC402 */
+	अणु USB_DEVICE(0x1199, 0x0028) पूर्ण, /* Sierra Wireless MC5728 */
+	अणु USB_DEVICE(0x1199, 0x0029) पूर्ण, /* Sierra Wireless Device */
 
-	{ USB_DEVICE(0x1199, 0x6802) },	/* Sierra Wireless MC8755 */
-	{ USB_DEVICE(0x1199, 0x6803) },	/* Sierra Wireless MC8765 */
-	{ USB_DEVICE(0x1199, 0x6804) },	/* Sierra Wireless MC8755 */
-	{ USB_DEVICE(0x1199, 0x6805) },	/* Sierra Wireless MC8765 */
-	{ USB_DEVICE(0x1199, 0x6808) },	/* Sierra Wireless MC8755 */
-	{ USB_DEVICE(0x1199, 0x6809) },	/* Sierra Wireless MC8765 */
-	{ USB_DEVICE(0x1199, 0x6812) },	/* Sierra Wireless MC8775 & AC 875U */
-	{ USB_DEVICE(0x1199, 0x6813) },	/* Sierra Wireless MC8775 */
-	{ USB_DEVICE(0x1199, 0x6815) },	/* Sierra Wireless MC8775 */
-	{ USB_DEVICE(0x1199, 0x6816) },	/* Sierra Wireless MC8775 */
-	{ USB_DEVICE(0x1199, 0x6820) },	/* Sierra Wireless AirCard 875 */
-	{ USB_DEVICE(0x1199, 0x6821) },	/* Sierra Wireless AirCard 875U */
-	{ USB_DEVICE(0x1199, 0x6822) },	/* Sierra Wireless AirCard 875E */
-	{ USB_DEVICE(0x1199, 0x6832) },	/* Sierra Wireless MC8780 */
-	{ USB_DEVICE(0x1199, 0x6833) },	/* Sierra Wireless MC8781 */
-	{ USB_DEVICE(0x1199, 0x6834) },	/* Sierra Wireless MC8780 */
-	{ USB_DEVICE(0x1199, 0x6835) },	/* Sierra Wireless MC8781 */
-	{ USB_DEVICE(0x1199, 0x6838) },	/* Sierra Wireless MC8780 */
-	{ USB_DEVICE(0x1199, 0x6839) },	/* Sierra Wireless MC8781 */
-	{ USB_DEVICE(0x1199, 0x683A) },	/* Sierra Wireless MC8785 */
-	{ USB_DEVICE(0x1199, 0x683B) },	/* Sierra Wireless MC8785 Composite */
+	अणु USB_DEVICE(0x1199, 0x6802) पूर्ण,	/* Sierra Wireless MC8755 */
+	अणु USB_DEVICE(0x1199, 0x6803) पूर्ण,	/* Sierra Wireless MC8765 */
+	अणु USB_DEVICE(0x1199, 0x6804) पूर्ण,	/* Sierra Wireless MC8755 */
+	अणु USB_DEVICE(0x1199, 0x6805) पूर्ण,	/* Sierra Wireless MC8765 */
+	अणु USB_DEVICE(0x1199, 0x6808) पूर्ण,	/* Sierra Wireless MC8755 */
+	अणु USB_DEVICE(0x1199, 0x6809) पूर्ण,	/* Sierra Wireless MC8765 */
+	अणु USB_DEVICE(0x1199, 0x6812) पूर्ण,	/* Sierra Wireless MC8775 & AC 875U */
+	अणु USB_DEVICE(0x1199, 0x6813) पूर्ण,	/* Sierra Wireless MC8775 */
+	अणु USB_DEVICE(0x1199, 0x6815) पूर्ण,	/* Sierra Wireless MC8775 */
+	अणु USB_DEVICE(0x1199, 0x6816) पूर्ण,	/* Sierra Wireless MC8775 */
+	अणु USB_DEVICE(0x1199, 0x6820) पूर्ण,	/* Sierra Wireless AirCard 875 */
+	अणु USB_DEVICE(0x1199, 0x6821) पूर्ण,	/* Sierra Wireless AirCard 875U */
+	अणु USB_DEVICE(0x1199, 0x6822) पूर्ण,	/* Sierra Wireless AirCard 875E */
+	अणु USB_DEVICE(0x1199, 0x6832) पूर्ण,	/* Sierra Wireless MC8780 */
+	अणु USB_DEVICE(0x1199, 0x6833) पूर्ण,	/* Sierra Wireless MC8781 */
+	अणु USB_DEVICE(0x1199, 0x6834) पूर्ण,	/* Sierra Wireless MC8780 */
+	अणु USB_DEVICE(0x1199, 0x6835) पूर्ण,	/* Sierra Wireless MC8781 */
+	अणु USB_DEVICE(0x1199, 0x6838) पूर्ण,	/* Sierra Wireless MC8780 */
+	अणु USB_DEVICE(0x1199, 0x6839) पूर्ण,	/* Sierra Wireless MC8781 */
+	अणु USB_DEVICE(0x1199, 0x683A) पूर्ण,	/* Sierra Wireless MC8785 */
+	अणु USB_DEVICE(0x1199, 0x683B) पूर्ण,	/* Sierra Wireless MC8785 Composite */
 	/* Sierra Wireless MC8790, MC8791, MC8792 Composite */
-	{ USB_DEVICE(0x1199, 0x683C) },
-	{ USB_DEVICE(0x1199, 0x683D) },	/* Sierra Wireless MC8791 Composite */
+	अणु USB_DEVICE(0x1199, 0x683C) पूर्ण,
+	अणु USB_DEVICE(0x1199, 0x683D) पूर्ण,	/* Sierra Wireless MC8791 Composite */
 	/* Sierra Wireless MC8790, MC8791, MC8792 */
-	{ USB_DEVICE(0x1199, 0x683E) },
-	{ USB_DEVICE(0x1199, 0x6850) },	/* Sierra Wireless AirCard 880 */
-	{ USB_DEVICE(0x1199, 0x6851) },	/* Sierra Wireless AirCard 881 */
-	{ USB_DEVICE(0x1199, 0x6852) },	/* Sierra Wireless AirCard 880 E */
-	{ USB_DEVICE(0x1199, 0x6853) },	/* Sierra Wireless AirCard 881 E */
-	{ USB_DEVICE(0x1199, 0x6855) },	/* Sierra Wireless AirCard 880 U */
-	{ USB_DEVICE(0x1199, 0x6856) },	/* Sierra Wireless AirCard 881 U */
-	{ USB_DEVICE(0x1199, 0x6859) },	/* Sierra Wireless AirCard 885 E */
-	{ USB_DEVICE(0x1199, 0x685A) },	/* Sierra Wireless AirCard 885 E */
+	अणु USB_DEVICE(0x1199, 0x683E) पूर्ण,
+	अणु USB_DEVICE(0x1199, 0x6850) पूर्ण,	/* Sierra Wireless AirCard 880 */
+	अणु USB_DEVICE(0x1199, 0x6851) पूर्ण,	/* Sierra Wireless AirCard 881 */
+	अणु USB_DEVICE(0x1199, 0x6852) पूर्ण,	/* Sierra Wireless AirCard 880 E */
+	अणु USB_DEVICE(0x1199, 0x6853) पूर्ण,	/* Sierra Wireless AirCard 881 E */
+	अणु USB_DEVICE(0x1199, 0x6855) पूर्ण,	/* Sierra Wireless AirCard 880 U */
+	अणु USB_DEVICE(0x1199, 0x6856) पूर्ण,	/* Sierra Wireless AirCard 881 U */
+	अणु USB_DEVICE(0x1199, 0x6859) पूर्ण,	/* Sierra Wireless AirCard 885 E */
+	अणु USB_DEVICE(0x1199, 0x685A) पूर्ण,	/* Sierra Wireless AirCard 885 E */
 	/* Sierra Wireless C885 */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x6880, 0xFF, 0xFF, 0xFF)},
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x6880, 0xFF, 0xFF, 0xFF)पूर्ण,
 	/* Sierra Wireless C888, Air Card 501, USB 303, USB 304 */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x6890, 0xFF, 0xFF, 0xFF)},
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x6890, 0xFF, 0xFF, 0xFF)पूर्ण,
 	/* Sierra Wireless C22/C33 */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x6891, 0xFF, 0xFF, 0xFF)},
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x6891, 0xFF, 0xFF, 0xFF)पूर्ण,
 	/* Sierra Wireless HSPA Non-Composite Device */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x6892, 0xFF, 0xFF, 0xFF)},
-	{ USB_DEVICE(0x1199, 0x6893) },	/* Sierra Wireless Device */
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x6892, 0xFF, 0xFF, 0xFF)पूर्ण,
+	अणु USB_DEVICE(0x1199, 0x6893) पूर्ण,	/* Sierra Wireless Device */
 	/* Sierra Wireless Direct IP modems */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x68A3, 0xFF, 0xFF, 0xFF),
-	  .driver_info = (kernel_ulong_t)&direct_ip_interface_ignore
-	},
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x68AA, 0xFF, 0xFF, 0xFF),
-	  .driver_info = (kernel_ulong_t)&direct_ip_interface_ignore
-	},
-	{ USB_DEVICE(0x1199, 0x68AB) }, /* Sierra Wireless AR8550 */
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x68A3, 0xFF, 0xFF, 0xFF),
+	  .driver_info = (kernel_uदीर्घ_t)&direct_ip_पूर्णांकerface_ignore
+	पूर्ण,
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1199, 0x68AA, 0xFF, 0xFF, 0xFF),
+	  .driver_info = (kernel_uदीर्घ_t)&direct_ip_पूर्णांकerface_ignore
+	पूर्ण,
+	अणु USB_DEVICE(0x1199, 0x68AB) पूर्ण, /* Sierra Wireless AR8550 */
 	/* AT&T Direct IP LTE modems */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x0F3D, 0x68AA, 0xFF, 0xFF, 0xFF),
-	  .driver_info = (kernel_ulong_t)&direct_ip_interface_ignore
-	},
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x0F3D, 0x68AA, 0xFF, 0xFF, 0xFF),
+	  .driver_info = (kernel_uदीर्घ_t)&direct_ip_पूर्णांकerface_ignore
+	पूर्ण,
 	/* Airprime/Sierra Wireless Direct IP modems */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x0F3D, 0x68A3, 0xFF, 0xFF, 0xFF),
-	  .driver_info = (kernel_ulong_t)&direct_ip_interface_ignore
-	},
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x0F3D, 0x68A3, 0xFF, 0xFF, 0xFF),
+	  .driver_info = (kernel_uदीर्घ_t)&direct_ip_पूर्णांकerface_ignore
+	पूर्ण,
 
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, id_table);
 
 
-struct sierra_port_private {
-	spinlock_t lock;	/* lock the structure */
-	int outstanding_urbs;	/* number of out urbs in flight */
-	struct usb_anchor active;
-	struct usb_anchor delayed;
+काष्ठा sierra_port_निजी अणु
+	spinlock_t lock;	/* lock the काष्ठाure */
+	पूर्णांक outstanding_urbs;	/* number of out urbs in flight */
+	काष्ठा usb_anchor active;
+	काष्ठा usb_anchor delayed;
 
-	int num_out_urbs;
-	int num_in_urbs;
-	/* Input endpoints and buffers for this port */
-	struct urb *in_urbs[N_IN_URB_HM];
+	पूर्णांक num_out_urbs;
+	पूर्णांक num_in_urbs;
+	/* Input endpoपूर्णांकs and buffers क्रम this port */
+	काष्ठा urb *in_urbs[N_IN_URB_HM];
 
-	/* Settings for the port */
-	int rts_state;	/* Handshaking pins (outputs) */
-	int dtr_state;
-	int cts_state;	/* Handshaking pins (inputs) */
-	int dsr_state;
-	int dcd_state;
-	int ri_state;
-};
+	/* Settings क्रम the port */
+	पूर्णांक rts_state;	/* Handshaking pins (outमाला_दो) */
+	पूर्णांक dtr_state;
+	पूर्णांक cts_state;	/* Handshaking pins (inमाला_दो) */
+	पूर्णांक dsr_state;
+	पूर्णांक dcd_state;
+	पूर्णांक ri_state;
+पूर्ण;
 
-static int sierra_send_setup(struct usb_serial_port *port)
-{
-	struct usb_serial *serial = port->serial;
-	struct sierra_port_private *portdata;
-	__u16 interface = 0;
-	int val = 0;
-	int do_send = 0;
-	int retval;
+अटल पूर्णांक sierra_send_setup(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा sierra_port_निजी *portdata;
+	__u16 पूर्णांकerface = 0;
+	पूर्णांक val = 0;
+	पूर्णांक करो_send = 0;
+	पूर्णांक retval;
 
 	portdata = usb_get_serial_port_data(port);
 
-	if (portdata->dtr_state)
+	अगर (portdata->dtr_state)
 		val |= 0x01;
-	if (portdata->rts_state)
+	अगर (portdata->rts_state)
 		val |= 0x02;
 
-	/* If composite device then properly report interface */
-	if (serial->num_ports == 1) {
-		interface = sierra_interface_num(serial);
-		/* Control message is sent only to interfaces with
-		 * interrupt_in endpoints
+	/* If composite device then properly report पूर्णांकerface */
+	अगर (serial->num_ports == 1) अणु
+		पूर्णांकerface = sierra_पूर्णांकerface_num(serial);
+		/* Control message is sent only to पूर्णांकerfaces with
+		 * पूर्णांकerrupt_in endpoपूर्णांकs
 		 */
-		if (port->interrupt_in_urb) {
+		अगर (port->पूर्णांकerrupt_in_urb) अणु
 			/* send control message */
-			do_send = 1;
-		}
-	}
+			करो_send = 1;
+		पूर्ण
+	पूर्ण
 
-	/* Otherwise the need to do non-composite mapping */
-	else {
-		if (port->bulk_out_endpointAddress == 2)
-			interface = 0;
-		else if (port->bulk_out_endpointAddress == 4)
-			interface = 1;
-		else if (port->bulk_out_endpointAddress == 5)
-			interface = 2;
+	/* Otherwise the need to करो non-composite mapping */
+	अन्यथा अणु
+		अगर (port->bulk_out_endpoपूर्णांकAddress == 2)
+			पूर्णांकerface = 0;
+		अन्यथा अगर (port->bulk_out_endpoपूर्णांकAddress == 4)
+			पूर्णांकerface = 1;
+		अन्यथा अगर (port->bulk_out_endpoपूर्णांकAddress == 5)
+			पूर्णांकerface = 2;
 
-		do_send = 1;
-	}
-	if (!do_send)
-		return 0;
+		करो_send = 1;
+	पूर्ण
+	अगर (!करो_send)
+		वापस 0;
 
-	retval = usb_autopm_get_interface(serial->interface);
-	if (retval < 0)
-		return retval;
+	retval = usb_स्वतःpm_get_पूर्णांकerface(serial->पूर्णांकerface);
+	अगर (retval < 0)
+		वापस retval;
 
 	retval = usb_control_msg(serial->dev, usb_sndctrlpipe(serial->dev, 0),
-		0x22, 0x21, val, interface, NULL, 0, USB_CTRL_SET_TIMEOUT);
-	usb_autopm_put_interface(serial->interface);
+		0x22, 0x21, val, पूर्णांकerface, शून्य, 0, USB_CTRL_SET_TIMEOUT);
+	usb_स्वतःpm_put_पूर्णांकerface(serial->पूर्णांकerface);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sierra_tiocmget(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	unsigned int value;
-	struct sierra_port_private *portdata;
+अटल पूर्णांक sierra_tiocmget(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	अचिन्हित पूर्णांक value;
+	काष्ठा sierra_port_निजी *portdata;
 
 	portdata = usb_get_serial_port_data(port);
 
@@ -353,518 +354,518 @@ static int sierra_tiocmget(struct tty_struct *tty)
 		((portdata->dcd_state) ? TIOCM_CAR : 0) |
 		((portdata->ri_state) ? TIOCM_RNG : 0);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static int sierra_tiocmset(struct tty_struct *tty,
-			unsigned int set, unsigned int clear)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct sierra_port_private *portdata;
+अटल पूर्णांक sierra_tiocmset(काष्ठा tty_काष्ठा *tty,
+			अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा sierra_port_निजी *portdata;
 
 	portdata = usb_get_serial_port_data(port);
 
-	if (set & TIOCM_RTS)
+	अगर (set & TIOCM_RTS)
 		portdata->rts_state = 1;
-	if (set & TIOCM_DTR)
+	अगर (set & TIOCM_DTR)
 		portdata->dtr_state = 1;
 
-	if (clear & TIOCM_RTS)
+	अगर (clear & TIOCM_RTS)
 		portdata->rts_state = 0;
-	if (clear & TIOCM_DTR)
+	अगर (clear & TIOCM_DTR)
 		portdata->dtr_state = 0;
-	return sierra_send_setup(port);
-}
+	वापस sierra_send_setup(port);
+पूर्ण
 
-static void sierra_release_urb(struct urb *urb)
-{
-	if (urb) {
-		kfree(urb->transfer_buffer);
-		usb_free_urb(urb);
-	}
-}
+अटल व्योम sierra_release_urb(काष्ठा urb *urb)
+अणु
+	अगर (urb) अणु
+		kमुक्त(urb->transfer_buffer);
+		usb_मुक्त_urb(urb);
+	पूर्ण
+पूर्ण
 
-static void sierra_outdat_callback(struct urb *urb)
-{
-	struct usb_serial_port *port = urb->context;
-	struct sierra_port_private *portdata = usb_get_serial_port_data(port);
-	struct sierra_intf_private *intfdata;
-	int status = urb->status;
-	unsigned long flags;
+अटल व्योम sierra_outdat_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_serial_port *port = urb->context;
+	काष्ठा sierra_port_निजी *portdata = usb_get_serial_port_data(port);
+	काष्ठा sierra_पूर्णांकf_निजी *पूर्णांकfdata;
+	पूर्णांक status = urb->status;
+	अचिन्हित दीर्घ flags;
 
-	intfdata = usb_get_serial_data(port->serial);
+	पूर्णांकfdata = usb_get_serial_data(port->serial);
 
-	/* free up the transfer buffer, as usb_free_urb() does not do this */
-	kfree(urb->transfer_buffer);
-	usb_autopm_put_interface_async(port->serial->interface);
-	if (status)
+	/* मुक्त up the transfer buffer, as usb_मुक्त_urb() करोes not करो this */
+	kमुक्त(urb->transfer_buffer);
+	usb_स्वतःpm_put_पूर्णांकerface_async(port->serial->पूर्णांकerface);
+	अगर (status)
 		dev_dbg(&port->dev, "%s - nonzero write bulk status "
 		    "received: %d\n", __func__, status);
 
 	spin_lock_irqsave(&portdata->lock, flags);
 	--portdata->outstanding_urbs;
 	spin_unlock_irqrestore(&portdata->lock, flags);
-	spin_lock_irqsave(&intfdata->susp_lock, flags);
-	--intfdata->in_flight;
-	spin_unlock_irqrestore(&intfdata->susp_lock, flags);
+	spin_lock_irqsave(&पूर्णांकfdata->susp_lock, flags);
+	--पूर्णांकfdata->in_flight;
+	spin_unlock_irqrestore(&पूर्णांकfdata->susp_lock, flags);
 
-	usb_serial_port_softint(port);
-}
+	usb_serial_port_softपूर्णांक(port);
+पूर्ण
 
 /* Write */
-static int sierra_write(struct tty_struct *tty, struct usb_serial_port *port,
-					const unsigned char *buf, int count)
-{
-	struct sierra_port_private *portdata;
-	struct sierra_intf_private *intfdata;
-	struct usb_serial *serial = port->serial;
-	unsigned long flags;
-	unsigned char *buffer;
-	struct urb *urb;
-	size_t writesize = min((size_t)count, (size_t)MAX_TRANSFER);
-	int retval = 0;
+अटल पूर्णांक sierra_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port,
+					स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	काष्ठा sierra_port_निजी *portdata;
+	काष्ठा sierra_पूर्णांकf_निजी *पूर्णांकfdata;
+	काष्ठा usb_serial *serial = port->serial;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर *buffer;
+	काष्ठा urb *urb;
+	माप_प्रकार ग_लिखोsize = min((माप_प्रकार)count, (माप_प्रकार)MAX_TRANSFER);
+	पूर्णांक retval = 0;
 
-	/* verify that we actually have some data to write */
-	if (count == 0)
-		return 0;
+	/* verअगरy that we actually have some data to ग_लिखो */
+	अगर (count == 0)
+		वापस 0;
 
 	portdata = usb_get_serial_port_data(port);
-	intfdata = usb_get_serial_data(serial);
+	पूर्णांकfdata = usb_get_serial_data(serial);
 
-	dev_dbg(&port->dev, "%s: write (%zd bytes)\n", __func__, writesize);
+	dev_dbg(&port->dev, "%s: write (%zd bytes)\n", __func__, ग_लिखोsize);
 	spin_lock_irqsave(&portdata->lock, flags);
 	dev_dbg(&port->dev, "%s - outstanding_urbs: %d\n", __func__,
 		portdata->outstanding_urbs);
-	if (portdata->outstanding_urbs > portdata->num_out_urbs) {
+	अगर (portdata->outstanding_urbs > portdata->num_out_urbs) अणु
 		spin_unlock_irqrestore(&portdata->lock, flags);
 		dev_dbg(&port->dev, "%s - write limit hit\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	portdata->outstanding_urbs++;
 	dev_dbg(&port->dev, "%s - 1, outstanding_urbs: %d\n", __func__,
 		portdata->outstanding_urbs);
 	spin_unlock_irqrestore(&portdata->lock, flags);
 
-	retval = usb_autopm_get_interface_async(serial->interface);
-	if (retval < 0) {
+	retval = usb_स्वतःpm_get_पूर्णांकerface_async(serial->पूर्णांकerface);
+	अगर (retval < 0) अणु
 		spin_lock_irqsave(&portdata->lock, flags);
 		portdata->outstanding_urbs--;
 		spin_unlock_irqrestore(&portdata->lock, flags);
-		goto error_simple;
-	}
+		जाओ error_simple;
+	पूर्ण
 
-	buffer = kmalloc(writesize, GFP_ATOMIC);
-	if (!buffer) {
+	buffer = kदो_स्मृति(ग_लिखोsize, GFP_ATOMIC);
+	अगर (!buffer) अणु
 		retval = -ENOMEM;
-		goto error_no_buffer;
-	}
+		जाओ error_no_buffer;
+	पूर्ण
 
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	if (!urb) {
+	अगर (!urb) अणु
 		retval = -ENOMEM;
-		goto error_no_urb;
-	}
+		जाओ error_no_urb;
+	पूर्ण
 
-	memcpy(buffer, buf, writesize);
+	स_नकल(buffer, buf, ग_लिखोsize);
 
-	usb_serial_debug_data(&port->dev, __func__, writesize, buffer);
+	usb_serial_debug_data(&port->dev, __func__, ग_लिखोsize, buffer);
 
 	usb_fill_bulk_urb(urb, serial->dev,
 			  usb_sndbulkpipe(serial->dev,
-					  port->bulk_out_endpointAddress),
-			  buffer, writesize, sierra_outdat_callback, port);
+					  port->bulk_out_endpoपूर्णांकAddress),
+			  buffer, ग_लिखोsize, sierra_outdat_callback, port);
 
 	/* Handle the need to send a zero length packet */
 	urb->transfer_flags |= URB_ZERO_PACKET;
 
-	spin_lock_irqsave(&intfdata->susp_lock, flags);
+	spin_lock_irqsave(&पूर्णांकfdata->susp_lock, flags);
 
-	if (intfdata->suspended) {
+	अगर (पूर्णांकfdata->suspended) अणु
 		usb_anchor_urb(urb, &portdata->delayed);
-		spin_unlock_irqrestore(&intfdata->susp_lock, flags);
-		goto skip_power;
-	} else {
+		spin_unlock_irqrestore(&पूर्णांकfdata->susp_lock, flags);
+		जाओ skip_घातer;
+	पूर्ण अन्यथा अणु
 		usb_anchor_urb(urb, &portdata->active);
-	}
-	/* send it down the pipe */
+	पूर्ण
+	/* send it करोwn the pipe */
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
-	if (retval) {
+	अगर (retval) अणु
 		usb_unanchor_urb(urb);
-		spin_unlock_irqrestore(&intfdata->susp_lock, flags);
+		spin_unlock_irqrestore(&पूर्णांकfdata->susp_lock, flags);
 		dev_err(&port->dev, "%s - usb_submit_urb(write bulk) failed "
 			"with status = %d\n", __func__, retval);
-		goto error;
-	} else {
-		intfdata->in_flight++;
-		spin_unlock_irqrestore(&intfdata->susp_lock, flags);
-	}
+		जाओ error;
+	पूर्ण अन्यथा अणु
+		पूर्णांकfdata->in_flight++;
+		spin_unlock_irqrestore(&पूर्णांकfdata->susp_lock, flags);
+	पूर्ण
 
-skip_power:
-	/* we are done with this urb, so let the host driver
-	 * really free it when it is finished with it */
-	usb_free_urb(urb);
+skip_घातer:
+	/* we are करोne with this urb, so let the host driver
+	 * really मुक्त it when it is finished with it */
+	usb_मुक्त_urb(urb);
 
-	return writesize;
+	वापस ग_लिखोsize;
 error:
-	usb_free_urb(urb);
+	usb_मुक्त_urb(urb);
 error_no_urb:
-	kfree(buffer);
+	kमुक्त(buffer);
 error_no_buffer:
 	spin_lock_irqsave(&portdata->lock, flags);
 	--portdata->outstanding_urbs;
 	dev_dbg(&port->dev, "%s - 2. outstanding_urbs: %d\n", __func__,
 		portdata->outstanding_urbs);
 	spin_unlock_irqrestore(&portdata->lock, flags);
-	usb_autopm_put_interface_async(serial->interface);
+	usb_स्वतःpm_put_पूर्णांकerface_async(serial->पूर्णांकerface);
 error_simple:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void sierra_indat_callback(struct urb *urb)
-{
-	int err;
-	int endpoint;
-	struct usb_serial_port *port;
-	unsigned char *data = urb->transfer_buffer;
-	int status = urb->status;
+अटल व्योम sierra_indat_callback(काष्ठा urb *urb)
+अणु
+	पूर्णांक err;
+	पूर्णांक endpoपूर्णांक;
+	काष्ठा usb_serial_port *port;
+	अचिन्हित अक्षर *data = urb->transfer_buffer;
+	पूर्णांक status = urb->status;
 
-	endpoint = usb_pipeendpoint(urb->pipe);
+	endpoपूर्णांक = usb_pipeendpoपूर्णांक(urb->pipe);
 	port = urb->context;
 
-	if (status) {
+	अगर (status) अणु
 		dev_dbg(&port->dev, "%s: nonzero status: %d on"
-			" endpoint %02x\n", __func__, status, endpoint);
-	} else {
-		if (urb->actual_length) {
+			" endpoint %02x\n", __func__, status, endpoपूर्णांक);
+	पूर्ण अन्यथा अणु
+		अगर (urb->actual_length) अणु
 			tty_insert_flip_string(&port->port, data,
 				urb->actual_length);
 			tty_flip_buffer_push(&port->port);
 
 			usb_serial_debug_data(&port->dev, __func__,
 					      urb->actual_length, data);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_dbg(&port->dev, "%s: empty read urb"
 				" received\n", __func__);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Resubmit urb so we continue receiving */
-	if (status != -ESHUTDOWN && status != -EPERM) {
+	/* Resubmit urb so we जारी receiving */
+	अगर (status != -ESHUTDOWN && status != -EPERM) अणु
 		usb_mark_last_busy(port->serial->dev);
 		err = usb_submit_urb(urb, GFP_ATOMIC);
-		if (err && err != -EPERM)
+		अगर (err && err != -EPERM)
 			dev_err(&port->dev, "resubmit read urb failed."
 				"(%d)\n", err);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sierra_instat_callback(struct urb *urb)
-{
-	int err;
-	int status = urb->status;
-	struct usb_serial_port *port =  urb->context;
-	struct sierra_port_private *portdata = usb_get_serial_port_data(port);
-	struct usb_serial *serial = port->serial;
+अटल व्योम sierra_instat_callback(काष्ठा urb *urb)
+अणु
+	पूर्णांक err;
+	पूर्णांक status = urb->status;
+	काष्ठा usb_serial_port *port =  urb->context;
+	काष्ठा sierra_port_निजी *portdata = usb_get_serial_port_data(port);
+	काष्ठा usb_serial *serial = port->serial;
 
 	dev_dbg(&port->dev, "%s: urb %p port %p has data %p\n", __func__,
 		urb, port, portdata);
 
-	if (status == 0) {
-		struct usb_ctrlrequest *req_pkt = urb->transfer_buffer;
+	अगर (status == 0) अणु
+		काष्ठा usb_ctrlrequest *req_pkt = urb->transfer_buffer;
 
-		if (!req_pkt) {
+		अगर (!req_pkt) अणु
 			dev_dbg(&port->dev, "%s: NULL req_pkt\n",
 				__func__);
-			return;
-		}
-		if ((req_pkt->bRequestType == 0xA1) &&
-				(req_pkt->bRequest == 0x20)) {
-			int old_dcd_state;
-			unsigned char signals = *((unsigned char *)
+			वापस;
+		पूर्ण
+		अगर ((req_pkt->bRequestType == 0xA1) &&
+				(req_pkt->bRequest == 0x20)) अणु
+			पूर्णांक old_dcd_state;
+			अचिन्हित अक्षर संकेतs = *((अचिन्हित अक्षर *)
 					urb->transfer_buffer +
-					sizeof(struct usb_ctrlrequest));
+					माप(काष्ठा usb_ctrlrequest));
 
 			dev_dbg(&port->dev, "%s: signal x%x\n", __func__,
-				signals);
+				संकेतs);
 
 			old_dcd_state = portdata->dcd_state;
 			portdata->cts_state = 1;
-			portdata->dcd_state = ((signals & 0x01) ? 1 : 0);
-			portdata->dsr_state = ((signals & 0x02) ? 1 : 0);
-			portdata->ri_state = ((signals & 0x08) ? 1 : 0);
+			portdata->dcd_state = ((संकेतs & 0x01) ? 1 : 0);
+			portdata->dsr_state = ((संकेतs & 0x02) ? 1 : 0);
+			portdata->ri_state = ((संकेतs & 0x08) ? 1 : 0);
 
-			if (old_dcd_state && !portdata->dcd_state)
+			अगर (old_dcd_state && !portdata->dcd_state)
 				tty_port_tty_hangup(&port->port, true);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_dbg(&port->dev, "%s: type %x req %x\n",
 				__func__, req_pkt->bRequestType,
 				req_pkt->bRequest);
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		dev_dbg(&port->dev, "%s: error %d\n", __func__, status);
 
-	/* Resubmit urb so we continue receiving IRQ data */
-	if (status != -ESHUTDOWN && status != -ENOENT) {
+	/* Resubmit urb so we जारी receiving IRQ data */
+	अगर (status != -ESHUTDOWN && status != -ENOENT) अणु
 		usb_mark_last_busy(serial->dev);
 		err = usb_submit_urb(urb, GFP_ATOMIC);
-		if (err && err != -EPERM)
+		अगर (err && err != -EPERM)
 			dev_err(&port->dev, "%s: resubmit intr urb "
 				"failed. (%d)\n", __func__, err);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sierra_write_room(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct sierra_port_private *portdata = usb_get_serial_port_data(port);
-	unsigned long flags;
+अटल पूर्णांक sierra_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा sierra_port_निजी *portdata = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
 
-	/* try to give a good number back based on if we have any free urbs at
-	 * this point in time */
+	/* try to give a good number back based on अगर we have any मुक्त urbs at
+	 * this poपूर्णांक in समय */
 	spin_lock_irqsave(&portdata->lock, flags);
-	if (portdata->outstanding_urbs > (portdata->num_out_urbs * 2) / 3) {
+	अगर (portdata->outstanding_urbs > (portdata->num_out_urbs * 2) / 3) अणु
 		spin_unlock_irqrestore(&portdata->lock, flags);
 		dev_dbg(&port->dev, "%s - write limit hit\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock_irqrestore(&portdata->lock, flags);
 
-	return 2048;
-}
+	वापस 2048;
+पूर्ण
 
-static int sierra_chars_in_buffer(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct sierra_port_private *portdata = usb_get_serial_port_data(port);
-	unsigned long flags;
-	int chars;
+अटल पूर्णांक sierra_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा sierra_port_निजी *portdata = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक अक्षरs;
 
 	/* NOTE: This overcounts somewhat. */
 	spin_lock_irqsave(&portdata->lock, flags);
-	chars = portdata->outstanding_urbs * MAX_TRANSFER;
+	अक्षरs = portdata->outstanding_urbs * MAX_TRANSFER;
 	spin_unlock_irqrestore(&portdata->lock, flags);
 
-	dev_dbg(&port->dev, "%s - %d\n", __func__, chars);
+	dev_dbg(&port->dev, "%s - %d\n", __func__, अक्षरs);
 
-	return chars;
-}
+	वापस अक्षरs;
+पूर्ण
 
-static void sierra_stop_rx_urbs(struct usb_serial_port *port)
-{
-	int i;
-	struct sierra_port_private *portdata = usb_get_serial_port_data(port);
+अटल व्योम sierra_stop_rx_urbs(काष्ठा usb_serial_port *port)
+अणु
+	पूर्णांक i;
+	काष्ठा sierra_port_निजी *portdata = usb_get_serial_port_data(port);
 
-	for (i = 0; i < portdata->num_in_urbs; i++)
-		usb_kill_urb(portdata->in_urbs[i]);
+	क्रम (i = 0; i < portdata->num_in_urbs; i++)
+		usb_समाप्त_urb(portdata->in_urbs[i]);
 
-	usb_kill_urb(port->interrupt_in_urb);
-}
+	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
+पूर्ण
 
-static int sierra_submit_rx_urbs(struct usb_serial_port *port, gfp_t mem_flags)
-{
-	int ok_cnt;
-	int err = -EINVAL;
-	int i;
-	struct urb *urb;
-	struct sierra_port_private *portdata = usb_get_serial_port_data(port);
+अटल पूर्णांक sierra_submit_rx_urbs(काष्ठा usb_serial_port *port, gfp_t mem_flags)
+अणु
+	पूर्णांक ok_cnt;
+	पूर्णांक err = -EINVAL;
+	पूर्णांक i;
+	काष्ठा urb *urb;
+	काष्ठा sierra_port_निजी *portdata = usb_get_serial_port_data(port);
 
 	ok_cnt = 0;
-	for (i = 0; i < portdata->num_in_urbs; i++) {
+	क्रम (i = 0; i < portdata->num_in_urbs; i++) अणु
 		urb = portdata->in_urbs[i];
-		if (!urb)
-			continue;
+		अगर (!urb)
+			जारी;
 		err = usb_submit_urb(urb, mem_flags);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&port->dev, "%s: submit urb failed: %d\n",
 				__func__, err);
-		} else {
+		पूर्ण अन्यथा अणु
 			ok_cnt++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ok_cnt && port->interrupt_in_urb) {
-		err = usb_submit_urb(port->interrupt_in_urb, mem_flags);
-		if (err) {
+	अगर (ok_cnt && port->पूर्णांकerrupt_in_urb) अणु
+		err = usb_submit_urb(port->पूर्णांकerrupt_in_urb, mem_flags);
+		अगर (err) अणु
 			dev_err(&port->dev, "%s: submit intr urb failed: %d\n",
 				__func__, err);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ok_cnt > 0) /* at least one rx urb submitted */
-		return 0;
-	else
-		return err;
-}
+	अगर (ok_cnt > 0) /* at least one rx urb submitted */
+		वापस 0;
+	अन्यथा
+		वापस err;
+पूर्ण
 
-static struct urb *sierra_setup_urb(struct usb_serial *serial, int endpoint,
-					int dir, void *ctx, int len,
+अटल काष्ठा urb *sierra_setup_urb(काष्ठा usb_serial *serial, पूर्णांक endpoपूर्णांक,
+					पूर्णांक dir, व्योम *ctx, पूर्णांक len,
 					gfp_t mem_flags,
 					usb_complete_t callback)
-{
-	struct urb	*urb;
+अणु
+	काष्ठा urb	*urb;
 	u8		*buf;
 
 	urb = usb_alloc_urb(0, mem_flags);
-	if (!urb)
-		return NULL;
+	अगर (!urb)
+		वापस शून्य;
 
-	buf = kmalloc(len, mem_flags);
-	if (buf) {
+	buf = kदो_स्मृति(len, mem_flags);
+	अगर (buf) अणु
 		/* Fill URB using supplied data */
 		usb_fill_bulk_urb(urb, serial->dev,
-			usb_sndbulkpipe(serial->dev, endpoint) | dir,
+			usb_sndbulkpipe(serial->dev, endpoपूर्णांक) | dir,
 			buf, len, callback, ctx);
 
 		dev_dbg(&serial->dev->dev, "%s %c u : %p d:%p\n", __func__,
-				dir == USB_DIR_IN ? 'i' : 'o', urb, buf);
-	} else {
+				dir == USB_सूची_IN ? 'i' : 'o', urb, buf);
+	पूर्ण अन्यथा अणु
 		sierra_release_urb(urb);
-		urb = NULL;
-	}
+		urb = शून्य;
+	पूर्ण
 
-	return urb;
-}
+	वापस urb;
+पूर्ण
 
-static void sierra_close(struct usb_serial_port *port)
-{
-	int i;
-	struct usb_serial *serial = port->serial;
-	struct sierra_port_private *portdata;
-	struct sierra_intf_private *intfdata = usb_get_serial_data(serial);
-	struct urb *urb;
+अटल व्योम sierra_बंद(काष्ठा usb_serial_port *port)
+अणु
+	पूर्णांक i;
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा sierra_port_निजी *portdata;
+	काष्ठा sierra_पूर्णांकf_निजी *पूर्णांकfdata = usb_get_serial_data(serial);
+	काष्ठा urb *urb;
 
 	portdata = usb_get_serial_port_data(port);
 
 	/*
-	 * Need to take susp_lock to make sure port is not already being
+	 * Need to take susp_lock to make sure port is not alपढ़ोy being
 	 * resumed, but no need to hold it due to initialized
 	 */
-	spin_lock_irq(&intfdata->susp_lock);
-	if (--intfdata->open_ports == 0)
-		serial->interface->needs_remote_wakeup = 0;
-	spin_unlock_irq(&intfdata->susp_lock);
+	spin_lock_irq(&पूर्णांकfdata->susp_lock);
+	अगर (--पूर्णांकfdata->खोलो_ports == 0)
+		serial->पूर्णांकerface->needs_remote_wakeup = 0;
+	spin_unlock_irq(&पूर्णांकfdata->susp_lock);
 
-	for (;;) {
+	क्रम (;;) अणु
 		urb = usb_get_from_anchor(&portdata->delayed);
-		if (!urb)
-			break;
-		kfree(urb->transfer_buffer);
-		usb_free_urb(urb);
-		usb_autopm_put_interface_async(serial->interface);
+		अगर (!urb)
+			अवरोध;
+		kमुक्त(urb->transfer_buffer);
+		usb_मुक्त_urb(urb);
+		usb_स्वतःpm_put_पूर्णांकerface_async(serial->पूर्णांकerface);
 		spin_lock_irq(&portdata->lock);
 		portdata->outstanding_urbs--;
 		spin_unlock_irq(&portdata->lock);
-	}
+	पूर्ण
 
 	sierra_stop_rx_urbs(port);
-	usb_kill_anchored_urbs(&portdata->active);
+	usb_समाप्त_anchored_urbs(&portdata->active);
 
-	for (i = 0; i < portdata->num_in_urbs; i++) {
+	क्रम (i = 0; i < portdata->num_in_urbs; i++) अणु
 		sierra_release_urb(portdata->in_urbs[i]);
-		portdata->in_urbs[i] = NULL;
-	}
+		portdata->in_urbs[i] = शून्य;
+	पूर्ण
 
-	usb_autopm_get_interface_no_resume(serial->interface);
-}
+	usb_स्वतःpm_get_पूर्णांकerface_no_resume(serial->पूर्णांकerface);
+पूर्ण
 
-static int sierra_open(struct tty_struct *tty, struct usb_serial_port *port)
-{
-	struct sierra_port_private *portdata;
-	struct usb_serial *serial = port->serial;
-	struct sierra_intf_private *intfdata = usb_get_serial_data(serial);
-	int i;
-	int err;
-	int endpoint;
-	struct urb *urb;
+अटल पूर्णांक sierra_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा sierra_port_निजी *portdata;
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा sierra_पूर्णांकf_निजी *पूर्णांकfdata = usb_get_serial_data(serial);
+	पूर्णांक i;
+	पूर्णांक err;
+	पूर्णांक endpoपूर्णांक;
+	काष्ठा urb *urb;
 
 	portdata = usb_get_serial_port_data(port);
 
-	endpoint = port->bulk_in_endpointAddress;
-	for (i = 0; i < portdata->num_in_urbs; i++) {
-		urb = sierra_setup_urb(serial, endpoint, USB_DIR_IN, port,
+	endpoपूर्णांक = port->bulk_in_endpoपूर्णांकAddress;
+	क्रम (i = 0; i < portdata->num_in_urbs; i++) अणु
+		urb = sierra_setup_urb(serial, endpoपूर्णांक, USB_सूची_IN, port,
 					IN_BUFLEN, GFP_KERNEL,
 					sierra_indat_callback);
 		portdata->in_urbs[i] = urb;
-	}
+	पूर्ण
 	/* clear halt condition */
 	usb_clear_halt(serial->dev,
-			usb_sndbulkpipe(serial->dev, endpoint) | USB_DIR_IN);
+			usb_sndbulkpipe(serial->dev, endpoपूर्णांक) | USB_सूची_IN);
 
 	err = sierra_submit_rx_urbs(port, GFP_KERNEL);
-	if (err)
-		goto err_submit;
+	अगर (err)
+		जाओ err_submit;
 
-	spin_lock_irq(&intfdata->susp_lock);
-	if (++intfdata->open_ports == 1)
-		serial->interface->needs_remote_wakeup = 1;
-	spin_unlock_irq(&intfdata->susp_lock);
-	usb_autopm_put_interface(serial->interface);
+	spin_lock_irq(&पूर्णांकfdata->susp_lock);
+	अगर (++पूर्णांकfdata->खोलो_ports == 1)
+		serial->पूर्णांकerface->needs_remote_wakeup = 1;
+	spin_unlock_irq(&पूर्णांकfdata->susp_lock);
+	usb_स्वतःpm_put_पूर्णांकerface(serial->पूर्णांकerface);
 
-	return 0;
+	वापस 0;
 
 err_submit:
 	sierra_stop_rx_urbs(port);
 
-	for (i = 0; i < portdata->num_in_urbs; i++) {
+	क्रम (i = 0; i < portdata->num_in_urbs; i++) अणु
 		sierra_release_urb(portdata->in_urbs[i]);
-		portdata->in_urbs[i] = NULL;
-	}
+		portdata->in_urbs[i] = शून्य;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static void sierra_dtr_rts(struct usb_serial_port *port, int on)
-{
-	struct sierra_port_private *portdata;
+अटल व्योम sierra_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on)
+अणु
+	काष्ठा sierra_port_निजी *portdata;
 
 	portdata = usb_get_serial_port_data(port);
 	portdata->rts_state = on;
 	portdata->dtr_state = on;
 
 	sierra_send_setup(port);
-}
+पूर्ण
 
-static int sierra_startup(struct usb_serial *serial)
-{
-	struct sierra_intf_private *intfdata;
+अटल पूर्णांक sierra_startup(काष्ठा usb_serial *serial)
+अणु
+	काष्ठा sierra_पूर्णांकf_निजी *पूर्णांकfdata;
 
-	intfdata = kzalloc(sizeof(*intfdata), GFP_KERNEL);
-	if (!intfdata)
-		return -ENOMEM;
+	पूर्णांकfdata = kzalloc(माप(*पूर्णांकfdata), GFP_KERNEL);
+	अगर (!पूर्णांकfdata)
+		वापस -ENOMEM;
 
-	spin_lock_init(&intfdata->susp_lock);
+	spin_lock_init(&पूर्णांकfdata->susp_lock);
 
-	usb_set_serial_data(serial, intfdata);
+	usb_set_serial_data(serial, पूर्णांकfdata);
 
 	/* Set Device mode to D0 */
-	sierra_set_power_state(serial->dev, 0x0000);
+	sierra_set_घातer_state(serial->dev, 0x0000);
 
 	/* Check NMEA and set */
-	if (nmea)
+	अगर (nmea)
 		sierra_vsc_set_nmea(serial->dev, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sierra_release(struct usb_serial *serial)
-{
-	struct sierra_intf_private *intfdata;
+अटल व्योम sierra_release(काष्ठा usb_serial *serial)
+अणु
+	काष्ठा sierra_पूर्णांकf_निजी *पूर्णांकfdata;
 
-	intfdata = usb_get_serial_data(serial);
-	kfree(intfdata);
-}
+	पूर्णांकfdata = usb_get_serial_data(serial);
+	kमुक्त(पूर्णांकfdata);
+पूर्ण
 
-static int sierra_port_probe(struct usb_serial_port *port)
-{
-	struct usb_serial *serial = port->serial;
-	struct sierra_port_private *portdata;
-	const struct sierra_iface_list *himemory_list;
-	u8 ifnum;
+अटल पूर्णांक sierra_port_probe(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा sierra_port_निजी *portdata;
+	स्थिर काष्ठा sierra_अगरace_list *himemory_list;
+	u8 अगरnum;
 
-	portdata = kzalloc(sizeof(*portdata), GFP_KERNEL);
-	if (!portdata)
-		return -ENOMEM;
+	portdata = kzalloc(माप(*portdata), GFP_KERNEL);
+	अगर (!portdata)
+		वापस -ENOMEM;
 
 	spin_lock_init(&portdata->lock);
 	init_usb_anchor(&portdata->active);
@@ -875,180 +876,180 @@ static int sierra_port_probe(struct usb_serial_port *port)
 	portdata->num_in_urbs  = N_IN_URB;
 
 	/* Determine actual memory requirements */
-	if (serial->num_ports == 1) {
-		/* Get interface number for composite device */
-		ifnum = sierra_interface_num(serial);
-		himemory_list = &typeB_interface_list;
-	} else {
-		/* This is really the usb-serial port number of the interface
-		 * rather than the interface number.
+	अगर (serial->num_ports == 1) अणु
+		/* Get पूर्णांकerface number क्रम composite device */
+		अगरnum = sierra_पूर्णांकerface_num(serial);
+		himemory_list = &typeB_पूर्णांकerface_list;
+	पूर्ण अन्यथा अणु
+		/* This is really the usb-serial port number of the पूर्णांकerface
+		 * rather than the पूर्णांकerface number.
 		 */
-		ifnum = port->port_number;
-		himemory_list = &typeA_interface_list;
-	}
+		अगरnum = port->port_number;
+		himemory_list = &typeA_पूर्णांकerface_list;
+	पूर्ण
 
-	if (is_listed(ifnum, himemory_list)) {
+	अगर (is_listed(अगरnum, himemory_list)) अणु
 		portdata->num_out_urbs = N_OUT_URB_HM;
 		portdata->num_in_urbs  = N_IN_URB_HM;
-	}
+	पूर्ण
 
 	dev_dbg(&port->dev,
 			"Memory usage (urbs) interface #%d, in=%d, out=%d\n",
-			ifnum, portdata->num_in_urbs, portdata->num_out_urbs);
+			अगरnum, portdata->num_in_urbs, portdata->num_out_urbs);
 
 	usb_set_serial_port_data(port, portdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sierra_port_remove(struct usb_serial_port *port)
-{
-	struct sierra_port_private *portdata;
+अटल व्योम sierra_port_हटाओ(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा sierra_port_निजी *portdata;
 
 	portdata = usb_get_serial_port_data(port);
-	usb_set_serial_port_data(port, NULL);
-	kfree(portdata);
-}
+	usb_set_serial_port_data(port, शून्य);
+	kमुक्त(portdata);
+पूर्ण
 
-#ifdef CONFIG_PM
-static void stop_read_write_urbs(struct usb_serial *serial)
-{
-	int i;
-	struct usb_serial_port *port;
-	struct sierra_port_private *portdata;
+#अगर_घोषित CONFIG_PM
+अटल व्योम stop_पढ़ो_ग_लिखो_urbs(काष्ठा usb_serial *serial)
+अणु
+	पूर्णांक i;
+	काष्ठा usb_serial_port *port;
+	काष्ठा sierra_port_निजी *portdata;
 
-	/* Stop reading/writing urbs */
-	for (i = 0; i < serial->num_ports; ++i) {
+	/* Stop पढ़ोing/writing urbs */
+	क्रम (i = 0; i < serial->num_ports; ++i) अणु
 		port = serial->port[i];
 		portdata = usb_get_serial_port_data(port);
-		if (!portdata)
-			continue;
+		अगर (!portdata)
+			जारी;
 		sierra_stop_rx_urbs(port);
-		usb_kill_anchored_urbs(&portdata->active);
-	}
-}
+		usb_समाप्त_anchored_urbs(&portdata->active);
+	पूर्ण
+पूर्ण
 
-static int sierra_suspend(struct usb_serial *serial, pm_message_t message)
-{
-	struct sierra_intf_private *intfdata = usb_get_serial_data(serial);
+अटल पूर्णांक sierra_suspend(काष्ठा usb_serial *serial, pm_message_t message)
+अणु
+	काष्ठा sierra_पूर्णांकf_निजी *पूर्णांकfdata = usb_get_serial_data(serial);
 
-	spin_lock_irq(&intfdata->susp_lock);
-	if (PMSG_IS_AUTO(message)) {
-		if (intfdata->in_flight) {
-			spin_unlock_irq(&intfdata->susp_lock);
-			return -EBUSY;
-		}
-	}
-	intfdata->suspended = 1;
-	spin_unlock_irq(&intfdata->susp_lock);
+	spin_lock_irq(&पूर्णांकfdata->susp_lock);
+	अगर (PMSG_IS_AUTO(message)) अणु
+		अगर (पूर्णांकfdata->in_flight) अणु
+			spin_unlock_irq(&पूर्णांकfdata->susp_lock);
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
+	पूर्णांकfdata->suspended = 1;
+	spin_unlock_irq(&पूर्णांकfdata->susp_lock);
 
-	stop_read_write_urbs(serial);
+	stop_पढ़ो_ग_लिखो_urbs(serial);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Caller must hold susp_lock. */
-static int sierra_submit_delayed_urbs(struct usb_serial_port *port)
-{
-	struct sierra_port_private *portdata = usb_get_serial_port_data(port);
-	struct sierra_intf_private *intfdata;
-	struct urb *urb;
-	int ec = 0;
-	int err;
+अटल पूर्णांक sierra_submit_delayed_urbs(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा sierra_port_निजी *portdata = usb_get_serial_port_data(port);
+	काष्ठा sierra_पूर्णांकf_निजी *पूर्णांकfdata;
+	काष्ठा urb *urb;
+	पूर्णांक ec = 0;
+	पूर्णांक err;
 
-	intfdata = usb_get_serial_data(port->serial);
+	पूर्णांकfdata = usb_get_serial_data(port->serial);
 
-	for (;;) {
+	क्रम (;;) अणु
 		urb = usb_get_from_anchor(&portdata->delayed);
-		if (!urb)
-			break;
+		अगर (!urb)
+			अवरोध;
 
 		usb_anchor_urb(urb, &portdata->active);
-		intfdata->in_flight++;
+		पूर्णांकfdata->in_flight++;
 		err = usb_submit_urb(urb, GFP_ATOMIC);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&port->dev, "%s - submit urb failed: %d",
 					__func__, err);
 			ec++;
-			intfdata->in_flight--;
+			पूर्णांकfdata->in_flight--;
 			usb_unanchor_urb(urb);
-			kfree(urb->transfer_buffer);
-			usb_free_urb(urb);
+			kमुक्त(urb->transfer_buffer);
+			usb_मुक्त_urb(urb);
 
 			spin_lock(&portdata->lock);
 			portdata->outstanding_urbs--;
 			spin_unlock(&portdata->lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ec)
-		return -EIO;
+	अगर (ec)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sierra_resume(struct usb_serial *serial)
-{
-	struct usb_serial_port *port;
-	struct sierra_intf_private *intfdata = usb_get_serial_data(serial);
-	int ec = 0;
-	int i, err;
+अटल पूर्णांक sierra_resume(काष्ठा usb_serial *serial)
+अणु
+	काष्ठा usb_serial_port *port;
+	काष्ठा sierra_पूर्णांकf_निजी *पूर्णांकfdata = usb_get_serial_data(serial);
+	पूर्णांक ec = 0;
+	पूर्णांक i, err;
 
-	spin_lock_irq(&intfdata->susp_lock);
-	for (i = 0; i < serial->num_ports; i++) {
+	spin_lock_irq(&पूर्णांकfdata->susp_lock);
+	क्रम (i = 0; i < serial->num_ports; i++) अणु
 		port = serial->port[i];
 
-		if (!tty_port_initialized(&port->port))
-			continue;
+		अगर (!tty_port_initialized(&port->port))
+			जारी;
 
 		err = sierra_submit_delayed_urbs(port);
-		if (err)
+		अगर (err)
 			ec++;
 
 		err = sierra_submit_rx_urbs(port, GFP_ATOMIC);
-		if (err)
+		अगर (err)
 			ec++;
-	}
-	intfdata->suspended = 0;
-	spin_unlock_irq(&intfdata->susp_lock);
+	पूर्ण
+	पूर्णांकfdata->suspended = 0;
+	spin_unlock_irq(&पूर्णांकfdata->susp_lock);
 
-	return ec ? -EIO : 0;
-}
+	वापस ec ? -EIO : 0;
+पूर्ण
 
-#else
-#define sierra_suspend NULL
-#define sierra_resume NULL
-#endif
+#अन्यथा
+#घोषणा sierra_suspend शून्य
+#घोषणा sierra_resume शून्य
+#पूर्ण_अगर
 
-static struct usb_serial_driver sierra_device = {
-	.driver = {
+अटल काष्ठा usb_serial_driver sierra_device = अणु
+	.driver = अणु
 		.owner =	THIS_MODULE,
 		.name =		"sierra",
-	},
+	पूर्ण,
 	.description       = "Sierra USB modem",
 	.id_table          = id_table,
 	.calc_num_ports	   = sierra_calc_num_ports,
 	.probe		   = sierra_probe,
-	.open              = sierra_open,
-	.close             = sierra_close,
+	.खोलो              = sierra_खोलो,
+	.बंद             = sierra_बंद,
 	.dtr_rts	   = sierra_dtr_rts,
-	.write             = sierra_write,
-	.write_room        = sierra_write_room,
-	.chars_in_buffer   = sierra_chars_in_buffer,
+	.ग_लिखो             = sierra_ग_लिखो,
+	.ग_लिखो_room        = sierra_ग_लिखो_room,
+	.अक्षरs_in_buffer   = sierra_अक्षरs_in_buffer,
 	.tiocmget          = sierra_tiocmget,
 	.tiocmset          = sierra_tiocmset,
 	.attach            = sierra_startup,
 	.release           = sierra_release,
 	.port_probe        = sierra_port_probe,
-	.port_remove       = sierra_port_remove,
+	.port_हटाओ       = sierra_port_हटाओ,
 	.suspend	   = sierra_suspend,
 	.resume		   = sierra_resume,
-	.read_int_callback = sierra_instat_callback,
-};
+	.पढ़ो_पूर्णांक_callback = sierra_instat_callback,
+पूर्ण;
 
-static struct usb_serial_driver * const serial_drivers[] = {
-	&sierra_device, NULL
-};
+अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
+	&sierra_device, शून्य
+पूर्ण;
 
 module_usb_serial_driver(serial_drivers, id_table);
 

@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_FD_H
-#define _LINUX_FD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_FD_H
+#घोषणा _LINUX_FD_H
 
-#include <uapi/linux/fd.h>
+#समावेश <uapi/linux/fd.h>
 
-#ifdef CONFIG_COMPAT
-#include <linux/compat.h>
+#अगर_घोषित CONFIG_COMPAT
+#समावेश <linux/compat.h>
 
-struct compat_floppy_struct {
-	compat_uint_t	size;
-	compat_uint_t	sect;
-	compat_uint_t	head;
-	compat_uint_t	track;
-	compat_uint_t	stretch;
-	unsigned char	gap;
-	unsigned char	rate;
-	unsigned char	spec1;
-	unsigned char	fmt_gap;
-	const compat_caddr_t name;
-};
+काष्ठा compat_floppy_काष्ठा अणु
+	compat_uपूर्णांक_t	size;
+	compat_uपूर्णांक_t	sect;
+	compat_uपूर्णांक_t	head;
+	compat_uपूर्णांक_t	track;
+	compat_uपूर्णांक_t	stretch;
+	अचिन्हित अक्षर	gap;
+	अचिन्हित अक्षर	rate;
+	अचिन्हित अक्षर	spec1;
+	अचिन्हित अक्षर	fmt_gap;
+	स्थिर compat_caddr_t name;
+पूर्ण;
 
-#define FDGETPRM32 _IOR(2, 0x04, struct compat_floppy_struct)
-#endif
-#endif
+#घोषणा FDGETPRM32 _IOR(2, 0x04, काष्ठा compat_floppy_काष्ठा)
+#पूर्ण_अगर
+#पूर्ण_अगर

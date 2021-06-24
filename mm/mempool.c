@@ -1,555 +1,556 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/mm/mempool.c
  *
  *  memory buffer pool support. Such pools are mostly used
- *  for guaranteed, deadlock-free memory allocations during
+ *  क्रम guaranteed, deadlock-मुक्त memory allocations during
  *  extreme VM load.
  *
  *  started by Ingo Molnar, Copyright (C) 2001
  *  debugging by David Rientjes, Copyright (C) 2015
  */
 
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/highmem.h>
-#include <linux/kasan.h>
-#include <linux/kmemleak.h>
-#include <linux/export.h>
-#include <linux/mempool.h>
-#include <linux/blkdev.h>
-#include <linux/writeback.h>
-#include "slab.h"
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/kasan.h>
+#समावेश <linux/kmemleak.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश "slab.h"
 
-#if defined(CONFIG_DEBUG_SLAB) || defined(CONFIG_SLUB_DEBUG_ON)
-static void poison_error(mempool_t *pool, void *element, size_t size,
-			 size_t byte)
-{
-	const int nr = pool->curr_nr;
-	const int start = max_t(int, byte - (BITS_PER_LONG / 8), 0);
-	const int end = min_t(int, byte + (BITS_PER_LONG / 8), size);
-	int i;
+#अगर defined(CONFIG_DEBUG_SLAB) || defined(CONFIG_SLUB_DEBUG_ON)
+अटल व्योम poison_error(mempool_t *pool, व्योम *element, माप_प्रकार size,
+			 माप_प्रकार byte)
+अणु
+	स्थिर पूर्णांक nr = pool->curr_nr;
+	स्थिर पूर्णांक start = max_t(पूर्णांक, byte - (BITS_PER_LONG / 8), 0);
+	स्थिर पूर्णांक end = min_t(पूर्णांक, byte + (BITS_PER_LONG / 8), size);
+	पूर्णांक i;
 
 	pr_err("BUG: mempool element poison mismatch\n");
 	pr_err("Mempool %p size %zu\n", pool, size);
 	pr_err(" nr=%d @ %p: %s0x", nr, element, start > 0 ? "... " : "");
-	for (i = start; i < end; i++)
+	क्रम (i = start; i < end; i++)
 		pr_cont("%x ", *(u8 *)(element + i));
 	pr_cont("%s\n", end < size ? "..." : "");
 	dump_stack();
-}
+पूर्ण
 
-static void __check_element(mempool_t *pool, void *element, size_t size)
-{
+अटल व्योम __check_element(mempool_t *pool, व्योम *element, माप_प्रकार size)
+अणु
 	u8 *obj = element;
-	size_t i;
+	माप_प्रकार i;
 
-	for (i = 0; i < size; i++) {
+	क्रम (i = 0; i < size; i++) अणु
 		u8 exp = (i < size - 1) ? POISON_FREE : POISON_END;
 
-		if (obj[i] != exp) {
+		अगर (obj[i] != exp) अणु
 			poison_error(pool, element, size, i);
-			return;
-		}
-	}
-	memset(obj, POISON_INUSE, size);
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+	स_रखो(obj, POISON_INUSE, size);
+पूर्ण
 
-static void check_element(mempool_t *pool, void *element)
-{
+अटल व्योम check_element(mempool_t *pool, व्योम *element)
+अणु
 	/* Mempools backed by slab allocator */
-	if (pool->free == mempool_free_slab || pool->free == mempool_kfree) {
+	अगर (pool->मुक्त == mempool_मुक्त_slab || pool->मुक्त == mempool_kमुक्त) अणु
 		__check_element(pool, element, ksize(element));
-	} else if (pool->free == mempool_free_pages) {
+	पूर्ण अन्यथा अगर (pool->मुक्त == mempool_मुक्त_pages) अणु
 		/* Mempools backed by page allocator */
-		int order = (int)(long)pool->pool_data;
-		void *addr = kmap_atomic((struct page *)element);
+		पूर्णांक order = (पूर्णांक)(दीर्घ)pool->pool_data;
+		व्योम *addr = kmap_atomic((काष्ठा page *)element);
 
 		__check_element(pool, addr, 1UL << (PAGE_SHIFT + order));
 		kunmap_atomic(addr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __poison_element(void *element, size_t size)
-{
+अटल व्योम __poison_element(व्योम *element, माप_प्रकार size)
+अणु
 	u8 *obj = element;
 
-	memset(obj, POISON_FREE, size - 1);
+	स_रखो(obj, POISON_FREE, size - 1);
 	obj[size - 1] = POISON_END;
-}
+पूर्ण
 
-static void poison_element(mempool_t *pool, void *element)
-{
+अटल व्योम poison_element(mempool_t *pool, व्योम *element)
+अणु
 	/* Mempools backed by slab allocator */
-	if (pool->alloc == mempool_alloc_slab || pool->alloc == mempool_kmalloc) {
+	अगर (pool->alloc == mempool_alloc_slab || pool->alloc == mempool_kदो_स्मृति) अणु
 		__poison_element(element, ksize(element));
-	} else if (pool->alloc == mempool_alloc_pages) {
+	पूर्ण अन्यथा अगर (pool->alloc == mempool_alloc_pages) अणु
 		/* Mempools backed by page allocator */
-		int order = (int)(long)pool->pool_data;
-		void *addr = kmap_atomic((struct page *)element);
+		पूर्णांक order = (पूर्णांक)(दीर्घ)pool->pool_data;
+		व्योम *addr = kmap_atomic((काष्ठा page *)element);
 
 		__poison_element(addr, 1UL << (PAGE_SHIFT + order));
 		kunmap_atomic(addr);
-	}
-}
-#else /* CONFIG_DEBUG_SLAB || CONFIG_SLUB_DEBUG_ON */
-static inline void check_element(mempool_t *pool, void *element)
-{
-}
-static inline void poison_element(mempool_t *pool, void *element)
-{
-}
-#endif /* CONFIG_DEBUG_SLAB || CONFIG_SLUB_DEBUG_ON */
+	पूर्ण
+पूर्ण
+#अन्यथा /* CONFIG_DEBUG_SLAB || CONFIG_SLUB_DEBUG_ON */
+अटल अंतरभूत व्योम check_element(mempool_t *pool, व्योम *element)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम poison_element(mempool_t *pool, व्योम *element)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DEBUG_SLAB || CONFIG_SLUB_DEBUG_ON */
 
-static __always_inline void kasan_poison_element(mempool_t *pool, void *element)
-{
-	if (pool->alloc == mempool_alloc_slab || pool->alloc == mempool_kmalloc)
-		kasan_slab_free_mempool(element);
-	else if (pool->alloc == mempool_alloc_pages)
-		kasan_free_pages(element, (unsigned long)pool->pool_data, false);
-}
+अटल __always_अंतरभूत व्योम kasan_poison_element(mempool_t *pool, व्योम *element)
+अणु
+	अगर (pool->alloc == mempool_alloc_slab || pool->alloc == mempool_kदो_स्मृति)
+		kasan_slab_मुक्त_mempool(element);
+	अन्यथा अगर (pool->alloc == mempool_alloc_pages)
+		kasan_मुक्त_pages(element, (अचिन्हित दीर्घ)pool->pool_data, false);
+पूर्ण
 
-static void kasan_unpoison_element(mempool_t *pool, void *element)
-{
-	if (pool->alloc == mempool_alloc_slab || pool->alloc == mempool_kmalloc)
+अटल व्योम kasan_unpoison_element(mempool_t *pool, व्योम *element)
+अणु
+	अगर (pool->alloc == mempool_alloc_slab || pool->alloc == mempool_kदो_स्मृति)
 		kasan_unpoison_range(element, __ksize(element));
-	else if (pool->alloc == mempool_alloc_pages)
-		kasan_alloc_pages(element, (unsigned long)pool->pool_data, false);
-}
+	अन्यथा अगर (pool->alloc == mempool_alloc_pages)
+		kasan_alloc_pages(element, (अचिन्हित दीर्घ)pool->pool_data, false);
+पूर्ण
 
-static __always_inline void add_element(mempool_t *pool, void *element)
-{
+अटल __always_अंतरभूत व्योम add_element(mempool_t *pool, व्योम *element)
+अणु
 	BUG_ON(pool->curr_nr >= pool->min_nr);
 	poison_element(pool, element);
 	kasan_poison_element(pool, element);
 	pool->elements[pool->curr_nr++] = element;
-}
+पूर्ण
 
-static void *remove_element(mempool_t *pool)
-{
-	void *element = pool->elements[--pool->curr_nr];
+अटल व्योम *हटाओ_element(mempool_t *pool)
+अणु
+	व्योम *element = pool->elements[--pool->curr_nr];
 
 	BUG_ON(pool->curr_nr < 0);
 	kasan_unpoison_element(pool, element);
 	check_element(pool, element);
-	return element;
-}
+	वापस element;
+पूर्ण
 
 /**
- * mempool_exit - exit a mempool initialized with mempool_init()
- * @pool:      pointer to the memory pool which was initialized with
+ * mempool_निकास - निकास a mempool initialized with mempool_init()
+ * @pool:      poपूर्णांकer to the memory pool which was initialized with
  *             mempool_init().
  *
  * Free all reserved elements in @pool and @pool itself.  This function
- * only sleeps if the free_fn() function sleeps.
+ * only sleeps अगर the मुक्त_fn() function sleeps.
  *
  * May be called on a zeroed but uninitialized mempool (i.e. allocated with
  * kzalloc()).
  */
-void mempool_exit(mempool_t *pool)
-{
-	while (pool->curr_nr) {
-		void *element = remove_element(pool);
-		pool->free(element, pool->pool_data);
-	}
-	kfree(pool->elements);
-	pool->elements = NULL;
-}
-EXPORT_SYMBOL(mempool_exit);
+व्योम mempool_निकास(mempool_t *pool)
+अणु
+	जबतक (pool->curr_nr) अणु
+		व्योम *element = हटाओ_element(pool);
+		pool->मुक्त(element, pool->pool_data);
+	पूर्ण
+	kमुक्त(pool->elements);
+	pool->elements = शून्य;
+पूर्ण
+EXPORT_SYMBOL(mempool_निकास);
 
 /**
  * mempool_destroy - deallocate a memory pool
- * @pool:      pointer to the memory pool which was allocated via
+ * @pool:      poपूर्णांकer to the memory pool which was allocated via
  *             mempool_create().
  *
  * Free all reserved elements in @pool and @pool itself.  This function
- * only sleeps if the free_fn() function sleeps.
+ * only sleeps अगर the मुक्त_fn() function sleeps.
  */
-void mempool_destroy(mempool_t *pool)
-{
-	if (unlikely(!pool))
-		return;
+व्योम mempool_destroy(mempool_t *pool)
+अणु
+	अगर (unlikely(!pool))
+		वापस;
 
-	mempool_exit(pool);
-	kfree(pool);
-}
+	mempool_निकास(pool);
+	kमुक्त(pool);
+पूर्ण
 EXPORT_SYMBOL(mempool_destroy);
 
-int mempool_init_node(mempool_t *pool, int min_nr, mempool_alloc_t *alloc_fn,
-		      mempool_free_t *free_fn, void *pool_data,
-		      gfp_t gfp_mask, int node_id)
-{
+पूर्णांक mempool_init_node(mempool_t *pool, पूर्णांक min_nr, mempool_alloc_t *alloc_fn,
+		      mempool_मुक्त_t *मुक्त_fn, व्योम *pool_data,
+		      gfp_t gfp_mask, पूर्णांक node_id)
+अणु
 	spin_lock_init(&pool->lock);
 	pool->min_nr	= min_nr;
 	pool->pool_data = pool_data;
 	pool->alloc	= alloc_fn;
-	pool->free	= free_fn;
-	init_waitqueue_head(&pool->wait);
+	pool->मुक्त	= मुक्त_fn;
+	init_रुकोqueue_head(&pool->रुको);
 
-	pool->elements = kmalloc_array_node(min_nr, sizeof(void *),
+	pool->elements = kदो_स्मृति_array_node(min_nr, माप(व्योम *),
 					    gfp_mask, node_id);
-	if (!pool->elements)
-		return -ENOMEM;
+	अगर (!pool->elements)
+		वापस -ENOMEM;
 
 	/*
 	 * First pre-allocate the guaranteed number of buffers.
 	 */
-	while (pool->curr_nr < pool->min_nr) {
-		void *element;
+	जबतक (pool->curr_nr < pool->min_nr) अणु
+		व्योम *element;
 
 		element = pool->alloc(gfp_mask, pool->pool_data);
-		if (unlikely(!element)) {
-			mempool_exit(pool);
-			return -ENOMEM;
-		}
+		अगर (unlikely(!element)) अणु
+			mempool_निकास(pool);
+			वापस -ENOMEM;
+		पूर्ण
 		add_element(pool, element);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mempool_init_node);
 
 /**
  * mempool_init - initialize a memory pool
- * @pool:      pointer to the memory pool that should be initialized
+ * @pool:      poपूर्णांकer to the memory pool that should be initialized
  * @min_nr:    the minimum number of elements guaranteed to be
- *             allocated for this pool.
+ *             allocated क्रम this pool.
  * @alloc_fn:  user-defined element-allocation function.
- * @free_fn:   user-defined element-freeing function.
- * @pool_data: optional private data available to the user-defined functions.
+ * @मुक्त_fn:   user-defined element-मुक्तing function.
+ * @pool_data: optional निजी data available to the user-defined functions.
  *
  * Like mempool_create(), but initializes the pool in (i.e. embedded in another
- * structure).
+ * काष्ठाure).
  *
  * Return: %0 on success, negative error code otherwise.
  */
-int mempool_init(mempool_t *pool, int min_nr, mempool_alloc_t *alloc_fn,
-		 mempool_free_t *free_fn, void *pool_data)
-{
-	return mempool_init_node(pool, min_nr, alloc_fn, free_fn,
+पूर्णांक mempool_init(mempool_t *pool, पूर्णांक min_nr, mempool_alloc_t *alloc_fn,
+		 mempool_मुक्त_t *मुक्त_fn, व्योम *pool_data)
+अणु
+	वापस mempool_init_node(pool, min_nr, alloc_fn, मुक्त_fn,
 				 pool_data, GFP_KERNEL, NUMA_NO_NODE);
 
-}
+पूर्ण
 EXPORT_SYMBOL(mempool_init);
 
 /**
  * mempool_create - create a memory pool
  * @min_nr:    the minimum number of elements guaranteed to be
- *             allocated for this pool.
+ *             allocated क्रम this pool.
  * @alloc_fn:  user-defined element-allocation function.
- * @free_fn:   user-defined element-freeing function.
- * @pool_data: optional private data available to the user-defined functions.
+ * @मुक्त_fn:   user-defined element-मुक्तing function.
+ * @pool_data: optional निजी data available to the user-defined functions.
  *
- * this function creates and allocates a guaranteed size, preallocated
- * memory pool. The pool can be used from the mempool_alloc() and mempool_free()
- * functions. This function might sleep. Both the alloc_fn() and the free_fn()
- * functions might sleep - as long as the mempool_alloc() function is not called
+ * this function creates and allocates a guaranteed size, pपुनः_स्मृतिated
+ * memory pool. The pool can be used from the mempool_alloc() and mempool_मुक्त()
+ * functions. This function might sleep. Both the alloc_fn() and the मुक्त_fn()
+ * functions might sleep - as दीर्घ as the mempool_alloc() function is not called
  * from IRQ contexts.
  *
- * Return: pointer to the created memory pool object or %NULL on error.
+ * Return: poपूर्णांकer to the created memory pool object or %शून्य on error.
  */
-mempool_t *mempool_create(int min_nr, mempool_alloc_t *alloc_fn,
-				mempool_free_t *free_fn, void *pool_data)
-{
-	return mempool_create_node(min_nr, alloc_fn, free_fn, pool_data,
+mempool_t *mempool_create(पूर्णांक min_nr, mempool_alloc_t *alloc_fn,
+				mempool_मुक्त_t *मुक्त_fn, व्योम *pool_data)
+अणु
+	वापस mempool_create_node(min_nr, alloc_fn, मुक्त_fn, pool_data,
 				   GFP_KERNEL, NUMA_NO_NODE);
-}
+पूर्ण
 EXPORT_SYMBOL(mempool_create);
 
-mempool_t *mempool_create_node(int min_nr, mempool_alloc_t *alloc_fn,
-			       mempool_free_t *free_fn, void *pool_data,
-			       gfp_t gfp_mask, int node_id)
-{
+mempool_t *mempool_create_node(पूर्णांक min_nr, mempool_alloc_t *alloc_fn,
+			       mempool_मुक्त_t *मुक्त_fn, व्योम *pool_data,
+			       gfp_t gfp_mask, पूर्णांक node_id)
+अणु
 	mempool_t *pool;
 
-	pool = kzalloc_node(sizeof(*pool), gfp_mask, node_id);
-	if (!pool)
-		return NULL;
+	pool = kzalloc_node(माप(*pool), gfp_mask, node_id);
+	अगर (!pool)
+		वापस शून्य;
 
-	if (mempool_init_node(pool, min_nr, alloc_fn, free_fn, pool_data,
-			      gfp_mask, node_id)) {
-		kfree(pool);
-		return NULL;
-	}
+	अगर (mempool_init_node(pool, min_nr, alloc_fn, मुक्त_fn, pool_data,
+			      gfp_mask, node_id)) अणु
+		kमुक्त(pool);
+		वापस शून्य;
+	पूर्ण
 
-	return pool;
-}
+	वापस pool;
+पूर्ण
 EXPORT_SYMBOL(mempool_create_node);
 
 /**
  * mempool_resize - resize an existing memory pool
- * @pool:       pointer to the memory pool which was allocated via
+ * @pool:       poपूर्णांकer to the memory pool which was allocated via
  *              mempool_create().
  * @new_min_nr: the new minimum number of elements guaranteed to be
- *              allocated for this pool.
+ *              allocated क्रम this pool.
  *
- * This function shrinks/grows the pool. In the case of growing,
+ * This function shrinks/grows the pool. In the हाल of growing,
  * it cannot be guaranteed that the pool will be grown to the new
- * size immediately, but new mempool_free() calls will refill it.
+ * size immediately, but new mempool_मुक्त() calls will refill it.
  * This function may sleep.
  *
  * Note, the caller must guarantee that no mempool_destroy is called
- * while this function is running. mempool_alloc() & mempool_free()
- * might be called (eg. from IRQ contexts) while this function executes.
+ * जबतक this function is running. mempool_alloc() & mempool_मुक्त()
+ * might be called (eg. from IRQ contexts) जबतक this function executes.
  *
  * Return: %0 on success, negative error code otherwise.
  */
-int mempool_resize(mempool_t *pool, int new_min_nr)
-{
-	void *element;
-	void **new_elements;
-	unsigned long flags;
+पूर्णांक mempool_resize(mempool_t *pool, पूर्णांक new_min_nr)
+अणु
+	व्योम *element;
+	व्योम **new_elements;
+	अचिन्हित दीर्घ flags;
 
 	BUG_ON(new_min_nr <= 0);
 	might_sleep();
 
 	spin_lock_irqsave(&pool->lock, flags);
-	if (new_min_nr <= pool->min_nr) {
-		while (new_min_nr < pool->curr_nr) {
-			element = remove_element(pool);
+	अगर (new_min_nr <= pool->min_nr) अणु
+		जबतक (new_min_nr < pool->curr_nr) अणु
+			element = हटाओ_element(pool);
 			spin_unlock_irqrestore(&pool->lock, flags);
-			pool->free(element, pool->pool_data);
+			pool->मुक्त(element, pool->pool_data);
 			spin_lock_irqsave(&pool->lock, flags);
-		}
+		पूर्ण
 		pool->min_nr = new_min_nr;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	spin_unlock_irqrestore(&pool->lock, flags);
 
 	/* Grow the pool */
-	new_elements = kmalloc_array(new_min_nr, sizeof(*new_elements),
+	new_elements = kदो_स्मृति_array(new_min_nr, माप(*new_elements),
 				     GFP_KERNEL);
-	if (!new_elements)
-		return -ENOMEM;
+	अगर (!new_elements)
+		वापस -ENOMEM;
 
 	spin_lock_irqsave(&pool->lock, flags);
-	if (unlikely(new_min_nr <= pool->min_nr)) {
-		/* Raced, other resize will do our work */
+	अगर (unlikely(new_min_nr <= pool->min_nr)) अणु
+		/* Raced, other resize will करो our work */
 		spin_unlock_irqrestore(&pool->lock, flags);
-		kfree(new_elements);
-		goto out;
-	}
-	memcpy(new_elements, pool->elements,
-			pool->curr_nr * sizeof(*new_elements));
-	kfree(pool->elements);
+		kमुक्त(new_elements);
+		जाओ out;
+	पूर्ण
+	स_नकल(new_elements, pool->elements,
+			pool->curr_nr * माप(*new_elements));
+	kमुक्त(pool->elements);
 	pool->elements = new_elements;
 	pool->min_nr = new_min_nr;
 
-	while (pool->curr_nr < pool->min_nr) {
+	जबतक (pool->curr_nr < pool->min_nr) अणु
 		spin_unlock_irqrestore(&pool->lock, flags);
 		element = pool->alloc(GFP_KERNEL, pool->pool_data);
-		if (!element)
-			goto out;
+		अगर (!element)
+			जाओ out;
 		spin_lock_irqsave(&pool->lock, flags);
-		if (pool->curr_nr < pool->min_nr) {
+		अगर (pool->curr_nr < pool->min_nr) अणु
 			add_element(pool, element);
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_unlock_irqrestore(&pool->lock, flags);
-			pool->free(element, pool->pool_data);	/* Raced */
-			goto out;
-		}
-	}
+			pool->मुक्त(element, pool->pool_data);	/* Raced */
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out_unlock:
 	spin_unlock_irqrestore(&pool->lock, flags);
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mempool_resize);
 
 /**
- * mempool_alloc - allocate an element from a specific memory pool
- * @pool:      pointer to the memory pool which was allocated via
+ * mempool_alloc - allocate an element from a specअगरic memory pool
+ * @pool:      poपूर्णांकer to the memory pool which was allocated via
  *             mempool_create().
- * @gfp_mask:  the usual allocation bitmask.
+ * @gfp_mask:  the usual allocation biपंचांगask.
  *
- * this function only sleeps if the alloc_fn() function sleeps or
- * returns NULL. Note that due to preallocation, this function
+ * this function only sleeps अगर the alloc_fn() function sleeps or
+ * वापसs शून्य. Note that due to pपुनः_स्मृतिation, this function
  * *never* fails when called from process contexts. (it might
- * fail if called from an IRQ context.)
+ * fail अगर called from an IRQ context.)
  * Note: using __GFP_ZERO is not supported.
  *
- * Return: pointer to the allocated element or %NULL on error.
+ * Return: poपूर्णांकer to the allocated element or %शून्य on error.
  */
-void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
-{
-	void *element;
-	unsigned long flags;
-	wait_queue_entry_t wait;
+व्योम *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
+अणु
+	व्योम *element;
+	अचिन्हित दीर्घ flags;
+	रुको_queue_entry_t रुको;
 	gfp_t gfp_temp;
 
 	VM_WARN_ON_ONCE(gfp_mask & __GFP_ZERO);
-	might_sleep_if(gfp_mask & __GFP_DIRECT_RECLAIM);
+	might_sleep_अगर(gfp_mask & __GFP_सूचीECT_RECLAIM);
 
-	gfp_mask |= __GFP_NOMEMALLOC;	/* don't allocate emergency reserves */
-	gfp_mask |= __GFP_NORETRY;	/* don't loop in __alloc_pages */
+	gfp_mask |= __GFP_NOMEMALLOC;	/* करोn't allocate emergency reserves */
+	gfp_mask |= __GFP_NORETRY;	/* करोn't loop in __alloc_pages */
 	gfp_mask |= __GFP_NOWARN;	/* failures are OK */
 
-	gfp_temp = gfp_mask & ~(__GFP_DIRECT_RECLAIM|__GFP_IO);
+	gfp_temp = gfp_mask & ~(__GFP_सूचीECT_RECLAIM|__GFP_IO);
 
 repeat_alloc:
 
 	element = pool->alloc(gfp_temp, pool->pool_data);
-	if (likely(element != NULL))
-		return element;
+	अगर (likely(element != शून्य))
+		वापस element;
 
 	spin_lock_irqsave(&pool->lock, flags);
-	if (likely(pool->curr_nr)) {
-		element = remove_element(pool);
+	अगर (likely(pool->curr_nr)) अणु
+		element = हटाओ_element(pool);
 		spin_unlock_irqrestore(&pool->lock, flags);
-		/* paired with rmb in mempool_free(), read comment there */
+		/* paired with rmb in mempool_मुक्त(), पढ़ो comment there */
 		smp_wmb();
 		/*
 		 * Update the allocation stack trace as this is more useful
-		 * for debugging.
+		 * क्रम debugging.
 		 */
 		kmemleak_update_trace(element);
-		return element;
-	}
+		वापस element;
+	पूर्ण
 
 	/*
-	 * We use gfp mask w/o direct reclaim or IO for the first round.  If
+	 * We use gfp mask w/o direct reclaim or IO क्रम the first round.  If
 	 * alloc failed with that and @pool was empty, retry immediately.
 	 */
-	if (gfp_temp != gfp_mask) {
+	अगर (gfp_temp != gfp_mask) अणु
 		spin_unlock_irqrestore(&pool->lock, flags);
 		gfp_temp = gfp_mask;
-		goto repeat_alloc;
-	}
+		जाओ repeat_alloc;
+	पूर्ण
 
-	/* We must not sleep if !__GFP_DIRECT_RECLAIM */
-	if (!(gfp_mask & __GFP_DIRECT_RECLAIM)) {
+	/* We must not sleep अगर !__GFP_सूचीECT_RECLAIM */
+	अगर (!(gfp_mask & __GFP_सूचीECT_RECLAIM)) अणु
 		spin_unlock_irqrestore(&pool->lock, flags);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	/* Let's wait for someone else to return an element to @pool */
-	init_wait(&wait);
-	prepare_to_wait(&pool->wait, &wait, TASK_UNINTERRUPTIBLE);
+	/* Let's रुको क्रम someone अन्यथा to वापस an element to @pool */
+	init_रुको(&रुको);
+	prepare_to_रुको(&pool->रुको, &रुको, TASK_UNINTERRUPTIBLE);
 
 	spin_unlock_irqrestore(&pool->lock, flags);
 
 	/*
-	 * FIXME: this should be io_schedule().  The timeout is there as a
-	 * workaround for some DM problems in 2.6.18.
+	 * FIXME: this should be io_schedule().  The समयout is there as a
+	 * workaround क्रम some DM problems in 2.6.18.
 	 */
-	io_schedule_timeout(5*HZ);
+	io_schedule_समयout(5*HZ);
 
-	finish_wait(&pool->wait, &wait);
-	goto repeat_alloc;
-}
+	finish_रुको(&pool->रुको, &रुको);
+	जाओ repeat_alloc;
+पूर्ण
 EXPORT_SYMBOL(mempool_alloc);
 
 /**
- * mempool_free - return an element to the pool.
- * @element:   pool element pointer.
- * @pool:      pointer to the memory pool which was allocated via
+ * mempool_मुक्त - वापस an element to the pool.
+ * @element:   pool element poपूर्णांकer.
+ * @pool:      poपूर्णांकer to the memory pool which was allocated via
  *             mempool_create().
  *
- * this function only sleeps if the free_fn() function sleeps.
+ * this function only sleeps अगर the मुक्त_fn() function sleeps.
  */
-void mempool_free(void *element, mempool_t *pool)
-{
-	unsigned long flags;
+व्योम mempool_मुक्त(व्योम *element, mempool_t *pool)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(element == NULL))
-		return;
+	अगर (unlikely(element == शून्य))
+		वापस;
 
 	/*
-	 * Paired with the wmb in mempool_alloc().  The preceding read is
-	 * for @element and the following @pool->curr_nr.  This ensures
+	 * Paired with the wmb in mempool_alloc().  The preceding पढ़ो is
+	 * क्रम @element and the following @pool->curr_nr.  This ensures
 	 * that the visible value of @pool->curr_nr is from after the
-	 * allocation of @element.  This is necessary for fringe cases
+	 * allocation of @element.  This is necessary क्रम fringe हालs
 	 * where @element was passed to this task without going through
 	 * barriers.
 	 *
-	 * For example, assume @p is %NULL at the beginning and one task
-	 * performs "p = mempool_alloc(...);" while another task is doing
+	 * For example, assume @p is %शून्य at the beginning and one task
+	 * perक्रमms "p = mempool_alloc(...);" जबतक another task is करोing
 	 * "while (!p) cpu_relax(); mempool_free(p, ...);".  This function
-	 * may end up using curr_nr value which is from before allocation
+	 * may end up using curr_nr value which is from beक्रमe allocation
 	 * of @p without the following rmb.
 	 */
 	smp_rmb();
 
 	/*
 	 * For correctness, we need a test which is guaranteed to trigger
-	 * if curr_nr + #allocated == min_nr.  Testing curr_nr < min_nr
+	 * अगर curr_nr + #allocated == min_nr.  Testing curr_nr < min_nr
 	 * without locking achieves that and refilling as soon as possible
 	 * is desirable.
 	 *
 	 * Because curr_nr visible here is always a value after the
 	 * allocation of @element, any task which decremented curr_nr below
-	 * min_nr is guaranteed to see curr_nr < min_nr unless curr_nr gets
-	 * incremented to min_nr afterwards.  If curr_nr gets incremented
+	 * min_nr is guaranteed to see curr_nr < min_nr unless curr_nr माला_लो
+	 * incremented to min_nr afterwards.  If curr_nr माला_लो incremented
 	 * to min_nr after the allocation of @element, the elements
 	 * allocated after that are subject to the same guarantee.
 	 *
-	 * Waiters happen iff curr_nr is 0 and the above guarantee also
-	 * ensures that there will be frees which return elements to the
-	 * pool waking up the waiters.
+	 * Waiters happen अगरf curr_nr is 0 and the above guarantee also
+	 * ensures that there will be मुक्तs which वापस elements to the
+	 * pool waking up the रुकोers.
 	 */
-	if (unlikely(READ_ONCE(pool->curr_nr) < pool->min_nr)) {
+	अगर (unlikely(READ_ONCE(pool->curr_nr) < pool->min_nr)) अणु
 		spin_lock_irqsave(&pool->lock, flags);
-		if (likely(pool->curr_nr < pool->min_nr)) {
+		अगर (likely(pool->curr_nr < pool->min_nr)) अणु
 			add_element(pool, element);
 			spin_unlock_irqrestore(&pool->lock, flags);
-			wake_up(&pool->wait);
-			return;
-		}
+			wake_up(&pool->रुको);
+			वापस;
+		पूर्ण
 		spin_unlock_irqrestore(&pool->lock, flags);
-	}
-	pool->free(element, pool->pool_data);
-}
-EXPORT_SYMBOL(mempool_free);
+	पूर्ण
+	pool->मुक्त(element, pool->pool_data);
+पूर्ण
+EXPORT_SYMBOL(mempool_मुक्त);
 
 /*
- * A commonly used alloc and free fn.
+ * A commonly used alloc and मुक्त fn.
  */
-void *mempool_alloc_slab(gfp_t gfp_mask, void *pool_data)
-{
-	struct kmem_cache *mem = pool_data;
+व्योम *mempool_alloc_slab(gfp_t gfp_mask, व्योम *pool_data)
+अणु
+	काष्ठा kmem_cache *mem = pool_data;
 	VM_BUG_ON(mem->ctor);
-	return kmem_cache_alloc(mem, gfp_mask);
-}
+	वापस kmem_cache_alloc(mem, gfp_mask);
+पूर्ण
 EXPORT_SYMBOL(mempool_alloc_slab);
 
-void mempool_free_slab(void *element, void *pool_data)
-{
-	struct kmem_cache *mem = pool_data;
-	kmem_cache_free(mem, element);
-}
-EXPORT_SYMBOL(mempool_free_slab);
+व्योम mempool_मुक्त_slab(व्योम *element, व्योम *pool_data)
+अणु
+	काष्ठा kmem_cache *mem = pool_data;
+	kmem_cache_मुक्त(mem, element);
+पूर्ण
+EXPORT_SYMBOL(mempool_मुक्त_slab);
 
 /*
- * A commonly used alloc and free fn that kmalloc/kfrees the amount of memory
- * specified by pool_data
+ * A commonly used alloc and मुक्त fn that kदो_स्मृति/kमुक्तs the amount of memory
+ * specअगरied by pool_data
  */
-void *mempool_kmalloc(gfp_t gfp_mask, void *pool_data)
-{
-	size_t size = (size_t)pool_data;
-	return kmalloc(size, gfp_mask);
-}
-EXPORT_SYMBOL(mempool_kmalloc);
+व्योम *mempool_kदो_स्मृति(gfp_t gfp_mask, व्योम *pool_data)
+अणु
+	माप_प्रकार size = (माप_प्रकार)pool_data;
+	वापस kदो_स्मृति(size, gfp_mask);
+पूर्ण
+EXPORT_SYMBOL(mempool_kदो_स्मृति);
 
-void mempool_kfree(void *element, void *pool_data)
-{
-	kfree(element);
-}
-EXPORT_SYMBOL(mempool_kfree);
+व्योम mempool_kमुक्त(व्योम *element, व्योम *pool_data)
+अणु
+	kमुक्त(element);
+पूर्ण
+EXPORT_SYMBOL(mempool_kमुक्त);
 
 /*
  * A simple mempool-backed page allocator that allocates pages
- * of the order specified by pool_data.
+ * of the order specअगरied by pool_data.
  */
-void *mempool_alloc_pages(gfp_t gfp_mask, void *pool_data)
-{
-	int order = (int)(long)pool_data;
-	return alloc_pages(gfp_mask, order);
-}
+व्योम *mempool_alloc_pages(gfp_t gfp_mask, व्योम *pool_data)
+अणु
+	पूर्णांक order = (पूर्णांक)(दीर्घ)pool_data;
+	वापस alloc_pages(gfp_mask, order);
+पूर्ण
 EXPORT_SYMBOL(mempool_alloc_pages);
 
-void mempool_free_pages(void *element, void *pool_data)
-{
-	int order = (int)(long)pool_data;
-	__free_pages(element, order);
-}
-EXPORT_SYMBOL(mempool_free_pages);
+व्योम mempool_मुक्त_pages(व्योम *element, व्योम *pool_data)
+अणु
+	पूर्णांक order = (पूर्णांक)(दीर्घ)pool_data;
+	__मुक्त_pages(element, order);
+पूर्ण
+EXPORT_SYMBOL(mempool_मुक्त_pages);

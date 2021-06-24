@@ -1,457 +1,458 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-/* Driver for 53c700 and 53c700-66 chips from NCR and Symbios
+/* Driver क्रम 53c700 and 53c700-66 chips from NCR and Symbios
  *
  * Copyright (C) 2001 by James.Bottomley@HansenPartnership.com
  */
 
-#ifndef _53C700_H
-#define _53C700_H
+#अगर_अघोषित _53C700_H
+#घोषणा _53C700_H
 
-#include <linux/interrupt.h>
-#include <asm/io.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <यंत्र/पन.स>
 
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_cmnd.h>
 
-/* Turn on for general debugging---too verbose for normal use */
-#undef	NCR_700_DEBUG
+/* Turn on क्रम general debugging---too verbose क्रम normal use */
+#अघोषित	NCR_700_DEBUG
 /* Debug the tag queues, checking hash queue allocation and deallocation
- * and search for duplicate tags */
-#undef NCR_700_TAG_DEBUG
+ * and search क्रम duplicate tags */
+#अघोषित NCR_700_TAG_DEBUG
 
-#ifdef NCR_700_DEBUG
-#define DEBUG(x)	printk x
-#define DDEBUG(prefix, sdev, fmt, a...) \
-	sdev_printk(prefix, sdev, fmt, ##a)
-#define CDEBUG(prefix, scmd, fmt, a...) \
-	scmd_printk(prefix, scmd, fmt, ##a)
-#else
-#define DEBUG(x)	do {} while (0)
-#define DDEBUG(prefix, scmd, fmt, a...) do {} while (0)
-#define CDEBUG(prefix, scmd, fmt, a...) do {} while (0)
-#endif
+#अगर_घोषित NCR_700_DEBUG
+#घोषणा DEBUG(x)	prपूर्णांकk x
+#घोषणा DDEBUG(prefix, sdev, fmt, a...) \
+	sdev_prपूर्णांकk(prefix, sdev, fmt, ##a)
+#घोषणा CDEBUG(prefix, scmd, fmt, a...) \
+	scmd_prपूर्णांकk(prefix, scmd, fmt, ##a)
+#अन्यथा
+#घोषणा DEBUG(x)	करो अणुपूर्ण जबतक (0)
+#घोषणा DDEBUG(prefix, scmd, fmt, a...) करो अणुपूर्ण जबतक (0)
+#घोषणा CDEBUG(prefix, scmd, fmt, a...) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /* The number of available command slots */
-#define NCR_700_COMMAND_SLOTS_PER_HOST	64
+#घोषणा NCR_700_COMMAND_SLOTS_PER_HOST	64
 /* The maximum number of Scatter Gathers we allow */
-#define NCR_700_SG_SEGMENTS		32
-/* The maximum number of luns (make this of the form 2^n) */
-#define NCR_700_MAX_LUNS		32
-#define NCR_700_LUN_MASK		(NCR_700_MAX_LUNS - 1)
+#घोषणा NCR_700_SG_SEGMENTS		32
+/* The maximum number of luns (make this of the क्रमm 2^n) */
+#घोषणा NCR_700_MAX_LUNS		32
+#घोषणा NCR_700_LUN_MASK		(NCR_700_MAX_LUNS - 1)
 /* Maximum number of tags the driver ever allows per device */
-#define NCR_700_MAX_TAGS		16
+#घोषणा NCR_700_MAX_TAGS		16
 /* Tag depth the driver starts out with (can be altered in sysfs) */
-#define NCR_700_DEFAULT_TAGS		4
-/* This is the default number of commands per LUN in the untagged case.
+#घोषणा NCR_700_DEFAULT_TAGS		4
+/* This is the शेष number of commands per LUN in the untagged हाल.
  * two is a good value because it means we can have one command active and
- * one command fully prepared and waiting
+ * one command fully prepared and रुकोing
  */
-#define NCR_700_CMD_PER_LUN		2
-/* magic byte identifying an internally generated REQUEST_SENSE command */
-#define NCR_700_INTERNAL_SENSE_MAGIC	0x42
+#घोषणा NCR_700_CMD_PER_LUN		2
+/* magic byte identअगरying an पूर्णांकernally generated REQUEST_SENSE command */
+#घोषणा NCR_700_INTERNAL_SENSE_MAGIC	0x42
 
-struct NCR_700_Host_Parameters;
+काष्ठा NCR_700_Host_Parameters;
 
-/* These are the externally used routines */
-struct Scsi_Host *NCR_700_detect(struct scsi_host_template *,
-		struct NCR_700_Host_Parameters *, struct device *);
-int NCR_700_release(struct Scsi_Host *host);
-irqreturn_t NCR_700_intr(int, void *);
+/* These are the बाह्यally used routines */
+काष्ठा Scsi_Host *NCR_700_detect(काष्ठा scsi_host_ढाँचा *,
+		काष्ठा NCR_700_Host_Parameters *, काष्ठा device *);
+पूर्णांक NCR_700_release(काष्ठा Scsi_Host *host);
+irqवापस_t NCR_700_पूर्णांकr(पूर्णांक, व्योम *);
 
 
-enum NCR_700_Host_State {
+क्रमागत NCR_700_Host_State अणु
 	NCR_700_HOST_BUSY,
 	NCR_700_HOST_FREE,
-};
+पूर्ण;
 
-struct NCR_700_SG_List {
+काष्ठा NCR_700_SG_List अणु
 	/* The following is a script fragment to move the buffer onto the
-	 * bus and then link the next fragment or return */
-	#define	SCRIPT_MOVE_DATA_IN		0x09000000
-	#define	SCRIPT_MOVE_DATA_OUT		0x08000000
+	 * bus and then link the next fragment or वापस */
+	#घोषणा	SCRIPT_MOVE_DATA_IN		0x09000000
+	#घोषणा	SCRIPT_MOVE_DATA_OUT		0x08000000
 	__u32	ins;
 	__u32	pAddr;
-	#define	SCRIPT_NOP			0x80000000
-	#define	SCRIPT_RETURN			0x90080000
-};
+	#घोषणा	SCRIPT_NOP			0x80000000
+	#घोषणा	SCRIPT_RETURN			0x90080000
+पूर्ण;
 
-struct NCR_700_Device_Parameters {
-	/* space for creating a request sense command. Really, except
-	 * for the annoying SCSI-2 requirement for LUN information in
-	 * cmnd[1], this could be in static storage */
-	unsigned char cmnd[MAX_COMMAND_SIZE];
+काष्ठा NCR_700_Device_Parameters अणु
+	/* space क्रम creating a request sense command. Really, except
+	 * क्रम the annoying SCSI-2 requirement क्रम LUN inक्रमmation in
+	 * cmnd[1], this could be in अटल storage */
+	अचिन्हित अक्षर cmnd[MAX_COMMAND_SIZE];
 	__u8	depth;
-	struct scsi_cmnd *current_cmnd;	/* currently active command */
-};
+	काष्ठा scsi_cmnd *current_cmnd;	/* currently active command */
+पूर्ण;
 
 
 /* The SYNC negotiation sequence looks like:
  * 
  * If DEV_NEGOTIATED_SYNC not set, tack and SDTR message on to the
- * initial identify for the device and set DEV_BEGIN_SYNC_NEGOTIATION
+ * initial identअगरy क्रम the device and set DEV_BEGIN_SYNC_NEGOTIATION
  * If we get an SDTR reply, work out the SXFER parameters, squirrel
  * them away here, clear DEV_BEGIN_SYNC_NEGOTIATION and set
  * DEV_NEGOTIATED_SYNC.  If we get a REJECT msg, squirrel
  *
  *
- * 0:7	SXFER_REG negotiated value for this device
+ * 0:7	SXFER_REG negotiated value क्रम this device
  * 8:15 Current queue depth
  * 16	negotiated SYNC flag
  * 17 begin SYNC negotiation flag 
  * 18 device supports tag queueing */
-#define NCR_700_DEV_NEGOTIATED_SYNC	(1<<16)
-#define NCR_700_DEV_BEGIN_SYNC_NEGOTIATION	(1<<17)
-#define NCR_700_DEV_PRINT_SYNC_NEGOTIATION (1<<19)
+#घोषणा NCR_700_DEV_NEGOTIATED_SYNC	(1<<16)
+#घोषणा NCR_700_DEV_BEGIN_SYNC_NEGOTIATION	(1<<17)
+#घोषणा NCR_700_DEV_PRINT_SYNC_NEGOTIATION (1<<19)
 
-static inline char *NCR_700_get_sense_cmnd(struct scsi_device *SDp)
-{
-	struct NCR_700_Device_Parameters *hostdata = SDp->hostdata;
+अटल अंतरभूत अक्षर *NCR_700_get_sense_cmnd(काष्ठा scsi_device *SDp)
+अणु
+	काष्ठा NCR_700_Device_Parameters *hostdata = SDp->hostdata;
 
-	return hostdata->cmnd;
-}
+	वापस hostdata->cmnd;
+पूर्ण
 
-static inline void
-NCR_700_set_depth(struct scsi_device *SDp, __u8 depth)
-{
-	struct NCR_700_Device_Parameters *hostdata = SDp->hostdata;
+अटल अंतरभूत व्योम
+NCR_700_set_depth(काष्ठा scsi_device *SDp, __u8 depth)
+अणु
+	काष्ठा NCR_700_Device_Parameters *hostdata = SDp->hostdata;
 
 	hostdata->depth = depth;
-}
-static inline __u8
-NCR_700_get_depth(struct scsi_device *SDp)
-{
-	struct NCR_700_Device_Parameters *hostdata = SDp->hostdata;
+पूर्ण
+अटल अंतरभूत __u8
+NCR_700_get_depth(काष्ठा scsi_device *SDp)
+अणु
+	काष्ठा NCR_700_Device_Parameters *hostdata = SDp->hostdata;
 
-	return hostdata->depth;
-}
-static inline int
-NCR_700_is_flag_set(struct scsi_device *SDp, __u32 flag)
-{
-	return (spi_flags(SDp->sdev_target) & flag) == flag;
-}
-static inline int
-NCR_700_is_flag_clear(struct scsi_device *SDp, __u32 flag)
-{
-	return (spi_flags(SDp->sdev_target) & flag) == 0;
-}
-static inline void
-NCR_700_set_flag(struct scsi_device *SDp, __u32 flag)
-{
+	वापस hostdata->depth;
+पूर्ण
+अटल अंतरभूत पूर्णांक
+NCR_700_is_flag_set(काष्ठा scsi_device *SDp, __u32 flag)
+अणु
+	वापस (spi_flags(SDp->sdev_target) & flag) == flag;
+पूर्ण
+अटल अंतरभूत पूर्णांक
+NCR_700_is_flag_clear(काष्ठा scsi_device *SDp, __u32 flag)
+अणु
+	वापस (spi_flags(SDp->sdev_target) & flag) == 0;
+पूर्ण
+अटल अंतरभूत व्योम
+NCR_700_set_flag(काष्ठा scsi_device *SDp, __u32 flag)
+अणु
 	spi_flags(SDp->sdev_target) |= flag;
-}
-static inline void
-NCR_700_clear_flag(struct scsi_device *SDp, __u32 flag)
-{
+पूर्ण
+अटल अंतरभूत व्योम
+NCR_700_clear_flag(काष्ठा scsi_device *SDp, __u32 flag)
+अणु
 	spi_flags(SDp->sdev_target) &= ~flag;
-}
+पूर्ण
 
-enum NCR_700_tag_neg_state {
+क्रमागत NCR_700_tag_neg_state अणु
 	NCR_700_START_TAG_NEGOTIATION = 0,
 	NCR_700_DURING_TAG_NEGOTIATION = 1,
 	NCR_700_FINISHED_TAG_NEGOTIATION = 2,
-};
+पूर्ण;
 
-static inline enum NCR_700_tag_neg_state
-NCR_700_get_tag_neg_state(struct scsi_device *SDp)
-{
-	return (enum NCR_700_tag_neg_state)((spi_flags(SDp->sdev_target)>>20) & 0x3);
-}
+अटल अंतरभूत क्रमागत NCR_700_tag_neg_state
+NCR_700_get_tag_neg_state(काष्ठा scsi_device *SDp)
+अणु
+	वापस (क्रमागत NCR_700_tag_neg_state)((spi_flags(SDp->sdev_target)>>20) & 0x3);
+पूर्ण
 
-static inline void
-NCR_700_set_tag_neg_state(struct scsi_device *SDp,
-			  enum NCR_700_tag_neg_state state)
-{
+अटल अंतरभूत व्योम
+NCR_700_set_tag_neg_state(काष्ठा scsi_device *SDp,
+			  क्रमागत NCR_700_tag_neg_state state)
+अणु
 	/* clear the slot */
 	spi_flags(SDp->sdev_target) &= ~(0x3 << 20);
 	spi_flags(SDp->sdev_target) |= ((__u32)state) << 20;
-}
+पूर्ण
 
-struct NCR_700_command_slot {
-	struct NCR_700_SG_List	SG[NCR_700_SG_SEGMENTS+1];
-	struct NCR_700_SG_List	*pSG;
-	#define NCR_700_SLOT_MASK 0xFC
-	#define NCR_700_SLOT_MAGIC 0xb8
-	#define	NCR_700_SLOT_FREE (0|NCR_700_SLOT_MAGIC) /* slot may be used */
-	#define NCR_700_SLOT_BUSY (1|NCR_700_SLOT_MAGIC) /* slot has command active on HA */
-	#define NCR_700_SLOT_QUEUED (2|NCR_700_SLOT_MAGIC) /* slot has command to be made active on HA */
+काष्ठा NCR_700_command_slot अणु
+	काष्ठा NCR_700_SG_List	SG[NCR_700_SG_SEGMENTS+1];
+	काष्ठा NCR_700_SG_List	*pSG;
+	#घोषणा NCR_700_SLOT_MASK 0xFC
+	#घोषणा NCR_700_SLOT_MAGIC 0xb8
+	#घोषणा	NCR_700_SLOT_FREE (0|NCR_700_SLOT_MAGIC) /* slot may be used */
+	#घोषणा NCR_700_SLOT_BUSY (1|NCR_700_SLOT_MAGIC) /* slot has command active on HA */
+	#घोषणा NCR_700_SLOT_QUEUED (2|NCR_700_SLOT_MAGIC) /* slot has command to be made active on HA */
 	__u8	state;
-	#define NCR_700_FLAG_AUTOSENSE	0x01
+	#घोषणा NCR_700_FLAG_AUTOSENSE	0x01
 	__u8	flags;
-	__u8	pad1[2];	/* Needed for m68k where min alignment is 2 bytes */
-	int	tag;
+	__u8	pad1[2];	/* Needed क्रम m68k where min alignment is 2 bytes */
+	पूर्णांक	tag;
 	__u32	resume_offset;
-	struct scsi_cmnd *cmnd;
+	काष्ठा scsi_cmnd *cmnd;
 	/* The pci_mapped address of the actual command in cmnd */
 	dma_addr_t	pCmd;
 	__u32		temp;
-	/* if this command is a pci_single mapping, holds the dma address
-	 * for later unmapping in the done routine */
+	/* अगर this command is a pci_single mapping, holds the dma address
+	 * क्रम later unmapping in the करोne routine */
 	dma_addr_t	dma_handle;
-	/* historical remnant, now used to link free commands */
-	struct NCR_700_command_slot *ITL_forw;
-};
+	/* historical remnant, now used to link मुक्त commands */
+	काष्ठा NCR_700_command_slot *ITL_क्रमw;
+पूर्ण;
 
-struct NCR_700_Host_Parameters {
+काष्ठा NCR_700_Host_Parameters अणु
 	/* These must be filled in by the calling driver */
-	int	clock;			/* board clock speed in MHz */
-	void __iomem	*base;		/* the base for the port (copied to host) */
-	struct device	*dev;
+	पूर्णांक	घड़ी;			/* board घड़ी speed in MHz */
+	व्योम __iomem	*base;		/* the base क्रम the port (copied to host) */
+	काष्ठा device	*dev;
 	__u32	dmode_extra;	/* adjustable bus settings */
 	__u32	dcntl_extra;	/* adjustable bus settings */
 	__u32	ctest7_extra;	/* adjustable bus settings */
-	__u32	differential:1;	/* if we are differential */
-#ifdef CONFIG_53C700_LE_ON_BE
-	/* This option is for HP only.  Set it if your chip is wired for
-	 * little endian on this platform (which is big endian) */
-	__u32	force_le_on_be:1;
-#endif
-	__u32	chip710:1;	/* set if really a 710 not 700 */
+	__u32	dअगरferential:1;	/* अगर we are dअगरferential */
+#अगर_घोषित CONFIG_53C700_LE_ON_BE
+	/* This option is क्रम HP only.  Set it अगर your chip is wired क्रम
+	 * little endian on this platक्रमm (which is big endian) */
+	__u32	क्रमce_le_on_be:1;
+#पूर्ण_अगर
+	__u32	chip710:1;	/* set अगर really a 710 not 700 */
 	__u32	burst_length:4;	/* set to 0 to disable 710 bursting */
 	__u32	noncoherent:1;	/* needs to use non-coherent DMA */
 
 	/* NOTHING BELOW HERE NEEDS ALTERING */
-	__u32	fast:1;		/* if we can alter the SCSI bus clock
+	__u32	fast:1;		/* अगर we can alter the SCSI bus घड़ी
                                    speed (so can negiotiate sync) */
-	int	sync_clock;	/* The speed of the SYNC core */
+	पूर्णांक	sync_घड़ी;	/* The speed of the SYNC core */
 
-	__u32	*script;		/* pointer to script location */
+	__u32	*script;		/* poपूर्णांकer to script location */
 	__u32	pScript;		/* physical mem addr of script */
 
-	enum NCR_700_Host_State state; /* protected by state lock */
-	struct scsi_cmnd *cmd;
+	क्रमागत NCR_700_Host_State state; /* रक्षित by state lock */
+	काष्ठा scsi_cmnd *cmd;
 	/* Note: pScript contains the single consistent block of
 	 * memory.  All the msgin, msgout and status are allocated in
 	 * this memory too (at separate cache lines).  TOTAL_MEM_SIZE
 	 * represents the total size of this area */
-#define	MSG_ARRAY_SIZE	8
-#define	MSGOUT_OFFSET	(L1_CACHE_ALIGN(sizeof(SCRIPT)))
+#घोषणा	MSG_ARRAY_SIZE	8
+#घोषणा	MSGOUT_OFFSET	(L1_CACHE_ALIGN(माप(SCRIPT)))
 	__u8	*msgout;
-#define MSGIN_OFFSET	(MSGOUT_OFFSET + L1_CACHE_ALIGN(MSG_ARRAY_SIZE))
+#घोषणा MSGIN_OFFSET	(MSGOUT_OFFSET + L1_CACHE_ALIGN(MSG_ARRAY_SIZE))
 	__u8	*msgin;
-#define STATUS_OFFSET	(MSGIN_OFFSET + L1_CACHE_ALIGN(MSG_ARRAY_SIZE))
+#घोषणा STATUS_OFFSET	(MSGIN_OFFSET + L1_CACHE_ALIGN(MSG_ARRAY_SIZE))
 	__u8	*status;
-#define SLOTS_OFFSET	(STATUS_OFFSET + L1_CACHE_ALIGN(MSG_ARRAY_SIZE))
-	struct NCR_700_command_slot	*slots;
-#define	TOTAL_MEM_SIZE	(SLOTS_OFFSET + L1_CACHE_ALIGN(sizeof(struct NCR_700_command_slot) * NCR_700_COMMAND_SLOTS_PER_HOST))
-	int	saved_slot_position;
-	int	command_slot_count; /* protected by state lock */
+#घोषणा SLOTS_OFFSET	(STATUS_OFFSET + L1_CACHE_ALIGN(MSG_ARRAY_SIZE))
+	काष्ठा NCR_700_command_slot	*slots;
+#घोषणा	TOTAL_MEM_SIZE	(SLOTS_OFFSET + L1_CACHE_ALIGN(माप(काष्ठा NCR_700_command_slot) * NCR_700_COMMAND_SLOTS_PER_HOST))
+	पूर्णांक	saved_slot_position;
+	पूर्णांक	command_slot_count; /* रक्षित by state lock */
 	__u8	tag_negotiated;
 	__u8	rev;
 	__u8	reselection_id;
 	__u8	min_period;
 
-	/* Free list, singly linked by ITL_forw elements */
-	struct NCR_700_command_slot *free_list;
-	/* Completion for waited for ops, like reset, abort or
+	/* Free list, singly linked by ITL_क्रमw elements */
+	काष्ठा NCR_700_command_slot *मुक्त_list;
+	/* Completion क्रम रुकोed क्रम ops, like reset, पात or
 	 * device reset.
 	 *
-	 * NOTE: relies on single threading in the error handler to
+	 * NOTE: relies on single thपढ़ोing in the error handler to
 	 * have only one outstanding at once */
-	struct completion *eh_complete;
-};
+	काष्ठा completion *eh_complete;
+पूर्ण;
 
 /*
  *	53C700 Register Interface - the offset from the Selected base
  *	I/O address */
-#ifdef CONFIG_53C700_LE_ON_BE
-#define bE	(hostdata->force_le_on_be ? 0 : 3)
-#define	bSWAP	(hostdata->force_le_on_be)
-#define bEBus	(!hostdata->force_le_on_be)
-#elif defined(__BIG_ENDIAN)
-#define bE	3
-#define bSWAP	0
-#elif defined(__LITTLE_ENDIAN)
-#define bE	0
-#define bSWAP	0
-#else
-#error "__BIG_ENDIAN or __LITTLE_ENDIAN must be defined, did you include byteorder.h?"
-#endif
-#ifndef bEBus
-#ifdef CONFIG_53C700_BE_BUS
-#define bEBus	1
-#else
-#define bEBus	0
-#endif
-#endif
-#define bS_to_cpu(x)	(bSWAP ? le32_to_cpu(x) : (x))
-#define bS_to_host(x)	(bSWAP ? cpu_to_le32(x) : (x))
+#अगर_घोषित CONFIG_53C700_LE_ON_BE
+#घोषणा bE	(hostdata->क्रमce_le_on_be ? 0 : 3)
+#घोषणा	bSWAP	(hostdata->क्रमce_le_on_be)
+#घोषणा bEBus	(!hostdata->क्रमce_le_on_be)
+#या_अगर defined(__BIG_ENDIAN)
+#घोषणा bE	3
+#घोषणा bSWAP	0
+#या_अगर defined(__LITTLE_ENDIAN)
+#घोषणा bE	0
+#घोषणा bSWAP	0
+#अन्यथा
+#त्रुटि "__BIG_ENDIAN or __LITTLE_ENDIAN must be defined, did you include byteorder.h?"
+#पूर्ण_अगर
+#अगर_अघोषित bEBus
+#अगर_घोषित CONFIG_53C700_BE_BUS
+#घोषणा bEBus	1
+#अन्यथा
+#घोषणा bEBus	0
+#पूर्ण_अगर
+#पूर्ण_अगर
+#घोषणा bS_to_cpu(x)	(bSWAP ? le32_to_cpu(x) : (x))
+#घोषणा bS_to_host(x)	(bSWAP ? cpu_to_le32(x) : (x))
 
-/* NOTE: These registers are in the LE register space only, the required byte
- * swapping is done by the NCR_700_{read|write}[b] functions */
-#define	SCNTL0_REG			0x00
-#define		FULL_ARBITRATION	0xc0
-#define 	PARITY			0x08
-#define		ENABLE_PARITY		0x04
-#define 	AUTO_ATN		0x02
-#define	SCNTL1_REG			0x01
-#define 	SLOW_BUS		0x80
-#define		ENABLE_SELECT		0x20
-#define		ASSERT_RST		0x08
-#define		ASSERT_EVEN_PARITY	0x04
-#define	SDID_REG			0x02
-#define	SIEN_REG			0x03
-#define 	PHASE_MM_INT		0x80
-#define 	FUNC_COMP_INT		0x40
-#define 	SEL_TIMEOUT_INT		0x20
-#define 	SELECT_INT		0x10
-#define 	GROSS_ERR_INT		0x08
-#define 	UX_DISC_INT		0x04
-#define 	RST_INT			0x02
-#define 	PAR_ERR_INT		0x01
-#define	SCID_REG			0x04
-#define SXFER_REG			0x05
-#define		ASYNC_OPERATION		0x00
-#define SODL_REG                        0x06
-#define	SOCL_REG			0x07
-#define	SFBR_REG			0x08
-#define	SIDL_REG			0x09
-#define	SBDL_REG			0x0A
-#define	SBCL_REG			0x0B
-/* read bits */
-#define		SBCL_IO			0x01
-/*write bits */
-#define		SYNC_DIV_AS_ASYNC	0x00
-#define		SYNC_DIV_1_0		0x01
-#define		SYNC_DIV_1_5		0x02
-#define		SYNC_DIV_2_0		0x03
-#define	DSTAT_REG			0x0C
-#define		ILGL_INST_DETECTED	0x01
-#define		WATCH_DOG_INTERRUPT	0x02
-#define		SCRIPT_INT_RECEIVED	0x04
-#define		ABORTED			0x10
-#define	SSTAT0_REG			0x0D
-#define		PARITY_ERROR		0x01
-#define		SCSI_RESET_DETECTED	0x02
-#define		UNEXPECTED_DISCONNECT	0x04
-#define		SCSI_GROSS_ERROR	0x08
-#define		SELECTED		0x10
-#define		SELECTION_TIMEOUT	0x20
-#define		FUNCTION_COMPLETE	0x40
-#define		PHASE_MISMATCH 		0x80
-#define	SSTAT1_REG			0x0E
-#define		SIDL_REG_FULL		0x80
-#define		SODR_REG_FULL		0x40
-#define		SODL_REG_FULL		0x20
-#define SSTAT2_REG                      0x0F
-#define CTEST0_REG                      0x14
-#define		BTB_TIMER_DISABLE	0x40
-#define CTEST1_REG                      0x15
-#define CTEST2_REG                      0x16
-#define CTEST3_REG                      0x17
-#define CTEST4_REG                      0x18
-#define         DISABLE_FIFO            0x00
-#define         SLBE                    0x10
-#define         SFWR                    0x08
-#define         BYTE_LANE0              0x04
-#define         BYTE_LANE1              0x05
-#define         BYTE_LANE2              0x06
-#define         BYTE_LANE3              0x07
-#define         SCSI_ZMODE              0x20
-#define         ZMODE                   0x40
-#define CTEST5_REG                      0x19
-#define         MASTER_CONTROL          0x10
-#define         DMA_DIRECTION           0x08
-#define CTEST7_REG                      0x1B
-#define		BURST_DISABLE		0x80 /* 710 only */
-#define		SEL_TIMEOUT_DISABLE	0x10 /* 710 only */
-#define         DFP                     0x08
-#define         EVP                     0x04
-#define         CTEST7_TT1              0x02
-#define		DIFF			0x01
-#define CTEST6_REG                      0x1A
-#define	TEMP_REG			0x1C
-#define	DFIFO_REG			0x20
-#define		FLUSH_DMA_FIFO		0x80
-#define		CLR_FIFO		0x40
-#define	ISTAT_REG			0x21
-#define		ABORT_OPERATION		0x80
-#define		SOFTWARE_RESET_710	0x40
-#define		DMA_INT_PENDING		0x01
-#define		SCSI_INT_PENDING	0x02
-#define		CONNECTED		0x08
-#define CTEST8_REG                      0x22
-#define         LAST_DIS_ENBL           0x01
-#define		SHORTEN_FILTERING	0x04
-#define		ENABLE_ACTIVE_NEGATION	0x10
-#define		GENERATE_RECEIVE_PARITY	0x20
-#define		CLR_FIFO_710		0x04
-#define		FLUSH_DMA_FIFO_710	0x08
-#define CTEST9_REG                      0x23
-#define	DBC_REG				0x24
-#define	DCMD_REG			0x27
-#define	DNAD_REG			0x28
-#define	DIEN_REG			0x39
-#define		BUS_FAULT		0x20
-#define 	ABORT_INT		0x10
-#define 	INT_INST_INT		0x04
-#define 	WD_INT			0x02
-#define 	ILGL_INST_INT		0x01
-#define	DCNTL_REG			0x3B
-#define		SOFTWARE_RESET		0x01
-#define		COMPAT_700_MODE		0x01
-#define 	SCRPTS_16BITS		0x20
-#define		EA_710			0x20
-#define		ASYNC_DIV_2_0		0x00
-#define		ASYNC_DIV_1_5		0x40
-#define		ASYNC_DIV_1_0		0x80
-#define		ASYNC_DIV_3_0		0xc0
-#define DMODE_710_REG			0x38
-#define	DMODE_700_REG			0x34
-#define		BURST_LENGTH_1		0x00
-#define		BURST_LENGTH_2		0x40
-#define		BURST_LENGTH_4		0x80
-#define		BURST_LENGTH_8		0xC0
-#define		DMODE_FC1		0x10
-#define		DMODE_FC2		0x20
-#define 	BW16			32 
-#define 	MODE_286		16
-#define 	IO_XFER			8
-#define 	FIXED_ADDR		4
+/* NOTE: These रेजिस्टरs are in the LE रेजिस्टर space only, the required byte
+ * swapping is करोne by the NCR_700_अणुपढ़ो|ग_लिखोपूर्ण[b] functions */
+#घोषणा	SCNTL0_REG			0x00
+#घोषणा		FULL_ARBITRATION	0xc0
+#घोषणा 	PARITY			0x08
+#घोषणा		ENABLE_PARITY		0x04
+#घोषणा 	AUTO_ATN		0x02
+#घोषणा	SCNTL1_REG			0x01
+#घोषणा 	SLOW_BUS		0x80
+#घोषणा		ENABLE_SELECT		0x20
+#घोषणा		ASSERT_RST		0x08
+#घोषणा		ASSERT_EVEN_PARITY	0x04
+#घोषणा	SDID_REG			0x02
+#घोषणा	SIEN_REG			0x03
+#घोषणा 	PHASE_MM_INT		0x80
+#घोषणा 	FUNC_COMP_INT		0x40
+#घोषणा 	SEL_TIMEOUT_INT		0x20
+#घोषणा 	SELECT_INT		0x10
+#घोषणा 	GROSS_ERR_INT		0x08
+#घोषणा 	UX_DISC_INT		0x04
+#घोषणा 	RST_INT			0x02
+#घोषणा 	PAR_ERR_INT		0x01
+#घोषणा	SCID_REG			0x04
+#घोषणा SXFER_REG			0x05
+#घोषणा		ASYNC_OPERATION		0x00
+#घोषणा SODL_REG                        0x06
+#घोषणा	SOCL_REG			0x07
+#घोषणा	SFBR_REG			0x08
+#घोषणा	SIDL_REG			0x09
+#घोषणा	SBDL_REG			0x0A
+#घोषणा	SBCL_REG			0x0B
+/* पढ़ो bits */
+#घोषणा		SBCL_IO			0x01
+/*ग_लिखो bits */
+#घोषणा		SYNC_DIV_AS_ASYNC	0x00
+#घोषणा		SYNC_DIV_1_0		0x01
+#घोषणा		SYNC_DIV_1_5		0x02
+#घोषणा		SYNC_DIV_2_0		0x03
+#घोषणा	DSTAT_REG			0x0C
+#घोषणा		ILGL_INST_DETECTED	0x01
+#घोषणा		WATCH_DOG_INTERRUPT	0x02
+#घोषणा		SCRIPT_INT_RECEIVED	0x04
+#घोषणा		ABORTED			0x10
+#घोषणा	SSTAT0_REG			0x0D
+#घोषणा		PARITY_ERROR		0x01
+#घोषणा		SCSI_RESET_DETECTED	0x02
+#घोषणा		UNEXPECTED_DISCONNECT	0x04
+#घोषणा		SCSI_GROSS_ERROR	0x08
+#घोषणा		SELECTED		0x10
+#घोषणा		SELECTION_TIMEOUT	0x20
+#घोषणा		FUNCTION_COMPLETE	0x40
+#घोषणा		PHASE_MISMATCH 		0x80
+#घोषणा	SSTAT1_REG			0x0E
+#घोषणा		SIDL_REG_FULL		0x80
+#घोषणा		SODR_REG_FULL		0x40
+#घोषणा		SODL_REG_FULL		0x20
+#घोषणा SSTAT2_REG                      0x0F
+#घोषणा CTEST0_REG                      0x14
+#घोषणा		BTB_TIMER_DISABLE	0x40
+#घोषणा CTEST1_REG                      0x15
+#घोषणा CTEST2_REG                      0x16
+#घोषणा CTEST3_REG                      0x17
+#घोषणा CTEST4_REG                      0x18
+#घोषणा         DISABLE_FIFO            0x00
+#घोषणा         SLBE                    0x10
+#घोषणा         SFWR                    0x08
+#घोषणा         BYTE_LANE0              0x04
+#घोषणा         BYTE_LANE1              0x05
+#घोषणा         BYTE_LANE2              0x06
+#घोषणा         BYTE_LANE3              0x07
+#घोषणा         SCSI_ZMODE              0x20
+#घोषणा         ZMODE                   0x40
+#घोषणा CTEST5_REG                      0x19
+#घोषणा         MASTER_CONTROL          0x10
+#घोषणा         DMA_सूचीECTION           0x08
+#घोषणा CTEST7_REG                      0x1B
+#घोषणा		BURST_DISABLE		0x80 /* 710 only */
+#घोषणा		SEL_TIMEOUT_DISABLE	0x10 /* 710 only */
+#घोषणा         DFP                     0x08
+#घोषणा         EVP                     0x04
+#घोषणा         CTEST7_TT1              0x02
+#घोषणा		DIFF			0x01
+#घोषणा CTEST6_REG                      0x1A
+#घोषणा	TEMP_REG			0x1C
+#घोषणा	DFIFO_REG			0x20
+#घोषणा		FLUSH_DMA_FIFO		0x80
+#घोषणा		CLR_FIFO		0x40
+#घोषणा	ISTAT_REG			0x21
+#घोषणा		ABORT_OPERATION		0x80
+#घोषणा		SOFTWARE_RESET_710	0x40
+#घोषणा		DMA_INT_PENDING		0x01
+#घोषणा		SCSI_INT_PENDING	0x02
+#घोषणा		CONNECTED		0x08
+#घोषणा CTEST8_REG                      0x22
+#घोषणा         LAST_DIS_ENBL           0x01
+#घोषणा		SHORTEN_FILTERING	0x04
+#घोषणा		ENABLE_ACTIVE_NEGATION	0x10
+#घोषणा		GENERATE_RECEIVE_PARITY	0x20
+#घोषणा		CLR_FIFO_710		0x04
+#घोषणा		FLUSH_DMA_FIFO_710	0x08
+#घोषणा CTEST9_REG                      0x23
+#घोषणा	DBC_REG				0x24
+#घोषणा	DCMD_REG			0x27
+#घोषणा	DNAD_REG			0x28
+#घोषणा	DIEN_REG			0x39
+#घोषणा		BUS_FAULT		0x20
+#घोषणा 	ABORT_INT		0x10
+#घोषणा 	INT_INST_INT		0x04
+#घोषणा 	WD_INT			0x02
+#घोषणा 	ILGL_INST_INT		0x01
+#घोषणा	DCNTL_REG			0x3B
+#घोषणा		SOFTWARE_RESET		0x01
+#घोषणा		COMPAT_700_MODE		0x01
+#घोषणा 	SCRPTS_16BITS		0x20
+#घोषणा		EA_710			0x20
+#घोषणा		ASYNC_DIV_2_0		0x00
+#घोषणा		ASYNC_DIV_1_5		0x40
+#घोषणा		ASYNC_DIV_1_0		0x80
+#घोषणा		ASYNC_DIV_3_0		0xc0
+#घोषणा DMODE_710_REG			0x38
+#घोषणा	DMODE_700_REG			0x34
+#घोषणा		BURST_LENGTH_1		0x00
+#घोषणा		BURST_LENGTH_2		0x40
+#घोषणा		BURST_LENGTH_4		0x80
+#घोषणा		BURST_LENGTH_8		0xC0
+#घोषणा		DMODE_FC1		0x10
+#घोषणा		DMODE_FC2		0x20
+#घोषणा 	BW16			32 
+#घोषणा 	MODE_286		16
+#घोषणा 	IO_XFER			8
+#घोषणा 	FIXED_ADDR		4
 
-#define DSP_REG                         0x2C
-#define DSPS_REG                        0x30
+#घोषणा DSP_REG                         0x2C
+#घोषणा DSPS_REG                        0x30
 
 /* Parameters to begin SDTR negotiations.  Empirically, I find that
- * the 53c700-66 cannot handle an offset >8, so don't change this  */
-#define NCR_700_MAX_OFFSET	8
-/* Was hoping the max offset would be greater for the 710, but
+ * the 53c700-66 cannot handle an offset >8, so करोn't change this  */
+#घोषणा NCR_700_MAX_OFFSET	8
+/* Was hoping the max offset would be greater क्रम the 710, but
  * empirically it seems to be 8 also */
-#define NCR_710_MAX_OFFSET	8
-#define NCR_700_MIN_XFERP	1
-#define NCR_710_MIN_XFERP	0
-#define NCR_700_MIN_PERIOD	25 /* for SDTR message, 100ns */
+#घोषणा NCR_710_MAX_OFFSET	8
+#घोषणा NCR_700_MIN_XFERP	1
+#घोषणा NCR_710_MIN_XFERP	0
+#घोषणा NCR_700_MIN_PERIOD	25 /* क्रम SDTR message, 100ns */
 
-#define script_patch_32(h, script, symbol, value) \
-{ \
-	int i; \
+#घोषणा script_patch_32(h, script, symbol, value) \
+अणु \
+	पूर्णांक i; \
 	dma_addr_t da = value; \
-	for(i=0; i< (sizeof(A_##symbol##_used) / sizeof(__u32)); i++) { \
+	क्रम(i=0; i< (माप(A_##symbol##_used) / माप(__u32)); i++) अणु \
 		__u32 val = bS_to_cpu((script)[A_##symbol##_used[i]]) + da; \
 		(script)[A_##symbol##_used[i]] = bS_to_host(val); \
 		dma_sync_to_dev((h), &(script)[A_##symbol##_used[i]], 4); \
 		DEBUG((" script, patching %s at %d to %pad\n", \
 		       #symbol, A_##symbol##_used[i], &da)); \
-	} \
-}
+	पूर्ण \
+पूर्ण
 
-#define script_patch_32_abs(h, script, symbol, value) \
-{ \
-	int i; \
+#घोषणा script_patch_32_असल(h, script, symbol, value) \
+अणु \
+	पूर्णांक i; \
 	dma_addr_t da = value; \
-	for(i=0; i< (sizeof(A_##symbol##_used) / sizeof(__u32)); i++) { \
+	क्रम(i=0; i< (माप(A_##symbol##_used) / माप(__u32)); i++) अणु \
 		(script)[A_##symbol##_used[i]] = bS_to_host(da); \
 		dma_sync_to_dev((h), &(script)[A_##symbol##_used[i]], 4); \
 		DEBUG((" script, patching %s at %d to %pad\n", \
 		       #symbol, A_##symbol##_used[i], &da)); \
-	} \
-}
+	पूर्ण \
+पूर्ण
 
-/* Used for patching the SCSI ID in the SELECT instruction */
-#define script_patch_ID(h, script, symbol, value) \
-{ \
-	int i; \
-	for(i=0; i< (sizeof(A_##symbol##_used) / sizeof(__u32)); i++) { \
+/* Used क्रम patching the SCSI ID in the SELECT inकाष्ठाion */
+#घोषणा script_patch_ID(h, script, symbol, value) \
+अणु \
+	पूर्णांक i; \
+	क्रम(i=0; i< (माप(A_##symbol##_used) / माप(__u32)); i++) अणु \
 		__u32 val = bS_to_cpu((script)[A_##symbol##_used[i]]); \
 		val &= 0xff00ffff; \
 		val |= ((value) & 0xff) << 16; \
@@ -459,13 +460,13 @@ struct NCR_700_Host_Parameters {
 		dma_sync_to_dev((h), &(script)[A_##symbol##_used[i]], 4); \
 		DEBUG((" script, patching ID field %s at %d to 0x%x\n", \
 		       #symbol, A_##symbol##_used[i], val)); \
-	} \
-}
+	पूर्ण \
+पूर्ण
 
-#define script_patch_16(h, script, symbol, value) \
-{ \
-	int i; \
-	for(i=0; i< (sizeof(A_##symbol##_used) / sizeof(__u32)); i++) { \
+#घोषणा script_patch_16(h, script, symbol, value) \
+अणु \
+	पूर्णांक i; \
+	क्रम(i=0; i< (माप(A_##symbol##_used) / माप(__u32)); i++) अणु \
 		__u32 val = bS_to_cpu((script)[A_##symbol##_used[i]]); \
 		val &= 0xffff0000; \
 		val |= ((value) & 0xffff); \
@@ -473,56 +474,56 @@ struct NCR_700_Host_Parameters {
 		dma_sync_to_dev((h), &(script)[A_##symbol##_used[i]], 4); \
 		DEBUG((" script, patching short field %s at %d to 0x%x\n", \
 		       #symbol, A_##symbol##_used[i], val)); \
-	} \
-}
+	पूर्ण \
+पूर्ण
 
 
-static inline __u8
-NCR_700_readb(struct Scsi_Host *host, __u32 reg)
-{
-	const struct NCR_700_Host_Parameters *hostdata
-		= (struct NCR_700_Host_Parameters *)host->hostdata[0];
+अटल अंतरभूत __u8
+NCR_700_पढ़ोb(काष्ठा Scsi_Host *host, __u32 reg)
+अणु
+	स्थिर काष्ठा NCR_700_Host_Parameters *hostdata
+		= (काष्ठा NCR_700_Host_Parameters *)host->hostdata[0];
 
-	return ioread8(hostdata->base + (reg^bE));
-}
+	वापस ioपढ़ो8(hostdata->base + (reg^bE));
+पूर्ण
 
-static inline __u32
-NCR_700_readl(struct Scsi_Host *host, __u32 reg)
-{
-	const struct NCR_700_Host_Parameters *hostdata
-		= (struct NCR_700_Host_Parameters *)host->hostdata[0];
-	__u32 value = bEBus ? ioread32be(hostdata->base + reg) :
-		ioread32(hostdata->base + reg);
-#if 1
-	/* sanity check the register */
+अटल अंतरभूत __u32
+NCR_700_पढ़ोl(काष्ठा Scsi_Host *host, __u32 reg)
+अणु
+	स्थिर काष्ठा NCR_700_Host_Parameters *hostdata
+		= (काष्ठा NCR_700_Host_Parameters *)host->hostdata[0];
+	__u32 value = bEBus ? ioपढ़ो32be(hostdata->base + reg) :
+		ioपढ़ो32(hostdata->base + reg);
+#अगर 1
+	/* sanity check the रेजिस्टर */
 	BUG_ON((reg & 0x3) != 0);
-#endif
+#पूर्ण_अगर
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static inline void
-NCR_700_writeb(__u8 value, struct Scsi_Host *host, __u32 reg)
-{
-	const struct NCR_700_Host_Parameters *hostdata
-		= (struct NCR_700_Host_Parameters *)host->hostdata[0];
+अटल अंतरभूत व्योम
+NCR_700_ग_लिखोb(__u8 value, काष्ठा Scsi_Host *host, __u32 reg)
+अणु
+	स्थिर काष्ठा NCR_700_Host_Parameters *hostdata
+		= (काष्ठा NCR_700_Host_Parameters *)host->hostdata[0];
 
-	iowrite8(value, hostdata->base + (reg^bE));
-}
+	ioग_लिखो8(value, hostdata->base + (reg^bE));
+पूर्ण
 
-static inline void
-NCR_700_writel(__u32 value, struct Scsi_Host *host, __u32 reg)
-{
-	const struct NCR_700_Host_Parameters *hostdata
-		= (struct NCR_700_Host_Parameters *)host->hostdata[0];
+अटल अंतरभूत व्योम
+NCR_700_ग_लिखोl(__u32 value, काष्ठा Scsi_Host *host, __u32 reg)
+अणु
+	स्थिर काष्ठा NCR_700_Host_Parameters *hostdata
+		= (काष्ठा NCR_700_Host_Parameters *)host->hostdata[0];
 
-#if 1
-	/* sanity check the register */
+#अगर 1
+	/* sanity check the रेजिस्टर */
 	BUG_ON((reg & 0x3) != 0);
-#endif
+#पूर्ण_अगर
 
-	bEBus ? iowrite32be(value, hostdata->base + reg): 
-		iowrite32(value, hostdata->base + reg);
-}
+	bEBus ? ioग_लिखो32be(value, hostdata->base + reg): 
+		ioग_लिखो32(value, hostdata->base + reg);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

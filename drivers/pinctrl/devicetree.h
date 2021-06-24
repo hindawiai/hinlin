@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Internal interface to pinctrl device tree integration
+ * Internal पूर्णांकerface to pinctrl device tree पूर्णांकegration
  *
  * Copyright (C) 2012 NVIDIA CORPORATION. All rights reserved.
  */
 
-struct of_phandle_args;
+काष्ठा of_phandle_args;
 
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 
-void pinctrl_dt_free_maps(struct pinctrl *p);
-int pinctrl_dt_to_map(struct pinctrl *p, struct pinctrl_dev *pctldev);
+व्योम pinctrl_dt_मुक्त_maps(काष्ठा pinctrl *p);
+पूर्णांक pinctrl_dt_to_map(काष्ठा pinctrl *p, काष्ठा pinctrl_dev *pctldev);
 
-int pinctrl_count_index_with_args(const struct device_node *np,
-				  const char *list_name);
+पूर्णांक pinctrl_count_index_with_args(स्थिर काष्ठा device_node *np,
+				  स्थिर अक्षर *list_name);
 
-int pinctrl_parse_index_with_args(const struct device_node *np,
-				  const char *list_name, int index,
-				  struct of_phandle_args *out_args);
+पूर्णांक pinctrl_parse_index_with_args(स्थिर काष्ठा device_node *np,
+				  स्थिर अक्षर *list_name, पूर्णांक index,
+				  काष्ठा of_phandle_args *out_args);
 
-#else
+#अन्यथा
 
-static inline int pinctrl_dt_to_map(struct pinctrl *p,
-				    struct pinctrl_dev *pctldev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_dt_to_map(काष्ठा pinctrl *p,
+				    काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void pinctrl_dt_free_maps(struct pinctrl *p)
-{
-}
+अटल अंतरभूत व्योम pinctrl_dt_मुक्त_maps(काष्ठा pinctrl *p)
+अणु
+पूर्ण
 
-static inline int pinctrl_count_index_with_args(const struct device_node *np,
-						const char *list_name)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक pinctrl_count_index_with_args(स्थिर काष्ठा device_node *np,
+						स्थिर अक्षर *list_name)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int
-pinctrl_parse_index_with_args(const struct device_node *np,
-			      const char *list_name, int index,
-			      struct of_phandle_args *out_args)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक
+pinctrl_parse_index_with_args(स्थिर काष्ठा device_node *np,
+			      स्थिर अक्षर *list_name, पूर्णांक index,
+			      काष्ठा of_phandle_args *out_args)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

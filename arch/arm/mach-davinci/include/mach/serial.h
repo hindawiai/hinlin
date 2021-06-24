@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * DaVinci serial device definitions
  *
@@ -8,30 +9,30 @@
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
-#ifndef __ASM_ARCH_SERIAL_H
-#define __ASM_ARCH_SERIAL_H
+#अगर_अघोषित __ASM_ARCH_SERIAL_H
+#घोषणा __ASM_ARCH_SERIAL_H
 
-#include <asm/memory.h>
+#समावेश <यंत्र/memory.h>
 
-#include <mach/hardware.h>
+#समावेश <mach/hardware.h>
 
-#define DAVINCI_UART0_BASE	(IO_PHYS + 0x20000)
-#define DAVINCI_UART1_BASE	(IO_PHYS + 0x20400)
-#define DAVINCI_UART2_BASE	(IO_PHYS + 0x20800)
+#घोषणा DAVINCI_UART0_BASE	(IO_PHYS + 0x20000)
+#घोषणा DAVINCI_UART1_BASE	(IO_PHYS + 0x20400)
+#घोषणा DAVINCI_UART2_BASE	(IO_PHYS + 0x20800)
 
-#define DA8XX_UART0_BASE	(IO_PHYS + 0x042000)
-#define DA8XX_UART1_BASE	(IO_PHYS + 0x10c000)
-#define DA8XX_UART2_BASE	(IO_PHYS + 0x10d000)
+#घोषणा DA8XX_UART0_BASE	(IO_PHYS + 0x042000)
+#घोषणा DA8XX_UART1_BASE	(IO_PHYS + 0x10c000)
+#घोषणा DA8XX_UART2_BASE	(IO_PHYS + 0x10d000)
 
-/* DaVinci UART register offsets */
-#define UART_DAVINCI_PWREMU		0x0c
-#define UART_DM646X_SCR			0x10
-#define UART_DM646X_SCR_TX_WATERMARK	0x08
+/* DaVinci UART रेजिस्टर offsets */
+#घोषणा UART_DAVINCI_PWREMU		0x0c
+#घोषणा UART_DM646X_SCR			0x10
+#घोषणा UART_DM646X_SCR_TX_WATERMARK	0x08
 
-#ifndef __ASSEMBLY__
-#include <linux/platform_device.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <linux/platक्रमm_device.h>
 
-extern int davinci_serial_init(struct platform_device *);
-#endif
+बाह्य पूर्णांक davinci_serial_init(काष्ठा platक्रमm_device *);
+#पूर्ण_अगर
 
-#endif /* __ASM_ARCH_SERIAL_H */
+#पूर्ण_अगर /* __ASM_ARCH_SERIAL_H */

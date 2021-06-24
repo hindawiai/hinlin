@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Intel PCH/PCU SPI flash platform driver.
+ * Intel PCH/PCU SPI flash platक्रमm driver.
  *
  * Copyright (C) 2016, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include <linux/ioport.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "intel-spi.h"
+#समावेश "intel-spi.h"
 
-static int intel_spi_platform_probe(struct platform_device *pdev)
-{
-	struct intel_spi_boardinfo *info;
-	struct intel_spi *ispi;
-	struct resource *mem;
+अटल पूर्णांक पूर्णांकel_spi_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा पूर्णांकel_spi_boardinfo *info;
+	काष्ठा पूर्णांकel_spi *ispi;
+	काष्ठा resource *mem;
 
 	info = dev_get_platdata(&pdev->dev);
-	if (!info)
-		return -EINVAL;
+	अगर (!info)
+		वापस -EINVAL;
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	ispi = intel_spi_probe(&pdev->dev, mem, info);
-	if (IS_ERR(ispi))
-		return PTR_ERR(ispi);
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	ispi = पूर्णांकel_spi_probe(&pdev->dev, mem, info);
+	अगर (IS_ERR(ispi))
+		वापस PTR_ERR(ispi);
 
-	platform_set_drvdata(pdev, ispi);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, ispi);
+	वापस 0;
+पूर्ण
 
-static int intel_spi_platform_remove(struct platform_device *pdev)
-{
-	struct intel_spi *ispi = platform_get_drvdata(pdev);
+अटल पूर्णांक पूर्णांकel_spi_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा पूर्णांकel_spi *ispi = platक्रमm_get_drvdata(pdev);
 
-	return intel_spi_remove(ispi);
-}
+	वापस पूर्णांकel_spi_हटाओ(ispi);
+पूर्ण
 
-static struct platform_driver intel_spi_platform_driver = {
-	.probe = intel_spi_platform_probe,
-	.remove = intel_spi_platform_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver पूर्णांकel_spi_platक्रमm_driver = अणु
+	.probe = पूर्णांकel_spi_platक्रमm_probe,
+	.हटाओ = पूर्णांकel_spi_platक्रमm_हटाओ,
+	.driver = अणु
 		.name = "intel-spi",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(intel_spi_platform_driver);
+module_platक्रमm_driver(पूर्णांकel_spi_platक्रमm_driver);
 
 MODULE_DESCRIPTION("Intel PCH/PCU SPI flash platform driver");
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");

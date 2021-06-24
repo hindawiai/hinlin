@@ -1,106 +1,107 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PERF_UTIL_TRACE_EVENT_H
-#define _PERF_UTIL_TRACE_EVENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PERF_UTIL_TRACE_EVENT_H
+#घोषणा _PERF_UTIL_TRACE_EVENT_H
 
-#include <traceevent/event-parse.h>
-#include "parse-events.h"
+#समावेश <traceevent/event-parse.h>
+#समावेश "parse-events.h"
 
-struct machine;
-struct perf_sample;
-union perf_event;
-struct perf_tool;
-struct thread;
-struct tep_plugin_list;
+काष्ठा machine;
+काष्ठा perf_sample;
+जोड़ perf_event;
+काष्ठा perf_tool;
+काष्ठा thपढ़ो;
+काष्ठा tep_plugin_list;
 
-struct trace_event {
-	struct tep_handle	*pevent;
-	struct tep_plugin_list	*plugin_list;
-};
+काष्ठा trace_event अणु
+	काष्ठा tep_handle	*pevent;
+	काष्ठा tep_plugin_list	*plugin_list;
+पूर्ण;
 
-int trace_event__init(struct trace_event *t);
-void trace_event__cleanup(struct trace_event *t);
-int trace_event__register_resolver(struct machine *machine,
+पूर्णांक trace_event__init(काष्ठा trace_event *t);
+व्योम trace_event__cleanup(काष्ठा trace_event *t);
+पूर्णांक trace_event__रेजिस्टर_resolver(काष्ठा machine *machine,
 				   tep_func_resolver_t *func);
-struct tep_event*
-trace_event__tp_format(const char *sys, const char *name);
+काष्ठा tep_event*
+trace_event__tp_क्रमmat(स्थिर अक्षर *sys, स्थिर अक्षर *name);
 
-struct tep_event *trace_event__tp_format_id(int id);
+काष्ठा tep_event *trace_event__tp_क्रमmat_id(पूर्णांक id);
 
-int bigendian(void);
+पूर्णांक bigendian(व्योम);
 
-void event_format__fprintf(struct tep_event *event,
-			   int cpu, void *data, int size, FILE *fp);
+व्योम event_क्रमmat__ख_लिखो(काष्ठा tep_event *event,
+			   पूर्णांक cpu, व्योम *data, पूर्णांक size, खाता *fp);
 
-void event_format__print(struct tep_event *event,
-			 int cpu, void *data, int size);
+व्योम event_क्रमmat__prपूर्णांक(काष्ठा tep_event *event,
+			 पूर्णांक cpu, व्योम *data, पूर्णांक size);
 
-int parse_ftrace_file(struct tep_handle *pevent, char *buf, unsigned long size);
-int parse_event_file(struct tep_handle *pevent,
-		     char *buf, unsigned long size, char *sys);
+पूर्णांक parse_ftrace_file(काष्ठा tep_handle *pevent, अक्षर *buf, अचिन्हित दीर्घ size);
+पूर्णांक parse_event_file(काष्ठा tep_handle *pevent,
+		     अक्षर *buf, अचिन्हित दीर्घ size, अक्षर *sys);
 
-unsigned long long
-raw_field_value(struct tep_event *event, const char *name, void *data);
+अचिन्हित दीर्घ दीर्घ
+raw_field_value(काष्ठा tep_event *event, स्थिर अक्षर *name, व्योम *data);
 
-void parse_proc_kallsyms(struct tep_handle *pevent, char *file, unsigned int size);
-void parse_ftrace_printk(struct tep_handle *pevent, char *file, unsigned int size);
-void parse_saved_cmdline(struct tep_handle *pevent, char *file, unsigned int size);
+व्योम parse_proc_kallsyms(काष्ठा tep_handle *pevent, अक्षर *file, अचिन्हित पूर्णांक size);
+व्योम parse_ftrace_prपूर्णांकk(काष्ठा tep_handle *pevent, अक्षर *file, अचिन्हित पूर्णांक size);
+व्योम parse_saved_cmdline(काष्ठा tep_handle *pevent, अक्षर *file, अचिन्हित पूर्णांक size);
 
-ssize_t trace_report(int fd, struct trace_event *tevent, bool repipe);
+sमाप_प्रकार trace_report(पूर्णांक fd, काष्ठा trace_event *tevent, bool repipe);
 
-unsigned long long read_size(struct tep_event *event, void *ptr, int size);
-unsigned long long eval_flag(const char *flag);
+अचिन्हित दीर्घ दीर्घ पढ़ो_size(काष्ठा tep_event *event, व्योम *ptr, पूर्णांक size);
+अचिन्हित दीर्घ दीर्घ eval_flag(स्थिर अक्षर *flag);
 
-int read_tracing_data(int fd, struct list_head *pattrs);
+पूर्णांक पढ़ो_tracing_data(पूर्णांक fd, काष्ठा list_head *pattrs);
 
-struct tracing_data {
-	/* size is only valid if temp is 'true' */
-	ssize_t size;
+काष्ठा tracing_data अणु
+	/* size is only valid अगर temp is 'true' */
+	sमाप_प्रकार size;
 	bool temp;
-	char temp_file[50];
-};
+	अक्षर temp_file[50];
+पूर्ण;
 
-struct tracing_data *tracing_data_get(struct list_head *pattrs,
-				      int fd, bool temp);
-int tracing_data_put(struct tracing_data *tdata);
+काष्ठा tracing_data *tracing_data_get(काष्ठा list_head *pattrs,
+				      पूर्णांक fd, bool temp);
+पूर्णांक tracing_data_put(काष्ठा tracing_data *tdata);
 
 
-struct addr_location;
+काष्ठा addr_location;
 
-struct perf_session;
-struct perf_stat_config;
+काष्ठा perf_session;
+काष्ठा perf_stat_config;
 
-struct scripting_ops {
-	const char *name;
-	int (*start_script) (const char *script, int argc, const char **argv);
-	int (*flush_script) (void);
-	int (*stop_script) (void);
-	void (*process_event) (union perf_event *event,
-			       struct perf_sample *sample,
-			       struct evsel *evsel,
-			       struct addr_location *al);
-	void (*process_switch)(union perf_event *event,
-			       struct perf_sample *sample,
-			       struct machine *machine);
-	void (*process_stat)(struct perf_stat_config *config,
-			     struct evsel *evsel, u64 tstamp);
-	void (*process_stat_interval)(u64 tstamp);
-	int (*generate_script) (struct tep_handle *pevent, const char *outfile);
-};
+काष्ठा scripting_ops अणु
+	स्थिर अक्षर *name;
+	पूर्णांक (*start_script) (स्थिर अक्षर *script, पूर्णांक argc, स्थिर अक्षर **argv);
+	पूर्णांक (*flush_script) (व्योम);
+	पूर्णांक (*stop_script) (व्योम);
+	व्योम (*process_event) (जोड़ perf_event *event,
+			       काष्ठा perf_sample *sample,
+			       काष्ठा evsel *evsel,
+			       काष्ठा addr_location *al);
+	व्योम (*process_चयन)(जोड़ perf_event *event,
+			       काष्ठा perf_sample *sample,
+			       काष्ठा machine *machine);
+	व्योम (*process_stat)(काष्ठा perf_stat_config *config,
+			     काष्ठा evsel *evsel, u64 tstamp);
+	व्योम (*process_stat_पूर्णांकerval)(u64 tstamp);
+	पूर्णांक (*generate_script) (काष्ठा tep_handle *pevent, स्थिर अक्षर *outfile);
+पूर्ण;
 
-extern unsigned int scripting_max_stack;
+बाह्य अचिन्हित पूर्णांक scripting_max_stack;
 
-int script_spec_register(const char *spec, struct scripting_ops *ops);
+पूर्णांक script_spec_रेजिस्टर(स्थिर अक्षर *spec, काष्ठा scripting_ops *ops);
 
-void setup_perl_scripting(void);
-void setup_python_scripting(void);
+व्योम setup_perl_scripting(व्योम);
+व्योम setup_python_scripting(व्योम);
 
-struct scripting_context {
-	struct tep_handle *pevent;
-	void *event_data;
-};
+काष्ठा scripting_context अणु
+	काष्ठा tep_handle *pevent;
+	व्योम *event_data;
+पूर्ण;
 
-int common_pc(struct scripting_context *context);
-int common_flags(struct scripting_context *context);
-int common_lock_depth(struct scripting_context *context);
+पूर्णांक common_pc(काष्ठा scripting_context *context);
+पूर्णांक common_flags(काष्ठा scripting_context *context);
+पूर्णांक common_lock_depth(काष्ठा scripting_context *context);
 
-#endif /* _PERF_UTIL_TRACE_EVENT_H */
+#पूर्ण_अगर /* _PERF_UTIL_TRACE_EVENT_H */

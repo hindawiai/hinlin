@@ -1,566 +1,567 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
    drbd_nl.c
 
    This file is part of DRBD by Philipp Reisner and Lars Ellenberg.
 
-   Copyright (C) 2001-2008, LINBIT Information Technologies GmbH.
+   Copyright (C) 2001-2008, LINBIT Inक्रमmation Technologies GmbH.
    Copyright (C) 1999-2008, Philipp Reisner <philipp.reisner@linbit.com>.
    Copyright (C) 2002-2008, Lars Ellenberg <lars.ellenberg@linbit.com>.
 
 
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/drbd.h>
-#include <linux/in.h>
-#include <linux/fs.h>
-#include <linux/file.h>
-#include <linux/slab.h>
-#include <linux/blkpg.h>
-#include <linux/cpumask.h>
-#include "drbd_int.h"
-#include "drbd_protocol.h"
-#include "drbd_req.h"
-#include "drbd_state_change.h"
-#include <asm/unaligned.h>
-#include <linux/drbd_limits.h>
-#include <linux/kthread.h>
+#समावेश <linux/module.h>
+#समावेश <linux/drbd.h>
+#समावेश <linux/in.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/blkpg.h>
+#समावेश <linux/cpumask.h>
+#समावेश "drbd_int.h"
+#समावेश "drbd_protocol.h"
+#समावेश "drbd_req.h"
+#समावेश "drbd_state_change.h"
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/drbd_सीमा.स>
+#समावेश <linux/kthपढ़ो.h>
 
-#include <net/genetlink.h>
+#समावेश <net/genetlink.h>
 
-/* .doit */
-// int drbd_adm_create_resource(struct sk_buff *skb, struct genl_info *info);
-// int drbd_adm_delete_resource(struct sk_buff *skb, struct genl_info *info);
+/* .करोit */
+// पूर्णांक drbd_adm_create_resource(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+// पूर्णांक drbd_adm_delete_resource(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
 
-int drbd_adm_new_minor(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_del_minor(struct sk_buff *skb, struct genl_info *info);
+पूर्णांक drbd_adm_new_minor(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_del_minor(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
 
-int drbd_adm_new_resource(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_del_resource(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_down(struct sk_buff *skb, struct genl_info *info);
+पूर्णांक drbd_adm_new_resource(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_del_resource(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_करोwn(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
 
-int drbd_adm_set_role(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_attach(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_disk_opts(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_detach(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_connect(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_net_opts(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_resize(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_start_ov(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_new_c_uuid(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_disconnect(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_invalidate(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_invalidate_peer(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_pause_sync(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_resume_sync(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_suspend_io(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_resume_io(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_outdate(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_resource_opts(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_get_status(struct sk_buff *skb, struct genl_info *info);
-int drbd_adm_get_timeout_type(struct sk_buff *skb, struct genl_info *info);
+पूर्णांक drbd_adm_set_role(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_attach(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_disk_opts(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_detach(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_connect(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_net_opts(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_resize(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_start_ov(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_new_c_uuid(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_disconnect(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_invalidate(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_invalidate_peer(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_छोड़ो_sync(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_resume_sync(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_suspend_io(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_resume_io(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_outdate(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_resource_opts(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_get_status(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक drbd_adm_get_समयout_type(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
 /* .dumpit */
-int drbd_adm_get_status_all(struct sk_buff *skb, struct netlink_callback *cb);
-int drbd_adm_dump_resources(struct sk_buff *skb, struct netlink_callback *cb);
-int drbd_adm_dump_devices(struct sk_buff *skb, struct netlink_callback *cb);
-int drbd_adm_dump_devices_done(struct netlink_callback *cb);
-int drbd_adm_dump_connections(struct sk_buff *skb, struct netlink_callback *cb);
-int drbd_adm_dump_connections_done(struct netlink_callback *cb);
-int drbd_adm_dump_peer_devices(struct sk_buff *skb, struct netlink_callback *cb);
-int drbd_adm_dump_peer_devices_done(struct netlink_callback *cb);
-int drbd_adm_get_initial_state(struct sk_buff *skb, struct netlink_callback *cb);
+पूर्णांक drbd_adm_get_status_all(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
+पूर्णांक drbd_adm_dump_resources(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
+पूर्णांक drbd_adm_dump_devices(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
+पूर्णांक drbd_adm_dump_devices_करोne(काष्ठा netlink_callback *cb);
+पूर्णांक drbd_adm_dump_connections(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
+पूर्णांक drbd_adm_dump_connections_करोne(काष्ठा netlink_callback *cb);
+पूर्णांक drbd_adm_dump_peer_devices(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
+पूर्णांक drbd_adm_dump_peer_devices_करोne(काष्ठा netlink_callback *cb);
+पूर्णांक drbd_adm_get_initial_state(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
 
-#include <linux/drbd_genl_api.h>
-#include "drbd_nla.h"
-#include <linux/genl_magic_func.h>
+#समावेश <linux/drbd_genl_api.h>
+#समावेश "drbd_nla.h"
+#समावेश <linux/genl_magic_func.h>
 
-static atomic_t drbd_genl_seq = ATOMIC_INIT(2); /* two. */
-static atomic_t notify_genl_seq = ATOMIC_INIT(2); /* two. */
+अटल atomic_t drbd_genl_seq = ATOMIC_INIT(2); /* two. */
+अटल atomic_t notअगरy_genl_seq = ATOMIC_INIT(2); /* two. */
 
-DEFINE_MUTEX(notification_mutex);
+DEFINE_MUTEX(notअगरication_mutex);
 
 /* used blkdev_get_by_path, to claim our meta data device(s) */
-static char *drbd_m_holder = "Hands off! this is DRBD's meta data device.";
+अटल अक्षर *drbd_m_holder = "Hands off! this is DRBD's meta data device.";
 
-static void drbd_adm_send_reply(struct sk_buff *skb, struct genl_info *info)
-{
+अटल व्योम drbd_adm_send_reply(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
 	genlmsg_end(skb, genlmsg_data(nlmsg_data(nlmsg_hdr(skb))));
-	if (genlmsg_reply(skb, info))
+	अगर (genlmsg_reply(skb, info))
 		pr_err("error sending genl reply\n");
-}
+पूर्ण
 
 /* Used on a fresh "drbd_adm_prepare"d reply_skb, this cannot fail: The only
  * reason it could fail was no space in skb, and there are 4k available. */
-static int drbd_msg_put_info(struct sk_buff *skb, const char *info)
-{
-	struct nlattr *nla;
-	int err = -EMSGSIZE;
+अटल पूर्णांक drbd_msg_put_info(काष्ठा sk_buff *skb, स्थिर अक्षर *info)
+अणु
+	काष्ठा nlattr *nla;
+	पूर्णांक err = -EMSGSIZE;
 
-	if (!info || !info[0])
-		return 0;
+	अगर (!info || !info[0])
+		वापस 0;
 
 	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_REPLY);
-	if (!nla)
-		return err;
+	अगर (!nla)
+		वापस err;
 
 	err = nla_put_string(skb, T_info_text, info);
-	if (err) {
+	अगर (err) अणु
 		nla_nest_cancel(skb, nla);
-		return err;
-	} else
+		वापस err;
+	पूर्ण अन्यथा
 		nla_nest_end(skb, nla);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__printf(2, 3)
-static int drbd_msg_sprintf_info(struct sk_buff *skb, const char *fmt, ...)
-{
-	va_list args;
-	struct nlattr *nla, *txt;
-	int err = -EMSGSIZE;
-	int len;
+__म_लिखो(2, 3)
+अटल पूर्णांक drbd_msg_प्र_लिखो_info(काष्ठा sk_buff *skb, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	काष्ठा nlattr *nla, *txt;
+	पूर्णांक err = -EMSGSIZE;
+	पूर्णांक len;
 
 	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_REPLY);
-	if (!nla)
-		return err;
+	अगर (!nla)
+		वापस err;
 
 	txt = nla_reserve(skb, T_info_text, 256);
-	if (!txt) {
+	अगर (!txt) अणु
 		nla_nest_cancel(skb, nla);
-		return err;
-	}
-	va_start(args, fmt);
-	len = vscnprintf(nla_data(txt), 256, fmt, args);
-	va_end(args);
+		वापस err;
+	पूर्ण
+	बहु_शुरू(args, fmt);
+	len = vscnम_लिखो(nla_data(txt), 256, fmt, args);
+	बहु_पूर्ण(args);
 
-	/* maybe: retry with larger reserve, if truncated */
+	/* maybe: retry with larger reserve, अगर truncated */
 	txt->nla_len = nla_attr_size(len+1);
-	nlmsg_trim(skb, (char*)txt + NLA_ALIGN(txt->nla_len));
+	nlmsg_trim(skb, (अक्षर*)txt + NLA_ALIGN(txt->nla_len));
 	nla_nest_end(skb, nla);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* This would be a good candidate for a "pre_doit" hook,
- * and per-family private info->pointers.
+/* This would be a good candidate क्रम a "pre_doit" hook,
+ * and per-family निजी info->poपूर्णांकers.
  * But we need to stay compatible with older kernels.
- * If it returns successfully, adm_ctx members are valid.
+ * If it वापसs successfully, adm_ctx members are valid.
  *
- * At this point, we still rely on the global genl_lock().
- * If we want to avoid that, and allow "genl_family.parallel_ops", we may need
- * to add additional synchronization against object destruction/modification.
+ * At this poपूर्णांक, we still rely on the global genl_lock().
+ * If we want to aव्योम that, and allow "genl_family.parallel_ops", we may need
+ * to add additional synchronization against object deकाष्ठाion/modअगरication.
  */
-#define DRBD_ADM_NEED_MINOR	1
-#define DRBD_ADM_NEED_RESOURCE	2
-#define DRBD_ADM_NEED_CONNECTION 4
-static int drbd_adm_prepare(struct drbd_config_context *adm_ctx,
-	struct sk_buff *skb, struct genl_info *info, unsigned flags)
-{
-	struct drbd_genlmsghdr *d_in = info->userhdr;
-	const u8 cmd = info->genlhdr->cmd;
-	int err;
+#घोषणा DRBD_ADM_NEED_MINOR	1
+#घोषणा DRBD_ADM_NEED_RESOURCE	2
+#घोषणा DRBD_ADM_NEED_CONNECTION 4
+अटल पूर्णांक drbd_adm_prepare(काष्ठा drbd_config_context *adm_ctx,
+	काष्ठा sk_buff *skb, काष्ठा genl_info *info, अचिन्हित flags)
+अणु
+	काष्ठा drbd_genlmsghdr *d_in = info->userhdr;
+	स्थिर u8 cmd = info->genlhdr->cmd;
+	पूर्णांक err;
 
-	memset(adm_ctx, 0, sizeof(*adm_ctx));
+	स_रखो(adm_ctx, 0, माप(*adm_ctx));
 
-	/* genl_rcv_msg only checks for CAP_NET_ADMIN on "GENL_ADMIN_PERM" :( */
-	if (cmd != DRBD_ADM_GET_STATUS && !capable(CAP_NET_ADMIN))
-	       return -EPERM;
+	/* genl_rcv_msg only checks क्रम CAP_NET_ADMIN on "GENL_ADMIN_PERM" :( */
+	अगर (cmd != DRBD_ADM_GET_STATUS && !capable(CAP_NET_ADMIN))
+	       वापस -EPERM;
 
 	adm_ctx->reply_skb = genlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
-	if (!adm_ctx->reply_skb) {
+	अगर (!adm_ctx->reply_skb) अणु
 		err = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	adm_ctx->reply_dh = genlmsg_put_reply(adm_ctx->reply_skb,
 					info, &drbd_genl_family, 0, cmd);
-	/* put of a few bytes into a fresh skb of >= 4k will always succeed.
+	/* put of a few bytes पूर्णांकo a fresh skb of >= 4k will always succeed.
 	 * but anyways */
-	if (!adm_ctx->reply_dh) {
+	अगर (!adm_ctx->reply_dh) अणु
 		err = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	adm_ctx->reply_dh->minor = d_in->minor;
 	adm_ctx->reply_dh->ret_code = NO_ERROR;
 
 	adm_ctx->volume = VOLUME_UNSPECIFIED;
-	if (info->attrs[DRBD_NLA_CFG_CONTEXT]) {
-		struct nlattr *nla;
+	अगर (info->attrs[DRBD_NLA_CFG_CONTEXT]) अणु
+		काष्ठा nlattr *nla;
 		/* parse and validate only */
-		err = drbd_cfg_context_from_attrs(NULL, info);
-		if (err)
-			goto fail;
+		err = drbd_cfg_context_from_attrs(शून्य, info);
+		अगर (err)
+			जाओ fail;
 
 		/* It was present, and valid,
 		 * copy it over to the reply skb. */
 		err = nla_put_nohdr(adm_ctx->reply_skb,
 				info->attrs[DRBD_NLA_CFG_CONTEXT]->nla_len,
 				info->attrs[DRBD_NLA_CFG_CONTEXT]);
-		if (err)
-			goto fail;
+		अगर (err)
+			जाओ fail;
 
 		/* and assign stuff to the adm_ctx */
 		nla = nested_attr_tb[__nla_type(T_ctx_volume)];
-		if (nla)
+		अगर (nla)
 			adm_ctx->volume = nla_get_u32(nla);
 		nla = nested_attr_tb[__nla_type(T_ctx_resource_name)];
-		if (nla)
+		अगर (nla)
 			adm_ctx->resource_name = nla_data(nla);
 		adm_ctx->my_addr = nested_attr_tb[__nla_type(T_ctx_my_addr)];
 		adm_ctx->peer_addr = nested_attr_tb[__nla_type(T_ctx_peer_addr)];
-		if ((adm_ctx->my_addr &&
-		     nla_len(adm_ctx->my_addr) > sizeof(adm_ctx->connection->my_addr)) ||
+		अगर ((adm_ctx->my_addr &&
+		     nla_len(adm_ctx->my_addr) > माप(adm_ctx->connection->my_addr)) ||
 		    (adm_ctx->peer_addr &&
-		     nla_len(adm_ctx->peer_addr) > sizeof(adm_ctx->connection->peer_addr))) {
+		     nla_len(adm_ctx->peer_addr) > माप(adm_ctx->connection->peer_addr))) अणु
 			err = -EINVAL;
-			goto fail;
-		}
-	}
+			जाओ fail;
+		पूर्ण
+	पूर्ण
 
 	adm_ctx->minor = d_in->minor;
 	adm_ctx->device = minor_to_device(d_in->minor);
 
-	/* We are protected by the global genl_lock().
+	/* We are रक्षित by the global genl_lock().
 	 * But we may explicitly drop it/retake it in drbd_adm_set_role(),
 	 * so make sure this object stays around. */
-	if (adm_ctx->device)
+	अगर (adm_ctx->device)
 		kref_get(&adm_ctx->device->kref);
 
-	if (adm_ctx->resource_name) {
+	अगर (adm_ctx->resource_name) अणु
 		adm_ctx->resource = drbd_find_resource(adm_ctx->resource_name);
-	}
+	पूर्ण
 
-	if (!adm_ctx->device && (flags & DRBD_ADM_NEED_MINOR)) {
+	अगर (!adm_ctx->device && (flags & DRBD_ADM_NEED_MINOR)) अणु
 		drbd_msg_put_info(adm_ctx->reply_skb, "unknown minor");
-		return ERR_MINOR_INVALID;
-	}
-	if (!adm_ctx->resource && (flags & DRBD_ADM_NEED_RESOURCE)) {
+		वापस ERR_MINOR_INVALID;
+	पूर्ण
+	अगर (!adm_ctx->resource && (flags & DRBD_ADM_NEED_RESOURCE)) अणु
 		drbd_msg_put_info(adm_ctx->reply_skb, "unknown resource");
-		if (adm_ctx->resource_name)
-			return ERR_RES_NOT_KNOWN;
-		return ERR_INVALID_REQUEST;
-	}
+		अगर (adm_ctx->resource_name)
+			वापस ERR_RES_NOT_KNOWN;
+		वापस ERR_INVALID_REQUEST;
+	पूर्ण
 
-	if (flags & DRBD_ADM_NEED_CONNECTION) {
-		if (adm_ctx->resource) {
+	अगर (flags & DRBD_ADM_NEED_CONNECTION) अणु
+		अगर (adm_ctx->resource) अणु
 			drbd_msg_put_info(adm_ctx->reply_skb, "no resource name expected");
-			return ERR_INVALID_REQUEST;
-		}
-		if (adm_ctx->device) {
+			वापस ERR_INVALID_REQUEST;
+		पूर्ण
+		अगर (adm_ctx->device) अणु
 			drbd_msg_put_info(adm_ctx->reply_skb, "no minor number expected");
-			return ERR_INVALID_REQUEST;
-		}
-		if (adm_ctx->my_addr && adm_ctx->peer_addr)
+			वापस ERR_INVALID_REQUEST;
+		पूर्ण
+		अगर (adm_ctx->my_addr && adm_ctx->peer_addr)
 			adm_ctx->connection = conn_get_by_addrs(nla_data(adm_ctx->my_addr),
 							  nla_len(adm_ctx->my_addr),
 							  nla_data(adm_ctx->peer_addr),
 							  nla_len(adm_ctx->peer_addr));
-		if (!adm_ctx->connection) {
+		अगर (!adm_ctx->connection) अणु
 			drbd_msg_put_info(adm_ctx->reply_skb, "unknown connection");
-			return ERR_INVALID_REQUEST;
-		}
-	}
+			वापस ERR_INVALID_REQUEST;
+		पूर्ण
+	पूर्ण
 
-	/* some more paranoia, if the request was over-determined */
-	if (adm_ctx->device && adm_ctx->resource &&
-	    adm_ctx->device->resource != adm_ctx->resource) {
+	/* some more paranoia, अगर the request was over-determined */
+	अगर (adm_ctx->device && adm_ctx->resource &&
+	    adm_ctx->device->resource != adm_ctx->resource) अणु
 		pr_warn("request: minor=%u, resource=%s; but that minor belongs to resource %s\n",
 			adm_ctx->minor, adm_ctx->resource->name,
 			adm_ctx->device->resource->name);
 		drbd_msg_put_info(adm_ctx->reply_skb, "minor exists in different resource");
-		return ERR_INVALID_REQUEST;
-	}
-	if (adm_ctx->device &&
+		वापस ERR_INVALID_REQUEST;
+	पूर्ण
+	अगर (adm_ctx->device &&
 	    adm_ctx->volume != VOLUME_UNSPECIFIED &&
-	    adm_ctx->volume != adm_ctx->device->vnr) {
+	    adm_ctx->volume != adm_ctx->device->vnr) अणु
 		pr_warn("request: minor=%u, volume=%u; but that minor is volume %u in %s\n",
 			adm_ctx->minor, adm_ctx->volume,
 			adm_ctx->device->vnr, adm_ctx->device->resource->name);
 		drbd_msg_put_info(adm_ctx->reply_skb, "minor exists as different volume");
-		return ERR_INVALID_REQUEST;
-	}
+		वापस ERR_INVALID_REQUEST;
+	पूर्ण
 
-	/* still, provide adm_ctx->resource always, if possible. */
-	if (!adm_ctx->resource) {
+	/* still, provide adm_ctx->resource always, अगर possible. */
+	अगर (!adm_ctx->resource) अणु
 		adm_ctx->resource = adm_ctx->device ? adm_ctx->device->resource
-			: adm_ctx->connection ? adm_ctx->connection->resource : NULL;
-		if (adm_ctx->resource)
+			: adm_ctx->connection ? adm_ctx->connection->resource : शून्य;
+		अगर (adm_ctx->resource)
 			kref_get(&adm_ctx->resource->kref);
-	}
+	पूर्ण
 
-	return NO_ERROR;
+	वापस NO_ERROR;
 
 fail:
-	nlmsg_free(adm_ctx->reply_skb);
-	adm_ctx->reply_skb = NULL;
-	return err;
-}
+	nlmsg_मुक्त(adm_ctx->reply_skb);
+	adm_ctx->reply_skb = शून्य;
+	वापस err;
+पूर्ण
 
-static int drbd_adm_finish(struct drbd_config_context *adm_ctx,
-	struct genl_info *info, int retcode)
-{
-	if (adm_ctx->device) {
+अटल पूर्णांक drbd_adm_finish(काष्ठा drbd_config_context *adm_ctx,
+	काष्ठा genl_info *info, पूर्णांक retcode)
+अणु
+	अगर (adm_ctx->device) अणु
 		kref_put(&adm_ctx->device->kref, drbd_destroy_device);
-		adm_ctx->device = NULL;
-	}
-	if (adm_ctx->connection) {
+		adm_ctx->device = शून्य;
+	पूर्ण
+	अगर (adm_ctx->connection) अणु
 		kref_put(&adm_ctx->connection->kref, &drbd_destroy_connection);
-		adm_ctx->connection = NULL;
-	}
-	if (adm_ctx->resource) {
+		adm_ctx->connection = शून्य;
+	पूर्ण
+	अगर (adm_ctx->resource) अणु
 		kref_put(&adm_ctx->resource->kref, drbd_destroy_resource);
-		adm_ctx->resource = NULL;
-	}
+		adm_ctx->resource = शून्य;
+	पूर्ण
 
-	if (!adm_ctx->reply_skb)
-		return -ENOMEM;
+	अगर (!adm_ctx->reply_skb)
+		वापस -ENOMEM;
 
 	adm_ctx->reply_dh->ret_code = retcode;
 	drbd_adm_send_reply(adm_ctx->reply_skb, info);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void setup_khelper_env(struct drbd_connection *connection, char **envp)
-{
-	char *afs;
+अटल व्योम setup_khelper_env(काष्ठा drbd_connection *connection, अक्षर **envp)
+अणु
+	अक्षर *afs;
 
-	/* FIXME: A future version will not allow this case. */
-	if (connection->my_addr_len == 0 || connection->peer_addr_len == 0)
-		return;
+	/* FIXME: A future version will not allow this हाल. */
+	अगर (connection->my_addr_len == 0 || connection->peer_addr_len == 0)
+		वापस;
 
-	switch (((struct sockaddr *)&connection->peer_addr)->sa_family) {
-	case AF_INET6:
+	चयन (((काष्ठा sockaddr *)&connection->peer_addr)->sa_family) अणु
+	हाल AF_INET6:
 		afs = "ipv6";
-		snprintf(envp[4], 60, "DRBD_PEER_ADDRESS=%pI6",
-			 &((struct sockaddr_in6 *)&connection->peer_addr)->sin6_addr);
-		break;
-	case AF_INET:
+		snम_लिखो(envp[4], 60, "DRBD_PEER_ADDRESS=%pI6",
+			 &((काष्ठा sockaddr_in6 *)&connection->peer_addr)->sin6_addr);
+		अवरोध;
+	हाल AF_INET:
 		afs = "ipv4";
-		snprintf(envp[4], 60, "DRBD_PEER_ADDRESS=%pI4",
-			 &((struct sockaddr_in *)&connection->peer_addr)->sin_addr);
-		break;
-	default:
+		snम_लिखो(envp[4], 60, "DRBD_PEER_ADDRESS=%pI4",
+			 &((काष्ठा sockaddr_in *)&connection->peer_addr)->sin_addr);
+		अवरोध;
+	शेष:
 		afs = "ssocks";
-		snprintf(envp[4], 60, "DRBD_PEER_ADDRESS=%pI4",
-			 &((struct sockaddr_in *)&connection->peer_addr)->sin_addr);
-	}
-	snprintf(envp[3], 20, "DRBD_PEER_AF=%s", afs);
-}
+		snम_लिखो(envp[4], 60, "DRBD_PEER_ADDRESS=%pI4",
+			 &((काष्ठा sockaddr_in *)&connection->peer_addr)->sin_addr);
+	पूर्ण
+	snम_लिखो(envp[3], 20, "DRBD_PEER_AF=%s", afs);
+पूर्ण
 
-int drbd_khelper(struct drbd_device *device, char *cmd)
-{
-	char *envp[] = { "HOME=/",
+पूर्णांक drbd_khelper(काष्ठा drbd_device *device, अक्षर *cmd)
+अणु
+	अक्षर *envp[] = अणु "HOME=/",
 			"TERM=linux",
 			"PATH=/sbin:/usr/sbin:/bin:/usr/bin",
-			 (char[20]) { }, /* address family */
-			 (char[60]) { }, /* address */
-			NULL };
-	char mb[14];
-	char *argv[] = {drbd_usermode_helper, cmd, mb, NULL };
-	struct drbd_connection *connection = first_peer_device(device)->connection;
-	struct sib_info sib;
-	int ret;
+			 (अक्षर[20]) अणु पूर्ण, /* address family */
+			 (अक्षर[60]) अणु पूर्ण, /* address */
+			शून्य पूर्ण;
+	अक्षर mb[14];
+	अक्षर *argv[] = अणुdrbd_usermode_helper, cmd, mb, शून्य पूर्ण;
+	काष्ठा drbd_connection *connection = first_peer_device(device)->connection;
+	काष्ठा sib_info sib;
+	पूर्णांक ret;
 
-	if (current == connection->worker.task)
+	अगर (current == connection->worker.task)
 		set_bit(CALLBACK_PENDING, &connection->flags);
 
-	snprintf(mb, 14, "minor-%d", device_to_minor(device));
+	snम_लिखो(mb, 14, "minor-%d", device_to_minor(device));
 	setup_khelper_env(connection, envp);
 
-	/* The helper may take some time.
-	 * write out any unsynced meta data changes now */
+	/* The helper may take some समय.
+	 * ग_लिखो out any unsynced meta data changes now */
 	drbd_md_sync(device);
 
 	drbd_info(device, "helper command: %s %s %s\n", drbd_usermode_helper, cmd, mb);
 	sib.sib_reason = SIB_HELPER_PRE;
 	sib.helper_name = cmd;
 	drbd_bcast_event(device, &sib);
-	notify_helper(NOTIFY_CALL, device, connection, cmd, 0);
+	notअगरy_helper(NOTIFY_CALL, device, connection, cmd, 0);
 	ret = call_usermodehelper(drbd_usermode_helper, argv, envp, UMH_WAIT_PROC);
-	if (ret)
+	अगर (ret)
 		drbd_warn(device, "helper command: %s %s %s exit code %u (0x%x)\n",
 				drbd_usermode_helper, cmd, mb,
 				(ret >> 8) & 0xff, ret);
-	else
+	अन्यथा
 		drbd_info(device, "helper command: %s %s %s exit code %u (0x%x)\n",
 				drbd_usermode_helper, cmd, mb,
 				(ret >> 8) & 0xff, ret);
 	sib.sib_reason = SIB_HELPER_POST;
-	sib.helper_exit_code = ret;
+	sib.helper_निकास_code = ret;
 	drbd_bcast_event(device, &sib);
-	notify_helper(NOTIFY_RESPONSE, device, connection, cmd, ret);
+	notअगरy_helper(NOTIFY_RESPONSE, device, connection, cmd, ret);
 
-	if (current == connection->worker.task)
+	अगर (current == connection->worker.task)
 		clear_bit(CALLBACK_PENDING, &connection->flags);
 
-	if (ret < 0) /* Ignore any ERRNOs we got. */
+	अगर (ret < 0) /* Ignore any ERRNOs we got. */
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-enum drbd_peer_state conn_khelper(struct drbd_connection *connection, char *cmd)
-{
-	char *envp[] = { "HOME=/",
+क्रमागत drbd_peer_state conn_khelper(काष्ठा drbd_connection *connection, अक्षर *cmd)
+अणु
+	अक्षर *envp[] = अणु "HOME=/",
 			"TERM=linux",
 			"PATH=/sbin:/usr/sbin:/bin:/usr/bin",
-			 (char[20]) { }, /* address family */
-			 (char[60]) { }, /* address */
-			NULL };
-	char *resource_name = connection->resource->name;
-	char *argv[] = {drbd_usermode_helper, cmd, resource_name, NULL };
-	int ret;
+			 (अक्षर[20]) अणु पूर्ण, /* address family */
+			 (अक्षर[60]) अणु पूर्ण, /* address */
+			शून्य पूर्ण;
+	अक्षर *resource_name = connection->resource->name;
+	अक्षर *argv[] = अणुdrbd_usermode_helper, cmd, resource_name, शून्य पूर्ण;
+	पूर्णांक ret;
 
 	setup_khelper_env(connection, envp);
 	conn_md_sync(connection);
 
 	drbd_info(connection, "helper command: %s %s %s\n", drbd_usermode_helper, cmd, resource_name);
 	/* TODO: conn_bcast_event() ?? */
-	notify_helper(NOTIFY_CALL, NULL, connection, cmd, 0);
+	notअगरy_helper(NOTIFY_CALL, शून्य, connection, cmd, 0);
 
 	ret = call_usermodehelper(drbd_usermode_helper, argv, envp, UMH_WAIT_PROC);
-	if (ret)
+	अगर (ret)
 		drbd_warn(connection, "helper command: %s %s %s exit code %u (0x%x)\n",
 			  drbd_usermode_helper, cmd, resource_name,
 			  (ret >> 8) & 0xff, ret);
-	else
+	अन्यथा
 		drbd_info(connection, "helper command: %s %s %s exit code %u (0x%x)\n",
 			  drbd_usermode_helper, cmd, resource_name,
 			  (ret >> 8) & 0xff, ret);
 	/* TODO: conn_bcast_event() ?? */
-	notify_helper(NOTIFY_RESPONSE, NULL, connection, cmd, ret);
+	notअगरy_helper(NOTIFY_RESPONSE, शून्य, connection, cmd, ret);
 
-	if (ret < 0) /* Ignore any ERRNOs we got. */
+	अगर (ret < 0) /* Ignore any ERRNOs we got. */
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum drbd_fencing_p highest_fencing_policy(struct drbd_connection *connection)
-{
-	enum drbd_fencing_p fp = FP_NOT_AVAIL;
-	struct drbd_peer_device *peer_device;
-	int vnr;
+अटल क्रमागत drbd_fencing_p highest_fencing_policy(काष्ठा drbd_connection *connection)
+अणु
+	क्रमागत drbd_fencing_p fp = FP_NOT_AVAIL;
+	काष्ठा drbd_peer_device *peer_device;
+	पूर्णांक vnr;
 
-	rcu_read_lock();
-	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
-		struct drbd_device *device = peer_device->device;
-		if (get_ldev_if_state(device, D_CONSISTENT)) {
-			struct disk_conf *disk_conf =
+	rcu_पढ़ो_lock();
+	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
+		काष्ठा drbd_device *device = peer_device->device;
+		अगर (get_ldev_अगर_state(device, D_CONSISTENT)) अणु
+			काष्ठा disk_conf *disk_conf =
 				rcu_dereference(peer_device->device->ldev->disk_conf);
-			fp = max_t(enum drbd_fencing_p, fp, disk_conf->fencing);
+			fp = max_t(क्रमागत drbd_fencing_p, fp, disk_conf->fencing);
 			put_ldev(device);
-		}
-	}
-	rcu_read_unlock();
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return fp;
-}
+	वापस fp;
+पूर्ण
 
-static bool resource_is_supended(struct drbd_resource *resource)
-{
-	return resource->susp || resource->susp_fen || resource->susp_nod;
-}
+अटल bool resource_is_supended(काष्ठा drbd_resource *resource)
+अणु
+	वापस resource->susp || resource->susp_fen || resource->susp_nod;
+पूर्ण
 
-bool conn_try_outdate_peer(struct drbd_connection *connection)
-{
-	struct drbd_resource * const resource = connection->resource;
-	unsigned int connect_cnt;
-	union drbd_state mask = { };
-	union drbd_state val = { };
-	enum drbd_fencing_p fp;
-	char *ex_to_string;
-	int r;
+bool conn_try_outdate_peer(काष्ठा drbd_connection *connection)
+अणु
+	काष्ठा drbd_resource * स्थिर resource = connection->resource;
+	अचिन्हित पूर्णांक connect_cnt;
+	जोड़ drbd_state mask = अणु पूर्ण;
+	जोड़ drbd_state val = अणु पूर्ण;
+	क्रमागत drbd_fencing_p fp;
+	अक्षर *ex_to_string;
+	पूर्णांक r;
 
 	spin_lock_irq(&resource->req_lock);
-	if (connection->cstate >= C_WF_REPORT_PARAMS) {
+	अगर (connection->cstate >= C_WF_REPORT_PARAMS) अणु
 		drbd_err(connection, "Expected cstate < C_WF_REPORT_PARAMS\n");
 		spin_unlock_irq(&resource->req_lock);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	connect_cnt = connection->connect_cnt;
 	spin_unlock_irq(&resource->req_lock);
 
 	fp = highest_fencing_policy(connection);
-	switch (fp) {
-	case FP_NOT_AVAIL:
+	चयन (fp) अणु
+	हाल FP_NOT_AVAIL:
 		drbd_warn(connection, "Not fencing peer, I'm not even Consistent myself.\n");
 		spin_lock_irq(&resource->req_lock);
-		if (connection->cstate < C_WF_REPORT_PARAMS) {
+		अगर (connection->cstate < C_WF_REPORT_PARAMS) अणु
 			_conn_request_state(connection,
-					    (union drbd_state) { { .susp_fen = 1 } },
-					    (union drbd_state) { { .susp_fen = 0 } },
+					    (जोड़ drbd_state) अणु अणु .susp_fen = 1 पूर्ण पूर्ण,
+					    (जोड़ drbd_state) अणु अणु .susp_fen = 0 पूर्ण पूर्ण,
 					    CS_VERBOSE | CS_HARD | CS_DC_SUSP);
-			/* We are no longer suspended due to the fencing policy.
+			/* We are no दीर्घer suspended due to the fencing policy.
 			 * We may still be suspended due to the on-no-data-accessible policy.
 			 * If that was OND_IO_ERROR, fail pending requests. */
-			if (!resource_is_supended(resource))
+			अगर (!resource_is_supended(resource))
 				_tl_restart(connection, CONNECTION_LOST_WHILE_PENDING);
-		}
-		/* Else: in case we raced with a connection handshake,
-		 * let the handshake figure out if we maybe can RESEND,
-		 * and do not resume/fail pending requests here.
-		 * Worst case is we stay suspended for now, which may be
+		पूर्ण
+		/* Else: in हाल we raced with a connection handshake,
+		 * let the handshake figure out अगर we maybe can RESEND,
+		 * and करो not resume/fail pending requests here.
+		 * Worst हाल is we stay suspended क्रम now, which may be
 		 * resolved by either re-establishing the replication link, or
 		 * the next link failure, or eventually the administrator.  */
 		spin_unlock_irq(&resource->req_lock);
-		return false;
+		वापस false;
 
-	case FP_DONT_CARE:
-		return true;
-	default: ;
-	}
+	हाल FP_DONT_CARE:
+		वापस true;
+	शेष: ;
+	पूर्ण
 
 	r = conn_khelper(connection, "fence-peer");
 
-	switch ((r>>8) & 0xff) {
-	case P_INCONSISTENT: /* peer is inconsistent */
+	चयन ((r>>8) & 0xff) अणु
+	हाल P_INCONSISTENT: /* peer is inconsistent */
 		ex_to_string = "peer is inconsistent or worse";
 		mask.pdsk = D_MASK;
 		val.pdsk = D_INCONSISTENT;
-		break;
-	case P_OUTDATED: /* peer got outdated, or was already outdated */
+		अवरोध;
+	हाल P_OUTDATED: /* peer got outdated, or was alपढ़ोy outdated */
 		ex_to_string = "peer was fenced";
 		mask.pdsk = D_MASK;
 		val.pdsk = D_OUTDATED;
-		break;
-	case P_DOWN: /* peer was down */
-		if (conn_highest_disk(connection) == D_UP_TO_DATE) {
+		अवरोध;
+	हाल P_DOWN: /* peer was करोwn */
+		अगर (conn_highest_disk(connection) == D_UP_TO_DATE) अणु
 			/* we will(have) create(d) a new UUID anyways... */
 			ex_to_string = "peer is unreachable, assumed to be dead";
 			mask.pdsk = D_MASK;
 			val.pdsk = D_OUTDATED;
-		} else {
+		पूर्ण अन्यथा अणु
 			ex_to_string = "peer unreachable, doing nothing since disk != UpToDate";
-		}
-		break;
-	case P_PRIMARY: /* Peer is primary, voluntarily outdate myself.
+		पूर्ण
+		अवरोध;
+	हाल P_PRIMARY: /* Peer is primary, voluntarily outdate myself.
 		 * This is useful when an unconnected R_SECONDARY is asked to
 		 * become R_PRIMARY, but finds the other peer being active. */
 		ex_to_string = "peer is active";
 		drbd_warn(connection, "Peer is primary, outdating myself.\n");
 		mask.disk = D_MASK;
 		val.disk = D_OUTDATED;
-		break;
-	case P_FENCING:
-		/* THINK: do we need to handle this
-		 * like case 4, or more like case 5? */
-		if (fp != FP_STONITH)
+		अवरोध;
+	हाल P_FENCING:
+		/* THINK: करो we need to handle this
+		 * like हाल 4, or more like हाल 5? */
+		अगर (fp != FP_STONITH)
 			drbd_err(connection, "fence-peer() = 7 && fencing != Stonith !!!\n");
 		ex_to_string = "peer was stonithed";
 		mask.pdsk = D_MASK;
 		val.pdsk = D_OUTDATED;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* The script is broken ... */
 		drbd_err(connection, "fence-peer helper broken, returned %d\n", (r>>8)&0xff);
-		return false; /* Eventually leave IO frozen */
-	}
+		वापस false; /* Eventually leave IO frozen */
+	पूर्ण
 
 	drbd_info(connection, "fence-peer helper returned %d (%s)\n",
 		  (r>>8) & 0xff, ex_to_string);
@@ -568,288 +569,288 @@ bool conn_try_outdate_peer(struct drbd_connection *connection)
 	/* Not using
 	   conn_request_state(connection, mask, val, CS_VERBOSE);
 	   here, because we might were able to re-establish the connection in the
-	   meantime. */
+	   meanसमय. */
 	spin_lock_irq(&resource->req_lock);
-	if (connection->cstate < C_WF_REPORT_PARAMS && !test_bit(STATE_SENT, &connection->flags)) {
-		if (connection->connect_cnt != connect_cnt)
-			/* In case the connection was established and droped
-			   while the fence-peer handler was running, ignore it */
+	अगर (connection->cstate < C_WF_REPORT_PARAMS && !test_bit(STATE_SENT, &connection->flags)) अणु
+		अगर (connection->connect_cnt != connect_cnt)
+			/* In हाल the connection was established and droped
+			   जबतक the fence-peer handler was running, ignore it */
 			drbd_info(connection, "Ignoring fence-peer exit code\n");
-		else
+		अन्यथा
 			_conn_request_state(connection, mask, val, CS_VERBOSE);
-	}
+	पूर्ण
 	spin_unlock_irq(&resource->req_lock);
 
-	return conn_highest_pdsk(connection) <= D_OUTDATED;
-}
+	वापस conn_highest_pdsk(connection) <= D_OUTDATED;
+पूर्ण
 
-static int _try_outdate_peer_async(void *data)
-{
-	struct drbd_connection *connection = (struct drbd_connection *)data;
+अटल पूर्णांक _try_outdate_peer_async(व्योम *data)
+अणु
+	काष्ठा drbd_connection *connection = (काष्ठा drbd_connection *)data;
 
 	conn_try_outdate_peer(connection);
 
 	kref_put(&connection->kref, drbd_destroy_connection);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void conn_try_outdate_peer_async(struct drbd_connection *connection)
-{
-	struct task_struct *opa;
+व्योम conn_try_outdate_peer_async(काष्ठा drbd_connection *connection)
+अणु
+	काष्ठा task_काष्ठा *opa;
 
 	kref_get(&connection->kref);
-	/* We may have just sent a signal to this thread
+	/* We may have just sent a संकेत to this thपढ़ो
 	 * to get it out of some blocking network function.
-	 * Clear signals; otherwise kthread_run(), which internally uses
-	 * wait_on_completion_killable(), will mistake our pending signal
-	 * for a new fatal signal and fail. */
-	flush_signals(current);
-	opa = kthread_run(_try_outdate_peer_async, connection, "drbd_async_h");
-	if (IS_ERR(opa)) {
+	 * Clear संकेतs; otherwise kthपढ़ो_run(), which पूर्णांकernally uses
+	 * रुको_on_completion_समाप्तable(), will mistake our pending संकेत
+	 * क्रम a new fatal संकेत and fail. */
+	flush_संकेतs(current);
+	opa = kthपढ़ो_run(_try_outdate_peer_async, connection, "drbd_async_h");
+	अगर (IS_ERR(opa)) अणु
 		drbd_err(connection, "out of mem, failed to invoke fence-peer helper\n");
 		kref_put(&connection->kref, drbd_destroy_connection);
-	}
-}
+	पूर्ण
+पूर्ण
 
-enum drbd_state_rv
-drbd_set_role(struct drbd_device *const device, enum drbd_role new_role, int force)
-{
-	struct drbd_peer_device *const peer_device = first_peer_device(device);
-	struct drbd_connection *const connection = peer_device ? peer_device->connection : NULL;
-	const int max_tries = 4;
-	enum drbd_state_rv rv = SS_UNKNOWN_ERROR;
-	struct net_conf *nc;
-	int try = 0;
-	int forced = 0;
-	union drbd_state mask, val;
+क्रमागत drbd_state_rv
+drbd_set_role(काष्ठा drbd_device *स्थिर device, क्रमागत drbd_role new_role, पूर्णांक क्रमce)
+अणु
+	काष्ठा drbd_peer_device *स्थिर peer_device = first_peer_device(device);
+	काष्ठा drbd_connection *स्थिर connection = peer_device ? peer_device->connection : शून्य;
+	स्थिर पूर्णांक max_tries = 4;
+	क्रमागत drbd_state_rv rv = SS_UNKNOWN_ERROR;
+	काष्ठा net_conf *nc;
+	पूर्णांक try = 0;
+	पूर्णांक क्रमced = 0;
+	जोड़ drbd_state mask, val;
 
-	if (new_role == R_PRIMARY) {
-		struct drbd_connection *connection;
+	अगर (new_role == R_PRIMARY) अणु
+		काष्ठा drbd_connection *connection;
 
 		/* Detect dead peers as soon as possible.  */
 
-		rcu_read_lock();
-		for_each_connection(connection, device->resource)
+		rcu_पढ़ो_lock();
+		क्रम_each_connection(connection, device->resource)
 			request_ping(connection);
-		rcu_read_unlock();
-	}
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
 	mutex_lock(device->state_mutex);
 
 	mask.i = 0; mask.role = R_MASK;
 	val.i  = 0; val.role  = new_role;
 
-	while (try++ < max_tries) {
+	जबतक (try++ < max_tries) अणु
 		rv = _drbd_request_state_holding_state_mutex(device, mask, val, CS_WAIT_COMPLETE);
 
-		/* in case we first succeeded to outdate,
+		/* in हाल we first succeeded to outdate,
 		 * but now suddenly could establish a connection */
-		if (rv == SS_CW_FAILED_BY_PEER && mask.pdsk != 0) {
+		अगर (rv == SS_CW_FAILED_BY_PEER && mask.pdsk != 0) अणु
 			val.pdsk = 0;
 			mask.pdsk = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (rv == SS_NO_UP_TO_DATE_DISK && force &&
+		अगर (rv == SS_NO_UP_TO_DATE_DISK && क्रमce &&
 		    (device->state.disk < D_UP_TO_DATE &&
-		     device->state.disk >= D_INCONSISTENT)) {
+		     device->state.disk >= D_INCONSISTENT)) अणु
 			mask.disk = D_MASK;
 			val.disk  = D_UP_TO_DATE;
-			forced = 1;
-			continue;
-		}
+			क्रमced = 1;
+			जारी;
+		पूर्ण
 
-		if (rv == SS_NO_UP_TO_DATE_DISK &&
-		    device->state.disk == D_CONSISTENT && mask.pdsk == 0) {
+		अगर (rv == SS_NO_UP_TO_DATE_DISK &&
+		    device->state.disk == D_CONSISTENT && mask.pdsk == 0) अणु
 			D_ASSERT(device, device->state.pdsk == D_UNKNOWN);
 
-			if (conn_try_outdate_peer(connection)) {
+			अगर (conn_try_outdate_peer(connection)) अणु
 				val.disk = D_UP_TO_DATE;
 				mask.disk = D_MASK;
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		if (rv == SS_NOTHING_TO_DO)
-			goto out;
-		if (rv == SS_PRIMARY_NOP && mask.pdsk == 0) {
-			if (!conn_try_outdate_peer(connection) && force) {
+		अगर (rv == SS_NOTHING_TO_DO)
+			जाओ out;
+		अगर (rv == SS_PRIMARY_NOP && mask.pdsk == 0) अणु
+			अगर (!conn_try_outdate_peer(connection) && क्रमce) अणु
 				drbd_warn(device, "Forced into split brain situation!\n");
 				mask.pdsk = D_MASK;
 				val.pdsk  = D_OUTDATED;
 
-			}
-			continue;
-		}
-		if (rv == SS_TWO_PRIMARIES) {
+			पूर्ण
+			जारी;
+		पूर्ण
+		अगर (rv == SS_TWO_PRIMARIES) अणु
 			/* Maybe the peer is detected as dead very soon...
-			   retry at most once more in this case. */
-			if (try < max_tries) {
-				int timeo;
+			   retry at most once more in this हाल. */
+			अगर (try < max_tries) अणु
+				पूर्णांक समयo;
 				try = max_tries - 1;
-				rcu_read_lock();
+				rcu_पढ़ो_lock();
 				nc = rcu_dereference(connection->net_conf);
-				timeo = nc ? (nc->ping_timeo + 1) * HZ / 10 : 1;
-				rcu_read_unlock();
-				schedule_timeout_interruptible(timeo);
-			}
-			continue;
-		}
-		if (rv < SS_SUCCESS) {
+				समयo = nc ? (nc->ping_समयo + 1) * HZ / 10 : 1;
+				rcu_पढ़ो_unlock();
+				schedule_समयout_पूर्णांकerruptible(समयo);
+			पूर्ण
+			जारी;
+		पूर्ण
+		अगर (rv < SS_SUCCESS) अणु
 			rv = _drbd_request_state(device, mask, val,
 						CS_VERBOSE + CS_WAIT_COMPLETE);
-			if (rv < SS_SUCCESS)
-				goto out;
-		}
-		break;
-	}
+			अगर (rv < SS_SUCCESS)
+				जाओ out;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (rv < SS_SUCCESS)
-		goto out;
+	अगर (rv < SS_SUCCESS)
+		जाओ out;
 
-	if (forced)
+	अगर (क्रमced)
 		drbd_warn(device, "Forced to consider local data as UpToDate!\n");
 
 	/* Wait until nothing is on the fly :) */
-	wait_event(device->misc_wait, atomic_read(&device->ap_pending_cnt) == 0);
+	रुको_event(device->misc_रुको, atomic_पढ़ो(&device->ap_pending_cnt) == 0);
 
-	/* FIXME also wait for all pending P_BARRIER_ACK? */
+	/* FIXME also रुको क्रम all pending P_BARRIER_ACK? */
 
-	if (new_role == R_SECONDARY) {
-		if (get_ldev(device)) {
+	अगर (new_role == R_SECONDARY) अणु
+		अगर (get_ldev(device)) अणु
 			device->ldev->md.uuid[UI_CURRENT] &= ~(u64)1;
 			put_ldev(device);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mutex_lock(&device->resource->conf_update);
 		nc = connection->net_conf;
-		if (nc)
+		अगर (nc)
 			nc->discard_my_data = 0; /* without copy; single bit op is atomic */
 		mutex_unlock(&device->resource->conf_update);
 
-		if (get_ldev(device)) {
-			if (((device->state.conn < C_CONNECTED ||
+		अगर (get_ldev(device)) अणु
+			अगर (((device->state.conn < C_CONNECTED ||
 			       device->state.pdsk <= D_FAILED)
-			      && device->ldev->md.uuid[UI_BITMAP] == 0) || forced)
+			      && device->ldev->md.uuid[UI_BITMAP] == 0) || क्रमced)
 				drbd_uuid_new_current(device);
 
 			device->ldev->md.uuid[UI_CURRENT] |=  (u64)1;
 			put_ldev(device);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* writeout of activity log covered areas of the bitmap
-	 * to stable storage done in after state change already */
+	/* ग_लिखोout of activity log covered areas of the biपंचांगap
+	 * to stable storage करोne in after state change alपढ़ोy */
 
-	if (device->state.conn >= C_WF_REPORT_PARAMS) {
-		/* if this was forced, we should consider sync */
-		if (forced)
+	अगर (device->state.conn >= C_WF_REPORT_PARAMS) अणु
+		/* अगर this was क्रमced, we should consider sync */
+		अगर (क्रमced)
 			drbd_send_uuids(peer_device);
 		drbd_send_current_state(peer_device);
-	}
+	पूर्ण
 
 	drbd_md_sync(device);
 	set_disk_ro(device->vdisk, new_role == R_SECONDARY);
 	kobject_uevent(&disk_to_dev(device->vdisk)->kobj, KOBJ_CHANGE);
 out:
 	mutex_unlock(device->state_mutex);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static const char *from_attrs_err_to_txt(int err)
-{
-	return	err == -ENOMSG ? "required attribute missing" :
+अटल स्थिर अक्षर *from_attrs_err_to_txt(पूर्णांक err)
+अणु
+	वापस	err == -ENOMSG ? "required attribute missing" :
 		err == -EOPNOTSUPP ? "unknown mandatory attribute" :
 		err == -EEXIST ? "can not change invariant setting" :
 		"invalid attribute value";
-}
+पूर्ण
 
-int drbd_adm_set_role(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct set_role_parms parms;
-	int err;
-	enum drbd_ret_code retcode;
+पूर्णांक drbd_adm_set_role(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा set_role_parms parms;
+	पूर्णांक err;
+	क्रमागत drbd_ret_code retcode;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
-	memset(&parms, 0, sizeof(parms));
-	if (info->attrs[DRBD_NLA_SET_ROLE_PARMS]) {
+	स_रखो(&parms, 0, माप(parms));
+	अगर (info->attrs[DRBD_NLA_SET_ROLE_PARMS]) अणु
 		err = set_role_parms_from_attrs(&parms, info);
-		if (err) {
+		अगर (err) अणु
 			retcode = ERR_MANDATORY_TAG;
 			drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	genl_unlock();
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 
-	if (info->genlhdr->cmd == DRBD_ADM_PRIMARY)
-		retcode = (enum drbd_ret_code)drbd_set_role(adm_ctx.device,
+	अगर (info->genlhdr->cmd == DRBD_ADM_PRIMARY)
+		retcode = (क्रमागत drbd_ret_code)drbd_set_role(adm_ctx.device,
 						R_PRIMARY, parms.assume_uptodate);
-	else
-		retcode = (enum drbd_ret_code)drbd_set_role(adm_ctx.device,
+	अन्यथा
+		retcode = (क्रमागत drbd_ret_code)drbd_set_role(adm_ctx.device,
 						R_SECONDARY, 0);
 
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 	genl_lock();
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Initializes the md.*_offset members, so we are able to find
  * the on disk meta data.
  *
  * We currently have two possible layouts:
- * external:
+ * बाह्यal:
  *   |----------- md_size_sect ------------------|
- *   [ 4k superblock ][ activity log ][  Bitmap  ]
+ *   [ 4k superblock ][ activity log ][  Biपंचांगap  ]
  *   | al_offset == 8 |
  *   | bm_offset = al_offset + X      |
- *  ==> bitmap sectors = md_size_sect - bm_offset
+ *  ==> biपंचांगap sectors = md_size_sect - bm_offset
  *
- * internal:
+ * पूर्णांकernal:
  *            |----------- md_size_sect ------------------|
- * [data.....][  Bitmap  ][ activity log ][ 4k superblock ]
+ * [data.....][  Biपंचांगap  ][ activity log ][ 4k superblock ]
  *                        | al_offset < 0 |
  *            | bm_offset = al_offset - Y |
- *  ==> bitmap sectors = Y = al_offset - bm_offset
+ *  ==> biपंचांगap sectors = Y = al_offset - bm_offset
  *
  *  Activity log size used to be fixed 32kB,
  *  but is about to become configurable.
  */
-static void drbd_md_set_sector_offsets(struct drbd_device *device,
-				       struct drbd_backing_dev *bdev)
-{
+अटल व्योम drbd_md_set_sector_offsets(काष्ठा drbd_device *device,
+				       काष्ठा drbd_backing_dev *bdev)
+अणु
 	sector_t md_size_sect = 0;
-	unsigned int al_size_sect = bdev->md.al_size_4k * 8;
+	अचिन्हित पूर्णांक al_size_sect = bdev->md.al_size_4k * 8;
 
 	bdev->md.md_offset = drbd_md_ss(bdev);
 
-	switch (bdev->md.meta_dev_idx) {
-	default:
+	चयन (bdev->md.meta_dev_idx) अणु
+	शेष:
 		/* v07 style fixed size indexed meta data */
 		bdev->md.md_size_sect = MD_128MB_SECT;
 		bdev->md.al_offset = MD_4kB_SECT;
 		bdev->md.bm_offset = MD_4kB_SECT + al_size_sect;
-		break;
-	case DRBD_MD_INDEX_FLEX_EXT:
+		अवरोध;
+	हाल DRBD_MD_INDEX_FLEX_EXT:
 		/* just occupy the full device; unit: sectors */
 		bdev->md.md_size_sect = drbd_get_capacity(bdev->md_bdev);
 		bdev->md.al_offset = MD_4kB_SECT;
 		bdev->md.bm_offset = MD_4kB_SECT + al_size_sect;
-		break;
-	case DRBD_MD_INDEX_INTERNAL:
-	case DRBD_MD_INDEX_FLEX_INT:
+		अवरोध;
+	हाल DRBD_MD_INDEX_INTERNAL:
+	हाल DRBD_MD_INDEX_FLEX_INT:
 		/* al size is still fixed */
 		bdev->md.al_offset = -al_size_sect;
-		/* we need (slightly less than) ~ this much bitmap sectors: */
+		/* we need (slightly less than) ~ this much biपंचांगap sectors: */
 		md_size_sect = drbd_get_capacity(bdev->backing_bdev);
 		md_size_sect = ALIGN(md_size_sect, BM_SECT_PER_EXT);
 		md_size_sect = BM_SECT_TO_EXT(md_size_sect);
@@ -860,35 +861,35 @@ static void drbd_md_set_sector_offsets(struct drbd_device *device,
 		md_size_sect += MD_4kB_SECT + al_size_sect;
 
 		bdev->md.md_size_sect = md_size_sect;
-		/* bitmap offset is adjusted by 'super' block size */
+		/* biपंचांगap offset is adjusted by 'super' block size */
 		bdev->md.bm_offset   = -md_size_sect + MD_4kB_SECT;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* input size is expected to be in KB */
-char *ppsize(char *buf, unsigned long long size)
-{
+अक्षर *ppsize(अक्षर *buf, अचिन्हित दीर्घ दीर्घ size)
+अणु
 	/* Needs 9 bytes at max including trailing NUL:
 	 * -1ULL ==> "16384 EB" */
-	static char units[] = { 'K', 'M', 'G', 'T', 'P', 'E' };
-	int base = 0;
-	while (size >= 10000 && base < sizeof(units)-1) {
-		/* shift + round */
+	अटल अक्षर units[] = अणु 'K', 'M', 'G', 'T', 'P', 'E' पूर्ण;
+	पूर्णांक base = 0;
+	जबतक (size >= 10000 && base < माप(units)-1) अणु
+		/* shअगरt + round */
 		size = (size >> 10) + !!(size & (1<<9));
 		base++;
-	}
-	sprintf(buf, "%u %cB", (unsigned)size, units[base]);
+	पूर्ण
+	प्र_लिखो(buf, "%u %cB", (अचिन्हित)size, units[base]);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
 /* there is still a theoretical deadlock when called from receiver
  * on an D_INCONSISTENT R_PRIMARY:
- *  remote READ does inc_ap_bio, receiver would need to receive answer
+ *  remote READ करोes inc_ap_bio, receiver would need to receive answer
  *  packet from remote to dec_ap_bio again.
  *  receiver receive_sizes(), comes here,
- *  waits for ap_bio_cnt == 0. -> deadlock.
+ *  रुकोs क्रम ap_bio_cnt == 0. -> deadlock.
  * but this cannot happen, actually, because:
  *  R_PRIMARY D_INCONSISTENT, and peer's disk is unreachable
  *  (not connected, or bad/no disk on peer):
@@ -899,36 +900,36 @@ char *ppsize(char *buf, unsigned long long size)
 /* Note these are not to be confused with
  * drbd_adm_suspend_io/drbd_adm_resume_io,
  * which are (sub) state changes triggered by admin (drbdsetup),
- * and can be long lived.
- * This changes an device->flag, is triggered by drbd internals,
- * and should be short-lived. */
-/* It needs to be a counter, since multiple threads might
+ * and can be दीर्घ lived.
+ * This changes an device->flag, is triggered by drbd पूर्णांकernals,
+ * and should be लघु-lived. */
+/* It needs to be a counter, since multiple thपढ़ोs might
    independently suspend and resume IO. */
-void drbd_suspend_io(struct drbd_device *device)
-{
+व्योम drbd_suspend_io(काष्ठा drbd_device *device)
+अणु
 	atomic_inc(&device->suspend_cnt);
-	if (drbd_suspended(device))
-		return;
-	wait_event(device->misc_wait, !atomic_read(&device->ap_bio_cnt));
-}
+	अगर (drbd_suspended(device))
+		वापस;
+	रुको_event(device->misc_रुको, !atomic_पढ़ो(&device->ap_bio_cnt));
+पूर्ण
 
-void drbd_resume_io(struct drbd_device *device)
-{
-	if (atomic_dec_and_test(&device->suspend_cnt))
-		wake_up(&device->misc_wait);
-}
+व्योम drbd_resume_io(काष्ठा drbd_device *device)
+अणु
+	अगर (atomic_dec_and_test(&device->suspend_cnt))
+		wake_up(&device->misc_रुको);
+पूर्ण
 
 /*
- * drbd_determine_dev_size() -  Sets the right device size obeying all constraints
+ * drbd_determine_dev_size() -  Sets the right device size obeying all स्थिरraपूर्णांकs
  * @device:	DRBD device.
  *
- * Returns 0 on success, negative return values indicate errors.
+ * Returns 0 on success, negative वापस values indicate errors.
  * You should call drbd_md_sync() after calling this function.
  */
-enum determine_dev_size
-drbd_determine_dev_size(struct drbd_device *device, enum dds_flags flags, struct resize_parms *rs) __must_hold(local)
-{
-	struct md_offsets_and_sizes {
+क्रमागत determine_dev_size
+drbd_determine_dev_size(काष्ठा drbd_device *device, क्रमागत dds_flags flags, काष्ठा resize_parms *rs) __must_hold(local)
+अणु
+	काष्ठा md_offsets_and_sizes अणु
 		u64 last_agreed_sect;
 		u64 md_offset;
 		s32 al_offset;
@@ -937,28 +938,28 @@ drbd_determine_dev_size(struct drbd_device *device, enum dds_flags flags, struct
 
 		u32 al_stripes;
 		u32 al_stripe_size_4k;
-	} prev;
+	पूर्ण prev;
 	sector_t u_size, size;
-	struct drbd_md *md = &device->ldev->md;
-	void *buffer;
+	काष्ठा drbd_md *md = &device->ldev->md;
+	व्योम *buffer;
 
-	int md_moved, la_size_changed;
-	enum determine_dev_size rv = DS_UNCHANGED;
+	पूर्णांक md_moved, la_size_changed;
+	क्रमागत determine_dev_size rv = DS_UNCHANGED;
 
 	/* We may change the on-disk offsets of our meta data below.  Lock out
-	 * anything that may cause meta data IO, to avoid acting on incomplete
+	 * anything that may cause meta data IO, to aव्योम acting on incomplete
 	 * layout changes or scribbling over meta data that is in the process
 	 * of being moved.
 	 *
 	 * Move is not exactly correct, btw, currently we have all our meta
-	 * data in core memory, to "move" it we just write it all out, there
-	 * are no reads. */
+	 * data in core memory, to "move" it we just ग_लिखो it all out, there
+	 * are no पढ़ोs. */
 	drbd_suspend_io(device);
 	buffer = drbd_md_get_buffer(device, __func__); /* Lock meta-data IO */
-	if (!buffer) {
+	अगर (!buffer) अणु
 		drbd_resume_io(device);
-		return DS_ERROR;
-	}
+		वापस DS_ERROR;
+	पूर्ण
 
 	/* remember current offset and sizes */
 	prev.last_agreed_sect = md->la_size_sect;
@@ -969,107 +970,107 @@ drbd_determine_dev_size(struct drbd_device *device, enum dds_flags flags, struct
 	prev.al_stripes = md->al_stripes;
 	prev.al_stripe_size_4k = md->al_stripe_size_4k;
 
-	if (rs) {
-		/* rs is non NULL if we should change the AL layout only */
+	अगर (rs) अणु
+		/* rs is non शून्य अगर we should change the AL layout only */
 		md->al_stripes = rs->al_stripes;
 		md->al_stripe_size_4k = rs->al_stripe_size / 4;
 		md->al_size_4k = (u64)rs->al_stripes * rs->al_stripe_size / 4;
-	}
+	पूर्ण
 
 	drbd_md_set_sector_offsets(device, device->ldev);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	u_size = rcu_dereference(device->ldev->disk_conf)->disk_size;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	size = drbd_new_dev_size(device, device->ldev, u_size, flags & DDSF_FORCED);
 
-	if (size < prev.last_agreed_sect) {
-		if (rs && u_size == 0) {
+	अगर (size < prev.last_agreed_sect) अणु
+		अगर (rs && u_size == 0) अणु
 			/* Remove "rs &&" later. This check should always be active, but
 			   right now the receiver expects the permissive behavior */
 			drbd_warn(device, "Implicit shrink not allowed. "
 				 "Use --size=%llus for explicit shrink.\n",
-				 (unsigned long long)size);
+				 (अचिन्हित दीर्घ दीर्घ)size);
 			rv = DS_ERROR_SHRINK;
-		}
-		if (u_size > size)
+		पूर्ण
+		अगर (u_size > size)
 			rv = DS_ERROR_SPACE_MD;
-		if (rv != DS_UNCHANGED)
-			goto err_out;
-	}
+		अगर (rv != DS_UNCHANGED)
+			जाओ err_out;
+	पूर्ण
 
-	if (get_capacity(device->vdisk) != size ||
-	    drbd_bm_capacity(device) != size) {
-		int err;
+	अगर (get_capacity(device->vdisk) != size ||
+	    drbd_bm_capacity(device) != size) अणु
+		पूर्णांक err;
 		err = drbd_bm_resize(device, size, !(flags & DDSF_NO_RESYNC));
-		if (unlikely(err)) {
+		अगर (unlikely(err)) अणु
 			/* currently there is only one error: ENOMEM! */
 			size = drbd_bm_capacity(device);
-			if (size == 0) {
+			अगर (size == 0) अणु
 				drbd_err(device, "OUT OF MEMORY! "
 				    "Could not allocate bitmap!\n");
-			} else {
+			पूर्ण अन्यथा अणु
 				drbd_err(device, "BM resizing failed. "
 				    "Leaving size unchanged\n");
-			}
+			पूर्ण
 			rv = DS_ERROR;
-		}
+		पूर्ण
 		/* racy, see comments above. */
 		drbd_set_my_capacity(device, size);
 		md->la_size_sect = size;
-	}
-	if (rv <= DS_ERROR)
-		goto err_out;
+	पूर्ण
+	अगर (rv <= DS_ERROR)
+		जाओ err_out;
 
 	la_size_changed = (prev.last_agreed_sect != md->la_size_sect);
 
 	md_moved = prev.md_offset    != md->md_offset
 		|| prev.md_size_sect != md->md_size_sect;
 
-	if (la_size_changed || md_moved || rs) {
+	अगर (la_size_changed || md_moved || rs) अणु
 		u32 prev_flags;
 
-		/* We do some synchronous IO below, which may take some time.
-		 * Clear the timer, to avoid scary "timer expired!" messages,
+		/* We करो some synchronous IO below, which may take some समय.
+		 * Clear the समयr, to aव्योम scary "timer expired!" messages,
 		 * "Superblock" is written out at least twice below, anyways. */
-		del_timer(&device->md_sync_timer);
+		del_समयr(&device->md_sync_समयr);
 
 		/* We won't change the "al-extents" setting, we just may need
 		 * to move the on-disk location of the activity log ringbuffer.
-		 * Lock for transaction is good enough, it may well be "dirty"
+		 * Lock क्रम transaction is good enough, it may well be "dirty"
 		 * or even "starving". */
-		wait_event(device->al_wait, lc_try_lock_for_transaction(device->act_log));
+		रुको_event(device->al_रुको, lc_try_lock_क्रम_transaction(device->act_log));
 
-		/* mark current on-disk bitmap and activity log as unreliable */
+		/* mark current on-disk biपंचांगap and activity log as unreliable */
 		prev_flags = md->flags;
 		md->flags |= MDF_FULL_SYNC | MDF_AL_DISABLED;
-		drbd_md_write(device, buffer);
+		drbd_md_ग_लिखो(device, buffer);
 
 		drbd_al_initialize(device, buffer);
 
 		drbd_info(device, "Writing the whole bitmap, %s\n",
 			 la_size_changed && md_moved ? "size changed and md moved" :
 			 la_size_changed ? "size changed" : "md moved");
-		/* next line implicitly does drbd_suspend_io()+drbd_resume_io() */
-		drbd_bitmap_io(device, md_moved ? &drbd_bm_write_all : &drbd_bm_write,
+		/* next line implicitly करोes drbd_suspend_io()+drbd_resume_io() */
+		drbd_biपंचांगap_io(device, md_moved ? &drbd_bm_ग_लिखो_all : &drbd_bm_ग_लिखो,
 			       "size changed", BM_LOCKED_MASK);
 
-		/* on-disk bitmap and activity log is authoritative again
-		 * (unless there was an IO error meanwhile...) */
+		/* on-disk biपंचांगap and activity log is authoritative again
+		 * (unless there was an IO error meanजबतक...) */
 		md->flags = prev_flags;
-		drbd_md_write(device, buffer);
+		drbd_md_ग_लिखो(device, buffer);
 
-		if (rs)
+		अगर (rs)
 			drbd_info(device, "Changed AL layout to al-stripes = %d, al-stripe-size-kB = %d\n",
 				  md->al_stripes, md->al_stripe_size_4k * 4);
-	}
+	पूर्ण
 
-	if (size > prev.last_agreed_sect)
+	अगर (size > prev.last_agreed_sect)
 		rv = prev.last_agreed_sect ? DS_GREW : DS_GREW_FROM_ZERO;
-	if (size < prev.last_agreed_sect)
+	अगर (size < prev.last_agreed_sect)
 		rv = DS_SHRUNK;
 
-	if (0) {
+	अगर (0) अणु
 	err_out:
 		/* restore previous offset and sizes */
 		md->la_size_sect = prev.last_agreed_sect;
@@ -1080,19 +1081,19 @@ drbd_determine_dev_size(struct drbd_device *device, enum dds_flags flags, struct
 		md->al_stripes = prev.al_stripes;
 		md->al_stripe_size_4k = prev.al_stripe_size_4k;
 		md->al_size_4k = (u64)prev.al_stripes * prev.al_stripe_size_4k;
-	}
+	पूर्ण
 	lc_unlock(device->act_log);
-	wake_up(&device->al_wait);
+	wake_up(&device->al_रुको);
 	drbd_md_put_buffer(device);
 	drbd_resume_io(device);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
 sector_t
-drbd_new_dev_size(struct drbd_device *device, struct drbd_backing_dev *bdev,
-		  sector_t u_size, int assume_peer_has_space)
-{
+drbd_new_dev_size(काष्ठा drbd_device *device, काष्ठा drbd_backing_dev *bdev,
+		  sector_t u_size, पूर्णांक assume_peer_has_space)
+अणु
 	sector_t p_size = device->p_size;   /* partner's disk size. */
 	sector_t la_size_sect = bdev->md.la_size_sect; /* last agreed size. */
 	sector_t m_size; /* my size */
@@ -1100,128 +1101,128 @@ drbd_new_dev_size(struct drbd_device *device, struct drbd_backing_dev *bdev,
 
 	m_size = drbd_get_max_capacity(bdev);
 
-	if (device->state.conn < C_CONNECTED && assume_peer_has_space) {
+	अगर (device->state.conn < C_CONNECTED && assume_peer_has_space) अणु
 		drbd_warn(device, "Resize while not connected was forced by the user!\n");
 		p_size = m_size;
-	}
+	पूर्ण
 
-	if (p_size && m_size) {
+	अगर (p_size && m_size) अणु
 		size = min_t(sector_t, p_size, m_size);
-	} else {
-		if (la_size_sect) {
+	पूर्ण अन्यथा अणु
+		अगर (la_size_sect) अणु
 			size = la_size_sect;
-			if (m_size && m_size < size)
+			अगर (m_size && m_size < size)
 				size = m_size;
-			if (p_size && p_size < size)
+			अगर (p_size && p_size < size)
 				size = p_size;
-		} else {
-			if (m_size)
+		पूर्ण अन्यथा अणु
+			अगर (m_size)
 				size = m_size;
-			if (p_size)
+			अगर (p_size)
 				size = p_size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (size == 0)
+	अगर (size == 0)
 		drbd_err(device, "Both nodes diskless!\n");
 
-	if (u_size) {
-		if (u_size > size)
+	अगर (u_size) अणु
+		अगर (u_size > size)
 			drbd_err(device, "Requested disk size is too big (%lu > %lu)\n",
-			    (unsigned long)u_size>>1, (unsigned long)size>>1);
-		else
+			    (अचिन्हित दीर्घ)u_size>>1, (अचिन्हित दीर्घ)size>>1);
+		अन्यथा
 			size = u_size;
-	}
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
 /*
  * drbd_check_al_size() - Ensures that the AL is of the right size
  * @device:	DRBD device.
  *
- * Returns -EBUSY if current al lru is still used, -ENOMEM when allocation
+ * Returns -EBUSY अगर current al lru is still used, -ENOMEM when allocation
  * failed, and 0 on success. You should call drbd_md_sync() after you called
  * this function.
  */
-static int drbd_check_al_size(struct drbd_device *device, struct disk_conf *dc)
-{
-	struct lru_cache *n, *t;
-	struct lc_element *e;
-	unsigned int in_use;
-	int i;
+अटल पूर्णांक drbd_check_al_size(काष्ठा drbd_device *device, काष्ठा disk_conf *dc)
+अणु
+	काष्ठा lru_cache *n, *t;
+	काष्ठा lc_element *e;
+	अचिन्हित पूर्णांक in_use;
+	पूर्णांक i;
 
-	if (device->act_log &&
+	अगर (device->act_log &&
 	    device->act_log->nr_elements == dc->al_extents)
-		return 0;
+		वापस 0;
 
 	in_use = 0;
 	t = device->act_log;
 	n = lc_create("act_log", drbd_al_ext_cache, AL_UPDATES_PER_TRANSACTION,
-		dc->al_extents, sizeof(struct lc_element), 0);
+		dc->al_extents, माप(काष्ठा lc_element), 0);
 
-	if (n == NULL) {
+	अगर (n == शून्य) अणु
 		drbd_err(device, "Cannot allocate act_log lru!\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	spin_lock_irq(&device->al_lock);
-	if (t) {
-		for (i = 0; i < t->nr_elements; i++) {
+	अगर (t) अणु
+		क्रम (i = 0; i < t->nr_elements; i++) अणु
 			e = lc_element_by_index(t, i);
-			if (e->refcnt)
+			अगर (e->refcnt)
 				drbd_err(device, "refcnt(%d)==%d\n",
 				    e->lc_number, e->refcnt);
 			in_use += e->refcnt;
-		}
-	}
-	if (!in_use)
+		पूर्ण
+	पूर्ण
+	अगर (!in_use)
 		device->act_log = n;
 	spin_unlock_irq(&device->al_lock);
-	if (in_use) {
+	अगर (in_use) अणु
 		drbd_err(device, "Activity log still in use!\n");
 		lc_destroy(n);
-		return -EBUSY;
-	} else {
+		वापस -EBUSY;
+	पूर्ण अन्यथा अणु
 		lc_destroy(t);
-	}
+	पूर्ण
 	drbd_md_mark_dirty(device); /* we changed device->act_log->nr_elemens */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void blk_queue_discard_granularity(struct request_queue *q, unsigned int granularity)
-{
+अटल व्योम blk_queue_discard_granularity(काष्ठा request_queue *q, अचिन्हित पूर्णांक granularity)
+अणु
 	q->limits.discard_granularity = granularity;
-}
+पूर्ण
 
-static unsigned int drbd_max_discard_sectors(struct drbd_connection *connection)
-{
-	/* when we introduced REQ_WRITE_SAME support, we also bumped
-	 * our maximum supported batch bio size used for discards. */
-	if (connection->agreed_features & DRBD_FF_WSAME)
-		return DRBD_MAX_BBIO_SECTORS;
-	/* before, with DRBD <= 8.4.6, we only allowed up to one AL_EXTENT_SIZE. */
-	return AL_EXTENT_SIZE >> 9;
-}
+अटल अचिन्हित पूर्णांक drbd_max_discard_sectors(काष्ठा drbd_connection *connection)
+अणु
+	/* when we पूर्णांकroduced REQ_WRITE_SAME support, we also bumped
+	 * our maximum supported batch bio size used क्रम discards. */
+	अगर (connection->agreed_features & DRBD_FF_WSAME)
+		वापस DRBD_MAX_BBIO_SECTORS;
+	/* beक्रमe, with DRBD <= 8.4.6, we only allowed up to one AL_EXTENT_SIZE. */
+	वापस AL_EXTENT_SIZE >> 9;
+पूर्ण
 
-static void decide_on_discard_support(struct drbd_device *device,
-			struct request_queue *q,
-			struct request_queue *b,
-			bool discard_zeroes_if_aligned)
-{
+अटल व्योम decide_on_discard_support(काष्ठा drbd_device *device,
+			काष्ठा request_queue *q,
+			काष्ठा request_queue *b,
+			bool discard_zeroes_अगर_aligned)
+अणु
 	/* q = drbd device queue (device->rq_queue)
 	 * b = backing device queue (device->ldev->backing_bdev->bd_disk->queue),
-	 *     or NULL if diskless
+	 *     or शून्य अगर diskless
 	 */
-	struct drbd_connection *connection = first_peer_device(device)->connection;
-	bool can_do = b ? blk_queue_discard(b) : true;
+	काष्ठा drbd_connection *connection = first_peer_device(device)->connection;
+	bool can_करो = b ? blk_queue_discard(b) : true;
 
-	if (can_do && connection->cstate >= C_CONNECTED && !(connection->agreed_features & DRBD_FF_TRIM)) {
-		can_do = false;
+	अगर (can_करो && connection->cstate >= C_CONNECTED && !(connection->agreed_features & DRBD_FF_TRIM)) अणु
+		can_करो = false;
 		drbd_info(connection, "peer DRBD too old, does not support TRIM: disabling discards\n");
-	}
-	if (can_do) {
-		/* We don't care for the granularity, really.
-		 * Stacking limits below should fix it for the local
+	पूर्ण
+	अगर (can_करो) अणु
+		/* We करोn't care क्रम the granularity, really.
+		 * Stacking limits below should fix it क्रम the local
 		 * device.  Whether or not it is a suitable granularity
 		 * on the remote device is not our problem, really. If
 		 * you care, you need to use devices with similar
@@ -1229,246 +1230,246 @@ static void decide_on_discard_support(struct drbd_device *device,
 		blk_queue_discard_granularity(q, 512);
 		q->limits.max_discard_sectors = drbd_max_discard_sectors(connection);
 		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
-		q->limits.max_write_zeroes_sectors = drbd_max_discard_sectors(connection);
-	} else {
+		q->limits.max_ग_लिखो_zeroes_sectors = drbd_max_discard_sectors(connection);
+	पूर्ण अन्यथा अणु
 		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
 		blk_queue_discard_granularity(q, 0);
 		q->limits.max_discard_sectors = 0;
-		q->limits.max_write_zeroes_sectors = 0;
-	}
-}
+		q->limits.max_ग_लिखो_zeroes_sectors = 0;
+	पूर्ण
+पूर्ण
 
-static void fixup_discard_if_not_supported(struct request_queue *q)
-{
-	/* To avoid confusion, if this queue does not support discard, clear
+अटल व्योम fixup_discard_अगर_not_supported(काष्ठा request_queue *q)
+अणु
+	/* To aव्योम confusion, अगर this queue करोes not support discard, clear
 	 * max_discard_sectors, which is what lsblk -D reports to the user.
 	 * Older kernels got this wrong in "stack limits".
 	 * */
-	if (!blk_queue_discard(q)) {
+	अगर (!blk_queue_discard(q)) अणु
 		blk_queue_max_discard_sectors(q, 0);
 		blk_queue_discard_granularity(q, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fixup_write_zeroes(struct drbd_device *device, struct request_queue *q)
-{
-	/* Fixup max_write_zeroes_sectors after blk_stack_limits():
-	 * if we can handle "zeroes" efficiently on the protocol,
-	 * we want to do that, even if our backend does not announce
-	 * max_write_zeroes_sectors itself. */
-	struct drbd_connection *connection = first_peer_device(device)->connection;
+अटल व्योम fixup_ग_लिखो_zeroes(काष्ठा drbd_device *device, काष्ठा request_queue *q)
+अणु
+	/* Fixup max_ग_लिखो_zeroes_sectors after blk_stack_limits():
+	 * अगर we can handle "zeroes" efficiently on the protocol,
+	 * we want to करो that, even अगर our backend करोes not announce
+	 * max_ग_लिखो_zeroes_sectors itself. */
+	काष्ठा drbd_connection *connection = first_peer_device(device)->connection;
 	/* If the peer announces WZEROES support, use it.  Otherwise, rather
 	 * send explicit zeroes than rely on some discard-zeroes-data magic. */
-	if (connection->agreed_features & DRBD_FF_WZEROES)
-		q->limits.max_write_zeroes_sectors = DRBD_MAX_BBIO_SECTORS;
-	else
-		q->limits.max_write_zeroes_sectors = 0;
-}
+	अगर (connection->agreed_features & DRBD_FF_WZEROES)
+		q->limits.max_ग_लिखो_zeroes_sectors = DRBD_MAX_BBIO_SECTORS;
+	अन्यथा
+		q->limits.max_ग_लिखो_zeroes_sectors = 0;
+पूर्ण
 
-static void decide_on_write_same_support(struct drbd_device *device,
-			struct request_queue *q,
-			struct request_queue *b, struct o_qlim *o,
-			bool disable_write_same)
-{
-	struct drbd_peer_device *peer_device = first_peer_device(device);
-	struct drbd_connection *connection = peer_device->connection;
-	bool can_do = b ? b->limits.max_write_same_sectors : true;
+अटल व्योम decide_on_ग_लिखो_same_support(काष्ठा drbd_device *device,
+			काष्ठा request_queue *q,
+			काष्ठा request_queue *b, काष्ठा o_qlim *o,
+			bool disable_ग_लिखो_same)
+अणु
+	काष्ठा drbd_peer_device *peer_device = first_peer_device(device);
+	काष्ठा drbd_connection *connection = peer_device->connection;
+	bool can_करो = b ? b->limits.max_ग_लिखो_same_sectors : true;
 
-	if (can_do && disable_write_same) {
-		can_do = false;
+	अगर (can_करो && disable_ग_लिखो_same) अणु
+		can_करो = false;
 		drbd_info(peer_device, "WRITE_SAME disabled by config\n");
-	}
+	पूर्ण
 
-	if (can_do && connection->cstate >= C_CONNECTED && !(connection->agreed_features & DRBD_FF_WSAME)) {
-		can_do = false;
+	अगर (can_करो && connection->cstate >= C_CONNECTED && !(connection->agreed_features & DRBD_FF_WSAME)) अणु
+		can_करो = false;
 		drbd_info(peer_device, "peer does not support WRITE_SAME\n");
-	}
+	पूर्ण
 
-	if (o) {
-		/* logical block size; queue_logical_block_size(NULL) is 512 */
-		unsigned int peer_lbs = be32_to_cpu(o->logical_block_size);
-		unsigned int me_lbs_b = queue_logical_block_size(b);
-		unsigned int me_lbs = queue_logical_block_size(q);
+	अगर (o) अणु
+		/* logical block size; queue_logical_block_size(शून्य) is 512 */
+		अचिन्हित पूर्णांक peer_lbs = be32_to_cpu(o->logical_block_size);
+		अचिन्हित पूर्णांक me_lbs_b = queue_logical_block_size(b);
+		अचिन्हित पूर्णांक me_lbs = queue_logical_block_size(q);
 
-		if (me_lbs_b != me_lbs) {
+		अगर (me_lbs_b != me_lbs) अणु
 			drbd_warn(device,
 				"logical block size of local backend does not match (drbd:%u, backend:%u); was this a late attach?\n",
 				me_lbs, me_lbs_b);
-			/* rather disable write same than trigger some BUG_ON later in the scsi layer. */
-			can_do = false;
-		}
-		if (me_lbs_b != peer_lbs) {
+			/* rather disable ग_लिखो same than trigger some BUG_ON later in the scsi layer. */
+			can_करो = false;
+		पूर्ण
+		अगर (me_lbs_b != peer_lbs) अणु
 			drbd_warn(peer_device, "logical block sizes do not match (me:%u, peer:%u); this may cause problems.\n",
 				me_lbs, peer_lbs);
-			if (can_do) {
+			अगर (can_करो) अणु
 				drbd_dbg(peer_device, "logical block size mismatch: WRITE_SAME disabled.\n");
-				can_do = false;
-			}
+				can_करो = false;
+			पूर्ण
 			me_lbs = max(me_lbs, me_lbs_b);
 			/* We cannot change the logical block size of an in-use queue.
 			 * We can only hope that access happens to be properly aligned.
 			 * If not, the peer will likely produce an IO error, and detach. */
-			if (peer_lbs > me_lbs) {
-				if (device->state.role != R_PRIMARY) {
+			अगर (peer_lbs > me_lbs) अणु
+				अगर (device->state.role != R_PRIMARY) अणु
 					blk_queue_logical_block_size(q, peer_lbs);
 					drbd_warn(peer_device, "logical block size set to %u\n", peer_lbs);
-				} else {
+				पूर्ण अन्यथा अणु
 					drbd_warn(peer_device,
 						"current Primary must NOT adjust logical block size (%u -> %u); hope for the best.\n",
 						me_lbs, peer_lbs);
-				}
-			}
-		}
-		if (can_do && !o->write_same_capable) {
-			/* If we introduce an open-coded write-same loop on the receiving side,
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		अगर (can_करो && !o->ग_लिखो_same_capable) अणु
+			/* If we पूर्णांकroduce an खोलो-coded ग_लिखो-same loop on the receiving side,
 			 * the peer would present itself as "capable". */
 			drbd_dbg(peer_device, "WRITE_SAME disabled (peer device not capable)\n");
-			can_do = false;
-		}
-	}
+			can_करो = false;
+		पूर्ण
+	पूर्ण
 
-	blk_queue_max_write_same_sectors(q, can_do ? DRBD_MAX_BBIO_SECTORS : 0);
-}
+	blk_queue_max_ग_लिखो_same_sectors(q, can_करो ? DRBD_MAX_BBIO_SECTORS : 0);
+पूर्ण
 
-static void drbd_setup_queue_param(struct drbd_device *device, struct drbd_backing_dev *bdev,
-				   unsigned int max_bio_size, struct o_qlim *o)
-{
-	struct request_queue * const q = device->rq_queue;
-	unsigned int max_hw_sectors = max_bio_size >> 9;
-	unsigned int max_segments = 0;
-	struct request_queue *b = NULL;
-	struct disk_conf *dc;
-	bool discard_zeroes_if_aligned = true;
-	bool disable_write_same = false;
+अटल व्योम drbd_setup_queue_param(काष्ठा drbd_device *device, काष्ठा drbd_backing_dev *bdev,
+				   अचिन्हित पूर्णांक max_bio_size, काष्ठा o_qlim *o)
+अणु
+	काष्ठा request_queue * स्थिर q = device->rq_queue;
+	अचिन्हित पूर्णांक max_hw_sectors = max_bio_size >> 9;
+	अचिन्हित पूर्णांक max_segments = 0;
+	काष्ठा request_queue *b = शून्य;
+	काष्ठा disk_conf *dc;
+	bool discard_zeroes_अगर_aligned = true;
+	bool disable_ग_लिखो_same = false;
 
-	if (bdev) {
+	अगर (bdev) अणु
 		b = bdev->backing_bdev->bd_disk->queue;
 
 		max_hw_sectors = min(queue_max_hw_sectors(b), max_bio_size >> 9);
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		dc = rcu_dereference(device->ldev->disk_conf);
 		max_segments = dc->max_bio_bvecs;
-		discard_zeroes_if_aligned = dc->discard_zeroes_if_aligned;
-		disable_write_same = dc->disable_write_same;
-		rcu_read_unlock();
+		discard_zeroes_अगर_aligned = dc->discard_zeroes_अगर_aligned;
+		disable_ग_लिखो_same = dc->disable_ग_लिखो_same;
+		rcu_पढ़ो_unlock();
 
 		blk_set_stacking_limits(&q->limits);
-	}
+	पूर्ण
 
 	blk_queue_max_hw_sectors(q, max_hw_sectors);
-	/* This is the workaround for "bio would need to, but cannot, be split" */
+	/* This is the workaround क्रम "bio would need to, but cannot, be split" */
 	blk_queue_max_segments(q, max_segments ? max_segments : BLK_MAX_SEGMENTS);
 	blk_queue_segment_boundary(q, PAGE_SIZE-1);
-	decide_on_discard_support(device, q, b, discard_zeroes_if_aligned);
-	decide_on_write_same_support(device, q, b, o, disable_write_same);
+	decide_on_discard_support(device, q, b, discard_zeroes_अगर_aligned);
+	decide_on_ग_लिखो_same_support(device, q, b, o, disable_ग_लिखो_same);
 
-	if (b) {
+	अगर (b) अणु
 		blk_stack_limits(&q->limits, &b->limits, 0);
-		blk_queue_update_readahead(q);
-	}
-	fixup_discard_if_not_supported(q);
-	fixup_write_zeroes(device, q);
-}
+		blk_queue_update_पढ़ोahead(q);
+	पूर्ण
+	fixup_discard_अगर_not_supported(q);
+	fixup_ग_लिखो_zeroes(device, q);
+पूर्ण
 
-void drbd_reconsider_queue_parameters(struct drbd_device *device, struct drbd_backing_dev *bdev, struct o_qlim *o)
-{
-	unsigned int now, new, local, peer;
+व्योम drbd_reconsider_queue_parameters(काष्ठा drbd_device *device, काष्ठा drbd_backing_dev *bdev, काष्ठा o_qlim *o)
+अणु
+	अचिन्हित पूर्णांक now, new, local, peer;
 
 	now = queue_max_hw_sectors(device->rq_queue) << 9;
-	local = device->local_max_bio_size; /* Eventually last known value, from volatile memory */
+	local = device->local_max_bio_size; /* Eventually last known value, from अस्थिर memory */
 	peer = device->peer_max_bio_size; /* Eventually last known value, from meta data */
 
-	if (bdev) {
+	अगर (bdev) अणु
 		local = queue_max_hw_sectors(bdev->backing_bdev->bd_disk->queue) << 9;
 		device->local_max_bio_size = local;
-	}
+	पूर्ण
 	local = min(local, DRBD_MAX_BIO_SIZE);
 
-	/* We may ignore peer limits if the peer is modern enough.
+	/* We may ignore peer limits अगर the peer is modern enough.
 	   Because new from 8.3.8 onwards the peer can use multiple
-	   BIOs for a single peer_request */
-	if (device->state.conn >= C_WF_REPORT_PARAMS) {
-		if (first_peer_device(device)->connection->agreed_pro_version < 94)
+	   BIOs क्रम a single peer_request */
+	अगर (device->state.conn >= C_WF_REPORT_PARAMS) अणु
+		अगर (first_peer_device(device)->connection->agreed_pro_version < 94)
 			peer = min(device->peer_max_bio_size, DRBD_MAX_SIZE_H80_PACKET);
-			/* Correct old drbd (up to 8.3.7) if it believes it can do more than 32KiB */
-		else if (first_peer_device(device)->connection->agreed_pro_version == 94)
+			/* Correct old drbd (up to 8.3.7) अगर it believes it can करो more than 32KiB */
+		अन्यथा अगर (first_peer_device(device)->connection->agreed_pro_version == 94)
 			peer = DRBD_MAX_SIZE_H80_PACKET;
-		else if (first_peer_device(device)->connection->agreed_pro_version < 100)
-			peer = DRBD_MAX_BIO_SIZE_P95;  /* drbd 8.3.8 onwards, before 8.4.0 */
-		else
+		अन्यथा अगर (first_peer_device(device)->connection->agreed_pro_version < 100)
+			peer = DRBD_MAX_BIO_SIZE_P95;  /* drbd 8.3.8 onwards, beक्रमe 8.4.0 */
+		अन्यथा
 			peer = DRBD_MAX_BIO_SIZE;
 
 		/* We may later detach and re-attach on a disconnected Primary.
-		 * Avoid this setting to jump back in that case.
+		 * Aव्योम this setting to jump back in that हाल.
 		 * We want to store what we know the peer DRBD can handle,
 		 * not what the peer IO backend can handle. */
-		if (peer > device->peer_max_bio_size)
+		अगर (peer > device->peer_max_bio_size)
 			device->peer_max_bio_size = peer;
-	}
+	पूर्ण
 	new = min(local, peer);
 
-	if (device->state.role == R_PRIMARY && new < now)
+	अगर (device->state.role == R_PRIMARY && new < now)
 		drbd_err(device, "ASSERT FAILED new < now; (%u < %u)\n", new, now);
 
-	if (new != now)
+	अगर (new != now)
 		drbd_info(device, "max BIO size = %u\n", new);
 
 	drbd_setup_queue_param(device, bdev, new, o);
-}
+पूर्ण
 
-/* Starts the worker thread */
-static void conn_reconfig_start(struct drbd_connection *connection)
-{
-	drbd_thread_start(&connection->worker);
+/* Starts the worker thपढ़ो */
+अटल व्योम conn_reconfig_start(काष्ठा drbd_connection *connection)
+अणु
+	drbd_thपढ़ो_start(&connection->worker);
 	drbd_flush_workqueue(&connection->sender_work);
-}
+पूर्ण
 
-/* if still unconfigured, stops worker again. */
-static void conn_reconfig_done(struct drbd_connection *connection)
-{
-	bool stop_threads;
+/* अगर still unconfigured, stops worker again. */
+अटल व्योम conn_reconfig_करोne(काष्ठा drbd_connection *connection)
+अणु
+	bool stop_thपढ़ोs;
 	spin_lock_irq(&connection->resource->req_lock);
-	stop_threads = conn_all_vols_unconf(connection) &&
+	stop_thपढ़ोs = conn_all_vols_unconf(connection) &&
 		connection->cstate == C_STANDALONE;
 	spin_unlock_irq(&connection->resource->req_lock);
-	if (stop_threads) {
-		/* ack_receiver thread and ack_sender workqueue are implicitly
+	अगर (stop_thपढ़ोs) अणु
+		/* ack_receiver thपढ़ो and ack_sender workqueue are implicitly
 		 * stopped by receiver in conn_disconnect() */
-		drbd_thread_stop(&connection->receiver);
-		drbd_thread_stop(&connection->worker);
-	}
-}
+		drbd_thपढ़ो_stop(&connection->receiver);
+		drbd_thपढ़ो_stop(&connection->worker);
+	पूर्ण
+पूर्ण
 
-/* Make sure IO is suspended before calling this function(). */
-static void drbd_suspend_al(struct drbd_device *device)
-{
-	int s = 0;
+/* Make sure IO is suspended beक्रमe calling this function(). */
+अटल व्योम drbd_suspend_al(काष्ठा drbd_device *device)
+अणु
+	पूर्णांक s = 0;
 
-	if (!lc_try_lock(device->act_log)) {
+	अगर (!lc_try_lock(device->act_log)) अणु
 		drbd_warn(device, "Failed to lock al in drbd_suspend_al()\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	drbd_al_shrink(device);
 	spin_lock_irq(&device->resource->req_lock);
-	if (device->state.conn < C_CONNECTED)
+	अगर (device->state.conn < C_CONNECTED)
 		s = !test_and_set_bit(AL_SUSPENDED, &device->flags);
 	spin_unlock_irq(&device->resource->req_lock);
 	lc_unlock(device->act_log);
 
-	if (s)
+	अगर (s)
 		drbd_info(device, "Suspended AL updates\n");
-}
+पूर्ण
 
 
-static bool should_set_defaults(struct genl_info *info)
-{
-	unsigned flags = ((struct drbd_genlmsghdr*)info->userhdr)->flags;
-	return 0 != (flags & DRBD_GENL_F_SET_DEFAULTS);
-}
+अटल bool should_set_शेषs(काष्ठा genl_info *info)
+अणु
+	अचिन्हित flags = ((काष्ठा drbd_genlmsghdr*)info->userhdr)->flags;
+	वापस 0 != (flags & DRBD_GENL_F_SET_DEFAULTS);
+पूर्ण
 
-static unsigned int drbd_al_extents_max(struct drbd_backing_dev *bdev)
-{
+अटल अचिन्हित पूर्णांक drbd_al_extents_max(काष्ठा drbd_backing_dev *bdev)
+अणु
 	/* This is limited by 16 bit "slot" numbers,
 	 * and by available on-disk context storage.
 	 *
@@ -1477,334 +1478,334 @@ static unsigned int drbd_al_extents_max(struct drbd_backing_dev *bdev)
 	 * One transaction occupies one 4kB on-disk block,
 	 * we have n such blocks in the on disk ring buffer,
 	 * the "current" transaction may fail (n-1),
-	 * and there is 919 slot numbers context information per transaction.
+	 * and there is 919 slot numbers context inक्रमmation per transaction.
 	 *
 	 * 72 transaction blocks amounts to more than 2**16 context slots,
 	 * so cap there first.
 	 */
-	const unsigned int max_al_nr = DRBD_AL_EXTENTS_MAX;
-	const unsigned int sufficient_on_disk =
+	स्थिर अचिन्हित पूर्णांक max_al_nr = DRBD_AL_EXTENTS_MAX;
+	स्थिर अचिन्हित पूर्णांक sufficient_on_disk =
 		(max_al_nr + AL_CONTEXT_PER_TRANSACTION -1)
 		/AL_CONTEXT_PER_TRANSACTION;
 
-	unsigned int al_size_4k = bdev->md.al_size_4k;
+	अचिन्हित पूर्णांक al_size_4k = bdev->md.al_size_4k;
 
-	if (al_size_4k > sufficient_on_disk)
-		return max_al_nr;
+	अगर (al_size_4k > sufficient_on_disk)
+		वापस max_al_nr;
 
-	return (al_size_4k - 1) * AL_CONTEXT_PER_TRANSACTION;
-}
+	वापस (al_size_4k - 1) * AL_CONTEXT_PER_TRANSACTION;
+पूर्ण
 
-static bool write_ordering_changed(struct disk_conf *a, struct disk_conf *b)
-{
-	return	a->disk_barrier != b->disk_barrier ||
+अटल bool ग_लिखो_ordering_changed(काष्ठा disk_conf *a, काष्ठा disk_conf *b)
+अणु
+	वापस	a->disk_barrier != b->disk_barrier ||
 		a->disk_flushes != b->disk_flushes ||
 		a->disk_drain != b->disk_drain;
-}
+पूर्ण
 
-static void sanitize_disk_conf(struct drbd_device *device, struct disk_conf *disk_conf,
-			       struct drbd_backing_dev *nbc)
-{
-	struct request_queue * const q = nbc->backing_bdev->bd_disk->queue;
+अटल व्योम sanitize_disk_conf(काष्ठा drbd_device *device, काष्ठा disk_conf *disk_conf,
+			       काष्ठा drbd_backing_dev *nbc)
+अणु
+	काष्ठा request_queue * स्थिर q = nbc->backing_bdev->bd_disk->queue;
 
-	if (disk_conf->al_extents < DRBD_AL_EXTENTS_MIN)
+	अगर (disk_conf->al_extents < DRBD_AL_EXTENTS_MIN)
 		disk_conf->al_extents = DRBD_AL_EXTENTS_MIN;
-	if (disk_conf->al_extents > drbd_al_extents_max(nbc))
+	अगर (disk_conf->al_extents > drbd_al_extents_max(nbc))
 		disk_conf->al_extents = drbd_al_extents_max(nbc);
 
-	if (!blk_queue_discard(q)) {
-		if (disk_conf->rs_discard_granularity) {
+	अगर (!blk_queue_discard(q)) अणु
+		अगर (disk_conf->rs_discard_granularity) अणु
 			disk_conf->rs_discard_granularity = 0; /* disable feature */
 			drbd_info(device, "rs_discard_granularity feature disabled\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (disk_conf->rs_discard_granularity) {
-		int orig_value = disk_conf->rs_discard_granularity;
-		int remainder;
+	अगर (disk_conf->rs_discard_granularity) अणु
+		पूर्णांक orig_value = disk_conf->rs_discard_granularity;
+		पूर्णांक reमुख्यder;
 
-		if (q->limits.discard_granularity > disk_conf->rs_discard_granularity)
+		अगर (q->limits.discard_granularity > disk_conf->rs_discard_granularity)
 			disk_conf->rs_discard_granularity = q->limits.discard_granularity;
 
-		remainder = disk_conf->rs_discard_granularity % q->limits.discard_granularity;
-		disk_conf->rs_discard_granularity += remainder;
+		reमुख्यder = disk_conf->rs_discard_granularity % q->limits.discard_granularity;
+		disk_conf->rs_discard_granularity += reमुख्यder;
 
-		if (disk_conf->rs_discard_granularity > q->limits.max_discard_sectors << 9)
+		अगर (disk_conf->rs_discard_granularity > q->limits.max_discard_sectors << 9)
 			disk_conf->rs_discard_granularity = q->limits.max_discard_sectors << 9;
 
-		if (disk_conf->rs_discard_granularity != orig_value)
+		अगर (disk_conf->rs_discard_granularity != orig_value)
 			drbd_info(device, "rs_discard_granularity changed to %d\n",
 				  disk_conf->rs_discard_granularity);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int disk_opts_check_al_size(struct drbd_device *device, struct disk_conf *dc)
-{
-	int err = -EBUSY;
+अटल पूर्णांक disk_opts_check_al_size(काष्ठा drbd_device *device, काष्ठा disk_conf *dc)
+अणु
+	पूर्णांक err = -EBUSY;
 
-	if (device->act_log &&
+	अगर (device->act_log &&
 	    device->act_log->nr_elements == dc->al_extents)
-		return 0;
+		वापस 0;
 
 	drbd_suspend_io(device);
-	/* If IO completion is currently blocked, we would likely wait
-	 * "forever" for the activity log to become unused. So we don't. */
-	if (atomic_read(&device->ap_bio_cnt))
-		goto out;
+	/* If IO completion is currently blocked, we would likely रुको
+	 * "forever" क्रम the activity log to become unused. So we करोn't. */
+	अगर (atomic_पढ़ो(&device->ap_bio_cnt))
+		जाओ out;
 
-	wait_event(device->al_wait, lc_try_lock(device->act_log));
+	रुको_event(device->al_रुको, lc_try_lock(device->act_log));
 	drbd_al_shrink(device);
 	err = drbd_check_al_size(device, dc);
 	lc_unlock(device->act_log);
-	wake_up(&device->al_wait);
+	wake_up(&device->al_रुको);
 out:
 	drbd_resume_io(device);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int drbd_adm_disk_opts(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	enum drbd_ret_code retcode;
-	struct drbd_device *device;
-	struct disk_conf *new_disk_conf, *old_disk_conf;
-	struct fifo_buffer *old_plan = NULL, *new_plan = NULL;
-	int err;
-	unsigned int fifo_size;
+पूर्णांक drbd_adm_disk_opts(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	क्रमागत drbd_ret_code retcode;
+	काष्ठा drbd_device *device;
+	काष्ठा disk_conf *new_disk_conf, *old_disk_conf;
+	काष्ठा fअगरo_buffer *old_plan = शून्य, *new_plan = शून्य;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक fअगरo_size;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto finish;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ finish;
 
 	device = adm_ctx.device;
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 
 	/* we also need a disk
 	 * to change the options on */
-	if (!get_ldev(device)) {
+	अगर (!get_ldev(device)) अणु
 		retcode = ERR_NO_DISK;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	new_disk_conf = kmalloc(sizeof(struct disk_conf), GFP_KERNEL);
-	if (!new_disk_conf) {
+	new_disk_conf = kदो_स्मृति(माप(काष्ठा disk_conf), GFP_KERNEL);
+	अगर (!new_disk_conf) अणु
 		retcode = ERR_NOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	mutex_lock(&device->resource->conf_update);
 	old_disk_conf = device->ldev->disk_conf;
 	*new_disk_conf = *old_disk_conf;
-	if (should_set_defaults(info))
-		set_disk_conf_defaults(new_disk_conf);
+	अगर (should_set_शेषs(info))
+		set_disk_conf_शेषs(new_disk_conf);
 
-	err = disk_conf_from_attrs_for_change(new_disk_conf, info);
-	if (err && err != -ENOMSG) {
+	err = disk_conf_from_attrs_क्रम_change(new_disk_conf, info);
+	अगर (err && err != -ENOMSG) अणु
 		retcode = ERR_MANDATORY_TAG;
 		drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-		goto fail_unlock;
-	}
+		जाओ fail_unlock;
+	पूर्ण
 
-	if (!expect(new_disk_conf->resync_rate >= 1))
+	अगर (!expect(new_disk_conf->resync_rate >= 1))
 		new_disk_conf->resync_rate = 1;
 
 	sanitize_disk_conf(device, new_disk_conf, device->ldev);
 
-	if (new_disk_conf->c_plan_ahead > DRBD_C_PLAN_AHEAD_MAX)
+	अगर (new_disk_conf->c_plan_ahead > DRBD_C_PLAN_AHEAD_MAX)
 		new_disk_conf->c_plan_ahead = DRBD_C_PLAN_AHEAD_MAX;
 
-	fifo_size = (new_disk_conf->c_plan_ahead * 10 * SLEEP_TIME) / HZ;
-	if (fifo_size != device->rs_plan_s->size) {
-		new_plan = fifo_alloc(fifo_size);
-		if (!new_plan) {
+	fअगरo_size = (new_disk_conf->c_plan_ahead * 10 * SLEEP_TIME) / HZ;
+	अगर (fअगरo_size != device->rs_plan_s->size) अणु
+		new_plan = fअगरo_alloc(fअगरo_size);
+		अगर (!new_plan) अणु
 			drbd_err(device, "kmalloc of fifo_buffer failed");
 			retcode = ERR_NOMEM;
-			goto fail_unlock;
-		}
-	}
+			जाओ fail_unlock;
+		पूर्ण
+	पूर्ण
 
 	err = disk_opts_check_al_size(device, new_disk_conf);
-	if (err) {
+	अगर (err) अणु
 		/* Could be just "busy". Ignore?
 		 * Introduce dedicated error code? */
 		drbd_msg_put_info(adm_ctx.reply_skb,
 			"Try again without changing current al-extents setting");
 		retcode = ERR_NOMEM;
-		goto fail_unlock;
-	}
+		जाओ fail_unlock;
+	पूर्ण
 
 	lock_all_resources();
 	retcode = drbd_resync_after_valid(device, new_disk_conf->resync_after);
-	if (retcode == NO_ERROR) {
-		rcu_assign_pointer(device->ldev->disk_conf, new_disk_conf);
+	अगर (retcode == NO_ERROR) अणु
+		rcu_assign_poपूर्णांकer(device->ldev->disk_conf, new_disk_conf);
 		drbd_resync_after_changed(device);
-	}
+	पूर्ण
 	unlock_all_resources();
 
-	if (retcode != NO_ERROR)
-		goto fail_unlock;
+	अगर (retcode != NO_ERROR)
+		जाओ fail_unlock;
 
-	if (new_plan) {
+	अगर (new_plan) अणु
 		old_plan = device->rs_plan_s;
-		rcu_assign_pointer(device->rs_plan_s, new_plan);
-	}
+		rcu_assign_poपूर्णांकer(device->rs_plan_s, new_plan);
+	पूर्ण
 
 	mutex_unlock(&device->resource->conf_update);
 
-	if (new_disk_conf->al_updates)
+	अगर (new_disk_conf->al_updates)
 		device->ldev->md.flags &= ~MDF_AL_DISABLED;
-	else
+	अन्यथा
 		device->ldev->md.flags |= MDF_AL_DISABLED;
 
-	if (new_disk_conf->md_flushes)
+	अगर (new_disk_conf->md_flushes)
 		clear_bit(MD_NO_FUA, &device->flags);
-	else
+	अन्यथा
 		set_bit(MD_NO_FUA, &device->flags);
 
-	if (write_ordering_changed(old_disk_conf, new_disk_conf))
-		drbd_bump_write_ordering(device->resource, NULL, WO_BDEV_FLUSH);
+	अगर (ग_लिखो_ordering_changed(old_disk_conf, new_disk_conf))
+		drbd_bump_ग_लिखो_ordering(device->resource, शून्य, WO_BDEV_FLUSH);
 
-	if (old_disk_conf->discard_zeroes_if_aligned != new_disk_conf->discard_zeroes_if_aligned
-	||  old_disk_conf->disable_write_same != new_disk_conf->disable_write_same)
-		drbd_reconsider_queue_parameters(device, device->ldev, NULL);
+	अगर (old_disk_conf->discard_zeroes_अगर_aligned != new_disk_conf->discard_zeroes_अगर_aligned
+	||  old_disk_conf->disable_ग_लिखो_same != new_disk_conf->disable_ग_लिखो_same)
+		drbd_reconsider_queue_parameters(device, device->ldev, शून्य);
 
 	drbd_md_sync(device);
 
-	if (device->state.conn >= C_CONNECTED) {
-		struct drbd_peer_device *peer_device;
+	अगर (device->state.conn >= C_CONNECTED) अणु
+		काष्ठा drbd_peer_device *peer_device;
 
-		for_each_peer_device(peer_device, device)
+		क्रम_each_peer_device(peer_device, device)
 			drbd_send_sync_param(peer_device);
-	}
+	पूर्ण
 
 	synchronize_rcu();
-	kfree(old_disk_conf);
-	kfree(old_plan);
-	mod_timer(&device->request_timer, jiffies + HZ);
-	goto success;
+	kमुक्त(old_disk_conf);
+	kमुक्त(old_plan);
+	mod_समयr(&device->request_समयr, jअगरfies + HZ);
+	जाओ success;
 
 fail_unlock:
 	mutex_unlock(&device->resource->conf_update);
  fail:
-	kfree(new_disk_conf);
-	kfree(new_plan);
+	kमुक्त(new_disk_conf);
+	kमुक्त(new_plan);
 success:
 	put_ldev(device);
  out:
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
  finish:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct block_device *open_backing_dev(struct drbd_device *device,
-		const char *bdev_path, void *claim_ptr, bool do_bd_link)
-{
-	struct block_device *bdev;
-	int err = 0;
+अटल काष्ठा block_device *खोलो_backing_dev(काष्ठा drbd_device *device,
+		स्थिर अक्षर *bdev_path, व्योम *claim_ptr, bool करो_bd_link)
+अणु
+	काष्ठा block_device *bdev;
+	पूर्णांक err = 0;
 
 	bdev = blkdev_get_by_path(bdev_path,
 				  FMODE_READ | FMODE_WRITE | FMODE_EXCL, claim_ptr);
-	if (IS_ERR(bdev)) {
+	अगर (IS_ERR(bdev)) अणु
 		drbd_err(device, "open(\"%s\") failed with %ld\n",
 				bdev_path, PTR_ERR(bdev));
-		return bdev;
-	}
+		वापस bdev;
+	पूर्ण
 
-	if (!do_bd_link)
-		return bdev;
+	अगर (!करो_bd_link)
+		वापस bdev;
 
 	err = bd_link_disk_holder(bdev, device->vdisk);
-	if (err) {
+	अगर (err) अणु
 		blkdev_put(bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
 		drbd_err(device, "bd_link_disk_holder(\"%s\", ...) failed with %d\n",
 				bdev_path, err);
 		bdev = ERR_PTR(err);
-	}
-	return bdev;
-}
+	पूर्ण
+	वापस bdev;
+पूर्ण
 
-static int open_backing_devices(struct drbd_device *device,
-		struct disk_conf *new_disk_conf,
-		struct drbd_backing_dev *nbc)
-{
-	struct block_device *bdev;
+अटल पूर्णांक खोलो_backing_devices(काष्ठा drbd_device *device,
+		काष्ठा disk_conf *new_disk_conf,
+		काष्ठा drbd_backing_dev *nbc)
+अणु
+	काष्ठा block_device *bdev;
 
-	bdev = open_backing_dev(device, new_disk_conf->backing_dev, device, true);
-	if (IS_ERR(bdev))
-		return ERR_OPEN_DISK;
+	bdev = खोलो_backing_dev(device, new_disk_conf->backing_dev, device, true);
+	अगर (IS_ERR(bdev))
+		वापस ERR_OPEN_DISK;
 	nbc->backing_bdev = bdev;
 
 	/*
-	 * meta_dev_idx >= 0: external fixed size, possibly multiple
-	 * drbd sharing one meta device.  TODO in that case, paranoia
+	 * meta_dev_idx >= 0: बाह्यal fixed size, possibly multiple
+	 * drbd sharing one meta device.  TODO in that हाल, paranoia
 	 * check that [md_bdev, meta_dev_idx] is not yet used by some
-	 * other drbd minor!  (if you use drbd.conf + drbdadm, that
-	 * should check it for you already; but if you don't, or
-	 * someone fooled it, we need to double check here)
+	 * other drbd minor!  (अगर you use drbd.conf + drbdadm, that
+	 * should check it क्रम you alपढ़ोy; but अगर you करोn't, or
+	 * someone fooled it, we need to द्विगुन check here)
 	 */
-	bdev = open_backing_dev(device, new_disk_conf->meta_dev,
-		/* claim ptr: device, if claimed exclusively; shared drbd_m_holder,
-		 * if potentially shared with other drbd minors */
-			(new_disk_conf->meta_dev_idx < 0) ? (void*)device : (void*)drbd_m_holder,
-		/* avoid double bd_claim_by_disk() for the same (source,target) tuple,
-		 * as would happen with internal metadata. */
+	bdev = खोलो_backing_dev(device, new_disk_conf->meta_dev,
+		/* claim ptr: device, अगर claimed exclusively; shared drbd_m_holder,
+		 * अगर potentially shared with other drbd minors */
+			(new_disk_conf->meta_dev_idx < 0) ? (व्योम*)device : (व्योम*)drbd_m_holder,
+		/* aव्योम द्विगुन bd_claim_by_disk() क्रम the same (source,target) tuple,
+		 * as would happen with पूर्णांकernal metadata. */
 			(new_disk_conf->meta_dev_idx != DRBD_MD_INDEX_FLEX_INT &&
 			 new_disk_conf->meta_dev_idx != DRBD_MD_INDEX_INTERNAL));
-	if (IS_ERR(bdev))
-		return ERR_OPEN_MD_DISK;
+	अगर (IS_ERR(bdev))
+		वापस ERR_OPEN_MD_DISK;
 	nbc->md_bdev = bdev;
-	return NO_ERROR;
-}
+	वापस NO_ERROR;
+पूर्ण
 
-static void close_backing_dev(struct drbd_device *device, struct block_device *bdev,
-	bool do_bd_unlink)
-{
-	if (!bdev)
-		return;
-	if (do_bd_unlink)
+अटल व्योम बंद_backing_dev(काष्ठा drbd_device *device, काष्ठा block_device *bdev,
+	bool करो_bd_unlink)
+अणु
+	अगर (!bdev)
+		वापस;
+	अगर (करो_bd_unlink)
 		bd_unlink_disk_holder(bdev, device->vdisk);
 	blkdev_put(bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
-}
+पूर्ण
 
-void drbd_backing_dev_free(struct drbd_device *device, struct drbd_backing_dev *ldev)
-{
-	if (ldev == NULL)
-		return;
+व्योम drbd_backing_dev_मुक्त(काष्ठा drbd_device *device, काष्ठा drbd_backing_dev *ldev)
+अणु
+	अगर (ldev == शून्य)
+		वापस;
 
-	close_backing_dev(device, ldev->md_bdev, ldev->md_bdev != ldev->backing_bdev);
-	close_backing_dev(device, ldev->backing_bdev, true);
+	बंद_backing_dev(device, ldev->md_bdev, ldev->md_bdev != ldev->backing_bdev);
+	बंद_backing_dev(device, ldev->backing_bdev, true);
 
-	kfree(ldev->disk_conf);
-	kfree(ldev);
-}
+	kमुक्त(ldev->disk_conf);
+	kमुक्त(ldev);
+पूर्ण
 
-int drbd_adm_attach(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct drbd_device *device;
-	struct drbd_peer_device *peer_device;
-	struct drbd_connection *connection;
-	int err;
-	enum drbd_ret_code retcode;
-	enum determine_dev_size dd;
+पूर्णांक drbd_adm_attach(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा drbd_device *device;
+	काष्ठा drbd_peer_device *peer_device;
+	काष्ठा drbd_connection *connection;
+	पूर्णांक err;
+	क्रमागत drbd_ret_code retcode;
+	क्रमागत determine_dev_size dd;
 	sector_t max_possible_sectors;
 	sector_t min_md_device_sectors;
-	struct drbd_backing_dev *nbc = NULL; /* new_backing_conf */
-	struct disk_conf *new_disk_conf = NULL;
-	struct lru_cache *resync_lru = NULL;
-	struct fifo_buffer *new_plan = NULL;
-	union drbd_state ns, os;
-	enum drbd_state_rv rv;
-	struct net_conf *nc;
+	काष्ठा drbd_backing_dev *nbc = शून्य; /* new_backing_conf */
+	काष्ठा disk_conf *new_disk_conf = शून्य;
+	काष्ठा lru_cache *resync_lru = शून्य;
+	काष्ठा fअगरo_buffer *new_plan = शून्य;
+	जोड़ drbd_state ns, os;
+	क्रमागत drbd_state_rv rv;
+	काष्ठा net_conf *nc;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto finish;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ finish;
 
 	device = adm_ctx.device;
 	mutex_lock(&adm_ctx.resource->adm_mutex);
@@ -1812,363 +1813,363 @@ int drbd_adm_attach(struct sk_buff *skb, struct genl_info *info)
 	connection = peer_device->connection;
 	conn_reconfig_start(connection);
 
-	/* if you want to reconfigure, please tear down first */
-	if (device->state.disk > D_DISKLESS) {
+	/* अगर you want to reconfigure, please tear करोwn first */
+	अगर (device->state.disk > D_DISKLESS) अणु
 		retcode = ERR_DISK_CONFIGURED;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	/* It may just now have detached because of IO error.  Make sure
-	 * drbd_ldev_destroy is done already, we may end up here very fast,
-	 * e.g. if someone calls attach from the on-io-error handler,
+	 * drbd_ldev_destroy is करोne alपढ़ोy, we may end up here very fast,
+	 * e.g. अगर someone calls attach from the on-io-error handler,
 	 * to realize a "hot spare" feature (not that I'd recommend that) */
-	wait_event(device->misc_wait, !test_bit(GOING_DISKLESS, &device->flags));
+	रुको_event(device->misc_रुको, !test_bit(GOING_DISKLESS, &device->flags));
 
-	/* make sure there is no leftover from previous force-detach attempts */
+	/* make sure there is no leftover from previous क्रमce-detach attempts */
 	clear_bit(FORCE_DETACH, &device->flags);
 	clear_bit(WAS_IO_ERROR, &device->flags);
 	clear_bit(WAS_READ_ERROR, &device->flags);
 
-	/* and no leftover from previously aborted resync or verify, either */
+	/* and no leftover from previously पातed resync or verअगरy, either */
 	device->rs_total = 0;
 	device->rs_failed = 0;
 	atomic_set(&device->rs_pending_cnt, 0);
 
 	/* allocation not in the IO path, drbdsetup context */
-	nbc = kzalloc(sizeof(struct drbd_backing_dev), GFP_KERNEL);
-	if (!nbc) {
+	nbc = kzalloc(माप(काष्ठा drbd_backing_dev), GFP_KERNEL);
+	अगर (!nbc) अणु
 		retcode = ERR_NOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	spin_lock_init(&nbc->md.uuid_lock);
 
-	new_disk_conf = kzalloc(sizeof(struct disk_conf), GFP_KERNEL);
-	if (!new_disk_conf) {
+	new_disk_conf = kzalloc(माप(काष्ठा disk_conf), GFP_KERNEL);
+	अगर (!new_disk_conf) अणु
 		retcode = ERR_NOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	nbc->disk_conf = new_disk_conf;
 
-	set_disk_conf_defaults(new_disk_conf);
+	set_disk_conf_शेषs(new_disk_conf);
 	err = disk_conf_from_attrs(new_disk_conf, info);
-	if (err) {
+	अगर (err) अणु
 		retcode = ERR_MANDATORY_TAG;
 		drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (new_disk_conf->c_plan_ahead > DRBD_C_PLAN_AHEAD_MAX)
+	अगर (new_disk_conf->c_plan_ahead > DRBD_C_PLAN_AHEAD_MAX)
 		new_disk_conf->c_plan_ahead = DRBD_C_PLAN_AHEAD_MAX;
 
-	new_plan = fifo_alloc((new_disk_conf->c_plan_ahead * 10 * SLEEP_TIME) / HZ);
-	if (!new_plan) {
+	new_plan = fअगरo_alloc((new_disk_conf->c_plan_ahead * 10 * SLEEP_TIME) / HZ);
+	अगर (!new_plan) अणु
 		retcode = ERR_NOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (new_disk_conf->meta_dev_idx < DRBD_MD_INDEX_FLEX_INT) {
+	अगर (new_disk_conf->meta_dev_idx < DRBD_MD_INDEX_FLEX_INT) अणु
 		retcode = ERR_MD_IDX_INVALID;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	nc = rcu_dereference(connection->net_conf);
-	if (nc) {
-		if (new_disk_conf->fencing == FP_STONITH && nc->wire_protocol == DRBD_PROT_A) {
-			rcu_read_unlock();
+	अगर (nc) अणु
+		अगर (new_disk_conf->fencing == FP_STONITH && nc->wire_protocol == DRBD_PROT_A) अणु
+			rcu_पढ़ो_unlock();
 			retcode = ERR_STONITH_AND_PROT_A;
-			goto fail;
-		}
-	}
-	rcu_read_unlock();
+			जाओ fail;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	retcode = open_backing_devices(device, new_disk_conf, nbc);
-	if (retcode != NO_ERROR)
-		goto fail;
+	retcode = खोलो_backing_devices(device, new_disk_conf, nbc);
+	अगर (retcode != NO_ERROR)
+		जाओ fail;
 
-	if ((nbc->backing_bdev == nbc->md_bdev) !=
+	अगर ((nbc->backing_bdev == nbc->md_bdev) !=
 	    (new_disk_conf->meta_dev_idx == DRBD_MD_INDEX_INTERNAL ||
-	     new_disk_conf->meta_dev_idx == DRBD_MD_INDEX_FLEX_INT)) {
+	     new_disk_conf->meta_dev_idx == DRBD_MD_INDEX_FLEX_INT)) अणु
 		retcode = ERR_MD_IDX_INVALID;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	resync_lru = lc_create("resync", drbd_bm_ext_cache,
-			1, 61, sizeof(struct bm_extent),
-			offsetof(struct bm_extent, lce));
-	if (!resync_lru) {
+			1, 61, माप(काष्ठा bm_extent),
+			दुरत्व(काष्ठा bm_extent, lce));
+	अगर (!resync_lru) अणु
 		retcode = ERR_NOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* Read our meta data super block early.
 	 * This also sets other on-disk offsets. */
-	retcode = drbd_md_read(device, nbc);
-	if (retcode != NO_ERROR)
-		goto fail;
+	retcode = drbd_md_पढ़ो(device, nbc);
+	अगर (retcode != NO_ERROR)
+		जाओ fail;
 
 	sanitize_disk_conf(device, new_disk_conf, nbc);
 
-	if (drbd_get_max_capacity(nbc) < new_disk_conf->disk_size) {
+	अगर (drbd_get_max_capacity(nbc) < new_disk_conf->disk_size) अणु
 		drbd_err(device, "max capacity %llu smaller than disk size %llu\n",
-			(unsigned long long) drbd_get_max_capacity(nbc),
-			(unsigned long long) new_disk_conf->disk_size);
+			(अचिन्हित दीर्घ दीर्घ) drbd_get_max_capacity(nbc),
+			(अचिन्हित दीर्घ दीर्घ) new_disk_conf->disk_size);
 		retcode = ERR_DISK_TOO_SMALL;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (new_disk_conf->meta_dev_idx < 0) {
+	अगर (new_disk_conf->meta_dev_idx < 0) अणु
 		max_possible_sectors = DRBD_MAX_SECTORS_FLEX;
-		/* at least one MB, otherwise it does not make sense */
+		/* at least one MB, otherwise it करोes not make sense */
 		min_md_device_sectors = (2<<10);
-	} else {
+	पूर्ण अन्यथा अणु
 		max_possible_sectors = DRBD_MAX_SECTORS;
 		min_md_device_sectors = MD_128MB_SECT * (new_disk_conf->meta_dev_idx + 1);
-	}
+	पूर्ण
 
-	if (drbd_get_capacity(nbc->md_bdev) < min_md_device_sectors) {
+	अगर (drbd_get_capacity(nbc->md_bdev) < min_md_device_sectors) अणु
 		retcode = ERR_MD_DISK_TOO_SMALL;
 		drbd_warn(device, "refusing attach: md-device too small, "
 		     "at least %llu sectors needed for this meta-disk type\n",
-		     (unsigned long long) min_md_device_sectors);
-		goto fail;
-	}
+		     (अचिन्हित दीर्घ दीर्घ) min_md_device_sectors);
+		जाओ fail;
+	पूर्ण
 
 	/* Make sure the new disk is big enough
 	 * (we may currently be R_PRIMARY with no local disk...) */
-	if (drbd_get_max_capacity(nbc) < get_capacity(device->vdisk)) {
+	अगर (drbd_get_max_capacity(nbc) < get_capacity(device->vdisk)) अणु
 		retcode = ERR_DISK_TOO_SMALL;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	nbc->known_size = drbd_get_capacity(nbc->backing_bdev);
 
-	if (nbc->known_size > max_possible_sectors) {
+	अगर (nbc->known_size > max_possible_sectors) अणु
 		drbd_warn(device, "==> truncating very big lower level device "
 			"to currently maximum possible %llu sectors <==\n",
-			(unsigned long long) max_possible_sectors);
-		if (new_disk_conf->meta_dev_idx >= 0)
+			(अचिन्हित दीर्घ दीर्घ) max_possible_sectors);
+		अगर (new_disk_conf->meta_dev_idx >= 0)
 			drbd_warn(device, "==>> using internal or flexible "
 				      "meta data may help <<==\n");
-	}
+	पूर्ण
 
 	drbd_suspend_io(device);
-	/* also wait for the last barrier ack. */
+	/* also रुको क्रम the last barrier ack. */
 	/* FIXME see also https://daiquiri.linbit/cgi-bin/bugzilla/show_bug.cgi?id=171
-	 * We need a way to either ignore barrier acks for barriers sent before a device
-	 * was attached, or a way to wait for all pending barrier acks to come in.
+	 * We need a way to either ignore barrier acks क्रम barriers sent beक्रमe a device
+	 * was attached, or a way to रुको क्रम all pending barrier acks to come in.
 	 * As barriers are counted per resource,
 	 * we'd need to suspend io on all devices of a resource.
 	 */
-	wait_event(device->misc_wait, !atomic_read(&device->ap_pending_cnt) || drbd_suspended(device));
-	/* and for any other previously queued work */
+	रुको_event(device->misc_रुको, !atomic_पढ़ो(&device->ap_pending_cnt) || drbd_suspended(device));
+	/* and क्रम any other previously queued work */
 	drbd_flush_workqueue(&connection->sender_work);
 
 	rv = _drbd_request_state(device, NS(disk, D_ATTACHING), CS_VERBOSE);
-	retcode = (enum drbd_ret_code)rv;
+	retcode = (क्रमागत drbd_ret_code)rv;
 	drbd_resume_io(device);
-	if (rv < SS_SUCCESS)
-		goto fail;
+	अगर (rv < SS_SUCCESS)
+		जाओ fail;
 
-	if (!get_ldev_if_state(device, D_ATTACHING))
-		goto force_diskless;
+	अगर (!get_ldev_अगर_state(device, D_ATTACHING))
+		जाओ क्रमce_diskless;
 
-	if (!device->bitmap) {
-		if (drbd_bm_init(device)) {
+	अगर (!device->biपंचांगap) अणु
+		अगर (drbd_bm_init(device)) अणु
 			retcode = ERR_NOMEM;
-			goto force_diskless_dec;
-		}
-	}
+			जाओ क्रमce_diskless_dec;
+		पूर्ण
+	पूर्ण
 
-	if (device->state.pdsk != D_UP_TO_DATE && device->ed_uuid &&
+	अगर (device->state.pdsk != D_UP_TO_DATE && device->ed_uuid &&
 	    (device->state.role == R_PRIMARY || device->state.peer == R_PRIMARY) &&
-            (device->ed_uuid & ~((u64)1)) != (nbc->md.uuid[UI_CURRENT] & ~((u64)1))) {
+            (device->ed_uuid & ~((u64)1)) != (nbc->md.uuid[UI_CURRENT] & ~((u64)1))) अणु
 		drbd_err(device, "Can only attach to data with current UUID=%016llX\n",
-		    (unsigned long long)device->ed_uuid);
+		    (अचिन्हित दीर्घ दीर्घ)device->ed_uuid);
 		retcode = ERR_DATA_NOT_CURRENT;
-		goto force_diskless_dec;
-	}
+		जाओ क्रमce_diskless_dec;
+	पूर्ण
 
 	/* Since we are diskless, fix the activity log first... */
-	if (drbd_check_al_size(device, new_disk_conf)) {
+	अगर (drbd_check_al_size(device, new_disk_conf)) अणु
 		retcode = ERR_NOMEM;
-		goto force_diskless_dec;
-	}
+		जाओ क्रमce_diskless_dec;
+	पूर्ण
 
 	/* Prevent shrinking of consistent devices ! */
-	{
-	unsigned long long nsz = drbd_new_dev_size(device, nbc, nbc->disk_conf->disk_size, 0);
-	unsigned long long eff = nbc->md.la_size_sect;
-	if (drbd_md_test_flag(nbc, MDF_CONSISTENT) && nsz < eff) {
-		if (nsz == nbc->disk_conf->disk_size) {
+	अणु
+	अचिन्हित दीर्घ दीर्घ nsz = drbd_new_dev_size(device, nbc, nbc->disk_conf->disk_size, 0);
+	अचिन्हित दीर्घ दीर्घ eff = nbc->md.la_size_sect;
+	अगर (drbd_md_test_flag(nbc, MDF_CONSISTENT) && nsz < eff) अणु
+		अगर (nsz == nbc->disk_conf->disk_size) अणु
 			drbd_warn(device, "truncating a consistent device during attach (%llu < %llu)\n", nsz, eff);
-		} else {
+		पूर्ण अन्यथा अणु
 			drbd_warn(device, "refusing to truncate a consistent device (%llu < %llu)\n", nsz, eff);
-			drbd_msg_sprintf_info(adm_ctx.reply_skb,
+			drbd_msg_प्र_लिखो_info(adm_ctx.reply_skb,
 				"To-be-attached device has last effective > current size, and is consistent\n"
 				"(%llu > %llu sectors). Refusing to attach.", eff, nsz);
 			retcode = ERR_IMPLICIT_SHRINK;
-			goto force_diskless_dec;
-		}
-	}
-	}
+			जाओ क्रमce_diskless_dec;
+		पूर्ण
+	पूर्ण
+	पूर्ण
 
 	lock_all_resources();
 	retcode = drbd_resync_after_valid(device, new_disk_conf->resync_after);
-	if (retcode != NO_ERROR) {
+	अगर (retcode != NO_ERROR) अणु
 		unlock_all_resources();
-		goto force_diskless_dec;
-	}
+		जाओ क्रमce_diskless_dec;
+	पूर्ण
 
-	/* Reset the "barriers don't work" bits here, then force meta data to
-	 * be written, to ensure we determine if barriers are supported. */
-	if (new_disk_conf->md_flushes)
+	/* Reset the "barriers don't work" bits here, then क्रमce meta data to
+	 * be written, to ensure we determine अगर barriers are supported. */
+	अगर (new_disk_conf->md_flushes)
 		clear_bit(MD_NO_FUA, &device->flags);
-	else
+	अन्यथा
 		set_bit(MD_NO_FUA, &device->flags);
 
-	/* Point of no return reached.
-	 * Devices and memory are no longer released by error cleanup below.
+	/* Poपूर्णांक of no वापस reached.
+	 * Devices and memory are no दीर्घer released by error cleanup below.
 	 * now device takes over responsibility, and the state engine should
 	 * clean it up somewhere.  */
-	D_ASSERT(device, device->ldev == NULL);
+	D_ASSERT(device, device->ldev == शून्य);
 	device->ldev = nbc;
 	device->resync = resync_lru;
 	device->rs_plan_s = new_plan;
-	nbc = NULL;
-	resync_lru = NULL;
-	new_disk_conf = NULL;
-	new_plan = NULL;
+	nbc = शून्य;
+	resync_lru = शून्य;
+	new_disk_conf = शून्य;
+	new_plan = शून्य;
 
 	drbd_resync_after_changed(device);
-	drbd_bump_write_ordering(device->resource, device->ldev, WO_BDEV_FLUSH);
+	drbd_bump_ग_लिखो_ordering(device->resource, device->ldev, WO_BDEV_FLUSH);
 	unlock_all_resources();
 
-	if (drbd_md_test_flag(device->ldev, MDF_CRASHED_PRIMARY))
+	अगर (drbd_md_test_flag(device->ldev, MDF_CRASHED_PRIMARY))
 		set_bit(CRASHED_PRIMARY, &device->flags);
-	else
+	अन्यथा
 		clear_bit(CRASHED_PRIMARY, &device->flags);
 
-	if (drbd_md_test_flag(device->ldev, MDF_PRIMARY_IND) &&
+	अगर (drbd_md_test_flag(device->ldev, MDF_PRIMARY_IND) &&
 	    !(device->state.role == R_PRIMARY && device->resource->susp_nod))
 		set_bit(CRASHED_PRIMARY, &device->flags);
 
 	device->send_cnt = 0;
 	device->recv_cnt = 0;
-	device->read_cnt = 0;
+	device->पढ़ो_cnt = 0;
 	device->writ_cnt = 0;
 
-	drbd_reconsider_queue_parameters(device, device->ldev, NULL);
+	drbd_reconsider_queue_parameters(device, device->ldev, शून्य);
 
 	/* If I am currently not R_PRIMARY,
 	 * but meta data primary indicator is set,
 	 * I just now recover from a hard crash,
-	 * and have been R_PRIMARY before that crash.
+	 * and have been R_PRIMARY beक्रमe that crash.
 	 *
-	 * Now, if I had no connection before that crash
+	 * Now, अगर I had no connection beक्रमe that crash
 	 * (have been degraded R_PRIMARY), chances are that
 	 * I won't find my peer now either.
 	 *
-	 * In that case, and _only_ in that case,
-	 * we use the degr-wfc-timeout instead of the default,
-	 * so we can automatically recover from a crash of a
-	 * degraded but active "cluster" after a certain timeout.
+	 * In that हाल, and _only_ in that हाल,
+	 * we use the degr-wfc-समयout instead of the शेष,
+	 * so we can स्वतःmatically recover from a crash of a
+	 * degraded but active "cluster" after a certain समयout.
 	 */
 	clear_bit(USE_DEGR_WFC_T, &device->flags);
-	if (device->state.role != R_PRIMARY &&
+	अगर (device->state.role != R_PRIMARY &&
 	     drbd_md_test_flag(device->ldev, MDF_PRIMARY_IND) &&
 	    !drbd_md_test_flag(device->ldev, MDF_CONNECTED_IND))
 		set_bit(USE_DEGR_WFC_T, &device->flags);
 
-	dd = drbd_determine_dev_size(device, 0, NULL);
-	if (dd <= DS_ERROR) {
+	dd = drbd_determine_dev_size(device, 0, शून्य);
+	अगर (dd <= DS_ERROR) अणु
 		retcode = ERR_NOMEM_BITMAP;
-		goto force_diskless_dec;
-	} else if (dd == DS_GREW)
+		जाओ क्रमce_diskless_dec;
+	पूर्ण अन्यथा अगर (dd == DS_GREW)
 		set_bit(RESYNC_AFTER_NEG, &device->flags);
 
-	if (drbd_md_test_flag(device->ldev, MDF_FULL_SYNC) ||
+	अगर (drbd_md_test_flag(device->ldev, MDF_FULL_SYNC) ||
 	    (test_bit(CRASHED_PRIMARY, &device->flags) &&
-	     drbd_md_test_flag(device->ldev, MDF_AL_DISABLED))) {
+	     drbd_md_test_flag(device->ldev, MDF_AL_DISABLED))) अणु
 		drbd_info(device, "Assuming that all blocks are out of sync "
 		     "(aka FullSync)\n");
-		if (drbd_bitmap_io(device, &drbd_bmio_set_n_write,
-			"set_n_write from attaching", BM_LOCKED_MASK)) {
+		अगर (drbd_biपंचांगap_io(device, &drbd_bmio_set_n_ग_लिखो,
+			"set_n_write from attaching", BM_LOCKED_MASK)) अणु
 			retcode = ERR_IO_MD_DISK;
-			goto force_diskless_dec;
-		}
-	} else {
-		if (drbd_bitmap_io(device, &drbd_bm_read,
-			"read from attaching", BM_LOCKED_MASK)) {
+			जाओ क्रमce_diskless_dec;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (drbd_biपंचांगap_io(device, &drbd_bm_पढ़ो,
+			"read from attaching", BM_LOCKED_MASK)) अणु
 			retcode = ERR_IO_MD_DISK;
-			goto force_diskless_dec;
-		}
-	}
+			जाओ क्रमce_diskless_dec;
+		पूर्ण
+	पूर्ण
 
-	if (_drbd_bm_total_weight(device) == drbd_bm_bits(device))
+	अगर (_drbd_bm_total_weight(device) == drbd_bm_bits(device))
 		drbd_suspend_al(device); /* IO is still suspended here... */
 
 	spin_lock_irq(&device->resource->req_lock);
-	os = drbd_read_state(device);
+	os = drbd_पढ़ो_state(device);
 	ns = os;
-	/* If MDF_CONSISTENT is not set go into inconsistent state,
+	/* If MDF_CONSISTENT is not set go पूर्णांकo inconsistent state,
 	   otherwise investigate MDF_WasUpToDate...
-	   If MDF_WAS_UP_TO_DATE is not set go into D_OUTDATED disk state,
-	   otherwise into D_CONSISTENT state.
+	   If MDF_WAS_UP_TO_DATE is not set go पूर्णांकo D_OUTDATED disk state,
+	   otherwise पूर्णांकo D_CONSISTENT state.
 	*/
-	if (drbd_md_test_flag(device->ldev, MDF_CONSISTENT)) {
-		if (drbd_md_test_flag(device->ldev, MDF_WAS_UP_TO_DATE))
+	अगर (drbd_md_test_flag(device->ldev, MDF_CONSISTENT)) अणु
+		अगर (drbd_md_test_flag(device->ldev, MDF_WAS_UP_TO_DATE))
 			ns.disk = D_CONSISTENT;
-		else
+		अन्यथा
 			ns.disk = D_OUTDATED;
-	} else {
+	पूर्ण अन्यथा अणु
 		ns.disk = D_INCONSISTENT;
-	}
+	पूर्ण
 
-	if (drbd_md_test_flag(device->ldev, MDF_PEER_OUT_DATED))
+	अगर (drbd_md_test_flag(device->ldev, MDF_PEER_OUT_DATED))
 		ns.pdsk = D_OUTDATED;
 
-	rcu_read_lock();
-	if (ns.disk == D_CONSISTENT &&
+	rcu_पढ़ो_lock();
+	अगर (ns.disk == D_CONSISTENT &&
 	    (ns.pdsk == D_OUTDATED || rcu_dereference(device->ldev->disk_conf)->fencing == FP_DONT_CARE))
 		ns.disk = D_UP_TO_DATE;
 
 	/* All tests on MDF_PRIMARY_IND, MDF_CONNECTED_IND,
-	   MDF_CONSISTENT and MDF_WAS_UP_TO_DATE must happen before
-	   this point, because drbd_request_state() modifies these
+	   MDF_CONSISTENT and MDF_WAS_UP_TO_DATE must happen beक्रमe
+	   this poपूर्णांक, because drbd_request_state() modअगरies these
 	   flags. */
 
-	if (rcu_dereference(device->ldev->disk_conf)->al_updates)
+	अगर (rcu_dereference(device->ldev->disk_conf)->al_updates)
 		device->ldev->md.flags &= ~MDF_AL_DISABLED;
-	else
+	अन्यथा
 		device->ldev->md.flags |= MDF_AL_DISABLED;
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	/* In case we are C_CONNECTED postpone any decision on the new disk
+	/* In हाल we are C_CONNECTED postpone any decision on the new disk
 	   state after the negotiation phase. */
-	if (device->state.conn == C_CONNECTED) {
-		device->new_state_tmp.i = ns.i;
+	अगर (device->state.conn == C_CONNECTED) अणु
+		device->new_state_पंचांगp.i = ns.i;
 		ns.i = os.i;
 		ns.disk = D_NEGOTIATING;
 
 		/* We expect to receive up-to-date UUIDs soon.
-		   To avoid a race in receive_state, free p_uuid while
+		   To aव्योम a race in receive_state, मुक्त p_uuid जबतक
 		   holding req_lock. I.e. atomic with the state change */
-		kfree(device->p_uuid);
-		device->p_uuid = NULL;
-	}
+		kमुक्त(device->p_uuid);
+		device->p_uuid = शून्य;
+	पूर्ण
 
-	rv = _drbd_set_state(device, ns, CS_VERBOSE, NULL);
+	rv = _drbd_set_state(device, ns, CS_VERBOSE, शून्य);
 	spin_unlock_irq(&device->resource->req_lock);
 
-	if (rv < SS_SUCCESS)
-		goto force_diskless_dec;
+	अगर (rv < SS_SUCCESS)
+		जाओ क्रमce_diskless_dec;
 
-	mod_timer(&device->request_timer, jiffies + HZ);
+	mod_समयr(&device->request_समयr, jअगरfies + HZ);
 
-	if (device->state.role == R_PRIMARY)
+	अगर (device->state.role == R_PRIMARY)
 		device->ldev->md.uuid[UI_CURRENT] |=  (u64)1;
-	else
+	अन्यथा
 		device->ldev->md.uuid[UI_CURRENT] &= ~(u64)1;
 
 	drbd_md_mark_dirty(device);
@@ -2176,271 +2177,271 @@ int drbd_adm_attach(struct sk_buff *skb, struct genl_info *info)
 
 	kobject_uevent(&disk_to_dev(device->vdisk)->kobj, KOBJ_CHANGE);
 	put_ldev(device);
-	conn_reconfig_done(connection);
+	conn_reconfig_करोne(connection);
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
+	वापस 0;
 
- force_diskless_dec:
+ क्रमce_diskless_dec:
 	put_ldev(device);
- force_diskless:
-	drbd_force_state(device, NS(disk, D_DISKLESS));
+ क्रमce_diskless:
+	drbd_क्रमce_state(device, NS(disk, D_DISKLESS));
 	drbd_md_sync(device);
  fail:
-	conn_reconfig_done(connection);
-	if (nbc) {
-		close_backing_dev(device, nbc->md_bdev, nbc->md_bdev != nbc->backing_bdev);
-		close_backing_dev(device, nbc->backing_bdev, true);
-		kfree(nbc);
-	}
-	kfree(new_disk_conf);
+	conn_reconfig_करोne(connection);
+	अगर (nbc) अणु
+		बंद_backing_dev(device, nbc->md_bdev, nbc->md_bdev != nbc->backing_bdev);
+		बंद_backing_dev(device, nbc->backing_bdev, true);
+		kमुक्त(nbc);
+	पूर्ण
+	kमुक्त(new_disk_conf);
 	lc_destroy(resync_lru);
-	kfree(new_plan);
+	kमुक्त(new_plan);
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
  finish:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adm_detach(struct drbd_device *device, int force)
-{
-	if (force) {
+अटल पूर्णांक adm_detach(काष्ठा drbd_device *device, पूर्णांक क्रमce)
+अणु
+	अगर (क्रमce) अणु
 		set_bit(FORCE_DETACH, &device->flags);
-		drbd_force_state(device, NS(disk, D_FAILED));
-		return SS_SUCCESS;
-	}
+		drbd_क्रमce_state(device, NS(disk, D_FAILED));
+		वापस SS_SUCCESS;
+	पूर्ण
 
-	return drbd_request_detach_interruptible(device);
-}
+	वापस drbd_request_detach_पूर्णांकerruptible(device);
+पूर्ण
 
 /* Detaching the disk is a process in multiple stages.  First we need to lock
  * out application IO, in-flight IO, IO stuck in drbd_al_begin_io.
- * Then we transition to D_DISKLESS, and wait for put_ldev() to return all
- * internal references as well.
+ * Then we transition to D_DISKLESS, and रुको क्रम put_ldev() to वापस all
+ * पूर्णांकernal references as well.
  * Only then we have finally detached. */
-int drbd_adm_detach(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	enum drbd_ret_code retcode;
-	struct detach_parms parms = { };
-	int err;
+पूर्णांक drbd_adm_detach(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	क्रमागत drbd_ret_code retcode;
+	काष्ठा detach_parms parms = अणु पूर्ण;
+	पूर्णांक err;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
-	if (info->attrs[DRBD_NLA_DETACH_PARMS]) {
+	अगर (info->attrs[DRBD_NLA_DETACH_PARMS]) अणु
 		err = detach_parms_from_attrs(&parms, info);
-		if (err) {
+		अगर (err) अणु
 			retcode = ERR_MANDATORY_TAG;
 			drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
-	retcode = adm_detach(adm_ctx.device, parms.force_detach);
+	retcode = adm_detach(adm_ctx.device, parms.क्रमce_detach);
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool conn_resync_running(struct drbd_connection *connection)
-{
-	struct drbd_peer_device *peer_device;
+अटल bool conn_resync_running(काष्ठा drbd_connection *connection)
+अणु
+	काष्ठा drbd_peer_device *peer_device;
 	bool rv = false;
-	int vnr;
+	पूर्णांक vnr;
 
-	rcu_read_lock();
-	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
-		struct drbd_device *device = peer_device->device;
-		if (device->state.conn == C_SYNC_SOURCE ||
+	rcu_पढ़ो_lock();
+	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
+		काष्ठा drbd_device *device = peer_device->device;
+		अगर (device->state.conn == C_SYNC_SOURCE ||
 		    device->state.conn == C_SYNC_TARGET ||
 		    device->state.conn == C_PAUSED_SYNC_S ||
-		    device->state.conn == C_PAUSED_SYNC_T) {
+		    device->state.conn == C_PAUSED_SYNC_T) अणु
 			rv = true;
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static bool conn_ov_running(struct drbd_connection *connection)
-{
-	struct drbd_peer_device *peer_device;
+अटल bool conn_ov_running(काष्ठा drbd_connection *connection)
+अणु
+	काष्ठा drbd_peer_device *peer_device;
 	bool rv = false;
-	int vnr;
+	पूर्णांक vnr;
 
-	rcu_read_lock();
-	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
-		struct drbd_device *device = peer_device->device;
-		if (device->state.conn == C_VERIFY_S ||
-		    device->state.conn == C_VERIFY_T) {
+	rcu_पढ़ो_lock();
+	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
+		काष्ठा drbd_device *device = peer_device->device;
+		अगर (device->state.conn == C_VERIFY_S ||
+		    device->state.conn == C_VERIFY_T) अणु
 			rv = true;
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static enum drbd_ret_code
-_check_net_options(struct drbd_connection *connection, struct net_conf *old_net_conf, struct net_conf *new_net_conf)
-{
-	struct drbd_peer_device *peer_device;
-	int i;
+अटल क्रमागत drbd_ret_code
+_check_net_options(काष्ठा drbd_connection *connection, काष्ठा net_conf *old_net_conf, काष्ठा net_conf *new_net_conf)
+अणु
+	काष्ठा drbd_peer_device *peer_device;
+	पूर्णांक i;
 
-	if (old_net_conf && connection->cstate == C_WF_REPORT_PARAMS && connection->agreed_pro_version < 100) {
-		if (new_net_conf->wire_protocol != old_net_conf->wire_protocol)
-			return ERR_NEED_APV_100;
+	अगर (old_net_conf && connection->cstate == C_WF_REPORT_PARAMS && connection->agreed_pro_version < 100) अणु
+		अगर (new_net_conf->wire_protocol != old_net_conf->wire_protocol)
+			वापस ERR_NEED_APV_100;
 
-		if (new_net_conf->two_primaries != old_net_conf->two_primaries)
-			return ERR_NEED_APV_100;
+		अगर (new_net_conf->two_primaries != old_net_conf->two_primaries)
+			वापस ERR_NEED_APV_100;
 
-		if (strcmp(new_net_conf->integrity_alg, old_net_conf->integrity_alg))
-			return ERR_NEED_APV_100;
-	}
+		अगर (म_भेद(new_net_conf->पूर्णांकegrity_alg, old_net_conf->पूर्णांकegrity_alg))
+			वापस ERR_NEED_APV_100;
+	पूर्ण
 
-	if (!new_net_conf->two_primaries &&
+	अगर (!new_net_conf->two_primaries &&
 	    conn_highest_role(connection) == R_PRIMARY &&
 	    conn_highest_peer(connection) == R_PRIMARY)
-		return ERR_NEED_ALLOW_TWO_PRI;
+		वापस ERR_NEED_ALLOW_TWO_PRI;
 
-	if (new_net_conf->two_primaries &&
+	अगर (new_net_conf->two_primaries &&
 	    (new_net_conf->wire_protocol != DRBD_PROT_C))
-		return ERR_NOT_PROTO_C;
+		वापस ERR_NOT_PROTO_C;
 
-	idr_for_each_entry(&connection->peer_devices, peer_device, i) {
-		struct drbd_device *device = peer_device->device;
-		if (get_ldev(device)) {
-			enum drbd_fencing_p fp = rcu_dereference(device->ldev->disk_conf)->fencing;
+	idr_क्रम_each_entry(&connection->peer_devices, peer_device, i) अणु
+		काष्ठा drbd_device *device = peer_device->device;
+		अगर (get_ldev(device)) अणु
+			क्रमागत drbd_fencing_p fp = rcu_dereference(device->ldev->disk_conf)->fencing;
 			put_ldev(device);
-			if (new_net_conf->wire_protocol == DRBD_PROT_A && fp == FP_STONITH)
-				return ERR_STONITH_AND_PROT_A;
-		}
-		if (device->state.role == R_PRIMARY && new_net_conf->discard_my_data)
-			return ERR_DISCARD_IMPOSSIBLE;
-	}
+			अगर (new_net_conf->wire_protocol == DRBD_PROT_A && fp == FP_STONITH)
+				वापस ERR_STONITH_AND_PROT_A;
+		पूर्ण
+		अगर (device->state.role == R_PRIMARY && new_net_conf->discard_my_data)
+			वापस ERR_DISCARD_IMPOSSIBLE;
+	पूर्ण
 
-	if (new_net_conf->on_congestion != OC_BLOCK && new_net_conf->wire_protocol != DRBD_PROT_A)
-		return ERR_CONG_NOT_PROTO_A;
+	अगर (new_net_conf->on_congestion != OC_BLOCK && new_net_conf->wire_protocol != DRBD_PROT_A)
+		वापस ERR_CONG_NOT_PROTO_A;
 
-	return NO_ERROR;
-}
+	वापस NO_ERROR;
+पूर्ण
 
-static enum drbd_ret_code
-check_net_options(struct drbd_connection *connection, struct net_conf *new_net_conf)
-{
-	enum drbd_ret_code rv;
-	struct drbd_peer_device *peer_device;
-	int i;
+अटल क्रमागत drbd_ret_code
+check_net_options(काष्ठा drbd_connection *connection, काष्ठा net_conf *new_net_conf)
+अणु
+	क्रमागत drbd_ret_code rv;
+	काष्ठा drbd_peer_device *peer_device;
+	पूर्णांक i;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	rv = _check_net_options(connection, rcu_dereference(connection->net_conf), new_net_conf);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	/* connection->peer_devices protected by genl_lock() here */
-	idr_for_each_entry(&connection->peer_devices, peer_device, i) {
-		struct drbd_device *device = peer_device->device;
-		if (!device->bitmap) {
-			if (drbd_bm_init(device))
-				return ERR_NOMEM;
-		}
-	}
+	/* connection->peer_devices रक्षित by genl_lock() here */
+	idr_क्रम_each_entry(&connection->peer_devices, peer_device, i) अणु
+		काष्ठा drbd_device *device = peer_device->device;
+		अगर (!device->biपंचांगap) अणु
+			अगर (drbd_bm_init(device))
+				वापस ERR_NOMEM;
+		पूर्ण
+	पूर्ण
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-struct crypto {
-	struct crypto_shash *verify_tfm;
-	struct crypto_shash *csums_tfm;
-	struct crypto_shash *cram_hmac_tfm;
-	struct crypto_shash *integrity_tfm;
-};
+काष्ठा crypto अणु
+	काष्ठा crypto_shash *verअगरy_tfm;
+	काष्ठा crypto_shash *csums_tfm;
+	काष्ठा crypto_shash *cram_hmac_tfm;
+	काष्ठा crypto_shash *पूर्णांकegrity_tfm;
+पूर्ण;
 
-static int
-alloc_shash(struct crypto_shash **tfm, char *tfm_name, int err_alg)
-{
-	if (!tfm_name[0])
-		return NO_ERROR;
+अटल पूर्णांक
+alloc_shash(काष्ठा crypto_shash **tfm, अक्षर *tfm_name, पूर्णांक err_alg)
+अणु
+	अगर (!tfm_name[0])
+		वापस NO_ERROR;
 
 	*tfm = crypto_alloc_shash(tfm_name, 0, 0);
-	if (IS_ERR(*tfm)) {
-		*tfm = NULL;
-		return err_alg;
-	}
+	अगर (IS_ERR(*tfm)) अणु
+		*tfm = शून्य;
+		वापस err_alg;
+	पूर्ण
 
-	return NO_ERROR;
-}
+	वापस NO_ERROR;
+पूर्ण
 
-static enum drbd_ret_code
-alloc_crypto(struct crypto *crypto, struct net_conf *new_net_conf)
-{
-	char hmac_name[CRYPTO_MAX_ALG_NAME];
-	enum drbd_ret_code rv;
+अटल क्रमागत drbd_ret_code
+alloc_crypto(काष्ठा crypto *crypto, काष्ठा net_conf *new_net_conf)
+अणु
+	अक्षर hmac_name[CRYPTO_MAX_ALG_NAME];
+	क्रमागत drbd_ret_code rv;
 
 	rv = alloc_shash(&crypto->csums_tfm, new_net_conf->csums_alg,
 			 ERR_CSUMS_ALG);
-	if (rv != NO_ERROR)
-		return rv;
-	rv = alloc_shash(&crypto->verify_tfm, new_net_conf->verify_alg,
+	अगर (rv != NO_ERROR)
+		वापस rv;
+	rv = alloc_shash(&crypto->verअगरy_tfm, new_net_conf->verअगरy_alg,
 			 ERR_VERIFY_ALG);
-	if (rv != NO_ERROR)
-		return rv;
-	rv = alloc_shash(&crypto->integrity_tfm, new_net_conf->integrity_alg,
+	अगर (rv != NO_ERROR)
+		वापस rv;
+	rv = alloc_shash(&crypto->पूर्णांकegrity_tfm, new_net_conf->पूर्णांकegrity_alg,
 			 ERR_INTEGRITY_ALG);
-	if (rv != NO_ERROR)
-		return rv;
-	if (new_net_conf->cram_hmac_alg[0] != 0) {
-		snprintf(hmac_name, CRYPTO_MAX_ALG_NAME, "hmac(%s)",
+	अगर (rv != NO_ERROR)
+		वापस rv;
+	अगर (new_net_conf->cram_hmac_alg[0] != 0) अणु
+		snम_लिखो(hmac_name, CRYPTO_MAX_ALG_NAME, "hmac(%s)",
 			 new_net_conf->cram_hmac_alg);
 
 		rv = alloc_shash(&crypto->cram_hmac_tfm, hmac_name,
 				 ERR_AUTH_ALG);
-	}
+	पूर्ण
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static void free_crypto(struct crypto *crypto)
-{
-	crypto_free_shash(crypto->cram_hmac_tfm);
-	crypto_free_shash(crypto->integrity_tfm);
-	crypto_free_shash(crypto->csums_tfm);
-	crypto_free_shash(crypto->verify_tfm);
-}
+अटल व्योम मुक्त_crypto(काष्ठा crypto *crypto)
+अणु
+	crypto_मुक्त_shash(crypto->cram_hmac_tfm);
+	crypto_मुक्त_shash(crypto->पूर्णांकegrity_tfm);
+	crypto_मुक्त_shash(crypto->csums_tfm);
+	crypto_मुक्त_shash(crypto->verअगरy_tfm);
+पूर्ण
 
-int drbd_adm_net_opts(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	enum drbd_ret_code retcode;
-	struct drbd_connection *connection;
-	struct net_conf *old_net_conf, *new_net_conf = NULL;
-	int err;
-	int ovr; /* online verify running */
-	int rsr; /* re-sync running */
-	struct crypto crypto = { };
+पूर्णांक drbd_adm_net_opts(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	क्रमागत drbd_ret_code retcode;
+	काष्ठा drbd_connection *connection;
+	काष्ठा net_conf *old_net_conf, *new_net_conf = शून्य;
+	पूर्णांक err;
+	पूर्णांक ovr; /* online verअगरy running */
+	पूर्णांक rsr; /* re-sync running */
+	काष्ठा crypto crypto = अणु पूर्ण;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_CONNECTION);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto finish;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ finish;
 
 	connection = adm_ctx.connection;
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 
-	new_net_conf = kzalloc(sizeof(struct net_conf), GFP_KERNEL);
-	if (!new_net_conf) {
+	new_net_conf = kzalloc(माप(काष्ठा net_conf), GFP_KERNEL);
+	अगर (!new_net_conf) अणु
 		retcode = ERR_NOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	conn_reconfig_start(connection);
 
@@ -2448,1197 +2449,1197 @@ int drbd_adm_net_opts(struct sk_buff *skb, struct genl_info *info)
 	mutex_lock(&connection->resource->conf_update);
 	old_net_conf = connection->net_conf;
 
-	if (!old_net_conf) {
+	अगर (!old_net_conf) अणु
 		drbd_msg_put_info(adm_ctx.reply_skb, "net conf missing, try connect");
 		retcode = ERR_INVALID_REQUEST;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	*new_net_conf = *old_net_conf;
-	if (should_set_defaults(info))
-		set_net_conf_defaults(new_net_conf);
+	अगर (should_set_शेषs(info))
+		set_net_conf_शेषs(new_net_conf);
 
-	err = net_conf_from_attrs_for_change(new_net_conf, info);
-	if (err && err != -ENOMSG) {
+	err = net_conf_from_attrs_क्रम_change(new_net_conf, info);
+	अगर (err && err != -ENOMSG) अणु
 		retcode = ERR_MANDATORY_TAG;
 		drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	retcode = check_net_options(connection, new_net_conf);
-	if (retcode != NO_ERROR)
-		goto fail;
+	अगर (retcode != NO_ERROR)
+		जाओ fail;
 
 	/* re-sync running */
 	rsr = conn_resync_running(connection);
-	if (rsr && strcmp(new_net_conf->csums_alg, old_net_conf->csums_alg)) {
+	अगर (rsr && म_भेद(new_net_conf->csums_alg, old_net_conf->csums_alg)) अणु
 		retcode = ERR_CSUMS_RESYNC_RUNNING;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	/* online verify running */
+	/* online verअगरy running */
 	ovr = conn_ov_running(connection);
-	if (ovr && strcmp(new_net_conf->verify_alg, old_net_conf->verify_alg)) {
+	अगर (ovr && म_भेद(new_net_conf->verअगरy_alg, old_net_conf->verअगरy_alg)) अणु
 		retcode = ERR_VERIFY_RUNNING;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	retcode = alloc_crypto(&crypto, new_net_conf);
-	if (retcode != NO_ERROR)
-		goto fail;
+	अगर (retcode != NO_ERROR)
+		जाओ fail;
 
-	rcu_assign_pointer(connection->net_conf, new_net_conf);
+	rcu_assign_poपूर्णांकer(connection->net_conf, new_net_conf);
 
-	if (!rsr) {
-		crypto_free_shash(connection->csums_tfm);
+	अगर (!rsr) अणु
+		crypto_मुक्त_shash(connection->csums_tfm);
 		connection->csums_tfm = crypto.csums_tfm;
-		crypto.csums_tfm = NULL;
-	}
-	if (!ovr) {
-		crypto_free_shash(connection->verify_tfm);
-		connection->verify_tfm = crypto.verify_tfm;
-		crypto.verify_tfm = NULL;
-	}
+		crypto.csums_tfm = शून्य;
+	पूर्ण
+	अगर (!ovr) अणु
+		crypto_मुक्त_shash(connection->verअगरy_tfm);
+		connection->verअगरy_tfm = crypto.verअगरy_tfm;
+		crypto.verअगरy_tfm = शून्य;
+	पूर्ण
 
-	crypto_free_shash(connection->integrity_tfm);
-	connection->integrity_tfm = crypto.integrity_tfm;
-	if (connection->cstate >= C_WF_REPORT_PARAMS && connection->agreed_pro_version >= 100)
+	crypto_मुक्त_shash(connection->पूर्णांकegrity_tfm);
+	connection->पूर्णांकegrity_tfm = crypto.पूर्णांकegrity_tfm;
+	अगर (connection->cstate >= C_WF_REPORT_PARAMS && connection->agreed_pro_version >= 100)
 		/* Do this without trying to take connection->data.mutex again.  */
 		__drbd_send_protocol(connection, P_PROTOCOL_UPDATE);
 
-	crypto_free_shash(connection->cram_hmac_tfm);
+	crypto_मुक्त_shash(connection->cram_hmac_tfm);
 	connection->cram_hmac_tfm = crypto.cram_hmac_tfm;
 
 	mutex_unlock(&connection->resource->conf_update);
 	mutex_unlock(&connection->data.mutex);
 	synchronize_rcu();
-	kfree(old_net_conf);
+	kमुक्त(old_net_conf);
 
-	if (connection->cstate >= C_WF_REPORT_PARAMS) {
-		struct drbd_peer_device *peer_device;
-		int vnr;
+	अगर (connection->cstate >= C_WF_REPORT_PARAMS) अणु
+		काष्ठा drbd_peer_device *peer_device;
+		पूर्णांक vnr;
 
-		idr_for_each_entry(&connection->peer_devices, peer_device, vnr)
+		idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr)
 			drbd_send_sync_param(peer_device);
-	}
+	पूर्ण
 
-	goto done;
+	जाओ करोne;
 
  fail:
 	mutex_unlock(&connection->resource->conf_update);
 	mutex_unlock(&connection->data.mutex);
-	free_crypto(&crypto);
-	kfree(new_net_conf);
- done:
-	conn_reconfig_done(connection);
+	मुक्त_crypto(&crypto);
+	kमुक्त(new_net_conf);
+ करोne:
+	conn_reconfig_करोne(connection);
  out:
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
  finish:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void connection_to_info(struct connection_info *info,
-			       struct drbd_connection *connection)
-{
+अटल व्योम connection_to_info(काष्ठा connection_info *info,
+			       काष्ठा drbd_connection *connection)
+अणु
 	info->conn_connection_state = connection->cstate;
 	info->conn_role = conn_highest_peer(connection);
-}
+पूर्ण
 
-static void peer_device_to_info(struct peer_device_info *info,
-				struct drbd_peer_device *peer_device)
-{
-	struct drbd_device *device = peer_device->device;
+अटल व्योम peer_device_to_info(काष्ठा peer_device_info *info,
+				काष्ठा drbd_peer_device *peer_device)
+अणु
+	काष्ठा drbd_device *device = peer_device->device;
 
 	info->peer_repl_state =
-		max_t(enum drbd_conns, C_WF_REPORT_PARAMS, device->state.conn);
+		max_t(क्रमागत drbd_conns, C_WF_REPORT_PARAMS, device->state.conn);
 	info->peer_disk_state = device->state.pdsk;
 	info->peer_resync_susp_user = device->state.user_isp;
 	info->peer_resync_susp_peer = device->state.peer_isp;
 	info->peer_resync_susp_dependency = device->state.aftr_isp;
-}
+पूर्ण
 
-int drbd_adm_connect(struct sk_buff *skb, struct genl_info *info)
-{
-	struct connection_info connection_info;
-	enum drbd_notification_type flags;
-	unsigned int peer_devices = 0;
-	struct drbd_config_context adm_ctx;
-	struct drbd_peer_device *peer_device;
-	struct net_conf *old_net_conf, *new_net_conf = NULL;
-	struct crypto crypto = { };
-	struct drbd_resource *resource;
-	struct drbd_connection *connection;
-	enum drbd_ret_code retcode;
-	int i;
-	int err;
+पूर्णांक drbd_adm_connect(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा connection_info connection_info;
+	क्रमागत drbd_notअगरication_type flags;
+	अचिन्हित पूर्णांक peer_devices = 0;
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा drbd_peer_device *peer_device;
+	काष्ठा net_conf *old_net_conf, *new_net_conf = शून्य;
+	काष्ठा crypto crypto = अणु पूर्ण;
+	काष्ठा drbd_resource *resource;
+	काष्ठा drbd_connection *connection;
+	क्रमागत drbd_ret_code retcode;
+	पूर्णांक i;
+	पूर्णांक err;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_RESOURCE);
 
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
-	if (!(adm_ctx.my_addr && adm_ctx.peer_addr)) {
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
+	अगर (!(adm_ctx.my_addr && adm_ctx.peer_addr)) अणु
 		drbd_msg_put_info(adm_ctx.reply_skb, "connection endpoint(s) missing");
 		retcode = ERR_INVALID_REQUEST;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* No need for _rcu here. All reconfiguration is
-	 * strictly serialized on genl_lock(). We are protected against
+	/* No need क्रम _rcu here. All reconfiguration is
+	 * strictly serialized on genl_lock(). We are रक्षित against
 	 * concurrent reconfiguration/addition/deletion */
-	for_each_resource(resource, &drbd_resources) {
-		for_each_connection(connection, resource) {
-			if (nla_len(adm_ctx.my_addr) == connection->my_addr_len &&
-			    !memcmp(nla_data(adm_ctx.my_addr), &connection->my_addr,
-				    connection->my_addr_len)) {
+	क्रम_each_resource(resource, &drbd_resources) अणु
+		क्रम_each_connection(connection, resource) अणु
+			अगर (nla_len(adm_ctx.my_addr) == connection->my_addr_len &&
+			    !स_भेद(nla_data(adm_ctx.my_addr), &connection->my_addr,
+				    connection->my_addr_len)) अणु
 				retcode = ERR_LOCAL_ADDR;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (nla_len(adm_ctx.peer_addr) == connection->peer_addr_len &&
-			    !memcmp(nla_data(adm_ctx.peer_addr), &connection->peer_addr,
-				    connection->peer_addr_len)) {
+			अगर (nla_len(adm_ctx.peer_addr) == connection->peer_addr_len &&
+			    !स_भेद(nla_data(adm_ctx.peer_addr), &connection->peer_addr,
+				    connection->peer_addr_len)) अणु
 				retcode = ERR_PEER_ADDR;
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 	connection = first_connection(adm_ctx.resource);
 	conn_reconfig_start(connection);
 
-	if (connection->cstate > C_STANDALONE) {
+	अगर (connection->cstate > C_STANDALONE) अणु
 		retcode = ERR_NET_CONFIGURED;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* allocation not in the IO path, drbdsetup / netlink process context */
-	new_net_conf = kzalloc(sizeof(*new_net_conf), GFP_KERNEL);
-	if (!new_net_conf) {
+	new_net_conf = kzalloc(माप(*new_net_conf), GFP_KERNEL);
+	अगर (!new_net_conf) अणु
 		retcode = ERR_NOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	set_net_conf_defaults(new_net_conf);
+	set_net_conf_शेषs(new_net_conf);
 
 	err = net_conf_from_attrs(new_net_conf, info);
-	if (err && err != -ENOMSG) {
+	अगर (err && err != -ENOMSG) अणु
 		retcode = ERR_MANDATORY_TAG;
 		drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	retcode = check_net_options(connection, new_net_conf);
-	if (retcode != NO_ERROR)
-		goto fail;
+	अगर (retcode != NO_ERROR)
+		जाओ fail;
 
 	retcode = alloc_crypto(&crypto, new_net_conf);
-	if (retcode != NO_ERROR)
-		goto fail;
+	अगर (retcode != NO_ERROR)
+		जाओ fail;
 
-	((char *)new_net_conf->shared_secret)[SHARED_SECRET_MAX-1] = 0;
+	((अक्षर *)new_net_conf->shared_secret)[SHARED_SECRET_MAX-1] = 0;
 
 	drbd_flush_workqueue(&connection->sender_work);
 
 	mutex_lock(&adm_ctx.resource->conf_update);
 	old_net_conf = connection->net_conf;
-	if (old_net_conf) {
+	अगर (old_net_conf) अणु
 		retcode = ERR_NET_CONFIGURED;
 		mutex_unlock(&adm_ctx.resource->conf_update);
-		goto fail;
-	}
-	rcu_assign_pointer(connection->net_conf, new_net_conf);
+		जाओ fail;
+	पूर्ण
+	rcu_assign_poपूर्णांकer(connection->net_conf, new_net_conf);
 
-	conn_free_crypto(connection);
+	conn_मुक्त_crypto(connection);
 	connection->cram_hmac_tfm = crypto.cram_hmac_tfm;
-	connection->integrity_tfm = crypto.integrity_tfm;
+	connection->पूर्णांकegrity_tfm = crypto.पूर्णांकegrity_tfm;
 	connection->csums_tfm = crypto.csums_tfm;
-	connection->verify_tfm = crypto.verify_tfm;
+	connection->verअगरy_tfm = crypto.verअगरy_tfm;
 
 	connection->my_addr_len = nla_len(adm_ctx.my_addr);
-	memcpy(&connection->my_addr, nla_data(adm_ctx.my_addr), connection->my_addr_len);
+	स_नकल(&connection->my_addr, nla_data(adm_ctx.my_addr), connection->my_addr_len);
 	connection->peer_addr_len = nla_len(adm_ctx.peer_addr);
-	memcpy(&connection->peer_addr, nla_data(adm_ctx.peer_addr), connection->peer_addr_len);
+	स_नकल(&connection->peer_addr, nla_data(adm_ctx.peer_addr), connection->peer_addr_len);
 
-	idr_for_each_entry(&connection->peer_devices, peer_device, i) {
+	idr_क्रम_each_entry(&connection->peer_devices, peer_device, i) अणु
 		peer_devices++;
-	}
+	पूर्ण
 
 	connection_to_info(&connection_info, connection);
 	flags = (peer_devices--) ? NOTIFY_CONTINUES : 0;
-	mutex_lock(&notification_mutex);
-	notify_connection_state(NULL, 0, connection, &connection_info, NOTIFY_CREATE | flags);
-	idr_for_each_entry(&connection->peer_devices, peer_device, i) {
-		struct peer_device_info peer_device_info;
+	mutex_lock(&notअगरication_mutex);
+	notअगरy_connection_state(शून्य, 0, connection, &connection_info, NOTIFY_CREATE | flags);
+	idr_क्रम_each_entry(&connection->peer_devices, peer_device, i) अणु
+		काष्ठा peer_device_info peer_device_info;
 
 		peer_device_to_info(&peer_device_info, peer_device);
 		flags = (peer_devices--) ? NOTIFY_CONTINUES : 0;
-		notify_peer_device_state(NULL, 0, peer_device, &peer_device_info, NOTIFY_CREATE | flags);
-	}
-	mutex_unlock(&notification_mutex);
+		notअगरy_peer_device_state(शून्य, 0, peer_device, &peer_device_info, NOTIFY_CREATE | flags);
+	पूर्ण
+	mutex_unlock(&notअगरication_mutex);
 	mutex_unlock(&adm_ctx.resource->conf_update);
 
-	rcu_read_lock();
-	idr_for_each_entry(&connection->peer_devices, peer_device, i) {
-		struct drbd_device *device = peer_device->device;
+	rcu_पढ़ो_lock();
+	idr_क्रम_each_entry(&connection->peer_devices, peer_device, i) अणु
+		काष्ठा drbd_device *device = peer_device->device;
 		device->send_cnt = 0;
 		device->recv_cnt = 0;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	retcode = (enum drbd_ret_code)conn_request_state(connection,
+	retcode = (क्रमागत drbd_ret_code)conn_request_state(connection,
 					NS(conn, C_UNCONNECTED), CS_VERBOSE);
 
-	conn_reconfig_done(connection);
+	conn_reconfig_करोne(connection);
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
+	वापस 0;
 
 fail:
-	free_crypto(&crypto);
-	kfree(new_net_conf);
+	मुक्त_crypto(&crypto);
+	kमुक्त(new_net_conf);
 
-	conn_reconfig_done(connection);
+	conn_reconfig_करोne(connection);
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum drbd_state_rv conn_try_disconnect(struct drbd_connection *connection, bool force)
-{
-	enum drbd_conns cstate;
-	enum drbd_state_rv rv;
+अटल क्रमागत drbd_state_rv conn_try_disconnect(काष्ठा drbd_connection *connection, bool क्रमce)
+अणु
+	क्रमागत drbd_conns cstate;
+	क्रमागत drbd_state_rv rv;
 
 repeat:
 	rv = conn_request_state(connection, NS(conn, C_DISCONNECTING),
-			force ? CS_HARD : 0);
+			क्रमce ? CS_HARD : 0);
 
-	switch (rv) {
-	case SS_NOTHING_TO_DO:
-		break;
-	case SS_ALREADY_STANDALONE:
-		return SS_SUCCESS;
-	case SS_PRIMARY_NOP:
+	चयन (rv) अणु
+	हाल SS_NOTHING_TO_DO:
+		अवरोध;
+	हाल SS_ALREADY_STANDALONE:
+		वापस SS_SUCCESS;
+	हाल SS_PRIMARY_NOP:
 		/* Our state checking code wants to see the peer outdated. */
 		rv = conn_request_state(connection, NS2(conn, C_DISCONNECTING, pdsk, D_OUTDATED), 0);
 
-		if (rv == SS_OUTDATE_WO_CONN) /* lost connection before graceful disconnect succeeded */
+		अगर (rv == SS_OUTDATE_WO_CONN) /* lost connection beक्रमe graceful disconnect succeeded */
 			rv = conn_request_state(connection, NS(conn, C_DISCONNECTING), CS_VERBOSE);
 
-		break;
-	case SS_CW_FAILED_BY_PEER:
+		अवरोध;
+	हाल SS_CW_FAILED_BY_PEER:
 		spin_lock_irq(&connection->resource->req_lock);
 		cstate = connection->cstate;
 		spin_unlock_irq(&connection->resource->req_lock);
-		if (cstate <= C_WF_CONNECTION)
-			goto repeat;
+		अगर (cstate <= C_WF_CONNECTION)
+			जाओ repeat;
 		/* The peer probably wants to see us outdated. */
 		rv = conn_request_state(connection, NS2(conn, C_DISCONNECTING,
 							disk, D_OUTDATED), 0);
-		if (rv == SS_IS_DISKLESS || rv == SS_LOWER_THAN_OUTDATED) {
+		अगर (rv == SS_IS_DISKLESS || rv == SS_LOWER_THAN_OUTDATED) अणु
 			rv = conn_request_state(connection, NS(conn, C_DISCONNECTING),
 					CS_HARD);
-		}
-		break;
-	default:;
+		पूर्ण
+		अवरोध;
+	शेष:;
 		/* no special handling necessary */
-	}
+	पूर्ण
 
-	if (rv >= SS_SUCCESS) {
-		enum drbd_state_rv rv2;
-		/* No one else can reconfigure the network while I am here.
-		 * The state handling only uses drbd_thread_stop_nowait(),
-		 * we want to really wait here until the receiver is no more.
+	अगर (rv >= SS_SUCCESS) अणु
+		क्रमागत drbd_state_rv rv2;
+		/* No one अन्यथा can reconfigure the network जबतक I am here.
+		 * The state handling only uses drbd_thपढ़ो_stop_noरुको(),
+		 * we want to really रुको here until the receiver is no more.
 		 */
-		drbd_thread_stop(&connection->receiver);
+		drbd_thपढ़ो_stop(&connection->receiver);
 
-		/* Race breaker.  This additional state change request may be
-		 * necessary, if this was a forced disconnect during a receiver
-		 * restart.  We may have "killed" the receiver thread just
-		 * after drbd_receiver() returned.  Typically, we should be
-		 * C_STANDALONE already, now, and this becomes a no-op.
+		/* Race अवरोधer.  This additional state change request may be
+		 * necessary, अगर this was a क्रमced disconnect during a receiver
+		 * restart.  We may have "killed" the receiver thपढ़ो just
+		 * after drbd_receiver() वापसed.  Typically, we should be
+		 * C_STANDALONE alपढ़ोy, now, and this becomes a no-op.
 		 */
 		rv2 = conn_request_state(connection, NS(conn, C_STANDALONE),
 				CS_VERBOSE | CS_HARD);
-		if (rv2 < SS_SUCCESS)
+		अगर (rv2 < SS_SUCCESS)
 			drbd_err(connection,
 				"unexpected rv2=%d in conn_try_disconnect()\n",
 				rv2);
 		/* Unlike in DRBD 9, the state engine has generated
-		 * NOTIFY_DESTROY events before clearing connection->net_conf. */
-	}
-	return rv;
-}
+		 * NOTIFY_DESTROY events beक्रमe clearing connection->net_conf. */
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-int drbd_adm_disconnect(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct disconnect_parms parms;
-	struct drbd_connection *connection;
-	enum drbd_state_rv rv;
-	enum drbd_ret_code retcode;
-	int err;
+पूर्णांक drbd_adm_disconnect(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा disconnect_parms parms;
+	काष्ठा drbd_connection *connection;
+	क्रमागत drbd_state_rv rv;
+	क्रमागत drbd_ret_code retcode;
+	पूर्णांक err;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_CONNECTION);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto fail;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ fail;
 
 	connection = adm_ctx.connection;
-	memset(&parms, 0, sizeof(parms));
-	if (info->attrs[DRBD_NLA_DISCONNECT_PARMS]) {
+	स_रखो(&parms, 0, माप(parms));
+	अगर (info->attrs[DRBD_NLA_DISCONNECT_PARMS]) अणु
 		err = disconnect_parms_from_attrs(&parms, info);
-		if (err) {
+		अगर (err) अणु
 			retcode = ERR_MANDATORY_TAG;
 			drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-			goto fail;
-		}
-	}
+			जाओ fail;
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
-	rv = conn_try_disconnect(connection, parms.force_disconnect);
-	if (rv < SS_SUCCESS)
-		retcode = (enum drbd_ret_code)rv;
-	else
+	rv = conn_try_disconnect(connection, parms.क्रमce_disconnect);
+	अगर (rv < SS_SUCCESS)
+		retcode = (क्रमागत drbd_ret_code)rv;
+	अन्यथा
 		retcode = NO_ERROR;
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
  fail:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void resync_after_online_grow(struct drbd_device *device)
-{
-	int iass; /* I am sync source */
+व्योम resync_after_online_grow(काष्ठा drbd_device *device)
+अणु
+	पूर्णांक iass; /* I am sync source */
 
 	drbd_info(device, "Resync of new storage after online grow\n");
-	if (device->state.role != device->state.peer)
+	अगर (device->state.role != device->state.peer)
 		iass = (device->state.role == R_PRIMARY);
-	else
+	अन्यथा
 		iass = test_bit(RESOLVE_CONFLICTS, &first_peer_device(device)->connection->flags);
 
-	if (iass)
+	अगर (iass)
 		drbd_start_resync(device, C_SYNC_SOURCE);
-	else
+	अन्यथा
 		_drbd_request_state(device, NS(conn, C_WF_SYNC_UUID), CS_VERBOSE + CS_SERIALIZE);
-}
+पूर्ण
 
-int drbd_adm_resize(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct disk_conf *old_disk_conf, *new_disk_conf = NULL;
-	struct resize_parms rs;
-	struct drbd_device *device;
-	enum drbd_ret_code retcode;
-	enum determine_dev_size dd;
+पूर्णांक drbd_adm_resize(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा disk_conf *old_disk_conf, *new_disk_conf = शून्य;
+	काष्ठा resize_parms rs;
+	काष्ठा drbd_device *device;
+	क्रमागत drbd_ret_code retcode;
+	क्रमागत determine_dev_size dd;
 	bool change_al_layout = false;
-	enum dds_flags ddsf;
+	क्रमागत dds_flags ddsf;
 	sector_t u_size;
-	int err;
+	पूर्णांक err;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto finish;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ finish;
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 	device = adm_ctx.device;
-	if (!get_ldev(device)) {
+	अगर (!get_ldev(device)) अणु
 		retcode = ERR_NO_DISK;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	memset(&rs, 0, sizeof(struct resize_parms));
+	स_रखो(&rs, 0, माप(काष्ठा resize_parms));
 	rs.al_stripes = device->ldev->md.al_stripes;
 	rs.al_stripe_size = device->ldev->md.al_stripe_size_4k * 4;
-	if (info->attrs[DRBD_NLA_RESIZE_PARMS]) {
+	अगर (info->attrs[DRBD_NLA_RESIZE_PARMS]) अणु
 		err = resize_parms_from_attrs(&rs, info);
-		if (err) {
+		अगर (err) अणु
 			retcode = ERR_MANDATORY_TAG;
 			drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-			goto fail_ldev;
-		}
-	}
+			जाओ fail_ldev;
+		पूर्ण
+	पूर्ण
 
-	if (device->state.conn > C_CONNECTED) {
+	अगर (device->state.conn > C_CONNECTED) अणु
 		retcode = ERR_RESIZE_RESYNC;
-		goto fail_ldev;
-	}
+		जाओ fail_ldev;
+	पूर्ण
 
-	if (device->state.role == R_SECONDARY &&
-	    device->state.peer == R_SECONDARY) {
+	अगर (device->state.role == R_SECONDARY &&
+	    device->state.peer == R_SECONDARY) अणु
 		retcode = ERR_NO_PRIMARY;
-		goto fail_ldev;
-	}
+		जाओ fail_ldev;
+	पूर्ण
 
-	if (rs.no_resync && first_peer_device(device)->connection->agreed_pro_version < 93) {
+	अगर (rs.no_resync && first_peer_device(device)->connection->agreed_pro_version < 93) अणु
 		retcode = ERR_NEED_APV_93;
-		goto fail_ldev;
-	}
+		जाओ fail_ldev;
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	u_size = rcu_dereference(device->ldev->disk_conf)->disk_size;
-	rcu_read_unlock();
-	if (u_size != (sector_t)rs.resize_size) {
-		new_disk_conf = kmalloc(sizeof(struct disk_conf), GFP_KERNEL);
-		if (!new_disk_conf) {
+	rcu_पढ़ो_unlock();
+	अगर (u_size != (sector_t)rs.resize_size) अणु
+		new_disk_conf = kदो_स्मृति(माप(काष्ठा disk_conf), GFP_KERNEL);
+		अगर (!new_disk_conf) अणु
 			retcode = ERR_NOMEM;
-			goto fail_ldev;
-		}
-	}
+			जाओ fail_ldev;
+		पूर्ण
+	पूर्ण
 
-	if (device->ldev->md.al_stripes != rs.al_stripes ||
-	    device->ldev->md.al_stripe_size_4k != rs.al_stripe_size / 4) {
+	अगर (device->ldev->md.al_stripes != rs.al_stripes ||
+	    device->ldev->md.al_stripe_size_4k != rs.al_stripe_size / 4) अणु
 		u32 al_size_k = rs.al_stripes * rs.al_stripe_size;
 
-		if (al_size_k > (16 * 1024 * 1024)) {
+		अगर (al_size_k > (16 * 1024 * 1024)) अणु
 			retcode = ERR_MD_LAYOUT_TOO_BIG;
-			goto fail_ldev;
-		}
+			जाओ fail_ldev;
+		पूर्ण
 
-		if (al_size_k < MD_32kB_SECT/2) {
+		अगर (al_size_k < MD_32kB_SECT/2) अणु
 			retcode = ERR_MD_LAYOUT_TOO_SMALL;
-			goto fail_ldev;
-		}
+			जाओ fail_ldev;
+		पूर्ण
 
-		if (device->state.conn != C_CONNECTED && !rs.resize_force) {
+		अगर (device->state.conn != C_CONNECTED && !rs.resize_क्रमce) अणु
 			retcode = ERR_MD_LAYOUT_CONNECTED;
-			goto fail_ldev;
-		}
+			जाओ fail_ldev;
+		पूर्ण
 
 		change_al_layout = true;
-	}
+	पूर्ण
 
-	if (device->ldev->known_size != drbd_get_capacity(device->ldev->backing_bdev))
+	अगर (device->ldev->known_size != drbd_get_capacity(device->ldev->backing_bdev))
 		device->ldev->known_size = drbd_get_capacity(device->ldev->backing_bdev);
 
-	if (new_disk_conf) {
+	अगर (new_disk_conf) अणु
 		mutex_lock(&device->resource->conf_update);
 		old_disk_conf = device->ldev->disk_conf;
 		*new_disk_conf = *old_disk_conf;
 		new_disk_conf->disk_size = (sector_t)rs.resize_size;
-		rcu_assign_pointer(device->ldev->disk_conf, new_disk_conf);
+		rcu_assign_poपूर्णांकer(device->ldev->disk_conf, new_disk_conf);
 		mutex_unlock(&device->resource->conf_update);
 		synchronize_rcu();
-		kfree(old_disk_conf);
-		new_disk_conf = NULL;
-	}
+		kमुक्त(old_disk_conf);
+		new_disk_conf = शून्य;
+	पूर्ण
 
-	ddsf = (rs.resize_force ? DDSF_FORCED : 0) | (rs.no_resync ? DDSF_NO_RESYNC : 0);
-	dd = drbd_determine_dev_size(device, ddsf, change_al_layout ? &rs : NULL);
+	ddsf = (rs.resize_क्रमce ? DDSF_FORCED : 0) | (rs.no_resync ? DDSF_NO_RESYNC : 0);
+	dd = drbd_determine_dev_size(device, ddsf, change_al_layout ? &rs : शून्य);
 	drbd_md_sync(device);
 	put_ldev(device);
-	if (dd == DS_ERROR) {
+	अगर (dd == DS_ERROR) अणु
 		retcode = ERR_NOMEM_BITMAP;
-		goto fail;
-	} else if (dd == DS_ERROR_SPACE_MD) {
+		जाओ fail;
+	पूर्ण अन्यथा अगर (dd == DS_ERROR_SPACE_MD) अणु
 		retcode = ERR_MD_LAYOUT_NO_FIT;
-		goto fail;
-	} else if (dd == DS_ERROR_SHRINK) {
+		जाओ fail;
+	पूर्ण अन्यथा अगर (dd == DS_ERROR_SHRINK) अणु
 		retcode = ERR_IMPLICIT_SHRINK;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (device->state.conn == C_CONNECTED) {
-		if (dd == DS_GREW)
+	अगर (device->state.conn == C_CONNECTED) अणु
+		अगर (dd == DS_GREW)
 			set_bit(RESIZE_PENDING, &device->flags);
 
 		drbd_send_uuids(first_peer_device(device));
 		drbd_send_sizes(first_peer_device(device), 1, ddsf);
-	}
+	पूर्ण
 
  fail:
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
  finish:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
+	वापस 0;
 
  fail_ldev:
 	put_ldev(device);
-	kfree(new_disk_conf);
-	goto fail;
-}
+	kमुक्त(new_disk_conf);
+	जाओ fail;
+पूर्ण
 
-int drbd_adm_resource_opts(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	enum drbd_ret_code retcode;
-	struct res_opts res_opts;
-	int err;
+पूर्णांक drbd_adm_resource_opts(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	क्रमागत drbd_ret_code retcode;
+	काष्ठा res_opts res_opts;
+	पूर्णांक err;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_RESOURCE);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto fail;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ fail;
 
 	res_opts = adm_ctx.resource->res_opts;
-	if (should_set_defaults(info))
-		set_res_opts_defaults(&res_opts);
+	अगर (should_set_शेषs(info))
+		set_res_opts_शेषs(&res_opts);
 
 	err = res_opts_from_attrs(&res_opts, info);
-	if (err && err != -ENOMSG) {
+	अगर (err && err != -ENOMSG) अणु
 		retcode = ERR_MANDATORY_TAG;
 		drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 	err = set_resource_options(adm_ctx.resource, &res_opts);
-	if (err) {
+	अगर (err) अणु
 		retcode = ERR_INVALID_REQUEST;
-		if (err == -ENOMEM)
+		अगर (err == -ENOMEM)
 			retcode = ERR_NOMEM;
-	}
+	पूर्ण
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 
 fail:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drbd_adm_invalidate(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct drbd_device *device;
-	int retcode; /* enum drbd_ret_code rsp. enum drbd_state_rv */
+पूर्णांक drbd_adm_invalidate(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा drbd_device *device;
+	पूर्णांक retcode; /* क्रमागत drbd_ret_code rsp. क्रमागत drbd_state_rv */
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
 	device = adm_ctx.device;
-	if (!get_ldev(device)) {
+	अगर (!get_ldev(device)) अणु
 		retcode = ERR_NO_DISK;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 
-	/* If there is still bitmap IO pending, probably because of a previous
-	 * resync just being finished, wait for it before requesting a new resync.
-	 * Also wait for it's after_state_ch(). */
+	/* If there is still biपंचांगap IO pending, probably because of a previous
+	 * resync just being finished, रुको क्रम it beक्रमe requesting a new resync.
+	 * Also रुको क्रम it's after_state_ch(). */
 	drbd_suspend_io(device);
-	wait_event(device->misc_wait, !test_bit(BITMAP_IO, &device->flags));
+	रुको_event(device->misc_रुको, !test_bit(BITMAP_IO, &device->flags));
 	drbd_flush_workqueue(&first_peer_device(device)->connection->sender_work);
 
 	/* If we happen to be C_STANDALONE R_SECONDARY, just change to
-	 * D_INCONSISTENT, and set all bits in the bitmap.  Otherwise,
-	 * try to start a resync handshake as sync target for full sync.
+	 * D_INCONSISTENT, and set all bits in the biपंचांगap.  Otherwise,
+	 * try to start a resync handshake as sync target क्रम full sync.
 	 */
-	if (device->state.conn == C_STANDALONE && device->state.role == R_SECONDARY) {
+	अगर (device->state.conn == C_STANDALONE && device->state.role == R_SECONDARY) अणु
 		retcode = drbd_request_state(device, NS(disk, D_INCONSISTENT));
-		if (retcode >= SS_SUCCESS) {
-			if (drbd_bitmap_io(device, &drbd_bmio_set_n_write,
+		अगर (retcode >= SS_SUCCESS) अणु
+			अगर (drbd_biपंचांगap_io(device, &drbd_bmio_set_n_ग_लिखो,
 				"set_n_write from invalidate", BM_LOCKED_MASK))
 				retcode = ERR_IO_MD_DISK;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		retcode = drbd_request_state(device, NS(conn, C_STARTING_SYNC_T));
 	drbd_resume_io(device);
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 	put_ldev(device);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drbd_adm_simple_request_state(struct sk_buff *skb, struct genl_info *info,
-		union drbd_state mask, union drbd_state val)
-{
-	struct drbd_config_context adm_ctx;
-	enum drbd_ret_code retcode;
+अटल पूर्णांक drbd_adm_simple_request_state(काष्ठा sk_buff *skb, काष्ठा genl_info *info,
+		जोड़ drbd_state mask, जोड़ drbd_state val)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	क्रमागत drbd_ret_code retcode;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 	retcode = drbd_request_state(adm_ctx.device, mask, val);
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drbd_bmio_set_susp_al(struct drbd_device *device) __must_hold(local)
-{
-	int rv;
+अटल पूर्णांक drbd_bmio_set_susp_al(काष्ठा drbd_device *device) __must_hold(local)
+अणु
+	पूर्णांक rv;
 
-	rv = drbd_bmio_set_n_write(device);
+	rv = drbd_bmio_set_n_ग_लिखो(device);
 	drbd_suspend_al(device);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-int drbd_adm_invalidate_peer(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	int retcode; /* drbd_ret_code, drbd_state_rv */
-	struct drbd_device *device;
+पूर्णांक drbd_adm_invalidate_peer(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	पूर्णांक retcode; /* drbd_ret_code, drbd_state_rv */
+	काष्ठा drbd_device *device;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
 	device = adm_ctx.device;
-	if (!get_ldev(device)) {
+	अगर (!get_ldev(device)) अणु
 		retcode = ERR_NO_DISK;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 
-	/* If there is still bitmap IO pending, probably because of a previous
-	 * resync just being finished, wait for it before requesting a new resync.
-	 * Also wait for it's after_state_ch(). */
+	/* If there is still biपंचांगap IO pending, probably because of a previous
+	 * resync just being finished, रुको क्रम it beक्रमe requesting a new resync.
+	 * Also रुको क्रम it's after_state_ch(). */
 	drbd_suspend_io(device);
-	wait_event(device->misc_wait, !test_bit(BITMAP_IO, &device->flags));
+	रुको_event(device->misc_रुको, !test_bit(BITMAP_IO, &device->flags));
 	drbd_flush_workqueue(&first_peer_device(device)->connection->sender_work);
 
 	/* If we happen to be C_STANDALONE R_PRIMARY, just set all bits
-	 * in the bitmap.  Otherwise, try to start a resync handshake
-	 * as sync source for full sync.
+	 * in the biपंचांगap.  Otherwise, try to start a resync handshake
+	 * as sync source क्रम full sync.
 	 */
-	if (device->state.conn == C_STANDALONE && device->state.role == R_PRIMARY) {
+	अगर (device->state.conn == C_STANDALONE && device->state.role == R_PRIMARY) अणु
 		/* The peer will get a resync upon connect anyways. Just make that
-		   into a full resync. */
+		   पूर्णांकo a full resync. */
 		retcode = drbd_request_state(device, NS(pdsk, D_INCONSISTENT));
-		if (retcode >= SS_SUCCESS) {
-			if (drbd_bitmap_io(device, &drbd_bmio_set_susp_al,
+		अगर (retcode >= SS_SUCCESS) अणु
+			अगर (drbd_biपंचांगap_io(device, &drbd_bmio_set_susp_al,
 				"set_n_write from invalidate_peer",
 				BM_LOCKED_SET_ALLOWED))
 				retcode = ERR_IO_MD_DISK;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		retcode = drbd_request_state(device, NS(conn, C_STARTING_SYNC_S));
 	drbd_resume_io(device);
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 	put_ldev(device);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drbd_adm_pause_sync(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	enum drbd_ret_code retcode;
+पूर्णांक drbd_adm_छोड़ो_sync(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	क्रमागत drbd_ret_code retcode;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
-	if (drbd_request_state(adm_ctx.device, NS(user_isp, 1)) == SS_NOTHING_TO_DO)
+	अगर (drbd_request_state(adm_ctx.device, NS(user_isp, 1)) == SS_NOTHING_TO_DO)
 		retcode = ERR_PAUSE_IS_SET;
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drbd_adm_resume_sync(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	union drbd_dev_state s;
-	enum drbd_ret_code retcode;
+पूर्णांक drbd_adm_resume_sync(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	जोड़ drbd_dev_state s;
+	क्रमागत drbd_ret_code retcode;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
-	if (drbd_request_state(adm_ctx.device, NS(user_isp, 0)) == SS_NOTHING_TO_DO) {
+	अगर (drbd_request_state(adm_ctx.device, NS(user_isp, 0)) == SS_NOTHING_TO_DO) अणु
 		s = adm_ctx.device->state;
-		if (s.conn == C_PAUSED_SYNC_S || s.conn == C_PAUSED_SYNC_T) {
+		अगर (s.conn == C_PAUSED_SYNC_S || s.conn == C_PAUSED_SYNC_T) अणु
 			retcode = s.aftr_isp ? ERR_PIC_AFTER_DEP :
 				  s.peer_isp ? ERR_PIC_PEER_DEP : ERR_PAUSE_IS_CLEAR;
-		} else {
+		पूर्ण अन्यथा अणु
 			retcode = ERR_PAUSE_IS_CLEAR;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drbd_adm_suspend_io(struct sk_buff *skb, struct genl_info *info)
-{
-	return drbd_adm_simple_request_state(skb, info, NS(susp, 1));
-}
+पूर्णांक drbd_adm_suspend_io(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	वापस drbd_adm_simple_request_state(skb, info, NS(susp, 1));
+पूर्ण
 
-int drbd_adm_resume_io(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct drbd_device *device;
-	int retcode; /* enum drbd_ret_code rsp. enum drbd_state_rv */
+पूर्णांक drbd_adm_resume_io(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा drbd_device *device;
+	पूर्णांक retcode; /* क्रमागत drbd_ret_code rsp. क्रमागत drbd_state_rv */
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 	device = adm_ctx.device;
-	if (test_bit(NEW_CUR_UUID, &device->flags)) {
-		if (get_ldev_if_state(device, D_ATTACHING)) {
+	अगर (test_bit(NEW_CUR_UUID, &device->flags)) अणु
+		अगर (get_ldev_अगर_state(device, D_ATTACHING)) अणु
 			drbd_uuid_new_current(device);
 			put_ldev(device);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* This is effectively a multi-stage "forced down".
-			 * The NEW_CUR_UUID bit is supposedly only set, if we
+			 * The NEW_CUR_UUID bit is supposedly only set, अगर we
 			 * lost the replication connection, and are configured
-			 * to freeze IO and wait for some fence-peer handler.
-			 * So we still don't have a replication connection.
-			 * And now we don't have a local disk either.  After
+			 * to मुक्तze IO and रुको क्रम some fence-peer handler.
+			 * So we still करोn't have a replication connection.
+			 * And now we करोn't have a local disk either.  After
 			 * resume, we will fail all pending and new IO, because
-			 * we don't have any data anymore.  Which means we will
+			 * we करोn't have any data anymore.  Which means we will
 			 * eventually be able to terminate all users of this
-			 * device, and then take it down.  By bumping the
+			 * device, and then take it करोwn.  By bumping the
 			 * "effective" data uuid, we make sure that you really
-			 * need to tear down before you reconfigure, we will
+			 * need to tear करोwn beक्रमe you reconfigure, we will
 			 * the refuse to re-connect or re-attach (because no
 			 * matching real data uuid exists).
 			 */
 			u64 val;
-			get_random_bytes(&val, sizeof(u64));
+			get_अक्रमom_bytes(&val, माप(u64));
 			drbd_set_ed_uuid(device, val);
 			drbd_warn(device, "Resumed without access to data; please tear down before attempting to re-configure.\n");
-		}
+		पूर्ण
 		clear_bit(NEW_CUR_UUID, &device->flags);
-	}
+	पूर्ण
 	drbd_suspend_io(device);
 	retcode = drbd_request_state(device, NS3(susp, 0, susp_nod, 0, susp_fen, 0));
-	if (retcode == SS_SUCCESS) {
-		if (device->state.conn < C_CONNECTED)
+	अगर (retcode == SS_SUCCESS) अणु
+		अगर (device->state.conn < C_CONNECTED)
 			tl_clear(first_peer_device(device)->connection);
-		if (device->state.disk == D_DISKLESS || device->state.disk == D_FAILED)
+		अगर (device->state.disk == D_DISKLESS || device->state.disk == D_FAILED)
 			tl_restart(first_peer_device(device)->connection, FAIL_FROZEN_DISK_IO);
-	}
+	पूर्ण
 	drbd_resume_io(device);
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drbd_adm_outdate(struct sk_buff *skb, struct genl_info *info)
-{
-	return drbd_adm_simple_request_state(skb, info, NS(disk, D_OUTDATED));
-}
+पूर्णांक drbd_adm_outdate(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	वापस drbd_adm_simple_request_state(skb, info, NS(disk, D_OUTDATED));
+पूर्ण
 
-static int nla_put_drbd_cfg_context(struct sk_buff *skb,
-				    struct drbd_resource *resource,
-				    struct drbd_connection *connection,
-				    struct drbd_device *device)
-{
-	struct nlattr *nla;
+अटल पूर्णांक nla_put_drbd_cfg_context(काष्ठा sk_buff *skb,
+				    काष्ठा drbd_resource *resource,
+				    काष्ठा drbd_connection *connection,
+				    काष्ठा drbd_device *device)
+अणु
+	काष्ठा nlattr *nla;
 	nla = nla_nest_start_noflag(skb, DRBD_NLA_CFG_CONTEXT);
-	if (!nla)
-		goto nla_put_failure;
-	if (device &&
+	अगर (!nla)
+		जाओ nla_put_failure;
+	अगर (device &&
 	    nla_put_u32(skb, T_ctx_volume, device->vnr))
-		goto nla_put_failure;
-	if (nla_put_string(skb, T_ctx_resource_name, resource->name))
-		goto nla_put_failure;
-	if (connection) {
-		if (connection->my_addr_len &&
+		जाओ nla_put_failure;
+	अगर (nla_put_string(skb, T_ctx_resource_name, resource->name))
+		जाओ nla_put_failure;
+	अगर (connection) अणु
+		अगर (connection->my_addr_len &&
 		    nla_put(skb, T_ctx_my_addr, connection->my_addr_len, &connection->my_addr))
-			goto nla_put_failure;
-		if (connection->peer_addr_len &&
+			जाओ nla_put_failure;
+		अगर (connection->peer_addr_len &&
 		    nla_put(skb, T_ctx_peer_addr, connection->peer_addr_len, &connection->peer_addr))
-			goto nla_put_failure;
-	}
+			जाओ nla_put_failure;
+	पूर्ण
 	nla_nest_end(skb, nla);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	if (nla)
+	अगर (nla)
 		nla_nest_cancel(skb, nla);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
 /*
  * The generic netlink dump callbacks are called outside the genl_lock(), so
  * they cannot use the simple attribute parsing code which uses global
  * attribute tables.
  */
-static struct nlattr *find_cfg_context_attr(const struct nlmsghdr *nlh, int attr)
-{
-	const unsigned hdrlen = GENL_HDRLEN + GENL_MAGIC_FAMILY_HDRSZ;
-	const int maxtype = ARRAY_SIZE(drbd_cfg_context_nl_policy) - 1;
-	struct nlattr *nla;
+अटल काष्ठा nlattr *find_cfg_context_attr(स्थिर काष्ठा nlmsghdr *nlh, पूर्णांक attr)
+अणु
+	स्थिर अचिन्हित hdrlen = GENL_HDRLEN + GENL_MAGIC_FAMILY_HDRSZ;
+	स्थिर पूर्णांक maxtype = ARRAY_SIZE(drbd_cfg_context_nl_policy) - 1;
+	काष्ठा nlattr *nla;
 
 	nla = nla_find(nlmsg_attrdata(nlh, hdrlen), nlmsg_attrlen(nlh, hdrlen),
 		       DRBD_NLA_CFG_CONTEXT);
-	if (!nla)
-		return NULL;
-	return drbd_nla_find_nested(maxtype, nla, __nla_type(attr));
-}
+	अगर (!nla)
+		वापस शून्य;
+	वापस drbd_nla_find_nested(maxtype, nla, __nla_type(attr));
+पूर्ण
 
-static void resource_to_info(struct resource_info *, struct drbd_resource *);
+अटल व्योम resource_to_info(काष्ठा resource_info *, काष्ठा drbd_resource *);
 
-int drbd_adm_dump_resources(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct drbd_genlmsghdr *dh;
-	struct drbd_resource *resource;
-	struct resource_info resource_info;
-	struct resource_statistics resource_statistics;
-	int err;
+पूर्णांक drbd_adm_dump_resources(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा drbd_genlmsghdr *dh;
+	काष्ठा drbd_resource *resource;
+	काष्ठा resource_info resource_info;
+	काष्ठा resource_statistics resource_statistics;
+	पूर्णांक err;
 
-	rcu_read_lock();
-	if (cb->args[0]) {
-		for_each_resource_rcu(resource, &drbd_resources)
-			if (resource == (struct drbd_resource *)cb->args[0])
-				goto found_resource;
+	rcu_पढ़ो_lock();
+	अगर (cb->args[0]) अणु
+		क्रम_each_resource_rcu(resource, &drbd_resources)
+			अगर (resource == (काष्ठा drbd_resource *)cb->args[0])
+				जाओ found_resource;
 		err = 0;  /* resource was probably deleted */
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	resource = list_entry(&drbd_resources,
-			      struct drbd_resource, resources);
+			      काष्ठा drbd_resource, resources);
 
 found_resource:
-	list_for_each_entry_continue_rcu(resource, &drbd_resources, resources) {
-		goto put_result;
-	}
+	list_क्रम_each_entry_जारी_rcu(resource, &drbd_resources, resources) अणु
+		जाओ put_result;
+	पूर्ण
 	err = 0;
-	goto out;
+	जाओ out;
 
 put_result:
 	dh = genlmsg_put(skb, NETLINK_CB(cb->skb).portid,
 			cb->nlh->nlmsg_seq, &drbd_genl_family,
 			NLM_F_MULTI, DRBD_ADM_GET_RESOURCES);
 	err = -ENOMEM;
-	if (!dh)
-		goto out;
+	अगर (!dh)
+		जाओ out;
 	dh->minor = -1U;
 	dh->ret_code = NO_ERROR;
-	err = nla_put_drbd_cfg_context(skb, resource, NULL, NULL);
-	if (err)
-		goto out;
+	err = nla_put_drbd_cfg_context(skb, resource, शून्य, शून्य);
+	अगर (err)
+		जाओ out;
 	err = res_opts_to_skb(skb, &resource->res_opts, !capable(CAP_SYS_ADMIN));
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	resource_to_info(&resource_info, resource);
 	err = resource_info_to_skb(skb, &resource_info, !capable(CAP_SYS_ADMIN));
-	if (err)
-		goto out;
-	resource_statistics.res_stat_write_ordering = resource->write_ordering;
+	अगर (err)
+		जाओ out;
+	resource_statistics.res_stat_ग_लिखो_ordering = resource->ग_लिखो_ordering;
 	err = resource_statistics_to_skb(skb, &resource_statistics, !capable(CAP_SYS_ADMIN));
-	if (err)
-		goto out;
-	cb->args[0] = (long)resource;
+	अगर (err)
+		जाओ out;
+	cb->args[0] = (दीर्घ)resource;
 	genlmsg_end(skb, dh);
 	err = 0;
 
 out:
-	rcu_read_unlock();
-	if (err)
-		return err;
-	return skb->len;
-}
+	rcu_पढ़ो_unlock();
+	अगर (err)
+		वापस err;
+	वापस skb->len;
+पूर्ण
 
-static void device_to_statistics(struct device_statistics *s,
-				 struct drbd_device *device)
-{
-	memset(s, 0, sizeof(*s));
+अटल व्योम device_to_statistics(काष्ठा device_statistics *s,
+				 काष्ठा drbd_device *device)
+अणु
+	स_रखो(s, 0, माप(*s));
 	s->dev_upper_blocked = !may_inc_ap_bio(device);
-	if (get_ldev(device)) {
-		struct drbd_md *md = &device->ldev->md;
+	अगर (get_ldev(device)) अणु
+		काष्ठा drbd_md *md = &device->ldev->md;
 		u64 *history_uuids = (u64 *)s->history_uuids;
-		int n;
+		पूर्णांक n;
 
 		spin_lock_irq(&md->uuid_lock);
 		s->dev_current_uuid = md->uuid[UI_CURRENT];
-		BUILD_BUG_ON(sizeof(s->history_uuids) < UI_HISTORY_END - UI_HISTORY_START + 1);
-		for (n = 0; n < UI_HISTORY_END - UI_HISTORY_START + 1; n++)
+		BUILD_BUG_ON(माप(s->history_uuids) < UI_HISTORY_END - UI_HISTORY_START + 1);
+		क्रम (n = 0; n < UI_HISTORY_END - UI_HISTORY_START + 1; n++)
 			history_uuids[n] = md->uuid[UI_HISTORY_START + n];
-		for (; n < HISTORY_UUIDS; n++)
+		क्रम (; n < HISTORY_UUIDS; n++)
 			history_uuids[n] = 0;
 		s->history_uuids_len = HISTORY_UUIDS;
 		spin_unlock_irq(&md->uuid_lock);
 
 		s->dev_disk_flags = md->flags;
 		put_ldev(device);
-	}
+	पूर्ण
 	s->dev_size = get_capacity(device->vdisk);
-	s->dev_read = device->read_cnt;
-	s->dev_write = device->writ_cnt;
-	s->dev_al_writes = device->al_writ_cnt;
-	s->dev_bm_writes = device->bm_writ_cnt;
-	s->dev_upper_pending = atomic_read(&device->ap_bio_cnt);
-	s->dev_lower_pending = atomic_read(&device->local_cnt);
+	s->dev_पढ़ो = device->पढ़ो_cnt;
+	s->dev_ग_लिखो = device->writ_cnt;
+	s->dev_al_ग_लिखोs = device->al_writ_cnt;
+	s->dev_bm_ग_लिखोs = device->bm_writ_cnt;
+	s->dev_upper_pending = atomic_पढ़ो(&device->ap_bio_cnt);
+	s->dev_lower_pending = atomic_पढ़ो(&device->local_cnt);
 	s->dev_al_suspended = test_bit(AL_SUSPENDED, &device->flags);
 	s->dev_exposed_data_uuid = device->ed_uuid;
-}
+पूर्ण
 
-static int put_resource_in_arg0(struct netlink_callback *cb, int holder_nr)
-{
-	if (cb->args[0]) {
-		struct drbd_resource *resource =
-			(struct drbd_resource *)cb->args[0];
+अटल पूर्णांक put_resource_in_arg0(काष्ठा netlink_callback *cb, पूर्णांक holder_nr)
+अणु
+	अगर (cb->args[0]) अणु
+		काष्ठा drbd_resource *resource =
+			(काष्ठा drbd_resource *)cb->args[0];
 		kref_put(&resource->kref, drbd_destroy_resource);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drbd_adm_dump_devices_done(struct netlink_callback *cb) {
-	return put_resource_in_arg0(cb, 7);
-}
+पूर्णांक drbd_adm_dump_devices_करोne(काष्ठा netlink_callback *cb) अणु
+	वापस put_resource_in_arg0(cb, 7);
+पूर्ण
 
-static void device_to_info(struct device_info *, struct drbd_device *);
+अटल व्योम device_to_info(काष्ठा device_info *, काष्ठा drbd_device *);
 
-int drbd_adm_dump_devices(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct nlattr *resource_filter;
-	struct drbd_resource *resource;
-	struct drbd_device *device;
-	int minor, err, retcode;
-	struct drbd_genlmsghdr *dh;
-	struct device_info device_info;
-	struct device_statistics device_statistics;
-	struct idr *idr_to_search;
+पूर्णांक drbd_adm_dump_devices(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा nlattr *resource_filter;
+	काष्ठा drbd_resource *resource;
+	काष्ठा drbd_device *device;
+	पूर्णांक minor, err, retcode;
+	काष्ठा drbd_genlmsghdr *dh;
+	काष्ठा device_info device_info;
+	काष्ठा device_statistics device_statistics;
+	काष्ठा idr *idr_to_search;
 
-	resource = (struct drbd_resource *)cb->args[0];
-	if (!cb->args[0] && !cb->args[1]) {
+	resource = (काष्ठा drbd_resource *)cb->args[0];
+	अगर (!cb->args[0] && !cb->args[1]) अणु
 		resource_filter = find_cfg_context_attr(cb->nlh, T_ctx_resource_name);
-		if (resource_filter) {
+		अगर (resource_filter) अणु
 			retcode = ERR_RES_NOT_KNOWN;
 			resource = drbd_find_resource(nla_data(resource_filter));
-			if (!resource)
-				goto put_result;
-			cb->args[0] = (long)resource;
-		}
-	}
+			अगर (!resource)
+				जाओ put_result;
+			cb->args[0] = (दीर्घ)resource;
+		पूर्ण
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	minor = cb->args[1];
 	idr_to_search = resource ? &resource->devices : &drbd_devices;
 	device = idr_get_next(idr_to_search, &minor);
-	if (!device) {
+	अगर (!device) अणु
 		err = 0;
-		goto out;
-	}
-	idr_for_each_entry_continue(idr_to_search, device, minor) {
+		जाओ out;
+	पूर्ण
+	idr_क्रम_each_entry_जारी(idr_to_search, device, minor) अणु
 		retcode = NO_ERROR;
-		goto put_result;  /* only one iteration */
-	}
+		जाओ put_result;  /* only one iteration */
+	पूर्ण
 	err = 0;
-	goto out;  /* no more devices */
+	जाओ out;  /* no more devices */
 
 put_result:
 	dh = genlmsg_put(skb, NETLINK_CB(cb->skb).portid,
 			cb->nlh->nlmsg_seq, &drbd_genl_family,
 			NLM_F_MULTI, DRBD_ADM_GET_DEVICES);
 	err = -ENOMEM;
-	if (!dh)
-		goto out;
+	अगर (!dh)
+		जाओ out;
 	dh->ret_code = retcode;
 	dh->minor = -1U;
-	if (retcode == NO_ERROR) {
+	अगर (retcode == NO_ERROR) अणु
 		dh->minor = device->minor;
-		err = nla_put_drbd_cfg_context(skb, device->resource, NULL, device);
-		if (err)
-			goto out;
-		if (get_ldev(device)) {
-			struct disk_conf *disk_conf =
+		err = nla_put_drbd_cfg_context(skb, device->resource, शून्य, device);
+		अगर (err)
+			जाओ out;
+		अगर (get_ldev(device)) अणु
+			काष्ठा disk_conf *disk_conf =
 				rcu_dereference(device->ldev->disk_conf);
 
 			err = disk_conf_to_skb(skb, disk_conf, !capable(CAP_SYS_ADMIN));
 			put_ldev(device);
-			if (err)
-				goto out;
-		}
+			अगर (err)
+				जाओ out;
+		पूर्ण
 		device_to_info(&device_info, device);
 		err = device_info_to_skb(skb, &device_info, !capable(CAP_SYS_ADMIN));
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		device_to_statistics(&device_statistics, device);
 		err = device_statistics_to_skb(skb, &device_statistics, !capable(CAP_SYS_ADMIN));
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		cb->args[1] = minor + 1;
-	}
+	पूर्ण
 	genlmsg_end(skb, dh);
 	err = 0;
 
 out:
-	rcu_read_unlock();
-	if (err)
-		return err;
-	return skb->len;
-}
+	rcu_पढ़ो_unlock();
+	अगर (err)
+		वापस err;
+	वापस skb->len;
+पूर्ण
 
-int drbd_adm_dump_connections_done(struct netlink_callback *cb)
-{
-	return put_resource_in_arg0(cb, 6);
-}
+पूर्णांक drbd_adm_dump_connections_करोne(काष्ठा netlink_callback *cb)
+अणु
+	वापस put_resource_in_arg0(cb, 6);
+पूर्ण
 
-enum { SINGLE_RESOURCE, ITERATE_RESOURCES };
+क्रमागत अणु SINGLE_RESOURCE, ITERATE_RESOURCES पूर्ण;
 
-int drbd_adm_dump_connections(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct nlattr *resource_filter;
-	struct drbd_resource *resource = NULL, *next_resource;
-	struct drbd_connection *connection;
-	int err = 0, retcode;
-	struct drbd_genlmsghdr *dh;
-	struct connection_info connection_info;
-	struct connection_statistics connection_statistics;
+पूर्णांक drbd_adm_dump_connections(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा nlattr *resource_filter;
+	काष्ठा drbd_resource *resource = शून्य, *next_resource;
+	काष्ठा drbd_connection *connection;
+	पूर्णांक err = 0, retcode;
+	काष्ठा drbd_genlmsghdr *dh;
+	काष्ठा connection_info connection_info;
+	काष्ठा connection_statistics connection_statistics;
 
-	rcu_read_lock();
-	resource = (struct drbd_resource *)cb->args[0];
-	if (!cb->args[0]) {
+	rcu_पढ़ो_lock();
+	resource = (काष्ठा drbd_resource *)cb->args[0];
+	अगर (!cb->args[0]) अणु
 		resource_filter = find_cfg_context_attr(cb->nlh, T_ctx_resource_name);
-		if (resource_filter) {
+		अगर (resource_filter) अणु
 			retcode = ERR_RES_NOT_KNOWN;
 			resource = drbd_find_resource(nla_data(resource_filter));
-			if (!resource)
-				goto put_result;
-			cb->args[0] = (long)resource;
+			अगर (!resource)
+				जाओ put_result;
+			cb->args[0] = (दीर्घ)resource;
 			cb->args[1] = SINGLE_RESOURCE;
-		}
-	}
-	if (!resource) {
-		if (list_empty(&drbd_resources))
-			goto out;
-		resource = list_first_entry(&drbd_resources, struct drbd_resource, resources);
+		पूर्ण
+	पूर्ण
+	अगर (!resource) अणु
+		अगर (list_empty(&drbd_resources))
+			जाओ out;
+		resource = list_first_entry(&drbd_resources, काष्ठा drbd_resource, resources);
 		kref_get(&resource->kref);
-		cb->args[0] = (long)resource;
+		cb->args[0] = (दीर्घ)resource;
 		cb->args[1] = ITERATE_RESOURCES;
-	}
+	पूर्ण
 
     next_resource:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	mutex_lock(&resource->conf_update);
-	rcu_read_lock();
-	if (cb->args[2]) {
-		for_each_connection_rcu(connection, resource)
-			if (connection == (struct drbd_connection *)cb->args[2])
-				goto found_connection;
+	rcu_पढ़ो_lock();
+	अगर (cb->args[2]) अणु
+		क्रम_each_connection_rcu(connection, resource)
+			अगर (connection == (काष्ठा drbd_connection *)cb->args[2])
+				जाओ found_connection;
 		/* connection was probably deleted */
-		goto no_more_connections;
-	}
-	connection = list_entry(&resource->connections, struct drbd_connection, connections);
+		जाओ no_more_connections;
+	पूर्ण
+	connection = list_entry(&resource->connections, काष्ठा drbd_connection, connections);
 
 found_connection:
-	list_for_each_entry_continue_rcu(connection, &resource->connections, connections) {
-		if (!has_net_conf(connection))
-			continue;
+	list_क्रम_each_entry_जारी_rcu(connection, &resource->connections, connections) अणु
+		अगर (!has_net_conf(connection))
+			जारी;
 		retcode = NO_ERROR;
-		goto put_result;  /* only one iteration */
-	}
+		जाओ put_result;  /* only one iteration */
+	पूर्ण
 
 no_more_connections:
-	if (cb->args[1] == ITERATE_RESOURCES) {
-		for_each_resource_rcu(next_resource, &drbd_resources) {
-			if (next_resource == resource)
-				goto found_resource;
-		}
+	अगर (cb->args[1] == ITERATE_RESOURCES) अणु
+		क्रम_each_resource_rcu(next_resource, &drbd_resources) अणु
+			अगर (next_resource == resource)
+				जाओ found_resource;
+		पूर्ण
 		/* resource was probably deleted */
-	}
-	goto out;
+	पूर्ण
+	जाओ out;
 
 found_resource:
-	list_for_each_entry_continue_rcu(next_resource, &drbd_resources, resources) {
+	list_क्रम_each_entry_जारी_rcu(next_resource, &drbd_resources, resources) अणु
 		mutex_unlock(&resource->conf_update);
 		kref_put(&resource->kref, drbd_destroy_resource);
 		resource = next_resource;
 		kref_get(&resource->kref);
-		cb->args[0] = (long)resource;
+		cb->args[0] = (दीर्घ)resource;
 		cb->args[2] = 0;
-		goto next_resource;
-	}
-	goto out;  /* no more resources */
+		जाओ next_resource;
+	पूर्ण
+	जाओ out;  /* no more resources */
 
 put_result:
 	dh = genlmsg_put(skb, NETLINK_CB(cb->skb).portid,
 			cb->nlh->nlmsg_seq, &drbd_genl_family,
 			NLM_F_MULTI, DRBD_ADM_GET_CONNECTIONS);
 	err = -ENOMEM;
-	if (!dh)
-		goto out;
+	अगर (!dh)
+		जाओ out;
 	dh->ret_code = retcode;
 	dh->minor = -1U;
-	if (retcode == NO_ERROR) {
-		struct net_conf *net_conf;
+	अगर (retcode == NO_ERROR) अणु
+		काष्ठा net_conf *net_conf;
 
-		err = nla_put_drbd_cfg_context(skb, resource, connection, NULL);
-		if (err)
-			goto out;
+		err = nla_put_drbd_cfg_context(skb, resource, connection, शून्य);
+		अगर (err)
+			जाओ out;
 		net_conf = rcu_dereference(connection->net_conf);
-		if (net_conf) {
+		अगर (net_conf) अणु
 			err = net_conf_to_skb(skb, net_conf, !capable(CAP_SYS_ADMIN));
-			if (err)
-				goto out;
-		}
+			अगर (err)
+				जाओ out;
+		पूर्ण
 		connection_to_info(&connection_info, connection);
 		err = connection_info_to_skb(skb, &connection_info, !capable(CAP_SYS_ADMIN));
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		connection_statistics.conn_congested = test_bit(NET_CONGESTED, &connection->flags);
 		err = connection_statistics_to_skb(skb, &connection_statistics, !capable(CAP_SYS_ADMIN));
-		if (err)
-			goto out;
-		cb->args[2] = (long)connection;
-	}
+		अगर (err)
+			जाओ out;
+		cb->args[2] = (दीर्घ)connection;
+	पूर्ण
 	genlmsg_end(skb, dh);
 	err = 0;
 
 out:
-	rcu_read_unlock();
-	if (resource)
+	rcu_पढ़ो_unlock();
+	अगर (resource)
 		mutex_unlock(&resource->conf_update);
-	if (err)
-		return err;
-	return skb->len;
-}
+	अगर (err)
+		वापस err;
+	वापस skb->len;
+पूर्ण
 
-enum mdf_peer_flag {
+क्रमागत mdf_peer_flag अणु
 	MDF_PEER_CONNECTED =	1 << 0,
 	MDF_PEER_OUTDATED =	1 << 1,
 	MDF_PEER_FENCING =	1 << 2,
 	MDF_PEER_FULL_SYNC =	1 << 3,
-};
+पूर्ण;
 
-static void peer_device_to_statistics(struct peer_device_statistics *s,
-				      struct drbd_peer_device *peer_device)
-{
-	struct drbd_device *device = peer_device->device;
+अटल व्योम peer_device_to_statistics(काष्ठा peer_device_statistics *s,
+				      काष्ठा drbd_peer_device *peer_device)
+अणु
+	काष्ठा drbd_device *device = peer_device->device;
 
-	memset(s, 0, sizeof(*s));
+	स_रखो(s, 0, माप(*s));
 	s->peer_dev_received = device->recv_cnt;
 	s->peer_dev_sent = device->send_cnt;
-	s->peer_dev_pending = atomic_read(&device->ap_pending_cnt) +
-			      atomic_read(&device->rs_pending_cnt);
-	s->peer_dev_unacked = atomic_read(&device->unacked_cnt);
+	s->peer_dev_pending = atomic_पढ़ो(&device->ap_pending_cnt) +
+			      atomic_पढ़ो(&device->rs_pending_cnt);
+	s->peer_dev_unacked = atomic_पढ़ो(&device->unacked_cnt);
 	s->peer_dev_out_of_sync = drbd_bm_total_weight(device) << (BM_BLOCK_SHIFT - 9);
 	s->peer_dev_resync_failed = device->rs_failed << (BM_BLOCK_SHIFT - 9);
-	if (get_ldev(device)) {
-		struct drbd_md *md = &device->ldev->md;
+	अगर (get_ldev(device)) अणु
+		काष्ठा drbd_md *md = &device->ldev->md;
 
 		spin_lock_irq(&md->uuid_lock);
-		s->peer_dev_bitmap_uuid = md->uuid[UI_BITMAP];
+		s->peer_dev_biपंचांगap_uuid = md->uuid[UI_BITMAP];
 		spin_unlock_irq(&md->uuid_lock);
 		s->peer_dev_flags =
 			(drbd_md_test_flag(device->ldev, MDF_CONNECTED_IND) ?
@@ -3650,136 +3651,136 @@ static void peer_device_to_statistics(struct peer_device_statistics *s,
 			(drbd_md_test_flag(device->ldev, MDF_FULL_SYNC) ?
 				MDF_PEER_FULL_SYNC : 0);
 		put_ldev(device);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int drbd_adm_dump_peer_devices_done(struct netlink_callback *cb)
-{
-	return put_resource_in_arg0(cb, 9);
-}
+पूर्णांक drbd_adm_dump_peer_devices_करोne(काष्ठा netlink_callback *cb)
+अणु
+	वापस put_resource_in_arg0(cb, 9);
+पूर्ण
 
-int drbd_adm_dump_peer_devices(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct nlattr *resource_filter;
-	struct drbd_resource *resource;
-	struct drbd_device *device;
-	struct drbd_peer_device *peer_device = NULL;
-	int minor, err, retcode;
-	struct drbd_genlmsghdr *dh;
-	struct idr *idr_to_search;
+पूर्णांक drbd_adm_dump_peer_devices(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा nlattr *resource_filter;
+	काष्ठा drbd_resource *resource;
+	काष्ठा drbd_device *device;
+	काष्ठा drbd_peer_device *peer_device = शून्य;
+	पूर्णांक minor, err, retcode;
+	काष्ठा drbd_genlmsghdr *dh;
+	काष्ठा idr *idr_to_search;
 
-	resource = (struct drbd_resource *)cb->args[0];
-	if (!cb->args[0] && !cb->args[1]) {
+	resource = (काष्ठा drbd_resource *)cb->args[0];
+	अगर (!cb->args[0] && !cb->args[1]) अणु
 		resource_filter = find_cfg_context_attr(cb->nlh, T_ctx_resource_name);
-		if (resource_filter) {
+		अगर (resource_filter) अणु
 			retcode = ERR_RES_NOT_KNOWN;
 			resource = drbd_find_resource(nla_data(resource_filter));
-			if (!resource)
-				goto put_result;
-		}
-		cb->args[0] = (long)resource;
-	}
+			अगर (!resource)
+				जाओ put_result;
+		पूर्ण
+		cb->args[0] = (दीर्घ)resource;
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	minor = cb->args[1];
 	idr_to_search = resource ? &resource->devices : &drbd_devices;
 	device = idr_find(idr_to_search, minor);
-	if (!device) {
+	अगर (!device) अणु
 next_device:
 		minor++;
 		cb->args[2] = 0;
 		device = idr_get_next(idr_to_search, &minor);
-		if (!device) {
+		अगर (!device) अणु
 			err = 0;
-			goto out;
-		}
-	}
-	if (cb->args[2]) {
-		for_each_peer_device(peer_device, device)
-			if (peer_device == (struct drbd_peer_device *)cb->args[2])
-				goto found_peer_device;
+			जाओ out;
+		पूर्ण
+	पूर्ण
+	अगर (cb->args[2]) अणु
+		क्रम_each_peer_device(peer_device, device)
+			अगर (peer_device == (काष्ठा drbd_peer_device *)cb->args[2])
+				जाओ found_peer_device;
 		/* peer device was probably deleted */
-		goto next_device;
-	}
-	/* Make peer_device point to the list head (not the first entry). */
-	peer_device = list_entry(&device->peer_devices, struct drbd_peer_device, peer_devices);
+		जाओ next_device;
+	पूर्ण
+	/* Make peer_device poपूर्णांक to the list head (not the first entry). */
+	peer_device = list_entry(&device->peer_devices, काष्ठा drbd_peer_device, peer_devices);
 
 found_peer_device:
-	list_for_each_entry_continue_rcu(peer_device, &device->peer_devices, peer_devices) {
-		if (!has_net_conf(peer_device->connection))
-			continue;
+	list_क्रम_each_entry_जारी_rcu(peer_device, &device->peer_devices, peer_devices) अणु
+		अगर (!has_net_conf(peer_device->connection))
+			जारी;
 		retcode = NO_ERROR;
-		goto put_result;  /* only one iteration */
-	}
-	goto next_device;
+		जाओ put_result;  /* only one iteration */
+	पूर्ण
+	जाओ next_device;
 
 put_result:
 	dh = genlmsg_put(skb, NETLINK_CB(cb->skb).portid,
 			cb->nlh->nlmsg_seq, &drbd_genl_family,
 			NLM_F_MULTI, DRBD_ADM_GET_PEER_DEVICES);
 	err = -ENOMEM;
-	if (!dh)
-		goto out;
+	अगर (!dh)
+		जाओ out;
 	dh->ret_code = retcode;
 	dh->minor = -1U;
-	if (retcode == NO_ERROR) {
-		struct peer_device_info peer_device_info;
-		struct peer_device_statistics peer_device_statistics;
+	अगर (retcode == NO_ERROR) अणु
+		काष्ठा peer_device_info peer_device_info;
+		काष्ठा peer_device_statistics peer_device_statistics;
 
 		dh->minor = minor;
 		err = nla_put_drbd_cfg_context(skb, device->resource, peer_device->connection, device);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		peer_device_to_info(&peer_device_info, peer_device);
 		err = peer_device_info_to_skb(skb, &peer_device_info, !capable(CAP_SYS_ADMIN));
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		peer_device_to_statistics(&peer_device_statistics, peer_device);
 		err = peer_device_statistics_to_skb(skb, &peer_device_statistics, !capable(CAP_SYS_ADMIN));
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		cb->args[1] = minor;
-		cb->args[2] = (long)peer_device;
-	}
+		cb->args[2] = (दीर्घ)peer_device;
+	पूर्ण
 	genlmsg_end(skb, dh);
 	err = 0;
 
 out:
-	rcu_read_unlock();
-	if (err)
-		return err;
-	return skb->len;
-}
+	rcu_पढ़ो_unlock();
+	अगर (err)
+		वापस err;
+	वापस skb->len;
+पूर्ण
 /*
- * Return the connection of @resource if @resource has exactly one connection.
+ * Return the connection of @resource अगर @resource has exactly one connection.
  */
-static struct drbd_connection *the_only_connection(struct drbd_resource *resource)
-{
-	struct list_head *connections = &resource->connections;
+अटल काष्ठा drbd_connection *the_only_connection(काष्ठा drbd_resource *resource)
+अणु
+	काष्ठा list_head *connections = &resource->connections;
 
-	if (list_empty(connections) || connections->next->next != connections)
-		return NULL;
-	return list_first_entry(&resource->connections, struct drbd_connection, connections);
-}
+	अगर (list_empty(connections) || connections->next->next != connections)
+		वापस शून्य;
+	वापस list_first_entry(&resource->connections, काष्ठा drbd_connection, connections);
+पूर्ण
 
-static int nla_put_status_info(struct sk_buff *skb, struct drbd_device *device,
-		const struct sib_info *sib)
-{
-	struct drbd_resource *resource = device->resource;
-	struct state_info *si = NULL; /* for sizeof(si->member); */
-	struct nlattr *nla;
-	int got_ldev;
-	int err = 0;
-	int exclude_sensitive;
+अटल पूर्णांक nla_put_status_info(काष्ठा sk_buff *skb, काष्ठा drbd_device *device,
+		स्थिर काष्ठा sib_info *sib)
+अणु
+	काष्ठा drbd_resource *resource = device->resource;
+	काष्ठा state_info *si = शून्य; /* क्रम माप(si->member); */
+	काष्ठा nlattr *nla;
+	पूर्णांक got_ldev;
+	पूर्णांक err = 0;
+	पूर्णांक exclude_sensitive;
 
-	/* If sib != NULL, this is drbd_bcast_event, which anyone can listen
-	 * to.  So we better exclude_sensitive information.
+	/* If sib != शून्य, this is drbd_bcast_event, which anyone can listen
+	 * to.  So we better exclude_sensitive inक्रमmation.
 	 *
-	 * If sib == NULL, this is drbd_adm_get_status, executed synchronously
+	 * If sib == शून्य, this is drbd_adm_get_status, executed synchronously
 	 * in the context of the requesting user process. Exclude sensitive
-	 * information, unless current has superuser.
+	 * inक्रमmation, unless current has superuser.
 	 *
-	 * NOTE: for drbd_adm_get_status_all(), this is a netlink dump, and
+	 * NOTE: क्रम drbd_adm_get_status_all(), this is a netlink dump, and
 	 * relies on the current implementation of netlink_dump(), which
 	 * executes the dump callback successively from netlink_recvmsg(),
 	 * always in the context of the receiving process */
@@ -3787,220 +3788,220 @@ static int nla_put_status_info(struct sk_buff *skb, struct drbd_device *device,
 
 	got_ldev = get_ldev(device);
 
-	/* We need to add connection name and volume number information still.
+	/* We need to add connection name and volume number inक्रमmation still.
 	 * Minor number is in drbd_genlmsghdr. */
-	if (nla_put_drbd_cfg_context(skb, resource, the_only_connection(resource), device))
-		goto nla_put_failure;
+	अगर (nla_put_drbd_cfg_context(skb, resource, the_only_connection(resource), device))
+		जाओ nla_put_failure;
 
-	if (res_opts_to_skb(skb, &device->resource->res_opts, exclude_sensitive))
-		goto nla_put_failure;
+	अगर (res_opts_to_skb(skb, &device->resource->res_opts, exclude_sensitive))
+		जाओ nla_put_failure;
 
-	rcu_read_lock();
-	if (got_ldev) {
-		struct disk_conf *disk_conf;
+	rcu_पढ़ो_lock();
+	अगर (got_ldev) अणु
+		काष्ठा disk_conf *disk_conf;
 
 		disk_conf = rcu_dereference(device->ldev->disk_conf);
 		err = disk_conf_to_skb(skb, disk_conf, exclude_sensitive);
-	}
-	if (!err) {
-		struct net_conf *nc;
+	पूर्ण
+	अगर (!err) अणु
+		काष्ठा net_conf *nc;
 
 		nc = rcu_dereference(first_peer_device(device)->connection->net_conf);
-		if (nc)
+		अगर (nc)
 			err = net_conf_to_skb(skb, nc, exclude_sensitive);
-	}
-	rcu_read_unlock();
-	if (err)
-		goto nla_put_failure;
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	अगर (err)
+		जाओ nla_put_failure;
 
 	nla = nla_nest_start_noflag(skb, DRBD_NLA_STATE_INFO);
-	if (!nla)
-		goto nla_put_failure;
-	if (nla_put_u32(skb, T_sib_reason, sib ? sib->sib_reason : SIB_GET_STATUS_REPLY) ||
+	अगर (!nla)
+		जाओ nla_put_failure;
+	अगर (nla_put_u32(skb, T_sib_reason, sib ? sib->sib_reason : SIB_GET_STATUS_REPLY) ||
 	    nla_put_u32(skb, T_current_state, device->state.i) ||
 	    nla_put_u64_0pad(skb, T_ed_uuid, device->ed_uuid) ||
 	    nla_put_u64_0pad(skb, T_capacity, get_capacity(device->vdisk)) ||
 	    nla_put_u64_0pad(skb, T_send_cnt, device->send_cnt) ||
 	    nla_put_u64_0pad(skb, T_recv_cnt, device->recv_cnt) ||
-	    nla_put_u64_0pad(skb, T_read_cnt, device->read_cnt) ||
+	    nla_put_u64_0pad(skb, T_पढ़ो_cnt, device->पढ़ो_cnt) ||
 	    nla_put_u64_0pad(skb, T_writ_cnt, device->writ_cnt) ||
 	    nla_put_u64_0pad(skb, T_al_writ_cnt, device->al_writ_cnt) ||
 	    nla_put_u64_0pad(skb, T_bm_writ_cnt, device->bm_writ_cnt) ||
-	    nla_put_u32(skb, T_ap_bio_cnt, atomic_read(&device->ap_bio_cnt)) ||
-	    nla_put_u32(skb, T_ap_pending_cnt, atomic_read(&device->ap_pending_cnt)) ||
-	    nla_put_u32(skb, T_rs_pending_cnt, atomic_read(&device->rs_pending_cnt)))
-		goto nla_put_failure;
+	    nla_put_u32(skb, T_ap_bio_cnt, atomic_पढ़ो(&device->ap_bio_cnt)) ||
+	    nla_put_u32(skb, T_ap_pending_cnt, atomic_पढ़ो(&device->ap_pending_cnt)) ||
+	    nla_put_u32(skb, T_rs_pending_cnt, atomic_पढ़ो(&device->rs_pending_cnt)))
+		जाओ nla_put_failure;
 
-	if (got_ldev) {
-		int err;
+	अगर (got_ldev) अणु
+		पूर्णांक err;
 
 		spin_lock_irq(&device->ldev->md.uuid_lock);
-		err = nla_put(skb, T_uuids, sizeof(si->uuids), device->ldev->md.uuid);
+		err = nla_put(skb, T_uuids, माप(si->uuids), device->ldev->md.uuid);
 		spin_unlock_irq(&device->ldev->md.uuid_lock);
 
-		if (err)
-			goto nla_put_failure;
+		अगर (err)
+			जाओ nla_put_failure;
 
-		if (nla_put_u32(skb, T_disk_flags, device->ldev->md.flags) ||
+		अगर (nla_put_u32(skb, T_disk_flags, device->ldev->md.flags) ||
 		    nla_put_u64_0pad(skb, T_bits_total, drbd_bm_bits(device)) ||
 		    nla_put_u64_0pad(skb, T_bits_oos,
 				     drbd_bm_total_weight(device)))
-			goto nla_put_failure;
-		if (C_SYNC_SOURCE <= device->state.conn &&
-		    C_PAUSED_SYNC_T >= device->state.conn) {
-			if (nla_put_u64_0pad(skb, T_bits_rs_total,
+			जाओ nla_put_failure;
+		अगर (C_SYNC_SOURCE <= device->state.conn &&
+		    C_PAUSED_SYNC_T >= device->state.conn) अणु
+			अगर (nla_put_u64_0pad(skb, T_bits_rs_total,
 					     device->rs_total) ||
 			    nla_put_u64_0pad(skb, T_bits_rs_failed,
 					     device->rs_failed))
-				goto nla_put_failure;
-		}
-	}
+				जाओ nla_put_failure;
+		पूर्ण
+	पूर्ण
 
-	if (sib) {
-		switch(sib->sib_reason) {
-		case SIB_SYNC_PROGRESS:
-		case SIB_GET_STATUS_REPLY:
-			break;
-		case SIB_STATE_CHANGE:
-			if (nla_put_u32(skb, T_prev_state, sib->os.i) ||
+	अगर (sib) अणु
+		चयन(sib->sib_reason) अणु
+		हाल SIB_SYNC_PROGRESS:
+		हाल SIB_GET_STATUS_REPLY:
+			अवरोध;
+		हाल SIB_STATE_CHANGE:
+			अगर (nla_put_u32(skb, T_prev_state, sib->os.i) ||
 			    nla_put_u32(skb, T_new_state, sib->ns.i))
-				goto nla_put_failure;
-			break;
-		case SIB_HELPER_POST:
-			if (nla_put_u32(skb, T_helper_exit_code,
-					sib->helper_exit_code))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
+			अवरोध;
+		हाल SIB_HELPER_POST:
+			अगर (nla_put_u32(skb, T_helper_निकास_code,
+					sib->helper_निकास_code))
+				जाओ nla_put_failure;
 			fallthrough;
-		case SIB_HELPER_PRE:
-			if (nla_put_string(skb, T_helper, sib->helper_name))
-				goto nla_put_failure;
-			break;
-		}
-	}
+		हाल SIB_HELPER_PRE:
+			अगर (nla_put_string(skb, T_helper, sib->helper_name))
+				जाओ nla_put_failure;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	nla_nest_end(skb, nla);
 
-	if (0)
+	अगर (0)
 nla_put_failure:
 		err = -EMSGSIZE;
-	if (got_ldev)
+	अगर (got_ldev)
 		put_ldev(device);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int drbd_adm_get_status(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	enum drbd_ret_code retcode;
-	int err;
+पूर्णांक drbd_adm_get_status(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	क्रमागत drbd_ret_code retcode;
+	पूर्णांक err;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
-	err = nla_put_status_info(adm_ctx.reply_skb, adm_ctx.device, NULL);
-	if (err) {
-		nlmsg_free(adm_ctx.reply_skb);
-		return err;
-	}
+	err = nla_put_status_info(adm_ctx.reply_skb, adm_ctx.device, शून्य);
+	अगर (err) अणु
+		nlmsg_मुक्त(adm_ctx.reply_skb);
+		वापस err;
+	पूर्ण
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_one_status(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct drbd_device *device;
-	struct drbd_genlmsghdr *dh;
-	struct drbd_resource *pos = (struct drbd_resource *)cb->args[0];
-	struct drbd_resource *resource = NULL;
-	struct drbd_resource *tmp;
-	unsigned volume = cb->args[1];
+अटल पूर्णांक get_one_status(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा drbd_device *device;
+	काष्ठा drbd_genlmsghdr *dh;
+	काष्ठा drbd_resource *pos = (काष्ठा drbd_resource *)cb->args[0];
+	काष्ठा drbd_resource *resource = शून्य;
+	काष्ठा drbd_resource *पंचांगp;
+	अचिन्हित volume = cb->args[1];
 
 	/* Open coded, deferred, iteration:
-	 * for_each_resource_safe(resource, tmp, &drbd_resources) {
+	 * क्रम_each_resource_safe(resource, पंचांगp, &drbd_resources) अणु
 	 *      connection = "first connection of resource or undefined";
-	 *	idr_for_each_entry(&resource->devices, device, i) {
+	 *	idr_क्रम_each_entry(&resource->devices, device, i) अणु
 	 *	  ...
-	 *	}
-	 * }
+	 *	पूर्ण
+	 * पूर्ण
 	 * where resource is cb->args[0];
 	 * and i is cb->args[1];
 	 *
-	 * cb->args[2] indicates if we shall loop over all resources,
+	 * cb->args[2] indicates अगर we shall loop over all resources,
 	 * or just dump all volumes of a single resource.
 	 *
 	 * This may miss entries inserted after this dump started,
-	 * or entries deleted before they are reached.
+	 * or entries deleted beक्रमe they are reached.
 	 *
-	 * We need to make sure the device won't disappear while
+	 * We need to make sure the device won't disappear जबतक
 	 * we are looking at it, and revalidate our iterators
 	 * on each iteration.
 	 */
 
 	/* synchronize with conn_create()/drbd_destroy_connection() */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	/* revalidate iterator position */
-	for_each_resource_rcu(tmp, &drbd_resources) {
-		if (pos == NULL) {
+	क्रम_each_resource_rcu(पंचांगp, &drbd_resources) अणु
+		अगर (pos == शून्य) अणु
 			/* first iteration */
-			pos = tmp;
+			pos = पंचांगp;
 			resource = pos;
-			break;
-		}
-		if (tmp == pos) {
+			अवरोध;
+		पूर्ण
+		अगर (पंचांगp == pos) अणु
 			resource = pos;
-			break;
-		}
-	}
-	if (resource) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (resource) अणु
 next_resource:
 		device = idr_get_next(&resource->devices, &volume);
-		if (!device) {
+		अगर (!device) अणु
 			/* No more volumes to dump on this resource.
 			 * Advance resource iterator. */
 			pos = list_entry_rcu(resource->resources.next,
-					     struct drbd_resource, resources);
+					     काष्ठा drbd_resource, resources);
 			/* Did we dump any volume of this resource yet? */
-			if (volume != 0) {
+			अगर (volume != 0) अणु
 				/* If we reached the end of the list,
 				 * or only a single resource dump was requested,
-				 * we are done. */
-				if (&pos->resources == &drbd_resources || cb->args[2])
-					goto out;
+				 * we are करोne. */
+				अगर (&pos->resources == &drbd_resources || cb->args[2])
+					जाओ out;
 				volume = 0;
 				resource = pos;
-				goto next_resource;
-			}
-		}
+				जाओ next_resource;
+			पूर्ण
+		पूर्ण
 
 		dh = genlmsg_put(skb, NETLINK_CB(cb->skb).portid,
 				cb->nlh->nlmsg_seq, &drbd_genl_family,
 				NLM_F_MULTI, DRBD_ADM_GET_STATUS);
-		if (!dh)
-			goto out;
+		अगर (!dh)
+			जाओ out;
 
-		if (!device) {
+		अगर (!device) अणु
 			/* This is a connection without a single volume.
 			 * Suprisingly enough, it may have a network
 			 * configuration. */
-			struct drbd_connection *connection;
+			काष्ठा drbd_connection *connection;
 
 			dh->minor = -1U;
 			dh->ret_code = NO_ERROR;
 			connection = the_only_connection(resource);
-			if (nla_put_drbd_cfg_context(skb, resource, connection, NULL))
-				goto cancel;
-			if (connection) {
-				struct net_conf *nc;
+			अगर (nla_put_drbd_cfg_context(skb, resource, connection, शून्य))
+				जाओ cancel;
+			अगर (connection) अणु
+				काष्ठा net_conf *nc;
 
 				nc = rcu_dereference(connection->net_conf);
-				if (nc && net_conf_to_skb(skb, nc, 1) != 0)
-					goto cancel;
-			}
-			goto done;
-		}
+				अगर (nc && net_conf_to_skb(skb, nc, 1) != 0)
+					जाओ cancel;
+			पूर्ण
+			जाओ करोne;
+		पूर्ण
 
 		D_ASSERT(device, device->vnr == volume);
 		D_ASSERT(device, device->resource == resource);
@@ -4008,52 +4009,52 @@ next_resource:
 		dh->minor = device_to_minor(device);
 		dh->ret_code = NO_ERROR;
 
-		if (nla_put_status_info(skb, device, NULL)) {
+		अगर (nla_put_status_info(skb, device, शून्य)) अणु
 cancel:
 			genlmsg_cancel(skb, dh);
-			goto out;
-		}
-done:
+			जाओ out;
+		पूर्ण
+करोne:
 		genlmsg_end(skb, dh);
-	}
+	पूर्ण
 
 out:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	/* where to start the next iteration */
-	cb->args[0] = (long)pos;
+	cb->args[0] = (दीर्घ)pos;
 	cb->args[1] = (pos == resource) ? volume + 1 : 0;
 
 	/* No more resources/volumes/minors found results in an empty skb.
 	 * Which will terminate the dump. */
-        return skb->len;
-}
+        वापस skb->len;
+पूर्ण
 
 /*
  * Request status of all resources, or of all volumes within a single resource.
  *
  * This is a dump, as the answer may not fit in a single reply skb otherwise.
  * Which means we cannot use the family->attrbuf or other such members, because
- * dump is NOT protected by the genl_lock().  During dump, we only have access
- * to the incoming skb, and need to opencode "parsing" of the nlattr payload.
+ * dump is NOT रक्षित by the genl_lock().  During dump, we only have access
+ * to the incoming skb, and need to खोलोcode "parsing" of the nlattr payload.
  *
- * Once things are setup properly, we call into get_one_status().
+ * Once things are setup properly, we call पूर्णांकo get_one_status().
  */
-int drbd_adm_get_status_all(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	const unsigned hdrlen = GENL_HDRLEN + GENL_MAGIC_FAMILY_HDRSZ;
-	struct nlattr *nla;
-	const char *resource_name;
-	struct drbd_resource *resource;
-	int maxtype;
+पूर्णांक drbd_adm_get_status_all(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	स्थिर अचिन्हित hdrlen = GENL_HDRLEN + GENL_MAGIC_FAMILY_HDRSZ;
+	काष्ठा nlattr *nla;
+	स्थिर अक्षर *resource_name;
+	काष्ठा drbd_resource *resource;
+	पूर्णांक maxtype;
 
 	/* Is this a followup call? */
-	if (cb->args[0]) {
+	अगर (cb->args[0]) अणु
 		/* ... of a single resource dump,
-		 * and the resource iterator has been advanced already? */
-		if (cb->args[2] && cb->args[2] != cb->args[0])
-			return 0; /* DONE. */
-		goto dump;
-	}
+		 * and the resource iterator has been advanced alपढ़ोy? */
+		अगर (cb->args[2] && cb->args[2] != cb->args[0])
+			वापस 0; /* DONE. */
+		जाओ dump;
+	पूर्ण
 
 	/* First call (from netlink_dump_start).  We need to figure out
 	 * which resource(s) the user wants us to dump. */
@@ -4062,173 +4063,173 @@ int drbd_adm_get_status_all(struct sk_buff *skb, struct netlink_callback *cb)
 			DRBD_NLA_CFG_CONTEXT);
 
 	/* No explicit context given.  Dump all. */
-	if (!nla)
-		goto dump;
+	अगर (!nla)
+		जाओ dump;
 	maxtype = ARRAY_SIZE(drbd_cfg_context_nl_policy) - 1;
 	nla = drbd_nla_find_nested(maxtype, nla, __nla_type(T_ctx_resource_name));
-	if (IS_ERR(nla))
-		return PTR_ERR(nla);
+	अगर (IS_ERR(nla))
+		वापस PTR_ERR(nla);
 	/* context given, but no name present? */
-	if (!nla)
-		return -EINVAL;
+	अगर (!nla)
+		वापस -EINVAL;
 	resource_name = nla_data(nla);
-	if (!*resource_name)
-		return -ENODEV;
+	अगर (!*resource_name)
+		वापस -ENODEV;
 	resource = drbd_find_resource(resource_name);
-	if (!resource)
-		return -ENODEV;
+	अगर (!resource)
+		वापस -ENODEV;
 
 	kref_put(&resource->kref, drbd_destroy_resource); /* get_one_status() revalidates the resource */
 
 	/* prime iterators, and set "filter" mode mark:
 	 * only dump this connection. */
-	cb->args[0] = (long)resource;
+	cb->args[0] = (दीर्घ)resource;
 	/* cb->args[1] = 0; passed in this way. */
-	cb->args[2] = (long)resource;
+	cb->args[2] = (दीर्घ)resource;
 
 dump:
-	return get_one_status(skb, cb);
-}
+	वापस get_one_status(skb, cb);
+पूर्ण
 
-int drbd_adm_get_timeout_type(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	enum drbd_ret_code retcode;
-	struct timeout_parms tp;
-	int err;
+पूर्णांक drbd_adm_get_समयout_type(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	क्रमागत drbd_ret_code retcode;
+	काष्ठा समयout_parms tp;
+	पूर्णांक err;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
-	tp.timeout_type =
+	tp.समयout_type =
 		adm_ctx.device->state.pdsk == D_OUTDATED ? UT_PEER_OUTDATED :
 		test_bit(USE_DEGR_WFC_T, &adm_ctx.device->flags) ? UT_DEGRADED :
 		UT_DEFAULT;
 
-	err = timeout_parms_to_priv_skb(adm_ctx.reply_skb, &tp);
-	if (err) {
-		nlmsg_free(adm_ctx.reply_skb);
-		return err;
-	}
+	err = समयout_parms_to_priv_skb(adm_ctx.reply_skb, &tp);
+	अगर (err) अणु
+		nlmsg_मुक्त(adm_ctx.reply_skb);
+		वापस err;
+	पूर्ण
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drbd_adm_start_ov(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct drbd_device *device;
-	enum drbd_ret_code retcode;
-	struct start_ov_parms parms;
+पूर्णांक drbd_adm_start_ov(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा drbd_device *device;
+	क्रमागत drbd_ret_code retcode;
+	काष्ठा start_ov_parms parms;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
 	device = adm_ctx.device;
 
-	/* resume from last known position, if possible */
+	/* resume from last known position, अगर possible */
 	parms.ov_start_sector = device->ov_start_sector;
-	parms.ov_stop_sector = ULLONG_MAX;
-	if (info->attrs[DRBD_NLA_START_OV_PARMS]) {
-		int err = start_ov_parms_from_attrs(&parms, info);
-		if (err) {
+	parms.ov_stop_sector = ULदीर्घ_उच्च;
+	अगर (info->attrs[DRBD_NLA_START_OV_PARMS]) अणु
+		पूर्णांक err = start_ov_parms_from_attrs(&parms, info);
+		अगर (err) अणु
 			retcode = ERR_MANDATORY_TAG;
 			drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 
 	/* w_make_ov_request expects position to be aligned */
 	device->ov_start_sector = parms.ov_start_sector & ~(BM_SECT_PER_BIT-1);
 	device->ov_stop_sector = parms.ov_stop_sector;
 
-	/* If there is still bitmap IO pending, e.g. previous resync or verify
-	 * just being finished, wait for it before requesting a new resync. */
+	/* If there is still biपंचांगap IO pending, e.g. previous resync or verअगरy
+	 * just being finished, रुको क्रम it beक्रमe requesting a new resync. */
 	drbd_suspend_io(device);
-	wait_event(device->misc_wait, !test_bit(BITMAP_IO, &device->flags));
+	रुको_event(device->misc_रुको, !test_bit(BITMAP_IO, &device->flags));
 	retcode = drbd_request_state(device, NS(conn, C_VERIFY_S));
 	drbd_resume_io(device);
 
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int drbd_adm_new_c_uuid(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct drbd_device *device;
-	enum drbd_ret_code retcode;
-	int skip_initial_sync = 0;
-	int err;
-	struct new_c_uuid_parms args;
+पूर्णांक drbd_adm_new_c_uuid(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा drbd_device *device;
+	क्रमागत drbd_ret_code retcode;
+	पूर्णांक skip_initial_sync = 0;
+	पूर्णांक err;
+	काष्ठा new_c_uuid_parms args;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out_nolock;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out_nolock;
 
 	device = adm_ctx.device;
-	memset(&args, 0, sizeof(args));
-	if (info->attrs[DRBD_NLA_NEW_C_UUID_PARMS]) {
+	स_रखो(&args, 0, माप(args));
+	अगर (info->attrs[DRBD_NLA_NEW_C_UUID_PARMS]) अणु
 		err = new_c_uuid_parms_from_attrs(&args, info);
-		if (err) {
+		अगर (err) अणु
 			retcode = ERR_MANDATORY_TAG;
 			drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-			goto out_nolock;
-		}
-	}
+			जाओ out_nolock;
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 	mutex_lock(device->state_mutex); /* Protects us against serialized state changes. */
 
-	if (!get_ldev(device)) {
+	अगर (!get_ldev(device)) अणु
 		retcode = ERR_NO_DISK;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* this is "skip initial sync", assume to be clean */
-	if (device->state.conn == C_CONNECTED &&
+	अगर (device->state.conn == C_CONNECTED &&
 	    first_peer_device(device)->connection->agreed_pro_version >= 90 &&
-	    device->ldev->md.uuid[UI_CURRENT] == UUID_JUST_CREATED && args.clear_bm) {
+	    device->ldev->md.uuid[UI_CURRENT] == UUID_JUST_CREATED && args.clear_bm) अणु
 		drbd_info(device, "Preparing to skip initial sync\n");
 		skip_initial_sync = 1;
-	} else if (device->state.conn != C_STANDALONE) {
+	पूर्ण अन्यथा अगर (device->state.conn != C_STANDALONE) अणु
 		retcode = ERR_CONNECTED;
-		goto out_dec;
-	}
+		जाओ out_dec;
+	पूर्ण
 
 	drbd_uuid_set(device, UI_BITMAP, 0); /* Rotate UI_BITMAP to History 1, etc... */
 	drbd_uuid_new_current(device); /* New current, previous to UI_BITMAP */
 
-	if (args.clear_bm) {
-		err = drbd_bitmap_io(device, &drbd_bmio_clear_n_write,
+	अगर (args.clear_bm) अणु
+		err = drbd_biपंचांगap_io(device, &drbd_bmio_clear_n_ग_लिखो,
 			"clear_n_write from new_c_uuid", BM_LOCKED_MASK);
-		if (err) {
+		अगर (err) अणु
 			drbd_err(device, "Writing bitmap failed with %d\n", err);
 			retcode = ERR_IO_MD_DISK;
-		}
-		if (skip_initial_sync) {
+		पूर्ण
+		अगर (skip_initial_sync) अणु
 			drbd_send_uuids_skip_initial_sync(first_peer_device(device));
 			_drbd_uuid_set(device, UI_BITMAP, 0);
-			drbd_print_uuids(device, "cleared bitmap UUID");
+			drbd_prपूर्णांक_uuids(device, "cleared bitmap UUID");
 			spin_lock_irq(&device->resource->req_lock);
 			_drbd_set_state(_NS2(device, disk, D_UP_TO_DATE, pdsk, D_UP_TO_DATE),
-					CS_VERBOSE, NULL);
+					CS_VERBOSE, शून्य);
 			spin_unlock_irq(&device->resource->req_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	drbd_md_sync(device);
 out_dec:
@@ -4238,328 +4239,328 @@ out:
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 out_nolock:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum drbd_ret_code
-drbd_check_resource_name(struct drbd_config_context *adm_ctx)
-{
-	const char *name = adm_ctx->resource_name;
-	if (!name || !name[0]) {
+अटल क्रमागत drbd_ret_code
+drbd_check_resource_name(काष्ठा drbd_config_context *adm_ctx)
+अणु
+	स्थिर अक्षर *name = adm_ctx->resource_name;
+	अगर (!name || !name[0]) अणु
 		drbd_msg_put_info(adm_ctx->reply_skb, "resource name missing");
-		return ERR_MANDATORY_TAG;
-	}
-	/* if we want to use these in sysfs/configfs/debugfs some day,
+		वापस ERR_MANDATORY_TAG;
+	पूर्ण
+	/* अगर we want to use these in sysfs/configfs/debugfs some day,
 	 * we must not allow slashes */
-	if (strchr(name, '/')) {
+	अगर (म_अक्षर(name, '/')) अणु
 		drbd_msg_put_info(adm_ctx->reply_skb, "invalid resource name");
-		return ERR_INVALID_REQUEST;
-	}
-	return NO_ERROR;
-}
+		वापस ERR_INVALID_REQUEST;
+	पूर्ण
+	वापस NO_ERROR;
+पूर्ण
 
-static void resource_to_info(struct resource_info *info,
-			     struct drbd_resource *resource)
-{
+अटल व्योम resource_to_info(काष्ठा resource_info *info,
+			     काष्ठा drbd_resource *resource)
+अणु
 	info->res_role = conn_highest_role(first_connection(resource));
 	info->res_susp = resource->susp;
 	info->res_susp_nod = resource->susp_nod;
 	info->res_susp_fen = resource->susp_fen;
-}
+पूर्ण
 
-int drbd_adm_new_resource(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_connection *connection;
-	struct drbd_config_context adm_ctx;
-	enum drbd_ret_code retcode;
-	struct res_opts res_opts;
-	int err;
+पूर्णांक drbd_adm_new_resource(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_connection *connection;
+	काष्ठा drbd_config_context adm_ctx;
+	क्रमागत drbd_ret_code retcode;
+	काष्ठा res_opts res_opts;
+	पूर्णांक err;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, 0);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
-	set_res_opts_defaults(&res_opts);
+	set_res_opts_शेषs(&res_opts);
 	err = res_opts_from_attrs(&res_opts, info);
-	if (err && err != -ENOMSG) {
+	अगर (err && err != -ENOMSG) अणु
 		retcode = ERR_MANDATORY_TAG;
 		drbd_msg_put_info(adm_ctx.reply_skb, from_attrs_err_to_txt(err));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	retcode = drbd_check_resource_name(&adm_ctx);
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
-	if (adm_ctx.resource) {
-		if (info->nlhdr->nlmsg_flags & NLM_F_EXCL) {
+	अगर (adm_ctx.resource) अणु
+		अगर (info->nlhdr->nlmsg_flags & NLM_F_EXCL) अणु
 			retcode = ERR_INVALID_REQUEST;
 			drbd_msg_put_info(adm_ctx.reply_skb, "resource exists");
-		}
-		/* else: still NO_ERROR */
-		goto out;
-	}
+		पूर्ण
+		/* अन्यथा: still NO_ERROR */
+		जाओ out;
+	पूर्ण
 
-	/* not yet safe for genl_family.parallel_ops */
+	/* not yet safe क्रम genl_family.parallel_ops */
 	mutex_lock(&resources_mutex);
 	connection = conn_create(adm_ctx.resource_name, &res_opts);
 	mutex_unlock(&resources_mutex);
 
-	if (connection) {
-		struct resource_info resource_info;
+	अगर (connection) अणु
+		काष्ठा resource_info resource_info;
 
-		mutex_lock(&notification_mutex);
+		mutex_lock(&notअगरication_mutex);
 		resource_to_info(&resource_info, connection->resource);
-		notify_resource_state(NULL, 0, connection->resource,
+		notअगरy_resource_state(शून्य, 0, connection->resource,
 				      &resource_info, NOTIFY_CREATE);
-		mutex_unlock(&notification_mutex);
-	} else
+		mutex_unlock(&notअगरication_mutex);
+	पूर्ण अन्यथा
 		retcode = ERR_NOMEM;
 
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void device_to_info(struct device_info *info,
-			   struct drbd_device *device)
-{
+अटल व्योम device_to_info(काष्ठा device_info *info,
+			   काष्ठा drbd_device *device)
+अणु
 	info->dev_disk_state = device->state.disk;
-}
+पूर्ण
 
 
-int drbd_adm_new_minor(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct drbd_genlmsghdr *dh = info->userhdr;
-	enum drbd_ret_code retcode;
+पूर्णांक drbd_adm_new_minor(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा drbd_genlmsghdr *dh = info->userhdr;
+	क्रमागत drbd_ret_code retcode;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_RESOURCE);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
-	if (dh->minor > MINORMASK) {
+	अगर (dh->minor > MINORMASK) अणु
 		drbd_msg_put_info(adm_ctx.reply_skb, "requested minor out of range");
 		retcode = ERR_INVALID_REQUEST;
-		goto out;
-	}
-	if (adm_ctx.volume > DRBD_VOLUME_MAX) {
+		जाओ out;
+	पूर्ण
+	अगर (adm_ctx.volume > DRBD_VOLUME_MAX) अणु
 		drbd_msg_put_info(adm_ctx.reply_skb, "requested volume id out of range");
 		retcode = ERR_INVALID_REQUEST;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* drbd_adm_prepare made sure already
+	/* drbd_adm_prepare made sure alपढ़ोy
 	 * that first_peer_device(device)->connection and device->vnr match the request. */
-	if (adm_ctx.device) {
-		if (info->nlhdr->nlmsg_flags & NLM_F_EXCL)
+	अगर (adm_ctx.device) अणु
+		अगर (info->nlhdr->nlmsg_flags & NLM_F_EXCL)
 			retcode = ERR_MINOR_OR_VOLUME_EXISTS;
-		/* else: still NO_ERROR */
-		goto out;
-	}
+		/* अन्यथा: still NO_ERROR */
+		जाओ out;
+	पूर्ण
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 	retcode = drbd_create_device(&adm_ctx, dh->minor);
-	if (retcode == NO_ERROR) {
-		struct drbd_device *device;
-		struct drbd_peer_device *peer_device;
-		struct device_info info;
-		unsigned int peer_devices = 0;
-		enum drbd_notification_type flags;
+	अगर (retcode == NO_ERROR) अणु
+		काष्ठा drbd_device *device;
+		काष्ठा drbd_peer_device *peer_device;
+		काष्ठा device_info info;
+		अचिन्हित पूर्णांक peer_devices = 0;
+		क्रमागत drbd_notअगरication_type flags;
 
 		device = minor_to_device(dh->minor);
-		for_each_peer_device(peer_device, device) {
-			if (!has_net_conf(peer_device->connection))
-				continue;
+		क्रम_each_peer_device(peer_device, device) अणु
+			अगर (!has_net_conf(peer_device->connection))
+				जारी;
 			peer_devices++;
-		}
+		पूर्ण
 
 		device_to_info(&info, device);
-		mutex_lock(&notification_mutex);
+		mutex_lock(&notअगरication_mutex);
 		flags = (peer_devices--) ? NOTIFY_CONTINUES : 0;
-		notify_device_state(NULL, 0, device, &info, NOTIFY_CREATE | flags);
-		for_each_peer_device(peer_device, device) {
-			struct peer_device_info peer_device_info;
+		notअगरy_device_state(शून्य, 0, device, &info, NOTIFY_CREATE | flags);
+		क्रम_each_peer_device(peer_device, device) अणु
+			काष्ठा peer_device_info peer_device_info;
 
-			if (!has_net_conf(peer_device->connection))
-				continue;
+			अगर (!has_net_conf(peer_device->connection))
+				जारी;
 			peer_device_to_info(&peer_device_info, peer_device);
 			flags = (peer_devices--) ? NOTIFY_CONTINUES : 0;
-			notify_peer_device_state(NULL, 0, peer_device, &peer_device_info,
+			notअगरy_peer_device_state(शून्य, 0, peer_device, &peer_device_info,
 						 NOTIFY_CREATE | flags);
-		}
-		mutex_unlock(&notification_mutex);
-	}
+		पूर्ण
+		mutex_unlock(&notअगरication_mutex);
+	पूर्ण
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum drbd_ret_code adm_del_minor(struct drbd_device *device)
-{
-	struct drbd_peer_device *peer_device;
+अटल क्रमागत drbd_ret_code adm_del_minor(काष्ठा drbd_device *device)
+अणु
+	काष्ठा drbd_peer_device *peer_device;
 
-	if (device->state.disk == D_DISKLESS &&
+	अगर (device->state.disk == D_DISKLESS &&
 	    /* no need to be device->state.conn == C_STANDALONE &&
 	     * we may want to delete a minor from a live replication group.
 	     */
-	    device->state.role == R_SECONDARY) {
-		struct drbd_connection *connection =
+	    device->state.role == R_SECONDARY) अणु
+		काष्ठा drbd_connection *connection =
 			first_connection(device->resource);
 
 		_drbd_request_state(device, NS(conn, C_WF_REPORT_PARAMS),
 				    CS_VERBOSE + CS_WAIT_COMPLETE);
 
-		/* If the state engine hasn't stopped the sender thread yet, we
-		 * need to flush the sender work queue before generating the
+		/* If the state engine hasn't stopped the sender thपढ़ो yet, we
+		 * need to flush the sender work queue beक्रमe generating the
 		 * DESTROY events here. */
-		if (get_t_state(&connection->worker) == RUNNING)
+		अगर (get_t_state(&connection->worker) == RUNNING)
 			drbd_flush_workqueue(&connection->sender_work);
 
-		mutex_lock(&notification_mutex);
-		for_each_peer_device(peer_device, device) {
-			if (!has_net_conf(peer_device->connection))
-				continue;
-			notify_peer_device_state(NULL, 0, peer_device, NULL,
+		mutex_lock(&notअगरication_mutex);
+		क्रम_each_peer_device(peer_device, device) अणु
+			अगर (!has_net_conf(peer_device->connection))
+				जारी;
+			notअगरy_peer_device_state(शून्य, 0, peer_device, शून्य,
 						 NOTIFY_DESTROY | NOTIFY_CONTINUES);
-		}
-		notify_device_state(NULL, 0, device, NULL, NOTIFY_DESTROY);
-		mutex_unlock(&notification_mutex);
+		पूर्ण
+		notअगरy_device_state(शून्य, 0, device, शून्य, NOTIFY_DESTROY);
+		mutex_unlock(&notअगरication_mutex);
 
 		drbd_delete_device(device);
-		return NO_ERROR;
-	} else
-		return ERR_MINOR_CONFIGURED;
-}
+		वापस NO_ERROR;
+	पूर्ण अन्यथा
+		वापस ERR_MINOR_CONFIGURED;
+पूर्ण
 
-int drbd_adm_del_minor(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	enum drbd_ret_code retcode;
+पूर्णांक drbd_adm_del_minor(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	क्रमागत drbd_ret_code retcode;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_MINOR);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto out;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ out;
 
 	mutex_lock(&adm_ctx.resource->adm_mutex);
 	retcode = adm_del_minor(adm_ctx.device);
 	mutex_unlock(&adm_ctx.resource->adm_mutex);
 out:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adm_del_resource(struct drbd_resource *resource)
-{
-	struct drbd_connection *connection;
+अटल पूर्णांक adm_del_resource(काष्ठा drbd_resource *resource)
+अणु
+	काष्ठा drbd_connection *connection;
 
-	for_each_connection(connection, resource) {
-		if (connection->cstate > C_STANDALONE)
-			return ERR_NET_CONFIGURED;
-	}
-	if (!idr_is_empty(&resource->devices))
-		return ERR_RES_IN_USE;
+	क्रम_each_connection(connection, resource) अणु
+		अगर (connection->cstate > C_STANDALONE)
+			वापस ERR_NET_CONFIGURED;
+	पूर्ण
+	अगर (!idr_is_empty(&resource->devices))
+		वापस ERR_RES_IN_USE;
 
-	/* The state engine has stopped the sender thread, so we don't
-	 * need to flush the sender work queue before generating the
+	/* The state engine has stopped the sender thपढ़ो, so we करोn't
+	 * need to flush the sender work queue beक्रमe generating the
 	 * DESTROY event here. */
-	mutex_lock(&notification_mutex);
-	notify_resource_state(NULL, 0, resource, NULL, NOTIFY_DESTROY);
-	mutex_unlock(&notification_mutex);
+	mutex_lock(&notअगरication_mutex);
+	notअगरy_resource_state(शून्य, 0, resource, शून्य, NOTIFY_DESTROY);
+	mutex_unlock(&notअगरication_mutex);
 
 	mutex_lock(&resources_mutex);
 	list_del_rcu(&resource->resources);
 	mutex_unlock(&resources_mutex);
-	/* Make sure all threads have actually stopped: state handling only
-	 * does drbd_thread_stop_nowait(). */
-	list_for_each_entry(connection, &resource->connections, connections)
-		drbd_thread_stop(&connection->worker);
+	/* Make sure all thपढ़ोs have actually stopped: state handling only
+	 * करोes drbd_thपढ़ो_stop_noरुको(). */
+	list_क्रम_each_entry(connection, &resource->connections, connections)
+		drbd_thपढ़ो_stop(&connection->worker);
 	synchronize_rcu();
-	drbd_free_resource(resource);
-	return NO_ERROR;
-}
+	drbd_मुक्त_resource(resource);
+	वापस NO_ERROR;
+पूर्ण
 
-int drbd_adm_down(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct drbd_resource *resource;
-	struct drbd_connection *connection;
-	struct drbd_device *device;
-	int retcode; /* enum drbd_ret_code rsp. enum drbd_state_rv */
-	unsigned i;
+पूर्णांक drbd_adm_करोwn(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा drbd_resource *resource;
+	काष्ठा drbd_connection *connection;
+	काष्ठा drbd_device *device;
+	पूर्णांक retcode; /* क्रमागत drbd_ret_code rsp. क्रमागत drbd_state_rv */
+	अचिन्हित i;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_RESOURCE);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto finish;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ finish;
 
 	resource = adm_ctx.resource;
 	mutex_lock(&resource->adm_mutex);
 	/* demote */
-	for_each_connection(connection, resource) {
-		struct drbd_peer_device *peer_device;
+	क्रम_each_connection(connection, resource) अणु
+		काष्ठा drbd_peer_device *peer_device;
 
-		idr_for_each_entry(&connection->peer_devices, peer_device, i) {
+		idr_क्रम_each_entry(&connection->peer_devices, peer_device, i) अणु
 			retcode = drbd_set_role(peer_device->device, R_SECONDARY, 0);
-			if (retcode < SS_SUCCESS) {
+			अगर (retcode < SS_SUCCESS) अणु
 				drbd_msg_put_info(adm_ctx.reply_skb, "failed to demote");
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		retcode = conn_try_disconnect(connection, 0);
-		if (retcode < SS_SUCCESS) {
+		अगर (retcode < SS_SUCCESS) अणु
 			drbd_msg_put_info(adm_ctx.reply_skb, "failed to disconnect");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* detach */
-	idr_for_each_entry(&resource->devices, device, i) {
+	idr_क्रम_each_entry(&resource->devices, device, i) अणु
 		retcode = adm_detach(device, 0);
-		if (retcode < SS_SUCCESS || retcode > NO_ERROR) {
+		अगर (retcode < SS_SUCCESS || retcode > NO_ERROR) अणु
 			drbd_msg_put_info(adm_ctx.reply_skb, "failed to detach");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* delete volumes */
-	idr_for_each_entry(&resource->devices, device, i) {
+	idr_क्रम_each_entry(&resource->devices, device, i) अणु
 		retcode = adm_del_minor(device);
-		if (retcode != NO_ERROR) {
+		अगर (retcode != NO_ERROR) अणु
 			/* "can not happen" */
 			drbd_msg_put_info(adm_ctx.reply_skb, "failed to delete volume");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	retcode = adm_del_resource(resource);
 out:
 	mutex_unlock(&resource->adm_mutex);
 finish:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int drbd_adm_del_resource(struct sk_buff *skb, struct genl_info *info)
-{
-	struct drbd_config_context adm_ctx;
-	struct drbd_resource *resource;
-	enum drbd_ret_code retcode;
+पूर्णांक drbd_adm_del_resource(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा drbd_config_context adm_ctx;
+	काष्ठा drbd_resource *resource;
+	क्रमागत drbd_ret_code retcode;
 
 	retcode = drbd_adm_prepare(&adm_ctx, skb, info, DRBD_ADM_NEED_RESOURCE);
-	if (!adm_ctx.reply_skb)
-		return retcode;
-	if (retcode != NO_ERROR)
-		goto finish;
+	अगर (!adm_ctx.reply_skb)
+		वापस retcode;
+	अगर (retcode != NO_ERROR)
+		जाओ finish;
 	resource = adm_ctx.resource;
 
 	mutex_lock(&resource->adm_mutex);
@@ -4567,444 +4568,444 @@ int drbd_adm_del_resource(struct sk_buff *skb, struct genl_info *info)
 	mutex_unlock(&resource->adm_mutex);
 finish:
 	drbd_adm_finish(&adm_ctx, info, retcode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void drbd_bcast_event(struct drbd_device *device, const struct sib_info *sib)
-{
-	struct sk_buff *msg;
-	struct drbd_genlmsghdr *d_out;
-	unsigned seq;
-	int err = -ENOMEM;
+व्योम drbd_bcast_event(काष्ठा drbd_device *device, स्थिर काष्ठा sib_info *sib)
+अणु
+	काष्ठा sk_buff *msg;
+	काष्ठा drbd_genlmsghdr *d_out;
+	अचिन्हित seq;
+	पूर्णांक err = -ENOMEM;
 
-	seq = atomic_inc_return(&drbd_genl_seq);
+	seq = atomic_inc_वापस(&drbd_genl_seq);
 	msg = genlmsg_new(NLMSG_GOODSIZE, GFP_NOIO);
-	if (!msg)
-		goto failed;
+	अगर (!msg)
+		जाओ failed;
 
 	err = -EMSGSIZE;
 	d_out = genlmsg_put(msg, 0, seq, &drbd_genl_family, 0, DRBD_EVENT);
-	if (!d_out) /* cannot happen, but anyways. */
-		goto nla_put_failure;
+	अगर (!d_out) /* cannot happen, but anyways. */
+		जाओ nla_put_failure;
 	d_out->minor = device_to_minor(device);
 	d_out->ret_code = NO_ERROR;
 
-	if (nla_put_status_info(msg, device, sib))
-		goto nla_put_failure;
+	अगर (nla_put_status_info(msg, device, sib))
+		जाओ nla_put_failure;
 	genlmsg_end(msg, d_out);
 	err = drbd_genl_multicast_events(msg, GFP_NOWAIT);
-	/* msg has been consumed or freed in netlink_broadcast() */
-	if (err && err != -ESRCH)
-		goto failed;
+	/* msg has been consumed or मुक्तd in netlink_broadcast() */
+	अगर (err && err != -ESRCH)
+		जाओ failed;
 
-	return;
+	वापस;
 
 nla_put_failure:
-	nlmsg_free(msg);
+	nlmsg_मुक्त(msg);
 failed:
 	drbd_err(device, "Error %d while broadcasting event. "
 			"Event seq:%u sib_reason:%u\n",
 			err, seq, sib->sib_reason);
-}
+पूर्ण
 
-static int nla_put_notification_header(struct sk_buff *msg,
-				       enum drbd_notification_type type)
-{
-	struct drbd_notification_header nh = {
+अटल पूर्णांक nla_put_notअगरication_header(काष्ठा sk_buff *msg,
+				       क्रमागत drbd_notअगरication_type type)
+अणु
+	काष्ठा drbd_notअगरication_header nh = अणु
 		.nh_type = type,
-	};
+	पूर्ण;
 
-	return drbd_notification_header_to_skb(msg, &nh, true);
-}
+	वापस drbd_notअगरication_header_to_skb(msg, &nh, true);
+पूर्ण
 
-void notify_resource_state(struct sk_buff *skb,
-			   unsigned int seq,
-			   struct drbd_resource *resource,
-			   struct resource_info *resource_info,
-			   enum drbd_notification_type type)
-{
-	struct resource_statistics resource_statistics;
-	struct drbd_genlmsghdr *dh;
+व्योम notअगरy_resource_state(काष्ठा sk_buff *skb,
+			   अचिन्हित पूर्णांक seq,
+			   काष्ठा drbd_resource *resource,
+			   काष्ठा resource_info *resource_info,
+			   क्रमागत drbd_notअगरication_type type)
+अणु
+	काष्ठा resource_statistics resource_statistics;
+	काष्ठा drbd_genlmsghdr *dh;
 	bool multicast = false;
-	int err;
+	पूर्णांक err;
 
-	if (!skb) {
-		seq = atomic_inc_return(&notify_genl_seq);
+	अगर (!skb) अणु
+		seq = atomic_inc_वापस(&notअगरy_genl_seq);
 		skb = genlmsg_new(NLMSG_GOODSIZE, GFP_NOIO);
 		err = -ENOMEM;
-		if (!skb)
-			goto failed;
+		अगर (!skb)
+			जाओ failed;
 		multicast = true;
-	}
+	पूर्ण
 
 	err = -EMSGSIZE;
 	dh = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, DRBD_RESOURCE_STATE);
-	if (!dh)
-		goto nla_put_failure;
+	अगर (!dh)
+		जाओ nla_put_failure;
 	dh->minor = -1U;
 	dh->ret_code = NO_ERROR;
-	if (nla_put_drbd_cfg_context(skb, resource, NULL, NULL) ||
-	    nla_put_notification_header(skb, type) ||
+	अगर (nla_put_drbd_cfg_context(skb, resource, शून्य, शून्य) ||
+	    nla_put_notअगरication_header(skb, type) ||
 	    ((type & ~NOTIFY_FLAGS) != NOTIFY_DESTROY &&
 	     resource_info_to_skb(skb, resource_info, true)))
-		goto nla_put_failure;
-	resource_statistics.res_stat_write_ordering = resource->write_ordering;
+		जाओ nla_put_failure;
+	resource_statistics.res_stat_ग_लिखो_ordering = resource->ग_लिखो_ordering;
 	err = resource_statistics_to_skb(skb, &resource_statistics, !capable(CAP_SYS_ADMIN));
-	if (err)
-		goto nla_put_failure;
+	अगर (err)
+		जाओ nla_put_failure;
 	genlmsg_end(skb, dh);
-	if (multicast) {
+	अगर (multicast) अणु
 		err = drbd_genl_multicast_events(skb, GFP_NOWAIT);
-		/* skb has been consumed or freed in netlink_broadcast() */
-		if (err && err != -ESRCH)
-			goto failed;
-	}
-	return;
+		/* skb has been consumed or मुक्तd in netlink_broadcast() */
+		अगर (err && err != -ESRCH)
+			जाओ failed;
+	पूर्ण
+	वापस;
 
 nla_put_failure:
-	nlmsg_free(skb);
+	nlmsg_मुक्त(skb);
 failed:
 	drbd_err(resource, "Error %d while broadcasting event. Event seq:%u\n",
 			err, seq);
-}
+पूर्ण
 
-void notify_device_state(struct sk_buff *skb,
-			 unsigned int seq,
-			 struct drbd_device *device,
-			 struct device_info *device_info,
-			 enum drbd_notification_type type)
-{
-	struct device_statistics device_statistics;
-	struct drbd_genlmsghdr *dh;
+व्योम notअगरy_device_state(काष्ठा sk_buff *skb,
+			 अचिन्हित पूर्णांक seq,
+			 काष्ठा drbd_device *device,
+			 काष्ठा device_info *device_info,
+			 क्रमागत drbd_notअगरication_type type)
+अणु
+	काष्ठा device_statistics device_statistics;
+	काष्ठा drbd_genlmsghdr *dh;
 	bool multicast = false;
-	int err;
+	पूर्णांक err;
 
-	if (!skb) {
-		seq = atomic_inc_return(&notify_genl_seq);
+	अगर (!skb) अणु
+		seq = atomic_inc_वापस(&notअगरy_genl_seq);
 		skb = genlmsg_new(NLMSG_GOODSIZE, GFP_NOIO);
 		err = -ENOMEM;
-		if (!skb)
-			goto failed;
+		अगर (!skb)
+			जाओ failed;
 		multicast = true;
-	}
+	पूर्ण
 
 	err = -EMSGSIZE;
 	dh = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, DRBD_DEVICE_STATE);
-	if (!dh)
-		goto nla_put_failure;
+	अगर (!dh)
+		जाओ nla_put_failure;
 	dh->minor = device->minor;
 	dh->ret_code = NO_ERROR;
-	if (nla_put_drbd_cfg_context(skb, device->resource, NULL, device) ||
-	    nla_put_notification_header(skb, type) ||
+	अगर (nla_put_drbd_cfg_context(skb, device->resource, शून्य, device) ||
+	    nla_put_notअगरication_header(skb, type) ||
 	    ((type & ~NOTIFY_FLAGS) != NOTIFY_DESTROY &&
 	     device_info_to_skb(skb, device_info, true)))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 	device_to_statistics(&device_statistics, device);
 	device_statistics_to_skb(skb, &device_statistics, !capable(CAP_SYS_ADMIN));
 	genlmsg_end(skb, dh);
-	if (multicast) {
+	अगर (multicast) अणु
 		err = drbd_genl_multicast_events(skb, GFP_NOWAIT);
-		/* skb has been consumed or freed in netlink_broadcast() */
-		if (err && err != -ESRCH)
-			goto failed;
-	}
-	return;
+		/* skb has been consumed or मुक्तd in netlink_broadcast() */
+		अगर (err && err != -ESRCH)
+			जाओ failed;
+	पूर्ण
+	वापस;
 
 nla_put_failure:
-	nlmsg_free(skb);
+	nlmsg_मुक्त(skb);
 failed:
 	drbd_err(device, "Error %d while broadcasting event. Event seq:%u\n",
 		 err, seq);
-}
+पूर्ण
 
-void notify_connection_state(struct sk_buff *skb,
-			     unsigned int seq,
-			     struct drbd_connection *connection,
-			     struct connection_info *connection_info,
-			     enum drbd_notification_type type)
-{
-	struct connection_statistics connection_statistics;
-	struct drbd_genlmsghdr *dh;
+व्योम notअगरy_connection_state(काष्ठा sk_buff *skb,
+			     अचिन्हित पूर्णांक seq,
+			     काष्ठा drbd_connection *connection,
+			     काष्ठा connection_info *connection_info,
+			     क्रमागत drbd_notअगरication_type type)
+अणु
+	काष्ठा connection_statistics connection_statistics;
+	काष्ठा drbd_genlmsghdr *dh;
 	bool multicast = false;
-	int err;
+	पूर्णांक err;
 
-	if (!skb) {
-		seq = atomic_inc_return(&notify_genl_seq);
+	अगर (!skb) अणु
+		seq = atomic_inc_वापस(&notअगरy_genl_seq);
 		skb = genlmsg_new(NLMSG_GOODSIZE, GFP_NOIO);
 		err = -ENOMEM;
-		if (!skb)
-			goto failed;
+		अगर (!skb)
+			जाओ failed;
 		multicast = true;
-	}
+	पूर्ण
 
 	err = -EMSGSIZE;
 	dh = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, DRBD_CONNECTION_STATE);
-	if (!dh)
-		goto nla_put_failure;
+	अगर (!dh)
+		जाओ nla_put_failure;
 	dh->minor = -1U;
 	dh->ret_code = NO_ERROR;
-	if (nla_put_drbd_cfg_context(skb, connection->resource, connection, NULL) ||
-	    nla_put_notification_header(skb, type) ||
+	अगर (nla_put_drbd_cfg_context(skb, connection->resource, connection, शून्य) ||
+	    nla_put_notअगरication_header(skb, type) ||
 	    ((type & ~NOTIFY_FLAGS) != NOTIFY_DESTROY &&
 	     connection_info_to_skb(skb, connection_info, true)))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 	connection_statistics.conn_congested = test_bit(NET_CONGESTED, &connection->flags);
 	connection_statistics_to_skb(skb, &connection_statistics, !capable(CAP_SYS_ADMIN));
 	genlmsg_end(skb, dh);
-	if (multicast) {
+	अगर (multicast) अणु
 		err = drbd_genl_multicast_events(skb, GFP_NOWAIT);
-		/* skb has been consumed or freed in netlink_broadcast() */
-		if (err && err != -ESRCH)
-			goto failed;
-	}
-	return;
+		/* skb has been consumed or मुक्तd in netlink_broadcast() */
+		अगर (err && err != -ESRCH)
+			जाओ failed;
+	पूर्ण
+	वापस;
 
 nla_put_failure:
-	nlmsg_free(skb);
+	nlmsg_मुक्त(skb);
 failed:
 	drbd_err(connection, "Error %d while broadcasting event. Event seq:%u\n",
 		 err, seq);
-}
+पूर्ण
 
-void notify_peer_device_state(struct sk_buff *skb,
-			      unsigned int seq,
-			      struct drbd_peer_device *peer_device,
-			      struct peer_device_info *peer_device_info,
-			      enum drbd_notification_type type)
-{
-	struct peer_device_statistics peer_device_statistics;
-	struct drbd_resource *resource = peer_device->device->resource;
-	struct drbd_genlmsghdr *dh;
+व्योम notअगरy_peer_device_state(काष्ठा sk_buff *skb,
+			      अचिन्हित पूर्णांक seq,
+			      काष्ठा drbd_peer_device *peer_device,
+			      काष्ठा peer_device_info *peer_device_info,
+			      क्रमागत drbd_notअगरication_type type)
+अणु
+	काष्ठा peer_device_statistics peer_device_statistics;
+	काष्ठा drbd_resource *resource = peer_device->device->resource;
+	काष्ठा drbd_genlmsghdr *dh;
 	bool multicast = false;
-	int err;
+	पूर्णांक err;
 
-	if (!skb) {
-		seq = atomic_inc_return(&notify_genl_seq);
+	अगर (!skb) अणु
+		seq = atomic_inc_वापस(&notअगरy_genl_seq);
 		skb = genlmsg_new(NLMSG_GOODSIZE, GFP_NOIO);
 		err = -ENOMEM;
-		if (!skb)
-			goto failed;
+		अगर (!skb)
+			जाओ failed;
 		multicast = true;
-	}
+	पूर्ण
 
 	err = -EMSGSIZE;
 	dh = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, DRBD_PEER_DEVICE_STATE);
-	if (!dh)
-		goto nla_put_failure;
+	अगर (!dh)
+		जाओ nla_put_failure;
 	dh->minor = -1U;
 	dh->ret_code = NO_ERROR;
-	if (nla_put_drbd_cfg_context(skb, resource, peer_device->connection, peer_device->device) ||
-	    nla_put_notification_header(skb, type) ||
+	अगर (nla_put_drbd_cfg_context(skb, resource, peer_device->connection, peer_device->device) ||
+	    nla_put_notअगरication_header(skb, type) ||
 	    ((type & ~NOTIFY_FLAGS) != NOTIFY_DESTROY &&
 	     peer_device_info_to_skb(skb, peer_device_info, true)))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 	peer_device_to_statistics(&peer_device_statistics, peer_device);
 	peer_device_statistics_to_skb(skb, &peer_device_statistics, !capable(CAP_SYS_ADMIN));
 	genlmsg_end(skb, dh);
-	if (multicast) {
+	अगर (multicast) अणु
 		err = drbd_genl_multicast_events(skb, GFP_NOWAIT);
-		/* skb has been consumed or freed in netlink_broadcast() */
-		if (err && err != -ESRCH)
-			goto failed;
-	}
-	return;
+		/* skb has been consumed or मुक्तd in netlink_broadcast() */
+		अगर (err && err != -ESRCH)
+			जाओ failed;
+	पूर्ण
+	वापस;
 
 nla_put_failure:
-	nlmsg_free(skb);
+	nlmsg_मुक्त(skb);
 failed:
 	drbd_err(peer_device, "Error %d while broadcasting event. Event seq:%u\n",
 		 err, seq);
-}
+पूर्ण
 
-void notify_helper(enum drbd_notification_type type,
-		   struct drbd_device *device, struct drbd_connection *connection,
-		   const char *name, int status)
-{
-	struct drbd_resource *resource = device ? device->resource : connection->resource;
-	struct drbd_helper_info helper_info;
-	unsigned int seq = atomic_inc_return(&notify_genl_seq);
-	struct sk_buff *skb = NULL;
-	struct drbd_genlmsghdr *dh;
-	int err;
+व्योम notअगरy_helper(क्रमागत drbd_notअगरication_type type,
+		   काष्ठा drbd_device *device, काष्ठा drbd_connection *connection,
+		   स्थिर अक्षर *name, पूर्णांक status)
+अणु
+	काष्ठा drbd_resource *resource = device ? device->resource : connection->resource;
+	काष्ठा drbd_helper_info helper_info;
+	अचिन्हित पूर्णांक seq = atomic_inc_वापस(&notअगरy_genl_seq);
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा drbd_genlmsghdr *dh;
+	पूर्णांक err;
 
-	strlcpy(helper_info.helper_name, name, sizeof(helper_info.helper_name));
-	helper_info.helper_name_len = min(strlen(name), sizeof(helper_info.helper_name));
+	strlcpy(helper_info.helper_name, name, माप(helper_info.helper_name));
+	helper_info.helper_name_len = min(म_माप(name), माप(helper_info.helper_name));
 	helper_info.helper_status = status;
 
 	skb = genlmsg_new(NLMSG_GOODSIZE, GFP_NOIO);
 	err = -ENOMEM;
-	if (!skb)
-		goto fail;
+	अगर (!skb)
+		जाओ fail;
 
 	err = -EMSGSIZE;
 	dh = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, DRBD_HELPER);
-	if (!dh)
-		goto fail;
+	अगर (!dh)
+		जाओ fail;
 	dh->minor = device ? device->minor : -1;
 	dh->ret_code = NO_ERROR;
-	mutex_lock(&notification_mutex);
-	if (nla_put_drbd_cfg_context(skb, resource, connection, device) ||
-	    nla_put_notification_header(skb, type) ||
+	mutex_lock(&notअगरication_mutex);
+	अगर (nla_put_drbd_cfg_context(skb, resource, connection, device) ||
+	    nla_put_notअगरication_header(skb, type) ||
 	    drbd_helper_info_to_skb(skb, &helper_info, true))
-		goto unlock_fail;
+		जाओ unlock_fail;
 	genlmsg_end(skb, dh);
 	err = drbd_genl_multicast_events(skb, GFP_NOWAIT);
-	skb = NULL;
-	/* skb has been consumed or freed in netlink_broadcast() */
-	if (err && err != -ESRCH)
-		goto unlock_fail;
-	mutex_unlock(&notification_mutex);
-	return;
+	skb = शून्य;
+	/* skb has been consumed or मुक्तd in netlink_broadcast() */
+	अगर (err && err != -ESRCH)
+		जाओ unlock_fail;
+	mutex_unlock(&notअगरication_mutex);
+	वापस;
 
 unlock_fail:
-	mutex_unlock(&notification_mutex);
+	mutex_unlock(&notअगरication_mutex);
 fail:
-	nlmsg_free(skb);
+	nlmsg_मुक्त(skb);
 	drbd_err(resource, "Error %d while broadcasting event. Event seq:%u\n",
 		 err, seq);
-}
+पूर्ण
 
-static void notify_initial_state_done(struct sk_buff *skb, unsigned int seq)
-{
-	struct drbd_genlmsghdr *dh;
-	int err;
+अटल व्योम notअगरy_initial_state_करोne(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक seq)
+अणु
+	काष्ठा drbd_genlmsghdr *dh;
+	पूर्णांक err;
 
 	err = -EMSGSIZE;
 	dh = genlmsg_put(skb, 0, seq, &drbd_genl_family, 0, DRBD_INITIAL_STATE_DONE);
-	if (!dh)
-		goto nla_put_failure;
+	अगर (!dh)
+		जाओ nla_put_failure;
 	dh->minor = -1U;
 	dh->ret_code = NO_ERROR;
-	if (nla_put_notification_header(skb, NOTIFY_EXISTS))
-		goto nla_put_failure;
+	अगर (nla_put_notअगरication_header(skb, NOTIFY_EXISTS))
+		जाओ nla_put_failure;
 	genlmsg_end(skb, dh);
-	return;
+	वापस;
 
 nla_put_failure:
-	nlmsg_free(skb);
+	nlmsg_मुक्त(skb);
 	pr_err("Error %d sending event. Event seq:%u\n", err, seq);
-}
+पूर्ण
 
-static void free_state_changes(struct list_head *list)
-{
-	while (!list_empty(list)) {
-		struct drbd_state_change *state_change =
-			list_first_entry(list, struct drbd_state_change, list);
+अटल व्योम मुक्त_state_changes(काष्ठा list_head *list)
+अणु
+	जबतक (!list_empty(list)) अणु
+		काष्ठा drbd_state_change *state_change =
+			list_first_entry(list, काष्ठा drbd_state_change, list);
 		list_del(&state_change->list);
-		forget_state_change(state_change);
-	}
-}
+		क्रमget_state_change(state_change);
+	पूर्ण
+पूर्ण
 
-static unsigned int notifications_for_state_change(struct drbd_state_change *state_change)
-{
-	return 1 +
+अटल अचिन्हित पूर्णांक notअगरications_क्रम_state_change(काष्ठा drbd_state_change *state_change)
+अणु
+	वापस 1 +
 	       state_change->n_connections +
 	       state_change->n_devices +
 	       state_change->n_devices * state_change->n_connections;
-}
+पूर्ण
 
-static int get_initial_state(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct drbd_state_change *state_change = (struct drbd_state_change *)cb->args[0];
-	unsigned int seq = cb->args[2];
-	unsigned int n;
-	enum drbd_notification_type flags = 0;
+अटल पूर्णांक get_initial_state(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा drbd_state_change *state_change = (काष्ठा drbd_state_change *)cb->args[0];
+	अचिन्हित पूर्णांक seq = cb->args[2];
+	अचिन्हित पूर्णांक n;
+	क्रमागत drbd_notअगरication_type flags = 0;
 
-	/* There is no need for taking notification_mutex here: it doesn't
-	   matter if the initial state events mix with later state chage
+	/* There is no need क्रम taking notअगरication_mutex here: it करोesn't
+	   matter अगर the initial state events mix with later state chage
 	   events; we can always tell the events apart by the NOTIFY_EXISTS
 	   flag. */
 
 	cb->args[5]--;
-	if (cb->args[5] == 1) {
-		notify_initial_state_done(skb, seq);
-		goto out;
-	}
+	अगर (cb->args[5] == 1) अणु
+		notअगरy_initial_state_करोne(skb, seq);
+		जाओ out;
+	पूर्ण
 	n = cb->args[4]++;
-	if (cb->args[4] < cb->args[3])
+	अगर (cb->args[4] < cb->args[3])
 		flags |= NOTIFY_CONTINUES;
-	if (n < 1) {
-		notify_resource_state_change(skb, seq, state_change->resource,
+	अगर (n < 1) अणु
+		notअगरy_resource_state_change(skb, seq, state_change->resource,
 					     NOTIFY_EXISTS | flags);
-		goto next;
-	}
+		जाओ next;
+	पूर्ण
 	n--;
-	if (n < state_change->n_connections) {
-		notify_connection_state_change(skb, seq, &state_change->connections[n],
+	अगर (n < state_change->n_connections) अणु
+		notअगरy_connection_state_change(skb, seq, &state_change->connections[n],
 					       NOTIFY_EXISTS | flags);
-		goto next;
-	}
+		जाओ next;
+	पूर्ण
 	n -= state_change->n_connections;
-	if (n < state_change->n_devices) {
-		notify_device_state_change(skb, seq, &state_change->devices[n],
+	अगर (n < state_change->n_devices) अणु
+		notअगरy_device_state_change(skb, seq, &state_change->devices[n],
 					   NOTIFY_EXISTS | flags);
-		goto next;
-	}
+		जाओ next;
+	पूर्ण
 	n -= state_change->n_devices;
-	if (n < state_change->n_devices * state_change->n_connections) {
-		notify_peer_device_state_change(skb, seq, &state_change->peer_devices[n],
+	अगर (n < state_change->n_devices * state_change->n_connections) अणु
+		notअगरy_peer_device_state_change(skb, seq, &state_change->peer_devices[n],
 						NOTIFY_EXISTS | flags);
-		goto next;
-	}
+		जाओ next;
+	पूर्ण
 
 next:
-	if (cb->args[4] == cb->args[3]) {
-		struct drbd_state_change *next_state_change =
+	अगर (cb->args[4] == cb->args[3]) अणु
+		काष्ठा drbd_state_change *next_state_change =
 			list_entry(state_change->list.next,
-				   struct drbd_state_change, list);
-		cb->args[0] = (long)next_state_change;
-		cb->args[3] = notifications_for_state_change(next_state_change);
+				   काष्ठा drbd_state_change, list);
+		cb->args[0] = (दीर्घ)next_state_change;
+		cb->args[3] = notअगरications_क्रम_state_change(next_state_change);
 		cb->args[4] = 0;
-	}
+	पूर्ण
 out:
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-int drbd_adm_get_initial_state(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct drbd_resource *resource;
+पूर्णांक drbd_adm_get_initial_state(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा drbd_resource *resource;
 	LIST_HEAD(head);
 
-	if (cb->args[5] >= 1) {
-		if (cb->args[5] > 1)
-			return get_initial_state(skb, cb);
-		if (cb->args[0]) {
-			struct drbd_state_change *state_change =
-				(struct drbd_state_change *)cb->args[0];
+	अगर (cb->args[5] >= 1) अणु
+		अगर (cb->args[5] > 1)
+			वापस get_initial_state(skb, cb);
+		अगर (cb->args[0]) अणु
+			काष्ठा drbd_state_change *state_change =
+				(काष्ठा drbd_state_change *)cb->args[0];
 
 			/* connect list to head */
 			list_add(&head, &state_change->list);
-			free_state_changes(&head);
-		}
-		return 0;
-	}
+			मुक्त_state_changes(&head);
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	cb->args[5] = 2;  /* number of iterations */
 	mutex_lock(&resources_mutex);
-	for_each_resource(resource, &drbd_resources) {
-		struct drbd_state_change *state_change;
+	क्रम_each_resource(resource, &drbd_resources) अणु
+		काष्ठा drbd_state_change *state_change;
 
 		state_change = remember_old_state(resource, GFP_KERNEL);
-		if (!state_change) {
-			if (!list_empty(&head))
-				free_state_changes(&head);
+		अगर (!state_change) अणु
+			अगर (!list_empty(&head))
+				मुक्त_state_changes(&head);
 			mutex_unlock(&resources_mutex);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		copy_old_to_new_state_change(state_change);
 		list_add_tail(&state_change->list, &head);
-		cb->args[5] += notifications_for_state_change(state_change);
-	}
+		cb->args[5] += notअगरications_क्रम_state_change(state_change);
+	पूर्ण
 	mutex_unlock(&resources_mutex);
 
-	if (!list_empty(&head)) {
-		struct drbd_state_change *state_change =
-			list_entry(head.next, struct drbd_state_change, list);
-		cb->args[0] = (long)state_change;
-		cb->args[3] = notifications_for_state_change(state_change);
+	अगर (!list_empty(&head)) अणु
+		काष्ठा drbd_state_change *state_change =
+			list_entry(head.next, काष्ठा drbd_state_change, list);
+		cb->args[0] = (दीर्घ)state_change;
+		cb->args[3] = notअगरications_क्रम_state_change(state_change);
 		list_del(&head);  /* detach list from head */
-	}
+	पूर्ण
 
 	cb->args[2] = cb->nlh->nlmsg_seq;
-	return get_initial_state(skb, cb);
-}
+	वापस get_initial_state(skb, cb);
+पूर्ण

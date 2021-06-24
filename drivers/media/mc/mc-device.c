@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Media device
  *
  * Copyright (C) 2010 Nokia Corporation
  *
- * Contacts: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Contacts: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#include <linux/compat.h>
-#include <linux/export.h>
-#include <linux/idr.h>
-#include <linux/ioctl.h>
-#include <linux/media.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/usb.h>
-#include <linux/version.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/export.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/media.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/version.h>
 
-#include <media/media-device.h>
-#include <media/media-devnode.h>
-#include <media/media-entity.h>
-#include <media/media-request.h>
+#समावेश <media/media-device.h>
+#समावेश <media/media-devnode.h>
+#समावेश <media/media-entity.h>
+#समावेश <media/media-request.h>
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 
 /*
  * Legacy defines from linux/media.h. This is the only place we need this
- * so we just define it here. The media.h header doesn't expose it to the
+ * so we just define it here. The media.h header करोesn't expose it to the
  * kernel to prevent it from being used by drivers, but here (and only here!)
  * we need it to handle the legacy behavior.
  */
-#define MEDIA_ENT_SUBTYPE_MASK			0x0000ffff
-#define MEDIA_ENT_T_DEVNODE_UNKNOWN		(MEDIA_ENT_F_OLD_BASE | \
+#घोषणा MEDIA_ENT_SUBTYPE_MASK			0x0000ffff
+#घोषणा MEDIA_ENT_T_DEVNODE_UNKNOWN		(MEDIA_ENT_F_OLD_BASE | \
 						 MEDIA_ENT_SUBTYPE_MASK)
 
 /* -----------------------------------------------------------------------------
  * Userspace API
  */
 
-static inline void __user *media_get_uptr(__u64 arg)
-{
-	return (void __user *)(uintptr_t)arg;
-}
+अटल अंतरभूत व्योम __user *media_get_uptr(__u64 arg)
+अणु
+	वापस (व्योम __user *)(uपूर्णांकptr_t)arg;
+पूर्ण
 
-static int media_device_open(struct file *filp)
-{
-	return 0;
-}
+अटल पूर्णांक media_device_खोलो(काष्ठा file *filp)
+अणु
+	वापस 0;
+पूर्ण
 
-static int media_device_close(struct file *filp)
-{
-	return 0;
-}
+अटल पूर्णांक media_device_बंद(काष्ठा file *filp)
+अणु
+	वापस 0;
+पूर्ण
 
-static long media_device_get_info(struct media_device *dev, void *arg)
-{
-	struct media_device_info *info = arg;
+अटल दीर्घ media_device_get_info(काष्ठा media_device *dev, व्योम *arg)
+अणु
+	काष्ठा media_device_info *info = arg;
 
-	memset(info, 0, sizeof(*info));
+	स_रखो(info, 0, माप(*info));
 
-	if (dev->driver_name[0])
-		strscpy(info->driver, dev->driver_name, sizeof(info->driver));
-	else
+	अगर (dev->driver_name[0])
+		strscpy(info->driver, dev->driver_name, माप(info->driver));
+	अन्यथा
 		strscpy(info->driver, dev->dev->driver->name,
-			sizeof(info->driver));
+			माप(info->driver));
 
-	strscpy(info->model, dev->model, sizeof(info->model));
-	strscpy(info->serial, dev->serial, sizeof(info->serial));
-	strscpy(info->bus_info, dev->bus_info, sizeof(info->bus_info));
+	strscpy(info->model, dev->model, माप(info->model));
+	strscpy(info->serial, dev->serial, माप(info->serial));
+	strscpy(info->bus_info, dev->bus_info, माप(info->bus_info));
 
 	info->media_version = LINUX_VERSION_CODE;
 	info->driver_version = info->media_version;
 	info->hw_revision = dev->hw_revision;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct media_entity *find_entity(struct media_device *mdev, u32 id)
-{
-	struct media_entity *entity;
-	int next = id & MEDIA_ENT_ID_FLAG_NEXT;
+अटल काष्ठा media_entity *find_entity(काष्ठा media_device *mdev, u32 id)
+अणु
+	काष्ठा media_entity *entity;
+	पूर्णांक next = id & MEDIA_ENT_ID_FLAG_NEXT;
 
 	id &= ~MEDIA_ENT_ID_FLAG_NEXT;
 
-	media_device_for_each_entity(entity, mdev) {
-		if (((media_entity_id(entity) == id) && !next) ||
-		    ((media_entity_id(entity) > id) && next)) {
-			return entity;
-		}
-	}
+	media_device_क्रम_each_entity(entity, mdev) अणु
+		अगर (((media_entity_id(entity) == id) && !next) ||
+		    ((media_entity_id(entity) > id) && next)) अणु
+			वापस entity;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static long media_device_enum_entities(struct media_device *mdev, void *arg)
-{
-	struct media_entity_desc *entd = arg;
-	struct media_entity *ent;
+अटल दीर्घ media_device_क्रमागत_entities(काष्ठा media_device *mdev, व्योम *arg)
+अणु
+	काष्ठा media_entity_desc *entd = arg;
+	काष्ठा media_entity *ent;
 
 	ent = find_entity(mdev, entd->id);
-	if (ent == NULL)
-		return -EINVAL;
+	अगर (ent == शून्य)
+		वापस -EINVAL;
 
-	memset(entd, 0, sizeof(*entd));
+	स_रखो(entd, 0, माप(*entd));
 
 	entd->id = media_entity_id(ent);
-	if (ent->name)
-		strscpy(entd->name, ent->name, sizeof(entd->name));
+	अगर (ent->name)
+		strscpy(entd->name, ent->name, माप(entd->name));
 	entd->type = ent->function;
 	entd->revision = 0;		/* Unused */
 	entd->flags = ent->flags;
@@ -117,627 +118,627 @@ static long media_device_enum_entities(struct media_device *mdev, void *arg)
 	entd->links = ent->num_links - ent->num_backlinks;
 
 	/*
-	 * Workaround for a bug at media-ctl <= v1.10 that makes it to
-	 * do the wrong thing if the entity function doesn't belong to
+	 * Workaround क्रम a bug at media-ctl <= v1.10 that makes it to
+	 * करो the wrong thing अगर the entity function करोesn't beदीर्घ to
 	 * either MEDIA_ENT_F_OLD_BASE or MEDIA_ENT_F_OLD_SUBDEV_BASE
 	 * Ranges.
 	 *
 	 * Non-subdevices are expected to be at the MEDIA_ENT_F_OLD_BASE,
 	 * or, otherwise, will be silently ignored by media-ctl when
-	 * printing the graphviz diagram. So, map them into the devnode
+	 * prपूर्णांकing the graphviz diagram. So, map them पूर्णांकo the devnode
 	 * old range.
 	 */
-	if (ent->function < MEDIA_ENT_F_OLD_BASE ||
-	    ent->function > MEDIA_ENT_F_TUNER) {
-		if (is_media_entity_v4l2_subdev(ent))
+	अगर (ent->function < MEDIA_ENT_F_OLD_BASE ||
+	    ent->function > MEDIA_ENT_F_TUNER) अणु
+		अगर (is_media_entity_v4l2_subdev(ent))
 			entd->type = MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN;
-		else if (ent->function != MEDIA_ENT_F_IO_V4L)
+		अन्यथा अगर (ent->function != MEDIA_ENT_F_IO_V4L)
 			entd->type = MEDIA_ENT_T_DEVNODE_UNKNOWN;
-	}
+	पूर्ण
 
-	memcpy(&entd->raw, &ent->info, sizeof(ent->info));
+	स_नकल(&entd->raw, &ent->info, माप(ent->info));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void media_device_kpad_to_upad(const struct media_pad *kpad,
-				      struct media_pad_desc *upad)
-{
+अटल व्योम media_device_kpad_to_upad(स्थिर काष्ठा media_pad *kpad,
+				      काष्ठा media_pad_desc *upad)
+अणु
 	upad->entity = media_entity_id(kpad->entity);
 	upad->index = kpad->index;
 	upad->flags = kpad->flags;
-}
+पूर्ण
 
-static long media_device_enum_links(struct media_device *mdev, void *arg)
-{
-	struct media_links_enum *links = arg;
-	struct media_entity *entity;
+अटल दीर्घ media_device_क्रमागत_links(काष्ठा media_device *mdev, व्योम *arg)
+अणु
+	काष्ठा media_links_क्रमागत *links = arg;
+	काष्ठा media_entity *entity;
 
 	entity = find_entity(mdev, links->entity);
-	if (entity == NULL)
-		return -EINVAL;
+	अगर (entity == शून्य)
+		वापस -EINVAL;
 
-	if (links->pads) {
-		unsigned int p;
+	अगर (links->pads) अणु
+		अचिन्हित पूर्णांक p;
 
-		for (p = 0; p < entity->num_pads; p++) {
-			struct media_pad_desc pad;
+		क्रम (p = 0; p < entity->num_pads; p++) अणु
+			काष्ठा media_pad_desc pad;
 
-			memset(&pad, 0, sizeof(pad));
+			स_रखो(&pad, 0, माप(pad));
 			media_device_kpad_to_upad(&entity->pads[p], &pad);
-			if (copy_to_user(&links->pads[p], &pad, sizeof(pad)))
-				return -EFAULT;
-		}
-	}
+			अगर (copy_to_user(&links->pads[p], &pad, माप(pad)))
+				वापस -EFAULT;
+		पूर्ण
+	पूर्ण
 
-	if (links->links) {
-		struct media_link *link;
-		struct media_link_desc __user *ulink_desc = links->links;
+	अगर (links->links) अणु
+		काष्ठा media_link *link;
+		काष्ठा media_link_desc __user *ulink_desc = links->links;
 
-		list_for_each_entry(link, &entity->links, list) {
-			struct media_link_desc klink_desc;
+		list_क्रम_each_entry(link, &entity->links, list) अणु
+			काष्ठा media_link_desc klink_desc;
 
 			/* Ignore backlinks. */
-			if (link->source->entity != entity)
-				continue;
-			memset(&klink_desc, 0, sizeof(klink_desc));
+			अगर (link->source->entity != entity)
+				जारी;
+			स_रखो(&klink_desc, 0, माप(klink_desc));
 			media_device_kpad_to_upad(link->source,
 						  &klink_desc.source);
 			media_device_kpad_to_upad(link->sink,
 						  &klink_desc.sink);
 			klink_desc.flags = link->flags;
-			if (copy_to_user(ulink_desc, &klink_desc,
-					 sizeof(*ulink_desc)))
-				return -EFAULT;
+			अगर (copy_to_user(ulink_desc, &klink_desc,
+					 माप(*ulink_desc)))
+				वापस -EFAULT;
 			ulink_desc++;
-		}
-	}
-	memset(links->reserved, 0, sizeof(links->reserved));
+		पूर्ण
+	पूर्ण
+	स_रखो(links->reserved, 0, माप(links->reserved));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long media_device_setup_link(struct media_device *mdev, void *arg)
-{
-	struct media_link_desc *linkd = arg;
-	struct media_link *link = NULL;
-	struct media_entity *source;
-	struct media_entity *sink;
+अटल दीर्घ media_device_setup_link(काष्ठा media_device *mdev, व्योम *arg)
+अणु
+	काष्ठा media_link_desc *linkd = arg;
+	काष्ठा media_link *link = शून्य;
+	काष्ठा media_entity *source;
+	काष्ठा media_entity *sink;
 
 	/* Find the source and sink entities and link.
 	 */
 	source = find_entity(mdev, linkd->source.entity);
 	sink = find_entity(mdev, linkd->sink.entity);
 
-	if (source == NULL || sink == NULL)
-		return -EINVAL;
+	अगर (source == शून्य || sink == शून्य)
+		वापस -EINVAL;
 
-	if (linkd->source.index >= source->num_pads ||
+	अगर (linkd->source.index >= source->num_pads ||
 	    linkd->sink.index >= sink->num_pads)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	link = media_entity_find_link(&source->pads[linkd->source.index],
 				      &sink->pads[linkd->sink.index]);
-	if (link == NULL)
-		return -EINVAL;
+	अगर (link == शून्य)
+		वापस -EINVAL;
 
-	memset(linkd->reserved, 0, sizeof(linkd->reserved));
+	स_रखो(linkd->reserved, 0, माप(linkd->reserved));
 
 	/* Setup the link on both entities. */
-	return __media_entity_setup_link(link, linkd->flags);
-}
+	वापस __media_entity_setup_link(link, linkd->flags);
+पूर्ण
 
-static long media_device_get_topology(struct media_device *mdev, void *arg)
-{
-	struct media_v2_topology *topo = arg;
-	struct media_entity *entity;
-	struct media_interface *intf;
-	struct media_pad *pad;
-	struct media_link *link;
-	struct media_v2_entity kentity, __user *uentity;
-	struct media_v2_interface kintf, __user *uintf;
-	struct media_v2_pad kpad, __user *upad;
-	struct media_v2_link klink, __user *ulink;
-	unsigned int i;
-	int ret = 0;
+अटल दीर्घ media_device_get_topology(काष्ठा media_device *mdev, व्योम *arg)
+अणु
+	काष्ठा media_v2_topology *topo = arg;
+	काष्ठा media_entity *entity;
+	काष्ठा media_पूर्णांकerface *पूर्णांकf;
+	काष्ठा media_pad *pad;
+	काष्ठा media_link *link;
+	काष्ठा media_v2_entity kentity, __user *uentity;
+	काष्ठा media_v2_पूर्णांकerface kपूर्णांकf, __user *uपूर्णांकf;
+	काष्ठा media_v2_pad kpad, __user *upad;
+	काष्ठा media_v2_link klink, __user *ulink;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret = 0;
 
 	topo->topology_version = mdev->topology_version;
 
 	/* Get entities and number of entities */
 	i = 0;
 	uentity = media_get_uptr(topo->ptr_entities);
-	media_device_for_each_entity(entity, mdev) {
+	media_device_क्रम_each_entity(entity, mdev) अणु
 		i++;
-		if (ret || !uentity)
-			continue;
+		अगर (ret || !uentity)
+			जारी;
 
-		if (i > topo->num_entities) {
+		अगर (i > topo->num_entities) अणु
 			ret = -ENOSPC;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Copy fields to userspace struct if not error */
-		memset(&kentity, 0, sizeof(kentity));
+		/* Copy fields to userspace काष्ठा अगर not error */
+		स_रखो(&kentity, 0, माप(kentity));
 		kentity.id = entity->graph_obj.id;
 		kentity.function = entity->function;
 		kentity.flags = entity->flags;
 		strscpy(kentity.name, entity->name,
-			sizeof(kentity.name));
+			माप(kentity.name));
 
-		if (copy_to_user(uentity, &kentity, sizeof(kentity)))
+		अगर (copy_to_user(uentity, &kentity, माप(kentity)))
 			ret = -EFAULT;
 		uentity++;
-	}
+	पूर्ण
 	topo->num_entities = i;
 	topo->reserved1 = 0;
 
-	/* Get interfaces and number of interfaces */
+	/* Get पूर्णांकerfaces and number of पूर्णांकerfaces */
 	i = 0;
-	uintf = media_get_uptr(topo->ptr_interfaces);
-	media_device_for_each_intf(intf, mdev) {
+	uपूर्णांकf = media_get_uptr(topo->ptr_पूर्णांकerfaces);
+	media_device_क्रम_each_पूर्णांकf(पूर्णांकf, mdev) अणु
 		i++;
-		if (ret || !uintf)
-			continue;
+		अगर (ret || !uपूर्णांकf)
+			जारी;
 
-		if (i > topo->num_interfaces) {
+		अगर (i > topo->num_पूर्णांकerfaces) अणु
 			ret = -ENOSPC;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		memset(&kintf, 0, sizeof(kintf));
+		स_रखो(&kपूर्णांकf, 0, माप(kपूर्णांकf));
 
-		/* Copy intf fields to userspace struct */
-		kintf.id = intf->graph_obj.id;
-		kintf.intf_type = intf->type;
-		kintf.flags = intf->flags;
+		/* Copy पूर्णांकf fields to userspace काष्ठा */
+		kपूर्णांकf.id = पूर्णांकf->graph_obj.id;
+		kपूर्णांकf.पूर्णांकf_type = पूर्णांकf->type;
+		kपूर्णांकf.flags = पूर्णांकf->flags;
 
-		if (media_type(&intf->graph_obj) == MEDIA_GRAPH_INTF_DEVNODE) {
-			struct media_intf_devnode *devnode;
+		अगर (media_type(&पूर्णांकf->graph_obj) == MEDIA_GRAPH_INTF_DEVNODE) अणु
+			काष्ठा media_पूर्णांकf_devnode *devnode;
 
-			devnode = intf_to_devnode(intf);
+			devnode = पूर्णांकf_to_devnode(पूर्णांकf);
 
-			kintf.devnode.major = devnode->major;
-			kintf.devnode.minor = devnode->minor;
-		}
+			kपूर्णांकf.devnode.major = devnode->major;
+			kपूर्णांकf.devnode.minor = devnode->minor;
+		पूर्ण
 
-		if (copy_to_user(uintf, &kintf, sizeof(kintf)))
+		अगर (copy_to_user(uपूर्णांकf, &kपूर्णांकf, माप(kपूर्णांकf)))
 			ret = -EFAULT;
-		uintf++;
-	}
-	topo->num_interfaces = i;
+		uपूर्णांकf++;
+	पूर्ण
+	topo->num_पूर्णांकerfaces = i;
 	topo->reserved2 = 0;
 
 	/* Get pads and number of pads */
 	i = 0;
 	upad = media_get_uptr(topo->ptr_pads);
-	media_device_for_each_pad(pad, mdev) {
+	media_device_क्रम_each_pad(pad, mdev) अणु
 		i++;
-		if (ret || !upad)
-			continue;
+		अगर (ret || !upad)
+			जारी;
 
-		if (i > topo->num_pads) {
+		अगर (i > topo->num_pads) अणु
 			ret = -ENOSPC;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		memset(&kpad, 0, sizeof(kpad));
+		स_रखो(&kpad, 0, माप(kpad));
 
-		/* Copy pad fields to userspace struct */
+		/* Copy pad fields to userspace काष्ठा */
 		kpad.id = pad->graph_obj.id;
 		kpad.entity_id = pad->entity->graph_obj.id;
 		kpad.flags = pad->flags;
 		kpad.index = pad->index;
 
-		if (copy_to_user(upad, &kpad, sizeof(kpad)))
+		अगर (copy_to_user(upad, &kpad, माप(kpad)))
 			ret = -EFAULT;
 		upad++;
-	}
+	पूर्ण
 	topo->num_pads = i;
 	topo->reserved3 = 0;
 
 	/* Get links and number of links */
 	i = 0;
 	ulink = media_get_uptr(topo->ptr_links);
-	media_device_for_each_link(link, mdev) {
-		if (link->is_backlink)
-			continue;
+	media_device_क्रम_each_link(link, mdev) अणु
+		अगर (link->is_backlink)
+			जारी;
 
 		i++;
 
-		if (ret || !ulink)
-			continue;
+		अगर (ret || !ulink)
+			जारी;
 
-		if (i > topo->num_links) {
+		अगर (i > topo->num_links) अणु
 			ret = -ENOSPC;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		memset(&klink, 0, sizeof(klink));
+		स_रखो(&klink, 0, माप(klink));
 
-		/* Copy link fields to userspace struct */
+		/* Copy link fields to userspace काष्ठा */
 		klink.id = link->graph_obj.id;
 		klink.source_id = link->gobj0->id;
 		klink.sink_id = link->gobj1->id;
 		klink.flags = link->flags;
 
-		if (copy_to_user(ulink, &klink, sizeof(klink)))
+		अगर (copy_to_user(ulink, &klink, माप(klink)))
 			ret = -EFAULT;
 		ulink++;
-	}
+	पूर्ण
 	topo->num_links = i;
 	topo->reserved4 = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long media_device_request_alloc(struct media_device *mdev, void *arg)
-{
-#ifdef CONFIG_MEDIA_CONTROLLER_REQUEST_API
-	int *alloc_fd = arg;
+अटल दीर्घ media_device_request_alloc(काष्ठा media_device *mdev, व्योम *arg)
+अणु
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER_REQUEST_API
+	पूर्णांक *alloc_fd = arg;
 
-	if (!mdev->ops || !mdev->ops->req_validate || !mdev->ops->req_queue)
-		return -ENOTTY;
+	अगर (!mdev->ops || !mdev->ops->req_validate || !mdev->ops->req_queue)
+		वापस -ENOTTY;
 
-	return media_request_alloc(mdev, alloc_fd);
-#else
-	return -ENOTTY;
-#endif
-}
+	वापस media_request_alloc(mdev, alloc_fd);
+#अन्यथा
+	वापस -ENOTTY;
+#पूर्ण_अगर
+पूर्ण
 
-static long copy_arg_from_user(void *karg, void __user *uarg, unsigned int cmd)
-{
-	if ((_IOC_DIR(cmd) & _IOC_WRITE) &&
+अटल दीर्घ copy_arg_from_user(व्योम *karg, व्योम __user *uarg, अचिन्हित पूर्णांक cmd)
+अणु
+	अगर ((_IOC_सूची(cmd) & _IOC_WRITE) &&
 	    copy_from_user(karg, uarg, _IOC_SIZE(cmd)))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long copy_arg_to_user(void __user *uarg, void *karg, unsigned int cmd)
-{
-	if ((_IOC_DIR(cmd) & _IOC_READ) &&
+अटल दीर्घ copy_arg_to_user(व्योम __user *uarg, व्योम *karg, अचिन्हित पूर्णांक cmd)
+अणु
+	अगर ((_IOC_सूची(cmd) & _IOC_READ) &&
 	    copy_to_user(uarg, karg, _IOC_SIZE(cmd)))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Do acquire the graph mutex */
-#define MEDIA_IOC_FL_GRAPH_MUTEX	BIT(0)
+#घोषणा MEDIA_IOC_FL_GRAPH_MUTEX	BIT(0)
 
-#define MEDIA_IOC_ARG(__cmd, func, fl, from_user, to_user)		\
-	[_IOC_NR(MEDIA_IOC_##__cmd)] = {				\
+#घोषणा MEDIA_IOC_ARG(__cmd, func, fl, from_user, to_user)		\
+	[_IOC_NR(MEDIA_IOC_##__cmd)] = अणु				\
 		.cmd = MEDIA_IOC_##__cmd,				\
 		.fn = func,						\
 		.flags = fl,						\
 		.arg_from_user = from_user,				\
 		.arg_to_user = to_user,					\
-	}
+	पूर्ण
 
-#define MEDIA_IOC(__cmd, func, fl)					\
+#घोषणा MEDIA_IOC(__cmd, func, fl)					\
 	MEDIA_IOC_ARG(__cmd, func, fl, copy_arg_from_user, copy_arg_to_user)
 
 /* the table is indexed by _IOC_NR(cmd) */
-struct media_ioctl_info {
-	unsigned int cmd;
-	unsigned short flags;
-	long (*fn)(struct media_device *dev, void *arg);
-	long (*arg_from_user)(void *karg, void __user *uarg, unsigned int cmd);
-	long (*arg_to_user)(void __user *uarg, void *karg, unsigned int cmd);
-};
+काष्ठा media_ioctl_info अणु
+	अचिन्हित पूर्णांक cmd;
+	अचिन्हित लघु flags;
+	दीर्घ (*fn)(काष्ठा media_device *dev, व्योम *arg);
+	दीर्घ (*arg_from_user)(व्योम *karg, व्योम __user *uarg, अचिन्हित पूर्णांक cmd);
+	दीर्घ (*arg_to_user)(व्योम __user *uarg, व्योम *karg, अचिन्हित पूर्णांक cmd);
+पूर्ण;
 
-static const struct media_ioctl_info ioctl_info[] = {
+अटल स्थिर काष्ठा media_ioctl_info ioctl_info[] = अणु
 	MEDIA_IOC(DEVICE_INFO, media_device_get_info, MEDIA_IOC_FL_GRAPH_MUTEX),
-	MEDIA_IOC(ENUM_ENTITIES, media_device_enum_entities, MEDIA_IOC_FL_GRAPH_MUTEX),
-	MEDIA_IOC(ENUM_LINKS, media_device_enum_links, MEDIA_IOC_FL_GRAPH_MUTEX),
+	MEDIA_IOC(ENUM_ENTITIES, media_device_क्रमागत_entities, MEDIA_IOC_FL_GRAPH_MUTEX),
+	MEDIA_IOC(ENUM_LINKS, media_device_क्रमागत_links, MEDIA_IOC_FL_GRAPH_MUTEX),
 	MEDIA_IOC(SETUP_LINK, media_device_setup_link, MEDIA_IOC_FL_GRAPH_MUTEX),
 	MEDIA_IOC(G_TOPOLOGY, media_device_get_topology, MEDIA_IOC_FL_GRAPH_MUTEX),
 	MEDIA_IOC(REQUEST_ALLOC, media_device_request_alloc, 0),
-};
+पूर्ण;
 
-static long media_device_ioctl(struct file *filp, unsigned int cmd,
-			       unsigned long __arg)
-{
-	struct media_devnode *devnode = media_devnode_data(filp);
-	struct media_device *dev = devnode->media_dev;
-	const struct media_ioctl_info *info;
-	void __user *arg = (void __user *)__arg;
-	char __karg[256], *karg = __karg;
-	long ret;
+अटल दीर्घ media_device_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
+			       अचिन्हित दीर्घ __arg)
+अणु
+	काष्ठा media_devnode *devnode = media_devnode_data(filp);
+	काष्ठा media_device *dev = devnode->media_dev;
+	स्थिर काष्ठा media_ioctl_info *info;
+	व्योम __user *arg = (व्योम __user *)__arg;
+	अक्षर __karg[256], *karg = __karg;
+	दीर्घ ret;
 
-	if (_IOC_NR(cmd) >= ARRAY_SIZE(ioctl_info)
+	अगर (_IOC_NR(cmd) >= ARRAY_SIZE(ioctl_info)
 	    || ioctl_info[_IOC_NR(cmd)].cmd != cmd)
-		return -ENOIOCTLCMD;
+		वापस -ENOIOCTLCMD;
 
 	info = &ioctl_info[_IOC_NR(cmd)];
 
-	if (_IOC_SIZE(info->cmd) > sizeof(__karg)) {
-		karg = kmalloc(_IOC_SIZE(info->cmd), GFP_KERNEL);
-		if (!karg)
-			return -ENOMEM;
-	}
+	अगर (_IOC_SIZE(info->cmd) > माप(__karg)) अणु
+		karg = kदो_स्मृति(_IOC_SIZE(info->cmd), GFP_KERNEL);
+		अगर (!karg)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (info->arg_from_user) {
+	अगर (info->arg_from_user) अणु
 		ret = info->arg_from_user(karg, arg, cmd);
-		if (ret)
-			goto out_free;
-	}
+		अगर (ret)
+			जाओ out_मुक्त;
+	पूर्ण
 
-	if (info->flags & MEDIA_IOC_FL_GRAPH_MUTEX)
+	अगर (info->flags & MEDIA_IOC_FL_GRAPH_MUTEX)
 		mutex_lock(&dev->graph_mutex);
 
 	ret = info->fn(dev, karg);
 
-	if (info->flags & MEDIA_IOC_FL_GRAPH_MUTEX)
+	अगर (info->flags & MEDIA_IOC_FL_GRAPH_MUTEX)
 		mutex_unlock(&dev->graph_mutex);
 
-	if (!ret && info->arg_to_user)
+	अगर (!ret && info->arg_to_user)
 		ret = info->arg_to_user(arg, karg, cmd);
 
-out_free:
-	if (karg != __karg)
-		kfree(karg);
+out_मुक्त:
+	अगर (karg != __karg)
+		kमुक्त(karg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 
-struct media_links_enum32 {
+काष्ठा media_links_क्रमागत32 अणु
 	__u32 entity;
-	compat_uptr_t pads; /* struct media_pad_desc * */
-	compat_uptr_t links; /* struct media_link_desc * */
+	compat_uptr_t pads; /* काष्ठा media_pad_desc * */
+	compat_uptr_t links; /* काष्ठा media_link_desc * */
 	__u32 reserved[4];
-};
+पूर्ण;
 
-static long media_device_enum_links32(struct media_device *mdev,
-				      struct media_links_enum32 __user *ulinks)
-{
-	struct media_links_enum links;
+अटल दीर्घ media_device_क्रमागत_links32(काष्ठा media_device *mdev,
+				      काष्ठा media_links_क्रमागत32 __user *ulinks)
+अणु
+	काष्ठा media_links_क्रमागत links;
 	compat_uptr_t pads_ptr, links_ptr;
-	int ret;
+	पूर्णांक ret;
 
-	memset(&links, 0, sizeof(links));
+	स_रखो(&links, 0, माप(links));
 
-	if (get_user(links.entity, &ulinks->entity)
+	अगर (get_user(links.entity, &ulinks->entity)
 	    || get_user(pads_ptr, &ulinks->pads)
 	    || get_user(links_ptr, &ulinks->links))
-		return -EFAULT;
+		वापस -EFAULT;
 
 	links.pads = compat_ptr(pads_ptr);
 	links.links = compat_ptr(links_ptr);
 
-	ret = media_device_enum_links(mdev, &links);
-	if (ret)
-		return ret;
+	ret = media_device_क्रमागत_links(mdev, &links);
+	अगर (ret)
+		वापस ret;
 
-	if (copy_to_user(ulinks->reserved, links.reserved,
-			 sizeof(ulinks->reserved)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(ulinks->reserved, links.reserved,
+			 माप(ulinks->reserved)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-#define MEDIA_IOC_ENUM_LINKS32		_IOWR('|', 0x02, struct media_links_enum32)
+#घोषणा MEDIA_IOC_ENUM_LINKS32		_IOWR('|', 0x02, काष्ठा media_links_क्रमागत32)
 
-static long media_device_compat_ioctl(struct file *filp, unsigned int cmd,
-				      unsigned long arg)
-{
-	struct media_devnode *devnode = media_devnode_data(filp);
-	struct media_device *dev = devnode->media_dev;
-	long ret;
+अटल दीर्घ media_device_compat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
+				      अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा media_devnode *devnode = media_devnode_data(filp);
+	काष्ठा media_device *dev = devnode->media_dev;
+	दीर्घ ret;
 
-	switch (cmd) {
-	case MEDIA_IOC_ENUM_LINKS32:
+	चयन (cmd) अणु
+	हाल MEDIA_IOC_ENUM_LINKS32:
 		mutex_lock(&dev->graph_mutex);
-		ret = media_device_enum_links32(dev,
-				(struct media_links_enum32 __user *)arg);
+		ret = media_device_क्रमागत_links32(dev,
+				(काष्ठा media_links_क्रमागत32 __user *)arg);
 		mutex_unlock(&dev->graph_mutex);
-		break;
+		अवरोध;
 
-	default:
-		return media_device_ioctl(filp, cmd, arg);
-	}
+	शेष:
+		वापस media_device_ioctl(filp, cmd, arg);
+	पूर्ण
 
-	return ret;
-}
-#endif /* CONFIG_COMPAT */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_COMPAT */
 
-static const struct media_file_operations media_device_fops = {
+अटल स्थिर काष्ठा media_file_operations media_device_fops = अणु
 	.owner = THIS_MODULE,
-	.open = media_device_open,
+	.खोलो = media_device_खोलो,
 	.ioctl = media_device_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl = media_device_compat_ioctl,
-#endif /* CONFIG_COMPAT */
-	.release = media_device_close,
-};
+#पूर्ण_अगर /* CONFIG_COMPAT */
+	.release = media_device_बंद,
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * sysfs
  */
 
-static ssize_t show_model(struct device *cd,
-			  struct device_attribute *attr, char *buf)
-{
-	struct media_devnode *devnode = to_media_devnode(cd);
-	struct media_device *mdev = devnode->media_dev;
+अटल sमाप_प्रकार show_model(काष्ठा device *cd,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा media_devnode *devnode = to_media_devnode(cd);
+	काष्ठा media_device *mdev = devnode->media_dev;
 
-	return sprintf(buf, "%.*s\n", (int)sizeof(mdev->model), mdev->model);
-}
+	वापस प्र_लिखो(buf, "%.*s\n", (पूर्णांक)माप(mdev->model), mdev->model);
+पूर्ण
 
-static DEVICE_ATTR(model, S_IRUGO, show_model, NULL);
+अटल DEVICE_ATTR(model, S_IRUGO, show_model, शून्य);
 
 /* -----------------------------------------------------------------------------
  * Registration/unregistration
  */
 
-static void media_device_release(struct media_devnode *devnode)
-{
+अटल व्योम media_device_release(काष्ठा media_devnode *devnode)
+अणु
 	dev_dbg(devnode->parent, "Media device released\n");
-}
+पूर्ण
 
-static void __media_device_unregister_entity(struct media_entity *entity)
-{
-	struct media_device *mdev = entity->graph_obj.mdev;
-	struct media_link *link, *tmp;
-	struct media_interface *intf;
-	unsigned int i;
+अटल व्योम __media_device_unरेजिस्टर_entity(काष्ठा media_entity *entity)
+अणु
+	काष्ठा media_device *mdev = entity->graph_obj.mdev;
+	काष्ठा media_link *link, *पंचांगp;
+	काष्ठा media_पूर्णांकerface *पूर्णांकf;
+	अचिन्हित पूर्णांक i;
 
-	ida_free(&mdev->entity_internal_idx, entity->internal_idx);
+	ida_मुक्त(&mdev->entity_पूर्णांकernal_idx, entity->पूर्णांकernal_idx);
 
-	/* Remove all interface links pointing to this entity */
-	list_for_each_entry(intf, &mdev->interfaces, graph_obj.list) {
-		list_for_each_entry_safe(link, tmp, &intf->links, list) {
-			if (link->entity == entity)
-				__media_remove_intf_link(link);
-		}
-	}
+	/* Remove all पूर्णांकerface links poपूर्णांकing to this entity */
+	list_क्रम_each_entry(पूर्णांकf, &mdev->पूर्णांकerfaces, graph_obj.list) अणु
+		list_क्रम_each_entry_safe(link, पंचांगp, &पूर्णांकf->links, list) अणु
+			अगर (link->entity == entity)
+				__media_हटाओ_पूर्णांकf_link(link);
+		पूर्ण
+	पूर्ण
 
-	/* Remove all data links that belong to this entity */
-	__media_entity_remove_links(entity);
+	/* Remove all data links that beदीर्घ to this entity */
+	__media_entity_हटाओ_links(entity);
 
-	/* Remove all pads that belong to this entity */
-	for (i = 0; i < entity->num_pads; i++)
+	/* Remove all pads that beदीर्घ to this entity */
+	क्रम (i = 0; i < entity->num_pads; i++)
 		media_gobj_destroy(&entity->pads[i].graph_obj);
 
 	/* Remove the entity */
 	media_gobj_destroy(&entity->graph_obj);
 
-	/* invoke entity_notify callbacks to handle entity removal?? */
+	/* invoke entity_notअगरy callbacks to handle entity removal?? */
 
-	entity->graph_obj.mdev = NULL;
-}
+	entity->graph_obj.mdev = शून्य;
+पूर्ण
 
 /**
- * media_device_register_entity - Register an entity with a media device
+ * media_device_रेजिस्टर_entity - Register an entity with a media device
  * @mdev:	The media device
  * @entity:	The entity
  */
-int __must_check media_device_register_entity(struct media_device *mdev,
-					      struct media_entity *entity)
-{
-	struct media_entity_notify *notify, *next;
-	unsigned int i;
-	int ret;
+पूर्णांक __must_check media_device_रेजिस्टर_entity(काष्ठा media_device *mdev,
+					      काष्ठा media_entity *entity)
+अणु
+	काष्ठा media_entity_notअगरy *notअगरy, *next;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	if (entity->function == MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN ||
+	अगर (entity->function == MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN ||
 	    entity->function == MEDIA_ENT_F_UNKNOWN)
 		dev_warn(mdev->dev,
 			 "Entity type for entity %s was not initialized!\n",
 			 entity->name);
 
-	/* Warn if we apparently re-register an entity */
-	WARN_ON(entity->graph_obj.mdev != NULL);
+	/* Warn अगर we apparently re-रेजिस्टर an entity */
+	WARN_ON(entity->graph_obj.mdev != शून्य);
 	entity->graph_obj.mdev = mdev;
 	INIT_LIST_HEAD(&entity->links);
 	entity->num_links = 0;
 	entity->num_backlinks = 0;
 
-	ret = ida_alloc_min(&mdev->entity_internal_idx, 1, GFP_KERNEL);
-	if (ret < 0)
-		return ret;
-	entity->internal_idx = ret;
+	ret = ida_alloc_min(&mdev->entity_पूर्णांकernal_idx, 1, GFP_KERNEL);
+	अगर (ret < 0)
+		वापस ret;
+	entity->पूर्णांकernal_idx = ret;
 
 	mutex_lock(&mdev->graph_mutex);
-	mdev->entity_internal_idx_max =
-		max(mdev->entity_internal_idx_max, entity->internal_idx);
+	mdev->entity_पूर्णांकernal_idx_max =
+		max(mdev->entity_पूर्णांकernal_idx_max, entity->पूर्णांकernal_idx);
 
 	/* Initialize media_gobj embedded at the entity */
 	media_gobj_create(mdev, MEDIA_GRAPH_ENTITY, &entity->graph_obj);
 
 	/* Initialize objects at the pads */
-	for (i = 0; i < entity->num_pads; i++)
+	क्रम (i = 0; i < entity->num_pads; i++)
 		media_gobj_create(mdev, MEDIA_GRAPH_PAD,
 			       &entity->pads[i].graph_obj);
 
-	/* invoke entity_notify callbacks */
-	list_for_each_entry_safe(notify, next, &mdev->entity_notify, list)
-		notify->notify(entity, notify->notify_data);
+	/* invoke entity_notअगरy callbacks */
+	list_क्रम_each_entry_safe(notअगरy, next, &mdev->entity_notअगरy, list)
+		notअगरy->notअगरy(entity, notअगरy->notअगरy_data);
 
-	if (mdev->entity_internal_idx_max
-	    >= mdev->pm_count_walk.ent_enum.idx_max) {
-		struct media_graph new = { .top = 0 };
+	अगर (mdev->entity_पूर्णांकernal_idx_max
+	    >= mdev->pm_count_walk.ent_क्रमागत.idx_max) अणु
+		काष्ठा media_graph new = अणु .top = 0 पूर्ण;
 
 		/*
-		 * Initialise the new graph walk before cleaning up
+		 * Initialise the new graph walk beक्रमe cleaning up
 		 * the old one in order not to spoil the graph walk
-		 * object of the media device if graph walk init fails.
+		 * object of the media device अगर graph walk init fails.
 		 */
 		ret = media_graph_walk_init(&new, mdev);
-		if (ret) {
-			__media_device_unregister_entity(entity);
+		अगर (ret) अणु
+			__media_device_unरेजिस्टर_entity(entity);
 			mutex_unlock(&mdev->graph_mutex);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		media_graph_walk_cleanup(&mdev->pm_count_walk);
 		mdev->pm_count_walk = new;
-	}
+	पूर्ण
 	mutex_unlock(&mdev->graph_mutex);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(media_device_register_entity);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(media_device_रेजिस्टर_entity);
 
-void media_device_unregister_entity(struct media_entity *entity)
-{
-	struct media_device *mdev = entity->graph_obj.mdev;
+व्योम media_device_unरेजिस्टर_entity(काष्ठा media_entity *entity)
+अणु
+	काष्ठा media_device *mdev = entity->graph_obj.mdev;
 
-	if (mdev == NULL)
-		return;
+	अगर (mdev == शून्य)
+		वापस;
 
 	mutex_lock(&mdev->graph_mutex);
-	__media_device_unregister_entity(entity);
+	__media_device_unरेजिस्टर_entity(entity);
 	mutex_unlock(&mdev->graph_mutex);
-}
-EXPORT_SYMBOL_GPL(media_device_unregister_entity);
+पूर्ण
+EXPORT_SYMBOL_GPL(media_device_unरेजिस्टर_entity);
 
 /**
  * media_device_init() - initialize a media device
  * @mdev:	The media device
  *
- * The caller is responsible for initializing the media device before
+ * The caller is responsible क्रम initializing the media device beक्रमe
  * registration. The following fields must be set:
  *
- * - dev must point to the parent device
+ * - dev must poपूर्णांक to the parent device
  * - model must be filled with the device model name
  */
-void media_device_init(struct media_device *mdev)
-{
+व्योम media_device_init(काष्ठा media_device *mdev)
+अणु
 	INIT_LIST_HEAD(&mdev->entities);
-	INIT_LIST_HEAD(&mdev->interfaces);
+	INIT_LIST_HEAD(&mdev->पूर्णांकerfaces);
 	INIT_LIST_HEAD(&mdev->pads);
 	INIT_LIST_HEAD(&mdev->links);
-	INIT_LIST_HEAD(&mdev->entity_notify);
+	INIT_LIST_HEAD(&mdev->entity_notअगरy);
 
 	mutex_init(&mdev->req_queue_mutex);
 	mutex_init(&mdev->graph_mutex);
-	ida_init(&mdev->entity_internal_idx);
+	ida_init(&mdev->entity_पूर्णांकernal_idx);
 
 	atomic_set(&mdev->request_id, 0);
 
 	dev_dbg(mdev->dev, "Media device initialized\n");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(media_device_init);
 
-void media_device_cleanup(struct media_device *mdev)
-{
-	ida_destroy(&mdev->entity_internal_idx);
-	mdev->entity_internal_idx_max = 0;
+व्योम media_device_cleanup(काष्ठा media_device *mdev)
+अणु
+	ida_destroy(&mdev->entity_पूर्णांकernal_idx);
+	mdev->entity_पूर्णांकernal_idx_max = 0;
 	media_graph_walk_cleanup(&mdev->pm_count_walk);
 	mutex_destroy(&mdev->graph_mutex);
 	mutex_destroy(&mdev->req_queue_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(media_device_cleanup);
 
-int __must_check __media_device_register(struct media_device *mdev,
-					 struct module *owner)
-{
-	struct media_devnode *devnode;
-	int ret;
+पूर्णांक __must_check __media_device_रेजिस्टर(काष्ठा media_device *mdev,
+					 काष्ठा module *owner)
+अणु
+	काष्ठा media_devnode *devnode;
+	पूर्णांक ret;
 
-	devnode = kzalloc(sizeof(*devnode), GFP_KERNEL);
-	if (!devnode)
-		return -ENOMEM;
+	devnode = kzalloc(माप(*devnode), GFP_KERNEL);
+	अगर (!devnode)
+		वापस -ENOMEM;
 
 	/* Register the device node. */
 	mdev->devnode = devnode;
@@ -745,160 +746,160 @@ int __must_check __media_device_register(struct media_device *mdev,
 	devnode->parent = mdev->dev;
 	devnode->release = media_device_release;
 
-	/* Set version 0 to indicate user-space that the graph is static */
+	/* Set version 0 to indicate user-space that the graph is अटल */
 	mdev->topology_version = 0;
 
-	ret = media_devnode_register(mdev, devnode, owner);
-	if (ret < 0) {
-		/* devnode free is handled in media_devnode_*() */
-		mdev->devnode = NULL;
-		return ret;
-	}
+	ret = media_devnode_रेजिस्टर(mdev, devnode, owner);
+	अगर (ret < 0) अणु
+		/* devnode मुक्त is handled in media_devnode_*() */
+		mdev->devnode = शून्य;
+		वापस ret;
+	पूर्ण
 
 	ret = device_create_file(&devnode->dev, &dev_attr_model);
-	if (ret < 0) {
-		/* devnode free is handled in media_devnode_*() */
-		mdev->devnode = NULL;
-		media_devnode_unregister_prepare(devnode);
-		media_devnode_unregister(devnode);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		/* devnode मुक्त is handled in media_devnode_*() */
+		mdev->devnode = शून्य;
+		media_devnode_unरेजिस्टर_prepare(devnode);
+		media_devnode_unरेजिस्टर(devnode);
+		वापस ret;
+	पूर्ण
 
 	dev_dbg(mdev->dev, "Media device registered\n");
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(__media_device_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(__media_device_रेजिस्टर);
 
-int __must_check media_device_register_entity_notify(struct media_device *mdev,
-					struct media_entity_notify *nptr)
-{
+पूर्णांक __must_check media_device_रेजिस्टर_entity_notअगरy(काष्ठा media_device *mdev,
+					काष्ठा media_entity_notअगरy *nptr)
+अणु
 	mutex_lock(&mdev->graph_mutex);
-	list_add_tail(&nptr->list, &mdev->entity_notify);
+	list_add_tail(&nptr->list, &mdev->entity_notअगरy);
 	mutex_unlock(&mdev->graph_mutex);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(media_device_register_entity_notify);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(media_device_रेजिस्टर_entity_notअगरy);
 
 /*
  * Note: Should be called with mdev->lock held.
  */
-static void __media_device_unregister_entity_notify(struct media_device *mdev,
-					struct media_entity_notify *nptr)
-{
+अटल व्योम __media_device_unरेजिस्टर_entity_notअगरy(काष्ठा media_device *mdev,
+					काष्ठा media_entity_notअगरy *nptr)
+अणु
 	list_del(&nptr->list);
-}
+पूर्ण
 
-void media_device_unregister_entity_notify(struct media_device *mdev,
-					struct media_entity_notify *nptr)
-{
+व्योम media_device_unरेजिस्टर_entity_notअगरy(काष्ठा media_device *mdev,
+					काष्ठा media_entity_notअगरy *nptr)
+अणु
 	mutex_lock(&mdev->graph_mutex);
-	__media_device_unregister_entity_notify(mdev, nptr);
+	__media_device_unरेजिस्टर_entity_notअगरy(mdev, nptr);
 	mutex_unlock(&mdev->graph_mutex);
-}
-EXPORT_SYMBOL_GPL(media_device_unregister_entity_notify);
+पूर्ण
+EXPORT_SYMBOL_GPL(media_device_unरेजिस्टर_entity_notअगरy);
 
-void media_device_unregister(struct media_device *mdev)
-{
-	struct media_entity *entity;
-	struct media_entity *next;
-	struct media_interface *intf, *tmp_intf;
-	struct media_entity_notify *notify, *nextp;
+व्योम media_device_unरेजिस्टर(काष्ठा media_device *mdev)
+अणु
+	काष्ठा media_entity *entity;
+	काष्ठा media_entity *next;
+	काष्ठा media_पूर्णांकerface *पूर्णांकf, *पंचांगp_पूर्णांकf;
+	काष्ठा media_entity_notअगरy *notअगरy, *nextp;
 
-	if (mdev == NULL)
-		return;
+	अगर (mdev == शून्य)
+		वापस;
 
 	mutex_lock(&mdev->graph_mutex);
 
-	/* Check if mdev was ever registered at all */
-	if (!media_devnode_is_registered(mdev->devnode)) {
+	/* Check अगर mdev was ever रेजिस्टरed at all */
+	अगर (!media_devnode_is_रेजिस्टरed(mdev->devnode)) अणु
 		mutex_unlock(&mdev->graph_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Clear the devnode register bit to avoid races with media dev open */
-	media_devnode_unregister_prepare(mdev->devnode);
+	/* Clear the devnode रेजिस्टर bit to aव्योम races with media dev खोलो */
+	media_devnode_unरेजिस्टर_prepare(mdev->devnode);
 
 	/* Remove all entities from the media device */
-	list_for_each_entry_safe(entity, next, &mdev->entities, graph_obj.list)
-		__media_device_unregister_entity(entity);
+	list_क्रम_each_entry_safe(entity, next, &mdev->entities, graph_obj.list)
+		__media_device_unरेजिस्टर_entity(entity);
 
-	/* Remove all entity_notify callbacks from the media device */
-	list_for_each_entry_safe(notify, nextp, &mdev->entity_notify, list)
-		__media_device_unregister_entity_notify(mdev, notify);
+	/* Remove all entity_notअगरy callbacks from the media device */
+	list_क्रम_each_entry_safe(notअगरy, nextp, &mdev->entity_notअगरy, list)
+		__media_device_unरेजिस्टर_entity_notअगरy(mdev, notअगरy);
 
-	/* Remove all interfaces from the media device */
-	list_for_each_entry_safe(intf, tmp_intf, &mdev->interfaces,
-				 graph_obj.list) {
+	/* Remove all पूर्णांकerfaces from the media device */
+	list_क्रम_each_entry_safe(पूर्णांकf, पंचांगp_पूर्णांकf, &mdev->पूर्णांकerfaces,
+				 graph_obj.list) अणु
 		/*
-		 * Unlink the interface, but don't free it here; the
-		 * module which created it is responsible for freeing
+		 * Unlink the पूर्णांकerface, but करोn't मुक्त it here; the
+		 * module which created it is responsible क्रम मुक्तing
 		 * it
 		 */
-		__media_remove_intf_links(intf);
-		media_gobj_destroy(&intf->graph_obj);
-	}
+		__media_हटाओ_पूर्णांकf_links(पूर्णांकf);
+		media_gobj_destroy(&पूर्णांकf->graph_obj);
+	पूर्ण
 
 	mutex_unlock(&mdev->graph_mutex);
 
 	dev_dbg(mdev->dev, "Media device unregistered\n");
 
-	device_remove_file(&mdev->devnode->dev, &dev_attr_model);
-	media_devnode_unregister(mdev->devnode);
-	/* devnode free is handled in media_devnode_*() */
-	mdev->devnode = NULL;
-}
-EXPORT_SYMBOL_GPL(media_device_unregister);
+	device_हटाओ_file(&mdev->devnode->dev, &dev_attr_model);
+	media_devnode_unरेजिस्टर(mdev->devnode);
+	/* devnode मुक्त is handled in media_devnode_*() */
+	mdev->devnode = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(media_device_unरेजिस्टर);
 
-#if IS_ENABLED(CONFIG_PCI)
-void media_device_pci_init(struct media_device *mdev,
-			   struct pci_dev *pci_dev,
-			   const char *name)
-{
+#अगर IS_ENABLED(CONFIG_PCI)
+व्योम media_device_pci_init(काष्ठा media_device *mdev,
+			   काष्ठा pci_dev *pci_dev,
+			   स्थिर अक्षर *name)
+अणु
 	mdev->dev = &pci_dev->dev;
 
-	if (name)
-		strscpy(mdev->model, name, sizeof(mdev->model));
-	else
-		strscpy(mdev->model, pci_name(pci_dev), sizeof(mdev->model));
+	अगर (name)
+		strscpy(mdev->model, name, माप(mdev->model));
+	अन्यथा
+		strscpy(mdev->model, pci_name(pci_dev), माप(mdev->model));
 
-	sprintf(mdev->bus_info, "PCI:%s", pci_name(pci_dev));
+	प्र_लिखो(mdev->bus_info, "PCI:%s", pci_name(pci_dev));
 
-	mdev->hw_revision = (pci_dev->subsystem_vendor << 16)
-			    | pci_dev->subsystem_device;
+	mdev->hw_revision = (pci_dev->subप्रणाली_venकरोr << 16)
+			    | pci_dev->subप्रणाली_device;
 
 	media_device_init(mdev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(media_device_pci_init);
-#endif
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_USB)
-void __media_device_usb_init(struct media_device *mdev,
-			     struct usb_device *udev,
-			     const char *board_name,
-			     const char *driver_name)
-{
+#अगर IS_ENABLED(CONFIG_USB)
+व्योम __media_device_usb_init(काष्ठा media_device *mdev,
+			     काष्ठा usb_device *udev,
+			     स्थिर अक्षर *board_name,
+			     स्थिर अक्षर *driver_name)
+अणु
 	mdev->dev = &udev->dev;
 
-	if (driver_name)
+	अगर (driver_name)
 		strscpy(mdev->driver_name, driver_name,
-			sizeof(mdev->driver_name));
+			माप(mdev->driver_name));
 
-	if (board_name)
-		strscpy(mdev->model, board_name, sizeof(mdev->model));
-	else if (udev->product)
-		strscpy(mdev->model, udev->product, sizeof(mdev->model));
-	else
-		strscpy(mdev->model, "unknown model", sizeof(mdev->model));
-	if (udev->serial)
-		strscpy(mdev->serial, udev->serial, sizeof(mdev->serial));
-	usb_make_path(udev, mdev->bus_info, sizeof(mdev->bus_info));
+	अगर (board_name)
+		strscpy(mdev->model, board_name, माप(mdev->model));
+	अन्यथा अगर (udev->product)
+		strscpy(mdev->model, udev->product, माप(mdev->model));
+	अन्यथा
+		strscpy(mdev->model, "unknown model", माप(mdev->model));
+	अगर (udev->serial)
+		strscpy(mdev->serial, udev->serial, माप(mdev->serial));
+	usb_make_path(udev, mdev->bus_info, माप(mdev->bus_info));
 	mdev->hw_revision = le16_to_cpu(udev->descriptor.bcdDevice);
 
 	media_device_init(mdev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__media_device_usb_init);
-#endif
+#पूर्ण_अगर
 
 
-#endif /* CONFIG_MEDIA_CONTROLLER */
+#पूर्ण_अगर /* CONFIG_MEDIA_CONTROLLER */

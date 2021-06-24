@@ -1,131 +1,132 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef CCISS_DEFS_H
-#define CCISS_DEFS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित CCISS_DEFS_H
+#घोषणा CCISS_DEFS_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* general boundary definitions */
-#define SENSEINFOBYTES          32 /* note that this value may vary
+#घोषणा SENSEINFOBYTES          32 /* note that this value may vary
 				      between host implementations */
 
 /* Command Status value */
-#define CMD_SUCCESS             0x0000
-#define CMD_TARGET_STATUS       0x0001
-#define CMD_DATA_UNDERRUN       0x0002
-#define CMD_DATA_OVERRUN        0x0003
-#define CMD_INVALID             0x0004
-#define CMD_PROTOCOL_ERR        0x0005
-#define CMD_HARDWARE_ERR        0x0006
-#define CMD_CONNECTION_LOST     0x0007
-#define CMD_ABORTED             0x0008
-#define CMD_ABORT_FAILED        0x0009
-#define CMD_UNSOLICITED_ABORT   0x000A
-#define CMD_TIMEOUT             0x000B
-#define CMD_UNABORTABLE		0x000C
+#घोषणा CMD_SUCCESS             0x0000
+#घोषणा CMD_TARGET_STATUS       0x0001
+#घोषणा CMD_DATA_UNDERRUN       0x0002
+#घोषणा CMD_DATA_OVERRUN        0x0003
+#घोषणा CMD_INVALID             0x0004
+#घोषणा CMD_PROTOCOL_ERR        0x0005
+#घोषणा CMD_HARDWARE_ERR        0x0006
+#घोषणा CMD_CONNECTION_LOST     0x0007
+#घोषणा CMD_ABORTED             0x0008
+#घोषणा CMD_ABORT_FAILED        0x0009
+#घोषणा CMD_UNSOLICITED_ABORT   0x000A
+#घोषणा CMD_TIMEOUT             0x000B
+#घोषणा CMD_UNABORTABLE		0x000C
 
 /* transfer direction */
-#define XFER_NONE               0x00
-#define XFER_WRITE              0x01
-#define XFER_READ               0x02
-#define XFER_RSVD               0x03
+#घोषणा XFER_NONE               0x00
+#घोषणा XFER_WRITE              0x01
+#घोषणा XFER_READ               0x02
+#घोषणा XFER_RSVD               0x03
 
 /* task attribute */
-#define ATTR_UNTAGGED           0x00
-#define ATTR_SIMPLE             0x04
-#define ATTR_HEADOFQUEUE        0x05
-#define ATTR_ORDERED            0x06
-#define ATTR_ACA                0x07
+#घोषणा ATTR_UNTAGGED           0x00
+#घोषणा ATTR_SIMPLE             0x04
+#घोषणा ATTR_HEADOFQUEUE        0x05
+#घोषणा ATTR_ORDERED            0x06
+#घोषणा ATTR_ACA                0x07
 
 /* cdb type */
-#define TYPE_CMD				0x00
-#define TYPE_MSG				0x01
+#घोषणा TYPE_CMD				0x00
+#घोषणा TYPE_MSG				0x01
 
-/* Type defs used in the following structs */
-#define BYTE __u8
-#define WORD __u16
-#define HWORD __u16
-#define DWORD __u32
+/* Type defs used in the following काष्ठाs */
+#घोषणा BYTE __u8
+#घोषणा WORD __u16
+#घोषणा HWORD __u16
+#घोषणा DWORD __u32
 
-#define CISS_MAX_LUN	1024
+#घोषणा CISS_MAX_LUN	1024
 
-#define LEVEL2LUN   1 /* index into Target(x) structure, due to byte swapping */
-#define LEVEL3LUN   0
+#घोषणा LEVEL2LUN   1 /* index पूर्णांकo Target(x) काष्ठाure, due to byte swapping */
+#घोषणा LEVEL3LUN   0
 
-#pragma pack(1)
+#आशय pack(1)
 
 /* Command List Structure */
-typedef union _SCSI3Addr_struct {
-   struct {
+प्रकार जोड़ _SCSI3Addr_काष्ठा अणु
+   काष्ठा अणु
     BYTE Dev;
     BYTE Bus:6;
     BYTE Mode:2;        /* b00 */
-  } PeripDev;
-   struct {
+  पूर्ण PeripDev;
+   काष्ठा अणु
     BYTE DevLSB;
     BYTE DevMSB:6;
     BYTE Mode:2;        /* b01 */
-  } LogDev;
-   struct {
+  पूर्ण LogDev;
+   काष्ठा अणु
     BYTE Dev:5;
     BYTE Bus:3;
     BYTE Targ:6;
     BYTE Mode:2;        /* b10 */
-  } LogUnit;
-} SCSI3Addr_struct;
+  पूर्ण LogUnit;
+पूर्ण SCSI3Addr_काष्ठा;
 
-typedef struct _PhysDevAddr_struct {
+प्रकार काष्ठा _PhysDevAddr_काष्ठा अणु
   DWORD             TargetId:24;
   DWORD             Bus:6;
   DWORD             Mode:2;
-  SCSI3Addr_struct  Target[2]; /* 2 level target device addr */
-} PhysDevAddr_struct;
+  SCSI3Addr_काष्ठा  Target[2]; /* 2 level target device addr */
+पूर्ण PhysDevAddr_काष्ठा;
 
-typedef struct _LogDevAddr_struct {
+प्रकार काष्ठा _LogDevAddr_काष्ठा अणु
   DWORD            VolId:30;
   DWORD            Mode:2;
   BYTE             reserved[4];
-} LogDevAddr_struct;
+पूर्ण LogDevAddr_काष्ठा;
 
-typedef union _LUNAddr_struct {
+प्रकार जोड़ _LUNAddr_काष्ठा अणु
   BYTE               LunAddrBytes[8];
-  SCSI3Addr_struct   SCSI3Lun[4];
-  PhysDevAddr_struct PhysDev;
-  LogDevAddr_struct  LogDev;
-} LUNAddr_struct;
+  SCSI3Addr_काष्ठा   SCSI3Lun[4];
+  PhysDevAddr_काष्ठा PhysDev;
+  LogDevAddr_काष्ठा  LogDev;
+पूर्ण LUNAddr_काष्ठा;
 
-typedef struct _RequestBlock_struct {
+प्रकार काष्ठा _RequestBlock_काष्ठा अणु
   BYTE   CDBLen;
-  struct {
+  काष्ठा अणु
     BYTE Type:3;
     BYTE Attribute:3;
     BYTE Direction:2;
-  } Type;
+  पूर्ण Type;
   HWORD  Timeout;
   BYTE   CDB[16];
-} RequestBlock_struct;
+पूर्ण RequestBlock_काष्ठा;
 
-typedef union _MoreErrInfo_struct{
-  struct {
+प्रकार जोड़ _MoreErrInfo_काष्ठाअणु
+  काष्ठा अणु
     BYTE  Reserved[3];
     BYTE  Type;
     DWORD ErrorInfo;
-  } Common_Info;
-  struct{
+  पूर्ण Common_Info;
+  काष्ठाअणु
     BYTE  Reserved[2];
     BYTE  offense_size; /* size of offending entry */
     BYTE  offense_num;  /* byte # of offense 0-base */
     DWORD offense_value;
-  } Invalid_Cmd;
-} MoreErrInfo_struct;
-typedef struct _ErrorInfo_struct {
+  पूर्ण Invalid_Cmd;
+पूर्ण MoreErrInfo_काष्ठा;
+प्रकार काष्ठा _ErrorInfo_काष्ठा अणु
   BYTE               ScsiStatus;
   BYTE               SenseLen;
   HWORD              CommandStatus;
   DWORD              ResidualCnt;
-  MoreErrInfo_struct MoreErrInfo;
+  MoreErrInfo_काष्ठा MoreErrInfo;
   BYTE               SenseInfo[SENSEINFOBYTES];
-} ErrorInfo_struct;
+पूर्ण ErrorInfo_काष्ठा;
 
-#pragma pack()
+#आशय pack()
 
-#endif /* CCISS_DEFS_H */
+#पूर्ण_अगर /* CCISS_DEFS_H */

@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * sh_dac_audio.c - SuperH DAC audio driver for ALSA
+ * sh_dac_audio.c - SuperH DAC audio driver क्रम ALSA
  *
  * Copyright (c) 2009 by Rafael Ignacio Zurita <rizurita@yahoo.com>
  *
  * Based on sh_dac_audio.c (Copyright (C) 2004, 2005 by Andriy Skulysh)
  */
 
-#include <linux/hrtimer.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/initval.h>
-#include <sound/pcm.h>
-#include <sound/sh_dac_audio.h>
-#include <asm/clock.h>
-#include <asm/hd64461.h>
-#include <mach/hp6xx.h>
-#include <cpu/dac.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/sh_dac_audपन.स>
+#समावेश <यंत्र/घड़ी.h>
+#समावेश <यंत्र/hd64461.h>
+#समावेश <mach/hp6xx.h>
+#समावेश <cpu/dac.h>
 
 MODULE_AUTHOR("Rafael Ignacio Zurita <rizurita@yahoo.com>");
 MODULE_DESCRIPTION("SuperH DAC audio driver");
 MODULE_LICENSE("GPL");
 
 /* Module Parameters */
-static int index = SNDRV_DEFAULT_IDX1;
-static char *id = SNDRV_DEFAULT_STR1;
-module_param(index, int, 0444);
+अटल पूर्णांक index = SNDRV_DEFAULT_IDX1;
+अटल अक्षर *id = SNDRV_DEFAULT_STR1;
+module_param(index, पूर्णांक, 0444);
 MODULE_PARM_DESC(index, "Index value for SuperH DAC audio.");
-module_param(id, charp, 0444);
+module_param(id, अक्षरp, 0444);
 MODULE_PARM_DESC(id, "ID string for SuperH DAC audio.");
 
-/* main struct */
-struct snd_sh_dac {
-	struct snd_card *card;
-	struct snd_pcm_substream *substream;
-	struct hrtimer hrtimer;
-	ktime_t wakeups_per_second;
+/* मुख्य काष्ठा */
+काष्ठा snd_sh_dac अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा hrसमयr hrसमयr;
+	kसमय_प्रकार wakeups_per_second;
 
-	int rate;
-	int empty;
-	char *data_buffer, *buffer_begin, *buffer_end;
-	int processed; /* bytes proccesed, to compare with period_size */
-	int buffer_size;
-	struct dac_audio_pdata *pdata;
-};
+	पूर्णांक rate;
+	पूर्णांक empty;
+	अक्षर *data_buffer, *buffer_begin, *buffer_end;
+	पूर्णांक processed; /* bytes proccesed, to compare with period_size */
+	पूर्णांक buffer_size;
+	काष्ठा dac_audio_pdata *pdata;
+पूर्ण;
 
 
-static void dac_audio_start_timer(struct snd_sh_dac *chip)
-{
-	hrtimer_start(&chip->hrtimer, chip->wakeups_per_second,
+अटल व्योम dac_audio_start_समयr(काष्ठा snd_sh_dac *chip)
+अणु
+	hrसमयr_start(&chip->hrसमयr, chip->wakeups_per_second,
 		      HRTIMER_MODE_REL);
-}
+पूर्ण
 
-static void dac_audio_stop_timer(struct snd_sh_dac *chip)
-{
-	hrtimer_cancel(&chip->hrtimer);
-}
+अटल व्योम dac_audio_stop_समयr(काष्ठा snd_sh_dac *chip)
+अणु
+	hrसमयr_cancel(&chip->hrसमयr);
+पूर्ण
 
-static void dac_audio_reset(struct snd_sh_dac *chip)
-{
-	dac_audio_stop_timer(chip);
+अटल व्योम dac_audio_reset(काष्ठा snd_sh_dac *chip)
+अणु
+	dac_audio_stop_समयr(chip);
 	chip->buffer_begin = chip->buffer_end = chip->data_buffer;
 	chip->processed = 0;
 	chip->empty = 1;
-}
+पूर्ण
 
-static void dac_audio_set_rate(struct snd_sh_dac *chip)
-{
+अटल व्योम dac_audio_set_rate(काष्ठा snd_sh_dac *chip)
+अणु
 	chip->wakeups_per_second = 1000000000 / chip->rate;
-}
+पूर्ण
 
 
 /* PCM INTERFACE */
 
-static const struct snd_pcm_hardware snd_sh_dac_pcm_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware snd_sh_dac_pcm_hw = अणु
 	.info			= (SNDRV_PCM_INFO_MMAP |
 					SNDRV_PCM_INFO_MMAP_VALID |
 					SNDRV_PCM_INFO_INTERLEAVED |
 					SNDRV_PCM_INFO_HALF_DUPLEX),
-	.formats		= SNDRV_PCM_FMTBIT_U8,
+	.क्रमmats		= SNDRV_PCM_FMTBIT_U8,
 	.rates			= SNDRV_PCM_RATE_8000,
 	.rate_min		= 8000,
 	.rate_max		= 8000,
@@ -93,14 +94,14 @@ static const struct snd_pcm_hardware snd_sh_dac_pcm_hw = {
 	.period_bytes_max	= (48*1024),
 	.periods_min		= 1,
 	.periods_max		= 1024,
-};
+पूर्ण;
 
-static int snd_sh_dac_pcm_open(struct snd_pcm_substream *substream)
-{
-	struct snd_sh_dac *chip = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक snd_sh_dac_pcm_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_sh_dac *chip = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
-	runtime->hw = snd_sh_dac_pcm_hw;
+	runसमय->hw = snd_sh_dac_pcm_hw;
 
 	chip->substream = substream;
 	chip->buffer_begin = chip->buffer_end = chip->data_buffer;
@@ -109,304 +110,304 @@ static int snd_sh_dac_pcm_open(struct snd_pcm_substream *substream)
 
 	chip->pdata->start(chip->pdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_sh_dac_pcm_close(struct snd_pcm_substream *substream)
-{
-	struct snd_sh_dac *chip = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_sh_dac_pcm_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_sh_dac *chip = snd_pcm_substream_chip(substream);
 
-	chip->substream = NULL;
+	chip->substream = शून्य;
 
-	dac_audio_stop_timer(chip);
+	dac_audio_stop_समयr(chip);
 	chip->pdata->stop(chip->pdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_sh_dac_pcm_prepare(struct snd_pcm_substream *substream)
-{
-	struct snd_sh_dac *chip = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = chip->substream->runtime;
+अटल पूर्णांक snd_sh_dac_pcm_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_sh_dac *chip = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = chip->substream->runसमय;
 
-	chip->buffer_size = runtime->buffer_size;
-	memset(chip->data_buffer, 0, chip->pdata->buffer_size);
+	chip->buffer_size = runसमय->buffer_size;
+	स_रखो(chip->data_buffer, 0, chip->pdata->buffer_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_sh_dac_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct snd_sh_dac *chip = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_sh_dac_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा snd_sh_dac *chip = snd_pcm_substream_chip(substream);
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-		dac_audio_start_timer(chip);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+		dac_audio_start_समयr(chip);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
 		chip->buffer_begin = chip->buffer_end = chip->data_buffer;
 		chip->processed = 0;
 		chip->empty = 1;
-		dac_audio_stop_timer(chip);
-		break;
-	default:
-		 return -EINVAL;
-	}
+		dac_audio_stop_समयr(chip);
+		अवरोध;
+	शेष:
+		 वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_sh_dac_pcm_copy(struct snd_pcm_substream *substream,
-			       int channel, unsigned long pos,
-			       void __user *src, unsigned long count)
-{
-	/* channel is not used (interleaved data) */
-	struct snd_sh_dac *chip = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_sh_dac_pcm_copy(काष्ठा snd_pcm_substream *substream,
+			       पूर्णांक channel, अचिन्हित दीर्घ pos,
+			       व्योम __user *src, अचिन्हित दीर्घ count)
+अणु
+	/* channel is not used (पूर्णांकerleaved data) */
+	काष्ठा snd_sh_dac *chip = snd_pcm_substream_chip(substream);
 
-	if (copy_from_user_toio(chip->data_buffer + pos, src, count))
-		return -EFAULT;
+	अगर (copy_from_user_toio(chip->data_buffer + pos, src, count))
+		वापस -EFAULT;
 	chip->buffer_end = chip->data_buffer + pos + count;
 
-	if (chip->empty) {
+	अगर (chip->empty) अणु
 		chip->empty = 0;
-		dac_audio_start_timer(chip);
-	}
+		dac_audio_start_समयr(chip);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_sh_dac_pcm_copy_kernel(struct snd_pcm_substream *substream,
-				      int channel, unsigned long pos,
-				      void *src, unsigned long count)
-{
-	/* channel is not used (interleaved data) */
-	struct snd_sh_dac *chip = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_sh_dac_pcm_copy_kernel(काष्ठा snd_pcm_substream *substream,
+				      पूर्णांक channel, अचिन्हित दीर्घ pos,
+				      व्योम *src, अचिन्हित दीर्घ count)
+अणु
+	/* channel is not used (पूर्णांकerleaved data) */
+	काष्ठा snd_sh_dac *chip = snd_pcm_substream_chip(substream);
 
-	memcpy_toio(chip->data_buffer + pos, src, count);
+	स_नकल_toio(chip->data_buffer + pos, src, count);
 	chip->buffer_end = chip->data_buffer + pos + count;
 
-	if (chip->empty) {
+	अगर (chip->empty) अणु
 		chip->empty = 0;
-		dac_audio_start_timer(chip);
-	}
+		dac_audio_start_समयr(chip);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_sh_dac_pcm_silence(struct snd_pcm_substream *substream,
-				  int channel, unsigned long pos,
-				  unsigned long count)
-{
-	/* channel is not used (interleaved data) */
-	struct snd_sh_dac *chip = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_sh_dac_pcm_silence(काष्ठा snd_pcm_substream *substream,
+				  पूर्णांक channel, अचिन्हित दीर्घ pos,
+				  अचिन्हित दीर्घ count)
+अणु
+	/* channel is not used (पूर्णांकerleaved data) */
+	काष्ठा snd_sh_dac *chip = snd_pcm_substream_chip(substream);
 
-	memset_io(chip->data_buffer + pos, 0, count);
+	स_रखो_io(chip->data_buffer + pos, 0, count);
 	chip->buffer_end = chip->data_buffer + pos + count;
 
-	if (chip->empty) {
+	अगर (chip->empty) अणु
 		chip->empty = 0;
-		dac_audio_start_timer(chip);
-	}
+		dac_audio_start_समयr(chip);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static
-snd_pcm_uframes_t snd_sh_dac_pcm_pointer(struct snd_pcm_substream *substream)
-{
-	struct snd_sh_dac *chip = snd_pcm_substream_chip(substream);
-	int pointer = chip->buffer_begin - chip->data_buffer;
+अटल
+snd_pcm_uframes_t snd_sh_dac_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_sh_dac *chip = snd_pcm_substream_chip(substream);
+	पूर्णांक poपूर्णांकer = chip->buffer_begin - chip->data_buffer;
 
-	return pointer;
-}
+	वापस poपूर्णांकer;
+पूर्ण
 
 /* pcm ops */
-static const struct snd_pcm_ops snd_sh_dac_pcm_ops = {
-	.open		= snd_sh_dac_pcm_open,
-	.close		= snd_sh_dac_pcm_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_sh_dac_pcm_ops = अणु
+	.खोलो		= snd_sh_dac_pcm_खोलो,
+	.बंद		= snd_sh_dac_pcm_बंद,
 	.prepare	= snd_sh_dac_pcm_prepare,
 	.trigger	= snd_sh_dac_pcm_trigger,
-	.pointer	= snd_sh_dac_pcm_pointer,
+	.poपूर्णांकer	= snd_sh_dac_pcm_poपूर्णांकer,
 	.copy_user	= snd_sh_dac_pcm_copy,
 	.copy_kernel	= snd_sh_dac_pcm_copy_kernel,
 	.fill_silence	= snd_sh_dac_pcm_silence,
 	.mmap		= snd_pcm_lib_mmap_iomem,
-};
+पूर्ण;
 
-static int snd_sh_dac_pcm(struct snd_sh_dac *chip, int device)
-{
-	int err;
-	struct snd_pcm *pcm;
+अटल पूर्णांक snd_sh_dac_pcm(काष्ठा snd_sh_dac *chip, पूर्णांक device)
+अणु
+	पूर्णांक err;
+	काष्ठा snd_pcm *pcm;
 
-	/* device should be always 0 for us */
+	/* device should be always 0 क्रम us */
 	err = snd_pcm_new(chip->card, "SH_DAC PCM", device, 1, 0, &pcm);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	pcm->private_data = chip;
-	strcpy(pcm->name, "SH_DAC PCM");
+	pcm->निजी_data = chip;
+	म_नकल(pcm->name, "SH_DAC PCM");
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_sh_dac_pcm_ops);
 
 	/* buffer size=48K */
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_CONTINUOUS,
-				       NULL, 48 * 1024, 48 * 1024);
+				       शून्य, 48 * 1024, 48 * 1024);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /* END OF PCM INTERFACE */
 
 
-/* driver .remove  --  destructor */
-static int snd_sh_dac_remove(struct platform_device *devptr)
-{
-	snd_card_free(platform_get_drvdata(devptr));
-	return 0;
-}
+/* driver .हटाओ  --  deकाष्ठाor */
+अटल पूर्णांक snd_sh_dac_हटाओ(काष्ठा platक्रमm_device *devptr)
+अणु
+	snd_card_मुक्त(platक्रमm_get_drvdata(devptr));
+	वापस 0;
+पूर्ण
 
-/* free -- it has been defined by create */
-static int snd_sh_dac_free(struct snd_sh_dac *chip)
-{
+/* मुक्त -- it has been defined by create */
+अटल पूर्णांक snd_sh_dac_मुक्त(काष्ठा snd_sh_dac *chip)
+अणु
 	/* release the data */
-	kfree(chip->data_buffer);
-	kfree(chip);
+	kमुक्त(chip->data_buffer);
+	kमुक्त(chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_sh_dac_dev_free(struct snd_device *device)
-{
-	struct snd_sh_dac *chip = device->device_data;
+अटल पूर्णांक snd_sh_dac_dev_मुक्त(काष्ठा snd_device *device)
+अणु
+	काष्ठा snd_sh_dac *chip = device->device_data;
 
-	return snd_sh_dac_free(chip);
-}
+	वापस snd_sh_dac_मुक्त(chip);
+पूर्ण
 
-static enum hrtimer_restart sh_dac_audio_timer(struct hrtimer *handle)
-{
-	struct snd_sh_dac *chip = container_of(handle, struct snd_sh_dac,
-					       hrtimer);
-	struct snd_pcm_runtime *runtime = chip->substream->runtime;
-	ssize_t b_ps = frames_to_bytes(runtime, runtime->period_size);
+अटल क्रमागत hrसमयr_restart sh_dac_audio_समयr(काष्ठा hrसमयr *handle)
+अणु
+	काष्ठा snd_sh_dac *chip = container_of(handle, काष्ठा snd_sh_dac,
+					       hrसमयr);
+	काष्ठा snd_pcm_runसमय *runसमय = chip->substream->runसमय;
+	sमाप_प्रकार b_ps = frames_to_bytes(runसमय, runसमय->period_size);
 
-	if (!chip->empty) {
+	अगर (!chip->empty) अणु
 		sh_dac_output(*chip->buffer_begin, chip->pdata->channel);
 		chip->buffer_begin++;
 
 		chip->processed++;
-		if (chip->processed >= b_ps) {
+		अगर (chip->processed >= b_ps) अणु
 			chip->processed -= b_ps;
 			snd_pcm_period_elapsed(chip->substream);
-		}
+		पूर्ण
 
-		if (chip->buffer_begin == (chip->data_buffer +
+		अगर (chip->buffer_begin == (chip->data_buffer +
 					   chip->buffer_size - 1))
 			chip->buffer_begin = chip->data_buffer;
 
-		if (chip->buffer_begin == chip->buffer_end)
+		अगर (chip->buffer_begin == chip->buffer_end)
 			chip->empty = 1;
 
-	}
+	पूर्ण
 
-	if (!chip->empty)
-		hrtimer_start(&chip->hrtimer, chip->wakeups_per_second,
+	अगर (!chip->empty)
+		hrसमयr_start(&chip->hrसमयr, chip->wakeups_per_second,
 			      HRTIMER_MODE_REL);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-/* create  --  chip-specific constructor for the cards components */
-static int snd_sh_dac_create(struct snd_card *card,
-			     struct platform_device *devptr,
-			     struct snd_sh_dac **rchip)
-{
-	struct snd_sh_dac *chip;
-	int err;
+/* create  --  chip-specअगरic स्थिरructor क्रम the cards components */
+अटल पूर्णांक snd_sh_dac_create(काष्ठा snd_card *card,
+			     काष्ठा platक्रमm_device *devptr,
+			     काष्ठा snd_sh_dac **rchip)
+अणु
+	काष्ठा snd_sh_dac *chip;
+	पूर्णांक err;
 
-	static const struct snd_device_ops ops = {
-		   .dev_free = snd_sh_dac_dev_free,
-	};
+	अटल स्थिर काष्ठा snd_device_ops ops = अणु
+		   .dev_मुक्त = snd_sh_dac_dev_मुक्त,
+	पूर्ण;
 
-	*rchip = NULL;
+	*rchip = शून्य;
 
-	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
-	if (chip == NULL)
-		return -ENOMEM;
+	chip = kzalloc(माप(*chip), GFP_KERNEL);
+	अगर (chip == शून्य)
+		वापस -ENOMEM;
 
 	chip->card = card;
 
-	hrtimer_init(&chip->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	chip->hrtimer.function = sh_dac_audio_timer;
+	hrसमयr_init(&chip->hrसमयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	chip->hrसमयr.function = sh_dac_audio_समयr;
 
 	dac_audio_reset(chip);
 	chip->rate = 8000;
 	dac_audio_set_rate(chip);
 
-	chip->pdata = devptr->dev.platform_data;
+	chip->pdata = devptr->dev.platक्रमm_data;
 
-	chip->data_buffer = kmalloc(chip->pdata->buffer_size, GFP_KERNEL);
-	if (chip->data_buffer == NULL) {
-		kfree(chip);
-		return -ENOMEM;
-	}
+	chip->data_buffer = kदो_स्मृति(chip->pdata->buffer_size, GFP_KERNEL);
+	अगर (chip->data_buffer == शून्य) अणु
+		kमुक्त(chip);
+		वापस -ENOMEM;
+	पूर्ण
 
 	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
-	if (err < 0) {
-		snd_sh_dac_free(chip);
-		return err;
-	}
+	अगर (err < 0) अणु
+		snd_sh_dac_मुक्त(chip);
+		वापस err;
+	पूर्ण
 
 	*rchip = chip;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* driver .probe  --  constructor */
-static int snd_sh_dac_probe(struct platform_device *devptr)
-{
-	struct snd_sh_dac *chip;
-	struct snd_card *card;
-	int err;
+/* driver .probe  --  स्थिरructor */
+अटल पूर्णांक snd_sh_dac_probe(काष्ठा platक्रमm_device *devptr)
+अणु
+	काष्ठा snd_sh_dac *chip;
+	काष्ठा snd_card *card;
+	पूर्णांक err;
 
 	err = snd_card_new(&devptr->dev, index, id, THIS_MODULE, 0, &card);
-	if (err < 0) {
-			snd_printk(KERN_ERR "cannot allocate the card\n");
-			return err;
-	}
+	अगर (err < 0) अणु
+			snd_prपूर्णांकk(KERN_ERR "cannot allocate the card\n");
+			वापस err;
+	पूर्ण
 
 	err = snd_sh_dac_create(card, devptr, &chip);
-	if (err < 0)
-		goto probe_error;
+	अगर (err < 0)
+		जाओ probe_error;
 
 	err = snd_sh_dac_pcm(chip, 0);
-	if (err < 0)
-		goto probe_error;
+	अगर (err < 0)
+		जाओ probe_error;
 
-	strcpy(card->driver, "snd_sh_dac");
-	strcpy(card->shortname, "SuperH DAC audio driver");
-	printk(KERN_INFO "%s %s", card->longname, card->shortname);
+	म_नकल(card->driver, "snd_sh_dac");
+	म_नकल(card->लघुname, "SuperH DAC audio driver");
+	prपूर्णांकk(KERN_INFO "%s %s", card->दीर्घname, card->लघुname);
 
-	err = snd_card_register(card);
-	if (err < 0)
-		goto probe_error;
+	err = snd_card_रेजिस्टर(card);
+	अगर (err < 0)
+		जाओ probe_error;
 
-	snd_printk(KERN_INFO "ALSA driver for SuperH DAC audio");
+	snd_prपूर्णांकk(KERN_INFO "ALSA driver for SuperH DAC audio");
 
-	platform_set_drvdata(devptr, card);
-	return 0;
+	platक्रमm_set_drvdata(devptr, card);
+	वापस 0;
 
 probe_error:
-	snd_card_free(card);
-	return err;
-}
+	snd_card_मुक्त(card);
+	वापस err;
+पूर्ण
 
 /*
  * "driver" definition
  */
-static struct platform_driver sh_dac_driver = {
+अटल काष्ठा platक्रमm_driver sh_dac_driver = अणु
 	.probe	= snd_sh_dac_probe,
-	.remove = snd_sh_dac_remove,
-	.driver = {
+	.हटाओ = snd_sh_dac_हटाओ,
+	.driver = अणु
 		.name = "dac_audio",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(sh_dac_driver);
+module_platक्रमm_driver(sh_dac_driver);

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-    i2c Support for Apple SMU Controller
+    i2c Support क्रम Apple SMU Controller
 
     Copyright (c) 2005 Benjamin Herrenschmidt, IBM Corp.
                        <benh@kernel.crashing.org>
@@ -8,330 +9,330 @@
 
 */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/i2c.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/of_irq.h>
-#include <asm/prom.h>
-#include <asm/pmac_low_i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/pmac_low_i2c.h>
 
 MODULE_AUTHOR("Benjamin Herrenschmidt <benh@kernel.crashing.org>");
 MODULE_DESCRIPTION("I2C driver for Apple PowerMac");
 MODULE_LICENSE("GPL");
 
 /*
- * SMBUS-type transfer entrypoint
+ * SMBUS-type transfer entrypoपूर्णांक
  */
-static s32 i2c_powermac_smbus_xfer(	struct i2c_adapter*	adap,
+अटल s32 i2c_घातermac_smbus_xfer(	काष्ठा i2c_adapter*	adap,
 					u16			addr,
-					unsigned short		flags,
-					char			read_write,
+					अचिन्हित लघु		flags,
+					अक्षर			पढ़ो_ग_लिखो,
 					u8			command,
-					int			size,
-					union i2c_smbus_data*	data)
-{
-	struct pmac_i2c_bus	*bus = i2c_get_adapdata(adap);
-	int			rc = 0;
-	int			read = (read_write == I2C_SMBUS_READ);
-	int			addrdir = (addr << 1) | read;
-	int			mode, subsize, len;
+					पूर्णांक			size,
+					जोड़ i2c_smbus_data*	data)
+अणु
+	काष्ठा pmac_i2c_bus	*bus = i2c_get_adapdata(adap);
+	पूर्णांक			rc = 0;
+	पूर्णांक			पढ़ो = (पढ़ो_ग_लिखो == I2C_SMBUS_READ);
+	पूर्णांक			addrdir = (addr << 1) | पढ़ो;
+	पूर्णांक			mode, subsize, len;
 	u32			subaddr;
 	u8			*buf;
 	u8			local[2];
 
-	if (size == I2C_SMBUS_QUICK || size == I2C_SMBUS_BYTE) {
+	अगर (size == I2C_SMBUS_QUICK || size == I2C_SMBUS_BYTE) अणु
 		mode = pmac_i2c_mode_std;
 		subsize = 0;
 		subaddr = 0;
-	} else {
-		mode = read ? pmac_i2c_mode_combined : pmac_i2c_mode_stdsub;
+	पूर्ण अन्यथा अणु
+		mode = पढ़ो ? pmac_i2c_mode_combined : pmac_i2c_mode_stdsub;
 		subsize = 1;
 		subaddr = command;
-	}
+	पूर्ण
 
-	switch (size) {
-        case I2C_SMBUS_QUICK:
-		buf = NULL;
+	चयन (size) अणु
+        हाल I2C_SMBUS_QUICK:
+		buf = शून्य;
 		len = 0;
-	    	break;
-        case I2C_SMBUS_BYTE:
-        case I2C_SMBUS_BYTE_DATA:
+	    	अवरोध;
+        हाल I2C_SMBUS_BYTE:
+        हाल I2C_SMBUS_BYTE_DATA:
 		buf = &data->byte;
 		len = 1;
-	    	break;
-        case I2C_SMBUS_WORD_DATA:
-		if (!read) {
+	    	अवरोध;
+        हाल I2C_SMBUS_WORD_DATA:
+		अगर (!पढ़ो) अणु
 			local[0] = data->word & 0xff;
 			local[1] = (data->word >> 8) & 0xff;
-		}
+		पूर्ण
 		buf = local;
 		len = 2;
-	    	break;
+	    	अवरोध;
 
 	/* Note that these are broken vs. the expected smbus API where
-	 * on reads, the length is actually returned from the function,
-	 * but I think the current API makes no sense and I don't want
-	 * any driver that I haven't verified for correctness to go
+	 * on पढ़ोs, the length is actually वापसed from the function,
+	 * but I think the current API makes no sense and I करोn't want
+	 * any driver that I haven't verअगरied क्रम correctness to go
 	 * anywhere near a pmac i2c bus anyway ...
 	 */
-        case I2C_SMBUS_BLOCK_DATA:
+        हाल I2C_SMBUS_BLOCK_DATA:
 		buf = data->block;
 		len = data->block[0] + 1;
-		break;
-	case I2C_SMBUS_I2C_BLOCK_DATA:
+		अवरोध;
+	हाल I2C_SMBUS_I2C_BLOCK_DATA:
 		buf = &data->block[1];
 		len = data->block[0];
-		break;
+		अवरोध;
 
-        default:
-		return -EINVAL;
-	}
+        शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	rc = pmac_i2c_open(bus, 0);
-	if (rc) {
+	rc = pmac_i2c_खोलो(bus, 0);
+	अगर (rc) अणु
 		dev_err(&adap->dev, "Failed to open I2C, err %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	rc = pmac_i2c_setmode(bus, mode);
-	if (rc) {
+	rc = pmac_i2c_seपंचांगode(bus, mode);
+	अगर (rc) अणु
 		dev_err(&adap->dev, "Failed to set I2C mode %d, err %d\n",
 			mode, rc);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	rc = pmac_i2c_xfer(bus, addrdir, subsize, subaddr, buf, len);
-	if (rc) {
-		if (rc == -ENXIO)
+	अगर (rc) अणु
+		अगर (rc == -ENXIO)
 			dev_dbg(&adap->dev,
 				"I2C transfer at 0x%02x failed, size %d, "
 				"err %d\n", addrdir >> 1, size, rc);
-		else
+		अन्यथा
 			dev_err(&adap->dev,
 				"I2C transfer at 0x%02x failed, size %d, "
 				"err %d\n", addrdir >> 1, size, rc);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (size == I2C_SMBUS_WORD_DATA && read) {
+	अगर (size == I2C_SMBUS_WORD_DATA && पढ़ो) अणु
 		data->word = ((u16)local[1]) << 8;
 		data->word |= local[0];
-	}
+	पूर्ण
 
  bail:
-	pmac_i2c_close(bus);
-	return rc;
-}
+	pmac_i2c_बंद(bus);
+	वापस rc;
+पूर्ण
 
 /*
- * Generic i2c master transfer entrypoint. This driver only support single
- * messages (for "lame i2c" transfers). Anything else should use the smbus
- * entry point
+ * Generic i2c master transfer entrypoपूर्णांक. This driver only support single
+ * messages (क्रम "lame i2c" transfers). Anything अन्यथा should use the smbus
+ * entry poपूर्णांक
  */
-static int i2c_powermac_master_xfer(	struct i2c_adapter *adap,
-					struct i2c_msg *msgs,
-					int num)
-{
-	struct pmac_i2c_bus	*bus = i2c_get_adapdata(adap);
-	int			rc = 0;
-	int			addrdir;
+अटल पूर्णांक i2c_घातermac_master_xfer(	काष्ठा i2c_adapter *adap,
+					काष्ठा i2c_msg *msgs,
+					पूर्णांक num)
+अणु
+	काष्ठा pmac_i2c_bus	*bus = i2c_get_adapdata(adap);
+	पूर्णांक			rc = 0;
+	पूर्णांक			addrdir;
 
-	if (msgs->flags & I2C_M_TEN)
-		return -EINVAL;
+	अगर (msgs->flags & I2C_M_TEN)
+		वापस -EINVAL;
 	addrdir = i2c_8bit_addr_from_msg(msgs);
 
-	rc = pmac_i2c_open(bus, 0);
-	if (rc) {
+	rc = pmac_i2c_खोलो(bus, 0);
+	अगर (rc) अणु
 		dev_err(&adap->dev, "Failed to open I2C, err %d\n", rc);
-		return rc;
-	}
-	rc = pmac_i2c_setmode(bus, pmac_i2c_mode_std);
-	if (rc) {
+		वापस rc;
+	पूर्ण
+	rc = pmac_i2c_seपंचांगode(bus, pmac_i2c_mode_std);
+	अगर (rc) अणु
 		dev_err(&adap->dev, "Failed to set I2C mode %d, err %d\n",
 			pmac_i2c_mode_std, rc);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 	rc = pmac_i2c_xfer(bus, addrdir, 0, 0, msgs->buf, msgs->len);
-	if (rc < 0) {
-		if (rc == -ENXIO)
+	अगर (rc < 0) अणु
+		अगर (rc == -ENXIO)
 			dev_dbg(&adap->dev, "I2C %s 0x%02x failed, err %d\n",
 				addrdir & 1 ? "read from" : "write to",
 				addrdir >> 1, rc);
-		else
+		अन्यथा
 			dev_err(&adap->dev, "I2C %s 0x%02x failed, err %d\n",
 				addrdir & 1 ? "read from" : "write to",
 				addrdir >> 1, rc);
-	}
+	पूर्ण
  bail:
-	pmac_i2c_close(bus);
-	return rc < 0 ? rc : 1;
-}
+	pmac_i2c_बंद(bus);
+	वापस rc < 0 ? rc : 1;
+पूर्ण
 
-static u32 i2c_powermac_func(struct i2c_adapter * adapter)
-{
-	return I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
+अटल u32 i2c_घातermac_func(काष्ठा i2c_adapter * adapter)
+अणु
+	वापस I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
 		I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_WORD_DATA |
 		I2C_FUNC_SMBUS_BLOCK_DATA | I2C_FUNC_I2C;
-}
+पूर्ण
 
 /* For now, we only handle smbus */
-static const struct i2c_algorithm i2c_powermac_algorithm = {
-	.smbus_xfer	= i2c_powermac_smbus_xfer,
-	.master_xfer	= i2c_powermac_master_xfer,
-	.functionality	= i2c_powermac_func,
-};
+अटल स्थिर काष्ठा i2c_algorithm i2c_घातermac_algorithm = अणु
+	.smbus_xfer	= i2c_घातermac_smbus_xfer,
+	.master_xfer	= i2c_घातermac_master_xfer,
+	.functionality	= i2c_घातermac_func,
+पूर्ण;
 
-static const struct i2c_adapter_quirks i2c_powermac_quirks = {
+अटल स्थिर काष्ठा i2c_adapter_quirks i2c_घातermac_quirks = अणु
 	.max_num_msgs = 1,
-};
+पूर्ण;
 
-static int i2c_powermac_remove(struct platform_device *dev)
-{
-	struct i2c_adapter	*adapter = platform_get_drvdata(dev);
+अटल पूर्णांक i2c_घातermac_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा i2c_adapter	*adapter = platक्रमm_get_drvdata(dev);
 
 	i2c_del_adapter(adapter);
-	memset(adapter, 0, sizeof(*adapter));
+	स_रखो(adapter, 0, माप(*adapter));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 i2c_powermac_get_addr(struct i2c_adapter *adap,
-					   struct pmac_i2c_bus *bus,
-					   struct device_node *node)
-{
+अटल u32 i2c_घातermac_get_addr(काष्ठा i2c_adapter *adap,
+					   काष्ठा pmac_i2c_bus *bus,
+					   काष्ठा device_node *node)
+अणु
 	u32 prop;
-	int ret;
+	पूर्णांक ret;
 
-	/* First check for valid "reg" */
-	ret = of_property_read_u32(node, "reg", &prop);
-	if (ret == 0)
-		return (prop & 0xff) >> 1;
+	/* First check क्रम valid "reg" */
+	ret = of_property_पढ़ो_u32(node, "reg", &prop);
+	अगर (ret == 0)
+		वापस (prop & 0xff) >> 1;
 
 	/* Then check old-style "i2c-address" */
-	ret = of_property_read_u32(node, "i2c-address", &prop);
-	if (ret == 0)
-		return (prop & 0xff) >> 1;
+	ret = of_property_पढ़ो_u32(node, "i2c-address", &prop);
+	अगर (ret == 0)
+		वापस (prop & 0xff) >> 1;
 
 	/* Now handle some devices with missing "reg" properties */
-	if (of_node_name_eq(node, "cereal"))
-		return 0x60;
-	else if (of_node_name_eq(node, "deq"))
-		return 0x34;
+	अगर (of_node_name_eq(node, "cereal"))
+		वापस 0x60;
+	अन्यथा अगर (of_node_name_eq(node, "deq"))
+		वापस 0x34;
 
 	dev_warn(&adap->dev, "No i2c address for %pOF\n", node);
 
-	return 0xffffffff;
-}
+	वापस 0xffffffff;
+पूर्ण
 
-static void i2c_powermac_create_one(struct i2c_adapter *adap,
-					      const char *type,
+अटल व्योम i2c_घातermac_create_one(काष्ठा i2c_adapter *adap,
+					      स्थिर अक्षर *type,
 					      u32 addr)
-{
-	struct i2c_board_info info = {};
-	struct i2c_client *newdev;
+अणु
+	काष्ठा i2c_board_info info = अणुपूर्ण;
+	काष्ठा i2c_client *newdev;
 
-	strncpy(info.type, type, sizeof(info.type));
+	म_नकलन(info.type, type, माप(info.type));
 	info.addr = addr;
 	newdev = i2c_new_client_device(adap, &info);
-	if (IS_ERR(newdev))
+	अगर (IS_ERR(newdev))
 		dev_err(&adap->dev,
 			"i2c-powermac: Failure to register missing %s\n",
 			type);
-}
+पूर्ण
 
-static void i2c_powermac_add_missing(struct i2c_adapter *adap,
-					       struct pmac_i2c_bus *bus,
+अटल व्योम i2c_घातermac_add_missing(काष्ठा i2c_adapter *adap,
+					       काष्ठा pmac_i2c_bus *bus,
 					       bool found_onyx)
-{
-	struct device_node *busnode = pmac_i2c_get_bus_node(bus);
-	int rc;
+अणु
+	काष्ठा device_node *busnode = pmac_i2c_get_bus_node(bus);
+	पूर्णांक rc;
 
-	/* Check for the onyx audio codec */
-#define ONYX_REG_CONTROL		67
-	if (of_device_is_compatible(busnode, "k2-i2c") && !found_onyx) {
-		union i2c_smbus_data data;
+	/* Check क्रम the onyx audio codec */
+#घोषणा ONYX_REG_CONTROL		67
+	अगर (of_device_is_compatible(busnode, "k2-i2c") && !found_onyx) अणु
+		जोड़ i2c_smbus_data data;
 
 		rc = i2c_smbus_xfer(adap, 0x46, 0, I2C_SMBUS_READ,
 				    ONYX_REG_CONTROL, I2C_SMBUS_BYTE_DATA,
 				    &data);
-		if (rc >= 0)
-			i2c_powermac_create_one(adap, "MAC,pcm3052", 0x46);
+		अगर (rc >= 0)
+			i2c_घातermac_create_one(adap, "MAC,pcm3052", 0x46);
 
 		rc = i2c_smbus_xfer(adap, 0x47, 0, I2C_SMBUS_READ,
 				    ONYX_REG_CONTROL, I2C_SMBUS_BYTE_DATA,
 				    &data);
-		if (rc >= 0)
-			i2c_powermac_create_one(adap, "MAC,pcm3052", 0x47);
-	}
-}
+		अगर (rc >= 0)
+			i2c_घातermac_create_one(adap, "MAC,pcm3052", 0x47);
+	पूर्ण
+पूर्ण
 
-static bool i2c_powermac_get_type(struct i2c_adapter *adap,
-					    struct device_node *node,
-					    u32 addr, char *type, int type_size)
-{
-	char tmp[16];
+अटल bool i2c_घातermac_get_type(काष्ठा i2c_adapter *adap,
+					    काष्ठा device_node *node,
+					    u32 addr, अक्षर *type, पूर्णांक type_size)
+अणु
+	अक्षर पंचांगp[16];
 
 	/*
-	 * Note: we do _NOT_ want the standard i2c drivers to match with any of
-	 * our powermac stuff unless they have been specifically modified to
-	 * handle it on a case by case basis. For example, for thermal control,
+	 * Note: we करो _NOT_ want the standard i2c drivers to match with any of
+	 * our घातermac stuff unless they have been specअगरically modअगरied to
+	 * handle it on a हाल by हाल basis. For example, क्रम thermal control,
 	 * things like lm75 etc... shall match with their corresponding
-	 * windfarm drivers, _NOT_ the generic ones, so we force a prefix of
+	 * windfarm drivers, _NOT_ the generic ones, so we क्रमce a prefix of
 	 * 'MAC', onto the modalias to make that happen
 	 */
 
 	/* First try proper modalias */
-	if (of_modalias_node(node, tmp, sizeof(tmp)) >= 0) {
-		snprintf(type, type_size, "MAC,%s", tmp);
-		return true;
-	}
+	अगर (of_modalias_node(node, पंचांगp, माप(पंचांगp)) >= 0) अणु
+		snम_लिखो(type, type_size, "MAC,%s", पंचांगp);
+		वापस true;
+	पूर्ण
 
-	/* Now look for known workarounds */
-	if (of_node_name_eq(node, "deq")) {
-		/* Apple uses address 0x34 for TAS3001 and 0x35 for TAS3004 */
-		if (addr == 0x34) {
-			snprintf(type, type_size, "MAC,tas3001");
-			return true;
-		} else if (addr == 0x35) {
-			snprintf(type, type_size, "MAC,tas3004");
-			return true;
-		}
-	}
+	/* Now look क्रम known workarounds */
+	अगर (of_node_name_eq(node, "deq")) अणु
+		/* Apple uses address 0x34 क्रम TAS3001 and 0x35 क्रम TAS3004 */
+		अगर (addr == 0x34) अणु
+			snम_लिखो(type, type_size, "MAC,tas3001");
+			वापस true;
+		पूर्ण अन्यथा अगर (addr == 0x35) अणु
+			snम_लिखो(type, type_size, "MAC,tas3004");
+			वापस true;
+		पूर्ण
+	पूर्ण
 
 	dev_err(&adap->dev, "i2c-powermac: modalias failure on %pOF\n", node);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void i2c_powermac_register_devices(struct i2c_adapter *adap,
-						    struct pmac_i2c_bus *bus)
-{
-	struct i2c_client *newdev;
-	struct device_node *node;
+अटल व्योम i2c_घातermac_रेजिस्टर_devices(काष्ठा i2c_adapter *adap,
+						    काष्ठा pmac_i2c_bus *bus)
+अणु
+	काष्ठा i2c_client *newdev;
+	काष्ठा device_node *node;
 	bool found_onyx = false;
 
 	/*
-	 * In some cases we end up with the via-pmu node itself, in this
-	 * case we skip this function completely as the device-tree will
+	 * In some हालs we end up with the via-pmu node itself, in this
+	 * हाल we skip this function completely as the device-tree will
 	 * not contain anything useful.
 	 */
-	if (of_node_name_eq(adap->dev.of_node, "via-pmu"))
-		return;
+	अगर (of_node_name_eq(adap->dev.of_node, "via-pmu"))
+		वापस;
 
-	for_each_child_of_node(adap->dev.of_node, node) {
-		struct i2c_board_info info = {};
+	क्रम_each_child_of_node(adap->dev.of_node, node) अणु
+		काष्ठा i2c_board_info info = अणुपूर्ण;
 		u32 addr;
 
 		/* Get address & channel */
-		addr = i2c_powermac_get_addr(adap, bus, node);
-		if (addr == 0xffffffff)
-			continue;
+		addr = i2c_घातermac_get_addr(adap, bus, node);
+		अगर (addr == 0xffffffff)
+			जारी;
 
 		/* Multibus setup, check channel */
-		if (!pmac_i2c_match_adapter(node, adap))
-			continue;
+		अगर (!pmac_i2c_match_adapter(node, adap))
+			जारी;
 
 		dev_dbg(&adap->dev, "i2c-powermac: register %pOF\n", node);
 
@@ -339,113 +340,113 @@ static void i2c_powermac_register_devices(struct i2c_adapter *adap,
 		 * Keep track of some device existence to handle
 		 * workarounds later.
 		 */
-		if (of_device_is_compatible(node, "pcm3052"))
+		अगर (of_device_is_compatible(node, "pcm3052"))
 			found_onyx = true;
 
 		/* Make up a modalias */
-		if (!i2c_powermac_get_type(adap, node, addr,
-					   info.type, sizeof(info.type))) {
-			continue;
-		}
+		अगर (!i2c_घातermac_get_type(adap, node, addr,
+					   info.type, माप(info.type))) अणु
+			जारी;
+		पूर्ण
 
-		/* Fill out the rest of the info structure */
+		/* Fill out the rest of the info काष्ठाure */
 		info.addr = addr;
 		info.irq = irq_of_parse_and_map(node, 0);
 		info.of_node = of_node_get(node);
 
 		newdev = i2c_new_client_device(adap, &info);
-		if (IS_ERR(newdev)) {
+		अगर (IS_ERR(newdev)) अणु
 			dev_err(&adap->dev, "i2c-powermac: Failure to register"
 				" %pOF\n", node);
 			of_node_put(node);
-			/* We do not dispose of the interrupt mapping on
-			 * purpose. It's not necessary (interrupt cannot be
-			 * re-used) and somebody else might have grabbed it
+			/* We करो not dispose of the पूर्णांकerrupt mapping on
+			 * purpose. It's not necessary (पूर्णांकerrupt cannot be
+			 * re-used) and somebody अन्यथा might have grabbed it
 			 * via direct DT lookup so let's not bother
 			 */
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 
 	/* Additional workarounds */
-	i2c_powermac_add_missing(adap, bus, found_onyx);
-}
+	i2c_घातermac_add_missing(adap, bus, found_onyx);
+पूर्ण
 
-static int i2c_powermac_probe(struct platform_device *dev)
-{
-	struct pmac_i2c_bus *bus = dev_get_platdata(&dev->dev);
-	struct device_node *parent;
-	struct i2c_adapter *adapter;
-	int rc;
+अटल पूर्णांक i2c_घातermac_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा pmac_i2c_bus *bus = dev_get_platdata(&dev->dev);
+	काष्ठा device_node *parent;
+	काष्ठा i2c_adapter *adapter;
+	पूर्णांक rc;
 
-	if (bus == NULL)
-		return -EINVAL;
+	अगर (bus == शून्य)
+		वापस -EINVAL;
 	adapter = pmac_i2c_get_adapter(bus);
 
-	/* Ok, now we need to make up a name for the interface that will
-	 * match what we used to do in the past, that is basically the
+	/* Ok, now we need to make up a name क्रम the पूर्णांकerface that will
+	 * match what we used to करो in the past, that is basically the
 	 * controller's parent device node for keywest. PMU didn't have a
-	 * naming convention and SMU has a different one
+	 * naming convention and SMU has a dअगरferent one
 	 */
-	switch(pmac_i2c_get_type(bus)) {
-	case pmac_i2c_bus_keywest:
+	चयन(pmac_i2c_get_type(bus)) अणु
+	हाल pmac_i2c_bus_keywest:
 		parent = of_get_parent(pmac_i2c_get_controller(bus));
-		if (parent == NULL)
-			return -EINVAL;
-		snprintf(adapter->name, sizeof(adapter->name), "%pOFn %d",
+		अगर (parent == शून्य)
+			वापस -EINVAL;
+		snम_लिखो(adapter->name, माप(adapter->name), "%pOFn %d",
 			 parent,
 			 pmac_i2c_get_channel(bus));
 		of_node_put(parent);
-		break;
-	case pmac_i2c_bus_pmu:
-		snprintf(adapter->name, sizeof(adapter->name), "pmu %d",
+		अवरोध;
+	हाल pmac_i2c_bus_pmu:
+		snम_लिखो(adapter->name, माप(adapter->name), "pmu %d",
 			 pmac_i2c_get_channel(bus));
-		break;
-	case pmac_i2c_bus_smu:
-		/* This is not what we used to do but I'm fixing drivers at
-		 * the same time as this change
+		अवरोध;
+	हाल pmac_i2c_bus_smu:
+		/* This is not what we used to करो but I'm fixing drivers at
+		 * the same समय as this change
 		 */
-		snprintf(adapter->name, sizeof(adapter->name), "smu %d",
+		snम_लिखो(adapter->name, माप(adapter->name), "smu %d",
 			 pmac_i2c_get_channel(bus));
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	platform_set_drvdata(dev, adapter);
-	adapter->algo = &i2c_powermac_algorithm;
-	adapter->quirks = &i2c_powermac_quirks;
+	platक्रमm_set_drvdata(dev, adapter);
+	adapter->algo = &i2c_घातermac_algorithm;
+	adapter->quirks = &i2c_घातermac_quirks;
 	i2c_set_adapdata(adapter, bus);
 	adapter->dev.parent = &dev->dev;
 
-	/* Clear of_node to skip automatic registration of i2c child nodes */
-	adapter->dev.of_node = NULL;
+	/* Clear of_node to skip स्वतःmatic registration of i2c child nodes */
+	adapter->dev.of_node = शून्य;
 	rc = i2c_add_adapter(adapter);
-	if (rc) {
-		printk(KERN_ERR "i2c-powermac: Adapter %s registration "
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR "i2c-powermac: Adapter %s registration "
 		       "failed\n", adapter->name);
-		memset(adapter, 0, sizeof(*adapter));
-		return rc;
-	}
+		स_रखो(adapter, 0, माप(*adapter));
+		वापस rc;
+	पूर्ण
 
-	printk(KERN_INFO "PowerMac i2c bus %s registered\n", adapter->name);
+	prपूर्णांकk(KERN_INFO "PowerMac i2c bus %s registered\n", adapter->name);
 
 	/* Use custom child registration due to Apple device-tree funkyness */
 	adapter->dev.of_node = dev->dev.of_node;
-	i2c_powermac_register_devices(adapter, bus);
+	i2c_घातermac_रेजिस्टर_devices(adapter, bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver i2c_powermac_driver = {
-	.probe = i2c_powermac_probe,
-	.remove = i2c_powermac_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver i2c_घातermac_driver = अणु
+	.probe = i2c_घातermac_probe,
+	.हटाओ = i2c_घातermac_हटाओ,
+	.driver = अणु
 		.name = "i2c-powermac",
-		.bus = &platform_bus_type,
-	},
-};
+		.bus = &platक्रमm_bus_type,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(i2c_powermac_driver);
+module_platक्रमm_driver(i2c_घातermac_driver);
 
 MODULE_ALIAS("platform:i2c-powermac");

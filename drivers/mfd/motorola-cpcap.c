@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Motorola CPCAP PMIC core driver
  *
  * Copyright (C) 2016 Tony Lindgren <tony@atomide.com>
  */
 
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/regmap.h>
-#include <linux/sysfs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/sysfs.h>
 
-#include <linux/mfd/core.h>
-#include <linux/mfd/motorola-cpcap.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/mfd/motorola-cpcap.h>
+#समावेश <linux/spi/spi.h>
 
-#define CPCAP_NR_IRQ_REG_BANKS	6
-#define CPCAP_NR_IRQ_CHIPS	3
-#define CPCAP_REGISTER_SIZE	4
-#define CPCAP_REGISTER_BITS	16
+#घोषणा CPCAP_NR_IRQ_REG_BANKS	6
+#घोषणा CPCAP_NR_IRQ_CHIPS	3
+#घोषणा CPCAP_REGISTER_SIZE	4
+#घोषणा CPCAP_REGISTER_BITS	16
 
-struct cpcap_ddata {
-	struct spi_device *spi;
-	struct regmap_irq *irqs;
-	struct regmap_irq_chip_data *irqdata[CPCAP_NR_IRQ_CHIPS];
-	const struct regmap_config *regmap_conf;
-	struct regmap *regmap;
-};
+काष्ठा cpcap_ddata अणु
+	काष्ठा spi_device *spi;
+	काष्ठा regmap_irq *irqs;
+	काष्ठा regmap_irq_chip_data *irqdata[CPCAP_NR_IRQ_CHIPS];
+	स्थिर काष्ठा regmap_config *regmap_conf;
+	काष्ठा regmap *regmap;
+पूर्ण;
 
-static int cpcap_sense_irq(struct regmap *regmap, int irq)
-{
-	int regnum = irq / CPCAP_REGISTER_BITS;
-	int mask = BIT(irq % CPCAP_REGISTER_BITS);
-	int reg = CPCAP_REG_INTS1 + (regnum * CPCAP_REGISTER_SIZE);
-	int err, val;
+अटल पूर्णांक cpcap_sense_irq(काष्ठा regmap *regmap, पूर्णांक irq)
+अणु
+	पूर्णांक regnum = irq / CPCAP_REGISTER_BITS;
+	पूर्णांक mask = BIT(irq % CPCAP_REGISTER_BITS);
+	पूर्णांक reg = CPCAP_REG_INTS1 + (regnum * CPCAP_REGISTER_SIZE);
+	पूर्णांक err, val;
 
-	if (reg < CPCAP_REG_INTS1 || reg > CPCAP_REG_INTS4)
-		return -EINVAL;
+	अगर (reg < CPCAP_REG_INTS1 || reg > CPCAP_REG_INTS4)
+		वापस -EINVAL;
 
-	err = regmap_read(regmap, reg, &val);
-	if (err)
-		return err;
+	err = regmap_पढ़ो(regmap, reg, &val);
+	अगर (err)
+		वापस err;
 
-	return !!(val & mask);
-}
+	वापस !!(val & mask);
+पूर्ण
 
-int cpcap_sense_virq(struct regmap *regmap, int virq)
-{
-	struct regmap_irq_chip_data *d = irq_get_chip_data(virq);
-	int irq_base = regmap_irq_chip_get_base(d);
+पूर्णांक cpcap_sense_virq(काष्ठा regmap *regmap, पूर्णांक virq)
+अणु
+	काष्ठा regmap_irq_chip_data *d = irq_get_chip_data(virq);
+	पूर्णांक irq_base = regmap_irq_chip_get_base(d);
 
-	return cpcap_sense_irq(regmap, virq - irq_base);
-}
+	वापस cpcap_sense_irq(regmap, virq - irq_base);
+पूर्ण
 EXPORT_SYMBOL_GPL(cpcap_sense_virq);
 
-static int cpcap_check_revision(struct cpcap_ddata *cpcap)
-{
-	u16 vendor, rev;
-	int ret;
+अटल पूर्णांक cpcap_check_revision(काष्ठा cpcap_ddata *cpcap)
+अणु
+	u16 venकरोr, rev;
+	पूर्णांक ret;
 
-	ret = cpcap_get_vendor(&cpcap->spi->dev, cpcap->regmap, &vendor);
-	if (ret)
-		return ret;
+	ret = cpcap_get_venकरोr(&cpcap->spi->dev, cpcap->regmap, &venकरोr);
+	अगर (ret)
+		वापस ret;
 
 	ret = cpcap_get_revision(&cpcap->spi->dev, cpcap->regmap, &rev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dev_info(&cpcap->spi->dev, "CPCAP vendor: %s rev: %i.%i (%x)\n",
-		 vendor == CPCAP_VENDOR_ST ? "ST" : "TI",
+		 venकरोr == CPCAP_VENDOR_ST ? "ST" : "TI",
 		 CPCAP_REVISION_MAJOR(rev), CPCAP_REVISION_MINOR(rev),
 		 rev);
 
-	if (rev < CPCAP_REVISION_2_1) {
+	अगर (rev < CPCAP_REVISION_2_1) अणु
 		dev_info(&cpcap->spi->dev,
 			 "Please add old CPCAP revision support as needed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * First two irq chips are the two private macro interrupt chips, the third
- * irq chip is for register banks 1 - 4 and is available for drivers to use.
+ * First two irq chips are the two निजी macro पूर्णांकerrupt chips, the third
+ * irq chip is क्रम रेजिस्टर banks 1 - 4 and is available क्रम drivers to use.
  */
-static struct regmap_irq_chip cpcap_irq_chip[CPCAP_NR_IRQ_CHIPS] = {
-	{
+अटल काष्ठा regmap_irq_chip cpcap_irq_chip[CPCAP_NR_IRQ_CHIPS] = अणु
+	अणु
 		.name = "cpcap-m2",
 		.num_regs = 1,
 		.status_base = CPCAP_REG_MI1,
@@ -98,8 +99,8 @@ static struct regmap_irq_chip cpcap_irq_chip[CPCAP_NR_IRQ_CHIPS] = {
 		.mask_base = CPCAP_REG_MIM1,
 		.use_ack = true,
 		.clear_ack = true,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cpcap-m2",
 		.num_regs = 1,
 		.status_base = CPCAP_REG_MI2,
@@ -107,8 +108,8 @@ static struct regmap_irq_chip cpcap_irq_chip[CPCAP_NR_IRQ_CHIPS] = {
 		.mask_base = CPCAP_REG_MIM2,
 		.use_ack = true,
 		.clear_ack = true,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cpcap1-4",
 		.num_regs = 4,
 		.status_base = CPCAP_REG_INT1,
@@ -116,15 +117,15 @@ static struct regmap_irq_chip cpcap_irq_chip[CPCAP_NR_IRQ_CHIPS] = {
 		.mask_base = CPCAP_REG_INTM1,
 		.use_ack = true,
 		.clear_ack = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void cpcap_init_one_regmap_irq(struct cpcap_ddata *cpcap,
-				      struct regmap_irq *rirq,
-				      int irq_base, int irq)
-{
-	unsigned int reg_offset;
-	unsigned int bit, mask;
+अटल व्योम cpcap_init_one_regmap_irq(काष्ठा cpcap_ddata *cpcap,
+				      काष्ठा regmap_irq *rirq,
+				      पूर्णांक irq_base, पूर्णांक irq)
+अणु
+	अचिन्हित पूर्णांक reg_offset;
+	अचिन्हित पूर्णांक bit, mask;
 
 	reg_offset = irq - irq_base;
 	reg_offset /= cpcap->regmap_conf->val_bits;
@@ -135,19 +136,19 @@ static void cpcap_init_one_regmap_irq(struct cpcap_ddata *cpcap,
 
 	rirq->reg_offset = reg_offset;
 	rirq->mask = mask;
-}
+पूर्ण
 
-static int cpcap_init_irq_chip(struct cpcap_ddata *cpcap, int irq_chip,
-			       int irq_start, int nr_irqs)
-{
-	struct regmap_irq_chip *chip = &cpcap_irq_chip[irq_chip];
-	int i, ret;
+अटल पूर्णांक cpcap_init_irq_chip(काष्ठा cpcap_ddata *cpcap, पूर्णांक irq_chip,
+			       पूर्णांक irq_start, पूर्णांक nr_irqs)
+अणु
+	काष्ठा regmap_irq_chip *chip = &cpcap_irq_chip[irq_chip];
+	पूर्णांक i, ret;
 
-	for (i = irq_start; i < irq_start + nr_irqs; i++) {
-		struct regmap_irq *rirq = &cpcap->irqs[i];
+	क्रम (i = irq_start; i < irq_start + nr_irqs; i++) अणु
+		काष्ठा regmap_irq *rirq = &cpcap->irqs[i];
 
 		cpcap_init_one_regmap_irq(cpcap, rirq, irq_start, i);
-	}
+	पूर्ण
 	chip->irqs = &cpcap->irqs[irq_start];
 	chip->num_irqs = nr_irqs;
 	chip->irq_drv_data = cpcap;
@@ -157,145 +158,145 @@ static int cpcap_init_irq_chip(struct cpcap_ddata *cpcap, int irq_chip,
 				       irq_get_trigger_type(cpcap->spi->irq) |
 				       IRQF_SHARED, -1,
 				       chip, &cpcap->irqdata[irq_chip]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&cpcap->spi->dev, "could not add irq chip %i: %i\n",
 			irq_chip, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cpcap_init_irq(struct cpcap_ddata *cpcap)
-{
-	int ret;
+अटल पूर्णांक cpcap_init_irq(काष्ठा cpcap_ddata *cpcap)
+अणु
+	पूर्णांक ret;
 
 	cpcap->irqs = devm_kzalloc(&cpcap->spi->dev,
-				   array3_size(sizeof(*cpcap->irqs),
+				   array3_size(माप(*cpcap->irqs),
 					       CPCAP_NR_IRQ_REG_BANKS,
 					       cpcap->regmap_conf->val_bits),
 				   GFP_KERNEL);
-	if (!cpcap->irqs)
-		return -ENOMEM;
+	अगर (!cpcap->irqs)
+		वापस -ENOMEM;
 
 	ret = cpcap_init_irq_chip(cpcap, 0, 0, 16);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = cpcap_init_irq_chip(cpcap, 1, 16, 16);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = cpcap_init_irq_chip(cpcap, 2, 32, 64);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	enable_irq_wake(cpcap->spi->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id cpcap_of_match[] = {
-	{ .compatible = "motorola,cpcap", },
-	{ .compatible = "st,6556002", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id cpcap_of_match[] = अणु
+	अणु .compatible = "motorola,cpcap", पूर्ण,
+	अणु .compatible = "st,6556002", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, cpcap_of_match);
 
-static const struct regmap_config cpcap_regmap_config = {
+अटल स्थिर काष्ठा regmap_config cpcap_regmap_config = अणु
 	.reg_bits = 16,
 	.reg_stride = 4,
 	.pad_bits = 0,
 	.val_bits = 16,
-	.write_flag_mask = 0x8000,
-	.max_register = CPCAP_REG_ST_TEST2,
+	.ग_लिखो_flag_mask = 0x8000,
+	.max_रेजिस्टर = CPCAP_REG_ST_TEST2,
 	.cache_type = REGCACHE_NONE,
-	.reg_format_endian = REGMAP_ENDIAN_LITTLE,
-	.val_format_endian = REGMAP_ENDIAN_LITTLE,
-};
+	.reg_क्रमmat_endian = REGMAP_ENDIAN_LITTLE,
+	.val_क्रमmat_endian = REGMAP_ENDIAN_LITTLE,
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
-static int cpcap_suspend(struct device *dev)
-{
-	struct spi_device *spi = to_spi_device(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक cpcap_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
 
 	disable_irq(spi->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cpcap_resume(struct device *dev)
-{
-	struct spi_device *spi = to_spi_device(dev);
+अटल पूर्णांक cpcap_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
 
 	enable_irq(spi->irq);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(cpcap_pm, cpcap_suspend, cpcap_resume);
+अटल SIMPLE_DEV_PM_OPS(cpcap_pm, cpcap_suspend, cpcap_resume);
 
-static const struct mfd_cell cpcap_mfd_devices[] = {
-	{
+अटल स्थिर काष्ठा mfd_cell cpcap_mfd_devices[] = अणु
+	अणु
 		.name          = "cpcap_adc",
 		.of_compatible = "motorola,mapphone-cpcap-adc",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap_battery",
 		.of_compatible = "motorola,cpcap-battery",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-charger",
 		.of_compatible = "motorola,mapphone-cpcap-charger",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-regulator",
 		.of_compatible = "motorola,mapphone-cpcap-regulator",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-rtc",
 		.of_compatible = "motorola,cpcap-rtc",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-pwrbutton",
 		.of_compatible = "motorola,cpcap-pwrbutton",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-usb-phy",
 		.of_compatible = "motorola,mapphone-cpcap-usb-phy",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-led",
 		.id            = 0,
 		.of_compatible = "motorola,cpcap-led-red",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-led",
 		.id            = 1,
 		.of_compatible = "motorola,cpcap-led-green",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-led",
 		.id            = 2,
 		.of_compatible = "motorola,cpcap-led-blue",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-led",
 		.id            = 3,
 		.of_compatible = "motorola,cpcap-led-adl",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-led",
 		.id            = 4,
 		.of_compatible = "motorola,cpcap-led-cp",
-	}, {
+	पूर्ण, अणु
 		.name          = "cpcap-codec",
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int cpcap_probe(struct spi_device *spi)
-{
-	const struct of_device_id *match;
-	struct cpcap_ddata *cpcap;
-	int ret;
+अटल पूर्णांक cpcap_probe(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा cpcap_ddata *cpcap;
+	पूर्णांक ret;
 
 	match = of_match_device(of_match_ptr(cpcap_of_match), &spi->dev);
-	if (!match)
-		return -ENODEV;
+	अगर (!match)
+		वापस -ENODEV;
 
-	cpcap = devm_kzalloc(&spi->dev, sizeof(*cpcap), GFP_KERNEL);
-	if (!cpcap)
-		return -ENOMEM;
+	cpcap = devm_kzalloc(&spi->dev, माप(*cpcap), GFP_KERNEL);
+	अगर (!cpcap)
+		वापस -ENOMEM;
 
 	cpcap->spi = spi;
 	spi_set_drvdata(spi, cpcap);
@@ -304,41 +305,41 @@ static int cpcap_probe(struct spi_device *spi)
 	spi->mode = SPI_MODE_0 | SPI_CS_HIGH;
 
 	ret = spi_setup(spi);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	cpcap->regmap_conf = &cpcap_regmap_config;
 	cpcap->regmap = devm_regmap_init_spi(spi, &cpcap_regmap_config);
-	if (IS_ERR(cpcap->regmap)) {
+	अगर (IS_ERR(cpcap->regmap)) अणु
 		ret = PTR_ERR(cpcap->regmap);
 		dev_err(&cpcap->spi->dev, "Failed to initialize regmap: %d\n",
 			ret);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = cpcap_check_revision(cpcap);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&cpcap->spi->dev, "Failed to detect CPCAP: %i\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = cpcap_init_irq(cpcap);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return devm_mfd_add_devices(&spi->dev, 0, cpcap_mfd_devices,
-				    ARRAY_SIZE(cpcap_mfd_devices), NULL, 0, NULL);
-}
+	वापस devm_mfd_add_devices(&spi->dev, 0, cpcap_mfd_devices,
+				    ARRAY_SIZE(cpcap_mfd_devices), शून्य, 0, शून्य);
+पूर्ण
 
-static struct spi_driver cpcap_driver = {
-	.driver = {
+अटल काष्ठा spi_driver cpcap_driver = अणु
+	.driver = अणु
 		.name = "cpcap-core",
 		.of_match_table = cpcap_of_match,
 		.pm = &cpcap_pm,
-	},
+	पूर्ण,
 	.probe = cpcap_probe,
-};
+पूर्ण;
 module_spi_driver(cpcap_driver);
 
 MODULE_ALIAS("platform:cpcap");

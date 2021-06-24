@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,37 +20,37 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "head.h"
+#समावेश "head.h"
 
-static void
-gv100_head_vblank_put(struct nvkm_head *head)
-{
-	struct nvkm_device *device = head->disp->engine.subdev.device;
+अटल व्योम
+gv100_head_vblank_put(काष्ठा nvkm_head *head)
+अणु
+	काष्ठा nvkm_device *device = head->disp->engine.subdev.device;
 	nvkm_mask(device, 0x611d80 + (head->id * 4), 0x00000004, 0x00000000);
-}
+पूर्ण
 
-static void
-gv100_head_vblank_get(struct nvkm_head *head)
-{
-	struct nvkm_device *device = head->disp->engine.subdev.device;
+अटल व्योम
+gv100_head_vblank_get(काष्ठा nvkm_head *head)
+अणु
+	काष्ठा nvkm_device *device = head->disp->engine.subdev.device;
 	nvkm_mask(device, 0x611d80 + (head->id * 4), 0x00000004, 0x00000004);
-}
+पूर्ण
 
-static void
-gv100_head_rgpos(struct nvkm_head *head, u16 *hline, u16 *vline)
-{
-	struct nvkm_device *device = head->disp->engine.subdev.device;
-	const u32 hoff = head->id * 0x800;
-	/* vline read locks hline. */
+अटल व्योम
+gv100_head_rgpos(काष्ठा nvkm_head *head, u16 *hline, u16 *vline)
+अणु
+	काष्ठा nvkm_device *device = head->disp->engine.subdev.device;
+	स्थिर u32 hoff = head->id * 0x800;
+	/* vline पढ़ो locks hline. */
 	*vline = nvkm_rd32(device, 0x616330 + hoff) & 0x0000ffff;
 	*hline = nvkm_rd32(device, 0x616334 + hoff) & 0x0000ffff;
-}
+पूर्ण
 
-static void
-gv100_head_state(struct nvkm_head *head, struct nvkm_head_state *state)
-{
-	struct nvkm_device *device = head->disp->engine.subdev.device;
-	const u32 hoff = (state == &head->arm) * 0x8000 + head->id * 0x400;
+अटल व्योम
+gv100_head_state(काष्ठा nvkm_head *head, काष्ठा nvkm_head_state *state)
+अणु
+	काष्ठा nvkm_device *device = head->disp->engine.subdev.device;
+	स्थिर u32 hoff = (state == &head->arm) * 0x8000 + head->id * 0x400;
 	u32 data;
 
 	data = nvkm_rd32(device, 0x682064 + hoff);
@@ -67,39 +68,39 @@ gv100_head_state(struct nvkm_head *head, struct nvkm_head_state *state)
 	state->hz = nvkm_rd32(device, 0x68200c + hoff);
 
 	data = nvkm_rd32(device, 0x682004 + hoff);
-	switch ((data & 0x000000f0) >> 4) {
-	case 5: state->or.depth = 30; break;
-	case 4: state->or.depth = 24; break;
-	case 1: state->or.depth = 18; break;
-	default:
+	चयन ((data & 0x000000f0) >> 4) अणु
+	हाल 5: state->or.depth = 30; अवरोध;
+	हाल 4: state->or.depth = 24; अवरोध;
+	हाल 1: state->or.depth = 18; अवरोध;
+	शेष:
 		state->or.depth = 18;
 		WARN_ON(1);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const struct nvkm_head_func
-gv100_head = {
+अटल स्थिर काष्ठा nvkm_head_func
+gv100_head = अणु
 	.state = gv100_head_state,
 	.rgpos = gv100_head_rgpos,
 	.rgclk = gf119_head_rgclk,
 	.vblank_get = gv100_head_vblank_get,
 	.vblank_put = gv100_head_vblank_put,
-};
+पूर्ण;
 
-int
-gv100_head_new(struct nvkm_disp *disp, int id)
-{
-	struct nvkm_device *device = disp->engine.subdev.device;
-	if (!(nvkm_rd32(device, 0x610060) & (0x00000001 << id)))
-		return 0;
-	return nvkm_head_new_(&gv100_head, disp, id);
-}
+पूर्णांक
+gv100_head_new(काष्ठा nvkm_disp *disp, पूर्णांक id)
+अणु
+	काष्ठा nvkm_device *device = disp->engine.subdev.device;
+	अगर (!(nvkm_rd32(device, 0x610060) & (0x00000001 << id)))
+		वापस 0;
+	वापस nvkm_head_new_(&gv100_head, disp, id);
+पूर्ण
 
-int
-gv100_head_cnt(struct nvkm_disp *disp, unsigned long *pmask)
-{
-	struct nvkm_device *device = disp->engine.subdev.device;
+पूर्णांक
+gv100_head_cnt(काष्ठा nvkm_disp *disp, अचिन्हित दीर्घ *pmask)
+अणु
+	काष्ठा nvkm_device *device = disp->engine.subdev.device;
 	*pmask = nvkm_rd32(device, 0x610060) & 0x000000ff;
-	return nvkm_rd32(device, 0x610074) & 0x0000000f;
-}
+	वापस nvkm_rd32(device, 0x610074) & 0x0000000f;
+पूर्ण

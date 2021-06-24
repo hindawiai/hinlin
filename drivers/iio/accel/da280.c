@@ -1,202 +1,203 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * IIO driver for the MiraMEMS DA280 3-axis accelerometer and
- * IIO driver for the MiraMEMS DA226 2-axis accelerometer
+ * IIO driver क्रम the MiraMEMS DA280 3-axis accelerometer and
+ * IIO driver क्रम the MiraMEMS DA226 2-axis accelerometer
  *
  * Copyright (c) 2016 Hans de Goede <hdegoede@redhat.com>
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/acpi.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/byteorder/generic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/byteorder/generic.h>
 
-#define DA280_REG_CHIP_ID		0x01
-#define DA280_REG_ACC_X_LSB		0x02
-#define DA280_REG_ACC_Y_LSB		0x04
-#define DA280_REG_ACC_Z_LSB		0x06
-#define DA280_REG_MODE_BW		0x11
+#घोषणा DA280_REG_CHIP_ID		0x01
+#घोषणा DA280_REG_ACC_X_LSB		0x02
+#घोषणा DA280_REG_ACC_Y_LSB		0x04
+#घोषणा DA280_REG_ACC_Z_LSB		0x06
+#घोषणा DA280_REG_MODE_BW		0x11
 
-#define DA280_CHIP_ID			0x13
-#define DA280_MODE_ENABLE		0x1e
-#define DA280_MODE_DISABLE		0x9e
+#घोषणा DA280_CHIP_ID			0x13
+#घोषणा DA280_MODE_ENABLE		0x1e
+#घोषणा DA280_MODE_DISABLE		0x9e
 
-enum da280_chipset { da226, da280 };
+क्रमागत da280_chipset अणु da226, da280 पूर्ण;
 
 /*
  * a value of + or -4096 corresponds to + or - 1G
  * scale = 9.81 / 4096 = 0.002395019
  */
 
-static const int da280_nscale = 2395019;
+अटल स्थिर पूर्णांक da280_nscale = 2395019;
 
-#define DA280_CHANNEL(reg, axis) {	\
+#घोषणा DA280_CHANNEL(reg, axis) अणु	\
 	.type = IIO_ACCEL,	\
 	.address = reg,	\
-	.modified = 1,	\
+	.modअगरied = 1,	\
 	.channel2 = IIO_MOD_##axis,	\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),	\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
-}
+पूर्ण
 
-static const struct iio_chan_spec da280_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec da280_channels[] = अणु
 	DA280_CHANNEL(DA280_REG_ACC_X_LSB, X),
 	DA280_CHANNEL(DA280_REG_ACC_Y_LSB, Y),
 	DA280_CHANNEL(DA280_REG_ACC_Z_LSB, Z),
-};
+पूर्ण;
 
-struct da280_data {
-	struct i2c_client *client;
-};
+काष्ठा da280_data अणु
+	काष्ठा i2c_client *client;
+पूर्ण;
 
-static int da280_enable(struct i2c_client *client, bool enable)
-{
+अटल पूर्णांक da280_enable(काष्ठा i2c_client *client, bool enable)
+अणु
 	u8 data = enable ? DA280_MODE_ENABLE : DA280_MODE_DISABLE;
 
-	return i2c_smbus_write_byte_data(client, DA280_REG_MODE_BW, data);
-}
+	वापस i2c_smbus_ग_लिखो_byte_data(client, DA280_REG_MODE_BW, data);
+पूर्ण
 
-static int da280_read_raw(struct iio_dev *indio_dev,
-				struct iio_chan_spec const *chan,
-				int *val, int *val2, long mask)
-{
-	struct da280_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक da280_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+				काष्ठा iio_chan_spec स्थिर *chan,
+				पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा da280_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		ret = i2c_smbus_read_word_data(data->client, chan->address);
-		if (ret < 0)
-			return ret;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		ret = i2c_smbus_पढ़ो_word_data(data->client, chan->address);
+		अगर (ret < 0)
+			वापस ret;
 		/*
 		 * Values are 14 bits, stored as 16 bits with the 2
-		 * least significant bits always 0.
+		 * least signअगरicant bits always 0.
 		 */
-		*val = (short)ret >> 2;
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
+		*val = (लघु)ret >> 2;
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = da280_nscale;
-		return IIO_VAL_INT_PLUS_NANO;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_INT_PLUS_न_अंकO;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info da280_info = {
-	.read_raw	= da280_read_raw,
-};
+अटल स्थिर काष्ठा iio_info da280_info = अणु
+	.पढ़ो_raw	= da280_पढ़ो_raw,
+पूर्ण;
 
-static enum da280_chipset da280_match_acpi_device(struct device *dev)
-{
-	const struct acpi_device_id *id;
+अटल क्रमागत da280_chipset da280_match_acpi_device(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा acpi_device_id *id;
 
 	id = acpi_match_device(dev->driver->acpi_match_table, dev);
-	if (!id)
-		return -EINVAL;
+	अगर (!id)
+		वापस -EINVAL;
 
-	return (enum da280_chipset) id->driver_data;
-}
+	वापस (क्रमागत da280_chipset) id->driver_data;
+पूर्ण
 
-static int da280_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	int ret;
-	struct iio_dev *indio_dev;
-	struct da280_data *data;
-	enum da280_chipset chip;
+अटल पूर्णांक da280_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा da280_data *data;
+	क्रमागत da280_chipset chip;
 
-	ret = i2c_smbus_read_byte_data(client, DA280_REG_CHIP_ID);
-	if (ret != DA280_CHIP_ID)
-		return (ret < 0) ? ret : -ENODEV;
+	ret = i2c_smbus_पढ़ो_byte_data(client, DA280_REG_CHIP_ID);
+	अगर (ret != DA280_CHIP_ID)
+		वापस (ret < 0) ? ret : -ENODEV;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	data->client = client;
 	i2c_set_clientdata(client, indio_dev);
 
 	indio_dev->info = &da280_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = da280_channels;
 
-	if (ACPI_HANDLE(&client->dev)) {
+	अगर (ACPI_HANDLE(&client->dev)) अणु
 		chip = da280_match_acpi_device(&client->dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		chip = id->driver_data;
-	}
+	पूर्ण
 
-	if (chip == da226) {
+	अगर (chip == da226) अणु
 		indio_dev->name = "da226";
 		indio_dev->num_channels = 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		indio_dev->name = "da280";
 		indio_dev->num_channels = 3;
-	}
+	पूर्ण
 
 	ret = da280_enable(client, true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = iio_device_register(indio_dev);
-	if (ret < 0) {
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "device_register failed\n");
 		da280_enable(client, false);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da280_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
+अटल पूर्णांक da280_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 
-	return da280_enable(client, false);
-}
+	वापस da280_enable(client, false);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int da280_suspend(struct device *dev)
-{
-	return da280_enable(to_i2c_client(dev), false);
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक da280_suspend(काष्ठा device *dev)
+अणु
+	वापस da280_enable(to_i2c_client(dev), false);
+पूर्ण
 
-static int da280_resume(struct device *dev)
-{
-	return da280_enable(to_i2c_client(dev), true);
-}
-#endif
+अटल पूर्णांक da280_resume(काष्ठा device *dev)
+अणु
+	वापस da280_enable(to_i2c_client(dev), true);
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(da280_pm_ops, da280_suspend, da280_resume);
+अटल SIMPLE_DEV_PM_OPS(da280_pm_ops, da280_suspend, da280_resume);
 
-static const struct acpi_device_id da280_acpi_match[] = {
-	{"MIRAACC", da280},
-	{},
-};
+अटल स्थिर काष्ठा acpi_device_id da280_acpi_match[] = अणु
+	अणु"MIRAACC", da280पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, da280_acpi_match);
 
-static const struct i2c_device_id da280_i2c_id[] = {
-	{ "da226", da226 },
-	{ "da280", da280 },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id da280_i2c_id[] = अणु
+	अणु "da226", da226 पूर्ण,
+	अणु "da280", da280 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, da280_i2c_id);
 
-static struct i2c_driver da280_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver da280_driver = अणु
+	.driver = अणु
 		.name = "da280",
 		.acpi_match_table = ACPI_PTR(da280_acpi_match),
 		.pm = &da280_pm_ops,
-	},
+	पूर्ण,
 	.probe		= da280_probe,
-	.remove		= da280_remove,
+	.हटाओ		= da280_हटाओ,
 	.id_table	= da280_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(da280_driver);
 

@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: MIT */
-static uint32_t g98_sec_data[] = {
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+अटल uपूर्णांक32_t g98_sec_data[] = अणु
 /* 0x0000: ctx_dma */
 /* 0x0000: ctx_dma_query */
 	0x00000000,
@@ -149,9 +150,9 @@ static uint32_t g98_sec_data[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;
 
-static uint32_t g98_sec_code[] = {
+अटल uपूर्णांक32_t g98_sec_code[] = अणु
 	0x17f004bd,
 	0x0010fe35,
 	0xf10004fe,
@@ -261,7 +262,7 @@ static uint32_t g98_sec_code[] = {
 	0xf08004cf,
 	0x44b04044,
 	0xf71bf400,
-/* 0x0180: cmddone */
+/* 0x0180: cmdकरोne */
 	0x1d0037f1,
 	0xd00147f0,
 /* 0x018a: nocmd */
@@ -271,7 +272,7 @@ static uint32_t g98_sec_code[] = {
 	0x38f201f8,
 	0x0325f001,
 	0x0b0047f1,
-/* 0x019c: ptimer_retry */
+/* 0x019c: pसमयr_retry */
 	0xcf4046cf,
 	0x47cf0045,
 	0x0467b840,
@@ -294,7 +295,7 @@ static uint32_t g98_sec_code[] = {
 	0x34b00132,
 	0x0b18f402,
 	0x800136f0,
-/* 0x01f2: return */
+/* 0x01f2: वापस */
 	0x00f80803,
 /* 0x01f4: cmd_cond_mode_queryful */
 	0x98060498,
@@ -311,7 +312,7 @@ static uint32_t g98_sec_code[] = {
 	0x0044b021,
 	0x800b4cf0,
 	0x00f80804,
-/* 0x022c: cmd_cond_mode_double */
+/* 0x022c: cmd_cond_mode_द्विगुन */
 	0xb61060b6,
 	0x65fa1050,
 	0x9803f805,
@@ -335,7 +336,7 @@ static uint32_t g98_sec_code[] = {
 	0xb00225f0,
 	0x18f40f34,
 	0x0132f409,
-/* 0x0283: sec_cmd_mode_return */
+/* 0x0283: sec_cmd_mode_वापस */
 	0xf80d0380,
 /* 0x0285: sec_cmd_length */
 	0x0034b000,
@@ -480,12 +481,12 @@ static uint32_t g98_sec_code[] = {
 	0x003cf5bc,
 	0x063cf5bc,
 	0x663cf5ac,
-/* 0x0483: sec_do_in */
+/* 0x0483: sec_करो_in */
 	0xbb00f8d0,
 	0x47fe0035,
 	0x8097f100,
 	0x0293f000,
-/* 0x0490: sec_do_in_loop */
+/* 0x0490: sec_करो_in_loop */
 	0xf80559fa,
 	0x223cf403,
 	0xf50609fa,
@@ -494,11 +495,11 @@ static uint32_t g98_sec_code[] = {
 	0xf40453b8,
 	0x3cf4e91b,
 	0xf803f801,
-/* 0x04b1: sec_do_out */
+/* 0x04b1: sec_करो_out */
 	0x0037bb00,
 	0xf10067fe,
 	0xf0008097,
-/* 0x04be: sec_do_out_loop */
+/* 0x04be: sec_करो_out_loop */
 	0x3cf50293,
 	0x3cf49810,
 	0x0579fa61,
@@ -506,11 +507,11 @@ static uint32_t g98_sec_code[] = {
 	0x03f8013c,
 	0xb81070b6,
 	0x1bf40473,
-/* 0x04db: sec_do_inout */
+/* 0x04db: sec_करो_inout */
 	0xbb00f8e8,
 	0x97f10035,
 	0x93f00080,
-/* 0x04e5: sec_do_inout_loop */
+/* 0x04e5: sec_करो_inout_loop */
 	0x0047fe02,
 	0xf80559fa,
 	0x213cf403,
@@ -582,4 +583,4 @@ static uint32_t g98_sec_code[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;

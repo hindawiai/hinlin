@@ -1,339 +1,340 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/kernel/sys.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#include <linux/export.h>
-#include <linux/mm.h>
-#include <linux/utsname.h>
-#include <linux/mman.h>
-#include <linux/reboot.h>
-#include <linux/prctl.h>
-#include <linux/highuid.h>
-#include <linux/fs.h>
-#include <linux/kmod.h>
-#include <linux/perf_event.h>
-#include <linux/resource.h>
-#include <linux/kernel.h>
-#include <linux/workqueue.h>
-#include <linux/capability.h>
-#include <linux/device.h>
-#include <linux/key.h>
-#include <linux/times.h>
-#include <linux/posix-timers.h>
-#include <linux/security.h>
-#include <linux/suspend.h>
-#include <linux/tty.h>
-#include <linux/signal.h>
-#include <linux/cn_proc.h>
-#include <linux/getcpu.h>
-#include <linux/task_io_accounting_ops.h>
-#include <linux/seccomp.h>
-#include <linux/cpu.h>
-#include <linux/personality.h>
-#include <linux/ptrace.h>
-#include <linux/fs_struct.h>
-#include <linux/file.h>
-#include <linux/mount.h>
-#include <linux/gfp.h>
-#include <linux/syscore_ops.h>
-#include <linux/version.h>
-#include <linux/ctype.h>
-#include <linux/syscall_user_dispatch.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/prctl.h>
+#समावेश <linux/highuid.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/resource.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/device.h>
+#समावेश <linux/key.h>
+#समावेश <linux/बार.h>
+#समावेश <linux/posix-समयrs.h>
+#समावेश <linux/security.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/cn_proc.h>
+#समावेश <linux/अ_लोpu.h>
+#समावेश <linux/task_io_accounting_ops.h>
+#समावेश <linux/seccomp.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/fs_काष्ठा.h>
+#समावेश <linux/file.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/version.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/syscall_user_dispatch.h>
 
-#include <linux/compat.h>
-#include <linux/syscalls.h>
-#include <linux/kprobes.h>
-#include <linux/user_namespace.h>
-#include <linux/time_namespace.h>
-#include <linux/binfmts.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <linux/समय_namespace.h>
+#समावेश <linux/binfmts.h>
 
-#include <linux/sched.h>
-#include <linux/sched/autogroup.h>
-#include <linux/sched/loadavg.h>
-#include <linux/sched/stat.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/coredump.h>
-#include <linux/sched/task.h>
-#include <linux/sched/cputime.h>
-#include <linux/rcupdate.h>
-#include <linux/uidgid.h>
-#include <linux/cred.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/स्वतःgroup.h>
+#समावेश <linux/sched/loadavg.h>
+#समावेश <linux/sched/स्थिति.स>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/coredump.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/cpuसमय.स>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/uidgid.h>
+#समावेश <linux/cred.h>
 
-#include <linux/nospec.h>
+#समावेश <linux/nospec.h>
 
-#include <linux/kmsg_dump.h>
-/* Move somewhere else to avoid recompiling? */
-#include <generated/utsrelease.h>
+#समावेश <linux/kmsg_dump.h>
+/* Move somewhere अन्यथा to aव्योम recompiling? */
+#समावेश <generated/utsrelease.h>
 
-#include <linux/uaccess.h>
-#include <asm/io.h>
-#include <asm/unistd.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/unistd.h>
 
-#include "uid16.h"
+#समावेश "uid16.h"
 
-#ifndef SET_UNALIGN_CTL
+#अगर_अघोषित SET_UNALIGN_CTL
 # define SET_UNALIGN_CTL(a, b)	(-EINVAL)
-#endif
-#ifndef GET_UNALIGN_CTL
+#पूर्ण_अगर
+#अगर_अघोषित GET_UNALIGN_CTL
 # define GET_UNALIGN_CTL(a, b)	(-EINVAL)
-#endif
-#ifndef SET_FPEMU_CTL
+#पूर्ण_अगर
+#अगर_अघोषित SET_FPEMU_CTL
 # define SET_FPEMU_CTL(a, b)	(-EINVAL)
-#endif
-#ifndef GET_FPEMU_CTL
+#पूर्ण_अगर
+#अगर_अघोषित GET_FPEMU_CTL
 # define GET_FPEMU_CTL(a, b)	(-EINVAL)
-#endif
-#ifndef SET_FPEXC_CTL
+#पूर्ण_अगर
+#अगर_अघोषित SET_FPEXC_CTL
 # define SET_FPEXC_CTL(a, b)	(-EINVAL)
-#endif
-#ifndef GET_FPEXC_CTL
+#पूर्ण_अगर
+#अगर_अघोषित GET_FPEXC_CTL
 # define GET_FPEXC_CTL(a, b)	(-EINVAL)
-#endif
-#ifndef GET_ENDIAN
+#पूर्ण_अगर
+#अगर_अघोषित GET_ENDIAN
 # define GET_ENDIAN(a, b)	(-EINVAL)
-#endif
-#ifndef SET_ENDIAN
+#पूर्ण_अगर
+#अगर_अघोषित SET_ENDIAN
 # define SET_ENDIAN(a, b)	(-EINVAL)
-#endif
-#ifndef GET_TSC_CTL
+#पूर्ण_अगर
+#अगर_अघोषित GET_TSC_CTL
 # define GET_TSC_CTL(a)		(-EINVAL)
-#endif
-#ifndef SET_TSC_CTL
+#पूर्ण_अगर
+#अगर_अघोषित SET_TSC_CTL
 # define SET_TSC_CTL(a)		(-EINVAL)
-#endif
-#ifndef GET_FP_MODE
+#पूर्ण_अगर
+#अगर_अघोषित GET_FP_MODE
 # define GET_FP_MODE(a)		(-EINVAL)
-#endif
-#ifndef SET_FP_MODE
+#पूर्ण_अगर
+#अगर_अघोषित SET_FP_MODE
 # define SET_FP_MODE(a,b)	(-EINVAL)
-#endif
-#ifndef SVE_SET_VL
+#पूर्ण_अगर
+#अगर_अघोषित SVE_SET_VL
 # define SVE_SET_VL(a)		(-EINVAL)
-#endif
-#ifndef SVE_GET_VL
+#पूर्ण_अगर
+#अगर_अघोषित SVE_GET_VL
 # define SVE_GET_VL()		(-EINVAL)
-#endif
-#ifndef PAC_RESET_KEYS
+#पूर्ण_अगर
+#अगर_अघोषित PAC_RESET_KEYS
 # define PAC_RESET_KEYS(a, b)	(-EINVAL)
-#endif
-#ifndef PAC_SET_ENABLED_KEYS
+#पूर्ण_अगर
+#अगर_अघोषित PAC_SET_ENABLED_KEYS
 # define PAC_SET_ENABLED_KEYS(a, b, c)	(-EINVAL)
-#endif
-#ifndef PAC_GET_ENABLED_KEYS
+#पूर्ण_अगर
+#अगर_अघोषित PAC_GET_ENABLED_KEYS
 # define PAC_GET_ENABLED_KEYS(a)	(-EINVAL)
-#endif
-#ifndef SET_TAGGED_ADDR_CTRL
+#पूर्ण_अगर
+#अगर_अघोषित SET_TAGGED_ADDR_CTRL
 # define SET_TAGGED_ADDR_CTRL(a)	(-EINVAL)
-#endif
-#ifndef GET_TAGGED_ADDR_CTRL
+#पूर्ण_अगर
+#अगर_अघोषित GET_TAGGED_ADDR_CTRL
 # define GET_TAGGED_ADDR_CTRL()		(-EINVAL)
-#endif
+#पूर्ण_अगर
 
 /*
- * this is where the system-wide overflow UID and GID are defined, for
+ * this is where the प्रणाली-wide overflow UID and GID are defined, क्रम
  * architectures that now have 32-bit UID/GID but didn't in the past
  */
 
-int overflowuid = DEFAULT_OVERFLOWUID;
-int overflowgid = DEFAULT_OVERFLOWGID;
+पूर्णांक overflowuid = DEFAULT_OVERFLOWUID;
+पूर्णांक overflowgid = DEFAULT_OVERFLOWGID;
 
 EXPORT_SYMBOL(overflowuid);
 EXPORT_SYMBOL(overflowgid);
 
 /*
- * the same as above, but for filesystems which can only store a 16-bit
+ * the same as above, but क्रम fileप्रणालीs which can only store a 16-bit
  * UID and GID. as such, this is needed on all architectures
  */
 
-int fs_overflowuid = DEFAULT_FS_OVERFLOWUID;
-int fs_overflowgid = DEFAULT_FS_OVERFLOWGID;
+पूर्णांक fs_overflowuid = DEFAULT_FS_OVERFLOWUID;
+पूर्णांक fs_overflowgid = DEFAULT_FS_OVERFLOWGID;
 
 EXPORT_SYMBOL(fs_overflowuid);
 EXPORT_SYMBOL(fs_overflowgid);
 
 /*
- * Returns true if current's euid is same as p's uid or euid,
+ * Returns true अगर current's euid is same as p's uid or euid,
  * or has CAP_SYS_NICE to p's user_ns.
  *
- * Called with rcu_read_lock, creds are safe
+ * Called with rcu_पढ़ो_lock, creds are safe
  */
-static bool set_one_prio_perm(struct task_struct *p)
-{
-	const struct cred *cred = current_cred(), *pcred = __task_cred(p);
+अटल bool set_one_prio_perm(काष्ठा task_काष्ठा *p)
+अणु
+	स्थिर काष्ठा cred *cred = current_cred(), *pcred = __task_cred(p);
 
-	if (uid_eq(pcred->uid,  cred->euid) ||
+	अगर (uid_eq(pcred->uid,  cred->euid) ||
 	    uid_eq(pcred->euid, cred->euid))
-		return true;
-	if (ns_capable(pcred->user_ns, CAP_SYS_NICE))
-		return true;
-	return false;
-}
+		वापस true;
+	अगर (ns_capable(pcred->user_ns, CAP_SYS_NICE))
+		वापस true;
+	वापस false;
+पूर्ण
 
 /*
  * set the priority of a task
- * - the caller must hold the RCU read lock
+ * - the caller must hold the RCU पढ़ो lock
  */
-static int set_one_prio(struct task_struct *p, int niceval, int error)
-{
-	int no_nice;
+अटल पूर्णांक set_one_prio(काष्ठा task_काष्ठा *p, पूर्णांक niceval, पूर्णांक error)
+अणु
+	पूर्णांक no_nice;
 
-	if (!set_one_prio_perm(p)) {
+	अगर (!set_one_prio_perm(p)) अणु
 		error = -EPERM;
-		goto out;
-	}
-	if (niceval < task_nice(p) && !can_nice(p, niceval)) {
+		जाओ out;
+	पूर्ण
+	अगर (niceval < task_nice(p) && !can_nice(p, niceval)) अणु
 		error = -EACCES;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	no_nice = security_task_setnice(p, niceval);
-	if (no_nice) {
+	अगर (no_nice) अणु
 		error = no_nice;
-		goto out;
-	}
-	if (error == -ESRCH)
+		जाओ out;
+	पूर्ण
+	अगर (error == -ESRCH)
 		error = 0;
 	set_user_nice(p, niceval);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE3(setpriority, int, which, int, who, int, niceval)
-{
-	struct task_struct *g, *p;
-	struct user_struct *user;
-	const struct cred *cred = current_cred();
-	int error = -EINVAL;
-	struct pid *pgrp;
+SYSCALL_DEFINE3(setpriority, पूर्णांक, which, पूर्णांक, who, पूर्णांक, niceval)
+अणु
+	काष्ठा task_काष्ठा *g, *p;
+	काष्ठा user_काष्ठा *user;
+	स्थिर काष्ठा cred *cred = current_cred();
+	पूर्णांक error = -EINVAL;
+	काष्ठा pid *pgrp;
 	kuid_t uid;
 
-	if (which > PRIO_USER || which < PRIO_PROCESS)
-		goto out;
+	अगर (which > PRIO_USER || which < PRIO_PROCESS)
+		जाओ out;
 
-	/* normalize: avoid signed division (rounding problems) */
+	/* normalize: aव्योम चिन्हित भागision (rounding problems) */
 	error = -ESRCH;
-	if (niceval < MIN_NICE)
+	अगर (niceval < MIN_NICE)
 		niceval = MIN_NICE;
-	if (niceval > MAX_NICE)
+	अगर (niceval > MAX_NICE)
 		niceval = MAX_NICE;
 
-	rcu_read_lock();
-	read_lock(&tasklist_lock);
-	switch (which) {
-	case PRIO_PROCESS:
-		if (who)
+	rcu_पढ़ो_lock();
+	पढ़ो_lock(&tasklist_lock);
+	चयन (which) अणु
+	हाल PRIO_PROCESS:
+		अगर (who)
 			p = find_task_by_vpid(who);
-		else
+		अन्यथा
 			p = current;
-		if (p)
+		अगर (p)
 			error = set_one_prio(p, niceval, error);
-		break;
-	case PRIO_PGRP:
-		if (who)
+		अवरोध;
+	हाल PRIO_PGRP:
+		अगर (who)
 			pgrp = find_vpid(who);
-		else
+		अन्यथा
 			pgrp = task_pgrp(current);
-		do_each_pid_thread(pgrp, PIDTYPE_PGID, p) {
+		करो_each_pid_thपढ़ो(pgrp, PIDTYPE_PGID, p) अणु
 			error = set_one_prio(p, niceval, error);
-		} while_each_pid_thread(pgrp, PIDTYPE_PGID, p);
-		break;
-	case PRIO_USER:
+		पूर्ण जबतक_each_pid_thपढ़ो(pgrp, PIDTYPE_PGID, p);
+		अवरोध;
+	हाल PRIO_USER:
 		uid = make_kuid(cred->user_ns, who);
 		user = cred->user;
-		if (!who)
+		अगर (!who)
 			uid = cred->uid;
-		else if (!uid_eq(uid, cred->uid)) {
+		अन्यथा अगर (!uid_eq(uid, cred->uid)) अणु
 			user = find_user(uid);
-			if (!user)
-				goto out_unlock;	/* No processes for this user */
-		}
-		do_each_thread(g, p) {
-			if (uid_eq(task_uid(p), uid) && task_pid_vnr(p))
+			अगर (!user)
+				जाओ out_unlock;	/* No processes क्रम this user */
+		पूर्ण
+		करो_each_thपढ़ो(g, p) अणु
+			अगर (uid_eq(task_uid(p), uid) && task_pid_vnr(p))
 				error = set_one_prio(p, niceval, error);
-		} while_each_thread(g, p);
-		if (!uid_eq(uid, cred->uid))
-			free_uid(user);		/* For find_user() */
-		break;
-	}
+		पूर्ण जबतक_each_thपढ़ो(g, p);
+		अगर (!uid_eq(uid, cred->uid))
+			मुक्त_uid(user);		/* For find_user() */
+		अवरोध;
+	पूर्ण
 out_unlock:
-	read_unlock(&tasklist_lock);
-	rcu_read_unlock();
+	पढ़ो_unlock(&tasklist_lock);
+	rcu_पढ़ो_unlock();
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * Ugh. To avoid negative return values, "getpriority()" will
- * not return the normal nice-value, but a negated value that
- * has been offset by 20 (ie it returns 40..1 instead of -20..19)
+ * Ugh. To aव्योम negative वापस values, "getpriority()" will
+ * not वापस the normal nice-value, but a negated value that
+ * has been offset by 20 (ie it वापसs 40..1 instead of -20..19)
  * to stay compatible.
  */
-SYSCALL_DEFINE2(getpriority, int, which, int, who)
-{
-	struct task_struct *g, *p;
-	struct user_struct *user;
-	const struct cred *cred = current_cred();
-	long niceval, retval = -ESRCH;
-	struct pid *pgrp;
+SYSCALL_DEFINE2(getpriority, पूर्णांक, which, पूर्णांक, who)
+अणु
+	काष्ठा task_काष्ठा *g, *p;
+	काष्ठा user_काष्ठा *user;
+	स्थिर काष्ठा cred *cred = current_cred();
+	दीर्घ niceval, retval = -ESRCH;
+	काष्ठा pid *pgrp;
 	kuid_t uid;
 
-	if (which > PRIO_USER || which < PRIO_PROCESS)
-		return -EINVAL;
+	अगर (which > PRIO_USER || which < PRIO_PROCESS)
+		वापस -EINVAL;
 
-	rcu_read_lock();
-	read_lock(&tasklist_lock);
-	switch (which) {
-	case PRIO_PROCESS:
-		if (who)
+	rcu_पढ़ो_lock();
+	पढ़ो_lock(&tasklist_lock);
+	चयन (which) अणु
+	हाल PRIO_PROCESS:
+		अगर (who)
 			p = find_task_by_vpid(who);
-		else
+		अन्यथा
 			p = current;
-		if (p) {
+		अगर (p) अणु
 			niceval = nice_to_rlimit(task_nice(p));
-			if (niceval > retval)
+			अगर (niceval > retval)
 				retval = niceval;
-		}
-		break;
-	case PRIO_PGRP:
-		if (who)
+		पूर्ण
+		अवरोध;
+	हाल PRIO_PGRP:
+		अगर (who)
 			pgrp = find_vpid(who);
-		else
+		अन्यथा
 			pgrp = task_pgrp(current);
-		do_each_pid_thread(pgrp, PIDTYPE_PGID, p) {
+		करो_each_pid_thपढ़ो(pgrp, PIDTYPE_PGID, p) अणु
 			niceval = nice_to_rlimit(task_nice(p));
-			if (niceval > retval)
+			अगर (niceval > retval)
 				retval = niceval;
-		} while_each_pid_thread(pgrp, PIDTYPE_PGID, p);
-		break;
-	case PRIO_USER:
+		पूर्ण जबतक_each_pid_thपढ़ो(pgrp, PIDTYPE_PGID, p);
+		अवरोध;
+	हाल PRIO_USER:
 		uid = make_kuid(cred->user_ns, who);
 		user = cred->user;
-		if (!who)
+		अगर (!who)
 			uid = cred->uid;
-		else if (!uid_eq(uid, cred->uid)) {
+		अन्यथा अगर (!uid_eq(uid, cred->uid)) अणु
 			user = find_user(uid);
-			if (!user)
-				goto out_unlock;	/* No processes for this user */
-		}
-		do_each_thread(g, p) {
-			if (uid_eq(task_uid(p), uid) && task_pid_vnr(p)) {
+			अगर (!user)
+				जाओ out_unlock;	/* No processes क्रम this user */
+		पूर्ण
+		करो_each_thपढ़ो(g, p) अणु
+			अगर (uid_eq(task_uid(p), uid) && task_pid_vnr(p)) अणु
 				niceval = nice_to_rlimit(task_nice(p));
-				if (niceval > retval)
+				अगर (niceval > retval)
 					retval = niceval;
-			}
-		} while_each_thread(g, p);
-		if (!uid_eq(uid, cred->uid))
-			free_uid(user);		/* for find_user() */
-		break;
-	}
+			पूर्ण
+		पूर्ण जबतक_each_thपढ़ो(g, p);
+		अगर (!uid_eq(uid, cred->uid))
+			मुक्त_uid(user);		/* क्रम find_user() */
+		अवरोध;
+	पूर्ण
 out_unlock:
-	read_unlock(&tasklist_lock);
-	rcu_read_unlock();
+	पढ़ो_unlock(&tasklist_lock);
+	rcu_पढ़ो_unlock();
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
  * Unprivileged users may change the real gid to the effective gid
@@ -342,153 +343,153 @@ out_unlock:
  * If you set the real gid at all, or set the effective gid to a value not
  * equal to the real gid, then the saved gid is set to the new effective gid.
  *
- * This makes it possible for a setgid program to completely drop its
- * privileges, which is often a useful assertion to make when you are doing
+ * This makes it possible क्रम a setgid program to completely drop its
+ * privileges, which is often a useful निश्चितion to make when you are करोing
  * a security audit over a program.
  *
  * The general idea is that a program which uses just setregid() will be
  * 100% compatible with BSD.  A program which uses just setgid() will be
  * 100% compatible with POSIX with saved IDs.
  *
- * SMP: There are not races, the GIDs are checked only by filesystem
+ * SMP: There are not races, the GIDs are checked only by fileप्रणाली
  *      operations (as far as semantic preservation is concerned).
  */
-#ifdef CONFIG_MULTIUSER
-long __sys_setregid(gid_t rgid, gid_t egid)
-{
-	struct user_namespace *ns = current_user_ns();
-	const struct cred *old;
-	struct cred *new;
-	int retval;
+#अगर_घोषित CONFIG_MULTIUSER
+दीर्घ __sys_setregid(gid_t rgid, gid_t egid)
+अणु
+	काष्ठा user_namespace *ns = current_user_ns();
+	स्थिर काष्ठा cred *old;
+	काष्ठा cred *new;
+	पूर्णांक retval;
 	kgid_t krgid, kegid;
 
 	krgid = make_kgid(ns, rgid);
 	kegid = make_kgid(ns, egid);
 
-	if ((rgid != (gid_t) -1) && !gid_valid(krgid))
-		return -EINVAL;
-	if ((egid != (gid_t) -1) && !gid_valid(kegid))
-		return -EINVAL;
+	अगर ((rgid != (gid_t) -1) && !gid_valid(krgid))
+		वापस -EINVAL;
+	अगर ((egid != (gid_t) -1) && !gid_valid(kegid))
+		वापस -EINVAL;
 
 	new = prepare_creds();
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 	old = current_cred();
 
 	retval = -EPERM;
-	if (rgid != (gid_t) -1) {
-		if (gid_eq(old->gid, krgid) ||
+	अगर (rgid != (gid_t) -1) अणु
+		अगर (gid_eq(old->gid, krgid) ||
 		    gid_eq(old->egid, krgid) ||
 		    ns_capable_setid(old->user_ns, CAP_SETGID))
 			new->gid = krgid;
-		else
-			goto error;
-	}
-	if (egid != (gid_t) -1) {
-		if (gid_eq(old->gid, kegid) ||
+		अन्यथा
+			जाओ error;
+	पूर्ण
+	अगर (egid != (gid_t) -1) अणु
+		अगर (gid_eq(old->gid, kegid) ||
 		    gid_eq(old->egid, kegid) ||
 		    gid_eq(old->sgid, kegid) ||
 		    ns_capable_setid(old->user_ns, CAP_SETGID))
 			new->egid = kegid;
-		else
-			goto error;
-	}
+		अन्यथा
+			जाओ error;
+	पूर्ण
 
-	if (rgid != (gid_t) -1 ||
+	अगर (rgid != (gid_t) -1 ||
 	    (egid != (gid_t) -1 && !gid_eq(kegid, old->gid)))
 		new->sgid = new->egid;
 	new->fsgid = new->egid;
 
 	retval = security_task_fix_setgid(new, old, LSM_SETID_RE);
-	if (retval < 0)
-		goto error;
+	अगर (retval < 0)
+		जाओ error;
 
-	return commit_creds(new);
+	वापस commit_creds(new);
 
 error:
-	abort_creds(new);
-	return retval;
-}
+	पात_creds(new);
+	वापस retval;
+पूर्ण
 
 SYSCALL_DEFINE2(setregid, gid_t, rgid, gid_t, egid)
-{
-	return __sys_setregid(rgid, egid);
-}
+अणु
+	वापस __sys_setregid(rgid, egid);
+पूर्ण
 
 /*
  * setgid() is implemented like SysV w/ SAVED_IDS
  *
  * SMP: Same implicit races as above.
  */
-long __sys_setgid(gid_t gid)
-{
-	struct user_namespace *ns = current_user_ns();
-	const struct cred *old;
-	struct cred *new;
-	int retval;
+दीर्घ __sys_setgid(gid_t gid)
+अणु
+	काष्ठा user_namespace *ns = current_user_ns();
+	स्थिर काष्ठा cred *old;
+	काष्ठा cred *new;
+	पूर्णांक retval;
 	kgid_t kgid;
 
 	kgid = make_kgid(ns, gid);
-	if (!gid_valid(kgid))
-		return -EINVAL;
+	अगर (!gid_valid(kgid))
+		वापस -EINVAL;
 
 	new = prepare_creds();
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 	old = current_cred();
 
 	retval = -EPERM;
-	if (ns_capable_setid(old->user_ns, CAP_SETGID))
+	अगर (ns_capable_setid(old->user_ns, CAP_SETGID))
 		new->gid = new->egid = new->sgid = new->fsgid = kgid;
-	else if (gid_eq(kgid, old->gid) || gid_eq(kgid, old->sgid))
+	अन्यथा अगर (gid_eq(kgid, old->gid) || gid_eq(kgid, old->sgid))
 		new->egid = new->fsgid = kgid;
-	else
-		goto error;
+	अन्यथा
+		जाओ error;
 
 	retval = security_task_fix_setgid(new, old, LSM_SETID_ID);
-	if (retval < 0)
-		goto error;
+	अगर (retval < 0)
+		जाओ error;
 
-	return commit_creds(new);
+	वापस commit_creds(new);
 
 error:
-	abort_creds(new);
-	return retval;
-}
+	पात_creds(new);
+	वापस retval;
+पूर्ण
 
 SYSCALL_DEFINE1(setgid, gid_t, gid)
-{
-	return __sys_setgid(gid);
-}
+अणु
+	वापस __sys_setgid(gid);
+पूर्ण
 
 /*
- * change the user struct in a credentials set to match the new UID
+ * change the user काष्ठा in a credentials set to match the new UID
  */
-static int set_user(struct cred *new)
-{
-	struct user_struct *new_user;
+अटल पूर्णांक set_user(काष्ठा cred *new)
+अणु
+	काष्ठा user_काष्ठा *new_user;
 
 	new_user = alloc_uid(new->uid);
-	if (!new_user)
-		return -EAGAIN;
+	अगर (!new_user)
+		वापस -EAGAIN;
 
 	/*
-	 * We don't fail in case of NPROC limit excess here because too many
-	 * poorly written programs don't check set*uid() return code, assuming
-	 * it never fails if called by root.  We may still enforce NPROC limit
-	 * for programs doing set*uid()+execve() by harmlessly deferring the
+	 * We करोn't fail in हाल of NPROC limit excess here because too many
+	 * poorly written programs करोn't check set*uid() वापस code, assuming
+	 * it never fails अगर called by root.  We may still enक्रमce NPROC limit
+	 * क्रम programs करोing set*uid()+execve() by harmlessly deferring the
 	 * failure to the execve() stage.
 	 */
-	if (atomic_read(&new_user->processes) >= rlimit(RLIMIT_NPROC) &&
+	अगर (atomic_पढ़ो(&new_user->processes) >= rlimit(RLIMIT_NPROC) &&
 			new_user != INIT_USER)
 		current->flags |= PF_NPROC_EXCEEDED;
-	else
+	अन्यथा
 		current->flags &= ~PF_NPROC_EXCEEDED;
 
-	free_uid(new->user);
+	मुक्त_uid(new->user);
 	new->user = new_user;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Unprivileged users may change the real uid to the effective uid
@@ -497,216 +498,216 @@ static int set_user(struct cred *new)
  * If you set the real uid at all, or set the effective uid to a value not
  * equal to the real uid, then the saved uid is set to the new effective uid.
  *
- * This makes it possible for a setuid program to completely drop its
- * privileges, which is often a useful assertion to make when you are doing
+ * This makes it possible क्रम a setuid program to completely drop its
+ * privileges, which is often a useful निश्चितion to make when you are करोing
  * a security audit over a program.
  *
  * The general idea is that a program which uses just setreuid() will be
  * 100% compatible with BSD.  A program which uses just setuid() will be
  * 100% compatible with POSIX with saved IDs.
  */
-long __sys_setreuid(uid_t ruid, uid_t euid)
-{
-	struct user_namespace *ns = current_user_ns();
-	const struct cred *old;
-	struct cred *new;
-	int retval;
+दीर्घ __sys_setreuid(uid_t ruid, uid_t euid)
+अणु
+	काष्ठा user_namespace *ns = current_user_ns();
+	स्थिर काष्ठा cred *old;
+	काष्ठा cred *new;
+	पूर्णांक retval;
 	kuid_t kruid, keuid;
 
 	kruid = make_kuid(ns, ruid);
 	keuid = make_kuid(ns, euid);
 
-	if ((ruid != (uid_t) -1) && !uid_valid(kruid))
-		return -EINVAL;
-	if ((euid != (uid_t) -1) && !uid_valid(keuid))
-		return -EINVAL;
+	अगर ((ruid != (uid_t) -1) && !uid_valid(kruid))
+		वापस -EINVAL;
+	अगर ((euid != (uid_t) -1) && !uid_valid(keuid))
+		वापस -EINVAL;
 
 	new = prepare_creds();
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 	old = current_cred();
 
 	retval = -EPERM;
-	if (ruid != (uid_t) -1) {
+	अगर (ruid != (uid_t) -1) अणु
 		new->uid = kruid;
-		if (!uid_eq(old->uid, kruid) &&
+		अगर (!uid_eq(old->uid, kruid) &&
 		    !uid_eq(old->euid, kruid) &&
 		    !ns_capable_setid(old->user_ns, CAP_SETUID))
-			goto error;
-	}
+			जाओ error;
+	पूर्ण
 
-	if (euid != (uid_t) -1) {
+	अगर (euid != (uid_t) -1) अणु
 		new->euid = keuid;
-		if (!uid_eq(old->uid, keuid) &&
+		अगर (!uid_eq(old->uid, keuid) &&
 		    !uid_eq(old->euid, keuid) &&
 		    !uid_eq(old->suid, keuid) &&
 		    !ns_capable_setid(old->user_ns, CAP_SETUID))
-			goto error;
-	}
+			जाओ error;
+	पूर्ण
 
-	if (!uid_eq(new->uid, old->uid)) {
+	अगर (!uid_eq(new->uid, old->uid)) अणु
 		retval = set_user(new);
-		if (retval < 0)
-			goto error;
-	}
-	if (ruid != (uid_t) -1 ||
+		अगर (retval < 0)
+			जाओ error;
+	पूर्ण
+	अगर (ruid != (uid_t) -1 ||
 	    (euid != (uid_t) -1 && !uid_eq(keuid, old->uid)))
 		new->suid = new->euid;
 	new->fsuid = new->euid;
 
 	retval = security_task_fix_setuid(new, old, LSM_SETID_RE);
-	if (retval < 0)
-		goto error;
+	अगर (retval < 0)
+		जाओ error;
 
-	return commit_creds(new);
+	वापस commit_creds(new);
 
 error:
-	abort_creds(new);
-	return retval;
-}
+	पात_creds(new);
+	वापस retval;
+पूर्ण
 
 SYSCALL_DEFINE2(setreuid, uid_t, ruid, uid_t, euid)
-{
-	return __sys_setreuid(ruid, euid);
-}
+अणु
+	वापस __sys_setreuid(ruid, euid);
+पूर्ण
 
 /*
  * setuid() is implemented like SysV with SAVED_IDS
  *
  * Note that SAVED_ID's is deficient in that a setuid root program
- * like sendmail, for example, cannot set its uid to be a normal
- * user and then switch back, because if you're root, setuid() sets
- * the saved uid too.  If you don't like this, blame the bright people
+ * like sendmail, क्रम example, cannot set its uid to be a normal
+ * user and then चयन back, because अगर you're root, setuid() sets
+ * the saved uid too.  If you करोn't like this, blame the bright people
  * in the POSIX committee and/or USG.  Note that the BSD-style setreuid()
  * will allow a root program to temporarily drop privileges and be able to
  * regain them by swapping the real and effective uid.
  */
-long __sys_setuid(uid_t uid)
-{
-	struct user_namespace *ns = current_user_ns();
-	const struct cred *old;
-	struct cred *new;
-	int retval;
+दीर्घ __sys_setuid(uid_t uid)
+अणु
+	काष्ठा user_namespace *ns = current_user_ns();
+	स्थिर काष्ठा cred *old;
+	काष्ठा cred *new;
+	पूर्णांक retval;
 	kuid_t kuid;
 
 	kuid = make_kuid(ns, uid);
-	if (!uid_valid(kuid))
-		return -EINVAL;
+	अगर (!uid_valid(kuid))
+		वापस -EINVAL;
 
 	new = prepare_creds();
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 	old = current_cred();
 
 	retval = -EPERM;
-	if (ns_capable_setid(old->user_ns, CAP_SETUID)) {
+	अगर (ns_capable_setid(old->user_ns, CAP_SETUID)) अणु
 		new->suid = new->uid = kuid;
-		if (!uid_eq(kuid, old->uid)) {
+		अगर (!uid_eq(kuid, old->uid)) अणु
 			retval = set_user(new);
-			if (retval < 0)
-				goto error;
-		}
-	} else if (!uid_eq(kuid, old->uid) && !uid_eq(kuid, new->suid)) {
-		goto error;
-	}
+			अगर (retval < 0)
+				जाओ error;
+		पूर्ण
+	पूर्ण अन्यथा अगर (!uid_eq(kuid, old->uid) && !uid_eq(kuid, new->suid)) अणु
+		जाओ error;
+	पूर्ण
 
 	new->fsuid = new->euid = kuid;
 
 	retval = security_task_fix_setuid(new, old, LSM_SETID_ID);
-	if (retval < 0)
-		goto error;
+	अगर (retval < 0)
+		जाओ error;
 
-	return commit_creds(new);
+	वापस commit_creds(new);
 
 error:
-	abort_creds(new);
-	return retval;
-}
+	पात_creds(new);
+	वापस retval;
+पूर्ण
 
 SYSCALL_DEFINE1(setuid, uid_t, uid)
-{
-	return __sys_setuid(uid);
-}
+अणु
+	वापस __sys_setuid(uid);
+पूर्ण
 
 
 /*
  * This function implements a generic ability to update ruid, euid,
  * and suid.  This allows you to implement the 4.4 compatible seteuid().
  */
-long __sys_setresuid(uid_t ruid, uid_t euid, uid_t suid)
-{
-	struct user_namespace *ns = current_user_ns();
-	const struct cred *old;
-	struct cred *new;
-	int retval;
+दीर्घ __sys_setresuid(uid_t ruid, uid_t euid, uid_t suid)
+अणु
+	काष्ठा user_namespace *ns = current_user_ns();
+	स्थिर काष्ठा cred *old;
+	काष्ठा cred *new;
+	पूर्णांक retval;
 	kuid_t kruid, keuid, ksuid;
 
 	kruid = make_kuid(ns, ruid);
 	keuid = make_kuid(ns, euid);
 	ksuid = make_kuid(ns, suid);
 
-	if ((ruid != (uid_t) -1) && !uid_valid(kruid))
-		return -EINVAL;
+	अगर ((ruid != (uid_t) -1) && !uid_valid(kruid))
+		वापस -EINVAL;
 
-	if ((euid != (uid_t) -1) && !uid_valid(keuid))
-		return -EINVAL;
+	अगर ((euid != (uid_t) -1) && !uid_valid(keuid))
+		वापस -EINVAL;
 
-	if ((suid != (uid_t) -1) && !uid_valid(ksuid))
-		return -EINVAL;
+	अगर ((suid != (uid_t) -1) && !uid_valid(ksuid))
+		वापस -EINVAL;
 
 	new = prepare_creds();
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 
 	old = current_cred();
 
 	retval = -EPERM;
-	if (!ns_capable_setid(old->user_ns, CAP_SETUID)) {
-		if (ruid != (uid_t) -1        && !uid_eq(kruid, old->uid) &&
+	अगर (!ns_capable_setid(old->user_ns, CAP_SETUID)) अणु
+		अगर (ruid != (uid_t) -1        && !uid_eq(kruid, old->uid) &&
 		    !uid_eq(kruid, old->euid) && !uid_eq(kruid, old->suid))
-			goto error;
-		if (euid != (uid_t) -1        && !uid_eq(keuid, old->uid) &&
+			जाओ error;
+		अगर (euid != (uid_t) -1        && !uid_eq(keuid, old->uid) &&
 		    !uid_eq(keuid, old->euid) && !uid_eq(keuid, old->suid))
-			goto error;
-		if (suid != (uid_t) -1        && !uid_eq(ksuid, old->uid) &&
+			जाओ error;
+		अगर (suid != (uid_t) -1        && !uid_eq(ksuid, old->uid) &&
 		    !uid_eq(ksuid, old->euid) && !uid_eq(ksuid, old->suid))
-			goto error;
-	}
+			जाओ error;
+	पूर्ण
 
-	if (ruid != (uid_t) -1) {
+	अगर (ruid != (uid_t) -1) अणु
 		new->uid = kruid;
-		if (!uid_eq(kruid, old->uid)) {
+		अगर (!uid_eq(kruid, old->uid)) अणु
 			retval = set_user(new);
-			if (retval < 0)
-				goto error;
-		}
-	}
-	if (euid != (uid_t) -1)
+			अगर (retval < 0)
+				जाओ error;
+		पूर्ण
+	पूर्ण
+	अगर (euid != (uid_t) -1)
 		new->euid = keuid;
-	if (suid != (uid_t) -1)
+	अगर (suid != (uid_t) -1)
 		new->suid = ksuid;
 	new->fsuid = new->euid;
 
 	retval = security_task_fix_setuid(new, old, LSM_SETID_RES);
-	if (retval < 0)
-		goto error;
+	अगर (retval < 0)
+		जाओ error;
 
-	return commit_creds(new);
+	वापस commit_creds(new);
 
 error:
-	abort_creds(new);
-	return retval;
-}
+	पात_creds(new);
+	वापस retval;
+पूर्ण
 
 SYSCALL_DEFINE3(setresuid, uid_t, ruid, uid_t, euid, uid_t, suid)
-{
-	return __sys_setresuid(ruid, euid, suid);
-}
+अणु
+	वापस __sys_setresuid(ruid, euid, suid);
+पूर्ण
 
 SYSCALL_DEFINE3(getresuid, uid_t __user *, ruidp, uid_t __user *, euidp, uid_t __user *, suidp)
-{
-	const struct cred *cred = current_cred();
-	int retval;
+अणु
+	स्थिर काष्ठा cred *cred = current_cred();
+	पूर्णांक retval;
 	uid_t ruid, euid, suid;
 
 	ruid = from_kuid_munged(cred->user_ns, cred->uid);
@@ -714,82 +715,82 @@ SYSCALL_DEFINE3(getresuid, uid_t __user *, ruidp, uid_t __user *, euidp, uid_t _
 	suid = from_kuid_munged(cred->user_ns, cred->suid);
 
 	retval = put_user(ruid, ruidp);
-	if (!retval) {
+	अगर (!retval) अणु
 		retval = put_user(euid, euidp);
-		if (!retval)
-			return put_user(suid, suidp);
-	}
-	return retval;
-}
+		अगर (!retval)
+			वापस put_user(suid, suidp);
+	पूर्ण
+	वापस retval;
+पूर्ण
 
 /*
- * Same as above, but for rgid, egid, sgid.
+ * Same as above, but क्रम rgid, egid, sgid.
  */
-long __sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid)
-{
-	struct user_namespace *ns = current_user_ns();
-	const struct cred *old;
-	struct cred *new;
-	int retval;
+दीर्घ __sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid)
+अणु
+	काष्ठा user_namespace *ns = current_user_ns();
+	स्थिर काष्ठा cred *old;
+	काष्ठा cred *new;
+	पूर्णांक retval;
 	kgid_t krgid, kegid, ksgid;
 
 	krgid = make_kgid(ns, rgid);
 	kegid = make_kgid(ns, egid);
 	ksgid = make_kgid(ns, sgid);
 
-	if ((rgid != (gid_t) -1) && !gid_valid(krgid))
-		return -EINVAL;
-	if ((egid != (gid_t) -1) && !gid_valid(kegid))
-		return -EINVAL;
-	if ((sgid != (gid_t) -1) && !gid_valid(ksgid))
-		return -EINVAL;
+	अगर ((rgid != (gid_t) -1) && !gid_valid(krgid))
+		वापस -EINVAL;
+	अगर ((egid != (gid_t) -1) && !gid_valid(kegid))
+		वापस -EINVAL;
+	अगर ((sgid != (gid_t) -1) && !gid_valid(ksgid))
+		वापस -EINVAL;
 
 	new = prepare_creds();
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 	old = current_cred();
 
 	retval = -EPERM;
-	if (!ns_capable_setid(old->user_ns, CAP_SETGID)) {
-		if (rgid != (gid_t) -1        && !gid_eq(krgid, old->gid) &&
+	अगर (!ns_capable_setid(old->user_ns, CAP_SETGID)) अणु
+		अगर (rgid != (gid_t) -1        && !gid_eq(krgid, old->gid) &&
 		    !gid_eq(krgid, old->egid) && !gid_eq(krgid, old->sgid))
-			goto error;
-		if (egid != (gid_t) -1        && !gid_eq(kegid, old->gid) &&
+			जाओ error;
+		अगर (egid != (gid_t) -1        && !gid_eq(kegid, old->gid) &&
 		    !gid_eq(kegid, old->egid) && !gid_eq(kegid, old->sgid))
-			goto error;
-		if (sgid != (gid_t) -1        && !gid_eq(ksgid, old->gid) &&
+			जाओ error;
+		अगर (sgid != (gid_t) -1        && !gid_eq(ksgid, old->gid) &&
 		    !gid_eq(ksgid, old->egid) && !gid_eq(ksgid, old->sgid))
-			goto error;
-	}
+			जाओ error;
+	पूर्ण
 
-	if (rgid != (gid_t) -1)
+	अगर (rgid != (gid_t) -1)
 		new->gid = krgid;
-	if (egid != (gid_t) -1)
+	अगर (egid != (gid_t) -1)
 		new->egid = kegid;
-	if (sgid != (gid_t) -1)
+	अगर (sgid != (gid_t) -1)
 		new->sgid = ksgid;
 	new->fsgid = new->egid;
 
 	retval = security_task_fix_setgid(new, old, LSM_SETID_RES);
-	if (retval < 0)
-		goto error;
+	अगर (retval < 0)
+		जाओ error;
 
-	return commit_creds(new);
+	वापस commit_creds(new);
 
 error:
-	abort_creds(new);
-	return retval;
-}
+	पात_creds(new);
+	वापस retval;
+पूर्ण
 
 SYSCALL_DEFINE3(setresgid, gid_t, rgid, gid_t, egid, gid_t, sgid)
-{
-	return __sys_setresgid(rgid, egid, sgid);
-}
+अणु
+	वापस __sys_setresgid(rgid, egid, sgid);
+पूर्ण
 
 SYSCALL_DEFINE3(getresgid, gid_t __user *, rgidp, gid_t __user *, egidp, gid_t __user *, sgidp)
-{
-	const struct cred *cred = current_cred();
-	int retval;
+अणु
+	स्थिर काष्ठा cred *cred = current_cred();
+	पूर्णांक retval;
 	gid_t rgid, egid, sgid;
 
 	rgid = from_kgid_munged(cred->user_ns, cred->gid);
@@ -797,26 +798,26 @@ SYSCALL_DEFINE3(getresgid, gid_t __user *, rgidp, gid_t __user *, egidp, gid_t _
 	sgid = from_kgid_munged(cred->user_ns, cred->sgid);
 
 	retval = put_user(rgid, rgidp);
-	if (!retval) {
+	अगर (!retval) अणु
 		retval = put_user(egid, egidp);
-		if (!retval)
+		अगर (!retval)
 			retval = put_user(sgid, sgidp);
-	}
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
 /*
- * "setfsuid()" sets the fsuid - the uid used for filesystem checks. This
- * is used for "access()" and for the NFS daemon (letting nfsd stay at
- * whatever uid it wants to). It normally shadows "euid", except when
- * explicitly set by setfsuid() or for access..
+ * "setfsuid()" sets the fsuid - the uid used क्रम fileप्रणाली checks. This
+ * is used क्रम "access()" and क्रम the NFS daemon (letting nfsd stay at
+ * whatever uid it wants to). It normally shaकरोws "euid", except when
+ * explicitly set by setfsuid() or क्रम access..
  */
-long __sys_setfsuid(uid_t uid)
-{
-	const struct cred *old;
-	struct cred *new;
+दीर्घ __sys_setfsuid(uid_t uid)
+अणु
+	स्थिर काष्ठा cred *old;
+	काष्ठा cred *new;
 	uid_t old_fsuid;
 	kuid_t kuid;
 
@@ -824,43 +825,43 @@ long __sys_setfsuid(uid_t uid)
 	old_fsuid = from_kuid_munged(old->user_ns, old->fsuid);
 
 	kuid = make_kuid(old->user_ns, uid);
-	if (!uid_valid(kuid))
-		return old_fsuid;
+	अगर (!uid_valid(kuid))
+		वापस old_fsuid;
 
 	new = prepare_creds();
-	if (!new)
-		return old_fsuid;
+	अगर (!new)
+		वापस old_fsuid;
 
-	if (uid_eq(kuid, old->uid)  || uid_eq(kuid, old->euid)  ||
+	अगर (uid_eq(kuid, old->uid)  || uid_eq(kuid, old->euid)  ||
 	    uid_eq(kuid, old->suid) || uid_eq(kuid, old->fsuid) ||
-	    ns_capable_setid(old->user_ns, CAP_SETUID)) {
-		if (!uid_eq(kuid, old->fsuid)) {
+	    ns_capable_setid(old->user_ns, CAP_SETUID)) अणु
+		अगर (!uid_eq(kuid, old->fsuid)) अणु
 			new->fsuid = kuid;
-			if (security_task_fix_setuid(new, old, LSM_SETID_FS) == 0)
-				goto change_okay;
-		}
-	}
+			अगर (security_task_fix_setuid(new, old, LSM_SETID_FS) == 0)
+				जाओ change_okay;
+		पूर्ण
+	पूर्ण
 
-	abort_creds(new);
-	return old_fsuid;
+	पात_creds(new);
+	वापस old_fsuid;
 
 change_okay:
 	commit_creds(new);
-	return old_fsuid;
-}
+	वापस old_fsuid;
+पूर्ण
 
 SYSCALL_DEFINE1(setfsuid, uid_t, uid)
-{
-	return __sys_setfsuid(uid);
-}
+अणु
+	वापस __sys_setfsuid(uid);
+पूर्ण
 
 /*
- * Samma på svenska..
+ * Samma pथआ svenska..
  */
-long __sys_setfsgid(gid_t gid)
-{
-	const struct cred *old;
-	struct cred *new;
+दीर्घ __sys_setfsgid(gid_t gid)
+अणु
+	स्थिर काष्ठा cred *old;
+	काष्ठा cred *new;
 	gid_t old_fsgid;
 	kgid_t kgid;
 
@@ -868,361 +869,361 @@ long __sys_setfsgid(gid_t gid)
 	old_fsgid = from_kgid_munged(old->user_ns, old->fsgid);
 
 	kgid = make_kgid(old->user_ns, gid);
-	if (!gid_valid(kgid))
-		return old_fsgid;
+	अगर (!gid_valid(kgid))
+		वापस old_fsgid;
 
 	new = prepare_creds();
-	if (!new)
-		return old_fsgid;
+	अगर (!new)
+		वापस old_fsgid;
 
-	if (gid_eq(kgid, old->gid)  || gid_eq(kgid, old->egid)  ||
+	अगर (gid_eq(kgid, old->gid)  || gid_eq(kgid, old->egid)  ||
 	    gid_eq(kgid, old->sgid) || gid_eq(kgid, old->fsgid) ||
-	    ns_capable_setid(old->user_ns, CAP_SETGID)) {
-		if (!gid_eq(kgid, old->fsgid)) {
+	    ns_capable_setid(old->user_ns, CAP_SETGID)) अणु
+		अगर (!gid_eq(kgid, old->fsgid)) अणु
 			new->fsgid = kgid;
-			if (security_task_fix_setgid(new,old,LSM_SETID_FS) == 0)
-				goto change_okay;
-		}
-	}
+			अगर (security_task_fix_setgid(new,old,LSM_SETID_FS) == 0)
+				जाओ change_okay;
+		पूर्ण
+	पूर्ण
 
-	abort_creds(new);
-	return old_fsgid;
+	पात_creds(new);
+	वापस old_fsgid;
 
 change_okay:
 	commit_creds(new);
-	return old_fsgid;
-}
+	वापस old_fsgid;
+पूर्ण
 
 SYSCALL_DEFINE1(setfsgid, gid_t, gid)
-{
-	return __sys_setfsgid(gid);
-}
-#endif /* CONFIG_MULTIUSER */
+अणु
+	वापस __sys_setfsgid(gid);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MULTIUSER */
 
 /**
- * sys_getpid - return the thread group id of the current process
+ * sys_getpid - वापस the thपढ़ो group id of the current process
  *
- * Note, despite the name, this returns the tgid not the pid.  The tgid and
- * the pid are identical unless CLONE_THREAD was specified on clone() in
- * which case the tgid is the same in all threads of the same group.
+ * Note, despite the name, this वापसs the tgid not the pid.  The tgid and
+ * the pid are identical unless CLONE_THREAD was specअगरied on clone() in
+ * which हाल the tgid is the same in all thपढ़ोs of the same group.
  *
- * This is SMP safe as current->tgid does not change.
+ * This is SMP safe as current->tgid करोes not change.
  */
 SYSCALL_DEFINE0(getpid)
-{
-	return task_tgid_vnr(current);
-}
+अणु
+	वापस task_tgid_vnr(current);
+पूर्ण
 
-/* Thread ID - the internal kernel "pid" */
+/* Thपढ़ो ID - the पूर्णांकernal kernel "pid" */
 SYSCALL_DEFINE0(gettid)
-{
-	return task_pid_vnr(current);
-}
+अणु
+	वापस task_pid_vnr(current);
+पूर्ण
 
 /*
  * Accessing ->real_parent is not SMP-safe, it could
  * change from under us. However, we can use a stale
- * value of ->real_parent under rcu_read_lock(), see
- * release_task()->call_rcu(delayed_put_task_struct).
+ * value of ->real_parent under rcu_पढ़ो_lock(), see
+ * release_task()->call_rcu(delayed_put_task_काष्ठा).
  */
 SYSCALL_DEFINE0(getppid)
-{
-	int pid;
+अणु
+	पूर्णांक pid;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	pid = task_tgid_vnr(rcu_dereference(current->real_parent));
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
 SYSCALL_DEFINE0(getuid)
-{
+अणु
 	/* Only we change this so SMP safe */
-	return from_kuid_munged(current_user_ns(), current_uid());
-}
+	वापस from_kuid_munged(current_user_ns(), current_uid());
+पूर्ण
 
 SYSCALL_DEFINE0(geteuid)
-{
+अणु
 	/* Only we change this so SMP safe */
-	return from_kuid_munged(current_user_ns(), current_euid());
-}
+	वापस from_kuid_munged(current_user_ns(), current_euid());
+पूर्ण
 
 SYSCALL_DEFINE0(getgid)
-{
+अणु
 	/* Only we change this so SMP safe */
-	return from_kgid_munged(current_user_ns(), current_gid());
-}
+	वापस from_kgid_munged(current_user_ns(), current_gid());
+पूर्ण
 
 SYSCALL_DEFINE0(getegid)
-{
+अणु
 	/* Only we change this so SMP safe */
-	return from_kgid_munged(current_user_ns(), current_egid());
-}
+	वापस from_kgid_munged(current_user_ns(), current_egid());
+पूर्ण
 
-static void do_sys_times(struct tms *tms)
-{
-	u64 tgutime, tgstime, cutime, cstime;
+अटल व्योम करो_sys_बार(काष्ठा पंचांगs *पंचांगs)
+अणु
+	u64 tguसमय, tgsसमय, cuसमय, csसमय;
 
-	thread_group_cputime_adjusted(current, &tgutime, &tgstime);
-	cutime = current->signal->cutime;
-	cstime = current->signal->cstime;
-	tms->tms_utime = nsec_to_clock_t(tgutime);
-	tms->tms_stime = nsec_to_clock_t(tgstime);
-	tms->tms_cutime = nsec_to_clock_t(cutime);
-	tms->tms_cstime = nsec_to_clock_t(cstime);
-}
+	thपढ़ो_group_cpuसमय_adjusted(current, &tguसमय, &tgsसमय);
+	cuसमय = current->संकेत->cuसमय;
+	csसमय = current->संकेत->csसमय;
+	पंचांगs->पंचांगs_uसमय = nsec_to_घड़ी_प्रकार(tguसमय);
+	पंचांगs->पंचांगs_sसमय = nsec_to_घड़ी_प्रकार(tgsसमय);
+	पंचांगs->पंचांगs_cuसमय = nsec_to_घड़ी_प्रकार(cuसमय);
+	पंचांगs->पंचांगs_csसमय = nsec_to_घड़ी_प्रकार(csसमय);
+पूर्ण
 
-SYSCALL_DEFINE1(times, struct tms __user *, tbuf)
-{
-	if (tbuf) {
-		struct tms tmp;
+SYSCALL_DEFINE1(बार, काष्ठा पंचांगs __user *, tbuf)
+अणु
+	अगर (tbuf) अणु
+		काष्ठा पंचांगs पंचांगp;
 
-		do_sys_times(&tmp);
-		if (copy_to_user(tbuf, &tmp, sizeof(struct tms)))
-			return -EFAULT;
-	}
-	force_successful_syscall_return();
-	return (long) jiffies_64_to_clock_t(get_jiffies_64());
-}
+		करो_sys_बार(&पंचांगp);
+		अगर (copy_to_user(tbuf, &पंचांगp, माप(काष्ठा पंचांगs)))
+			वापस -EFAULT;
+	पूर्ण
+	क्रमce_successful_syscall_वापस();
+	वापस (दीर्घ) jअगरfies_64_to_घड़ी_प्रकार(get_jअगरfies_64());
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static compat_clock_t clock_t_to_compat_clock_t(clock_t x)
-{
-	return compat_jiffies_to_clock_t(clock_t_to_jiffies(x));
-}
+#अगर_घोषित CONFIG_COMPAT
+अटल compat_घड़ी_प्रकार घड़ी_प्रकार_to_compat_घड़ी_प्रकार(घड़ी_प्रकार x)
+अणु
+	वापस compat_jअगरfies_to_घड़ी_प्रकार(घड़ी_प्रकार_to_jअगरfies(x));
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE1(times, struct compat_tms __user *, tbuf)
-{
-	if (tbuf) {
-		struct tms tms;
-		struct compat_tms tmp;
+COMPAT_SYSCALL_DEFINE1(बार, काष्ठा compat_पंचांगs __user *, tbuf)
+अणु
+	अगर (tbuf) अणु
+		काष्ठा पंचांगs पंचांगs;
+		काष्ठा compat_पंचांगs पंचांगp;
 
-		do_sys_times(&tms);
-		/* Convert our struct tms to the compat version. */
-		tmp.tms_utime = clock_t_to_compat_clock_t(tms.tms_utime);
-		tmp.tms_stime = clock_t_to_compat_clock_t(tms.tms_stime);
-		tmp.tms_cutime = clock_t_to_compat_clock_t(tms.tms_cutime);
-		tmp.tms_cstime = clock_t_to_compat_clock_t(tms.tms_cstime);
-		if (copy_to_user(tbuf, &tmp, sizeof(tmp)))
-			return -EFAULT;
-	}
-	force_successful_syscall_return();
-	return compat_jiffies_to_clock_t(jiffies);
-}
-#endif
+		करो_sys_बार(&पंचांगs);
+		/* Convert our काष्ठा पंचांगs to the compat version. */
+		पंचांगp.पंचांगs_uसमय = घड़ी_प्रकार_to_compat_घड़ी_प्रकार(पंचांगs.पंचांगs_uसमय);
+		पंचांगp.पंचांगs_sसमय = घड़ी_प्रकार_to_compat_घड़ी_प्रकार(पंचांगs.पंचांगs_sसमय);
+		पंचांगp.पंचांगs_cuसमय = घड़ी_प्रकार_to_compat_घड़ी_प्रकार(पंचांगs.पंचांगs_cuसमय);
+		पंचांगp.पंचांगs_csसमय = घड़ी_प्रकार_to_compat_घड़ी_प्रकार(पंचांगs.पंचांगs_csसमय);
+		अगर (copy_to_user(tbuf, &पंचांगp, माप(पंचांगp)))
+			वापस -EFAULT;
+	पूर्ण
+	क्रमce_successful_syscall_वापस();
+	वापस compat_jअगरfies_to_घड़ी_प्रकार(jअगरfies);
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * This needs some heavy checking ...
  * I just haven't the stomach for it. I also don't fully
- * understand sessions/pgrp etc. Let somebody who does explain it.
+ * understand sessions/pgrp etc. Let somebody who करोes explain it.
  *
  * OK, I think I have the protection semantics right.... this is really
- * only important on a multi-user system anyway, to make sure one user
- * can't send a signal to a process owned by another.  -TYT, 12/12/91
+ * only important on a multi-user प्रणाली anyway, to make sure one user
+ * can't send a संकेत to a process owned by another.  -TYT, 12/12/91
  *
- * !PF_FORKNOEXEC check to conform completely to POSIX.
+ * !PF_FORKNOEXEC check to conक्रमm completely to POSIX.
  */
 SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
-{
-	struct task_struct *p;
-	struct task_struct *group_leader = current->group_leader;
-	struct pid *pgrp;
-	int err;
+अणु
+	काष्ठा task_काष्ठा *p;
+	काष्ठा task_काष्ठा *group_leader = current->group_leader;
+	काष्ठा pid *pgrp;
+	पूर्णांक err;
 
-	if (!pid)
+	अगर (!pid)
 		pid = task_pid_vnr(group_leader);
-	if (!pgid)
+	अगर (!pgid)
 		pgid = pid;
-	if (pgid < 0)
-		return -EINVAL;
-	rcu_read_lock();
+	अगर (pgid < 0)
+		वापस -EINVAL;
+	rcu_पढ़ो_lock();
 
-	/* From this point forward we keep holding onto the tasklist lock
-	 * so that our parent does not change from under us. -DaveM
+	/* From this poपूर्णांक क्रमward we keep holding onto the tasklist lock
+	 * so that our parent करोes not change from under us. -DaveM
 	 */
-	write_lock_irq(&tasklist_lock);
+	ग_लिखो_lock_irq(&tasklist_lock);
 
 	err = -ESRCH;
 	p = find_task_by_vpid(pid);
-	if (!p)
-		goto out;
+	अगर (!p)
+		जाओ out;
 
 	err = -EINVAL;
-	if (!thread_group_leader(p))
-		goto out;
+	अगर (!thपढ़ो_group_leader(p))
+		जाओ out;
 
-	if (same_thread_group(p->real_parent, group_leader)) {
+	अगर (same_thपढ़ो_group(p->real_parent, group_leader)) अणु
 		err = -EPERM;
-		if (task_session(p) != task_session(group_leader))
-			goto out;
+		अगर (task_session(p) != task_session(group_leader))
+			जाओ out;
 		err = -EACCES;
-		if (!(p->flags & PF_FORKNOEXEC))
-			goto out;
-	} else {
+		अगर (!(p->flags & PF_FORKNOEXEC))
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		err = -ESRCH;
-		if (p != group_leader)
-			goto out;
-	}
+		अगर (p != group_leader)
+			जाओ out;
+	पूर्ण
 
 	err = -EPERM;
-	if (p->signal->leader)
-		goto out;
+	अगर (p->संकेत->leader)
+		जाओ out;
 
 	pgrp = task_pid(p);
-	if (pgid != pid) {
-		struct task_struct *g;
+	अगर (pgid != pid) अणु
+		काष्ठा task_काष्ठा *g;
 
 		pgrp = find_vpid(pgid);
 		g = pid_task(pgrp, PIDTYPE_PGID);
-		if (!g || task_session(g) != task_session(group_leader))
-			goto out;
-	}
+		अगर (!g || task_session(g) != task_session(group_leader))
+			जाओ out;
+	पूर्ण
 
 	err = security_task_setpgid(p, pgid);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (task_pgrp(p) != pgrp)
+	अगर (task_pgrp(p) != pgrp)
 		change_pid(p, PIDTYPE_PGID, pgrp);
 
 	err = 0;
 out:
 	/* All paths lead to here, thus we are safe. -DaveM */
-	write_unlock_irq(&tasklist_lock);
-	rcu_read_unlock();
-	return err;
-}
+	ग_लिखो_unlock_irq(&tasklist_lock);
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 
-static int do_getpgid(pid_t pid)
-{
-	struct task_struct *p;
-	struct pid *grp;
-	int retval;
+अटल पूर्णांक करो_getpgid(pid_t pid)
+अणु
+	काष्ठा task_काष्ठा *p;
+	काष्ठा pid *grp;
+	पूर्णांक retval;
 
-	rcu_read_lock();
-	if (!pid)
+	rcu_पढ़ो_lock();
+	अगर (!pid)
 		grp = task_pgrp(current);
-	else {
+	अन्यथा अणु
 		retval = -ESRCH;
 		p = find_task_by_vpid(pid);
-		if (!p)
-			goto out;
+		अगर (!p)
+			जाओ out;
 		grp = task_pgrp(p);
-		if (!grp)
-			goto out;
+		अगर (!grp)
+			जाओ out;
 
 		retval = security_task_getpgid(p);
-		if (retval)
-			goto out;
-	}
+		अगर (retval)
+			जाओ out;
+	पूर्ण
 	retval = pid_vnr(grp);
 out:
-	rcu_read_unlock();
-	return retval;
-}
+	rcu_पढ़ो_unlock();
+	वापस retval;
+पूर्ण
 
 SYSCALL_DEFINE1(getpgid, pid_t, pid)
-{
-	return do_getpgid(pid);
-}
+अणु
+	वापस करो_getpgid(pid);
+पूर्ण
 
-#ifdef __ARCH_WANT_SYS_GETPGRP
+#अगर_घोषित __ARCH_WANT_SYS_GETPGRP
 
 SYSCALL_DEFINE0(getpgrp)
-{
-	return do_getpgid(0);
-}
+अणु
+	वापस करो_getpgid(0);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-SYSCALL_DEFINE1(getsid, pid_t, pid)
-{
-	struct task_struct *p;
-	struct pid *sid;
-	int retval;
+SYSCALL_DEFINE1(माला_लोid, pid_t, pid)
+अणु
+	काष्ठा task_काष्ठा *p;
+	काष्ठा pid *sid;
+	पूर्णांक retval;
 
-	rcu_read_lock();
-	if (!pid)
+	rcu_पढ़ो_lock();
+	अगर (!pid)
 		sid = task_session(current);
-	else {
+	अन्यथा अणु
 		retval = -ESRCH;
 		p = find_task_by_vpid(pid);
-		if (!p)
-			goto out;
+		अगर (!p)
+			जाओ out;
 		sid = task_session(p);
-		if (!sid)
-			goto out;
+		अगर (!sid)
+			जाओ out;
 
-		retval = security_task_getsid(p);
-		if (retval)
-			goto out;
-	}
+		retval = security_task_माला_लोid(p);
+		अगर (retval)
+			जाओ out;
+	पूर्ण
 	retval = pid_vnr(sid);
 out:
-	rcu_read_unlock();
-	return retval;
-}
+	rcu_पढ़ो_unlock();
+	वापस retval;
+पूर्ण
 
-static void set_special_pids(struct pid *pid)
-{
-	struct task_struct *curr = current->group_leader;
+अटल व्योम set_special_pids(काष्ठा pid *pid)
+अणु
+	काष्ठा task_काष्ठा *curr = current->group_leader;
 
-	if (task_session(curr) != pid)
+	अगर (task_session(curr) != pid)
 		change_pid(curr, PIDTYPE_SID, pid);
 
-	if (task_pgrp(curr) != pid)
+	अगर (task_pgrp(curr) != pid)
 		change_pid(curr, PIDTYPE_PGID, pid);
-}
+पूर्ण
 
-int ksys_setsid(void)
-{
-	struct task_struct *group_leader = current->group_leader;
-	struct pid *sid = task_pid(group_leader);
+पूर्णांक ksys_setsid(व्योम)
+अणु
+	काष्ठा task_काष्ठा *group_leader = current->group_leader;
+	काष्ठा pid *sid = task_pid(group_leader);
 	pid_t session = pid_vnr(sid);
-	int err = -EPERM;
+	पूर्णांक err = -EPERM;
 
-	write_lock_irq(&tasklist_lock);
-	/* Fail if I am already a session leader */
-	if (group_leader->signal->leader)
-		goto out;
+	ग_लिखो_lock_irq(&tasklist_lock);
+	/* Fail अगर I am alपढ़ोy a session leader */
+	अगर (group_leader->संकेत->leader)
+		जाओ out;
 
-	/* Fail if a process group id already exists that equals the
+	/* Fail अगर a process group id alपढ़ोy exists that equals the
 	 * proposed session id.
 	 */
-	if (pid_task(sid, PIDTYPE_PGID))
-		goto out;
+	अगर (pid_task(sid, PIDTYPE_PGID))
+		जाओ out;
 
-	group_leader->signal->leader = 1;
+	group_leader->संकेत->leader = 1;
 	set_special_pids(sid);
 
 	proc_clear_tty(group_leader);
 
 	err = session;
 out:
-	write_unlock_irq(&tasklist_lock);
-	if (err > 0) {
+	ग_लिखो_unlock_irq(&tasklist_lock);
+	अगर (err > 0) अणु
 		proc_sid_connector(group_leader);
-		sched_autogroup_create_attach(group_leader);
-	}
-	return err;
-}
+		sched_स्वतःgroup_create_attach(group_leader);
+	पूर्ण
+	वापस err;
+पूर्ण
 
 SYSCALL_DEFINE0(setsid)
-{
-	return ksys_setsid();
-}
+अणु
+	वापस ksys_setsid();
+पूर्ण
 
 DECLARE_RWSEM(uts_sem);
 
-#ifdef COMPAT_UTS_MACHINE
-#define override_architecture(name) \
+#अगर_घोषित COMPAT_UTS_MACHINE
+#घोषणा override_architecture(name) \
 	(personality(current->personality) == PER_LINUX32 && \
 	 copy_to_user(name->machine, COMPAT_UTS_MACHINE, \
-		      sizeof(COMPAT_UTS_MACHINE)))
-#else
-#define override_architecture(name)	0
-#endif
+		      माप(COMPAT_UTS_MACHINE)))
+#अन्यथा
+#घोषणा override_architecture(name)	0
+#पूर्ण_अगर
 
 /*
  * Work around broken programs that cannot handle "Linux 3.0".
@@ -1230,387 +1231,387 @@ DECLARE_RWSEM(uts_sem);
  * And we map 4.x and later versions to 2.6.60+x, so 4.0/5.0/6.0/... would be
  * 2.6.60.
  */
-static int override_release(char __user *release, size_t len)
-{
-	int ret = 0;
+अटल पूर्णांक override_release(अक्षर __user *release, माप_प्रकार len)
+अणु
+	पूर्णांक ret = 0;
 
-	if (current->personality & UNAME26) {
-		const char *rest = UTS_RELEASE;
-		char buf[65] = { 0 };
-		int ndots = 0;
-		unsigned v;
-		size_t copy;
+	अगर (current->personality & UNAME26) अणु
+		स्थिर अक्षर *rest = UTS_RELEASE;
+		अक्षर buf[65] = अणु 0 पूर्ण;
+		पूर्णांक nकरोts = 0;
+		अचिन्हित v;
+		माप_प्रकार copy;
 
-		while (*rest) {
-			if (*rest == '.' && ++ndots >= 3)
-				break;
-			if (!isdigit(*rest) && *rest != '.')
-				break;
+		जबतक (*rest) अणु
+			अगर (*rest == '.' && ++nकरोts >= 3)
+				अवरोध;
+			अगर (!है_अंक(*rest) && *rest != '.')
+				अवरोध;
 			rest++;
-		}
+		पूर्ण
 		v = LINUX_VERSION_PATCHLEVEL + 60;
-		copy = clamp_t(size_t, len, 1, sizeof(buf));
-		copy = scnprintf(buf, copy, "2.6.%u%s", v, rest);
+		copy = clamp_t(माप_प्रकार, len, 1, माप(buf));
+		copy = scnम_लिखो(buf, copy, "2.6.%u%s", v, rest);
 		ret = copy_to_user(release, buf, copy + 1);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
-{
-	struct new_utsname tmp;
+SYSCALL_DEFINE1(newuname, काष्ठा new_utsname __user *, name)
+अणु
+	काष्ठा new_utsname पंचांगp;
 
-	down_read(&uts_sem);
-	memcpy(&tmp, utsname(), sizeof(tmp));
-	up_read(&uts_sem);
-	if (copy_to_user(name, &tmp, sizeof(tmp)))
-		return -EFAULT;
+	करोwn_पढ़ो(&uts_sem);
+	स_नकल(&पंचांगp, utsname(), माप(पंचांगp));
+	up_पढ़ो(&uts_sem);
+	अगर (copy_to_user(name, &पंचांगp, माप(पंचांगp)))
+		वापस -EFAULT;
 
-	if (override_release(name->release, sizeof(name->release)))
-		return -EFAULT;
-	if (override_architecture(name))
-		return -EFAULT;
-	return 0;
-}
+	अगर (override_release(name->release, माप(name->release)))
+		वापस -EFAULT;
+	अगर (override_architecture(name))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-#ifdef __ARCH_WANT_SYS_OLD_UNAME
+#अगर_घोषित __ARCH_WANT_SYS_OLD_UNAME
 /*
  * Old cruft
  */
-SYSCALL_DEFINE1(uname, struct old_utsname __user *, name)
-{
-	struct old_utsname tmp;
+SYSCALL_DEFINE1(uname, काष्ठा old_utsname __user *, name)
+अणु
+	काष्ठा old_utsname पंचांगp;
 
-	if (!name)
-		return -EFAULT;
+	अगर (!name)
+		वापस -EFAULT;
 
-	down_read(&uts_sem);
-	memcpy(&tmp, utsname(), sizeof(tmp));
-	up_read(&uts_sem);
-	if (copy_to_user(name, &tmp, sizeof(tmp)))
-		return -EFAULT;
+	करोwn_पढ़ो(&uts_sem);
+	स_नकल(&पंचांगp, utsname(), माप(पंचांगp));
+	up_पढ़ो(&uts_sem);
+	अगर (copy_to_user(name, &पंचांगp, माप(पंचांगp)))
+		वापस -EFAULT;
 
-	if (override_release(name->release, sizeof(name->release)))
-		return -EFAULT;
-	if (override_architecture(name))
-		return -EFAULT;
-	return 0;
-}
+	अगर (override_release(name->release, माप(name->release)))
+		वापस -EFAULT;
+	अगर (override_architecture(name))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-SYSCALL_DEFINE1(olduname, struct oldold_utsname __user *, name)
-{
-	struct oldold_utsname tmp;
+SYSCALL_DEFINE1(olduname, काष्ठा olकरोld_utsname __user *, name)
+अणु
+	काष्ठा olकरोld_utsname पंचांगp;
 
-	if (!name)
-		return -EFAULT;
+	अगर (!name)
+		वापस -EFAULT;
 
-	memset(&tmp, 0, sizeof(tmp));
+	स_रखो(&पंचांगp, 0, माप(पंचांगp));
 
-	down_read(&uts_sem);
-	memcpy(&tmp.sysname, &utsname()->sysname, __OLD_UTS_LEN);
-	memcpy(&tmp.nodename, &utsname()->nodename, __OLD_UTS_LEN);
-	memcpy(&tmp.release, &utsname()->release, __OLD_UTS_LEN);
-	memcpy(&tmp.version, &utsname()->version, __OLD_UTS_LEN);
-	memcpy(&tmp.machine, &utsname()->machine, __OLD_UTS_LEN);
-	up_read(&uts_sem);
-	if (copy_to_user(name, &tmp, sizeof(tmp)))
-		return -EFAULT;
+	करोwn_पढ़ो(&uts_sem);
+	स_नकल(&पंचांगp.sysname, &utsname()->sysname, __OLD_UTS_LEN);
+	स_नकल(&पंचांगp.nodename, &utsname()->nodename, __OLD_UTS_LEN);
+	स_नकल(&पंचांगp.release, &utsname()->release, __OLD_UTS_LEN);
+	स_नकल(&पंचांगp.version, &utsname()->version, __OLD_UTS_LEN);
+	स_नकल(&पंचांगp.machine, &utsname()->machine, __OLD_UTS_LEN);
+	up_पढ़ो(&uts_sem);
+	अगर (copy_to_user(name, &पंचांगp, माप(पंचांगp)))
+		वापस -EFAULT;
 
-	if (override_architecture(name))
-		return -EFAULT;
-	if (override_release(name->release, sizeof(name->release)))
-		return -EFAULT;
-	return 0;
-}
-#endif
+	अगर (override_architecture(name))
+		वापस -EFAULT;
+	अगर (override_release(name->release, माप(name->release)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-SYSCALL_DEFINE2(sethostname, char __user *, name, int, len)
-{
-	int errno;
-	char tmp[__NEW_UTS_LEN];
+SYSCALL_DEFINE2(sethostname, अक्षर __user *, name, पूर्णांक, len)
+अणु
+	पूर्णांक त्रुटि_सं;
+	अक्षर पंचांगp[__NEW_UTS_LEN];
 
-	if (!ns_capable(current->nsproxy->uts_ns->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!ns_capable(current->nsproxy->uts_ns->user_ns, CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	if (len < 0 || len > __NEW_UTS_LEN)
-		return -EINVAL;
-	errno = -EFAULT;
-	if (!copy_from_user(tmp, name, len)) {
-		struct new_utsname *u;
+	अगर (len < 0 || len > __NEW_UTS_LEN)
+		वापस -EINVAL;
+	त्रुटि_सं = -EFAULT;
+	अगर (!copy_from_user(पंचांगp, name, len)) अणु
+		काष्ठा new_utsname *u;
 
-		down_write(&uts_sem);
+		करोwn_ग_लिखो(&uts_sem);
 		u = utsname();
-		memcpy(u->nodename, tmp, len);
-		memset(u->nodename + len, 0, sizeof(u->nodename) - len);
-		errno = 0;
-		uts_proc_notify(UTS_PROC_HOSTNAME);
-		up_write(&uts_sem);
-	}
-	return errno;
-}
+		स_नकल(u->nodename, पंचांगp, len);
+		स_रखो(u->nodename + len, 0, माप(u->nodename) - len);
+		त्रुटि_सं = 0;
+		uts_proc_notअगरy(UTS_PROC_HOSTNAME);
+		up_ग_लिखो(&uts_sem);
+	पूर्ण
+	वापस त्रुटि_सं;
+पूर्ण
 
-#ifdef __ARCH_WANT_SYS_GETHOSTNAME
+#अगर_घोषित __ARCH_WANT_SYS_GETHOSTNAME
 
-SYSCALL_DEFINE2(gethostname, char __user *, name, int, len)
-{
-	int i;
-	struct new_utsname *u;
-	char tmp[__NEW_UTS_LEN + 1];
+SYSCALL_DEFINE2(gethostname, अक्षर __user *, name, पूर्णांक, len)
+अणु
+	पूर्णांक i;
+	काष्ठा new_utsname *u;
+	अक्षर पंचांगp[__NEW_UTS_LEN + 1];
 
-	if (len < 0)
-		return -EINVAL;
-	down_read(&uts_sem);
+	अगर (len < 0)
+		वापस -EINVAL;
+	करोwn_पढ़ो(&uts_sem);
 	u = utsname();
-	i = 1 + strlen(u->nodename);
-	if (i > len)
+	i = 1 + म_माप(u->nodename);
+	अगर (i > len)
 		i = len;
-	memcpy(tmp, u->nodename, i);
-	up_read(&uts_sem);
-	if (copy_to_user(name, tmp, i))
-		return -EFAULT;
-	return 0;
-}
+	स_नकल(पंचांगp, u->nodename, i);
+	up_पढ़ो(&uts_sem);
+	अगर (copy_to_user(name, पंचांगp, i))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
- * Only setdomainname; getdomainname can be implemented by calling
+ * Only setकरोमुख्यname; getकरोमुख्यname can be implemented by calling
  * uname()
  */
-SYSCALL_DEFINE2(setdomainname, char __user *, name, int, len)
-{
-	int errno;
-	char tmp[__NEW_UTS_LEN];
+SYSCALL_DEFINE2(setकरोमुख्यname, अक्षर __user *, name, पूर्णांक, len)
+अणु
+	पूर्णांक त्रुटि_सं;
+	अक्षर पंचांगp[__NEW_UTS_LEN];
 
-	if (!ns_capable(current->nsproxy->uts_ns->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
-	if (len < 0 || len > __NEW_UTS_LEN)
-		return -EINVAL;
+	अगर (!ns_capable(current->nsproxy->uts_ns->user_ns, CAP_SYS_ADMIN))
+		वापस -EPERM;
+	अगर (len < 0 || len > __NEW_UTS_LEN)
+		वापस -EINVAL;
 
-	errno = -EFAULT;
-	if (!copy_from_user(tmp, name, len)) {
-		struct new_utsname *u;
+	त्रुटि_सं = -EFAULT;
+	अगर (!copy_from_user(पंचांगp, name, len)) अणु
+		काष्ठा new_utsname *u;
 
-		down_write(&uts_sem);
+		करोwn_ग_लिखो(&uts_sem);
 		u = utsname();
-		memcpy(u->domainname, tmp, len);
-		memset(u->domainname + len, 0, sizeof(u->domainname) - len);
-		errno = 0;
-		uts_proc_notify(UTS_PROC_DOMAINNAME);
-		up_write(&uts_sem);
-	}
-	return errno;
-}
+		स_नकल(u->करोमुख्यname, पंचांगp, len);
+		स_रखो(u->करोमुख्यname + len, 0, माप(u->करोमुख्यname) - len);
+		त्रुटि_सं = 0;
+		uts_proc_notअगरy(UTS_PROC_DOMAINNAME);
+		up_ग_लिखो(&uts_sem);
+	पूर्ण
+	वापस त्रुटि_सं;
+पूर्ण
 
-SYSCALL_DEFINE2(getrlimit, unsigned int, resource, struct rlimit __user *, rlim)
-{
-	struct rlimit value;
-	int ret;
+SYSCALL_DEFINE2(getrlimit, अचिन्हित पूर्णांक, resource, काष्ठा rlimit __user *, rlim)
+अणु
+	काष्ठा rlimit value;
+	पूर्णांक ret;
 
-	ret = do_prlimit(current, resource, NULL, &value);
-	if (!ret)
-		ret = copy_to_user(rlim, &value, sizeof(*rlim)) ? -EFAULT : 0;
+	ret = करो_prlimit(current, resource, शून्य, &value);
+	अगर (!ret)
+		ret = copy_to_user(rlim, &value, माप(*rlim)) ? -EFAULT : 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 
-COMPAT_SYSCALL_DEFINE2(setrlimit, unsigned int, resource,
-		       struct compat_rlimit __user *, rlim)
-{
-	struct rlimit r;
-	struct compat_rlimit r32;
+COMPAT_SYSCALL_DEFINE2(setrlimit, अचिन्हित पूर्णांक, resource,
+		       काष्ठा compat_rlimit __user *, rlim)
+अणु
+	काष्ठा rlimit r;
+	काष्ठा compat_rlimit r32;
 
-	if (copy_from_user(&r32, rlim, sizeof(struct compat_rlimit)))
-		return -EFAULT;
+	अगर (copy_from_user(&r32, rlim, माप(काष्ठा compat_rlimit)))
+		वापस -EFAULT;
 
-	if (r32.rlim_cur == COMPAT_RLIM_INFINITY)
-		r.rlim_cur = RLIM_INFINITY;
-	else
+	अगर (r32.rlim_cur == COMPAT_RLIM_अनन्त)
+		r.rlim_cur = RLIM_अनन्त;
+	अन्यथा
 		r.rlim_cur = r32.rlim_cur;
-	if (r32.rlim_max == COMPAT_RLIM_INFINITY)
-		r.rlim_max = RLIM_INFINITY;
-	else
+	अगर (r32.rlim_max == COMPAT_RLIM_अनन्त)
+		r.rlim_max = RLIM_अनन्त;
+	अन्यथा
 		r.rlim_max = r32.rlim_max;
-	return do_prlimit(current, resource, &r, NULL);
-}
+	वापस करो_prlimit(current, resource, &r, शून्य);
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE2(getrlimit, unsigned int, resource,
-		       struct compat_rlimit __user *, rlim)
-{
-	struct rlimit r;
-	int ret;
+COMPAT_SYSCALL_DEFINE2(getrlimit, अचिन्हित पूर्णांक, resource,
+		       काष्ठा compat_rlimit __user *, rlim)
+अणु
+	काष्ठा rlimit r;
+	पूर्णांक ret;
 
-	ret = do_prlimit(current, resource, NULL, &r);
-	if (!ret) {
-		struct compat_rlimit r32;
-		if (r.rlim_cur > COMPAT_RLIM_INFINITY)
-			r32.rlim_cur = COMPAT_RLIM_INFINITY;
-		else
+	ret = करो_prlimit(current, resource, शून्य, &r);
+	अगर (!ret) अणु
+		काष्ठा compat_rlimit r32;
+		अगर (r.rlim_cur > COMPAT_RLIM_अनन्त)
+			r32.rlim_cur = COMPAT_RLIM_अनन्त;
+		अन्यथा
 			r32.rlim_cur = r.rlim_cur;
-		if (r.rlim_max > COMPAT_RLIM_INFINITY)
-			r32.rlim_max = COMPAT_RLIM_INFINITY;
-		else
+		अगर (r.rlim_max > COMPAT_RLIM_अनन्त)
+			r32.rlim_max = COMPAT_RLIM_अनन्त;
+		अन्यथा
 			r32.rlim_max = r.rlim_max;
 
-		if (copy_to_user(rlim, &r32, sizeof(struct compat_rlimit)))
-			return -EFAULT;
-	}
-	return ret;
-}
+		अगर (copy_to_user(rlim, &r32, माप(काष्ठा compat_rlimit)))
+			वापस -EFAULT;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef __ARCH_WANT_SYS_OLD_GETRLIMIT
+#अगर_घोषित __ARCH_WANT_SYS_OLD_GETRLIMIT
 
 /*
- *	Back compatibility for getrlimit. Needed for some apps.
+ *	Back compatibility क्रम getrlimit. Needed क्रम some apps.
  */
-SYSCALL_DEFINE2(old_getrlimit, unsigned int, resource,
-		struct rlimit __user *, rlim)
-{
-	struct rlimit x;
-	if (resource >= RLIM_NLIMITS)
-		return -EINVAL;
+SYSCALL_DEFINE2(old_getrlimit, अचिन्हित पूर्णांक, resource,
+		काष्ठा rlimit __user *, rlim)
+अणु
+	काष्ठा rlimit x;
+	अगर (resource >= RLIM_NLIMITS)
+		वापस -EINVAL;
 
 	resource = array_index_nospec(resource, RLIM_NLIMITS);
 	task_lock(current->group_leader);
-	x = current->signal->rlim[resource];
+	x = current->संकेत->rlim[resource];
 	task_unlock(current->group_leader);
-	if (x.rlim_cur > 0x7FFFFFFF)
+	अगर (x.rlim_cur > 0x7FFFFFFF)
 		x.rlim_cur = 0x7FFFFFFF;
-	if (x.rlim_max > 0x7FFFFFFF)
+	अगर (x.rlim_max > 0x7FFFFFFF)
 		x.rlim_max = 0x7FFFFFFF;
-	return copy_to_user(rlim, &x, sizeof(x)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(rlim, &x, माप(x)) ? -EFAULT : 0;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE2(old_getrlimit, unsigned int, resource,
-		       struct compat_rlimit __user *, rlim)
-{
-	struct rlimit r;
+#अगर_घोषित CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE2(old_getrlimit, अचिन्हित पूर्णांक, resource,
+		       काष्ठा compat_rlimit __user *, rlim)
+अणु
+	काष्ठा rlimit r;
 
-	if (resource >= RLIM_NLIMITS)
-		return -EINVAL;
+	अगर (resource >= RLIM_NLIMITS)
+		वापस -EINVAL;
 
 	resource = array_index_nospec(resource, RLIM_NLIMITS);
 	task_lock(current->group_leader);
-	r = current->signal->rlim[resource];
+	r = current->संकेत->rlim[resource];
 	task_unlock(current->group_leader);
-	if (r.rlim_cur > 0x7FFFFFFF)
+	अगर (r.rlim_cur > 0x7FFFFFFF)
 		r.rlim_cur = 0x7FFFFFFF;
-	if (r.rlim_max > 0x7FFFFFFF)
+	अगर (r.rlim_max > 0x7FFFFFFF)
 		r.rlim_max = 0x7FFFFFFF;
 
-	if (put_user(r.rlim_cur, &rlim->rlim_cur) ||
+	अगर (put_user(r.rlim_cur, &rlim->rlim_cur) ||
 	    put_user(r.rlim_max, &rlim->rlim_max))
-		return -EFAULT;
-	return 0;
-}
-#endif
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर
 
-static inline bool rlim64_is_infinity(__u64 rlim64)
-{
-#if BITS_PER_LONG < 64
-	return rlim64 >= ULONG_MAX;
-#else
-	return rlim64 == RLIM64_INFINITY;
-#endif
-}
+अटल अंतरभूत bool rlim64_is_infinity(__u64 rlim64)
+अणु
+#अगर BITS_PER_LONG < 64
+	वापस rlim64 >= अच_दीर्घ_उच्च;
+#अन्यथा
+	वापस rlim64 == RLIM64_अनन्त;
+#पूर्ण_अगर
+पूर्ण
 
-static void rlim_to_rlim64(const struct rlimit *rlim, struct rlimit64 *rlim64)
-{
-	if (rlim->rlim_cur == RLIM_INFINITY)
-		rlim64->rlim_cur = RLIM64_INFINITY;
-	else
+अटल व्योम rlim_to_rlim64(स्थिर काष्ठा rlimit *rlim, काष्ठा rlimit64 *rlim64)
+अणु
+	अगर (rlim->rlim_cur == RLIM_अनन्त)
+		rlim64->rlim_cur = RLIM64_अनन्त;
+	अन्यथा
 		rlim64->rlim_cur = rlim->rlim_cur;
-	if (rlim->rlim_max == RLIM_INFINITY)
-		rlim64->rlim_max = RLIM64_INFINITY;
-	else
+	अगर (rlim->rlim_max == RLIM_अनन्त)
+		rlim64->rlim_max = RLIM64_अनन्त;
+	अन्यथा
 		rlim64->rlim_max = rlim->rlim_max;
-}
+पूर्ण
 
-static void rlim64_to_rlim(const struct rlimit64 *rlim64, struct rlimit *rlim)
-{
-	if (rlim64_is_infinity(rlim64->rlim_cur))
-		rlim->rlim_cur = RLIM_INFINITY;
-	else
-		rlim->rlim_cur = (unsigned long)rlim64->rlim_cur;
-	if (rlim64_is_infinity(rlim64->rlim_max))
-		rlim->rlim_max = RLIM_INFINITY;
-	else
-		rlim->rlim_max = (unsigned long)rlim64->rlim_max;
-}
+अटल व्योम rlim64_to_rlim(स्थिर काष्ठा rlimit64 *rlim64, काष्ठा rlimit *rlim)
+अणु
+	अगर (rlim64_is_infinity(rlim64->rlim_cur))
+		rlim->rlim_cur = RLIM_अनन्त;
+	अन्यथा
+		rlim->rlim_cur = (अचिन्हित दीर्घ)rlim64->rlim_cur;
+	अगर (rlim64_is_infinity(rlim64->rlim_max))
+		rlim->rlim_max = RLIM_अनन्त;
+	अन्यथा
+		rlim->rlim_max = (अचिन्हित दीर्घ)rlim64->rlim_max;
+पूर्ण
 
-/* make sure you are allowed to change @tsk limits before calling this */
-int do_prlimit(struct task_struct *tsk, unsigned int resource,
-		struct rlimit *new_rlim, struct rlimit *old_rlim)
-{
-	struct rlimit *rlim;
-	int retval = 0;
+/* make sure you are allowed to change @tsk limits beक्रमe calling this */
+पूर्णांक करो_prlimit(काष्ठा task_काष्ठा *tsk, अचिन्हित पूर्णांक resource,
+		काष्ठा rlimit *new_rlim, काष्ठा rlimit *old_rlim)
+अणु
+	काष्ठा rlimit *rlim;
+	पूर्णांक retval = 0;
 
-	if (resource >= RLIM_NLIMITS)
-		return -EINVAL;
-	if (new_rlim) {
-		if (new_rlim->rlim_cur > new_rlim->rlim_max)
-			return -EINVAL;
-		if (resource == RLIMIT_NOFILE &&
-				new_rlim->rlim_max > sysctl_nr_open)
-			return -EPERM;
-	}
+	अगर (resource >= RLIM_NLIMITS)
+		वापस -EINVAL;
+	अगर (new_rlim) अणु
+		अगर (new_rlim->rlim_cur > new_rlim->rlim_max)
+			वापस -EINVAL;
+		अगर (resource == RLIMIT_NOखाता &&
+				new_rlim->rlim_max > sysctl_nr_खोलो)
+			वापस -EPERM;
+	पूर्ण
 
-	/* protect tsk->signal and tsk->sighand from disappearing */
-	read_lock(&tasklist_lock);
-	if (!tsk->sighand) {
+	/* protect tsk->संकेत and tsk->sighand from disappearing */
+	पढ़ो_lock(&tasklist_lock);
+	अगर (!tsk->sighand) अणु
 		retval = -ESRCH;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rlim = tsk->signal->rlim + resource;
+	rlim = tsk->संकेत->rlim + resource;
 	task_lock(tsk->group_leader);
-	if (new_rlim) {
+	अगर (new_rlim) अणु
 		/* Keep the capable check against init_user_ns until
 		   cgroups can contain all limits */
-		if (new_rlim->rlim_max > rlim->rlim_max &&
+		अगर (new_rlim->rlim_max > rlim->rlim_max &&
 				!capable(CAP_SYS_RESOURCE))
 			retval = -EPERM;
-		if (!retval)
+		अगर (!retval)
 			retval = security_task_setrlimit(tsk, resource, new_rlim);
-	}
-	if (!retval) {
-		if (old_rlim)
+	पूर्ण
+	अगर (!retval) अणु
+		अगर (old_rlim)
 			*old_rlim = *rlim;
-		if (new_rlim)
+		अगर (new_rlim)
 			*rlim = *new_rlim;
-	}
+	पूर्ण
 	task_unlock(tsk->group_leader);
 
 	/*
-	 * RLIMIT_CPU handling. Arm the posix CPU timer if the limit is not
-	 * infinite. In case of RLIM_INFINITY the posix CPU timer code
+	 * RLIMIT_CPU handling. Arm the posix CPU समयr अगर the limit is not
+	 * infinite. In हाल of RLIM_अनन्त the posix CPU समयr code
 	 * ignores the rlimit.
 	 */
-	 if (!retval && new_rlim && resource == RLIMIT_CPU &&
-	     new_rlim->rlim_cur != RLIM_INFINITY &&
+	 अगर (!retval && new_rlim && resource == RLIMIT_CPU &&
+	     new_rlim->rlim_cur != RLIM_अनन्त &&
 	     IS_ENABLED(CONFIG_POSIX_TIMERS))
 		update_rlimit_cpu(tsk, new_rlim->rlim_cur);
 out:
-	read_unlock(&tasklist_lock);
-	return retval;
-}
+	पढ़ो_unlock(&tasklist_lock);
+	वापस retval;
+पूर्ण
 
 /* rcu lock must be held */
-static int check_prlimit_permission(struct task_struct *task,
-				    unsigned int flags)
-{
-	const struct cred *cred = current_cred(), *tcred;
+अटल पूर्णांक check_prlimit_permission(काष्ठा task_काष्ठा *task,
+				    अचिन्हित पूर्णांक flags)
+अणु
+	स्थिर काष्ठा cred *cred = current_cred(), *tcred;
 	bool id_match;
 
-	if (current == task)
-		return 0;
+	अगर (current == task)
+		वापस 0;
 
 	tcred = __task_cred(task);
 	id_match = (uid_eq(cred->uid, tcred->euid) &&
@@ -1619,429 +1620,429 @@ static int check_prlimit_permission(struct task_struct *task,
 		    gid_eq(cred->gid, tcred->egid) &&
 		    gid_eq(cred->gid, tcred->sgid) &&
 		    gid_eq(cred->gid, tcred->gid));
-	if (!id_match && !ns_capable(tcred->user_ns, CAP_SYS_RESOURCE))
-		return -EPERM;
+	अगर (!id_match && !ns_capable(tcred->user_ns, CAP_SYS_RESOURCE))
+		वापस -EPERM;
 
-	return security_task_prlimit(cred, tcred, flags);
-}
+	वापस security_task_prlimit(cred, tcred, flags);
+पूर्ण
 
-SYSCALL_DEFINE4(prlimit64, pid_t, pid, unsigned int, resource,
-		const struct rlimit64 __user *, new_rlim,
-		struct rlimit64 __user *, old_rlim)
-{
-	struct rlimit64 old64, new64;
-	struct rlimit old, new;
-	struct task_struct *tsk;
-	unsigned int checkflags = 0;
-	int ret;
+SYSCALL_DEFINE4(prlimit64, pid_t, pid, अचिन्हित पूर्णांक, resource,
+		स्थिर काष्ठा rlimit64 __user *, new_rlim,
+		काष्ठा rlimit64 __user *, old_rlim)
+अणु
+	काष्ठा rlimit64 old64, new64;
+	काष्ठा rlimit old, new;
+	काष्ठा task_काष्ठा *tsk;
+	अचिन्हित पूर्णांक checkflags = 0;
+	पूर्णांक ret;
 
-	if (old_rlim)
+	अगर (old_rlim)
 		checkflags |= LSM_PRLIMIT_READ;
 
-	if (new_rlim) {
-		if (copy_from_user(&new64, new_rlim, sizeof(new64)))
-			return -EFAULT;
+	अगर (new_rlim) अणु
+		अगर (copy_from_user(&new64, new_rlim, माप(new64)))
+			वापस -EFAULT;
 		rlim64_to_rlim(&new64, &new);
 		checkflags |= LSM_PRLIMIT_WRITE;
-	}
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tsk = pid ? find_task_by_vpid(pid) : current;
-	if (!tsk) {
-		rcu_read_unlock();
-		return -ESRCH;
-	}
+	अगर (!tsk) अणु
+		rcu_पढ़ो_unlock();
+		वापस -ESRCH;
+	पूर्ण
 	ret = check_prlimit_permission(tsk, checkflags);
-	if (ret) {
-		rcu_read_unlock();
-		return ret;
-	}
-	get_task_struct(tsk);
-	rcu_read_unlock();
+	अगर (ret) अणु
+		rcu_पढ़ो_unlock();
+		वापस ret;
+	पूर्ण
+	get_task_काष्ठा(tsk);
+	rcu_पढ़ो_unlock();
 
-	ret = do_prlimit(tsk, resource, new_rlim ? &new : NULL,
-			old_rlim ? &old : NULL);
+	ret = करो_prlimit(tsk, resource, new_rlim ? &new : शून्य,
+			old_rlim ? &old : शून्य);
 
-	if (!ret && old_rlim) {
+	अगर (!ret && old_rlim) अणु
 		rlim_to_rlim64(&old, &old64);
-		if (copy_to_user(old_rlim, &old64, sizeof(old64)))
+		अगर (copy_to_user(old_rlim, &old64, माप(old64)))
 			ret = -EFAULT;
-	}
+	पूर्ण
 
-	put_task_struct(tsk);
-	return ret;
-}
+	put_task_काष्ठा(tsk);
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE2(setrlimit, unsigned int, resource, struct rlimit __user *, rlim)
-{
-	struct rlimit new_rlim;
+SYSCALL_DEFINE2(setrlimit, अचिन्हित पूर्णांक, resource, काष्ठा rlimit __user *, rlim)
+अणु
+	काष्ठा rlimit new_rlim;
 
-	if (copy_from_user(&new_rlim, rlim, sizeof(*rlim)))
-		return -EFAULT;
-	return do_prlimit(current, resource, &new_rlim, NULL);
-}
+	अगर (copy_from_user(&new_rlim, rlim, माप(*rlim)))
+		वापस -EFAULT;
+	वापस करो_prlimit(current, resource, &new_rlim, शून्य);
+पूर्ण
 
 /*
- * It would make sense to put struct rusage in the task_struct,
- * except that would make the task_struct be *really big*.  After
- * task_struct gets moved into malloc'ed memory, it would
- * make sense to do this.  It will make moving the rest of the information
+ * It would make sense to put काष्ठा rusage in the task_काष्ठा,
+ * except that would make the task_काष्ठा be *really big*.  After
+ * task_काष्ठा माला_लो moved पूर्णांकo दो_स्मृति'ed memory, it would
+ * make sense to करो this.  It will make moving the rest of the inक्रमmation
  * a lot simpler!  (Which we're not doing right now because we're not
  * measuring them yet).
  *
- * When sampling multiple threads for RUSAGE_SELF, under SMP we might have
- * races with threads incrementing their own counters.  But since word
- * reads are atomic, we either get new values or old values and we don't
- * care which for the sums.  We always take the siglock to protect reading
- * the c* fields from p->signal from races with exit.c updating those
- * fields when reaping, so a sample either gets all the additions of a
- * given child after it's reaped, or none so this sample is before reaping.
+ * When sampling multiple thपढ़ोs क्रम RUSAGE_SELF, under SMP we might have
+ * races with thपढ़ोs incrementing their own counters.  But since word
+ * पढ़ोs are atomic, we either get new values or old values and we करोn't
+ * care which क्रम the sums.  We always take the siglock to protect पढ़ोing
+ * the c* fields from p->संकेत from races with निकास.c updating those
+ * fields when reaping, so a sample either माला_लो all the additions of a
+ * given child after it's reaped, or none so this sample is beक्रमe reaping.
  *
  * Locking:
- * We need to take the siglock for CHILDEREN, SELF and BOTH
- * for  the cases current multithreaded, non-current single threaded
- * non-current multithreaded.  Thread traversal is now safe with
+ * We need to take the siglock क्रम CHILDEREN, SELF and BOTH
+ * क्रम  the हालs current multithपढ़ोed, non-current single thपढ़ोed
+ * non-current multithपढ़ोed.  Thपढ़ो traversal is now safe with
  * the siglock held.
- * Strictly speaking, we donot need to take the siglock if we are current and
- * single threaded,  as no one else can take our signal_struct away, no one
- * else can  reap the  children to update signal->c* counters, and no one else
- * can race with the signal-> fields. If we do not take any lock, the
- * signal-> fields could be read out of order while another thread was just
- * exiting. So we should  place a read memory barrier when we avoid the lock.
- * On the writer side,  write memory barrier is implied in  __exit_signal
- * as __exit_signal releases  the siglock spinlock after updating the signal->
- * fields. But we don't do this yet to keep things simple.
+ * Strictly speaking, we करोnot need to take the siglock अगर we are current and
+ * single thपढ़ोed,  as no one अन्यथा can take our संकेत_काष्ठा away, no one
+ * अन्यथा can  reap the  children to update संकेत->c* counters, and no one अन्यथा
+ * can race with the संकेत-> fields. If we करो not take any lock, the
+ * संकेत-> fields could be पढ़ो out of order जबतक another thपढ़ो was just
+ * निकासing. So we should  place a पढ़ो memory barrier when we aव्योम the lock.
+ * On the ग_लिखोr side,  ग_लिखो memory barrier is implied in  __निकास_संकेत
+ * as __निकास_संकेत releases  the siglock spinlock after updating the संकेत->
+ * fields. But we करोn't करो this yet to keep things simple.
  *
  */
 
-static void accumulate_thread_rusage(struct task_struct *t, struct rusage *r)
-{
+अटल व्योम accumulate_thपढ़ो_rusage(काष्ठा task_काष्ठा *t, काष्ठा rusage *r)
+अणु
 	r->ru_nvcsw += t->nvcsw;
 	r->ru_nivcsw += t->nivcsw;
 	r->ru_minflt += t->min_flt;
 	r->ru_majflt += t->maj_flt;
 	r->ru_inblock += task_io_get_inblock(t);
 	r->ru_oublock += task_io_get_oublock(t);
-}
+पूर्ण
 
-void getrusage(struct task_struct *p, int who, struct rusage *r)
-{
-	struct task_struct *t;
-	unsigned long flags;
-	u64 tgutime, tgstime, utime, stime;
-	unsigned long maxrss = 0;
+व्योम getrusage(काष्ठा task_काष्ठा *p, पूर्णांक who, काष्ठा rusage *r)
+अणु
+	काष्ठा task_काष्ठा *t;
+	अचिन्हित दीर्घ flags;
+	u64 tguसमय, tgsसमय, uसमय, sसमय;
+	अचिन्हित दीर्घ maxrss = 0;
 
-	memset((char *)r, 0, sizeof (*r));
-	utime = stime = 0;
+	स_रखो((अक्षर *)r, 0, माप (*r));
+	uसमय = sसमय = 0;
 
-	if (who == RUSAGE_THREAD) {
-		task_cputime_adjusted(current, &utime, &stime);
-		accumulate_thread_rusage(p, r);
-		maxrss = p->signal->maxrss;
-		goto out;
-	}
+	अगर (who == RUSAGE_THREAD) अणु
+		task_cpuसमय_adjusted(current, &uसमय, &sसमय);
+		accumulate_thपढ़ो_rusage(p, r);
+		maxrss = p->संकेत->maxrss;
+		जाओ out;
+	पूर्ण
 
-	if (!lock_task_sighand(p, &flags))
-		return;
+	अगर (!lock_task_sighand(p, &flags))
+		वापस;
 
-	switch (who) {
-	case RUSAGE_BOTH:
-	case RUSAGE_CHILDREN:
-		utime = p->signal->cutime;
-		stime = p->signal->cstime;
-		r->ru_nvcsw = p->signal->cnvcsw;
-		r->ru_nivcsw = p->signal->cnivcsw;
-		r->ru_minflt = p->signal->cmin_flt;
-		r->ru_majflt = p->signal->cmaj_flt;
-		r->ru_inblock = p->signal->cinblock;
-		r->ru_oublock = p->signal->coublock;
-		maxrss = p->signal->cmaxrss;
+	चयन (who) अणु
+	हाल RUSAGE_BOTH:
+	हाल RUSAGE_CHILDREN:
+		uसमय = p->संकेत->cuसमय;
+		sसमय = p->संकेत->csसमय;
+		r->ru_nvcsw = p->संकेत->cnvcsw;
+		r->ru_nivcsw = p->संकेत->cnivcsw;
+		r->ru_minflt = p->संकेत->cmin_flt;
+		r->ru_majflt = p->संकेत->cmaj_flt;
+		r->ru_inblock = p->संकेत->cinblock;
+		r->ru_oublock = p->संकेत->coublock;
+		maxrss = p->संकेत->cmaxrss;
 
-		if (who == RUSAGE_CHILDREN)
-			break;
+		अगर (who == RUSAGE_CHILDREN)
+			अवरोध;
 		fallthrough;
 
-	case RUSAGE_SELF:
-		thread_group_cputime_adjusted(p, &tgutime, &tgstime);
-		utime += tgutime;
-		stime += tgstime;
-		r->ru_nvcsw += p->signal->nvcsw;
-		r->ru_nivcsw += p->signal->nivcsw;
-		r->ru_minflt += p->signal->min_flt;
-		r->ru_majflt += p->signal->maj_flt;
-		r->ru_inblock += p->signal->inblock;
-		r->ru_oublock += p->signal->oublock;
-		if (maxrss < p->signal->maxrss)
-			maxrss = p->signal->maxrss;
+	हाल RUSAGE_SELF:
+		thपढ़ो_group_cpuसमय_adjusted(p, &tguसमय, &tgsसमय);
+		uसमय += tguसमय;
+		sसमय += tgsसमय;
+		r->ru_nvcsw += p->संकेत->nvcsw;
+		r->ru_nivcsw += p->संकेत->nivcsw;
+		r->ru_minflt += p->संकेत->min_flt;
+		r->ru_majflt += p->संकेत->maj_flt;
+		r->ru_inblock += p->संकेत->inblock;
+		r->ru_oublock += p->संकेत->oublock;
+		अगर (maxrss < p->संकेत->maxrss)
+			maxrss = p->संकेत->maxrss;
 		t = p;
-		do {
-			accumulate_thread_rusage(t, r);
-		} while_each_thread(p, t);
-		break;
+		करो अणु
+			accumulate_thपढ़ो_rusage(t, r);
+		पूर्ण जबतक_each_thपढ़ो(p, t);
+		अवरोध;
 
-	default:
+	शेष:
 		BUG();
-	}
+	पूर्ण
 	unlock_task_sighand(p, &flags);
 
 out:
-	r->ru_utime = ns_to_kernel_old_timeval(utime);
-	r->ru_stime = ns_to_kernel_old_timeval(stime);
+	r->ru_uसमय = ns_to_kernel_old_समयval(uसमय);
+	r->ru_sसमय = ns_to_kernel_old_समयval(sसमय);
 
-	if (who != RUSAGE_CHILDREN) {
-		struct mm_struct *mm = get_task_mm(p);
+	अगर (who != RUSAGE_CHILDREN) अणु
+		काष्ठा mm_काष्ठा *mm = get_task_mm(p);
 
-		if (mm) {
-			setmax_mm_hiwater_rss(&maxrss, mm);
+		अगर (mm) अणु
+			seपंचांगax_mm_hiwater_rss(&maxrss, mm);
 			mmput(mm);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	r->ru_maxrss = maxrss * (PAGE_SIZE / 1024); /* convert pages to KBs */
-}
+पूर्ण
 
-SYSCALL_DEFINE2(getrusage, int, who, struct rusage __user *, ru)
-{
-	struct rusage r;
+SYSCALL_DEFINE2(getrusage, पूर्णांक, who, काष्ठा rusage __user *, ru)
+अणु
+	काष्ठा rusage r;
 
-	if (who != RUSAGE_SELF && who != RUSAGE_CHILDREN &&
+	अगर (who != RUSAGE_SELF && who != RUSAGE_CHILDREN &&
 	    who != RUSAGE_THREAD)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	getrusage(current, who, &r);
-	return copy_to_user(ru, &r, sizeof(r)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(ru, &r, माप(r)) ? -EFAULT : 0;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE2(getrusage, int, who, struct compat_rusage __user *, ru)
-{
-	struct rusage r;
+#अगर_घोषित CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE2(getrusage, पूर्णांक, who, काष्ठा compat_rusage __user *, ru)
+अणु
+	काष्ठा rusage r;
 
-	if (who != RUSAGE_SELF && who != RUSAGE_CHILDREN &&
+	अगर (who != RUSAGE_SELF && who != RUSAGE_CHILDREN &&
 	    who != RUSAGE_THREAD)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	getrusage(current, who, &r);
-	return put_compat_rusage(&r, ru);
-}
-#endif
+	वापस put_compat_rusage(&r, ru);
+पूर्ण
+#पूर्ण_अगर
 
-SYSCALL_DEFINE1(umask, int, mask)
-{
+SYSCALL_DEFINE1(umask, पूर्णांक, mask)
+अणु
 	mask = xchg(&current->fs->umask, mask & S_IRWXUGO);
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int prctl_set_mm_exe_file(struct mm_struct *mm, unsigned int fd)
-{
-	struct fd exe;
-	struct file *old_exe, *exe_file;
-	struct inode *inode;
-	int err;
+अटल पूर्णांक prctl_set_mm_exe_file(काष्ठा mm_काष्ठा *mm, अचिन्हित पूर्णांक fd)
+अणु
+	काष्ठा fd exe;
+	काष्ठा file *old_exe, *exe_file;
+	काष्ठा inode *inode;
+	पूर्णांक err;
 
 	exe = fdget(fd);
-	if (!exe.file)
-		return -EBADF;
+	अगर (!exe.file)
+		वापस -EBADF;
 
 	inode = file_inode(exe.file);
 
 	/*
-	 * Because the original mm->exe_file points to executable file, make
-	 * sure that this one is executable as well, to avoid breaking an
+	 * Because the original mm->exe_file poपूर्णांकs to executable file, make
+	 * sure that this one is executable as well, to aव्योम अवरोधing an
 	 * overall picture.
 	 */
 	err = -EACCES;
-	if (!S_ISREG(inode->i_mode) || path_noexec(&exe.file->f_path))
-		goto exit;
+	अगर (!S_ISREG(inode->i_mode) || path_noexec(&exe.file->f_path))
+		जाओ निकास;
 
 	err = file_permission(exe.file, MAY_EXEC);
-	if (err)
-		goto exit;
+	अगर (err)
+		जाओ निकास;
 
 	/*
-	 * Forbid mm->exe_file change if old file still mapped.
+	 * Forbid mm->exe_file change अगर old file still mapped.
 	 */
 	exe_file = get_mm_exe_file(mm);
 	err = -EBUSY;
-	if (exe_file) {
-		struct vm_area_struct *vma;
+	अगर (exe_file) अणु
+		काष्ठा vm_area_काष्ठा *vma;
 
-		mmap_read_lock(mm);
-		for (vma = mm->mmap; vma; vma = vma->vm_next) {
-			if (!vma->vm_file)
-				continue;
-			if (path_equal(&vma->vm_file->f_path,
+		mmap_पढ़ो_lock(mm);
+		क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
+			अगर (!vma->vm_file)
+				जारी;
+			अगर (path_equal(&vma->vm_file->f_path,
 				       &exe_file->f_path))
-				goto exit_err;
-		}
+				जाओ निकास_err;
+		पूर्ण
 
-		mmap_read_unlock(mm);
+		mmap_पढ़ो_unlock(mm);
 		fput(exe_file);
-	}
+	पूर्ण
 
 	err = 0;
 	/* set the new file, lockless */
 	get_file(exe.file);
 	old_exe = xchg(&mm->exe_file, exe.file);
-	if (old_exe)
+	अगर (old_exe)
 		fput(old_exe);
-exit:
+निकास:
 	fdput(exe);
-	return err;
-exit_err:
-	mmap_read_unlock(mm);
+	वापस err;
+निकास_err:
+	mmap_पढ़ो_unlock(mm);
 	fput(exe_file);
-	goto exit;
-}
+	जाओ निकास;
+पूर्ण
 
 /*
  * Check arithmetic relations of passed addresses.
  *
- * WARNING: we don't require any capability here so be very careful
- * in what is allowed for modification from userspace.
+ * WARNING: we करोn't require any capability here so be very careful
+ * in what is allowed क्रम modअगरication from userspace.
  */
-static int validate_prctl_map_addr(struct prctl_mm_map *prctl_map)
-{
-	unsigned long mmap_max_addr = TASK_SIZE;
-	int error = -EINVAL, i;
+अटल पूर्णांक validate_prctl_map_addr(काष्ठा prctl_mm_map *prctl_map)
+अणु
+	अचिन्हित दीर्घ mmap_max_addr = TASK_SIZE;
+	पूर्णांक error = -EINVAL, i;
 
-	static const unsigned char offsets[] = {
-		offsetof(struct prctl_mm_map, start_code),
-		offsetof(struct prctl_mm_map, end_code),
-		offsetof(struct prctl_mm_map, start_data),
-		offsetof(struct prctl_mm_map, end_data),
-		offsetof(struct prctl_mm_map, start_brk),
-		offsetof(struct prctl_mm_map, brk),
-		offsetof(struct prctl_mm_map, start_stack),
-		offsetof(struct prctl_mm_map, arg_start),
-		offsetof(struct prctl_mm_map, arg_end),
-		offsetof(struct prctl_mm_map, env_start),
-		offsetof(struct prctl_mm_map, env_end),
-	};
+	अटल स्थिर अचिन्हित अक्षर offsets[] = अणु
+		दुरत्व(काष्ठा prctl_mm_map, start_code),
+		दुरत्व(काष्ठा prctl_mm_map, end_code),
+		दुरत्व(काष्ठा prctl_mm_map, start_data),
+		दुरत्व(काष्ठा prctl_mm_map, end_data),
+		दुरत्व(काष्ठा prctl_mm_map, start_brk),
+		दुरत्व(काष्ठा prctl_mm_map, brk),
+		दुरत्व(काष्ठा prctl_mm_map, start_stack),
+		दुरत्व(काष्ठा prctl_mm_map, arg_start),
+		दुरत्व(काष्ठा prctl_mm_map, arg_end),
+		दुरत्व(काष्ठा prctl_mm_map, env_start),
+		दुरत्व(काष्ठा prctl_mm_map, env_end),
+	पूर्ण;
 
 	/*
 	 * Make sure the members are not somewhere outside
 	 * of allowed address space.
 	 */
-	for (i = 0; i < ARRAY_SIZE(offsets); i++) {
-		u64 val = *(u64 *)((char *)prctl_map + offsets[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(offsets); i++) अणु
+		u64 val = *(u64 *)((अक्षर *)prctl_map + offsets[i]);
 
-		if ((unsigned long)val >= mmap_max_addr ||
-		    (unsigned long)val < mmap_min_addr)
-			goto out;
-	}
+		अगर ((अचिन्हित दीर्घ)val >= mmap_max_addr ||
+		    (अचिन्हित दीर्घ)val < mmap_min_addr)
+			जाओ out;
+	पूर्ण
 
 	/*
 	 * Make sure the pairs are ordered.
 	 */
-#define __prctl_check_order(__m1, __op, __m2)				\
-	((unsigned long)prctl_map->__m1 __op				\
-	 (unsigned long)prctl_map->__m2) ? 0 : -EINVAL
+#घोषणा __prctl_check_order(__m1, __op, __m2)				\
+	((अचिन्हित दीर्घ)prctl_map->__m1 __op				\
+	 (अचिन्हित दीर्घ)prctl_map->__m2) ? 0 : -EINVAL
 	error  = __prctl_check_order(start_code, <, end_code);
 	error |= __prctl_check_order(start_data,<=, end_data);
 	error |= __prctl_check_order(start_brk, <=, brk);
 	error |= __prctl_check_order(arg_start, <=, arg_end);
 	error |= __prctl_check_order(env_start, <=, env_end);
-	if (error)
-		goto out;
-#undef __prctl_check_order
+	अगर (error)
+		जाओ out;
+#अघोषित __prctl_check_order
 
 	error = -EINVAL;
 
 	/*
 	 * @brk should be after @end_data in traditional maps.
 	 */
-	if (prctl_map->start_brk <= prctl_map->end_data ||
+	अगर (prctl_map->start_brk <= prctl_map->end_data ||
 	    prctl_map->brk <= prctl_map->end_data)
-		goto out;
+		जाओ out;
 
 	/*
-	 * Neither we should allow to override limits if they set.
+	 * Neither we should allow to override limits अगर they set.
 	 */
-	if (check_data_rlimit(rlimit(RLIMIT_DATA), prctl_map->brk,
+	अगर (check_data_rlimit(rlimit(RLIMIT_DATA), prctl_map->brk,
 			      prctl_map->start_brk, prctl_map->end_data,
 			      prctl_map->start_data))
-			goto out;
+			जाओ out;
 
 	error = 0;
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-#ifdef CONFIG_CHECKPOINT_RESTORE
-static int prctl_set_mm_map(int opt, const void __user *addr, unsigned long data_size)
-{
-	struct prctl_mm_map prctl_map = { .exe_fd = (u32)-1, };
-	unsigned long user_auxv[AT_VECTOR_SIZE];
-	struct mm_struct *mm = current->mm;
-	int error;
+#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
+अटल पूर्णांक prctl_set_mm_map(पूर्णांक opt, स्थिर व्योम __user *addr, अचिन्हित दीर्घ data_size)
+अणु
+	काष्ठा prctl_mm_map prctl_map = अणु .exe_fd = (u32)-1, पूर्ण;
+	अचिन्हित दीर्घ user_auxv[AT_VECTOR_SIZE];
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	पूर्णांक error;
 
-	BUILD_BUG_ON(sizeof(user_auxv) != sizeof(mm->saved_auxv));
-	BUILD_BUG_ON(sizeof(struct prctl_mm_map) > 256);
+	BUILD_BUG_ON(माप(user_auxv) != माप(mm->saved_auxv));
+	BUILD_BUG_ON(माप(काष्ठा prctl_mm_map) > 256);
 
-	if (opt == PR_SET_MM_MAP_SIZE)
-		return put_user((unsigned int)sizeof(prctl_map),
-				(unsigned int __user *)addr);
+	अगर (opt == PR_SET_MM_MAP_SIZE)
+		वापस put_user((अचिन्हित पूर्णांक)माप(prctl_map),
+				(अचिन्हित पूर्णांक __user *)addr);
 
-	if (data_size != sizeof(prctl_map))
-		return -EINVAL;
+	अगर (data_size != माप(prctl_map))
+		वापस -EINVAL;
 
-	if (copy_from_user(&prctl_map, addr, sizeof(prctl_map)))
-		return -EFAULT;
+	अगर (copy_from_user(&prctl_map, addr, माप(prctl_map)))
+		वापस -EFAULT;
 
 	error = validate_prctl_map_addr(&prctl_map);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (prctl_map.auxv_size) {
+	अगर (prctl_map.auxv_size) अणु
 		/*
 		 * Someone is trying to cheat the auxv vector.
 		 */
-		if (!prctl_map.auxv ||
-				prctl_map.auxv_size > sizeof(mm->saved_auxv))
-			return -EINVAL;
+		अगर (!prctl_map.auxv ||
+				prctl_map.auxv_size > माप(mm->saved_auxv))
+			वापस -EINVAL;
 
-		memset(user_auxv, 0, sizeof(user_auxv));
-		if (copy_from_user(user_auxv,
-				   (const void __user *)prctl_map.auxv,
+		स_रखो(user_auxv, 0, माप(user_auxv));
+		अगर (copy_from_user(user_auxv,
+				   (स्थिर व्योम __user *)prctl_map.auxv,
 				   prctl_map.auxv_size))
-			return -EFAULT;
+			वापस -EFAULT;
 
-		/* Last entry must be AT_NULL as specification requires */
-		user_auxv[AT_VECTOR_SIZE - 2] = AT_NULL;
-		user_auxv[AT_VECTOR_SIZE - 1] = AT_NULL;
-	}
+		/* Last entry must be AT_शून्य as specअगरication requires */
+		user_auxv[AT_VECTOR_SIZE - 2] = AT_शून्य;
+		user_auxv[AT_VECTOR_SIZE - 1] = AT_शून्य;
+	पूर्ण
 
-	if (prctl_map.exe_fd != (u32)-1) {
+	अगर (prctl_map.exe_fd != (u32)-1) अणु
 		/*
-		 * Check if the current user is checkpoint/restore capable.
-		 * At the time of this writing, it checks for CAP_SYS_ADMIN
+		 * Check अगर the current user is checkpoपूर्णांक/restore capable.
+		 * At the समय of this writing, it checks क्रम CAP_SYS_ADMIN
 		 * or CAP_CHECKPOINT_RESTORE.
 		 * Note that a user with access to ptrace can masquerade an
 		 * arbitrary program as any executable, even setuid ones.
-		 * This may have implications in the tomoyo subsystem.
+		 * This may have implications in the tomoyo subप्रणाली.
 		 */
-		if (!checkpoint_restore_ns_capable(current_user_ns()))
-			return -EPERM;
+		अगर (!checkpoपूर्णांक_restore_ns_capable(current_user_ns()))
+			वापस -EPERM;
 
 		error = prctl_set_mm_exe_file(mm, prctl_map.exe_fd);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
 	/*
-	 * arg_lock protects concurrent updates but we still need mmap_lock for
-	 * read to exclude races with sys_brk.
+	 * arg_lock protects concurrent updates but we still need mmap_lock क्रम
+	 * पढ़ो to exclude races with sys_brk.
 	 */
-	mmap_read_lock(mm);
+	mmap_पढ़ो_lock(mm);
 
 	/*
-	 * We don't validate if these members are pointing to
+	 * We करोn't validate अगर these members are poपूर्णांकing to
 	 * real present VMAs because application may have correspond
-	 * VMAs already unmapped and kernel uses these members for statistics
+	 * VMAs alपढ़ोy unmapped and kernel uses these members क्रम statistics
 	 * output in procfs mostly, except
 	 *
-	 *  - @start_brk/@brk which are used in do_brk_flags but kernel lookups
-	 *    for VMAs when updating these members so anything wrong written
+	 *  - @start_brk/@brk which are used in करो_brk_flags but kernel lookups
+	 *    क्रम VMAs when updating these members so anything wrong written
 	 *    here cause kernel to swear at userspace program but won't lead
 	 *    to any problem in kernel itself
 	 */
@@ -2062,92 +2063,92 @@ static int prctl_set_mm_map(int opt, const void __user *addr, unsigned long data
 
 	/*
 	 * Note this update of @saved_auxv is lockless thus
-	 * if someone reads this member in procfs while we're
+	 * अगर someone पढ़ोs this member in procfs जबतक we're
 	 * updating -- it may get partly updated results. It's
 	 * known and acceptable trade off: we leave it as is to
-	 * not introduce additional locks here making the kernel
+	 * not पूर्णांकroduce additional locks here making the kernel
 	 * more complex.
 	 */
-	if (prctl_map.auxv_size)
-		memcpy(mm->saved_auxv, user_auxv, sizeof(user_auxv));
+	अगर (prctl_map.auxv_size)
+		स_नकल(mm->saved_auxv, user_auxv, माप(user_auxv));
 
-	mmap_read_unlock(mm);
-	return 0;
-}
-#endif /* CONFIG_CHECKPOINT_RESTORE */
+	mmap_पढ़ो_unlock(mm);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CHECKPOINT_RESTORE */
 
-static int prctl_set_auxv(struct mm_struct *mm, unsigned long addr,
-			  unsigned long len)
-{
+अटल पूर्णांक prctl_set_auxv(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+			  अचिन्हित दीर्घ len)
+अणु
 	/*
-	 * This doesn't move the auxiliary vector itself since it's pinned to
-	 * mm_struct, but it permits filling the vector with new values.  It's
+	 * This करोesn't move the auxiliary vector itself since it's pinned to
+	 * mm_काष्ठा, but it permits filling the vector with new values.  It's
 	 * up to the caller to provide sane values here, otherwise userspace
 	 * tools which use this vector might be unhappy.
 	 */
-	unsigned long user_auxv[AT_VECTOR_SIZE] = {};
+	अचिन्हित दीर्घ user_auxv[AT_VECTOR_SIZE] = अणुपूर्ण;
 
-	if (len > sizeof(user_auxv))
-		return -EINVAL;
+	अगर (len > माप(user_auxv))
+		वापस -EINVAL;
 
-	if (copy_from_user(user_auxv, (const void __user *)addr, len))
-		return -EFAULT;
+	अगर (copy_from_user(user_auxv, (स्थिर व्योम __user *)addr, len))
+		वापस -EFAULT;
 
-	/* Make sure the last entry is always AT_NULL */
+	/* Make sure the last entry is always AT_शून्य */
 	user_auxv[AT_VECTOR_SIZE - 2] = 0;
 	user_auxv[AT_VECTOR_SIZE - 1] = 0;
 
-	BUILD_BUG_ON(sizeof(user_auxv) != sizeof(mm->saved_auxv));
+	BUILD_BUG_ON(माप(user_auxv) != माप(mm->saved_auxv));
 
 	task_lock(current);
-	memcpy(mm->saved_auxv, user_auxv, len);
+	स_नकल(mm->saved_auxv, user_auxv, len);
 	task_unlock(current);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prctl_set_mm(int opt, unsigned long addr,
-			unsigned long arg4, unsigned long arg5)
-{
-	struct mm_struct *mm = current->mm;
-	struct prctl_mm_map prctl_map = {
-		.auxv = NULL,
+अटल पूर्णांक prctl_set_mm(पूर्णांक opt, अचिन्हित दीर्घ addr,
+			अचिन्हित दीर्घ arg4, अचिन्हित दीर्घ arg5)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा prctl_mm_map prctl_map = अणु
+		.auxv = शून्य,
 		.auxv_size = 0,
 		.exe_fd = -1,
-	};
-	struct vm_area_struct *vma;
-	int error;
+	पूर्ण;
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक error;
 
-	if (arg5 || (arg4 && (opt != PR_SET_MM_AUXV &&
+	अगर (arg5 || (arg4 && (opt != PR_SET_MM_AUXV &&
 			      opt != PR_SET_MM_MAP &&
 			      opt != PR_SET_MM_MAP_SIZE)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-#ifdef CONFIG_CHECKPOINT_RESTORE
-	if (opt == PR_SET_MM_MAP || opt == PR_SET_MM_MAP_SIZE)
-		return prctl_set_mm_map(opt, (const void __user *)addr, arg4);
-#endif
+#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
+	अगर (opt == PR_SET_MM_MAP || opt == PR_SET_MM_MAP_SIZE)
+		वापस prctl_set_mm_map(opt, (स्थिर व्योम __user *)addr, arg4);
+#पूर्ण_अगर
 
-	if (!capable(CAP_SYS_RESOURCE))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_RESOURCE))
+		वापस -EPERM;
 
-	if (opt == PR_SET_MM_EXE_FILE)
-		return prctl_set_mm_exe_file(mm, (unsigned int)addr);
+	अगर (opt == PR_SET_MM_EXE_खाता)
+		वापस prctl_set_mm_exe_file(mm, (अचिन्हित पूर्णांक)addr);
 
-	if (opt == PR_SET_MM_AUXV)
-		return prctl_set_auxv(mm, addr, arg4);
+	अगर (opt == PR_SET_MM_AUXV)
+		वापस prctl_set_auxv(mm, addr, arg4);
 
-	if (addr >= TASK_SIZE || addr < mmap_min_addr)
-		return -EINVAL;
+	अगर (addr >= TASK_SIZE || addr < mmap_min_addr)
+		वापस -EINVAL;
 
 	error = -EINVAL;
 
 	/*
 	 * arg_lock protects concurrent updates of arg boundaries, we need
-	 * mmap_lock for a) concurrent sys_brk, b) finding VMA for addr
+	 * mmap_lock क्रम a) concurrent sys_brk, b) finding VMA क्रम addr
 	 * validation.
 	 */
-	mmap_read_lock(mm);
+	mmap_पढ़ो_lock(mm);
 	vma = find_vma(mm, addr);
 
 	spin_lock(&mm->arg_lock);
@@ -2163,66 +2164,66 @@ static int prctl_set_mm(int opt, unsigned long addr,
 	prctl_map.env_start	= mm->env_start;
 	prctl_map.env_end	= mm->env_end;
 
-	switch (opt) {
-	case PR_SET_MM_START_CODE:
+	चयन (opt) अणु
+	हाल PR_SET_MM_START_CODE:
 		prctl_map.start_code = addr;
-		break;
-	case PR_SET_MM_END_CODE:
+		अवरोध;
+	हाल PR_SET_MM_END_CODE:
 		prctl_map.end_code = addr;
-		break;
-	case PR_SET_MM_START_DATA:
+		अवरोध;
+	हाल PR_SET_MM_START_DATA:
 		prctl_map.start_data = addr;
-		break;
-	case PR_SET_MM_END_DATA:
+		अवरोध;
+	हाल PR_SET_MM_END_DATA:
 		prctl_map.end_data = addr;
-		break;
-	case PR_SET_MM_START_STACK:
+		अवरोध;
+	हाल PR_SET_MM_START_STACK:
 		prctl_map.start_stack = addr;
-		break;
-	case PR_SET_MM_START_BRK:
+		अवरोध;
+	हाल PR_SET_MM_START_BRK:
 		prctl_map.start_brk = addr;
-		break;
-	case PR_SET_MM_BRK:
+		अवरोध;
+	हाल PR_SET_MM_BRK:
 		prctl_map.brk = addr;
-		break;
-	case PR_SET_MM_ARG_START:
+		अवरोध;
+	हाल PR_SET_MM_ARG_START:
 		prctl_map.arg_start = addr;
-		break;
-	case PR_SET_MM_ARG_END:
+		अवरोध;
+	हाल PR_SET_MM_ARG_END:
 		prctl_map.arg_end = addr;
-		break;
-	case PR_SET_MM_ENV_START:
+		अवरोध;
+	हाल PR_SET_MM_ENV_START:
 		prctl_map.env_start = addr;
-		break;
-	case PR_SET_MM_ENV_END:
+		अवरोध;
+	हाल PR_SET_MM_ENV_END:
 		prctl_map.env_end = addr;
-		break;
-	default:
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		जाओ out;
+	पूर्ण
 
 	error = validate_prctl_map_addr(&prctl_map);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	switch (opt) {
+	चयन (opt) अणु
 	/*
 	 * If command line arguments and environment
-	 * are placed somewhere else on stack, we can
+	 * are placed somewhere अन्यथा on stack, we can
 	 * set them up here, ARG_START/END to setup
 	 * command line arguments and ENV_START/END
-	 * for environment.
+	 * क्रम environment.
 	 */
-	case PR_SET_MM_START_STACK:
-	case PR_SET_MM_ARG_START:
-	case PR_SET_MM_ARG_END:
-	case PR_SET_MM_ENV_START:
-	case PR_SET_MM_ENV_END:
-		if (!vma) {
+	हाल PR_SET_MM_START_STACK:
+	हाल PR_SET_MM_ARG_START:
+	हाल PR_SET_MM_ARG_END:
+	हाल PR_SET_MM_ENV_START:
+	हाल PR_SET_MM_ENV_END:
+		अगर (!vma) अणु
 			error = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	mm->start_code	= prctl_map.start_code;
 	mm->end_code	= prctl_map.end_code;
@@ -2239,382 +2240,382 @@ static int prctl_set_mm(int opt, unsigned long addr,
 	error = 0;
 out:
 	spin_unlock(&mm->arg_lock);
-	mmap_read_unlock(mm);
-	return error;
-}
+	mmap_पढ़ो_unlock(mm);
+	वापस error;
+पूर्ण
 
-#ifdef CONFIG_CHECKPOINT_RESTORE
-static int prctl_get_tid_address(struct task_struct *me, int __user * __user *tid_addr)
-{
-	return put_user(me->clear_child_tid, tid_addr);
-}
-#else
-static int prctl_get_tid_address(struct task_struct *me, int __user * __user *tid_addr)
-{
-	return -EINVAL;
-}
-#endif
+#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
+अटल पूर्णांक prctl_get_tid_address(काष्ठा task_काष्ठा *me, पूर्णांक __user * __user *tid_addr)
+अणु
+	वापस put_user(me->clear_child_tid, tid_addr);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक prctl_get_tid_address(काष्ठा task_काष्ठा *me, पूर्णांक __user * __user *tid_addr)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-static int propagate_has_child_subreaper(struct task_struct *p, void *data)
-{
+अटल पूर्णांक propagate_has_child_subreaper(काष्ठा task_काष्ठा *p, व्योम *data)
+अणु
 	/*
 	 * If task has has_child_subreaper - all its descendants
-	 * already have these flag too and new descendants will
-	 * inherit it on fork, skip them.
+	 * alपढ़ोy have these flag too and new descendants will
+	 * inherit it on विभाजन, skip them.
 	 *
 	 * If we've found child_reaper - skip descendants in
 	 * it's subtree as they will never get out pidns.
 	 */
-	if (p->signal->has_child_subreaper ||
+	अगर (p->संकेत->has_child_subreaper ||
 	    is_child_reaper(task_pid(p)))
-		return 0;
+		वापस 0;
 
-	p->signal->has_child_subreaper = 1;
-	return 1;
-}
+	p->संकेत->has_child_subreaper = 1;
+	वापस 1;
+पूर्ण
 
-int __weak arch_prctl_spec_ctrl_get(struct task_struct *t, unsigned long which)
-{
-	return -EINVAL;
-}
+पूर्णांक __weak arch_prctl_spec_ctrl_get(काष्ठा task_काष्ठा *t, अचिन्हित दीर्घ which)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-int __weak arch_prctl_spec_ctrl_set(struct task_struct *t, unsigned long which,
-				    unsigned long ctrl)
-{
-	return -EINVAL;
-}
+पूर्णांक __weak arch_prctl_spec_ctrl_set(काष्ठा task_काष्ठा *t, अचिन्हित दीर्घ which,
+				    अचिन्हित दीर्घ ctrl)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-#define PR_IO_FLUSHER (PF_MEMALLOC_NOIO | PF_LOCAL_THROTTLE)
+#घोषणा PR_IO_FLUSHER (PF_MEMALLOC_NOIO | PF_LOCAL_THROTTLE)
 
-SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
-		unsigned long, arg4, unsigned long, arg5)
-{
-	struct task_struct *me = current;
-	unsigned char comm[sizeof(me->comm)];
-	long error;
+SYSCALL_DEFINE5(prctl, पूर्णांक, option, अचिन्हित दीर्घ, arg2, अचिन्हित दीर्घ, arg3,
+		अचिन्हित दीर्घ, arg4, अचिन्हित दीर्घ, arg5)
+अणु
+	काष्ठा task_काष्ठा *me = current;
+	अचिन्हित अक्षर comm[माप(me->comm)];
+	दीर्घ error;
 
 	error = security_task_prctl(option, arg2, arg3, arg4, arg5);
-	if (error != -ENOSYS)
-		return error;
+	अगर (error != -ENOSYS)
+		वापस error;
 
 	error = 0;
-	switch (option) {
-	case PR_SET_PDEATHSIG:
-		if (!valid_signal(arg2)) {
+	चयन (option) अणु
+	हाल PR_SET_PDEATHSIG:
+		अगर (!valid_संकेत(arg2)) अणु
 			error = -EINVAL;
-			break;
-		}
-		me->pdeath_signal = arg2;
-		break;
-	case PR_GET_PDEATHSIG:
-		error = put_user(me->pdeath_signal, (int __user *)arg2);
-		break;
-	case PR_GET_DUMPABLE:
+			अवरोध;
+		पूर्ण
+		me->pdeath_संकेत = arg2;
+		अवरोध;
+	हाल PR_GET_PDEATHSIG:
+		error = put_user(me->pdeath_संकेत, (पूर्णांक __user *)arg2);
+		अवरोध;
+	हाल PR_GET_DUMPABLE:
 		error = get_dumpable(me->mm);
-		break;
-	case PR_SET_DUMPABLE:
-		if (arg2 != SUID_DUMP_DISABLE && arg2 != SUID_DUMP_USER) {
+		अवरोध;
+	हाल PR_SET_DUMPABLE:
+		अगर (arg2 != SUID_DUMP_DISABLE && arg2 != SUID_DUMP_USER) अणु
 			error = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		set_dumpable(me->mm, arg2);
-		break;
+		अवरोध;
 
-	case PR_SET_UNALIGN:
+	हाल PR_SET_UNALIGN:
 		error = SET_UNALIGN_CTL(me, arg2);
-		break;
-	case PR_GET_UNALIGN:
+		अवरोध;
+	हाल PR_GET_UNALIGN:
 		error = GET_UNALIGN_CTL(me, arg2);
-		break;
-	case PR_SET_FPEMU:
+		अवरोध;
+	हाल PR_SET_FPEMU:
 		error = SET_FPEMU_CTL(me, arg2);
-		break;
-	case PR_GET_FPEMU:
+		अवरोध;
+	हाल PR_GET_FPEMU:
 		error = GET_FPEMU_CTL(me, arg2);
-		break;
-	case PR_SET_FPEXC:
+		अवरोध;
+	हाल PR_SET_FPEXC:
 		error = SET_FPEXC_CTL(me, arg2);
-		break;
-	case PR_GET_FPEXC:
+		अवरोध;
+	हाल PR_GET_FPEXC:
 		error = GET_FPEXC_CTL(me, arg2);
-		break;
-	case PR_GET_TIMING:
+		अवरोध;
+	हाल PR_GET_TIMING:
 		error = PR_TIMING_STATISTICAL;
-		break;
-	case PR_SET_TIMING:
-		if (arg2 != PR_TIMING_STATISTICAL)
+		अवरोध;
+	हाल PR_SET_TIMING:
+		अगर (arg2 != PR_TIMING_STATISTICAL)
 			error = -EINVAL;
-		break;
-	case PR_SET_NAME:
-		comm[sizeof(me->comm) - 1] = 0;
-		if (strncpy_from_user(comm, (char __user *)arg2,
-				      sizeof(me->comm) - 1) < 0)
-			return -EFAULT;
+		अवरोध;
+	हाल PR_SET_NAME:
+		comm[माप(me->comm) - 1] = 0;
+		अगर (म_नकलन_from_user(comm, (अक्षर __user *)arg2,
+				      माप(me->comm) - 1) < 0)
+			वापस -EFAULT;
 		set_task_comm(me, comm);
 		proc_comm_connector(me);
-		break;
-	case PR_GET_NAME:
+		अवरोध;
+	हाल PR_GET_NAME:
 		get_task_comm(comm, me);
-		if (copy_to_user((char __user *)arg2, comm, sizeof(comm)))
-			return -EFAULT;
-		break;
-	case PR_GET_ENDIAN:
+		अगर (copy_to_user((अक्षर __user *)arg2, comm, माप(comm)))
+			वापस -EFAULT;
+		अवरोध;
+	हाल PR_GET_ENDIAN:
 		error = GET_ENDIAN(me, arg2);
-		break;
-	case PR_SET_ENDIAN:
+		अवरोध;
+	हाल PR_SET_ENDIAN:
 		error = SET_ENDIAN(me, arg2);
-		break;
-	case PR_GET_SECCOMP:
+		अवरोध;
+	हाल PR_GET_SECCOMP:
 		error = prctl_get_seccomp();
-		break;
-	case PR_SET_SECCOMP:
-		error = prctl_set_seccomp(arg2, (char __user *)arg3);
-		break;
-	case PR_GET_TSC:
+		अवरोध;
+	हाल PR_SET_SECCOMP:
+		error = prctl_set_seccomp(arg2, (अक्षर __user *)arg3);
+		अवरोध;
+	हाल PR_GET_TSC:
 		error = GET_TSC_CTL(arg2);
-		break;
-	case PR_SET_TSC:
+		अवरोध;
+	हाल PR_SET_TSC:
 		error = SET_TSC_CTL(arg2);
-		break;
-	case PR_TASK_PERF_EVENTS_DISABLE:
+		अवरोध;
+	हाल PR_TASK_PERF_EVENTS_DISABLE:
 		error = perf_event_task_disable();
-		break;
-	case PR_TASK_PERF_EVENTS_ENABLE:
+		अवरोध;
+	हाल PR_TASK_PERF_EVENTS_ENABLE:
 		error = perf_event_task_enable();
-		break;
-	case PR_GET_TIMERSLACK:
-		if (current->timer_slack_ns > ULONG_MAX)
-			error = ULONG_MAX;
-		else
-			error = current->timer_slack_ns;
-		break;
-	case PR_SET_TIMERSLACK:
-		if (arg2 <= 0)
-			current->timer_slack_ns =
-					current->default_timer_slack_ns;
-		else
-			current->timer_slack_ns = arg2;
-		break;
-	case PR_MCE_KILL:
-		if (arg4 | arg5)
-			return -EINVAL;
-		switch (arg2) {
-		case PR_MCE_KILL_CLEAR:
-			if (arg3 != 0)
-				return -EINVAL;
+		अवरोध;
+	हाल PR_GET_TIMERSLACK:
+		अगर (current->समयr_slack_ns > अच_दीर्घ_उच्च)
+			error = अच_दीर्घ_उच्च;
+		अन्यथा
+			error = current->समयr_slack_ns;
+		अवरोध;
+	हाल PR_SET_TIMERSLACK:
+		अगर (arg2 <= 0)
+			current->समयr_slack_ns =
+					current->शेष_समयr_slack_ns;
+		अन्यथा
+			current->समयr_slack_ns = arg2;
+		अवरोध;
+	हाल PR_MCE_KILL:
+		अगर (arg4 | arg5)
+			वापस -EINVAL;
+		चयन (arg2) अणु
+		हाल PR_MCE_KILL_CLEAR:
+			अगर (arg3 != 0)
+				वापस -EINVAL;
 			current->flags &= ~PF_MCE_PROCESS;
-			break;
-		case PR_MCE_KILL_SET:
+			अवरोध;
+		हाल PR_MCE_KILL_SET:
 			current->flags |= PF_MCE_PROCESS;
-			if (arg3 == PR_MCE_KILL_EARLY)
+			अगर (arg3 == PR_MCE_KILL_EARLY)
 				current->flags |= PF_MCE_EARLY;
-			else if (arg3 == PR_MCE_KILL_LATE)
+			अन्यथा अगर (arg3 == PR_MCE_KILL_LATE)
 				current->flags &= ~PF_MCE_EARLY;
-			else if (arg3 == PR_MCE_KILL_DEFAULT)
+			अन्यथा अगर (arg3 == PR_MCE_KILL_DEFAULT)
 				current->flags &=
 						~(PF_MCE_EARLY|PF_MCE_PROCESS);
-			else
-				return -EINVAL;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case PR_MCE_KILL_GET:
-		if (arg2 | arg3 | arg4 | arg5)
-			return -EINVAL;
-		if (current->flags & PF_MCE_PROCESS)
+			अन्यथा
+				वापस -EINVAL;
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल PR_MCE_KILL_GET:
+		अगर (arg2 | arg3 | arg4 | arg5)
+			वापस -EINVAL;
+		अगर (current->flags & PF_MCE_PROCESS)
 			error = (current->flags & PF_MCE_EARLY) ?
 				PR_MCE_KILL_EARLY : PR_MCE_KILL_LATE;
-		else
+		अन्यथा
 			error = PR_MCE_KILL_DEFAULT;
-		break;
-	case PR_SET_MM:
+		अवरोध;
+	हाल PR_SET_MM:
 		error = prctl_set_mm(arg2, arg3, arg4, arg5);
-		break;
-	case PR_GET_TID_ADDRESS:
-		error = prctl_get_tid_address(me, (int __user * __user *)arg2);
-		break;
-	case PR_SET_CHILD_SUBREAPER:
-		me->signal->is_child_subreaper = !!arg2;
-		if (!arg2)
-			break;
+		अवरोध;
+	हाल PR_GET_TID_ADDRESS:
+		error = prctl_get_tid_address(me, (पूर्णांक __user * __user *)arg2);
+		अवरोध;
+	हाल PR_SET_CHILD_SUBREAPER:
+		me->संकेत->is_child_subreaper = !!arg2;
+		अगर (!arg2)
+			अवरोध;
 
-		walk_process_tree(me, propagate_has_child_subreaper, NULL);
-		break;
-	case PR_GET_CHILD_SUBREAPER:
-		error = put_user(me->signal->is_child_subreaper,
-				 (int __user *)arg2);
-		break;
-	case PR_SET_NO_NEW_PRIVS:
-		if (arg2 != 1 || arg3 || arg4 || arg5)
-			return -EINVAL;
+		walk_process_tree(me, propagate_has_child_subreaper, शून्य);
+		अवरोध;
+	हाल PR_GET_CHILD_SUBREAPER:
+		error = put_user(me->संकेत->is_child_subreaper,
+				 (पूर्णांक __user *)arg2);
+		अवरोध;
+	हाल PR_SET_NO_NEW_PRIVS:
+		अगर (arg2 != 1 || arg3 || arg4 || arg5)
+			वापस -EINVAL;
 
 		task_set_no_new_privs(current);
-		break;
-	case PR_GET_NO_NEW_PRIVS:
-		if (arg2 || arg3 || arg4 || arg5)
-			return -EINVAL;
-		return task_no_new_privs(current) ? 1 : 0;
-	case PR_GET_THP_DISABLE:
-		if (arg2 || arg3 || arg4 || arg5)
-			return -EINVAL;
+		अवरोध;
+	हाल PR_GET_NO_NEW_PRIVS:
+		अगर (arg2 || arg3 || arg4 || arg5)
+			वापस -EINVAL;
+		वापस task_no_new_privs(current) ? 1 : 0;
+	हाल PR_GET_THP_DISABLE:
+		अगर (arg2 || arg3 || arg4 || arg5)
+			वापस -EINVAL;
 		error = !!test_bit(MMF_DISABLE_THP, &me->mm->flags);
-		break;
-	case PR_SET_THP_DISABLE:
-		if (arg3 || arg4 || arg5)
-			return -EINVAL;
-		if (mmap_write_lock_killable(me->mm))
-			return -EINTR;
-		if (arg2)
+		अवरोध;
+	हाल PR_SET_THP_DISABLE:
+		अगर (arg3 || arg4 || arg5)
+			वापस -EINVAL;
+		अगर (mmap_ग_लिखो_lock_समाप्तable(me->mm))
+			वापस -EINTR;
+		अगर (arg2)
 			set_bit(MMF_DISABLE_THP, &me->mm->flags);
-		else
+		अन्यथा
 			clear_bit(MMF_DISABLE_THP, &me->mm->flags);
-		mmap_write_unlock(me->mm);
-		break;
-	case PR_MPX_ENABLE_MANAGEMENT:
-	case PR_MPX_DISABLE_MANAGEMENT:
-		/* No longer implemented: */
-		return -EINVAL;
-	case PR_SET_FP_MODE:
+		mmap_ग_लिखो_unlock(me->mm);
+		अवरोध;
+	हाल PR_MPX_ENABLE_MANAGEMENT:
+	हाल PR_MPX_DISABLE_MANAGEMENT:
+		/* No दीर्घer implemented: */
+		वापस -EINVAL;
+	हाल PR_SET_FP_MODE:
 		error = SET_FP_MODE(me, arg2);
-		break;
-	case PR_GET_FP_MODE:
+		अवरोध;
+	हाल PR_GET_FP_MODE:
 		error = GET_FP_MODE(me);
-		break;
-	case PR_SVE_SET_VL:
+		अवरोध;
+	हाल PR_SVE_SET_VL:
 		error = SVE_SET_VL(arg2);
-		break;
-	case PR_SVE_GET_VL:
+		अवरोध;
+	हाल PR_SVE_GET_VL:
 		error = SVE_GET_VL();
-		break;
-	case PR_GET_SPECULATION_CTRL:
-		if (arg3 || arg4 || arg5)
-			return -EINVAL;
+		अवरोध;
+	हाल PR_GET_SPECULATION_CTRL:
+		अगर (arg3 || arg4 || arg5)
+			वापस -EINVAL;
 		error = arch_prctl_spec_ctrl_get(me, arg2);
-		break;
-	case PR_SET_SPECULATION_CTRL:
-		if (arg4 || arg5)
-			return -EINVAL;
+		अवरोध;
+	हाल PR_SET_SPECULATION_CTRL:
+		अगर (arg4 || arg5)
+			वापस -EINVAL;
 		error = arch_prctl_spec_ctrl_set(me, arg2, arg3);
-		break;
-	case PR_PAC_RESET_KEYS:
-		if (arg3 || arg4 || arg5)
-			return -EINVAL;
+		अवरोध;
+	हाल PR_PAC_RESET_KEYS:
+		अगर (arg3 || arg4 || arg5)
+			वापस -EINVAL;
 		error = PAC_RESET_KEYS(me, arg2);
-		break;
-	case PR_PAC_SET_ENABLED_KEYS:
-		if (arg4 || arg5)
-			return -EINVAL;
+		अवरोध;
+	हाल PR_PAC_SET_ENABLED_KEYS:
+		अगर (arg4 || arg5)
+			वापस -EINVAL;
 		error = PAC_SET_ENABLED_KEYS(me, arg2, arg3);
-		break;
-	case PR_PAC_GET_ENABLED_KEYS:
-		if (arg2 || arg3 || arg4 || arg5)
-			return -EINVAL;
+		अवरोध;
+	हाल PR_PAC_GET_ENABLED_KEYS:
+		अगर (arg2 || arg3 || arg4 || arg5)
+			वापस -EINVAL;
 		error = PAC_GET_ENABLED_KEYS(me);
-		break;
-	case PR_SET_TAGGED_ADDR_CTRL:
-		if (arg3 || arg4 || arg5)
-			return -EINVAL;
+		अवरोध;
+	हाल PR_SET_TAGGED_ADDR_CTRL:
+		अगर (arg3 || arg4 || arg5)
+			वापस -EINVAL;
 		error = SET_TAGGED_ADDR_CTRL(arg2);
-		break;
-	case PR_GET_TAGGED_ADDR_CTRL:
-		if (arg2 || arg3 || arg4 || arg5)
-			return -EINVAL;
+		अवरोध;
+	हाल PR_GET_TAGGED_ADDR_CTRL:
+		अगर (arg2 || arg3 || arg4 || arg5)
+			वापस -EINVAL;
 		error = GET_TAGGED_ADDR_CTRL();
-		break;
-	case PR_SET_IO_FLUSHER:
-		if (!capable(CAP_SYS_RESOURCE))
-			return -EPERM;
+		अवरोध;
+	हाल PR_SET_IO_FLUSHER:
+		अगर (!capable(CAP_SYS_RESOURCE))
+			वापस -EPERM;
 
-		if (arg3 || arg4 || arg5)
-			return -EINVAL;
+		अगर (arg3 || arg4 || arg5)
+			वापस -EINVAL;
 
-		if (arg2 == 1)
+		अगर (arg2 == 1)
 			current->flags |= PR_IO_FLUSHER;
-		else if (!arg2)
+		अन्यथा अगर (!arg2)
 			current->flags &= ~PR_IO_FLUSHER;
-		else
-			return -EINVAL;
-		break;
-	case PR_GET_IO_FLUSHER:
-		if (!capable(CAP_SYS_RESOURCE))
-			return -EPERM;
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
+	हाल PR_GET_IO_FLUSHER:
+		अगर (!capable(CAP_SYS_RESOURCE))
+			वापस -EPERM;
 
-		if (arg2 || arg3 || arg4 || arg5)
-			return -EINVAL;
+		अगर (arg2 || arg3 || arg4 || arg5)
+			वापस -EINVAL;
 
 		error = (current->flags & PR_IO_FLUSHER) == PR_IO_FLUSHER;
-		break;
-	case PR_SET_SYSCALL_USER_DISPATCH:
+		अवरोध;
+	हाल PR_SET_SYSCALL_USER_DISPATCH:
 		error = set_syscall_user_dispatch(arg2, arg3, arg4,
-						  (char __user *) arg5);
-		break;
-	default:
+						  (अक्षर __user *) arg5);
+		अवरोध;
+	शेष:
 		error = -EINVAL;
-		break;
-	}
-	return error;
-}
+		अवरोध;
+	पूर्ण
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE3(getcpu, unsigned __user *, cpup, unsigned __user *, nodep,
-		struct getcpu_cache __user *, unused)
-{
-	int err = 0;
-	int cpu = raw_smp_processor_id();
+SYSCALL_DEFINE3(अ_लोpu, अचिन्हित __user *, cpup, अचिन्हित __user *, nodep,
+		काष्ठा अ_लोpu_cache __user *, unused)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक cpu = raw_smp_processor_id();
 
-	if (cpup)
+	अगर (cpup)
 		err |= put_user(cpu, cpup);
-	if (nodep)
+	अगर (nodep)
 		err |= put_user(cpu_to_node(cpu), nodep);
-	return err ? -EFAULT : 0;
-}
+	वापस err ? -EFAULT : 0;
+पूर्ण
 
 /**
- * do_sysinfo - fill in sysinfo struct
- * @info: pointer to buffer to fill
+ * करो_sysinfo - fill in sysinfo काष्ठा
+ * @info: poपूर्णांकer to buffer to fill
  */
-static int do_sysinfo(struct sysinfo *info)
-{
-	unsigned long mem_total, sav_total;
-	unsigned int mem_unit, bitcount;
-	struct timespec64 tp;
+अटल पूर्णांक करो_sysinfo(काष्ठा sysinfo *info)
+अणु
+	अचिन्हित दीर्घ mem_total, sav_total;
+	अचिन्हित पूर्णांक mem_unit, bitcount;
+	काष्ठा बारpec64 tp;
 
-	memset(info, 0, sizeof(struct sysinfo));
+	स_रखो(info, 0, माप(काष्ठा sysinfo));
 
-	ktime_get_boottime_ts64(&tp);
-	timens_add_boottime(&tp);
-	info->uptime = tp.tv_sec + (tp.tv_nsec ? 1 : 0);
+	kसमय_get_bootसमय_प्रकारs64(&tp);
+	समयns_add_bootसमय(&tp);
+	info->upसमय = tp.tv_sec + (tp.tv_nsec ? 1 : 0);
 
 	get_avenrun(info->loads, 0, SI_LOAD_SHIFT - FSHIFT);
 
-	info->procs = nr_threads;
+	info->procs = nr_thपढ़ोs;
 
 	si_meminfo(info);
 	si_swapinfo(info);
 
 	/*
 	 * If the sum of all the available memory (i.e. ram + swap)
-	 * is less than can be stored in a 32 bit unsigned long then
+	 * is less than can be stored in a 32 bit अचिन्हित दीर्घ then
 	 * we can be binary compatible with 2.2.x kernels.  If not,
-	 * well, in that case 2.2.x was broken anyways...
+	 * well, in that हाल 2.2.x was broken anyways...
 	 *
 	 *  -Erik Andersen <andersee@debian.org>
 	 */
 
 	mem_total = info->totalram + info->totalswap;
-	if (mem_total < info->totalram || mem_total < info->totalswap)
-		goto out;
+	अगर (mem_total < info->totalram || mem_total < info->totalswap)
+		जाओ out;
 	bitcount = 0;
 	mem_unit = info->mem_unit;
-	while (mem_unit > 1) {
+	जबतक (mem_unit > 1) अणु
 		bitcount++;
 		mem_unit >>= 1;
 		sav_total = mem_total;
 		mem_total <<= 1;
-		if (mem_total < sav_total)
-			goto out;
-	}
+		अगर (mem_total < sav_total)
+			जाओ out;
+	पूर्ण
 
 	/*
 	 * If mem_total did not overflow, multiply all memory values by
@@ -2625,93 +2626,93 @@ static int do_sysinfo(struct sysinfo *info)
 
 	info->mem_unit = 1;
 	info->totalram <<= bitcount;
-	info->freeram <<= bitcount;
+	info->मुक्तram <<= bitcount;
 	info->sharedram <<= bitcount;
 	info->bufferram <<= bitcount;
 	info->totalswap <<= bitcount;
-	info->freeswap <<= bitcount;
+	info->मुक्तswap <<= bitcount;
 	info->totalhigh <<= bitcount;
-	info->freehigh <<= bitcount;
+	info->मुक्तhigh <<= bitcount;
 
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-SYSCALL_DEFINE1(sysinfo, struct sysinfo __user *, info)
-{
-	struct sysinfo val;
+SYSCALL_DEFINE1(sysinfo, काष्ठा sysinfo __user *, info)
+अणु
+	काष्ठा sysinfo val;
 
-	do_sysinfo(&val);
+	करो_sysinfo(&val);
 
-	if (copy_to_user(info, &val, sizeof(struct sysinfo)))
-		return -EFAULT;
+	अगर (copy_to_user(info, &val, माप(काष्ठा sysinfo)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-struct compat_sysinfo {
-	s32 uptime;
+#अगर_घोषित CONFIG_COMPAT
+काष्ठा compat_sysinfo अणु
+	s32 upसमय;
 	u32 loads[3];
 	u32 totalram;
-	u32 freeram;
+	u32 मुक्तram;
 	u32 sharedram;
 	u32 bufferram;
 	u32 totalswap;
-	u32 freeswap;
+	u32 मुक्तswap;
 	u16 procs;
 	u16 pad;
 	u32 totalhigh;
-	u32 freehigh;
+	u32 मुक्तhigh;
 	u32 mem_unit;
-	char _f[20-2*sizeof(u32)-sizeof(int)];
-};
+	अक्षर _f[20-2*माप(u32)-माप(पूर्णांक)];
+पूर्ण;
 
-COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
-{
-	struct sysinfo s;
-	struct compat_sysinfo s_32;
+COMPAT_SYSCALL_DEFINE1(sysinfo, काष्ठा compat_sysinfo __user *, info)
+अणु
+	काष्ठा sysinfo s;
+	काष्ठा compat_sysinfo s_32;
 
-	do_sysinfo(&s);
+	करो_sysinfo(&s);
 
-	/* Check to see if any memory value is too large for 32-bit and scale
-	 *  down if needed
+	/* Check to see अगर any memory value is too large क्रम 32-bit and scale
+	 *  करोwn अगर needed
 	 */
-	if (upper_32_bits(s.totalram) || upper_32_bits(s.totalswap)) {
-		int bitcount = 0;
+	अगर (upper_32_bits(s.totalram) || upper_32_bits(s.totalswap)) अणु
+		पूर्णांक bitcount = 0;
 
-		while (s.mem_unit < PAGE_SIZE) {
+		जबतक (s.mem_unit < PAGE_SIZE) अणु
 			s.mem_unit <<= 1;
 			bitcount++;
-		}
+		पूर्ण
 
 		s.totalram >>= bitcount;
-		s.freeram >>= bitcount;
+		s.मुक्तram >>= bitcount;
 		s.sharedram >>= bitcount;
 		s.bufferram >>= bitcount;
 		s.totalswap >>= bitcount;
-		s.freeswap >>= bitcount;
+		s.मुक्तswap >>= bitcount;
 		s.totalhigh >>= bitcount;
-		s.freehigh >>= bitcount;
-	}
+		s.मुक्तhigh >>= bitcount;
+	पूर्ण
 
-	memset(&s_32, 0, sizeof(s_32));
-	s_32.uptime = s.uptime;
+	स_रखो(&s_32, 0, माप(s_32));
+	s_32.upसमय = s.upसमय;
 	s_32.loads[0] = s.loads[0];
 	s_32.loads[1] = s.loads[1];
 	s_32.loads[2] = s.loads[2];
 	s_32.totalram = s.totalram;
-	s_32.freeram = s.freeram;
+	s_32.मुक्तram = s.मुक्तram;
 	s_32.sharedram = s.sharedram;
 	s_32.bufferram = s.bufferram;
 	s_32.totalswap = s.totalswap;
-	s_32.freeswap = s.freeswap;
+	s_32.मुक्तswap = s.मुक्तswap;
 	s_32.procs = s.procs;
 	s_32.totalhigh = s.totalhigh;
-	s_32.freehigh = s.freehigh;
+	s_32.मुक्तhigh = s.मुक्तhigh;
 	s_32.mem_unit = s.mem_unit;
-	if (copy_to_user(info, &s_32, sizeof(s_32)))
-		return -EFAULT;
-	return 0;
-}
-#endif /* CONFIG_COMPAT */
+	अगर (copy_to_user(info, &s_32, माप(s_32)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_COMPAT */

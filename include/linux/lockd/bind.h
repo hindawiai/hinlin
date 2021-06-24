@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * linux/include/linux/lockd/bind.h
  *
@@ -7,76 +8,76 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
-#ifndef LINUX_LOCKD_BIND_H
-#define LINUX_LOCKD_BIND_H
+#अगर_अघोषित LINUX_LOCKD_BIND_H
+#घोषणा LINUX_LOCKD_BIND_H
 
-#include <linux/lockd/nlm.h>
+#समावेश <linux/lockd/nlm.h>
 /* need xdr-encoded error codes too, so... */
-#include <linux/lockd/xdr.h>
-#ifdef CONFIG_LOCKD_V4
-#include <linux/lockd/xdr4.h>
-#endif
+#समावेश <linux/lockd/xdr.h>
+#अगर_घोषित CONFIG_LOCKD_V4
+#समावेश <linux/lockd/xdr4.h>
+#पूर्ण_अगर
 
 /* Dummy declarations */
-struct svc_rqst;
-struct rpc_task;
+काष्ठा svc_rqst;
+काष्ठा rpc_task;
 
 /*
- * This is the set of functions for lockd->nfsd communication
+ * This is the set of functions क्रम lockd->nfsd communication
  */
-struct nlmsvc_binding {
-	__be32			(*fopen)(struct svc_rqst *,
-						struct nfs_fh *,
-						struct file **);
-	void			(*fclose)(struct file *);
-};
+काष्ठा nlmsvc_binding अणु
+	__be32			(*ख_खोलो)(काष्ठा svc_rqst *,
+						काष्ठा nfs_fh *,
+						काष्ठा file **);
+	व्योम			(*ख_बंद)(काष्ठा file *);
+पूर्ण;
 
-extern const struct nlmsvc_binding *nlmsvc_ops;
+बाह्य स्थिर काष्ठा nlmsvc_binding *nlmsvc_ops;
 
 /*
- * Similar to nfs_client_initdata, but without the NFS-specific
+ * Similar to nfs_client_initdata, but without the NFS-specअगरic
  * rpc_ops field.
  */
-struct nlmclnt_initdata {
-	const char		*hostname;
-	const struct sockaddr	*address;
-	size_t			addrlen;
-	unsigned short		protocol;
+काष्ठा nlmclnt_initdata अणु
+	स्थिर अक्षर		*hostname;
+	स्थिर काष्ठा sockaddr	*address;
+	माप_प्रकार			addrlen;
+	अचिन्हित लघु		protocol;
 	u32			nfs_version;
-	int			noresvport;
-	struct net		*net;
-	const struct nlmclnt_operations	*nlmclnt_ops;
-	const struct cred	*cred;
-};
+	पूर्णांक			noresvport;
+	काष्ठा net		*net;
+	स्थिर काष्ठा nlmclnt_operations	*nlmclnt_ops;
+	स्थिर काष्ठा cred	*cred;
+पूर्ण;
 
 /*
  * Functions exported by the lockd module
  */
 
-extern struct nlm_host *nlmclnt_init(const struct nlmclnt_initdata *nlm_init);
-extern void	nlmclnt_done(struct nlm_host *host);
+बाह्य काष्ठा nlm_host *nlmclnt_init(स्थिर काष्ठा nlmclnt_initdata *nlm_init);
+बाह्य व्योम	nlmclnt_करोne(काष्ठा nlm_host *host);
 
 /*
- * NLM client operations provide a means to modify RPC processing of NLM
- * requests.  Callbacks receive a pointer to data passed into the call to
+ * NLM client operations provide a means to modअगरy RPC processing of NLM
+ * requests.  Callbacks receive a poपूर्णांकer to data passed पूर्णांकo the call to
  * nlmclnt_proc().
  */
-struct nlmclnt_operations {
-	/* Called on successful allocation of nlm_rqst, use for allocation or
+काष्ठा nlmclnt_operations अणु
+	/* Called on successful allocation of nlm_rqst, use क्रम allocation or
 	 * reference counting. */
-	void (*nlmclnt_alloc_call)(void *);
+	व्योम (*nlmclnt_alloc_call)(व्योम *);
 
-	/* Called in rpc_task_prepare for unlock.  A return value of true
-	 * indicates the callback has put the task to sleep on a waitqueue
+	/* Called in rpc_task_prepare क्रम unlock.  A वापस value of true
+	 * indicates the callback has put the task to sleep on a रुकोqueue
 	 * and NLM should not call rpc_call_start(). */
-	bool (*nlmclnt_unlock_prepare)(struct rpc_task*, void *);
+	bool (*nlmclnt_unlock_prepare)(काष्ठा rpc_task*, व्योम *);
 
-	/* Called when the nlm_rqst is freed, callbacks should clean up here */
-	void (*nlmclnt_release_call)(void *);
-};
+	/* Called when the nlm_rqst is मुक्तd, callbacks should clean up here */
+	व्योम (*nlmclnt_release_call)(व्योम *);
+पूर्ण;
 
-extern int	nlmclnt_proc(struct nlm_host *host, int cmd, struct file_lock *fl, void *data);
-extern int	lockd_up(struct net *net, const struct cred *cred);
-extern void	lockd_down(struct net *net);
+बाह्य पूर्णांक	nlmclnt_proc(काष्ठा nlm_host *host, पूर्णांक cmd, काष्ठा file_lock *fl, व्योम *data);
+बाह्य पूर्णांक	lockd_up(काष्ठा net *net, स्थिर काष्ठा cred *cred);
+बाह्य व्योम	lockd_करोwn(काष्ठा net *net);
 
-#endif /* LINUX_LOCKD_BIND_H */
+#पूर्ण_अगर /* LINUX_LOCKD_BIND_H */

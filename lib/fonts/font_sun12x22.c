@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/font.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/font.h>
 
-#define FONTDATAMAX 11264
+#घोषणा FONTDATAMAX 11264
 
-static const struct font_data fontdata_sun12x22 = {
-	{ 0, 0, FONTDATAMAX, 0 }, {
+अटल स्थिर काष्ठा font_data fontdata_sun12x22 = अणु
+	अणु 0, 0, FONTDATAMAX, 0 पूर्ण, अणु
 	/* 0 0x00 '^@' */
 	0x00, 0x00, /* 000000000000 */
 	0x00, 0x00, /* 000000000000 */
@@ -6148,19 +6149,19 @@ static const struct font_data fontdata_sun12x22 = {
 	0x00, 0x00, /* 000000000000 */
 	0x00, 0x00, /* 000000000000 */
 	0x00, 0x00, /* 000000000000 */
-} };
+पूर्ण पूर्ण;
 
 
-const struct font_desc font_sun_12x22 = {
+स्थिर काष्ठा font_desc font_sun_12x22 = अणु
 	.idx	= SUN12x22_IDX,
 	.name	= "SUN12x22",
 	.width	= 12,
 	.height	= 22,
-	.charcount = 256,
+	.अक्षरcount = 256,
 	.data	= fontdata_sun12x22.data,
-#ifdef __sparc__
+#अगर_घोषित __sparc__
 	.pref	= 5,
-#else
+#अन्यथा
 	.pref	= -1,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

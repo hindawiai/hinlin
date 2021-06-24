@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * gpio_backlight.c - Simple GPIO-controlled backlight
  */
 
-#include <linux/backlight.h>
-#include <linux/err.h>
-#include <linux/fb.h>
-#include <linux/gpio/consumer.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_data/gpio_backlight.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
-#include <linux/slab.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/err.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_data/gpio_backlight.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/slab.h>
 
-struct gpio_backlight {
-	struct device *fbdev;
-	struct gpio_desc *gpiod;
-};
+काष्ठा gpio_backlight अणु
+	काष्ठा device *fbdev;
+	काष्ठा gpio_desc *gpiod;
+पूर्ण;
 
-static int gpio_backlight_update_status(struct backlight_device *bl)
-{
-	struct gpio_backlight *gbl = bl_get_data(bl);
+अटल पूर्णांक gpio_backlight_update_status(काष्ठा backlight_device *bl)
+अणु
+	काष्ठा gpio_backlight *gbl = bl_get_data(bl);
 
 	gpiod_set_value_cansleep(gbl->gpiod, backlight_get_brightness(bl));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpio_backlight_check_fb(struct backlight_device *bl,
-				   struct fb_info *info)
-{
-	struct gpio_backlight *gbl = bl_get_data(bl);
+अटल पूर्णांक gpio_backlight_check_fb(काष्ठा backlight_device *bl,
+				   काष्ठा fb_info *info)
+अणु
+	काष्ठा gpio_backlight *gbl = bl_get_data(bl);
 
-	return gbl->fbdev == NULL || gbl->fbdev == info->dev;
-}
+	वापस gbl->fbdev == शून्य || gbl->fbdev == info->dev;
+पूर्ण
 
-static const struct backlight_ops gpio_backlight_ops = {
+अटल स्थिर काष्ठा backlight_ops gpio_backlight_ops = अणु
 	.options	= BL_CORE_SUSPENDRESUME,
 	.update_status	= gpio_backlight_update_status,
 	.check_fb	= gpio_backlight_check_fb,
-};
+पूर्ण;
 
-static int gpio_backlight_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct gpio_backlight_platform_data *pdata = dev_get_platdata(dev);
-	struct device_node *of_node = dev->of_node;
-	struct backlight_properties props;
-	struct backlight_device *bl;
-	struct gpio_backlight *gbl;
-	int ret, init_brightness, def_value;
+अटल पूर्णांक gpio_backlight_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा gpio_backlight_platक्रमm_data *pdata = dev_get_platdata(dev);
+	काष्ठा device_node *of_node = dev->of_node;
+	काष्ठा backlight_properties props;
+	काष्ठा backlight_device *bl;
+	काष्ठा gpio_backlight *gbl;
+	पूर्णांक ret, init_brightness, def_value;
 
-	gbl = devm_kzalloc(dev, sizeof(*gbl), GFP_KERNEL);
-	if (gbl == NULL)
-		return -ENOMEM;
+	gbl = devm_kzalloc(dev, माप(*gbl), GFP_KERNEL);
+	अगर (gbl == शून्य)
+		वापस -ENOMEM;
 
-	if (pdata)
+	अगर (pdata)
 		gbl->fbdev = pdata->fbdev;
 
-	def_value = device_property_read_bool(dev, "default-on");
+	def_value = device_property_पढ़ो_bool(dev, "default-on");
 
-	gbl->gpiod = devm_gpiod_get(dev, NULL, GPIOD_ASIS);
-	if (IS_ERR(gbl->gpiod)) {
+	gbl->gpiod = devm_gpiod_get(dev, शून्य, GPIOD_ASIS);
+	अगर (IS_ERR(gbl->gpiod)) अणु
 		ret = PTR_ERR(gbl->gpiod);
-		if (ret != -EPROBE_DEFER)
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(dev,
 				"Error: The gpios parameter is missing or invalid.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	memset(&props, 0, sizeof(props));
+	स_रखो(&props, 0, माप(props));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = 1;
-	bl = devm_backlight_device_register(dev, dev_name(dev), dev, gbl,
+	bl = devm_backlight_device_रेजिस्टर(dev, dev_name(dev), dev, gbl,
 					    &gpio_backlight_ops, &props);
-	if (IS_ERR(bl)) {
+	अगर (IS_ERR(bl)) अणु
 		dev_err(dev, "failed to register backlight\n");
-		return PTR_ERR(bl);
-	}
+		वापस PTR_ERR(bl);
+	पूर्ण
 
-	/* Set the initial power state */
-	if (!of_node || !of_node->phandle)
+	/* Set the initial घातer state */
+	अगर (!of_node || !of_node->phandle)
 		/* Not booted with device tree or no phandle link to the node */
-		bl->props.power = def_value ? FB_BLANK_UNBLANK
+		bl->props.घातer = def_value ? FB_BLANK_UNBLANK
 					    : FB_BLANK_POWERDOWN;
-	else if (gpiod_get_direction(gbl->gpiod) == 0 &&
+	अन्यथा अगर (gpiod_get_direction(gbl->gpiod) == 0 &&
 		 gpiod_get_value_cansleep(gbl->gpiod) == 0)
-		bl->props.power = FB_BLANK_POWERDOWN;
-	else
-		bl->props.power = FB_BLANK_UNBLANK;
+		bl->props.घातer = FB_BLANK_POWERDOWN;
+	अन्यथा
+		bl->props.घातer = FB_BLANK_UNBLANK;
 
 	bl->props.brightness = 1;
 
 	init_brightness = backlight_get_brightness(bl);
 	ret = gpiod_direction_output(gbl->gpiod, init_brightness);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to set initial brightness\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, bl);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, bl);
+	वापस 0;
+पूर्ण
 
-static struct of_device_id gpio_backlight_of_match[] = {
-	{ .compatible = "gpio-backlight" },
-	{ /* sentinel */ }
-};
+अटल काष्ठा of_device_id gpio_backlight_of_match[] = अणु
+	अणु .compatible = "gpio-backlight" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, gpio_backlight_of_match);
 
-static struct platform_driver gpio_backlight_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver gpio_backlight_driver = अणु
+	.driver		= अणु
 		.name		= "gpio-backlight",
 		.of_match_table = gpio_backlight_of_match,
-	},
+	पूर्ण,
 	.probe		= gpio_backlight_probe,
-};
+पूर्ण;
 
-module_platform_driver(gpio_backlight_driver);
+module_platक्रमm_driver(gpio_backlight_driver);
 
 MODULE_AUTHOR("Laurent Pinchart <laurent.pinchart@ideasonboard.com>");
 MODULE_DESCRIPTION("GPIO-based Backlight Driver");

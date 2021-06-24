@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#define _GNU_SOURCE
-#include <argp.h>
-#include <linux/compiler.h>
-#include <sys/time.h>
-#include <sched.h>
-#include <fcntl.h>
-#include <pthread.h>
-#include <sys/sysinfo.h>
-#include <sys/resource.h>
-#include <signal.h>
-#include "bench.h"
-#include "testing_helpers.h"
+#घोषणा _GNU_SOURCE
+#समावेश <argp.h>
+#समावेश <linux/compiler.h>
+#समावेश <sys/समय.स>
+#समावेश <sched.h>
+#समावेश <fcntl.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <sys/sysinfo.h>
+#समावेश <sys/resource.h>
+#समावेश <संकेत.स>
+#समावेश "bench.h"
+#समावेश "testing_helpers.h"
 
-struct env env = {
+काष्ठा env env = अणु
 	.warmup_sec = 1,
 	.duration_sec = 5,
 	.affinity = false,
 	.consumer_cnt = 1,
 	.producer_cnt = 1,
-};
+पूर्ण;
 
-static int libbpf_print_fn(enum libbpf_print_level level,
-		    const char *format, va_list args)
-{
-	if (level == LIBBPF_DEBUG && !env.verbose)
-		return 0;
-	return vfprintf(stderr, format, args);
-}
+अटल पूर्णांक libbpf_prपूर्णांक_fn(क्रमागत libbpf_prपूर्णांक_level level,
+		    स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
+	अगर (level == LIBBPF_DEBUG && !env.verbose)
+		वापस 0;
+	वापस भख_लिखो(मानक_त्रुटि, क्रमmat, args);
+पूर्ण
 
-static int bump_memlock_rlimit(void)
-{
-	struct rlimit rlim_new = {
-		.rlim_cur	= RLIM_INFINITY,
-		.rlim_max	= RLIM_INFINITY,
-	};
+अटल पूर्णांक bump_memlock_rlimit(व्योम)
+अणु
+	काष्ठा rlimit rlim_new = अणु
+		.rlim_cur	= RLIM_अनन्त,
+		.rlim_max	= RLIM_अनन्त,
+	पूर्ण;
 
-	return setrlimit(RLIMIT_MEMLOCK, &rlim_new);
-}
+	वापस setrlimit(RLIMIT_MEMLOCK, &rlim_new);
+पूर्ण
 
-void setup_libbpf()
-{
-	int err;
+व्योम setup_libbpf()
+अणु
+	पूर्णांक err;
 
-	libbpf_set_print(libbpf_print_fn);
+	libbpf_set_prपूर्णांक(libbpf_prपूर्णांक_fn);
 
 	err = bump_memlock_rlimit();
-	if (err)
-		fprintf(stderr, "failed to increase RLIMIT_MEMLOCK: %d", err);
-}
+	अगर (err)
+		ख_लिखो(मानक_त्रुटि, "failed to increase RLIMIT_MEMLOCK: %d", err);
+पूर्ण
 
-void hits_drops_report_progress(int iter, struct bench_res *res, long delta_ns)
-{
-	double hits_per_sec, drops_per_sec;
-	double hits_per_prod;
+व्योम hits_drops_report_progress(पूर्णांक iter, काष्ठा bench_res *res, दीर्घ delta_ns)
+अणु
+	द्विगुन hits_per_sec, drops_per_sec;
+	द्विगुन hits_per_prod;
 
 	hits_per_sec = res->hits / 1000000.0 / (delta_ns / 1000000000.0);
 	hits_per_prod = hits_per_sec / env.producer_cnt;
 	drops_per_sec = res->drops / 1000000.0 / (delta_ns / 1000000000.0);
 
-	printf("Iter %3d (%7.3lfus): ",
+	म_लिखो("Iter %3d (%7.3lfus): ",
 	       iter, (delta_ns - 1000000000) / 1000.0);
 
-	printf("hits %8.3lfM/s (%7.3lfM/prod), drops %8.3lfM/s\n",
+	म_लिखो("hits %8.3lfM/s (%7.3lfM/prod), drops %8.3lfM/s\n",
 	       hits_per_sec, hits_per_prod, drops_per_sec);
-}
+पूर्ण
 
-void hits_drops_report_final(struct bench_res res[], int res_cnt)
-{
-	int i;
-	double hits_mean = 0.0, drops_mean = 0.0;
-	double hits_stddev = 0.0, drops_stddev = 0.0;
+व्योम hits_drops_report_final(काष्ठा bench_res res[], पूर्णांक res_cnt)
+अणु
+	पूर्णांक i;
+	द्विगुन hits_mean = 0.0, drops_mean = 0.0;
+	द्विगुन hits_stddev = 0.0, drops_stddev = 0.0;
 
-	for (i = 0; i < res_cnt; i++) {
+	क्रम (i = 0; i < res_cnt; i++) अणु
 		hits_mean += res[i].hits / 1000000.0 / (0.0 + res_cnt);
 		drops_mean += res[i].drops / 1000000.0 / (0.0 + res_cnt);
-	}
+	पूर्ण
 
-	if (res_cnt > 1)  {
-		for (i = 0; i < res_cnt; i++) {
+	अगर (res_cnt > 1)  अणु
+		क्रम (i = 0; i < res_cnt; i++) अणु
 			hits_stddev += (hits_mean - res[i].hits / 1000000.0) *
 				       (hits_mean - res[i].hits / 1000000.0) /
 				       (res_cnt - 1.0);
 			drops_stddev += (drops_mean - res[i].drops / 1000000.0) *
 					(drops_mean - res[i].drops / 1000000.0) /
 					(res_cnt - 1.0);
-		}
-		hits_stddev = sqrt(hits_stddev);
-		drops_stddev = sqrt(drops_stddev);
-	}
-	printf("Summary: hits %8.3lf \u00B1 %5.3lfM/s (%7.3lfM/prod), ",
+		पूर्ण
+		hits_stddev = वर्ग_मूल(hits_stddev);
+		drops_stddev = वर्ग_मूल(drops_stddev);
+	पूर्ण
+	म_लिखो("Summary: hits %8.3lf \u00B1 %5.3lfM/s (%7.3lfM/prod), ",
 	       hits_mean, hits_stddev, hits_mean / env.producer_cnt);
-	printf("drops %8.3lf \u00B1 %5.3lfM/s\n",
+	म_लिखो("drops %8.3lf \u00B1 %5.3lfM/s\n",
 	       drops_mean, drops_stddev);
-}
+पूर्ण
 
-const char *argp_program_version = "benchmark";
-const char *argp_program_bug_address = "<bpf@vger.kernel.org>";
-const char argp_program_doc[] =
+स्थिर अक्षर *argp_program_version = "benchmark";
+स्थिर अक्षर *argp_program_bug_address = "<bpf@vger.kernel.org>";
+स्थिर अक्षर argp_program_करोc[] =
 "benchmark    Generic benchmarking framework.\n"
 "\n"
 "This tool runs benchmarks.\n"
@@ -110,355 +111,355 @@ const char argp_program_doc[] =
 "    # run 'count-local' with 16 producer and 8 consumer thread, pinned to CPUs\n"
 "    benchmark -p16 -c8 -a count-local\n";
 
-enum {
+क्रमागत अणु
 	ARG_PROD_AFFINITY_SET = 1000,
 	ARG_CONS_AFFINITY_SET = 1001,
-};
+पूर्ण;
 
-static const struct argp_option opts[] = {
-	{ "list", 'l', NULL, 0, "List available benchmarks"},
-	{ "duration", 'd', "SEC", 0, "Duration of benchmark, seconds"},
-	{ "warmup", 'w', "SEC", 0, "Warm-up period, seconds"},
-	{ "producers", 'p', "NUM", 0, "Number of producer threads"},
-	{ "consumers", 'c', "NUM", 0, "Number of consumer threads"},
-	{ "verbose", 'v', NULL, 0, "Verbose debug output"},
-	{ "affinity", 'a', NULL, 0, "Set consumer/producer thread affinity"},
-	{ "prod-affinity", ARG_PROD_AFFINITY_SET, "CPUSET", 0,
-	  "Set of CPUs for producer threads; implies --affinity"},
-	{ "cons-affinity", ARG_CONS_AFFINITY_SET, "CPUSET", 0,
-	  "Set of CPUs for consumer threads; implies --affinity"},
-	{},
-};
+अटल स्थिर काष्ठा argp_option opts[] = अणु
+	अणु "list", 'l', शून्य, 0, "List available benchmarks"पूर्ण,
+	अणु "duration", 'd', "SEC", 0, "Duration of benchmark, seconds"पूर्ण,
+	अणु "warmup", 'w', "SEC", 0, "Warm-up period, seconds"पूर्ण,
+	अणु "producers", 'p', "NUM", 0, "Number of producer threads"पूर्ण,
+	अणु "consumers", 'c', "NUM", 0, "Number of consumer threads"पूर्ण,
+	अणु "verbose", 'v', शून्य, 0, "Verbose debug output"पूर्ण,
+	अणु "affinity", 'a', शून्य, 0, "Set consumer/producer thread affinity"पूर्ण,
+	अणु "prod-affinity", ARG_PROD_AFFINITY_SET, "CPUSET", 0,
+	  "Set of CPUs for producer threads; implies --affinity"पूर्ण,
+	अणु "cons-affinity", ARG_CONS_AFFINITY_SET, "CPUSET", 0,
+	  "Set of CPUs for consumer threads; implies --affinity"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-extern struct argp bench_ringbufs_argp;
+बाह्य काष्ठा argp bench_ringbufs_argp;
 
-static const struct argp_child bench_parsers[] = {
-	{ &bench_ringbufs_argp, 0, "Ring buffers benchmark", 0 },
-	{},
-};
+अटल स्थिर काष्ठा argp_child bench_parsers[] = अणु
+	अणु &bench_ringbufs_argp, 0, "Ring buffers benchmark", 0 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static error_t parse_arg(int key, char *arg, struct argp_state *state)
-{
-	static int pos_args;
+अटल error_t parse_arg(पूर्णांक key, अक्षर *arg, काष्ठा argp_state *state)
+अणु
+	अटल पूर्णांक pos_args;
 
-	switch (key) {
-	case 'v':
+	चयन (key) अणु
+	हाल 'v':
 		env.verbose = true;
-		break;
-	case 'l':
+		अवरोध;
+	हाल 'l':
 		env.list = true;
-		break;
-	case 'd':
-		env.duration_sec = strtol(arg, NULL, 10);
-		if (env.duration_sec <= 0) {
-			fprintf(stderr, "Invalid duration: %s\n", arg);
+		अवरोध;
+	हाल 'd':
+		env.duration_sec = म_से_दीर्घ(arg, शून्य, 10);
+		अगर (env.duration_sec <= 0) अणु
+			ख_लिखो(मानक_त्रुटि, "Invalid duration: %s\n", arg);
 			argp_usage(state);
-		}
-		break;
-	case 'w':
-		env.warmup_sec = strtol(arg, NULL, 10);
-		if (env.warmup_sec <= 0) {
-			fprintf(stderr, "Invalid warm-up duration: %s\n", arg);
+		पूर्ण
+		अवरोध;
+	हाल 'w':
+		env.warmup_sec = म_से_दीर्घ(arg, शून्य, 10);
+		अगर (env.warmup_sec <= 0) अणु
+			ख_लिखो(मानक_त्रुटि, "Invalid warm-up duration: %s\n", arg);
 			argp_usage(state);
-		}
-		break;
-	case 'p':
-		env.producer_cnt = strtol(arg, NULL, 10);
-		if (env.producer_cnt <= 0) {
-			fprintf(stderr, "Invalid producer count: %s\n", arg);
+		पूर्ण
+		अवरोध;
+	हाल 'p':
+		env.producer_cnt = म_से_दीर्घ(arg, शून्य, 10);
+		अगर (env.producer_cnt <= 0) अणु
+			ख_लिखो(मानक_त्रुटि, "Invalid producer count: %s\n", arg);
 			argp_usage(state);
-		}
-		break;
-	case 'c':
-		env.consumer_cnt = strtol(arg, NULL, 10);
-		if (env.consumer_cnt <= 0) {
-			fprintf(stderr, "Invalid consumer count: %s\n", arg);
+		पूर्ण
+		अवरोध;
+	हाल 'c':
+		env.consumer_cnt = म_से_दीर्घ(arg, शून्य, 10);
+		अगर (env.consumer_cnt <= 0) अणु
+			ख_लिखो(मानक_त्रुटि, "Invalid consumer count: %s\n", arg);
 			argp_usage(state);
-		}
-		break;
-	case 'a':
+		पूर्ण
+		अवरोध;
+	हाल 'a':
 		env.affinity = true;
-		break;
-	case ARG_PROD_AFFINITY_SET:
+		अवरोध;
+	हाल ARG_PROD_AFFINITY_SET:
 		env.affinity = true;
-		if (parse_num_list(arg, &env.prod_cpus.cpus,
-				   &env.prod_cpus.cpus_len)) {
-			fprintf(stderr, "Invalid format of CPU set for producers.");
+		अगर (parse_num_list(arg, &env.prod_cpus.cpus,
+				   &env.prod_cpus.cpus_len)) अणु
+			ख_लिखो(मानक_त्रुटि, "Invalid format of CPU set for producers.");
 			argp_usage(state);
-		}
-		break;
-	case ARG_CONS_AFFINITY_SET:
+		पूर्ण
+		अवरोध;
+	हाल ARG_CONS_AFFINITY_SET:
 		env.affinity = true;
-		if (parse_num_list(arg, &env.cons_cpus.cpus,
-				   &env.cons_cpus.cpus_len)) {
-			fprintf(stderr, "Invalid format of CPU set for consumers.");
+		अगर (parse_num_list(arg, &env.cons_cpus.cpus,
+				   &env.cons_cpus.cpus_len)) अणु
+			ख_लिखो(मानक_त्रुटि, "Invalid format of CPU set for consumers.");
 			argp_usage(state);
-		}
-		break;
-	case ARGP_KEY_ARG:
-		if (pos_args++) {
-			fprintf(stderr,
+		पूर्ण
+		अवरोध;
+	हाल ARGP_KEY_ARG:
+		अगर (pos_args++) अणु
+			ख_लिखो(मानक_त्रुटि,
 				"Unrecognized positional argument: %s\n", arg);
 			argp_usage(state);
-		}
+		पूर्ण
 		env.bench_name = strdup(arg);
-		break;
-	default:
-		return ARGP_ERR_UNKNOWN;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस ARGP_ERR_UNKNOWN;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void parse_cmdline_args(int argc, char **argv)
-{
-	static const struct argp argp = {
+अटल व्योम parse_cmdline_args(पूर्णांक argc, अक्षर **argv)
+अणु
+	अटल स्थिर काष्ठा argp argp = अणु
 		.options = opts,
 		.parser = parse_arg,
-		.doc = argp_program_doc,
+		.करोc = argp_program_करोc,
 		.children = bench_parsers,
-	};
-	if (argp_parse(&argp, argc, argv, 0, NULL, NULL))
-		exit(1);
-	if (!env.list && !env.bench_name) {
-		argp_help(&argp, stderr, ARGP_HELP_DOC, "bench");
-		exit(1);
-	}
-}
+	पूर्ण;
+	अगर (argp_parse(&argp, argc, argv, 0, शून्य, शून्य))
+		निकास(1);
+	अगर (!env.list && !env.bench_name) अणु
+		argp_help(&argp, मानक_त्रुटि, ARGP_HELP_DOC, "bench");
+		निकास(1);
+	पूर्ण
+पूर्ण
 
-static void collect_measurements(long delta_ns);
+अटल व्योम collect_measurements(दीर्घ delta_ns);
 
-static __u64 last_time_ns;
-static void sigalarm_handler(int signo)
-{
-	long new_time_ns = get_time_ns();
-	long delta_ns = new_time_ns - last_time_ns;
+अटल __u64 last_समय_ns;
+अटल व्योम sigalarm_handler(पूर्णांक signo)
+अणु
+	दीर्घ new_समय_ns = get_समय_ns();
+	दीर्घ delta_ns = new_समय_ns - last_समय_ns;
 
 	collect_measurements(delta_ns);
 
-	last_time_ns = new_time_ns;
-}
+	last_समय_ns = new_समय_ns;
+पूर्ण
 
-/* set up periodic 1-second timer */
-static void setup_timer()
-{
-	static struct sigaction sigalarm_action = {
+/* set up periodic 1-second समयr */
+अटल व्योम setup_समयr()
+अणु
+	अटल काष्ठा sigaction sigalarm_action = अणु
 		.sa_handler = sigalarm_handler,
-	};
-	struct itimerval timer_settings = {};
-	int err;
+	पूर्ण;
+	काष्ठा iसमयrval समयr_settings = अणुपूर्ण;
+	पूर्णांक err;
 
-	last_time_ns = get_time_ns();
-	err = sigaction(SIGALRM, &sigalarm_action, NULL);
-	if (err < 0) {
-		fprintf(stderr, "failed to install SIGALRM handler: %d\n", -errno);
-		exit(1);
-	}
-	timer_settings.it_interval.tv_sec = 1;
-	timer_settings.it_value.tv_sec = 1;
-	err = setitimer(ITIMER_REAL, &timer_settings, NULL);
-	if (err < 0) {
-		fprintf(stderr, "failed to arm interval timer: %d\n", -errno);
-		exit(1);
-	}
-}
+	last_समय_ns = get_समय_ns();
+	err = sigaction(SIGALRM, &sigalarm_action, शून्य);
+	अगर (err < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "failed to install SIGALRM handler: %d\n", -त्रुटि_सं);
+		निकास(1);
+	पूर्ण
+	समयr_settings.it_पूर्णांकerval.tv_sec = 1;
+	समयr_settings.it_value.tv_sec = 1;
+	err = setiसमयr(ITIMER_REAL, &समयr_settings, शून्य);
+	अगर (err < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "failed to arm interval timer: %d\n", -त्रुटि_सं);
+		निकास(1);
+	पूर्ण
+पूर्ण
 
-static void set_thread_affinity(pthread_t thread, int cpu)
-{
+अटल व्योम set_thपढ़ो_affinity(pthपढ़ो_t thपढ़ो, पूर्णांक cpu)
+अणु
 	cpu_set_t cpuset;
 
 	CPU_ZERO(&cpuset);
 	CPU_SET(cpu, &cpuset);
-	if (pthread_setaffinity_np(thread, sizeof(cpuset), &cpuset)) {
-		fprintf(stderr, "setting affinity to CPU #%d failed: %d\n",
-			cpu, errno);
-		exit(1);
-	}
-}
+	अगर (pthपढ़ो_setaffinity_np(thपढ़ो, माप(cpuset), &cpuset)) अणु
+		ख_लिखो(मानक_त्रुटि, "setting affinity to CPU #%d failed: %d\n",
+			cpu, त्रुटि_सं);
+		निकास(1);
+	पूर्ण
+पूर्ण
 
-static int next_cpu(struct cpu_set *cpu_set)
-{
-	if (cpu_set->cpus) {
-		int i;
+अटल पूर्णांक next_cpu(काष्ठा cpu_set *cpu_set)
+अणु
+	अगर (cpu_set->cpus) अणु
+		पूर्णांक i;
 
 		/* find next available CPU */
-		for (i = cpu_set->next_cpu; i < cpu_set->cpus_len; i++) {
-			if (cpu_set->cpus[i]) {
+		क्रम (i = cpu_set->next_cpu; i < cpu_set->cpus_len; i++) अणु
+			अगर (cpu_set->cpus[i]) अणु
 				cpu_set->next_cpu = i + 1;
-				return i;
-			}
-		}
-		fprintf(stderr, "Not enough CPUs specified, need CPU #%d or higher.\n", i);
-		exit(1);
-	}
+				वापस i;
+			पूर्ण
+		पूर्ण
+		ख_लिखो(मानक_त्रुटि, "Not enough CPUs specified, need CPU #%d or higher.\n", i);
+		निकास(1);
+	पूर्ण
 
-	return cpu_set->next_cpu++;
-}
+	वापस cpu_set->next_cpu++;
+पूर्ण
 
-static struct bench_state {
-	int res_cnt;
-	struct bench_res *results;
-	pthread_t *consumers;
-	pthread_t *producers;
-} state;
+अटल काष्ठा bench_state अणु
+	पूर्णांक res_cnt;
+	काष्ठा bench_res *results;
+	pthपढ़ो_t *consumers;
+	pthपढ़ो_t *producers;
+पूर्ण state;
 
-const struct bench *bench = NULL;
+स्थिर काष्ठा bench *bench = शून्य;
 
-extern const struct bench bench_count_global;
-extern const struct bench bench_count_local;
-extern const struct bench bench_rename_base;
-extern const struct bench bench_rename_kprobe;
-extern const struct bench bench_rename_kretprobe;
-extern const struct bench bench_rename_rawtp;
-extern const struct bench bench_rename_fentry;
-extern const struct bench bench_rename_fexit;
-extern const struct bench bench_trig_base;
-extern const struct bench bench_trig_tp;
-extern const struct bench bench_trig_rawtp;
-extern const struct bench bench_trig_kprobe;
-extern const struct bench bench_trig_fentry;
-extern const struct bench bench_trig_fentry_sleep;
-extern const struct bench bench_trig_fmodret;
-extern const struct bench bench_rb_libbpf;
-extern const struct bench bench_rb_custom;
-extern const struct bench bench_pb_libbpf;
-extern const struct bench bench_pb_custom;
+बाह्य स्थिर काष्ठा bench bench_count_global;
+बाह्य स्थिर काष्ठा bench bench_count_local;
+बाह्य स्थिर काष्ठा bench bench_नाम_base;
+बाह्य स्थिर काष्ठा bench bench_नाम_kprobe;
+बाह्य स्थिर काष्ठा bench bench_नाम_kretprobe;
+बाह्य स्थिर काष्ठा bench bench_नाम_rawtp;
+बाह्य स्थिर काष्ठा bench bench_नाम_fentry;
+बाह्य स्थिर काष्ठा bench bench_नाम_fनिकास;
+बाह्य स्थिर काष्ठा bench bench_trig_base;
+बाह्य स्थिर काष्ठा bench bench_trig_tp;
+बाह्य स्थिर काष्ठा bench bench_trig_rawtp;
+बाह्य स्थिर काष्ठा bench bench_trig_kprobe;
+बाह्य स्थिर काष्ठा bench bench_trig_fentry;
+बाह्य स्थिर काष्ठा bench bench_trig_fentry_sleep;
+बाह्य स्थिर काष्ठा bench bench_trig_भ_शेषret;
+बाह्य स्थिर काष्ठा bench bench_rb_libbpf;
+बाह्य स्थिर काष्ठा bench bench_rb_custom;
+बाह्य स्थिर काष्ठा bench bench_pb_libbpf;
+बाह्य स्थिर काष्ठा bench bench_pb_custom;
 
-static const struct bench *benchs[] = {
+अटल स्थिर काष्ठा bench *benchs[] = अणु
 	&bench_count_global,
 	&bench_count_local,
-	&bench_rename_base,
-	&bench_rename_kprobe,
-	&bench_rename_kretprobe,
-	&bench_rename_rawtp,
-	&bench_rename_fentry,
-	&bench_rename_fexit,
+	&bench_नाम_base,
+	&bench_नाम_kprobe,
+	&bench_नाम_kretprobe,
+	&bench_नाम_rawtp,
+	&bench_नाम_fentry,
+	&bench_नाम_fनिकास,
 	&bench_trig_base,
 	&bench_trig_tp,
 	&bench_trig_rawtp,
 	&bench_trig_kprobe,
 	&bench_trig_fentry,
 	&bench_trig_fentry_sleep,
-	&bench_trig_fmodret,
+	&bench_trig_भ_शेषret,
 	&bench_rb_libbpf,
 	&bench_rb_custom,
 	&bench_pb_libbpf,
 	&bench_pb_custom,
-};
+पूर्ण;
 
-static void setup_benchmark()
-{
-	int i, err;
+अटल व्योम setup_benchmark()
+अणु
+	पूर्णांक i, err;
 
-	if (!env.bench_name) {
-		fprintf(stderr, "benchmark name is not specified\n");
-		exit(1);
-	}
+	अगर (!env.bench_name) अणु
+		ख_लिखो(मानक_त्रुटि, "benchmark name is not specified\n");
+		निकास(1);
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(benchs); i++) {
-		if (strcmp(benchs[i]->name, env.bench_name) == 0) {
+	क्रम (i = 0; i < ARRAY_SIZE(benchs); i++) अणु
+		अगर (म_भेद(benchs[i]->name, env.bench_name) == 0) अणु
 			bench = benchs[i];
-			break;
-		}
-	}
-	if (!bench) {
-		fprintf(stderr, "benchmark '%s' not found\n", env.bench_name);
-		exit(1);
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!bench) अणु
+		ख_लिखो(मानक_त्रुटि, "benchmark '%s' not found\n", env.bench_name);
+		निकास(1);
+	पूर्ण
 
-	printf("Setting up benchmark '%s'...\n", bench->name);
+	म_लिखो("Setting up benchmark '%s'...\n", bench->name);
 
-	state.producers = calloc(env.producer_cnt, sizeof(*state.producers));
-	state.consumers = calloc(env.consumer_cnt, sizeof(*state.consumers));
-	state.results = calloc(env.duration_sec + env.warmup_sec + 2,
-			       sizeof(*state.results));
-	if (!state.producers || !state.consumers || !state.results)
-		exit(1);
+	state.producers = सुस्मृति(env.producer_cnt, माप(*state.producers));
+	state.consumers = सुस्मृति(env.consumer_cnt, माप(*state.consumers));
+	state.results = सुस्मृति(env.duration_sec + env.warmup_sec + 2,
+			       माप(*state.results));
+	अगर (!state.producers || !state.consumers || !state.results)
+		निकास(1);
 
-	if (bench->validate)
+	अगर (bench->validate)
 		bench->validate();
-	if (bench->setup)
+	अगर (bench->setup)
 		bench->setup();
 
-	for (i = 0; i < env.consumer_cnt; i++) {
-		err = pthread_create(&state.consumers[i], NULL,
-				     bench->consumer_thread, (void *)(long)i);
-		if (err) {
-			fprintf(stderr, "failed to create consumer thread #%d: %d\n",
-				i, -errno);
-			exit(1);
-		}
-		if (env.affinity)
-			set_thread_affinity(state.consumers[i],
+	क्रम (i = 0; i < env.consumer_cnt; i++) अणु
+		err = pthपढ़ो_create(&state.consumers[i], शून्य,
+				     bench->consumer_thपढ़ो, (व्योम *)(दीर्घ)i);
+		अगर (err) अणु
+			ख_लिखो(मानक_त्रुटि, "failed to create consumer thread #%d: %d\n",
+				i, -त्रुटि_सं);
+			निकास(1);
+		पूर्ण
+		अगर (env.affinity)
+			set_thपढ़ो_affinity(state.consumers[i],
 					    next_cpu(&env.cons_cpus));
-	}
+	पूर्ण
 
-	/* unless explicit producer CPU list is specified, continue after
+	/* unless explicit producer CPU list is specअगरied, जारी after
 	 * last consumer CPU
 	 */
-	if (!env.prod_cpus.cpus)
+	अगर (!env.prod_cpus.cpus)
 		env.prod_cpus.next_cpu = env.cons_cpus.next_cpu;
 
-	for (i = 0; i < env.producer_cnt; i++) {
-		err = pthread_create(&state.producers[i], NULL,
-				     bench->producer_thread, (void *)(long)i);
-		if (err) {
-			fprintf(stderr, "failed to create producer thread #%d: %d\n",
-				i, -errno);
-			exit(1);
-		}
-		if (env.affinity)
-			set_thread_affinity(state.producers[i],
+	क्रम (i = 0; i < env.producer_cnt; i++) अणु
+		err = pthपढ़ो_create(&state.producers[i], शून्य,
+				     bench->producer_thपढ़ो, (व्योम *)(दीर्घ)i);
+		अगर (err) अणु
+			ख_लिखो(मानक_त्रुटि, "failed to create producer thread #%d: %d\n",
+				i, -त्रुटि_सं);
+			निकास(1);
+		पूर्ण
+		अगर (env.affinity)
+			set_thपढ़ो_affinity(state.producers[i],
 					    next_cpu(&env.prod_cpus));
-	}
+	पूर्ण
 
-	printf("Benchmark '%s' started.\n", bench->name);
-}
+	म_लिखो("Benchmark '%s' started.\n", bench->name);
+पूर्ण
 
-static pthread_mutex_t bench_done_mtx = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t bench_done = PTHREAD_COND_INITIALIZER;
+अटल pthपढ़ो_mutex_t bench_करोne_mtx = PTHREAD_MUTEX_INITIALIZER;
+अटल pthपढ़ो_cond_t bench_करोne = PTHREAD_COND_INITIALIZER;
 
-static void collect_measurements(long delta_ns) {
-	int iter = state.res_cnt++;
-	struct bench_res *res = &state.results[iter];
+अटल व्योम collect_measurements(दीर्घ delta_ns) अणु
+	पूर्णांक iter = state.res_cnt++;
+	काष्ठा bench_res *res = &state.results[iter];
 
 	bench->measure(res);
 
-	if (bench->report_progress)
+	अगर (bench->report_progress)
 		bench->report_progress(iter, res, delta_ns);
 
-	if (iter == env.duration_sec + env.warmup_sec) {
-		pthread_mutex_lock(&bench_done_mtx);
-		pthread_cond_signal(&bench_done);
-		pthread_mutex_unlock(&bench_done_mtx);
-	}
-}
+	अगर (iter == env.duration_sec + env.warmup_sec) अणु
+		pthपढ़ो_mutex_lock(&bench_करोne_mtx);
+		pthपढ़ो_cond_संकेत(&bench_करोne);
+		pthपढ़ो_mutex_unlock(&bench_करोne_mtx);
+	पूर्ण
+पूर्ण
 
-int main(int argc, char **argv)
-{
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
 	parse_cmdline_args(argc, argv);
 
-	if (env.list) {
-		int i;
+	अगर (env.list) अणु
+		पूर्णांक i;
 
-		printf("Available benchmarks:\n");
-		for (i = 0; i < ARRAY_SIZE(benchs); i++) {
-			printf("- %s\n", benchs[i]->name);
-		}
-		return 0;
-	}
+		म_लिखो("Available benchmarks:\n");
+		क्रम (i = 0; i < ARRAY_SIZE(benchs); i++) अणु
+			म_लिखो("- %s\n", benchs[i]->name);
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	setup_benchmark();
 
-	setup_timer();
+	setup_समयr();
 
-	pthread_mutex_lock(&bench_done_mtx);
-	pthread_cond_wait(&bench_done, &bench_done_mtx);
-	pthread_mutex_unlock(&bench_done_mtx);
+	pthपढ़ो_mutex_lock(&bench_करोne_mtx);
+	pthपढ़ो_cond_रुको(&bench_करोne, &bench_करोne_mtx);
+	pthपढ़ो_mutex_unlock(&bench_करोne_mtx);
 
-	if (bench->report_final)
+	अगर (bench->report_final)
 		/* skip first sample */
 		bench->report_final(state.results + env.warmup_sec,
 				    state.res_cnt - env.warmup_sec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

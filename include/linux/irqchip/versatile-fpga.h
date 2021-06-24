@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PLAT_FPGA_IRQ_H
-#define PLAT_FPGA_IRQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PLAT_FPGA_IRQ_H
+#घोषणा PLAT_FPGA_IRQ_H
 
-struct device_node;
-struct pt_regs;
+काष्ठा device_node;
+काष्ठा pt_regs;
 
-void fpga_handle_irq(struct pt_regs *regs);
-void fpga_irq_init(void __iomem *, const char *, int, int, u32,
-		struct device_node *node);
-int fpga_irq_of_init(struct device_node *node,
-		     struct device_node *parent);
+व्योम fpga_handle_irq(काष्ठा pt_regs *regs);
+व्योम fpga_irq_init(व्योम __iomem *, स्थिर अक्षर *, पूर्णांक, पूर्णांक, u32,
+		काष्ठा device_node *node);
+पूर्णांक fpga_irq_of_init(काष्ठा device_node *node,
+		     काष्ठा device_node *parent);
 
-#endif
+#पूर्ण_अगर

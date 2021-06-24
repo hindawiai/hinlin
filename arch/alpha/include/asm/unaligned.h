@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_ALPHA_UNALIGNED_H
-#define _ASM_ALPHA_UNALIGNED_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_ALPHA_UNALIGNED_H
+#घोषणा _ASM_ALPHA_UNALIGNED_H
 
-#include <linux/unaligned/le_struct.h>
-#include <linux/unaligned/be_byteshift.h>
-#include <linux/unaligned/generic.h>
+#समावेश <linux/unaligned/le_काष्ठा.h>
+#समावेश <linux/unaligned/be_byteshअगरt.h>
+#समावेश <linux/unaligned/generic.h>
 
-#define get_unaligned __get_unaligned_le
-#define put_unaligned __put_unaligned_le
+#घोषणा get_unaligned __get_unaligned_le
+#घोषणा put_unaligned __put_unaligned_le
 
-#endif /* _ASM_ALPHA_UNALIGNED_H */
+#पूर्ण_अगर /* _ASM_ALPHA_UNALIGNED_H */

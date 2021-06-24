@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * DMABUF Heaps Userspace API
  *
  * Copyright (C) 2011 Google, Inc.
  * Copyright (C) 2019 Linaro Ltd.
  */
-#ifndef _UAPI_LINUX_DMABUF_POOL_H
-#define _UAPI_LINUX_DMABUF_POOL_H
+#अगर_अघोषित _UAPI_LINUX_DMABUF_POOL_H
+#घोषणा _UAPI_LINUX_DMABUF_POOL_H
 
-#include <linux/ioctl.h>
-#include <linux/types.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/types.h>
 
 /**
  * DOC: DMABUF Heaps Userspace API
  */
 
 /* Valid FD_FLAGS are O_CLOEXEC, O_RDONLY, O_WRONLY, O_RDWR */
-#define DMA_HEAP_VALID_FD_FLAGS (O_CLOEXEC | O_ACCMODE)
+#घोषणा DMA_HEAP_VALID_FD_FLAGS (O_CLOEXEC | O_ACCMODE)
 
 /* Currently no heap flags */
-#define DMA_HEAP_VALID_HEAP_FLAGS (0)
+#घोषणा DMA_HEAP_VALID_HEAP_FLAGS (0)
 
 /**
- * struct dma_heap_allocation_data - metadata passed from userspace for
+ * काष्ठा dma_heap_allocation_data - metadata passed from userspace क्रम
  *                                      allocations
  * @len:		size of the allocation
  * @fd:			will be populated with a fd which provides the
@@ -32,22 +33,22 @@
  *
  * Provided by userspace as an argument to the ioctl
  */
-struct dma_heap_allocation_data {
+काष्ठा dma_heap_allocation_data अणु
 	__u64 len;
 	__u32 fd;
 	__u32 fd_flags;
 	__u64 heap_flags;
-};
+पूर्ण;
 
-#define DMA_HEAP_IOC_MAGIC		'H'
+#घोषणा DMA_HEAP_IOC_MAGIC		'H'
 
 /**
  * DOC: DMA_HEAP_IOCTL_ALLOC - allocate memory from pool
  *
- * Takes a dma_heap_allocation_data struct and returns it with the fd field
+ * Takes a dma_heap_allocation_data काष्ठा and वापसs it with the fd field
  * populated with the dmabuf handle of the allocation.
  */
-#define DMA_HEAP_IOCTL_ALLOC	_IOWR(DMA_HEAP_IOC_MAGIC, 0x0,\
-				      struct dma_heap_allocation_data)
+#घोषणा DMA_HEAP_IOCTL_ALLOC	_IOWR(DMA_HEAP_IOC_MAGIC, 0x0,\
+				      काष्ठा dma_heap_allocation_data)
 
-#endif /* _UAPI_LINUX_DMABUF_POOL_H */
+#पूर्ण_अगर /* _UAPI_LINUX_DMABUF_POOL_H */

@@ -1,376 +1,377 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{linux.intel,addtoit}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुlinux.पूर्णांकel,addtoitपूर्ण.com)
  */
 
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include "chan.h"
-#include <os.h>
-#include <irq_kern.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश "chan.h"
+#समावेश <os.h>
+#समावेश <irq_kern.h>
 
-#ifdef CONFIG_NOCONFIG_CHAN
-static void *not_configged_init(char *str, int device,
-				const struct chan_opts *opts)
-{
-	printk(KERN_ERR "Using a channel type which is configured out of "
+#अगर_घोषित CONFIG_NOCONFIG_CHAN
+अटल व्योम *not_configged_init(अक्षर *str, पूर्णांक device,
+				स्थिर काष्ठा chan_opts *opts)
+अणु
+	prपूर्णांकk(KERN_ERR "Using a channel type which is configured out of "
 	       "UML\n");
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int not_configged_open(int input, int output, int primary, void *data,
-			      char **dev_out)
-{
-	printk(KERN_ERR "Using a channel type which is configured out of "
+अटल पूर्णांक not_configged_खोलो(पूर्णांक input, पूर्णांक output, पूर्णांक primary, व्योम *data,
+			      अक्षर **dev_out)
+अणु
+	prपूर्णांकk(KERN_ERR "Using a channel type which is configured out of "
 	       "UML\n");
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void not_configged_close(int fd, void *data)
-{
-	printk(KERN_ERR "Using a channel type which is configured out of "
+अटल व्योम not_configged_बंद(पूर्णांक fd, व्योम *data)
+अणु
+	prपूर्णांकk(KERN_ERR "Using a channel type which is configured out of "
 	       "UML\n");
-}
+पूर्ण
 
-static int not_configged_read(int fd, char *c_out, void *data)
-{
-	printk(KERN_ERR "Using a channel type which is configured out of "
+अटल पूर्णांक not_configged_पढ़ो(पूर्णांक fd, अक्षर *c_out, व्योम *data)
+अणु
+	prपूर्णांकk(KERN_ERR "Using a channel type which is configured out of "
 	       "UML\n");
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int not_configged_write(int fd, const char *buf, int len, void *data)
-{
-	printk(KERN_ERR "Using a channel type which is configured out of "
+अटल पूर्णांक not_configged_ग_लिखो(पूर्णांक fd, स्थिर अक्षर *buf, पूर्णांक len, व्योम *data)
+अणु
+	prपूर्णांकk(KERN_ERR "Using a channel type which is configured out of "
 	       "UML\n");
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int not_configged_console_write(int fd, const char *buf, int len)
-{
-	printk(KERN_ERR "Using a channel type which is configured out of "
+अटल पूर्णांक not_configged_console_ग_लिखो(पूर्णांक fd, स्थिर अक्षर *buf, पूर्णांक len)
+अणु
+	prपूर्णांकk(KERN_ERR "Using a channel type which is configured out of "
 	       "UML\n");
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int not_configged_window_size(int fd, void *data, unsigned short *rows,
-				     unsigned short *cols)
-{
-	printk(KERN_ERR "Using a channel type which is configured out of "
+अटल पूर्णांक not_configged_winकरोw_size(पूर्णांक fd, व्योम *data, अचिन्हित लघु *rows,
+				     अचिन्हित लघु *cols)
+अणु
+	prपूर्णांकk(KERN_ERR "Using a channel type which is configured out of "
 	       "UML\n");
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void not_configged_free(void *data)
-{
-	printk(KERN_ERR "Using a channel type which is configured out of "
+अटल व्योम not_configged_मुक्त(व्योम *data)
+अणु
+	prपूर्णांकk(KERN_ERR "Using a channel type which is configured out of "
 	       "UML\n");
-}
+पूर्ण
 
-static const struct chan_ops not_configged_ops = {
+अटल स्थिर काष्ठा chan_ops not_configged_ops = अणु
 	.init		= not_configged_init,
-	.open		= not_configged_open,
-	.close		= not_configged_close,
-	.read		= not_configged_read,
-	.write		= not_configged_write,
-	.console_write	= not_configged_console_write,
-	.window_size	= not_configged_window_size,
-	.free		= not_configged_free,
+	.खोलो		= not_configged_खोलो,
+	.बंद		= not_configged_बंद,
+	.पढ़ो		= not_configged_पढ़ो,
+	.ग_लिखो		= not_configged_ग_लिखो,
+	.console_ग_लिखो	= not_configged_console_ग_लिखो,
+	.winकरोw_size	= not_configged_winकरोw_size,
+	.मुक्त		= not_configged_मुक्त,
 	.winch		= 0,
-};
-#endif /* CONFIG_NOCONFIG_CHAN */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_NOCONFIG_CHAN */
 
-static int open_one_chan(struct chan *chan)
-{
-	int fd, err;
+अटल पूर्णांक खोलो_one_chan(काष्ठा chan *chan)
+अणु
+	पूर्णांक fd, err;
 
-	if (chan->opened)
-		return 0;
+	अगर (chan->खोलोed)
+		वापस 0;
 
-	if (chan->ops->open == NULL)
+	अगर (chan->ops->खोलो == शून्य)
 		fd = 0;
-	else fd = (*chan->ops->open)(chan->input, chan->output, chan->primary,
+	अन्यथा fd = (*chan->ops->खोलो)(chan->input, chan->output, chan->primary,
 				     chan->data, &chan->dev);
-	if (fd < 0)
-		return fd;
+	अगर (fd < 0)
+		वापस fd;
 
 	err = os_set_fd_block(fd, 0);
-	if (err) {
-		(*chan->ops->close)(fd, chan->data);
-		return err;
-	}
+	अगर (err) अणु
+		(*chan->ops->बंद)(fd, chan->data);
+		वापस err;
+	पूर्ण
 
 	chan->fd = fd;
 
-	chan->opened = 1;
-	return 0;
-}
+	chan->खोलोed = 1;
+	वापस 0;
+पूर्ण
 
-static int open_chan(struct list_head *chans)
-{
-	struct list_head *ele;
-	struct chan *chan;
-	int ret, err = 0;
+अटल पूर्णांक खोलो_chan(काष्ठा list_head *chans)
+अणु
+	काष्ठा list_head *ele;
+	काष्ठा chan *chan;
+	पूर्णांक ret, err = 0;
 
-	list_for_each(ele, chans) {
-		chan = list_entry(ele, struct chan, list);
-		ret = open_one_chan(chan);
-		if (chan->primary)
+	list_क्रम_each(ele, chans) अणु
+		chan = list_entry(ele, काष्ठा chan, list);
+		ret = खोलो_one_chan(chan);
+		अगर (chan->primary)
 			err = ret;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-void chan_enable_winch(struct chan *chan, struct tty_port *port)
-{
-	if (chan && chan->primary && chan->ops->winch)
-		register_winch(chan->fd, port);
-}
+व्योम chan_enable_winch(काष्ठा chan *chan, काष्ठा tty_port *port)
+अणु
+	अगर (chan && chan->primary && chan->ops->winch)
+		रेजिस्टर_winch(chan->fd, port);
+पूर्ण
 
-static void line_timer_cb(struct work_struct *work)
-{
-	struct line *line = container_of(work, struct line, task.work);
+अटल व्योम line_समयr_cb(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा line *line = container_of(work, काष्ठा line, task.work);
 
-	if (!line->throttled)
-		chan_interrupt(line, line->driver->read_irq);
-}
+	अगर (!line->throttled)
+		chan_पूर्णांकerrupt(line, line->driver->पढ़ो_irq);
+पूर्ण
 
-int enable_chan(struct line *line)
-{
-	struct list_head *ele;
-	struct chan *chan;
-	int err;
+पूर्णांक enable_chan(काष्ठा line *line)
+अणु
+	काष्ठा list_head *ele;
+	काष्ठा chan *chan;
+	पूर्णांक err;
 
-	INIT_DELAYED_WORK(&line->task, line_timer_cb);
+	INIT_DELAYED_WORK(&line->task, line_समयr_cb);
 
-	list_for_each(ele, &line->chan_list) {
-		chan = list_entry(ele, struct chan, list);
-		err = open_one_chan(chan);
-		if (err) {
-			if (chan->primary)
-				goto out_close;
+	list_क्रम_each(ele, &line->chan_list) अणु
+		chan = list_entry(ele, काष्ठा chan, list);
+		err = खोलो_one_chan(chan);
+		अगर (err) अणु
+			अगर (chan->primary)
+				जाओ out_बंद;
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (chan->enabled)
-			continue;
+		अगर (chan->enabled)
+			जारी;
 		err = line_setup_irq(chan->fd, chan->input, chan->output, line,
 				     chan);
-		if (err)
-			goto out_close;
+		अगर (err)
+			जाओ out_बंद;
 
 		chan->enabled = 1;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- out_close:
-	close_chan(line);
-	return err;
-}
+ out_बंद:
+	बंद_chan(line);
+	वापस err;
+पूर्ण
 
-/* Items are added in IRQ context, when free_irq can't be called, and
- * removed in process context, when it can.
- * This handles interrupt sources which disappear, and which need to
+/* Items are added in IRQ context, when मुक्त_irq can't be called, and
+ * हटाओd in process context, when it can.
+ * This handles पूर्णांकerrupt sources which disappear, and which need to
  * be permanently disabled.  This is discovered in IRQ context, but
- * the freeing of the IRQ must be done later.
+ * the मुक्तing of the IRQ must be करोne later.
  */
-static DEFINE_SPINLOCK(irqs_to_free_lock);
-static LIST_HEAD(irqs_to_free);
+अटल DEFINE_SPINLOCK(irqs_to_मुक्त_lock);
+अटल LIST_HEAD(irqs_to_मुक्त);
 
-void free_irqs(void)
-{
-	struct chan *chan;
+व्योम मुक्त_irqs(व्योम)
+अणु
+	काष्ठा chan *chan;
 	LIST_HEAD(list);
-	struct list_head *ele;
-	unsigned long flags;
+	काष्ठा list_head *ele;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&irqs_to_free_lock, flags);
-	list_splice_init(&irqs_to_free, &list);
-	spin_unlock_irqrestore(&irqs_to_free_lock, flags);
+	spin_lock_irqsave(&irqs_to_मुक्त_lock, flags);
+	list_splice_init(&irqs_to_मुक्त, &list);
+	spin_unlock_irqrestore(&irqs_to_मुक्त_lock, flags);
 
-	list_for_each(ele, &list) {
-		chan = list_entry(ele, struct chan, free_list);
+	list_क्रम_each(ele, &list) अणु
+		chan = list_entry(ele, काष्ठा chan, मुक्त_list);
 
-		if (chan->input && chan->enabled)
-			um_free_irq(chan->line->driver->read_irq, chan);
-		if (chan->output && chan->enabled)
-			um_free_irq(chan->line->driver->write_irq, chan);
+		अगर (chan->input && chan->enabled)
+			um_मुक्त_irq(chan->line->driver->पढ़ो_irq, chan);
+		अगर (chan->output && chan->enabled)
+			um_मुक्त_irq(chan->line->driver->ग_लिखो_irq, chan);
 		chan->enabled = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void close_one_chan(struct chan *chan, int delay_free_irq)
-{
-	unsigned long flags;
+अटल व्योम बंद_one_chan(काष्ठा chan *chan, पूर्णांक delay_मुक्त_irq)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!chan->opened)
-		return;
+	अगर (!chan->खोलोed)
+		वापस;
 
-	if (delay_free_irq) {
-		spin_lock_irqsave(&irqs_to_free_lock, flags);
-		list_add(&chan->free_list, &irqs_to_free);
-		spin_unlock_irqrestore(&irqs_to_free_lock, flags);
-	} else {
-		if (chan->input && chan->enabled)
-			um_free_irq(chan->line->driver->read_irq, chan);
-		if (chan->output && chan->enabled)
-			um_free_irq(chan->line->driver->write_irq, chan);
+	अगर (delay_मुक्त_irq) अणु
+		spin_lock_irqsave(&irqs_to_मुक्त_lock, flags);
+		list_add(&chan->मुक्त_list, &irqs_to_मुक्त);
+		spin_unlock_irqrestore(&irqs_to_मुक्त_lock, flags);
+	पूर्ण अन्यथा अणु
+		अगर (chan->input && chan->enabled)
+			um_मुक्त_irq(chan->line->driver->पढ़ो_irq, chan);
+		अगर (chan->output && chan->enabled)
+			um_मुक्त_irq(chan->line->driver->ग_लिखो_irq, chan);
 		chan->enabled = 0;
-	}
-	if (chan->ops->close != NULL)
-		(*chan->ops->close)(chan->fd, chan->data);
+	पूर्ण
+	अगर (chan->ops->बंद != शून्य)
+		(*chan->ops->बंद)(chan->fd, chan->data);
 
-	chan->opened = 0;
+	chan->खोलोed = 0;
 	chan->fd = -1;
-}
+पूर्ण
 
-void close_chan(struct line *line)
-{
-	struct chan *chan;
+व्योम बंद_chan(काष्ठा line *line)
+अणु
+	काष्ठा chan *chan;
 
-	/* Close in reverse order as open in case more than one of them
+	/* Close in reverse order as खोलो in हाल more than one of them
 	 * refers to the same device and they save and restore that device's
-	 * state.  Then, the first one opened will have the original state,
-	 * so it must be the last closed.
+	 * state.  Then, the first one खोलोed will have the original state,
+	 * so it must be the last बंदd.
 	 */
-	list_for_each_entry_reverse(chan, &line->chan_list, list) {
-		close_one_chan(chan, 0);
-	}
-}
+	list_क्रम_each_entry_reverse(chan, &line->chan_list, list) अणु
+		बंद_one_chan(chan, 0);
+	पूर्ण
+पूर्ण
 
-void deactivate_chan(struct chan *chan, int irq)
-{
-	if (chan && chan->enabled)
+व्योम deactivate_chan(काष्ठा chan *chan, पूर्णांक irq)
+अणु
+	अगर (chan && chan->enabled)
 		deactivate_fd(chan->fd, irq);
-}
+पूर्ण
 
-int write_chan(struct chan *chan, const char *buf, int len,
-	       int write_irq)
-{
-	int n, ret = 0;
+पूर्णांक ग_लिखो_chan(काष्ठा chan *chan, स्थिर अक्षर *buf, पूर्णांक len,
+	       पूर्णांक ग_लिखो_irq)
+अणु
+	पूर्णांक n, ret = 0;
 
-	if (len == 0 || !chan || !chan->ops->write)
-		return 0;
+	अगर (len == 0 || !chan || !chan->ops->ग_लिखो)
+		वापस 0;
 
-	n = chan->ops->write(chan->fd, buf, len, chan->data);
-	if (chan->primary) {
+	n = chan->ops->ग_लिखो(chan->fd, buf, len, chan->data);
+	अगर (chan->primary) अणु
 		ret = n;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int console_write_chan(struct chan *chan, const char *buf, int len)
-{
-	int n, ret = 0;
+पूर्णांक console_ग_लिखो_chan(काष्ठा chan *chan, स्थिर अक्षर *buf, पूर्णांक len)
+अणु
+	पूर्णांक n, ret = 0;
 
-	if (!chan || !chan->ops->console_write)
-		return 0;
+	अगर (!chan || !chan->ops->console_ग_लिखो)
+		वापस 0;
 
-	n = chan->ops->console_write(chan->fd, buf, len);
-	if (chan->primary)
+	n = chan->ops->console_ग_लिखो(chan->fd, buf, len);
+	अगर (chan->primary)
 		ret = n;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int console_open_chan(struct line *line, struct console *co)
-{
-	int err;
+पूर्णांक console_खोलो_chan(काष्ठा line *line, काष्ठा console *co)
+अणु
+	पूर्णांक err;
 
-	err = open_chan(&line->chan_list);
-	if (err)
-		return err;
+	err = खोलो_chan(&line->chan_list);
+	अगर (err)
+		वापस err;
 
-	printk(KERN_INFO "Console initialized on /dev/%s%d\n", co->name,
+	prपूर्णांकk(KERN_INFO "Console initialized on /dev/%s%d\n", co->name,
 	       co->index);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int chan_window_size(struct line *line, unsigned short *rows_out,
-		      unsigned short *cols_out)
-{
-	struct chan *chan;
+पूर्णांक chan_winकरोw_size(काष्ठा line *line, अचिन्हित लघु *rows_out,
+		      अचिन्हित लघु *cols_out)
+अणु
+	काष्ठा chan *chan;
 
 	chan = line->chan_in;
-	if (chan && chan->primary) {
-		if (chan->ops->window_size == NULL)
-			return 0;
-		return chan->ops->window_size(chan->fd, chan->data,
+	अगर (chan && chan->primary) अणु
+		अगर (chan->ops->winकरोw_size == शून्य)
+			वापस 0;
+		वापस chan->ops->winकरोw_size(chan->fd, chan->data,
 					      rows_out, cols_out);
-	}
+	पूर्ण
 	chan = line->chan_out;
-	if (chan && chan->primary) {
-		if (chan->ops->window_size == NULL)
-			return 0;
-		return chan->ops->window_size(chan->fd, chan->data,
+	अगर (chan && chan->primary) अणु
+		अगर (chan->ops->winकरोw_size == शून्य)
+			वापस 0;
+		वापस chan->ops->winकरोw_size(chan->fd, chan->data,
 					      rows_out, cols_out);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void free_one_chan(struct chan *chan)
-{
+अटल व्योम मुक्त_one_chan(काष्ठा chan *chan)
+अणु
 	list_del(&chan->list);
 
-	close_one_chan(chan, 0);
+	बंद_one_chan(chan, 0);
 
-	if (chan->ops->free != NULL)
-		(*chan->ops->free)(chan->data);
+	अगर (chan->ops->मुक्त != शून्य)
+		(*chan->ops->मुक्त)(chan->data);
 
-	if (chan->primary && chan->output)
+	अगर (chan->primary && chan->output)
 		ignore_sigio_fd(chan->fd);
-	kfree(chan);
-}
+	kमुक्त(chan);
+पूर्ण
 
-static void free_chan(struct list_head *chans)
-{
-	struct list_head *ele, *next;
-	struct chan *chan;
+अटल व्योम मुक्त_chan(काष्ठा list_head *chans)
+अणु
+	काष्ठा list_head *ele, *next;
+	काष्ठा chan *chan;
 
-	list_for_each_safe(ele, next, chans) {
-		chan = list_entry(ele, struct chan, list);
-		free_one_chan(chan);
-	}
-}
+	list_क्रम_each_safe(ele, next, chans) अणु
+		chan = list_entry(ele, काष्ठा chan, list);
+		मुक्त_one_chan(chan);
+	पूर्ण
+पूर्ण
 
-static int one_chan_config_string(struct chan *chan, char *str, int size,
-				  char **error_out)
-{
-	int n = 0;
+अटल पूर्णांक one_chan_config_string(काष्ठा chan *chan, अक्षर *str, पूर्णांक size,
+				  अक्षर **error_out)
+अणु
+	पूर्णांक n = 0;
 
-	if (chan == NULL) {
+	अगर (chan == शून्य) अणु
 		CONFIG_CHUNK(str, size, n, "none", 1);
-		return n;
-	}
+		वापस n;
+	पूर्ण
 
 	CONFIG_CHUNK(str, size, n, chan->ops->type, 0);
 
-	if (chan->dev == NULL) {
+	अगर (chan->dev == शून्य) अणु
 		CONFIG_CHUNK(str, size, n, "", 1);
-		return n;
-	}
+		वापस n;
+	पूर्ण
 
 	CONFIG_CHUNK(str, size, n, ":", 0);
 	CONFIG_CHUNK(str, size, n, chan->dev, 0);
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static int chan_pair_config_string(struct chan *in, struct chan *out,
-				   char *str, int size, char **error_out)
-{
-	int n;
+अटल पूर्णांक chan_pair_config_string(काष्ठा chan *in, काष्ठा chan *out,
+				   अक्षर *str, पूर्णांक size, अक्षर **error_out)
+अणु
+	पूर्णांक n;
 
 	n = one_chan_config_string(in, str, size, error_out);
 	str += n;
 	size -= n;
 
-	if (in == out) {
+	अगर (in == out) अणु
 		CONFIG_CHUNK(str, size, n, "", 1);
-		return n;
-	}
+		वापस n;
+	पूर्ण
 
 	CONFIG_CHUNK(str, size, n, ",", 1);
 	n = one_chan_config_string(out, str, size, error_out);
@@ -378,193 +379,193 @@ static int chan_pair_config_string(struct chan *in, struct chan *out,
 	size -= n;
 	CONFIG_CHUNK(str, size, n, "", 1);
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-int chan_config_string(struct line *line, char *str, int size,
-		       char **error_out)
-{
-	struct chan *in = line->chan_in, *out = line->chan_out;
+पूर्णांक chan_config_string(काष्ठा line *line, अक्षर *str, पूर्णांक size,
+		       अक्षर **error_out)
+अणु
+	काष्ठा chan *in = line->chan_in, *out = line->chan_out;
 
-	if (in && !in->primary)
-		in = NULL;
-	if (out && !out->primary)
-		out = NULL;
+	अगर (in && !in->primary)
+		in = शून्य;
+	अगर (out && !out->primary)
+		out = शून्य;
 
-	return chan_pair_config_string(in, out, str, size, error_out);
-}
+	वापस chan_pair_config_string(in, out, str, size, error_out);
+पूर्ण
 
-struct chan_type {
-	char *key;
-	const struct chan_ops *ops;
-};
+काष्ठा chan_type अणु
+	अक्षर *key;
+	स्थिर काष्ठा chan_ops *ops;
+पूर्ण;
 
-static const struct chan_type chan_table[] = {
-	{ "fd", &fd_ops },
+अटल स्थिर काष्ठा chan_type chan_table[] = अणु
+	अणु "fd", &fd_ops पूर्ण,
 
-#ifdef CONFIG_NULL_CHAN
-	{ "null", &null_ops },
-#else
-	{ "null", &not_configged_ops },
-#endif
+#अगर_घोषित CONFIG_शून्य_CHAN
+	अणु "null", &null_ops पूर्ण,
+#अन्यथा
+	अणु "null", &not_configged_ops पूर्ण,
+#पूर्ण_अगर
 
-#ifdef CONFIG_PORT_CHAN
-	{ "port", &port_ops },
-#else
-	{ "port", &not_configged_ops },
-#endif
+#अगर_घोषित CONFIG_PORT_CHAN
+	अणु "port", &port_ops पूर्ण,
+#अन्यथा
+	अणु "port", &not_configged_ops पूर्ण,
+#पूर्ण_अगर
 
-#ifdef CONFIG_PTY_CHAN
-	{ "pty", &pty_ops },
-	{ "pts", &pts_ops },
-#else
-	{ "pty", &not_configged_ops },
-	{ "pts", &not_configged_ops },
-#endif
+#अगर_घोषित CONFIG_PTY_CHAN
+	अणु "pty", &pty_ops पूर्ण,
+	अणु "pts", &pts_ops पूर्ण,
+#अन्यथा
+	अणु "pty", &not_configged_ops पूर्ण,
+	अणु "pts", &not_configged_ops पूर्ण,
+#पूर्ण_अगर
 
-#ifdef CONFIG_TTY_CHAN
-	{ "tty", &tty_ops },
-#else
-	{ "tty", &not_configged_ops },
-#endif
+#अगर_घोषित CONFIG_TTY_CHAN
+	अणु "tty", &tty_ops पूर्ण,
+#अन्यथा
+	अणु "tty", &not_configged_ops पूर्ण,
+#पूर्ण_अगर
 
-#ifdef CONFIG_XTERM_CHAN
-	{ "xterm", &xterm_ops },
-#else
-	{ "xterm", &not_configged_ops },
-#endif
-};
+#अगर_घोषित CONFIG_XTERM_CHAN
+	अणु "xterm", &xterm_ops पूर्ण,
+#अन्यथा
+	अणु "xterm", &not_configged_ops पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static struct chan *parse_chan(struct line *line, char *str, int device,
-			       const struct chan_opts *opts, char **error_out)
-{
-	const struct chan_type *entry;
-	const struct chan_ops *ops;
-	struct chan *chan;
-	void *data;
-	int i;
+अटल काष्ठा chan *parse_chan(काष्ठा line *line, अक्षर *str, पूर्णांक device,
+			       स्थिर काष्ठा chan_opts *opts, अक्षर **error_out)
+अणु
+	स्थिर काष्ठा chan_type *entry;
+	स्थिर काष्ठा chan_ops *ops;
+	काष्ठा chan *chan;
+	व्योम *data;
+	पूर्णांक i;
 
-	ops = NULL;
-	data = NULL;
-	for(i = 0; i < ARRAY_SIZE(chan_table); i++) {
+	ops = शून्य;
+	data = शून्य;
+	क्रम(i = 0; i < ARRAY_SIZE(chan_table); i++) अणु
 		entry = &chan_table[i];
-		if (!strncmp(str, entry->key, strlen(entry->key))) {
+		अगर (!म_भेदन(str, entry->key, म_माप(entry->key))) अणु
 			ops = entry->ops;
-			str += strlen(entry->key);
-			break;
-		}
-	}
-	if (ops == NULL) {
+			str += म_माप(entry->key);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (ops == शून्य) अणु
 		*error_out = "No match for configured backends";
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	data = (*ops->init)(str, device, opts);
-	if (data == NULL) {
+	अगर (data == शून्य) अणु
 		*error_out = "Configuration failed";
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	chan = kmalloc(sizeof(*chan), GFP_ATOMIC);
-	if (chan == NULL) {
+	chan = kदो_स्मृति(माप(*chan), GFP_ATOMIC);
+	अगर (chan == शून्य) अणु
 		*error_out = "Memory allocation failed";
-		return NULL;
-	}
-	*chan = ((struct chan) { .list	 	= LIST_HEAD_INIT(chan->list),
-				 .free_list 	=
-				 	LIST_HEAD_INIT(chan->free_list),
+		वापस शून्य;
+	पूर्ण
+	*chan = ((काष्ठा chan) अणु .list	 	= LIST_HEAD_INIT(chan->list),
+				 .मुक्त_list 	=
+				 	LIST_HEAD_INIT(chan->मुक्त_list),
 				 .line		= line,
 				 .primary	= 1,
 				 .input		= 0,
 				 .output 	= 0,
-				 .opened  	= 0,
+				 .खोलोed  	= 0,
 				 .enabled  	= 0,
 				 .fd 		= -1,
 				 .ops 		= ops,
-				 .data 		= data });
-	return chan;
-}
+				 .data 		= data पूर्ण);
+	वापस chan;
+पूर्ण
 
-int parse_chan_pair(char *str, struct line *line, int device,
-		    const struct chan_opts *opts, char **error_out)
-{
-	struct list_head *chans = &line->chan_list;
-	struct chan *new;
-	char *in, *out;
+पूर्णांक parse_chan_pair(अक्षर *str, काष्ठा line *line, पूर्णांक device,
+		    स्थिर काष्ठा chan_opts *opts, अक्षर **error_out)
+अणु
+	काष्ठा list_head *chans = &line->chan_list;
+	काष्ठा chan *new;
+	अक्षर *in, *out;
 
-	if (!list_empty(chans)) {
-		line->chan_in = line->chan_out = NULL;
-		free_chan(chans);
+	अगर (!list_empty(chans)) अणु
+		line->chan_in = line->chan_out = शून्य;
+		मुक्त_chan(chans);
 		INIT_LIST_HEAD(chans);
-	}
+	पूर्ण
 
-	if (!str)
-		return 0;
+	अगर (!str)
+		वापस 0;
 
-	out = strchr(str, ',');
-	if (out != NULL) {
+	out = म_अक्षर(str, ',');
+	अगर (out != शून्य) अणु
 		in = str;
 		*out = '\0';
 		out++;
 		new = parse_chan(line, in, device, opts, error_out);
-		if (new == NULL)
-			return -1;
+		अगर (new == शून्य)
+			वापस -1;
 
 		new->input = 1;
 		list_add(&new->list, chans);
 		line->chan_in = new;
 
 		new = parse_chan(line, out, device, opts, error_out);
-		if (new == NULL)
-			return -1;
+		अगर (new == शून्य)
+			वापस -1;
 
 		list_add(&new->list, chans);
 		new->output = 1;
 		line->chan_out = new;
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 		new = parse_chan(line, str, device, opts, error_out);
-		if (new == NULL)
-			return -1;
+		अगर (new == शून्य)
+			वापस -1;
 
 		list_add(&new->list, chans);
 		new->input = 1;
 		new->output = 1;
 		line->chan_in = line->chan_out = new;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void chan_interrupt(struct line *line, int irq)
-{
-	struct tty_port *port = &line->port;
-	struct chan *chan = line->chan_in;
-	int err;
-	char c;
+व्योम chan_पूर्णांकerrupt(काष्ठा line *line, पूर्णांक irq)
+अणु
+	काष्ठा tty_port *port = &line->port;
+	काष्ठा chan *chan = line->chan_in;
+	पूर्णांक err;
+	अक्षर c;
 
-	if (!chan || !chan->ops->read)
-		goto out;
+	अगर (!chan || !chan->ops->पढ़ो)
+		जाओ out;
 
-	do {
-		if (!tty_buffer_request_room(port, 1)) {
+	करो अणु
+		अगर (!tty_buffer_request_room(port, 1)) अणु
 			schedule_delayed_work(&line->task, 1);
-			goto out;
-		}
-		err = chan->ops->read(chan->fd, &c, chan->data);
-		if (err > 0)
-			tty_insert_flip_char(port, c, TTY_NORMAL);
-	} while (err > 0);
+			जाओ out;
+		पूर्ण
+		err = chan->ops->पढ़ो(chan->fd, &c, chan->data);
+		अगर (err > 0)
+			tty_insert_flip_अक्षर(port, c, TTY_NORMAL);
+	पूर्ण जबतक (err > 0);
 
-	if (err == -EIO) {
-		if (chan->primary) {
+	अगर (err == -EIO) अणु
+		अगर (chan->primary) अणु
 			tty_port_tty_hangup(&line->port, false);
-			if (line->chan_out != chan)
-				close_one_chan(line->chan_out, 1);
-		}
-		close_one_chan(chan, 1);
-		if (chan->primary)
-			return;
-	}
+			अगर (line->chan_out != chan)
+				बंद_one_chan(line->chan_out, 1);
+		पूर्ण
+		बंद_one_chan(chan, 1);
+		अगर (chan->primary)
+			वापस;
+	पूर्ण
  out:
 	tty_flip_buffer_push(port);
-}
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * This file is part of UBIFS.
  *
@@ -6,541 +7,541 @@
  */
 
 /*
- * This file implements various helper functions for UBIFS authentication support
+ * This file implements various helper functions क्रम UBIFS authentication support
  */
 
-#include <linux/crypto.h>
-#include <linux/verification.h>
-#include <crypto/hash.h>
-#include <crypto/algapi.h>
-#include <keys/user-type.h>
-#include <keys/asymmetric-type.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/verअगरication.h>
+#समावेश <crypto/hash.h>
+#समावेश <crypto/algapi.h>
+#समावेश <keys/user-type.h>
+#समावेश <keys/asymmetric-type.h>
 
-#include "ubifs.h"
+#समावेश "ubifs.h"
 
 /**
- * ubifs_node_calc_hash - calculate the hash of a UBIFS node
- * @c: UBIFS file-system description object
- * @node: the node to calculate a hash for
- * @hash: the returned hash
+ * ubअगरs_node_calc_hash - calculate the hash of a UBIFS node
+ * @c: UBIFS file-प्रणाली description object
+ * @node: the node to calculate a hash क्रम
+ * @hash: the वापसed hash
  *
- * Returns 0 for success or a negative error code otherwise.
+ * Returns 0 क्रम success or a negative error code otherwise.
  */
-int __ubifs_node_calc_hash(const struct ubifs_info *c, const void *node,
+पूर्णांक __ubअगरs_node_calc_hash(स्थिर काष्ठा ubअगरs_info *c, स्थिर व्योम *node,
 			    u8 *hash)
-{
-	const struct ubifs_ch *ch = node;
+अणु
+	स्थिर काष्ठा ubअगरs_ch *ch = node;
 
-	return crypto_shash_tfm_digest(c->hash_tfm, node, le32_to_cpu(ch->len),
+	वापस crypto_shash_tfm_digest(c->hash_tfm, node, le32_to_cpu(ch->len),
 				       hash);
-}
+पूर्ण
 
 /**
- * ubifs_hash_calc_hmac - calculate a HMAC from a hash
- * @c: UBIFS file-system description object
- * @hash: the node to calculate a HMAC for
- * @hmac: the returned HMAC
+ * ubअगरs_hash_calc_hmac - calculate a HMAC from a hash
+ * @c: UBIFS file-प्रणाली description object
+ * @hash: the node to calculate a HMAC क्रम
+ * @hmac: the वापसed HMAC
  *
- * Returns 0 for success or a negative error code otherwise.
+ * Returns 0 क्रम success or a negative error code otherwise.
  */
-static int ubifs_hash_calc_hmac(const struct ubifs_info *c, const u8 *hash,
+अटल पूर्णांक ubअगरs_hash_calc_hmac(स्थिर काष्ठा ubअगरs_info *c, स्थिर u8 *hash,
 				 u8 *hmac)
-{
-	return crypto_shash_tfm_digest(c->hmac_tfm, hash, c->hash_len, hmac);
-}
+अणु
+	वापस crypto_shash_tfm_digest(c->hmac_tfm, hash, c->hash_len, hmac);
+पूर्ण
 
 /**
- * ubifs_prepare_auth_node - Prepare an authentication node
- * @c: UBIFS file-system description object
- * @node: the node to calculate a hash for
+ * ubअगरs_prepare_auth_node - Prepare an authentication node
+ * @c: UBIFS file-प्रणाली description object
+ * @node: the node to calculate a hash क्रम
  * @inhash: input hash of previous nodes
  *
- * This function prepares an authentication node for writing onto flash.
- * It creates a HMAC from the given input hash and writes it to the node.
+ * This function prepares an authentication node क्रम writing onto flash.
+ * It creates a HMAC from the given input hash and ग_लिखोs it to the node.
  *
- * Returns 0 for success or a negative error code otherwise.
+ * Returns 0 क्रम success or a negative error code otherwise.
  */
-int ubifs_prepare_auth_node(struct ubifs_info *c, void *node,
-			     struct shash_desc *inhash)
-{
-	struct ubifs_auth_node *auth = node;
+पूर्णांक ubअगरs_prepare_auth_node(काष्ठा ubअगरs_info *c, व्योम *node,
+			     काष्ठा shash_desc *inhash)
+अणु
+	काष्ठा ubअगरs_auth_node *auth = node;
 	u8 hash[UBIFS_HASH_ARR_SZ];
-	int err;
+	पूर्णांक err;
 
-	{
+	अणु
 		SHASH_DESC_ON_STACK(hash_desc, c->hash_tfm);
 
 		hash_desc->tfm = c->hash_tfm;
-		ubifs_shash_copy_state(c, inhash, hash_desc);
+		ubअगरs_shash_copy_state(c, inhash, hash_desc);
 
 		err = crypto_shash_final(hash_desc, hash);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	err = ubifs_hash_calc_hmac(c, hash, auth->hmac);
-	if (err)
-		return err;
+	err = ubअगरs_hash_calc_hmac(c, hash, auth->hmac);
+	अगर (err)
+		वापस err;
 
 	auth->ch.node_type = UBIFS_AUTH_NODE;
-	ubifs_prepare_node(c, auth, ubifs_auth_node_sz(c), 0);
-	return 0;
-}
+	ubअगरs_prepare_node(c, auth, ubअगरs_auth_node_sz(c), 0);
+	वापस 0;
+पूर्ण
 
-static struct shash_desc *ubifs_get_desc(const struct ubifs_info *c,
-					 struct crypto_shash *tfm)
-{
-	struct shash_desc *desc;
-	int err;
+अटल काष्ठा shash_desc *ubअगरs_get_desc(स्थिर काष्ठा ubअगरs_info *c,
+					 काष्ठा crypto_shash *tfm)
+अणु
+	काष्ठा shash_desc *desc;
+	पूर्णांक err;
 
-	if (!ubifs_authenticated(c))
-		return NULL;
+	अगर (!ubअगरs_authenticated(c))
+		वापस शून्य;
 
-	desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(tfm), GFP_KERNEL);
-	if (!desc)
-		return ERR_PTR(-ENOMEM);
+	desc = kदो_स्मृति(माप(*desc) + crypto_shash_descsize(tfm), GFP_KERNEL);
+	अगर (!desc)
+		वापस ERR_PTR(-ENOMEM);
 
 	desc->tfm = tfm;
 
 	err = crypto_shash_init(desc);
-	if (err) {
-		kfree(desc);
-		return ERR_PTR(err);
-	}
+	अगर (err) अणु
+		kमुक्त(desc);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
 /**
- * __ubifs_hash_get_desc - get a descriptor suitable for hashing a node
- * @c: UBIFS file-system description object
+ * __ubअगरs_hash_get_desc - get a descriptor suitable क्रम hashing a node
+ * @c: UBIFS file-प्रणाली description object
  *
- * This function returns a descriptor suitable for hashing a node. Free after use
- * with kfree.
+ * This function वापसs a descriptor suitable क्रम hashing a node. Free after use
+ * with kमुक्त.
  */
-struct shash_desc *__ubifs_hash_get_desc(const struct ubifs_info *c)
-{
-	return ubifs_get_desc(c, c->hash_tfm);
-}
+काष्ठा shash_desc *__ubअगरs_hash_get_desc(स्थिर काष्ठा ubअगरs_info *c)
+अणु
+	वापस ubअगरs_get_desc(c, c->hash_tfm);
+पूर्ण
 
 /**
- * ubifs_bad_hash - Report hash mismatches
- * @c: UBIFS file-system description object
+ * ubअगरs_bad_hash - Report hash mismatches
+ * @c: UBIFS file-प्रणाली description object
  * @node: the node
  * @hash: the expected hash
- * @lnum: the LEB @node was read from
- * @offs: offset in LEB @node was read from
+ * @lnum: the LEB @node was पढ़ो from
+ * @offs: offset in LEB @node was पढ़ो from
  *
- * This function reports a hash mismatch when a node has a different hash than
+ * This function reports a hash mismatch when a node has a dअगरferent hash than
  * expected.
  */
-void ubifs_bad_hash(const struct ubifs_info *c, const void *node, const u8 *hash,
-		    int lnum, int offs)
-{
-	int len = min(c->hash_len, 20);
-	int cropped = len != c->hash_len;
-	const char *cont = cropped ? "..." : "";
+व्योम ubअगरs_bad_hash(स्थिर काष्ठा ubअगरs_info *c, स्थिर व्योम *node, स्थिर u8 *hash,
+		    पूर्णांक lnum, पूर्णांक offs)
+अणु
+	पूर्णांक len = min(c->hash_len, 20);
+	पूर्णांक cropped = len != c->hash_len;
+	स्थिर अक्षर *cont = cropped ? "..." : "";
 
 	u8 calc[UBIFS_HASH_ARR_SZ];
 
-	__ubifs_node_calc_hash(c, node, calc);
+	__ubअगरs_node_calc_hash(c, node, calc);
 
-	ubifs_err(c, "hash mismatch on node at LEB %d:%d", lnum, offs);
-	ubifs_err(c, "hash expected:   %*ph%s", len, hash, cont);
-	ubifs_err(c, "hash calculated: %*ph%s", len, calc, cont);
-}
+	ubअगरs_err(c, "hash mismatch on node at LEB %d:%d", lnum, offs);
+	ubअगरs_err(c, "hash expected:   %*ph%s", len, hash, cont);
+	ubअगरs_err(c, "hash calculated: %*ph%s", len, calc, cont);
+पूर्ण
 
 /**
- * __ubifs_node_check_hash - check the hash of a node against given hash
- * @c: UBIFS file-system description object
+ * __ubअगरs_node_check_hash - check the hash of a node against given hash
+ * @c: UBIFS file-प्रणाली description object
  * @node: the node
  * @expected: the expected hash
  *
  * This function calculates a hash over a node and compares it to the given hash.
- * Returns 0 if both hashes are equal or authentication is disabled, otherwise a
- * negative error code is returned.
+ * Returns 0 अगर both hashes are equal or authentication is disabled, otherwise a
+ * negative error code is वापसed.
  */
-int __ubifs_node_check_hash(const struct ubifs_info *c, const void *node,
-			    const u8 *expected)
-{
+पूर्णांक __ubअगरs_node_check_hash(स्थिर काष्ठा ubअगरs_info *c, स्थिर व्योम *node,
+			    स्थिर u8 *expected)
+अणु
 	u8 calc[UBIFS_HASH_ARR_SZ];
-	int err;
+	पूर्णांक err;
 
-	err = __ubifs_node_calc_hash(c, node, calc);
-	if (err)
-		return err;
+	err = __ubअगरs_node_calc_hash(c, node, calc);
+	अगर (err)
+		वापस err;
 
-	if (ubifs_check_hash(c, expected, calc))
-		return -EPERM;
+	अगर (ubअगरs_check_hash(c, expected, calc))
+		वापस -EPERM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ubifs_sb_verify_signature - verify the signature of a superblock
- * @c: UBIFS file-system description object
+ * ubअगरs_sb_verअगरy_signature - verअगरy the signature of a superblock
+ * @c: UBIFS file-प्रणाली description object
  * @sup: The superblock node
  *
- * To support offline signed images the superblock can be signed with a
+ * To support offline चिन्हित images the superblock can be चिन्हित with a
  * PKCS#7 signature. The signature is placed directly behind the superblock
- * node in an ubifs_sig_node.
+ * node in an ubअगरs_sig_node.
  *
- * Returns 0 when the signature can be successfully verified or a negative
- * error code if not.
+ * Returns 0 when the signature can be successfully verअगरied or a negative
+ * error code अगर not.
  */
-int ubifs_sb_verify_signature(struct ubifs_info *c,
-			      const struct ubifs_sb_node *sup)
-{
-	int err;
-	struct ubifs_scan_leb *sleb;
-	struct ubifs_scan_node *snod;
-	const struct ubifs_sig_node *signode;
+पूर्णांक ubअगरs_sb_verअगरy_signature(काष्ठा ubअगरs_info *c,
+			      स्थिर काष्ठा ubअगरs_sb_node *sup)
+अणु
+	पूर्णांक err;
+	काष्ठा ubअगरs_scan_leb *sleb;
+	काष्ठा ubअगरs_scan_node *snod;
+	स्थिर काष्ठा ubअगरs_sig_node *signode;
 
-	sleb = ubifs_scan(c, UBIFS_SB_LNUM, UBIFS_SB_NODE_SZ, c->sbuf, 0);
-	if (IS_ERR(sleb)) {
+	sleb = ubअगरs_scan(c, UBIFS_SB_LNUM, UBIFS_SB_NODE_SZ, c->sbuf, 0);
+	अगर (IS_ERR(sleb)) अणु
 		err = PTR_ERR(sleb);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (sleb->nodes_cnt == 0) {
-		ubifs_err(c, "Unable to find signature node");
+	अगर (sleb->nodes_cnt == 0) अणु
+		ubअगरs_err(c, "Unable to find signature node");
 		err = -EINVAL;
-		goto out_destroy;
-	}
+		जाओ out_destroy;
+	पूर्ण
 
-	snod = list_first_entry(&sleb->nodes, struct ubifs_scan_node, list);
+	snod = list_first_entry(&sleb->nodes, काष्ठा ubअगरs_scan_node, list);
 
-	if (snod->type != UBIFS_SIG_NODE) {
-		ubifs_err(c, "Signature node is of wrong type");
+	अगर (snod->type != UBIFS_SIG_NODE) अणु
+		ubअगरs_err(c, "Signature node is of wrong type");
 		err = -EINVAL;
-		goto out_destroy;
-	}
+		जाओ out_destroy;
+	पूर्ण
 
 	signode = snod->node;
 
-	if (le32_to_cpu(signode->len) > snod->len + sizeof(struct ubifs_sig_node)) {
-		ubifs_err(c, "invalid signature len %d", le32_to_cpu(signode->len));
+	अगर (le32_to_cpu(signode->len) > snod->len + माप(काष्ठा ubअगरs_sig_node)) अणु
+		ubअगरs_err(c, "invalid signature len %d", le32_to_cpu(signode->len));
 		err = -EINVAL;
-		goto out_destroy;
-	}
+		जाओ out_destroy;
+	पूर्ण
 
-	if (le32_to_cpu(signode->type) != UBIFS_SIGNATURE_TYPE_PKCS7) {
-		ubifs_err(c, "Signature type %d is not supported\n",
+	अगर (le32_to_cpu(signode->type) != UBIFS_SIGNATURE_TYPE_PKCS7) अणु
+		ubअगरs_err(c, "Signature type %d is not supported\n",
 			  le32_to_cpu(signode->type));
 		err = -EINVAL;
-		goto out_destroy;
-	}
+		जाओ out_destroy;
+	पूर्ण
 
-	err = verify_pkcs7_signature(sup, sizeof(struct ubifs_sb_node),
+	err = verअगरy_pkcs7_signature(sup, माप(काष्ठा ubअगरs_sb_node),
 				     signode->sig, le32_to_cpu(signode->len),
-				     NULL, VERIFYING_UNSPECIFIED_SIGNATURE,
-				     NULL, NULL);
+				     शून्य, VERIFYING_UNSPECIFIED_SIGNATURE,
+				     शून्य, शून्य);
 
-	if (err)
-		ubifs_err(c, "Failed to verify signature");
-	else
-		ubifs_msg(c, "Successfully verified super block signature");
+	अगर (err)
+		ubअगरs_err(c, "Failed to verify signature");
+	अन्यथा
+		ubअगरs_msg(c, "Successfully verified super block signature");
 
 out_destroy:
-	ubifs_scan_destroy(sleb);
+	ubअगरs_scan_destroy(sleb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ubifs_init_authentication - initialize UBIFS authentication support
- * @c: UBIFS file-system description object
+ * ubअगरs_init_authentication - initialize UBIFS authentication support
+ * @c: UBIFS file-प्रणाली description object
  *
- * This function returns 0 for success or a negative error code otherwise.
+ * This function वापसs 0 क्रम success or a negative error code otherwise.
  */
-int ubifs_init_authentication(struct ubifs_info *c)
-{
-	struct key *keyring_key;
-	const struct user_key_payload *ukp;
-	int err;
-	char hmac_name[CRYPTO_MAX_ALG_NAME];
+पूर्णांक ubअगरs_init_authentication(काष्ठा ubअगरs_info *c)
+अणु
+	काष्ठा key *keyring_key;
+	स्थिर काष्ठा user_key_payload *ukp;
+	पूर्णांक err;
+	अक्षर hmac_name[CRYPTO_MAX_ALG_NAME];
 
-	if (!c->auth_hash_name) {
-		ubifs_err(c, "authentication hash name needed with authentication");
-		return -EINVAL;
-	}
+	अगर (!c->auth_hash_name) अणु
+		ubअगरs_err(c, "authentication hash name needed with authentication");
+		वापस -EINVAL;
+	पूर्ण
 
 	c->auth_hash_algo = match_string(hash_algo_name, HASH_ALGO__LAST,
 					 c->auth_hash_name);
-	if ((int)c->auth_hash_algo < 0) {
-		ubifs_err(c, "Unknown hash algo %s specified",
+	अगर ((पूर्णांक)c->auth_hash_algo < 0) अणु
+		ubअगरs_err(c, "Unknown hash algo %s specified",
 			  c->auth_hash_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	snprintf(hmac_name, CRYPTO_MAX_ALG_NAME, "hmac(%s)",
+	snम_लिखो(hmac_name, CRYPTO_MAX_ALG_NAME, "hmac(%s)",
 		 c->auth_hash_name);
 
-	keyring_key = request_key(&key_type_logon, c->auth_key_name, NULL);
+	keyring_key = request_key(&key_type_logon, c->auth_key_name, शून्य);
 
-	if (IS_ERR(keyring_key)) {
-		ubifs_err(c, "Failed to request key: %ld",
+	अगर (IS_ERR(keyring_key)) अणु
+		ubअगरs_err(c, "Failed to request key: %ld",
 			  PTR_ERR(keyring_key));
-		return PTR_ERR(keyring_key);
-	}
+		वापस PTR_ERR(keyring_key);
+	पूर्ण
 
-	down_read(&keyring_key->sem);
+	करोwn_पढ़ो(&keyring_key->sem);
 
-	if (keyring_key->type != &key_type_logon) {
-		ubifs_err(c, "key type must be logon");
+	अगर (keyring_key->type != &key_type_logon) अणु
+		ubअगरs_err(c, "key type must be logon");
 		err = -ENOKEY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ukp = user_key_payload_locked(keyring_key);
-	if (!ukp) {
-		/* key was revoked before we acquired its semaphore */
+	अगर (!ukp) अणु
+		/* key was revoked beक्रमe we acquired its semaphore */
 		err = -EKEYREVOKED;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	c->hash_tfm = crypto_alloc_shash(c->auth_hash_name, 0, 0);
-	if (IS_ERR(c->hash_tfm)) {
+	अगर (IS_ERR(c->hash_tfm)) अणु
 		err = PTR_ERR(c->hash_tfm);
-		ubifs_err(c, "Can not allocate %s: %d",
+		ubअगरs_err(c, "Can not allocate %s: %d",
 			  c->auth_hash_name, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	c->hash_len = crypto_shash_digestsize(c->hash_tfm);
-	if (c->hash_len > UBIFS_HASH_ARR_SZ) {
-		ubifs_err(c, "hash %s is bigger than maximum allowed hash size (%d > %d)",
+	अगर (c->hash_len > UBIFS_HASH_ARR_SZ) अणु
+		ubअगरs_err(c, "hash %s is bigger than maximum allowed hash size (%d > %d)",
 			  c->auth_hash_name, c->hash_len, UBIFS_HASH_ARR_SZ);
 		err = -EINVAL;
-		goto out_free_hash;
-	}
+		जाओ out_मुक्त_hash;
+	पूर्ण
 
 	c->hmac_tfm = crypto_alloc_shash(hmac_name, 0, 0);
-	if (IS_ERR(c->hmac_tfm)) {
+	अगर (IS_ERR(c->hmac_tfm)) अणु
 		err = PTR_ERR(c->hmac_tfm);
-		ubifs_err(c, "Can not allocate %s: %d", hmac_name, err);
-		goto out_free_hash;
-	}
+		ubअगरs_err(c, "Can not allocate %s: %d", hmac_name, err);
+		जाओ out_मुक्त_hash;
+	पूर्ण
 
 	c->hmac_desc_len = crypto_shash_digestsize(c->hmac_tfm);
-	if (c->hmac_desc_len > UBIFS_HMAC_ARR_SZ) {
-		ubifs_err(c, "hmac %s is bigger than maximum allowed hmac size (%d > %d)",
+	अगर (c->hmac_desc_len > UBIFS_HMAC_ARR_SZ) अणु
+		ubअगरs_err(c, "hmac %s is bigger than maximum allowed hmac size (%d > %d)",
 			  hmac_name, c->hmac_desc_len, UBIFS_HMAC_ARR_SZ);
 		err = -EINVAL;
-		goto out_free_hmac;
-	}
+		जाओ out_मुक्त_hmac;
+	पूर्ण
 
 	err = crypto_shash_setkey(c->hmac_tfm, ukp->data, ukp->datalen);
-	if (err)
-		goto out_free_hmac;
+	अगर (err)
+		जाओ out_मुक्त_hmac;
 
 	c->authenticated = true;
 
-	c->log_hash = ubifs_hash_get_desc(c);
-	if (IS_ERR(c->log_hash)) {
+	c->log_hash = ubअगरs_hash_get_desc(c);
+	अगर (IS_ERR(c->log_hash)) अणु
 		err = PTR_ERR(c->log_hash);
-		goto out_free_hmac;
-	}
+		जाओ out_मुक्त_hmac;
+	पूर्ण
 
 	err = 0;
 
-out_free_hmac:
-	if (err)
-		crypto_free_shash(c->hmac_tfm);
-out_free_hash:
-	if (err)
-		crypto_free_shash(c->hash_tfm);
+out_मुक्त_hmac:
+	अगर (err)
+		crypto_मुक्त_shash(c->hmac_tfm);
+out_मुक्त_hash:
+	अगर (err)
+		crypto_मुक्त_shash(c->hash_tfm);
 out:
-	up_read(&keyring_key->sem);
+	up_पढ़ो(&keyring_key->sem);
 	key_put(keyring_key);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * __ubifs_exit_authentication - release resource
- * @c: UBIFS file-system description object
+ * __ubअगरs_निकास_authentication - release resource
+ * @c: UBIFS file-प्रणाली description object
  *
  * This function releases the authentication related resources.
  */
-void __ubifs_exit_authentication(struct ubifs_info *c)
-{
-	if (!ubifs_authenticated(c))
-		return;
+व्योम __ubअगरs_निकास_authentication(काष्ठा ubअगरs_info *c)
+अणु
+	अगर (!ubअगरs_authenticated(c))
+		वापस;
 
-	crypto_free_shash(c->hmac_tfm);
-	crypto_free_shash(c->hash_tfm);
-	kfree(c->log_hash);
-}
+	crypto_मुक्त_shash(c->hmac_tfm);
+	crypto_मुक्त_shash(c->hash_tfm);
+	kमुक्त(c->log_hash);
+पूर्ण
 
 /**
- * ubifs_node_calc_hmac - calculate the HMAC of a UBIFS node
- * @c: UBIFS file-system description object
- * @node: the node to insert a HMAC into.
+ * ubअगरs_node_calc_hmac - calculate the HMAC of a UBIFS node
+ * @c: UBIFS file-प्रणाली description object
+ * @node: the node to insert a HMAC पूर्णांकo.
  * @len: the length of the node
  * @ofs_hmac: the offset in the node where the HMAC is inserted
- * @hmac: returned HMAC
+ * @hmac: वापसed HMAC
  *
  * This function calculates a HMAC of a UBIFS node. The HMAC is expected to be
- * embedded into the node, so this area is not covered by the HMAC. Also not
+ * embedded पूर्णांकo the node, so this area is not covered by the HMAC. Also not
  * covered is the UBIFS_NODE_MAGIC and the CRC of the node.
  */
-static int ubifs_node_calc_hmac(const struct ubifs_info *c, const void *node,
-				int len, int ofs_hmac, void *hmac)
-{
+अटल पूर्णांक ubअगरs_node_calc_hmac(स्थिर काष्ठा ubअगरs_info *c, स्थिर व्योम *node,
+				पूर्णांक len, पूर्णांक ofs_hmac, व्योम *hmac)
+अणु
 	SHASH_DESC_ON_STACK(shash, c->hmac_tfm);
-	int hmac_len = c->hmac_desc_len;
-	int err;
+	पूर्णांक hmac_len = c->hmac_desc_len;
+	पूर्णांक err;
 
-	ubifs_assert(c, ofs_hmac > 8);
-	ubifs_assert(c, ofs_hmac + hmac_len < len);
+	ubअगरs_निश्चित(c, ofs_hmac > 8);
+	ubअगरs_निश्चित(c, ofs_hmac + hmac_len < len);
 
 	shash->tfm = c->hmac_tfm;
 
 	err = crypto_shash_init(shash);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* behind common node header CRC up to HMAC begin */
 	err = crypto_shash_update(shash, node + 8, ofs_hmac - 8);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* behind HMAC, if any */
-	if (len - ofs_hmac - hmac_len > 0) {
+	/* behind HMAC, अगर any */
+	अगर (len - ofs_hmac - hmac_len > 0) अणु
 		err = crypto_shash_update(shash, node + ofs_hmac + hmac_len,
 			    len - ofs_hmac - hmac_len);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	return crypto_shash_final(shash, hmac);
-}
+	वापस crypto_shash_final(shash, hmac);
+पूर्ण
 
 /**
- * __ubifs_node_insert_hmac - insert a HMAC into a UBIFS node
- * @c: UBIFS file-system description object
- * @node: the node to insert a HMAC into.
+ * __ubअगरs_node_insert_hmac - insert a HMAC पूर्णांकo a UBIFS node
+ * @c: UBIFS file-प्रणाली description object
+ * @node: the node to insert a HMAC पूर्णांकo.
  * @len: the length of the node
  * @ofs_hmac: the offset in the node where the HMAC is inserted
  *
- * This function inserts a HMAC at offset @ofs_hmac into the node given in
+ * This function inserts a HMAC at offset @ofs_hmac पूर्णांकo the node given in
  * @node.
  *
- * This function returns 0 for success or a negative error code otherwise.
+ * This function वापसs 0 क्रम success or a negative error code otherwise.
  */
-int __ubifs_node_insert_hmac(const struct ubifs_info *c, void *node, int len,
-			    int ofs_hmac)
-{
-	return ubifs_node_calc_hmac(c, node, len, ofs_hmac, node + ofs_hmac);
-}
+पूर्णांक __ubअगरs_node_insert_hmac(स्थिर काष्ठा ubअगरs_info *c, व्योम *node, पूर्णांक len,
+			    पूर्णांक ofs_hmac)
+अणु
+	वापस ubअगरs_node_calc_hmac(c, node, len, ofs_hmac, node + ofs_hmac);
+पूर्ण
 
 /**
- * __ubifs_node_verify_hmac - verify the HMAC of UBIFS node
- * @c: UBIFS file-system description object
- * @node: the node to insert a HMAC into.
+ * __ubअगरs_node_verअगरy_hmac - verअगरy the HMAC of UBIFS node
+ * @c: UBIFS file-प्रणाली description object
+ * @node: the node to insert a HMAC पूर्णांकo.
  * @len: the length of the node
  * @ofs_hmac: the offset in the node where the HMAC is inserted
  *
- * This function verifies the HMAC at offset @ofs_hmac of the node given in
- * @node. Returns 0 if successful or a negative error code otherwise.
+ * This function verअगरies the HMAC at offset @ofs_hmac of the node given in
+ * @node. Returns 0 अगर successful or a negative error code otherwise.
  */
-int __ubifs_node_verify_hmac(const struct ubifs_info *c, const void *node,
-			     int len, int ofs_hmac)
-{
-	int hmac_len = c->hmac_desc_len;
+पूर्णांक __ubअगरs_node_verअगरy_hmac(स्थिर काष्ठा ubअगरs_info *c, स्थिर व्योम *node,
+			     पूर्णांक len, पूर्णांक ofs_hmac)
+अणु
+	पूर्णांक hmac_len = c->hmac_desc_len;
 	u8 *hmac;
-	int err;
+	पूर्णांक err;
 
-	hmac = kmalloc(hmac_len, GFP_NOFS);
-	if (!hmac)
-		return -ENOMEM;
+	hmac = kदो_स्मृति(hmac_len, GFP_NOFS);
+	अगर (!hmac)
+		वापस -ENOMEM;
 
-	err = ubifs_node_calc_hmac(c, node, len, ofs_hmac, hmac);
-	if (err) {
-		kfree(hmac);
-		return err;
-	}
+	err = ubअगरs_node_calc_hmac(c, node, len, ofs_hmac, hmac);
+	अगर (err) अणु
+		kमुक्त(hmac);
+		वापस err;
+	पूर्ण
 
 	err = crypto_memneq(hmac, node + ofs_hmac, hmac_len);
 
-	kfree(hmac);
+	kमुक्त(hmac);
 
-	if (!err)
-		return 0;
+	अगर (!err)
+		वापस 0;
 
-	return -EPERM;
-}
+	वापस -EPERM;
+पूर्ण
 
-int __ubifs_shash_copy_state(const struct ubifs_info *c, struct shash_desc *src,
-			     struct shash_desc *target)
-{
+पूर्णांक __ubअगरs_shash_copy_state(स्थिर काष्ठा ubअगरs_info *c, काष्ठा shash_desc *src,
+			     काष्ठा shash_desc *target)
+अणु
 	u8 *state;
-	int err;
+	पूर्णांक err;
 
-	state = kmalloc(crypto_shash_descsize(src->tfm), GFP_NOFS);
-	if (!state)
-		return -ENOMEM;
+	state = kदो_स्मृति(crypto_shash_descsize(src->tfm), GFP_NOFS);
+	अगर (!state)
+		वापस -ENOMEM;
 
 	err = crypto_shash_export(src, state);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = crypto_shash_import(target, state);
 
 out:
-	kfree(state);
+	kमुक्त(state);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ubifs_hmac_wkm - Create a HMAC of the well known message
- * @c: UBIFS file-system description object
+ * ubअगरs_hmac_wkm - Create a HMAC of the well known message
+ * @c: UBIFS file-प्रणाली description object
  * @hmac: The HMAC of the well known message
  *
  * This function creates a HMAC of a well known message. This is used
- * to check if the provided key is suitable to authenticate a UBIFS
+ * to check अगर the provided key is suitable to authenticate a UBIFS
  * image. This is only a convenience to the user to provide a better
  * error message when the wrong key is provided.
  *
- * This function returns 0 for success or a negative error code otherwise.
+ * This function वापसs 0 क्रम success or a negative error code otherwise.
  */
-int ubifs_hmac_wkm(struct ubifs_info *c, u8 *hmac)
-{
+पूर्णांक ubअगरs_hmac_wkm(काष्ठा ubअगरs_info *c, u8 *hmac)
+अणु
 	SHASH_DESC_ON_STACK(shash, c->hmac_tfm);
-	int err;
-	const char well_known_message[] = "UBIFS";
+	पूर्णांक err;
+	स्थिर अक्षर well_known_message[] = "UBIFS";
 
-	if (!ubifs_authenticated(c))
-		return 0;
+	अगर (!ubअगरs_authenticated(c))
+		वापस 0;
 
 	shash->tfm = c->hmac_tfm;
 
 	err = crypto_shash_init(shash);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = crypto_shash_update(shash, well_known_message,
-				  sizeof(well_known_message) - 1);
-	if (err < 0)
-		return err;
+				  माप(well_known_message) - 1);
+	अगर (err < 0)
+		वापस err;
 
 	err = crypto_shash_final(shash, hmac);
-	if (err)
-		return err;
-	return 0;
-}
+	अगर (err)
+		वापस err;
+	वापस 0;
+पूर्ण
 
 /*
- * ubifs_hmac_zero - test if a HMAC is zero
- * @c: UBIFS file-system description object
+ * ubअगरs_hmac_zero - test अगर a HMAC is zero
+ * @c: UBIFS file-प्रणाली description object
  * @hmac: the HMAC to test
  *
- * This function tests if a HMAC is zero and returns true if it is
+ * This function tests अगर a HMAC is zero and वापसs true अगर it is
  * and false otherwise.
  */
-bool ubifs_hmac_zero(struct ubifs_info *c, const u8 *hmac)
-{
-	return !memchr_inv(hmac, 0, c->hmac_desc_len);
-}
+bool ubअगरs_hmac_zero(काष्ठा ubअगरs_info *c, स्थिर u8 *hmac)
+अणु
+	वापस !स_प्रथम_inv(hmac, 0, c->hmac_desc_len);
+पूर्ण

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_STACKPROTECTOR_H
-#define _LINUX_STACKPROTECTOR_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_STACKPROTECTOR_H
+#घोषणा _LINUX_STACKPROTECTOR_H 1
 
-#include <linux/compiler.h>
-#include <linux/sched.h>
-#include <linux/random.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/अक्रमom.h>
 
-#if defined(CONFIG_STACKPROTECTOR) || defined(CONFIG_ARM64_PTR_AUTH)
-# include <asm/stackprotector.h>
-#else
-static inline void boot_init_stack_canary(void)
-{
-}
-#endif
+#अगर defined(CONFIG_STACKPROTECTOR) || defined(CONFIG_ARM64_PTR_AUTH)
+# include <यंत्र/stackprotector.h>
+#अन्यथा
+अटल अंतरभूत व्योम boot_init_stack_canary(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

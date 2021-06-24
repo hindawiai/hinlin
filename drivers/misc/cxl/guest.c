@@ -1,550 +1,551 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2015 IBM Corp.
  */
 
-#include <linux/spinlock.h>
-#include <linux/uaccess.h>
-#include <linux/delay.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/delay.h>
 
-#include "cxl.h"
-#include "hcalls.h"
-#include "trace.h"
+#समावेश "cxl.h"
+#समावेश "hcalls.h"
+#समावेश "trace.h"
 
-#define CXL_ERROR_DETECTED_EVENT	1
-#define CXL_SLOT_RESET_EVENT		2
-#define CXL_RESUME_EVENT		3
+#घोषणा CXL_ERROR_DETECTED_EVENT	1
+#घोषणा CXL_SLOT_RESET_EVENT		2
+#घोषणा CXL_RESUME_EVENT		3
 
-static void pci_error_handlers(struct cxl_afu *afu,
-				int bus_error_event,
+अटल व्योम pci_error_handlers(काष्ठा cxl_afu *afu,
+				पूर्णांक bus_error_event,
 				pci_channel_state_t state)
-{
-	struct pci_dev *afu_dev;
+अणु
+	काष्ठा pci_dev *afu_dev;
 
-	if (afu->phb == NULL)
-		return;
+	अगर (afu->phb == शून्य)
+		वापस;
 
-	list_for_each_entry(afu_dev, &afu->phb->bus->devices, bus_list) {
-		if (!afu_dev->driver)
-			continue;
+	list_क्रम_each_entry(afu_dev, &afu->phb->bus->devices, bus_list) अणु
+		अगर (!afu_dev->driver)
+			जारी;
 
-		switch (bus_error_event) {
-		case CXL_ERROR_DETECTED_EVENT:
+		चयन (bus_error_event) अणु
+		हाल CXL_ERROR_DETECTED_EVENT:
 			afu_dev->error_state = state;
 
-			if (afu_dev->driver->err_handler &&
+			अगर (afu_dev->driver->err_handler &&
 			    afu_dev->driver->err_handler->error_detected)
 				afu_dev->driver->err_handler->error_detected(afu_dev, state);
-		break;
-		case CXL_SLOT_RESET_EVENT:
+		अवरोध;
+		हाल CXL_SLOT_RESET_EVENT:
 			afu_dev->error_state = state;
 
-			if (afu_dev->driver->err_handler &&
+			अगर (afu_dev->driver->err_handler &&
 			    afu_dev->driver->err_handler->slot_reset)
 				afu_dev->driver->err_handler->slot_reset(afu_dev);
-		break;
-		case CXL_RESUME_EVENT:
-			if (afu_dev->driver->err_handler &&
+		अवरोध;
+		हाल CXL_RESUME_EVENT:
+			अगर (afu_dev->driver->err_handler &&
 			    afu_dev->driver->err_handler->resume)
 				afu_dev->driver->err_handler->resume(afu_dev);
-		break;
-		}
-	}
-}
+		अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t guest_handle_psl_slice_error(struct cxl_context *ctx, u64 dsisr,
+अटल irqवापस_t guest_handle_psl_slice_error(काष्ठा cxl_context *ctx, u64 dsisr,
 					u64 errstat)
-{
+अणु
 	pr_devel("in %s\n", __func__);
 	dev_crit(&ctx->afu->dev, "PSL ERROR STATUS: 0x%.16llx\n", errstat);
 
-	return cxl_ops->ack_irq(ctx, 0, errstat);
-}
+	वापस cxl_ops->ack_irq(ctx, 0, errstat);
+पूर्ण
 
-static ssize_t guest_collect_vpd(struct cxl *adapter, struct cxl_afu *afu,
-			void *buf, size_t len)
-{
-	unsigned int entries, mod;
-	unsigned long **vpd_buf = NULL;
-	struct sg_list *le;
-	int rc = 0, i, tocopy;
+अटल sमाप_प्रकार guest_collect_vpd(काष्ठा cxl *adapter, काष्ठा cxl_afu *afu,
+			व्योम *buf, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक entries, mod;
+	अचिन्हित दीर्घ **vpd_buf = शून्य;
+	काष्ठा sg_list *le;
+	पूर्णांक rc = 0, i, tocopy;
 	u64 out = 0;
 
-	if (buf == NULL)
-		return -EINVAL;
+	अगर (buf == शून्य)
+		वापस -EINVAL;
 
 	/* number of entries in the list */
 	entries = len / SG_BUFFER_SIZE;
 	mod = len % SG_BUFFER_SIZE;
-	if (mod)
+	अगर (mod)
 		entries++;
 
-	if (entries > SG_MAX_ENTRIES) {
+	अगर (entries > SG_MAX_ENTRIES) अणु
 		entries = SG_MAX_ENTRIES;
 		len = SG_MAX_ENTRIES * SG_BUFFER_SIZE;
 		mod = 0;
-	}
+	पूर्ण
 
-	vpd_buf = kcalloc(entries, sizeof(unsigned long *), GFP_KERNEL);
-	if (!vpd_buf)
-		return -ENOMEM;
+	vpd_buf = kसुस्मृति(entries, माप(अचिन्हित दीर्घ *), GFP_KERNEL);
+	अगर (!vpd_buf)
+		वापस -ENOMEM;
 
-	le = (struct sg_list *)get_zeroed_page(GFP_KERNEL);
-	if (!le) {
+	le = (काष्ठा sg_list *)get_zeroed_page(GFP_KERNEL);
+	अगर (!le) अणु
 		rc = -ENOMEM;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	for (i = 0; i < entries; i++) {
-		vpd_buf[i] = (unsigned long *)get_zeroed_page(GFP_KERNEL);
-		if (!vpd_buf[i]) {
+	क्रम (i = 0; i < entries; i++) अणु
+		vpd_buf[i] = (अचिन्हित दीर्घ *)get_zeroed_page(GFP_KERNEL);
+		अगर (!vpd_buf[i]) अणु
 			rc = -ENOMEM;
-			goto err2;
-		}
+			जाओ err2;
+		पूर्ण
 		le[i].phys_addr = cpu_to_be64(virt_to_phys(vpd_buf[i]));
 		le[i].len = cpu_to_be64(SG_BUFFER_SIZE);
-		if ((i == (entries - 1)) && mod)
+		अगर ((i == (entries - 1)) && mod)
 			le[i].len = cpu_to_be64(mod);
-	}
+	पूर्ण
 
-	if (adapter)
+	अगर (adapter)
 		rc = cxl_h_collect_vpd_adapter(adapter->guest->handle,
 					virt_to_phys(le), entries, &out);
-	else
+	अन्यथा
 		rc = cxl_h_collect_vpd(afu->guest->handle, 0,
 				virt_to_phys(le), entries, &out);
 	pr_devel("length of available (entries: %i), vpd: %#llx\n",
 		entries, out);
 
-	if (!rc) {
+	अगर (!rc) अणु
 		/*
-		 * hcall returns in 'out' the size of available VPDs.
+		 * hcall वापसs in 'out' the size of available VPDs.
 		 * It fills the buffer with as much data as possible.
 		 */
-		if (out < len)
+		अगर (out < len)
 			len = out;
 		rc = len;
-		if (out) {
-			for (i = 0; i < entries; i++) {
-				if (len < SG_BUFFER_SIZE)
+		अगर (out) अणु
+			क्रम (i = 0; i < entries; i++) अणु
+				अगर (len < SG_BUFFER_SIZE)
 					tocopy = len;
-				else
+				अन्यथा
 					tocopy = SG_BUFFER_SIZE;
-				memcpy(buf, vpd_buf[i], tocopy);
+				स_नकल(buf, vpd_buf[i], tocopy);
 				buf += tocopy;
 				len -= tocopy;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 err2:
-	for (i = 0; i < entries; i++) {
-		if (vpd_buf[i])
-			free_page((unsigned long) vpd_buf[i]);
-	}
-	free_page((unsigned long) le);
+	क्रम (i = 0; i < entries; i++) अणु
+		अगर (vpd_buf[i])
+			मुक्त_page((अचिन्हित दीर्घ) vpd_buf[i]);
+	पूर्ण
+	मुक्त_page((अचिन्हित दीर्घ) le);
 err1:
-	kfree(vpd_buf);
-	return rc;
-}
+	kमुक्त(vpd_buf);
+	वापस rc;
+पूर्ण
 
-static int guest_get_irq_info(struct cxl_context *ctx, struct cxl_irq_info *info)
-{
-	return cxl_h_collect_int_info(ctx->afu->guest->handle, ctx->process_token, info);
-}
+अटल पूर्णांक guest_get_irq_info(काष्ठा cxl_context *ctx, काष्ठा cxl_irq_info *info)
+अणु
+	वापस cxl_h_collect_पूर्णांक_info(ctx->afu->guest->handle, ctx->process_token, info);
+पूर्ण
 
-static irqreturn_t guest_psl_irq(int irq, void *data)
-{
-	struct cxl_context *ctx = data;
-	struct cxl_irq_info irq_info;
-	int rc;
+अटल irqवापस_t guest_psl_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा cxl_context *ctx = data;
+	काष्ठा cxl_irq_info irq_info;
+	पूर्णांक rc;
 
 	pr_devel("%d: received PSL interrupt %i\n", ctx->pe, irq);
 	rc = guest_get_irq_info(ctx, &irq_info);
-	if (rc) {
+	अगर (rc) अणु
 		WARN(1, "Unable to get IRQ info: %i\n", rc);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	rc = cxl_irq_psl8(irq, ctx, &irq_info);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int afu_read_error_state(struct cxl_afu *afu, int *state_out)
-{
+अटल पूर्णांक afu_पढ़ो_error_state(काष्ठा cxl_afu *afu, पूर्णांक *state_out)
+अणु
 	u64 state;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	if (!afu)
-		return -EIO;
+	अगर (!afu)
+		वापस -EIO;
 
-	rc = cxl_h_read_error_state(afu->guest->handle, &state);
-	if (!rc) {
+	rc = cxl_h_पढ़ो_error_state(afu->guest->handle, &state);
+	अगर (!rc) अणु
 		WARN_ON(state != H_STATE_NORMAL &&
 			state != H_STATE_DISABLE &&
 			state != H_STATE_TEMP_UNAVAILABLE &&
 			state != H_STATE_PERM_UNAVAILABLE);
 		*state_out = state & 0xffffffff;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static irqreturn_t guest_slice_irq_err(int irq, void *data)
-{
-	struct cxl_afu *afu = data;
-	int rc;
+अटल irqवापस_t guest_slice_irq_err(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा cxl_afu *afu = data;
+	पूर्णांक rc;
 	u64 serr, afu_error, dsisr;
 
-	rc = cxl_h_get_fn_error_interrupt(afu->guest->handle, &serr);
-	if (rc) {
+	rc = cxl_h_get_fn_error_पूर्णांकerrupt(afu->guest->handle, &serr);
+	अगर (rc) अणु
 		dev_crit(&afu->dev, "Couldn't read PSL_SERR_An: %d\n", rc);
-		return IRQ_HANDLED;
-	}
-	afu_error = cxl_p2n_read(afu, CXL_AFU_ERR_An);
-	dsisr = cxl_p2n_read(afu, CXL_PSL_DSISR_An);
+		वापस IRQ_HANDLED;
+	पूर्ण
+	afu_error = cxl_p2n_पढ़ो(afu, CXL_AFU_ERR_An);
+	dsisr = cxl_p2n_पढ़ो(afu, CXL_PSL_DSISR_An);
 	cxl_afu_decode_psl_serr(afu, serr);
 	dev_crit(&afu->dev, "AFU_ERR_An: 0x%.16llx\n", afu_error);
 	dev_crit(&afu->dev, "PSL_DSISR_An: 0x%.16llx\n", dsisr);
 
-	rc = cxl_h_ack_fn_error_interrupt(afu->guest->handle, serr);
-	if (rc)
+	rc = cxl_h_ack_fn_error_पूर्णांकerrupt(afu->guest->handle, serr);
+	अगर (rc)
 		dev_crit(&afu->dev, "Couldn't ack slice error interrupt: %d\n",
 			rc);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-static int irq_alloc_range(struct cxl *adapter, int len, int *irq)
-{
-	int i, n;
-	struct irq_avail *cur;
+अटल पूर्णांक irq_alloc_range(काष्ठा cxl *adapter, पूर्णांक len, पूर्णांक *irq)
+अणु
+	पूर्णांक i, n;
+	काष्ठा irq_avail *cur;
 
-	for (i = 0; i < adapter->guest->irq_nranges; i++) {
+	क्रम (i = 0; i < adapter->guest->irq_nranges; i++) अणु
 		cur = &adapter->guest->irq_avail[i];
-		n = bitmap_find_next_zero_area(cur->bitmap, cur->range,
+		n = biपंचांगap_find_next_zero_area(cur->biपंचांगap, cur->range,
 					0, len, 0);
-		if (n < cur->range) {
-			bitmap_set(cur->bitmap, n, len);
+		अगर (n < cur->range) अणु
+			biपंचांगap_set(cur->biपंचांगap, n, len);
 			*irq = cur->offset + n;
 			pr_devel("guest: allocate IRQs %#x->%#x\n",
 				*irq, *irq + len - 1);
 
-			return 0;
-		}
-	}
-	return -ENOSPC;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -ENOSPC;
+पूर्ण
 
-static int irq_free_range(struct cxl *adapter, int irq, int len)
-{
-	int i, n;
-	struct irq_avail *cur;
+अटल पूर्णांक irq_मुक्त_range(काष्ठा cxl *adapter, पूर्णांक irq, पूर्णांक len)
+अणु
+	पूर्णांक i, n;
+	काष्ठा irq_avail *cur;
 
-	if (len == 0)
-		return -ENOENT;
+	अगर (len == 0)
+		वापस -ENOENT;
 
-	for (i = 0; i < adapter->guest->irq_nranges; i++) {
+	क्रम (i = 0; i < adapter->guest->irq_nranges; i++) अणु
 		cur = &adapter->guest->irq_avail[i];
-		if (irq >= cur->offset &&
-			(irq + len) <= (cur->offset + cur->range)) {
+		अगर (irq >= cur->offset &&
+			(irq + len) <= (cur->offset + cur->range)) अणु
 			n = irq - cur->offset;
-			bitmap_clear(cur->bitmap, n, len);
+			biपंचांगap_clear(cur->biपंचांगap, n, len);
 			pr_devel("guest: release IRQs %#x->%#x\n",
 				irq, irq + len - 1);
-			return 0;
-		}
-	}
-	return -ENOENT;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-static int guest_reset(struct cxl *adapter)
-{
-	struct cxl_afu *afu = NULL;
-	int i, rc;
+अटल पूर्णांक guest_reset(काष्ठा cxl *adapter)
+अणु
+	काष्ठा cxl_afu *afu = शून्य;
+	पूर्णांक i, rc;
 
 	pr_devel("Adapter reset request\n");
 	spin_lock(&adapter->afu_list_lock);
-	for (i = 0; i < adapter->slices; i++) {
-		if ((afu = adapter->afu[i])) {
+	क्रम (i = 0; i < adapter->slices; i++) अणु
+		अगर ((afu = adapter->afu[i])) अणु
 			pci_error_handlers(afu, CXL_ERROR_DETECTED_EVENT,
 					pci_channel_io_frozen);
 			cxl_context_detach_all(afu);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rc = cxl_h_reset_adapter(adapter->guest->handle);
-	for (i = 0; i < adapter->slices; i++) {
-		if (!rc && (afu = adapter->afu[i])) {
+	क्रम (i = 0; i < adapter->slices; i++) अणु
+		अगर (!rc && (afu = adapter->afu[i])) अणु
 			pci_error_handlers(afu, CXL_SLOT_RESET_EVENT,
 					pci_channel_io_normal);
 			pci_error_handlers(afu, CXL_RESUME_EVENT, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&adapter->afu_list_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int guest_alloc_one_irq(struct cxl *adapter)
-{
-	int irq;
+अटल पूर्णांक guest_alloc_one_irq(काष्ठा cxl *adapter)
+अणु
+	पूर्णांक irq;
 
 	spin_lock(&adapter->guest->irq_alloc_lock);
-	if (irq_alloc_range(adapter, 1, &irq))
+	अगर (irq_alloc_range(adapter, 1, &irq))
 		irq = -ENOSPC;
 	spin_unlock(&adapter->guest->irq_alloc_lock);
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static void guest_release_one_irq(struct cxl *adapter, int irq)
-{
+अटल व्योम guest_release_one_irq(काष्ठा cxl *adapter, पूर्णांक irq)
+अणु
 	spin_lock(&adapter->guest->irq_alloc_lock);
-	irq_free_range(adapter, irq, 1);
+	irq_मुक्त_range(adapter, irq, 1);
 	spin_unlock(&adapter->guest->irq_alloc_lock);
-}
+पूर्ण
 
-static int guest_alloc_irq_ranges(struct cxl_irq_ranges *irqs,
-				struct cxl *adapter, unsigned int num)
-{
-	int i, try, irq;
+अटल पूर्णांक guest_alloc_irq_ranges(काष्ठा cxl_irq_ranges *irqs,
+				काष्ठा cxl *adapter, अचिन्हित पूर्णांक num)
+अणु
+	पूर्णांक i, try, irq;
 
-	memset(irqs, 0, sizeof(struct cxl_irq_ranges));
+	स_रखो(irqs, 0, माप(काष्ठा cxl_irq_ranges));
 
 	spin_lock(&adapter->guest->irq_alloc_lock);
-	for (i = 0; i < CXL_IRQ_RANGES && num; i++) {
+	क्रम (i = 0; i < CXL_IRQ_RANGES && num; i++) अणु
 		try = num;
-		while (try) {
-			if (irq_alloc_range(adapter, try, &irq) == 0)
-				break;
+		जबतक (try) अणु
+			अगर (irq_alloc_range(adapter, try, &irq) == 0)
+				अवरोध;
 			try /= 2;
-		}
-		if (!try)
-			goto error;
+		पूर्ण
+		अगर (!try)
+			जाओ error;
 		irqs->offset[i] = irq;
 		irqs->range[i] = try;
 		num -= try;
-	}
-	if (num)
-		goto error;
+	पूर्ण
+	अगर (num)
+		जाओ error;
 	spin_unlock(&adapter->guest->irq_alloc_lock);
-	return 0;
+	वापस 0;
 
 error:
-	for (i = 0; i < CXL_IRQ_RANGES; i++)
-		irq_free_range(adapter, irqs->offset[i], irqs->range[i]);
+	क्रम (i = 0; i < CXL_IRQ_RANGES; i++)
+		irq_मुक्त_range(adapter, irqs->offset[i], irqs->range[i]);
 	spin_unlock(&adapter->guest->irq_alloc_lock);
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
-static void guest_release_irq_ranges(struct cxl_irq_ranges *irqs,
-				struct cxl *adapter)
-{
-	int i;
+अटल व्योम guest_release_irq_ranges(काष्ठा cxl_irq_ranges *irqs,
+				काष्ठा cxl *adapter)
+अणु
+	पूर्णांक i;
 
 	spin_lock(&adapter->guest->irq_alloc_lock);
-	for (i = 0; i < CXL_IRQ_RANGES; i++)
-		irq_free_range(adapter, irqs->offset[i], irqs->range[i]);
+	क्रम (i = 0; i < CXL_IRQ_RANGES; i++)
+		irq_मुक्त_range(adapter, irqs->offset[i], irqs->range[i]);
 	spin_unlock(&adapter->guest->irq_alloc_lock);
-}
+पूर्ण
 
-static int guest_register_serr_irq(struct cxl_afu *afu)
-{
-	afu->err_irq_name = kasprintf(GFP_KERNEL, "cxl-%s-err",
+अटल पूर्णांक guest_रेजिस्टर_serr_irq(काष्ठा cxl_afu *afu)
+अणु
+	afu->err_irq_name = kaप्र_लिखो(GFP_KERNEL, "cxl-%s-err",
 				      dev_name(&afu->dev));
-	if (!afu->err_irq_name)
-		return -ENOMEM;
+	अगर (!afu->err_irq_name)
+		वापस -ENOMEM;
 
-	if (!(afu->serr_virq = cxl_map_irq(afu->adapter, afu->serr_hwirq,
-				 guest_slice_irq_err, afu, afu->err_irq_name))) {
-		kfree(afu->err_irq_name);
-		afu->err_irq_name = NULL;
-		return -ENOMEM;
-	}
+	अगर (!(afu->serr_virq = cxl_map_irq(afu->adapter, afu->serr_hwirq,
+				 guest_slice_irq_err, afu, afu->err_irq_name))) अणु
+		kमुक्त(afu->err_irq_name);
+		afu->err_irq_name = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void guest_release_serr_irq(struct cxl_afu *afu)
-{
+अटल व्योम guest_release_serr_irq(काष्ठा cxl_afu *afu)
+अणु
 	cxl_unmap_irq(afu->serr_virq, afu);
 	cxl_ops->release_one_irq(afu->adapter, afu->serr_hwirq);
-	kfree(afu->err_irq_name);
-}
+	kमुक्त(afu->err_irq_name);
+पूर्ण
 
-static int guest_ack_irq(struct cxl_context *ctx, u64 tfc, u64 psl_reset_mask)
-{
-	return cxl_h_control_faults(ctx->afu->guest->handle, ctx->process_token,
+अटल पूर्णांक guest_ack_irq(काष्ठा cxl_context *ctx, u64 tfc, u64 psl_reset_mask)
+अणु
+	वापस cxl_h_control_faults(ctx->afu->guest->handle, ctx->process_token,
 				tfc >> 32, (psl_reset_mask != 0));
-}
+पूर्ण
 
-static void disable_afu_irqs(struct cxl_context *ctx)
-{
+अटल व्योम disable_afu_irqs(काष्ठा cxl_context *ctx)
+अणु
 	irq_hw_number_t hwirq;
-	unsigned int virq;
-	int r, i;
+	अचिन्हित पूर्णांक virq;
+	पूर्णांक r, i;
 
 	pr_devel("Disabling AFU(%d) interrupts\n", ctx->afu->slice);
-	for (r = 0; r < CXL_IRQ_RANGES; r++) {
+	क्रम (r = 0; r < CXL_IRQ_RANGES; r++) अणु
 		hwirq = ctx->irqs.offset[r];
-		for (i = 0; i < ctx->irqs.range[r]; hwirq++, i++) {
-			virq = irq_find_mapping(NULL, hwirq);
+		क्रम (i = 0; i < ctx->irqs.range[r]; hwirq++, i++) अणु
+			virq = irq_find_mapping(शून्य, hwirq);
 			disable_irq(virq);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void enable_afu_irqs(struct cxl_context *ctx)
-{
+अटल व्योम enable_afu_irqs(काष्ठा cxl_context *ctx)
+अणु
 	irq_hw_number_t hwirq;
-	unsigned int virq;
-	int r, i;
+	अचिन्हित पूर्णांक virq;
+	पूर्णांक r, i;
 
 	pr_devel("Enabling AFU(%d) interrupts\n", ctx->afu->slice);
-	for (r = 0; r < CXL_IRQ_RANGES; r++) {
+	क्रम (r = 0; r < CXL_IRQ_RANGES; r++) अणु
 		hwirq = ctx->irqs.offset[r];
-		for (i = 0; i < ctx->irqs.range[r]; hwirq++, i++) {
-			virq = irq_find_mapping(NULL, hwirq);
+		क्रम (i = 0; i < ctx->irqs.range[r]; hwirq++, i++) अणु
+			virq = irq_find_mapping(शून्य, hwirq);
 			enable_irq(virq);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int _guest_afu_cr_readXX(int sz, struct cxl_afu *afu, int cr_idx,
+अटल पूर्णांक _guest_afu_cr_पढ़ोXX(पूर्णांक sz, काष्ठा cxl_afu *afu, पूर्णांक cr_idx,
 			u64 offset, u64 *val)
-{
-	unsigned long cr;
-	char c;
-	int rc = 0;
+अणु
+	अचिन्हित दीर्घ cr;
+	अक्षर c;
+	पूर्णांक rc = 0;
 
-	if (afu->crs_len < sz)
-		return -ENOENT;
+	अगर (afu->crs_len < sz)
+		वापस -ENOENT;
 
-	if (unlikely(offset >= afu->crs_len))
-		return -ERANGE;
+	अगर (unlikely(offset >= afu->crs_len))
+		वापस -दुस्फल;
 
 	cr = get_zeroed_page(GFP_KERNEL);
-	if (!cr)
-		return -ENOMEM;
+	अगर (!cr)
+		वापस -ENOMEM;
 
 	rc = cxl_h_get_config(afu->guest->handle, cr_idx, offset,
-			virt_to_phys((void *)cr), sz);
-	if (rc)
-		goto err;
+			virt_to_phys((व्योम *)cr), sz);
+	अगर (rc)
+		जाओ err;
 
-	switch (sz) {
-	case 1:
-		c = *((char *) cr);
+	चयन (sz) अणु
+	हाल 1:
+		c = *((अक्षर *) cr);
 		*val = c;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*val = in_le16((u16 *)cr);
-		break;
-	case 4:
-		*val = in_le32((unsigned *)cr);
-		break;
-	case 8:
+		अवरोध;
+	हाल 4:
+		*val = in_le32((अचिन्हित *)cr);
+		अवरोध;
+	हाल 8:
 		*val = in_le64((u64 *)cr);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 err:
-	free_page(cr);
-	return rc;
-}
+	मुक्त_page(cr);
+	वापस rc;
+पूर्ण
 
-static int guest_afu_cr_read32(struct cxl_afu *afu, int cr_idx, u64 offset,
+अटल पूर्णांक guest_afu_cr_पढ़ो32(काष्ठा cxl_afu *afu, पूर्णांक cr_idx, u64 offset,
 			u32 *out)
-{
-	int rc;
+अणु
+	पूर्णांक rc;
 	u64 val;
 
-	rc = _guest_afu_cr_readXX(4, afu, cr_idx, offset, &val);
-	if (!rc)
+	rc = _guest_afu_cr_पढ़ोXX(4, afu, cr_idx, offset, &val);
+	अगर (!rc)
 		*out = (u32) val;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int guest_afu_cr_read16(struct cxl_afu *afu, int cr_idx, u64 offset,
+अटल पूर्णांक guest_afu_cr_पढ़ो16(काष्ठा cxl_afu *afu, पूर्णांक cr_idx, u64 offset,
 			u16 *out)
-{
-	int rc;
+अणु
+	पूर्णांक rc;
 	u64 val;
 
-	rc = _guest_afu_cr_readXX(2, afu, cr_idx, offset, &val);
-	if (!rc)
+	rc = _guest_afu_cr_पढ़ोXX(2, afu, cr_idx, offset, &val);
+	अगर (!rc)
 		*out = (u16) val;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int guest_afu_cr_read8(struct cxl_afu *afu, int cr_idx, u64 offset,
+अटल पूर्णांक guest_afu_cr_पढ़ो8(काष्ठा cxl_afu *afu, पूर्णांक cr_idx, u64 offset,
 			u8 *out)
-{
-	int rc;
+अणु
+	पूर्णांक rc;
 	u64 val;
 
-	rc = _guest_afu_cr_readXX(1, afu, cr_idx, offset, &val);
-	if (!rc)
+	rc = _guest_afu_cr_पढ़ोXX(1, afu, cr_idx, offset, &val);
+	अगर (!rc)
 		*out = (u8) val;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int guest_afu_cr_read64(struct cxl_afu *afu, int cr_idx, u64 offset,
+अटल पूर्णांक guest_afu_cr_पढ़ो64(काष्ठा cxl_afu *afu, पूर्णांक cr_idx, u64 offset,
 			u64 *out)
-{
-	return _guest_afu_cr_readXX(8, afu, cr_idx, offset, out);
-}
+अणु
+	वापस _guest_afu_cr_पढ़ोXX(8, afu, cr_idx, offset, out);
+पूर्ण
 
-static int guest_afu_cr_write32(struct cxl_afu *afu, int cr, u64 off, u32 in)
-{
+अटल पूर्णांक guest_afu_cr_ग_लिखो32(काष्ठा cxl_afu *afu, पूर्णांक cr, u64 off, u32 in)
+अणु
 	/* config record is not writable from guest */
-	return -EPERM;
-}
+	वापस -EPERM;
+पूर्ण
 
-static int guest_afu_cr_write16(struct cxl_afu *afu, int cr, u64 off, u16 in)
-{
+अटल पूर्णांक guest_afu_cr_ग_लिखो16(काष्ठा cxl_afu *afu, पूर्णांक cr, u64 off, u16 in)
+अणु
 	/* config record is not writable from guest */
-	return -EPERM;
-}
+	वापस -EPERM;
+पूर्ण
 
-static int guest_afu_cr_write8(struct cxl_afu *afu, int cr, u64 off, u8 in)
-{
+अटल पूर्णांक guest_afu_cr_ग_लिखो8(काष्ठा cxl_afu *afu, पूर्णांक cr, u64 off, u8 in)
+अणु
 	/* config record is not writable from guest */
-	return -EPERM;
-}
+	वापस -EPERM;
+पूर्ण
 
-static int attach_afu_directed(struct cxl_context *ctx, u64 wed, u64 amr)
-{
-	struct cxl_process_element_hcall *elem;
-	struct cxl *adapter = ctx->afu->adapter;
-	const struct cred *cred;
+अटल पूर्णांक attach_afu_directed(काष्ठा cxl_context *ctx, u64 wed, u64 amr)
+अणु
+	काष्ठा cxl_process_element_hcall *elem;
+	काष्ठा cxl *adapter = ctx->afu->adapter;
+	स्थिर काष्ठा cred *cred;
 	u32 pid, idx;
-	int rc, r, i;
+	पूर्णांक rc, r, i;
 	u64 mmio_addr, mmio_size;
 	__be64 flags = 0;
 
 	/* Must be 8 byte aligned and cannot cross a 4096 byte boundary */
-	if (!(elem = (struct cxl_process_element_hcall *)
+	अगर (!(elem = (काष्ठा cxl_process_element_hcall *)
 			get_zeroed_page(GFP_KERNEL)))
-		return -ENOMEM;
+		वापस -ENOMEM;
 
 	elem->version = cpu_to_be64(CXL_PROCESS_ELEMENT_VERSION);
-	if (ctx->kernel) {
+	अगर (ctx->kernel) अणु
 		pid = 0;
 		flags |= CXL_PE_TRANSLATION_ENABLED;
 		flags |= CXL_PE_PRIVILEGED_PROCESS;
-		if (mfmsr() & MSR_SF)
+		अगर (mfmsr() & MSR_SF)
 			flags |= CXL_PE_64_BIT;
-	} else {
+	पूर्ण अन्यथा अणु
 		pid = current->pid;
 		flags |= CXL_PE_PROBLEM_STATE;
 		flags |= CXL_PE_TRANSLATION_ENABLED;
-		if (!test_tsk_thread_flag(current, TIF_32BIT))
+		अगर (!test_tsk_thपढ़ो_flag(current, TIF_32BIT))
 			flags |= CXL_PE_64_BIT;
 		cred = get_current_cred();
-		if (uid_eq(cred->euid, GLOBAL_ROOT_UID))
+		अगर (uid_eq(cred->euid, GLOBAL_ROOT_UID))
 			flags |= CXL_PE_PRIVILEGED_PROCESS;
 		put_cred(cred);
-	}
+	पूर्ण
 	elem->flags         = cpu_to_be64(flags);
 	elem->common.tid    = cpu_to_be32(0); /* Unused */
 	elem->common.pid    = cpu_to_be32(pid);
@@ -558,25 +559,25 @@ static int attach_afu_directed(struct cxl_context *ctx, u64 wed, u64 amr)
 	elem->common.u.psl8.sstp1  = cpu_to_be64(ctx->sstp1);
 
 	/*
-	 * Ensure we have at least one interrupt allocated to take faults for
+	 * Ensure we have at least one पूर्णांकerrupt allocated to take faults क्रम
 	 * kernel contexts that may not have allocated any AFU IRQs at all:
 	 */
-	if (ctx->irqs.range[0] == 0) {
-		rc = afu_register_irqs(ctx, 0);
-		if (rc)
-			goto out_free;
-	}
+	अगर (ctx->irqs.range[0] == 0) अणु
+		rc = afu_रेजिस्टर_irqs(ctx, 0);
+		अगर (rc)
+			जाओ out_मुक्त;
+	पूर्ण
 
-	for (r = 0; r < CXL_IRQ_RANGES; r++) {
-		for (i = 0; i < ctx->irqs.range[r]; i++) {
-			if (r == 0 && i == 0) {
+	क्रम (r = 0; r < CXL_IRQ_RANGES; r++) अणु
+		क्रम (i = 0; i < ctx->irqs.range[r]; i++) अणु
+			अगर (r == 0 && i == 0) अणु
 				elem->pslVirtualIsn = cpu_to_be32(ctx->irqs.offset[0]);
-			} else {
+			पूर्ण अन्यथा अणु
 				idx = ctx->irqs.offset[r] + i - adapter->guest->irq_base_offset;
-				elem->applicationVirtualIsnBitmap[idx / 8] |= 0x80 >> (idx % 8);
-			}
-		}
-	}
+				elem->applicationVirtualIsnBiपंचांगap[idx / 8] |= 0x80 >> (idx % 8);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	elem->common.amr = cpu_to_be64(amr);
 	elem->common.wed = cpu_to_be64(wed);
 
@@ -584,401 +585,401 @@ static int attach_afu_directed(struct cxl_context *ctx, u64 wed, u64 amr)
 
 	rc = cxl_h_attach_process(ctx->afu->guest->handle, elem,
 				&ctx->process_token, &mmio_addr, &mmio_size);
-	if (rc == H_SUCCESS) {
-		if (ctx->master || !ctx->afu->pp_psa) {
+	अगर (rc == H_SUCCESS) अणु
+		अगर (ctx->master || !ctx->afu->pp_psa) अणु
 			ctx->psn_phys = ctx->afu->psn_phys;
 			ctx->psn_size = ctx->afu->adapter->ps_size;
-		} else {
+		पूर्ण अन्यथा अणु
 			ctx->psn_phys = mmio_addr;
 			ctx->psn_size = mmio_size;
-		}
-		if (ctx->afu->pp_psa && mmio_size &&
-			ctx->afu->pp_size == 0) {
+		पूर्ण
+		अगर (ctx->afu->pp_psa && mmio_size &&
+			ctx->afu->pp_size == 0) अणु
 			/*
-			 * There's no property in the device tree to read the
+			 * There's no property in the device tree to पढ़ो the
 			 * pp_size. We only find out at the 1st attach.
 			 * Compared to bare-metal, it is too late and we
-			 * should really lock here. However, on powerVM,
+			 * should really lock here. However, on घातerVM,
 			 * pp_size is really only used to display in /sys.
-			 * Being discussed with pHyp for their next release.
+			 * Being discussed with pHyp क्रम their next release.
 			 */
 			ctx->afu->pp_size = mmio_size;
-		}
+		पूर्ण
 		/* from PAPR: process element is bytes 4-7 of process token */
-		ctx->external_pe = ctx->process_token & 0xFFFFFFFF;
+		ctx->बाह्यal_pe = ctx->process_token & 0xFFFFFFFF;
 		pr_devel("CXL pe=%i is known as %i for pHyp, mmio_size=%#llx",
-			ctx->pe, ctx->external_pe, ctx->psn_size);
+			ctx->pe, ctx->बाह्यal_pe, ctx->psn_size);
 		ctx->pe_inserted = true;
 		enable_afu_irqs(ctx);
-	}
+	पूर्ण
 
-out_free:
-	free_page((u64)elem);
-	return rc;
-}
+out_मुक्त:
+	मुक्त_page((u64)elem);
+	वापस rc;
+पूर्ण
 
-static int guest_attach_process(struct cxl_context *ctx, bool kernel, u64 wed, u64 amr)
-{
+अटल पूर्णांक guest_attach_process(काष्ठा cxl_context *ctx, bool kernel, u64 wed, u64 amr)
+अणु
 	pr_devel("in %s\n", __func__);
 
 	ctx->kernel = kernel;
-	if (ctx->afu->current_mode == CXL_MODE_DIRECTED)
-		return attach_afu_directed(ctx, wed, amr);
+	अगर (ctx->afu->current_mode == CXL_MODE_सूचीECTED)
+		वापस attach_afu_directed(ctx, wed, amr);
 
 	/* dedicated mode not supported on FW840 */
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int detach_afu_directed(struct cxl_context *ctx)
-{
-	if (!ctx->pe_inserted)
-		return 0;
-	if (cxl_h_detach_process(ctx->afu->guest->handle, ctx->process_token))
-		return -1;
-	return 0;
-}
+अटल पूर्णांक detach_afu_directed(काष्ठा cxl_context *ctx)
+अणु
+	अगर (!ctx->pe_inserted)
+		वापस 0;
+	अगर (cxl_h_detach_process(ctx->afu->guest->handle, ctx->process_token))
+		वापस -1;
+	वापस 0;
+पूर्ण
 
-static int guest_detach_process(struct cxl_context *ctx)
-{
+अटल पूर्णांक guest_detach_process(काष्ठा cxl_context *ctx)
+अणु
 	pr_devel("in %s\n", __func__);
 	trace_cxl_detach(ctx);
 
-	if (!cxl_ops->link_ok(ctx->afu->adapter, ctx->afu))
-		return -EIO;
+	अगर (!cxl_ops->link_ok(ctx->afu->adapter, ctx->afu))
+		वापस -EIO;
 
-	if (ctx->afu->current_mode == CXL_MODE_DIRECTED)
-		return detach_afu_directed(ctx);
+	अगर (ctx->afu->current_mode == CXL_MODE_सूचीECTED)
+		वापस detach_afu_directed(ctx);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void guest_release_afu(struct device *dev)
-{
-	struct cxl_afu *afu = to_cxl_afu(dev);
+अटल व्योम guest_release_afu(काष्ठा device *dev)
+अणु
+	काष्ठा cxl_afu *afu = to_cxl_afu(dev);
 
 	pr_devel("%s\n", __func__);
 
 	idr_destroy(&afu->contexts_idr);
 
-	kfree(afu->guest);
-	kfree(afu);
-}
+	kमुक्त(afu->guest);
+	kमुक्त(afu);
+पूर्ण
 
-ssize_t cxl_guest_read_afu_vpd(struct cxl_afu *afu, void *buf, size_t len)
-{
-	return guest_collect_vpd(NULL, afu, buf, len);
-}
+sमाप_प्रकार cxl_guest_पढ़ो_afu_vpd(काष्ठा cxl_afu *afu, व्योम *buf, माप_प्रकार len)
+अणु
+	वापस guest_collect_vpd(शून्य, afu, buf, len);
+पूर्ण
 
-#define ERR_BUFF_MAX_COPY_SIZE PAGE_SIZE
-static ssize_t guest_afu_read_err_buffer(struct cxl_afu *afu, char *buf,
-					loff_t off, size_t count)
-{
-	void *tbuf = NULL;
-	int rc = 0;
+#घोषणा ERR_BUFF_MAX_COPY_SIZE PAGE_SIZE
+अटल sमाप_प्रकार guest_afu_पढ़ो_err_buffer(काष्ठा cxl_afu *afu, अक्षर *buf,
+					loff_t off, माप_प्रकार count)
+अणु
+	व्योम *tbuf = शून्य;
+	पूर्णांक rc = 0;
 
-	tbuf = (void *) get_zeroed_page(GFP_KERNEL);
-	if (!tbuf)
-		return -ENOMEM;
+	tbuf = (व्योम *) get_zeroed_page(GFP_KERNEL);
+	अगर (!tbuf)
+		वापस -ENOMEM;
 
 	rc = cxl_h_get_afu_err(afu->guest->handle,
 			       off & 0x7,
 			       virt_to_phys(tbuf),
 			       count);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
-	if (count > ERR_BUFF_MAX_COPY_SIZE)
+	अगर (count > ERR_BUFF_MAX_COPY_SIZE)
 		count = ERR_BUFF_MAX_COPY_SIZE - (off & 0x7);
-	memcpy(buf, tbuf, count);
+	स_नकल(buf, tbuf, count);
 err:
-	free_page((u64)tbuf);
+	मुक्त_page((u64)tbuf);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int guest_afu_check_and_enable(struct cxl_afu *afu)
-{
-	return 0;
-}
+अटल पूर्णांक guest_afu_check_and_enable(काष्ठा cxl_afu *afu)
+अणु
+	वापस 0;
+पूर्ण
 
-static bool guest_support_attributes(const char *attr_name,
-				     enum cxl_attrs type)
-{
-	switch (type) {
-	case CXL_ADAPTER_ATTRS:
-		if ((strcmp(attr_name, "base_image") == 0) ||
-			(strcmp(attr_name, "load_image_on_perst") == 0) ||
-			(strcmp(attr_name, "perst_reloads_same_image") == 0) ||
-			(strcmp(attr_name, "image_loaded") == 0))
-			return false;
-		break;
-	case CXL_AFU_MASTER_ATTRS:
-		if ((strcmp(attr_name, "pp_mmio_off") == 0))
-			return false;
-		break;
-	case CXL_AFU_ATTRS:
-		break;
-	default:
-		break;
-	}
+अटल bool guest_support_attributes(स्थिर अक्षर *attr_name,
+				     क्रमागत cxl_attrs type)
+अणु
+	चयन (type) अणु
+	हाल CXL_ADAPTER_ATTRS:
+		अगर ((म_भेद(attr_name, "base_image") == 0) ||
+			(म_भेद(attr_name, "load_image_on_perst") == 0) ||
+			(म_भेद(attr_name, "perst_reloads_same_image") == 0) ||
+			(म_भेद(attr_name, "image_loaded") == 0))
+			वापस false;
+		अवरोध;
+	हाल CXL_AFU_MASTER_ATTRS:
+		अगर ((म_भेद(attr_name, "pp_mmio_off") == 0))
+			वापस false;
+		अवरोध;
+	हाल CXL_AFU_ATTRS:
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int activate_afu_directed(struct cxl_afu *afu)
-{
-	int rc;
+अटल पूर्णांक activate_afu_directed(काष्ठा cxl_afu *afu)
+अणु
+	पूर्णांक rc;
 
 	dev_info(&afu->dev, "Activating AFU(%d) directed mode\n", afu->slice);
 
-	afu->current_mode = CXL_MODE_DIRECTED;
+	afu->current_mode = CXL_MODE_सूचीECTED;
 
-	afu->num_procs = afu->max_procs_virtualised;
+	afu->num_procs = afu->max_procs_भवised;
 
-	if ((rc = cxl_chardev_m_afu_add(afu)))
-		return rc;
+	अगर ((rc = cxl_अक्षरdev_m_afu_add(afu)))
+		वापस rc;
 
-	if ((rc = cxl_sysfs_afu_m_add(afu)))
-		goto err;
+	अगर ((rc = cxl_sysfs_afu_m_add(afu)))
+		जाओ err;
 
-	if ((rc = cxl_chardev_s_afu_add(afu)))
-		goto err1;
+	अगर ((rc = cxl_अक्षरdev_s_afu_add(afu)))
+		जाओ err1;
 
-	return 0;
+	वापस 0;
 err1:
-	cxl_sysfs_afu_m_remove(afu);
+	cxl_sysfs_afu_m_हटाओ(afu);
 err:
-	cxl_chardev_afu_remove(afu);
-	return rc;
-}
+	cxl_अक्षरdev_afu_हटाओ(afu);
+	वापस rc;
+पूर्ण
 
-static int guest_afu_activate_mode(struct cxl_afu *afu, int mode)
-{
-	if (!mode)
-		return 0;
-	if (!(mode & afu->modes_supported))
-		return -EINVAL;
+अटल पूर्णांक guest_afu_activate_mode(काष्ठा cxl_afu *afu, पूर्णांक mode)
+अणु
+	अगर (!mode)
+		वापस 0;
+	अगर (!(mode & afu->modes_supported))
+		वापस -EINVAL;
 
-	if (mode == CXL_MODE_DIRECTED)
-		return activate_afu_directed(afu);
+	अगर (mode == CXL_MODE_सूचीECTED)
+		वापस activate_afu_directed(afu);
 
-	if (mode == CXL_MODE_DEDICATED)
+	अगर (mode == CXL_MODE_DEDICATED)
 		dev_err(&afu->dev, "Dedicated mode not supported\n");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int deactivate_afu_directed(struct cxl_afu *afu)
-{
+अटल पूर्णांक deactivate_afu_directed(काष्ठा cxl_afu *afu)
+अणु
 	dev_info(&afu->dev, "Deactivating AFU(%d) directed mode\n", afu->slice);
 
 	afu->current_mode = 0;
 	afu->num_procs = 0;
 
-	cxl_sysfs_afu_m_remove(afu);
-	cxl_chardev_afu_remove(afu);
+	cxl_sysfs_afu_m_हटाओ(afu);
+	cxl_अक्षरdev_afu_हटाओ(afu);
 
 	cxl_ops->afu_reset(afu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int guest_afu_deactivate_mode(struct cxl_afu *afu, int mode)
-{
-	if (!mode)
-		return 0;
-	if (!(mode & afu->modes_supported))
-		return -EINVAL;
+अटल पूर्णांक guest_afu_deactivate_mode(काष्ठा cxl_afu *afu, पूर्णांक mode)
+अणु
+	अगर (!mode)
+		वापस 0;
+	अगर (!(mode & afu->modes_supported))
+		वापस -EINVAL;
 
-	if (mode == CXL_MODE_DIRECTED)
-		return deactivate_afu_directed(afu);
-	return 0;
-}
+	अगर (mode == CXL_MODE_सूचीECTED)
+		वापस deactivate_afu_directed(afu);
+	वापस 0;
+पूर्ण
 
-static int guest_afu_reset(struct cxl_afu *afu)
-{
+अटल पूर्णांक guest_afu_reset(काष्ठा cxl_afu *afu)
+अणु
 	pr_devel("AFU(%d) reset request\n", afu->slice);
-	return cxl_h_reset_afu(afu->guest->handle);
-}
+	वापस cxl_h_reset_afu(afu->guest->handle);
+पूर्ण
 
-static int guest_map_slice_regs(struct cxl_afu *afu)
-{
-	if (!(afu->p2n_mmio = ioremap(afu->guest->p2n_phys, afu->guest->p2n_size))) {
+अटल पूर्णांक guest_map_slice_regs(काष्ठा cxl_afu *afu)
+अणु
+	अगर (!(afu->p2n_mmio = ioremap(afu->guest->p2n_phys, afu->guest->p2n_size))) अणु
 		dev_err(&afu->dev, "Error mapping AFU(%d) MMIO regions\n",
 			afu->slice);
-		return -ENOMEM;
-	}
-	return 0;
-}
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void guest_unmap_slice_regs(struct cxl_afu *afu)
-{
-	if (afu->p2n_mmio)
+अटल व्योम guest_unmap_slice_regs(काष्ठा cxl_afu *afu)
+अणु
+	अगर (afu->p2n_mmio)
 		iounmap(afu->p2n_mmio);
-}
+पूर्ण
 
-static int afu_update_state(struct cxl_afu *afu)
-{
-	int rc, cur_state;
+अटल पूर्णांक afu_update_state(काष्ठा cxl_afu *afu)
+अणु
+	पूर्णांक rc, cur_state;
 
-	rc = afu_read_error_state(afu, &cur_state);
-	if (rc)
-		return rc;
+	rc = afu_पढ़ो_error_state(afu, &cur_state);
+	अगर (rc)
+		वापस rc;
 
-	if (afu->guest->previous_state == cur_state)
-		return 0;
+	अगर (afu->guest->previous_state == cur_state)
+		वापस 0;
 
 	pr_devel("AFU(%d) update state to %#x\n", afu->slice, cur_state);
 
-	switch (cur_state) {
-	case H_STATE_NORMAL:
+	चयन (cur_state) अणु
+	हाल H_STATE_NORMAL:
 		afu->guest->previous_state = cur_state;
-		break;
+		अवरोध;
 
-	case H_STATE_DISABLE:
+	हाल H_STATE_DISABLE:
 		pci_error_handlers(afu, CXL_ERROR_DETECTED_EVENT,
 				pci_channel_io_frozen);
 
 		cxl_context_detach_all(afu);
-		if ((rc = cxl_ops->afu_reset(afu)))
+		अगर ((rc = cxl_ops->afu_reset(afu)))
 			pr_devel("reset hcall failed %d\n", rc);
 
-		rc = afu_read_error_state(afu, &cur_state);
-		if (!rc && cur_state == H_STATE_NORMAL) {
+		rc = afu_पढ़ो_error_state(afu, &cur_state);
+		अगर (!rc && cur_state == H_STATE_NORMAL) अणु
 			pci_error_handlers(afu, CXL_SLOT_RESET_EVENT,
 					pci_channel_io_normal);
 			pci_error_handlers(afu, CXL_RESUME_EVENT, 0);
-		}
+		पूर्ण
 		afu->guest->previous_state = 0;
-		break;
+		अवरोध;
 
-	case H_STATE_TEMP_UNAVAILABLE:
+	हाल H_STATE_TEMP_UNAVAILABLE:
 		afu->guest->previous_state = cur_state;
-		break;
+		अवरोध;
 
-	case H_STATE_PERM_UNAVAILABLE:
+	हाल H_STATE_PERM_UNAVAILABLE:
 		dev_err(&afu->dev, "AFU is in permanent error state\n");
 		pci_error_handlers(afu, CXL_ERROR_DETECTED_EVENT,
 				pci_channel_io_perm_failure);
 		afu->guest->previous_state = cur_state;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_err("Unexpected AFU(%d) error state: %#x\n",
 		       afu->slice, cur_state);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void afu_handle_errstate(struct work_struct *work)
-{
-	struct cxl_afu_guest *afu_guest =
-		container_of(to_delayed_work(work), struct cxl_afu_guest, work_err);
+अटल व्योम afu_handle_errstate(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cxl_afu_guest *afu_guest =
+		container_of(to_delayed_work(work), काष्ठा cxl_afu_guest, work_err);
 
-	if (!afu_update_state(afu_guest->parent) &&
+	अगर (!afu_update_state(afu_guest->parent) &&
 	    afu_guest->previous_state == H_STATE_PERM_UNAVAILABLE)
-		return;
+		वापस;
 
-	if (afu_guest->handle_err)
+	अगर (afu_guest->handle_err)
 		schedule_delayed_work(&afu_guest->work_err,
-				      msecs_to_jiffies(3000));
-}
+				      msecs_to_jअगरfies(3000));
+पूर्ण
 
-static bool guest_link_ok(struct cxl *cxl, struct cxl_afu *afu)
-{
-	int state;
+अटल bool guest_link_ok(काष्ठा cxl *cxl, काष्ठा cxl_afu *afu)
+अणु
+	पूर्णांक state;
 
-	if (afu && (!afu_read_error_state(afu, &state))) {
-		if (state == H_STATE_NORMAL)
-			return true;
-	}
+	अगर (afu && (!afu_पढ़ो_error_state(afu, &state))) अणु
+		अगर (state == H_STATE_NORMAL)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int afu_properties_look_ok(struct cxl_afu *afu)
-{
-	if (afu->pp_irqs < 0) {
+अटल पूर्णांक afu_properties_look_ok(काष्ठा cxl_afu *afu)
+अणु
+	अगर (afu->pp_irqs < 0) अणु
 		dev_err(&afu->dev, "Unexpected per-process minimum interrupt value\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (afu->max_procs_virtualised < 1) {
+	अगर (afu->max_procs_भवised < 1) अणु
 		dev_err(&afu->dev, "Unexpected max number of processes virtualised value\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cxl_guest_init_afu(struct cxl *adapter, int slice, struct device_node *afu_np)
-{
-	struct cxl_afu *afu;
-	bool free = true;
-	int rc;
+पूर्णांक cxl_guest_init_afu(काष्ठा cxl *adapter, पूर्णांक slice, काष्ठा device_node *afu_np)
+अणु
+	काष्ठा cxl_afu *afu;
+	bool मुक्त = true;
+	पूर्णांक rc;
 
 	pr_devel("in %s - AFU(%d)\n", __func__, slice);
-	if (!(afu = cxl_alloc_afu(adapter, slice)))
-		return -ENOMEM;
+	अगर (!(afu = cxl_alloc_afu(adapter, slice)))
+		वापस -ENOMEM;
 
-	if (!(afu->guest = kzalloc(sizeof(struct cxl_afu_guest), GFP_KERNEL))) {
-		kfree(afu);
-		return -ENOMEM;
-	}
+	अगर (!(afu->guest = kzalloc(माप(काष्ठा cxl_afu_guest), GFP_KERNEL))) अणु
+		kमुक्त(afu);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if ((rc = dev_set_name(&afu->dev, "afu%i.%i",
+	अगर ((rc = dev_set_name(&afu->dev, "afu%i.%i",
 					  adapter->adapter_num,
 					  slice)))
-		goto err1;
+		जाओ err1;
 
 	adapter->slices++;
 
-	if ((rc = cxl_of_read_afu_handle(afu, afu_np)))
-		goto err1;
+	अगर ((rc = cxl_of_पढ़ो_afu_handle(afu, afu_np)))
+		जाओ err1;
 
-	if ((rc = cxl_ops->afu_reset(afu)))
-		goto err1;
+	अगर ((rc = cxl_ops->afu_reset(afu)))
+		जाओ err1;
 
-	if ((rc = cxl_of_read_afu_properties(afu, afu_np)))
-		goto err1;
+	अगर ((rc = cxl_of_पढ़ो_afu_properties(afu, afu_np)))
+		जाओ err1;
 
-	if ((rc = afu_properties_look_ok(afu)))
-		goto err1;
+	अगर ((rc = afu_properties_look_ok(afu)))
+		जाओ err1;
 
-	if ((rc = guest_map_slice_regs(afu)))
-		goto err1;
+	अगर ((rc = guest_map_slice_regs(afu)))
+		जाओ err1;
 
-	if ((rc = guest_register_serr_irq(afu)))
-		goto err2;
+	अगर ((rc = guest_रेजिस्टर_serr_irq(afu)))
+		जाओ err2;
 
 	/*
-	 * After we call this function we must not free the afu directly, even
-	 * if it returns an error!
+	 * After we call this function we must not मुक्त the afu directly, even
+	 * अगर it वापसs an error!
 	 */
-	if ((rc = cxl_register_afu(afu)))
-		goto err_put1;
+	अगर ((rc = cxl_रेजिस्टर_afu(afu)))
+		जाओ err_put1;
 
-	if ((rc = cxl_sysfs_afu_add(afu)))
-		goto err_put1;
+	अगर ((rc = cxl_sysfs_afu_add(afu)))
+		जाओ err_put1;
 
 	/*
-	 * pHyp doesn't expose the programming models supported by the
+	 * pHyp करोesn't expose the programming models supported by the
 	 * AFU. pHyp currently only supports directed mode. If it adds
 	 * dedicated mode later, this version of cxl has no way to
 	 * detect it. So we'll initialize the driver, but the first
 	 * attach will fail.
-	 * Being discussed with pHyp to do better (likely new property)
+	 * Being discussed with pHyp to करो better (likely new property)
 	 */
-	if (afu->max_procs_virtualised == 1)
+	अगर (afu->max_procs_भवised == 1)
 		afu->modes_supported = CXL_MODE_DEDICATED;
-	else
-		afu->modes_supported = CXL_MODE_DIRECTED;
+	अन्यथा
+		afu->modes_supported = CXL_MODE_सूचीECTED;
 
-	if ((rc = cxl_afu_select_best_mode(afu)))
-		goto err_put2;
+	अगर ((rc = cxl_afu_select_best_mode(afu)))
+		जाओ err_put2;
 
 	adapter->afu[afu->slice] = afu;
 
@@ -986,48 +987,48 @@ int cxl_guest_init_afu(struct cxl *adapter, int slice, struct device_node *afu_n
 
 	/*
 	 * wake up the cpu periodically to check the state
-	 * of the AFU using "afu" stored in the guest structure.
+	 * of the AFU using "afu" stored in the guest काष्ठाure.
 	 */
 	afu->guest->parent = afu;
 	afu->guest->handle_err = true;
 	INIT_DELAYED_WORK(&afu->guest->work_err, afu_handle_errstate);
-	schedule_delayed_work(&afu->guest->work_err, msecs_to_jiffies(1000));
+	schedule_delayed_work(&afu->guest->work_err, msecs_to_jअगरfies(1000));
 
-	if ((rc = cxl_pci_vphb_add(afu)))
+	अगर ((rc = cxl_pci_vphb_add(afu)))
 		dev_info(&afu->dev, "Can't register vPHB\n");
 
-	return 0;
+	वापस 0;
 
 err_put2:
-	cxl_sysfs_afu_remove(afu);
+	cxl_sysfs_afu_हटाओ(afu);
 err_put1:
-	device_unregister(&afu->dev);
-	free = false;
+	device_unरेजिस्टर(&afu->dev);
+	मुक्त = false;
 	guest_release_serr_irq(afu);
 err2:
 	guest_unmap_slice_regs(afu);
 err1:
-	if (free) {
-		kfree(afu->guest);
-		kfree(afu);
-	}
-	return rc;
-}
+	अगर (मुक्त) अणु
+		kमुक्त(afu->guest);
+		kमुक्त(afu);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-void cxl_guest_remove_afu(struct cxl_afu *afu)
-{
-	if (!afu)
-		return;
+व्योम cxl_guest_हटाओ_afu(काष्ठा cxl_afu *afu)
+अणु
+	अगर (!afu)
+		वापस;
 
 	/* flush and stop pending job */
 	afu->guest->handle_err = false;
 	flush_delayed_work(&afu->guest->work_err);
 
-	cxl_pci_vphb_remove(afu);
-	cxl_sysfs_afu_remove(afu);
+	cxl_pci_vphb_हटाओ(afu);
+	cxl_sysfs_afu_हटाओ(afu);
 
 	spin_lock(&afu->adapter->afu_list_lock);
-	afu->adapter->afu[afu->slice] = NULL;
+	afu->adapter->afu[afu->slice] = शून्य;
 	spin_unlock(&afu->adapter->afu_list_lock);
 
 	cxl_context_detach_all(afu);
@@ -1035,76 +1036,76 @@ void cxl_guest_remove_afu(struct cxl_afu *afu)
 	guest_release_serr_irq(afu);
 	guest_unmap_slice_regs(afu);
 
-	device_unregister(&afu->dev);
-}
+	device_unरेजिस्टर(&afu->dev);
+पूर्ण
 
-static void free_adapter(struct cxl *adapter)
-{
-	struct irq_avail *cur;
-	int i;
+अटल व्योम मुक्त_adapter(काष्ठा cxl *adapter)
+अणु
+	काष्ठा irq_avail *cur;
+	पूर्णांक i;
 
-	if (adapter->guest) {
-		if (adapter->guest->irq_avail) {
-			for (i = 0; i < adapter->guest->irq_nranges; i++) {
+	अगर (adapter->guest) अणु
+		अगर (adapter->guest->irq_avail) अणु
+			क्रम (i = 0; i < adapter->guest->irq_nranges; i++) अणु
 				cur = &adapter->guest->irq_avail[i];
-				kfree(cur->bitmap);
-			}
-			kfree(adapter->guest->irq_avail);
-		}
-		kfree(adapter->guest->status);
-		kfree(adapter->guest);
-	}
-	cxl_remove_adapter_nr(adapter);
-	kfree(adapter);
-}
+				kमुक्त(cur->biपंचांगap);
+			पूर्ण
+			kमुक्त(adapter->guest->irq_avail);
+		पूर्ण
+		kमुक्त(adapter->guest->status);
+		kमुक्त(adapter->guest);
+	पूर्ण
+	cxl_हटाओ_adapter_nr(adapter);
+	kमुक्त(adapter);
+पूर्ण
 
-static int properties_look_ok(struct cxl *adapter)
-{
-	/* The absence of this property means that the operational
+अटल पूर्णांक properties_look_ok(काष्ठा cxl *adapter)
+अणु
+	/* The असलence of this property means that the operational
 	 * status is unknown or okay
 	 */
-	if (strlen(adapter->guest->status) &&
-	    strcmp(adapter->guest->status, "okay")) {
+	अगर (म_माप(adapter->guest->status) &&
+	    म_भेद(adapter->guest->status, "okay")) अणु
 		pr_err("ABORTING:Bad operational status of the device\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-ssize_t cxl_guest_read_adapter_vpd(struct cxl *adapter, void *buf, size_t len)
-{
-	return guest_collect_vpd(adapter, NULL, buf, len);
-}
+sमाप_प्रकार cxl_guest_पढ़ो_adapter_vpd(काष्ठा cxl *adapter, व्योम *buf, माप_प्रकार len)
+अणु
+	वापस guest_collect_vpd(adapter, शून्य, buf, len);
+पूर्ण
 
-void cxl_guest_remove_adapter(struct cxl *adapter)
-{
+व्योम cxl_guest_हटाओ_adapter(काष्ठा cxl *adapter)
+अणु
 	pr_devel("in %s\n", __func__);
 
-	cxl_sysfs_adapter_remove(adapter);
+	cxl_sysfs_adapter_हटाओ(adapter);
 
-	cxl_guest_remove_chardev(adapter);
-	device_unregister(&adapter->dev);
-}
+	cxl_guest_हटाओ_अक्षरdev(adapter);
+	device_unरेजिस्टर(&adapter->dev);
+पूर्ण
 
-static void release_adapter(struct device *dev)
-{
-	free_adapter(to_cxl_adapter(dev));
-}
+अटल व्योम release_adapter(काष्ठा device *dev)
+अणु
+	मुक्त_adapter(to_cxl_adapter(dev));
+पूर्ण
 
-struct cxl *cxl_guest_init_adapter(struct device_node *np, struct platform_device *pdev)
-{
-	struct cxl *adapter;
-	bool free = true;
-	int rc;
+काष्ठा cxl *cxl_guest_init_adapter(काष्ठा device_node *np, काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cxl *adapter;
+	bool मुक्त = true;
+	पूर्णांक rc;
 
-	if (!(adapter = cxl_alloc_adapter()))
-		return ERR_PTR(-ENOMEM);
+	अगर (!(adapter = cxl_alloc_adapter()))
+		वापस ERR_PTR(-ENOMEM);
 
-	if (!(adapter->guest = kzalloc(sizeof(struct cxl_guest), GFP_KERNEL))) {
-		free_adapter(adapter);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!(adapter->guest = kzalloc(माप(काष्ठा cxl_guest), GFP_KERNEL))) अणु
+		मुक्त_adapter(adapter);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	adapter->slices = 0;
 	adapter->guest->pdev = pdev;
@@ -1113,86 +1114,86 @@ struct cxl *cxl_guest_init_adapter(struct device_node *np, struct platform_devic
 	dev_set_drvdata(&pdev->dev, adapter);
 
 	/*
-	 * Hypervisor controls PSL timebase initialization (p1 register).
+	 * Hypervisor controls PSL समयbase initialization (p1 रेजिस्टर).
 	 * On FW840, PSL is initialized.
 	 */
-	adapter->psl_timebase_synced = true;
+	adapter->psl_समयbase_synced = true;
 
-	if ((rc = cxl_of_read_adapter_handle(adapter, np)))
-		goto err1;
+	अगर ((rc = cxl_of_पढ़ो_adapter_handle(adapter, np)))
+		जाओ err1;
 
-	if ((rc = cxl_of_read_adapter_properties(adapter, np)))
-		goto err1;
+	अगर ((rc = cxl_of_पढ़ो_adapter_properties(adapter, np)))
+		जाओ err1;
 
-	if ((rc = properties_look_ok(adapter)))
-		goto err1;
+	अगर ((rc = properties_look_ok(adapter)))
+		जाओ err1;
 
-	if ((rc = cxl_guest_add_chardev(adapter)))
-		goto err1;
+	अगर ((rc = cxl_guest_add_अक्षरdev(adapter)))
+		जाओ err1;
 
 	/*
-	 * After we call this function we must not free the adapter directly,
-	 * even if it returns an error!
+	 * After we call this function we must not मुक्त the adapter directly,
+	 * even अगर it वापसs an error!
 	 */
-	if ((rc = cxl_register_adapter(adapter)))
-		goto err_put1;
+	अगर ((rc = cxl_रेजिस्टर_adapter(adapter)))
+		जाओ err_put1;
 
-	if ((rc = cxl_sysfs_adapter_add(adapter)))
-		goto err_put1;
+	अगर ((rc = cxl_sysfs_adapter_add(adapter)))
+		जाओ err_put1;
 
 	/* release the context lock as the adapter is configured */
 	cxl_adapter_context_unlock(adapter);
 
-	return adapter;
+	वापस adapter;
 
 err_put1:
-	device_unregister(&adapter->dev);
-	free = false;
-	cxl_guest_remove_chardev(adapter);
+	device_unरेजिस्टर(&adapter->dev);
+	मुक्त = false;
+	cxl_guest_हटाओ_अक्षरdev(adapter);
 err1:
-	if (free)
-		free_adapter(adapter);
-	return ERR_PTR(rc);
-}
+	अगर (मुक्त)
+		मुक्त_adapter(adapter);
+	वापस ERR_PTR(rc);
+पूर्ण
 
-void cxl_guest_reload_module(struct cxl *adapter)
-{
-	struct platform_device *pdev;
+व्योम cxl_guest_reload_module(काष्ठा cxl *adapter)
+अणु
+	काष्ठा platक्रमm_device *pdev;
 
 	pdev = adapter->guest->pdev;
-	cxl_guest_remove_adapter(adapter);
+	cxl_guest_हटाओ_adapter(adapter);
 
 	cxl_of_probe(pdev);
-}
+पूर्ण
 
-const struct cxl_backend_ops cxl_guest_ops = {
+स्थिर काष्ठा cxl_backend_ops cxl_guest_ops = अणु
 	.module = THIS_MODULE,
 	.adapter_reset = guest_reset,
 	.alloc_one_irq = guest_alloc_one_irq,
 	.release_one_irq = guest_release_one_irq,
 	.alloc_irq_ranges = guest_alloc_irq_ranges,
 	.release_irq_ranges = guest_release_irq_ranges,
-	.setup_irq = NULL,
+	.setup_irq = शून्य,
 	.handle_psl_slice_error = guest_handle_psl_slice_error,
-	.psl_interrupt = guest_psl_irq,
+	.psl_पूर्णांकerrupt = guest_psl_irq,
 	.ack_irq = guest_ack_irq,
 	.attach_process = guest_attach_process,
 	.detach_process = guest_detach_process,
-	.update_ivtes = NULL,
+	.update_ivtes = शून्य,
 	.support_attributes = guest_support_attributes,
 	.link_ok = guest_link_ok,
 	.release_afu = guest_release_afu,
-	.afu_read_err_buffer = guest_afu_read_err_buffer,
+	.afu_पढ़ो_err_buffer = guest_afu_पढ़ो_err_buffer,
 	.afu_check_and_enable = guest_afu_check_and_enable,
 	.afu_activate_mode = guest_afu_activate_mode,
 	.afu_deactivate_mode = guest_afu_deactivate_mode,
 	.afu_reset = guest_afu_reset,
-	.afu_cr_read8 = guest_afu_cr_read8,
-	.afu_cr_read16 = guest_afu_cr_read16,
-	.afu_cr_read32 = guest_afu_cr_read32,
-	.afu_cr_read64 = guest_afu_cr_read64,
-	.afu_cr_write8 = guest_afu_cr_write8,
-	.afu_cr_write16 = guest_afu_cr_write16,
-	.afu_cr_write32 = guest_afu_cr_write32,
-	.read_adapter_vpd = cxl_guest_read_adapter_vpd,
-};
+	.afu_cr_पढ़ो8 = guest_afu_cr_पढ़ो8,
+	.afu_cr_पढ़ो16 = guest_afu_cr_पढ़ो16,
+	.afu_cr_पढ़ो32 = guest_afu_cr_पढ़ो32,
+	.afu_cr_पढ़ो64 = guest_afu_cr_पढ़ो64,
+	.afu_cr_ग_लिखो8 = guest_afu_cr_ग_लिखो8,
+	.afu_cr_ग_लिखो16 = guest_afu_cr_ग_लिखो16,
+	.afu_cr_ग_लिखो32 = guest_afu_cr_ग_लिखो32,
+	.पढ़ो_adapter_vpd = cxl_guest_पढ़ो_adapter_vpd,
+पूर्ण;

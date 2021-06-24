@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * PC-Speaker driver for Linux
+ * PC-Speaker driver क्रम Linux
  *
  * Copyright (C) 2001-2008  Stas Sergeev
  */
 
-#ifndef __PCSP_INPUT_H__
-#define __PCSP_INPUT_H__
+#अगर_अघोषित __PCSP_INPUT_H__
+#घोषणा __PCSP_INPUT_H__
 
-int pcspkr_input_init(struct input_dev **rdev, struct device *dev);
-int pcspkr_input_remove(struct input_dev *dev);
-void pcspkr_stop_sound(void);
+पूर्णांक pcspkr_input_init(काष्ठा input_dev **rdev, काष्ठा device *dev);
+पूर्णांक pcspkr_input_हटाओ(काष्ठा input_dev *dev);
+व्योम pcspkr_stop_sound(व्योम);
 
-#endif
+#पूर्ण_अगर

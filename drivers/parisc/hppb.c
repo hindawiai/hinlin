@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 ** hppb.c:
-**      HP-PB bus driver for the NOVA and K-Class systems.
+**      HP-PB bus driver क्रम the NOVA and K-Class प्रणालीs.
 **
 **      (c) Copyright 2002 Ryan Bradetich
 **      (c) Copyright 2002 Hewlett-Packard Company
@@ -9,65 +10,65 @@
 **
 */
 
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/dma-mapping.h>
-#include <linux/ioport.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/ioport.h>
 
-#include <asm/io.h>
-#include <asm/hardware.h>
-#include <asm/parisc-device.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/hardware.h>
+#समावेश <यंत्र/parisc-device.h>
 
-#include "iommu.h"
+#समावेश "iommu.h"
 
-struct hppb_card {
-	unsigned long hpa;
-	struct resource mmio_region;
-	struct hppb_card *next;
-};
+काष्ठा hppb_card अणु
+	अचिन्हित दीर्घ hpa;
+	काष्ठा resource mmio_region;
+	काष्ठा hppb_card *next;
+पूर्ण;
 
-static struct hppb_card hppb_card_head = {
+अटल काष्ठा hppb_card hppb_card_head = अणु
 	.hpa = 0,
-	.next = NULL,
-};
+	.next = शून्य,
+पूर्ण;
 
-#define IO_IO_LOW  offsetof(struct bc_module, io_io_low)
-#define IO_IO_HIGH offsetof(struct bc_module, io_io_high)
+#घोषणा IO_IO_LOW  दुरत्व(काष्ठा bc_module, io_io_low)
+#घोषणा IO_IO_HIGH दुरत्व(काष्ठा bc_module, io_io_high)
 
 /**
- * hppb_probe - Determine if the hppb driver should claim this device.
+ * hppb_probe - Determine अगर the hppb driver should claim this device.
  * @dev: The device which has been found
  *
- * Determine if hppb driver should claim this chip (return 0) or not 
- * (return 1). If so, initialize the chip and tell other partners in crime 
- * they have work to do.
+ * Determine अगर hppb driver should claim this chip (वापस 0) or not 
+ * (वापस 1). If so, initialize the chip and tell other partners in crime 
+ * they have work to करो.
  */
-static int __init hppb_probe(struct parisc_device *dev)
-{
-	int status;
-	struct hppb_card *card = &hppb_card_head;
+अटल पूर्णांक __init hppb_probe(काष्ठा parisc_device *dev)
+अणु
+	पूर्णांक status;
+	काष्ठा hppb_card *card = &hppb_card_head;
 
-	while(card->next) {
+	जबतक(card->next) अणु
 		card = card->next;
-	}
+	पूर्ण
 
-	if(card->hpa) {
-		card->next = kzalloc(sizeof(struct hppb_card), GFP_KERNEL);
-		if(!card->next) {
-			printk(KERN_ERR "HP-PB: Unable to allocate memory.\n");
-			return 1;
-		}
+	अगर(card->hpa) अणु
+		card->next = kzalloc(माप(काष्ठा hppb_card), GFP_KERNEL);
+		अगर(!card->next) अणु
+			prपूर्णांकk(KERN_ERR "HP-PB: Unable to allocate memory.\n");
+			वापस 1;
+		पूर्ण
 		card = card->next;
-	}
+	पूर्ण
 
 	card->hpa = dev->hpa.start;
 	card->mmio_region.name = "HP-PB Bus";
 	card->mmio_region.flags = IORESOURCE_MEM;
 
-	card->mmio_region.start = gsc_readl(dev->hpa.start + IO_IO_LOW);
-	card->mmio_region.end = gsc_readl(dev->hpa.start + IO_IO_HIGH) - 1;
+	card->mmio_region.start = gsc_पढ़ोl(dev->hpa.start + IO_IO_LOW);
+	card->mmio_region.end = gsc_पढ़ोl(dev->hpa.start + IO_IO_HIGH) - 1;
 
 	status = ccio_request_resource(dev, &card->mmio_region);
 
@@ -76,29 +77,29 @@ static int __init hppb_probe(struct parisc_device *dev)
 			&card->mmio_region,
 			(status < 0) ? " not":"" );
 
-        return 0;
-}
+        वापस 0;
+पूर्ण
 
-static const struct parisc_device_id hppb_tbl[] __initconst = {
-        { HPHW_BCPORT, HVERSION_REV_ANY_ID, 0x500, 0xc }, /* E25 and K */
-        { HPHW_BCPORT, 0x0, 0x501, 0xc }, /* E35 */
-        { HPHW_BCPORT, 0x0, 0x502, 0xc }, /* E45 */
-        { HPHW_BCPORT, 0x0, 0x503, 0xc }, /* E55 */
-        { 0, }
-};
+अटल स्थिर काष्ठा parisc_device_id hppb_tbl[] __initस्थिर = अणु
+        अणु HPHW_BCPORT, HVERSION_REV_ANY_ID, 0x500, 0xc पूर्ण, /* E25 and K */
+        अणु HPHW_BCPORT, 0x0, 0x501, 0xc पूर्ण, /* E35 */
+        अणु HPHW_BCPORT, 0x0, 0x502, 0xc पूर्ण, /* E45 */
+        अणु HPHW_BCPORT, 0x0, 0x503, 0xc पूर्ण, /* E55 */
+        अणु 0, पूर्ण
+पूर्ण;
 
-static struct parisc_driver hppb_driver __refdata = {
+अटल काष्ठा parisc_driver hppb_driver __refdata = अणु
         .name =         "gecko_boa",
         .id_table =     hppb_tbl,
 	.probe =        hppb_probe,
-};
+पूर्ण;
 
 /**
  * hppb_init - HP-PB bus initialization procedure.
  *
  * Register this driver.   
  */
-void __init hppb_init(void)
-{
-        register_parisc_driver(&hppb_driver);
-}
+व्योम __init hppb_init(व्योम)
+अणु
+        रेजिस्टर_parisc_driver(&hppb_driver);
+पूर्ण

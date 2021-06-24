@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-pxa/littleton.c
  *
- *  Support for the Marvell Littleton Development Platform.
+ *  Support क्रम the Marvell Littleton Development Platक्रमm.
  *
- *  Author:	Jason Chagas (largely modified code)
+ *  Author:	Jason Chagas (largely modअगरied code)
  *  Created:	Nov 20, 2006
  *  Copyright:	(C) Copyright 2006 Marvell International Ltd.
  *
- *  2007-11-22  modified to align with latest kernel
+ *  2007-11-22  modअगरied to align with latest kernel
  *              eric miao <eric.miao@marvell.com>
  */
 
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/clk.h>
-#include <linux/gpio/machine.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/pxa2xx_spi.h>
-#include <linux/smc91x.h>
-#include <linux/i2c.h>
-#include <linux/leds.h>
-#include <linux/mfd/da903x.h>
-#include <linux/platform_data/max732x.h>
-#include <linux/platform_data/i2c-pxa.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/pxa2xx_spi.h>
+#समावेश <linux/smc91x.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/mfd/da903x.h>
+#समावेश <linux/platक्रमm_data/max732x.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
 
-#include <asm/types.h>
-#include <asm/setup.h>
-#include <asm/memory.h>
-#include <asm/mach-types.h>
-#include <mach/hardware.h>
-#include <asm/irq.h>
+#समावेश <यंत्र/types.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/memory.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/irq.h>
 
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
-#include <asm/mach/irq.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/mach/irq.h>
 
-#include "pxa300.h"
-#include "devices.h"
-#include <linux/platform_data/video-pxafb.h>
-#include <linux/platform_data/mmc-pxamci.h>
-#include <linux/platform_data/keypad-pxa27x.h>
-#include "littleton.h"
-#include <linux/platform_data/mtd-nand-pxa3xx.h>
+#समावेश "pxa300.h"
+#समावेश "devices.h"
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
+#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
+#समावेश "littleton.h"
+#समावेश <linux/platक्रमm_data/mtd-nand-pxa3xx.h>
 
-#include "generic.h"
+#समावेश "generic.h"
 
 /* Littleton MFP configurations */
-static mfp_cfg_t littleton_mfp_cfg[] __initdata = {
+अटल mfp_cfg_t littleton_mfp_cfg[] __initdata = अणु
 	/* LCD */
 	GPIO54_LCD_LDD_0,
 	GPIO55_LCD_LDD_1,
@@ -111,41 +112,41 @@ static mfp_cfg_t littleton_mfp_cfg[] __initdata = {
 	GPIO108_UART3_RTS,
 	GPIO109_UART3_TXD,
 	GPIO110_UART3_RXD,
-};
+पूर्ण;
 
-static struct resource smc91x_resources[] = {
-	[0] = {
+अटल काष्ठा resource smc91x_resources[] = अणु
+	[0] = अणु
 		.start	= (LITTLETON_ETH_PHYS + 0x300),
 		.end	= (LITTLETON_ETH_PHYS + 0xfffff),
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO90)),
 		.end	= PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO90)),
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_LOWEDGE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct smc91x_platdata littleton_smc91x_info = {
+अटल काष्ठा smc91x_platdata littleton_smc91x_info = अणु
 	.flags	= SMC91X_USE_8BIT | SMC91X_USE_16BIT |
 		  SMC91X_NOWAIT | SMC91X_USE_DMA,
-};
+पूर्ण;
 
-static struct platform_device smc91x_device = {
+अटल काष्ठा platक्रमm_device smc91x_device = अणु
 	.name		= "smc91x",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(smc91x_resources),
 	.resource	= smc91x_resources,
-	.dev		= {
-		.platform_data = &littleton_smc91x_info,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data = &littleton_smc91x_info,
+	पूर्ण,
+पूर्ण;
 
-#if defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
-static struct pxafb_mode_info tpo_tdo24mtea1_modes[] = {
-	[0] = {
+#अगर defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
+अटल काष्ठा pxafb_mode_info tpo_tकरो24mtea1_modes[] = अणु
+	[0] = अणु
 		/* VGA */
-		.pixclock	= 38250,
+		.pixघड़ी	= 38250,
 		.xres		= 480,
 		.yres		= 640,
 		.bpp		= 16,
@@ -156,10 +157,10 @@ static struct pxafb_mode_info tpo_tdo24mtea1_modes[] = {
 		.upper_margin	= 2,
 		.lower_margin	= 4,
 		.sync		= 0,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		/* QVGA */
-		.pixclock	= 153000,
+		.pixघड़ी	= 153000,
 		.xres		= 240,
 		.yres		= 320,
 		.bpp		= 16,
@@ -170,55 +171,55 @@ static struct pxafb_mode_info tpo_tdo24mtea1_modes[] = {
 		.upper_margin	= 2,
 		.lower_margin	= 2,
 		.sync		= 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct pxafb_mach_info littleton_lcd_info = {
-	.modes			= tpo_tdo24mtea1_modes,
+अटल काष्ठा pxafb_mach_info littleton_lcd_info = अणु
+	.modes			= tpo_tकरो24mtea1_modes,
 	.num_modes		= 2,
 	.lcd_conn		= LCD_COLOR_TFT_16BPP,
-};
+पूर्ण;
 
-static void __init littleton_init_lcd(void)
-{
-	pxa_set_fb_info(NULL, &littleton_lcd_info);
-}
-#else
-static inline void littleton_init_lcd(void) {};
-#endif /* CONFIG_FB_PXA || CONFIG_FB_PXA_MODULE */
+अटल व्योम __init littleton_init_lcd(व्योम)
+अणु
+	pxa_set_fb_info(शून्य, &littleton_lcd_info);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम littleton_init_lcd(व्योम) अणुपूर्ण;
+#पूर्ण_अगर /* CONFIG_FB_PXA || CONFIG_FB_PXA_MODULE */
 
-#if defined(CONFIG_SPI_PXA2XX) || defined(CONFIG_SPI_PXA2XX_MODULE)
-static struct pxa2xx_spi_controller littleton_spi_info = {
+#अगर defined(CONFIG_SPI_PXA2XX) || defined(CONFIG_SPI_PXA2XX_MODULE)
+अटल काष्ठा pxa2xx_spi_controller littleton_spi_info = अणु
 	.num_chipselect		= 1,
-};
+पूर्ण;
 
-static struct pxa2xx_spi_chip littleton_tdo24m_chip = {
+अटल काष्ठा pxa2xx_spi_chip littleton_tकरो24m_chip = अणु
 	.rx_threshold	= 1,
 	.tx_threshold	= 1,
 	.gpio_cs	= LITTLETON_GPIO_LCD_CS,
-};
+पूर्ण;
 
-static struct spi_board_info littleton_spi_devices[] __initdata = {
-	{
+अटल काष्ठा spi_board_info littleton_spi_devices[] __initdata = अणु
+	अणु
 		.modalias	= "tdo24m",
 		.max_speed_hz	= 1000000,
 		.bus_num	= 2,
 		.chip_select	= 0,
-		.controller_data= &littleton_tdo24m_chip,
-	},
-};
+		.controller_data= &littleton_tकरो24m_chip,
+	पूर्ण,
+पूर्ण;
 
-static void __init littleton_init_spi(void)
-{
+अटल व्योम __init littleton_init_spi(व्योम)
+अणु
 	pxa2xx_set_spi_info(2, &littleton_spi_info);
-	spi_register_board_info(ARRAY_AND_SIZE(littleton_spi_devices));
-}
-#else
-static inline void littleton_init_spi(void) {}
-#endif
+	spi_रेजिस्टर_board_info(ARRAY_AND_SIZE(littleton_spi_devices));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम littleton_init_spi(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
-static const unsigned int littleton_matrix_key_map[] = {
+#अगर defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
+अटल स्थिर अचिन्हित पूर्णांक littleton_matrix_key_map[] = अणु
 	/* KEY(row, col, key_code) */
 	KEY(1, 3, KEY_0), KEY(0, 0, KEY_1), KEY(1, 0, KEY_2), KEY(2, 0, KEY_3),
 	KEY(0, 1, KEY_4), KEY(1, 1, KEY_5), KEY(2, 1, KEY_6), KEY(0, 2, KEY_7),
@@ -243,197 +244,197 @@ static const unsigned int littleton_matrix_key_map[] = {
 
 	KEY(3, 0, KEY_F22),	/* soft1 */
 	KEY(3, 1, KEY_F23),	/* soft2 */
-};
+पूर्ण;
 
-static struct matrix_keymap_data littleton_matrix_keymap_data = {
+अटल काष्ठा matrix_keymap_data littleton_matrix_keymap_data = अणु
 	.keymap			= littleton_matrix_key_map,
 	.keymap_size		= ARRAY_SIZE(littleton_matrix_key_map),
-};
+पूर्ण;
 
-static struct pxa27x_keypad_platform_data littleton_keypad_info = {
+अटल काष्ठा pxa27x_keypad_platक्रमm_data littleton_keypad_info = अणु
 	.matrix_key_rows	= 6,
 	.matrix_key_cols	= 5,
 	.matrix_keymap_data	= &littleton_matrix_keymap_data,
 
 	.enable_rotary0		= 1,
 	.rotary0_up_key		= KEY_UP,
-	.rotary0_down_key	= KEY_DOWN,
+	.rotary0_करोwn_key	= KEY_DOWN,
 
-	.debounce_interval	= 30,
-};
-static void __init littleton_init_keypad(void)
-{
+	.debounce_पूर्णांकerval	= 30,
+पूर्ण;
+अटल व्योम __init littleton_init_keypad(व्योम)
+अणु
 	pxa_set_keypad_info(&littleton_keypad_info);
-}
-#else
-static inline void littleton_init_keypad(void) {}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम littleton_init_keypad(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_MMC_PXA) || defined(CONFIG_MMC_PXA_MODULE)
-static struct pxamci_platform_data littleton_mci_platform_data = {
+#अगर defined(CONFIG_MMC_PXA) || defined(CONFIG_MMC_PXA_MODULE)
+अटल काष्ठा pxamci_platक्रमm_data littleton_mci_platक्रमm_data = अणु
 	.detect_delay_ms	= 200,
 	.ocr_mask		= MMC_VDD_32_33 | MMC_VDD_33_34,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table littleton_mci_gpio_table = {
+अटल काष्ठा gpiod_lookup_table littleton_mci_gpio_table = अणु
 	.dev_id = "pxa2xx-mci.0",
-	.table = {
+	.table = अणु
 		/* Card detect on MFP (gpio-pxa) GPIO 15 */
 		GPIO_LOOKUP("gpio-pxa", MFP_PIN_GPIO15,
 			    "cd", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static void __init littleton_init_mmc(void)
-{
+अटल व्योम __init littleton_init_mmc(व्योम)
+अणु
 	gpiod_add_lookup_table(&littleton_mci_gpio_table);
-	pxa_set_mci_info(&littleton_mci_platform_data);
-}
-#else
-static inline void littleton_init_mmc(void) {}
-#endif
+	pxa_set_mci_info(&littleton_mci_platक्रमm_data);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम littleton_init_mmc(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_MTD_NAND_MARVELL)
-static struct mtd_partition littleton_nand_partitions[] = {
-	[0] = {
+#अगर IS_ENABLED(CONFIG_MTD_न_अंकD_MARVELL)
+अटल काष्ठा mtd_partition littleton_nand_partitions[] = अणु
+	[0] = अणु
 		.name        = "Bootloader",
 		.offset      = 0,
 		.size        = 0x060000,
-		.mask_flags  = MTD_WRITEABLE, /* force read-only */
-	},
-	[1] = {
+		.mask_flags  = MTD_WRITEABLE, /* क्रमce पढ़ो-only */
+	पूर्ण,
+	[1] = अणु
 		.name        = "Kernel",
 		.offset      = 0x060000,
 		.size        = 0x200000,
-		.mask_flags  = MTD_WRITEABLE, /* force read-only */
-	},
-	[2] = {
+		.mask_flags  = MTD_WRITEABLE, /* क्रमce पढ़ो-only */
+	पूर्ण,
+	[2] = अणु
 		.name        = "Filesystem",
 		.offset      = 0x0260000,
 		.size        = 0x3000000,     /* 48M - rootfs */
-	},
-	[3] = {
+	पूर्ण,
+	[3] = अणु
 		.name        = "MassStorage",
 		.offset      = 0x3260000,
 		.size        = 0x3d40000,
-	},
-	[4] = {
+	पूर्ण,
+	[4] = अणु
 		.name        = "BBT",
 		.offset      = 0x6FA0000,
 		.size        = 0x80000,
-		.mask_flags  = MTD_WRITEABLE,  /* force read-only */
-	},
-	/* NOTE: we reserve some blocks at the end of the NAND flash for
+		.mask_flags  = MTD_WRITEABLE,  /* क्रमce पढ़ो-only */
+	पूर्ण,
+	/* NOTE: we reserve some blocks at the end of the न_अंकD flash क्रम
 	 * bad block management, and the max number of relocation blocks
-	 * differs on different platforms. Please take care with it when
+	 * dअगरfers on dअगरferent platक्रमms. Please take care with it when
 	 * defining the partition table.
 	 */
-};
+पूर्ण;
 
-static struct pxa3xx_nand_platform_data littleton_nand_info = {
+अटल काष्ठा pxa3xx_nand_platक्रमm_data littleton_nand_info = अणु
 	.parts		= littleton_nand_partitions,
 	.nr_parts	= ARRAY_SIZE(littleton_nand_partitions),
-};
+पूर्ण;
 
-static void __init littleton_init_nand(void)
-{
+अटल व्योम __init littleton_init_nand(व्योम)
+अणु
 	pxa3xx_set_nand_info(&littleton_nand_info);
-}
-#else
-static inline void littleton_init_nand(void) {}
-#endif /* IS_ENABLED(CONFIG_MTD_NAND_MARVELL) */
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम littleton_init_nand(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_MTD_न_अंकD_MARVELL) */
 
-#if defined(CONFIG_I2C_PXA) || defined(CONFIG_I2C_PXA_MODULE)
-static struct led_info littleton_da9034_leds[] = {
-	[0] = {
+#अगर defined(CONFIG_I2C_PXA) || defined(CONFIG_I2C_PXA_MODULE)
+अटल काष्ठा led_info littleton_da9034_leds[] = अणु
+	[0] = अणु
 		.name	= "littleton:keypad1",
 		.flags	= DA9034_LED_RAMP,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.name	= "littleton:keypad2",
 		.flags	= DA9034_LED_RAMP,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.name	= "littleton:vibra",
 		.flags	= 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct da9034_touch_pdata littleton_da9034_touch = {
+अटल काष्ठा da9034_touch_pdata littleton_da9034_touch = अणु
 	.x_inverted     = 1,
-	.interval_ms    = 20,
-};
+	.पूर्णांकerval_ms    = 20,
+पूर्ण;
 
-static struct da903x_subdev_info littleton_da9034_subdevs[] = {
-	{
+अटल काष्ठा da903x_subdev_info littleton_da9034_subdevs[] = अणु
+	अणु
 		.name		= "da903x-led",
 		.id		= DA9034_ID_LED_1,
-		.platform_data	= &littleton_da9034_leds[0],
-	}, {
+		.platक्रमm_data	= &littleton_da9034_leds[0],
+	पूर्ण, अणु
 		.name		= "da903x-led",
 		.id		= DA9034_ID_LED_2,
-		.platform_data	= &littleton_da9034_leds[1],
-	}, {
+		.platक्रमm_data	= &littleton_da9034_leds[1],
+	पूर्ण, अणु
 		.name		= "da903x-led",
 		.id		= DA9034_ID_VIBRA,
-		.platform_data	= &littleton_da9034_leds[2],
-	}, {
+		.platक्रमm_data	= &littleton_da9034_leds[2],
+	पूर्ण, अणु
 		.name		= "da903x-backlight",
 		.id		= DA9034_ID_WLED,
-	}, {
+	पूर्ण, अणु
 		.name		= "da9034-touch",
 		.id		= DA9034_ID_TOUCH,
-		.platform_data	= &littleton_da9034_touch,
-	},
-};
+		.platक्रमm_data	= &littleton_da9034_touch,
+	पूर्ण,
+पूर्ण;
 
-static struct da903x_platform_data littleton_da9034_info = {
+अटल काष्ठा da903x_platक्रमm_data littleton_da9034_info = अणु
 	.num_subdevs	= ARRAY_SIZE(littleton_da9034_subdevs),
 	.subdevs	= littleton_da9034_subdevs,
-};
+पूर्ण;
 
-static struct max732x_platform_data littleton_max7320_info = {
+अटल काष्ठा max732x_platक्रमm_data littleton_max7320_info = अणु
 	.gpio_base	= EXT0_GPIO_BASE,
-};
+पूर्ण;
 
-static struct i2c_board_info littleton_i2c_info[] = {
-	[0] = {
+अटल काष्ठा i2c_board_info littleton_i2c_info[] = अणु
+	[0] = अणु
 		.type		= "da9034",
 		.addr		= 0x34,
-		.platform_data	= &littleton_da9034_info,
+		.platक्रमm_data	= &littleton_da9034_info,
 		.irq		= PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO18)),
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.type		= "max7320",
 		.addr		= 0x50,
-		.platform_data	= &littleton_max7320_info,
-	},
-};
+		.platक्रमm_data	= &littleton_max7320_info,
+	पूर्ण,
+पूर्ण;
 
-static void __init littleton_init_i2c(void)
-{
-	pxa_set_i2c_info(NULL);
-	i2c_register_board_info(0, ARRAY_AND_SIZE(littleton_i2c_info));
-}
-#else
-static inline void littleton_init_i2c(void) {}
-#endif /* CONFIG_I2C_PXA || CONFIG_I2C_PXA_MODULE */
+अटल व्योम __init littleton_init_i2c(व्योम)
+अणु
+	pxa_set_i2c_info(शून्य);
+	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(littleton_i2c_info));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम littleton_init_i2c(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_I2C_PXA || CONFIG_I2C_PXA_MODULE */
 
-static void __init littleton_init(void)
-{
+अटल व्योम __init littleton_init(व्योम)
+अणु
 	/* initialize MFP configurations */
 	pxa3xx_mfp_config(ARRAY_AND_SIZE(littleton_mfp_cfg));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
 	/*
 	 * Note: we depend bootloader set the correct
-	 * value to MSC register for SMC91x.
+	 * value to MSC रेजिस्टर क्रम SMC91x.
 	 */
-	platform_device_register(&smc91x_device);
+	platक्रमm_device_रेजिस्टर(&smc91x_device);
 
 	littleton_init_spi();
 	littleton_init_i2c();
@@ -441,7 +442,7 @@ static void __init littleton_init(void)
 	littleton_init_lcd();
 	littleton_init_keypad();
 	littleton_init_nand();
-}
+पूर्ण
 
 MACHINE_START(LITTLETON, "Marvell Form Factor Development Platform (aka Littleton)")
 	.atag_offset	= 0x100,
@@ -449,7 +450,7 @@ MACHINE_START(LITTLETON, "Marvell Form Factor Development Platform (aka Littleto
 	.nr_irqs	= LITTLETON_NR_IRQS,
 	.init_irq	= pxa3xx_init_irq,
 	.handle_irq	= pxa3xx_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine	= littleton_init,
 	.restart	= pxa_restart,
 MACHINE_END

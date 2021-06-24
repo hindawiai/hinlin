@@ -1,428 +1,429 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *    SCLP control program identification sysfs interface
+ *    SCLP control program identअगरication sysfs पूर्णांकerface
  *
  *    Copyright IBM Corp. 2001, 2007
  *    Author(s): Martin Peschke <mpeschke@de.ibm.com>
  *		 Michael Ernst <mernst@de.ibm.com>
  */
 
-#define KMSG_COMPONENT "sclp_cpi"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "sclp_cpi"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/stat.h>
-#include <linux/device.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <linux/kmod.h>
-#include <linux/timer.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/completion.h>
-#include <linux/export.h>
-#include <asm/ebcdic.h>
-#include <asm/sclp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/device.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/kmod.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/ebcdic.h>
+#समावेश <यंत्र/sclp.h>
 
-#include "sclp.h"
-#include "sclp_rw.h"
-#include "sclp_cpi_sys.h"
+#समावेश "sclp.h"
+#समावेश "sclp_rw.h"
+#समावेश "sclp_cpi_sys.h"
 
-#define CPI_LENGTH_NAME 8
-#define CPI_LENGTH_LEVEL 16
+#घोषणा CPI_LENGTH_NAME 8
+#घोषणा CPI_LENGTH_LEVEL 16
 
-static DEFINE_MUTEX(sclp_cpi_mutex);
+अटल DEFINE_MUTEX(sclp_cpi_mutex);
 
-struct cpi_evbuf {
-	struct evbuf_header header;
-	u8	id_format;
+काष्ठा cpi_evbuf अणु
+	काष्ठा evbuf_header header;
+	u8	id_क्रमmat;
 	u8	reserved0;
-	u8	system_type[CPI_LENGTH_NAME];
+	u8	प्रणाली_type[CPI_LENGTH_NAME];
 	u64	reserved1;
-	u8	system_name[CPI_LENGTH_NAME];
+	u8	प्रणाली_name[CPI_LENGTH_NAME];
 	u64	reserved2;
-	u64	system_level;
+	u64	प्रणाली_level;
 	u64	reserved3;
 	u8	sysplex_name[CPI_LENGTH_NAME];
 	u8	reserved4[16];
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct cpi_sccb {
-	struct sccb_header header;
-	struct cpi_evbuf cpi_evbuf;
-} __attribute__((packed));
+काष्ठा cpi_sccb अणु
+	काष्ठा sccb_header header;
+	काष्ठा cpi_evbuf cpi_evbuf;
+पूर्ण __attribute__((packed));
 
-static struct sclp_register sclp_cpi_event = {
+अटल काष्ठा sclp_रेजिस्टर sclp_cpi_event = अणु
 	.send_mask = EVTYP_CTLPROGIDENT_MASK,
-};
+पूर्ण;
 
-static char system_name[CPI_LENGTH_NAME + 1];
-static char sysplex_name[CPI_LENGTH_NAME + 1];
-static char system_type[CPI_LENGTH_NAME + 1];
-static u64 system_level;
+अटल अक्षर प्रणाली_name[CPI_LENGTH_NAME + 1];
+अटल अक्षर sysplex_name[CPI_LENGTH_NAME + 1];
+अटल अक्षर प्रणाली_type[CPI_LENGTH_NAME + 1];
+अटल u64 प्रणाली_level;
 
-static void set_data(char *field, char *data)
-{
-	memset(field, ' ', CPI_LENGTH_NAME);
-	memcpy(field, data, strlen(data));
+अटल व्योम set_data(अक्षर *field, अक्षर *data)
+अणु
+	स_रखो(field, ' ', CPI_LENGTH_NAME);
+	स_नकल(field, data, म_माप(data));
 	sclp_ascebc_str(field, CPI_LENGTH_NAME);
-}
+पूर्ण
 
-static void cpi_callback(struct sclp_req *req, void *data)
-{
-	struct completion *completion = data;
+अटल व्योम cpi_callback(काष्ठा sclp_req *req, व्योम *data)
+अणु
+	काष्ठा completion *completion = data;
 
 	complete(completion);
-}
+पूर्ण
 
-static struct sclp_req *cpi_prepare_req(void)
-{
-	struct sclp_req *req;
-	struct cpi_sccb *sccb;
-	struct cpi_evbuf *evb;
+अटल काष्ठा sclp_req *cpi_prepare_req(व्योम)
+अणु
+	काष्ठा sclp_req *req;
+	काष्ठा cpi_sccb *sccb;
+	काष्ठा cpi_evbuf *evb;
 
-	req = kzalloc(sizeof(struct sclp_req), GFP_KERNEL);
-	if (!req)
-		return ERR_PTR(-ENOMEM);
-	sccb = (struct cpi_sccb *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
-	if (!sccb) {
-		kfree(req);
-		return ERR_PTR(-ENOMEM);
-	}
+	req = kzalloc(माप(काष्ठा sclp_req), GFP_KERNEL);
+	अगर (!req)
+		वापस ERR_PTR(-ENOMEM);
+	sccb = (काष्ठा cpi_sccb *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+	अगर (!sccb) अणु
+		kमुक्त(req);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	/* setup SCCB for Control-Program Identification */
-	sccb->header.length = sizeof(struct cpi_sccb);
-	sccb->cpi_evbuf.header.length = sizeof(struct cpi_evbuf);
+	/* setup SCCB क्रम Control-Program Identअगरication */
+	sccb->header.length = माप(काष्ठा cpi_sccb);
+	sccb->cpi_evbuf.header.length = माप(काष्ठा cpi_evbuf);
 	sccb->cpi_evbuf.header.type = EVTYP_CTLPROGIDENT;
 	evb = &sccb->cpi_evbuf;
 
-	/* set system type */
-	set_data(evb->system_type, system_type);
+	/* set प्रणाली type */
+	set_data(evb->प्रणाली_type, प्रणाली_type);
 
-	/* set system name */
-	set_data(evb->system_name, system_name);
+	/* set प्रणाली name */
+	set_data(evb->प्रणाली_name, प्रणाली_name);
 
-	/* set system level */
-	evb->system_level = system_level;
+	/* set प्रणाली level */
+	evb->प्रणाली_level = प्रणाली_level;
 
 	/* set sysplex name */
 	set_data(evb->sysplex_name, sysplex_name);
 
-	/* prepare request data structure presented to SCLP driver */
+	/* prepare request data काष्ठाure presented to SCLP driver */
 	req->command = SCLP_CMDW_WRITE_EVENT_DATA;
 	req->sccb = sccb;
 	req->status = SCLP_REQ_FILLED;
 	req->callback = cpi_callback;
-	return req;
-}
+	वापस req;
+पूर्ण
 
-static void cpi_free_req(struct sclp_req *req)
-{
-	free_page((unsigned long) req->sccb);
-	kfree(req);
-}
+अटल व्योम cpi_मुक्त_req(काष्ठा sclp_req *req)
+अणु
+	मुक्त_page((अचिन्हित दीर्घ) req->sccb);
+	kमुक्त(req);
+पूर्ण
 
-static int cpi_req(void)
-{
-	struct completion completion;
-	struct sclp_req *req;
-	int rc;
-	int response;
+अटल पूर्णांक cpi_req(व्योम)
+अणु
+	काष्ठा completion completion;
+	काष्ठा sclp_req *req;
+	पूर्णांक rc;
+	पूर्णांक response;
 
-	rc = sclp_register(&sclp_cpi_event);
-	if (rc)
-		goto out;
-	if (!(sclp_cpi_event.sclp_receive_mask & EVTYP_CTLPROGIDENT_MASK)) {
+	rc = sclp_रेजिस्टर(&sclp_cpi_event);
+	अगर (rc)
+		जाओ out;
+	अगर (!(sclp_cpi_event.sclp_receive_mask & EVTYP_CTLPROGIDENT_MASK)) अणु
 		rc = -EOPNOTSUPP;
-		goto out_unregister;
-	}
+		जाओ out_unरेजिस्टर;
+	पूर्ण
 
 	req = cpi_prepare_req();
-	if (IS_ERR(req)) {
+	अगर (IS_ERR(req)) अणु
 		rc = PTR_ERR(req);
-		goto out_unregister;
-	}
+		जाओ out_unरेजिस्टर;
+	पूर्ण
 
 	init_completion(&completion);
 	req->callback_data = &completion;
 
 	/* Add request to sclp queue */
 	rc = sclp_add_request(req);
-	if (rc)
-		goto out_free_req;
+	अगर (rc)
+		जाओ out_मुक्त_req;
 
-	wait_for_completion(&completion);
+	रुको_क्रम_completion(&completion);
 
-	if (req->status != SCLP_REQ_DONE) {
+	अगर (req->status != SCLP_REQ_DONE) अणु
 		pr_warn("request failed (status=0x%02x)\n", req->status);
 		rc = -EIO;
-		goto out_free_req;
-	}
+		जाओ out_मुक्त_req;
+	पूर्ण
 
-	response = ((struct cpi_sccb *) req->sccb)->header.response_code;
-	if (response != 0x0020) {
+	response = ((काष्ठा cpi_sccb *) req->sccb)->header.response_code;
+	अगर (response != 0x0020) अणु
 		pr_warn("request failed with response code 0x%x\n", response);
 		rc = -EIO;
-	}
+	पूर्ण
 
-out_free_req:
-	cpi_free_req(req);
+out_मुक्त_req:
+	cpi_मुक्त_req(req);
 
-out_unregister:
-	sclp_unregister(&sclp_cpi_event);
+out_unरेजिस्टर:
+	sclp_unरेजिस्टर(&sclp_cpi_event);
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int check_string(const char *attr, const char *str)
-{
-	size_t len;
-	size_t i;
+अटल पूर्णांक check_string(स्थिर अक्षर *attr, स्थिर अक्षर *str)
+अणु
+	माप_प्रकार len;
+	माप_प्रकार i;
 
-	len = strlen(str);
+	len = म_माप(str);
 
-	if ((len > 0) && (str[len - 1] == '\n'))
+	अगर ((len > 0) && (str[len - 1] == '\n'))
 		len--;
 
-	if (len > CPI_LENGTH_NAME)
-		return -EINVAL;
+	अगर (len > CPI_LENGTH_NAME)
+		वापस -EINVAL;
 
-	for (i = 0; i < len ; i++) {
-		if (isalpha(str[i]) || isdigit(str[i]) ||
-		    strchr("$@# ", str[i]))
-			continue;
-		return -EINVAL;
-	}
+	क्रम (i = 0; i < len ; i++) अणु
+		अगर (है_अक्षर(str[i]) || है_अंक(str[i]) ||
+		    म_अक्षर("$@# ", str[i]))
+			जारी;
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_string(char *attr, const char *value)
-{
-	size_t len;
-	size_t i;
+अटल व्योम set_string(अक्षर *attr, स्थिर अक्षर *value)
+अणु
+	माप_प्रकार len;
+	माप_प्रकार i;
 
-	len = strlen(value);
+	len = म_माप(value);
 
-	if ((len > 0) && (value[len - 1] == '\n'))
+	अगर ((len > 0) && (value[len - 1] == '\n'))
 		len--;
 
-	for (i = 0; i < CPI_LENGTH_NAME; i++) {
-		if (i < len)
-			attr[i] = toupper(value[i]);
-		else
+	क्रम (i = 0; i < CPI_LENGTH_NAME; i++) अणु
+		अगर (i < len)
+			attr[i] = बड़े(value[i]);
+		अन्यथा
 			attr[i] = ' ';
-	}
-}
+	पूर्ण
+पूर्ण
 
-static ssize_t system_name_show(struct kobject *kobj,
-				struct kobj_attribute *attr, char *page)
-{
-	int rc;
+अटल sमाप_प्रकार प्रणाली_name_show(काष्ठा kobject *kobj,
+				काष्ठा kobj_attribute *attr, अक्षर *page)
+अणु
+	पूर्णांक rc;
 
 	mutex_lock(&sclp_cpi_mutex);
-	rc = snprintf(page, PAGE_SIZE, "%s\n", system_name);
+	rc = snम_लिखो(page, PAGE_SIZE, "%s\n", प्रणाली_name);
 	mutex_unlock(&sclp_cpi_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t system_name_store(struct kobject *kobj,
-				 struct kobj_attribute *attr,
-				 const char *buf,
-	size_t len)
-{
-	int rc;
+अटल sमाप_प्रकार प्रणाली_name_store(काष्ठा kobject *kobj,
+				 काष्ठा kobj_attribute *attr,
+				 स्थिर अक्षर *buf,
+	माप_प्रकार len)
+अणु
+	पूर्णांक rc;
 
 	rc = check_string("system_name", buf);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	mutex_lock(&sclp_cpi_mutex);
-	set_string(system_name, buf);
+	set_string(प्रणाली_name, buf);
 	mutex_unlock(&sclp_cpi_mutex);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct kobj_attribute system_name_attr =
-	__ATTR(system_name, 0644, system_name_show, system_name_store);
+अटल काष्ठा kobj_attribute प्रणाली_name_attr =
+	__ATTR(प्रणाली_name, 0644, प्रणाली_name_show, प्रणाली_name_store);
 
-static ssize_t sysplex_name_show(struct kobject *kobj,
-				 struct kobj_attribute *attr, char *page)
-{
-	int rc;
+अटल sमाप_प्रकार sysplex_name_show(काष्ठा kobject *kobj,
+				 काष्ठा kobj_attribute *attr, अक्षर *page)
+अणु
+	पूर्णांक rc;
 
 	mutex_lock(&sclp_cpi_mutex);
-	rc = snprintf(page, PAGE_SIZE, "%s\n", sysplex_name);
+	rc = snम_लिखो(page, PAGE_SIZE, "%s\n", sysplex_name);
 	mutex_unlock(&sclp_cpi_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t sysplex_name_store(struct kobject *kobj,
-				  struct kobj_attribute *attr,
-				  const char *buf,
-	size_t len)
-{
-	int rc;
+अटल sमाप_प्रकार sysplex_name_store(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr,
+				  स्थिर अक्षर *buf,
+	माप_प्रकार len)
+अणु
+	पूर्णांक rc;
 
 	rc = check_string("sysplex_name", buf);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	mutex_lock(&sclp_cpi_mutex);
 	set_string(sysplex_name, buf);
 	mutex_unlock(&sclp_cpi_mutex);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct kobj_attribute sysplex_name_attr =
+अटल काष्ठा kobj_attribute sysplex_name_attr =
 	__ATTR(sysplex_name, 0644, sysplex_name_show, sysplex_name_store);
 
-static ssize_t system_type_show(struct kobject *kobj,
-				struct kobj_attribute *attr, char *page)
-{
-	int rc;
+अटल sमाप_प्रकार प्रणाली_type_show(काष्ठा kobject *kobj,
+				काष्ठा kobj_attribute *attr, अक्षर *page)
+अणु
+	पूर्णांक rc;
 
 	mutex_lock(&sclp_cpi_mutex);
-	rc = snprintf(page, PAGE_SIZE, "%s\n", system_type);
+	rc = snम_लिखो(page, PAGE_SIZE, "%s\n", प्रणाली_type);
 	mutex_unlock(&sclp_cpi_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t system_type_store(struct kobject *kobj,
-				 struct kobj_attribute *attr,
-				 const char *buf,
-	size_t len)
-{
-	int rc;
+अटल sमाप_प्रकार प्रणाली_type_store(काष्ठा kobject *kobj,
+				 काष्ठा kobj_attribute *attr,
+				 स्थिर अक्षर *buf,
+	माप_प्रकार len)
+अणु
+	पूर्णांक rc;
 
 	rc = check_string("system_type", buf);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	mutex_lock(&sclp_cpi_mutex);
-	set_string(system_type, buf);
+	set_string(प्रणाली_type, buf);
 	mutex_unlock(&sclp_cpi_mutex);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct kobj_attribute system_type_attr =
-	__ATTR(system_type, 0644, system_type_show, system_type_store);
+अटल काष्ठा kobj_attribute प्रणाली_type_attr =
+	__ATTR(प्रणाली_type, 0644, प्रणाली_type_show, प्रणाली_type_store);
 
-static ssize_t system_level_show(struct kobject *kobj,
-				 struct kobj_attribute *attr, char *page)
-{
-	unsigned long long level;
+अटल sमाप_प्रकार प्रणाली_level_show(काष्ठा kobject *kobj,
+				 काष्ठा kobj_attribute *attr, अक्षर *page)
+अणु
+	अचिन्हित दीर्घ दीर्घ level;
 
 	mutex_lock(&sclp_cpi_mutex);
-	level = system_level;
+	level = प्रणाली_level;
 	mutex_unlock(&sclp_cpi_mutex);
-	return snprintf(page, PAGE_SIZE, "%#018llx\n", level);
-}
+	वापस snम_लिखो(page, PAGE_SIZE, "%#018llx\n", level);
+पूर्ण
 
-static ssize_t system_level_store(struct kobject *kobj,
-				  struct kobj_attribute *attr,
-				  const char *buf,
-	size_t len)
-{
-	unsigned long long level;
-	char *endp;
+अटल sमाप_प्रकार प्रणाली_level_store(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr,
+				  स्थिर अक्षर *buf,
+	माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ दीर्घ level;
+	अक्षर *endp;
 
-	level = simple_strtoull(buf, &endp, 16);
+	level = simple_म_से_अदीर्घl(buf, &endp, 16);
 
-	if (endp == buf)
-		return -EINVAL;
-	if (*endp == '\n')
+	अगर (endp == buf)
+		वापस -EINVAL;
+	अगर (*endp == '\n')
 		endp++;
-	if (*endp)
-		return -EINVAL;
+	अगर (*endp)
+		वापस -EINVAL;
 
 	mutex_lock(&sclp_cpi_mutex);
-	system_level = level;
+	प्रणाली_level = level;
 	mutex_unlock(&sclp_cpi_mutex);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct kobj_attribute system_level_attr =
-	__ATTR(system_level, 0644, system_level_show, system_level_store);
+अटल काष्ठा kobj_attribute प्रणाली_level_attr =
+	__ATTR(प्रणाली_level, 0644, प्रणाली_level_show, प्रणाली_level_store);
 
-static ssize_t set_store(struct kobject *kobj,
-			 struct kobj_attribute *attr,
-			 const char *buf, size_t len)
-{
-	int rc;
+अटल sमाप_प्रकार set_store(काष्ठा kobject *kobj,
+			 काष्ठा kobj_attribute *attr,
+			 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	पूर्णांक rc;
 
 	mutex_lock(&sclp_cpi_mutex);
 	rc = cpi_req();
 	mutex_unlock(&sclp_cpi_mutex);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct kobj_attribute set_attr = __ATTR(set, 0200, NULL, set_store);
+अटल काष्ठा kobj_attribute set_attr = __ATTR(set, 0200, शून्य, set_store);
 
-static struct attribute *cpi_attrs[] = {
-	&system_name_attr.attr,
+अटल काष्ठा attribute *cpi_attrs[] = अणु
+	&प्रणाली_name_attr.attr,
 	&sysplex_name_attr.attr,
-	&system_type_attr.attr,
-	&system_level_attr.attr,
+	&प्रणाली_type_attr.attr,
+	&प्रणाली_level_attr.attr,
 	&set_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group cpi_attr_group = {
+अटल काष्ठा attribute_group cpi_attr_group = अणु
 	.attrs = cpi_attrs,
-};
+पूर्ण;
 
-static struct kset *cpi_kset;
+अटल काष्ठा kset *cpi_kset;
 
-int sclp_cpi_set_data(const char *system, const char *sysplex, const char *type,
-		      const u64 level)
-{
-	int rc;
+पूर्णांक sclp_cpi_set_data(स्थिर अक्षर *प्रणाली, स्थिर अक्षर *sysplex, स्थिर अक्षर *type,
+		      स्थिर u64 level)
+अणु
+	पूर्णांक rc;
 
-	rc = check_string("system_name", system);
-	if (rc)
-		return rc;
+	rc = check_string("system_name", प्रणाली);
+	अगर (rc)
+		वापस rc;
 	rc = check_string("sysplex_name", sysplex);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	rc = check_string("system_type", type);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	mutex_lock(&sclp_cpi_mutex);
-	set_string(system_name, system);
+	set_string(प्रणाली_name, प्रणाली);
 	set_string(sysplex_name, sysplex);
-	set_string(system_type, type);
-	system_level = level;
+	set_string(प्रणाली_type, type);
+	प्रणाली_level = level;
 
 	rc = cpi_req();
 	mutex_unlock(&sclp_cpi_mutex);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL(sclp_cpi_set_data);
 
-static int __init cpi_init(void)
-{
-	int rc;
+अटल पूर्णांक __init cpi_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	cpi_kset = kset_create_and_add("cpi", NULL, firmware_kobj);
-	if (!cpi_kset)
-		return -ENOMEM;
+	cpi_kset = kset_create_and_add("cpi", शून्य, firmware_kobj);
+	अगर (!cpi_kset)
+		वापस -ENOMEM;
 
 	rc = sysfs_create_group(&cpi_kset->kobj, &cpi_attr_group);
-	if (rc)
-		kset_unregister(cpi_kset);
+	अगर (rc)
+		kset_unरेजिस्टर(cpi_kset);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 __initcall(cpi_init);

@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ALPHA_DELAY_H
-#define __ALPHA_DELAY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ALPHA_DELAY_H
+#घोषणा __ALPHA_DELAY_H
 
-extern void __delay(int loops);
-extern void udelay(unsigned long usecs);
+बाह्य व्योम __delay(पूर्णांक loops);
+बाह्य व्योम udelay(अचिन्हित दीर्घ usecs);
 
-extern void ndelay(unsigned long nsecs);
-#define ndelay ndelay
+बाह्य व्योम ndelay(अचिन्हित दीर्घ nsecs);
+#घोषणा ndelay ndelay
 
-#endif /* defined(__ALPHA_DELAY_H) */
+#पूर्ण_अगर /* defined(__ALPHA_DELAY_H) */

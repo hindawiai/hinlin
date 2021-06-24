@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef _SH_CSS_HRT_H_
-#define _SH_CSS_HRT_H_
+#अगर_अघोषित _SH_CSS_HRT_H_
+#घोषणा _SH_CSS_HRT_H_
 
-#include <sp.h>
-#include <isp.h>
+#समावेश <sp.h>
+#समावेश <isp.h>
 
-#include <ia_css_err.h>
+#समावेश <ia_css_err.h>
 
 /* SP access */
-void sh_css_hrt_sp_start_si(void);
+व्योम sh_css_hrt_sp_start_si(व्योम);
 
-void sh_css_hrt_sp_start_copy_frame(void);
+व्योम sh_css_hrt_sp_start_copy_frame(व्योम);
 
-void sh_css_hrt_sp_start_isp(void);
+व्योम sh_css_hrt_sp_start_isp(व्योम);
 
-int sh_css_hrt_sp_wait(void);
+पूर्णांक sh_css_hrt_sp_रुको(व्योम);
 
-bool sh_css_hrt_system_is_idle(void);
+bool sh_css_hrt_प्रणाली_is_idle(व्योम);
 
-#endif /* _SH_CSS_HRT_H_ */
+#पूर्ण_अगर /* _SH_CSS_HRT_H_ */

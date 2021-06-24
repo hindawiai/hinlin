@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,20 +24,20 @@
  *
  */
 
-#ifndef __DM_SERVICES_TYPES_H__
-#define __DM_SERVICES_TYPES_H__
+#अगर_अघोषित __DM_SERVICES_TYPES_H__
+#घोषणा __DM_SERVICES_TYPES_H__
 
-#include "os_types.h"
-#include "dc_types.h"
+#समावेश "os_types.h"
+#समावेश "dc_types.h"
 
-struct pp_smu_funcs;
+काष्ठा pp_smu_funcs;
 
-struct dm_pp_clock_range {
-	int min_khz;
-	int max_khz;
-};
+काष्ठा dm_pp_घड़ी_range अणु
+	पूर्णांक min_khz;
+	पूर्णांक max_khz;
+पूर्ण;
 
-enum dm_pp_clocks_state {
+क्रमागत dm_pp_घड़ीs_state अणु
 	DM_PP_CLOCKS_STATE_INVALID,
 	DM_PP_CLOCKS_STATE_ULTRA_LOW,
 	DM_PP_CLOCKS_STATE_LOW,
@@ -56,19 +57,19 @@ enum dm_pp_clocks_state {
 	DM_PP_CLOCKS_DPM_STATE_LEVEL_7,
 
 	DM_PP_CLOCKS_MAX_STATES
-};
+पूर्ण;
 
-struct dm_pp_gpu_clock_range {
-	enum dm_pp_clocks_state clock_state;
-	struct dm_pp_clock_range sclk;
-	struct dm_pp_clock_range mclk;
-	struct dm_pp_clock_range eclk;
-	struct dm_pp_clock_range dclk;
-};
+काष्ठा dm_pp_gpu_घड़ी_range अणु
+	क्रमागत dm_pp_घड़ीs_state घड़ी_state;
+	काष्ठा dm_pp_घड़ी_range sclk;
+	काष्ठा dm_pp_घड़ी_range mclk;
+	काष्ठा dm_pp_घड़ी_range eclk;
+	काष्ठा dm_pp_घड़ी_range dclk;
+पूर्ण;
 
-enum dm_pp_clock_type {
+क्रमागत dm_pp_घड़ी_प्रकारype अणु
 	DM_PP_CLOCK_TYPE_DISPLAY_CLK = 1,
-	DM_PP_CLOCK_TYPE_ENGINE_CLK, /* System clock */
+	DM_PP_CLOCK_TYPE_ENGINE_CLK, /* System घड़ी */
 	DM_PP_CLOCK_TYPE_MEMORY_CLK,
 	DM_PP_CLOCK_TYPE_DCFCLK,
 	DM_PP_CLOCK_TYPE_DCEFCLK,
@@ -77,9 +78,9 @@ enum dm_pp_clock_type {
 	DM_PP_CLOCK_TYPE_DISPLAYPHYCLK,
 	DM_PP_CLOCK_TYPE_DPPCLK,
 	DM_PP_CLOCK_TYPE_FCLK,
-};
+पूर्ण;
 
-#define DC_DECODE_PP_CLOCK_TYPE(clk_type) \
+#घोषणा DC_DECODE_PP_CLOCK_TYPE(clk_type) \
 	(clk_type) == DM_PP_CLOCK_TYPE_DISPLAY_CLK ? "Display" : \
 	(clk_type) == DM_PP_CLOCK_TYPE_ENGINE_CLK ? "Engine" : \
 	(clk_type) == DM_PP_CLOCK_TYPE_MEMORY_CLK ? "Memory" : \
@@ -92,148 +93,148 @@ enum dm_pp_clock_type {
 	(clk_type) == DM_PP_CLOCK_TYPE_FCLK ? "F" : \
 	"Invalid"
 
-#define DM_PP_MAX_CLOCK_LEVELS 16
+#घोषणा DM_PP_MAX_CLOCK_LEVELS 16
 
-struct dm_pp_clock_levels {
-	uint32_t num_levels;
-	uint32_t clocks_in_khz[DM_PP_MAX_CLOCK_LEVELS];
-};
+काष्ठा dm_pp_घड़ी_levels अणु
+	uपूर्णांक32_t num_levels;
+	uपूर्णांक32_t घड़ीs_in_khz[DM_PP_MAX_CLOCK_LEVELS];
+पूर्ण;
 
-struct dm_pp_clock_with_latency {
-	uint32_t clocks_in_khz;
-	uint32_t latency_in_us;
-};
+काष्ठा dm_pp_घड़ी_with_latency अणु
+	uपूर्णांक32_t घड़ीs_in_khz;
+	uपूर्णांक32_t latency_in_us;
+पूर्ण;
 
-struct dm_pp_clock_levels_with_latency {
-	uint32_t num_levels;
-	struct dm_pp_clock_with_latency data[DM_PP_MAX_CLOCK_LEVELS];
-};
+काष्ठा dm_pp_घड़ी_levels_with_latency अणु
+	uपूर्णांक32_t num_levels;
+	काष्ठा dm_pp_घड़ी_with_latency data[DM_PP_MAX_CLOCK_LEVELS];
+पूर्ण;
 
-struct dm_pp_clock_with_voltage {
-	uint32_t clocks_in_khz;
-	uint32_t voltage_in_mv;
-};
+काष्ठा dm_pp_घड़ी_with_voltage अणु
+	uपूर्णांक32_t घड़ीs_in_khz;
+	uपूर्णांक32_t voltage_in_mv;
+पूर्ण;
 
-struct dm_pp_clock_levels_with_voltage {
-	uint32_t num_levels;
-	struct dm_pp_clock_with_voltage data[DM_PP_MAX_CLOCK_LEVELS];
-};
+काष्ठा dm_pp_घड़ी_levels_with_voltage अणु
+	uपूर्णांक32_t num_levels;
+	काष्ठा dm_pp_घड़ी_with_voltage data[DM_PP_MAX_CLOCK_LEVELS];
+पूर्ण;
 
-struct dm_pp_single_disp_config {
-	enum signal_type signal;
-	uint8_t transmitter;
-	uint8_t ddi_channel_mapping;
-	uint8_t pipe_idx;
-	uint32_t src_height;
-	uint32_t src_width;
-	uint32_t v_refresh;
-	uint32_t sym_clock; /* HDMI only */
-	struct dc_link_settings link_settings; /* DP only */
-};
+काष्ठा dm_pp_single_disp_config अणु
+	क्रमागत संकेत_type संकेत;
+	uपूर्णांक8_t transmitter;
+	uपूर्णांक8_t ddi_channel_mapping;
+	uपूर्णांक8_t pipe_idx;
+	uपूर्णांक32_t src_height;
+	uपूर्णांक32_t src_width;
+	uपूर्णांक32_t v_refresh;
+	uपूर्णांक32_t sym_घड़ी; /* HDMI only */
+	काष्ठा dc_link_settings link_settings; /* DP only */
+पूर्ण;
 
-#define MAX_WM_SETS 4
+#घोषणा MAX_WM_SETS 4
 
-enum dm_pp_wm_set_id {
+क्रमागत dm_pp_wm_set_id अणु
 	WM_SET_A = 0,
 	WM_SET_B,
 	WM_SET_C,
 	WM_SET_D,
 	WM_SET_INVALID = 0xffff,
-};
+पूर्ण;
 
-struct dm_pp_clock_range_for_wm_set {
-	enum dm_pp_wm_set_id wm_set_id;
-	uint32_t wm_min_eng_clk_in_khz;
-	uint32_t wm_max_eng_clk_in_khz;
-	uint32_t wm_min_mem_clk_in_khz;
-	uint32_t wm_max_mem_clk_in_khz;
-};
+काष्ठा dm_pp_घड़ी_range_क्रम_wm_set अणु
+	क्रमागत dm_pp_wm_set_id wm_set_id;
+	uपूर्णांक32_t wm_min_eng_clk_in_khz;
+	uपूर्णांक32_t wm_max_eng_clk_in_khz;
+	uपूर्णांक32_t wm_min_mem_clk_in_khz;
+	uपूर्णांक32_t wm_max_mem_clk_in_khz;
+पूर्ण;
 
-struct dm_pp_wm_sets_with_clock_ranges {
-	uint32_t num_wm_sets;
-	struct dm_pp_clock_range_for_wm_set wm_clk_ranges[MAX_WM_SETS];
-};
+काष्ठा dm_pp_wm_sets_with_घड़ी_ranges अणु
+	uपूर्णांक32_t num_wm_sets;
+	काष्ठा dm_pp_घड़ी_range_क्रम_wm_set wm_clk_ranges[MAX_WM_SETS];
+पूर्ण;
 
-struct dm_pp_clock_range_for_dmif_wm_set_soc15 {
-	enum dm_pp_wm_set_id wm_set_id;
-	uint32_t wm_min_dcfclk_clk_in_khz;
-	uint32_t wm_max_dcfclk_clk_in_khz;
-	uint32_t wm_min_mem_clk_in_khz;
-	uint32_t wm_max_mem_clk_in_khz;
-};
+काष्ठा dm_pp_घड़ी_range_क्रम_dmअगर_wm_set_soc15 अणु
+	क्रमागत dm_pp_wm_set_id wm_set_id;
+	uपूर्णांक32_t wm_min_dcfclk_clk_in_khz;
+	uपूर्णांक32_t wm_max_dcfclk_clk_in_khz;
+	uपूर्णांक32_t wm_min_mem_clk_in_khz;
+	uपूर्णांक32_t wm_max_mem_clk_in_khz;
+पूर्ण;
 
-struct dm_pp_clock_range_for_mcif_wm_set_soc15 {
-	enum dm_pp_wm_set_id wm_set_id;
-	uint32_t wm_min_socclk_clk_in_khz;
-	uint32_t wm_max_socclk_clk_in_khz;
-	uint32_t wm_min_mem_clk_in_khz;
-	uint32_t wm_max_mem_clk_in_khz;
-};
+काष्ठा dm_pp_घड़ी_range_क्रम_mcअगर_wm_set_soc15 अणु
+	क्रमागत dm_pp_wm_set_id wm_set_id;
+	uपूर्णांक32_t wm_min_socclk_clk_in_khz;
+	uपूर्णांक32_t wm_max_socclk_clk_in_khz;
+	uपूर्णांक32_t wm_min_mem_clk_in_khz;
+	uपूर्णांक32_t wm_max_mem_clk_in_khz;
+पूर्ण;
 
-struct dm_pp_wm_sets_with_clock_ranges_soc15 {
-	uint32_t num_wm_dmif_sets;
-	uint32_t num_wm_mcif_sets;
-	struct dm_pp_clock_range_for_dmif_wm_set_soc15
-		wm_dmif_clocks_ranges[MAX_WM_SETS];
-	struct dm_pp_clock_range_for_mcif_wm_set_soc15
-		wm_mcif_clocks_ranges[MAX_WM_SETS];
-};
+काष्ठा dm_pp_wm_sets_with_घड़ी_ranges_soc15 अणु
+	uपूर्णांक32_t num_wm_dmअगर_sets;
+	uपूर्णांक32_t num_wm_mcअगर_sets;
+	काष्ठा dm_pp_घड़ी_range_क्रम_dmअगर_wm_set_soc15
+		wm_dmअगर_घड़ीs_ranges[MAX_WM_SETS];
+	काष्ठा dm_pp_घड़ी_range_क्रम_mcअगर_wm_set_soc15
+		wm_mcअगर_घड़ीs_ranges[MAX_WM_SETS];
+पूर्ण;
 
-#define MAX_DISPLAY_CONFIGS 6
+#घोषणा MAX_DISPLAY_CONFIGS 6
 
-struct dm_pp_display_configuration {
-	bool nb_pstate_switch_disable;/* controls NB PState switch */
-	bool cpu_cc6_disable; /* controls CPU CState switch ( on or off) */
+काष्ठा dm_pp_display_configuration अणु
+	bool nb_pstate_चयन_disable;/* controls NB PState चयन */
+	bool cpu_cc6_disable; /* controls CPU CState चयन ( on or off) */
 	bool cpu_pstate_disable;
-	uint32_t cpu_pstate_separation_time;
+	uपूर्णांक32_t cpu_pstate_separation_समय;
 
-	uint32_t min_memory_clock_khz;
-	uint32_t min_engine_clock_khz;
-	uint32_t min_engine_clock_deep_sleep_khz;
+	uपूर्णांक32_t min_memory_घड़ी_khz;
+	uपूर्णांक32_t min_engine_घड़ी_khz;
+	uपूर्णांक32_t min_engine_घड़ी_deep_sleep_khz;
 
-	uint32_t avail_mclk_switch_time_us;
-	uint32_t avail_mclk_switch_time_in_disp_active_us;
-	uint32_t min_dcfclock_khz;
-	uint32_t min_dcfc_deep_sleep_clock_khz;
+	uपूर्णांक32_t avail_mclk_चयन_समय_us;
+	uपूर्णांक32_t avail_mclk_चयन_समय_in_disp_active_us;
+	uपूर्णांक32_t min_dcfघड़ी_khz;
+	uपूर्णांक32_t min_dcfc_deep_sleep_घड़ी_khz;
 
-	uint32_t disp_clk_khz;
+	uपूर्णांक32_t disp_clk_khz;
 
 	bool all_displays_in_sync;
 
-	uint8_t display_count;
-	struct dm_pp_single_disp_config disp_configs[MAX_DISPLAY_CONFIGS];
+	uपूर्णांक8_t display_count;
+	काष्ठा dm_pp_single_disp_config disp_configs[MAX_DISPLAY_CONFIGS];
 
-	/*Controller Index of primary display - used in MCLK SMC switching hang
+	/*Controller Index of primary display - used in MCLK SMC चयनing hang
 	 * SW Workaround*/
-	uint8_t crtc_index;
-	/*htotal*1000/pixelclk - used in MCLK SMC switching hang SW Workaround*/
-	uint32_t line_time_in_us;
-};
+	uपूर्णांक8_t crtc_index;
+	/*htotal*1000/pixelclk - used in MCLK SMC चयनing hang SW Workaround*/
+	uपूर्णांक32_t line_समय_in_us;
+पूर्ण;
 
-struct dm_bl_data_point {
+काष्ठा dm_bl_data_poपूर्णांक अणु
 		/* Brightness level in percentage */
-		uint8_t luminance;
+		uपूर्णांक8_t luminance;
 		/* Brightness level as effective value in range 0-255,
 		 * corresponding to above percentage
 		 */
-		uint8_t signal_level;
-};
+		uपूर्णांक8_t संकेत_level;
+पूर्ण;
 
-/* Total size of the structure should not exceed 256 bytes */
-#define BL_DATA_POINTS 99
-struct dm_acpi_atif_backlight_caps {
-	uint16_t size; /* Bytes 0-1 (2 bytes) */
-	uint16_t flags; /* Byted 2-3 (2 bytes) */
-	uint8_t  error_code; /* Byte 4 */
-	uint8_t  ac_level_percentage; /* Byte 5 */
-	uint8_t  dc_level_percentage; /* Byte 6 */
-	uint8_t  min_input_signal; /* Byte 7 */
-	uint8_t  max_input_signal; /* Byte 8 */
-	uint8_t  num_data_points; /* Byte 9 */
-	struct dm_bl_data_point data_points[BL_DATA_POINTS]; /* Bytes 10-207 (198 bytes)*/
-};
+/* Total size of the काष्ठाure should not exceed 256 bytes */
+#घोषणा BL_DATA_POINTS 99
+काष्ठा dm_acpi_atअगर_backlight_caps अणु
+	uपूर्णांक16_t size; /* Bytes 0-1 (2 bytes) */
+	uपूर्णांक16_t flags; /* Byted 2-3 (2 bytes) */
+	uपूर्णांक8_t  error_code; /* Byte 4 */
+	uपूर्णांक8_t  ac_level_percentage; /* Byte 5 */
+	uपूर्णांक8_t  dc_level_percentage; /* Byte 6 */
+	uपूर्णांक8_t  min_input_संकेत; /* Byte 7 */
+	uपूर्णांक8_t  max_input_संकेत; /* Byte 8 */
+	uपूर्णांक8_t  num_data_poपूर्णांकs; /* Byte 9 */
+	काष्ठा dm_bl_data_poपूर्णांक data_poपूर्णांकs[BL_DATA_POINTS]; /* Bytes 10-207 (198 bytes)*/
+पूर्ण;
 
-enum dm_acpi_display_type {
+क्रमागत dm_acpi_display_type अणु
 	AcpiDisplayType_LCD1 = 0,
 	AcpiDisplayType_CRT1 = 1,
 	AcpiDisplayType_DFP1 = 3,
@@ -244,29 +245,29 @@ enum dm_acpi_display_type {
 	AcpiDisplayType_DFP4 = 10,
 	AcpiDisplayType_DFP5 = 11,
 	AcpiDisplayType_DFP6 = 12
-};
+पूर्ण;
 
-struct dm_pp_power_level_change_request {
-	enum dm_pp_clocks_state power_level;
-};
+काष्ठा dm_pp_घातer_level_change_request अणु
+	क्रमागत dm_pp_घड़ीs_state घातer_level;
+पूर्ण;
 
-struct dm_pp_clock_for_voltage_req {
-	enum dm_pp_clock_type clk_type;
-	uint32_t clocks_in_khz;
-};
+काष्ठा dm_pp_घड़ी_क्रम_voltage_req अणु
+	क्रमागत dm_pp_घड़ी_प्रकारype clk_type;
+	uपूर्णांक32_t घड़ीs_in_khz;
+पूर्ण;
 
-struct dm_pp_static_clock_info {
-	uint32_t max_sclk_khz;
-	uint32_t max_mclk_khz;
+काष्ठा dm_pp_अटल_घड़ी_info अणु
+	uपूर्णांक32_t max_sclk_khz;
+	uपूर्णांक32_t max_mclk_khz;
 
-	/* max possible display block clocks state */
-	enum dm_pp_clocks_state max_clocks_state;
-};
+	/* max possible display block घड़ीs state */
+	क्रमागत dm_pp_घड़ीs_state max_घड़ीs_state;
+पूर्ण;
 
-struct dtn_min_clk_info {
-	uint32_t disp_clk_khz;
-	uint32_t min_engine_clock_khz;
-	uint32_t min_memory_clock_khz;
-};
+काष्ठा dtn_min_clk_info अणु
+	uपूर्णांक32_t disp_clk_khz;
+	uपूर्णांक32_t min_engine_घड़ी_khz;
+	uपूर्णांक32_t min_memory_घड़ी_khz;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

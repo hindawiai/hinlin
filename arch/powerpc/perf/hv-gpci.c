@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Hypervisor supplied "gpci" ("get performance counter info") performance
+ * Hypervisor supplied "gpci" ("get performance counter info") perक्रमmance
  * counter support
  *
  * Author: Cody P Schafer <cody@linux.vnet.ibm.com>
  * Copyright 2014 IBM Corporation.
  */
 
-#define pr_fmt(fmt) "hv-gpci: " fmt
+#घोषणा pr_fmt(fmt) "hv-gpci: " fmt
 
-#include <linux/init.h>
-#include <linux/perf_event.h>
-#include <asm/firmware.h>
-#include <asm/hvcall.h>
-#include <asm/io.h>
+#समावेश <linux/init.h>
+#समावेश <linux/perf_event.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/hvcall.h>
+#समावेश <यंत्र/पन.स>
 
-#include "hv-gpci.h"
-#include "hv-common.h"
+#समावेश "hv-gpci.h"
+#समावेश "hv-common.h"
 
 /*
  * Example usage:
@@ -30,7 +31,7 @@ EVENT_DEFINE_RANGE_FORMAT(request, config, 0, 31);
 /*
  * Note that starting_index, phys_processor_idx, sibling_part_id,
  * hw_chip_id, partition_id all refer to the same bit range. They
- * are basically aliases for the starting_index. The specific alias
+ * are basically aliases क्रम the starting_index. The specअगरic alias
  * used depends on the event. See REQUEST_IDX_KIND in hv-gpci-requests.h
  */
 EVENT_DEFINE_RANGE_FORMAT(starting_index, config, 32, 63);
@@ -48,62 +49,62 @@ EVENT_DEFINE_RANGE_FORMAT(length, config1, 24, 31);
 /* u32, byte offset */
 EVENT_DEFINE_RANGE_FORMAT(offset, config1, 32, 63);
 
-static cpumask_t hv_gpci_cpumask;
+अटल cpumask_t hv_gpci_cpumask;
 
-static struct attribute *format_attrs[] = {
-	&format_attr_request.attr,
-	&format_attr_starting_index.attr,
-	&format_attr_phys_processor_idx.attr,
-	&format_attr_sibling_part_id.attr,
-	&format_attr_hw_chip_id.attr,
-	&format_attr_partition_id.attr,
-	&format_attr_secondary_index.attr,
-	&format_attr_counter_info_version.attr,
+अटल काष्ठा attribute *क्रमmat_attrs[] = अणु
+	&क्रमmat_attr_request.attr,
+	&क्रमmat_attr_starting_index.attr,
+	&क्रमmat_attr_phys_processor_idx.attr,
+	&क्रमmat_attr_sibling_part_id.attr,
+	&क्रमmat_attr_hw_chip_id.attr,
+	&क्रमmat_attr_partition_id.attr,
+	&क्रमmat_attr_secondary_index.attr,
+	&क्रमmat_attr_counter_info_version.attr,
 
-	&format_attr_offset.attr,
-	&format_attr_length.attr,
-	NULL,
-};
+	&क्रमmat_attr_offset.attr,
+	&क्रमmat_attr_length.attr,
+	शून्य,
+पूर्ण;
 
-static struct attribute_group format_group = {
+अटल काष्ठा attribute_group क्रमmat_group = अणु
 	.name = "format",
-	.attrs = format_attrs,
-};
+	.attrs = क्रमmat_attrs,
+पूर्ण;
 
-static struct attribute_group event_group = {
+अटल काष्ठा attribute_group event_group = अणु
 	.name  = "events",
 	.attrs = hv_gpci_event_attrs,
-};
+पूर्ण;
 
-#define HV_CAPS_ATTR(_name, _format)				\
-static ssize_t _name##_show(struct device *dev,			\
-			    struct device_attribute *attr,	\
-			    char *page)				\
-{								\
-	struct hv_perf_caps caps;				\
-	unsigned long hret = hv_perf_caps_get(&caps);		\
-	if (hret)						\
-		return -EIO;					\
+#घोषणा HV_CAPS_ATTR(_name, _क्रमmat)				\
+अटल sमाप_प्रकार _name##_show(काष्ठा device *dev,			\
+			    काष्ठा device_attribute *attr,	\
+			    अक्षर *page)				\
+अणु								\
+	काष्ठा hv_perf_caps caps;				\
+	अचिन्हित दीर्घ hret = hv_perf_caps_get(&caps);		\
+	अगर (hret)						\
+		वापस -EIO;					\
 								\
-	return sprintf(page, _format, caps._name);		\
-}								\
-static struct device_attribute hv_caps_attr_##_name = __ATTR_RO(_name)
+	वापस प्र_लिखो(page, _क्रमmat, caps._name);		\
+पूर्ण								\
+अटल काष्ठा device_attribute hv_caps_attr_##_name = __ATTR_RO(_name)
 
-static ssize_t kernel_version_show(struct device *dev,
-				   struct device_attribute *attr,
-				   char *page)
-{
-	return sprintf(page, "0x%x\n", COUNTER_INFO_VERSION_CURRENT);
-}
+अटल sमाप_प्रकार kernel_version_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "0x%x\n", COUNTER_INFO_VERSION_CURRENT);
+पूर्ण
 
-static ssize_t cpumask_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	return cpumap_print_to_pagebuf(true, buf, &hv_gpci_cpumask);
-}
+अटल sमाप_प्रकार cpumask_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, &hv_gpci_cpumask);
+पूर्ण
 
-static DEVICE_ATTR_RO(kernel_version);
-static DEVICE_ATTR_RO(cpumask);
+अटल DEVICE_ATTR_RO(kernel_version);
+अटल DEVICE_ATTR_RO(cpumask);
 
 HV_CAPS_ATTR(version, "0x%x\n");
 HV_CAPS_ATTR(ga, "%d\n");
@@ -111,51 +112,51 @@ HV_CAPS_ATTR(expanded, "%d\n");
 HV_CAPS_ATTR(lab, "%d\n");
 HV_CAPS_ATTR(collect_privileged, "%d\n");
 
-static struct attribute *interface_attrs[] = {
+अटल काष्ठा attribute *पूर्णांकerface_attrs[] = अणु
 	&dev_attr_kernel_version.attr,
 	&hv_caps_attr_version.attr,
 	&hv_caps_attr_ga.attr,
 	&hv_caps_attr_expanded.attr,
 	&hv_caps_attr_lab.attr,
 	&hv_caps_attr_collect_privileged.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cpumask_attrs[] = {
+अटल काष्ठा attribute *cpumask_attrs[] = अणु
 	&dev_attr_cpumask.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group cpumask_attr_group = {
+अटल काष्ठा attribute_group cpumask_attr_group = अणु
 	.attrs = cpumask_attrs,
-};
+पूर्ण;
 
-static struct attribute_group interface_group = {
+अटल काष्ठा attribute_group पूर्णांकerface_group = अणु
 	.name = "interface",
-	.attrs = interface_attrs,
-};
+	.attrs = पूर्णांकerface_attrs,
+पूर्ण;
 
-static const struct attribute_group *attr_groups[] = {
-	&format_group,
+अटल स्थिर काष्ठा attribute_group *attr_groups[] = अणु
+	&क्रमmat_group,
 	&event_group,
-	&interface_group,
+	&पूर्णांकerface_group,
 	&cpumask_attr_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static DEFINE_PER_CPU(char, hv_gpci_reqb[HGPCI_REQ_BUFFER_SIZE]) __aligned(sizeof(uint64_t));
+अटल DEFINE_PER_CPU(अक्षर, hv_gpci_reqb[HGPCI_REQ_BUFFER_SIZE]) __aligned(माप(uपूर्णांक64_t));
 
-static unsigned long single_gpci_request(u32 req, u32 starting_index,
+अटल अचिन्हित दीर्घ single_gpci_request(u32 req, u32 starting_index,
 		u16 secondary_index, u8 version_in, u32 offset, u8 length,
 		u64 *value)
-{
-	unsigned long ret;
-	size_t i;
+अणु
+	अचिन्हित दीर्घ ret;
+	माप_प्रकार i;
 	u64 count;
-	struct hv_gpci_request_buffer *arg;
+	काष्ठा hv_gpci_request_buffer *arg;
 
-	arg = (void *)get_cpu_var(hv_gpci_reqb);
-	memset(arg, 0, HGPCI_REQ_BUFFER_SIZE);
+	arg = (व्योम *)get_cpu_var(hv_gpci_reqb);
+	स_रखो(arg, 0, HGPCI_REQ_BUFFER_SIZE);
 
 	arg->params.counter_request = cpu_to_be32(req);
 	arg->params.starting_index = cpu_to_be32(starting_index);
@@ -164,115 +165,115 @@ static unsigned long single_gpci_request(u32 req, u32 starting_index,
 
 	ret = plpar_hcall_norets(H_GET_PERF_COUNTER_INFO,
 			virt_to_phys(arg), HGPCI_REQ_BUFFER_SIZE);
-	if (ret) {
+	अगर (ret) अणु
 		pr_devel("hcall failed: 0x%lx\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * we verify offset and length are within the zeroed buffer at event
+	 * we verअगरy offset and length are within the zeroed buffer at event
 	 * init.
 	 */
 	count = 0;
-	for (i = offset; i < offset + length; i++)
+	क्रम (i = offset; i < offset + length; i++)
 		count |= arg->bytes[i] << (i - offset);
 
 	*value = count;
 out:
 	put_cpu_var(hv_gpci_reqb);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u64 h_gpci_get_value(struct perf_event *event)
-{
+अटल u64 h_gpci_get_value(काष्ठा perf_event *event)
+अणु
 	u64 count;
-	unsigned long ret = single_gpci_request(event_get_request(event),
+	अचिन्हित दीर्घ ret = single_gpci_request(event_get_request(event),
 					event_get_starting_index(event),
 					event_get_secondary_index(event),
 					event_get_counter_info_version(event),
 					event_get_offset(event),
 					event_get_length(event),
 					&count);
-	if (ret)
-		return 0;
-	return count;
-}
+	अगर (ret)
+		वापस 0;
+	वापस count;
+पूर्ण
 
-static void h_gpci_event_update(struct perf_event *event)
-{
+अटल व्योम h_gpci_event_update(काष्ठा perf_event *event)
+अणु
 	s64 prev;
 	u64 now = h_gpci_get_value(event);
 	prev = local64_xchg(&event->hw.prev_count, now);
 	local64_add(now - prev, &event->count);
-}
+पूर्ण
 
-static void h_gpci_event_start(struct perf_event *event, int flags)
-{
+अटल व्योम h_gpci_event_start(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
 	local64_set(&event->hw.prev_count, h_gpci_get_value(event));
-}
+पूर्ण
 
-static void h_gpci_event_stop(struct perf_event *event, int flags)
-{
+अटल व्योम h_gpci_event_stop(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
 	h_gpci_event_update(event);
-}
+पूर्ण
 
-static int h_gpci_event_add(struct perf_event *event, int flags)
-{
-	if (flags & PERF_EF_START)
+अटल पूर्णांक h_gpci_event_add(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	अगर (flags & PERF_EF_START)
 		h_gpci_event_start(event, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int h_gpci_event_init(struct perf_event *event)
-{
+अटल पूर्णांक h_gpci_event_init(काष्ठा perf_event *event)
+अणु
 	u64 count;
 	u8 length;
 
 	/* Not our event */
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
+	अगर (event->attr.type != event->pmu->type)
+		वापस -ENOENT;
 
 	/* config2 is unused */
-	if (event->attr.config2) {
+	अगर (event->attr.config2) अणु
 		pr_devel("config2 set when reserved\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* no branch sampling */
-	if (has_branch_stack(event))
-		return -EOPNOTSUPP;
+	अगर (has_branch_stack(event))
+		वापस -EOPNOTSUPP;
 
 	length = event_get_length(event);
-	if (length < 1 || length > 8) {
+	अगर (length < 1 || length > 8) अणु
 		pr_devel("length invalid\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* last byte within the buffer? */
-	if ((event_get_offset(event) + length) > HGPCI_MAX_DATA_BYTES) {
+	अगर ((event_get_offset(event) + length) > HGPCI_MAX_DATA_BYTES) अणु
 		pr_devel("request outside of buffer: %zu > %zu\n",
-				(size_t)event_get_offset(event) + length,
+				(माप_प्रकार)event_get_offset(event) + length,
 				HGPCI_MAX_DATA_BYTES);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* check if the request works... */
-	if (single_gpci_request(event_get_request(event),
+	/* check अगर the request works... */
+	अगर (single_gpci_request(event_get_request(event),
 				event_get_starting_index(event),
 				event_get_secondary_index(event),
 				event_get_counter_info_version(event),
 				event_get_offset(event),
 				length,
-				&count)) {
+				&count)) अणु
 		pr_devel("gpci hcall failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pmu h_gpci_pmu = {
+अटल काष्ठा pmu h_gpci_pmu = अणु
 	.task_ctx_nr = perf_invalid_context,
 
 	.name = "hv_gpci",
@@ -282,82 +283,82 @@ static struct pmu h_gpci_pmu = {
 	.del         = h_gpci_event_stop,
 	.start       = h_gpci_event_start,
 	.stop        = h_gpci_event_stop,
-	.read        = h_gpci_event_update,
+	.पढ़ो        = h_gpci_event_update,
 	.capabilities = PERF_PMU_CAP_NO_EXCLUDE,
-};
+पूर्ण;
 
-static int ppc_hv_gpci_cpu_online(unsigned int cpu)
-{
-	if (cpumask_empty(&hv_gpci_cpumask))
+अटल पूर्णांक ppc_hv_gpci_cpu_online(अचिन्हित पूर्णांक cpu)
+अणु
+	अगर (cpumask_empty(&hv_gpci_cpumask))
 		cpumask_set_cpu(cpu, &hv_gpci_cpumask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ppc_hv_gpci_cpu_offline(unsigned int cpu)
-{
-	int target;
+अटल पूर्णांक ppc_hv_gpci_cpu_offline(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक target;
 
-	/* Check if exiting cpu is used for collecting gpci events */
-	if (!cpumask_test_and_clear_cpu(cpu, &hv_gpci_cpumask))
-		return 0;
+	/* Check अगर निकासing cpu is used क्रम collecting gpci events */
+	अगर (!cpumask_test_and_clear_cpu(cpu, &hv_gpci_cpumask))
+		वापस 0;
 
 	/* Find a new cpu to collect gpci events */
 	target = cpumask_last(cpu_active_mask);
 
-	if (target < 0 || target >= nr_cpu_ids) {
+	अगर (target < 0 || target >= nr_cpu_ids) अणु
 		pr_err("hv_gpci: CPU hotplug init failed\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/* Migrate gpci events to the new target */
 	cpumask_set_cpu(target, &hv_gpci_cpumask);
 	perf_pmu_migrate_context(&h_gpci_pmu, cpu, target);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hv_gpci_cpu_hotplug_init(void)
-{
-	return cpuhp_setup_state(CPUHP_AP_PERF_POWERPC_HV_GPCI_ONLINE,
+अटल पूर्णांक hv_gpci_cpu_hotplug_init(व्योम)
+अणु
+	वापस cpuhp_setup_state(CPUHP_AP_PERF_POWERPC_HV_GPCI_ONLINE,
 			  "perf/powerpc/hv_gcpi:online",
 			  ppc_hv_gpci_cpu_online,
 			  ppc_hv_gpci_cpu_offline);
-}
+पूर्ण
 
-static int hv_gpci_init(void)
-{
-	int r;
-	unsigned long hret;
-	struct hv_perf_caps caps;
+अटल पूर्णांक hv_gpci_init(व्योम)
+अणु
+	पूर्णांक r;
+	अचिन्हित दीर्घ hret;
+	काष्ठा hv_perf_caps caps;
 
-	hv_gpci_assert_offsets_correct();
+	hv_gpci_निश्चित_offsets_correct();
 
-	if (!firmware_has_feature(FW_FEATURE_LPAR)) {
+	अगर (!firmware_has_feature(FW_FEATURE_LPAR)) अणु
 		pr_debug("not a virtualized system, not enabling\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	hret = hv_perf_caps_get(&caps);
-	if (hret) {
+	अगर (hret) अणु
 		pr_debug("could not obtain capabilities, not enabling, rc=%ld\n",
 				hret);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* init cpuhotplug */
 	r = hv_gpci_cpu_hotplug_init();
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* sampling not supported */
 	h_gpci_pmu.capabilities |= PERF_PMU_CAP_NO_INTERRUPT;
 
-	r = perf_pmu_register(&h_gpci_pmu, h_gpci_pmu.name, -1);
-	if (r)
-		return r;
+	r = perf_pmu_रेजिस्टर(&h_gpci_pmu, h_gpci_pmu.name, -1);
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 device_initcall(hv_gpci_init);

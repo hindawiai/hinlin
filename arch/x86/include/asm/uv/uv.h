@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_UV_UV_H
-#define _ASM_X86_UV_UV_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_UV_UV_H
+#घोषणा _ASM_X86_UV_UV_H
 
-enum uv_system_type {UV_NONE, UV_LEGACY_APIC, UV_X2APIC};
+क्रमागत uv_प्रणाली_type अणुUV_NONE, UV_LEGACY_APIC, UV_X2APICपूर्ण;
 
-#ifdef CONFIG_X86_UV
-#include <linux/efi.h>
+#अगर_घोषित CONFIG_X86_UV
+#समावेश <linux/efi.h>
 
-#define	UV_PROC_NODE	"sgi_uv"
+#घोषणा	UV_PROC_NODE	"sgi_uv"
 
-static inline int uv(int uvtype)
-{
+अटल अंतरभूत पूर्णांक uv(पूर्णांक uvtype)
+अणु
 	/* uv(0) is "any" */
-	if (uvtype >= 0 && uvtype <= 30)
-		return 1 << uvtype;
-	return 1;
-}
+	अगर (uvtype >= 0 && uvtype <= 30)
+		वापस 1 << uvtype;
+	वापस 1;
+पूर्ण
 
-extern unsigned long uv_systab_phys;
+बाह्य अचिन्हित दीर्घ uv_systab_phys;
 
-extern enum uv_system_type get_uv_system_type(void);
-static inline bool is_early_uv_system(void)
-{
-	return uv_systab_phys && uv_systab_phys != EFI_INVALID_TABLE_ADDR;
-}
-extern int is_uv_system(void);
-extern int is_uv_hubbed(int uvtype);
-extern void uv_cpu_init(void);
-extern void uv_nmi_init(void);
-extern void uv_system_init(void);
+बाह्य क्रमागत uv_प्रणाली_type get_uv_प्रणाली_type(व्योम);
+अटल अंतरभूत bool is_early_uv_प्रणाली(व्योम)
+अणु
+	वापस uv_systab_phys && uv_systab_phys != EFI_INVALID_TABLE_ADDR;
+पूर्ण
+बाह्य पूर्णांक is_uv_प्रणाली(व्योम);
+बाह्य पूर्णांक is_uv_hubbed(पूर्णांक uvtype);
+बाह्य व्योम uv_cpu_init(व्योम);
+बाह्य व्योम uv_nmi_init(व्योम);
+बाह्य व्योम uv_प्रणाली_init(व्योम);
 
-#else	/* !X86_UV */
+#अन्यथा	/* !X86_UV */
 
-static inline enum uv_system_type get_uv_system_type(void) { return UV_NONE; }
-static inline bool is_early_uv_system(void)	{ return 0; }
-static inline int is_uv_system(void)	{ return 0; }
-static inline int is_uv_hubbed(int uv)	{ return 0; }
-static inline void uv_cpu_init(void)	{ }
-static inline void uv_system_init(void)	{ }
+अटल अंतरभूत क्रमागत uv_प्रणाली_type get_uv_प्रणाली_type(व्योम) अणु वापस UV_NONE; पूर्ण
+अटल अंतरभूत bool is_early_uv_प्रणाली(व्योम)	अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक is_uv_प्रणाली(व्योम)	अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक is_uv_hubbed(पूर्णांक uv)	अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम uv_cpu_init(व्योम)	अणु पूर्ण
+अटल अंतरभूत व्योम uv_प्रणाली_init(व्योम)	अणु पूर्ण
 
-#endif	/* X86_UV */
+#पूर्ण_अगर	/* X86_UV */
 
-#endif	/* _ASM_X86_UV_UV_H */
+#पूर्ण_अगर	/* _ASM_X86_UV_UV_H */

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	RAW sockets for IPv6
+ *	RAW sockets क्रम IPv6
  *	Linux INET6 implementation
  *
  *	Authors:
@@ -14,138 +15,138 @@
  *	Kazunori MIYAZAWA @USAGI:	change process style to use ip6_append_data
  */
 
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/slab.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/in6.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/icmpv6.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter_ipv6.h>
-#include <linux/skbuff.h>
-#include <linux/compat.h>
-#include <linux/uaccess.h>
-#include <asm/ioctls.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/ioctls.h>
 
-#include <net/net_namespace.h>
-#include <net/ip.h>
-#include <net/sock.h>
-#include <net/snmp.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/ip.h>
+#समावेश <net/sock.h>
+#समावेश <net/snmp.h>
 
-#include <net/ipv6.h>
-#include <net/ndisc.h>
-#include <net/protocol.h>
-#include <net/ip6_route.h>
-#include <net/ip6_checksum.h>
-#include <net/addrconf.h>
-#include <net/transp_v6.h>
-#include <net/udp.h>
-#include <net/inet_common.h>
-#include <net/tcp_states.h>
-#if IS_ENABLED(CONFIG_IPV6_MIP6)
-#include <net/mip6.h>
-#endif
-#include <linux/mroute6.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/ndisc.h>
+#समावेश <net/protocol.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/transp_v6.h>
+#समावेश <net/udp.h>
+#समावेश <net/inet_common.h>
+#समावेश <net/tcp_states.h>
+#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
+#समावेश <net/mip6.h>
+#पूर्ण_अगर
+#समावेश <linux/mroute6.h>
 
-#include <net/raw.h>
-#include <net/rawv6.h>
-#include <net/xfrm.h>
+#समावेश <net/raw.h>
+#समावेश <net/rawv6.h>
+#समावेश <net/xfrm.h>
 
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/export.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/export.h>
 
-#define	ICMPV6_HDRLEN	4	/* ICMPv6 header, RFC 4443 Section 2.1 */
+#घोषणा	ICMPV6_HDRLEN	4	/* ICMPv6 header, RFC 4443 Section 2.1 */
 
-struct raw_hashinfo raw_v6_hashinfo = {
+काष्ठा raw_hashinfo raw_v6_hashinfo = अणु
 	.lock = __RW_LOCK_UNLOCKED(raw_v6_hashinfo.lock),
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(raw_v6_hashinfo);
 
-struct sock *__raw_v6_lookup(struct net *net, struct sock *sk,
-		unsigned short num, const struct in6_addr *loc_addr,
-		const struct in6_addr *rmt_addr, int dif, int sdif)
-{
+काष्ठा sock *__raw_v6_lookup(काष्ठा net *net, काष्ठा sock *sk,
+		अचिन्हित लघु num, स्थिर काष्ठा in6_addr *loc_addr,
+		स्थिर काष्ठा in6_addr *rmt_addr, पूर्णांक dअगर, पूर्णांक sdअगर)
+अणु
 	bool is_multicast = ipv6_addr_is_multicast(loc_addr);
 
-	sk_for_each_from(sk)
-		if (inet_sk(sk)->inet_num == num) {
+	sk_क्रम_each_from(sk)
+		अगर (inet_sk(sk)->inet_num == num) अणु
 
-			if (!net_eq(sock_net(sk), net))
-				continue;
+			अगर (!net_eq(sock_net(sk), net))
+				जारी;
 
-			if (!ipv6_addr_any(&sk->sk_v6_daddr) &&
+			अगर (!ipv6_addr_any(&sk->sk_v6_daddr) &&
 			    !ipv6_addr_equal(&sk->sk_v6_daddr, rmt_addr))
-				continue;
+				जारी;
 
-			if (!raw_sk_bound_dev_eq(net, sk->sk_bound_dev_if,
-						 dif, sdif))
-				continue;
+			अगर (!raw_sk_bound_dev_eq(net, sk->sk_bound_dev_अगर,
+						 dअगर, sdअगर))
+				जारी;
 
-			if (!ipv6_addr_any(&sk->sk_v6_rcv_saddr)) {
-				if (ipv6_addr_equal(&sk->sk_v6_rcv_saddr, loc_addr))
-					goto found;
-				if (is_multicast &&
+			अगर (!ipv6_addr_any(&sk->sk_v6_rcv_saddr)) अणु
+				अगर (ipv6_addr_equal(&sk->sk_v6_rcv_saddr, loc_addr))
+					जाओ found;
+				अगर (is_multicast &&
 				    inet6_mc_check(sk, loc_addr, rmt_addr))
-					goto found;
-				continue;
-			}
-			goto found;
-		}
-	sk = NULL;
+					जाओ found;
+				जारी;
+			पूर्ण
+			जाओ found;
+		पूर्ण
+	sk = शून्य;
 found:
-	return sk;
-}
+	वापस sk;
+पूर्ण
 EXPORT_SYMBOL_GPL(__raw_v6_lookup);
 
 /*
  *	0 - deliver
  *	1 - block
  */
-static int icmpv6_filter(const struct sock *sk, const struct sk_buff *skb)
-{
-	struct icmp6hdr _hdr;
-	const struct icmp6hdr *hdr;
+अटल पूर्णांक icmpv6_filter(स्थिर काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb)
+अणु
+	काष्ठा icmp6hdr _hdr;
+	स्थिर काष्ठा icmp6hdr *hdr;
 
 	/* We require only the four bytes of the ICMPv6 header, not any
 	 * additional bytes of message body in "struct icmp6hdr".
 	 */
-	hdr = skb_header_pointer(skb, skb_transport_offset(skb),
+	hdr = skb_header_poपूर्णांकer(skb, skb_transport_offset(skb),
 				 ICMPV6_HDRLEN, &_hdr);
-	if (hdr) {
-		const __u32 *data = &raw6_sk(sk)->filter.data[0];
-		unsigned int type = hdr->icmp6_type;
+	अगर (hdr) अणु
+		स्थिर __u32 *data = &raw6_sk(sk)->filter.data[0];
+		अचिन्हित पूर्णांक type = hdr->icmp6_type;
 
-		return (data[type >> 5] & (1U << (type & 31))) != 0;
-	}
-	return 1;
-}
+		वापस (data[type >> 5] & (1U << (type & 31))) != 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6_MIP6)
-typedef int mh_filter_t(struct sock *sock, struct sk_buff *skb);
+#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
+प्रकार पूर्णांक mh_filter_t(काष्ठा sock *sock, काष्ठा sk_buff *skb);
 
-static mh_filter_t __rcu *mh_filter __read_mostly;
+अटल mh_filter_t __rcu *mh_filter __पढ़ो_mostly;
 
-int rawv6_mh_filter_register(mh_filter_t filter)
-{
-	rcu_assign_pointer(mh_filter, filter);
-	return 0;
-}
-EXPORT_SYMBOL(rawv6_mh_filter_register);
+पूर्णांक rawv6_mh_filter_रेजिस्टर(mh_filter_t filter)
+अणु
+	rcu_assign_poपूर्णांकer(mh_filter, filter);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(rawv6_mh_filter_रेजिस्टर);
 
-int rawv6_mh_filter_unregister(mh_filter_t filter)
-{
-	RCU_INIT_POINTER(mh_filter, NULL);
+पूर्णांक rawv6_mh_filter_unरेजिस्टर(mh_filter_t filter)
+अणु
+	RCU_INIT_POINTER(mh_filter, शून्य);
 	synchronize_rcu();
-	return 0;
-}
-EXPORT_SYMBOL(rawv6_mh_filter_unregister);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(rawv6_mh_filter_unरेजिस्टर);
 
-#endif
+#पूर्ण_अगर
 
 /*
  *	demultiplex raw sockets.
@@ -154,457 +155,457 @@ EXPORT_SYMBOL(rawv6_mh_filter_unregister);
  *
  *	Caller owns SKB so we must make clones.
  */
-static bool ipv6_raw_deliver(struct sk_buff *skb, int nexthdr)
-{
-	const struct in6_addr *saddr;
-	const struct in6_addr *daddr;
-	struct sock *sk;
+अटल bool ipv6_raw_deliver(काष्ठा sk_buff *skb, पूर्णांक nexthdr)
+अणु
+	स्थिर काष्ठा in6_addr *saddr;
+	स्थिर काष्ठा in6_addr *daddr;
+	काष्ठा sock *sk;
 	bool delivered = false;
 	__u8 hash;
-	struct net *net;
+	काष्ठा net *net;
 
 	saddr = &ipv6_hdr(skb)->saddr;
 	daddr = saddr + 1;
 
 	hash = nexthdr & (RAW_HTABLE_SIZE - 1);
 
-	read_lock(&raw_v6_hashinfo.lock);
+	पढ़ो_lock(&raw_v6_hashinfo.lock);
 	sk = sk_head(&raw_v6_hashinfo.ht[hash]);
 
-	if (!sk)
-		goto out;
+	अगर (!sk)
+		जाओ out;
 
 	net = dev_net(skb->dev);
 	sk = __raw_v6_lookup(net, sk, nexthdr, daddr, saddr,
-			     inet6_iif(skb), inet6_sdif(skb));
+			     inet6_iअगर(skb), inet6_sdअगर(skb));
 
-	while (sk) {
-		int filtered;
+	जबतक (sk) अणु
+		पूर्णांक filtered;
 
 		delivered = true;
-		switch (nexthdr) {
-		case IPPROTO_ICMPV6:
+		चयन (nexthdr) अणु
+		हाल IPPROTO_ICMPV6:
 			filtered = icmpv6_filter(sk, skb);
-			break;
+			अवरोध;
 
-#if IS_ENABLED(CONFIG_IPV6_MIP6)
-		case IPPROTO_MH:
-		{
-			/* XXX: To validate MH only once for each packet,
+#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
+		हाल IPPROTO_MH:
+		अणु
+			/* XXX: To validate MH only once क्रम each packet,
 			 * this is placed here. It should be after checking
-			 * xfrm policy, however it doesn't. The checking xfrm
+			 * xfrm policy, however it करोesn't. The checking xfrm
 			 * policy is placed in rawv6_rcv() because it is
-			 * required for each socket.
+			 * required क्रम each socket.
 			 */
 			mh_filter_t *filter;
 
 			filter = rcu_dereference(mh_filter);
 			filtered = filter ? (*filter)(sk, skb) : 0;
-			break;
-		}
-#endif
-		default:
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर
+		शेष:
 			filtered = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (filtered < 0)
-			break;
-		if (filtered == 0) {
-			struct sk_buff *clone = skb_clone(skb, GFP_ATOMIC);
+		अगर (filtered < 0)
+			अवरोध;
+		अगर (filtered == 0) अणु
+			काष्ठा sk_buff *clone = skb_clone(skb, GFP_ATOMIC);
 
 			/* Not releasing hash table! */
-			if (clone) {
+			अगर (clone) अणु
 				nf_reset_ct(clone);
 				rawv6_rcv(sk, clone);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		sk = __raw_v6_lookup(net, sk_next(sk), nexthdr, daddr, saddr,
-				     inet6_iif(skb), inet6_sdif(skb));
-	}
+				     inet6_iअगर(skb), inet6_sdअगर(skb));
+	पूर्ण
 out:
-	read_unlock(&raw_v6_hashinfo.lock);
-	return delivered;
-}
+	पढ़ो_unlock(&raw_v6_hashinfo.lock);
+	वापस delivered;
+पूर्ण
 
-bool raw6_local_deliver(struct sk_buff *skb, int nexthdr)
-{
-	struct sock *raw_sk;
+bool raw6_local_deliver(काष्ठा sk_buff *skb, पूर्णांक nexthdr)
+अणु
+	काष्ठा sock *raw_sk;
 
 	raw_sk = sk_head(&raw_v6_hashinfo.ht[nexthdr & (RAW_HTABLE_SIZE - 1)]);
-	if (raw_sk && !ipv6_raw_deliver(skb, nexthdr))
-		raw_sk = NULL;
+	अगर (raw_sk && !ipv6_raw_deliver(skb, nexthdr))
+		raw_sk = शून्य;
 
-	return raw_sk != NULL;
-}
+	वापस raw_sk != शून्य;
+पूर्ण
 
 /* This cleans up af_inet6 a bit. -DaveM */
-static int rawv6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
-{
-	struct inet_sock *inet = inet_sk(sk);
-	struct ipv6_pinfo *np = inet6_sk(sk);
-	struct sockaddr_in6 *addr = (struct sockaddr_in6 *) uaddr;
+अटल पूर्णांक rawv6_bind(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
+अणु
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+	काष्ठा sockaddr_in6 *addr = (काष्ठा sockaddr_in6 *) uaddr;
 	__be32 v4addr = 0;
-	int addr_type;
-	int err;
+	पूर्णांक addr_type;
+	पूर्णांक err;
 
-	if (addr_len < SIN6_LEN_RFC2133)
-		return -EINVAL;
+	अगर (addr_len < SIN6_LEN_RFC2133)
+		वापस -EINVAL;
 
-	if (addr->sin6_family != AF_INET6)
-		return -EINVAL;
+	अगर (addr->sin6_family != AF_INET6)
+		वापस -EINVAL;
 
 	addr_type = ipv6_addr_type(&addr->sin6_addr);
 
 	/* Raw sockets are IPv6 only */
-	if (addr_type == IPV6_ADDR_MAPPED)
-		return -EADDRNOTAVAIL;
+	अगर (addr_type == IPV6_ADDR_MAPPED)
+		वापस -EADDRNOTAVAIL;
 
 	lock_sock(sk);
 
 	err = -EINVAL;
-	if (sk->sk_state != TCP_CLOSE)
-		goto out;
+	अगर (sk->sk_state != TCP_CLOSE)
+		जाओ out;
 
-	rcu_read_lock();
-	/* Check if the address belongs to the host. */
-	if (addr_type != IPV6_ADDR_ANY) {
-		struct net_device *dev = NULL;
+	rcu_पढ़ो_lock();
+	/* Check अगर the address beदीर्घs to the host. */
+	अगर (addr_type != IPV6_ADDR_ANY) अणु
+		काष्ठा net_device *dev = शून्य;
 
-		if (__ipv6_addr_needs_scope_id(addr_type)) {
-			if (addr_len >= sizeof(struct sockaddr_in6) &&
-			    addr->sin6_scope_id) {
-				/* Override any existing binding, if another
+		अगर (__ipv6_addr_needs_scope_id(addr_type)) अणु
+			अगर (addr_len >= माप(काष्ठा sockaddr_in6) &&
+			    addr->sin6_scope_id) अणु
+				/* Override any existing binding, अगर another
 				 * one is supplied by user.
 				 */
-				sk->sk_bound_dev_if = addr->sin6_scope_id;
-			}
+				sk->sk_bound_dev_अगर = addr->sin6_scope_id;
+			पूर्ण
 
-			/* Binding to link-local address requires an interface */
-			if (!sk->sk_bound_dev_if)
-				goto out_unlock;
-		}
+			/* Binding to link-local address requires an पूर्णांकerface */
+			अगर (!sk->sk_bound_dev_अगर)
+				जाओ out_unlock;
+		पूर्ण
 
-		if (sk->sk_bound_dev_if) {
+		अगर (sk->sk_bound_dev_अगर) अणु
 			err = -ENODEV;
 			dev = dev_get_by_index_rcu(sock_net(sk),
-						   sk->sk_bound_dev_if);
-			if (!dev)
-				goto out_unlock;
-		}
+						   sk->sk_bound_dev_अगर);
+			अगर (!dev)
+				जाओ out_unlock;
+		पूर्ण
 
 		/* ipv4 addr of the socket is invalid.  Only the
-		 * unspecified and mapped address have a v4 equivalent.
+		 * unspecअगरied and mapped address have a v4 equivalent.
 		 */
 		v4addr = LOOPBACK4_IPV6;
-		if (!(addr_type & IPV6_ADDR_MULTICAST) &&
-		    !ipv6_can_nonlocal_bind(sock_net(sk), inet)) {
+		अगर (!(addr_type & IPV6_ADDR_MULTICAST) &&
+		    !ipv6_can_nonlocal_bind(sock_net(sk), inet)) अणु
 			err = -EADDRNOTAVAIL;
-			if (!ipv6_chk_addr(sock_net(sk), &addr->sin6_addr,
-					   dev, 0)) {
-				goto out_unlock;
-			}
-		}
-	}
+			अगर (!ipv6_chk_addr(sock_net(sk), &addr->sin6_addr,
+					   dev, 0)) अणु
+				जाओ out_unlock;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	inet->inet_rcv_saddr = inet->inet_saddr = v4addr;
 	sk->sk_v6_rcv_saddr = addr->sin6_addr;
-	if (!(addr_type & IPV6_ADDR_MULTICAST))
+	अगर (!(addr_type & IPV6_ADDR_MULTICAST))
 		np->saddr = addr->sin6_addr;
 	err = 0;
 out_unlock:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rawv6_err(struct sock *sk, struct sk_buff *skb,
-	       struct inet6_skb_parm *opt,
-	       u8 type, u8 code, int offset, __be32 info)
-{
-	struct inet_sock *inet = inet_sk(sk);
-	struct ipv6_pinfo *np = inet6_sk(sk);
-	int err;
-	int harderr;
+अटल व्योम rawv6_err(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+	       काष्ठा inet6_skb_parm *opt,
+	       u8 type, u8 code, पूर्णांक offset, __be32 info)
+अणु
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+	पूर्णांक err;
+	पूर्णांक harderr;
 
-	/* Report error on raw socket, if:
+	/* Report error on raw socket, अगर:
 	   1. User requested recverr.
 	   2. Socket is connected (otherwise the error indication
 	      is useless without recverr and error is hard.
 	 */
-	if (!np->recverr && sk->sk_state != TCP_ESTABLISHED)
-		return;
+	अगर (!np->recverr && sk->sk_state != TCP_ESTABLISHED)
+		वापस;
 
 	harderr = icmpv6_err_convert(type, code, &err);
-	if (type == ICMPV6_PKT_TOOBIG) {
+	अगर (type == ICMPV6_PKT_TOOBIG) अणु
 		ip6_sk_update_pmtu(skb, sk, info);
 		harderr = (np->pmtudisc == IPV6_PMTUDISC_DO);
-	}
-	if (type == NDISC_REDIRECT) {
+	पूर्ण
+	अगर (type == NDISC_REसूचीECT) अणु
 		ip6_sk_redirect(skb, sk);
-		return;
-	}
-	if (np->recverr) {
+		वापस;
+	पूर्ण
+	अगर (np->recverr) अणु
 		u8 *payload = skb->data;
-		if (!inet->hdrincl)
+		अगर (!inet->hdrincl)
 			payload += offset;
 		ipv6_icmp_error(sk, skb, err, 0, ntohl(info), payload);
-	}
+	पूर्ण
 
-	if (np->recverr || harderr) {
+	अगर (np->recverr || harderr) अणु
 		sk->sk_err = err;
 		sk->sk_error_report(sk);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void raw6_icmp_error(struct sk_buff *skb, int nexthdr,
-		u8 type, u8 code, int inner_offset, __be32 info)
-{
-	struct sock *sk;
-	int hash;
-	const struct in6_addr *saddr, *daddr;
-	struct net *net;
+व्योम raw6_icmp_error(काष्ठा sk_buff *skb, पूर्णांक nexthdr,
+		u8 type, u8 code, पूर्णांक inner_offset, __be32 info)
+अणु
+	काष्ठा sock *sk;
+	पूर्णांक hash;
+	स्थिर काष्ठा in6_addr *saddr, *daddr;
+	काष्ठा net *net;
 
 	hash = nexthdr & (RAW_HTABLE_SIZE - 1);
 
-	read_lock(&raw_v6_hashinfo.lock);
+	पढ़ो_lock(&raw_v6_hashinfo.lock);
 	sk = sk_head(&raw_v6_hashinfo.ht[hash]);
-	if (sk) {
+	अगर (sk) अणु
 		/* Note: ipv6_hdr(skb) != skb->data */
-		const struct ipv6hdr *ip6h = (const struct ipv6hdr *)skb->data;
+		स्थिर काष्ठा ipv6hdr *ip6h = (स्थिर काष्ठा ipv6hdr *)skb->data;
 		saddr = &ip6h->saddr;
 		daddr = &ip6h->daddr;
 		net = dev_net(skb->dev);
 
-		while ((sk = __raw_v6_lookup(net, sk, nexthdr, saddr, daddr,
-					     inet6_iif(skb), inet6_iif(skb)))) {
-			rawv6_err(sk, skb, NULL, type, code,
+		जबतक ((sk = __raw_v6_lookup(net, sk, nexthdr, saddr, daddr,
+					     inet6_iअगर(skb), inet6_iअगर(skb)))) अणु
+			rawv6_err(sk, skb, शून्य, type, code,
 					inner_offset, info);
 			sk = sk_next(sk);
-		}
-	}
-	read_unlock(&raw_v6_hashinfo.lock);
-}
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&raw_v6_hashinfo.lock);
+पूर्ण
 
-static inline int rawv6_rcv_skb(struct sock *sk, struct sk_buff *skb)
-{
-	if ((raw6_sk(sk)->checksum || rcu_access_pointer(sk->sk_filter)) &&
-	    skb_checksum_complete(skb)) {
+अटल अंतरभूत पूर्णांक rawv6_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	अगर ((raw6_sk(sk)->checksum || rcu_access_poपूर्णांकer(sk->sk_filter)) &&
+	    skb_checksum_complete(skb)) अणु
 		atomic_inc(&sk->sk_drops);
-		kfree_skb(skb);
-		return NET_RX_DROP;
-	}
+		kमुक्त_skb(skb);
+		वापस NET_RX_DROP;
+	पूर्ण
 
 	/* Charge it to the socket. */
 	skb_dst_drop(skb);
-	if (sock_queue_rcv_skb(sk, skb) < 0) {
-		kfree_skb(skb);
-		return NET_RX_DROP;
-	}
+	अगर (sock_queue_rcv_skb(sk, skb) < 0) अणु
+		kमुक्त_skb(skb);
+		वापस NET_RX_DROP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	This is next to useless...
- *	if we demultiplex in network layer we don't need the extra call
+ *	अगर we demultiplex in network layer we करोn't need the extra call
  *	just to queue the skb...
- *	maybe we could have the network decide upon a hint if it
- *	should call raw_rcv for demultiplexing
+ *	maybe we could have the network decide upon a hपूर्णांक अगर it
+ *	should call raw_rcv क्रम demultiplexing
  */
-int rawv6_rcv(struct sock *sk, struct sk_buff *skb)
-{
-	struct inet_sock *inet = inet_sk(sk);
-	struct raw6_sock *rp = raw6_sk(sk);
+पूर्णांक rawv6_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा raw6_sock *rp = raw6_sk(sk);
 
-	if (!xfrm6_policy_check(sk, XFRM_POLICY_IN, skb)) {
+	अगर (!xfrm6_policy_check(sk, XFRM_POLICY_IN, skb)) अणु
 		atomic_inc(&sk->sk_drops);
-		kfree_skb(skb);
-		return NET_RX_DROP;
-	}
+		kमुक्त_skb(skb);
+		वापस NET_RX_DROP;
+	पूर्ण
 
-	if (!rp->checksum)
+	अगर (!rp->checksum)
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 
-	if (skb->ip_summed == CHECKSUM_COMPLETE) {
+	अगर (skb->ip_summed == CHECKSUM_COMPLETE) अणु
 		skb_postpull_rcsum(skb, skb_network_header(skb),
 				   skb_network_header_len(skb));
-		if (!csum_ipv6_magic(&ipv6_hdr(skb)->saddr,
+		अगर (!csum_ipv6_magic(&ipv6_hdr(skb)->saddr,
 				     &ipv6_hdr(skb)->daddr,
 				     skb->len, inet->inet_num, skb->csum))
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-	}
-	if (!skb_csum_unnecessary(skb))
+	पूर्ण
+	अगर (!skb_csum_unnecessary(skb))
 		skb->csum = ~csum_unfold(csum_ipv6_magic(&ipv6_hdr(skb)->saddr,
 							 &ipv6_hdr(skb)->daddr,
 							 skb->len,
 							 inet->inet_num, 0));
 
-	if (inet->hdrincl) {
-		if (skb_checksum_complete(skb)) {
+	अगर (inet->hdrincl) अणु
+		अगर (skb_checksum_complete(skb)) अणु
 			atomic_inc(&sk->sk_drops);
-			kfree_skb(skb);
-			return NET_RX_DROP;
-		}
-	}
+			kमुक्त_skb(skb);
+			वापस NET_RX_DROP;
+		पूर्ण
+	पूर्ण
 
 	rawv6_rcv_skb(sk, skb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- *	This should be easy, if there is something there
- *	we return it, otherwise we block.
+ *	This should be easy, अगर there is something there
+ *	we वापस it, otherwise we block.
  */
 
-static int rawv6_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
-			 int noblock, int flags, int *addr_len)
-{
-	struct ipv6_pinfo *np = inet6_sk(sk);
-	DECLARE_SOCKADDR(struct sockaddr_in6 *, sin6, msg->msg_name);
-	struct sk_buff *skb;
-	size_t copied;
-	int err;
+अटल पूर्णांक rawv6_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
+			 पूर्णांक noblock, पूर्णांक flags, पूर्णांक *addr_len)
+अणु
+	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+	DECLARE_SOCKADDR(काष्ठा sockaddr_in6 *, sin6, msg->msg_name);
+	काष्ठा sk_buff *skb;
+	माप_प्रकार copied;
+	पूर्णांक err;
 
-	if (flags & MSG_OOB)
-		return -EOPNOTSUPP;
+	अगर (flags & MSG_OOB)
+		वापस -EOPNOTSUPP;
 
-	if (flags & MSG_ERRQUEUE)
-		return ipv6_recv_error(sk, msg, len, addr_len);
+	अगर (flags & MSG_ERRQUEUE)
+		वापस ipv6_recv_error(sk, msg, len, addr_len);
 
-	if (np->rxpmtu && np->rxopt.bits.rxpmtu)
-		return ipv6_recv_rxpmtu(sk, msg, len, addr_len);
+	अगर (np->rxpmtu && np->rxopt.bits.rxpmtu)
+		वापस ipv6_recv_rxpmtu(sk, msg, len, addr_len);
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
 	copied = skb->len;
-	if (copied > len) {
+	अगर (copied > len) अणु
 		copied = len;
 		msg->msg_flags |= MSG_TRUNC;
-	}
+	पूर्ण
 
-	if (skb_csum_unnecessary(skb)) {
+	अगर (skb_csum_unnecessary(skb)) अणु
 		err = skb_copy_datagram_msg(skb, 0, msg, copied);
-	} else if (msg->msg_flags&MSG_TRUNC) {
-		if (__skb_checksum_complete(skb))
-			goto csum_copy_err;
+	पूर्ण अन्यथा अगर (msg->msg_flags&MSG_TRUNC) अणु
+		अगर (__skb_checksum_complete(skb))
+			जाओ csum_copy_err;
 		err = skb_copy_datagram_msg(skb, 0, msg, copied);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = skb_copy_and_csum_datagram_msg(skb, 0, msg);
-		if (err == -EINVAL)
-			goto csum_copy_err;
-	}
-	if (err)
-		goto out_free;
+		अगर (err == -EINVAL)
+			जाओ csum_copy_err;
+	पूर्ण
+	अगर (err)
+		जाओ out_मुक्त;
 
 	/* Copy the address. */
-	if (sin6) {
+	अगर (sin6) अणु
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = 0;
 		sin6->sin6_addr = ipv6_hdr(skb)->saddr;
 		sin6->sin6_flowinfo = 0;
-		sin6->sin6_scope_id = ipv6_iface_scope_id(&sin6->sin6_addr,
-							  inet6_iif(skb));
-		*addr_len = sizeof(*sin6);
-	}
+		sin6->sin6_scope_id = ipv6_अगरace_scope_id(&sin6->sin6_addr,
+							  inet6_iअगर(skb));
+		*addr_len = माप(*sin6);
+	पूर्ण
 
 	sock_recv_ts_and_drops(msg, sk, skb);
 
-	if (np->rxopt.all)
+	अगर (np->rxopt.all)
 		ip6_datagram_recv_ctl(sk, msg, skb);
 
 	err = copied;
-	if (flags & MSG_TRUNC)
+	अगर (flags & MSG_TRUNC)
 		err = skb->len;
 
-out_free:
-	skb_free_datagram(sk, skb);
+out_मुक्त:
+	skb_मुक्त_datagram(sk, skb);
 out:
-	return err;
+	वापस err;
 
 csum_copy_err:
-	skb_kill_datagram(sk, skb, flags);
+	skb_समाप्त_datagram(sk, skb, flags);
 
-	/* Error for blocking case is chosen to masquerade
+	/* Error क्रम blocking हाल is chosen to masquerade
 	   as some normal condition.
 	 */
 	err = (flags&MSG_DONTWAIT) ? -EAGAIN : -EHOSTUNREACH;
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static int rawv6_push_pending_frames(struct sock *sk, struct flowi6 *fl6,
-				     struct raw6_sock *rp)
-{
-	struct sk_buff *skb;
-	int err = 0;
-	int offset;
-	int len;
-	int total_len;
-	__wsum tmp_csum;
+अटल पूर्णांक rawv6_push_pending_frames(काष्ठा sock *sk, काष्ठा flowi6 *fl6,
+				     काष्ठा raw6_sock *rp)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = 0;
+	पूर्णांक offset;
+	पूर्णांक len;
+	पूर्णांक total_len;
+	__wsum पंचांगp_csum;
 	__sum16 csum;
 
-	if (!rp->checksum)
-		goto send;
+	अगर (!rp->checksum)
+		जाओ send;
 
-	skb = skb_peek(&sk->sk_write_queue);
-	if (!skb)
-		goto out;
+	skb = skb_peek(&sk->sk_ग_लिखो_queue);
+	अगर (!skb)
+		जाओ out;
 
 	offset = rp->offset;
 	total_len = inet_sk(sk)->cork.base.length;
-	if (offset >= total_len - 1) {
+	अगर (offset >= total_len - 1) अणु
 		err = -EINVAL;
 		ip6_flush_pending_frames(sk);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* should be check HW csum miyazawa */
-	if (skb_queue_len(&sk->sk_write_queue) == 1) {
+	अगर (skb_queue_len(&sk->sk_ग_लिखो_queue) == 1) अणु
 		/*
 		 * Only one fragment on the socket.
 		 */
-		tmp_csum = skb->csum;
-	} else {
-		struct sk_buff *csum_skb = NULL;
-		tmp_csum = 0;
+		पंचांगp_csum = skb->csum;
+	पूर्ण अन्यथा अणु
+		काष्ठा sk_buff *csum_skb = शून्य;
+		पंचांगp_csum = 0;
 
-		skb_queue_walk(&sk->sk_write_queue, skb) {
-			tmp_csum = csum_add(tmp_csum, skb->csum);
+		skb_queue_walk(&sk->sk_ग_लिखो_queue, skb) अणु
+			पंचांगp_csum = csum_add(पंचांगp_csum, skb->csum);
 
-			if (csum_skb)
-				continue;
+			अगर (csum_skb)
+				जारी;
 
 			len = skb->len - skb_transport_offset(skb);
-			if (offset >= len) {
+			अगर (offset >= len) अणु
 				offset -= len;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			csum_skb = skb;
-		}
+		पूर्ण
 
 		skb = csum_skb;
-	}
+	पूर्ण
 
 	offset += skb_transport_offset(skb);
 	err = skb_copy_bits(skb, offset, &csum, 2);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		ip6_flush_pending_frames(sk);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* in case cksum was not initialized */
-	if (unlikely(csum))
-		tmp_csum = csum_sub(tmp_csum, csum_unfold(csum));
+	/* in हाल cksum was not initialized */
+	अगर (unlikely(csum))
+		पंचांगp_csum = csum_sub(पंचांगp_csum, csum_unfold(csum));
 
 	csum = csum_ipv6_magic(&fl6->saddr, &fl6->daddr,
-			       total_len, fl6->flowi6_proto, tmp_csum);
+			       total_len, fl6->flowi6_proto, पंचांगp_csum);
 
-	if (csum == 0 && fl6->flowi6_proto == IPPROTO_UDP)
+	अगर (csum == 0 && fl6->flowi6_proto == IPPROTO_UDP)
 		csum = CSUM_MANGLED_0;
 
 	BUG_ON(skb_store_bits(skb, offset, &csum, 2));
@@ -612,42 +613,42 @@ static int rawv6_push_pending_frames(struct sock *sk, struct flowi6 *fl6,
 send:
 	err = ip6_push_pending_frames(sk);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rawv6_send_hdrinc(struct sock *sk, struct msghdr *msg, int length,
-			struct flowi6 *fl6, struct dst_entry **dstp,
-			unsigned int flags, const struct sockcm_cookie *sockc)
-{
-	struct ipv6_pinfo *np = inet6_sk(sk);
-	struct net *net = sock_net(sk);
-	struct ipv6hdr *iph;
-	struct sk_buff *skb;
-	int err;
-	struct rt6_info *rt = (struct rt6_info *)*dstp;
-	int hlen = LL_RESERVED_SPACE(rt->dst.dev);
-	int tlen = rt->dst.dev->needed_tailroom;
+अटल पूर्णांक rawv6_send_hdrinc(काष्ठा sock *sk, काष्ठा msghdr *msg, पूर्णांक length,
+			काष्ठा flowi6 *fl6, काष्ठा dst_entry **dstp,
+			अचिन्हित पूर्णांक flags, स्थिर काष्ठा sockcm_cookie *sockc)
+अणु
+	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा ipv6hdr *iph;
+	काष्ठा sk_buff *skb;
+	पूर्णांक err;
+	काष्ठा rt6_info *rt = (काष्ठा rt6_info *)*dstp;
+	पूर्णांक hlen = LL_RESERVED_SPACE(rt->dst.dev);
+	पूर्णांक tlen = rt->dst.dev->needed_tailroom;
 
-	if (length > rt->dst.dev->mtu) {
+	अगर (length > rt->dst.dev->mtu) अणु
 		ipv6_local_error(sk, EMSGSIZE, fl6, rt->dst.dev->mtu);
-		return -EMSGSIZE;
-	}
-	if (length < sizeof(struct ipv6hdr))
-		return -EINVAL;
-	if (flags&MSG_PROBE)
-		goto out;
+		वापस -EMSGSIZE;
+	पूर्ण
+	अगर (length < माप(काष्ठा ipv6hdr))
+		वापस -EINVAL;
+	अगर (flags&MSG_PROBE)
+		जाओ out;
 
 	skb = sock_alloc_send_skb(sk,
 				  length + hlen + tlen + 15,
 				  flags & MSG_DONTWAIT, &err);
-	if (!skb)
-		goto error;
+	अगर (!skb)
+		जाओ error;
 	skb_reserve(skb, hlen);
 
 	skb->protocol = htons(ETH_P_IPV6);
 	skb->priority = sk->sk_priority;
 	skb->mark = sockc->mark;
-	skb->tstamp = sockc->transmit_time;
+	skb->tstamp = sockc->transmit_समय;
 
 	skb_put(skb, length);
 	skb_reset_network_header(skb);
@@ -655,94 +656,94 @@ static int rawv6_send_hdrinc(struct sock *sk, struct msghdr *msg, int length,
 
 	skb->ip_summed = CHECKSUM_NONE;
 
-	skb_setup_tx_timestamp(skb, sockc->tsflags);
+	skb_setup_tx_बारtamp(skb, sockc->tsflags);
 
-	if (flags & MSG_CONFIRM)
+	अगर (flags & MSG_CONFIRM)
 		skb_set_dst_pending_confirm(skb, 1);
 
 	skb->transport_header = skb->network_header;
-	err = memcpy_from_msg(iph, msg, length);
-	if (err) {
+	err = स_नकल_from_msg(iph, msg, length);
+	अगर (err) अणु
 		err = -EFAULT;
-		kfree_skb(skb);
-		goto error;
-	}
+		kमुक्त_skb(skb);
+		जाओ error;
+	पूर्ण
 
 	skb_dst_set(skb, &rt->dst);
-	*dstp = NULL;
+	*dstp = शून्य;
 
-	/* if egress device is enslaved to an L3 master device pass the
-	 * skb to its handler for processing
+	/* अगर egress device is enslaved to an L3 master device pass the
+	 * skb to its handler क्रम processing
 	 */
 	skb = l3mdev_ip6_out(sk, skb);
-	if (unlikely(!skb))
-		return 0;
+	अगर (unlikely(!skb))
+		वापस 0;
 
-	/* Acquire rcu_read_lock() in case we need to use rt->rt6i_idev
-	 * in the error path. Since skb has been freed, the dst could
-	 * have been queued for deletion.
+	/* Acquire rcu_पढ़ो_lock() in हाल we need to use rt->rt6i_idev
+	 * in the error path. Since skb has been मुक्तd, the dst could
+	 * have been queued क्रम deletion.
 	 */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	IP6_UPD_PO_STATS(net, rt->rt6i_idev, IPSTATS_MIB_OUT, skb->len);
 	err = NF_HOOK(NFPROTO_IPV6, NF_INET_LOCAL_OUT, net, sk, skb,
-		      NULL, rt->dst.dev, dst_output);
-	if (err > 0)
-		err = net_xmit_errno(err);
-	if (err) {
+		      शून्य, rt->dst.dev, dst_output);
+	अगर (err > 0)
+		err = net_xmit_त्रुटि_सं(err);
+	अगर (err) अणु
 		IP6_INC_STATS(net, rt->rt6i_idev, IPSTATS_MIB_OUTDISCARDS);
-		rcu_read_unlock();
-		goto error_check;
-	}
-	rcu_read_unlock();
+		rcu_पढ़ो_unlock();
+		जाओ error_check;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 out:
-	return 0;
+	वापस 0;
 
 error:
 	IP6_INC_STATS(net, rt->rt6i_idev, IPSTATS_MIB_OUTDISCARDS);
 error_check:
-	if (err == -ENOBUFS && !np->recverr)
+	अगर (err == -ENOBUFS && !np->recverr)
 		err = 0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct raw6_frag_vec {
-	struct msghdr *msg;
-	int hlen;
-	char c[4];
-};
+काष्ठा raw6_frag_vec अणु
+	काष्ठा msghdr *msg;
+	पूर्णांक hlen;
+	अक्षर c[4];
+पूर्ण;
 
-static int rawv6_probe_proto_opt(struct raw6_frag_vec *rfv, struct flowi6 *fl6)
-{
-	int err = 0;
-	switch (fl6->flowi6_proto) {
-	case IPPROTO_ICMPV6:
+अटल पूर्णांक rawv6_probe_proto_opt(काष्ठा raw6_frag_vec *rfv, काष्ठा flowi6 *fl6)
+अणु
+	पूर्णांक err = 0;
+	चयन (fl6->flowi6_proto) अणु
+	हाल IPPROTO_ICMPV6:
 		rfv->hlen = 2;
-		err = memcpy_from_msg(rfv->c, rfv->msg, rfv->hlen);
-		if (!err) {
+		err = स_नकल_from_msg(rfv->c, rfv->msg, rfv->hlen);
+		अगर (!err) अणु
 			fl6->fl6_icmp_type = rfv->c[0];
 			fl6->fl6_icmp_code = rfv->c[1];
-		}
-		break;
-	case IPPROTO_MH:
+		पूर्ण
+		अवरोध;
+	हाल IPPROTO_MH:
 		rfv->hlen = 4;
-		err = memcpy_from_msg(rfv->c, rfv->msg, rfv->hlen);
-		if (!err)
+		err = स_नकल_from_msg(rfv->c, rfv->msg, rfv->hlen);
+		अगर (!err)
 			fl6->fl6_mh_type = rfv->c[2];
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int raw6_getfrag(void *from, char *to, int offset, int len, int odd,
-		       struct sk_buff *skb)
-{
-	struct raw6_frag_vec *rfv = from;
+अटल पूर्णांक raw6_getfrag(व्योम *from, अक्षर *to, पूर्णांक offset, पूर्णांक len, पूर्णांक odd,
+		       काष्ठा sk_buff *skb)
+अणु
+	काष्ठा raw6_frag_vec *rfv = from;
 
-	if (offset < rfv->hlen) {
-		int copy = min(rfv->hlen - offset, len);
+	अगर (offset < rfv->hlen) अणु
+		पूर्णांक copy = min(rfv->hlen - offset, len);
 
-		if (skb->ip_summed == CHECKSUM_PARTIAL)
-			memcpy(to, rfv->c + offset, copy);
-		else
+		अगर (skb->ip_summed == CHECKSUM_PARTIAL)
+			स_नकल(to, rfv->c + offset, copy);
+		अन्यथा
 			skb->csum = csum_block_add(
 				skb->csum,
 				csum_partial_copy_nocheck(rfv->c + offset,
@@ -754,56 +755,56 @@ static int raw6_getfrag(void *from, char *to, int offset, int len, int odd,
 		to += copy;
 		len -= copy;
 
-		if (!len)
-			return 0;
-	}
+		अगर (!len)
+			वापस 0;
+	पूर्ण
 
 	offset -= rfv->hlen;
 
-	return ip_generic_getfrag(rfv->msg, to, offset, len, odd, skb);
-}
+	वापस ip_generic_getfrag(rfv->msg, to, offset, len, odd, skb);
+पूर्ण
 
-static int rawv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
-{
-	struct ipv6_txoptions *opt_to_free = NULL;
-	struct ipv6_txoptions opt_space;
-	DECLARE_SOCKADDR(struct sockaddr_in6 *, sin6, msg->msg_name);
-	struct in6_addr *daddr, *final_p, final;
-	struct inet_sock *inet = inet_sk(sk);
-	struct ipv6_pinfo *np = inet6_sk(sk);
-	struct raw6_sock *rp = raw6_sk(sk);
-	struct ipv6_txoptions *opt = NULL;
-	struct ip6_flowlabel *flowlabel = NULL;
-	struct dst_entry *dst = NULL;
-	struct raw6_frag_vec rfv;
-	struct flowi6 fl6;
-	struct ipcm6_cookie ipc6;
-	int addr_len = msg->msg_namelen;
-	int hdrincl;
+अटल पूर्णांक rawv6_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len)
+अणु
+	काष्ठा ipv6_txoptions *opt_to_मुक्त = शून्य;
+	काष्ठा ipv6_txoptions opt_space;
+	DECLARE_SOCKADDR(काष्ठा sockaddr_in6 *, sin6, msg->msg_name);
+	काष्ठा in6_addr *daddr, *final_p, final;
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+	काष्ठा raw6_sock *rp = raw6_sk(sk);
+	काष्ठा ipv6_txoptions *opt = शून्य;
+	काष्ठा ip6_flowlabel *flowlabel = शून्य;
+	काष्ठा dst_entry *dst = शून्य;
+	काष्ठा raw6_frag_vec rfv;
+	काष्ठा flowi6 fl6;
+	काष्ठा ipcm6_cookie ipc6;
+	पूर्णांक addr_len = msg->msg_namelen;
+	पूर्णांक hdrincl;
 	u16 proto;
-	int err;
+	पूर्णांक err;
 
 	/* Rough check on arithmetic overflow,
 	   better check is made in ip6_append_data().
 	 */
-	if (len > INT_MAX)
-		return -EMSGSIZE;
+	अगर (len > पूर्णांक_उच्च)
+		वापस -EMSGSIZE;
 
 	/* Mirror BSD error message compatibility */
-	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+	अगर (msg->msg_flags & MSG_OOB)
+		वापस -EOPNOTSUPP;
 
 	/* hdrincl should be READ_ONCE(inet->hdrincl)
-	 * but READ_ONCE() doesn't work with bit fields.
+	 * but READ_ONCE() करोesn't work with bit fields.
 	 * Doing this indirectly yields the same result.
 	 */
 	hdrincl = inet->hdrincl;
 	hdrincl = READ_ONCE(hdrincl);
 
 	/*
-	 *	Get and verify the address.
+	 *	Get and verअगरy the address.
 	 */
-	memset(&fl6, 0, sizeof(fl6));
+	स_रखो(&fl6, 0, माप(fl6));
 
 	fl6.flowi6_mark = sk->sk_mark;
 	fl6.flowi6_uid = sk->sk_uid;
@@ -812,226 +813,226 @@ static int rawv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	ipc6.sockc.tsflags = sk->sk_tsflags;
 	ipc6.sockc.mark = sk->sk_mark;
 
-	if (sin6) {
-		if (addr_len < SIN6_LEN_RFC2133)
-			return -EINVAL;
+	अगर (sin6) अणु
+		अगर (addr_len < SIN6_LEN_RFC2133)
+			वापस -EINVAL;
 
-		if (sin6->sin6_family && sin6->sin6_family != AF_INET6)
-			return -EAFNOSUPPORT;
+		अगर (sin6->sin6_family && sin6->sin6_family != AF_INET6)
+			वापस -EAFNOSUPPORT;
 
 		/* port is the proto value [0..255] carried in nexthdr */
 		proto = ntohs(sin6->sin6_port);
 
-		if (!proto)
+		अगर (!proto)
 			proto = inet->inet_num;
-		else if (proto != inet->inet_num)
-			return -EINVAL;
+		अन्यथा अगर (proto != inet->inet_num)
+			वापस -EINVAL;
 
-		if (proto > 255)
-			return -EINVAL;
+		अगर (proto > 255)
+			वापस -EINVAL;
 
 		daddr = &sin6->sin6_addr;
-		if (np->sndflow) {
+		अगर (np->sndflow) अणु
 			fl6.flowlabel = sin6->sin6_flowinfo&IPV6_FLOWINFO_MASK;
-			if (fl6.flowlabel&IPV6_FLOWLABEL_MASK) {
+			अगर (fl6.flowlabel&IPV6_FLOWLABEL_MASK) अणु
 				flowlabel = fl6_sock_lookup(sk, fl6.flowlabel);
-				if (IS_ERR(flowlabel))
-					return -EINVAL;
-			}
-		}
+				अगर (IS_ERR(flowlabel))
+					वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * Otherwise it will be difficult to maintain
+		 * Otherwise it will be dअगरficult to मुख्यtain
 		 * sk->sk_dst_cache.
 		 */
-		if (sk->sk_state == TCP_ESTABLISHED &&
+		अगर (sk->sk_state == TCP_ESTABLISHED &&
 		    ipv6_addr_equal(daddr, &sk->sk_v6_daddr))
 			daddr = &sk->sk_v6_daddr;
 
-		if (addr_len >= sizeof(struct sockaddr_in6) &&
+		अगर (addr_len >= माप(काष्ठा sockaddr_in6) &&
 		    sin6->sin6_scope_id &&
 		    __ipv6_addr_needs_scope_id(__ipv6_addr_type(daddr)))
-			fl6.flowi6_oif = sin6->sin6_scope_id;
-	} else {
-		if (sk->sk_state != TCP_ESTABLISHED)
-			return -EDESTADDRREQ;
+			fl6.flowi6_oअगर = sin6->sin6_scope_id;
+	पूर्ण अन्यथा अणु
+		अगर (sk->sk_state != TCP_ESTABLISHED)
+			वापस -EDESTADDRREQ;
 
 		proto = inet->inet_num;
 		daddr = &sk->sk_v6_daddr;
 		fl6.flowlabel = np->flow_label;
-	}
+	पूर्ण
 
-	if (fl6.flowi6_oif == 0)
-		fl6.flowi6_oif = sk->sk_bound_dev_if;
+	अगर (fl6.flowi6_oअगर == 0)
+		fl6.flowi6_oअगर = sk->sk_bound_dev_अगर;
 
-	if (msg->msg_controllen) {
+	अगर (msg->msg_controllen) अणु
 		opt = &opt_space;
-		memset(opt, 0, sizeof(struct ipv6_txoptions));
-		opt->tot_len = sizeof(struct ipv6_txoptions);
+		स_रखो(opt, 0, माप(काष्ठा ipv6_txoptions));
+		opt->tot_len = माप(काष्ठा ipv6_txoptions);
 		ipc6.opt = opt;
 
 		err = ip6_datagram_send_ctl(sock_net(sk), sk, msg, &fl6, &ipc6);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			fl6_sock_release(flowlabel);
-			return err;
-		}
-		if ((fl6.flowlabel&IPV6_FLOWLABEL_MASK) && !flowlabel) {
+			वापस err;
+		पूर्ण
+		अगर ((fl6.flowlabel&IPV6_FLOWLABEL_MASK) && !flowlabel) अणु
 			flowlabel = fl6_sock_lookup(sk, fl6.flowlabel);
-			if (IS_ERR(flowlabel))
-				return -EINVAL;
-		}
-		if (!(opt->opt_nflen|opt->opt_flen))
-			opt = NULL;
-	}
-	if (!opt) {
+			अगर (IS_ERR(flowlabel))
+				वापस -EINVAL;
+		पूर्ण
+		अगर (!(opt->opt_nflen|opt->opt_flen))
+			opt = शून्य;
+	पूर्ण
+	अगर (!opt) अणु
 		opt = txopt_get(np);
-		opt_to_free = opt;
-	}
-	if (flowlabel)
+		opt_to_मुक्त = opt;
+	पूर्ण
+	अगर (flowlabel)
 		opt = fl6_merge_options(&opt_space, flowlabel, opt);
 	opt = ipv6_fixup_options(&opt_space, opt);
 
 	fl6.flowi6_proto = proto;
 	fl6.flowi6_mark = ipc6.sockc.mark;
 
-	if (!hdrincl) {
+	अगर (!hdrincl) अणु
 		rfv.msg = msg;
 		rfv.hlen = 0;
 		err = rawv6_probe_proto_opt(&rfv, &fl6);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
-	if (!ipv6_addr_any(daddr))
+	अगर (!ipv6_addr_any(daddr))
 		fl6.daddr = *daddr;
-	else
+	अन्यथा
 		fl6.daddr.s6_addr[15] = 0x1; /* :: means loopback (BSD'ism) */
-	if (ipv6_addr_any(&fl6.saddr) && !ipv6_addr_any(&np->saddr))
+	अगर (ipv6_addr_any(&fl6.saddr) && !ipv6_addr_any(&np->saddr))
 		fl6.saddr = np->saddr;
 
 	final_p = fl6_update_dst(&fl6, opt, &final);
 
-	if (!fl6.flowi6_oif && ipv6_addr_is_multicast(&fl6.daddr))
-		fl6.flowi6_oif = np->mcast_oif;
-	else if (!fl6.flowi6_oif)
-		fl6.flowi6_oif = np->ucast_oif;
-	security_sk_classify_flow(sk, flowi6_to_flowi_common(&fl6));
+	अगर (!fl6.flowi6_oअगर && ipv6_addr_is_multicast(&fl6.daddr))
+		fl6.flowi6_oअगर = np->mcast_oअगर;
+	अन्यथा अगर (!fl6.flowi6_oअगर)
+		fl6.flowi6_oअगर = np->ucast_oअगर;
+	security_sk_classअगरy_flow(sk, flowi6_to_flowi_common(&fl6));
 
-	if (hdrincl)
+	अगर (hdrincl)
 		fl6.flowi6_flags |= FLOWI_FLAG_KNOWN_NH;
 
-	if (ipc6.tclass < 0)
+	अगर (ipc6.tclass < 0)
 		ipc6.tclass = np->tclass;
 
 	fl6.flowlabel = ip6_make_flowinfo(ipc6.tclass, fl6.flowlabel);
 
 	dst = ip6_dst_lookup_flow(sock_net(sk), sk, &fl6, final_p);
-	if (IS_ERR(dst)) {
+	अगर (IS_ERR(dst)) अणु
 		err = PTR_ERR(dst);
-		goto out;
-	}
-	if (ipc6.hlimit < 0)
+		जाओ out;
+	पूर्ण
+	अगर (ipc6.hlimit < 0)
 		ipc6.hlimit = ip6_sk_dst_hoplimit(np, &fl6, dst);
 
-	if (ipc6.dontfrag < 0)
-		ipc6.dontfrag = np->dontfrag;
+	अगर (ipc6.करोntfrag < 0)
+		ipc6.करोntfrag = np->करोntfrag;
 
-	if (msg->msg_flags&MSG_CONFIRM)
-		goto do_confirm;
+	अगर (msg->msg_flags&MSG_CONFIRM)
+		जाओ करो_confirm;
 
 back_from_confirm:
-	if (hdrincl)
+	अगर (hdrincl)
 		err = rawv6_send_hdrinc(sk, msg, len, &fl6, &dst,
 					msg->msg_flags, &ipc6.sockc);
-	else {
+	अन्यथा अणु
 		ipc6.opt = opt;
 		lock_sock(sk);
 		err = ip6_append_data(sk, raw6_getfrag, &rfv,
-			len, 0, &ipc6, &fl6, (struct rt6_info *)dst,
+			len, 0, &ipc6, &fl6, (काष्ठा rt6_info *)dst,
 			msg->msg_flags);
 
-		if (err)
+		अगर (err)
 			ip6_flush_pending_frames(sk);
-		else if (!(msg->msg_flags & MSG_MORE))
+		अन्यथा अगर (!(msg->msg_flags & MSG_MORE))
 			err = rawv6_push_pending_frames(sk, &fl6, rp);
 		release_sock(sk);
-	}
-done:
+	पूर्ण
+करोne:
 	dst_release(dst);
 out:
 	fl6_sock_release(flowlabel);
-	txopt_put(opt_to_free);
-	return err < 0 ? err : len;
-do_confirm:
-	if (msg->msg_flags & MSG_PROBE)
+	txopt_put(opt_to_मुक्त);
+	वापस err < 0 ? err : len;
+करो_confirm:
+	अगर (msg->msg_flags & MSG_PROBE)
 		dst_confirm_neigh(dst, &fl6.daddr);
-	if (!(msg->msg_flags & MSG_PROBE) || len)
-		goto back_from_confirm;
+	अगर (!(msg->msg_flags & MSG_PROBE) || len)
+		जाओ back_from_confirm;
 	err = 0;
-	goto done;
-}
+	जाओ करोne;
+पूर्ण
 
-static int rawv6_seticmpfilter(struct sock *sk, int level, int optname,
-			       sockptr_t optval, int optlen)
-{
-	switch (optname) {
-	case ICMPV6_FILTER:
-		if (optlen > sizeof(struct icmp6_filter))
-			optlen = sizeof(struct icmp6_filter);
-		if (copy_from_sockptr(&raw6_sk(sk)->filter, optval, optlen))
-			return -EFAULT;
-		return 0;
-	default:
-		return -ENOPROTOOPT;
-	}
+अटल पूर्णांक rawv6_seticmpfilter(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			       sockptr_t optval, पूर्णांक optlen)
+अणु
+	चयन (optname) अणु
+	हाल ICMPV6_FILTER:
+		अगर (optlen > माप(काष्ठा icmp6_filter))
+			optlen = माप(काष्ठा icmp6_filter);
+		अगर (copy_from_sockptr(&raw6_sk(sk)->filter, optval, optlen))
+			वापस -EFAULT;
+		वापस 0;
+	शेष:
+		वापस -ENOPROTOOPT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rawv6_geticmpfilter(struct sock *sk, int level, int optname,
-			       char __user *optval, int __user *optlen)
-{
-	int len;
+अटल पूर्णांक rawv6_geticmpfilter(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			       अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	पूर्णांक len;
 
-	switch (optname) {
-	case ICMPV6_FILTER:
-		if (get_user(len, optlen))
-			return -EFAULT;
-		if (len < 0)
-			return -EINVAL;
-		if (len > sizeof(struct icmp6_filter))
-			len = sizeof(struct icmp6_filter);
-		if (put_user(len, optlen))
-			return -EFAULT;
-		if (copy_to_user(optval, &raw6_sk(sk)->filter, len))
-			return -EFAULT;
-		return 0;
-	default:
-		return -ENOPROTOOPT;
-	}
+	चयन (optname) अणु
+	हाल ICMPV6_FILTER:
+		अगर (get_user(len, optlen))
+			वापस -EFAULT;
+		अगर (len < 0)
+			वापस -EINVAL;
+		अगर (len > माप(काष्ठा icmp6_filter))
+			len = माप(काष्ठा icmp6_filter);
+		अगर (put_user(len, optlen))
+			वापस -EFAULT;
+		अगर (copy_to_user(optval, &raw6_sk(sk)->filter, len))
+			वापस -EFAULT;
+		वापस 0;
+	शेष:
+		वापस -ENOPROTOOPT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int do_rawv6_setsockopt(struct sock *sk, int level, int optname,
-			       sockptr_t optval, unsigned int optlen)
-{
-	struct raw6_sock *rp = raw6_sk(sk);
-	int val;
+अटल पूर्णांक करो_rawv6_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			       sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा raw6_sock *rp = raw6_sk(sk);
+	पूर्णांक val;
 
-	if (copy_from_sockptr(&val, optval, sizeof(val)))
-		return -EFAULT;
+	अगर (copy_from_sockptr(&val, optval, माप(val)))
+		वापस -EFAULT;
 
-	switch (optname) {
-	case IPV6_HDRINCL:
-		if (sk->sk_type != SOCK_RAW)
-			return -EINVAL;
+	चयन (optname) अणु
+	हाल IPV6_HDRINCL:
+		अगर (sk->sk_type != SOCK_RAW)
+			वापस -EINVAL;
 		inet_sk(sk)->hdrincl = !!val;
-		return 0;
-	case IPV6_CHECKSUM:
-		if (inet_sk(sk)->inet_num == IPPROTO_ICMPV6 &&
-		    level == IPPROTO_IPV6) {
+		वापस 0;
+	हाल IPV6_CHECKSUM:
+		अगर (inet_sk(sk)->inet_num == IPPROTO_ICMPV6 &&
+		    level == IPPROTO_IPV6) अणु
 			/*
 			 * RFC3542 tells that IPV6_CHECKSUM socket
 			 * option in the IPPROTO_IPV6 level is not
@@ -1040,311 +1041,311 @@ static int do_rawv6_setsockopt(struct sock *sk, int level, int optname,
 			 * level IPV6_CHECKSUM socket option
 			 * (Linux extension).
 			 */
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* You may get strange result with a positive odd offset;
 		   RFC2292bis agrees with me. */
-		if (val > 0 && (val&1))
-			return -EINVAL;
-		if (val < 0) {
+		अगर (val > 0 && (val&1))
+			वापस -EINVAL;
+		अगर (val < 0) अणु
 			rp->checksum = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			rp->checksum = 1;
 			rp->offset = val;
-		}
+		पूर्ण
 
-		return 0;
+		वापस 0;
 
-	default:
-		return -ENOPROTOOPT;
-	}
-}
+	शेष:
+		वापस -ENOPROTOOPT;
+	पूर्ण
+पूर्ण
 
-static int rawv6_setsockopt(struct sock *sk, int level, int optname,
-			    sockptr_t optval, unsigned int optlen)
-{
-	switch (level) {
-	case SOL_RAW:
-		break;
+अटल पूर्णांक rawv6_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			    sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	चयन (level) अणु
+	हाल SOL_RAW:
+		अवरोध;
 
-	case SOL_ICMPV6:
-		if (inet_sk(sk)->inet_num != IPPROTO_ICMPV6)
-			return -EOPNOTSUPP;
-		return rawv6_seticmpfilter(sk, level, optname, optval, optlen);
-	case SOL_IPV6:
-		if (optname == IPV6_CHECKSUM ||
+	हाल SOL_ICMPV6:
+		अगर (inet_sk(sk)->inet_num != IPPROTO_ICMPV6)
+			वापस -EOPNOTSUPP;
+		वापस rawv6_seticmpfilter(sk, level, optname, optval, optlen);
+	हाल SOL_IPV6:
+		अगर (optname == IPV6_CHECKSUM ||
 		    optname == IPV6_HDRINCL)
-			break;
+			अवरोध;
 		fallthrough;
-	default:
-		return ipv6_setsockopt(sk, level, optname, optval, optlen);
-	}
+	शेष:
+		वापस ipv6_setsockopt(sk, level, optname, optval, optlen);
+	पूर्ण
 
-	return do_rawv6_setsockopt(sk, level, optname, optval, optlen);
-}
+	वापस करो_rawv6_setsockopt(sk, level, optname, optval, optlen);
+पूर्ण
 
-static int do_rawv6_getsockopt(struct sock *sk, int level, int optname,
-			    char __user *optval, int __user *optlen)
-{
-	struct raw6_sock *rp = raw6_sk(sk);
-	int val, len;
+अटल पूर्णांक करो_rawv6_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			    अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा raw6_sock *rp = raw6_sk(sk);
+	पूर्णांक val, len;
 
-	if (get_user(len, optlen))
-		return -EFAULT;
+	अगर (get_user(len, optlen))
+		वापस -EFAULT;
 
-	switch (optname) {
-	case IPV6_HDRINCL:
+	चयन (optname) अणु
+	हाल IPV6_HDRINCL:
 		val = inet_sk(sk)->hdrincl;
-		break;
-	case IPV6_CHECKSUM:
+		अवरोध;
+	हाल IPV6_CHECKSUM:
 		/*
-		 * We allow getsockopt() for IPPROTO_IPV6-level
+		 * We allow माला_लोockopt() क्रम IPPROTO_IPV6-level
 		 * IPV6_CHECKSUM socket option on ICMPv6 sockets
 		 * since RFC3542 is silent about it.
 		 */
-		if (rp->checksum == 0)
+		अगर (rp->checksum == 0)
 			val = -1;
-		else
+		अन्यथा
 			val = rp->offset;
-		break;
+		अवरोध;
 
-	default:
-		return -ENOPROTOOPT;
-	}
+	शेष:
+		वापस -ENOPROTOOPT;
+	पूर्ण
 
-	len = min_t(unsigned int, sizeof(int), len);
+	len = min_t(अचिन्हित पूर्णांक, माप(पूर्णांक), len);
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int rawv6_getsockopt(struct sock *sk, int level, int optname,
-			  char __user *optval, int __user *optlen)
-{
-	switch (level) {
-	case SOL_RAW:
-		break;
+अटल पूर्णांक rawv6_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			  अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	चयन (level) अणु
+	हाल SOL_RAW:
+		अवरोध;
 
-	case SOL_ICMPV6:
-		if (inet_sk(sk)->inet_num != IPPROTO_ICMPV6)
-			return -EOPNOTSUPP;
-		return rawv6_geticmpfilter(sk, level, optname, optval, optlen);
-	case SOL_IPV6:
-		if (optname == IPV6_CHECKSUM ||
+	हाल SOL_ICMPV6:
+		अगर (inet_sk(sk)->inet_num != IPPROTO_ICMPV6)
+			वापस -EOPNOTSUPP;
+		वापस rawv6_geticmpfilter(sk, level, optname, optval, optlen);
+	हाल SOL_IPV6:
+		अगर (optname == IPV6_CHECKSUM ||
 		    optname == IPV6_HDRINCL)
-			break;
+			अवरोध;
 		fallthrough;
-	default:
-		return ipv6_getsockopt(sk, level, optname, optval, optlen);
-	}
+	शेष:
+		वापस ipv6_माला_लोockopt(sk, level, optname, optval, optlen);
+	पूर्ण
 
-	return do_rawv6_getsockopt(sk, level, optname, optval, optlen);
-}
+	वापस करो_rawv6_माला_लोockopt(sk, level, optname, optval, optlen);
+पूर्ण
 
-static int rawv6_ioctl(struct sock *sk, int cmd, unsigned long arg)
-{
-	switch (cmd) {
-	case SIOCOUTQ: {
-		int amount = sk_wmem_alloc_get(sk);
+अटल पूर्णांक rawv6_ioctl(काष्ठा sock *sk, पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल SIOCOUTQ: अणु
+		पूर्णांक amount = sk_wmem_alloc_get(sk);
 
-		return put_user(amount, (int __user *)arg);
-	}
-	case SIOCINQ: {
-		struct sk_buff *skb;
-		int amount = 0;
+		वापस put_user(amount, (पूर्णांक __user *)arg);
+	पूर्ण
+	हाल SIOCINQ: अणु
+		काष्ठा sk_buff *skb;
+		पूर्णांक amount = 0;
 
 		spin_lock_bh(&sk->sk_receive_queue.lock);
 		skb = skb_peek(&sk->sk_receive_queue);
-		if (skb)
+		अगर (skb)
 			amount = skb->len;
 		spin_unlock_bh(&sk->sk_receive_queue.lock);
-		return put_user(amount, (int __user *)arg);
-	}
+		वापस put_user(amount, (पूर्णांक __user *)arg);
+	पूर्ण
 
-	default:
-#ifdef CONFIG_IPV6_MROUTE
-		return ip6mr_ioctl(sk, cmd, (void __user *)arg);
-#else
-		return -ENOIOCTLCMD;
-#endif
-	}
-}
+	शेष:
+#अगर_घोषित CONFIG_IPV6_MROUTE
+		वापस ip6mr_ioctl(sk, cmd, (व्योम __user *)arg);
+#अन्यथा
+		वापस -ENOIOCTLCMD;
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static int compat_rawv6_ioctl(struct sock *sk, unsigned int cmd, unsigned long arg)
-{
-	switch (cmd) {
-	case SIOCOUTQ:
-	case SIOCINQ:
-		return -ENOIOCTLCMD;
-	default:
-#ifdef CONFIG_IPV6_MROUTE
-		return ip6mr_compat_ioctl(sk, cmd, compat_ptr(arg));
-#else
-		return -ENOIOCTLCMD;
-#endif
-	}
-}
-#endif
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक compat_rawv6_ioctl(काष्ठा sock *sk, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल SIOCOUTQ:
+	हाल SIOCINQ:
+		वापस -ENOIOCTLCMD;
+	शेष:
+#अगर_घोषित CONFIG_IPV6_MROUTE
+		वापस ip6mr_compat_ioctl(sk, cmd, compat_ptr(arg));
+#अन्यथा
+		वापस -ENOIOCTLCMD;
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static void rawv6_close(struct sock *sk, long timeout)
-{
-	if (inet_sk(sk)->inet_num == IPPROTO_RAW)
+अटल व्योम rawv6_बंद(काष्ठा sock *sk, दीर्घ समयout)
+अणु
+	अगर (inet_sk(sk)->inet_num == IPPROTO_RAW)
 		ip6_ra_control(sk, -1);
-	ip6mr_sk_done(sk);
+	ip6mr_sk_करोne(sk);
 	sk_common_release(sk);
-}
+पूर्ण
 
-static void raw6_destroy(struct sock *sk)
-{
+अटल व्योम raw6_destroy(काष्ठा sock *sk)
+अणु
 	lock_sock(sk);
 	ip6_flush_pending_frames(sk);
 	release_sock(sk);
 
 	inet6_destroy_sock(sk);
-}
+पूर्ण
 
-static int rawv6_init_sk(struct sock *sk)
-{
-	struct raw6_sock *rp = raw6_sk(sk);
+अटल पूर्णांक rawv6_init_sk(काष्ठा sock *sk)
+अणु
+	काष्ठा raw6_sock *rp = raw6_sk(sk);
 
-	switch (inet_sk(sk)->inet_num) {
-	case IPPROTO_ICMPV6:
+	चयन (inet_sk(sk)->inet_num) अणु
+	हाल IPPROTO_ICMPV6:
 		rp->checksum = 1;
 		rp->offset   = 2;
-		break;
-	case IPPROTO_MH:
+		अवरोध;
+	हाल IPPROTO_MH:
 		rp->checksum = 1;
 		rp->offset   = 4;
-		break;
-	default:
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-struct proto rawv6_prot = {
+काष्ठा proto rawv6_prot = अणु
 	.name		   = "RAWv6",
 	.owner		   = THIS_MODULE,
-	.close		   = rawv6_close,
+	.बंद		   = rawv6_बंद,
 	.destroy	   = raw6_destroy,
 	.connect	   = ip6_datagram_connect_v6_only,
 	.disconnect	   = __udp_disconnect,
 	.ioctl		   = rawv6_ioctl,
 	.init		   = rawv6_init_sk,
 	.setsockopt	   = rawv6_setsockopt,
-	.getsockopt	   = rawv6_getsockopt,
+	.माला_लोockopt	   = rawv6_माला_लोockopt,
 	.sendmsg	   = rawv6_sendmsg,
 	.recvmsg	   = rawv6_recvmsg,
 	.bind		   = rawv6_bind,
 	.backlog_rcv	   = rawv6_rcv_skb,
 	.hash		   = raw_hash_sk,
 	.unhash		   = raw_unhash_sk,
-	.obj_size	   = sizeof(struct raw6_sock),
-	.useroffset	   = offsetof(struct raw6_sock, filter),
-	.usersize	   = sizeof_field(struct raw6_sock, filter),
+	.obj_size	   = माप(काष्ठा raw6_sock),
+	.useroffset	   = दुरत्व(काष्ठा raw6_sock, filter),
+	.usersize	   = माप_field(काष्ठा raw6_sock, filter),
 	.h.raw_hash	   = &raw_v6_hashinfo,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	   = compat_rawv6_ioctl,
-#endif
-	.diag_destroy	   = raw_abort,
-};
+#पूर्ण_अगर
+	.diag_destroy	   = raw_पात,
+पूर्ण;
 
-#ifdef CONFIG_PROC_FS
-static int raw6_seq_show(struct seq_file *seq, void *v)
-{
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq, IPV6_SEQ_DGRAM_HEADER);
-	} else {
-		struct sock *sp = v;
+#अगर_घोषित CONFIG_PROC_FS
+अटल पूर्णांक raw6_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(seq, IPV6_SEQ_DGRAM_HEADER);
+	पूर्ण अन्यथा अणु
+		काष्ठा sock *sp = v;
 		__u16 srcp  = inet_sk(sp)->inet_num;
 		ip6_dgram_sock_seq_show(seq, v, srcp, 0,
-					raw_seq_private(seq)->bucket);
-	}
-	return 0;
-}
+					raw_seq_निजी(seq)->bucket);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations raw6_seq_ops = {
+अटल स्थिर काष्ठा seq_operations raw6_seq_ops = अणु
 	.start =	raw_seq_start,
 	.next =		raw_seq_next,
 	.stop =		raw_seq_stop,
 	.show =		raw6_seq_show,
-};
+पूर्ण;
 
-static int __net_init raw6_init_net(struct net *net)
-{
-	if (!proc_create_net_data("raw6", 0444, net->proc_net, &raw6_seq_ops,
-			sizeof(struct raw_iter_state), &raw_v6_hashinfo))
-		return -ENOMEM;
+अटल पूर्णांक __net_init raw6_init_net(काष्ठा net *net)
+अणु
+	अगर (!proc_create_net_data("raw6", 0444, net->proc_net, &raw6_seq_ops,
+			माप(काष्ठा raw_iter_state), &raw_v6_hashinfo))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit raw6_exit_net(struct net *net)
-{
-	remove_proc_entry("raw6", net->proc_net);
-}
+अटल व्योम __net_निकास raw6_निकास_net(काष्ठा net *net)
+अणु
+	हटाओ_proc_entry("raw6", net->proc_net);
+पूर्ण
 
-static struct pernet_operations raw6_net_ops = {
+अटल काष्ठा pernet_operations raw6_net_ops = अणु
 	.init = raw6_init_net,
-	.exit = raw6_exit_net,
-};
+	.निकास = raw6_निकास_net,
+पूर्ण;
 
-int __init raw6_proc_init(void)
-{
-	return register_pernet_subsys(&raw6_net_ops);
-}
+पूर्णांक __init raw6_proc_init(व्योम)
+अणु
+	वापस रेजिस्टर_pernet_subsys(&raw6_net_ops);
+पूर्ण
 
-void raw6_proc_exit(void)
-{
-	unregister_pernet_subsys(&raw6_net_ops);
-}
-#endif	/* CONFIG_PROC_FS */
+व्योम raw6_proc_निकास(व्योम)
+अणु
+	unरेजिस्टर_pernet_subsys(&raw6_net_ops);
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_PROC_FS */
 
 /* Same as inet6_dgram_ops, sans udp_poll.  */
-const struct proto_ops inet6_sockraw_ops = {
+स्थिर काष्ठा proto_ops inet6_sockraw_ops = अणु
 	.family		   = PF_INET6,
 	.owner		   = THIS_MODULE,
 	.release	   = inet6_release,
 	.bind		   = inet6_bind,
 	.connect	   = inet_dgram_connect,	/* ok		*/
-	.socketpair	   = sock_no_socketpair,	/* a do nothing	*/
-	.accept		   = sock_no_accept,		/* a do nothing	*/
+	.socketpair	   = sock_no_socketpair,	/* a करो nothing	*/
+	.accept		   = sock_no_accept,		/* a करो nothing	*/
 	.getname	   = inet6_getname,
 	.poll		   = datagram_poll,		/* ok		*/
 	.ioctl		   = inet6_ioctl,		/* must change  */
 	.gettstamp	   = sock_gettstamp,
 	.listen		   = sock_no_listen,		/* ok		*/
-	.shutdown	   = inet_shutdown,		/* ok		*/
+	.shutकरोwn	   = inet_shutकरोwn,		/* ok		*/
 	.setsockopt	   = sock_common_setsockopt,	/* ok		*/
-	.getsockopt	   = sock_common_getsockopt,	/* ok		*/
+	.माला_लोockopt	   = sock_common_माला_लोockopt,	/* ok		*/
 	.sendmsg	   = inet_sendmsg,		/* ok		*/
 	.recvmsg	   = sock_common_recvmsg,	/* ok		*/
 	.mmap		   = sock_no_mmap,
 	.sendpage	   = sock_no_sendpage,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	   = inet6_compat_ioctl,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static struct inet_protosw rawv6_protosw = {
+अटल काष्ठा inet_protosw rawv6_protosw = अणु
 	.type		= SOCK_RAW,
 	.protocol	= IPPROTO_IP,	/* wild card */
 	.prot		= &rawv6_prot,
 	.ops		= &inet6_sockraw_ops,
 	.flags		= INET_PROTOSW_REUSE,
-};
+पूर्ण;
 
-int __init rawv6_init(void)
-{
-	return inet6_register_protosw(&rawv6_protosw);
-}
+पूर्णांक __init rawv6_init(व्योम)
+अणु
+	वापस inet6_रेजिस्टर_protosw(&rawv6_protosw);
+पूर्ण
 
-void rawv6_exit(void)
-{
-	inet6_unregister_protosw(&rawv6_protosw);
-}
+व्योम rawv6_निकास(व्योम)
+अणु
+	inet6_unरेजिस्टर_protosw(&rawv6_protosw);
+पूर्ण

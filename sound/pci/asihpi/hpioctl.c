@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*******************************************************************************
     AudioScience HPI driver
-    Common Linux HPI ioctl and module probe/remove functions
+    Common Linux HPI ioctl and module probe/हटाओ functions
 
     Copyright (C) 1997-2014  AudioScience Inc. <support@audioscience.com>
 
 
 *******************************************************************************/
-#define SOURCEFILE_NAME "hpioctl.c"
+#घोषणा SOURCEखाता_NAME "hpioctl.c"
 
-#include "hpi_internal.h"
-#include "hpi_version.h"
-#include "hpimsginit.h"
-#include "hpidebug.h"
-#include "hpimsgx.h"
-#include "hpioctl.h"
-#include "hpicmn.h"
+#समावेश "hpi_internal.h"
+#समावेश "hpi_version.h"
+#समावेश "hpimsginit.h"
+#समावेश "hpidebug.h"
+#समावेश "hpimsgx.h"
+#समावेश "hpioctl.h"
+#समावेश "hpicmn.h"
 
-#include <linux/fs.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/moduleparam.h>
-#include <linux/uaccess.h>
-#include <linux/pci.h>
-#include <linux/stringify.h>
-#include <linux/module.h>
-#include <linux/vmalloc.h>
-#include <linux/nospec.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/module.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/nospec.h>
 
-#ifdef MODULE_FIRMWARE
+#अगर_घोषित MODULE_FIRMWARE
 MODULE_FIRMWARE("asihpi/dsp5000.bin");
 MODULE_FIRMWARE("asihpi/dsp6200.bin");
 MODULE_FIRMWARE("asihpi/dsp6205.bin");
@@ -36,197 +37,197 @@ MODULE_FIRMWARE("asihpi/dsp6400.bin");
 MODULE_FIRMWARE("asihpi/dsp6600.bin");
 MODULE_FIRMWARE("asihpi/dsp8700.bin");
 MODULE_FIRMWARE("asihpi/dsp8900.bin");
-#endif
+#पूर्ण_अगर
 
-static int prealloc_stream_buf;
-module_param(prealloc_stream_buf, int, 0444);
-MODULE_PARM_DESC(prealloc_stream_buf,
+अटल पूर्णांक pपुनः_स्मृति_stream_buf;
+module_param(pपुनः_स्मृति_stream_buf, पूर्णांक, 0444);
+MODULE_PARM_DESC(pपुनः_स्मृति_stream_buf,
 	"Preallocate size for per-adapter stream buffer");
 
 /* Allow the debug level to be changed after module load.
  E.g.   echo 2 > /sys/module/asihpi/parameters/hpiDebugLevel
 */
-module_param(hpi_debug_level, int, 0644);
+module_param(hpi_debug_level, पूर्णांक, 0644);
 MODULE_PARM_DESC(hpi_debug_level, "debug verbosity 0..5");
 
 /* List of adapters found */
-static struct hpi_adapter adapters[HPI_MAX_ADAPTERS];
+अटल काष्ठा hpi_adapter adapters[HPI_MAX_ADAPTERS];
 
 /* Wrapper function to HPI_Message to enable dumping of the
    message and response types.
 */
-static void hpi_send_recv_f(struct hpi_message *phm, struct hpi_response *phr,
-	struct file *file)
-{
-	if ((phm->adapter_index >= HPI_MAX_ADAPTERS)
+अटल व्योम hpi_send_recv_f(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr,
+	काष्ठा file *file)
+अणु
+	अगर ((phm->adapter_index >= HPI_MAX_ADAPTERS)
 		&& (phm->object != HPI_OBJ_SUBSYSTEM))
 		phr->error = HPI_ERROR_INVALID_OBJ_INDEX;
-	else
+	अन्यथा
 		hpi_send_recv_ex(phm, phr, file);
-}
+पूर्ण
 
-/* This is called from hpifunc.c functions, called by ALSA
- * (or other kernel process) In this case there is no file descriptor
- * available for the message cache code
+/* This is called from hpअगरunc.c functions, called by ALSA
+ * (or other kernel process) In this हाल there is no file descriptor
+ * available क्रम the message cache code
  */
-void hpi_send_recv(struct hpi_message *phm, struct hpi_response *phr)
-{
+व्योम hpi_send_recv(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
 	hpi_send_recv_f(phm, phr, HOWNER_KERNEL);
-}
+पूर्ण
 
 EXPORT_SYMBOL(hpi_send_recv);
-/* for radio-asihpi */
+/* क्रम radio-asihpi */
 
-int asihpi_hpi_release(struct file *file)
-{
-	struct hpi_message hm;
-	struct hpi_response hr;
+पूर्णांक asihpi_hpi_release(काष्ठा file *file)
+अणु
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
 
 /* HPI_DEBUG_LOG(INFO,"hpi_release file %p, pid %d\n", file, current->pid); */
-	/* close the subsystem just in case the application forgot to. */
+	/* बंद the subप्रणाली just in हाल the application क्रमgot to. */
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_SUBSYSTEM,
 		HPI_SUBSYS_CLOSE);
 	hpi_send_recv_ex(&hm, &hr, file);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-long asihpi_hpi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct hpi_ioctl_linux __user *phpi_ioctl_data;
-	void __user *puhm;
-	void __user *puhr;
-	union hpi_message_buffer_v1 *hm;
-	union hpi_response_buffer_v1 *hr;
+दीर्घ asihpi_hpi_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा hpi_ioctl_linux __user *phpi_ioctl_data;
+	व्योम __user *puhm;
+	व्योम __user *puhr;
+	जोड़ hpi_message_buffer_v1 *hm;
+	जोड़ hpi_response_buffer_v1 *hr;
 	u16 msg_size;
 	u16 res_max_size;
 	u32 uncopied_bytes;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (cmd != HPI_IOCTL_LINUX)
-		return -EINVAL;
+	अगर (cmd != HPI_IOCTL_LINUX)
+		वापस -EINVAL;
 
-	hm = kmalloc(sizeof(*hm), GFP_KERNEL);
-	hr = kzalloc(sizeof(*hr), GFP_KERNEL);
-	if (!hm || !hr) {
+	hm = kदो_स्मृति(माप(*hm), GFP_KERNEL);
+	hr = kzalloc(माप(*hr), GFP_KERNEL);
+	अगर (!hm || !hr) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	phpi_ioctl_data = (struct hpi_ioctl_linux __user *)arg;
+	phpi_ioctl_data = (काष्ठा hpi_ioctl_linux __user *)arg;
 
-	/* Read the message and response pointers from user space.  */
-	if (get_user(puhm, &phpi_ioctl_data->phm)
-		|| get_user(puhr, &phpi_ioctl_data->phr)) {
+	/* Read the message and response poपूर्णांकers from user space.  */
+	अगर (get_user(puhm, &phpi_ioctl_data->phm)
+		|| get_user(puhr, &phpi_ioctl_data->phr)) अणु
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Now read the message size and data from user space.  */
-	if (get_user(msg_size, (u16 __user *)puhm)) {
+	/* Now पढ़ो the message size and data from user space.  */
+	अगर (get_user(msg_size, (u16 __user *)puhm)) अणु
 		err = -EFAULT;
-		goto out;
-	}
-	if (msg_size > sizeof(*hm))
-		msg_size = sizeof(*hm);
+		जाओ out;
+	पूर्ण
+	अगर (msg_size > माप(*hm))
+		msg_size = माप(*hm);
 
-	/* printk(KERN_INFO "message size %d\n", hm->h.wSize); */
+	/* prपूर्णांकk(KERN_INFO "message size %d\n", hm->h.wSize); */
 
 	uncopied_bytes = copy_from_user(hm, puhm, msg_size);
-	if (uncopied_bytes) {
+	अगर (uncopied_bytes) अणु
 		HPI_DEBUG_LOG(ERROR, "uncopied bytes %d\n", uncopied_bytes);
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Override h.size in case it is changed between two userspace fetches */
+	/* Override h.size in हाल it is changed between two userspace fetches */
 	hm->h.size = msg_size;
 
-	if (get_user(res_max_size, (u16 __user *)puhr)) {
+	अगर (get_user(res_max_size, (u16 __user *)puhr)) अणु
 		err = -EFAULT;
-		goto out;
-	}
-	/* printk(KERN_INFO "user response size %d\n", res_max_size); */
-	if (res_max_size < sizeof(struct hpi_response_header)) {
+		जाओ out;
+	पूर्ण
+	/* prपूर्णांकk(KERN_INFO "user response size %d\n", res_max_size); */
+	अगर (res_max_size < माप(काष्ठा hpi_response_header)) अणु
 		HPI_DEBUG_LOG(WARNING, "small res size %d\n", res_max_size);
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	res_max_size = min_t(size_t, res_max_size, sizeof(*hr));
+	res_max_size = min_t(माप_प्रकार, res_max_size, माप(*hr));
 
-	switch (hm->h.function) {
-	case HPI_SUBSYS_CREATE_ADAPTER:
-	case HPI_ADAPTER_DELETE:
+	चयन (hm->h.function) अणु
+	हाल HPI_SUBSYS_CREATE_ADAPTER:
+	हाल HPI_ADAPTER_DELETE:
 		/* Application must not use these functions! */
-		hr->h.size = sizeof(hr->h);
+		hr->h.size = माप(hr->h);
 		hr->h.error = HPI_ERROR_INVALID_OPERATION;
 		hr->h.function = hm->h.function;
 		uncopied_bytes = copy_to_user(puhr, hr, hr->h.size);
-		if (uncopied_bytes)
+		अगर (uncopied_bytes)
 			err = -EFAULT;
-		else
+		अन्यथा
 			err = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hr->h.size = res_max_size;
-	if (hm->h.object == HPI_OBJ_SUBSYSTEM) {
+	अगर (hm->h.object == HPI_OBJ_SUBSYSTEM) अणु
 		hpi_send_recv_f(&hm->m0, &hr->r0, file);
-	} else {
-		u16 __user *ptr = NULL;
+	पूर्ण अन्यथा अणु
+		u16 __user *ptr = शून्य;
 		u32 size = 0;
-		/* -1=no data 0=read from user mem, 1=write to user mem */
-		int wrflag = -1;
-		struct hpi_adapter *pa = NULL;
+		/* -1=no data 0=पढ़ो from user mem, 1=ग_लिखो to user mem */
+		पूर्णांक wrflag = -1;
+		काष्ठा hpi_adapter *pa = शून्य;
 
-		if (hm->h.adapter_index < ARRAY_SIZE(adapters))
+		अगर (hm->h.adapter_index < ARRAY_SIZE(adapters))
 			pa = &adapters[array_index_nospec(hm->h.adapter_index,
 							  ARRAY_SIZE(adapters))];
 
-		if (!pa || !pa->adapter || !pa->adapter->type) {
+		अगर (!pa || !pa->adapter || !pa->adapter->type) अणु
 			hpi_init_response(&hr->r0, hm->h.object,
 				hm->h.function, HPI_ERROR_BAD_ADAPTER_NUMBER);
 
 			uncopied_bytes =
-				copy_to_user(puhr, hr, sizeof(hr->h));
-			if (uncopied_bytes)
+				copy_to_user(puhr, hr, माप(hr->h));
+			अगर (uncopied_bytes)
 				err = -EFAULT;
-			else
+			अन्यथा
 				err = 0;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (mutex_lock_interruptible(&pa->mutex)) {
+		अगर (mutex_lock_पूर्णांकerruptible(&pa->mutex)) अणु
 			err = -EINTR;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* Dig out any pointers embedded in the message.  */
-		switch (hm->h.function) {
-		case HPI_OSTREAM_WRITE:
-		case HPI_ISTREAM_READ:{
+		/* Dig out any poपूर्णांकers embedded in the message.  */
+		चयन (hm->h.function) अणु
+		हाल HPI_OSTREAM_WRITE:
+		हाल HPI_ISTREAM_READ:अणु
 				/* Yes, sparse, this is correct. */
 				ptr = (u16 __user *)hm->m0.u.d.u.data.pb_data;
 				size = hm->m0.u.d.u.data.data_size;
 
 				/* Allocate buffer according to application request.
-				   ?Is it better to alloc/free for the duration
+				   ?Is it better to alloc/मुक्त क्रम the duration
 				   of the transaction?
 				 */
-				if (pa->buffer_size < size) {
+				अगर (pa->buffer_size < size) अणु
 					HPI_DEBUG_LOG(DEBUG,
 						"Realloc adapter %d stream "
 						"buffer from %zd to %d\n",
 						hm->h.adapter_index,
 						pa->buffer_size, size);
-					if (pa->p_buffer) {
+					अगर (pa->p_buffer) अणु
 						pa->buffer_size = 0;
-						vfree(pa->p_buffer);
-					}
-					pa->p_buffer = vmalloc(size);
-					if (pa->p_buffer)
+						vमुक्त(pa->p_buffer);
+					पूर्ण
+					pa->p_buffer = vदो_स्मृति(size);
+					अगर (pa->p_buffer)
 						pa->buffer_size = size;
-					else {
+					अन्यथा अणु
 						HPI_DEBUG_LOG(ERROR,
 							"HPI could not allocate "
 							"stream buffer size %d\n",
@@ -234,140 +235,140 @@ long asihpi_hpi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 						mutex_unlock(&pa->mutex);
 						err = -EINVAL;
-						goto out;
-					}
-				}
+						जाओ out;
+					पूर्ण
+				पूर्ण
 
 				hm->m0.u.d.u.data.pb_data = pa->p_buffer;
-				if (hm->h.function == HPI_ISTREAM_READ)
+				अगर (hm->h.function == HPI_ISTREAM_READ)
 					/* from card, WRITE to user mem */
 					wrflag = 1;
-				else
+				अन्यथा
 					wrflag = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		default:
+		शेष:
 			size = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (size && (wrflag == 0)) {
+		अगर (size && (wrflag == 0)) अणु
 			uncopied_bytes =
 				copy_from_user(pa->p_buffer, ptr, size);
-			if (uncopied_bytes)
+			अगर (uncopied_bytes)
 				HPI_DEBUG_LOG(WARNING,
 					"Missed %d of %d "
 					"bytes from user\n", uncopied_bytes,
 					size);
-		}
+		पूर्ण
 
 		hpi_send_recv_f(&hm->m0, &hr->r0, file);
 
-		if (size && (wrflag == 1)) {
+		अगर (size && (wrflag == 1)) अणु
 			uncopied_bytes =
 				copy_to_user(ptr, pa->p_buffer, size);
-			if (uncopied_bytes)
+			अगर (uncopied_bytes)
 				HPI_DEBUG_LOG(WARNING,
 					"Missed %d of %d " "bytes to user\n",
 					uncopied_bytes, size);
-		}
+		पूर्ण
 
 		mutex_unlock(&pa->mutex);
-	}
+	पूर्ण
 
-	/* on return response size must be set */
-	/*printk(KERN_INFO "response size %d\n", hr->h.wSize); */
+	/* on वापस response size must be set */
+	/*prपूर्णांकk(KERN_INFO "response size %d\n", hr->h.wSize); */
 
-	if (!hr->h.size) {
+	अगर (!hr->h.size) अणु
 		HPI_DEBUG_LOG(ERROR, "response zero size\n");
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (hr->h.size > res_max_size) {
+	अगर (hr->h.size > res_max_size) अणु
 		HPI_DEBUG_LOG(ERROR, "response too big %d %d\n", hr->h.size,
 			res_max_size);
 		hr->h.error = HPI_ERROR_RESPONSE_BUFFER_TOO_SMALL;
-		hr->h.specific_error = hr->h.size;
-		hr->h.size = sizeof(hr->h);
-	}
+		hr->h.specअगरic_error = hr->h.size;
+		hr->h.size = माप(hr->h);
+	पूर्ण
 
 	uncopied_bytes = copy_to_user(puhr, hr, hr->h.size);
-	if (uncopied_bytes) {
+	अगर (uncopied_bytes) अणु
 		HPI_DEBUG_LOG(ERROR, "uncopied bytes %d\n", uncopied_bytes);
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	kfree(hm);
-	kfree(hr);
-	return err;
-}
+	kमुक्त(hm);
+	kमुक्त(hr);
+	वापस err;
+पूर्ण
 
-static int asihpi_irq_count;
+अटल पूर्णांक asihpi_irq_count;
 
-static irqreturn_t asihpi_isr(int irq, void *dev_id)
-{
-	struct hpi_adapter *a = dev_id;
-	int handled;
+अटल irqवापस_t asihpi_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा hpi_adapter *a = dev_id;
+	पूर्णांक handled;
 
-	if (!a->adapter->irq_query_and_clear) {
+	अगर (!a->adapter->irq_query_and_clear) अणु
 		pr_err("asihpi_isr ASI%04X:%d no handler\n", a->adapter->type,
 			a->adapter->index);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	handled = a->adapter->irq_query_and_clear(a->adapter, 0);
 
-	if (!handled)
-		return IRQ_NONE;
+	अगर (!handled)
+		वापस IRQ_NONE;
 
 	asihpi_irq_count++;
-	/* printk(KERN_INFO "asihpi_isr %d ASI%04X:%d irq handled\n",
+	/* prपूर्णांकk(KERN_INFO "asihpi_isr %d ASI%04X:%d irq handled\n",
 	   asihpi_irq_count, a->adapter->type, a->adapter->index); */
 
-	if (a->interrupt_callback)
-		return IRQ_WAKE_THREAD;
+	अगर (a->पूर्णांकerrupt_callback)
+		वापस IRQ_WAKE_THREAD;
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t asihpi_isr_thread(int irq, void *dev_id)
-{
-	struct hpi_adapter *a = dev_id;
+अटल irqवापस_t asihpi_isr_thपढ़ो(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा hpi_adapter *a = dev_id;
 
-	if (a->interrupt_callback)
-		a->interrupt_callback(a);
-	return IRQ_HANDLED;
-}
+	अगर (a->पूर्णांकerrupt_callback)
+		a->पूर्णांकerrupt_callback(a);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int asihpi_adapter_probe(struct pci_dev *pci_dev,
-			 const struct pci_device_id *pci_id)
-{
-	int idx, nm, low_latency_mode = 0, irq_supported = 0;
-	int adapter_index;
-	unsigned int memlen;
-	struct hpi_message hm;
-	struct hpi_response hr;
-	struct hpi_adapter adapter;
-	struct hpi_pci pci = { 0 };
+पूर्णांक asihpi_adapter_probe(काष्ठा pci_dev *pci_dev,
+			 स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	पूर्णांक idx, nm, low_latency_mode = 0, irq_supported = 0;
+	पूर्णांक adapter_index;
+	अचिन्हित पूर्णांक memlen;
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
+	काष्ठा hpi_adapter adapter;
+	काष्ठा hpi_pci pci = अणु 0 पूर्ण;
 
-	memset(&adapter, 0, sizeof(adapter));
+	स_रखो(&adapter, 0, माप(adapter));
 
-	dev_printk(KERN_DEBUG, &pci_dev->dev,
-		"probe %04x:%04x,%04x:%04x,%04x\n", pci_dev->vendor,
-		pci_dev->device, pci_dev->subsystem_vendor,
-		pci_dev->subsystem_device, pci_dev->devfn);
+	dev_prपूर्णांकk(KERN_DEBUG, &pci_dev->dev,
+		"probe %04x:%04x,%04x:%04x,%04x\n", pci_dev->venकरोr,
+		pci_dev->device, pci_dev->subप्रणाली_venकरोr,
+		pci_dev->subप्रणाली_device, pci_dev->devfn);
 
-	if (pci_enable_device(pci_dev) < 0) {
+	अगर (pci_enable_device(pci_dev) < 0) अणु
 		dev_err(&pci_dev->dev,
 			"pci_enable_device failed, disabling device\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	pci_set_master(pci_dev);	/* also sets latency timer if < 16 */
+	pci_set_master(pci_dev);	/* also sets latency समयr अगर < 16 */
 
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_SUBSYSTEM,
 		HPI_SUBSYS_CREATE_ADAPTER);
@@ -378,23 +379,23 @@ int asihpi_adapter_probe(struct pci_dev *pci_dev,
 
 	nm = HPI_MAX_ADAPTER_MEM_SPACES;
 
-	for (idx = 0; idx < nm; idx++) {
+	क्रम (idx = 0; idx < nm; idx++) अणु
 		HPI_DEBUG_LOG(INFO, "resource %d %pR\n", idx,
 			&pci_dev->resource[idx]);
 
-		if (pci_resource_flags(pci_dev, idx) & IORESOURCE_MEM) {
+		अगर (pci_resource_flags(pci_dev, idx) & IORESOURCE_MEM) अणु
 			memlen = pci_resource_len(pci_dev, idx);
 			pci.ap_mem_base[idx] =
 				ioremap(pci_resource_start(pci_dev, idx),
 				memlen);
-			if (!pci.ap_mem_base[idx]) {
+			अगर (!pci.ap_mem_base[idx]) अणु
 				HPI_DEBUG_LOG(ERROR,
 					"ioremap failed, aborting\n");
 				/* unmap previously mapped pci mem space */
-				goto err;
-			}
-		}
-	}
+				जाओ err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	pci.pci_dev = pci_dev;
 	hm.u.s.resource.bus_type = HPI_BUS_PCI;
@@ -402,60 +403,60 @@ int asihpi_adapter_probe(struct pci_dev *pci_dev,
 
 	/* call CreateAdapterObject on the relevant hpi module */
 	hpi_send_recv_ex(&hm, &hr, HOWNER_KERNEL);
-	if (hr.error)
-		goto err;
+	अगर (hr.error)
+		जाओ err;
 
 	adapter_index = hr.u.s.adapter_index;
 	adapter.adapter = hpi_find_adapter(adapter_index);
 
-	if (prealloc_stream_buf) {
-		adapter.p_buffer = vmalloc(prealloc_stream_buf);
-		if (!adapter.p_buffer) {
+	अगर (pपुनः_स्मृति_stream_buf) अणु
+		adapter.p_buffer = vदो_स्मृति(pपुनः_स्मृति_stream_buf);
+		अगर (!adapter.p_buffer) अणु
 			HPI_DEBUG_LOG(ERROR,
 				"HPI could not allocate "
 				"kernel buffer size %d\n",
-				prealloc_stream_buf);
-			goto err;
-		}
-	}
+				pपुनः_स्मृति_stream_buf);
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_ADAPTER,
 		HPI_ADAPTER_OPEN);
 	hm.adapter_index = adapter.adapter->index;
 	hpi_send_recv_ex(&hm, &hr, HOWNER_KERNEL);
 
-	if (hr.error) {
+	अगर (hr.error) अणु
 		HPI_DEBUG_LOG(ERROR, "HPI_ADAPTER_OPEN failed, aborting\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* Check if current mode == Low Latency mode */
+	/* Check अगर current mode == Low Latency mode */
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_ADAPTER,
 		HPI_ADAPTER_GET_MODE);
 	hm.adapter_index = adapter.adapter->index;
 	hpi_send_recv_ex(&hm, &hr, HOWNER_KERNEL);
 
-	if (!hr.error
+	अगर (!hr.error
 		&& hr.u.ax.mode.adapter_mode == HPI_ADAPTER_MODE_LOW_LATENCY)
 		low_latency_mode = 1;
-	else
+	अन्यथा
 		dev_info(&pci_dev->dev,
 			"Adapter at index %d is not in low latency mode\n",
 			adapter.adapter->index);
 
-	/* Check if IRQs are supported */
+	/* Check अगर IRQs are supported */
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_ADAPTER,
 		HPI_ADAPTER_GET_PROPERTY);
 	hm.adapter_index = adapter.adapter->index;
 	hm.u.ax.property_set.property = HPI_ADAPTER_PROPERTY_SUPPORTS_IRQ;
 	hpi_send_recv_ex(&hm, &hr, HOWNER_KERNEL);
-	if (hr.error || !hr.u.ax.property_get.parameter1) {
+	अगर (hr.error || !hr.u.ax.property_get.parameter1) अणु
 		dev_info(&pci_dev->dev,
 			"IRQs not supported by adapter at index %d\n",
 			adapter.adapter->index);
-	} else {
+	पूर्ण अन्यथा अणु
 		irq_supported = 1;
-	}
+	पूर्ण
 
 	/* WARNING can't init mutex in 'adapter'
 	 * and then copy it to adapters[] ?!?!
@@ -464,13 +465,13 @@ int asihpi_adapter_probe(struct pci_dev *pci_dev,
 	mutex_init(&adapters[adapter_index].mutex);
 	pci_set_drvdata(pci_dev, &adapters[adapter_index]);
 
-	if (low_latency_mode && irq_supported) {
-		if (!adapter.adapter->irq_query_and_clear) {
+	अगर (low_latency_mode && irq_supported) अणु
+		अगर (!adapter.adapter->irq_query_and_clear) अणु
 			dev_err(&pci_dev->dev,
 				"no IRQ handler for adapter %d, aborting\n",
 				adapter.adapter->index);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		/* Disable IRQ generation on DSP side by setting the rate to 0 */
 		hpi_init_message_response(&hm, &hr, HPI_OBJ_ADAPTER,
@@ -480,58 +481,58 @@ int asihpi_adapter_probe(struct pci_dev *pci_dev,
 		hm.u.ax.property_set.parameter1 = 0;
 		hm.u.ax.property_set.parameter2 = 0;
 		hpi_send_recv_ex(&hm, &hr, HOWNER_KERNEL);
-		if (hr.error) {
+		अगर (hr.error) अणु
 			HPI_DEBUG_LOG(ERROR,
 				"HPI_ADAPTER_GET_MODE failed, aborting\n");
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		/* Note: request_irq calls asihpi_isr here */
-		if (request_threaded_irq(pci_dev->irq, asihpi_isr,
-					 asihpi_isr_thread, IRQF_SHARED,
-					 "asihpi", &adapters[adapter_index])) {
+		अगर (request_thपढ़ोed_irq(pci_dev->irq, asihpi_isr,
+					 asihpi_isr_thपढ़ो, IRQF_SHARED,
+					 "asihpi", &adapters[adapter_index])) अणु
 			dev_err(&pci_dev->dev, "request_irq(%d) failed\n",
 				pci_dev->irq);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		adapters[adapter_index].interrupt_mode = 1;
+		adapters[adapter_index].पूर्णांकerrupt_mode = 1;
 
 		dev_info(&pci_dev->dev, "using irq %d\n", pci_dev->irq);
 		adapters[adapter_index].irq = pci_dev->irq;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_info(&pci_dev->dev, "using polled mode\n");
-	}
+	पूर्ण
 
 	dev_info(&pci_dev->dev, "probe succeeded for ASI%04X HPI index %d\n",
 		 adapter.adapter->type, adapter_index);
 
-	return 0;
+	वापस 0;
 
 err:
-	while (--idx >= 0) {
-		if (pci.ap_mem_base[idx]) {
+	जबतक (--idx >= 0) अणु
+		अगर (pci.ap_mem_base[idx]) अणु
 			iounmap(pci.ap_mem_base[idx]);
-			pci.ap_mem_base[idx] = NULL;
-		}
-	}
+			pci.ap_mem_base[idx] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (adapter.p_buffer) {
+	अगर (adapter.p_buffer) अणु
 		adapter.buffer_size = 0;
-		vfree(adapter.p_buffer);
-	}
+		vमुक्त(adapter.p_buffer);
+	पूर्ण
 
 	HPI_DEBUG_LOG(ERROR, "adapter_probe failed\n");
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-void asihpi_adapter_remove(struct pci_dev *pci_dev)
-{
-	int idx;
-	struct hpi_message hm;
-	struct hpi_response hr;
-	struct hpi_adapter *pa;
-	struct hpi_pci pci;
+व्योम asihpi_adapter_हटाओ(काष्ठा pci_dev *pci_dev)
+अणु
+	पूर्णांक idx;
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
+	काष्ठा hpi_adapter *pa;
+	काष्ठा hpi_pci pci;
 
 	pa = pci_get_drvdata(pci_dev);
 	pci = pa->adapter->pci;
@@ -551,44 +552,44 @@ void asihpi_adapter_remove(struct pci_dev *pci_dev)
 	hpi_send_recv_ex(&hm, &hr, HOWNER_KERNEL);
 
 	/* unmap PCI memory space, mapped during device init. */
-	for (idx = 0; idx < HPI_MAX_ADAPTER_MEM_SPACES; ++idx)
+	क्रम (idx = 0; idx < HPI_MAX_ADAPTER_MEM_SPACES; ++idx)
 		iounmap(pci.ap_mem_base[idx]);
 
-	if (pa->irq)
-		free_irq(pa->irq, pa);
+	अगर (pa->irq)
+		मुक्त_irq(pa->irq, pa);
 
-	vfree(pa->p_buffer);
+	vमुक्त(pa->p_buffer);
 
-	if (1)
+	अगर (1)
 		dev_info(&pci_dev->dev,
 			 "remove %04x:%04x,%04x:%04x,%04x, HPI index %d\n",
-			 pci_dev->vendor, pci_dev->device,
-			 pci_dev->subsystem_vendor, pci_dev->subsystem_device,
+			 pci_dev->venकरोr, pci_dev->device,
+			 pci_dev->subप्रणाली_venकरोr, pci_dev->subप्रणाली_device,
 			 pci_dev->devfn, pa->adapter->index);
 
-	memset(pa, 0, sizeof(*pa));
-}
+	स_रखो(pa, 0, माप(*pa));
+पूर्ण
 
-void __init asihpi_init(void)
-{
-	struct hpi_message hm;
-	struct hpi_response hr;
+व्योम __init asihpi_init(व्योम)
+अणु
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
 
-	memset(adapters, 0, sizeof(adapters));
+	स_रखो(adapters, 0, माप(adapters));
 
-	printk(KERN_INFO "ASIHPI driver " HPI_VER_STRING "\n");
+	prपूर्णांकk(KERN_INFO "ASIHPI driver " HPI_VER_STRING "\n");
 
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_SUBSYSTEM,
 		HPI_SUBSYS_DRIVER_LOAD);
 	hpi_send_recv_ex(&hm, &hr, HOWNER_KERNEL);
-}
+पूर्ण
 
-void asihpi_exit(void)
-{
-	struct hpi_message hm;
-	struct hpi_response hr;
+व्योम asihpi_निकास(व्योम)
+अणु
+	काष्ठा hpi_message hm;
+	काष्ठा hpi_response hr;
 
 	hpi_init_message_response(&hm, &hr, HPI_OBJ_SUBSYSTEM,
 		HPI_SUBSYS_DRIVER_UNLOAD);
 	hpi_send_recv_ex(&hm, &hr, HOWNER_KERNEL);
-}
+पूर्ण

@@ -1,117 +1,118 @@
-{
+<शैली गुरु>
+अणु
 	"bounded loop, count to 4",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 1),
 	BPF_JMP_IMM(BPF_JLT, BPF_REG_0, 4, -2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
 	.retval = 4,
-},
-{
+पूर्ण,
+अणु
 	"bounded loop, count to 20",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 3),
 	BPF_JMP_IMM(BPF_JLT, BPF_REG_0, 20, -2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"bounded loop, count from positive unknown to 4",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_JMP_IMM(BPF_JSLT, BPF_REG_0, 0, 2),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 1),
 	BPF_JMP_IMM(BPF_JLT, BPF_REG_0, 4, -2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
 	.retval = 4,
-},
-{
+पूर्ण,
+अणु
 	"bounded loop, count from totally unknown to 4",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 1),
 	BPF_JMP_IMM(BPF_JLT, BPF_REG_0, 4, -2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"bounded loop, count to 4 with equality",
-	.insns = {
+	.insns = अणु
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 1),
 		BPF_JMP_IMM(BPF_JNE, BPF_REG_0, 4, -2),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"bounded loop, start in the middle",
-	.insns = {
+	.insns = अणु
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_JMP_A(1),
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 1),
 		BPF_JMP_IMM(BPF_JLT, BPF_REG_0, 4, -2),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.errstr = "back-edge",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
 	.retval = 4,
-},
-{
+पूर्ण,
+अणु
 	"bounded loop containing a forward jump",
-	.insns = {
+	.insns = अणु
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 1),
 		BPF_JMP_REG(BPF_JEQ, BPF_REG_0, BPF_REG_0, 0),
 		BPF_JMP_IMM(BPF_JLT, BPF_REG_0, 4, -3),
 		BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
 	.retval = 4,
-},
-{
+पूर्ण,
+अणु
 	"bounded loop that jumps out rather than in",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_6, 0),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, 1),
 	BPF_JMP_IMM(BPF_JGT, BPF_REG_6, 10000, 2),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_JMP_A(-4),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"infinite loop after a conditional jump",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 5),
 	BPF_JMP_IMM(BPF_JLT, BPF_REG_0, 4, 2),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 1),
 	BPF_JMP_A(-2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.errstr = "program is too large",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"bounded recursion",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_1, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, 1),
 	BPF_EXIT_INSN(),
@@ -121,26 +122,26 @@
 	BPF_EXIT_INSN(),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, -5),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.errstr = "back-edge",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"infinite loop in two jumps",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_JMP_A(0),
 	BPF_JMP_IMM(BPF_JLT, BPF_REG_0, 4, -2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.errstr = "loop detected",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"infinite loop: three-jump trick",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
@@ -154,25 +155,25 @@
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 1),
 	BPF_JMP_IMM(BPF_JLT, BPF_REG_0, 2, -11),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = REJECT,
 	.errstr = "loop detected",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"not-taken loop with back jump to 1st insn",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_0, 123),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 4, -2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_XDP,
 	.retval = 123,
-},
-{
+पूर्ण,
+अणु
 	"taken loop with back jump to 1st insn",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_1, 10),
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, 1),
@@ -182,14 +183,14 @@
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, -3),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_XDP,
 	.retval = 55,
-},
-{
+पूर्ण,
+अणु
 	"taken loop with back jump to 1st insn, 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_IMM(BPF_REG_1, 10),
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 1, 0, 1),
@@ -199,8 +200,8 @@
 	BPF_JMP32_IMM(BPF_JNE, BPF_REG_1, 0, -3),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_XDP,
 	.retval = 55,
-},
+पूर्ण,

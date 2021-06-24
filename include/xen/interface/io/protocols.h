@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __XEN_PROTOCOLS_H__
-#define __XEN_PROTOCOLS_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __XEN_PROTOCOLS_H__
+#घोषणा __XEN_PROTOCOLS_H__
 
-#define XEN_IO_PROTO_ABI_X86_32     "x86_32-abi"
-#define XEN_IO_PROTO_ABI_X86_64     "x86_64-abi"
-#define XEN_IO_PROTO_ABI_POWERPC64  "powerpc64-abi"
-#define XEN_IO_PROTO_ABI_ARM        "arm-abi"
+#घोषणा XEN_IO_PROTO_ABI_X86_32     "x86_32-abi"
+#घोषणा XEN_IO_PROTO_ABI_X86_64     "x86_64-abi"
+#घोषणा XEN_IO_PROTO_ABI_POWERPC64  "powerpc64-abi"
+#घोषणा XEN_IO_PROTO_ABI_ARM        "arm-abi"
 
-#if defined(__i386__)
+#अगर defined(__i386__)
 # define XEN_IO_PROTO_ABI_NATIVE XEN_IO_PROTO_ABI_X86_32
-#elif defined(__x86_64__)
+#या_अगर defined(__x86_64__)
 # define XEN_IO_PROTO_ABI_NATIVE XEN_IO_PROTO_ABI_X86_64
-#elif defined(__powerpc64__)
+#या_अगर defined(__घातerpc64__)
 # define XEN_IO_PROTO_ABI_NATIVE XEN_IO_PROTO_ABI_POWERPC64
-#elif defined(__arm__) || defined(__aarch64__)
+#या_अगर defined(__arm__) || defined(__aarch64__)
 # define XEN_IO_PROTO_ABI_NATIVE XEN_IO_PROTO_ABI_ARM
-#else
+#अन्यथा
 # error arch fixup needed here
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

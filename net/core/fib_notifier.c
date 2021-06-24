@@ -1,199 +1,200 @@
-#include <linux/rtnetlink.h>
-#include <linux/notifier.h>
-#include <linux/rcupdate.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
-#include <net/fib_notifier.h>
+<शैली गुरु>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/fib_notअगरier.h>
 
-static unsigned int fib_notifier_net_id;
+अटल अचिन्हित पूर्णांक fib_notअगरier_net_id;
 
-struct fib_notifier_net {
-	struct list_head fib_notifier_ops;
-	struct atomic_notifier_head fib_chain;
-};
+काष्ठा fib_notअगरier_net अणु
+	काष्ठा list_head fib_notअगरier_ops;
+	काष्ठा atomic_notअगरier_head fib_chain;
+पूर्ण;
 
-int call_fib_notifier(struct notifier_block *nb,
-		      enum fib_event_type event_type,
-		      struct fib_notifier_info *info)
-{
-	int err;
+पूर्णांक call_fib_notअगरier(काष्ठा notअगरier_block *nb,
+		      क्रमागत fib_event_type event_type,
+		      काष्ठा fib_notअगरier_info *info)
+अणु
+	पूर्णांक err;
 
-	err = nb->notifier_call(nb, event_type, info);
-	return notifier_to_errno(err);
-}
-EXPORT_SYMBOL(call_fib_notifier);
+	err = nb->notअगरier_call(nb, event_type, info);
+	वापस notअगरier_to_त्रुटि_सं(err);
+पूर्ण
+EXPORT_SYMBOL(call_fib_notअगरier);
 
-int call_fib_notifiers(struct net *net, enum fib_event_type event_type,
-		       struct fib_notifier_info *info)
-{
-	struct fib_notifier_net *fn_net = net_generic(net, fib_notifier_net_id);
-	int err;
+पूर्णांक call_fib_notअगरiers(काष्ठा net *net, क्रमागत fib_event_type event_type,
+		       काष्ठा fib_notअगरier_info *info)
+अणु
+	काष्ठा fib_notअगरier_net *fn_net = net_generic(net, fib_notअगरier_net_id);
+	पूर्णांक err;
 
-	err = atomic_notifier_call_chain(&fn_net->fib_chain, event_type, info);
-	return notifier_to_errno(err);
-}
-EXPORT_SYMBOL(call_fib_notifiers);
+	err = atomic_notअगरier_call_chain(&fn_net->fib_chain, event_type, info);
+	वापस notअगरier_to_त्रुटि_सं(err);
+पूर्ण
+EXPORT_SYMBOL(call_fib_notअगरiers);
 
-static unsigned int fib_seq_sum(struct net *net)
-{
-	struct fib_notifier_net *fn_net = net_generic(net, fib_notifier_net_id);
-	struct fib_notifier_ops *ops;
-	unsigned int fib_seq = 0;
+अटल अचिन्हित पूर्णांक fib_seq_sum(काष्ठा net *net)
+अणु
+	काष्ठा fib_notअगरier_net *fn_net = net_generic(net, fib_notअगरier_net_id);
+	काष्ठा fib_notअगरier_ops *ops;
+	अचिन्हित पूर्णांक fib_seq = 0;
 
 	rtnl_lock();
-	rcu_read_lock();
-	list_for_each_entry_rcu(ops, &fn_net->fib_notifier_ops, list) {
-		if (!try_module_get(ops->owner))
-			continue;
-		fib_seq += ops->fib_seq_read(net);
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(ops, &fn_net->fib_notअगरier_ops, list) अणु
+		अगर (!try_module_get(ops->owner))
+			जारी;
+		fib_seq += ops->fib_seq_पढ़ो(net);
 		module_put(ops->owner);
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 	rtnl_unlock();
 
-	return fib_seq;
-}
+	वापस fib_seq;
+पूर्ण
 
-static int fib_net_dump(struct net *net, struct notifier_block *nb,
-			struct netlink_ext_ack *extack)
-{
-	struct fib_notifier_net *fn_net = net_generic(net, fib_notifier_net_id);
-	struct fib_notifier_ops *ops;
-	int err = 0;
+अटल पूर्णांक fib_net_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा fib_notअगरier_net *fn_net = net_generic(net, fib_notअगरier_net_id);
+	काष्ठा fib_notअगरier_ops *ops;
+	पूर्णांक err = 0;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(ops, &fn_net->fib_notifier_ops, list) {
-		if (!try_module_get(ops->owner))
-			continue;
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(ops, &fn_net->fib_notअगरier_ops, list) अणु
+		अगर (!try_module_get(ops->owner))
+			जारी;
 		err = ops->fib_dump(net, nb, extack);
 		module_put(ops->owner);
-		if (err)
-			goto unlock;
-	}
+		अगर (err)
+			जाओ unlock;
+	पूर्ण
 
 unlock:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool fib_dump_is_consistent(struct net *net, struct notifier_block *nb,
-				   void (*cb)(struct notifier_block *nb),
-				   unsigned int fib_seq)
-{
-	struct fib_notifier_net *fn_net = net_generic(net, fib_notifier_net_id);
+अटल bool fib_dump_is_consistent(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+				   व्योम (*cb)(काष्ठा notअगरier_block *nb),
+				   अचिन्हित पूर्णांक fib_seq)
+अणु
+	काष्ठा fib_notअगरier_net *fn_net = net_generic(net, fib_notअगरier_net_id);
 
-	atomic_notifier_chain_register(&fn_net->fib_chain, nb);
-	if (fib_seq == fib_seq_sum(net))
-		return true;
-	atomic_notifier_chain_unregister(&fn_net->fib_chain, nb);
-	if (cb)
+	atomic_notअगरier_chain_रेजिस्टर(&fn_net->fib_chain, nb);
+	अगर (fib_seq == fib_seq_sum(net))
+		वापस true;
+	atomic_notअगरier_chain_unरेजिस्टर(&fn_net->fib_chain, nb);
+	अगर (cb)
 		cb(nb);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#define FIB_DUMP_MAX_RETRIES 5
-int register_fib_notifier(struct net *net, struct notifier_block *nb,
-			  void (*cb)(struct notifier_block *nb),
-			  struct netlink_ext_ack *extack)
-{
-	int retries = 0;
-	int err;
+#घोषणा FIB_DUMP_MAX_RETRIES 5
+पूर्णांक रेजिस्टर_fib_notअगरier(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+			  व्योम (*cb)(काष्ठा notअगरier_block *nb),
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक retries = 0;
+	पूर्णांक err;
 
-	do {
-		unsigned int fib_seq = fib_seq_sum(net);
+	करो अणु
+		अचिन्हित पूर्णांक fib_seq = fib_seq_sum(net);
 
 		err = fib_net_dump(net, nb, extack);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (fib_dump_is_consistent(net, nb, cb, fib_seq))
-			return 0;
-	} while (++retries < FIB_DUMP_MAX_RETRIES);
+		अगर (fib_dump_is_consistent(net, nb, cb, fib_seq))
+			वापस 0;
+	पूर्ण जबतक (++retries < FIB_DUMP_MAX_RETRIES);
 
-	return -EBUSY;
-}
-EXPORT_SYMBOL(register_fib_notifier);
+	वापस -EBUSY;
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_fib_notअगरier);
 
-int unregister_fib_notifier(struct net *net, struct notifier_block *nb)
-{
-	struct fib_notifier_net *fn_net = net_generic(net, fib_notifier_net_id);
+पूर्णांक unरेजिस्टर_fib_notअगरier(काष्ठा net *net, काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा fib_notअगरier_net *fn_net = net_generic(net, fib_notअगरier_net_id);
 
-	return atomic_notifier_chain_unregister(&fn_net->fib_chain, nb);
-}
-EXPORT_SYMBOL(unregister_fib_notifier);
+	वापस atomic_notअगरier_chain_unरेजिस्टर(&fn_net->fib_chain, nb);
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_fib_notअगरier);
 
-static int __fib_notifier_ops_register(struct fib_notifier_ops *ops,
-				       struct net *net)
-{
-	struct fib_notifier_net *fn_net = net_generic(net, fib_notifier_net_id);
-	struct fib_notifier_ops *o;
+अटल पूर्णांक __fib_notअगरier_ops_रेजिस्टर(काष्ठा fib_notअगरier_ops *ops,
+				       काष्ठा net *net)
+अणु
+	काष्ठा fib_notअगरier_net *fn_net = net_generic(net, fib_notअगरier_net_id);
+	काष्ठा fib_notअगरier_ops *o;
 
-	list_for_each_entry(o, &fn_net->fib_notifier_ops, list)
-		if (ops->family == o->family)
-			return -EEXIST;
-	list_add_tail_rcu(&ops->list, &fn_net->fib_notifier_ops);
-	return 0;
-}
+	list_क्रम_each_entry(o, &fn_net->fib_notअगरier_ops, list)
+		अगर (ops->family == o->family)
+			वापस -EEXIST;
+	list_add_tail_rcu(&ops->list, &fn_net->fib_notअगरier_ops);
+	वापस 0;
+पूर्ण
 
-struct fib_notifier_ops *
-fib_notifier_ops_register(const struct fib_notifier_ops *tmpl, struct net *net)
-{
-	struct fib_notifier_ops *ops;
-	int err;
+काष्ठा fib_notअगरier_ops *
+fib_notअगरier_ops_रेजिस्टर(स्थिर काष्ठा fib_notअगरier_ops *पंचांगpl, काष्ठा net *net)
+अणु
+	काष्ठा fib_notअगरier_ops *ops;
+	पूर्णांक err;
 
-	ops = kmemdup(tmpl, sizeof(*ops), GFP_KERNEL);
-	if (!ops)
-		return ERR_PTR(-ENOMEM);
+	ops = kmemdup(पंचांगpl, माप(*ops), GFP_KERNEL);
+	अगर (!ops)
+		वापस ERR_PTR(-ENOMEM);
 
-	err = __fib_notifier_ops_register(ops, net);
-	if (err)
-		goto err_register;
+	err = __fib_notअगरier_ops_रेजिस्टर(ops, net);
+	अगर (err)
+		जाओ err_रेजिस्टर;
 
-	return ops;
+	वापस ops;
 
-err_register:
-	kfree(ops);
-	return ERR_PTR(err);
-}
-EXPORT_SYMBOL(fib_notifier_ops_register);
+err_रेजिस्टर:
+	kमुक्त(ops);
+	वापस ERR_PTR(err);
+पूर्ण
+EXPORT_SYMBOL(fib_notअगरier_ops_रेजिस्टर);
 
-void fib_notifier_ops_unregister(struct fib_notifier_ops *ops)
-{
+व्योम fib_notअगरier_ops_unरेजिस्टर(काष्ठा fib_notअगरier_ops *ops)
+अणु
 	list_del_rcu(&ops->list);
-	kfree_rcu(ops, rcu);
-}
-EXPORT_SYMBOL(fib_notifier_ops_unregister);
+	kमुक्त_rcu(ops, rcu);
+पूर्ण
+EXPORT_SYMBOL(fib_notअगरier_ops_unरेजिस्टर);
 
-static int __net_init fib_notifier_net_init(struct net *net)
-{
-	struct fib_notifier_net *fn_net = net_generic(net, fib_notifier_net_id);
+अटल पूर्णांक __net_init fib_notअगरier_net_init(काष्ठा net *net)
+अणु
+	काष्ठा fib_notअगरier_net *fn_net = net_generic(net, fib_notअगरier_net_id);
 
-	INIT_LIST_HEAD(&fn_net->fib_notifier_ops);
+	INIT_LIST_HEAD(&fn_net->fib_notअगरier_ops);
 	ATOMIC_INIT_NOTIFIER_HEAD(&fn_net->fib_chain);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit fib_notifier_net_exit(struct net *net)
-{
-	struct fib_notifier_net *fn_net = net_generic(net, fib_notifier_net_id);
+अटल व्योम __net_निकास fib_notअगरier_net_निकास(काष्ठा net *net)
+अणु
+	काष्ठा fib_notअगरier_net *fn_net = net_generic(net, fib_notअगरier_net_id);
 
-	WARN_ON_ONCE(!list_empty(&fn_net->fib_notifier_ops));
-}
+	WARN_ON_ONCE(!list_empty(&fn_net->fib_notअगरier_ops));
+पूर्ण
 
-static struct pernet_operations fib_notifier_net_ops = {
-	.init = fib_notifier_net_init,
-	.exit = fib_notifier_net_exit,
-	.id = &fib_notifier_net_id,
-	.size = sizeof(struct fib_notifier_net),
-};
+अटल काष्ठा pernet_operations fib_notअगरier_net_ops = अणु
+	.init = fib_notअगरier_net_init,
+	.निकास = fib_notअगरier_net_निकास,
+	.id = &fib_notअगरier_net_id,
+	.size = माप(काष्ठा fib_notअगरier_net),
+पूर्ण;
 
-static int __init fib_notifier_init(void)
-{
-	return register_pernet_subsys(&fib_notifier_net_ops);
-}
+अटल पूर्णांक __init fib_notअगरier_init(व्योम)
+अणु
+	वापस रेजिस्टर_pernet_subsys(&fib_notअगरier_net_ops);
+पूर्ण
 
-subsys_initcall(fib_notifier_init);
+subsys_initcall(fib_notअगरier_init);

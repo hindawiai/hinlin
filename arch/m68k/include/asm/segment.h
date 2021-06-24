@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _M68K_SEGMENT_H
-#define _M68K_SEGMENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _M68K_SEGMENT_H
+#घोषणा _M68K_SEGMENT_H
 
-/* define constants */
+/* define स्थिरants */
 /* Address spaces (FC0-FC2) */
-#define USER_DATA     (1)
-#ifndef __USER_DS
-#define __USER_DS     (USER_DATA)
-#endif
-#define USER_PROGRAM  (2)
-#define SUPER_DATA    (5)
-#ifndef __KERNEL_DS
-#define __KERNEL_DS   (SUPER_DATA)
-#endif
-#define SUPER_PROGRAM (6)
-#define CPU_SPACE     (7)
+#घोषणा USER_DATA     (1)
+#अगर_अघोषित __USER_DS
+#घोषणा __USER_DS     (USER_DATA)
+#पूर्ण_अगर
+#घोषणा USER_PROGRAM  (2)
+#घोषणा SUPER_DATA    (5)
+#अगर_अघोषित __KERNEL_DS
+#घोषणा __KERNEL_DS   (SUPER_DATA)
+#पूर्ण_अगर
+#घोषणा SUPER_PROGRAM (6)
+#घोषणा CPU_SPACE     (7)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-typedef struct {
-	unsigned long seg;
-} mm_segment_t;
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ seg;
+पूर्ण mm_segment_t;
 
-#define MAKE_MM_SEG(s)	((mm_segment_t) { (s) })
+#घोषणा MAKE_MM_SEG(s)	((mm_segment_t) अणु (s) पूर्ण)
 
-#ifdef CONFIG_CPU_HAS_ADDRESS_SPACES
+#अगर_घोषित CONFIG_CPU_HAS_ADDRESS_SPACES
 /*
- * Get/set the SFC/DFC registers for MOVES instructions
+ * Get/set the SFC/DFC रेजिस्टरs क्रम MOVES inकाष्ठाions
  */
-#define USER_DS		MAKE_MM_SEG(__USER_DS)
-#define KERNEL_DS	MAKE_MM_SEG(__KERNEL_DS)
+#घोषणा USER_DS		MAKE_MM_SEG(__USER_DS)
+#घोषणा KERNEL_DS	MAKE_MM_SEG(__KERNEL_DS)
 
-static inline mm_segment_t get_fs(void)
-{
+अटल अंतरभूत mm_segment_t get_fs(व्योम)
+अणु
 	mm_segment_t _v;
-	__asm__ ("movec %/dfc,%0":"=r" (_v.seg):);
-	return _v;
-}
+	__यंत्र__ ("movec %/dfc,%0":"=r" (_v.seg):);
+	वापस _v;
+पूर्ण
 
-static inline void set_fs(mm_segment_t val)
-{
-	__asm__ __volatile__ ("movec %0,%/sfc\n\t"
+अटल अंतरभूत व्योम set_fs(mm_segment_t val)
+अणु
+	__यंत्र__ __अस्थिर__ ("movec %0,%/sfc\n\t"
 			      "movec %0,%/dfc\n\t"
-			      : /* no outputs */ : "r" (val.seg) : "memory");
-}
+			      : /* no outमाला_दो */ : "r" (val.seg) : "memory");
+पूर्ण
 
-#else
-#define USER_DS		MAKE_MM_SEG(TASK_SIZE)
-#define KERNEL_DS	MAKE_MM_SEG(0xFFFFFFFF)
-#define get_fs()	(current_thread_info()->addr_limit)
-#define set_fs(x)	(current_thread_info()->addr_limit = (x))
-#endif
+#अन्यथा
+#घोषणा USER_DS		MAKE_MM_SEG(TASK_SIZE)
+#घोषणा KERNEL_DS	MAKE_MM_SEG(0xFFFFFFFF)
+#घोषणा get_fs()	(current_thपढ़ो_info()->addr_limit)
+#घोषणा set_fs(x)	(current_thपढ़ो_info()->addr_limit = (x))
+#पूर्ण_अगर
 
-#define uaccess_kernel()	(get_fs().seg == KERNEL_DS.seg)
+#घोषणा uaccess_kernel()	(get_fs().seg == KERNEL_DS.seg)
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* _M68K_SEGMENT_H */
+#पूर्ण_अगर /* _M68K_SEGMENT_H */

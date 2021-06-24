@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Generic DFL driver for Userspace I/O devicess
+ * Generic DFL driver क्रम Userspace I/O devicess
  *
  * Copyright (C) 2021 Intel Corporation, Inc.
  */
-#include <linux/dfl.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/uio_driver.h>
+#समावेश <linux/dfl.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/uio_driver.h>
 
-#define DRIVER_NAME "uio_dfl"
+#घोषणा DRIVER_NAME "uio_dfl"
 
-static int uio_dfl_probe(struct dfl_device *ddev)
-{
-	struct resource *r = &ddev->mmio_res;
-	struct device *dev = &ddev->dev;
-	struct uio_info *uioinfo;
-	struct uio_mem *uiomem;
-	int ret;
+अटल पूर्णांक uio_dfl_probe(काष्ठा dfl_device *ddev)
+अणु
+	काष्ठा resource *r = &ddev->mmio_res;
+	काष्ठा device *dev = &ddev->dev;
+	काष्ठा uio_info *uioinfo;
+	काष्ठा uio_mem *uiomem;
+	पूर्णांक ret;
 
-	uioinfo = devm_kzalloc(dev, sizeof(struct uio_info), GFP_KERNEL);
-	if (!uioinfo)
-		return -ENOMEM;
+	uioinfo = devm_kzalloc(dev, माप(काष्ठा uio_info), GFP_KERNEL);
+	अगर (!uioinfo)
+		वापस -ENOMEM;
 
 	uioinfo->name = DRIVER_NAME;
 	uioinfo->version = "0";
@@ -37,28 +38,28 @@ static int uio_dfl_probe(struct dfl_device *ddev)
 	/* Irq is yet to be supported */
 	uioinfo->irq = UIO_IRQ_NONE;
 
-	ret = devm_uio_register_device(dev, uioinfo);
-	if (ret)
+	ret = devm_uio_रेजिस्टर_device(dev, uioinfo);
+	अगर (ret)
 		dev_err(dev, "unable to register uio device\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define FME_FEATURE_ID_ETH_GROUP	0x10
+#घोषणा FME_FEATURE_ID_ETH_GROUP	0x10
 
-static const struct dfl_device_id uio_dfl_ids[] = {
-	{ FME_ID, FME_FEATURE_ID_ETH_GROUP },
-	{ }
-};
+अटल स्थिर काष्ठा dfl_device_id uio_dfl_ids[] = अणु
+	अणु FME_ID, FME_FEATURE_ID_ETH_GROUP पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(dfl, uio_dfl_ids);
 
-static struct dfl_driver uio_dfl_driver = {
-	.drv = {
+अटल काष्ठा dfl_driver uio_dfl_driver = अणु
+	.drv = अणु
 		.name = DRIVER_NAME,
-	},
+	पूर्ण,
 	.id_table	= uio_dfl_ids,
 	.probe		= uio_dfl_probe,
-};
+पूर्ण;
 module_dfl_driver(uio_dfl_driver);
 
 MODULE_DESCRIPTION("Generic DFL driver for Userspace I/O devices");

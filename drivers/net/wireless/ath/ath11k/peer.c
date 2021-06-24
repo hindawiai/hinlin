@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: BSD-3-Clause-Clear
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
-#include "core.h"
-#include "peer.h"
-#include "debug.h"
+#समावेश "core.h"
+#समावेश "peer.h"
+#समावेश "debug.h"
 
-struct ath11k_peer *ath11k_peer_find(struct ath11k_base *ab, int vdev_id,
-				     const u8 *addr)
-{
-	struct ath11k_peer *peer;
+काष्ठा ath11k_peer *ath11k_peer_find(काष्ठा ath11k_base *ab, पूर्णांक vdev_id,
+				     स्थिर u8 *addr)
+अणु
+	काष्ठा ath11k_peer *peer;
 
-	lockdep_assert_held(&ab->base_lock);
+	lockdep_निश्चित_held(&ab->base_lock);
 
-	list_for_each_entry(peer, &ab->peers, list) {
-		if (peer->vdev_id != vdev_id)
-			continue;
-		if (!ether_addr_equal(peer->addr, addr))
-			continue;
+	list_क्रम_each_entry(peer, &ab->peers, list) अणु
+		अगर (peer->vdev_id != vdev_id)
+			जारी;
+		अगर (!ether_addr_equal(peer->addr, addr))
+			जारी;
 
-		return peer;
-	}
+		वापस peer;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct ath11k_peer *ath11k_peer_find_by_pdev_idx(struct ath11k_base *ab,
-							u8 pdev_idx, const u8 *addr)
-{
-	struct ath11k_peer *peer;
+अटल काष्ठा ath11k_peer *ath11k_peer_find_by_pdev_idx(काष्ठा ath11k_base *ab,
+							u8 pdev_idx, स्थिर u8 *addr)
+अणु
+	काष्ठा ath11k_peer *peer;
 
-	lockdep_assert_held(&ab->base_lock);
+	lockdep_निश्चित_held(&ab->base_lock);
 
-	list_for_each_entry(peer, &ab->peers, list) {
-		if (peer->pdev_idx != pdev_idx)
-			continue;
-		if (!ether_addr_equal(peer->addr, addr))
-			continue;
+	list_क्रम_each_entry(peer, &ab->peers, list) अणु
+		अगर (peer->pdev_idx != pdev_idx)
+			जारी;
+		अगर (!ether_addr_equal(peer->addr, addr))
+			जारी;
 
-		return peer;
-	}
+		वापस peer;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct ath11k_peer *ath11k_peer_find_by_addr(struct ath11k_base *ab,
-					     const u8 *addr)
-{
-	struct ath11k_peer *peer;
+काष्ठा ath11k_peer *ath11k_peer_find_by_addr(काष्ठा ath11k_base *ab,
+					     स्थिर u8 *addr)
+अणु
+	काष्ठा ath11k_peer *peer;
 
-	lockdep_assert_held(&ab->base_lock);
+	lockdep_निश्चित_held(&ab->base_lock);
 
-	list_for_each_entry(peer, &ab->peers, list) {
-		if (!ether_addr_equal(peer->addr, addr))
-			continue;
+	list_क्रम_each_entry(peer, &ab->peers, list) अणु
+		अगर (!ether_addr_equal(peer->addr, addr))
+			जारी;
 
-		return peer;
-	}
+		वापस peer;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct ath11k_peer *ath11k_peer_find_by_id(struct ath11k_base *ab,
-					   int peer_id)
-{
-	struct ath11k_peer *peer;
+काष्ठा ath11k_peer *ath11k_peer_find_by_id(काष्ठा ath11k_base *ab,
+					   पूर्णांक peer_id)
+अणु
+	काष्ठा ath11k_peer *peer;
 
-	lockdep_assert_held(&ab->base_lock);
+	lockdep_निश्चित_held(&ab->base_lock);
 
-	list_for_each_entry(peer, &ab->peers, list)
-		if (peer_id == peer->peer_id)
-			return peer;
+	list_क्रम_each_entry(peer, &ab->peers, list)
+		अगर (peer_id == peer->peer_id)
+			वापस peer;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct ath11k_peer *ath11k_peer_find_by_vdev_id(struct ath11k_base *ab,
-						int vdev_id)
-{
-	struct ath11k_peer *peer;
+काष्ठा ath11k_peer *ath11k_peer_find_by_vdev_id(काष्ठा ath11k_base *ab,
+						पूर्णांक vdev_id)
+अणु
+	काष्ठा ath11k_peer *peer;
 
 	spin_lock_bh(&ab->base_lock);
 
-	list_for_each_entry(peer, &ab->peers, list) {
-		if (vdev_id == peer->vdev_id) {
+	list_क्रम_each_entry(peer, &ab->peers, list) अणु
+		अगर (vdev_id == peer->vdev_id) अणु
 			spin_unlock_bh(&ab->base_lock);
-			return peer;
-		}
-	}
+			वापस peer;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&ab->base_lock);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void ath11k_peer_unmap_event(struct ath11k_base *ab, u16 peer_id)
-{
-	struct ath11k_peer *peer;
+व्योम ath11k_peer_unmap_event(काष्ठा ath11k_base *ab, u16 peer_id)
+अणु
+	काष्ठा ath11k_peer *peer;
 
 	spin_lock_bh(&ab->base_lock);
 
 	peer = ath11k_peer_find_by_id(ab, peer_id);
-	if (!peer) {
+	अगर (!peer) अणु
 		ath11k_warn(ab, "peer-unmap-event: unknown peer id %d\n",
 			    peer_id);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	ath11k_dbg(ab, ATH11K_DBG_DP_HTT, "htt peer unmap vdev %d peer %pM id %d\n",
 		   peer->vdev_id, peer->addr, peer_id);
 
 	list_del(&peer->list);
-	kfree(peer);
+	kमुक्त(peer);
 	wake_up(&ab->peer_mapping_wq);
 
-exit:
+निकास:
 	spin_unlock_bh(&ab->base_lock);
-}
+पूर्ण
 
-void ath11k_peer_map_event(struct ath11k_base *ab, u8 vdev_id, u16 peer_id,
+व्योम ath11k_peer_map_event(काष्ठा ath11k_base *ab, u8 vdev_id, u16 peer_id,
 			   u8 *mac_addr, u16 ast_hash, u16 hw_peer_id)
-{
-	struct ath11k_peer *peer;
+अणु
+	काष्ठा ath11k_peer *peer;
 
 	spin_lock_bh(&ab->base_lock);
 	peer = ath11k_peer_find(ab, vdev_id, mac_addr);
-	if (!peer) {
-		peer = kzalloc(sizeof(*peer), GFP_ATOMIC);
-		if (!peer)
-			goto exit;
+	अगर (!peer) अणु
+		peer = kzalloc(माप(*peer), GFP_ATOMIC);
+		अगर (!peer)
+			जाओ निकास;
 
 		peer->vdev_id = vdev_id;
 		peer->peer_id = peer_id;
@@ -136,21 +137,21 @@ void ath11k_peer_map_event(struct ath11k_base *ab, u8 vdev_id, u16 peer_id,
 		ether_addr_copy(peer->addr, mac_addr);
 		list_add(&peer->list, &ab->peers);
 		wake_up(&ab->peer_mapping_wq);
-	}
+	पूर्ण
 
 	ath11k_dbg(ab, ATH11K_DBG_DP_HTT, "htt peer map vdev %d peer %pM id %d\n",
 		   vdev_id, mac_addr, peer_id);
 
-exit:
+निकास:
 	spin_unlock_bh(&ab->base_lock);
-}
+पूर्ण
 
-static int ath11k_wait_for_peer_common(struct ath11k_base *ab, int vdev_id,
-				       const u8 *addr, bool expect_mapped)
-{
-	int ret;
+अटल पूर्णांक ath11k_रुको_क्रम_peer_common(काष्ठा ath11k_base *ab, पूर्णांक vdev_id,
+				       स्थिर u8 *addr, bool expect_mapped)
+अणु
+	पूर्णांक ret;
 
-	ret = wait_event_timeout(ab->peer_mapping_wq, ({
+	ret = रुको_event_समयout(ab->peer_mapping_wq, (अणु
 				bool mapped;
 
 				spin_lock_bh(&ab->base_lock);
@@ -159,162 +160,162 @@ static int ath11k_wait_for_peer_common(struct ath11k_base *ab, int vdev_id,
 
 				(mapped == expect_mapped ||
 				 test_bit(ATH11K_FLAG_CRASH_FLUSH, &ab->dev_flags));
-				}), 3 * HZ);
+				पूर्ण), 3 * HZ);
 
-	if (ret <= 0)
-		return -ETIMEDOUT;
+	अगर (ret <= 0)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ath11k_peer_cleanup(struct ath11k *ar, u32 vdev_id)
-{
-	struct ath11k_peer *peer, *tmp;
-	struct ath11k_base *ab = ar->ab;
+व्योम ath11k_peer_cleanup(काष्ठा ath11k *ar, u32 vdev_id)
+अणु
+	काष्ठा ath11k_peer *peer, *पंचांगp;
+	काष्ठा ath11k_base *ab = ar->ab;
 
-	lockdep_assert_held(&ar->conf_mutex);
+	lockdep_निश्चित_held(&ar->conf_mutex);
 
 	spin_lock_bh(&ab->base_lock);
-	list_for_each_entry_safe(peer, tmp, &ab->peers, list) {
-		if (peer->vdev_id != vdev_id)
-			continue;
+	list_क्रम_each_entry_safe(peer, पंचांगp, &ab->peers, list) अणु
+		अगर (peer->vdev_id != vdev_id)
+			जारी;
 
 		ath11k_warn(ab, "removing stale peer %pM from vdev_id %d\n",
 			    peer->addr, vdev_id);
 
 		list_del(&peer->list);
-		kfree(peer);
+		kमुक्त(peer);
 		ar->num_peers--;
-	}
+	पूर्ण
 
 	spin_unlock_bh(&ab->base_lock);
-}
+पूर्ण
 
-static int ath11k_wait_for_peer_deleted(struct ath11k *ar, int vdev_id, const u8 *addr)
-{
-	return ath11k_wait_for_peer_common(ar->ab, vdev_id, addr, false);
-}
+अटल पूर्णांक ath11k_रुको_क्रम_peer_deleted(काष्ठा ath11k *ar, पूर्णांक vdev_id, स्थिर u8 *addr)
+अणु
+	वापस ath11k_रुको_क्रम_peer_common(ar->ab, vdev_id, addr, false);
+पूर्ण
 
-int ath11k_wait_for_peer_delete_done(struct ath11k *ar, u32 vdev_id,
-				     const u8 *addr)
-{
-	int ret;
-	unsigned long time_left;
+पूर्णांक ath11k_रुको_क्रम_peer_delete_करोne(काष्ठा ath11k *ar, u32 vdev_id,
+				     स्थिर u8 *addr)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ समय_left;
 
-	ret = ath11k_wait_for_peer_deleted(ar, vdev_id, addr);
-	if (ret) {
+	ret = ath11k_रुको_क्रम_peer_deleted(ar, vdev_id, addr);
+	अगर (ret) अणु
 		ath11k_warn(ar->ab, "failed wait for peer deleted");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	time_left = wait_for_completion_timeout(&ar->peer_delete_done,
+	समय_left = रुको_क्रम_completion_समयout(&ar->peer_delete_करोne,
 						3 * HZ);
-	if (time_left == 0) {
+	अगर (समय_left == 0) अणु
 		ath11k_warn(ar->ab, "Timeout in receiving peer delete response\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath11k_peer_delete(struct ath11k *ar, u32 vdev_id, u8 *addr)
-{
-	int ret;
+पूर्णांक ath11k_peer_delete(काष्ठा ath11k *ar, u32 vdev_id, u8 *addr)
+अणु
+	पूर्णांक ret;
 
-	lockdep_assert_held(&ar->conf_mutex);
+	lockdep_निश्चित_held(&ar->conf_mutex);
 
-	reinit_completion(&ar->peer_delete_done);
+	reinit_completion(&ar->peer_delete_करोne);
 
 	ret = ath11k_wmi_send_peer_delete_cmd(ar, addr, vdev_id);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_warn(ar->ab,
 			    "failed to delete peer vdev_id %d addr %pM ret %d\n",
 			    vdev_id, addr, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ath11k_wait_for_peer_delete_done(ar, vdev_id, addr);
-	if (ret)
-		return ret;
+	ret = ath11k_रुको_क्रम_peer_delete_करोne(ar, vdev_id, addr);
+	अगर (ret)
+		वापस ret;
 
 	ar->num_peers--;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath11k_wait_for_peer_created(struct ath11k *ar, int vdev_id, const u8 *addr)
-{
-	return ath11k_wait_for_peer_common(ar->ab, vdev_id, addr, true);
-}
+अटल पूर्णांक ath11k_रुको_क्रम_peer_created(काष्ठा ath11k *ar, पूर्णांक vdev_id, स्थिर u8 *addr)
+अणु
+	वापस ath11k_रुको_क्रम_peer_common(ar->ab, vdev_id, addr, true);
+पूर्ण
 
-int ath11k_peer_create(struct ath11k *ar, struct ath11k_vif *arvif,
-		       struct ieee80211_sta *sta, struct peer_create_params *param)
-{
-	struct ath11k_peer *peer;
-	int ret;
+पूर्णांक ath11k_peer_create(काष्ठा ath11k *ar, काष्ठा ath11k_vअगर *arvअगर,
+		       काष्ठा ieee80211_sta *sta, काष्ठा peer_create_params *param)
+अणु
+	काष्ठा ath11k_peer *peer;
+	पूर्णांक ret;
 
-	lockdep_assert_held(&ar->conf_mutex);
+	lockdep_निश्चित_held(&ar->conf_mutex);
 
-	if (ar->num_peers > (ar->max_num_peers - 1)) {
+	अगर (ar->num_peers > (ar->max_num_peers - 1)) अणु
 		ath11k_warn(ar->ab,
 			    "failed to create peer due to insufficient peer entry resource in firmware\n");
-		return -ENOBUFS;
-	}
+		वापस -ENOBUFS;
+	पूर्ण
 
 	spin_lock_bh(&ar->ab->base_lock);
 	peer = ath11k_peer_find_by_pdev_idx(ar->ab, ar->pdev_idx, param->peer_addr);
-	if (peer) {
+	अगर (peer) अणु
 		spin_unlock_bh(&ar->ab->base_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	spin_unlock_bh(&ar->ab->base_lock);
 
 	ret = ath11k_wmi_send_peer_create_cmd(ar, param);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_warn(ar->ab,
 			    "failed to send peer create vdev_id %d ret %d\n",
 			    param->vdev_id, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ath11k_wait_for_peer_created(ar, param->vdev_id,
+	ret = ath11k_रुको_क्रम_peer_created(ar, param->vdev_id,
 					   param->peer_addr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_bh(&ar->ab->base_lock);
 
 	peer = ath11k_peer_find(ar->ab, param->vdev_id, param->peer_addr);
-	if (!peer) {
+	अगर (!peer) अणु
 		spin_unlock_bh(&ar->ab->base_lock);
 		ath11k_warn(ar->ab, "failed to find peer %pM on vdev %i after creation\n",
 			    param->peer_addr, param->vdev_id);
 
-		reinit_completion(&ar->peer_delete_done);
+		reinit_completion(&ar->peer_delete_करोne);
 
 		ret = ath11k_wmi_send_peer_delete_cmd(ar, param->peer_addr,
 						      param->vdev_id);
-		if (ret) {
+		अगर (ret) अणु
 			ath11k_warn(ar->ab, "failed to delete peer vdev_id %d addr %pM\n",
 				    param->vdev_id, param->peer_addr);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = ath11k_wait_for_peer_delete_done(ar, param->vdev_id,
+		ret = ath11k_रुको_क्रम_peer_delete_करोne(ar, param->vdev_id,
 						       param->peer_addr);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	peer->pdev_idx = ar->pdev_idx;
 	peer->sta = sta;
 
-	if (arvif->vif->type == NL80211_IFTYPE_STATION) {
-		arvif->ast_hash = peer->ast_hash;
-		arvif->ast_idx = peer->hw_peer_id;
-	}
+	अगर (arvअगर->vअगर->type == NL80211_IFTYPE_STATION) अणु
+		arvअगर->ast_hash = peer->ast_hash;
+		arvअगर->ast_idx = peer->hw_peer_id;
+	पूर्ण
 
 	peer->sec_type = HAL_ENCRYPT_TYPE_OPEN;
 	peer->sec_type_grp = HAL_ENCRYPT_TYPE_OPEN;
@@ -323,5 +324,5 @@ int ath11k_peer_create(struct ath11k *ar, struct ath11k_vif *arvif,
 
 	spin_unlock_bh(&ar->ab->base_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

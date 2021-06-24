@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
 
-#include <xen/xen.h>
-#include <xen/hvm.h>
-#include <xen/features.h>
-#include <xen/interface/features.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/hvm.h>
+#समावेश <xen/features.h>
+#समावेश <xen/पूर्णांकerface/features.h>
 
-#include "xen-ops.h"
+#समावेश "xen-ops.h"
 
-void xen_hvm_post_suspend(int suspend_cancelled)
-{
-	if (!suspend_cancelled) {
+व्योम xen_hvm_post_suspend(पूर्णांक suspend_cancelled)
+अणु
+	अगर (!suspend_cancelled) अणु
 		xen_hvm_init_shared_info();
 		xen_vcpu_restore();
-	}
+	पूर्ण
 	xen_setup_callback_vector();
 	xen_unplug_emulated_devices();
-}
+पूर्ण

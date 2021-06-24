@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ___ASM_SPARC_STRING_H
-#define ___ASM_SPARC_STRING_H
-#if defined(__sparc__) && defined(__arch64__)
-#include <asm/string_64.h>
-#else
-#include <asm/string_32.h>
-#endif
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ___ASM_SPARC_STRING_H
+#घोषणा ___ASM_SPARC_STRING_H
+#अगर defined(__sparc__) && defined(__arch64__)
+#समावेश <यंत्र/string_64.h>
+#अन्यथा
+#समावेश <यंत्र/string_32.h>
+#पूर्ण_अगर
 
 /* First the mem*() things. */
-#define __HAVE_ARCH_MEMMOVE
-void *memmove(void *, const void *, __kernel_size_t);
+#घोषणा __HAVE_ARCH_MEMMOVE
+व्योम *स_हटाओ(व्योम *, स्थिर व्योम *, __kernel_माप_प्रकार);
 
-#define __HAVE_ARCH_MEMCPY
-#define memcpy(t, f, n) __builtin_memcpy(t, f, n)
+#घोषणा __HAVE_ARCH_MEMCPY
+#घोषणा स_नकल(t, f, n) __builtin_स_नकल(t, f, n)
 
-#define __HAVE_ARCH_MEMSET
-#define memset(s, c, count) __builtin_memset(s, c, count)
+#घोषणा __HAVE_ARCH_MEMSET
+#घोषणा स_रखो(s, c, count) __builtin_स_रखो(s, c, count)
 
-#define __HAVE_ARCH_MEMSCAN
+#घोषणा __HAVE_ARCH_MEMSCAN
 
-#define memscan(__arg0, __char, __arg2)						\
-({										\
-	void *__memscan_zero(void *, size_t);					\
-	void *__memscan_generic(void *, int, size_t);				\
-	void *__retval, *__addr = (__arg0);					\
-	size_t __size = (__arg2);						\
+#घोषणा memscan(__arg0, __अक्षर, __arg2)						\
+(अणु										\
+	व्योम *__memscan_zero(व्योम *, माप_प्रकार);					\
+	व्योम *__memscan_generic(व्योम *, पूर्णांक, माप_प्रकार);				\
+	व्योम *__retval, *__addr = (__arg0);					\
+	माप_प्रकार __size = (__arg2);						\
 										\
-	if(__builtin_constant_p(__char) && !(__char))				\
+	अगर(__builtin_स्थिरant_p(__अक्षर) && !(__अक्षर))				\
 		__retval = __memscan_zero(__addr, __size);			\
-	else									\
-		__retval = __memscan_generic(__addr, (__char), __size);		\
+	अन्यथा									\
+		__retval = __memscan_generic(__addr, (__अक्षर), __size);		\
 										\
 	__retval;								\
-})
+पूर्ण)
 
-#define __HAVE_ARCH_MEMCMP
-int memcmp(const void *,const void *,__kernel_size_t);
+#घोषणा __HAVE_ARCH_MEMCMP
+पूर्णांक स_भेद(स्थिर व्योम *,स्थिर व्योम *,__kernel_माप_प्रकार);
 
 /* Now the str*() stuff... */
-#define __HAVE_ARCH_STRLEN
-__kernel_size_t strlen(const char *);
+#घोषणा __HAVE_ARCH_STRLEN
+__kernel_माप_प्रकार म_माप(स्थिर अक्षर *);
 
-#define __HAVE_ARCH_STRNCMP
-int strncmp(const char *, const char *, __kernel_size_t);
+#घोषणा __HAVE_ARCH_STRNCMP
+पूर्णांक म_भेदन(स्थिर अक्षर *, स्थिर अक्षर *, __kernel_माप_प्रकार);
 
-#endif
+#पूर्ण_अगर

@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Exynos Generic power domain support.
+// Exynos Generic घातer करोमुख्य support.
 //
 // Copyright (c) 2012 Samsung Electronics Co., Ltd.
 //		http://www.samsung.com
 //
-// Implementation of Exynos specific power domain control which is used in
-// conjunction with runtime-pm. Support for both device-tree and non-device-tree
-// based power domain support is included.
+// Implementation of Exynos specअगरic घातer करोमुख्य control which is used in
+// conjunction with runसमय-pm. Support क्रम both device-tree and non-device-tree
+// based घातer करोमुख्य support is included.
 
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/pm_domain.h>
-#include <linux/delay.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pm_runसमय.स>
 
-struct exynos_pm_domain_config {
-	/* Value for LOCAL_PWR_CFG and STATUS fields for each domain */
+काष्ठा exynos_pm_करोमुख्य_config अणु
+	/* Value क्रम LOCAL_PWR_CFG and STATUS fields क्रम each करोमुख्य */
 	u32 local_pwr_cfg;
-};
+पूर्ण;
 
 /*
- * Exynos specific wrapper around the generic power domain
+ * Exynos specअगरic wrapper around the generic घातer करोमुख्य
  */
-struct exynos_pm_domain {
-	void __iomem *base;
+काष्ठा exynos_pm_करोमुख्य अणु
+	व्योम __iomem *base;
 	bool is_off;
-	struct generic_pm_domain pd;
+	काष्ठा generic_pm_करोमुख्य pd;
 	u32 local_pwr_cfg;
-};
+पूर्ण;
 
-static int exynos_pd_power(struct generic_pm_domain *domain, bool power_on)
-{
-	struct exynos_pm_domain *pd;
-	void __iomem *base;
-	u32 timeout, pwr;
-	char *op;
+अटल पूर्णांक exynos_pd_घातer(काष्ठा generic_pm_करोमुख्य *करोमुख्य, bool घातer_on)
+अणु
+	काष्ठा exynos_pm_करोमुख्य *pd;
+	व्योम __iomem *base;
+	u32 समयout, pwr;
+	अक्षर *op;
 
-	pd = container_of(domain, struct exynos_pm_domain, pd);
+	pd = container_of(करोमुख्य, काष्ठा exynos_pm_करोमुख्य, pd);
 	base = pd->base;
 
-	pwr = power_on ? pd->local_pwr_cfg : 0;
-	writel_relaxed(pwr, base);
+	pwr = घातer_on ? pd->local_pwr_cfg : 0;
+	ग_लिखोl_relaxed(pwr, base);
 
 	/* Wait max 1ms */
-	timeout = 10;
+	समयout = 10;
 
-	while ((readl_relaxed(base + 0x4) & pd->local_pwr_cfg) != pwr) {
-		if (!timeout) {
-			op = (power_on) ? "enable" : "disable";
-			pr_err("Power domain %s %s failed\n", domain->name, op);
-			return -ETIMEDOUT;
-		}
-		timeout--;
+	जबतक ((पढ़ोl_relaxed(base + 0x4) & pd->local_pwr_cfg) != pwr) अणु
+		अगर (!समयout) अणु
+			op = (घातer_on) ? "enable" : "disable";
+			pr_err("Power domain %s %s failed\n", करोमुख्य->name, op);
+			वापस -ETIMEDOUT;
+		पूर्ण
+		समयout--;
 		cpu_relax();
 		usleep_range(80, 100);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exynos_pd_power_on(struct generic_pm_domain *domain)
-{
-	return exynos_pd_power(domain, true);
-}
+अटल पूर्णांक exynos_pd_घातer_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	वापस exynos_pd_घातer(करोमुख्य, true);
+पूर्ण
 
-static int exynos_pd_power_off(struct generic_pm_domain *domain)
-{
-	return exynos_pd_power(domain, false);
-}
+अटल पूर्णांक exynos_pd_घातer_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	वापस exynos_pd_घातer(करोमुख्य, false);
+पूर्ण
 
-static const struct exynos_pm_domain_config exynos4210_cfg = {
+अटल स्थिर काष्ठा exynos_pm_करोमुख्य_config exynos4210_cfg = अणु
 	.local_pwr_cfg		= 0x7,
-};
+पूर्ण;
 
-static const struct exynos_pm_domain_config exynos5433_cfg = {
+अटल स्थिर काष्ठा exynos_pm_करोमुख्य_config exynos5433_cfg = अणु
 	.local_pwr_cfg		= 0xf,
-};
+पूर्ण;
 
-static const struct of_device_id exynos_pm_domain_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id exynos_pm_करोमुख्य_of_match[] = अणु
+	अणु
 		.compatible = "samsung,exynos4210-pd",
 		.data = &exynos4210_cfg,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-pd",
 		.data = &exynos5433_cfg,
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static const char *exynos_get_domain_name(struct device_node *node)
-{
-	const char *name;
+अटल स्थिर अक्षर *exynos_get_करोमुख्य_name(काष्ठा device_node *node)
+अणु
+	स्थिर अक्षर *name;
 
-	if (of_property_read_string(node, "label", &name) < 0)
+	अगर (of_property_पढ़ो_string(node, "label", &name) < 0)
 		name = kbasename(node->full_name);
-	return kstrdup_const(name, GFP_KERNEL);
-}
+	वापस kstrdup_स्थिर(name, GFP_KERNEL);
+पूर्ण
 
-static int exynos_pd_probe(struct platform_device *pdev)
-{
-	const struct exynos_pm_domain_config *pm_domain_cfg;
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct of_phandle_args child, parent;
-	struct exynos_pm_domain *pd;
-	int on, ret;
+अटल पूर्णांक exynos_pd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा exynos_pm_करोमुख्य_config *pm_करोमुख्य_cfg;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा of_phandle_args child, parent;
+	काष्ठा exynos_pm_करोमुख्य *pd;
+	पूर्णांक on, ret;
 
-	pm_domain_cfg = of_device_get_match_data(dev);
-	pd = devm_kzalloc(dev, sizeof(*pd), GFP_KERNEL);
-	if (!pd)
-		return -ENOMEM;
+	pm_करोमुख्य_cfg = of_device_get_match_data(dev);
+	pd = devm_kzalloc(dev, माप(*pd), GFP_KERNEL);
+	अगर (!pd)
+		वापस -ENOMEM;
 
-	pd->pd.name = exynos_get_domain_name(np);
-	if (!pd->pd.name)
-		return -ENOMEM;
+	pd->pd.name = exynos_get_करोमुख्य_name(np);
+	अगर (!pd->pd.name)
+		वापस -ENOMEM;
 
 	pd->base = of_iomap(np, 0);
-	if (!pd->base) {
-		kfree_const(pd->pd.name);
-		return -ENODEV;
-	}
+	अगर (!pd->base) अणु
+		kमुक्त_स्थिर(pd->pd.name);
+		वापस -ENODEV;
+	पूर्ण
 
-	pd->pd.power_off = exynos_pd_power_off;
-	pd->pd.power_on = exynos_pd_power_on;
-	pd->local_pwr_cfg = pm_domain_cfg->local_pwr_cfg;
+	pd->pd.घातer_off = exynos_pd_घातer_off;
+	pd->pd.घातer_on = exynos_pd_घातer_on;
+	pd->local_pwr_cfg = pm_करोमुख्य_cfg->local_pwr_cfg;
 
-	on = readl_relaxed(pd->base + 0x4) & pd->local_pwr_cfg;
+	on = पढ़ोl_relaxed(pd->base + 0x4) & pd->local_pwr_cfg;
 
-	pm_genpd_init(&pd->pd, NULL, !on);
+	pm_genpd_init(&pd->pd, शून्य, !on);
 	ret = of_genpd_add_provider_simple(np, &pd->pd);
 
-	if (ret == 0 && of_parse_phandle_with_args(np, "power-domains",
-				      "#power-domain-cells", 0, &parent) == 0) {
+	अगर (ret == 0 && of_parse_phandle_with_args(np, "power-domains",
+				      "#power-domain-cells", 0, &parent) == 0) अणु
 		child.np = np;
 		child.args_count = 0;
 
-		if (of_genpd_add_subdomain(&parent, &child))
+		अगर (of_genpd_add_subकरोमुख्य(&parent, &child))
 			pr_warn("%pOF failed to add subdomain: %pOF\n",
 				parent.np, child.np);
-		else
+		अन्यथा
 			pr_info("%pOF has as child subdomain: %pOF.\n",
 				parent.np, child.np);
-	}
+	पूर्ण
 
-	pm_runtime_enable(dev);
-	return ret;
-}
+	pm_runसमय_enable(dev);
+	वापस ret;
+पूर्ण
 
-static struct platform_driver exynos_pd_driver = {
+अटल काष्ठा platक्रमm_driver exynos_pd_driver = अणु
 	.probe	= exynos_pd_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "exynos-pd",
-		.of_match_table	= exynos_pm_domain_of_match,
+		.of_match_table	= exynos_pm_करोमुख्य_of_match,
 		.suppress_bind_attrs = true,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static __init int exynos4_pm_init_power_domain(void)
-{
-	return platform_driver_register(&exynos_pd_driver);
-}
-core_initcall(exynos4_pm_init_power_domain);
+अटल __init पूर्णांक exynos4_pm_init_घातer_करोमुख्य(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&exynos_pd_driver);
+पूर्ण
+core_initcall(exynos4_pm_init_घातer_करोमुख्य);

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wl1251
  *
  * Copyright (C) 2009 Nokia Corporation
  */
 
-#ifndef WL1251_DEBUGFS_H
-#define WL1251_DEBUGFS_H
+#अगर_अघोषित WL1251_DEBUGFS_H
+#घोषणा WL1251_DEBUGFS_H
 
-#include "wl1251.h"
+#समावेश "wl1251.h"
 
-int wl1251_debugfs_init(struct wl1251 *wl);
-void wl1251_debugfs_exit(struct wl1251 *wl);
-void wl1251_debugfs_reset(struct wl1251 *wl);
+पूर्णांक wl1251_debugfs_init(काष्ठा wl1251 *wl);
+व्योम wl1251_debugfs_निकास(काष्ठा wl1251 *wl);
+व्योम wl1251_debugfs_reset(काष्ठा wl1251 *wl);
 
-#endif /* WL1251_DEBUGFS_H */
+#पूर्ण_अगर /* WL1251_DEBUGFS_H */

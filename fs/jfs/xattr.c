@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   Copyright (C) International Business Machines  Corp., 2000-2004
  *   Copyright (C) Christoph Hellwig, 2002
  */
 
-#include <linux/capability.h>
-#include <linux/fs.h>
-#include <linux/xattr.h>
-#include <linux/posix_acl_xattr.h>
-#include <linux/slab.h>
-#include <linux/quotaops.h>
-#include <linux/security.h>
-#include "jfs_incore.h"
-#include "jfs_superblock.h"
-#include "jfs_dmap.h"
-#include "jfs_debug.h"
-#include "jfs_dinode.h"
-#include "jfs_extent.h"
-#include "jfs_metapage.h"
-#include "jfs_xattr.h"
-#include "jfs_acl.h"
+#समावेश <linux/capability.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/posix_acl_xattr.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/security.h>
+#समावेश "jfs_incore.h"
+#समावेश "jfs_superblock.h"
+#समावेश "jfs_dmap.h"
+#समावेश "jfs_debug.h"
+#समावेश "jfs_dinode.h"
+#समावेश "jfs_extent.h"
+#समावेश "jfs_metapage.h"
+#समावेश "jfs_xattr.h"
+#समावेश "jfs_acl.h"
 
 /*
  *	jfs_xattr.c: extended attribute service
@@ -30,10 +31,10 @@
  *
  *   Extended attribute lists (jfs_ea_list) consist of an overall size (32 bit
  *   value) and a variable (0 or more) number of extended attribute
- *   entries.  Each extended attribute entry (jfs_ea) is a <name,value> double
- *   where <name> is constructed from a null-terminated ascii string
+ *   entries.  Each extended attribute entry (jfs_ea) is a <name,value> द्विगुन
+ *   where <name> is स्थिरructed from a null-terminated ascii string
  *   (1 ... 255 bytes in the name) and <value> is arbitrary 8 bit data
- *   (1 ... 65535 bytes).  The in-memory format is
+ *   (1 ... 65535 bytes).  The in-memory क्रमmat is
  *
  *   0       1        2        4                4 + namelen + 1
  *   +-------+--------+--------+----------------+-------------------+
@@ -41,7 +42,7 @@
  *   |       | Length | Length |                |                   |
  *   +-------+--------+--------+----------------+-------------------+
  *
- *   A jfs_ea_list then is structured as
+ *   A jfs_ea_list then is काष्ठाured as
  *
  *   0            4                   4 + EA_SIZE(ea1)
  *   +------------+-------------------+--------------------+-----
@@ -52,237 +53,237 @@
  *   On-disk:
  *
  *	FEALISTs are stored on disk using blocks allocated by dbAlloc() and
- *	written directly. An EA list may be in-lined in the inode if there is
+ *	written directly. An EA list may be in-lined in the inode अगर there is
  *	sufficient room available.
  */
 
-struct ea_buffer {
-	int flag;		/* Indicates what storage xattr points to */
-	int max_size;		/* largest xattr that fits in current buffer */
-	dxd_t new_ea;		/* dxd to replace ea when modifying xattr */
-	struct metapage *mp;	/* metapage containing ea list */
-	struct jfs_ea_list *xattr;	/* buffer containing ea list */
-};
+काष्ठा ea_buffer अणु
+	पूर्णांक flag;		/* Indicates what storage xattr poपूर्णांकs to */
+	पूर्णांक max_size;		/* largest xattr that fits in current buffer */
+	dxd_t new_ea;		/* dxd to replace ea when modअगरying xattr */
+	काष्ठा metapage *mp;	/* metapage containing ea list */
+	काष्ठा jfs_ea_list *xattr;	/* buffer containing ea list */
+पूर्ण;
 
 /*
  * ea_buffer.flag values
  */
-#define EA_INLINE	0x0001
-#define EA_EXTENT	0x0002
-#define EA_NEW		0x0004
-#define EA_MALLOC	0x0008
+#घोषणा EA_INLINE	0x0001
+#घोषणा EA_EXTENT	0x0002
+#घोषणा EA_NEW		0x0004
+#घोषणा EA_MALLOC	0x0008
 
 
 /*
- * Mapping of on-disk attribute names: for on-disk attribute names with an
+ * Mapping of on-disk attribute names: क्रम on-disk attribute names with an
  * unknown prefix (not "system.", "user.", "security.", or "trusted."), the
  * prefix "os2." is prepended.  On the way back to disk, "os2." prefixes are
- * stripped and we make sure that the remaining name does not start with one
+ * stripped and we make sure that the reमुख्यing name करोes not start with one
  * of the know prefixes.
  */
 
-static int is_known_namespace(const char *name)
-{
-	if (strncmp(name, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN) &&
-	    strncmp(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN) &&
-	    strncmp(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN) &&
-	    strncmp(name, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN))
-		return false;
+अटल पूर्णांक is_known_namespace(स्थिर अक्षर *name)
+अणु
+	अगर (म_भेदन(name, XATTR_SYSTEM_PREFIX, XATTR_SYSTEM_PREFIX_LEN) &&
+	    म_भेदन(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN) &&
+	    म_भेदन(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN) &&
+	    म_भेदन(name, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline int name_size(struct jfs_ea *ea)
-{
-	if (is_known_namespace(ea->name))
-		return ea->namelen;
-	else
-		return ea->namelen + XATTR_OS2_PREFIX_LEN;
-}
+अटल अंतरभूत पूर्णांक name_size(काष्ठा jfs_ea *ea)
+अणु
+	अगर (is_known_namespace(ea->name))
+		वापस ea->namelen;
+	अन्यथा
+		वापस ea->namelen + XATTR_OS2_PREFIX_LEN;
+पूर्ण
 
-static inline int copy_name(char *buffer, struct jfs_ea *ea)
-{
-	int len = ea->namelen;
+अटल अंतरभूत पूर्णांक copy_name(अक्षर *buffer, काष्ठा jfs_ea *ea)
+अणु
+	पूर्णांक len = ea->namelen;
 
-	if (!is_known_namespace(ea->name)) {
-		memcpy(buffer, XATTR_OS2_PREFIX, XATTR_OS2_PREFIX_LEN);
+	अगर (!is_known_namespace(ea->name)) अणु
+		स_नकल(buffer, XATTR_OS2_PREFIX, XATTR_OS2_PREFIX_LEN);
 		buffer += XATTR_OS2_PREFIX_LEN;
 		len += XATTR_OS2_PREFIX_LEN;
-	}
-	memcpy(buffer, ea->name, ea->namelen);
+	पूर्ण
+	स_नकल(buffer, ea->name, ea->namelen);
 	buffer[ea->namelen] = 0;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /* Forward references */
-static void ea_release(struct inode *inode, struct ea_buffer *ea_buf);
+अटल व्योम ea_release(काष्ठा inode *inode, काष्ठा ea_buffer *ea_buf);
 
 /*
- * NAME: ea_write_inline
+ * NAME: ea_ग_लिखो_अंतरभूत
  *
- * FUNCTION: Attempt to write an EA inline if area is available
+ * FUNCTION: Attempt to ग_लिखो an EA अंतरभूत अगर area is available
  *
  * PRE CONDITIONS:
- *	Already verified that the specified EA is small enough to fit inline
+ *	Alपढ़ोy verअगरied that the specअगरied EA is small enough to fit अंतरभूत
  *
  * PARAMETERS:
- *	ip	- Inode pointer
- *	ealist	- EA list pointer
+ *	ip	- Inode poपूर्णांकer
+ *	ealist	- EA list poपूर्णांकer
  *	size	- size of ealist in bytes
- *	ea	- dxd_t structure to be filled in with necessary EA information
- *		  if we successfully copy the EA inline
+ *	ea	- dxd_t काष्ठाure to be filled in with necessary EA inक्रमmation
+ *		  अगर we successfully copy the EA अंतरभूत
  *
  * NOTES:
- *	Checks if the inode's inline area is available.  If so, copies EA inline
- *	and sets <ea> fields appropriately.  Otherwise, returns failure, EA will
- *	have to be put into an extent.
+ *	Checks अगर the inode's अंतरभूत area is available.  If so, copies EA अंतरभूत
+ *	and sets <ea> fields appropriately.  Otherwise, वापसs failure, EA will
+ *	have to be put पूर्णांकo an extent.
  *
- * RETURNS: 0 for successful copy to inline area; -1 if area not available
+ * RETURNS: 0 क्रम successful copy to अंतरभूत area; -1 अगर area not available
  */
-static int ea_write_inline(struct inode *ip, struct jfs_ea_list *ealist,
-			   int size, dxd_t * ea)
-{
-	struct jfs_inode_info *ji = JFS_IP(ip);
+अटल पूर्णांक ea_ग_लिखो_अंतरभूत(काष्ठा inode *ip, काष्ठा jfs_ea_list *ealist,
+			   पूर्णांक size, dxd_t * ea)
+अणु
+	काष्ठा jfs_inode_info *ji = JFS_IP(ip);
 
 	/*
-	 * Make sure we have an EA -- the NULL EA list is valid, but you
+	 * Make sure we have an EA -- the शून्य EA list is valid, but you
 	 * can't copy it!
 	 */
-	if (ealist && size > sizeof (struct jfs_ea_list)) {
-		assert(size <= sizeof (ji->i_inline_ea));
+	अगर (ealist && size > माप (काष्ठा jfs_ea_list)) अणु
+		निश्चित(size <= माप (ji->i_अंतरभूत_ea));
 
 		/*
-		 * See if the space is available or if it is already being
-		 * used for an inline EA.
+		 * See अगर the space is available or अगर it is alपढ़ोy being
+		 * used क्रम an अंतरभूत EA.
 		 */
-		if (!(ji->mode2 & INLINEEA) && !(ji->ea.flag & DXD_INLINE))
-			return -EPERM;
+		अगर (!(ji->mode2 & INLINEEA) && !(ji->ea.flag & DXD_INLINE))
+			वापस -EPERM;
 
 		DXDsize(ea, size);
 		DXDlength(ea, 0);
 		DXDaddress(ea, 0);
-		memcpy(ji->i_inline_ea, ealist, size);
+		स_नकल(ji->i_अंतरभूत_ea, ealist, size);
 		ea->flag = DXD_INLINE;
 		ji->mode2 &= ~INLINEEA;
-	} else {
+	पूर्ण अन्यथा अणु
 		ea->flag = 0;
 		DXDsize(ea, 0);
 		DXDlength(ea, 0);
 		DXDaddress(ea, 0);
 
 		/* Free up INLINE area */
-		if (ji->ea.flag & DXD_INLINE)
+		अगर (ji->ea.flag & DXD_INLINE)
 			ji->mode2 |= INLINEEA;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * NAME: ea_write
+ * NAME: ea_ग_लिखो
  *
- * FUNCTION: Write an EA for an inode
+ * FUNCTION: Write an EA क्रम an inode
  *
- * PRE CONDITIONS: EA has been verified
+ * PRE CONDITIONS: EA has been verअगरied
  *
  * PARAMETERS:
- *	ip	- Inode pointer
- *	ealist	- EA list pointer
+ *	ip	- Inode poपूर्णांकer
+ *	ealist	- EA list poपूर्णांकer
  *	size	- size of ealist in bytes
- *	ea	- dxd_t structure to be filled in appropriately with where the
+ *	ea	- dxd_t काष्ठाure to be filled in appropriately with where the
  *		  EA was copied
  *
- * NOTES: Will write EA inline if able to, otherwise allocates blocks for an
- *	extent and synchronously writes it to those blocks.
+ * NOTES: Will ग_लिखो EA अंतरभूत अगर able to, otherwise allocates blocks क्रम an
+ *	extent and synchronously ग_लिखोs it to those blocks.
  *
- * RETURNS: 0 for success; Anything else indicates failure
+ * RETURNS: 0 क्रम success; Anything अन्यथा indicates failure
  */
-static int ea_write(struct inode *ip, struct jfs_ea_list *ealist, int size,
+अटल पूर्णांक ea_ग_लिखो(काष्ठा inode *ip, काष्ठा jfs_ea_list *ealist, पूर्णांक size,
 		       dxd_t * ea)
-{
-	struct super_block *sb = ip->i_sb;
-	struct jfs_inode_info *ji = JFS_IP(ip);
-	struct jfs_sb_info *sbi = JFS_SBI(sb);
-	int nblocks;
+अणु
+	काष्ठा super_block *sb = ip->i_sb;
+	काष्ठा jfs_inode_info *ji = JFS_IP(ip);
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(sb);
+	पूर्णांक nblocks;
 	s64 blkno;
-	int rc = 0, i;
-	char *cp;
+	पूर्णांक rc = 0, i;
+	अक्षर *cp;
 	s32 nbytes, nb;
-	s32 bytes_to_write;
-	struct metapage *mp;
+	s32 bytes_to_ग_लिखो;
+	काष्ठा metapage *mp;
 
 	/*
-	 * Quick check to see if this is an in-linable EA.  Short EAs
+	 * Quick check to see अगर this is an in-linable EA.  Short EAs
 	 * and empty EAs are all in-linable, provided the space exists.
 	 */
-	if (!ealist || size <= sizeof (ji->i_inline_ea)) {
-		if (!ea_write_inline(ip, ealist, size, ea))
-			return 0;
-	}
+	अगर (!ealist || size <= माप (ji->i_अंतरभूत_ea)) अणु
+		अगर (!ea_ग_लिखो_अंतरभूत(ip, ealist, size, ea))
+			वापस 0;
+	पूर्ण
 
 	/* figure out how many blocks we need */
 	nblocks = (size + (sb->s_blocksize - 1)) >> sb->s_blocksize_bits;
 
 	/* Allocate new blocks to quota. */
 	rc = dquot_alloc_block(ip, nblocks);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = dbAlloc(ip, INOHINT(ip), nblocks, &blkno);
-	if (rc) {
+	अगर (rc) अणु
 		/*Rollback quota allocation. */
-		dquot_free_block(ip, nblocks);
-		return rc;
-	}
+		dquot_मुक्त_block(ip, nblocks);
+		वापस rc;
+	पूर्ण
 
 	/*
-	 * Now have nblocks worth of storage to stuff into the FEALIST.
-	 * loop over the FEALIST copying data into the buffer one page at
-	 * a time.
+	 * Now have nblocks worth of storage to stuff पूर्णांकo the FEALIST.
+	 * loop over the FEALIST copying data पूर्णांकo the buffer one page at
+	 * a समय.
 	 */
-	cp = (char *) ealist;
+	cp = (अक्षर *) ealist;
 	nbytes = size;
-	for (i = 0; i < nblocks; i += sbi->nbperpage) {
+	क्रम (i = 0; i < nblocks; i += sbi->nbperpage) अणु
 		/*
-		 * Determine how many bytes for this request, and round up to
+		 * Determine how many bytes क्रम this request, and round up to
 		 * the nearest aggregate block size
 		 */
 		nb = min(PSIZE, nbytes);
-		bytes_to_write =
+		bytes_to_ग_लिखो =
 		    ((((nb + sb->s_blocksize - 1)) >> sb->s_blocksize_bits))
 		    << sb->s_blocksize_bits;
 
-		if (!(mp = get_metapage(ip, blkno + i, bytes_to_write, 1))) {
+		अगर (!(mp = get_metapage(ip, blkno + i, bytes_to_ग_लिखो, 1))) अणु
 			rc = -EIO;
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 
-		memcpy(mp->data, cp, nb);
+		स_नकल(mp->data, cp, nb);
 
 		/*
-		 * We really need a way to propagate errors for
-		 * forced writes like this one.  --hch
+		 * We really need a way to propagate errors क्रम
+		 * क्रमced ग_लिखोs like this one.  --hch
 		 *
-		 * (__write_metapage => release_metapage => flush_metapage)
+		 * (__ग_लिखो_metapage => release_metapage => flush_metapage)
 		 */
-#ifdef _JFS_FIXME
-		if ((rc = flush_metapage(mp))) {
+#अगर_घोषित _JFS_FIXME
+		अगर ((rc = flush_metapage(mp))) अणु
 			/*
-			 * the write failed -- this means that the buffer
-			 * is still assigned and the blocks are not being
+			 * the ग_लिखो failed -- this means that the buffer
+			 * is still asचिन्हित and the blocks are not being
 			 * used.  this seems like the best error recovery
 			 * we can get ...
 			 */
-			goto failed;
-		}
-#else
+			जाओ failed;
+		पूर्ण
+#अन्यथा
 		flush_metapage(mp);
-#endif
+#पूर्ण_अगर
 
 		cp += PSIZE;
 		nbytes -= nb;
-	}
+	पूर्ण
 
 	ea->flag = DXD_EXTENT;
 	DXDsize(ea, le32_to_cpu(ealist->size));
@@ -290,86 +291,86 @@ static int ea_write(struct inode *ip, struct jfs_ea_list *ealist, int size,
 	DXDaddress(ea, blkno);
 
 	/* Free up INLINE area */
-	if (ji->ea.flag & DXD_INLINE)
+	अगर (ji->ea.flag & DXD_INLINE)
 		ji->mode2 |= INLINEEA;
 
-	return 0;
+	वापस 0;
 
       failed:
 	/* Rollback quota allocation. */
-	dquot_free_block(ip, nblocks);
+	dquot_मुक्त_block(ip, nblocks);
 
 	dbFree(ip, blkno, nblocks);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * NAME: ea_read_inline
+ * NAME: ea_पढ़ो_अंतरभूत
  *
- * FUNCTION: Read an inlined EA into user's buffer
+ * FUNCTION: Read an अंतरभूतd EA पूर्णांकo user's buffer
  *
  * PARAMETERS:
- *	ip	- Inode pointer
- *	ealist	- Pointer to buffer to fill in with EA
+ *	ip	- Inode poपूर्णांकer
+ *	ealist	- Poपूर्णांकer to buffer to fill in with EA
  *
  * RETURNS: 0
  */
-static int ea_read_inline(struct inode *ip, struct jfs_ea_list *ealist)
-{
-	struct jfs_inode_info *ji = JFS_IP(ip);
-	int ea_size = sizeDXD(&ji->ea);
+अटल पूर्णांक ea_पढ़ो_अंतरभूत(काष्ठा inode *ip, काष्ठा jfs_ea_list *ealist)
+अणु
+	काष्ठा jfs_inode_info *ji = JFS_IP(ip);
+	पूर्णांक ea_size = sizeDXD(&ji->ea);
 
-	if (ea_size == 0) {
+	अगर (ea_size == 0) अणु
 		ealist->size = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Sanity Check */
-	if ((sizeDXD(&ji->ea) > sizeof (ji->i_inline_ea)))
-		return -EIO;
-	if (le32_to_cpu(((struct jfs_ea_list *) &ji->i_inline_ea)->size)
+	अगर ((sizeDXD(&ji->ea) > माप (ji->i_अंतरभूत_ea)))
+		वापस -EIO;
+	अगर (le32_to_cpu(((काष्ठा jfs_ea_list *) &ji->i_अंतरभूत_ea)->size)
 	    != ea_size)
-		return -EIO;
+		वापस -EIO;
 
-	memcpy(ealist, ji->i_inline_ea, ea_size);
-	return 0;
-}
+	स_नकल(ealist, ji->i_अंतरभूत_ea, ea_size);
+	वापस 0;
+पूर्ण
 
 /*
- * NAME: ea_read
+ * NAME: ea_पढ़ो
  *
- * FUNCTION: copy EA data into user's buffer
+ * FUNCTION: copy EA data पूर्णांकo user's buffer
  *
  * PARAMETERS:
- *	ip	- Inode pointer
- *	ealist	- Pointer to buffer to fill in with EA
+ *	ip	- Inode poपूर्णांकer
+ *	ealist	- Poपूर्णांकer to buffer to fill in with EA
  *
- * NOTES:  If EA is inline calls ea_read_inline() to copy EA.
+ * NOTES:  If EA is अंतरभूत calls ea_पढ़ो_अंतरभूत() to copy EA.
  *
- * RETURNS: 0 for success; other indicates failure
+ * RETURNS: 0 क्रम success; other indicates failure
  */
-static int ea_read(struct inode *ip, struct jfs_ea_list *ealist)
-{
-	struct super_block *sb = ip->i_sb;
-	struct jfs_inode_info *ji = JFS_IP(ip);
-	struct jfs_sb_info *sbi = JFS_SBI(sb);
-	int nblocks;
+अटल पूर्णांक ea_पढ़ो(काष्ठा inode *ip, काष्ठा jfs_ea_list *ealist)
+अणु
+	काष्ठा super_block *sb = ip->i_sb;
+	काष्ठा jfs_inode_info *ji = JFS_IP(ip);
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(sb);
+	पूर्णांक nblocks;
 	s64 blkno;
-	char *cp = (char *) ealist;
-	int i;
-	int nbytes, nb;
-	s32 bytes_to_read;
-	struct metapage *mp;
+	अक्षर *cp = (अक्षर *) ealist;
+	पूर्णांक i;
+	पूर्णांक nbytes, nb;
+	s32 bytes_to_पढ़ो;
+	काष्ठा metapage *mp;
 
-	/* quick check for in-line EA */
-	if (ji->ea.flag & DXD_INLINE)
-		return ea_read_inline(ip, ealist);
+	/* quick check क्रम in-line EA */
+	अगर (ji->ea.flag & DXD_INLINE)
+		वापस ea_पढ़ो_अंतरभूत(ip, ealist);
 
 	nbytes = sizeDXD(&ji->ea);
-	if (!nbytes) {
+	अगर (!nbytes) अणु
 		jfs_error(sb, "nbytes is 0\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/*
 	 * Figure out how many blocks were allocated when this EA list was
@@ -381,30 +382,30 @@ static int ea_read(struct inode *ip, struct jfs_ea_list *ealist)
 	/*
 	 * I have found the disk blocks which were originally used to store
 	 * the FEALIST.  now i loop over each contiguous block copying the
-	 * data into the buffer.
+	 * data पूर्णांकo the buffer.
 	 */
-	for (i = 0; i < nblocks; i += sbi->nbperpage) {
+	क्रम (i = 0; i < nblocks; i += sbi->nbperpage) अणु
 		/*
-		 * Determine how many bytes for this request, and round up to
+		 * Determine how many bytes क्रम this request, and round up to
 		 * the nearest aggregate block size
 		 */
 		nb = min(PSIZE, nbytes);
-		bytes_to_read =
+		bytes_to_पढ़ो =
 		    ((((nb + sb->s_blocksize - 1)) >> sb->s_blocksize_bits))
 		    << sb->s_blocksize_bits;
 
-		if (!(mp = read_metapage(ip, blkno + i, bytes_to_read, 1)))
-			return -EIO;
+		अगर (!(mp = पढ़ो_metapage(ip, blkno + i, bytes_to_पढ़ो, 1)))
+			वापस -EIO;
 
-		memcpy(cp, mp->data, nb);
+		स_नकल(cp, mp->data, nb);
 		release_metapage(mp);
 
 		cp += PSIZE;
 		nbytes -= nb;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * NAME: ea_get
@@ -413,69 +414,69 @@ static int ea_read(struct inode *ip, struct jfs_ea_list *ealist)
  *	     The size of the buffer will be the larger of the existing
  *	     attributes size, or min_size.
  *
- *	     The buffer, which may be inlined in the inode or in the
+ *	     The buffer, which may be अंतरभूतd in the inode or in the
  *	     page cache must be release by calling ea_release or ea_put
  *
  * PARAMETERS:
- *	inode	- Inode pointer
+ *	inode	- Inode poपूर्णांकer
  *	ea_buf	- Structure to be populated with ealist and its metadata
- *	min_size- minimum size of buffer to be returned
+ *	min_size- minimum size of buffer to be वापसed
  *
- * RETURNS: 0 for success; Other indicates failure
+ * RETURNS: 0 क्रम success; Other indicates failure
  */
-static int ea_get(struct inode *inode, struct ea_buffer *ea_buf, int min_size)
-{
-	struct jfs_inode_info *ji = JFS_IP(inode);
-	struct super_block *sb = inode->i_sb;
-	int size;
-	int ea_size = sizeDXD(&ji->ea);
-	int blocks_needed, current_blocks;
+अटल पूर्णांक ea_get(काष्ठा inode *inode, काष्ठा ea_buffer *ea_buf, पूर्णांक min_size)
+अणु
+	काष्ठा jfs_inode_info *ji = JFS_IP(inode);
+	काष्ठा super_block *sb = inode->i_sb;
+	पूर्णांक size;
+	पूर्णांक ea_size = sizeDXD(&ji->ea);
+	पूर्णांक blocks_needed, current_blocks;
 	s64 blkno;
-	int rc;
-	int quota_allocation = 0;
+	पूर्णांक rc;
+	पूर्णांक quota_allocation = 0;
 
-	/* When fsck.jfs clears a bad ea, it doesn't clear the size */
-	if (ji->ea.flag == 0)
+	/* When fsck.jfs clears a bad ea, it करोesn't clear the size */
+	अगर (ji->ea.flag == 0)
 		ea_size = 0;
 
-	if (ea_size == 0) {
-		if (min_size == 0) {
+	अगर (ea_size == 0) अणु
+		अगर (min_size == 0) अणु
 			ea_buf->flag = 0;
 			ea_buf->max_size = 0;
-			ea_buf->xattr = NULL;
-			return 0;
-		}
-		if ((min_size <= sizeof (ji->i_inline_ea)) &&
-		    (ji->mode2 & INLINEEA)) {
+			ea_buf->xattr = शून्य;
+			वापस 0;
+		पूर्ण
+		अगर ((min_size <= माप (ji->i_अंतरभूत_ea)) &&
+		    (ji->mode2 & INLINEEA)) अणु
 			ea_buf->flag = EA_INLINE | EA_NEW;
-			ea_buf->max_size = sizeof (ji->i_inline_ea);
-			ea_buf->xattr = (struct jfs_ea_list *) ji->i_inline_ea;
+			ea_buf->max_size = माप (ji->i_अंतरभूत_ea);
+			ea_buf->xattr = (काष्ठा jfs_ea_list *) ji->i_अंतरभूत_ea;
 			DXDlength(&ea_buf->new_ea, 0);
 			DXDaddress(&ea_buf->new_ea, 0);
 			ea_buf->new_ea.flag = DXD_INLINE;
 			DXDsize(&ea_buf->new_ea, min_size);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		current_blocks = 0;
-	} else if (ji->ea.flag & DXD_INLINE) {
-		if (min_size <= sizeof (ji->i_inline_ea)) {
+	पूर्ण अन्यथा अगर (ji->ea.flag & DXD_INLINE) अणु
+		अगर (min_size <= माप (ji->i_अंतरभूत_ea)) अणु
 			ea_buf->flag = EA_INLINE;
-			ea_buf->max_size = sizeof (ji->i_inline_ea);
-			ea_buf->xattr = (struct jfs_ea_list *) ji->i_inline_ea;
-			goto size_check;
-		}
+			ea_buf->max_size = माप (ji->i_अंतरभूत_ea);
+			ea_buf->xattr = (काष्ठा jfs_ea_list *) ji->i_अंतरभूत_ea;
+			जाओ size_check;
+		पूर्ण
 		current_blocks = 0;
-	} else {
-		if (!(ji->ea.flag & DXD_EXTENT)) {
+	पूर्ण अन्यथा अणु
+		अगर (!(ji->ea.flag & DXD_EXTENT)) अणु
 			jfs_error(sb, "invalid ea.flag\n");
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		current_blocks = (ea_size + sb->s_blocksize - 1) >>
 		    sb->s_blocksize_bits;
-	}
+	पूर्ण
 	size = max(min_size, ea_size);
 
-	if (size > PSIZE) {
+	अगर (size > PSIZE) अणु
 		/*
 		 * To keep the rest of the code simple.  Allocate a
 		 * contiguous buffer to work with. Make the buffer large
@@ -484,37 +485,37 @@ static int ea_get(struct inode *inode, struct ea_buffer *ea_buf, int min_size)
 		ea_buf->max_size = (size + sb->s_blocksize - 1) &
 		    ~(sb->s_blocksize - 1);
 
-		ea_buf->xattr = kmalloc(ea_buf->max_size, GFP_KERNEL);
-		if (ea_buf->xattr == NULL)
-			return -ENOMEM;
+		ea_buf->xattr = kदो_स्मृति(ea_buf->max_size, GFP_KERNEL);
+		अगर (ea_buf->xattr == शून्य)
+			वापस -ENOMEM;
 
 		ea_buf->flag = EA_MALLOC;
 
-		if (ea_size == 0)
-			return 0;
+		अगर (ea_size == 0)
+			वापस 0;
 
-		if ((rc = ea_read(inode, ea_buf->xattr))) {
-			kfree(ea_buf->xattr);
-			ea_buf->xattr = NULL;
-			return rc;
-		}
-		goto size_check;
-	}
+		अगर ((rc = ea_पढ़ो(inode, ea_buf->xattr))) अणु
+			kमुक्त(ea_buf->xattr);
+			ea_buf->xattr = शून्य;
+			वापस rc;
+		पूर्ण
+		जाओ size_check;
+	पूर्ण
 	blocks_needed = (min_size + sb->s_blocksize - 1) >>
 	    sb->s_blocksize_bits;
 
-	if (blocks_needed > current_blocks) {
+	अगर (blocks_needed > current_blocks) अणु
 		/* Allocate new blocks to quota. */
 		rc = dquot_alloc_block(inode, blocks_needed);
-		if (rc)
-			return -EDQUOT;
+		अगर (rc)
+			वापस -EDQUOT;
 
 		quota_allocation = blocks_needed;
 
 		rc = dbAlloc(inode, INOHINT(inode), (s64) blocks_needed,
 			     &blkno);
-		if (rc)
-			goto clean_up;
+		अगर (rc)
+			जाओ clean_up;
 
 		DXDlength(&ea_buf->new_ea, blocks_needed);
 		DXDaddress(&ea_buf->new_ea, blkno);
@@ -526,510 +527,510 @@ static int ea_get(struct inode *inode, struct ea_buffer *ea_buf, int min_size)
 		ea_buf->mp = get_metapage(inode, blkno,
 					  blocks_needed << sb->s_blocksize_bits,
 					  1);
-		if (ea_buf->mp == NULL) {
+		अगर (ea_buf->mp == शून्य) अणु
 			dbFree(inode, blkno, (s64) blocks_needed);
 			rc = -EIO;
-			goto clean_up;
-		}
+			जाओ clean_up;
+		पूर्ण
 		ea_buf->xattr = ea_buf->mp->data;
 		ea_buf->max_size = (min_size + sb->s_blocksize - 1) &
 		    ~(sb->s_blocksize - 1);
-		if (ea_size == 0)
-			return 0;
-		if ((rc = ea_read(inode, ea_buf->xattr))) {
+		अगर (ea_size == 0)
+			वापस 0;
+		अगर ((rc = ea_पढ़ो(inode, ea_buf->xattr))) अणु
 			discard_metapage(ea_buf->mp);
 			dbFree(inode, blkno, (s64) blocks_needed);
-			goto clean_up;
-		}
-		goto size_check;
-	}
+			जाओ clean_up;
+		पूर्ण
+		जाओ size_check;
+	पूर्ण
 	ea_buf->flag = EA_EXTENT;
-	ea_buf->mp = read_metapage(inode, addressDXD(&ji->ea),
+	ea_buf->mp = पढ़ो_metapage(inode, addressDXD(&ji->ea),
 				   lengthDXD(&ji->ea) << sb->s_blocksize_bits,
 				   1);
-	if (ea_buf->mp == NULL) {
+	अगर (ea_buf->mp == शून्य) अणु
 		rc = -EIO;
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 	ea_buf->xattr = ea_buf->mp->data;
 	ea_buf->max_size = (ea_size + sb->s_blocksize - 1) &
 	    ~(sb->s_blocksize - 1);
 
       size_check:
-	if (EALIST_SIZE(ea_buf->xattr) != ea_size) {
-		printk(KERN_ERR "ea_get: invalid extended attribute\n");
-		print_hex_dump(KERN_ERR, "", DUMP_PREFIX_ADDRESS, 16, 1,
+	अगर (EALIST_SIZE(ea_buf->xattr) != ea_size) अणु
+		prपूर्णांकk(KERN_ERR "ea_get: invalid extended attribute\n");
+		prपूर्णांक_hex_dump(KERN_ERR, "", DUMP_PREFIX_ADDRESS, 16, 1,
 				     ea_buf->xattr, ea_size, 1);
 		ea_release(inode, ea_buf);
 		rc = -EIO;
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
-	return ea_size;
+	वापस ea_size;
 
       clean_up:
 	/* Rollback quota allocation */
-	if (quota_allocation)
-		dquot_free_block(inode, quota_allocation);
+	अगर (quota_allocation)
+		dquot_मुक्त_block(inode, quota_allocation);
 
-	return (rc);
-}
+	वापस (rc);
+पूर्ण
 
-static void ea_release(struct inode *inode, struct ea_buffer *ea_buf)
-{
-	if (ea_buf->flag & EA_MALLOC)
-		kfree(ea_buf->xattr);
-	else if (ea_buf->flag & EA_EXTENT) {
-		assert(ea_buf->mp);
+अटल व्योम ea_release(काष्ठा inode *inode, काष्ठा ea_buffer *ea_buf)
+अणु
+	अगर (ea_buf->flag & EA_MALLOC)
+		kमुक्त(ea_buf->xattr);
+	अन्यथा अगर (ea_buf->flag & EA_EXTENT) अणु
+		निश्चित(ea_buf->mp);
 		release_metapage(ea_buf->mp);
 
-		if (ea_buf->flag & EA_NEW)
+		अगर (ea_buf->flag & EA_NEW)
 			dbFree(inode, addressDXD(&ea_buf->new_ea),
 			       lengthDXD(&ea_buf->new_ea));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ea_put(tid_t tid, struct inode *inode, struct ea_buffer *ea_buf,
-		  int new_size)
-{
-	struct jfs_inode_info *ji = JFS_IP(inode);
-	unsigned long old_blocks, new_blocks;
-	int rc = 0;
+अटल पूर्णांक ea_put(tid_t tid, काष्ठा inode *inode, काष्ठा ea_buffer *ea_buf,
+		  पूर्णांक new_size)
+अणु
+	काष्ठा jfs_inode_info *ji = JFS_IP(inode);
+	अचिन्हित दीर्घ old_blocks, new_blocks;
+	पूर्णांक rc = 0;
 
-	if (new_size == 0) {
+	अगर (new_size == 0) अणु
 		ea_release(inode, ea_buf);
-		ea_buf = NULL;
-	} else if (ea_buf->flag & EA_INLINE) {
-		assert(new_size <= sizeof (ji->i_inline_ea));
+		ea_buf = शून्य;
+	पूर्ण अन्यथा अगर (ea_buf->flag & EA_INLINE) अणु
+		निश्चित(new_size <= माप (ji->i_अंतरभूत_ea));
 		ji->mode2 &= ~INLINEEA;
 		ea_buf->new_ea.flag = DXD_INLINE;
 		DXDsize(&ea_buf->new_ea, new_size);
 		DXDaddress(&ea_buf->new_ea, 0);
 		DXDlength(&ea_buf->new_ea, 0);
-	} else if (ea_buf->flag & EA_MALLOC) {
-		rc = ea_write(inode, ea_buf->xattr, new_size, &ea_buf->new_ea);
-		kfree(ea_buf->xattr);
-	} else if (ea_buf->flag & EA_NEW) {
-		/* We have already allocated a new dxd */
+	पूर्ण अन्यथा अगर (ea_buf->flag & EA_MALLOC) अणु
+		rc = ea_ग_लिखो(inode, ea_buf->xattr, new_size, &ea_buf->new_ea);
+		kमुक्त(ea_buf->xattr);
+	पूर्ण अन्यथा अगर (ea_buf->flag & EA_NEW) अणु
+		/* We have alपढ़ोy allocated a new dxd */
 		flush_metapage(ea_buf->mp);
-	} else {
-		/* ->xattr must point to original ea's metapage */
-		rc = ea_write(inode, ea_buf->xattr, new_size, &ea_buf->new_ea);
+	पूर्ण अन्यथा अणु
+		/* ->xattr must poपूर्णांक to original ea's metapage */
+		rc = ea_ग_लिखो(inode, ea_buf->xattr, new_size, &ea_buf->new_ea);
 		discard_metapage(ea_buf->mp);
-	}
-	if (rc)
-		return rc;
+	पूर्ण
+	अगर (rc)
+		वापस rc;
 
 	old_blocks = new_blocks = 0;
 
-	if (ji->ea.flag & DXD_EXTENT) {
+	अगर (ji->ea.flag & DXD_EXTENT) अणु
 		invalidate_dxd_metapages(inode, ji->ea);
 		old_blocks = lengthDXD(&ji->ea);
-	}
+	पूर्ण
 
-	if (ea_buf) {
+	अगर (ea_buf) अणु
 		txEA(tid, inode, &ji->ea, &ea_buf->new_ea);
-		if (ea_buf->new_ea.flag & DXD_EXTENT) {
+		अगर (ea_buf->new_ea.flag & DXD_EXTENT) अणु
 			new_blocks = lengthDXD(&ea_buf->new_ea);
-			if (ji->ea.flag & DXD_INLINE)
+			अगर (ji->ea.flag & DXD_INLINE)
 				ji->mode2 |= INLINEEA;
-		}
+		पूर्ण
 		ji->ea = ea_buf->new_ea;
-	} else {
-		txEA(tid, inode, &ji->ea, NULL);
-		if (ji->ea.flag & DXD_INLINE)
+	पूर्ण अन्यथा अणु
+		txEA(tid, inode, &ji->ea, शून्य);
+		अगर (ji->ea.flag & DXD_INLINE)
 			ji->mode2 |= INLINEEA;
 		ji->ea.flag = 0;
 		ji->ea.size = 0;
-	}
+	पूर्ण
 
-	/* If old blocks exist, they must be removed from quota allocation. */
-	if (old_blocks)
-		dquot_free_block(inode, old_blocks);
+	/* If old blocks exist, they must be हटाओd from quota allocation. */
+	अगर (old_blocks)
+		dquot_मुक्त_block(inode, old_blocks);
 
-	inode->i_ctime = current_time(inode);
+	inode->i_स_समय = current_समय(inode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __jfs_setxattr(tid_t tid, struct inode *inode, const char *name,
-		   const void *value, size_t value_len, int flags)
-{
-	struct jfs_ea_list *ealist;
-	struct jfs_ea *ea, *old_ea = NULL, *next_ea = NULL;
-	struct ea_buffer ea_buf;
-	int old_ea_size = 0;
-	int xattr_size;
-	int new_size;
-	int namelen = strlen(name);
-	int found = 0;
-	int rc;
-	int length;
+पूर्णांक __jfs_setxattr(tid_t tid, काष्ठा inode *inode, स्थिर अक्षर *name,
+		   स्थिर व्योम *value, माप_प्रकार value_len, पूर्णांक flags)
+अणु
+	काष्ठा jfs_ea_list *ealist;
+	काष्ठा jfs_ea *ea, *old_ea = शून्य, *next_ea = शून्य;
+	काष्ठा ea_buffer ea_buf;
+	पूर्णांक old_ea_size = 0;
+	पूर्णांक xattr_size;
+	पूर्णांक new_size;
+	पूर्णांक namelen = म_माप(name);
+	पूर्णांक found = 0;
+	पूर्णांक rc;
+	पूर्णांक length;
 
-	down_write(&JFS_IP(inode)->xattr_sem);
+	करोwn_ग_लिखो(&JFS_IP(inode)->xattr_sem);
 
 	xattr_size = ea_get(inode, &ea_buf, 0);
-	if (xattr_size < 0) {
+	अगर (xattr_size < 0) अणु
 		rc = xattr_size;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
       again:
-	ealist = (struct jfs_ea_list *) ea_buf.xattr;
-	new_size = sizeof (struct jfs_ea_list);
+	ealist = (काष्ठा jfs_ea_list *) ea_buf.xattr;
+	new_size = माप (काष्ठा jfs_ea_list);
 
-	if (xattr_size) {
-		for (ea = FIRST_EA(ealist); ea < END_EALIST(ealist);
-		     ea = NEXT_EA(ea)) {
-			if ((namelen == ea->namelen) &&
-			    (memcmp(name, ea->name, namelen) == 0)) {
+	अगर (xattr_size) अणु
+		क्रम (ea = FIRST_EA(ealist); ea < END_EALIST(ealist);
+		     ea = NEXT_EA(ea)) अणु
+			अगर ((namelen == ea->namelen) &&
+			    (स_भेद(name, ea->name, namelen) == 0)) अणु
 				found = 1;
-				if (flags & XATTR_CREATE) {
+				अगर (flags & XATTR_CREATE) अणु
 					rc = -EEXIST;
-					goto release;
-				}
+					जाओ release;
+				पूर्ण
 				old_ea = ea;
 				old_ea_size = EA_SIZE(ea);
 				next_ea = NEXT_EA(ea);
-			} else
+			पूर्ण अन्यथा
 				new_size += EA_SIZE(ea);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!found) {
-		if (flags & XATTR_REPLACE) {
+	अगर (!found) अणु
+		अगर (flags & XATTR_REPLACE) अणु
 			rc = -ENODATA;
-			goto release;
-		}
-		if (value == NULL) {
+			जाओ release;
+		पूर्ण
+		अगर (value == शून्य) अणु
 			rc = 0;
-			goto release;
-		}
-	}
-	if (value)
-		new_size += sizeof (struct jfs_ea) + namelen + 1 + value_len;
+			जाओ release;
+		पूर्ण
+	पूर्ण
+	अगर (value)
+		new_size += माप (काष्ठा jfs_ea) + namelen + 1 + value_len;
 
-	if (new_size > ea_buf.max_size) {
+	अगर (new_size > ea_buf.max_size) अणु
 		/*
-		 * We need to allocate more space for merged ea list.
+		 * We need to allocate more space क्रम merged ea list.
 		 * We should only have loop to again: once.
 		 */
 		ea_release(inode, &ea_buf);
 		xattr_size = ea_get(inode, &ea_buf, new_size);
-		if (xattr_size < 0) {
+		अगर (xattr_size < 0) अणु
 			rc = xattr_size;
-			goto out;
-		}
-		goto again;
-	}
+			जाओ out;
+		पूर्ण
+		जाओ again;
+	पूर्ण
 
 	/* Remove old ea of the same name */
-	if (found) {
+	अगर (found) अणु
 		/* number of bytes following target EA */
-		length = (char *) END_EALIST(ealist) - (char *) next_ea;
-		if (length > 0)
-			memmove(old_ea, next_ea, length);
+		length = (अक्षर *) END_EALIST(ealist) - (अक्षर *) next_ea;
+		अगर (length > 0)
+			स_हटाओ(old_ea, next_ea, length);
 		xattr_size -= old_ea_size;
-	}
+	पूर्ण
 
 	/* Add new entry to the end */
-	if (value) {
-		if (xattr_size == 0)
+	अगर (value) अणु
+		अगर (xattr_size == 0)
 			/* Completely new ea list */
-			xattr_size = sizeof (struct jfs_ea_list);
+			xattr_size = माप (काष्ठा jfs_ea_list);
 
 		/*
-		 * The size of EA value is limitted by on-disk format up to
-		 *  __le16, there would be an overflow if the size is equal
-		 * to XATTR_SIZE_MAX (65536).  In order to avoid this issue,
-		 * we can pre-checkup the value size against USHRT_MAX, and
-		 * return -E2BIG in this case, which is consistent with the
-		 * VFS setxattr interface.
+		 * The size of EA value is limitted by on-disk क्रमmat up to
+		 *  __le16, there would be an overflow अगर the size is equal
+		 * to XATTR_SIZE_MAX (65536).  In order to aव्योम this issue,
+		 * we can pre-checkup the value size against अच_लघु_उच्च, and
+		 * वापस -E2BIG in this हाल, which is consistent with the
+		 * VFS setxattr पूर्णांकerface.
 		 */
-		if (value_len >= USHRT_MAX) {
+		अगर (value_len >= अच_लघु_उच्च) अणु
 			rc = -E2BIG;
-			goto release;
-		}
+			जाओ release;
+		पूर्ण
 
-		ea = (struct jfs_ea *) ((char *) ealist + xattr_size);
+		ea = (काष्ठा jfs_ea *) ((अक्षर *) ealist + xattr_size);
 		ea->flag = 0;
 		ea->namelen = namelen;
 		ea->valuelen = (cpu_to_le16(value_len));
-		memcpy(ea->name, name, namelen);
+		स_नकल(ea->name, name, namelen);
 		ea->name[namelen] = 0;
-		if (value_len)
-			memcpy(&ea->name[namelen + 1], value, value_len);
+		अगर (value_len)
+			स_नकल(&ea->name[namelen + 1], value, value_len);
 		xattr_size += EA_SIZE(ea);
-	}
+	पूर्ण
 
 	/* DEBUG - If we did this right, these number match */
-	if (xattr_size != new_size) {
-		printk(KERN_ERR
+	अगर (xattr_size != new_size) अणु
+		prपूर्णांकk(KERN_ERR
 		       "__jfs_setxattr: xattr_size = %d, new_size = %d\n",
 		       xattr_size, new_size);
 
 		rc = -EINVAL;
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 
 	/*
 	 * If we're left with an empty list, there's no ea
 	 */
-	if (new_size == sizeof (struct jfs_ea_list))
+	अगर (new_size == माप (काष्ठा jfs_ea_list))
 		new_size = 0;
 
 	ealist->size = cpu_to_le32(new_size);
 
 	rc = ea_put(tid, inode, &ea_buf, new_size);
 
-	goto out;
+	जाओ out;
       release:
 	ea_release(inode, &ea_buf);
       out:
-	up_write(&JFS_IP(inode)->xattr_sem);
+	up_ग_लिखो(&JFS_IP(inode)->xattr_sem);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-ssize_t __jfs_getxattr(struct inode *inode, const char *name, void *data,
-		       size_t buf_size)
-{
-	struct jfs_ea_list *ealist;
-	struct jfs_ea *ea;
-	struct ea_buffer ea_buf;
-	int xattr_size;
-	ssize_t size;
-	int namelen = strlen(name);
-	char *value;
+sमाप_प्रकार __jfs_getxattr(काष्ठा inode *inode, स्थिर अक्षर *name, व्योम *data,
+		       माप_प्रकार buf_size)
+अणु
+	काष्ठा jfs_ea_list *ealist;
+	काष्ठा jfs_ea *ea;
+	काष्ठा ea_buffer ea_buf;
+	पूर्णांक xattr_size;
+	sमाप_प्रकार size;
+	पूर्णांक namelen = म_माप(name);
+	अक्षर *value;
 
-	down_read(&JFS_IP(inode)->xattr_sem);
+	करोwn_पढ़ो(&JFS_IP(inode)->xattr_sem);
 
 	xattr_size = ea_get(inode, &ea_buf, 0);
 
-	if (xattr_size < 0) {
+	अगर (xattr_size < 0) अणु
 		size = xattr_size;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (xattr_size == 0)
-		goto not_found;
+	अगर (xattr_size == 0)
+		जाओ not_found;
 
-	ealist = (struct jfs_ea_list *) ea_buf.xattr;
+	ealist = (काष्ठा jfs_ea_list *) ea_buf.xattr;
 
 	/* Find the named attribute */
-	for (ea = FIRST_EA(ealist); ea < END_EALIST(ealist); ea = NEXT_EA(ea))
-		if ((namelen == ea->namelen) &&
-		    memcmp(name, ea->name, namelen) == 0) {
+	क्रम (ea = FIRST_EA(ealist); ea < END_EALIST(ealist); ea = NEXT_EA(ea))
+		अगर ((namelen == ea->namelen) &&
+		    स_भेद(name, ea->name, namelen) == 0) अणु
 			/* Found it */
 			size = le16_to_cpu(ea->valuelen);
-			if (!data)
-				goto release;
-			else if (size > buf_size) {
-				size = -ERANGE;
-				goto release;
-			}
-			value = ((char *) &ea->name) + ea->namelen + 1;
-			memcpy(data, value, size);
-			goto release;
-		}
+			अगर (!data)
+				जाओ release;
+			अन्यथा अगर (size > buf_size) अणु
+				size = -दुस्फल;
+				जाओ release;
+			पूर्ण
+			value = ((अक्षर *) &ea->name) + ea->namelen + 1;
+			स_नकल(data, value, size);
+			जाओ release;
+		पूर्ण
       not_found:
 	size = -ENODATA;
       release:
 	ea_release(inode, &ea_buf);
       out:
-	up_read(&JFS_IP(inode)->xattr_sem);
+	up_पढ़ो(&JFS_IP(inode)->xattr_sem);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
 /*
- * No special permissions are needed to list attributes except for trusted.*
+ * No special permissions are needed to list attributes except क्रम trusted.*
  */
-static inline int can_list(struct jfs_ea *ea)
-{
-	return (strncmp(ea->name, XATTR_TRUSTED_PREFIX,
+अटल अंतरभूत पूर्णांक can_list(काष्ठा jfs_ea *ea)
+अणु
+	वापस (म_भेदन(ea->name, XATTR_TRUSTED_PREFIX,
 			    XATTR_TRUSTED_PREFIX_LEN) ||
 		capable(CAP_SYS_ADMIN));
-}
+पूर्ण
 
-ssize_t jfs_listxattr(struct dentry * dentry, char *data, size_t buf_size)
-{
-	struct inode *inode = d_inode(dentry);
-	char *buffer;
-	ssize_t size = 0;
-	int xattr_size;
-	struct jfs_ea_list *ealist;
-	struct jfs_ea *ea;
-	struct ea_buffer ea_buf;
+sमाप_प्रकार jfs_listxattr(काष्ठा dentry * dentry, अक्षर *data, माप_प्रकार buf_size)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	अक्षर *buffer;
+	sमाप_प्रकार size = 0;
+	पूर्णांक xattr_size;
+	काष्ठा jfs_ea_list *ealist;
+	काष्ठा jfs_ea *ea;
+	काष्ठा ea_buffer ea_buf;
 
-	down_read(&JFS_IP(inode)->xattr_sem);
+	करोwn_पढ़ो(&JFS_IP(inode)->xattr_sem);
 
 	xattr_size = ea_get(inode, &ea_buf, 0);
-	if (xattr_size < 0) {
+	अगर (xattr_size < 0) अणु
 		size = xattr_size;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (xattr_size == 0)
-		goto release;
+	अगर (xattr_size == 0)
+		जाओ release;
 
-	ealist = (struct jfs_ea_list *) ea_buf.xattr;
+	ealist = (काष्ठा jfs_ea_list *) ea_buf.xattr;
 
 	/* compute required size of list */
-	for (ea = FIRST_EA(ealist); ea < END_EALIST(ealist); ea = NEXT_EA(ea)) {
-		if (can_list(ea))
+	क्रम (ea = FIRST_EA(ealist); ea < END_EALIST(ealist); ea = NEXT_EA(ea)) अणु
+		अगर (can_list(ea))
 			size += name_size(ea) + 1;
-	}
+	पूर्ण
 
-	if (!data)
-		goto release;
+	अगर (!data)
+		जाओ release;
 
-	if (size > buf_size) {
-		size = -ERANGE;
-		goto release;
-	}
+	अगर (size > buf_size) अणु
+		size = -दुस्फल;
+		जाओ release;
+	पूर्ण
 
 	/* Copy attribute names to buffer */
 	buffer = data;
-	for (ea = FIRST_EA(ealist); ea < END_EALIST(ealist); ea = NEXT_EA(ea)) {
-		if (can_list(ea)) {
-			int namelen = copy_name(buffer, ea);
+	क्रम (ea = FIRST_EA(ealist); ea < END_EALIST(ealist); ea = NEXT_EA(ea)) अणु
+		अगर (can_list(ea)) अणु
+			पूर्णांक namelen = copy_name(buffer, ea);
 			buffer += namelen + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
       release:
 	ea_release(inode, &ea_buf);
       out:
-	up_read(&JFS_IP(inode)->xattr_sem);
-	return size;
-}
+	up_पढ़ो(&JFS_IP(inode)->xattr_sem);
+	वापस size;
+पूर्ण
 
-static int __jfs_xattr_set(struct inode *inode, const char *name,
-			   const void *value, size_t size, int flags)
-{
-	struct jfs_inode_info *ji = JFS_IP(inode);
+अटल पूर्णांक __jfs_xattr_set(काष्ठा inode *inode, स्थिर अक्षर *name,
+			   स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा jfs_inode_info *ji = JFS_IP(inode);
 	tid_t tid;
-	int rc;
+	पूर्णांक rc;
 
 	tid = txBegin(inode->i_sb, 0);
 	mutex_lock(&ji->commit_mutex);
 	rc = __jfs_setxattr(tid, inode, name, value, size, flags);
-	if (!rc)
+	अगर (!rc)
 		rc = txCommit(tid, 1, &inode, 0);
 	txEnd(tid);
 	mutex_unlock(&ji->commit_mutex);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int jfs_xattr_get(const struct xattr_handler *handler,
-			 struct dentry *unused, struct inode *inode,
-			 const char *name, void *value, size_t size)
-{
+अटल पूर्णांक jfs_xattr_get(स्थिर काष्ठा xattr_handler *handler,
+			 काष्ठा dentry *unused, काष्ठा inode *inode,
+			 स्थिर अक्षर *name, व्योम *value, माप_प्रकार size)
+अणु
 	name = xattr_full_name(handler, name);
-	return __jfs_getxattr(inode, name, value, size);
-}
+	वापस __jfs_getxattr(inode, name, value, size);
+पूर्ण
 
-static int jfs_xattr_set(const struct xattr_handler *handler,
-			 struct user_namespace *mnt_userns,
-			 struct dentry *unused, struct inode *inode,
-			 const char *name, const void *value,
-			 size_t size, int flags)
-{
+अटल पूर्णांक jfs_xattr_set(स्थिर काष्ठा xattr_handler *handler,
+			 काष्ठा user_namespace *mnt_userns,
+			 काष्ठा dentry *unused, काष्ठा inode *inode,
+			 स्थिर अक्षर *name, स्थिर व्योम *value,
+			 माप_प्रकार size, पूर्णांक flags)
+अणु
 	name = xattr_full_name(handler, name);
-	return __jfs_xattr_set(inode, name, value, size, flags);
-}
+	वापस __jfs_xattr_set(inode, name, value, size, flags);
+पूर्ण
 
-static int jfs_xattr_get_os2(const struct xattr_handler *handler,
-			     struct dentry *unused, struct inode *inode,
-			     const char *name, void *value, size_t size)
-{
-	if (is_known_namespace(name))
-		return -EOPNOTSUPP;
-	return __jfs_getxattr(inode, name, value, size);
-}
+अटल पूर्णांक jfs_xattr_get_os2(स्थिर काष्ठा xattr_handler *handler,
+			     काष्ठा dentry *unused, काष्ठा inode *inode,
+			     स्थिर अक्षर *name, व्योम *value, माप_प्रकार size)
+अणु
+	अगर (is_known_namespace(name))
+		वापस -EOPNOTSUPP;
+	वापस __jfs_getxattr(inode, name, value, size);
+पूर्ण
 
-static int jfs_xattr_set_os2(const struct xattr_handler *handler,
-			     struct user_namespace *mnt_userns,
-			     struct dentry *unused, struct inode *inode,
-			     const char *name, const void *value,
-			     size_t size, int flags)
-{
-	if (is_known_namespace(name))
-		return -EOPNOTSUPP;
-	return __jfs_xattr_set(inode, name, value, size, flags);
-}
+अटल पूर्णांक jfs_xattr_set_os2(स्थिर काष्ठा xattr_handler *handler,
+			     काष्ठा user_namespace *mnt_userns,
+			     काष्ठा dentry *unused, काष्ठा inode *inode,
+			     स्थिर अक्षर *name, स्थिर व्योम *value,
+			     माप_प्रकार size, पूर्णांक flags)
+अणु
+	अगर (is_known_namespace(name))
+		वापस -EOPNOTSUPP;
+	वापस __jfs_xattr_set(inode, name, value, size, flags);
+पूर्ण
 
-static const struct xattr_handler jfs_user_xattr_handler = {
+अटल स्थिर काष्ठा xattr_handler jfs_user_xattr_handler = अणु
 	.prefix = XATTR_USER_PREFIX,
 	.get = jfs_xattr_get,
 	.set = jfs_xattr_set,
-};
+पूर्ण;
 
-static const struct xattr_handler jfs_os2_xattr_handler = {
+अटल स्थिर काष्ठा xattr_handler jfs_os2_xattr_handler = अणु
 	.prefix = XATTR_OS2_PREFIX,
 	.get = jfs_xattr_get_os2,
 	.set = jfs_xattr_set_os2,
-};
+पूर्ण;
 
-static const struct xattr_handler jfs_security_xattr_handler = {
+अटल स्थिर काष्ठा xattr_handler jfs_security_xattr_handler = अणु
 	.prefix = XATTR_SECURITY_PREFIX,
 	.get = jfs_xattr_get,
 	.set = jfs_xattr_set,
-};
+पूर्ण;
 
-static const struct xattr_handler jfs_trusted_xattr_handler = {
+अटल स्थिर काष्ठा xattr_handler jfs_trusted_xattr_handler = अणु
 	.prefix = XATTR_TRUSTED_PREFIX,
 	.get = jfs_xattr_get,
 	.set = jfs_xattr_set,
-};
+पूर्ण;
 
-const struct xattr_handler *jfs_xattr_handlers[] = {
-#ifdef CONFIG_JFS_POSIX_ACL
+स्थिर काष्ठा xattr_handler *jfs_xattr_handlers[] = अणु
+#अगर_घोषित CONFIG_JFS_POSIX_ACL
 	&posix_acl_access_xattr_handler,
-	&posix_acl_default_xattr_handler,
-#endif
+	&posix_acl_शेष_xattr_handler,
+#पूर्ण_अगर
 	&jfs_os2_xattr_handler,
 	&jfs_user_xattr_handler,
 	&jfs_security_xattr_handler,
 	&jfs_trusted_xattr_handler,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 
-#ifdef CONFIG_JFS_SECURITY
-static int jfs_initxattrs(struct inode *inode, const struct xattr *xattr_array,
-			  void *fs_info)
-{
-	const struct xattr *xattr;
+#अगर_घोषित CONFIG_JFS_SECURITY
+अटल पूर्णांक jfs_initxattrs(काष्ठा inode *inode, स्थिर काष्ठा xattr *xattr_array,
+			  व्योम *fs_info)
+अणु
+	स्थिर काष्ठा xattr *xattr;
 	tid_t *tid = fs_info;
-	char *name;
-	int err = 0;
+	अक्षर *name;
+	पूर्णांक err = 0;
 
-	for (xattr = xattr_array; xattr->name != NULL; xattr++) {
-		name = kmalloc(XATTR_SECURITY_PREFIX_LEN +
-			       strlen(xattr->name) + 1, GFP_NOFS);
-		if (!name) {
+	क्रम (xattr = xattr_array; xattr->name != शून्य; xattr++) अणु
+		name = kदो_स्मृति(XATTR_SECURITY_PREFIX_LEN +
+			       म_माप(xattr->name) + 1, GFP_NOFS);
+		अगर (!name) अणु
 			err = -ENOMEM;
-			break;
-		}
-		strcpy(name, XATTR_SECURITY_PREFIX);
-		strcpy(name + XATTR_SECURITY_PREFIX_LEN, xattr->name);
+			अवरोध;
+		पूर्ण
+		म_नकल(name, XATTR_SECURITY_PREFIX);
+		म_नकल(name + XATTR_SECURITY_PREFIX_LEN, xattr->name);
 
 		err = __jfs_setxattr(*tid, inode, name,
 				     xattr->value, xattr->value_len, 0);
-		kfree(name);
-		if (err < 0)
-			break;
-	}
-	return err;
-}
+		kमुक्त(name);
+		अगर (err < 0)
+			अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-int jfs_init_security(tid_t tid, struct inode *inode, struct inode *dir,
-		      const struct qstr *qstr)
-{
-	return security_inode_init_security(inode, dir, qstr,
+पूर्णांक jfs_init_security(tid_t tid, काष्ठा inode *inode, काष्ठा inode *dir,
+		      स्थिर काष्ठा qstr *qstr)
+अणु
+	वापस security_inode_init_security(inode, dir, qstr,
 					    &jfs_initxattrs, &tid);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

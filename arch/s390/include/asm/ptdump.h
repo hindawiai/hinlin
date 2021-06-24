@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _ASM_S390_PTDUMP_H
-#define _ASM_S390_PTDUMP_H
+#अगर_अघोषित _ASM_S390_PTDUMP_H
+#घोषणा _ASM_S390_PTDUMP_H
 
-void ptdump_check_wx(void);
+व्योम ptdump_check_wx(व्योम);
 
-static inline void debug_checkwx(void)
-{
-	if (IS_ENABLED(CONFIG_DEBUG_WX))
+अटल अंतरभूत व्योम debug_checkwx(व्योम)
+अणु
+	अगर (IS_ENABLED(CONFIG_DEBUG_WX))
 		ptdump_check_wx();
-}
+पूर्ण
 
-#endif /* _ASM_S390_PTDUMP_H */
+#पूर्ण_अगर /* _ASM_S390_PTDUMP_H */

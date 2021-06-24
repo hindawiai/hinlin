@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
  *  Amiga Linux/m68k Ariadne Ethernet Driver
  *
- *  © Copyright 1995-2003 by Geert Uytterhoeven (geert@linux-m68k.org)
+ *  तऊ Copyright 1995-2003 by Geert Uytterhoeven (geert@linux-m68k.org)
  *			     Peter De Schrijver (p2@mind.be)
  *
  *  ---------------------------------------------------------------------------
  *
  *  This program is based on
  *
- *	lance.c:	An AMD LANCE ethernet driver for linux.
+ *	lance.c:	An AMD LANCE ethernet driver क्रम linux.
  *			Written 1993-94 by Donald Becker.
  *
- *	Am79C960:	PCnet(tm)-ISA Single-Chip Ethernet Controller
+ *	Am79C960:	PCnet(पंचांग)-ISA Single-Chip Ethernet Controller
  *			Advanced Micro Devices
  *			Publication #16907, Rev. B, Amendment/0, May 1994
  *
@@ -21,8 +22,8 @@
  *  ---------------------------------------------------------------------------
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of the Linux
- *  distribution for more details.
+ *  License.  See the file COPYING in the मुख्य directory of the Linux
+ *  distribution क्रम more details.
  *
  *  ---------------------------------------------------------------------------
  *
@@ -34,367 +35,367 @@
  *	- an MC68230 Parallel Interface/Timer configured as 2 parallel ports
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-/*#define DEBUG*/
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+/*#घोषणा DEBUG*/
 
-#include <linux/module.h>
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/interrupt.h>
-#include <linux/skbuff.h>
-#include <linux/init.h>
-#include <linux/zorro.h>
-#include <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/init.h>
+#समावेश <linux/zorro.h>
+#समावेश <linux/bitops.h>
 
-#include <asm/byteorder.h>
-#include <asm/amigaints.h>
-#include <asm/amigahw.h>
-#include <asm/irq.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/amigaपूर्णांकs.h>
+#समावेश <यंत्र/amigahw.h>
+#समावेश <यंत्र/irq.h>
 
-#include "ariadne.h"
+#समावेश "ariadne.h"
 
-#ifdef ARIADNE_DEBUG
-int ariadne_debug = ARIADNE_DEBUG;
-#else
-int ariadne_debug = 1;
-#endif
+#अगर_घोषित ARIADNE_DEBUG
+पूर्णांक ariadne_debug = ARIADNE_DEBUG;
+#अन्यथा
+पूर्णांक ariadne_debug = 1;
+#पूर्ण_अगर
 
 /* Macros to Fix Endianness problems */
 
 /* Swap the Bytes in a WORD */
-#define swapw(x)	(((x >> 8) & 0x00ff) | ((x << 8) & 0xff00))
+#घोषणा swapw(x)	(((x >> 8) & 0x00ff) | ((x << 8) & 0xff00))
 /* Get the Low BYTE in a WORD */
-#define lowb(x)		(x & 0xff)
+#घोषणा lowb(x)		(x & 0xff)
 /* Get the Swapped High WORD in a LONG */
-#define swhighw(x)	((((x) >> 8) & 0xff00) | (((x) >> 24) & 0x00ff))
+#घोषणा swhighw(x)	((((x) >> 8) & 0xff00) | (((x) >> 24) & 0x00ff))
 /* Get the Swapped Low WORD in a LONG */
-#define swloww(x)	((((x) << 8) & 0xff00) | (((x) >> 8) & 0x00ff))
+#घोषणा swloww(x)	((((x) << 8) & 0xff00) | (((x) >> 8) & 0x00ff))
 
 /* Transmit/Receive Ring Definitions */
 
-#define TX_RING_SIZE	5
-#define RX_RING_SIZE	16
+#घोषणा TX_RING_SIZE	5
+#घोषणा RX_RING_SIZE	16
 
-#define PKT_BUF_SIZE	1520
+#घोषणा PKT_BUF_SIZE	1520
 
 /* Private Device Data */
 
-struct ariadne_private {
-	volatile struct TDRE *tx_ring[TX_RING_SIZE];
-	volatile struct RDRE *rx_ring[RX_RING_SIZE];
-	volatile u_short *tx_buff[TX_RING_SIZE];
-	volatile u_short *rx_buff[RX_RING_SIZE];
-	int cur_tx, cur_rx;		/* The next free ring entry */
-	int dirty_tx;			/* The ring entries to be free()ed */
-	char tx_full;
-};
+काष्ठा ariadne_निजी अणु
+	अस्थिर काष्ठा TDRE *tx_ring[TX_RING_SIZE];
+	अस्थिर काष्ठा RDRE *rx_ring[RX_RING_SIZE];
+	अस्थिर u_लघु *tx_buff[TX_RING_SIZE];
+	अस्थिर u_लघु *rx_buff[RX_RING_SIZE];
+	पूर्णांक cur_tx, cur_rx;		/* The next मुक्त ring entry */
+	पूर्णांक dirty_tx;			/* The ring entries to be मुक्त()ed */
+	अक्षर tx_full;
+पूर्ण;
 
 /* Structure Created in the Ariadne's RAM Buffer */
 
-struct lancedata {
-	struct TDRE tx_ring[TX_RING_SIZE];
-	struct RDRE rx_ring[RX_RING_SIZE];
-	u_short tx_buff[TX_RING_SIZE][PKT_BUF_SIZE / sizeof(u_short)];
-	u_short rx_buff[RX_RING_SIZE][PKT_BUF_SIZE / sizeof(u_short)];
-};
+काष्ठा lancedata अणु
+	काष्ठा TDRE tx_ring[TX_RING_SIZE];
+	काष्ठा RDRE rx_ring[RX_RING_SIZE];
+	u_लघु tx_buff[TX_RING_SIZE][PKT_BUF_SIZE / माप(u_लघु)];
+	u_लघु rx_buff[RX_RING_SIZE][PKT_BUF_SIZE / माप(u_लघु)];
+पूर्ण;
 
-static void memcpyw(volatile u_short *dest, u_short *src, int len)
-{
-	while (len >= 2) {
+अटल व्योम स_नकलw(अस्थिर u_लघु *dest, u_लघु *src, पूर्णांक len)
+अणु
+	जबतक (len >= 2) अणु
 		*(dest++) = *(src++);
 		len -= 2;
-	}
-	if (len == 1)
-		*dest = (*(u_char *)src) << 8;
-}
+	पूर्ण
+	अगर (len == 1)
+		*dest = (*(u_अक्षर *)src) << 8;
+पूर्ण
 
-static void ariadne_init_ring(struct net_device *dev)
-{
-	struct ariadne_private *priv = netdev_priv(dev);
-	volatile struct lancedata *lancedata = (struct lancedata *)dev->mem_start;
-	int i;
+अटल व्योम ariadne_init_ring(काष्ठा net_device *dev)
+अणु
+	काष्ठा ariadne_निजी *priv = netdev_priv(dev);
+	अस्थिर काष्ठा lancedata *lancedata = (काष्ठा lancedata *)dev->mem_start;
+	पूर्णांक i;
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
 	priv->tx_full = 0;
 	priv->cur_rx = priv->cur_tx = 0;
 	priv->dirty_tx = 0;
 
 	/* Set up TX Ring */
-	for (i = 0; i < TX_RING_SIZE; i++) {
-		volatile struct TDRE *t = &lancedata->tx_ring[i];
+	क्रम (i = 0; i < TX_RING_SIZE; i++) अणु
+		अस्थिर काष्ठा TDRE *t = &lancedata->tx_ring[i];
 		t->TMD0 = swloww(ARIADNE_RAM +
-				 offsetof(struct lancedata, tx_buff[i]));
+				 दुरत्व(काष्ठा lancedata, tx_buff[i]));
 		t->TMD1 = swhighw(ARIADNE_RAM +
-				  offsetof(struct lancedata, tx_buff[i])) |
+				  दुरत्व(काष्ठा lancedata, tx_buff[i])) |
 			TF_STP | TF_ENP;
-		t->TMD2 = swapw((u_short)-PKT_BUF_SIZE);
+		t->TMD2 = swapw((u_लघु)-PKT_BUF_SIZE);
 		t->TMD3 = 0;
 		priv->tx_ring[i] = &lancedata->tx_ring[i];
 		priv->tx_buff[i] = lancedata->tx_buff[i];
 		netdev_dbg(dev, "TX Entry %2d at %p, Buf at %p\n",
 			   i, &lancedata->tx_ring[i], lancedata->tx_buff[i]);
-	}
+	पूर्ण
 
 	/* Set up RX Ring */
-	for (i = 0; i < RX_RING_SIZE; i++) {
-		volatile struct RDRE *r = &lancedata->rx_ring[i];
+	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
+		अस्थिर काष्ठा RDRE *r = &lancedata->rx_ring[i];
 		r->RMD0 = swloww(ARIADNE_RAM +
-				 offsetof(struct lancedata, rx_buff[i]));
+				 दुरत्व(काष्ठा lancedata, rx_buff[i]));
 		r->RMD1 = swhighw(ARIADNE_RAM +
-				  offsetof(struct lancedata, rx_buff[i])) |
+				  दुरत्व(काष्ठा lancedata, rx_buff[i])) |
 			RF_OWN;
-		r->RMD2 = swapw((u_short)-PKT_BUF_SIZE);
+		r->RMD2 = swapw((u_लघु)-PKT_BUF_SIZE);
 		r->RMD3 = 0x0000;
 		priv->rx_ring[i] = &lancedata->rx_ring[i];
 		priv->rx_buff[i] = lancedata->rx_buff[i];
 		netdev_dbg(dev, "RX Entry %2d at %p, Buf at %p\n",
 			   i, &lancedata->rx_ring[i], lancedata->rx_buff[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ariadne_rx(struct net_device *dev)
-{
-	struct ariadne_private *priv = netdev_priv(dev);
-	int entry = priv->cur_rx % RX_RING_SIZE;
-	int i;
+अटल पूर्णांक ariadne_rx(काष्ठा net_device *dev)
+अणु
+	काष्ठा ariadne_निजी *priv = netdev_priv(dev);
+	पूर्णांक entry = priv->cur_rx % RX_RING_SIZE;
+	पूर्णांक i;
 
 	/* If we own the next entry, it's a new packet. Send it up */
-	while (!(lowb(priv->rx_ring[entry]->RMD1) & RF_OWN)) {
-		int status = lowb(priv->rx_ring[entry]->RMD1);
+	जबतक (!(lowb(priv->rx_ring[entry]->RMD1) & RF_OWN)) अणु
+		पूर्णांक status = lowb(priv->rx_ring[entry]->RMD1);
 
-		if (status != (RF_STP | RF_ENP)) {	/* There was an error */
+		अगर (status != (RF_STP | RF_ENP)) अणु	/* There was an error */
 			/* There is a tricky error noted by
 			 * John Murphy <murf@perftech.com> to Russ Nelson:
-			 * Even with full-sized buffers it's possible for a
+			 * Even with full-sized buffers it's possible क्रम a
 			 * jabber packet to use two buffers, with only the
 			 * last correctly noting the error
 			 */
 			/* Only count a general error at the end of a packet */
-			if (status & RF_ENP)
+			अगर (status & RF_ENP)
 				dev->stats.rx_errors++;
-			if (status & RF_FRAM)
+			अगर (status & RF_FRAM)
 				dev->stats.rx_frame_errors++;
-			if (status & RF_OFLO)
+			अगर (status & RF_OFLO)
 				dev->stats.rx_over_errors++;
-			if (status & RF_CRC)
+			अगर (status & RF_CRC)
 				dev->stats.rx_crc_errors++;
-			if (status & RF_BUFF)
-				dev->stats.rx_fifo_errors++;
+			अगर (status & RF_BUFF)
+				dev->stats.rx_fअगरo_errors++;
 			priv->rx_ring[entry]->RMD1 &= 0xff00 | RF_STP | RF_ENP;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Malloc up new buffer, compatible with net-3 */
-			short pkt_len = swapw(priv->rx_ring[entry]->RMD3);
-			struct sk_buff *skb;
+			लघु pkt_len = swapw(priv->rx_ring[entry]->RMD3);
+			काष्ठा sk_buff *skb;
 
 			skb = netdev_alloc_skb(dev, pkt_len + 2);
-			if (skb == NULL) {
-				for (i = 0; i < RX_RING_SIZE; i++)
-					if (lowb(priv->rx_ring[(entry + i) % RX_RING_SIZE]->RMD1) & RF_OWN)
-						break;
+			अगर (skb == शून्य) अणु
+				क्रम (i = 0; i < RX_RING_SIZE; i++)
+					अगर (lowb(priv->rx_ring[(entry + i) % RX_RING_SIZE]->RMD1) & RF_OWN)
+						अवरोध;
 
-				if (i > RX_RING_SIZE - 2) {
+				अगर (i > RX_RING_SIZE - 2) अणु
 					dev->stats.rx_dropped++;
 					priv->rx_ring[entry]->RMD1 |= RF_OWN;
 					priv->cur_rx++;
-				}
-				break;
-			}
+				पूर्ण
+				अवरोध;
+			पूर्ण
 
 
 			skb_reserve(skb, 2);	/* 16 byte align */
 			skb_put(skb, pkt_len);	/* Make room */
 			skb_copy_to_linear_data(skb,
-						(const void *)priv->rx_buff[entry],
+						(स्थिर व्योम *)priv->rx_buff[entry],
 						pkt_len);
 			skb->protocol = eth_type_trans(skb, dev);
 			netdev_dbg(dev, "RX pkt type 0x%04x from %pM to %pM data %p len %u\n",
-				   ((u_short *)skb->data)[6],
+				   ((u_लघु *)skb->data)[6],
 				   skb->data + 6, skb->data,
 				   skb->data, skb->len);
 
-			netif_rx(skb);
+			netअगर_rx(skb);
 			dev->stats.rx_packets++;
 			dev->stats.rx_bytes += pkt_len;
-		}
+		पूर्ण
 
 		priv->rx_ring[entry]->RMD1 |= RF_OWN;
 		entry = (++priv->cur_rx) % RX_RING_SIZE;
-	}
+	पूर्ण
 
 	priv->cur_rx = priv->cur_rx % RX_RING_SIZE;
 
-	/* We should check that at least two ring entries are free.
-	 * If not, we should free one and mark stats->rx_dropped++
+	/* We should check that at least two ring entries are मुक्त.
+	 * If not, we should मुक्त one and mark stats->rx_dropped++
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t ariadne_interrupt(int irq, void *data)
-{
-	struct net_device *dev = (struct net_device *)data;
-	volatile struct Am79C960 *lance = (struct Am79C960 *)dev->base_addr;
-	struct ariadne_private *priv;
-	int csr0, boguscnt;
-	int handled = 0;
+अटल irqवापस_t ariadne_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा net_device *dev = (काष्ठा net_device *)data;
+	अस्थिर काष्ठा Am79C960 *lance = (काष्ठा Am79C960 *)dev->base_addr;
+	काष्ठा ariadne_निजी *priv;
+	पूर्णांक csr0, boguscnt;
+	पूर्णांक handled = 0;
 
 	lance->RAP = CSR0;		/* PCnet-ISA Controller Status */
 
-	if (!(lance->RDP & INTR))	/* Check if any interrupt has been */
-		return IRQ_NONE;	/* generated by the board */
+	अगर (!(lance->RDP & INTR))	/* Check अगर any पूर्णांकerrupt has been */
+		वापस IRQ_NONE;	/* generated by the board */
 
 	priv = netdev_priv(dev);
 
 	boguscnt = 10;
-	while ((csr0 = lance->RDP) & (ERR | RINT | TINT) && --boguscnt >= 0) {
-		/* Acknowledge all of the current interrupt sources ASAP */
+	जबतक ((csr0 = lance->RDP) & (ERR | RINT | TINT) && --boguscnt >= 0) अणु
+		/* Acknowledge all of the current पूर्णांकerrupt sources ASAP */
 		lance->RDP = csr0 & ~(INEA | TDMD | STOP | STRT | INIT);
 
-#ifdef DEBUG
-		if (ariadne_debug > 5) {
+#अगर_घोषित DEBUG
+		अगर (ariadne_debug > 5) अणु
 			netdev_dbg(dev, "interrupt  csr0=%#02x new csr=%#02x [",
 				   csr0, lance->RDP);
-			if (csr0 & INTR)
+			अगर (csr0 & INTR)
 				pr_cont(" INTR");
-			if (csr0 & INEA)
+			अगर (csr0 & INEA)
 				pr_cont(" INEA");
-			if (csr0 & RXON)
+			अगर (csr0 & RXON)
 				pr_cont(" RXON");
-			if (csr0 & TXON)
+			अगर (csr0 & TXON)
 				pr_cont(" TXON");
-			if (csr0 & TDMD)
+			अगर (csr0 & TDMD)
 				pr_cont(" TDMD");
-			if (csr0 & STOP)
+			अगर (csr0 & STOP)
 				pr_cont(" STOP");
-			if (csr0 & STRT)
+			अगर (csr0 & STRT)
 				pr_cont(" STRT");
-			if (csr0 & INIT)
+			अगर (csr0 & INIT)
 				pr_cont(" INIT");
-			if (csr0 & ERR)
+			अगर (csr0 & ERR)
 				pr_cont(" ERR");
-			if (csr0 & BABL)
+			अगर (csr0 & BABL)
 				pr_cont(" BABL");
-			if (csr0 & CERR)
+			अगर (csr0 & CERR)
 				pr_cont(" CERR");
-			if (csr0 & MISS)
+			अगर (csr0 & MISS)
 				pr_cont(" MISS");
-			if (csr0 & MERR)
+			अगर (csr0 & MERR)
 				pr_cont(" MERR");
-			if (csr0 & RINT)
+			अगर (csr0 & RINT)
 				pr_cont(" RINT");
-			if (csr0 & TINT)
+			अगर (csr0 & TINT)
 				pr_cont(" TINT");
-			if (csr0 & IDON)
+			अगर (csr0 & IDON)
 				pr_cont(" IDON");
 			pr_cont(" ]\n");
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 
-		if (csr0 & RINT) {	/* Rx interrupt */
+		अगर (csr0 & RINT) अणु	/* Rx पूर्णांकerrupt */
 			handled = 1;
 			ariadne_rx(dev);
-		}
+		पूर्ण
 
-		if (csr0 & TINT) {	/* Tx-done interrupt */
-			int dirty_tx = priv->dirty_tx;
+		अगर (csr0 & TINT) अणु	/* Tx-करोne पूर्णांकerrupt */
+			पूर्णांक dirty_tx = priv->dirty_tx;
 
 			handled = 1;
-			while (dirty_tx < priv->cur_tx) {
-				int entry = dirty_tx % TX_RING_SIZE;
-				int status = lowb(priv->tx_ring[entry]->TMD1);
+			जबतक (dirty_tx < priv->cur_tx) अणु
+				पूर्णांक entry = dirty_tx % TX_RING_SIZE;
+				पूर्णांक status = lowb(priv->tx_ring[entry]->TMD1);
 
-				if (status & TF_OWN)
-					break;	/* It still hasn't been Txed */
+				अगर (status & TF_OWN)
+					अवरोध;	/* It still hasn't been Txed */
 
 				priv->tx_ring[entry]->TMD1 &= 0xff00;
 
-				if (status & TF_ERR) {
+				अगर (status & TF_ERR) अणु
 					/* There was an major error, log it */
-					int err_status = priv->tx_ring[entry]->TMD3;
+					पूर्णांक err_status = priv->tx_ring[entry]->TMD3;
 					dev->stats.tx_errors++;
-					if (err_status & EF_RTRY)
-						dev->stats.tx_aborted_errors++;
-					if (err_status & EF_LCAR)
+					अगर (err_status & EF_RTRY)
+						dev->stats.tx_पातed_errors++;
+					अगर (err_status & EF_LCAR)
 						dev->stats.tx_carrier_errors++;
-					if (err_status & EF_LCOL)
-						dev->stats.tx_window_errors++;
-					if (err_status & EF_UFLO) {
+					अगर (err_status & EF_LCOL)
+						dev->stats.tx_winकरोw_errors++;
+					अगर (err_status & EF_UFLO) अणु
 						/* Ackk!  On FIFO errors the Tx unit is turned off! */
-						dev->stats.tx_fifo_errors++;
+						dev->stats.tx_fअगरo_errors++;
 						/* Remove this verbosity later! */
 						netdev_err(dev, "Tx FIFO error! Status %04x\n",
 							   csr0);
 						/* Restart the chip */
 						lance->RDP = STRT;
-					}
-				} else {
-					if (status & (TF_MORE | TF_ONE))
+					पूर्ण
+				पूर्ण अन्यथा अणु
+					अगर (status & (TF_MORE | TF_ONE))
 						dev->stats.collisions++;
 					dev->stats.tx_packets++;
-				}
+				पूर्ण
 				dirty_tx++;
-			}
+			पूर्ण
 
-#ifndef final_version
-			if (priv->cur_tx - dirty_tx >= TX_RING_SIZE) {
+#अगर_अघोषित final_version
+			अगर (priv->cur_tx - dirty_tx >= TX_RING_SIZE) अणु
 				netdev_err(dev, "out-of-sync dirty pointer, %d vs. %d, full=%d\n",
 					   dirty_tx, priv->cur_tx,
 					   priv->tx_full);
 				dirty_tx += TX_RING_SIZE;
-			}
-#endif
+			पूर्ण
+#पूर्ण_अगर
 
-			if (priv->tx_full && netif_queue_stopped(dev) &&
-			    dirty_tx > priv->cur_tx - TX_RING_SIZE + 2) {
-				/* The ring is no longer full */
+			अगर (priv->tx_full && netअगर_queue_stopped(dev) &&
+			    dirty_tx > priv->cur_tx - TX_RING_SIZE + 2) अणु
+				/* The ring is no दीर्घer full */
 				priv->tx_full = 0;
-				netif_wake_queue(dev);
-			}
+				netअगर_wake_queue(dev);
+			पूर्ण
 
 			priv->dirty_tx = dirty_tx;
-		}
+		पूर्ण
 
 		/* Log misc errors */
-		if (csr0 & BABL) {
+		अगर (csr0 & BABL) अणु
 			handled = 1;
 			dev->stats.tx_errors++;	/* Tx babble */
-		}
-		if (csr0 & MISS) {
+		पूर्ण
+		अगर (csr0 & MISS) अणु
 			handled = 1;
 			dev->stats.rx_errors++;	/* Missed a Rx frame */
-		}
-		if (csr0 & MERR) {
+		पूर्ण
+		अगर (csr0 & MERR) अणु
 			handled = 1;
 			netdev_err(dev, "Bus master arbitration failure, status %04x\n",
 				   csr0);
 			/* Restart the chip */
 			lance->RDP = STRT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Clear any other interrupt, and set interrupt enable */
+	/* Clear any other पूर्णांकerrupt, and set पूर्णांकerrupt enable */
 	lance->RAP = CSR0;		/* PCnet-ISA Controller Status */
 	lance->RDP = INEA | BABL | CERR | MISS | MERR | IDON;
 
-	if (ariadne_debug > 4)
+	अगर (ariadne_debug > 4)
 		netdev_dbg(dev, "exiting interrupt, csr%d=%#04x\n",
 			   lance->RAP, lance->RDP);
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static int ariadne_open(struct net_device *dev)
-{
-	volatile struct Am79C960 *lance = (struct Am79C960 *)dev->base_addr;
-	u_short in;
-	u_long version;
-	int i;
+अटल पूर्णांक ariadne_खोलो(काष्ठा net_device *dev)
+अणु
+	अस्थिर काष्ठा Am79C960 *lance = (काष्ठा Am79C960 *)dev->base_addr;
+	u_लघु in;
+	u_दीर्घ version;
+	पूर्णांक i;
 
 	/* Reset the LANCE */
 	in = lance->Reset;
@@ -408,15 +409,15 @@ static int ariadne_open(struct net_device *dev)
 	version = swapw(lance->RDP);
 	lance->RAP = CSR89;		/* Chip ID */
 	version |= swapw(lance->RDP) << 16;
-	if ((version & 0x00000fff) != 0x00000003) {
+	अगर ((version & 0x00000fff) != 0x00000003) अणु
 		pr_warn("Couldn't find AMD Ethernet Chip\n");
-		return -EAGAIN;
-	}
-	if ((version & 0x0ffff000) != 0x00003000) {
+		वापस -EAGAIN;
+	पूर्ण
+	अगर ((version & 0x0ffff000) != 0x00003000) अणु
 		pr_warn("Couldn't find Am79C960 (Wrong part number = %ld)\n",
 		       (version & 0x0ffff000) >> 12);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	netdev_dbg(dev, "Am79C960 (PCnet-ISA) Revision %ld\n",
 		   (version & 0xf0000000) >> 28);
@@ -441,33 +442,33 @@ static int ariadne_open(struct net_device *dev)
 
 	/* Set the Ethernet Hardware Address */
 	lance->RAP = CSR12;		/* Physical Address Register, PADR[15:0] */
-	lance->RDP = ((u_short *)&dev->dev_addr[0])[0];
+	lance->RDP = ((u_लघु *)&dev->dev_addr[0])[0];
 	lance->RAP = CSR13;		/* Physical Address Register, PADR[31:16] */
-	lance->RDP = ((u_short *)&dev->dev_addr[0])[1];
+	lance->RDP = ((u_लघु *)&dev->dev_addr[0])[1];
 	lance->RAP = CSR14;		/* Physical Address Register, PADR[47:32] */
-	lance->RDP = ((u_short *)&dev->dev_addr[0])[2];
+	lance->RDP = ((u_लघु *)&dev->dev_addr[0])[2];
 
 	/* Set the Init Block Mode */
 	lance->RAP = CSR15;		/* Mode Register */
 	lance->RDP = 0x0000;
 
-	/* Set the Transmit Descriptor Ring Pointer */
+	/* Set the Transmit Descriptor Ring Poपूर्णांकer */
 	lance->RAP = CSR30;		/* Base Address of Transmit Ring */
-	lance->RDP = swloww(ARIADNE_RAM + offsetof(struct lancedata, tx_ring));
+	lance->RDP = swloww(ARIADNE_RAM + दुरत्व(काष्ठा lancedata, tx_ring));
 	lance->RAP = CSR31;		/* Base Address of transmit Ring */
-	lance->RDP = swhighw(ARIADNE_RAM + offsetof(struct lancedata, tx_ring));
+	lance->RDP = swhighw(ARIADNE_RAM + दुरत्व(काष्ठा lancedata, tx_ring));
 
-	/* Set the Receive Descriptor Ring Pointer */
+	/* Set the Receive Descriptor Ring Poपूर्णांकer */
 	lance->RAP = CSR24;		/* Base Address of Receive Ring */
-	lance->RDP = swloww(ARIADNE_RAM + offsetof(struct lancedata, rx_ring));
+	lance->RDP = swloww(ARIADNE_RAM + दुरत्व(काष्ठा lancedata, rx_ring));
 	lance->RAP = CSR25;		/* Base Address of Receive Ring */
-	lance->RDP = swhighw(ARIADNE_RAM + offsetof(struct lancedata, rx_ring));
+	lance->RDP = swhighw(ARIADNE_RAM + दुरत्व(काष्ठा lancedata, rx_ring));
 
 	/* Set the Number of RX and TX Ring Entries */
 	lance->RAP = CSR76;		/* Receive Ring Length */
-	lance->RDP = swapw(((u_short)-RX_RING_SIZE));
+	lance->RDP = swapw(((u_लघु)-RX_RING_SIZE));
 	lance->RAP = CSR78;		/* Transmit Ring Length */
-	lance->RDP = swapw(((u_short)-TX_RING_SIZE));
+	lance->RDP = swapw(((u_लघु)-TX_RING_SIZE));
 
 	/* Enable Media Interface Port Auto Select (10BASE-2/10BASE-T) */
 	lance->RAP = ISACSR2;		/* Miscellaneous Configuration */
@@ -481,93 +482,93 @@ static int ariadne_open(struct net_device *dev)
 	lance->RAP = ISACSR7;	/* LED3 Status */
 	lance->IDP = PSE|RCVE;
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	i = request_irq(IRQ_AMIGA_PORTS, ariadne_interrupt, IRQF_SHARED,
+	i = request_irq(IRQ_AMIGA_PORTS, ariadne_पूर्णांकerrupt, IRQF_SHARED,
 			dev->name, dev);
-	if (i)
-		return i;
+	अगर (i)
+		वापस i;
 
 	lance->RAP = CSR0;		/* PCnet-ISA Controller Status */
 	lance->RDP = INEA | STRT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ariadne_close(struct net_device *dev)
-{
-	volatile struct Am79C960 *lance = (struct Am79C960 *)dev->base_addr;
+अटल पूर्णांक ariadne_बंद(काष्ठा net_device *dev)
+अणु
+	अस्थिर काष्ठा Am79C960 *lance = (काष्ठा Am79C960 *)dev->base_addr;
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
 	lance->RAP = CSR112;		/* Missed Frame Count */
 	dev->stats.rx_missed_errors = swapw(lance->RDP);
 	lance->RAP = CSR0;		/* PCnet-ISA Controller Status */
 
-	if (ariadne_debug > 1) {
+	अगर (ariadne_debug > 1) अणु
 		netdev_dbg(dev, "Shutting down ethercard, status was %02x\n",
 			   lance->RDP);
 		netdev_dbg(dev, "%lu packets missed\n",
 			   dev->stats.rx_missed_errors);
-	}
+	पूर्ण
 
-	/* We stop the LANCE here -- it occasionally polls memory if we don't */
+	/* We stop the LANCE here -- it occasionally polls memory अगर we करोn't */
 	lance->RDP = STOP;
 
-	free_irq(IRQ_AMIGA_PORTS, dev);
+	मुक्त_irq(IRQ_AMIGA_PORTS, dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void ariadne_reset(struct net_device *dev)
-{
-	volatile struct Am79C960 *lance = (struct Am79C960 *)dev->base_addr;
+अटल अंतरभूत व्योम ariadne_reset(काष्ठा net_device *dev)
+अणु
+	अस्थिर काष्ठा Am79C960 *lance = (काष्ठा Am79C960 *)dev->base_addr;
 
 	lance->RAP = CSR0;	/* PCnet-ISA Controller Status */
 	lance->RDP = STOP;
 	ariadne_init_ring(dev);
 	lance->RDP = INEA | STRT;
-	netif_start_queue(dev);
-}
+	netअगर_start_queue(dev);
+पूर्ण
 
-static void ariadne_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	volatile struct Am79C960 *lance = (struct Am79C960 *)dev->base_addr;
+अटल व्योम ariadne_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	अस्थिर काष्ठा Am79C960 *lance = (काष्ठा Am79C960 *)dev->base_addr;
 
 	netdev_err(dev, "transmit timed out, status %04x, resetting\n",
 		   lance->RDP);
 	ariadne_reset(dev);
-	netif_wake_queue(dev);
-}
+	netअगर_wake_queue(dev);
+पूर्ण
 
-static netdev_tx_t ariadne_start_xmit(struct sk_buff *skb,
-				      struct net_device *dev)
-{
-	struct ariadne_private *priv = netdev_priv(dev);
-	volatile struct Am79C960 *lance = (struct Am79C960 *)dev->base_addr;
-	int entry;
-	unsigned long flags;
-	int len = skb->len;
+अटल netdev_tx_t ariadne_start_xmit(काष्ठा sk_buff *skb,
+				      काष्ठा net_device *dev)
+अणु
+	काष्ठा ariadne_निजी *priv = netdev_priv(dev);
+	अस्थिर काष्ठा Am79C960 *lance = (काष्ठा Am79C960 *)dev->base_addr;
+	पूर्णांक entry;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक len = skb->len;
 
-#if 0
-	if (ariadne_debug > 3) {
+#अगर 0
+	अगर (ariadne_debug > 3) अणु
 		lance->RAP = CSR0;	/* PCnet-ISA Controller Status */
 		netdev_dbg(dev, "%s: csr0 %04x\n", __func__, lance->RDP);
 		lance->RDP = 0x0000;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	/* FIXME: is the 79C960 new enough to do its own padding right ? */
-	if (skb->len < ETH_ZLEN) {
-		if (skb_padto(skb, ETH_ZLEN))
-			return NETDEV_TX_OK;
+	/* FIXME: is the 79C960 new enough to करो its own padding right ? */
+	अगर (skb->len < ETH_ZLEN) अणु
+		अगर (skb_padto(skb, ETH_ZLEN))
+			वापस NETDEV_TX_OK;
 		len = ETH_ZLEN;
-	}
+	पूर्ण
 
 	/* Fill in a Tx ring entry */
 
 	netdev_dbg(dev, "TX pkt type 0x%04x from %pM to %pM data %p len %u\n",
-		   ((u_short *)skb->data)[6],
+		   ((u_लघु *)skb->data)[6],
 		   skb->data + 6, skb->data,
 		   skb->data, skb->len);
 
@@ -575,54 +576,54 @@ static netdev_tx_t ariadne_start_xmit(struct sk_buff *skb,
 
 	entry = priv->cur_tx % TX_RING_SIZE;
 
-	/* Caution: the write order is important here, set the base address with
+	/* Caution: the ग_लिखो order is important here, set the base address with
 	   the "ownership" bits last */
 
-	priv->tx_ring[entry]->TMD2 = swapw((u_short)-skb->len);
+	priv->tx_ring[entry]->TMD2 = swapw((u_लघु)-skb->len);
 	priv->tx_ring[entry]->TMD3 = 0x0000;
-	memcpyw(priv->tx_buff[entry], (u_short *)skb->data, len);
+	स_नकलw(priv->tx_buff[entry], (u_लघु *)skb->data, len);
 
-#ifdef DEBUG
-	print_hex_dump(KERN_DEBUG, "tx_buff: ", DUMP_PREFIX_OFFSET, 16, 1,
-		       (void *)priv->tx_buff[entry],
+#अगर_घोषित DEBUG
+	prपूर्णांक_hex_dump(KERN_DEBUG, "tx_buff: ", DUMP_PREFIX_OFFSET, 16, 1,
+		       (व्योम *)priv->tx_buff[entry],
 		       skb->len > 64 ? 64 : skb->len, true);
-#endif
+#पूर्ण_अगर
 
 	priv->tx_ring[entry]->TMD1 = (priv->tx_ring[entry]->TMD1 & 0xff00)
 		| TF_OWN | TF_STP | TF_ENP;
 
-	dev_kfree_skb(skb);
+	dev_kमुक्त_skb(skb);
 
 	priv->cur_tx++;
-	if ((priv->cur_tx >= TX_RING_SIZE) &&
-	    (priv->dirty_tx >= TX_RING_SIZE)) {
+	अगर ((priv->cur_tx >= TX_RING_SIZE) &&
+	    (priv->dirty_tx >= TX_RING_SIZE)) अणु
 
 		netdev_dbg(dev, "*** Subtracting TX_RING_SIZE from cur_tx (%d) and dirty_tx (%d)\n",
 			   priv->cur_tx, priv->dirty_tx);
 
 		priv->cur_tx -= TX_RING_SIZE;
 		priv->dirty_tx -= TX_RING_SIZE;
-	}
+	पूर्ण
 	dev->stats.tx_bytes += len;
 
 	/* Trigger an immediate send poll */
 	lance->RAP = CSR0;		/* PCnet-ISA Controller Status */
 	lance->RDP = INEA | TDMD;
 
-	if (lowb(priv->tx_ring[(entry + 1) % TX_RING_SIZE]->TMD1) != 0) {
-		netif_stop_queue(dev);
+	अगर (lowb(priv->tx_ring[(entry + 1) % TX_RING_SIZE]->TMD1) != 0) अणु
+		netअगर_stop_queue(dev);
 		priv->tx_full = 1;
-	}
+	पूर्ण
 	local_irq_restore(flags);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static struct net_device_stats *ariadne_get_stats(struct net_device *dev)
-{
-	volatile struct Am79C960 *lance = (struct Am79C960 *)dev->base_addr;
-	short saved_addr;
-	unsigned long flags;
+अटल काष्ठा net_device_stats *ariadne_get_stats(काष्ठा net_device *dev)
+अणु
+	अस्थिर काष्ठा Am79C960 *lance = (काष्ठा Am79C960 *)dev->base_addr;
+	लघु saved_addr;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	saved_addr = lance->RAP;
@@ -631,110 +632,110 @@ static struct net_device_stats *ariadne_get_stats(struct net_device *dev)
 	lance->RAP = saved_addr;
 	local_irq_restore(flags);
 
-	return &dev->stats;
-}
+	वापस &dev->stats;
+पूर्ण
 
-/* Set or clear the multicast filter for this adaptor.
+/* Set or clear the multicast filter क्रम this adaptor.
  * num_addrs == -1	Promiscuous mode, receive all packets
  * num_addrs == 0	Normal mode, clear multicast list
  * num_addrs > 0	Multicast mode, receive normal and MC packets,
- * 			and do best-effort filtering.
+ * 			and करो best-efक्रमt filtering.
  */
-static void set_multicast_list(struct net_device *dev)
-{
-	volatile struct Am79C960 *lance = (struct Am79C960 *)dev->base_addr;
+अटल व्योम set_multicast_list(काष्ठा net_device *dev)
+अणु
+	अस्थिर काष्ठा Am79C960 *lance = (काष्ठा Am79C960 *)dev->base_addr;
 
-	if (!netif_running(dev))
-		return;
+	अगर (!netअगर_running(dev))
+		वापस;
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
 	/* We take the simple way out and always enable promiscuous mode */
 	lance->RAP = CSR0;		/* PCnet-ISA Controller Status */
 	lance->RDP = STOP;		/* Temporarily stop the lance */
 	ariadne_init_ring(dev);
 
-	if (dev->flags & IFF_PROMISC) {
+	अगर (dev->flags & IFF_PROMISC) अणु
 		lance->RAP = CSR15;	/* Mode Register */
 		lance->RDP = PROM;	/* Set promiscuous mode */
-	} else {
-		short multicast_table[4];
-		int num_addrs = netdev_mc_count(dev);
-		int i;
-		/* We don't use the multicast table,
+	पूर्ण अन्यथा अणु
+		लघु multicast_table[4];
+		पूर्णांक num_addrs = netdev_mc_count(dev);
+		पूर्णांक i;
+		/* We करोn't use the multicast table,
 		 * but rely on upper-layer filtering
 		 */
-		memset(multicast_table, (num_addrs == 0) ? 0 : -1,
-		       sizeof(multicast_table));
-		for (i = 0; i < 4; i++) {
+		स_रखो(multicast_table, (num_addrs == 0) ? 0 : -1,
+		       माप(multicast_table));
+		क्रम (i = 0; i < 4; i++) अणु
 			lance->RAP = CSR8 + (i << 8);
 					/* Logical Address Filter */
 			lance->RDP = swapw(multicast_table[i]);
-		}
+		पूर्ण
 		lance->RAP = CSR15;	/* Mode Register */
 		lance->RDP = 0x0000;	/* Unset promiscuous mode */
-	}
+	पूर्ण
 
 	lance->RAP = CSR0;		/* PCnet-ISA Controller Status */
 	lance->RDP = INEA | STRT | IDON;/* Resume normal operation */
 
-	netif_wake_queue(dev);
-}
+	netअगर_wake_queue(dev);
+पूर्ण
 
 
-static void ariadne_remove_one(struct zorro_dev *z)
-{
-	struct net_device *dev = zorro_get_drvdata(z);
+अटल व्योम ariadne_हटाओ_one(काष्ठा zorro_dev *z)
+अणु
+	काष्ठा net_device *dev = zorro_get_drvdata(z);
 
-	unregister_netdev(dev);
-	release_mem_region(ZTWO_PADDR(dev->base_addr), sizeof(struct Am79C960));
+	unरेजिस्टर_netdev(dev);
+	release_mem_region(ZTWO_PADDR(dev->base_addr), माप(काष्ठा Am79C960));
 	release_mem_region(ZTWO_PADDR(dev->mem_start), ARIADNE_RAM_SIZE);
-	free_netdev(dev);
-}
+	मुक्त_netdev(dev);
+पूर्ण
 
-static const struct zorro_device_id ariadne_zorro_tbl[] = {
-	{ ZORRO_PROD_VILLAGE_TRONIC_ARIADNE },
-	{ 0 }
-};
+अटल स्थिर काष्ठा zorro_device_id ariadne_zorro_tbl[] = अणु
+	अणु ZORRO_PROD_VILLAGE_TRONIC_ARIADNE पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(zorro, ariadne_zorro_tbl);
 
-static const struct net_device_ops ariadne_netdev_ops = {
-	.ndo_open		= ariadne_open,
-	.ndo_stop		= ariadne_close,
-	.ndo_start_xmit		= ariadne_start_xmit,
-	.ndo_tx_timeout		= ariadne_tx_timeout,
-	.ndo_get_stats		= ariadne_get_stats,
-	.ndo_set_rx_mode	= set_multicast_list,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= eth_mac_addr,
-};
+अटल स्थिर काष्ठा net_device_ops ariadne_netdev_ops = अणु
+	.nकरो_खोलो		= ariadne_खोलो,
+	.nकरो_stop		= ariadne_बंद,
+	.nकरो_start_xmit		= ariadne_start_xmit,
+	.nकरो_tx_समयout		= ariadne_tx_समयout,
+	.nकरो_get_stats		= ariadne_get_stats,
+	.nकरो_set_rx_mode	= set_multicast_list,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= eth_mac_addr,
+पूर्ण;
 
-static int ariadne_init_one(struct zorro_dev *z,
-			    const struct zorro_device_id *ent)
-{
-	unsigned long board = z->resource.start;
-	unsigned long base_addr = board + ARIADNE_LANCE;
-	unsigned long mem_start = board + ARIADNE_RAM;
-	struct resource *r1, *r2;
-	struct net_device *dev;
+अटल पूर्णांक ariadne_init_one(काष्ठा zorro_dev *z,
+			    स्थिर काष्ठा zorro_device_id *ent)
+अणु
+	अचिन्हित दीर्घ board = z->resource.start;
+	अचिन्हित दीर्घ base_addr = board + ARIADNE_LANCE;
+	अचिन्हित दीर्घ mem_start = board + ARIADNE_RAM;
+	काष्ठा resource *r1, *r2;
+	काष्ठा net_device *dev;
 	u32 serial;
-	int err;
+	पूर्णांक err;
 
-	r1 = request_mem_region(base_addr, sizeof(struct Am79C960), "Am79C960");
-	if (!r1)
-		return -EBUSY;
+	r1 = request_mem_region(base_addr, माप(काष्ठा Am79C960), "Am79C960");
+	अगर (!r1)
+		वापस -EBUSY;
 	r2 = request_mem_region(mem_start, ARIADNE_RAM_SIZE, "RAM");
-	if (!r2) {
-		release_mem_region(base_addr, sizeof(struct Am79C960));
-		return -EBUSY;
-	}
+	अगर (!r2) अणु
+		release_mem_region(base_addr, माप(काष्ठा Am79C960));
+		वापस -EBUSY;
+	पूर्ण
 
-	dev = alloc_etherdev(sizeof(struct ariadne_private));
-	if (dev == NULL) {
-		release_mem_region(base_addr, sizeof(struct Am79C960));
+	dev = alloc_etherdev(माप(काष्ठा ariadne_निजी));
+	अगर (dev == शून्य) अणु
+		release_mem_region(base_addr, माप(काष्ठा Am79C960));
 		release_mem_region(mem_start, ARIADNE_RAM_SIZE);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	r1->name = dev->name;
 	r2->name = dev->name;
@@ -746,46 +747,46 @@ static int ariadne_init_one(struct zorro_dev *z,
 	dev->dev_addr[3] = (serial >> 16) & 0xff;
 	dev->dev_addr[4] = (serial >> 8) & 0xff;
 	dev->dev_addr[5] = serial & 0xff;
-	dev->base_addr = (unsigned long)ZTWO_VADDR(base_addr);
-	dev->mem_start = (unsigned long)ZTWO_VADDR(mem_start);
+	dev->base_addr = (अचिन्हित दीर्घ)ZTWO_VADDR(base_addr);
+	dev->mem_start = (अचिन्हित दीर्घ)ZTWO_VADDR(mem_start);
 	dev->mem_end = dev->mem_start + ARIADNE_RAM_SIZE;
 
 	dev->netdev_ops = &ariadne_netdev_ops;
-	dev->watchdog_timeo = 5 * HZ;
+	dev->watchकरोg_समयo = 5 * HZ;
 
-	err = register_netdev(dev);
-	if (err) {
-		release_mem_region(base_addr, sizeof(struct Am79C960));
+	err = रेजिस्टर_netdev(dev);
+	अगर (err) अणु
+		release_mem_region(base_addr, माप(काष्ठा Am79C960));
 		release_mem_region(mem_start, ARIADNE_RAM_SIZE);
-		free_netdev(dev);
-		return err;
-	}
+		मुक्त_netdev(dev);
+		वापस err;
+	पूर्ण
 	zorro_set_drvdata(z, dev);
 
 	netdev_info(dev, "Ariadne at 0x%08lx, Ethernet Address %pM\n",
 		    board, dev->dev_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct zorro_driver ariadne_driver = {
+अटल काष्ठा zorro_driver ariadne_driver = अणु
 	.name		= "ariadne",
 	.id_table	= ariadne_zorro_tbl,
 	.probe		= ariadne_init_one,
-	.remove		= ariadne_remove_one,
-};
+	.हटाओ		= ariadne_हटाओ_one,
+पूर्ण;
 
-static int __init ariadne_init_module(void)
-{
-	return zorro_register_driver(&ariadne_driver);
-}
+अटल पूर्णांक __init ariadne_init_module(व्योम)
+अणु
+	वापस zorro_रेजिस्टर_driver(&ariadne_driver);
+पूर्ण
 
-static void __exit ariadne_cleanup_module(void)
-{
-	zorro_unregister_driver(&ariadne_driver);
-}
+अटल व्योम __निकास ariadne_cleanup_module(व्योम)
+अणु
+	zorro_unरेजिस्टर_driver(&ariadne_driver);
+पूर्ण
 
 module_init(ariadne_init_module);
-module_exit(ariadne_cleanup_module);
+module_निकास(ariadne_cleanup_module);
 
 MODULE_LICENSE("GPL");

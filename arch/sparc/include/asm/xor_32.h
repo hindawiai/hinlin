@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * include/asm/xor.h
+ * include/यंत्र/xor.h
  *
- * Optimized RAID-5 checksumming functions for 32-bit Sparc.
+ * Optimized RAID-5 checksumming functions क्रम 32-bit Sparc.
  */
 
 /*
- * High speed xor_block operation for RAID4/5 utilizing the
- * ldd/std SPARC instructions.
+ * High speed xor_block operation क्रम RAID4/5 utilizing the
+ * ldd/std SPARC inकाष्ठाions.
  *
  * Copyright (C) 1999 Jakub Jelinek (jj@ultra.linux.cz)
  */
 
-static void
-sparc_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
-{
-	int lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+sparc_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
+अणु
+	पूर्णांक lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
-		__asm__ __volatile__(
+	करो अणु
+		__यंत्र__ __अस्थिर__(
 		  "ldd [%0 + 0x00], %%g2\n\t"
 		  "ldd [%0 + 0x08], %%g4\n\t"
 		  "ldd [%0 + 0x10], %%o0\n\t"
@@ -46,17 +47,17 @@ sparc_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 		  "l0", "l1", "l2", "l3", "l4", "l5");
 		p1 += 8;
 		p2 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-sparc_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	unsigned long *p3)
-{
-	int lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+sparc_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	अचिन्हित दीर्घ *p3)
+अणु
+	पूर्णांक lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
-		__asm__ __volatile__(
+	करो अणु
+		__यंत्र__ __अस्थिर__(
 		  "ldd [%0 + 0x00], %%g2\n\t"
 		  "ldd [%0 + 0x08], %%g4\n\t"
 		  "ldd [%0 + 0x10], %%o0\n\t"
@@ -97,17 +98,17 @@ sparc_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p1 += 8;
 		p2 += 8;
 		p3 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-sparc_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	unsigned long *p3, unsigned long *p4)
-{
-	int lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+sparc_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	पूर्णांक lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
-		__asm__ __volatile__(
+	करो अणु
+		__यंत्र__ __अस्थिर__(
 		  "ldd [%0 + 0x00], %%g2\n\t"
 		  "ldd [%0 + 0x08], %%g4\n\t"
 		  "ldd [%0 + 0x10], %%o0\n\t"
@@ -161,17 +162,17 @@ sparc_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p2 += 8;
 		p3 += 8;
 		p4 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-sparc_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	unsigned long *p3, unsigned long *p4, unsigned long *p5)
-{
-	int lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+sparc_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
+	पूर्णांक lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
-		__asm__ __volatile__(
+	करो अणु
+		__यंत्र__ __अस्थिर__(
 		  "ldd [%0 + 0x00], %%g2\n\t"
 		  "ldd [%0 + 0x08], %%g4\n\t"
 		  "ldd [%0 + 0x10], %%o0\n\t"
@@ -238,24 +239,24 @@ sparc_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p3 += 8;
 		p4 += 8;
 		p5 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static struct xor_block_template xor_block_SPARC = {
+अटल काष्ठा xor_block_ढाँचा xor_block_SPARC = अणु
 	.name	= "SPARC",
-	.do_2	= sparc_2,
-	.do_3	= sparc_3,
-	.do_4	= sparc_4,
-	.do_5	= sparc_5,
-};
+	.करो_2	= sparc_2,
+	.करो_3	= sparc_3,
+	.करो_4	= sparc_4,
+	.करो_5	= sparc_5,
+पूर्ण;
 
 /* For grins, also test the generic routines.  */
-#include <asm-generic/xor.h>
+#समावेश <यंत्र-generic/xor.h>
 
-#undef XOR_TRY_TEMPLATES
-#define XOR_TRY_TEMPLATES				\
-	do {						\
+#अघोषित XOR_TRY_TEMPLATES
+#घोषणा XOR_TRY_TEMPLATES				\
+	करो अणु						\
 		xor_speed(&xor_block_8regs);		\
 		xor_speed(&xor_block_32regs);		\
 		xor_speed(&xor_block_SPARC);		\
-	} while (0)
+	पूर्ण जबतक (0)

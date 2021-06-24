@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_MSENC_H__
-#define __NVKM_MSENC_H__
-#include <core/engine.h>
-#endif
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_MSENC_H__
+#घोषणा __NVKM_MSENC_H__
+#समावेश <core/engine.h>
+#पूर्ण_अगर

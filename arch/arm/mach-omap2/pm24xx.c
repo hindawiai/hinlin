@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * OMAP2 Power Management Routines
  *
@@ -6,72 +7,72 @@
  * Copyright (C) 2006-2008 Nokia Corporation
  *
  * Written by:
- * Richard Woodruff <r-woodruff2@ti.com>
+ * Riअक्षरd Woodruff <r-woodruff2@ti.com>
  * Tony Lindgren
  * Juha Yrjola
  * Amit Kucheria <amit.kucheria@nokia.com>
  * Igor Stoppa <igor.stoppa@nokia.com>
  *
- * Based on pm.c for omap1
+ * Based on pm.c क्रम omap1
  */
 
-#include <linux/cpu_pm.h>
-#include <linux/suspend.h>
-#include <linux/sched.h>
-#include <linux/proc_fs.h>
-#include <linux/interrupt.h>
-#include <linux/sysfs.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/irq.h>
-#include <linux/time.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/समय.स>
 
-#include <asm/fncpy.h>
+#समावेश <यंत्र/fncpy.h>
 
-#include <asm/mach/time.h>
-#include <asm/mach/irq.h>
-#include <asm/mach-types.h>
-#include <asm/system_misc.h>
+#समावेश <यंत्र/mach/समय.स>
+#समावेश <यंत्र/mach/irq.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#include <linux/omap-dma.h>
+#समावेश <linux/omap-dma.h>
 
-#include "soc.h"
-#include "common.h"
-#include "clock.h"
-#include "prm2xxx.h"
-#include "prm-regbits-24xx.h"
-#include "cm2xxx.h"
-#include "cm-regbits-24xx.h"
-#include "sdrc.h"
-#include "sram.h"
-#include "pm.h"
-#include "control.h"
-#include "powerdomain.h"
-#include "clockdomain.h"
+#समावेश "soc.h"
+#समावेश "common.h"
+#समावेश "clock.h"
+#समावेश "prm2xxx.h"
+#समावेश "prm-regbits-24xx.h"
+#समावेश "cm2xxx.h"
+#समावेश "cm-regbits-24xx.h"
+#समावेश "sdrc.h"
+#समावेश "sram.h"
+#समावेश "pm.h"
+#समावेश "control.h"
+#समावेश "powerdomain.h"
+#समावेश "clockdomain.h"
 
-static void (*omap2_sram_suspend)(u32 dllctrl, void __iomem *sdrc_dlla_ctrl,
-				  void __iomem *sdrc_power);
+अटल व्योम (*omap2_sram_suspend)(u32 dllctrl, व्योम __iomem *sdrc_dlla_ctrl,
+				  व्योम __iomem *sdrc_घातer);
 
-static struct powerdomain *mpu_pwrdm, *core_pwrdm;
-static struct clockdomain *dsp_clkdm, *mpu_clkdm, *wkup_clkdm, *gfx_clkdm;
+अटल काष्ठा घातerकरोमुख्य *mpu_pwrdm, *core_pwrdm;
+अटल काष्ठा घड़ीकरोमुख्य *dsp_clkdm, *mpu_clkdm, *wkup_clkdm, *gfx_clkdm;
 
-static struct clk *osc_ck, *emul_ck;
+अटल काष्ठा clk *osc_ck, *emul_ck;
 
-static int omap2_enter_full_retention(void)
-{
+अटल पूर्णांक omap2_enter_full_retention(व्योम)
+अणु
 	u32 l;
 
-	/* There is 1 reference hold for all children of the oscillator
-	 * clock, the following will remove it. If no one else uses the
-	 * oscillator itself it will be disabled if/when we enter retention
+	/* There is 1 reference hold क्रम all children of the oscillator
+	 * घड़ी, the following will हटाओ it. If no one अन्यथा uses the
+	 * oscillator itself it will be disabled अगर/when we enter retention
 	 * mode.
 	 */
 	clk_disable(osc_ck);
 
 	/* Clear old wake-up events */
-	/* REVISIT: These write to reserved bits? */
+	/* REVISIT: These ग_लिखो to reserved bits? */
 	omap_prm_clear_mod_irqs(CORE_MOD, PM_WKST1, ~0);
 	omap_prm_clear_mod_irqs(CORE_MOD, OMAP24XX_PM_WKST2, ~0);
 	omap_prm_clear_mod_irqs(WKUP_MOD, PM_WKST, ~0);
@@ -79,17 +80,17 @@ static int omap2_enter_full_retention(void)
 	pwrdm_set_next_pwrst(core_pwrdm, PWRDM_POWER_RET);
 	pwrdm_set_next_pwrst(mpu_pwrdm, PWRDM_POWER_RET);
 
-	/* Workaround to kill USB */
-	l = omap_ctrl_readl(OMAP2_CONTROL_DEVCONF0) | OMAP24XX_USBSTANDBYCTRL;
-	omap_ctrl_writel(l, OMAP2_CONTROL_DEVCONF0);
+	/* Workaround to समाप्त USB */
+	l = omap_ctrl_पढ़ोl(OMAP2_CONTROL_DEVCONF0) | OMAP24XX_USBSTANDBYCTRL;
+	omap_ctrl_ग_लिखोl(l, OMAP2_CONTROL_DEVCONF0);
 
-	/* One last check for pending IRQs to avoid extra latency due
+	/* One last check क्रम pending IRQs to aव्योम extra latency due
 	 * to sleeping unnecessarily. */
-	if (omap_irq_pending())
-		goto no_sleep;
+	अगर (omap_irq_pending())
+		जाओ no_sleep;
 
 	/* Jump to SRAM suspend code */
-	omap2_sram_suspend(sdrc_read_reg(SDRC_DLLA_CTRL),
+	omap2_sram_suspend(sdrc_पढ़ो_reg(SDRC_DLLA_CTRL),
 			   OMAP_SDRC_REGADDR(SDRC_DLLA_CTRL),
 			   OMAP_SDRC_REGADDR(SDRC_POWER));
 
@@ -100,10 +101,10 @@ no_sleep:
 	omap_prm_clear_mod_irqs(CORE_MOD, PM_WKST1, ~0);
 	omap_prm_clear_mod_irqs(CORE_MOD, OMAP24XX_PM_WKST2, ~0);
 
-	/* wakeup domain events - bit 1: GPT1, bit5 GPIO */
+	/* wakeup करोमुख्य events - bit 1: GPT1, bit5 GPIO */
 	omap_prm_clear_mod_irqs(WKUP_MOD, PM_WKST, 0x4 | 0x1);
 
-	/* MPU domain wake events */
+	/* MPU करोमुख्य wake events */
 	omap_prm_clear_mod_irqs(OCP_MOD, OMAP2_PRCM_IRQSTATUS_MPU_OFFSET, 0x1);
 
 	omap_prm_clear_mod_irqs(OCP_MOD, OMAP2_PRCM_IRQSTATUS_MPU_OFFSET, 0x20);
@@ -111,29 +112,29 @@ no_sleep:
 	pwrdm_set_next_pwrst(mpu_pwrdm, PWRDM_POWER_ON);
 	pwrdm_set_next_pwrst(core_pwrdm, PWRDM_POWER_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sti_console_enabled;
+अटल पूर्णांक sti_console_enabled;
 
-static int omap2_allow_mpu_retention(void)
-{
-	if (!omap2xxx_cm_mpu_retention_allowed())
-		return 0;
-	if (sti_console_enabled)
-		return 0;
+अटल पूर्णांक omap2_allow_mpu_retention(व्योम)
+अणु
+	अगर (!omap2xxx_cm_mpu_retention_allowed())
+		वापस 0;
+	अगर (sti_console_enabled)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void omap2_enter_mpu_retention(void)
-{
-	const int zero = 0;
+अटल व्योम omap2_enter_mpu_retention(व्योम)
+अणु
+	स्थिर पूर्णांक zero = 0;
 
 	/* The peripherals seem not to be able to wake up the MPU when
 	 * it is in retention mode. */
-	if (omap2_allow_mpu_retention()) {
-		/* REVISIT: These write to reserved bits? */
+	अगर (omap2_allow_mpu_retention()) अणु
+		/* REVISIT: These ग_लिखो to reserved bits? */
 		omap_prm_clear_mod_irqs(CORE_MOD, PM_WKST1, ~0);
 		omap_prm_clear_mod_irqs(CORE_MOD, OMAP24XX_PM_WKST2, ~0);
 		omap_prm_clear_mod_irqs(WKUP_MOD, PM_WKST, ~0);
@@ -141,71 +142,71 @@ static void omap2_enter_mpu_retention(void)
 		/* Try to enter MPU retention */
 		pwrdm_set_next_pwrst(mpu_pwrdm, PWRDM_POWER_RET);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Block MPU retention */
 		pwrdm_set_next_pwrst(mpu_pwrdm, PWRDM_POWER_ON);
-	}
+	पूर्ण
 
 	/* WFI */
-	asm("mcr p15, 0, %0, c7, c0, 4" : : "r" (zero) : "memory", "cc");
+	यंत्र("mcr p15, 0, %0, c7, c0, 4" : : "r" (zero) : "memory", "cc");
 
 	pwrdm_set_next_pwrst(mpu_pwrdm, PWRDM_POWER_ON);
-}
+पूर्ण
 
-static int omap2_can_sleep(void)
-{
-	if (omap2xxx_cm_fclks_active())
-		return 0;
-	if (__clk_is_enabled(osc_ck))
-		return 0;
+अटल पूर्णांक omap2_can_sleep(व्योम)
+अणु
+	अगर (omap2xxx_cm_fclks_active())
+		वापस 0;
+	अगर (__clk_is_enabled(osc_ck))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void omap2_pm_idle(void)
-{
-	int error;
+अटल व्योम omap2_pm_idle(व्योम)
+अणु
+	पूर्णांक error;
 
-	if (omap_irq_pending())
-		return;
+	अगर (omap_irq_pending())
+		वापस;
 
 	error = cpu_cluster_pm_enter();
-	if (error || !omap2_can_sleep()) {
+	अगर (error || !omap2_can_sleep()) अणु
 		omap2_enter_mpu_retention();
-		goto out_cpu_cluster_pm;
-	}
+		जाओ out_cpu_cluster_pm;
+	पूर्ण
 
 	omap2_enter_full_retention();
 
 out_cpu_cluster_pm:
-	cpu_cluster_pm_exit();
-}
+	cpu_cluster_pm_निकास();
+पूर्ण
 
-static void __init prcm_setup_regs(void)
-{
-	int i, num_mem_banks;
-	struct powerdomain *pwrdm;
+अटल व्योम __init prcm_setup_regs(व्योम)
+अणु
+	पूर्णांक i, num_mem_banks;
+	काष्ठा घातerकरोमुख्य *pwrdm;
 
 	/*
-	 * Enable autoidle
+	 * Enable स्वतःidle
 	 * XXX This should be handled by hwmod code or PRCM init code
 	 */
-	omap2_prm_write_mod_reg(OMAP24XX_AUTOIDLE_MASK, OCP_MOD,
+	omap2_prm_ग_लिखो_mod_reg(OMAP24XX_AUTOIDLE_MASK, OCP_MOD,
 			  OMAP2_PRCM_SYSCONFIG_OFFSET);
 
 	/*
-	 * Set CORE powerdomain memory banks to retain their contents
+	 * Set CORE घातerकरोमुख्य memory banks to retain their contents
 	 * during RETENTION
 	 */
 	num_mem_banks = pwrdm_get_mem_bank_count(core_pwrdm);
-	for (i = 0; i < num_mem_banks; i++)
+	क्रम (i = 0; i < num_mem_banks; i++)
 		pwrdm_set_mem_retst(core_pwrdm, i, PWRDM_POWER_RET);
 
 	pwrdm_set_logic_retst(core_pwrdm, PWRDM_POWER_RET);
 
 	pwrdm_set_logic_retst(mpu_pwrdm, PWRDM_POWER_RET);
 
-	/* Force-power down DSP, GFX powerdomains */
+	/* Force-घातer करोwn DSP, GFX घातerकरोमुख्यs */
 
 	pwrdm = clkdm_get_pwrdm(dsp_clkdm);
 	pwrdm_set_next_pwrst(pwrdm, PWRDM_POWER_OFF);
@@ -213,21 +214,21 @@ static void __init prcm_setup_regs(void)
 	pwrdm = clkdm_get_pwrdm(gfx_clkdm);
 	pwrdm_set_next_pwrst(pwrdm, PWRDM_POWER_OFF);
 
-	/* Enable hardware-supervised idle for all clkdms */
-	clkdm_for_each(omap_pm_clkdms_setup, NULL);
+	/* Enable hardware-supervised idle क्रम all clkdms */
+	clkdm_क्रम_each(omap_pm_clkdms_setup, शून्य);
 	clkdm_add_wkdep(mpu_clkdm, wkup_clkdm);
 
 	omap_common_suspend_init(omap2_enter_full_retention);
 
-	/* REVISIT: Configure number of 32 kHz clock cycles for sys_clk
+	/* REVISIT: Configure number of 32 kHz घड़ी cycles क्रम sys_clk
 	 * stabilisation */
-	omap2_prm_write_mod_reg(15 << OMAP_SETUP_TIME_SHIFT, OMAP24XX_GR_MOD,
+	omap2_prm_ग_लिखो_mod_reg(15 << OMAP_SETUP_TIME_SHIFT, OMAP24XX_GR_MOD,
 				OMAP2_PRCM_CLKSSETUP_OFFSET);
 
-	/* Configure automatic voltage transition */
-	omap2_prm_write_mod_reg(2 << OMAP_SETUP_TIME_SHIFT, OMAP24XX_GR_MOD,
+	/* Configure स्वतःmatic voltage transition */
+	omap2_prm_ग_लिखो_mod_reg(2 << OMAP_SETUP_TIME_SHIFT, OMAP24XX_GR_MOD,
 				OMAP2_PRCM_VOLTSETUP_OFFSET);
-	omap2_prm_write_mod_reg(OMAP24XX_AUTO_EXTVOLT_MASK |
+	omap2_prm_ग_लिखो_mod_reg(OMAP24XX_AUTO_EXTVOLT_MASK |
 				(0x1 << OMAP24XX_SETOFF_LEVEL_SHIFT) |
 				OMAP24XX_MEMRETCTRL_MASK |
 				(0x1 << OMAP24XX_SETRET_LEVEL_SHIFT) |
@@ -235,65 +236,65 @@ static void __init prcm_setup_regs(void)
 				OMAP24XX_GR_MOD, OMAP2_PRCM_VOLTCTRL_OFFSET);
 
 	/* Enable wake-up events */
-	omap2_prm_write_mod_reg(OMAP24XX_EN_GPIOS_MASK | OMAP24XX_EN_GPT1_MASK,
+	omap2_prm_ग_लिखो_mod_reg(OMAP24XX_EN_GPIOS_MASK | OMAP24XX_EN_GPT1_MASK,
 				WKUP_MOD, PM_WKEN);
 
-	/* Enable SYS_CLKEN control when all domains idle */
+	/* Enable SYS_CLKEN control when all करोमुख्यs idle */
 	omap2_prm_set_mod_reg_bits(OMAP_AUTOEXTCLKMODE_MASK, OMAP24XX_GR_MOD,
 				   OMAP2_PRCM_CLKSRC_CTRL_OFFSET);
-}
+पूर्ण
 
-int __init omap2_pm_init(void)
-{
+पूर्णांक __init omap2_pm_init(व्योम)
+अणु
 	u32 l;
 
-	printk(KERN_INFO "Power Management for OMAP2 initializing\n");
-	l = omap2_prm_read_mod_reg(OCP_MOD, OMAP2_PRCM_REVISION_OFFSET);
-	printk(KERN_INFO "PRCM revision %d.%d\n", (l >> 4) & 0x0f, l & 0x0f);
+	prपूर्णांकk(KERN_INFO "Power Management for OMAP2 initializing\n");
+	l = omap2_prm_पढ़ो_mod_reg(OCP_MOD, OMAP2_PRCM_REVISION_OFFSET);
+	prपूर्णांकk(KERN_INFO "PRCM revision %d.%d\n", (l >> 4) & 0x0f, l & 0x0f);
 
-	/* Look up important powerdomains */
+	/* Look up important घातerकरोमुख्यs */
 
 	mpu_pwrdm = pwrdm_lookup("mpu_pwrdm");
-	if (!mpu_pwrdm)
+	अगर (!mpu_pwrdm)
 		pr_err("PM: mpu_pwrdm not found\n");
 
 	core_pwrdm = pwrdm_lookup("core_pwrdm");
-	if (!core_pwrdm)
+	अगर (!core_pwrdm)
 		pr_err("PM: core_pwrdm not found\n");
 
-	/* Look up important clockdomains */
+	/* Look up important घड़ीकरोमुख्यs */
 
 	mpu_clkdm = clkdm_lookup("mpu_clkdm");
-	if (!mpu_clkdm)
+	अगर (!mpu_clkdm)
 		pr_err("PM: mpu_clkdm not found\n");
 
 	wkup_clkdm = clkdm_lookup("wkup_clkdm");
-	if (!wkup_clkdm)
+	अगर (!wkup_clkdm)
 		pr_err("PM: wkup_clkdm not found\n");
 
 	dsp_clkdm = clkdm_lookup("dsp_clkdm");
-	if (!dsp_clkdm)
+	अगर (!dsp_clkdm)
 		pr_err("PM: dsp_clkdm not found\n");
 
 	gfx_clkdm = clkdm_lookup("gfx_clkdm");
-	if (!gfx_clkdm)
+	अगर (!gfx_clkdm)
 		pr_err("PM: gfx_clkdm not found\n");
 
 
-	osc_ck = clk_get(NULL, "osc_ck");
-	if (IS_ERR(osc_ck)) {
-		printk(KERN_ERR "could not get osc_ck\n");
-		return -ENODEV;
-	}
+	osc_ck = clk_get(शून्य, "osc_ck");
+	अगर (IS_ERR(osc_ck)) अणु
+		prपूर्णांकk(KERN_ERR "could not get osc_ck\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	if (cpu_is_omap242x()) {
-		emul_ck = clk_get(NULL, "emul_ck");
-		if (IS_ERR(emul_ck)) {
-			printk(KERN_ERR "could not get emul_ck\n");
+	अगर (cpu_is_omap242x()) अणु
+		emul_ck = clk_get(शून्य, "emul_ck");
+		अगर (IS_ERR(emul_ck)) अणु
+			prपूर्णांकk(KERN_ERR "could not get emul_ck\n");
 			clk_put(osc_ck);
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
 	prcm_setup_regs();
 
@@ -308,5 +309,5 @@ int __init omap2_pm_init(void)
 
 	arm_pm_idle = omap2_pm_idle;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

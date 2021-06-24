@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2019 IBM Corporation
  * Author: Nayna Jain
  */
 
-#include <linux/ima.h>
-#include <asm/secure_boot.h>
+#समावेश <linux/ima.h>
+#समावेश <यंत्र/secure_boot.h>
 
-bool arch_ima_get_secureboot(void)
-{
-	return is_ppc_secureboot_enabled();
-}
+bool arch_ima_get_secureboot(व्योम)
+अणु
+	वापस is_ppc_secureboot_enabled();
+पूर्ण
 
 /*
- * The "secure_rules" are enabled only on "secureboot" enabled systems.
- * These rules verify the file signatures against known good values.
+ * The "secure_rules" are enabled only on "secureboot" enabled प्रणालीs.
+ * These rules verअगरy the file signatures against known good values.
  * The "appraise_type=imasig|modsig" option allows the known good signature
  * to be stored as an xattr or as an appended signature.
  *
- * To avoid duplicate signature verification as much as possible, the IMA
- * policy rule for module appraisal is added only if CONFIG_MODULE_SIG
+ * To aव्योम duplicate signature verअगरication as much as possible, the IMA
+ * policy rule क्रम module appraisal is added only अगर CONFIG_MODULE_SIG
  * is not enabled.
  */
-static const char *const secure_rules[] = {
+अटल स्थिर अक्षर *स्थिर secure_rules[] = अणु
 	"appraise func=KEXEC_KERNEL_CHECK appraise_flag=check_blacklist appraise_type=imasig|modsig",
-#ifndef CONFIG_MODULE_SIG
+#अगर_अघोषित CONFIG_MODULE_SIG
 	"appraise func=MODULE_CHECK appraise_flag=check_blacklist appraise_type=imasig|modsig",
-#endif
-	NULL
-};
+#पूर्ण_अगर
+	शून्य
+पूर्ण;
 
 /*
- * The "trusted_rules" are enabled only on "trustedboot" enabled systems.
+ * The "trusted_rules" are enabled only on "trustedboot" enabled प्रणालीs.
  * These rules add the kexec kernel image and kernel modules file hashes to
  * the IMA measurement list.
  */
-static const char *const trusted_rules[] = {
+अटल स्थिर अक्षर *स्थिर trusted_rules[] = अणु
 	"measure func=KEXEC_KERNEL_CHECK",
 	"measure func=MODULE_CHECK",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /*
- * The "secure_and_trusted_rules" contains rules for both the secure boot and
+ * The "secure_and_trusted_rules" contains rules क्रम both the secure boot and
  * trusted boot. The "template=ima-modsig" option includes the appended
  * signature, when available, in the IMA measurement list.
  */
-static const char *const secure_and_trusted_rules[] = {
+अटल स्थिर अक्षर *स्थिर secure_and_trusted_rules[] = अणु
 	"measure func=KEXEC_KERNEL_CHECK template=ima-modsig",
 	"measure func=MODULE_CHECK template=ima-modsig",
 	"appraise func=KEXEC_KERNEL_CHECK appraise_flag=check_blacklist appraise_type=imasig|modsig",
-#ifndef CONFIG_MODULE_SIG
+#अगर_अघोषित CONFIG_MODULE_SIG
 	"appraise func=MODULE_CHECK appraise_flag=check_blacklist appraise_type=imasig|modsig",
-#endif
-	NULL
-};
+#पूर्ण_अगर
+	शून्य
+पूर्ण;
 
 /*
- * Returns the relevant IMA arch-specific policies based on the system secure
+ * Returns the relevant IMA arch-specअगरic policies based on the प्रणाली secure
  * boot state.
  */
-const char *const *arch_get_ima_policy(void)
-{
-	if (is_ppc_secureboot_enabled()) {
-		if (IS_ENABLED(CONFIG_MODULE_SIG))
-			set_module_sig_enforced();
+स्थिर अक्षर *स्थिर *arch_get_ima_policy(व्योम)
+अणु
+	अगर (is_ppc_secureboot_enabled()) अणु
+		अगर (IS_ENABLED(CONFIG_MODULE_SIG))
+			set_module_sig_enक्रमced();
 
-		if (is_ppc_trustedboot_enabled())
-			return secure_and_trusted_rules;
-		else
-			return secure_rules;
-	} else if (is_ppc_trustedboot_enabled()) {
-		return trusted_rules;
-	}
+		अगर (is_ppc_trustedboot_enabled())
+			वापस secure_and_trusted_rules;
+		अन्यथा
+			वापस secure_rules;
+	पूर्ण अन्यथा अगर (is_ppc_trustedboot_enabled()) अणु
+		वापस trusted_rules;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

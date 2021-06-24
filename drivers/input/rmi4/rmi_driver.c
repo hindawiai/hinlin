@@ -1,679 +1,680 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2011-2016 Synaptics Incorporated
  * Copyright (c) 2011 Unixphere
  *
- * This driver provides the core support for a single RMI4-based device.
+ * This driver provides the core support क्रम a single RMI4-based device.
  *
- * The RMI4 specification can be found here (URL split for line length):
+ * The RMI4 specअगरication can be found here (URL split क्रम line length):
  *
- * http://www.synaptics.com/sites/default/files/
+ * http://www.synaptics.com/sites/शेष/files/
  *      511-000136-01-Rev-E-RMI4-Interfacing-Guide.pdf
  */
 
-#include <linux/bitmap.h>
-#include <linux/delay.h>
-#include <linux/fs.h>
-#include <linux/irq.h>
-#include <linux/pm.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/irqdomain.h>
-#include <uapi/linux/input.h>
-#include <linux/rmi.h>
-#include "rmi_bus.h"
-#include "rmi_driver.h"
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <uapi/linux/input.h>
+#समावेश <linux/rmi.h>
+#समावेश "rmi_bus.h"
+#समावेश "rmi_driver.h"
 
-#define HAS_NONSTANDARD_PDT_MASK 0x40
-#define RMI4_MAX_PAGE 0xff
-#define RMI4_PAGE_SIZE 0x100
-#define RMI4_PAGE_MASK 0xFF00
+#घोषणा HAS_NONSTANDARD_PDT_MASK 0x40
+#घोषणा RMI4_MAX_PAGE 0xff
+#घोषणा RMI4_PAGE_SIZE 0x100
+#घोषणा RMI4_PAGE_MASK 0xFF00
 
-#define RMI_DEVICE_RESET_CMD	0x01
-#define DEFAULT_RESET_DELAY_MS	100
+#घोषणा RMI_DEVICE_RESET_CMD	0x01
+#घोषणा DEFAULT_RESET_DELAY_MS	100
 
-void rmi_free_function_list(struct rmi_device *rmi_dev)
-{
-	struct rmi_function *fn, *tmp;
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+व्योम rmi_मुक्त_function_list(काष्ठा rmi_device *rmi_dev)
+अणु
+	काष्ठा rmi_function *fn, *पंचांगp;
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
 
 	rmi_dbg(RMI_DEBUG_CORE, &rmi_dev->dev, "Freeing function list\n");
 
-	/* Doing it in the reverse order so F01 will be removed last */
-	list_for_each_entry_safe_reverse(fn, tmp,
-					 &data->function_list, node) {
+	/* Doing it in the reverse order so F01 will be हटाओd last */
+	list_क्रम_each_entry_safe_reverse(fn, पंचांगp,
+					 &data->function_list, node) अणु
 		list_del(&fn->node);
-		rmi_unregister_function(fn);
-	}
+		rmi_unरेजिस्टर_function(fn);
+	पूर्ण
 
-	devm_kfree(&rmi_dev->dev, data->irq_memory);
-	data->irq_memory = NULL;
-	data->irq_status = NULL;
-	data->fn_irq_bits = NULL;
-	data->current_irq_mask = NULL;
-	data->new_irq_mask = NULL;
+	devm_kमुक्त(&rmi_dev->dev, data->irq_memory);
+	data->irq_memory = शून्य;
+	data->irq_status = शून्य;
+	data->fn_irq_bits = शून्य;
+	data->current_irq_mask = शून्य;
+	data->new_irq_mask = शून्य;
 
-	data->f01_container = NULL;
-	data->f34_container = NULL;
-}
+	data->f01_container = शून्य;
+	data->f34_container = शून्य;
+पूर्ण
 
-static int reset_one_function(struct rmi_function *fn)
-{
-	struct rmi_function_handler *fh;
-	int retval = 0;
+अटल पूर्णांक reset_one_function(काष्ठा rmi_function *fn)
+अणु
+	काष्ठा rmi_function_handler *fh;
+	पूर्णांक retval = 0;
 
-	if (!fn || !fn->dev.driver)
-		return 0;
+	अगर (!fn || !fn->dev.driver)
+		वापस 0;
 
 	fh = to_rmi_function_handler(fn->dev.driver);
-	if (fh->reset) {
+	अगर (fh->reset) अणु
 		retval = fh->reset(fn);
-		if (retval < 0)
+		अगर (retval < 0)
 			dev_err(&fn->dev, "Reset failed with code %d.\n",
 				retval);
-	}
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int configure_one_function(struct rmi_function *fn)
-{
-	struct rmi_function_handler *fh;
-	int retval = 0;
+अटल पूर्णांक configure_one_function(काष्ठा rmi_function *fn)
+अणु
+	काष्ठा rmi_function_handler *fh;
+	पूर्णांक retval = 0;
 
-	if (!fn || !fn->dev.driver)
-		return 0;
+	अगर (!fn || !fn->dev.driver)
+		वापस 0;
 
 	fh = to_rmi_function_handler(fn->dev.driver);
-	if (fh->config) {
+	अगर (fh->config) अणु
 		retval = fh->config(fn);
-		if (retval < 0)
+		अगर (retval < 0)
 			dev_err(&fn->dev, "Config failed with code %d.\n",
 				retval);
-	}
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int rmi_driver_process_reset_requests(struct rmi_device *rmi_dev)
-{
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	struct rmi_function *entry;
-	int retval;
+अटल पूर्णांक rmi_driver_process_reset_requests(काष्ठा rmi_device *rmi_dev)
+अणु
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा rmi_function *entry;
+	पूर्णांक retval;
 
-	list_for_each_entry(entry, &data->function_list, node) {
+	list_क्रम_each_entry(entry, &data->function_list, node) अणु
 		retval = reset_one_function(entry);
-		if (retval < 0)
-			return retval;
-	}
+		अगर (retval < 0)
+			वापस retval;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmi_driver_process_config_requests(struct rmi_device *rmi_dev)
-{
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	struct rmi_function *entry;
-	int retval;
+अटल पूर्णांक rmi_driver_process_config_requests(काष्ठा rmi_device *rmi_dev)
+अणु
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा rmi_function *entry;
+	पूर्णांक retval;
 
-	list_for_each_entry(entry, &data->function_list, node) {
+	list_क्रम_each_entry(entry, &data->function_list, node) अणु
 		retval = configure_one_function(entry);
-		if (retval < 0)
-			return retval;
-	}
+		अगर (retval < 0)
+			वापस retval;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmi_process_interrupt_requests(struct rmi_device *rmi_dev)
-{
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	struct device *dev = &rmi_dev->dev;
-	int i;
-	int error;
+अटल पूर्णांक rmi_process_पूर्णांकerrupt_requests(काष्ठा rmi_device *rmi_dev)
+अणु
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा device *dev = &rmi_dev->dev;
+	पूर्णांक i;
+	पूर्णांक error;
 
-	if (!data)
-		return 0;
+	अगर (!data)
+		वापस 0;
 
-	if (!data->attn_data.data) {
-		error = rmi_read_block(rmi_dev,
+	अगर (!data->attn_data.data) अणु
+		error = rmi_पढ़ो_block(rmi_dev,
 				data->f01_container->fd.data_base_addr + 1,
 				data->irq_status, data->num_of_irq_regs);
-		if (error < 0) {
+		अगर (error < 0) अणु
 			dev_err(dev, "Failed to read irqs, code=%d\n", error);
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&data->irq_mutex);
-	bitmap_and(data->irq_status, data->irq_status, data->fn_irq_bits,
+	biपंचांगap_and(data->irq_status, data->irq_status, data->fn_irq_bits,
 	       data->irq_count);
 	/*
-	 * At this point, irq_status has all bits that are set in the
-	 * interrupt status register and are enabled.
+	 * At this poपूर्णांक, irq_status has all bits that are set in the
+	 * पूर्णांकerrupt status रेजिस्टर and are enabled.
 	 */
 	mutex_unlock(&data->irq_mutex);
 
-	for_each_set_bit(i, data->irq_status, data->irq_count)
-		handle_nested_irq(irq_find_mapping(data->irqdomain, i));
+	क्रम_each_set_bit(i, data->irq_status, data->irq_count)
+		handle_nested_irq(irq_find_mapping(data->irqकरोमुख्य, i));
 
-	if (data->input)
+	अगर (data->input)
 		input_sync(data->input);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rmi_set_attn_data(struct rmi_device *rmi_dev, unsigned long irq_status,
-		       void *data, size_t size)
-{
-	struct rmi_driver_data *drvdata = dev_get_drvdata(&rmi_dev->dev);
-	struct rmi4_attn_data attn_data;
-	void *fifo_data;
+व्योम rmi_set_attn_data(काष्ठा rmi_device *rmi_dev, अचिन्हित दीर्घ irq_status,
+		       व्योम *data, माप_प्रकार size)
+अणु
+	काष्ठा rmi_driver_data *drvdata = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा rmi4_attn_data attn_data;
+	व्योम *fअगरo_data;
 
-	if (!drvdata->enabled)
-		return;
+	अगर (!drvdata->enabled)
+		वापस;
 
-	fifo_data = kmemdup(data, size, GFP_ATOMIC);
-	if (!fifo_data)
-		return;
+	fअगरo_data = kmemdup(data, size, GFP_ATOMIC);
+	अगर (!fअगरo_data)
+		वापस;
 
 	attn_data.irq_status = irq_status;
 	attn_data.size = size;
-	attn_data.data = fifo_data;
+	attn_data.data = fअगरo_data;
 
-	kfifo_put(&drvdata->attn_fifo, attn_data);
-}
+	kfअगरo_put(&drvdata->attn_fअगरo, attn_data);
+पूर्ण
 EXPORT_SYMBOL_GPL(rmi_set_attn_data);
 
-static irqreturn_t rmi_irq_fn(int irq, void *dev_id)
-{
-	struct rmi_device *rmi_dev = dev_id;
-	struct rmi_driver_data *drvdata = dev_get_drvdata(&rmi_dev->dev);
-	struct rmi4_attn_data attn_data = {0};
-	int ret, count;
+अटल irqवापस_t rmi_irq_fn(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा rmi_device *rmi_dev = dev_id;
+	काष्ठा rmi_driver_data *drvdata = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा rmi4_attn_data attn_data = अणु0पूर्ण;
+	पूर्णांक ret, count;
 
-	count = kfifo_get(&drvdata->attn_fifo, &attn_data);
-	if (count) {
+	count = kfअगरo_get(&drvdata->attn_fअगरo, &attn_data);
+	अगर (count) अणु
 		*(drvdata->irq_status) = attn_data.irq_status;
 		drvdata->attn_data = attn_data;
-	}
+	पूर्ण
 
-	ret = rmi_process_interrupt_requests(rmi_dev);
-	if (ret)
+	ret = rmi_process_पूर्णांकerrupt_requests(rmi_dev);
+	अगर (ret)
 		rmi_dbg(RMI_DEBUG_CORE, &rmi_dev->dev,
 			"Failed to process interrupt request: %d\n", ret);
 
-	if (count) {
-		kfree(attn_data.data);
-		drvdata->attn_data.data = NULL;
-	}
+	अगर (count) अणु
+		kमुक्त(attn_data.data);
+		drvdata->attn_data.data = शून्य;
+	पूर्ण
 
-	if (!kfifo_is_empty(&drvdata->attn_fifo))
-		return rmi_irq_fn(irq, dev_id);
+	अगर (!kfअगरo_is_empty(&drvdata->attn_fअगरo))
+		वापस rmi_irq_fn(irq, dev_id);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rmi_irq_init(struct rmi_device *rmi_dev)
-{
-	struct rmi_device_platform_data *pdata = rmi_get_platform_data(rmi_dev);
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	int irq_flags = irq_get_trigger_type(pdata->irq);
-	int ret;
+अटल पूर्णांक rmi_irq_init(काष्ठा rmi_device *rmi_dev)
+अणु
+	काष्ठा rmi_device_platक्रमm_data *pdata = rmi_get_platक्रमm_data(rmi_dev);
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	पूर्णांक irq_flags = irq_get_trigger_type(pdata->irq);
+	पूर्णांक ret;
 
-	if (!irq_flags)
+	अगर (!irq_flags)
 		irq_flags = IRQF_TRIGGER_LOW;
 
-	ret = devm_request_threaded_irq(&rmi_dev->dev, pdata->irq, NULL,
+	ret = devm_request_thपढ़ोed_irq(&rmi_dev->dev, pdata->irq, शून्य,
 					rmi_irq_fn, irq_flags | IRQF_ONESHOT,
 					dev_driver_string(rmi_dev->xport->dev),
 					rmi_dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&rmi_dev->dev, "Failed to register interrupt %d\n",
 			pdata->irq);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	data->enabled = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct rmi_function *rmi_find_function(struct rmi_device *rmi_dev, u8 number)
-{
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	struct rmi_function *entry;
+काष्ठा rmi_function *rmi_find_function(काष्ठा rmi_device *rmi_dev, u8 number)
+अणु
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा rmi_function *entry;
 
-	list_for_each_entry(entry, &data->function_list, node) {
-		if (entry->fd.function_number == number)
-			return entry;
-	}
+	list_क्रम_each_entry(entry, &data->function_list, node) अणु
+		अगर (entry->fd.function_number == number)
+			वापस entry;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int suspend_one_function(struct rmi_function *fn)
-{
-	struct rmi_function_handler *fh;
-	int retval = 0;
+अटल पूर्णांक suspend_one_function(काष्ठा rmi_function *fn)
+अणु
+	काष्ठा rmi_function_handler *fh;
+	पूर्णांक retval = 0;
 
-	if (!fn || !fn->dev.driver)
-		return 0;
+	अगर (!fn || !fn->dev.driver)
+		वापस 0;
 
 	fh = to_rmi_function_handler(fn->dev.driver);
-	if (fh->suspend) {
+	अगर (fh->suspend) अणु
 		retval = fh->suspend(fn);
-		if (retval < 0)
+		अगर (retval < 0)
 			dev_err(&fn->dev, "Suspend failed with code %d.\n",
 				retval);
-	}
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int rmi_suspend_functions(struct rmi_device *rmi_dev)
-{
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	struct rmi_function *entry;
-	int retval;
+अटल पूर्णांक rmi_suspend_functions(काष्ठा rmi_device *rmi_dev)
+अणु
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा rmi_function *entry;
+	पूर्णांक retval;
 
-	list_for_each_entry(entry, &data->function_list, node) {
+	list_क्रम_each_entry(entry, &data->function_list, node) अणु
 		retval = suspend_one_function(entry);
-		if (retval < 0)
-			return retval;
-	}
+		अगर (retval < 0)
+			वापस retval;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int resume_one_function(struct rmi_function *fn)
-{
-	struct rmi_function_handler *fh;
-	int retval = 0;
+अटल पूर्णांक resume_one_function(काष्ठा rmi_function *fn)
+अणु
+	काष्ठा rmi_function_handler *fh;
+	पूर्णांक retval = 0;
 
-	if (!fn || !fn->dev.driver)
-		return 0;
+	अगर (!fn || !fn->dev.driver)
+		वापस 0;
 
 	fh = to_rmi_function_handler(fn->dev.driver);
-	if (fh->resume) {
+	अगर (fh->resume) अणु
 		retval = fh->resume(fn);
-		if (retval < 0)
+		अगर (retval < 0)
 			dev_err(&fn->dev, "Resume failed with code %d.\n",
 				retval);
-	}
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int rmi_resume_functions(struct rmi_device *rmi_dev)
-{
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	struct rmi_function *entry;
-	int retval;
+अटल पूर्णांक rmi_resume_functions(काष्ठा rmi_device *rmi_dev)
+अणु
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा rmi_function *entry;
+	पूर्णांक retval;
 
-	list_for_each_entry(entry, &data->function_list, node) {
+	list_क्रम_each_entry(entry, &data->function_list, node) अणु
 		retval = resume_one_function(entry);
-		if (retval < 0)
-			return retval;
-	}
+		अगर (retval < 0)
+			वापस retval;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rmi_enable_sensor(struct rmi_device *rmi_dev)
-{
-	int retval = 0;
+पूर्णांक rmi_enable_sensor(काष्ठा rmi_device *rmi_dev)
+अणु
+	पूर्णांक retval = 0;
 
 	retval = rmi_driver_process_config_requests(rmi_dev);
-	if (retval < 0)
-		return retval;
+	अगर (retval < 0)
+		वापस retval;
 
-	return rmi_process_interrupt_requests(rmi_dev);
-}
+	वापस rmi_process_पूर्णांकerrupt_requests(rmi_dev);
+पूर्ण
 
 /**
  * rmi_driver_set_input_params - set input device id and other data.
  *
- * @rmi_dev: Pointer to an RMI device
- * @input: Pointer to input device
+ * @rmi_dev: Poपूर्णांकer to an RMI device
+ * @input: Poपूर्णांकer to input device
  *
  */
-static int rmi_driver_set_input_params(struct rmi_device *rmi_dev,
-				struct input_dev *input)
-{
+अटल पूर्णांक rmi_driver_set_input_params(काष्ठा rmi_device *rmi_dev,
+				काष्ठा input_dev *input)
+अणु
 	input->name = SYNAPTICS_INPUT_DEVICE_NAME;
-	input->id.vendor  = SYNAPTICS_VENDOR_ID;
+	input->id.venकरोr  = SYNAPTICS_VENDOR_ID;
 	input->id.bustype = BUS_RMI;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rmi_driver_set_input_name(struct rmi_device *rmi_dev,
-				struct input_dev *input)
-{
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	const char *device_name = rmi_f01_get_product_ID(data->f01_container);
-	char *name;
+अटल व्योम rmi_driver_set_input_name(काष्ठा rmi_device *rmi_dev,
+				काष्ठा input_dev *input)
+अणु
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	स्थिर अक्षर *device_name = rmi_f01_get_product_ID(data->f01_container);
+	अक्षर *name;
 
-	name = devm_kasprintf(&rmi_dev->dev, GFP_KERNEL,
+	name = devm_kaप्र_लिखो(&rmi_dev->dev, GFP_KERNEL,
 			      "Synaptics %s", device_name);
-	if (!name)
-		return;
+	अगर (!name)
+		वापस;
 
 	input->name = name;
-}
+पूर्ण
 
-static int rmi_driver_set_irq_bits(struct rmi_device *rmi_dev,
-				   unsigned long *mask)
-{
-	int error = 0;
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	struct device *dev = &rmi_dev->dev;
+अटल पूर्णांक rmi_driver_set_irq_bits(काष्ठा rmi_device *rmi_dev,
+				   अचिन्हित दीर्घ *mask)
+अणु
+	पूर्णांक error = 0;
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा device *dev = &rmi_dev->dev;
 
 	mutex_lock(&data->irq_mutex);
-	bitmap_or(data->new_irq_mask,
+	biपंचांगap_or(data->new_irq_mask,
 		  data->current_irq_mask, mask, data->irq_count);
 
-	error = rmi_write_block(rmi_dev,
+	error = rmi_ग_लिखो_block(rmi_dev,
 			data->f01_container->fd.control_base_addr + 1,
 			data->new_irq_mask, data->num_of_irq_regs);
-	if (error < 0) {
+	अगर (error < 0) अणु
 		dev_err(dev, "%s: Failed to change enabled interrupts!",
 							__func__);
-		goto error_unlock;
-	}
-	bitmap_copy(data->current_irq_mask, data->new_irq_mask,
+		जाओ error_unlock;
+	पूर्ण
+	biपंचांगap_copy(data->current_irq_mask, data->new_irq_mask,
 		    data->num_of_irq_regs);
 
-	bitmap_or(data->fn_irq_bits, data->fn_irq_bits, mask, data->irq_count);
+	biपंचांगap_or(data->fn_irq_bits, data->fn_irq_bits, mask, data->irq_count);
 
 error_unlock:
 	mutex_unlock(&data->irq_mutex);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int rmi_driver_clear_irq_bits(struct rmi_device *rmi_dev,
-				     unsigned long *mask)
-{
-	int error = 0;
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	struct device *dev = &rmi_dev->dev;
+अटल पूर्णांक rmi_driver_clear_irq_bits(काष्ठा rmi_device *rmi_dev,
+				     अचिन्हित दीर्घ *mask)
+अणु
+	पूर्णांक error = 0;
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा device *dev = &rmi_dev->dev;
 
 	mutex_lock(&data->irq_mutex);
-	bitmap_andnot(data->fn_irq_bits,
+	biपंचांगap_andnot(data->fn_irq_bits,
 		      data->fn_irq_bits, mask, data->irq_count);
-	bitmap_andnot(data->new_irq_mask,
+	biपंचांगap_andnot(data->new_irq_mask,
 		  data->current_irq_mask, mask, data->irq_count);
 
-	error = rmi_write_block(rmi_dev,
+	error = rmi_ग_लिखो_block(rmi_dev,
 			data->f01_container->fd.control_base_addr + 1,
 			data->new_irq_mask, data->num_of_irq_regs);
-	if (error < 0) {
+	अगर (error < 0) अणु
 		dev_err(dev, "%s: Failed to change enabled interrupts!",
 							__func__);
-		goto error_unlock;
-	}
-	bitmap_copy(data->current_irq_mask, data->new_irq_mask,
+		जाओ error_unlock;
+	पूर्ण
+	biपंचांगap_copy(data->current_irq_mask, data->new_irq_mask,
 		    data->num_of_irq_regs);
 
 error_unlock:
 	mutex_unlock(&data->irq_mutex);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int rmi_driver_reset_handler(struct rmi_device *rmi_dev)
-{
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	int error;
+अटल पूर्णांक rmi_driver_reset_handler(काष्ठा rmi_device *rmi_dev)
+अणु
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	पूर्णांक error;
 
 	/*
-	 * Can get called before the driver is fully ready to deal with
+	 * Can get called beक्रमe the driver is fully पढ़ोy to deal with
 	 * this situation.
 	 */
-	if (!data || !data->f01_container) {
+	अगर (!data || !data->f01_container) अणु
 		dev_warn(&rmi_dev->dev,
 			 "Not ready to handle reset yet!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	error = rmi_read_block(rmi_dev,
+	error = rmi_पढ़ो_block(rmi_dev,
 			       data->f01_container->fd.control_base_addr + 1,
 			       data->current_irq_mask, data->num_of_irq_regs);
-	if (error < 0) {
+	अगर (error < 0) अणु
 		dev_err(&rmi_dev->dev, "%s: Failed to read current IRQ mask.\n",
 			__func__);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = rmi_driver_process_reset_requests(rmi_dev);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
 	error = rmi_driver_process_config_requests(rmi_dev);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmi_read_pdt_entry(struct rmi_device *rmi_dev,
-			      struct pdt_entry *entry, u16 pdt_address)
-{
+अटल पूर्णांक rmi_पढ़ो_pdt_entry(काष्ठा rmi_device *rmi_dev,
+			      काष्ठा pdt_entry *entry, u16 pdt_address)
+अणु
 	u8 buf[RMI_PDT_ENTRY_SIZE];
-	int error;
+	पूर्णांक error;
 
-	error = rmi_read_block(rmi_dev, pdt_address, buf, RMI_PDT_ENTRY_SIZE);
-	if (error) {
+	error = rmi_पढ़ो_block(rmi_dev, pdt_address, buf, RMI_PDT_ENTRY_SIZE);
+	अगर (error) अणु
 		dev_err(&rmi_dev->dev, "Read PDT entry at %#06x failed, code: %d.\n",
 				pdt_address, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	entry->page_start = pdt_address & RMI4_PAGE_MASK;
 	entry->query_base_addr = buf[0];
 	entry->command_base_addr = buf[1];
 	entry->control_base_addr = buf[2];
 	entry->data_base_addr = buf[3];
-	entry->interrupt_source_count = buf[4] & RMI_PDT_INT_SOURCE_COUNT_MASK;
+	entry->पूर्णांकerrupt_source_count = buf[4] & RMI_PDT_INT_SOURCE_COUNT_MASK;
 	entry->function_version = (buf[4] & RMI_PDT_FUNCTION_VERSION_MASK) >> 5;
 	entry->function_number = buf[5];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rmi_driver_copy_pdt_to_fd(const struct pdt_entry *pdt,
-				      struct rmi_function_descriptor *fd)
-{
+अटल व्योम rmi_driver_copy_pdt_to_fd(स्थिर काष्ठा pdt_entry *pdt,
+				      काष्ठा rmi_function_descriptor *fd)
+अणु
 	fd->query_base_addr = pdt->query_base_addr + pdt->page_start;
 	fd->command_base_addr = pdt->command_base_addr + pdt->page_start;
 	fd->control_base_addr = pdt->control_base_addr + pdt->page_start;
 	fd->data_base_addr = pdt->data_base_addr + pdt->page_start;
 	fd->function_number = pdt->function_number;
-	fd->interrupt_source_count = pdt->interrupt_source_count;
+	fd->पूर्णांकerrupt_source_count = pdt->पूर्णांकerrupt_source_count;
 	fd->function_version = pdt->function_version;
-}
+पूर्ण
 
-#define RMI_SCAN_CONTINUE	0
-#define RMI_SCAN_DONE		1
+#घोषणा RMI_SCAN_CONTINUE	0
+#घोषणा RMI_SCAN_DONE		1
 
-static int rmi_scan_pdt_page(struct rmi_device *rmi_dev,
-			     int page,
-			     int *empty_pages,
-			     void *ctx,
-			     int (*callback)(struct rmi_device *rmi_dev,
-					     void *ctx,
-					     const struct pdt_entry *entry))
-{
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	struct pdt_entry pdt_entry;
+अटल पूर्णांक rmi_scan_pdt_page(काष्ठा rmi_device *rmi_dev,
+			     पूर्णांक page,
+			     पूर्णांक *empty_pages,
+			     व्योम *ctx,
+			     पूर्णांक (*callback)(काष्ठा rmi_device *rmi_dev,
+					     व्योम *ctx,
+					     स्थिर काष्ठा pdt_entry *entry))
+अणु
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा pdt_entry pdt_entry;
 	u16 page_start = RMI4_PAGE_SIZE * page;
 	u16 pdt_start = page_start + PDT_START_SCAN_LOCATION;
 	u16 pdt_end = page_start + PDT_END_SCAN_LOCATION;
 	u16 addr;
-	int error;
-	int retval;
+	पूर्णांक error;
+	पूर्णांक retval;
 
-	for (addr = pdt_start; addr >= pdt_end; addr -= RMI_PDT_ENTRY_SIZE) {
-		error = rmi_read_pdt_entry(rmi_dev, &pdt_entry, addr);
-		if (error)
-			return error;
+	क्रम (addr = pdt_start; addr >= pdt_end; addr -= RMI_PDT_ENTRY_SIZE) अणु
+		error = rmi_पढ़ो_pdt_entry(rmi_dev, &pdt_entry, addr);
+		अगर (error)
+			वापस error;
 
-		if (RMI4_END_OF_PDT(pdt_entry.function_number))
-			break;
+		अगर (RMI4_END_OF_PDT(pdt_entry.function_number))
+			अवरोध;
 
 		retval = callback(rmi_dev, ctx, &pdt_entry);
-		if (retval != RMI_SCAN_CONTINUE)
-			return retval;
-	}
+		अगर (retval != RMI_SCAN_CONTINUE)
+			वापस retval;
+	पूर्ण
 
 	/*
 	 * Count number of empty PDT pages. If a gap of two pages
 	 * or more is found, stop scanning.
 	 */
-	if (addr == pdt_start)
+	अगर (addr == pdt_start)
 		++*empty_pages;
-	else
+	अन्यथा
 		*empty_pages = 0;
 
-	return (data->bootloader_mode || *empty_pages >= 2) ?
+	वापस (data->bootloader_mode || *empty_pages >= 2) ?
 					RMI_SCAN_DONE : RMI_SCAN_CONTINUE;
-}
+पूर्ण
 
-int rmi_scan_pdt(struct rmi_device *rmi_dev, void *ctx,
-		 int (*callback)(struct rmi_device *rmi_dev,
-		 void *ctx, const struct pdt_entry *entry))
-{
-	int page;
-	int empty_pages = 0;
-	int retval = RMI_SCAN_DONE;
+पूर्णांक rmi_scan_pdt(काष्ठा rmi_device *rmi_dev, व्योम *ctx,
+		 पूर्णांक (*callback)(काष्ठा rmi_device *rmi_dev,
+		 व्योम *ctx, स्थिर काष्ठा pdt_entry *entry))
+अणु
+	पूर्णांक page;
+	पूर्णांक empty_pages = 0;
+	पूर्णांक retval = RMI_SCAN_DONE;
 
-	for (page = 0; page <= RMI4_MAX_PAGE; page++) {
+	क्रम (page = 0; page <= RMI4_MAX_PAGE; page++) अणु
 		retval = rmi_scan_pdt_page(rmi_dev, page, &empty_pages,
 					   ctx, callback);
-		if (retval != RMI_SCAN_CONTINUE)
-			break;
-	}
+		अगर (retval != RMI_SCAN_CONTINUE)
+			अवरोध;
+	पूर्ण
 
-	return retval < 0 ? retval : 0;
-}
+	वापस retval < 0 ? retval : 0;
+पूर्ण
 
-int rmi_read_register_desc(struct rmi_device *d, u16 addr,
-				struct rmi_register_descriptor *rdesc)
-{
-	int ret;
+पूर्णांक rmi_पढ़ो_रेजिस्टर_desc(काष्ठा rmi_device *d, u16 addr,
+				काष्ठा rmi_रेजिस्टर_descriptor *rdesc)
+अणु
+	पूर्णांक ret;
 	u8 size_presence_reg;
 	u8 buf[35];
-	int presense_offset = 1;
-	u8 *struct_buf;
-	int reg;
-	int offset = 0;
-	int map_offset = 0;
-	int i;
-	int b;
+	पूर्णांक presense_offset = 1;
+	u8 *काष्ठा_buf;
+	पूर्णांक reg;
+	पूर्णांक offset = 0;
+	पूर्णांक map_offset = 0;
+	पूर्णांक i;
+	पूर्णांक b;
 
 	/*
-	 * The first register of the register descriptor is the size of
-	 * the register descriptor's presense register.
+	 * The first रेजिस्टर of the रेजिस्टर descriptor is the size of
+	 * the रेजिस्टर descriptor's presense रेजिस्टर.
 	 */
-	ret = rmi_read(d, addr, &size_presence_reg);
-	if (ret)
-		return ret;
+	ret = rmi_पढ़ो(d, addr, &size_presence_reg);
+	अगर (ret)
+		वापस ret;
 	++addr;
 
-	if (size_presence_reg < 0 || size_presence_reg > 35)
-		return -EIO;
+	अगर (size_presence_reg < 0 || size_presence_reg > 35)
+		वापस -EIO;
 
-	memset(buf, 0, sizeof(buf));
+	स_रखो(buf, 0, माप(buf));
 
 	/*
-	 * The presence register contains the size of the register structure
-	 * and a bitmap which identified which packet registers are present
-	 * for this particular register type (ie query, control, or data).
+	 * The presence रेजिस्टर contains the size of the रेजिस्टर काष्ठाure
+	 * and a biपंचांगap which identअगरied which packet रेजिस्टरs are present
+	 * क्रम this particular रेजिस्टर type (ie query, control, or data).
 	 */
-	ret = rmi_read_block(d, addr, buf, size_presence_reg);
-	if (ret)
-		return ret;
+	ret = rmi_पढ़ो_block(d, addr, buf, size_presence_reg);
+	अगर (ret)
+		वापस ret;
 	++addr;
 
-	if (buf[0] == 0) {
+	अगर (buf[0] == 0) अणु
 		presense_offset = 3;
-		rdesc->struct_size = buf[1] | (buf[2] << 8);
-	} else {
-		rdesc->struct_size = buf[0];
-	}
+		rdesc->काष्ठा_size = buf[1] | (buf[2] << 8);
+	पूर्ण अन्यथा अणु
+		rdesc->काष्ठा_size = buf[0];
+	पूर्ण
 
-	for (i = presense_offset; i < size_presence_reg; i++) {
-		for (b = 0; b < 8; b++) {
-			if (buf[i] & (0x1 << b))
-				bitmap_set(rdesc->presense_map, map_offset, 1);
+	क्रम (i = presense_offset; i < size_presence_reg; i++) अणु
+		क्रम (b = 0; b < 8; b++) अणु
+			अगर (buf[i] & (0x1 << b))
+				biपंचांगap_set(rdesc->presense_map, map_offset, 1);
 			++map_offset;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	rdesc->num_registers = bitmap_weight(rdesc->presense_map,
+	rdesc->num_रेजिस्टरs = biपंचांगap_weight(rdesc->presense_map,
 						RMI_REG_DESC_PRESENSE_BITS);
 
-	rdesc->registers = devm_kcalloc(&d->dev,
-					rdesc->num_registers,
-					sizeof(struct rmi_register_desc_item),
+	rdesc->रेजिस्टरs = devm_kसुस्मृति(&d->dev,
+					rdesc->num_रेजिस्टरs,
+					माप(काष्ठा rmi_रेजिस्टर_desc_item),
 					GFP_KERNEL);
-	if (!rdesc->registers)
-		return -ENOMEM;
+	अगर (!rdesc->रेजिस्टरs)
+		वापस -ENOMEM;
 
 	/*
-	 * Allocate a temporary buffer to hold the register structure.
+	 * Allocate a temporary buffer to hold the रेजिस्टर काष्ठाure.
 	 * I'm not using devm_kzalloc here since it will not be retained
-	 * after exiting this function
+	 * after निकासing this function
 	 */
-	struct_buf = kzalloc(rdesc->struct_size, GFP_KERNEL);
-	if (!struct_buf)
-		return -ENOMEM;
+	काष्ठा_buf = kzalloc(rdesc->काष्ठा_size, GFP_KERNEL);
+	अगर (!काष्ठा_buf)
+		वापस -ENOMEM;
 
 	/*
-	 * The register structure contains information about every packet
-	 * register of this type. This includes the size of the packet
-	 * register and a bitmap of all subpackets contained in the packet
-	 * register.
+	 * The रेजिस्टर काष्ठाure contains inक्रमmation about every packet
+	 * रेजिस्टर of this type. This includes the size of the packet
+	 * रेजिस्टर and a biपंचांगap of all subpackets contained in the packet
+	 * रेजिस्टर.
 	 */
-	ret = rmi_read_block(d, addr, struct_buf, rdesc->struct_size);
-	if (ret)
-		goto free_struct_buff;
+	ret = rmi_पढ़ो_block(d, addr, काष्ठा_buf, rdesc->काष्ठा_size);
+	अगर (ret)
+		जाओ मुक्त_काष्ठा_buff;
 
 	reg = find_first_bit(rdesc->presense_map, RMI_REG_DESC_PRESENSE_BITS);
-	for (i = 0; i < rdesc->num_registers; i++) {
-		struct rmi_register_desc_item *item = &rdesc->registers[i];
-		int reg_size = struct_buf[offset];
+	क्रम (i = 0; i < rdesc->num_रेजिस्टरs; i++) अणु
+		काष्ठा rmi_रेजिस्टर_desc_item *item = &rdesc->रेजिस्टरs[i];
+		पूर्णांक reg_size = काष्ठा_buf[offset];
 
 		++offset;
-		if (reg_size == 0) {
-			reg_size = struct_buf[offset] |
-					(struct_buf[offset + 1] << 8);
+		अगर (reg_size == 0) अणु
+			reg_size = काष्ठा_buf[offset] |
+					(काष्ठा_buf[offset + 1] << 8);
 			offset += 2;
-		}
+		पूर्ण
 
-		if (reg_size == 0) {
-			reg_size = struct_buf[offset] |
-					(struct_buf[offset + 1] << 8) |
-					(struct_buf[offset + 2] << 16) |
-					(struct_buf[offset + 3] << 24);
+		अगर (reg_size == 0) अणु
+			reg_size = काष्ठा_buf[offset] |
+					(काष्ठा_buf[offset + 1] << 8) |
+					(काष्ठा_buf[offset + 2] << 16) |
+					(काष्ठा_buf[offset + 3] << 24);
 			offset += 4;
-		}
+		पूर्ण
 
 		item->reg = reg;
 		item->reg_size = reg_size;
 
 		map_offset = 0;
 
-		do {
-			for (b = 0; b < 7; b++) {
-				if (struct_buf[offset] & (0x1 << b))
-					bitmap_set(item->subpacket_map,
+		करो अणु
+			क्रम (b = 0; b < 7; b++) अणु
+				अगर (काष्ठा_buf[offset] & (0x1 << b))
+					biपंचांगap_set(item->subpacket_map,
 						map_offset, 1);
 				++map_offset;
-			}
-		} while (struct_buf[offset++] & 0x80);
+			पूर्ण
+		पूर्ण जबतक (काष्ठा_buf[offset++] & 0x80);
 
-		item->num_subpackets = bitmap_weight(item->subpacket_map,
+		item->num_subpackets = biपंचांगap_weight(item->subpacket_map,
 						RMI_REG_DESC_SUBPACKET_BITS);
 
 		rmi_dbg(RMI_DEBUG_CORE, &d->dev,
@@ -682,343 +683,343 @@ int rmi_read_register_desc(struct rmi_device *d, u16 addr,
 
 		reg = find_next_bit(rdesc->presense_map,
 				RMI_REG_DESC_PRESENSE_BITS, reg + 1);
-	}
+	पूर्ण
 
-free_struct_buff:
-	kfree(struct_buf);
-	return ret;
-}
+मुक्त_काष्ठा_buff:
+	kमुक्त(काष्ठा_buf);
+	वापस ret;
+पूर्ण
 
-const struct rmi_register_desc_item *rmi_get_register_desc_item(
-				struct rmi_register_descriptor *rdesc, u16 reg)
-{
-	const struct rmi_register_desc_item *item;
-	int i;
+स्थिर काष्ठा rmi_रेजिस्टर_desc_item *rmi_get_रेजिस्टर_desc_item(
+				काष्ठा rmi_रेजिस्टर_descriptor *rdesc, u16 reg)
+अणु
+	स्थिर काष्ठा rmi_रेजिस्टर_desc_item *item;
+	पूर्णांक i;
 
-	for (i = 0; i < rdesc->num_registers; i++) {
-		item = &rdesc->registers[i];
-		if (item->reg == reg)
-			return item;
-	}
+	क्रम (i = 0; i < rdesc->num_रेजिस्टरs; i++) अणु
+		item = &rdesc->रेजिस्टरs[i];
+		अगर (item->reg == reg)
+			वापस item;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-size_t rmi_register_desc_calc_size(struct rmi_register_descriptor *rdesc)
-{
-	const struct rmi_register_desc_item *item;
-	int i;
-	size_t size = 0;
+माप_प्रकार rmi_रेजिस्टर_desc_calc_size(काष्ठा rmi_रेजिस्टर_descriptor *rdesc)
+अणु
+	स्थिर काष्ठा rmi_रेजिस्टर_desc_item *item;
+	पूर्णांक i;
+	माप_प्रकार size = 0;
 
-	for (i = 0; i < rdesc->num_registers; i++) {
-		item = &rdesc->registers[i];
+	क्रम (i = 0; i < rdesc->num_रेजिस्टरs; i++) अणु
+		item = &rdesc->रेजिस्टरs[i];
 		size += item->reg_size;
-	}
-	return size;
-}
+	पूर्ण
+	वापस size;
+पूर्ण
 
-/* Compute the register offset relative to the base address */
-int rmi_register_desc_calc_reg_offset(
-		struct rmi_register_descriptor *rdesc, u16 reg)
-{
-	const struct rmi_register_desc_item *item;
-	int offset = 0;
-	int i;
+/* Compute the रेजिस्टर offset relative to the base address */
+पूर्णांक rmi_रेजिस्टर_desc_calc_reg_offset(
+		काष्ठा rmi_रेजिस्टर_descriptor *rdesc, u16 reg)
+अणु
+	स्थिर काष्ठा rmi_रेजिस्टर_desc_item *item;
+	पूर्णांक offset = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < rdesc->num_registers; i++) {
-		item = &rdesc->registers[i];
-		if (item->reg == reg)
-			return offset;
+	क्रम (i = 0; i < rdesc->num_रेजिस्टरs; i++) अणु
+		item = &rdesc->रेजिस्टरs[i];
+		अगर (item->reg == reg)
+			वापस offset;
 		++offset;
-	}
-	return -1;
-}
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-bool rmi_register_desc_has_subpacket(const struct rmi_register_desc_item *item,
+bool rmi_रेजिस्टर_desc_has_subpacket(स्थिर काष्ठा rmi_रेजिस्टर_desc_item *item,
 	u8 subpacket)
-{
-	return find_next_bit(item->subpacket_map, RMI_REG_DESC_PRESENSE_BITS,
+अणु
+	वापस find_next_bit(item->subpacket_map, RMI_REG_DESC_PRESENSE_BITS,
 				subpacket) == subpacket;
-}
+पूर्ण
 
-static int rmi_check_bootloader_mode(struct rmi_device *rmi_dev,
-				     const struct pdt_entry *pdt)
-{
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	int ret;
+अटल पूर्णांक rmi_check_bootloader_mode(काष्ठा rmi_device *rmi_dev,
+				     स्थिर काष्ठा pdt_entry *pdt)
+अणु
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	पूर्णांक ret;
 	u8 status;
 
-	if (pdt->function_number == 0x34 && pdt->function_version > 1) {
-		ret = rmi_read(rmi_dev, pdt->data_base_addr, &status);
-		if (ret) {
+	अगर (pdt->function_number == 0x34 && pdt->function_version > 1) अणु
+		ret = rmi_पढ़ो(rmi_dev, pdt->data_base_addr, &status);
+		अगर (ret) अणु
 			dev_err(&rmi_dev->dev,
 				"Failed to read F34 status: %d.\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (status & BIT(7))
+		अगर (status & BIT(7))
 			data->bootloader_mode = true;
-	} else if (pdt->function_number == 0x01) {
-		ret = rmi_read(rmi_dev, pdt->data_base_addr, &status);
-		if (ret) {
+	पूर्ण अन्यथा अगर (pdt->function_number == 0x01) अणु
+		ret = rmi_पढ़ो(rmi_dev, pdt->data_base_addr, &status);
+		अगर (ret) अणु
 			dev_err(&rmi_dev->dev,
 				"Failed to read F01 status: %d.\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (status & BIT(6))
+		अगर (status & BIT(6))
 			data->bootloader_mode = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmi_count_irqs(struct rmi_device *rmi_dev,
-			 void *ctx, const struct pdt_entry *pdt)
-{
-	int *irq_count = ctx;
-	int ret;
+अटल पूर्णांक rmi_count_irqs(काष्ठा rmi_device *rmi_dev,
+			 व्योम *ctx, स्थिर काष्ठा pdt_entry *pdt)
+अणु
+	पूर्णांक *irq_count = ctx;
+	पूर्णांक ret;
 
-	*irq_count += pdt->interrupt_source_count;
+	*irq_count += pdt->पूर्णांकerrupt_source_count;
 
 	ret = rmi_check_bootloader_mode(rmi_dev, pdt);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return RMI_SCAN_CONTINUE;
-}
+	वापस RMI_SCAN_CONTINUE;
+पूर्ण
 
-int rmi_initial_reset(struct rmi_device *rmi_dev, void *ctx,
-		      const struct pdt_entry *pdt)
-{
-	int error;
+पूर्णांक rmi_initial_reset(काष्ठा rmi_device *rmi_dev, व्योम *ctx,
+		      स्थिर काष्ठा pdt_entry *pdt)
+अणु
+	पूर्णांक error;
 
-	if (pdt->function_number == 0x01) {
+	अगर (pdt->function_number == 0x01) अणु
 		u16 cmd_addr = pdt->page_start + pdt->command_base_addr;
 		u8 cmd_buf = RMI_DEVICE_RESET_CMD;
-		const struct rmi_device_platform_data *pdata =
-				rmi_get_platform_data(rmi_dev);
+		स्थिर काष्ठा rmi_device_platक्रमm_data *pdata =
+				rmi_get_platक्रमm_data(rmi_dev);
 
-		if (rmi_dev->xport->ops->reset) {
+		अगर (rmi_dev->xport->ops->reset) अणु
 			error = rmi_dev->xport->ops->reset(rmi_dev->xport,
 								cmd_addr);
-			if (error)
-				return error;
+			अगर (error)
+				वापस error;
 
-			return RMI_SCAN_DONE;
-		}
+			वापस RMI_SCAN_DONE;
+		पूर्ण
 
 		rmi_dbg(RMI_DEBUG_CORE, &rmi_dev->dev, "Sending reset\n");
-		error = rmi_write_block(rmi_dev, cmd_addr, &cmd_buf, 1);
-		if (error) {
+		error = rmi_ग_लिखो_block(rmi_dev, cmd_addr, &cmd_buf, 1);
+		अगर (error) अणु
 			dev_err(&rmi_dev->dev,
 				"Initial reset failed. Code = %d.\n", error);
-			return error;
-		}
+			वापस error;
+		पूर्ण
 
 		mdelay(pdata->reset_delay_ms ?: DEFAULT_RESET_DELAY_MS);
 
-		return RMI_SCAN_DONE;
-	}
+		वापस RMI_SCAN_DONE;
+	पूर्ण
 
-	/* F01 should always be on page 0. If we don't find it there, fail. */
-	return pdt->page_start == 0 ? RMI_SCAN_CONTINUE : -ENODEV;
-}
+	/* F01 should always be on page 0. If we करोn't find it there, fail. */
+	वापस pdt->page_start == 0 ? RMI_SCAN_CONTINUE : -ENODEV;
+पूर्ण
 
-static int rmi_create_function(struct rmi_device *rmi_dev,
-			       void *ctx, const struct pdt_entry *pdt)
-{
-	struct device *dev = &rmi_dev->dev;
-	struct rmi_driver_data *data = dev_get_drvdata(dev);
-	int *current_irq_count = ctx;
-	struct rmi_function *fn;
-	int i;
-	int error;
+अटल पूर्णांक rmi_create_function(काष्ठा rmi_device *rmi_dev,
+			       व्योम *ctx, स्थिर काष्ठा pdt_entry *pdt)
+अणु
+	काष्ठा device *dev = &rmi_dev->dev;
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(dev);
+	पूर्णांक *current_irq_count = ctx;
+	काष्ठा rmi_function *fn;
+	पूर्णांक i;
+	पूर्णांक error;
 
 	rmi_dbg(RMI_DEBUG_CORE, dev, "Initializing F%02X.\n",
 			pdt->function_number);
 
-	fn = kzalloc(sizeof(struct rmi_function) +
-			BITS_TO_LONGS(data->irq_count) * sizeof(unsigned long),
+	fn = kzalloc(माप(काष्ठा rmi_function) +
+			BITS_TO_LONGS(data->irq_count) * माप(अचिन्हित दीर्घ),
 		     GFP_KERNEL);
-	if (!fn) {
+	अगर (!fn) अणु
 		dev_err(dev, "Failed to allocate memory for F%02X\n",
 			pdt->function_number);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	INIT_LIST_HEAD(&fn->node);
 	rmi_driver_copy_pdt_to_fd(pdt, &fn->fd);
 
 	fn->rmi_dev = rmi_dev;
 
-	fn->num_of_irqs = pdt->interrupt_source_count;
+	fn->num_of_irqs = pdt->पूर्णांकerrupt_source_count;
 	fn->irq_pos = *current_irq_count;
 	*current_irq_count += fn->num_of_irqs;
 
-	for (i = 0; i < fn->num_of_irqs; i++)
+	क्रम (i = 0; i < fn->num_of_irqs; i++)
 		set_bit(fn->irq_pos + i, fn->irq_mask);
 
-	error = rmi_register_function(fn);
-	if (error)
-		return error;
+	error = rmi_रेजिस्टर_function(fn);
+	अगर (error)
+		वापस error;
 
-	if (pdt->function_number == 0x01)
+	अगर (pdt->function_number == 0x01)
 		data->f01_container = fn;
-	else if (pdt->function_number == 0x34)
+	अन्यथा अगर (pdt->function_number == 0x34)
 		data->f34_container = fn;
 
 	list_add_tail(&fn->node, &data->function_list);
 
-	return RMI_SCAN_CONTINUE;
-}
+	वापस RMI_SCAN_CONTINUE;
+पूर्ण
 
-void rmi_enable_irq(struct rmi_device *rmi_dev, bool clear_wake)
-{
-	struct rmi_device_platform_data *pdata = rmi_get_platform_data(rmi_dev);
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	int irq = pdata->irq;
-	int irq_flags;
-	int retval;
+व्योम rmi_enable_irq(काष्ठा rmi_device *rmi_dev, bool clear_wake)
+अणु
+	काष्ठा rmi_device_platक्रमm_data *pdata = rmi_get_platक्रमm_data(rmi_dev);
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	पूर्णांक irq = pdata->irq;
+	पूर्णांक irq_flags;
+	पूर्णांक retval;
 
 	mutex_lock(&data->enabled_mutex);
 
-	if (data->enabled)
-		goto out;
+	अगर (data->enabled)
+		जाओ out;
 
 	enable_irq(irq);
 	data->enabled = true;
-	if (clear_wake && device_may_wakeup(rmi_dev->xport->dev)) {
+	अगर (clear_wake && device_may_wakeup(rmi_dev->xport->dev)) अणु
 		retval = disable_irq_wake(irq);
-		if (retval)
+		अगर (retval)
 			dev_warn(&rmi_dev->dev,
 				 "Failed to disable irq for wake: %d\n",
 				 retval);
-	}
+	पूर्ण
 
 	/*
-	 * Call rmi_process_interrupt_requests() after enabling irq,
-	 * otherwise we may lose interrupt on edge-triggered systems.
+	 * Call rmi_process_पूर्णांकerrupt_requests() after enabling irq,
+	 * otherwise we may lose पूर्णांकerrupt on edge-triggered प्रणालीs.
 	 */
 	irq_flags = irq_get_trigger_type(pdata->irq);
-	if (irq_flags & IRQ_TYPE_EDGE_BOTH)
-		rmi_process_interrupt_requests(rmi_dev);
+	अगर (irq_flags & IRQ_TYPE_EDGE_BOTH)
+		rmi_process_पूर्णांकerrupt_requests(rmi_dev);
 
 out:
 	mutex_unlock(&data->enabled_mutex);
-}
+पूर्ण
 
-void rmi_disable_irq(struct rmi_device *rmi_dev, bool enable_wake)
-{
-	struct rmi_device_platform_data *pdata = rmi_get_platform_data(rmi_dev);
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
-	struct rmi4_attn_data attn_data = {0};
-	int irq = pdata->irq;
-	int retval, count;
+व्योम rmi_disable_irq(काष्ठा rmi_device *rmi_dev, bool enable_wake)
+अणु
+	काष्ठा rmi_device_platक्रमm_data *pdata = rmi_get_platक्रमm_data(rmi_dev);
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+	काष्ठा rmi4_attn_data attn_data = अणु0पूर्ण;
+	पूर्णांक irq = pdata->irq;
+	पूर्णांक retval, count;
 
 	mutex_lock(&data->enabled_mutex);
 
-	if (!data->enabled)
-		goto out;
+	अगर (!data->enabled)
+		जाओ out;
 
 	data->enabled = false;
 	disable_irq(irq);
-	if (enable_wake && device_may_wakeup(rmi_dev->xport->dev)) {
+	अगर (enable_wake && device_may_wakeup(rmi_dev->xport->dev)) अणु
 		retval = enable_irq_wake(irq);
-		if (retval)
+		अगर (retval)
 			dev_warn(&rmi_dev->dev,
 				 "Failed to enable irq for wake: %d\n",
 				 retval);
-	}
+	पूर्ण
 
-	/* make sure the fifo is clean */
-	while (!kfifo_is_empty(&data->attn_fifo)) {
-		count = kfifo_get(&data->attn_fifo, &attn_data);
-		if (count)
-			kfree(attn_data.data);
-	}
+	/* make sure the fअगरo is clean */
+	जबतक (!kfअगरo_is_empty(&data->attn_fअगरo)) अणु
+		count = kfअगरo_get(&data->attn_fअगरo, &attn_data);
+		अगर (count)
+			kमुक्त(attn_data.data);
+	पूर्ण
 
 out:
 	mutex_unlock(&data->enabled_mutex);
-}
+पूर्ण
 
-int rmi_driver_suspend(struct rmi_device *rmi_dev, bool enable_wake)
-{
-	int retval;
+पूर्णांक rmi_driver_suspend(काष्ठा rmi_device *rmi_dev, bool enable_wake)
+अणु
+	पूर्णांक retval;
 
 	retval = rmi_suspend_functions(rmi_dev);
-	if (retval)
+	अगर (retval)
 		dev_warn(&rmi_dev->dev, "Failed to suspend functions: %d\n",
 			retval);
 
 	rmi_disable_irq(rmi_dev, enable_wake);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL_GPL(rmi_driver_suspend);
 
-int rmi_driver_resume(struct rmi_device *rmi_dev, bool clear_wake)
-{
-	int retval;
+पूर्णांक rmi_driver_resume(काष्ठा rmi_device *rmi_dev, bool clear_wake)
+अणु
+	पूर्णांक retval;
 
 	rmi_enable_irq(rmi_dev, clear_wake);
 
 	retval = rmi_resume_functions(rmi_dev);
-	if (retval)
+	अगर (retval)
 		dev_warn(&rmi_dev->dev, "Failed to suspend functions: %d\n",
 			retval);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL_GPL(rmi_driver_resume);
 
-static int rmi_driver_remove(struct device *dev)
-{
-	struct rmi_device *rmi_dev = to_rmi_device(dev);
-	struct rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
+अटल पूर्णांक rmi_driver_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा rmi_device *rmi_dev = to_rmi_device(dev);
+	काष्ठा rmi_driver_data *data = dev_get_drvdata(&rmi_dev->dev);
 
 	rmi_disable_irq(rmi_dev, false);
 
-	irq_domain_remove(data->irqdomain);
-	data->irqdomain = NULL;
+	irq_करोमुख्य_हटाओ(data->irqकरोमुख्य);
+	data->irqकरोमुख्य = शून्य;
 
-	rmi_f34_remove_sysfs(rmi_dev);
-	rmi_free_function_list(rmi_dev);
+	rmi_f34_हटाओ_sysfs(rmi_dev);
+	rmi_मुक्त_function_list(rmi_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static int rmi_driver_of_probe(struct device *dev,
-				struct rmi_device_platform_data *pdata)
-{
-	int retval;
+#अगर_घोषित CONFIG_OF
+अटल पूर्णांक rmi_driver_of_probe(काष्ठा device *dev,
+				काष्ठा rmi_device_platक्रमm_data *pdata)
+अणु
+	पूर्णांक retval;
 
-	retval = rmi_of_property_read_u32(dev, &pdata->reset_delay_ms,
+	retval = rmi_of_property_पढ़ो_u32(dev, &pdata->reset_delay_ms,
 					"syna,reset-delay-ms", 1);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return 0;
-}
-#else
-static inline int rmi_driver_of_probe(struct device *dev,
-					struct rmi_device_platform_data *pdata)
-{
-	return -ENODEV;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक rmi_driver_of_probe(काष्ठा device *dev,
+					काष्ठा rmi_device_platक्रमm_data *pdata)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-int rmi_probe_interrupts(struct rmi_driver_data *data)
-{
-	struct rmi_device *rmi_dev = data->rmi_dev;
-	struct device *dev = &rmi_dev->dev;
-	struct fwnode_handle *fwnode = rmi_dev->xport->dev->fwnode;
-	int irq_count = 0;
-	size_t size;
-	int retval;
+पूर्णांक rmi_probe_पूर्णांकerrupts(काष्ठा rmi_driver_data *data)
+अणु
+	काष्ठा rmi_device *rmi_dev = data->rmi_dev;
+	काष्ठा device *dev = &rmi_dev->dev;
+	काष्ठा fwnode_handle *fwnode = rmi_dev->xport->dev->fwnode;
+	पूर्णांक irq_count = 0;
+	माप_प्रकार size;
+	पूर्णांक retval;
 
 	/*
-	 * We need to count the IRQs and allocate their storage before scanning
+	 * We need to count the IRQs and allocate their storage beक्रमe scanning
 	 * the PDT and creating the function entries, because adding a new
 	 * function can trigger events that result in the IRQ related storage
 	 * being accessed.
@@ -1027,253 +1028,253 @@ int rmi_probe_interrupts(struct rmi_driver_data *data)
 	data->bootloader_mode = false;
 
 	retval = rmi_scan_pdt(rmi_dev, &irq_count, rmi_count_irqs);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		dev_err(dev, "IRQ counting failed with code %d.\n", retval);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	if (data->bootloader_mode)
+	अगर (data->bootloader_mode)
 		dev_warn(dev, "Device in bootloader mode.\n");
 
-	/* Allocate and register a linear revmap irq_domain */
-	data->irqdomain = irq_domain_create_linear(fwnode, irq_count,
-						   &irq_domain_simple_ops,
+	/* Allocate and रेजिस्टर a linear revmap irq_करोमुख्य */
+	data->irqकरोमुख्य = irq_करोमुख्य_create_linear(fwnode, irq_count,
+						   &irq_करोमुख्य_simple_ops,
 						   data);
-	if (!data->irqdomain) {
+	अगर (!data->irqकरोमुख्य) अणु
 		dev_err(&rmi_dev->dev, "Failed to create IRQ domain\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	data->irq_count = irq_count;
 	data->num_of_irq_regs = (data->irq_count + 7) / 8;
 
-	size = BITS_TO_LONGS(data->irq_count) * sizeof(unsigned long);
-	data->irq_memory = devm_kcalloc(dev, size, 4, GFP_KERNEL);
-	if (!data->irq_memory) {
+	size = BITS_TO_LONGS(data->irq_count) * माप(अचिन्हित दीर्घ);
+	data->irq_memory = devm_kसुस्मृति(dev, size, 4, GFP_KERNEL);
+	अगर (!data->irq_memory) अणु
 		dev_err(dev, "Failed to allocate memory for irq masks.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	data->irq_status	= data->irq_memory + size * 0;
 	data->fn_irq_bits	= data->irq_memory + size * 1;
 	data->current_irq_mask	= data->irq_memory + size * 2;
 	data->new_irq_mask	= data->irq_memory + size * 3;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-int rmi_init_functions(struct rmi_driver_data *data)
-{
-	struct rmi_device *rmi_dev = data->rmi_dev;
-	struct device *dev = &rmi_dev->dev;
-	int irq_count = 0;
-	int retval;
+पूर्णांक rmi_init_functions(काष्ठा rmi_driver_data *data)
+अणु
+	काष्ठा rmi_device *rmi_dev = data->rmi_dev;
+	काष्ठा device *dev = &rmi_dev->dev;
+	पूर्णांक irq_count = 0;
+	पूर्णांक retval;
 
 	rmi_dbg(RMI_DEBUG_CORE, dev, "%s: Creating functions.\n", __func__);
 	retval = rmi_scan_pdt(rmi_dev, &irq_count, rmi_create_function);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		dev_err(dev, "Function creation failed with code %d.\n",
 			retval);
-		goto err_destroy_functions;
-	}
+		जाओ err_destroy_functions;
+	पूर्ण
 
-	if (!data->f01_container) {
+	अगर (!data->f01_container) अणु
 		dev_err(dev, "Missing F01 container!\n");
 		retval = -EINVAL;
-		goto err_destroy_functions;
-	}
+		जाओ err_destroy_functions;
+	पूर्ण
 
-	retval = rmi_read_block(rmi_dev,
+	retval = rmi_पढ़ो_block(rmi_dev,
 				data->f01_container->fd.control_base_addr + 1,
 				data->current_irq_mask, data->num_of_irq_regs);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		dev_err(dev, "%s: Failed to read current IRQ mask.\n",
 			__func__);
-		goto err_destroy_functions;
-	}
+		जाओ err_destroy_functions;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_destroy_functions:
-	rmi_free_function_list(rmi_dev);
-	return retval;
-}
+	rmi_मुक्त_function_list(rmi_dev);
+	वापस retval;
+पूर्ण
 
-static int rmi_driver_probe(struct device *dev)
-{
-	struct rmi_driver *rmi_driver;
-	struct rmi_driver_data *data;
-	struct rmi_device_platform_data *pdata;
-	struct rmi_device *rmi_dev;
-	int retval;
+अटल पूर्णांक rmi_driver_probe(काष्ठा device *dev)
+अणु
+	काष्ठा rmi_driver *rmi_driver;
+	काष्ठा rmi_driver_data *data;
+	काष्ठा rmi_device_platक्रमm_data *pdata;
+	काष्ठा rmi_device *rmi_dev;
+	पूर्णांक retval;
 
 	rmi_dbg(RMI_DEBUG_CORE, dev, "%s: Starting probe.\n",
 			__func__);
 
-	if (!rmi_is_physical_device(dev)) {
+	अगर (!rmi_is_physical_device(dev)) अणु
 		rmi_dbg(RMI_DEBUG_CORE, dev, "Not a physical device.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	rmi_dev = to_rmi_device(dev);
 	rmi_driver = to_rmi_driver(dev->driver);
 	rmi_dev->driver = rmi_driver;
 
-	pdata = rmi_get_platform_data(rmi_dev);
+	pdata = rmi_get_platक्रमm_data(rmi_dev);
 
-	if (rmi_dev->xport->dev->of_node) {
+	अगर (rmi_dev->xport->dev->of_node) अणु
 		retval = rmi_driver_of_probe(rmi_dev->xport->dev, pdata);
-		if (retval)
-			return retval;
-	}
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
-	data = devm_kzalloc(dev, sizeof(struct rmi_driver_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(काष्ठा rmi_driver_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&data->function_list);
 	data->rmi_dev = rmi_dev;
 	dev_set_drvdata(&rmi_dev->dev, data);
 
 	/*
-	 * Right before a warm boot, the sensor might be in some unusual state,
+	 * Right beक्रमe a warm boot, the sensor might be in some unusual state,
 	 * such as F54 diagnostics, or F34 bootloader mode after a firmware
 	 * or configuration update.  In order to clear the sensor to a known
 	 * state and/or apply any updates, we issue a initial reset to clear any
-	 * previous settings and force it into normal operation.
+	 * previous settings and क्रमce it पूर्णांकo normal operation.
 	 *
-	 * We have to do this before actually building the PDT because
-	 * the reflash updates (if any) might cause various registers to move
+	 * We have to करो this beक्रमe actually building the PDT because
+	 * the reflash updates (अगर any) might cause various रेजिस्टरs to move
 	 * around.
 	 *
-	 * For a number of reasons, this initial reset may fail to return
-	 * within the specified time, but we'll still be able to bring up the
+	 * For a number of reasons, this initial reset may fail to वापस
+	 * within the specअगरied समय, but we'll still be able to bring up the
 	 * driver normally after that failure.  This occurs most commonly in
-	 * a cold boot situation (where then firmware takes longer to come up
-	 * than from a warm boot) and the reset_delay_ms in the platform data
-	 * has been set too short to accommodate that.  Since the sensor will
-	 * eventually come up and be usable, we don't want to just fail here
+	 * a cold boot situation (where then firmware takes दीर्घer to come up
+	 * than from a warm boot) and the reset_delay_ms in the platक्रमm data
+	 * has been set too लघु to accommodate that.  Since the sensor will
+	 * eventually come up and be usable, we करोn't want to just fail here
 	 * and leave the customer's device unusable.  So we warn them, and
-	 * continue processing.
+	 * जारी processing.
 	 */
-	retval = rmi_scan_pdt(rmi_dev, NULL, rmi_initial_reset);
-	if (retval < 0)
+	retval = rmi_scan_pdt(rmi_dev, शून्य, rmi_initial_reset);
+	अगर (retval < 0)
 		dev_warn(dev, "RMI initial reset failed! Continuing in spite of this.\n");
 
-	retval = rmi_read(rmi_dev, PDT_PROPERTIES_LOCATION, &data->pdt_props);
-	if (retval < 0) {
+	retval = rmi_पढ़ो(rmi_dev, PDT_PROPERTIES_LOCATION, &data->pdt_props);
+	अगर (retval < 0) अणु
 		/*
-		 * we'll print out a warning and continue since
+		 * we'll prपूर्णांक out a warning and जारी since
 		 * failure to get the PDT properties is not a cause to fail
 		 */
 		dev_warn(dev, "Could not read PDT properties from %#06x (code %d). Assuming 0x00.\n",
 			 PDT_PROPERTIES_LOCATION, retval);
-	}
+	पूर्ण
 
 	mutex_init(&data->irq_mutex);
 	mutex_init(&data->enabled_mutex);
 
-	retval = rmi_probe_interrupts(data);
-	if (retval)
-		goto err;
+	retval = rmi_probe_पूर्णांकerrupts(data);
+	अगर (retval)
+		जाओ err;
 
-	if (rmi_dev->xport->input) {
+	अगर (rmi_dev->xport->input) अणु
 		/*
-		 * The transport driver already has an input device.
-		 * In some cases it is preferable to reuse the transport
+		 * The transport driver alपढ़ोy has an input device.
+		 * In some हालs it is preferable to reuse the transport
 		 * devices input device instead of creating a new one here.
 		 * One example is some HID touchpads report "pass-through"
-		 * button events are not reported by rmi registers.
+		 * button events are not reported by rmi रेजिस्टरs.
 		 */
 		data->input = rmi_dev->xport->input;
-	} else {
+	पूर्ण अन्यथा अणु
 		data->input = devm_input_allocate_device(dev);
-		if (!data->input) {
+		अगर (!data->input) अणु
 			dev_err(dev, "%s: Failed to allocate input device.\n",
 				__func__);
 			retval = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		rmi_driver_set_input_params(rmi_dev, data->input);
-		data->input->phys = devm_kasprintf(dev, GFP_KERNEL,
+		data->input->phys = devm_kaप्र_लिखो(dev, GFP_KERNEL,
 						"%s/input0", dev_name(dev));
-	}
+	पूर्ण
 
 	retval = rmi_init_functions(data);
-	if (retval)
-		goto err;
+	अगर (retval)
+		जाओ err;
 
 	retval = rmi_f34_create_sysfs(rmi_dev);
-	if (retval)
-		goto err;
+	अगर (retval)
+		जाओ err;
 
-	if (data->input) {
+	अगर (data->input) अणु
 		rmi_driver_set_input_name(rmi_dev, data->input);
-		if (!rmi_dev->xport->input) {
-			retval = input_register_device(data->input);
-			if (retval) {
+		अगर (!rmi_dev->xport->input) अणु
+			retval = input_रेजिस्टर_device(data->input);
+			अगर (retval) अणु
 				dev_err(dev, "%s: Failed to register input device.\n",
 					__func__);
-				goto err_destroy_functions;
-			}
-		}
-	}
+				जाओ err_destroy_functions;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	retval = rmi_irq_init(rmi_dev);
-	if (retval < 0)
-		goto err_destroy_functions;
+	अगर (retval < 0)
+		जाओ err_destroy_functions;
 
-	if (data->f01_container->dev.driver) {
-		/* Driver already bound, so enable ATTN now. */
+	अगर (data->f01_container->dev.driver) अणु
+		/* Driver alपढ़ोy bound, so enable ATTN now. */
 		retval = rmi_enable_sensor(rmi_dev);
-		if (retval)
-			goto err_disable_irq;
-	}
+		अगर (retval)
+			जाओ err_disable_irq;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_disable_irq:
 	rmi_disable_irq(rmi_dev, false);
 err_destroy_functions:
-	rmi_free_function_list(rmi_dev);
+	rmi_मुक्त_function_list(rmi_dev);
 err:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static struct rmi_driver rmi_physical_driver = {
-	.driver = {
+अटल काष्ठा rmi_driver rmi_physical_driver = अणु
+	.driver = अणु
 		.owner	= THIS_MODULE,
 		.name	= "rmi4_physical",
 		.bus	= &rmi_bus_type,
 		.probe = rmi_driver_probe,
-		.remove = rmi_driver_remove,
-	},
+		.हटाओ = rmi_driver_हटाओ,
+	पूर्ण,
 	.reset_handler = rmi_driver_reset_handler,
 	.clear_irq_bits = rmi_driver_clear_irq_bits,
 	.set_irq_bits = rmi_driver_set_irq_bits,
 	.set_input_params = rmi_driver_set_input_params,
-};
+पूर्ण;
 
-bool rmi_is_physical_driver(struct device_driver *drv)
-{
-	return drv == &rmi_physical_driver.driver;
-}
+bool rmi_is_physical_driver(काष्ठा device_driver *drv)
+अणु
+	वापस drv == &rmi_physical_driver.driver;
+पूर्ण
 
-int __init rmi_register_physical_driver(void)
-{
-	int error;
+पूर्णांक __init rmi_रेजिस्टर_physical_driver(व्योम)
+अणु
+	पूर्णांक error;
 
-	error = driver_register(&rmi_physical_driver.driver);
-	if (error) {
+	error = driver_रेजिस्टर(&rmi_physical_driver.driver);
+	अगर (error) अणु
 		pr_err("%s: driver register failed, code=%d.\n", __func__,
 		       error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __exit rmi_unregister_physical_driver(void)
-{
-	driver_unregister(&rmi_physical_driver.driver);
-}
+व्योम __निकास rmi_unरेजिस्टर_physical_driver(व्योम)
+अणु
+	driver_unरेजिस्टर(&rmi_physical_driver.driver);
+पूर्ण

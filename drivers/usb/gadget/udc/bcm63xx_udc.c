@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * bcm63xx_udc.c -- BCM63xx UDC high/full speed USB device controller
  *
@@ -6,119 +7,119 @@
  * Copyright (C) 2012 Broadcom Corporation
  */
 
-#include <linux/bitops.h>
-#include <linux/bug.h>
-#include <linux/clk.h>
-#include <linux/compiler.h>
-#include <linux/debugfs.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/timer.h>
-#include <linux/usb.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
-#include <linux/workqueue.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/workqueue.h>
 
-#include <bcm63xx_cpu.h>
-#include <bcm63xx_iudma.h>
-#include <bcm63xx_dev_usb_usbd.h>
-#include <bcm63xx_io.h>
-#include <bcm63xx_regs.h>
+#समावेश <bcm63xx_cpu.h>
+#समावेश <bcm63xx_iudma.h>
+#समावेश <bcm63xx_dev_usb_usbd.h>
+#समावेश <bcm63xx_पन.स>
+#समावेश <bcm63xx_regs.h>
 
-#define DRV_MODULE_NAME		"bcm63xx_udc"
+#घोषणा DRV_MODULE_NAME		"bcm63xx_udc"
 
-static const char bcm63xx_ep0name[] = "ep0";
+अटल स्थिर अक्षर bcm63xx_ep0name[] = "ep0";
 
-static const struct {
-	const char *name;
-	const struct usb_ep_caps caps;
-} bcm63xx_ep_info[] = {
-#define EP_INFO(_name, _caps) \
-	{ \
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
+	स्थिर काष्ठा usb_ep_caps caps;
+पूर्ण bcm63xx_ep_info[] = अणु
+#घोषणा EP_INFO(_name, _caps) \
+	अणु \
 		.name = _name, \
 		.caps = _caps, \
-	}
+	पूर्ण
 
 	EP_INFO(bcm63xx_ep0name,
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_DIR_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_सूची_ALL)),
 	EP_INFO("ep1in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
 	EP_INFO("ep2out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
 	EP_INFO("ep3in-int",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_DIR_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_सूची_IN)),
 	EP_INFO("ep4out-int",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_DIR_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_INT, USB_EP_CAPS_सूची_OUT)),
 
-#undef EP_INFO
-};
+#अघोषित EP_INFO
+पूर्ण;
 
-static bool use_fullspeed;
+अटल bool use_fullspeed;
 module_param(use_fullspeed, bool, S_IRUGO);
 MODULE_PARM_DESC(use_fullspeed, "true for fullspeed only");
 
 /*
  * RX IRQ coalescing options:
  *
- * false (default) - one IRQ per DATAx packet.  Slow but reliable.  The
+ * false (शेष) - one IRQ per DATAx packet.  Slow but reliable.  The
  * driver is able to pass the "testusb" suite and recover from conditions like:
  *
  *   1) Device queues up a 2048-byte RX IUDMA transaction on an OUT bulk ep
  *   2) Host sends 512 bytes of data
  *   3) Host decides to reconfigure the device and sends SET_INTERFACE
- *   4) Device shuts down the endpoint and cancels the RX transaction
+ *   4) Device shuts करोwn the endpoपूर्णांक and cancels the RX transaction
  *
- * true - one IRQ per transfer, for transfers <= 2048B.  Generates
+ * true - one IRQ per transfer, क्रम transfers <= 2048B.  Generates
  * considerably fewer IRQs, but error recovery is less robust.  Does not
  * reliably pass "testusb".
  *
  * TX always uses coalescing, because we can cancel partially complete TX
- * transfers by repeatedly flushing the FIFO.  The hardware doesn't allow
+ * transfers by repeatedly flushing the FIFO.  The hardware करोesn't allow
  * this on RX.
  */
-static bool irq_coalesce;
+अटल bool irq_coalesce;
 module_param(irq_coalesce, bool, S_IRUGO);
 MODULE_PARM_DESC(irq_coalesce, "take one IRQ per RX transfer");
 
-#define BCM63XX_NUM_EP			5
-#define BCM63XX_NUM_IUDMA		6
-#define BCM63XX_NUM_FIFO_PAIRS		3
+#घोषणा BCM63XX_NUM_EP			5
+#घोषणा BCM63XX_NUM_IUDMA		6
+#घोषणा BCM63XX_NUM_FIFO_PAIRS		3
 
-#define IUDMA_RESET_TIMEOUT_US		10000
+#घोषणा IUDMA_RESET_TIMEOUT_US		10000
 
-#define IUDMA_EP0_RXCHAN		0
-#define IUDMA_EP0_TXCHAN		1
+#घोषणा IUDMA_EP0_RXCHAN		0
+#घोषणा IUDMA_EP0_TXCHAN		1
 
-#define IUDMA_MAX_FRAGMENT		2048
-#define BCM63XX_MAX_CTRL_PKT		64
+#घोषणा IUDMA_MAX_FRAGMENT		2048
+#घोषणा BCM63XX_MAX_CTRL_PKT		64
 
-#define BCMEP_CTRL			0x00
-#define BCMEP_ISOC			0x01
-#define BCMEP_BULK			0x02
-#define BCMEP_INTR			0x03
+#घोषणा BCMEP_CTRL			0x00
+#घोषणा BCMEP_ISOC			0x01
+#घोषणा BCMEP_BULK			0x02
+#घोषणा BCMEP_INTR			0x03
 
-#define BCMEP_OUT			0x00
-#define BCMEP_IN			0x01
+#घोषणा BCMEP_OUT			0x00
+#घोषणा BCMEP_IN			0x01
 
-#define BCM63XX_SPD_FULL		1
-#define BCM63XX_SPD_HIGH		0
+#घोषणा BCM63XX_SPD_FULL		1
+#घोषणा BCM63XX_SPD_HIGH		0
 
-#define IUDMA_DMAC_OFFSET		0x200
-#define IUDMA_DMAS_OFFSET		0x400
+#घोषणा IUDMA_DMAC_OFFSET		0x200
+#घोषणा IUDMA_DMAS_OFFSET		0x400
 
-enum bcm63xx_ep0_state {
+क्रमागत bcm63xx_ep0_state अणु
 	EP0_REQUEUE,
 	EP0_IDLE,
 	EP0_IN_DATA_PHASE_SETUP,
@@ -128,9 +129,9 @@ enum bcm63xx_ep0_state {
 	EP0_OUT_STATUS_PHASE,
 	EP0_IN_FAKE_STATUS_PHASE,
 	EP0_SHUTDOWN,
-};
+पूर्ण;
 
-static const char __maybe_unused bcm63xx_ep0_state_names[][32] = {
+अटल स्थिर अक्षर __maybe_unused bcm63xx_ep0_state_names[][32] = अणु
 	"REQUEUE",
 	"IDLE",
 	"IN_DATA_PHASE_SETUP",
@@ -140,511 +141,511 @@ static const char __maybe_unused bcm63xx_ep0_state_names[][32] = {
 	"OUT_STATUS_PHASE",
 	"IN_FAKE_STATUS_PHASE",
 	"SHUTDOWN",
-};
+पूर्ण;
 
 /**
- * struct iudma_ch_cfg - Static configuration for an IUDMA channel.
- * @ep_num: USB endpoint number.
+ * काष्ठा iudma_ch_cfg - Static configuration क्रम an IUDMA channel.
+ * @ep_num: USB endpoपूर्णांक number.
  * @n_bds: Number of buffer descriptors in the ring.
- * @ep_type: Endpoint type (control, bulk, interrupt).
+ * @ep_type: Endpoपूर्णांक type (control, bulk, पूर्णांकerrupt).
  * @dir: Direction (in, out).
- * @n_fifo_slots: Number of FIFO entries to allocate for this channel.
+ * @n_fअगरo_slots: Number of FIFO entries to allocate क्रम this channel.
  * @max_pkt_hs: Maximum packet size in high speed mode.
  * @max_pkt_fs: Maximum packet size in full speed mode.
  */
-struct iudma_ch_cfg {
-	int				ep_num;
-	int				n_bds;
-	int				ep_type;
-	int				dir;
-	int				n_fifo_slots;
-	int				max_pkt_hs;
-	int				max_pkt_fs;
-};
+काष्ठा iudma_ch_cfg अणु
+	पूर्णांक				ep_num;
+	पूर्णांक				n_bds;
+	पूर्णांक				ep_type;
+	पूर्णांक				dir;
+	पूर्णांक				n_fअगरo_slots;
+	पूर्णांक				max_pkt_hs;
+	पूर्णांक				max_pkt_fs;
+पूर्ण;
 
-static const struct iudma_ch_cfg iudma_defaults[] = {
+अटल स्थिर काष्ठा iudma_ch_cfg iudma_शेषs[] = अणु
 
-	/* This controller was designed to support a CDC/RNDIS application.
-	   It may be possible to reconfigure some of the endpoints, but
+	/* This controller was deचिन्हित to support a CDC/RNDIS application.
+	   It may be possible to reconfigure some of the endpoपूर्णांकs, but
 	   the hardware limitations (FIFO sizing and number of DMA channels)
-	   may significantly impact flexibility and/or stability.  Change
+	   may signअगरicantly impact flexibility and/or stability.  Change
 	   these values at your own risk.
 
-	      ep_num       ep_type           n_fifo_slots    max_pkt_fs
+	      ep_num       ep_type           n_fअगरo_slots    max_pkt_fs
 	idx      |  n_bds     |         dir       |  max_pkt_hs  |
 	 |       |    |       |          |        |      |       |       */
-	[0] = { -1,   4, BCMEP_CTRL, BCMEP_OUT,  32,    64,     64 },
-	[1] = {  0,   4, BCMEP_CTRL, BCMEP_OUT,  32,    64,     64 },
-	[2] = {  2,  16, BCMEP_BULK, BCMEP_OUT, 128,   512,     64 },
-	[3] = {  1,  16, BCMEP_BULK, BCMEP_IN,  128,   512,     64 },
-	[4] = {  4,   4, BCMEP_INTR, BCMEP_OUT,  32,    64,     64 },
-	[5] = {  3,   4, BCMEP_INTR, BCMEP_IN,   32,    64,     64 },
-};
+	[0] = अणु -1,   4, BCMEP_CTRL, BCMEP_OUT,  32,    64,     64 पूर्ण,
+	[1] = अणु  0,   4, BCMEP_CTRL, BCMEP_OUT,  32,    64,     64 पूर्ण,
+	[2] = अणु  2,  16, BCMEP_BULK, BCMEP_OUT, 128,   512,     64 पूर्ण,
+	[3] = अणु  1,  16, BCMEP_BULK, BCMEP_IN,  128,   512,     64 पूर्ण,
+	[4] = अणु  4,   4, BCMEP_INTR, BCMEP_OUT,  32,    64,     64 पूर्ण,
+	[5] = अणु  3,   4, BCMEP_INTR, BCMEP_IN,   32,    64,     64 पूर्ण,
+पूर्ण;
 
-struct bcm63xx_udc;
+काष्ठा bcm63xx_udc;
 
 /**
- * struct iudma_ch - Represents the current state of a single IUDMA channel.
+ * काष्ठा iudma_ch - Represents the current state of a single IUDMA channel.
  * @ch_idx: IUDMA channel index (0 to BCM63XX_NUM_IUDMA-1).
- * @ep_num: USB endpoint number.  -1 for ep0 RX.
+ * @ep_num: USB endpoपूर्णांक number.  -1 क्रम ep0 RX.
  * @enabled: Whether bcm63xx_ep_enable() has been called.
- * @max_pkt: "Chunk size" on the USB interface.  Based on interface speed.
- * @is_tx: true for TX, false for RX.
- * @bep: Pointer to the associated endpoint.  NULL for ep0 RX.
+ * @max_pkt: "Chunk size" on the USB पूर्णांकerface.  Based on पूर्णांकerface speed.
+ * @is_tx: true क्रम TX, false क्रम RX.
+ * @bep: Poपूर्णांकer to the associated endpoपूर्णांक.  शून्य क्रम ep0 RX.
  * @udc: Reference to the device controller.
- * @read_bd: Next buffer descriptor to reap from the hardware.
- * @write_bd: Next BD available for a new packet.
- * @end_bd: Points to the final BD in the ring.
+ * @पढ़ो_bd: Next buffer descriptor to reap from the hardware.
+ * @ग_लिखो_bd: Next BD available क्रम a new packet.
+ * @end_bd: Poपूर्णांकs to the final BD in the ring.
  * @n_bds_used: Number of BD entries currently occupied.
- * @bd_ring: Base pointer to the BD ring.
+ * @bd_ring: Base poपूर्णांकer to the BD ring.
  * @bd_ring_dma: Physical (DMA) address of bd_ring.
  * @n_bds: Total number of BDs in the ring.
  *
  * ep0 has two IUDMA channels (IUDMA_EP0_RXCHAN and IUDMA_EP0_TXCHAN), as it is
- * bidirectional.  The "struct usb_ep" associated with ep0 is for TX (IN)
+ * bidirectional.  The "struct usb_ep" associated with ep0 is क्रम TX (IN)
  * only.
  *
- * Each bulk/intr endpoint has a single IUDMA channel and a single
- * struct usb_ep.
+ * Each bulk/पूर्णांकr endpoपूर्णांक has a single IUDMA channel and a single
+ * काष्ठा usb_ep.
  */
-struct iudma_ch {
-	unsigned int			ch_idx;
-	int				ep_num;
+काष्ठा iudma_ch अणु
+	अचिन्हित पूर्णांक			ch_idx;
+	पूर्णांक				ep_num;
 	bool				enabled;
-	int				max_pkt;
+	पूर्णांक				max_pkt;
 	bool				is_tx;
-	struct bcm63xx_ep		*bep;
-	struct bcm63xx_udc		*udc;
+	काष्ठा bcm63xx_ep		*bep;
+	काष्ठा bcm63xx_udc		*udc;
 
-	struct bcm_enet_desc		*read_bd;
-	struct bcm_enet_desc		*write_bd;
-	struct bcm_enet_desc		*end_bd;
-	int				n_bds_used;
+	काष्ठा bcm_enet_desc		*पढ़ो_bd;
+	काष्ठा bcm_enet_desc		*ग_लिखो_bd;
+	काष्ठा bcm_enet_desc		*end_bd;
+	पूर्णांक				n_bds_used;
 
-	struct bcm_enet_desc		*bd_ring;
+	काष्ठा bcm_enet_desc		*bd_ring;
 	dma_addr_t			bd_ring_dma;
-	unsigned int			n_bds;
-};
+	अचिन्हित पूर्णांक			n_bds;
+पूर्ण;
 
 /**
- * struct bcm63xx_ep - Internal (driver) state of a single endpoint.
- * @ep_num: USB endpoint number.
- * @iudma: Pointer to IUDMA channel state.
+ * काष्ठा bcm63xx_ep - Internal (driver) state of a single endpoपूर्णांक.
+ * @ep_num: USB endpoपूर्णांक number.
+ * @iudma: Poपूर्णांकer to IUDMA channel state.
  * @ep: USB gadget layer representation of the EP.
  * @udc: Reference to the device controller.
- * @queue: Linked list of outstanding requests for this EP.
- * @halted: 1 if the EP is stalled; 0 otherwise.
+ * @queue: Linked list of outstanding requests क्रम this EP.
+ * @halted: 1 अगर the EP is stalled; 0 otherwise.
  */
-struct bcm63xx_ep {
-	unsigned int			ep_num;
-	struct iudma_ch			*iudma;
-	struct usb_ep			ep;
-	struct bcm63xx_udc		*udc;
-	struct list_head		queue;
-	unsigned			halted:1;
-};
+काष्ठा bcm63xx_ep अणु
+	अचिन्हित पूर्णांक			ep_num;
+	काष्ठा iudma_ch			*iudma;
+	काष्ठा usb_ep			ep;
+	काष्ठा bcm63xx_udc		*udc;
+	काष्ठा list_head		queue;
+	अचिन्हित			halted:1;
+पूर्ण;
 
 /**
- * struct bcm63xx_req - Internal (driver) state of a single request.
+ * काष्ठा bcm63xx_req - Internal (driver) state of a single request.
  * @queue: Links back to the EP's request list.
  * @req: USB gadget layer representation of the request.
- * @offset: Current byte offset into the data buffer (next byte to queue).
+ * @offset: Current byte offset पूर्णांकo the data buffer (next byte to queue).
  * @bd_bytes: Number of data bytes in outstanding BD entries.
- * @iudma: IUDMA channel used for the request.
+ * @iudma: IUDMA channel used क्रम the request.
  */
-struct bcm63xx_req {
-	struct list_head		queue;		/* ep's requests */
-	struct usb_request		req;
-	unsigned int			offset;
-	unsigned int			bd_bytes;
-	struct iudma_ch			*iudma;
-};
+काष्ठा bcm63xx_req अणु
+	काष्ठा list_head		queue;		/* ep's requests */
+	काष्ठा usb_request		req;
+	अचिन्हित पूर्णांक			offset;
+	अचिन्हित पूर्णांक			bd_bytes;
+	काष्ठा iudma_ch			*iudma;
+पूर्ण;
 
 /**
- * struct bcm63xx_udc - Driver/hardware private context.
- * @lock: Spinlock to mediate access to this struct, and (most) HW regs.
- * @dev: Generic Linux device structure.
- * @pd: Platform data (board/port info).
- * @usbd_clk: Clock descriptor for the USB device block.
- * @usbh_clk: Clock descriptor for the USB host block.
+ * काष्ठा bcm63xx_udc - Driver/hardware निजी context.
+ * @lock: Spinlock to mediate access to this काष्ठा, and (most) HW regs.
+ * @dev: Generic Linux device काष्ठाure.
+ * @pd: Platक्रमm data (board/port info).
+ * @usbd_clk: Clock descriptor क्रम the USB device block.
+ * @usbh_clk: Clock descriptor क्रम the USB host block.
  * @gadget: USB device.
- * @driver: Driver for USB device.
+ * @driver: Driver क्रम USB device.
  * @usbd_regs: Base address of the USBD/USB20D block.
  * @iudma_regs: Base address of the USBD's associated IUDMA block.
- * @bep: Array of endpoints, including ep0.
+ * @bep: Array of endpoपूर्णांकs, including ep0.
  * @iudma: Array of all IUDMA channels used by this controller.
  * @cfg: USB configuration number, from SET_CONFIGURATION wValue.
- * @iface: USB interface number, from SET_INTERFACE wIndex.
- * @alt_iface: USB alt interface number, from SET_INTERFACE wValue.
- * @ep0_ctrl_req: Request object for bcm63xx_udc-initiated ep0 transactions.
- * @ep0_ctrl_buf: Data buffer for ep0_ctrl_req.
+ * @अगरace: USB पूर्णांकerface number, from SET_INTERFACE wIndex.
+ * @alt_अगरace: USB alt पूर्णांकerface number, from SET_INTERFACE wValue.
+ * @ep0_ctrl_req: Request object क्रम bcm63xx_udc-initiated ep0 transactions.
+ * @ep0_ctrl_buf: Data buffer क्रम ep0_ctrl_req.
  * @ep0state: Current state of the ep0 state machine.
- * @ep0_wq: Workqueue struct used to wake up the ep0 state machine.
- * @wedgemap: Bitmap of wedged endpoints.
+ * @ep0_wq: Workqueue काष्ठा used to wake up the ep0 state machine.
+ * @wedgemap: Biपंचांगap of wedged endpoपूर्णांकs.
  * @ep0_req_reset: USB reset is pending.
  * @ep0_req_set_cfg: Need to spoof a SET_CONFIGURATION packet.
- * @ep0_req_set_iface: Need to spoof a SET_INTERFACE packet.
- * @ep0_req_shutdown: Driver is shutting down; requesting ep0 to halt activity.
+ * @ep0_req_set_अगरace: Need to spoof a SET_INTERFACE packet.
+ * @ep0_req_shutकरोwn: Driver is shutting करोwn; requesting ep0 to halt activity.
  * @ep0_req_completed: ep0 request has completed; worker has not seen it yet.
  * @ep0_reply: Pending reply from gadget driver.
  * @ep0_request: Outstanding ep0 request.
  * @debugfs_root: debugfs directory: /sys/kernel/debug/<DRV_MODULE_NAME>.
  */
-struct bcm63xx_udc {
+काष्ठा bcm63xx_udc अणु
 	spinlock_t			lock;
 
-	struct device			*dev;
-	struct bcm63xx_usbd_platform_data *pd;
-	struct clk			*usbd_clk;
-	struct clk			*usbh_clk;
+	काष्ठा device			*dev;
+	काष्ठा bcm63xx_usbd_platक्रमm_data *pd;
+	काष्ठा clk			*usbd_clk;
+	काष्ठा clk			*usbh_clk;
 
-	struct usb_gadget		gadget;
-	struct usb_gadget_driver	*driver;
+	काष्ठा usb_gadget		gadget;
+	काष्ठा usb_gadget_driver	*driver;
 
-	void __iomem			*usbd_regs;
-	void __iomem			*iudma_regs;
+	व्योम __iomem			*usbd_regs;
+	व्योम __iomem			*iudma_regs;
 
-	struct bcm63xx_ep		bep[BCM63XX_NUM_EP];
-	struct iudma_ch			iudma[BCM63XX_NUM_IUDMA];
+	काष्ठा bcm63xx_ep		bep[BCM63XX_NUM_EP];
+	काष्ठा iudma_ch			iudma[BCM63XX_NUM_IUDMA];
 
-	int				cfg;
-	int				iface;
-	int				alt_iface;
+	पूर्णांक				cfg;
+	पूर्णांक				अगरace;
+	पूर्णांक				alt_अगरace;
 
-	struct bcm63xx_req		ep0_ctrl_req;
+	काष्ठा bcm63xx_req		ep0_ctrl_req;
 	u8				*ep0_ctrl_buf;
 
-	int				ep0state;
-	struct work_struct		ep0_wq;
+	पूर्णांक				ep0state;
+	काष्ठा work_काष्ठा		ep0_wq;
 
-	unsigned long			wedgemap;
+	अचिन्हित दीर्घ			wedgemap;
 
-	unsigned			ep0_req_reset:1;
-	unsigned			ep0_req_set_cfg:1;
-	unsigned			ep0_req_set_iface:1;
-	unsigned			ep0_req_shutdown:1;
+	अचिन्हित			ep0_req_reset:1;
+	अचिन्हित			ep0_req_set_cfg:1;
+	अचिन्हित			ep0_req_set_अगरace:1;
+	अचिन्हित			ep0_req_shutकरोwn:1;
 
-	unsigned			ep0_req_completed:1;
-	struct usb_request		*ep0_reply;
-	struct usb_request		*ep0_request;
+	अचिन्हित			ep0_req_completed:1;
+	काष्ठा usb_request		*ep0_reply;
+	काष्ठा usb_request		*ep0_request;
 
-	struct dentry			*debugfs_root;
-};
+	काष्ठा dentry			*debugfs_root;
+पूर्ण;
 
-static const struct usb_ep_ops bcm63xx_udc_ep_ops;
+अटल स्थिर काष्ठा usb_ep_ops bcm63xx_udc_ep_ops;
 
 /***********************************************************************
  * Convenience functions
  ***********************************************************************/
 
-static inline struct bcm63xx_udc *gadget_to_udc(struct usb_gadget *g)
-{
-	return container_of(g, struct bcm63xx_udc, gadget);
-}
+अटल अंतरभूत काष्ठा bcm63xx_udc *gadget_to_udc(काष्ठा usb_gadget *g)
+अणु
+	वापस container_of(g, काष्ठा bcm63xx_udc, gadget);
+पूर्ण
 
-static inline struct bcm63xx_ep *our_ep(struct usb_ep *ep)
-{
-	return container_of(ep, struct bcm63xx_ep, ep);
-}
+अटल अंतरभूत काष्ठा bcm63xx_ep *our_ep(काष्ठा usb_ep *ep)
+अणु
+	वापस container_of(ep, काष्ठा bcm63xx_ep, ep);
+पूर्ण
 
-static inline struct bcm63xx_req *our_req(struct usb_request *req)
-{
-	return container_of(req, struct bcm63xx_req, req);
-}
+अटल अंतरभूत काष्ठा bcm63xx_req *our_req(काष्ठा usb_request *req)
+अणु
+	वापस container_of(req, काष्ठा bcm63xx_req, req);
+पूर्ण
 
-static inline u32 usbd_readl(struct bcm63xx_udc *udc, u32 off)
-{
-	return bcm_readl(udc->usbd_regs + off);
-}
+अटल अंतरभूत u32 usbd_पढ़ोl(काष्ठा bcm63xx_udc *udc, u32 off)
+अणु
+	वापस bcm_पढ़ोl(udc->usbd_regs + off);
+पूर्ण
 
-static inline void usbd_writel(struct bcm63xx_udc *udc, u32 val, u32 off)
-{
-	bcm_writel(val, udc->usbd_regs + off);
-}
+अटल अंतरभूत व्योम usbd_ग_लिखोl(काष्ठा bcm63xx_udc *udc, u32 val, u32 off)
+अणु
+	bcm_ग_लिखोl(val, udc->usbd_regs + off);
+पूर्ण
 
-static inline u32 usb_dma_readl(struct bcm63xx_udc *udc, u32 off)
-{
-	return bcm_readl(udc->iudma_regs + off);
-}
+अटल अंतरभूत u32 usb_dma_पढ़ोl(काष्ठा bcm63xx_udc *udc, u32 off)
+अणु
+	वापस bcm_पढ़ोl(udc->iudma_regs + off);
+पूर्ण
 
-static inline void usb_dma_writel(struct bcm63xx_udc *udc, u32 val, u32 off)
-{
-	bcm_writel(val, udc->iudma_regs + off);
-}
+अटल अंतरभूत व्योम usb_dma_ग_लिखोl(काष्ठा bcm63xx_udc *udc, u32 val, u32 off)
+अणु
+	bcm_ग_लिखोl(val, udc->iudma_regs + off);
+पूर्ण
 
-static inline u32 usb_dmac_readl(struct bcm63xx_udc *udc, u32 off, int chan)
-{
-	return bcm_readl(udc->iudma_regs + IUDMA_DMAC_OFFSET + off +
+अटल अंतरभूत u32 usb_dmac_पढ़ोl(काष्ठा bcm63xx_udc *udc, u32 off, पूर्णांक chan)
+अणु
+	वापस bcm_पढ़ोl(udc->iudma_regs + IUDMA_DMAC_OFFSET + off +
 			(ENETDMA_CHAN_WIDTH * chan));
-}
+पूर्ण
 
-static inline void usb_dmac_writel(struct bcm63xx_udc *udc, u32 val, u32 off,
-					int chan)
-{
-	bcm_writel(val, udc->iudma_regs + IUDMA_DMAC_OFFSET + off +
+अटल अंतरभूत व्योम usb_dmac_ग_लिखोl(काष्ठा bcm63xx_udc *udc, u32 val, u32 off,
+					पूर्णांक chan)
+अणु
+	bcm_ग_लिखोl(val, udc->iudma_regs + IUDMA_DMAC_OFFSET + off +
 			(ENETDMA_CHAN_WIDTH * chan));
-}
+पूर्ण
 
-static inline u32 usb_dmas_readl(struct bcm63xx_udc *udc, u32 off, int chan)
-{
-	return bcm_readl(udc->iudma_regs + IUDMA_DMAS_OFFSET + off +
+अटल अंतरभूत u32 usb_dmas_पढ़ोl(काष्ठा bcm63xx_udc *udc, u32 off, पूर्णांक chan)
+अणु
+	वापस bcm_पढ़ोl(udc->iudma_regs + IUDMA_DMAS_OFFSET + off +
 			(ENETDMA_CHAN_WIDTH * chan));
-}
+पूर्ण
 
-static inline void usb_dmas_writel(struct bcm63xx_udc *udc, u32 val, u32 off,
-					int chan)
-{
-	bcm_writel(val, udc->iudma_regs + IUDMA_DMAS_OFFSET + off +
+अटल अंतरभूत व्योम usb_dmas_ग_लिखोl(काष्ठा bcm63xx_udc *udc, u32 val, u32 off,
+					पूर्णांक chan)
+अणु
+	bcm_ग_लिखोl(val, udc->iudma_regs + IUDMA_DMAS_OFFSET + off +
 			(ENETDMA_CHAN_WIDTH * chan));
-}
+पूर्ण
 
-static inline void set_clocks(struct bcm63xx_udc *udc, bool is_enabled)
-{
-	if (is_enabled) {
+अटल अंतरभूत व्योम set_घड़ीs(काष्ठा bcm63xx_udc *udc, bool is_enabled)
+अणु
+	अगर (is_enabled) अणु
 		clk_enable(udc->usbh_clk);
 		clk_enable(udc->usbd_clk);
 		udelay(10);
-	} else {
+	पूर्ण अन्यथा अणु
 		clk_disable(udc->usbd_clk);
 		clk_disable(udc->usbh_clk);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /***********************************************************************
  * Low-level IUDMA / FIFO operations
  ***********************************************************************/
 
 /**
- * bcm63xx_ep_dma_select - Helper function to set up the init_sel signal.
+ * bcm63xx_ep_dma_select - Helper function to set up the init_sel संकेत.
  * @udc: Reference to the device controller.
  * @idx: Desired init_sel value.
  *
- * The "init_sel" signal is used as a selection index for both endpoints
- * and IUDMA channels.  Since these do not map 1:1, the use of this signal
+ * The "init_sel" संकेत is used as a selection index क्रम both endpoपूर्णांकs
+ * and IUDMA channels.  Since these करो not map 1:1, the use of this संकेत
  * depends on the context.
  */
-static void bcm63xx_ep_dma_select(struct bcm63xx_udc *udc, int idx)
-{
-	u32 val = usbd_readl(udc, USBD_CONTROL_REG);
+अटल व्योम bcm63xx_ep_dma_select(काष्ठा bcm63xx_udc *udc, पूर्णांक idx)
+अणु
+	u32 val = usbd_पढ़ोl(udc, USBD_CONTROL_REG);
 
 	val &= ~USBD_CONTROL_INIT_SEL_MASK;
 	val |= idx << USBD_CONTROL_INIT_SEL_SHIFT;
-	usbd_writel(udc, val, USBD_CONTROL_REG);
-}
+	usbd_ग_लिखोl(udc, val, USBD_CONTROL_REG);
+पूर्ण
 
 /**
- * bcm63xx_set_stall - Enable/disable stall on one endpoint.
+ * bcm63xx_set_stall - Enable/disable stall on one endpoपूर्णांक.
  * @udc: Reference to the device controller.
- * @bep: Endpoint on which to operate.
+ * @bep: Endpoपूर्णांक on which to operate.
  * @is_stalled: true to enable stall, false to disable.
  *
- * See notes in bcm63xx_update_wedge() regarding automatic clearing of
+ * See notes in bcm63xx_update_wedge() regarding स्वतःmatic clearing of
  * halt/stall conditions.
  */
-static void bcm63xx_set_stall(struct bcm63xx_udc *udc, struct bcm63xx_ep *bep,
+अटल व्योम bcm63xx_set_stall(काष्ठा bcm63xx_udc *udc, काष्ठा bcm63xx_ep *bep,
 	bool is_stalled)
-{
+अणु
 	u32 val;
 
 	val = USBD_STALL_UPDATE_MASK |
 		(is_stalled ? USBD_STALL_ENABLE_MASK : 0) |
 		(bep->ep_num << USBD_STALL_EPNUM_SHIFT);
-	usbd_writel(udc, val, USBD_STALL_REG);
-}
+	usbd_ग_लिखोl(udc, val, USBD_STALL_REG);
+पूर्ण
 
 /**
- * bcm63xx_fifo_setup - (Re)initialize FIFO boundaries and settings.
+ * bcm63xx_fअगरo_setup - (Re)initialize FIFO boundaries and settings.
  * @udc: Reference to the device controller.
  *
  * These parameters depend on the USB link speed.  Settings are
  * per-IUDMA-channel-pair.
  */
-static void bcm63xx_fifo_setup(struct bcm63xx_udc *udc)
-{
-	int is_hs = udc->gadget.speed == USB_SPEED_HIGH;
-	u32 i, val, rx_fifo_slot, tx_fifo_slot;
+अटल व्योम bcm63xx_fअगरo_setup(काष्ठा bcm63xx_udc *udc)
+अणु
+	पूर्णांक is_hs = udc->gadget.speed == USB_SPEED_HIGH;
+	u32 i, val, rx_fअगरo_slot, tx_fअगरo_slot;
 
-	/* set up FIFO boundaries and packet sizes; this is done in pairs */
-	rx_fifo_slot = tx_fifo_slot = 0;
-	for (i = 0; i < BCM63XX_NUM_IUDMA; i += 2) {
-		const struct iudma_ch_cfg *rx_cfg = &iudma_defaults[i];
-		const struct iudma_ch_cfg *tx_cfg = &iudma_defaults[i + 1];
+	/* set up FIFO boundaries and packet sizes; this is करोne in pairs */
+	rx_fअगरo_slot = tx_fअगरo_slot = 0;
+	क्रम (i = 0; i < BCM63XX_NUM_IUDMA; i += 2) अणु
+		स्थिर काष्ठा iudma_ch_cfg *rx_cfg = &iudma_शेषs[i];
+		स्थिर काष्ठा iudma_ch_cfg *tx_cfg = &iudma_शेषs[i + 1];
 
 		bcm63xx_ep_dma_select(udc, i >> 1);
 
-		val = (rx_fifo_slot << USBD_RXFIFO_CONFIG_START_SHIFT) |
-			((rx_fifo_slot + rx_cfg->n_fifo_slots - 1) <<
+		val = (rx_fअगरo_slot << USBD_RXFIFO_CONFIG_START_SHIFT) |
+			((rx_fअगरo_slot + rx_cfg->n_fअगरo_slots - 1) <<
 			 USBD_RXFIFO_CONFIG_END_SHIFT);
-		rx_fifo_slot += rx_cfg->n_fifo_slots;
-		usbd_writel(udc, val, USBD_RXFIFO_CONFIG_REG);
-		usbd_writel(udc,
+		rx_fअगरo_slot += rx_cfg->n_fअगरo_slots;
+		usbd_ग_लिखोl(udc, val, USBD_RXFIFO_CONFIG_REG);
+		usbd_ग_लिखोl(udc,
 			    is_hs ? rx_cfg->max_pkt_hs : rx_cfg->max_pkt_fs,
 			    USBD_RXFIFO_EPSIZE_REG);
 
-		val = (tx_fifo_slot << USBD_TXFIFO_CONFIG_START_SHIFT) |
-			((tx_fifo_slot + tx_cfg->n_fifo_slots - 1) <<
+		val = (tx_fअगरo_slot << USBD_TXFIFO_CONFIG_START_SHIFT) |
+			((tx_fअगरo_slot + tx_cfg->n_fअगरo_slots - 1) <<
 			 USBD_TXFIFO_CONFIG_END_SHIFT);
-		tx_fifo_slot += tx_cfg->n_fifo_slots;
-		usbd_writel(udc, val, USBD_TXFIFO_CONFIG_REG);
-		usbd_writel(udc,
+		tx_fअगरo_slot += tx_cfg->n_fअगरo_slots;
+		usbd_ग_लिखोl(udc, val, USBD_TXFIFO_CONFIG_REG);
+		usbd_ग_लिखोl(udc,
 			    is_hs ? tx_cfg->max_pkt_hs : tx_cfg->max_pkt_fs,
 			    USBD_TXFIFO_EPSIZE_REG);
 
-		usbd_readl(udc, USBD_TXFIFO_EPSIZE_REG);
-	}
-}
+		usbd_पढ़ोl(udc, USBD_TXFIFO_EPSIZE_REG);
+	पूर्ण
+पूर्ण
 
 /**
- * bcm63xx_fifo_reset_ep - Flush a single endpoint's FIFO.
+ * bcm63xx_fअगरo_reset_ep - Flush a single endpoपूर्णांक's FIFO.
  * @udc: Reference to the device controller.
- * @ep_num: Endpoint number.
+ * @ep_num: Endpoपूर्णांक number.
  */
-static void bcm63xx_fifo_reset_ep(struct bcm63xx_udc *udc, int ep_num)
-{
+अटल व्योम bcm63xx_fअगरo_reset_ep(काष्ठा bcm63xx_udc *udc, पूर्णांक ep_num)
+अणु
 	u32 val;
 
 	bcm63xx_ep_dma_select(udc, ep_num);
 
-	val = usbd_readl(udc, USBD_CONTROL_REG);
+	val = usbd_पढ़ोl(udc, USBD_CONTROL_REG);
 	val |= USBD_CONTROL_FIFO_RESET_MASK;
-	usbd_writel(udc, val, USBD_CONTROL_REG);
-	usbd_readl(udc, USBD_CONTROL_REG);
-}
+	usbd_ग_लिखोl(udc, val, USBD_CONTROL_REG);
+	usbd_पढ़ोl(udc, USBD_CONTROL_REG);
+पूर्ण
 
 /**
- * bcm63xx_fifo_reset - Flush all hardware FIFOs.
+ * bcm63xx_fअगरo_reset - Flush all hardware FIFOs.
  * @udc: Reference to the device controller.
  */
-static void bcm63xx_fifo_reset(struct bcm63xx_udc *udc)
-{
-	int i;
+अटल व्योम bcm63xx_fअगरo_reset(काष्ठा bcm63xx_udc *udc)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BCM63XX_NUM_FIFO_PAIRS; i++)
-		bcm63xx_fifo_reset_ep(udc, i);
-}
+	क्रम (i = 0; i < BCM63XX_NUM_FIFO_PAIRS; i++)
+		bcm63xx_fअगरo_reset_ep(udc, i);
+पूर्ण
 
 /**
- * bcm63xx_ep_init - Initial (one-time) endpoint initialization.
+ * bcm63xx_ep_init - Initial (one-समय) endpoपूर्णांक initialization.
  * @udc: Reference to the device controller.
  */
-static void bcm63xx_ep_init(struct bcm63xx_udc *udc)
-{
+अटल व्योम bcm63xx_ep_init(काष्ठा bcm63xx_udc *udc)
+अणु
 	u32 i, val;
 
-	for (i = 0; i < BCM63XX_NUM_IUDMA; i++) {
-		const struct iudma_ch_cfg *cfg = &iudma_defaults[i];
+	क्रम (i = 0; i < BCM63XX_NUM_IUDMA; i++) अणु
+		स्थिर काष्ठा iudma_ch_cfg *cfg = &iudma_शेषs[i];
 
-		if (cfg->ep_num < 0)
-			continue;
+		अगर (cfg->ep_num < 0)
+			जारी;
 
 		bcm63xx_ep_dma_select(udc, cfg->ep_num);
 		val = (cfg->ep_type << USBD_EPNUM_TYPEMAP_TYPE_SHIFT) |
 			((i >> 1) << USBD_EPNUM_TYPEMAP_DMA_CH_SHIFT);
-		usbd_writel(udc, val, USBD_EPNUM_TYPEMAP_REG);
-	}
-}
+		usbd_ग_लिखोl(udc, val, USBD_EPNUM_TYPEMAP_REG);
+	पूर्ण
+पूर्ण
 
 /**
- * bcm63xx_ep_setup - Configure per-endpoint settings.
+ * bcm63xx_ep_setup - Configure per-endpoपूर्णांक settings.
  * @udc: Reference to the device controller.
  *
- * This needs to be rerun if the speed/cfg/intf/altintf changes.
+ * This needs to be rerun अगर the speed/cfg/पूर्णांकf/altपूर्णांकf changes.
  */
-static void bcm63xx_ep_setup(struct bcm63xx_udc *udc)
-{
+अटल व्योम bcm63xx_ep_setup(काष्ठा bcm63xx_udc *udc)
+अणु
 	u32 val, i;
 
-	usbd_writel(udc, USBD_CSR_SETUPADDR_DEF, USBD_CSR_SETUPADDR_REG);
+	usbd_ग_लिखोl(udc, USBD_CSR_SETUPADDR_DEF, USBD_CSR_SETUPADDR_REG);
 
-	for (i = 0; i < BCM63XX_NUM_IUDMA; i++) {
-		const struct iudma_ch_cfg *cfg = &iudma_defaults[i];
-		int max_pkt = udc->gadget.speed == USB_SPEED_HIGH ?
+	क्रम (i = 0; i < BCM63XX_NUM_IUDMA; i++) अणु
+		स्थिर काष्ठा iudma_ch_cfg *cfg = &iudma_शेषs[i];
+		पूर्णांक max_pkt = udc->gadget.speed == USB_SPEED_HIGH ?
 			      cfg->max_pkt_hs : cfg->max_pkt_fs;
-		int idx = cfg->ep_num;
+		पूर्णांक idx = cfg->ep_num;
 
 		udc->iudma[i].max_pkt = max_pkt;
 
-		if (idx < 0)
-			continue;
+		अगर (idx < 0)
+			जारी;
 		usb_ep_set_maxpacket_limit(&udc->bep[idx].ep, max_pkt);
 
 		val = (idx << USBD_CSR_EP_LOG_SHIFT) |
-		      (cfg->dir << USBD_CSR_EP_DIR_SHIFT) |
+		      (cfg->dir << USBD_CSR_EP_सूची_SHIFT) |
 		      (cfg->ep_type << USBD_CSR_EP_TYPE_SHIFT) |
 		      (udc->cfg << USBD_CSR_EP_CFG_SHIFT) |
-		      (udc->iface << USBD_CSR_EP_IFACE_SHIFT) |
-		      (udc->alt_iface << USBD_CSR_EP_ALTIFACE_SHIFT) |
+		      (udc->अगरace << USBD_CSR_EP_IFACE_SHIFT) |
+		      (udc->alt_अगरace << USBD_CSR_EP_ALTIFACE_SHIFT) |
 		      (max_pkt << USBD_CSR_EP_MAXPKT_SHIFT);
-		usbd_writel(udc, val, USBD_CSR_EP_REG(idx));
-	}
-}
+		usbd_ग_लिखोl(udc, val, USBD_CSR_EP_REG(idx));
+	पूर्ण
+पूर्ण
 
 /**
- * iudma_write - Queue a single IUDMA transaction.
+ * iudma_ग_लिखो - Queue a single IUDMA transaction.
  * @udc: Reference to the device controller.
  * @iudma: IUDMA channel to use.
  * @breq: Request containing the transaction data.
  *
  * For RX IUDMA, this will queue a single buffer descriptor, as RX IUDMA
- * does not honor SOP/EOP so the handling of multiple buffers is ambiguous.
- * So iudma_write() may be called several times to fulfill a single
+ * करोes not honor SOP/EOP so the handling of multiple buffers is ambiguous.
+ * So iudma_ग_लिखो() may be called several बार to fulfill a single
  * usb_request.
  *
- * For TX IUDMA, this can queue multiple buffer descriptors if needed.
+ * For TX IUDMA, this can queue multiple buffer descriptors अगर needed.
  */
-static void iudma_write(struct bcm63xx_udc *udc, struct iudma_ch *iudma,
-	struct bcm63xx_req *breq)
-{
-	int first_bd = 1, last_bd = 0, extra_zero_pkt = 0;
-	unsigned int bytes_left = breq->req.length - breq->offset;
-	const int max_bd_bytes = !irq_coalesce && !iudma->is_tx ?
+अटल व्योम iudma_ग_लिखो(काष्ठा bcm63xx_udc *udc, काष्ठा iudma_ch *iudma,
+	काष्ठा bcm63xx_req *breq)
+अणु
+	पूर्णांक first_bd = 1, last_bd = 0, extra_zero_pkt = 0;
+	अचिन्हित पूर्णांक bytes_left = breq->req.length - breq->offset;
+	स्थिर पूर्णांक max_bd_bytes = !irq_coalesce && !iudma->is_tx ?
 		iudma->max_pkt : IUDMA_MAX_FRAGMENT;
 
 	iudma->n_bds_used = 0;
 	breq->bd_bytes = 0;
 	breq->iudma = iudma;
 
-	if ((bytes_left % iudma->max_pkt == 0) && bytes_left && breq->req.zero)
+	अगर ((bytes_left % iudma->max_pkt == 0) && bytes_left && breq->req.zero)
 		extra_zero_pkt = 1;
 
-	do {
-		struct bcm_enet_desc *d = iudma->write_bd;
+	करो अणु
+		काष्ठा bcm_enet_desc *d = iudma->ग_लिखो_bd;
 		u32 dmaflags = 0;
-		unsigned int n_bytes;
+		अचिन्हित पूर्णांक n_bytes;
 
-		if (d == iudma->end_bd) {
+		अगर (d == iudma->end_bd) अणु
 			dmaflags |= DMADESC_WRAP_MASK;
-			iudma->write_bd = iudma->bd_ring;
-		} else {
-			iudma->write_bd++;
-		}
+			iudma->ग_लिखो_bd = iudma->bd_ring;
+		पूर्ण अन्यथा अणु
+			iudma->ग_लिखो_bd++;
+		पूर्ण
 		iudma->n_bds_used++;
 
-		n_bytes = min_t(int, bytes_left, max_bd_bytes);
-		if (n_bytes)
+		n_bytes = min_t(पूर्णांक, bytes_left, max_bd_bytes);
+		अगर (n_bytes)
 			dmaflags |= n_bytes << DMADESC_LENGTH_SHIFT;
-		else
+		अन्यथा
 			dmaflags |= (1 << DMADESC_LENGTH_SHIFT) |
 				    DMADESC_USB_ZERO_MASK;
 
 		dmaflags |= DMADESC_OWNER_MASK;
-		if (first_bd) {
+		अगर (first_bd) अणु
 			dmaflags |= DMADESC_SOP_MASK;
 			first_bd = 0;
-		}
+		पूर्ण
 
 		/*
-		 * extra_zero_pkt forces one more iteration through the loop
+		 * extra_zero_pkt क्रमces one more iteration through the loop
 		 * after all data is queued up, to send the zero packet
 		 */
-		if (extra_zero_pkt && !bytes_left)
+		अगर (extra_zero_pkt && !bytes_left)
 			extra_zero_pkt = 0;
 
-		if (!iudma->is_tx || iudma->n_bds_used == iudma->n_bds ||
-		    (n_bytes == bytes_left && !extra_zero_pkt)) {
+		अगर (!iudma->is_tx || iudma->n_bds_used == iudma->n_bds ||
+		    (n_bytes == bytes_left && !extra_zero_pkt)) अणु
 			last_bd = 1;
 			dmaflags |= DMADESC_EOP_MASK;
-		}
+		पूर्ण
 
 		d->address = breq->req.dma + breq->offset;
 		mb();
@@ -653,251 +654,251 @@ static void iudma_write(struct bcm63xx_udc *udc, struct iudma_ch *iudma,
 		breq->offset += n_bytes;
 		breq->bd_bytes += n_bytes;
 		bytes_left -= n_bytes;
-	} while (!last_bd);
+	पूर्ण जबतक (!last_bd);
 
-	usb_dmac_writel(udc, ENETDMAC_CHANCFG_EN_MASK,
+	usb_dmac_ग_लिखोl(udc, ENETDMAC_CHANCFG_EN_MASK,
 			ENETDMAC_CHANCFG_REG, iudma->ch_idx);
-}
+पूर्ण
 
 /**
- * iudma_read - Check for IUDMA buffer completion.
+ * iudma_पढ़ो - Check क्रम IUDMA buffer completion.
  * @udc: Reference to the device controller.
  * @iudma: IUDMA channel to use.
  *
- * This checks to see if ALL of the outstanding BDs on the DMA channel
- * have been filled.  If so, it returns the actual transfer length;
- * otherwise it returns -EBUSY.
+ * This checks to see अगर ALL of the outstanding BDs on the DMA channel
+ * have been filled.  If so, it वापसs the actual transfer length;
+ * otherwise it वापसs -EBUSY.
  */
-static int iudma_read(struct bcm63xx_udc *udc, struct iudma_ch *iudma)
-{
-	int i, actual_len = 0;
-	struct bcm_enet_desc *d = iudma->read_bd;
+अटल पूर्णांक iudma_पढ़ो(काष्ठा bcm63xx_udc *udc, काष्ठा iudma_ch *iudma)
+अणु
+	पूर्णांक i, actual_len = 0;
+	काष्ठा bcm_enet_desc *d = iudma->पढ़ो_bd;
 
-	if (!iudma->n_bds_used)
-		return -EINVAL;
+	अगर (!iudma->n_bds_used)
+		वापस -EINVAL;
 
-	for (i = 0; i < iudma->n_bds_used; i++) {
+	क्रम (i = 0; i < iudma->n_bds_used; i++) अणु
 		u32 dmaflags;
 
 		dmaflags = d->len_stat;
 
-		if (dmaflags & DMADESC_OWNER_MASK)
-			return -EBUSY;
+		अगर (dmaflags & DMADESC_OWNER_MASK)
+			वापस -EBUSY;
 
 		actual_len += (dmaflags & DMADESC_LENGTH_MASK) >>
 			      DMADESC_LENGTH_SHIFT;
-		if (d == iudma->end_bd)
+		अगर (d == iudma->end_bd)
 			d = iudma->bd_ring;
-		else
+		अन्यथा
 			d++;
-	}
+	पूर्ण
 
-	iudma->read_bd = d;
+	iudma->पढ़ो_bd = d;
 	iudma->n_bds_used = 0;
-	return actual_len;
-}
+	वापस actual_len;
+पूर्ण
 
 /**
  * iudma_reset_channel - Stop DMA on a single channel.
  * @udc: Reference to the device controller.
  * @iudma: IUDMA channel to reset.
  */
-static void iudma_reset_channel(struct bcm63xx_udc *udc, struct iudma_ch *iudma)
-{
-	int timeout = IUDMA_RESET_TIMEOUT_US;
-	struct bcm_enet_desc *d;
-	int ch_idx = iudma->ch_idx;
+अटल व्योम iudma_reset_channel(काष्ठा bcm63xx_udc *udc, काष्ठा iudma_ch *iudma)
+अणु
+	पूर्णांक समयout = IUDMA_RESET_TIMEOUT_US;
+	काष्ठा bcm_enet_desc *d;
+	पूर्णांक ch_idx = iudma->ch_idx;
 
-	if (!iudma->is_tx)
-		bcm63xx_fifo_reset_ep(udc, max(0, iudma->ep_num));
+	अगर (!iudma->is_tx)
+		bcm63xx_fअगरo_reset_ep(udc, max(0, iudma->ep_num));
 
-	/* stop DMA, then wait for the hardware to wrap up */
-	usb_dmac_writel(udc, 0, ENETDMAC_CHANCFG_REG, ch_idx);
+	/* stop DMA, then रुको क्रम the hardware to wrap up */
+	usb_dmac_ग_लिखोl(udc, 0, ENETDMAC_CHANCFG_REG, ch_idx);
 
-	while (usb_dmac_readl(udc, ENETDMAC_CHANCFG_REG, ch_idx) &
-				   ENETDMAC_CHANCFG_EN_MASK) {
+	जबतक (usb_dmac_पढ़ोl(udc, ENETDMAC_CHANCFG_REG, ch_idx) &
+				   ENETDMAC_CHANCFG_EN_MASK) अणु
 		udelay(1);
 
 		/* repeatedly flush the FIFO data until the BD completes */
-		if (iudma->is_tx && iudma->ep_num >= 0)
-			bcm63xx_fifo_reset_ep(udc, iudma->ep_num);
+		अगर (iudma->is_tx && iudma->ep_num >= 0)
+			bcm63xx_fअगरo_reset_ep(udc, iudma->ep_num);
 
-		if (!timeout--) {
+		अगर (!समयout--) अणु
 			dev_err(udc->dev, "can't reset IUDMA channel %d\n",
 				ch_idx);
-			break;
-		}
-		if (timeout == IUDMA_RESET_TIMEOUT_US / 2) {
+			अवरोध;
+		पूर्ण
+		अगर (समयout == IUDMA_RESET_TIMEOUT_US / 2) अणु
 			dev_warn(udc->dev, "forcibly halting IUDMA channel %d\n",
 				 ch_idx);
-			usb_dmac_writel(udc, ENETDMAC_CHANCFG_BUFHALT_MASK,
+			usb_dmac_ग_लिखोl(udc, ENETDMAC_CHANCFG_BUFHALT_MASK,
 					ENETDMAC_CHANCFG_REG, ch_idx);
-		}
-	}
-	usb_dmac_writel(udc, ~0, ENETDMAC_IR_REG, ch_idx);
+		पूर्ण
+	पूर्ण
+	usb_dmac_ग_लिखोl(udc, ~0, ENETDMAC_IR_REG, ch_idx);
 
-	/* don't leave "live" HW-owned entries for the next guy to step on */
-	for (d = iudma->bd_ring; d <= iudma->end_bd; d++)
+	/* करोn't leave "live" HW-owned entries क्रम the next guy to step on */
+	क्रम (d = iudma->bd_ring; d <= iudma->end_bd; d++)
 		d->len_stat = 0;
 	mb();
 
-	iudma->read_bd = iudma->write_bd = iudma->bd_ring;
+	iudma->पढ़ो_bd = iudma->ग_लिखो_bd = iudma->bd_ring;
 	iudma->n_bds_used = 0;
 
-	/* set up IRQs, UBUS burst size, and BD base for this channel */
-	usb_dmac_writel(udc, ENETDMAC_IR_BUFDONE_MASK,
+	/* set up IRQs, UBUS burst size, and BD base क्रम this channel */
+	usb_dmac_ग_लिखोl(udc, ENETDMAC_IR_BUFDONE_MASK,
 			ENETDMAC_IRMASK_REG, ch_idx);
-	usb_dmac_writel(udc, 8, ENETDMAC_MAXBURST_REG, ch_idx);
+	usb_dmac_ग_लिखोl(udc, 8, ENETDMAC_MAXBURST_REG, ch_idx);
 
-	usb_dmas_writel(udc, iudma->bd_ring_dma, ENETDMAS_RSTART_REG, ch_idx);
-	usb_dmas_writel(udc, 0, ENETDMAS_SRAM2_REG, ch_idx);
-}
+	usb_dmas_ग_लिखोl(udc, iudma->bd_ring_dma, ENETDMAS_RSTART_REG, ch_idx);
+	usb_dmas_ग_लिखोl(udc, 0, ENETDMAS_SRAM2_REG, ch_idx);
+पूर्ण
 
 /**
- * iudma_init_channel - One-time IUDMA channel initialization.
+ * iudma_init_channel - One-समय IUDMA channel initialization.
  * @udc: Reference to the device controller.
  * @ch_idx: Channel to initialize.
  */
-static int iudma_init_channel(struct bcm63xx_udc *udc, unsigned int ch_idx)
-{
-	struct iudma_ch *iudma = &udc->iudma[ch_idx];
-	const struct iudma_ch_cfg *cfg = &iudma_defaults[ch_idx];
-	unsigned int n_bds = cfg->n_bds;
-	struct bcm63xx_ep *bep = NULL;
+अटल पूर्णांक iudma_init_channel(काष्ठा bcm63xx_udc *udc, अचिन्हित पूर्णांक ch_idx)
+अणु
+	काष्ठा iudma_ch *iudma = &udc->iudma[ch_idx];
+	स्थिर काष्ठा iudma_ch_cfg *cfg = &iudma_शेषs[ch_idx];
+	अचिन्हित पूर्णांक n_bds = cfg->n_bds;
+	काष्ठा bcm63xx_ep *bep = शून्य;
 
 	iudma->ep_num = cfg->ep_num;
 	iudma->ch_idx = ch_idx;
 	iudma->is_tx = !!(ch_idx & 0x01);
-	if (iudma->ep_num >= 0) {
+	अगर (iudma->ep_num >= 0) अणु
 		bep = &udc->bep[iudma->ep_num];
 		bep->iudma = iudma;
 		INIT_LIST_HEAD(&bep->queue);
-	}
+	पूर्ण
 
 	iudma->bep = bep;
 	iudma->udc = udc;
 
 	/* ep0 is always active; others are controlled by the gadget driver */
-	if (iudma->ep_num <= 0)
+	अगर (iudma->ep_num <= 0)
 		iudma->enabled = true;
 
 	iudma->n_bds = n_bds;
 	iudma->bd_ring = dmam_alloc_coherent(udc->dev,
-		n_bds * sizeof(struct bcm_enet_desc),
+		n_bds * माप(काष्ठा bcm_enet_desc),
 		&iudma->bd_ring_dma, GFP_KERNEL);
-	if (!iudma->bd_ring)
-		return -ENOMEM;
+	अगर (!iudma->bd_ring)
+		वापस -ENOMEM;
 	iudma->end_bd = &iudma->bd_ring[n_bds - 1];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * iudma_init - One-time initialization of all IUDMA channels.
+ * iudma_init - One-समय initialization of all IUDMA channels.
  * @udc: Reference to the device controller.
  *
  * Enable DMA, flush channels, and enable global IUDMA IRQs.
  */
-static int iudma_init(struct bcm63xx_udc *udc)
-{
-	int i, rc;
+अटल पूर्णांक iudma_init(काष्ठा bcm63xx_udc *udc)
+अणु
+	पूर्णांक i, rc;
 
-	usb_dma_writel(udc, ENETDMA_CFG_EN_MASK, ENETDMA_CFG_REG);
+	usb_dma_ग_लिखोl(udc, ENETDMA_CFG_EN_MASK, ENETDMA_CFG_REG);
 
-	for (i = 0; i < BCM63XX_NUM_IUDMA; i++) {
+	क्रम (i = 0; i < BCM63XX_NUM_IUDMA; i++) अणु
 		rc = iudma_init_channel(udc, i);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 		iudma_reset_channel(udc, &udc->iudma[i]);
-	}
+	पूर्ण
 
-	usb_dma_writel(udc, BIT(BCM63XX_NUM_IUDMA)-1, ENETDMA_GLB_IRQMASK_REG);
-	return 0;
-}
+	usb_dma_ग_लिखोl(udc, BIT(BCM63XX_NUM_IUDMA)-1, ENETDMA_GLB_IRQMASK_REG);
+	वापस 0;
+पूर्ण
 
 /**
  * iudma_uninit - Uninitialize IUDMA channels.
  * @udc: Reference to the device controller.
  *
- * Kill global IUDMA IRQs, flush channels, and kill DMA.
+ * Kill global IUDMA IRQs, flush channels, and समाप्त DMA.
  */
-static void iudma_uninit(struct bcm63xx_udc *udc)
-{
-	int i;
+अटल व्योम iudma_uninit(काष्ठा bcm63xx_udc *udc)
+अणु
+	पूर्णांक i;
 
-	usb_dma_writel(udc, 0, ENETDMA_GLB_IRQMASK_REG);
+	usb_dma_ग_लिखोl(udc, 0, ENETDMA_GLB_IRQMASK_REG);
 
-	for (i = 0; i < BCM63XX_NUM_IUDMA; i++)
+	क्रम (i = 0; i < BCM63XX_NUM_IUDMA; i++)
 		iudma_reset_channel(udc, &udc->iudma[i]);
 
-	usb_dma_writel(udc, 0, ENETDMA_CFG_REG);
-}
+	usb_dma_ग_लिखोl(udc, 0, ENETDMA_CFG_REG);
+पूर्ण
 
 /***********************************************************************
  * Other low-level USBD operations
  ***********************************************************************/
 
 /**
- * bcm63xx_set_ctrl_irqs - Mask/unmask control path interrupts.
+ * bcm63xx_set_ctrl_irqs - Mask/unmask control path पूर्णांकerrupts.
  * @udc: Reference to the device controller.
  * @enable_irqs: true to enable, false to disable.
  */
-static void bcm63xx_set_ctrl_irqs(struct bcm63xx_udc *udc, bool enable_irqs)
-{
+अटल व्योम bcm63xx_set_ctrl_irqs(काष्ठा bcm63xx_udc *udc, bool enable_irqs)
+अणु
 	u32 val;
 
-	usbd_writel(udc, 0, USBD_STATUS_REG);
+	usbd_ग_लिखोl(udc, 0, USBD_STATUS_REG);
 
 	val = BIT(USBD_EVENT_IRQ_USB_RESET) |
 	      BIT(USBD_EVENT_IRQ_SETUP) |
 	      BIT(USBD_EVENT_IRQ_SETCFG) |
 	      BIT(USBD_EVENT_IRQ_SETINTF) |
 	      BIT(USBD_EVENT_IRQ_USB_LINK);
-	usbd_writel(udc, enable_irqs ? val : 0, USBD_EVENT_IRQ_MASK_REG);
-	usbd_writel(udc, val, USBD_EVENT_IRQ_STATUS_REG);
-}
+	usbd_ग_लिखोl(udc, enable_irqs ? val : 0, USBD_EVENT_IRQ_MASK_REG);
+	usbd_ग_लिखोl(udc, val, USBD_EVENT_IRQ_STATUS_REG);
+पूर्ण
 
 /**
  * bcm63xx_select_phy_mode - Select between USB device and host mode.
  * @udc: Reference to the device controller.
- * @is_device: true for device, false for host.
+ * @is_device: true क्रम device, false क्रम host.
  *
  * This should probably be reworked to use the drivers/usb/otg
- * infrastructure.
+ * infraकाष्ठाure.
  *
- * By default, the AFE/pullups are disabled in device mode, until
+ * By शेष, the AFE/pullups are disabled in device mode, until
  * bcm63xx_select_pullup() is called.
  */
-static void bcm63xx_select_phy_mode(struct bcm63xx_udc *udc, bool is_device)
-{
-	u32 val, portmask = BIT(udc->pd->port_no);
+अटल व्योम bcm63xx_select_phy_mode(काष्ठा bcm63xx_udc *udc, bool is_device)
+अणु
+	u32 val, porपंचांगask = BIT(udc->pd->port_no);
 
-	if (BCMCPU_IS_6328()) {
-		/* configure pinmux to sense VBUS signal */
-		val = bcm_gpio_readl(GPIO_PINMUX_OTHR_REG);
+	अगर (BCMCPU_IS_6328()) अणु
+		/* configure pinmux to sense VBUS संकेत */
+		val = bcm_gpio_पढ़ोl(GPIO_PINMUX_OTHR_REG);
 		val &= ~GPIO_PINMUX_OTHR_6328_USB_MASK;
 		val |= is_device ? GPIO_PINMUX_OTHR_6328_USB_DEV :
 			       GPIO_PINMUX_OTHR_6328_USB_HOST;
-		bcm_gpio_writel(val, GPIO_PINMUX_OTHR_REG);
-	}
+		bcm_gpio_ग_लिखोl(val, GPIO_PINMUX_OTHR_REG);
+	पूर्ण
 
-	val = bcm_rset_readl(RSET_USBH_PRIV, USBH_PRIV_UTMI_CTL_6368_REG);
-	if (is_device) {
-		val |= (portmask << USBH_PRIV_UTMI_CTL_HOSTB_SHIFT);
-		val |= (portmask << USBH_PRIV_UTMI_CTL_NODRIV_SHIFT);
-	} else {
-		val &= ~(portmask << USBH_PRIV_UTMI_CTL_HOSTB_SHIFT);
-		val &= ~(portmask << USBH_PRIV_UTMI_CTL_NODRIV_SHIFT);
-	}
-	bcm_rset_writel(RSET_USBH_PRIV, val, USBH_PRIV_UTMI_CTL_6368_REG);
+	val = bcm_rset_पढ़ोl(RSET_USBH_PRIV, USBH_PRIV_UTMI_CTL_6368_REG);
+	अगर (is_device) अणु
+		val |= (porपंचांगask << USBH_PRIV_UTMI_CTL_HOSTB_SHIFT);
+		val |= (porपंचांगask << USBH_PRIV_UTMI_CTL_NODRIV_SHIFT);
+	पूर्ण अन्यथा अणु
+		val &= ~(porपंचांगask << USBH_PRIV_UTMI_CTL_HOSTB_SHIFT);
+		val &= ~(porपंचांगask << USBH_PRIV_UTMI_CTL_NODRIV_SHIFT);
+	पूर्ण
+	bcm_rset_ग_लिखोl(RSET_USBH_PRIV, val, USBH_PRIV_UTMI_CTL_6368_REG);
 
-	val = bcm_rset_readl(RSET_USBH_PRIV, USBH_PRIV_SWAP_6368_REG);
-	if (is_device)
+	val = bcm_rset_पढ़ोl(RSET_USBH_PRIV, USBH_PRIV_SWAP_6368_REG);
+	अगर (is_device)
 		val |= USBH_PRIV_SWAP_USBD_MASK;
-	else
+	अन्यथा
 		val &= ~USBH_PRIV_SWAP_USBD_MASK;
-	bcm_rset_writel(RSET_USBH_PRIV, val, USBH_PRIV_SWAP_6368_REG);
-}
+	bcm_rset_ग_लिखोl(RSET_USBH_PRIV, val, USBH_PRIV_SWAP_6368_REG);
+पूर्ण
 
 /**
  * bcm63xx_select_pullup - Enable/disable the pullup on D+
@@ -908,52 +909,52 @@ static void bcm63xx_select_phy_mode(struct bcm63xx_udc *udc, bool is_device)
  * the port.  If the pullup is inactive, the host will think the USB
  * device has been disconnected.
  */
-static void bcm63xx_select_pullup(struct bcm63xx_udc *udc, bool is_on)
-{
-	u32 val, portmask = BIT(udc->pd->port_no);
+अटल व्योम bcm63xx_select_pullup(काष्ठा bcm63xx_udc *udc, bool is_on)
+अणु
+	u32 val, porपंचांगask = BIT(udc->pd->port_no);
 
-	val = bcm_rset_readl(RSET_USBH_PRIV, USBH_PRIV_UTMI_CTL_6368_REG);
-	if (is_on)
-		val &= ~(portmask << USBH_PRIV_UTMI_CTL_NODRIV_SHIFT);
-	else
-		val |= (portmask << USBH_PRIV_UTMI_CTL_NODRIV_SHIFT);
-	bcm_rset_writel(RSET_USBH_PRIV, val, USBH_PRIV_UTMI_CTL_6368_REG);
-}
+	val = bcm_rset_पढ़ोl(RSET_USBH_PRIV, USBH_PRIV_UTMI_CTL_6368_REG);
+	अगर (is_on)
+		val &= ~(porपंचांगask << USBH_PRIV_UTMI_CTL_NODRIV_SHIFT);
+	अन्यथा
+		val |= (porपंचांगask << USBH_PRIV_UTMI_CTL_NODRIV_SHIFT);
+	bcm_rset_ग_लिखोl(RSET_USBH_PRIV, val, USBH_PRIV_UTMI_CTL_6368_REG);
+पूर्ण
 
 /**
- * bcm63xx_uninit_udc_hw - Shut down the hardware prior to driver removal.
+ * bcm63xx_uninit_udc_hw - Shut करोwn the hardware prior to driver removal.
  * @udc: Reference to the device controller.
  *
- * This just masks the IUDMA IRQs and releases the clocks.  It is assumed
- * that bcm63xx_udc_stop() has already run, and the clocks are stopped.
+ * This just masks the IUDMA IRQs and releases the घड़ीs.  It is assumed
+ * that bcm63xx_udc_stop() has alपढ़ोy run, and the घड़ीs are stopped.
  */
-static void bcm63xx_uninit_udc_hw(struct bcm63xx_udc *udc)
-{
-	set_clocks(udc, true);
+अटल व्योम bcm63xx_uninit_udc_hw(काष्ठा bcm63xx_udc *udc)
+अणु
+	set_घड़ीs(udc, true);
 	iudma_uninit(udc);
-	set_clocks(udc, false);
+	set_घड़ीs(udc, false);
 
 	clk_put(udc->usbd_clk);
 	clk_put(udc->usbh_clk);
-}
+पूर्ण
 
 /**
- * bcm63xx_init_udc_hw - Initialize the controller hardware and data structures.
+ * bcm63xx_init_udc_hw - Initialize the controller hardware and data काष्ठाures.
  * @udc: Reference to the device controller.
  */
-static int bcm63xx_init_udc_hw(struct bcm63xx_udc *udc)
-{
-	int i, rc = 0;
+अटल पूर्णांक bcm63xx_init_udc_hw(काष्ठा bcm63xx_udc *udc)
+अणु
+	पूर्णांक i, rc = 0;
 	u32 val;
 
 	udc->ep0_ctrl_buf = devm_kzalloc(udc->dev, BCM63XX_MAX_CTRL_PKT,
 					 GFP_KERNEL);
-	if (!udc->ep0_ctrl_buf)
-		return -ENOMEM;
+	अगर (!udc->ep0_ctrl_buf)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&udc->gadget.ep_list);
-	for (i = 0; i < BCM63XX_NUM_EP; i++) {
-		struct bcm63xx_ep *bep = &udc->bep[i];
+	क्रम (i = 0; i < BCM63XX_NUM_EP; i++) अणु
+		काष्ठा bcm63xx_ep *bep = &udc->bep[i];
 
 		bep->ep.name = bcm63xx_ep_info[i].name;
 		bep->ep.caps = bcm63xx_ep_info[i].caps;
@@ -963,9 +964,9 @@ static int bcm63xx_init_udc_hw(struct bcm63xx_udc *udc)
 		bep->halted = 0;
 		usb_ep_set_maxpacket_limit(&bep->ep, BCM63XX_MAX_CTRL_PKT);
 		bep->udc = udc;
-		bep->ep.desc = NULL;
+		bep->ep.desc = शून्य;
 		INIT_LIST_HEAD(&bep->queue);
-	}
+	पूर्ण
 
 	udc->gadget.ep0 = &udc->bep[0].ep;
 	list_del(&udc->bep[0].ep.ep_list);
@@ -974,21 +975,21 @@ static int bcm63xx_init_udc_hw(struct bcm63xx_udc *udc)
 	udc->ep0state = EP0_SHUTDOWN;
 
 	udc->usbh_clk = clk_get(udc->dev, "usbh");
-	if (IS_ERR(udc->usbh_clk))
-		return -EIO;
+	अगर (IS_ERR(udc->usbh_clk))
+		वापस -EIO;
 
 	udc->usbd_clk = clk_get(udc->dev, "usbd");
-	if (IS_ERR(udc->usbd_clk)) {
+	अगर (IS_ERR(udc->usbd_clk)) अणु
 		clk_put(udc->usbh_clk);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	set_clocks(udc, true);
+	set_घड़ीs(udc, true);
 
 	val = USBD_CONTROL_AUTO_CSRS_MASK |
 	      USBD_CONTROL_DONE_CSRS_MASK |
 	      (irq_coalesce ? USBD_CONTROL_RXZSCFG_MASK : 0);
-	usbd_writel(udc, val, USBD_CONTROL_REG);
+	usbd_ग_लिखोl(udc, val, USBD_CONTROL_REG);
 
 	val = USBD_STRAPS_APP_SELF_PWR_MASK |
 	      USBD_STRAPS_APP_RAM_IF_MASK |
@@ -996,59 +997,59 @@ static int bcm63xx_init_udc_hw(struct bcm63xx_udc *udc)
 	      USBD_STRAPS_APP_8BITPHY_MASK |
 	      USBD_STRAPS_APP_RMTWKUP_MASK;
 
-	if (udc->gadget.max_speed == USB_SPEED_HIGH)
+	अगर (udc->gadget.max_speed == USB_SPEED_HIGH)
 		val |= (BCM63XX_SPD_HIGH << USBD_STRAPS_SPEED_SHIFT);
-	else
+	अन्यथा
 		val |= (BCM63XX_SPD_FULL << USBD_STRAPS_SPEED_SHIFT);
-	usbd_writel(udc, val, USBD_STRAPS_REG);
+	usbd_ग_लिखोl(udc, val, USBD_STRAPS_REG);
 
 	bcm63xx_set_ctrl_irqs(udc, false);
 
-	usbd_writel(udc, 0, USBD_EVENT_IRQ_CFG_LO_REG);
+	usbd_ग_लिखोl(udc, 0, USBD_EVENT_IRQ_CFG_LO_REG);
 
 	val = USBD_EVENT_IRQ_CFG_FALLING(USBD_EVENT_IRQ_ENUM_ON) |
 	      USBD_EVENT_IRQ_CFG_FALLING(USBD_EVENT_IRQ_SET_CSRS);
-	usbd_writel(udc, val, USBD_EVENT_IRQ_CFG_HI_REG);
+	usbd_ग_लिखोl(udc, val, USBD_EVENT_IRQ_CFG_HI_REG);
 
 	rc = iudma_init(udc);
-	set_clocks(udc, false);
-	if (rc)
+	set_घड़ीs(udc, false);
+	अगर (rc)
 		bcm63xx_uninit_udc_hw(udc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /***********************************************************************
  * Standard EP gadget operations
  ***********************************************************************/
 
 /**
- * bcm63xx_ep_enable - Enable one endpoint.
- * @ep: Endpoint to enable.
+ * bcm63xx_ep_enable - Enable one endpoपूर्णांक.
+ * @ep: Endpoपूर्णांक to enable.
  * @desc: Contains max packet, direction, etc.
  *
- * Most of the endpoint parameters are fixed in this controller, so there
- * isn't much for this function to do.
+ * Most of the endpoपूर्णांक parameters are fixed in this controller, so there
+ * isn't much क्रम this function to करो.
  */
-static int bcm63xx_ep_enable(struct usb_ep *ep,
-	const struct usb_endpoint_descriptor *desc)
-{
-	struct bcm63xx_ep *bep = our_ep(ep);
-	struct bcm63xx_udc *udc = bep->udc;
-	struct iudma_ch *iudma = bep->iudma;
-	unsigned long flags;
+अटल पूर्णांक bcm63xx_ep_enable(काष्ठा usb_ep *ep,
+	स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
+अणु
+	काष्ठा bcm63xx_ep *bep = our_ep(ep);
+	काष्ठा bcm63xx_udc *udc = bep->udc;
+	काष्ठा iudma_ch *iudma = bep->iudma;
+	अचिन्हित दीर्घ flags;
 
-	if (!ep || !desc || ep->name == bcm63xx_ep0name)
-		return -EINVAL;
+	अगर (!ep || !desc || ep->name == bcm63xx_ep0name)
+		वापस -EINVAL;
 
-	if (!udc->driver)
-		return -ESHUTDOWN;
+	अगर (!udc->driver)
+		वापस -ESHUTDOWN;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	if (iudma->enabled) {
+	अगर (iudma->enabled) अणु
 		spin_unlock_irqrestore(&udc->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	iudma->enabled = true;
 	BUG_ON(!list_empty(&bep->queue));
@@ -1060,38 +1061,38 @@ static int bcm63xx_ep_enable(struct usb_ep *ep,
 	clear_bit(bep->ep_num, &udc->wedgemap);
 
 	ep->desc = desc;
-	ep->maxpacket = usb_endpoint_maxp(desc);
+	ep->maxpacket = usb_endpoपूर्णांक_maxp(desc);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * bcm63xx_ep_disable - Disable one endpoint.
- * @ep: Endpoint to disable.
+ * bcm63xx_ep_disable - Disable one endpoपूर्णांक.
+ * @ep: Endpoपूर्णांक to disable.
  */
-static int bcm63xx_ep_disable(struct usb_ep *ep)
-{
-	struct bcm63xx_ep *bep = our_ep(ep);
-	struct bcm63xx_udc *udc = bep->udc;
-	struct iudma_ch *iudma = bep->iudma;
-	struct bcm63xx_req *breq, *n;
-	unsigned long flags;
+अटल पूर्णांक bcm63xx_ep_disable(काष्ठा usb_ep *ep)
+अणु
+	काष्ठा bcm63xx_ep *bep = our_ep(ep);
+	काष्ठा bcm63xx_udc *udc = bep->udc;
+	काष्ठा iudma_ch *iudma = bep->iudma;
+	काष्ठा bcm63xx_req *breq, *n;
+	अचिन्हित दीर्घ flags;
 
-	if (!ep || !ep->desc)
-		return -EINVAL;
+	अगर (!ep || !ep->desc)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	if (!iudma->enabled) {
+	अगर (!iudma->enabled) अणु
 		spin_unlock_irqrestore(&udc->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	iudma->enabled = false;
 
 	iudma_reset_channel(udc, iudma);
 
-	if (!list_empty(&bep->queue)) {
-		list_for_each_entry_safe(breq, n, &bep->queue, queue) {
+	अगर (!list_empty(&bep->queue)) अणु
+		list_क्रम_each_entry_safe(breq, n, &bep->queue, queue) अणु
 			usb_gadget_unmap_request(&udc->gadget, &breq->req,
 						 iudma->is_tx);
 			list_del(&breq->queue);
@@ -1100,45 +1101,45 @@ static int bcm63xx_ep_disable(struct usb_ep *ep)
 			spin_unlock_irqrestore(&udc->lock, flags);
 			usb_gadget_giveback_request(&iudma->bep->ep, &breq->req);
 			spin_lock_irqsave(&udc->lock, flags);
-		}
-	}
-	ep->desc = NULL;
+		पूर्ण
+	पूर्ण
+	ep->desc = शून्य;
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * bcm63xx_udc_alloc_request - Allocate a new request.
- * @ep: Endpoint associated with the request.
+ * @ep: Endpoपूर्णांक associated with the request.
  * @mem_flags: Flags to pass to kzalloc().
  */
-static struct usb_request *bcm63xx_udc_alloc_request(struct usb_ep *ep,
+अटल काष्ठा usb_request *bcm63xx_udc_alloc_request(काष्ठा usb_ep *ep,
 	gfp_t mem_flags)
-{
-	struct bcm63xx_req *breq;
+अणु
+	काष्ठा bcm63xx_req *breq;
 
-	breq = kzalloc(sizeof(*breq), mem_flags);
-	if (!breq)
-		return NULL;
-	return &breq->req;
-}
+	breq = kzalloc(माप(*breq), mem_flags);
+	अगर (!breq)
+		वापस शून्य;
+	वापस &breq->req;
+पूर्ण
 
 /**
- * bcm63xx_udc_free_request - Free a request.
- * @ep: Endpoint associated with the request.
- * @req: Request to free.
+ * bcm63xx_udc_मुक्त_request - Free a request.
+ * @ep: Endpoपूर्णांक associated with the request.
+ * @req: Request to मुक्त.
  */
-static void bcm63xx_udc_free_request(struct usb_ep *ep,
-	struct usb_request *req)
-{
-	struct bcm63xx_req *breq = our_req(req);
-	kfree(breq);
-}
+अटल व्योम bcm63xx_udc_मुक्त_request(काष्ठा usb_ep *ep,
+	काष्ठा usb_request *req)
+अणु
+	काष्ठा bcm63xx_req *breq = our_req(req);
+	kमुक्त(breq);
+पूर्ण
 
 /**
  * bcm63xx_udc_queue - Queue up a new request.
- * @ep: Endpoint associated with the request.
+ * @ep: Endpoपूर्णांक associated with the request.
  * @req: Request to add.
  * @mem_flags: Unused.
  *
@@ -1146,94 +1147,94 @@ static void bcm63xx_udc_free_request(struct usb_ep *ep,
  * it to the list.
  *
  * ep0 replies are sent through this function from the gadget driver, but
- * they are treated differently because they need to be handled by the ep0
- * state machine.  (Sometimes they are replies to control requests that
+ * they are treated dअगरferently because they need to be handled by the ep0
+ * state machine.  (Someबार they are replies to control requests that
  * were spoofed by this driver, and so they shouldn't be transmitted at all.)
  */
-static int bcm63xx_udc_queue(struct usb_ep *ep, struct usb_request *req,
+अटल पूर्णांक bcm63xx_udc_queue(काष्ठा usb_ep *ep, काष्ठा usb_request *req,
 	gfp_t mem_flags)
-{
-	struct bcm63xx_ep *bep = our_ep(ep);
-	struct bcm63xx_udc *udc = bep->udc;
-	struct bcm63xx_req *breq = our_req(req);
-	unsigned long flags;
-	int rc = 0;
+अणु
+	काष्ठा bcm63xx_ep *bep = our_ep(ep);
+	काष्ठा bcm63xx_udc *udc = bep->udc;
+	काष्ठा bcm63xx_req *breq = our_req(req);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc = 0;
 
-	if (unlikely(!req || !req->complete || !req->buf || !ep))
-		return -EINVAL;
+	अगर (unlikely(!req || !req->complete || !req->buf || !ep))
+		वापस -EINVAL;
 
 	req->actual = 0;
 	req->status = 0;
 	breq->offset = 0;
 
-	if (bep == &udc->bep[0]) {
+	अगर (bep == &udc->bep[0]) अणु
 		/* only one reply per request, please */
-		if (udc->ep0_reply)
-			return -EINVAL;
+		अगर (udc->ep0_reply)
+			वापस -EINVAL;
 
 		udc->ep0_reply = req;
 		schedule_work(&udc->ep0_wq);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	spin_lock_irqsave(&udc->lock, flags);
-	if (!bep->iudma->enabled) {
+	अगर (!bep->iudma->enabled) अणु
 		rc = -ESHUTDOWN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rc = usb_gadget_map_request(&udc->gadget, req, bep->iudma->is_tx);
-	if (rc == 0) {
+	अगर (rc == 0) अणु
 		list_add_tail(&breq->queue, &bep->queue);
-		if (list_is_singular(&bep->queue))
-			iudma_write(udc, bep->iudma, breq);
-	}
+		अगर (list_is_singular(&bep->queue))
+			iudma_ग_लिखो(udc, bep->iudma, breq);
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&udc->lock, flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * bcm63xx_udc_dequeue - Remove a pending request from the queue.
- * @ep: Endpoint associated with the request.
- * @req: Request to remove.
+ * @ep: Endpoपूर्णांक associated with the request.
+ * @req: Request to हटाओ.
  *
  * If the request is not at the head of the queue, this is easy - just nuke
  * it.  If the request is at the head of the queue, we'll need to stop the
  * DMA transaction and then queue up the successor.
  */
-static int bcm63xx_udc_dequeue(struct usb_ep *ep, struct usb_request *req)
-{
-	struct bcm63xx_ep *bep = our_ep(ep);
-	struct bcm63xx_udc *udc = bep->udc;
-	struct bcm63xx_req *breq = our_req(req), *cur;
-	unsigned long flags;
-	int rc = 0;
+अटल पूर्णांक bcm63xx_udc_dequeue(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा bcm63xx_ep *bep = our_ep(ep);
+	काष्ठा bcm63xx_udc *udc = bep->udc;
+	काष्ठा bcm63xx_req *breq = our_req(req), *cur;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc = 0;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	if (list_empty(&bep->queue)) {
+	अगर (list_empty(&bep->queue)) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	cur = list_first_entry(&bep->queue, struct bcm63xx_req, queue);
+	cur = list_first_entry(&bep->queue, काष्ठा bcm63xx_req, queue);
 	usb_gadget_unmap_request(&udc->gadget, &breq->req, bep->iudma->is_tx);
 
-	if (breq == cur) {
+	अगर (breq == cur) अणु
 		iudma_reset_channel(udc, bep->iudma);
 		list_del(&breq->queue);
 
-		if (!list_empty(&bep->queue)) {
-			struct bcm63xx_req *next;
+		अगर (!list_empty(&bep->queue)) अणु
+			काष्ठा bcm63xx_req *next;
 
 			next = list_first_entry(&bep->queue,
-				struct bcm63xx_req, queue);
-			iudma_write(udc, bep->iudma, next);
-		}
-	} else {
+				काष्ठा bcm63xx_req, queue);
+			iudma_ग_लिखो(udc, bep->iudma, next);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		list_del(&breq->queue);
-	}
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&udc->lock, flags);
@@ -1241,63 +1242,63 @@ out:
 	req->status = -ESHUTDOWN;
 	req->complete(ep, req);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * bcm63xx_udc_set_halt - Enable/disable STALL flag in the hardware.
- * @ep: Endpoint to halt.
+ * @ep: Endpoपूर्णांक to halt.
  * @value: Zero to clear halt; nonzero to set halt.
  *
  * See comments in bcm63xx_update_wedge().
  */
-static int bcm63xx_udc_set_halt(struct usb_ep *ep, int value)
-{
-	struct bcm63xx_ep *bep = our_ep(ep);
-	struct bcm63xx_udc *udc = bep->udc;
-	unsigned long flags;
+अटल पूर्णांक bcm63xx_udc_set_halt(काष्ठा usb_ep *ep, पूर्णांक value)
+अणु
+	काष्ठा bcm63xx_ep *bep = our_ep(ep);
+	काष्ठा bcm63xx_udc *udc = bep->udc;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	bcm63xx_set_stall(udc, bep, !!value);
 	bep->halted = value;
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * bcm63xx_udc_set_wedge - Stall the endpoint until the next reset.
- * @ep: Endpoint to wedge.
+ * bcm63xx_udc_set_wedge - Stall the endpoपूर्णांक until the next reset.
+ * @ep: Endpoपूर्णांक to wedge.
  *
  * See comments in bcm63xx_update_wedge().
  */
-static int bcm63xx_udc_set_wedge(struct usb_ep *ep)
-{
-	struct bcm63xx_ep *bep = our_ep(ep);
-	struct bcm63xx_udc *udc = bep->udc;
-	unsigned long flags;
+अटल पूर्णांक bcm63xx_udc_set_wedge(काष्ठा usb_ep *ep)
+अणु
+	काष्ठा bcm63xx_ep *bep = our_ep(ep);
+	काष्ठा bcm63xx_udc *udc = bep->udc;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 	set_bit(bep->ep_num, &udc->wedgemap);
 	bcm63xx_set_stall(udc, bep, true);
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct usb_ep_ops bcm63xx_udc_ep_ops = {
+अटल स्थिर काष्ठा usb_ep_ops bcm63xx_udc_ep_ops = अणु
 	.enable		= bcm63xx_ep_enable,
 	.disable	= bcm63xx_ep_disable,
 
 	.alloc_request	= bcm63xx_udc_alloc_request,
-	.free_request	= bcm63xx_udc_free_request,
+	.मुक्त_request	= bcm63xx_udc_मुक्त_request,
 
 	.queue		= bcm63xx_udc_queue,
 	.dequeue	= bcm63xx_udc_dequeue,
 
 	.set_halt	= bcm63xx_udc_set_halt,
 	.set_wedge	= bcm63xx_udc_set_wedge,
-};
+पूर्ण;
 
 /***********************************************************************
  * EP0 handling
@@ -1308,84 +1309,84 @@ static const struct usb_ep_ops bcm63xx_udc_ep_ops = {
  * @udc: Reference to the device controller.
  * @ctrl: 8-byte SETUP request.
  */
-static int bcm63xx_ep0_setup_callback(struct bcm63xx_udc *udc,
-	struct usb_ctrlrequest *ctrl)
-{
-	int rc;
+अटल पूर्णांक bcm63xx_ep0_setup_callback(काष्ठा bcm63xx_udc *udc,
+	काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	पूर्णांक rc;
 
 	spin_unlock_irq(&udc->lock);
 	rc = udc->driver->setup(&udc->gadget, ctrl);
 	spin_lock_irq(&udc->lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * bcm63xx_ep0_spoof_set_cfg - Synthesize a SET_CONFIGURATION request.
  * @udc: Reference to the device controller.
  *
- * Many standard requests are handled automatically in the hardware, but
+ * Many standard requests are handled स्वतःmatically in the hardware, but
  * we still need to pass them to the gadget driver so that it can
- * reconfigure the interfaces/endpoints if necessary.
+ * reconfigure the पूर्णांकerfaces/endpoपूर्णांकs अगर necessary.
  *
- * Unfortunately we are not able to send a STALL response if the host
+ * Unक्रमtunately we are not able to send a STALL response अगर the host
  * requests an invalid configuration.  If this happens, we'll have to be
- * content with printing a warning.
+ * content with prपूर्णांकing a warning.
  */
-static int bcm63xx_ep0_spoof_set_cfg(struct bcm63xx_udc *udc)
-{
-	struct usb_ctrlrequest ctrl;
-	int rc;
+अटल पूर्णांक bcm63xx_ep0_spoof_set_cfg(काष्ठा bcm63xx_udc *udc)
+अणु
+	काष्ठा usb_ctrlrequest ctrl;
+	पूर्णांक rc;
 
-	ctrl.bRequestType = USB_DIR_OUT | USB_RECIP_DEVICE;
+	ctrl.bRequestType = USB_सूची_OUT | USB_RECIP_DEVICE;
 	ctrl.bRequest = USB_REQ_SET_CONFIGURATION;
 	ctrl.wValue = cpu_to_le16(udc->cfg);
 	ctrl.wIndex = 0;
 	ctrl.wLength = 0;
 
 	rc = bcm63xx_ep0_setup_callback(udc, &ctrl);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_warn_ratelimited(udc->dev,
 			"hardware auto-acked bad SET_CONFIGURATION(%d) request\n",
 			udc->cfg);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 /**
- * bcm63xx_ep0_spoof_set_iface - Synthesize a SET_INTERFACE request.
+ * bcm63xx_ep0_spoof_set_अगरace - Synthesize a SET_INTERFACE request.
  * @udc: Reference to the device controller.
  */
-static int bcm63xx_ep0_spoof_set_iface(struct bcm63xx_udc *udc)
-{
-	struct usb_ctrlrequest ctrl;
-	int rc;
+अटल पूर्णांक bcm63xx_ep0_spoof_set_अगरace(काष्ठा bcm63xx_udc *udc)
+अणु
+	काष्ठा usb_ctrlrequest ctrl;
+	पूर्णांक rc;
 
-	ctrl.bRequestType = USB_DIR_OUT | USB_RECIP_INTERFACE;
+	ctrl.bRequestType = USB_सूची_OUT | USB_RECIP_INTERFACE;
 	ctrl.bRequest = USB_REQ_SET_INTERFACE;
-	ctrl.wValue = cpu_to_le16(udc->alt_iface);
-	ctrl.wIndex = cpu_to_le16(udc->iface);
+	ctrl.wValue = cpu_to_le16(udc->alt_अगरace);
+	ctrl.wIndex = cpu_to_le16(udc->अगरace);
 	ctrl.wLength = 0;
 
 	rc = bcm63xx_ep0_setup_callback(udc, &ctrl);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_warn_ratelimited(udc->dev,
 			"hardware auto-acked bad SET_INTERFACE(%d,%d) request\n",
-			udc->iface, udc->alt_iface);
-	}
-	return rc;
-}
+			udc->अगरace, udc->alt_अगरace);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 /**
- * bcm63xx_ep0_map_write - dma_map and iudma_write a single request.
+ * bcm63xx_ep0_map_ग_लिखो - dma_map and iudma_ग_लिखो a single request.
  * @udc: Reference to the device controller.
  * @ch_idx: IUDMA channel number.
  * @req: USB gadget layer representation of the request.
  */
-static void bcm63xx_ep0_map_write(struct bcm63xx_udc *udc, int ch_idx,
-	struct usb_request *req)
-{
-	struct bcm63xx_req *breq = our_req(req);
-	struct iudma_ch *iudma = &udc->iudma[ch_idx];
+अटल व्योम bcm63xx_ep0_map_ग_लिखो(काष्ठा bcm63xx_udc *udc, पूर्णांक ch_idx,
+	काष्ठा usb_request *req)
+अणु
+	काष्ठा bcm63xx_req *breq = our_req(req);
+	काष्ठा iudma_ch *iudma = &udc->iudma[ch_idx];
 
 	BUG_ON(udc->ep0_request);
 	udc->ep0_request = req;
@@ -1393,351 +1394,351 @@ static void bcm63xx_ep0_map_write(struct bcm63xx_udc *udc, int ch_idx,
 	req->actual = 0;
 	breq->offset = 0;
 	usb_gadget_map_request(&udc->gadget, req, iudma->is_tx);
-	iudma_write(udc, iudma, breq);
-}
+	iudma_ग_लिखो(udc, iudma, breq);
+पूर्ण
 
 /**
  * bcm63xx_ep0_complete - Set completion status and "stage" the callback.
  * @udc: Reference to the device controller.
  * @req: USB gadget layer representation of the request.
- * @status: Status to return to the gadget driver.
+ * @status: Status to वापस to the gadget driver.
  */
-static void bcm63xx_ep0_complete(struct bcm63xx_udc *udc,
-	struct usb_request *req, int status)
-{
+अटल व्योम bcm63xx_ep0_complete(काष्ठा bcm63xx_udc *udc,
+	काष्ठा usb_request *req, पूर्णांक status)
+अणु
 	req->status = status;
-	if (status)
+	अगर (status)
 		req->actual = 0;
-	if (req->complete) {
+	अगर (req->complete) अणु
 		spin_unlock_irq(&udc->lock);
 		req->complete(&udc->bep[0].ep, req);
 		spin_lock_irq(&udc->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * bcm63xx_ep0_nuke_reply - Abort request from the gadget driver due to
- *   reset/shutdown.
+ *   reset/shutकरोwn.
  * @udc: Reference to the device controller.
- * @is_tx: Nonzero for TX (IN), zero for RX (OUT).
+ * @is_tx: Nonzero क्रम TX (IN), zero क्रम RX (OUT).
  */
-static void bcm63xx_ep0_nuke_reply(struct bcm63xx_udc *udc, int is_tx)
-{
-	struct usb_request *req = udc->ep0_reply;
+अटल व्योम bcm63xx_ep0_nuke_reply(काष्ठा bcm63xx_udc *udc, पूर्णांक is_tx)
+अणु
+	काष्ठा usb_request *req = udc->ep0_reply;
 
-	udc->ep0_reply = NULL;
+	udc->ep0_reply = शून्य;
 	usb_gadget_unmap_request(&udc->gadget, req, is_tx);
-	if (udc->ep0_request == req) {
+	अगर (udc->ep0_request == req) अणु
 		udc->ep0_req_completed = 0;
-		udc->ep0_request = NULL;
-	}
+		udc->ep0_request = शून्य;
+	पूर्ण
 	bcm63xx_ep0_complete(udc, req, -ESHUTDOWN);
-}
+पूर्ण
 
 /**
- * bcm63xx_ep0_read_complete - Close out the pending ep0 request; return
+ * bcm63xx_ep0_पढ़ो_complete - Close out the pending ep0 request; वापस
  *   transfer len.
  * @udc: Reference to the device controller.
  */
-static int bcm63xx_ep0_read_complete(struct bcm63xx_udc *udc)
-{
-	struct usb_request *req = udc->ep0_request;
+अटल पूर्णांक bcm63xx_ep0_पढ़ो_complete(काष्ठा bcm63xx_udc *udc)
+अणु
+	काष्ठा usb_request *req = udc->ep0_request;
 
 	udc->ep0_req_completed = 0;
-	udc->ep0_request = NULL;
+	udc->ep0_request = शून्य;
 
-	return req->actual;
-}
+	वापस req->actual;
+पूर्ण
 
 /**
- * bcm63xx_ep0_internal_request - Helper function to submit an ep0 request.
+ * bcm63xx_ep0_पूर्णांकernal_request - Helper function to submit an ep0 request.
  * @udc: Reference to the device controller.
  * @ch_idx: IUDMA channel number.
  * @length: Number of bytes to TX/RX.
  *
- * Used for simple transfers performed by the ep0 worker.  This will always
+ * Used क्रम simple transfers perक्रमmed by the ep0 worker.  This will always
  * use ep0_ctrl_req / ep0_ctrl_buf.
  */
-static void bcm63xx_ep0_internal_request(struct bcm63xx_udc *udc, int ch_idx,
-	int length)
-{
-	struct usb_request *req = &udc->ep0_ctrl_req.req;
+अटल व्योम bcm63xx_ep0_पूर्णांकernal_request(काष्ठा bcm63xx_udc *udc, पूर्णांक ch_idx,
+	पूर्णांक length)
+अणु
+	काष्ठा usb_request *req = &udc->ep0_ctrl_req.req;
 
 	req->buf = udc->ep0_ctrl_buf;
 	req->length = length;
-	req->complete = NULL;
+	req->complete = शून्य;
 
-	bcm63xx_ep0_map_write(udc, ch_idx, req);
-}
+	bcm63xx_ep0_map_ग_लिखो(udc, ch_idx, req);
+पूर्ण
 
 /**
- * bcm63xx_ep0_do_setup - Parse new SETUP packet and decide how to handle it.
+ * bcm63xx_ep0_करो_setup - Parse new SETUP packet and decide how to handle it.
  * @udc: Reference to the device controller.
  *
- * EP0_IDLE probably shouldn't ever happen.  EP0_REQUEUE means we're ready
- * for the next packet.  Anything else means the transaction requires multiple
+ * EP0_IDLE probably shouldn't ever happen.  EP0_REQUEUE means we're पढ़ोy
+ * क्रम the next packet.  Anything अन्यथा means the transaction requires multiple
  * stages of handling.
  */
-static enum bcm63xx_ep0_state bcm63xx_ep0_do_setup(struct bcm63xx_udc *udc)
-{
-	int rc;
-	struct usb_ctrlrequest *ctrl = (void *)udc->ep0_ctrl_buf;
+अटल क्रमागत bcm63xx_ep0_state bcm63xx_ep0_करो_setup(काष्ठा bcm63xx_udc *udc)
+अणु
+	पूर्णांक rc;
+	काष्ठा usb_ctrlrequest *ctrl = (व्योम *)udc->ep0_ctrl_buf;
 
-	rc = bcm63xx_ep0_read_complete(udc);
+	rc = bcm63xx_ep0_पढ़ो_complete(udc);
 
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(udc->dev, "missing SETUP packet\n");
-		return EP0_IDLE;
-	}
+		वापस EP0_IDLE;
+	पूर्ण
 
 	/*
-	 * Handle 0-byte IN STATUS acknowledgement.  The hardware doesn't
-	 * ALWAYS deliver these 100% of the time, so if we happen to see one,
+	 * Handle 0-byte IN STATUS acknowledgement.  The hardware करोesn't
+	 * ALWAYS deliver these 100% of the समय, so अगर we happen to see one,
 	 * just throw it away.
 	 */
-	if (rc == 0)
-		return EP0_REQUEUE;
+	अगर (rc == 0)
+		वापस EP0_REQUEUE;
 
-	/* Drop malformed SETUP packets */
-	if (rc != sizeof(*ctrl)) {
+	/* Drop malक्रमmed SETUP packets */
+	अगर (rc != माप(*ctrl)) अणु
 		dev_warn_ratelimited(udc->dev,
 			"malformed SETUP packet (%d bytes)\n", rc);
-		return EP0_REQUEUE;
-	}
+		वापस EP0_REQUEUE;
+	पूर्ण
 
 	/* Process new SETUP packet arriving on ep0 */
 	rc = bcm63xx_ep0_setup_callback(udc, ctrl);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		bcm63xx_set_stall(udc, &udc->bep[0], true);
-		return EP0_REQUEUE;
-	}
+		वापस EP0_REQUEUE;
+	पूर्ण
 
-	if (!ctrl->wLength)
-		return EP0_REQUEUE;
-	else if (ctrl->bRequestType & USB_DIR_IN)
-		return EP0_IN_DATA_PHASE_SETUP;
-	else
-		return EP0_OUT_DATA_PHASE_SETUP;
-}
+	अगर (!ctrl->wLength)
+		वापस EP0_REQUEUE;
+	अन्यथा अगर (ctrl->bRequestType & USB_सूची_IN)
+		वापस EP0_IN_DATA_PHASE_SETUP;
+	अन्यथा
+		वापस EP0_OUT_DATA_PHASE_SETUP;
+पूर्ण
 
 /**
- * bcm63xx_ep0_do_idle - Check for outstanding requests if ep0 is idle.
+ * bcm63xx_ep0_करो_idle - Check क्रम outstanding requests अगर ep0 is idle.
  * @udc: Reference to the device controller.
  *
  * In state EP0_IDLE, the RX descriptor is either pending, or has been
  * filled with a SETUP packet from the host.  This function handles new
  * SETUP packets, control IRQ events (which can generate fake SETUP packets),
- * and reset/shutdown events.
+ * and reset/shutकरोwn events.
  *
- * Returns 0 if work was done; -EAGAIN if nothing to do.
+ * Returns 0 अगर work was करोne; -EAGAIN अगर nothing to करो.
  */
-static int bcm63xx_ep0_do_idle(struct bcm63xx_udc *udc)
-{
-	if (udc->ep0_req_reset) {
+अटल पूर्णांक bcm63xx_ep0_करो_idle(काष्ठा bcm63xx_udc *udc)
+अणु
+	अगर (udc->ep0_req_reset) अणु
 		udc->ep0_req_reset = 0;
-	} else if (udc->ep0_req_set_cfg) {
+	पूर्ण अन्यथा अगर (udc->ep0_req_set_cfg) अणु
 		udc->ep0_req_set_cfg = 0;
-		if (bcm63xx_ep0_spoof_set_cfg(udc) >= 0)
+		अगर (bcm63xx_ep0_spoof_set_cfg(udc) >= 0)
 			udc->ep0state = EP0_IN_FAKE_STATUS_PHASE;
-	} else if (udc->ep0_req_set_iface) {
-		udc->ep0_req_set_iface = 0;
-		if (bcm63xx_ep0_spoof_set_iface(udc) >= 0)
+	पूर्ण अन्यथा अगर (udc->ep0_req_set_अगरace) अणु
+		udc->ep0_req_set_अगरace = 0;
+		अगर (bcm63xx_ep0_spoof_set_अगरace(udc) >= 0)
 			udc->ep0state = EP0_IN_FAKE_STATUS_PHASE;
-	} else if (udc->ep0_req_completed) {
-		udc->ep0state = bcm63xx_ep0_do_setup(udc);
-		return udc->ep0state == EP0_IDLE ? -EAGAIN : 0;
-	} else if (udc->ep0_req_shutdown) {
-		udc->ep0_req_shutdown = 0;
+	पूर्ण अन्यथा अगर (udc->ep0_req_completed) अणु
+		udc->ep0state = bcm63xx_ep0_करो_setup(udc);
+		वापस udc->ep0state == EP0_IDLE ? -EAGAIN : 0;
+	पूर्ण अन्यथा अगर (udc->ep0_req_shutकरोwn) अणु
+		udc->ep0_req_shutकरोwn = 0;
 		udc->ep0_req_completed = 0;
-		udc->ep0_request = NULL;
+		udc->ep0_request = शून्य;
 		iudma_reset_channel(udc, &udc->iudma[IUDMA_EP0_RXCHAN]);
 		usb_gadget_unmap_request(&udc->gadget,
 			&udc->ep0_ctrl_req.req, 0);
 
-		/* bcm63xx_udc_pullup() is waiting for this */
+		/* bcm63xx_udc_pullup() is रुकोing क्रम this */
 		mb();
 		udc->ep0state = EP0_SHUTDOWN;
-	} else if (udc->ep0_reply) {
+	पूर्ण अन्यथा अगर (udc->ep0_reply) अणु
 		/*
-		 * This could happen if a USB RESET shows up during an ep0
-		 * transaction (especially if a laggy driver like gadgetfs
+		 * This could happen अगर a USB RESET shows up during an ep0
+		 * transaction (especially अगर a laggy driver like gadgetfs
 		 * is in use).
 		 */
 		dev_warn(udc->dev, "nuking unexpected reply\n");
 		bcm63xx_ep0_nuke_reply(udc, 0);
-	} else {
-		return -EAGAIN;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EAGAIN;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * bcm63xx_ep0_one_round - Handle the current ep0 state.
  * @udc: Reference to the device controller.
  *
- * Returns 0 if work was done; -EAGAIN if nothing to do.
+ * Returns 0 अगर work was करोne; -EAGAIN अगर nothing to करो.
  */
-static int bcm63xx_ep0_one_round(struct bcm63xx_udc *udc)
-{
-	enum bcm63xx_ep0_state ep0state = udc->ep0state;
-	bool shutdown = udc->ep0_req_reset || udc->ep0_req_shutdown;
+अटल पूर्णांक bcm63xx_ep0_one_round(काष्ठा bcm63xx_udc *udc)
+अणु
+	क्रमागत bcm63xx_ep0_state ep0state = udc->ep0state;
+	bool shutकरोwn = udc->ep0_req_reset || udc->ep0_req_shutकरोwn;
 
-	switch (udc->ep0state) {
-	case EP0_REQUEUE:
+	चयन (udc->ep0state) अणु
+	हाल EP0_REQUEUE:
 		/* set up descriptor to receive SETUP packet */
-		bcm63xx_ep0_internal_request(udc, IUDMA_EP0_RXCHAN,
+		bcm63xx_ep0_पूर्णांकernal_request(udc, IUDMA_EP0_RXCHAN,
 					     BCM63XX_MAX_CTRL_PKT);
 		ep0state = EP0_IDLE;
-		break;
-	case EP0_IDLE:
-		return bcm63xx_ep0_do_idle(udc);
-	case EP0_IN_DATA_PHASE_SETUP:
+		अवरोध;
+	हाल EP0_IDLE:
+		वापस bcm63xx_ep0_करो_idle(udc);
+	हाल EP0_IN_DATA_PHASE_SETUP:
 		/*
-		 * Normal case: TX request is in ep0_reply (queued by the
-		 * callback), or will be queued shortly.  When it's here,
+		 * Normal हाल: TX request is in ep0_reply (queued by the
+		 * callback), or will be queued लघुly.  When it's here,
 		 * send it to the HW and go to EP0_IN_DATA_PHASE_COMPLETE.
 		 *
-		 * Shutdown case: Stop waiting for the reply.  Just
+		 * Shutकरोwn हाल: Stop रुकोing क्रम the reply.  Just
 		 * REQUEUE->IDLE.  The gadget driver is NOT expected to
-		 * queue anything else now.
+		 * queue anything अन्यथा now.
 		 */
-		if (udc->ep0_reply) {
-			bcm63xx_ep0_map_write(udc, IUDMA_EP0_TXCHAN,
+		अगर (udc->ep0_reply) अणु
+			bcm63xx_ep0_map_ग_लिखो(udc, IUDMA_EP0_TXCHAN,
 					      udc->ep0_reply);
 			ep0state = EP0_IN_DATA_PHASE_COMPLETE;
-		} else if (shutdown) {
+		पूर्ण अन्यथा अगर (shutकरोwn) अणु
 			ep0state = EP0_REQUEUE;
-		}
-		break;
-	case EP0_IN_DATA_PHASE_COMPLETE: {
+		पूर्ण
+		अवरोध;
+	हाल EP0_IN_DATA_PHASE_COMPLETE: अणु
 		/*
-		 * Normal case: TX packet (ep0_reply) is in flight; wait for
+		 * Normal हाल: TX packet (ep0_reply) is in flight; रुको क्रम
 		 * it to finish, then go back to REQUEUE->IDLE.
 		 *
-		 * Shutdown case: Reset the TX channel, send -ESHUTDOWN
+		 * Shutकरोwn हाल: Reset the TX channel, send -ESHUTDOWN
 		 * completion to the gadget driver, then REQUEUE->IDLE.
 		 */
-		if (udc->ep0_req_completed) {
-			udc->ep0_reply = NULL;
-			bcm63xx_ep0_read_complete(udc);
+		अगर (udc->ep0_req_completed) अणु
+			udc->ep0_reply = शून्य;
+			bcm63xx_ep0_पढ़ो_complete(udc);
 			/*
-			 * the "ack" sometimes gets eaten (see
-			 * bcm63xx_ep0_do_idle)
+			 * the "ack" someबार माला_लो eaten (see
+			 * bcm63xx_ep0_करो_idle)
 			 */
 			ep0state = EP0_REQUEUE;
-		} else if (shutdown) {
+		पूर्ण अन्यथा अगर (shutकरोwn) अणु
 			iudma_reset_channel(udc, &udc->iudma[IUDMA_EP0_TXCHAN]);
 			bcm63xx_ep0_nuke_reply(udc, 1);
 			ep0state = EP0_REQUEUE;
-		}
-		break;
-	}
-	case EP0_OUT_DATA_PHASE_SETUP:
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल EP0_OUT_DATA_PHASE_SETUP:
 		/* Similar behavior to EP0_IN_DATA_PHASE_SETUP */
-		if (udc->ep0_reply) {
-			bcm63xx_ep0_map_write(udc, IUDMA_EP0_RXCHAN,
+		अगर (udc->ep0_reply) अणु
+			bcm63xx_ep0_map_ग_लिखो(udc, IUDMA_EP0_RXCHAN,
 					      udc->ep0_reply);
 			ep0state = EP0_OUT_DATA_PHASE_COMPLETE;
-		} else if (shutdown) {
+		पूर्ण अन्यथा अगर (shutकरोwn) अणु
 			ep0state = EP0_REQUEUE;
-		}
-		break;
-	case EP0_OUT_DATA_PHASE_COMPLETE: {
+		पूर्ण
+		अवरोध;
+	हाल EP0_OUT_DATA_PHASE_COMPLETE: अणु
 		/* Similar behavior to EP0_IN_DATA_PHASE_COMPLETE */
-		if (udc->ep0_req_completed) {
-			udc->ep0_reply = NULL;
-			bcm63xx_ep0_read_complete(udc);
+		अगर (udc->ep0_req_completed) अणु
+			udc->ep0_reply = शून्य;
+			bcm63xx_ep0_पढ़ो_complete(udc);
 
 			/* send 0-byte ack to host */
-			bcm63xx_ep0_internal_request(udc, IUDMA_EP0_TXCHAN, 0);
+			bcm63xx_ep0_पूर्णांकernal_request(udc, IUDMA_EP0_TXCHAN, 0);
 			ep0state = EP0_OUT_STATUS_PHASE;
-		} else if (shutdown) {
+		पूर्ण अन्यथा अगर (shutकरोwn) अणु
 			iudma_reset_channel(udc, &udc->iudma[IUDMA_EP0_RXCHAN]);
 			bcm63xx_ep0_nuke_reply(udc, 0);
 			ep0state = EP0_REQUEUE;
-		}
-		break;
-	}
-	case EP0_OUT_STATUS_PHASE:
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल EP0_OUT_STATUS_PHASE:
 		/*
-		 * Normal case: 0-byte OUT ack packet is in flight; wait
-		 * for it to finish, then go back to REQUEUE->IDLE.
+		 * Normal हाल: 0-byte OUT ack packet is in flight; रुको
+		 * क्रम it to finish, then go back to REQUEUE->IDLE.
 		 *
-		 * Shutdown case: just cancel the transmission.  Don't bother
+		 * Shutकरोwn हाल: just cancel the transmission.  Don't bother
 		 * calling the completion, because it originated from this
 		 * function anyway.  Then go back to REQUEUE->IDLE.
 		 */
-		if (udc->ep0_req_completed) {
-			bcm63xx_ep0_read_complete(udc);
+		अगर (udc->ep0_req_completed) अणु
+			bcm63xx_ep0_पढ़ो_complete(udc);
 			ep0state = EP0_REQUEUE;
-		} else if (shutdown) {
+		पूर्ण अन्यथा अगर (shutकरोwn) अणु
 			iudma_reset_channel(udc, &udc->iudma[IUDMA_EP0_TXCHAN]);
-			udc->ep0_request = NULL;
+			udc->ep0_request = शून्य;
 			ep0state = EP0_REQUEUE;
-		}
-		break;
-	case EP0_IN_FAKE_STATUS_PHASE: {
+		पूर्ण
+		अवरोध;
+	हाल EP0_IN_FAKE_STATUS_PHASE: अणु
 		/*
-		 * Normal case: we spoofed a SETUP packet and are now
-		 * waiting for the gadget driver to send a 0-byte reply.
-		 * This doesn't actually get sent to the HW because the
-		 * HW has already sent its own reply.  Once we get the
-		 * response, return to IDLE.
+		 * Normal हाल: we spoofed a SETUP packet and are now
+		 * रुकोing क्रम the gadget driver to send a 0-byte reply.
+		 * This करोesn't actually get sent to the HW because the
+		 * HW has alपढ़ोy sent its own reply.  Once we get the
+		 * response, वापस to IDLE.
 		 *
-		 * Shutdown case: return to IDLE immediately.
+		 * Shutकरोwn हाल: वापस to IDLE immediately.
 		 *
-		 * Note that the ep0 RX descriptor has remained queued
+		 * Note that the ep0 RX descriptor has reमुख्यed queued
 		 * (and possibly unfilled) during this entire transaction.
 		 * The HW datapath (IUDMA) never even sees SET_CONFIGURATION
 		 * or SET_INTERFACE transactions.
 		 */
-		struct usb_request *r = udc->ep0_reply;
+		काष्ठा usb_request *r = udc->ep0_reply;
 
-		if (!r) {
-			if (shutdown)
+		अगर (!r) अणु
+			अगर (shutकरोwn)
 				ep0state = EP0_IDLE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		bcm63xx_ep0_complete(udc, r, 0);
-		udc->ep0_reply = NULL;
+		udc->ep0_reply = शून्य;
 		ep0state = EP0_IDLE;
-		break;
-	}
-	case EP0_SHUTDOWN:
-		break;
-	}
+		अवरोध;
+	पूर्ण
+	हाल EP0_SHUTDOWN:
+		अवरोध;
+	पूर्ण
 
-	if (udc->ep0state == ep0state)
-		return -EAGAIN;
+	अगर (udc->ep0state == ep0state)
+		वापस -EAGAIN;
 
 	udc->ep0state = ep0state;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * bcm63xx_ep0_process - ep0 worker thread / state machine.
- * @w: Workqueue struct.
+ * bcm63xx_ep0_process - ep0 worker thपढ़ो / state machine.
+ * @w: Workqueue काष्ठा.
  *
- * bcm63xx_ep0_process is triggered any time an event occurs on ep0.  It
+ * bcm63xx_ep0_process is triggered any समय an event occurs on ep0.  It
  * is used to synchronize ep0 events and ensure that both HW and SW events
  * occur in a well-defined order.  When the ep0 IUDMA queues are idle, it may
  * synthesize SET_CONFIGURATION / SET_INTERFACE requests that were consumed
  * by the USBD hardware.
  *
- * The worker function will continue iterating around the state machine
- * until there is nothing left to do.  Usually "nothing left to do" means
- * that we're waiting for a new event from the hardware.
+ * The worker function will जारी iterating around the state machine
+ * until there is nothing left to करो.  Usually "nothing left to do" means
+ * that we're रुकोing क्रम a new event from the hardware.
  */
-static void bcm63xx_ep0_process(struct work_struct *w)
-{
-	struct bcm63xx_udc *udc = container_of(w, struct bcm63xx_udc, ep0_wq);
+अटल व्योम bcm63xx_ep0_process(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा bcm63xx_udc *udc = container_of(w, काष्ठा bcm63xx_udc, ep0_wq);
 	spin_lock_irq(&udc->lock);
-	while (bcm63xx_ep0_one_round(udc) == 0)
+	जबतक (bcm63xx_ep0_one_round(udc) == 0)
 		;
 	spin_unlock_irq(&udc->lock);
-}
+पूर्ण
 
 /***********************************************************************
  * Standard UDC gadget operations
@@ -1747,13 +1748,13 @@ static void bcm63xx_ep0_process(struct work_struct *w)
  * bcm63xx_udc_get_frame - Read current SOF frame number from the HW.
  * @gadget: USB device.
  */
-static int bcm63xx_udc_get_frame(struct usb_gadget *gadget)
-{
-	struct bcm63xx_udc *udc = gadget_to_udc(gadget);
+अटल पूर्णांक bcm63xx_udc_get_frame(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा bcm63xx_udc *udc = gadget_to_udc(gadget);
 
-	return (usbd_readl(udc, USBD_STATUS_REG) &
+	वापस (usbd_पढ़ोl(udc, USBD_STATUS_REG) &
 		USBD_STATUS_SOF_MASK) >> USBD_STATUS_SOF_SHIFT;
-}
+पूर्ण
 
 /**
  * bcm63xx_udc_pullup - Enable/disable pullup on D+ line.
@@ -1762,101 +1763,101 @@ static int bcm63xx_udc_get_frame(struct usb_gadget *gadget)
  *
  * See notes in bcm63xx_select_pullup().
  */
-static int bcm63xx_udc_pullup(struct usb_gadget *gadget, int is_on)
-{
-	struct bcm63xx_udc *udc = gadget_to_udc(gadget);
-	unsigned long flags;
-	int i, rc = -EINVAL;
+अटल पूर्णांक bcm63xx_udc_pullup(काष्ठा usb_gadget *gadget, पूर्णांक is_on)
+अणु
+	काष्ठा bcm63xx_udc *udc = gadget_to_udc(gadget);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, rc = -EINVAL;
 
 	spin_lock_irqsave(&udc->lock, flags);
-	if (is_on && udc->ep0state == EP0_SHUTDOWN) {
+	अगर (is_on && udc->ep0state == EP0_SHUTDOWN) अणु
 		udc->gadget.speed = USB_SPEED_UNKNOWN;
 		udc->ep0state = EP0_REQUEUE;
-		bcm63xx_fifo_setup(udc);
-		bcm63xx_fifo_reset(udc);
+		bcm63xx_fअगरo_setup(udc);
+		bcm63xx_fअगरo_reset(udc);
 		bcm63xx_ep_setup(udc);
 
-		bitmap_zero(&udc->wedgemap, BCM63XX_NUM_EP);
-		for (i = 0; i < BCM63XX_NUM_EP; i++)
+		biपंचांगap_zero(&udc->wedgemap, BCM63XX_NUM_EP);
+		क्रम (i = 0; i < BCM63XX_NUM_EP; i++)
 			bcm63xx_set_stall(udc, &udc->bep[i], false);
 
 		bcm63xx_set_ctrl_irqs(udc, true);
 		bcm63xx_select_pullup(gadget_to_udc(gadget), true);
 		rc = 0;
-	} else if (!is_on && udc->ep0state != EP0_SHUTDOWN) {
+	पूर्ण अन्यथा अगर (!is_on && udc->ep0state != EP0_SHUTDOWN) अणु
 		bcm63xx_select_pullup(gadget_to_udc(gadget), false);
 
-		udc->ep0_req_shutdown = 1;
+		udc->ep0_req_shutकरोwn = 1;
 		spin_unlock_irqrestore(&udc->lock, flags);
 
-		while (1) {
+		जबतक (1) अणु
 			schedule_work(&udc->ep0_wq);
-			if (udc->ep0state == EP0_SHUTDOWN)
-				break;
+			अगर (udc->ep0state == EP0_SHUTDOWN)
+				अवरोध;
 			msleep(50);
-		}
+		पूर्ण
 		bcm63xx_set_ctrl_irqs(udc, false);
 		cancel_work_sync(&udc->ep0_wq);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * bcm63xx_udc_start - Start the controller.
  * @gadget: USB device.
- * @driver: Driver for USB device.
+ * @driver: Driver क्रम USB device.
  */
-static int bcm63xx_udc_start(struct usb_gadget *gadget,
-		struct usb_gadget_driver *driver)
-{
-	struct bcm63xx_udc *udc = gadget_to_udc(gadget);
-	unsigned long flags;
+अटल पूर्णांक bcm63xx_udc_start(काष्ठा usb_gadget *gadget,
+		काष्ठा usb_gadget_driver *driver)
+अणु
+	काष्ठा bcm63xx_udc *udc = gadget_to_udc(gadget);
+	अचिन्हित दीर्घ flags;
 
-	if (!driver || driver->max_speed < USB_SPEED_HIGH ||
+	अगर (!driver || driver->max_speed < USB_SPEED_HIGH ||
 	    !driver->setup)
-		return -EINVAL;
-	if (!udc)
-		return -ENODEV;
-	if (udc->driver)
-		return -EBUSY;
+		वापस -EINVAL;
+	अगर (!udc)
+		वापस -ENODEV;
+	अगर (udc->driver)
+		वापस -EBUSY;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	set_clocks(udc, true);
-	bcm63xx_fifo_setup(udc);
+	set_घड़ीs(udc, true);
+	bcm63xx_fअगरo_setup(udc);
 	bcm63xx_ep_init(udc);
 	bcm63xx_ep_setup(udc);
-	bcm63xx_fifo_reset(udc);
+	bcm63xx_fअगरo_reset(udc);
 	bcm63xx_select_phy_mode(udc, true);
 
 	udc->driver = driver;
-	driver->driver.bus = NULL;
+	driver->driver.bus = शून्य;
 	udc->gadget.dev.of_node = udc->dev->of_node;
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * bcm63xx_udc_stop - Shut down the controller.
+ * bcm63xx_udc_stop - Shut करोwn the controller.
  * @gadget: USB device.
- * @driver: Driver for USB device.
+ * @driver: Driver क्रम USB device.
  */
-static int bcm63xx_udc_stop(struct usb_gadget *gadget)
-{
-	struct bcm63xx_udc *udc = gadget_to_udc(gadget);
-	unsigned long flags;
+अटल पूर्णांक bcm63xx_udc_stop(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा bcm63xx_udc *udc = gadget_to_udc(gadget);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	udc->driver = NULL;
+	udc->driver = शून्य;
 
 	/*
-	 * If we switch the PHY too abruptly after dropping D+, the host
+	 * If we चयन the PHY too abruptly after dropping D+, the host
 	 * will often complain:
 	 *
 	 *     hub 1-0:1.0: port 1 disabled by hub (EMI?), re-enabling...
@@ -1864,136 +1865,136 @@ static int bcm63xx_udc_stop(struct usb_gadget *gadget)
 	msleep(100);
 
 	bcm63xx_select_phy_mode(udc, false);
-	set_clocks(udc, false);
+	set_घड़ीs(udc, false);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct usb_gadget_ops bcm63xx_udc_ops = {
+अटल स्थिर काष्ठा usb_gadget_ops bcm63xx_udc_ops = अणु
 	.get_frame	= bcm63xx_udc_get_frame,
 	.pullup		= bcm63xx_udc_pullup,
 	.udc_start	= bcm63xx_udc_start,
 	.udc_stop	= bcm63xx_udc_stop,
-};
+पूर्ण;
 
 /***********************************************************************
  * IRQ handling
  ***********************************************************************/
 
 /**
- * bcm63xx_update_cfg_iface - Read current configuration/interface settings.
+ * bcm63xx_update_cfg_अगरace - Read current configuration/पूर्णांकerface settings.
  * @udc: Reference to the device controller.
  *
- * This controller intercepts SET_CONFIGURATION and SET_INTERFACE messages.
+ * This controller पूर्णांकercepts SET_CONFIGURATION and SET_INTERFACE messages.
  * The driver never sees the raw control packets coming in on the ep0
- * IUDMA channel, but at least we get an interrupt event to tell us that
- * new values are waiting in the USBD_STATUS register.
+ * IUDMA channel, but at least we get an पूर्णांकerrupt event to tell us that
+ * new values are रुकोing in the USBD_STATUS रेजिस्टर.
  */
-static void bcm63xx_update_cfg_iface(struct bcm63xx_udc *udc)
-{
-	u32 reg = usbd_readl(udc, USBD_STATUS_REG);
+अटल व्योम bcm63xx_update_cfg_अगरace(काष्ठा bcm63xx_udc *udc)
+अणु
+	u32 reg = usbd_पढ़ोl(udc, USBD_STATUS_REG);
 
 	udc->cfg = (reg & USBD_STATUS_CFG_MASK) >> USBD_STATUS_CFG_SHIFT;
-	udc->iface = (reg & USBD_STATUS_INTF_MASK) >> USBD_STATUS_INTF_SHIFT;
-	udc->alt_iface = (reg & USBD_STATUS_ALTINTF_MASK) >>
+	udc->अगरace = (reg & USBD_STATUS_INTF_MASK) >> USBD_STATUS_INTF_SHIFT;
+	udc->alt_अगरace = (reg & USBD_STATUS_ALTINTF_MASK) >>
 			 USBD_STATUS_ALTINTF_SHIFT;
 	bcm63xx_ep_setup(udc);
-}
+पूर्ण
 
 /**
- * bcm63xx_update_link_speed - Check to see if the link speed has changed.
+ * bcm63xx_update_link_speed - Check to see अगर the link speed has changed.
  * @udc: Reference to the device controller.
  *
- * The link speed update coincides with a SETUP IRQ.  Returns 1 if the
- * speed has changed, so that the caller can update the endpoint settings.
+ * The link speed update coincides with a SETUP IRQ.  Returns 1 अगर the
+ * speed has changed, so that the caller can update the endpoपूर्णांक settings.
  */
-static int bcm63xx_update_link_speed(struct bcm63xx_udc *udc)
-{
-	u32 reg = usbd_readl(udc, USBD_STATUS_REG);
-	enum usb_device_speed oldspeed = udc->gadget.speed;
+अटल पूर्णांक bcm63xx_update_link_speed(काष्ठा bcm63xx_udc *udc)
+अणु
+	u32 reg = usbd_पढ़ोl(udc, USBD_STATUS_REG);
+	क्रमागत usb_device_speed oldspeed = udc->gadget.speed;
 
-	switch ((reg & USBD_STATUS_SPD_MASK) >> USBD_STATUS_SPD_SHIFT) {
-	case BCM63XX_SPD_HIGH:
+	चयन ((reg & USBD_STATUS_SPD_MASK) >> USBD_STATUS_SPD_SHIFT) अणु
+	हाल BCM63XX_SPD_HIGH:
 		udc->gadget.speed = USB_SPEED_HIGH;
-		break;
-	case BCM63XX_SPD_FULL:
+		अवरोध;
+	हाल BCM63XX_SPD_FULL:
 		udc->gadget.speed = USB_SPEED_FULL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* this should never happen */
 		udc->gadget.speed = USB_SPEED_UNKNOWN;
 		dev_err(udc->dev,
 			"received SETUP packet with invalid link speed\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (udc->gadget.speed != oldspeed) {
+	अगर (udc->gadget.speed != oldspeed) अणु
 		dev_info(udc->dev, "link up, %s-speed mode\n",
 			 udc->gadget.speed == USB_SPEED_HIGH ? "high" : "full");
-		return 1;
-	} else {
-		return 0;
-	}
-}
+		वापस 1;
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /**
- * bcm63xx_update_wedge - Iterate through wedged endpoints.
+ * bcm63xx_update_wedge - Iterate through wedged endpoपूर्णांकs.
  * @udc: Reference to the device controller.
  * @new_status: true to "refresh" wedge status; false to clear it.
  *
- * On a SETUP interrupt, we need to manually "refresh" the wedge status
- * because the controller hardware is designed to automatically clear
+ * On a SETUP पूर्णांकerrupt, we need to manually "refresh" the wedge status
+ * because the controller hardware is deचिन्हित to स्वतःmatically clear
  * stalls in response to a CLEAR_FEATURE request from the host.
  *
- * On a RESET interrupt, we do want to restore all wedged endpoints.
+ * On a RESET पूर्णांकerrupt, we करो want to restore all wedged endpoपूर्णांकs.
  */
-static void bcm63xx_update_wedge(struct bcm63xx_udc *udc, bool new_status)
-{
-	int i;
+अटल व्योम bcm63xx_update_wedge(काष्ठा bcm63xx_udc *udc, bool new_status)
+अणु
+	पूर्णांक i;
 
-	for_each_set_bit(i, &udc->wedgemap, BCM63XX_NUM_EP) {
+	क्रम_each_set_bit(i, &udc->wedgemap, BCM63XX_NUM_EP) अणु
 		bcm63xx_set_stall(udc, &udc->bep[i], new_status);
-		if (!new_status)
+		अगर (!new_status)
 			clear_bit(i, &udc->wedgemap);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * bcm63xx_udc_ctrl_isr - ISR for control path events (USBD).
+ * bcm63xx_udc_ctrl_isr - ISR क्रम control path events (USBD).
  * @irq: IRQ number (unused).
  * @dev_id: Reference to the device controller.
  *
- * This is where we handle link (VBUS) down, USB reset, speed changes,
+ * This is where we handle link (VBUS) करोwn, USB reset, speed changes,
  * SET_CONFIGURATION, and SET_INTERFACE events.
  */
-static irqreturn_t bcm63xx_udc_ctrl_isr(int irq, void *dev_id)
-{
-	struct bcm63xx_udc *udc = dev_id;
+अटल irqवापस_t bcm63xx_udc_ctrl_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा bcm63xx_udc *udc = dev_id;
 	u32 stat;
 	bool disconnected = false, bus_reset = false;
 
-	stat = usbd_readl(udc, USBD_EVENT_IRQ_STATUS_REG) &
-	       usbd_readl(udc, USBD_EVENT_IRQ_MASK_REG);
+	stat = usbd_पढ़ोl(udc, USBD_EVENT_IRQ_STATUS_REG) &
+	       usbd_पढ़ोl(udc, USBD_EVENT_IRQ_MASK_REG);
 
-	usbd_writel(udc, stat, USBD_EVENT_IRQ_STATUS_REG);
+	usbd_ग_लिखोl(udc, stat, USBD_EVENT_IRQ_STATUS_REG);
 
 	spin_lock(&udc->lock);
-	if (stat & BIT(USBD_EVENT_IRQ_USB_LINK)) {
+	अगर (stat & BIT(USBD_EVENT_IRQ_USB_LINK)) अणु
 		/* VBUS toggled */
 
-		if (!(usbd_readl(udc, USBD_EVENTS_REG) &
+		अगर (!(usbd_पढ़ोl(udc, USBD_EVENTS_REG) &
 		      USBD_EVENTS_USB_LINK_MASK) &&
 		      udc->gadget.speed != USB_SPEED_UNKNOWN)
 			dev_info(udc->dev, "link down\n");
 
 		udc->gadget.speed = USB_SPEED_UNKNOWN;
 		disconnected = true;
-	}
-	if (stat & BIT(USBD_EVENT_IRQ_USB_RESET)) {
-		bcm63xx_fifo_setup(udc);
-		bcm63xx_fifo_reset(udc);
+	पूर्ण
+	अगर (stat & BIT(USBD_EVENT_IRQ_USB_RESET)) अणु
+		bcm63xx_fअगरo_setup(udc);
+		bcm63xx_fअगरo_reset(udc);
 		bcm63xx_ep_setup(udc);
 
 		bcm63xx_update_wedge(udc, false);
@@ -2001,310 +2002,310 @@ static irqreturn_t bcm63xx_udc_ctrl_isr(int irq, void *dev_id)
 		udc->ep0_req_reset = 1;
 		schedule_work(&udc->ep0_wq);
 		bus_reset = true;
-	}
-	if (stat & BIT(USBD_EVENT_IRQ_SETUP)) {
-		if (bcm63xx_update_link_speed(udc)) {
-			bcm63xx_fifo_setup(udc);
+	पूर्ण
+	अगर (stat & BIT(USBD_EVENT_IRQ_SETUP)) अणु
+		अगर (bcm63xx_update_link_speed(udc)) अणु
+			bcm63xx_fअगरo_setup(udc);
 			bcm63xx_ep_setup(udc);
-		}
+		पूर्ण
 		bcm63xx_update_wedge(udc, true);
-	}
-	if (stat & BIT(USBD_EVENT_IRQ_SETCFG)) {
-		bcm63xx_update_cfg_iface(udc);
+	पूर्ण
+	अगर (stat & BIT(USBD_EVENT_IRQ_SETCFG)) अणु
+		bcm63xx_update_cfg_अगरace(udc);
 		udc->ep0_req_set_cfg = 1;
 		schedule_work(&udc->ep0_wq);
-	}
-	if (stat & BIT(USBD_EVENT_IRQ_SETINTF)) {
-		bcm63xx_update_cfg_iface(udc);
-		udc->ep0_req_set_iface = 1;
+	पूर्ण
+	अगर (stat & BIT(USBD_EVENT_IRQ_SETINTF)) अणु
+		bcm63xx_update_cfg_अगरace(udc);
+		udc->ep0_req_set_अगरace = 1;
 		schedule_work(&udc->ep0_wq);
-	}
+	पूर्ण
 	spin_unlock(&udc->lock);
 
-	if (disconnected && udc->driver)
+	अगर (disconnected && udc->driver)
 		udc->driver->disconnect(&udc->gadget);
-	else if (bus_reset && udc->driver)
+	अन्यथा अगर (bus_reset && udc->driver)
 		usb_gadget_udc_reset(&udc->gadget, udc->driver);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * bcm63xx_udc_data_isr - ISR for data path events (IUDMA).
+ * bcm63xx_udc_data_isr - ISR क्रम data path events (IUDMA).
  * @irq: IRQ number (unused).
- * @dev_id: Reference to the IUDMA channel that generated the interrupt.
+ * @dev_id: Reference to the IUDMA channel that generated the पूर्णांकerrupt.
  *
  * For the two ep0 channels, we have special handling that triggers the
- * ep0 worker thread.  For normal bulk/intr channels, either queue up
- * the next buffer descriptor for the transaction (incomplete transaction),
+ * ep0 worker thपढ़ो.  For normal bulk/पूर्णांकr channels, either queue up
+ * the next buffer descriptor क्रम the transaction (incomplete transaction),
  * or invoke the completion callback (complete transactions).
  */
-static irqreturn_t bcm63xx_udc_data_isr(int irq, void *dev_id)
-{
-	struct iudma_ch *iudma = dev_id;
-	struct bcm63xx_udc *udc = iudma->udc;
-	struct bcm63xx_ep *bep;
-	struct usb_request *req = NULL;
-	struct bcm63xx_req *breq = NULL;
-	int rc;
-	bool is_done = false;
+अटल irqवापस_t bcm63xx_udc_data_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा iudma_ch *iudma = dev_id;
+	काष्ठा bcm63xx_udc *udc = iudma->udc;
+	काष्ठा bcm63xx_ep *bep;
+	काष्ठा usb_request *req = शून्य;
+	काष्ठा bcm63xx_req *breq = शून्य;
+	पूर्णांक rc;
+	bool is_करोne = false;
 
 	spin_lock(&udc->lock);
 
-	usb_dmac_writel(udc, ENETDMAC_IR_BUFDONE_MASK,
+	usb_dmac_ग_लिखोl(udc, ENETDMAC_IR_BUFDONE_MASK,
 			ENETDMAC_IR_REG, iudma->ch_idx);
 	bep = iudma->bep;
-	rc = iudma_read(udc, iudma);
+	rc = iudma_पढ़ो(udc, iudma);
 
-	/* special handling for EP0 RX (0) and TX (1) */
-	if (iudma->ch_idx == IUDMA_EP0_RXCHAN ||
-	    iudma->ch_idx == IUDMA_EP0_TXCHAN) {
+	/* special handling क्रम EP0 RX (0) and TX (1) */
+	अगर (iudma->ch_idx == IUDMA_EP0_RXCHAN ||
+	    iudma->ch_idx == IUDMA_EP0_TXCHAN) अणु
 		req = udc->ep0_request;
 		breq = our_req(req);
 
 		/* a single request could require multiple submissions */
-		if (rc >= 0) {
+		अगर (rc >= 0) अणु
 			req->actual += rc;
 
-			if (req->actual >= req->length || breq->bd_bytes > rc) {
+			अगर (req->actual >= req->length || breq->bd_bytes > rc) अणु
 				udc->ep0_req_completed = 1;
-				is_done = true;
+				is_करोne = true;
 				schedule_work(&udc->ep0_wq);
 
 				/* "actual" on a ZLP is 1 byte */
 				req->actual = min(req->actual, req->length);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* queue up the next BD (same request) */
-				iudma_write(udc, iudma, breq);
-			}
-		}
-	} else if (!list_empty(&bep->queue)) {
-		breq = list_first_entry(&bep->queue, struct bcm63xx_req, queue);
+				iudma_ग_लिखो(udc, iudma, breq);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (!list_empty(&bep->queue)) अणु
+		breq = list_first_entry(&bep->queue, काष्ठा bcm63xx_req, queue);
 		req = &breq->req;
 
-		if (rc >= 0) {
+		अगर (rc >= 0) अणु
 			req->actual += rc;
 
-			if (req->actual >= req->length || breq->bd_bytes > rc) {
-				is_done = true;
+			अगर (req->actual >= req->length || breq->bd_bytes > rc) अणु
+				is_करोne = true;
 				list_del(&breq->queue);
 
 				req->actual = min(req->actual, req->length);
 
-				if (!list_empty(&bep->queue)) {
-					struct bcm63xx_req *next;
+				अगर (!list_empty(&bep->queue)) अणु
+					काष्ठा bcm63xx_req *next;
 
 					next = list_first_entry(&bep->queue,
-						struct bcm63xx_req, queue);
-					iudma_write(udc, iudma, next);
-				}
-			} else {
-				iudma_write(udc, iudma, breq);
-			}
-		}
-	}
+						काष्ठा bcm63xx_req, queue);
+					iudma_ग_लिखो(udc, iudma, next);
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				iudma_ग_लिखो(udc, iudma, breq);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock(&udc->lock);
 
-	if (is_done) {
+	अगर (is_करोne) अणु
 		usb_gadget_unmap_request(&udc->gadget, req, iudma->is_tx);
-		if (req->complete)
+		अगर (req->complete)
 			req->complete(&bep->ep, req);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /***********************************************************************
- * Debug filesystem
+ * Debug fileप्रणाली
  ***********************************************************************/
 
 /*
  * bcm63xx_usbd_dbg_show - Show USBD controller state.
- * @s: seq_file to which the information will be written.
+ * @s: seq_file to which the inक्रमmation will be written.
  * @p: Unused.
  *
  * This file nominally shows up as /sys/kernel/debug/bcm63xx_udc/usbd
  */
-static int bcm63xx_usbd_dbg_show(struct seq_file *s, void *p)
-{
-	struct bcm63xx_udc *udc = s->private;
+अटल पूर्णांक bcm63xx_usbd_dbg_show(काष्ठा seq_file *s, व्योम *p)
+अणु
+	काष्ठा bcm63xx_udc *udc = s->निजी;
 
-	if (!udc->driver)
-		return -ENODEV;
+	अगर (!udc->driver)
+		वापस -ENODEV;
 
-	seq_printf(s, "ep0 state: %s\n",
+	seq_म_लिखो(s, "ep0 state: %s\n",
 		   bcm63xx_ep0_state_names[udc->ep0state]);
-	seq_printf(s, "  pending requests: %s%s%s%s%s%s%s\n",
+	seq_म_लिखो(s, "  pending requests: %s%s%s%s%s%s%s\n",
 		   udc->ep0_req_reset ? "reset " : "",
 		   udc->ep0_req_set_cfg ? "set_cfg " : "",
-		   udc->ep0_req_set_iface ? "set_iface " : "",
-		   udc->ep0_req_shutdown ? "shutdown " : "",
+		   udc->ep0_req_set_अगरace ? "set_iface " : "",
+		   udc->ep0_req_shutकरोwn ? "shutdown " : "",
 		   udc->ep0_request ? "pending " : "",
 		   udc->ep0_req_completed ? "completed " : "",
 		   udc->ep0_reply ? "reply " : "");
-	seq_printf(s, "cfg: %d; iface: %d; alt_iface: %d\n",
-		   udc->cfg, udc->iface, udc->alt_iface);
-	seq_printf(s, "regs:\n");
-	seq_printf(s, "  control: %08x; straps: %08x; status: %08x\n",
-		   usbd_readl(udc, USBD_CONTROL_REG),
-		   usbd_readl(udc, USBD_STRAPS_REG),
-		   usbd_readl(udc, USBD_STATUS_REG));
-	seq_printf(s, "  events:  %08x; stall:  %08x\n",
-		   usbd_readl(udc, USBD_EVENTS_REG),
-		   usbd_readl(udc, USBD_STALL_REG));
+	seq_म_लिखो(s, "cfg: %d; iface: %d; alt_iface: %d\n",
+		   udc->cfg, udc->अगरace, udc->alt_अगरace);
+	seq_म_लिखो(s, "regs:\n");
+	seq_म_लिखो(s, "  control: %08x; straps: %08x; status: %08x\n",
+		   usbd_पढ़ोl(udc, USBD_CONTROL_REG),
+		   usbd_पढ़ोl(udc, USBD_STRAPS_REG),
+		   usbd_पढ़ोl(udc, USBD_STATUS_REG));
+	seq_म_लिखो(s, "  events:  %08x; stall:  %08x\n",
+		   usbd_पढ़ोl(udc, USBD_EVENTS_REG),
+		   usbd_पढ़ोl(udc, USBD_STALL_REG));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(bcm63xx_usbd_dbg);
 
 /*
  * bcm63xx_iudma_dbg_show - Show IUDMA status and descriptors.
- * @s: seq_file to which the information will be written.
+ * @s: seq_file to which the inक्रमmation will be written.
  * @p: Unused.
  *
  * This file nominally shows up as /sys/kernel/debug/bcm63xx_udc/iudma
  */
-static int bcm63xx_iudma_dbg_show(struct seq_file *s, void *p)
-{
-	struct bcm63xx_udc *udc = s->private;
-	int ch_idx, i;
+अटल पूर्णांक bcm63xx_iudma_dbg_show(काष्ठा seq_file *s, व्योम *p)
+अणु
+	काष्ठा bcm63xx_udc *udc = s->निजी;
+	पूर्णांक ch_idx, i;
 	u32 sram2, sram3;
 
-	if (!udc->driver)
-		return -ENODEV;
+	अगर (!udc->driver)
+		वापस -ENODEV;
 
-	for (ch_idx = 0; ch_idx < BCM63XX_NUM_IUDMA; ch_idx++) {
-		struct iudma_ch *iudma = &udc->iudma[ch_idx];
-		struct list_head *pos;
+	क्रम (ch_idx = 0; ch_idx < BCM63XX_NUM_IUDMA; ch_idx++) अणु
+		काष्ठा iudma_ch *iudma = &udc->iudma[ch_idx];
+		काष्ठा list_head *pos;
 
-		seq_printf(s, "IUDMA channel %d -- ", ch_idx);
-		switch (iudma_defaults[ch_idx].ep_type) {
-		case BCMEP_CTRL:
-			seq_printf(s, "control");
-			break;
-		case BCMEP_BULK:
-			seq_printf(s, "bulk");
-			break;
-		case BCMEP_INTR:
-			seq_printf(s, "interrupt");
-			break;
-		}
-		seq_printf(s, ch_idx & 0x01 ? " tx" : " rx");
-		seq_printf(s, " [ep%d]:\n",
-			   max_t(int, iudma_defaults[ch_idx].ep_num, 0));
-		seq_printf(s, "  cfg: %08x; irqstat: %08x; irqmask: %08x; maxburst: %08x\n",
-			   usb_dmac_readl(udc, ENETDMAC_CHANCFG_REG, ch_idx),
-			   usb_dmac_readl(udc, ENETDMAC_IR_REG, ch_idx),
-			   usb_dmac_readl(udc, ENETDMAC_IRMASK_REG, ch_idx),
-			   usb_dmac_readl(udc, ENETDMAC_MAXBURST_REG, ch_idx));
+		seq_म_लिखो(s, "IUDMA channel %d -- ", ch_idx);
+		चयन (iudma_शेषs[ch_idx].ep_type) अणु
+		हाल BCMEP_CTRL:
+			seq_म_लिखो(s, "control");
+			अवरोध;
+		हाल BCMEP_BULK:
+			seq_म_लिखो(s, "bulk");
+			अवरोध;
+		हाल BCMEP_INTR:
+			seq_म_लिखो(s, "interrupt");
+			अवरोध;
+		पूर्ण
+		seq_म_लिखो(s, ch_idx & 0x01 ? " tx" : " rx");
+		seq_म_लिखो(s, " [ep%d]:\n",
+			   max_t(पूर्णांक, iudma_शेषs[ch_idx].ep_num, 0));
+		seq_म_लिखो(s, "  cfg: %08x; irqstat: %08x; irqmask: %08x; maxburst: %08x\n",
+			   usb_dmac_पढ़ोl(udc, ENETDMAC_CHANCFG_REG, ch_idx),
+			   usb_dmac_पढ़ोl(udc, ENETDMAC_IR_REG, ch_idx),
+			   usb_dmac_पढ़ोl(udc, ENETDMAC_IRMASK_REG, ch_idx),
+			   usb_dmac_पढ़ोl(udc, ENETDMAC_MAXBURST_REG, ch_idx));
 
-		sram2 = usb_dmas_readl(udc, ENETDMAS_SRAM2_REG, ch_idx);
-		sram3 = usb_dmas_readl(udc, ENETDMAS_SRAM3_REG, ch_idx);
-		seq_printf(s, "  base: %08x; index: %04x_%04x; desc: %04x_%04x %08x\n",
-			   usb_dmas_readl(udc, ENETDMAS_RSTART_REG, ch_idx),
+		sram2 = usb_dmas_पढ़ोl(udc, ENETDMAS_SRAM2_REG, ch_idx);
+		sram3 = usb_dmas_पढ़ोl(udc, ENETDMAS_SRAM3_REG, ch_idx);
+		seq_म_लिखो(s, "  base: %08x; index: %04x_%04x; desc: %04x_%04x %08x\n",
+			   usb_dmas_पढ़ोl(udc, ENETDMAS_RSTART_REG, ch_idx),
 			   sram2 >> 16, sram2 & 0xffff,
 			   sram3 >> 16, sram3 & 0xffff,
-			   usb_dmas_readl(udc, ENETDMAS_SRAM4_REG, ch_idx));
-		seq_printf(s, "  desc: %d/%d used", iudma->n_bds_used,
+			   usb_dmas_पढ़ोl(udc, ENETDMAS_SRAM4_REG, ch_idx));
+		seq_म_लिखो(s, "  desc: %d/%d used", iudma->n_bds_used,
 			   iudma->n_bds);
 
-		if (iudma->bep) {
+		अगर (iudma->bep) अणु
 			i = 0;
-			list_for_each(pos, &iudma->bep->queue)
+			list_क्रम_each(pos, &iudma->bep->queue)
 				i++;
-			seq_printf(s, "; %d queued\n", i);
-		} else {
-			seq_printf(s, "\n");
-		}
+			seq_म_लिखो(s, "; %d queued\n", i);
+		पूर्ण अन्यथा अणु
+			seq_म_लिखो(s, "\n");
+		पूर्ण
 
-		for (i = 0; i < iudma->n_bds; i++) {
-			struct bcm_enet_desc *d = &iudma->bd_ring[i];
+		क्रम (i = 0; i < iudma->n_bds; i++) अणु
+			काष्ठा bcm_enet_desc *d = &iudma->bd_ring[i];
 
-			seq_printf(s, "  %03x (%02x): len_stat: %04x_%04x; pa %08x",
-				   i * sizeof(*d), i,
+			seq_म_लिखो(s, "  %03x (%02x): len_stat: %04x_%04x; pa %08x",
+				   i * माप(*d), i,
 				   d->len_stat >> 16, d->len_stat & 0xffff,
 				   d->address);
-			if (d == iudma->read_bd)
-				seq_printf(s, "   <<RD");
-			if (d == iudma->write_bd)
-				seq_printf(s, "   <<WR");
-			seq_printf(s, "\n");
-		}
+			अगर (d == iudma->पढ़ो_bd)
+				seq_म_लिखो(s, "   <<RD");
+			अगर (d == iudma->ग_लिखो_bd)
+				seq_म_लिखो(s, "   <<WR");
+			seq_म_लिखो(s, "\n");
+		पूर्ण
 
-		seq_printf(s, "\n");
-	}
+		seq_म_लिखो(s, "\n");
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(bcm63xx_iudma_dbg);
 
 /**
  * bcm63xx_udc_init_debugfs - Create debugfs entries.
  * @udc: Reference to the device controller.
  */
-static void bcm63xx_udc_init_debugfs(struct bcm63xx_udc *udc)
-{
-	struct dentry *root;
+अटल व्योम bcm63xx_udc_init_debugfs(काष्ठा bcm63xx_udc *udc)
+अणु
+	काष्ठा dentry *root;
 
-	if (!IS_ENABLED(CONFIG_USB_GADGET_DEBUG_FS))
-		return;
+	अगर (!IS_ENABLED(CONFIG_USB_GADGET_DEBUG_FS))
+		वापस;
 
 	root = debugfs_create_dir(udc->gadget.name, usb_debug_root);
 	udc->debugfs_root = root;
 
 	debugfs_create_file("usbd", 0400, root, udc, &bcm63xx_usbd_dbg_fops);
 	debugfs_create_file("iudma", 0400, root, udc, &bcm63xx_iudma_dbg_fops);
-}
+पूर्ण
 
 /**
  * bcm63xx_udc_cleanup_debugfs - Remove debugfs entries.
  * @udc: Reference to the device controller.
  *
- * debugfs_remove() is safe to call with a NULL argument.
+ * debugfs_हटाओ() is safe to call with a शून्य argument.
  */
-static void bcm63xx_udc_cleanup_debugfs(struct bcm63xx_udc *udc)
-{
-	debugfs_remove_recursive(udc->debugfs_root);
-}
+अटल व्योम bcm63xx_udc_cleanup_debugfs(काष्ठा bcm63xx_udc *udc)
+अणु
+	debugfs_हटाओ_recursive(udc->debugfs_root);
+पूर्ण
 
 /***********************************************************************
- * Driver init/exit
+ * Driver init/निकास
  ***********************************************************************/
 
 /**
  * bcm63xx_udc_probe - Initialize a new instance of the UDC.
- * @pdev: Platform device struct from the bcm63xx BSP code.
+ * @pdev: Platक्रमm device काष्ठा from the bcm63xx BSP code.
  *
- * Note that platform data is required, because pd.port_no varies from chip
- * to chip and is used to switch the correct USB port to device mode.
+ * Note that platक्रमm data is required, because pd.port_no varies from chip
+ * to chip and is used to चयन the correct USB port to device mode.
  */
-static int bcm63xx_udc_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct bcm63xx_usbd_platform_data *pd = dev_get_platdata(dev);
-	struct bcm63xx_udc *udc;
-	int rc = -ENOMEM, i, irq;
+अटल पूर्णांक bcm63xx_udc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा bcm63xx_usbd_platक्रमm_data *pd = dev_get_platdata(dev);
+	काष्ठा bcm63xx_udc *udc;
+	पूर्णांक rc = -ENOMEM, i, irq;
 
-	udc = devm_kzalloc(dev, sizeof(*udc), GFP_KERNEL);
-	if (!udc)
-		return -ENOMEM;
+	udc = devm_kzalloc(dev, माप(*udc), GFP_KERNEL);
+	अगर (!udc)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, udc);
+	platक्रमm_set_drvdata(pdev, udc);
 	udc->dev = dev;
 	udc->pd = pd;
 
-	if (!pd) {
+	अगर (!pd) अणु
 		dev_err(dev, "missing platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	udc->usbd_regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(udc->usbd_regs))
-		return PTR_ERR(udc->usbd_regs);
+	udc->usbd_regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(udc->usbd_regs))
+		वापस PTR_ERR(udc->usbd_regs);
 
-	udc->iudma_regs = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(udc->iudma_regs))
-		return PTR_ERR(udc->iudma_regs);
+	udc->iudma_regs = devm_platक्रमm_ioremap_resource(pdev, 1);
+	अगर (IS_ERR(udc->iudma_regs))
+		वापस PTR_ERR(udc->iudma_regs);
 
 	spin_lock_init(&udc->lock);
 	INIT_WORK(&udc->ep0_wq, bcm63xx_ep0_process);
@@ -2312,58 +2313,58 @@ static int bcm63xx_udc_probe(struct platform_device *pdev)
 	udc->gadget.ops = &bcm63xx_udc_ops;
 	udc->gadget.name = dev_name(dev);
 
-	if (!pd->use_fullspeed && !use_fullspeed)
+	अगर (!pd->use_fullspeed && !use_fullspeed)
 		udc->gadget.max_speed = USB_SPEED_HIGH;
-	else
+	अन्यथा
 		udc->gadget.max_speed = USB_SPEED_FULL;
 
-	/* request clocks, allocate buffers, and clear any pending IRQs */
+	/* request घड़ीs, allocate buffers, and clear any pending IRQs */
 	rc = bcm63xx_init_udc_hw(udc);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = -ENXIO;
 
-	/* IRQ resource #0: control interrupt (VBUS, speed, etc.) */
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		goto out_uninit;
-	if (devm_request_irq(dev, irq, &bcm63xx_udc_ctrl_isr, 0,
+	/* IRQ resource #0: control पूर्णांकerrupt (VBUS, speed, etc.) */
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		जाओ out_uninit;
+	अगर (devm_request_irq(dev, irq, &bcm63xx_udc_ctrl_isr, 0,
 			     dev_name(dev), udc) < 0)
-		goto report_request_failure;
+		जाओ report_request_failure;
 
-	/* IRQ resources #1-6: data interrupts for IUDMA channels 0-5 */
-	for (i = 0; i < BCM63XX_NUM_IUDMA; i++) {
-		irq = platform_get_irq(pdev, i + 1);
-		if (irq < 0)
-			goto out_uninit;
-		if (devm_request_irq(dev, irq, &bcm63xx_udc_data_isr, 0,
+	/* IRQ resources #1-6: data पूर्णांकerrupts क्रम IUDMA channels 0-5 */
+	क्रम (i = 0; i < BCM63XX_NUM_IUDMA; i++) अणु
+		irq = platक्रमm_get_irq(pdev, i + 1);
+		अगर (irq < 0)
+			जाओ out_uninit;
+		अगर (devm_request_irq(dev, irq, &bcm63xx_udc_data_isr, 0,
 				     dev_name(dev), &udc->iudma[i]) < 0)
-			goto report_request_failure;
-	}
+			जाओ report_request_failure;
+	पूर्ण
 
 	bcm63xx_udc_init_debugfs(udc);
 	rc = usb_add_gadget_udc(dev, &udc->gadget);
-	if (!rc)
-		return 0;
+	अगर (!rc)
+		वापस 0;
 
 	bcm63xx_udc_cleanup_debugfs(udc);
 out_uninit:
 	bcm63xx_uninit_udc_hw(udc);
-	return rc;
+	वापस rc;
 
 report_request_failure:
 	dev_err(dev, "error requesting IRQ #%d\n", irq);
-	goto out_uninit;
-}
+	जाओ out_uninit;
+पूर्ण
 
 /**
- * bcm63xx_udc_remove - Remove the device from the system.
- * @pdev: Platform device struct from the bcm63xx BSP code.
+ * bcm63xx_udc_हटाओ - Remove the device from the प्रणाली.
+ * @pdev: Platक्रमm device काष्ठा from the bcm63xx BSP code.
  */
-static int bcm63xx_udc_remove(struct platform_device *pdev)
-{
-	struct bcm63xx_udc *udc = platform_get_drvdata(pdev);
+अटल पूर्णांक bcm63xx_udc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm63xx_udc *udc = platक्रमm_get_drvdata(pdev);
 
 	bcm63xx_udc_cleanup_debugfs(udc);
 	usb_del_gadget_udc(&udc->gadget);
@@ -2371,17 +2372,17 @@ static int bcm63xx_udc_remove(struct platform_device *pdev)
 
 	bcm63xx_uninit_udc_hw(udc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver bcm63xx_udc_driver = {
+अटल काष्ठा platक्रमm_driver bcm63xx_udc_driver = अणु
 	.probe		= bcm63xx_udc_probe,
-	.remove		= bcm63xx_udc_remove,
-	.driver		= {
+	.हटाओ		= bcm63xx_udc_हटाओ,
+	.driver		= अणु
 		.name	= DRV_MODULE_NAME,
-	},
-};
-module_platform_driver(bcm63xx_udc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(bcm63xx_udc_driver);
 
 MODULE_DESCRIPTION("BCM63xx USB Peripheral Controller");
 MODULE_AUTHOR("Kevin Cernekee <cernekee@gmail.com>");

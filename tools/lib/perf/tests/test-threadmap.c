@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdarg.h>
-#include <stdio.h>
-#include <perf/threadmap.h>
-#include <internal/tests.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकतर्क.स>
+#समावेश <मानकपन.स>
+#समावेश <perf/thपढ़ोmap.h>
+#समावेश <पूर्णांकernal/tests.h>
 
-static int libperf_print(enum libperf_print_level level,
-			 const char *fmt, va_list ap)
-{
-	return vfprintf(stderr, fmt, ap);
-}
+अटल पूर्णांक libperf_prपूर्णांक(क्रमागत libperf_prपूर्णांक_level level,
+			 स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
+	वापस भख_लिखो(मानक_त्रुटि, fmt, ap);
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	struct perf_thread_map *threads;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
 
 	__T_START;
 
-	libperf_init(libperf_print);
+	libperf_init(libperf_prपूर्णांक);
 
-	threads = perf_thread_map__new_dummy();
-	if (!threads)
-		return -1;
+	thपढ़ोs = perf_thपढ़ो_map__new_dummy();
+	अगर (!thपढ़ोs)
+		वापस -1;
 
-	perf_thread_map__get(threads);
-	perf_thread_map__put(threads);
-	perf_thread_map__put(threads);
+	perf_thपढ़ो_map__get(thपढ़ोs);
+	perf_thपढ़ो_map__put(thपढ़ोs);
+	perf_thपढ़ो_map__put(thपढ़ोs);
 
 	__T_END;
-	return tests_failed == 0 ? 0 : -1;
-}
+	वापस tests_failed == 0 ? 0 : -1;
+पूर्ण

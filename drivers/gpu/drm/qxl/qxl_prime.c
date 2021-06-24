@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Canonical
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,60 +23,60 @@
  * Authors: Andreas Pokorny
  */
 
-#include "qxl_drv.h"
-#include "qxl_object.h"
+#समावेश "qxl_drv.h"
+#समावेश "qxl_object.h"
 
-/* Empty Implementations as there should not be any other driver for a virtual
+/* Empty Implementations as there should not be any other driver क्रम a भव
  * device that might share buffers with qxl */
 
-int qxl_gem_prime_pin(struct drm_gem_object *obj)
-{
-	struct qxl_bo *bo = gem_to_qxl_bo(obj);
+पूर्णांक qxl_gem_prime_pin(काष्ठा drm_gem_object *obj)
+अणु
+	काष्ठा qxl_bo *bo = gem_to_qxl_bo(obj);
 
-	return qxl_bo_pin(bo);
-}
+	वापस qxl_bo_pin(bo);
+पूर्ण
 
-void qxl_gem_prime_unpin(struct drm_gem_object *obj)
-{
-	struct qxl_bo *bo = gem_to_qxl_bo(obj);
+व्योम qxl_gem_prime_unpin(काष्ठा drm_gem_object *obj)
+अणु
+	काष्ठा qxl_bo *bo = gem_to_qxl_bo(obj);
 
 	qxl_bo_unpin(bo);
-}
+पूर्ण
 
-struct sg_table *qxl_gem_prime_get_sg_table(struct drm_gem_object *obj)
-{
-	return ERR_PTR(-ENOSYS);
-}
+काष्ठा sg_table *qxl_gem_prime_get_sg_table(काष्ठा drm_gem_object *obj)
+अणु
+	वापस ERR_PTR(-ENOSYS);
+पूर्ण
 
-struct drm_gem_object *qxl_gem_prime_import_sg_table(
-	struct drm_device *dev, struct dma_buf_attachment *attach,
-	struct sg_table *table)
-{
-	return ERR_PTR(-ENOSYS);
-}
+काष्ठा drm_gem_object *qxl_gem_prime_import_sg_table(
+	काष्ठा drm_device *dev, काष्ठा dma_buf_attachment *attach,
+	काष्ठा sg_table *table)
+अणु
+	वापस ERR_PTR(-ENOSYS);
+पूर्ण
 
-int qxl_gem_prime_vmap(struct drm_gem_object *obj, struct dma_buf_map *map)
-{
-	struct qxl_bo *bo = gem_to_qxl_bo(obj);
-	int ret;
+पूर्णांक qxl_gem_prime_vmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा qxl_bo *bo = gem_to_qxl_bo(obj);
+	पूर्णांक ret;
 
 	ret = qxl_bo_vmap(bo, map);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void qxl_gem_prime_vunmap(struct drm_gem_object *obj,
-			  struct dma_buf_map *map)
-{
-	struct qxl_bo *bo = gem_to_qxl_bo(obj);
+व्योम qxl_gem_prime_vunmap(काष्ठा drm_gem_object *obj,
+			  काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा qxl_bo *bo = gem_to_qxl_bo(obj);
 
 	qxl_bo_vunmap(bo);
-}
+पूर्ण
 
-int qxl_gem_prime_mmap(struct drm_gem_object *obj,
-		       struct vm_area_struct *area)
-{
-	return -ENOSYS;
-}
+पूर्णांक qxl_gem_prime_mmap(काष्ठा drm_gem_object *obj,
+		       काष्ठा vm_area_काष्ठा *area)
+अणु
+	वापस -ENOSYS;
+पूर्ण

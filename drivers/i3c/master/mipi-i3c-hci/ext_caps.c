@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause
 /*
  * Copyright (c) 2020, MIPI Alliance, Inc.
  *
  * Author: Nicolas Pitre <npitre@baylibre.com>
  */
 
-#include <linux/bitfield.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/i3c/master.h>
-#include <linux/kernel.h>
-#include <linux/io.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/i3c/master.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
 
-#include "hci.h"
-#include "ext_caps.h"
-#include "xfer_mode_rate.h"
+#समावेश "hci.h"
+#समावेश "ext_caps.h"
+#समावेश "xfer_mode_rate.h"
 
 
 /* Extended Capability Header */
-#define CAP_HEADER_LENGTH		GENMASK(23, 8)
-#define CAP_HEADER_ID			GENMASK(7, 0)
+#घोषणा CAP_HEADER_LENGTH		GENMASK(23, 8)
+#घोषणा CAP_HEADER_ID			GENMASK(7, 0)
 
-static int hci_extcap_hardware_id(struct i3c_hci *hci, void __iomem *base)
-{
-	hci->vendor_mipi_id	= readl(base + 0x04);
-	hci->vendor_version_id	= readl(base + 0x08);
-	hci->vendor_product_id	= readl(base + 0x0c);
+अटल पूर्णांक hci_extcap_hardware_id(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
+	hci->venकरोr_mipi_id	= पढ़ोl(base + 0x04);
+	hci->venकरोr_version_id	= पढ़ोl(base + 0x08);
+	hci->venकरोr_product_id	= पढ़ोl(base + 0x0c);
 
-	dev_info(&hci->master.dev, "vendor MIPI ID: %#x\n", hci->vendor_mipi_id);
-	dev_info(&hci->master.dev, "vendor version ID: %#x\n", hci->vendor_version_id);
-	dev_info(&hci->master.dev, "vendor product ID: %#x\n", hci->vendor_product_id);
+	dev_info(&hci->master.dev, "vendor MIPI ID: %#x\n", hci->venकरोr_mipi_id);
+	dev_info(&hci->master.dev, "vendor version ID: %#x\n", hci->venकरोr_version_id);
+	dev_info(&hci->master.dev, "vendor product ID: %#x\n", hci->venकरोr_product_id);
 
-	/* ought to go in a table if this grows too much */
-	switch (hci->vendor_mipi_id) {
-	case MIPI_VENDOR_NXP:
+	/* ought to go in a table अगर this grows too much */
+	चयन (hci->venकरोr_mipi_id) अणु
+	हाल MIPI_VENDOR_NXP:
 		hci->quirks |= HCI_QUIRK_RAW_CCC;
 		DBG("raw CCC quirks set");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_master_config(struct i3c_hci *hci, void __iomem *base)
-{
-	u32 master_config = readl(base + 0x04);
-	unsigned int operation_mode = FIELD_GET(GENMASK(5, 4), master_config);
-	static const char * const functionality[] = {
+अटल पूर्णांक hci_extcap_master_config(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
+	u32 master_config = पढ़ोl(base + 0x04);
+	अचिन्हित पूर्णांक operation_mode = FIELD_GET(GENMASK(5, 4), master_config);
+	अटल स्थिर अक्षर * स्थिर functionality[] = अणु
 		"(unknown)", "master only", "target only",
-		"primary/secondary master" };
+		"primary/secondary master" पूर्ण;
 	dev_info(&hci->master.dev, "operation mode: %s\n", functionality[operation_mode]);
-	if (operation_mode & 0x1)
-		return 0;
+	अगर (operation_mode & 0x1)
+		वापस 0;
 	dev_err(&hci->master.dev, "only master mode is currently supported\n");
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int hci_extcap_multi_bus(struct i3c_hci *hci, void __iomem *base)
-{
-	u32 bus_instance = readl(base + 0x04);
-	unsigned int count = FIELD_GET(GENMASK(3, 0), bus_instance);
+अटल पूर्णांक hci_extcap_multi_bus(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
+	u32 bus_instance = पढ़ोl(base + 0x04);
+	अचिन्हित पूर्णांक count = FIELD_GET(GENMASK(3, 0), bus_instance);
 
 	dev_info(&hci->master.dev, "%d bus instances\n", count);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_xfer_modes(struct i3c_hci *hci, void __iomem *base)
-{
-	u32 header = readl(base);
+अटल पूर्णांक hci_extcap_xfer_modes(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
+	u32 header = पढ़ोl(base);
 	u32 entries = FIELD_GET(CAP_HEADER_LENGTH, header) - 1;
-	unsigned int index;
+	अचिन्हित पूर्णांक index;
 
 	dev_info(&hci->master.dev, "transfer mode table has %d entries\n",
 		 entries);
 	base += 4;  /* skip header */
-	for (index = 0; index < entries; index++) {
-		u32 mode_entry = readl(base);
+	क्रम (index = 0; index < entries; index++) अणु
+		u32 mode_entry = पढ़ोl(base);
 
 		DBG("mode %d: 0x%08x", index, mode_entry);
-		/* TODO: will be needed when I3C core does more than SDR */
+		/* TODO: will be needed when I3C core करोes more than SDR */
 		base += 4;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_xfer_rates(struct i3c_hci *hci, void __iomem *base)
-{
-	u32 header = readl(base);
+अटल पूर्णांक hci_extcap_xfer_rates(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
+	u32 header = पढ़ोl(base);
 	u32 entries = FIELD_GET(CAP_HEADER_LENGTH, header) - 1;
 	u32 rate_entry;
-	unsigned int index, rate, rate_id, mode_id;
+	अचिन्हित पूर्णांक index, rate, rate_id, mode_id;
 
 	base += 4;  /* skip header */
 
 	dev_info(&hci->master.dev, "available data rates:\n");
-	for (index = 0; index < entries; index++) {
-		rate_entry = readl(base);
+	क्रम (index = 0; index < entries; index++) अणु
+		rate_entry = पढ़ोl(base);
 		DBG("entry %d: 0x%08x", index, rate_entry);
 		rate = FIELD_GET(XFERRATE_ACTUAL_RATE_KHZ, rate_entry);
 		rate_id = FIELD_GET(XFERRATE_RATE_ID, rate_entry);
@@ -108,86 +109,86 @@ static int hci_extcap_xfer_rates(struct i3c_hci *hci, void __iomem *base)
 			 "unknown mode",
 			 rate);
 		base += 4;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_auto_command(struct i3c_hci *hci, void __iomem *base)
-{
-	u32 autocmd_ext_caps = readl(base + 0x04);
-	unsigned int max_count = FIELD_GET(GENMASK(3, 0), autocmd_ext_caps);
-	u32 autocmd_ext_config = readl(base + 0x08);
-	unsigned int count = FIELD_GET(GENMASK(3, 0), autocmd_ext_config);
+अटल पूर्णांक hci_extcap_स्वतः_command(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
+	u32 स्वतःcmd_ext_caps = पढ़ोl(base + 0x04);
+	अचिन्हित पूर्णांक max_count = FIELD_GET(GENMASK(3, 0), स्वतःcmd_ext_caps);
+	u32 स्वतःcmd_ext_config = पढ़ोl(base + 0x08);
+	अचिन्हित पूर्णांक count = FIELD_GET(GENMASK(3, 0), स्वतःcmd_ext_config);
 
 	dev_info(&hci->master.dev, "%d/%d active auto-command entries\n",
 		 count, max_count);
-	/* remember auto-command register location for later use */
+	/* remember स्वतः-command रेजिस्टर location क्रम later use */
 	hci->AUTOCMD_regs = base;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_debug(struct i3c_hci *hci, void __iomem *base)
-{
+अटल पूर्णांक hci_extcap_debug(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
 	dev_info(&hci->master.dev, "debug registers present\n");
 	hci->DEBUG_regs = base;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_scheduled_cmd(struct i3c_hci *hci, void __iomem *base)
-{
+अटल पूर्णांक hci_extcap_scheduled_cmd(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
 	dev_info(&hci->master.dev, "scheduled commands available\n");
 	/* hci->schedcmd_regs = base; */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_non_curr_master(struct i3c_hci *hci, void __iomem *base)
-{
+अटल पूर्णांक hci_extcap_non_curr_master(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
 	dev_info(&hci->master.dev, "Non-Current Master support available\n");
 	/* hci->NCM_regs = base; */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_ccc_resp_conf(struct i3c_hci *hci, void __iomem *base)
-{
+अटल पूर्णांक hci_extcap_ccc_resp_conf(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
 	dev_info(&hci->master.dev, "CCC Response Configuration available\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_global_DAT(struct i3c_hci *hci, void __iomem *base)
-{
+अटल पूर्णांक hci_extcap_global_DAT(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
 	dev_info(&hci->master.dev, "Global DAT available\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_multilane(struct i3c_hci *hci, void __iomem *base)
-{
+अटल पूर्णांक hci_extcap_multilane(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
 	dev_info(&hci->master.dev, "Master Multi-Lane support available\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hci_extcap_ncm_multilane(struct i3c_hci *hci, void __iomem *base)
-{
+अटल पूर्णांक hci_extcap_ncm_multilane(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
 	dev_info(&hci->master.dev, "NCM Multi-Lane support available\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct hci_ext_caps {
+काष्ठा hci_ext_caps अणु
 	u8  id;
 	u16 min_length;
-	int (*parser)(struct i3c_hci *hci, void __iomem *base);
-};
+	पूर्णांक (*parser)(काष्ठा i3c_hci *hci, व्योम __iomem *base);
+पूर्ण;
 
-#define EXT_CAP(_id, _highest_mandatory_reg_offset, _parser) \
-	{ .id = (_id), .parser = (_parser), \
-	  .min_length = (_highest_mandatory_reg_offset)/4 + 1 }
+#घोषणा EXT_CAP(_id, _highest_mandatory_reg_offset, _parser) \
+	अणु .id = (_id), .parser = (_parser), \
+	  .min_length = (_highest_mandatory_reg_offset)/4 + 1 पूर्ण
 
-static const struct hci_ext_caps ext_capabilities[] = {
+अटल स्थिर काष्ठा hci_ext_caps ext_capabilities[] = अणु
 	EXT_CAP(0x01, 0x0c, hci_extcap_hardware_id),
 	EXT_CAP(0x02, 0x04, hci_extcap_master_config),
 	EXT_CAP(0x03, 0x04, hci_extcap_multi_bus),
 	EXT_CAP(0x04, 0x24, hci_extcap_xfer_modes),
-	EXT_CAP(0x05, 0x08, hci_extcap_auto_command),
+	EXT_CAP(0x05, 0x08, hci_extcap_स्वतः_command),
 	EXT_CAP(0x08, 0x40, hci_extcap_xfer_rates),
 	EXT_CAP(0x0c, 0x10, hci_extcap_debug),
 	EXT_CAP(0x0d, 0x0c, hci_extcap_scheduled_cmd),
@@ -196,113 +197,113 @@ static const struct hci_ext_caps ext_capabilities[] = {
 	EXT_CAP(0x10, 0x08, hci_extcap_global_DAT),
 	EXT_CAP(0x9d, 0x04,	hci_extcap_multilane),
 	EXT_CAP(0x9e, 0x04, hci_extcap_ncm_multilane),
-};
+पूर्ण;
 
-static int hci_extcap_vendor_NXP(struct i3c_hci *hci, void __iomem *base)
-{
-	hci->vendor_data = (__force void *)base;
-	dev_info(&hci->master.dev, "Build Date Info = %#x\n", readl(base + 1*4));
+अटल पूर्णांक hci_extcap_venकरोr_NXP(काष्ठा i3c_hci *hci, व्योम __iomem *base)
+अणु
+	hci->venकरोr_data = (__क्रमce व्योम *)base;
+	dev_info(&hci->master.dev, "Build Date Info = %#x\n", पढ़ोl(base + 1*4));
 	/* reset the FPGA */
-	writel(0xdeadbeef, base + 1*4);
-	return 0;
-}
+	ग_लिखोl(0xdeadbeef, base + 1*4);
+	वापस 0;
+पूर्ण
 
-struct hci_ext_cap_vendor_specific {
-	u32 vendor;
+काष्ठा hci_ext_cap_venकरोr_specअगरic अणु
+	u32 venकरोr;
 	u8  cap;
 	u16 min_length;
-	int (*parser)(struct i3c_hci *hci, void __iomem *base);
-};
+	पूर्णांक (*parser)(काष्ठा i3c_hci *hci, व्योम __iomem *base);
+पूर्ण;
 
-#define EXT_CAP_VENDOR(_vendor, _cap, _highest_mandatory_reg_offset) \
-	{ .vendor = (MIPI_VENDOR_##_vendor), .cap = (_cap), \
-	  .parser = (hci_extcap_vendor_##_vendor), \
-	  .min_length = (_highest_mandatory_reg_offset)/4 + 1 }
+#घोषणा EXT_CAP_VENDOR(_venकरोr, _cap, _highest_mandatory_reg_offset) \
+	अणु .venकरोr = (MIPI_VENDOR_##_venकरोr), .cap = (_cap), \
+	  .parser = (hci_extcap_venकरोr_##_venकरोr), \
+	  .min_length = (_highest_mandatory_reg_offset)/4 + 1 पूर्ण
 
-static const struct hci_ext_cap_vendor_specific vendor_ext_caps[] = {
+अटल स्थिर काष्ठा hci_ext_cap_venकरोr_specअगरic venकरोr_ext_caps[] = अणु
 	EXT_CAP_VENDOR(NXP, 0xc0, 0x20),
-};
+पूर्ण;
 
-static int hci_extcap_vendor_specific(struct i3c_hci *hci, void __iomem *base,
+अटल पूर्णांक hci_extcap_venकरोr_specअगरic(काष्ठा i3c_hci *hci, व्योम __iomem *base,
 				      u32 cap_id, u32 cap_length)
-{
-	const struct hci_ext_cap_vendor_specific *vendor_cap_entry;
-	int i;
+अणु
+	स्थिर काष्ठा hci_ext_cap_venकरोr_specअगरic *venकरोr_cap_entry;
+	पूर्णांक i;
 
-	vendor_cap_entry = NULL;
-	for (i = 0; i < ARRAY_SIZE(vendor_ext_caps); i++) {
-		if (vendor_ext_caps[i].vendor == hci->vendor_mipi_id &&
-		    vendor_ext_caps[i].cap == cap_id) {
-			vendor_cap_entry = &vendor_ext_caps[i];
-			break;
-		}
-	}
+	venकरोr_cap_entry = शून्य;
+	क्रम (i = 0; i < ARRAY_SIZE(venकरोr_ext_caps); i++) अणु
+		अगर (venकरोr_ext_caps[i].venकरोr == hci->venकरोr_mipi_id &&
+		    venकरोr_ext_caps[i].cap == cap_id) अणु
+			venकरोr_cap_entry = &venकरोr_ext_caps[i];
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!vendor_cap_entry) {
+	अगर (!venकरोr_cap_entry) अणु
 		dev_notice(&hci->master.dev,
 			   "unknown ext_cap 0x%02x for vendor 0x%02x\n",
-			   cap_id, hci->vendor_mipi_id);
-		return 0;
-	}
-	if (cap_length < vendor_cap_entry->min_length) {
+			   cap_id, hci->venकरोr_mipi_id);
+		वापस 0;
+	पूर्ण
+	अगर (cap_length < venकरोr_cap_entry->min_length) अणु
 		dev_err(&hci->master.dev,
 			"ext_cap 0x%02x has size %d (expecting >= %d)\n",
-			cap_id, cap_length, vendor_cap_entry->min_length);
-		return -EINVAL;
-	}
-	return vendor_cap_entry->parser(hci, base);
-}
+			cap_id, cap_length, venकरोr_cap_entry->min_length);
+		वापस -EINVAL;
+	पूर्ण
+	वापस venकरोr_cap_entry->parser(hci, base);
+पूर्ण
 
-int i3c_hci_parse_ext_caps(struct i3c_hci *hci)
-{
-	void __iomem *curr_cap = hci->EXTCAPS_regs;
-	void __iomem *end = curr_cap + 0x1000; /* some arbitrary limit */
+पूर्णांक i3c_hci_parse_ext_caps(काष्ठा i3c_hci *hci)
+अणु
+	व्योम __iomem *curr_cap = hci->EXTCAPS_regs;
+	व्योम __iomem *end = curr_cap + 0x1000; /* some arbitrary limit */
 	u32 cap_header, cap_id, cap_length;
-	const struct hci_ext_caps *cap_entry;
-	int i, err = 0;
+	स्थिर काष्ठा hci_ext_caps *cap_entry;
+	पूर्णांक i, err = 0;
 
-	if (!curr_cap)
-		return 0;
+	अगर (!curr_cap)
+		वापस 0;
 
-	for (; !err && curr_cap < end; curr_cap += cap_length * 4) {
-		cap_header = readl(curr_cap);
+	क्रम (; !err && curr_cap < end; curr_cap += cap_length * 4) अणु
+		cap_header = पढ़ोl(curr_cap);
 		cap_id = FIELD_GET(CAP_HEADER_ID, cap_header);
 		cap_length = FIELD_GET(CAP_HEADER_LENGTH, cap_header);
 		DBG("id=0x%02x length=%d", cap_id, cap_length);
-		if (!cap_length)
-			break;
-		if (curr_cap + cap_length * 4 >= end) {
+		अगर (!cap_length)
+			अवरोध;
+		अगर (curr_cap + cap_length * 4 >= end) अणु
 			dev_err(&hci->master.dev,
 				"ext_cap 0x%02x has size %d (too big)\n",
 				cap_id, cap_length);
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (cap_id >= 0xc0 && cap_id <= 0xcf) {
-			err = hci_extcap_vendor_specific(hci, curr_cap,
+		अगर (cap_id >= 0xc0 && cap_id <= 0xcf) अणु
+			err = hci_extcap_venकरोr_specअगरic(hci, curr_cap,
 							 cap_id, cap_length);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		cap_entry = NULL;
-		for (i = 0; i < ARRAY_SIZE(ext_capabilities); i++) {
-			if (ext_capabilities[i].id == cap_id) {
+		cap_entry = शून्य;
+		क्रम (i = 0; i < ARRAY_SIZE(ext_capabilities); i++) अणु
+			अगर (ext_capabilities[i].id == cap_id) अणु
 				cap_entry = &ext_capabilities[i];
-				break;
-			}
-		}
-		if (!cap_entry) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (!cap_entry) अणु
 			dev_notice(&hci->master.dev,
 				   "unknown ext_cap 0x%02x\n", cap_id);
-		} else if (cap_length < cap_entry->min_length) {
+		पूर्ण अन्यथा अगर (cap_length < cap_entry->min_length) अणु
 			dev_err(&hci->master.dev,
 				"ext_cap 0x%02x has size %d (expecting >= %d)\n",
 				cap_id, cap_length, cap_entry->min_length);
 			err = -EINVAL;
-		} else {
+		पूर्ण अन्यथा अणु
 			err = cap_entry->parser(hci, curr_cap);
-		}
-	}
-	return err;
-}
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण

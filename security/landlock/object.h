@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Landlock LSM - Object management
  *
- * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
- * Copyright © 2018-2020 ANSSI
+ * Copyright तऊ 2016-2020 Mickaथ+l Salaथञn <mic@digikod.net>
+ * Copyright तऊ 2018-2020 ANSSI
  */
 
-#ifndef _SECURITY_LANDLOCK_OBJECT_H
-#define _SECURITY_LANDLOCK_OBJECT_H
+#अगर_अघोषित _SECURITY_LANDLOCK_OBJECT_H
+#घोषणा _SECURITY_LANDLOCK_OBJECT_H
 
-#include <linux/compiler_types.h>
-#include <linux/refcount.h>
-#include <linux/spinlock.h>
+#समावेश <linux/compiler_types.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/spinlock.h>
 
-struct landlock_object;
+काष्ठा landlock_object;
 
 /**
- * struct landlock_object_underops - Operations on an underlying object
+ * काष्ठा landlock_object_underops - Operations on an underlying object
  */
-struct landlock_object_underops {
+काष्ठा landlock_object_underops अणु
 	/**
-	 * @release: Releases the underlying object (e.g. iput() for an inode).
+	 * @release: Releases the underlying object (e.g. iput() क्रम an inode).
 	 */
-	void (*release)(struct landlock_object *const object)
+	व्योम (*release)(काष्ठा landlock_object *स्थिर object)
 		__releases(object->lock);
-};
+पूर्ण;
 
 /**
- * struct landlock_object - Security blob tied to a kernel object
+ * काष्ठा landlock_object - Security blob tied to a kernel object
  *
- * The goal of this structure is to enable to tie a set of ephemeral access
- * rights (pertaining to different domains) to a kernel object (e.g an inode)
- * in a safe way.  This implies to handle concurrent use and modification.
+ * The goal of this काष्ठाure is to enable to tie a set of ephemeral access
+ * rights (pertaining to dअगरferent करोमुख्यs) to a kernel object (e.g an inode)
+ * in a safe way.  This implies to handle concurrent use and modअगरication.
  *
- * The lifetime of a &struct landlock_object depends on the rules referring to
+ * The lअगरeसमय of a &काष्ठा landlock_object depends on the rules referring to
  * it.
  */
-struct landlock_object {
+काष्ठा landlock_object अणु
 	/**
 	 * @usage: This counter is used to tie an object to the rules matching
-	 * it or to keep it alive while adding a new rule.  If this counter
-	 * reaches zero, this struct must not be modified, but this counter can
-	 * still be read from within an RCU read-side critical section.  When
+	 * it or to keep it alive जबतक adding a new rule.  If this counter
+	 * reaches zero, this काष्ठा must not be modअगरied, but this counter can
+	 * still be पढ़ो from within an RCU पढ़ो-side critical section.  When
 	 * adding a new rule to an object with a usage counter of zero, we must
-	 * wait until the pointer to this object is set to NULL (or recycled).
+	 * रुको until the poपूर्णांकer to this object is set to शून्य (or recycled).
 	 */
 	refcount_t usage;
 	/**
-	 * @lock: Protects against concurrent modifications.  This lock must be
-	 * held from the time @usage drops to zero until any weak references
+	 * @lock: Protects against concurrent modअगरications.  This lock must be
+	 * held from the समय @usage drops to zero until any weak references
 	 * from @underobj to this object have been cleaned up.
 	 *
 	 * Lock ordering: inode->i_lock nests inside this.
@@ -56,36 +57,36 @@ struct landlock_object {
 	spinlock_t lock;
 	/**
 	 * @underobj: Used when cleaning up an object and to mark an object as
-	 * tied to its underlying kernel structure.  This pointer is protected
+	 * tied to its underlying kernel काष्ठाure.  This poपूर्णांकer is रक्षित
 	 * by @lock.  Cf. landlock_release_inodes() and release_inode().
 	 */
-	void *underobj;
-	union {
+	व्योम *underobj;
+	जोड़ अणु
 		/**
-		 * @rcu_free: Enables lockless use of @usage, @lock and
-		 * @underobj from within an RCU read-side critical section.
-		 * @rcu_free and @underops are only used by
+		 * @rcu_मुक्त: Enables lockless use of @usage, @lock and
+		 * @underobj from within an RCU पढ़ो-side critical section.
+		 * @rcu_मुक्त and @underops are only used by
 		 * landlock_put_object().
 		 */
-		struct rcu_head rcu_free;
+		काष्ठा rcu_head rcu_मुक्त;
 		/**
 		 * @underops: Enables landlock_put_object() to release the
 		 * underlying object (e.g. inode).
 		 */
-		const struct landlock_object_underops *underops;
-	};
-};
+		स्थिर काष्ठा landlock_object_underops *underops;
+	पूर्ण;
+पूर्ण;
 
-struct landlock_object *landlock_create_object(
-		const struct landlock_object_underops *const underops,
-		void *const underobj);
+काष्ठा landlock_object *landlock_create_object(
+		स्थिर काष्ठा landlock_object_underops *स्थिर underops,
+		व्योम *स्थिर underobj);
 
-void landlock_put_object(struct landlock_object *const object);
+व्योम landlock_put_object(काष्ठा landlock_object *स्थिर object);
 
-static inline void landlock_get_object(struct landlock_object *const object)
-{
-	if (object)
+अटल अंतरभूत व्योम landlock_get_object(काष्ठा landlock_object *स्थिर object)
+अणु
+	अगर (object)
 		refcount_inc(&object->usage);
-}
+पूर्ण
 
-#endif /* _SECURITY_LANDLOCK_OBJECT_H */
+#पूर्ण_अगर /* _SECURITY_LANDLOCK_OBJECT_H */

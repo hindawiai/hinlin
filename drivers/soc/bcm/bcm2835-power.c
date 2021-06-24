@@ -1,196 +1,197 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Power domain driver for Broadcom BCM2835
+ * Power करोमुख्य driver क्रम Broadcom BCM2835
  *
  * Copyright (C) 2018 Broadcom
  */
 
-#include <dt-bindings/soc/bcm2835-pm.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/mfd/bcm2835-pm.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/pm_domain.h>
-#include <linux/reset-controller.h>
-#include <linux/types.h>
+#समावेश <dt-bindings/soc/bcm2835-pm.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/bcm2835-pm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/reset-controller.h>
+#समावेश <linux/types.h>
 
-#define PM_GNRIC                        0x00
-#define PM_AUDIO                        0x04
-#define PM_STATUS                       0x18
-#define PM_RSTC				0x1c
-#define PM_RSTS				0x20
-#define PM_WDOG				0x24
-#define PM_PADS0			0x28
-#define PM_PADS2			0x2c
-#define PM_PADS3			0x30
-#define PM_PADS4			0x34
-#define PM_PADS5			0x38
-#define PM_PADS6			0x3c
-#define PM_CAM0				0x44
-#define PM_CAM0_LDOHPEN			BIT(2)
-#define PM_CAM0_LDOLPEN			BIT(1)
-#define PM_CAM0_CTRLEN			BIT(0)
+#घोषणा PM_GNRIC                        0x00
+#घोषणा PM_AUDIO                        0x04
+#घोषणा PM_STATUS                       0x18
+#घोषणा PM_RSTC				0x1c
+#घोषणा PM_RSTS				0x20
+#घोषणा PM_WDOG				0x24
+#घोषणा PM_PADS0			0x28
+#घोषणा PM_PADS2			0x2c
+#घोषणा PM_PADS3			0x30
+#घोषणा PM_PADS4			0x34
+#घोषणा PM_PADS5			0x38
+#घोषणा PM_PADS6			0x3c
+#घोषणा PM_CAM0				0x44
+#घोषणा PM_CAM0_LDOHPEN			BIT(2)
+#घोषणा PM_CAM0_LDOLPEN			BIT(1)
+#घोषणा PM_CAM0_CTRLEN			BIT(0)
 
-#define PM_CAM1				0x48
-#define PM_CAM1_LDOHPEN			BIT(2)
-#define PM_CAM1_LDOLPEN			BIT(1)
-#define PM_CAM1_CTRLEN			BIT(0)
+#घोषणा PM_CAM1				0x48
+#घोषणा PM_CAM1_LDOHPEN			BIT(2)
+#घोषणा PM_CAM1_LDOLPEN			BIT(1)
+#घोषणा PM_CAM1_CTRLEN			BIT(0)
 
-#define PM_CCP2TX			0x4c
-#define PM_CCP2TX_LDOEN			BIT(1)
-#define PM_CCP2TX_CTRLEN		BIT(0)
+#घोषणा PM_CCP2TX			0x4c
+#घोषणा PM_CCP2TX_LDOEN			BIT(1)
+#घोषणा PM_CCP2TX_CTRLEN		BIT(0)
 
-#define PM_DSI0				0x50
-#define PM_DSI0_LDOHPEN			BIT(2)
-#define PM_DSI0_LDOLPEN			BIT(1)
-#define PM_DSI0_CTRLEN			BIT(0)
+#घोषणा PM_DSI0				0x50
+#घोषणा PM_DSI0_LDOHPEN			BIT(2)
+#घोषणा PM_DSI0_LDOLPEN			BIT(1)
+#घोषणा PM_DSI0_CTRLEN			BIT(0)
 
-#define PM_DSI1				0x54
-#define PM_DSI1_LDOHPEN			BIT(2)
-#define PM_DSI1_LDOLPEN			BIT(1)
-#define PM_DSI1_CTRLEN			BIT(0)
+#घोषणा PM_DSI1				0x54
+#घोषणा PM_DSI1_LDOHPEN			BIT(2)
+#घोषणा PM_DSI1_LDOLPEN			BIT(1)
+#घोषणा PM_DSI1_CTRLEN			BIT(0)
 
-#define PM_HDMI				0x58
-#define PM_HDMI_RSTDR			BIT(19)
-#define PM_HDMI_LDOPD			BIT(1)
-#define PM_HDMI_CTRLEN			BIT(0)
+#घोषणा PM_HDMI				0x58
+#घोषणा PM_HDMI_RSTDR			BIT(19)
+#घोषणा PM_HDMI_LDOPD			BIT(1)
+#घोषणा PM_HDMI_CTRLEN			BIT(0)
 
-#define PM_USB				0x5c
-/* The power gates must be enabled with this bit before enabling the LDO in the
+#घोषणा PM_USB				0x5c
+/* The घातer gates must be enabled with this bit beक्रमe enabling the LDO in the
  * USB block.
  */
-#define PM_USB_CTRLEN			BIT(0)
+#घोषणा PM_USB_CTRLEN			BIT(0)
 
-#define PM_PXLDO			0x60
-#define PM_PXBG				0x64
-#define PM_DFT				0x68
-#define PM_SMPS				0x6c
-#define PM_XOSC				0x70
-#define PM_SPAREW			0x74
-#define PM_SPARER			0x78
-#define PM_AVS_RSTDR			0x7c
-#define PM_AVS_STAT			0x80
-#define PM_AVS_EVENT			0x84
-#define PM_AVS_INTEN			0x88
-#define PM_DUMMY			0xfc
+#घोषणा PM_PXLDO			0x60
+#घोषणा PM_PXBG				0x64
+#घोषणा PM_DFT				0x68
+#घोषणा PM_SMPS				0x6c
+#घोषणा PM_XOSC				0x70
+#घोषणा PM_SPAREW			0x74
+#घोषणा PM_SPARER			0x78
+#घोषणा PM_AVS_RSTDR			0x7c
+#घोषणा PM_AVS_STAT			0x80
+#घोषणा PM_AVS_EVENT			0x84
+#घोषणा PM_AVS_INTEN			0x88
+#घोषणा PM_DUMMY			0xfc
 
-#define PM_IMAGE			0x108
-#define PM_GRAFX			0x10c
-#define PM_PROC				0x110
-#define PM_ENAB				BIT(12)
-#define PM_ISPRSTN			BIT(8)
-#define PM_H264RSTN			BIT(7)
-#define PM_PERIRSTN			BIT(6)
-#define PM_V3DRSTN			BIT(6)
-#define PM_ISFUNC			BIT(5)
-#define PM_MRDONE			BIT(4)
-#define PM_MEMREP			BIT(3)
-#define PM_ISPOW			BIT(2)
-#define PM_POWOK			BIT(1)
-#define PM_POWUP			BIT(0)
-#define PM_INRUSH_SHIFT			13
-#define PM_INRUSH_3_5_MA		0
-#define PM_INRUSH_5_MA			1
-#define PM_INRUSH_10_MA			2
-#define PM_INRUSH_20_MA			3
-#define PM_INRUSH_MASK			(3 << PM_INRUSH_SHIFT)
+#घोषणा PM_IMAGE			0x108
+#घोषणा PM_GRAFX			0x10c
+#घोषणा PM_PROC				0x110
+#घोषणा PM_ENAB				BIT(12)
+#घोषणा PM_ISPRSTN			BIT(8)
+#घोषणा PM_H264RSTN			BIT(7)
+#घोषणा PM_PERIRSTN			BIT(6)
+#घोषणा PM_V3DRSTN			BIT(6)
+#घोषणा PM_ISFUNC			BIT(5)
+#घोषणा PM_MRDONE			BIT(4)
+#घोषणा PM_MEMREP			BIT(3)
+#घोषणा PM_ISPOW			BIT(2)
+#घोषणा PM_POWOK			BIT(1)
+#घोषणा PM_POWUP			BIT(0)
+#घोषणा PM_INRUSH_SHIFT			13
+#घोषणा PM_INRUSH_3_5_MA		0
+#घोषणा PM_INRUSH_5_MA			1
+#घोषणा PM_INRUSH_10_MA			2
+#घोषणा PM_INRUSH_20_MA			3
+#घोषणा PM_INRUSH_MASK			(3 << PM_INRUSH_SHIFT)
 
-#define PM_PASSWORD			0x5a000000
+#घोषणा PM_PASSWORD			0x5a000000
 
-#define PM_WDOG_TIME_SET		0x000fffff
-#define PM_RSTC_WRCFG_CLR		0xffffffcf
-#define PM_RSTS_HADWRH_SET		0x00000040
-#define PM_RSTC_WRCFG_SET		0x00000030
-#define PM_RSTC_WRCFG_FULL_RESET	0x00000020
-#define PM_RSTC_RESET			0x00000102
+#घोषणा PM_WDOG_TIME_SET		0x000fffff
+#घोषणा PM_RSTC_WRCFG_CLR		0xffffffcf
+#घोषणा PM_RSTS_HADWRH_SET		0x00000040
+#घोषणा PM_RSTC_WRCFG_SET		0x00000030
+#घोषणा PM_RSTC_WRCFG_FULL_RESET	0x00000020
+#घोषणा PM_RSTC_RESET			0x00000102
 
-#define PM_READ(reg) readl(power->base + (reg))
-#define PM_WRITE(reg, val) writel(PM_PASSWORD | (val), power->base + (reg))
+#घोषणा PM_READ(reg) पढ़ोl(घातer->base + (reg))
+#घोषणा PM_WRITE(reg, val) ग_लिखोl(PM_PASSWORD | (val), घातer->base + (reg))
 
-#define ASB_BRDG_VERSION                0x00
-#define ASB_CPR_CTRL                    0x04
+#घोषणा ASB_BRDG_VERSION                0x00
+#घोषणा ASB_CPR_CTRL                    0x04
 
-#define ASB_V3D_S_CTRL			0x08
-#define ASB_V3D_M_CTRL			0x0c
-#define ASB_ISP_S_CTRL			0x10
-#define ASB_ISP_M_CTRL			0x14
-#define ASB_H264_S_CTRL			0x18
-#define ASB_H264_M_CTRL			0x1c
+#घोषणा ASB_V3D_S_CTRL			0x08
+#घोषणा ASB_V3D_M_CTRL			0x0c
+#घोषणा ASB_ISP_S_CTRL			0x10
+#घोषणा ASB_ISP_M_CTRL			0x14
+#घोषणा ASB_H264_S_CTRL			0x18
+#घोषणा ASB_H264_M_CTRL			0x1c
 
-#define ASB_REQ_STOP                    BIT(0)
-#define ASB_ACK                         BIT(1)
-#define ASB_EMPTY                       BIT(2)
-#define ASB_FULL                        BIT(3)
+#घोषणा ASB_REQ_STOP                    BIT(0)
+#घोषणा ASB_ACK                         BIT(1)
+#घोषणा ASB_EMPTY                       BIT(2)
+#घोषणा ASB_FULL                        BIT(3)
 
-#define ASB_AXI_BRDG_ID			0x20
+#घोषणा ASB_AXI_BRDG_ID			0x20
 
-#define ASB_READ(reg) readl(power->asb + (reg))
-#define ASB_WRITE(reg, val) writel(PM_PASSWORD | (val), power->asb + (reg))
+#घोषणा ASB_READ(reg) पढ़ोl(घातer->asb + (reg))
+#घोषणा ASB_WRITE(reg, val) ग_लिखोl(PM_PASSWORD | (val), घातer->asb + (reg))
 
-struct bcm2835_power_domain {
-	struct generic_pm_domain base;
-	struct bcm2835_power *power;
-	u32 domain;
-	struct clk *clk;
-};
+काष्ठा bcm2835_घातer_करोमुख्य अणु
+	काष्ठा generic_pm_करोमुख्य base;
+	काष्ठा bcm2835_घातer *घातer;
+	u32 करोमुख्य;
+	काष्ठा clk *clk;
+पूर्ण;
 
-struct bcm2835_power {
-	struct device		*dev;
-	/* PM registers. */
-	void __iomem		*base;
-	/* AXI Async bridge registers. */
-	void __iomem		*asb;
+काष्ठा bcm2835_घातer अणु
+	काष्ठा device		*dev;
+	/* PM रेजिस्टरs. */
+	व्योम __iomem		*base;
+	/* AXI Async bridge रेजिस्टरs. */
+	व्योम __iomem		*asb;
 
-	struct genpd_onecell_data pd_xlate;
-	struct bcm2835_power_domain domains[BCM2835_POWER_DOMAIN_COUNT];
-	struct reset_controller_dev reset;
-};
+	काष्ठा genpd_onecell_data pd_xlate;
+	काष्ठा bcm2835_घातer_करोमुख्य करोमुख्यs[BCM2835_POWER_DOMAIN_COUNT];
+	काष्ठा reset_controller_dev reset;
+पूर्ण;
 
-static int bcm2835_asb_enable(struct bcm2835_power *power, u32 reg)
-{
+अटल पूर्णांक bcm2835_asb_enable(काष्ठा bcm2835_घातer *घातer, u32 reg)
+अणु
 	u64 start;
 
-	if (!reg)
-		return 0;
+	अगर (!reg)
+		वापस 0;
 
-	start = ktime_get_ns();
+	start = kसमय_get_ns();
 
 	/* Enable the module's async AXI bridges. */
 	ASB_WRITE(reg, ASB_READ(reg) & ~ASB_REQ_STOP);
-	while (ASB_READ(reg) & ASB_ACK) {
+	जबतक (ASB_READ(reg) & ASB_ACK) अणु
 		cpu_relax();
-		if (ktime_get_ns() - start >= 1000)
-			return -ETIMEDOUT;
-	}
+		अगर (kसमय_get_ns() - start >= 1000)
+			वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm2835_asb_disable(struct bcm2835_power *power, u32 reg)
-{
+अटल पूर्णांक bcm2835_asb_disable(काष्ठा bcm2835_घातer *घातer, u32 reg)
+अणु
 	u64 start;
 
-	if (!reg)
-		return 0;
+	अगर (!reg)
+		वापस 0;
 
-	start = ktime_get_ns();
+	start = kसमय_get_ns();
 
 	/* Enable the module's async AXI bridges. */
 	ASB_WRITE(reg, ASB_READ(reg) | ASB_REQ_STOP);
-	while (!(ASB_READ(reg) & ASB_ACK)) {
+	जबतक (!(ASB_READ(reg) & ASB_ACK)) अणु
 		cpu_relax();
-		if (ktime_get_ns() - start >= 1000)
-			return -ETIMEDOUT;
-	}
+		अगर (kसमय_get_ns() - start >= 1000)
+			वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm2835_power_power_off(struct bcm2835_power_domain *pd, u32 pm_reg)
-{
-	struct bcm2835_power *power = pd->power;
+अटल पूर्णांक bcm2835_घातer_घातer_off(काष्ठा bcm2835_घातer_करोमुख्य *pd, u32 pm_reg)
+अणु
+	काष्ठा bcm2835_घातer *घातer = pd->घातer;
 
 	/* Enable functional isolation */
 	PM_WRITE(pm_reg, PM_READ(pm_reg) & ~PM_ISFUNC);
@@ -198,390 +199,390 @@ static int bcm2835_power_power_off(struct bcm2835_power_domain *pd, u32 pm_reg)
 	/* Enable electrical isolation */
 	PM_WRITE(pm_reg, PM_READ(pm_reg) & ~PM_ISPOW);
 
-	/* Open the power switches. */
+	/* Open the घातer चयनes. */
 	PM_WRITE(pm_reg, PM_READ(pm_reg) & ~PM_POWUP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm2835_power_power_on(struct bcm2835_power_domain *pd, u32 pm_reg)
-{
-	struct bcm2835_power *power = pd->power;
-	struct device *dev = power->dev;
+अटल पूर्णांक bcm2835_घातer_घातer_on(काष्ठा bcm2835_घातer_करोमुख्य *pd, u32 pm_reg)
+अणु
+	काष्ठा bcm2835_घातer *घातer = pd->घातer;
+	काष्ठा device *dev = घातer->dev;
 	u64 start;
-	int ret;
-	int inrush;
-	bool powok;
+	पूर्णांक ret;
+	पूर्णांक inrush;
+	bool घातok;
 
-	/* If it was already powered on by the fw, leave it that way. */
-	if (PM_READ(pm_reg) & PM_POWUP)
-		return 0;
+	/* If it was alपढ़ोy घातered on by the fw, leave it that way. */
+	अगर (PM_READ(pm_reg) & PM_POWUP)
+		वापस 0;
 
-	/* Enable power.  Allowing too much current at once may result
+	/* Enable घातer.  Allowing too much current at once may result
 	 * in POWOK never getting set, so start low and ramp it up as
 	 * necessary to succeed.
 	 */
-	powok = false;
-	for (inrush = PM_INRUSH_3_5_MA; inrush <= PM_INRUSH_20_MA; inrush++) {
+	घातok = false;
+	क्रम (inrush = PM_INRUSH_3_5_MA; inrush <= PM_INRUSH_20_MA; inrush++) अणु
 		PM_WRITE(pm_reg,
 			 (PM_READ(pm_reg) & ~PM_INRUSH_MASK) |
 			 (inrush << PM_INRUSH_SHIFT) |
 			 PM_POWUP);
 
-		start = ktime_get_ns();
-		while (!(powok = !!(PM_READ(pm_reg) & PM_POWOK))) {
+		start = kसमय_get_ns();
+		जबतक (!(घातok = !!(PM_READ(pm_reg) & PM_POWOK))) अणु
 			cpu_relax();
-			if (ktime_get_ns() - start >= 3000)
-				break;
-		}
-	}
-	if (!powok) {
+			अगर (kसमय_get_ns() - start >= 3000)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!घातok) अणु
 		dev_err(dev, "Timeout waiting for %s power OK\n",
 			pd->base.name);
 		ret = -ETIMEDOUT;
-		goto err_disable_powup;
-	}
+		जाओ err_disable_घातup;
+	पूर्ण
 
 	/* Disable electrical isolation */
 	PM_WRITE(pm_reg, PM_READ(pm_reg) | PM_ISPOW);
 
 	/* Repair memory */
 	PM_WRITE(pm_reg, PM_READ(pm_reg) | PM_MEMREP);
-	start = ktime_get_ns();
-	while (!(PM_READ(pm_reg) & PM_MRDONE)) {
+	start = kसमय_get_ns();
+	जबतक (!(PM_READ(pm_reg) & PM_MRDONE)) अणु
 		cpu_relax();
-		if (ktime_get_ns() - start >= 1000) {
+		अगर (kसमय_get_ns() - start >= 1000) अणु
 			dev_err(dev, "Timeout waiting for %s memory repair\n",
 				pd->base.name);
 			ret = -ETIMEDOUT;
-			goto err_disable_ispow;
-		}
-	}
+			जाओ err_disable_isघात;
+		पूर्ण
+	पूर्ण
 
 	/* Disable functional isolation */
 	PM_WRITE(pm_reg, PM_READ(pm_reg) | PM_ISFUNC);
 
-	return 0;
+	वापस 0;
 
-err_disable_ispow:
+err_disable_isघात:
 	PM_WRITE(pm_reg, PM_READ(pm_reg) & ~PM_ISPOW);
-err_disable_powup:
+err_disable_घातup:
 	PM_WRITE(pm_reg, PM_READ(pm_reg) & ~(PM_POWUP | PM_INRUSH_MASK));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bcm2835_asb_power_on(struct bcm2835_power_domain *pd,
+अटल पूर्णांक bcm2835_asb_घातer_on(काष्ठा bcm2835_घातer_करोमुख्य *pd,
 				u32 pm_reg,
 				u32 asb_m_reg,
 				u32 asb_s_reg,
 				u32 reset_flags)
-{
-	struct bcm2835_power *power = pd->power;
-	int ret;
+अणु
+	काष्ठा bcm2835_घातer *घातer = pd->घातer;
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(pd->clk);
-	if (ret) {
-		dev_err(power->dev, "Failed to enable clock for %s\n",
+	अगर (ret) अणु
+		dev_err(घातer->dev, "Failed to enable clock for %s\n",
 			pd->base.name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Wait 32 clocks for reset to propagate, 1 us will be enough */
+	/* Wait 32 घड़ीs क्रम reset to propagate, 1 us will be enough */
 	udelay(1);
 
 	clk_disable_unprepare(pd->clk);
 
-	/* Deassert the resets. */
+	/* Deनिश्चित the resets. */
 	PM_WRITE(pm_reg, PM_READ(pm_reg) | reset_flags);
 
 	ret = clk_prepare_enable(pd->clk);
-	if (ret) {
-		dev_err(power->dev, "Failed to enable clock for %s\n",
+	अगर (ret) अणु
+		dev_err(घातer->dev, "Failed to enable clock for %s\n",
 			pd->base.name);
-		goto err_enable_resets;
-	}
+		जाओ err_enable_resets;
+	पूर्ण
 
-	ret = bcm2835_asb_enable(power, asb_m_reg);
-	if (ret) {
-		dev_err(power->dev, "Failed to enable ASB master for %s\n",
+	ret = bcm2835_asb_enable(घातer, asb_m_reg);
+	अगर (ret) अणु
+		dev_err(घातer->dev, "Failed to enable ASB master for %s\n",
 			pd->base.name);
-		goto err_disable_clk;
-	}
-	ret = bcm2835_asb_enable(power, asb_s_reg);
-	if (ret) {
-		dev_err(power->dev, "Failed to enable ASB slave for %s\n",
+		जाओ err_disable_clk;
+	पूर्ण
+	ret = bcm2835_asb_enable(घातer, asb_s_reg);
+	अगर (ret) अणु
+		dev_err(घातer->dev, "Failed to enable ASB slave for %s\n",
 			pd->base.name);
-		goto err_disable_asb_master;
-	}
+		जाओ err_disable_asb_master;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_disable_asb_master:
-	bcm2835_asb_disable(power, asb_m_reg);
+	bcm2835_asb_disable(घातer, asb_m_reg);
 err_disable_clk:
 	clk_disable_unprepare(pd->clk);
 err_enable_resets:
 	PM_WRITE(pm_reg, PM_READ(pm_reg) & ~reset_flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bcm2835_asb_power_off(struct bcm2835_power_domain *pd,
+अटल पूर्णांक bcm2835_asb_घातer_off(काष्ठा bcm2835_घातer_करोमुख्य *pd,
 				 u32 pm_reg,
 				 u32 asb_m_reg,
 				 u32 asb_s_reg,
 				 u32 reset_flags)
-{
-	struct bcm2835_power *power = pd->power;
-	int ret;
+अणु
+	काष्ठा bcm2835_घातer *घातer = pd->घातer;
+	पूर्णांक ret;
 
-	ret = bcm2835_asb_disable(power, asb_s_reg);
-	if (ret) {
-		dev_warn(power->dev, "Failed to disable ASB slave for %s\n",
+	ret = bcm2835_asb_disable(घातer, asb_s_reg);
+	अगर (ret) अणु
+		dev_warn(घातer->dev, "Failed to disable ASB slave for %s\n",
 			 pd->base.name);
-		return ret;
-	}
-	ret = bcm2835_asb_disable(power, asb_m_reg);
-	if (ret) {
-		dev_warn(power->dev, "Failed to disable ASB master for %s\n",
+		वापस ret;
+	पूर्ण
+	ret = bcm2835_asb_disable(घातer, asb_m_reg);
+	अगर (ret) अणु
+		dev_warn(घातer->dev, "Failed to disable ASB master for %s\n",
 			 pd->base.name);
-		bcm2835_asb_enable(power, asb_s_reg);
-		return ret;
-	}
+		bcm2835_asb_enable(घातer, asb_s_reg);
+		वापस ret;
+	पूर्ण
 
 	clk_disable_unprepare(pd->clk);
 
 	/* Assert the resets. */
 	PM_WRITE(pm_reg, PM_READ(pm_reg) & ~reset_flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm2835_power_pd_power_on(struct generic_pm_domain *domain)
-{
-	struct bcm2835_power_domain *pd =
-		container_of(domain, struct bcm2835_power_domain, base);
-	struct bcm2835_power *power = pd->power;
+अटल पूर्णांक bcm2835_घातer_pd_घातer_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा bcm2835_घातer_करोमुख्य *pd =
+		container_of(करोमुख्य, काष्ठा bcm2835_घातer_करोमुख्य, base);
+	काष्ठा bcm2835_घातer *घातer = pd->घातer;
 
-	switch (pd->domain) {
-	case BCM2835_POWER_DOMAIN_GRAFX:
-		return bcm2835_power_power_on(pd, PM_GRAFX);
+	चयन (pd->करोमुख्य) अणु
+	हाल BCM2835_POWER_DOMAIN_GRAFX:
+		वापस bcm2835_घातer_घातer_on(pd, PM_GRAFX);
 
-	case BCM2835_POWER_DOMAIN_GRAFX_V3D:
-		return bcm2835_asb_power_on(pd, PM_GRAFX,
+	हाल BCM2835_POWER_DOMAIN_GRAFX_V3D:
+		वापस bcm2835_asb_घातer_on(pd, PM_GRAFX,
 					    ASB_V3D_M_CTRL, ASB_V3D_S_CTRL,
 					    PM_V3DRSTN);
 
-	case BCM2835_POWER_DOMAIN_IMAGE:
-		return bcm2835_power_power_on(pd, PM_IMAGE);
+	हाल BCM2835_POWER_DOMAIN_IMAGE:
+		वापस bcm2835_घातer_घातer_on(pd, PM_IMAGE);
 
-	case BCM2835_POWER_DOMAIN_IMAGE_PERI:
-		return bcm2835_asb_power_on(pd, PM_IMAGE,
+	हाल BCM2835_POWER_DOMAIN_IMAGE_PERI:
+		वापस bcm2835_asb_घातer_on(pd, PM_IMAGE,
 					    0, 0,
 					    PM_PERIRSTN);
 
-	case BCM2835_POWER_DOMAIN_IMAGE_ISP:
-		return bcm2835_asb_power_on(pd, PM_IMAGE,
+	हाल BCM2835_POWER_DOMAIN_IMAGE_ISP:
+		वापस bcm2835_asb_घातer_on(pd, PM_IMAGE,
 					    ASB_ISP_M_CTRL, ASB_ISP_S_CTRL,
 					    PM_ISPRSTN);
 
-	case BCM2835_POWER_DOMAIN_IMAGE_H264:
-		return bcm2835_asb_power_on(pd, PM_IMAGE,
+	हाल BCM2835_POWER_DOMAIN_IMAGE_H264:
+		वापस bcm2835_asb_घातer_on(pd, PM_IMAGE,
 					    ASB_H264_M_CTRL, ASB_H264_S_CTRL,
 					    PM_H264RSTN);
 
-	case BCM2835_POWER_DOMAIN_USB:
+	हाल BCM2835_POWER_DOMAIN_USB:
 		PM_WRITE(PM_USB, PM_USB_CTRLEN);
-		return 0;
+		वापस 0;
 
-	case BCM2835_POWER_DOMAIN_DSI0:
+	हाल BCM2835_POWER_DOMAIN_DSI0:
 		PM_WRITE(PM_DSI0, PM_DSI0_CTRLEN);
 		PM_WRITE(PM_DSI0, PM_DSI0_CTRLEN | PM_DSI0_LDOHPEN);
-		return 0;
+		वापस 0;
 
-	case BCM2835_POWER_DOMAIN_DSI1:
+	हाल BCM2835_POWER_DOMAIN_DSI1:
 		PM_WRITE(PM_DSI1, PM_DSI1_CTRLEN);
 		PM_WRITE(PM_DSI1, PM_DSI1_CTRLEN | PM_DSI1_LDOHPEN);
-		return 0;
+		वापस 0;
 
-	case BCM2835_POWER_DOMAIN_CCP2TX:
+	हाल BCM2835_POWER_DOMAIN_CCP2TX:
 		PM_WRITE(PM_CCP2TX, PM_CCP2TX_CTRLEN);
 		PM_WRITE(PM_CCP2TX, PM_CCP2TX_CTRLEN | PM_CCP2TX_LDOEN);
-		return 0;
+		वापस 0;
 
-	case BCM2835_POWER_DOMAIN_HDMI:
+	हाल BCM2835_POWER_DOMAIN_HDMI:
 		PM_WRITE(PM_HDMI, PM_READ(PM_HDMI) | PM_HDMI_RSTDR);
 		PM_WRITE(PM_HDMI, PM_READ(PM_HDMI) | PM_HDMI_CTRLEN);
 		PM_WRITE(PM_HDMI, PM_READ(PM_HDMI) & ~PM_HDMI_LDOPD);
 		usleep_range(100, 200);
 		PM_WRITE(PM_HDMI, PM_READ(PM_HDMI) & ~PM_HDMI_RSTDR);
-		return 0;
+		वापस 0;
 
-	default:
-		dev_err(power->dev, "Invalid domain %d\n", pd->domain);
-		return -EINVAL;
-	}
-}
+	शेष:
+		dev_err(घातer->dev, "Invalid domain %d\n", pd->करोमुख्य);
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int bcm2835_power_pd_power_off(struct generic_pm_domain *domain)
-{
-	struct bcm2835_power_domain *pd =
-		container_of(domain, struct bcm2835_power_domain, base);
-	struct bcm2835_power *power = pd->power;
+अटल पूर्णांक bcm2835_घातer_pd_घातer_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा bcm2835_घातer_करोमुख्य *pd =
+		container_of(करोमुख्य, काष्ठा bcm2835_घातer_करोमुख्य, base);
+	काष्ठा bcm2835_घातer *घातer = pd->घातer;
 
-	switch (pd->domain) {
-	case BCM2835_POWER_DOMAIN_GRAFX:
-		return bcm2835_power_power_off(pd, PM_GRAFX);
+	चयन (pd->करोमुख्य) अणु
+	हाल BCM2835_POWER_DOMAIN_GRAFX:
+		वापस bcm2835_घातer_घातer_off(pd, PM_GRAFX);
 
-	case BCM2835_POWER_DOMAIN_GRAFX_V3D:
-		return bcm2835_asb_power_off(pd, PM_GRAFX,
+	हाल BCM2835_POWER_DOMAIN_GRAFX_V3D:
+		वापस bcm2835_asb_घातer_off(pd, PM_GRAFX,
 					     ASB_V3D_M_CTRL, ASB_V3D_S_CTRL,
 					     PM_V3DRSTN);
 
-	case BCM2835_POWER_DOMAIN_IMAGE:
-		return bcm2835_power_power_off(pd, PM_IMAGE);
+	हाल BCM2835_POWER_DOMAIN_IMAGE:
+		वापस bcm2835_घातer_घातer_off(pd, PM_IMAGE);
 
-	case BCM2835_POWER_DOMAIN_IMAGE_PERI:
-		return bcm2835_asb_power_off(pd, PM_IMAGE,
+	हाल BCM2835_POWER_DOMAIN_IMAGE_PERI:
+		वापस bcm2835_asb_घातer_off(pd, PM_IMAGE,
 					     0, 0,
 					     PM_PERIRSTN);
 
-	case BCM2835_POWER_DOMAIN_IMAGE_ISP:
-		return bcm2835_asb_power_off(pd, PM_IMAGE,
+	हाल BCM2835_POWER_DOMAIN_IMAGE_ISP:
+		वापस bcm2835_asb_घातer_off(pd, PM_IMAGE,
 					     ASB_ISP_M_CTRL, ASB_ISP_S_CTRL,
 					     PM_ISPRSTN);
 
-	case BCM2835_POWER_DOMAIN_IMAGE_H264:
-		return bcm2835_asb_power_off(pd, PM_IMAGE,
+	हाल BCM2835_POWER_DOMAIN_IMAGE_H264:
+		वापस bcm2835_asb_घातer_off(pd, PM_IMAGE,
 					     ASB_H264_M_CTRL, ASB_H264_S_CTRL,
 					     PM_H264RSTN);
 
-	case BCM2835_POWER_DOMAIN_USB:
+	हाल BCM2835_POWER_DOMAIN_USB:
 		PM_WRITE(PM_USB, 0);
-		return 0;
+		वापस 0;
 
-	case BCM2835_POWER_DOMAIN_DSI0:
+	हाल BCM2835_POWER_DOMAIN_DSI0:
 		PM_WRITE(PM_DSI0, PM_DSI0_CTRLEN);
 		PM_WRITE(PM_DSI0, 0);
-		return 0;
+		वापस 0;
 
-	case BCM2835_POWER_DOMAIN_DSI1:
+	हाल BCM2835_POWER_DOMAIN_DSI1:
 		PM_WRITE(PM_DSI1, PM_DSI1_CTRLEN);
 		PM_WRITE(PM_DSI1, 0);
-		return 0;
+		वापस 0;
 
-	case BCM2835_POWER_DOMAIN_CCP2TX:
+	हाल BCM2835_POWER_DOMAIN_CCP2TX:
 		PM_WRITE(PM_CCP2TX, PM_CCP2TX_CTRLEN);
 		PM_WRITE(PM_CCP2TX, 0);
-		return 0;
+		वापस 0;
 
-	case BCM2835_POWER_DOMAIN_HDMI:
+	हाल BCM2835_POWER_DOMAIN_HDMI:
 		PM_WRITE(PM_HDMI, PM_READ(PM_HDMI) | PM_HDMI_LDOPD);
 		PM_WRITE(PM_HDMI, PM_READ(PM_HDMI) & ~PM_HDMI_CTRLEN);
-		return 0;
+		वापस 0;
 
-	default:
-		dev_err(power->dev, "Invalid domain %d\n", pd->domain);
-		return -EINVAL;
-	}
-}
+	शेष:
+		dev_err(घातer->dev, "Invalid domain %d\n", pd->करोमुख्य);
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int
-bcm2835_init_power_domain(struct bcm2835_power *power,
-			  int pd_xlate_index, const char *name)
-{
-	struct device *dev = power->dev;
-	struct bcm2835_power_domain *dom = &power->domains[pd_xlate_index];
+अटल पूर्णांक
+bcm2835_init_घातer_करोमुख्य(काष्ठा bcm2835_घातer *घातer,
+			  पूर्णांक pd_xlate_index, स्थिर अक्षर *name)
+अणु
+	काष्ठा device *dev = घातer->dev;
+	काष्ठा bcm2835_घातer_करोमुख्य *करोm = &घातer->करोमुख्यs[pd_xlate_index];
 
-	dom->clk = devm_clk_get(dev->parent, name);
-	if (IS_ERR(dom->clk)) {
-		int ret = PTR_ERR(dom->clk);
+	करोm->clk = devm_clk_get(dev->parent, name);
+	अगर (IS_ERR(करोm->clk)) अणु
+		पूर्णांक ret = PTR_ERR(करोm->clk);
 
-		if (ret == -EPROBE_DEFER)
-			return ret;
+		अगर (ret == -EPROBE_DEFER)
+			वापस ret;
 
-		/* Some domains don't have a clk, so make sure that we
-		 * don't deref an error pointer later.
+		/* Some करोमुख्यs करोn't have a clk, so make sure that we
+		 * करोn't deref an error poपूर्णांकer later.
 		 */
-		dom->clk = NULL;
-	}
+		करोm->clk = शून्य;
+	पूर्ण
 
-	dom->base.name = name;
-	dom->base.power_on = bcm2835_power_pd_power_on;
-	dom->base.power_off = bcm2835_power_pd_power_off;
+	करोm->base.name = name;
+	करोm->base.घातer_on = bcm2835_घातer_pd_घातer_on;
+	करोm->base.घातer_off = bcm2835_घातer_pd_घातer_off;
 
-	dom->domain = pd_xlate_index;
-	dom->power = power;
+	करोm->करोमुख्य = pd_xlate_index;
+	करोm->घातer = घातer;
 
 	/* XXX: on/off at boot? */
-	pm_genpd_init(&dom->base, NULL, true);
+	pm_genpd_init(&करोm->base, शून्य, true);
 
-	power->pd_xlate.domains[pd_xlate_index] = &dom->base;
+	घातer->pd_xlate.करोमुख्यs[pd_xlate_index] = &करोm->base;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /** bcm2835_reset_reset - Resets a block that has a reset line in the
  * PM block.
  *
- * The consumer of the reset controller must have the power domain up
- * -- there's no reset ability with the power domain down.  To reset
+ * The consumer of the reset controller must have the घातer करोमुख्य up
+ * -- there's no reset ability with the घातer करोमुख्य करोwn.  To reset
  * the sub-block, we just disable its access to memory through the
  * ASB, reset, and re-enable.
  */
-static int bcm2835_reset_reset(struct reset_controller_dev *rcdev,
-			       unsigned long id)
-{
-	struct bcm2835_power *power = container_of(rcdev, struct bcm2835_power,
+अटल पूर्णांक bcm2835_reset_reset(काष्ठा reset_controller_dev *rcdev,
+			       अचिन्हित दीर्घ id)
+अणु
+	काष्ठा bcm2835_घातer *घातer = container_of(rcdev, काष्ठा bcm2835_घातer,
 						   reset);
-	struct bcm2835_power_domain *pd;
-	int ret;
+	काष्ठा bcm2835_घातer_करोमुख्य *pd;
+	पूर्णांक ret;
 
-	switch (id) {
-	case BCM2835_RESET_V3D:
-		pd = &power->domains[BCM2835_POWER_DOMAIN_GRAFX_V3D];
-		break;
-	case BCM2835_RESET_H264:
-		pd = &power->domains[BCM2835_POWER_DOMAIN_IMAGE_H264];
-		break;
-	case BCM2835_RESET_ISP:
-		pd = &power->domains[BCM2835_POWER_DOMAIN_IMAGE_ISP];
-		break;
-	default:
-		dev_err(power->dev, "Bad reset id %ld\n", id);
-		return -EINVAL;
-	}
+	चयन (id) अणु
+	हाल BCM2835_RESET_V3D:
+		pd = &घातer->करोमुख्यs[BCM2835_POWER_DOMAIN_GRAFX_V3D];
+		अवरोध;
+	हाल BCM2835_RESET_H264:
+		pd = &घातer->करोमुख्यs[BCM2835_POWER_DOMAIN_IMAGE_H264];
+		अवरोध;
+	हाल BCM2835_RESET_ISP:
+		pd = &घातer->करोमुख्यs[BCM2835_POWER_DOMAIN_IMAGE_ISP];
+		अवरोध;
+	शेष:
+		dev_err(घातer->dev, "Bad reset id %ld\n", id);
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = bcm2835_power_pd_power_off(&pd->base);
-	if (ret)
-		return ret;
+	ret = bcm2835_घातer_pd_घातer_off(&pd->base);
+	अगर (ret)
+		वापस ret;
 
-	return bcm2835_power_pd_power_on(&pd->base);
-}
+	वापस bcm2835_घातer_pd_घातer_on(&pd->base);
+पूर्ण
 
-static int bcm2835_reset_status(struct reset_controller_dev *rcdev,
-				unsigned long id)
-{
-	struct bcm2835_power *power = container_of(rcdev, struct bcm2835_power,
+अटल पूर्णांक bcm2835_reset_status(काष्ठा reset_controller_dev *rcdev,
+				अचिन्हित दीर्घ id)
+अणु
+	काष्ठा bcm2835_घातer *घातer = container_of(rcdev, काष्ठा bcm2835_घातer,
 						   reset);
 
-	switch (id) {
-	case BCM2835_RESET_V3D:
-		return !PM_READ(PM_GRAFX & PM_V3DRSTN);
-	case BCM2835_RESET_H264:
-		return !PM_READ(PM_IMAGE & PM_H264RSTN);
-	case BCM2835_RESET_ISP:
-		return !PM_READ(PM_IMAGE & PM_ISPRSTN);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (id) अणु
+	हाल BCM2835_RESET_V3D:
+		वापस !PM_READ(PM_GRAFX & PM_V3DRSTN);
+	हाल BCM2835_RESET_H264:
+		वापस !PM_READ(PM_IMAGE & PM_H264RSTN);
+	हाल BCM2835_RESET_ISP:
+		वापस !PM_READ(PM_IMAGE & PM_ISPRSTN);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct reset_control_ops bcm2835_reset_ops = {
+अटल स्थिर काष्ठा reset_control_ops bcm2835_reset_ops = अणु
 	.reset = bcm2835_reset_reset,
 	.status = bcm2835_reset_status,
-};
+पूर्ण;
 
-static const char *const power_domain_names[] = {
+अटल स्थिर अक्षर *स्थिर घातer_करोमुख्य_names[] = अणु
 	[BCM2835_POWER_DOMAIN_GRAFX] = "grafx",
 	[BCM2835_POWER_DOMAIN_GRAFX_V3D] = "v3d",
 
@@ -597,99 +598,99 @@ static const char *const power_domain_names[] = {
 	[BCM2835_POWER_DOMAIN_CAM1] = "cam1",
 	[BCM2835_POWER_DOMAIN_CCP2TX] = "ccp2tx",
 	[BCM2835_POWER_DOMAIN_HDMI] = "hdmi",
-};
+पूर्ण;
 
-static int bcm2835_power_probe(struct platform_device *pdev)
-{
-	struct bcm2835_pm *pm = dev_get_drvdata(pdev->dev.parent);
-	struct device *dev = &pdev->dev;
-	struct bcm2835_power *power;
-	static const struct {
-		int parent, child;
-	} domain_deps[] = {
-		{ BCM2835_POWER_DOMAIN_GRAFX, BCM2835_POWER_DOMAIN_GRAFX_V3D },
-		{ BCM2835_POWER_DOMAIN_IMAGE, BCM2835_POWER_DOMAIN_IMAGE_PERI },
-		{ BCM2835_POWER_DOMAIN_IMAGE, BCM2835_POWER_DOMAIN_IMAGE_H264 },
-		{ BCM2835_POWER_DOMAIN_IMAGE, BCM2835_POWER_DOMAIN_IMAGE_ISP },
-		{ BCM2835_POWER_DOMAIN_IMAGE_PERI, BCM2835_POWER_DOMAIN_USB },
-		{ BCM2835_POWER_DOMAIN_IMAGE_PERI, BCM2835_POWER_DOMAIN_CAM0 },
-		{ BCM2835_POWER_DOMAIN_IMAGE_PERI, BCM2835_POWER_DOMAIN_CAM1 },
-	};
-	int ret = 0, i;
+अटल पूर्णांक bcm2835_घातer_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm2835_pm *pm = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा bcm2835_घातer *घातer;
+	अटल स्थिर काष्ठा अणु
+		पूर्णांक parent, child;
+	पूर्ण करोमुख्य_deps[] = अणु
+		अणु BCM2835_POWER_DOMAIN_GRAFX, BCM2835_POWER_DOMAIN_GRAFX_V3D पूर्ण,
+		अणु BCM2835_POWER_DOMAIN_IMAGE, BCM2835_POWER_DOMAIN_IMAGE_PERI पूर्ण,
+		अणु BCM2835_POWER_DOMAIN_IMAGE, BCM2835_POWER_DOMAIN_IMAGE_H264 पूर्ण,
+		अणु BCM2835_POWER_DOMAIN_IMAGE, BCM2835_POWER_DOMAIN_IMAGE_ISP पूर्ण,
+		अणु BCM2835_POWER_DOMAIN_IMAGE_PERI, BCM2835_POWER_DOMAIN_USB पूर्ण,
+		अणु BCM2835_POWER_DOMAIN_IMAGE_PERI, BCM2835_POWER_DOMAIN_CAM0 पूर्ण,
+		अणु BCM2835_POWER_DOMAIN_IMAGE_PERI, BCM2835_POWER_DOMAIN_CAM1 पूर्ण,
+	पूर्ण;
+	पूर्णांक ret = 0, i;
 	u32 id;
 
-	power = devm_kzalloc(dev, sizeof(*power), GFP_KERNEL);
-	if (!power)
-		return -ENOMEM;
-	platform_set_drvdata(pdev, power);
+	घातer = devm_kzalloc(dev, माप(*घातer), GFP_KERNEL);
+	अगर (!घातer)
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, घातer);
 
-	power->dev = dev;
-	power->base = pm->base;
-	power->asb = pm->asb;
+	घातer->dev = dev;
+	घातer->base = pm->base;
+	घातer->asb = pm->asb;
 
 	id = ASB_READ(ASB_AXI_BRDG_ID);
-	if (id != 0x62726467 /* "BRDG" */) {
+	अगर (id != 0x62726467 /* "BRDG" */) अणु
 		dev_err(dev, "ASB register ID returned 0x%08x\n", id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	power->pd_xlate.domains = devm_kcalloc(dev,
-					       ARRAY_SIZE(power_domain_names),
-					       sizeof(*power->pd_xlate.domains),
+	घातer->pd_xlate.करोमुख्यs = devm_kसुस्मृति(dev,
+					       ARRAY_SIZE(घातer_करोमुख्य_names),
+					       माप(*घातer->pd_xlate.करोमुख्यs),
 					       GFP_KERNEL);
-	if (!power->pd_xlate.domains)
-		return -ENOMEM;
+	अगर (!घातer->pd_xlate.करोमुख्यs)
+		वापस -ENOMEM;
 
-	power->pd_xlate.num_domains = ARRAY_SIZE(power_domain_names);
+	घातer->pd_xlate.num_करोमुख्यs = ARRAY_SIZE(घातer_करोमुख्य_names);
 
-	for (i = 0; i < ARRAY_SIZE(power_domain_names); i++) {
-		ret = bcm2835_init_power_domain(power, i, power_domain_names[i]);
-		if (ret)
-			goto fail;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(घातer_करोमुख्य_names); i++) अणु
+		ret = bcm2835_init_घातer_करोमुख्य(घातer, i, घातer_करोमुख्य_names[i]);
+		अगर (ret)
+			जाओ fail;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(domain_deps); i++) {
-		pm_genpd_add_subdomain(&power->domains[domain_deps[i].parent].base,
-				       &power->domains[domain_deps[i].child].base);
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(करोमुख्य_deps); i++) अणु
+		pm_genpd_add_subकरोमुख्य(&घातer->करोमुख्यs[करोमुख्य_deps[i].parent].base,
+				       &घातer->करोमुख्यs[करोमुख्य_deps[i].child].base);
+	पूर्ण
 
-	power->reset.owner = THIS_MODULE;
-	power->reset.nr_resets = BCM2835_RESET_COUNT;
-	power->reset.ops = &bcm2835_reset_ops;
-	power->reset.of_node = dev->parent->of_node;
+	घातer->reset.owner = THIS_MODULE;
+	घातer->reset.nr_resets = BCM2835_RESET_COUNT;
+	घातer->reset.ops = &bcm2835_reset_ops;
+	घातer->reset.of_node = dev->parent->of_node;
 
-	ret = devm_reset_controller_register(dev, &power->reset);
-	if (ret)
-		goto fail;
+	ret = devm_reset_controller_रेजिस्टर(dev, &घातer->reset);
+	अगर (ret)
+		जाओ fail;
 
-	of_genpd_add_provider_onecell(dev->parent->of_node, &power->pd_xlate);
+	of_genpd_add_provider_onecell(dev->parent->of_node, &घातer->pd_xlate);
 
 	dev_info(dev, "Broadcom BCM2835 power domains driver");
-	return 0;
+	वापस 0;
 
 fail:
-	for (i = 0; i < ARRAY_SIZE(power_domain_names); i++) {
-		struct generic_pm_domain *dom = &power->domains[i].base;
+	क्रम (i = 0; i < ARRAY_SIZE(घातer_करोमुख्य_names); i++) अणु
+		काष्ठा generic_pm_करोमुख्य *करोm = &घातer->करोमुख्यs[i].base;
 
-		if (dom->name)
-			pm_genpd_remove(dom);
-	}
-	return ret;
-}
+		अगर (करोm->name)
+			pm_genpd_हटाओ(करोm);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int bcm2835_power_remove(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक bcm2835_घातer_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static struct platform_driver bcm2835_power_driver = {
-	.probe		= bcm2835_power_probe,
-	.remove		= bcm2835_power_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver bcm2835_घातer_driver = अणु
+	.probe		= bcm2835_घातer_probe,
+	.हटाओ		= bcm2835_घातer_हटाओ,
+	.driver = अणु
 		.name =	"bcm2835-power",
-	},
-};
-module_platform_driver(bcm2835_power_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(bcm2835_घातer_driver);
 
 MODULE_AUTHOR("Eric Anholt <eric@anholt.net>");
 MODULE_DESCRIPTION("Driver for Broadcom BCM2835 PM power domains and reset");

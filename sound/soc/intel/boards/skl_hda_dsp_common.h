@@ -1,66 +1,67 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright(c) 2015-18 Intel Corporation.
  */
 
 /*
- * This file defines data structures used in Machine Driver for Intel
- * platforms with HDA Codecs.
+ * This file defines data काष्ठाures used in Machine Driver क्रम Intel
+ * platक्रमms with HDA Codecs.
  */
 
-#ifndef __SKL_HDA_DSP_COMMON_H
-#define __SKL_HDA_DSP_COMMON_H
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <sound/core.h>
-#include <sound/jack.h>
-#include <sound/hda_codec.h>
-#include "../../codecs/hdac_hda.h"
-#include "hda_dsp_common.h"
+#अगर_अघोषित __SKL_HDA_DSP_COMMON_H
+#घोषणा __SKL_HDA_DSP_COMMON_H
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <sound/core.h>
+#समावेश <sound/jack.h>
+#समावेश <sound/hda_codec.h>
+#समावेश "../../codecs/hdac_hda.h"
+#समावेश "hda_dsp_common.h"
 
-#define HDA_DSP_MAX_BE_DAI_LINKS 7
+#घोषणा HDA_DSP_MAX_BE_DAI_LINKS 7
 
-struct skl_hda_hdmi_pcm {
-	struct list_head head;
-	struct snd_soc_dai *codec_dai;
-	struct snd_soc_jack hdmi_jack;
-	int device;
-};
+काष्ठा skl_hda_hdmi_pcm अणु
+	काष्ठा list_head head;
+	काष्ठा snd_soc_dai *codec_dai;
+	काष्ठा snd_soc_jack hdmi_jack;
+	पूर्णांक device;
+पूर्ण;
 
-struct skl_hda_private {
-	struct list_head hdmi_pcm_list;
-	int pcm_count;
-	int dai_index;
-	const char *platform_name;
+काष्ठा skl_hda_निजी अणु
+	काष्ठा list_head hdmi_pcm_list;
+	पूर्णांक pcm_count;
+	पूर्णांक dai_index;
+	स्थिर अक्षर *platक्रमm_name;
 	bool common_hdmi_codec_drv;
 	bool idisp_codec;
-};
+पूर्ण;
 
-extern struct snd_soc_dai_link skl_hda_be_dai_links[HDA_DSP_MAX_BE_DAI_LINKS];
-int skl_hda_hdmi_jack_init(struct snd_soc_card *card);
-int skl_hda_hdmi_add_pcm(struct snd_soc_card *card, int device);
+बाह्य काष्ठा snd_soc_dai_link skl_hda_be_dai_links[HDA_DSP_MAX_BE_DAI_LINKS];
+पूर्णांक skl_hda_hdmi_jack_init(काष्ठा snd_soc_card *card);
+पूर्णांक skl_hda_hdmi_add_pcm(काष्ठा snd_soc_card *card, पूर्णांक device);
 
 /*
- * Search card topology and register HDMI PCM related controls
+ * Search card topology and रेजिस्टर HDMI PCM related controls
  * to codec driver.
  */
-static inline int skl_hda_hdmi_build_controls(struct snd_soc_card *card)
-{
-	struct skl_hda_private *ctx = snd_soc_card_get_drvdata(card);
-	struct snd_soc_component *component;
-	struct skl_hda_hdmi_pcm *pcm;
+अटल अंतरभूत पूर्णांक skl_hda_hdmi_build_controls(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा skl_hda_निजी *ctx = snd_soc_card_get_drvdata(card);
+	काष्ठा snd_soc_component *component;
+	काष्ठा skl_hda_hdmi_pcm *pcm;
 
-	/* HDMI disabled, do not create controls */
-	if (list_empty(&ctx->hdmi_pcm_list))
-		return 0;
+	/* HDMI disabled, करो not create controls */
+	अगर (list_empty(&ctx->hdmi_pcm_list))
+		वापस 0;
 
-	pcm = list_first_entry(&ctx->hdmi_pcm_list, struct skl_hda_hdmi_pcm,
+	pcm = list_first_entry(&ctx->hdmi_pcm_list, काष्ठा skl_hda_hdmi_pcm,
 			       head);
 	component = pcm->codec_dai->component;
-	if (!component)
-		return -EINVAL;
+	अगर (!component)
+		वापस -EINVAL;
 
-	return hda_dsp_hdmi_build_controls(card, component);
-}
+	वापस hda_dsp_hdmi_build_controls(card, component);
+पूर्ण
 
-#endif /* __SOUND_SOC_HDA_DSP_COMMON_H */
+#पूर्ण_अगर /* __SOUND_SOC_HDA_DSP_COMMON_H */

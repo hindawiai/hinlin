@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Parse the EFI PCDP table to locate the console device.
  *
@@ -8,128 +9,128 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/console.h>
-#include <linux/efi.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <asm/vga.h>
-#include "pcdp.h"
+#समावेश <linux/acpi.h>
+#समावेश <linux/console.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <यंत्र/vga.h>
+#समावेश "pcdp.h"
 
-static int __init
-setup_serial_console(struct pcdp_uart *uart)
-{
-#ifdef CONFIG_SERIAL_8250_CONSOLE
-	int mmio;
-	static char options[64], *p = options;
-	char parity;
+अटल पूर्णांक __init
+setup_serial_console(काष्ठा pcdp_uart *uart)
+अणु
+#अगर_घोषित CONFIG_SERIAL_8250_CONSOLE
+	पूर्णांक mmio;
+	अटल अक्षर options[64], *p = options;
+	अक्षर parity;
 
 	mmio = (uart->addr.space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY);
-	p += sprintf(p, "uart8250,%s,0x%llx",
+	p += प्र_लिखो(p, "uart8250,%s,0x%llx",
 		mmio ? "mmio" : "io", uart->addr.address);
-	if (uart->baud) {
-		p += sprintf(p, ",%llu", uart->baud);
-		if (uart->bits) {
-			switch (uart->parity) {
-			    case 0x2: parity = 'e'; break;
-			    case 0x3: parity = 'o'; break;
-			    default:  parity = 'n';
-			}
-			p += sprintf(p, "%c%d", parity, uart->bits);
-		}
-	}
+	अगर (uart->baud) अणु
+		p += प्र_लिखो(p, ",%llu", uart->baud);
+		अगर (uart->bits) अणु
+			चयन (uart->parity) अणु
+			    हाल 0x2: parity = 'e'; अवरोध;
+			    हाल 0x3: parity = 'o'; अवरोध;
+			    शेष:  parity = 'n';
+			पूर्ण
+			p += प्र_लिखो(p, "%c%d", parity, uart->bits);
+		पूर्ण
+	पूर्ण
 
 	add_preferred_console("uart", 8250, &options[9]);
-	return setup_earlycon(options);
-#else
-	return -ENODEV;
-#endif
-}
+	वापस setup_earlycon(options);
+#अन्यथा
+	वापस -ENODEV;
+#पूर्ण_अगर
+पूर्ण
 
-static int __init
-setup_vga_console(struct pcdp_device *dev)
-{
-#if defined(CONFIG_VT) && defined(CONFIG_VGA_CONSOLE)
-	u8 *if_ptr;
+अटल पूर्णांक __init
+setup_vga_console(काष्ठा pcdp_device *dev)
+अणु
+#अगर defined(CONFIG_VT) && defined(CONFIG_VGA_CONSOLE)
+	u8 *अगर_ptr;
 
-	if_ptr = ((u8 *)dev + sizeof(struct pcdp_device));
-	if (if_ptr[0] == PCDP_IF_PCI) {
-		struct pcdp_if_pci if_pci;
+	अगर_ptr = ((u8 *)dev + माप(काष्ठा pcdp_device));
+	अगर (अगर_ptr[0] == PCDP_IF_PCI) अणु
+		काष्ठा pcdp_अगर_pci अगर_pci;
 
-		/* struct copy since ifptr might not be correctly aligned */
+		/* काष्ठा copy since अगरptr might not be correctly aligned */
 
-		memcpy(&if_pci, if_ptr, sizeof(if_pci));
+		स_नकल(&अगर_pci, अगर_ptr, माप(अगर_pci));
 
-		if (if_pci.trans & PCDP_PCI_TRANS_IOPORT)
-			vga_console_iobase = if_pci.ioport_tra;
+		अगर (अगर_pci.trans & PCDP_PCI_TRANS_IOPORT)
+			vga_console_iobase = अगर_pci.ioport_tra;
 
-		if (if_pci.trans & PCDP_PCI_TRANS_MMIO)
-			vga_console_membase = if_pci.mmio_tra;
-	}
+		अगर (अगर_pci.trans & PCDP_PCI_TRANS_MMIO)
+			vga_console_membase = अगर_pci.mmio_tra;
+	पूर्ण
 
-	if (efi_mem_type(vga_console_membase + 0xA0000) == EFI_CONVENTIONAL_MEMORY) {
-		printk(KERN_ERR "PCDP: VGA selected, but frame buffer is not MMIO!\n");
-		return -ENODEV;
-	}
+	अगर (efi_mem_type(vga_console_membase + 0xA0000) == EFI_CONVENTIONAL_MEMORY) अणु
+		prपूर्णांकk(KERN_ERR "PCDP: VGA selected, but frame buffer is not MMIO!\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	conswitchp = &vga_con;
-	printk(KERN_INFO "PCDP: VGA console\n");
-	return 0;
-#else
-	return -ENODEV;
-#endif
-}
+	conचयनp = &vga_con;
+	prपूर्णांकk(KERN_INFO "PCDP: VGA console\n");
+	वापस 0;
+#अन्यथा
+	वापस -ENODEV;
+#पूर्ण_अगर
+पूर्ण
 
-extern unsigned long hcdp_phys;
+बाह्य अचिन्हित दीर्घ hcdp_phys;
 
-int __init
-efi_setup_pcdp_console(char *cmdline)
-{
-	struct pcdp *pcdp;
-	struct pcdp_uart *uart;
-	struct pcdp_device *dev, *end;
-	int i, serial = 0;
-	int rc = -ENODEV;
+पूर्णांक __init
+efi_setup_pcdp_console(अक्षर *cmdline)
+अणु
+	काष्ठा pcdp *pcdp;
+	काष्ठा pcdp_uart *uart;
+	काष्ठा pcdp_device *dev, *end;
+	पूर्णांक i, serial = 0;
+	पूर्णांक rc = -ENODEV;
 
-	if (hcdp_phys == EFI_INVALID_TABLE_ADDR)
-		return -ENODEV;
+	अगर (hcdp_phys == EFI_INVALID_TABLE_ADDR)
+		वापस -ENODEV;
 
 	pcdp = early_memremap(hcdp_phys, 4096);
-	printk(KERN_INFO "PCDP: v%d at 0x%lx\n", pcdp->rev, hcdp_phys);
+	prपूर्णांकk(KERN_INFO "PCDP: v%d at 0x%lx\n", pcdp->rev, hcdp_phys);
 
-	if (strstr(cmdline, "console=hcdp")) {
-		if (pcdp->rev < 3)
+	अगर (म_माला(cmdline, "console=hcdp")) अणु
+		अगर (pcdp->rev < 3)
 			serial = 1;
-	} else if (strstr(cmdline, "console=")) {
-		printk(KERN_INFO "Explicit \"console=\"; ignoring PCDP\n");
-		goto out;
-	}
+	पूर्ण अन्यथा अगर (म_माला(cmdline, "console=")) अणु
+		prपूर्णांकk(KERN_INFO "Explicit \"console=\"; ignoring PCDP\n");
+		जाओ out;
+	पूर्ण
 
-	if (pcdp->rev < 3 && efi_uart_console_only())
+	अगर (pcdp->rev < 3 && efi_uart_console_only())
 		serial = 1;
 
-	for (i = 0, uart = pcdp->uart; i < pcdp->num_uarts; i++, uart++) {
-		if (uart->flags & PCDP_UART_PRIMARY_CONSOLE || serial) {
-			if (uart->type == PCDP_CONSOLE_UART) {
+	क्रम (i = 0, uart = pcdp->uart; i < pcdp->num_uarts; i++, uart++) अणु
+		अगर (uart->flags & PCDP_UART_PRIMARY_CONSOLE || serial) अणु
+			अगर (uart->type == PCDP_CONSOLE_UART) अणु
 				rc = setup_serial_console(uart);
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	end = (struct pcdp_device *) ((u8 *) pcdp + pcdp->length);
-	for (dev = (struct pcdp_device *) (pcdp->uart + pcdp->num_uarts);
+	end = (काष्ठा pcdp_device *) ((u8 *) pcdp + pcdp->length);
+	क्रम (dev = (काष्ठा pcdp_device *) (pcdp->uart + pcdp->num_uarts);
 	     dev < end;
-	     dev = (struct pcdp_device *) ((u8 *) dev + dev->length)) {
-		if (dev->flags & PCDP_PRIMARY_CONSOLE) {
-			if (dev->type == PCDP_CONSOLE_VGA) {
+	     dev = (काष्ठा pcdp_device *) ((u8 *) dev + dev->length)) अणु
+		अगर (dev->flags & PCDP_PRIMARY_CONSOLE) अणु
+			अगर (dev->type == PCDP_CONSOLE_VGA) अणु
 				rc = setup_vga_console(dev);
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out:
 	early_memunmap(pcdp, 4096);
-	return rc;
-}
+	वापस rc;
+पूर्ण

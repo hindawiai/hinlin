@@ -1,213 +1,214 @@
+<शैली गुरु>
 /*
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
-#include <linux/capability.h>
-#include <linux/fs.h>
-#include <linux/mount.h>
-#include "reiserfs.h"
-#include <linux/time.h>
-#include <linux/uaccess.h>
-#include <linux/pagemap.h>
-#include <linux/compat.h>
-#include <linux/fileattr.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
+#समावेश "reiserfs.h"
+#समावेश <linux/समय.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/fileattr.h>
 
-int reiserfs_fileattr_get(struct dentry *dentry, struct fileattr *fa)
-{
-	struct inode *inode = d_inode(dentry);
+पूर्णांक reiserfs_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
 
-	if (!reiserfs_attrs(inode->i_sb))
-		return -ENOTTY;
+	अगर (!reiserfs_attrs(inode->i_sb))
+		वापस -ENOTTY;
 
 	fileattr_fill_flags(fa, REISERFS_I(inode)->i_attrs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int reiserfs_fileattr_set(struct user_namespace *mnt_userns,
-			  struct dentry *dentry, struct fileattr *fa)
-{
-	struct inode *inode = d_inode(dentry);
-	unsigned int flags = fa->flags;
-	int err;
+पूर्णांक reiserfs_fileattr_set(काष्ठा user_namespace *mnt_userns,
+			  काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	अचिन्हित पूर्णांक flags = fa->flags;
+	पूर्णांक err;
 
-	reiserfs_write_lock(inode->i_sb);
+	reiserfs_ग_लिखो_lock(inode->i_sb);
 
 	err = -ENOTTY;
-	if (!reiserfs_attrs(inode->i_sb))
-		goto unlock;
+	अगर (!reiserfs_attrs(inode->i_sb))
+		जाओ unlock;
 
 	err = -EOPNOTSUPP;
-	if (fileattr_has_fsx(fa))
-		goto unlock;
+	अगर (fileattr_has_fsx(fa))
+		जाओ unlock;
 
 	/*
 	 * Is it quota file? Do not allow user to mess with it
 	 */
 	err = -EPERM;
-	if (IS_NOQUOTA(inode))
-		goto unlock;
+	अगर (IS_NOQUOTA(inode))
+		जाओ unlock;
 
-	if ((flags & REISERFS_NOTAIL_FL) && S_ISREG(inode->i_mode)) {
+	अगर ((flags & REISERFS_NOTAIL_FL) && S_ISREG(inode->i_mode)) अणु
 		err = reiserfs_unpack(inode);
-		if (err)
-			goto unlock;
-	}
+		अगर (err)
+			जाओ unlock;
+	पूर्ण
 	sd_attrs_to_i_attrs(flags, inode);
 	REISERFS_I(inode)->i_attrs = flags;
-	inode->i_ctime = current_time(inode);
+	inode->i_स_समय = current_समय(inode);
 	mark_inode_dirty(inode);
 	err = 0;
 unlock:
-	reiserfs_write_unlock(inode->i_sb);
+	reiserfs_ग_लिखो_unlock(inode->i_sb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * reiserfs_ioctl - handler for ioctl for inode
+ * reiserfs_ioctl - handler क्रम ioctl क्रम inode
  * supported commands:
- *  1) REISERFS_IOC_UNPACK - try to unpack tail from direct item into indirect
+ *  1) REISERFS_IOC_UNPACK - try to unpack tail from direct item पूर्णांकo indirect
  *                           and prevent packing file (argument arg has t
  *			      be non-zero)
  *  2) REISERFS_IOC_[GS]ETFLAGS, REISERFS_IOC_[GS]ETVERSION
- *  3) That's all for a while ...
+ *  3) That's all क्रम a जबतक ...
  */
-long reiserfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	struct inode *inode = file_inode(filp);
-	int err = 0;
+दीर्घ reiserfs_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा inode *inode = file_inode(filp);
+	पूर्णांक err = 0;
 
-	reiserfs_write_lock(inode->i_sb);
+	reiserfs_ग_लिखो_lock(inode->i_sb);
 
-	switch (cmd) {
-	case REISERFS_IOC_UNPACK:
-		if (S_ISREG(inode->i_mode)) {
-			if (arg)
+	चयन (cmd) अणु
+	हाल REISERFS_IOC_UNPACK:
+		अगर (S_ISREG(inode->i_mode)) अणु
+			अगर (arg)
 				err = reiserfs_unpack(inode);
-		} else
+		पूर्ण अन्यथा
 			err = -ENOTTY;
-		break;
+		अवरोध;
 		/*
-		 * following two cases are taken from fs/ext2/ioctl.c by Remy
+		 * following two हालs are taken from fs/ext2/ioctl.c by Remy
 		 * Card (card@masi.ibp.fr)
 		 */
-	case REISERFS_IOC_GETVERSION:
-		err = put_user(inode->i_generation, (int __user *)arg);
-		break;
-	case REISERFS_IOC_SETVERSION:
-		if (!inode_owner_or_capable(&init_user_ns, inode)) {
+	हाल REISERFS_IOC_GETVERSION:
+		err = put_user(inode->i_generation, (पूर्णांक __user *)arg);
+		अवरोध;
+	हाल REISERFS_IOC_SETVERSION:
+		अगर (!inode_owner_or_capable(&init_user_ns, inode)) अणु
 			err = -EPERM;
-			break;
-		}
-		err = mnt_want_write_file(filp);
-		if (err)
-			break;
-		if (get_user(inode->i_generation, (int __user *)arg)) {
+			अवरोध;
+		पूर्ण
+		err = mnt_want_ग_लिखो_file(filp);
+		अगर (err)
+			अवरोध;
+		अगर (get_user(inode->i_generation, (पूर्णांक __user *)arg)) अणु
 			err = -EFAULT;
-			goto setversion_out;
-		}
-		inode->i_ctime = current_time(inode);
+			जाओ setversion_out;
+		पूर्ण
+		inode->i_स_समय = current_समय(inode);
 		mark_inode_dirty(inode);
 setversion_out:
-		mnt_drop_write_file(filp);
-		break;
-	default:
+		mnt_drop_ग_लिखो_file(filp);
+		अवरोध;
+	शेष:
 		err = -ENOTTY;
-	}
+	पूर्ण
 
-	reiserfs_write_unlock(inode->i_sb);
+	reiserfs_ग_लिखो_unlock(inode->i_sb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-long reiserfs_compat_ioctl(struct file *file, unsigned int cmd,
-				unsigned long arg)
-{
+#अगर_घोषित CONFIG_COMPAT
+दीर्घ reiserfs_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+				अचिन्हित दीर्घ arg)
+अणु
 	/*
 	 * These are just misnamed, they actually
-	 * get/put from/to user an int
+	 * get/put from/to user an पूर्णांक
 	 */
-	switch (cmd) {
-	case REISERFS_IOC32_UNPACK:
+	चयन (cmd) अणु
+	हाल REISERFS_IOC32_UNPACK:
 		cmd = REISERFS_IOC_UNPACK;
-		break;
-	case REISERFS_IOC32_GETVERSION:
+		अवरोध;
+	हाल REISERFS_IOC32_GETVERSION:
 		cmd = REISERFS_IOC_GETVERSION;
-		break;
-	case REISERFS_IOC32_SETVERSION:
+		अवरोध;
+	हाल REISERFS_IOC32_SETVERSION:
 		cmd = REISERFS_IOC_SETVERSION;
-		break;
-	default:
-		return -ENOIOCTLCMD;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
 
-	return reiserfs_ioctl(file, cmd, (unsigned long) compat_ptr(arg));
-}
-#endif
+	वापस reiserfs_ioctl(file, cmd, (अचिन्हित दीर्घ) compat_ptr(arg));
+पूर्ण
+#पूर्ण_अगर
 
-int reiserfs_commit_write(struct file *f, struct page *page,
-			  unsigned from, unsigned to);
+पूर्णांक reiserfs_commit_ग_लिखो(काष्ठा file *f, काष्ठा page *page,
+			  अचिन्हित from, अचिन्हित to);
 /*
  * reiserfs_unpack
- * Function try to convert tail from direct item into indirect.
+ * Function try to convert tail from direct item पूर्णांकo indirect.
  * It set up nopack attribute in the REISERFS_I(inode)->nopack
  */
-int reiserfs_unpack(struct inode *inode)
-{
-	int retval = 0;
-	int index;
-	struct page *page;
-	struct address_space *mapping;
-	unsigned long write_from;
-	unsigned long blocksize = inode->i_sb->s_blocksize;
+पूर्णांक reiserfs_unpack(काष्ठा inode *inode)
+अणु
+	पूर्णांक retval = 0;
+	पूर्णांक index;
+	काष्ठा page *page;
+	काष्ठा address_space *mapping;
+	अचिन्हित दीर्घ ग_लिखो_from;
+	अचिन्हित दीर्घ blocksize = inode->i_sb->s_blocksize;
 
-	if (inode->i_size == 0) {
+	अगर (inode->i_size == 0) अणु
 		REISERFS_I(inode)->i_flags |= i_nopack_mask;
-		return 0;
-	}
-	/* ioctl already done */
-	if (REISERFS_I(inode)->i_flags & i_nopack_mask) {
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
+	/* ioctl alपढ़ोy करोne */
+	अगर (REISERFS_I(inode)->i_flags & i_nopack_mask) अणु
+		वापस 0;
+	पूर्ण
 
 	/* we need to make sure nobody is changing the file size beneath us */
-	{
-		int depth = reiserfs_write_unlock_nested(inode->i_sb);
+	अणु
+		पूर्णांक depth = reiserfs_ग_लिखो_unlock_nested(inode->i_sb);
 
 		inode_lock(inode);
-		reiserfs_write_lock_nested(inode->i_sb, depth);
-	}
+		reiserfs_ग_लिखो_lock_nested(inode->i_sb, depth);
+	पूर्ण
 
-	reiserfs_write_lock(inode->i_sb);
+	reiserfs_ग_लिखो_lock(inode->i_sb);
 
-	write_from = inode->i_size & (blocksize - 1);
-	/* if we are on a block boundary, we are already unpacked.  */
-	if (write_from == 0) {
+	ग_लिखो_from = inode->i_size & (blocksize - 1);
+	/* अगर we are on a block boundary, we are alपढ़ोy unpacked.  */
+	अगर (ग_लिखो_from == 0) अणु
 		REISERFS_I(inode)->i_flags |= i_nopack_mask;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * we unpack by finding the page with the tail, and calling
-	 * __reiserfs_write_begin on that page.  This will force a
-	 * reiserfs_get_block to unpack the tail for us.
+	 * __reiserfs_ग_लिखो_begin on that page.  This will क्रमce a
+	 * reiserfs_get_block to unpack the tail क्रम us.
 	 */
 	index = inode->i_size >> PAGE_SHIFT;
 	mapping = inode->i_mapping;
 	page = grab_cache_page(mapping, index);
 	retval = -ENOMEM;
-	if (!page) {
-		goto out;
-	}
-	retval = __reiserfs_write_begin(page, write_from, 0);
-	if (retval)
-		goto out_unlock;
+	अगर (!page) अणु
+		जाओ out;
+	पूर्ण
+	retval = __reiserfs_ग_लिखो_begin(page, ग_लिखो_from, 0);
+	अगर (retval)
+		जाओ out_unlock;
 
 	/* conversion can change page contents, must flush */
 	flush_dcache_page(page);
-	retval = reiserfs_commit_write(NULL, page, write_from, write_from);
+	retval = reiserfs_commit_ग_लिखो(शून्य, page, ग_लिखो_from, ग_लिखो_from);
 	REISERFS_I(inode)->i_flags |= i_nopack_mask;
 
 out_unlock:
@@ -216,6 +217,6 @@ out_unlock:
 
 out:
 	inode_unlock(inode);
-	reiserfs_write_unlock(inode->i_sb);
-	return retval;
-}
+	reiserfs_ग_लिखो_unlock(inode->i_sb);
+	वापस retval;
+पूर्ण

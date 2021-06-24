@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0
-#ifndef __TRACE_STAT_H
-#define __TRACE_STAT_H
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#अगर_अघोषित __TRACE_STAT_H
+#घोषणा __TRACE_STAT_H
 
-#include <linux/seq_file.h>
+#समावेश <linux/seq_file.h>
 
 /*
  * If you want to provide a stat file (one-shot statistics), fill
  * an iterator with stat_start/stat_next and a stat_show callbacks.
  * The others callbacks are optional.
  */
-struct tracer_stat {
+काष्ठा tracer_stat अणु
 	/* The name of your stat file */
-	const char		*name;
+	स्थिर अक्षर		*name;
 	/* Iteration over statistic entries */
-	void			*(*stat_start)(struct tracer_stat *trace);
-	void			*(*stat_next)(void *prev, int idx);
-	/* Compare two entries for stats sorting */
+	व्योम			*(*stat_start)(काष्ठा tracer_stat *trace);
+	व्योम			*(*stat_next)(व्योम *prev, पूर्णांक idx);
+	/* Compare two entries क्रम stats sorting */
 	cmp_func_t		stat_cmp;
-	/* Print a stat entry */
-	int			(*stat_show)(struct seq_file *s, void *p);
+	/* Prपूर्णांक a stat entry */
+	पूर्णांक			(*stat_show)(काष्ठा seq_file *s, व्योम *p);
 	/* Release an entry */
-	void			(*stat_release)(void *stat);
-	/* Print the headers of your stat entries */
-	int			(*stat_headers)(struct seq_file *s);
-};
+	व्योम			(*stat_release)(व्योम *stat);
+	/* Prपूर्णांक the headers of your stat entries */
+	पूर्णांक			(*stat_headers)(काष्ठा seq_file *s);
+पूर्ण;
 
 /*
  * Destroy or create a stat file
  */
-extern int register_stat_tracer(struct tracer_stat *trace);
-extern void unregister_stat_tracer(struct tracer_stat *trace);
+बाह्य पूर्णांक रेजिस्टर_stat_tracer(काष्ठा tracer_stat *trace);
+बाह्य व्योम unरेजिस्टर_stat_tracer(काष्ठा tracer_stat *trace);
 
-#endif /* __TRACE_STAT_H */
+#पूर्ण_अगर /* __TRACE_STAT_H */

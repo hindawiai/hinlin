@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SD/MMC Greybus driver.
  *
@@ -6,58 +7,58 @@
  * Copyright 2014-2015 Linaro Ltd.
  */
 
-#include <linux/kernel.h>
-#include <linux/mmc/core.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/mmc.h>
-#include <linux/scatterlist.h>
-#include <linux/workqueue.h>
-#include <linux/greybus.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mmc/core.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/mmc.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/greybus.h>
 
-#include "gbphy.h"
+#समावेश "gbphy.h"
 
-struct gb_sdio_host {
-	struct gb_connection	*connection;
-	struct gbphy_device	*gbphy_dev;
-	struct mmc_host		*mmc;
-	struct mmc_request	*mrq;
-	struct mutex		lock;	/* lock for this host */
-	size_t			data_max;
+काष्ठा gb_sdio_host अणु
+	काष्ठा gb_connection	*connection;
+	काष्ठा gbphy_device	*gbphy_dev;
+	काष्ठा mmc_host		*mmc;
+	काष्ठा mmc_request	*mrq;
+	काष्ठा mutex		lock;	/* lock क्रम this host */
+	माप_प्रकार			data_max;
 	spinlock_t		xfer;	/* lock to cancel ongoing transfer */
 	bool			xfer_stop;
-	struct workqueue_struct	*mrq_workqueue;
-	struct work_struct	mrqwork;
+	काष्ठा workqueue_काष्ठा	*mrq_workqueue;
+	काष्ठा work_काष्ठा	mrqwork;
 	u8			queued_events;
-	bool			removed;
+	bool			हटाओd;
 	bool			card_present;
-	bool			read_only;
-};
+	bool			पढ़ो_only;
+पूर्ण;
 
-#define GB_SDIO_RSP_R1_R5_R6_R7	(GB_SDIO_RSP_PRESENT | GB_SDIO_RSP_CRC | \
+#घोषणा GB_SDIO_RSP_R1_R5_R6_R7	(GB_SDIO_RSP_PRESENT | GB_SDIO_RSP_CRC | \
 				 GB_SDIO_RSP_OPCODE)
-#define GB_SDIO_RSP_R3_R4	(GB_SDIO_RSP_PRESENT)
-#define GB_SDIO_RSP_R2		(GB_SDIO_RSP_PRESENT | GB_SDIO_RSP_CRC | \
+#घोषणा GB_SDIO_RSP_R3_R4	(GB_SDIO_RSP_PRESENT)
+#घोषणा GB_SDIO_RSP_R2		(GB_SDIO_RSP_PRESENT | GB_SDIO_RSP_CRC | \
 				 GB_SDIO_RSP_136)
-#define GB_SDIO_RSP_R1B		(GB_SDIO_RSP_PRESENT | GB_SDIO_RSP_CRC | \
+#घोषणा GB_SDIO_RSP_R1B		(GB_SDIO_RSP_PRESENT | GB_SDIO_RSP_CRC | \
 				 GB_SDIO_RSP_OPCODE | GB_SDIO_RSP_BUSY)
 
 /* kernel vdd starts at 0x80 and we need to translate to greybus ones 0x01 */
-#define GB_SDIO_VDD_SHIFT	8
+#घोषणा GB_SDIO_VDD_SHIFT	8
 
-#ifndef MMC_CAP2_CORE_RUNTIME_PM
-#define MMC_CAP2_CORE_RUNTIME_PM	0
-#endif
+#अगर_अघोषित MMC_CAP2_CORE_RUNTIME_PM
+#घोषणा MMC_CAP2_CORE_RUNTIME_PM	0
+#पूर्ण_अगर
 
-static inline bool single_op(struct mmc_command *cmd)
-{
+अटल अंतरभूत bool single_op(काष्ठा mmc_command *cmd)
+अणु
 	u32 opcode = cmd->opcode;
 
-	return opcode == MMC_WRITE_BLOCK ||
+	वापस opcode == MMC_WRITE_BLOCK ||
 	       opcode == MMC_READ_SINGLE_BLOCK;
-}
+पूर्ण
 
-static void _gb_sdio_set_host_caps(struct gb_sdio_host *host, u32 r)
-{
+अटल व्योम _gb_sdio_set_host_caps(काष्ठा gb_sdio_host *host, u32 r)
+अणु
 	u32 caps = 0;
 	u32 caps2 = 0;
 
@@ -86,13 +87,13 @@ static void _gb_sdio_set_host_caps(struct gb_sdio_host *host, u32 r)
 	host->mmc->caps = caps;
 	host->mmc->caps2 = caps2 | MMC_CAP2_CORE_RUNTIME_PM;
 
-	if (caps & MMC_CAP_NONREMOVABLE)
+	अगर (caps & MMC_CAP_NONREMOVABLE)
 		host->card_present = true;
-}
+पूर्ण
 
-static u32 _gb_sdio_get_host_ocr(u32 ocr)
-{
-	return (((ocr & GB_SDIO_VDD_165_195) ? MMC_VDD_165_195 : 0) |
+अटल u32 _gb_sdio_get_host_ocr(u32 ocr)
+अणु
+	वापस (((ocr & GB_SDIO_VDD_165_195) ? MMC_VDD_165_195 : 0) |
 		((ocr & GB_SDIO_VDD_20_21) ? MMC_VDD_20_21 : 0) |
 		((ocr & GB_SDIO_VDD_21_22) ? MMC_VDD_21_22 : 0) |
 		((ocr & GB_SDIO_VDD_22_23) ? MMC_VDD_22_23 : 0) |
@@ -110,35 +111,35 @@ static u32 _gb_sdio_get_host_ocr(u32 ocr)
 		((ocr & GB_SDIO_VDD_34_35) ? MMC_VDD_34_35 : 0) |
 		((ocr & GB_SDIO_VDD_35_36) ? MMC_VDD_35_36 : 0)
 		);
-}
+पूर्ण
 
-static int gb_sdio_get_caps(struct gb_sdio_host *host)
-{
-	struct gb_sdio_get_caps_response response;
-	struct mmc_host *mmc = host->mmc;
+अटल पूर्णांक gb_sdio_get_caps(काष्ठा gb_sdio_host *host)
+अणु
+	काष्ठा gb_sdio_get_caps_response response;
+	काष्ठा mmc_host *mmc = host->mmc;
 	u16 data_max;
 	u32 blksz;
 	u32 ocr;
 	u32 r;
-	int ret;
+	पूर्णांक ret;
 
 	ret = gb_operation_sync(host->connection, GB_SDIO_TYPE_GET_CAPABILITIES,
-				NULL, 0, &response, sizeof(response));
-	if (ret < 0)
-		return ret;
+				शून्य, 0, &response, माप(response));
+	अगर (ret < 0)
+		वापस ret;
 	r = le32_to_cpu(response.caps);
 
 	_gb_sdio_set_host_caps(host, r);
 
 	/* get the max block size that could fit our payload */
 	data_max = gb_operation_get_payload_size_max(host->connection);
-	data_max = min(data_max - sizeof(struct gb_sdio_transfer_request),
-		       data_max - sizeof(struct gb_sdio_transfer_response));
+	data_max = min(data_max - माप(काष्ठा gb_sdio_transfer_request),
+		       data_max - माप(काष्ठा gb_sdio_transfer_response));
 
 	blksz = min_t(u16, le16_to_cpu(response.max_blk_size), data_max);
 	blksz = max_t(u32, 512, blksz);
 
-	mmc->max_blk_size = rounddown_pow_of_two(blksz);
+	mmc->max_blk_size = roundकरोwn_घात_of_two(blksz);
 	mmc->max_blk_count = le16_to_cpu(response.max_blk_count);
 	host->data_max = data_max;
 
@@ -153,124 +154,124 @@ static int gb_sdio_get_caps(struct gb_sdio_host *host)
 	mmc->f_min = le32_to_cpu(response.f_min);
 	mmc->f_max = le32_to_cpu(response.f_max);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void _gb_queue_event(struct gb_sdio_host *host, u8 event)
-{
-	if (event & GB_SDIO_CARD_INSERTED)
+अटल व्योम _gb_queue_event(काष्ठा gb_sdio_host *host, u8 event)
+अणु
+	अगर (event & GB_SDIO_CARD_INSERTED)
 		host->queued_events &= ~GB_SDIO_CARD_REMOVED;
-	else if (event & GB_SDIO_CARD_REMOVED)
+	अन्यथा अगर (event & GB_SDIO_CARD_REMOVED)
 		host->queued_events &= ~GB_SDIO_CARD_INSERTED;
 
 	host->queued_events |= event;
-}
+पूर्ण
 
-static int _gb_sdio_process_events(struct gb_sdio_host *host, u8 event)
-{
+अटल पूर्णांक _gb_sdio_process_events(काष्ठा gb_sdio_host *host, u8 event)
+अणु
 	u8 state_changed = 0;
 
-	if (event & GB_SDIO_CARD_INSERTED) {
-		if (host->mmc->caps & MMC_CAP_NONREMOVABLE)
-			return 0;
-		if (host->card_present)
-			return 0;
+	अगर (event & GB_SDIO_CARD_INSERTED) अणु
+		अगर (host->mmc->caps & MMC_CAP_NONREMOVABLE)
+			वापस 0;
+		अगर (host->card_present)
+			वापस 0;
 		host->card_present = true;
 		state_changed = 1;
-	}
+	पूर्ण
 
-	if (event & GB_SDIO_CARD_REMOVED) {
-		if (host->mmc->caps & MMC_CAP_NONREMOVABLE)
-			return 0;
-		if (!(host->card_present))
-			return 0;
+	अगर (event & GB_SDIO_CARD_REMOVED) अणु
+		अगर (host->mmc->caps & MMC_CAP_NONREMOVABLE)
+			वापस 0;
+		अगर (!(host->card_present))
+			वापस 0;
 		host->card_present = false;
 		state_changed = 1;
-	}
+	पूर्ण
 
-	if (event & GB_SDIO_WP)
-		host->read_only = true;
+	अगर (event & GB_SDIO_WP)
+		host->पढ़ो_only = true;
 
-	if (state_changed) {
+	अगर (state_changed) अणु
 		dev_info(mmc_dev(host->mmc), "card %s now event\n",
 			 (host->card_present ?  "inserted" : "removed"));
 		mmc_detect_change(host->mmc, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_sdio_request_handler(struct gb_operation *op)
-{
-	struct gb_sdio_host *host = gb_connection_get_data(op->connection);
-	struct gb_message *request;
-	struct gb_sdio_event_request *payload;
+अटल पूर्णांक gb_sdio_request_handler(काष्ठा gb_operation *op)
+अणु
+	काष्ठा gb_sdio_host *host = gb_connection_get_data(op->connection);
+	काष्ठा gb_message *request;
+	काष्ठा gb_sdio_event_request *payload;
 	u8 type = op->type;
-	int ret =  0;
+	पूर्णांक ret =  0;
 	u8 event;
 
-	if (type != GB_SDIO_TYPE_EVENT) {
+	अगर (type != GB_SDIO_TYPE_EVENT) अणु
 		dev_err(mmc_dev(host->mmc),
 			"unsupported unsolicited event: %u\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	request = op->request;
 
-	if (request->payload_size < sizeof(*payload)) {
+	अगर (request->payload_size < माप(*payload)) अणु
 		dev_err(mmc_dev(host->mmc), "wrong event size received (%zu < %zu)\n",
-			request->payload_size, sizeof(*payload));
-		return -EINVAL;
-	}
+			request->payload_size, माप(*payload));
+		वापस -EINVAL;
+	पूर्ण
 
 	payload = request->payload;
 	event = payload->event;
 
-	if (host->removed)
+	अगर (host->हटाओd)
 		_gb_queue_event(host, event);
-	else
+	अन्यथा
 		ret = _gb_sdio_process_events(host, event);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_sdio_set_ios(struct gb_sdio_host *host,
-			   struct gb_sdio_set_ios_request *request)
-{
-	int ret;
+अटल पूर्णांक gb_sdio_set_ios(काष्ठा gb_sdio_host *host,
+			   काष्ठा gb_sdio_set_ios_request *request)
+अणु
+	पूर्णांक ret;
 
-	ret = gbphy_runtime_get_sync(host->gbphy_dev);
-	if (ret)
-		return ret;
+	ret = gbphy_runसमय_get_sync(host->gbphy_dev);
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_operation_sync(host->connection, GB_SDIO_TYPE_SET_IOS, request,
-				sizeof(*request), NULL, 0);
+				माप(*request), शून्य, 0);
 
-	gbphy_runtime_put_autosuspend(host->gbphy_dev);
+	gbphy_runसमय_put_स्वतःsuspend(host->gbphy_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int _gb_sdio_send(struct gb_sdio_host *host, struct mmc_data *data,
-			 size_t len, u16 nblocks, off_t skip)
-{
-	struct gb_sdio_transfer_request *request;
-	struct gb_sdio_transfer_response *response;
-	struct gb_operation *operation;
-	struct scatterlist *sg = data->sg;
-	unsigned int sg_len = data->sg_len;
-	size_t copied;
+अटल पूर्णांक _gb_sdio_send(काष्ठा gb_sdio_host *host, काष्ठा mmc_data *data,
+			 माप_प्रकार len, u16 nblocks, off_t skip)
+अणु
+	काष्ठा gb_sdio_transfer_request *request;
+	काष्ठा gb_sdio_transfer_response *response;
+	काष्ठा gb_operation *operation;
+	काष्ठा scatterlist *sg = data->sg;
+	अचिन्हित पूर्णांक sg_len = data->sg_len;
+	माप_प्रकार copied;
 	u16 send_blksz;
 	u16 send_blocks;
-	int ret;
+	पूर्णांक ret;
 
 	WARN_ON(len > host->data_max);
 
 	operation = gb_operation_create(host->connection, GB_SDIO_TYPE_TRANSFER,
-					len + sizeof(*request),
-					sizeof(*response), GFP_KERNEL);
-	if (!operation)
-		return -ENOMEM;
+					len + माप(*request),
+					माप(*response), GFP_KERNEL);
+	अगर (!operation)
+		वापस -ENOMEM;
 
 	request = operation->request->payload;
 	request->data_flags = data->flags >> 8;
@@ -279,52 +280,52 @@ static int _gb_sdio_send(struct gb_sdio_host *host, struct mmc_data *data,
 
 	copied = sg_pcopy_to_buffer(sg, sg_len, &request->data[0], len, skip);
 
-	if (copied != len) {
+	अगर (copied != len) अणु
 		ret = -EINVAL;
-		goto err_put_operation;
-	}
+		जाओ err_put_operation;
+	पूर्ण
 
 	ret = gb_operation_request_send_sync(operation);
-	if (ret < 0)
-		goto err_put_operation;
+	अगर (ret < 0)
+		जाओ err_put_operation;
 
 	response = operation->response->payload;
 
 	send_blocks = le16_to_cpu(response->data_blocks);
 	send_blksz = le16_to_cpu(response->data_blksz);
 
-	if (len != send_blksz * send_blocks) {
+	अगर (len != send_blksz * send_blocks) अणु
 		dev_err(mmc_dev(host->mmc), "send: size received: %zu != %d\n",
 			len, send_blksz * send_blocks);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 err_put_operation:
 	gb_operation_put(operation);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int _gb_sdio_recv(struct gb_sdio_host *host, struct mmc_data *data,
-			 size_t len, u16 nblocks, off_t skip)
-{
-	struct gb_sdio_transfer_request *request;
-	struct gb_sdio_transfer_response *response;
-	struct gb_operation *operation;
-	struct scatterlist *sg = data->sg;
-	unsigned int sg_len = data->sg_len;
-	size_t copied;
+अटल पूर्णांक _gb_sdio_recv(काष्ठा gb_sdio_host *host, काष्ठा mmc_data *data,
+			 माप_प्रकार len, u16 nblocks, off_t skip)
+अणु
+	काष्ठा gb_sdio_transfer_request *request;
+	काष्ठा gb_sdio_transfer_response *response;
+	काष्ठा gb_operation *operation;
+	काष्ठा scatterlist *sg = data->sg;
+	अचिन्हित पूर्णांक sg_len = data->sg_len;
+	माप_प्रकार copied;
 	u16 recv_blksz;
 	u16 recv_blocks;
-	int ret;
+	पूर्णांक ret;
 
 	WARN_ON(len > host->data_max);
 
 	operation = gb_operation_create(host->connection, GB_SDIO_TYPE_TRANSFER,
-					sizeof(*request),
-					len + sizeof(*response), GFP_KERNEL);
-	if (!operation)
-		return -ENOMEM;
+					माप(*request),
+					len + माप(*response), GFP_KERNEL);
+	अगर (!operation)
+		वापस -ENOMEM;
 
 	request = operation->request->payload;
 	request->data_flags = data->flags >> 8;
@@ -332,275 +333,275 @@ static int _gb_sdio_recv(struct gb_sdio_host *host, struct mmc_data *data,
 	request->data_blksz = cpu_to_le16(data->blksz);
 
 	ret = gb_operation_request_send_sync(operation);
-	if (ret < 0)
-		goto err_put_operation;
+	अगर (ret < 0)
+		जाओ err_put_operation;
 
 	response = operation->response->payload;
 	recv_blocks = le16_to_cpu(response->data_blocks);
 	recv_blksz = le16_to_cpu(response->data_blksz);
 
-	if (len != recv_blksz * recv_blocks) {
+	अगर (len != recv_blksz * recv_blocks) अणु
 		dev_err(mmc_dev(host->mmc), "recv: size received: %d != %zu\n",
 			recv_blksz * recv_blocks, len);
 		ret = -EINVAL;
-		goto err_put_operation;
-	}
+		जाओ err_put_operation;
+	पूर्ण
 
 	copied = sg_pcopy_from_buffer(sg, sg_len, &response->data[0], len,
 				      skip);
-	if (copied != len)
+	अगर (copied != len)
 		ret = -EINVAL;
 
 err_put_operation:
 	gb_operation_put(operation);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_sdio_transfer(struct gb_sdio_host *host, struct mmc_data *data)
-{
-	size_t left, len;
+अटल पूर्णांक gb_sdio_transfer(काष्ठा gb_sdio_host *host, काष्ठा mmc_data *data)
+अणु
+	माप_प्रकार left, len;
 	off_t skip = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 	u16 nblocks;
 
-	if (single_op(data->mrq->cmd) && data->blocks > 1) {
+	अगर (single_op(data->mrq->cmd) && data->blocks > 1) अणु
 		ret = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	left = data->blksz * data->blocks;
 
-	while (left) {
+	जबतक (left) अणु
 		/* check is a stop transmission is pending */
 		spin_lock(&host->xfer);
-		if (host->xfer_stop) {
+		अगर (host->xfer_stop) अणु
 			host->xfer_stop = false;
 			spin_unlock(&host->xfer);
 			ret = -EINTR;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		spin_unlock(&host->xfer);
 		len = min(left, host->data_max);
 		nblocks = len / data->blksz;
 		len = nblocks * data->blksz;
 
-		if (data->flags & MMC_DATA_READ) {
+		अगर (data->flags & MMC_DATA_READ) अणु
 			ret = _gb_sdio_recv(host, data, len, nblocks, skip);
-			if (ret < 0)
-				goto out;
-		} else {
+			अगर (ret < 0)
+				जाओ out;
+		पूर्ण अन्यथा अणु
 			ret = _gb_sdio_send(host, data, len, nblocks, skip);
-			if (ret < 0)
-				goto out;
-		}
+			अगर (ret < 0)
+				जाओ out;
+		पूर्ण
 		data->bytes_xfered += len;
 		left -= len;
 		skip += len;
-	}
+	पूर्ण
 
 out:
 	data->error = ret;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_sdio_command(struct gb_sdio_host *host, struct mmc_command *cmd)
-{
-	struct gb_sdio_command_request request = {0};
-	struct gb_sdio_command_response response;
-	struct mmc_data *data = host->mrq->data;
-	unsigned int timeout_ms;
+अटल पूर्णांक gb_sdio_command(काष्ठा gb_sdio_host *host, काष्ठा mmc_command *cmd)
+अणु
+	काष्ठा gb_sdio_command_request request = अणु0पूर्ण;
+	काष्ठा gb_sdio_command_response response;
+	काष्ठा mmc_data *data = host->mrq->data;
+	अचिन्हित पूर्णांक समयout_ms;
 	u8 cmd_flags;
 	u8 cmd_type;
-	int i;
-	int ret;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	switch (mmc_resp_type(cmd)) {
-	case MMC_RSP_NONE:
+	चयन (mmc_resp_type(cmd)) अणु
+	हाल MMC_RSP_NONE:
 		cmd_flags = GB_SDIO_RSP_NONE;
-		break;
-	case MMC_RSP_R1:
+		अवरोध;
+	हाल MMC_RSP_R1:
 		cmd_flags = GB_SDIO_RSP_R1_R5_R6_R7;
-		break;
-	case MMC_RSP_R1B:
+		अवरोध;
+	हाल MMC_RSP_R1B:
 		cmd_flags = GB_SDIO_RSP_R1B;
-		break;
-	case MMC_RSP_R2:
+		अवरोध;
+	हाल MMC_RSP_R2:
 		cmd_flags = GB_SDIO_RSP_R2;
-		break;
-	case MMC_RSP_R3:
+		अवरोध;
+	हाल MMC_RSP_R3:
 		cmd_flags = GB_SDIO_RSP_R3_R4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(mmc_dev(host->mmc), "cmd flag invalid 0x%04x\n",
 			mmc_resp_type(cmd));
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (mmc_cmd_type(cmd)) {
-	case MMC_CMD_BC:
+	चयन (mmc_cmd_type(cmd)) अणु
+	हाल MMC_CMD_BC:
 		cmd_type = GB_SDIO_CMD_BC;
-		break;
-	case MMC_CMD_BCR:
+		अवरोध;
+	हाल MMC_CMD_BCR:
 		cmd_type = GB_SDIO_CMD_BCR;
-		break;
-	case MMC_CMD_AC:
+		अवरोध;
+	हाल MMC_CMD_AC:
 		cmd_type = GB_SDIO_CMD_AC;
-		break;
-	case MMC_CMD_ADTC:
+		अवरोध;
+	हाल MMC_CMD_ADTC:
 		cmd_type = GB_SDIO_CMD_ADTC;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(mmc_dev(host->mmc), "cmd type invalid 0x%04x\n",
 			mmc_cmd_type(cmd));
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	request.cmd = cmd->opcode;
 	request.cmd_flags = cmd_flags;
 	request.cmd_type = cmd_type;
 	request.cmd_arg = cpu_to_le32(cmd->arg);
-	/* some controllers need to know at command time data details */
-	if (data) {
+	/* some controllers need to know at command समय data details */
+	अगर (data) अणु
 		request.data_blocks = cpu_to_le16(data->blocks);
 		request.data_blksz = cpu_to_le16(data->blksz);
-	}
+	पूर्ण
 
-	timeout_ms = cmd->busy_timeout ? cmd->busy_timeout :
+	समयout_ms = cmd->busy_समयout ? cmd->busy_समयout :
 		GB_OPERATION_TIMEOUT_DEFAULT;
 
-	ret = gb_operation_sync_timeout(host->connection, GB_SDIO_TYPE_COMMAND,
-					&request, sizeof(request), &response,
-					sizeof(response), timeout_ms);
-	if (ret < 0)
-		goto out;
+	ret = gb_operation_sync_समयout(host->connection, GB_SDIO_TYPE_COMMAND,
+					&request, माप(request), &response,
+					माप(response), समयout_ms);
+	अगर (ret < 0)
+		जाओ out;
 
 	/* no response expected */
-	if (cmd_flags == GB_SDIO_RSP_NONE)
-		goto out;
+	अगर (cmd_flags == GB_SDIO_RSP_NONE)
+		जाओ out;
 
-	/* long response expected */
-	if (cmd_flags & GB_SDIO_RSP_R2)
-		for (i = 0; i < 4; i++)
+	/* दीर्घ response expected */
+	अगर (cmd_flags & GB_SDIO_RSP_R2)
+		क्रम (i = 0; i < 4; i++)
 			cmd->resp[i] = le32_to_cpu(response.resp[i]);
-	else
+	अन्यथा
 		cmd->resp[0] = le32_to_cpu(response.resp[0]);
 
 out:
 	cmd->error = ret;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void gb_sdio_mrq_work(struct work_struct *work)
-{
-	struct gb_sdio_host *host;
-	struct mmc_request *mrq;
-	int ret;
+अटल व्योम gb_sdio_mrq_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा gb_sdio_host *host;
+	काष्ठा mmc_request *mrq;
+	पूर्णांक ret;
 
-	host = container_of(work, struct gb_sdio_host, mrqwork);
+	host = container_of(work, काष्ठा gb_sdio_host, mrqwork);
 
-	ret = gbphy_runtime_get_sync(host->gbphy_dev);
-	if (ret)
-		return;
+	ret = gbphy_runसमय_get_sync(host->gbphy_dev);
+	अगर (ret)
+		वापस;
 
 	mutex_lock(&host->lock);
 	mrq = host->mrq;
-	if (!mrq) {
+	अगर (!mrq) अणु
 		mutex_unlock(&host->lock);
-		gbphy_runtime_put_autosuspend(host->gbphy_dev);
+		gbphy_runसमय_put_स्वतःsuspend(host->gbphy_dev);
 		dev_err(mmc_dev(host->mmc), "mmc request is NULL");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (host->removed) {
+	अगर (host->हटाओd) अणु
 		mrq->cmd->error = -ESHUTDOWN;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (mrq->sbc) {
+	अगर (mrq->sbc) अणु
 		ret = gb_sdio_command(host, mrq->sbc);
-		if (ret < 0)
-			goto done;
-	}
+		अगर (ret < 0)
+			जाओ करोne;
+	पूर्ण
 
 	ret = gb_sdio_command(host, mrq->cmd);
-	if (ret < 0)
-		goto done;
+	अगर (ret < 0)
+		जाओ करोne;
 
-	if (mrq->data) {
+	अगर (mrq->data) अणु
 		ret = gb_sdio_transfer(host, mrq->data);
-		if (ret < 0)
-			goto done;
-	}
+		अगर (ret < 0)
+			जाओ करोne;
+	पूर्ण
 
-	if (mrq->stop) {
+	अगर (mrq->stop) अणु
 		ret = gb_sdio_command(host, mrq->stop);
-		if (ret < 0)
-			goto done;
-	}
+		अगर (ret < 0)
+			जाओ करोne;
+	पूर्ण
 
-done:
-	host->mrq = NULL;
+करोne:
+	host->mrq = शून्य;
 	mutex_unlock(&host->lock);
-	mmc_request_done(host->mmc, mrq);
-	gbphy_runtime_put_autosuspend(host->gbphy_dev);
-}
+	mmc_request_करोne(host->mmc, mrq);
+	gbphy_runसमय_put_स्वतःsuspend(host->gbphy_dev);
+पूर्ण
 
-static void gb_mmc_request(struct mmc_host *mmc, struct mmc_request *mrq)
-{
-	struct gb_sdio_host *host = mmc_priv(mmc);
-	struct mmc_command *cmd = mrq->cmd;
+अटल व्योम gb_mmc_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा gb_sdio_host *host = mmc_priv(mmc);
+	काष्ठा mmc_command *cmd = mrq->cmd;
 
-	/* Check if it is a cancel to ongoing transfer */
-	if (cmd->opcode == MMC_STOP_TRANSMISSION) {
+	/* Check अगर it is a cancel to ongoing transfer */
+	अगर (cmd->opcode == MMC_STOP_TRANSMISSION) अणु
 		spin_lock(&host->xfer);
 		host->xfer_stop = true;
 		spin_unlock(&host->xfer);
-	}
+	पूर्ण
 
 	mutex_lock(&host->lock);
 
 	WARN_ON(host->mrq);
 	host->mrq = mrq;
 
-	if (host->removed) {
+	अगर (host->हटाओd) अणु
 		mrq->cmd->error = -ESHUTDOWN;
-		goto out;
-	}
-	if (!host->card_present) {
+		जाओ out;
+	पूर्ण
+	अगर (!host->card_present) अणु
 		mrq->cmd->error = -ENOMEDIUM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	queue_work(host->mrq_workqueue, &host->mrqwork);
 
 	mutex_unlock(&host->lock);
-	return;
+	वापस;
 
 out:
-	host->mrq = NULL;
+	host->mrq = शून्य;
 	mutex_unlock(&host->lock);
-	mmc_request_done(mmc, mrq);
-}
+	mmc_request_करोne(mmc, mrq);
+पूर्ण
 
-static void gb_mmc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
-{
-	struct gb_sdio_host *host = mmc_priv(mmc);
-	struct gb_sdio_set_ios_request request;
-	int ret;
-	u8 power_mode;
+अटल व्योम gb_mmc_set_ios(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
+अणु
+	काष्ठा gb_sdio_host *host = mmc_priv(mmc);
+	काष्ठा gb_sdio_set_ios_request request;
+	पूर्णांक ret;
+	u8 घातer_mode;
 	u8 bus_width;
 	u8 timing;
-	u8 signal_voltage;
+	u8 संकेत_voltage;
 	u8 drv_type;
 	u32 vdd = 0;
 
 	mutex_lock(&host->lock);
-	request.clock = cpu_to_le32(ios->clock);
+	request.घड़ी = cpu_to_le32(ios->घड़ी);
 
-	if (ios->vdd)
+	अगर (ios->vdd)
 		vdd = 1 << (ios->vdd - GB_SDIO_VDD_SHIFT);
 	request.vdd = cpu_to_le32(vdd);
 
@@ -608,180 +609,180 @@ static void gb_mmc_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 			    GB_SDIO_BUSMODE_OPENDRAIN :
 			    GB_SDIO_BUSMODE_PUSHPULL;
 
-	switch (ios->power_mode) {
-	case MMC_POWER_OFF:
-	default:
-		power_mode = GB_SDIO_POWER_OFF;
-		break;
-	case MMC_POWER_UP:
-		power_mode = GB_SDIO_POWER_UP;
-		break;
-	case MMC_POWER_ON:
-		power_mode = GB_SDIO_POWER_ON;
-		break;
-	case MMC_POWER_UNDEFINED:
-		power_mode = GB_SDIO_POWER_UNDEFINED;
-		break;
-	}
-	request.power_mode = power_mode;
+	चयन (ios->घातer_mode) अणु
+	हाल MMC_POWER_OFF:
+	शेष:
+		घातer_mode = GB_SDIO_POWER_OFF;
+		अवरोध;
+	हाल MMC_POWER_UP:
+		घातer_mode = GB_SDIO_POWER_UP;
+		अवरोध;
+	हाल MMC_POWER_ON:
+		घातer_mode = GB_SDIO_POWER_ON;
+		अवरोध;
+	हाल MMC_POWER_UNDEFINED:
+		घातer_mode = GB_SDIO_POWER_UNDEFINED;
+		अवरोध;
+	पूर्ण
+	request.घातer_mode = घातer_mode;
 
-	switch (ios->bus_width) {
-	case MMC_BUS_WIDTH_1:
+	चयन (ios->bus_width) अणु
+	हाल MMC_BUS_WIDTH_1:
 		bus_width = GB_SDIO_BUS_WIDTH_1;
-		break;
-	case MMC_BUS_WIDTH_4:
-	default:
+		अवरोध;
+	हाल MMC_BUS_WIDTH_4:
+	शेष:
 		bus_width = GB_SDIO_BUS_WIDTH_4;
-		break;
-	case MMC_BUS_WIDTH_8:
+		अवरोध;
+	हाल MMC_BUS_WIDTH_8:
 		bus_width = GB_SDIO_BUS_WIDTH_8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	request.bus_width = bus_width;
 
-	switch (ios->timing) {
-	case MMC_TIMING_LEGACY:
-	default:
+	चयन (ios->timing) अणु
+	हाल MMC_TIMING_LEGACY:
+	शेष:
 		timing = GB_SDIO_TIMING_LEGACY;
-		break;
-	case MMC_TIMING_MMC_HS:
+		अवरोध;
+	हाल MMC_TIMING_MMC_HS:
 		timing = GB_SDIO_TIMING_MMC_HS;
-		break;
-	case MMC_TIMING_SD_HS:
+		अवरोध;
+	हाल MMC_TIMING_SD_HS:
 		timing = GB_SDIO_TIMING_SD_HS;
-		break;
-	case MMC_TIMING_UHS_SDR12:
+		अवरोध;
+	हाल MMC_TIMING_UHS_SDR12:
 		timing = GB_SDIO_TIMING_UHS_SDR12;
-		break;
-	case MMC_TIMING_UHS_SDR25:
+		अवरोध;
+	हाल MMC_TIMING_UHS_SDR25:
 		timing = GB_SDIO_TIMING_UHS_SDR25;
-		break;
-	case MMC_TIMING_UHS_SDR50:
+		अवरोध;
+	हाल MMC_TIMING_UHS_SDR50:
 		timing = GB_SDIO_TIMING_UHS_SDR50;
-		break;
-	case MMC_TIMING_UHS_SDR104:
+		अवरोध;
+	हाल MMC_TIMING_UHS_SDR104:
 		timing = GB_SDIO_TIMING_UHS_SDR104;
-		break;
-	case MMC_TIMING_UHS_DDR50:
+		अवरोध;
+	हाल MMC_TIMING_UHS_DDR50:
 		timing = GB_SDIO_TIMING_UHS_DDR50;
-		break;
-	case MMC_TIMING_MMC_DDR52:
+		अवरोध;
+	हाल MMC_TIMING_MMC_DDR52:
 		timing = GB_SDIO_TIMING_MMC_DDR52;
-		break;
-	case MMC_TIMING_MMC_HS200:
+		अवरोध;
+	हाल MMC_TIMING_MMC_HS200:
 		timing = GB_SDIO_TIMING_MMC_HS200;
-		break;
-	case MMC_TIMING_MMC_HS400:
+		अवरोध;
+	हाल MMC_TIMING_MMC_HS400:
 		timing = GB_SDIO_TIMING_MMC_HS400;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	request.timing = timing;
 
-	switch (ios->signal_voltage) {
-	case MMC_SIGNAL_VOLTAGE_330:
-		signal_voltage = GB_SDIO_SIGNAL_VOLTAGE_330;
-		break;
-	case MMC_SIGNAL_VOLTAGE_180:
-	default:
-		signal_voltage = GB_SDIO_SIGNAL_VOLTAGE_180;
-		break;
-	case MMC_SIGNAL_VOLTAGE_120:
-		signal_voltage = GB_SDIO_SIGNAL_VOLTAGE_120;
-		break;
-	}
-	request.signal_voltage = signal_voltage;
+	चयन (ios->संकेत_voltage) अणु
+	हाल MMC_SIGNAL_VOLTAGE_330:
+		संकेत_voltage = GB_SDIO_SIGNAL_VOLTAGE_330;
+		अवरोध;
+	हाल MMC_SIGNAL_VOLTAGE_180:
+	शेष:
+		संकेत_voltage = GB_SDIO_SIGNAL_VOLTAGE_180;
+		अवरोध;
+	हाल MMC_SIGNAL_VOLTAGE_120:
+		संकेत_voltage = GB_SDIO_SIGNAL_VOLTAGE_120;
+		अवरोध;
+	पूर्ण
+	request.संकेत_voltage = संकेत_voltage;
 
-	switch (ios->drv_type) {
-	case MMC_SET_DRIVER_TYPE_A:
+	चयन (ios->drv_type) अणु
+	हाल MMC_SET_DRIVER_TYPE_A:
 		drv_type = GB_SDIO_SET_DRIVER_TYPE_A;
-		break;
-	case MMC_SET_DRIVER_TYPE_C:
+		अवरोध;
+	हाल MMC_SET_DRIVER_TYPE_C:
 		drv_type = GB_SDIO_SET_DRIVER_TYPE_C;
-		break;
-	case MMC_SET_DRIVER_TYPE_D:
+		अवरोध;
+	हाल MMC_SET_DRIVER_TYPE_D:
 		drv_type = GB_SDIO_SET_DRIVER_TYPE_D;
-		break;
-	case MMC_SET_DRIVER_TYPE_B:
-	default:
+		अवरोध;
+	हाल MMC_SET_DRIVER_TYPE_B:
+	शेष:
 		drv_type = GB_SDIO_SET_DRIVER_TYPE_B;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	request.drv_type = drv_type;
 
 	ret = gb_sdio_set_ios(host, &request);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	memcpy(&mmc->ios, ios, sizeof(mmc->ios));
+	स_नकल(&mmc->ios, ios, माप(mmc->ios));
 
 out:
 	mutex_unlock(&host->lock);
-}
+पूर्ण
 
-static int gb_mmc_get_ro(struct mmc_host *mmc)
-{
-	struct gb_sdio_host *host = mmc_priv(mmc);
-
-	mutex_lock(&host->lock);
-	if (host->removed) {
-		mutex_unlock(&host->lock);
-		return -ESHUTDOWN;
-	}
-	mutex_unlock(&host->lock);
-
-	return host->read_only;
-}
-
-static int gb_mmc_get_cd(struct mmc_host *mmc)
-{
-	struct gb_sdio_host *host = mmc_priv(mmc);
+अटल पूर्णांक gb_mmc_get_ro(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा gb_sdio_host *host = mmc_priv(mmc);
 
 	mutex_lock(&host->lock);
-	if (host->removed) {
+	अगर (host->हटाओd) अणु
 		mutex_unlock(&host->lock);
-		return -ESHUTDOWN;
-	}
+		वापस -ESHUTDOWN;
+	पूर्ण
 	mutex_unlock(&host->lock);
 
-	return host->card_present;
-}
+	वापस host->पढ़ो_only;
+पूर्ण
 
-static int gb_mmc_switch_voltage(struct mmc_host *mmc, struct mmc_ios *ios)
-{
-	return 0;
-}
+अटल पूर्णांक gb_mmc_get_cd(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा gb_sdio_host *host = mmc_priv(mmc);
 
-static const struct mmc_host_ops gb_sdio_ops = {
+	mutex_lock(&host->lock);
+	अगर (host->हटाओd) अणु
+		mutex_unlock(&host->lock);
+		वापस -ESHUTDOWN;
+	पूर्ण
+	mutex_unlock(&host->lock);
+
+	वापस host->card_present;
+पूर्ण
+
+अटल पूर्णांक gb_mmc_चयन_voltage(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
+अणु
+	वापस 0;
+पूर्ण
+
+अटल स्थिर काष्ठा mmc_host_ops gb_sdio_ops = अणु
 	.request	= gb_mmc_request,
 	.set_ios	= gb_mmc_set_ios,
 	.get_ro		= gb_mmc_get_ro,
 	.get_cd		= gb_mmc_get_cd,
-	.start_signal_voltage_switch	= gb_mmc_switch_voltage,
-};
+	.start_संकेत_voltage_चयन	= gb_mmc_चयन_voltage,
+पूर्ण;
 
-static int gb_sdio_probe(struct gbphy_device *gbphy_dev,
-			 const struct gbphy_device_id *id)
-{
-	struct gb_connection *connection;
-	struct mmc_host *mmc;
-	struct gb_sdio_host *host;
-	int ret = 0;
+अटल पूर्णांक gb_sdio_probe(काष्ठा gbphy_device *gbphy_dev,
+			 स्थिर काष्ठा gbphy_device_id *id)
+अणु
+	काष्ठा gb_connection *connection;
+	काष्ठा mmc_host *mmc;
+	काष्ठा gb_sdio_host *host;
+	पूर्णांक ret = 0;
 
-	mmc = mmc_alloc_host(sizeof(*host), &gbphy_dev->dev);
-	if (!mmc)
-		return -ENOMEM;
+	mmc = mmc_alloc_host(माप(*host), &gbphy_dev->dev);
+	अगर (!mmc)
+		वापस -ENOMEM;
 
 	connection = gb_connection_create(gbphy_dev->bundle,
 					  le16_to_cpu(gbphy_dev->cport_desc->id),
 					  gb_sdio_request_handler);
-	if (IS_ERR(connection)) {
+	अगर (IS_ERR(connection)) अणु
 		ret = PTR_ERR(connection);
-		goto exit_mmc_free;
-	}
+		जाओ निकास_mmc_मुक्त;
+	पूर्ण
 
 	host = mmc_priv(mmc);
 	host->mmc = mmc;
-	host->removed = true;
+	host->हटाओd = true;
 
 	host->connection = connection;
 	gb_connection_set_data(connection, host);
@@ -789,18 +790,18 @@ static int gb_sdio_probe(struct gbphy_device *gbphy_dev,
 	gb_gbphy_set_data(gbphy_dev, host);
 
 	ret = gb_connection_enable_tx(connection);
-	if (ret)
-		goto exit_connection_destroy;
+	अगर (ret)
+		जाओ निकास_connection_destroy;
 
 	ret = gb_sdio_get_caps(host);
-	if (ret < 0)
-		goto exit_connection_disable;
+	अगर (ret < 0)
+		जाओ निकास_connection_disable;
 
 	mmc->ops = &gb_sdio_ops;
 
 	mmc->max_segs = host->mmc->max_blk_count;
 
-	/* for now we make a map 1:1 between max request and segment size */
+	/* क्रम now we make a map 1:1 between max request and segment size */
 	mmc->max_req_size = mmc->max_blk_size * mmc->max_blk_count;
 	mmc->max_seg_size = mmc->max_req_size;
 
@@ -808,77 +809,77 @@ static int gb_sdio_probe(struct gbphy_device *gbphy_dev,
 	spin_lock_init(&host->xfer);
 	host->mrq_workqueue = alloc_workqueue("mmc-%s", 0, 1,
 					      dev_name(&gbphy_dev->dev));
-	if (!host->mrq_workqueue) {
+	अगर (!host->mrq_workqueue) अणु
 		ret = -ENOMEM;
-		goto exit_connection_disable;
-	}
+		जाओ निकास_connection_disable;
+	पूर्ण
 	INIT_WORK(&host->mrqwork, gb_sdio_mrq_work);
 
 	ret = gb_connection_enable(connection);
-	if (ret)
-		goto exit_wq_destroy;
+	अगर (ret)
+		जाओ निकास_wq_destroy;
 
 	ret = mmc_add_host(mmc);
-	if (ret < 0)
-		goto exit_wq_destroy;
-	host->removed = false;
+	अगर (ret < 0)
+		जाओ निकास_wq_destroy;
+	host->हटाओd = false;
 	ret = _gb_sdio_process_events(host, host->queued_events);
 	host->queued_events = 0;
 
-	gbphy_runtime_put_autosuspend(gbphy_dev);
+	gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
 
-	return ret;
+	वापस ret;
 
-exit_wq_destroy:
+निकास_wq_destroy:
 	destroy_workqueue(host->mrq_workqueue);
-exit_connection_disable:
+निकास_connection_disable:
 	gb_connection_disable(connection);
-exit_connection_destroy:
+निकास_connection_destroy:
 	gb_connection_destroy(connection);
-exit_mmc_free:
-	mmc_free_host(mmc);
+निकास_mmc_मुक्त:
+	mmc_मुक्त_host(mmc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void gb_sdio_remove(struct gbphy_device *gbphy_dev)
-{
-	struct gb_sdio_host *host = gb_gbphy_get_data(gbphy_dev);
-	struct gb_connection *connection = host->connection;
-	struct mmc_host *mmc;
-	int ret;
+अटल व्योम gb_sdio_हटाओ(काष्ठा gbphy_device *gbphy_dev)
+अणु
+	काष्ठा gb_sdio_host *host = gb_gbphy_get_data(gbphy_dev);
+	काष्ठा gb_connection *connection = host->connection;
+	काष्ठा mmc_host *mmc;
+	पूर्णांक ret;
 
-	ret = gbphy_runtime_get_sync(gbphy_dev);
-	if (ret)
-		gbphy_runtime_get_noresume(gbphy_dev);
+	ret = gbphy_runसमय_get_sync(gbphy_dev);
+	अगर (ret)
+		gbphy_runसमय_get_noresume(gbphy_dev);
 
 	mutex_lock(&host->lock);
-	host->removed = true;
+	host->हटाओd = true;
 	mmc = host->mmc;
-	gb_connection_set_data(connection, NULL);
+	gb_connection_set_data(connection, शून्य);
 	mutex_unlock(&host->lock);
 
 	flush_workqueue(host->mrq_workqueue);
 	destroy_workqueue(host->mrq_workqueue);
 	gb_connection_disable_rx(connection);
-	mmc_remove_host(mmc);
+	mmc_हटाओ_host(mmc);
 	gb_connection_disable(connection);
 	gb_connection_destroy(connection);
-	mmc_free_host(mmc);
-}
+	mmc_मुक्त_host(mmc);
+पूर्ण
 
-static const struct gbphy_device_id gb_sdio_id_table[] = {
-	{ GBPHY_PROTOCOL(GREYBUS_PROTOCOL_SDIO) },
-	{ },
-};
+अटल स्थिर काष्ठा gbphy_device_id gb_sdio_id_table[] = अणु
+	अणु GBPHY_PROTOCOL(GREYBUS_PROTOCOL_SDIO) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(gbphy, gb_sdio_id_table);
 
-static struct gbphy_driver sdio_driver = {
+अटल काष्ठा gbphy_driver sdio_driver = अणु
 	.name		= "sdio",
 	.probe		= gb_sdio_probe,
-	.remove		= gb_sdio_remove,
+	.हटाओ		= gb_sdio_हटाओ,
 	.id_table	= gb_sdio_id_table,
-};
+पूर्ण;
 
 module_gbphy_driver(sdio_driver);
 MODULE_LICENSE("GPL v2");

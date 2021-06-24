@@ -1,399 +1,400 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * camss-csid-4-7.c
  *
- * Qualcomm MSM Camera Subsystem - CSID (CSI Decoder) Module
+ * Qualcomm MSM Camera Subप्रणाली - CSID (CSI Decoder) Module
  *
  * Copyright (C) 2020 Linaro Ltd.
  */
-#include <linux/completion.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
 
-#include "camss-csid.h"
-#include "camss-csid-gen1.h"
-#include "camss.h"
+#समावेश "camss-csid.h"
+#समावेश "camss-csid-gen1.h"
+#समावेश "camss.h"
 
-#define CAMSS_CSID_HW_VERSION		0x0
-#define CAMSS_CSID_CORE_CTRL_0		0x004
-#define CAMSS_CSID_CORE_CTRL_1		0x008
-#define CAMSS_CSID_RST_CMD		0x010
-#define CAMSS_CSID_CID_LUT_VC_n(n)	(0x014 + 0x4 * (n))
-#define CAMSS_CSID_CID_n_CFG(n)		(0x024 + 0x4 * (n))
-#define CAMSS_CSID_CID_n_CFG_ISPIF_EN	BIT(0)
-#define CAMSS_CSID_CID_n_CFG_RDI_EN	BIT(1)
-#define CAMSS_CSID_CID_n_CFG_DECODE_FORMAT_SHIFT	4
-#define CAMSS_CSID_CID_n_CFG_PLAIN_FORMAT_8		(PLAIN_FORMAT_PLAIN8 << 8)
-#define CAMSS_CSID_CID_n_CFG_PLAIN_FORMAT_16		(PLAIN_FORMAT_PLAIN16 << 8)
-#define CAMSS_CSID_CID_n_CFG_PLAIN_ALIGNMENT_LSB	(0 << 9)
-#define CAMSS_CSID_CID_n_CFG_PLAIN_ALIGNMENT_MSB	(1 << 9)
-#define CAMSS_CSID_CID_n_CFG_RDI_MODE_RAW_DUMP		(0 << 10)
-#define CAMSS_CSID_CID_n_CFG_RDI_MODE_PLAIN_PACKING	(1 << 10)
-#define CAMSS_CSID_IRQ_CLEAR_CMD	0x064
-#define CAMSS_CSID_IRQ_MASK		0x068
-#define CAMSS_CSID_IRQ_STATUS		0x06c
-#define CAMSS_CSID_TG_CTRL		0x0a8
-#define CAMSS_CSID_TG_CTRL_DISABLE	0xa06436
-#define CAMSS_CSID_TG_CTRL_ENABLE	0xa06437
-#define CAMSS_CSID_TG_VC_CFG		0x0ac
-#define CAMSS_CSID_TG_VC_CFG_H_BLANKING		0x3ff
-#define CAMSS_CSID_TG_VC_CFG_V_BLANKING		0x7f
-#define CAMSS_CSID_TG_DT_n_CGG_0(n)	(0x0b4 + 0xc * (n))
-#define CAMSS_CSID_TG_DT_n_CGG_1(n)	(0x0b8 + 0xc * (n))
-#define CAMSS_CSID_TG_DT_n_CGG_2(n)	(0x0bc + 0xc * (n))
+#घोषणा CAMSS_CSID_HW_VERSION		0x0
+#घोषणा CAMSS_CSID_CORE_CTRL_0		0x004
+#घोषणा CAMSS_CSID_CORE_CTRL_1		0x008
+#घोषणा CAMSS_CSID_RST_CMD		0x010
+#घोषणा CAMSS_CSID_CID_LUT_VC_n(n)	(0x014 + 0x4 * (n))
+#घोषणा CAMSS_CSID_CID_n_CFG(n)		(0x024 + 0x4 * (n))
+#घोषणा CAMSS_CSID_CID_n_CFG_ISPIF_EN	BIT(0)
+#घोषणा CAMSS_CSID_CID_n_CFG_RDI_EN	BIT(1)
+#घोषणा CAMSS_CSID_CID_n_CFG_DECODE_FORMAT_SHIFT	4
+#घोषणा CAMSS_CSID_CID_n_CFG_PLAIN_FORMAT_8		(PLAIN_FORMAT_PLAIN8 << 8)
+#घोषणा CAMSS_CSID_CID_n_CFG_PLAIN_FORMAT_16		(PLAIN_FORMAT_PLAIN16 << 8)
+#घोषणा CAMSS_CSID_CID_n_CFG_PLAIN_ALIGNMENT_LSB	(0 << 9)
+#घोषणा CAMSS_CSID_CID_n_CFG_PLAIN_ALIGNMENT_MSB	(1 << 9)
+#घोषणा CAMSS_CSID_CID_n_CFG_RDI_MODE_RAW_DUMP		(0 << 10)
+#घोषणा CAMSS_CSID_CID_n_CFG_RDI_MODE_PLAIN_PACKING	(1 << 10)
+#घोषणा CAMSS_CSID_IRQ_CLEAR_CMD	0x064
+#घोषणा CAMSS_CSID_IRQ_MASK		0x068
+#घोषणा CAMSS_CSID_IRQ_STATUS		0x06c
+#घोषणा CAMSS_CSID_TG_CTRL		0x0a8
+#घोषणा CAMSS_CSID_TG_CTRL_DISABLE	0xa06436
+#घोषणा CAMSS_CSID_TG_CTRL_ENABLE	0xa06437
+#घोषणा CAMSS_CSID_TG_VC_CFG		0x0ac
+#घोषणा CAMSS_CSID_TG_VC_CFG_H_BLANKING		0x3ff
+#घोषणा CAMSS_CSID_TG_VC_CFG_V_BLANKING		0x7f
+#घोषणा CAMSS_CSID_TG_DT_n_CGG_0(n)	(0x0b4 + 0xc * (n))
+#घोषणा CAMSS_CSID_TG_DT_n_CGG_1(n)	(0x0b8 + 0xc * (n))
+#घोषणा CAMSS_CSID_TG_DT_n_CGG_2(n)	(0x0bc + 0xc * (n))
 
-static const struct csid_format csid_formats[] = {
-	{
+अटल स्थिर काष्ठा csid_क्रमmat csid_क्रमmats[] = अणु
+	अणु
 		MEDIA_BUS_FMT_UYVY8_2X8,
 		DATA_TYPE_YUV422_8BIT,
 		DECODE_FORMAT_UNCOMPRESSED_8_BIT,
 		8,
 		2,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_VYUY8_2X8,
 		DATA_TYPE_YUV422_8BIT,
 		DECODE_FORMAT_UNCOMPRESSED_8_BIT,
 		8,
 		2,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_YUYV8_2X8,
 		DATA_TYPE_YUV422_8BIT,
 		DECODE_FORMAT_UNCOMPRESSED_8_BIT,
 		8,
 		2,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_YVYU8_2X8,
 		DATA_TYPE_YUV422_8BIT,
 		DECODE_FORMAT_UNCOMPRESSED_8_BIT,
 		8,
 		2,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SBGGR8_1X8,
 		DATA_TYPE_RAW_8BIT,
 		DECODE_FORMAT_UNCOMPRESSED_8_BIT,
 		8,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SGBRG8_1X8,
 		DATA_TYPE_RAW_8BIT,
 		DECODE_FORMAT_UNCOMPRESSED_8_BIT,
 		8,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SGRBG8_1X8,
 		DATA_TYPE_RAW_8BIT,
 		DECODE_FORMAT_UNCOMPRESSED_8_BIT,
 		8,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SRGGB8_1X8,
 		DATA_TYPE_RAW_8BIT,
 		DECODE_FORMAT_UNCOMPRESSED_8_BIT,
 		8,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SBGGR10_1X10,
 		DATA_TYPE_RAW_10BIT,
 		DECODE_FORMAT_UNCOMPRESSED_10_BIT,
 		10,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SGBRG10_1X10,
 		DATA_TYPE_RAW_10BIT,
 		DECODE_FORMAT_UNCOMPRESSED_10_BIT,
 		10,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SGRBG10_1X10,
 		DATA_TYPE_RAW_10BIT,
 		DECODE_FORMAT_UNCOMPRESSED_10_BIT,
 		10,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SRGGB10_1X10,
 		DATA_TYPE_RAW_10BIT,
 		DECODE_FORMAT_UNCOMPRESSED_10_BIT,
 		10,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SBGGR12_1X12,
 		DATA_TYPE_RAW_12BIT,
 		DECODE_FORMAT_UNCOMPRESSED_12_BIT,
 		12,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SGBRG12_1X12,
 		DATA_TYPE_RAW_12BIT,
 		DECODE_FORMAT_UNCOMPRESSED_12_BIT,
 		12,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SGRBG12_1X12,
 		DATA_TYPE_RAW_12BIT,
 		DECODE_FORMAT_UNCOMPRESSED_12_BIT,
 		12,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SRGGB12_1X12,
 		DATA_TYPE_RAW_12BIT,
 		DECODE_FORMAT_UNCOMPRESSED_12_BIT,
 		12,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SBGGR14_1X14,
 		DATA_TYPE_RAW_14BIT,
 		DECODE_FORMAT_UNCOMPRESSED_14_BIT,
 		14,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SGBRG14_1X14,
 		DATA_TYPE_RAW_14BIT,
 		DECODE_FORMAT_UNCOMPRESSED_14_BIT,
 		14,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SGRBG14_1X14,
 		DATA_TYPE_RAW_14BIT,
 		DECODE_FORMAT_UNCOMPRESSED_14_BIT,
 		14,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_SRGGB14_1X14,
 		DATA_TYPE_RAW_14BIT,
 		DECODE_FORMAT_UNCOMPRESSED_14_BIT,
 		14,
 		1,
-	},
-	{
+	पूर्ण,
+	अणु
 		MEDIA_BUS_FMT_Y10_1X10,
 		DATA_TYPE_RAW_10BIT,
 		DECODE_FORMAT_UNCOMPRESSED_10_BIT,
 		10,
 		1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void csid_configure_stream(struct csid_device *csid, u8 enable)
-{
-	struct csid_testgen_config *tg = &csid->testgen;
+अटल व्योम csid_configure_stream(काष्ठा csid_device *csid, u8 enable)
+अणु
+	काष्ठा csid_testgen_config *tg = &csid->testgen;
 	u32 sink_code = csid->fmt[MSM_CSID_PAD_SINK].code;
 	u32 src_code = csid->fmt[MSM_CSID_PAD_SRC].code;
 	u32 val;
 
-	if (enable) {
-		struct v4l2_mbus_framefmt *input_format;
-		const struct csid_format *format;
+	अगर (enable) अणु
+		काष्ठा v4l2_mbus_framefmt *input_क्रमmat;
+		स्थिर काष्ठा csid_क्रमmat *क्रमmat;
 		u8 vc = 0; /* Virtual Channel 0 */
 		u8 cid = vc * 4; /* id of Virtual Channel and Data Type set */
-		u8 dt_shift;
+		u8 dt_shअगरt;
 
-		if (tg->enabled) {
+		अगर (tg->enabled) अणु
 			/* Config Test Generator */
 			u32 num_bytes_per_line, num_lines;
 
-			input_format = &csid->fmt[MSM_CSID_PAD_SRC];
-			format = csid_get_fmt_entry(csid->formats, csid->nformats,
-						    input_format->code);
-			num_bytes_per_line = input_format->width * format->bpp * format->spp / 8;
-			num_lines = input_format->height;
+			input_क्रमmat = &csid->fmt[MSM_CSID_PAD_SRC];
+			क्रमmat = csid_get_fmt_entry(csid->क्रमmats, csid->nक्रमmats,
+						    input_क्रमmat->code);
+			num_bytes_per_line = input_क्रमmat->width * क्रमmat->bpp * क्रमmat->spp / 8;
+			num_lines = input_क्रमmat->height;
 
 			/* 31:24 V blank, 23:13 H blank, 3:2 num of active DT */
 			/* 1:0 VC */
 			val = ((CAMSS_CSID_TG_VC_CFG_V_BLANKING & 0xff) << 24) |
 				  ((CAMSS_CSID_TG_VC_CFG_H_BLANKING & 0x7ff) << 13);
-			writel_relaxed(val, csid->base + CAMSS_CSID_TG_VC_CFG);
+			ग_लिखोl_relaxed(val, csid->base + CAMSS_CSID_TG_VC_CFG);
 
 			/* 28:16 bytes per lines, 12:0 num of lines */
 			val = ((num_bytes_per_line & 0x1fff) << 16) |
 				  (num_lines & 0x1fff);
-			writel_relaxed(val, csid->base + CAMSS_CSID_TG_DT_n_CGG_0(0));
+			ग_लिखोl_relaxed(val, csid->base + CAMSS_CSID_TG_DT_n_CGG_0(0));
 
 			/* 5:0 data type */
-			val = format->data_type;
-			writel_relaxed(val, csid->base + CAMSS_CSID_TG_DT_n_CGG_1(0));
+			val = क्रमmat->data_type;
+			ग_लिखोl_relaxed(val, csid->base + CAMSS_CSID_TG_DT_n_CGG_1(0));
 
 			/* 2:0 output test pattern */
 			val = tg->mode - 1;
-			writel_relaxed(val, csid->base + CAMSS_CSID_TG_DT_n_CGG_2(0));
-		} else {
-			struct csid_phy_config *phy = &csid->phy;
+			ग_लिखोl_relaxed(val, csid->base + CAMSS_CSID_TG_DT_n_CGG_2(0));
+		पूर्ण अन्यथा अणु
+			काष्ठा csid_phy_config *phy = &csid->phy;
 
-			input_format = &csid->fmt[MSM_CSID_PAD_SINK];
-			format = csid_get_fmt_entry(csid->formats, csid->nformats,
-						    input_format->code);
+			input_क्रमmat = &csid->fmt[MSM_CSID_PAD_SINK];
+			क्रमmat = csid_get_fmt_entry(csid->क्रमmats, csid->nक्रमmats,
+						    input_क्रमmat->code);
 
 			val = phy->lane_cnt - 1;
 			val |= phy->lane_assign << 4;
 
-			writel_relaxed(val, csid->base + CAMSS_CSID_CORE_CTRL_0);
+			ग_लिखोl_relaxed(val, csid->base + CAMSS_CSID_CORE_CTRL_0);
 
 			val = phy->csiphy_id << 17;
 			val |= 0x9;
 
-			writel_relaxed(val, csid->base + CAMSS_CSID_CORE_CTRL_1);
-		}
+			ग_लिखोl_relaxed(val, csid->base + CAMSS_CSID_CORE_CTRL_1);
+		पूर्ण
 
 		/* Config LUT */
 
-		dt_shift = (cid % 4) * 8;
+		dt_shअगरt = (cid % 4) * 8;
 
-		val = readl_relaxed(csid->base + CAMSS_CSID_CID_LUT_VC_n(vc));
-		val &= ~(0xff << dt_shift);
-		val |= format->data_type << dt_shift;
-		writel_relaxed(val, csid->base + CAMSS_CSID_CID_LUT_VC_n(vc));
+		val = पढ़ोl_relaxed(csid->base + CAMSS_CSID_CID_LUT_VC_n(vc));
+		val &= ~(0xff << dt_shअगरt);
+		val |= क्रमmat->data_type << dt_shअगरt;
+		ग_लिखोl_relaxed(val, csid->base + CAMSS_CSID_CID_LUT_VC_n(vc));
 
 		val = CAMSS_CSID_CID_n_CFG_ISPIF_EN;
 		val |= CAMSS_CSID_CID_n_CFG_RDI_EN;
-		val |= format->decode_format << CAMSS_CSID_CID_n_CFG_DECODE_FORMAT_SHIFT;
+		val |= क्रमmat->decode_क्रमmat << CAMSS_CSID_CID_n_CFG_DECODE_FORMAT_SHIFT;
 		val |= CAMSS_CSID_CID_n_CFG_RDI_MODE_RAW_DUMP;
 
-		if ((sink_code == MEDIA_BUS_FMT_SBGGR10_1X10 &&
+		अगर ((sink_code == MEDIA_BUS_FMT_SBGGR10_1X10 &&
 		     src_code == MEDIA_BUS_FMT_SBGGR10_2X8_PADHI_LE) ||
 		    (sink_code == MEDIA_BUS_FMT_Y10_1X10 &&
-		     src_code == MEDIA_BUS_FMT_Y10_2X8_PADHI_LE)) {
+		     src_code == MEDIA_BUS_FMT_Y10_2X8_PADHI_LE)) अणु
 			val |= CAMSS_CSID_CID_n_CFG_RDI_MODE_PLAIN_PACKING;
 			val |= CAMSS_CSID_CID_n_CFG_PLAIN_FORMAT_16;
 			val |= CAMSS_CSID_CID_n_CFG_PLAIN_ALIGNMENT_LSB;
-		}
+		पूर्ण
 
-		writel_relaxed(val, csid->base + CAMSS_CSID_CID_n_CFG(cid));
+		ग_लिखोl_relaxed(val, csid->base + CAMSS_CSID_CID_n_CFG(cid));
 
-		if (tg->enabled) {
+		अगर (tg->enabled) अणु
 			val = CAMSS_CSID_TG_CTRL_ENABLE;
-			writel_relaxed(val, csid->base + CAMSS_CSID_TG_CTRL);
-		}
-	} else {
-		if (tg->enabled) {
+			ग_लिखोl_relaxed(val, csid->base + CAMSS_CSID_TG_CTRL);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (tg->enabled) अणु
 			val = CAMSS_CSID_TG_CTRL_DISABLE;
-			writel_relaxed(val, csid->base + CAMSS_CSID_TG_CTRL);
-		}
-	}
-}
+			ग_लिखोl_relaxed(val, csid->base + CAMSS_CSID_TG_CTRL);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int csid_configure_testgen_pattern(struct csid_device *csid, s32 val)
-{
-	if (val > 0 && val <= csid->testgen.nmodes)
+अटल पूर्णांक csid_configure_testgen_pattern(काष्ठा csid_device *csid, s32 val)
+अणु
+	अगर (val > 0 && val <= csid->testgen.nmodes)
 		csid->testgen.mode = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 csid_hw_version(struct csid_device *csid)
-{
-	u32 hw_version = readl_relaxed(csid->base + CAMSS_CSID_HW_VERSION);
+अटल u32 csid_hw_version(काष्ठा csid_device *csid)
+अणु
+	u32 hw_version = पढ़ोl_relaxed(csid->base + CAMSS_CSID_HW_VERSION);
 
 	dev_dbg(csid->camss->dev, "CSID HW Version = 0x%08x\n", hw_version);
 
-	return hw_version;
-}
+	वापस hw_version;
+पूर्ण
 
 /*
- * isr - CSID module interrupt service routine
+ * isr - CSID module पूर्णांकerrupt service routine
  * @irq: Interrupt line
  * @dev: CSID device
  *
  * Return IRQ_HANDLED on success
  */
-static irqreturn_t csid_isr(int irq, void *dev)
-{
-	struct csid_device *csid = dev;
+अटल irqवापस_t csid_isr(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा csid_device *csid = dev;
 	u32 value;
 
-	value = readl_relaxed(csid->base + CAMSS_CSID_IRQ_STATUS);
-	writel_relaxed(value, csid->base + CAMSS_CSID_IRQ_CLEAR_CMD);
+	value = पढ़ोl_relaxed(csid->base + CAMSS_CSID_IRQ_STATUS);
+	ग_लिखोl_relaxed(value, csid->base + CAMSS_CSID_IRQ_CLEAR_CMD);
 
-	if ((value >> 11) & 0x1)
+	अगर ((value >> 11) & 0x1)
 		complete(&csid->reset_complete);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * csid_reset - Trigger reset on CSID module and wait to complete
+ * csid_reset - Trigger reset on CSID module and रुको to complete
  * @csid: CSID device
  *
  * Return 0 on success or a negative error code otherwise
  */
-static int csid_reset(struct csid_device *csid)
-{
-	unsigned long time;
+अटल पूर्णांक csid_reset(काष्ठा csid_device *csid)
+अणु
+	अचिन्हित दीर्घ समय;
 
 	reinit_completion(&csid->reset_complete);
 
-	writel_relaxed(0x7fff, csid->base + CAMSS_CSID_RST_CMD);
+	ग_लिखोl_relaxed(0x7fff, csid->base + CAMSS_CSID_RST_CMD);
 
-	time = wait_for_completion_timeout(&csid->reset_complete,
-					   msecs_to_jiffies(CSID_RESET_TIMEOUT_MS));
-	if (!time) {
+	समय = रुको_क्रम_completion_समयout(&csid->reset_complete,
+					   msecs_to_jअगरfies(CSID_RESET_TIMEOUT_MS));
+	अगर (!समय) अणु
 		dev_err(csid->camss->dev, "CSID reset timeout\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 csid_src_pad_code(struct csid_device *csid, u32 sink_code,
-			     unsigned int match_format_idx, u32 match_code)
-{
-	switch (sink_code) {
-	case MEDIA_BUS_FMT_SBGGR10_1X10:
-	{
-		u32 src_code[] = {
+अटल u32 csid_src_pad_code(काष्ठा csid_device *csid, u32 sink_code,
+			     अचिन्हित पूर्णांक match_क्रमmat_idx, u32 match_code)
+अणु
+	चयन (sink_code) अणु
+	हाल MEDIA_BUS_FMT_SBGGR10_1X10:
+	अणु
+		u32 src_code[] = अणु
 			MEDIA_BUS_FMT_SBGGR10_1X10,
 			MEDIA_BUS_FMT_SBGGR10_2X8_PADHI_LE,
-		};
+		पूर्ण;
 
-		return csid_find_code(src_code, ARRAY_SIZE(src_code),
-				      match_format_idx, match_code);
-	}
-	case MEDIA_BUS_FMT_Y10_1X10:
-	{
-		u32 src_code[] = {
+		वापस csid_find_code(src_code, ARRAY_SIZE(src_code),
+				      match_क्रमmat_idx, match_code);
+	पूर्ण
+	हाल MEDIA_BUS_FMT_Y10_1X10:
+	अणु
+		u32 src_code[] = अणु
 			MEDIA_BUS_FMT_Y10_1X10,
 			MEDIA_BUS_FMT_Y10_2X8_PADHI_LE,
-		};
+		पूर्ण;
 
-		return csid_find_code(src_code, ARRAY_SIZE(src_code),
-				      match_format_idx, match_code);
-	}
-	default:
-		if (match_format_idx > 0)
-			return 0;
+		वापस csid_find_code(src_code, ARRAY_SIZE(src_code),
+				      match_क्रमmat_idx, match_code);
+	पूर्ण
+	शेष:
+		अगर (match_क्रमmat_idx > 0)
+			वापस 0;
 
-		return sink_code;
-	}
-}
+		वापस sink_code;
+	पूर्ण
+पूर्ण
 
-static void csid_subdev_init(struct csid_device *csid)
-{
-	csid->formats = csid_formats;
-	csid->nformats = ARRAY_SIZE(csid_formats);
+अटल व्योम csid_subdev_init(काष्ठा csid_device *csid)
+अणु
+	csid->क्रमmats = csid_क्रमmats;
+	csid->nक्रमmats = ARRAY_SIZE(csid_क्रमmats);
 	csid->testgen.modes = csid_testgen_modes;
 	csid->testgen.nmodes = CSID_PAYLOAD_MODE_NUM_SUPPORTED_GEN1;
-}
+पूर्ण
 
-const struct csid_hw_ops csid_ops_4_7 = {
+स्थिर काष्ठा csid_hw_ops csid_ops_4_7 = अणु
 	.configure_stream = csid_configure_stream,
 	.configure_testgen_pattern = csid_configure_testgen_pattern,
 	.hw_version = csid_hw_version,
@@ -401,4 +402,4 @@ const struct csid_hw_ops csid_ops_4_7 = {
 	.reset = csid_reset,
 	.src_pad_code = csid_src_pad_code,
 	.subdev_init = csid_subdev_init,
-};
+पूर्ण;

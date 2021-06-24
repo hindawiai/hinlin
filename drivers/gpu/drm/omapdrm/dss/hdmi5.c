@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * HDMI driver for OMAP5
+ * HDMI driver क्रम OMAP5
  *
  * Copyright (C) 2014 Texas Instruments Incorporated - https://www.ti.com/
  *
@@ -11,86 +12,86 @@
  *	Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#define DSS_SUBSYS_NAME "HDMI"
+#घोषणा DSS_SUBSYS_NAME "HDMI"
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/interrupt.h>
-#include <linux/mutex.h>
-#include <linux/delay.h>
-#include <linux/string.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/clk.h>
-#include <linux/regulator/consumer.h>
-#include <linux/component.h>
-#include <linux/of.h>
-#include <linux/of_graph.h>
-#include <sound/omap-hdmi-audio.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/component.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_graph.h>
+#समावेश <sound/omap-hdmi-audपन.स>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_state_helper.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_state_helper.h>
 
-#include "omapdss.h"
-#include "hdmi5_core.h"
-#include "dss.h"
+#समावेश "omapdss.h"
+#समावेश "hdmi5_core.h"
+#समावेश "dss.h"
 
-static int hdmi_runtime_get(struct omap_hdmi *hdmi)
-{
-	int r;
+अटल पूर्णांक hdmi_runसमय_get(काष्ठा omap_hdmi *hdmi)
+अणु
+	पूर्णांक r;
 
 	DSSDBG("hdmi_runtime_get\n");
 
-	r = pm_runtime_get_sync(&hdmi->pdev->dev);
-	if (WARN_ON(r < 0)) {
-		pm_runtime_put_noidle(&hdmi->pdev->dev);
-		return r;
-	}
-	return 0;
-}
+	r = pm_runसमय_get_sync(&hdmi->pdev->dev);
+	अगर (WARN_ON(r < 0)) अणु
+		pm_runसमय_put_noidle(&hdmi->pdev->dev);
+		वापस r;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void hdmi_runtime_put(struct omap_hdmi *hdmi)
-{
-	int r;
+अटल व्योम hdmi_runसमय_put(काष्ठा omap_hdmi *hdmi)
+अणु
+	पूर्णांक r;
 
 	DSSDBG("hdmi_runtime_put\n");
 
-	r = pm_runtime_put_sync(&hdmi->pdev->dev);
+	r = pm_runसमय_put_sync(&hdmi->pdev->dev);
 	WARN_ON(r < 0 && r != -ENOSYS);
-}
+पूर्ण
 
-static irqreturn_t hdmi_irq_handler(int irq, void *data)
-{
-	struct omap_hdmi *hdmi = data;
-	struct hdmi_wp_data *wp = &hdmi->wp;
+अटल irqवापस_t hdmi_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा omap_hdmi *hdmi = data;
+	काष्ठा hdmi_wp_data *wp = &hdmi->wp;
 	u32 irqstatus;
 
 	irqstatus = hdmi_wp_get_irqstatus(wp);
 	hdmi_wp_set_irqstatus(wp, irqstatus);
 
-	if ((irqstatus & HDMI_IRQ_LINK_CONNECT) &&
-			irqstatus & HDMI_IRQ_LINK_DISCONNECT) {
+	अगर ((irqstatus & HDMI_IRQ_LINK_CONNECT) &&
+			irqstatus & HDMI_IRQ_LINK_DISCONNECT) अणु
 		u32 v;
 		/*
-		 * If we get both connect and disconnect interrupts at the same
-		 * time, turn off the PHY, clear interrupts, and restart, which
-		 * raises connect interrupt if a cable is connected, or nothing
-		 * if cable is not connected.
+		 * If we get both connect and disconnect पूर्णांकerrupts at the same
+		 * समय, turn off the PHY, clear पूर्णांकerrupts, and restart, which
+		 * उठाओs connect पूर्णांकerrupt अगर a cable is connected, or nothing
+		 * अगर cable is not connected.
 		 */
 
 		hdmi_wp_set_phy_pwr(wp, HDMI_PHYPWRCMD_OFF);
 
 		/*
-		 * We always get bogus CONNECT & DISCONNECT interrupts when
-		 * setting the PHY to LDOON. To ignore those, we force the RXDET
-		 * line to 0 until the PHY power state has been changed.
+		 * We always get bogus CONNECT & DISCONNECT पूर्णांकerrupts when
+		 * setting the PHY to LDOON. To ignore those, we क्रमce the RXDET
+		 * line to 0 until the PHY घातer state has been changed.
 		 */
-		v = hdmi_read_reg(hdmi->phy.base, HDMI_TXPHY_PAD_CFG_CTRL);
+		v = hdmi_पढ़ो_reg(hdmi->phy.base, HDMI_TXPHY_PAD_CFG_CTRL);
 		v = FLD_MOD(v, 1, 15, 15); /* FORCE_RXDET_HIGH */
 		v = FLD_MOD(v, 0, 14, 7); /* RXDET_LINE */
-		hdmi_write_reg(hdmi->phy.base, HDMI_TXPHY_PAD_CFG_CTRL, v);
+		hdmi_ग_लिखो_reg(hdmi->phy.base, HDMI_TXPHY_PAD_CFG_CTRL, v);
 
 		hdmi_wp_set_irqstatus(wp, HDMI_IRQ_LINK_CONNECT |
 				HDMI_IRQ_LINK_DISCONNECT);
@@ -99,66 +100,66 @@ static irqreturn_t hdmi_irq_handler(int irq, void *data)
 
 		REG_FLD_MOD(hdmi->phy.base, HDMI_TXPHY_PAD_CFG_CTRL, 0, 15, 15);
 
-	} else if (irqstatus & HDMI_IRQ_LINK_CONNECT) {
+	पूर्ण अन्यथा अगर (irqstatus & HDMI_IRQ_LINK_CONNECT) अणु
 		hdmi_wp_set_phy_pwr(wp, HDMI_PHYPWRCMD_TXON);
-	} else if (irqstatus & HDMI_IRQ_LINK_DISCONNECT) {
+	पूर्ण अन्यथा अगर (irqstatus & HDMI_IRQ_LINK_DISCONNECT) अणु
 		hdmi_wp_set_phy_pwr(wp, HDMI_PHYPWRCMD_LDOON);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int hdmi_power_on_core(struct omap_hdmi *hdmi)
-{
-	int r;
+अटल पूर्णांक hdmi_घातer_on_core(काष्ठा omap_hdmi *hdmi)
+अणु
+	पूर्णांक r;
 
 	r = regulator_enable(hdmi->vdda_reg);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	r = hdmi_runtime_get(hdmi);
-	if (r)
-		goto err_runtime_get;
+	r = hdmi_runसमय_get(hdmi);
+	अगर (r)
+		जाओ err_runसमय_get;
 
 	/* Make selection of HDMI in DSS */
 	dss_select_hdmi_venc_clk_source(hdmi->dss, DSS_HDMI_M_PCLK);
 
 	hdmi->core_enabled = true;
 
-	return 0;
+	वापस 0;
 
-err_runtime_get:
+err_runसमय_get:
 	regulator_disable(hdmi->vdda_reg);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void hdmi_power_off_core(struct omap_hdmi *hdmi)
-{
+अटल व्योम hdmi_घातer_off_core(काष्ठा omap_hdmi *hdmi)
+अणु
 	hdmi->core_enabled = false;
 
-	hdmi_runtime_put(hdmi);
+	hdmi_runसमय_put(hdmi);
 	regulator_disable(hdmi->vdda_reg);
-}
+पूर्ण
 
-static int hdmi_power_on_full(struct omap_hdmi *hdmi)
-{
-	int r;
-	const struct videomode *vm;
-	struct dss_pll_clock_info hdmi_cinfo = { 0 };
-	unsigned int pc;
+अटल पूर्णांक hdmi_घातer_on_full(काष्ठा omap_hdmi *hdmi)
+अणु
+	पूर्णांक r;
+	स्थिर काष्ठा videomode *vm;
+	काष्ठा dss_pll_घड़ी_info hdmi_cinfo = अणु 0 पूर्ण;
+	अचिन्हित पूर्णांक pc;
 
-	r = hdmi_power_on_core(hdmi);
-	if (r)
-		return r;
+	r = hdmi_घातer_on_core(hdmi);
+	अगर (r)
+		वापस r;
 
 	vm = &hdmi->cfg.vm;
 
 	DSSDBG("hdmi_power_on hactive= %d vactive = %d\n", vm->hactive,
 	       vm->vactive);
 
-	pc = vm->pixelclock;
-	if (vm->flags & DISPLAY_FLAGS_DOUBLECLK)
+	pc = vm->pixelघड़ी;
+	अगर (vm->flags & DISPLAY_FLAGS_DOUBLECLK)
 		pc *= 2;
 
 	/* DSS_HDMI_TCLK is bitclk / 10 */
@@ -173,42 +174,42 @@ static int hdmi_power_on_full(struct omap_hdmi *hdmi)
 			hdmi_wp_get_irqstatus(&hdmi->wp));
 
 	r = dss_pll_enable(&hdmi->pll.pll);
-	if (r) {
+	अगर (r) अणु
 		DSSERR("Failed to enable PLL\n");
-		goto err_pll_enable;
-	}
+		जाओ err_pll_enable;
+	पूर्ण
 
 	r = dss_pll_set_config(&hdmi->pll.pll, &hdmi_cinfo);
-	if (r) {
+	अगर (r) अणु
 		DSSERR("Failed to configure PLL\n");
-		goto err_pll_cfg;
-	}
+		जाओ err_pll_cfg;
+	पूर्ण
 
 	r = hdmi_phy_configure(&hdmi->phy, hdmi_cinfo.clkdco,
 		hdmi_cinfo.clkout[0]);
-	if (r) {
+	अगर (r) अणु
 		DSSDBG("Failed to start PHY\n");
-		goto err_phy_cfg;
-	}
+		जाओ err_phy_cfg;
+	पूर्ण
 
 	r = hdmi_wp_set_phy_pwr(&hdmi->wp, HDMI_PHYPWRCMD_LDOON);
-	if (r)
-		goto err_phy_pwr;
+	अगर (r)
+		जाओ err_phy_pwr;
 
 	hdmi5_configure(&hdmi->core, &hdmi->wp, &hdmi->cfg);
 
 	r = dss_mgr_enable(&hdmi->output);
-	if (r)
-		goto err_mgr_enable;
+	अगर (r)
+		जाओ err_mgr_enable;
 
 	r = hdmi_wp_video_start(&hdmi->wp);
-	if (r)
-		goto err_vid_enable;
+	अगर (r)
+		जाओ err_vid_enable;
 
 	hdmi_wp_set_irqenable(&hdmi->wp,
 			HDMI_IRQ_LINK_CONNECT | HDMI_IRQ_LINK_DISCONNECT);
 
-	return 0;
+	वापस 0;
 
 err_vid_enable:
 	dss_mgr_disable(&hdmi->output);
@@ -219,12 +220,12 @@ err_phy_cfg:
 err_pll_cfg:
 	dss_pll_disable(&hdmi->pll.pll);
 err_pll_enable:
-	hdmi_power_off_core(hdmi);
-	return -EIO;
-}
+	hdmi_घातer_off_core(hdmi);
+	वापस -EIO;
+पूर्ण
 
-static void hdmi_power_off_full(struct omap_hdmi *hdmi)
-{
+अटल व्योम hdmi_घातer_off_full(काष्ठा omap_hdmi *hdmi)
+अणु
 	hdmi_wp_clear_irqenable(&hdmi->wp, 0xffffffff);
 
 	hdmi_wp_video_stop(&hdmi->wp);
@@ -235,182 +236,182 @@ static void hdmi_power_off_full(struct omap_hdmi *hdmi)
 
 	dss_pll_disable(&hdmi->pll.pll);
 
-	hdmi_power_off_core(hdmi);
-}
+	hdmi_घातer_off_core(hdmi);
+पूर्ण
 
-static int hdmi_dump_regs(struct seq_file *s, void *p)
-{
-	struct omap_hdmi *hdmi = s->private;
+अटल पूर्णांक hdmi_dump_regs(काष्ठा seq_file *s, व्योम *p)
+अणु
+	काष्ठा omap_hdmi *hdmi = s->निजी;
 
 	mutex_lock(&hdmi->lock);
 
-	if (hdmi_runtime_get(hdmi)) {
+	अगर (hdmi_runसमय_get(hdmi)) अणु
 		mutex_unlock(&hdmi->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	hdmi_wp_dump(&hdmi->wp, s);
 	hdmi_pll_dump(&hdmi->pll, s);
 	hdmi_phy_dump(&hdmi->phy, s);
 	hdmi5_core_dump(&hdmi->core, s);
 
-	hdmi_runtime_put(hdmi);
+	hdmi_runसमय_put(hdmi);
 	mutex_unlock(&hdmi->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hdmi_start_audio_stream(struct omap_hdmi *hd)
-{
+अटल व्योम hdmi_start_audio_stream(काष्ठा omap_hdmi *hd)
+अणु
 	REG_FLD_MOD(hd->wp.base, HDMI_WP_SYSCONFIG, 1, 3, 2);
 	hdmi_wp_audio_enable(&hd->wp, true);
 	hdmi_wp_audio_core_req_enable(&hd->wp, true);
-}
+पूर्ण
 
-static void hdmi_stop_audio_stream(struct omap_hdmi *hd)
-{
+अटल व्योम hdmi_stop_audio_stream(काष्ठा omap_hdmi *hd)
+अणु
 	hdmi_wp_audio_core_req_enable(&hd->wp, false);
 	hdmi_wp_audio_enable(&hd->wp, false);
 	REG_FLD_MOD(hd->wp.base, HDMI_WP_SYSCONFIG, hd->wp_idlemode, 3, 2);
-}
+पूर्ण
 
-static int hdmi_core_enable(struct omap_hdmi *hdmi)
-{
-	int r = 0;
+अटल पूर्णांक hdmi_core_enable(काष्ठा omap_hdmi *hdmi)
+अणु
+	पूर्णांक r = 0;
 
 	DSSDBG("ENTER omapdss_hdmi_core_enable\n");
 
 	mutex_lock(&hdmi->lock);
 
-	r = hdmi_power_on_core(hdmi);
-	if (r) {
+	r = hdmi_घातer_on_core(hdmi);
+	अगर (r) अणु
 		DSSERR("failed to power on device\n");
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
 	mutex_unlock(&hdmi->lock);
-	return 0;
+	वापस 0;
 
 err0:
 	mutex_unlock(&hdmi->lock);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void hdmi_core_disable(struct omap_hdmi *hdmi)
-{
+अटल व्योम hdmi_core_disable(काष्ठा omap_hdmi *hdmi)
+अणु
 	DSSDBG("Enter omapdss_hdmi_core_disable\n");
 
 	mutex_lock(&hdmi->lock);
 
-	hdmi_power_off_core(hdmi);
+	hdmi_घातer_off_core(hdmi);
 
 	mutex_unlock(&hdmi->lock);
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * DRM Bridge Operations
  */
 
-static int hdmi5_bridge_attach(struct drm_bridge *bridge,
-			       enum drm_bridge_attach_flags flags)
-{
-	struct omap_hdmi *hdmi = drm_bridge_to_hdmi(bridge);
+अटल पूर्णांक hdmi5_bridge_attach(काष्ठा drm_bridge *bridge,
+			       क्रमागत drm_bridge_attach_flags flags)
+अणु
+	काष्ठा omap_hdmi *hdmi = drm_bridge_to_hdmi(bridge);
 
-	if (!(flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR))
-		return -EINVAL;
+	अगर (!(flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR))
+		वापस -EINVAL;
 
-	return drm_bridge_attach(bridge->encoder, hdmi->output.next_bridge,
+	वापस drm_bridge_attach(bridge->encoder, hdmi->output.next_bridge,
 				 bridge, flags);
-}
+पूर्ण
 
-static void hdmi5_bridge_mode_set(struct drm_bridge *bridge,
-				  const struct drm_display_mode *mode,
-				  const struct drm_display_mode *adjusted_mode)
-{
-	struct omap_hdmi *hdmi = drm_bridge_to_hdmi(bridge);
+अटल व्योम hdmi5_bridge_mode_set(काष्ठा drm_bridge *bridge,
+				  स्थिर काष्ठा drm_display_mode *mode,
+				  स्थिर काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा omap_hdmi *hdmi = drm_bridge_to_hdmi(bridge);
 
 	mutex_lock(&hdmi->lock);
 
 	drm_display_mode_to_videomode(adjusted_mode, &hdmi->cfg.vm);
 
-	dispc_set_tv_pclk(hdmi->dss->dispc, adjusted_mode->clock * 1000);
+	dispc_set_tv_pclk(hdmi->dss->dispc, adjusted_mode->घड़ी * 1000);
 
 	mutex_unlock(&hdmi->lock);
-}
+पूर्ण
 
-static void hdmi5_bridge_enable(struct drm_bridge *bridge,
-				struct drm_bridge_state *bridge_state)
-{
-	struct omap_hdmi *hdmi = drm_bridge_to_hdmi(bridge);
-	struct drm_atomic_state *state = bridge_state->base.state;
-	struct drm_connector_state *conn_state;
-	struct drm_connector *connector;
-	struct drm_crtc_state *crtc_state;
-	unsigned long flags;
-	int ret;
+अटल व्योम hdmi5_bridge_enable(काष्ठा drm_bridge *bridge,
+				काष्ठा drm_bridge_state *bridge_state)
+अणु
+	काष्ठा omap_hdmi *hdmi = drm_bridge_to_hdmi(bridge);
+	काष्ठा drm_atomic_state *state = bridge_state->base.state;
+	काष्ठा drm_connector_state *conn_state;
+	काष्ठा drm_connector *connector;
+	काष्ठा drm_crtc_state *crtc_state;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	/*
 	 * None of these should fail, as the bridge can't be enabled without a
 	 * valid CRTC to connector path with fully populated new states.
 	 */
-	connector = drm_atomic_get_new_connector_for_encoder(state,
+	connector = drm_atomic_get_new_connector_क्रम_encoder(state,
 							     bridge->encoder);
-	if (WARN_ON(!connector))
-		return;
+	अगर (WARN_ON(!connector))
+		वापस;
 	conn_state = drm_atomic_get_new_connector_state(state, connector);
-	if (WARN_ON(!conn_state))
-		return;
+	अगर (WARN_ON(!conn_state))
+		वापस;
 	crtc_state = drm_atomic_get_new_crtc_state(state, conn_state->crtc);
-	if (WARN_ON(!crtc_state))
-		return;
+	अगर (WARN_ON(!crtc_state))
+		वापस;
 
 	hdmi->cfg.hdmi_dvi_mode = connector->display_info.is_hdmi
 				? HDMI_HDMI : HDMI_DVI;
 
-	if (connector->display_info.is_hdmi) {
-		const struct drm_display_mode *mode;
-		struct hdmi_avi_infoframe avi;
+	अगर (connector->display_info.is_hdmi) अणु
+		स्थिर काष्ठा drm_display_mode *mode;
+		काष्ठा hdmi_avi_infoframe avi;
 
 		mode = &crtc_state->adjusted_mode;
 		ret = drm_hdmi_avi_infoframe_from_display_mode(&avi, connector,
 							       mode);
-		if (ret == 0)
+		अगर (ret == 0)
 			hdmi->cfg.infoframe = avi;
-	}
+	पूर्ण
 
 	mutex_lock(&hdmi->lock);
 
-	ret = hdmi_power_on_full(hdmi);
-	if (ret) {
+	ret = hdmi_घातer_on_full(hdmi);
+	अगर (ret) अणु
 		DSSERR("failed to power on device\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (hdmi->audio_configured) {
+	अगर (hdmi->audio_configured) अणु
 		ret = hdmi5_audio_config(&hdmi->core, &hdmi->wp,
 					 &hdmi->audio_config,
-					 hdmi->cfg.vm.pixelclock);
-		if (ret) {
+					 hdmi->cfg.vm.pixelघड़ी);
+		अगर (ret) अणु
 			DSSERR("Error restoring audio configuration: %d", ret);
-			hdmi->audio_abort_cb(&hdmi->pdev->dev);
+			hdmi->audio_पात_cb(&hdmi->pdev->dev);
 			hdmi->audio_configured = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&hdmi->audio_playing_lock, flags);
-	if (hdmi->audio_configured && hdmi->audio_playing)
+	अगर (hdmi->audio_configured && hdmi->audio_playing)
 		hdmi_start_audio_stream(hdmi);
 	hdmi->display_enabled = true;
 	spin_unlock_irqrestore(&hdmi->audio_playing_lock, flags);
 
-done:
+करोne:
 	mutex_unlock(&hdmi->lock);
-}
+पूर्ण
 
-static void hdmi5_bridge_disable(struct drm_bridge *bridge,
-				 struct drm_bridge_state *bridge_state)
-{
-	struct omap_hdmi *hdmi = drm_bridge_to_hdmi(bridge);
-	unsigned long flags;
+अटल व्योम hdmi5_bridge_disable(काष्ठा drm_bridge *bridge,
+				 काष्ठा drm_bridge_state *bridge_state)
+अणु
+	काष्ठा omap_hdmi *hdmi = drm_bridge_to_hdmi(bridge);
+	अचिन्हित दीर्घ flags;
 
 	mutex_lock(&hdmi->lock);
 
@@ -419,30 +420,30 @@ static void hdmi5_bridge_disable(struct drm_bridge *bridge,
 	hdmi->display_enabled = false;
 	spin_unlock_irqrestore(&hdmi->audio_playing_lock, flags);
 
-	hdmi_power_off_full(hdmi);
+	hdmi_घातer_off_full(hdmi);
 
 	mutex_unlock(&hdmi->lock);
-}
+पूर्ण
 
-static struct edid *hdmi5_bridge_get_edid(struct drm_bridge *bridge,
-					  struct drm_connector *connector)
-{
-	struct omap_hdmi *hdmi = drm_bridge_to_hdmi(bridge);
-	struct edid *edid;
+अटल काष्ठा edid *hdmi5_bridge_get_edid(काष्ठा drm_bridge *bridge,
+					  काष्ठा drm_connector *connector)
+अणु
+	काष्ठा omap_hdmi *hdmi = drm_bridge_to_hdmi(bridge);
+	काष्ठा edid *edid;
 	bool need_enable;
-	int idlemode;
-	int r;
+	पूर्णांक idlemode;
+	पूर्णांक r;
 
 	need_enable = hdmi->core_enabled == false;
 
-	if (need_enable) {
+	अगर (need_enable) अणु
 		r = hdmi_core_enable(hdmi);
-		if (r)
-			return NULL;
-	}
+		अगर (r)
+			वापस शून्य;
+	पूर्ण
 
 	mutex_lock(&hdmi->lock);
-	r = hdmi_runtime_get(hdmi);
+	r = hdmi_runसमय_get(hdmi);
 	BUG_ON(r);
 
 	idlemode = REG_GET(hdmi->wp.base, HDMI_WP_SYSCONFIG, 3, 2);
@@ -451,22 +452,22 @@ static struct edid *hdmi5_bridge_get_edid(struct drm_bridge *bridge,
 
 	hdmi5_core_ddc_init(&hdmi->core);
 
-	edid = drm_do_get_edid(connector, hdmi5_core_ddc_read, &hdmi->core);
+	edid = drm_करो_get_edid(connector, hdmi5_core_ddc_पढ़ो, &hdmi->core);
 
 	hdmi5_core_ddc_uninit(&hdmi->core);
 
 	REG_FLD_MOD(hdmi->wp.base, HDMI_WP_SYSCONFIG, idlemode, 3, 2);
 
-	hdmi_runtime_put(hdmi);
+	hdmi_runसमय_put(hdmi);
 	mutex_unlock(&hdmi->lock);
 
-	if (need_enable)
+	अगर (need_enable)
 		hdmi_core_disable(hdmi);
 
-	return (struct edid *)edid;
-}
+	वापस (काष्ठा edid *)edid;
+पूर्ण
 
-static const struct drm_bridge_funcs hdmi5_bridge_funcs = {
+अटल स्थिर काष्ठा drm_bridge_funcs hdmi5_bridge_funcs = अणु
 	.attach = hdmi5_bridge_attach,
 	.mode_set = hdmi5_bridge_mode_set,
 	.atomic_duplicate_state = drm_atomic_helper_bridge_duplicate_state,
@@ -475,204 +476,204 @@ static const struct drm_bridge_funcs hdmi5_bridge_funcs = {
 	.atomic_enable = hdmi5_bridge_enable,
 	.atomic_disable = hdmi5_bridge_disable,
 	.get_edid = hdmi5_bridge_get_edid,
-};
+पूर्ण;
 
-static void hdmi5_bridge_init(struct omap_hdmi *hdmi)
-{
+अटल व्योम hdmi5_bridge_init(काष्ठा omap_hdmi *hdmi)
+अणु
 	hdmi->bridge.funcs = &hdmi5_bridge_funcs;
 	hdmi->bridge.of_node = hdmi->pdev->dev.of_node;
 	hdmi->bridge.ops = DRM_BRIDGE_OP_EDID;
 	hdmi->bridge.type = DRM_MODE_CONNECTOR_HDMIA;
 
 	drm_bridge_add(&hdmi->bridge);
-}
+पूर्ण
 
-static void hdmi5_bridge_cleanup(struct omap_hdmi *hdmi)
-{
-	drm_bridge_remove(&hdmi->bridge);
-}
+अटल व्योम hdmi5_bridge_cleanup(काष्ठा omap_hdmi *hdmi)
+अणु
+	drm_bridge_हटाओ(&hdmi->bridge);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Audio Callbacks
  */
 
-static int hdmi_audio_startup(struct device *dev,
-			      void (*abort_cb)(struct device *dev))
-{
-	struct omap_hdmi *hd = dev_get_drvdata(dev);
+अटल पूर्णांक hdmi_audio_startup(काष्ठा device *dev,
+			      व्योम (*पात_cb)(काष्ठा device *dev))
+अणु
+	काष्ठा omap_hdmi *hd = dev_get_drvdata(dev);
 
 	mutex_lock(&hd->lock);
 
-	WARN_ON(hd->audio_abort_cb != NULL);
+	WARN_ON(hd->audio_पात_cb != शून्य);
 
-	hd->audio_abort_cb = abort_cb;
+	hd->audio_पात_cb = पात_cb;
 
 	mutex_unlock(&hd->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hdmi_audio_shutdown(struct device *dev)
-{
-	struct omap_hdmi *hd = dev_get_drvdata(dev);
+अटल पूर्णांक hdmi_audio_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा omap_hdmi *hd = dev_get_drvdata(dev);
 
 	mutex_lock(&hd->lock);
-	hd->audio_abort_cb = NULL;
+	hd->audio_पात_cb = शून्य;
 	hd->audio_configured = false;
 	hd->audio_playing = false;
 	mutex_unlock(&hd->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hdmi_audio_start(struct device *dev)
-{
-	struct omap_hdmi *hd = dev_get_drvdata(dev);
-	unsigned long flags;
+अटल पूर्णांक hdmi_audio_start(काष्ठा device *dev)
+अणु
+	काष्ठा omap_hdmi *hd = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&hd->audio_playing_lock, flags);
 
-	if (hd->display_enabled) {
-		if (!hdmi_mode_has_audio(&hd->cfg))
+	अगर (hd->display_enabled) अणु
+		अगर (!hdmi_mode_has_audio(&hd->cfg))
 			DSSERR("%s: Video mode does not support audio\n",
 			       __func__);
 		hdmi_start_audio_stream(hd);
-	}
+	पूर्ण
 	hd->audio_playing = true;
 
 	spin_unlock_irqrestore(&hd->audio_playing_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hdmi_audio_stop(struct device *dev)
-{
-	struct omap_hdmi *hd = dev_get_drvdata(dev);
-	unsigned long flags;
+अटल व्योम hdmi_audio_stop(काष्ठा device *dev)
+अणु
+	काष्ठा omap_hdmi *hd = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
 
-	if (!hdmi_mode_has_audio(&hd->cfg))
+	अगर (!hdmi_mode_has_audio(&hd->cfg))
 		DSSERR("%s: Video mode does not support audio\n", __func__);
 
 	spin_lock_irqsave(&hd->audio_playing_lock, flags);
 
-	if (hd->display_enabled)
+	अगर (hd->display_enabled)
 		hdmi_stop_audio_stream(hd);
 	hd->audio_playing = false;
 
 	spin_unlock_irqrestore(&hd->audio_playing_lock, flags);
-}
+पूर्ण
 
-static int hdmi_audio_config(struct device *dev,
-			     struct omap_dss_audio *dss_audio)
-{
-	struct omap_hdmi *hd = dev_get_drvdata(dev);
-	int ret = 0;
+अटल पूर्णांक hdmi_audio_config(काष्ठा device *dev,
+			     काष्ठा omap_dss_audio *dss_audio)
+अणु
+	काष्ठा omap_hdmi *hd = dev_get_drvdata(dev);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&hd->lock);
 
-	if (hd->display_enabled) {
+	अगर (hd->display_enabled) अणु
 		ret = hdmi5_audio_config(&hd->core, &hd->wp, dss_audio,
-					 hd->cfg.vm.pixelclock);
-		if (ret)
-			goto out;
-	}
+					 hd->cfg.vm.pixelघड़ी);
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	hd->audio_configured = true;
 	hd->audio_config = *dss_audio;
 out:
 	mutex_unlock(&hd->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct omap_hdmi_audio_ops hdmi_audio_ops = {
+अटल स्थिर काष्ठा omap_hdmi_audio_ops hdmi_audio_ops = अणु
 	.audio_startup = hdmi_audio_startup,
-	.audio_shutdown = hdmi_audio_shutdown,
+	.audio_shutकरोwn = hdmi_audio_shutकरोwn,
 	.audio_start = hdmi_audio_start,
 	.audio_stop = hdmi_audio_stop,
 	.audio_config = hdmi_audio_config,
-};
+पूर्ण;
 
-static int hdmi_audio_register(struct omap_hdmi *hdmi)
-{
-	struct omap_hdmi_audio_pdata pdata = {
+अटल पूर्णांक hdmi_audio_रेजिस्टर(काष्ठा omap_hdmi *hdmi)
+अणु
+	काष्ठा omap_hdmi_audio_pdata pdata = अणु
 		.dev = &hdmi->pdev->dev,
 		.version = 5,
 		.audio_dma_addr = hdmi_wp_get_audio_dma_addr(&hdmi->wp),
 		.ops = &hdmi_audio_ops,
-	};
+	पूर्ण;
 
-	hdmi->audio_pdev = platform_device_register_data(
+	hdmi->audio_pdev = platक्रमm_device_रेजिस्टर_data(
 		&hdmi->pdev->dev, "omap-hdmi-audio", PLATFORM_DEVID_AUTO,
-		&pdata, sizeof(pdata));
+		&pdata, माप(pdata));
 
-	if (IS_ERR(hdmi->audio_pdev))
-		return PTR_ERR(hdmi->audio_pdev);
+	अगर (IS_ERR(hdmi->audio_pdev))
+		वापस PTR_ERR(hdmi->audio_pdev);
 
-	hdmi_runtime_get(hdmi);
+	hdmi_runसमय_get(hdmi);
 	hdmi->wp_idlemode =
 		REG_GET(hdmi->wp.base, HDMI_WP_SYSCONFIG, 3, 2);
-	hdmi_runtime_put(hdmi);
+	hdmi_runसमय_put(hdmi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Component Bind & Unbind
  */
 
-static int hdmi5_bind(struct device *dev, struct device *master, void *data)
-{
-	struct dss_device *dss = dss_get_device(master);
-	struct omap_hdmi *hdmi = dev_get_drvdata(dev);
-	int r;
+अटल पूर्णांक hdmi5_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा dss_device *dss = dss_get_device(master);
+	काष्ठा omap_hdmi *hdmi = dev_get_drvdata(dev);
+	पूर्णांक r;
 
 	hdmi->dss = dss;
 
 	r = hdmi_pll_init(dss, hdmi->pdev, &hdmi->pll, &hdmi->wp);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	r = hdmi_audio_register(hdmi);
-	if (r) {
+	r = hdmi_audio_रेजिस्टर(hdmi);
+	अगर (r) अणु
 		DSSERR("Registering HDMI audio failed %d\n", r);
-		goto err_pll_uninit;
-	}
+		जाओ err_pll_uninit;
+	पूर्ण
 
 	hdmi->debugfs = dss_debugfs_create_file(dss, "hdmi", hdmi_dump_regs,
 						hdmi);
 
-	return 0;
+	वापस 0;
 
 err_pll_uninit:
 	hdmi_pll_uninit(&hdmi->pll);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void hdmi5_unbind(struct device *dev, struct device *master, void *data)
-{
-	struct omap_hdmi *hdmi = dev_get_drvdata(dev);
+अटल व्योम hdmi5_unbind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा omap_hdmi *hdmi = dev_get_drvdata(dev);
 
-	dss_debugfs_remove_file(hdmi->debugfs);
+	dss_debugfs_हटाओ_file(hdmi->debugfs);
 
-	if (hdmi->audio_pdev)
-		platform_device_unregister(hdmi->audio_pdev);
+	अगर (hdmi->audio_pdev)
+		platक्रमm_device_unरेजिस्टर(hdmi->audio_pdev);
 
 	hdmi_pll_uninit(&hdmi->pll);
-}
+पूर्ण
 
-static const struct component_ops hdmi5_component_ops = {
+अटल स्थिर काष्ठा component_ops hdmi5_component_ops = अणु
 	.bind	= hdmi5_bind,
 	.unbind	= hdmi5_unbind,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * Probe & Remove, Suspend & Resume
  */
 
-static int hdmi5_init_output(struct omap_hdmi *hdmi)
-{
-	struct omap_dss_device *out = &hdmi->output;
-	int r;
+अटल पूर्णांक hdmi5_init_output(काष्ठा omap_hdmi *hdmi)
+अणु
+	काष्ठा omap_dss_device *out = &hdmi->output;
+	पूर्णांक r;
 
 	hdmi5_bridge_init(hdmi);
 
@@ -684,51 +685,51 @@ static int hdmi5_init_output(struct omap_hdmi *hdmi)
 	out->of_port = 0;
 
 	r = omapdss_device_init_output(out, &hdmi->bridge);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		hdmi5_bridge_cleanup(hdmi);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	omapdss_device_register(out);
+	omapdss_device_रेजिस्टर(out);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hdmi5_uninit_output(struct omap_hdmi *hdmi)
-{
-	struct omap_dss_device *out = &hdmi->output;
+अटल व्योम hdmi5_uninit_output(काष्ठा omap_hdmi *hdmi)
+अणु
+	काष्ठा omap_dss_device *out = &hdmi->output;
 
-	omapdss_device_unregister(out);
+	omapdss_device_unरेजिस्टर(out);
 	omapdss_device_cleanup_output(out);
 
 	hdmi5_bridge_cleanup(hdmi);
-}
+पूर्ण
 
-static int hdmi5_probe_of(struct omap_hdmi *hdmi)
-{
-	struct platform_device *pdev = hdmi->pdev;
-	struct device_node *node = pdev->dev.of_node;
-	struct device_node *ep;
-	int r;
+अटल पूर्णांक hdmi5_probe_of(काष्ठा omap_hdmi *hdmi)
+अणु
+	काष्ठा platक्रमm_device *pdev = hdmi->pdev;
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा device_node *ep;
+	पूर्णांक r;
 
-	ep = of_graph_get_endpoint_by_regs(node, 0, 0);
-	if (!ep)
-		return 0;
+	ep = of_graph_get_endpoपूर्णांक_by_regs(node, 0, 0);
+	अगर (!ep)
+		वापस 0;
 
 	r = hdmi_parse_lanes_of(pdev, ep, &hdmi->phy);
 	of_node_put(ep);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int hdmi5_probe(struct platform_device *pdev)
-{
-	struct omap_hdmi *hdmi;
-	int irq;
-	int r;
+अटल पूर्णांक hdmi5_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_hdmi *hdmi;
+	पूर्णांक irq;
+	पूर्णांक r;
 
-	hdmi = kzalloc(sizeof(*hdmi), GFP_KERNEL);
-	if (!hdmi)
-		return -ENOMEM;
+	hdmi = kzalloc(माप(*hdmi), GFP_KERNEL);
+	अगर (!hdmi)
+		वापस -ENOMEM;
 
 	hdmi->pdev = pdev;
 
@@ -738,91 +739,91 @@ static int hdmi5_probe(struct platform_device *pdev)
 	spin_lock_init(&hdmi->audio_playing_lock);
 
 	r = hdmi5_probe_of(hdmi);
-	if (r)
-		goto err_free;
+	अगर (r)
+		जाओ err_मुक्त;
 
 	r = hdmi_wp_init(pdev, &hdmi->wp, 5);
-	if (r)
-		goto err_free;
+	अगर (r)
+		जाओ err_मुक्त;
 
 	r = hdmi_phy_init(pdev, &hdmi->phy, 5);
-	if (r)
-		goto err_free;
+	अगर (r)
+		जाओ err_मुक्त;
 
 	r = hdmi5_core_init(pdev, &hdmi->core);
-	if (r)
-		goto err_free;
+	अगर (r)
+		जाओ err_मुक्त;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		DSSERR("platform_get_irq failed\n");
 		r = -ENODEV;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	r = devm_request_threaded_irq(&pdev->dev, irq,
-			NULL, hdmi_irq_handler,
+	r = devm_request_thपढ़ोed_irq(&pdev->dev, irq,
+			शून्य, hdmi_irq_handler,
 			IRQF_ONESHOT, "OMAP HDMI", hdmi);
-	if (r) {
+	अगर (r) अणु
 		DSSERR("HDMI IRQ request failed\n");
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	hdmi->vdda_reg = devm_regulator_get(&pdev->dev, "vdda");
-	if (IS_ERR(hdmi->vdda_reg)) {
+	अगर (IS_ERR(hdmi->vdda_reg)) अणु
 		r = PTR_ERR(hdmi->vdda_reg);
-		if (r != -EPROBE_DEFER)
+		अगर (r != -EPROBE_DEFER)
 			DSSERR("can't get VDDA regulator\n");
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
 	r = hdmi5_init_output(hdmi);
-	if (r)
-		goto err_pm_disable;
+	अगर (r)
+		जाओ err_pm_disable;
 
 	r = component_add(&pdev->dev, &hdmi5_component_ops);
-	if (r)
-		goto err_uninit_output;
+	अगर (r)
+		जाओ err_uninit_output;
 
-	return 0;
+	वापस 0;
 
 err_uninit_output:
 	hdmi5_uninit_output(hdmi);
 err_pm_disable:
-	pm_runtime_disable(&pdev->dev);
-err_free:
-	kfree(hdmi);
-	return r;
-}
+	pm_runसमय_disable(&pdev->dev);
+err_मुक्त:
+	kमुक्त(hdmi);
+	वापस r;
+पूर्ण
 
-static int hdmi5_remove(struct platform_device *pdev)
-{
-	struct omap_hdmi *hdmi = platform_get_drvdata(pdev);
+अटल पूर्णांक hdmi5_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_hdmi *hdmi = platक्रमm_get_drvdata(pdev);
 
 	component_del(&pdev->dev, &hdmi5_component_ops);
 
 	hdmi5_uninit_output(hdmi);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	kfree(hdmi);
-	return 0;
-}
+	kमुक्त(hdmi);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id hdmi_of_match[] = {
-	{ .compatible = "ti,omap5-hdmi", },
-	{ .compatible = "ti,dra7-hdmi", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id hdmi_of_match[] = अणु
+	अणु .compatible = "ti,omap5-hdmi", पूर्ण,
+	अणु .compatible = "ti,dra7-hdmi", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-struct platform_driver omapdss_hdmi5hw_driver = {
+काष्ठा platक्रमm_driver omapdss_hdmi5hw_driver = अणु
 	.probe		= hdmi5_probe,
-	.remove		= hdmi5_remove,
-	.driver         = {
+	.हटाओ		= hdmi5_हटाओ,
+	.driver         = अणु
 		.name   = "omapdss_hdmi5",
 		.of_match_table = hdmi_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
+	पूर्ण,
+पूर्ण;

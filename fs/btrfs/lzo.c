@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2008 Oracle.  All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/sched.h>
-#include <linux/pagemap.h>
-#include <linux/bio.h>
-#include <linux/lzo.h>
-#include <linux/refcount.h>
-#include "compression.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/lzo.h>
+#समावेश <linux/refcount.h>
+#समावेश "compression.h"
 
-#define LZO_LEN	4
+#घोषणा LZO_LEN	4
 
 /*
- * Btrfs LZO compression format
+ * Btrfs LZO compression क्रमmat
  *
- * Regular and inlined LZO compressed data extents consist of:
+ * Regular and अंतरभूतd LZO compressed data extents consist of:
  *
  * 1.  Header
- *     Fixed size. LZO_LEN (4) bytes long, LE32.
+ *     Fixed size. LZO_LEN (4) bytes दीर्घ, LE32.
  *     Records the total size (including the header) of compressed data.
  *
  * 2.  Segment(s)
  *     Variable size. Each segment includes one segment header, followed by data
  *     payload.
  *     One regular LZO compressed extent can have one or more segments.
- *     For inlined LZO compressed extent, only one segment is allowed.
+ *     For अंतरभूतd LZO compressed extent, only one segment is allowed.
  *     One segment represents at most one page of uncompressed data.
  *
  * 2.1 Segment header
- *     Fixed size. LZO_LEN (4) bytes long, LE32.
+ *     Fixed size. LZO_LEN (4) bytes दीर्घ, LE32.
  *     Records the total size of the segment (not including the header).
  *     Segment header never crosses page boundary, thus it's possible to
  *     have at most 3 padding zeros at the end of the page.
  *
  * 2.2 Data Payload
  *     Variable size. Size up limit should be lzo1x_worst_compress(PAGE_SIZE)
- *     which is 4419 for a 4KiB page.
+ *     which is 4419 क्रम a 4KiB page.
  *
  * Example:
  * Page 1:
@@ -54,86 +55,86 @@
  * 0x1000   | SegHdr N+1| Data payload N+1 ...                |
  */
 
-struct workspace {
-	void *mem;
-	void *buf;	/* where decompressed data goes */
-	void *cbuf;	/* where compressed data goes */
-	struct list_head list;
-};
+काष्ठा workspace अणु
+	व्योम *mem;
+	व्योम *buf;	/* where decompressed data goes */
+	व्योम *cbuf;	/* where compressed data goes */
+	काष्ठा list_head list;
+पूर्ण;
 
-static struct workspace_manager wsm;
+अटल काष्ठा workspace_manager wsm;
 
-void lzo_free_workspace(struct list_head *ws)
-{
-	struct workspace *workspace = list_entry(ws, struct workspace, list);
+व्योम lzo_मुक्त_workspace(काष्ठा list_head *ws)
+अणु
+	काष्ठा workspace *workspace = list_entry(ws, काष्ठा workspace, list);
 
-	kvfree(workspace->buf);
-	kvfree(workspace->cbuf);
-	kvfree(workspace->mem);
-	kfree(workspace);
-}
+	kvमुक्त(workspace->buf);
+	kvमुक्त(workspace->cbuf);
+	kvमुक्त(workspace->mem);
+	kमुक्त(workspace);
+पूर्ण
 
-struct list_head *lzo_alloc_workspace(unsigned int level)
-{
-	struct workspace *workspace;
+काष्ठा list_head *lzo_alloc_workspace(अचिन्हित पूर्णांक level)
+अणु
+	काष्ठा workspace *workspace;
 
-	workspace = kzalloc(sizeof(*workspace), GFP_KERNEL);
-	if (!workspace)
-		return ERR_PTR(-ENOMEM);
+	workspace = kzalloc(माप(*workspace), GFP_KERNEL);
+	अगर (!workspace)
+		वापस ERR_PTR(-ENOMEM);
 
-	workspace->mem = kvmalloc(LZO1X_MEM_COMPRESS, GFP_KERNEL);
-	workspace->buf = kvmalloc(lzo1x_worst_compress(PAGE_SIZE), GFP_KERNEL);
-	workspace->cbuf = kvmalloc(lzo1x_worst_compress(PAGE_SIZE), GFP_KERNEL);
-	if (!workspace->mem || !workspace->buf || !workspace->cbuf)
-		goto fail;
+	workspace->mem = kvदो_स्मृति(LZO1X_MEM_COMPRESS, GFP_KERNEL);
+	workspace->buf = kvदो_स्मृति(lzo1x_worst_compress(PAGE_SIZE), GFP_KERNEL);
+	workspace->cbuf = kvदो_स्मृति(lzo1x_worst_compress(PAGE_SIZE), GFP_KERNEL);
+	अगर (!workspace->mem || !workspace->buf || !workspace->cbuf)
+		जाओ fail;
 
 	INIT_LIST_HEAD(&workspace->list);
 
-	return &workspace->list;
+	वापस &workspace->list;
 fail:
-	lzo_free_workspace(&workspace->list);
-	return ERR_PTR(-ENOMEM);
-}
+	lzo_मुक्त_workspace(&workspace->list);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
-static inline void write_compress_length(char *buf, size_t len)
-{
+अटल अंतरभूत व्योम ग_लिखो_compress_length(अक्षर *buf, माप_प्रकार len)
+अणु
 	__le32 dlen;
 
 	dlen = cpu_to_le32(len);
-	memcpy(buf, &dlen, LZO_LEN);
-}
+	स_नकल(buf, &dlen, LZO_LEN);
+पूर्ण
 
-static inline size_t read_compress_length(const char *buf)
-{
+अटल अंतरभूत माप_प्रकार पढ़ो_compress_length(स्थिर अक्षर *buf)
+अणु
 	__le32 dlen;
 
-	memcpy(&dlen, buf, LZO_LEN);
-	return le32_to_cpu(dlen);
-}
+	स_नकल(&dlen, buf, LZO_LEN);
+	वापस le32_to_cpu(dlen);
+पूर्ण
 
-int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
-		u64 start, struct page **pages, unsigned long *out_pages,
-		unsigned long *total_in, unsigned long *total_out)
-{
-	struct workspace *workspace = list_entry(ws, struct workspace, list);
-	int ret = 0;
-	char *data_in;
-	char *cpage_out, *sizes_ptr;
-	int nr_pages = 0;
-	struct page *in_page = NULL;
-	struct page *out_page = NULL;
-	unsigned long bytes_left;
-	unsigned long len = *total_out;
-	unsigned long nr_dest_pages = *out_pages;
-	const unsigned long max_out = nr_dest_pages * PAGE_SIZE;
-	size_t in_len;
-	size_t out_len;
-	char *buf;
-	unsigned long tot_in = 0;
-	unsigned long tot_out = 0;
-	unsigned long pg_bytes_left;
-	unsigned long out_offset;
-	unsigned long bytes;
+पूर्णांक lzo_compress_pages(काष्ठा list_head *ws, काष्ठा address_space *mapping,
+		u64 start, काष्ठा page **pages, अचिन्हित दीर्घ *out_pages,
+		अचिन्हित दीर्घ *total_in, अचिन्हित दीर्घ *total_out)
+अणु
+	काष्ठा workspace *workspace = list_entry(ws, काष्ठा workspace, list);
+	पूर्णांक ret = 0;
+	अक्षर *data_in;
+	अक्षर *cpage_out, *sizes_ptr;
+	पूर्णांक nr_pages = 0;
+	काष्ठा page *in_page = शून्य;
+	काष्ठा page *out_page = शून्य;
+	अचिन्हित दीर्घ bytes_left;
+	अचिन्हित दीर्घ len = *total_out;
+	अचिन्हित दीर्घ nr_dest_pages = *out_pages;
+	स्थिर अचिन्हित दीर्घ max_out = nr_dest_pages * PAGE_SIZE;
+	माप_प्रकार in_len;
+	माप_प्रकार out_len;
+	अक्षर *buf;
+	अचिन्हित दीर्घ tot_in = 0;
+	अचिन्हित दीर्घ tot_out = 0;
+	अचिन्हित दीर्घ pg_bytes_left;
+	अचिन्हित दीर्घ out_offset;
+	अचिन्हित दीर्घ bytes;
 
 	*out_pages = 0;
 	*total_out = 0;
@@ -147,10 +148,10 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 	 * the first 4 bytes
 	 */
 	out_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-	if (out_page == NULL) {
+	अगर (out_page == शून्य) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	cpage_out = kmap(out_page);
 	out_offset = LZO_LEN;
 	tot_out = LZO_LEN;
@@ -158,20 +159,20 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 	nr_pages = 1;
 	pg_bytes_left = PAGE_SIZE - LZO_LEN;
 
-	/* compress at most one page of data each time */
+	/* compress at most one page of data each समय */
 	in_len = min(len, PAGE_SIZE);
-	while (tot_in < len) {
+	जबतक (tot_in < len) अणु
 		ret = lzo1x_1_compress(data_in, in_len, workspace->cbuf,
 				       &out_len, workspace->mem);
-		if (ret != LZO_E_OK) {
+		अगर (ret != LZO_E_OK) अणु
 			pr_debug("BTRFS: lzo in loop returned %d\n",
 			       ret);
 			ret = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* store the size of this chunk of compressed data */
-		write_compress_length(cpage_out + out_offset, out_len);
+		ग_लिखो_compress_length(cpage_out + out_offset, out_len);
 		tot_out += LZO_LEN;
 		out_offset += LZO_LEN;
 		pg_bytes_left -= LZO_LEN;
@@ -179,12 +180,12 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 		tot_in += in_len;
 		tot_out += out_len;
 
-		/* copy bytes from the working buffer into the pages */
+		/* copy bytes from the working buffer पूर्णांकo the pages */
 		buf = workspace->cbuf;
-		while (out_len) {
-			bytes = min_t(unsigned long, pg_bytes_left, out_len);
+		जबतक (out_len) अणु
+			bytes = min_t(अचिन्हित दीर्घ, pg_bytes_left, out_len);
 
-			memcpy(cpage_out + out_offset, buf, bytes);
+			स_नकल(cpage_out + out_offset, buf, bytes);
 
 			out_len -= bytes;
 			pg_bytes_left -= bytes;
@@ -192,55 +193,55 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 			out_offset += bytes;
 
 			/*
-			 * we need another page for writing out.
+			 * we need another page क्रम writing out.
 			 *
-			 * Note if there's less than 4 bytes left, we just
+			 * Note अगर there's less than 4 bytes left, we just
 			 * skip to a new page.
 			 */
-			if ((out_len == 0 && pg_bytes_left < LZO_LEN) ||
-			    pg_bytes_left == 0) {
-				if (pg_bytes_left) {
-					memset(cpage_out + out_offset, 0,
+			अगर ((out_len == 0 && pg_bytes_left < LZO_LEN) ||
+			    pg_bytes_left == 0) अणु
+				अगर (pg_bytes_left) अणु
+					स_रखो(cpage_out + out_offset, 0,
 					       pg_bytes_left);
 					tot_out += pg_bytes_left;
-				}
+				पूर्ण
 
 				/* we're done, don't allocate new page */
-				if (out_len == 0 && tot_in >= len)
-					break;
+				अगर (out_len == 0 && tot_in >= len)
+					अवरोध;
 
 				kunmap(out_page);
-				if (nr_pages == nr_dest_pages) {
-					out_page = NULL;
+				अगर (nr_pages == nr_dest_pages) अणु
+					out_page = शून्य;
 					ret = -E2BIG;
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 
 				out_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-				if (out_page == NULL) {
+				अगर (out_page == शून्य) अणु
 					ret = -ENOMEM;
-					goto out;
-				}
+					जाओ out;
+				पूर्ण
 				cpage_out = kmap(out_page);
 				pages[nr_pages++] = out_page;
 
 				pg_bytes_left = PAGE_SIZE;
 				out_offset = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* we're making it bigger, give up */
-		if (tot_in > 8192 && tot_in < tot_out) {
+		अगर (tot_in > 8192 && tot_in < tot_out) अणु
 			ret = -E2BIG;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* we're all done */
-		if (tot_in >= len)
-			break;
+		/* we're all करोne */
+		अगर (tot_in >= len)
+			अवरोध;
 
-		if (tot_out > max_out)
-			break;
+		अगर (tot_out > max_out)
+			अवरोध;
 
 		bytes_left = len - tot_in;
 		kunmap(in_page);
@@ -250,16 +251,16 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 		in_page = find_get_page(mapping, start >> PAGE_SHIFT);
 		data_in = kmap(in_page);
 		in_len = min(bytes_left, PAGE_SIZE);
-	}
+	पूर्ण
 
-	if (tot_out >= tot_in) {
+	अगर (tot_out >= tot_in) अणु
 		ret = -E2BIG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* store the size of all chunks of compressed data */
 	sizes_ptr = kmap_local_page(pages[0]);
-	write_compress_length(sizes_ptr, tot_out);
+	ग_लिखो_compress_length(sizes_ptr, tot_out);
 	kunmap_local(sizes_ptr);
 
 	ret = 0;
@@ -267,45 +268,45 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 	*total_in = tot_in;
 out:
 	*out_pages = nr_pages;
-	if (out_page)
+	अगर (out_page)
 		kunmap(out_page);
 
-	if (in_page) {
+	अगर (in_page) अणु
 		kunmap(in_page);
 		put_page(in_page);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int lzo_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
-{
-	struct workspace *workspace = list_entry(ws, struct workspace, list);
-	int ret = 0, ret2;
-	char *data_in;
-	unsigned long page_in_index = 0;
-	size_t srclen = cb->compressed_len;
-	unsigned long total_pages_in = DIV_ROUND_UP(srclen, PAGE_SIZE);
-	unsigned long buf_start;
-	unsigned long buf_offset = 0;
-	unsigned long bytes;
-	unsigned long working_bytes;
-	size_t in_len;
-	size_t out_len;
-	const size_t max_segment_len = lzo1x_worst_compress(PAGE_SIZE);
-	unsigned long in_offset;
-	unsigned long in_page_bytes_left;
-	unsigned long tot_in;
-	unsigned long tot_out;
-	unsigned long tot_len;
-	char *buf;
+पूर्णांक lzo_decompress_bio(काष्ठा list_head *ws, काष्ठा compressed_bio *cb)
+अणु
+	काष्ठा workspace *workspace = list_entry(ws, काष्ठा workspace, list);
+	पूर्णांक ret = 0, ret2;
+	अक्षर *data_in;
+	अचिन्हित दीर्घ page_in_index = 0;
+	माप_प्रकार srclen = cb->compressed_len;
+	अचिन्हित दीर्घ total_pages_in = DIV_ROUND_UP(srclen, PAGE_SIZE);
+	अचिन्हित दीर्घ buf_start;
+	अचिन्हित दीर्घ buf_offset = 0;
+	अचिन्हित दीर्घ bytes;
+	अचिन्हित दीर्घ working_bytes;
+	माप_प्रकार in_len;
+	माप_प्रकार out_len;
+	स्थिर माप_प्रकार max_segment_len = lzo1x_worst_compress(PAGE_SIZE);
+	अचिन्हित दीर्घ in_offset;
+	अचिन्हित दीर्घ in_page_bytes_left;
+	अचिन्हित दीर्घ tot_in;
+	अचिन्हित दीर्घ tot_out;
+	अचिन्हित दीर्घ tot_len;
+	अक्षर *buf;
 	bool may_late_unmap, need_unmap;
-	struct page **pages_in = cb->compressed_pages;
+	काष्ठा page **pages_in = cb->compressed_pages;
 	u64 disk_start = cb->start;
-	struct bio *orig_bio = cb->orig_bio;
+	काष्ठा bio *orig_bio = cb->orig_bio;
 
 	data_in = kmap(pages_in[0]);
-	tot_len = read_compress_length(data_in);
+	tot_len = पढ़ो_compress_length(data_in);
 	/*
 	 * Compressed data header check.
 	 *
@@ -314,11 +315,11 @@ int lzo_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
 	 * header is not possible).  If this happens it means the compressed
 	 * extent is corrupted.
 	 */
-	if (tot_len > min_t(size_t, BTRFS_MAX_COMPRESSED, srclen) ||
-	    tot_len < srclen - PAGE_SIZE) {
+	अगर (tot_len > min_t(माप_प्रकार, BTRFS_MAX_COMPRESSED, srclen) ||
+	    tot_len < srclen - PAGE_SIZE) अणु
 		ret = -EUCLEAN;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	tot_in = LZO_LEN;
 	in_offset = LZO_LEN;
@@ -326,8 +327,8 @@ int lzo_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
 
 	tot_out = 0;
 
-	while (tot_in < tot_len) {
-		in_len = read_compress_length(data_in + in_offset);
+	जबतक (tot_in < tot_len) अणु
+		in_len = पढ़ो_compress_length(data_in + in_offset);
 		in_page_bytes_left -= LZO_LEN;
 		in_offset += LZO_LEN;
 		tot_in += LZO_LEN;
@@ -338,151 +339,151 @@ int lzo_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
 		 * The segment length must not exceed the maximum LZO
 		 * compression size, nor the total compressed size.
 		 */
-		if (in_len > max_segment_len || tot_in + in_len > tot_len) {
+		अगर (in_len > max_segment_len || tot_in + in_len > tot_len) अणु
 			ret = -EUCLEAN;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		tot_in += in_len;
 		working_bytes = in_len;
 		may_late_unmap = need_unmap = false;
 
-		/* fast path: avoid using the working buffer */
-		if (in_page_bytes_left >= in_len) {
+		/* fast path: aव्योम using the working buffer */
+		अगर (in_page_bytes_left >= in_len) अणु
 			buf = data_in + in_offset;
 			bytes = in_len;
 			may_late_unmap = true;
-			goto cont;
-		}
+			जाओ cont;
+		पूर्ण
 
-		/* copy bytes from the pages into the working buffer */
+		/* copy bytes from the pages पूर्णांकo the working buffer */
 		buf = workspace->cbuf;
 		buf_offset = 0;
-		while (working_bytes) {
+		जबतक (working_bytes) अणु
 			bytes = min(working_bytes, in_page_bytes_left);
 
-			memcpy(buf + buf_offset, data_in + in_offset, bytes);
+			स_नकल(buf + buf_offset, data_in + in_offset, bytes);
 			buf_offset += bytes;
 cont:
 			working_bytes -= bytes;
 			in_page_bytes_left -= bytes;
 			in_offset += bytes;
 
-			/* check if we need to pick another page */
-			if ((working_bytes == 0 && in_page_bytes_left < LZO_LEN)
-			    || in_page_bytes_left == 0) {
+			/* check अगर we need to pick another page */
+			अगर ((working_bytes == 0 && in_page_bytes_left < LZO_LEN)
+			    || in_page_bytes_left == 0) अणु
 				tot_in += in_page_bytes_left;
 
-				if (working_bytes == 0 && tot_in >= tot_len)
-					break;
+				अगर (working_bytes == 0 && tot_in >= tot_len)
+					अवरोध;
 
-				if (page_in_index + 1 >= total_pages_in) {
+				अगर (page_in_index + 1 >= total_pages_in) अणु
 					ret = -EIO;
-					goto done;
-				}
+					जाओ करोne;
+				पूर्ण
 
-				if (may_late_unmap)
+				अगर (may_late_unmap)
 					need_unmap = true;
-				else
+				अन्यथा
 					kunmap(pages_in[page_in_index]);
 
 				data_in = kmap(pages_in[++page_in_index]);
 
 				in_page_bytes_left = PAGE_SIZE;
 				in_offset = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		out_len = max_segment_len;
 		ret = lzo1x_decompress_safe(buf, in_len, workspace->buf,
 					    &out_len);
-		if (need_unmap)
+		अगर (need_unmap)
 			kunmap(pages_in[page_in_index - 1]);
-		if (ret != LZO_E_OK) {
+		अगर (ret != LZO_E_OK) अणु
 			pr_warn("BTRFS: decompress failed\n");
 			ret = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		buf_start = tot_out;
 		tot_out += out_len;
 
 		ret2 = btrfs_decompress_buf2page(workspace->buf, buf_start,
 						 tot_out, disk_start, orig_bio);
-		if (ret2 == 0)
-			break;
-	}
-done:
+		अगर (ret2 == 0)
+			अवरोध;
+	पूर्ण
+करोne:
 	kunmap(pages_in[page_in_index]);
-	if (!ret)
+	अगर (!ret)
 		zero_fill_bio(orig_bio);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int lzo_decompress(struct list_head *ws, unsigned char *data_in,
-		struct page *dest_page, unsigned long start_byte, size_t srclen,
-		size_t destlen)
-{
-	struct workspace *workspace = list_entry(ws, struct workspace, list);
-	size_t in_len;
-	size_t out_len;
-	size_t max_segment_len = lzo1x_worst_compress(PAGE_SIZE);
-	int ret = 0;
-	char *kaddr;
-	unsigned long bytes;
+पूर्णांक lzo_decompress(काष्ठा list_head *ws, अचिन्हित अक्षर *data_in,
+		काष्ठा page *dest_page, अचिन्हित दीर्घ start_byte, माप_प्रकार srclen,
+		माप_प्रकार destlen)
+अणु
+	काष्ठा workspace *workspace = list_entry(ws, काष्ठा workspace, list);
+	माप_प्रकार in_len;
+	माप_प्रकार out_len;
+	माप_प्रकार max_segment_len = lzo1x_worst_compress(PAGE_SIZE);
+	पूर्णांक ret = 0;
+	अक्षर *kaddr;
+	अचिन्हित दीर्घ bytes;
 
-	if (srclen < LZO_LEN || srclen > max_segment_len + LZO_LEN * 2)
-		return -EUCLEAN;
+	अगर (srclen < LZO_LEN || srclen > max_segment_len + LZO_LEN * 2)
+		वापस -EUCLEAN;
 
-	in_len = read_compress_length(data_in);
-	if (in_len != srclen)
-		return -EUCLEAN;
+	in_len = पढ़ो_compress_length(data_in);
+	अगर (in_len != srclen)
+		वापस -EUCLEAN;
 	data_in += LZO_LEN;
 
-	in_len = read_compress_length(data_in);
-	if (in_len != srclen - LZO_LEN * 2) {
+	in_len = पढ़ो_compress_length(data_in);
+	अगर (in_len != srclen - LZO_LEN * 2) अणु
 		ret = -EUCLEAN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	data_in += LZO_LEN;
 
 	out_len = PAGE_SIZE;
 	ret = lzo1x_decompress_safe(data_in, in_len, workspace->buf, &out_len);
-	if (ret != LZO_E_OK) {
+	अगर (ret != LZO_E_OK) अणु
 		pr_warn("BTRFS: decompress failed!\n");
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (out_len < start_byte) {
+	अगर (out_len < start_byte) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * the caller is already checking against PAGE_SIZE, but lets
-	 * move this check closer to the memcpy/memset
+	 * the caller is alपढ़ोy checking against PAGE_SIZE, but lets
+	 * move this check बंदr to the स_नकल/स_रखो
 	 */
-	destlen = min_t(unsigned long, destlen, PAGE_SIZE);
-	bytes = min_t(unsigned long, destlen, out_len - start_byte);
+	destlen = min_t(अचिन्हित दीर्घ, destlen, PAGE_SIZE);
+	bytes = min_t(अचिन्हित दीर्घ, destlen, out_len - start_byte);
 
 	kaddr = kmap_local_page(dest_page);
-	memcpy(kaddr, workspace->buf + start_byte, bytes);
+	स_नकल(kaddr, workspace->buf + start_byte, bytes);
 
 	/*
-	 * btrfs_getblock is doing a zero on the tail of the page too,
+	 * btrfs_getblock is करोing a zero on the tail of the page too,
 	 * but this will cover anything missing from the decompressed
 	 * data.
 	 */
-	if (bytes < destlen)
-		memset(kaddr+bytes, 0, destlen-bytes);
+	अगर (bytes < destlen)
+		स_रखो(kaddr+bytes, 0, destlen-bytes);
 	kunmap_local(kaddr);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct btrfs_compress_op btrfs_lzo_compress = {
+स्थिर काष्ठा btrfs_compress_op btrfs_lzo_compress = अणु
 	.workspace_manager	= &wsm,
 	.max_level		= 1,
-	.default_level		= 1,
-};
+	.शेष_level		= 1,
+पूर्ण;

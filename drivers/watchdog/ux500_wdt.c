@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2011-2013
  *
- * Author: Mathieu Poirier <mathieu.poirier@linaro.org> for ST-Ericsson
- * Author: Jonas Aaberg <jonas.aberg@stericsson.com> for ST-Ericsson
+ * Author: Mathieu Poirier <mathieu.poirier@linaro.org> क्रम ST-Ericsson
+ * Author: Jonas Aaberg <jonas.aberg@stericsson.com> क्रम ST-Ericsson
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/moduleparam.h>
-#include <linux/err.h>
-#include <linux/uaccess.h>
-#include <linux/watchdog.h>
-#include <linux/platform_device.h>
-#include <linux/platform_data/ux500_wdt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/err.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_data/ux500_wdt.h>
 
-#include <linux/mfd/dbx500-prcmu.h>
+#समावेश <linux/mfd/dbx500-prcmu.h>
 
-#define WATCHDOG_TIMEOUT 600 /* 10 minutes */
+#घोषणा WATCHDOG_TIMEOUT 600 /* 10 minutes */
 
-#define WATCHDOG_MIN	0
-#define WATCHDOG_MAX28	268435  /* 28 bit resolution in ms == 268435.455 s */
-#define WATCHDOG_MAX32	4294967 /* 32 bit resolution in ms == 4294967.295 s */
+#घोषणा WATCHDOG_MIN	0
+#घोषणा WATCHDOG_MAX28	268435  /* 28 bit resolution in ms == 268435.455 s */
+#घोषणा WATCHDOG_MAX32	4294967 /* 32 bit resolution in ms == 4294967.295 s */
 
-static unsigned int timeout = WATCHDOG_TIMEOUT;
-module_param(timeout, uint, 0);
-MODULE_PARM_DESC(timeout,
+अटल अचिन्हित पूर्णांक समयout = WATCHDOG_TIMEOUT;
+module_param(समयout, uपूर्णांक, 0);
+MODULE_PARM_DESC(समयout,
 	"Watchdog timeout in seconds. default="
 				__MODULE_STRING(WATCHDOG_TIMEOUT) ".");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 	"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static int ux500_wdt_start(struct watchdog_device *wdd)
-{
-	return prcmu_enable_a9wdog(PRCMU_WDOG_ALL);
-}
+अटल पूर्णांक ux500_wdt_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	वापस prcmu_enable_a9wकरोg(PRCMU_WDOG_ALL);
+पूर्ण
 
-static int ux500_wdt_stop(struct watchdog_device *wdd)
-{
-	return prcmu_disable_a9wdog(PRCMU_WDOG_ALL);
-}
+अटल पूर्णांक ux500_wdt_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	वापस prcmu_disable_a9wकरोg(PRCMU_WDOG_ALL);
+पूर्ण
 
-static int ux500_wdt_keepalive(struct watchdog_device *wdd)
-{
-	return prcmu_kick_a9wdog(PRCMU_WDOG_ALL);
-}
+अटल पूर्णांक ux500_wdt_keepalive(काष्ठा watchकरोg_device *wdd)
+अणु
+	वापस prcmu_kick_a9wकरोg(PRCMU_WDOG_ALL);
+पूर्ण
 
-static int ux500_wdt_set_timeout(struct watchdog_device *wdd,
-				 unsigned int timeout)
-{
+अटल पूर्णांक ux500_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
+				 अचिन्हित पूर्णांक समयout)
+अणु
 	ux500_wdt_stop(wdd);
-	prcmu_load_a9wdog(PRCMU_WDOG_ALL, timeout * 1000);
+	prcmu_load_a9wकरोg(PRCMU_WDOG_ALL, समयout * 1000);
 	ux500_wdt_start(wdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info ux500_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info ux500_wdt_info = अणु
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "Ux500 WDT",
 	.firmware_version = 1,
-};
+पूर्ण;
 
-static const struct watchdog_ops ux500_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops ux500_wdt_ops = अणु
 	.owner = THIS_MODULE,
 	.start = ux500_wdt_start,
 	.stop  = ux500_wdt_stop,
 	.ping  = ux500_wdt_keepalive,
-	.set_timeout = ux500_wdt_set_timeout,
-};
+	.set_समयout = ux500_wdt_set_समयout,
+पूर्ण;
 
-static struct watchdog_device ux500_wdt = {
+अटल काष्ठा watchकरोg_device ux500_wdt = अणु
 	.info = &ux500_wdt_info,
 	.ops = &ux500_wdt_ops,
-	.min_timeout = WATCHDOG_MIN,
-	.max_timeout = WATCHDOG_MAX32,
-};
+	.min_समयout = WATCHDOG_MIN,
+	.max_समयout = WATCHDOG_MAX32,
+पूर्ण;
 
-static int ux500_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	int ret;
-	struct ux500_wdt_data *pdata = dev_get_platdata(dev);
+अटल पूर्णांक ux500_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक ret;
+	काष्ठा ux500_wdt_data *pdata = dev_get_platdata(dev);
 
-	if (pdata) {
-		if (pdata->timeout > 0)
-			timeout = pdata->timeout;
-		if (pdata->has_28_bits_resolution)
-			ux500_wdt.max_timeout = WATCHDOG_MAX28;
-	}
+	अगर (pdata) अणु
+		अगर (pdata->समयout > 0)
+			समयout = pdata->समयout;
+		अगर (pdata->has_28_bits_resolution)
+			ux500_wdt.max_समयout = WATCHDOG_MAX28;
+	पूर्ण
 
 	ux500_wdt.parent = dev;
-	watchdog_set_nowayout(&ux500_wdt, nowayout);
+	watchकरोg_set_nowayout(&ux500_wdt, nowayout);
 
-	/* disable auto off on sleep */
-	prcmu_config_a9wdog(PRCMU_WDOG_CPU1, false);
+	/* disable स्वतः off on sleep */
+	prcmu_config_a9wकरोg(PRCMU_WDOG_CPU1, false);
 
 	/* set HW initial value */
-	prcmu_load_a9wdog(PRCMU_WDOG_ALL, timeout * 1000);
+	prcmu_load_a9wकरोg(PRCMU_WDOG_ALL, समयout * 1000);
 
-	ret = devm_watchdog_register_device(dev, &ux500_wdt);
-	if (ret)
-		return ret;
+	ret = devm_watchकरोg_रेजिस्टर_device(dev, &ux500_wdt);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(dev, "initialized\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int ux500_wdt_suspend(struct platform_device *pdev,
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक ux500_wdt_suspend(काष्ठा platक्रमm_device *pdev,
 			     pm_message_t state)
-{
-	if (watchdog_active(&ux500_wdt)) {
+अणु
+	अगर (watchकरोg_active(&ux500_wdt)) अणु
 		ux500_wdt_stop(&ux500_wdt);
-		prcmu_config_a9wdog(PRCMU_WDOG_CPU1, true);
+		prcmu_config_a9wकरोg(PRCMU_WDOG_CPU1, true);
 
-		prcmu_load_a9wdog(PRCMU_WDOG_ALL, timeout * 1000);
+		prcmu_load_a9wकरोg(PRCMU_WDOG_ALL, समयout * 1000);
 		ux500_wdt_start(&ux500_wdt);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ux500_wdt_resume(struct platform_device *pdev)
-{
-	if (watchdog_active(&ux500_wdt)) {
+अटल पूर्णांक ux500_wdt_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (watchकरोg_active(&ux500_wdt)) अणु
 		ux500_wdt_stop(&ux500_wdt);
-		prcmu_config_a9wdog(PRCMU_WDOG_CPU1, false);
+		prcmu_config_a9wकरोg(PRCMU_WDOG_CPU1, false);
 
-		prcmu_load_a9wdog(PRCMU_WDOG_ALL, timeout * 1000);
+		prcmu_load_a9wकरोg(PRCMU_WDOG_ALL, समयout * 1000);
 		ux500_wdt_start(&ux500_wdt);
-	}
-	return 0;
-}
-#else
-#define ux500_wdt_suspend NULL
-#define ux500_wdt_resume NULL
-#endif
+	पूर्ण
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा ux500_wdt_suspend शून्य
+#घोषणा ux500_wdt_resume शून्य
+#पूर्ण_अगर
 
-static struct platform_driver ux500_wdt_driver = {
+अटल काष्ठा platक्रमm_driver ux500_wdt_driver = अणु
 	.probe		= ux500_wdt_probe,
 	.suspend	= ux500_wdt_suspend,
 	.resume		= ux500_wdt_resume,
-	.driver		= {
+	.driver		= अणु
 		.name	= "ux500_wdt",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ux500_wdt_driver);
+module_platक्रमm_driver(ux500_wdt_driver);
 
 MODULE_AUTHOR("Jonas Aaberg <jonas.aberg@stericsson.com>");
 MODULE_DESCRIPTION("Ux500 Watchdog Driver");

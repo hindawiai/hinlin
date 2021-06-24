@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
 /* PIPAPO: PIle PAcket POlicies: AVX2 packet lookup routines
  *
@@ -7,289 +8,289 @@
  * Author: Stefano Brivio <sbrivio@redhat.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_core.h>
-#include <uapi/linux/netfilter/nf_tables.h>
-#include <linux/bitmap.h>
-#include <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_core.h>
+#समावेश <uapi/linux/netfilter/nf_tables.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/bitops.h>
 
-#include <linux/compiler.h>
-#include <asm/fpu/api.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/fpu/api.h>
 
-#include "nft_set_pipapo_avx2.h"
-#include "nft_set_pipapo.h"
+#समावेश "nft_set_pipapo_avx2.h"
+#समावेश "nft_set_pipapo.h"
 
-#define NFT_PIPAPO_LONGS_PER_M256	(XSAVE_YMM_SIZE / BITS_PER_LONG)
+#घोषणा NFT_PIPAPO_LONGS_PER_M256	(XSAVE_YMM_SIZE / BITS_PER_LONG)
 
-/* Load from memory into YMM register with non-temporal hint ("stream load"),
- * that is, don't fetch lines from memory into the cache. This avoids pushing
+/* Load from memory पूर्णांकo YMM रेजिस्टर with non-temporal hपूर्णांक ("stream load"),
+ * that is, करोn't fetch lines from memory पूर्णांकo the cache. This aव्योमs pushing
  * precious packet data out of the cache hierarchy, and is appropriate when:
  *
  * - loading buckets from lookup tables, as they are not going to be used
- *   again before packets are entirely classified
+ *   again beक्रमe packets are entirely classअगरied
  *
- * - loading the result bitmap from the previous field, as it's never used
+ * - loading the result biपंचांगap from the previous field, as it's never used
  *   again
  */
-#define NFT_PIPAPO_AVX2_LOAD(reg, loc)					\
-	asm volatile("vmovntdqa %0, %%ymm" #reg : : "m" (loc))
+#घोषणा NFT_PIPAPO_AVX2_LOAD(reg, loc)					\
+	यंत्र अस्थिर("vmovntdqa %0, %%ymm" #reg : : "m" (loc))
 
-/* Stream a single lookup table bucket into YMM register given lookup table,
+/* Stream a single lookup table bucket पूर्णांकo YMM रेजिस्टर given lookup table,
  * group index, value of packet bits, bucket size.
  */
-#define NFT_PIPAPO_AVX2_BUCKET_LOAD4(reg, lt, group, v, bsize)		\
+#घोषणा NFT_PIPAPO_AVX2_BUCKET_LOAD4(reg, lt, group, v, bsize)		\
 	NFT_PIPAPO_AVX2_LOAD(reg,					\
 			     lt[((group) * NFT_PIPAPO_BUCKETS(4) +	\
 				 (v)) * (bsize)])
-#define NFT_PIPAPO_AVX2_BUCKET_LOAD8(reg, lt, group, v, bsize)		\
+#घोषणा NFT_PIPAPO_AVX2_BUCKET_LOAD8(reg, lt, group, v, bsize)		\
 	NFT_PIPAPO_AVX2_LOAD(reg,					\
 			     lt[((group) * NFT_PIPAPO_BUCKETS(8) +	\
 				 (v)) * (bsize)])
 
 /* Bitwise AND: the staple operation of this algorithm */
-#define NFT_PIPAPO_AVX2_AND(dst, a, b)					\
-	asm volatile("vpand %ymm" #a ", %ymm" #b ", %ymm" #dst)
+#घोषणा NFT_PIPAPO_AVX2_AND(dst, a, b)					\
+	यंत्र अस्थिर("vpand %ymm" #a ", %ymm" #b ", %ymm" #dst)
 
-/* Jump to label if @reg is zero */
-#define NFT_PIPAPO_AVX2_NOMATCH_GOTO(reg, label)			\
-	asm_volatile_goto("vptest %%ymm" #reg ", %%ymm" #reg ";"	\
+/* Jump to label अगर @reg is zero */
+#घोषणा NFT_PIPAPO_AVX2_NOMATCH_GOTO(reg, label)			\
+	यंत्र_अस्थिर_जाओ("vptest %%ymm" #reg ", %%ymm" #reg ";"	\
 			  "je %l[" #label "]" : : : : label)
 
-/* Store 256 bits from YMM register into memory. Contrary to bucket load
- * operation, we don't bypass the cache here, as stored matching results
- * are always used shortly after.
+/* Store 256 bits from YMM रेजिस्टर पूर्णांकo memory. Contrary to bucket load
+ * operation, we करोn't bypass the cache here, as stored matching results
+ * are always used लघुly after.
  */
-#define NFT_PIPAPO_AVX2_STORE(loc, reg)					\
-	asm volatile("vmovdqa %%ymm" #reg ", %0" : "=m" (loc))
+#घोषणा NFT_PIPAPO_AVX2_STORE(loc, reg)					\
+	यंत्र अस्थिर("vmovdqa %%ymm" #reg ", %0" : "=m" (loc))
 
-/* Zero out a complete YMM register, @reg */
-#define NFT_PIPAPO_AVX2_ZERO(reg)					\
-	asm volatile("vpxor %ymm" #reg ", %ymm" #reg ", %ymm" #reg)
+/* Zero out a complete YMM रेजिस्टर, @reg */
+#घोषणा NFT_PIPAPO_AVX2_ZERO(reg)					\
+	यंत्र अस्थिर("vpxor %ymm" #reg ", %ymm" #reg ", %ymm" #reg)
 
-/* Current working bitmap index, toggled between field matches */
-static DEFINE_PER_CPU(bool, nft_pipapo_avx2_scratch_index);
+/* Current working biपंचांगap index, toggled between field matches */
+अटल DEFINE_PER_CPU(bool, nft_pipapo_avx2_scratch_index);
 
 /**
- * nft_pipapo_avx2_prepare() - Prepare before main algorithm body
+ * nft_pipapo_avx2_prepare() - Prepare beक्रमe मुख्य algorithm body
  *
  * This zeroes out ymm15, which is later used whenever we need to clear a
- * memory location, by storing its content into memory.
+ * memory location, by storing its content पूर्णांकo memory.
  */
-static void nft_pipapo_avx2_prepare(void)
-{
+अटल व्योम nft_pipapo_avx2_prepare(व्योम)
+अणु
 	NFT_PIPAPO_AVX2_ZERO(15);
-}
+पूर्ण
 
 /**
- * nft_pipapo_avx2_fill() - Fill a bitmap region with ones
+ * nft_pipapo_avx2_fill() - Fill a biपंचांगap region with ones
  * @data:	Base memory area
  * @start:	First bit to set
  * @len:	Count of bits to fill
  *
- * This is nothing else than a version of bitmap_set(), as used e.g. by
- * pipapo_refill(), tailored for the microarchitectures using it and better
- * suited for the specific usage: it's very likely that we'll set a small number
+ * This is nothing अन्यथा than a version of biपंचांगap_set(), as used e.g. by
+ * pipapo_refill(), tailored क्रम the microarchitectures using it and better
+ * suited क्रम the specअगरic usage: it's very likely that we'll set a small number
  * of bits, not crossing a word boundary, and correct branch prediction is
  * critical here.
  *
- * This function doesn't actually use any AVX2 instruction.
+ * This function करोesn't actually use any AVX2 inकाष्ठाion.
  */
-static void nft_pipapo_avx2_fill(unsigned long *data, int start, int len)
-{
-	int offset = start % BITS_PER_LONG;
-	unsigned long mask;
+अटल व्योम nft_pipapo_avx2_fill(अचिन्हित दीर्घ *data, पूर्णांक start, पूर्णांक len)
+अणु
+	पूर्णांक offset = start % BITS_PER_LONG;
+	अचिन्हित दीर्घ mask;
 
 	data += start / BITS_PER_LONG;
 
-	if (likely(len == 1)) {
+	अगर (likely(len == 1)) अणु
 		*data |= BIT(offset);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (likely(len < BITS_PER_LONG || offset)) {
-		if (likely(len + offset <= BITS_PER_LONG)) {
+	अगर (likely(len < BITS_PER_LONG || offset)) अणु
+		अगर (likely(len + offset <= BITS_PER_LONG)) अणु
 			*data |= GENMASK(len - 1 + offset, offset);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		*data |= ~0UL << offset;
 		len -= BITS_PER_LONG - offset;
 		data++;
 
-		if (len <= BITS_PER_LONG) {
+		अगर (len <= BITS_PER_LONG) अणु
 			mask = ~0UL >> (BITS_PER_LONG - len);
 			*data |= mask;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	memset(data, 0xff, len / BITS_PER_BYTE);
+	स_रखो(data, 0xff, len / BITS_PER_BYTE);
 	data += len / BITS_PER_LONG;
 
 	len %= BITS_PER_LONG;
-	if (len)
+	अगर (len)
 		*data |= ~0UL >> (BITS_PER_LONG - len);
-}
+पूर्ण
 
 /**
- * nft_pipapo_avx2_refill() - Scan bitmap, select mapping table item, set bits
- * @offset:	Start from given bitmap (equivalent to bucket) offset, in longs
- * @map:	Bitmap to be scanned for set bits
- * @dst:	Destination bitmap
- * @mt:		Mapping table containing bit set specifiers
- * @len:	Length of bitmap in longs
- * @last:	Return index of first set bit, if this is the last field
+ * nft_pipapo_avx2_refill() - Scan biपंचांगap, select mapping table item, set bits
+ * @offset:	Start from given biपंचांगap (equivalent to bucket) offset, in दीर्घs
+ * @map:	Biपंचांगap to be scanned क्रम set bits
+ * @dst:	Destination biपंचांगap
+ * @mt:		Mapping table containing bit set specअगरiers
+ * @len:	Length of biपंचांगap in दीर्घs
+ * @last:	Return index of first set bit, अगर this is the last field
  *
- * This is an alternative implementation of pipapo_refill() suitable for usage
+ * This is an alternative implementation of pipapo_refill() suitable क्रम usage
  * with AVX2 lookup routines: we know there are four words to be scanned, at
- * a given offset inside the map, for each matching iteration.
+ * a given offset inside the map, क्रम each matching iteration.
  *
- * This function doesn't actually use any AVX2 instruction.
+ * This function करोesn't actually use any AVX2 inकाष्ठाion.
  *
- * Return: first set bit index if @last, index of first filled word otherwise.
+ * Return: first set bit index अगर @last, index of first filled word otherwise.
  */
-static int nft_pipapo_avx2_refill(int offset, unsigned long *map,
-				  unsigned long *dst,
-				  union nft_pipapo_map_bucket *mt, bool last)
-{
-	int ret = -1;
+अटल पूर्णांक nft_pipapo_avx2_refill(पूर्णांक offset, अचिन्हित दीर्घ *map,
+				  अचिन्हित दीर्घ *dst,
+				  जोड़ nft_pipapo_map_bucket *mt, bool last)
+अणु
+	पूर्णांक ret = -1;
 
-#define NFT_PIPAPO_AVX2_REFILL_ONE_WORD(x)				\
-	do {								\
-		while (map[(x)]) {					\
-			int r = __builtin_ctzl(map[(x)]);		\
-			int i = (offset + (x)) * BITS_PER_LONG + r;	\
+#घोषणा NFT_PIPAPO_AVX2_REFILL_ONE_WORD(x)				\
+	करो अणु								\
+		जबतक (map[(x)]) अणु					\
+			पूर्णांक r = __builtin_ctzl(map[(x)]);		\
+			पूर्णांक i = (offset + (x)) * BITS_PER_LONG + r;	\
 									\
-			if (last)					\
-				return i;				\
+			अगर (last)					\
+				वापस i;				\
 									\
 			nft_pipapo_avx2_fill(dst, mt[i].to, mt[i].n);	\
 									\
-			if (ret == -1)					\
+			अगर (ret == -1)					\
 				ret = mt[i].to;				\
 									\
 			map[(x)] &= ~(1UL << r);			\
-		}							\
-	} while (0)
+		पूर्ण							\
+	पूर्ण जबतक (0)
 
 	NFT_PIPAPO_AVX2_REFILL_ONE_WORD(0);
 	NFT_PIPAPO_AVX2_REFILL_ONE_WORD(1);
 	NFT_PIPAPO_AVX2_REFILL_ONE_WORD(2);
 	NFT_PIPAPO_AVX2_REFILL_ONE_WORD(3);
-#undef NFT_PIPAPO_AVX2_REFILL_ONE_WORD
+#अघोषित NFT_PIPAPO_AVX2_REFILL_ONE_WORD
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_4b_2() - AVX2-based lookup for 2 four-bit groups
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_4b_2() - AVX2-based lookup क्रम 2 four-bit groups
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
  * Load buckets from lookup table corresponding to the values of each 4-bit
- * group of packet bytes, and perform a bitwise intersection between them. If
+ * group of packet bytes, and perक्रमm a bitwise पूर्णांकersection between them. If
  * this is the first field in the set, simply AND the buckets together
- * (equivalent to using an all-ones starting bitmap), use the provided starting
- * bitmap otherwise. Then call nft_pipapo_avx2_refill() to generate the next
- * working bitmap, @fill.
+ * (equivalent to using an all-ones starting biपंचांगap), use the provided starting
+ * biपंचांगap otherwise. Then call nft_pipapo_avx2_refill() to generate the next
+ * working biपंचांगap, @fill.
  *
- * This is used for 8-bit fields (i.e. protocol numbers).
+ * This is used क्रम 8-bit fields (i.e. protocol numbers).
  *
  * Out-of-order (and superscalar) execution is vital here, so it's critical to
- * avoid false data dependencies. CPU and compiler could (mostly) take care of
+ * aव्योम false data dependencies. CPU and compiler could (mostly) take care of
  * this on their own, but the operation ordering is explicitly given here with
  * a likely execution order in mind, to highlight possible stalls. That's why
- * a number of logically distinct operations (i.e. loading buckets, intersecting
- * buckets) are interleaved.
+ * a number of logically distinct operations (i.e. loading buckets, पूर्णांकersecting
+ * buckets) are पूर्णांकerleaved.
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_4b_2(unsigned long *map, unsigned long *fill,
-				       struct nft_pipapo_field *f, int offset,
-				       const u8 *pkt, bool first, bool last)
-{
-	int i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
-	u8 pg[2] = { pkt[0] >> 4, pkt[0] & 0xf };
-	unsigned long *lt = f->lt, bsize = f->bsize;
+अटल पूर्णांक nft_pipapo_avx2_lookup_4b_2(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+				       काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+				       स्थिर u8 *pkt, bool first, bool last)
+अणु
+	पूर्णांक i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
+	u8 pg[2] = अणु pkt[0] >> 4, pkt[0] & 0xf पूर्ण;
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
-	for (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) {
-		int i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
+	क्रम (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) अणु
+		पूर्णांक i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
 
-		if (first) {
+		अगर (first) अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(0, lt, 0, pg[0], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(1, lt, 1, pg[1], bsize);
 			NFT_PIPAPO_AVX2_AND(4, 0, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(0, lt, 0, pg[0], bsize);
 			NFT_PIPAPO_AVX2_LOAD(2, map[i_ul]);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(1, lt, 1, pg[1], bsize);
 			NFT_PIPAPO_AVX2_NOMATCH_GOTO(2, nothing);
 			NFT_PIPAPO_AVX2_AND(3, 0, 1);
 			NFT_PIPAPO_AVX2_AND(4, 2, 3);
-		}
+		पूर्ण
 
 		NFT_PIPAPO_AVX2_NOMATCH_GOTO(4, nomatch);
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 4);
 
 		b = nft_pipapo_avx2_refill(i_ul, &map[i_ul], fill, f->mt, last);
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (unlikely(ret == -1))
+		अगर (unlikely(ret == -1))
 			ret = b / XSAVE_YMM_SIZE;
 
-		continue;
+		जारी;
 nomatch:
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 15);
 nothing:
 		;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_4b_4() - AVX2-based lookup for 4 four-bit groups
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_4b_4() - AVX2-based lookup क्रम 4 four-bit groups
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
  * See nft_pipapo_avx2_lookup_4b_2().
  *
- * This is used for 16-bit fields (i.e. ports).
+ * This is used क्रम 16-bit fields (i.e. ports).
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_4b_4(unsigned long *map, unsigned long *fill,
-				       struct nft_pipapo_field *f, int offset,
-				       const u8 *pkt, bool first, bool last)
-{
-	int i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
-	u8 pg[4] = { pkt[0] >> 4, pkt[0] & 0xf, pkt[1] >> 4, pkt[1] & 0xf };
-	unsigned long *lt = f->lt, bsize = f->bsize;
+अटल पूर्णांक nft_pipapo_avx2_lookup_4b_4(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+				       काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+				       स्थिर u8 *pkt, bool first, bool last)
+अणु
+	पूर्णांक i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
+	u8 pg[4] = अणु pkt[0] >> 4, pkt[0] & 0xf, pkt[1] >> 4, pkt[1] & 0xf पूर्ण;
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
-	for (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) {
-		int i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
+	क्रम (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) अणु
+		पूर्णांक i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
 
-		if (first) {
+		अगर (first) अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(0, lt, 0, pg[0], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(1, lt, 1, pg[1], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(2, lt, 2, pg[2], bsize);
@@ -297,7 +298,7 @@ static int nft_pipapo_avx2_lookup_4b_4(unsigned long *map, unsigned long *fill,
 			NFT_PIPAPO_AVX2_AND(4, 0, 1);
 			NFT_PIPAPO_AVX2_AND(5, 2, 3);
 			NFT_PIPAPO_AVX2_AND(7, 4, 5);
-		} else {
+		पूर्ण अन्यथा अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(0, lt, 0, pg[0], bsize);
 
 			NFT_PIPAPO_AVX2_LOAD(1, map[i_ul]);
@@ -313,61 +314,61 @@ static int nft_pipapo_avx2_lookup_4b_4(unsigned long *map, unsigned long *fill,
 			NFT_PIPAPO_AVX2_AND(7, 4, 5);
 			/* Stall */
 			NFT_PIPAPO_AVX2_AND(7, 6, 7);
-		}
+		पूर्ण
 
 		/* Stall */
 		NFT_PIPAPO_AVX2_NOMATCH_GOTO(7, nomatch);
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 7);
 
 		b = nft_pipapo_avx2_refill(i_ul, &map[i_ul], fill, f->mt, last);
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (unlikely(ret == -1))
+		अगर (unlikely(ret == -1))
 			ret = b / XSAVE_YMM_SIZE;
 
-		continue;
+		जारी;
 nomatch:
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 15);
 nothing:
 		;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_4b_8() - AVX2-based lookup for 8 four-bit groups
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_4b_8() - AVX2-based lookup क्रम 8 four-bit groups
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
  * See nft_pipapo_avx2_lookup_4b_2().
  *
- * This is used for 32-bit fields (i.e. IPv4 addresses).
+ * This is used क्रम 32-bit fields (i.e. IPv4 addresses).
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_4b_8(unsigned long *map, unsigned long *fill,
-				       struct nft_pipapo_field *f, int offset,
-				       const u8 *pkt, bool first, bool last)
-{
-	u8 pg[8] = {  pkt[0] >> 4,  pkt[0] & 0xf,  pkt[1] >> 4,  pkt[1] & 0xf,
+अटल पूर्णांक nft_pipapo_avx2_lookup_4b_8(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+				       काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+				       स्थिर u8 *pkt, bool first, bool last)
+अणु
+	u8 pg[8] = अणु  pkt[0] >> 4,  pkt[0] & 0xf,  pkt[1] >> 4,  pkt[1] & 0xf,
 		      pkt[2] >> 4,  pkt[2] & 0xf,  pkt[3] >> 4,  pkt[3] & 0xf,
-		   };
-	int i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
-	unsigned long *lt = f->lt, bsize = f->bsize;
+		   पूर्ण;
+	पूर्णांक i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
-	for (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) {
-		int i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
+	क्रम (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) अणु
+		पूर्णांक i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
 
-		if (first) {
+		अगर (first) अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(0,  lt, 0, pg[0], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(1,  lt, 1, pg[1], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(2,  lt, 2, pg[2], bsize);
@@ -385,7 +386,7 @@ static int nft_pipapo_avx2_lookup_4b_8(unsigned long *map, unsigned long *fill,
 
 			/* Stall */
 			NFT_PIPAPO_AVX2_AND(1,  12, 13);
-		} else {
+		पूर्ण अन्यथा अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(0,  lt, 0, pg[0], bsize);
 			NFT_PIPAPO_AVX2_LOAD(1, map[i_ul]);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD4(2,  lt, 1, pg[1], bsize);
@@ -408,72 +409,72 @@ static int nft_pipapo_avx2_lookup_4b_8(unsigned long *map, unsigned long *fill,
 			/* Stall */
 			NFT_PIPAPO_AVX2_AND(1,  12, 13);
 			NFT_PIPAPO_AVX2_AND(1,   1, 14);
-		}
+		पूर्ण
 
 		NFT_PIPAPO_AVX2_NOMATCH_GOTO(1, nomatch);
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 1);
 
 		b = nft_pipapo_avx2_refill(i_ul, &map[i_ul], fill, f->mt, last);
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (unlikely(ret == -1))
+		अगर (unlikely(ret == -1))
 			ret = b / XSAVE_YMM_SIZE;
 
-		continue;
+		जारी;
 
 nomatch:
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 15);
 nothing:
 		;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_4b_12() - AVX2-based lookup for 12 four-bit groups
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_4b_12() - AVX2-based lookup क्रम 12 four-bit groups
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
  * See nft_pipapo_avx2_lookup_4b_2().
  *
- * This is used for 48-bit fields (i.e. MAC addresses/EUI-48).
+ * This is used क्रम 48-bit fields (i.e. MAC addresses/EUI-48).
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_4b_12(unsigned long *map, unsigned long *fill,
-				        struct nft_pipapo_field *f, int offset,
-				        const u8 *pkt, bool first, bool last)
-{
-	u8 pg[12] = {  pkt[0] >> 4,  pkt[0] & 0xf,  pkt[1] >> 4,  pkt[1] & 0xf,
+अटल पूर्णांक nft_pipapo_avx2_lookup_4b_12(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+				        काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+				        स्थिर u8 *pkt, bool first, bool last)
+अणु
+	u8 pg[12] = अणु  pkt[0] >> 4,  pkt[0] & 0xf,  pkt[1] >> 4,  pkt[1] & 0xf,
 		       pkt[2] >> 4,  pkt[2] & 0xf,  pkt[3] >> 4,  pkt[3] & 0xf,
 		       pkt[4] >> 4,  pkt[4] & 0xf,  pkt[5] >> 4,  pkt[5] & 0xf,
-		    };
-	int i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
-	unsigned long *lt = f->lt, bsize = f->bsize;
+		    पूर्ण;
+	पूर्णांक i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
-	for (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) {
-		int i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
+	क्रम (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) अणु
+		पूर्णांक i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
 
-		if (!first)
+		अगर (!first)
 			NFT_PIPAPO_AVX2_LOAD(0, map[i_ul]);
 
 		NFT_PIPAPO_AVX2_BUCKET_LOAD4(1,  lt,  0,  pg[0], bsize);
 		NFT_PIPAPO_AVX2_BUCKET_LOAD4(2,  lt,  1,  pg[1], bsize);
 		NFT_PIPAPO_AVX2_BUCKET_LOAD4(3,  lt,  2,  pg[2], bsize);
 
-		if (!first) {
+		अगर (!first) अणु
 			NFT_PIPAPO_AVX2_NOMATCH_GOTO(0, nothing);
 			NFT_PIPAPO_AVX2_AND(1, 1, 0);
-		}
+		पूर्ण
 
 		NFT_PIPAPO_AVX2_BUCKET_LOAD4(4,  lt,  3,  pg[3], bsize);
 		NFT_PIPAPO_AVX2_BUCKET_LOAD4(5,  lt,  4,  pg[4], bsize);
@@ -504,44 +505,44 @@ static int nft_pipapo_avx2_lookup_4b_12(unsigned long *map, unsigned long *fill,
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 8);
 
 		b = nft_pipapo_avx2_refill(i_ul, &map[i_ul], fill, f->mt, last);
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (unlikely(ret == -1))
+		अगर (unlikely(ret == -1))
 			ret = b / XSAVE_YMM_SIZE;
 
-		continue;
+		जारी;
 nomatch:
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 15);
 nothing:
 		;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_4b_32() - AVX2-based lookup for 32 four-bit groups
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_4b_32() - AVX2-based lookup क्रम 32 four-bit groups
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
  * See nft_pipapo_avx2_lookup_4b_2().
  *
- * This is used for 128-bit fields (i.e. IPv6 addresses).
+ * This is used क्रम 128-bit fields (i.e. IPv6 addresses).
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_4b_32(unsigned long *map, unsigned long *fill,
-					struct nft_pipapo_field *f, int offset,
-					const u8 *pkt, bool first, bool last)
-{
-	u8 pg[32] = {  pkt[0] >> 4,  pkt[0] & 0xf,  pkt[1] >> 4,  pkt[1] & 0xf,
+अटल पूर्णांक nft_pipapo_avx2_lookup_4b_32(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+					काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+					स्थिर u8 *pkt, bool first, bool last)
+अणु
+	u8 pg[32] = अणु  pkt[0] >> 4,  pkt[0] & 0xf,  pkt[1] >> 4,  pkt[1] & 0xf,
 		       pkt[2] >> 4,  pkt[2] & 0xf,  pkt[3] >> 4,  pkt[3] & 0xf,
 		       pkt[4] >> 4,  pkt[4] & 0xf,  pkt[5] >> 4,  pkt[5] & 0xf,
 		       pkt[6] >> 4,  pkt[6] & 0xf,  pkt[7] >> 4,  pkt[7] & 0xf,
@@ -549,25 +550,25 @@ static int nft_pipapo_avx2_lookup_4b_32(unsigned long *map, unsigned long *fill,
 		      pkt[10] >> 4, pkt[10] & 0xf, pkt[11] >> 4, pkt[11] & 0xf,
 		      pkt[12] >> 4, pkt[12] & 0xf, pkt[13] >> 4, pkt[13] & 0xf,
 		      pkt[14] >> 4, pkt[14] & 0xf, pkt[15] >> 4, pkt[15] & 0xf,
-		    };
-	int i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
-	unsigned long *lt = f->lt, bsize = f->bsize;
+		    पूर्ण;
+	पूर्णांक i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
-	for (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) {
-		int i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
+	क्रम (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) अणु
+		पूर्णांक i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
 
-		if (!first)
+		अगर (!first)
 			NFT_PIPAPO_AVX2_LOAD(0, map[i_ul]);
 
 		NFT_PIPAPO_AVX2_BUCKET_LOAD4(1,  lt,  0,  pg[0], bsize);
 		NFT_PIPAPO_AVX2_BUCKET_LOAD4(2,  lt,  1,  pg[1], bsize);
 		NFT_PIPAPO_AVX2_BUCKET_LOAD4(3,  lt,  2,  pg[2], bsize);
 		NFT_PIPAPO_AVX2_BUCKET_LOAD4(4,  lt,  3,  pg[3], bsize);
-		if (!first) {
+		अगर (!first) अणु
 			NFT_PIPAPO_AVX2_NOMATCH_GOTO(0, nothing);
 			NFT_PIPAPO_AVX2_AND(1, 1, 0);
-		}
+		पूर्ण
 
 		NFT_PIPAPO_AVX2_AND(5,   2,  3);
 		NFT_PIPAPO_AVX2_BUCKET_LOAD4(6,  lt,  4,  pg[4], bsize);
@@ -639,112 +640,112 @@ static int nft_pipapo_avx2_lookup_4b_32(unsigned long *map, unsigned long *fill,
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 5);
 
 		b = nft_pipapo_avx2_refill(i_ul, &map[i_ul], fill, f->mt, last);
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (unlikely(ret == -1))
+		अगर (unlikely(ret == -1))
 			ret = b / XSAVE_YMM_SIZE;
 
-		continue;
+		जारी;
 nomatch:
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 15);
 nothing:
 		;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_8b_1() - AVX2-based lookup for one eight-bit group
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_8b_1() - AVX2-based lookup क्रम one eight-bit group
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
  * See nft_pipapo_avx2_lookup_4b_2().
  *
- * This is used for 8-bit fields (i.e. protocol numbers).
+ * This is used क्रम 8-bit fields (i.e. protocol numbers).
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_8b_1(unsigned long *map, unsigned long *fill,
-				       struct nft_pipapo_field *f, int offset,
-				       const u8 *pkt, bool first, bool last)
-{
-	int i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
-	unsigned long *lt = f->lt, bsize = f->bsize;
+अटल पूर्णांक nft_pipapo_avx2_lookup_8b_1(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+				       काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+				       स्थिर u8 *pkt, bool first, bool last)
+अणु
+	पूर्णांक i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
-	for (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) {
-		int i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
+	क्रम (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) अणु
+		पूर्णांक i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
 
-		if (first) {
+		अगर (first) अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(2, lt, 0, pkt[0], bsize);
-		} else {
+		पूर्ण अन्यथा अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(0, lt, 0, pkt[0], bsize);
 			NFT_PIPAPO_AVX2_LOAD(1, map[i_ul]);
 			NFT_PIPAPO_AVX2_AND(2, 0, 1);
 			NFT_PIPAPO_AVX2_NOMATCH_GOTO(1, nothing);
-		}
+		पूर्ण
 
 		NFT_PIPAPO_AVX2_NOMATCH_GOTO(2, nomatch);
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 2);
 
 		b = nft_pipapo_avx2_refill(i_ul, &map[i_ul], fill, f->mt, last);
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (unlikely(ret == -1))
+		अगर (unlikely(ret == -1))
 			ret = b / XSAVE_YMM_SIZE;
 
-		continue;
+		जारी;
 nomatch:
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 15);
 nothing:
 		;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_8b_2() - AVX2-based lookup for 2 eight-bit groups
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_8b_2() - AVX2-based lookup क्रम 2 eight-bit groups
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
  * See nft_pipapo_avx2_lookup_4b_2().
  *
- * This is used for 16-bit fields (i.e. ports).
+ * This is used क्रम 16-bit fields (i.e. ports).
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_8b_2(unsigned long *map, unsigned long *fill,
-				       struct nft_pipapo_field *f, int offset,
-				       const u8 *pkt, bool first, bool last)
-{
-	int i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
-	unsigned long *lt = f->lt, bsize = f->bsize;
+अटल पूर्णांक nft_pipapo_avx2_lookup_8b_2(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+				       काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+				       स्थिर u8 *pkt, bool first, bool last)
+अणु
+	पूर्णांक i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
-	for (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) {
-		int i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
+	क्रम (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) अणु
+		पूर्णांक i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
 
-		if (first) {
+		अगर (first) अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(0, lt, 0, pkt[0], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(1, lt, 1, pkt[1], bsize);
 			NFT_PIPAPO_AVX2_AND(4, 0, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			NFT_PIPAPO_AVX2_LOAD(0, map[i_ul]);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(1, lt, 0, pkt[0], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(2, lt, 1, pkt[1], bsize);
@@ -753,58 +754,58 @@ static int nft_pipapo_avx2_lookup_8b_2(unsigned long *map, unsigned long *fill,
 			NFT_PIPAPO_AVX2_AND(3, 0, 1);
 			NFT_PIPAPO_AVX2_NOMATCH_GOTO(0, nothing);
 			NFT_PIPAPO_AVX2_AND(4, 3, 2);
-		}
+		पूर्ण
 
 		/* Stall */
 		NFT_PIPAPO_AVX2_NOMATCH_GOTO(4, nomatch);
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 4);
 
 		b = nft_pipapo_avx2_refill(i_ul, &map[i_ul], fill, f->mt, last);
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (unlikely(ret == -1))
+		अगर (unlikely(ret == -1))
 			ret = b / XSAVE_YMM_SIZE;
 
-		continue;
+		जारी;
 nomatch:
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 15);
 nothing:
 		;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_8b_4() - AVX2-based lookup for 4 eight-bit groups
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_8b_4() - AVX2-based lookup क्रम 4 eight-bit groups
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
  * See nft_pipapo_avx2_lookup_4b_2().
  *
- * This is used for 32-bit fields (i.e. IPv4 addresses).
+ * This is used क्रम 32-bit fields (i.e. IPv4 addresses).
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_8b_4(unsigned long *map, unsigned long *fill,
-				       struct nft_pipapo_field *f, int offset,
-				       const u8 *pkt, bool first, bool last)
-{
-	int i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
-	unsigned long *lt = f->lt, bsize = f->bsize;
+अटल पूर्णांक nft_pipapo_avx2_lookup_8b_4(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+				       काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+				       स्थिर u8 *pkt, bool first, bool last)
+अणु
+	पूर्णांक i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
-	for (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) {
-		int i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
+	क्रम (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) अणु
+		पूर्णांक i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
 
-		if (first) {
+		अगर (first) अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(0,  lt, 0, pkt[0], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(1,  lt, 1, pkt[1], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(2,  lt, 2, pkt[2], bsize);
@@ -814,7 +815,7 @@ static int nft_pipapo_avx2_lookup_8b_4(unsigned long *map, unsigned long *fill,
 			NFT_PIPAPO_AVX2_AND(4, 0, 1);
 			NFT_PIPAPO_AVX2_AND(5, 2, 3);
 			NFT_PIPAPO_AVX2_AND(0, 4, 5);
-		} else {
+		पूर्ण अन्यथा अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(0,  lt, 0, pkt[0], bsize);
 			NFT_PIPAPO_AVX2_LOAD(1, map[i_ul]);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(2,  lt, 1, pkt[1], bsize);
@@ -828,58 +829,58 @@ static int nft_pipapo_avx2_lookup_8b_4(unsigned long *map, unsigned long *fill,
 			/* Stall */
 			NFT_PIPAPO_AVX2_AND(7, 4, 5);
 			NFT_PIPAPO_AVX2_AND(0, 6, 7);
-		}
+		पूर्ण
 
 		NFT_PIPAPO_AVX2_NOMATCH_GOTO(0, nomatch);
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 0);
 
 		b = nft_pipapo_avx2_refill(i_ul, &map[i_ul], fill, f->mt, last);
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (unlikely(ret == -1))
+		अगर (unlikely(ret == -1))
 			ret = b / XSAVE_YMM_SIZE;
 
-		continue;
+		जारी;
 
 nomatch:
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 15);
 nothing:
 		;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_8b_6() - AVX2-based lookup for 6 eight-bit groups
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_8b_6() - AVX2-based lookup क्रम 6 eight-bit groups
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
  * See nft_pipapo_avx2_lookup_4b_2().
  *
- * This is used for 48-bit fields (i.e. MAC addresses/EUI-48).
+ * This is used क्रम 48-bit fields (i.e. MAC addresses/EUI-48).
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_8b_6(unsigned long *map, unsigned long *fill,
-				       struct nft_pipapo_field *f, int offset,
-				       const u8 *pkt, bool first, bool last)
-{
-	int i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
-	unsigned long *lt = f->lt, bsize = f->bsize;
+अटल पूर्णांक nft_pipapo_avx2_lookup_8b_6(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+				       काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+				       स्थिर u8 *pkt, bool first, bool last)
+अणु
+	पूर्णांक i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
-	for (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) {
-		int i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
+	क्रम (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) अणु
+		पूर्णांक i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
 
-		if (first) {
+		अगर (first) अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(0,  lt, 0, pkt[0], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(1,  lt, 1, pkt[1], bsize);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(2,  lt, 2, pkt[2], bsize);
@@ -894,7 +895,7 @@ static int nft_pipapo_avx2_lookup_8b_6(unsigned long *map, unsigned long *fill,
 			NFT_PIPAPO_AVX2_AND(0, 4, 5);
 			NFT_PIPAPO_AVX2_AND(1, 6, 7);
 			NFT_PIPAPO_AVX2_AND(4, 0, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(0,  lt, 0, pkt[0], bsize);
 			NFT_PIPAPO_AVX2_LOAD(1, map[i_ul]);
 			NFT_PIPAPO_AVX2_BUCKET_LOAD8(2,  lt, 1, pkt[1], bsize);
@@ -913,67 +914,67 @@ static int nft_pipapo_avx2_lookup_8b_6(unsigned long *map, unsigned long *fill,
 			/* Stall */
 			NFT_PIPAPO_AVX2_AND(3, 0, 1);
 			NFT_PIPAPO_AVX2_AND(4, 2, 3);
-		}
+		पूर्ण
 
 		NFT_PIPAPO_AVX2_NOMATCH_GOTO(4, nomatch);
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 4);
 
 		b = nft_pipapo_avx2_refill(i_ul, &map[i_ul], fill, f->mt, last);
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (unlikely(ret == -1))
+		अगर (unlikely(ret == -1))
 			ret = b / XSAVE_YMM_SIZE;
 
-		continue;
+		जारी;
 
 nomatch:
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 15);
 nothing:
 		;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_8b_16() - AVX2-based lookup for 16 eight-bit groups
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_8b_16() - AVX2-based lookup क्रम 16 eight-bit groups
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
  * See nft_pipapo_avx2_lookup_4b_2().
  *
- * This is used for 128-bit fields (i.e. IPv6 addresses).
+ * This is used क्रम 128-bit fields (i.e. IPv6 addresses).
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_8b_16(unsigned long *map, unsigned long *fill,
-					struct nft_pipapo_field *f, int offset,
-					const u8 *pkt, bool first, bool last)
-{
-	int i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
-	unsigned long *lt = f->lt, bsize = f->bsize;
+अटल पूर्णांक nft_pipapo_avx2_lookup_8b_16(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+					काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+					स्थिर u8 *pkt, bool first, bool last)
+अणु
+	पूर्णांक i, ret = -1, m256_size = f->bsize / NFT_PIPAPO_LONGS_PER_M256, b;
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
-	for (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) {
-		int i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
+	क्रम (i = offset; i < m256_size; i++, lt += NFT_PIPAPO_LONGS_PER_M256) अणु
+		पूर्णांक i_ul = i * NFT_PIPAPO_LONGS_PER_M256;
 
-		if (!first)
+		अगर (!first)
 			NFT_PIPAPO_AVX2_LOAD(0, map[i_ul]);
 
 		NFT_PIPAPO_AVX2_BUCKET_LOAD8(1, lt,  0,  pkt[0], bsize);
 		NFT_PIPAPO_AVX2_BUCKET_LOAD8(2, lt,  1,  pkt[1], bsize);
 		NFT_PIPAPO_AVX2_BUCKET_LOAD8(3, lt,  2,  pkt[2], bsize);
-		if (!first) {
+		अगर (!first) अणु
 			NFT_PIPAPO_AVX2_NOMATCH_GOTO(0, nothing);
 			NFT_PIPAPO_AVX2_AND(1, 1, 0);
-		}
+		पूर्ण
 		NFT_PIPAPO_AVX2_BUCKET_LOAD8(4, lt,  3,  pkt[3], bsize);
 
 		NFT_PIPAPO_AVX2_BUCKET_LOAD8(5, lt,  4,  pkt[4], bsize);
@@ -1011,128 +1012,128 @@ static int nft_pipapo_avx2_lookup_8b_16(unsigned long *map, unsigned long *fill,
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 6);
 
 		b = nft_pipapo_avx2_refill(i_ul, &map[i_ul], fill, f->mt, last);
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (unlikely(ret == -1))
+		अगर (unlikely(ret == -1))
 			ret = b / XSAVE_YMM_SIZE;
 
-		continue;
+		जारी;
 
 nomatch:
 		NFT_PIPAPO_AVX2_STORE(map[i_ul], 15);
 nothing:
 		;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup_slow() - Fallback function for uncommon field sizes
- * @map:	Previous match result, used as initial bitmap
- * @fill:	Destination bitmap to be filled with current match result
+ * nft_pipapo_avx2_lookup_slow() - Fallback function क्रम uncommon field sizes
+ * @map:	Previous match result, used as initial biपंचांगap
+ * @fill:	Destination biपंचांगap to be filled with current match result
  * @f:		Field, containing lookup and mapping tables
- * @offset:	Ignore buckets before the given index, no bits are filled there
- * @pkt:	Packet data, pointer to input nftables register
- * @first:	If this is the first field, don't source previous result
- * @last:	Last field: stop at the first match and return bit index
+ * @offset:	Ignore buckets beक्रमe the given index, no bits are filled there
+ * @pkt:	Packet data, poपूर्णांकer to input nftables रेजिस्टर
+ * @first:	If this is the first field, करोn't source previous result
+ * @last:	Last field: stop at the first match and वापस bit index
  *
- * This function should never be called, but is provided for the case the field
- * size doesn't match any of the known data types. Matching rate is
+ * This function should never be called, but is provided क्रम the हाल the field
+ * size करोesn't match any of the known data types. Matching rate is
  * substantially lower than AVX2 routines.
  *
- * Return: -1 on no match, rule index of match if @last, otherwise first long
+ * Return: -1 on no match, rule index of match अगर @last, otherwise first दीर्घ
  * word index to be checked next (i.e. first filled word).
  */
-static int nft_pipapo_avx2_lookup_slow(unsigned long *map, unsigned long *fill,
-					struct nft_pipapo_field *f, int offset,
-					const u8 *pkt, bool first, bool last)
-{
-	unsigned long *lt = f->lt, bsize = f->bsize;
-	int i, ret = -1, b;
+अटल पूर्णांक nft_pipapo_avx2_lookup_slow(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ *fill,
+					काष्ठा nft_pipapo_field *f, पूर्णांक offset,
+					स्थिर u8 *pkt, bool first, bool last)
+अणु
+	अचिन्हित दीर्घ *lt = f->lt, bsize = f->bsize;
+	पूर्णांक i, ret = -1, b;
 
 	lt += offset * NFT_PIPAPO_LONGS_PER_M256;
 
-	if (first)
-		memset(map, 0xff, bsize * sizeof(*map));
+	अगर (first)
+		स_रखो(map, 0xff, bsize * माप(*map));
 
-	for (i = offset; i < bsize; i++) {
-		if (f->bb == 8)
+	क्रम (i = offset; i < bsize; i++) अणु
+		अगर (f->bb == 8)
 			pipapo_and_field_buckets_8bit(f, map, pkt);
-		else
+		अन्यथा
 			pipapo_and_field_buckets_4bit(f, map, pkt);
 		NFT_PIPAPO_GROUP_BITS_ARE_8_OR_4;
 
 		b = pipapo_refill(map, bsize, f->rules, fill, f->mt, last);
 
-		if (last)
-			return b;
+		अगर (last)
+			वापस b;
 
-		if (ret == -1)
+		अगर (ret == -1)
 			ret = b / XSAVE_YMM_SIZE;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_estimate() - Set size, space and lookup complexity
+ * nft_pipapo_avx2_estimate() - Set size, space and lookup complनिकासy
  * @desc:	Set description, element count and field description used
  * @features:	Flags: NFT_SET_INTERVAL needs to be there
- * @est:	Storage for estimation data
+ * @est:	Storage क्रम estimation data
  *
- * Return: true if set is compatible and AVX2 available, false otherwise.
+ * Return: true अगर set is compatible and AVX2 available, false otherwise.
  */
-bool nft_pipapo_avx2_estimate(const struct nft_set_desc *desc, u32 features,
-			      struct nft_set_estimate *est)
-{
-	if (!(features & NFT_SET_INTERVAL) ||
+bool nft_pipapo_avx2_estimate(स्थिर काष्ठा nft_set_desc *desc, u32 features,
+			      काष्ठा nft_set_estimate *est)
+अणु
+	अगर (!(features & NFT_SET_INTERVAL) ||
 	    desc->field_count < NFT_PIPAPO_MIN_FIELDS)
-		return false;
+		वापस false;
 
-	if (!boot_cpu_has(X86_FEATURE_AVX2) || !boot_cpu_has(X86_FEATURE_AVX))
-		return false;
+	अगर (!boot_cpu_has(X86_FEATURE_AVX2) || !boot_cpu_has(X86_FEATURE_AVX))
+		वापस false;
 
 	est->size = pipapo_estimate_size(desc);
-	if (!est->size)
-		return false;
+	अगर (!est->size)
+		वापस false;
 
 	est->lookup = NFT_SET_CLASS_O_LOG_N;
 
 	est->space = NFT_SET_CLASS_O_N;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * nft_pipapo_avx2_lookup() - Lookup function for AVX2 implementation
+ * nft_pipapo_avx2_lookup() - Lookup function क्रम AVX2 implementation
  * @net:	Network namespace
  * @set:	nftables API set representation
  * @elem:	nftables API element representation containing key data
- * @ext:	nftables API extension pointer, filled with matching reference
+ * @ext:	nftables API extension poपूर्णांकer, filled with matching reference
  *
  * For more details, see DOC: Theory of Operation in nft_set_pipapo.c.
  *
- * This implementation exploits the repetitive characteristic of the algorithm
- * to provide a fast, vectorised version using the AVX2 SIMD instruction set.
+ * This implementation exploits the repetitive अक्षरacteristic of the algorithm
+ * to provide a fast, vectorised version using the AVX2 SIMD inकाष्ठाion set.
  *
  * Return: true on match, false otherwise.
  */
-bool nft_pipapo_avx2_lookup(const struct net *net, const struct nft_set *set,
-			    const u32 *key, const struct nft_set_ext **ext)
-{
-	struct nft_pipapo *priv = nft_set_priv(set);
-	unsigned long *res, *fill, *scratch;
+bool nft_pipapo_avx2_lookup(स्थिर काष्ठा net *net, स्थिर काष्ठा nft_set *set,
+			    स्थिर u32 *key, स्थिर काष्ठा nft_set_ext **ext)
+अणु
+	काष्ठा nft_pipapo *priv = nft_set_priv(set);
+	अचिन्हित दीर्घ *res, *fill, *scratch;
 	u8 genmask = nft_genmask_cur(net);
-	const u8 *rp = (const u8 *)key;
-	struct nft_pipapo_match *m;
-	struct nft_pipapo_field *f;
+	स्थिर u8 *rp = (स्थिर u8 *)key;
+	काष्ठा nft_pipapo_match *m;
+	काष्ठा nft_pipapo_field *f;
 	bool map_index;
-	int i, ret = 0;
+	पूर्णांक i, ret = 0;
 
-	if (unlikely(!irq_fpu_usable()))
-		return nft_pipapo_lookup(net, set, key, ext);
+	अगर (unlikely(!irq_fpu_usable()))
+		वापस nft_pipapo_lookup(net, set, key, ext);
 
 	m = rcu_dereference(priv->match);
 
@@ -1140,87 +1141,87 @@ bool nft_pipapo_avx2_lookup(const struct net *net, const struct nft_set *set,
 	kernel_fpu_begin();
 
 	scratch = *raw_cpu_ptr(m->scratch_aligned);
-	if (unlikely(!scratch)) {
+	अगर (unlikely(!scratch)) अणु
 		kernel_fpu_end();
-		return false;
-	}
-	map_index = raw_cpu_read(nft_pipapo_avx2_scratch_index);
+		वापस false;
+	पूर्ण
+	map_index = raw_cpu_पढ़ो(nft_pipapo_avx2_scratch_index);
 
 	res  = scratch + (map_index ? m->bsize_max : 0);
 	fill = scratch + (map_index ? 0 : m->bsize_max);
 
-	/* Starting map doesn't need to be set for this implementation */
+	/* Starting map करोesn't need to be set क्रम this implementation */
 
 	nft_pipapo_avx2_prepare();
 
 next_match:
-	nft_pipapo_for_each_field(f, i, m) {
+	nft_pipapo_क्रम_each_field(f, i, m) अणु
 		bool last = i == m->field_count - 1, first = !i;
 
-#define NFT_SET_PIPAPO_AVX2_LOOKUP(b, n)				\
+#घोषणा NFT_SET_PIPAPO_AVX2_LOOKUP(b, n)				\
 		(ret = nft_pipapo_avx2_lookup_##b##b_##n(res, fill, f,	\
 							 ret, rp,	\
 							 first, last))
 
-		if (likely(f->bb == 8)) {
-			if (f->groups == 1) {
+		अगर (likely(f->bb == 8)) अणु
+			अगर (f->groups == 1) अणु
 				NFT_SET_PIPAPO_AVX2_LOOKUP(8, 1);
-			} else if (f->groups == 2) {
+			पूर्ण अन्यथा अगर (f->groups == 2) अणु
 				NFT_SET_PIPAPO_AVX2_LOOKUP(8, 2);
-			} else if (f->groups == 4) {
+			पूर्ण अन्यथा अगर (f->groups == 4) अणु
 				NFT_SET_PIPAPO_AVX2_LOOKUP(8, 4);
-			} else if (f->groups == 6) {
+			पूर्ण अन्यथा अगर (f->groups == 6) अणु
 				NFT_SET_PIPAPO_AVX2_LOOKUP(8, 6);
-			} else if (f->groups == 16) {
+			पूर्ण अन्यथा अगर (f->groups == 16) अणु
 				NFT_SET_PIPAPO_AVX2_LOOKUP(8, 16);
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = nft_pipapo_avx2_lookup_slow(res, fill, f,
 								  ret, rp,
 								  first, last);
-			}
-		} else {
-			if (f->groups == 2) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (f->groups == 2) अणु
 				NFT_SET_PIPAPO_AVX2_LOOKUP(4, 2);
-			} else if (f->groups == 4) {
+			पूर्ण अन्यथा अगर (f->groups == 4) अणु
 				NFT_SET_PIPAPO_AVX2_LOOKUP(4, 4);
-			} else if (f->groups == 8) {
+			पूर्ण अन्यथा अगर (f->groups == 8) अणु
 				NFT_SET_PIPAPO_AVX2_LOOKUP(4, 8);
-			} else if (f->groups == 12) {
+			पूर्ण अन्यथा अगर (f->groups == 12) अणु
 				NFT_SET_PIPAPO_AVX2_LOOKUP(4, 12);
-			} else if (f->groups == 32) {
+			पूर्ण अन्यथा अगर (f->groups == 32) अणु
 				NFT_SET_PIPAPO_AVX2_LOOKUP(4, 32);
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = nft_pipapo_avx2_lookup_slow(res, fill, f,
 								  ret, rp,
 								  first, last);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		NFT_PIPAPO_GROUP_BITS_ARE_8_OR_4;
 
-#undef NFT_SET_PIPAPO_AVX2_LOOKUP
+#अघोषित NFT_SET_PIPAPO_AVX2_LOOKUP
 
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 
-		if (last) {
+		अगर (last) अणु
 			*ext = &f->mt[ret].e->ext;
-			if (unlikely(nft_set_elem_expired(*ext) ||
-				     !nft_set_elem_active(*ext, genmask))) {
+			अगर (unlikely(nft_set_elem_expired(*ext) ||
+				     !nft_set_elem_active(*ext, genmask))) अणु
 				ret = 0;
-				goto next_match;
-			}
+				जाओ next_match;
+			पूर्ण
 
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		swap(res, fill);
 		rp += NFT_PIPAPO_GROUPS_PADDED_SIZE(f);
-	}
+	पूर्ण
 
 out:
-	if (i % 2)
-		raw_cpu_write(nft_pipapo_avx2_scratch_index, !map_index);
+	अगर (i % 2)
+		raw_cpu_ग_लिखो(nft_pipapo_avx2_scratch_index, !map_index);
 	kernel_fpu_end();
 
-	return ret >= 0;
-}
+	वापस ret >= 0;
+पूर्ण

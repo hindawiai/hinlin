@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* lanai.c -- Copyright 1999-2003 by Mitchell Blank Jr <mitch@sfgoth.com>
  *
  * This driver supports ATM cards based on the Efficient "Lanai"
  * chipset such as the Speedstream 3010 and the ENI-25p.  The
- * Speedstream 3060 is currently not supported since we don't
+ * Speedstream 3060 is currently not supported since we करोn't
  * have the code to drive the on-board Alcatel DSL chipset (yet).
  *
- * Thanks to Efficient for supporting this project with hardware,
- * documentation, and by answering my questions.
+ * Thanks to Efficient क्रम supporting this project with hardware,
+ * करोcumentation, and by answering my questions.
  *
  * Things not working yet:
  *
- * o  We don't support the Speedstream 3060 yet - this card has
+ * o  We करोn't support the Speedstream 3060 yet - this card has
  *    an on-board DSL modem chip by Alcatel and the driver will
  *    need some extra code added to handle it
  *
  * o  Note that due to limitations of the Lanai only one VCC can be
  *    in CBR at once
  *
- * o We don't currently parse the EEPROM at all.  The code is all
- *   there as per the spec, but it doesn't actually work.  I think
- *   there may be some issues with the docs.  Anyway, do NOT
+ * o We करोn't currently parse the EEPROM at all.  The code is all
+ *   there as per the spec, but it करोesn't actually work.  I think
+ *   there may be some issues with the करोcs.  Anyway, करो NOT
  *   enable it yet - bugs in that code may actually damage your
- *   hardware!  Because of this you should hardware an ESI before
+ *   hardware!  Because of this you should hardware an ESI beक्रमe
  *   trying to use this in a LANE or MPOA environment.
  *
  * o  AAL0 is stubbed in but the actual rx/tx path isn't written yet:
  *	vcc_tx_aal0() needs to send or queue a SKB
  *	vcc_tx_unqueue_aal0() needs to attempt to send queued SKBs
- *	vcc_rx_aal0() needs to handle AAL0 interrupts
+ *	vcc_rx_aal0() needs to handle AAL0 पूर्णांकerrupts
  *    This isn't too much work - I just wanted to get other things
- *    done first.
+ *    करोne first.
  *
  * o  lanai_change_qos() isn't written yet
  *
  * o  There aren't any ioctl's yet -- I'd like to eventually support
  *    setting loopback and LED modes that way.
  *
- * o  If the segmentation engine or DMA gets shut down we should restart
+ * o  If the segmentation engine or DMA माला_लो shut करोwn we should restart
  *    card as per section 17.0i.  (see lanai_reset)
  *
- * o setsockopt(SO_CIRANGE) isn't done (although despite what the
+ * o setsockopt(SO_CIRANGE) isn't करोne (although despite what the
  *   API says it isn't exactly commonly implemented)
  */
 
@@ -50,350 +51,350 @@
  *   v.0.01 -- 30-NOV-1999 -- Initial release
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/atmdev.h>
-#include <asm/io.h>
-#include <asm/byteorder.h>
-#include <linux/spinlock.h>
-#include <linux/pci.h>
-#include <linux/dma-mapping.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/aपंचांगdev.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
 /* -------------------- TUNABLE PARAMATERS: */
 
 /*
  * Maximum number of VCIs per card.  Setting it lower could theoretically
- * save some memory, but since we allocate our vcc list with get_free_pages,
- * it's not really likely for most architectures
+ * save some memory, but since we allocate our vcc list with get_मुक्त_pages,
+ * it's not really likely क्रम most architectures
  */
-#define NUM_VCI			(1024)
+#घोषणा NUM_VCI			(1024)
 
 /*
  * Enable extra debugging
  */
-#define DEBUG
+#घोषणा DEBUG
 /*
- * Debug _all_ register operations with card, except the memory test.
- * Also disables the timed poll to prevent extra chattiness.  This
- * isn't for normal use
+ * Debug _all_ रेजिस्टर operations with card, except the memory test.
+ * Also disables the समयd poll to prevent extra chattiness.  This
+ * isn't क्रम normal use
  */
-#undef DEBUG_RW
+#अघोषित DEBUG_RW
 
 /*
- * The programming guide specifies a full test of the on-board SRAM
- * at initialization time.  Undefine to remove this
+ * The programming guide specअगरies a full test of the on-board SRAM
+ * at initialization समय.  Undefine to हटाओ this
  */
-#define FULL_MEMORY_TEST
+#घोषणा FULL_MEMORY_TEST
 
 /*
  * This is the number of (4 byte) service entries that we will
  * try to allocate at startup.  Note that we will end up with
  * one PAGE_SIZE's worth regardless of what this is set to
  */
-#define SERVICE_ENTRIES		(1024)
-/* TODO: make above a module load-time option */
+#घोषणा SERVICE_ENTRIES		(1024)
+/* TODO: make above a module load-समय option */
 
 /*
- * We normally read the onboard EEPROM in order to discover our MAC
- * address.  Undefine to _not_ do this
+ * We normally पढ़ो the onboard EEPROM in order to discover our MAC
+ * address.  Undefine to _not_ करो this
  */
-/* #define READ_EEPROM */ /* ***DONT ENABLE YET*** */
-/* TODO: make above a module load-time option (also) */
+/* #घोषणा READ_EEPROM */ /* ***DONT ENABLE YET*** */
+/* TODO: make above a module load-समय option (also) */
 
 /*
- * Depth of TX fifo (in 128 byte units; range 2-31)
- * Smaller numbers are better for network latency
- * Larger numbers are better for PCI latency
+ * Depth of TX fअगरo (in 128 byte units; range 2-31)
+ * Smaller numbers are better क्रम network latency
+ * Larger numbers are better क्रम PCI latency
  * I'm really sure where the best tradeoff is, but the BSD driver uses
  * 7 and it seems to work ok.
  */
-#define TX_FIFO_DEPTH		(7)
-/* TODO: make above a module load-time option */
+#घोषणा TX_FIFO_DEPTH		(7)
+/* TODO: make above a module load-समय option */
 
 /*
- * How often (in jiffies) we will try to unstick stuck connections -
+ * How often (in jअगरfies) we will try to unstick stuck connections -
  * shouldn't need to happen much
  */
-#define LANAI_POLL_PERIOD	(10*HZ)
-/* TODO: make above a module load-time option */
+#घोषणा LANAI_POLL_PERIOD	(10*HZ)
+/* TODO: make above a module load-समय option */
 
 /*
  * When allocating an AAL5 receiving buffer, try to make it at least
  * large enough to hold this many max_sdu sized PDUs
  */
-#define AAL5_RX_MULTIPLIER	(3)
-/* TODO: make above a module load-time option */
+#घोषणा AAL5_RX_MULTIPLIER	(3)
+/* TODO: make above a module load-समय option */
 
 /*
- * Same for transmitting buffer
+ * Same क्रम transmitting buffer
  */
-#define AAL5_TX_MULTIPLIER	(3)
-/* TODO: make above a module load-time option */
+#घोषणा AAL5_TX_MULTIPLIER	(3)
+/* TODO: make above a module load-समय option */
 
 /*
  * When allocating an AAL0 transmiting buffer, how many cells should fit.
  * Remember we'll end up with a PAGE_SIZE of them anyway, so this isn't
  * really critical
  */
-#define AAL0_TX_MULTIPLIER	(40)
-/* TODO: make above a module load-time option */
+#घोषणा AAL0_TX_MULTIPLIER	(40)
+/* TODO: make above a module load-समय option */
 
 /*
  * How large should we make the AAL0 receiving buffer.  Remember that this
  * is shared between all AAL0 VC's
  */
-#define AAL0_RX_BUFFER_SIZE	(PAGE_SIZE)
-/* TODO: make above a module load-time option */
+#घोषणा AAL0_RX_BUFFER_SIZE	(PAGE_SIZE)
+/* TODO: make above a module load-समय option */
 
 /*
  * Should we use Lanai's "powerdown" feature when no vcc's are bound?
  */
-/* #define USE_POWERDOWN */
-/* TODO: make above a module load-time option (also) */
+/* #घोषणा USE_POWERDOWN */
+/* TODO: make above a module load-समय option (also) */
 
 /* -------------------- DEBUGGING AIDS: */
 
-#define DEV_LABEL "lanai"
+#घोषणा DEV_LABEL "lanai"
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 
-#define DPRINTK(format, args...) \
-	printk(KERN_DEBUG DEV_LABEL ": " format, ##args)
-#define APRINTK(truth, format, args...) \
-	do { \
-		if (unlikely(!(truth))) \
-			printk(KERN_ERR DEV_LABEL ": " format, ##args); \
-	} while (0)
+#घोषणा DPRINTK(क्रमmat, args...) \
+	prपूर्णांकk(KERN_DEBUG DEV_LABEL ": " क्रमmat, ##args)
+#घोषणा APRINTK(truth, क्रमmat, args...) \
+	करो अणु \
+		अगर (unlikely(!(truth))) \
+			prपूर्णांकk(KERN_ERR DEV_LABEL ": " क्रमmat, ##args); \
+	पूर्ण जबतक (0)
 
-#else /* !DEBUG */
+#अन्यथा /* !DEBUG */
 
-#define DPRINTK(format, args...)
-#define APRINTK(truth, format, args...)
+#घोषणा DPRINTK(क्रमmat, args...)
+#घोषणा APRINTK(truth, क्रमmat, args...)
 
-#endif /* DEBUG */
+#पूर्ण_अगर /* DEBUG */
 
-#ifdef DEBUG_RW
-#define RWDEBUG(format, args...) \
-	printk(KERN_DEBUG DEV_LABEL ": " format, ##args)
-#else /* !DEBUG_RW */
-#define RWDEBUG(format, args...)
-#endif
+#अगर_घोषित DEBUG_RW
+#घोषणा RWDEBUG(क्रमmat, args...) \
+	prपूर्णांकk(KERN_DEBUG DEV_LABEL ": " क्रमmat, ##args)
+#अन्यथा /* !DEBUG_RW */
+#घोषणा RWDEBUG(क्रमmat, args...)
+#पूर्ण_अगर
 
 /* -------------------- DATA DEFINITIONS: */
 
-#define LANAI_MAPPING_SIZE	(0x40000)
-#define LANAI_EEPROM_SIZE	(128)
+#घोषणा LANAI_MAPPING_SIZE	(0x40000)
+#घोषणा LANAI_EEPROM_SIZE	(128)
 
-typedef int vci_t;
-typedef void __iomem *bus_addr_t;
+प्रकार पूर्णांक vci_t;
+प्रकार व्योम __iomem *bus_addr_t;
 
-/* DMA buffer in host memory for TX, RX, or service list. */
-struct lanai_buffer {
-	u32 *start;	/* From get_free_pages */
+/* DMA buffer in host memory क्रम TX, RX, or service list. */
+काष्ठा lanai_buffer अणु
+	u32 *start;	/* From get_मुक्त_pages */
 	u32 *end;	/* One past last byte */
-	u32 *ptr;	/* Pointer to current host location */
+	u32 *ptr;	/* Poपूर्णांकer to current host location */
 	dma_addr_t dmaaddr;
-};
+पूर्ण;
 
-struct lanai_vcc_stats {
-	unsigned rx_nomem;
-	union {
-		struct {
-			unsigned rx_badlen;
-			unsigned service_trash;
-			unsigned service_stream;
-			unsigned service_rxcrc;
-		} aal5;
-		struct {
-		} aal0;
-	} x;
-};
+काष्ठा lanai_vcc_stats अणु
+	अचिन्हित rx_nomem;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित rx_badlen;
+			अचिन्हित service_trash;
+			अचिन्हित service_stream;
+			अचिन्हित service_rxcrc;
+		पूर्ण aal5;
+		काष्ठा अणु
+		पूर्ण aal0;
+	पूर्ण x;
+पूर्ण;
 
-struct lanai_dev;			/* Forward declaration */
+काष्ठा lanai_dev;			/* Forward declaration */
 
 /*
- * This is the card-specific per-vcc data.  Note that unlike some other
+ * This is the card-specअगरic per-vcc data.  Note that unlike some other
  * drivers there is NOT a 1-to-1 correspondance between these and
- * atm_vcc's - each one of these represents an actual 2-way vcc, but
- * an atm_vcc can be 1-way and share with a 1-way vcc in the other
+ * aपंचांग_vcc's - each one of these represents an actual 2-way vcc, but
+ * an aपंचांग_vcc can be 1-way and share with a 1-way vcc in the other
  * direction.  To make it weirder, there can even be 0-way vccs
- * bound to us, waiting to do a change_qos
+ * bound to us, रुकोing to करो a change_qos
  */
-struct lanai_vcc {
-	bus_addr_t vbase;		/* Base of VCC's registers */
-	struct lanai_vcc_stats stats;
-	int nref;			/* # of atm_vcc's who reference us */
+काष्ठा lanai_vcc अणु
+	bus_addr_t vbase;		/* Base of VCC's रेजिस्टरs */
+	काष्ठा lanai_vcc_stats stats;
+	पूर्णांक nref;			/* # of aपंचांग_vcc's who reference us */
 	vci_t vci;
-	struct {
-		struct lanai_buffer buf;
-		struct atm_vcc *atmvcc;	/* atm_vcc who is receiver */
-	} rx;
-	struct {
-		struct lanai_buffer buf;
-		struct atm_vcc *atmvcc;	/* atm_vcc who is transmitter */
-		int endptr;		/* last endptr from service entry */
-		struct sk_buff_head backlog;
-		void (*unqueue)(struct lanai_dev *, struct lanai_vcc *, int);
-	} tx;
-};
+	काष्ठा अणु
+		काष्ठा lanai_buffer buf;
+		काष्ठा aपंचांग_vcc *aपंचांगvcc;	/* aपंचांग_vcc who is receiver */
+	पूर्ण rx;
+	काष्ठा अणु
+		काष्ठा lanai_buffer buf;
+		काष्ठा aपंचांग_vcc *aपंचांगvcc;	/* aपंचांग_vcc who is transmitter */
+		पूर्णांक endptr;		/* last endptr from service entry */
+		काष्ठा sk_buff_head backlog;
+		व्योम (*unqueue)(काष्ठा lanai_dev *, काष्ठा lanai_vcc *, पूर्णांक);
+	पूर्ण tx;
+पूर्ण;
 
-enum lanai_type {
+क्रमागत lanai_type अणु
 	lanai2	= PCI_DEVICE_ID_EF_ATM_LANAI2,
 	lanaihb	= PCI_DEVICE_ID_EF_ATM_LANAIHB
-};
+पूर्ण;
 
-struct lanai_dev_stats {
-	unsigned ovfl_trash;	/* # of cells dropped - buffer overflow */
-	unsigned vci_trash;	/* # of cells dropped - closed vci */
-	unsigned hec_err;	/* # of cells dropped - bad HEC */
-	unsigned atm_ovfl;	/* # of cells dropped - rx fifo overflow */
-	unsigned pcierr_parity_detect;
-	unsigned pcierr_serr_set;
-	unsigned pcierr_master_abort;
-	unsigned pcierr_m_target_abort;
-	unsigned pcierr_s_target_abort;
-	unsigned pcierr_master_parity;
-	unsigned service_notx;
-	unsigned service_norx;
-	unsigned service_rxnotaal5;
-	unsigned dma_reenable;
-	unsigned card_reset;
-};
+काष्ठा lanai_dev_stats अणु
+	अचिन्हित ovfl_trash;	/* # of cells dropped - buffer overflow */
+	अचिन्हित vci_trash;	/* # of cells dropped - बंदd vci */
+	अचिन्हित hec_err;	/* # of cells dropped - bad HEC */
+	अचिन्हित aपंचांग_ovfl;	/* # of cells dropped - rx fअगरo overflow */
+	अचिन्हित pcierr_parity_detect;
+	अचिन्हित pcierr_serr_set;
+	अचिन्हित pcierr_master_पात;
+	अचिन्हित pcierr_m_target_पात;
+	अचिन्हित pcierr_s_target_पात;
+	अचिन्हित pcierr_master_parity;
+	अचिन्हित service_notx;
+	अचिन्हित service_norx;
+	अचिन्हित service_rxnotaal5;
+	अचिन्हित dma_reenable;
+	अचिन्हित card_reset;
+पूर्ण;
 
-struct lanai_dev {
+काष्ठा lanai_dev अणु
 	bus_addr_t base;
-	struct lanai_dev_stats stats;
-	struct lanai_buffer service;
-	struct lanai_vcc **vccs;
-#ifdef USE_POWERDOWN
-	int nbound;			/* number of bound vccs */
-#endif
-	enum lanai_type type;
+	काष्ठा lanai_dev_stats stats;
+	काष्ठा lanai_buffer service;
+	काष्ठा lanai_vcc **vccs;
+#अगर_घोषित USE_POWERDOWN
+	पूर्णांक nbound;			/* number of bound vccs */
+#पूर्ण_अगर
+	क्रमागत lanai_type type;
 	vci_t num_vci;			/* Currently just NUM_VCI */
 	u8 eeprom[LANAI_EEPROM_SIZE];
 	u32 serialno, magicno;
-	struct pci_dev *pci;
+	काष्ठा pci_dev *pci;
 	DECLARE_BITMAP(backlog_vccs, NUM_VCI);   /* VCCs with tx backlog */
-	DECLARE_BITMAP(transmit_ready, NUM_VCI); /* VCCs with transmit space */
-	struct timer_list timer;
-	int naal0;
-	struct lanai_buffer aal0buf;	/* AAL0 RX buffers */
-	u32 conf1, conf2;		/* CONFIG[12] registers */
-	u32 status;			/* STATUS register */
+	DECLARE_BITMAP(transmit_पढ़ोy, NUM_VCI); /* VCCs with transmit space */
+	काष्ठा समयr_list समयr;
+	पूर्णांक naal0;
+	काष्ठा lanai_buffer aal0buf;	/* AAL0 RX buffers */
+	u32 conf1, conf2;		/* CONFIG[12] रेजिस्टरs */
+	u32 status;			/* STATUS रेजिस्टर */
 	spinlock_t endtxlock;
 	spinlock_t servicelock;
-	struct atm_vcc *cbrvcc;
-	int number;
-	int board_rev;
-/* TODO - look at race conditions with maintence of conf1/conf2 */
+	काष्ठा aपंचांग_vcc *cbrvcc;
+	पूर्णांक number;
+	पूर्णांक board_rev;
+/* TODO - look at race conditions with मुख्यtence of conf1/conf2 */
 /* TODO - transmit locking: should we use _irq not _irqsave? */
-/* TODO - organize above in some rational fashion (see <asm/cache.h>) */
-};
+/* TODO - organize above in some rational fashion (see <यंत्र/cache.h>) */
+पूर्ण;
 
 /*
- * Each device has two bitmaps for each VCC (baclog_vccs and transmit_ready)
- * This function iterates one of these, calling a given function for each
+ * Each device has two biपंचांगaps क्रम each VCC (baclog_vccs and transmit_पढ़ोy)
+ * This function iterates one of these, calling a given function क्रम each
  * vci with their bit set
  */
-static void vci_bitfield_iterate(struct lanai_dev *lanai,
-	const unsigned long *lp,
-	void (*func)(struct lanai_dev *,vci_t vci))
-{
+अटल व्योम vci_bitfield_iterate(काष्ठा lanai_dev *lanai,
+	स्थिर अचिन्हित दीर्घ *lp,
+	व्योम (*func)(काष्ठा lanai_dev *,vci_t vci))
+अणु
 	vci_t vci;
 
-	for_each_set_bit(vci, lp, NUM_VCI)
+	क्रम_each_set_bit(vci, lp, NUM_VCI)
 		func(lanai, vci);
-}
+पूर्ण
 
 /* -------------------- BUFFER  UTILITIES: */
 
 /*
  * Lanai needs DMA buffers aligned to 256 bytes of at least 1024 bytes -
- * usually any page allocation will do.  Just to be safe in case
+ * usually any page allocation will करो.  Just to be safe in हाल
  * PAGE_SIZE is insanely tiny, though...
  */
-#define LANAI_PAGE_SIZE   ((PAGE_SIZE >= 1024) ? PAGE_SIZE : 1024)
+#घोषणा LANAI_PAGE_SIZE   ((PAGE_SIZE >= 1024) ? PAGE_SIZE : 1024)
 
 /*
- * Allocate a buffer in host RAM for service list, RX, or TX
- * Returns buf->start==NULL if no memory
+ * Allocate a buffer in host RAM क्रम service list, RX, or TX
+ * Returns buf->start==शून्य अगर no memory
  * Note that the size will be rounded up 2^n bytes, and
- * if we can't allocate that we'll settle for something smaller
+ * अगर we can't allocate that we'll settle क्रम something smaller
  * until minbytes
  */
-static void lanai_buf_allocate(struct lanai_buffer *buf,
-	size_t bytes, size_t minbytes, struct pci_dev *pci)
-{
-	int size;
+अटल व्योम lanai_buf_allocate(काष्ठा lanai_buffer *buf,
+	माप_प्रकार bytes, माप_प्रकार minbytes, काष्ठा pci_dev *pci)
+अणु
+	पूर्णांक size;
 
-	if (bytes > (128 * 1024))	/* max lanai buffer size */
+	अगर (bytes > (128 * 1024))	/* max lanai buffer size */
 		bytes = 128 * 1024;
-	for (size = LANAI_PAGE_SIZE; size < bytes; size *= 2)
+	क्रम (size = LANAI_PAGE_SIZE; size < bytes; size *= 2)
 		;
-	if (minbytes < LANAI_PAGE_SIZE)
+	अगर (minbytes < LANAI_PAGE_SIZE)
 		minbytes = LANAI_PAGE_SIZE;
-	do {
+	करो अणु
 		/*
-		 * Technically we could use non-consistent mappings for
+		 * Technically we could use non-consistent mappings क्रम
 		 * everything, but the way the lanai uses DMA memory would
-		 * make that a terrific pain.  This is much simpler.
+		 * make that a terrअगरic pain.  This is much simpler.
 		 */
 		buf->start = dma_alloc_coherent(&pci->dev,
 						size, &buf->dmaaddr, GFP_KERNEL);
-		if (buf->start != NULL) {	/* Success */
+		अगर (buf->start != शून्य) अणु	/* Success */
 			/* Lanai requires 256-byte alignment of DMA bufs */
 			APRINTK((buf->dmaaddr & ~0xFFFFFF00) == 0,
 			    "bad dmaaddr: 0x%lx\n",
-			    (unsigned long) buf->dmaaddr);
+			    (अचिन्हित दीर्घ) buf->dmaaddr);
 			buf->ptr = buf->start;
 			buf->end = (u32 *)
-			    (&((unsigned char *) buf->start)[size]);
-			memset(buf->start, 0, size);
-			break;
-		}
+			    (&((अचिन्हित अक्षर *) buf->start)[size]);
+			स_रखो(buf->start, 0, size);
+			अवरोध;
+		पूर्ण
 		size /= 2;
-	} while (size >= minbytes);
-}
+	पूर्ण जबतक (size >= minbytes);
+पूर्ण
 
 /* size of buffer in bytes */
-static inline size_t lanai_buf_size(const struct lanai_buffer *buf)
-{
-	return ((unsigned long) buf->end) - ((unsigned long) buf->start);
-}
+अटल अंतरभूत माप_प्रकार lanai_buf_size(स्थिर काष्ठा lanai_buffer *buf)
+अणु
+	वापस ((अचिन्हित दीर्घ) buf->end) - ((अचिन्हित दीर्घ) buf->start);
+पूर्ण
 
-static void lanai_buf_deallocate(struct lanai_buffer *buf,
-	struct pci_dev *pci)
-{
-	if (buf->start != NULL) {
-		dma_free_coherent(&pci->dev, lanai_buf_size(buf),
+अटल व्योम lanai_buf_deallocate(काष्ठा lanai_buffer *buf,
+	काष्ठा pci_dev *pci)
+अणु
+	अगर (buf->start != शून्य) अणु
+		dma_मुक्त_coherent(&pci->dev, lanai_buf_size(buf),
 				  buf->start, buf->dmaaddr);
-		buf->start = buf->end = buf->ptr = NULL;
-	}
-}
+		buf->start = buf->end = buf->ptr = शून्य;
+	पूर्ण
+पूर्ण
 
 /* size of buffer as "card order" (0=1k .. 7=128k) */
-static int lanai_buf_size_cardorder(const struct lanai_buffer *buf)
-{
-	int order = get_order(lanai_buf_size(buf)) + (PAGE_SHIFT - 10);
+अटल पूर्णांक lanai_buf_size_carकरोrder(स्थिर काष्ठा lanai_buffer *buf)
+अणु
+	पूर्णांक order = get_order(lanai_buf_size(buf)) + (PAGE_SHIFT - 10);
 
-	/* This can only happen if PAGE_SIZE is gigantic, but just in case */
-	if (order > 7)
+	/* This can only happen अगर PAGE_SIZE is gigantic, but just in हाल */
+	अगर (order > 7)
 		order = 7;
-	return order;
-}
+	वापस order;
+पूर्ण
 
 /* -------------------- PORT I/O UTILITIES: */
 
 /* Registers (and their bit-fields) */
-enum lanai_register {
-	Reset_Reg		= 0x00,	/* Reset; read for chip type; bits: */
-#define   RESET_GET_BOARD_REV(x)    (((x)>> 0)&0x03)	/* Board revision */
-#define   RESET_GET_BOARD_ID(x)	    (((x)>> 2)&0x03)	/* Board ID */
-#define     BOARD_ID_LANAI256		(0)	/* 25.6M adapter card */
+क्रमागत lanai_रेजिस्टर अणु
+	Reset_Reg		= 0x00,	/* Reset; पढ़ो क्रम chip type; bits: */
+#घोषणा   RESET_GET_BOARD_REV(x)    (((x)>> 0)&0x03)	/* Board revision */
+#घोषणा   RESET_GET_BOARD_ID(x)	    (((x)>> 2)&0x03)	/* Board ID */
+#घोषणा     BOARD_ID_LANAI256		(0)	/* 25.6M adapter card */
 	Endian_Reg		= 0x04,	/* Endian setting */
 	IntStatus_Reg		= 0x08,	/* Interrupt status */
 	IntStatusMasked_Reg	= 0x0C,	/* Interrupt status (masked) */
@@ -404,766 +405,766 @@ enum lanai_register {
 	IntControlEna_Reg	= 0x20,	/* Interrupt control enable */
 	IntControlDis_Reg	= 0x24,	/* Interrupt control disable */
 	Status_Reg		= 0x28,	/* Status */
-#define   STATUS_PROMDATA	 (0x00000001)	/* PROM_DATA pin */
-#define   STATUS_WAITING	 (0x00000002)	/* Interrupt being delayed */
-#define	  STATUS_SOOL		 (0x00000004)	/* SOOL alarm */
-#define   STATUS_LOCD		 (0x00000008)	/* LOCD alarm */
-#define	  STATUS_LED		 (0x00000010)	/* LED (HAPPI) output */
-#define   STATUS_GPIN		 (0x00000020)	/* GPIN pin */
-#define   STATUS_BUTTBUSY	 (0x00000040)	/* Butt register is pending */
+#घोषणा   STATUS_PROMDATA	 (0x00000001)	/* PROM_DATA pin */
+#घोषणा   STATUS_WAITING	 (0x00000002)	/* Interrupt being delayed */
+#घोषणा	  STATUS_SOOL		 (0x00000004)	/* SOOL alarm */
+#घोषणा   STATUS_LOCD		 (0x00000008)	/* LOCD alarm */
+#घोषणा	  STATUS_LED		 (0x00000010)	/* LED (HAPPI) output */
+#घोषणा   STATUS_GPIN		 (0x00000020)	/* GPIN pin */
+#घोषणा   STATUS_BUTTBUSY	 (0x00000040)	/* Butt रेजिस्टर is pending */
 	Config1_Reg		= 0x2C,	/* Config word 1; bits: */
-#define   CONFIG1_PROMDATA	 (0x00000001)	/* PROM_DATA pin */
-#define   CONFIG1_PROMCLK	 (0x00000002)	/* PROM_CLK pin */
-#define   CONFIG1_SET_READMODE(x) ((x)*0x004)	/* PCI BM reads; values: */
-#define     READMODE_PLAIN	    (0)		/*   Plain memory read */
-#define     READMODE_LINE	    (2)		/*   Memory read line */
-#define     READMODE_MULTIPLE	    (3)		/*   Memory read multiple */
-#define   CONFIG1_DMA_ENABLE	 (0x00000010)	/* Turn on DMA */
-#define   CONFIG1_POWERDOWN	 (0x00000020)	/* Turn off clocks */
-#define   CONFIG1_SET_LOOPMODE(x) ((x)*0x080)	/* Clock&loop mode; values: */
-#define     LOOPMODE_NORMAL	    (0)		/*   Normal - no loop */
-#define     LOOPMODE_TIME	    (1)
-#define     LOOPMODE_DIAG	    (2)
-#define     LOOPMODE_LINE	    (3)
-#define   CONFIG1_MASK_LOOPMODE  (0x00000180)
-#define   CONFIG1_SET_LEDMODE(x) ((x)*0x0200)	/* Mode of LED; values: */
-#define     LEDMODE_NOT_SOOL	    (0)		/*   !SOOL */
-#define	    LEDMODE_OFF		    (1)		/*   0     */
-#define	    LEDMODE_ON		    (2)		/*   1     */
-#define	    LEDMODE_NOT_LOCD	    (3)		/*   !LOCD */
-#define	    LEDMORE_GPIN	    (4)		/*   GPIN  */
-#define     LEDMODE_NOT_GPIN	    (7)		/*   !GPIN */
-#define   CONFIG1_MASK_LEDMODE	 (0x00000E00)
-#define   CONFIG1_GPOUT1	 (0x00001000)	/* Toggle for reset */
-#define   CONFIG1_GPOUT2	 (0x00002000)	/* Loopback PHY */
-#define   CONFIG1_GPOUT3	 (0x00004000)	/* Loopback lanai */
+#घोषणा   CONFIG1_PROMDATA	 (0x00000001)	/* PROM_DATA pin */
+#घोषणा   CONFIG1_PROMCLK	 (0x00000002)	/* PROM_CLK pin */
+#घोषणा   CONFIG1_SET_READMODE(x) ((x)*0x004)	/* PCI BM पढ़ोs; values: */
+#घोषणा     READMODE_PLAIN	    (0)		/*   Plain memory पढ़ो */
+#घोषणा     READMODE_LINE	    (2)		/*   Memory पढ़ो line */
+#घोषणा     READMODE_MULTIPLE	    (3)		/*   Memory पढ़ो multiple */
+#घोषणा   CONFIG1_DMA_ENABLE	 (0x00000010)	/* Turn on DMA */
+#घोषणा   CONFIG1_POWERDOWN	 (0x00000020)	/* Turn off घड़ीs */
+#घोषणा   CONFIG1_SET_LOOPMODE(x) ((x)*0x080)	/* Clock&loop mode; values: */
+#घोषणा     LOOPMODE_NORMAL	    (0)		/*   Normal - no loop */
+#घोषणा     LOOPMODE_TIME	    (1)
+#घोषणा     LOOPMODE_DIAG	    (2)
+#घोषणा     LOOPMODE_LINE	    (3)
+#घोषणा   CONFIG1_MASK_LOOPMODE  (0x00000180)
+#घोषणा   CONFIG1_SET_LEDMODE(x) ((x)*0x0200)	/* Mode of LED; values: */
+#घोषणा     LEDMODE_NOT_SOOL	    (0)		/*   !SOOL */
+#घोषणा	    LEDMODE_OFF		    (1)		/*   0     */
+#घोषणा	    LEDMODE_ON		    (2)		/*   1     */
+#घोषणा	    LEDMODE_NOT_LOCD	    (3)		/*   !LOCD */
+#घोषणा	    LEDMORE_GPIN	    (4)		/*   GPIN  */
+#घोषणा     LEDMODE_NOT_GPIN	    (7)		/*   !GPIN */
+#घोषणा   CONFIG1_MASK_LEDMODE	 (0x00000E00)
+#घोषणा   CONFIG1_GPOUT1	 (0x00001000)	/* Toggle क्रम reset */
+#घोषणा   CONFIG1_GPOUT2	 (0x00002000)	/* Loopback PHY */
+#घोषणा   CONFIG1_GPOUT3	 (0x00004000)	/* Loopback lanai */
 	Config2_Reg		= 0x30,	/* Config word 2; bits: */
-#define   CONFIG2_HOWMANY	 (0x00000001)	/* >512 VCIs? */
-#define   CONFIG2_PTI7_MODE	 (0x00000002)	/* Make PTI=7 RM, not OAM */
-#define   CONFIG2_VPI_CHK_DIS	 (0x00000004)	/* Ignore RX VPI value */
-#define   CONFIG2_HEC_DROP	 (0x00000008)	/* Drop cells w/ HEC errors */
-#define   CONFIG2_VCI0_NORMAL	 (0x00000010)	/* Treat VCI=0 normally */
-#define   CONFIG2_CBR_ENABLE	 (0x00000020)	/* Deal with CBR traffic */
-#define   CONFIG2_TRASH_ALL	 (0x00000040)	/* Trashing incoming cells */
-#define   CONFIG2_TX_DISABLE	 (0x00000080)	/* Trashing outgoing cells */
-#define   CONFIG2_SET_TRASH	 (0x00000100)	/* Turn trashing on */
+#घोषणा   CONFIG2_HOWMANY	 (0x00000001)	/* >512 VCIs? */
+#घोषणा   CONFIG2_PTI7_MODE	 (0x00000002)	/* Make PTI=7 RM, not OAM */
+#घोषणा   CONFIG2_VPI_CHK_DIS	 (0x00000004)	/* Ignore RX VPI value */
+#घोषणा   CONFIG2_HEC_DROP	 (0x00000008)	/* Drop cells w/ HEC errors */
+#घोषणा   CONFIG2_VCI0_NORMAL	 (0x00000010)	/* Treat VCI=0 normally */
+#घोषणा   CONFIG2_CBR_ENABLE	 (0x00000020)	/* Deal with CBR traffic */
+#घोषणा   CONFIG2_TRASH_ALL	 (0x00000040)	/* Trashing incoming cells */
+#घोषणा   CONFIG2_TX_DISABLE	 (0x00000080)	/* Trashing outgoing cells */
+#घोषणा   CONFIG2_SET_TRASH	 (0x00000100)	/* Turn trashing on */
 	Statistics_Reg		= 0x34,	/* Statistics; bits: */
-#define   STATS_GET_FIFO_OVFL(x)    (((x)>> 0)&0xFF)	/* FIFO overflowed */
-#define   STATS_GET_HEC_ERR(x)      (((x)>> 8)&0xFF)	/* HEC was bad */
-#define   STATS_GET_BAD_VCI(x)      (((x)>>16)&0xFF)	/* VCI not open */
-#define   STATS_GET_BUF_OVFL(x)     (((x)>>24)&0xFF)	/* VCC buffer full */
+#घोषणा   STATS_GET_FIFO_OVFL(x)    (((x)>> 0)&0xFF)	/* FIFO overflowed */
+#घोषणा   STATS_GET_HEC_ERR(x)      (((x)>> 8)&0xFF)	/* HEC was bad */
+#घोषणा   STATS_GET_BAD_VCI(x)      (((x)>>16)&0xFF)	/* VCI not खोलो */
+#घोषणा   STATS_GET_BUF_OVFL(x)     (((x)>>24)&0xFF)	/* VCC buffer full */
 	ServiceStuff_Reg	= 0x38,	/* Service stuff; bits: */
-#define   SSTUFF_SET_SIZE(x) ((x)*0x20000000)	/* size of service buffer */
-#define   SSTUFF_SET_ADDR(x)	    ((x)>>8)	/* set address of buffer */
-	ServWrite_Reg		= 0x3C,	/* ServWrite Pointer */
-	ServRead_Reg		= 0x40,	/* ServRead Pointer */
+#घोषणा   SSTUFF_SET_SIZE(x) ((x)*0x20000000)	/* size of service buffer */
+#घोषणा   SSTUFF_SET_ADDR(x)	    ((x)>>8)	/* set address of buffer */
+	ServWrite_Reg		= 0x3C,	/* ServWrite Poपूर्णांकer */
+	ServRead_Reg		= 0x40,	/* ServRead Poपूर्णांकer */
 	TxDepth_Reg		= 0x44,	/* FIFO Transmit Depth */
-	Butt_Reg		= 0x48,	/* Butt register */
+	Butt_Reg		= 0x48,	/* Butt रेजिस्टर */
 	CBR_ICG_Reg		= 0x50,
 	CBR_PTR_Reg		= 0x54,
 	PingCount_Reg		= 0x58,	/* Ping count */
 	DMA_Addr_Reg		= 0x5C	/* DMA address */
-};
+पूर्ण;
 
-static inline bus_addr_t reg_addr(const struct lanai_dev *lanai,
-	enum lanai_register reg)
-{
-	return lanai->base + reg;
-}
+अटल अंतरभूत bus_addr_t reg_addr(स्थिर काष्ठा lanai_dev *lanai,
+	क्रमागत lanai_रेजिस्टर reg)
+अणु
+	वापस lanai->base + reg;
+पूर्ण
 
-static inline u32 reg_read(const struct lanai_dev *lanai,
-	enum lanai_register reg)
-{
+अटल अंतरभूत u32 reg_पढ़ो(स्थिर काष्ठा lanai_dev *lanai,
+	क्रमागत lanai_रेजिस्टर reg)
+अणु
 	u32 t;
-	t = readl(reg_addr(lanai, reg));
-	RWDEBUG("R [0x%08X] 0x%02X = 0x%08X\n", (unsigned int) lanai->base,
-	    (int) reg, t);
-	return t;
-}
+	t = पढ़ोl(reg_addr(lanai, reg));
+	RWDEBUG("R [0x%08X] 0x%02X = 0x%08X\n", (अचिन्हित पूर्णांक) lanai->base,
+	    (पूर्णांक) reg, t);
+	वापस t;
+पूर्ण
 
-static inline void reg_write(const struct lanai_dev *lanai, u32 val,
-	enum lanai_register reg)
-{
-	RWDEBUG("W [0x%08X] 0x%02X < 0x%08X\n", (unsigned int) lanai->base,
-	    (int) reg, val);
-	writel(val, reg_addr(lanai, reg));
-}
+अटल अंतरभूत व्योम reg_ग_लिखो(स्थिर काष्ठा lanai_dev *lanai, u32 val,
+	क्रमागत lanai_रेजिस्टर reg)
+अणु
+	RWDEBUG("W [0x%08X] 0x%02X < 0x%08X\n", (अचिन्हित पूर्णांक) lanai->base,
+	    (पूर्णांक) reg, val);
+	ग_लिखोl(val, reg_addr(lanai, reg));
+पूर्ण
 
-static inline void conf1_write(const struct lanai_dev *lanai)
-{
-	reg_write(lanai, lanai->conf1, Config1_Reg);
-}
+अटल अंतरभूत व्योम conf1_ग_लिखो(स्थिर काष्ठा lanai_dev *lanai)
+अणु
+	reg_ग_लिखो(lanai, lanai->conf1, Config1_Reg);
+पूर्ण
 
-static inline void conf2_write(const struct lanai_dev *lanai)
-{
-	reg_write(lanai, lanai->conf2, Config2_Reg);
-}
+अटल अंतरभूत व्योम conf2_ग_लिखो(स्थिर काष्ठा lanai_dev *lanai)
+अणु
+	reg_ग_लिखो(lanai, lanai->conf2, Config2_Reg);
+पूर्ण
 
-/* Same as conf2_write(), but defers I/O if we're powered down */
-static inline void conf2_write_if_powerup(const struct lanai_dev *lanai)
-{
-#ifdef USE_POWERDOWN
-	if (unlikely((lanai->conf1 & CONFIG1_POWERDOWN) != 0))
-		return;
-#endif /* USE_POWERDOWN */
-	conf2_write(lanai);
-}
+/* Same as conf2_ग_लिखो(), but defers I/O अगर we're घातered करोwn */
+अटल अंतरभूत व्योम conf2_ग_लिखो_अगर_घातerup(स्थिर काष्ठा lanai_dev *lanai)
+अणु
+#अगर_घोषित USE_POWERDOWN
+	अगर (unlikely((lanai->conf1 & CONFIG1_POWERDOWN) != 0))
+		वापस;
+#पूर्ण_अगर /* USE_POWERDOWN */
+	conf2_ग_लिखो(lanai);
+पूर्ण
 
-static inline void reset_board(const struct lanai_dev *lanai)
-{
+अटल अंतरभूत व्योम reset_board(स्थिर काष्ठा lanai_dev *lanai)
+अणु
 	DPRINTK("about to reset board\n");
-	reg_write(lanai, 0, Reset_Reg);
+	reg_ग_लिखो(lanai, 0, Reset_Reg);
 	/*
-	 * If we don't delay a little while here then we can end up
+	 * If we करोn't delay a little जबतक here then we can end up
 	 * leaving the card in a VERY weird state and lock up the
 	 * PCI bus.  This isn't documented anywhere but I've convinced
 	 * myself after a lot of painful experimentation
 	 */
 	udelay(5);
-}
+पूर्ण
 
 /* -------------------- CARD SRAM UTILITIES: */
 
-/* The SRAM is mapped into normal PCI memory space - the only catch is
+/* The SRAM is mapped पूर्णांकo normal PCI memory space - the only catch is
  * that it is only 16-bits wide but must be accessed as 32-bit.  The
- * 16 high bits will be zero.  We don't hide this, since they get
- * programmed mostly like discrete registers anyway
+ * 16 high bits will be zero.  We करोn't hide this, since they get
+ * programmed mostly like discrete रेजिस्टरs anyway
  */
-#define SRAM_START (0x20000)
-#define SRAM_BYTES (0x20000)	/* Again, half don't really exist */
+#घोषणा SRAM_START (0x20000)
+#घोषणा SRAM_BYTES (0x20000)	/* Again, half करोn't really exist */
 
-static inline bus_addr_t sram_addr(const struct lanai_dev *lanai, int offset)
-{
-	return lanai->base + SRAM_START + offset;
-}
+अटल अंतरभूत bus_addr_t sram_addr(स्थिर काष्ठा lanai_dev *lanai, पूर्णांक offset)
+अणु
+	वापस lanai->base + SRAM_START + offset;
+पूर्ण
 
-static inline u32 sram_read(const struct lanai_dev *lanai, int offset)
-{
-	return readl(sram_addr(lanai, offset));
-}
+अटल अंतरभूत u32 sram_पढ़ो(स्थिर काष्ठा lanai_dev *lanai, पूर्णांक offset)
+अणु
+	वापस पढ़ोl(sram_addr(lanai, offset));
+पूर्ण
 
-static inline void sram_write(const struct lanai_dev *lanai,
-	u32 val, int offset)
-{
-	writel(val, sram_addr(lanai, offset));
-}
+अटल अंतरभूत व्योम sram_ग_लिखो(स्थिर काष्ठा lanai_dev *lanai,
+	u32 val, पूर्णांक offset)
+अणु
+	ग_लिखोl(val, sram_addr(lanai, offset));
+पूर्ण
 
-static int sram_test_word(const struct lanai_dev *lanai, int offset,
+अटल पूर्णांक sram_test_word(स्थिर काष्ठा lanai_dev *lanai, पूर्णांक offset,
 			  u32 pattern)
-{
-	u32 readback;
-	sram_write(lanai, pattern, offset);
-	readback = sram_read(lanai, offset);
-	if (likely(readback == pattern))
-		return 0;
-	printk(KERN_ERR DEV_LABEL
+अणु
+	u32 पढ़ोback;
+	sram_ग_लिखो(lanai, pattern, offset);
+	पढ़ोback = sram_पढ़ो(lanai, offset);
+	अगर (likely(पढ़ोback == pattern))
+		वापस 0;
+	prपूर्णांकk(KERN_ERR DEV_LABEL
 	    "(itf %d): SRAM word at %d bad: wrote 0x%X, read 0x%X\n",
 	    lanai->number, offset,
-	    (unsigned int) pattern, (unsigned int) readback);
-	return -EIO;
-}
+	    (अचिन्हित पूर्णांक) pattern, (अचिन्हित पूर्णांक) पढ़ोback);
+	वापस -EIO;
+पूर्ण
 
-static int sram_test_pass(const struct lanai_dev *lanai, u32 pattern)
-{
-	int offset, result = 0;
-	for (offset = 0; offset < SRAM_BYTES && result == 0; offset += 4)
+अटल पूर्णांक sram_test_pass(स्थिर काष्ठा lanai_dev *lanai, u32 pattern)
+अणु
+	पूर्णांक offset, result = 0;
+	क्रम (offset = 0; offset < SRAM_BYTES && result == 0; offset += 4)
 		result = sram_test_word(lanai, offset, pattern);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int sram_test_and_clear(const struct lanai_dev *lanai)
-{
-#ifdef FULL_MEMORY_TEST
-	int result;
+अटल पूर्णांक sram_test_and_clear(स्थिर काष्ठा lanai_dev *lanai)
+अणु
+#अगर_घोषित FULL_MEMORY_TEST
+	पूर्णांक result;
 	DPRINTK("testing SRAM\n");
-	if ((result = sram_test_pass(lanai, 0x5555)) != 0)
-		return result;
-	if ((result = sram_test_pass(lanai, 0xAAAA)) != 0)
-		return result;
-#endif
+	अगर ((result = sram_test_pass(lanai, 0x5555)) != 0)
+		वापस result;
+	अगर ((result = sram_test_pass(lanai, 0xAAAA)) != 0)
+		वापस result;
+#पूर्ण_अगर
 	DPRINTK("clearing SRAM\n");
-	return sram_test_pass(lanai, 0x0000);
-}
+	वापस sram_test_pass(lanai, 0x0000);
+पूर्ण
 
 /* -------------------- CARD-BASED VCC TABLE UTILITIES: */
 
 /* vcc table */
-enum lanai_vcc_offset {
+क्रमागत lanai_vcc_offset अणु
 	vcc_rxaddr1		= 0x00,	/* Location1, plus bits: */
-#define   RXADDR1_SET_SIZE(x) ((x)*0x0000100)	/* size of RX buffer */
-#define   RXADDR1_SET_RMMODE(x) ((x)*0x00800)	/* RM cell action; values: */
-#define     RMMODE_TRASH	  (0)		/*   discard */
-#define     RMMODE_PRESERVE	  (1)		/*   input as AAL0 */
-#define     RMMODE_PIPE		  (2)		/*   pipe to coscheduler */
-#define     RMMODE_PIPEALL	  (3)		/*   pipe non-RM too */
-#define   RXADDR1_OAM_PRESERVE	 (0x00002000)	/* Input OAM cells as AAL0 */
-#define   RXADDR1_SET_MODE(x) ((x)*0x0004000)	/* Reassembly mode */
-#define     RXMODE_TRASH	  (0)		/*   discard */
-#define     RXMODE_AAL0		  (1)		/*   non-AAL5 mode */
-#define     RXMODE_AAL5		  (2)		/*   AAL5, intr. each PDU */
-#define     RXMODE_AAL5_STREAM	  (3)		/*   AAL5 w/o per-PDU intr */
+#घोषणा   RXADDR1_SET_SIZE(x) ((x)*0x0000100)	/* size of RX buffer */
+#घोषणा   RXADDR1_SET_RMMODE(x) ((x)*0x00800)	/* RM cell action; values: */
+#घोषणा     RMMODE_TRASH	  (0)		/*   discard */
+#घोषणा     RMMODE_PRESERVE	  (1)		/*   input as AAL0 */
+#घोषणा     RMMODE_PIPE		  (2)		/*   pipe to coscheduler */
+#घोषणा     RMMODE_PIPEALL	  (3)		/*   pipe non-RM too */
+#घोषणा   RXADDR1_OAM_PRESERVE	 (0x00002000)	/* Input OAM cells as AAL0 */
+#घोषणा   RXADDR1_SET_MODE(x) ((x)*0x0004000)	/* Reassembly mode */
+#घोषणा     RXMODE_TRASH	  (0)		/*   discard */
+#घोषणा     RXMODE_AAL0		  (1)		/*   non-AAL5 mode */
+#घोषणा     RXMODE_AAL5		  (2)		/*   AAL5, पूर्णांकr. each PDU */
+#घोषणा     RXMODE_AAL5_STREAM	  (3)		/*   AAL5 w/o per-PDU पूर्णांकr */
 	vcc_rxaddr2		= 0x04,	/* Location2 */
 	vcc_rxcrc1		= 0x08,	/* RX CRC claculation space */
 	vcc_rxcrc2		= 0x0C,
-	vcc_rxwriteptr		= 0x10, /* RX writeptr, plus bits: */
-#define   RXWRITEPTR_LASTEFCI	 (0x00002000)	/* Last PDU had EFCI bit */
-#define   RXWRITEPTR_DROPPING	 (0x00004000)	/* Had error, dropping */
-#define   RXWRITEPTR_TRASHING	 (0x00008000)	/* Trashing */
+	vcc_rxग_लिखोptr		= 0x10, /* RX ग_लिखोptr, plus bits: */
+#घोषणा   RXWRITEPTR_LASTEFCI	 (0x00002000)	/* Last PDU had EFCI bit */
+#घोषणा   RXWRITEPTR_DROPPING	 (0x00004000)	/* Had error, dropping */
+#घोषणा   RXWRITEPTR_TRASHING	 (0x00008000)	/* Trashing */
 	vcc_rxbufstart		= 0x14,	/* RX bufstart, plus bits: */
-#define   RXBUFSTART_CLP	 (0x00004000)
-#define   RXBUFSTART_CI		 (0x00008000)
-	vcc_rxreadptr		= 0x18,	/* RX readptr */
+#घोषणा   RXBUFSTART_CLP	 (0x00004000)
+#घोषणा   RXBUFSTART_CI		 (0x00008000)
+	vcc_rxपढ़ोptr		= 0x18,	/* RX पढ़ोptr */
 	vcc_txicg		= 0x1C, /* TX ICG */
 	vcc_txaddr1		= 0x20,	/* Location1, plus bits: */
-#define   TXADDR1_SET_SIZE(x) ((x)*0x0000100)	/* size of TX buffer */
-#define   TXADDR1_ABR		 (0x00008000)	/* use ABR (doesn't work) */
+#घोषणा   TXADDR1_SET_SIZE(x) ((x)*0x0000100)	/* size of TX buffer */
+#घोषणा   TXADDR1_ABR		 (0x00008000)	/* use ABR (करोesn't work) */
 	vcc_txaddr2		= 0x24,	/* Location2 */
 	vcc_txcrc1		= 0x28,	/* TX CRC claculation space */
 	vcc_txcrc2		= 0x2C,
-	vcc_txreadptr		= 0x30, /* TX Readptr, plus bits: */
-#define   TXREADPTR_GET_PTR(x) ((x)&0x01FFF)
-#define   TXREADPTR_MASK_DELTA	(0x0000E000)	/* ? */
+	vcc_txपढ़ोptr		= 0x30, /* TX Readptr, plus bits: */
+#घोषणा   TXREADPTR_GET_PTR(x) ((x)&0x01FFF)
+#घोषणा   TXREADPTR_MASK_DELTA	(0x0000E000)	/* ? */
 	vcc_txendptr		= 0x34, /* TX Endptr, plus bits: */
-#define   TXENDPTR_CLP		(0x00002000)
-#define   TXENDPTR_MASK_PDUMODE	(0x0000C000)	/* PDU mode; values: */
-#define     PDUMODE_AAL0	 (0*0x04000)
-#define     PDUMODE_AAL5	 (2*0x04000)
-#define     PDUMODE_AAL5STREAM	 (3*0x04000)
-	vcc_txwriteptr		= 0x38,	/* TX Writeptr */
-#define   TXWRITEPTR_GET_PTR(x) ((x)&0x1FFF)
+#घोषणा   TXENDPTR_CLP		(0x00002000)
+#घोषणा   TXENDPTR_MASK_PDUMODE	(0x0000C000)	/* PDU mode; values: */
+#घोषणा     PDUMODE_AAL0	 (0*0x04000)
+#घोषणा     PDUMODE_AAL5	 (2*0x04000)
+#घोषणा     PDUMODE_AAL5STREAM	 (3*0x04000)
+	vcc_txग_लिखोptr		= 0x38,	/* TX Writeptr */
+#घोषणा   TXWRITEPTR_GET_PTR(x) ((x)&0x1FFF)
 	vcc_txcbr_next		= 0x3C	/* # of next CBR VCI in ring */
-#define   TXCBR_NEXT_BOZO	(0x00008000)	/* "bozo bit" */
-};
+#घोषणा   TXCBR_NEXT_BOZO	(0x00008000)	/* "bozo bit" */
+पूर्ण;
 
-#define CARDVCC_SIZE	(0x40)
+#घोषणा CARDVCC_SIZE	(0x40)
 
-static inline bus_addr_t cardvcc_addr(const struct lanai_dev *lanai,
+अटल अंतरभूत bus_addr_t cardvcc_addr(स्थिर काष्ठा lanai_dev *lanai,
 	vci_t vci)
-{
-	return sram_addr(lanai, vci * CARDVCC_SIZE);
-}
+अणु
+	वापस sram_addr(lanai, vci * CARDVCC_SIZE);
+पूर्ण
 
-static inline u32 cardvcc_read(const struct lanai_vcc *lvcc,
-	enum lanai_vcc_offset offset)
-{
+अटल अंतरभूत u32 cardvcc_पढ़ो(स्थिर काष्ठा lanai_vcc *lvcc,
+	क्रमागत lanai_vcc_offset offset)
+अणु
 	u32 val;
-	APRINTK(lvcc->vbase != NULL, "cardvcc_read: unbound vcc!\n");
-	val= readl(lvcc->vbase + offset);
+	APRINTK(lvcc->vbase != शून्य, "cardvcc_read: unbound vcc!\n");
+	val= पढ़ोl(lvcc->vbase + offset);
 	RWDEBUG("VR vci=%04d 0x%02X = 0x%08X\n",
-	    lvcc->vci, (int) offset, val);
-	return val;
-}
+	    lvcc->vci, (पूर्णांक) offset, val);
+	वापस val;
+पूर्ण
 
-static inline void cardvcc_write(const struct lanai_vcc *lvcc,
-	u32 val, enum lanai_vcc_offset offset)
-{
-	APRINTK(lvcc->vbase != NULL, "cardvcc_write: unbound vcc!\n");
+अटल अंतरभूत व्योम cardvcc_ग_लिखो(स्थिर काष्ठा lanai_vcc *lvcc,
+	u32 val, क्रमागत lanai_vcc_offset offset)
+अणु
+	APRINTK(lvcc->vbase != शून्य, "cardvcc_write: unbound vcc!\n");
 	APRINTK((val & ~0xFFFF) == 0,
 	    "cardvcc_write: bad val 0x%X (vci=%d, addr=0x%02X)\n",
-	    (unsigned int) val, lvcc->vci, (unsigned int) offset);
+	    (अचिन्हित पूर्णांक) val, lvcc->vci, (अचिन्हित पूर्णांक) offset);
 	RWDEBUG("VW vci=%04d 0x%02X > 0x%08X\n",
-	    lvcc->vci, (unsigned int) offset, (unsigned int) val);
-	writel(val, lvcc->vbase + offset);
-}
+	    lvcc->vci, (अचिन्हित पूर्णांक) offset, (अचिन्हित पूर्णांक) val);
+	ग_लिखोl(val, lvcc->vbase + offset);
+पूर्ण
 
 /* -------------------- COMPUTE SIZE OF AN AAL5 PDU: */
 
 /* How many bytes will an AAL5 PDU take to transmit - remember that:
- *   o  we need to add 8 bytes for length, CPI, UU, and CRC
- *   o  we need to round up to 48 bytes for cells
+ *   o  we need to add 8 bytes क्रम length, CPI, UU, and CRC
+ *   o  we need to round up to 48 bytes क्रम cells
  */
-static inline int aal5_size(int size)
-{
-	int cells = (size + 8 + 47) / 48;
-	return cells * 48;
-}
+अटल अंतरभूत पूर्णांक aal5_size(पूर्णांक size)
+अणु
+	पूर्णांक cells = (size + 8 + 47) / 48;
+	वापस cells * 48;
+पूर्ण
 
 /* -------------------- FREE AN ATM SKB: */
 
-static inline void lanai_free_skb(struct atm_vcc *atmvcc, struct sk_buff *skb)
-{
-	if (atmvcc->pop != NULL)
-		atmvcc->pop(atmvcc, skb);
-	else
-		dev_kfree_skb_any(skb);
-}
+अटल अंतरभूत व्योम lanai_मुक्त_skb(काष्ठा aपंचांग_vcc *aपंचांगvcc, काष्ठा sk_buff *skb)
+अणु
+	अगर (aपंचांगvcc->pop != शून्य)
+		aपंचांगvcc->pop(aपंचांगvcc, skb);
+	अन्यथा
+		dev_kमुक्त_skb_any(skb);
+पूर्ण
 
 /* -------------------- TURN VCCS ON AND OFF: */
 
-static void host_vcc_start_rx(const struct lanai_vcc *lvcc)
-{
+अटल व्योम host_vcc_start_rx(स्थिर काष्ठा lanai_vcc *lvcc)
+अणु
 	u32 addr1;
-	if (lvcc->rx.atmvcc->qos.aal == ATM_AAL5) {
+	अगर (lvcc->rx.aपंचांगvcc->qos.aal == ATM_AAL5) अणु
 		dma_addr_t dmaaddr = lvcc->rx.buf.dmaaddr;
-		cardvcc_write(lvcc, 0xFFFF, vcc_rxcrc1);
-		cardvcc_write(lvcc, 0xFFFF, vcc_rxcrc2);
-		cardvcc_write(lvcc, 0, vcc_rxwriteptr);
-		cardvcc_write(lvcc, 0, vcc_rxbufstart);
-		cardvcc_write(lvcc, 0, vcc_rxreadptr);
-		cardvcc_write(lvcc, (dmaaddr >> 16) & 0xFFFF, vcc_rxaddr2);
+		cardvcc_ग_लिखो(lvcc, 0xFFFF, vcc_rxcrc1);
+		cardvcc_ग_लिखो(lvcc, 0xFFFF, vcc_rxcrc2);
+		cardvcc_ग_लिखो(lvcc, 0, vcc_rxग_लिखोptr);
+		cardvcc_ग_लिखो(lvcc, 0, vcc_rxbufstart);
+		cardvcc_ग_लिखो(lvcc, 0, vcc_rxपढ़ोptr);
+		cardvcc_ग_लिखो(lvcc, (dmaaddr >> 16) & 0xFFFF, vcc_rxaddr2);
 		addr1 = ((dmaaddr >> 8) & 0xFF) |
-		    RXADDR1_SET_SIZE(lanai_buf_size_cardorder(&lvcc->rx.buf))|
+		    RXADDR1_SET_SIZE(lanai_buf_size_carकरोrder(&lvcc->rx.buf))|
 		    RXADDR1_SET_RMMODE(RMMODE_TRASH) |	/* ??? */
 		 /* RXADDR1_OAM_PRESERVE |	--- no OAM support yet */
 		    RXADDR1_SET_MODE(RXMODE_AAL5);
-	} else
+	पूर्ण अन्यथा
 		addr1 = RXADDR1_SET_RMMODE(RMMODE_PRESERVE) | /* ??? */
 		    RXADDR1_OAM_PRESERVE |		      /* ??? */
 		    RXADDR1_SET_MODE(RXMODE_AAL0);
 	/* This one must be last! */
-	cardvcc_write(lvcc, addr1, vcc_rxaddr1);
-}
+	cardvcc_ग_लिखो(lvcc, addr1, vcc_rxaddr1);
+पूर्ण
 
-static void host_vcc_start_tx(const struct lanai_vcc *lvcc)
-{
+अटल व्योम host_vcc_start_tx(स्थिर काष्ठा lanai_vcc *lvcc)
+अणु
 	dma_addr_t dmaaddr = lvcc->tx.buf.dmaaddr;
-	cardvcc_write(lvcc, 0, vcc_txicg);
-	cardvcc_write(lvcc, 0xFFFF, vcc_txcrc1);
-	cardvcc_write(lvcc, 0xFFFF, vcc_txcrc2);
-	cardvcc_write(lvcc, 0, vcc_txreadptr);
-	cardvcc_write(lvcc, 0, vcc_txendptr);
-	cardvcc_write(lvcc, 0, vcc_txwriteptr);
-	cardvcc_write(lvcc,
-		(lvcc->tx.atmvcc->qos.txtp.traffic_class == ATM_CBR) ?
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txicg);
+	cardvcc_ग_लिखो(lvcc, 0xFFFF, vcc_txcrc1);
+	cardvcc_ग_लिखो(lvcc, 0xFFFF, vcc_txcrc2);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txपढ़ोptr);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txendptr);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txग_लिखोptr);
+	cardvcc_ग_लिखो(lvcc,
+		(lvcc->tx.aपंचांगvcc->qos.txtp.traffic_class == ATM_CBR) ?
 		TXCBR_NEXT_BOZO | lvcc->vci : 0, vcc_txcbr_next);
-	cardvcc_write(lvcc, (dmaaddr >> 16) & 0xFFFF, vcc_txaddr2);
-	cardvcc_write(lvcc,
+	cardvcc_ग_लिखो(lvcc, (dmaaddr >> 16) & 0xFFFF, vcc_txaddr2);
+	cardvcc_ग_लिखो(lvcc,
 	    ((dmaaddr >> 8) & 0xFF) |
-	    TXADDR1_SET_SIZE(lanai_buf_size_cardorder(&lvcc->tx.buf)),
+	    TXADDR1_SET_SIZE(lanai_buf_size_carकरोrder(&lvcc->tx.buf)),
 	    vcc_txaddr1);
-}
+पूर्ण
 
-/* Shutdown receiving on card */
-static void lanai_shutdown_rx_vci(const struct lanai_vcc *lvcc)
-{
-	if (lvcc->vbase == NULL)	/* We were never bound to a VCI */
-		return;
-	/* 15.1.1 - set to trashing, wait one cell time (15us) */
-	cardvcc_write(lvcc,
+/* Shutकरोwn receiving on card */
+अटल व्योम lanai_shutकरोwn_rx_vci(स्थिर काष्ठा lanai_vcc *lvcc)
+अणु
+	अगर (lvcc->vbase == शून्य)	/* We were never bound to a VCI */
+		वापस;
+	/* 15.1.1 - set to trashing, रुको one cell समय (15us) */
+	cardvcc_ग_लिखो(lvcc,
 	    RXADDR1_SET_RMMODE(RMMODE_TRASH) |
 	    RXADDR1_SET_MODE(RXMODE_TRASH), vcc_rxaddr1);
 	udelay(15);
 	/* 15.1.2 - clear rest of entries */
-	cardvcc_write(lvcc, 0, vcc_rxaddr2);
-	cardvcc_write(lvcc, 0, vcc_rxcrc1);
-	cardvcc_write(lvcc, 0, vcc_rxcrc2);
-	cardvcc_write(lvcc, 0, vcc_rxwriteptr);
-	cardvcc_write(lvcc, 0, vcc_rxbufstart);
-	cardvcc_write(lvcc, 0, vcc_rxreadptr);
-}
+	cardvcc_ग_लिखो(lvcc, 0, vcc_rxaddr2);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_rxcrc1);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_rxcrc2);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_rxग_लिखोptr);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_rxbufstart);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_rxपढ़ोptr);
+पूर्ण
 
-/* Shutdown transmitting on card.
- * Unfortunately the lanai needs us to wait until all the data
- * drains out of the buffer before we can dealloc it, so this
- * can take awhile -- up to 370ms for a full 128KB buffer
- * assuming everone else is quiet.  In theory the time is
- * boundless if there's a CBR VCC holding things up.
+/* Shutकरोwn transmitting on card.
+ * Unक्रमtunately the lanai needs us to रुको until all the data
+ * drains out of the buffer beक्रमe we can dealloc it, so this
+ * can take aजबतक -- up to 370ms क्रम a full 128KB buffer
+ * assuming everone अन्यथा is quiet.  In theory the समय is
+ * boundless अगर there's a CBR VCC holding things up.
  */
-static void lanai_shutdown_tx_vci(struct lanai_dev *lanai,
-	struct lanai_vcc *lvcc)
-{
-	struct sk_buff *skb;
-	unsigned long flags, timeout;
-	int read, write, lastread = -1;
+अटल व्योम lanai_shutकरोwn_tx_vci(काष्ठा lanai_dev *lanai,
+	काष्ठा lanai_vcc *lvcc)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags, समयout;
+	पूर्णांक पढ़ो, ग_लिखो, lastपढ़ो = -1;
 
-	if (lvcc->vbase == NULL)	/* We were never bound to a VCI */
-		return;
-	/* 15.2.1 - wait for queue to drain */
-	while ((skb = skb_dequeue(&lvcc->tx.backlog)) != NULL)
-		lanai_free_skb(lvcc->tx.atmvcc, skb);
-	read_lock_irqsave(&vcc_sklist_lock, flags);
+	अगर (lvcc->vbase == शून्य)	/* We were never bound to a VCI */
+		वापस;
+	/* 15.2.1 - रुको क्रम queue to drain */
+	जबतक ((skb = skb_dequeue(&lvcc->tx.backlog)) != शून्य)
+		lanai_मुक्त_skb(lvcc->tx.aपंचांगvcc, skb);
+	पढ़ो_lock_irqsave(&vcc_sklist_lock, flags);
 	__clear_bit(lvcc->vci, lanai->backlog_vccs);
-	read_unlock_irqrestore(&vcc_sklist_lock, flags);
+	पढ़ो_unlock_irqrestore(&vcc_sklist_lock, flags);
 	/*
-	 * We need to wait for the VCC to drain but don't wait forever.  We
+	 * We need to रुको क्रम the VCC to drain but करोn't रुको क्रमever.  We
 	 * give each 1K of buffer size 1/128th of a second to clear out.
-	 * TODO: maybe disable CBR if we're about to timeout?
+	 * TODO: maybe disable CBR अगर we're about to समयout?
 	 */
-	timeout = jiffies +
+	समयout = jअगरfies +
 	    (((lanai_buf_size(&lvcc->tx.buf) / 1024) * HZ) >> 7);
-	write = TXWRITEPTR_GET_PTR(cardvcc_read(lvcc, vcc_txwriteptr));
-	for (;;) {
-		read = TXREADPTR_GET_PTR(cardvcc_read(lvcc, vcc_txreadptr));
-		if (read == write &&	   /* Is TX buffer empty? */
-		    (lvcc->tx.atmvcc->qos.txtp.traffic_class != ATM_CBR ||
-		    (cardvcc_read(lvcc, vcc_txcbr_next) &
+	ग_लिखो = TXWRITEPTR_GET_PTR(cardvcc_पढ़ो(lvcc, vcc_txग_लिखोptr));
+	क्रम (;;) अणु
+		पढ़ो = TXREADPTR_GET_PTR(cardvcc_पढ़ो(lvcc, vcc_txपढ़ोptr));
+		अगर (पढ़ो == ग_लिखो &&	   /* Is TX buffer empty? */
+		    (lvcc->tx.aपंचांगvcc->qos.txtp.traffic_class != ATM_CBR ||
+		    (cardvcc_पढ़ो(lvcc, vcc_txcbr_next) &
 		    TXCBR_NEXT_BOZO) == 0))
-			break;
-		if (read != lastread) {	   /* Has there been any progress? */
-			lastread = read;
-			timeout += HZ / 10;
-		}
-		if (unlikely(time_after(jiffies, timeout))) {
-			printk(KERN_ERR DEV_LABEL "(itf %d): Timed out on "
+			अवरोध;
+		अगर (पढ़ो != lastपढ़ो) अणु	   /* Has there been any progress? */
+			lastपढ़ो = पढ़ो;
+			समयout += HZ / 10;
+		पूर्ण
+		अगर (unlikely(समय_after(jअगरfies, समयout))) अणु
+			prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): Timed out on "
 			    "backlog closing vci %d\n",
-			    lvcc->tx.atmvcc->dev->number, lvcc->vci);
-			DPRINTK("read, write = %d, %d\n", read, write);
-			break;
-		}
+			    lvcc->tx.aपंचांगvcc->dev->number, lvcc->vci);
+			DPRINTK("read, write = %d, %d\n", पढ़ो, ग_लिखो);
+			अवरोध;
+		पूर्ण
 		msleep(40);
-	}
-	/* 15.2.2 - clear out all tx registers */
-	cardvcc_write(lvcc, 0, vcc_txreadptr);
-	cardvcc_write(lvcc, 0, vcc_txwriteptr);
-	cardvcc_write(lvcc, 0, vcc_txendptr);
-	cardvcc_write(lvcc, 0, vcc_txcrc1);
-	cardvcc_write(lvcc, 0, vcc_txcrc2);
-	cardvcc_write(lvcc, 0, vcc_txaddr2);
-	cardvcc_write(lvcc, 0, vcc_txaddr1);
-}
+	पूर्ण
+	/* 15.2.2 - clear out all tx रेजिस्टरs */
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txपढ़ोptr);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txग_लिखोptr);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txendptr);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txcrc1);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txcrc2);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txaddr2);
+	cardvcc_ग_लिखो(lvcc, 0, vcc_txaddr1);
+पूर्ण
 
 /* -------------------- MANAGING AAL0 RX BUFFER: */
 
-static inline int aal0_buffer_allocate(struct lanai_dev *lanai)
-{
+अटल अंतरभूत पूर्णांक aal0_buffer_allocate(काष्ठा lanai_dev *lanai)
+अणु
 	DPRINTK("aal0_buffer_allocate: allocating AAL0 RX buffer\n");
 	lanai_buf_allocate(&lanai->aal0buf, AAL0_RX_BUFFER_SIZE, 80,
 			   lanai->pci);
-	return (lanai->aal0buf.start == NULL) ? -ENOMEM : 0;
-}
+	वापस (lanai->aal0buf.start == शून्य) ? -ENOMEM : 0;
+पूर्ण
 
-static inline void aal0_buffer_free(struct lanai_dev *lanai)
-{
+अटल अंतरभूत व्योम aal0_buffer_मुक्त(काष्ठा lanai_dev *lanai)
+अणु
 	DPRINTK("aal0_buffer_allocate: freeing AAL0 RX buffer\n");
 	lanai_buf_deallocate(&lanai->aal0buf, lanai->pci);
-}
+पूर्ण
 
 /* -------------------- EEPROM UTILITIES: */
 
 /* Offsets of data in the EEPROM */
-#define EEPROM_COPYRIGHT	(0)
-#define EEPROM_COPYRIGHT_LEN	(44)
-#define EEPROM_CHECKSUM		(62)
-#define EEPROM_CHECKSUM_REV	(63)
-#define EEPROM_MAC		(64)
-#define EEPROM_MAC_REV		(70)
-#define EEPROM_SERIAL		(112)
-#define EEPROM_SERIAL_REV	(116)
-#define EEPROM_MAGIC		(120)
-#define EEPROM_MAGIC_REV	(124)
+#घोषणा EEPROM_COPYRIGHT	(0)
+#घोषणा EEPROM_COPYRIGHT_LEN	(44)
+#घोषणा EEPROM_CHECKSUM		(62)
+#घोषणा EEPROM_CHECKSUM_REV	(63)
+#घोषणा EEPROM_MAC		(64)
+#घोषणा EEPROM_MAC_REV		(70)
+#घोषणा EEPROM_SERIAL		(112)
+#घोषणा EEPROM_SERIAL_REV	(116)
+#घोषणा EEPROM_MAGIC		(120)
+#घोषणा EEPROM_MAGIC_REV	(124)
 
-#define EEPROM_MAGIC_VALUE	(0x5AB478D2)
+#घोषणा EEPROM_MAGIC_VALUE	(0x5AB478D2)
 
-#ifndef READ_EEPROM
+#अगर_अघोषित READ_EEPROM
 
-/* Stub functions to use if EEPROM reading is disabled */
-static int eeprom_read(struct lanai_dev *lanai)
-{
-	printk(KERN_INFO DEV_LABEL "(itf %d): *NOT* reading EEPROM\n",
+/* Stub functions to use अगर EEPROM पढ़ोing is disabled */
+अटल पूर्णांक eeprom_पढ़ो(काष्ठा lanai_dev *lanai)
+अणु
+	prपूर्णांकk(KERN_INFO DEV_LABEL "(itf %d): *NOT* reading EEPROM\n",
 	    lanai->number);
-	memset(&lanai->eeprom[EEPROM_MAC], 0, 6);
-	return 0;
-}
+	स_रखो(&lanai->eeprom[EEPROM_MAC], 0, 6);
+	वापस 0;
+पूर्ण
 
-static int eeprom_validate(struct lanai_dev *lanai)
-{
+अटल पूर्णांक eeprom_validate(काष्ठा lanai_dev *lanai)
+अणु
 	lanai->serialno = 0;
 	lanai->magicno = EEPROM_MAGIC_VALUE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* READ_EEPROM */
+#अन्यथा /* READ_EEPROM */
 
-static int eeprom_read(struct lanai_dev *lanai)
-{
-	int i, address;
+अटल पूर्णांक eeprom_पढ़ो(काष्ठा lanai_dev *lanai)
+अणु
+	पूर्णांक i, address;
 	u8 data;
-	u32 tmp;
-#define set_config1(x)   do { lanai->conf1 = x; conf1_write(lanai); \
-			    } while (0)
-#define clock_h()	 set_config1(lanai->conf1 | CONFIG1_PROMCLK)
-#define clock_l()	 set_config1(lanai->conf1 &~ CONFIG1_PROMCLK)
-#define data_h()	 set_config1(lanai->conf1 | CONFIG1_PROMDATA)
-#define data_l()	 set_config1(lanai->conf1 &~ CONFIG1_PROMDATA)
-#define pre_read()	 do { data_h(); clock_h(); udelay(5); } while (0)
-#define read_pin()	 (reg_read(lanai, Status_Reg) & STATUS_PROMDATA)
-#define send_stop()	 do { data_l(); udelay(5); clock_h(); udelay(5); \
-			      data_h(); udelay(5); } while (0)
-	/* start with both clock and data high */
-	data_h(); clock_h(); udelay(5);
-	for (address = 0; address < LANAI_EEPROM_SIZE; address++) {
-		data = (address << 1) | 1;	/* Command=read + address */
+	u32 पंचांगp;
+#घोषणा set_config1(x)   करो अणु lanai->conf1 = x; conf1_ग_लिखो(lanai); \
+			    पूर्ण जबतक (0)
+#घोषणा घड़ी_h()	 set_config1(lanai->conf1 | CONFIG1_PROMCLK)
+#घोषणा घड़ी_l()	 set_config1(lanai->conf1 &~ CONFIG1_PROMCLK)
+#घोषणा data_h()	 set_config1(lanai->conf1 | CONFIG1_PROMDATA)
+#घोषणा data_l()	 set_config1(lanai->conf1 &~ CONFIG1_PROMDATA)
+#घोषणा pre_पढ़ो()	 करो अणु data_h(); घड़ी_h(); udelay(5); पूर्ण जबतक (0)
+#घोषणा पढ़ो_pin()	 (reg_पढ़ो(lanai, Status_Reg) & STATUS_PROMDATA)
+#घोषणा send_stop()	 करो अणु data_l(); udelay(5); घड़ी_h(); udelay(5); \
+			      data_h(); udelay(5); पूर्ण जबतक (0)
+	/* start with both घड़ी and data high */
+	data_h(); घड़ी_h(); udelay(5);
+	क्रम (address = 0; address < LANAI_EEPROM_SIZE; address++) अणु
+		data = (address << 1) | 1;	/* Command=पढ़ो + address */
 		/* send start bit */
 		data_l(); udelay(5);
-		clock_l(); udelay(5);
-		for (i = 128; i != 0; i >>= 1) {   /* write command out */
-			tmp = (lanai->conf1 & ~CONFIG1_PROMDATA) |
+		घड़ी_l(); udelay(5);
+		क्रम (i = 128; i != 0; i >>= 1) अणु   /* ग_लिखो command out */
+			पंचांगp = (lanai->conf1 & ~CONFIG1_PROMDATA) |
 			    ((data & i) ? CONFIG1_PROMDATA : 0);
-			if (lanai->conf1 != tmp) {
-				set_config1(tmp);
+			अगर (lanai->conf1 != पंचांगp) अणु
+				set_config1(पंचांगp);
 				udelay(5);	/* Let new data settle */
-			}
-			clock_h(); udelay(5); clock_l(); udelay(5);
-		}
-		/* look for ack */
-		data_h(); clock_h(); udelay(5);
-		if (read_pin() != 0)
-			goto error;	/* No ack seen */
-		clock_l(); udelay(5);
-		/* read back result */
-		for (data = 0, i = 7; i >= 0; i--) {
-			data_h(); clock_h(); udelay(5);
-			data = (data << 1) | !!read_pin();
-			clock_l(); udelay(5);
-		}
-		/* look again for ack */
-		data_h(); clock_h(); udelay(5);
-		if (read_pin() == 0)
-			goto error;	/* Spurious ack */
-		clock_l(); udelay(5);
+			पूर्ण
+			घड़ी_h(); udelay(5); घड़ी_l(); udelay(5);
+		पूर्ण
+		/* look क्रम ack */
+		data_h(); घड़ी_h(); udelay(5);
+		अगर (पढ़ो_pin() != 0)
+			जाओ error;	/* No ack seen */
+		घड़ी_l(); udelay(5);
+		/* पढ़ो back result */
+		क्रम (data = 0, i = 7; i >= 0; i--) अणु
+			data_h(); घड़ी_h(); udelay(5);
+			data = (data << 1) | !!पढ़ो_pin();
+			घड़ी_l(); udelay(5);
+		पूर्ण
+		/* look again क्रम ack */
+		data_h(); घड़ी_h(); udelay(5);
+		अगर (पढ़ो_pin() == 0)
+			जाओ error;	/* Spurious ack */
+		घड़ी_l(); udelay(5);
 		send_stop();
 		lanai->eeprom[address] = data;
 		DPRINTK("EEPROM 0x%04X %02X\n",
-		    (unsigned int) address, (unsigned int) data);
-	}
-	return 0;
+		    (अचिन्हित पूर्णांक) address, (अचिन्हित पूर्णांक) data);
+	पूर्ण
+	वापस 0;
     error:
-	clock_l(); udelay(5);		/* finish read */
+	घड़ी_l(); udelay(5);		/* finish पढ़ो */
 	send_stop();
-	printk(KERN_ERR DEV_LABEL "(itf %d): error reading EEPROM byte %d\n",
+	prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): error reading EEPROM byte %d\n",
 	    lanai->number, address);
-	return -EIO;
-#undef set_config1
-#undef clock_h
-#undef clock_l
-#undef data_h
-#undef data_l
-#undef pre_read
-#undef read_pin
-#undef send_stop
-}
+	वापस -EIO;
+#अघोषित set_config1
+#अघोषित घड़ी_h
+#अघोषित घड़ी_l
+#अघोषित data_h
+#अघोषित data_l
+#अघोषित pre_पढ़ो
+#अघोषित पढ़ो_pin
+#अघोषित send_stop
+पूर्ण
 
-/* read a big-endian 4-byte value out of eeprom */
-static inline u32 eeprom_be4(const struct lanai_dev *lanai, int address)
-{
-	return be32_to_cpup((const u32 *) &lanai->eeprom[address]);
-}
+/* पढ़ो a big-endian 4-byte value out of eeprom */
+अटल अंतरभूत u32 eeprom_be4(स्थिर काष्ठा lanai_dev *lanai, पूर्णांक address)
+अणु
+	वापस be32_to_cpup((स्थिर u32 *) &lanai->eeprom[address]);
+पूर्ण
 
 /* Checksum/validate EEPROM contents */
-static int eeprom_validate(struct lanai_dev *lanai)
-{
-	int i, s;
+अटल पूर्णांक eeprom_validate(काष्ठा lanai_dev *lanai)
+अणु
+	पूर्णांक i, s;
 	u32 v;
-	const u8 *e = lanai->eeprom;
-#ifdef DEBUG
-	/* First, see if we can get an ASCIIZ string out of the copyright */
-	for (i = EEPROM_COPYRIGHT;
+	स्थिर u8 *e = lanai->eeprom;
+#अगर_घोषित DEBUG
+	/* First, see अगर we can get an ASCIIZ string out of the copyright */
+	क्रम (i = EEPROM_COPYRIGHT;
 	    i < (EEPROM_COPYRIGHT + EEPROM_COPYRIGHT_LEN); i++)
-		if (e[i] < 0x20 || e[i] > 0x7E)
-			break;
-	if ( i != EEPROM_COPYRIGHT &&
+		अगर (e[i] < 0x20 || e[i] > 0x7E)
+			अवरोध;
+	अगर ( i != EEPROM_COPYRIGHT &&
 	    i != EEPROM_COPYRIGHT + EEPROM_COPYRIGHT_LEN && e[i] == '\0')
 		DPRINTK("eeprom: copyright = \"%s\"\n",
-		    (char *) &e[EEPROM_COPYRIGHT]);
-	else
+		    (अक्षर *) &e[EEPROM_COPYRIGHT]);
+	अन्यथा
 		DPRINTK("eeprom: copyright not found\n");
-#endif
+#पूर्ण_अगर
 	/* Validate checksum */
-	for (i = s = 0; i < EEPROM_CHECKSUM; i++)
+	क्रम (i = s = 0; i < EEPROM_CHECKSUM; i++)
 		s += e[i];
 	s &= 0xFF;
-	if (s != e[EEPROM_CHECKSUM]) {
-		printk(KERN_ERR DEV_LABEL "(itf %d): EEPROM checksum bad "
+	अगर (s != e[EEPROM_CHECKSUM]) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): EEPROM checksum bad "
 		    "(wanted 0x%02X, got 0x%02X)\n", lanai->number,
-		    (unsigned int) s, (unsigned int) e[EEPROM_CHECKSUM]);
-		return -EIO;
-	}
+		    (अचिन्हित पूर्णांक) s, (अचिन्हित पूर्णांक) e[EEPROM_CHECKSUM]);
+		वापस -EIO;
+	पूर्ण
 	s ^= 0xFF;
-	if (s != e[EEPROM_CHECKSUM_REV]) {
-		printk(KERN_ERR DEV_LABEL "(itf %d): EEPROM inverse checksum "
+	अगर (s != e[EEPROM_CHECKSUM_REV]) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): EEPROM inverse checksum "
 		    "bad (wanted 0x%02X, got 0x%02X)\n", lanai->number,
-		    (unsigned int) s, (unsigned int) e[EEPROM_CHECKSUM_REV]);
-		return -EIO;
-	}
-	/* Verify MAC address */
-	for (i = 0; i < 6; i++)
-		if ((e[EEPROM_MAC + i] ^ e[EEPROM_MAC_REV + i]) != 0xFF) {
-			printk(KERN_ERR DEV_LABEL
+		    (अचिन्हित पूर्णांक) s, (अचिन्हित पूर्णांक) e[EEPROM_CHECKSUM_REV]);
+		वापस -EIO;
+	पूर्ण
+	/* Verअगरy MAC address */
+	क्रम (i = 0; i < 6; i++)
+		अगर ((e[EEPROM_MAC + i] ^ e[EEPROM_MAC_REV + i]) != 0xFF) अणु
+			prपूर्णांकk(KERN_ERR DEV_LABEL
 			    "(itf %d) : EEPROM MAC addresses don't match "
 			    "(0x%02X, inverse 0x%02X)\n", lanai->number,
-			    (unsigned int) e[EEPROM_MAC + i],
-			    (unsigned int) e[EEPROM_MAC_REV + i]);
-			return -EIO;
-		}
+			    (अचिन्हित पूर्णांक) e[EEPROM_MAC + i],
+			    (अचिन्हित पूर्णांक) e[EEPROM_MAC_REV + i]);
+			वापस -EIO;
+		पूर्ण
 	DPRINTK("eeprom: MAC address = %pM\n", &e[EEPROM_MAC]);
-	/* Verify serial number */
+	/* Verअगरy serial number */
 	lanai->serialno = eeprom_be4(lanai, EEPROM_SERIAL);
 	v = eeprom_be4(lanai, EEPROM_SERIAL_REV);
-	if ((lanai->serialno ^ v) != 0xFFFFFFFF) {
-		printk(KERN_ERR DEV_LABEL "(itf %d): EEPROM serial numbers "
+	अगर ((lanai->serialno ^ v) != 0xFFFFFFFF) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): EEPROM serial numbers "
 		    "don't match (0x%08X, inverse 0x%08X)\n", lanai->number,
-		    (unsigned int) lanai->serialno, (unsigned int) v);
-		return -EIO;
-	}
-	DPRINTK("eeprom: Serial number = %d\n", (unsigned int) lanai->serialno);
-	/* Verify magic number */
+		    (अचिन्हित पूर्णांक) lanai->serialno, (अचिन्हित पूर्णांक) v);
+		वापस -EIO;
+	पूर्ण
+	DPRINTK("eeprom: Serial number = %d\n", (अचिन्हित पूर्णांक) lanai->serialno);
+	/* Verअगरy magic number */
 	lanai->magicno = eeprom_be4(lanai, EEPROM_MAGIC);
 	v = eeprom_be4(lanai, EEPROM_MAGIC_REV);
-	if ((lanai->magicno ^ v) != 0xFFFFFFFF) {
-		printk(KERN_ERR DEV_LABEL "(itf %d): EEPROM magic numbers "
+	अगर ((lanai->magicno ^ v) != 0xFFFFFFFF) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): EEPROM magic numbers "
 		    "don't match (0x%08X, inverse 0x%08X)\n", lanai->number,
 		    lanai->magicno, v);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	DPRINTK("eeprom: Magic number = 0x%08X\n", lanai->magicno);
-	if (lanai->magicno != EEPROM_MAGIC_VALUE)
-		printk(KERN_WARNING DEV_LABEL "(itf %d): warning - EEPROM "
+	अगर (lanai->magicno != EEPROM_MAGIC_VALUE)
+		prपूर्णांकk(KERN_WARNING DEV_LABEL "(itf %d): warning - EEPROM "
 		    "magic not what expected (got 0x%08X, not 0x%08X)\n",
-		    lanai->number, (unsigned int) lanai->magicno,
-		    (unsigned int) EEPROM_MAGIC_VALUE);
-	return 0;
-}
+		    lanai->number, (अचिन्हित पूर्णांक) lanai->magicno,
+		    (अचिन्हित पूर्णांक) EEPROM_MAGIC_VALUE);
+	वापस 0;
+पूर्ण
 
-#endif /* READ_EEPROM */
+#पूर्ण_अगर /* READ_EEPROM */
 
-static inline const u8 *eeprom_mac(const struct lanai_dev *lanai)
-{
-	return &lanai->eeprom[EEPROM_MAC];
-}
+अटल अंतरभूत स्थिर u8 *eeprom_mac(स्थिर काष्ठा lanai_dev *lanai)
+अणु
+	वापस &lanai->eeprom[EEPROM_MAC];
+पूर्ण
 
 /* -------------------- INTERRUPT HANDLING UTILITIES: */
 
 /* Interrupt types */
-#define INT_STATS	(0x00000002)	/* Statistics counter overflow */
-#define INT_SOOL	(0x00000004)	/* SOOL changed state */
-#define INT_LOCD	(0x00000008)	/* LOCD changed state */
-#define INT_LED		(0x00000010)	/* LED (HAPPI) changed state */
-#define INT_GPIN	(0x00000020)	/* GPIN changed state */
-#define INT_PING	(0x00000040)	/* PING_COUNT fulfilled */
-#define INT_WAKE	(0x00000080)	/* Lanai wants bus */
-#define INT_CBR0	(0x00000100)	/* CBR sched hit VCI 0 */
-#define INT_LOCK	(0x00000200)	/* Service list overflow */
-#define INT_MISMATCH	(0x00000400)	/* TX magic list mismatch */
-#define INT_AAL0_STR	(0x00000800)	/* Non-AAL5 buffer half filled */
-#define INT_AAL0	(0x00001000)	/* Non-AAL5 data available */
-#define INT_SERVICE	(0x00002000)	/* Service list entries available */
-#define INT_TABORTSENT	(0x00004000)	/* Target abort sent by lanai */
-#define INT_TABORTBM	(0x00008000)	/* Abort rcv'd as bus master */
-#define INT_TIMEOUTBM	(0x00010000)	/* No response to bus master */
-#define INT_PCIPARITY	(0x00020000)	/* Parity error on PCI */
+#घोषणा INT_STATS	(0x00000002)	/* Statistics counter overflow */
+#घोषणा INT_SOOL	(0x00000004)	/* SOOL changed state */
+#घोषणा INT_LOCD	(0x00000008)	/* LOCD changed state */
+#घोषणा INT_LED		(0x00000010)	/* LED (HAPPI) changed state */
+#घोषणा INT_GPIN	(0x00000020)	/* GPIN changed state */
+#घोषणा INT_PING	(0x00000040)	/* PING_COUNT fulfilled */
+#घोषणा INT_WAKE	(0x00000080)	/* Lanai wants bus */
+#घोषणा INT_CBR0	(0x00000100)	/* CBR sched hit VCI 0 */
+#घोषणा INT_LOCK	(0x00000200)	/* Service list overflow */
+#घोषणा INT_MISMATCH	(0x00000400)	/* TX magic list mismatch */
+#घोषणा INT_AAL0_STR	(0x00000800)	/* Non-AAL5 buffer half filled */
+#घोषणा INT_AAL0	(0x00001000)	/* Non-AAL5 data available */
+#घोषणा INT_SERVICE	(0x00002000)	/* Service list entries available */
+#घोषणा INT_TABORTSENT	(0x00004000)	/* Target पात sent by lanai */
+#घोषणा INT_TABORTBM	(0x00008000)	/* Abort rcv'd as bus master */
+#घोषणा INT_TIMEOUTBM	(0x00010000)	/* No response to bus master */
+#घोषणा INT_PCIPARITY	(0x00020000)	/* Parity error on PCI */
 
 /* Sets of the above */
-#define INT_ALL		(0x0003FFFE)	/* All interrupts */
-#define INT_STATUS	(0x0000003C)	/* Some status pin changed */
-#define INT_DMASHUT	(0x00038000)	/* DMA engine got shut down */
-#define INT_SEGSHUT	(0x00000700)	/* Segmentation got shut down */
+#घोषणा INT_ALL		(0x0003FFFE)	/* All पूर्णांकerrupts */
+#घोषणा INT_STATUS	(0x0000003C)	/* Some status pin changed */
+#घोषणा INT_DMASHUT	(0x00038000)	/* DMA engine got shut करोwn */
+#घोषणा INT_SEGSHUT	(0x00000700)	/* Segmentation got shut करोwn */
 
-static inline u32 intr_pending(const struct lanai_dev *lanai)
-{
-	return reg_read(lanai, IntStatusMasked_Reg);
-}
+अटल अंतरभूत u32 पूर्णांकr_pending(स्थिर काष्ठा lanai_dev *lanai)
+अणु
+	वापस reg_पढ़ो(lanai, IntStatusMasked_Reg);
+पूर्ण
 
-static inline void intr_enable(const struct lanai_dev *lanai, u32 i)
-{
-	reg_write(lanai, i, IntControlEna_Reg);
-}
+अटल अंतरभूत व्योम पूर्णांकr_enable(स्थिर काष्ठा lanai_dev *lanai, u32 i)
+अणु
+	reg_ग_लिखो(lanai, i, IntControlEna_Reg);
+पूर्ण
 
-static inline void intr_disable(const struct lanai_dev *lanai, u32 i)
-{
-	reg_write(lanai, i, IntControlDis_Reg);
-}
+अटल अंतरभूत व्योम पूर्णांकr_disable(स्थिर काष्ठा lanai_dev *lanai, u32 i)
+अणु
+	reg_ग_लिखो(lanai, i, IntControlDis_Reg);
+पूर्ण
 
 /* -------------------- CARD/PCI STATUS: */
 
-static void status_message(int itf, const char *name, int status)
-{
-	static const char *onoff[2] = { "off to on", "on to off" };
-	printk(KERN_INFO DEV_LABEL "(itf %d): %s changed from %s\n",
+अटल व्योम status_message(पूर्णांक itf, स्थिर अक्षर *name, पूर्णांक status)
+अणु
+	अटल स्थिर अक्षर *onoff[2] = अणु "off to on", "on to off" पूर्ण;
+	prपूर्णांकk(KERN_INFO DEV_LABEL "(itf %d): %s changed from %s\n",
 	    itf, name, onoff[!status]);
-}
+पूर्ण
 
-static void lanai_check_status(struct lanai_dev *lanai)
-{
-	u32 new = reg_read(lanai, Status_Reg);
+अटल व्योम lanai_check_status(काष्ठा lanai_dev *lanai)
+अणु
+	u32 new = reg_पढ़ो(lanai, Status_Reg);
 	u32 changes = new ^ lanai->status;
 	lanai->status = new;
-#define e(flag, name) \
-		if (changes & flag) \
+#घोषणा e(flag, name) \
+		अगर (changes & flag) \
 			status_message(lanai->number, name, new & flag)
 	e(STATUS_SOOL, "SOOL");
 	e(STATUS_LOCD, "LOCD");
 	e(STATUS_LED, "LED");
 	e(STATUS_GPIN, "GPIN");
-#undef e
-}
+#अघोषित e
+पूर्ण
 
-static void pcistatus_got(int itf, const char *name)
-{
-	printk(KERN_INFO DEV_LABEL "(itf %d): PCI got %s error\n", itf, name);
-}
+अटल व्योम pcistatus_got(पूर्णांक itf, स्थिर अक्षर *name)
+अणु
+	prपूर्णांकk(KERN_INFO DEV_LABEL "(itf %d): PCI got %s error\n", itf, name);
+पूर्ण
 
-static void pcistatus_check(struct lanai_dev *lanai, int clearonly)
-{
+अटल व्योम pcistatus_check(काष्ठा lanai_dev *lanai, पूर्णांक clearonly)
+अणु
 	u16 s;
-	int result;
-	result = pci_read_config_word(lanai->pci, PCI_STATUS, &s);
-	if (result != PCIBIOS_SUCCESSFUL) {
-		printk(KERN_ERR DEV_LABEL "(itf %d): can't read PCI_STATUS: "
+	पूर्णांक result;
+	result = pci_पढ़ो_config_word(lanai->pci, PCI_STATUS, &s);
+	अगर (result != PCIBIOS_SUCCESSFUL) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): can't read PCI_STATUS: "
 		    "%d\n", lanai->number, result);
-		return;
-	}
+		वापस;
+	पूर्ण
 	s &= PCI_STATUS_DETECTED_PARITY | PCI_STATUS_SIG_SYSTEM_ERROR |
 	    PCI_STATUS_REC_MASTER_ABORT | PCI_STATUS_REC_TARGET_ABORT |
 	    PCI_STATUS_SIG_TARGET_ABORT | PCI_STATUS_PARITY;
-	if (s == 0)
-		return;
-	result = pci_write_config_word(lanai->pci, PCI_STATUS, s);
-	if (result != PCIBIOS_SUCCESSFUL)
-		printk(KERN_ERR DEV_LABEL "(itf %d): can't write PCI_STATUS: "
+	अगर (s == 0)
+		वापस;
+	result = pci_ग_लिखो_config_word(lanai->pci, PCI_STATUS, s);
+	अगर (result != PCIBIOS_SUCCESSFUL)
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): can't write PCI_STATUS: "
 		    "%d\n", lanai->number, result);
-	if (clearonly)
-		return;
-#define e(flag, name, stat) \
-		if (s & flag) { \
+	अगर (clearonly)
+		वापस;
+#घोषणा e(flag, name, stat) \
+		अगर (s & flag) अणु \
 			pcistatus_got(lanai->number, name); \
 			++lanai->stats.pcierr_##stat; \
-		}
+		पूर्ण
 	e(PCI_STATUS_DETECTED_PARITY, "parity", parity_detect);
 	e(PCI_STATUS_SIG_SYSTEM_ERROR, "signalled system", serr_set);
-	e(PCI_STATUS_REC_MASTER_ABORT, "master", master_abort);
-	e(PCI_STATUS_REC_TARGET_ABORT, "master target", m_target_abort);
-	e(PCI_STATUS_SIG_TARGET_ABORT, "slave", s_target_abort);
+	e(PCI_STATUS_REC_MASTER_ABORT, "master", master_पात);
+	e(PCI_STATUS_REC_TARGET_ABORT, "master target", m_target_पात);
+	e(PCI_STATUS_SIG_TARGET_ABORT, "slave", s_target_पात);
 	e(PCI_STATUS_PARITY, "master parity", master_parity);
-#undef e
-}
+#अघोषित e
+पूर्ण
 
 /* -------------------- VCC TX BUFFER UTILITIES: */
 
 /* space left in tx buffer in bytes */
-static inline int vcc_tx_space(const struct lanai_vcc *lvcc, int endptr)
-{
-	int r;
+अटल अंतरभूत पूर्णांक vcc_tx_space(स्थिर काष्ठा lanai_vcc *lvcc, पूर्णांक endptr)
+अणु
+	पूर्णांक r;
 	r = endptr * 16;
-	r -= ((unsigned long) lvcc->tx.buf.ptr) -
-	    ((unsigned long) lvcc->tx.buf.start);
-	r -= 16;	/* Leave "bubble" - if start==end it looks empty */
-	if (r < 0)
+	r -= ((अचिन्हित दीर्घ) lvcc->tx.buf.ptr) -
+	    ((अचिन्हित दीर्घ) lvcc->tx.buf.start);
+	r -= 16;	/* Leave "bubble" - अगर start==end it looks empty */
+	अगर (r < 0)
 		r += lanai_buf_size(&lvcc->tx.buf);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-/* test if VCC is currently backlogged */
-static inline int vcc_is_backlogged(const struct lanai_vcc *lvcc)
-{
-	return !skb_queue_empty(&lvcc->tx.backlog);
-}
+/* test अगर VCC is currently backlogged */
+अटल अंतरभूत पूर्णांक vcc_is_backlogged(स्थिर काष्ठा lanai_vcc *lvcc)
+अणु
+	वापस !skb_queue_empty(&lvcc->tx.backlog);
+पूर्ण
 
 /* Bit fields in the segmentation buffer descriptor */
-#define DESCRIPTOR_MAGIC	(0xD0000000)
-#define DESCRIPTOR_AAL5		(0x00008000)
-#define DESCRIPTOR_AAL5_STREAM	(0x00004000)
-#define DESCRIPTOR_CLP		(0x00002000)
+#घोषणा DESCRIPTOR_MAGIC	(0xD0000000)
+#घोषणा DESCRIPTOR_AAL5		(0x00008000)
+#घोषणा DESCRIPTOR_AAL5_STREAM	(0x00004000)
+#घोषणा DESCRIPTOR_CLP		(0x00002000)
 
 /* Add 32-bit descriptor with its padding */
-static inline void vcc_tx_add_aal5_descriptor(struct lanai_vcc *lvcc,
-	u32 flags, int len)
-{
-	int pos;
-	APRINTK((((unsigned long) lvcc->tx.buf.ptr) & 15) == 0,
+अटल अंतरभूत व्योम vcc_tx_add_aal5_descriptor(काष्ठा lanai_vcc *lvcc,
+	u32 flags, पूर्णांक len)
+अणु
+	पूर्णांक pos;
+	APRINTK((((अचिन्हित दीर्घ) lvcc->tx.buf.ptr) & 15) == 0,
 	    "vcc_tx_add_aal5_descriptor: bad ptr=%p\n", lvcc->tx.buf.ptr);
-	lvcc->tx.buf.ptr += 4;	/* Hope the values REALLY don't matter */
-	pos = ((unsigned char *) lvcc->tx.buf.ptr) -
-	    (unsigned char *) lvcc->tx.buf.start;
+	lvcc->tx.buf.ptr += 4;	/* Hope the values REALLY करोn't matter */
+	pos = ((अचिन्हित अक्षर *) lvcc->tx.buf.ptr) -
+	    (अचिन्हित अक्षर *) lvcc->tx.buf.start;
 	APRINTK((pos & ~0x0001FFF0) == 0,
 	    "vcc_tx_add_aal5_descriptor: bad pos (%d) before, vci=%d, "
 	    "start,ptr,end=%p,%p,%p\n", pos, lvcc->vci,
@@ -1175,65 +1176,65 @@ static inline void vcc_tx_add_aal5_descriptor(struct lanai_vcc *lvcc,
 	    lvcc->tx.buf.start, lvcc->tx.buf.ptr, lvcc->tx.buf.end);
 	lvcc->tx.buf.ptr[-1] =
 	    cpu_to_le32(DESCRIPTOR_MAGIC | DESCRIPTOR_AAL5 |
-	    ((lvcc->tx.atmvcc->atm_options & ATM_ATMOPT_CLP) ?
+	    ((lvcc->tx.aपंचांगvcc->aपंचांग_options & ATM_ATMOPT_CLP) ?
 	    DESCRIPTOR_CLP : 0) | flags | pos >> 4);
-	if (lvcc->tx.buf.ptr >= lvcc->tx.buf.end)
+	अगर (lvcc->tx.buf.ptr >= lvcc->tx.buf.end)
 		lvcc->tx.buf.ptr = lvcc->tx.buf.start;
-}
+पूर्ण
 
-/* Add 32-bit AAL5 trailer and leave room for its CRC */
-static inline void vcc_tx_add_aal5_trailer(struct lanai_vcc *lvcc,
-	int len, int cpi, int uu)
-{
-	APRINTK((((unsigned long) lvcc->tx.buf.ptr) & 15) == 8,
+/* Add 32-bit AAL5 trailer and leave room क्रम its CRC */
+अटल अंतरभूत व्योम vcc_tx_add_aal5_trailer(काष्ठा lanai_vcc *lvcc,
+	पूर्णांक len, पूर्णांक cpi, पूर्णांक uu)
+अणु
+	APRINTK((((अचिन्हित दीर्घ) lvcc->tx.buf.ptr) & 15) == 8,
 	    "vcc_tx_add_aal5_trailer: bad ptr=%p\n", lvcc->tx.buf.ptr);
 	lvcc->tx.buf.ptr += 2;
 	lvcc->tx.buf.ptr[-2] = cpu_to_be32((uu << 24) | (cpi << 16) | len);
-	if (lvcc->tx.buf.ptr >= lvcc->tx.buf.end)
+	अगर (lvcc->tx.buf.ptr >= lvcc->tx.buf.end)
 		lvcc->tx.buf.ptr = lvcc->tx.buf.start;
-}
+पूर्ण
 
-static inline void vcc_tx_memcpy(struct lanai_vcc *lvcc,
-	const unsigned char *src, int n)
-{
-	unsigned char *e;
-	int m;
-	e = ((unsigned char *) lvcc->tx.buf.ptr) + n;
-	m = e - (unsigned char *) lvcc->tx.buf.end;
-	if (m < 0)
+अटल अंतरभूत व्योम vcc_tx_स_नकल(काष्ठा lanai_vcc *lvcc,
+	स्थिर अचिन्हित अक्षर *src, पूर्णांक n)
+अणु
+	अचिन्हित अक्षर *e;
+	पूर्णांक m;
+	e = ((अचिन्हित अक्षर *) lvcc->tx.buf.ptr) + n;
+	m = e - (अचिन्हित अक्षर *) lvcc->tx.buf.end;
+	अगर (m < 0)
 		m = 0;
-	memcpy(lvcc->tx.buf.ptr, src, n - m);
-	if (m != 0) {
-		memcpy(lvcc->tx.buf.start, src + n - m, m);
-		e = ((unsigned char *) lvcc->tx.buf.start) + m;
-	}
+	स_नकल(lvcc->tx.buf.ptr, src, n - m);
+	अगर (m != 0) अणु
+		स_नकल(lvcc->tx.buf.start, src + n - m, m);
+		e = ((अचिन्हित अक्षर *) lvcc->tx.buf.start) + m;
+	पूर्ण
 	lvcc->tx.buf.ptr = (u32 *) e;
-}
+पूर्ण
 
-static inline void vcc_tx_memzero(struct lanai_vcc *lvcc, int n)
-{
-	unsigned char *e;
-	int m;
-	if (n == 0)
-		return;
-	e = ((unsigned char *) lvcc->tx.buf.ptr) + n;
-	m = e - (unsigned char *) lvcc->tx.buf.end;
-	if (m < 0)
+अटल अंतरभूत व्योम vcc_tx_memzero(काष्ठा lanai_vcc *lvcc, पूर्णांक n)
+अणु
+	अचिन्हित अक्षर *e;
+	पूर्णांक m;
+	अगर (n == 0)
+		वापस;
+	e = ((अचिन्हित अक्षर *) lvcc->tx.buf.ptr) + n;
+	m = e - (अचिन्हित अक्षर *) lvcc->tx.buf.end;
+	अगर (m < 0)
 		m = 0;
-	memset(lvcc->tx.buf.ptr, 0, n - m);
-	if (m != 0) {
-		memset(lvcc->tx.buf.start, 0, m);
-		e = ((unsigned char *) lvcc->tx.buf.start) + m;
-	}
+	स_रखो(lvcc->tx.buf.ptr, 0, n - m);
+	अगर (m != 0) अणु
+		स_रखो(lvcc->tx.buf.start, 0, m);
+		e = ((अचिन्हित अक्षर *) lvcc->tx.buf.start) + m;
+	पूर्ण
 	lvcc->tx.buf.ptr = (u32 *) e;
-}
+पूर्ण
 
-/* Update "butt" register to specify new WritePtr */
-static inline void lanai_endtx(struct lanai_dev *lanai,
-	const struct lanai_vcc *lvcc)
-{
-	int i, ptr = ((unsigned char *) lvcc->tx.buf.ptr) -
-	    (unsigned char *) lvcc->tx.buf.start;
+/* Update "butt" रेजिस्टर to specअगरy new WritePtr */
+अटल अंतरभूत व्योम lanai_endtx(काष्ठा lanai_dev *lanai,
+	स्थिर काष्ठा lanai_vcc *lvcc)
+अणु
+	पूर्णांक i, ptr = ((अचिन्हित अक्षर *) lvcc->tx.buf.ptr) -
+	    (अचिन्हित अक्षर *) lvcc->tx.buf.start;
 	APRINTK((ptr & ~0x0001FFF0) == 0,
 	    "lanai_endtx: bad ptr (%d), vci=%d, start,ptr,end=%p,%p,%p\n",
 	    ptr, lvcc->vci, lvcc->tx.buf.start, lvcc->tx.buf.ptr,
@@ -1242,42 +1243,42 @@ static inline void lanai_endtx(struct lanai_dev *lanai,
 	/*
 	 * Since the "butt register" is a shared resounce on the card we
 	 * serialize all accesses to it through this spinlock.  This is
-	 * mostly just paranoia since the register is rarely "busy" anyway
-	 * but is needed for correctness.
+	 * mostly just paranoia since the रेजिस्टर is rarely "busy" anyway
+	 * but is needed क्रम correctness.
 	 */
 	spin_lock(&lanai->endtxlock);
 	/*
-	 * We need to check if the "butt busy" bit is set before
-	 * updating the butt register.  In theory this should
+	 * We need to check अगर the "butt busy" bit is set beक्रमe
+	 * updating the butt रेजिस्टर.  In theory this should
 	 * never happen because the ATM card is plenty fast at
-	 * updating the register.  Still, we should make sure
+	 * updating the रेजिस्टर.  Still, we should make sure
 	 */
-	for (i = 0; reg_read(lanai, Status_Reg) & STATUS_BUTTBUSY; i++) {
-		if (unlikely(i > 50)) {
-			printk(KERN_ERR DEV_LABEL "(itf %d): butt register "
+	क्रम (i = 0; reg_पढ़ो(lanai, Status_Reg) & STATUS_BUTTBUSY; i++) अणु
+		अगर (unlikely(i > 50)) अणु
+			prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): butt register "
 			    "always busy!\n", lanai->number);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		udelay(5);
-	}
+	पूर्ण
 	/*
-	 * Before we tall the card to start work we need to be sure 100% of
-	 * the info in the service buffer has been written before we tell
+	 * Beक्रमe we tall the card to start work we need to be sure 100% of
+	 * the info in the service buffer has been written beक्रमe we tell
 	 * the card about it
 	 */
 	wmb();
-	reg_write(lanai, (ptr << 12) | lvcc->vci, Butt_Reg);
+	reg_ग_लिखो(lanai, (ptr << 12) | lvcc->vci, Butt_Reg);
 	spin_unlock(&lanai->endtxlock);
-}
+पूर्ण
 
 /*
  * Add one AAL5 PDU to lvcc's transmit buffer.  Caller garauntees there's
  * space available.  "pdusize" is the number of bytes the PDU will take
  */
-static void lanai_send_one_aal5(struct lanai_dev *lanai,
-	struct lanai_vcc *lvcc, struct sk_buff *skb, int pdusize)
-{
-	int pad;
+अटल व्योम lanai_send_one_aal5(काष्ठा lanai_dev *lanai,
+	काष्ठा lanai_vcc *lvcc, काष्ठा sk_buff *skb, पूर्णांक pdusize)
+अणु
+	पूर्णांक pad;
 	APRINTK(pdusize == aal5_size(skb->len),
 	    "lanai_send_one_aal5: wrong size packet (%d != %d)\n",
 	    pdusize, aal5_size(skb->len));
@@ -1285,942 +1286,942 @@ static void lanai_send_one_aal5(struct lanai_dev *lanai,
 	pad = pdusize - skb->len - 8;
 	APRINTK(pad >= 0, "pad is negative (%d)\n", pad);
 	APRINTK(pad < 48, "pad is too big (%d)\n", pad);
-	vcc_tx_memcpy(lvcc, skb->data, skb->len);
+	vcc_tx_स_नकल(lvcc, skb->data, skb->len);
 	vcc_tx_memzero(lvcc, pad);
 	vcc_tx_add_aal5_trailer(lvcc, skb->len, 0, 0);
 	lanai_endtx(lanai, lvcc);
-	lanai_free_skb(lvcc->tx.atmvcc, skb);
-	atomic_inc(&lvcc->tx.atmvcc->stats->tx);
-}
+	lanai_मुक्त_skb(lvcc->tx.aपंचांगvcc, skb);
+	atomic_inc(&lvcc->tx.aपंचांगvcc->stats->tx);
+पूर्ण
 
-/* Try to fill the buffer - don't call unless there is backlog */
-static void vcc_tx_unqueue_aal5(struct lanai_dev *lanai,
-	struct lanai_vcc *lvcc, int endptr)
-{
-	int n;
-	struct sk_buff *skb;
-	int space = vcc_tx_space(lvcc, endptr);
+/* Try to fill the buffer - करोn't call unless there is backlog */
+अटल व्योम vcc_tx_unqueue_aal5(काष्ठा lanai_dev *lanai,
+	काष्ठा lanai_vcc *lvcc, पूर्णांक endptr)
+अणु
+	पूर्णांक n;
+	काष्ठा sk_buff *skb;
+	पूर्णांक space = vcc_tx_space(lvcc, endptr);
 	APRINTK(vcc_is_backlogged(lvcc),
 	    "vcc_tx_unqueue() called with empty backlog (vci=%d)\n",
 	    lvcc->vci);
-	while (space >= 64) {
+	जबतक (space >= 64) अणु
 		skb = skb_dequeue(&lvcc->tx.backlog);
-		if (skb == NULL)
-			goto no_backlog;
+		अगर (skb == शून्य)
+			जाओ no_backlog;
 		n = aal5_size(skb->len);
-		if (n + 16 > space) {
-			/* No room for this packet - put it back on queue */
+		अगर (n + 16 > space) अणु
+			/* No room क्रम this packet - put it back on queue */
 			skb_queue_head(&lvcc->tx.backlog, skb);
-			return;
-		}
+			वापस;
+		पूर्ण
 		lanai_send_one_aal5(lanai, lvcc, skb, n);
 		space -= n + 16;
-	}
-	if (!vcc_is_backlogged(lvcc)) {
+	पूर्ण
+	अगर (!vcc_is_backlogged(lvcc)) अणु
 	    no_backlog:
 		__clear_bit(lvcc->vci, lanai->backlog_vccs);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Given an skb that we want to transmit either send it now or queue */
-static void vcc_tx_aal5(struct lanai_dev *lanai, struct lanai_vcc *lvcc,
-	struct sk_buff *skb)
-{
-	int space, n;
-	if (vcc_is_backlogged(lvcc))		/* Already backlogged */
-		goto queue_it;
+अटल व्योम vcc_tx_aal5(काष्ठा lanai_dev *lanai, काष्ठा lanai_vcc *lvcc,
+	काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक space, n;
+	अगर (vcc_is_backlogged(lvcc))		/* Alपढ़ोy backlogged */
+		जाओ queue_it;
 	space = vcc_tx_space(lvcc,
-		    TXREADPTR_GET_PTR(cardvcc_read(lvcc, vcc_txreadptr)));
+		    TXREADPTR_GET_PTR(cardvcc_पढ़ो(lvcc, vcc_txपढ़ोptr)));
 	n = aal5_size(skb->len);
 	APRINTK(n + 16 >= 64, "vcc_tx_aal5: n too small (%d)\n", n);
-	if (space < n + 16) {			/* No space for this PDU */
+	अगर (space < n + 16) अणु			/* No space क्रम this PDU */
 		__set_bit(lvcc->vci, lanai->backlog_vccs);
 	    queue_it:
 		skb_queue_tail(&lvcc->tx.backlog, skb);
-		return;
-	}
+		वापस;
+	पूर्ण
 	lanai_send_one_aal5(lanai, lvcc, skb, n);
-}
+पूर्ण
 
-static void vcc_tx_unqueue_aal0(struct lanai_dev *lanai,
-	struct lanai_vcc *lvcc, int endptr)
-{
-	printk(KERN_INFO DEV_LABEL
+अटल व्योम vcc_tx_unqueue_aal0(काष्ठा lanai_dev *lanai,
+	काष्ठा lanai_vcc *lvcc, पूर्णांक endptr)
+अणु
+	prपूर्णांकk(KERN_INFO DEV_LABEL
 	    ": vcc_tx_unqueue_aal0: not implemented\n");
-}
+पूर्ण
 
-static void vcc_tx_aal0(struct lanai_dev *lanai, struct lanai_vcc *lvcc,
-	struct sk_buff *skb)
-{
-	printk(KERN_INFO DEV_LABEL ": vcc_tx_aal0: not implemented\n");
-	/* Remember to increment lvcc->tx.atmvcc->stats->tx */
-	lanai_free_skb(lvcc->tx.atmvcc, skb);
-}
+अटल व्योम vcc_tx_aal0(काष्ठा lanai_dev *lanai, काष्ठा lanai_vcc *lvcc,
+	काष्ठा sk_buff *skb)
+अणु
+	prपूर्णांकk(KERN_INFO DEV_LABEL ": vcc_tx_aal0: not implemented\n");
+	/* Remember to increment lvcc->tx.aपंचांगvcc->stats->tx */
+	lanai_मुक्त_skb(lvcc->tx.aपंचांगvcc, skb);
+पूर्ण
 
 /* -------------------- VCC RX BUFFER UTILITIES: */
 
-/* unlike the _tx_ cousins, this doesn't update ptr */
-static inline void vcc_rx_memcpy(unsigned char *dest,
-	const struct lanai_vcc *lvcc, int n)
-{
-	int m = ((const unsigned char *) lvcc->rx.buf.ptr) + n -
-	    ((const unsigned char *) (lvcc->rx.buf.end));
-	if (m < 0)
+/* unlike the _tx_ cousins, this करोesn't update ptr */
+अटल अंतरभूत व्योम vcc_rx_स_नकल(अचिन्हित अक्षर *dest,
+	स्थिर काष्ठा lanai_vcc *lvcc, पूर्णांक n)
+अणु
+	पूर्णांक m = ((स्थिर अचिन्हित अक्षर *) lvcc->rx.buf.ptr) + n -
+	    ((स्थिर अचिन्हित अक्षर *) (lvcc->rx.buf.end));
+	अगर (m < 0)
 		m = 0;
-	memcpy(dest, lvcc->rx.buf.ptr, n - m);
-	memcpy(dest + n - m, lvcc->rx.buf.start, m);
-	/* Make sure that these copies don't get reordered */
+	स_नकल(dest, lvcc->rx.buf.ptr, n - m);
+	स_नकल(dest + n - m, lvcc->rx.buf.start, m);
+	/* Make sure that these copies करोn't get reordered */
 	barrier();
-}
+पूर्ण
 
 /* Receive AAL5 data on a VCC with a particular endptr */
-static void vcc_rx_aal5(struct lanai_vcc *lvcc, int endptr)
-{
-	int size;
-	struct sk_buff *skb;
-	const u32 *x;
+अटल व्योम vcc_rx_aal5(काष्ठा lanai_vcc *lvcc, पूर्णांक endptr)
+अणु
+	पूर्णांक size;
+	काष्ठा sk_buff *skb;
+	स्थिर u32 *x;
 	u32 *end = &lvcc->rx.buf.start[endptr * 4];
-	int n = ((unsigned long) end) - ((unsigned long) lvcc->rx.buf.ptr);
-	if (n < 0)
+	पूर्णांक n = ((अचिन्हित दीर्घ) end) - ((अचिन्हित दीर्घ) lvcc->rx.buf.ptr);
+	अगर (n < 0)
 		n += lanai_buf_size(&lvcc->rx.buf);
 	APRINTK(n >= 0 && n < lanai_buf_size(&lvcc->rx.buf) && !(n & 15),
 	    "vcc_rx_aal5: n out of range (%d/%zu)\n",
 	    n, lanai_buf_size(&lvcc->rx.buf));
 	/* Recover the second-to-last word to get true pdu length */
-	if ((x = &end[-2]) < lvcc->rx.buf.start)
+	अगर ((x = &end[-2]) < lvcc->rx.buf.start)
 		x = &lvcc->rx.buf.end[-2];
 	/*
-	 * Before we actually read from the buffer, make sure the memory
+	 * Beक्रमe we actually पढ़ो from the buffer, make sure the memory
 	 * changes have arrived
 	 */
 	rmb();
 	size = be32_to_cpup(x) & 0xffff;
-	if (unlikely(n != aal5_size(size))) {
+	अगर (unlikely(n != aal5_size(size))) अणु
 		/* Make sure size matches padding */
-		printk(KERN_INFO DEV_LABEL "(itf %d): Got bad AAL5 length "
+		prपूर्णांकk(KERN_INFO DEV_LABEL "(itf %d): Got bad AAL5 length "
 		    "on vci=%d - size=%d n=%d\n",
-		    lvcc->rx.atmvcc->dev->number, lvcc->vci, size, n);
+		    lvcc->rx.aपंचांगvcc->dev->number, lvcc->vci, size, n);
 		lvcc->stats.x.aal5.rx_badlen++;
-		goto out;
-	}
-	skb = atm_alloc_charge(lvcc->rx.atmvcc, size, GFP_ATOMIC);
-	if (unlikely(skb == NULL)) {
+		जाओ out;
+	पूर्ण
+	skb = aपंचांग_alloc_अक्षरge(lvcc->rx.aपंचांगvcc, size, GFP_ATOMIC);
+	अगर (unlikely(skb == शून्य)) अणु
 		lvcc->stats.rx_nomem++;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	skb_put(skb, size);
-	vcc_rx_memcpy(skb->data, lvcc, size);
-	ATM_SKB(skb)->vcc = lvcc->rx.atmvcc;
-	__net_timestamp(skb);
-	lvcc->rx.atmvcc->push(lvcc->rx.atmvcc, skb);
-	atomic_inc(&lvcc->rx.atmvcc->stats->rx);
+	vcc_rx_स_नकल(skb->data, lvcc, size);
+	ATM_SKB(skb)->vcc = lvcc->rx.aपंचांगvcc;
+	__net_बारtamp(skb);
+	lvcc->rx.aपंचांगvcc->push(lvcc->rx.aपंचांगvcc, skb);
+	atomic_inc(&lvcc->rx.aपंचांगvcc->stats->rx);
     out:
 	lvcc->rx.buf.ptr = end;
-	cardvcc_write(lvcc, endptr, vcc_rxreadptr);
-}
+	cardvcc_ग_लिखो(lvcc, endptr, vcc_rxपढ़ोptr);
+पूर्ण
 
-static void vcc_rx_aal0(struct lanai_dev *lanai)
-{
-	printk(KERN_INFO DEV_LABEL ": vcc_rx_aal0: not implemented\n");
-	/* Remember to get read_lock(&vcc_sklist_lock) while looking up VC */
-	/* Remember to increment lvcc->rx.atmvcc->stats->rx */
-}
+अटल व्योम vcc_rx_aal0(काष्ठा lanai_dev *lanai)
+अणु
+	prपूर्णांकk(KERN_INFO DEV_LABEL ": vcc_rx_aal0: not implemented\n");
+	/* Remember to get पढ़ो_lock(&vcc_sklist_lock) जबतक looking up VC */
+	/* Remember to increment lvcc->rx.aपंचांगvcc->stats->rx */
+पूर्ण
 
 /* -------------------- MANAGING HOST-BASED VCC TABLE: */
 
-/* Decide whether to use vmalloc or get_zeroed_page for VCC table */
-#if (NUM_VCI * BITS_PER_LONG) <= PAGE_SIZE
-#define VCCTABLE_GETFREEPAGE
-#else
-#include <linux/vmalloc.h>
-#endif
+/* Decide whether to use vदो_स्मृति or get_zeroed_page क्रम VCC table */
+#अगर (NUM_VCI * BITS_PER_LONG) <= PAGE_SIZE
+#घोषणा VCCTABLE_GETFREEPAGE
+#अन्यथा
+#समावेश <linux/vदो_स्मृति.h>
+#पूर्ण_अगर
 
-static int vcc_table_allocate(struct lanai_dev *lanai)
-{
-#ifdef VCCTABLE_GETFREEPAGE
-	APRINTK((lanai->num_vci) * sizeof(struct lanai_vcc *) <= PAGE_SIZE,
+अटल पूर्णांक vcc_table_allocate(काष्ठा lanai_dev *lanai)
+अणु
+#अगर_घोषित VCCTABLE_GETFREEPAGE
+	APRINTK((lanai->num_vci) * माप(काष्ठा lanai_vcc *) <= PAGE_SIZE,
 	    "vcc table > PAGE_SIZE!");
-	lanai->vccs = (struct lanai_vcc **) get_zeroed_page(GFP_KERNEL);
-	return (lanai->vccs == NULL) ? -ENOMEM : 0;
-#else
-	int bytes = (lanai->num_vci) * sizeof(struct lanai_vcc *);
+	lanai->vccs = (काष्ठा lanai_vcc **) get_zeroed_page(GFP_KERNEL);
+	वापस (lanai->vccs == शून्य) ? -ENOMEM : 0;
+#अन्यथा
+	पूर्णांक bytes = (lanai->num_vci) * माप(काष्ठा lanai_vcc *);
 	lanai->vccs = vzalloc(bytes);
-	if (unlikely(lanai->vccs == NULL))
-		return -ENOMEM;
-	return 0;
-#endif
-}
+	अगर (unlikely(lanai->vccs == शून्य))
+		वापस -ENOMEM;
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-static inline void vcc_table_deallocate(const struct lanai_dev *lanai)
-{
-#ifdef VCCTABLE_GETFREEPAGE
-	free_page((unsigned long) lanai->vccs);
-#else
-	vfree(lanai->vccs);
-#endif
-}
+अटल अंतरभूत व्योम vcc_table_deallocate(स्थिर काष्ठा lanai_dev *lanai)
+अणु
+#अगर_घोषित VCCTABLE_GETFREEPAGE
+	मुक्त_page((अचिन्हित दीर्घ) lanai->vccs);
+#अन्यथा
+	vमुक्त(lanai->vccs);
+#पूर्ण_अगर
+पूर्ण
 
 /* Allocate a fresh lanai_vcc, with the appropriate things cleared */
-static inline struct lanai_vcc *new_lanai_vcc(void)
-{
-	struct lanai_vcc *lvcc;
-	lvcc =  kzalloc(sizeof(*lvcc), GFP_KERNEL);
-	if (likely(lvcc != NULL)) {
+अटल अंतरभूत काष्ठा lanai_vcc *new_lanai_vcc(व्योम)
+अणु
+	काष्ठा lanai_vcc *lvcc;
+	lvcc =  kzalloc(माप(*lvcc), GFP_KERNEL);
+	अगर (likely(lvcc != शून्य)) अणु
 		skb_queue_head_init(&lvcc->tx.backlog);
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 		lvcc->vci = -1;
-#endif
-	}
-	return lvcc;
-}
+#पूर्ण_अगर
+	पूर्ण
+	वापस lvcc;
+पूर्ण
 
-static int lanai_get_sized_buffer(struct lanai_dev *lanai,
-	struct lanai_buffer *buf, int max_sdu, int multiplier,
-	const char *name)
-{
-	int size;
-	if (unlikely(max_sdu < 1))
+अटल पूर्णांक lanai_get_sized_buffer(काष्ठा lanai_dev *lanai,
+	काष्ठा lanai_buffer *buf, पूर्णांक max_sdu, पूर्णांक multiplier,
+	स्थिर अक्षर *name)
+अणु
+	पूर्णांक size;
+	अगर (unlikely(max_sdu < 1))
 		max_sdu = 1;
 	max_sdu = aal5_size(max_sdu);
 	size = (max_sdu + 16) * multiplier + 16;
 	lanai_buf_allocate(buf, size, max_sdu + 32, lanai->pci);
-	if (unlikely(buf->start == NULL))
-		return -ENOMEM;
-	if (unlikely(lanai_buf_size(buf) < size))
-		printk(KERN_WARNING DEV_LABEL "(itf %d): wanted %d bytes "
+	अगर (unlikely(buf->start == शून्य))
+		वापस -ENOMEM;
+	अगर (unlikely(lanai_buf_size(buf) < size))
+		prपूर्णांकk(KERN_WARNING DEV_LABEL "(itf %d): wanted %d bytes "
 		    "for %s buffer, got only %zu\n", lanai->number, size,
 		    name, lanai_buf_size(buf));
 	DPRINTK("Allocated %zu byte %s buffer\n", lanai_buf_size(buf), name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Setup a RX buffer for a currently unbound AAL5 vci */
-static inline int lanai_setup_rx_vci_aal5(struct lanai_dev *lanai,
-	struct lanai_vcc *lvcc, const struct atm_qos *qos)
-{
-	return lanai_get_sized_buffer(lanai, &lvcc->rx.buf,
+/* Setup a RX buffer क्रम a currently unbound AAL5 vci */
+अटल अंतरभूत पूर्णांक lanai_setup_rx_vci_aal5(काष्ठा lanai_dev *lanai,
+	काष्ठा lanai_vcc *lvcc, स्थिर काष्ठा aपंचांग_qos *qos)
+अणु
+	वापस lanai_get_sized_buffer(lanai, &lvcc->rx.buf,
 	    qos->rxtp.max_sdu, AAL5_RX_MULTIPLIER, "RX");
-}
+पूर्ण
 
-/* Setup a TX buffer for a currently unbound AAL5 vci */
-static int lanai_setup_tx_vci(struct lanai_dev *lanai, struct lanai_vcc *lvcc,
-	const struct atm_qos *qos)
-{
-	int max_sdu, multiplier;
-	if (qos->aal == ATM_AAL0) {
+/* Setup a TX buffer क्रम a currently unbound AAL5 vci */
+अटल पूर्णांक lanai_setup_tx_vci(काष्ठा lanai_dev *lanai, काष्ठा lanai_vcc *lvcc,
+	स्थिर काष्ठा aपंचांग_qos *qos)
+अणु
+	पूर्णांक max_sdu, multiplier;
+	अगर (qos->aal == ATM_AAL0) अणु
 		lvcc->tx.unqueue = vcc_tx_unqueue_aal0;
 		max_sdu = ATM_CELL_SIZE - 1;
 		multiplier = AAL0_TX_MULTIPLIER;
-	} else {
+	पूर्ण अन्यथा अणु
 		lvcc->tx.unqueue = vcc_tx_unqueue_aal5;
 		max_sdu = qos->txtp.max_sdu;
 		multiplier = AAL5_TX_MULTIPLIER;
-	}
-	return lanai_get_sized_buffer(lanai, &lvcc->tx.buf, max_sdu,
+	पूर्ण
+	वापस lanai_get_sized_buffer(lanai, &lvcc->tx.buf, max_sdu,
 	    multiplier, "TX");
-}
+पूर्ण
 
-static inline void host_vcc_bind(struct lanai_dev *lanai,
-	struct lanai_vcc *lvcc, vci_t vci)
-{
-	if (lvcc->vbase != NULL)
-		return;    /* We already were bound in the other direction */
+अटल अंतरभूत व्योम host_vcc_bind(काष्ठा lanai_dev *lanai,
+	काष्ठा lanai_vcc *lvcc, vci_t vci)
+अणु
+	अगर (lvcc->vbase != शून्य)
+		वापस;    /* We alपढ़ोy were bound in the other direction */
 	DPRINTK("Binding vci %d\n", vci);
-#ifdef USE_POWERDOWN
-	if (lanai->nbound++ == 0) {
+#अगर_घोषित USE_POWERDOWN
+	अगर (lanai->nbound++ == 0) अणु
 		DPRINTK("Coming out of powerdown\n");
 		lanai->conf1 &= ~CONFIG1_POWERDOWN;
-		conf1_write(lanai);
-		conf2_write(lanai);
-	}
-#endif
+		conf1_ग_लिखो(lanai);
+		conf2_ग_लिखो(lanai);
+	पूर्ण
+#पूर्ण_अगर
 	lvcc->vbase = cardvcc_addr(lanai, vci);
 	lanai->vccs[lvcc->vci = vci] = lvcc;
-}
+पूर्ण
 
-static inline void host_vcc_unbind(struct lanai_dev *lanai,
-	struct lanai_vcc *lvcc)
-{
-	if (lvcc->vbase == NULL)
-		return;	/* This vcc was never bound */
+अटल अंतरभूत व्योम host_vcc_unbind(काष्ठा lanai_dev *lanai,
+	काष्ठा lanai_vcc *lvcc)
+अणु
+	अगर (lvcc->vbase == शून्य)
+		वापस;	/* This vcc was never bound */
 	DPRINTK("Unbinding vci %d\n", lvcc->vci);
-	lvcc->vbase = NULL;
-	lanai->vccs[lvcc->vci] = NULL;
-#ifdef USE_POWERDOWN
-	if (--lanai->nbound == 0) {
+	lvcc->vbase = शून्य;
+	lanai->vccs[lvcc->vci] = शून्य;
+#अगर_घोषित USE_POWERDOWN
+	अगर (--lanai->nbound == 0) अणु
 		DPRINTK("Going into powerdown\n");
 		lanai->conf1 |= CONFIG1_POWERDOWN;
-		conf1_write(lanai);
-	}
-#endif
-}
+		conf1_ग_लिखो(lanai);
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /* -------------------- RESET CARD: */
 
-static void lanai_reset(struct lanai_dev *lanai)
-{
-	printk(KERN_CRIT DEV_LABEL "(itf %d): *NOT* resetting - not "
+अटल व्योम lanai_reset(काष्ठा lanai_dev *lanai)
+अणु
+	prपूर्णांकk(KERN_CRIT DEV_LABEL "(itf %d): *NOT* resetting - not "
 	    "implemented\n", lanai->number);
 	/* TODO */
-	/* The following is just a hack until we write the real
-	 * resetter - at least ack whatever interrupt sent us
+	/* The following is just a hack until we ग_लिखो the real
+	 * resetter - at least ack whatever पूर्णांकerrupt sent us
 	 * here
 	 */
-	reg_write(lanai, INT_ALL, IntAck_Reg);
+	reg_ग_लिखो(lanai, INT_ALL, IntAck_Reg);
 	lanai->stats.card_reset++;
-}
+पूर्ण
 
 /* -------------------- SERVICE LIST UTILITIES: */
 
 /*
  * Allocate service buffer and tell card about it
  */
-static int service_buffer_allocate(struct lanai_dev *lanai)
-{
+अटल पूर्णांक service_buffer_allocate(काष्ठा lanai_dev *lanai)
+अणु
 	lanai_buf_allocate(&lanai->service, SERVICE_ENTRIES * 4, 8,
 	    lanai->pci);
-	if (unlikely(lanai->service.start == NULL))
-		return -ENOMEM;
+	अगर (unlikely(lanai->service.start == शून्य))
+		वापस -ENOMEM;
 	DPRINTK("allocated service buffer at %p, size %zu(%d)\n",
 	    lanai->service.start,
 	    lanai_buf_size(&lanai->service),
-	    lanai_buf_size_cardorder(&lanai->service));
-	/* Clear ServWrite register to be safe */
-	reg_write(lanai, 0, ServWrite_Reg);
-	/* ServiceStuff register contains size and address of buffer */
-	reg_write(lanai,
-	    SSTUFF_SET_SIZE(lanai_buf_size_cardorder(&lanai->service)) |
+	    lanai_buf_size_carकरोrder(&lanai->service));
+	/* Clear ServWrite रेजिस्टर to be safe */
+	reg_ग_लिखो(lanai, 0, ServWrite_Reg);
+	/* ServiceStuff रेजिस्टर contains size and address of buffer */
+	reg_ग_लिखो(lanai,
+	    SSTUFF_SET_SIZE(lanai_buf_size_carकरोrder(&lanai->service)) |
 	    SSTUFF_SET_ADDR(lanai->service.dmaaddr),
 	    ServiceStuff_Reg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void service_buffer_deallocate(struct lanai_dev *lanai)
-{
+अटल अंतरभूत व्योम service_buffer_deallocate(काष्ठा lanai_dev *lanai)
+अणु
 	lanai_buf_deallocate(&lanai->service, lanai->pci);
-}
+पूर्ण
 
 /* Bitfields in service list */
-#define SERVICE_TX	(0x80000000)	/* Was from transmission */
-#define SERVICE_TRASH	(0x40000000)	/* RXed PDU was trashed */
-#define SERVICE_CRCERR	(0x20000000)	/* RXed PDU had CRC error */
-#define SERVICE_CI	(0x10000000)	/* RXed PDU had CI set */
-#define SERVICE_CLP	(0x08000000)	/* RXed PDU had CLP set */
-#define SERVICE_STREAM	(0x04000000)	/* RX Stream mode */
-#define SERVICE_GET_VCI(x) (((x)>>16)&0x3FF)
-#define SERVICE_GET_END(x) ((x)&0x1FFF)
+#घोषणा SERVICE_TX	(0x80000000)	/* Was from transmission */
+#घोषणा SERVICE_TRASH	(0x40000000)	/* RXed PDU was trashed */
+#घोषणा SERVICE_CRCERR	(0x20000000)	/* RXed PDU had CRC error */
+#घोषणा SERVICE_CI	(0x10000000)	/* RXed PDU had CI set */
+#घोषणा SERVICE_CLP	(0x08000000)	/* RXed PDU had CLP set */
+#घोषणा SERVICE_STREAM	(0x04000000)	/* RX Stream mode */
+#घोषणा SERVICE_GET_VCI(x) (((x)>>16)&0x3FF)
+#घोषणा SERVICE_GET_END(x) ((x)&0x1FFF)
 
-/* Handle one thing from the service list - returns true if it marked a
- * VCC ready for xmit
+/* Handle one thing from the service list - वापसs true अगर it marked a
+ * VCC पढ़ोy क्रम xmit
  */
-static int handle_service(struct lanai_dev *lanai, u32 s)
-{
+अटल पूर्णांक handle_service(काष्ठा lanai_dev *lanai, u32 s)
+अणु
 	vci_t vci = SERVICE_GET_VCI(s);
-	struct lanai_vcc *lvcc;
-	read_lock(&vcc_sklist_lock);
+	काष्ठा lanai_vcc *lvcc;
+	पढ़ो_lock(&vcc_sklist_lock);
 	lvcc = lanai->vccs[vci];
-	if (unlikely(lvcc == NULL)) {
-		read_unlock(&vcc_sklist_lock);
+	अगर (unlikely(lvcc == शून्य)) अणु
+		पढ़ो_unlock(&vcc_sklist_lock);
 		DPRINTK("(itf %d) got service entry 0x%X for nonexistent "
-		    "vcc %d\n", lanai->number, (unsigned int) s, vci);
-		if (s & SERVICE_TX)
+		    "vcc %d\n", lanai->number, (अचिन्हित पूर्णांक) s, vci);
+		अगर (s & SERVICE_TX)
 			lanai->stats.service_notx++;
-		else
+		अन्यथा
 			lanai->stats.service_norx++;
-		return 0;
-	}
-	if (s & SERVICE_TX) {			/* segmentation interrupt */
-		if (unlikely(lvcc->tx.atmvcc == NULL)) {
-			read_unlock(&vcc_sklist_lock);
+		वापस 0;
+	पूर्ण
+	अगर (s & SERVICE_TX) अणु			/* segmentation पूर्णांकerrupt */
+		अगर (unlikely(lvcc->tx.aपंचांगvcc == शून्य)) अणु
+			पढ़ो_unlock(&vcc_sklist_lock);
 			DPRINTK("(itf %d) got service entry 0x%X for non-TX "
-			    "vcc %d\n", lanai->number, (unsigned int) s, vci);
+			    "vcc %d\n", lanai->number, (अचिन्हित पूर्णांक) s, vci);
 			lanai->stats.service_notx++;
-			return 0;
-		}
-		__set_bit(vci, lanai->transmit_ready);
+			वापस 0;
+		पूर्ण
+		__set_bit(vci, lanai->transmit_पढ़ोy);
 		lvcc->tx.endptr = SERVICE_GET_END(s);
-		read_unlock(&vcc_sklist_lock);
-		return 1;
-	}
-	if (unlikely(lvcc->rx.atmvcc == NULL)) {
-		read_unlock(&vcc_sklist_lock);
+		पढ़ो_unlock(&vcc_sklist_lock);
+		वापस 1;
+	पूर्ण
+	अगर (unlikely(lvcc->rx.aपंचांगvcc == शून्य)) अणु
+		पढ़ो_unlock(&vcc_sklist_lock);
 		DPRINTK("(itf %d) got service entry 0x%X for non-RX "
-		    "vcc %d\n", lanai->number, (unsigned int) s, vci);
+		    "vcc %d\n", lanai->number, (अचिन्हित पूर्णांक) s, vci);
 		lanai->stats.service_norx++;
-		return 0;
-	}
-	if (unlikely(lvcc->rx.atmvcc->qos.aal != ATM_AAL5)) {
-		read_unlock(&vcc_sklist_lock);
+		वापस 0;
+	पूर्ण
+	अगर (unlikely(lvcc->rx.aपंचांगvcc->qos.aal != ATM_AAL5)) अणु
+		पढ़ो_unlock(&vcc_sklist_lock);
 		DPRINTK("(itf %d) got RX service entry 0x%X for non-AAL5 "
-		    "vcc %d\n", lanai->number, (unsigned int) s, vci);
+		    "vcc %d\n", lanai->number, (अचिन्हित पूर्णांक) s, vci);
 		lanai->stats.service_rxnotaal5++;
-		atomic_inc(&lvcc->rx.atmvcc->stats->rx_err);
-		return 0;
-	}
-	if (likely(!(s & (SERVICE_TRASH | SERVICE_STREAM | SERVICE_CRCERR)))) {
+		atomic_inc(&lvcc->rx.aपंचांगvcc->stats->rx_err);
+		वापस 0;
+	पूर्ण
+	अगर (likely(!(s & (SERVICE_TRASH | SERVICE_STREAM | SERVICE_CRCERR)))) अणु
 		vcc_rx_aal5(lvcc, SERVICE_GET_END(s));
-		read_unlock(&vcc_sklist_lock);
-		return 0;
-	}
-	if (s & SERVICE_TRASH) {
-		int bytes;
-		read_unlock(&vcc_sklist_lock);
+		पढ़ो_unlock(&vcc_sklist_lock);
+		वापस 0;
+	पूर्ण
+	अगर (s & SERVICE_TRASH) अणु
+		पूर्णांक bytes;
+		पढ़ो_unlock(&vcc_sklist_lock);
 		DPRINTK("got trashed rx pdu on vci %d\n", vci);
-		atomic_inc(&lvcc->rx.atmvcc->stats->rx_err);
+		atomic_inc(&lvcc->rx.aपंचांगvcc->stats->rx_err);
 		lvcc->stats.x.aal5.service_trash++;
 		bytes = (SERVICE_GET_END(s) * 16) -
-		    (((unsigned long) lvcc->rx.buf.ptr) -
-		    ((unsigned long) lvcc->rx.buf.start)) + 47;
-		if (bytes < 0)
+		    (((अचिन्हित दीर्घ) lvcc->rx.buf.ptr) -
+		    ((अचिन्हित दीर्घ) lvcc->rx.buf.start)) + 47;
+		अगर (bytes < 0)
 			bytes += lanai_buf_size(&lvcc->rx.buf);
 		lanai->stats.ovfl_trash += (bytes / 48);
-		return 0;
-	}
-	if (s & SERVICE_STREAM) {
-		read_unlock(&vcc_sklist_lock);
-		atomic_inc(&lvcc->rx.atmvcc->stats->rx_err);
+		वापस 0;
+	पूर्ण
+	अगर (s & SERVICE_STREAM) अणु
+		पढ़ो_unlock(&vcc_sklist_lock);
+		atomic_inc(&lvcc->rx.aपंचांगvcc->stats->rx_err);
 		lvcc->stats.x.aal5.service_stream++;
-		printk(KERN_ERR DEV_LABEL "(itf %d): Got AAL5 stream "
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): Got AAL5 stream "
 		    "PDU on VCI %d!\n", lanai->number, vci);
 		lanai_reset(lanai);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	DPRINTK("got rx crc error on vci %d\n", vci);
-	atomic_inc(&lvcc->rx.atmvcc->stats->rx_err);
+	atomic_inc(&lvcc->rx.aपंचांगvcc->stats->rx_err);
 	lvcc->stats.x.aal5.service_rxcrc++;
 	lvcc->rx.buf.ptr = &lvcc->rx.buf.start[SERVICE_GET_END(s) * 4];
-	cardvcc_write(lvcc, SERVICE_GET_END(s), vcc_rxreadptr);
-	read_unlock(&vcc_sklist_lock);
-	return 0;
-}
+	cardvcc_ग_लिखो(lvcc, SERVICE_GET_END(s), vcc_rxपढ़ोptr);
+	पढ़ो_unlock(&vcc_sklist_lock);
+	वापस 0;
+पूर्ण
 
-/* Try transmitting on all VCIs that we marked ready to serve */
-static void iter_transmit(struct lanai_dev *lanai, vci_t vci)
-{
-	struct lanai_vcc *lvcc = lanai->vccs[vci];
-	if (vcc_is_backlogged(lvcc))
+/* Try transmitting on all VCIs that we marked पढ़ोy to serve */
+अटल व्योम iter_transmit(काष्ठा lanai_dev *lanai, vci_t vci)
+अणु
+	काष्ठा lanai_vcc *lvcc = lanai->vccs[vci];
+	अगर (vcc_is_backlogged(lvcc))
 		lvcc->tx.unqueue(lanai, lvcc, lvcc->tx.endptr);
-}
+पूर्ण
 
-/* Run service queue -- called from interrupt context or with
- * interrupts otherwise disabled and with the lanai->servicelock
+/* Run service queue -- called from पूर्णांकerrupt context or with
+ * पूर्णांकerrupts otherwise disabled and with the lanai->servicelock
  * lock held
  */
-static void run_service(struct lanai_dev *lanai)
-{
-	int ntx = 0;
-	u32 wreg = reg_read(lanai, ServWrite_Reg);
-	const u32 *end = lanai->service.start + wreg;
-	while (lanai->service.ptr != end) {
+अटल व्योम run_service(काष्ठा lanai_dev *lanai)
+अणु
+	पूर्णांक ntx = 0;
+	u32 wreg = reg_पढ़ो(lanai, ServWrite_Reg);
+	स्थिर u32 *end = lanai->service.start + wreg;
+	जबतक (lanai->service.ptr != end) अणु
 		ntx += handle_service(lanai,
 		    le32_to_cpup(lanai->service.ptr++));
-		if (lanai->service.ptr >= lanai->service.end)
+		अगर (lanai->service.ptr >= lanai->service.end)
 			lanai->service.ptr = lanai->service.start;
-	}
-	reg_write(lanai, wreg, ServRead_Reg);
-	if (ntx != 0) {
-		read_lock(&vcc_sklist_lock);
-		vci_bitfield_iterate(lanai, lanai->transmit_ready,
+	पूर्ण
+	reg_ग_लिखो(lanai, wreg, ServRead_Reg);
+	अगर (ntx != 0) अणु
+		पढ़ो_lock(&vcc_sklist_lock);
+		vci_bitfield_iterate(lanai, lanai->transmit_पढ़ोy,
 		    iter_transmit);
-		bitmap_zero(lanai->transmit_ready, NUM_VCI);
-		read_unlock(&vcc_sklist_lock);
-	}
-}
+		biपंचांगap_zero(lanai->transmit_पढ़ोy, NUM_VCI);
+		पढ़ो_unlock(&vcc_sklist_lock);
+	पूर्ण
+पूर्ण
 
 /* -------------------- GATHER STATISTICS: */
 
-static void get_statistics(struct lanai_dev *lanai)
-{
-	u32 statreg = reg_read(lanai, Statistics_Reg);
-	lanai->stats.atm_ovfl += STATS_GET_FIFO_OVFL(statreg);
+अटल व्योम get_statistics(काष्ठा lanai_dev *lanai)
+अणु
+	u32 statreg = reg_पढ़ो(lanai, Statistics_Reg);
+	lanai->stats.aपंचांग_ovfl += STATS_GET_FIFO_OVFL(statreg);
 	lanai->stats.hec_err += STATS_GET_HEC_ERR(statreg);
 	lanai->stats.vci_trash += STATS_GET_BAD_VCI(statreg);
 	lanai->stats.ovfl_trash += STATS_GET_BUF_OVFL(statreg);
-}
+पूर्ण
 
 /* -------------------- POLLING TIMER: */
 
-#ifndef DEBUG_RW
+#अगर_अघोषित DEBUG_RW
 /* Try to undequeue 1 backlogged vcc */
-static void iter_dequeue(struct lanai_dev *lanai, vci_t vci)
-{
-	struct lanai_vcc *lvcc = lanai->vccs[vci];
-	int endptr;
-	if (lvcc == NULL || lvcc->tx.atmvcc == NULL ||
-	    !vcc_is_backlogged(lvcc)) {
+अटल व्योम iter_dequeue(काष्ठा lanai_dev *lanai, vci_t vci)
+अणु
+	काष्ठा lanai_vcc *lvcc = lanai->vccs[vci];
+	पूर्णांक endptr;
+	अगर (lvcc == शून्य || lvcc->tx.aपंचांगvcc == शून्य ||
+	    !vcc_is_backlogged(lvcc)) अणु
 		__clear_bit(vci, lanai->backlog_vccs);
-		return;
-	}
-	endptr = TXREADPTR_GET_PTR(cardvcc_read(lvcc, vcc_txreadptr));
+		वापस;
+	पूर्ण
+	endptr = TXREADPTR_GET_PTR(cardvcc_पढ़ो(lvcc, vcc_txपढ़ोptr));
 	lvcc->tx.unqueue(lanai, lvcc, endptr);
-}
-#endif /* !DEBUG_RW */
+पूर्ण
+#पूर्ण_अगर /* !DEBUG_RW */
 
-static void lanai_timed_poll(struct timer_list *t)
-{
-	struct lanai_dev *lanai = from_timer(lanai, t, timer);
-#ifndef DEBUG_RW
-	unsigned long flags;
-#ifdef USE_POWERDOWN
-	if (lanai->conf1 & CONFIG1_POWERDOWN)
-		return;
-#endif /* USE_POWERDOWN */
+अटल व्योम lanai_समयd_poll(काष्ठा समयr_list *t)
+अणु
+	काष्ठा lanai_dev *lanai = from_समयr(lanai, t, समयr);
+#अगर_अघोषित DEBUG_RW
+	अचिन्हित दीर्घ flags;
+#अगर_घोषित USE_POWERDOWN
+	अगर (lanai->conf1 & CONFIG1_POWERDOWN)
+		वापस;
+#पूर्ण_अगर /* USE_POWERDOWN */
 	local_irq_save(flags);
-	/* If we can grab the spinlock, check if any services need to be run */
-	if (spin_trylock(&lanai->servicelock)) {
+	/* If we can grab the spinlock, check अगर any services need to be run */
+	अगर (spin_trylock(&lanai->servicelock)) अणु
 		run_service(lanai);
 		spin_unlock(&lanai->servicelock);
-	}
-	/* ...and see if any backlogged VCs can make progress */
-	/* unfortunately linux has no read_trylock() currently */
-	read_lock(&vcc_sklist_lock);
+	पूर्ण
+	/* ...and see अगर any backlogged VCs can make progress */
+	/* unक्रमtunately linux has no पढ़ो_trylock() currently */
+	पढ़ो_lock(&vcc_sklist_lock);
 	vci_bitfield_iterate(lanai, lanai->backlog_vccs, iter_dequeue);
-	read_unlock(&vcc_sklist_lock);
+	पढ़ो_unlock(&vcc_sklist_lock);
 	local_irq_restore(flags);
 
 	get_statistics(lanai);
-#endif /* !DEBUG_RW */
-	mod_timer(&lanai->timer, jiffies + LANAI_POLL_PERIOD);
-}
+#पूर्ण_अगर /* !DEBUG_RW */
+	mod_समयr(&lanai->समयr, jअगरfies + LANAI_POLL_PERIOD);
+पूर्ण
 
-static inline void lanai_timed_poll_start(struct lanai_dev *lanai)
-{
-	timer_setup(&lanai->timer, lanai_timed_poll, 0);
-	lanai->timer.expires = jiffies + LANAI_POLL_PERIOD;
-	add_timer(&lanai->timer);
-}
+अटल अंतरभूत व्योम lanai_समयd_poll_start(काष्ठा lanai_dev *lanai)
+अणु
+	समयr_setup(&lanai->समयr, lanai_समयd_poll, 0);
+	lanai->समयr.expires = jअगरfies + LANAI_POLL_PERIOD;
+	add_समयr(&lanai->समयr);
+पूर्ण
 
-static inline void lanai_timed_poll_stop(struct lanai_dev *lanai)
-{
-	del_timer_sync(&lanai->timer);
-}
+अटल अंतरभूत व्योम lanai_समयd_poll_stop(काष्ठा lanai_dev *lanai)
+अणु
+	del_समयr_sync(&lanai->समयr);
+पूर्ण
 
 /* -------------------- INTERRUPT SERVICE: */
 
-static inline void lanai_int_1(struct lanai_dev *lanai, u32 reason)
-{
+अटल अंतरभूत व्योम lanai_पूर्णांक_1(काष्ठा lanai_dev *lanai, u32 reason)
+अणु
 	u32 ack = 0;
-	if (reason & INT_SERVICE) {
+	अगर (reason & INT_SERVICE) अणु
 		ack = INT_SERVICE;
 		spin_lock(&lanai->servicelock);
 		run_service(lanai);
 		spin_unlock(&lanai->servicelock);
-	}
-	if (reason & (INT_AAL0_STR | INT_AAL0)) {
+	पूर्ण
+	अगर (reason & (INT_AAL0_STR | INT_AAL0)) अणु
 		ack |= reason & (INT_AAL0_STR | INT_AAL0);
 		vcc_rx_aal0(lanai);
-	}
-	/* The rest of the interrupts are pretty rare */
-	if (ack == reason)
-		goto done;
-	if (reason & INT_STATS) {
+	पूर्ण
+	/* The rest of the पूर्णांकerrupts are pretty rare */
+	अगर (ack == reason)
+		जाओ करोne;
+	अगर (reason & INT_STATS) अणु
 		reason &= ~INT_STATS;	/* No need to ack */
 		get_statistics(lanai);
-	}
-	if (reason & INT_STATUS) {
+	पूर्ण
+	अगर (reason & INT_STATUS) अणु
 		ack |= reason & INT_STATUS;
 		lanai_check_status(lanai);
-	}
-	if (unlikely(reason & INT_DMASHUT)) {
-		printk(KERN_ERR DEV_LABEL "(itf %d): driver error - DMA "
+	पूर्ण
+	अगर (unlikely(reason & INT_DMASHUT)) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): driver error - DMA "
 		    "shutdown, reason=0x%08X, address=0x%08X\n",
-		    lanai->number, (unsigned int) (reason & INT_DMASHUT),
-		    (unsigned int) reg_read(lanai, DMA_Addr_Reg));
-		if (reason & INT_TABORTBM) {
+		    lanai->number, (अचिन्हित पूर्णांक) (reason & INT_DMASHUT),
+		    (अचिन्हित पूर्णांक) reg_पढ़ो(lanai, DMA_Addr_Reg));
+		अगर (reason & INT_TABORTBM) अणु
 			lanai_reset(lanai);
-			return;
-		}
+			वापस;
+		पूर्ण
 		ack |= (reason & INT_DMASHUT);
-		printk(KERN_ERR DEV_LABEL "(itf %d): re-enabling DMA\n",
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): re-enabling DMA\n",
 		    lanai->number);
-		conf1_write(lanai);
+		conf1_ग_लिखो(lanai);
 		lanai->stats.dma_reenable++;
 		pcistatus_check(lanai, 0);
-	}
-	if (unlikely(reason & INT_TABORTSENT)) {
+	पूर्ण
+	अगर (unlikely(reason & INT_TABORTSENT)) अणु
 		ack |= (reason & INT_TABORTSENT);
-		printk(KERN_ERR DEV_LABEL "(itf %d): sent PCI target abort\n",
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): sent PCI target abort\n",
 		    lanai->number);
 		pcistatus_check(lanai, 0);
-	}
-	if (unlikely(reason & INT_SEGSHUT)) {
-		printk(KERN_ERR DEV_LABEL "(itf %d): driver error - "
+	पूर्ण
+	अगर (unlikely(reason & INT_SEGSHUT)) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): driver error - "
 		    "segmentation shutdown, reason=0x%08X\n", lanai->number,
-		    (unsigned int) (reason & INT_SEGSHUT));
+		    (अचिन्हित पूर्णांक) (reason & INT_SEGSHUT));
 		lanai_reset(lanai);
-		return;
-	}
-	if (unlikely(reason & (INT_PING | INT_WAKE))) {
-		printk(KERN_ERR DEV_LABEL "(itf %d): driver error - "
+		वापस;
+	पूर्ण
+	अगर (unlikely(reason & (INT_PING | INT_WAKE))) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): driver error - "
 		    "unexpected interrupt 0x%08X, resetting\n",
 		    lanai->number,
-		    (unsigned int) (reason & (INT_PING | INT_WAKE)));
+		    (अचिन्हित पूर्णांक) (reason & (INT_PING | INT_WAKE)));
 		lanai_reset(lanai);
-		return;
-	}
-#ifdef DEBUG
-	if (unlikely(ack != reason)) {
+		वापस;
+	पूर्ण
+#अगर_घोषित DEBUG
+	अगर (unlikely(ack != reason)) अणु
 		DPRINTK("unacked ints: 0x%08X\n",
-		    (unsigned int) (reason & ~ack));
+		    (अचिन्हित पूर्णांक) (reason & ~ack));
 		ack = reason;
-	}
-#endif
-   done:
-	if (ack != 0)
-		reg_write(lanai, ack, IntAck_Reg);
-}
+	पूर्ण
+#पूर्ण_अगर
+   करोne:
+	अगर (ack != 0)
+		reg_ग_लिखो(lanai, ack, IntAck_Reg);
+पूर्ण
 
-static irqreturn_t lanai_int(int irq, void *devid)
-{
-	struct lanai_dev *lanai = devid;
+अटल irqवापस_t lanai_पूर्णांक(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा lanai_dev *lanai = devid;
 	u32 reason;
 
-#ifdef USE_POWERDOWN
+#अगर_घोषित USE_POWERDOWN
 	/*
-	 * If we're powered down we shouldn't be generating any interrupts -
-	 * so assume that this is a shared interrupt line and it's for someone
-	 * else
+	 * If we're powered down we shouldn't be generating any पूर्णांकerrupts -
+	 * so assume that this is a shared पूर्णांकerrupt line and it's क्रम someone
+	 * अन्यथा
 	 */
-	if (unlikely(lanai->conf1 & CONFIG1_POWERDOWN))
-		return IRQ_NONE;
-#endif
+	अगर (unlikely(lanai->conf1 & CONFIG1_POWERDOWN))
+		वापस IRQ_NONE;
+#पूर्ण_अगर
 
-	reason = intr_pending(lanai);
-	if (reason == 0)
-		return IRQ_NONE;	/* Must be for someone else */
+	reason = पूर्णांकr_pending(lanai);
+	अगर (reason == 0)
+		वापस IRQ_NONE;	/* Must be क्रम someone अन्यथा */
 
-	do {
-		if (unlikely(reason == 0xFFFFFFFF))
-			break;		/* Maybe we've been unplugged? */
-		lanai_int_1(lanai, reason);
-		reason = intr_pending(lanai);
-	} while (reason != 0);
+	करो अणु
+		अगर (unlikely(reason == 0xFFFFFFFF))
+			अवरोध;		/* Maybe we've been unplugged? */
+		lanai_पूर्णांक_1(lanai, reason);
+		reason = पूर्णांकr_pending(lanai);
+	पूर्ण जबतक (reason != 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* TODO - it would be nice if we could use the "delayed interrupt" system
+/* TODO - it would be nice अगर we could use the "delayed interrupt" प्रणाली
  *   to some advantage
  */
 
 /* -------------------- CHECK BOARD ID/REV: */
 
 /*
- * The board id and revision are stored both in the reset register and
- * in the PCI configuration space - the documentation says to check
- * each of them.  If revp!=NULL we store the revision there
+ * The board id and revision are stored both in the reset रेजिस्टर and
+ * in the PCI configuration space - the करोcumentation says to check
+ * each of them.  If revp!=शून्य we store the revision there
  */
-static int check_board_id_and_rev(const char *name, u32 val, int *revp)
-{
+अटल पूर्णांक check_board_id_and_rev(स्थिर अक्षर *name, u32 val, पूर्णांक *revp)
+अणु
 	DPRINTK("%s says board_id=%d, board_rev=%d\n", name,
-		(int) RESET_GET_BOARD_ID(val),
-		(int) RESET_GET_BOARD_REV(val));
-	if (RESET_GET_BOARD_ID(val) != BOARD_ID_LANAI256) {
-		printk(KERN_ERR DEV_LABEL ": Found %s board-id %d -- not a "
-		    "Lanai 25.6\n", name, (int) RESET_GET_BOARD_ID(val));
-		return -ENODEV;
-	}
-	if (revp != NULL)
+		(पूर्णांक) RESET_GET_BOARD_ID(val),
+		(पूर्णांक) RESET_GET_BOARD_REV(val));
+	अगर (RESET_GET_BOARD_ID(val) != BOARD_ID_LANAI256) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL ": Found %s board-id %d -- not a "
+		    "Lanai 25.6\n", name, (पूर्णांक) RESET_GET_BOARD_ID(val));
+		वापस -ENODEV;
+	पूर्ण
+	अगर (revp != शून्य)
 		*revp = RESET_GET_BOARD_REV(val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -------------------- PCI INITIALIZATION/SHUTDOWN: */
 
-static int lanai_pci_start(struct lanai_dev *lanai)
-{
-	struct pci_dev *pci = lanai->pci;
-	int result;
+अटल पूर्णांक lanai_pci_start(काष्ठा lanai_dev *lanai)
+अणु
+	काष्ठा pci_dev *pci = lanai->pci;
+	पूर्णांक result;
 
-	if (pci_enable_device(pci) != 0) {
-		printk(KERN_ERR DEV_LABEL "(itf %d): can't enable "
+	अगर (pci_enable_device(pci) != 0) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): can't enable "
 		    "PCI device", lanai->number);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	pci_set_master(pci);
-	if (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(32)) != 0) {
-		printk(KERN_WARNING DEV_LABEL
+	अगर (dma_set_mask_and_coherent(&pci->dev, DMA_BIT_MASK(32)) != 0) अणु
+		prपूर्णांकk(KERN_WARNING DEV_LABEL
 		    "(itf %d): No suitable DMA available.\n", lanai->number);
-		return -EBUSY;
-	}
-	result = check_board_id_and_rev("PCI", pci->subsystem_device, NULL);
-	if (result != 0)
-		return result;
-	/* Set latency timer to zero as per lanai docs */
-	result = pci_write_config_byte(pci, PCI_LATENCY_TIMER, 0);
-	if (result != PCIBIOS_SUCCESSFUL) {
-		printk(KERN_ERR DEV_LABEL "(itf %d): can't write "
+		वापस -EBUSY;
+	पूर्ण
+	result = check_board_id_and_rev("PCI", pci->subप्रणाली_device, शून्य);
+	अगर (result != 0)
+		वापस result;
+	/* Set latency समयr to zero as per lanai करोcs */
+	result = pci_ग_लिखो_config_byte(pci, PCI_LATENCY_TIMER, 0);
+	अगर (result != PCIBIOS_SUCCESSFUL) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL "(itf %d): can't write "
 		    "PCI_LATENCY_TIMER: %d\n", lanai->number, result);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	pcistatus_check(lanai, 1);
 	pcistatus_check(lanai, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -------------------- VPI/VCI ALLOCATION: */
 
 /*
- * We _can_ use VCI==0 for normal traffic, but only for UBR (or we'll
- * get a CBRZERO interrupt), and we can use it only if no one is receiving
+ * We _can_ use VCI==0 क्रम normal traffic, but only क्रम UBR (or we'll
+ * get a CBRZERO पूर्णांकerrupt), and we can use it only अगर no one is receiving
  * AAL0 traffic (since they will use the same queue) - according to the
- * docs we shouldn't even use it for AAL0 traffic
+ * करोcs we shouldn't even use it क्रम AAL0 traffic
  */
-static inline int vci0_is_ok(struct lanai_dev *lanai,
-	const struct atm_qos *qos)
-{
-	if (qos->txtp.traffic_class == ATM_CBR || qos->aal == ATM_AAL0)
-		return 0;
-	if (qos->rxtp.traffic_class != ATM_NONE) {
-		if (lanai->naal0 != 0)
-			return 0;
+अटल अंतरभूत पूर्णांक vci0_is_ok(काष्ठा lanai_dev *lanai,
+	स्थिर काष्ठा aपंचांग_qos *qos)
+अणु
+	अगर (qos->txtp.traffic_class == ATM_CBR || qos->aal == ATM_AAL0)
+		वापस 0;
+	अगर (qos->rxtp.traffic_class != ATM_NONE) अणु
+		अगर (lanai->naal0 != 0)
+			वापस 0;
 		lanai->conf2 |= CONFIG2_VCI0_NORMAL;
-		conf2_write_if_powerup(lanai);
-	}
-	return 1;
-}
+		conf2_ग_लिखो_अगर_घातerup(lanai);
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-/* return true if vci is currently unused, or if requested qos is
+/* वापस true अगर vci is currently unused, or अगर requested qos is
  * compatible
  */
-static int vci_is_ok(struct lanai_dev *lanai, vci_t vci,
-	const struct atm_vcc *atmvcc)
-{
-	const struct atm_qos *qos = &atmvcc->qos;
-	const struct lanai_vcc *lvcc = lanai->vccs[vci];
-	if (vci == 0 && !vci0_is_ok(lanai, qos))
-		return 0;
-	if (unlikely(lvcc != NULL)) {
-		if (qos->rxtp.traffic_class != ATM_NONE &&
-		    lvcc->rx.atmvcc != NULL && lvcc->rx.atmvcc != atmvcc)
-			return 0;
-		if (qos->txtp.traffic_class != ATM_NONE &&
-		    lvcc->tx.atmvcc != NULL && lvcc->tx.atmvcc != atmvcc)
-			return 0;
-		if (qos->txtp.traffic_class == ATM_CBR &&
-		    lanai->cbrvcc != NULL && lanai->cbrvcc != atmvcc)
-			return 0;
-	}
-	if (qos->aal == ATM_AAL0 && lanai->naal0 == 0 &&
-	    qos->rxtp.traffic_class != ATM_NONE) {
-		const struct lanai_vcc *vci0 = lanai->vccs[0];
-		if (vci0 != NULL && vci0->rx.atmvcc != NULL)
-			return 0;
+अटल पूर्णांक vci_is_ok(काष्ठा lanai_dev *lanai, vci_t vci,
+	स्थिर काष्ठा aपंचांग_vcc *aपंचांगvcc)
+अणु
+	स्थिर काष्ठा aपंचांग_qos *qos = &aपंचांगvcc->qos;
+	स्थिर काष्ठा lanai_vcc *lvcc = lanai->vccs[vci];
+	अगर (vci == 0 && !vci0_is_ok(lanai, qos))
+		वापस 0;
+	अगर (unlikely(lvcc != शून्य)) अणु
+		अगर (qos->rxtp.traffic_class != ATM_NONE &&
+		    lvcc->rx.aपंचांगvcc != शून्य && lvcc->rx.aपंचांगvcc != aपंचांगvcc)
+			वापस 0;
+		अगर (qos->txtp.traffic_class != ATM_NONE &&
+		    lvcc->tx.aपंचांगvcc != शून्य && lvcc->tx.aपंचांगvcc != aपंचांगvcc)
+			वापस 0;
+		अगर (qos->txtp.traffic_class == ATM_CBR &&
+		    lanai->cbrvcc != शून्य && lanai->cbrvcc != aपंचांगvcc)
+			वापस 0;
+	पूर्ण
+	अगर (qos->aal == ATM_AAL0 && lanai->naal0 == 0 &&
+	    qos->rxtp.traffic_class != ATM_NONE) अणु
+		स्थिर काष्ठा lanai_vcc *vci0 = lanai->vccs[0];
+		अगर (vci0 != शून्य && vci0->rx.aपंचांगvcc != शून्य)
+			वापस 0;
 		lanai->conf2 &= ~CONFIG2_VCI0_NORMAL;
-		conf2_write_if_powerup(lanai);
-	}
-	return 1;
-}
+		conf2_ग_लिखो_अगर_घातerup(lanai);
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int lanai_normalize_ci(struct lanai_dev *lanai,
-	const struct atm_vcc *atmvcc, short *vpip, vci_t *vcip)
-{
-	switch (*vpip) {
-		case ATM_VPI_ANY:
+अटल पूर्णांक lanai_normalize_ci(काष्ठा lanai_dev *lanai,
+	स्थिर काष्ठा aपंचांग_vcc *aपंचांगvcc, लघु *vpip, vci_t *vcip)
+अणु
+	चयन (*vpip) अणु
+		हाल ATM_VPI_ANY:
 			*vpip = 0;
 			fallthrough;
-		case 0:
-			break;
-		default:
-			return -EADDRINUSE;
-	}
-	switch (*vcip) {
-		case ATM_VCI_ANY:
-			for (*vcip = ATM_NOT_RSV_VCI; *vcip < lanai->num_vci;
+		हाल 0:
+			अवरोध;
+		शेष:
+			वापस -EADDRINUSE;
+	पूर्ण
+	चयन (*vcip) अणु
+		हाल ATM_VCI_ANY:
+			क्रम (*vcip = ATM_NOT_RSV_VCI; *vcip < lanai->num_vci;
 			    (*vcip)++)
-				if (vci_is_ok(lanai, *vcip, atmvcc))
-					return 0;
-			return -EADDRINUSE;
-		default:
-			if (*vcip >= lanai->num_vci || *vcip < 0 ||
-			    !vci_is_ok(lanai, *vcip, atmvcc))
-				return -EADDRINUSE;
-	}
-	return 0;
-}
+				अगर (vci_is_ok(lanai, *vcip, aपंचांगvcc))
+					वापस 0;
+			वापस -EADDRINUSE;
+		शेष:
+			अगर (*vcip >= lanai->num_vci || *vcip < 0 ||
+			    !vci_is_ok(lanai, *vcip, aपंचांगvcc))
+				वापस -EADDRINUSE;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* -------------------- MANAGE CBR: */
 
 /*
- * CBR ICG is stored as a fixed-point number with 4 fractional bits.
+ * CBR ICG is stored as a fixed-poपूर्णांक number with 4 fractional bits.
  * Note that storing a number greater than 2046.0 will result in
  * incorrect shaping
  */
-#define CBRICG_FRAC_BITS	(4)
-#define CBRICG_MAX		(2046 << CBRICG_FRAC_BITS)
+#घोषणा CBRICG_FRAC_BITS	(4)
+#घोषणा CBRICG_MAX		(2046 << CBRICG_FRAC_BITS)
 
 /*
- * ICG is related to PCR with the formula PCR = MAXPCR / (ICG + 1)
- * where MAXPCR is (according to the docs) 25600000/(54*8),
+ * ICG is related to PCR with the क्रमmula PCR = MAXPCR / (ICG + 1)
+ * where MAXPCR is (according to the करोcs) 25600000/(54*8),
  * which is equal to (3125<<9)/27.
  *
- * Solving for ICG, we get:
+ * Solving क्रम ICG, we get:
  *    ICG = MAXPCR/PCR - 1
  *    ICG = (3125<<9)/(27*PCR) - 1
  *    ICG = ((3125<<9) - (27*PCR)) / (27*PCR)
  *
- * The end result is supposed to be a fixed-point number with FRAC_BITS
+ * The end result is supposed to be a fixed-poपूर्णांक number with FRAC_BITS
  * bits of a fractional part, so we keep everything in the numerator
- * shifted by that much as we compute
+ * shअगरted by that much as we compute
  *
  */
-static int pcr_to_cbricg(const struct atm_qos *qos)
-{
-	int rounddown = 0;	/* 1 = Round PCR down, i.e. round ICG _up_ */
-	int x, icg, pcr = atm_pcr_goal(&qos->txtp);
-	if (pcr == 0)		/* Use maximum bandwidth */
-		return 0;
-	if (pcr < 0) {
-		rounddown = 1;
+अटल पूर्णांक pcr_to_cbricg(स्थिर काष्ठा aपंचांग_qos *qos)
+अणु
+	पूर्णांक roundकरोwn = 0;	/* 1 = Round PCR करोwn, i.e. round ICG _up_ */
+	पूर्णांक x, icg, pcr = aपंचांग_pcr_goal(&qos->txtp);
+	अगर (pcr == 0)		/* Use maximum bandwidth */
+		वापस 0;
+	अगर (pcr < 0) अणु
+		roundकरोwn = 1;
 		pcr = -pcr;
-	}
+	पूर्ण
 	x = pcr * 27;
 	icg = (3125 << (9 + CBRICG_FRAC_BITS)) - (x << CBRICG_FRAC_BITS);
-	if (rounddown)
+	अगर (roundकरोwn)
 		icg += x - 1;
 	icg /= x;
-	if (icg > CBRICG_MAX)
+	अगर (icg > CBRICG_MAX)
 		icg = CBRICG_MAX;
 	DPRINTK("pcr_to_cbricg: pcr=%d rounddown=%c icg=%d\n",
-	    pcr, rounddown ? 'Y' : 'N', icg);
-	return icg;
-}
+	    pcr, roundकरोwn ? 'Y' : 'N', icg);
+	वापस icg;
+पूर्ण
 
-static inline void lanai_cbr_setup(struct lanai_dev *lanai)
-{
-	reg_write(lanai, pcr_to_cbricg(&lanai->cbrvcc->qos), CBR_ICG_Reg);
-	reg_write(lanai, lanai->cbrvcc->vci, CBR_PTR_Reg);
+अटल अंतरभूत व्योम lanai_cbr_setup(काष्ठा lanai_dev *lanai)
+अणु
+	reg_ग_लिखो(lanai, pcr_to_cbricg(&lanai->cbrvcc->qos), CBR_ICG_Reg);
+	reg_ग_लिखो(lanai, lanai->cbrvcc->vci, CBR_PTR_Reg);
 	lanai->conf2 |= CONFIG2_CBR_ENABLE;
-	conf2_write(lanai);
-}
+	conf2_ग_लिखो(lanai);
+पूर्ण
 
-static inline void lanai_cbr_shutdown(struct lanai_dev *lanai)
-{
+अटल अंतरभूत व्योम lanai_cbr_shutकरोwn(काष्ठा lanai_dev *lanai)
+अणु
 	lanai->conf2 &= ~CONFIG2_CBR_ENABLE;
-	conf2_write(lanai);
-}
+	conf2_ग_लिखो(lanai);
+पूर्ण
 
 /* -------------------- OPERATIONS: */
 
 /* setup a newly detected device */
-static int lanai_dev_open(struct atm_dev *atmdev)
-{
-	struct lanai_dev *lanai = (struct lanai_dev *) atmdev->dev_data;
-	unsigned long raw_base;
-	int result;
+अटल पूर्णांक lanai_dev_खोलो(काष्ठा aपंचांग_dev *aपंचांगdev)
+अणु
+	काष्ठा lanai_dev *lanai = (काष्ठा lanai_dev *) aपंचांगdev->dev_data;
+	अचिन्हित दीर्घ raw_base;
+	पूर्णांक result;
 
 	DPRINTK("In lanai_dev_open()\n");
 	/* Basic device fields */
-	lanai->number = atmdev->number;
+	lanai->number = aपंचांगdev->number;
 	lanai->num_vci = NUM_VCI;
-	bitmap_zero(lanai->backlog_vccs, NUM_VCI);
-	bitmap_zero(lanai->transmit_ready, NUM_VCI);
+	biपंचांगap_zero(lanai->backlog_vccs, NUM_VCI);
+	biपंचांगap_zero(lanai->transmit_पढ़ोy, NUM_VCI);
 	lanai->naal0 = 0;
-#ifdef USE_POWERDOWN
+#अगर_घोषित USE_POWERDOWN
 	lanai->nbound = 0;
-#endif
-	lanai->cbrvcc = NULL;
-	memset(&lanai->stats, 0, sizeof lanai->stats);
+#पूर्ण_अगर
+	lanai->cbrvcc = शून्य;
+	स_रखो(&lanai->stats, 0, माप lanai->stats);
 	spin_lock_init(&lanai->endtxlock);
 	spin_lock_init(&lanai->servicelock);
-	atmdev->ci_range.vpi_bits = 0;
-	atmdev->ci_range.vci_bits = 0;
-	while (1 << atmdev->ci_range.vci_bits < lanai->num_vci)
-		atmdev->ci_range.vci_bits++;
-	atmdev->link_rate = ATM_25_PCR;
+	aपंचांगdev->ci_range.vpi_bits = 0;
+	aपंचांगdev->ci_range.vci_bits = 0;
+	जबतक (1 << aपंचांगdev->ci_range.vci_bits < lanai->num_vci)
+		aपंचांगdev->ci_range.vci_bits++;
+	aपंचांगdev->link_rate = ATM_25_PCR;
 
 	/* 3.2: PCI initialization */
-	if ((result = lanai_pci_start(lanai)) != 0)
-		goto error;
+	अगर ((result = lanai_pci_start(lanai)) != 0)
+		जाओ error;
 	raw_base = lanai->pci->resource[0].start;
 	lanai->base = (bus_addr_t) ioremap(raw_base, LANAI_MAPPING_SIZE);
-	if (lanai->base == NULL) {
-		printk(KERN_ERR DEV_LABEL ": couldn't remap I/O space\n");
+	अगर (lanai->base == शून्य) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL ": couldn't remap I/O space\n");
 		result = -ENOMEM;
-		goto error_pci;
-	}
+		जाओ error_pci;
+	पूर्ण
 	/* 3.3: Reset lanai and PHY */
 	reset_board(lanai);
-	lanai->conf1 = reg_read(lanai, Config1_Reg);
+	lanai->conf1 = reg_पढ़ो(lanai, Config1_Reg);
 	lanai->conf1 &= ~(CONFIG1_GPOUT1 | CONFIG1_POWERDOWN |
 	    CONFIG1_MASK_LEDMODE);
 	lanai->conf1 |= CONFIG1_SET_LEDMODE(LEDMODE_NOT_SOOL);
-	reg_write(lanai, lanai->conf1 | CONFIG1_GPOUT1, Config1_Reg);
+	reg_ग_लिखो(lanai, lanai->conf1 | CONFIG1_GPOUT1, Config1_Reg);
 	udelay(1000);
-	conf1_write(lanai);
+	conf1_ग_लिखो(lanai);
 
 	/*
-	 * 3.4: Turn on endian mode for big-endian hardware
-	 *   We don't actually want to do this - the actual bit fields
-	 *   in the endian register are not documented anywhere.
-	 *   Instead we do the bit-flipping ourselves on big-endian
+	 * 3.4: Turn on endian mode क्रम big-endian hardware
+	 *   We करोn't actually want to करो this - the actual bit fields
+	 *   in the endian रेजिस्टर are not करोcumented anywhere.
+	 *   Instead we करो the bit-flipping ourselves on big-endian
 	 *   hardware.
 	 *
-	 * 3.5: get the board ID/rev by reading the reset register
+	 * 3.5: get the board ID/rev by पढ़ोing the reset रेजिस्टर
 	 */
 	result = check_board_id_and_rev("register",
-	    reg_read(lanai, Reset_Reg), &lanai->board_rev);
-	if (result != 0)
-		goto error_unmap;
+	    reg_पढ़ो(lanai, Reset_Reg), &lanai->board_rev);
+	अगर (result != 0)
+		जाओ error_unmap;
 
-	/* 3.6: read EEPROM */
-	if ((result = eeprom_read(lanai)) != 0)
-		goto error_unmap;
-	if ((result = eeprom_validate(lanai)) != 0)
-		goto error_unmap;
+	/* 3.6: पढ़ो EEPROM */
+	अगर ((result = eeprom_पढ़ो(lanai)) != 0)
+		जाओ error_unmap;
+	अगर ((result = eeprom_validate(lanai)) != 0)
+		जाओ error_unmap;
 
-	/* 3.7: re-reset PHY, do loopback tests, setup PHY */
-	reg_write(lanai, lanai->conf1 | CONFIG1_GPOUT1, Config1_Reg);
+	/* 3.7: re-reset PHY, करो loopback tests, setup PHY */
+	reg_ग_लिखो(lanai, lanai->conf1 | CONFIG1_GPOUT1, Config1_Reg);
 	udelay(1000);
-	conf1_write(lanai);
+	conf1_ग_लिखो(lanai);
 	/* TODO - loopback tests */
 	lanai->conf1 |= (CONFIG1_GPOUT2 | CONFIG1_GPOUT3 | CONFIG1_DMA_ENABLE);
-	conf1_write(lanai);
+	conf1_ग_लिखो(lanai);
 
 	/* 3.8/3.9: test and initialize card SRAM */
-	if ((result = sram_test_and_clear(lanai)) != 0)
-		goto error_unmap;
+	अगर ((result = sram_test_and_clear(lanai)) != 0)
+		जाओ error_unmap;
 
-	/* 3.10: initialize lanai registers */
+	/* 3.10: initialize lanai रेजिस्टरs */
 	lanai->conf1 |= CONFIG1_DMA_ENABLE;
-	conf1_write(lanai);
-	if ((result = service_buffer_allocate(lanai)) != 0)
-		goto error_unmap;
-	if ((result = vcc_table_allocate(lanai)) != 0)
-		goto error_service;
+	conf1_ग_लिखो(lanai);
+	अगर ((result = service_buffer_allocate(lanai)) != 0)
+		जाओ error_unmap;
+	अगर ((result = vcc_table_allocate(lanai)) != 0)
+		जाओ error_service;
 	lanai->conf2 = (lanai->num_vci >= 512 ? CONFIG2_HOWMANY : 0) |
 	    CONFIG2_HEC_DROP |	/* ??? */ CONFIG2_PTI7_MODE;
-	conf2_write(lanai);
-	reg_write(lanai, TX_FIFO_DEPTH, TxDepth_Reg);
-	reg_write(lanai, 0, CBR_ICG_Reg);	/* CBR defaults to no limit */
-	if ((result = request_irq(lanai->pci->irq, lanai_int, IRQF_SHARED,
-	    DEV_LABEL, lanai)) != 0) {
-		printk(KERN_ERR DEV_LABEL ": can't allocate interrupt\n");
-		goto error_vcctable;
-	}
+	conf2_ग_लिखो(lanai);
+	reg_ग_लिखो(lanai, TX_FIFO_DEPTH, TxDepth_Reg);
+	reg_ग_लिखो(lanai, 0, CBR_ICG_Reg);	/* CBR शेषs to no limit */
+	अगर ((result = request_irq(lanai->pci->irq, lanai_पूर्णांक, IRQF_SHARED,
+	    DEV_LABEL, lanai)) != 0) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL ": can't allocate interrupt\n");
+		जाओ error_vcctable;
+	पूर्ण
 	mb();				/* Make sure that all that made it */
-	intr_enable(lanai, INT_ALL & ~(INT_PING | INT_WAKE));
+	पूर्णांकr_enable(lanai, INT_ALL & ~(INT_PING | INT_WAKE));
 	/* 3.11: initialize loop mode (i.e. turn looping off) */
 	lanai->conf1 = (lanai->conf1 & ~CONFIG1_MASK_LOOPMODE) |
 	    CONFIG1_SET_LOOPMODE(LOOPMODE_NORMAL) |
 	    CONFIG1_GPOUT2 | CONFIG1_GPOUT3;
-	conf1_write(lanai);
-	lanai->status = reg_read(lanai, Status_Reg);
-	/* We're now done initializing this card */
-#ifdef USE_POWERDOWN
+	conf1_ग_लिखो(lanai);
+	lanai->status = reg_पढ़ो(lanai, Status_Reg);
+	/* We're now करोne initializing this card */
+#अगर_घोषित USE_POWERDOWN
 	lanai->conf1 |= CONFIG1_POWERDOWN;
-	conf1_write(lanai);
-#endif
-	memcpy(atmdev->esi, eeprom_mac(lanai), ESI_LEN);
-	lanai_timed_poll_start(lanai);
-	printk(KERN_NOTICE DEV_LABEL "(itf %d): rev.%d, base=%p, irq=%u "
-		"(%pMF)\n", lanai->number, (int) lanai->pci->revision,
-		lanai->base, lanai->pci->irq, atmdev->esi);
-	printk(KERN_NOTICE DEV_LABEL "(itf %d): LANAI%s, serialno=%u(0x%X), "
+	conf1_ग_लिखो(lanai);
+#पूर्ण_अगर
+	स_नकल(aपंचांगdev->esi, eeprom_mac(lanai), ESI_LEN);
+	lanai_समयd_poll_start(lanai);
+	prपूर्णांकk(KERN_NOTICE DEV_LABEL "(itf %d): rev.%d, base=%p, irq=%u "
+		"(%pMF)\n", lanai->number, (पूर्णांक) lanai->pci->revision,
+		lanai->base, lanai->pci->irq, aपंचांगdev->esi);
+	prपूर्णांकk(KERN_NOTICE DEV_LABEL "(itf %d): LANAI%s, serialno=%u(0x%X), "
 	    "board_rev=%d\n", lanai->number,
-	    lanai->type==lanai2 ? "2" : "HB", (unsigned int) lanai->serialno,
-	    (unsigned int) lanai->serialno, lanai->board_rev);
-	return 0;
+	    lanai->type==lanai2 ? "2" : "HB", (अचिन्हित पूर्णांक) lanai->serialno,
+	    (अचिन्हित पूर्णांक) lanai->serialno, lanai->board_rev);
+	वापस 0;
 
     error_vcctable:
 	vcc_table_deallocate(lanai);
@@ -2228,288 +2229,288 @@ static int lanai_dev_open(struct atm_dev *atmdev)
 	service_buffer_deallocate(lanai);
     error_unmap:
 	reset_board(lanai);
-#ifdef USE_POWERDOWN
-	lanai->conf1 = reg_read(lanai, Config1_Reg) | CONFIG1_POWERDOWN;
-	conf1_write(lanai);
-#endif
+#अगर_घोषित USE_POWERDOWN
+	lanai->conf1 = reg_पढ़ो(lanai, Config1_Reg) | CONFIG1_POWERDOWN;
+	conf1_ग_लिखो(lanai);
+#पूर्ण_अगर
 	iounmap(lanai->base);
-	lanai->base = NULL;
+	lanai->base = शून्य;
     error_pci:
 	pci_disable_device(lanai->pci);
     error:
-	return result;
-}
+	वापस result;
+पूर्ण
 
-/* called when device is being shutdown, and all vcc's are gone - higher
- * levels will deallocate the atm device for us
+/* called when device is being shutकरोwn, and all vcc's are gone - higher
+ * levels will deallocate the aपंचांग device क्रम us
  */
-static void lanai_dev_close(struct atm_dev *atmdev)
-{
-	struct lanai_dev *lanai = (struct lanai_dev *) atmdev->dev_data;
-	if (lanai->base==NULL)
-		return;
-	printk(KERN_INFO DEV_LABEL "(itf %d): shutting down interface\n",
+अटल व्योम lanai_dev_बंद(काष्ठा aपंचांग_dev *aपंचांगdev)
+अणु
+	काष्ठा lanai_dev *lanai = (काष्ठा lanai_dev *) aपंचांगdev->dev_data;
+	अगर (lanai->base==शून्य)
+		वापस;
+	prपूर्णांकk(KERN_INFO DEV_LABEL "(itf %d): shutting down interface\n",
 	    lanai->number);
-	lanai_timed_poll_stop(lanai);
-#ifdef USE_POWERDOWN
-	lanai->conf1 = reg_read(lanai, Config1_Reg) & ~CONFIG1_POWERDOWN;
-	conf1_write(lanai);
-#endif
-	intr_disable(lanai, INT_ALL);
-	free_irq(lanai->pci->irq, lanai);
+	lanai_समयd_poll_stop(lanai);
+#अगर_घोषित USE_POWERDOWN
+	lanai->conf1 = reg_पढ़ो(lanai, Config1_Reg) & ~CONFIG1_POWERDOWN;
+	conf1_ग_लिखो(lanai);
+#पूर्ण_अगर
+	पूर्णांकr_disable(lanai, INT_ALL);
+	मुक्त_irq(lanai->pci->irq, lanai);
 	reset_board(lanai);
-#ifdef USE_POWERDOWN
+#अगर_घोषित USE_POWERDOWN
 	lanai->conf1 |= CONFIG1_POWERDOWN;
-	conf1_write(lanai);
-#endif
+	conf1_ग_लिखो(lanai);
+#पूर्ण_अगर
 	pci_disable_device(lanai->pci);
 	vcc_table_deallocate(lanai);
 	service_buffer_deallocate(lanai);
 	iounmap(lanai->base);
-	kfree(lanai);
-}
+	kमुक्त(lanai);
+पूर्ण
 
-/* close a vcc */
-static void lanai_close(struct atm_vcc *atmvcc)
-{
-	struct lanai_vcc *lvcc = (struct lanai_vcc *) atmvcc->dev_data;
-	struct lanai_dev *lanai = (struct lanai_dev *) atmvcc->dev->dev_data;
-	if (lvcc == NULL)
-		return;
-	clear_bit(ATM_VF_READY, &atmvcc->flags);
-	clear_bit(ATM_VF_PARTIAL, &atmvcc->flags);
-	if (lvcc->rx.atmvcc == atmvcc) {
-		lanai_shutdown_rx_vci(lvcc);
-		if (atmvcc->qos.aal == ATM_AAL0) {
-			if (--lanai->naal0 <= 0)
-				aal0_buffer_free(lanai);
-		} else
+/* बंद a vcc */
+अटल व्योम lanai_बंद(काष्ठा aपंचांग_vcc *aपंचांगvcc)
+अणु
+	काष्ठा lanai_vcc *lvcc = (काष्ठा lanai_vcc *) aपंचांगvcc->dev_data;
+	काष्ठा lanai_dev *lanai = (काष्ठा lanai_dev *) aपंचांगvcc->dev->dev_data;
+	अगर (lvcc == शून्य)
+		वापस;
+	clear_bit(ATM_VF_READY, &aपंचांगvcc->flags);
+	clear_bit(ATM_VF_PARTIAL, &aपंचांगvcc->flags);
+	अगर (lvcc->rx.aपंचांगvcc == aपंचांगvcc) अणु
+		lanai_shutकरोwn_rx_vci(lvcc);
+		अगर (aपंचांगvcc->qos.aal == ATM_AAL0) अणु
+			अगर (--lanai->naal0 <= 0)
+				aal0_buffer_मुक्त(lanai);
+		पूर्ण अन्यथा
 			lanai_buf_deallocate(&lvcc->rx.buf, lanai->pci);
-		lvcc->rx.atmvcc = NULL;
-	}
-	if (lvcc->tx.atmvcc == atmvcc) {
-		if (atmvcc == lanai->cbrvcc) {
-			if (lvcc->vbase != NULL)
-				lanai_cbr_shutdown(lanai);
-			lanai->cbrvcc = NULL;
-		}
-		lanai_shutdown_tx_vci(lanai, lvcc);
+		lvcc->rx.aपंचांगvcc = शून्य;
+	पूर्ण
+	अगर (lvcc->tx.aपंचांगvcc == aपंचांगvcc) अणु
+		अगर (aपंचांगvcc == lanai->cbrvcc) अणु
+			अगर (lvcc->vbase != शून्य)
+				lanai_cbr_shutकरोwn(lanai);
+			lanai->cbrvcc = शून्य;
+		पूर्ण
+		lanai_shutकरोwn_tx_vci(lanai, lvcc);
 		lanai_buf_deallocate(&lvcc->tx.buf, lanai->pci);
-		lvcc->tx.atmvcc = NULL;
-	}
-	if (--lvcc->nref == 0) {
+		lvcc->tx.aपंचांगvcc = शून्य;
+	पूर्ण
+	अगर (--lvcc->nref == 0) अणु
 		host_vcc_unbind(lanai, lvcc);
-		kfree(lvcc);
-	}
-	atmvcc->dev_data = NULL;
-	clear_bit(ATM_VF_ADDR, &atmvcc->flags);
-}
+		kमुक्त(lvcc);
+	पूर्ण
+	aपंचांगvcc->dev_data = शून्य;
+	clear_bit(ATM_VF_ADDR, &aपंचांगvcc->flags);
+पूर्ण
 
-/* open a vcc on the card to vpi/vci */
-static int lanai_open(struct atm_vcc *atmvcc)
-{
-	struct lanai_dev *lanai;
-	struct lanai_vcc *lvcc;
-	int result = 0;
-	int vci = atmvcc->vci;
-	short vpi = atmvcc->vpi;
-	/* we don't support partial open - it's not really useful anyway */
-	if ((test_bit(ATM_VF_PARTIAL, &atmvcc->flags)) ||
+/* खोलो a vcc on the card to vpi/vci */
+अटल पूर्णांक lanai_खोलो(काष्ठा aपंचांग_vcc *aपंचांगvcc)
+अणु
+	काष्ठा lanai_dev *lanai;
+	काष्ठा lanai_vcc *lvcc;
+	पूर्णांक result = 0;
+	पूर्णांक vci = aपंचांगvcc->vci;
+	लघु vpi = aपंचांगvcc->vpi;
+	/* we करोn't support partial open - it's not really useful anyway */
+	अगर ((test_bit(ATM_VF_PARTIAL, &aपंचांगvcc->flags)) ||
 	    (vpi == ATM_VPI_UNSPEC) || (vci == ATM_VCI_UNSPEC))
-		return -EINVAL;
-	lanai = (struct lanai_dev *) atmvcc->dev->dev_data;
-	result = lanai_normalize_ci(lanai, atmvcc, &vpi, &vci);
-	if (unlikely(result != 0))
-		goto out;
-	set_bit(ATM_VF_ADDR, &atmvcc->flags);
-	if (atmvcc->qos.aal != ATM_AAL0 && atmvcc->qos.aal != ATM_AAL5)
-		return -EINVAL;
+		वापस -EINVAL;
+	lanai = (काष्ठा lanai_dev *) aपंचांगvcc->dev->dev_data;
+	result = lanai_normalize_ci(lanai, aपंचांगvcc, &vpi, &vci);
+	अगर (unlikely(result != 0))
+		जाओ out;
+	set_bit(ATM_VF_ADDR, &aपंचांगvcc->flags);
+	अगर (aपंचांगvcc->qos.aal != ATM_AAL0 && aपंचांगvcc->qos.aal != ATM_AAL5)
+		वापस -EINVAL;
 	DPRINTK(DEV_LABEL "(itf %d): open %d.%d\n", lanai->number,
-	    (int) vpi, vci);
+	    (पूर्णांक) vpi, vci);
 	lvcc = lanai->vccs[vci];
-	if (lvcc == NULL) {
+	अगर (lvcc == शून्य) अणु
 		lvcc = new_lanai_vcc();
-		if (unlikely(lvcc == NULL))
-			return -ENOMEM;
-		atmvcc->dev_data = lvcc;
-	}
+		अगर (unlikely(lvcc == शून्य))
+			वापस -ENOMEM;
+		aपंचांगvcc->dev_data = lvcc;
+	पूर्ण
 	lvcc->nref++;
-	if (atmvcc->qos.rxtp.traffic_class != ATM_NONE) {
-		APRINTK(lvcc->rx.atmvcc == NULL, "rx.atmvcc!=NULL, vci=%d\n",
+	अगर (aपंचांगvcc->qos.rxtp.traffic_class != ATM_NONE) अणु
+		APRINTK(lvcc->rx.aपंचांगvcc == शून्य, "rx.atmvcc!=NULL, vci=%d\n",
 		    vci);
-		if (atmvcc->qos.aal == ATM_AAL0) {
-			if (lanai->naal0 == 0)
+		अगर (aपंचांगvcc->qos.aal == ATM_AAL0) अणु
+			अगर (lanai->naal0 == 0)
 				result = aal0_buffer_allocate(lanai);
-		} else
+		पूर्ण अन्यथा
 			result = lanai_setup_rx_vci_aal5(
-			    lanai, lvcc, &atmvcc->qos);
-		if (unlikely(result != 0))
-			goto out_free;
-		lvcc->rx.atmvcc = atmvcc;
+			    lanai, lvcc, &aपंचांगvcc->qos);
+		अगर (unlikely(result != 0))
+			जाओ out_मुक्त;
+		lvcc->rx.aपंचांगvcc = aपंचांगvcc;
 		lvcc->stats.rx_nomem = 0;
 		lvcc->stats.x.aal5.rx_badlen = 0;
 		lvcc->stats.x.aal5.service_trash = 0;
 		lvcc->stats.x.aal5.service_stream = 0;
 		lvcc->stats.x.aal5.service_rxcrc = 0;
-		if (atmvcc->qos.aal == ATM_AAL0)
+		अगर (aपंचांगvcc->qos.aal == ATM_AAL0)
 			lanai->naal0++;
-	}
-	if (atmvcc->qos.txtp.traffic_class != ATM_NONE) {
-		APRINTK(lvcc->tx.atmvcc == NULL, "tx.atmvcc!=NULL, vci=%d\n",
+	पूर्ण
+	अगर (aपंचांगvcc->qos.txtp.traffic_class != ATM_NONE) अणु
+		APRINTK(lvcc->tx.aपंचांगvcc == शून्य, "tx.atmvcc!=NULL, vci=%d\n",
 		    vci);
-		result = lanai_setup_tx_vci(lanai, lvcc, &atmvcc->qos);
-		if (unlikely(result != 0))
-			goto out_free;
-		lvcc->tx.atmvcc = atmvcc;
-		if (atmvcc->qos.txtp.traffic_class == ATM_CBR) {
-			APRINTK(lanai->cbrvcc == NULL,
+		result = lanai_setup_tx_vci(lanai, lvcc, &aपंचांगvcc->qos);
+		अगर (unlikely(result != 0))
+			जाओ out_मुक्त;
+		lvcc->tx.aपंचांगvcc = aपंचांगvcc;
+		अगर (aपंचांगvcc->qos.txtp.traffic_class == ATM_CBR) अणु
+			APRINTK(lanai->cbrvcc == शून्य,
 			    "cbrvcc!=NULL, vci=%d\n", vci);
-			lanai->cbrvcc = atmvcc;
-		}
-	}
+			lanai->cbrvcc = aपंचांगvcc;
+		पूर्ण
+	पूर्ण
 	host_vcc_bind(lanai, lvcc, vci);
 	/*
-	 * Make sure everything made it to RAM before we tell the card about
+	 * Make sure everything made it to RAM beक्रमe we tell the card about
 	 * the VCC
 	 */
 	wmb();
-	if (atmvcc == lvcc->rx.atmvcc)
+	अगर (aपंचांगvcc == lvcc->rx.aपंचांगvcc)
 		host_vcc_start_rx(lvcc);
-	if (atmvcc == lvcc->tx.atmvcc) {
+	अगर (aपंचांगvcc == lvcc->tx.aपंचांगvcc) अणु
 		host_vcc_start_tx(lvcc);
-		if (lanai->cbrvcc == atmvcc)
+		अगर (lanai->cbrvcc == aपंचांगvcc)
 			lanai_cbr_setup(lanai);
-	}
-	set_bit(ATM_VF_READY, &atmvcc->flags);
-	return 0;
-    out_free:
-	lanai_close(atmvcc);
+	पूर्ण
+	set_bit(ATM_VF_READY, &aपंचांगvcc->flags);
+	वापस 0;
+    out_मुक्त:
+	lanai_बंद(aपंचांगvcc);
     out:
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int lanai_send(struct atm_vcc *atmvcc, struct sk_buff *skb)
-{
-	struct lanai_vcc *lvcc = (struct lanai_vcc *) atmvcc->dev_data;
-	struct lanai_dev *lanai = (struct lanai_dev *) atmvcc->dev->dev_data;
-	unsigned long flags;
-	if (unlikely(lvcc == NULL || lvcc->vbase == NULL ||
-	      lvcc->tx.atmvcc != atmvcc))
-		goto einval;
-#ifdef DEBUG
-	if (unlikely(skb == NULL)) {
-		DPRINTK("lanai_send: skb==NULL for vci=%d\n", atmvcc->vci);
-		goto einval;
-	}
-	if (unlikely(lanai == NULL)) {
-		DPRINTK("lanai_send: lanai==NULL for vci=%d\n", atmvcc->vci);
-		goto einval;
-	}
-#endif
-	ATM_SKB(skb)->vcc = atmvcc;
-	switch (atmvcc->qos.aal) {
-		case ATM_AAL5:
-			read_lock_irqsave(&vcc_sklist_lock, flags);
+अटल पूर्णांक lanai_send(काष्ठा aपंचांग_vcc *aपंचांगvcc, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा lanai_vcc *lvcc = (काष्ठा lanai_vcc *) aपंचांगvcc->dev_data;
+	काष्ठा lanai_dev *lanai = (काष्ठा lanai_dev *) aपंचांगvcc->dev->dev_data;
+	अचिन्हित दीर्घ flags;
+	अगर (unlikely(lvcc == शून्य || lvcc->vbase == शून्य ||
+	      lvcc->tx.aपंचांगvcc != aपंचांगvcc))
+		जाओ einval;
+#अगर_घोषित DEBUG
+	अगर (unlikely(skb == शून्य)) अणु
+		DPRINTK("lanai_send: skb==NULL for vci=%d\n", aपंचांगvcc->vci);
+		जाओ einval;
+	पूर्ण
+	अगर (unlikely(lanai == शून्य)) अणु
+		DPRINTK("lanai_send: lanai==NULL for vci=%d\n", aपंचांगvcc->vci);
+		जाओ einval;
+	पूर्ण
+#पूर्ण_अगर
+	ATM_SKB(skb)->vcc = aपंचांगvcc;
+	चयन (aपंचांगvcc->qos.aal) अणु
+		हाल ATM_AAL5:
+			पढ़ो_lock_irqsave(&vcc_sklist_lock, flags);
 			vcc_tx_aal5(lanai, lvcc, skb);
-			read_unlock_irqrestore(&vcc_sklist_lock, flags);
-			return 0;
-		case ATM_AAL0:
-			if (unlikely(skb->len != ATM_CELL_SIZE-1))
-				goto einval;
+			पढ़ो_unlock_irqrestore(&vcc_sklist_lock, flags);
+			वापस 0;
+		हाल ATM_AAL0:
+			अगर (unlikely(skb->len != ATM_CELL_SIZE-1))
+				जाओ einval;
   /* NOTE - this next line is technically invalid - we haven't unshared skb */
 			cpu_to_be32s((u32 *) skb->data);
-			read_lock_irqsave(&vcc_sklist_lock, flags);
+			पढ़ो_lock_irqsave(&vcc_sklist_lock, flags);
 			vcc_tx_aal0(lanai, lvcc, skb);
-			read_unlock_irqrestore(&vcc_sklist_lock, flags);
-			return 0;
-	}
-	DPRINTK("lanai_send: bad aal=%d on vci=%d\n", (int) atmvcc->qos.aal,
-	    atmvcc->vci);
+			पढ़ो_unlock_irqrestore(&vcc_sklist_lock, flags);
+			वापस 0;
+	पूर्ण
+	DPRINTK("lanai_send: bad aal=%d on vci=%d\n", (पूर्णांक) aपंचांगvcc->qos.aal,
+	    aपंचांगvcc->vci);
     einval:
-	lanai_free_skb(atmvcc, skb);
-	return -EINVAL;
-}
+	lanai_मुक्त_skb(aपंचांगvcc, skb);
+	वापस -EINVAL;
+पूर्ण
 
-static int lanai_change_qos(struct atm_vcc *atmvcc,
-	/*const*/ struct atm_qos *qos, int flags)
-{
-	return -EBUSY;		/* TODO: need to write this */
-}
+अटल पूर्णांक lanai_change_qos(काष्ठा aपंचांग_vcc *aपंचांगvcc,
+	/*स्थिर*/ काष्ठा aपंचांग_qos *qos, पूर्णांक flags)
+अणु
+	वापस -EBUSY;		/* TODO: need to ग_लिखो this */
+पूर्ण
 
-#ifndef CONFIG_PROC_FS
-#define lanai_proc_read NULL
-#else
-static int lanai_proc_read(struct atm_dev *atmdev, loff_t *pos, char *page)
-{
-	struct lanai_dev *lanai = (struct lanai_dev *) atmdev->dev_data;
+#अगर_अघोषित CONFIG_PROC_FS
+#घोषणा lanai_proc_पढ़ो शून्य
+#अन्यथा
+अटल पूर्णांक lanai_proc_पढ़ो(काष्ठा aपंचांग_dev *aपंचांगdev, loff_t *pos, अक्षर *page)
+अणु
+	काष्ठा lanai_dev *lanai = (काष्ठा lanai_dev *) aपंचांगdev->dev_data;
 	loff_t left = *pos;
-	struct lanai_vcc *lvcc;
-	if (left-- == 0)
-		return sprintf(page, DEV_LABEL "(itf %d): chip=LANAI%s, "
+	काष्ठा lanai_vcc *lvcc;
+	अगर (left-- == 0)
+		वापस प्र_लिखो(page, DEV_LABEL "(itf %d): chip=LANAI%s, "
 		    "serial=%u, magic=0x%08X, num_vci=%d\n",
-		    atmdev->number, lanai->type==lanai2 ? "2" : "HB",
-		    (unsigned int) lanai->serialno,
-		    (unsigned int) lanai->magicno, lanai->num_vci);
-	if (left-- == 0)
-		return sprintf(page, "revision: board=%d, pci_if=%d\n",
-		    lanai->board_rev, (int) lanai->pci->revision);
-	if (left-- == 0)
-		return sprintf(page, "EEPROM ESI: %pM\n",
+		    aपंचांगdev->number, lanai->type==lanai2 ? "2" : "HB",
+		    (अचिन्हित पूर्णांक) lanai->serialno,
+		    (अचिन्हित पूर्णांक) lanai->magicno, lanai->num_vci);
+	अगर (left-- == 0)
+		वापस प्र_लिखो(page, "revision: board=%d, pci_if=%d\n",
+		    lanai->board_rev, (पूर्णांक) lanai->pci->revision);
+	अगर (left-- == 0)
+		वापस प्र_लिखो(page, "EEPROM ESI: %pM\n",
 		    &lanai->eeprom[EEPROM_MAC]);
-	if (left-- == 0)
-		return sprintf(page, "status: SOOL=%d, LOCD=%d, LED=%d, "
+	अगर (left-- == 0)
+		वापस प्र_लिखो(page, "status: SOOL=%d, LOCD=%d, LED=%d, "
 		    "GPIN=%d\n", (lanai->status & STATUS_SOOL) ? 1 : 0,
 		    (lanai->status & STATUS_LOCD) ? 1 : 0,
 		    (lanai->status & STATUS_LED) ? 1 : 0,
 		    (lanai->status & STATUS_GPIN) ? 1 : 0);
-	if (left-- == 0)
-		return sprintf(page, "global buffer sizes: service=%zu, "
+	अगर (left-- == 0)
+		वापस प्र_लिखो(page, "global buffer sizes: service=%zu, "
 		    "aal0_rx=%zu\n", lanai_buf_size(&lanai->service),
 		    lanai->naal0 ? lanai_buf_size(&lanai->aal0buf) : 0);
-	if (left-- == 0) {
+	अगर (left-- == 0) अणु
 		get_statistics(lanai);
-		return sprintf(page, "cells in error: overflow=%u, "
+		वापस प्र_लिखो(page, "cells in error: overflow=%u, "
 		    "closed_vci=%u, bad_HEC=%u, rx_fifo=%u\n",
 		    lanai->stats.ovfl_trash, lanai->stats.vci_trash,
-		    lanai->stats.hec_err, lanai->stats.atm_ovfl);
-	}
-	if (left-- == 0)
-		return sprintf(page, "PCI errors: parity_detect=%u, "
+		    lanai->stats.hec_err, lanai->stats.aपंचांग_ovfl);
+	पूर्ण
+	अगर (left-- == 0)
+		वापस प्र_लिखो(page, "PCI errors: parity_detect=%u, "
 		    "master_abort=%u, master_target_abort=%u,\n",
 		    lanai->stats.pcierr_parity_detect,
 		    lanai->stats.pcierr_serr_set,
-		    lanai->stats.pcierr_m_target_abort);
-	if (left-- == 0)
-		return sprintf(page, "            slave_target_abort=%u, "
-		    "master_parity=%u\n", lanai->stats.pcierr_s_target_abort,
+		    lanai->stats.pcierr_m_target_पात);
+	अगर (left-- == 0)
+		वापस प्र_लिखो(page, "            slave_target_abort=%u, "
+		    "master_parity=%u\n", lanai->stats.pcierr_s_target_पात,
 		    lanai->stats.pcierr_master_parity);
-	if (left-- == 0)
-		return sprintf(page, "                     no_tx=%u, "
+	अगर (left-- == 0)
+		वापस प्र_लिखो(page, "                     no_tx=%u, "
 		    "no_rx=%u, bad_rx_aal=%u\n", lanai->stats.service_norx,
 		    lanai->stats.service_notx,
 		    lanai->stats.service_rxnotaal5);
-	if (left-- == 0)
-		return sprintf(page, "resets: dma=%u, card=%u\n",
+	अगर (left-- == 0)
+		वापस प्र_लिखो(page, "resets: dma=%u, card=%u\n",
 		    lanai->stats.dma_reenable, lanai->stats.card_reset);
-	/* At this point, "left" should be the VCI we're looking for */
-	read_lock(&vcc_sklist_lock);
-	for (; ; left++) {
-		if (left >= NUM_VCI) {
+	/* At this poपूर्णांक, "left" should be the VCI we're looking क्रम */
+	पढ़ो_lock(&vcc_sklist_lock);
+	क्रम (; ; left++) अणु
+		अगर (left >= NUM_VCI) अणु
 			left = 0;
-			goto out;
-		}
-		if ((lvcc = lanai->vccs[left]) != NULL)
-			break;
+			जाओ out;
+		पूर्ण
+		अगर ((lvcc = lanai->vccs[left]) != शून्य)
+			अवरोध;
 		(*pos)++;
-	}
-	/* Note that we re-use "left" here since we're done with it */
-	left = sprintf(page, "VCI %4d: nref=%d, rx_nomem=%u",  (vci_t) left,
+	पूर्ण
+	/* Note that we re-use "left" here since we're करोne with it */
+	left = प्र_लिखो(page, "VCI %4d: nref=%d, rx_nomem=%u",  (vci_t) left,
 	    lvcc->nref, lvcc->stats.rx_nomem);
-	if (lvcc->rx.atmvcc != NULL) {
-		left += sprintf(&page[left], ",\n          rx_AAL=%d",
-		    lvcc->rx.atmvcc->qos.aal == ATM_AAL5 ? 5 : 0);
-		if (lvcc->rx.atmvcc->qos.aal == ATM_AAL5)
-			left += sprintf(&page[left], ", rx_buf_size=%zu, "
+	अगर (lvcc->rx.aपंचांगvcc != शून्य) अणु
+		left += प्र_लिखो(&page[left], ",\n          rx_AAL=%d",
+		    lvcc->rx.aपंचांगvcc->qos.aal == ATM_AAL5 ? 5 : 0);
+		अगर (lvcc->rx.aपंचांगvcc->qos.aal == ATM_AAL5)
+			left += प्र_लिखो(&page[left], ", rx_buf_size=%zu, "
 			    "rx_bad_len=%u,\n          rx_service_trash=%u, "
 			    "rx_service_stream=%u, rx_bad_crc=%u",
 			    lanai_buf_size(&lvcc->rx.buf),
@@ -2517,84 +2518,84 @@ static int lanai_proc_read(struct atm_dev *atmdev, loff_t *pos, char *page)
 			    lvcc->stats.x.aal5.service_trash,
 			    lvcc->stats.x.aal5.service_stream,
 			    lvcc->stats.x.aal5.service_rxcrc);
-	}
-	if (lvcc->tx.atmvcc != NULL)
-		left += sprintf(&page[left], ",\n          tx_AAL=%d, "
+	पूर्ण
+	अगर (lvcc->tx.aपंचांगvcc != शून्य)
+		left += प्र_लिखो(&page[left], ",\n          tx_AAL=%d, "
 		    "tx_buf_size=%zu, tx_qos=%cBR, tx_backlogged=%c",
-		    lvcc->tx.atmvcc->qos.aal == ATM_AAL5 ? 5 : 0,
+		    lvcc->tx.aपंचांगvcc->qos.aal == ATM_AAL5 ? 5 : 0,
 		    lanai_buf_size(&lvcc->tx.buf),
-		    lvcc->tx.atmvcc == lanai->cbrvcc ? 'C' : 'U',
+		    lvcc->tx.aपंचांगvcc == lanai->cbrvcc ? 'C' : 'U',
 		    vcc_is_backlogged(lvcc) ? 'Y' : 'N');
 	page[left++] = '\n';
 	page[left] = '\0';
     out:
-	read_unlock(&vcc_sklist_lock);
-	return left;
-}
-#endif /* CONFIG_PROC_FS */
+	पढ़ो_unlock(&vcc_sklist_lock);
+	वापस left;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PROC_FS */
 
 /* -------------------- HOOKS: */
 
-static const struct atmdev_ops ops = {
-	.dev_close	= lanai_dev_close,
-	.open		= lanai_open,
-	.close		= lanai_close,
+अटल स्थिर काष्ठा aपंचांगdev_ops ops = अणु
+	.dev_बंद	= lanai_dev_बंद,
+	.खोलो		= lanai_खोलो,
+	.बंद		= lanai_बंद,
 	.send		= lanai_send,
-	.phy_put	= NULL,
-	.phy_get	= NULL,
+	.phy_put	= शून्य,
+	.phy_get	= शून्य,
 	.change_qos	= lanai_change_qos,
-	.proc_read	= lanai_proc_read,
+	.proc_पढ़ो	= lanai_proc_पढ़ो,
 	.owner		= THIS_MODULE
-};
+पूर्ण;
 
 /* initialize one probed card */
-static int lanai_init_one(struct pci_dev *pci,
-			  const struct pci_device_id *ident)
-{
-	struct lanai_dev *lanai;
-	struct atm_dev *atmdev;
-	int result;
+अटल पूर्णांक lanai_init_one(काष्ठा pci_dev *pci,
+			  स्थिर काष्ठा pci_device_id *ident)
+अणु
+	काष्ठा lanai_dev *lanai;
+	काष्ठा aपंचांग_dev *aपंचांगdev;
+	पूर्णांक result;
 
-	lanai = kzalloc(sizeof(*lanai), GFP_KERNEL);
-	if (lanai == NULL) {
-		printk(KERN_ERR DEV_LABEL
+	lanai = kzalloc(माप(*lanai), GFP_KERNEL);
+	अगर (lanai == शून्य) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL
 		       ": couldn't allocate dev_data structure!\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	atmdev = atm_dev_register(DEV_LABEL, &pci->dev, &ops, -1, NULL);
-	if (atmdev == NULL) {
-		printk(KERN_ERR DEV_LABEL
+	aपंचांगdev = aपंचांग_dev_रेजिस्टर(DEV_LABEL, &pci->dev, &ops, -1, शून्य);
+	अगर (aपंचांगdev == शून्य) अणु
+		prपूर्णांकk(KERN_ERR DEV_LABEL
 		    ": couldn't register atm device!\n");
-		kfree(lanai);
-		return -EBUSY;
-	}
+		kमुक्त(lanai);
+		वापस -EBUSY;
+	पूर्ण
 
-	atmdev->dev_data = lanai;
+	aपंचांगdev->dev_data = lanai;
 	lanai->pci = pci;
-	lanai->type = (enum lanai_type) ident->device;
+	lanai->type = (क्रमागत lanai_type) ident->device;
 
-	result = lanai_dev_open(atmdev);
-	if (result != 0) {
+	result = lanai_dev_खोलो(aपंचांगdev);
+	अगर (result != 0) अणु
 		DPRINTK("lanai_start() failed, err=%d\n", -result);
-		atm_dev_deregister(atmdev);
-		kfree(lanai);
-	}
-	return result;
-}
+		aपंचांग_dev_deरेजिस्टर(aपंचांगdev);
+		kमुक्त(lanai);
+	पूर्ण
+	वापस result;
+पूर्ण
 
-static const struct pci_device_id lanai_pci_tbl[] = {
-	{ PCI_VDEVICE(EF, PCI_DEVICE_ID_EF_ATM_LANAI2) },
-	{ PCI_VDEVICE(EF, PCI_DEVICE_ID_EF_ATM_LANAIHB) },
-	{ 0, }	/* terminal entry */
-};
+अटल स्थिर काष्ठा pci_device_id lanai_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(EF, PCI_DEVICE_ID_EF_ATM_LANAI2) पूर्ण,
+	अणु PCI_VDEVICE(EF, PCI_DEVICE_ID_EF_ATM_LANAIHB) पूर्ण,
+	अणु 0, पूर्ण	/* terminal entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, lanai_pci_tbl);
 
-static struct pci_driver lanai_driver = {
+अटल काष्ठा pci_driver lanai_driver = अणु
 	.name     = DEV_LABEL,
 	.id_table = lanai_pci_tbl,
 	.probe    = lanai_init_one,
-};
+पूर्ण;
 
 module_pci_driver(lanai_driver);
 

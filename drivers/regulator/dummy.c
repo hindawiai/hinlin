@@ -1,89 +1,90 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * dummy.c
  *
  * Copyright 2010 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  *
- * This is useful for systems with mixed controllable and
- * non-controllable regulators, as well as for allowing testing on
- * systems with no controllable regulators.
+ * This is useful क्रम प्रणालीs with mixed controllable and
+ * non-controllable regulators, as well as क्रम allowing testing on
+ * प्रणालीs with no controllable regulators.
  */
 
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
 
-#include "dummy.h"
+#समावेश "dummy.h"
 
-struct regulator_dev *dummy_regulator_rdev;
+काष्ठा regulator_dev *dummy_regulator_rdev;
 
-static const struct regulator_init_data dummy_initdata = {
-	.constraints = {
+अटल स्थिर काष्ठा regulator_init_data dummy_initdata = अणु
+	.स्थिरraपूर्णांकs = अणु
 		.always_on = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct regulator_ops dummy_ops;
+अटल स्थिर काष्ठा regulator_ops dummy_ops;
 
-static const struct regulator_desc dummy_desc = {
+अटल स्थिर काष्ठा regulator_desc dummy_desc = अणु
 	.name = "regulator-dummy",
 	.id = -1,
 	.type = REGULATOR_VOLTAGE,
 	.owner = THIS_MODULE,
 	.ops = &dummy_ops,
-};
+पूर्ण;
 
-static int dummy_regulator_probe(struct platform_device *pdev)
-{
-	struct regulator_config config = { };
-	int ret;
+अटल पूर्णांक dummy_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा regulator_config config = अणु पूर्ण;
+	पूर्णांक ret;
 
 	config.dev = &pdev->dev;
 	config.init_data = &dummy_initdata;
 
-	dummy_regulator_rdev = regulator_register(&dummy_desc, &config);
-	if (IS_ERR(dummy_regulator_rdev)) {
+	dummy_regulator_rdev = regulator_रेजिस्टर(&dummy_desc, &config);
+	अगर (IS_ERR(dummy_regulator_rdev)) अणु
 		ret = PTR_ERR(dummy_regulator_rdev);
 		pr_err("Failed to register regulator: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver dummy_regulator_driver = {
+अटल काष्ठा platक्रमm_driver dummy_regulator_driver = अणु
 	.probe		= dummy_regulator_probe,
-	.driver		= {
+	.driver		= अणु
 		.name		= "reg-dummy",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device *dummy_pdev;
+अटल काष्ठा platक्रमm_device *dummy_pdev;
 
-void __init regulator_dummy_init(void)
-{
-	int ret;
+व्योम __init regulator_dummy_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	dummy_pdev = platform_device_alloc("reg-dummy", -1);
-	if (!dummy_pdev) {
+	dummy_pdev = platक्रमm_device_alloc("reg-dummy", -1);
+	अगर (!dummy_pdev) अणु
 		pr_err("Failed to allocate dummy regulator device\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ret = platform_device_add(dummy_pdev);
-	if (ret != 0) {
+	ret = platक्रमm_device_add(dummy_pdev);
+	अगर (ret != 0) अणु
 		pr_err("Failed to register dummy regulator device: %d\n", ret);
-		platform_device_put(dummy_pdev);
-		return;
-	}
+		platक्रमm_device_put(dummy_pdev);
+		वापस;
+	पूर्ण
 
-	ret = platform_driver_register(&dummy_regulator_driver);
-	if (ret != 0) {
+	ret = platक्रमm_driver_रेजिस्टर(&dummy_regulator_driver);
+	अगर (ret != 0) अणु
 		pr_err("Failed to register dummy regulator driver: %d\n", ret);
-		platform_device_unregister(dummy_pdev);
-	}
-}
+		platक्रमm_device_unरेजिस्टर(dummy_pdev);
+	पूर्ण
+पूर्ण

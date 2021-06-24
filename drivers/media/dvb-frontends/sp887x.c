@@ -1,599 +1,600 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
-   Driver for the Spase sp887x demodulator
+   Driver क्रम the Spase sp887x demodulator
 */
 
 /*
- * This driver needs external firmware. Please use the command
+ * This driver needs बाह्यal firmware. Please use the command
  * "<kerneldir>/scripts/get_dvb_firmware sp887x" to
- * download/extract it, and then copy it to /usr/lib/hotplug/firmware
+ * करोwnload/extract it, and then copy it to /usr/lib/hotplug/firmware
  * or /lib/firmware (depending on configuration of firmware hotplug).
  */
-#define SP887X_DEFAULT_FIRMWARE "dvb-fe-sp887x.fw"
+#घोषणा SP887X_DEFAULT_FIRMWARE "dvb-fe-sp887x.fw"
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/firmware.h>
-#include <linux/string.h>
-#include <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
 
-#include <media/dvb_frontend.h>
-#include "sp887x.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "sp887x.h"
 
 
-struct sp887x_state {
-	struct i2c_adapter* i2c;
-	const struct sp887x_config* config;
-	struct dvb_frontend frontend;
+काष्ठा sp887x_state अणु
+	काष्ठा i2c_adapter* i2c;
+	स्थिर काष्ठा sp887x_config* config;
+	काष्ठा dvb_frontend frontend;
 
-	/* demodulator private data */
+	/* demodulator निजी data */
 	u8 initialised:1;
-};
+पूर्ण;
 
-static int debug;
-#define dprintk(args...) \
-	do { \
-		if (debug) printk(KERN_DEBUG "sp887x: " args); \
-	} while (0)
+अटल पूर्णांक debug;
+#घोषणा dprपूर्णांकk(args...) \
+	करो अणु \
+		अगर (debug) prपूर्णांकk(KERN_DEBUG "sp887x: " args); \
+	पूर्ण जबतक (0)
 
-static int i2c_writebytes (struct sp887x_state* state, u8 *buf, u8 len)
-{
-	struct i2c_msg msg = { .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = len };
-	int err;
+अटल पूर्णांक i2c_ग_लिखोbytes (काष्ठा sp887x_state* state, u8 *buf, u8 len)
+अणु
+	काष्ठा i2c_msg msg = अणु .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = len पूर्ण;
+	पूर्णांक err;
 
-	if ((err = i2c_transfer (state->i2c, &msg, 1)) != 1) {
-		printk ("%s: i2c write error (addr %02x, err == %i)\n",
+	अगर ((err = i2c_transfer (state->i2c, &msg, 1)) != 1) अणु
+		prपूर्णांकk ("%s: i2c write error (addr %02x, err == %i)\n",
 			__func__, state->config->demod_address, err);
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp887x_writereg (struct sp887x_state* state, u16 reg, u16 data)
-{
-	u8 b0 [] = { reg >> 8 , reg & 0xff, data >> 8, data & 0xff };
-	struct i2c_msg msg = { .addr = state->config->demod_address, .flags = 0, .buf = b0, .len = 4 };
-	int ret;
+अटल पूर्णांक sp887x_ग_लिखोreg (काष्ठा sp887x_state* state, u16 reg, u16 data)
+अणु
+	u8 b0 [] = अणु reg >> 8 , reg & 0xff, data >> 8, data & 0xff पूर्ण;
+	काष्ठा i2c_msg msg = अणु .addr = state->config->demod_address, .flags = 0, .buf = b0, .len = 4 पूर्ण;
+	पूर्णांक ret;
 
-	if ((ret = i2c_transfer(state->i2c, &msg, 1)) != 1) {
+	अगर ((ret = i2c_transfer(state->i2c, &msg, 1)) != 1) अणु
 		/*
-		 *  in case of soft reset we ignore ACK errors...
+		 *  in हाल of soft reset we ignore ACK errors...
 		 */
-		if (!(reg == 0xf1a && data == 0x000 &&
+		अगर (!(reg == 0xf1a && data == 0x000 &&
 			(ret == -EREMOTEIO || ret == -EFAULT)))
-		{
-			printk("%s: writereg error (reg %03x, data %03x, ret == %i)\n",
+		अणु
+			prपूर्णांकk("%s: writereg error (reg %03x, data %03x, ret == %i)\n",
 			       __func__, reg & 0xffff, data & 0xffff, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp887x_readreg (struct sp887x_state* state, u16 reg)
-{
-	u8 b0 [] = { reg >> 8 , reg & 0xff };
+अटल पूर्णांक sp887x_पढ़ोreg (काष्ठा sp887x_state* state, u16 reg)
+अणु
+	u8 b0 [] = अणु reg >> 8 , reg & 0xff पूर्ण;
 	u8 b1 [2];
-	int ret;
-	struct i2c_msg msg[] = {{ .addr = state->config->demod_address, .flags = 0, .buf = b0, .len = 2 },
-			 { .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b1, .len = 2 }};
+	पूर्णांक ret;
+	काष्ठा i2c_msg msg[] = अणुअणु .addr = state->config->demod_address, .flags = 0, .buf = b0, .len = 2 पूर्ण,
+			 अणु .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b1, .len = 2 पूर्णपूर्ण;
 
-	if ((ret = i2c_transfer(state->i2c, msg, 2)) != 2) {
-		printk("%s: readreg error (ret == %i)\n", __func__, ret);
-		return -1;
-	}
+	अगर ((ret = i2c_transfer(state->i2c, msg, 2)) != 2) अणु
+		prपूर्णांकk("%s: readreg error (ret == %i)\n", __func__, ret);
+		वापस -1;
+	पूर्ण
 
-	return (((b1[0] << 8) | b1[1]) & 0xfff);
-}
+	वापस (((b1[0] << 8) | b1[1]) & 0xfff);
+पूर्ण
 
-static void sp887x_microcontroller_stop (struct sp887x_state* state)
-{
-	dprintk("%s\n", __func__);
-	sp887x_writereg(state, 0xf08, 0x000);
-	sp887x_writereg(state, 0xf09, 0x000);
+अटल व्योम sp887x_microcontroller_stop (काष्ठा sp887x_state* state)
+अणु
+	dprपूर्णांकk("%s\n", __func__);
+	sp887x_ग_लिखोreg(state, 0xf08, 0x000);
+	sp887x_ग_लिखोreg(state, 0xf09, 0x000);
 
 	/* microcontroller STOP */
-	sp887x_writereg(state, 0xf00, 0x000);
-}
+	sp887x_ग_लिखोreg(state, 0xf00, 0x000);
+पूर्ण
 
-static void sp887x_microcontroller_start (struct sp887x_state* state)
-{
-	dprintk("%s\n", __func__);
-	sp887x_writereg(state, 0xf08, 0x000);
-	sp887x_writereg(state, 0xf09, 0x000);
+अटल व्योम sp887x_microcontroller_start (काष्ठा sp887x_state* state)
+अणु
+	dprपूर्णांकk("%s\n", __func__);
+	sp887x_ग_लिखोreg(state, 0xf08, 0x000);
+	sp887x_ग_लिखोreg(state, 0xf09, 0x000);
 
 	/* microcontroller START */
-	sp887x_writereg(state, 0xf00, 0x001);
-}
+	sp887x_ग_लिखोreg(state, 0xf00, 0x001);
+पूर्ण
 
-static void sp887x_setup_agc (struct sp887x_state* state)
-{
+अटल व्योम sp887x_setup_agc (काष्ठा sp887x_state* state)
+अणु
 	/* setup AGC parameters */
-	dprintk("%s\n", __func__);
-	sp887x_writereg(state, 0x33c, 0x054);
-	sp887x_writereg(state, 0x33b, 0x04c);
-	sp887x_writereg(state, 0x328, 0x000);
-	sp887x_writereg(state, 0x327, 0x005);
-	sp887x_writereg(state, 0x326, 0x001);
-	sp887x_writereg(state, 0x325, 0x001);
-	sp887x_writereg(state, 0x324, 0x001);
-	sp887x_writereg(state, 0x318, 0x050);
-	sp887x_writereg(state, 0x317, 0x3fe);
-	sp887x_writereg(state, 0x316, 0x001);
-	sp887x_writereg(state, 0x313, 0x005);
-	sp887x_writereg(state, 0x312, 0x002);
-	sp887x_writereg(state, 0x306, 0x000);
-	sp887x_writereg(state, 0x303, 0x000);
-}
+	dprपूर्णांकk("%s\n", __func__);
+	sp887x_ग_लिखोreg(state, 0x33c, 0x054);
+	sp887x_ग_लिखोreg(state, 0x33b, 0x04c);
+	sp887x_ग_लिखोreg(state, 0x328, 0x000);
+	sp887x_ग_लिखोreg(state, 0x327, 0x005);
+	sp887x_ग_लिखोreg(state, 0x326, 0x001);
+	sp887x_ग_लिखोreg(state, 0x325, 0x001);
+	sp887x_ग_लिखोreg(state, 0x324, 0x001);
+	sp887x_ग_लिखोreg(state, 0x318, 0x050);
+	sp887x_ग_लिखोreg(state, 0x317, 0x3fe);
+	sp887x_ग_लिखोreg(state, 0x316, 0x001);
+	sp887x_ग_लिखोreg(state, 0x313, 0x005);
+	sp887x_ग_लिखोreg(state, 0x312, 0x002);
+	sp887x_ग_लिखोreg(state, 0x306, 0x000);
+	sp887x_ग_लिखोreg(state, 0x303, 0x000);
+पूर्ण
 
-#define BLOCKSIZE 30
-#define FW_SIZE 0x4000
+#घोषणा BLOCKSIZE 30
+#घोषणा FW_SIZE 0x4000
 /*
- *  load firmware and setup MPEG interface...
+ *  load firmware and setup MPEG पूर्णांकerface...
  */
-static int sp887x_initial_setup (struct dvb_frontend* fe, const struct firmware *fw)
-{
-	struct sp887x_state* state = fe->demodulator_priv;
+अटल पूर्णांक sp887x_initial_setup (काष्ठा dvb_frontend* fe, स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
 	u8 buf [BLOCKSIZE + 2];
-	int i;
-	int fw_size = fw->size;
-	const unsigned char *mem = fw->data;
+	पूर्णांक i;
+	पूर्णांक fw_size = fw->size;
+	स्थिर अचिन्हित अक्षर *mem = fw->data;
 
-	dprintk("%s\n", __func__);
+	dprपूर्णांकk("%s\n", __func__);
 
 	/* ignore the first 10 bytes, then we expect 0x4000 bytes of firmware */
-	if (fw_size < FW_SIZE + 10)
-		return -ENODEV;
+	अगर (fw_size < FW_SIZE + 10)
+		वापस -ENODEV;
 
 	mem = fw->data + 10;
 
 	/* soft reset */
-	sp887x_writereg(state, 0xf1a, 0x000);
+	sp887x_ग_लिखोreg(state, 0xf1a, 0x000);
 
 	sp887x_microcontroller_stop (state);
 
-	printk ("%s: firmware upload... ", __func__);
+	prपूर्णांकk ("%s: firmware upload... ", __func__);
 
-	/* setup write pointer to -1 (end of memory) */
+	/* setup ग_लिखो poपूर्णांकer to -1 (end of memory) */
 	/* bit 0x8000 in address is set to enable 13bit mode */
-	sp887x_writereg(state, 0x8f08, 0x1fff);
+	sp887x_ग_लिखोreg(state, 0x8f08, 0x1fff);
 
-	/* dummy write (wrap around to start of memory) */
-	sp887x_writereg(state, 0x8f0a, 0x0000);
+	/* dummy ग_लिखो (wrap around to start of memory) */
+	sp887x_ग_लिखोreg(state, 0x8f0a, 0x0000);
 
-	for (i = 0; i < FW_SIZE; i += BLOCKSIZE) {
-		int c = BLOCKSIZE;
-		int err;
+	क्रम (i = 0; i < FW_SIZE; i += BLOCKSIZE) अणु
+		पूर्णांक c = BLOCKSIZE;
+		पूर्णांक err;
 
-		if (c > FW_SIZE - i)
+		अगर (c > FW_SIZE - i)
 			c = FW_SIZE - i;
 
 		/* bit 0x8000 in address is set to enable 13bit mode */
-		/* bit 0x4000 enables multibyte read/write transfers */
-		/* write register is 0xf0a */
+		/* bit 0x4000 enables multibyte पढ़ो/ग_लिखो transfers */
+		/* ग_लिखो रेजिस्टर is 0xf0a */
 		buf[0] = 0xcf;
 		buf[1] = 0x0a;
 
-		memcpy(&buf[2], mem + i, c);
+		स_नकल(&buf[2], mem + i, c);
 
-		if ((err = i2c_writebytes (state, buf, c+2)) < 0) {
-			printk ("failed.\n");
-			printk ("%s: i2c error (err == %i)\n", __func__, err);
-			return err;
-		}
-	}
+		अगर ((err = i2c_ग_लिखोbytes (state, buf, c+2)) < 0) अणु
+			prपूर्णांकk ("failed.\n");
+			prपूर्णांकk ("%s: i2c error (err == %i)\n", __func__, err);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	/* don't write RS bytes between packets */
-	sp887x_writereg(state, 0xc13, 0x001);
+	/* करोn't ग_लिखो RS bytes between packets */
+	sp887x_ग_लिखोreg(state, 0xc13, 0x001);
 
-	/* suppress clock if (!data_valid) */
-	sp887x_writereg(state, 0xc14, 0x000);
+	/* suppress घड़ी अगर (!data_valid) */
+	sp887x_ग_लिखोreg(state, 0xc14, 0x000);
 
-	/* setup MPEG interface... */
-	sp887x_writereg(state, 0xc1a, 0x872);
-	sp887x_writereg(state, 0xc1b, 0x001);
-	sp887x_writereg(state, 0xc1c, 0x000); /* parallel mode (serial mode == 1) */
-	sp887x_writereg(state, 0xc1a, 0x871);
+	/* setup MPEG पूर्णांकerface... */
+	sp887x_ग_लिखोreg(state, 0xc1a, 0x872);
+	sp887x_ग_लिखोreg(state, 0xc1b, 0x001);
+	sp887x_ग_लिखोreg(state, 0xc1c, 0x000); /* parallel mode (serial mode == 1) */
+	sp887x_ग_लिखोreg(state, 0xc1a, 0x871);
 
-	/* ADC mode, 2 for MT8872, 3 for SP8870/SP8871 */
-	sp887x_writereg(state, 0x301, 0x002);
+	/* ADC mode, 2 क्रम MT8872, 3 क्रम SP8870/SP8871 */
+	sp887x_ग_लिखोreg(state, 0x301, 0x002);
 
 	sp887x_setup_agc(state);
 
-	/* bit 0x010: enable data valid signal */
-	sp887x_writereg(state, 0xd00, 0x010);
-	sp887x_writereg(state, 0x0d1, 0x000);
-	return 0;
-};
+	/* bit 0x010: enable data valid संकेत */
+	sp887x_ग_लिखोreg(state, 0xd00, 0x010);
+	sp887x_ग_लिखोreg(state, 0x0d1, 0x000);
+	वापस 0;
+पूर्ण;
 
-static int configure_reg0xc05(struct dtv_frontend_properties *p, u16 *reg0xc05)
-{
-	int known_parameters = 1;
+अटल पूर्णांक configure_reg0xc05(काष्ठा dtv_frontend_properties *p, u16 *reg0xc05)
+अणु
+	पूर्णांक known_parameters = 1;
 
 	*reg0xc05 = 0x000;
 
-	switch (p->modulation) {
-	case QPSK:
-		break;
-	case QAM_16:
+	चयन (p->modulation) अणु
+	हाल QPSK:
+		अवरोध;
+	हाल QAM_16:
 		*reg0xc05 |= (1 << 10);
-		break;
-	case QAM_64:
+		अवरोध;
+	हाल QAM_64:
 		*reg0xc05 |= (2 << 10);
-		break;
-	case QAM_AUTO:
+		अवरोध;
+	हाल QAM_AUTO:
 		known_parameters = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (p->hierarchy) {
-	case HIERARCHY_NONE:
-		break;
-	case HIERARCHY_1:
+	चयन (p->hierarchy) अणु
+	हाल HIERARCHY_NONE:
+		अवरोध;
+	हाल HIERARCHY_1:
 		*reg0xc05 |= (1 << 7);
-		break;
-	case HIERARCHY_2:
+		अवरोध;
+	हाल HIERARCHY_2:
 		*reg0xc05 |= (2 << 7);
-		break;
-	case HIERARCHY_4:
+		अवरोध;
+	हाल HIERARCHY_4:
 		*reg0xc05 |= (3 << 7);
-		break;
-	case HIERARCHY_AUTO:
+		अवरोध;
+	हाल HIERARCHY_AUTO:
 		known_parameters = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (p->code_rate_HP) {
-	case FEC_1_2:
-		break;
-	case FEC_2_3:
+	चयन (p->code_rate_HP) अणु
+	हाल FEC_1_2:
+		अवरोध;
+	हाल FEC_2_3:
 		*reg0xc05 |= (1 << 3);
-		break;
-	case FEC_3_4:
+		अवरोध;
+	हाल FEC_3_4:
 		*reg0xc05 |= (2 << 3);
-		break;
-	case FEC_5_6:
+		अवरोध;
+	हाल FEC_5_6:
 		*reg0xc05 |= (3 << 3);
-		break;
-	case FEC_7_8:
+		अवरोध;
+	हाल FEC_7_8:
 		*reg0xc05 |= (4 << 3);
-		break;
-	case FEC_AUTO:
+		अवरोध;
+	हाल FEC_AUTO:
 		known_parameters = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (known_parameters)
-		*reg0xc05 |= (2 << 1);	/* use specified parameters */
-	else
-		*reg0xc05 |= (1 << 1);	/* enable autoprobing */
+	अगर (known_parameters)
+		*reg0xc05 |= (2 << 1);	/* use specअगरied parameters */
+	अन्यथा
+		*reg0xc05 |= (1 << 1);	/* enable स्वतःprobing */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *  estimates division of two 24bit numbers,
+ *  estimates भागision of two 24bit numbers,
  *  derived from the ves1820/stv0299 driver code
  */
-static void divide (int n, int d, int *quotient_i, int *quotient_f)
-{
-	unsigned int q, r;
+अटल व्योम भागide (पूर्णांक n, पूर्णांक d, पूर्णांक *quotient_i, पूर्णांक *quotient_f)
+अणु
+	अचिन्हित पूर्णांक q, r;
 
 	r = (n % d) << 8;
 	q = (r / d);
 
-	if (quotient_i)
+	अगर (quotient_i)
 		*quotient_i = q;
 
-	if (quotient_f) {
+	अगर (quotient_f) अणु
 		r = (r % d) << 8;
 		q = (q << 8) | (r / d);
 		r = (r % d) << 8;
 		*quotient_f = (q << 8) | (r / d);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sp887x_correct_offsets (struct sp887x_state* state,
-				    struct dtv_frontend_properties *p,
-				    int actual_freq)
-{
-	static const u32 srate_correction [] = { 1879617, 4544878, 8098561 };
-	int bw_index;
-	int freq_offset = actual_freq - p->frequency;
-	int sysclock = 61003; //[kHz]
-	int ifreq = 36000000;
-	int freq;
-	int frequency_shift;
+अटल व्योम sp887x_correct_offsets (काष्ठा sp887x_state* state,
+				    काष्ठा dtv_frontend_properties *p,
+				    पूर्णांक actual_freq)
+अणु
+	अटल स्थिर u32 srate_correction [] = अणु 1879617, 4544878, 8098561 पूर्ण;
+	पूर्णांक bw_index;
+	पूर्णांक freq_offset = actual_freq - p->frequency;
+	पूर्णांक sysघड़ी = 61003; //[kHz]
+	पूर्णांक अगरreq = 36000000;
+	पूर्णांक freq;
+	पूर्णांक frequency_shअगरt;
 
-	switch (p->bandwidth_hz) {
-	default:
-	case 8000000:
+	चयन (p->bandwidth_hz) अणु
+	शेष:
+	हाल 8000000:
 		bw_index = 0;
-		break;
-	case 7000000:
+		अवरोध;
+	हाल 7000000:
 		bw_index = 1;
-		break;
-	case 6000000:
+		अवरोध;
+	हाल 6000000:
 		bw_index = 2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (p->inversion == INVERSION_ON)
-		freq = ifreq - freq_offset;
-	else
-		freq = ifreq + freq_offset;
+	अगर (p->inversion == INVERSION_ON)
+		freq = अगरreq - freq_offset;
+	अन्यथा
+		freq = अगरreq + freq_offset;
 
-	divide(freq / 333, sysclock, NULL, &frequency_shift);
+	भागide(freq / 333, sysघड़ी, शून्य, &frequency_shअगरt);
 
-	if (p->inversion == INVERSION_ON)
-		frequency_shift = -frequency_shift;
+	अगर (p->inversion == INVERSION_ON)
+		frequency_shअगरt = -frequency_shअगरt;
 
 	/* sample rate correction */
-	sp887x_writereg(state, 0x319, srate_correction[bw_index] >> 12);
-	sp887x_writereg(state, 0x31a, srate_correction[bw_index] & 0xfff);
+	sp887x_ग_लिखोreg(state, 0x319, srate_correction[bw_index] >> 12);
+	sp887x_ग_लिखोreg(state, 0x31a, srate_correction[bw_index] & 0xfff);
 
 	/* carrier offset correction */
-	sp887x_writereg(state, 0x309, frequency_shift >> 12);
-	sp887x_writereg(state, 0x30a, frequency_shift & 0xfff);
-}
+	sp887x_ग_लिखोreg(state, 0x309, frequency_shअगरt >> 12);
+	sp887x_ग_लिखोreg(state, 0x30a, frequency_shअगरt & 0xfff);
+पूर्ण
 
-static int sp887x_setup_frontend_parameters(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct sp887x_state* state = fe->demodulator_priv;
-	unsigned actual_freq;
-	int err;
+अटल पूर्णांक sp887x_setup_frontend_parameters(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
+	अचिन्हित actual_freq;
+	पूर्णांक err;
 	u16 val, reg0xc05;
 
-	if (p->bandwidth_hz != 8000000 &&
+	अगर (p->bandwidth_hz != 8000000 &&
 	    p->bandwidth_hz != 7000000 &&
 	    p->bandwidth_hz != 6000000)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if ((err = configure_reg0xc05(p, &reg0xc05)))
-		return err;
+	अगर ((err = configure_reg0xc05(p, &reg0xc05)))
+		वापस err;
 
 	sp887x_microcontroller_stop(state);
 
 	/* setup the PLL */
-	if (fe->ops.tuner_ops.set_params) {
+	अगर (fe->ops.tuner_ops.set_params) अणु
 		fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
-	}
-	if (fe->ops.tuner_ops.get_frequency) {
+		अगर (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
+	पूर्ण
+	अगर (fe->ops.tuner_ops.get_frequency) अणु
 		fe->ops.tuner_ops.get_frequency(fe, &actual_freq);
-		if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
-	} else {
+		अगर (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
+	पूर्ण अन्यथा अणु
 		actual_freq = p->frequency;
-	}
+	पूर्ण
 
-	/* read status reg in order to clear <pending irqs */
-	sp887x_readreg(state, 0x200);
+	/* पढ़ो status reg in order to clear <pending irqs */
+	sp887x_पढ़ोreg(state, 0x200);
 
 	sp887x_correct_offsets(state, p, actual_freq);
 
-	/* filter for 6/7/8 Mhz channel */
-	if (p->bandwidth_hz == 6000000)
+	/* filter क्रम 6/7/8 Mhz channel */
+	अगर (p->bandwidth_hz == 6000000)
 		val = 2;
-	else if (p->bandwidth_hz == 7000000)
+	अन्यथा अगर (p->bandwidth_hz == 7000000)
 		val = 1;
-	else
+	अन्यथा
 		val = 0;
 
-	sp887x_writereg(state, 0x311, val);
+	sp887x_ग_लिखोreg(state, 0x311, val);
 
 	/* scan order: 2k first = 0, 8k first = 1 */
-	if (p->transmission_mode == TRANSMISSION_MODE_2K)
-		sp887x_writereg(state, 0x338, 0x000);
-	else
-		sp887x_writereg(state, 0x338, 0x001);
+	अगर (p->transmission_mode == TRANSMISSION_MODE_2K)
+		sp887x_ग_लिखोreg(state, 0x338, 0x000);
+	अन्यथा
+		sp887x_ग_लिखोreg(state, 0x338, 0x001);
 
-	sp887x_writereg(state, 0xc05, reg0xc05);
+	sp887x_ग_लिखोreg(state, 0xc05, reg0xc05);
 
-	if (p->bandwidth_hz == 6000000)
+	अगर (p->bandwidth_hz == 6000000)
 		val = 2 << 3;
-	else if (p->bandwidth_hz == 7000000)
+	अन्यथा अगर (p->bandwidth_hz == 7000000)
 		val = 3 << 3;
-	else
+	अन्यथा
 		val = 0 << 3;
 
-	/* enable OFDM and SAW bits as lock indicators in sync register 0xf17,
-	 * optimize algorithm for given bandwidth...
+	/* enable OFDM and SAW bits as lock indicators in sync रेजिस्टर 0xf17,
+	 * optimize algorithm क्रम given bandwidth...
 	 */
-	sp887x_writereg(state, 0xf14, 0x160 | val);
-	sp887x_writereg(state, 0xf15, 0x000);
+	sp887x_ग_लिखोreg(state, 0xf14, 0x160 | val);
+	sp887x_ग_लिखोreg(state, 0xf15, 0x000);
 
 	sp887x_microcontroller_start(state);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp887x_read_status(struct dvb_frontend *fe, enum fe_status *status)
-{
-	struct sp887x_state* state = fe->demodulator_priv;
-	u16 snr12 = sp887x_readreg(state, 0xf16);
-	u16 sync0x200 = sp887x_readreg(state, 0x200);
-	u16 sync0xf17 = sp887x_readreg(state, 0xf17);
+अटल पूर्णांक sp887x_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
+अणु
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
+	u16 snr12 = sp887x_पढ़ोreg(state, 0xf16);
+	u16 sync0x200 = sp887x_पढ़ोreg(state, 0x200);
+	u16 sync0xf17 = sp887x_पढ़ोreg(state, 0xf17);
 
 	*status = 0;
 
-	if (snr12 > 0x00f)
+	अगर (snr12 > 0x00f)
 		*status |= FE_HAS_SIGNAL;
 
-	//if (sync0x200 & 0x004)
+	//अगर (sync0x200 & 0x004)
 	//	*status |= FE_HAS_SYNC | FE_HAS_CARRIER;
 
-	//if (sync0x200 & 0x008)
+	//अगर (sync0x200 & 0x008)
 	//	*status |= FE_HAS_VITERBI;
 
-	if ((sync0xf17 & 0x00f) == 0x002) {
+	अगर ((sync0xf17 & 0x00f) == 0x002) अणु
 		*status |= FE_HAS_LOCK;
 		*status |= FE_HAS_VITERBI | FE_HAS_SYNC | FE_HAS_CARRIER;
-	}
+	पूर्ण
 
-	if (sync0x200 & 0x001) {	/* tuner adjustment requested...*/
-		int steps = (sync0x200 >> 4) & 0x00f;
-		if (steps & 0x008)
+	अगर (sync0x200 & 0x001) अणु	/* tuner adjusपंचांगent requested...*/
+		पूर्णांक steps = (sync0x200 >> 4) & 0x00f;
+		अगर (steps & 0x008)
 			steps = -steps;
-		dprintk("sp887x: implement tuner adjustment (%+i steps)!!\n",
+		dprपूर्णांकk("sp887x: implement tuner adjustment (%+i steps)!!\n",
 		       steps);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp887x_read_ber(struct dvb_frontend* fe, u32* ber)
-{
-	struct sp887x_state* state = fe->demodulator_priv;
+अटल पूर्णांक sp887x_पढ़ो_ber(काष्ठा dvb_frontend* fe, u32* ber)
+अणु
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
 
-	*ber = (sp887x_readreg(state, 0xc08) & 0x3f) |
-	       (sp887x_readreg(state, 0xc07) << 6);
-	sp887x_writereg(state, 0xc08, 0x000);
-	sp887x_writereg(state, 0xc07, 0x000);
-	if (*ber >= 0x3fff0)
+	*ber = (sp887x_पढ़ोreg(state, 0xc08) & 0x3f) |
+	       (sp887x_पढ़ोreg(state, 0xc07) << 6);
+	sp887x_ग_लिखोreg(state, 0xc08, 0x000);
+	sp887x_ग_लिखोreg(state, 0xc07, 0x000);
+	अगर (*ber >= 0x3fff0)
 		*ber = ~0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp887x_read_signal_strength(struct dvb_frontend* fe, u16* strength)
-{
-	struct sp887x_state* state = fe->demodulator_priv;
+अटल पूर्णांक sp887x_पढ़ो_संकेत_strength(काष्ठा dvb_frontend* fe, u16* strength)
+अणु
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
 
-	u16 snr12 = sp887x_readreg(state, 0xf16);
-	u32 signal = 3 * (snr12 << 4);
-	*strength = (signal < 0xffff) ? signal : 0xffff;
+	u16 snr12 = sp887x_पढ़ोreg(state, 0xf16);
+	u32 संकेत = 3 * (snr12 << 4);
+	*strength = (संकेत < 0xffff) ? संकेत : 0xffff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp887x_read_snr(struct dvb_frontend* fe, u16* snr)
-{
-	struct sp887x_state* state = fe->demodulator_priv;
+अटल पूर्णांक sp887x_पढ़ो_snr(काष्ठा dvb_frontend* fe, u16* snr)
+अणु
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
 
-	u16 snr12 = sp887x_readreg(state, 0xf16);
+	u16 snr12 = sp887x_पढ़ोreg(state, 0xf16);
 	*snr = (snr12 << 4) | (snr12 >> 8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp887x_read_ucblocks(struct dvb_frontend* fe, u32* ucblocks)
-{
-	struct sp887x_state* state = fe->demodulator_priv;
+अटल पूर्णांक sp887x_पढ़ो_ucblocks(काष्ठा dvb_frontend* fe, u32* ucblocks)
+अणु
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
 
-	*ucblocks = sp887x_readreg(state, 0xc0c);
-	if (*ucblocks == 0xfff)
+	*ucblocks = sp887x_पढ़ोreg(state, 0xc0c);
+	अगर (*ucblocks == 0xfff)
 		*ucblocks = ~0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp887x_i2c_gate_ctrl(struct dvb_frontend* fe, int enable)
-{
-	struct sp887x_state* state = fe->demodulator_priv;
+अटल पूर्णांक sp887x_i2c_gate_ctrl(काष्ठा dvb_frontend* fe, पूर्णांक enable)
+अणु
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
 
-	if (enable) {
-		return sp887x_writereg(state, 0x206, 0x001);
-	} else {
-		return sp887x_writereg(state, 0x206, 0x000);
-	}
-}
+	अगर (enable) अणु
+		वापस sp887x_ग_लिखोreg(state, 0x206, 0x001);
+	पूर्ण अन्यथा अणु
+		वापस sp887x_ग_लिखोreg(state, 0x206, 0x000);
+	पूर्ण
+पूर्ण
 
-static int sp887x_sleep(struct dvb_frontend* fe)
-{
-	struct sp887x_state* state = fe->demodulator_priv;
+अटल पूर्णांक sp887x_sleep(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
 
-	/* tristate TS output and disable interface pins */
-	sp887x_writereg(state, 0xc18, 0x000);
+	/* tristate TS output and disable पूर्णांकerface pins */
+	sp887x_ग_लिखोreg(state, 0xc18, 0x000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp887x_init(struct dvb_frontend* fe)
-{
-	struct sp887x_state* state = fe->demodulator_priv;
-	const struct firmware *fw = NULL;
-	int ret;
+अटल पूर्णांक sp887x_init(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
+	स्थिर काष्ठा firmware *fw = शून्य;
+	पूर्णांक ret;
 
-	if (!state->initialised) {
+	अगर (!state->initialised) अणु
 		/* request the firmware, this will block until someone uploads it */
-		printk("sp887x: waiting for firmware upload (%s)...\n", SP887X_DEFAULT_FIRMWARE);
+		prपूर्णांकk("sp887x: waiting for firmware upload (%s)...\n", SP887X_DEFAULT_FIRMWARE);
 		ret = state->config->request_firmware(fe, &fw, SP887X_DEFAULT_FIRMWARE);
-		if (ret) {
-			printk("sp887x: no firmware upload (timeout or file not found?)\n");
-			return ret;
-		}
+		अगर (ret) अणु
+			prपूर्णांकk("sp887x: no firmware upload (timeout or file not found?)\n");
+			वापस ret;
+		पूर्ण
 
 		ret = sp887x_initial_setup(fe, fw);
 		release_firmware(fw);
-		if (ret) {
-			printk("sp887x: writing firmware to device failed\n");
-			return ret;
-		}
-		printk("sp887x: firmware upload complete\n");
+		अगर (ret) अणु
+			prपूर्णांकk("sp887x: writing firmware to device failed\n");
+			वापस ret;
+		पूर्ण
+		prपूर्णांकk("sp887x: firmware upload complete\n");
 		state->initialised = 1;
-	}
+	पूर्ण
 
-	/* enable TS output and interface pins */
-	sp887x_writereg(state, 0xc18, 0x00d);
+	/* enable TS output and पूर्णांकerface pins */
+	sp887x_ग_लिखोreg(state, 0xc18, 0x00d);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sp887x_get_tune_settings(struct dvb_frontend* fe, struct dvb_frontend_tune_settings* fesettings)
-{
+अटल पूर्णांक sp887x_get_tune_settings(काष्ठा dvb_frontend* fe, काष्ठा dvb_frontend_tune_settings* fesettings)
+अणु
 	fesettings->min_delay_ms = 350;
 	fesettings->step_size = 166666*2;
-	fesettings->max_drift = (166666*2)+1;
-	return 0;
-}
+	fesettings->max_drअगरt = (166666*2)+1;
+	वापस 0;
+पूर्ण
 
-static void sp887x_release(struct dvb_frontend* fe)
-{
-	struct sp887x_state* state = fe->demodulator_priv;
-	kfree(state);
-}
+अटल व्योम sp887x_release(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा sp887x_state* state = fe->demodulator_priv;
+	kमुक्त(state);
+पूर्ण
 
-static const struct dvb_frontend_ops sp887x_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops sp887x_ops;
 
-struct dvb_frontend* sp887x_attach(const struct sp887x_config* config,
-				   struct i2c_adapter* i2c)
-{
-	struct sp887x_state* state = NULL;
+काष्ठा dvb_frontend* sp887x_attach(स्थिर काष्ठा sp887x_config* config,
+				   काष्ठा i2c_adapter* i2c)
+अणु
+	काष्ठा sp887x_state* state = शून्य;
 
-	/* allocate memory for the internal state */
-	state = kzalloc(sizeof(struct sp887x_state), GFP_KERNEL);
-	if (state == NULL) goto error;
+	/* allocate memory क्रम the पूर्णांकernal state */
+	state = kzalloc(माप(काष्ठा sp887x_state), GFP_KERNEL);
+	अगर (state == शून्य) जाओ error;
 
 	/* setup the state */
 	state->config = config;
 	state->i2c = i2c;
 	state->initialised = 0;
 
-	/* check if the demod is there */
-	if (sp887x_readreg(state, 0x0200) < 0) goto error;
+	/* check अगर the demod is there */
+	अगर (sp887x_पढ़ोreg(state, 0x0200) < 0) जाओ error;
 
 	/* create dvb_frontend */
-	memcpy(&state->frontend.ops, &sp887x_ops, sizeof(struct dvb_frontend_ops));
+	स_नकल(&state->frontend.ops, &sp887x_ops, माप(काष्ठा dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
-	return &state->frontend;
+	वापस &state->frontend;
 
 error:
-	kfree(state);
-	return NULL;
-}
+	kमुक्त(state);
+	वापस शून्य;
+पूर्ण
 
-static const struct dvb_frontend_ops sp887x_ops = {
-	.delsys = { SYS_DVBT },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops sp887x_ops = अणु
+	.delsys = अणु SYS_DVBT पूर्ण,
+	.info = अणु
 		.name = "Spase SP887x DVB-T",
 		.frequency_min_hz =  50500 * kHz,
 		.frequency_max_hz = 858000 * kHz,
@@ -602,7 +603,7 @@ static const struct dvb_frontend_ops sp887x_ops = {
 			FE_CAN_FEC_5_6 | FE_CAN_FEC_7_8 | FE_CAN_FEC_AUTO |
 			FE_CAN_QPSK | FE_CAN_QAM_16 | FE_CAN_QAM_64 |
 			FE_CAN_RECOVER
-	},
+	पूर्ण,
 
 	.release = sp887x_release,
 
@@ -613,14 +614,14 @@ static const struct dvb_frontend_ops sp887x_ops = {
 	.set_frontend = sp887x_setup_frontend_parameters,
 	.get_tune_settings = sp887x_get_tune_settings,
 
-	.read_status = sp887x_read_status,
-	.read_ber = sp887x_read_ber,
-	.read_signal_strength = sp887x_read_signal_strength,
-	.read_snr = sp887x_read_snr,
-	.read_ucblocks = sp887x_read_ucblocks,
-};
+	.पढ़ो_status = sp887x_पढ़ो_status,
+	.पढ़ो_ber = sp887x_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = sp887x_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = sp887x_पढ़ो_snr,
+	.पढ़ो_ucblocks = sp887x_पढ़ो_ucblocks,
+पूर्ण;
 
-module_param(debug, int, 0644);
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off frontend debugging (default:off).");
 
 MODULE_DESCRIPTION("Spase sp887x DVB-T demodulator driver");

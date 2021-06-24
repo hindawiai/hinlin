@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Force feedback support for GreenAsia (Product ID 0x12) based devices
+ *  Force feedback support क्रम GreenAsia (Product ID 0x12) based devices
  *
  *  The devices are distributed under various names and the same USB device ID
  *  can be used in many game controllers.
@@ -14,24 +15,24 @@
 /*
  */
 
-#include <linux/input.h>
-#include <linux/slab.h>
-#include <linux/hid.h>
-#include <linux/module.h>
-#include "hid-ids.h"
+#समावेश <linux/input.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
+#समावेश "hid-ids.h"
 
-#ifdef CONFIG_GREENASIA_FF
+#अगर_घोषित CONFIG_GREENASIA_FF
 
-struct gaff_device {
-	struct hid_report *report;
-};
+काष्ठा gaff_device अणु
+	काष्ठा hid_report *report;
+पूर्ण;
 
-static int hid_gaff_play(struct input_dev *dev, void *data,
-			 struct ff_effect *effect)
-{
-	struct hid_device *hid = input_get_drvdata(dev);
-	struct gaff_device *gaff = data;
-	int left, right;
+अटल पूर्णांक hid_gaff_play(काष्ठा input_dev *dev, व्योम *data,
+			 काष्ठा ff_effect *effect)
+अणु
+	काष्ठा hid_device *hid = input_get_drvdata(dev);
+	काष्ठा gaff_device *gaff = data;
+	पूर्णांक left, right;
 
 	left = effect->u.rumble.strong_magnitude;
 	right = effect->u.rumble.weak_magnitude;
@@ -57,56 +58,56 @@ static int hid_gaff_play(struct input_dev *dev, void *data,
 
 	hid_hw_request(hid, gaff->report, HID_REQ_SET_REPORT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gaff_init(struct hid_device *hid)
-{
-	struct gaff_device *gaff;
-	struct hid_report *report;
-	struct hid_input *hidinput;
-	struct list_head *report_list =
-			&hid->report_enum[HID_OUTPUT_REPORT].report_list;
-	struct list_head *report_ptr = report_list;
-	struct input_dev *dev;
-	int error;
+अटल पूर्णांक gaff_init(काष्ठा hid_device *hid)
+अणु
+	काष्ठा gaff_device *gaff;
+	काष्ठा hid_report *report;
+	काष्ठा hid_input *hidinput;
+	काष्ठा list_head *report_list =
+			&hid->report_क्रमागत[HID_OUTPUT_REPORT].report_list;
+	काष्ठा list_head *report_ptr = report_list;
+	काष्ठा input_dev *dev;
+	पूर्णांक error;
 
-	if (list_empty(&hid->inputs)) {
+	अगर (list_empty(&hid->inमाला_दो)) अणु
 		hid_err(hid, "no inputs found\n");
-		return -ENODEV;
-	}
-	hidinput = list_entry(hid->inputs.next, struct hid_input, list);
+		वापस -ENODEV;
+	पूर्ण
+	hidinput = list_entry(hid->inमाला_दो.next, काष्ठा hid_input, list);
 	dev = hidinput->input;
 
-	if (list_empty(report_list)) {
+	अगर (list_empty(report_list)) अणु
 		hid_err(hid, "no output reports found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	report_ptr = report_ptr->next;
 
-	report = list_entry(report_ptr, struct hid_report, list);
-	if (report->maxfield < 1) {
+	report = list_entry(report_ptr, काष्ठा hid_report, list);
+	अगर (report->maxfield < 1) अणु
 		hid_err(hid, "no fields in the report\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (report->field[0]->report_count < 6) {
+	अगर (report->field[0]->report_count < 6) अणु
 		hid_err(hid, "not enough values in the field\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	gaff = kzalloc(sizeof(struct gaff_device), GFP_KERNEL);
-	if (!gaff)
-		return -ENOMEM;
+	gaff = kzalloc(माप(काष्ठा gaff_device), GFP_KERNEL);
+	अगर (!gaff)
+		वापस -ENOMEM;
 
 	set_bit(FF_RUMBLE, dev->ffbit);
 
 	error = input_ff_create_memless(dev, gaff, hid_gaff_play);
-	if (error) {
-		kfree(gaff);
-		return error;
-	}
+	अगर (error) अणु
+		kमुक्त(gaff);
+		वापस error;
+	पूर्ण
 
 	gaff->report = report;
 	gaff->report->field[0]->value[0] = 0x51;
@@ -122,51 +123,51 @@ static int gaff_init(struct hid_device *hid)
 
 	hid_info(hid, "Force Feedback for GreenAsia 0x12 devices by Lukasz Lubojanski <lukasz@lubojanski.info>\n");
 
-	return 0;
-}
-#else
-static inline int gaff_init(struct hid_device *hdev)
-{
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक gaff_init(काष्ठा hid_device *hdev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int ga_probe(struct hid_device *hdev, const struct hid_device_id *id)
-{
-	int ret;
+अटल पूर्णांक ga_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
+अणु
+	पूर्णांक ret;
 
 	dev_dbg(&hdev->dev, "Greenasia HID hardware probe...");
 
 	ret = hid_parse(hdev);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "parse failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "hw start failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	gaff_init(hdev);
 
-	return 0;
+	वापस 0;
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct hid_device_id ga_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_GREENASIA, 0x0012),  },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id ga_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_GREENASIA, 0x0012),  पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, ga_devices);
 
-static struct hid_driver ga_driver = {
+अटल काष्ठा hid_driver ga_driver = अणु
 	.name = "greenasia",
 	.id_table = ga_devices,
 	.probe = ga_probe,
-};
+पूर्ण;
 module_hid_driver(ga_driver);
 
 MODULE_LICENSE("GPL");

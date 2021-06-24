@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __JVMTI_AGENT_H__
-#define __JVMTI_AGENT_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __JVMTI_AGENT_H__
+#घोषणा __JVMTI_AGENT_H__
 
-#include <sys/types.h>
-#include <stdint.h>
-#include <jvmti.h>
+#समावेश <sys/types.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <jvmti.h>
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+#अगर defined(__cplusplus)
+बाह्य "C" अणु
+#पूर्ण_अगर
 
-typedef struct {
-	unsigned long	pc;
-	int		line_number;
-	int		discrim; /* discriminator -- 0 for now */
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ	pc;
+	पूर्णांक		line_number;
+	पूर्णांक		discrim; /* discriminator -- 0 क्रम now */
 	jmethodID	methodID;
-} jvmti_line_info_t;
+पूर्ण jvmti_line_info_t;
 
-void *jvmti_open(void);
-int   jvmti_close(void *agent);
-int   jvmti_write_code(void *agent, char const *symbol_name,
-		       uint64_t vma, void const *code,
-		       const unsigned int code_size);
+व्योम *jvmti_खोलो(व्योम);
+पूर्णांक   jvmti_बंद(व्योम *agent);
+पूर्णांक   jvmti_ग_लिखो_code(व्योम *agent, अक्षर स्थिर *symbol_name,
+		       uपूर्णांक64_t vma, व्योम स्थिर *code,
+		       स्थिर अचिन्हित पूर्णांक code_size);
 
-int   jvmti_write_debug_info(void *agent, uint64_t code, int nr_lines,
+पूर्णांक   jvmti_ग_लिखो_debug_info(व्योम *agent, uपूर्णांक64_t code, पूर्णांक nr_lines,
 			     jvmti_line_info_t *li,
-			     const char * const * file_names);
+			     स्थिर अक्षर * स्थिर * file_names);
 
-#if defined(__cplusplus)
-}
+#अगर defined(__cplusplus)
+पूर्ण
 
-#endif
-#endif /* __JVMTI_H__ */
+#पूर्ण_अगर
+#पूर्ण_अगर /* __JVMTI_H__ */

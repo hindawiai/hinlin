@@ -1,168 +1,169 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2004 PathScale, Inc
- * Copyright (C) 2004 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2004 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  * Licensed under the GPL
  */
 
-#include <errno.h>
-#include <stdlib.h>
-#include <sys/ptrace.h>
-#ifdef __i386__
-#include <sys/user.h>
-#endif
-#include <longjmp.h>
-#include <sysdep/ptrace_user.h>
-#include <sys/uio.h>
-#include <asm/sigcontext.h>
-#include <linux/elf.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/ptrace.h>
+#अगर_घोषित __i386__
+#समावेश <sys/user.h>
+#पूर्ण_अगर
+#समावेश <दीर्घ_लाँघ.h>
+#समावेश <sysdep/ptrace_user.h>
+#समावेश <sys/uपन.स>
+#समावेश <यंत्र/sigcontext.h>
+#समावेश <linux/elf.h>
 
-int have_xstate_support;
+पूर्णांक have_xstate_support;
 
-int save_i387_registers(int pid, unsigned long *fp_regs)
-{
-	if (ptrace(PTRACE_GETFPREGS, pid, 0, fp_regs) < 0)
-		return -errno;
-	return 0;
-}
+पूर्णांक save_i387_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs)
+अणु
+	अगर (ptrace(PTRACE_GETFPREGS, pid, 0, fp_regs) < 0)
+		वापस -त्रुटि_सं;
+	वापस 0;
+पूर्ण
 
-int save_fp_registers(int pid, unsigned long *fp_regs)
-{
-#ifdef PTRACE_GETREGSET
-	struct iovec iov;
+पूर्णांक save_fp_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs)
+अणु
+#अगर_घोषित PTRACE_GETREGSET
+	काष्ठा iovec iov;
 
-	if (have_xstate_support) {
+	अगर (have_xstate_support) अणु
 		iov.iov_base = fp_regs;
-		iov.iov_len = FP_SIZE * sizeof(unsigned long);
-		if (ptrace(PTRACE_GETREGSET, pid, NT_X86_XSTATE, &iov) < 0)
-			return -errno;
-		return 0;
-	} else
-#endif
-		return save_i387_registers(pid, fp_regs);
-}
+		iov.iov_len = FP_SIZE * माप(अचिन्हित दीर्घ);
+		अगर (ptrace(PTRACE_GETREGSET, pid, NT_X86_XSTATE, &iov) < 0)
+			वापस -त्रुटि_सं;
+		वापस 0;
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+		वापस save_i387_रेजिस्टरs(pid, fp_regs);
+पूर्ण
 
-int restore_i387_registers(int pid, unsigned long *fp_regs)
-{
-	if (ptrace(PTRACE_SETFPREGS, pid, 0, fp_regs) < 0)
-		return -errno;
-	return 0;
-}
+पूर्णांक restore_i387_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs)
+अणु
+	अगर (ptrace(PTRACE_SETFPREGS, pid, 0, fp_regs) < 0)
+		वापस -त्रुटि_सं;
+	वापस 0;
+पूर्ण
 
-int restore_fp_registers(int pid, unsigned long *fp_regs)
-{
-#ifdef PTRACE_SETREGSET
-	struct iovec iov;
-	if (have_xstate_support) {
+पूर्णांक restore_fp_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs)
+अणु
+#अगर_घोषित PTRACE_SETREGSET
+	काष्ठा iovec iov;
+	अगर (have_xstate_support) अणु
 		iov.iov_base = fp_regs;
-		iov.iov_len = FP_SIZE * sizeof(unsigned long);
-		if (ptrace(PTRACE_SETREGSET, pid, NT_X86_XSTATE, &iov) < 0)
-			return -errno;
-		return 0;
-	} else
-#endif
-		return restore_i387_registers(pid, fp_regs);
-}
+		iov.iov_len = FP_SIZE * माप(अचिन्हित दीर्घ);
+		अगर (ptrace(PTRACE_SETREGSET, pid, NT_X86_XSTATE, &iov) < 0)
+			वापस -त्रुटि_सं;
+		वापस 0;
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+		वापस restore_i387_रेजिस्टरs(pid, fp_regs);
+पूर्ण
 
-#ifdef __i386__
-int have_fpx_regs = 1;
-int save_fpx_registers(int pid, unsigned long *fp_regs)
-{
-	if (ptrace(PTRACE_GETFPXREGS, pid, 0, fp_regs) < 0)
-		return -errno;
-	return 0;
-}
+#अगर_घोषित __i386__
+पूर्णांक have_fpx_regs = 1;
+पूर्णांक save_fpx_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs)
+अणु
+	अगर (ptrace(PTRACE_GETFPXREGS, pid, 0, fp_regs) < 0)
+		वापस -त्रुटि_सं;
+	वापस 0;
+पूर्ण
 
-int restore_fpx_registers(int pid, unsigned long *fp_regs)
-{
-	if (ptrace(PTRACE_SETFPXREGS, pid, 0, fp_regs) < 0)
-		return -errno;
-	return 0;
-}
+पूर्णांक restore_fpx_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *fp_regs)
+अणु
+	अगर (ptrace(PTRACE_SETFPXREGS, pid, 0, fp_regs) < 0)
+		वापस -त्रुटि_सं;
+	वापस 0;
+पूर्ण
 
-int get_fp_registers(int pid, unsigned long *regs)
-{
-	if (have_fpx_regs)
-		return save_fpx_registers(pid, regs);
-	else
-		return save_fp_registers(pid, regs);
-}
+पूर्णांक get_fp_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *regs)
+अणु
+	अगर (have_fpx_regs)
+		वापस save_fpx_रेजिस्टरs(pid, regs);
+	अन्यथा
+		वापस save_fp_रेजिस्टरs(pid, regs);
+पूर्ण
 
-int put_fp_registers(int pid, unsigned long *regs)
-{
-	if (have_fpx_regs)
-		return restore_fpx_registers(pid, regs);
-	else
-		return restore_fp_registers(pid, regs);
-}
+पूर्णांक put_fp_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *regs)
+अणु
+	अगर (have_fpx_regs)
+		वापस restore_fpx_रेजिस्टरs(pid, regs);
+	अन्यथा
+		वापस restore_fp_रेजिस्टरs(pid, regs);
+पूर्ण
 
-void arch_init_registers(int pid)
-{
-	struct user_fpxregs_struct fpx_regs;
-	int err;
+व्योम arch_init_रेजिस्टरs(पूर्णांक pid)
+अणु
+	काष्ठा user_fpxregs_काष्ठा fpx_regs;
+	पूर्णांक err;
 
 	err = ptrace(PTRACE_GETFPXREGS, pid, 0, &fpx_regs);
-	if (!err)
-		return;
+	अगर (!err)
+		वापस;
 
-	if (errno != EIO)
+	अगर (त्रुटि_सं != EIO)
 		panic("check_ptrace : PTRACE_GETFPXREGS failed, errno = %d",
-		      errno);
+		      त्रुटि_सं);
 
 	have_fpx_regs = 0;
-}
-#else
+पूर्ण
+#अन्यथा
 
-int get_fp_registers(int pid, unsigned long *regs)
-{
-	return save_fp_registers(pid, regs);
-}
+पूर्णांक get_fp_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *regs)
+अणु
+	वापस save_fp_रेजिस्टरs(pid, regs);
+पूर्ण
 
-int put_fp_registers(int pid, unsigned long *regs)
-{
-	return restore_fp_registers(pid, regs);
-}
+पूर्णांक put_fp_रेजिस्टरs(पूर्णांक pid, अचिन्हित दीर्घ *regs)
+अणु
+	वापस restore_fp_रेजिस्टरs(pid, regs);
+पूर्ण
 
-void arch_init_registers(int pid)
-{
-#ifdef PTRACE_GETREGSET
-	void * fp_regs;
-	struct iovec iov;
+व्योम arch_init_रेजिस्टरs(पूर्णांक pid)
+अणु
+#अगर_घोषित PTRACE_GETREGSET
+	व्योम * fp_regs;
+	काष्ठा iovec iov;
 
-	fp_regs = malloc(FP_SIZE * sizeof(unsigned long));
-	if(fp_regs == NULL)
-		return;
+	fp_regs = दो_स्मृति(FP_SIZE * माप(अचिन्हित दीर्घ));
+	अगर(fp_regs == शून्य)
+		वापस;
 
 	iov.iov_base = fp_regs;
-	iov.iov_len = FP_SIZE * sizeof(unsigned long);
-	if (ptrace(PTRACE_GETREGSET, pid, NT_X86_XSTATE, &iov) == 0)
+	iov.iov_len = FP_SIZE * माप(अचिन्हित दीर्घ);
+	अगर (ptrace(PTRACE_GETREGSET, pid, NT_X86_XSTATE, &iov) == 0)
 		have_xstate_support = 1;
 
-	free(fp_regs);
-#endif
-}
-#endif
+	मुक्त(fp_regs);
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
 
-unsigned long get_thread_reg(int reg, jmp_buf *buf)
-{
-	switch (reg) {
-#ifdef __i386__
-	case HOST_IP:
-		return buf[0]->__eip;
-	case HOST_SP:
-		return buf[0]->__esp;
-	case HOST_BP:
-		return buf[0]->__ebp;
-#else
-	case HOST_IP:
-		return buf[0]->__rip;
-	case HOST_SP:
-		return buf[0]->__rsp;
-	case HOST_BP:
-		return buf[0]->__rbp;
-#endif
-	default:
-		printk(UM_KERN_ERR "get_thread_regs - unknown register %d\n",
+अचिन्हित दीर्घ get_thपढ़ो_reg(पूर्णांक reg, लाँघ_बफ *buf)
+अणु
+	चयन (reg) अणु
+#अगर_घोषित __i386__
+	हाल HOST_IP:
+		वापस buf[0]->__eip;
+	हाल HOST_SP:
+		वापस buf[0]->__esp;
+	हाल HOST_BP:
+		वापस buf[0]->__ebp;
+#अन्यथा
+	हाल HOST_IP:
+		वापस buf[0]->__rip;
+	हाल HOST_SP:
+		वापस buf[0]->__rsp;
+	हाल HOST_BP:
+		वापस buf[0]->__rbp;
+#पूर्ण_अगर
+	शेष:
+		prपूर्णांकk(UM_KERN_ERR "get_thread_regs - unknown register %d\n",
 		       reg);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण

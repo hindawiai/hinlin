@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Detection routine for the NCR53c710 based Amiga SCSI Controllers for Linux.
+ * Detection routine क्रम the NCR53c710 based Amiga SCSI Controllers क्रम Linux.
  *		Amiga Technologies A4000T SCSI controller.
  *
  * Written 1997 by Alan Hourihane <alanh@fairlite.demon.co.uk>
- * plus modifications of the 53c7xx.c driver to support the Amiga.
+ * plus modअगरications of the 53c7xx.c driver to support the Amiga.
  *
  * Rewritten to use 53c700.c by Kars de Jong <jongk@linux-m68k.org>
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <asm/amigahw.h>
-#include <asm/amigaints.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_transport_spi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/amigahw.h>
+#समावेश <यंत्र/amigaपूर्णांकs.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_transport_spi.h>
 
-#include "53c700.h"
+#समावेश "53c700.h"
 
 
-static struct scsi_host_template a4000t_scsi_driver_template = {
+अटल काष्ठा scsi_host_ढाँचा a4000t_scsi_driver_ढाँचा = अणु
 	.name		= "A4000T builtin SCSI",
 	.proc_name	= "A4000t",
 	.this_id	= 7,
 	.module		= THIS_MODULE,
-};
+पूर्ण;
 
 
-#define A4000T_SCSI_OFFSET	0x40
+#घोषणा A4000T_SCSI_OFFSET	0x40
 
-static int __init amiga_a4000t_scsi_probe(struct platform_device *pdev)
-{
-	struct resource *res;
+अटल पूर्णांक __init amiga_a4000t_scsi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
 	phys_addr_t scsi_addr;
-	struct NCR_700_Host_Parameters *hostdata;
-	struct Scsi_Host *host;
+	काष्ठा NCR_700_Host_Parameters *hostdata;
+	काष्ठा Scsi_Host *host;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
-	if (!request_mem_region(res->start, resource_size(res),
+	अगर (!request_mem_region(res->start, resource_size(res),
 				"A4000T builtin SCSI"))
-		return -EBUSY;
+		वापस -EBUSY;
 
-	hostdata = kzalloc(sizeof(struct NCR_700_Host_Parameters),
+	hostdata = kzalloc(माप(काष्ठा NCR_700_Host_Parameters),
 			   GFP_KERNEL);
-	if (!hostdata) {
+	अगर (!hostdata) अणु
 		dev_err(&pdev->dev, "Failed to allocate host data\n");
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 
 	scsi_addr = res->start + A4000T_SCSI_OFFSET;
 
 	/* Fill in the required pieces of hostdata */
 	hostdata->base = ZTWO_VADDR(scsi_addr);
-	hostdata->clock = 50;
+	hostdata->घड़ी = 50;
 	hostdata->chip710 = 1;
 	hostdata->dmode_extra = DMODE_FC2;
 	hostdata->dcntl_extra = EA_710;
 
-	/* and register the chip */
-	host = NCR_700_detect(&a4000t_scsi_driver_template, hostdata,
+	/* and रेजिस्टर the chip */
+	host = NCR_700_detect(&a4000t_scsi_driver_ढाँचा, hostdata,
 			      &pdev->dev);
-	if (!host) {
+	अगर (!host) अणु
 		dev_err(&pdev->dev,
 			"No host detected; board configuration problem?\n");
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	host->this_id = 7;
 	host->base = scsi_addr;
 	host->irq = IRQ_AMIGA_PORTS;
 
-	if (request_irq(host->irq, NCR_700_intr, IRQF_SHARED, "a4000t-scsi",
-			host)) {
+	अगर (request_irq(host->irq, NCR_700_पूर्णांकr, IRQF_SHARED, "a4000t-scsi",
+			host)) अणु
 		dev_err(&pdev->dev, "request_irq failed\n");
-		goto out_put_host;
-	}
+		जाओ out_put_host;
+	पूर्ण
 
-	platform_set_drvdata(pdev, host);
+	platक्रमm_set_drvdata(pdev, host);
 	scsi_scan_host(host);
-	return 0;
+	वापस 0;
 
  out_put_host:
 	scsi_host_put(host);
- out_free:
-	kfree(hostdata);
+ out_मुक्त:
+	kमुक्त(hostdata);
  out_release:
 	release_mem_region(res->start, resource_size(res));
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int __exit amiga_a4000t_scsi_remove(struct platform_device *pdev)
-{
-	struct Scsi_Host *host = platform_get_drvdata(pdev);
-	struct NCR_700_Host_Parameters *hostdata = shost_priv(host);
-	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+अटल पूर्णांक __निकास amiga_a4000t_scsi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा Scsi_Host *host = platक्रमm_get_drvdata(pdev);
+	काष्ठा NCR_700_Host_Parameters *hostdata = shost_priv(host);
+	काष्ठा resource *res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 
-	scsi_remove_host(host);
+	scsi_हटाओ_host(host);
 	NCR_700_release(host);
-	kfree(hostdata);
-	free_irq(host->irq, host);
+	kमुक्त(hostdata);
+	मुक्त_irq(host->irq, host);
 	release_mem_region(res->start, resource_size(res));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver amiga_a4000t_scsi_driver = {
-	.remove = __exit_p(amiga_a4000t_scsi_remove),
-	.driver   = {
+अटल काष्ठा platक्रमm_driver amiga_a4000t_scsi_driver = अणु
+	.हटाओ = __निकास_p(amiga_a4000t_scsi_हटाओ),
+	.driver   = अणु
 		.name	= "amiga-a4000t-scsi",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver_probe(amiga_a4000t_scsi_driver, amiga_a4000t_scsi_probe);
+module_platक्रमm_driver_probe(amiga_a4000t_scsi_driver, amiga_a4000t_scsi_probe);
 
 MODULE_AUTHOR("Alan Hourihane <alanh@fairlite.demon.co.uk> / "
 	      "Kars de Jong <jongk@linux-m68k.org>");

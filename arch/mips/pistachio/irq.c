@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Pistachio IRQ setup
  *
  * Copyright (C) 2014 Google, Inc.
  */
 
-#include <linux/init.h>
-#include <linux/irqchip.h>
-#include <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/kernel.h>
 
-#include <asm/cpu-features.h>
-#include <asm/irq_cpu.h>
+#समावेश <यंत्र/cpu-features.h>
+#समावेश <यंत्र/irq_cpu.h>
 
-void __init arch_init_irq(void)
-{
+व्योम __init arch_init_irq(व्योम)
+अणु
 	pr_info("EIC is %s\n", cpu_has_veic ? "on" : "off");
-	pr_info("VINT is %s\n", cpu_has_vint ? "on" : "off");
+	pr_info("VINT is %s\n", cpu_has_vपूर्णांक ? "on" : "off");
 
-	if (!cpu_has_veic)
+	अगर (!cpu_has_veic)
 		mips_cpu_irq_init();
 
 	irqchip_init();
-}
+पूर्ण

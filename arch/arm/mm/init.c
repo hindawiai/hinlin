@@ -1,217 +1,218 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mm/init.c
  *
  *  Copyright (C) 1995-2005 Russell King
  */
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/swap.h>
-#include <linux/init.h>
-#include <linux/mman.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/task.h>
-#include <linux/export.h>
-#include <linux/nodemask.h>
-#include <linux/initrd.h>
-#include <linux/of_fdt.h>
-#include <linux/highmem.h>
-#include <linux/gfp.h>
-#include <linux/memblock.h>
-#include <linux/dma-map-ops.h>
-#include <linux/sizes.h>
-#include <linux/stop_machine.h>
-#include <linux/swiotlb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/swap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/export.h>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/gfp.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/stop_machine.h>
+#समावेश <linux/swiotlb.h>
 
-#include <asm/cp15.h>
-#include <asm/mach-types.h>
-#include <asm/memblock.h>
-#include <asm/memory.h>
-#include <asm/prom.h>
-#include <asm/sections.h>
-#include <asm/setup.h>
-#include <asm/set_memory.h>
-#include <asm/system_info.h>
-#include <asm/tlb.h>
-#include <asm/fixmap.h>
-#include <asm/ptdump.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/memblock.h>
+#समावेश <यंत्र/memory.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/set_memory.h>
+#समावेश <यंत्र/प्रणाली_info.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/ptdump.h>
 
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include "mm.h"
+#समावेश "mm.h"
 
-#ifdef CONFIG_CPU_CP15_MMU
-unsigned long __init __clear_cr(unsigned long mask)
-{
+#अगर_घोषित CONFIG_CPU_CP15_MMU
+अचिन्हित दीर्घ __init __clear_cr(अचिन्हित दीर्घ mask)
+अणु
 	cr_alignment = cr_alignment & ~mask;
-	return cr_alignment;
-}
-#endif
+	वापस cr_alignment;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_BLK_DEV_INITRD
-static int __init parse_tag_initrd(const struct tag *tag)
-{
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+अटल पूर्णांक __init parse_tag_initrd(स्थिर काष्ठा tag *tag)
+अणु
 	pr_warn("ATAG_INITRD is deprecated; "
 		"please update your bootloader.\n");
 	phys_initrd_start = __virt_to_phys(tag->u.initrd.start);
 	phys_initrd_size = tag->u.initrd.size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __tagtable(ATAG_INITRD, parse_tag_initrd);
 
-static int __init parse_tag_initrd2(const struct tag *tag)
-{
+अटल पूर्णांक __init parse_tag_initrd2(स्थिर काष्ठा tag *tag)
+अणु
 	phys_initrd_start = tag->u.initrd.start;
 	phys_initrd_size = tag->u.initrd.size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __tagtable(ATAG_INITRD2, parse_tag_initrd2);
-#endif
+#पूर्ण_अगर
 
-static void __init find_limits(unsigned long *min, unsigned long *max_low,
-			       unsigned long *max_high)
-{
+अटल व्योम __init find_limits(अचिन्हित दीर्घ *min, अचिन्हित दीर्घ *max_low,
+			       अचिन्हित दीर्घ *max_high)
+अणु
 	*max_low = PFN_DOWN(memblock_get_current_limit());
 	*min = PFN_UP(memblock_start_of_DRAM());
 	*max_high = PFN_DOWN(memblock_end_of_DRAM());
-}
+पूर्ण
 
-#ifdef CONFIG_ZONE_DMA
+#अगर_घोषित CONFIG_ZONE_DMA
 
-phys_addr_t arm_dma_zone_size __read_mostly;
+phys_addr_t arm_dma_zone_size __पढ़ो_mostly;
 EXPORT_SYMBOL(arm_dma_zone_size);
 
 /*
  * The DMA mask corresponding to the maximum bus address allocatable
- * using GFP_DMA.  The default here places no restriction on DMA
- * allocations.  This must be the smallest DMA mask in the system,
+ * using GFP_DMA.  The शेष here places no restriction on DMA
+ * allocations.  This must be the smallest DMA mask in the प्रणाली,
  * so a successful GFP_DMA allocation will always satisfy this.
  */
 phys_addr_t arm_dma_limit;
-unsigned long arm_dma_pfn_limit;
-#endif
+अचिन्हित दीर्घ arm_dma_pfn_limit;
+#पूर्ण_अगर
 
-void __init setup_dma_zone(const struct machine_desc *mdesc)
-{
-#ifdef CONFIG_ZONE_DMA
-	if (mdesc->dma_zone_size) {
+व्योम __init setup_dma_zone(स्थिर काष्ठा machine_desc *mdesc)
+अणु
+#अगर_घोषित CONFIG_ZONE_DMA
+	अगर (mdesc->dma_zone_size) अणु
 		arm_dma_zone_size = mdesc->dma_zone_size;
 		arm_dma_limit = PHYS_OFFSET + arm_dma_zone_size - 1;
-	} else
+	पूर्ण अन्यथा
 		arm_dma_limit = 0xffffffff;
 	arm_dma_pfn_limit = arm_dma_limit >> PAGE_SHIFT;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void __init zone_sizes_init(unsigned long min, unsigned long max_low,
-	unsigned long max_high)
-{
-	unsigned long max_zone_pfn[MAX_NR_ZONES] = { 0 };
+अटल व्योम __init zone_sizes_init(अचिन्हित दीर्घ min, अचिन्हित दीर्घ max_low,
+	अचिन्हित दीर्घ max_high)
+अणु
+	अचिन्हित दीर्घ max_zone_pfn[MAX_NR_ZONES] = अणु 0 पूर्ण;
 
-#ifdef CONFIG_ZONE_DMA
+#अगर_घोषित CONFIG_ZONE_DMA
 	max_zone_pfn[ZONE_DMA] = min(arm_dma_pfn_limit, max_low);
-#endif
+#पूर्ण_अगर
 	max_zone_pfn[ZONE_NORMAL] = max_low;
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 	max_zone_pfn[ZONE_HIGHMEM] = max_high;
-#endif
-	free_area_init(max_zone_pfn);
-}
+#पूर्ण_अगर
+	मुक्त_area_init(max_zone_pfn);
+पूर्ण
 
-#ifdef CONFIG_HAVE_ARCH_PFN_VALID
-int pfn_valid(unsigned long pfn)
-{
+#अगर_घोषित CONFIG_HAVE_ARCH_PFN_VALID
+पूर्णांक pfn_valid(अचिन्हित दीर्घ pfn)
+अणु
 	phys_addr_t addr = __pfn_to_phys(pfn);
 
-	if (__phys_to_pfn(addr) != pfn)
-		return 0;
+	अगर (__phys_to_pfn(addr) != pfn)
+		वापस 0;
 
-	return memblock_is_map_memory(addr);
-}
+	वापस memblock_is_map_memory(addr);
+पूर्ण
 EXPORT_SYMBOL(pfn_valid);
-#endif
+#पूर्ण_अगर
 
-static bool arm_memblock_steal_permitted = true;
+अटल bool arm_memblock_steal_permitted = true;
 
 phys_addr_t __init arm_memblock_steal(phys_addr_t size, phys_addr_t align)
-{
+अणु
 	phys_addr_t phys;
 
 	BUG_ON(!arm_memblock_steal_permitted);
 
 	phys = memblock_phys_alloc(size, align);
-	if (!phys)
+	अगर (!phys)
 		panic("Failed to steal %pa bytes at %pS\n",
-		      &size, (void *)_RET_IP_);
+		      &size, (व्योम *)_RET_IP_);
 
-	memblock_free(phys, size);
-	memblock_remove(phys, size);
+	memblock_मुक्त(phys, size);
+	memblock_हटाओ(phys, size);
 
-	return phys;
-}
+	वापस phys;
+पूर्ण
 
-static void __init arm_initrd_init(void)
-{
-#ifdef CONFIG_BLK_DEV_INITRD
+अटल व्योम __init arm_initrd_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
 	phys_addr_t start;
-	unsigned long size;
+	अचिन्हित दीर्घ size;
 
 	initrd_start = initrd_end = 0;
 
-	if (!phys_initrd_size)
-		return;
+	अगर (!phys_initrd_size)
+		वापस;
 
 	/*
-	 * Round the memory region to page boundaries as per free_initrd_mem()
+	 * Round the memory region to page boundaries as per मुक्त_initrd_mem()
 	 * This allows us to detect whether the pages overlapping the initrd
 	 * are in use, but more importantly, reserves the entire set of pages
-	 * as we don't want these pages allocated for other purposes.
+	 * as we करोn't want these pages allocated क्रम other purposes.
 	 */
-	start = round_down(phys_initrd_start, PAGE_SIZE);
+	start = round_करोwn(phys_initrd_start, PAGE_SIZE);
 	size = phys_initrd_size + (phys_initrd_start - start);
 	size = round_up(size, PAGE_SIZE);
 
-	if (!memblock_is_region_memory(start, size)) {
+	अगर (!memblock_is_region_memory(start, size)) अणु
 		pr_err("INITRD: 0x%08llx+0x%08lx is not a memory region - disabling initrd\n",
 		       (u64)start, size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (memblock_is_region_reserved(start, size)) {
+	अगर (memblock_is_region_reserved(start, size)) अणु
 		pr_err("INITRD: 0x%08llx+0x%08lx overlaps in-use memory region - disabling initrd\n",
 		       (u64)start, size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	memblock_reserve(start, size);
 
-	/* Now convert initrd to virtual addresses */
+	/* Now convert initrd to भव addresses */
 	initrd_start = __phys_to_virt(phys_initrd_start);
 	initrd_end = initrd_start + phys_initrd_size;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_CPU_ICACHE_MISMATCH_WORKAROUND
-void check_cpu_icache_size(int cpuid)
-{
+#अगर_घोषित CONFIG_CPU_ICACHE_MISMATCH_WORKAROUND
+व्योम check_cpu_icache_size(पूर्णांक cpuid)
+अणु
 	u32 size, ctr;
 
-	asm("mrc p15, 0, %0, c0, c0, 1" : "=r" (ctr));
+	यंत्र("mrc p15, 0, %0, c0, c0, 1" : "=r" (ctr));
 
 	size = 1 << ((ctr & 0xf) + 2);
-	if (cpuid != 0 && icache_size != size)
+	अगर (cpuid != 0 && icache_size != size)
 		pr_info("CPU%u: detected I-Cache line size mismatch, workaround enabled\n",
 			cpuid);
-	if (icache_size > size)
+	अगर (icache_size > size)
 		icache_size = size;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void __init arm_memblock_init(const struct machine_desc *mdesc)
-{
+व्योम __init arm_memblock_init(स्थिर काष्ठा machine_desc *mdesc)
+अणु
 	/* Register the kernel text, kernel data and initrd with memblock. */
 	memblock_reserve(__pa(KERNEL_START), KERNEL_END - KERNEL_START);
 
@@ -219,21 +220,21 @@ void __init arm_memblock_init(const struct machine_desc *mdesc)
 
 	arm_mm_memblock_reserve();
 
-	/* reserve any platform specific memblock areas */
-	if (mdesc->reserve)
+	/* reserve any platक्रमm specअगरic memblock areas */
+	अगर (mdesc->reserve)
 		mdesc->reserve();
 
 	early_init_fdt_scan_reserved_mem();
 
-	/* reserve memory for DMA contiguous allocations */
+	/* reserve memory क्रम DMA contiguous allocations */
 	dma_contiguous_reserve(arm_dma_limit);
 
 	arm_memblock_steal_permitted = false;
 	memblock_dump_all();
-}
+पूर्ण
 
-void __init bootmem_init(void)
-{
+व्योम __init booपंचांगem_init(व्योम)
+अणु
 	memblock_allow_resize();
 
 	find_limits(&min_low_pfn, &max_low_pfn, &max_pfn);
@@ -243,280 +244,280 @@ void __init bootmem_init(void)
 
 	/*
 	 * sparse_init() tries to allocate memory from memblock, so must be
-	 * done after the fixed reservations
+	 * करोne after the fixed reservations
 	 */
 	sparse_init();
 
 	/*
-	 * Now free the memory - free_area_init needs
+	 * Now मुक्त the memory - मुक्त_area_init needs
 	 * the sparse mem_map arrays initialized by sparse_init()
-	 * for memmap_init_zone(), otherwise all PFNs are invalid.
+	 * क्रम memmap_init_zone(), otherwise all PFNs are invalid.
 	 */
 	zone_sizes_init(min_low_pfn, max_low_pfn, max_pfn);
-}
+पूर्ण
 
 /*
- * Poison init memory with an undefined instruction (ARM) or a branch to an
- * undefined instruction (Thumb).
+ * Poison init memory with an undefined inकाष्ठाion (ARM) or a branch to an
+ * undefined inकाष्ठाion (Thumb).
  */
-static inline void poison_init_mem(void *s, size_t count)
-{
+अटल अंतरभूत व्योम poison_init_mem(व्योम *s, माप_प्रकार count)
+अणु
 	u32 *p = (u32 *)s;
-	for (; count != 0; count -= 4)
+	क्रम (; count != 0; count -= 4)
 		*p++ = 0xe7fddef0;
-}
+पूर्ण
 
-static void __init free_highpages(void)
-{
-#ifdef CONFIG_HIGHMEM
-	unsigned long max_low = max_low_pfn;
+अटल व्योम __init मुक्त_highpages(व्योम)
+अणु
+#अगर_घोषित CONFIG_HIGHMEM
+	अचिन्हित दीर्घ max_low = max_low_pfn;
 	phys_addr_t range_start, range_end;
 	u64 i;
 
-	/* set highmem page free */
-	for_each_free_mem_range(i, NUMA_NO_NODE, MEMBLOCK_NONE,
-				&range_start, &range_end, NULL) {
-		unsigned long start = PFN_UP(range_start);
-		unsigned long end = PFN_DOWN(range_end);
+	/* set highmem page मुक्त */
+	क्रम_each_मुक्त_mem_range(i, NUMA_NO_NODE, MEMBLOCK_NONE,
+				&range_start, &range_end, शून्य) अणु
+		अचिन्हित दीर्घ start = PFN_UP(range_start);
+		अचिन्हित दीर्घ end = PFN_DOWN(range_end);
 
 		/* Ignore complete lowmem entries */
-		if (end <= max_low)
-			continue;
+		अगर (end <= max_low)
+			जारी;
 
 		/* Truncate partial highmem entries */
-		if (start < max_low)
+		अगर (start < max_low)
 			start = max_low;
 
-		for (; start < end; start++)
-			free_highmem_page(pfn_to_page(start));
-	}
-#endif
-}
+		क्रम (; start < end; start++)
+			मुक्त_highmem_page(pfn_to_page(start));
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * mem_init() marks the free areas in the mem_map and tells us how much
- * memory is free.  This is done after various parts of the system have
+ * mem_init() marks the मुक्त areas in the mem_map and tells us how much
+ * memory is मुक्त.  This is करोne after various parts of the प्रणाली have
  * claimed their memory after the kernel image.
  */
-void __init mem_init(void)
-{
-#ifdef CONFIG_ARM_LPAE
-	if (swiotlb_force == SWIOTLB_FORCE ||
+व्योम __init mem_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_ARM_LPAE
+	अगर (swiotlb_क्रमce == SWIOTLB_FORCE ||
 	    max_pfn > arm_dma_pfn_limit)
 		swiotlb_init(1);
-	else
-		swiotlb_force = SWIOTLB_NO_FORCE;
-#endif
+	अन्यथा
+		swiotlb_क्रमce = SWIOTLB_NO_FORCE;
+#पूर्ण_अगर
 
 	set_max_mapnr(pfn_to_page(max_pfn) - mem_map);
 
-	/* this will put all unused low memory onto the freelists */
-	memblock_free_all();
+	/* this will put all unused low memory onto the मुक्तlists */
+	memblock_मुक्त_all();
 
-#ifdef CONFIG_SA1111
-	/* now that our DMA memory is actually so designated, we can free it */
-	free_reserved_area(__va(PHYS_OFFSET), swapper_pg_dir, -1, NULL);
-#endif
+#अगर_घोषित CONFIG_SA1111
+	/* now that our DMA memory is actually so designated, we can मुक्त it */
+	मुक्त_reserved_area(__va(PHYS_OFFSET), swapper_pg_dir, -1, शून्य);
+#पूर्ण_अगर
 
-	free_highpages();
+	मुक्त_highpages();
 
 	/*
 	 * Check boundaries twice: Some fundamental inconsistencies can
-	 * be detected at build time already.
+	 * be detected at build समय alपढ़ोy.
 	 */
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 	BUILD_BUG_ON(TASK_SIZE				> MODULES_VADDR);
 	BUG_ON(TASK_SIZE 				> MODULES_VADDR);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 	BUILD_BUG_ON(PKMAP_BASE + LAST_PKMAP * PAGE_SIZE > PAGE_OFFSET);
 	BUG_ON(PKMAP_BASE + LAST_PKMAP * PAGE_SIZE	> PAGE_OFFSET);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_STRICT_KERNEL_RWX
-struct section_perm {
-	const char *name;
-	unsigned long start;
-	unsigned long end;
+#अगर_घोषित CONFIG_STRICT_KERNEL_RWX
+काष्ठा section_perm अणु
+	स्थिर अक्षर *name;
+	अचिन्हित दीर्घ start;
+	अचिन्हित दीर्घ end;
 	pmdval_t mask;
 	pmdval_t prot;
 	pmdval_t clear;
-};
+पूर्ण;
 
 /* First section-aligned location at or after __start_rodata. */
-extern char __start_rodata_section_aligned[];
+बाह्य अक्षर __start_rodata_section_aligned[];
 
-static struct section_perm nx_perms[] = {
-	/* Make pages tables, etc before _stext RW (set NX). */
-	{
+अटल काष्ठा section_perm nx_perms[] = अणु
+	/* Make pages tables, etc beक्रमe _stext RW (set NX). */
+	अणु
 		.name	= "pre-text NX",
 		.start	= PAGE_OFFSET,
-		.end	= (unsigned long)_stext,
+		.end	= (अचिन्हित दीर्घ)_stext,
 		.mask	= ~PMD_SECT_XN,
 		.prot	= PMD_SECT_XN,
-	},
+	पूर्ण,
 	/* Make init RW (set NX). */
-	{
+	अणु
 		.name	= "init NX",
-		.start	= (unsigned long)__init_begin,
-		.end	= (unsigned long)_sdata,
+		.start	= (अचिन्हित दीर्घ)__init_begin,
+		.end	= (अचिन्हित दीर्घ)_sdata,
 		.mask	= ~PMD_SECT_XN,
 		.prot	= PMD_SECT_XN,
-	},
+	पूर्ण,
 	/* Make rodata NX (set RO in ro_perms below). */
-	{
+	अणु
 		.name	= "rodata NX",
-		.start  = (unsigned long)__start_rodata_section_aligned,
-		.end    = (unsigned long)__init_begin,
+		.start  = (अचिन्हित दीर्घ)__start_rodata_section_aligned,
+		.end    = (अचिन्हित दीर्घ)__init_begin,
 		.mask   = ~PMD_SECT_XN,
 		.prot   = PMD_SECT_XN,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct section_perm ro_perms[] = {
+अटल काष्ठा section_perm ro_perms[] = अणु
 	/* Make kernel code and rodata RX (set RO). */
-	{
+	अणु
 		.name	= "text/rodata RO",
-		.start  = (unsigned long)_stext,
-		.end    = (unsigned long)__init_begin,
-#ifdef CONFIG_ARM_LPAE
+		.start  = (अचिन्हित दीर्घ)_stext,
+		.end    = (अचिन्हित दीर्घ)__init_begin,
+#अगर_घोषित CONFIG_ARM_LPAE
 		.mask   = ~(L_PMD_SECT_RDONLY | PMD_SECT_AP2),
 		.prot   = L_PMD_SECT_RDONLY | PMD_SECT_AP2,
-#else
+#अन्यथा
 		.mask   = ~(PMD_SECT_APX | PMD_SECT_AP_WRITE),
 		.prot   = PMD_SECT_APX | PMD_SECT_AP_WRITE,
 		.clear  = PMD_SECT_AP_WRITE,
-#endif
-	},
-};
+#पूर्ण_अगर
+	पूर्ण,
+पूर्ण;
 
 /*
- * Updates section permissions only for the current mm (sections are
- * copied into each mm). During startup, this is the init_mm. Is only
+ * Updates section permissions only क्रम the current mm (sections are
+ * copied पूर्णांकo each mm). During startup, this is the init_mm. Is only
  * safe to be called with preemption disabled, as under stop_machine().
  */
-static inline void section_update(unsigned long addr, pmdval_t mask,
-				  pmdval_t prot, struct mm_struct *mm)
-{
+अटल अंतरभूत व्योम section_update(अचिन्हित दीर्घ addr, pmdval_t mask,
+				  pmdval_t prot, काष्ठा mm_काष्ठा *mm)
+अणु
 	pmd_t *pmd;
 
 	pmd = pmd_offset(pud_offset(p4d_offset(pgd_offset(mm, addr), addr), addr), addr);
 
-#ifdef CONFIG_ARM_LPAE
+#अगर_घोषित CONFIG_ARM_LPAE
 	pmd[0] = __pmd((pmd_val(pmd[0]) & mask) | prot);
-#else
-	if (addr & SECTION_SIZE)
+#अन्यथा
+	अगर (addr & SECTION_SIZE)
 		pmd[1] = __pmd((pmd_val(pmd[1]) & mask) | prot);
-	else
+	अन्यथा
 		pmd[0] = __pmd((pmd_val(pmd[0]) & mask) | prot);
-#endif
+#पूर्ण_अगर
 	flush_pmd_entry(pmd);
 	local_flush_tlb_kernel_range(addr, addr + SECTION_SIZE);
-}
+पूर्ण
 
 /* Make sure extended page tables are in use. */
-static inline bool arch_has_strict_perms(void)
-{
-	if (cpu_architecture() < CPU_ARCH_ARMv6)
-		return false;
+अटल अंतरभूत bool arch_has_strict_perms(व्योम)
+अणु
+	अगर (cpu_architecture() < CPU_ARCH_ARMv6)
+		वापस false;
 
-	return !!(get_cr() & CR_XP);
-}
+	वापस !!(get_cr() & CR_XP);
+पूर्ण
 
-static void set_section_perms(struct section_perm *perms, int n, bool set,
-			      struct mm_struct *mm)
-{
-	size_t i;
-	unsigned long addr;
+अटल व्योम set_section_perms(काष्ठा section_perm *perms, पूर्णांक n, bool set,
+			      काष्ठा mm_काष्ठा *mm)
+अणु
+	माप_प्रकार i;
+	अचिन्हित दीर्घ addr;
 
-	if (!arch_has_strict_perms())
-		return;
+	अगर (!arch_has_strict_perms())
+		वापस;
 
-	for (i = 0; i < n; i++) {
-		if (!IS_ALIGNED(perms[i].start, SECTION_SIZE) ||
-		    !IS_ALIGNED(perms[i].end, SECTION_SIZE)) {
+	क्रम (i = 0; i < n; i++) अणु
+		अगर (!IS_ALIGNED(perms[i].start, SECTION_SIZE) ||
+		    !IS_ALIGNED(perms[i].end, SECTION_SIZE)) अणु
 			pr_err("BUG: %s section %lx-%lx not aligned to %lx\n",
 				perms[i].name, perms[i].start, perms[i].end,
 				SECTION_SIZE);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		for (addr = perms[i].start;
+		क्रम (addr = perms[i].start;
 		     addr < perms[i].end;
 		     addr += SECTION_SIZE)
 			section_update(addr, perms[i].mask,
 				set ? perms[i].prot : perms[i].clear, mm);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 /**
- * update_sections_early intended to be called only through stop_machine
- * framework and executed by only one CPU while all other CPUs will spin and
- * wait, so no locking is required in this function.
+ * update_sections_early पूर्णांकended to be called only through stop_machine
+ * framework and executed by only one CPU जबतक all other CPUs will spin and
+ * रुको, so no locking is required in this function.
  */
-static void update_sections_early(struct section_perm perms[], int n)
-{
-	struct task_struct *t, *s;
+अटल व्योम update_sections_early(काष्ठा section_perm perms[], पूर्णांक n)
+अणु
+	काष्ठा task_काष्ठा *t, *s;
 
-	for_each_process(t) {
-		if (t->flags & PF_KTHREAD)
-			continue;
-		for_each_thread(t, s)
-			if (s->mm)
+	क्रम_each_process(t) अणु
+		अगर (t->flags & PF_KTHREAD)
+			जारी;
+		क्रम_each_thपढ़ो(t, s)
+			अगर (s->mm)
 				set_section_perms(perms, n, true, s->mm);
-	}
+	पूर्ण
 	set_section_perms(perms, n, true, current->active_mm);
 	set_section_perms(perms, n, true, &init_mm);
-}
+पूर्ण
 
-static int __fix_kernmem_perms(void *unused)
-{
+अटल पूर्णांक __fix_kernmem_perms(व्योम *unused)
+अणु
 	update_sections_early(nx_perms, ARRAY_SIZE(nx_perms));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fix_kernmem_perms(void)
-{
-	stop_machine(__fix_kernmem_perms, NULL, NULL);
-}
+अटल व्योम fix_kernmem_perms(व्योम)
+अणु
+	stop_machine(__fix_kernmem_perms, शून्य, शून्य);
+पूर्ण
 
-static int __mark_rodata_ro(void *unused)
-{
+अटल पूर्णांक __mark_rodata_ro(व्योम *unused)
+अणु
 	update_sections_early(ro_perms, ARRAY_SIZE(ro_perms));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mark_rodata_ro(void)
-{
-	stop_machine(__mark_rodata_ro, NULL, NULL);
+व्योम mark_rodata_ro(व्योम)
+अणु
+	stop_machine(__mark_rodata_ro, शून्य, शून्य);
 	debug_checkwx();
-}
+पूर्ण
 
-#else
-static inline void fix_kernmem_perms(void) { }
-#endif /* CONFIG_STRICT_KERNEL_RWX */
+#अन्यथा
+अटल अंतरभूत व्योम fix_kernmem_perms(व्योम) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_STRICT_KERNEL_RWX */
 
-void free_initmem(void)
-{
+व्योम मुक्त_iniपंचांगem(व्योम)
+अणु
 	fix_kernmem_perms();
 
 	poison_init_mem(__init_begin, __init_end - __init_begin);
-	if (!machine_is_integrator() && !machine_is_cintegrator())
-		free_initmem_default(-1);
-}
+	अगर (!machine_is_पूर्णांकegrator() && !machine_is_cपूर्णांकegrator())
+		मुक्त_iniपंचांगem_शेष(-1);
+पूर्ण
 
-#ifdef CONFIG_BLK_DEV_INITRD
-void free_initrd_mem(unsigned long start, unsigned long end)
-{
-	if (start == initrd_start)
-		start = round_down(start, PAGE_SIZE);
-	if (end == initrd_end)
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+व्योम मुक्त_initrd_mem(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अगर (start == initrd_start)
+		start = round_करोwn(start, PAGE_SIZE);
+	अगर (end == initrd_end)
 		end = round_up(end, PAGE_SIZE);
 
-	poison_init_mem((void *)start, PAGE_ALIGN(end) - start);
-	free_reserved_area((void *)start, (void *)end, -1, "initrd");
-}
-#endif
+	poison_init_mem((व्योम *)start, PAGE_ALIGN(end) - start);
+	मुक्त_reserved_area((व्योम *)start, (व्योम *)end, -1, "initrd");
+पूर्ण
+#पूर्ण_अगर

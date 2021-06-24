@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * net/sched/em_cmp.c	Simple packet data comparison ematch
  *
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/tc_ematch/tc_em_cmp.h>
-#include <asm/unaligned.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/tc_ematch/tc_em_cmp.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <net/pkt_cls.h>
 
-static inline int cmp_needs_transformation(struct tcf_em_cmp *cmp)
-{
-	return unlikely(cmp->flags & TCF_EM_CMP_TRANS);
-}
+अटल अंतरभूत पूर्णांक cmp_needs_transक्रमmation(काष्ठा tcf_em_cmp *cmp)
+अणु
+	वापस unlikely(cmp->flags & TCF_EM_CMP_TRANS);
+पूर्ण
 
-static int em_cmp_match(struct sk_buff *skb, struct tcf_ematch *em,
-			struct tcf_pkt_info *info)
-{
-	struct tcf_em_cmp *cmp = (struct tcf_em_cmp *) em->data;
-	unsigned char *ptr = tcf_get_base_ptr(skb, cmp->layer) + cmp->off;
+अटल पूर्णांक em_cmp_match(काष्ठा sk_buff *skb, काष्ठा tcf_ematch *em,
+			काष्ठा tcf_pkt_info *info)
+अणु
+	काष्ठा tcf_em_cmp *cmp = (काष्ठा tcf_em_cmp *) em->data;
+	अचिन्हित अक्षर *ptr = tcf_get_base_ptr(skb, cmp->layer) + cmp->off;
 	u32 val = 0;
 
-	if (!tcf_valid_offset(skb, ptr, cmp->align))
-		return 0;
+	अगर (!tcf_valid_offset(skb, ptr, cmp->align))
+		वापस 0;
 
-	switch (cmp->align) {
-	case TCF_EM_ALIGN_U8:
+	चयन (cmp->align) अणु
+	हाल TCF_EM_ALIGN_U8:
 		val = *ptr;
-		break;
+		अवरोध;
 
-	case TCF_EM_ALIGN_U16:
+	हाल TCF_EM_ALIGN_U16:
 		val = get_unaligned_be16(ptr);
 
-		if (cmp_needs_transformation(cmp))
+		अगर (cmp_needs_transक्रमmation(cmp))
 			val = be16_to_cpu(val);
-		break;
+		अवरोध;
 
-	case TCF_EM_ALIGN_U32:
+	हाल TCF_EM_ALIGN_U32:
 		/* Worth checking boundaries? The branching seems
 		 * to get worse. Visit again.
 		 */
 		val = get_unaligned_be32(ptr);
 
-		if (cmp_needs_transformation(cmp))
+		अगर (cmp_needs_transक्रमmation(cmp))
 			val = be32_to_cpu(val);
-		break;
+		अवरोध;
 
-	default:
-		return 0;
-	}
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	if (cmp->mask)
+	अगर (cmp->mask)
 		val &= cmp->mask;
 
-	switch (cmp->opnd) {
-	case TCF_EM_OPND_EQ:
-		return val == cmp->val;
-	case TCF_EM_OPND_LT:
-		return val < cmp->val;
-	case TCF_EM_OPND_GT:
-		return val > cmp->val;
-	}
+	चयन (cmp->opnd) अणु
+	हाल TCF_EM_OPND_EQ:
+		वापस val == cmp->val;
+	हाल TCF_EM_OPND_LT:
+		वापस val < cmp->val;
+	हाल TCF_EM_OPND_GT:
+		वापस val > cmp->val;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct tcf_ematch_ops em_cmp_ops = {
+अटल काष्ठा tcf_ematch_ops em_cmp_ops = अणु
 	.kind	  = TCF_EM_CMP,
-	.datalen  = sizeof(struct tcf_em_cmp),
+	.datalen  = माप(काष्ठा tcf_em_cmp),
 	.match	  = em_cmp_match,
 	.owner	  = THIS_MODULE,
 	.link	  = LIST_HEAD_INIT(em_cmp_ops.link)
-};
+पूर्ण;
 
-static int __init init_em_cmp(void)
-{
-	return tcf_em_register(&em_cmp_ops);
-}
+अटल पूर्णांक __init init_em_cmp(व्योम)
+अणु
+	वापस tcf_em_रेजिस्टर(&em_cmp_ops);
+पूर्ण
 
-static void __exit exit_em_cmp(void)
-{
-	tcf_em_unregister(&em_cmp_ops);
-}
+अटल व्योम __निकास निकास_em_cmp(व्योम)
+अणु
+	tcf_em_unरेजिस्टर(&em_cmp_ops);
+पूर्ण
 
 MODULE_LICENSE("GPL");
 
 module_init(init_em_cmp);
-module_exit(exit_em_cmp);
+module_निकास(निकास_em_cmp);
 
 MODULE_ALIAS_TCF_EMATCH(TCF_EM_CMP);

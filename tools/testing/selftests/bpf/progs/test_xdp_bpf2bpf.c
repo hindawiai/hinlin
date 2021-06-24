@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bpf.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_helpers.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_tracing.h>
+#समावेश <bpf/bpf_helpers.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-struct net_device {
-	/* Structure does not need to contain all entries,
+काष्ठा net_device अणु
+	/* Structure करोes not need to contain all entries,
 	 * as "preserve_access_index" will use BTF to fix this...
 	 */
-	int ifindex;
-} __attribute__((preserve_access_index));
+	पूर्णांक अगरindex;
+पूर्ण __attribute__((preserve_access_index));
 
-struct xdp_rxq_info {
-	/* Structure does not need to contain all entries,
+काष्ठा xdp_rxq_info अणु
+	/* Structure करोes not need to contain all entries,
 	 * as "preserve_access_index" will use BTF to fix this...
 	 */
-	struct net_device *dev;
+	काष्ठा net_device *dev;
 	__u32 queue_index;
-} __attribute__((preserve_access_index));
+पूर्ण __attribute__((preserve_access_index));
 
-struct xdp_buff {
-	void *data;
-	void *data_end;
-	void *data_meta;
-	void *data_hard_start;
-	unsigned long handle;
-	struct xdp_rxq_info *rxq;
-} __attribute__((preserve_access_index));
+काष्ठा xdp_buff अणु
+	व्योम *data;
+	व्योम *data_end;
+	व्योम *data_meta;
+	व्योम *data_hard_start;
+	अचिन्हित दीर्घ handle;
+	काष्ठा xdp_rxq_info *rxq;
+पूर्ण __attribute__((preserve_access_index));
 
-struct meta {
-	int ifindex;
-	int pkt_len;
-};
+काष्ठा meta अणु
+	पूर्णांक अगरindex;
+	पूर्णांक pkt_len;
+पूर्ण;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-	__uint(key_size, sizeof(int));
-	__uint(value_size, sizeof(int));
-} perf_buf_map SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+	__uपूर्णांक(key_size, माप(पूर्णांक));
+	__uपूर्णांक(value_size, माप(पूर्णांक));
+पूर्ण perf_buf_map SEC(".maps");
 
 __u64 test_result_fentry = 0;
 SEC("fentry/FUNC")
-int BPF_PROG(trace_on_entry, struct xdp_buff *xdp)
-{
-	struct meta meta;
-	void *data_end = (void *)(long)xdp->data_end;
-	void *data = (void *)(long)xdp->data;
+पूर्णांक BPF_PROG(trace_on_entry, काष्ठा xdp_buff *xdp)
+अणु
+	काष्ठा meta meta;
+	व्योम *data_end = (व्योम *)(दीर्घ)xdp->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)xdp->data;
 
-	meta.ifindex = xdp->rxq->dev->ifindex;
+	meta.अगरindex = xdp->rxq->dev->अगरindex;
 	meta.pkt_len = data_end - data;
 	bpf_xdp_output(xdp, &perf_buf_map,
 		       ((__u64) meta.pkt_len << 32) |
 		       BPF_F_CURRENT_CPU,
-		       &meta, sizeof(meta));
+		       &meta, माप(meta));
 
-	test_result_fentry = xdp->rxq->dev->ifindex;
-	return 0;
-}
+	test_result_fentry = xdp->rxq->dev->अगरindex;
+	वापस 0;
+पूर्ण
 
-__u64 test_result_fexit = 0;
+__u64 test_result_fनिकास = 0;
 SEC("fexit/FUNC")
-int BPF_PROG(trace_on_exit, struct xdp_buff *xdp, int ret)
-{
-	test_result_fexit = ret;
-	return 0;
-}
+पूर्णांक BPF_PROG(trace_on_निकास, काष्ठा xdp_buff *xdp, पूर्णांक ret)
+अणु
+	test_result_fनिकास = ret;
+	वापस 0;
+पूर्ण

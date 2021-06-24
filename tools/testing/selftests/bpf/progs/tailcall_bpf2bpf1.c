@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-struct {
-	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
-	__uint(max_entries, 2);
-	__uint(key_size, sizeof(__u32));
-	__uint(value_size, sizeof(__u32));
-} jmp_table SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PROG_ARRAY);
+	__uपूर्णांक(max_entries, 2);
+	__uपूर्णांक(key_size, माप(__u32));
+	__uपूर्णांक(value_size, माप(__u32));
+पूर्ण jmp_table SEC(".maps");
 
-#define TAIL_FUNC(x) 				\
+#घोषणा TAIL_FUNC(x) 				\
 	SEC("classifier/" #x)			\
-	int bpf_func_##x(struct __sk_buff *skb)	\
-	{					\
-		return x;			\
-	}
+	पूर्णांक bpf_func_##x(काष्ठा __sk_buff *skb)	\
+	अणु					\
+		वापस x;			\
+	पूर्ण
 TAIL_FUNC(0)
 TAIL_FUNC(1)
 
-static __noinline
-int subprog_tail(struct __sk_buff *skb)
-{
-	bpf_tail_call_static(skb, &jmp_table, 0);
+अटल __noअंतरभूत
+पूर्णांक subprog_tail(काष्ठा __sk_buff *skb)
+अणु
+	bpf_tail_call_अटल(skb, &jmp_table, 0);
 
-	return skb->len * 2;
-}
+	वापस skb->len * 2;
+पूर्ण
 
 SEC("classifier")
-int entry(struct __sk_buff *skb)
-{
-	bpf_tail_call_static(skb, &jmp_table, 1);
+पूर्णांक entry(काष्ठा __sk_buff *skb)
+अणु
+	bpf_tail_call_अटल(skb, &jmp_table, 1);
 
-	return subprog_tail(skb);
-}
+	वापस subprog_tail(skb);
+पूर्ण
 
-char __license[] SEC("license") = "GPL";
-int _version SEC("version") = 1;
+अक्षर __license[] SEC("license") = "GPL";
+पूर्णांक _version SEC("version") = 1;

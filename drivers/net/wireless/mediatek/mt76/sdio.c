@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /* Copyright (C) 2020 MediaTek Inc.
  *
  * This file is written based on mt76/usb.c.
@@ -8,251 +9,251 @@
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
-#include <linux/iopoll.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/sched.h>
-#include <linux/kthread.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include "mt76.h"
+#समावेश "mt76.h"
 
-static int
-mt76s_alloc_rx_queue(struct mt76_dev *dev, enum mt76_rxq_id qid)
-{
-	struct mt76_queue *q = &dev->q_rx[qid];
+अटल पूर्णांक
+mt76s_alloc_rx_queue(काष्ठा mt76_dev *dev, क्रमागत mt76_rxq_id qid)
+अणु
+	काष्ठा mt76_queue *q = &dev->q_rx[qid];
 
 	spin_lock_init(&q->lock);
-	q->entry = devm_kcalloc(dev->dev,
-				MT_NUM_RX_ENTRIES, sizeof(*q->entry),
+	q->entry = devm_kसुस्मृति(dev->dev,
+				MT_NUM_RX_ENTRIES, माप(*q->entry),
 				GFP_KERNEL);
-	if (!q->entry)
-		return -ENOMEM;
+	अगर (!q->entry)
+		वापस -ENOMEM;
 
 	q->ndesc = MT_NUM_RX_ENTRIES;
 	q->head = q->tail = 0;
 	q->queued = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct mt76_queue *mt76s_alloc_tx_queue(struct mt76_dev *dev)
-{
-	struct mt76_queue *q;
+अटल काष्ठा mt76_queue *mt76s_alloc_tx_queue(काष्ठा mt76_dev *dev)
+अणु
+	काष्ठा mt76_queue *q;
 
-	q = devm_kzalloc(dev->dev, sizeof(*q), GFP_KERNEL);
-	if (!q)
-		return ERR_PTR(-ENOMEM);
+	q = devm_kzalloc(dev->dev, माप(*q), GFP_KERNEL);
+	अगर (!q)
+		वापस ERR_PTR(-ENOMEM);
 
 	spin_lock_init(&q->lock);
-	q->entry = devm_kcalloc(dev->dev,
-				MT_NUM_TX_ENTRIES, sizeof(*q->entry),
+	q->entry = devm_kसुस्मृति(dev->dev,
+				MT_NUM_TX_ENTRIES, माप(*q->entry),
 				GFP_KERNEL);
-	if (!q->entry)
-		return ERR_PTR(-ENOMEM);
+	अगर (!q->entry)
+		वापस ERR_PTR(-ENOMEM);
 
 	q->ndesc = MT_NUM_TX_ENTRIES;
 
-	return q;
-}
+	वापस q;
+पूर्ण
 
-static int mt76s_alloc_tx(struct mt76_dev *dev)
-{
-	struct mt76_queue *q;
-	int i;
+अटल पूर्णांक mt76s_alloc_tx(काष्ठा mt76_dev *dev)
+अणु
+	काष्ठा mt76_queue *q;
+	पूर्णांक i;
 
-	for (i = 0; i <= MT_TXQ_PSD; i++) {
+	क्रम (i = 0; i <= MT_TXQ_PSD; i++) अणु
 		q = mt76s_alloc_tx_queue(dev);
-		if (IS_ERR(q))
-			return PTR_ERR(q);
+		अगर (IS_ERR(q))
+			वापस PTR_ERR(q);
 
 		q->qid = i;
 		dev->phy.q_tx[i] = q;
-	}
+	पूर्ण
 
 	q = mt76s_alloc_tx_queue(dev);
-	if (IS_ERR(q))
-		return PTR_ERR(q);
+	अगर (IS_ERR(q))
+		वापस PTR_ERR(q);
 
 	q->qid = MT_MCUQ_WM;
 	dev->q_mcu[MT_MCUQ_WM] = q;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mt76s_alloc_queues(struct mt76_dev *dev)
-{
-	int err;
+पूर्णांक mt76s_alloc_queues(काष्ठा mt76_dev *dev)
+अणु
+	पूर्णांक err;
 
 	err = mt76s_alloc_rx_queue(dev, MT_RXQ_MAIN);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return mt76s_alloc_tx(dev);
-}
+	वापस mt76s_alloc_tx(dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76s_alloc_queues);
 
-static struct mt76_queue_entry *
-mt76s_get_next_rx_entry(struct mt76_queue *q)
-{
-	struct mt76_queue_entry *e = NULL;
+अटल काष्ठा mt76_queue_entry *
+mt76s_get_next_rx_entry(काष्ठा mt76_queue *q)
+अणु
+	काष्ठा mt76_queue_entry *e = शून्य;
 
 	spin_lock_bh(&q->lock);
-	if (q->queued > 0) {
+	अगर (q->queued > 0) अणु
 		e = &q->entry[q->tail];
 		q->tail = (q->tail + 1) % q->ndesc;
 		q->queued--;
-	}
+	पूर्ण
 	spin_unlock_bh(&q->lock);
 
-	return e;
-}
+	वापस e;
+पूर्ण
 
-static int
-mt76s_process_rx_queue(struct mt76_dev *dev, struct mt76_queue *q)
-{
-	int qid = q - &dev->q_rx[MT_RXQ_MAIN];
-	int nframes = 0;
+अटल पूर्णांक
+mt76s_process_rx_queue(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q)
+अणु
+	पूर्णांक qid = q - &dev->q_rx[MT_RXQ_MAIN];
+	पूर्णांक nframes = 0;
 
-	while (true) {
-		struct mt76_queue_entry *e;
+	जबतक (true) अणु
+		काष्ठा mt76_queue_entry *e;
 
-		if (!test_bit(MT76_STATE_INITIALIZED, &dev->phy.state))
-			break;
+		अगर (!test_bit(MT76_STATE_INITIALIZED, &dev->phy.state))
+			अवरोध;
 
 		e = mt76s_get_next_rx_entry(q);
-		if (!e || !e->skb)
-			break;
+		अगर (!e || !e->skb)
+			अवरोध;
 
 		dev->drv->rx_skb(dev, MT_RXQ_MAIN, e->skb);
-		e->skb = NULL;
+		e->skb = शून्य;
 		nframes++;
-	}
-	if (qid == MT_RXQ_MAIN)
-		mt76_rx_poll_complete(dev, MT_RXQ_MAIN, NULL);
+	पूर्ण
+	अगर (qid == MT_RXQ_MAIN)
+		mt76_rx_poll_complete(dev, MT_RXQ_MAIN, शून्य);
 
-	return nframes;
-}
+	वापस nframes;
+पूर्ण
 
-static void mt76s_net_worker(struct mt76_worker *w)
-{
-	struct mt76_sdio *sdio = container_of(w, struct mt76_sdio,
+अटल व्योम mt76s_net_worker(काष्ठा mt76_worker *w)
+अणु
+	काष्ठा mt76_sdio *sdio = container_of(w, काष्ठा mt76_sdio,
 					      net_worker);
-	struct mt76_dev *dev = container_of(sdio, struct mt76_dev, sdio);
-	int i, nframes;
+	काष्ठा mt76_dev *dev = container_of(sdio, काष्ठा mt76_dev, sdio);
+	पूर्णांक i, nframes;
 
-	do {
+	करो अणु
 		nframes = 0;
 
 		local_bh_disable();
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 
-		mt76_for_each_q_rx(dev, i)
+		mt76_क्रम_each_q_rx(dev, i)
 			nframes += mt76s_process_rx_queue(dev, &dev->q_rx[i]);
 
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 		local_bh_enable();
-	} while (nframes > 0);
-}
+	पूर्ण जबतक (nframes > 0);
+पूर्ण
 
-static int mt76s_process_tx_queue(struct mt76_dev *dev, struct mt76_queue *q)
-{
-	struct mt76_queue_entry entry;
-	int nframes = 0;
+अटल पूर्णांक mt76s_process_tx_queue(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q)
+अणु
+	काष्ठा mt76_queue_entry entry;
+	पूर्णांक nframes = 0;
 	bool mcu;
 
-	if (!q)
-		return 0;
+	अगर (!q)
+		वापस 0;
 
 	mcu = q == dev->q_mcu[MT_MCUQ_WM];
-	while (q->queued > 0) {
-		if (!q->entry[q->tail].done)
-			break;
+	जबतक (q->queued > 0) अणु
+		अगर (!q->entry[q->tail].करोne)
+			अवरोध;
 
 		entry = q->entry[q->tail];
-		q->entry[q->tail].done = false;
+		q->entry[q->tail].करोne = false;
 
-		if (mcu) {
-			dev_kfree_skb(entry.skb);
-			entry.skb = NULL;
-		}
+		अगर (mcu) अणु
+			dev_kमुक्त_skb(entry.skb);
+			entry.skb = शून्य;
+		पूर्ण
 
 		mt76_queue_tx_complete(dev, q, &entry);
 		nframes++;
-	}
+	पूर्ण
 
-	if (!q->queued)
-		wake_up(&dev->tx_wait);
+	अगर (!q->queued)
+		wake_up(&dev->tx_रुको);
 
-	if (!mcu)
+	अगर (!mcu)
 		mt76_txq_schedule(&dev->phy, q->qid);
 
-	return nframes;
-}
+	वापस nframes;
+पूर्ण
 
-static void mt76s_status_worker(struct mt76_worker *w)
-{
-	struct mt76_sdio *sdio = container_of(w, struct mt76_sdio,
+अटल व्योम mt76s_status_worker(काष्ठा mt76_worker *w)
+अणु
+	काष्ठा mt76_sdio *sdio = container_of(w, काष्ठा mt76_sdio,
 					      status_worker);
-	struct mt76_dev *dev = container_of(sdio, struct mt76_dev, sdio);
-	int i, nframes;
+	काष्ठा mt76_dev *dev = container_of(sdio, काष्ठा mt76_dev, sdio);
+	पूर्णांक i, nframes;
 
-	do {
+	करो अणु
 		nframes = mt76s_process_tx_queue(dev, dev->q_mcu[MT_MCUQ_WM]);
 
-		for (i = 0; i <= MT_TXQ_PSD; i++)
+		क्रम (i = 0; i <= MT_TXQ_PSD; i++)
 			nframes += mt76s_process_tx_queue(dev,
 							  dev->phy.q_tx[i]);
 
-		if (dev->drv->tx_status_data &&
+		अगर (dev->drv->tx_status_data &&
 		    !test_and_set_bit(MT76_READING_STATS, &dev->phy.state))
 			queue_work(dev->wq, &dev->sdio.stat_work);
-	} while (nframes > 0);
-}
+	पूर्ण जबतक (nframes > 0);
+पूर्ण
 
-static void mt76s_tx_status_data(struct work_struct *work)
-{
-	struct mt76_sdio *sdio;
-	struct mt76_dev *dev;
+अटल व्योम mt76s_tx_status_data(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mt76_sdio *sdio;
+	काष्ठा mt76_dev *dev;
 	u8 update = 1;
 	u16 count = 0;
 
-	sdio = container_of(work, struct mt76_sdio, stat_work);
-	dev = container_of(sdio, struct mt76_dev, sdio);
+	sdio = container_of(work, काष्ठा mt76_sdio, stat_work);
+	dev = container_of(sdio, काष्ठा mt76_dev, sdio);
 
-	while (true) {
-		if (test_bit(MT76_REMOVED, &dev->phy.state))
-			break;
+	जबतक (true) अणु
+		अगर (test_bit(MT76_REMOVED, &dev->phy.state))
+			अवरोध;
 
-		if (!dev->drv->tx_status_data(dev, &update))
-			break;
+		अगर (!dev->drv->tx_status_data(dev, &update))
+			अवरोध;
 		count++;
-	}
+	पूर्ण
 
-	if (count && test_bit(MT76_STATE_RUNNING, &dev->phy.state))
+	अगर (count && test_bit(MT76_STATE_RUNNING, &dev->phy.state))
 		queue_work(dev->wq, &sdio->stat_work);
-	else
+	अन्यथा
 		clear_bit(MT76_READING_STATS, &dev->phy.state);
-}
+पूर्ण
 
-static int
-mt76s_tx_queue_skb(struct mt76_dev *dev, struct mt76_queue *q,
-		   struct sk_buff *skb, struct mt76_wcid *wcid,
-		   struct ieee80211_sta *sta)
-{
-	struct mt76_tx_info tx_info = {
+अटल पूर्णांक
+mt76s_tx_queue_skb(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q,
+		   काष्ठा sk_buff *skb, काष्ठा mt76_wcid *wcid,
+		   काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा mt76_tx_info tx_info = अणु
 		.skb = skb,
-	};
-	int err, len = skb->len;
+	पूर्ण;
+	पूर्णांक err, len = skb->len;
 	u16 idx = q->head;
 
-	if (q->queued == q->ndesc)
-		return -ENOSPC;
+	अगर (q->queued == q->ndesc)
+		वापस -ENOSPC;
 
-	skb->prev = skb->next = NULL;
-	err = dev->drv->tx_prepare_skb(dev, NULL, q->qid, wcid, sta, &tx_info);
-	if (err < 0)
-		return err;
+	skb->prev = skb->next = शून्य;
+	err = dev->drv->tx_prepare_skb(dev, शून्य, q->qid, wcid, sta, &tx_info);
+	अगर (err < 0)
+		वापस err;
 
 	q->entry[q->head].skb = tx_info.skb;
 	q->entry[q->head].buf_sz = len;
@@ -262,22 +263,22 @@ mt76s_tx_queue_skb(struct mt76_dev *dev, struct mt76_queue *q,
 	q->head = (q->head + 1) % q->ndesc;
 	q->queued++;
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static int
-mt76s_tx_queue_skb_raw(struct mt76_dev *dev, struct mt76_queue *q,
-		       struct sk_buff *skb, u32 tx_info)
-{
-	int ret = -ENOSPC, len = skb->len, pad;
+अटल पूर्णांक
+mt76s_tx_queue_skb_raw(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q,
+		       काष्ठा sk_buff *skb, u32 tx_info)
+अणु
+	पूर्णांक ret = -ENOSPC, len = skb->len, pad;
 
-	if (q->queued == q->ndesc)
-		goto error;
+	अगर (q->queued == q->ndesc)
+		जाओ error;
 
 	pad = round_up(skb->len, 4) - skb->len;
 	ret = mt76_skb_adjust_pad(skb, pad);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
 	spin_lock_bh(&q->lock);
 
@@ -288,80 +289,80 @@ mt76s_tx_queue_skb_raw(struct mt76_dev *dev, struct mt76_queue *q,
 
 	spin_unlock_bh(&q->lock);
 
-	return 0;
+	वापस 0;
 
 error:
-	dev_kfree_skb(skb);
+	dev_kमुक्त_skb(skb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mt76s_tx_kick(struct mt76_dev *dev, struct mt76_queue *q)
-{
-	struct mt76_sdio *sdio = &dev->sdio;
+अटल व्योम mt76s_tx_kick(काष्ठा mt76_dev *dev, काष्ठा mt76_queue *q)
+अणु
+	काष्ठा mt76_sdio *sdio = &dev->sdio;
 
 	mt76_worker_schedule(&sdio->txrx_worker);
-}
+पूर्ण
 
-static const struct mt76_queue_ops sdio_queue_ops = {
+अटल स्थिर काष्ठा mt76_queue_ops sdio_queue_ops = अणु
 	.tx_queue_skb = mt76s_tx_queue_skb,
 	.kick = mt76s_tx_kick,
 	.tx_queue_skb_raw = mt76s_tx_queue_skb_raw,
-};
+पूर्ण;
 
-void mt76s_deinit(struct mt76_dev *dev)
-{
-	struct mt76_sdio *sdio = &dev->sdio;
-	int i;
+व्योम mt76s_deinit(काष्ठा mt76_dev *dev)
+अणु
+	काष्ठा mt76_sdio *sdio = &dev->sdio;
+	पूर्णांक i;
 
-	mt76_worker_teardown(&sdio->txrx_worker);
-	mt76_worker_teardown(&sdio->status_worker);
-	mt76_worker_teardown(&sdio->net_worker);
+	mt76_worker_tearकरोwn(&sdio->txrx_worker);
+	mt76_worker_tearकरोwn(&sdio->status_worker);
+	mt76_worker_tearकरोwn(&sdio->net_worker);
 
 	cancel_work_sync(&sdio->stat_work);
 	clear_bit(MT76_READING_STATS, &dev->phy.state);
 
-	mt76_tx_status_check(dev, NULL, true);
+	mt76_tx_status_check(dev, शून्य, true);
 
 	sdio_claim_host(sdio->func);
 	sdio_release_irq(sdio->func);
 	sdio_release_host(sdio->func);
 
-	mt76_for_each_q_rx(dev, i) {
-		struct mt76_queue *q = &dev->q_rx[i];
-		int j;
+	mt76_क्रम_each_q_rx(dev, i) अणु
+		काष्ठा mt76_queue *q = &dev->q_rx[i];
+		पूर्णांक j;
 
-		for (j = 0; j < q->ndesc; j++) {
-			struct mt76_queue_entry *e = &q->entry[j];
+		क्रम (j = 0; j < q->ndesc; j++) अणु
+			काष्ठा mt76_queue_entry *e = &q->entry[j];
 
-			if (!e->skb)
-				continue;
+			अगर (!e->skb)
+				जारी;
 
-			dev_kfree_skb(e->skb);
-			e->skb = NULL;
-		}
-	}
-}
+			dev_kमुक्त_skb(e->skb);
+			e->skb = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76s_deinit);
 
-int mt76s_init(struct mt76_dev *dev, struct sdio_func *func,
-	       const struct mt76_bus_ops *bus_ops)
-{
-	struct mt76_sdio *sdio = &dev->sdio;
-	int err;
+पूर्णांक mt76s_init(काष्ठा mt76_dev *dev, काष्ठा sdio_func *func,
+	       स्थिर काष्ठा mt76_bus_ops *bus_ops)
+अणु
+	काष्ठा mt76_sdio *sdio = &dev->sdio;
+	पूर्णांक err;
 
 	err = mt76_worker_setup(dev->hw, &sdio->status_worker,
 				mt76s_status_worker, "sdio-status");
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = mt76_worker_setup(dev->hw, &sdio->net_worker, mt76s_net_worker,
 				"sdio-net");
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	sched_set_fifo_low(sdio->status_worker.task);
-	sched_set_fifo_low(sdio->net_worker.task);
+	sched_set_fअगरo_low(sdio->status_worker.task);
+	sched_set_fअगरo_low(sdio->net_worker.task);
 
 	INIT_WORK(&sdio->stat_work, mt76s_tx_status_data);
 
@@ -369,8 +370,8 @@ int mt76s_init(struct mt76_dev *dev, struct sdio_func *func,
 	dev->bus = bus_ops;
 	dev->sdio.func = func;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76s_init);
 
 MODULE_AUTHOR("Sean Wang <sean.wang@mediatek.com>");

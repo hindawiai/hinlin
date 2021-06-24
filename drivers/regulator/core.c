@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 //
 // core.c  --  Voltage/Current Regulator framework.
 //
@@ -7,193 +8,193 @@
 //
 // Author: Liam Girdwood <lrg@slimlogic.co.uk>
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/debugfs.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/async.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
-#include <linux/suspend.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/of.h>
-#include <linux/regmap.h>
-#include <linux/regulator/of_regulator.h>
-#include <linux/regulator/consumer.h>
-#include <linux/regulator/coupler.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/async.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/of_regulator.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/regulator/coupler.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/module.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/regulator.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/regulator.h>
 
-#include "dummy.h"
-#include "internal.h"
+#समावेश "dummy.h"
+#समावेश "internal.h"
 
-#define rdev_crit(rdev, fmt, ...)					\
+#घोषणा rdev_crit(rdev, fmt, ...)					\
 	pr_crit("%s: " fmt, rdev_get_name(rdev), ##__VA_ARGS__)
-#define rdev_err(rdev, fmt, ...)					\
+#घोषणा rdev_err(rdev, fmt, ...)					\
 	pr_err("%s: " fmt, rdev_get_name(rdev), ##__VA_ARGS__)
-#define rdev_warn(rdev, fmt, ...)					\
+#घोषणा rdev_warn(rdev, fmt, ...)					\
 	pr_warn("%s: " fmt, rdev_get_name(rdev), ##__VA_ARGS__)
-#define rdev_info(rdev, fmt, ...)					\
+#घोषणा rdev_info(rdev, fmt, ...)					\
 	pr_info("%s: " fmt, rdev_get_name(rdev), ##__VA_ARGS__)
-#define rdev_dbg(rdev, fmt, ...)					\
+#घोषणा rdev_dbg(rdev, fmt, ...)					\
 	pr_debug("%s: " fmt, rdev_get_name(rdev), ##__VA_ARGS__)
 
-static DEFINE_WW_CLASS(regulator_ww_class);
-static DEFINE_MUTEX(regulator_nesting_mutex);
-static DEFINE_MUTEX(regulator_list_mutex);
-static LIST_HEAD(regulator_map_list);
-static LIST_HEAD(regulator_ena_gpio_list);
-static LIST_HEAD(regulator_supply_alias_list);
-static LIST_HEAD(regulator_coupler_list);
-static bool has_full_constraints;
+अटल DEFINE_WW_CLASS(regulator_ww_class);
+अटल DEFINE_MUTEX(regulator_nesting_mutex);
+अटल DEFINE_MUTEX(regulator_list_mutex);
+अटल LIST_HEAD(regulator_map_list);
+अटल LIST_HEAD(regulator_ena_gpio_list);
+अटल LIST_HEAD(regulator_supply_alias_list);
+अटल LIST_HEAD(regulator_coupler_list);
+अटल bool has_full_स्थिरraपूर्णांकs;
 
-static struct dentry *debugfs_root;
+अटल काष्ठा dentry *debugfs_root;
 
 /*
- * struct regulator_map
+ * काष्ठा regulator_map
  *
  * Used to provide symbolic supply names to devices.
  */
-struct regulator_map {
-	struct list_head list;
-	const char *dev_name;   /* The dev_name() for the consumer */
-	const char *supply;
-	struct regulator_dev *regulator;
-};
+काष्ठा regulator_map अणु
+	काष्ठा list_head list;
+	स्थिर अक्षर *dev_name;   /* The dev_name() क्रम the consumer */
+	स्थिर अक्षर *supply;
+	काष्ठा regulator_dev *regulator;
+पूर्ण;
 
 /*
- * struct regulator_enable_gpio
+ * काष्ठा regulator_enable_gpio
  *
- * Management for shared enable GPIO pin
+ * Management क्रम shared enable GPIO pin
  */
-struct regulator_enable_gpio {
-	struct list_head list;
-	struct gpio_desc *gpiod;
+काष्ठा regulator_enable_gpio अणु
+	काष्ठा list_head list;
+	काष्ठा gpio_desc *gpiod;
 	u32 enable_count;	/* a number of enabled shared GPIO */
 	u32 request_count;	/* a number of requested shared GPIO */
-};
+पूर्ण;
 
 /*
- * struct regulator_supply_alias
+ * काष्ठा regulator_supply_alias
  *
- * Used to map lookups for a supply onto an alternative device.
+ * Used to map lookups क्रम a supply onto an alternative device.
  */
-struct regulator_supply_alias {
-	struct list_head list;
-	struct device *src_dev;
-	const char *src_supply;
-	struct device *alias_dev;
-	const char *alias_supply;
-};
+काष्ठा regulator_supply_alias अणु
+	काष्ठा list_head list;
+	काष्ठा device *src_dev;
+	स्थिर अक्षर *src_supply;
+	काष्ठा device *alias_dev;
+	स्थिर अक्षर *alias_supply;
+पूर्ण;
 
-static int _regulator_is_enabled(struct regulator_dev *rdev);
-static int _regulator_disable(struct regulator *regulator);
-static int _regulator_get_current_limit(struct regulator_dev *rdev);
-static unsigned int _regulator_get_mode(struct regulator_dev *rdev);
-static int _notifier_call_chain(struct regulator_dev *rdev,
-				  unsigned long event, void *data);
-static int _regulator_do_set_voltage(struct regulator_dev *rdev,
-				     int min_uV, int max_uV);
-static int regulator_balance_voltage(struct regulator_dev *rdev,
+अटल पूर्णांक _regulator_is_enabled(काष्ठा regulator_dev *rdev);
+अटल पूर्णांक _regulator_disable(काष्ठा regulator *regulator);
+अटल पूर्णांक _regulator_get_current_limit(काष्ठा regulator_dev *rdev);
+अटल अचिन्हित पूर्णांक _regulator_get_mode(काष्ठा regulator_dev *rdev);
+अटल पूर्णांक _notअगरier_call_chain(काष्ठा regulator_dev *rdev,
+				  अचिन्हित दीर्घ event, व्योम *data);
+अटल पूर्णांक _regulator_करो_set_voltage(काष्ठा regulator_dev *rdev,
+				     पूर्णांक min_uV, पूर्णांक max_uV);
+अटल पूर्णांक regulator_balance_voltage(काष्ठा regulator_dev *rdev,
 				     suspend_state_t state);
-static struct regulator *create_regulator(struct regulator_dev *rdev,
-					  struct device *dev,
-					  const char *supply_name);
-static void destroy_regulator(struct regulator *regulator);
-static void _regulator_put(struct regulator *regulator);
+अटल काष्ठा regulator *create_regulator(काष्ठा regulator_dev *rdev,
+					  काष्ठा device *dev,
+					  स्थिर अक्षर *supply_name);
+अटल व्योम destroy_regulator(काष्ठा regulator *regulator);
+अटल व्योम _regulator_put(काष्ठा regulator *regulator);
 
-const char *rdev_get_name(struct regulator_dev *rdev)
-{
-	if (rdev->constraints && rdev->constraints->name)
-		return rdev->constraints->name;
-	else if (rdev->desc->name)
-		return rdev->desc->name;
-	else
-		return "";
-}
+स्थिर अक्षर *rdev_get_name(काष्ठा regulator_dev *rdev)
+अणु
+	अगर (rdev->स्थिरraपूर्णांकs && rdev->स्थिरraपूर्णांकs->name)
+		वापस rdev->स्थिरraपूर्णांकs->name;
+	अन्यथा अगर (rdev->desc->name)
+		वापस rdev->desc->name;
+	अन्यथा
+		वापस "";
+पूर्ण
 
-static bool have_full_constraints(void)
-{
-	return has_full_constraints || of_have_populated_dt();
-}
+अटल bool have_full_स्थिरraपूर्णांकs(व्योम)
+अणु
+	वापस has_full_स्थिरraपूर्णांकs || of_have_populated_dt();
+पूर्ण
 
-static bool regulator_ops_is_valid(struct regulator_dev *rdev, int ops)
-{
-	if (!rdev->constraints) {
+अटल bool regulator_ops_is_valid(काष्ठा regulator_dev *rdev, पूर्णांक ops)
+अणु
+	अगर (!rdev->स्थिरraपूर्णांकs) अणु
 		rdev_err(rdev, "no constraints\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (rdev->constraints->valid_ops_mask & ops)
-		return true;
+	अगर (rdev->स्थिरraपूर्णांकs->valid_ops_mask & ops)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * regulator_lock_nested - lock a single regulator
  * @rdev:		regulator source
  * @ww_ctx:		w/w mutex acquire context
  *
- * This function can be called many times by one task on
+ * This function can be called many बार by one task on
  * a single regulator and its mutex will be locked only
  * once. If a task, which is calling this function is other
  * than the one, which initially locked the mutex, it will
- * wait on mutex.
+ * रुको on mutex.
  */
-static inline int regulator_lock_nested(struct regulator_dev *rdev,
-					struct ww_acquire_ctx *ww_ctx)
-{
+अटल अंतरभूत पूर्णांक regulator_lock_nested(काष्ठा regulator_dev *rdev,
+					काष्ठा ww_acquire_ctx *ww_ctx)
+अणु
 	bool lock = false;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&regulator_nesting_mutex);
 
-	if (ww_ctx || !ww_mutex_trylock(&rdev->mutex)) {
-		if (rdev->mutex_owner == current)
+	अगर (ww_ctx || !ww_mutex_trylock(&rdev->mutex)) अणु
+		अगर (rdev->mutex_owner == current)
 			rdev->ref_cnt++;
-		else
+		अन्यथा
 			lock = true;
 
-		if (lock) {
+		अगर (lock) अणु
 			mutex_unlock(&regulator_nesting_mutex);
 			ret = ww_mutex_lock(&rdev->mutex, ww_ctx);
 			mutex_lock(&regulator_nesting_mutex);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		lock = true;
-	}
+	पूर्ण
 
-	if (lock && ret != -EDEADLK) {
+	अगर (lock && ret != -EDEADLK) अणु
 		rdev->ref_cnt++;
 		rdev->mutex_owner = current;
-	}
+	पूर्ण
 
 	mutex_unlock(&regulator_nesting_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * regulator_lock - lock a single regulator
  * @rdev:		regulator source
  *
- * This function can be called many times by one task on
+ * This function can be called many बार by one task on
  * a single regulator and its mutex will be locked only
  * once. If a task, which is calling this function is other
  * than the one, which initially locked the mutex, it will
- * wait on mutex.
+ * रुको on mutex.
  */
-static void regulator_lock(struct regulator_dev *rdev)
-{
-	regulator_lock_nested(rdev, NULL);
-}
+अटल व्योम regulator_lock(काष्ठा regulator_dev *rdev)
+अणु
+	regulator_lock_nested(rdev, शून्य);
+पूर्ण
 
 /**
  * regulator_unlock - unlock a single regulator
@@ -202,107 +203,107 @@ static void regulator_lock(struct regulator_dev *rdev)
  * This function unlocks the mutex when the
  * reference counter reaches 0.
  */
-static void regulator_unlock(struct regulator_dev *rdev)
-{
+अटल व्योम regulator_unlock(काष्ठा regulator_dev *rdev)
+अणु
 	mutex_lock(&regulator_nesting_mutex);
 
-	if (--rdev->ref_cnt == 0) {
-		rdev->mutex_owner = NULL;
+	अगर (--rdev->ref_cnt == 0) अणु
+		rdev->mutex_owner = शून्य;
 		ww_mutex_unlock(&rdev->mutex);
-	}
+	पूर्ण
 
 	WARN_ON_ONCE(rdev->ref_cnt < 0);
 
 	mutex_unlock(&regulator_nesting_mutex);
-}
+पूर्ण
 
-static bool regulator_supply_is_couple(struct regulator_dev *rdev)
-{
-	struct regulator_dev *c_rdev;
-	int i;
+अटल bool regulator_supply_is_couple(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulator_dev *c_rdev;
+	पूर्णांक i;
 
-	for (i = 1; i < rdev->coupling_desc.n_coupled; i++) {
+	क्रम (i = 1; i < rdev->coupling_desc.n_coupled; i++) अणु
 		c_rdev = rdev->coupling_desc.coupled_rdevs[i];
 
-		if (rdev->supply->rdev == c_rdev)
-			return true;
-	}
+		अगर (rdev->supply->rdev == c_rdev)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void regulator_unlock_recursive(struct regulator_dev *rdev,
-				       unsigned int n_coupled)
-{
-	struct regulator_dev *c_rdev, *supply_rdev;
-	int i, supply_n_coupled;
+अटल व्योम regulator_unlock_recursive(काष्ठा regulator_dev *rdev,
+				       अचिन्हित पूर्णांक n_coupled)
+अणु
+	काष्ठा regulator_dev *c_rdev, *supply_rdev;
+	पूर्णांक i, supply_n_coupled;
 
-	for (i = n_coupled; i > 0; i--) {
+	क्रम (i = n_coupled; i > 0; i--) अणु
 		c_rdev = rdev->coupling_desc.coupled_rdevs[i - 1];
 
-		if (!c_rdev)
-			continue;
+		अगर (!c_rdev)
+			जारी;
 
-		if (c_rdev->supply && !regulator_supply_is_couple(c_rdev)) {
+		अगर (c_rdev->supply && !regulator_supply_is_couple(c_rdev)) अणु
 			supply_rdev = c_rdev->supply->rdev;
 			supply_n_coupled = supply_rdev->coupling_desc.n_coupled;
 
 			regulator_unlock_recursive(supply_rdev,
 						   supply_n_coupled);
-		}
+		पूर्ण
 
 		regulator_unlock(c_rdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int regulator_lock_recursive(struct regulator_dev *rdev,
-				    struct regulator_dev **new_contended_rdev,
-				    struct regulator_dev **old_contended_rdev,
-				    struct ww_acquire_ctx *ww_ctx)
-{
-	struct regulator_dev *c_rdev;
-	int i, err;
+अटल पूर्णांक regulator_lock_recursive(काष्ठा regulator_dev *rdev,
+				    काष्ठा regulator_dev **new_contended_rdev,
+				    काष्ठा regulator_dev **old_contended_rdev,
+				    काष्ठा ww_acquire_ctx *ww_ctx)
+अणु
+	काष्ठा regulator_dev *c_rdev;
+	पूर्णांक i, err;
 
-	for (i = 0; i < rdev->coupling_desc.n_coupled; i++) {
+	क्रम (i = 0; i < rdev->coupling_desc.n_coupled; i++) अणु
 		c_rdev = rdev->coupling_desc.coupled_rdevs[i];
 
-		if (!c_rdev)
-			continue;
+		अगर (!c_rdev)
+			जारी;
 
-		if (c_rdev != *old_contended_rdev) {
+		अगर (c_rdev != *old_contended_rdev) अणु
 			err = regulator_lock_nested(c_rdev, ww_ctx);
-			if (err) {
-				if (err == -EDEADLK) {
+			अगर (err) अणु
+				अगर (err == -EDEADLK) अणु
 					*new_contended_rdev = c_rdev;
-					goto err_unlock;
-				}
+					जाओ err_unlock;
+				पूर्ण
 
 				/* shouldn't happen */
 				WARN_ON_ONCE(err != -EALREADY);
-			}
-		} else {
-			*old_contended_rdev = NULL;
-		}
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			*old_contended_rdev = शून्य;
+		पूर्ण
 
-		if (c_rdev->supply && !regulator_supply_is_couple(c_rdev)) {
+		अगर (c_rdev->supply && !regulator_supply_is_couple(c_rdev)) अणु
 			err = regulator_lock_recursive(c_rdev->supply->rdev,
 						       new_contended_rdev,
 						       old_contended_rdev,
 						       ww_ctx);
-			if (err) {
+			अगर (err) अणु
 				regulator_unlock(c_rdev);
-				goto err_unlock;
-			}
-		}
-	}
+				जाओ err_unlock;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_unlock:
 	regulator_unlock_recursive(rdev, i);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * regulator_unlock_dependent - unlock regulator's suppliers and coupled
@@ -312,12 +313,12 @@ err_unlock:
  *
  * Unlock all regulators related with rdev by coupling or supplying.
  */
-static void regulator_unlock_dependent(struct regulator_dev *rdev,
-				       struct ww_acquire_ctx *ww_ctx)
-{
+अटल व्योम regulator_unlock_dependent(काष्ठा regulator_dev *rdev,
+				       काष्ठा ww_acquire_ctx *ww_ctx)
+अणु
 	regulator_unlock_recursive(rdev, rdev->coupling_desc.n_coupled);
 	ww_acquire_fini(ww_ctx);
-}
+पूर्ण
 
 /**
  * regulator_lock_dependent - lock regulator's suppliers and coupled regulators
@@ -327,38 +328,38 @@ static void regulator_unlock_dependent(struct regulator_dev *rdev,
  * This function as a wrapper on regulator_lock_recursive(), which locks
  * all regulators related with rdev by coupling or supplying.
  */
-static void regulator_lock_dependent(struct regulator_dev *rdev,
-				     struct ww_acquire_ctx *ww_ctx)
-{
-	struct regulator_dev *new_contended_rdev = NULL;
-	struct regulator_dev *old_contended_rdev = NULL;
-	int err;
+अटल व्योम regulator_lock_dependent(काष्ठा regulator_dev *rdev,
+				     काष्ठा ww_acquire_ctx *ww_ctx)
+अणु
+	काष्ठा regulator_dev *new_contended_rdev = शून्य;
+	काष्ठा regulator_dev *old_contended_rdev = शून्य;
+	पूर्णांक err;
 
 	mutex_lock(&regulator_list_mutex);
 
 	ww_acquire_init(ww_ctx, &regulator_ww_class);
 
-	do {
-		if (new_contended_rdev) {
+	करो अणु
+		अगर (new_contended_rdev) अणु
 			ww_mutex_lock_slow(&new_contended_rdev->mutex, ww_ctx);
 			old_contended_rdev = new_contended_rdev;
 			old_contended_rdev->ref_cnt++;
-		}
+		पूर्ण
 
 		err = regulator_lock_recursive(rdev,
 					       &new_contended_rdev,
 					       &old_contended_rdev,
 					       ww_ctx);
 
-		if (old_contended_rdev)
+		अगर (old_contended_rdev)
 			regulator_unlock(old_contended_rdev);
 
-	} while (err == -EDEADLK);
+	पूर्ण जबतक (err == -EDEADLK);
 
-	ww_acquire_done(ww_ctx);
+	ww_acquire_करोne(ww_ctx);
 
 	mutex_unlock(&regulator_list_mutex);
-}
+पूर्ण
 
 /**
  * of_get_child_regulator - get a child regulator device node
@@ -368,1175 +369,1175 @@ static void regulator_lock_dependent(struct regulator_dev *rdev,
  *
  * Traverse all child nodes.
  * Extract the child regulator device node corresponding to the supply name.
- * returns the device node corresponding to the regulator if found, else
- * returns NULL.
+ * वापसs the device node corresponding to the regulator अगर found, अन्यथा
+ * वापसs शून्य.
  */
-static struct device_node *of_get_child_regulator(struct device_node *parent,
-						  const char *prop_name)
-{
-	struct device_node *regnode = NULL;
-	struct device_node *child = NULL;
+अटल काष्ठा device_node *of_get_child_regulator(काष्ठा device_node *parent,
+						  स्थिर अक्षर *prop_name)
+अणु
+	काष्ठा device_node *regnode = शून्य;
+	काष्ठा device_node *child = शून्य;
 
-	for_each_child_of_node(parent, child) {
+	क्रम_each_child_of_node(parent, child) अणु
 		regnode = of_parse_phandle(child, prop_name, 0);
 
-		if (!regnode) {
+		अगर (!regnode) अणु
 			regnode = of_get_child_regulator(child, prop_name);
-			if (regnode)
-				goto err_node_put;
-		} else {
-			goto err_node_put;
-		}
-	}
-	return NULL;
+			अगर (regnode)
+				जाओ err_node_put;
+		पूर्ण अन्यथा अणु
+			जाओ err_node_put;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
 
 err_node_put:
 	of_node_put(child);
-	return regnode;
-}
+	वापस regnode;
+पूर्ण
 
 /**
  * of_get_regulator - get a regulator device node based on supply name
- * @dev: Device pointer for the consumer (of regulator) device
+ * @dev: Device poपूर्णांकer क्रम the consumer (of regulator) device
  * @supply: regulator supply name
  *
  * Extract the regulator device node corresponding to the supply name.
- * returns the device node corresponding to the regulator if found, else
- * returns NULL.
+ * वापसs the device node corresponding to the regulator अगर found, अन्यथा
+ * वापसs शून्य.
  */
-static struct device_node *of_get_regulator(struct device *dev, const char *supply)
-{
-	struct device_node *regnode = NULL;
-	char prop_name[64]; /* 64 is max size of property name */
+अटल काष्ठा device_node *of_get_regulator(काष्ठा device *dev, स्थिर अक्षर *supply)
+अणु
+	काष्ठा device_node *regnode = शून्य;
+	अक्षर prop_name[64]; /* 64 is max size of property name */
 
 	dev_dbg(dev, "Looking up %s-supply from device tree\n", supply);
 
-	snprintf(prop_name, 64, "%s-supply", supply);
+	snम_लिखो(prop_name, 64, "%s-supply", supply);
 	regnode = of_parse_phandle(dev->of_node, prop_name, 0);
 
-	if (!regnode) {
+	अगर (!regnode) अणु
 		regnode = of_get_child_regulator(dev->of_node, prop_name);
-		if (regnode)
-			return regnode;
+		अगर (regnode)
+			वापस regnode;
 
 		dev_dbg(dev, "Looking up %s property in node %pOF failed\n",
 				prop_name, dev->of_node);
-		return NULL;
-	}
-	return regnode;
-}
+		वापस शून्य;
+	पूर्ण
+	वापस regnode;
+पूर्ण
 
-/* Platform voltage constraint check */
-int regulator_check_voltage(struct regulator_dev *rdev,
-			    int *min_uV, int *max_uV)
-{
+/* Platक्रमm voltage स्थिरraपूर्णांक check */
+पूर्णांक regulator_check_voltage(काष्ठा regulator_dev *rdev,
+			    पूर्णांक *min_uV, पूर्णांक *max_uV)
+अणु
 	BUG_ON(*min_uV > *max_uV);
 
-	if (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_VOLTAGE)) {
+	अगर (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_VOLTAGE)) अणु
 		rdev_err(rdev, "voltage operation not allowed\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	if (*max_uV > rdev->constraints->max_uV)
-		*max_uV = rdev->constraints->max_uV;
-	if (*min_uV < rdev->constraints->min_uV)
-		*min_uV = rdev->constraints->min_uV;
+	अगर (*max_uV > rdev->स्थिरraपूर्णांकs->max_uV)
+		*max_uV = rdev->स्थिरraपूर्णांकs->max_uV;
+	अगर (*min_uV < rdev->स्थिरraपूर्णांकs->min_uV)
+		*min_uV = rdev->स्थिरraपूर्णांकs->min_uV;
 
-	if (*min_uV > *max_uV) {
+	अगर (*min_uV > *max_uV) अणु
 		rdev_err(rdev, "unsupportable voltage range: %d-%duV\n",
 			 *min_uV, *max_uV);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* return 0 if the state is valid */
-static int regulator_check_states(suspend_state_t state)
-{
-	return (state > PM_SUSPEND_MAX || state == PM_SUSPEND_TO_IDLE);
-}
+/* वापस 0 अगर the state is valid */
+अटल पूर्णांक regulator_check_states(suspend_state_t state)
+अणु
+	वापस (state > PM_SUSPEND_MAX || state == PM_SUSPEND_TO_IDLE);
+पूर्ण
 
 /* Make sure we select a voltage that suits the needs of all
  * regulator consumers
  */
-int regulator_check_consumers(struct regulator_dev *rdev,
-			      int *min_uV, int *max_uV,
+पूर्णांक regulator_check_consumers(काष्ठा regulator_dev *rdev,
+			      पूर्णांक *min_uV, पूर्णांक *max_uV,
 			      suspend_state_t state)
-{
-	struct regulator *regulator;
-	struct regulator_voltage *voltage;
+अणु
+	काष्ठा regulator *regulator;
+	काष्ठा regulator_voltage *voltage;
 
-	list_for_each_entry(regulator, &rdev->consumer_list, list) {
+	list_क्रम_each_entry(regulator, &rdev->consumer_list, list) अणु
 		voltage = &regulator->voltage[state];
 		/*
 		 * Assume consumers that didn't say anything are OK
-		 * with anything in the constraint range.
+		 * with anything in the स्थिरraपूर्णांक range.
 		 */
-		if (!voltage->min_uV && !voltage->max_uV)
-			continue;
+		अगर (!voltage->min_uV && !voltage->max_uV)
+			जारी;
 
-		if (*max_uV > voltage->max_uV)
+		अगर (*max_uV > voltage->max_uV)
 			*max_uV = voltage->max_uV;
-		if (*min_uV < voltage->min_uV)
+		अगर (*min_uV < voltage->min_uV)
 			*min_uV = voltage->min_uV;
-	}
+	पूर्ण
 
-	if (*min_uV > *max_uV) {
+	अगर (*min_uV > *max_uV) अणु
 		rdev_err(rdev, "Restricting voltage, %u-%uuV\n",
 			*min_uV, *max_uV);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* current constraint check */
-static int regulator_check_current_limit(struct regulator_dev *rdev,
-					int *min_uA, int *max_uA)
-{
+/* current स्थिरraपूर्णांक check */
+अटल पूर्णांक regulator_check_current_limit(काष्ठा regulator_dev *rdev,
+					पूर्णांक *min_uA, पूर्णांक *max_uA)
+अणु
 	BUG_ON(*min_uA > *max_uA);
 
-	if (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_CURRENT)) {
+	अगर (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_CURRENT)) अणु
 		rdev_err(rdev, "current operation not allowed\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	if (*max_uA > rdev->constraints->max_uA)
-		*max_uA = rdev->constraints->max_uA;
-	if (*min_uA < rdev->constraints->min_uA)
-		*min_uA = rdev->constraints->min_uA;
+	अगर (*max_uA > rdev->स्थिरraपूर्णांकs->max_uA)
+		*max_uA = rdev->स्थिरraपूर्णांकs->max_uA;
+	अगर (*min_uA < rdev->स्थिरraपूर्णांकs->min_uA)
+		*min_uA = rdev->स्थिरraपूर्णांकs->min_uA;
 
-	if (*min_uA > *max_uA) {
+	अगर (*min_uA > *max_uA) अणु
 		rdev_err(rdev, "unsupportable current range: %d-%duA\n",
 			 *min_uA, *max_uA);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* operating mode constraint check */
-static int regulator_mode_constrain(struct regulator_dev *rdev,
-				    unsigned int *mode)
-{
-	switch (*mode) {
-	case REGULATOR_MODE_FAST:
-	case REGULATOR_MODE_NORMAL:
-	case REGULATOR_MODE_IDLE:
-	case REGULATOR_MODE_STANDBY:
-		break;
-	default:
+/* operating mode स्थिरraपूर्णांक check */
+अटल पूर्णांक regulator_mode_स्थिरrain(काष्ठा regulator_dev *rdev,
+				    अचिन्हित पूर्णांक *mode)
+अणु
+	चयन (*mode) अणु
+	हाल REGULATOR_MODE_FAST:
+	हाल REGULATOR_MODE_NORMAL:
+	हाल REGULATOR_MODE_IDLE:
+	हाल REGULATOR_MODE_STANDBY:
+		अवरोध;
+	शेष:
 		rdev_err(rdev, "invalid mode %x specified\n", *mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_MODE)) {
+	अगर (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_MODE)) अणु
 		rdev_err(rdev, "mode operation not allowed\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	/* The modes are bitmasks, the most power hungry modes having
+	/* The modes are biपंचांगasks, the most घातer hungry modes having
 	 * the lowest values. If the requested mode isn't supported
 	 * try higher modes.
 	 */
-	while (*mode) {
-		if (rdev->constraints->valid_modes_mask & *mode)
-			return 0;
+	जबतक (*mode) अणु
+		अगर (rdev->स्थिरraपूर्णांकs->valid_modes_mask & *mode)
+			वापस 0;
 		*mode /= 2;
-	}
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static inline struct regulator_state *
-regulator_get_suspend_state(struct regulator_dev *rdev, suspend_state_t state)
-{
-	if (rdev->constraints == NULL)
-		return NULL;
+अटल अंतरभूत काष्ठा regulator_state *
+regulator_get_suspend_state(काष्ठा regulator_dev *rdev, suspend_state_t state)
+अणु
+	अगर (rdev->स्थिरraपूर्णांकs == शून्य)
+		वापस शून्य;
 
-	switch (state) {
-	case PM_SUSPEND_STANDBY:
-		return &rdev->constraints->state_standby;
-	case PM_SUSPEND_MEM:
-		return &rdev->constraints->state_mem;
-	case PM_SUSPEND_MAX:
-		return &rdev->constraints->state_disk;
-	default:
-		return NULL;
-	}
-}
+	चयन (state) अणु
+	हाल PM_SUSPEND_STANDBY:
+		वापस &rdev->स्थिरraपूर्णांकs->state_standby;
+	हाल PM_SUSPEND_MEM:
+		वापस &rdev->स्थिरraपूर्णांकs->state_mem;
+	हाल PM_SUSPEND_MAX:
+		वापस &rdev->स्थिरraपूर्णांकs->state_disk;
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-static const struct regulator_state *
-regulator_get_suspend_state_check(struct regulator_dev *rdev, suspend_state_t state)
-{
-	const struct regulator_state *rstate;
+अटल स्थिर काष्ठा regulator_state *
+regulator_get_suspend_state_check(काष्ठा regulator_dev *rdev, suspend_state_t state)
+अणु
+	स्थिर काष्ठा regulator_state *rstate;
 
 	rstate = regulator_get_suspend_state(rdev, state);
-	if (rstate == NULL)
-		return NULL;
+	अगर (rstate == शून्य)
+		वापस शून्य;
 
-	/* If we have no suspend mode configuration don't set anything;
-	 * only warn if the driver implements set_suspend_voltage or
+	/* If we have no suspend mode configuration करोn't set anything;
+	 * only warn अगर the driver implements set_suspend_voltage or
 	 * set_suspend_mode callback.
 	 */
-	if (rstate->enabled != ENABLE_IN_SUSPEND &&
-	    rstate->enabled != DISABLE_IN_SUSPEND) {
-		if (rdev->desc->ops->set_suspend_voltage ||
+	अगर (rstate->enabled != ENABLE_IN_SUSPEND &&
+	    rstate->enabled != DISABLE_IN_SUSPEND) अणु
+		अगर (rdev->desc->ops->set_suspend_voltage ||
 		    rdev->desc->ops->set_suspend_mode)
 			rdev_warn(rdev, "No configuration\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return rstate;
-}
+	वापस rstate;
+पूर्ण
 
-static ssize_t regulator_uV_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
-	int uV;
+अटल sमाप_प्रकार regulator_uV_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
+	पूर्णांक uV;
 
 	regulator_lock(rdev);
 	uV = regulator_get_voltage_rdev(rdev);
 	regulator_unlock(rdev);
 
-	if (uV < 0)
-		return uV;
-	return sprintf(buf, "%d\n", uV);
-}
-static DEVICE_ATTR(microvolts, 0444, regulator_uV_show, NULL);
+	अगर (uV < 0)
+		वापस uV;
+	वापस प्र_लिखो(buf, "%d\n", uV);
+पूर्ण
+अटल DEVICE_ATTR(microvolts, 0444, regulator_uV_show, शून्य);
 
-static ssize_t regulator_uA_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_uA_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", _regulator_get_current_limit(rdev));
-}
-static DEVICE_ATTR(microamps, 0444, regulator_uA_show, NULL);
+	वापस प्र_लिखो(buf, "%d\n", _regulator_get_current_limit(rdev));
+पूर्ण
+अटल DEVICE_ATTR(microamps, 0444, regulator_uA_show, शून्य);
 
-static ssize_t name_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", rdev_get_name(rdev));
-}
-static DEVICE_ATTR_RO(name);
+	वापस प्र_लिखो(buf, "%s\n", rdev_get_name(rdev));
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static const char *regulator_opmode_to_str(int mode)
-{
-	switch (mode) {
-	case REGULATOR_MODE_FAST:
-		return "fast";
-	case REGULATOR_MODE_NORMAL:
-		return "normal";
-	case REGULATOR_MODE_IDLE:
-		return "idle";
-	case REGULATOR_MODE_STANDBY:
-		return "standby";
-	}
-	return "unknown";
-}
+अटल स्थिर अक्षर *regulator_opmode_to_str(पूर्णांक mode)
+अणु
+	चयन (mode) अणु
+	हाल REGULATOR_MODE_FAST:
+		वापस "fast";
+	हाल REGULATOR_MODE_NORMAL:
+		वापस "normal";
+	हाल REGULATOR_MODE_IDLE:
+		वापस "idle";
+	हाल REGULATOR_MODE_STANDBY:
+		वापस "standby";
+	पूर्ण
+	वापस "unknown";
+पूर्ण
 
-static ssize_t regulator_print_opmode(char *buf, int mode)
-{
-	return sprintf(buf, "%s\n", regulator_opmode_to_str(mode));
-}
+अटल sमाप_प्रकार regulator_prपूर्णांक_opmode(अक्षर *buf, पूर्णांक mode)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", regulator_opmode_to_str(mode));
+पूर्ण
 
-static ssize_t regulator_opmode_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_opmode_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return regulator_print_opmode(buf, _regulator_get_mode(rdev));
-}
-static DEVICE_ATTR(opmode, 0444, regulator_opmode_show, NULL);
+	वापस regulator_prपूर्णांक_opmode(buf, _regulator_get_mode(rdev));
+पूर्ण
+अटल DEVICE_ATTR(opmode, 0444, regulator_opmode_show, शून्य);
 
-static ssize_t regulator_print_state(char *buf, int state)
-{
-	if (state > 0)
-		return sprintf(buf, "enabled\n");
-	else if (state == 0)
-		return sprintf(buf, "disabled\n");
-	else
-		return sprintf(buf, "unknown\n");
-}
+अटल sमाप_प्रकार regulator_prपूर्णांक_state(अक्षर *buf, पूर्णांक state)
+अणु
+	अगर (state > 0)
+		वापस प्र_लिखो(buf, "enabled\n");
+	अन्यथा अगर (state == 0)
+		वापस प्र_लिखो(buf, "disabled\n");
+	अन्यथा
+		वापस प्र_लिखो(buf, "unknown\n");
+पूर्ण
 
-static ssize_t regulator_state_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
-	ssize_t ret;
+अटल sमाप_प्रकार regulator_state_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
+	sमाप_प्रकार ret;
 
 	regulator_lock(rdev);
-	ret = regulator_print_state(buf, _regulator_is_enabled(rdev));
+	ret = regulator_prपूर्णांक_state(buf, _regulator_is_enabled(rdev));
 	regulator_unlock(rdev);
 
-	return ret;
-}
-static DEVICE_ATTR(state, 0444, regulator_state_show, NULL);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR(state, 0444, regulator_state_show, शून्य);
 
-static ssize_t regulator_status_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
-	int status;
-	char *label;
+अटल sमाप_प्रकार regulator_status_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
+	पूर्णांक status;
+	अक्षर *label;
 
 	status = rdev->desc->ops->get_status(rdev);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
-	switch (status) {
-	case REGULATOR_STATUS_OFF:
+	चयन (status) अणु
+	हाल REGULATOR_STATUS_OFF:
 		label = "off";
-		break;
-	case REGULATOR_STATUS_ON:
+		अवरोध;
+	हाल REGULATOR_STATUS_ON:
 		label = "on";
-		break;
-	case REGULATOR_STATUS_ERROR:
+		अवरोध;
+	हाल REGULATOR_STATUS_ERROR:
 		label = "error";
-		break;
-	case REGULATOR_STATUS_FAST:
+		अवरोध;
+	हाल REGULATOR_STATUS_FAST:
 		label = "fast";
-		break;
-	case REGULATOR_STATUS_NORMAL:
+		अवरोध;
+	हाल REGULATOR_STATUS_NORMAL:
 		label = "normal";
-		break;
-	case REGULATOR_STATUS_IDLE:
+		अवरोध;
+	हाल REGULATOR_STATUS_IDLE:
 		label = "idle";
-		break;
-	case REGULATOR_STATUS_STANDBY:
+		अवरोध;
+	हाल REGULATOR_STATUS_STANDBY:
 		label = "standby";
-		break;
-	case REGULATOR_STATUS_BYPASS:
+		अवरोध;
+	हाल REGULATOR_STATUS_BYPASS:
 		label = "bypass";
-		break;
-	case REGULATOR_STATUS_UNDEFINED:
+		अवरोध;
+	हाल REGULATOR_STATUS_UNDEFINED:
 		label = "undefined";
-		break;
-	default:
-		return -ERANGE;
-	}
+		अवरोध;
+	शेष:
+		वापस -दुस्फल;
+	पूर्ण
 
-	return sprintf(buf, "%s\n", label);
-}
-static DEVICE_ATTR(status, 0444, regulator_status_show, NULL);
+	वापस प्र_लिखो(buf, "%s\n", label);
+पूर्ण
+अटल DEVICE_ATTR(status, 0444, regulator_status_show, शून्य);
 
-static ssize_t regulator_min_uA_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_min_uA_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	if (!rdev->constraints)
-		return sprintf(buf, "constraint not defined\n");
+	अगर (!rdev->स्थिरraपूर्णांकs)
+		वापस प्र_लिखो(buf, "constraint not defined\n");
 
-	return sprintf(buf, "%d\n", rdev->constraints->min_uA);
-}
-static DEVICE_ATTR(min_microamps, 0444, regulator_min_uA_show, NULL);
+	वापस प्र_लिखो(buf, "%d\n", rdev->स्थिरraपूर्णांकs->min_uA);
+पूर्ण
+अटल DEVICE_ATTR(min_microamps, 0444, regulator_min_uA_show, शून्य);
 
-static ssize_t regulator_max_uA_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_max_uA_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	if (!rdev->constraints)
-		return sprintf(buf, "constraint not defined\n");
+	अगर (!rdev->स्थिरraपूर्णांकs)
+		वापस प्र_लिखो(buf, "constraint not defined\n");
 
-	return sprintf(buf, "%d\n", rdev->constraints->max_uA);
-}
-static DEVICE_ATTR(max_microamps, 0444, regulator_max_uA_show, NULL);
+	वापस प्र_लिखो(buf, "%d\n", rdev->स्थिरraपूर्णांकs->max_uA);
+पूर्ण
+अटल DEVICE_ATTR(max_microamps, 0444, regulator_max_uA_show, शून्य);
 
-static ssize_t regulator_min_uV_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_min_uV_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	if (!rdev->constraints)
-		return sprintf(buf, "constraint not defined\n");
+	अगर (!rdev->स्थिरraपूर्णांकs)
+		वापस प्र_लिखो(buf, "constraint not defined\n");
 
-	return sprintf(buf, "%d\n", rdev->constraints->min_uV);
-}
-static DEVICE_ATTR(min_microvolts, 0444, regulator_min_uV_show, NULL);
+	वापस प्र_लिखो(buf, "%d\n", rdev->स्थिरraपूर्णांकs->min_uV);
+पूर्ण
+अटल DEVICE_ATTR(min_microvolts, 0444, regulator_min_uV_show, शून्य);
 
-static ssize_t regulator_max_uV_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_max_uV_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	if (!rdev->constraints)
-		return sprintf(buf, "constraint not defined\n");
+	अगर (!rdev->स्थिरraपूर्णांकs)
+		वापस प्र_लिखो(buf, "constraint not defined\n");
 
-	return sprintf(buf, "%d\n", rdev->constraints->max_uV);
-}
-static DEVICE_ATTR(max_microvolts, 0444, regulator_max_uV_show, NULL);
+	वापस प्र_लिखो(buf, "%d\n", rdev->स्थिरraपूर्णांकs->max_uV);
+पूर्ण
+अटल DEVICE_ATTR(max_microvolts, 0444, regulator_max_uV_show, शून्य);
 
-static ssize_t regulator_total_uA_show(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
-	struct regulator *regulator;
-	int uA = 0;
+अटल sमाप_प्रकार regulator_total_uA_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
+	काष्ठा regulator *regulator;
+	पूर्णांक uA = 0;
 
 	regulator_lock(rdev);
-	list_for_each_entry(regulator, &rdev->consumer_list, list) {
-		if (regulator->enable_count)
+	list_क्रम_each_entry(regulator, &rdev->consumer_list, list) अणु
+		अगर (regulator->enable_count)
 			uA += regulator->uA_load;
-	}
+	पूर्ण
 	regulator_unlock(rdev);
-	return sprintf(buf, "%d\n", uA);
-}
-static DEVICE_ATTR(requested_microamps, 0444, regulator_total_uA_show, NULL);
+	वापस प्र_लिखो(buf, "%d\n", uA);
+पूर्ण
+अटल DEVICE_ATTR(requested_microamps, 0444, regulator_total_uA_show, शून्य);
 
-static ssize_t num_users_show(struct device *dev, struct device_attribute *attr,
-			      char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
-	return sprintf(buf, "%d\n", rdev->use_count);
-}
-static DEVICE_ATTR_RO(num_users);
+अटल sमाप_प्रकार num_users_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
+	वापस प्र_लिखो(buf, "%d\n", rdev->use_count);
+पूर्ण
+अटल DEVICE_ATTR_RO(num_users);
 
-static ssize_t type_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	switch (rdev->desc->type) {
-	case REGULATOR_VOLTAGE:
-		return sprintf(buf, "voltage\n");
-	case REGULATOR_CURRENT:
-		return sprintf(buf, "current\n");
-	}
-	return sprintf(buf, "unknown\n");
-}
-static DEVICE_ATTR_RO(type);
+	चयन (rdev->desc->type) अणु
+	हाल REGULATOR_VOLTAGE:
+		वापस प्र_लिखो(buf, "voltage\n");
+	हाल REGULATOR_CURRENT:
+		वापस प्र_लिखो(buf, "current\n");
+	पूर्ण
+	वापस प्र_लिखो(buf, "unknown\n");
+पूर्ण
+अटल DEVICE_ATTR_RO(type);
 
-static ssize_t regulator_suspend_mem_uV_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_suspend_mem_uV_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", rdev->constraints->state_mem.uV);
-}
-static DEVICE_ATTR(suspend_mem_microvolts, 0444,
-		regulator_suspend_mem_uV_show, NULL);
+	वापस प्र_लिखो(buf, "%d\n", rdev->स्थिरraपूर्णांकs->state_mem.uV);
+पूर्ण
+अटल DEVICE_ATTR(suspend_mem_microvolts, 0444,
+		regulator_suspend_mem_uV_show, शून्य);
 
-static ssize_t regulator_suspend_disk_uV_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_suspend_disk_uV_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", rdev->constraints->state_disk.uV);
-}
-static DEVICE_ATTR(suspend_disk_microvolts, 0444,
-		regulator_suspend_disk_uV_show, NULL);
+	वापस प्र_लिखो(buf, "%d\n", rdev->स्थिरraपूर्णांकs->state_disk.uV);
+पूर्ण
+अटल DEVICE_ATTR(suspend_disk_microvolts, 0444,
+		regulator_suspend_disk_uV_show, शून्य);
 
-static ssize_t regulator_suspend_standby_uV_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_suspend_standby_uV_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", rdev->constraints->state_standby.uV);
-}
-static DEVICE_ATTR(suspend_standby_microvolts, 0444,
-		regulator_suspend_standby_uV_show, NULL);
+	वापस प्र_लिखो(buf, "%d\n", rdev->स्थिरraपूर्णांकs->state_standby.uV);
+पूर्ण
+अटल DEVICE_ATTR(suspend_standby_microvolts, 0444,
+		regulator_suspend_standby_uV_show, शून्य);
 
-static ssize_t regulator_suspend_mem_mode_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_suspend_mem_mode_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return regulator_print_opmode(buf,
-		rdev->constraints->state_mem.mode);
-}
-static DEVICE_ATTR(suspend_mem_mode, 0444,
-		regulator_suspend_mem_mode_show, NULL);
+	वापस regulator_prपूर्णांक_opmode(buf,
+		rdev->स्थिरraपूर्णांकs->state_mem.mode);
+पूर्ण
+अटल DEVICE_ATTR(suspend_mem_mode, 0444,
+		regulator_suspend_mem_mode_show, शून्य);
 
-static ssize_t regulator_suspend_disk_mode_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_suspend_disk_mode_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return regulator_print_opmode(buf,
-		rdev->constraints->state_disk.mode);
-}
-static DEVICE_ATTR(suspend_disk_mode, 0444,
-		regulator_suspend_disk_mode_show, NULL);
+	वापस regulator_prपूर्णांक_opmode(buf,
+		rdev->स्थिरraपूर्णांकs->state_disk.mode);
+पूर्ण
+अटल DEVICE_ATTR(suspend_disk_mode, 0444,
+		regulator_suspend_disk_mode_show, शून्य);
 
-static ssize_t regulator_suspend_standby_mode_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_suspend_standby_mode_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return regulator_print_opmode(buf,
-		rdev->constraints->state_standby.mode);
-}
-static DEVICE_ATTR(suspend_standby_mode, 0444,
-		regulator_suspend_standby_mode_show, NULL);
+	वापस regulator_prपूर्णांक_opmode(buf,
+		rdev->स्थिरraपूर्णांकs->state_standby.mode);
+पूर्ण
+अटल DEVICE_ATTR(suspend_standby_mode, 0444,
+		regulator_suspend_standby_mode_show, शून्य);
 
-static ssize_t regulator_suspend_mem_state_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_suspend_mem_state_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return regulator_print_state(buf,
-			rdev->constraints->state_mem.enabled);
-}
-static DEVICE_ATTR(suspend_mem_state, 0444,
-		regulator_suspend_mem_state_show, NULL);
+	वापस regulator_prपूर्णांक_state(buf,
+			rdev->स्थिरraपूर्णांकs->state_mem.enabled);
+पूर्ण
+अटल DEVICE_ATTR(suspend_mem_state, 0444,
+		regulator_suspend_mem_state_show, शून्य);
 
-static ssize_t regulator_suspend_disk_state_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_suspend_disk_state_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return regulator_print_state(buf,
-			rdev->constraints->state_disk.enabled);
-}
-static DEVICE_ATTR(suspend_disk_state, 0444,
-		regulator_suspend_disk_state_show, NULL);
+	वापस regulator_prपूर्णांक_state(buf,
+			rdev->स्थिरraपूर्णांकs->state_disk.enabled);
+पूर्ण
+अटल DEVICE_ATTR(suspend_disk_state, 0444,
+		regulator_suspend_disk_state_show, शून्य);
 
-static ssize_t regulator_suspend_standby_state_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार regulator_suspend_standby_state_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	return regulator_print_state(buf,
-			rdev->constraints->state_standby.enabled);
-}
-static DEVICE_ATTR(suspend_standby_state, 0444,
-		regulator_suspend_standby_state_show, NULL);
+	वापस regulator_prपूर्णांक_state(buf,
+			rdev->स्थिरraपूर्णांकs->state_standby.enabled);
+पूर्ण
+अटल DEVICE_ATTR(suspend_standby_state, 0444,
+		regulator_suspend_standby_state_show, शून्य);
 
-static ssize_t regulator_bypass_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
-	const char *report;
+अटल sमाप_प्रकार regulator_bypass_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
+	स्थिर अक्षर *report;
 	bool bypass;
-	int ret;
+	पूर्णांक ret;
 
 	ret = rdev->desc->ops->get_bypass(rdev, &bypass);
 
-	if (ret != 0)
+	अगर (ret != 0)
 		report = "unknown";
-	else if (bypass)
+	अन्यथा अगर (bypass)
 		report = "enabled";
-	else
+	अन्यथा
 		report = "disabled";
 
-	return sprintf(buf, "%s\n", report);
-}
-static DEVICE_ATTR(bypass, 0444,
-		   regulator_bypass_show, NULL);
+	वापस प्र_लिखो(buf, "%s\n", report);
+पूर्ण
+अटल DEVICE_ATTR(bypass, 0444,
+		   regulator_bypass_show, शून्य);
 
 /* Calculate the new optimum regulator operating mode based on the new total
  * consumer load. All locks held by caller
  */
-static int drms_uA_update(struct regulator_dev *rdev)
-{
-	struct regulator *sibling;
-	int current_uA = 0, output_uV, input_uV, err;
-	unsigned int mode;
+अटल पूर्णांक drms_uA_update(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulator *sibling;
+	पूर्णांक current_uA = 0, output_uV, input_uV, err;
+	अचिन्हित पूर्णांक mode;
 
 	/*
-	 * first check to see if we can set modes at all, otherwise just
+	 * first check to see अगर we can set modes at all, otherwise just
 	 * tell the consumer everything is OK.
 	 */
-	if (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_DRMS)) {
+	अगर (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_DRMS)) अणु
 		rdev_dbg(rdev, "DRMS operation not allowed\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!rdev->desc->ops->get_optimum_mode &&
+	अगर (!rdev->desc->ops->get_optimum_mode &&
 	    !rdev->desc->ops->set_load)
-		return 0;
+		वापस 0;
 
-	if (!rdev->desc->ops->set_mode &&
+	अगर (!rdev->desc->ops->set_mode &&
 	    !rdev->desc->ops->set_load)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* calc total requested load */
-	list_for_each_entry(sibling, &rdev->consumer_list, list) {
-		if (sibling->enable_count)
+	list_क्रम_each_entry(sibling, &rdev->consumer_list, list) अणु
+		अगर (sibling->enable_count)
 			current_uA += sibling->uA_load;
-	}
+	पूर्ण
 
-	current_uA += rdev->constraints->system_load;
+	current_uA += rdev->स्थिरraपूर्णांकs->प्रणाली_load;
 
-	if (rdev->desc->ops->set_load) {
-		/* set the optimum mode for our new total regulator load */
+	अगर (rdev->desc->ops->set_load) अणु
+		/* set the optimum mode क्रम our new total regulator load */
 		err = rdev->desc->ops->set_load(rdev, current_uA);
-		if (err < 0)
+		अगर (err < 0)
 			rdev_err(rdev, "failed to set load %d: %pe\n",
 				 current_uA, ERR_PTR(err));
-	} else {
+	पूर्ण अन्यथा अणु
 		/* get output voltage */
 		output_uV = regulator_get_voltage_rdev(rdev);
-		if (output_uV <= 0) {
+		अगर (output_uV <= 0) अणु
 			rdev_err(rdev, "invalid output voltage found\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* get input voltage */
 		input_uV = 0;
-		if (rdev->supply)
+		अगर (rdev->supply)
 			input_uV = regulator_get_voltage(rdev->supply);
-		if (input_uV <= 0)
-			input_uV = rdev->constraints->input_uV;
-		if (input_uV <= 0) {
+		अगर (input_uV <= 0)
+			input_uV = rdev->स्थिरraपूर्णांकs->input_uV;
+		अगर (input_uV <= 0) अणु
 			rdev_err(rdev, "invalid input voltage found\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* now get the optimum mode for our new total regulator load */
+		/* now get the optimum mode क्रम our new total regulator load */
 		mode = rdev->desc->ops->get_optimum_mode(rdev, input_uV,
 							 output_uV, current_uA);
 
 		/* check the new mode is allowed */
-		err = regulator_mode_constrain(rdev, &mode);
-		if (err < 0) {
+		err = regulator_mode_स्थिरrain(rdev, &mode);
+		अगर (err < 0) अणु
 			rdev_err(rdev, "failed to get optimum mode @ %d uA %d -> %d uV: %pe\n",
 				 current_uA, input_uV, output_uV, ERR_PTR(err));
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		err = rdev->desc->ops->set_mode(rdev, mode);
-		if (err < 0)
+		अगर (err < 0)
 			rdev_err(rdev, "failed to set optimum mode %x: %pe\n",
 				 mode, ERR_PTR(err));
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __suspend_set_state(struct regulator_dev *rdev,
-			       const struct regulator_state *rstate)
-{
-	int ret = 0;
+अटल पूर्णांक __suspend_set_state(काष्ठा regulator_dev *rdev,
+			       स्थिर काष्ठा regulator_state *rstate)
+अणु
+	पूर्णांक ret = 0;
 
-	if (rstate->enabled == ENABLE_IN_SUSPEND &&
+	अगर (rstate->enabled == ENABLE_IN_SUSPEND &&
 		rdev->desc->ops->set_suspend_enable)
 		ret = rdev->desc->ops->set_suspend_enable(rdev);
-	else if (rstate->enabled == DISABLE_IN_SUSPEND &&
+	अन्यथा अगर (rstate->enabled == DISABLE_IN_SUSPEND &&
 		rdev->desc->ops->set_suspend_disable)
 		ret = rdev->desc->ops->set_suspend_disable(rdev);
-	else /* OK if set_suspend_enable or set_suspend_disable is NULL */
+	अन्यथा /* OK अगर set_suspend_enable or set_suspend_disable is शून्य */
 		ret = 0;
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		rdev_err(rdev, "failed to enabled/disable: %pe\n", ERR_PTR(ret));
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (rdev->desc->ops->set_suspend_voltage && rstate->uV > 0) {
+	अगर (rdev->desc->ops->set_suspend_voltage && rstate->uV > 0) अणु
 		ret = rdev->desc->ops->set_suspend_voltage(rdev, rstate->uV);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			rdev_err(rdev, "failed to set voltage: %pe\n", ERR_PTR(ret));
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (rdev->desc->ops->set_suspend_mode && rstate->mode > 0) {
+	अगर (rdev->desc->ops->set_suspend_mode && rstate->mode > 0) अणु
 		ret = rdev->desc->ops->set_suspend_mode(rdev, rstate->mode);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			rdev_err(rdev, "failed to set mode: %pe\n", ERR_PTR(ret));
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int suspend_set_initial_state(struct regulator_dev *rdev)
-{
-	const struct regulator_state *rstate;
+अटल पूर्णांक suspend_set_initial_state(काष्ठा regulator_dev *rdev)
+अणु
+	स्थिर काष्ठा regulator_state *rstate;
 
 	rstate = regulator_get_suspend_state_check(rdev,
-			rdev->constraints->initial_state);
-	if (!rstate)
-		return 0;
+			rdev->स्थिरraपूर्णांकs->initial_state);
+	अगर (!rstate)
+		वापस 0;
 
-	return __suspend_set_state(rdev, rstate);
-}
+	वापस __suspend_set_state(rdev, rstate);
+पूर्ण
 
-#if defined(DEBUG) || defined(CONFIG_DYNAMIC_DEBUG)
-static void print_constraints_debug(struct regulator_dev *rdev)
-{
-	struct regulation_constraints *constraints = rdev->constraints;
-	char buf[160] = "";
-	size_t len = sizeof(buf) - 1;
-	int count = 0;
-	int ret;
+#अगर defined(DEBUG) || defined(CONFIG_DYNAMIC_DEBUG)
+अटल व्योम prपूर्णांक_स्थिरraपूर्णांकs_debug(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulation_स्थिरraपूर्णांकs *स्थिरraपूर्णांकs = rdev->स्थिरraपूर्णांकs;
+	अक्षर buf[160] = "";
+	माप_प्रकार len = माप(buf) - 1;
+	पूर्णांक count = 0;
+	पूर्णांक ret;
 
-	if (constraints->min_uV && constraints->max_uV) {
-		if (constraints->min_uV == constraints->max_uV)
-			count += scnprintf(buf + count, len - count, "%d mV ",
-					   constraints->min_uV / 1000);
-		else
-			count += scnprintf(buf + count, len - count,
+	अगर (स्थिरraपूर्णांकs->min_uV && स्थिरraपूर्णांकs->max_uV) अणु
+		अगर (स्थिरraपूर्णांकs->min_uV == स्थिरraपूर्णांकs->max_uV)
+			count += scnम_लिखो(buf + count, len - count, "%d mV ",
+					   स्थिरraपूर्णांकs->min_uV / 1000);
+		अन्यथा
+			count += scnम_लिखो(buf + count, len - count,
 					   "%d <--> %d mV ",
-					   constraints->min_uV / 1000,
-					   constraints->max_uV / 1000);
-	}
+					   स्थिरraपूर्णांकs->min_uV / 1000,
+					   स्थिरraपूर्णांकs->max_uV / 1000);
+	पूर्ण
 
-	if (!constraints->min_uV ||
-	    constraints->min_uV != constraints->max_uV) {
+	अगर (!स्थिरraपूर्णांकs->min_uV ||
+	    स्थिरraपूर्णांकs->min_uV != स्थिरraपूर्णांकs->max_uV) अणु
 		ret = regulator_get_voltage_rdev(rdev);
-		if (ret > 0)
-			count += scnprintf(buf + count, len - count,
+		अगर (ret > 0)
+			count += scnम_लिखो(buf + count, len - count,
 					   "at %d mV ", ret / 1000);
-	}
+	पूर्ण
 
-	if (constraints->uV_offset)
-		count += scnprintf(buf + count, len - count, "%dmV offset ",
-				   constraints->uV_offset / 1000);
+	अगर (स्थिरraपूर्णांकs->uV_offset)
+		count += scnम_लिखो(buf + count, len - count, "%dmV offset ",
+				   स्थिरraपूर्णांकs->uV_offset / 1000);
 
-	if (constraints->min_uA && constraints->max_uA) {
-		if (constraints->min_uA == constraints->max_uA)
-			count += scnprintf(buf + count, len - count, "%d mA ",
-					   constraints->min_uA / 1000);
-		else
-			count += scnprintf(buf + count, len - count,
+	अगर (स्थिरraपूर्णांकs->min_uA && स्थिरraपूर्णांकs->max_uA) अणु
+		अगर (स्थिरraपूर्णांकs->min_uA == स्थिरraपूर्णांकs->max_uA)
+			count += scnम_लिखो(buf + count, len - count, "%d mA ",
+					   स्थिरraपूर्णांकs->min_uA / 1000);
+		अन्यथा
+			count += scnम_लिखो(buf + count, len - count,
 					   "%d <--> %d mA ",
-					   constraints->min_uA / 1000,
-					   constraints->max_uA / 1000);
-	}
+					   स्थिरraपूर्णांकs->min_uA / 1000,
+					   स्थिरraपूर्णांकs->max_uA / 1000);
+	पूर्ण
 
-	if (!constraints->min_uA ||
-	    constraints->min_uA != constraints->max_uA) {
+	अगर (!स्थिरraपूर्णांकs->min_uA ||
+	    स्थिरraपूर्णांकs->min_uA != स्थिरraपूर्णांकs->max_uA) अणु
 		ret = _regulator_get_current_limit(rdev);
-		if (ret > 0)
-			count += scnprintf(buf + count, len - count,
+		अगर (ret > 0)
+			count += scnम_लिखो(buf + count, len - count,
 					   "at %d mA ", ret / 1000);
-	}
+	पूर्ण
 
-	if (constraints->valid_modes_mask & REGULATOR_MODE_FAST)
-		count += scnprintf(buf + count, len - count, "fast ");
-	if (constraints->valid_modes_mask & REGULATOR_MODE_NORMAL)
-		count += scnprintf(buf + count, len - count, "normal ");
-	if (constraints->valid_modes_mask & REGULATOR_MODE_IDLE)
-		count += scnprintf(buf + count, len - count, "idle ");
-	if (constraints->valid_modes_mask & REGULATOR_MODE_STANDBY)
-		count += scnprintf(buf + count, len - count, "standby ");
+	अगर (स्थिरraपूर्णांकs->valid_modes_mask & REGULATOR_MODE_FAST)
+		count += scnम_लिखो(buf + count, len - count, "fast ");
+	अगर (स्थिरraपूर्णांकs->valid_modes_mask & REGULATOR_MODE_NORMAL)
+		count += scnम_लिखो(buf + count, len - count, "normal ");
+	अगर (स्थिरraपूर्णांकs->valid_modes_mask & REGULATOR_MODE_IDLE)
+		count += scnम_लिखो(buf + count, len - count, "idle ");
+	अगर (स्थिरraपूर्णांकs->valid_modes_mask & REGULATOR_MODE_STANDBY)
+		count += scnम_लिखो(buf + count, len - count, "standby ");
 
-	if (!count)
-		count = scnprintf(buf, len, "no parameters");
-	else
+	अगर (!count)
+		count = scnम_लिखो(buf, len, "no parameters");
+	अन्यथा
 		--count;
 
-	count += scnprintf(buf + count, len - count, ", %s",
+	count += scnम_लिखो(buf + count, len - count, ", %s",
 		_regulator_is_enabled(rdev) ? "enabled" : "disabled");
 
 	rdev_dbg(rdev, "%s\n", buf);
-}
-#else /* !DEBUG && !CONFIG_DYNAMIC_DEBUG */
-static inline void print_constraints_debug(struct regulator_dev *rdev) {}
-#endif /* !DEBUG && !CONFIG_DYNAMIC_DEBUG */
+पूर्ण
+#अन्यथा /* !DEBUG && !CONFIG_DYNAMIC_DEBUG */
+अटल अंतरभूत व्योम prपूर्णांक_स्थिरraपूर्णांकs_debug(काष्ठा regulator_dev *rdev) अणुपूर्ण
+#पूर्ण_अगर /* !DEBUG && !CONFIG_DYNAMIC_DEBUG */
 
-static void print_constraints(struct regulator_dev *rdev)
-{
-	struct regulation_constraints *constraints = rdev->constraints;
+अटल व्योम prपूर्णांक_स्थिरraपूर्णांकs(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulation_स्थिरraपूर्णांकs *स्थिरraपूर्णांकs = rdev->स्थिरraपूर्णांकs;
 
-	print_constraints_debug(rdev);
+	prपूर्णांक_स्थिरraपूर्णांकs_debug(rdev);
 
-	if ((constraints->min_uV != constraints->max_uV) &&
+	अगर ((स्थिरraपूर्णांकs->min_uV != स्थिरraपूर्णांकs->max_uV) &&
 	    !regulator_ops_is_valid(rdev, REGULATOR_CHANGE_VOLTAGE))
 		rdev_warn(rdev,
 			  "Voltage range but no REGULATOR_CHANGE_VOLTAGE\n");
-}
+पूर्ण
 
-static int machine_constraints_voltage(struct regulator_dev *rdev,
-	struct regulation_constraints *constraints)
-{
-	const struct regulator_ops *ops = rdev->desc->ops;
-	int ret;
+अटल पूर्णांक machine_स्थिरraपूर्णांकs_voltage(काष्ठा regulator_dev *rdev,
+	काष्ठा regulation_स्थिरraपूर्णांकs *स्थिरraपूर्णांकs)
+अणु
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
+	पूर्णांक ret;
 
-	/* do we need to apply the constraint voltage */
-	if (rdev->constraints->apply_uV &&
-	    rdev->constraints->min_uV && rdev->constraints->max_uV) {
-		int target_min, target_max;
-		int current_uV = regulator_get_voltage_rdev(rdev);
+	/* करो we need to apply the स्थिरraपूर्णांक voltage */
+	अगर (rdev->स्थिरraपूर्णांकs->apply_uV &&
+	    rdev->स्थिरraपूर्णांकs->min_uV && rdev->स्थिरraपूर्णांकs->max_uV) अणु
+		पूर्णांक target_min, target_max;
+		पूर्णांक current_uV = regulator_get_voltage_rdev(rdev);
 
-		if (current_uV == -ENOTRECOVERABLE) {
-			/* This regulator can't be read and must be initialized */
+		अगर (current_uV == -ENOTRECOVERABLE) अणु
+			/* This regulator can't be पढ़ो and must be initialized */
 			rdev_info(rdev, "Setting %d-%duV\n",
-				  rdev->constraints->min_uV,
-				  rdev->constraints->max_uV);
-			_regulator_do_set_voltage(rdev,
-						  rdev->constraints->min_uV,
-						  rdev->constraints->max_uV);
+				  rdev->स्थिरraपूर्णांकs->min_uV,
+				  rdev->स्थिरraपूर्णांकs->max_uV);
+			_regulator_करो_set_voltage(rdev,
+						  rdev->स्थिरraपूर्णांकs->min_uV,
+						  rdev->स्थिरraपूर्णांकs->max_uV);
 			current_uV = regulator_get_voltage_rdev(rdev);
-		}
+		पूर्ण
 
-		if (current_uV < 0) {
+		अगर (current_uV < 0) अणु
 			rdev_err(rdev,
 				 "failed to get the current voltage: %pe\n",
 				 ERR_PTR(current_uV));
-			return current_uV;
-		}
+			वापस current_uV;
+		पूर्ण
 
 		/*
 		 * If we're below the minimum voltage move up to the
-		 * minimum voltage, if we're above the maximum voltage
-		 * then move down to the maximum.
+		 * minimum voltage, अगर we're above the maximum voltage
+		 * then move करोwn to the maximum.
 		 */
 		target_min = current_uV;
 		target_max = current_uV;
 
-		if (current_uV < rdev->constraints->min_uV) {
-			target_min = rdev->constraints->min_uV;
-			target_max = rdev->constraints->min_uV;
-		}
+		अगर (current_uV < rdev->स्थिरraपूर्णांकs->min_uV) अणु
+			target_min = rdev->स्थिरraपूर्णांकs->min_uV;
+			target_max = rdev->स्थिरraपूर्णांकs->min_uV;
+		पूर्ण
 
-		if (current_uV > rdev->constraints->max_uV) {
-			target_min = rdev->constraints->max_uV;
-			target_max = rdev->constraints->max_uV;
-		}
+		अगर (current_uV > rdev->स्थिरraपूर्णांकs->max_uV) अणु
+			target_min = rdev->स्थिरraपूर्णांकs->max_uV;
+			target_max = rdev->स्थिरraपूर्णांकs->max_uV;
+		पूर्ण
 
-		if (target_min != current_uV || target_max != current_uV) {
+		अगर (target_min != current_uV || target_max != current_uV) अणु
 			rdev_info(rdev, "Bringing %duV into %d-%duV\n",
 				  current_uV, target_min, target_max);
-			ret = _regulator_do_set_voltage(
+			ret = _regulator_करो_set_voltage(
 				rdev, target_min, target_max);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				rdev_err(rdev,
 					"failed to apply %d-%duV constraint: %pe\n",
 					target_min, target_max, ERR_PTR(ret));
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* constrain machine-level voltage specs to fit
+	/* स्थिरrain machine-level voltage specs to fit
 	 * the actual range supported by this regulator.
 	 */
-	if (ops->list_voltage && rdev->desc->n_voltages) {
-		int	count = rdev->desc->n_voltages;
-		int	i;
-		int	min_uV = INT_MAX;
-		int	max_uV = INT_MIN;
-		int	cmin = constraints->min_uV;
-		int	cmax = constraints->max_uV;
+	अगर (ops->list_voltage && rdev->desc->n_voltages) अणु
+		पूर्णांक	count = rdev->desc->n_voltages;
+		पूर्णांक	i;
+		पूर्णांक	min_uV = पूर्णांक_उच्च;
+		पूर्णांक	max_uV = पूर्णांक_न्यून;
+		पूर्णांक	cmin = स्थिरraपूर्णांकs->min_uV;
+		पूर्णांक	cmax = स्थिरraपूर्णांकs->max_uV;
 
-		/* it's safe to autoconfigure fixed-voltage supplies
-		 * and the constraints are used by list_voltage.
+		/* it's safe to स्वतःconfigure fixed-voltage supplies
+		 * and the स्थिरraपूर्णांकs are used by list_voltage.
 		 */
-		if (count == 1 && !cmin) {
+		अगर (count == 1 && !cmin) अणु
 			cmin = 1;
-			cmax = INT_MAX;
-			constraints->min_uV = cmin;
-			constraints->max_uV = cmax;
-		}
+			cmax = पूर्णांक_उच्च;
+			स्थिरraपूर्णांकs->min_uV = cmin;
+			स्थिरraपूर्णांकs->max_uV = cmax;
+		पूर्ण
 
-		/* voltage constraints are optional */
-		if ((cmin == 0) && (cmax == 0))
-			return 0;
+		/* voltage स्थिरraपूर्णांकs are optional */
+		अगर ((cmin == 0) && (cmax == 0))
+			वापस 0;
 
-		/* else require explicit machine-level constraints */
-		if (cmin <= 0 || cmax <= 0 || cmax < cmin) {
+		/* अन्यथा require explicit machine-level स्थिरraपूर्णांकs */
+		अगर (cmin <= 0 || cmax <= 0 || cmax < cmin) अणु
 			rdev_err(rdev, "invalid voltage constraints\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* no need to loop voltages if range is continuous */
-		if (rdev->desc->continuous_voltage_range)
-			return 0;
+		/* no need to loop voltages अगर range is continuous */
+		अगर (rdev->desc->continuous_voltage_range)
+			वापस 0;
 
 		/* initial: [cmin..cmax] valid, [min_uV..max_uV] not */
-		for (i = 0; i < count; i++) {
-			int	value;
+		क्रम (i = 0; i < count; i++) अणु
+			पूर्णांक	value;
 
 			value = ops->list_voltage(rdev, i);
-			if (value <= 0)
-				continue;
+			अगर (value <= 0)
+				जारी;
 
 			/* maybe adjust [min_uV..max_uV] */
-			if (value >= cmin && value < min_uV)
+			अगर (value >= cmin && value < min_uV)
 				min_uV = value;
-			if (value <= cmax && value > max_uV)
+			अगर (value <= cmax && value > max_uV)
 				max_uV = value;
-		}
+		पूर्ण
 
-		/* final: [min_uV..max_uV] valid iff constraints valid */
-		if (max_uV < min_uV) {
+		/* final: [min_uV..max_uV] valid अगरf स्थिरraपूर्णांकs valid */
+		अगर (max_uV < min_uV) अणु
 			rdev_err(rdev,
 				 "unsupportable voltage constraints %u-%uuV\n",
 				 min_uV, max_uV);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* use regulator's subset of machine constraints */
-		if (constraints->min_uV < min_uV) {
+		/* use regulator's subset of machine स्थिरraपूर्णांकs */
+		अगर (स्थिरraपूर्णांकs->min_uV < min_uV) अणु
 			rdev_dbg(rdev, "override min_uV, %d -> %d\n",
-				 constraints->min_uV, min_uV);
-			constraints->min_uV = min_uV;
-		}
-		if (constraints->max_uV > max_uV) {
+				 स्थिरraपूर्णांकs->min_uV, min_uV);
+			स्थिरraपूर्णांकs->min_uV = min_uV;
+		पूर्ण
+		अगर (स्थिरraपूर्णांकs->max_uV > max_uV) अणु
 			rdev_dbg(rdev, "override max_uV, %d -> %d\n",
-				 constraints->max_uV, max_uV);
-			constraints->max_uV = max_uV;
-		}
-	}
+				 स्थिरraपूर्णांकs->max_uV, max_uV);
+			स्थिरraपूर्णांकs->max_uV = max_uV;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int machine_constraints_current(struct regulator_dev *rdev,
-	struct regulation_constraints *constraints)
-{
-	const struct regulator_ops *ops = rdev->desc->ops;
-	int ret;
+अटल पूर्णांक machine_स्थिरraपूर्णांकs_current(काष्ठा regulator_dev *rdev,
+	काष्ठा regulation_स्थिरraपूर्णांकs *स्थिरraपूर्णांकs)
+अणु
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
+	पूर्णांक ret;
 
-	if (!constraints->min_uA && !constraints->max_uA)
-		return 0;
+	अगर (!स्थिरraपूर्णांकs->min_uA && !स्थिरraपूर्णांकs->max_uA)
+		वापस 0;
 
-	if (constraints->min_uA > constraints->max_uA) {
+	अगर (स्थिरraपूर्णांकs->min_uA > स्थिरraपूर्णांकs->max_uA) अणु
 		rdev_err(rdev, "Invalid current constraints\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!ops->set_current_limit || !ops->get_current_limit) {
+	अगर (!ops->set_current_limit || !ops->get_current_limit) अणु
 		rdev_warn(rdev, "Operation of current configuration missing\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Set regulator current in constraints range */
-	ret = ops->set_current_limit(rdev, constraints->min_uA,
-			constraints->max_uA);
-	if (ret < 0) {
+	/* Set regulator current in स्थिरraपूर्णांकs range */
+	ret = ops->set_current_limit(rdev, स्थिरraपूर्णांकs->min_uA,
+			स्थिरraपूर्णांकs->max_uA);
+	अगर (ret < 0) अणु
 		rdev_err(rdev, "Failed to set current constraint, %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _regulator_do_enable(struct regulator_dev *rdev);
+अटल पूर्णांक _regulator_करो_enable(काष्ठा regulator_dev *rdev);
 
 /**
- * set_machine_constraints - sets regulator constraints
+ * set_machine_स्थिरraपूर्णांकs - sets regulator स्थिरraपूर्णांकs
  * @rdev: regulator source
  *
- * Allows platform initialisation code to define and constrain
+ * Allows platक्रमm initialisation code to define and स्थिरrain
  * regulator circuits e.g. valid voltage/current ranges, etc.  NOTE:
- * Constraints *must* be set by platform code in order for some
+ * Constraपूर्णांकs *must* be set by platक्रमm code in order क्रम some
  * regulator operations to proceed i.e. set_voltage, set_current_limit,
  * set_mode.
  */
-static int set_machine_constraints(struct regulator_dev *rdev)
-{
-	int ret = 0;
-	const struct regulator_ops *ops = rdev->desc->ops;
+अटल पूर्णांक set_machine_स्थिरraपूर्णांकs(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret = 0;
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
 
-	ret = machine_constraints_voltage(rdev, rdev->constraints);
-	if (ret != 0)
-		return ret;
+	ret = machine_स्थिरraपूर्णांकs_voltage(rdev, rdev->स्थिरraपूर्णांकs);
+	अगर (ret != 0)
+		वापस ret;
 
-	ret = machine_constraints_current(rdev, rdev->constraints);
-	if (ret != 0)
-		return ret;
+	ret = machine_स्थिरraपूर्णांकs_current(rdev, rdev->स्थिरraपूर्णांकs);
+	अगर (ret != 0)
+		वापस ret;
 
-	if (rdev->constraints->ilim_uA && ops->set_input_current_limit) {
+	अगर (rdev->स्थिरraपूर्णांकs->ilim_uA && ops->set_input_current_limit) अणु
 		ret = ops->set_input_current_limit(rdev,
-						   rdev->constraints->ilim_uA);
-		if (ret < 0) {
+						   rdev->स्थिरraपूर्णांकs->ilim_uA);
+		अगर (ret < 0) अणु
 			rdev_err(rdev, "failed to set input limit: %pe\n", ERR_PTR(ret));
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* do we need to setup our suspend state */
-	if (rdev->constraints->initial_state) {
+	/* करो we need to setup our suspend state */
+	अगर (rdev->स्थिरraपूर्णांकs->initial_state) अणु
 		ret = suspend_set_initial_state(rdev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			rdev_err(rdev, "failed to set suspend state: %pe\n", ERR_PTR(ret));
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (rdev->constraints->initial_mode) {
-		if (!ops->set_mode) {
+	अगर (rdev->स्थिरraपूर्णांकs->initial_mode) अणु
+		अगर (!ops->set_mode) अणु
 			rdev_err(rdev, "no set_mode operation\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		ret = ops->set_mode(rdev, rdev->constraints->initial_mode);
-		if (ret < 0) {
+		ret = ops->set_mode(rdev, rdev->स्थिरraपूर्णांकs->initial_mode);
+		अगर (ret < 0) अणु
 			rdev_err(rdev, "failed to set initial mode: %pe\n", ERR_PTR(ret));
-			return ret;
-		}
-	} else if (rdev->constraints->system_load) {
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अगर (rdev->स्थिरraपूर्णांकs->प्रणाली_load) अणु
 		/*
-		 * We'll only apply the initial system load if an
-		 * initial mode wasn't specified.
+		 * We'll only apply the initial प्रणाली load अगर an
+		 * initial mode wasn't specअगरied.
 		 */
 		drms_uA_update(rdev);
-	}
+	पूर्ण
 
-	if ((rdev->constraints->ramp_delay || rdev->constraints->ramp_disable)
-		&& ops->set_ramp_delay) {
-		ret = ops->set_ramp_delay(rdev, rdev->constraints->ramp_delay);
-		if (ret < 0) {
+	अगर ((rdev->स्थिरraपूर्णांकs->ramp_delay || rdev->स्थिरraपूर्णांकs->ramp_disable)
+		&& ops->set_ramp_delay) अणु
+		ret = ops->set_ramp_delay(rdev, rdev->स्थिरraपूर्णांकs->ramp_delay);
+		अगर (ret < 0) अणु
 			rdev_err(rdev, "failed to set ramp_delay: %pe\n", ERR_PTR(ret));
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (rdev->constraints->pull_down && ops->set_pull_down) {
-		ret = ops->set_pull_down(rdev);
-		if (ret < 0) {
+	अगर (rdev->स्थिरraपूर्णांकs->pull_करोwn && ops->set_pull_करोwn) अणु
+		ret = ops->set_pull_करोwn(rdev);
+		अगर (ret < 0) अणु
 			rdev_err(rdev, "failed to set pull down: %pe\n", ERR_PTR(ret));
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (rdev->constraints->soft_start && ops->set_soft_start) {
+	अगर (rdev->स्थिरraपूर्णांकs->soft_start && ops->set_soft_start) अणु
 		ret = ops->set_soft_start(rdev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			rdev_err(rdev, "failed to set soft start: %pe\n", ERR_PTR(ret));
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (rdev->constraints->over_current_protection
-		&& ops->set_over_current_protection) {
+	अगर (rdev->स्थिरraपूर्णांकs->over_current_protection
+		&& ops->set_over_current_protection) अणु
 		ret = ops->set_over_current_protection(rdev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			rdev_err(rdev, "failed to set over current protection: %pe\n",
 				 ERR_PTR(ret));
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (rdev->constraints->active_discharge && ops->set_active_discharge) {
-		bool ad_state = (rdev->constraints->active_discharge ==
+	अगर (rdev->स्थिरraपूर्णांकs->active_disअक्षरge && ops->set_active_disअक्षरge) अणु
+		bool ad_state = (rdev->स्थिरraपूर्णांकs->active_disअक्षरge ==
 			      REGULATOR_ACTIVE_DISCHARGE_ENABLE) ? true : false;
 
-		ret = ops->set_active_discharge(rdev, ad_state);
-		if (ret < 0) {
+		ret = ops->set_active_disअक्षरge(rdev, ad_state);
+		अगर (ret < 0) अणु
 			rdev_err(rdev, "failed to set active discharge: %pe\n", ERR_PTR(ret));
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* If the constraints say the regulator should be on at this point
+	/* If the स्थिरraपूर्णांकs say the regulator should be on at this poपूर्णांक
 	 * and we have control then make sure it is enabled.
 	 */
-	if (rdev->constraints->always_on || rdev->constraints->boot_on) {
+	अगर (rdev->स्थिरraपूर्णांकs->always_on || rdev->स्थिरraपूर्णांकs->boot_on) अणु
 		/* If we want to enable this regulator, make sure that we know
 		 * the supplying regulator.
 		 */
-		if (rdev->supply_name && !rdev->supply)
-			return -EPROBE_DEFER;
+		अगर (rdev->supply_name && !rdev->supply)
+			वापस -EPROBE_DEFER;
 
-		if (rdev->supply) {
+		अगर (rdev->supply) अणु
 			ret = regulator_enable(rdev->supply);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				_regulator_put(rdev->supply);
-				rdev->supply = NULL;
-				return ret;
-			}
-		}
+				rdev->supply = शून्य;
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
-		ret = _regulator_do_enable(rdev);
-		if (ret < 0 && ret != -EINVAL) {
+		ret = _regulator_करो_enable(rdev);
+		अगर (ret < 0 && ret != -EINVAL) अणु
 			rdev_err(rdev, "failed to enable: %pe\n", ERR_PTR(ret));
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (rdev->constraints->always_on)
+		अगर (rdev->स्थिरraपूर्णांकs->always_on)
 			rdev->use_count++;
-	} else if (rdev->desc->off_on_delay) {
-		rdev->last_off = ktime_get();
-	}
+	पूर्ण अन्यथा अगर (rdev->desc->off_on_delay) अणु
+		rdev->last_off = kसमय_get();
+	पूर्ण
 
-	print_constraints(rdev);
-	return 0;
-}
+	prपूर्णांक_स्थिरraपूर्णांकs(rdev);
+	वापस 0;
+पूर्ण
 
 /**
  * set_supply - set regulator supply regulator
  * @rdev: regulator name
  * @supply_rdev: supply regulator name
  *
- * Called by platform initialisation code to set the supply regulator for this
+ * Called by platक्रमm initialisation code to set the supply regulator क्रम this
  * regulator. This ensures that a regulators supply will also be enabled by the
- * core if it's child is enabled.
+ * core अगर it's child is enabled.
  */
-static int set_supply(struct regulator_dev *rdev,
-		      struct regulator_dev *supply_rdev)
-{
-	int err;
+अटल पूर्णांक set_supply(काष्ठा regulator_dev *rdev,
+		      काष्ठा regulator_dev *supply_rdev)
+अणु
+	पूर्णांक err;
 
 	rdev_info(rdev, "supplied by %s\n", rdev_get_name(supply_rdev));
 
-	if (!try_module_get(supply_rdev->owner))
-		return -ENODEV;
+	अगर (!try_module_get(supply_rdev->owner))
+		वापस -ENODEV;
 
 	rdev->supply = create_regulator(supply_rdev, &rdev->dev, "SUPPLY");
-	if (rdev->supply == NULL) {
+	अगर (rdev->supply == शून्य) अणु
 		err = -ENOMEM;
-		return err;
-	}
-	supply_rdev->open_count++;
+		वापस err;
+	पूर्ण
+	supply_rdev->खोलो_count++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * set_consumer_device_supply - Bind a regulator to a symbolic supply
  * @rdev:         regulator source
- * @consumer_dev_name: dev_name() string for device supply applies to
- * @supply:       symbolic name for supply
+ * @consumer_dev_name: dev_name() string क्रम device supply applies to
+ * @supply:       symbolic name क्रम supply
  *
- * Allows platform initialisation code to map physical regulator
- * sources to symbolic names for supplies for use by devices.  Devices
- * should use these symbolic names to request regulators, avoiding the
- * need to provide board-specific regulator names as platform data.
+ * Allows platक्रमm initialisation code to map physical regulator
+ * sources to symbolic names क्रम supplies क्रम use by devices.  Devices
+ * should use these symbolic names to request regulators, aव्योमing the
+ * need to provide board-specअगरic regulator names as platक्रमm data.
  */
-static int set_consumer_device_supply(struct regulator_dev *rdev,
-				      const char *consumer_dev_name,
-				      const char *supply)
-{
-	struct regulator_map *node, *new_node;
-	int has_dev;
+अटल पूर्णांक set_consumer_device_supply(काष्ठा regulator_dev *rdev,
+				      स्थिर अक्षर *consumer_dev_name,
+				      स्थिर अक्षर *supply)
+अणु
+	काष्ठा regulator_map *node, *new_node;
+	पूर्णांक has_dev;
 
-	if (supply == NULL)
-		return -EINVAL;
+	अगर (supply == शून्य)
+		वापस -EINVAL;
 
-	if (consumer_dev_name != NULL)
+	अगर (consumer_dev_name != शून्य)
 		has_dev = 1;
-	else
+	अन्यथा
 		has_dev = 0;
 
-	new_node = kzalloc(sizeof(struct regulator_map), GFP_KERNEL);
-	if (new_node == NULL)
-		return -ENOMEM;
+	new_node = kzalloc(माप(काष्ठा regulator_map), GFP_KERNEL);
+	अगर (new_node == शून्य)
+		वापस -ENOMEM;
 
 	new_node->regulator = rdev;
 	new_node->supply = supply;
 
-	if (has_dev) {
+	अगर (has_dev) अणु
 		new_node->dev_name = kstrdup(consumer_dev_name, GFP_KERNEL);
-		if (new_node->dev_name == NULL) {
-			kfree(new_node);
-			return -ENOMEM;
-		}
-	}
+		अगर (new_node->dev_name == शून्य) अणु
+			kमुक्त(new_node);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&regulator_list_mutex);
-	list_for_each_entry(node, &regulator_map_list, list) {
-		if (node->dev_name && consumer_dev_name) {
-			if (strcmp(node->dev_name, consumer_dev_name) != 0)
-				continue;
-		} else if (node->dev_name || consumer_dev_name) {
-			continue;
-		}
+	list_क्रम_each_entry(node, &regulator_map_list, list) अणु
+		अगर (node->dev_name && consumer_dev_name) अणु
+			अगर (म_भेद(node->dev_name, consumer_dev_name) != 0)
+				जारी;
+		पूर्ण अन्यथा अगर (node->dev_name || consumer_dev_name) अणु
+			जारी;
+		पूर्ण
 
-		if (strcmp(node->supply, supply) != 0)
-			continue;
+		अगर (म_भेद(node->supply, supply) != 0)
+			जारी;
 
 		pr_debug("%s: %s/%s is '%s' supply; fail %s/%s\n",
 			 consumer_dev_name,
@@ -1544,52 +1545,52 @@ static int set_consumer_device_supply(struct regulator_dev *rdev,
 			 node->regulator->desc->name,
 			 supply,
 			 dev_name(&rdev->dev), rdev_get_name(rdev));
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	list_add(&new_node->list, &regulator_map_list);
 	mutex_unlock(&regulator_list_mutex);
 
-	return 0;
+	वापस 0;
 
 fail:
 	mutex_unlock(&regulator_list_mutex);
-	kfree(new_node->dev_name);
-	kfree(new_node);
-	return -EBUSY;
-}
+	kमुक्त(new_node->dev_name);
+	kमुक्त(new_node);
+	वापस -EBUSY;
+पूर्ण
 
-static void unset_regulator_supplies(struct regulator_dev *rdev)
-{
-	struct regulator_map *node, *n;
+अटल व्योम unset_regulator_supplies(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulator_map *node, *n;
 
-	list_for_each_entry_safe(node, n, &regulator_map_list, list) {
-		if (rdev == node->regulator) {
+	list_क्रम_each_entry_safe(node, n, &regulator_map_list, list) अणु
+		अगर (rdev == node->regulator) अणु
 			list_del(&node->list);
-			kfree(node->dev_name);
-			kfree(node);
-		}
-	}
-}
+			kमुक्त(node->dev_name);
+			kमुक्त(node);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static ssize_t constraint_flags_read_file(struct file *file,
-					  char __user *user_buf,
-					  size_t count, loff_t *ppos)
-{
-	const struct regulator *regulator = file->private_data;
-	const struct regulation_constraints *c = regulator->rdev->constraints;
-	char *buf;
-	ssize_t ret;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल sमाप_प्रकार स्थिरraपूर्णांक_flags_पढ़ो_file(काष्ठा file *file,
+					  अक्षर __user *user_buf,
+					  माप_प्रकार count, loff_t *ppos)
+अणु
+	स्थिर काष्ठा regulator *regulator = file->निजी_data;
+	स्थिर काष्ठा regulation_स्थिरraपूर्णांकs *c = regulator->rdev->स्थिरraपूर्णांकs;
+	अक्षर *buf;
+	sमाप_प्रकार ret;
 
-	if (!c)
-		return 0;
+	अगर (!c)
+		वापस 0;
 
-	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	ret = snprintf(buf, PAGE_SIZE,
+	ret = snम_लिखो(buf, PAGE_SIZE,
 			"always_on: %u\n"
 			"boot_on: %u\n"
 			"apply_uV: %u\n"
@@ -1602,57 +1603,57 @@ static ssize_t constraint_flags_read_file(struct file *file,
 			c->apply_uV,
 			c->ramp_disable,
 			c->soft_start,
-			c->pull_down,
+			c->pull_करोwn,
 			c->over_current_protection);
 
-	ret = simple_read_from_buffer(user_buf, count, ppos, buf, ret);
-	kfree(buf);
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, ret);
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static const struct file_operations constraint_flags_fops = {
-#ifdef CONFIG_DEBUG_FS
-	.open = simple_open,
-	.read = constraint_flags_read_file,
-	.llseek = default_llseek,
-#endif
-};
+अटल स्थिर काष्ठा file_operations स्थिरraपूर्णांक_flags_fops = अणु
+#अगर_घोषित CONFIG_DEBUG_FS
+	.खोलो = simple_खोलो,
+	.पढ़ो = स्थिरraपूर्णांक_flags_पढ़ो_file,
+	.llseek = शेष_llseek,
+#पूर्ण_अगर
+पूर्ण;
 
-#define REG_STR_SIZE	64
+#घोषणा REG_STR_SIZE	64
 
-static struct regulator *create_regulator(struct regulator_dev *rdev,
-					  struct device *dev,
-					  const char *supply_name)
-{
-	struct regulator *regulator;
-	int err = 0;
+अटल काष्ठा regulator *create_regulator(काष्ठा regulator_dev *rdev,
+					  काष्ठा device *dev,
+					  स्थिर अक्षर *supply_name)
+अणु
+	काष्ठा regulator *regulator;
+	पूर्णांक err = 0;
 
-	if (dev) {
-		char buf[REG_STR_SIZE];
-		int size;
+	अगर (dev) अणु
+		अक्षर buf[REG_STR_SIZE];
+		पूर्णांक size;
 
-		size = snprintf(buf, REG_STR_SIZE, "%s-%s",
+		size = snम_लिखो(buf, REG_STR_SIZE, "%s-%s",
 				dev->kobj.name, supply_name);
-		if (size >= REG_STR_SIZE)
-			return NULL;
+		अगर (size >= REG_STR_SIZE)
+			वापस शून्य;
 
 		supply_name = kstrdup(buf, GFP_KERNEL);
-		if (supply_name == NULL)
-			return NULL;
-	} else {
-		supply_name = kstrdup_const(supply_name, GFP_KERNEL);
-		if (supply_name == NULL)
-			return NULL;
-	}
+		अगर (supply_name == शून्य)
+			वापस शून्य;
+	पूर्ण अन्यथा अणु
+		supply_name = kstrdup_स्थिर(supply_name, GFP_KERNEL);
+		अगर (supply_name == शून्य)
+			वापस शून्य;
+	पूर्ण
 
-	regulator = kzalloc(sizeof(*regulator), GFP_KERNEL);
-	if (regulator == NULL) {
-		kfree(supply_name);
-		return NULL;
-	}
+	regulator = kzalloc(माप(*regulator), GFP_KERNEL);
+	अगर (regulator == शून्य) अणु
+		kमुक्त(supply_name);
+		वापस शून्य;
+	पूर्ण
 
 	regulator->rdev = rdev;
 	regulator->supply_name = supply_name;
@@ -1661,24 +1662,24 @@ static struct regulator *create_regulator(struct regulator_dev *rdev,
 	list_add(&regulator->list, &rdev->consumer_list);
 	regulator_unlock(rdev);
 
-	if (dev) {
+	अगर (dev) अणु
 		regulator->dev = dev;
 
 		/* Add a link to the device sysfs entry */
 		err = sysfs_create_link_nowarn(&rdev->dev.kobj, &dev->kobj,
 					       supply_name);
-		if (err) {
+		अगर (err) अणु
 			rdev_dbg(rdev, "could not add device link %s: %pe\n",
 				  dev->kobj.name, ERR_PTR(err));
 			/* non-fatal */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (err != -EEXIST)
+	अगर (err != -EEXIST)
 		regulator->debugfs = debugfs_create_dir(supply_name, rdev->debugfs);
-	if (!regulator->debugfs) {
+	अगर (!regulator->debugfs) अणु
 		rdev_dbg(rdev, "Failed to create debugfs directory\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		debugfs_create_u32("uA_load", 0444, regulator->debugfs,
 				   &regulator->uA_load);
 		debugfs_create_u32("min_uV", 0444, regulator->debugfs,
@@ -1687,472 +1688,472 @@ static struct regulator *create_regulator(struct regulator_dev *rdev,
 				   &regulator->voltage[PM_SUSPEND_ON].max_uV);
 		debugfs_create_file("constraint_flags", 0444,
 				    regulator->debugfs, regulator,
-				    &constraint_flags_fops);
-	}
+				    &स्थिरraपूर्णांक_flags_fops);
+	पूर्ण
 
 	/*
-	 * Check now if the regulator is an always on regulator - if
-	 * it is then we don't need to do nearly so much work for
+	 * Check now अगर the regulator is an always on regulator - अगर
+	 * it is then we करोn't need to करो nearly so much work क्रम
 	 * enable/disable calls.
 	 */
-	if (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_STATUS) &&
+	अगर (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_STATUS) &&
 	    _regulator_is_enabled(rdev))
 		regulator->always_on = true;
 
-	return regulator;
-}
+	वापस regulator;
+पूर्ण
 
-static int _regulator_get_enable_time(struct regulator_dev *rdev)
-{
-	if (rdev->constraints && rdev->constraints->enable_time)
-		return rdev->constraints->enable_time;
-	if (rdev->desc->ops->enable_time)
-		return rdev->desc->ops->enable_time(rdev);
-	return rdev->desc->enable_time;
-}
+अटल पूर्णांक _regulator_get_enable_समय(काष्ठा regulator_dev *rdev)
+अणु
+	अगर (rdev->स्थिरraपूर्णांकs && rdev->स्थिरraपूर्णांकs->enable_समय)
+		वापस rdev->स्थिरraपूर्णांकs->enable_समय;
+	अगर (rdev->desc->ops->enable_समय)
+		वापस rdev->desc->ops->enable_समय(rdev);
+	वापस rdev->desc->enable_समय;
+पूर्ण
 
-static struct regulator_supply_alias *regulator_find_supply_alias(
-		struct device *dev, const char *supply)
-{
-	struct regulator_supply_alias *map;
+अटल काष्ठा regulator_supply_alias *regulator_find_supply_alias(
+		काष्ठा device *dev, स्थिर अक्षर *supply)
+अणु
+	काष्ठा regulator_supply_alias *map;
 
-	list_for_each_entry(map, &regulator_supply_alias_list, list)
-		if (map->src_dev == dev && strcmp(map->src_supply, supply) == 0)
-			return map;
+	list_क्रम_each_entry(map, &regulator_supply_alias_list, list)
+		अगर (map->src_dev == dev && म_भेद(map->src_supply, supply) == 0)
+			वापस map;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void regulator_supply_alias(struct device **dev, const char **supply)
-{
-	struct regulator_supply_alias *map;
+अटल व्योम regulator_supply_alias(काष्ठा device **dev, स्थिर अक्षर **supply)
+अणु
+	काष्ठा regulator_supply_alias *map;
 
 	map = regulator_find_supply_alias(*dev, *supply);
-	if (map) {
+	अगर (map) अणु
 		dev_dbg(*dev, "Mapping supply %s to %s,%s\n",
 				*supply, map->alias_supply,
 				dev_name(map->alias_dev));
 		*dev = map->alias_dev;
 		*supply = map->alias_supply;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int regulator_match(struct device *dev, const void *data)
-{
-	struct regulator_dev *r = dev_to_rdev(dev);
+अटल पूर्णांक regulator_match(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	काष्ठा regulator_dev *r = dev_to_rdev(dev);
 
-	return strcmp(rdev_get_name(r), data) == 0;
-}
+	वापस म_भेद(rdev_get_name(r), data) == 0;
+पूर्ण
 
-static struct regulator_dev *regulator_lookup_by_name(const char *name)
-{
-	struct device *dev;
+अटल काष्ठा regulator_dev *regulator_lookup_by_name(स्थिर अक्षर *name)
+अणु
+	काष्ठा device *dev;
 
-	dev = class_find_device(&regulator_class, NULL, name, regulator_match);
+	dev = class_find_device(&regulator_class, शून्य, name, regulator_match);
 
-	return dev ? dev_to_rdev(dev) : NULL;
-}
+	वापस dev ? dev_to_rdev(dev) : शून्य;
+पूर्ण
 
 /**
  * regulator_dev_lookup - lookup a regulator device.
- * @dev: device for regulator "consumer".
+ * @dev: device क्रम regulator "consumer".
  * @supply: Supply name or regulator ID.
  *
- * If successful, returns a struct regulator_dev that corresponds to the name
- * @supply and with the embedded struct device refcount incremented by one.
+ * If successful, वापसs a काष्ठा regulator_dev that corresponds to the name
+ * @supply and with the embedded काष्ठा device refcount incremented by one.
  * The refcount must be dropped by calling put_device().
- * On failure one of the following ERR-PTR-encoded values is returned:
- * -ENODEV if lookup fails permanently, -EPROBE_DEFER if lookup could succeed
+ * On failure one of the following ERR-PTR-encoded values is वापसed:
+ * -ENODEV अगर lookup fails permanently, -EPROBE_DEFER अगर lookup could succeed
  * in the future.
  */
-static struct regulator_dev *regulator_dev_lookup(struct device *dev,
-						  const char *supply)
-{
-	struct regulator_dev *r = NULL;
-	struct device_node *node;
-	struct regulator_map *map;
-	const char *devname = NULL;
+अटल काष्ठा regulator_dev *regulator_dev_lookup(काष्ठा device *dev,
+						  स्थिर अक्षर *supply)
+अणु
+	काष्ठा regulator_dev *r = शून्य;
+	काष्ठा device_node *node;
+	काष्ठा regulator_map *map;
+	स्थिर अक्षर *devname = शून्य;
 
 	regulator_supply_alias(&dev, &supply);
 
-	/* first do a dt based lookup */
-	if (dev && dev->of_node) {
+	/* first करो a dt based lookup */
+	अगर (dev && dev->of_node) अणु
 		node = of_get_regulator(dev, supply);
-		if (node) {
+		अगर (node) अणु
 			r = of_find_regulator_by_node(node);
-			if (r)
-				return r;
+			अगर (r)
+				वापस r;
 
 			/*
 			 * We have a node, but there is no device.
-			 * assume it has not registered yet.
+			 * assume it has not रेजिस्टरed yet.
 			 */
-			return ERR_PTR(-EPROBE_DEFER);
-		}
-	}
+			वापस ERR_PTR(-EPROBE_DEFER);
+		पूर्ण
+	पूर्ण
 
-	/* if not found, try doing it non-dt way */
-	if (dev)
+	/* अगर not found, try करोing it non-dt way */
+	अगर (dev)
 		devname = dev_name(dev);
 
 	mutex_lock(&regulator_list_mutex);
-	list_for_each_entry(map, &regulator_map_list, list) {
+	list_क्रम_each_entry(map, &regulator_map_list, list) अणु
 		/* If the mapping has a device set up it must match */
-		if (map->dev_name &&
-		    (!devname || strcmp(map->dev_name, devname)))
-			continue;
+		अगर (map->dev_name &&
+		    (!devname || म_भेद(map->dev_name, devname)))
+			जारी;
 
-		if (strcmp(map->supply, supply) == 0 &&
-		    get_device(&map->regulator->dev)) {
+		अगर (म_भेद(map->supply, supply) == 0 &&
+		    get_device(&map->regulator->dev)) अणु
 			r = map->regulator;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&regulator_list_mutex);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = regulator_lookup_by_name(supply);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return ERR_PTR(-ENODEV);
-}
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static int regulator_resolve_supply(struct regulator_dev *rdev)
-{
-	struct regulator_dev *r;
-	struct device *dev = rdev->dev.parent;
-	int ret = 0;
+अटल पूर्णांक regulator_resolve_supply(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulator_dev *r;
+	काष्ठा device *dev = rdev->dev.parent;
+	पूर्णांक ret = 0;
 
 	/* No supply to resolve? */
-	if (!rdev->supply_name)
-		return 0;
+	अगर (!rdev->supply_name)
+		वापस 0;
 
-	/* Supply already resolved? (fast-path without locking contention) */
-	if (rdev->supply)
-		return 0;
+	/* Supply alपढ़ोy resolved? (fast-path without locking contention) */
+	अगर (rdev->supply)
+		वापस 0;
 
 	r = regulator_dev_lookup(dev, rdev->supply_name);
-	if (IS_ERR(r)) {
+	अगर (IS_ERR(r)) अणु
 		ret = PTR_ERR(r);
 
-		/* Did the lookup explicitly defer for us? */
-		if (ret == -EPROBE_DEFER)
-			goto out;
+		/* Did the lookup explicitly defer क्रम us? */
+		अगर (ret == -EPROBE_DEFER)
+			जाओ out;
 
-		if (have_full_constraints()) {
+		अगर (have_full_स्थिरraपूर्णांकs()) अणु
 			r = dummy_regulator_rdev;
 			get_device(&r->dev);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "Failed to resolve %s-supply for %s\n",
 				rdev->supply_name, rdev->desc->name);
 			ret = -EPROBE_DEFER;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (r == rdev) {
+	अगर (r == rdev) अणु
 		dev_err(dev, "Supply for %s (%s) resolved to itself\n",
 			rdev->desc->name, rdev->supply_name);
-		if (!have_full_constraints()) {
+		अगर (!have_full_स्थिरraपूर्णांकs()) अणु
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		r = dummy_regulator_rdev;
 		get_device(&r->dev);
-	}
+	पूर्ण
 
 	/*
 	 * If the supply's parent device is not the same as the
 	 * regulator's parent device, then ensure the parent device
-	 * is bound before we resolve the supply, in case the parent
-	 * device get probe deferred and unregisters the supply.
+	 * is bound beक्रमe we resolve the supply, in हाल the parent
+	 * device get probe deferred and unरेजिस्टरs the supply.
 	 */
-	if (r->dev.parent && r->dev.parent != rdev->dev.parent) {
-		if (!device_is_bound(r->dev.parent)) {
+	अगर (r->dev.parent && r->dev.parent != rdev->dev.parent) अणु
+		अगर (!device_is_bound(r->dev.parent)) अणु
 			put_device(&r->dev);
 			ret = -EPROBE_DEFER;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Recursively resolve the supply of the supply */
 	ret = regulator_resolve_supply(r);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		put_device(&r->dev);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Recheck rdev->supply with rdev->mutex lock held to avoid a race
+	 * Recheck rdev->supply with rdev->mutex lock held to aव्योम a race
 	 * between rdev->supply null check and setting rdev->supply in
 	 * set_supply() from concurrent tasks.
 	 */
 	regulator_lock(rdev);
 
 	/* Supply just resolved by a concurrent task? */
-	if (rdev->supply) {
+	अगर (rdev->supply) अणु
 		regulator_unlock(rdev);
 		put_device(&r->dev);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = set_supply(rdev, r);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		regulator_unlock(rdev);
 		put_device(&r->dev);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	regulator_unlock(rdev);
 
 	/*
-	 * In set_machine_constraints() we may have turned this regulator on
+	 * In set_machine_स्थिरraपूर्णांकs() we may have turned this regulator on
 	 * but we couldn't propagate to the supply if it hadn't been resolved
 	 * yet.  Do it now.
 	 */
-	if (rdev->use_count) {
+	अगर (rdev->use_count) अणु
 		ret = regulator_enable(rdev->supply);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			_regulator_put(rdev->supply);
-			rdev->supply = NULL;
-			goto out;
-		}
-	}
+			rdev->supply = शून्य;
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Internal regulator request function */
-struct regulator *_regulator_get(struct device *dev, const char *id,
-				 enum regulator_get_type get_type)
-{
-	struct regulator_dev *rdev;
-	struct regulator *regulator;
-	struct device_link *link;
-	int ret;
+काष्ठा regulator *_regulator_get(काष्ठा device *dev, स्थिर अक्षर *id,
+				 क्रमागत regulator_get_type get_type)
+अणु
+	काष्ठा regulator_dev *rdev;
+	काष्ठा regulator *regulator;
+	काष्ठा device_link *link;
+	पूर्णांक ret;
 
-	if (get_type >= MAX_GET_TYPE) {
+	अगर (get_type >= MAX_GET_TYPE) अणु
 		dev_err(dev, "invalid type %d in %s\n", get_type, __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (id == NULL) {
+	अगर (id == शून्य) अणु
 		pr_err("get() with no identifier\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	rdev = regulator_dev_lookup(dev, id);
-	if (IS_ERR(rdev)) {
+	अगर (IS_ERR(rdev)) अणु
 		ret = PTR_ERR(rdev);
 
 		/*
 		 * If regulator_dev_lookup() fails with error other
-		 * than -ENODEV our job here is done, we simply return it.
+		 * than -ENODEV our job here is करोne, we simply वापस it.
 		 */
-		if (ret != -ENODEV)
-			return ERR_PTR(ret);
+		अगर (ret != -ENODEV)
+			वापस ERR_PTR(ret);
 
-		if (!have_full_constraints()) {
+		अगर (!have_full_स्थिरraपूर्णांकs()) अणु
 			dev_warn(dev,
 				 "incomplete constraints, dummy supplies not allowed\n");
-			return ERR_PTR(-ENODEV);
-		}
+			वापस ERR_PTR(-ENODEV);
+		पूर्ण
 
-		switch (get_type) {
-		case NORMAL_GET:
+		चयन (get_type) अणु
+		हाल NORMAL_GET:
 			/*
 			 * Assume that a regulator is physically present and
-			 * enabled, even if it isn't hooked up, and just
+			 * enabled, even अगर it isn't hooked up, and just
 			 * provide a dummy.
 			 */
 			dev_warn(dev, "supply %s not found, using dummy regulator\n", id);
 			rdev = dummy_regulator_rdev;
 			get_device(&rdev->dev);
-			break;
+			अवरोध;
 
-		case EXCLUSIVE_GET:
+		हाल EXCLUSIVE_GET:
 			dev_warn(dev,
 				 "dummy supplies not allowed for exclusive requests\n");
 			fallthrough;
 
-		default:
-			return ERR_PTR(-ENODEV);
-		}
-	}
+		शेष:
+			वापस ERR_PTR(-ENODEV);
+		पूर्ण
+	पूर्ण
 
-	if (rdev->exclusive) {
+	अगर (rdev->exclusive) अणु
 		regulator = ERR_PTR(-EPERM);
 		put_device(&rdev->dev);
-		return regulator;
-	}
+		वापस regulator;
+	पूर्ण
 
-	if (get_type == EXCLUSIVE_GET && rdev->open_count) {
+	अगर (get_type == EXCLUSIVE_GET && rdev->खोलो_count) अणु
 		regulator = ERR_PTR(-EBUSY);
 		put_device(&rdev->dev);
-		return regulator;
-	}
+		वापस regulator;
+	पूर्ण
 
 	mutex_lock(&regulator_list_mutex);
 	ret = (rdev->coupling_desc.n_resolved != rdev->coupling_desc.n_coupled);
 	mutex_unlock(&regulator_list_mutex);
 
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		regulator = ERR_PTR(-EPROBE_DEFER);
 		put_device(&rdev->dev);
-		return regulator;
-	}
+		वापस regulator;
+	पूर्ण
 
 	ret = regulator_resolve_supply(rdev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		regulator = ERR_PTR(ret);
 		put_device(&rdev->dev);
-		return regulator;
-	}
+		वापस regulator;
+	पूर्ण
 
-	if (!try_module_get(rdev->owner)) {
+	अगर (!try_module_get(rdev->owner)) अणु
 		regulator = ERR_PTR(-EPROBE_DEFER);
 		put_device(&rdev->dev);
-		return regulator;
-	}
+		वापस regulator;
+	पूर्ण
 
 	regulator = create_regulator(rdev, dev, id);
-	if (regulator == NULL) {
+	अगर (regulator == शून्य) अणु
 		regulator = ERR_PTR(-ENOMEM);
 		module_put(rdev->owner);
 		put_device(&rdev->dev);
-		return regulator;
-	}
+		वापस regulator;
+	पूर्ण
 
-	rdev->open_count++;
-	if (get_type == EXCLUSIVE_GET) {
+	rdev->खोलो_count++;
+	अगर (get_type == EXCLUSIVE_GET) अणु
 		rdev->exclusive = 1;
 
 		ret = _regulator_is_enabled(rdev);
-		if (ret > 0)
+		अगर (ret > 0)
 			rdev->use_count = 1;
-		else
+		अन्यथा
 			rdev->use_count = 0;
-	}
+	पूर्ण
 
 	link = device_link_add(dev, &rdev->dev, DL_FLAG_STATELESS);
-	if (!IS_ERR_OR_NULL(link))
+	अगर (!IS_ERR_OR_शून्य(link))
 		regulator->device_link = true;
 
-	return regulator;
-}
+	वापस regulator;
+पूर्ण
 
 /**
  * regulator_get - lookup and obtain a reference to a regulator.
- * @dev: device for regulator "consumer"
+ * @dev: device क्रम regulator "consumer"
  * @id: Supply name or regulator ID.
  *
- * Returns a struct regulator corresponding to the regulator producer,
- * or IS_ERR() condition containing errno.
+ * Returns a काष्ठा regulator corresponding to the regulator producer,
+ * or IS_ERR() condition containing त्रुटि_सं.
  *
  * Use of supply names configured via set_consumer_device_supply() is
  * strongly encouraged.  It is recommended that the supply name used
- * should match the name used for the supply and/or the relevant
+ * should match the name used क्रम the supply and/or the relevant
  * device pins in the datasheet.
  */
-struct regulator *regulator_get(struct device *dev, const char *id)
-{
-	return _regulator_get(dev, id, NORMAL_GET);
-}
+काष्ठा regulator *regulator_get(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	वापस _regulator_get(dev, id, NORMAL_GET);
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get);
 
 /**
  * regulator_get_exclusive - obtain exclusive access to a regulator.
- * @dev: device for regulator "consumer"
+ * @dev: device क्रम regulator "consumer"
  * @id: Supply name or regulator ID.
  *
- * Returns a struct regulator corresponding to the regulator producer,
- * or IS_ERR() condition containing errno.  Other consumers will be
- * unable to obtain this regulator while this reference is held and the
- * use count for the regulator will be initialised to reflect the current
+ * Returns a काष्ठा regulator corresponding to the regulator producer,
+ * or IS_ERR() condition containing त्रुटि_सं.  Other consumers will be
+ * unable to obtain this regulator जबतक this reference is held and the
+ * use count क्रम the regulator will be initialised to reflect the current
  * state of the regulator.
  *
- * This is intended for use by consumers which cannot tolerate shared
- * use of the regulator such as those which need to force the
- * regulator off for correct operation of the hardware they are
+ * This is पूर्णांकended क्रम use by consumers which cannot tolerate shared
+ * use of the regulator such as those which need to क्रमce the
+ * regulator off क्रम correct operation of the hardware they are
  * controlling.
  *
  * Use of supply names configured via set_consumer_device_supply() is
  * strongly encouraged.  It is recommended that the supply name used
- * should match the name used for the supply and/or the relevant
+ * should match the name used क्रम the supply and/or the relevant
  * device pins in the datasheet.
  */
-struct regulator *regulator_get_exclusive(struct device *dev, const char *id)
-{
-	return _regulator_get(dev, id, EXCLUSIVE_GET);
-}
+काष्ठा regulator *regulator_get_exclusive(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	वापस _regulator_get(dev, id, EXCLUSIVE_GET);
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get_exclusive);
 
 /**
  * regulator_get_optional - obtain optional access to a regulator.
- * @dev: device for regulator "consumer"
+ * @dev: device क्रम regulator "consumer"
  * @id: Supply name or regulator ID.
  *
- * Returns a struct regulator corresponding to the regulator producer,
- * or IS_ERR() condition containing errno.
+ * Returns a काष्ठा regulator corresponding to the regulator producer,
+ * or IS_ERR() condition containing त्रुटि_सं.
  *
- * This is intended for use by consumers for devices which can have
+ * This is पूर्णांकended क्रम use by consumers क्रम devices which can have
  * some supplies unconnected in normal use, such as some MMC devices.
- * It can allow the regulator core to provide stub supplies for other
+ * It can allow the regulator core to provide stub supplies क्रम other
  * supplies requested using normal regulator_get() calls without
- * disrupting the operation of drivers that can handle absent
+ * disrupting the operation of drivers that can handle असलent
  * supplies.
  *
  * Use of supply names configured via set_consumer_device_supply() is
  * strongly encouraged.  It is recommended that the supply name used
- * should match the name used for the supply and/or the relevant
+ * should match the name used क्रम the supply and/or the relevant
  * device pins in the datasheet.
  */
-struct regulator *regulator_get_optional(struct device *dev, const char *id)
-{
-	return _regulator_get(dev, id, OPTIONAL_GET);
-}
+काष्ठा regulator *regulator_get_optional(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	वापस _regulator_get(dev, id, OPTIONAL_GET);
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get_optional);
 
-static void destroy_regulator(struct regulator *regulator)
-{
-	struct regulator_dev *rdev = regulator->rdev;
+अटल व्योम destroy_regulator(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
 
-	debugfs_remove_recursive(regulator->debugfs);
+	debugfs_हटाओ_recursive(regulator->debugfs);
 
-	if (regulator->dev) {
-		if (regulator->device_link)
-			device_link_remove(regulator->dev, &rdev->dev);
+	अगर (regulator->dev) अणु
+		अगर (regulator->device_link)
+			device_link_हटाओ(regulator->dev, &rdev->dev);
 
-		/* remove any sysfs entries */
-		sysfs_remove_link(&rdev->dev.kobj, regulator->supply_name);
-	}
+		/* हटाओ any sysfs entries */
+		sysfs_हटाओ_link(&rdev->dev.kobj, regulator->supply_name);
+	पूर्ण
 
 	regulator_lock(rdev);
 	list_del(&regulator->list);
 
-	rdev->open_count--;
+	rdev->खोलो_count--;
 	rdev->exclusive = 0;
 	regulator_unlock(rdev);
 
-	kfree_const(regulator->supply_name);
-	kfree(regulator);
-}
+	kमुक्त_स्थिर(regulator->supply_name);
+	kमुक्त(regulator);
+पूर्ण
 
 /* regulator_list_mutex lock held by regulator_put() */
-static void _regulator_put(struct regulator *regulator)
-{
-	struct regulator_dev *rdev;
+अटल व्योम _regulator_put(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev;
 
-	if (IS_ERR_OR_NULL(regulator))
-		return;
+	अगर (IS_ERR_OR_शून्य(regulator))
+		वापस;
 
-	lockdep_assert_held_once(&regulator_list_mutex);
+	lockdep_निश्चित_held_once(&regulator_list_mutex);
 
-	/* Docs say you must disable before calling regulator_put() */
+	/* Docs say you must disable beक्रमe calling regulator_put() */
 	WARN_ON(regulator->enable_count);
 
 	rdev = regulator->rdev;
@@ -2161,7 +2162,7 @@ static void _regulator_put(struct regulator *regulator)
 
 	module_put(rdev->owner);
 	put_device(&rdev->dev);
-}
+पूर्ण
 
 /**
  * regulator_put - "free" the regulator source
@@ -2171,16 +2172,16 @@ static void _regulator_put(struct regulator *regulator)
  * regulator source are balanced by regulator_disable calls prior to calling
  * this function.
  */
-void regulator_put(struct regulator *regulator)
-{
+व्योम regulator_put(काष्ठा regulator *regulator)
+अणु
 	mutex_lock(&regulator_list_mutex);
 	_regulator_put(regulator);
 	mutex_unlock(&regulator_list_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_put);
 
 /**
- * regulator_register_supply_alias - Provide device alias for supply lookup
+ * regulator_रेजिस्टर_supply_alias - Provide device alias क्रम supply lookup
  *
  * @dev: device that will be given as the regulator "consumer"
  * @id: Supply name or regulator ID
@@ -2188,22 +2189,22 @@ EXPORT_SYMBOL_GPL(regulator_put);
  * @alias_id: Supply name or regulator ID that should be used to lookup the
  * supply
  *
- * All lookups for id on dev will instead be conducted for alias_id on
+ * All lookups क्रम id on dev will instead be conducted क्रम alias_id on
  * alias_dev.
  */
-int regulator_register_supply_alias(struct device *dev, const char *id,
-				    struct device *alias_dev,
-				    const char *alias_id)
-{
-	struct regulator_supply_alias *map;
+पूर्णांक regulator_रेजिस्टर_supply_alias(काष्ठा device *dev, स्थिर अक्षर *id,
+				    काष्ठा device *alias_dev,
+				    स्थिर अक्षर *alias_id)
+अणु
+	काष्ठा regulator_supply_alias *map;
 
 	map = regulator_find_supply_alias(dev, id);
-	if (map)
-		return -EEXIST;
+	अगर (map)
+		वापस -EEXIST;
 
-	map = kzalloc(sizeof(struct regulator_supply_alias), GFP_KERNEL);
-	if (!map)
-		return -ENOMEM;
+	map = kzalloc(माप(काष्ठा regulator_supply_alias), GFP_KERNEL);
+	अगर (!map)
+		वापस -ENOMEM;
 
 	map->src_dev = dev;
 	map->src_supply = id;
@@ -2215,125 +2216,125 @@ int regulator_register_supply_alias(struct device *dev, const char *id,
 	pr_info("Adding alias for supply %s,%s -> %s,%s\n",
 		id, dev_name(dev), alias_id, dev_name(alias_dev));
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(regulator_register_supply_alias);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_रेजिस्टर_supply_alias);
 
 /**
- * regulator_unregister_supply_alias - Remove device alias
+ * regulator_unरेजिस्टर_supply_alias - Remove device alias
  *
  * @dev: device that will be given as the regulator "consumer"
  * @id: Supply name or regulator ID
  *
- * Remove a lookup alias if one exists for id on dev.
+ * Remove a lookup alias अगर one exists क्रम id on dev.
  */
-void regulator_unregister_supply_alias(struct device *dev, const char *id)
-{
-	struct regulator_supply_alias *map;
+व्योम regulator_unरेजिस्टर_supply_alias(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	काष्ठा regulator_supply_alias *map;
 
 	map = regulator_find_supply_alias(dev, id);
-	if (map) {
+	अगर (map) अणु
 		list_del(&map->list);
-		kfree(map);
-	}
-}
-EXPORT_SYMBOL_GPL(regulator_unregister_supply_alias);
+		kमुक्त(map);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_unरेजिस्टर_supply_alias);
 
 /**
- * regulator_bulk_register_supply_alias - register multiple aliases
+ * regulator_bulk_रेजिस्टर_supply_alias - रेजिस्टर multiple aliases
  *
  * @dev: device that will be given as the regulator "consumer"
  * @id: List of supply names or regulator IDs
  * @alias_dev: device that should be used to lookup the supply
  * @alias_id: List of supply names or regulator IDs that should be used to
  * lookup the supply
- * @num_id: Number of aliases to register
+ * @num_id: Number of aliases to रेजिस्टर
  *
- * @return 0 on success, an errno on failure.
+ * @वापस 0 on success, an त्रुटि_सं on failure.
  *
- * This helper function allows drivers to register several supply
+ * This helper function allows drivers to रेजिस्टर several supply
  * aliases in one operation.  If any of the aliases cannot be
- * registered any aliases that were registered will be removed
- * before returning to the caller.
+ * रेजिस्टरed any aliases that were रेजिस्टरed will be हटाओd
+ * beक्रमe वापसing to the caller.
  */
-int regulator_bulk_register_supply_alias(struct device *dev,
-					 const char *const *id,
-					 struct device *alias_dev,
-					 const char *const *alias_id,
-					 int num_id)
-{
-	int i;
-	int ret;
+पूर्णांक regulator_bulk_रेजिस्टर_supply_alias(काष्ठा device *dev,
+					 स्थिर अक्षर *स्थिर *id,
+					 काष्ठा device *alias_dev,
+					 स्थिर अक्षर *स्थिर *alias_id,
+					 पूर्णांक num_id)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < num_id; ++i) {
-		ret = regulator_register_supply_alias(dev, id[i], alias_dev,
+	क्रम (i = 0; i < num_id; ++i) अणु
+		ret = regulator_रेजिस्टर_supply_alias(dev, id[i], alias_dev,
 						      alias_id[i]);
-		if (ret < 0)
-			goto err;
-	}
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
 	dev_err(dev,
 		"Failed to create supply alias %s,%s -> %s,%s\n",
 		id[i], dev_name(dev), alias_id[i], dev_name(alias_dev));
 
-	while (--i >= 0)
-		regulator_unregister_supply_alias(dev, id[i]);
+	जबतक (--i >= 0)
+		regulator_unरेजिस्टर_supply_alias(dev, id[i]);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(regulator_bulk_register_supply_alias);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_bulk_रेजिस्टर_supply_alias);
 
 /**
- * regulator_bulk_unregister_supply_alias - unregister multiple aliases
+ * regulator_bulk_unरेजिस्टर_supply_alias - unरेजिस्टर multiple aliases
  *
  * @dev: device that will be given as the regulator "consumer"
  * @id: List of supply names or regulator IDs
- * @num_id: Number of aliases to unregister
+ * @num_id: Number of aliases to unरेजिस्टर
  *
- * This helper function allows drivers to unregister several supply
+ * This helper function allows drivers to unरेजिस्टर several supply
  * aliases in one operation.
  */
-void regulator_bulk_unregister_supply_alias(struct device *dev,
-					    const char *const *id,
-					    int num_id)
-{
-	int i;
+व्योम regulator_bulk_unरेजिस्टर_supply_alias(काष्ठा device *dev,
+					    स्थिर अक्षर *स्थिर *id,
+					    पूर्णांक num_id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_id; ++i)
-		regulator_unregister_supply_alias(dev, id[i]);
-}
-EXPORT_SYMBOL_GPL(regulator_bulk_unregister_supply_alias);
+	क्रम (i = 0; i < num_id; ++i)
+		regulator_unरेजिस्टर_supply_alias(dev, id[i]);
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_bulk_unरेजिस्टर_supply_alias);
 
 
 /* Manage enable GPIO list. Same GPIO pin can be shared among regulators */
-static int regulator_ena_gpio_request(struct regulator_dev *rdev,
-				const struct regulator_config *config)
-{
-	struct regulator_enable_gpio *pin, *new_pin;
-	struct gpio_desc *gpiod;
+अटल पूर्णांक regulator_ena_gpio_request(काष्ठा regulator_dev *rdev,
+				स्थिर काष्ठा regulator_config *config)
+अणु
+	काष्ठा regulator_enable_gpio *pin, *new_pin;
+	काष्ठा gpio_desc *gpiod;
 
 	gpiod = config->ena_gpiod;
-	new_pin = kzalloc(sizeof(*new_pin), GFP_KERNEL);
+	new_pin = kzalloc(माप(*new_pin), GFP_KERNEL);
 
 	mutex_lock(&regulator_list_mutex);
 
-	list_for_each_entry(pin, &regulator_ena_gpio_list, list) {
-		if (pin->gpiod == gpiod) {
+	list_क्रम_each_entry(pin, &regulator_ena_gpio_list, list) अणु
+		अगर (pin->gpiod == gpiod) अणु
 			rdev_dbg(rdev, "GPIO is already used\n");
-			goto update_ena_gpio_to_rdev;
-		}
-	}
+			जाओ update_ena_gpio_to_rdev;
+		पूर्ण
+	पूर्ण
 
-	if (new_pin == NULL) {
+	अगर (new_pin == शून्य) अणु
 		mutex_unlock(&regulator_list_mutex);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pin = new_pin;
-	new_pin = NULL;
+	new_pin = शून्य;
 
 	pin->gpiod = gpiod;
 	list_add(&pin->list, &regulator_ena_gpio_list);
@@ -2343,225 +2344,225 @@ update_ena_gpio_to_rdev:
 	rdev->ena_pin = pin;
 
 	mutex_unlock(&regulator_list_mutex);
-	kfree(new_pin);
+	kमुक्त(new_pin);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void regulator_ena_gpio_free(struct regulator_dev *rdev)
-{
-	struct regulator_enable_gpio *pin, *n;
+अटल व्योम regulator_ena_gpio_मुक्त(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulator_enable_gpio *pin, *n;
 
-	if (!rdev->ena_pin)
-		return;
+	अगर (!rdev->ena_pin)
+		वापस;
 
-	/* Free the GPIO only in case of no use */
-	list_for_each_entry_safe(pin, n, &regulator_ena_gpio_list, list) {
-		if (pin != rdev->ena_pin)
-			continue;
+	/* Free the GPIO only in हाल of no use */
+	list_क्रम_each_entry_safe(pin, n, &regulator_ena_gpio_list, list) अणु
+		अगर (pin != rdev->ena_pin)
+			जारी;
 
-		if (--pin->request_count)
-			break;
+		अगर (--pin->request_count)
+			अवरोध;
 
 		gpiod_put(pin->gpiod);
 		list_del(&pin->list);
-		kfree(pin);
-		break;
-	}
+		kमुक्त(pin);
+		अवरोध;
+	पूर्ण
 
-	rdev->ena_pin = NULL;
-}
+	rdev->ena_pin = शून्य;
+पूर्ण
 
 /**
  * regulator_ena_gpio_ctrl - balance enable_count of each GPIO and actual GPIO pin control
- * @rdev: regulator_dev structure
+ * @rdev: regulator_dev काष्ठाure
  * @enable: enable GPIO at initial use?
  *
- * GPIO is enabled in case of initial use. (enable_count is 0)
+ * GPIO is enabled in हाल of initial use. (enable_count is 0)
  * GPIO is disabled when it is not shared any more. (enable_count <= 1)
  */
-static int regulator_ena_gpio_ctrl(struct regulator_dev *rdev, bool enable)
-{
-	struct regulator_enable_gpio *pin = rdev->ena_pin;
+अटल पूर्णांक regulator_ena_gpio_ctrl(काष्ठा regulator_dev *rdev, bool enable)
+अणु
+	काष्ठा regulator_enable_gpio *pin = rdev->ena_pin;
 
-	if (!pin)
-		return -EINVAL;
+	अगर (!pin)
+		वापस -EINVAL;
 
-	if (enable) {
+	अगर (enable) अणु
 		/* Enable GPIO at initial use */
-		if (pin->enable_count == 0)
+		अगर (pin->enable_count == 0)
 			gpiod_set_value_cansleep(pin->gpiod, 1);
 
 		pin->enable_count++;
-	} else {
-		if (pin->enable_count > 1) {
+	पूर्ण अन्यथा अणु
+		अगर (pin->enable_count > 1) अणु
 			pin->enable_count--;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		/* Disable GPIO if not used */
-		if (pin->enable_count <= 1) {
+		/* Disable GPIO अगर not used */
+		अगर (pin->enable_count <= 1) अणु
 			gpiod_set_value_cansleep(pin->gpiod, 0);
 			pin->enable_count = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _regulator_enable_delay - a delay helper function
- * @delay: time to delay in microseconds
+ * @delay: समय to delay in microseconds
  *
- * Delay for the requested amount of time as per the guidelines in:
+ * Delay क्रम the requested amount of समय as per the guidelines in:
  *
- *     Documentation/timers/timers-howto.rst
+ *     Documentation/समयrs/समयrs-howto.rst
  *
  * The assumption here is that regulators will never be enabled in
- * atomic context and therefore sleeping functions can be used.
+ * atomic context and thereक्रमe sleeping functions can be used.
  */
-static void _regulator_enable_delay(unsigned int delay)
-{
-	unsigned int ms = delay / 1000;
-	unsigned int us = delay % 1000;
+अटल व्योम _regulator_enable_delay(अचिन्हित पूर्णांक delay)
+अणु
+	अचिन्हित पूर्णांक ms = delay / 1000;
+	अचिन्हित पूर्णांक us = delay % 1000;
 
-	if (ms > 0) {
+	अगर (ms > 0) अणु
 		/*
 		 * For small enough values, handle super-millisecond
 		 * delays in the usleep_range() call below.
 		 */
-		if (ms < 20)
+		अगर (ms < 20)
 			us += ms * 1000;
-		else
+		अन्यथा
 			msleep(ms);
-	}
+	पूर्ण
 
 	/*
 	 * Give the scheduler some room to coalesce with any other
-	 * wakeup sources. For delays shorter than 10 us, don't even
-	 * bother setting up high-resolution timers and just busy-
+	 * wakeup sources. For delays लघुer than 10 us, करोn't even
+	 * bother setting up high-resolution समयrs and just busy-
 	 * loop.
 	 */
-	if (us >= 10)
+	अगर (us >= 10)
 		usleep_range(us, us + 100);
-	else
+	अन्यथा
 		udelay(us);
-}
+पूर्ण
 
 /**
  * _regulator_check_status_enabled
  *
- * A helper function to check if the regulator status can be interpreted
+ * A helper function to check अगर the regulator status can be पूर्णांकerpreted
  * as 'regulator is enabled'.
  * @rdev: the regulator device to check
  *
  * Return:
- * * 1			- if status shows regulator is in enabled state
- * * 0			- if not enabled state
+ * * 1			- अगर status shows regulator is in enabled state
+ * * 0			- अगर not enabled state
  * * Error Value	- as received from ops->get_status()
  */
-static inline int _regulator_check_status_enabled(struct regulator_dev *rdev)
-{
-	int ret = rdev->desc->ops->get_status(rdev);
+अटल अंतरभूत पूर्णांक _regulator_check_status_enabled(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret = rdev->desc->ops->get_status(rdev);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		rdev_info(rdev, "get_status returned error: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (ret) {
-	case REGULATOR_STATUS_OFF:
-	case REGULATOR_STATUS_ERROR:
-	case REGULATOR_STATUS_UNDEFINED:
-		return 0;
-	default:
-		return 1;
-	}
-}
+	चयन (ret) अणु
+	हाल REGULATOR_STATUS_OFF:
+	हाल REGULATOR_STATUS_ERROR:
+	हाल REGULATOR_STATUS_UNDEFINED:
+		वापस 0;
+	शेष:
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-static int _regulator_do_enable(struct regulator_dev *rdev)
-{
-	int ret, delay;
+अटल पूर्णांक _regulator_करो_enable(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret, delay;
 
-	/* Query before enabling in case configuration dependent.  */
-	ret = _regulator_get_enable_time(rdev);
-	if (ret >= 0) {
+	/* Query beक्रमe enabling in हाल configuration dependent.  */
+	ret = _regulator_get_enable_समय(rdev);
+	अगर (ret >= 0) अणु
 		delay = ret;
-	} else {
+	पूर्ण अन्यथा अणु
 		rdev_warn(rdev, "enable_time() failed: %pe\n", ERR_PTR(ret));
 		delay = 0;
-	}
+	पूर्ण
 
 	trace_regulator_enable(rdev_get_name(rdev));
 
-	if (rdev->desc->off_on_delay && rdev->last_off) {
-		/* if needed, keep a distance of off_on_delay from last time
+	अगर (rdev->desc->off_on_delay && rdev->last_off) अणु
+		/* अगर needed, keep a distance of off_on_delay from last समय
 		 * this regulator was disabled.
 		 */
-		ktime_t end = ktime_add_us(rdev->last_off, rdev->desc->off_on_delay);
-		s64 remaining = ktime_us_delta(end, ktime_get());
+		kसमय_प्रकार end = kसमय_add_us(rdev->last_off, rdev->desc->off_on_delay);
+		s64 reमुख्यing = kसमय_us_delta(end, kसमय_get());
 
-		if (remaining > 0)
-			_regulator_enable_delay(remaining);
-	}
+		अगर (reमुख्यing > 0)
+			_regulator_enable_delay(reमुख्यing);
+	पूर्ण
 
-	if (rdev->ena_pin) {
-		if (!rdev->ena_gpio_state) {
+	अगर (rdev->ena_pin) अणु
+		अगर (!rdev->ena_gpio_state) अणु
 			ret = regulator_ena_gpio_ctrl(rdev, true);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 			rdev->ena_gpio_state = 1;
-		}
-	} else if (rdev->desc->ops->enable) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (rdev->desc->ops->enable) अणु
 		ret = rdev->desc->ops->enable(rdev);
-		if (ret < 0)
-			return ret;
-	} else {
-		return -EINVAL;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Allow the regulator to ramp; it would be useful to extend
-	 * this for bulk operations so that the regulators can ramp
+	 * this क्रम bulk operations so that the regulators can ramp
 	 * together.
 	 */
 	trace_regulator_enable_delay(rdev_get_name(rdev));
 
-	/* If poll_enabled_time is set, poll upto the delay calculated
-	 * above, delaying poll_enabled_time uS to check if the regulator
+	/* If poll_enabled_समय is set, poll upto the delay calculated
+	 * above, delaying poll_enabled_समय uS to check अगर the regulator
 	 * actually got enabled.
 	 * If the regulator isn't enabled after enable_delay has
-	 * expired, return -ETIMEDOUT.
+	 * expired, वापस -ETIMEDOUT.
 	 */
-	if (rdev->desc->poll_enabled_time) {
-		unsigned int time_remaining = delay;
+	अगर (rdev->desc->poll_enabled_समय) अणु
+		अचिन्हित पूर्णांक समय_reमुख्यing = delay;
 
-		while (time_remaining > 0) {
-			_regulator_enable_delay(rdev->desc->poll_enabled_time);
+		जबतक (समय_reमुख्यing > 0) अणु
+			_regulator_enable_delay(rdev->desc->poll_enabled_समय);
 
-			if (rdev->desc->ops->get_status) {
+			अगर (rdev->desc->ops->get_status) अणु
 				ret = _regulator_check_status_enabled(rdev);
-				if (ret < 0)
-					return ret;
-				else if (ret)
-					break;
-			} else if (rdev->desc->ops->is_enabled(rdev))
-				break;
+				अगर (ret < 0)
+					वापस ret;
+				अन्यथा अगर (ret)
+					अवरोध;
+			पूर्ण अन्यथा अगर (rdev->desc->ops->is_enabled(rdev))
+				अवरोध;
 
-			time_remaining -= rdev->desc->poll_enabled_time;
-		}
+			समय_reमुख्यing -= rdev->desc->poll_enabled_समय;
+		पूर्ण
 
-		if (time_remaining <= 0) {
+		अगर (समय_reमुख्यing <= 0) अणु
 			rdev_err(rdev, "Enabled check timed out\n");
-			return -ETIMEDOUT;
-		}
-	} else {
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		_regulator_enable_delay(delay);
-	}
+	पूर्ण
 
 	trace_regulator_enable_complete(rdev_get_name(rdev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _regulator_handle_consumer_enable - handle that a consumer enabled
@@ -2578,23 +2579,23 @@ static int _regulator_do_enable(struct regulator_dev *rdev)
  *   consumer A: regulator_disable(); => total_load = 1000
  *
  * This function (together with _regulator_handle_consumer_disable) is
- * responsible for keeping track of the refcount for a given regulator consumer
+ * responsible क्रम keeping track of the refcount क्रम a given regulator consumer
  * and applying / unapplying these things.
  *
  * Returns 0 upon no error; -error upon error.
  */
-static int _regulator_handle_consumer_enable(struct regulator *regulator)
-{
-	struct regulator_dev *rdev = regulator->rdev;
+अटल पूर्णांक _regulator_handle_consumer_enable(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
 
-	lockdep_assert_held_once(&rdev->mutex.base);
+	lockdep_निश्चित_held_once(&rdev->mutex.base);
 
 	regulator->enable_count++;
-	if (regulator->uA_load && regulator->enable_count == 1)
-		return drms_uA_update(rdev);
+	अगर (regulator->uA_load && regulator->enable_count == 1)
+		वापस drms_uA_update(rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * _regulator_handle_consumer_disable - handle that a consumer disabled
@@ -2604,88 +2605,88 @@ static int _regulator_handle_consumer_enable(struct regulator *regulator)
  *
  * Returns 0 upon no error; -error upon error.
  */
-static int _regulator_handle_consumer_disable(struct regulator *regulator)
-{
-	struct regulator_dev *rdev = regulator->rdev;
+अटल पूर्णांक _regulator_handle_consumer_disable(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
 
-	lockdep_assert_held_once(&rdev->mutex.base);
+	lockdep_निश्चित_held_once(&rdev->mutex.base);
 
-	if (!regulator->enable_count) {
+	अगर (!regulator->enable_count) अणु
 		rdev_err(rdev, "Underflow of regulator enable count\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	regulator->enable_count--;
-	if (regulator->uA_load && regulator->enable_count == 0)
-		return drms_uA_update(rdev);
+	अगर (regulator->uA_load && regulator->enable_count == 0)
+		वापस drms_uA_update(rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* locks held by regulator_enable() */
-static int _regulator_enable(struct regulator *regulator)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	int ret;
+अटल पूर्णांक _regulator_enable(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	पूर्णांक ret;
 
-	lockdep_assert_held_once(&rdev->mutex.base);
+	lockdep_निश्चित_held_once(&rdev->mutex.base);
 
-	if (rdev->use_count == 0 && rdev->supply) {
+	अगर (rdev->use_count == 0 && rdev->supply) अणु
 		ret = _regulator_enable(rdev->supply);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	/* balance only if there are regulators coupled */
-	if (rdev->coupling_desc.n_coupled > 1) {
+	/* balance only अगर there are regulators coupled */
+	अगर (rdev->coupling_desc.n_coupled > 1) अणु
 		ret = regulator_balance_voltage(rdev, PM_SUSPEND_ON);
-		if (ret < 0)
-			goto err_disable_supply;
-	}
+		अगर (ret < 0)
+			जाओ err_disable_supply;
+	पूर्ण
 
 	ret = _regulator_handle_consumer_enable(regulator);
-	if (ret < 0)
-		goto err_disable_supply;
+	अगर (ret < 0)
+		जाओ err_disable_supply;
 
-	if (rdev->use_count == 0) {
+	अगर (rdev->use_count == 0) अणु
 		/*
-		 * The regulator may already be enabled if it's not switchable
+		 * The regulator may alपढ़ोy be enabled अगर it's not चयनable
 		 * or was left on
 		 */
 		ret = _regulator_is_enabled(rdev);
-		if (ret == -EINVAL || ret == 0) {
-			if (!regulator_ops_is_valid(rdev,
-					REGULATOR_CHANGE_STATUS)) {
+		अगर (ret == -EINVAL || ret == 0) अणु
+			अगर (!regulator_ops_is_valid(rdev,
+					REGULATOR_CHANGE_STATUS)) अणु
 				ret = -EPERM;
-				goto err_consumer_disable;
-			}
+				जाओ err_consumer_disable;
+			पूर्ण
 
-			ret = _regulator_do_enable(rdev);
-			if (ret < 0)
-				goto err_consumer_disable;
+			ret = _regulator_करो_enable(rdev);
+			अगर (ret < 0)
+				जाओ err_consumer_disable;
 
-			_notifier_call_chain(rdev, REGULATOR_EVENT_ENABLE,
-					     NULL);
-		} else if (ret < 0) {
+			_notअगरier_call_chain(rdev, REGULATOR_EVENT_ENABLE,
+					     शून्य);
+		पूर्ण अन्यथा अगर (ret < 0) अणु
 			rdev_err(rdev, "is_enabled() failed: %pe\n", ERR_PTR(ret));
-			goto err_consumer_disable;
-		}
-		/* Fallthrough on positive return values - already enabled */
-	}
+			जाओ err_consumer_disable;
+		पूर्ण
+		/* Fallthrough on positive वापस values - alपढ़ोy enabled */
+	पूर्ण
 
 	rdev->use_count++;
 
-	return 0;
+	वापस 0;
 
 err_consumer_disable:
 	_regulator_handle_consumer_disable(regulator);
 
 err_disable_supply:
-	if (rdev->use_count == 0 && rdev->supply)
+	अगर (rdev->use_count == 0 && rdev->supply)
 		_regulator_disable(rdev->supply);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * regulator_enable - enable regulator output
@@ -2698,100 +2699,100 @@ err_disable_supply:
  * NOTE: the output value can be set by other drivers, boot loader or may be
  * hardwired in the regulator.
  */
-int regulator_enable(struct regulator *regulator)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	struct ww_acquire_ctx ww_ctx;
-	int ret;
+पूर्णांक regulator_enable(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	काष्ठा ww_acquire_ctx ww_ctx;
+	पूर्णांक ret;
 
 	regulator_lock_dependent(rdev, &ww_ctx);
 	ret = _regulator_enable(regulator);
 	regulator_unlock_dependent(rdev, &ww_ctx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_enable);
 
-static int _regulator_do_disable(struct regulator_dev *rdev)
-{
-	int ret;
+अटल पूर्णांक _regulator_करो_disable(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret;
 
 	trace_regulator_disable(rdev_get_name(rdev));
 
-	if (rdev->ena_pin) {
-		if (rdev->ena_gpio_state) {
+	अगर (rdev->ena_pin) अणु
+		अगर (rdev->ena_gpio_state) अणु
 			ret = regulator_ena_gpio_ctrl(rdev, false);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 			rdev->ena_gpio_state = 0;
-		}
+		पूर्ण
 
-	} else if (rdev->desc->ops->disable) {
+	पूर्ण अन्यथा अगर (rdev->desc->ops->disable) अणु
 		ret = rdev->desc->ops->disable(rdev);
-		if (ret != 0)
-			return ret;
-	}
+		अगर (ret != 0)
+			वापस ret;
+	पूर्ण
 
-	if (rdev->desc->off_on_delay)
-		rdev->last_off = ktime_get();
+	अगर (rdev->desc->off_on_delay)
+		rdev->last_off = kसमय_get();
 
 	trace_regulator_disable_complete(rdev_get_name(rdev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* locks held by regulator_disable() */
-static int _regulator_disable(struct regulator *regulator)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	int ret = 0;
+अटल पूर्णांक _regulator_disable(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	पूर्णांक ret = 0;
 
-	lockdep_assert_held_once(&rdev->mutex.base);
+	lockdep_निश्चित_held_once(&rdev->mutex.base);
 
-	if (WARN(rdev->use_count <= 0,
+	अगर (WARN(rdev->use_count <= 0,
 		 "unbalanced disables for %s\n", rdev_get_name(rdev)))
-		return -EIO;
+		वापस -EIO;
 
 	/* are we the last user and permitted to disable ? */
-	if (rdev->use_count == 1 &&
-	    (rdev->constraints && !rdev->constraints->always_on)) {
+	अगर (rdev->use_count == 1 &&
+	    (rdev->स्थिरraपूर्णांकs && !rdev->स्थिरraपूर्णांकs->always_on)) अणु
 
 		/* we are last user */
-		if (regulator_ops_is_valid(rdev, REGULATOR_CHANGE_STATUS)) {
-			ret = _notifier_call_chain(rdev,
+		अगर (regulator_ops_is_valid(rdev, REGULATOR_CHANGE_STATUS)) अणु
+			ret = _notअगरier_call_chain(rdev,
 						   REGULATOR_EVENT_PRE_DISABLE,
-						   NULL);
-			if (ret & NOTIFY_STOP_MASK)
-				return -EINVAL;
+						   शून्य);
+			अगर (ret & NOTIFY_STOP_MASK)
+				वापस -EINVAL;
 
-			ret = _regulator_do_disable(rdev);
-			if (ret < 0) {
+			ret = _regulator_करो_disable(rdev);
+			अगर (ret < 0) अणु
 				rdev_err(rdev, "failed to disable: %pe\n", ERR_PTR(ret));
-				_notifier_call_chain(rdev,
+				_notअगरier_call_chain(rdev,
 						REGULATOR_EVENT_ABORT_DISABLE,
-						NULL);
-				return ret;
-			}
-			_notifier_call_chain(rdev, REGULATOR_EVENT_DISABLE,
-					NULL);
-		}
+						शून्य);
+				वापस ret;
+			पूर्ण
+			_notअगरier_call_chain(rdev, REGULATOR_EVENT_DISABLE,
+					शून्य);
+		पूर्ण
 
 		rdev->use_count = 0;
-	} else if (rdev->use_count > 1) {
+	पूर्ण अन्यथा अगर (rdev->use_count > 1) अणु
 		rdev->use_count--;
-	}
+	पूर्ण
 
-	if (ret == 0)
+	अगर (ret == 0)
 		ret = _regulator_handle_consumer_disable(regulator);
 
-	if (ret == 0 && rdev->coupling_desc.n_coupled > 1)
+	अगर (ret == 0 && rdev->coupling_desc.n_coupled > 1)
 		ret = regulator_balance_voltage(rdev, PM_SUSPEND_ON);
 
-	if (ret == 0 && rdev->use_count == 0 && rdev->supply)
+	अगर (ret == 0 && rdev->use_count == 0 && rdev->supply)
 		ret = _regulator_disable(rdev->supply);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * regulator_disable - disable regulator output
@@ -2801,128 +2802,128 @@ static int _regulator_disable(struct regulator *regulator)
  * regulator_enable() must be balanced with calls to
  * regulator_disable().
  *
- * NOTE: this will only disable the regulator output if no other consumer
+ * NOTE: this will only disable the regulator output अगर no other consumer
  * devices have it enabled, the regulator device supports disabling and
- * machine constraints permit this operation.
+ * machine स्थिरraपूर्णांकs permit this operation.
  */
-int regulator_disable(struct regulator *regulator)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	struct ww_acquire_ctx ww_ctx;
-	int ret;
+पूर्णांक regulator_disable(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	काष्ठा ww_acquire_ctx ww_ctx;
+	पूर्णांक ret;
 
 	regulator_lock_dependent(rdev, &ww_ctx);
 	ret = _regulator_disable(regulator);
 	regulator_unlock_dependent(rdev, &ww_ctx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_disable);
 
-/* locks held by regulator_force_disable() */
-static int _regulator_force_disable(struct regulator_dev *rdev)
-{
-	int ret = 0;
+/* locks held by regulator_क्रमce_disable() */
+अटल पूर्णांक _regulator_क्रमce_disable(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret = 0;
 
-	lockdep_assert_held_once(&rdev->mutex.base);
+	lockdep_निश्चित_held_once(&rdev->mutex.base);
 
-	ret = _notifier_call_chain(rdev, REGULATOR_EVENT_FORCE_DISABLE |
-			REGULATOR_EVENT_PRE_DISABLE, NULL);
-	if (ret & NOTIFY_STOP_MASK)
-		return -EINVAL;
+	ret = _notअगरier_call_chain(rdev, REGULATOR_EVENT_FORCE_DISABLE |
+			REGULATOR_EVENT_PRE_DISABLE, शून्य);
+	अगर (ret & NOTIFY_STOP_MASK)
+		वापस -EINVAL;
 
-	ret = _regulator_do_disable(rdev);
-	if (ret < 0) {
+	ret = _regulator_करो_disable(rdev);
+	अगर (ret < 0) अणु
 		rdev_err(rdev, "failed to force disable: %pe\n", ERR_PTR(ret));
-		_notifier_call_chain(rdev, REGULATOR_EVENT_FORCE_DISABLE |
-				REGULATOR_EVENT_ABORT_DISABLE, NULL);
-		return ret;
-	}
+		_notअगरier_call_chain(rdev, REGULATOR_EVENT_FORCE_DISABLE |
+				REGULATOR_EVENT_ABORT_DISABLE, शून्य);
+		वापस ret;
+	पूर्ण
 
-	_notifier_call_chain(rdev, REGULATOR_EVENT_FORCE_DISABLE |
-			REGULATOR_EVENT_DISABLE, NULL);
+	_notअगरier_call_chain(rdev, REGULATOR_EVENT_FORCE_DISABLE |
+			REGULATOR_EVENT_DISABLE, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * regulator_force_disable - force disable regulator output
+ * regulator_क्रमce_disable - क्रमce disable regulator output
  * @regulator: regulator source
  *
  * Forcibly disable the regulator output voltage or current.
- * NOTE: this *will* disable the regulator output even if other consumer
- * devices have it enabled. This should be used for situations when device
- * damage will likely occur if the regulator is not disabled (e.g. over temp).
+ * NOTE: this *will* disable the regulator output even अगर other consumer
+ * devices have it enabled. This should be used क्रम situations when device
+ * damage will likely occur अगर the regulator is not disabled (e.g. over temp).
  */
-int regulator_force_disable(struct regulator *regulator)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	struct ww_acquire_ctx ww_ctx;
-	int ret;
+पूर्णांक regulator_क्रमce_disable(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	काष्ठा ww_acquire_ctx ww_ctx;
+	पूर्णांक ret;
 
 	regulator_lock_dependent(rdev, &ww_ctx);
 
-	ret = _regulator_force_disable(regulator->rdev);
+	ret = _regulator_क्रमce_disable(regulator->rdev);
 
-	if (rdev->coupling_desc.n_coupled > 1)
+	अगर (rdev->coupling_desc.n_coupled > 1)
 		regulator_balance_voltage(rdev, PM_SUSPEND_ON);
 
-	if (regulator->uA_load) {
+	अगर (regulator->uA_load) अणु
 		regulator->uA_load = 0;
 		ret = drms_uA_update(rdev);
-	}
+	पूर्ण
 
-	if (rdev->use_count != 0 && rdev->supply)
+	अगर (rdev->use_count != 0 && rdev->supply)
 		_regulator_disable(rdev->supply);
 
 	regulator_unlock_dependent(rdev, &ww_ctx);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(regulator_force_disable);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_क्रमce_disable);
 
-static void regulator_disable_work(struct work_struct *work)
-{
-	struct regulator_dev *rdev = container_of(work, struct regulator_dev,
+अटल व्योम regulator_disable_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा regulator_dev *rdev = container_of(work, काष्ठा regulator_dev,
 						  disable_work.work);
-	struct ww_acquire_ctx ww_ctx;
-	int count, i, ret;
-	struct regulator *regulator;
-	int total_count = 0;
+	काष्ठा ww_acquire_ctx ww_ctx;
+	पूर्णांक count, i, ret;
+	काष्ठा regulator *regulator;
+	पूर्णांक total_count = 0;
 
 	regulator_lock_dependent(rdev, &ww_ctx);
 
 	/*
-	 * Workqueue functions queue the new work instance while the previous
+	 * Workqueue functions queue the new work instance जबतक the previous
 	 * work instance is being processed. Cancel the queued work instance
-	 * as the work instance under processing does the job of the queued
+	 * as the work instance under processing करोes the job of the queued
 	 * work instance.
 	 */
 	cancel_delayed_work(&rdev->disable_work);
 
-	list_for_each_entry(regulator, &rdev->consumer_list, list) {
+	list_क्रम_each_entry(regulator, &rdev->consumer_list, list) अणु
 		count = regulator->deferred_disables;
 
-		if (!count)
-			continue;
+		अगर (!count)
+			जारी;
 
 		total_count += count;
 		regulator->deferred_disables = 0;
 
-		for (i = 0; i < count; i++) {
+		क्रम (i = 0; i < count; i++) अणु
 			ret = _regulator_disable(regulator);
-			if (ret != 0)
+			अगर (ret != 0)
 				rdev_err(rdev, "Deferred disable failed: %pe\n",
 					 ERR_PTR(ret));
-		}
-	}
+		पूर्ण
+	पूर्ण
 	WARN_ON(!total_count);
 
-	if (rdev->coupling_desc.n_coupled > 1)
+	अगर (rdev->coupling_desc.n_coupled > 1)
 		regulator_balance_voltage(rdev, PM_SUSPEND_ON);
 
 	regulator_unlock_dependent(rdev, &ww_ctx);
-}
+पूर्ण
 
 /**
  * regulator_disable_deferred - disable regulator output with delay
@@ -2930,233 +2931,233 @@ static void regulator_disable_work(struct work_struct *work)
  * @ms: milliseconds until the regulator is disabled
  *
  * Execute regulator_disable() on the regulator after a delay.  This
- * is intended for use with devices that require some time to quiesce.
+ * is पूर्णांकended क्रम use with devices that require some समय to quiesce.
  *
- * NOTE: this will only disable the regulator output if no other consumer
+ * NOTE: this will only disable the regulator output अगर no other consumer
  * devices have it enabled, the regulator device supports disabling and
- * machine constraints permit this operation.
+ * machine स्थिरraपूर्णांकs permit this operation.
  */
-int regulator_disable_deferred(struct regulator *regulator, int ms)
-{
-	struct regulator_dev *rdev = regulator->rdev;
+पूर्णांक regulator_disable_deferred(काष्ठा regulator *regulator, पूर्णांक ms)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
 
-	if (!ms)
-		return regulator_disable(regulator);
+	अगर (!ms)
+		वापस regulator_disable(regulator);
 
 	regulator_lock(rdev);
 	regulator->deferred_disables++;
-	mod_delayed_work(system_power_efficient_wq, &rdev->disable_work,
-			 msecs_to_jiffies(ms));
+	mod_delayed_work(प्रणाली_घातer_efficient_wq, &rdev->disable_work,
+			 msecs_to_jअगरfies(ms));
 	regulator_unlock(rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_disable_deferred);
 
-static int _regulator_is_enabled(struct regulator_dev *rdev)
-{
+अटल पूर्णांक _regulator_is_enabled(काष्ठा regulator_dev *rdev)
+अणु
 	/* A GPIO control always takes precedence */
-	if (rdev->ena_pin)
-		return rdev->ena_gpio_state;
+	अगर (rdev->ena_pin)
+		वापस rdev->ena_gpio_state;
 
-	/* If we don't know then assume that the regulator is always on */
-	if (!rdev->desc->ops->is_enabled)
-		return 1;
+	/* If we करोn't know then assume that the regulator is always on */
+	अगर (!rdev->desc->ops->is_enabled)
+		वापस 1;
 
-	return rdev->desc->ops->is_enabled(rdev);
-}
+	वापस rdev->desc->ops->is_enabled(rdev);
+पूर्ण
 
-static int _regulator_list_voltage(struct regulator_dev *rdev,
-				   unsigned selector, int lock)
-{
-	const struct regulator_ops *ops = rdev->desc->ops;
-	int ret;
+अटल पूर्णांक _regulator_list_voltage(काष्ठा regulator_dev *rdev,
+				   अचिन्हित selector, पूर्णांक lock)
+अणु
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
+	पूर्णांक ret;
 
-	if (rdev->desc->fixed_uV && rdev->desc->n_voltages == 1 && !selector)
-		return rdev->desc->fixed_uV;
+	अगर (rdev->desc->fixed_uV && rdev->desc->n_voltages == 1 && !selector)
+		वापस rdev->desc->fixed_uV;
 
-	if (ops->list_voltage) {
-		if (selector >= rdev->desc->n_voltages)
-			return -EINVAL;
-		if (selector < rdev->desc->linear_min_sel)
-			return 0;
-		if (lock)
+	अगर (ops->list_voltage) अणु
+		अगर (selector >= rdev->desc->n_voltages)
+			वापस -EINVAL;
+		अगर (selector < rdev->desc->linear_min_sel)
+			वापस 0;
+		अगर (lock)
 			regulator_lock(rdev);
 		ret = ops->list_voltage(rdev, selector);
-		if (lock)
+		अगर (lock)
 			regulator_unlock(rdev);
-	} else if (rdev->is_switch && rdev->supply) {
+	पूर्ण अन्यथा अगर (rdev->is_चयन && rdev->supply) अणु
 		ret = _regulator_list_voltage(rdev->supply->rdev,
 					      selector, lock);
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ret > 0) {
-		if (ret < rdev->constraints->min_uV)
+	अगर (ret > 0) अणु
+		अगर (ret < rdev->स्थिरraपूर्णांकs->min_uV)
 			ret = 0;
-		else if (ret > rdev->constraints->max_uV)
+		अन्यथा अगर (ret > rdev->स्थिरraपूर्णांकs->max_uV)
 			ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * regulator_is_enabled - is the regulator output enabled
  * @regulator: regulator source
  *
- * Returns positive if the regulator driver backing the source/client
- * has requested that the device be enabled, zero if it hasn't, else a
- * negative errno code.
+ * Returns positive अगर the regulator driver backing the source/client
+ * has requested that the device be enabled, zero अगर it hasn't, अन्यथा a
+ * negative त्रुटि_सं code.
  *
  * Note that the device backing this regulator handle can have multiple
- * users, so it might be enabled even if regulator_enable() was never
- * called for this particular source.
+ * users, so it might be enabled even अगर regulator_enable() was never
+ * called क्रम this particular source.
  */
-int regulator_is_enabled(struct regulator *regulator)
-{
-	int ret;
+पूर्णांक regulator_is_enabled(काष्ठा regulator *regulator)
+अणु
+	पूर्णांक ret;
 
-	if (regulator->always_on)
-		return 1;
+	अगर (regulator->always_on)
+		वापस 1;
 
 	regulator_lock(regulator->rdev);
 	ret = _regulator_is_enabled(regulator->rdev);
 	regulator_unlock(regulator->rdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_is_enabled);
 
 /**
  * regulator_count_voltages - count regulator_list_voltage() selectors
  * @regulator: regulator source
  *
- * Returns number of selectors, or negative errno.  Selectors are
+ * Returns number of selectors, or negative त्रुटि_सं.  Selectors are
  * numbered starting at zero, and typically correspond to bitfields
- * in hardware registers.
+ * in hardware रेजिस्टरs.
  */
-int regulator_count_voltages(struct regulator *regulator)
-{
-	struct regulator_dev	*rdev = regulator->rdev;
+पूर्णांक regulator_count_voltages(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev	*rdev = regulator->rdev;
 
-	if (rdev->desc->n_voltages)
-		return rdev->desc->n_voltages;
+	अगर (rdev->desc->n_voltages)
+		वापस rdev->desc->n_voltages;
 
-	if (!rdev->is_switch || !rdev->supply)
-		return -EINVAL;
+	अगर (!rdev->is_चयन || !rdev->supply)
+		वापस -EINVAL;
 
-	return regulator_count_voltages(rdev->supply);
-}
+	वापस regulator_count_voltages(rdev->supply);
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_count_voltages);
 
 /**
- * regulator_list_voltage - enumerate supported voltages
+ * regulator_list_voltage - क्रमागतerate supported voltages
  * @regulator: regulator source
- * @selector: identify voltage to list
+ * @selector: identअगरy voltage to list
  * Context: can sleep
  *
  * Returns a voltage that can be passed to @regulator_set_voltage(),
- * zero if this selector code can't be used on this system, or a
- * negative errno.
+ * zero अगर this selector code can't be used on this प्रणाली, or a
+ * negative त्रुटि_सं.
  */
-int regulator_list_voltage(struct regulator *regulator, unsigned selector)
-{
-	return _regulator_list_voltage(regulator->rdev, selector, 1);
-}
+पूर्णांक regulator_list_voltage(काष्ठा regulator *regulator, अचिन्हित selector)
+अणु
+	वापस _regulator_list_voltage(regulator->rdev, selector, 1);
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_list_voltage);
 
 /**
- * regulator_get_regmap - get the regulator's register map
+ * regulator_get_regmap - get the regulator's रेजिस्टर map
  * @regulator: regulator source
  *
- * Returns the register map for the given regulator, or an ERR_PTR value
- * if the regulator doesn't use regmap.
+ * Returns the रेजिस्टर map क्रम the given regulator, or an ERR_PTR value
+ * अगर the regulator करोesn't use regmap.
  */
-struct regmap *regulator_get_regmap(struct regulator *regulator)
-{
-	struct regmap *map = regulator->rdev->regmap;
+काष्ठा regmap *regulator_get_regmap(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regmap *map = regulator->rdev->regmap;
 
-	return map ? map : ERR_PTR(-EOPNOTSUPP);
-}
+	वापस map ? map : ERR_PTR(-EOPNOTSUPP);
+पूर्ण
 
 /**
- * regulator_get_hardware_vsel_register - get the HW voltage selector register
+ * regulator_get_hardware_vsel_रेजिस्टर - get the HW voltage selector रेजिस्टर
  * @regulator: regulator source
- * @vsel_reg: voltage selector register, output parameter
- * @vsel_mask: mask for voltage selector bitfield, output parameter
+ * @vsel_reg: voltage selector रेजिस्टर, output parameter
+ * @vsel_mask: mask क्रम voltage selector bitfield, output parameter
  *
- * Returns the hardware register offset and bitmask used for setting the
+ * Returns the hardware रेजिस्टर offset and biपंचांगask used क्रम setting the
  * regulator voltage. This might be useful when configuring voltage-scaling
  * hardware or firmware that can make I2C requests behind the kernel's back,
- * for example.
+ * क्रम example.
  *
  * On success, the output parameters @vsel_reg and @vsel_mask are filled in
- * and 0 is returned, otherwise a negative errno is returned.
+ * and 0 is वापसed, otherwise a negative त्रुटि_सं is वापसed.
  */
-int regulator_get_hardware_vsel_register(struct regulator *regulator,
-					 unsigned *vsel_reg,
-					 unsigned *vsel_mask)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	const struct regulator_ops *ops = rdev->desc->ops;
+पूर्णांक regulator_get_hardware_vsel_रेजिस्टर(काष्ठा regulator *regulator,
+					 अचिन्हित *vsel_reg,
+					 अचिन्हित *vsel_mask)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
 
-	if (ops->set_voltage_sel != regulator_set_voltage_sel_regmap)
-		return -EOPNOTSUPP;
+	अगर (ops->set_voltage_sel != regulator_set_voltage_sel_regmap)
+		वापस -EOPNOTSUPP;
 
 	*vsel_reg = rdev->desc->vsel_reg;
 	*vsel_mask = rdev->desc->vsel_mask;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(regulator_get_hardware_vsel_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_get_hardware_vsel_रेजिस्टर);
 
 /**
- * regulator_list_hardware_vsel - get the HW-specific register value for a selector
+ * regulator_list_hardware_vsel - get the HW-specअगरic रेजिस्टर value क्रम a selector
  * @regulator: regulator source
- * @selector: identify voltage to list
+ * @selector: identअगरy voltage to list
  *
- * Converts the selector to a hardware-specific voltage selector that can be
- * directly written to the regulator registers. The address of the voltage
- * register can be determined by calling @regulator_get_hardware_vsel_register.
+ * Converts the selector to a hardware-specअगरic voltage selector that can be
+ * directly written to the regulator रेजिस्टरs. The address of the voltage
+ * रेजिस्टर can be determined by calling @regulator_get_hardware_vsel_रेजिस्टर.
  *
- * On error a negative errno is returned.
+ * On error a negative त्रुटि_सं is वापसed.
  */
-int regulator_list_hardware_vsel(struct regulator *regulator,
-				 unsigned selector)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	const struct regulator_ops *ops = rdev->desc->ops;
+पूर्णांक regulator_list_hardware_vsel(काष्ठा regulator *regulator,
+				 अचिन्हित selector)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
 
-	if (selector >= rdev->desc->n_voltages)
-		return -EINVAL;
-	if (selector < rdev->desc->linear_min_sel)
-		return 0;
-	if (ops->set_voltage_sel != regulator_set_voltage_sel_regmap)
-		return -EOPNOTSUPP;
+	अगर (selector >= rdev->desc->n_voltages)
+		वापस -EINVAL;
+	अगर (selector < rdev->desc->linear_min_sel)
+		वापस 0;
+	अगर (ops->set_voltage_sel != regulator_set_voltage_sel_regmap)
+		वापस -EOPNOTSUPP;
 
-	return selector;
-}
+	वापस selector;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_list_hardware_vsel);
 
 /**
- * regulator_get_linear_step - return the voltage step size between VSEL values
+ * regulator_get_linear_step - वापस the voltage step size between VSEL values
  * @regulator: regulator source
  *
- * Returns the voltage step size between VSEL values for linear
- * regulators, or return 0 if the regulator isn't a linear regulator.
+ * Returns the voltage step size between VSEL values क्रम linear
+ * regulators, or वापस 0 अगर the regulator isn't a linear regulator.
  */
-unsigned int regulator_get_linear_step(struct regulator *regulator)
-{
-	struct regulator_dev *rdev = regulator->rdev;
+अचिन्हित पूर्णांक regulator_get_linear_step(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
 
-	return rdev->desc->uV_step;
-}
+	वापस rdev->desc->uV_step;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get_linear_step);
 
 /**
- * regulator_is_supported_voltage - check if a voltage range can be supported
+ * regulator_is_supported_voltage - check अगर a voltage range can be supported
  *
  * @regulator: Regulator to check.
  * @min_uV: Minimum required voltage in uV.
@@ -3164,509 +3165,509 @@ EXPORT_SYMBOL_GPL(regulator_get_linear_step);
  *
  * Returns a boolean.
  */
-int regulator_is_supported_voltage(struct regulator *regulator,
-				   int min_uV, int max_uV)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	int i, voltages, ret;
+पूर्णांक regulator_is_supported_voltage(काष्ठा regulator *regulator,
+				   पूर्णांक min_uV, पूर्णांक max_uV)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	पूर्णांक i, voltages, ret;
 
 	/* If we can't change voltage check the current voltage */
-	if (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_VOLTAGE)) {
+	अगर (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_VOLTAGE)) अणु
 		ret = regulator_get_voltage(regulator);
-		if (ret >= 0)
-			return min_uV <= ret && ret <= max_uV;
-		else
-			return ret;
-	}
+		अगर (ret >= 0)
+			वापस min_uV <= ret && ret <= max_uV;
+		अन्यथा
+			वापस ret;
+	पूर्ण
 
-	/* Any voltage within constrains range is fine? */
-	if (rdev->desc->continuous_voltage_range)
-		return min_uV >= rdev->constraints->min_uV &&
-				max_uV <= rdev->constraints->max_uV;
+	/* Any voltage within स्थिरrains range is fine? */
+	अगर (rdev->desc->continuous_voltage_range)
+		वापस min_uV >= rdev->स्थिरraपूर्णांकs->min_uV &&
+				max_uV <= rdev->स्थिरraपूर्णांकs->max_uV;
 
 	ret = regulator_count_voltages(regulator);
-	if (ret < 0)
-		return 0;
+	अगर (ret < 0)
+		वापस 0;
 	voltages = ret;
 
-	for (i = 0; i < voltages; i++) {
+	क्रम (i = 0; i < voltages; i++) अणु
 		ret = regulator_list_voltage(regulator, i);
 
-		if (ret >= min_uV && ret <= max_uV)
-			return 1;
-	}
+		अगर (ret >= min_uV && ret <= max_uV)
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_is_supported_voltage);
 
-static int regulator_map_voltage(struct regulator_dev *rdev, int min_uV,
-				 int max_uV)
-{
-	const struct regulator_desc *desc = rdev->desc;
+अटल पूर्णांक regulator_map_voltage(काष्ठा regulator_dev *rdev, पूर्णांक min_uV,
+				 पूर्णांक max_uV)
+अणु
+	स्थिर काष्ठा regulator_desc *desc = rdev->desc;
 
-	if (desc->ops->map_voltage)
-		return desc->ops->map_voltage(rdev, min_uV, max_uV);
+	अगर (desc->ops->map_voltage)
+		वापस desc->ops->map_voltage(rdev, min_uV, max_uV);
 
-	if (desc->ops->list_voltage == regulator_list_voltage_linear)
-		return regulator_map_voltage_linear(rdev, min_uV, max_uV);
+	अगर (desc->ops->list_voltage == regulator_list_voltage_linear)
+		वापस regulator_map_voltage_linear(rdev, min_uV, max_uV);
 
-	if (desc->ops->list_voltage == regulator_list_voltage_linear_range)
-		return regulator_map_voltage_linear_range(rdev, min_uV, max_uV);
+	अगर (desc->ops->list_voltage == regulator_list_voltage_linear_range)
+		वापस regulator_map_voltage_linear_range(rdev, min_uV, max_uV);
 
-	if (desc->ops->list_voltage ==
+	अगर (desc->ops->list_voltage ==
 		regulator_list_voltage_pickable_linear_range)
-		return regulator_map_voltage_pickable_linear_range(rdev,
+		वापस regulator_map_voltage_pickable_linear_range(rdev,
 							min_uV, max_uV);
 
-	return regulator_map_voltage_iterate(rdev, min_uV, max_uV);
-}
+	वापस regulator_map_voltage_iterate(rdev, min_uV, max_uV);
+पूर्ण
 
-static int _regulator_call_set_voltage(struct regulator_dev *rdev,
-				       int min_uV, int max_uV,
-				       unsigned *selector)
-{
-	struct pre_voltage_change_data data;
-	int ret;
+अटल पूर्णांक _regulator_call_set_voltage(काष्ठा regulator_dev *rdev,
+				       पूर्णांक min_uV, पूर्णांक max_uV,
+				       अचिन्हित *selector)
+अणु
+	काष्ठा pre_voltage_change_data data;
+	पूर्णांक ret;
 
 	data.old_uV = regulator_get_voltage_rdev(rdev);
 	data.min_uV = min_uV;
 	data.max_uV = max_uV;
-	ret = _notifier_call_chain(rdev, REGULATOR_EVENT_PRE_VOLTAGE_CHANGE,
+	ret = _notअगरier_call_chain(rdev, REGULATOR_EVENT_PRE_VOLTAGE_CHANGE,
 				   &data);
-	if (ret & NOTIFY_STOP_MASK)
-		return -EINVAL;
+	अगर (ret & NOTIFY_STOP_MASK)
+		वापस -EINVAL;
 
 	ret = rdev->desc->ops->set_voltage(rdev, min_uV, max_uV, selector);
-	if (ret >= 0)
-		return ret;
+	अगर (ret >= 0)
+		वापस ret;
 
-	_notifier_call_chain(rdev, REGULATOR_EVENT_ABORT_VOLTAGE_CHANGE,
-			     (void *)data.old_uV);
+	_notअगरier_call_chain(rdev, REGULATOR_EVENT_ABORT_VOLTAGE_CHANGE,
+			     (व्योम *)data.old_uV);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int _regulator_call_set_voltage_sel(struct regulator_dev *rdev,
-					   int uV, unsigned selector)
-{
-	struct pre_voltage_change_data data;
-	int ret;
+अटल पूर्णांक _regulator_call_set_voltage_sel(काष्ठा regulator_dev *rdev,
+					   पूर्णांक uV, अचिन्हित selector)
+अणु
+	काष्ठा pre_voltage_change_data data;
+	पूर्णांक ret;
 
 	data.old_uV = regulator_get_voltage_rdev(rdev);
 	data.min_uV = uV;
 	data.max_uV = uV;
-	ret = _notifier_call_chain(rdev, REGULATOR_EVENT_PRE_VOLTAGE_CHANGE,
+	ret = _notअगरier_call_chain(rdev, REGULATOR_EVENT_PRE_VOLTAGE_CHANGE,
 				   &data);
-	if (ret & NOTIFY_STOP_MASK)
-		return -EINVAL;
+	अगर (ret & NOTIFY_STOP_MASK)
+		वापस -EINVAL;
 
 	ret = rdev->desc->ops->set_voltage_sel(rdev, selector);
-	if (ret >= 0)
-		return ret;
+	अगर (ret >= 0)
+		वापस ret;
 
-	_notifier_call_chain(rdev, REGULATOR_EVENT_ABORT_VOLTAGE_CHANGE,
-			     (void *)data.old_uV);
+	_notअगरier_call_chain(rdev, REGULATOR_EVENT_ABORT_VOLTAGE_CHANGE,
+			     (व्योम *)data.old_uV);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int _regulator_set_voltage_sel_step(struct regulator_dev *rdev,
-					   int uV, int new_selector)
-{
-	const struct regulator_ops *ops = rdev->desc->ops;
-	int diff, old_sel, curr_sel, ret;
+अटल पूर्णांक _regulator_set_voltage_sel_step(काष्ठा regulator_dev *rdev,
+					   पूर्णांक uV, पूर्णांक new_selector)
+अणु
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
+	पूर्णांक dअगरf, old_sel, curr_sel, ret;
 
-	/* Stepping is only needed if the regulator is enabled. */
-	if (!_regulator_is_enabled(rdev))
-		goto final_set;
+	/* Stepping is only needed अगर the regulator is enabled. */
+	अगर (!_regulator_is_enabled(rdev))
+		जाओ final_set;
 
-	if (!ops->get_voltage_sel)
-		return -EINVAL;
+	अगर (!ops->get_voltage_sel)
+		वापस -EINVAL;
 
 	old_sel = ops->get_voltage_sel(rdev);
-	if (old_sel < 0)
-		return old_sel;
+	अगर (old_sel < 0)
+		वापस old_sel;
 
-	diff = new_selector - old_sel;
-	if (diff == 0)
-		return 0; /* No change needed. */
+	dअगरf = new_selector - old_sel;
+	अगर (dअगरf == 0)
+		वापस 0; /* No change needed. */
 
-	if (diff > 0) {
+	अगर (dअगरf > 0) अणु
 		/* Stepping up. */
-		for (curr_sel = old_sel + rdev->desc->vsel_step;
+		क्रम (curr_sel = old_sel + rdev->desc->vsel_step;
 		     curr_sel < new_selector;
-		     curr_sel += rdev->desc->vsel_step) {
+		     curr_sel += rdev->desc->vsel_step) अणु
 			/*
 			 * Call the callback directly instead of using
-			 * _regulator_call_set_voltage_sel() as we don't
-			 * want to notify anyone yet. Same in the branch
+			 * _regulator_call_set_voltage_sel() as we करोn't
+			 * want to notअगरy anyone yet. Same in the branch
 			 * below.
 			 */
 			ret = ops->set_voltage_sel(rdev, curr_sel);
-			if (ret)
-				goto try_revert;
-		}
-	} else {
-		/* Stepping down. */
-		for (curr_sel = old_sel - rdev->desc->vsel_step;
+			अगर (ret)
+				जाओ try_revert;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Stepping करोwn. */
+		क्रम (curr_sel = old_sel - rdev->desc->vsel_step;
 		     curr_sel > new_selector;
-		     curr_sel -= rdev->desc->vsel_step) {
+		     curr_sel -= rdev->desc->vsel_step) अणु
 			ret = ops->set_voltage_sel(rdev, curr_sel);
-			if (ret)
-				goto try_revert;
-		}
-	}
+			अगर (ret)
+				जाओ try_revert;
+		पूर्ण
+	पूर्ण
 
 final_set:
-	/* The final selector will trigger the notifiers. */
-	return _regulator_call_set_voltage_sel(rdev, uV, new_selector);
+	/* The final selector will trigger the notअगरiers. */
+	वापस _regulator_call_set_voltage_sel(rdev, uV, new_selector);
 
 try_revert:
 	/*
-	 * At least try to return to the previous voltage if setting a new
+	 * At least try to वापस to the previous voltage अगर setting a new
 	 * one failed.
 	 */
-	(void)ops->set_voltage_sel(rdev, old_sel);
-	return ret;
-}
+	(व्योम)ops->set_voltage_sel(rdev, old_sel);
+	वापस ret;
+पूर्ण
 
-static int _regulator_set_voltage_time(struct regulator_dev *rdev,
-				       int old_uV, int new_uV)
-{
-	unsigned int ramp_delay = 0;
+अटल पूर्णांक _regulator_set_voltage_समय(काष्ठा regulator_dev *rdev,
+				       पूर्णांक old_uV, पूर्णांक new_uV)
+अणु
+	अचिन्हित पूर्णांक ramp_delay = 0;
 
-	if (rdev->constraints->ramp_delay)
-		ramp_delay = rdev->constraints->ramp_delay;
-	else if (rdev->desc->ramp_delay)
+	अगर (rdev->स्थिरraपूर्णांकs->ramp_delay)
+		ramp_delay = rdev->स्थिरraपूर्णांकs->ramp_delay;
+	अन्यथा अगर (rdev->desc->ramp_delay)
 		ramp_delay = rdev->desc->ramp_delay;
-	else if (rdev->constraints->settling_time)
-		return rdev->constraints->settling_time;
-	else if (rdev->constraints->settling_time_up &&
+	अन्यथा अगर (rdev->स्थिरraपूर्णांकs->settling_समय)
+		वापस rdev->स्थिरraपूर्णांकs->settling_समय;
+	अन्यथा अगर (rdev->स्थिरraपूर्णांकs->settling_समय_up &&
 		 (new_uV > old_uV))
-		return rdev->constraints->settling_time_up;
-	else if (rdev->constraints->settling_time_down &&
+		वापस rdev->स्थिरraपूर्णांकs->settling_समय_up;
+	अन्यथा अगर (rdev->स्थिरraपूर्णांकs->settling_समय_करोwn &&
 		 (new_uV < old_uV))
-		return rdev->constraints->settling_time_down;
+		वापस rdev->स्थिरraपूर्णांकs->settling_समय_करोwn;
 
-	if (ramp_delay == 0) {
+	अगर (ramp_delay == 0) अणु
 		rdev_dbg(rdev, "ramp_delay not set\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return DIV_ROUND_UP(abs(new_uV - old_uV), ramp_delay);
-}
+	वापस DIV_ROUND_UP(असल(new_uV - old_uV), ramp_delay);
+पूर्ण
 
-static int _regulator_do_set_voltage(struct regulator_dev *rdev,
-				     int min_uV, int max_uV)
-{
-	int ret;
-	int delay = 0;
-	int best_val = 0;
-	unsigned int selector;
-	int old_selector = -1;
-	const struct regulator_ops *ops = rdev->desc->ops;
-	int old_uV = regulator_get_voltage_rdev(rdev);
+अटल पूर्णांक _regulator_करो_set_voltage(काष्ठा regulator_dev *rdev,
+				     पूर्णांक min_uV, पूर्णांक max_uV)
+अणु
+	पूर्णांक ret;
+	पूर्णांक delay = 0;
+	पूर्णांक best_val = 0;
+	अचिन्हित पूर्णांक selector;
+	पूर्णांक old_selector = -1;
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
+	पूर्णांक old_uV = regulator_get_voltage_rdev(rdev);
 
 	trace_regulator_set_voltage(rdev_get_name(rdev), min_uV, max_uV);
 
-	min_uV += rdev->constraints->uV_offset;
-	max_uV += rdev->constraints->uV_offset;
+	min_uV += rdev->स्थिरraपूर्णांकs->uV_offset;
+	max_uV += rdev->स्थिरraपूर्णांकs->uV_offset;
 
 	/*
 	 * If we can't obtain the old selector there is not enough
-	 * info to call set_voltage_time_sel().
+	 * info to call set_voltage_समय_sel().
 	 */
-	if (_regulator_is_enabled(rdev) &&
-	    ops->set_voltage_time_sel && ops->get_voltage_sel) {
+	अगर (_regulator_is_enabled(rdev) &&
+	    ops->set_voltage_समय_sel && ops->get_voltage_sel) अणु
 		old_selector = ops->get_voltage_sel(rdev);
-		if (old_selector < 0)
-			return old_selector;
-	}
+		अगर (old_selector < 0)
+			वापस old_selector;
+	पूर्ण
 
-	if (ops->set_voltage) {
+	अगर (ops->set_voltage) अणु
 		ret = _regulator_call_set_voltage(rdev, min_uV, max_uV,
 						  &selector);
 
-		if (ret >= 0) {
-			if (ops->list_voltage)
+		अगर (ret >= 0) अणु
+			अगर (ops->list_voltage)
 				best_val = ops->list_voltage(rdev,
 							     selector);
-			else
+			अन्यथा
 				best_val = regulator_get_voltage_rdev(rdev);
-		}
+		पूर्ण
 
-	} else if (ops->set_voltage_sel) {
+	पूर्ण अन्यथा अगर (ops->set_voltage_sel) अणु
 		ret = regulator_map_voltage(rdev, min_uV, max_uV);
-		if (ret >= 0) {
+		अगर (ret >= 0) अणु
 			best_val = ops->list_voltage(rdev, ret);
-			if (min_uV <= best_val && max_uV >= best_val) {
+			अगर (min_uV <= best_val && max_uV >= best_val) अणु
 				selector = ret;
-				if (old_selector == selector)
+				अगर (old_selector == selector)
 					ret = 0;
-				else if (rdev->desc->vsel_step)
+				अन्यथा अगर (rdev->desc->vsel_step)
 					ret = _regulator_set_voltage_sel_step(
 						rdev, best_val, selector);
-				else
+				अन्यथा
 					ret = _regulator_call_set_voltage_sel(
 						rdev, best_val, selector);
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = -EINVAL;
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (ops->set_voltage_time_sel) {
+	अगर (ops->set_voltage_समय_sel) अणु
 		/*
-		 * Call set_voltage_time_sel if successfully obtained
+		 * Call set_voltage_समय_sel अगर successfully obtained
 		 * old_selector
 		 */
-		if (old_selector >= 0 && old_selector != selector)
-			delay = ops->set_voltage_time_sel(rdev, old_selector,
+		अगर (old_selector >= 0 && old_selector != selector)
+			delay = ops->set_voltage_समय_sel(rdev, old_selector,
 							  selector);
-	} else {
-		if (old_uV != best_val) {
-			if (ops->set_voltage_time)
-				delay = ops->set_voltage_time(rdev, old_uV,
+	पूर्ण अन्यथा अणु
+		अगर (old_uV != best_val) अणु
+			अगर (ops->set_voltage_समय)
+				delay = ops->set_voltage_समय(rdev, old_uV,
 							      best_val);
-			else
-				delay = _regulator_set_voltage_time(rdev,
+			अन्यथा
+				delay = _regulator_set_voltage_समय(rdev,
 								    old_uV,
 								    best_val);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (delay < 0) {
+	अगर (delay < 0) अणु
 		rdev_warn(rdev, "failed to get delay: %pe\n", ERR_PTR(delay));
 		delay = 0;
-	}
+	पूर्ण
 
 	/* Insert any necessary delays */
-	if (delay >= 1000) {
+	अगर (delay >= 1000) अणु
 		mdelay(delay / 1000);
 		udelay(delay % 1000);
-	} else if (delay) {
+	पूर्ण अन्यथा अगर (delay) अणु
 		udelay(delay);
-	}
+	पूर्ण
 
-	if (best_val >= 0) {
-		unsigned long data = best_val;
+	अगर (best_val >= 0) अणु
+		अचिन्हित दीर्घ data = best_val;
 
-		_notifier_call_chain(rdev, REGULATOR_EVENT_VOLTAGE_CHANGE,
-				     (void *)data);
-	}
+		_notअगरier_call_chain(rdev, REGULATOR_EVENT_VOLTAGE_CHANGE,
+				     (व्योम *)data);
+	पूर्ण
 
 out:
 	trace_regulator_set_voltage_complete(rdev_get_name(rdev), best_val);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int _regulator_do_set_suspend_voltage(struct regulator_dev *rdev,
-				  int min_uV, int max_uV, suspend_state_t state)
-{
-	struct regulator_state *rstate;
-	int uV, sel;
+अटल पूर्णांक _regulator_करो_set_suspend_voltage(काष्ठा regulator_dev *rdev,
+				  पूर्णांक min_uV, पूर्णांक max_uV, suspend_state_t state)
+अणु
+	काष्ठा regulator_state *rstate;
+	पूर्णांक uV, sel;
 
 	rstate = regulator_get_suspend_state(rdev, state);
-	if (rstate == NULL)
-		return -EINVAL;
+	अगर (rstate == शून्य)
+		वापस -EINVAL;
 
-	if (min_uV < rstate->min_uV)
+	अगर (min_uV < rstate->min_uV)
 		min_uV = rstate->min_uV;
-	if (max_uV > rstate->max_uV)
+	अगर (max_uV > rstate->max_uV)
 		max_uV = rstate->max_uV;
 
 	sel = regulator_map_voltage(rdev, min_uV, max_uV);
-	if (sel < 0)
-		return sel;
+	अगर (sel < 0)
+		वापस sel;
 
 	uV = rdev->desc->ops->list_voltage(rdev, sel);
-	if (uV >= min_uV && uV <= max_uV)
+	अगर (uV >= min_uV && uV <= max_uV)
 		rstate->uV = uV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regulator_set_voltage_unlocked(struct regulator *regulator,
-					  int min_uV, int max_uV,
+अटल पूर्णांक regulator_set_voltage_unlocked(काष्ठा regulator *regulator,
+					  पूर्णांक min_uV, पूर्णांक max_uV,
 					  suspend_state_t state)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	struct regulator_voltage *voltage = &regulator->voltage[state];
-	int ret = 0;
-	int old_min_uV, old_max_uV;
-	int current_uV;
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	काष्ठा regulator_voltage *voltage = &regulator->voltage[state];
+	पूर्णांक ret = 0;
+	पूर्णांक old_min_uV, old_max_uV;
+	पूर्णांक current_uV;
 
-	/* If we're setting the same range as last time the change
+	/* If we're setting the same range as last समय the change
 	 * should be a noop (some cpufreq implementations use the same
-	 * voltage for multiple frequencies, for example).
+	 * voltage क्रम multiple frequencies, क्रम example).
 	 */
-	if (voltage->min_uV == min_uV && voltage->max_uV == max_uV)
-		goto out;
+	अगर (voltage->min_uV == min_uV && voltage->max_uV == max_uV)
+		जाओ out;
 
 	/* If we're trying to set a range that overlaps the current voltage,
-	 * return successfully even though the regulator does not support
+	 * वापस successfully even though the regulator करोes not support
 	 * changing the voltage.
 	 */
-	if (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_VOLTAGE)) {
+	अगर (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_VOLTAGE)) अणु
 		current_uV = regulator_get_voltage_rdev(rdev);
-		if (min_uV <= current_uV && current_uV <= max_uV) {
+		अगर (min_uV <= current_uV && current_uV <= max_uV) अणु
 			voltage->min_uV = min_uV;
 			voltage->max_uV = max_uV;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* sanity check */
-	if (!rdev->desc->ops->set_voltage &&
-	    !rdev->desc->ops->set_voltage_sel) {
+	अगर (!rdev->desc->ops->set_voltage &&
+	    !rdev->desc->ops->set_voltage_sel) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* constraints check */
+	/* स्थिरraपूर्णांकs check */
 	ret = regulator_check_voltage(rdev, &min_uV, &max_uV);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	/* restore original values in case of error */
+	/* restore original values in हाल of error */
 	old_min_uV = voltage->min_uV;
 	old_max_uV = voltage->max_uV;
 	voltage->min_uV = min_uV;
 	voltage->max_uV = max_uV;
 
-	/* for not coupled regulators this will just set the voltage */
+	/* क्रम not coupled regulators this will just set the voltage */
 	ret = regulator_balance_voltage(rdev, state);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		voltage->min_uV = old_min_uV;
 		voltage->max_uV = old_max_uV;
-	}
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int regulator_set_voltage_rdev(struct regulator_dev *rdev, int min_uV,
-			       int max_uV, suspend_state_t state)
-{
-	int best_supply_uV = 0;
-	int supply_change_uV = 0;
-	int ret;
+पूर्णांक regulator_set_voltage_rdev(काष्ठा regulator_dev *rdev, पूर्णांक min_uV,
+			       पूर्णांक max_uV, suspend_state_t state)
+अणु
+	पूर्णांक best_supply_uV = 0;
+	पूर्णांक supply_change_uV = 0;
+	पूर्णांक ret;
 
-	if (rdev->supply &&
+	अगर (rdev->supply &&
 	    regulator_ops_is_valid(rdev->supply->rdev,
 				   REGULATOR_CHANGE_VOLTAGE) &&
 	    (rdev->desc->min_dropout_uV || !(rdev->desc->ops->get_voltage ||
-					   rdev->desc->ops->get_voltage_sel))) {
-		int current_supply_uV;
-		int selector;
+					   rdev->desc->ops->get_voltage_sel))) अणु
+		पूर्णांक current_supply_uV;
+		पूर्णांक selector;
 
 		selector = regulator_map_voltage(rdev, min_uV, max_uV);
-		if (selector < 0) {
+		अगर (selector < 0) अणु
 			ret = selector;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		best_supply_uV = _regulator_list_voltage(rdev, selector, 0);
-		if (best_supply_uV < 0) {
+		अगर (best_supply_uV < 0) अणु
 			ret = best_supply_uV;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		best_supply_uV += rdev->desc->min_dropout_uV;
 
 		current_supply_uV = regulator_get_voltage_rdev(rdev->supply->rdev);
-		if (current_supply_uV < 0) {
+		अगर (current_supply_uV < 0) अणु
 			ret = current_supply_uV;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		supply_change_uV = best_supply_uV - current_supply_uV;
-	}
+	पूर्ण
 
-	if (supply_change_uV > 0) {
+	अगर (supply_change_uV > 0) अणु
 		ret = regulator_set_voltage_unlocked(rdev->supply,
-				best_supply_uV, INT_MAX, state);
-		if (ret) {
+				best_supply_uV, पूर्णांक_उच्च, state);
+		अगर (ret) अणु
 			dev_err(&rdev->dev, "Failed to increase supply voltage: %pe\n",
 				ERR_PTR(ret));
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (state == PM_SUSPEND_ON)
-		ret = _regulator_do_set_voltage(rdev, min_uV, max_uV);
-	else
-		ret = _regulator_do_set_suspend_voltage(rdev, min_uV,
+	अगर (state == PM_SUSPEND_ON)
+		ret = _regulator_करो_set_voltage(rdev, min_uV, max_uV);
+	अन्यथा
+		ret = _regulator_करो_set_suspend_voltage(rdev, min_uV,
 							max_uV, state);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (supply_change_uV < 0) {
+	अगर (supply_change_uV < 0) अणु
 		ret = regulator_set_voltage_unlocked(rdev->supply,
-				best_supply_uV, INT_MAX, state);
-		if (ret)
+				best_supply_uV, पूर्णांक_उच्च, state);
+		अगर (ret)
 			dev_warn(&rdev->dev, "Failed to decrease supply voltage: %pe\n",
 				 ERR_PTR(ret));
 		/* No need to fail here */
 		ret = 0;
-	}
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_set_voltage_rdev);
 
-static int regulator_limit_voltage_step(struct regulator_dev *rdev,
-					int *current_uV, int *min_uV)
-{
-	struct regulation_constraints *constraints = rdev->constraints;
+अटल पूर्णांक regulator_limit_voltage_step(काष्ठा regulator_dev *rdev,
+					पूर्णांक *current_uV, पूर्णांक *min_uV)
+अणु
+	काष्ठा regulation_स्थिरraपूर्णांकs *स्थिरraपूर्णांकs = rdev->स्थिरraपूर्णांकs;
 
-	/* Limit voltage change only if necessary */
-	if (!constraints->max_uV_step || !_regulator_is_enabled(rdev))
-		return 1;
+	/* Limit voltage change only अगर necessary */
+	अगर (!स्थिरraपूर्णांकs->max_uV_step || !_regulator_is_enabled(rdev))
+		वापस 1;
 
-	if (*current_uV < 0) {
+	अगर (*current_uV < 0) अणु
 		*current_uV = regulator_get_voltage_rdev(rdev);
 
-		if (*current_uV < 0)
-			return *current_uV;
-	}
+		अगर (*current_uV < 0)
+			वापस *current_uV;
+	पूर्ण
 
-	if (abs(*current_uV - *min_uV) <= constraints->max_uV_step)
-		return 1;
+	अगर (असल(*current_uV - *min_uV) <= स्थिरraपूर्णांकs->max_uV_step)
+		वापस 1;
 
 	/* Clamp target voltage within the given step */
-	if (*current_uV < *min_uV)
-		*min_uV = min(*current_uV + constraints->max_uV_step,
+	अगर (*current_uV < *min_uV)
+		*min_uV = min(*current_uV + स्थिरraपूर्णांकs->max_uV_step,
 			      *min_uV);
-	else
-		*min_uV = max(*current_uV - constraints->max_uV_step,
+	अन्यथा
+		*min_uV = max(*current_uV - स्थिरraपूर्णांकs->max_uV_step,
 			      *min_uV);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regulator_get_optimal_voltage(struct regulator_dev *rdev,
-					 int *current_uV,
-					 int *min_uV, int *max_uV,
+अटल पूर्णांक regulator_get_optimal_voltage(काष्ठा regulator_dev *rdev,
+					 पूर्णांक *current_uV,
+					 पूर्णांक *min_uV, पूर्णांक *max_uV,
 					 suspend_state_t state,
-					 int n_coupled)
-{
-	struct coupling_desc *c_desc = &rdev->coupling_desc;
-	struct regulator_dev **c_rdevs = c_desc->coupled_rdevs;
-	struct regulation_constraints *constraints = rdev->constraints;
-	int desired_min_uV = 0, desired_max_uV = INT_MAX;
-	int max_current_uV = 0, min_current_uV = INT_MAX;
-	int highest_min_uV = 0, target_uV, possible_uV;
-	int i, ret, max_spread;
-	bool done;
+					 पूर्णांक n_coupled)
+अणु
+	काष्ठा coupling_desc *c_desc = &rdev->coupling_desc;
+	काष्ठा regulator_dev **c_rdevs = c_desc->coupled_rdevs;
+	काष्ठा regulation_स्थिरraपूर्णांकs *स्थिरraपूर्णांकs = rdev->स्थिरraपूर्णांकs;
+	पूर्णांक desired_min_uV = 0, desired_max_uV = पूर्णांक_उच्च;
+	पूर्णांक max_current_uV = 0, min_current_uV = पूर्णांक_उच्च;
+	पूर्णांक highest_min_uV = 0, target_uV, possible_uV;
+	पूर्णांक i, ret, max_spपढ़ो;
+	bool करोne;
 
 	*current_uV = -1;
 
@@ -3674,236 +3675,236 @@ static int regulator_get_optimal_voltage(struct regulator_dev *rdev,
 	 * If there are no coupled regulators, simply set the voltage
 	 * demanded by consumers.
 	 */
-	if (n_coupled == 1) {
+	अगर (n_coupled == 1) अणु
 		/*
-		 * If consumers don't provide any demands, set voltage
+		 * If consumers करोn't provide any demands, set voltage
 		 * to min_uV
 		 */
-		desired_min_uV = constraints->min_uV;
-		desired_max_uV = constraints->max_uV;
+		desired_min_uV = स्थिरraपूर्णांकs->min_uV;
+		desired_max_uV = स्थिरraपूर्णांकs->max_uV;
 
 		ret = regulator_check_consumers(rdev,
 						&desired_min_uV,
 						&desired_max_uV, state);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		possible_uV = desired_min_uV;
-		done = true;
+		करोne = true;
 
-		goto finish;
-	}
+		जाओ finish;
+	पूर्ण
 
 	/* Find highest min desired voltage */
-	for (i = 0; i < n_coupled; i++) {
-		int tmp_min = 0;
-		int tmp_max = INT_MAX;
+	क्रम (i = 0; i < n_coupled; i++) अणु
+		पूर्णांक पंचांगp_min = 0;
+		पूर्णांक पंचांगp_max = पूर्णांक_उच्च;
 
-		lockdep_assert_held_once(&c_rdevs[i]->mutex.base);
+		lockdep_निश्चित_held_once(&c_rdevs[i]->mutex.base);
 
 		ret = regulator_check_consumers(c_rdevs[i],
-						&tmp_min,
-						&tmp_max, state);
-		if (ret < 0)
-			return ret;
+						&पंचांगp_min,
+						&पंचांगp_max, state);
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = regulator_check_voltage(c_rdevs[i], &tmp_min, &tmp_max);
-		if (ret < 0)
-			return ret;
+		ret = regulator_check_voltage(c_rdevs[i], &पंचांगp_min, &पंचांगp_max);
+		अगर (ret < 0)
+			वापस ret;
 
-		highest_min_uV = max(highest_min_uV, tmp_min);
+		highest_min_uV = max(highest_min_uV, पंचांगp_min);
 
-		if (i == 0) {
-			desired_min_uV = tmp_min;
-			desired_max_uV = tmp_max;
-		}
-	}
+		अगर (i == 0) अणु
+			desired_min_uV = पंचांगp_min;
+			desired_max_uV = पंचांगp_max;
+		पूर्ण
+	पूर्ण
 
-	max_spread = constraints->max_spread[0];
+	max_spपढ़ो = स्थिरraपूर्णांकs->max_spपढ़ो[0];
 
 	/*
-	 * Let target_uV be equal to the desired one if possible.
+	 * Let target_uV be equal to the desired one अगर possible.
 	 * If not, set it to minimum voltage, allowed by other coupled
 	 * regulators.
 	 */
-	target_uV = max(desired_min_uV, highest_min_uV - max_spread);
+	target_uV = max(desired_min_uV, highest_min_uV - max_spपढ़ो);
 
 	/*
 	 * Find min and max voltages, which currently aren't violating
-	 * max_spread.
+	 * max_spपढ़ो.
 	 */
-	for (i = 1; i < n_coupled; i++) {
-		int tmp_act;
+	क्रम (i = 1; i < n_coupled; i++) अणु
+		पूर्णांक पंचांगp_act;
 
-		if (!_regulator_is_enabled(c_rdevs[i]))
-			continue;
+		अगर (!_regulator_is_enabled(c_rdevs[i]))
+			जारी;
 
-		tmp_act = regulator_get_voltage_rdev(c_rdevs[i]);
-		if (tmp_act < 0)
-			return tmp_act;
+		पंचांगp_act = regulator_get_voltage_rdev(c_rdevs[i]);
+		अगर (पंचांगp_act < 0)
+			वापस पंचांगp_act;
 
-		min_current_uV = min(tmp_act, min_current_uV);
-		max_current_uV = max(tmp_act, max_current_uV);
-	}
+		min_current_uV = min(पंचांगp_act, min_current_uV);
+		max_current_uV = max(पंचांगp_act, max_current_uV);
+	पूर्ण
 
 	/* There aren't any other regulators enabled */
-	if (max_current_uV == 0) {
+	अगर (max_current_uV == 0) अणु
 		possible_uV = target_uV;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Correct target voltage, so as it currently isn't
-		 * violating max_spread
+		 * violating max_spपढ़ो
 		 */
-		possible_uV = max(target_uV, max_current_uV - max_spread);
-		possible_uV = min(possible_uV, min_current_uV + max_spread);
-	}
+		possible_uV = max(target_uV, max_current_uV - max_spपढ़ो);
+		possible_uV = min(possible_uV, min_current_uV + max_spपढ़ो);
+	पूर्ण
 
-	if (possible_uV > desired_max_uV)
-		return -EINVAL;
+	अगर (possible_uV > desired_max_uV)
+		वापस -EINVAL;
 
-	done = (possible_uV == target_uV);
+	करोne = (possible_uV == target_uV);
 	desired_min_uV = possible_uV;
 
 finish:
-	/* Apply max_uV_step constraint if necessary */
-	if (state == PM_SUSPEND_ON) {
+	/* Apply max_uV_step स्थिरraपूर्णांक अगर necessary */
+	अगर (state == PM_SUSPEND_ON) अणु
 		ret = regulator_limit_voltage_step(rdev, current_uV,
 						   &desired_min_uV);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		if (ret == 0)
-			done = false;
-	}
+		अगर (ret == 0)
+			करोne = false;
+	पूर्ण
 
-	/* Set current_uV if wasn't done earlier in the code and if necessary */
-	if (n_coupled > 1 && *current_uV == -1) {
+	/* Set current_uV अगर wasn't करोne earlier in the code and अगर necessary */
+	अगर (n_coupled > 1 && *current_uV == -1) अणु
 
-		if (_regulator_is_enabled(rdev)) {
+		अगर (_regulator_is_enabled(rdev)) अणु
 			ret = regulator_get_voltage_rdev(rdev);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
 			*current_uV = ret;
-		} else {
+		पूर्ण अन्यथा अणु
 			*current_uV = desired_min_uV;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*min_uV = desired_min_uV;
 	*max_uV = desired_max_uV;
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-int regulator_do_balance_voltage(struct regulator_dev *rdev,
+पूर्णांक regulator_करो_balance_voltage(काष्ठा regulator_dev *rdev,
 				 suspend_state_t state, bool skip_coupled)
-{
-	struct regulator_dev **c_rdevs;
-	struct regulator_dev *best_rdev;
-	struct coupling_desc *c_desc = &rdev->coupling_desc;
-	int i, ret, n_coupled, best_min_uV, best_max_uV, best_c_rdev;
-	unsigned int delta, best_delta;
-	unsigned long c_rdev_done = 0;
-	bool best_c_rdev_done;
+अणु
+	काष्ठा regulator_dev **c_rdevs;
+	काष्ठा regulator_dev *best_rdev;
+	काष्ठा coupling_desc *c_desc = &rdev->coupling_desc;
+	पूर्णांक i, ret, n_coupled, best_min_uV, best_max_uV, best_c_rdev;
+	अचिन्हित पूर्णांक delta, best_delta;
+	अचिन्हित दीर्घ c_rdev_करोne = 0;
+	bool best_c_rdev_करोne;
 
 	c_rdevs = c_desc->coupled_rdevs;
 	n_coupled = skip_coupled ? 1 : c_desc->n_coupled;
 
 	/*
 	 * Find the best possible voltage change on each loop. Leave the loop
-	 * if there isn't any possible change.
+	 * अगर there isn't any possible change.
 	 */
-	do {
-		best_c_rdev_done = false;
+	करो अणु
+		best_c_rdev_करोne = false;
 		best_delta = 0;
 		best_min_uV = 0;
 		best_max_uV = 0;
 		best_c_rdev = 0;
-		best_rdev = NULL;
+		best_rdev = शून्य;
 
 		/*
-		 * Find highest difference between optimal voltage
+		 * Find highest dअगरference between optimal voltage
 		 * and current voltage.
 		 */
-		for (i = 0; i < n_coupled; i++) {
+		क्रम (i = 0; i < n_coupled; i++) अणु
 			/*
-			 * optimal_uV is the best voltage that can be set for
+			 * optimal_uV is the best voltage that can be set क्रम
 			 * i-th regulator at the moment without violating
-			 * max_spread constraint in order to balance
+			 * max_spपढ़ो स्थिरraपूर्णांक in order to balance
 			 * the coupled voltages.
 			 */
-			int optimal_uV = 0, optimal_max_uV = 0, current_uV = 0;
+			पूर्णांक optimal_uV = 0, optimal_max_uV = 0, current_uV = 0;
 
-			if (test_bit(i, &c_rdev_done))
-				continue;
+			अगर (test_bit(i, &c_rdev_करोne))
+				जारी;
 
 			ret = regulator_get_optimal_voltage(c_rdevs[i],
 							    &current_uV,
 							    &optimal_uV,
 							    &optimal_max_uV,
 							    state, n_coupled);
-			if (ret < 0)
-				goto out;
+			अगर (ret < 0)
+				जाओ out;
 
-			delta = abs(optimal_uV - current_uV);
+			delta = असल(optimal_uV - current_uV);
 
-			if (delta && best_delta <= delta) {
-				best_c_rdev_done = ret;
+			अगर (delta && best_delta <= delta) अणु
+				best_c_rdev_करोne = ret;
 				best_delta = delta;
 				best_rdev = c_rdevs[i];
 				best_min_uV = optimal_uV;
 				best_max_uV = optimal_max_uV;
 				best_c_rdev = i;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* Nothing to change, return successfully */
-		if (!best_rdev) {
+		/* Nothing to change, वापस successfully */
+		अगर (!best_rdev) अणु
 			ret = 0;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = regulator_set_voltage_rdev(best_rdev, best_min_uV,
 						 best_max_uV, state);
 
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 
-		if (best_c_rdev_done)
-			set_bit(best_c_rdev, &c_rdev_done);
+		अगर (best_c_rdev_करोne)
+			set_bit(best_c_rdev, &c_rdev_करोne);
 
-	} while (n_coupled > 1);
+	पूर्ण जबतक (n_coupled > 1);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int regulator_balance_voltage(struct regulator_dev *rdev,
+अटल पूर्णांक regulator_balance_voltage(काष्ठा regulator_dev *rdev,
 				     suspend_state_t state)
-{
-	struct coupling_desc *c_desc = &rdev->coupling_desc;
-	struct regulator_coupler *coupler = c_desc->coupler;
+अणु
+	काष्ठा coupling_desc *c_desc = &rdev->coupling_desc;
+	काष्ठा regulator_coupler *coupler = c_desc->coupler;
 	bool skip_coupled = false;
 
 	/*
-	 * If system is in a state other than PM_SUSPEND_ON, don't check
+	 * If प्रणाली is in a state other than PM_SUSPEND_ON, करोn't check
 	 * other coupled regulators.
 	 */
-	if (state != PM_SUSPEND_ON)
+	अगर (state != PM_SUSPEND_ON)
 		skip_coupled = true;
 
-	if (c_desc->n_resolved < c_desc->n_coupled) {
+	अगर (c_desc->n_resolved < c_desc->n_coupled) अणु
 		rdev_err(rdev, "Not all coupled regulators registered\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	/* Invoke custom balancer for customized couplers */
-	if (coupler && coupler->balance_voltage)
-		return coupler->balance_voltage(coupler, rdev, state);
+	/* Invoke custom balancer क्रम customized couplers */
+	अगर (coupler && coupler->balance_voltage)
+		वापस coupler->balance_voltage(coupler, rdev, state);
 
-	return regulator_do_balance_voltage(rdev, state, skip_coupled);
-}
+	वापस regulator_करो_balance_voltage(rdev, state, skip_coupled);
+पूर्ण
 
 /**
  * regulator_set_voltage - set regulator output voltage
@@ -3915,18 +3916,18 @@ static int regulator_balance_voltage(struct regulator_dev *rdev,
  * during any regulator state. IOW, regulator can be disabled or enabled.
  *
  * If the regulator is enabled then the voltage will change to the new value
- * immediately otherwise if the regulator is disabled the regulator will
+ * immediately otherwise अगर the regulator is disabled the regulator will
  * output at the new voltage when enabled.
  *
  * NOTE: If the regulator is shared between several devices then the lowest
- * request voltage that meets the system constraints will be used.
- * Regulator system constraints must be set for this regulator before
+ * request voltage that meets the प्रणाली स्थिरraपूर्णांकs will be used.
+ * Regulator प्रणाली स्थिरraपूर्णांकs must be set क्रम this regulator beक्रमe
  * calling this function otherwise this call will fail.
  */
-int regulator_set_voltage(struct regulator *regulator, int min_uV, int max_uV)
-{
-	struct ww_acquire_ctx ww_ctx;
-	int ret;
+पूर्णांक regulator_set_voltage(काष्ठा regulator *regulator, पूर्णांक min_uV, पूर्णांक max_uV)
+अणु
+	काष्ठा ww_acquire_ctx ww_ctx;
+	पूर्णांक ret;
 
 	regulator_lock_dependent(regulator->rdev, &ww_ctx);
 
@@ -3935,82 +3936,82 @@ int regulator_set_voltage(struct regulator *regulator, int min_uV, int max_uV)
 
 	regulator_unlock_dependent(regulator->rdev, &ww_ctx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_set_voltage);
 
-static inline int regulator_suspend_toggle(struct regulator_dev *rdev,
+अटल अंतरभूत पूर्णांक regulator_suspend_toggle(काष्ठा regulator_dev *rdev,
 					   suspend_state_t state, bool en)
-{
-	struct regulator_state *rstate;
+अणु
+	काष्ठा regulator_state *rstate;
 
 	rstate = regulator_get_suspend_state(rdev, state);
-	if (rstate == NULL)
-		return -EINVAL;
+	अगर (rstate == शून्य)
+		वापस -EINVAL;
 
-	if (!rstate->changeable)
-		return -EPERM;
+	अगर (!rstate->changeable)
+		वापस -EPERM;
 
 	rstate->enabled = (en) ? ENABLE_IN_SUSPEND : DISABLE_IN_SUSPEND;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int regulator_suspend_enable(struct regulator_dev *rdev,
+पूर्णांक regulator_suspend_enable(काष्ठा regulator_dev *rdev,
 				    suspend_state_t state)
-{
-	return regulator_suspend_toggle(rdev, state, true);
-}
+अणु
+	वापस regulator_suspend_toggle(rdev, state, true);
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_suspend_enable);
 
-int regulator_suspend_disable(struct regulator_dev *rdev,
+पूर्णांक regulator_suspend_disable(काष्ठा regulator_dev *rdev,
 				     suspend_state_t state)
-{
-	struct regulator *regulator;
-	struct regulator_voltage *voltage;
+अणु
+	काष्ठा regulator *regulator;
+	काष्ठा regulator_voltage *voltage;
 
 	/*
-	 * if any consumer wants this regulator device keeping on in
-	 * suspend states, don't set it as disabled.
+	 * अगर any consumer wants this regulator device keeping on in
+	 * suspend states, करोn't set it as disabled.
 	 */
-	list_for_each_entry(regulator, &rdev->consumer_list, list) {
+	list_क्रम_each_entry(regulator, &rdev->consumer_list, list) अणु
 		voltage = &regulator->voltage[state];
-		if (voltage->min_uV || voltage->max_uV)
-			return 0;
-	}
+		अगर (voltage->min_uV || voltage->max_uV)
+			वापस 0;
+	पूर्ण
 
-	return regulator_suspend_toggle(rdev, state, false);
-}
+	वापस regulator_suspend_toggle(rdev, state, false);
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_suspend_disable);
 
-static int _regulator_set_suspend_voltage(struct regulator *regulator,
-					  int min_uV, int max_uV,
+अटल पूर्णांक _regulator_set_suspend_voltage(काष्ठा regulator *regulator,
+					  पूर्णांक min_uV, पूर्णांक max_uV,
 					  suspend_state_t state)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	struct regulator_state *rstate;
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	काष्ठा regulator_state *rstate;
 
 	rstate = regulator_get_suspend_state(rdev, state);
-	if (rstate == NULL)
-		return -EINVAL;
+	अगर (rstate == शून्य)
+		वापस -EINVAL;
 
-	if (rstate->min_uV == rstate->max_uV) {
+	अगर (rstate->min_uV == rstate->max_uV) अणु
 		rdev_err(rdev, "The suspend voltage can't be changed!\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	return regulator_set_voltage_unlocked(regulator, min_uV, max_uV, state);
-}
+	वापस regulator_set_voltage_unlocked(regulator, min_uV, max_uV, state);
+पूर्ण
 
-int regulator_set_suspend_voltage(struct regulator *regulator, int min_uV,
-				  int max_uV, suspend_state_t state)
-{
-	struct ww_acquire_ctx ww_ctx;
-	int ret;
+पूर्णांक regulator_set_suspend_voltage(काष्ठा regulator *regulator, पूर्णांक min_uV,
+				  पूर्णांक max_uV, suspend_state_t state)
+अणु
+	काष्ठा ww_acquire_ctx ww_ctx;
+	पूर्णांक ret;
 
 	/* PM_SUSPEND_ON is handled by regulator_set_voltage() */
-	if (regulator_check_states(state) || state == PM_SUSPEND_ON)
-		return -EINVAL;
+	अगर (regulator_check_states(state) || state == PM_SUSPEND_ON)
+		वापस -EINVAL;
 
 	regulator_lock_dependent(regulator->rdev, &ww_ctx);
 
@@ -4019,216 +4020,216 @@ int regulator_set_suspend_voltage(struct regulator *regulator, int min_uV,
 
 	regulator_unlock_dependent(regulator->rdev, &ww_ctx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_set_suspend_voltage);
 
 /**
- * regulator_set_voltage_time - get raise/fall time
+ * regulator_set_voltage_समय - get उठाओ/fall समय
  * @regulator: regulator source
  * @old_uV: starting voltage in microvolts
  * @new_uV: target voltage in microvolts
  *
  * Provided with the starting and ending voltage, this function attempts to
- * calculate the time in microseconds required to rise or fall to this new
+ * calculate the समय in microseconds required to rise or fall to this new
  * voltage.
  */
-int regulator_set_voltage_time(struct regulator *regulator,
-			       int old_uV, int new_uV)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	const struct regulator_ops *ops = rdev->desc->ops;
-	int old_sel = -1;
-	int new_sel = -1;
-	int voltage;
-	int i;
+पूर्णांक regulator_set_voltage_समय(काष्ठा regulator *regulator,
+			       पूर्णांक old_uV, पूर्णांक new_uV)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
+	पूर्णांक old_sel = -1;
+	पूर्णांक new_sel = -1;
+	पूर्णांक voltage;
+	पूर्णांक i;
 
-	if (ops->set_voltage_time)
-		return ops->set_voltage_time(rdev, old_uV, new_uV);
-	else if (!ops->set_voltage_time_sel)
-		return _regulator_set_voltage_time(rdev, old_uV, new_uV);
+	अगर (ops->set_voltage_समय)
+		वापस ops->set_voltage_समय(rdev, old_uV, new_uV);
+	अन्यथा अगर (!ops->set_voltage_समय_sel)
+		वापस _regulator_set_voltage_समय(rdev, old_uV, new_uV);
 
-	/* Currently requires operations to do this */
-	if (!ops->list_voltage || !rdev->desc->n_voltages)
-		return -EINVAL;
+	/* Currently requires operations to करो this */
+	अगर (!ops->list_voltage || !rdev->desc->n_voltages)
+		वापस -EINVAL;
 
-	for (i = 0; i < rdev->desc->n_voltages; i++) {
-		/* We only look for exact voltage matches here */
-		if (i < rdev->desc->linear_min_sel)
-			continue;
+	क्रम (i = 0; i < rdev->desc->n_voltages; i++) अणु
+		/* We only look क्रम exact voltage matches here */
+		अगर (i < rdev->desc->linear_min_sel)
+			जारी;
 
-		if (old_sel >= 0 && new_sel >= 0)
-			break;
+		अगर (old_sel >= 0 && new_sel >= 0)
+			अवरोध;
 
 		voltage = regulator_list_voltage(regulator, i);
-		if (voltage < 0)
-			return -EINVAL;
-		if (voltage == 0)
-			continue;
-		if (voltage == old_uV)
+		अगर (voltage < 0)
+			वापस -EINVAL;
+		अगर (voltage == 0)
+			जारी;
+		अगर (voltage == old_uV)
 			old_sel = i;
-		if (voltage == new_uV)
+		अगर (voltage == new_uV)
 			new_sel = i;
-	}
+	पूर्ण
 
-	if (old_sel < 0 || new_sel < 0)
-		return -EINVAL;
+	अगर (old_sel < 0 || new_sel < 0)
+		वापस -EINVAL;
 
-	return ops->set_voltage_time_sel(rdev, old_sel, new_sel);
-}
-EXPORT_SYMBOL_GPL(regulator_set_voltage_time);
+	वापस ops->set_voltage_समय_sel(rdev, old_sel, new_sel);
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_set_voltage_समय);
 
 /**
- * regulator_set_voltage_time_sel - get raise/fall time
+ * regulator_set_voltage_समय_sel - get उठाओ/fall समय
  * @rdev: regulator source device
- * @old_selector: selector for starting voltage
- * @new_selector: selector for target voltage
+ * @old_selector: selector क्रम starting voltage
+ * @new_selector: selector क्रम target voltage
  *
  * Provided with the starting and target voltage selectors, this function
- * returns time in microseconds required to rise or fall to this new voltage
+ * वापसs समय in microseconds required to rise or fall to this new voltage
  *
- * Drivers providing ramp_delay in regulation_constraints can use this as their
- * set_voltage_time_sel() operation.
+ * Drivers providing ramp_delay in regulation_स्थिरraपूर्णांकs can use this as their
+ * set_voltage_समय_sel() operation.
  */
-int regulator_set_voltage_time_sel(struct regulator_dev *rdev,
-				   unsigned int old_selector,
-				   unsigned int new_selector)
-{
-	int old_volt, new_volt;
+पूर्णांक regulator_set_voltage_समय_sel(काष्ठा regulator_dev *rdev,
+				   अचिन्हित पूर्णांक old_selector,
+				   अचिन्हित पूर्णांक new_selector)
+अणु
+	पूर्णांक old_volt, new_volt;
 
 	/* sanity check */
-	if (!rdev->desc->ops->list_voltage)
-		return -EINVAL;
+	अगर (!rdev->desc->ops->list_voltage)
+		वापस -EINVAL;
 
 	old_volt = rdev->desc->ops->list_voltage(rdev, old_selector);
 	new_volt = rdev->desc->ops->list_voltage(rdev, new_selector);
 
-	if (rdev->desc->ops->set_voltage_time)
-		return rdev->desc->ops->set_voltage_time(rdev, old_volt,
+	अगर (rdev->desc->ops->set_voltage_समय)
+		वापस rdev->desc->ops->set_voltage_समय(rdev, old_volt,
 							 new_volt);
-	else
-		return _regulator_set_voltage_time(rdev, old_volt, new_volt);
-}
-EXPORT_SYMBOL_GPL(regulator_set_voltage_time_sel);
+	अन्यथा
+		वापस _regulator_set_voltage_समय(rdev, old_volt, new_volt);
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_set_voltage_समय_sel);
 
 /**
  * regulator_sync_voltage - re-apply last regulator output voltage
  * @regulator: regulator source
  *
- * Re-apply the last configured voltage.  This is intended to be used
- * where some external control source the consumer is cooperating with
+ * Re-apply the last configured voltage.  This is पूर्णांकended to be used
+ * where some बाह्यal control source the consumer is cooperating with
  * has caused the configured voltage to change.
  */
-int regulator_sync_voltage(struct regulator *regulator)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	struct regulator_voltage *voltage = &regulator->voltage[PM_SUSPEND_ON];
-	int ret, min_uV, max_uV;
+पूर्णांक regulator_sync_voltage(काष्ठा regulator *regulator)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	काष्ठा regulator_voltage *voltage = &regulator->voltage[PM_SUSPEND_ON];
+	पूर्णांक ret, min_uV, max_uV;
 
 	regulator_lock(rdev);
 
-	if (!rdev->desc->ops->set_voltage &&
-	    !rdev->desc->ops->set_voltage_sel) {
+	अगर (!rdev->desc->ops->set_voltage &&
+	    !rdev->desc->ops->set_voltage_sel) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* This is only going to work if we've had a voltage configured. */
-	if (!voltage->min_uV && !voltage->max_uV) {
+	/* This is only going to work अगर we've had a voltage configured. */
+	अगर (!voltage->min_uV && !voltage->max_uV) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	min_uV = voltage->min_uV;
 	max_uV = voltage->max_uV;
 
 	/* This should be a paranoia check... */
 	ret = regulator_check_voltage(rdev, &min_uV, &max_uV);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = regulator_check_consumers(rdev, &min_uV, &max_uV, 0);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	/* balance only, if regulator is coupled */
-	if (rdev->coupling_desc.n_coupled > 1)
+	/* balance only, अगर regulator is coupled */
+	अगर (rdev->coupling_desc.n_coupled > 1)
 		ret = regulator_balance_voltage(rdev, PM_SUSPEND_ON);
-	else
-		ret = _regulator_do_set_voltage(rdev, min_uV, max_uV);
+	अन्यथा
+		ret = _regulator_करो_set_voltage(rdev, min_uV, max_uV);
 
 out:
 	regulator_unlock(rdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_sync_voltage);
 
-int regulator_get_voltage_rdev(struct regulator_dev *rdev)
-{
-	int sel, ret;
+पूर्णांक regulator_get_voltage_rdev(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक sel, ret;
 	bool bypassed;
 
-	if (rdev->desc->ops->get_bypass) {
+	अगर (rdev->desc->ops->get_bypass) अणु
 		ret = rdev->desc->ops->get_bypass(rdev, &bypassed);
-		if (ret < 0)
-			return ret;
-		if (bypassed) {
-			/* if bypassed the regulator must have a supply */
-			if (!rdev->supply) {
+		अगर (ret < 0)
+			वापस ret;
+		अगर (bypassed) अणु
+			/* अगर bypassed the regulator must have a supply */
+			अगर (!rdev->supply) अणु
 				rdev_err(rdev,
 					 "bypassed regulator has no supply!\n");
-				return -EPROBE_DEFER;
-			}
+				वापस -EPROBE_DEFER;
+			पूर्ण
 
-			return regulator_get_voltage_rdev(rdev->supply->rdev);
-		}
-	}
+			वापस regulator_get_voltage_rdev(rdev->supply->rdev);
+		पूर्ण
+	पूर्ण
 
-	if (rdev->desc->ops->get_voltage_sel) {
+	अगर (rdev->desc->ops->get_voltage_sel) अणु
 		sel = rdev->desc->ops->get_voltage_sel(rdev);
-		if (sel < 0)
-			return sel;
+		अगर (sel < 0)
+			वापस sel;
 		ret = rdev->desc->ops->list_voltage(rdev, sel);
-	} else if (rdev->desc->ops->get_voltage) {
+	पूर्ण अन्यथा अगर (rdev->desc->ops->get_voltage) अणु
 		ret = rdev->desc->ops->get_voltage(rdev);
-	} else if (rdev->desc->ops->list_voltage) {
+	पूर्ण अन्यथा अगर (rdev->desc->ops->list_voltage) अणु
 		ret = rdev->desc->ops->list_voltage(rdev, 0);
-	} else if (rdev->desc->fixed_uV && (rdev->desc->n_voltages == 1)) {
+	पूर्ण अन्यथा अगर (rdev->desc->fixed_uV && (rdev->desc->n_voltages == 1)) अणु
 		ret = rdev->desc->fixed_uV;
-	} else if (rdev->supply) {
+	पूर्ण अन्यथा अगर (rdev->supply) अणु
 		ret = regulator_get_voltage_rdev(rdev->supply->rdev);
-	} else if (rdev->supply_name) {
-		return -EPROBE_DEFER;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अगर (rdev->supply_name) अणु
+		वापस -EPROBE_DEFER;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ret < 0)
-		return ret;
-	return ret - rdev->constraints->uV_offset;
-}
+	अगर (ret < 0)
+		वापस ret;
+	वापस ret - rdev->स्थिरraपूर्णांकs->uV_offset;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get_voltage_rdev);
 
 /**
  * regulator_get_voltage - get regulator output voltage
  * @regulator: regulator source
  *
- * This returns the current regulator voltage in uV.
+ * This वापसs the current regulator voltage in uV.
  *
- * NOTE: If the regulator is disabled it will return the voltage value. This
+ * NOTE: If the regulator is disabled it will वापस the voltage value. This
  * function should not be used to determine regulator state.
  */
-int regulator_get_voltage(struct regulator *regulator)
-{
-	struct ww_acquire_ctx ww_ctx;
-	int ret;
+पूर्णांक regulator_get_voltage(काष्ठा regulator *regulator)
+अणु
+	काष्ठा ww_acquire_ctx ww_ctx;
+	पूर्णांक ret;
 
 	regulator_lock_dependent(regulator->rdev, &ww_ctx);
 	ret = regulator_get_voltage_rdev(regulator->rdev);
 	regulator_unlock_dependent(regulator->rdev, &ww_ctx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get_voltage);
 
 /**
@@ -4241,138 +4242,138 @@ EXPORT_SYMBOL_GPL(regulator_get_voltage);
  * any regulator state. IOW, regulator can be disabled or enabled.
  *
  * If the regulator is enabled then the current will change to the new value
- * immediately otherwise if the regulator is disabled the regulator will
+ * immediately otherwise अगर the regulator is disabled the regulator will
  * output at the new current when enabled.
  *
- * NOTE: Regulator system constraints must be set for this regulator before
+ * NOTE: Regulator प्रणाली स्थिरraपूर्णांकs must be set क्रम this regulator beक्रमe
  * calling this function otherwise this call will fail.
  */
-int regulator_set_current_limit(struct regulator *regulator,
-			       int min_uA, int max_uA)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	int ret;
+पूर्णांक regulator_set_current_limit(काष्ठा regulator *regulator,
+			       पूर्णांक min_uA, पूर्णांक max_uA)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	पूर्णांक ret;
 
 	regulator_lock(rdev);
 
 	/* sanity check */
-	if (!rdev->desc->ops->set_current_limit) {
+	अगर (!rdev->desc->ops->set_current_limit) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* constraints check */
+	/* स्थिरraपूर्णांकs check */
 	ret = regulator_check_current_limit(rdev, &min_uA, &max_uA);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = rdev->desc->ops->set_current_limit(rdev, min_uA, max_uA);
 out:
 	regulator_unlock(rdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_set_current_limit);
 
-static int _regulator_get_current_limit_unlocked(struct regulator_dev *rdev)
-{
+अटल पूर्णांक _regulator_get_current_limit_unlocked(काष्ठा regulator_dev *rdev)
+अणु
 	/* sanity check */
-	if (!rdev->desc->ops->get_current_limit)
-		return -EINVAL;
+	अगर (!rdev->desc->ops->get_current_limit)
+		वापस -EINVAL;
 
-	return rdev->desc->ops->get_current_limit(rdev);
-}
+	वापस rdev->desc->ops->get_current_limit(rdev);
+पूर्ण
 
-static int _regulator_get_current_limit(struct regulator_dev *rdev)
-{
-	int ret;
+अटल पूर्णांक _regulator_get_current_limit(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret;
 
 	regulator_lock(rdev);
 	ret = _regulator_get_current_limit_unlocked(rdev);
 	regulator_unlock(rdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * regulator_get_current_limit - get regulator output current
  * @regulator: regulator source
  *
- * This returns the current supplied by the specified current sink in uA.
+ * This वापसs the current supplied by the specअगरied current sink in uA.
  *
- * NOTE: If the regulator is disabled it will return the current value. This
+ * NOTE: If the regulator is disabled it will वापस the current value. This
  * function should not be used to determine regulator state.
  */
-int regulator_get_current_limit(struct regulator *regulator)
-{
-	return _regulator_get_current_limit(regulator->rdev);
-}
+पूर्णांक regulator_get_current_limit(काष्ठा regulator *regulator)
+अणु
+	वापस _regulator_get_current_limit(regulator->rdev);
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get_current_limit);
 
 /**
  * regulator_set_mode - set regulator operating mode
  * @regulator: regulator source
- * @mode: operating mode - one of the REGULATOR_MODE constants
+ * @mode: operating mode - one of the REGULATOR_MODE स्थिरants
  *
  * Set regulator operating mode to increase regulator efficiency or improve
- * regulation performance.
+ * regulation perक्रमmance.
  *
- * NOTE: Regulator system constraints must be set for this regulator before
+ * NOTE: Regulator प्रणाली स्थिरraपूर्णांकs must be set क्रम this regulator beक्रमe
  * calling this function otherwise this call will fail.
  */
-int regulator_set_mode(struct regulator *regulator, unsigned int mode)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	int ret;
-	int regulator_curr_mode;
+पूर्णांक regulator_set_mode(काष्ठा regulator *regulator, अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	पूर्णांक ret;
+	पूर्णांक regulator_curr_mode;
 
 	regulator_lock(rdev);
 
 	/* sanity check */
-	if (!rdev->desc->ops->set_mode) {
+	अगर (!rdev->desc->ops->set_mode) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* return if the same mode is requested */
-	if (rdev->desc->ops->get_mode) {
+	/* वापस अगर the same mode is requested */
+	अगर (rdev->desc->ops->get_mode) अणु
 		regulator_curr_mode = rdev->desc->ops->get_mode(rdev);
-		if (regulator_curr_mode == mode) {
+		अगर (regulator_curr_mode == mode) अणु
 			ret = 0;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	/* constraints check */
-	ret = regulator_mode_constrain(rdev, &mode);
-	if (ret < 0)
-		goto out;
+	/* स्थिरraपूर्णांकs check */
+	ret = regulator_mode_स्थिरrain(rdev, &mode);
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = rdev->desc->ops->set_mode(rdev, mode);
 out:
 	regulator_unlock(rdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_set_mode);
 
-static unsigned int _regulator_get_mode_unlocked(struct regulator_dev *rdev)
-{
+अटल अचिन्हित पूर्णांक _regulator_get_mode_unlocked(काष्ठा regulator_dev *rdev)
+अणु
 	/* sanity check */
-	if (!rdev->desc->ops->get_mode)
-		return -EINVAL;
+	अगर (!rdev->desc->ops->get_mode)
+		वापस -EINVAL;
 
-	return rdev->desc->ops->get_mode(rdev);
-}
+	वापस rdev->desc->ops->get_mode(rdev);
+पूर्ण
 
-static unsigned int _regulator_get_mode(struct regulator_dev *rdev)
-{
-	int ret;
+अटल अचिन्हित पूर्णांक _regulator_get_mode(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret;
 
 	regulator_lock(rdev);
 	ret = _regulator_get_mode_unlocked(rdev);
 	regulator_unlock(rdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * regulator_get_mode - get regulator operating mode
@@ -4380,43 +4381,43 @@ static unsigned int _regulator_get_mode(struct regulator_dev *rdev)
  *
  * Get the current regulator operating mode.
  */
-unsigned int regulator_get_mode(struct regulator *regulator)
-{
-	return _regulator_get_mode(regulator->rdev);
-}
+अचिन्हित पूर्णांक regulator_get_mode(काष्ठा regulator *regulator)
+अणु
+	वापस _regulator_get_mode(regulator->rdev);
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get_mode);
 
-static int _regulator_get_error_flags(struct regulator_dev *rdev,
-					unsigned int *flags)
-{
-	int ret;
+अटल पूर्णांक _regulator_get_error_flags(काष्ठा regulator_dev *rdev,
+					अचिन्हित पूर्णांक *flags)
+अणु
+	पूर्णांक ret;
 
 	regulator_lock(rdev);
 
 	/* sanity check */
-	if (!rdev->desc->ops->get_error_flags) {
+	अगर (!rdev->desc->ops->get_error_flags) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = rdev->desc->ops->get_error_flags(rdev, flags);
 out:
 	regulator_unlock(rdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * regulator_get_error_flags - get regulator error information
+ * regulator_get_error_flags - get regulator error inक्रमmation
  * @regulator: regulator source
- * @flags: pointer to store error flags
+ * @flags: poपूर्णांकer to store error flags
  *
- * Get the current regulator error information.
+ * Get the current regulator error inक्रमmation.
  */
-int regulator_get_error_flags(struct regulator *regulator,
-				unsigned int *flags)
-{
-	return _regulator_get_error_flags(regulator->rdev, flags);
-}
+पूर्णांक regulator_get_error_flags(काष्ठा regulator *regulator,
+				अचिन्हित पूर्णांक *flags)
+अणु
+	वापस _regulator_get_error_flags(regulator->rdev, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get_error_flags);
 
 /**
@@ -4424,260 +4425,260 @@ EXPORT_SYMBOL_GPL(regulator_get_error_flags);
  * @regulator: regulator source
  * @uA_load: load current
  *
- * Notifies the regulator core of a new device load. This is then used by
- * DRMS (if enabled by constraints) to set the most efficient regulator
- * operating mode for the new regulator loading.
+ * Notअगरies the regulator core of a new device load. This is then used by
+ * DRMS (अगर enabled by स्थिरraपूर्णांकs) to set the most efficient regulator
+ * operating mode क्रम the new regulator loading.
  *
- * Consumer devices notify their supply regulator of the maximum power
- * they will require (can be taken from device datasheet in the power
- * consumption tables) when they change operational status and hence power
- * state. Examples of operational state changes that can affect power
+ * Consumer devices notअगरy their supply regulator of the maximum घातer
+ * they will require (can be taken from device datasheet in the घातer
+ * consumption tables) when they change operational status and hence घातer
+ * state. Examples of operational state changes that can affect घातer
  * consumption are :-
  *
- *    o Device is opened / closed.
+ *    o Device is खोलोed / बंदd.
  *    o Device I/O is about to begin or has just finished.
  *    o Device is idling in between work.
  *
- * This information is also exported via sysfs to userspace.
+ * This inक्रमmation is also exported via sysfs to userspace.
  *
  * DRMS will sum the total requested load on the regulator and change
- * to the most efficient operating mode if platform constraints allow.
+ * to the most efficient operating mode अगर platक्रमm स्थिरraपूर्णांकs allow.
  *
  * NOTE: when a regulator consumer requests to have a regulator
- * disabled then any load that consumer requested no longer counts
+ * disabled then any load that consumer requested no दीर्घer counts
  * toward the total requested load.  If the regulator is re-enabled
  * then the previously requested load will start counting again.
  *
- * If a regulator is an always-on regulator then an individual consumer's
- * load will still be removed if that consumer is fully disabled.
+ * If a regulator is an always-on regulator then an inभागidual consumer's
+ * load will still be हटाओd अगर that consumer is fully disabled.
  *
- * On error a negative errno is returned.
+ * On error a negative त्रुटि_सं is वापसed.
  */
-int regulator_set_load(struct regulator *regulator, int uA_load)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	int old_uA_load;
-	int ret = 0;
+पूर्णांक regulator_set_load(काष्ठा regulator *regulator, पूर्णांक uA_load)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	पूर्णांक old_uA_load;
+	पूर्णांक ret = 0;
 
 	regulator_lock(rdev);
 	old_uA_load = regulator->uA_load;
 	regulator->uA_load = uA_load;
-	if (regulator->enable_count && old_uA_load != uA_load) {
+	अगर (regulator->enable_count && old_uA_load != uA_load) अणु
 		ret = drms_uA_update(rdev);
-		if (ret < 0)
+		अगर (ret < 0)
 			regulator->uA_load = old_uA_load;
-	}
+	पूर्ण
 	regulator_unlock(rdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_set_load);
 
 /**
- * regulator_allow_bypass - allow the regulator to go into bypass mode
+ * regulator_allow_bypass - allow the regulator to go पूर्णांकo bypass mode
  *
  * @regulator: Regulator to configure
  * @enable: enable or disable bypass mode
  *
- * Allow the regulator to go into bypass mode if all other consumers
- * for the regulator also enable bypass mode and the machine
- * constraints allow this.  Bypass mode means that the regulator is
+ * Allow the regulator to go पूर्णांकo bypass mode अगर all other consumers
+ * क्रम the regulator also enable bypass mode and the machine
+ * स्थिरraपूर्णांकs allow this.  Bypass mode means that the regulator is
  * simply passing the input directly to the output with no regulation.
  */
-int regulator_allow_bypass(struct regulator *regulator, bool enable)
-{
-	struct regulator_dev *rdev = regulator->rdev;
-	const char *name = rdev_get_name(rdev);
-	int ret = 0;
+पूर्णांक regulator_allow_bypass(काष्ठा regulator *regulator, bool enable)
+अणु
+	काष्ठा regulator_dev *rdev = regulator->rdev;
+	स्थिर अक्षर *name = rdev_get_name(rdev);
+	पूर्णांक ret = 0;
 
-	if (!rdev->desc->ops->set_bypass)
-		return 0;
+	अगर (!rdev->desc->ops->set_bypass)
+		वापस 0;
 
-	if (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_BYPASS))
-		return 0;
+	अगर (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_BYPASS))
+		वापस 0;
 
 	regulator_lock(rdev);
 
-	if (enable && !regulator->bypass) {
+	अगर (enable && !regulator->bypass) अणु
 		rdev->bypass_count++;
 
-		if (rdev->bypass_count == rdev->open_count) {
+		अगर (rdev->bypass_count == rdev->खोलो_count) अणु
 			trace_regulator_bypass_enable(name);
 
 			ret = rdev->desc->ops->set_bypass(rdev, enable);
-			if (ret != 0)
+			अगर (ret != 0)
 				rdev->bypass_count--;
-			else
+			अन्यथा
 				trace_regulator_bypass_enable_complete(name);
-		}
+		पूर्ण
 
-	} else if (!enable && regulator->bypass) {
+	पूर्ण अन्यथा अगर (!enable && regulator->bypass) अणु
 		rdev->bypass_count--;
 
-		if (rdev->bypass_count != rdev->open_count) {
+		अगर (rdev->bypass_count != rdev->खोलो_count) अणु
 			trace_regulator_bypass_disable(name);
 
 			ret = rdev->desc->ops->set_bypass(rdev, enable);
-			if (ret != 0)
+			अगर (ret != 0)
 				rdev->bypass_count++;
-			else
+			अन्यथा
 				trace_regulator_bypass_disable_complete(name);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ret == 0)
+	अगर (ret == 0)
 		regulator->bypass = enable;
 
 	regulator_unlock(rdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_allow_bypass);
 
 /**
- * regulator_register_notifier - register regulator event notifier
+ * regulator_रेजिस्टर_notअगरier - रेजिस्टर regulator event notअगरier
  * @regulator: regulator source
- * @nb: notifier block
+ * @nb: notअगरier block
  *
- * Register notifier block to receive regulator events.
+ * Register notअगरier block to receive regulator events.
  */
-int regulator_register_notifier(struct regulator *regulator,
-			      struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&regulator->rdev->notifier,
+पूर्णांक regulator_रेजिस्टर_notअगरier(काष्ठा regulator *regulator,
+			      काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&regulator->rdev->notअगरier,
 						nb);
-}
-EXPORT_SYMBOL_GPL(regulator_register_notifier);
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_रेजिस्टर_notअगरier);
 
 /**
- * regulator_unregister_notifier - unregister regulator event notifier
+ * regulator_unरेजिस्टर_notअगरier - unरेजिस्टर regulator event notअगरier
  * @regulator: regulator source
- * @nb: notifier block
+ * @nb: notअगरier block
  *
- * Unregister regulator event notifier block.
+ * Unरेजिस्टर regulator event notअगरier block.
  */
-int regulator_unregister_notifier(struct regulator *regulator,
-				struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&regulator->rdev->notifier,
+पूर्णांक regulator_unरेजिस्टर_notअगरier(काष्ठा regulator *regulator,
+				काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&regulator->rdev->notअगरier,
 						  nb);
-}
-EXPORT_SYMBOL_GPL(regulator_unregister_notifier);
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_unरेजिस्टर_notअगरier);
 
-/* notify regulator consumers and downstream regulator consumers.
+/* notअगरy regulator consumers and करोwnstream regulator consumers.
  * Note mutex must be held by caller.
  */
-static int _notifier_call_chain(struct regulator_dev *rdev,
-				  unsigned long event, void *data)
-{
+अटल पूर्णांक _notअगरier_call_chain(काष्ठा regulator_dev *rdev,
+				  अचिन्हित दीर्घ event, व्योम *data)
+अणु
 	/* call rdev chain first */
-	return blocking_notifier_call_chain(&rdev->notifier, event, data);
-}
+	वापस blocking_notअगरier_call_chain(&rdev->notअगरier, event, data);
+पूर्ण
 
 /**
  * regulator_bulk_get - get multiple regulator consumers
  *
  * @dev:           Device to supply
- * @num_consumers: Number of consumers to register
+ * @num_consumers: Number of consumers to रेजिस्टर
  * @consumers:     Configuration of consumers; clients are stored here.
  *
- * @return 0 on success, an errno on failure.
+ * @वापस 0 on success, an त्रुटि_सं on failure.
  *
  * This helper function allows drivers to get several regulator
  * consumers in one operation.  If any of the regulators cannot be
- * acquired then any regulators that were allocated will be freed
- * before returning to the caller.
+ * acquired then any regulators that were allocated will be मुक्तd
+ * beक्रमe वापसing to the caller.
  */
-int regulator_bulk_get(struct device *dev, int num_consumers,
-		       struct regulator_bulk_data *consumers)
-{
-	int i;
-	int ret;
+पूर्णांक regulator_bulk_get(काष्ठा device *dev, पूर्णांक num_consumers,
+		       काष्ठा regulator_bulk_data *consumers)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < num_consumers; i++)
-		consumers[i].consumer = NULL;
+	क्रम (i = 0; i < num_consumers; i++)
+		consumers[i].consumer = शून्य;
 
-	for (i = 0; i < num_consumers; i++) {
+	क्रम (i = 0; i < num_consumers; i++) अणु
 		consumers[i].consumer = regulator_get(dev,
 						      consumers[i].supply);
-		if (IS_ERR(consumers[i].consumer)) {
+		अगर (IS_ERR(consumers[i].consumer)) अणु
 			ret = PTR_ERR(consumers[i].consumer);
-			consumers[i].consumer = NULL;
-			goto err;
-		}
-	}
+			consumers[i].consumer = शून्य;
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	if (ret != -EPROBE_DEFER)
+	अगर (ret != -EPROBE_DEFER)
 		dev_err(dev, "Failed to get supply '%s': %pe\n",
 			consumers[i].supply, ERR_PTR(ret));
-	else
+	अन्यथा
 		dev_dbg(dev, "Failed to get supply '%s', deferring\n",
 			consumers[i].supply);
 
-	while (--i >= 0)
+	जबतक (--i >= 0)
 		regulator_put(consumers[i].consumer);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_bulk_get);
 
-static void regulator_bulk_enable_async(void *data, async_cookie_t cookie)
-{
-	struct regulator_bulk_data *bulk = data;
+अटल व्योम regulator_bulk_enable_async(व्योम *data, async_cookie_t cookie)
+अणु
+	काष्ठा regulator_bulk_data *bulk = data;
 
 	bulk->ret = regulator_enable(bulk->consumer);
-}
+पूर्ण
 
 /**
  * regulator_bulk_enable - enable multiple regulator consumers
  *
  * @num_consumers: Number of consumers
  * @consumers:     Consumer data; clients are stored here.
- * @return         0 on success, an errno on failure
+ * @वापस         0 on success, an त्रुटि_सं on failure
  *
  * This convenience API allows consumers to enable multiple regulator
  * clients in a single API call.  If any consumers cannot be enabled
  * then any others that were enabled will be disabled again prior to
- * return.
+ * वापस.
  */
-int regulator_bulk_enable(int num_consumers,
-			  struct regulator_bulk_data *consumers)
-{
-	ASYNC_DOMAIN_EXCLUSIVE(async_domain);
-	int i;
-	int ret = 0;
+पूर्णांक regulator_bulk_enable(पूर्णांक num_consumers,
+			  काष्ठा regulator_bulk_data *consumers)
+अणु
+	ASYNC_DOMAIN_EXCLUSIVE(async_करोमुख्य);
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	for (i = 0; i < num_consumers; i++) {
-		async_schedule_domain(regulator_bulk_enable_async,
-				      &consumers[i], &async_domain);
-	}
+	क्रम (i = 0; i < num_consumers; i++) अणु
+		async_schedule_करोमुख्य(regulator_bulk_enable_async,
+				      &consumers[i], &async_करोमुख्य);
+	पूर्ण
 
-	async_synchronize_full_domain(&async_domain);
+	async_synchronize_full_करोमुख्य(&async_करोमुख्य);
 
 	/* If any consumer failed we need to unwind any that succeeded */
-	for (i = 0; i < num_consumers; i++) {
-		if (consumers[i].ret != 0) {
+	क्रम (i = 0; i < num_consumers; i++) अणु
+		अगर (consumers[i].ret != 0) अणु
 			ret = consumers[i].ret;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	for (i = 0; i < num_consumers; i++) {
-		if (consumers[i].ret < 0)
+	क्रम (i = 0; i < num_consumers; i++) अणु
+		अगर (consumers[i].ret < 0)
 			pr_err("Failed to enable %s: %pe\n", consumers[i].supply,
 			       ERR_PTR(consumers[i].ret));
-		else
+		अन्यथा
 			regulator_disable(consumers[i].consumer);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_bulk_enable);
 
 /**
@@ -4685,137 +4686,137 @@ EXPORT_SYMBOL_GPL(regulator_bulk_enable);
  *
  * @num_consumers: Number of consumers
  * @consumers:     Consumer data; clients are stored here.
- * @return         0 on success, an errno on failure
+ * @वापस         0 on success, an त्रुटि_सं on failure
  *
  * This convenience API allows consumers to disable multiple regulator
  * clients in a single API call.  If any consumers cannot be disabled
  * then any others that were disabled will be enabled again prior to
- * return.
+ * वापस.
  */
-int regulator_bulk_disable(int num_consumers,
-			   struct regulator_bulk_data *consumers)
-{
-	int i;
-	int ret, r;
+पूर्णांक regulator_bulk_disable(पूर्णांक num_consumers,
+			   काष्ठा regulator_bulk_data *consumers)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret, r;
 
-	for (i = num_consumers - 1; i >= 0; --i) {
+	क्रम (i = num_consumers - 1; i >= 0; --i) अणु
 		ret = regulator_disable(consumers[i].consumer);
-		if (ret != 0)
-			goto err;
-	}
+		अगर (ret != 0)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
 	pr_err("Failed to disable %s: %pe\n", consumers[i].supply, ERR_PTR(ret));
-	for (++i; i < num_consumers; ++i) {
+	क्रम (++i; i < num_consumers; ++i) अणु
 		r = regulator_enable(consumers[i].consumer);
-		if (r != 0)
+		अगर (r != 0)
 			pr_err("Failed to re-enable %s: %pe\n",
 			       consumers[i].supply, ERR_PTR(r));
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_bulk_disable);
 
 /**
- * regulator_bulk_force_disable - force disable multiple regulator consumers
+ * regulator_bulk_क्रमce_disable - क्रमce disable multiple regulator consumers
  *
  * @num_consumers: Number of consumers
  * @consumers:     Consumer data; clients are stored here.
- * @return         0 on success, an errno on failure
+ * @वापस         0 on success, an त्रुटि_सं on failure
  *
- * This convenience API allows consumers to forcibly disable multiple regulator
+ * This convenience API allows consumers to क्रमcibly disable multiple regulator
  * clients in a single API call.
- * NOTE: This should be used for situations when device damage will
- * likely occur if the regulators are not disabled (e.g. over temp).
- * Although regulator_force_disable function call for some consumers can
- * return error numbers, the function is called for all consumers.
+ * NOTE: This should be used क्रम situations when device damage will
+ * likely occur अगर the regulators are not disabled (e.g. over temp).
+ * Although regulator_क्रमce_disable function call क्रम some consumers can
+ * वापस error numbers, the function is called क्रम all consumers.
  */
-int regulator_bulk_force_disable(int num_consumers,
-			   struct regulator_bulk_data *consumers)
-{
-	int i;
-	int ret = 0;
+पूर्णांक regulator_bulk_क्रमce_disable(पूर्णांक num_consumers,
+			   काष्ठा regulator_bulk_data *consumers)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	for (i = 0; i < num_consumers; i++) {
+	क्रम (i = 0; i < num_consumers; i++) अणु
 		consumers[i].ret =
-			    regulator_force_disable(consumers[i].consumer);
+			    regulator_क्रमce_disable(consumers[i].consumer);
 
-		/* Store first error for reporting */
-		if (consumers[i].ret && !ret)
+		/* Store first error क्रम reporting */
+		अगर (consumers[i].ret && !ret)
 			ret = consumers[i].ret;
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(regulator_bulk_force_disable);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_bulk_क्रमce_disable);
 
 /**
- * regulator_bulk_free - free multiple regulator consumers
+ * regulator_bulk_मुक्त - मुक्त multiple regulator consumers
  *
  * @num_consumers: Number of consumers
  * @consumers:     Consumer data; clients are stored here.
  *
- * This convenience API allows consumers to free multiple regulator
+ * This convenience API allows consumers to मुक्त multiple regulator
  * clients in a single API call.
  */
-void regulator_bulk_free(int num_consumers,
-			 struct regulator_bulk_data *consumers)
-{
-	int i;
+व्योम regulator_bulk_मुक्त(पूर्णांक num_consumers,
+			 काष्ठा regulator_bulk_data *consumers)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_consumers; i++) {
+	क्रम (i = 0; i < num_consumers; i++) अणु
 		regulator_put(consumers[i].consumer);
-		consumers[i].consumer = NULL;
-	}
-}
-EXPORT_SYMBOL_GPL(regulator_bulk_free);
+		consumers[i].consumer = शून्य;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_bulk_मुक्त);
 
 /**
- * regulator_notifier_call_chain - call regulator event notifier
+ * regulator_notअगरier_call_chain - call regulator event notअगरier
  * @rdev: regulator source
- * @event: notifier block
- * @data: callback-specific data.
+ * @event: notअगरier block
+ * @data: callback-specअगरic data.
  *
- * Called by regulator drivers to notify clients a regulator event has
+ * Called by regulator drivers to notअगरy clients a regulator event has
  * occurred.
  */
-int regulator_notifier_call_chain(struct regulator_dev *rdev,
-				  unsigned long event, void *data)
-{
-	_notifier_call_chain(rdev, event, data);
-	return NOTIFY_DONE;
+पूर्णांक regulator_notअगरier_call_chain(काष्ठा regulator_dev *rdev,
+				  अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	_notअगरier_call_chain(rdev, event, data);
+	वापस NOTIFY_DONE;
 
-}
-EXPORT_SYMBOL_GPL(regulator_notifier_call_chain);
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_notअगरier_call_chain);
 
 /**
- * regulator_mode_to_status - convert a regulator mode into a status
+ * regulator_mode_to_status - convert a regulator mode पूर्णांकo a status
  *
  * @mode: Mode to convert
  *
- * Convert a regulator mode into a status.
+ * Convert a regulator mode पूर्णांकo a status.
  */
-int regulator_mode_to_status(unsigned int mode)
-{
-	switch (mode) {
-	case REGULATOR_MODE_FAST:
-		return REGULATOR_STATUS_FAST;
-	case REGULATOR_MODE_NORMAL:
-		return REGULATOR_STATUS_NORMAL;
-	case REGULATOR_MODE_IDLE:
-		return REGULATOR_STATUS_IDLE;
-	case REGULATOR_MODE_STANDBY:
-		return REGULATOR_STATUS_STANDBY;
-	default:
-		return REGULATOR_STATUS_UNDEFINED;
-	}
-}
+पूर्णांक regulator_mode_to_status(अचिन्हित पूर्णांक mode)
+अणु
+	चयन (mode) अणु
+	हाल REGULATOR_MODE_FAST:
+		वापस REGULATOR_STATUS_FAST;
+	हाल REGULATOR_MODE_NORMAL:
+		वापस REGULATOR_STATUS_NORMAL;
+	हाल REGULATOR_MODE_IDLE:
+		वापस REGULATOR_STATUS_IDLE;
+	हाल REGULATOR_MODE_STANDBY:
+		वापस REGULATOR_STATUS_STANDBY;
+	शेष:
+		वापस REGULATOR_STATUS_UNDEFINED;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_mode_to_status);
 
-static struct attribute *regulator_dev_attrs[] = {
+अटल काष्ठा attribute *regulator_dev_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_num_users.attr,
 	&dev_attr_type.attr,
@@ -4839,376 +4840,376 @@ static struct attribute *regulator_dev_attrs[] = {
 	&dev_attr_suspend_standby_mode.attr,
 	&dev_attr_suspend_mem_mode.attr,
 	&dev_attr_suspend_disk_mode.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /*
- * To avoid cluttering sysfs (and memory) with useless state, only
+ * To aव्योम cluttering sysfs (and memory) with useless state, only
  * create attributes that can be meaningfully displayed.
  */
-static umode_t regulator_attr_is_visible(struct kobject *kobj,
-					 struct attribute *attr, int idx)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct regulator_dev *rdev = dev_to_rdev(dev);
-	const struct regulator_ops *ops = rdev->desc->ops;
+अटल umode_t regulator_attr_is_visible(काष्ठा kobject *kobj,
+					 काष्ठा attribute *attr, पूर्णांक idx)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा regulator_dev *rdev = dev_to_rdev(dev);
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
 	umode_t mode = attr->mode;
 
 	/* these three are always present */
-	if (attr == &dev_attr_name.attr ||
+	अगर (attr == &dev_attr_name.attr ||
 	    attr == &dev_attr_num_users.attr ||
 	    attr == &dev_attr_type.attr)
-		return mode;
+		वापस mode;
 
-	/* some attributes need specific methods to be displayed */
-	if (attr == &dev_attr_microvolts.attr) {
-		if ((ops->get_voltage && ops->get_voltage(rdev) >= 0) ||
+	/* some attributes need specअगरic methods to be displayed */
+	अगर (attr == &dev_attr_microvolts.attr) अणु
+		अगर ((ops->get_voltage && ops->get_voltage(rdev) >= 0) ||
 		    (ops->get_voltage_sel && ops->get_voltage_sel(rdev) >= 0) ||
 		    (ops->list_voltage && ops->list_voltage(rdev, 0) >= 0) ||
 		    (rdev->desc->fixed_uV && rdev->desc->n_voltages == 1))
-			return mode;
-		return 0;
-	}
+			वापस mode;
+		वापस 0;
+	पूर्ण
 
-	if (attr == &dev_attr_microamps.attr)
-		return ops->get_current_limit ? mode : 0;
+	अगर (attr == &dev_attr_microamps.attr)
+		वापस ops->get_current_limit ? mode : 0;
 
-	if (attr == &dev_attr_opmode.attr)
-		return ops->get_mode ? mode : 0;
+	अगर (attr == &dev_attr_opmode.attr)
+		वापस ops->get_mode ? mode : 0;
 
-	if (attr == &dev_attr_state.attr)
-		return (rdev->ena_pin || ops->is_enabled) ? mode : 0;
+	अगर (attr == &dev_attr_state.attr)
+		वापस (rdev->ena_pin || ops->is_enabled) ? mode : 0;
 
-	if (attr == &dev_attr_status.attr)
-		return ops->get_status ? mode : 0;
+	अगर (attr == &dev_attr_status.attr)
+		वापस ops->get_status ? mode : 0;
 
-	if (attr == &dev_attr_bypass.attr)
-		return ops->get_bypass ? mode : 0;
+	अगर (attr == &dev_attr_bypass.attr)
+		वापस ops->get_bypass ? mode : 0;
 
-	/* constraints need specific supporting methods */
-	if (attr == &dev_attr_min_microvolts.attr ||
+	/* स्थिरraपूर्णांकs need specअगरic supporting methods */
+	अगर (attr == &dev_attr_min_microvolts.attr ||
 	    attr == &dev_attr_max_microvolts.attr)
-		return (ops->set_voltage || ops->set_voltage_sel) ? mode : 0;
+		वापस (ops->set_voltage || ops->set_voltage_sel) ? mode : 0;
 
-	if (attr == &dev_attr_min_microamps.attr ||
+	अगर (attr == &dev_attr_min_microamps.attr ||
 	    attr == &dev_attr_max_microamps.attr)
-		return ops->set_current_limit ? mode : 0;
+		वापस ops->set_current_limit ? mode : 0;
 
-	if (attr == &dev_attr_suspend_standby_state.attr ||
+	अगर (attr == &dev_attr_suspend_standby_state.attr ||
 	    attr == &dev_attr_suspend_mem_state.attr ||
 	    attr == &dev_attr_suspend_disk_state.attr)
-		return mode;
+		वापस mode;
 
-	if (attr == &dev_attr_suspend_standby_microvolts.attr ||
+	अगर (attr == &dev_attr_suspend_standby_microvolts.attr ||
 	    attr == &dev_attr_suspend_mem_microvolts.attr ||
 	    attr == &dev_attr_suspend_disk_microvolts.attr)
-		return ops->set_suspend_voltage ? mode : 0;
+		वापस ops->set_suspend_voltage ? mode : 0;
 
-	if (attr == &dev_attr_suspend_standby_mode.attr ||
+	अगर (attr == &dev_attr_suspend_standby_mode.attr ||
 	    attr == &dev_attr_suspend_mem_mode.attr ||
 	    attr == &dev_attr_suspend_disk_mode.attr)
-		return ops->set_suspend_mode ? mode : 0;
+		वापस ops->set_suspend_mode ? mode : 0;
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static const struct attribute_group regulator_dev_group = {
+अटल स्थिर काष्ठा attribute_group regulator_dev_group = अणु
 	.attrs = regulator_dev_attrs,
 	.is_visible = regulator_attr_is_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *regulator_dev_groups[] = {
+अटल स्थिर काष्ठा attribute_group *regulator_dev_groups[] = अणु
 	&regulator_dev_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static void regulator_dev_release(struct device *dev)
-{
-	struct regulator_dev *rdev = dev_get_drvdata(dev);
+अटल व्योम regulator_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा regulator_dev *rdev = dev_get_drvdata(dev);
 
-	kfree(rdev->constraints);
+	kमुक्त(rdev->स्थिरraपूर्णांकs);
 	of_node_put(rdev->dev.of_node);
-	kfree(rdev);
-}
+	kमुक्त(rdev);
+पूर्ण
 
-static void rdev_init_debugfs(struct regulator_dev *rdev)
-{
-	struct device *parent = rdev->dev.parent;
-	const char *rname = rdev_get_name(rdev);
-	char name[NAME_MAX];
+अटल व्योम rdev_init_debugfs(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा device *parent = rdev->dev.parent;
+	स्थिर अक्षर *rname = rdev_get_name(rdev);
+	अक्षर name[NAME_MAX];
 
-	/* Avoid duplicate debugfs directory names */
-	if (parent && rname == rdev->desc->name) {
-		snprintf(name, sizeof(name), "%s-%s", dev_name(parent),
+	/* Aव्योम duplicate debugfs directory names */
+	अगर (parent && rname == rdev->desc->name) अणु
+		snम_लिखो(name, माप(name), "%s-%s", dev_name(parent),
 			 rname);
 		rname = name;
-	}
+	पूर्ण
 
 	rdev->debugfs = debugfs_create_dir(rname, debugfs_root);
-	if (!rdev->debugfs) {
+	अगर (!rdev->debugfs) अणु
 		rdev_warn(rdev, "Failed to create debugfs directory\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	debugfs_create_u32("use_count", 0444, rdev->debugfs,
 			   &rdev->use_count);
 	debugfs_create_u32("open_count", 0444, rdev->debugfs,
-			   &rdev->open_count);
+			   &rdev->खोलो_count);
 	debugfs_create_u32("bypass_count", 0444, rdev->debugfs,
 			   &rdev->bypass_count);
-}
+पूर्ण
 
-static int regulator_register_resolve_supply(struct device *dev, void *data)
-{
-	struct regulator_dev *rdev = dev_to_rdev(dev);
+अटल पूर्णांक regulator_रेजिस्टर_resolve_supply(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा regulator_dev *rdev = dev_to_rdev(dev);
 
-	if (regulator_resolve_supply(rdev))
+	अगर (regulator_resolve_supply(rdev))
 		rdev_dbg(rdev, "unable to resolve supply\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int regulator_coupler_register(struct regulator_coupler *coupler)
-{
+पूर्णांक regulator_coupler_रेजिस्टर(काष्ठा regulator_coupler *coupler)
+अणु
 	mutex_lock(&regulator_list_mutex);
 	list_add_tail(&coupler->list, &regulator_coupler_list);
 	mutex_unlock(&regulator_list_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct regulator_coupler *
-regulator_find_coupler(struct regulator_dev *rdev)
-{
-	struct regulator_coupler *coupler;
-	int err;
+अटल काष्ठा regulator_coupler *
+regulator_find_coupler(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulator_coupler *coupler;
+	पूर्णांक err;
 
 	/*
 	 * Note that regulators are appended to the list and the generic
-	 * coupler is registered first, hence it will be attached at last
-	 * if nobody cared.
+	 * coupler is रेजिस्टरed first, hence it will be attached at last
+	 * अगर nobody cared.
 	 */
-	list_for_each_entry_reverse(coupler, &regulator_coupler_list, list) {
+	list_क्रम_each_entry_reverse(coupler, &regulator_coupler_list, list) अणु
 		err = coupler->attach_regulator(coupler, rdev);
-		if (!err) {
-			if (!coupler->balance_voltage &&
+		अगर (!err) अणु
+			अगर (!coupler->balance_voltage &&
 			    rdev->coupling_desc.n_coupled > 2)
-				goto err_unsupported;
+				जाओ err_unsupported;
 
-			return coupler;
-		}
+			वापस coupler;
+		पूर्ण
 
-		if (err < 0)
-			return ERR_PTR(err);
+		अगर (err < 0)
+			वापस ERR_PTR(err);
 
-		if (err == 1)
-			continue;
+		अगर (err == 1)
+			जारी;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ERR_PTR(-EINVAL);
+	वापस ERR_PTR(-EINVAL);
 
 err_unsupported:
-	if (coupler->detach_regulator)
+	अगर (coupler->detach_regulator)
 		coupler->detach_regulator(coupler, rdev);
 
 	rdev_err(rdev,
 		"Voltage balancing for multiple regulator couples is unimplemented\n");
 
-	return ERR_PTR(-EPERM);
-}
+	वापस ERR_PTR(-EPERM);
+पूर्ण
 
-static void regulator_resolve_coupling(struct regulator_dev *rdev)
-{
-	struct regulator_coupler *coupler = rdev->coupling_desc.coupler;
-	struct coupling_desc *c_desc = &rdev->coupling_desc;
-	int n_coupled = c_desc->n_coupled;
-	struct regulator_dev *c_rdev;
-	int i;
+अटल व्योम regulator_resolve_coupling(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulator_coupler *coupler = rdev->coupling_desc.coupler;
+	काष्ठा coupling_desc *c_desc = &rdev->coupling_desc;
+	पूर्णांक n_coupled = c_desc->n_coupled;
+	काष्ठा regulator_dev *c_rdev;
+	पूर्णांक i;
 
-	for (i = 1; i < n_coupled; i++) {
-		/* already resolved */
-		if (c_desc->coupled_rdevs[i])
-			continue;
+	क्रम (i = 1; i < n_coupled; i++) अणु
+		/* alपढ़ोy resolved */
+		अगर (c_desc->coupled_rdevs[i])
+			जारी;
 
 		c_rdev = of_parse_coupled_regulator(rdev, i - 1);
 
-		if (!c_rdev)
-			continue;
+		अगर (!c_rdev)
+			जारी;
 
-		if (c_rdev->coupling_desc.coupler != coupler) {
+		अगर (c_rdev->coupling_desc.coupler != coupler) अणु
 			rdev_err(rdev, "coupler mismatch with %s\n",
 				 rdev_get_name(c_rdev));
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		c_desc->coupled_rdevs[i] = c_rdev;
 		c_desc->n_resolved++;
 
 		regulator_resolve_coupling(c_rdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void regulator_remove_coupling(struct regulator_dev *rdev)
-{
-	struct regulator_coupler *coupler = rdev->coupling_desc.coupler;
-	struct coupling_desc *__c_desc, *c_desc = &rdev->coupling_desc;
-	struct regulator_dev *__c_rdev, *c_rdev;
-	unsigned int __n_coupled, n_coupled;
-	int i, k;
-	int err;
+अटल व्योम regulator_हटाओ_coupling(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulator_coupler *coupler = rdev->coupling_desc.coupler;
+	काष्ठा coupling_desc *__c_desc, *c_desc = &rdev->coupling_desc;
+	काष्ठा regulator_dev *__c_rdev, *c_rdev;
+	अचिन्हित पूर्णांक __n_coupled, n_coupled;
+	पूर्णांक i, k;
+	पूर्णांक err;
 
 	n_coupled = c_desc->n_coupled;
 
-	for (i = 1; i < n_coupled; i++) {
+	क्रम (i = 1; i < n_coupled; i++) अणु
 		c_rdev = c_desc->coupled_rdevs[i];
 
-		if (!c_rdev)
-			continue;
+		अगर (!c_rdev)
+			जारी;
 
 		regulator_lock(c_rdev);
 
 		__c_desc = &c_rdev->coupling_desc;
 		__n_coupled = __c_desc->n_coupled;
 
-		for (k = 1; k < __n_coupled; k++) {
+		क्रम (k = 1; k < __n_coupled; k++) अणु
 			__c_rdev = __c_desc->coupled_rdevs[k];
 
-			if (__c_rdev == rdev) {
-				__c_desc->coupled_rdevs[k] = NULL;
+			अगर (__c_rdev == rdev) अणु
+				__c_desc->coupled_rdevs[k] = शून्य;
 				__c_desc->n_resolved--;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		regulator_unlock(c_rdev);
 
-		c_desc->coupled_rdevs[i] = NULL;
+		c_desc->coupled_rdevs[i] = शून्य;
 		c_desc->n_resolved--;
-	}
+	पूर्ण
 
-	if (coupler && coupler->detach_regulator) {
+	अगर (coupler && coupler->detach_regulator) अणु
 		err = coupler->detach_regulator(coupler, rdev);
-		if (err)
+		अगर (err)
 			rdev_err(rdev, "failed to detach from coupler: %pe\n",
 				 ERR_PTR(err));
-	}
+	पूर्ण
 
-	kfree(rdev->coupling_desc.coupled_rdevs);
-	rdev->coupling_desc.coupled_rdevs = NULL;
-}
+	kमुक्त(rdev->coupling_desc.coupled_rdevs);
+	rdev->coupling_desc.coupled_rdevs = शून्य;
+पूर्ण
 
-static int regulator_init_coupling(struct regulator_dev *rdev)
-{
-	struct regulator_dev **coupled;
-	int err, n_phandles;
+अटल पूर्णांक regulator_init_coupling(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा regulator_dev **coupled;
+	पूर्णांक err, n_phandles;
 
-	if (!IS_ENABLED(CONFIG_OF))
+	अगर (!IS_ENABLED(CONFIG_OF))
 		n_phandles = 0;
-	else
+	अन्यथा
 		n_phandles = of_get_n_coupled(rdev);
 
-	coupled = kcalloc(n_phandles + 1, sizeof(*coupled), GFP_KERNEL);
-	if (!coupled)
-		return -ENOMEM;
+	coupled = kसुस्मृति(n_phandles + 1, माप(*coupled), GFP_KERNEL);
+	अगर (!coupled)
+		वापस -ENOMEM;
 
 	rdev->coupling_desc.coupled_rdevs = coupled;
 
 	/*
 	 * Every regulator should always have coupling descriptor filled with
-	 * at least pointer to itself.
+	 * at least poपूर्णांकer to itself.
 	 */
 	rdev->coupling_desc.coupled_rdevs[0] = rdev;
 	rdev->coupling_desc.n_coupled = n_phandles + 1;
 	rdev->coupling_desc.n_resolved++;
 
 	/* regulator isn't coupled */
-	if (n_phandles == 0)
-		return 0;
+	अगर (n_phandles == 0)
+		वापस 0;
 
-	if (!of_check_coupling_data(rdev))
-		return -EPERM;
+	अगर (!of_check_coupling_data(rdev))
+		वापस -EPERM;
 
 	mutex_lock(&regulator_list_mutex);
 	rdev->coupling_desc.coupler = regulator_find_coupler(rdev);
 	mutex_unlock(&regulator_list_mutex);
 
-	if (IS_ERR(rdev->coupling_desc.coupler)) {
+	अगर (IS_ERR(rdev->coupling_desc.coupler)) अणु
 		err = PTR_ERR(rdev->coupling_desc.coupler);
 		rdev_err(rdev, "failed to get coupler: %pe\n", ERR_PTR(err));
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int generic_coupler_attach(struct regulator_coupler *coupler,
-				  struct regulator_dev *rdev)
-{
-	if (rdev->coupling_desc.n_coupled > 2) {
+अटल पूर्णांक generic_coupler_attach(काष्ठा regulator_coupler *coupler,
+				  काष्ठा regulator_dev *rdev)
+अणु
+	अगर (rdev->coupling_desc.n_coupled > 2) अणु
 		rdev_err(rdev,
 			 "Voltage balancing for multiple regulator couples is unimplemented\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	if (!rdev->constraints->always_on) {
+	अगर (!rdev->स्थिरraपूर्णांकs->always_on) अणु
 		rdev_err(rdev,
 			 "Coupling of a non always-on regulator is unimplemented\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct regulator_coupler generic_regulator_coupler = {
+अटल काष्ठा regulator_coupler generic_regulator_coupler = अणु
 	.attach_regulator = generic_coupler_attach,
-};
+पूर्ण;
 
 /**
- * regulator_register - register regulator
- * @regulator_desc: regulator to register
- * @cfg: runtime configuration for regulator
+ * regulator_रेजिस्टर - रेजिस्टर regulator
+ * @regulator_desc: regulator to रेजिस्टर
+ * @cfg: runसमय configuration क्रम regulator
  *
- * Called by regulator drivers to register a regulator.
- * Returns a valid pointer to struct regulator_dev on success
+ * Called by regulator drivers to रेजिस्टर a regulator.
+ * Returns a valid poपूर्णांकer to काष्ठा regulator_dev on success
  * or an ERR_PTR() on error.
  */
-struct regulator_dev *
-regulator_register(const struct regulator_desc *regulator_desc,
-		   const struct regulator_config *cfg)
-{
-	const struct regulator_init_data *init_data;
-	struct regulator_config *config = NULL;
-	static atomic_t regulator_no = ATOMIC_INIT(-1);
-	struct regulator_dev *rdev;
+काष्ठा regulator_dev *
+regulator_रेजिस्टर(स्थिर काष्ठा regulator_desc *regulator_desc,
+		   स्थिर काष्ठा regulator_config *cfg)
+अणु
+	स्थिर काष्ठा regulator_init_data *init_data;
+	काष्ठा regulator_config *config = शून्य;
+	अटल atomic_t regulator_no = ATOMIC_INIT(-1);
+	काष्ठा regulator_dev *rdev;
 	bool dangling_cfg_gpiod = false;
 	bool dangling_of_gpiod = false;
-	struct device *dev;
-	int ret, i;
+	काष्ठा device *dev;
+	पूर्णांक ret, i;
 
-	if (cfg == NULL)
-		return ERR_PTR(-EINVAL);
-	if (cfg->ena_gpiod)
+	अगर (cfg == शून्य)
+		वापस ERR_PTR(-EINVAL);
+	अगर (cfg->ena_gpiod)
 		dangling_cfg_gpiod = true;
-	if (regulator_desc == NULL) {
+	अगर (regulator_desc == शून्य) अणु
 		ret = -EINVAL;
-		goto rinse;
-	}
+		जाओ rinse;
+	पूर्ण
 
 	dev = cfg->dev;
 	WARN_ON(!dev);
 
-	if (regulator_desc->name == NULL || regulator_desc->ops == NULL) {
+	अगर (regulator_desc->name == शून्य || regulator_desc->ops == शून्य) अणु
 		ret = -EINVAL;
-		goto rinse;
-	}
+		जाओ rinse;
+	पूर्ण
 
-	if (regulator_desc->type != REGULATOR_VOLTAGE &&
-	    regulator_desc->type != REGULATOR_CURRENT) {
+	अगर (regulator_desc->type != REGULATOR_VOLTAGE &&
+	    regulator_desc->type != REGULATOR_CURRENT) अणु
 		ret = -EINVAL;
-		goto rinse;
-	}
+		जाओ rinse;
+	पूर्ण
 
 	/* Only one of each should be implemented */
 	WARN_ON(regulator_desc->ops->get_voltage &&
@@ -5217,46 +5218,46 @@ regulator_register(const struct regulator_desc *regulator_desc,
 		regulator_desc->ops->set_voltage_sel);
 
 	/* If we're using selectors we must implement list_voltage. */
-	if (regulator_desc->ops->get_voltage_sel &&
-	    !regulator_desc->ops->list_voltage) {
+	अगर (regulator_desc->ops->get_voltage_sel &&
+	    !regulator_desc->ops->list_voltage) अणु
 		ret = -EINVAL;
-		goto rinse;
-	}
-	if (regulator_desc->ops->set_voltage_sel &&
-	    !regulator_desc->ops->list_voltage) {
+		जाओ rinse;
+	पूर्ण
+	अगर (regulator_desc->ops->set_voltage_sel &&
+	    !regulator_desc->ops->list_voltage) अणु
 		ret = -EINVAL;
-		goto rinse;
-	}
+		जाओ rinse;
+	पूर्ण
 
-	rdev = kzalloc(sizeof(struct regulator_dev), GFP_KERNEL);
-	if (rdev == NULL) {
+	rdev = kzalloc(माप(काष्ठा regulator_dev), GFP_KERNEL);
+	अगर (rdev == शून्य) अणु
 		ret = -ENOMEM;
-		goto rinse;
-	}
+		जाओ rinse;
+	पूर्ण
 	device_initialize(&rdev->dev);
 
 	/*
 	 * Duplicate the config so the driver could override it after
 	 * parsing init data.
 	 */
-	config = kmemdup(cfg, sizeof(*cfg), GFP_KERNEL);
-	if (config == NULL) {
+	config = kmemdup(cfg, माप(*cfg), GFP_KERNEL);
+	अगर (config == शून्य) अणु
 		ret = -ENOMEM;
-		goto clean;
-	}
+		जाओ clean;
+	पूर्ण
 
 	init_data = regulator_of_get_init_data(dev, regulator_desc, config,
 					       &rdev->dev.of_node);
 
 	/*
-	 * Sometimes not all resources are probed already so we need to take
-	 * that into account. This happens most the time if the ena_gpiod comes
-	 * from a gpio extender or something else.
+	 * Someबार not all resources are probed alपढ़ोy so we need to take
+	 * that पूर्णांकo account. This happens most the समय अगर the ena_gpiod comes
+	 * from a gpio extender or something अन्यथा.
 	 */
-	if (PTR_ERR(init_data) == -EPROBE_DEFER) {
+	अगर (PTR_ERR(init_data) == -EPROBE_DEFER) अणु
 		ret = -EPROBE_DEFER;
-		goto clean;
-	}
+		जाओ clean;
+	पूर्ण
 
 	/*
 	 * We need to keep track of any GPIO descriptor coming from the
@@ -5266,76 +5267,76 @@ regulator_register(const struct regulator_desc *regulator_desc,
 	 * a descriptor, we definitely got one from parsing the device
 	 * tree.
 	 */
-	if (!cfg->ena_gpiod && config->ena_gpiod)
+	अगर (!cfg->ena_gpiod && config->ena_gpiod)
 		dangling_of_gpiod = true;
-	if (!init_data) {
+	अगर (!init_data) अणु
 		init_data = config->init_data;
 		rdev->dev.of_node = of_node_get(config->of_node);
-	}
+	पूर्ण
 
 	ww_mutex_init(&rdev->mutex, &regulator_ww_class);
 	rdev->reg_data = config->driver_data;
 	rdev->owner = regulator_desc->owner;
 	rdev->desc = regulator_desc;
-	if (config->regmap)
+	अगर (config->regmap)
 		rdev->regmap = config->regmap;
-	else if (dev_get_regmap(dev, NULL))
-		rdev->regmap = dev_get_regmap(dev, NULL);
-	else if (dev->parent)
-		rdev->regmap = dev_get_regmap(dev->parent, NULL);
+	अन्यथा अगर (dev_get_regmap(dev, शून्य))
+		rdev->regmap = dev_get_regmap(dev, शून्य);
+	अन्यथा अगर (dev->parent)
+		rdev->regmap = dev_get_regmap(dev->parent, शून्य);
 	INIT_LIST_HEAD(&rdev->consumer_list);
 	INIT_LIST_HEAD(&rdev->list);
-	BLOCKING_INIT_NOTIFIER_HEAD(&rdev->notifier);
+	BLOCKING_INIT_NOTIFIER_HEAD(&rdev->notअगरier);
 	INIT_DELAYED_WORK(&rdev->disable_work, regulator_disable_work);
 
-	/* preform any regulator specific init */
-	if (init_data && init_data->regulator_init) {
+	/* preक्रमm any regulator specअगरic init */
+	अगर (init_data && init_data->regulator_init) अणु
 		ret = init_data->regulator_init(rdev->reg_data);
-		if (ret < 0)
-			goto clean;
-	}
+		अगर (ret < 0)
+			जाओ clean;
+	पूर्ण
 
-	if (config->ena_gpiod) {
+	अगर (config->ena_gpiod) अणु
 		ret = regulator_ena_gpio_request(rdev, config);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			rdev_err(rdev, "Failed to request enable GPIO: %pe\n",
 				 ERR_PTR(ret));
-			goto clean;
-		}
+			जाओ clean;
+		पूर्ण
 		/* The regulator core took over the GPIO descriptor */
 		dangling_cfg_gpiod = false;
 		dangling_of_gpiod = false;
-	}
+	पूर्ण
 
-	/* register with sysfs */
+	/* रेजिस्टर with sysfs */
 	rdev->dev.class = &regulator_class;
 	rdev->dev.parent = dev;
 	dev_set_name(&rdev->dev, "regulator.%lu",
-		    (unsigned long) atomic_inc_return(&regulator_no));
+		    (अचिन्हित दीर्घ) atomic_inc_वापस(&regulator_no));
 	dev_set_drvdata(&rdev->dev, rdev);
 
-	/* set regulator constraints */
-	if (init_data)
-		rdev->constraints = kmemdup(&init_data->constraints,
-					    sizeof(*rdev->constraints),
+	/* set regulator स्थिरraपूर्णांकs */
+	अगर (init_data)
+		rdev->स्थिरraपूर्णांकs = kmemdup(&init_data->स्थिरraपूर्णांकs,
+					    माप(*rdev->स्थिरraपूर्णांकs),
 					    GFP_KERNEL);
-	else
-		rdev->constraints = kzalloc(sizeof(*rdev->constraints),
+	अन्यथा
+		rdev->स्थिरraपूर्णांकs = kzalloc(माप(*rdev->स्थिरraपूर्णांकs),
 					    GFP_KERNEL);
-	if (!rdev->constraints) {
+	अगर (!rdev->स्थिरraपूर्णांकs) अणु
 		ret = -ENOMEM;
-		goto wash;
-	}
+		जाओ wash;
+	पूर्ण
 
-	if (init_data && init_data->supply_regulator)
+	अगर (init_data && init_data->supply_regulator)
 		rdev->supply_name = init_data->supply_regulator;
-	else if (regulator_desc->supply_name)
+	अन्यथा अगर (regulator_desc->supply_name)
 		rdev->supply_name = regulator_desc->supply_name;
 
-	ret = set_machine_constraints(rdev);
-	if (ret == -EPROBE_DEFER) {
+	ret = set_machine_स्थिरraपूर्णांकs(rdev);
+	अगर (ret == -EPROBE_DEFER) अणु
 		/* Regulator might be in bypass mode and so needs its supply
-		 * to set the constraints
+		 * to set the स्थिरraपूर्णांकs
 		 */
 		/* FIXME: this currently triggers a chicken-and-egg problem
 		 * when creating -SUPPLY symlink in sysfs to a regulator
@@ -5344,223 +5345,223 @@ regulator_register(const struct regulator_desc *regulator_desc,
 		rdev_dbg(rdev, "will resolve supply early: %s\n",
 			 rdev->supply_name);
 		ret = regulator_resolve_supply(rdev);
-		if (!ret)
-			ret = set_machine_constraints(rdev);
-		else
+		अगर (!ret)
+			ret = set_machine_स्थिरraपूर्णांकs(rdev);
+		अन्यथा
 			rdev_dbg(rdev, "unable to resolve supply early: %pe\n",
 				 ERR_PTR(ret));
-	}
-	if (ret < 0)
-		goto wash;
+	पूर्ण
+	अगर (ret < 0)
+		जाओ wash;
 
 	ret = regulator_init_coupling(rdev);
-	if (ret < 0)
-		goto wash;
+	अगर (ret < 0)
+		जाओ wash;
 
 	/* add consumers devices */
-	if (init_data) {
-		for (i = 0; i < init_data->num_consumer_supplies; i++) {
+	अगर (init_data) अणु
+		क्रम (i = 0; i < init_data->num_consumer_supplies; i++) अणु
 			ret = set_consumer_device_supply(rdev,
 				init_data->consumer_supplies[i].dev_name,
 				init_data->consumer_supplies[i].supply);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(dev, "Failed to set supply %s\n",
 					init_data->consumer_supplies[i].supply);
-				goto unset_supplies;
-			}
-		}
-	}
+				जाओ unset_supplies;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!rdev->desc->ops->get_voltage &&
+	अगर (!rdev->desc->ops->get_voltage &&
 	    !rdev->desc->ops->list_voltage &&
 	    !rdev->desc->fixed_uV)
-		rdev->is_switch = true;
+		rdev->is_चयन = true;
 
 	ret = device_add(&rdev->dev);
-	if (ret != 0)
-		goto unset_supplies;
+	अगर (ret != 0)
+		जाओ unset_supplies;
 
 	rdev_init_debugfs(rdev);
 
-	/* try to resolve regulators coupling since a new one was registered */
+	/* try to resolve regulators coupling since a new one was रेजिस्टरed */
 	mutex_lock(&regulator_list_mutex);
 	regulator_resolve_coupling(rdev);
 	mutex_unlock(&regulator_list_mutex);
 
-	/* try to resolve regulators supply since a new one was registered */
-	class_for_each_device(&regulator_class, NULL, NULL,
-			      regulator_register_resolve_supply);
-	kfree(config);
-	return rdev;
+	/* try to resolve regulators supply since a new one was रेजिस्टरed */
+	class_क्रम_each_device(&regulator_class, शून्य, शून्य,
+			      regulator_रेजिस्टर_resolve_supply);
+	kमुक्त(config);
+	वापस rdev;
 
 unset_supplies:
 	mutex_lock(&regulator_list_mutex);
 	unset_regulator_supplies(rdev);
-	regulator_remove_coupling(rdev);
+	regulator_हटाओ_coupling(rdev);
 	mutex_unlock(&regulator_list_mutex);
 wash:
-	kfree(rdev->coupling_desc.coupled_rdevs);
+	kमुक्त(rdev->coupling_desc.coupled_rdevs);
 	mutex_lock(&regulator_list_mutex);
-	regulator_ena_gpio_free(rdev);
+	regulator_ena_gpio_मुक्त(rdev);
 	mutex_unlock(&regulator_list_mutex);
 clean:
-	if (dangling_of_gpiod)
+	अगर (dangling_of_gpiod)
 		gpiod_put(config->ena_gpiod);
-	kfree(config);
+	kमुक्त(config);
 	put_device(&rdev->dev);
 rinse:
-	if (dangling_cfg_gpiod)
+	अगर (dangling_cfg_gpiod)
 		gpiod_put(cfg->ena_gpiod);
-	return ERR_PTR(ret);
-}
-EXPORT_SYMBOL_GPL(regulator_register);
+	वापस ERR_PTR(ret);
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_रेजिस्टर);
 
 /**
- * regulator_unregister - unregister regulator
- * @rdev: regulator to unregister
+ * regulator_unरेजिस्टर - unरेजिस्टर regulator
+ * @rdev: regulator to unरेजिस्टर
  *
- * Called by regulator drivers to unregister a regulator.
+ * Called by regulator drivers to unरेजिस्टर a regulator.
  */
-void regulator_unregister(struct regulator_dev *rdev)
-{
-	if (rdev == NULL)
-		return;
+व्योम regulator_unरेजिस्टर(काष्ठा regulator_dev *rdev)
+अणु
+	अगर (rdev == शून्य)
+		वापस;
 
-	if (rdev->supply) {
-		while (rdev->use_count--)
+	अगर (rdev->supply) अणु
+		जबतक (rdev->use_count--)
 			regulator_disable(rdev->supply);
 		regulator_put(rdev->supply);
-	}
+	पूर्ण
 
 	flush_work(&rdev->disable_work.work);
 
 	mutex_lock(&regulator_list_mutex);
 
-	debugfs_remove_recursive(rdev->debugfs);
-	WARN_ON(rdev->open_count);
-	regulator_remove_coupling(rdev);
+	debugfs_हटाओ_recursive(rdev->debugfs);
+	WARN_ON(rdev->खोलो_count);
+	regulator_हटाओ_coupling(rdev);
 	unset_regulator_supplies(rdev);
 	list_del(&rdev->list);
-	regulator_ena_gpio_free(rdev);
-	device_unregister(&rdev->dev);
+	regulator_ena_gpio_मुक्त(rdev);
+	device_unरेजिस्टर(&rdev->dev);
 
 	mutex_unlock(&regulator_list_mutex);
-}
-EXPORT_SYMBOL_GPL(regulator_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_unरेजिस्टर);
 
-#ifdef CONFIG_SUSPEND
+#अगर_घोषित CONFIG_SUSPEND
 /**
- * regulator_suspend - prepare regulators for system wide suspend
- * @dev: ``&struct device`` pointer that is passed to _regulator_suspend()
+ * regulator_suspend - prepare regulators क्रम प्रणाली wide suspend
+ * @dev: ``&काष्ठा device`` poपूर्णांकer that is passed to _regulator_suspend()
  *
- * Configure each regulator with it's suspend operating parameters for state.
+ * Configure each regulator with it's suspend operating parameters क्रम state.
  */
-static int regulator_suspend(struct device *dev)
-{
-	struct regulator_dev *rdev = dev_to_rdev(dev);
+अटल पूर्णांक regulator_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा regulator_dev *rdev = dev_to_rdev(dev);
 	suspend_state_t state = pm_suspend_target_state;
-	int ret;
-	const struct regulator_state *rstate;
+	पूर्णांक ret;
+	स्थिर काष्ठा regulator_state *rstate;
 
 	rstate = regulator_get_suspend_state_check(rdev, state);
-	if (!rstate)
-		return 0;
+	अगर (!rstate)
+		वापस 0;
 
 	regulator_lock(rdev);
 	ret = __suspend_set_state(rdev, rstate);
 	regulator_unlock(rdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int regulator_resume(struct device *dev)
-{
+अटल पूर्णांक regulator_resume(काष्ठा device *dev)
+अणु
 	suspend_state_t state = pm_suspend_target_state;
-	struct regulator_dev *rdev = dev_to_rdev(dev);
-	struct regulator_state *rstate;
-	int ret = 0;
+	काष्ठा regulator_dev *rdev = dev_to_rdev(dev);
+	काष्ठा regulator_state *rstate;
+	पूर्णांक ret = 0;
 
 	rstate = regulator_get_suspend_state(rdev, state);
-	if (rstate == NULL)
-		return 0;
+	अगर (rstate == शून्य)
+		वापस 0;
 
-	/* Avoid grabbing the lock if we don't need to */
-	if (!rdev->desc->ops->resume)
-		return 0;
+	/* Aव्योम grabbing the lock अगर we करोn't need to */
+	अगर (!rdev->desc->ops->resume)
+		वापस 0;
 
 	regulator_lock(rdev);
 
-	if (rstate->enabled == ENABLE_IN_SUSPEND ||
+	अगर (rstate->enabled == ENABLE_IN_SUSPEND ||
 	    rstate->enabled == DISABLE_IN_SUSPEND)
 		ret = rdev->desc->ops->resume(rdev);
 
 	regulator_unlock(rdev);
 
-	return ret;
-}
-#else /* !CONFIG_SUSPEND */
+	वापस ret;
+पूर्ण
+#अन्यथा /* !CONFIG_SUSPEND */
 
-#define regulator_suspend	NULL
-#define regulator_resume	NULL
+#घोषणा regulator_suspend	शून्य
+#घोषणा regulator_resume	शून्य
 
-#endif /* !CONFIG_SUSPEND */
+#पूर्ण_अगर /* !CONFIG_SUSPEND */
 
-#ifdef CONFIG_PM
-static const struct dev_pm_ops __maybe_unused regulator_pm_ops = {
+#अगर_घोषित CONFIG_PM
+अटल स्थिर काष्ठा dev_pm_ops __maybe_unused regulator_pm_ops = अणु
 	.suspend	= regulator_suspend,
 	.resume		= regulator_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-struct class regulator_class = {
+काष्ठा class regulator_class = अणु
 	.name = "regulator",
 	.dev_release = regulator_dev_release,
 	.dev_groups = regulator_dev_groups,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.pm = &regulator_pm_ops,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 /**
- * regulator_has_full_constraints - the system has fully specified constraints
+ * regulator_has_full_स्थिरraपूर्णांकs - the प्रणाली has fully specअगरied स्थिरraपूर्णांकs
  *
  * Calling this function will cause the regulator API to disable all
- * regulators which have a zero use count and don't have an always_on
- * constraint in a late_initcall.
+ * regulators which have a zero use count and करोn't have an always_on
+ * स्थिरraपूर्णांक in a late_initcall.
  *
- * The intention is that this will become the default behaviour in a
+ * The पूर्णांकention is that this will become the शेष behaviour in a
  * future kernel release so users are encouraged to use this facility
  * now.
  */
-void regulator_has_full_constraints(void)
-{
-	has_full_constraints = 1;
-}
-EXPORT_SYMBOL_GPL(regulator_has_full_constraints);
+व्योम regulator_has_full_स्थिरraपूर्णांकs(व्योम)
+अणु
+	has_full_स्थिरraपूर्णांकs = 1;
+पूर्ण
+EXPORT_SYMBOL_GPL(regulator_has_full_स्थिरraपूर्णांकs);
 
 /**
  * rdev_get_drvdata - get rdev regulator driver data
  * @rdev: regulator
  *
- * Get rdev regulator driver private data. This call can be used in the
+ * Get rdev regulator driver निजी data. This call can be used in the
  * regulator driver context.
  */
-void *rdev_get_drvdata(struct regulator_dev *rdev)
-{
-	return rdev->reg_data;
-}
+व्योम *rdev_get_drvdata(काष्ठा regulator_dev *rdev)
+अणु
+	वापस rdev->reg_data;
+पूर्ण
 EXPORT_SYMBOL_GPL(rdev_get_drvdata);
 
 /**
  * regulator_get_drvdata - get regulator driver data
  * @regulator: regulator
  *
- * Get regulator driver private data. This call can be used in the consumer
- * driver context when non API regulator specific functions need to be called.
+ * Get regulator driver निजी data. This call can be used in the consumer
+ * driver context when non API regulator specअगरic functions need to be called.
  */
-void *regulator_get_drvdata(struct regulator *regulator)
-{
-	return regulator->rdev->reg_data;
-}
+व्योम *regulator_get_drvdata(काष्ठा regulator *regulator)
+अणु
+	वापस regulator->rdev->reg_data;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get_drvdata);
 
 /**
@@ -5568,407 +5569,407 @@ EXPORT_SYMBOL_GPL(regulator_get_drvdata);
  * @regulator: regulator
  * @data: data
  */
-void regulator_set_drvdata(struct regulator *regulator, void *data)
-{
+व्योम regulator_set_drvdata(काष्ठा regulator *regulator, व्योम *data)
+अणु
 	regulator->rdev->reg_data = data;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_set_drvdata);
 
 /**
  * rdev_get_id - get regulator ID
  * @rdev: regulator
  */
-int rdev_get_id(struct regulator_dev *rdev)
-{
-	return rdev->desc->id;
-}
+पूर्णांक rdev_get_id(काष्ठा regulator_dev *rdev)
+अणु
+	वापस rdev->desc->id;
+पूर्ण
 EXPORT_SYMBOL_GPL(rdev_get_id);
 
-struct device *rdev_get_dev(struct regulator_dev *rdev)
-{
-	return &rdev->dev;
-}
+काष्ठा device *rdev_get_dev(काष्ठा regulator_dev *rdev)
+अणु
+	वापस &rdev->dev;
+पूर्ण
 EXPORT_SYMBOL_GPL(rdev_get_dev);
 
-struct regmap *rdev_get_regmap(struct regulator_dev *rdev)
-{
-	return rdev->regmap;
-}
+काष्ठा regmap *rdev_get_regmap(काष्ठा regulator_dev *rdev)
+अणु
+	वापस rdev->regmap;
+पूर्ण
 EXPORT_SYMBOL_GPL(rdev_get_regmap);
 
-void *regulator_get_init_drvdata(struct regulator_init_data *reg_init_data)
-{
-	return reg_init_data->driver_data;
-}
+व्योम *regulator_get_init_drvdata(काष्ठा regulator_init_data *reg_init_data)
+अणु
+	वापस reg_init_data->driver_data;
+पूर्ण
 EXPORT_SYMBOL_GPL(regulator_get_init_drvdata);
 
-#ifdef CONFIG_DEBUG_FS
-static int supply_map_show(struct seq_file *sf, void *data)
-{
-	struct regulator_map *map;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल पूर्णांक supply_map_show(काष्ठा seq_file *sf, व्योम *data)
+अणु
+	काष्ठा regulator_map *map;
 
-	list_for_each_entry(map, &regulator_map_list, list) {
-		seq_printf(sf, "%s -> %s.%s\n",
+	list_क्रम_each_entry(map, &regulator_map_list, list) अणु
+		seq_म_लिखो(sf, "%s -> %s.%s\n",
 				rdev_get_name(map->regulator), map->dev_name,
 				map->supply);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(supply_map);
 
-struct summary_data {
-	struct seq_file *s;
-	struct regulator_dev *parent;
-	int level;
-};
+काष्ठा summary_data अणु
+	काष्ठा seq_file *s;
+	काष्ठा regulator_dev *parent;
+	पूर्णांक level;
+पूर्ण;
 
-static void regulator_summary_show_subtree(struct seq_file *s,
-					   struct regulator_dev *rdev,
-					   int level);
+अटल व्योम regulator_summary_show_subtree(काष्ठा seq_file *s,
+					   काष्ठा regulator_dev *rdev,
+					   पूर्णांक level);
 
-static int regulator_summary_show_children(struct device *dev, void *data)
-{
-	struct regulator_dev *rdev = dev_to_rdev(dev);
-	struct summary_data *summary_data = data;
+अटल पूर्णांक regulator_summary_show_children(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा regulator_dev *rdev = dev_to_rdev(dev);
+	काष्ठा summary_data *summary_data = data;
 
-	if (rdev->supply && rdev->supply->rdev == summary_data->parent)
+	अगर (rdev->supply && rdev->supply->rdev == summary_data->parent)
 		regulator_summary_show_subtree(summary_data->s, rdev,
 					       summary_data->level + 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void regulator_summary_show_subtree(struct seq_file *s,
-					   struct regulator_dev *rdev,
-					   int level)
-{
-	struct regulation_constraints *c;
-	struct regulator *consumer;
-	struct summary_data summary_data;
-	unsigned int opmode;
+अटल व्योम regulator_summary_show_subtree(काष्ठा seq_file *s,
+					   काष्ठा regulator_dev *rdev,
+					   पूर्णांक level)
+अणु
+	काष्ठा regulation_स्थिरraपूर्णांकs *c;
+	काष्ठा regulator *consumer;
+	काष्ठा summary_data summary_data;
+	अचिन्हित पूर्णांक opmode;
 
-	if (!rdev)
-		return;
+	अगर (!rdev)
+		वापस;
 
 	opmode = _regulator_get_mode_unlocked(rdev);
-	seq_printf(s, "%*s%-*s %3d %4d %6d %7s ",
+	seq_म_लिखो(s, "%*s%-*s %3d %4d %6d %7s ",
 		   level * 3 + 1, "",
 		   30 - level * 3, rdev_get_name(rdev),
-		   rdev->use_count, rdev->open_count, rdev->bypass_count,
+		   rdev->use_count, rdev->खोलो_count, rdev->bypass_count,
 		   regulator_opmode_to_str(opmode));
 
-	seq_printf(s, "%5dmV ", regulator_get_voltage_rdev(rdev) / 1000);
-	seq_printf(s, "%5dmA ",
+	seq_म_लिखो(s, "%5dmV ", regulator_get_voltage_rdev(rdev) / 1000);
+	seq_म_लिखो(s, "%5dmA ",
 		   _regulator_get_current_limit_unlocked(rdev) / 1000);
 
-	c = rdev->constraints;
-	if (c) {
-		switch (rdev->desc->type) {
-		case REGULATOR_VOLTAGE:
-			seq_printf(s, "%5dmV %5dmV ",
+	c = rdev->स्थिरraपूर्णांकs;
+	अगर (c) अणु
+		चयन (rdev->desc->type) अणु
+		हाल REGULATOR_VOLTAGE:
+			seq_म_लिखो(s, "%5dmV %5dmV ",
 				   c->min_uV / 1000, c->max_uV / 1000);
-			break;
-		case REGULATOR_CURRENT:
-			seq_printf(s, "%5dmA %5dmA ",
+			अवरोध;
+		हाल REGULATOR_CURRENT:
+			seq_म_लिखो(s, "%5dmA %5dmA ",
 				   c->min_uA / 1000, c->max_uA / 1000);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	seq_puts(s, "\n");
+	seq_माला_दो(s, "\n");
 
-	list_for_each_entry(consumer, &rdev->consumer_list, list) {
-		if (consumer->dev && consumer->dev->class == &regulator_class)
-			continue;
+	list_क्रम_each_entry(consumer, &rdev->consumer_list, list) अणु
+		अगर (consumer->dev && consumer->dev->class == &regulator_class)
+			जारी;
 
-		seq_printf(s, "%*s%-*s ",
+		seq_म_लिखो(s, "%*s%-*s ",
 			   (level + 1) * 3 + 1, "",
 			   30 - (level + 1) * 3,
 			   consumer->supply_name ? consumer->supply_name :
 			   consumer->dev ? dev_name(consumer->dev) : "deviceless");
 
-		switch (rdev->desc->type) {
-		case REGULATOR_VOLTAGE:
-			seq_printf(s, "%3d %33dmA%c%5dmV %5dmV",
+		चयन (rdev->desc->type) अणु
+		हाल REGULATOR_VOLTAGE:
+			seq_म_लिखो(s, "%3d %33dmA%c%5dmV %5dmV",
 				   consumer->enable_count,
 				   consumer->uA_load / 1000,
 				   consumer->uA_load && !consumer->enable_count ?
 				   '*' : ' ',
 				   consumer->voltage[PM_SUSPEND_ON].min_uV / 1000,
 				   consumer->voltage[PM_SUSPEND_ON].max_uV / 1000);
-			break;
-		case REGULATOR_CURRENT:
-			break;
-		}
+			अवरोध;
+		हाल REGULATOR_CURRENT:
+			अवरोध;
+		पूर्ण
 
-		seq_puts(s, "\n");
-	}
+		seq_माला_दो(s, "\n");
+	पूर्ण
 
 	summary_data.s = s;
 	summary_data.level = level;
 	summary_data.parent = rdev;
 
-	class_for_each_device(&regulator_class, NULL, &summary_data,
+	class_क्रम_each_device(&regulator_class, शून्य, &summary_data,
 			      regulator_summary_show_children);
-}
+पूर्ण
 
-struct summary_lock_data {
-	struct ww_acquire_ctx *ww_ctx;
-	struct regulator_dev **new_contended_rdev;
-	struct regulator_dev **old_contended_rdev;
-};
+काष्ठा summary_lock_data अणु
+	काष्ठा ww_acquire_ctx *ww_ctx;
+	काष्ठा regulator_dev **new_contended_rdev;
+	काष्ठा regulator_dev **old_contended_rdev;
+पूर्ण;
 
-static int regulator_summary_lock_one(struct device *dev, void *data)
-{
-	struct regulator_dev *rdev = dev_to_rdev(dev);
-	struct summary_lock_data *lock_data = data;
-	int ret = 0;
+अटल पूर्णांक regulator_summary_lock_one(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा regulator_dev *rdev = dev_to_rdev(dev);
+	काष्ठा summary_lock_data *lock_data = data;
+	पूर्णांक ret = 0;
 
-	if (rdev != *lock_data->old_contended_rdev) {
+	अगर (rdev != *lock_data->old_contended_rdev) अणु
 		ret = regulator_lock_nested(rdev, lock_data->ww_ctx);
 
-		if (ret == -EDEADLK)
+		अगर (ret == -EDEADLK)
 			*lock_data->new_contended_rdev = rdev;
-		else
+		अन्यथा
 			WARN_ON_ONCE(ret);
-	} else {
-		*lock_data->old_contended_rdev = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		*lock_data->old_contended_rdev = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int regulator_summary_unlock_one(struct device *dev, void *data)
-{
-	struct regulator_dev *rdev = dev_to_rdev(dev);
-	struct summary_lock_data *lock_data = data;
+अटल पूर्णांक regulator_summary_unlock_one(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा regulator_dev *rdev = dev_to_rdev(dev);
+	काष्ठा summary_lock_data *lock_data = data;
 
-	if (lock_data) {
-		if (rdev == *lock_data->new_contended_rdev)
-			return -EDEADLK;
-	}
+	अगर (lock_data) अणु
+		अगर (rdev == *lock_data->new_contended_rdev)
+			वापस -EDEADLK;
+	पूर्ण
 
 	regulator_unlock(rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regulator_summary_lock_all(struct ww_acquire_ctx *ww_ctx,
-				      struct regulator_dev **new_contended_rdev,
-				      struct regulator_dev **old_contended_rdev)
-{
-	struct summary_lock_data lock_data;
-	int ret;
+अटल पूर्णांक regulator_summary_lock_all(काष्ठा ww_acquire_ctx *ww_ctx,
+				      काष्ठा regulator_dev **new_contended_rdev,
+				      काष्ठा regulator_dev **old_contended_rdev)
+अणु
+	काष्ठा summary_lock_data lock_data;
+	पूर्णांक ret;
 
 	lock_data.ww_ctx = ww_ctx;
 	lock_data.new_contended_rdev = new_contended_rdev;
 	lock_data.old_contended_rdev = old_contended_rdev;
 
-	ret = class_for_each_device(&regulator_class, NULL, &lock_data,
+	ret = class_क्रम_each_device(&regulator_class, शून्य, &lock_data,
 				    regulator_summary_lock_one);
-	if (ret)
-		class_for_each_device(&regulator_class, NULL, &lock_data,
+	अगर (ret)
+		class_क्रम_each_device(&regulator_class, शून्य, &lock_data,
 				      regulator_summary_unlock_one);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void regulator_summary_lock(struct ww_acquire_ctx *ww_ctx)
-{
-	struct regulator_dev *new_contended_rdev = NULL;
-	struct regulator_dev *old_contended_rdev = NULL;
-	int err;
+अटल व्योम regulator_summary_lock(काष्ठा ww_acquire_ctx *ww_ctx)
+अणु
+	काष्ठा regulator_dev *new_contended_rdev = शून्य;
+	काष्ठा regulator_dev *old_contended_rdev = शून्य;
+	पूर्णांक err;
 
 	mutex_lock(&regulator_list_mutex);
 
 	ww_acquire_init(ww_ctx, &regulator_ww_class);
 
-	do {
-		if (new_contended_rdev) {
+	करो अणु
+		अगर (new_contended_rdev) अणु
 			ww_mutex_lock_slow(&new_contended_rdev->mutex, ww_ctx);
 			old_contended_rdev = new_contended_rdev;
 			old_contended_rdev->ref_cnt++;
-		}
+		पूर्ण
 
 		err = regulator_summary_lock_all(ww_ctx,
 						 &new_contended_rdev,
 						 &old_contended_rdev);
 
-		if (old_contended_rdev)
+		अगर (old_contended_rdev)
 			regulator_unlock(old_contended_rdev);
 
-	} while (err == -EDEADLK);
+	पूर्ण जबतक (err == -EDEADLK);
 
-	ww_acquire_done(ww_ctx);
-}
+	ww_acquire_करोne(ww_ctx);
+पूर्ण
 
-static void regulator_summary_unlock(struct ww_acquire_ctx *ww_ctx)
-{
-	class_for_each_device(&regulator_class, NULL, NULL,
+अटल व्योम regulator_summary_unlock(काष्ठा ww_acquire_ctx *ww_ctx)
+अणु
+	class_क्रम_each_device(&regulator_class, शून्य, शून्य,
 			      regulator_summary_unlock_one);
 	ww_acquire_fini(ww_ctx);
 
 	mutex_unlock(&regulator_list_mutex);
-}
+पूर्ण
 
-static int regulator_summary_show_roots(struct device *dev, void *data)
-{
-	struct regulator_dev *rdev = dev_to_rdev(dev);
-	struct seq_file *s = data;
+अटल पूर्णांक regulator_summary_show_roots(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा regulator_dev *rdev = dev_to_rdev(dev);
+	काष्ठा seq_file *s = data;
 
-	if (!rdev->supply)
+	अगर (!rdev->supply)
 		regulator_summary_show_subtree(s, rdev, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regulator_summary_show(struct seq_file *s, void *data)
-{
-	struct ww_acquire_ctx ww_ctx;
+अटल पूर्णांक regulator_summary_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा ww_acquire_ctx ww_ctx;
 
-	seq_puts(s, " regulator                      use open bypass  opmode voltage current     min     max\n");
-	seq_puts(s, "---------------------------------------------------------------------------------------\n");
+	seq_माला_दो(s, " regulator                      use open bypass  opmode voltage current     min     max\n");
+	seq_माला_दो(s, "---------------------------------------------------------------------------------------\n");
 
 	regulator_summary_lock(&ww_ctx);
 
-	class_for_each_device(&regulator_class, NULL, s,
+	class_क्रम_each_device(&regulator_class, शून्य, s,
 			      regulator_summary_show_roots);
 
 	regulator_summary_unlock(&ww_ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(regulator_summary);
-#endif /* CONFIG_DEBUG_FS */
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-static int __init regulator_init(void)
-{
-	int ret;
+अटल पूर्णांक __init regulator_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = class_register(&regulator_class);
+	ret = class_रेजिस्टर(&regulator_class);
 
-	debugfs_root = debugfs_create_dir("regulator", NULL);
-	if (!debugfs_root)
+	debugfs_root = debugfs_create_dir("regulator", शून्य);
+	अगर (!debugfs_root)
 		pr_warn("regulator: Failed to create debugfs directory\n");
 
-#ifdef CONFIG_DEBUG_FS
-	debugfs_create_file("supply_map", 0444, debugfs_root, NULL,
+#अगर_घोषित CONFIG_DEBUG_FS
+	debugfs_create_file("supply_map", 0444, debugfs_root, शून्य,
 			    &supply_map_fops);
 
 	debugfs_create_file("regulator_summary", 0444, debugfs_root,
-			    NULL, &regulator_summary_fops);
-#endif
+			    शून्य, &regulator_summary_fops);
+#पूर्ण_अगर
 	regulator_dummy_init();
 
-	regulator_coupler_register(&generic_regulator_coupler);
+	regulator_coupler_रेजिस्टर(&generic_regulator_coupler);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* init early to allow our consumers to complete system booting */
+/* init early to allow our consumers to complete प्रणाली booting */
 core_initcall(regulator_init);
 
-static int regulator_late_cleanup(struct device *dev, void *data)
-{
-	struct regulator_dev *rdev = dev_to_rdev(dev);
-	const struct regulator_ops *ops = rdev->desc->ops;
-	struct regulation_constraints *c = rdev->constraints;
-	int enabled, ret;
+अटल पूर्णांक regulator_late_cleanup(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा regulator_dev *rdev = dev_to_rdev(dev);
+	स्थिर काष्ठा regulator_ops *ops = rdev->desc->ops;
+	काष्ठा regulation_स्थिरraपूर्णांकs *c = rdev->स्थिरraपूर्णांकs;
+	पूर्णांक enabled, ret;
 
-	if (c && c->always_on)
-		return 0;
+	अगर (c && c->always_on)
+		वापस 0;
 
-	if (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_STATUS))
-		return 0;
+	अगर (!regulator_ops_is_valid(rdev, REGULATOR_CHANGE_STATUS))
+		वापस 0;
 
 	regulator_lock(rdev);
 
-	if (rdev->use_count)
-		goto unlock;
+	अगर (rdev->use_count)
+		जाओ unlock;
 
 	/* If we can't read the status assume it's always on. */
-	if (ops->is_enabled)
+	अगर (ops->is_enabled)
 		enabled = ops->is_enabled(rdev);
-	else
+	अन्यथा
 		enabled = 1;
 
-	/* But if reading the status failed, assume that it's off. */
-	if (enabled <= 0)
-		goto unlock;
+	/* But अगर पढ़ोing the status failed, assume that it's off. */
+	अगर (enabled <= 0)
+		जाओ unlock;
 
-	if (have_full_constraints()) {
-		/* We log since this may kill the system if it goes
+	अगर (have_full_स्थिरraपूर्णांकs()) अणु
+		/* We log since this may समाप्त the प्रणाली अगर it goes
 		 * wrong.
 		 */
 		rdev_info(rdev, "disabling\n");
-		ret = _regulator_do_disable(rdev);
-		if (ret != 0)
+		ret = _regulator_करो_disable(rdev);
+		अगर (ret != 0)
 			rdev_err(rdev, "couldn't disable: %pe\n", ERR_PTR(ret));
-	} else {
-		/* The intention is that in future we will
-		 * assume that full constraints are provided
-		 * so warn even if we aren't going to do
+	पूर्ण अन्यथा अणु
+		/* The पूर्णांकention is that in future we will
+		 * assume that full स्थिरraपूर्णांकs are provided
+		 * so warn even अगर we aren't going to करो
 		 * anything here.
 		 */
 		rdev_warn(rdev, "incomplete constraints, leaving on\n");
-	}
+	पूर्ण
 
 unlock:
 	regulator_unlock(rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void regulator_init_complete_work_function(struct work_struct *work)
-{
+अटल व्योम regulator_init_complete_work_function(काष्ठा work_काष्ठा *work)
+अणु
 	/*
 	 * Regulators may had failed to resolve their input supplies
-	 * when were registered, either because the input supply was
-	 * not registered yet or because its parent device was not
-	 * bound yet. So attempt to resolve the input supplies for
-	 * pending regulators before trying to disable unused ones.
+	 * when were रेजिस्टरed, either because the input supply was
+	 * not रेजिस्टरed yet or because its parent device was not
+	 * bound yet. So attempt to resolve the input supplies क्रम
+	 * pending regulators beक्रमe trying to disable unused ones.
 	 */
-	class_for_each_device(&regulator_class, NULL, NULL,
-			      regulator_register_resolve_supply);
+	class_क्रम_each_device(&regulator_class, शून्य, शून्य,
+			      regulator_रेजिस्टर_resolve_supply);
 
 	/* If we have a full configuration then disable any regulators
-	 * we have permission to change the status for and which are
-	 * not in use or always_on.  This is effectively the default
-	 * for DT and ACPI as they have full constraints.
+	 * we have permission to change the status क्रम and which are
+	 * not in use or always_on.  This is effectively the शेष
+	 * क्रम DT and ACPI as they have full स्थिरraपूर्णांकs.
 	 */
-	class_for_each_device(&regulator_class, NULL, NULL,
+	class_क्रम_each_device(&regulator_class, शून्य, शून्य,
 			      regulator_late_cleanup);
-}
+पूर्ण
 
-static DECLARE_DELAYED_WORK(regulator_init_complete_work,
+अटल DECLARE_DELAYED_WORK(regulator_init_complete_work,
 			    regulator_init_complete_work_function);
 
-static int __init regulator_init_complete(void)
-{
+अटल पूर्णांक __init regulator_init_complete(व्योम)
+अणु
 	/*
-	 * Since DT doesn't provide an idiomatic mechanism for
-	 * enabling full constraints and since it's much more natural
+	 * Since DT करोesn't provide an idiomatic mechanism क्रम
+	 * enabling full स्थिरraपूर्णांकs and since it's much more natural
 	 * with DT to provide them just assume that a DT enabled
-	 * system has full constraints.
+	 * प्रणाली has full स्थिरraपूर्णांकs.
 	 */
-	if (of_have_populated_dt())
-		has_full_constraints = true;
+	अगर (of_have_populated_dt())
+		has_full_स्थिरraपूर्णांकs = true;
 
 	/*
-	 * We punt completion for an arbitrary amount of time since
-	 * systems like distros will load many drivers from userspace
-	 * so consumers might not always be ready yet, this is
+	 * We punt completion क्रम an arbitrary amount of समय since
+	 * प्रणालीs like distros will load many drivers from userspace
+	 * so consumers might not always be पढ़ोy yet, this is
 	 * particularly an issue with laptops where this might bounce
-	 * the display off then on.  Ideally we'd get a notification
-	 * from userspace when this happens but we don't so just wait
-	 * a bit and hope we waited long enough.  It'd be better if
-	 * we'd only do this on systems that need it, and a kernel
+	 * the display off then on.  Ideally we'd get a notअगरication
+	 * from userspace when this happens but we करोn't so just रुको
+	 * a bit and hope we रुकोed दीर्घ enough.  It'd be better अगर
+	 * we'd only करो this on प्रणालीs that need it, and a kernel
 	 * command line option might be useful.
 	 */
 	schedule_delayed_work(&regulator_init_complete_work,
-			      msecs_to_jiffies(30000));
+			      msecs_to_jअगरfies(30000));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 late_initcall_sync(regulator_init_complete);

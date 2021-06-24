@@ -1,15 +1,16 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2000-2001 Christoph Hellwig.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    without modअगरication.
+ * 2. The name of the author may not be used to enकरोrse or promote products
+ *    derived from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL").
@@ -18,7 +19,7 @@
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -28,141 +29,141 @@
  */
 
 /*
- * Veritas filesystem driver - shared subroutines.
+ * Veritas fileप्रणाली driver - shared subroutines.
  */
-#include <linux/fs.h>
-#include <linux/buffer_head.h>
-#include <linux/kernel.h>
-#include <linux/pagemap.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pagemap.h>
 
-#include "vxfs_extern.h"
+#समावेश "vxfs_extern.h"
 
 
-static int		vxfs_readpage(struct file *, struct page *);
-static sector_t		vxfs_bmap(struct address_space *, sector_t);
+अटल पूर्णांक		vxfs_पढ़ोpage(काष्ठा file *, काष्ठा page *);
+अटल sector_t		vxfs_bmap(काष्ठा address_space *, sector_t);
 
-const struct address_space_operations vxfs_aops = {
-	.readpage =		vxfs_readpage,
+स्थिर काष्ठा address_space_operations vxfs_aops = अणु
+	.पढ़ोpage =		vxfs_पढ़ोpage,
 	.bmap =			vxfs_bmap,
-};
+पूर्ण;
 
-inline void
-vxfs_put_page(struct page *pp)
-{
+अंतरभूत व्योम
+vxfs_put_page(काष्ठा page *pp)
+अणु
 	kunmap(pp);
 	put_page(pp);
-}
+पूर्ण
 
 /**
- * vxfs_get_page - read a page into memory.
- * @ip:		inode to read from
+ * vxfs_get_page - पढ़ो a page पूर्णांकo memory.
+ * @ip:		inode to पढ़ो from
  * @n:		page number
  *
  * Description:
- *   vxfs_get_page reads the @n th page of @ip into the pagecache.
+ *   vxfs_get_page पढ़ोs the @n th page of @ip पूर्णांकo the pagecache.
  *
  * Returns:
- *   The wanted page on success, else a NULL pointer.
+ *   The wanted page on success, अन्यथा a शून्य poपूर्णांकer.
  */
-struct page *
-vxfs_get_page(struct address_space *mapping, u_long n)
-{
-	struct page *			pp;
+काष्ठा page *
+vxfs_get_page(काष्ठा address_space *mapping, u_दीर्घ n)
+अणु
+	काष्ठा page *			pp;
 
-	pp = read_mapping_page(mapping, n, NULL);
+	pp = पढ़ो_mapping_page(mapping, n, शून्य);
 
-	if (!IS_ERR(pp)) {
+	अगर (!IS_ERR(pp)) अणु
 		kmap(pp);
-		/** if (!PageChecked(pp)) **/
+		/** अगर (!PageChecked(pp)) **/
 			/** vxfs_check_page(pp); **/
-		if (PageError(pp))
-			goto fail;
-	}
+		अगर (PageError(pp))
+			जाओ fail;
+	पूर्ण
 	
-	return (pp);
+	वापस (pp);
 		 
 fail:
 	vxfs_put_page(pp);
-	return ERR_PTR(-EIO);
-}
+	वापस ERR_PTR(-EIO);
+पूर्ण
 
 /**
- * vxfs_bread - read buffer for a give inode,block tuple
+ * vxfs_bपढ़ो - पढ़ो buffer क्रम a give inode,block tuple
  * @ip:		inode
  * @block:	logical block
  *
  * Description:
- *   The vxfs_bread function reads block no @block  of
- *   @ip into the buffercache.
+ *   The vxfs_bपढ़ो function पढ़ोs block no @block  of
+ *   @ip पूर्णांकo the buffercache.
  *
  * Returns:
- *   The resulting &struct buffer_head.
+ *   The resulting &काष्ठा buffer_head.
  */
-struct buffer_head *
-vxfs_bread(struct inode *ip, int block)
-{
-	struct buffer_head	*bp;
+काष्ठा buffer_head *
+vxfs_bपढ़ो(काष्ठा inode *ip, पूर्णांक block)
+अणु
+	काष्ठा buffer_head	*bp;
 	daddr_t			pblock;
 
 	pblock = vxfs_bmap1(ip, block);
-	bp = sb_bread(ip->i_sb, pblock);
+	bp = sb_bपढ़ो(ip->i_sb, pblock);
 
-	return (bp);
-}
+	वापस (bp);
+पूर्ण
 
 /**
- * vxfs_get_block - locate buffer for given inode,block tuple 
+ * vxfs_get_block - locate buffer क्रम given inode,block tuple 
  * @ip:		inode
  * @iblock:	logical block
  * @bp:		buffer skeleton
- * @create:	%TRUE if blocks may be newly allocated.
+ * @create:	%TRUE अगर blocks may be newly allocated.
  *
  * Description:
  *   The vxfs_get_block function fills @bp with the right physical
- *   block and device number to perform a lowlevel read/write on
+ *   block and device number to perक्रमm a lowlevel पढ़ो/ग_लिखो on
  *   it.
  *
  * Returns:
- *   Zero on success, else a negativ error code (-EIO).
+ *   Zero on success, अन्यथा a negativ error code (-EIO).
  */
-static int
-vxfs_getblk(struct inode *ip, sector_t iblock,
-	    struct buffer_head *bp, int create)
-{
+अटल पूर्णांक
+vxfs_getblk(काष्ठा inode *ip, sector_t iblock,
+	    काष्ठा buffer_head *bp, पूर्णांक create)
+अणु
 	daddr_t			pblock;
 
 	pblock = vxfs_bmap1(ip, iblock);
-	if (pblock != 0) {
+	अगर (pblock != 0) अणु
 		map_bh(bp, ip->i_sb, pblock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /**
- * vxfs_readpage - read one page synchronously into the pagecache
+ * vxfs_पढ़ोpage - पढ़ो one page synchronously पूर्णांकo the pagecache
  * @file:	file context (unused)
  * @page:	page frame to fill in.
  *
  * Description:
- *   The vxfs_readpage routine reads @page synchronously into the
+ *   The vxfs_पढ़ोpage routine पढ़ोs @page synchronously पूर्णांकo the
  *   pagecache.
  *
  * Returns:
- *   Zero on success, else a negative error code.
+ *   Zero on success, अन्यथा a negative error code.
  *
  * Locking status:
  *   @page is locked and will be unlocked.
  */
-static int
-vxfs_readpage(struct file *file, struct page *page)
-{
-	return block_read_full_page(page, vxfs_getblk);
-}
+अटल पूर्णांक
+vxfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	वापस block_पढ़ो_full_page(page, vxfs_getblk);
+पूर्ण
  
 /**
- * vxfs_bmap - perform logical to physical block mapping
+ * vxfs_bmap - perक्रमm logical to physical block mapping
  * @mapping:	logical to physical mapping to use
  * @block:	logical block (relative to @mapping).
  *
@@ -171,13 +172,13 @@ vxfs_readpage(struct file *file, struct page *page)
  *   @mapping, @block pair.
  *
  * Returns:
- *   Physical block number on success, else Zero.
+ *   Physical block number on success, अन्यथा Zero.
  *
  * Locking status:
  *   We are under the bkl.
  */
-static sector_t
-vxfs_bmap(struct address_space *mapping, sector_t block)
-{
-	return generic_block_bmap(mapping, block, vxfs_getblk);
-}
+अटल sector_t
+vxfs_bmap(काष्ठा address_space *mapping, sector_t block)
+अणु
+	वापस generic_block_bmap(mapping, block, vxfs_getblk);
+पूर्ण

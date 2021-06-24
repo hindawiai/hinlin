@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NET_GRO_CELLS_H
-#define _NET_GRO_CELLS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NET_GRO_CELLS_H
+#घोषणा _NET_GRO_CELLS_H
 
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/netdevice.h>
 
-struct gro_cell;
+काष्ठा gro_cell;
 
-struct gro_cells {
-	struct gro_cell __percpu	*cells;
-};
+काष्ठा gro_cells अणु
+	काष्ठा gro_cell __percpu	*cells;
+पूर्ण;
 
-int gro_cells_receive(struct gro_cells *gcells, struct sk_buff *skb);
-int gro_cells_init(struct gro_cells *gcells, struct net_device *dev);
-void gro_cells_destroy(struct gro_cells *gcells);
+पूर्णांक gro_cells_receive(काष्ठा gro_cells *gcells, काष्ठा sk_buff *skb);
+पूर्णांक gro_cells_init(काष्ठा gro_cells *gcells, काष्ठा net_device *dev);
+व्योम gro_cells_destroy(काष्ठा gro_cells *gcells);
 
-#endif
+#पूर्ण_अगर

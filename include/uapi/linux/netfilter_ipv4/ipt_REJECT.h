@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _IPT_REJECT_H
-#define _IPT_REJECT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _IPT_REJECT_H
+#घोषणा _IPT_REJECT_H
 
-enum ipt_reject_with {
+क्रमागत ipt_reject_with अणु
 	IPT_ICMP_NET_UNREACHABLE,
 	IPT_ICMP_HOST_UNREACHABLE,
 	IPT_ICMP_PROT_UNREACHABLE,
@@ -12,10 +13,10 @@ enum ipt_reject_with {
 	IPT_ICMP_HOST_PROHIBITED,
 	IPT_TCP_RESET,
 	IPT_ICMP_ADMIN_PROHIBITED
-};
+पूर्ण;
 
-struct ipt_reject_info {
-	enum ipt_reject_with with;      /* reject type */
-};
+काष्ठा ipt_reject_info अणु
+	क्रमागत ipt_reject_with with;      /* reject type */
+पूर्ण;
 
-#endif /*_IPT_REJECT_H*/
+#पूर्ण_अगर /*_IPT_REJECT_H*/

@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#ifndef __MLX5_EN_STATS_VHCA_H__
-#define __MLX5_EN_STATS_VHCA_H__
-#include "en.h"
+#अगर_अघोषित __MLX5_EN_STATS_VHCA_H__
+#घोषणा __MLX5_EN_STATS_VHCA_H__
+#समावेश "en.h"
 
-#if IS_ENABLED(CONFIG_PCI_HYPERV_INTERFACE)
+#अगर IS_ENABLED(CONFIG_PCI_HYPERV_INTERFACE)
 
-int mlx5e_hv_vhca_stats_create(struct mlx5e_priv *priv);
-void mlx5e_hv_vhca_stats_destroy(struct mlx5e_priv *priv);
+पूर्णांक mlx5e_hv_vhca_stats_create(काष्ठा mlx5e_priv *priv);
+व्योम mlx5e_hv_vhca_stats_destroy(काष्ठा mlx5e_priv *priv);
 
-#else
+#अन्यथा
 
-static inline int mlx5e_hv_vhca_stats_create(struct mlx5e_priv *priv)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mlx5e_hv_vhca_stats_create(काष्ठा mlx5e_priv *priv)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mlx5e_hv_vhca_stats_destroy(struct mlx5e_priv *priv)
-{
-}
-#endif
+अटल अंतरभूत व्योम mlx5e_hv_vhca_stats_destroy(काष्ठा mlx5e_priv *priv)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __MLX5_EN_STATS_VHCA_H__ */
+#पूर्ण_अगर /* __MLX5_EN_STATS_VHCA_H__ */

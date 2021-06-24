@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * AMD NUMA support.
  * Discover the memory map and associated nodes.
  *
- * This version reads it directly from the AMD northbridge.
+ * This version पढ़ोs it directly from the AMD northbridge.
  *
- * Copyright 2002,2003 Andi Kleen, SuSE Labs.
+ * Copyright 2002,2003 Andi Kleen, SuSE Lअसल.
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/nodemask.h>
-#include <linux/memblock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/memblock.h>
 
-#include <asm/io.h>
-#include <linux/pci_ids.h>
-#include <linux/acpi.h>
-#include <asm/types.h>
-#include <asm/mmzone.h>
-#include <asm/proto.h>
-#include <asm/e820/api.h>
-#include <asm/pci-direct.h>
-#include <asm/numa.h>
-#include <asm/mpspec.h>
-#include <asm/apic.h>
-#include <asm/amd_nb.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/acpi.h>
+#समावेश <यंत्र/types.h>
+#समावेश <यंत्र/mmzone.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/pci-direct.h>
+#समावेश <यंत्र/numa.h>
+#समावेश <यंत्र/mpspec.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/amd_nb.h>
 
-static unsigned char __initdata nodeids[8];
+अटल अचिन्हित अक्षर __initdata nodeids[8];
 
-static __init int find_northbridge(void)
-{
-	int num;
+अटल __init पूर्णांक find_northbridge(व्योम)
+अणु
+	पूर्णांक num;
 
-	for (num = 0; num < 32; num++) {
+	क्रम (num = 0; num < 32; num++) अणु
 		u32 header;
 
-		header = read_pci_config(0, num, 0, 0x00);
-		if (header != (PCI_VENDOR_ID_AMD | (0x1100<<16)) &&
+		header = पढ़ो_pci_config(0, num, 0, 0x00);
+		अगर (header != (PCI_VENDOR_ID_AMD | (0x1100<<16)) &&
 			header != (PCI_VENDOR_ID_AMD | (0x1200<<16)) &&
 			header != (PCI_VENDOR_ID_AMD | (0x1300<<16)))
-			continue;
+			जारी;
 
-		header = read_pci_config(0, num, 1, 0x00);
-		if (header != (PCI_VENDOR_ID_AMD | (0x1101<<16)) &&
+		header = पढ़ो_pci_config(0, num, 1, 0x00);
+		अगर (header != (PCI_VENDOR_ID_AMD | (0x1101<<16)) &&
 			header != (PCI_VENDOR_ID_AMD | (0x1201<<16)) &&
 			header != (PCI_VENDOR_ID_AMD | (0x1301<<16)))
-			continue;
-		return num;
-	}
+			जारी;
+		वापस num;
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-int __init amd_numa_init(void)
-{
+पूर्णांक __init amd_numa_init(व्योम)
+अणु
 	u64 start = PFN_PHYS(0);
 	u64 end = PFN_PHYS(max_pfn);
-	unsigned numnodes;
+	अचिन्हित numnodes;
 	u64 prevbase;
-	int i, j, nb;
+	पूर्णांक i, j, nb;
 	u32 nodeid, reg;
-	unsigned int bits, cores, apicid_base;
+	अचिन्हित पूर्णांक bits, cores, apicid_base;
 
-	if (!early_pci_allowed())
-		return -EINVAL;
+	अगर (!early_pci_allowed())
+		वापस -EINVAL;
 
 	nb = find_northbridge();
-	if (nb < 0)
-		return nb;
+	अगर (nb < 0)
+		वापस nb;
 
 	pr_info("Scanning NUMA topology in Northbridge %d\n", nb);
 
-	reg = read_pci_config(0, nb, 0, 0x60);
+	reg = पढ़ो_pci_config(0, nb, 0, 0x60);
 	numnodes = ((reg >> 4) & 0xF) + 1;
-	if (numnodes <= 1)
-		return -ENOENT;
+	अगर (numnodes <= 1)
+		वापस -ENOENT;
 
 	pr_info("Number of physical nodes %d\n", numnodes);
 
 	prevbase = 0;
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		u64 base, limit;
 
-		base = read_pci_config(0, nb, 1, 0x40 + i*8);
-		limit = read_pci_config(0, nb, 1, 0x44 + i*8);
+		base = पढ़ो_pci_config(0, nb, 1, 0x40 + i*8);
+		limit = पढ़ो_pci_config(0, nb, 1, 0x44 + i*8);
 
 		nodeids[i] = nodeid = limit & 7;
-		if ((base & 3) == 0) {
-			if (i < numnodes)
+		अगर ((base & 3) == 0) अणु
+			अगर (i < numnodes)
 				pr_info("Skipping disabled node %d\n", i);
-			continue;
-		}
-		if (nodeid >= numnodes) {
+			जारी;
+		पूर्ण
+		अगर (nodeid >= numnodes) अणु
 			pr_info("Ignoring excess node %d (%Lx:%Lx)\n", nodeid,
 				base, limit);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!limit) {
+		अगर (!limit) अणु
 			pr_info("Skipping node entry %d (base %Lx)\n",
 				i, base);
-			continue;
-		}
-		if ((base >> 8) & 3 || (limit >> 8) & 3) {
+			जारी;
+		पूर्ण
+		अगर ((base >> 8) & 3 || (limit >> 8) & 3) अणु
 			pr_err("Node %d using interleaving mode %Lx/%Lx\n",
 			       nodeid, (base >> 8) & 3, (limit >> 8) & 3);
-			return -EINVAL;
-		}
-		if (node_isset(nodeid, numa_nodes_parsed)) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (node_isset(nodeid, numa_nodes_parsed)) अणु
 			pr_info("Node %d already present, skipping\n",
 				nodeid);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		limit >>= 16;
 		limit++;
 		limit <<= 24;
 
-		if (limit > end)
+		अगर (limit > end)
 			limit = end;
-		if (limit <= base)
-			continue;
+		अगर (limit <= base)
+			जारी;
 
 		base >>= 16;
 		base <<= 24;
 
-		if (base < start)
+		अगर (base < start)
 			base = start;
-		if (limit > end)
+		अगर (limit > end)
 			limit = end;
-		if (limit == base) {
+		अगर (limit == base) अणु
 			pr_err("Empty node %d\n", nodeid);
-			continue;
-		}
-		if (limit < base) {
+			जारी;
+		पूर्ण
+		अगर (limit < base) अणु
 			pr_err("Node %d bogus settings %Lx-%Lx.\n",
 			       nodeid, base, limit);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Could sort here, but pun for now. Should not happen anyroads. */
-		if (prevbase > base) {
+		/* Could sort here, but pun क्रम now. Should not happen anyroads. */
+		अगर (prevbase > base) अणु
 			pr_err("Node map not sorted %Lx,%Lx\n",
 			       prevbase, base);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		pr_info("Node %d MemBase %016Lx Limit %016Lx\n",
 			nodeid, base, limit);
@@ -152,32 +153,32 @@ int __init amd_numa_init(void)
 		prevbase = base;
 		numa_add_memblk(nodeid, base, limit);
 		node_set(nodeid, numa_nodes_parsed);
-	}
+	पूर्ण
 
-	if (!nodes_weight(numa_nodes_parsed))
-		return -ENOENT;
+	अगर (!nodes_weight(numa_nodes_parsed))
+		वापस -ENOENT;
 
 	/*
 	 * We seem to have valid NUMA configuration.  Map apicids to nodes
-	 * using the coreid bits from early_identify_cpu.
+	 * using the coreid bits from early_identअगरy_cpu.
 	 */
 	bits = boot_cpu_data.x86_coreid_bits;
 	cores = 1 << bits;
 	apicid_base = 0;
 
 	/*
-	 * get boot-time SMP configuration:
+	 * get boot-समय SMP configuration:
 	 */
 	early_get_smp_config();
 
-	if (boot_cpu_physical_apicid > 0) {
+	अगर (boot_cpu_physical_apicid > 0) अणु
 		pr_info("BSP APIC ID: %02x\n", boot_cpu_physical_apicid);
 		apicid_base = boot_cpu_physical_apicid;
-	}
+	पूर्ण
 
-	for_each_node_mask(i, numa_nodes_parsed)
-		for (j = apicid_base; j < cores + apicid_base; j++)
+	क्रम_each_node_mask(i, numa_nodes_parsed)
+		क्रम (j = apicid_base; j < cores + apicid_base; j++)
 			set_apicid_to_node((i << bits) + j, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

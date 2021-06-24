@@ -1,153 +1,154 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Framework for ISA radio drivers.
+ * Framework क्रम ISA radio drivers.
  * This takes care of all the V4L2 scaffolding, allowing the ISA drivers
  * to concentrate on the actual hardware operation.
  *
  * Copyright (C) 2012 Hans Verkuil <hans.verkuil@cisco.com>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/videodev2.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-fh.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-event.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-fh.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-event.h>
 
-#include "radio-isa.h"
+#समावेश "radio-isa.h"
 
 MODULE_AUTHOR("Hans Verkuil");
 MODULE_DESCRIPTION("A framework for ISA radio drivers.");
 MODULE_LICENSE("GPL");
 
-#define FREQ_LOW  (87U * 16000U)
-#define FREQ_HIGH (108U * 16000U)
+#घोषणा FREQ_LOW  (87U * 16000U)
+#घोषणा FREQ_HIGH (108U * 16000U)
 
-static int radio_isa_querycap(struct file *file, void  *priv,
-					struct v4l2_capability *v)
-{
-	struct radio_isa_card *isa = video_drvdata(file);
+अटल पूर्णांक radio_isa_querycap(काष्ठा file *file, व्योम  *priv,
+					काष्ठा v4l2_capability *v)
+अणु
+	काष्ठा radio_isa_card *isa = video_drvdata(file);
 
-	strscpy(v->driver, isa->drv->driver.driver.name, sizeof(v->driver));
-	strscpy(v->card, isa->drv->card, sizeof(v->card));
-	snprintf(v->bus_info, sizeof(v->bus_info), "ISA:%s", isa->v4l2_dev.name);
-	return 0;
-}
+	strscpy(v->driver, isa->drv->driver.driver.name, माप(v->driver));
+	strscpy(v->card, isa->drv->card, माप(v->card));
+	snम_लिखो(v->bus_info, माप(v->bus_info), "ISA:%s", isa->v4l2_dev.name);
+	वापस 0;
+पूर्ण
 
-static int radio_isa_g_tuner(struct file *file, void *priv,
-				struct v4l2_tuner *v)
-{
-	struct radio_isa_card *isa = video_drvdata(file);
-	const struct radio_isa_ops *ops = isa->drv->ops;
+अटल पूर्णांक radio_isa_g_tuner(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_tuner *v)
+अणु
+	काष्ठा radio_isa_card *isa = video_drvdata(file);
+	स्थिर काष्ठा radio_isa_ops *ops = isa->drv->ops;
 
-	if (v->index > 0)
-		return -EINVAL;
+	अगर (v->index > 0)
+		वापस -EINVAL;
 
-	strscpy(v->name, "FM", sizeof(v->name));
+	strscpy(v->name, "FM", माप(v->name));
 	v->type = V4L2_TUNER_RADIO;
 	v->rangelow = FREQ_LOW;
 	v->rangehigh = FREQ_HIGH;
 	v->capability = V4L2_TUNER_CAP_LOW;
-	if (isa->drv->has_stereo)
+	अगर (isa->drv->has_stereo)
 		v->capability |= V4L2_TUNER_CAP_STEREO;
 
-	if (ops->g_rxsubchans)
+	अगर (ops->g_rxsubchans)
 		v->rxsubchans = ops->g_rxsubchans(isa);
-	else
+	अन्यथा
 		v->rxsubchans = V4L2_TUNER_SUB_MONO | V4L2_TUNER_SUB_STEREO;
 	v->audmode = isa->stereo ? V4L2_TUNER_MODE_STEREO : V4L2_TUNER_MODE_MONO;
-	if (ops->g_signal)
-		v->signal = ops->g_signal(isa);
-	else
-		v->signal = (v->rxsubchans & V4L2_TUNER_SUB_STEREO) ?
+	अगर (ops->g_संकेत)
+		v->संकेत = ops->g_संकेत(isa);
+	अन्यथा
+		v->संकेत = (v->rxsubchans & V4L2_TUNER_SUB_STEREO) ?
 								0xffff : 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int radio_isa_s_tuner(struct file *file, void *priv,
-				const struct v4l2_tuner *v)
-{
-	struct radio_isa_card *isa = video_drvdata(file);
-	const struct radio_isa_ops *ops = isa->drv->ops;
+अटल पूर्णांक radio_isa_s_tuner(काष्ठा file *file, व्योम *priv,
+				स्थिर काष्ठा v4l2_tuner *v)
+अणु
+	काष्ठा radio_isa_card *isa = video_drvdata(file);
+	स्थिर काष्ठा radio_isa_ops *ops = isa->drv->ops;
 
-	if (v->index)
-		return -EINVAL;
-	if (ops->s_stereo) {
+	अगर (v->index)
+		वापस -EINVAL;
+	अगर (ops->s_stereo) अणु
 		isa->stereo = (v->audmode == V4L2_TUNER_MODE_STEREO);
-		return ops->s_stereo(isa, isa->stereo);
-	}
-	return 0;
-}
+		वापस ops->s_stereo(isa, isa->stereo);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int radio_isa_s_frequency(struct file *file, void *priv,
-				const struct v4l2_frequency *f)
-{
-	struct radio_isa_card *isa = video_drvdata(file);
+अटल पूर्णांक radio_isa_s_frequency(काष्ठा file *file, व्योम *priv,
+				स्थिर काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा radio_isa_card *isa = video_drvdata(file);
 	u32 freq = f->frequency;
-	int res;
+	पूर्णांक res;
 
-	if (f->tuner != 0 || f->type != V4L2_TUNER_RADIO)
-		return -EINVAL;
+	अगर (f->tuner != 0 || f->type != V4L2_TUNER_RADIO)
+		वापस -EINVAL;
 	freq = clamp(freq, FREQ_LOW, FREQ_HIGH);
 	res = isa->drv->ops->s_frequency(isa, freq);
-	if (res == 0)
+	अगर (res == 0)
 		isa->freq = freq;
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int radio_isa_g_frequency(struct file *file, void *priv,
-				struct v4l2_frequency *f)
-{
-	struct radio_isa_card *isa = video_drvdata(file);
+अटल पूर्णांक radio_isa_g_frequency(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा radio_isa_card *isa = video_drvdata(file);
 
-	if (f->tuner != 0)
-		return -EINVAL;
+	अगर (f->tuner != 0)
+		वापस -EINVAL;
 	f->type = V4L2_TUNER_RADIO;
 	f->frequency = isa->freq;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int radio_isa_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct radio_isa_card *isa =
-		container_of(ctrl->handler, struct radio_isa_card, hdl);
+अटल पूर्णांक radio_isa_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा radio_isa_card *isa =
+		container_of(ctrl->handler, काष्ठा radio_isa_card, hdl);
 
-	switch (ctrl->id) {
-	case V4L2_CID_AUDIO_MUTE:
-		return isa->drv->ops->s_mute_volume(isa, ctrl->val,
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_AUDIO_MUTE:
+		वापस isa->drv->ops->s_mute_volume(isa, ctrl->val,
 				isa->volume ? isa->volume->val : 0);
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int radio_isa_log_status(struct file *file, void *priv)
-{
-	struct radio_isa_card *isa = video_drvdata(file);
+अटल पूर्णांक radio_isa_log_status(काष्ठा file *file, व्योम *priv)
+अणु
+	काष्ठा radio_isa_card *isa = video_drvdata(file);
 
 	v4l2_info(&isa->v4l2_dev, "I/O Port = 0x%03x\n", isa->io);
 	v4l2_ctrl_handler_log_status(&isa->hdl, isa->v4l2_dev.name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ctrl_ops radio_isa_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops radio_isa_ctrl_ops = अणु
 	.s_ctrl = radio_isa_s_ctrl,
-};
+पूर्ण;
 
-static const struct v4l2_file_operations radio_isa_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations radio_isa_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= v4l2_fh_open,
+	.खोलो		= v4l2_fh_खोलो,
 	.release	= v4l2_fh_release,
 	.poll		= v4l2_ctrl_poll,
 	.unlocked_ioctl	= video_ioctl2,
-};
+पूर्ण;
 
-static const struct v4l2_ioctl_ops radio_isa_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops radio_isa_ioctl_ops = अणु
 	.vidioc_querycap    = radio_isa_querycap,
 	.vidioc_g_tuner     = radio_isa_g_tuner,
 	.vidioc_s_tuner     = radio_isa_s_tuner,
@@ -156,83 +157,83 @@ static const struct v4l2_ioctl_ops radio_isa_ioctl_ops = {
 	.vidioc_log_status  = radio_isa_log_status,
 	.vidioc_subscribe_event   = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-};
+पूर्ण;
 
-int radio_isa_match(struct device *pdev, unsigned int dev)
-{
-	struct radio_isa_driver *drv = pdev->platform_data;
+पूर्णांक radio_isa_match(काष्ठा device *pdev, अचिन्हित पूर्णांक dev)
+अणु
+	काष्ठा radio_isa_driver *drv = pdev->platक्रमm_data;
 
-	return drv->probe || drv->io_params[dev] >= 0;
-}
+	वापस drv->probe || drv->io_params[dev] >= 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(radio_isa_match);
 
-static bool radio_isa_valid_io(const struct radio_isa_driver *drv, int io)
-{
-	int i;
+अटल bool radio_isa_valid_io(स्थिर काष्ठा radio_isa_driver *drv, पूर्णांक io)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < drv->num_of_io_ports; i++)
-		if (drv->io_ports[i] == io)
-			return true;
-	return false;
-}
+	क्रम (i = 0; i < drv->num_of_io_ports; i++)
+		अगर (drv->io_ports[i] == io)
+			वापस true;
+	वापस false;
+पूर्ण
 
-static struct radio_isa_card *radio_isa_alloc(struct radio_isa_driver *drv,
-				struct device *pdev)
-{
-	struct v4l2_device *v4l2_dev;
-	struct radio_isa_card *isa = drv->ops->alloc();
-	if (!isa)
-		return NULL;
+अटल काष्ठा radio_isa_card *radio_isa_alloc(काष्ठा radio_isa_driver *drv,
+				काष्ठा device *pdev)
+अणु
+	काष्ठा v4l2_device *v4l2_dev;
+	काष्ठा radio_isa_card *isa = drv->ops->alloc();
+	अगर (!isa)
+		वापस शून्य;
 
 	dev_set_drvdata(pdev, isa);
 	isa->drv = drv;
 	v4l2_dev = &isa->v4l2_dev;
-	strscpy(v4l2_dev->name, dev_name(pdev), sizeof(v4l2_dev->name));
+	strscpy(v4l2_dev->name, dev_name(pdev), माप(v4l2_dev->name));
 
-	return isa;
-}
+	वापस isa;
+पूर्ण
 
-static int radio_isa_common_probe(struct radio_isa_card *isa,
-				  struct device *pdev,
-				  int radio_nr, unsigned region_size)
-{
-	const struct radio_isa_driver *drv = isa->drv;
-	const struct radio_isa_ops *ops = drv->ops;
-	struct v4l2_device *v4l2_dev = &isa->v4l2_dev;
-	int res;
+अटल पूर्णांक radio_isa_common_probe(काष्ठा radio_isa_card *isa,
+				  काष्ठा device *pdev,
+				  पूर्णांक radio_nr, अचिन्हित region_size)
+अणु
+	स्थिर काष्ठा radio_isa_driver *drv = isa->drv;
+	स्थिर काष्ठा radio_isa_ops *ops = drv->ops;
+	काष्ठा v4l2_device *v4l2_dev = &isa->v4l2_dev;
+	पूर्णांक res;
 
-	if (!request_region(isa->io, region_size, v4l2_dev->name)) {
+	अगर (!request_region(isa->io, region_size, v4l2_dev->name)) अणु
 		v4l2_err(v4l2_dev, "port 0x%x already in use\n", isa->io);
-		kfree(isa);
-		return -EBUSY;
-	}
+		kमुक्त(isa);
+		वापस -EBUSY;
+	पूर्ण
 
-	res = v4l2_device_register(pdev, v4l2_dev);
-	if (res < 0) {
+	res = v4l2_device_रेजिस्टर(pdev, v4l2_dev);
+	अगर (res < 0) अणु
 		v4l2_err(v4l2_dev, "Could not register v4l2_device\n");
-		goto err_dev_reg;
-	}
+		जाओ err_dev_reg;
+	पूर्ण
 
 	v4l2_ctrl_handler_init(&isa->hdl, 1);
 	isa->mute = v4l2_ctrl_new_std(&isa->hdl, &radio_isa_ctrl_ops,
 				V4L2_CID_AUDIO_MUTE, 0, 1, 1, 1);
-	if (drv->max_volume)
+	अगर (drv->max_volume)
 		isa->volume = v4l2_ctrl_new_std(&isa->hdl, &radio_isa_ctrl_ops,
 			V4L2_CID_AUDIO_VOLUME, 0, drv->max_volume, 1,
 			drv->max_volume);
 	v4l2_dev->ctrl_handler = &isa->hdl;
-	if (isa->hdl.error) {
+	अगर (isa->hdl.error) अणु
 		res = isa->hdl.error;
 		v4l2_err(v4l2_dev, "Could not register controls\n");
-		goto err_hdl;
-	}
-	if (drv->max_volume)
+		जाओ err_hdl;
+	पूर्ण
+	अगर (drv->max_volume)
 		v4l2_ctrl_cluster(2, &isa->mute);
 	v4l2_dev->ctrl_handler = &isa->hdl;
 
 	mutex_init(&isa->lock);
 	isa->vdev.lock = &isa->lock;
-	strscpy(isa->vdev.name, v4l2_dev->name, sizeof(isa->vdev.name));
+	strscpy(isa->vdev.name, v4l2_dev->name, माप(isa->vdev.name));
 	isa->vdev.v4l2_dev = v4l2_dev;
 	isa->vdev.fops = &radio_isa_fops;
 	isa->vdev.ioctl_ops = &radio_isa_ioctl_ops;
@@ -242,136 +243,136 @@ static int radio_isa_common_probe(struct radio_isa_card *isa,
 	isa->freq = FREQ_LOW;
 	isa->stereo = drv->has_stereo;
 
-	if (ops->init)
+	अगर (ops->init)
 		res = ops->init(isa);
-	if (!res)
+	अगर (!res)
 		res = v4l2_ctrl_handler_setup(&isa->hdl);
-	if (!res)
+	अगर (!res)
 		res = ops->s_frequency(isa, isa->freq);
-	if (!res && ops->s_stereo)
+	अगर (!res && ops->s_stereo)
 		res = ops->s_stereo(isa, isa->stereo);
-	if (res < 0) {
+	अगर (res < 0) अणु
 		v4l2_err(v4l2_dev, "Could not setup card\n");
-		goto err_hdl;
-	}
-	res = video_register_device(&isa->vdev, VFL_TYPE_RADIO, radio_nr);
+		जाओ err_hdl;
+	पूर्ण
+	res = video_रेजिस्टर_device(&isa->vdev, VFL_TYPE_RADIO, radio_nr);
 
-	if (res < 0) {
+	अगर (res < 0) अणु
 		v4l2_err(v4l2_dev, "Could not register device node\n");
-		goto err_hdl;
-	}
+		जाओ err_hdl;
+	पूर्ण
 
 	v4l2_info(v4l2_dev, "Initialized radio card %s on port 0x%03x\n",
 			drv->card, isa->io);
-	return 0;
+	वापस 0;
 
 err_hdl:
-	v4l2_ctrl_handler_free(&isa->hdl);
+	v4l2_ctrl_handler_मुक्त(&isa->hdl);
 err_dev_reg:
 	release_region(isa->io, region_size);
-	kfree(isa);
-	return res;
-}
+	kमुक्त(isa);
+	वापस res;
+पूर्ण
 
-static void radio_isa_common_remove(struct radio_isa_card *isa,
-				    unsigned region_size)
-{
-	const struct radio_isa_ops *ops = isa->drv->ops;
+अटल व्योम radio_isa_common_हटाओ(काष्ठा radio_isa_card *isa,
+				    अचिन्हित region_size)
+अणु
+	स्थिर काष्ठा radio_isa_ops *ops = isa->drv->ops;
 
 	ops->s_mute_volume(isa, true, isa->volume ? isa->volume->cur.val : 0);
-	video_unregister_device(&isa->vdev);
-	v4l2_ctrl_handler_free(&isa->hdl);
-	v4l2_device_unregister(&isa->v4l2_dev);
+	video_unरेजिस्टर_device(&isa->vdev);
+	v4l2_ctrl_handler_मुक्त(&isa->hdl);
+	v4l2_device_unरेजिस्टर(&isa->v4l2_dev);
 	release_region(isa->io, region_size);
 	v4l2_info(&isa->v4l2_dev, "Removed radio card %s\n", isa->drv->card);
-	kfree(isa);
-}
+	kमुक्त(isa);
+पूर्ण
 
-int radio_isa_probe(struct device *pdev, unsigned int dev)
-{
-	struct radio_isa_driver *drv = pdev->platform_data;
-	const struct radio_isa_ops *ops = drv->ops;
-	struct v4l2_device *v4l2_dev;
-	struct radio_isa_card *isa;
+पूर्णांक radio_isa_probe(काष्ठा device *pdev, अचिन्हित पूर्णांक dev)
+अणु
+	काष्ठा radio_isa_driver *drv = pdev->platक्रमm_data;
+	स्थिर काष्ठा radio_isa_ops *ops = drv->ops;
+	काष्ठा v4l2_device *v4l2_dev;
+	काष्ठा radio_isa_card *isa;
 
 	isa = radio_isa_alloc(drv, pdev);
-	if (!isa)
-		return -ENOMEM;
+	अगर (!isa)
+		वापस -ENOMEM;
 	isa->io = drv->io_params[dev];
 	v4l2_dev = &isa->v4l2_dev;
 
-	if (drv->probe && ops->probe) {
-		int i;
+	अगर (drv->probe && ops->probe) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < drv->num_of_io_ports; ++i) {
-			int io = drv->io_ports[i];
+		क्रम (i = 0; i < drv->num_of_io_ports; ++i) अणु
+			पूर्णांक io = drv->io_ports[i];
 
-			if (request_region(io, drv->region_size, v4l2_dev->name)) {
+			अगर (request_region(io, drv->region_size, v4l2_dev->name)) अणु
 				bool found = ops->probe(isa, io);
 
 				release_region(io, drv->region_size);
-				if (found) {
+				अगर (found) अणु
 					isa->io = io;
-					break;
-				}
-			}
-		}
-	}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!radio_isa_valid_io(drv, isa->io)) {
-		int i;
+	अगर (!radio_isa_valid_io(drv, isa->io)) अणु
+		पूर्णांक i;
 
-		if (isa->io < 0)
-			return -ENODEV;
+		अगर (isa->io < 0)
+			वापस -ENODEV;
 		v4l2_err(v4l2_dev, "you must set an I/O address with io=0x%03x",
 				drv->io_ports[0]);
-		for (i = 1; i < drv->num_of_io_ports; i++)
-			printk(KERN_CONT "/0x%03x", drv->io_ports[i]);
-		printk(KERN_CONT ".\n");
-		kfree(isa);
-		return -EINVAL;
-	}
+		क्रम (i = 1; i < drv->num_of_io_ports; i++)
+			prपूर्णांकk(KERN_CONT "/0x%03x", drv->io_ports[i]);
+		prपूर्णांकk(KERN_CONT ".\n");
+		kमुक्त(isa);
+		वापस -EINVAL;
+	पूर्ण
 
-	return radio_isa_common_probe(isa, pdev, drv->radio_nr_params[dev],
+	वापस radio_isa_common_probe(isa, pdev, drv->radio_nr_params[dev],
 					drv->region_size);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(radio_isa_probe);
 
-void radio_isa_remove(struct device *pdev, unsigned int dev)
-{
-	struct radio_isa_card *isa = dev_get_drvdata(pdev);
+व्योम radio_isa_हटाओ(काष्ठा device *pdev, अचिन्हित पूर्णांक dev)
+अणु
+	काष्ठा radio_isa_card *isa = dev_get_drvdata(pdev);
 
-	radio_isa_common_remove(isa, isa->drv->region_size);
-}
-EXPORT_SYMBOL_GPL(radio_isa_remove);
+	radio_isa_common_हटाओ(isa, isa->drv->region_size);
+पूर्ण
+EXPORT_SYMBOL_GPL(radio_isa_हटाओ);
 
-#ifdef CONFIG_PNP
-int radio_isa_pnp_probe(struct pnp_dev *dev, const struct pnp_device_id *dev_id)
-{
-	struct pnp_driver *pnp_drv = to_pnp_driver(dev->dev.driver);
-	struct radio_isa_driver *drv = container_of(pnp_drv,
-					struct radio_isa_driver, pnp_driver);
-	struct radio_isa_card *isa;
+#अगर_घोषित CONFIG_PNP
+पूर्णांक radio_isa_pnp_probe(काष्ठा pnp_dev *dev, स्थिर काष्ठा pnp_device_id *dev_id)
+अणु
+	काष्ठा pnp_driver *pnp_drv = to_pnp_driver(dev->dev.driver);
+	काष्ठा radio_isa_driver *drv = container_of(pnp_drv,
+					काष्ठा radio_isa_driver, pnp_driver);
+	काष्ठा radio_isa_card *isa;
 
-	if (!pnp_port_valid(dev, 0))
-		return -ENODEV;
+	अगर (!pnp_port_valid(dev, 0))
+		वापस -ENODEV;
 
 	isa = radio_isa_alloc(drv, &dev->dev);
-	if (!isa)
-		return -ENOMEM;
+	अगर (!isa)
+		वापस -ENOMEM;
 
 	isa->io = pnp_port_start(dev, 0);
 
-	return radio_isa_common_probe(isa, &dev->dev, drv->radio_nr_params[0],
+	वापस radio_isa_common_probe(isa, &dev->dev, drv->radio_nr_params[0],
 					pnp_port_len(dev, 0));
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(radio_isa_pnp_probe);
 
-void radio_isa_pnp_remove(struct pnp_dev *dev)
-{
-	struct radio_isa_card *isa = dev_get_drvdata(&dev->dev);
+व्योम radio_isa_pnp_हटाओ(काष्ठा pnp_dev *dev)
+अणु
+	काष्ठा radio_isa_card *isa = dev_get_drvdata(&dev->dev);
 
-	radio_isa_common_remove(isa, pnp_port_len(dev, 0));
-}
-EXPORT_SYMBOL_GPL(radio_isa_pnp_remove);
-#endif
+	radio_isa_common_हटाओ(isa, pnp_port_len(dev, 0));
+पूर्ण
+EXPORT_SYMBOL_GPL(radio_isa_pnp_हटाओ);
+#पूर्ण_अगर

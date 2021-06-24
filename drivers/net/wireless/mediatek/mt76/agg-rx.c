@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2018 Felix Fietkau <nbd@nbd.name>
  */
-#include "mt76.h"
+#समावेश "mt76.h"
 
-static unsigned long mt76_aggr_tid_to_timeo(u8 tidno)
-{
+अटल अचिन्हित दीर्घ mt76_aggr_tid_to_समयo(u8 tidno)
+अणु
 	/* Currently voice traffic (AC_VO) always runs without aggregation,
 	 * no special handling is needed. AC_BE/AC_BK use tids 0-3. Just check
-	 * for non AC_BK/AC_BE and set smaller timeout for it. */
-	return HZ / (tidno >= 4 ? 25 : 10);
-}
+	 * क्रम non AC_BK/AC_BE and set smaller समयout क्रम it. */
+	वापस HZ / (tidno >= 4 ? 25 : 10);
+पूर्ण
 
-static void
-mt76_aggr_release(struct mt76_rx_tid *tid, struct sk_buff_head *frames, int idx)
-{
-	struct sk_buff *skb;
+अटल व्योम
+mt76_aggr_release(काष्ठा mt76_rx_tid *tid, काष्ठा sk_buff_head *frames, पूर्णांक idx)
+अणु
+	काष्ठा sk_buff *skb;
 
 	tid->head = ieee80211_sn_inc(tid->head);
 
 	skb = tid->reorder_buf[idx];
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
-	tid->reorder_buf[idx] = NULL;
+	tid->reorder_buf[idx] = शून्य;
 	tid->nframes--;
 	__skb_queue_tail(frames, skb);
-}
+पूर्ण
 
-static void
-mt76_rx_aggr_release_frames(struct mt76_rx_tid *tid,
-			    struct sk_buff_head *frames,
+अटल व्योम
+mt76_rx_aggr_release_frames(काष्ठा mt76_rx_tid *tid,
+			    काष्ठा sk_buff_head *frames,
 			    u16 head)
-{
-	int idx;
+अणु
+	पूर्णांक idx;
 
-	while (ieee80211_sn_less(tid->head, head)) {
+	जबतक (ieee80211_sn_less(tid->head, head)) अणु
 		idx = tid->head % tid->size;
 		mt76_aggr_release(tid, frames, idx);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-mt76_rx_aggr_release_head(struct mt76_rx_tid *tid, struct sk_buff_head *frames)
-{
-	int idx = tid->head % tid->size;
+अटल व्योम
+mt76_rx_aggr_release_head(काष्ठा mt76_rx_tid *tid, काष्ठा sk_buff_head *frames)
+अणु
+	पूर्णांक idx = tid->head % tid->size;
 
-	while (tid->reorder_buf[idx]) {
+	जबतक (tid->reorder_buf[idx]) अणु
 		mt76_aggr_release(tid, frames, idx);
 		idx = tid->head % tid->size;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-mt76_rx_aggr_check_release(struct mt76_rx_tid *tid, struct sk_buff_head *frames)
-{
-	struct mt76_rx_status *status;
-	struct sk_buff *skb;
-	int start, idx, nframes;
+अटल व्योम
+mt76_rx_aggr_check_release(काष्ठा mt76_rx_tid *tid, काष्ठा sk_buff_head *frames)
+अणु
+	काष्ठा mt76_rx_status *status;
+	काष्ठा sk_buff *skb;
+	पूर्णांक start, idx, nframes;
 
-	if (!tid->nframes)
-		return;
+	अगर (!tid->nframes)
+		वापस;
 
 	mt76_rx_aggr_release_head(tid, frames);
 
 	start = tid->head % tid->size;
 	nframes = tid->nframes;
 
-	for (idx = (tid->head + 1) % tid->size;
+	क्रम (idx = (tid->head + 1) % tid->size;
 	     idx != start && nframes;
-	     idx = (idx + 1) % tid->size) {
+	     idx = (idx + 1) % tid->size) अणु
 		skb = tid->reorder_buf[idx];
-		if (!skb)
-			continue;
+		अगर (!skb)
+			जारी;
 
 		nframes--;
-		status = (struct mt76_rx_status *)skb->cb;
-		if (!time_after32(jiffies,
-				  status->reorder_time +
-				  mt76_aggr_tid_to_timeo(tid->num)))
-			continue;
+		status = (काष्ठा mt76_rx_status *)skb->cb;
+		अगर (!समय_after32(jअगरfies,
+				  status->reorder_समय +
+				  mt76_aggr_tid_to_समयo(tid->num)))
+			जारी;
 
 		mt76_rx_aggr_release_frames(tid, frames, status->seqno);
-	}
+	पूर्ण
 
 	mt76_rx_aggr_release_head(tid, frames);
-}
+पूर्ण
 
-static void
-mt76_rx_aggr_reorder_work(struct work_struct *work)
-{
-	struct mt76_rx_tid *tid = container_of(work, struct mt76_rx_tid,
+अटल व्योम
+mt76_rx_aggr_reorder_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mt76_rx_tid *tid = container_of(work, काष्ठा mt76_rx_tid,
 					       reorder_work.work);
-	struct mt76_dev *dev = tid->dev;
-	struct sk_buff_head frames;
-	int nframes;
+	काष्ठा mt76_dev *dev = tid->dev;
+	काष्ठा sk_buff_head frames;
+	पूर्णांक nframes;
 
 	__skb_queue_head_init(&frames);
 
 	local_bh_disable();
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	spin_lock(&tid->lock);
 	mt76_rx_aggr_check_release(tid, &frames);
 	nframes = tid->nframes;
 	spin_unlock(&tid->lock);
 
-	if (nframes)
+	अगर (nframes)
 		ieee80211_queue_delayed_work(tid->dev->hw, &tid->reorder_work,
-					     mt76_aggr_tid_to_timeo(tid->num));
-	mt76_rx_complete(dev, &frames, NULL);
+					     mt76_aggr_tid_to_समयo(tid->num));
+	mt76_rx_complete(dev, &frames, शून्य);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	local_bh_enable();
-}
+पूर्ण
 
-static void
-mt76_rx_aggr_check_ctl(struct sk_buff *skb, struct sk_buff_head *frames)
-{
-	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
-	struct ieee80211_bar *bar = mt76_skb_get_hdr(skb);
-	struct mt76_wcid *wcid = status->wcid;
-	struct mt76_rx_tid *tid;
+अटल व्योम
+mt76_rx_aggr_check_ctl(काष्ठा sk_buff *skb, काष्ठा sk_buff_head *frames)
+अणु
+	काष्ठा mt76_rx_status *status = (काष्ठा mt76_rx_status *)skb->cb;
+	काष्ठा ieee80211_bar *bar = mt76_skb_get_hdr(skb);
+	काष्ठा mt76_wcid *wcid = status->wcid;
+	काष्ठा mt76_rx_tid *tid;
 	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
 	u16 seqno;
 
-	if (!ieee80211_is_ctl(bar->frame_control))
-		return;
+	अगर (!ieee80211_is_ctl(bar->frame_control))
+		वापस;
 
-	if (!ieee80211_is_back_req(bar->frame_control))
-		return;
+	अगर (!ieee80211_is_back_req(bar->frame_control))
+		वापस;
 
 	status->qos_ctl = tidno = le16_to_cpu(bar->control) >> 12;
 	seqno = IEEE80211_SEQ_TO_SN(le16_to_cpu(bar->start_seq_num));
 	tid = rcu_dereference(wcid->aggr[tidno]);
-	if (!tid)
-		return;
+	अगर (!tid)
+		वापस;
 
 	spin_lock_bh(&tid->lock);
-	if (!tid->stopped) {
+	अगर (!tid->stopped) अणु
 		mt76_rx_aggr_release_frames(tid, frames, seqno);
 		mt76_rx_aggr_release_head(tid, frames);
-	}
+	पूर्ण
 	spin_unlock_bh(&tid->lock);
-}
+पूर्ण
 
-void mt76_rx_aggr_reorder(struct sk_buff *skb, struct sk_buff_head *frames)
-{
-	struct mt76_rx_status *status = (struct mt76_rx_status *)skb->cb;
-	struct mt76_wcid *wcid = status->wcid;
-	struct ieee80211_sta *sta;
-	struct mt76_rx_tid *tid;
+व्योम mt76_rx_aggr_reorder(काष्ठा sk_buff *skb, काष्ठा sk_buff_head *frames)
+अणु
+	काष्ठा mt76_rx_status *status = (काष्ठा mt76_rx_status *)skb->cb;
+	काष्ठा mt76_wcid *wcid = status->wcid;
+	काष्ठा ieee80211_sta *sta;
+	काष्ठा mt76_rx_tid *tid;
 	bool sn_less;
 	u16 seqno, head, size, idx;
 	u8 tidno = status->qos_ctl & IEEE80211_QOS_CTL_TID_MASK;
@@ -159,96 +160,96 @@ void mt76_rx_aggr_reorder(struct sk_buff *skb, struct sk_buff_head *frames)
 	__skb_queue_tail(frames, skb);
 
 	sta = wcid_to_sta(wcid);
-	if (!sta)
-		return;
+	अगर (!sta)
+		वापस;
 
-	if (!status->aggr && !(status->flag & RX_FLAG_8023)) {
+	अगर (!status->aggr && !(status->flag & RX_FLAG_8023)) अणु
 		mt76_rx_aggr_check_ctl(skb, frames);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* not part of a BA session */
 	ackp = status->qos_ctl & IEEE80211_QOS_CTL_ACK_POLICY_MASK;
-	if (ackp != IEEE80211_QOS_CTL_ACK_POLICY_BLOCKACK &&
+	अगर (ackp != IEEE80211_QOS_CTL_ACK_POLICY_BLOCKACK &&
 	    ackp != IEEE80211_QOS_CTL_ACK_POLICY_NORMAL)
-		return;
+		वापस;
 
 	tid = rcu_dereference(wcid->aggr[tidno]);
-	if (!tid)
-		return;
+	अगर (!tid)
+		वापस;
 
 	status->flag |= RX_FLAG_DUP_VALIDATED;
 	spin_lock_bh(&tid->lock);
 
-	if (tid->stopped)
-		goto out;
+	अगर (tid->stopped)
+		जाओ out;
 
 	head = tid->head;
 	seqno = status->seqno;
 	size = tid->size;
 	sn_less = ieee80211_sn_less(seqno, head);
 
-	if (!tid->started) {
-		if (sn_less)
-			goto out;
+	अगर (!tid->started) अणु
+		अगर (sn_less)
+			जाओ out;
 
 		tid->started = true;
-	}
+	पूर्ण
 
-	if (sn_less) {
+	अगर (sn_less) अणु
 		__skb_unlink(skb, frames);
-		dev_kfree_skb(skb);
-		goto out;
-	}
+		dev_kमुक्त_skb(skb);
+		जाओ out;
+	पूर्ण
 
-	if (seqno == head) {
+	अगर (seqno == head) अणु
 		tid->head = ieee80211_sn_inc(head);
-		if (tid->nframes)
+		अगर (tid->nframes)
 			mt76_rx_aggr_release_head(tid, frames);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	__skb_unlink(skb, frames);
 
 	/*
-	 * Frame sequence number exceeds buffering window, free up some space
+	 * Frame sequence number exceeds buffering winकरोw, मुक्त up some space
 	 * by releasing previous frames
 	 */
-	if (!ieee80211_sn_less(seqno, head + size)) {
+	अगर (!ieee80211_sn_less(seqno, head + size)) अणु
 		head = ieee80211_sn_inc(ieee80211_sn_sub(seqno, size));
 		mt76_rx_aggr_release_frames(tid, frames, head);
-	}
+	पूर्ण
 
 	idx = seqno % size;
 
-	/* Discard if the current slot is already in use */
-	if (tid->reorder_buf[idx]) {
-		dev_kfree_skb(skb);
-		goto out;
-	}
+	/* Discard अगर the current slot is alपढ़ोy in use */
+	अगर (tid->reorder_buf[idx]) अणु
+		dev_kमुक्त_skb(skb);
+		जाओ out;
+	पूर्ण
 
-	status->reorder_time = jiffies;
+	status->reorder_समय = jअगरfies;
 	tid->reorder_buf[idx] = skb;
 	tid->nframes++;
 	mt76_rx_aggr_release_head(tid, frames);
 
 	ieee80211_queue_delayed_work(tid->dev->hw, &tid->reorder_work,
-				     mt76_aggr_tid_to_timeo(tid->num));
+				     mt76_aggr_tid_to_समयo(tid->num));
 
 out:
 	spin_unlock_bh(&tid->lock);
-}
+पूर्ण
 
-int mt76_rx_aggr_start(struct mt76_dev *dev, struct mt76_wcid *wcid, u8 tidno,
+पूर्णांक mt76_rx_aggr_start(काष्ठा mt76_dev *dev, काष्ठा mt76_wcid *wcid, u8 tidno,
 		       u16 ssn, u16 size)
-{
-	struct mt76_rx_tid *tid;
+अणु
+	काष्ठा mt76_rx_tid *tid;
 
 	mt76_rx_aggr_stop(dev, wcid, tidno);
 
-	tid = kzalloc(struct_size(tid, reorder_buf, size), GFP_KERNEL);
-	if (!tid)
-		return -ENOMEM;
+	tid = kzalloc(काष्ठा_size(tid, reorder_buf, size), GFP_KERNEL);
+	अगर (!tid)
+		वापस -ENOMEM;
 
 	tid->dev = dev;
 	tid->head = ssn;
@@ -257,45 +258,45 @@ int mt76_rx_aggr_start(struct mt76_dev *dev, struct mt76_wcid *wcid, u8 tidno,
 	INIT_DELAYED_WORK(&tid->reorder_work, mt76_rx_aggr_reorder_work);
 	spin_lock_init(&tid->lock);
 
-	rcu_assign_pointer(wcid->aggr[tidno], tid);
+	rcu_assign_poपूर्णांकer(wcid->aggr[tidno], tid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_rx_aggr_start);
 
-static void mt76_rx_aggr_shutdown(struct mt76_dev *dev, struct mt76_rx_tid *tid)
-{
+अटल व्योम mt76_rx_aggr_shutकरोwn(काष्ठा mt76_dev *dev, काष्ठा mt76_rx_tid *tid)
+अणु
 	u16 size = tid->size;
-	int i;
+	पूर्णांक i;
 
 	spin_lock_bh(&tid->lock);
 
 	tid->stopped = true;
-	for (i = 0; tid->nframes && i < size; i++) {
-		struct sk_buff *skb = tid->reorder_buf[i];
+	क्रम (i = 0; tid->nframes && i < size; i++) अणु
+		काष्ठा sk_buff *skb = tid->reorder_buf[i];
 
-		if (!skb)
-			continue;
+		अगर (!skb)
+			जारी;
 
-		tid->reorder_buf[i] = NULL;
+		tid->reorder_buf[i] = शून्य;
 		tid->nframes--;
-		dev_kfree_skb(skb);
-	}
+		dev_kमुक्त_skb(skb);
+	पूर्ण
 
 	spin_unlock_bh(&tid->lock);
 
 	cancel_delayed_work_sync(&tid->reorder_work);
-}
+पूर्ण
 
-void mt76_rx_aggr_stop(struct mt76_dev *dev, struct mt76_wcid *wcid, u8 tidno)
-{
-	struct mt76_rx_tid *tid = NULL;
+व्योम mt76_rx_aggr_stop(काष्ठा mt76_dev *dev, काष्ठा mt76_wcid *wcid, u8 tidno)
+अणु
+	काष्ठा mt76_rx_tid *tid = शून्य;
 
-	tid = rcu_replace_pointer(wcid->aggr[tidno], tid,
+	tid = rcu_replace_poपूर्णांकer(wcid->aggr[tidno], tid,
 				  lockdep_is_held(&dev->mutex));
-	if (tid) {
-		mt76_rx_aggr_shutdown(dev, tid);
-		kfree_rcu(tid, rcu_head);
-	}
-}
+	अगर (tid) अणु
+		mt76_rx_aggr_shutकरोwn(dev, tid);
+		kमुक्त_rcu(tid, rcu_head);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_rx_aggr_stop);

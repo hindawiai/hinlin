@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __AR5312_H
-#define __AR5312_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __AR5312_H
+#घोषणा __AR5312_H
 
-#ifdef CONFIG_SOC_AR5312
+#अगर_घोषित CONFIG_SOC_AR5312
 
-void ar5312_arch_init_irq(void);
-void ar5312_init_devices(void);
-void ar5312_plat_time_init(void);
-void ar5312_plat_mem_setup(void);
-void ar5312_arch_init(void);
+व्योम ar5312_arch_init_irq(व्योम);
+व्योम ar5312_init_devices(व्योम);
+व्योम ar5312_plat_समय_init(व्योम);
+व्योम ar5312_plat_mem_setup(व्योम);
+व्योम ar5312_arch_init(व्योम);
 
-#else
+#अन्यथा
 
-static inline void ar5312_arch_init_irq(void) {}
-static inline void ar5312_init_devices(void) {}
-static inline void ar5312_plat_time_init(void) {}
-static inline void ar5312_plat_mem_setup(void) {}
-static inline void ar5312_arch_init(void) {}
+अटल अंतरभूत व्योम ar5312_arch_init_irq(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम ar5312_init_devices(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम ar5312_plat_समय_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम ar5312_plat_mem_setup(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम ar5312_arch_init(व्योम) अणुपूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif	/* __AR5312_H */
+#पूर्ण_अगर	/* __AR5312_H */

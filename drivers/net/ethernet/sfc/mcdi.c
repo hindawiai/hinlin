@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2008-2013 Solarflare Communications Inc.
  */
 
-#include <linux/delay.h>
-#include <linux/moduleparam.h>
-#include <linux/atomic.h>
-#include "net_driver.h"
-#include "nic.h"
-#include "io.h"
-#include "farch_regs.h"
-#include "mcdi_pcol.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/atomic.h>
+#समावेश "net_driver.h"
+#समावेश "nic.h"
+#समावेश "io.h"
+#समावेश "farch_regs.h"
+#समावेश "mcdi_pcol.h"
 
 /**************************************************************************
  *
@@ -20,157 +21,157 @@
  **************************************************************************
  */
 
-#define MCDI_RPC_TIMEOUT       (10 * HZ)
+#घोषणा MCDI_RPC_TIMEOUT       (10 * HZ)
 
-/* A reboot/assertion causes the MCDI status word to be set after the
+/* A reboot/निश्चितion causes the MCDI status word to be set after the
  * command word is set or a REBOOT event is sent. If we notice a reboot
- * via these mechanisms then wait 250ms for the status word to be set.
+ * via these mechanisms then रुको 250ms क्रम the status word to be set.
  */
-#define MCDI_STATUS_DELAY_US		100
-#define MCDI_STATUS_DELAY_COUNT		2500
-#define MCDI_STATUS_SLEEP_MS						\
+#घोषणा MCDI_STATUS_DELAY_US		100
+#घोषणा MCDI_STATUS_DELAY_COUNT		2500
+#घोषणा MCDI_STATUS_SLEEP_MS						\
 	(MCDI_STATUS_DELAY_US * MCDI_STATUS_DELAY_COUNT / 1000)
 
-#define SEQ_MASK							\
+#घोषणा SEQ_MASK							\
 	EFX_MASK32(EFX_WIDTH(MCDI_HEADER_SEQ))
 
-struct efx_mcdi_async_param {
-	struct list_head list;
-	unsigned int cmd;
-	size_t inlen;
-	size_t outlen;
+काष्ठा efx_mcdi_async_param अणु
+	काष्ठा list_head list;
+	अचिन्हित पूर्णांक cmd;
+	माप_प्रकार inlen;
+	माप_प्रकार outlen;
 	bool quiet;
 	efx_mcdi_async_completer *complete;
-	unsigned long cookie;
+	अचिन्हित दीर्घ cookie;
 	/* followed by request/response buffer */
-};
+पूर्ण;
 
-static void efx_mcdi_timeout_async(struct timer_list *t);
-static int efx_mcdi_drv_attach(struct efx_nic *efx, bool driver_operating,
+अटल व्योम efx_mcdi_समयout_async(काष्ठा समयr_list *t);
+अटल पूर्णांक efx_mcdi_drv_attach(काष्ठा efx_nic *efx, bool driver_operating,
 			       bool *was_attached_out);
-static bool efx_mcdi_poll_once(struct efx_nic *efx);
-static void efx_mcdi_abandon(struct efx_nic *efx);
+अटल bool efx_mcdi_poll_once(काष्ठा efx_nic *efx);
+अटल व्योम efx_mcdi_abanकरोn(काष्ठा efx_nic *efx);
 
-#ifdef CONFIG_SFC_MCDI_LOGGING
-static bool mcdi_logging_default;
-module_param(mcdi_logging_default, bool, 0644);
-MODULE_PARM_DESC(mcdi_logging_default,
+#अगर_घोषित CONFIG_SFC_MCDI_LOGGING
+अटल bool mcdi_logging_शेष;
+module_param(mcdi_logging_शेष, bool, 0644);
+MODULE_PARM_DESC(mcdi_logging_शेष,
 		 "Enable MCDI logging on newly-probed functions");
-#endif
+#पूर्ण_अगर
 
-int efx_mcdi_init(struct efx_nic *efx)
-{
-	struct efx_mcdi_iface *mcdi;
-	bool already_attached;
-	int rc = -ENOMEM;
+पूर्णांक efx_mcdi_init(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi;
+	bool alपढ़ोy_attached;
+	पूर्णांक rc = -ENOMEM;
 
-	efx->mcdi = kzalloc(sizeof(*efx->mcdi), GFP_KERNEL);
-	if (!efx->mcdi)
-		goto fail;
+	efx->mcdi = kzalloc(माप(*efx->mcdi), GFP_KERNEL);
+	अगर (!efx->mcdi)
+		जाओ fail;
 
 	mcdi = efx_mcdi(efx);
 	mcdi->efx = efx;
-#ifdef CONFIG_SFC_MCDI_LOGGING
+#अगर_घोषित CONFIG_SFC_MCDI_LOGGING
 	/* consuming code assumes buffer is page-sized */
-	mcdi->logging_buffer = (char *)__get_free_page(GFP_KERNEL);
-	if (!mcdi->logging_buffer)
-		goto fail1;
-	mcdi->logging_enabled = mcdi_logging_default;
-#endif
-	init_waitqueue_head(&mcdi->wq);
-	init_waitqueue_head(&mcdi->proxy_rx_wq);
-	spin_lock_init(&mcdi->iface_lock);
+	mcdi->logging_buffer = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!mcdi->logging_buffer)
+		जाओ fail1;
+	mcdi->logging_enabled = mcdi_logging_शेष;
+#पूर्ण_अगर
+	init_रुकोqueue_head(&mcdi->wq);
+	init_रुकोqueue_head(&mcdi->proxy_rx_wq);
+	spin_lock_init(&mcdi->अगरace_lock);
 	mcdi->state = MCDI_STATE_QUIESCENT;
 	mcdi->mode = MCDI_MODE_POLL;
 	spin_lock_init(&mcdi->async_lock);
 	INIT_LIST_HEAD(&mcdi->async_list);
-	timer_setup(&mcdi->async_timer, efx_mcdi_timeout_async, 0);
+	समयr_setup(&mcdi->async_समयr, efx_mcdi_समयout_async, 0);
 
-	(void) efx_mcdi_poll_reboot(efx);
+	(व्योम) efx_mcdi_poll_reboot(efx);
 	mcdi->new_epoch = true;
 
-	/* Recover from a failed assertion before probing */
-	rc = efx_mcdi_handle_assertion(efx);
-	if (rc)
-		goto fail2;
+	/* Recover from a failed निश्चितion beक्रमe probing */
+	rc = efx_mcdi_handle_निश्चितion(efx);
+	अगर (rc)
+		जाओ fail2;
 
-	/* Let the MC (and BMC, if this is a LOM) know that the driver
-	 * is loaded. We should do this before we reset the NIC.
+	/* Let the MC (and BMC, अगर this is a LOM) know that the driver
+	 * is loaded. We should करो this beक्रमe we reset the NIC.
 	 */
-	rc = efx_mcdi_drv_attach(efx, true, &already_attached);
-	if (rc) {
-		netif_err(efx, probe, efx->net_dev,
+	rc = efx_mcdi_drv_attach(efx, true, &alपढ़ोy_attached);
+	अगर (rc) अणु
+		netअगर_err(efx, probe, efx->net_dev,
 			  "Unable to register driver with MCPU\n");
-		goto fail2;
-	}
-	if (already_attached)
+		जाओ fail2;
+	पूर्ण
+	अगर (alपढ़ोy_attached)
 		/* Not a fatal error */
-		netif_err(efx, probe, efx->net_dev,
+		netअगर_err(efx, probe, efx->net_dev,
 			  "Host already registered with MCPU\n");
 
-	if (efx->mcdi->fn_flags &
+	अगर (efx->mcdi->fn_flags &
 	    (1 << MC_CMD_DRV_ATTACH_EXT_OUT_FLAG_PRIMARY))
 		efx->primary = efx;
 
-	return 0;
+	वापस 0;
 fail2:
-#ifdef CONFIG_SFC_MCDI_LOGGING
-	free_page((unsigned long)mcdi->logging_buffer);
+#अगर_घोषित CONFIG_SFC_MCDI_LOGGING
+	मुक्त_page((अचिन्हित दीर्घ)mcdi->logging_buffer);
 fail1:
-#endif
-	kfree(efx->mcdi);
-	efx->mcdi = NULL;
+#पूर्ण_अगर
+	kमुक्त(efx->mcdi);
+	efx->mcdi = शून्य;
 fail:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void efx_mcdi_detach(struct efx_nic *efx)
-{
-	if (!efx->mcdi)
-		return;
+व्योम efx_mcdi_detach(काष्ठा efx_nic *efx)
+अणु
+	अगर (!efx->mcdi)
+		वापस;
 
-	BUG_ON(efx->mcdi->iface.state != MCDI_STATE_QUIESCENT);
+	BUG_ON(efx->mcdi->अगरace.state != MCDI_STATE_QUIESCENT);
 
-	/* Relinquish the device (back to the BMC, if this is a LOM) */
-	efx_mcdi_drv_attach(efx, false, NULL);
-}
+	/* Relinquish the device (back to the BMC, अगर this is a LOM) */
+	efx_mcdi_drv_attach(efx, false, शून्य);
+पूर्ण
 
-void efx_mcdi_fini(struct efx_nic *efx)
-{
-	if (!efx->mcdi)
-		return;
+व्योम efx_mcdi_fini(काष्ठा efx_nic *efx)
+अणु
+	अगर (!efx->mcdi)
+		वापस;
 
-#ifdef CONFIG_SFC_MCDI_LOGGING
-	free_page((unsigned long)efx->mcdi->iface.logging_buffer);
-#endif
+#अगर_घोषित CONFIG_SFC_MCDI_LOGGING
+	मुक्त_page((अचिन्हित दीर्घ)efx->mcdi->अगरace.logging_buffer);
+#पूर्ण_अगर
 
-	kfree(efx->mcdi);
-}
+	kमुक्त(efx->mcdi);
+पूर्ण
 
-static void efx_mcdi_send_request(struct efx_nic *efx, unsigned cmd,
-				  const efx_dword_t *inbuf, size_t inlen)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
-#ifdef CONFIG_SFC_MCDI_LOGGING
-	char *buf = mcdi->logging_buffer; /* page-sized */
-#endif
+अटल व्योम efx_mcdi_send_request(काष्ठा efx_nic *efx, अचिन्हित cmd,
+				  स्थिर efx_dword_t *inbuf, माप_प्रकार inlen)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
+#अगर_घोषित CONFIG_SFC_MCDI_LOGGING
+	अक्षर *buf = mcdi->logging_buffer; /* page-sized */
+#पूर्ण_अगर
 	efx_dword_t hdr[2];
-	size_t hdr_len;
+	माप_प्रकार hdr_len;
 	u32 xflags, seqno;
 
 	BUG_ON(mcdi->state == MCDI_STATE_QUIESCENT);
 
 	/* Serialise with efx_mcdi_ev_cpl() and efx_mcdi_ev_death() */
-	spin_lock_bh(&mcdi->iface_lock);
+	spin_lock_bh(&mcdi->अगरace_lock);
 	++mcdi->seqno;
-	spin_unlock_bh(&mcdi->iface_lock);
+	spin_unlock_bh(&mcdi->अगरace_lock);
 
 	seqno = mcdi->seqno & SEQ_MASK;
 	xflags = 0;
-	if (mcdi->mode == MCDI_MODE_EVENTS)
+	अगर (mcdi->mode == MCDI_MODE_EVENTS)
 		xflags |= MCDI_HEADER_XFLAGS_EVREQ;
 
-	if (efx->type->mcdi_max_ver == 1) {
+	अगर (efx->type->mcdi_max_ver == 1) अणु
 		/* MCDI v1 */
 		EFX_POPULATE_DWORD_7(hdr[0],
 				     MCDI_HEADER_RESPONSE, 0,
@@ -181,7 +182,7 @@ static void efx_mcdi_send_request(struct efx_nic *efx, unsigned cmd,
 				     MCDI_HEADER_XFLAGS, xflags,
 				     MCDI_HEADER_NOT_EPOCH, !mcdi->new_epoch);
 		hdr_len = 4;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* MCDI v2 */
 		BUG_ON(inlen > MCDI_CTL_SDU_LEN_MAX_V2);
 		EFX_POPULATE_DWORD_7(hdr[0],
@@ -196,48 +197,48 @@ static void efx_mcdi_send_request(struct efx_nic *efx, unsigned cmd,
 				     MC_CMD_V2_EXTN_IN_EXTENDED_CMD, cmd,
 				     MC_CMD_V2_EXTN_IN_ACTUAL_LEN, inlen);
 		hdr_len = 8;
-	}
+	पूर्ण
 
-#ifdef CONFIG_SFC_MCDI_LOGGING
-	if (mcdi->logging_enabled && !WARN_ON_ONCE(!buf)) {
-		int bytes = 0;
-		int i;
+#अगर_घोषित CONFIG_SFC_MCDI_LOGGING
+	अगर (mcdi->logging_enabled && !WARN_ON_ONCE(!buf)) अणु
+		पूर्णांक bytes = 0;
+		पूर्णांक i;
 		/* Lengths should always be a whole number of dwords, so scream
-		 * if they're not.
+		 * अगर they're not.
 		 */
 		WARN_ON_ONCE(hdr_len % 4);
 		WARN_ON_ONCE(inlen % 4);
 
 		/* We own the logging buffer, as only one MCDI can be in
-		 * progress on a NIC at any one time.  So no need for locking.
+		 * progress on a NIC at any one समय.  So no need क्रम locking.
 		 */
-		for (i = 0; i < hdr_len / 4 && bytes < PAGE_SIZE; i++)
-			bytes += scnprintf(buf + bytes, PAGE_SIZE - bytes,
+		क्रम (i = 0; i < hdr_len / 4 && bytes < PAGE_SIZE; i++)
+			bytes += scnम_लिखो(buf + bytes, PAGE_SIZE - bytes,
 					   " %08x",
 					   le32_to_cpu(hdr[i].u32[0]));
 
-		for (i = 0; i < inlen / 4 && bytes < PAGE_SIZE; i++)
-			bytes += scnprintf(buf + bytes, PAGE_SIZE - bytes,
+		क्रम (i = 0; i < inlen / 4 && bytes < PAGE_SIZE; i++)
+			bytes += scnम_लिखो(buf + bytes, PAGE_SIZE - bytes,
 					   " %08x",
 					   le32_to_cpu(inbuf[i].u32[0]));
 
-		netif_info(efx, hw, efx->net_dev, "MCDI RPC REQ:%s\n", buf);
-	}
-#endif
+		netअगर_info(efx, hw, efx->net_dev, "MCDI RPC REQ:%s\n", buf);
+	पूर्ण
+#पूर्ण_अगर
 
 	efx->type->mcdi_request(efx, hdr, hdr_len, inbuf, inlen);
 
 	mcdi->new_epoch = false;
-}
+पूर्ण
 
-static int efx_mcdi_errno(unsigned int mcdi_err)
-{
-	switch (mcdi_err) {
-	case 0:
-		return 0;
-#define TRANSLATE_ERROR(name)					\
-	case MC_CMD_ERR_ ## name:				\
-		return -name;
+अटल पूर्णांक efx_mcdi_त्रुटि_सं(अचिन्हित पूर्णांक mcdi_err)
+अणु
+	चयन (mcdi_err) अणु
+	हाल 0:
+		वापस 0;
+#घोषणा TRANSLATE_ERROR(name)					\
+	हाल MC_CMD_ERR_ ## name:				\
+		वापस -name;
 	TRANSLATE_ERROR(EPERM);
 	TRANSLATE_ERROR(ENOENT);
 	TRANSLATE_ERROR(EINTR);
@@ -250,47 +251,47 @@ static int efx_mcdi_errno(unsigned int mcdi_err)
 	TRANSLATE_ERROR(ETIME);
 	TRANSLATE_ERROR(EALREADY);
 	TRANSLATE_ERROR(ENOSPC);
-#undef TRANSLATE_ERROR
-	case MC_CMD_ERR_ENOTSUP:
-		return -EOPNOTSUPP;
-	case MC_CMD_ERR_ALLOC_FAIL:
-		return -ENOBUFS;
-	case MC_CMD_ERR_MAC_EXIST:
-		return -EADDRINUSE;
-	default:
-		return -EPROTO;
-	}
-}
+#अघोषित TRANSLATE_ERROR
+	हाल MC_CMD_ERR_ENOTSUP:
+		वापस -EOPNOTSUPP;
+	हाल MC_CMD_ERR_ALLOC_FAIL:
+		वापस -ENOBUFS;
+	हाल MC_CMD_ERR_MAC_EXIST:
+		वापस -EADDRINUSE;
+	शेष:
+		वापस -EPROTO;
+	पूर्ण
+पूर्ण
 
-static void efx_mcdi_read_response_header(struct efx_nic *efx)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
-	unsigned int respseq, respcmd, error;
-#ifdef CONFIG_SFC_MCDI_LOGGING
-	char *buf = mcdi->logging_buffer; /* page-sized */
-#endif
+अटल व्योम efx_mcdi_पढ़ो_response_header(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
+	अचिन्हित पूर्णांक respseq, respcmd, error;
+#अगर_घोषित CONFIG_SFC_MCDI_LOGGING
+	अक्षर *buf = mcdi->logging_buffer; /* page-sized */
+#पूर्ण_अगर
 	efx_dword_t hdr;
 
-	efx->type->mcdi_read_response(efx, &hdr, 0, 4);
+	efx->type->mcdi_पढ़ो_response(efx, &hdr, 0, 4);
 	respseq = EFX_DWORD_FIELD(hdr, MCDI_HEADER_SEQ);
 	respcmd = EFX_DWORD_FIELD(hdr, MCDI_HEADER_CODE);
 	error = EFX_DWORD_FIELD(hdr, MCDI_HEADER_ERROR);
 
-	if (respcmd != MC_CMD_V2_EXTN) {
+	अगर (respcmd != MC_CMD_V2_EXTN) अणु
 		mcdi->resp_hdr_len = 4;
 		mcdi->resp_data_len = EFX_DWORD_FIELD(hdr, MCDI_HEADER_DATALEN);
-	} else {
-		efx->type->mcdi_read_response(efx, &hdr, 4, 4);
+	पूर्ण अन्यथा अणु
+		efx->type->mcdi_पढ़ो_response(efx, &hdr, 4, 4);
 		mcdi->resp_hdr_len = 8;
 		mcdi->resp_data_len =
 			EFX_DWORD_FIELD(hdr, MC_CMD_V2_EXTN_IN_ACTUAL_LEN);
-	}
+	पूर्ण
 
-#ifdef CONFIG_SFC_MCDI_LOGGING
-	if (mcdi->logging_enabled && !WARN_ON_ONCE(!buf)) {
-		size_t hdr_len, data_len;
-		int bytes = 0;
-		int i;
+#अगर_घोषित CONFIG_SFC_MCDI_LOGGING
+	अगर (mcdi->logging_enabled && !WARN_ON_ONCE(!buf)) अणु
+		माप_प्रकार hdr_len, data_len;
+		पूर्णांक bytes = 0;
+		पूर्णांक i;
 
 		WARN_ON_ONCE(mcdi->resp_hdr_len % 4);
 		hdr_len = mcdi->resp_hdr_len / 4;
@@ -300,220 +301,220 @@ static void efx_mcdi_read_response_header(struct efx_nic *efx)
 		data_len = DIV_ROUND_UP(mcdi->resp_data_len, 4);
 
 		/* We own the logging buffer, as only one MCDI can be in
-		 * progress on a NIC at any one time.  So no need for locking.
+		 * progress on a NIC at any one समय.  So no need क्रम locking.
 		 */
-		for (i = 0; i < hdr_len && bytes < PAGE_SIZE; i++) {
-			efx->type->mcdi_read_response(efx, &hdr, (i * 4), 4);
-			bytes += scnprintf(buf + bytes, PAGE_SIZE - bytes,
+		क्रम (i = 0; i < hdr_len && bytes < PAGE_SIZE; i++) अणु
+			efx->type->mcdi_पढ़ो_response(efx, &hdr, (i * 4), 4);
+			bytes += scnम_लिखो(buf + bytes, PAGE_SIZE - bytes,
 					   " %08x", le32_to_cpu(hdr.u32[0]));
-		}
+		पूर्ण
 
-		for (i = 0; i < data_len && bytes < PAGE_SIZE; i++) {
-			efx->type->mcdi_read_response(efx, &hdr,
+		क्रम (i = 0; i < data_len && bytes < PAGE_SIZE; i++) अणु
+			efx->type->mcdi_पढ़ो_response(efx, &hdr,
 					mcdi->resp_hdr_len + (i * 4), 4);
-			bytes += scnprintf(buf + bytes, PAGE_SIZE - bytes,
+			bytes += scnम_लिखो(buf + bytes, PAGE_SIZE - bytes,
 					   " %08x", le32_to_cpu(hdr.u32[0]));
-		}
+		पूर्ण
 
-		netif_info(efx, hw, efx->net_dev, "MCDI RPC RESP:%s\n", buf);
-	}
-#endif
+		netअगर_info(efx, hw, efx->net_dev, "MCDI RPC RESP:%s\n", buf);
+	पूर्ण
+#पूर्ण_अगर
 
 	mcdi->resprc_raw = 0;
-	if (error && mcdi->resp_data_len == 0) {
-		netif_err(efx, hw, efx->net_dev, "MC rebooted\n");
+	अगर (error && mcdi->resp_data_len == 0) अणु
+		netअगर_err(efx, hw, efx->net_dev, "MC rebooted\n");
 		mcdi->resprc = -EIO;
-	} else if ((respseq ^ mcdi->seqno) & SEQ_MASK) {
-		netif_err(efx, hw, efx->net_dev,
+	पूर्ण अन्यथा अगर ((respseq ^ mcdi->seqno) & SEQ_MASK) अणु
+		netअगर_err(efx, hw, efx->net_dev,
 			  "MC response mismatch tx seq 0x%x rx seq 0x%x\n",
 			  respseq, mcdi->seqno);
 		mcdi->resprc = -EIO;
-	} else if (error) {
-		efx->type->mcdi_read_response(efx, &hdr, mcdi->resp_hdr_len, 4);
+	पूर्ण अन्यथा अगर (error) अणु
+		efx->type->mcdi_पढ़ो_response(efx, &hdr, mcdi->resp_hdr_len, 4);
 		mcdi->resprc_raw = EFX_DWORD_FIELD(hdr, EFX_DWORD_0);
-		mcdi->resprc = efx_mcdi_errno(mcdi->resprc_raw);
-	} else {
+		mcdi->resprc = efx_mcdi_त्रुटि_सं(mcdi->resprc_raw);
+	पूर्ण अन्यथा अणु
 		mcdi->resprc = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool efx_mcdi_poll_once(struct efx_nic *efx)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
+अटल bool efx_mcdi_poll_once(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
 
 	rmb();
-	if (!efx->type->mcdi_poll_response(efx))
-		return false;
+	अगर (!efx->type->mcdi_poll_response(efx))
+		वापस false;
 
-	spin_lock_bh(&mcdi->iface_lock);
-	efx_mcdi_read_response_header(efx);
-	spin_unlock_bh(&mcdi->iface_lock);
+	spin_lock_bh(&mcdi->अगरace_lock);
+	efx_mcdi_पढ़ो_response_header(efx);
+	spin_unlock_bh(&mcdi->अगरace_lock);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int efx_mcdi_poll(struct efx_nic *efx)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
-	unsigned long time, finish;
-	unsigned int spins;
-	int rc;
+अटल पूर्णांक efx_mcdi_poll(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
+	अचिन्हित दीर्घ समय, finish;
+	अचिन्हित पूर्णांक spins;
+	पूर्णांक rc;
 
-	/* Check for a reboot atomically with respect to efx_mcdi_copyout() */
+	/* Check क्रम a reboot atomically with respect to efx_mcdi_copyout() */
 	rc = efx_mcdi_poll_reboot(efx);
-	if (rc) {
-		spin_lock_bh(&mcdi->iface_lock);
+	अगर (rc) अणु
+		spin_lock_bh(&mcdi->अगरace_lock);
 		mcdi->resprc = rc;
 		mcdi->resp_hdr_len = 0;
 		mcdi->resp_data_len = 0;
-		spin_unlock_bh(&mcdi->iface_lock);
-		return 0;
-	}
+		spin_unlock_bh(&mcdi->अगरace_lock);
+		वापस 0;
+	पूर्ण
 
-	/* Poll for completion. Poll quickly (once a us) for the 1st jiffy,
+	/* Poll क्रम completion. Poll quickly (once a us) क्रम the 1st jअगरfy,
 	 * because generally mcdi responses are fast. After that, back off
-	 * and poll once a jiffy (approximately)
+	 * and poll once a jअगरfy (approximately)
 	 */
 	spins = USER_TICK_USEC;
-	finish = jiffies + MCDI_RPC_TIMEOUT;
+	finish = jअगरfies + MCDI_RPC_TIMEOUT;
 
-	while (1) {
-		if (spins != 0) {
+	जबतक (1) अणु
+		अगर (spins != 0) अणु
 			--spins;
 			udelay(1);
-		} else {
-			schedule_timeout_uninterruptible(1);
-		}
+		पूर्ण अन्यथा अणु
+			schedule_समयout_unपूर्णांकerruptible(1);
+		पूर्ण
 
-		time = jiffies;
+		समय = jअगरfies;
 
-		if (efx_mcdi_poll_once(efx))
-			break;
+		अगर (efx_mcdi_poll_once(efx))
+			अवरोध;
 
-		if (time_after(time, finish))
-			return -ETIMEDOUT;
-	}
+		अगर (समय_after(समय, finish))
+			वापस -ETIMEDOUT;
+	पूर्ण
 
-	/* Return rc=0 like wait_event_timeout() */
-	return 0;
-}
+	/* Return rc=0 like रुको_event_समयout() */
+	वापस 0;
+पूर्ण
 
-/* Test and clear MC-rebooted flag for this port/function; reset
+/* Test and clear MC-rebooted flag क्रम this port/function; reset
  * software state as necessary.
  */
-int efx_mcdi_poll_reboot(struct efx_nic *efx)
-{
-	if (!efx->mcdi)
-		return 0;
+पूर्णांक efx_mcdi_poll_reboot(काष्ठा efx_nic *efx)
+अणु
+	अगर (!efx->mcdi)
+		वापस 0;
 
-	return efx->type->mcdi_poll_reboot(efx);
-}
+	वापस efx->type->mcdi_poll_reboot(efx);
+पूर्ण
 
-static bool efx_mcdi_acquire_async(struct efx_mcdi_iface *mcdi)
-{
-	return cmpxchg(&mcdi->state,
+अटल bool efx_mcdi_acquire_async(काष्ठा efx_mcdi_अगरace *mcdi)
+अणु
+	वापस cmpxchg(&mcdi->state,
 		       MCDI_STATE_QUIESCENT, MCDI_STATE_RUNNING_ASYNC) ==
 		MCDI_STATE_QUIESCENT;
-}
+पूर्ण
 
-static void efx_mcdi_acquire_sync(struct efx_mcdi_iface *mcdi)
-{
-	/* Wait until the interface becomes QUIESCENT and we win the race
+अटल व्योम efx_mcdi_acquire_sync(काष्ठा efx_mcdi_अगरace *mcdi)
+अणु
+	/* Wait until the पूर्णांकerface becomes QUIESCENT and we win the race
 	 * to mark it RUNNING_SYNC.
 	 */
-	wait_event(mcdi->wq,
+	रुको_event(mcdi->wq,
 		   cmpxchg(&mcdi->state,
 			   MCDI_STATE_QUIESCENT, MCDI_STATE_RUNNING_SYNC) ==
 		   MCDI_STATE_QUIESCENT);
-}
+पूर्ण
 
-static int efx_mcdi_await_completion(struct efx_nic *efx)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
+अटल पूर्णांक efx_mcdi_aरुको_completion(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
 
-	if (wait_event_timeout(mcdi->wq, mcdi->state == MCDI_STATE_COMPLETED,
+	अगर (रुको_event_समयout(mcdi->wq, mcdi->state == MCDI_STATE_COMPLETED,
 			       MCDI_RPC_TIMEOUT) == 0)
-		return -ETIMEDOUT;
+		वापस -ETIMEDOUT;
 
-	/* Check if efx_mcdi_set_mode() switched us back to polled completions.
-	 * In which case, poll for completions directly. If efx_mcdi_ev_cpl()
+	/* Check अगर efx_mcdi_set_mode() चयनed us back to polled completions.
+	 * In which हाल, poll क्रम completions directly. If efx_mcdi_ev_cpl()
 	 * completed the request first, then we'll just end up completing the
 	 * request again, which is safe.
 	 *
 	 * We need an smp_rmb() to synchronise with efx_mcdi_mode_poll(), which
-	 * wait_event_timeout() implicitly provides.
+	 * रुको_event_समयout() implicitly provides.
 	 */
-	if (mcdi->mode == MCDI_MODE_POLL)
-		return efx_mcdi_poll(efx);
+	अगर (mcdi->mode == MCDI_MODE_POLL)
+		वापस efx_mcdi_poll(efx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* If the interface is RUNNING_SYNC, switch to COMPLETED and wake the
- * requester.  Return whether this was done.  Does not take any locks.
+/* If the पूर्णांकerface is RUNNING_SYNC, चयन to COMPLETED and wake the
+ * requester.  Return whether this was करोne.  Does not take any locks.
  */
-static bool efx_mcdi_complete_sync(struct efx_mcdi_iface *mcdi)
-{
-	if (cmpxchg(&mcdi->state,
+अटल bool efx_mcdi_complete_sync(काष्ठा efx_mcdi_अगरace *mcdi)
+अणु
+	अगर (cmpxchg(&mcdi->state,
 		    MCDI_STATE_RUNNING_SYNC, MCDI_STATE_COMPLETED) ==
-	    MCDI_STATE_RUNNING_SYNC) {
+	    MCDI_STATE_RUNNING_SYNC) अणु
 		wake_up(&mcdi->wq);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void efx_mcdi_release(struct efx_mcdi_iface *mcdi)
-{
-	if (mcdi->mode == MCDI_MODE_EVENTS) {
-		struct efx_mcdi_async_param *async;
-		struct efx_nic *efx = mcdi->efx;
+अटल व्योम efx_mcdi_release(काष्ठा efx_mcdi_अगरace *mcdi)
+अणु
+	अगर (mcdi->mode == MCDI_MODE_EVENTS) अणु
+		काष्ठा efx_mcdi_async_param *async;
+		काष्ठा efx_nic *efx = mcdi->efx;
 
 		/* Process the asynchronous request queue */
 		spin_lock_bh(&mcdi->async_lock);
 		async = list_first_entry_or_null(
-			&mcdi->async_list, struct efx_mcdi_async_param, list);
-		if (async) {
+			&mcdi->async_list, काष्ठा efx_mcdi_async_param, list);
+		अगर (async) अणु
 			mcdi->state = MCDI_STATE_RUNNING_ASYNC;
 			efx_mcdi_send_request(efx, async->cmd,
-					      (const efx_dword_t *)(async + 1),
+					      (स्थिर efx_dword_t *)(async + 1),
 					      async->inlen);
-			mod_timer(&mcdi->async_timer,
-				  jiffies + MCDI_RPC_TIMEOUT);
-		}
+			mod_समयr(&mcdi->async_समयr,
+				  jअगरfies + MCDI_RPC_TIMEOUT);
+		पूर्ण
 		spin_unlock_bh(&mcdi->async_lock);
 
-		if (async)
-			return;
-	}
+		अगर (async)
+			वापस;
+	पूर्ण
 
 	mcdi->state = MCDI_STATE_QUIESCENT;
 	wake_up(&mcdi->wq);
-}
+पूर्ण
 
-/* If the interface is RUNNING_ASYNC, switch to COMPLETED, call the
- * asynchronous completion function, and release the interface.
- * Return whether this was done.  Must be called in bh-disabled
- * context.  Will take iface_lock and async_lock.
+/* If the पूर्णांकerface is RUNNING_ASYNC, चयन to COMPLETED, call the
+ * asynchronous completion function, and release the पूर्णांकerface.
+ * Return whether this was करोne.  Must be called in bh-disabled
+ * context.  Will take अगरace_lock and async_lock.
  */
-static bool efx_mcdi_complete_async(struct efx_mcdi_iface *mcdi, bool timeout)
-{
-	struct efx_nic *efx = mcdi->efx;
-	struct efx_mcdi_async_param *async;
-	size_t hdr_len, data_len, err_len;
+अटल bool efx_mcdi_complete_async(काष्ठा efx_mcdi_अगरace *mcdi, bool समयout)
+अणु
+	काष्ठा efx_nic *efx = mcdi->efx;
+	काष्ठा efx_mcdi_async_param *async;
+	माप_प्रकार hdr_len, data_len, err_len;
 	efx_dword_t *outbuf;
 	MCDI_DECLARE_BUF_ERR(errbuf);
-	int rc;
+	पूर्णांक rc;
 
-	if (cmpxchg(&mcdi->state,
+	अगर (cmpxchg(&mcdi->state,
 		    MCDI_STATE_RUNNING_ASYNC, MCDI_STATE_COMPLETED) !=
 	    MCDI_STATE_RUNNING_ASYNC)
-		return false;
+		वापस false;
 
-	spin_lock(&mcdi->iface_lock);
-	if (timeout) {
-		/* Ensure that if the completion event arrives later,
+	spin_lock(&mcdi->अगरace_lock);
+	अगर (समयout) अणु
+		/* Ensure that अगर the completion event arrives later,
 		 * the seqno check in efx_mcdi_ev_cpl() will fail
 		 */
 		++mcdi->seqno;
@@ -521,319 +522,319 @@ static bool efx_mcdi_complete_async(struct efx_mcdi_iface *mcdi, bool timeout)
 		rc = -ETIMEDOUT;
 		hdr_len = 0;
 		data_len = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = mcdi->resprc;
 		hdr_len = mcdi->resp_hdr_len;
 		data_len = mcdi->resp_data_len;
-	}
-	spin_unlock(&mcdi->iface_lock);
+	पूर्ण
+	spin_unlock(&mcdi->अगरace_lock);
 
-	/* Stop the timer.  In case the timer function is running, we
-	 * must wait for it to return so that there is no possibility
-	 * of it aborting the next request.
+	/* Stop the समयr.  In हाल the समयr function is running, we
+	 * must रुको क्रम it to वापस so that there is no possibility
+	 * of it पातing the next request.
 	 */
-	if (!timeout)
-		del_timer_sync(&mcdi->async_timer);
+	अगर (!समयout)
+		del_समयr_sync(&mcdi->async_समयr);
 
 	spin_lock(&mcdi->async_lock);
 	async = list_first_entry(&mcdi->async_list,
-				 struct efx_mcdi_async_param, list);
+				 काष्ठा efx_mcdi_async_param, list);
 	list_del(&async->list);
 	spin_unlock(&mcdi->async_lock);
 
 	outbuf = (efx_dword_t *)(async + 1);
-	efx->type->mcdi_read_response(efx, outbuf, hdr_len,
+	efx->type->mcdi_पढ़ो_response(efx, outbuf, hdr_len,
 				      min(async->outlen, data_len));
-	if (!timeout && rc && !async->quiet) {
-		err_len = min(sizeof(errbuf), data_len);
-		efx->type->mcdi_read_response(efx, errbuf, hdr_len,
-					      sizeof(errbuf));
+	अगर (!समयout && rc && !async->quiet) अणु
+		err_len = min(माप(errbuf), data_len);
+		efx->type->mcdi_पढ़ो_response(efx, errbuf, hdr_len,
+					      माप(errbuf));
 		efx_mcdi_display_error(efx, async->cmd, async->inlen, errbuf,
 				       err_len, rc);
-	}
+	पूर्ण
 
-	if (async->complete)
+	अगर (async->complete)
 		async->complete(efx, async->cookie, rc, outbuf,
 				min(async->outlen, data_len));
-	kfree(async);
+	kमुक्त(async);
 
 	efx_mcdi_release(mcdi);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void efx_mcdi_ev_cpl(struct efx_nic *efx, unsigned int seqno,
-			    unsigned int datalen, unsigned int mcdi_err)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
+अटल व्योम efx_mcdi_ev_cpl(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक seqno,
+			    अचिन्हित पूर्णांक datalen, अचिन्हित पूर्णांक mcdi_err)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
 	bool wake = false;
 
-	spin_lock(&mcdi->iface_lock);
+	spin_lock(&mcdi->अगरace_lock);
 
-	if ((seqno ^ mcdi->seqno) & SEQ_MASK) {
-		if (mcdi->credits)
+	अगर ((seqno ^ mcdi->seqno) & SEQ_MASK) अणु
+		अगर (mcdi->credits)
 			/* The request has been cancelled */
 			--mcdi->credits;
-		else
-			netif_err(efx, hw, efx->net_dev,
+		अन्यथा
+			netअगर_err(efx, hw, efx->net_dev,
 				  "MC response mismatch tx seq 0x%x rx "
 				  "seq 0x%x\n", seqno, mcdi->seqno);
-	} else {
-		if (efx->type->mcdi_max_ver >= 2) {
-			/* MCDI v2 responses don't fit in an event */
-			efx_mcdi_read_response_header(efx);
-		} else {
-			mcdi->resprc = efx_mcdi_errno(mcdi_err);
+	पूर्ण अन्यथा अणु
+		अगर (efx->type->mcdi_max_ver >= 2) अणु
+			/* MCDI v2 responses करोn't fit in an event */
+			efx_mcdi_पढ़ो_response_header(efx);
+		पूर्ण अन्यथा अणु
+			mcdi->resprc = efx_mcdi_त्रुटि_सं(mcdi_err);
 			mcdi->resp_hdr_len = 4;
 			mcdi->resp_data_len = datalen;
-		}
+		पूर्ण
 
 		wake = true;
-	}
+	पूर्ण
 
-	spin_unlock(&mcdi->iface_lock);
+	spin_unlock(&mcdi->अगरace_lock);
 
-	if (wake) {
-		if (!efx_mcdi_complete_async(mcdi, false))
-			(void) efx_mcdi_complete_sync(mcdi);
+	अगर (wake) अणु
+		अगर (!efx_mcdi_complete_async(mcdi, false))
+			(व्योम) efx_mcdi_complete_sync(mcdi);
 
-		/* If the interface isn't RUNNING_ASYNC or
+		/* If the पूर्णांकerface isn't RUNNING_ASYNC or
 		 * RUNNING_SYNC then we've received a duplicate
-		 * completion after we've already transitioned back to
+		 * completion after we've alपढ़ोy transitioned back to
 		 * QUIESCENT. [A subsequent invocation would increment
 		 * seqno, so would have failed the seqno check].
 		 */
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void efx_mcdi_timeout_async(struct timer_list *t)
-{
-	struct efx_mcdi_iface *mcdi = from_timer(mcdi, t, async_timer);
+अटल व्योम efx_mcdi_समयout_async(काष्ठा समयr_list *t)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = from_समयr(mcdi, t, async_समयr);
 
 	efx_mcdi_complete_async(mcdi, true);
-}
+पूर्ण
 
-static int
-efx_mcdi_check_supported(struct efx_nic *efx, unsigned int cmd, size_t inlen)
-{
-	if (efx->type->mcdi_max_ver < 0 ||
+अटल पूर्णांक
+efx_mcdi_check_supported(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक cmd, माप_प्रकार inlen)
+अणु
+	अगर (efx->type->mcdi_max_ver < 0 ||
 	     (efx->type->mcdi_max_ver < 2 &&
 	      cmd > MC_CMD_CMD_SPACE_ESCAPE_7))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (inlen > MCDI_CTL_SDU_LEN_MAX_V2 ||
+	अगर (inlen > MCDI_CTL_SDU_LEN_MAX_V2 ||
 	    (efx->type->mcdi_max_ver < 2 &&
 	     inlen > MCDI_CTL_SDU_LEN_MAX_V1))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool efx_mcdi_get_proxy_handle(struct efx_nic *efx,
-				      size_t hdr_len, size_t data_len,
+अटल bool efx_mcdi_get_proxy_handle(काष्ठा efx_nic *efx,
+				      माप_प्रकार hdr_len, माप_प्रकार data_len,
 				      u32 *proxy_handle)
-{
+अणु
 	MCDI_DECLARE_BUF_ERR(testbuf);
-	const size_t buflen = sizeof(testbuf);
+	स्थिर माप_प्रकार buflen = माप(testbuf);
 
-	if (!proxy_handle || data_len < buflen)
-		return false;
+	अगर (!proxy_handle || data_len < buflen)
+		वापस false;
 
-	efx->type->mcdi_read_response(efx, testbuf, hdr_len, buflen);
-	if (MCDI_DWORD(testbuf, ERR_CODE) == MC_CMD_ERR_PROXY_PENDING) {
+	efx->type->mcdi_पढ़ो_response(efx, testbuf, hdr_len, buflen);
+	अगर (MCDI_DWORD(testbuf, ERR_CODE) == MC_CMD_ERR_PROXY_PENDING) अणु
 		*proxy_handle = MCDI_DWORD(testbuf, ERR_PROXY_PENDING_HANDLE);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int _efx_mcdi_rpc_finish(struct efx_nic *efx, unsigned int cmd,
-				size_t inlen,
-				efx_dword_t *outbuf, size_t outlen,
-				size_t *outlen_actual, bool quiet,
-				u32 *proxy_handle, int *raw_rc)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
+अटल पूर्णांक _efx_mcdi_rpc_finish(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक cmd,
+				माप_प्रकार inlen,
+				efx_dword_t *outbuf, माप_प्रकार outlen,
+				माप_प्रकार *outlen_actual, bool quiet,
+				u32 *proxy_handle, पूर्णांक *raw_rc)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
 	MCDI_DECLARE_BUF_ERR(errbuf);
-	int rc;
+	पूर्णांक rc;
 
-	if (mcdi->mode == MCDI_MODE_POLL)
+	अगर (mcdi->mode == MCDI_MODE_POLL)
 		rc = efx_mcdi_poll(efx);
-	else
-		rc = efx_mcdi_await_completion(efx);
+	अन्यथा
+		rc = efx_mcdi_aरुको_completion(efx);
 
-	if (rc != 0) {
-		netif_err(efx, hw, efx->net_dev,
+	अगर (rc != 0) अणु
+		netअगर_err(efx, hw, efx->net_dev,
 			  "MC command 0x%x inlen %d mode %d timed out\n",
-			  cmd, (int)inlen, mcdi->mode);
+			  cmd, (पूर्णांक)inlen, mcdi->mode);
 
-		if (mcdi->mode == MCDI_MODE_EVENTS && efx_mcdi_poll_once(efx)) {
-			netif_err(efx, hw, efx->net_dev,
+		अगर (mcdi->mode == MCDI_MODE_EVENTS && efx_mcdi_poll_once(efx)) अणु
+			netअगर_err(efx, hw, efx->net_dev,
 				  "MCDI request was completed without an event\n");
 			rc = 0;
-		}
+		पूर्ण
 
-		efx_mcdi_abandon(efx);
+		efx_mcdi_abanकरोn(efx);
 
 		/* Close the race with efx_mcdi_ev_cpl() executing just too late
 		 * and completing a request we've just cancelled, by ensuring
 		 * that the seqno check therein fails.
 		 */
-		spin_lock_bh(&mcdi->iface_lock);
+		spin_lock_bh(&mcdi->अगरace_lock);
 		++mcdi->seqno;
 		++mcdi->credits;
-		spin_unlock_bh(&mcdi->iface_lock);
-	}
+		spin_unlock_bh(&mcdi->अगरace_lock);
+	पूर्ण
 
-	if (proxy_handle)
+	अगर (proxy_handle)
 		*proxy_handle = 0;
 
-	if (rc != 0) {
-		if (outlen_actual)
+	अगर (rc != 0) अणु
+		अगर (outlen_actual)
 			*outlen_actual = 0;
-	} else {
-		size_t hdr_len, data_len, err_len;
+	पूर्ण अन्यथा अणु
+		माप_प्रकार hdr_len, data_len, err_len;
 
 		/* At the very least we need a memory barrier here to ensure
 		 * we pick up changes from efx_mcdi_ev_cpl(). Protect against
 		 * a spurious efx_mcdi_ev_cpl() running concurrently by
-		 * acquiring the iface_lock. */
-		spin_lock_bh(&mcdi->iface_lock);
+		 * acquiring the अगरace_lock. */
+		spin_lock_bh(&mcdi->अगरace_lock);
 		rc = mcdi->resprc;
-		if (raw_rc)
+		अगर (raw_rc)
 			*raw_rc = mcdi->resprc_raw;
 		hdr_len = mcdi->resp_hdr_len;
 		data_len = mcdi->resp_data_len;
-		err_len = min(sizeof(errbuf), data_len);
-		spin_unlock_bh(&mcdi->iface_lock);
+		err_len = min(माप(errbuf), data_len);
+		spin_unlock_bh(&mcdi->अगरace_lock);
 
 		BUG_ON(rc > 0);
 
-		efx->type->mcdi_read_response(efx, outbuf, hdr_len,
+		efx->type->mcdi_पढ़ो_response(efx, outbuf, hdr_len,
 					      min(outlen, data_len));
-		if (outlen_actual)
+		अगर (outlen_actual)
 			*outlen_actual = data_len;
 
-		efx->type->mcdi_read_response(efx, errbuf, hdr_len, err_len);
+		efx->type->mcdi_पढ़ो_response(efx, errbuf, hdr_len, err_len);
 
-		if (cmd == MC_CMD_REBOOT && rc == -EIO) {
-			/* Don't reset if MC_CMD_REBOOT returns EIO */
-		} else if (rc == -EIO || rc == -EINTR) {
-			netif_err(efx, hw, efx->net_dev, "MC reboot detected\n");
-			netif_dbg(efx, hw, efx->net_dev, "MC rebooted during command %d rc %d\n",
+		अगर (cmd == MC_CMD_REBOOT && rc == -EIO) अणु
+			/* Don't reset अगर MC_CMD_REBOOT वापसs EIO */
+		पूर्ण अन्यथा अगर (rc == -EIO || rc == -EINTR) अणु
+			netअगर_err(efx, hw, efx->net_dev, "MC reboot detected\n");
+			netअगर_dbg(efx, hw, efx->net_dev, "MC rebooted during command %d rc %d\n",
 				  cmd, -rc);
-			if (efx->type->mcdi_reboot_detected)
+			अगर (efx->type->mcdi_reboot_detected)
 				efx->type->mcdi_reboot_detected(efx);
 			efx_schedule_reset(efx, RESET_TYPE_MC_FAILURE);
-		} else if (proxy_handle && (rc == -EPROTO) &&
+		पूर्ण अन्यथा अगर (proxy_handle && (rc == -EPROTO) &&
 			   efx_mcdi_get_proxy_handle(efx, hdr_len, data_len,
-						     proxy_handle)) {
+						     proxy_handle)) अणु
 			mcdi->proxy_rx_status = 0;
 			mcdi->proxy_rx_handle = 0;
 			mcdi->state = MCDI_STATE_PROXY_WAIT;
-		} else if (rc && !quiet) {
+		पूर्ण अन्यथा अगर (rc && !quiet) अणु
 			efx_mcdi_display_error(efx, cmd, inlen, errbuf, err_len,
 					       rc);
-		}
+		पूर्ण
 
-		if (rc == -EIO || rc == -EINTR) {
+		अगर (rc == -EIO || rc == -EINTR) अणु
 			msleep(MCDI_STATUS_SLEEP_MS);
 			efx_mcdi_poll_reboot(efx);
 			mcdi->new_epoch = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!proxy_handle || !*proxy_handle)
+	अगर (!proxy_handle || !*proxy_handle)
 		efx_mcdi_release(mcdi);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void efx_mcdi_proxy_abort(struct efx_mcdi_iface *mcdi)
-{
-	if (mcdi->state == MCDI_STATE_PROXY_WAIT) {
-		/* Interrupt the proxy wait. */
+अटल व्योम efx_mcdi_proxy_पात(काष्ठा efx_mcdi_अगरace *mcdi)
+अणु
+	अगर (mcdi->state == MCDI_STATE_PROXY_WAIT) अणु
+		/* Interrupt the proxy रुको. */
 		mcdi->proxy_rx_status = -EINTR;
 		wake_up(&mcdi->proxy_rx_wq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void efx_mcdi_ev_proxy_response(struct efx_nic *efx,
-				       u32 handle, int status)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
+अटल व्योम efx_mcdi_ev_proxy_response(काष्ठा efx_nic *efx,
+				       u32 handle, पूर्णांक status)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
 
 	WARN_ON(mcdi->state != MCDI_STATE_PROXY_WAIT);
 
-	mcdi->proxy_rx_status = efx_mcdi_errno(status);
-	/* Ensure the status is written before we update the handle, since the
-	 * latter is used to check if we've finished.
+	mcdi->proxy_rx_status = efx_mcdi_त्रुटि_सं(status);
+	/* Ensure the status is written beक्रमe we update the handle, since the
+	 * latter is used to check अगर we've finished.
 	 */
 	wmb();
 	mcdi->proxy_rx_handle = handle;
 	wake_up(&mcdi->proxy_rx_wq);
-}
+पूर्ण
 
-static int efx_mcdi_proxy_wait(struct efx_nic *efx, u32 handle, bool quiet)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
-	int rc;
+अटल पूर्णांक efx_mcdi_proxy_रुको(काष्ठा efx_nic *efx, u32 handle, bool quiet)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
+	पूर्णांक rc;
 
-	/* Wait for a proxy event, or timeout. */
-	rc = wait_event_timeout(mcdi->proxy_rx_wq,
+	/* Wait क्रम a proxy event, or समयout. */
+	rc = रुको_event_समयout(mcdi->proxy_rx_wq,
 				mcdi->proxy_rx_handle != 0 ||
 				mcdi->proxy_rx_status == -EINTR,
 				MCDI_RPC_TIMEOUT);
 
-	if (rc <= 0) {
-		netif_dbg(efx, hw, efx->net_dev,
+	अगर (rc <= 0) अणु
+		netअगर_dbg(efx, hw, efx->net_dev,
 			  "MCDI proxy timeout %d\n", handle);
-		return -ETIMEDOUT;
-	} else if (mcdi->proxy_rx_handle != handle) {
-		netif_warn(efx, hw, efx->net_dev,
+		वापस -ETIMEDOUT;
+	पूर्ण अन्यथा अगर (mcdi->proxy_rx_handle != handle) अणु
+		netअगर_warn(efx, hw, efx->net_dev,
 			   "MCDI proxy unexpected handle %d (expected %d)\n",
 			   mcdi->proxy_rx_handle, handle);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return mcdi->proxy_rx_status;
-}
+	वापस mcdi->proxy_rx_status;
+पूर्ण
 
-static int _efx_mcdi_rpc(struct efx_nic *efx, unsigned int cmd,
-			 const efx_dword_t *inbuf, size_t inlen,
-			 efx_dword_t *outbuf, size_t outlen,
-			 size_t *outlen_actual, bool quiet, int *raw_rc)
-{
+अटल पूर्णांक _efx_mcdi_rpc(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक cmd,
+			 स्थिर efx_dword_t *inbuf, माप_प्रकार inlen,
+			 efx_dword_t *outbuf, माप_प्रकार outlen,
+			 माप_प्रकार *outlen_actual, bool quiet, पूर्णांक *raw_rc)
+अणु
 	u32 proxy_handle = 0; /* Zero is an invalid proxy handle. */
-	int rc;
+	पूर्णांक rc;
 
-	if (inbuf && inlen && (inbuf == outbuf)) {
+	अगर (inbuf && inlen && (inbuf == outbuf)) अणु
 		/* The input buffer can't be aliased with the output. */
 		WARN_ON(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rc = efx_mcdi_rpc_start(efx, cmd, inbuf, inlen);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = _efx_mcdi_rpc_finish(efx, cmd, inlen, outbuf, outlen,
 				  outlen_actual, quiet, &proxy_handle, raw_rc);
 
-	if (proxy_handle) {
+	अगर (proxy_handle) अणु
 		/* Handle proxy authorisation. This allows approval of MCDI
 		 * operations to be delegated to the admin function, allowing
 		 * fine control over (eg) multicast subscriptions.
 		 */
-		struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
+		काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
 
-		netif_dbg(efx, hw, efx->net_dev,
+		netअगर_dbg(efx, hw, efx->net_dev,
 			  "MCDI waiting for proxy auth %d\n",
 			  proxy_handle);
-		rc = efx_mcdi_proxy_wait(efx, proxy_handle, quiet);
+		rc = efx_mcdi_proxy_रुको(efx, proxy_handle, quiet);
 
-		if (rc == 0) {
-			netif_dbg(efx, hw, efx->net_dev,
+		अगर (rc == 0) अणु
+			netअगर_dbg(efx, hw, efx->net_dev,
 				  "MCDI proxy retry %d\n", proxy_handle);
 
 			/* We now retry the original request. */
@@ -842,156 +843,156 @@ static int _efx_mcdi_rpc(struct efx_nic *efx, unsigned int cmd,
 
 			rc = _efx_mcdi_rpc_finish(efx, cmd, inlen,
 						  outbuf, outlen, outlen_actual,
-						  quiet, NULL, raw_rc);
-		} else {
-			netif_cond_dbg(efx, hw, efx->net_dev, rc == -EPERM, err,
+						  quiet, शून्य, raw_rc);
+		पूर्ण अन्यथा अणु
+			netअगर_cond_dbg(efx, hw, efx->net_dev, rc == -EPERM, err,
 				       "MC command 0x%x failed after proxy auth rc=%d\n",
 				       cmd, rc);
 
-			if (rc == -EINTR || rc == -EIO)
+			अगर (rc == -EINTR || rc == -EIO)
 				efx_schedule_reset(efx, RESET_TYPE_MC_FAILURE);
 			efx_mcdi_release(mcdi);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int _efx_mcdi_rpc_evb_retry(struct efx_nic *efx, unsigned cmd,
-				   const efx_dword_t *inbuf, size_t inlen,
-				   efx_dword_t *outbuf, size_t outlen,
-				   size_t *outlen_actual, bool quiet)
-{
-	int raw_rc = 0;
-	int rc;
+अटल पूर्णांक _efx_mcdi_rpc_evb_retry(काष्ठा efx_nic *efx, अचिन्हित cmd,
+				   स्थिर efx_dword_t *inbuf, माप_प्रकार inlen,
+				   efx_dword_t *outbuf, माप_प्रकार outlen,
+				   माप_प्रकार *outlen_actual, bool quiet)
+अणु
+	पूर्णांक raw_rc = 0;
+	पूर्णांक rc;
 
 	rc = _efx_mcdi_rpc(efx, cmd, inbuf, inlen,
 			   outbuf, outlen, outlen_actual, true, &raw_rc);
 
-	if ((rc == -EPROTO) && (raw_rc == MC_CMD_ERR_NO_EVB_PORT) &&
-	    efx->type->is_vf) {
+	अगर ((rc == -EPROTO) && (raw_rc == MC_CMD_ERR_NO_EVB_PORT) &&
+	    efx->type->is_vf) अणु
 		/* If the EVB port isn't available within a VF this may
-		 * mean the PF is still bringing the switch up. We should
-		 * retry our request shortly.
+		 * mean the PF is still bringing the चयन up. We should
+		 * retry our request लघुly.
 		 */
-		unsigned long abort_time = jiffies + MCDI_RPC_TIMEOUT;
-		unsigned int delay_us = 10000;
+		अचिन्हित दीर्घ पात_समय = jअगरfies + MCDI_RPC_TIMEOUT;
+		अचिन्हित पूर्णांक delay_us = 10000;
 
-		netif_dbg(efx, hw, efx->net_dev,
+		netअगर_dbg(efx, hw, efx->net_dev,
 			  "%s: NO_EVB_PORT; will retry request\n",
 			  __func__);
 
-		do {
+		करो अणु
 			usleep_range(delay_us, delay_us + 10000);
 			rc = _efx_mcdi_rpc(efx, cmd, inbuf, inlen,
 					   outbuf, outlen, outlen_actual,
 					   true, &raw_rc);
-			if (delay_us < 100000)
+			अगर (delay_us < 100000)
 				delay_us <<= 1;
-		} while ((rc == -EPROTO) &&
+		पूर्ण जबतक ((rc == -EPROTO) &&
 			 (raw_rc == MC_CMD_ERR_NO_EVB_PORT) &&
-			 time_before(jiffies, abort_time));
-	}
+			 समय_beक्रमe(jअगरfies, पात_समय));
+	पूर्ण
 
-	if (rc && !quiet && !(cmd == MC_CMD_REBOOT && rc == -EIO))
+	अगर (rc && !quiet && !(cmd == MC_CMD_REBOOT && rc == -EIO))
 		efx_mcdi_display_error(efx, cmd, inlen,
 				       outbuf, outlen, rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * efx_mcdi_rpc - Issue an MCDI command and wait for completion
+ * efx_mcdi_rpc - Issue an MCDI command and रुको क्रम completion
  * @efx: NIC through which to issue the command
  * @cmd: Command type number
  * @inbuf: Command parameters
  * @inlen: Length of command parameters, in bytes.  Must be a multiple
  *	of 4 and no greater than %MCDI_CTL_SDU_LEN_MAX_V1.
- * @outbuf: Response buffer.  May be %NULL if @outlen is 0.
+ * @outbuf: Response buffer.  May be %शून्य अगर @outlen is 0.
  * @outlen: Length of response buffer, in bytes.  If the actual
- *	response is longer than @outlen & ~3, it will be truncated
+ *	response is दीर्घer than @outlen & ~3, it will be truncated
  *	to that length.
- * @outlen_actual: Pointer through which to return the actual response
- *	length.  May be %NULL if this is not needed.
+ * @outlen_actual: Poपूर्णांकer through which to वापस the actual response
+ *	length.  May be %शून्य अगर this is not needed.
  *
- * This function may sleep and therefore must be called in an appropriate
+ * This function may sleep and thereक्रमe must be called in an appropriate
  * context.
  *
- * Return: A negative error code, or zero if successful.  The error
+ * Return: A negative error code, or zero अगर successful.  The error
  *	code may come from the MCDI response or may indicate a failure
- *	to communicate with the MC.  In the former case, the response
+ *	to communicate with the MC.  In the क्रमmer हाल, the response
  *	will still be copied to @outbuf and *@outlen_actual will be
- *	set accordingly.  In the latter case, *@outlen_actual will be
+ *	set accordingly.  In the latter हाल, *@outlen_actual will be
  *	set to zero.
  */
-int efx_mcdi_rpc(struct efx_nic *efx, unsigned cmd,
-		 const efx_dword_t *inbuf, size_t inlen,
-		 efx_dword_t *outbuf, size_t outlen,
-		 size_t *outlen_actual)
-{
-	return _efx_mcdi_rpc_evb_retry(efx, cmd, inbuf, inlen, outbuf, outlen,
+पूर्णांक efx_mcdi_rpc(काष्ठा efx_nic *efx, अचिन्हित cmd,
+		 स्थिर efx_dword_t *inbuf, माप_प्रकार inlen,
+		 efx_dword_t *outbuf, माप_प्रकार outlen,
+		 माप_प्रकार *outlen_actual)
+अणु
+	वापस _efx_mcdi_rpc_evb_retry(efx, cmd, inbuf, inlen, outbuf, outlen,
 				       outlen_actual, false);
-}
+पूर्ण
 
 /* Normally, on receiving an error code in the MCDI response,
  * efx_mcdi_rpc will log an error message containing (among other
  * things) the raw error code, by means of efx_mcdi_display_error.
- * This _quiet version suppresses that; if the caller wishes to log
- * the error conditionally on the return code, it should call this
- * function and is then responsible for calling efx_mcdi_display_error
+ * This _quiet version suppresses that; अगर the caller wishes to log
+ * the error conditionally on the वापस code, it should call this
+ * function and is then responsible क्रम calling efx_mcdi_display_error
  * as needed.
  */
-int efx_mcdi_rpc_quiet(struct efx_nic *efx, unsigned cmd,
-		       const efx_dword_t *inbuf, size_t inlen,
-		       efx_dword_t *outbuf, size_t outlen,
-		       size_t *outlen_actual)
-{
-	return _efx_mcdi_rpc_evb_retry(efx, cmd, inbuf, inlen, outbuf, outlen,
+पूर्णांक efx_mcdi_rpc_quiet(काष्ठा efx_nic *efx, अचिन्हित cmd,
+		       स्थिर efx_dword_t *inbuf, माप_प्रकार inlen,
+		       efx_dword_t *outbuf, माप_प्रकार outlen,
+		       माप_प्रकार *outlen_actual)
+अणु
+	वापस _efx_mcdi_rpc_evb_retry(efx, cmd, inbuf, inlen, outbuf, outlen,
 				       outlen_actual, true);
-}
+पूर्ण
 
-int efx_mcdi_rpc_start(struct efx_nic *efx, unsigned cmd,
-		       const efx_dword_t *inbuf, size_t inlen)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
-	int rc;
+पूर्णांक efx_mcdi_rpc_start(काष्ठा efx_nic *efx, अचिन्हित cmd,
+		       स्थिर efx_dword_t *inbuf, माप_प्रकार inlen)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
+	पूर्णांक rc;
 
 	rc = efx_mcdi_check_supported(efx, cmd, inlen);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (efx->mc_bist_for_other_fn)
-		return -ENETDOWN;
+	अगर (efx->mc_bist_क्रम_other_fn)
+		वापस -ENETDOWN;
 
-	if (mcdi->mode == MCDI_MODE_FAIL)
-		return -ENETDOWN;
+	अगर (mcdi->mode == MCDI_MODE_FAIL)
+		वापस -ENETDOWN;
 
 	efx_mcdi_acquire_sync(mcdi);
 	efx_mcdi_send_request(efx, cmd, inbuf, inlen);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _efx_mcdi_rpc_async(struct efx_nic *efx, unsigned int cmd,
-			       const efx_dword_t *inbuf, size_t inlen,
-			       size_t outlen,
+अटल पूर्णांक _efx_mcdi_rpc_async(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक cmd,
+			       स्थिर efx_dword_t *inbuf, माप_प्रकार inlen,
+			       माप_प्रकार outlen,
 			       efx_mcdi_async_completer *complete,
-			       unsigned long cookie, bool quiet)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
-	struct efx_mcdi_async_param *async;
-	int rc;
+			       अचिन्हित दीर्घ cookie, bool quiet)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
+	काष्ठा efx_mcdi_async_param *async;
+	पूर्णांक rc;
 
 	rc = efx_mcdi_check_supported(efx, cmd, inlen);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (efx->mc_bist_for_other_fn)
-		return -ENETDOWN;
+	अगर (efx->mc_bist_क्रम_other_fn)
+		वापस -ENETDOWN;
 
-	async = kmalloc(sizeof(*async) + ALIGN(max(inlen, outlen), 4),
+	async = kदो_स्मृति(माप(*async) + ALIGN(max(inlen, outlen), 4),
 			GFP_ATOMIC);
-	if (!async)
-		return -ENOMEM;
+	अगर (!async)
+		वापस -ENOMEM;
 
 	async->cmd = cmd;
 	async->inlen = inlen;
@@ -999,31 +1000,31 @@ static int _efx_mcdi_rpc_async(struct efx_nic *efx, unsigned int cmd,
 	async->quiet = quiet;
 	async->complete = complete;
 	async->cookie = cookie;
-	memcpy(async + 1, inbuf, inlen);
+	स_नकल(async + 1, inbuf, inlen);
 
 	spin_lock_bh(&mcdi->async_lock);
 
-	if (mcdi->mode == MCDI_MODE_EVENTS) {
+	अगर (mcdi->mode == MCDI_MODE_EVENTS) अणु
 		list_add_tail(&async->list, &mcdi->async_list);
 
 		/* If this is at the front of the queue, try to start it
 		 * immediately
 		 */
-		if (mcdi->async_list.next == &async->list &&
-		    efx_mcdi_acquire_async(mcdi)) {
+		अगर (mcdi->async_list.next == &async->list &&
+		    efx_mcdi_acquire_async(mcdi)) अणु
 			efx_mcdi_send_request(efx, cmd, inbuf, inlen);
-			mod_timer(&mcdi->async_timer,
-				  jiffies + MCDI_RPC_TIMEOUT);
-		}
-	} else {
-		kfree(async);
+			mod_समयr(&mcdi->async_समयr,
+				  jअगरfies + MCDI_RPC_TIMEOUT);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		kमुक्त(async);
 		rc = -ENETDOWN;
-	}
+	पूर्ण
 
 	spin_unlock_bh(&mcdi->async_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * efx_mcdi_rpc_async - Schedule an MCDI command to run asynchronously
@@ -1031,177 +1032,177 @@ static int _efx_mcdi_rpc_async(struct efx_nic *efx, unsigned int cmd,
  * @cmd: Command type number
  * @inbuf: Command parameters
  * @inlen: Length of command parameters, in bytes
- * @outlen: Length to allocate for response buffer, in bytes
+ * @outlen: Length to allocate क्रम response buffer, in bytes
  * @complete: Function to be called on completion or cancellation.
  * @cookie: Arbitrary value to be passed to @complete.
  *
- * This function does not sleep and therefore may be called in atomic
- * context.  It will fail if event queues are disabled or if MCDI
+ * This function करोes not sleep and thereक्रमe may be called in atomic
+ * context.  It will fail अगर event queues are disabled or अगर MCDI
  * event completions have been disabled due to an error.
  *
  * If it succeeds, the @complete function will be called exactly once
  * in atomic context, when one of the following occurs:
  * (a) the completion event is received (in NAPI context)
  * (b) event queues are disabled (in the process that disables them)
- * (c) the request times-out (in timer context)
+ * (c) the request बार-out (in समयr context)
  */
-int
-efx_mcdi_rpc_async(struct efx_nic *efx, unsigned int cmd,
-		   const efx_dword_t *inbuf, size_t inlen, size_t outlen,
-		   efx_mcdi_async_completer *complete, unsigned long cookie)
-{
-	return _efx_mcdi_rpc_async(efx, cmd, inbuf, inlen, outlen, complete,
+पूर्णांक
+efx_mcdi_rpc_async(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक cmd,
+		   स्थिर efx_dword_t *inbuf, माप_प्रकार inlen, माप_प्रकार outlen,
+		   efx_mcdi_async_completer *complete, अचिन्हित दीर्घ cookie)
+अणु
+	वापस _efx_mcdi_rpc_async(efx, cmd, inbuf, inlen, outlen, complete,
 				   cookie, false);
-}
+पूर्ण
 
-int efx_mcdi_rpc_async_quiet(struct efx_nic *efx, unsigned int cmd,
-			     const efx_dword_t *inbuf, size_t inlen,
-			     size_t outlen, efx_mcdi_async_completer *complete,
-			     unsigned long cookie)
-{
-	return _efx_mcdi_rpc_async(efx, cmd, inbuf, inlen, outlen, complete,
+पूर्णांक efx_mcdi_rpc_async_quiet(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक cmd,
+			     स्थिर efx_dword_t *inbuf, माप_प्रकार inlen,
+			     माप_प्रकार outlen, efx_mcdi_async_completer *complete,
+			     अचिन्हित दीर्घ cookie)
+अणु
+	वापस _efx_mcdi_rpc_async(efx, cmd, inbuf, inlen, outlen, complete,
 				   cookie, true);
-}
+पूर्ण
 
-int efx_mcdi_rpc_finish(struct efx_nic *efx, unsigned cmd, size_t inlen,
-			efx_dword_t *outbuf, size_t outlen,
-			size_t *outlen_actual)
-{
-	return _efx_mcdi_rpc_finish(efx, cmd, inlen, outbuf, outlen,
-				    outlen_actual, false, NULL, NULL);
-}
+पूर्णांक efx_mcdi_rpc_finish(काष्ठा efx_nic *efx, अचिन्हित cmd, माप_प्रकार inlen,
+			efx_dword_t *outbuf, माप_प्रकार outlen,
+			माप_प्रकार *outlen_actual)
+अणु
+	वापस _efx_mcdi_rpc_finish(efx, cmd, inlen, outbuf, outlen,
+				    outlen_actual, false, शून्य, शून्य);
+पूर्ण
 
-int efx_mcdi_rpc_finish_quiet(struct efx_nic *efx, unsigned cmd, size_t inlen,
-			      efx_dword_t *outbuf, size_t outlen,
-			      size_t *outlen_actual)
-{
-	return _efx_mcdi_rpc_finish(efx, cmd, inlen, outbuf, outlen,
-				    outlen_actual, true, NULL, NULL);
-}
+पूर्णांक efx_mcdi_rpc_finish_quiet(काष्ठा efx_nic *efx, अचिन्हित cmd, माप_प्रकार inlen,
+			      efx_dword_t *outbuf, माप_प्रकार outlen,
+			      माप_प्रकार *outlen_actual)
+अणु
+	वापस _efx_mcdi_rpc_finish(efx, cmd, inlen, outbuf, outlen,
+				    outlen_actual, true, शून्य, शून्य);
+पूर्ण
 
-void efx_mcdi_display_error(struct efx_nic *efx, unsigned cmd,
-			    size_t inlen, efx_dword_t *outbuf,
-			    size_t outlen, int rc)
-{
-	int code = 0, err_arg = 0;
+व्योम efx_mcdi_display_error(काष्ठा efx_nic *efx, अचिन्हित cmd,
+			    माप_प्रकार inlen, efx_dword_t *outbuf,
+			    माप_प्रकार outlen, पूर्णांक rc)
+अणु
+	पूर्णांक code = 0, err_arg = 0;
 
-	if (outlen >= MC_CMD_ERR_CODE_OFST + 4)
+	अगर (outlen >= MC_CMD_ERR_CODE_OFST + 4)
 		code = MCDI_DWORD(outbuf, ERR_CODE);
-	if (outlen >= MC_CMD_ERR_ARG_OFST + 4)
+	अगर (outlen >= MC_CMD_ERR_ARG_OFST + 4)
 		err_arg = MCDI_DWORD(outbuf, ERR_ARG);
-	netif_cond_dbg(efx, hw, efx->net_dev, rc == -EPERM, err,
+	netअगर_cond_dbg(efx, hw, efx->net_dev, rc == -EPERM, err,
 		       "MC command 0x%x inlen %zu failed rc=%d (raw=%d) arg=%d\n",
 		       cmd, inlen, rc, code, err_arg);
-}
+पूर्ण
 
 /* Switch to polled MCDI completions.  This can be called in various
  * error conditions with various locks held, so it must be lockless.
- * Caller is responsible for flushing asynchronous requests later.
+ * Caller is responsible क्रम flushing asynchronous requests later.
  */
-void efx_mcdi_mode_poll(struct efx_nic *efx)
-{
-	struct efx_mcdi_iface *mcdi;
+व्योम efx_mcdi_mode_poll(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi;
 
-	if (!efx->mcdi)
-		return;
+	अगर (!efx->mcdi)
+		वापस;
 
 	mcdi = efx_mcdi(efx);
-	/* If already in polling mode, nothing to do.
-	 * If in fail-fast state, don't switch to polled completion.
-	 * FLR recovery will do that later.
+	/* If alपढ़ोy in polling mode, nothing to करो.
+	 * If in fail-fast state, करोn't चयन to polled completion.
+	 * FLR recovery will करो that later.
 	 */
-	if (mcdi->mode == MCDI_MODE_POLL || mcdi->mode == MCDI_MODE_FAIL)
-		return;
+	अगर (mcdi->mode == MCDI_MODE_POLL || mcdi->mode == MCDI_MODE_FAIL)
+		वापस;
 
-	/* We can switch from event completion to polled completion, because
-	 * mcdi requests are always completed in shared memory. We do this by
-	 * switching the mode to POLL'd then completing the request.
-	 * efx_mcdi_await_completion() will then call efx_mcdi_poll().
+	/* We can चयन from event completion to polled completion, because
+	 * mcdi requests are always completed in shared memory. We करो this by
+	 * चयनing the mode to POLL'd then completing the request.
+	 * efx_mcdi_aरुको_completion() will then call efx_mcdi_poll().
 	 *
-	 * We need an smp_wmb() to synchronise with efx_mcdi_await_completion(),
-	 * which efx_mcdi_complete_sync() provides for us.
+	 * We need an smp_wmb() to synchronise with efx_mcdi_aरुको_completion(),
+	 * which efx_mcdi_complete_sync() provides क्रम us.
 	 */
 	mcdi->mode = MCDI_MODE_POLL;
 
 	efx_mcdi_complete_sync(mcdi);
-}
+पूर्ण
 
 /* Flush any running or queued asynchronous requests, after event processing
  * is stopped
  */
-void efx_mcdi_flush_async(struct efx_nic *efx)
-{
-	struct efx_mcdi_async_param *async, *next;
-	struct efx_mcdi_iface *mcdi;
+व्योम efx_mcdi_flush_async(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_async_param *async, *next;
+	काष्ठा efx_mcdi_अगरace *mcdi;
 
-	if (!efx->mcdi)
-		return;
+	अगर (!efx->mcdi)
+		वापस;
 
 	mcdi = efx_mcdi(efx);
 
 	/* We must be in poll or fail mode so no more requests can be queued */
 	BUG_ON(mcdi->mode == MCDI_MODE_EVENTS);
 
-	del_timer_sync(&mcdi->async_timer);
+	del_समयr_sync(&mcdi->async_समयr);
 
 	/* If a request is still running, make sure we give the MC
-	 * time to complete it so that the response won't overwrite our
+	 * समय to complete it so that the response won't overग_लिखो our
 	 * next request.
 	 */
-	if (mcdi->state == MCDI_STATE_RUNNING_ASYNC) {
+	अगर (mcdi->state == MCDI_STATE_RUNNING_ASYNC) अणु
 		efx_mcdi_poll(efx);
 		mcdi->state = MCDI_STATE_QUIESCENT;
-	}
+	पूर्ण
 
-	/* Nothing else will access the async list now, so it is safe
-	 * to walk it without holding async_lock.  If we hold it while
+	/* Nothing अन्यथा will access the async list now, so it is safe
+	 * to walk it without holding async_lock.  If we hold it जबतक
 	 * calling a completer then lockdep may warn that we have
 	 * acquired locks in the wrong order.
 	 */
-	list_for_each_entry_safe(async, next, &mcdi->async_list, list) {
-		if (async->complete)
-			async->complete(efx, async->cookie, -ENETDOWN, NULL, 0);
+	list_क्रम_each_entry_safe(async, next, &mcdi->async_list, list) अणु
+		अगर (async->complete)
+			async->complete(efx, async->cookie, -ENETDOWN, शून्य, 0);
 		list_del(&async->list);
-		kfree(async);
-	}
-}
+		kमुक्त(async);
+	पूर्ण
+पूर्ण
 
-void efx_mcdi_mode_event(struct efx_nic *efx)
-{
-	struct efx_mcdi_iface *mcdi;
+व्योम efx_mcdi_mode_event(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi;
 
-	if (!efx->mcdi)
-		return;
+	अगर (!efx->mcdi)
+		वापस;
 
 	mcdi = efx_mcdi(efx);
-	/* If already in event completion mode, nothing to do.
-	 * If in fail-fast state, don't switch to event completion.  FLR
-	 * recovery will do that later.
+	/* If alपढ़ोy in event completion mode, nothing to करो.
+	 * If in fail-fast state, करोn't चयन to event completion.  FLR
+	 * recovery will करो that later.
 	 */
-	if (mcdi->mode == MCDI_MODE_EVENTS || mcdi->mode == MCDI_MODE_FAIL)
-		return;
+	अगर (mcdi->mode == MCDI_MODE_EVENTS || mcdi->mode == MCDI_MODE_FAIL)
+		वापस;
 
-	/* We can't switch from polled to event completion in the middle of a
-	 * request, because the completion method is specified in the request.
-	 * So acquire the interface to serialise the requestors. We don't need
-	 * to acquire the iface_lock to change the mode here, but we do need a
-	 * write memory barrier ensure that efx_mcdi_rpc() sees it, which
+	/* We can't चयन from polled to event completion in the middle of a
+	 * request, because the completion method is specअगरied in the request.
+	 * So acquire the पूर्णांकerface to serialise the requestors. We करोn't need
+	 * to acquire the अगरace_lock to change the mode here, but we करो need a
+	 * ग_लिखो memory barrier ensure that efx_mcdi_rpc() sees it, which
 	 * efx_mcdi_acquire() provides.
 	 */
 	efx_mcdi_acquire_sync(mcdi);
 	mcdi->mode = MCDI_MODE_EVENTS;
 	efx_mcdi_release(mcdi);
-}
+पूर्ण
 
-static void efx_mcdi_ev_death(struct efx_nic *efx, int rc)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
+अटल व्योम efx_mcdi_ev_death(काष्ठा efx_nic *efx, पूर्णांक rc)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
 
 	/* If there is an outstanding MCDI request, it has been terminated
-	 * either by a BADASSERT or REBOOT event. If the mcdi interface is
-	 * in polled mode, then do nothing because the MC reboot handler will
-	 * set the header correctly. However, if the mcdi interface is waiting
-	 * for a CMDDONE event it won't receive it [and since all MCDI events
+	 * either by a BADASSERT or REBOOT event. If the mcdi पूर्णांकerface is
+	 * in polled mode, then करो nothing because the MC reboot handler will
+	 * set the header correctly. However, अगर the mcdi पूर्णांकerface is रुकोing
+	 * क्रम a CMDDONE event it won't receive it [and since all MCDI events
 	 * are sent to the same queue, we can't be racing with
 	 * efx_mcdi_ev_cpl()]
 	 *
@@ -1210,379 +1211,379 @@ static void efx_mcdi_ev_death(struct efx_nic *efx, int rc)
 	 * reset process will take care of this.
 	 *
 	 * There's a race here with efx_mcdi_send_request(), because
-	 * we might receive a REBOOT event *before* the request has
+	 * we might receive a REBOOT event *beक्रमe* the request has
 	 * been copied out. In polled mode (during startup) this is
 	 * irrelevant, because efx_mcdi_complete_sync() is ignored. In
-	 * event mode, this condition is just an edge-case of
+	 * event mode, this condition is just an edge-हाल of
 	 * receiving a REBOOT event after posting the MCDI
-	 * request. Did the mc reboot before or after the copyout? The
-	 * best we can do always is just return failure.
+	 * request. Did the mc reboot beक्रमe or after the copyout? The
+	 * best we can करो always is just वापस failure.
 	 *
 	 * If there is an outstanding proxy response expected it is not going
-	 * to arrive. We should thus abort it.
+	 * to arrive. We should thus पात it.
 	 */
-	spin_lock(&mcdi->iface_lock);
-	efx_mcdi_proxy_abort(mcdi);
+	spin_lock(&mcdi->अगरace_lock);
+	efx_mcdi_proxy_पात(mcdi);
 
-	if (efx_mcdi_complete_sync(mcdi)) {
-		if (mcdi->mode == MCDI_MODE_EVENTS) {
+	अगर (efx_mcdi_complete_sync(mcdi)) अणु
+		अगर (mcdi->mode == MCDI_MODE_EVENTS) अणु
 			mcdi->resprc = rc;
 			mcdi->resp_hdr_len = 0;
 			mcdi->resp_data_len = 0;
 			++mcdi->credits;
-		}
-	} else {
-		int count;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		पूर्णांक count;
 
 		/* Consume the status word since efx_mcdi_rpc_finish() won't */
-		for (count = 0; count < MCDI_STATUS_DELAY_COUNT; ++count) {
+		क्रम (count = 0; count < MCDI_STATUS_DELAY_COUNT; ++count) अणु
 			rc = efx_mcdi_poll_reboot(efx);
-			if (rc)
-				break;
+			अगर (rc)
+				अवरोध;
 			udelay(MCDI_STATUS_DELAY_US);
-		}
+		पूर्ण
 
 		/* On EF10, a CODE_MC_REBOOT event can be received without the
 		 * reboot detection in efx_mcdi_poll_reboot() being triggered.
-		 * If zero was returned from the final call to
+		 * If zero was वापसed from the final call to
 		 * efx_mcdi_poll_reboot(), the MC reboot wasn't noticed but the
-		 * MC has definitely rebooted so prepare for the reset.
+		 * MC has definitely rebooted so prepare क्रम the reset.
 		 */
-		if (!rc && efx->type->mcdi_reboot_detected)
+		अगर (!rc && efx->type->mcdi_reboot_detected)
 			efx->type->mcdi_reboot_detected(efx);
 
 		mcdi->new_epoch = true;
 
-		/* Nobody was waiting for an MCDI request, so trigger a reset */
+		/* Nobody was रुकोing क्रम an MCDI request, so trigger a reset */
 		efx_schedule_reset(efx, RESET_TYPE_MC_FAILURE);
-	}
+	पूर्ण
 
-	spin_unlock(&mcdi->iface_lock);
-}
+	spin_unlock(&mcdi->अगरace_lock);
+पूर्ण
 
-/* The MC is going down in to BIST mode. set the BIST flag to block
+/* The MC is going करोwn in to BIST mode. set the BIST flag to block
  * new MCDI, cancel any outstanding MCDI and and schedule a BIST-type reset
- * (which doesn't actually execute a reset, it waits for the controlling
+ * (which करोesn't actually execute a reset, it रुकोs क्रम the controlling
  * function to reset it).
  */
-static void efx_mcdi_ev_bist(struct efx_nic *efx)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
+अटल व्योम efx_mcdi_ev_bist(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
 
-	spin_lock(&mcdi->iface_lock);
-	efx->mc_bist_for_other_fn = true;
-	efx_mcdi_proxy_abort(mcdi);
+	spin_lock(&mcdi->अगरace_lock);
+	efx->mc_bist_क्रम_other_fn = true;
+	efx_mcdi_proxy_पात(mcdi);
 
-	if (efx_mcdi_complete_sync(mcdi)) {
-		if (mcdi->mode == MCDI_MODE_EVENTS) {
+	अगर (efx_mcdi_complete_sync(mcdi)) अणु
+		अगर (mcdi->mode == MCDI_MODE_EVENTS) अणु
 			mcdi->resprc = -EIO;
 			mcdi->resp_hdr_len = 0;
 			mcdi->resp_data_len = 0;
 			++mcdi->credits;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mcdi->new_epoch = true;
 	efx_schedule_reset(efx, RESET_TYPE_MC_BIST);
-	spin_unlock(&mcdi->iface_lock);
-}
+	spin_unlock(&mcdi->अगरace_lock);
+पूर्ण
 
-/* MCDI timeouts seen, so make all MCDI calls fail-fast and issue an FLR to try
+/* MCDI समयouts seen, so make all MCDI calls fail-fast and issue an FLR to try
  * to recover.
  */
-static void efx_mcdi_abandon(struct efx_nic *efx)
-{
-	struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
+अटल व्योम efx_mcdi_abanकरोn(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
 
-	if (xchg(&mcdi->mode, MCDI_MODE_FAIL) == MCDI_MODE_FAIL)
-		return; /* it had already been done */
-	netif_dbg(efx, hw, efx->net_dev, "MCDI is timing out; trying to recover\n");
+	अगर (xchg(&mcdi->mode, MCDI_MODE_FAIL) == MCDI_MODE_FAIL)
+		वापस; /* it had alपढ़ोy been करोne */
+	netअगर_dbg(efx, hw, efx->net_dev, "MCDI is timing out; trying to recover\n");
 	efx_schedule_reset(efx, RESET_TYPE_MCDI_TIMEOUT);
-}
+पूर्ण
 
-static void efx_handle_drain_event(struct efx_nic *efx)
-{
-	if (atomic_dec_and_test(&efx->active_queues))
+अटल व्योम efx_handle_drain_event(काष्ठा efx_nic *efx)
+अणु
+	अगर (atomic_dec_and_test(&efx->active_queues))
 		wake_up(&efx->flush_wq);
 
-	WARN_ON(atomic_read(&efx->active_queues) < 0);
-}
+	WARN_ON(atomic_पढ़ो(&efx->active_queues) < 0);
+पूर्ण
 
-/* Called from efx_farch_ev_process and efx_ef10_ev_process for MCDI events */
-void efx_mcdi_process_event(struct efx_channel *channel,
+/* Called from efx_farch_ev_process and efx_ef10_ev_process क्रम MCDI events */
+व्योम efx_mcdi_process_event(काष्ठा efx_channel *channel,
 			    efx_qword_t *event)
-{
-	struct efx_nic *efx = channel->efx;
-	int code = EFX_QWORD_FIELD(*event, MCDI_EVENT_CODE);
+अणु
+	काष्ठा efx_nic *efx = channel->efx;
+	पूर्णांक code = EFX_QWORD_FIELD(*event, MCDI_EVENT_CODE);
 	u32 data = EFX_QWORD_FIELD(*event, MCDI_EVENT_DATA);
 
-	switch (code) {
-	case MCDI_EVENT_CODE_BADSSERT:
-		netif_err(efx, hw, efx->net_dev,
+	चयन (code) अणु
+	हाल MCDI_EVENT_CODE_BADSSERT:
+		netअगर_err(efx, hw, efx->net_dev,
 			  "MC watchdog or assertion failure at 0x%x\n", data);
 		efx_mcdi_ev_death(efx, -EINTR);
-		break;
+		अवरोध;
 
-	case MCDI_EVENT_CODE_PMNOTICE:
-		netif_info(efx, wol, efx->net_dev, "MCDI PM event.\n");
-		break;
+	हाल MCDI_EVENT_CODE_PMNOTICE:
+		netअगर_info(efx, wol, efx->net_dev, "MCDI PM event.\n");
+		अवरोध;
 
-	case MCDI_EVENT_CODE_CMDDONE:
+	हाल MCDI_EVENT_CODE_CMDDONE:
 		efx_mcdi_ev_cpl(efx,
 				MCDI_EVENT_FIELD(*event, CMDDONE_SEQ),
 				MCDI_EVENT_FIELD(*event, CMDDONE_DATALEN),
 				MCDI_EVENT_FIELD(*event, CMDDONE_ERRNO));
-		break;
+		अवरोध;
 
-	case MCDI_EVENT_CODE_LINKCHANGE:
+	हाल MCDI_EVENT_CODE_LINKCHANGE:
 		efx_mcdi_process_link_change(efx, event);
-		break;
-	case MCDI_EVENT_CODE_SENSOREVT:
+		अवरोध;
+	हाल MCDI_EVENT_CODE_SENSOREVT:
 		efx_sensor_event(efx, event);
-		break;
-	case MCDI_EVENT_CODE_SCHEDERR:
-		netif_dbg(efx, hw, efx->net_dev,
+		अवरोध;
+	हाल MCDI_EVENT_CODE_SCHEDERR:
+		netअगर_dbg(efx, hw, efx->net_dev,
 			  "MC Scheduler alert (0x%x)\n", data);
-		break;
-	case MCDI_EVENT_CODE_REBOOT:
-	case MCDI_EVENT_CODE_MC_REBOOT:
-		netif_info(efx, hw, efx->net_dev, "MC Reboot\n");
+		अवरोध;
+	हाल MCDI_EVENT_CODE_REBOOT:
+	हाल MCDI_EVENT_CODE_MC_REBOOT:
+		netअगर_info(efx, hw, efx->net_dev, "MC Reboot\n");
 		efx_mcdi_ev_death(efx, -EIO);
-		break;
-	case MCDI_EVENT_CODE_MC_BIST:
-		netif_info(efx, hw, efx->net_dev, "MC entered BIST mode\n");
+		अवरोध;
+	हाल MCDI_EVENT_CODE_MC_BIST:
+		netअगर_info(efx, hw, efx->net_dev, "MC entered BIST mode\n");
 		efx_mcdi_ev_bist(efx);
-		break;
-	case MCDI_EVENT_CODE_MAC_STATS_DMA:
+		अवरोध;
+	हाल MCDI_EVENT_CODE_MAC_STATS_DMA:
 		/* MAC stats are gather lazily.  We can ignore this. */
-		break;
-	case MCDI_EVENT_CODE_FLR:
-		if (efx->type->sriov_flr)
+		अवरोध;
+	हाल MCDI_EVENT_CODE_FLR:
+		अगर (efx->type->sriov_flr)
 			efx->type->sriov_flr(efx,
 					     MCDI_EVENT_FIELD(*event, FLR_VF));
-		break;
-	case MCDI_EVENT_CODE_PTP_RX:
-	case MCDI_EVENT_CODE_PTP_FAULT:
-	case MCDI_EVENT_CODE_PTP_PPS:
+		अवरोध;
+	हाल MCDI_EVENT_CODE_PTP_RX:
+	हाल MCDI_EVENT_CODE_PTP_FAULT:
+	हाल MCDI_EVENT_CODE_PTP_PPS:
 		efx_ptp_event(efx, event);
-		break;
-	case MCDI_EVENT_CODE_PTP_TIME:
-		efx_time_sync_event(channel, event);
-		break;
-	case MCDI_EVENT_CODE_TX_FLUSH:
-	case MCDI_EVENT_CODE_RX_FLUSH:
+		अवरोध;
+	हाल MCDI_EVENT_CODE_PTP_TIME:
+		efx_समय_sync_event(channel, event);
+		अवरोध;
+	हाल MCDI_EVENT_CODE_TX_FLUSH:
+	हाल MCDI_EVENT_CODE_RX_FLUSH:
 		/* Two flush events will be sent: one to the same event
 		 * queue as completions, and one to event queue 0.
-		 * In the latter case the {RX,TX}_FLUSH_TO_DRIVER
+		 * In the latter हाल the अणुRX,TXपूर्ण_FLUSH_TO_DRIVER
 		 * flag will be set, and we should ignore the event
-		 * because we want to wait for all completions.
+		 * because we want to रुको क्रम all completions.
 		 */
 		BUILD_BUG_ON(MCDI_EVENT_TX_FLUSH_TO_DRIVER_LBN !=
 			     MCDI_EVENT_RX_FLUSH_TO_DRIVER_LBN);
-		if (!MCDI_EVENT_FIELD(*event, TX_FLUSH_TO_DRIVER))
+		अगर (!MCDI_EVENT_FIELD(*event, TX_FLUSH_TO_DRIVER))
 			efx_handle_drain_event(efx);
-		break;
-	case MCDI_EVENT_CODE_TX_ERR:
-	case MCDI_EVENT_CODE_RX_ERR:
-		netif_err(efx, hw, efx->net_dev,
+		अवरोध;
+	हाल MCDI_EVENT_CODE_TX_ERR:
+	हाल MCDI_EVENT_CODE_RX_ERR:
+		netअगर_err(efx, hw, efx->net_dev,
 			  "%s DMA error (event: "EFX_QWORD_FMT")\n",
 			  code == MCDI_EVENT_CODE_TX_ERR ? "TX" : "RX",
 			  EFX_QWORD_VAL(*event));
 		efx_schedule_reset(efx, RESET_TYPE_DMA_ERROR);
-		break;
-	case MCDI_EVENT_CODE_PROXY_RESPONSE:
+		अवरोध;
+	हाल MCDI_EVENT_CODE_PROXY_RESPONSE:
 		efx_mcdi_ev_proxy_response(efx,
 				MCDI_EVENT_FIELD(*event, PROXY_RESPONSE_HANDLE),
 				MCDI_EVENT_FIELD(*event, PROXY_RESPONSE_RC));
-		break;
-	default:
-		netif_err(efx, hw, efx->net_dev,
+		अवरोध;
+	शेष:
+		netअगर_err(efx, hw, efx->net_dev,
 			  "Unknown MCDI event " EFX_QWORD_FMT "\n",
 			  EFX_QWORD_VAL(*event));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**************************************************************************
  *
- * Specific request functions
+ * Specअगरic request functions
  *
  **************************************************************************
  */
 
-void efx_mcdi_print_fwver(struct efx_nic *efx, char *buf, size_t len)
-{
+व्योम efx_mcdi_prपूर्णांक_fwver(काष्ठा efx_nic *efx, अक्षर *buf, माप_प्रकार len)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_VERSION_OUT_LEN);
-	size_t outlength;
-	const __le16 *ver_words;
-	size_t offset;
-	int rc;
+	माप_प्रकार outlength;
+	स्थिर __le16 *ver_words;
+	माप_प्रकार offset;
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_GET_VERSION_IN_LEN != 0);
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_VERSION, NULL, 0,
-			  outbuf, sizeof(outbuf), &outlength);
-	if (rc)
-		goto fail;
-	if (outlength < MC_CMD_GET_VERSION_OUT_LEN) {
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_VERSION, शून्य, 0,
+			  outbuf, माप(outbuf), &outlength);
+	अगर (rc)
+		जाओ fail;
+	अगर (outlength < MC_CMD_GET_VERSION_OUT_LEN) अणु
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	ver_words = (__le16 *)MCDI_PTR(outbuf, GET_VERSION_OUT_VERSION);
-	offset = scnprintf(buf, len, "%u.%u.%u.%u",
+	offset = scnम_लिखो(buf, len, "%u.%u.%u.%u",
 			   le16_to_cpu(ver_words[0]),
 			   le16_to_cpu(ver_words[1]),
 			   le16_to_cpu(ver_words[2]),
 			   le16_to_cpu(ver_words[3]));
 
-	if (efx->type->print_additional_fwver)
-		offset += efx->type->print_additional_fwver(efx, buf + offset,
+	अगर (efx->type->prपूर्णांक_additional_fwver)
+		offset += efx->type->prपूर्णांक_additional_fwver(efx, buf + offset,
 							    len - offset);
 
-	/* It's theoretically possible for the string to exceed 31
-	 * characters, though in practice the first three version
-	 * components are short enough that this doesn't happen.
+	/* It's theoretically possible क्रम the string to exceed 31
+	 * अक्षरacters, though in practice the first three version
+	 * components are लघु enough that this करोesn't happen.
 	 */
-	if (WARN_ON(offset >= len))
+	अगर (WARN_ON(offset >= len))
 		buf[0] = 0;
 
-	return;
+	वापस;
 
 fail:
-	netif_err(efx, probe, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
+	netअगर_err(efx, probe, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
 	buf[0] = 0;
-}
+पूर्ण
 
-static int efx_mcdi_drv_attach(struct efx_nic *efx, bool driver_operating,
+अटल पूर्णांक efx_mcdi_drv_attach(काष्ठा efx_nic *efx, bool driver_operating,
 			       bool *was_attached)
-{
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_DRV_ATTACH_IN_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_DRV_ATTACH_EXT_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, DRV_ATTACH_IN_NEW_STATE,
 		       driver_operating ? 1 : 0);
 	MCDI_SET_DWORD(inbuf, DRV_ATTACH_IN_UPDATE, 1);
 	MCDI_SET_DWORD(inbuf, DRV_ATTACH_IN_FIRMWARE_ID, MC_CMD_FW_LOW_LATENCY);
 
-	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_DRV_ATTACH, inbuf, sizeof(inbuf),
-				outbuf, sizeof(outbuf), &outlen);
+	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_DRV_ATTACH, inbuf, माप(inbuf),
+				outbuf, माप(outbuf), &outlen);
 	/* If we're not the primary PF, trying to ATTACH with a FIRMWARE_ID
-	 * specified will fail with EPERM, and we have to tell the MC we don't
+	 * specअगरied will fail with EPERM, and we have to tell the MC we करोn't
 	 * care what firmware we get.
 	 */
-	if (rc == -EPERM) {
-		netif_dbg(efx, probe, efx->net_dev,
+	अगर (rc == -EPERM) अणु
+		netअगर_dbg(efx, probe, efx->net_dev,
 			  "efx_mcdi_drv_attach with fw-variant setting failed EPERM, trying without it\n");
 		MCDI_SET_DWORD(inbuf, DRV_ATTACH_IN_FIRMWARE_ID,
 			       MC_CMD_FW_DONT_CARE);
 		rc = efx_mcdi_rpc_quiet(efx, MC_CMD_DRV_ATTACH, inbuf,
-					sizeof(inbuf), outbuf, sizeof(outbuf),
+					माप(inbuf), outbuf, माप(outbuf),
 					&outlen);
-	}
-	if (rc) {
-		efx_mcdi_display_error(efx, MC_CMD_DRV_ATTACH, sizeof(inbuf),
+	पूर्ण
+	अगर (rc) अणु
+		efx_mcdi_display_error(efx, MC_CMD_DRV_ATTACH, माप(inbuf),
 				       outbuf, outlen, rc);
-		goto fail;
-	}
-	if (outlen < MC_CMD_DRV_ATTACH_OUT_LEN) {
+		जाओ fail;
+	पूर्ण
+	अगर (outlen < MC_CMD_DRV_ATTACH_OUT_LEN) अणु
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (driver_operating) {
-		if (outlen >= MC_CMD_DRV_ATTACH_EXT_OUT_LEN) {
+	अगर (driver_operating) अणु
+		अगर (outlen >= MC_CMD_DRV_ATTACH_EXT_OUT_LEN) अणु
 			efx->mcdi->fn_flags =
 				MCDI_DWORD(outbuf,
 					   DRV_ATTACH_EXT_OUT_FUNC_FLAGS);
-		} else {
-			/* Synthesise flags for Siena */
+		पूर्ण अन्यथा अणु
+			/* Synthesise flags क्रम Siena */
 			efx->mcdi->fn_flags =
 				1 << MC_CMD_DRV_ATTACH_EXT_OUT_FLAG_LINKCTRL |
 				1 << MC_CMD_DRV_ATTACH_EXT_OUT_FLAG_TRUSTED |
 				(efx_port_num(efx) == 0) <<
 				MC_CMD_DRV_ATTACH_EXT_OUT_FLAG_PRIMARY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* We currently assume we have control of the external link
+	/* We currently assume we have control of the बाह्यal link
 	 * and are completely trusted by firmware.  Abort probing
-	 * if that's not true for this function.
+	 * अगर that's not true क्रम this function.
 	 */
 
-	if (was_attached != NULL)
+	अगर (was_attached != शून्य)
 		*was_attached = MCDI_DWORD(outbuf, DRV_ATTACH_OUT_OLD_STATE);
-	return 0;
+	वापस 0;
 
 fail:
-	netif_err(efx, probe, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
-	return rc;
-}
+	netअगर_err(efx, probe, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_get_board_cfg(struct efx_nic *efx, u8 *mac_address,
+पूर्णांक efx_mcdi_get_board_cfg(काष्ठा efx_nic *efx, u8 *mac_address,
 			   u16 *fw_subtype_list, u32 *capabilities)
-{
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_BOARD_CFG_OUT_LENMAX);
-	size_t outlen, i;
-	int port_num = efx_port_num(efx);
-	int rc;
+	माप_प्रकार outlen, i;
+	पूर्णांक port_num = efx_port_num(efx);
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_GET_BOARD_CFG_IN_LEN != 0);
-	/* we need __aligned(2) for ether_addr_copy */
+	/* we need __aligned(2) क्रम ether_addr_copy */
 	BUILD_BUG_ON(MC_CMD_GET_BOARD_CFG_OUT_MAC_ADDR_BASE_PORT0_OFST & 1);
 	BUILD_BUG_ON(MC_CMD_GET_BOARD_CFG_OUT_MAC_ADDR_BASE_PORT1_OFST & 1);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_BOARD_CFG, NULL, 0,
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		goto fail;
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_BOARD_CFG, शून्य, 0,
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		जाओ fail;
 
-	if (outlen < MC_CMD_GET_BOARD_CFG_OUT_LENMIN) {
+	अगर (outlen < MC_CMD_GET_BOARD_CFG_OUT_LENMIN) अणु
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (mac_address)
+	अगर (mac_address)
 		ether_addr_copy(mac_address,
 				port_num ?
 				MCDI_PTR(outbuf, GET_BOARD_CFG_OUT_MAC_ADDR_BASE_PORT1) :
 				MCDI_PTR(outbuf, GET_BOARD_CFG_OUT_MAC_ADDR_BASE_PORT0));
-	if (fw_subtype_list) {
-		for (i = 0;
+	अगर (fw_subtype_list) अणु
+		क्रम (i = 0;
 		     i < MCDI_VAR_ARRAY_LEN(outlen,
 					    GET_BOARD_CFG_OUT_FW_SUBTYPE_LIST);
 		     i++)
 			fw_subtype_list[i] = MCDI_ARRAY_WORD(
 				outbuf, GET_BOARD_CFG_OUT_FW_SUBTYPE_LIST, i);
-		for (; i < MC_CMD_GET_BOARD_CFG_OUT_FW_SUBTYPE_LIST_MAXNUM; i++)
+		क्रम (; i < MC_CMD_GET_BOARD_CFG_OUT_FW_SUBTYPE_LIST_MAXNUM; i++)
 			fw_subtype_list[i] = 0;
-	}
-	if (capabilities) {
-		if (port_num)
+	पूर्ण
+	अगर (capabilities) अणु
+		अगर (port_num)
 			*capabilities = MCDI_DWORD(outbuf,
 					GET_BOARD_CFG_OUT_CAPABILITIES_PORT1);
-		else
+		अन्यथा
 			*capabilities = MCDI_DWORD(outbuf,
 					GET_BOARD_CFG_OUT_CAPABILITIES_PORT0);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
-	netif_err(efx, hw, efx->net_dev, "%s: failed rc=%d len=%d\n",
-		  __func__, rc, (int)outlen);
+	netअगर_err(efx, hw, efx->net_dev, "%s: failed rc=%d len=%d\n",
+		  __func__, rc, (पूर्णांक)outlen);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_log_ctrl(struct efx_nic *efx, bool evq, bool uart, u32 dest_evq)
-{
+पूर्णांक efx_mcdi_log_ctrl(काष्ठा efx_nic *efx, bool evq, bool uart, u32 dest_evq)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_LOG_CTRL_IN_LEN);
 	u32 dest = 0;
-	int rc;
+	पूर्णांक rc;
 
-	if (uart)
+	अगर (uart)
 		dest |= MC_CMD_LOG_CTRL_IN_LOG_DEST_UART;
-	if (evq)
+	अगर (evq)
 		dest |= MC_CMD_LOG_CTRL_IN_LOG_DEST_EVQ;
 
 	MCDI_SET_DWORD(inbuf, LOG_CTRL_IN_LOG_DEST, dest);
@@ -1590,224 +1591,224 @@ int efx_mcdi_log_ctrl(struct efx_nic *efx, bool evq, bool uart, u32 dest_evq)
 
 	BUILD_BUG_ON(MC_CMD_LOG_CTRL_OUT_LEN != 0);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_LOG_CTRL, inbuf, sizeof(inbuf),
-			  NULL, 0, NULL);
-	return rc;
-}
+	rc = efx_mcdi_rpc(efx, MC_CMD_LOG_CTRL, inbuf, माप(inbuf),
+			  शून्य, 0, शून्य);
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_nvram_types(struct efx_nic *efx, u32 *nvram_types_out)
-{
+पूर्णांक efx_mcdi_nvram_types(काष्ठा efx_nic *efx, u32 *nvram_types_out)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_NVRAM_TYPES_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_NVRAM_TYPES_IN_LEN != 0);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_TYPES, NULL, 0,
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		goto fail;
-	if (outlen < MC_CMD_NVRAM_TYPES_OUT_LEN) {
+	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_TYPES, शून्य, 0,
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		जाओ fail;
+	अगर (outlen < MC_CMD_NVRAM_TYPES_OUT_LEN) अणु
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	*nvram_types_out = MCDI_DWORD(outbuf, NVRAM_TYPES_OUT_TYPES);
-	return 0;
+	वापस 0;
 
 fail:
-	netif_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n",
+	netअगर_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n",
 		  __func__, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* This function finds types using the new NVRAM_PARTITIONS mcdi. */
-static int efx_new_mcdi_nvram_types(struct efx_nic *efx, u32 *number,
+अटल पूर्णांक efx_new_mcdi_nvram_types(काष्ठा efx_nic *efx, u32 *number,
 				    u32 *nvram_types)
-{
+अणु
 	efx_dword_t *outbuf = kzalloc(MC_CMD_NVRAM_PARTITIONS_OUT_LENMAX_MCDI2,
 				      GFP_KERNEL);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
-	if (!outbuf)
-		return -ENOMEM;
+	अगर (!outbuf)
+		वापस -ENOMEM;
 
 	BUILD_BUG_ON(MC_CMD_NVRAM_PARTITIONS_IN_LEN != 0);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_PARTITIONS, NULL, 0,
+	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_PARTITIONS, शून्य, 0,
 			  outbuf, MC_CMD_NVRAM_PARTITIONS_OUT_LENMAX_MCDI2, &outlen);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
 	*number = MCDI_DWORD(outbuf, NVRAM_PARTITIONS_OUT_NUM_PARTITIONS);
 
-	memcpy(nvram_types, MCDI_PTR(outbuf, NVRAM_PARTITIONS_OUT_TYPE_ID),
-	       *number * sizeof(u32));
+	स_नकल(nvram_types, MCDI_PTR(outbuf, NVRAM_PARTITIONS_OUT_TYPE_ID),
+	       *number * माप(u32));
 
 fail:
-	kfree(outbuf);
-	return rc;
-}
+	kमुक्त(outbuf);
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_nvram_info(struct efx_nic *efx, unsigned int type,
-			size_t *size_out, size_t *erase_size_out,
-			bool *protected_out)
-{
+पूर्णांक efx_mcdi_nvram_info(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक type,
+			माप_प्रकार *size_out, माप_प्रकार *erase_size_out,
+			bool *रक्षित_out)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_NVRAM_INFO_IN_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_NVRAM_INFO_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, NVRAM_INFO_IN_TYPE, type);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_INFO, inbuf, sizeof(inbuf),
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		goto fail;
-	if (outlen < MC_CMD_NVRAM_INFO_OUT_LEN) {
+	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_INFO, inbuf, माप(inbuf),
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		जाओ fail;
+	अगर (outlen < MC_CMD_NVRAM_INFO_OUT_LEN) अणु
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	*size_out = MCDI_DWORD(outbuf, NVRAM_INFO_OUT_SIZE);
 	*erase_size_out = MCDI_DWORD(outbuf, NVRAM_INFO_OUT_ERASESIZE);
-	*protected_out = !!(MCDI_DWORD(outbuf, NVRAM_INFO_OUT_FLAGS) &
+	*रक्षित_out = !!(MCDI_DWORD(outbuf, NVRAM_INFO_OUT_FLAGS) &
 				(1 << MC_CMD_NVRAM_INFO_OUT_PROTECTED_LBN));
-	return 0;
+	वापस 0;
 
 fail:
-	netif_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
-	return rc;
-}
+	netअगर_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
+	वापस rc;
+पूर्ण
 
-static int efx_mcdi_nvram_test(struct efx_nic *efx, unsigned int type)
-{
+अटल पूर्णांक efx_mcdi_nvram_test(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक type)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_NVRAM_TEST_IN_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_NVRAM_TEST_OUT_LEN);
-	int rc;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, NVRAM_TEST_IN_TYPE, type);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_TEST, inbuf, sizeof(inbuf),
-			  outbuf, sizeof(outbuf), NULL);
-	if (rc)
-		return rc;
+	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_TEST, inbuf, माप(inbuf),
+			  outbuf, माप(outbuf), शून्य);
+	अगर (rc)
+		वापस rc;
 
-	switch (MCDI_DWORD(outbuf, NVRAM_TEST_OUT_RESULT)) {
-	case MC_CMD_NVRAM_TEST_PASS:
-	case MC_CMD_NVRAM_TEST_NOTSUPP:
-		return 0;
-	default:
-		return -EIO;
-	}
-}
+	चयन (MCDI_DWORD(outbuf, NVRAM_TEST_OUT_RESULT)) अणु
+	हाल MC_CMD_NVRAM_TEST_PASS:
+	हाल MC_CMD_NVRAM_TEST_NOTSUPP:
+		वापस 0;
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
 /* This function tests nvram partitions using the new mcdi partition lookup scheme */
-int efx_new_mcdi_nvram_test_all(struct efx_nic *efx)
-{
+पूर्णांक efx_new_mcdi_nvram_test_all(काष्ठा efx_nic *efx)
+अणु
 	u32 *nvram_types = kzalloc(MC_CMD_NVRAM_PARTITIONS_OUT_LENMAX_MCDI2,
 				   GFP_KERNEL);
-	unsigned int number;
-	int rc, i;
+	अचिन्हित पूर्णांक number;
+	पूर्णांक rc, i;
 
-	if (!nvram_types)
-		return -ENOMEM;
+	अगर (!nvram_types)
+		वापस -ENOMEM;
 
 	rc = efx_new_mcdi_nvram_types(efx, &number, nvram_types);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
 	/* Require at least one check */
 	rc = -EAGAIN;
 
-	for (i = 0; i < number; i++) {
-		if (nvram_types[i] == NVRAM_PARTITION_TYPE_PARTITION_MAP ||
+	क्रम (i = 0; i < number; i++) अणु
+		अगर (nvram_types[i] == NVRAM_PARTITION_TYPE_PARTITION_MAP ||
 		    nvram_types[i] == NVRAM_PARTITION_TYPE_DYNAMIC_CONFIG)
-			continue;
+			जारी;
 
 		rc = efx_mcdi_nvram_test(efx, nvram_types[i]);
-		if (rc)
-			goto fail;
-	}
+		अगर (rc)
+			जाओ fail;
+	पूर्ण
 
 fail:
-	kfree(nvram_types);
-	return rc;
-}
+	kमुक्त(nvram_types);
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_nvram_test_all(struct efx_nic *efx)
-{
+पूर्णांक efx_mcdi_nvram_test_all(काष्ठा efx_nic *efx)
+अणु
 	u32 nvram_types;
-	unsigned int type;
-	int rc;
+	अचिन्हित पूर्णांक type;
+	पूर्णांक rc;
 
 	rc = efx_mcdi_nvram_types(efx, &nvram_types);
-	if (rc)
-		goto fail1;
+	अगर (rc)
+		जाओ fail1;
 
 	type = 0;
-	while (nvram_types != 0) {
-		if (nvram_types & 1) {
+	जबतक (nvram_types != 0) अणु
+		अगर (nvram_types & 1) अणु
 			rc = efx_mcdi_nvram_test(efx, type);
-			if (rc)
-				goto fail2;
-		}
+			अगर (rc)
+				जाओ fail2;
+		पूर्ण
 		type++;
 		nvram_types >>= 1;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail2:
-	netif_err(efx, hw, efx->net_dev, "%s: failed type=%u\n",
+	netअगर_err(efx, hw, efx->net_dev, "%s: failed type=%u\n",
 		  __func__, type);
 fail1:
-	netif_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
-	return rc;
-}
+	netअगर_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
+	वापस rc;
+पूर्ण
 
-/* Returns 1 if an assertion was read, 0 if no assertion had fired,
+/* Returns 1 अगर an निश्चितion was पढ़ो, 0 अगर no निश्चितion had fired,
  * negative on error.
  */
-static int efx_mcdi_read_assertion(struct efx_nic *efx)
-{
+अटल पूर्णांक efx_mcdi_पढ़ो_निश्चितion(काष्ठा efx_nic *efx)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_GET_ASSERTS_IN_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_ASSERTS_OUT_LEN);
-	unsigned int flags, index;
-	const char *reason;
-	size_t outlen;
-	int retry;
-	int rc;
+	अचिन्हित पूर्णांक flags, index;
+	स्थिर अक्षर *reason;
+	माप_प्रकार outlen;
+	पूर्णांक retry;
+	पूर्णांक rc;
 
-	/* Attempt to read any stored assertion state before we reboot
-	 * the mcfw out of the assertion handler. Retry twice, once
-	 * because a boot-time assertion might cause this command to fail
+	/* Attempt to पढ़ो any stored निश्चितion state beक्रमe we reboot
+	 * the mcfw out of the निश्चितion handler. Retry twice, once
+	 * because a boot-समय निश्चितion might cause this command to fail
 	 * with EINTR. And once again because GET_ASSERTS can race with
 	 * MC_CMD_REBOOT running on the other port. */
 	retry = 2;
-	do {
+	करो अणु
 		MCDI_SET_DWORD(inbuf, GET_ASSERTS_IN_CLEAR, 1);
 		rc = efx_mcdi_rpc_quiet(efx, MC_CMD_GET_ASSERTS,
 					inbuf, MC_CMD_GET_ASSERTS_IN_LEN,
-					outbuf, sizeof(outbuf), &outlen);
-		if (rc == -EPERM)
-			return 0;
-	} while ((rc == -EINTR || rc == -EIO) && retry-- > 0);
+					outbuf, माप(outbuf), &outlen);
+		अगर (rc == -EPERM)
+			वापस 0;
+	पूर्ण जबतक ((rc == -EINTR || rc == -EIO) && retry-- > 0);
 
-	if (rc) {
+	अगर (rc) अणु
 		efx_mcdi_display_error(efx, MC_CMD_GET_ASSERTS,
 				       MC_CMD_GET_ASSERTS_IN_LEN, outbuf,
 				       outlen, rc);
-		return rc;
-	}
-	if (outlen < MC_CMD_GET_ASSERTS_OUT_LEN)
-		return -EIO;
+		वापस rc;
+	पूर्ण
+	अगर (outlen < MC_CMD_GET_ASSERTS_OUT_LEN)
+		वापस -EIO;
 
-	/* Print out any recorded assertion state */
+	/* Prपूर्णांक out any recorded निश्चितion state */
 	flags = MCDI_DWORD(outbuf, GET_ASSERTS_OUT_GLOBAL_FLAGS);
-	if (flags == MC_CMD_GET_ASSERTS_FLAGS_NO_FAILS)
-		return 0;
+	अगर (flags == MC_CMD_GET_ASSERTS_FLAGS_NO_FAILS)
+		वापस 0;
 
 	reason = (flags == MC_CMD_GET_ASSERTS_FLAGS_SYS_FAIL)
 		? "system-level assertion"
@@ -1816,60 +1817,60 @@ static int efx_mcdi_read_assertion(struct efx_nic *efx)
 		: (flags == MC_CMD_GET_ASSERTS_FLAGS_WDOG_FIRED)
 		? "watchdog reset"
 		: "unknown assertion";
-	netif_err(efx, hw, efx->net_dev,
+	netअगर_err(efx, hw, efx->net_dev,
 		  "MCPU %s at PC = 0x%.8x in thread 0x%.8x\n", reason,
 		  MCDI_DWORD(outbuf, GET_ASSERTS_OUT_SAVED_PC_OFFS),
 		  MCDI_DWORD(outbuf, GET_ASSERTS_OUT_THREAD_OFFS));
 
-	/* Print out the registers */
-	for (index = 0;
+	/* Prपूर्णांक out the रेजिस्टरs */
+	क्रम (index = 0;
 	     index < MC_CMD_GET_ASSERTS_OUT_GP_REGS_OFFS_NUM;
 	     index++)
-		netif_err(efx, hw, efx->net_dev, "R%.2d (?): 0x%.8x\n",
+		netअगर_err(efx, hw, efx->net_dev, "R%.2d (?): 0x%.8x\n",
 			  1 + index,
 			  MCDI_ARRAY_DWORD(outbuf, GET_ASSERTS_OUT_GP_REGS_OFFS,
 					   index));
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int efx_mcdi_exit_assertion(struct efx_nic *efx)
-{
+अटल पूर्णांक efx_mcdi_निकास_निश्चितion(काष्ठा efx_nic *efx)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_REBOOT_IN_LEN);
-	int rc;
+	पूर्णांक rc;
 
 	/* If the MC is running debug firmware, it might now be
-	 * waiting for a debugger to attach, but we just want it to
-	 * reboot.  We set a flag that makes the command a no-op if it
-	 * has already done so.
-	 * The MCDI will thus return either 0 or -EIO.
+	 * रुकोing क्रम a debugger to attach, but we just want it to
+	 * reboot.  We set a flag that makes the command a no-op अगर it
+	 * has alपढ़ोy करोne so.
+	 * The MCDI will thus वापस either 0 or -EIO.
 	 */
 	BUILD_BUG_ON(MC_CMD_REBOOT_OUT_LEN != 0);
 	MCDI_SET_DWORD(inbuf, REBOOT_IN_FLAGS,
 		       MC_CMD_REBOOT_FLAGS_AFTER_ASSERTION);
 	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_REBOOT, inbuf, MC_CMD_REBOOT_IN_LEN,
-				NULL, 0, NULL);
-	if (rc == -EIO)
+				शून्य, 0, शून्य);
+	अगर (rc == -EIO)
 		rc = 0;
-	if (rc)
+	अगर (rc)
 		efx_mcdi_display_error(efx, MC_CMD_REBOOT, MC_CMD_REBOOT_IN_LEN,
-				       NULL, 0, rc);
-	return rc;
-}
+				       शून्य, 0, rc);
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_handle_assertion(struct efx_nic *efx)
-{
-	int rc;
+पूर्णांक efx_mcdi_handle_निश्चितion(काष्ठा efx_nic *efx)
+अणु
+	पूर्णांक rc;
 
-	rc = efx_mcdi_read_assertion(efx);
-	if (rc <= 0)
-		return rc;
+	rc = efx_mcdi_पढ़ो_निश्चितion(efx);
+	अगर (rc <= 0)
+		वापस rc;
 
-	return efx_mcdi_exit_assertion(efx);
-}
+	वापस efx_mcdi_निकास_निश्चितion(efx);
+पूर्ण
 
-int efx_mcdi_set_id_led(struct efx_nic *efx, enum efx_led_mode mode)
-{
+पूर्णांक efx_mcdi_set_id_led(काष्ठा efx_nic *efx, क्रमागत efx_led_mode mode)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_SET_ID_LED_IN_LEN);
 
 	BUILD_BUG_ON(EFX_LED_OFF != MC_CMD_LED_OFF);
@@ -1880,264 +1881,264 @@ int efx_mcdi_set_id_led(struct efx_nic *efx, enum efx_led_mode mode)
 
 	MCDI_SET_DWORD(inbuf, SET_ID_LED_IN_STATE, mode);
 
-	return efx_mcdi_rpc(efx, MC_CMD_SET_ID_LED, inbuf, sizeof(inbuf), NULL, 0, NULL);
-}
+	वापस efx_mcdi_rpc(efx, MC_CMD_SET_ID_LED, inbuf, माप(inbuf), शून्य, 0, शून्य);
+पूर्ण
 
-static int efx_mcdi_reset_func(struct efx_nic *efx)
-{
+अटल पूर्णांक efx_mcdi_reset_func(काष्ठा efx_nic *efx)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_ENTITY_RESET_IN_LEN);
-	int rc;
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_ENTITY_RESET_OUT_LEN != 0);
 	MCDI_POPULATE_DWORD_1(inbuf, ENTITY_RESET_IN_FLAG,
 			      ENTITY_RESET_IN_FUNCTION_RESOURCE_RESET, 1);
-	rc = efx_mcdi_rpc(efx, MC_CMD_ENTITY_RESET, inbuf, sizeof(inbuf),
-			  NULL, 0, NULL);
-	return rc;
-}
+	rc = efx_mcdi_rpc(efx, MC_CMD_ENTITY_RESET, inbuf, माप(inbuf),
+			  शून्य, 0, शून्य);
+	वापस rc;
+पूर्ण
 
-static int efx_mcdi_reset_mc(struct efx_nic *efx)
-{
+अटल पूर्णांक efx_mcdi_reset_mc(काष्ठा efx_nic *efx)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_REBOOT_IN_LEN);
-	int rc;
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_REBOOT_OUT_LEN != 0);
 	MCDI_SET_DWORD(inbuf, REBOOT_IN_FLAGS, 0);
-	rc = efx_mcdi_rpc(efx, MC_CMD_REBOOT, inbuf, sizeof(inbuf),
-			  NULL, 0, NULL);
-	/* White is black, and up is down */
-	if (rc == -EIO)
-		return 0;
-	if (rc == 0)
+	rc = efx_mcdi_rpc(efx, MC_CMD_REBOOT, inbuf, माप(inbuf),
+			  शून्य, 0, शून्य);
+	/* White is black, and up is करोwn */
+	अगर (rc == -EIO)
+		वापस 0;
+	अगर (rc == 0)
 		rc = -EIO;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-enum reset_type efx_mcdi_map_reset_reason(enum reset_type reason)
-{
-	return RESET_TYPE_RECOVER_OR_ALL;
-}
+क्रमागत reset_type efx_mcdi_map_reset_reason(क्रमागत reset_type reason)
+अणु
+	वापस RESET_TYPE_RECOVER_OR_ALL;
+पूर्ण
 
-int efx_mcdi_reset(struct efx_nic *efx, enum reset_type method)
-{
-	int rc;
+पूर्णांक efx_mcdi_reset(काष्ठा efx_nic *efx, क्रमागत reset_type method)
+अणु
+	पूर्णांक rc;
 
-	/* If MCDI is down, we can't handle_assertion */
-	if (method == RESET_TYPE_MCDI_TIMEOUT) {
+	/* If MCDI is करोwn, we can't handle_निश्चितion */
+	अगर (method == RESET_TYPE_MCDI_TIMEOUT) अणु
 		rc = pci_reset_function(efx->pci_dev);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 		/* Re-enable polled MCDI completion */
-		if (efx->mcdi) {
-			struct efx_mcdi_iface *mcdi = efx_mcdi(efx);
+		अगर (efx->mcdi) अणु
+			काष्ठा efx_mcdi_अगरace *mcdi = efx_mcdi(efx);
 			mcdi->mode = MCDI_MODE_POLL;
-		}
-		return 0;
-	}
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	/* Recover from a failed assertion pre-reset */
-	rc = efx_mcdi_handle_assertion(efx);
-	if (rc)
-		return rc;
+	/* Recover from a failed निश्चितion pre-reset */
+	rc = efx_mcdi_handle_निश्चितion(efx);
+	अगर (rc)
+		वापस rc;
 
-	if (method == RESET_TYPE_DATAPATH)
-		return 0;
-	else if (method == RESET_TYPE_WORLD)
-		return efx_mcdi_reset_mc(efx);
-	else
-		return efx_mcdi_reset_func(efx);
-}
+	अगर (method == RESET_TYPE_DATAPATH)
+		वापस 0;
+	अन्यथा अगर (method == RESET_TYPE_WORLD)
+		वापस efx_mcdi_reset_mc(efx);
+	अन्यथा
+		वापस efx_mcdi_reset_func(efx);
+पूर्ण
 
-static int efx_mcdi_wol_filter_set(struct efx_nic *efx, u32 type,
-				   const u8 *mac, int *id_out)
-{
+अटल पूर्णांक efx_mcdi_wol_filter_set(काष्ठा efx_nic *efx, u32 type,
+				   स्थिर u8 *mac, पूर्णांक *id_out)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_WOL_FILTER_SET_IN_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_WOL_FILTER_SET_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, WOL_FILTER_SET_IN_WOL_TYPE, type);
 	MCDI_SET_DWORD(inbuf, WOL_FILTER_SET_IN_FILTER_MODE,
 		       MC_CMD_FILTER_MODE_SIMPLE);
 	ether_addr_copy(MCDI_PTR(inbuf, WOL_FILTER_SET_IN_MAGIC_MAC), mac);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_WOL_FILTER_SET, inbuf, sizeof(inbuf),
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		goto fail;
+	rc = efx_mcdi_rpc(efx, MC_CMD_WOL_FILTER_SET, inbuf, माप(inbuf),
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		जाओ fail;
 
-	if (outlen < MC_CMD_WOL_FILTER_SET_OUT_LEN) {
+	अगर (outlen < MC_CMD_WOL_FILTER_SET_OUT_LEN) अणु
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	*id_out = (int)MCDI_DWORD(outbuf, WOL_FILTER_SET_OUT_FILTER_ID);
+	*id_out = (पूर्णांक)MCDI_DWORD(outbuf, WOL_FILTER_SET_OUT_FILTER_ID);
 
-	return 0;
+	वापस 0;
 
 fail:
 	*id_out = -1;
-	netif_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
-	return rc;
+	netअगर_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
+	वापस rc;
 
-}
-
-
-int
-efx_mcdi_wol_filter_set_magic(struct efx_nic *efx,  const u8 *mac, int *id_out)
-{
-	return efx_mcdi_wol_filter_set(efx, MC_CMD_WOL_TYPE_MAGIC, mac, id_out);
-}
+पूर्ण
 
 
-int efx_mcdi_wol_filter_get_magic(struct efx_nic *efx, int *id_out)
-{
+पूर्णांक
+efx_mcdi_wol_filter_set_magic(काष्ठा efx_nic *efx,  स्थिर u8 *mac, पूर्णांक *id_out)
+अणु
+	वापस efx_mcdi_wol_filter_set(efx, MC_CMD_WOL_TYPE_MAGIC, mac, id_out);
+पूर्ण
+
+
+पूर्णांक efx_mcdi_wol_filter_get_magic(काष्ठा efx_nic *efx, पूर्णांक *id_out)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_WOL_FILTER_GET_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_WOL_FILTER_GET, NULL, 0,
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		goto fail;
+	rc = efx_mcdi_rpc(efx, MC_CMD_WOL_FILTER_GET, शून्य, 0,
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		जाओ fail;
 
-	if (outlen < MC_CMD_WOL_FILTER_GET_OUT_LEN) {
+	अगर (outlen < MC_CMD_WOL_FILTER_GET_OUT_LEN) अणु
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	*id_out = (int)MCDI_DWORD(outbuf, WOL_FILTER_GET_OUT_FILTER_ID);
+	*id_out = (पूर्णांक)MCDI_DWORD(outbuf, WOL_FILTER_GET_OUT_FILTER_ID);
 
-	return 0;
+	वापस 0;
 
 fail:
 	*id_out = -1;
-	netif_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
-	return rc;
-}
+	netअगर_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
+	वापस rc;
+पूर्ण
 
 
-int efx_mcdi_wol_filter_remove(struct efx_nic *efx, int id)
-{
+पूर्णांक efx_mcdi_wol_filter_हटाओ(काष्ठा efx_nic *efx, पूर्णांक id)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_WOL_FILTER_REMOVE_IN_LEN);
-	int rc;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, WOL_FILTER_REMOVE_IN_FILTER_ID, (u32)id);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_WOL_FILTER_REMOVE, inbuf, sizeof(inbuf),
-			  NULL, 0, NULL);
-	return rc;
-}
+	rc = efx_mcdi_rpc(efx, MC_CMD_WOL_FILTER_REMOVE, inbuf, माप(inbuf),
+			  शून्य, 0, शून्य);
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_flush_rxqs(struct efx_nic *efx)
-{
-	struct efx_channel *channel;
-	struct efx_rx_queue *rx_queue;
+पूर्णांक efx_mcdi_flush_rxqs(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_channel *channel;
+	काष्ठा efx_rx_queue *rx_queue;
 	MCDI_DECLARE_BUF(inbuf,
 			 MC_CMD_FLUSH_RX_QUEUES_IN_LEN(EFX_MAX_CHANNELS));
-	int rc, count;
+	पूर्णांक rc, count;
 
 	BUILD_BUG_ON(EFX_MAX_CHANNELS >
 		     MC_CMD_FLUSH_RX_QUEUES_IN_QID_OFST_MAXNUM);
 
 	count = 0;
-	efx_for_each_channel(channel, efx) {
-		efx_for_each_channel_rx_queue(rx_queue, channel) {
-			if (rx_queue->flush_pending) {
+	efx_क्रम_each_channel(channel, efx) अणु
+		efx_क्रम_each_channel_rx_queue(rx_queue, channel) अणु
+			अगर (rx_queue->flush_pending) अणु
 				rx_queue->flush_pending = false;
 				atomic_dec(&efx->rxq_flush_pending);
 				MCDI_SET_ARRAY_DWORD(
 					inbuf, FLUSH_RX_QUEUES_IN_QID_OFST,
 					count, efx_rx_queue_index(rx_queue));
 				count++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	rc = efx_mcdi_rpc(efx, MC_CMD_FLUSH_RX_QUEUES, inbuf,
-			  MC_CMD_FLUSH_RX_QUEUES_IN_LEN(count), NULL, 0, NULL);
+			  MC_CMD_FLUSH_RX_QUEUES_IN_LEN(count), शून्य, 0, शून्य);
 	WARN_ON(rc < 0);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_wol_filter_reset(struct efx_nic *efx)
-{
-	int rc;
+पूर्णांक efx_mcdi_wol_filter_reset(काष्ठा efx_nic *efx)
+अणु
+	पूर्णांक rc;
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_WOL_FILTER_RESET, NULL, 0, NULL, 0, NULL);
-	return rc;
-}
+	rc = efx_mcdi_rpc(efx, MC_CMD_WOL_FILTER_RESET, शून्य, 0, शून्य, 0, शून्य);
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_set_workaround(struct efx_nic *efx, u32 type, bool enabled,
-			    unsigned int *flags)
-{
+पूर्णांक efx_mcdi_set_workaround(काष्ठा efx_nic *efx, u32 type, bool enabled,
+			    अचिन्हित पूर्णांक *flags)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_WORKAROUND_IN_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_WORKAROUND_EXT_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_WORKAROUND_OUT_LEN != 0);
 	MCDI_SET_DWORD(inbuf, WORKAROUND_IN_TYPE, type);
 	MCDI_SET_DWORD(inbuf, WORKAROUND_IN_ENABLED, enabled);
-	rc = efx_mcdi_rpc(efx, MC_CMD_WORKAROUND, inbuf, sizeof(inbuf),
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		return rc;
+	rc = efx_mcdi_rpc(efx, MC_CMD_WORKAROUND, inbuf, माप(inbuf),
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		वापस rc;
 
-	if (!flags)
-		return 0;
+	अगर (!flags)
+		वापस 0;
 
-	if (outlen >= MC_CMD_WORKAROUND_EXT_OUT_LEN)
+	अगर (outlen >= MC_CMD_WORKAROUND_EXT_OUT_LEN)
 		*flags = MCDI_DWORD(outbuf, WORKAROUND_EXT_OUT_FLAGS);
-	else
+	अन्यथा
 		*flags = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int efx_mcdi_get_workarounds(struct efx_nic *efx, unsigned int *impl_out,
-			     unsigned int *enabled_out)
-{
+पूर्णांक efx_mcdi_get_workarounds(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक *impl_out,
+			     अचिन्हित पूर्णांक *enabled_out)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_WORKAROUNDS_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_WORKAROUNDS, NULL, 0,
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		goto fail;
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_WORKAROUNDS, शून्य, 0,
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		जाओ fail;
 
-	if (outlen < MC_CMD_GET_WORKAROUNDS_OUT_LEN) {
+	अगर (outlen < MC_CMD_GET_WORKAROUNDS_OUT_LEN) अणु
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (impl_out)
+	अगर (impl_out)
 		*impl_out = MCDI_DWORD(outbuf, GET_WORKAROUNDS_OUT_IMPLEMENTED);
 
-	if (enabled_out)
+	अगर (enabled_out)
 		*enabled_out = MCDI_DWORD(outbuf, GET_WORKAROUNDS_OUT_ENABLED);
 
-	return 0;
+	वापस 0;
 
 fail:
 	/* Older firmware lacks GET_WORKAROUNDS and this isn't especially
-	 * terrifying.  The call site will have to deal with it though.
+	 * terrअगरying.  The call site will have to deal with it though.
 	 */
-	netif_cond_dbg(efx, hw, efx->net_dev, rc == -ENOSYS, err,
+	netअगर_cond_dbg(efx, hw, efx->net_dev, rc == -ENOSYS, err,
 		       "%s: failed rc=%d\n", __func__, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#ifdef CONFIG_SFC_MTD
+#अगर_घोषित CONFIG_SFC_MTD
 
-#define EFX_MCDI_NVRAM_LEN_MAX 128
+#घोषणा EFX_MCDI_NVRAM_LEN_MAX 128
 
-static int efx_mcdi_nvram_update_start(struct efx_nic *efx, unsigned int type)
-{
+अटल पूर्णांक efx_mcdi_nvram_update_start(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक type)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_NVRAM_UPDATE_START_V2_IN_LEN);
-	int rc;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, NVRAM_UPDATE_START_IN_TYPE, type);
 	MCDI_POPULATE_DWORD_1(inbuf, NVRAM_UPDATE_START_V2_IN_FLAGS,
@@ -2146,20 +2147,20 @@ static int efx_mcdi_nvram_update_start(struct efx_nic *efx, unsigned int type)
 
 	BUILD_BUG_ON(MC_CMD_NVRAM_UPDATE_START_OUT_LEN != 0);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_UPDATE_START, inbuf, sizeof(inbuf),
-			  NULL, 0, NULL);
+	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_UPDATE_START, inbuf, माप(inbuf),
+			  शून्य, 0, शून्य);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int efx_mcdi_nvram_read(struct efx_nic *efx, unsigned int type,
-			       loff_t offset, u8 *buffer, size_t length)
-{
+अटल पूर्णांक efx_mcdi_nvram_पढ़ो(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक type,
+			       loff_t offset, u8 *buffer, माप_प्रकार length)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_NVRAM_READ_IN_V2_LEN);
 	MCDI_DECLARE_BUF(outbuf,
 			 MC_CMD_NVRAM_READ_OUT_LEN(EFX_MCDI_NVRAM_LEN_MAX));
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, NVRAM_READ_IN_TYPE, type);
 	MCDI_SET_DWORD(inbuf, NVRAM_READ_IN_OFFSET, offset);
@@ -2167,40 +2168,40 @@ static int efx_mcdi_nvram_read(struct efx_nic *efx, unsigned int type,
 	MCDI_SET_DWORD(inbuf, NVRAM_READ_IN_V2_MODE,
 		       MC_CMD_NVRAM_READ_IN_V2_DEFAULT);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_READ, inbuf, sizeof(inbuf),
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		return rc;
+	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_READ, inbuf, माप(inbuf),
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		वापस rc;
 
-	memcpy(buffer, MCDI_PTR(outbuf, NVRAM_READ_OUT_READ_BUFFER), length);
-	return 0;
-}
+	स_नकल(buffer, MCDI_PTR(outbuf, NVRAM_READ_OUT_READ_BUFFER), length);
+	वापस 0;
+पूर्ण
 
-static int efx_mcdi_nvram_write(struct efx_nic *efx, unsigned int type,
-				loff_t offset, const u8 *buffer, size_t length)
-{
+अटल पूर्णांक efx_mcdi_nvram_ग_लिखो(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक type,
+				loff_t offset, स्थिर u8 *buffer, माप_प्रकार length)
+अणु
 	MCDI_DECLARE_BUF(inbuf,
 			 MC_CMD_NVRAM_WRITE_IN_LEN(EFX_MCDI_NVRAM_LEN_MAX));
-	int rc;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, NVRAM_WRITE_IN_TYPE, type);
 	MCDI_SET_DWORD(inbuf, NVRAM_WRITE_IN_OFFSET, offset);
 	MCDI_SET_DWORD(inbuf, NVRAM_WRITE_IN_LENGTH, length);
-	memcpy(MCDI_PTR(inbuf, NVRAM_WRITE_IN_WRITE_BUFFER), buffer, length);
+	स_नकल(MCDI_PTR(inbuf, NVRAM_WRITE_IN_WRITE_BUFFER), buffer, length);
 
 	BUILD_BUG_ON(MC_CMD_NVRAM_WRITE_OUT_LEN != 0);
 
 	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_WRITE, inbuf,
 			  ALIGN(MC_CMD_NVRAM_WRITE_IN_LEN(length), 4),
-			  NULL, 0, NULL);
-	return rc;
-}
+			  शून्य, 0, शून्य);
+	वापस rc;
+पूर्ण
 
-static int efx_mcdi_nvram_erase(struct efx_nic *efx, unsigned int type,
-				loff_t offset, size_t length)
-{
+अटल पूर्णांक efx_mcdi_nvram_erase(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक type,
+				loff_t offset, माप_प्रकार length)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_NVRAM_ERASE_IN_LEN);
-	int rc;
+	पूर्णांक rc;
 
 	MCDI_SET_DWORD(inbuf, NVRAM_ERASE_IN_TYPE, type);
 	MCDI_SET_DWORD(inbuf, NVRAM_ERASE_IN_OFFSET, offset);
@@ -2208,17 +2209,17 @@ static int efx_mcdi_nvram_erase(struct efx_nic *efx, unsigned int type,
 
 	BUILD_BUG_ON(MC_CMD_NVRAM_ERASE_OUT_LEN != 0);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_ERASE, inbuf, sizeof(inbuf),
-			  NULL, 0, NULL);
-	return rc;
-}
+	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_ERASE, inbuf, माप(inbuf),
+			  शून्य, 0, शून्य);
+	वापस rc;
+पूर्ण
 
-static int efx_mcdi_nvram_update_finish(struct efx_nic *efx, unsigned int type)
-{
+अटल पूर्णांक efx_mcdi_nvram_update_finish(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक type)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_NVRAM_UPDATE_FINISH_V2_IN_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_NVRAM_UPDATE_FINISH_V2_OUT_LEN);
-	size_t outlen;
-	int rc, rc2;
+	माप_प्रकार outlen;
+	पूर्णांक rc, rc2;
 
 	MCDI_SET_DWORD(inbuf, NVRAM_UPDATE_FINISH_IN_TYPE, type);
 	/* Always set this flag. Old firmware ignores it */
@@ -2226,150 +2227,150 @@ static int efx_mcdi_nvram_update_finish(struct efx_nic *efx, unsigned int type)
 			      NVRAM_UPDATE_FINISH_V2_IN_FLAG_REPORT_VERIFY_RESULT,
 			      1);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_UPDATE_FINISH, inbuf, sizeof(inbuf),
-			  outbuf, sizeof(outbuf), &outlen);
-	if (!rc && outlen >= MC_CMD_NVRAM_UPDATE_FINISH_V2_OUT_LEN) {
+	rc = efx_mcdi_rpc(efx, MC_CMD_NVRAM_UPDATE_FINISH, inbuf, माप(inbuf),
+			  outbuf, माप(outbuf), &outlen);
+	अगर (!rc && outlen >= MC_CMD_NVRAM_UPDATE_FINISH_V2_OUT_LEN) अणु
 		rc2 = MCDI_DWORD(outbuf, NVRAM_UPDATE_FINISH_V2_OUT_RESULT_CODE);
-		if (rc2 != MC_CMD_NVRAM_VERIFY_RC_SUCCESS)
-			netif_err(efx, drv, efx->net_dev,
+		अगर (rc2 != MC_CMD_NVRAM_VERIFY_RC_SUCCESS)
+			netअगर_err(efx, drv, efx->net_dev,
 				  "NVRAM update failed verification with code 0x%x\n",
 				  rc2);
-		switch (rc2) {
-		case MC_CMD_NVRAM_VERIFY_RC_SUCCESS:
-			break;
-		case MC_CMD_NVRAM_VERIFY_RC_CMS_CHECK_FAILED:
-		case MC_CMD_NVRAM_VERIFY_RC_MESSAGE_DIGEST_CHECK_FAILED:
-		case MC_CMD_NVRAM_VERIFY_RC_SIGNATURE_CHECK_FAILED:
-		case MC_CMD_NVRAM_VERIFY_RC_TRUSTED_APPROVERS_CHECK_FAILED:
-		case MC_CMD_NVRAM_VERIFY_RC_SIGNATURE_CHAIN_CHECK_FAILED:
+		चयन (rc2) अणु
+		हाल MC_CMD_NVRAM_VERIFY_RC_SUCCESS:
+			अवरोध;
+		हाल MC_CMD_NVRAM_VERIFY_RC_CMS_CHECK_FAILED:
+		हाल MC_CMD_NVRAM_VERIFY_RC_MESSAGE_DIGEST_CHECK_FAILED:
+		हाल MC_CMD_NVRAM_VERIFY_RC_SIGNATURE_CHECK_FAILED:
+		हाल MC_CMD_NVRAM_VERIFY_RC_TRUSTED_APPROVERS_CHECK_FAILED:
+		हाल MC_CMD_NVRAM_VERIFY_RC_SIGNATURE_CHAIN_CHECK_FAILED:
 			rc = -EIO;
-			break;
-		case MC_CMD_NVRAM_VERIFY_RC_INVALID_CMS_FORMAT:
-		case MC_CMD_NVRAM_VERIFY_RC_BAD_MESSAGE_DIGEST:
+			अवरोध;
+		हाल MC_CMD_NVRAM_VERIFY_RC_INVALID_CMS_FORMAT:
+		हाल MC_CMD_NVRAM_VERIFY_RC_BAD_MESSAGE_DIGEST:
 			rc = -EINVAL;
-			break;
-		case MC_CMD_NVRAM_VERIFY_RC_NO_VALID_SIGNATURES:
-		case MC_CMD_NVRAM_VERIFY_RC_NO_TRUSTED_APPROVERS:
-		case MC_CMD_NVRAM_VERIFY_RC_NO_SIGNATURE_MATCH:
+			अवरोध;
+		हाल MC_CMD_NVRAM_VERIFY_RC_NO_VALID_SIGNATURES:
+		हाल MC_CMD_NVRAM_VERIFY_RC_NO_TRUSTED_APPROVERS:
+		हाल MC_CMD_NVRAM_VERIFY_RC_NO_SIGNATURE_MATCH:
 			rc = -EPERM;
-			break;
-		default:
-			netif_err(efx, drv, efx->net_dev,
+			अवरोध;
+		शेष:
+			netअगर_err(efx, drv, efx->net_dev,
 				  "Unknown response to NVRAM_UPDATE_FINISH\n");
 			rc = -EIO;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_mtd_read(struct mtd_info *mtd, loff_t start,
-		      size_t len, size_t *retlen, u8 *buffer)
-{
-	struct efx_mcdi_mtd_partition *part = to_efx_mcdi_mtd_partition(mtd);
-	struct efx_nic *efx = mtd->priv;
+पूर्णांक efx_mcdi_mtd_पढ़ो(काष्ठा mtd_info *mtd, loff_t start,
+		      माप_प्रकार len, माप_प्रकार *retlen, u8 *buffer)
+अणु
+	काष्ठा efx_mcdi_mtd_partition *part = to_efx_mcdi_mtd_partition(mtd);
+	काष्ठा efx_nic *efx = mtd->priv;
 	loff_t offset = start;
 	loff_t end = min_t(loff_t, start + len, mtd->size);
-	size_t chunk;
-	int rc = 0;
+	माप_प्रकार chunk;
+	पूर्णांक rc = 0;
 
-	while (offset < end) {
-		chunk = min_t(size_t, end - offset, EFX_MCDI_NVRAM_LEN_MAX);
-		rc = efx_mcdi_nvram_read(efx, part->nvram_type, offset,
+	जबतक (offset < end) अणु
+		chunk = min_t(माप_प्रकार, end - offset, EFX_MCDI_NVRAM_LEN_MAX);
+		rc = efx_mcdi_nvram_पढ़ो(efx, part->nvram_type, offset,
 					 buffer, chunk);
-		if (rc)
-			goto out;
+		अगर (rc)
+			जाओ out;
 		offset += chunk;
 		buffer += chunk;
-	}
+	पूर्ण
 out:
 	*retlen = offset - start;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_mtd_erase(struct mtd_info *mtd, loff_t start, size_t len)
-{
-	struct efx_mcdi_mtd_partition *part = to_efx_mcdi_mtd_partition(mtd);
-	struct efx_nic *efx = mtd->priv;
+पूर्णांक efx_mcdi_mtd_erase(काष्ठा mtd_info *mtd, loff_t start, माप_प्रकार len)
+अणु
+	काष्ठा efx_mcdi_mtd_partition *part = to_efx_mcdi_mtd_partition(mtd);
+	काष्ठा efx_nic *efx = mtd->priv;
 	loff_t offset = start & ~((loff_t)(mtd->erasesize - 1));
 	loff_t end = min_t(loff_t, start + len, mtd->size);
-	size_t chunk = part->common.mtd.erasesize;
-	int rc = 0;
+	माप_प्रकार chunk = part->common.mtd.erasesize;
+	पूर्णांक rc = 0;
 
-	if (!part->updating) {
+	अगर (!part->updating) अणु
 		rc = efx_mcdi_nvram_update_start(efx, part->nvram_type);
-		if (rc)
-			goto out;
+		अगर (rc)
+			जाओ out;
 		part->updating = true;
-	}
+	पूर्ण
 
-	/* The MCDI interface can in fact do multiple erase blocks at once;
-	 * but erasing may be slow, so we make multiple calls here to avoid
-	 * tripping the MCDI RPC timeout. */
-	while (offset < end) {
+	/* The MCDI पूर्णांकerface can in fact करो multiple erase blocks at once;
+	 * but erasing may be slow, so we make multiple calls here to aव्योम
+	 * tripping the MCDI RPC समयout. */
+	जबतक (offset < end) अणु
 		rc = efx_mcdi_nvram_erase(efx, part->nvram_type, offset,
 					  chunk);
-		if (rc)
-			goto out;
+		अगर (rc)
+			जाओ out;
 		offset += chunk;
-	}
+	पूर्ण
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_mtd_write(struct mtd_info *mtd, loff_t start,
-		       size_t len, size_t *retlen, const u8 *buffer)
-{
-	struct efx_mcdi_mtd_partition *part = to_efx_mcdi_mtd_partition(mtd);
-	struct efx_nic *efx = mtd->priv;
+पूर्णांक efx_mcdi_mtd_ग_लिखो(काष्ठा mtd_info *mtd, loff_t start,
+		       माप_प्रकार len, माप_प्रकार *retlen, स्थिर u8 *buffer)
+अणु
+	काष्ठा efx_mcdi_mtd_partition *part = to_efx_mcdi_mtd_partition(mtd);
+	काष्ठा efx_nic *efx = mtd->priv;
 	loff_t offset = start;
 	loff_t end = min_t(loff_t, start + len, mtd->size);
-	size_t chunk;
-	int rc = 0;
+	माप_प्रकार chunk;
+	पूर्णांक rc = 0;
 
-	if (!part->updating) {
+	अगर (!part->updating) अणु
 		rc = efx_mcdi_nvram_update_start(efx, part->nvram_type);
-		if (rc)
-			goto out;
+		अगर (rc)
+			जाओ out;
 		part->updating = true;
-	}
+	पूर्ण
 
-	while (offset < end) {
-		chunk = min_t(size_t, end - offset, EFX_MCDI_NVRAM_LEN_MAX);
-		rc = efx_mcdi_nvram_write(efx, part->nvram_type, offset,
+	जबतक (offset < end) अणु
+		chunk = min_t(माप_प्रकार, end - offset, EFX_MCDI_NVRAM_LEN_MAX);
+		rc = efx_mcdi_nvram_ग_लिखो(efx, part->nvram_type, offset,
 					  buffer, chunk);
-		if (rc)
-			goto out;
+		अगर (rc)
+			जाओ out;
 		offset += chunk;
 		buffer += chunk;
-	}
+	पूर्ण
 out:
 	*retlen = offset - start;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_mtd_sync(struct mtd_info *mtd)
-{
-	struct efx_mcdi_mtd_partition *part = to_efx_mcdi_mtd_partition(mtd);
-	struct efx_nic *efx = mtd->priv;
-	int rc = 0;
+पूर्णांक efx_mcdi_mtd_sync(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा efx_mcdi_mtd_partition *part = to_efx_mcdi_mtd_partition(mtd);
+	काष्ठा efx_nic *efx = mtd->priv;
+	पूर्णांक rc = 0;
 
-	if (part->updating) {
+	अगर (part->updating) अणु
 		part->updating = false;
 		rc = efx_mcdi_nvram_update_finish(efx, part->nvram_type);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void efx_mcdi_mtd_rename(struct efx_mtd_partition *part)
-{
-	struct efx_mcdi_mtd_partition *mcdi_part =
-		container_of(part, struct efx_mcdi_mtd_partition, common);
-	struct efx_nic *efx = part->mtd.priv;
+व्योम efx_mcdi_mtd_नाम(काष्ठा efx_mtd_partition *part)
+अणु
+	काष्ठा efx_mcdi_mtd_partition *mcdi_part =
+		container_of(part, काष्ठा efx_mcdi_mtd_partition, common);
+	काष्ठा efx_nic *efx = part->mtd.priv;
 
-	snprintf(part->name, sizeof(part->name), "%s %s:%02x",
+	snम_लिखो(part->name, माप(part->name), "%s %s:%02x",
 		 efx->name, part->type_name, mcdi_part->fw_subtype);
-}
+पूर्ण
 
-#endif /* CONFIG_SFC_MTD */
+#पूर्ण_अगर /* CONFIG_SFC_MTD */

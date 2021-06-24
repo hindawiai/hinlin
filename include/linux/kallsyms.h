@@ -1,165 +1,166 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* Rewritten and vastly simplified by Rusty Russell for in-kernel
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* Rewritten and vastly simplअगरied by Rusty Russell क्रम in-kernel
  * module loader:
  *   Copyright 2002 Rusty Russell <rusty@rustcorp.com.au> IBM Corporation
  */
-#ifndef _LINUX_KALLSYMS_H
-#define _LINUX_KALLSYMS_H
+#अगर_अघोषित _LINUX_KALLSYMS_H
+#घोषणा _LINUX_KALLSYMS_H
 
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/stddef.h>
-#include <linux/mm.h>
-#include <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
 
-#include <asm/sections.h>
+#समावेश <यंत्र/sections.h>
 
-#define KSYM_NAME_LEN 128
-#define KSYM_SYMBOL_LEN (sizeof("%s+%#lx/%#lx [%s]") + (KSYM_NAME_LEN - 1) + \
+#घोषणा KSYM_NAME_LEN 128
+#घोषणा KSYM_SYMBOL_LEN (माप("%s+%#lx/%#lx [%s]") + (KSYM_NAME_LEN - 1) + \
 			 2*(BITS_PER_LONG*3/10) + (MODULE_NAME_LEN - 1) + 1)
 
-struct cred;
-struct module;
+काष्ठा cred;
+काष्ठा module;
 
-static inline int is_kernel_inittext(unsigned long addr)
-{
-	if (addr >= (unsigned long)_sinittext
-	    && addr <= (unsigned long)_einittext)
-		return 1;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक is_kernel_inittext(अचिन्हित दीर्घ addr)
+अणु
+	अगर (addr >= (अचिन्हित दीर्घ)_sinittext
+	    && addr <= (अचिन्हित दीर्घ)_einittext)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static inline int is_kernel_text(unsigned long addr)
-{
-	if ((addr >= (unsigned long)_stext && addr <= (unsigned long)_etext) ||
+अटल अंतरभूत पूर्णांक is_kernel_text(अचिन्हित दीर्घ addr)
+अणु
+	अगर ((addr >= (अचिन्हित दीर्घ)_stext && addr <= (अचिन्हित दीर्घ)_etext) ||
 	    arch_is_kernel_text(addr))
-		return 1;
-	return in_gate_area_no_mm(addr);
-}
+		वापस 1;
+	वापस in_gate_area_no_mm(addr);
+पूर्ण
 
-static inline int is_kernel(unsigned long addr)
-{
-	if (addr >= (unsigned long)_stext && addr <= (unsigned long)_end)
-		return 1;
-	return in_gate_area_no_mm(addr);
-}
+अटल अंतरभूत पूर्णांक is_kernel(अचिन्हित दीर्घ addr)
+अणु
+	अगर (addr >= (अचिन्हित दीर्घ)_stext && addr <= (अचिन्हित दीर्घ)_end)
+		वापस 1;
+	वापस in_gate_area_no_mm(addr);
+पूर्ण
 
-static inline int is_ksym_addr(unsigned long addr)
-{
-	if (IS_ENABLED(CONFIG_KALLSYMS_ALL))
-		return is_kernel(addr);
+अटल अंतरभूत पूर्णांक is_ksym_addr(अचिन्हित दीर्घ addr)
+अणु
+	अगर (IS_ENABLED(CONFIG_KALLSYMS_ALL))
+		वापस is_kernel(addr);
 
-	return is_kernel_text(addr) || is_kernel_inittext(addr);
-}
+	वापस is_kernel_text(addr) || is_kernel_inittext(addr);
+पूर्ण
 
-static inline void *dereference_symbol_descriptor(void *ptr)
-{
-#ifdef HAVE_DEREFERENCE_FUNCTION_DESCRIPTOR
-	struct module *mod;
+अटल अंतरभूत व्योम *dereference_symbol_descriptor(व्योम *ptr)
+अणु
+#अगर_घोषित HAVE_DEREFERENCE_FUNCTION_DESCRIPTOR
+	काष्ठा module *mod;
 
 	ptr = dereference_kernel_function_descriptor(ptr);
-	if (is_ksym_addr((unsigned long)ptr))
-		return ptr;
+	अगर (is_ksym_addr((अचिन्हित दीर्घ)ptr))
+		वापस ptr;
 
 	preempt_disable();
-	mod = __module_address((unsigned long)ptr);
+	mod = __module_address((अचिन्हित दीर्घ)ptr);
 	preempt_enable();
 
-	if (mod)
+	अगर (mod)
 		ptr = dereference_module_function_descriptor(mod, ptr);
-#endif
-	return ptr;
-}
+#पूर्ण_अगर
+	वापस ptr;
+पूर्ण
 
-int kallsyms_on_each_symbol(int (*fn)(void *, const char *, struct module *,
-				      unsigned long),
-			    void *data);
+पूर्णांक kallsyms_on_each_symbol(पूर्णांक (*fn)(व्योम *, स्थिर अक्षर *, काष्ठा module *,
+				      अचिन्हित दीर्घ),
+			    व्योम *data);
 
-#ifdef CONFIG_KALLSYMS
-/* Lookup the address for a symbol. Returns 0 if not found. */
-unsigned long kallsyms_lookup_name(const char *name);
+#अगर_घोषित CONFIG_KALLSYMS
+/* Lookup the address क्रम a symbol. Returns 0 अगर not found. */
+अचिन्हित दीर्घ kallsyms_lookup_name(स्थिर अक्षर *name);
 
-extern int kallsyms_lookup_size_offset(unsigned long addr,
-				  unsigned long *symbolsize,
-				  unsigned long *offset);
+बाह्य पूर्णांक kallsyms_lookup_size_offset(अचिन्हित दीर्घ addr,
+				  अचिन्हित दीर्घ *symbolsize,
+				  अचिन्हित दीर्घ *offset);
 
-/* Lookup an address.  modname is set to NULL if it's in the kernel. */
-const char *kallsyms_lookup(unsigned long addr,
-			    unsigned long *symbolsize,
-			    unsigned long *offset,
-			    char **modname, char *namebuf);
+/* Lookup an address.  modname is set to शून्य अगर it's in the kernel. */
+स्थिर अक्षर *kallsyms_lookup(अचिन्हित दीर्घ addr,
+			    अचिन्हित दीर्घ *symbolsize,
+			    अचिन्हित दीर्घ *offset,
+			    अक्षर **modname, अक्षर *namebuf);
 
-/* Look up a kernel symbol and return it in a text buffer. */
-extern int sprint_symbol(char *buffer, unsigned long address);
-extern int sprint_symbol_no_offset(char *buffer, unsigned long address);
-extern int sprint_backtrace(char *buffer, unsigned long address);
+/* Look up a kernel symbol and वापस it in a text buffer. */
+बाह्य पूर्णांक sprपूर्णांक_symbol(अक्षर *buffer, अचिन्हित दीर्घ address);
+बाह्य पूर्णांक sprपूर्णांक_symbol_no_offset(अक्षर *buffer, अचिन्हित दीर्घ address);
+बाह्य पूर्णांक sprपूर्णांक_backtrace(अक्षर *buffer, अचिन्हित दीर्घ address);
 
-int lookup_symbol_name(unsigned long addr, char *symname);
-int lookup_symbol_attrs(unsigned long addr, unsigned long *size, unsigned long *offset, char *modname, char *name);
+पूर्णांक lookup_symbol_name(अचिन्हित दीर्घ addr, अक्षर *symname);
+पूर्णांक lookup_symbol_attrs(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *size, अचिन्हित दीर्घ *offset, अक्षर *modname, अक्षर *name);
 
-/* How and when do we show kallsyms values? */
-extern bool kallsyms_show_value(const struct cred *cred);
+/* How and when करो we show kallsyms values? */
+बाह्य bool kallsyms_show_value(स्थिर काष्ठा cred *cred);
 
-#else /* !CONFIG_KALLSYMS */
+#अन्यथा /* !CONFIG_KALLSYMS */
 
-static inline unsigned long kallsyms_lookup_name(const char *name)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित दीर्घ kallsyms_lookup_name(स्थिर अक्षर *name)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int kallsyms_lookup_size_offset(unsigned long addr,
-					      unsigned long *symbolsize,
-					      unsigned long *offset)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक kallsyms_lookup_size_offset(अचिन्हित दीर्घ addr,
+					      अचिन्हित दीर्घ *symbolsize,
+					      अचिन्हित दीर्घ *offset)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline const char *kallsyms_lookup(unsigned long addr,
-					  unsigned long *symbolsize,
-					  unsigned long *offset,
-					  char **modname, char *namebuf)
-{
-	return NULL;
-}
+अटल अंतरभूत स्थिर अक्षर *kallsyms_lookup(अचिन्हित दीर्घ addr,
+					  अचिन्हित दीर्घ *symbolsize,
+					  अचिन्हित दीर्घ *offset,
+					  अक्षर **modname, अक्षर *namebuf)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int sprint_symbol(char *buffer, unsigned long addr)
-{
+अटल अंतरभूत पूर्णांक sprपूर्णांक_symbol(अक्षर *buffer, अचिन्हित दीर्घ addr)
+अणु
 	*buffer = '\0';
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int sprint_symbol_no_offset(char *buffer, unsigned long addr)
-{
+अटल अंतरभूत पूर्णांक sprपूर्णांक_symbol_no_offset(अक्षर *buffer, अचिन्हित दीर्घ addr)
+अणु
 	*buffer = '\0';
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int sprint_backtrace(char *buffer, unsigned long addr)
-{
+अटल अंतरभूत पूर्णांक sprपूर्णांक_backtrace(अक्षर *buffer, अचिन्हित दीर्घ addr)
+अणु
 	*buffer = '\0';
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int lookup_symbol_name(unsigned long addr, char *symname)
-{
-	return -ERANGE;
-}
+अटल अंतरभूत पूर्णांक lookup_symbol_name(अचिन्हित दीर्घ addr, अक्षर *symname)
+अणु
+	वापस -दुस्फल;
+पूर्ण
 
-static inline int lookup_symbol_attrs(unsigned long addr, unsigned long *size, unsigned long *offset, char *modname, char *name)
-{
-	return -ERANGE;
-}
+अटल अंतरभूत पूर्णांक lookup_symbol_attrs(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *size, अचिन्हित दीर्घ *offset, अक्षर *modname, अक्षर *name)
+अणु
+	वापस -दुस्फल;
+पूर्ण
 
-static inline bool kallsyms_show_value(const struct cred *cred)
-{
-	return false;
-}
+अटल अंतरभूत bool kallsyms_show_value(स्थिर काष्ठा cred *cred)
+अणु
+	वापस false;
+पूर्ण
 
-#endif /*CONFIG_KALLSYMS*/
+#पूर्ण_अगर /*CONFIG_KALLSYMS*/
 
-static inline void print_ip_sym(const char *loglvl, unsigned long ip)
-{
-	printk("%s[<%px>] %pS\n", loglvl, (void *) ip, (void *) ip);
-}
+अटल अंतरभूत व्योम prपूर्णांक_ip_sym(स्थिर अक्षर *loglvl, अचिन्हित दीर्घ ip)
+अणु
+	prपूर्णांकk("%s[<%px>] %pS\n", loglvl, (व्योम *) ip, (व्योम *) ip);
+पूर्ण
 
-#endif /*_LINUX_KALLSYMS_H*/
+#पूर्ण_अगर /*_LINUX_KALLSYMS_H*/

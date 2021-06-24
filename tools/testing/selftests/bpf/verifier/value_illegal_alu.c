@@ -1,6 +1,7 @@
-{
+<शैली गुरु>
+अणु
 	"map element value illegal alu op, 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -10,14 +11,14 @@
 	BPF_ALU64_IMM(BPF_AND, BPF_REG_0, 8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, 22),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R0 bitwise operator &= on pointer",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"map element value illegal alu op, 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -27,14 +28,14 @@
 	BPF_ALU32_IMM(BPF_ADD, BPF_REG_0, 0),
 	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, 22),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R0 32-bit pointer arithmetic prohibited",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"map element value illegal alu op, 3",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -44,14 +45,14 @@
 	BPF_ALU64_IMM(BPF_DIV, BPF_REG_0, 42),
 	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, 22),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R0 pointer arithmetic with /= operator",
 	.result = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"map element value illegal alu op, 4",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -61,17 +62,17 @@
 	BPF_ENDIAN(BPF_FROM_BE, BPF_REG_0, 64),
 	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, 22),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr_unpriv = "R0 pointer arithmetic prohibited",
 	.errstr = "invalid mem access 'inv'",
 	.result = REJECT,
 	.result_unpriv = REJECT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-},
-{
+पूर्ण,
+अणु
 	"map element value illegal alu op, 5",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -86,10 +87,10 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_2, 0),
 	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, 22),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr_unpriv = "leaking pointer from stack off -8",
 	.errstr = "R0 invalid mem access 'inv'",
 	.result = REJECT,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-},
+पूर्ण,

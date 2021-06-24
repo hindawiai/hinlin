@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * DMA driver for Altera mSGDMA IP core
+ * DMA driver क्रम Altera mSGDMA IP core
  *
  * Copyright (C) 2017 Stefan Roese <sr@denx.de>
  *
@@ -8,87 +9,87 @@
  * Copyright (C) 2016 Xilinx, Inc. All rights reserved.
  */
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmapool.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "dmaengine.h"
+#समावेश "dmaengine.h"
 
-#define MSGDMA_MAX_TRANS_LEN		U32_MAX
-#define MSGDMA_DESC_NUM			1024
+#घोषणा MSGDMA_MAX_TRANS_LEN		U32_MAX
+#घोषणा MSGDMA_DESC_NUM			1024
 
 /**
- * struct msgdma_extended_desc - implements an extended descriptor
- * @read_addr_lo: data buffer source address low bits
- * @write_addr_lo: data buffer destination address low bits
+ * काष्ठा msgdma_extended_desc - implements an extended descriptor
+ * @पढ़ो_addr_lo: data buffer source address low bits
+ * @ग_लिखो_addr_lo: data buffer destination address low bits
  * @len: the number of bytes to transfer per descriptor
- * @burst_seq_num: bit 31:24 write burst
- *		   bit 23:16 read burst
+ * @burst_seq_num: bit 31:24 ग_लिखो burst
+ *		   bit 23:16 पढ़ो burst
  *		   bit 15:00 sequence number
- * @stride: bit 31:16 write stride
- *	    bit 15:00 read stride
- * @read_addr_hi: data buffer source address high bits
- * @write_addr_hi: data buffer destination address high bits
- * @control: characteristics of the transfer
+ * @stride: bit 31:16 ग_लिखो stride
+ *	    bit 15:00 पढ़ो stride
+ * @पढ़ो_addr_hi: data buffer source address high bits
+ * @ग_लिखो_addr_hi: data buffer destination address high bits
+ * @control: अक्षरacteristics of the transfer
  */
-struct msgdma_extended_desc {
-	u32 read_addr_lo;
-	u32 write_addr_lo;
+काष्ठा msgdma_extended_desc अणु
+	u32 पढ़ो_addr_lo;
+	u32 ग_लिखो_addr_lo;
 	u32 len;
 	u32 burst_seq_num;
 	u32 stride;
-	u32 read_addr_hi;
-	u32 write_addr_hi;
+	u32 पढ़ो_addr_hi;
+	u32 ग_लिखो_addr_hi;
 	u32 control;
-};
+पूर्ण;
 
 /* mSGDMA descriptor control field bit definitions */
-#define MSGDMA_DESC_CTL_SET_CH(x)	((x) & 0xff)
-#define MSGDMA_DESC_CTL_GEN_SOP		BIT(8)
-#define MSGDMA_DESC_CTL_GEN_EOP		BIT(9)
-#define MSGDMA_DESC_CTL_PARK_READS	BIT(10)
-#define MSGDMA_DESC_CTL_PARK_WRITES	BIT(11)
-#define MSGDMA_DESC_CTL_END_ON_EOP	BIT(12)
-#define MSGDMA_DESC_CTL_END_ON_LEN	BIT(13)
-#define MSGDMA_DESC_CTL_TR_COMP_IRQ	BIT(14)
-#define MSGDMA_DESC_CTL_EARLY_IRQ	BIT(15)
-#define MSGDMA_DESC_CTL_TR_ERR_IRQ	GENMASK(23, 16)
-#define MSGDMA_DESC_CTL_EARLY_DONE	BIT(24)
+#घोषणा MSGDMA_DESC_CTL_SET_CH(x)	((x) & 0xff)
+#घोषणा MSGDMA_DESC_CTL_GEN_SOP		BIT(8)
+#घोषणा MSGDMA_DESC_CTL_GEN_EOP		BIT(9)
+#घोषणा MSGDMA_DESC_CTL_PARK_READS	BIT(10)
+#घोषणा MSGDMA_DESC_CTL_PARK_WRITES	BIT(11)
+#घोषणा MSGDMA_DESC_CTL_END_ON_EOP	BIT(12)
+#घोषणा MSGDMA_DESC_CTL_END_ON_LEN	BIT(13)
+#घोषणा MSGDMA_DESC_CTL_TR_COMP_IRQ	BIT(14)
+#घोषणा MSGDMA_DESC_CTL_EARLY_IRQ	BIT(15)
+#घोषणा MSGDMA_DESC_CTL_TR_ERR_IRQ	GENMASK(23, 16)
+#घोषणा MSGDMA_DESC_CTL_EARLY_DONE	BIT(24)
 
 /*
- * Writing "1" the "go" bit commits the entire descriptor into the
+ * Writing "1" the "go" bit commits the entire descriptor पूर्णांकo the
  * descriptor FIFO(s)
  */
-#define MSGDMA_DESC_CTL_GO		BIT(31)
+#घोषणा MSGDMA_DESC_CTL_GO		BIT(31)
 
 /* Tx buffer control flags */
-#define MSGDMA_DESC_CTL_TX_FIRST	(MSGDMA_DESC_CTL_GEN_SOP |	\
+#घोषणा MSGDMA_DESC_CTL_TX_FIRST	(MSGDMA_DESC_CTL_GEN_SOP |	\
 					 MSGDMA_DESC_CTL_TR_ERR_IRQ |	\
 					 MSGDMA_DESC_CTL_GO)
 
-#define MSGDMA_DESC_CTL_TX_MIDDLE	(MSGDMA_DESC_CTL_TR_ERR_IRQ |	\
+#घोषणा MSGDMA_DESC_CTL_TX_MIDDLE	(MSGDMA_DESC_CTL_TR_ERR_IRQ |	\
 					 MSGDMA_DESC_CTL_GO)
 
-#define MSGDMA_DESC_CTL_TX_LAST		(MSGDMA_DESC_CTL_GEN_EOP |	\
+#घोषणा MSGDMA_DESC_CTL_TX_LAST		(MSGDMA_DESC_CTL_GEN_EOP |	\
 					 MSGDMA_DESC_CTL_TR_COMP_IRQ |	\
 					 MSGDMA_DESC_CTL_TR_ERR_IRQ |	\
 					 MSGDMA_DESC_CTL_GO)
 
-#define MSGDMA_DESC_CTL_TX_SINGLE	(MSGDMA_DESC_CTL_GEN_SOP |	\
+#घोषणा MSGDMA_DESC_CTL_TX_SINGLE	(MSGDMA_DESC_CTL_GEN_SOP |	\
 					 MSGDMA_DESC_CTL_GEN_EOP |	\
 					 MSGDMA_DESC_CTL_TR_COMP_IRQ |	\
 					 MSGDMA_DESC_CTL_TR_ERR_IRQ |	\
 					 MSGDMA_DESC_CTL_GO)
 
-#define MSGDMA_DESC_CTL_RX_SINGLE	(MSGDMA_DESC_CTL_END_ON_EOP |	\
+#घोषणा MSGDMA_DESC_CTL_RX_SINGLE	(MSGDMA_DESC_CTL_END_ON_EOP |	\
 					 MSGDMA_DESC_CTL_END_ON_LEN |	\
 					 MSGDMA_DESC_CTL_TR_COMP_IRQ |	\
 					 MSGDMA_DESC_CTL_EARLY_IRQ |	\
@@ -96,216 +97,216 @@ struct msgdma_extended_desc {
 					 MSGDMA_DESC_CTL_GO)
 
 /* mSGDMA extended descriptor stride definitions */
-#define MSGDMA_DESC_STRIDE_RD		0x00000001
-#define MSGDMA_DESC_STRIDE_WR		0x00010000
-#define MSGDMA_DESC_STRIDE_RW		0x00010001
+#घोषणा MSGDMA_DESC_STRIDE_RD		0x00000001
+#घोषणा MSGDMA_DESC_STRIDE_WR		0x00010000
+#घोषणा MSGDMA_DESC_STRIDE_RW		0x00010001
 
-/* mSGDMA dispatcher control and status register map */
-#define MSGDMA_CSR_STATUS		0x00	/* Read / Clear */
-#define MSGDMA_CSR_CONTROL		0x04	/* Read / Write */
-#define MSGDMA_CSR_RW_FILL_LEVEL	0x08	/* 31:16 - write fill level */
-						/* 15:00 - read fill level */
-#define MSGDMA_CSR_RESP_FILL_LEVEL	0x0c	/* response FIFO fill level */
-#define MSGDMA_CSR_RW_SEQ_NUM		0x10	/* 31:16 - write seq number */
-						/* 15:00 - read seq number */
+/* mSGDMA dispatcher control and status रेजिस्टर map */
+#घोषणा MSGDMA_CSR_STATUS		0x00	/* Read / Clear */
+#घोषणा MSGDMA_CSR_CONTROL		0x04	/* Read / Write */
+#घोषणा MSGDMA_CSR_RW_FILL_LEVEL	0x08	/* 31:16 - ग_लिखो fill level */
+						/* 15:00 - पढ़ो fill level */
+#घोषणा MSGDMA_CSR_RESP_FILL_LEVEL	0x0c	/* response FIFO fill level */
+#घोषणा MSGDMA_CSR_RW_SEQ_NUM		0x10	/* 31:16 - ग_लिखो seq number */
+						/* 15:00 - पढ़ो seq number */
 
-/* mSGDMA CSR status register bit definitions */
-#define MSGDMA_CSR_STAT_BUSY			BIT(0)
-#define MSGDMA_CSR_STAT_DESC_BUF_EMPTY		BIT(1)
-#define MSGDMA_CSR_STAT_DESC_BUF_FULL		BIT(2)
-#define MSGDMA_CSR_STAT_RESP_BUF_EMPTY		BIT(3)
-#define MSGDMA_CSR_STAT_RESP_BUF_FULL		BIT(4)
-#define MSGDMA_CSR_STAT_STOPPED			BIT(5)
-#define MSGDMA_CSR_STAT_RESETTING		BIT(6)
-#define MSGDMA_CSR_STAT_STOPPED_ON_ERR		BIT(7)
-#define MSGDMA_CSR_STAT_STOPPED_ON_EARLY	BIT(8)
-#define MSGDMA_CSR_STAT_IRQ			BIT(9)
-#define MSGDMA_CSR_STAT_MASK			GENMASK(9, 0)
-#define MSGDMA_CSR_STAT_MASK_WITHOUT_IRQ	GENMASK(8, 0)
+/* mSGDMA CSR status रेजिस्टर bit definitions */
+#घोषणा MSGDMA_CSR_STAT_BUSY			BIT(0)
+#घोषणा MSGDMA_CSR_STAT_DESC_BUF_EMPTY		BIT(1)
+#घोषणा MSGDMA_CSR_STAT_DESC_BUF_FULL		BIT(2)
+#घोषणा MSGDMA_CSR_STAT_RESP_BUF_EMPTY		BIT(3)
+#घोषणा MSGDMA_CSR_STAT_RESP_BUF_FULL		BIT(4)
+#घोषणा MSGDMA_CSR_STAT_STOPPED			BIT(5)
+#घोषणा MSGDMA_CSR_STAT_RESETTING		BIT(6)
+#घोषणा MSGDMA_CSR_STAT_STOPPED_ON_ERR		BIT(7)
+#घोषणा MSGDMA_CSR_STAT_STOPPED_ON_EARLY	BIT(8)
+#घोषणा MSGDMA_CSR_STAT_IRQ			BIT(9)
+#घोषणा MSGDMA_CSR_STAT_MASK			GENMASK(9, 0)
+#घोषणा MSGDMA_CSR_STAT_MASK_WITHOUT_IRQ	GENMASK(8, 0)
 
-#define DESC_EMPTY	(MSGDMA_CSR_STAT_DESC_BUF_EMPTY | \
+#घोषणा DESC_EMPTY	(MSGDMA_CSR_STAT_DESC_BUF_EMPTY | \
 			 MSGDMA_CSR_STAT_RESP_BUF_EMPTY)
 
-/* mSGDMA CSR control register bit definitions */
-#define MSGDMA_CSR_CTL_STOP			BIT(0)
-#define MSGDMA_CSR_CTL_RESET			BIT(1)
-#define MSGDMA_CSR_CTL_STOP_ON_ERR		BIT(2)
-#define MSGDMA_CSR_CTL_STOP_ON_EARLY		BIT(3)
-#define MSGDMA_CSR_CTL_GLOBAL_INTR		BIT(4)
-#define MSGDMA_CSR_CTL_STOP_DESCS		BIT(5)
+/* mSGDMA CSR control रेजिस्टर bit definitions */
+#घोषणा MSGDMA_CSR_CTL_STOP			BIT(0)
+#घोषणा MSGDMA_CSR_CTL_RESET			BIT(1)
+#घोषणा MSGDMA_CSR_CTL_STOP_ON_ERR		BIT(2)
+#घोषणा MSGDMA_CSR_CTL_STOP_ON_EARLY		BIT(3)
+#घोषणा MSGDMA_CSR_CTL_GLOBAL_INTR		BIT(4)
+#घोषणा MSGDMA_CSR_CTL_STOP_DESCS		BIT(5)
 
 /* mSGDMA CSR fill level bits */
-#define MSGDMA_CSR_WR_FILL_LEVEL_GET(v)		(((v) & 0xffff0000) >> 16)
-#define MSGDMA_CSR_RD_FILL_LEVEL_GET(v)		((v) & 0x0000ffff)
-#define MSGDMA_CSR_RESP_FILL_LEVEL_GET(v)	((v) & 0x0000ffff)
+#घोषणा MSGDMA_CSR_WR_FILL_LEVEL_GET(v)		(((v) & 0xffff0000) >> 16)
+#घोषणा MSGDMA_CSR_RD_FILL_LEVEL_GET(v)		((v) & 0x0000ffff)
+#घोषणा MSGDMA_CSR_RESP_FILL_LEVEL_GET(v)	((v) & 0x0000ffff)
 
-#define MSGDMA_CSR_SEQ_NUM_GET(v)		(((v) & 0xffff0000) >> 16)
+#घोषणा MSGDMA_CSR_SEQ_NUM_GET(v)		(((v) & 0xffff0000) >> 16)
 
-/* mSGDMA response register map */
-#define MSGDMA_RESP_BYTES_TRANSFERRED	0x00
-#define MSGDMA_RESP_STATUS		0x04
+/* mSGDMA response रेजिस्टर map */
+#घोषणा MSGDMA_RESP_BYTES_TRANSFERRED	0x00
+#घोषणा MSGDMA_RESP_STATUS		0x04
 
-/* mSGDMA response register bit definitions */
-#define MSGDMA_RESP_EARLY_TERM	BIT(8)
-#define MSGDMA_RESP_ERR_MASK	0xff
+/* mSGDMA response रेजिस्टर bit definitions */
+#घोषणा MSGDMA_RESP_EARLY_TERM	BIT(8)
+#घोषणा MSGDMA_RESP_ERR_MASK	0xff
 
 /**
- * struct msgdma_sw_desc - implements a sw descriptor
- * @async_tx: support for the async_tx api
+ * काष्ठा msgdma_sw_desc - implements a sw descriptor
+ * @async_tx: support क्रम the async_tx api
  * @hw_desc: assosiated HW descriptor
- * @node: node to move from the free list to the tx list
+ * @node: node to move from the मुक्त list to the tx list
  * @tx_list: transmit list node
  */
-struct msgdma_sw_desc {
-	struct dma_async_tx_descriptor async_tx;
-	struct msgdma_extended_desc hw_desc;
-	struct list_head node;
-	struct list_head tx_list;
-};
+काष्ठा msgdma_sw_desc अणु
+	काष्ठा dma_async_tx_descriptor async_tx;
+	काष्ठा msgdma_extended_desc hw_desc;
+	काष्ठा list_head node;
+	काष्ठा list_head tx_list;
+पूर्ण;
 
 /*
- * struct msgdma_device - DMA device structure
+ * काष्ठा msgdma_device - DMA device काष्ठाure
  */
-struct msgdma_device {
+काष्ठा msgdma_device अणु
 	spinlock_t lock;
-	struct device *dev;
-	struct tasklet_struct irq_tasklet;
-	struct list_head pending_list;
-	struct list_head free_list;
-	struct list_head active_list;
-	struct list_head done_list;
-	u32 desc_free_cnt;
+	काष्ठा device *dev;
+	काष्ठा tasklet_काष्ठा irq_tasklet;
+	काष्ठा list_head pending_list;
+	काष्ठा list_head मुक्त_list;
+	काष्ठा list_head active_list;
+	काष्ठा list_head करोne_list;
+	u32 desc_मुक्त_cnt;
 	bool idle;
 
-	struct dma_device dmadev;
-	struct dma_chan	dmachan;
+	काष्ठा dma_device dmadev;
+	काष्ठा dma_chan	dmachan;
 	dma_addr_t hw_desq;
-	struct msgdma_sw_desc *sw_desq;
-	unsigned int npendings;
+	काष्ठा msgdma_sw_desc *sw_desq;
+	अचिन्हित पूर्णांक npendings;
 
-	struct dma_slave_config slave_cfg;
+	काष्ठा dma_slave_config slave_cfg;
 
-	int irq;
+	पूर्णांक irq;
 
 	/* mSGDMA controller */
-	void __iomem *csr;
+	व्योम __iomem *csr;
 
 	/* mSGDMA descriptors */
-	void __iomem *desc;
+	व्योम __iomem *desc;
 
 	/* mSGDMA response */
-	void __iomem *resp;
-};
+	व्योम __iomem *resp;
+पूर्ण;
 
-#define to_mdev(chan)	container_of(chan, struct msgdma_device, dmachan)
-#define tx_to_desc(tx)	container_of(tx, struct msgdma_sw_desc, async_tx)
+#घोषणा to_mdev(chan)	container_of(chan, काष्ठा msgdma_device, dmachan)
+#घोषणा tx_to_desc(tx)	container_of(tx, काष्ठा msgdma_sw_desc, async_tx)
 
 /**
  * msgdma_get_descriptor - Get the sw descriptor from the pool
- * @mdev: Pointer to the Altera mSGDMA device structure
+ * @mdev: Poपूर्णांकer to the Altera mSGDMA device काष्ठाure
  *
  * Return: The sw descriptor
  */
-static struct msgdma_sw_desc *msgdma_get_descriptor(struct msgdma_device *mdev)
-{
-	struct msgdma_sw_desc *desc;
-	unsigned long flags;
+अटल काष्ठा msgdma_sw_desc *msgdma_get_descriptor(काष्ठा msgdma_device *mdev)
+अणु
+	काष्ठा msgdma_sw_desc *desc;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mdev->lock, flags);
-	desc = list_first_entry(&mdev->free_list, struct msgdma_sw_desc, node);
+	desc = list_first_entry(&mdev->मुक्त_list, काष्ठा msgdma_sw_desc, node);
 	list_del(&desc->node);
 	spin_unlock_irqrestore(&mdev->lock, flags);
 
 	INIT_LIST_HEAD(&desc->tx_list);
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
 /**
- * msgdma_free_descriptor - Issue pending transactions
- * @mdev: Pointer to the Altera mSGDMA device structure
- * @desc: Transaction descriptor pointer
+ * msgdma_मुक्त_descriptor - Issue pending transactions
+ * @mdev: Poपूर्णांकer to the Altera mSGDMA device काष्ठाure
+ * @desc: Transaction descriptor poपूर्णांकer
  */
-static void msgdma_free_descriptor(struct msgdma_device *mdev,
-				   struct msgdma_sw_desc *desc)
-{
-	struct msgdma_sw_desc *child, *next;
+अटल व्योम msgdma_मुक्त_descriptor(काष्ठा msgdma_device *mdev,
+				   काष्ठा msgdma_sw_desc *desc)
+अणु
+	काष्ठा msgdma_sw_desc *child, *next;
 
-	mdev->desc_free_cnt++;
-	list_add_tail(&desc->node, &mdev->free_list);
-	list_for_each_entry_safe(child, next, &desc->tx_list, node) {
-		mdev->desc_free_cnt++;
-		list_move_tail(&child->node, &mdev->free_list);
-	}
-}
+	mdev->desc_मुक्त_cnt++;
+	list_add_tail(&desc->node, &mdev->मुक्त_list);
+	list_क्रम_each_entry_safe(child, next, &desc->tx_list, node) अणु
+		mdev->desc_मुक्त_cnt++;
+		list_move_tail(&child->node, &mdev->मुक्त_list);
+	पूर्ण
+पूर्ण
 
 /**
- * msgdma_free_desc_list - Free descriptors list
- * @mdev: Pointer to the Altera mSGDMA device structure
+ * msgdma_मुक्त_desc_list - Free descriptors list
+ * @mdev: Poपूर्णांकer to the Altera mSGDMA device काष्ठाure
  * @list: List to parse and delete the descriptor
  */
-static void msgdma_free_desc_list(struct msgdma_device *mdev,
-				  struct list_head *list)
-{
-	struct msgdma_sw_desc *desc, *next;
+अटल व्योम msgdma_मुक्त_desc_list(काष्ठा msgdma_device *mdev,
+				  काष्ठा list_head *list)
+अणु
+	काष्ठा msgdma_sw_desc *desc, *next;
 
-	list_for_each_entry_safe(desc, next, list, node)
-		msgdma_free_descriptor(mdev, desc);
-}
+	list_क्रम_each_entry_safe(desc, next, list, node)
+		msgdma_मुक्त_descriptor(mdev, desc);
+पूर्ण
 
 /**
  * msgdma_desc_config - Configure the descriptor
- * @desc: Hw descriptor pointer
+ * @desc: Hw descriptor poपूर्णांकer
  * @dst: Destination buffer address
  * @src: Source buffer address
  * @len: Transfer length
- * @stride: Read/write stride value to set
+ * @stride: Read/ग_लिखो stride value to set
  */
-static void msgdma_desc_config(struct msgdma_extended_desc *desc,
-			       dma_addr_t dst, dma_addr_t src, size_t len,
+अटल व्योम msgdma_desc_config(काष्ठा msgdma_extended_desc *desc,
+			       dma_addr_t dst, dma_addr_t src, माप_प्रकार len,
 			       u32 stride)
-{
+अणु
 	/* Set lower 32bits of src & dst addresses in the descriptor */
-	desc->read_addr_lo = lower_32_bits(src);
-	desc->write_addr_lo = lower_32_bits(dst);
+	desc->पढ़ो_addr_lo = lower_32_bits(src);
+	desc->ग_लिखो_addr_lo = lower_32_bits(dst);
 
 	/* Set upper 32bits of src & dst addresses in the descriptor */
-	desc->read_addr_hi = upper_32_bits(src);
-	desc->write_addr_hi = upper_32_bits(dst);
+	desc->पढ़ो_addr_hi = upper_32_bits(src);
+	desc->ग_लिखो_addr_hi = upper_32_bits(dst);
 
 	desc->len = len;
 	desc->stride = stride;
 	desc->burst_seq_num = 0;	/* 0 will result in max burst length */
 
 	/*
-	 * Don't set interrupt on xfer end yet, this will be done later
-	 * for the "last" descriptor
+	 * Don't set पूर्णांकerrupt on xfer end yet, this will be करोne later
+	 * क्रम the "last" descriptor
 	 */
 	desc->control = MSGDMA_DESC_CTL_TR_ERR_IRQ | MSGDMA_DESC_CTL_GO |
 		MSGDMA_DESC_CTL_END_ON_LEN;
-}
+पूर्ण
 
 /**
  * msgdma_desc_config_eod - Mark the descriptor as end descriptor
- * @desc: Hw descriptor pointer
+ * @desc: Hw descriptor poपूर्णांकer
  */
-static void msgdma_desc_config_eod(struct msgdma_extended_desc *desc)
-{
+अटल व्योम msgdma_desc_config_eod(काष्ठा msgdma_extended_desc *desc)
+अणु
 	desc->control |= MSGDMA_DESC_CTL_TR_COMP_IRQ;
-}
+पूर्ण
 
 /**
  * msgdma_tx_submit - Submit DMA transaction
- * @tx: Async transaction descriptor pointer
+ * @tx: Async transaction descriptor poपूर्णांकer
  *
  * Return: cookie value
  */
-static dma_cookie_t msgdma_tx_submit(struct dma_async_tx_descriptor *tx)
-{
-	struct msgdma_device *mdev = to_mdev(tx->chan);
-	struct msgdma_sw_desc *new;
+अटल dma_cookie_t msgdma_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
+अणु
+	काष्ठा msgdma_device *mdev = to_mdev(tx->chan);
+	काष्ठा msgdma_sw_desc *new;
 	dma_cookie_t cookie;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	new = tx_to_desc(tx);
 	spin_lock_irqsave(&mdev->lock, flags);
@@ -314,67 +315,67 @@ static dma_cookie_t msgdma_tx_submit(struct dma_async_tx_descriptor *tx)
 	list_add_tail(&new->node, &mdev->pending_list);
 	spin_unlock_irqrestore(&mdev->lock, flags);
 
-	return cookie;
-}
+	वापस cookie;
+पूर्ण
 
 /**
- * msgdma_prep_memcpy - prepare descriptors for memcpy transaction
+ * msgdma_prep_स_नकल - prepare descriptors क्रम स_नकल transaction
  * @dchan: DMA channel
  * @dma_dst: Destination buffer address
  * @dma_src: Source buffer address
  * @len: Transfer length
  * @flags: transfer ack flags
  *
- * Return: Async transaction descriptor on success and NULL on failure
+ * Return: Async transaction descriptor on success and शून्य on failure
  */
-static struct dma_async_tx_descriptor *
-msgdma_prep_memcpy(struct dma_chan *dchan, dma_addr_t dma_dst,
-		   dma_addr_t dma_src, size_t len, ulong flags)
-{
-	struct msgdma_device *mdev = to_mdev(dchan);
-	struct msgdma_sw_desc *new, *first = NULL;
-	struct msgdma_extended_desc *desc;
-	size_t copy;
+अटल काष्ठा dma_async_tx_descriptor *
+msgdma_prep_स_नकल(काष्ठा dma_chan *dchan, dma_addr_t dma_dst,
+		   dma_addr_t dma_src, माप_प्रकार len, uदीर्घ flags)
+अणु
+	काष्ठा msgdma_device *mdev = to_mdev(dchan);
+	काष्ठा msgdma_sw_desc *new, *first = शून्य;
+	काष्ठा msgdma_extended_desc *desc;
+	माप_प्रकार copy;
 	u32 desc_cnt;
-	unsigned long irqflags;
+	अचिन्हित दीर्घ irqflags;
 
 	desc_cnt = DIV_ROUND_UP(len, MSGDMA_MAX_TRANS_LEN);
 
 	spin_lock_irqsave(&mdev->lock, irqflags);
-	if (desc_cnt > mdev->desc_free_cnt) {
+	अगर (desc_cnt > mdev->desc_मुक्त_cnt) अणु
 		spin_unlock_irqrestore(&mdev->lock, irqflags);
 		dev_dbg(mdev->dev, "mdev %p descs are not available\n", mdev);
-		return NULL;
-	}
-	mdev->desc_free_cnt -= desc_cnt;
+		वापस शून्य;
+	पूर्ण
+	mdev->desc_मुक्त_cnt -= desc_cnt;
 	spin_unlock_irqrestore(&mdev->lock, irqflags);
 
-	do {
+	करो अणु
 		/* Allocate and populate the descriptor */
 		new = msgdma_get_descriptor(mdev);
 
-		copy = min_t(size_t, len, MSGDMA_MAX_TRANS_LEN);
+		copy = min_t(माप_प्रकार, len, MSGDMA_MAX_TRANS_LEN);
 		desc = &new->hw_desc;
 		msgdma_desc_config(desc, dma_dst, dma_src, copy,
 				   MSGDMA_DESC_STRIDE_RW);
 		len -= copy;
 		dma_src += copy;
 		dma_dst += copy;
-		if (!first)
+		अगर (!first)
 			first = new;
-		else
+		अन्यथा
 			list_add_tail(&new->node, &first->tx_list);
-	} while (len);
+	पूर्ण जबतक (len);
 
 	msgdma_desc_config_eod(desc);
 	async_tx_ack(&first->async_tx);
 	first->async_tx.flags = flags;
 
-	return &first->async_tx;
-}
+	वापस &first->async_tx;
+पूर्ण
 
 /**
- * msgdma_prep_slave_sg - prepare descriptors for a slave sg transaction
+ * msgdma_prep_slave_sg - prepare descriptors क्रम a slave sg transaction
  *
  * @dchan: DMA channel
  * @sgl: Destination scatter list
@@ -383,267 +384,267 @@ msgdma_prep_memcpy(struct dma_chan *dchan, dma_addr_t dma_dst,
  * @flags: transfer ack flags
  * @context: transfer context (unused)
  */
-static struct dma_async_tx_descriptor *
-msgdma_prep_slave_sg(struct dma_chan *dchan, struct scatterlist *sgl,
-		     unsigned int sg_len, enum dma_transfer_direction dir,
-		     unsigned long flags, void *context)
+अटल काष्ठा dma_async_tx_descriptor *
+msgdma_prep_slave_sg(काष्ठा dma_chan *dchan, काष्ठा scatterlist *sgl,
+		     अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction dir,
+		     अचिन्हित दीर्घ flags, व्योम *context)
 
-{
-	struct msgdma_device *mdev = to_mdev(dchan);
-	struct dma_slave_config *cfg = &mdev->slave_cfg;
-	struct msgdma_sw_desc *new, *first = NULL;
-	void *desc = NULL;
-	size_t len, avail;
+अणु
+	काष्ठा msgdma_device *mdev = to_mdev(dchan);
+	काष्ठा dma_slave_config *cfg = &mdev->slave_cfg;
+	काष्ठा msgdma_sw_desc *new, *first = शून्य;
+	व्योम *desc = शून्य;
+	माप_प्रकार len, avail;
 	dma_addr_t dma_dst, dma_src;
 	u32 desc_cnt = 0, i;
-	struct scatterlist *sg;
+	काष्ठा scatterlist *sg;
 	u32 stride;
-	unsigned long irqflags;
+	अचिन्हित दीर्घ irqflags;
 
-	for_each_sg(sgl, sg, sg_len, i)
+	क्रम_each_sg(sgl, sg, sg_len, i)
 		desc_cnt += DIV_ROUND_UP(sg_dma_len(sg), MSGDMA_MAX_TRANS_LEN);
 
 	spin_lock_irqsave(&mdev->lock, irqflags);
-	if (desc_cnt > mdev->desc_free_cnt) {
+	अगर (desc_cnt > mdev->desc_मुक्त_cnt) अणु
 		spin_unlock_irqrestore(&mdev->lock, irqflags);
 		dev_dbg(mdev->dev, "mdev %p descs are not available\n", mdev);
-		return NULL;
-	}
-	mdev->desc_free_cnt -= desc_cnt;
+		वापस शून्य;
+	पूर्ण
+	mdev->desc_मुक्त_cnt -= desc_cnt;
 	spin_unlock_irqrestore(&mdev->lock, irqflags);
 
 	avail = sg_dma_len(sgl);
 
 	/* Run until we are out of scatterlist entries */
-	while (true) {
+	जबतक (true) अणु
 		/* Allocate and populate the descriptor */
 		new = msgdma_get_descriptor(mdev);
 
 		desc = &new->hw_desc;
-		len = min_t(size_t, avail, MSGDMA_MAX_TRANS_LEN);
+		len = min_t(माप_प्रकार, avail, MSGDMA_MAX_TRANS_LEN);
 
-		if (dir == DMA_MEM_TO_DEV) {
+		अगर (dir == DMA_MEM_TO_DEV) अणु
 			dma_src = sg_dma_address(sgl) + sg_dma_len(sgl) - avail;
 			dma_dst = cfg->dst_addr;
 			stride = MSGDMA_DESC_STRIDE_RD;
-		} else {
+		पूर्ण अन्यथा अणु
 			dma_src = cfg->src_addr;
 			dma_dst = sg_dma_address(sgl) + sg_dma_len(sgl) - avail;
 			stride = MSGDMA_DESC_STRIDE_WR;
-		}
+		पूर्ण
 		msgdma_desc_config(desc, dma_dst, dma_src, len, stride);
 		avail -= len;
 
-		if (!first)
+		अगर (!first)
 			first = new;
-		else
+		अन्यथा
 			list_add_tail(&new->node, &first->tx_list);
 
 		/* Fetch the next scatterlist entry */
-		if (avail == 0) {
-			if (sg_len == 0)
-				break;
+		अगर (avail == 0) अणु
+			अगर (sg_len == 0)
+				अवरोध;
 			sgl = sg_next(sgl);
-			if (sgl == NULL)
-				break;
+			अगर (sgl == शून्य)
+				अवरोध;
 			sg_len--;
 			avail = sg_dma_len(sgl);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	msgdma_desc_config_eod(desc);
 	first->async_tx.flags = flags;
 
-	return &first->async_tx;
-}
+	वापस &first->async_tx;
+पूर्ण
 
-static int msgdma_dma_config(struct dma_chan *dchan,
-			     struct dma_slave_config *config)
-{
-	struct msgdma_device *mdev = to_mdev(dchan);
+अटल पूर्णांक msgdma_dma_config(काष्ठा dma_chan *dchan,
+			     काष्ठा dma_slave_config *config)
+अणु
+	काष्ठा msgdma_device *mdev = to_mdev(dchan);
 
-	memcpy(&mdev->slave_cfg, config, sizeof(*config));
+	स_नकल(&mdev->slave_cfg, config, माप(*config));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void msgdma_reset(struct msgdma_device *mdev)
-{
+अटल व्योम msgdma_reset(काष्ठा msgdma_device *mdev)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	/* Reset mSGDMA */
-	iowrite32(MSGDMA_CSR_STAT_MASK, mdev->csr + MSGDMA_CSR_STATUS);
-	iowrite32(MSGDMA_CSR_CTL_RESET, mdev->csr + MSGDMA_CSR_CONTROL);
+	ioग_लिखो32(MSGDMA_CSR_STAT_MASK, mdev->csr + MSGDMA_CSR_STATUS);
+	ioग_लिखो32(MSGDMA_CSR_CTL_RESET, mdev->csr + MSGDMA_CSR_CONTROL);
 
-	ret = readl_poll_timeout(mdev->csr + MSGDMA_CSR_STATUS, val,
+	ret = पढ़ोl_poll_समयout(mdev->csr + MSGDMA_CSR_STATUS, val,
 				 (val & MSGDMA_CSR_STAT_RESETTING) == 0,
 				 1, 10000);
-	if (ret)
+	अगर (ret)
 		dev_err(mdev->dev, "DMA channel did not reset\n");
 
 	/* Clear all status bits */
-	iowrite32(MSGDMA_CSR_STAT_MASK, mdev->csr + MSGDMA_CSR_STATUS);
+	ioग_लिखो32(MSGDMA_CSR_STAT_MASK, mdev->csr + MSGDMA_CSR_STATUS);
 
-	/* Enable the DMA controller including interrupts */
-	iowrite32(MSGDMA_CSR_CTL_STOP_ON_ERR | MSGDMA_CSR_CTL_STOP_ON_EARLY |
+	/* Enable the DMA controller including पूर्णांकerrupts */
+	ioग_लिखो32(MSGDMA_CSR_CTL_STOP_ON_ERR | MSGDMA_CSR_CTL_STOP_ON_EARLY |
 		  MSGDMA_CSR_CTL_GLOBAL_INTR, mdev->csr + MSGDMA_CSR_CONTROL);
 
 	mdev->idle = true;
-};
+पूर्ण;
 
-static void msgdma_copy_one(struct msgdma_device *mdev,
-			    struct msgdma_sw_desc *desc)
-{
-	void __iomem *hw_desc = mdev->desc;
+अटल व्योम msgdma_copy_one(काष्ठा msgdma_device *mdev,
+			    काष्ठा msgdma_sw_desc *desc)
+अणु
+	व्योम __iomem *hw_desc = mdev->desc;
 
 	/*
-	 * Check if the DESC FIFO it not full. If its full, we need to wait
-	 * for at least one entry to become free again
+	 * Check अगर the DESC FIFO it not full. If its full, we need to रुको
+	 * क्रम at least one entry to become मुक्त again
 	 */
-	while (ioread32(mdev->csr + MSGDMA_CSR_STATUS) &
+	जबतक (ioपढ़ो32(mdev->csr + MSGDMA_CSR_STATUS) &
 	       MSGDMA_CSR_STAT_DESC_BUF_FULL)
 		mdelay(1);
 
 	/*
-	 * The descriptor needs to get copied into the descriptor FIFO
+	 * The descriptor needs to get copied पूर्णांकo the descriptor FIFO
 	 * of the DMA controller. The descriptor will get flushed to the
 	 * FIFO, once the last word (control word) is written. Since we
-	 * are not 100% sure that memcpy() writes all word in the "correct"
+	 * are not 100% sure that स_नकल() ग_लिखोs all word in the "correct"
 	 * oder (address from low to high) on all architectures, we make
 	 * sure this control word is written last by single coding it and
-	 * adding some write-barriers here.
+	 * adding some ग_लिखो-barriers here.
 	 */
-	memcpy((void __force *)hw_desc, &desc->hw_desc,
-	       sizeof(desc->hw_desc) - sizeof(u32));
+	स_नकल((व्योम __क्रमce *)hw_desc, &desc->hw_desc,
+	       माप(desc->hw_desc) - माप(u32));
 
-	/* Write control word last to flush this descriptor into the FIFO */
+	/* Write control word last to flush this descriptor पूर्णांकo the FIFO */
 	mdev->idle = false;
 	wmb();
-	iowrite32(desc->hw_desc.control, hw_desc +
-		  offsetof(struct msgdma_extended_desc, control));
+	ioग_लिखो32(desc->hw_desc.control, hw_desc +
+		  दुरत्व(काष्ठा msgdma_extended_desc, control));
 	wmb();
-}
+पूर्ण
 
 /**
- * msgdma_copy_desc_to_fifo - copy descriptor(s) into controller FIFO
- * @mdev: Pointer to the Altera mSGDMA device structure
- * @desc: Transaction descriptor pointer
+ * msgdma_copy_desc_to_fअगरo - copy descriptor(s) पूर्णांकo controller FIFO
+ * @mdev: Poपूर्णांकer to the Altera mSGDMA device काष्ठाure
+ * @desc: Transaction descriptor poपूर्णांकer
  */
-static void msgdma_copy_desc_to_fifo(struct msgdma_device *mdev,
-				     struct msgdma_sw_desc *desc)
-{
-	struct msgdma_sw_desc *sdesc, *next;
+अटल व्योम msgdma_copy_desc_to_fअगरo(काष्ठा msgdma_device *mdev,
+				     काष्ठा msgdma_sw_desc *desc)
+अणु
+	काष्ठा msgdma_sw_desc *sdesc, *next;
 
 	msgdma_copy_one(mdev, desc);
 
-	list_for_each_entry_safe(sdesc, next, &desc->tx_list, node)
+	list_क्रम_each_entry_safe(sdesc, next, &desc->tx_list, node)
 		msgdma_copy_one(mdev, sdesc);
-}
+पूर्ण
 
 /**
  * msgdma_start_transfer - Initiate the new transfer
- * @mdev: Pointer to the Altera mSGDMA device structure
+ * @mdev: Poपूर्णांकer to the Altera mSGDMA device काष्ठाure
  */
-static void msgdma_start_transfer(struct msgdma_device *mdev)
-{
-	struct msgdma_sw_desc *desc;
+अटल व्योम msgdma_start_transfer(काष्ठा msgdma_device *mdev)
+अणु
+	काष्ठा msgdma_sw_desc *desc;
 
-	if (!mdev->idle)
-		return;
+	अगर (!mdev->idle)
+		वापस;
 
 	desc = list_first_entry_or_null(&mdev->pending_list,
-					struct msgdma_sw_desc, node);
-	if (!desc)
-		return;
+					काष्ठा msgdma_sw_desc, node);
+	अगर (!desc)
+		वापस;
 
 	list_splice_tail_init(&mdev->pending_list, &mdev->active_list);
-	msgdma_copy_desc_to_fifo(mdev, desc);
-}
+	msgdma_copy_desc_to_fअगरo(mdev, desc);
+पूर्ण
 
 /**
  * msgdma_issue_pending - Issue pending transactions
- * @chan: DMA channel pointer
+ * @chan: DMA channel poपूर्णांकer
  */
-static void msgdma_issue_pending(struct dma_chan *chan)
-{
-	struct msgdma_device *mdev = to_mdev(chan);
-	unsigned long flags;
+अटल व्योम msgdma_issue_pending(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा msgdma_device *mdev = to_mdev(chan);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mdev->lock, flags);
 	msgdma_start_transfer(mdev);
 	spin_unlock_irqrestore(&mdev->lock, flags);
-}
+पूर्ण
 
 /**
  * msgdma_chan_desc_cleanup - Cleanup the completed descriptors
- * @mdev: Pointer to the Altera mSGDMA device structure
+ * @mdev: Poपूर्णांकer to the Altera mSGDMA device काष्ठाure
  */
-static void msgdma_chan_desc_cleanup(struct msgdma_device *mdev)
-{
-	struct msgdma_sw_desc *desc, *next;
+अटल व्योम msgdma_chan_desc_cleanup(काष्ठा msgdma_device *mdev)
+अणु
+	काष्ठा msgdma_sw_desc *desc, *next;
 
-	list_for_each_entry_safe(desc, next, &mdev->done_list, node) {
+	list_क्रम_each_entry_safe(desc, next, &mdev->करोne_list, node) अणु
 		dma_async_tx_callback callback;
-		void *callback_param;
+		व्योम *callback_param;
 
 		list_del(&desc->node);
 
 		callback = desc->async_tx.callback;
 		callback_param = desc->async_tx.callback_param;
-		if (callback) {
+		अगर (callback) अणु
 			spin_unlock(&mdev->lock);
 			callback(callback_param);
 			spin_lock(&mdev->lock);
-		}
+		पूर्ण
 
-		/* Run any dependencies, then free the descriptor */
-		msgdma_free_descriptor(mdev, desc);
-	}
-}
+		/* Run any dependencies, then मुक्त the descriptor */
+		msgdma_मुक्त_descriptor(mdev, desc);
+	पूर्ण
+पूर्ण
 
 /**
  * msgdma_complete_descriptor - Mark the active descriptor as complete
- * @mdev: Pointer to the Altera mSGDMA device structure
+ * @mdev: Poपूर्णांकer to the Altera mSGDMA device काष्ठाure
  */
-static void msgdma_complete_descriptor(struct msgdma_device *mdev)
-{
-	struct msgdma_sw_desc *desc;
+अटल व्योम msgdma_complete_descriptor(काष्ठा msgdma_device *mdev)
+अणु
+	काष्ठा msgdma_sw_desc *desc;
 
 	desc = list_first_entry_or_null(&mdev->active_list,
-					struct msgdma_sw_desc, node);
-	if (!desc)
-		return;
+					काष्ठा msgdma_sw_desc, node);
+	अगर (!desc)
+		वापस;
 	list_del(&desc->node);
 	dma_cookie_complete(&desc->async_tx);
-	list_add_tail(&desc->node, &mdev->done_list);
-}
+	list_add_tail(&desc->node, &mdev->करोne_list);
+पूर्ण
 
 /**
- * msgdma_free_descriptors - Free channel descriptors
- * @mdev: Pointer to the Altera mSGDMA device structure
+ * msgdma_मुक्त_descriptors - Free channel descriptors
+ * @mdev: Poपूर्णांकer to the Altera mSGDMA device काष्ठाure
  */
-static void msgdma_free_descriptors(struct msgdma_device *mdev)
-{
-	msgdma_free_desc_list(mdev, &mdev->active_list);
-	msgdma_free_desc_list(mdev, &mdev->pending_list);
-	msgdma_free_desc_list(mdev, &mdev->done_list);
-}
+अटल व्योम msgdma_मुक्त_descriptors(काष्ठा msgdma_device *mdev)
+अणु
+	msgdma_मुक्त_desc_list(mdev, &mdev->active_list);
+	msgdma_मुक्त_desc_list(mdev, &mdev->pending_list);
+	msgdma_मुक्त_desc_list(mdev, &mdev->करोne_list);
+पूर्ण
 
 /**
- * msgdma_free_chan_resources - Free channel resources
- * @dchan: DMA channel pointer
+ * msgdma_मुक्त_chan_resources - Free channel resources
+ * @dchan: DMA channel poपूर्णांकer
  */
-static void msgdma_free_chan_resources(struct dma_chan *dchan)
-{
-	struct msgdma_device *mdev = to_mdev(dchan);
-	unsigned long flags;
+अटल व्योम msgdma_मुक्त_chan_resources(काष्ठा dma_chan *dchan)
+अणु
+	काष्ठा msgdma_device *mdev = to_mdev(dchan);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mdev->lock, flags);
-	msgdma_free_descriptors(mdev);
+	msgdma_मुक्त_descriptors(mdev);
 	spin_unlock_irqrestore(&mdev->lock, flags);
-	kfree(mdev->sw_desq);
-}
+	kमुक्त(mdev->sw_desq);
+पूर्ण
 
 /**
  * msgdma_alloc_chan_resources - Allocate channel resources
@@ -651,184 +652,184 @@ static void msgdma_free_chan_resources(struct dma_chan *dchan)
  *
  * Return: Number of descriptors on success and failure value on error
  */
-static int msgdma_alloc_chan_resources(struct dma_chan *dchan)
-{
-	struct msgdma_device *mdev = to_mdev(dchan);
-	struct msgdma_sw_desc *desc;
-	int i;
+अटल पूर्णांक msgdma_alloc_chan_resources(काष्ठा dma_chan *dchan)
+अणु
+	काष्ठा msgdma_device *mdev = to_mdev(dchan);
+	काष्ठा msgdma_sw_desc *desc;
+	पूर्णांक i;
 
-	mdev->sw_desq = kcalloc(MSGDMA_DESC_NUM, sizeof(*desc), GFP_NOWAIT);
-	if (!mdev->sw_desq)
-		return -ENOMEM;
+	mdev->sw_desq = kसुस्मृति(MSGDMA_DESC_NUM, माप(*desc), GFP_NOWAIT);
+	अगर (!mdev->sw_desq)
+		वापस -ENOMEM;
 
 	mdev->idle = true;
-	mdev->desc_free_cnt = MSGDMA_DESC_NUM;
+	mdev->desc_मुक्त_cnt = MSGDMA_DESC_NUM;
 
-	INIT_LIST_HEAD(&mdev->free_list);
+	INIT_LIST_HEAD(&mdev->मुक्त_list);
 
-	for (i = 0; i < MSGDMA_DESC_NUM; i++) {
+	क्रम (i = 0; i < MSGDMA_DESC_NUM; i++) अणु
 		desc = mdev->sw_desq + i;
 		dma_async_tx_descriptor_init(&desc->async_tx, &mdev->dmachan);
 		desc->async_tx.tx_submit = msgdma_tx_submit;
-		list_add_tail(&desc->node, &mdev->free_list);
-	}
+		list_add_tail(&desc->node, &mdev->मुक्त_list);
+	पूर्ण
 
-	return MSGDMA_DESC_NUM;
-}
+	वापस MSGDMA_DESC_NUM;
+पूर्ण
 
 /**
  * msgdma_tasklet - Schedule completion tasklet
- * @t: Pointer to the Altera sSGDMA channel structure
+ * @t: Poपूर्णांकer to the Altera sSGDMA channel काष्ठाure
  */
-static void msgdma_tasklet(struct tasklet_struct *t)
-{
-	struct msgdma_device *mdev = from_tasklet(mdev, t, irq_tasklet);
+अटल व्योम msgdma_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा msgdma_device *mdev = from_tasklet(mdev, t, irq_tasklet);
 	u32 count;
 	u32 __maybe_unused size;
 	u32 __maybe_unused status;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mdev->lock, flags);
 
 	/* Read number of responses that are available */
-	count = ioread32(mdev->csr + MSGDMA_CSR_RESP_FILL_LEVEL);
+	count = ioपढ़ो32(mdev->csr + MSGDMA_CSR_RESP_FILL_LEVEL);
 	dev_dbg(mdev->dev, "%s (%d): response count=%d\n",
 		__func__, __LINE__, count);
 
-	while (count--) {
+	जबतक (count--) अणु
 		/*
-		 * Read both longwords to purge this response from the FIFO
-		 * On Avalon-MM implementations, size and status do not
+		 * Read both दीर्घwords to purge this response from the FIFO
+		 * On Avalon-MM implementations, size and status करो not
 		 * have any real values, like transferred bytes or error
 		 * bits. So we need to just drop these values.
 		 */
-		size = ioread32(mdev->resp + MSGDMA_RESP_BYTES_TRANSFERRED);
-		status = ioread32(mdev->resp + MSGDMA_RESP_STATUS);
+		size = ioपढ़ो32(mdev->resp + MSGDMA_RESP_BYTES_TRANSFERRED);
+		status = ioपढ़ो32(mdev->resp + MSGDMA_RESP_STATUS);
 
 		msgdma_complete_descriptor(mdev);
 		msgdma_chan_desc_cleanup(mdev);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&mdev->lock, flags);
-}
+पूर्ण
 
 /**
  * msgdma_irq_handler - Altera mSGDMA Interrupt handler
  * @irq: IRQ number
- * @data: Pointer to the Altera mSGDMA device structure
+ * @data: Poपूर्णांकer to the Altera mSGDMA device काष्ठाure
  *
  * Return: IRQ_HANDLED/IRQ_NONE
  */
-static irqreturn_t msgdma_irq_handler(int irq, void *data)
-{
-	struct msgdma_device *mdev = data;
+अटल irqवापस_t msgdma_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा msgdma_device *mdev = data;
 	u32 status;
 
-	status = ioread32(mdev->csr + MSGDMA_CSR_STATUS);
-	if ((status & MSGDMA_CSR_STAT_BUSY) == 0) {
-		/* Start next transfer if the DMA controller is idle */
+	status = ioपढ़ो32(mdev->csr + MSGDMA_CSR_STATUS);
+	अगर ((status & MSGDMA_CSR_STAT_BUSY) == 0) अणु
+		/* Start next transfer अगर the DMA controller is idle */
 		spin_lock(&mdev->lock);
 		mdev->idle = true;
 		msgdma_start_transfer(mdev);
 		spin_unlock(&mdev->lock);
-	}
+	पूर्ण
 
 	tasklet_schedule(&mdev->irq_tasklet);
 
-	/* Clear interrupt in mSGDMA controller */
-	iowrite32(MSGDMA_CSR_STAT_IRQ, mdev->csr + MSGDMA_CSR_STATUS);
+	/* Clear पूर्णांकerrupt in mSGDMA controller */
+	ioग_लिखो32(MSGDMA_CSR_STAT_IRQ, mdev->csr + MSGDMA_CSR_STATUS);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * msgdma_chan_remove - Channel remove function
- * @mdev: Pointer to the Altera mSGDMA device structure
+ * msgdma_chan_हटाओ - Channel हटाओ function
+ * @mdev: Poपूर्णांकer to the Altera mSGDMA device काष्ठाure
  */
-static void msgdma_dev_remove(struct msgdma_device *mdev)
-{
-	if (!mdev)
-		return;
+अटल व्योम msgdma_dev_हटाओ(काष्ठा msgdma_device *mdev)
+अणु
+	अगर (!mdev)
+		वापस;
 
-	devm_free_irq(mdev->dev, mdev->irq, mdev);
-	tasklet_kill(&mdev->irq_tasklet);
+	devm_मुक्त_irq(mdev->dev, mdev->irq, mdev);
+	tasklet_समाप्त(&mdev->irq_tasklet);
 	list_del(&mdev->dmachan.device_node);
-}
+पूर्ण
 
-static int request_and_map(struct platform_device *pdev, const char *name,
-			   struct resource **res, void __iomem **ptr)
-{
-	struct resource *region;
-	struct device *device = &pdev->dev;
+अटल पूर्णांक request_and_map(काष्ठा platक्रमm_device *pdev, स्थिर अक्षर *name,
+			   काष्ठा resource **res, व्योम __iomem **ptr)
+अणु
+	काष्ठा resource *region;
+	काष्ठा device *device = &pdev->dev;
 
-	*res = platform_get_resource_byname(pdev, IORESOURCE_MEM, name);
-	if (*res == NULL) {
+	*res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, name);
+	अगर (*res == शून्य) अणु
 		dev_err(device, "resource %s not defined\n", name);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	region = devm_request_mem_region(device, (*res)->start,
 					 resource_size(*res), dev_name(device));
-	if (region == NULL) {
+	अगर (region == शून्य) अणु
 		dev_err(device, "unable to request %s\n", name);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	*ptr = devm_ioremap(device, region->start,
 				    resource_size(region));
-	if (*ptr == NULL) {
+	अगर (*ptr == शून्य) अणु
 		dev_err(device, "ioremap of %s failed!", name);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * msgdma_probe - Driver probe function
- * @pdev: Pointer to the platform_device structure
+ * @pdev: Poपूर्णांकer to the platक्रमm_device काष्ठाure
  *
  * Return: '0' on success and failure value on error
  */
-static int msgdma_probe(struct platform_device *pdev)
-{
-	struct msgdma_device *mdev;
-	struct dma_device *dma_dev;
-	struct resource *dma_res;
-	int ret;
+अटल पूर्णांक msgdma_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा msgdma_device *mdev;
+	काष्ठा dma_device *dma_dev;
+	काष्ठा resource *dma_res;
+	पूर्णांक ret;
 
-	mdev = devm_kzalloc(&pdev->dev, sizeof(*mdev), GFP_NOWAIT);
-	if (!mdev)
-		return -ENOMEM;
+	mdev = devm_kzalloc(&pdev->dev, माप(*mdev), GFP_NOWAIT);
+	अगर (!mdev)
+		वापस -ENOMEM;
 
 	mdev->dev = &pdev->dev;
 
 	/* Map CSR space */
 	ret = request_and_map(pdev, "csr", &dma_res, &mdev->csr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Map (extended) descriptor space */
 	ret = request_and_map(pdev, "desc", &dma_res, &mdev->desc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Map response space */
 	ret = request_and_map(pdev, "resp", &dma_res, &mdev->resp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, mdev);
+	platक्रमm_set_drvdata(pdev, mdev);
 
-	/* Get interrupt nr from platform data */
-	mdev->irq = platform_get_irq(pdev, 0);
-	if (mdev->irq < 0)
-		return -ENXIO;
+	/* Get पूर्णांकerrupt nr from platक्रमm data */
+	mdev->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (mdev->irq < 0)
+		वापस -ENXIO;
 
 	ret = devm_request_irq(&pdev->dev, mdev->irq, msgdma_irq_handler,
 			       0, dev_name(&pdev->dev), mdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	tasklet_setup(&mdev->irq_tasklet, msgdma_tasklet);
 
@@ -838,8 +839,8 @@ static int msgdma_probe(struct platform_device *pdev)
 
 	INIT_LIST_HEAD(&mdev->active_list);
 	INIT_LIST_HEAD(&mdev->pending_list);
-	INIT_LIST_HEAD(&mdev->done_list);
-	INIT_LIST_HEAD(&mdev->free_list);
+	INIT_LIST_HEAD(&mdev->करोne_list);
+	INIT_LIST_HEAD(&mdev->मुक्त_list);
 
 	dma_dev = &mdev->dmadev;
 
@@ -863,68 +864,68 @@ static int msgdma_probe(struct platform_device *pdev)
 	dma_dev->dev = &pdev->dev;
 
 	dma_dev->copy_align = DMAENGINE_ALIGN_4_BYTES;
-	dma_dev->device_prep_dma_memcpy = msgdma_prep_memcpy;
+	dma_dev->device_prep_dma_स_नकल = msgdma_prep_स_नकल;
 	dma_dev->device_prep_slave_sg = msgdma_prep_slave_sg;
 	dma_dev->device_config = msgdma_dma_config;
 
 	dma_dev->device_alloc_chan_resources = msgdma_alloc_chan_resources;
-	dma_dev->device_free_chan_resources = msgdma_free_chan_resources;
+	dma_dev->device_मुक्त_chan_resources = msgdma_मुक्त_chan_resources;
 
 	mdev->dmachan.device = dma_dev;
 	list_add_tail(&mdev->dmachan.device_node, &dma_dev->channels);
 
 	/* Set DMA mask to 64 bits */
 	ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(&pdev->dev, "unable to set coherent mask to 64");
 		ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-		if (ret)
-			goto fail;
-	}
+		अगर (ret)
+			जाओ fail;
+	पूर्ण
 
 	msgdma_reset(mdev);
 
-	ret = dma_async_device_register(dma_dev);
-	if (ret)
-		goto fail;
+	ret = dma_async_device_रेजिस्टर(dma_dev);
+	अगर (ret)
+		जाओ fail;
 
 	dev_notice(&pdev->dev, "Altera mSGDMA driver probe success\n");
 
-	return 0;
+	वापस 0;
 
 fail:
-	msgdma_dev_remove(mdev);
+	msgdma_dev_हटाओ(mdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * msgdma_dma_remove - Driver remove function
- * @pdev: Pointer to the platform_device structure
+ * msgdma_dma_हटाओ - Driver हटाओ function
+ * @pdev: Poपूर्णांकer to the platक्रमm_device काष्ठाure
  *
  * Return: Always '0'
  */
-static int msgdma_remove(struct platform_device *pdev)
-{
-	struct msgdma_device *mdev = platform_get_drvdata(pdev);
+अटल पूर्णांक msgdma_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा msgdma_device *mdev = platक्रमm_get_drvdata(pdev);
 
-	dma_async_device_unregister(&mdev->dmadev);
-	msgdma_dev_remove(mdev);
+	dma_async_device_unरेजिस्टर(&mdev->dmadev);
+	msgdma_dev_हटाओ(mdev);
 
 	dev_notice(&pdev->dev, "Altera mSGDMA driver removed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver msgdma_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver msgdma_driver = अणु
+	.driver = अणु
 		.name = "altera-msgdma",
-	},
+	पूर्ण,
 	.probe = msgdma_probe,
-	.remove = msgdma_remove,
-};
+	.हटाओ = msgdma_हटाओ,
+पूर्ण;
 
-module_platform_driver(msgdma_driver);
+module_platक्रमm_driver(msgdma_driver);
 
 MODULE_ALIAS("platform:altera-msgdma");
 MODULE_DESCRIPTION("Altera mSGDMA driver");

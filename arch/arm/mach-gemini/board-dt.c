@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Gemini Device Tree boot support
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
 
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
-#include <asm/system_misc.h>
-#include <asm/proc-fns.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
+#समावेश <यंत्र/proc-fns.h>
 
-#ifdef CONFIG_DEBUG_GEMINI
-/* This is needed for LL-debug/earlyprintk/debug-macro.S */
-static struct map_desc gemini_io_desc[] __initdata = {
-	{
-		.virtual = CONFIG_DEBUG_UART_VIRT,
+#अगर_घोषित CONFIG_DEBUG_GEMINI
+/* This is needed क्रम LL-debug/earlyprपूर्णांकk/debug-macro.S */
+अटल काष्ठा map_desc gemini_io_desc[] __initdata = अणु
+	अणु
+		.भव = CONFIG_DEBUG_UART_VIRT,
 		.pfn = __phys_to_pfn(CONFIG_DEBUG_UART_PHYS),
 		.length = SZ_4K,
 		.type = MT_DEVICE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void __init gemini_map_io(void)
-{
+अटल व्योम __init gemini_map_io(व्योम)
+अणु
 	iotable_init(gemini_io_desc, ARRAY_SIZE(gemini_io_desc));
-}
-#else
-#define gemini_map_io NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा gemini_map_io शून्य
+#पूर्ण_अगर
 
-static void gemini_idle(void)
-{
+अटल व्योम gemini_idle(व्योम)
+अणु
 	/*
-	 * Because of broken hardware we have to enable interrupts or the CPU
+	 * Because of broken hardware we have to enable पूर्णांकerrupts or the CPU
 	 * will never wakeup... Acctualy it is not very good to enable
-	 * interrupts first since scheduler can miss a tick, but there is
-	 * no other way around this. Platforms that needs it for power saving
-	 * should enable it in init code, since by default it is
+	 * पूर्णांकerrupts first since scheduler can miss a tick, but there is
+	 * no other way around this. Platक्रमms that needs it क्रम घातer saving
+	 * should enable it in init code, since by शेष it is
 	 * disabled.
 	 */
 
-	/* FIXME: Enabling interrupts here is racy! */
+	/* FIXME: Enabling पूर्णांकerrupts here is racy! */
 	local_irq_enable();
-	cpu_do_idle();
-}
+	cpu_करो_idle();
+पूर्ण
 
-static void __init gemini_init_machine(void)
-{
+अटल व्योम __init gemini_init_machine(व्योम)
+अणु
 	arm_pm_idle = gemini_idle;
-}
+पूर्ण
 
-static const char *gemini_board_compat[] = {
+अटल स्थिर अक्षर *gemini_board_compat[] = अणु
 	"cortina,gemini",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(GEMINI_DT, "Gemini (Device Tree)")
 	.map_io		= gemini_map_io,

@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Arizona-i2c.c  --  Arizona I2C bus interface
+ * Arizona-i2c.c  --  Arizona I2C bus पूर्णांकerface
  *
  * Copyright 2012 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  */
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <linux/of.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
 
-#include <linux/mfd/arizona/core.h>
+#समावेश <linux/mfd/arizona/core.h>
 
-#include "arizona.h"
+#समावेश "arizona.h"
 
-static int arizona_i2c_probe(struct i2c_client *i2c,
-			     const struct i2c_device_id *id)
-{
-	const void *match_data;
-	struct arizona *arizona;
-	const struct regmap_config *regmap_config = NULL;
-	unsigned long type = 0;
-	int ret;
+अटल पूर्णांक arizona_i2c_probe(काष्ठा i2c_client *i2c,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	स्थिर व्योम *match_data;
+	काष्ठा arizona *arizona;
+	स्थिर काष्ठा regmap_config *regmap_config = शून्य;
+	अचिन्हित दीर्घ type = 0;
+	पूर्णांक ret;
 
 	match_data = device_get_match_data(&i2c->dev);
-	if (match_data)
-		type = (unsigned long)match_data;
-	else if (id)
+	अगर (match_data)
+		type = (अचिन्हित दीर्घ)match_data;
+	अन्यथा अगर (id)
 		type = id->driver_data;
 
-	switch (type) {
-	case WM5102:
-		if (IS_ENABLED(CONFIG_MFD_WM5102))
+	चयन (type) अणु
+	हाल WM5102:
+		अगर (IS_ENABLED(CONFIG_MFD_WM5102))
 			regmap_config = &wm5102_i2c_regmap;
-		break;
-	case WM5110:
-	case WM8280:
-		if (IS_ENABLED(CONFIG_MFD_WM5110))
+		अवरोध;
+	हाल WM5110:
+	हाल WM8280:
+		अगर (IS_ENABLED(CONFIG_MFD_WM5110))
 			regmap_config = &wm5110_i2c_regmap;
-		break;
-	case WM8997:
-		if (IS_ENABLED(CONFIG_MFD_WM8997))
+		अवरोध;
+	हाल WM8997:
+		अगर (IS_ENABLED(CONFIG_MFD_WM8997))
 			regmap_config = &wm8997_i2c_regmap;
-		break;
-	case WM8998:
-	case WM1814:
-		if (IS_ENABLED(CONFIG_MFD_WM8998))
+		अवरोध;
+	हाल WM8998:
+	हाल WM1814:
+		अगर (IS_ENABLED(CONFIG_MFD_WM8998))
 			regmap_config = &wm8998_i2c_regmap;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&i2c->dev, "Unknown device type %ld\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!regmap_config) {
+	अगर (!regmap_config) अणु
 		dev_err(&i2c->dev,
 			"No kernel support for device type %ld\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	arizona = devm_kzalloc(&i2c->dev, sizeof(*arizona), GFP_KERNEL);
-	if (arizona == NULL)
-		return -ENOMEM;
+	arizona = devm_kzalloc(&i2c->dev, माप(*arizona), GFP_KERNEL);
+	अगर (arizona == शून्य)
+		वापस -ENOMEM;
 
 	arizona->regmap = devm_regmap_init_i2c(i2c, regmap_config);
-	if (IS_ERR(arizona->regmap)) {
+	अगर (IS_ERR(arizona->regmap)) अणु
 		ret = PTR_ERR(arizona->regmap);
 		dev_err(&i2c->dev, "Failed to allocate register map: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	arizona->type = type;
 	arizona->dev = &i2c->dev;
 	arizona->irq = i2c->irq;
 
-	return arizona_dev_init(arizona);
-}
+	वापस arizona_dev_init(arizona);
+पूर्ण
 
-static int arizona_i2c_remove(struct i2c_client *i2c)
-{
-	struct arizona *arizona = dev_get_drvdata(&i2c->dev);
+अटल पूर्णांक arizona_i2c_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	काष्ठा arizona *arizona = dev_get_drvdata(&i2c->dev);
 
-	arizona_dev_exit(arizona);
+	arizona_dev_निकास(arizona);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id arizona_i2c_id[] = {
-	{ "wm5102", WM5102 },
-	{ "wm5110", WM5110 },
-	{ "wm8280", WM8280 },
-	{ "wm8997", WM8997 },
-	{ "wm8998", WM8998 },
-	{ "wm1814", WM1814 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id arizona_i2c_id[] = अणु
+	अणु "wm5102", WM5102 पूर्ण,
+	अणु "wm5110", WM5110 पूर्ण,
+	अणु "wm8280", WM8280 पूर्ण,
+	अणु "wm8997", WM8997 पूर्ण,
+	अणु "wm8998", WM8998 पूर्ण,
+	अणु "wm1814", WM1814 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, arizona_i2c_id);
 
-static struct i2c_driver arizona_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver arizona_i2c_driver = अणु
+	.driver = अणु
 		.name	= "arizona",
 		.pm	= &arizona_pm_ops,
 		.of_match_table	= of_match_ptr(arizona_of_match),
-	},
+	पूर्ण,
 	.probe		= arizona_i2c_probe,
-	.remove		= arizona_i2c_remove,
+	.हटाओ		= arizona_i2c_हटाओ,
 	.id_table	= arizona_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(arizona_i2c_driver);
 

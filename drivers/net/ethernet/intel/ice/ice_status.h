@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c) 2018, Intel Corporation. */
 
-#ifndef _ICE_STATUS_H_
-#define _ICE_STATUS_H_
+#अगर_अघोषित _ICE_STATUS_H_
+#घोषणा _ICE_STATUS_H_
 
 /* Error Codes */
-enum ice_status {
+क्रमागत ice_status अणु
 	ICE_SUCCESS				= 0,
 
 	/* Generic codes : Range -1..-49 */
@@ -39,6 +40,6 @@ enum ice_status {
 	ICE_ERR_AQ_NO_WORK			= -103,
 	ICE_ERR_AQ_EMPTY			= -104,
 	ICE_ERR_AQ_FW_CRITICAL			= -105,
-};
+पूर्ण;
 
-#endif /* _ICE_STATUS_H_ */
+#पूर्ण_अगर /* _ICE_STATUS_H_ */

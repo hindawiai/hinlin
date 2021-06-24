@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Arch specific extensions to struct device
+ * Arch specअगरic extensions to काष्ठा device
  */
-#ifndef ASMARM_DEVICE_H
-#define ASMARM_DEVICE_H
+#अगर_अघोषित ASMARM_DEVICE_H
+#घोषणा ASMARM_DEVICE_H
 
-struct dev_archdata {
-#ifdef CONFIG_DMABOUNCE
-	struct dmabounce_device_info *dmabounce;
-#endif
-#ifdef CONFIG_ARM_DMA_USE_IOMMU
-	struct dma_iommu_mapping	*mapping;
-#endif
-	unsigned int dma_coherent:1;
-	unsigned int dma_ops_setup:1;
-};
+काष्ठा dev_archdata अणु
+#अगर_घोषित CONFIG_DMABOUNCE
+	काष्ठा dmabounce_device_info *dmabounce;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARM_DMA_USE_IOMMU
+	काष्ठा dma_iommu_mapping	*mapping;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक dma_coherent:1;
+	अचिन्हित पूर्णांक dma_ops_setup:1;
+पूर्ण;
 
-struct omap_device;
+काष्ठा omap_device;
 
-struct pdev_archdata {
-#ifdef CONFIG_ARCH_OMAP
-	struct omap_device *od;
-#endif
-};
+काष्ठा pdev_archdata अणु
+#अगर_घोषित CONFIG_ARCH_OMAP
+	काष्ठा omap_device *od;
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_ARM_DMA_USE_IOMMU
-#define to_dma_iommu_mapping(dev) ((dev)->archdata.mapping)
-#else
-#define to_dma_iommu_mapping(dev) NULL
-#endif
+#अगर_घोषित CONFIG_ARM_DMA_USE_IOMMU
+#घोषणा to_dma_iommu_mapping(dev) ((dev)->archdata.mapping)
+#अन्यथा
+#घोषणा to_dma_iommu_mapping(dev) शून्य
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

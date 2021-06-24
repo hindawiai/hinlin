@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_LPE_AUDIO_H__
-#define __INTEL_LPE_AUDIO_H__
+#अगर_अघोषित __INTEL_LPE_AUDIO_H__
+#घोषणा __INTEL_LPE_AUDIO_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum pipe;
-enum port;
-struct drm_i915_private;
+क्रमागत pipe;
+क्रमागत port;
+काष्ठा drm_i915_निजी;
 
-int  intel_lpe_audio_init(struct drm_i915_private *dev_priv);
-void intel_lpe_audio_teardown(struct drm_i915_private *dev_priv);
-void intel_lpe_audio_irq_handler(struct drm_i915_private *dev_priv);
-void intel_lpe_audio_notify(struct drm_i915_private *dev_priv,
-			    enum pipe pipe, enum port port,
-			    const void *eld, int ls_clock, bool dp_output);
+पूर्णांक  पूर्णांकel_lpe_audio_init(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_lpe_audio_tearकरोwn(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_lpe_audio_irq_handler(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_lpe_audio_notअगरy(काष्ठा drm_i915_निजी *dev_priv,
+			    क्रमागत pipe pipe, क्रमागत port port,
+			    स्थिर व्योम *eld, पूर्णांक ls_घड़ी, bool dp_output);
 
-#endif /* __INTEL_LPE_AUDIO_H__ */
+#पूर्ण_अगर /* __INTEL_LPE_AUDIO_H__ */

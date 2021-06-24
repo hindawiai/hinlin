@@ -1,259 +1,260 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2016 Facebook
  */
-#include <linux/bpf.h>
-#include <linux/jhash.h>
-#include <linux/filter.h>
-#include <linux/kernel.h>
-#include <linux/stacktrace.h>
-#include <linux/perf_event.h>
-#include <linux/irq_work.h>
-#include <linux/btf_ids.h>
-#include <linux/buildid.h>
-#include "percpu_freelist.h"
+#समावेश <linux/bpf.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/irq_work.h>
+#समावेश <linux/btf_ids.h>
+#समावेश <linux/buildid.h>
+#समावेश "percpu_freelist.h"
 
-#define STACK_CREATE_FLAG_MASK					\
+#घोषणा STACK_CREATE_FLAG_MASK					\
 	(BPF_F_NUMA_NODE | BPF_F_RDONLY | BPF_F_WRONLY |	\
 	 BPF_F_STACK_BUILD_ID)
 
-struct stack_map_bucket {
-	struct pcpu_freelist_node fnode;
+काष्ठा stack_map_bucket अणु
+	काष्ठा pcpu_मुक्तlist_node fnode;
 	u32 hash;
 	u32 nr;
 	u64 data[];
-};
+पूर्ण;
 
-struct bpf_stack_map {
-	struct bpf_map map;
-	void *elems;
-	struct pcpu_freelist freelist;
+काष्ठा bpf_stack_map अणु
+	काष्ठा bpf_map map;
+	व्योम *elems;
+	काष्ठा pcpu_मुक्तlist मुक्तlist;
 	u32 n_buckets;
-	struct stack_map_bucket *buckets[];
-};
+	काष्ठा stack_map_bucket *buckets[];
+पूर्ण;
 
-/* irq_work to run up_read() for build_id lookup in nmi context */
-struct stack_map_irq_work {
-	struct irq_work irq_work;
-	struct mm_struct *mm;
-};
+/* irq_work to run up_पढ़ो() क्रम build_id lookup in nmi context */
+काष्ठा stack_map_irq_work अणु
+	काष्ठा irq_work irq_work;
+	काष्ठा mm_काष्ठा *mm;
+पूर्ण;
 
-static void do_up_read(struct irq_work *entry)
-{
-	struct stack_map_irq_work *work;
+अटल व्योम करो_up_पढ़ो(काष्ठा irq_work *entry)
+अणु
+	काष्ठा stack_map_irq_work *work;
 
-	if (WARN_ON_ONCE(IS_ENABLED(CONFIG_PREEMPT_RT)))
-		return;
+	अगर (WARN_ON_ONCE(IS_ENABLED(CONFIG_PREEMPT_RT)))
+		वापस;
 
-	work = container_of(entry, struct stack_map_irq_work, irq_work);
-	mmap_read_unlock_non_owner(work->mm);
-}
+	work = container_of(entry, काष्ठा stack_map_irq_work, irq_work);
+	mmap_पढ़ो_unlock_non_owner(work->mm);
+पूर्ण
 
-static DEFINE_PER_CPU(struct stack_map_irq_work, up_read_work);
+अटल DEFINE_PER_CPU(काष्ठा stack_map_irq_work, up_पढ़ो_work);
 
-static inline bool stack_map_use_build_id(struct bpf_map *map)
-{
-	return (map->map_flags & BPF_F_STACK_BUILD_ID);
-}
+अटल अंतरभूत bool stack_map_use_build_id(काष्ठा bpf_map *map)
+अणु
+	वापस (map->map_flags & BPF_F_STACK_BUILD_ID);
+पूर्ण
 
-static inline int stack_map_data_size(struct bpf_map *map)
-{
-	return stack_map_use_build_id(map) ?
-		sizeof(struct bpf_stack_build_id) : sizeof(u64);
-}
+अटल अंतरभूत पूर्णांक stack_map_data_size(काष्ठा bpf_map *map)
+अणु
+	वापस stack_map_use_build_id(map) ?
+		माप(काष्ठा bpf_stack_build_id) : माप(u64);
+पूर्ण
 
-static int prealloc_elems_and_freelist(struct bpf_stack_map *smap)
-{
-	u32 elem_size = sizeof(struct stack_map_bucket) + smap->map.value_size;
-	int err;
+अटल पूर्णांक pपुनः_स्मृति_elems_and_मुक्तlist(काष्ठा bpf_stack_map *smap)
+अणु
+	u32 elem_size = माप(काष्ठा stack_map_bucket) + smap->map.value_size;
+	पूर्णांक err;
 
 	smap->elems = bpf_map_area_alloc(elem_size * smap->map.max_entries,
 					 smap->map.numa_node);
-	if (!smap->elems)
-		return -ENOMEM;
+	अगर (!smap->elems)
+		वापस -ENOMEM;
 
-	err = pcpu_freelist_init(&smap->freelist);
-	if (err)
-		goto free_elems;
+	err = pcpu_मुक्तlist_init(&smap->मुक्तlist);
+	अगर (err)
+		जाओ मुक्त_elems;
 
-	pcpu_freelist_populate(&smap->freelist, smap->elems, elem_size,
+	pcpu_मुक्तlist_populate(&smap->मुक्तlist, smap->elems, elem_size,
 			       smap->map.max_entries);
-	return 0;
+	वापस 0;
 
-free_elems:
-	bpf_map_area_free(smap->elems);
-	return err;
-}
+मुक्त_elems:
+	bpf_map_area_मुक्त(smap->elems);
+	वापस err;
+पूर्ण
 
 /* Called from syscall */
-static struct bpf_map *stack_map_alloc(union bpf_attr *attr)
-{
+अटल काष्ठा bpf_map *stack_map_alloc(जोड़ bpf_attr *attr)
+अणु
 	u32 value_size = attr->value_size;
-	struct bpf_stack_map *smap;
+	काष्ठा bpf_stack_map *smap;
 	u64 cost, n_buckets;
-	int err;
+	पूर्णांक err;
 
-	if (!bpf_capable())
-		return ERR_PTR(-EPERM);
+	अगर (!bpf_capable())
+		वापस ERR_PTR(-EPERM);
 
-	if (attr->map_flags & ~STACK_CREATE_FLAG_MASK)
-		return ERR_PTR(-EINVAL);
+	अगर (attr->map_flags & ~STACK_CREATE_FLAG_MASK)
+		वापस ERR_PTR(-EINVAL);
 
 	/* check sanity of attributes */
-	if (attr->max_entries == 0 || attr->key_size != 4 ||
+	अगर (attr->max_entries == 0 || attr->key_size != 4 ||
 	    value_size < 8 || value_size % 8)
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	BUILD_BUG_ON(sizeof(struct bpf_stack_build_id) % sizeof(u64));
-	if (attr->map_flags & BPF_F_STACK_BUILD_ID) {
-		if (value_size % sizeof(struct bpf_stack_build_id) ||
-		    value_size / sizeof(struct bpf_stack_build_id)
+	BUILD_BUG_ON(माप(काष्ठा bpf_stack_build_id) % माप(u64));
+	अगर (attr->map_flags & BPF_F_STACK_BUILD_ID) अणु
+		अगर (value_size % माप(काष्ठा bpf_stack_build_id) ||
+		    value_size / माप(काष्ठा bpf_stack_build_id)
 		    > sysctl_perf_event_max_stack)
-			return ERR_PTR(-EINVAL);
-	} else if (value_size / 8 > sysctl_perf_event_max_stack)
-		return ERR_PTR(-EINVAL);
+			वापस ERR_PTR(-EINVAL);
+	पूर्ण अन्यथा अगर (value_size / 8 > sysctl_perf_event_max_stack)
+		वापस ERR_PTR(-EINVAL);
 
-	/* hash table size must be power of 2 */
-	n_buckets = roundup_pow_of_two(attr->max_entries);
-	if (!n_buckets)
-		return ERR_PTR(-E2BIG);
+	/* hash table size must be घातer of 2 */
+	n_buckets = roundup_घात_of_two(attr->max_entries);
+	अगर (!n_buckets)
+		वापस ERR_PTR(-E2BIG);
 
-	cost = n_buckets * sizeof(struct stack_map_bucket *) + sizeof(*smap);
-	cost += n_buckets * (value_size + sizeof(struct stack_map_bucket));
+	cost = n_buckets * माप(काष्ठा stack_map_bucket *) + माप(*smap);
+	cost += n_buckets * (value_size + माप(काष्ठा stack_map_bucket));
 	smap = bpf_map_area_alloc(cost, bpf_map_attr_numa_node(attr));
-	if (!smap)
-		return ERR_PTR(-ENOMEM);
+	अगर (!smap)
+		वापस ERR_PTR(-ENOMEM);
 
 	bpf_map_init_from_attr(&smap->map, attr);
 	smap->map.value_size = value_size;
 	smap->n_buckets = n_buckets;
 
 	err = get_callchain_buffers(sysctl_perf_event_max_stack);
-	if (err)
-		goto free_smap;
+	अगर (err)
+		जाओ मुक्त_smap;
 
-	err = prealloc_elems_and_freelist(smap);
-	if (err)
-		goto put_buffers;
+	err = pपुनः_स्मृति_elems_and_मुक्तlist(smap);
+	अगर (err)
+		जाओ put_buffers;
 
-	return &smap->map;
+	वापस &smap->map;
 
 put_buffers:
 	put_callchain_buffers();
-free_smap:
-	bpf_map_area_free(smap);
-	return ERR_PTR(err);
-}
+मुक्त_smap:
+	bpf_map_area_मुक्त(smap);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void stack_map_get_build_id_offset(struct bpf_stack_build_id *id_offs,
+अटल व्योम stack_map_get_build_id_offset(काष्ठा bpf_stack_build_id *id_offs,
 					  u64 *ips, u32 trace_nr, bool user)
-{
-	int i;
-	struct vm_area_struct *vma;
+अणु
+	पूर्णांक i;
+	काष्ठा vm_area_काष्ठा *vma;
 	bool irq_work_busy = false;
-	struct stack_map_irq_work *work = NULL;
+	काष्ठा stack_map_irq_work *work = शून्य;
 
-	if (irqs_disabled()) {
-		if (!IS_ENABLED(CONFIG_PREEMPT_RT)) {
-			work = this_cpu_ptr(&up_read_work);
-			if (irq_work_is_busy(&work->irq_work)) {
-				/* cannot queue more up_read, fallback */
+	अगर (irqs_disabled()) अणु
+		अगर (!IS_ENABLED(CONFIG_PREEMPT_RT)) अणु
+			work = this_cpu_ptr(&up_पढ़ो_work);
+			अगर (irq_work_is_busy(&work->irq_work)) अणु
+				/* cannot queue more up_पढ़ो, fallback */
 				irq_work_busy = true;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/*
-			 * PREEMPT_RT does not allow to trylock mmap sem in
-			 * interrupt disabled context. Force the fallback code.
+			 * PREEMPT_RT करोes not allow to trylock mmap sem in
+			 * पूर्णांकerrupt disabled context. Force the fallback code.
 			 */
 			irq_work_busy = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * We cannot do up_read() when the irq is disabled, because of
-	 * risk to deadlock with rq_lock. To do build_id lookup when the
-	 * irqs are disabled, we need to run up_read() in irq_work. We use
-	 * a percpu variable to do the irq_work. If the irq_work is
-	 * already used by another lookup, we fall back to report ips.
+	 * We cannot करो up_पढ़ो() when the irq is disabled, because of
+	 * risk to deadlock with rq_lock. To करो build_id lookup when the
+	 * irqs are disabled, we need to run up_पढ़ो() in irq_work. We use
+	 * a percpu variable to करो the irq_work. If the irq_work is
+	 * alपढ़ोy used by another lookup, we fall back to report ips.
 	 *
-	 * Same fallback is used for kernel stack (!user) on a stackmap
+	 * Same fallback is used क्रम kernel stack (!user) on a stackmap
 	 * with build_id.
 	 */
-	if (!user || !current || !current->mm || irq_work_busy ||
-	    !mmap_read_trylock_non_owner(current->mm)) {
+	अगर (!user || !current || !current->mm || irq_work_busy ||
+	    !mmap_पढ़ो_trylock_non_owner(current->mm)) अणु
 		/* cannot access current->mm, fall back to ips */
-		for (i = 0; i < trace_nr; i++) {
+		क्रम (i = 0; i < trace_nr; i++) अणु
 			id_offs[i].status = BPF_STACK_BUILD_ID_IP;
 			id_offs[i].ip = ips[i];
-			memset(id_offs[i].build_id, 0, BUILD_ID_SIZE_MAX);
-		}
-		return;
-	}
+			स_रखो(id_offs[i].build_id, 0, BUILD_ID_SIZE_MAX);
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < trace_nr; i++) {
+	क्रम (i = 0; i < trace_nr; i++) अणु
 		vma = find_vma(current->mm, ips[i]);
-		if (!vma || build_id_parse(vma, id_offs[i].build_id, NULL)) {
+		अगर (!vma || build_id_parse(vma, id_offs[i].build_id, शून्य)) अणु
 			/* per entry fall back to ips */
 			id_offs[i].status = BPF_STACK_BUILD_ID_IP;
 			id_offs[i].ip = ips[i];
-			memset(id_offs[i].build_id, 0, BUILD_ID_SIZE_MAX);
-			continue;
-		}
+			स_रखो(id_offs[i].build_id, 0, BUILD_ID_SIZE_MAX);
+			जारी;
+		पूर्ण
 		id_offs[i].offset = (vma->vm_pgoff << PAGE_SHIFT) + ips[i]
 			- vma->vm_start;
 		id_offs[i].status = BPF_STACK_BUILD_ID_VALID;
-	}
+	पूर्ण
 
-	if (!work) {
-		mmap_read_unlock_non_owner(current->mm);
-	} else {
+	अगर (!work) अणु
+		mmap_पढ़ो_unlock_non_owner(current->mm);
+	पूर्ण अन्यथा अणु
 		work->mm = current->mm;
 		irq_work_queue(&work->irq_work);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct perf_callchain_entry *
-get_callchain_entry_for_task(struct task_struct *task, u32 init_nr)
-{
-#ifdef CONFIG_STACKTRACE
-	struct perf_callchain_entry *entry;
-	int rctx;
+अटल काष्ठा perf_callchain_entry *
+get_callchain_entry_क्रम_task(काष्ठा task_काष्ठा *task, u32 init_nr)
+अणु
+#अगर_घोषित CONFIG_STACKTRACE
+	काष्ठा perf_callchain_entry *entry;
+	पूर्णांक rctx;
 
 	entry = get_callchain_entry(&rctx);
 
-	if (!entry)
-		return NULL;
+	अगर (!entry)
+		वापस शून्य;
 
 	entry->nr = init_nr +
-		stack_trace_save_tsk(task, (unsigned long *)(entry->ip + init_nr),
+		stack_trace_save_tsk(task, (अचिन्हित दीर्घ *)(entry->ip + init_nr),
 				     sysctl_perf_event_max_stack - init_nr, 0);
 
-	/* stack_trace_save_tsk() works on unsigned long array, while
-	 * perf_callchain_entry uses u64 array. For 32-bit systems, it is
+	/* stack_trace_save_tsk() works on अचिन्हित दीर्घ array, जबतक
+	 * perf_callchain_entry uses u64 array. For 32-bit प्रणालीs, it is
 	 * necessary to fix this mismatch.
 	 */
-	if (__BITS_PER_LONG != 64) {
-		unsigned long *from = (unsigned long *) entry->ip;
+	अगर (__BITS_PER_LONG != 64) अणु
+		अचिन्हित दीर्घ *from = (अचिन्हित दीर्घ *) entry->ip;
 		u64 *to = entry->ip;
-		int i;
+		पूर्णांक i;
 
-		/* copy data from the end to avoid using extra buffer */
-		for (i = entry->nr - 1; i >= (int)init_nr; i--)
+		/* copy data from the end to aव्योम using extra buffer */
+		क्रम (i = entry->nr - 1; i >= (पूर्णांक)init_nr; i--)
 			to[i] = (u64)(from[i]);
-	}
+	पूर्ण
 
 	put_callchain_entry(rctx);
 
-	return entry;
-#else /* CONFIG_STACKTRACE */
-	return NULL;
-#endif
-}
+	वापस entry;
+#अन्यथा /* CONFIG_STACKTRACE */
+	वापस शून्य;
+#पूर्ण_अगर
+पूर्ण
 
-static long __bpf_get_stackid(struct bpf_map *map,
-			      struct perf_callchain_entry *trace, u64 flags)
-{
-	struct bpf_stack_map *smap = container_of(map, struct bpf_stack_map, map);
-	struct stack_map_bucket *bucket, *new_bucket, *old_bucket;
+अटल दीर्घ __bpf_get_stackid(काष्ठा bpf_map *map,
+			      काष्ठा perf_callchain_entry *trace, u64 flags)
+अणु
+	काष्ठा bpf_stack_map *smap = container_of(map, काष्ठा bpf_stack_map, map);
+	काष्ठा stack_map_bucket *bucket, *new_bucket, *old_bucket;
 	u32 max_depth = map->value_size / stack_map_data_size(map);
 	/* stack_map_alloc() checks that max_depth <= sysctl_perf_event_max_stack */
 	u32 init_nr = sysctl_perf_event_max_stack - max_depth;
@@ -268,138 +269,138 @@ static long __bpf_get_stackid(struct bpf_map *map,
 	 */
 	trace_nr = trace->nr - init_nr;
 
-	if (trace_nr <= skip)
+	अगर (trace_nr <= skip)
 		/* skipping more than usable stack trace */
-		return -EFAULT;
+		वापस -EFAULT;
 
 	trace_nr -= skip;
-	trace_len = trace_nr * sizeof(u64);
+	trace_len = trace_nr * माप(u64);
 	ips = trace->ip + skip + init_nr;
-	hash = jhash2((u32 *)ips, trace_len / sizeof(u32), 0);
+	hash = jhash2((u32 *)ips, trace_len / माप(u32), 0);
 	id = hash & (smap->n_buckets - 1);
 	bucket = READ_ONCE(smap->buckets[id]);
 
 	hash_matches = bucket && bucket->hash == hash;
 	/* fast cmp */
-	if (hash_matches && flags & BPF_F_FAST_STACK_CMP)
-		return id;
+	अगर (hash_matches && flags & BPF_F_FAST_STACK_CMP)
+		वापस id;
 
-	if (stack_map_use_build_id(map)) {
-		/* for build_id+offset, pop a bucket before slow cmp */
-		new_bucket = (struct stack_map_bucket *)
-			pcpu_freelist_pop(&smap->freelist);
-		if (unlikely(!new_bucket))
-			return -ENOMEM;
+	अगर (stack_map_use_build_id(map)) अणु
+		/* क्रम build_id+offset, pop a bucket beक्रमe slow cmp */
+		new_bucket = (काष्ठा stack_map_bucket *)
+			pcpu_मुक्तlist_pop(&smap->मुक्तlist);
+		अगर (unlikely(!new_bucket))
+			वापस -ENOMEM;
 		new_bucket->nr = trace_nr;
 		stack_map_get_build_id_offset(
-			(struct bpf_stack_build_id *)new_bucket->data,
+			(काष्ठा bpf_stack_build_id *)new_bucket->data,
 			ips, trace_nr, user);
-		trace_len = trace_nr * sizeof(struct bpf_stack_build_id);
-		if (hash_matches && bucket->nr == trace_nr &&
-		    memcmp(bucket->data, new_bucket->data, trace_len) == 0) {
-			pcpu_freelist_push(&smap->freelist, &new_bucket->fnode);
-			return id;
-		}
-		if (bucket && !(flags & BPF_F_REUSE_STACKID)) {
-			pcpu_freelist_push(&smap->freelist, &new_bucket->fnode);
-			return -EEXIST;
-		}
-	} else {
-		if (hash_matches && bucket->nr == trace_nr &&
-		    memcmp(bucket->data, ips, trace_len) == 0)
-			return id;
-		if (bucket && !(flags & BPF_F_REUSE_STACKID))
-			return -EEXIST;
+		trace_len = trace_nr * माप(काष्ठा bpf_stack_build_id);
+		अगर (hash_matches && bucket->nr == trace_nr &&
+		    स_भेद(bucket->data, new_bucket->data, trace_len) == 0) अणु
+			pcpu_मुक्तlist_push(&smap->मुक्तlist, &new_bucket->fnode);
+			वापस id;
+		पूर्ण
+		अगर (bucket && !(flags & BPF_F_REUSE_STACKID)) अणु
+			pcpu_मुक्तlist_push(&smap->मुक्तlist, &new_bucket->fnode);
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (hash_matches && bucket->nr == trace_nr &&
+		    स_भेद(bucket->data, ips, trace_len) == 0)
+			वापस id;
+		अगर (bucket && !(flags & BPF_F_REUSE_STACKID))
+			वापस -EEXIST;
 
-		new_bucket = (struct stack_map_bucket *)
-			pcpu_freelist_pop(&smap->freelist);
-		if (unlikely(!new_bucket))
-			return -ENOMEM;
-		memcpy(new_bucket->data, ips, trace_len);
-	}
+		new_bucket = (काष्ठा stack_map_bucket *)
+			pcpu_मुक्तlist_pop(&smap->मुक्तlist);
+		अगर (unlikely(!new_bucket))
+			वापस -ENOMEM;
+		स_नकल(new_bucket->data, ips, trace_len);
+	पूर्ण
 
 	new_bucket->hash = hash;
 	new_bucket->nr = trace_nr;
 
 	old_bucket = xchg(&smap->buckets[id], new_bucket);
-	if (old_bucket)
-		pcpu_freelist_push(&smap->freelist, &old_bucket->fnode);
-	return id;
-}
+	अगर (old_bucket)
+		pcpu_मुक्तlist_push(&smap->मुक्तlist, &old_bucket->fnode);
+	वापस id;
+पूर्ण
 
-BPF_CALL_3(bpf_get_stackid, struct pt_regs *, regs, struct bpf_map *, map,
+BPF_CALL_3(bpf_get_stackid, काष्ठा pt_regs *, regs, काष्ठा bpf_map *, map,
 	   u64, flags)
-{
+अणु
 	u32 max_depth = map->value_size / stack_map_data_size(map);
 	/* stack_map_alloc() checks that max_depth <= sysctl_perf_event_max_stack */
 	u32 init_nr = sysctl_perf_event_max_stack - max_depth;
 	bool user = flags & BPF_F_USER_STACK;
-	struct perf_callchain_entry *trace;
+	काष्ठा perf_callchain_entry *trace;
 	bool kernel = !user;
 
-	if (unlikely(flags & ~(BPF_F_SKIP_FIELD_MASK | BPF_F_USER_STACK |
+	अगर (unlikely(flags & ~(BPF_F_SKIP_FIELD_MASK | BPF_F_USER_STACK |
 			       BPF_F_FAST_STACK_CMP | BPF_F_REUSE_STACKID)))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	trace = get_perf_callchain(regs, init_nr, kernel, user,
 				   sysctl_perf_event_max_stack, false, false);
 
-	if (unlikely(!trace))
+	अगर (unlikely(!trace))
 		/* couldn't fetch the stack trace */
-		return -EFAULT;
+		वापस -EFAULT;
 
-	return __bpf_get_stackid(map, trace, flags);
-}
+	वापस __bpf_get_stackid(map, trace, flags);
+पूर्ण
 
-const struct bpf_func_proto bpf_get_stackid_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_stackid_proto = अणु
 	.func		= bpf_get_stackid,
 	.gpl_only	= true,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_PTR_TO_CTX,
 	.arg2_type	= ARG_CONST_MAP_PTR,
 	.arg3_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-static __u64 count_kernel_ip(struct perf_callchain_entry *trace)
-{
+अटल __u64 count_kernel_ip(काष्ठा perf_callchain_entry *trace)
+अणु
 	__u64 nr_kernel = 0;
 
-	while (nr_kernel < trace->nr) {
-		if (trace->ip[nr_kernel] == PERF_CONTEXT_USER)
-			break;
+	जबतक (nr_kernel < trace->nr) अणु
+		अगर (trace->ip[nr_kernel] == PERF_CONTEXT_USER)
+			अवरोध;
 		nr_kernel++;
-	}
-	return nr_kernel;
-}
+	पूर्ण
+	वापस nr_kernel;
+पूर्ण
 
-BPF_CALL_3(bpf_get_stackid_pe, struct bpf_perf_event_data_kern *, ctx,
-	   struct bpf_map *, map, u64, flags)
-{
-	struct perf_event *event = ctx->event;
-	struct perf_callchain_entry *trace;
+BPF_CALL_3(bpf_get_stackid_pe, काष्ठा bpf_perf_event_data_kern *, ctx,
+	   काष्ठा bpf_map *, map, u64, flags)
+अणु
+	काष्ठा perf_event *event = ctx->event;
+	काष्ठा perf_callchain_entry *trace;
 	bool kernel, user;
 	__u64 nr_kernel;
-	int ret;
+	पूर्णांक ret;
 
-	/* perf_sample_data doesn't have callchain, use bpf_get_stackid */
-	if (!(event->attr.sample_type & __PERF_SAMPLE_CALLCHAIN_EARLY))
-		return bpf_get_stackid((unsigned long)(ctx->regs),
-				       (unsigned long) map, flags, 0, 0);
+	/* perf_sample_data करोesn't have callchain, use bpf_get_stackid */
+	अगर (!(event->attr.sample_type & __PERF_SAMPLE_CALLCHAIN_EARLY))
+		वापस bpf_get_stackid((अचिन्हित दीर्घ)(ctx->regs),
+				       (अचिन्हित दीर्घ) map, flags, 0, 0);
 
-	if (unlikely(flags & ~(BPF_F_SKIP_FIELD_MASK | BPF_F_USER_STACK |
+	अगर (unlikely(flags & ~(BPF_F_SKIP_FIELD_MASK | BPF_F_USER_STACK |
 			       BPF_F_FAST_STACK_CMP | BPF_F_REUSE_STACKID)))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	user = flags & BPF_F_USER_STACK;
 	kernel = !user;
 
 	trace = ctx->data->callchain;
-	if (unlikely(!trace))
-		return -EFAULT;
+	अगर (unlikely(!trace))
+		वापस -EFAULT;
 
 	nr_kernel = count_kernel_ip(trace);
 
-	if (kernel) {
+	अगर (kernel) अणु
 		__u64 nr = trace->nr;
 
 		trace->nr = nr_kernel;
@@ -407,104 +408,104 @@ BPF_CALL_3(bpf_get_stackid_pe, struct bpf_perf_event_data_kern *, ctx,
 
 		/* restore nr */
 		trace->nr = nr;
-	} else { /* user */
+	पूर्ण अन्यथा अणु /* user */
 		u64 skip = flags & BPF_F_SKIP_FIELD_MASK;
 
 		skip += nr_kernel;
-		if (skip > BPF_F_SKIP_FIELD_MASK)
-			return -EFAULT;
+		अगर (skip > BPF_F_SKIP_FIELD_MASK)
+			वापस -EFAULT;
 
 		flags = (flags & ~BPF_F_SKIP_FIELD_MASK) | skip;
 		ret = __bpf_get_stackid(map, trace, flags);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-const struct bpf_func_proto bpf_get_stackid_proto_pe = {
+स्थिर काष्ठा bpf_func_proto bpf_get_stackid_proto_pe = अणु
 	.func		= bpf_get_stackid_pe,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_PTR_TO_CTX,
 	.arg2_type	= ARG_CONST_MAP_PTR,
 	.arg3_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-static long __bpf_get_stack(struct pt_regs *regs, struct task_struct *task,
-			    struct perf_callchain_entry *trace_in,
-			    void *buf, u32 size, u64 flags)
-{
+अटल दीर्घ __bpf_get_stack(काष्ठा pt_regs *regs, काष्ठा task_काष्ठा *task,
+			    काष्ठा perf_callchain_entry *trace_in,
+			    व्योम *buf, u32 size, u64 flags)
+अणु
 	u32 init_nr, trace_nr, copy_len, elem_size, num_elem;
 	bool user_build_id = flags & BPF_F_USER_BUILD_ID;
 	u32 skip = flags & BPF_F_SKIP_FIELD_MASK;
 	bool user = flags & BPF_F_USER_STACK;
-	struct perf_callchain_entry *trace;
+	काष्ठा perf_callchain_entry *trace;
 	bool kernel = !user;
-	int err = -EINVAL;
+	पूर्णांक err = -EINVAL;
 	u64 *ips;
 
-	if (unlikely(flags & ~(BPF_F_SKIP_FIELD_MASK | BPF_F_USER_STACK |
+	अगर (unlikely(flags & ~(BPF_F_SKIP_FIELD_MASK | BPF_F_USER_STACK |
 			       BPF_F_USER_BUILD_ID)))
-		goto clear;
-	if (kernel && user_build_id)
-		goto clear;
+		जाओ clear;
+	अगर (kernel && user_build_id)
+		जाओ clear;
 
-	elem_size = (user && user_build_id) ? sizeof(struct bpf_stack_build_id)
-					    : sizeof(u64);
-	if (unlikely(size % elem_size))
-		goto clear;
+	elem_size = (user && user_build_id) ? माप(काष्ठा bpf_stack_build_id)
+					    : माप(u64);
+	अगर (unlikely(size % elem_size))
+		जाओ clear;
 
-	/* cannot get valid user stack for task without user_mode regs */
-	if (task && user && !user_mode(regs))
-		goto err_fault;
+	/* cannot get valid user stack क्रम task without user_mode regs */
+	अगर (task && user && !user_mode(regs))
+		जाओ err_fault;
 
 	num_elem = size / elem_size;
-	if (sysctl_perf_event_max_stack < num_elem)
+	अगर (sysctl_perf_event_max_stack < num_elem)
 		init_nr = 0;
-	else
+	अन्यथा
 		init_nr = sysctl_perf_event_max_stack - num_elem;
 
-	if (trace_in)
+	अगर (trace_in)
 		trace = trace_in;
-	else if (kernel && task)
-		trace = get_callchain_entry_for_task(task, init_nr);
-	else
+	अन्यथा अगर (kernel && task)
+		trace = get_callchain_entry_क्रम_task(task, init_nr);
+	अन्यथा
 		trace = get_perf_callchain(regs, init_nr, kernel, user,
 					   sysctl_perf_event_max_stack,
 					   false, false);
-	if (unlikely(!trace))
-		goto err_fault;
+	अगर (unlikely(!trace))
+		जाओ err_fault;
 
 	trace_nr = trace->nr - init_nr;
-	if (trace_nr < skip)
-		goto err_fault;
+	अगर (trace_nr < skip)
+		जाओ err_fault;
 
 	trace_nr -= skip;
 	trace_nr = (trace_nr <= num_elem) ? trace_nr : num_elem;
 	copy_len = trace_nr * elem_size;
 	ips = trace->ip + skip + init_nr;
-	if (user && user_build_id)
+	अगर (user && user_build_id)
 		stack_map_get_build_id_offset(buf, ips, trace_nr, user);
-	else
-		memcpy(buf, ips, copy_len);
+	अन्यथा
+		स_नकल(buf, ips, copy_len);
 
-	if (size > copy_len)
-		memset(buf + copy_len, 0, size - copy_len);
-	return copy_len;
+	अगर (size > copy_len)
+		स_रखो(buf + copy_len, 0, size - copy_len);
+	वापस copy_len;
 
 err_fault:
 	err = -EFAULT;
 clear:
-	memset(buf, 0, size);
-	return err;
-}
+	स_रखो(buf, 0, size);
+	वापस err;
+पूर्ण
 
-BPF_CALL_4(bpf_get_stack, struct pt_regs *, regs, void *, buf, u32, size,
+BPF_CALL_4(bpf_get_stack, काष्ठा pt_regs *, regs, व्योम *, buf, u32, size,
 	   u64, flags)
-{
-	return __bpf_get_stack(regs, NULL, NULL, buf, size, flags);
-}
+अणु
+	वापस __bpf_get_stack(regs, शून्य, शून्य, buf, size, flags);
+पूर्ण
 
-const struct bpf_func_proto bpf_get_stack_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_stack_proto = अणु
 	.func		= bpf_get_stack,
 	.gpl_only	= true,
 	.ret_type	= RET_INTEGER,
@@ -512,27 +513,27 @@ const struct bpf_func_proto bpf_get_stack_proto = {
 	.arg2_type	= ARG_PTR_TO_UNINIT_MEM,
 	.arg3_type	= ARG_CONST_SIZE_OR_ZERO,
 	.arg4_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_4(bpf_get_task_stack, struct task_struct *, task, void *, buf,
+BPF_CALL_4(bpf_get_task_stack, काष्ठा task_काष्ठा *, task, व्योम *, buf,
 	   u32, size, u64, flags)
-{
-	struct pt_regs *regs;
-	long res;
+अणु
+	काष्ठा pt_regs *regs;
+	दीर्घ res;
 
-	if (!try_get_task_stack(task))
-		return -EFAULT;
+	अगर (!try_get_task_stack(task))
+		वापस -EFAULT;
 
 	regs = task_pt_regs(task);
-	res = __bpf_get_stack(regs, task, NULL, buf, size, flags);
+	res = __bpf_get_stack(regs, task, शून्य, buf, size, flags);
 	put_task_stack(task);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-BTF_ID_LIST_SINGLE(bpf_get_task_stack_btf_ids, struct, task_struct)
+BTF_ID_LIST_SINGLE(bpf_get_task_stack_btf_ids, काष्ठा, task_काष्ठा)
 
-const struct bpf_func_proto bpf_get_task_stack_proto = {
+स्थिर काष्ठा bpf_func_proto bpf_get_task_stack_proto = अणु
 	.func		= bpf_get_task_stack,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
@@ -541,62 +542,62 @@ const struct bpf_func_proto bpf_get_task_stack_proto = {
 	.arg2_type	= ARG_PTR_TO_UNINIT_MEM,
 	.arg3_type	= ARG_CONST_SIZE_OR_ZERO,
 	.arg4_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
-BPF_CALL_4(bpf_get_stack_pe, struct bpf_perf_event_data_kern *, ctx,
-	   void *, buf, u32, size, u64, flags)
-{
-	struct pt_regs *regs = (struct pt_regs *)(ctx->regs);
-	struct perf_event *event = ctx->event;
-	struct perf_callchain_entry *trace;
+BPF_CALL_4(bpf_get_stack_pe, काष्ठा bpf_perf_event_data_kern *, ctx,
+	   व्योम *, buf, u32, size, u64, flags)
+अणु
+	काष्ठा pt_regs *regs = (काष्ठा pt_regs *)(ctx->regs);
+	काष्ठा perf_event *event = ctx->event;
+	काष्ठा perf_callchain_entry *trace;
 	bool kernel, user;
-	int err = -EINVAL;
+	पूर्णांक err = -EINVAL;
 	__u64 nr_kernel;
 
-	if (!(event->attr.sample_type & __PERF_SAMPLE_CALLCHAIN_EARLY))
-		return __bpf_get_stack(regs, NULL, NULL, buf, size, flags);
+	अगर (!(event->attr.sample_type & __PERF_SAMPLE_CALLCHAIN_EARLY))
+		वापस __bpf_get_stack(regs, शून्य, शून्य, buf, size, flags);
 
-	if (unlikely(flags & ~(BPF_F_SKIP_FIELD_MASK | BPF_F_USER_STACK |
+	अगर (unlikely(flags & ~(BPF_F_SKIP_FIELD_MASK | BPF_F_USER_STACK |
 			       BPF_F_USER_BUILD_ID)))
-		goto clear;
+		जाओ clear;
 
 	user = flags & BPF_F_USER_STACK;
 	kernel = !user;
 
 	err = -EFAULT;
 	trace = ctx->data->callchain;
-	if (unlikely(!trace))
-		goto clear;
+	अगर (unlikely(!trace))
+		जाओ clear;
 
 	nr_kernel = count_kernel_ip(trace);
 
-	if (kernel) {
+	अगर (kernel) अणु
 		__u64 nr = trace->nr;
 
 		trace->nr = nr_kernel;
-		err = __bpf_get_stack(regs, NULL, trace, buf, size, flags);
+		err = __bpf_get_stack(regs, शून्य, trace, buf, size, flags);
 
 		/* restore nr */
 		trace->nr = nr;
-	} else { /* user */
+	पूर्ण अन्यथा अणु /* user */
 		u64 skip = flags & BPF_F_SKIP_FIELD_MASK;
 
 		skip += nr_kernel;
-		if (skip > BPF_F_SKIP_FIELD_MASK)
-			goto clear;
+		अगर (skip > BPF_F_SKIP_FIELD_MASK)
+			जाओ clear;
 
 		flags = (flags & ~BPF_F_SKIP_FIELD_MASK) | skip;
-		err = __bpf_get_stack(regs, NULL, trace, buf, size, flags);
-	}
-	return err;
+		err = __bpf_get_stack(regs, शून्य, trace, buf, size, flags);
+	पूर्ण
+	वापस err;
 
 clear:
-	memset(buf, 0, size);
-	return err;
+	स_रखो(buf, 0, size);
+	वापस err;
 
-}
+पूर्ण
 
-const struct bpf_func_proto bpf_get_stack_proto_pe = {
+स्थिर काष्ठा bpf_func_proto bpf_get_stack_proto_pe = अणु
 	.func		= bpf_get_stack_pe,
 	.gpl_only	= true,
 	.ret_type	= RET_INTEGER,
@@ -604,108 +605,108 @@ const struct bpf_func_proto bpf_get_stack_proto_pe = {
 	.arg2_type	= ARG_PTR_TO_UNINIT_MEM,
 	.arg3_type	= ARG_CONST_SIZE_OR_ZERO,
 	.arg4_type	= ARG_ANYTHING,
-};
+पूर्ण;
 
 /* Called from eBPF program */
-static void *stack_map_lookup_elem(struct bpf_map *map, void *key)
-{
-	return ERR_PTR(-EOPNOTSUPP);
-}
+अटल व्योम *stack_map_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	वापस ERR_PTR(-EOPNOTSUPP);
+पूर्ण
 
 /* Called from syscall */
-int bpf_stackmap_copy(struct bpf_map *map, void *key, void *value)
-{
-	struct bpf_stack_map *smap = container_of(map, struct bpf_stack_map, map);
-	struct stack_map_bucket *bucket, *old_bucket;
+पूर्णांक bpf_stackmap_copy(काष्ठा bpf_map *map, व्योम *key, व्योम *value)
+अणु
+	काष्ठा bpf_stack_map *smap = container_of(map, काष्ठा bpf_stack_map, map);
+	काष्ठा stack_map_bucket *bucket, *old_bucket;
 	u32 id = *(u32 *)key, trace_len;
 
-	if (unlikely(id >= smap->n_buckets))
-		return -ENOENT;
+	अगर (unlikely(id >= smap->n_buckets))
+		वापस -ENOENT;
 
-	bucket = xchg(&smap->buckets[id], NULL);
-	if (!bucket)
-		return -ENOENT;
+	bucket = xchg(&smap->buckets[id], शून्य);
+	अगर (!bucket)
+		वापस -ENOENT;
 
 	trace_len = bucket->nr * stack_map_data_size(map);
-	memcpy(value, bucket->data, trace_len);
-	memset(value + trace_len, 0, map->value_size - trace_len);
+	स_नकल(value, bucket->data, trace_len);
+	स_रखो(value + trace_len, 0, map->value_size - trace_len);
 
 	old_bucket = xchg(&smap->buckets[id], bucket);
-	if (old_bucket)
-		pcpu_freelist_push(&smap->freelist, &old_bucket->fnode);
-	return 0;
-}
+	अगर (old_bucket)
+		pcpu_मुक्तlist_push(&smap->मुक्तlist, &old_bucket->fnode);
+	वापस 0;
+पूर्ण
 
-static int stack_map_get_next_key(struct bpf_map *map, void *key,
-				  void *next_key)
-{
-	struct bpf_stack_map *smap = container_of(map,
-						  struct bpf_stack_map, map);
+अटल पूर्णांक stack_map_get_next_key(काष्ठा bpf_map *map, व्योम *key,
+				  व्योम *next_key)
+अणु
+	काष्ठा bpf_stack_map *smap = container_of(map,
+						  काष्ठा bpf_stack_map, map);
 	u32 id;
 
-	WARN_ON_ONCE(!rcu_read_lock_held());
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
 
-	if (!key) {
+	अगर (!key) अणु
 		id = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		id = *(u32 *)key;
-		if (id >= smap->n_buckets || !smap->buckets[id])
+		अगर (id >= smap->n_buckets || !smap->buckets[id])
 			id = 0;
-		else
+		अन्यथा
 			id++;
-	}
+	पूर्ण
 
-	while (id < smap->n_buckets && !smap->buckets[id])
+	जबतक (id < smap->n_buckets && !smap->buckets[id])
 		id++;
 
-	if (id >= smap->n_buckets)
-		return -ENOENT;
+	अगर (id >= smap->n_buckets)
+		वापस -ENOENT;
 
 	*(u32 *)next_key = id;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stack_map_update_elem(struct bpf_map *map, void *key, void *value,
+अटल पूर्णांक stack_map_update_elem(काष्ठा bpf_map *map, व्योम *key, व्योम *value,
 				 u64 map_flags)
-{
-	return -EINVAL;
-}
+अणु
+	वापस -EINVAL;
+पूर्ण
 
 /* Called from syscall or from eBPF program */
-static int stack_map_delete_elem(struct bpf_map *map, void *key)
-{
-	struct bpf_stack_map *smap = container_of(map, struct bpf_stack_map, map);
-	struct stack_map_bucket *old_bucket;
+अटल पूर्णांक stack_map_delete_elem(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	काष्ठा bpf_stack_map *smap = container_of(map, काष्ठा bpf_stack_map, map);
+	काष्ठा stack_map_bucket *old_bucket;
 	u32 id = *(u32 *)key;
 
-	if (unlikely(id >= smap->n_buckets))
-		return -E2BIG;
+	अगर (unlikely(id >= smap->n_buckets))
+		वापस -E2BIG;
 
-	old_bucket = xchg(&smap->buckets[id], NULL);
-	if (old_bucket) {
-		pcpu_freelist_push(&smap->freelist, &old_bucket->fnode);
-		return 0;
-	} else {
-		return -ENOENT;
-	}
-}
+	old_bucket = xchg(&smap->buckets[id], शून्य);
+	अगर (old_bucket) अणु
+		pcpu_मुक्तlist_push(&smap->मुक्तlist, &old_bucket->fnode);
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		वापस -ENOENT;
+	पूर्ण
+पूर्ण
 
 /* Called when map->refcnt goes to zero, either from workqueue or from syscall */
-static void stack_map_free(struct bpf_map *map)
-{
-	struct bpf_stack_map *smap = container_of(map, struct bpf_stack_map, map);
+अटल व्योम stack_map_मुक्त(काष्ठा bpf_map *map)
+अणु
+	काष्ठा bpf_stack_map *smap = container_of(map, काष्ठा bpf_stack_map, map);
 
-	bpf_map_area_free(smap->elems);
-	pcpu_freelist_destroy(&smap->freelist);
-	bpf_map_area_free(smap);
+	bpf_map_area_मुक्त(smap->elems);
+	pcpu_मुक्तlist_destroy(&smap->मुक्तlist);
+	bpf_map_area_मुक्त(smap);
 	put_callchain_buffers();
-}
+पूर्ण
 
-static int stack_trace_map_btf_id;
-const struct bpf_map_ops stack_trace_map_ops = {
+अटल पूर्णांक stack_trace_map_btf_id;
+स्थिर काष्ठा bpf_map_ops stack_trace_map_ops = अणु
 	.map_meta_equal = bpf_map_meta_equal,
 	.map_alloc = stack_map_alloc,
-	.map_free = stack_map_free,
+	.map_मुक्त = stack_map_मुक्त,
 	.map_get_next_key = stack_map_get_next_key,
 	.map_lookup_elem = stack_map_lookup_elem,
 	.map_update_elem = stack_map_update_elem,
@@ -713,17 +714,17 @@ const struct bpf_map_ops stack_trace_map_ops = {
 	.map_check_btf = map_check_no_btf,
 	.map_btf_name = "bpf_stack_map",
 	.map_btf_id = &stack_trace_map_btf_id,
-};
+पूर्ण;
 
-static int __init stack_map_init(void)
-{
-	int cpu;
-	struct stack_map_irq_work *work;
+अटल पूर्णांक __init stack_map_init(व्योम)
+अणु
+	पूर्णांक cpu;
+	काष्ठा stack_map_irq_work *work;
 
-	for_each_possible_cpu(cpu) {
-		work = per_cpu_ptr(&up_read_work, cpu);
-		init_irq_work(&work->irq_work, do_up_read);
-	}
-	return 0;
-}
+	क्रम_each_possible_cpu(cpu) अणु
+		work = per_cpu_ptr(&up_पढ़ो_work, cpu);
+		init_irq_work(&work->irq_work, करो_up_पढ़ो);
+	पूर्ण
+	वापस 0;
+पूर्ण
 subsys_initcall(stack_map_init);

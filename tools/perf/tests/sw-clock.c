@@ -1,145 +1,146 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include <inttypes.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <sys/mman.h>
-#include <linux/string.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <संकेत.स>
+#समावेश <sys/mman.h>
+#समावेश <linux/माला.स>
 
-#include "tests.h"
-#include "util/debug.h"
-#include "util/evsel.h"
-#include "util/evlist.h"
-#include "util/cpumap.h"
-#include "util/mmap.h"
-#include "util/thread_map.h"
-#include <perf/evlist.h>
-#include <perf/mmap.h>
+#समावेश "tests.h"
+#समावेश "util/debug.h"
+#समावेश "util/evsel.h"
+#समावेश "util/evlist.h"
+#समावेश "util/cpumap.h"
+#समावेश "util/mmap.h"
+#समावेश "util/thread_map.h"
+#समावेश <perf/evlist.h>
+#समावेश <perf/mmap.h>
 
-#define NR_LOOPS  10000000
+#घोषणा NR_LOOPS  10000000
 
 /*
- * This test will open software clock events (cpu-clock, task-clock)
- * then check their frequency -> period conversion has no artifact of
- * setting period to 1 forcefully.
+ * This test will खोलो software घड़ी events (cpu-घड़ी, task-घड़ी)
+ * then check their frequency -> period conversion has no artअगरact of
+ * setting period to 1 क्रमcefully.
  */
-static int __test__sw_clock_freq(enum perf_sw_ids clock_id)
-{
-	int i, err = -1;
-	volatile int tmp = 0;
+अटल पूर्णांक __test__sw_घड़ी_freq(क्रमागत perf_sw_ids घड़ी_id)
+अणु
+	पूर्णांक i, err = -1;
+	अस्थिर पूर्णांक पंचांगp = 0;
 	u64 total_periods = 0;
-	int nr_samples = 0;
-	char sbuf[STRERR_BUFSIZE];
-	union perf_event *event;
-	struct evsel *evsel;
-	struct evlist *evlist;
-	struct perf_event_attr attr = {
+	पूर्णांक nr_samples = 0;
+	अक्षर sbuf[STRERR_बफ_मानE];
+	जोड़ perf_event *event;
+	काष्ठा evsel *evsel;
+	काष्ठा evlist *evlist;
+	काष्ठा perf_event_attr attr = अणु
 		.type = PERF_TYPE_SOFTWARE,
-		.config = clock_id,
+		.config = घड़ी_id,
 		.sample_type = PERF_SAMPLE_PERIOD,
 		.exclude_kernel = 1,
 		.disabled = 1,
 		.freq = 1,
-	};
-	struct perf_cpu_map *cpus = NULL;
-	struct perf_thread_map *threads = NULL;
-	struct mmap *md;
+	पूर्ण;
+	काष्ठा perf_cpu_map *cpus = शून्य;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs = शून्य;
+	काष्ठा mmap *md;
 
 	attr.sample_freq = 500;
 
 	evlist = evlist__new();
-	if (evlist == NULL) {
+	अगर (evlist == शून्य) अणु
 		pr_debug("evlist__new\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	evsel = evsel__new(&attr);
-	if (evsel == NULL) {
+	अगर (evsel == शून्य) अणु
 		pr_debug("evsel__new\n");
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 	evlist__add(evlist, evsel);
 
 	cpus = perf_cpu_map__dummy_new();
-	threads = thread_map__new_by_tid(getpid());
-	if (!cpus || !threads) {
+	thपढ़ोs = thपढ़ो_map__new_by_tid(getpid());
+	अगर (!cpus || !thपढ़ोs) अणु
 		err = -ENOMEM;
 		pr_debug("Not enough memory to create thread/cpu maps\n");
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
-	perf_evlist__set_maps(&evlist->core, cpus, threads);
+	perf_evlist__set_maps(&evlist->core, cpus, thपढ़ोs);
 
-	if (evlist__open(evlist)) {
-		const char *knob = "/proc/sys/kernel/perf_event_max_sample_rate";
+	अगर (evlist__खोलो(evlist)) अणु
+		स्थिर अक्षर *knob = "/proc/sys/kernel/perf_event_max_sample_rate";
 
-		err = -errno;
+		err = -त्रुटि_सं;
 		pr_debug("Couldn't open evlist: %s\nHint: check %s, using %" PRIu64 " in this test.\n",
-			 str_error_r(errno, sbuf, sizeof(sbuf)),
+			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)),
 			 knob, (u64)attr.sample_freq);
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
 	err = evlist__mmap(evlist, 128);
-	if (err < 0) {
-		pr_debug("failed to mmap event: %d (%s)\n", errno,
-			 str_error_r(errno, sbuf, sizeof(sbuf)));
-		goto out_delete_evlist;
-	}
+	अगर (err < 0) अणु
+		pr_debug("failed to mmap event: %d (%s)\n", त्रुटि_सं,
+			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		जाओ out_delete_evlist;
+	पूर्ण
 
 	evlist__enable(evlist);
 
 	/* collect samples */
-	for (i = 0; i < NR_LOOPS; i++)
-		tmp++;
+	क्रम (i = 0; i < NR_LOOPS; i++)
+		पंचांगp++;
 
 	evlist__disable(evlist);
 
 	md = &evlist->mmap[0];
-	if (perf_mmap__read_init(&md->core) < 0)
-		goto out_init;
+	अगर (perf_mmap__पढ़ो_init(&md->core) < 0)
+		जाओ out_init;
 
-	while ((event = perf_mmap__read_event(&md->core)) != NULL) {
-		struct perf_sample sample;
+	जबतक ((event = perf_mmap__पढ़ो_event(&md->core)) != शून्य) अणु
+		काष्ठा perf_sample sample;
 
-		if (event->header.type != PERF_RECORD_SAMPLE)
-			goto next_event;
+		अगर (event->header.type != PERF_RECORD_SAMPLE)
+			जाओ next_event;
 
 		err = evlist__parse_sample(evlist, event, &sample);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			pr_debug("Error during parse sample\n");
-			goto out_delete_evlist;
-		}
+			जाओ out_delete_evlist;
+		पूर्ण
 
 		total_periods += sample.period;
 		nr_samples++;
 next_event:
 		perf_mmap__consume(&md->core);
-	}
-	perf_mmap__read_done(&md->core);
+	पूर्ण
+	perf_mmap__पढ़ो_करोne(&md->core);
 
 out_init:
-	if ((u64) nr_samples == total_periods) {
+	अगर ((u64) nr_samples == total_periods) अणु
 		pr_debug("All (%d) samples have period value of 1!\n",
 			 nr_samples);
 		err = -1;
-	}
+	पूर्ण
 
 out_delete_evlist:
 	perf_cpu_map__put(cpus);
-	perf_thread_map__put(threads);
+	perf_thपढ़ो_map__put(thपढ़ोs);
 	evlist__delete(evlist);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int test__sw_clock_freq(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	int ret;
+पूर्णांक test__sw_घड़ी_freq(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	पूर्णांक ret;
 
-	ret = __test__sw_clock_freq(PERF_COUNT_SW_CPU_CLOCK);
-	if (!ret)
-		ret = __test__sw_clock_freq(PERF_COUNT_SW_TASK_CLOCK);
+	ret = __test__sw_घड़ी_freq(PERF_COUNT_SW_CPU_CLOCK);
+	अगर (!ret)
+		ret = __test__sw_घड़ी_freq(PERF_COUNT_SW_TASK_CLOCK);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

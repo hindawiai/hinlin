@@ -1,235 +1,236 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* sun3xflop.h: Sun3/80 specific parts of the floppy driver.
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* sun3xflop.h: Sun3/80 specअगरic parts of the floppy driver.
  *
- * Derived partially from asm-sparc/floppy.h, which is:
+ * Derived partially from यंत्र-sparc/floppy.h, which is:
  *     Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  *
  * Sun3x version 2/4/2000 Sam Creasey (sammy@sammy.net)
  */
 
-#ifndef __ASM_SUN3X_FLOPPY_H
-#define __ASM_SUN3X_FLOPPY_H
+#अगर_अघोषित __ASM_SUN3X_FLOPPY_H
+#घोषणा __ASM_SUN3X_FLOPPY_H
 
-#include <linux/pgtable.h>
-#include <asm/page.h>
-#include <asm/irq.h>
-#include <asm/sun3x.h>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/sun3x.h>
 
-/* default interrupt vector */
-#define SUN3X_FDC_IRQ 0x40
+/* शेष पूर्णांकerrupt vector */
+#घोषणा SUN3X_FDC_IRQ 0x40
 
-/* some constants */
-#define FCR_TC 0x1
-#define FCR_EJECT 0x2
-#define FCR_MTRON 0x4
-#define FCR_DSEL1 0x8
-#define FCR_DSEL0 0x10
+/* some स्थिरants */
+#घोषणा FCR_TC 0x1
+#घोषणा FCR_EJECT 0x2
+#घोषणा FCR_MTRON 0x4
+#घोषणा FCR_DSEL1 0x8
+#घोषणा FCR_DSEL0 0x10
 
-/* We don't need no stinkin' I/O port allocation crap. */
-#undef release_region
-#undef request_region
-#define release_region(X, Y)	do { } while(0)
-#define request_region(X, Y, Z)	(1)
+/* We करोn't need no stinkin' I/O port allocation crap. */
+#अघोषित release_region
+#अघोषित request_region
+#घोषणा release_region(X, Y)	करो अणु पूर्ण जबतक(0)
+#घोषणा request_region(X, Y, Z)	(1)
 
-struct sun3xflop_private {
-	volatile unsigned char *status_r;
-	volatile unsigned char *data_r;
-	volatile unsigned char *fcr_r;
-	volatile unsigned char *fvr_r;
-	unsigned char fcr;
-} sun3x_fdc;
+काष्ठा sun3xflop_निजी अणु
+	अस्थिर अचिन्हित अक्षर *status_r;
+	अस्थिर अचिन्हित अक्षर *data_r;
+	अस्थिर अचिन्हित अक्षर *fcr_r;
+	अस्थिर अचिन्हित अक्षर *fvr_r;
+	अचिन्हित अक्षर fcr;
+पूर्ण sun3x_fdc;
 
 /* Super paranoid... */
-#undef HAVE_DISABLE_HLT
+#अघोषित HAVE_DISABLE_HLT
 
 /* Routines unique to each controller type on a Sun. */
-static unsigned char sun3x_82072_fd_inb(int port)
-{
-	static int once = 0;
+अटल अचिन्हित अक्षर sun3x_82072_fd_inb(पूर्णांक port)
+अणु
+	अटल पूर्णांक once = 0;
 //	udelay(5);
-	switch(port & 7) {
-	default:
+	चयन(port & 7) अणु
+	शेष:
 		pr_crit("floppy: Asked to read unknown port %d\n", port);
 		panic("floppy: Port bolixed.");
-	case 4: /* FD_STATUS */
-		return (*sun3x_fdc.status_r) & ~STATUS_DMA;
-	case 5: /* FD_DATA */
-		return (*sun3x_fdc.data_r);
-	case 7: /* FD_DIR */
+	हाल 4: /* FD_STATUS */
+		वापस (*sun3x_fdc.status_r) & ~STATUS_DMA;
+	हाल 5: /* FD_DATA */
+		वापस (*sun3x_fdc.data_r);
+	हाल 7: /* FD_सूची */
 		/* ugly hack, I can't find a way to actually detect the disk */
-		if(!once) {
+		अगर(!once) अणु
 			once = 1;
-			return 0x80;
-		}
-		return 0;
-	};
+			वापस 0x80;
+		पूर्ण
+		वापस 0;
+	पूर्ण;
 	panic("sun_82072_fd_inb: How did I get here?");
-}
+पूर्ण
 
-static void sun3x_82072_fd_outb(unsigned char value, int port)
-{
+अटल व्योम sun3x_82072_fd_outb(अचिन्हित अक्षर value, पूर्णांक port)
+अणु
 //	udelay(5);
-	switch(port & 7) {
-	default:
+	चयन(port & 7) अणु
+	शेष:
 		pr_crit("floppy: Asked to write to unknown port %d\n", port);
 		panic("floppy: Port bolixed.");
-	case 2: /* FD_DOR */
-		/* Oh geese, 82072 on the Sun has no DOR register,
-		 * so we make do with taunting the FCR.
+	हाल 2: /* FD_DOR */
+		/* Oh geese, 82072 on the Sun has no DOR रेजिस्टर,
+		 * so we make करो with taunting the FCR.
 		 *
 		 * ASSUMPTIONS:  There will only ever be one floppy
 		 *               drive attached to a Sun controller
 		 *               and it will be at drive zero.
 		 */
 
-	{
-		unsigned char fcr = sun3x_fdc.fcr;
+	अणु
+		अचिन्हित अक्षर fcr = sun3x_fdc.fcr;
 
-		if(value & 0x10) {
+		अगर(value & 0x10) अणु
 			fcr |= (FCR_DSEL0 | FCR_MTRON);
-		} else
+		पूर्ण अन्यथा
 			fcr &= ~(FCR_DSEL0 | FCR_MTRON);
 
 
-		if(fcr != sun3x_fdc.fcr) {
+		अगर(fcr != sun3x_fdc.fcr) अणु
 			*(sun3x_fdc.fcr_r) = fcr;
 			sun3x_fdc.fcr = fcr;
-		}
-	}
-		break;
-	case 5: /* FD_DATA */
+		पूर्ण
+	पूर्ण
+		अवरोध;
+	हाल 5: /* FD_DATA */
 		*(sun3x_fdc.data_r) = value;
-		break;
-	case 7: /* FD_DCR */
+		अवरोध;
+	हाल 7: /* FD_DCR */
 		*(sun3x_fdc.status_r) = value;
-		break;
-	case 4: /* FD_STATUS */
+		अवरोध;
+	हाल 4: /* FD_STATUS */
 		*(sun3x_fdc.status_r) = value;
-		break;
-	}
-	return;
-}
+		अवरोध;
+	पूर्ण
+	वापस;
+पूर्ण
 
 
-asmlinkage irqreturn_t sun3xflop_hardint(int irq, void *dev_id)
-{
-	register unsigned char st;
+यंत्रlinkage irqवापस_t sun3xflop_hardपूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	रेजिस्टर अचिन्हित अक्षर st;
 
-#undef TRACE_FLPY_INT
-#define NO_FLOPPY_ASSEMBLER
+#अघोषित TRACE_FLPY_INT
+#घोषणा NO_FLOPPY_ASSEMBLER
 
-#ifdef TRACE_FLPY_INT
-	static int calls=0;
-	static int bytes=0;
-	static int dma_wait=0;
-#endif
-	if(!doing_pdma) {
-		floppy_interrupt(irq, dev_id);
-		return IRQ_HANDLED;
-	}
+#अगर_घोषित TRACE_FLPY_INT
+	अटल पूर्णांक calls=0;
+	अटल पूर्णांक bytes=0;
+	अटल पूर्णांक dma_रुको=0;
+#पूर्ण_अगर
+	अगर(!करोing_pdma) अणु
+		floppy_पूर्णांकerrupt(irq, dev_id);
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-//	pr_info("doing pdma\n");// st %x\n", sun_fdc->status_82072);
+//	pr_info("doing pdma\n");// st %x\न", sun_fdc->status_82072);
 
-#ifdef TRACE_FLPY_INT
-	if(!calls)
-		bytes = virtual_dma_count;
-#endif
+#अगर_घोषित TRACE_FLPY_INT
+	अगर(!calls)
+		bytes = भव_dma_count;
+#पूर्ण_अगर
 
-	{
-		register int lcount;
-		register char *lptr;
+	अणु
+		रेजिस्टर पूर्णांक lcount;
+		रेजिस्टर अक्षर *lptr;
 
-		for(lcount=virtual_dma_count, lptr=virtual_dma_addr;
-		    lcount; lcount--, lptr++) {
-/*			st=fd_inb(virtual_dma_port+4) & 0x80 ;  */
+		क्रम(lcount=भव_dma_count, lptr=भव_dma_addr;
+		    lcount; lcount--, lptr++) अणु
+/*			st=fd_inb(भव_dma_port+4) & 0x80 ;  */
 			st = *(sun3x_fdc.status_r);
-/*			if(st != 0xa0)                  */
-/*				break;                  */
+/*			अगर(st != 0xa0)                  */
+/*				अवरोध;                  */
 
-			if((st & 0x80) == 0) {
-				virtual_dma_count = lcount;
-				virtual_dma_addr = lptr;
-				return IRQ_HANDLED;
-			}
+			अगर((st & 0x80) == 0) अणु
+				भव_dma_count = lcount;
+				भव_dma_addr = lptr;
+				वापस IRQ_HANDLED;
+			पूर्ण
 
-			if((st & 0x20) == 0)
-				break;
+			अगर((st & 0x20) == 0)
+				अवरोध;
 
-			if(virtual_dma_mode)
-/*				fd_outb(*lptr, virtual_dma_port+5); */
+			अगर(भव_dma_mode)
+/*				fd_outb(*lptr, भव_dma_port+5); */
 				*(sun3x_fdc.data_r) = *lptr;
-			else
-/*				*lptr = fd_inb(virtual_dma_port+5); */
+			अन्यथा
+/*				*lptr = fd_inb(भव_dma_port+5); */
 				*lptr = *(sun3x_fdc.data_r);
-		}
+		पूर्ण
 
-		virtual_dma_count = lcount;
-		virtual_dma_addr = lptr;
-/*		st = fd_inb(virtual_dma_port+4);   */
+		भव_dma_count = lcount;
+		भव_dma_addr = lptr;
+/*		st = fd_inb(भव_dma_port+4);   */
 		st = *(sun3x_fdc.status_r);
-	}
+	पूर्ण
 
-#ifdef TRACE_FLPY_INT
+#अगर_घोषित TRACE_FLPY_INT
 	calls++;
-#endif
+#पूर्ण_अगर
 //	pr_info("st=%02x\n", st);
-	if(st == 0x20)
-		return IRQ_HANDLED;
-	if(!(st & 0x20)) {
-		virtual_dma_residue += virtual_dma_count;
-		virtual_dma_count=0;
-		doing_pdma = 0;
+	अगर(st == 0x20)
+		वापस IRQ_HANDLED;
+	अगर(!(st & 0x20)) अणु
+		भव_dma_residue += भव_dma_count;
+		भव_dma_count=0;
+		करोing_pdma = 0;
 
-#ifdef TRACE_FLPY_INT
+#अगर_घोषित TRACE_FLPY_INT
 		pr_info("count=%x, residue=%x calls=%d bytes=%x dma_wait=%d\n",
-			virtual_dma_count, virtual_dma_residue, calls, bytes,
-			dma_wait);
+			भव_dma_count, भव_dma_residue, calls, bytes,
+			dma_रुको);
 		calls = 0;
-		dma_wait=0;
-#endif
+		dma_रुको=0;
+#पूर्ण_अगर
 
-		floppy_interrupt(irq, dev_id);
-		return IRQ_HANDLED;
-	}
+		floppy_पूर्णांकerrupt(irq, dev_id);
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 
-#ifdef TRACE_FLPY_INT
-	if(!virtual_dma_count)
-		dma_wait++;
-#endif
-	return IRQ_HANDLED;
-}
+#अगर_घोषित TRACE_FLPY_INT
+	अगर(!भव_dma_count)
+		dma_रुको++;
+#पूर्ण_अगर
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int sun3xflop_request_irq(void)
-{
-	static int once = 0;
-	int error;
+अटल पूर्णांक sun3xflop_request_irq(व्योम)
+अणु
+	अटल पूर्णांक once = 0;
+	पूर्णांक error;
 
-	if(!once) {
+	अगर(!once) अणु
 		once = 1;
-		error = request_irq(FLOPPY_IRQ, sun3xflop_hardint,
-				    0, "floppy", NULL);
-		return ((error == 0) ? 0 : -1);
-	} else return 0;
-}
+		error = request_irq(FLOPPY_IRQ, sun3xflop_hardपूर्णांक,
+				    0, "floppy", शून्य);
+		वापस ((error == 0) ? 0 : -1);
+	पूर्ण अन्यथा वापस 0;
+पूर्ण
 
-static void __init floppy_set_flags(int *ints,int param, int param2);
+अटल व्योम __init floppy_set_flags(पूर्णांक *पूर्णांकs,पूर्णांक param, पूर्णांक param2);
 
-static int sun3xflop_init(void)
-{
-	if(FLOPPY_IRQ < 0x40)
+अटल पूर्णांक sun3xflop_init(व्योम)
+अणु
+	अगर(FLOPPY_IRQ < 0x40)
 		FLOPPY_IRQ = SUN3X_FDC_IRQ;
 
-	sun3x_fdc.status_r = (volatile unsigned char *)SUN3X_FDC;
-	sun3x_fdc.data_r  = (volatile unsigned char *)(SUN3X_FDC+1);
-	sun3x_fdc.fcr_r = (volatile unsigned char *)SUN3X_FDC_FCR;
-	sun3x_fdc.fvr_r = (volatile unsigned char *)SUN3X_FDC_FVR;
+	sun3x_fdc.status_r = (अस्थिर अचिन्हित अक्षर *)SUN3X_FDC;
+	sun3x_fdc.data_r  = (अस्थिर अचिन्हित अक्षर *)(SUN3X_FDC+1);
+	sun3x_fdc.fcr_r = (अस्थिर अचिन्हित अक्षर *)SUN3X_FDC_FCR;
+	sun3x_fdc.fvr_r = (अस्थिर अचिन्हित अक्षर *)SUN3X_FDC_FVR;
 	sun3x_fdc.fcr = 0;
 
 	/* Last minute sanity check... */
-	if(*sun3x_fdc.status_r == 0xff) {
-		return -1;
-	}
+	अगर(*sun3x_fdc.status_r == 0xff) अणु
+		वापस -1;
+	पूर्ण
 
 	*sun3x_fdc.fvr_r = FLOPPY_IRQ;
 
@@ -238,26 +239,26 @@ static int sun3xflop_init(void)
 	*sun3x_fdc.fcr_r = 0;
 
 	/* Success... */
-	floppy_set_flags(NULL, 1, FD_BROKEN_DCL); // I don't know how to detect this.
+	floppy_set_flags(शून्य, 1, FD_BROKEN_DCL); // I करोn't know how to detect this.
 	allowed_drive_mask = 0x01;
-	return (int) SUN3X_FDC;
-}
+	वापस (पूर्णांक) SUN3X_FDC;
+पूर्ण
 
 /* I'm not precisely sure this eject routine works */
-static int sun3x_eject(void)
-{
-	if(MACH_IS_SUN3X) {
+अटल पूर्णांक sun3x_eject(व्योम)
+अणु
+	अगर(MACH_IS_SUN3X) अणु
 
 		sun3x_fdc.fcr |= (FCR_DSEL0 | FCR_EJECT);
 		*(sun3x_fdc.fcr_r) = sun3x_fdc.fcr;
 		udelay(10);
 		sun3x_fdc.fcr &= ~(FCR_DSEL0 | FCR_EJECT);
 		*(sun3x_fdc.fcr_r) = sun3x_fdc.fcr;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define fd_eject(drive) sun3x_eject()
+#घोषणा fd_eject(drive) sun3x_eject()
 
-#endif /* !(__ASM_SUN3X_FLOPPY_H) */
+#पूर्ण_अगर /* !(__ASM_SUN3X_FLOPPY_H) */

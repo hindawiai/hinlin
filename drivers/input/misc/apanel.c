@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Fujitsu Lifebook Application Panel button drive
+ *  Fujitsu Lअगरebook Application Panel button drive
  *
  *  Copyright (C) 2007 Stephen Hemminger <shemminger@linux-foundation.org>
  *  Copyright (C) 2001-2003 Jochen Eisinger <jochen@penguin-breeder.org>
  *
- * Many Fujitsu Lifebook laptops have a small panel of buttons that are
- * accessible via the i2c/smbus interface. This driver polls those
+ * Many Fujitsu Lअगरebook laptops have a small panel of buttons that are
+ * accessible via the i2c/smbus पूर्णांकerface. This driver polls those
  * buttons and generates input events.
  *
  * For more details see:
- *	http://apanel.sourceforge.net/tech.php
+ *	http://apanel.sourceक्रमge.net/tech.php
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/ioport.h>
-#include <linux/io.h>
-#include <linux/input.h>
-#include <linux/i2c.h>
-#include <linux/leds.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/input.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/leds.h>
 
-#define APANEL_NAME	"Fujitsu Application Panel"
-#define APANEL		"apanel"
+#घोषणा APANEL_NAME	"Fujitsu Application Panel"
+#घोषणा APANEL		"apanel"
 
 /* How often we poll keys - msecs */
-#define POLL_INTERVAL_DEFAULT	1000
+#घोषणा POLL_INTERVAL_DEFAULT	1000
 
-/* Magic constants in BIOS that tell about buttons */
-enum apanel_devid {
+/* Magic स्थिरants in BIOS that tell about buttons */
+क्रमागत apanel_devid अणु
 	APANEL_DEV_NONE	  = 0,
 	APANEL_DEV_APPBTN = 1,
 	APANEL_DEV_CDBTN  = 2,
@@ -36,29 +37,29 @@ enum apanel_devid {
 	APANEL_DEV_LED	  = 4,
 
 	APANEL_DEV_MAX,
-};
+पूर्ण;
 
-enum apanel_chip {
+क्रमागत apanel_chip अणु
 	CHIP_NONE    = 0,
 	CHIP_OZ992C  = 1,
 	CHIP_OZ163T  = 2,
 	CHIP_OZ711M3 = 4,
-};
+पूर्ण;
 
 /* Result of BIOS snooping/probing -- what features are supported */
-static enum apanel_chip device_chip[APANEL_DEV_MAX];
+अटल क्रमागत apanel_chip device_chip[APANEL_DEV_MAX];
 
-#define MAX_PANEL_KEYS	12
+#घोषणा MAX_PANEL_KEYS	12
 
-struct apanel {
-	struct input_dev *idev;
-	struct i2c_client *client;
-	unsigned short keymap[MAX_PANEL_KEYS];
+काष्ठा apanel अणु
+	काष्ठा input_dev *idev;
+	काष्ठा i2c_client *client;
+	अचिन्हित लघु keymap[MAX_PANEL_KEYS];
 	u16 nkeys;
-	struct led_classdev mail_led;
-};
+	काष्ठा led_classdev mail_led;
+पूर्ण;
 
-static const unsigned short apanel_keymap[MAX_PANEL_KEYS] = {
+अटल स्थिर अचिन्हित लघु apanel_keymap[MAX_PANEL_KEYS] = अणु
 	[0] = KEY_MAIL,
 	[1] = KEY_WWW,
 	[2] = KEY_PROG2,
@@ -68,19 +69,19 @@ static const unsigned short apanel_keymap[MAX_PANEL_KEYS] = {
 	[9] = KEY_REWIND,
 	[10] = KEY_STOPCD,
 	[11] = KEY_PLAYPAUSE,
-};
+पूर्ण;
 
-static void report_key(struct input_dev *input, unsigned keycode)
-{
+अटल व्योम report_key(काष्ठा input_dev *input, अचिन्हित keycode)
+अणु
 	dev_dbg(input->dev.parent, "report key %#x\n", keycode);
 	input_report_key(input, keycode, 1);
 	input_sync(input);
 
 	input_report_key(input, keycode, 0);
 	input_sync(input);
-}
+पूर्ण
 
-/* Poll for key changes
+/* Poll क्रम key changes
  *
  * Read Application keys via SMI
  *  A (0x4), B (0x8), Internet (0x2), Email (0x1).
@@ -88,64 +89,64 @@ static void report_key(struct input_dev *input, unsigned keycode)
  * CD keys:
  * Forward (0x100), Rewind (0x200), Stop (0x400), Pause (0x800)
  */
-static void apanel_poll(struct input_dev *idev)
-{
-	struct apanel *ap = input_get_drvdata(idev);
+अटल व्योम apanel_poll(काष्ठा input_dev *idev)
+अणु
+	काष्ठा apanel *ap = input_get_drvdata(idev);
 	u8 cmd = device_chip[APANEL_DEV_APPBTN] == CHIP_OZ992C ? 0 : 8;
 	s32 data;
-	int i;
+	पूर्णांक i;
 
-	data = i2c_smbus_read_word_data(ap->client, cmd);
-	if (data < 0)
-		return;	/* ignore errors (due to ACPI??) */
+	data = i2c_smbus_पढ़ो_word_data(ap->client, cmd);
+	अगर (data < 0)
+		वापस;	/* ignore errors (due to ACPI??) */
 
-	/* write back to clear latch */
-	i2c_smbus_write_word_data(ap->client, cmd, 0);
+	/* ग_लिखो back to clear latch */
+	i2c_smbus_ग_लिखो_word_data(ap->client, cmd, 0);
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
 	dev_dbg(&idev->dev, APANEL ": data %#x\n", data);
-	for (i = 0; i < idev->keycodemax; i++)
-		if ((1u << i) & data)
+	क्रम (i = 0; i < idev->keycodemax; i++)
+		अगर ((1u << i) & data)
 			report_key(idev, ap->keymap[i]);
-}
+पूर्ण
 
-static int mail_led_set(struct led_classdev *led,
-			 enum led_brightness value)
-{
-	struct apanel *ap = container_of(led, struct apanel, mail_led);
+अटल पूर्णांक mail_led_set(काष्ठा led_classdev *led,
+			 क्रमागत led_brightness value)
+अणु
+	काष्ठा apanel *ap = container_of(led, काष्ठा apanel, mail_led);
 	u16 led_bits = value != LED_OFF ? 0x8000 : 0x0000;
 
-	return i2c_smbus_write_word_data(ap->client, 0x10, led_bits);
-}
+	वापस i2c_smbus_ग_लिखो_word_data(ap->client, 0x10, led_bits);
+पूर्ण
 
-static int apanel_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	struct apanel *ap;
-	struct input_dev *idev;
+अटल पूर्णांक apanel_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा apanel *ap;
+	काष्ठा input_dev *idev;
 	u8 cmd = device_chip[APANEL_DEV_APPBTN] == CHIP_OZ992C ? 0 : 8;
-	int i, err;
+	पूर्णांक i, err;
 
-	ap = devm_kzalloc(&client->dev, sizeof(*ap), GFP_KERNEL);
-	if (!ap)
-		return -ENOMEM;
+	ap = devm_kzalloc(&client->dev, माप(*ap), GFP_KERNEL);
+	अगर (!ap)
+		वापस -ENOMEM;
 
 	idev = devm_input_allocate_device(&client->dev);
-	if (!idev)
-		return -ENOMEM;
+	अगर (!idev)
+		वापस -ENOMEM;
 
 	ap->idev = idev;
 	ap->client = client;
 
 	i2c_set_clientdata(client, ap);
 
-	err = i2c_smbus_write_word_data(client, cmd, 0);
-	if (err) {
+	err = i2c_smbus_ग_लिखो_word_data(client, cmd, 0);
+	अगर (err) अणु
 		dev_warn(&client->dev, "smbus write error %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	input_set_drvdata(idev, ap);
 
@@ -153,149 +154,149 @@ static int apanel_probe(struct i2c_client *client,
 	idev->phys = "apanel/input0";
 	idev->id.bustype = BUS_HOST;
 
-	memcpy(ap->keymap, apanel_keymap, sizeof(apanel_keymap));
+	स_नकल(ap->keymap, apanel_keymap, माप(apanel_keymap));
 	idev->keycode = ap->keymap;
-	idev->keycodesize = sizeof(ap->keymap[0]);
+	idev->keycodesize = माप(ap->keymap[0]);
 	idev->keycodemax = (device_chip[APANEL_DEV_CDBTN] != CHIP_NONE) ? 12 : 4;
 
 	set_bit(EV_KEY, idev->evbit);
-	for (i = 0; i < idev->keycodemax; i++)
-		if (ap->keymap[i])
+	क्रम (i = 0; i < idev->keycodemax; i++)
+		अगर (ap->keymap[i])
 			set_bit(ap->keymap[i], idev->keybit);
 
 	err = input_setup_polling(idev, apanel_poll);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	input_set_poll_interval(idev, POLL_INTERVAL_DEFAULT);
+	input_set_poll_पूर्णांकerval(idev, POLL_INTERVAL_DEFAULT);
 
-	err = input_register_device(idev);
-	if (err)
-		return err;
+	err = input_रेजिस्टर_device(idev);
+	अगर (err)
+		वापस err;
 
-	if (device_chip[APANEL_DEV_LED] != CHIP_NONE) {
+	अगर (device_chip[APANEL_DEV_LED] != CHIP_NONE) अणु
 		ap->mail_led.name = "mail:blue";
 		ap->mail_led.brightness_set_blocking = mail_led_set;
-		err = devm_led_classdev_register(&client->dev, &ap->mail_led);
-		if (err)
-			return err;
-	}
+		err = devm_led_classdev_रेजिस्टर(&client->dev, &ap->mail_led);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void apanel_shutdown(struct i2c_client *client)
-{
-	struct apanel *ap = i2c_get_clientdata(client);
+अटल व्योम apanel_shutकरोwn(काष्ठा i2c_client *client)
+अणु
+	काष्ठा apanel *ap = i2c_get_clientdata(client);
 
-	if (device_chip[APANEL_DEV_LED] != CHIP_NONE)
+	अगर (device_chip[APANEL_DEV_LED] != CHIP_NONE)
 		led_set_brightness(&ap->mail_led, LED_OFF);
-}
+पूर्ण
 
-static const struct i2c_device_id apanel_id[] = {
-	{ "fujitsu_apanel", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id apanel_id[] = अणु
+	अणु "fujitsu_apanel", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, apanel_id);
 
-static struct i2c_driver apanel_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver apanel_driver = अणु
+	.driver = अणु
 		.name = APANEL,
-	},
+	पूर्ण,
 	.probe		= apanel_probe,
-	.shutdown	= apanel_shutdown,
+	.shutकरोwn	= apanel_shutकरोwn,
 	.id_table	= apanel_id,
-};
+पूर्ण;
 
-/* Scan the system ROM for the signature "FJKEYINF" */
-static __init const void __iomem *bios_signature(const void __iomem *bios)
-{
-	ssize_t offset;
-	const unsigned char signature[] = "FJKEYINF";
+/* Scan the प्रणाली ROM क्रम the signature "FJKEYINF" */
+अटल __init स्थिर व्योम __iomem *bios_signature(स्थिर व्योम __iomem *bios)
+अणु
+	sमाप_प्रकार offset;
+	स्थिर अचिन्हित अक्षर signature[] = "FJKEYINF";
 
-	for (offset = 0; offset < 0x10000; offset += 0x10) {
-		if (check_signature(bios + offset, signature,
-				    sizeof(signature)-1))
-			return bios + offset;
-	}
+	क्रम (offset = 0; offset < 0x10000; offset += 0x10) अणु
+		अगर (check_signature(bios + offset, signature,
+				    माप(signature)-1))
+			वापस bios + offset;
+	पूर्ण
 	pr_notice(APANEL ": Fujitsu BIOS signature '%s' not found...\n",
 		  signature);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int __init apanel_init(void)
-{
-	void __iomem *bios;
-	const void __iomem *p;
+अटल पूर्णांक __init apanel_init(व्योम)
+अणु
+	व्योम __iomem *bios;
+	स्थिर व्योम __iomem *p;
 	u8 devno;
-	unsigned char i2c_addr;
-	int found = 0;
+	अचिन्हित अक्षर i2c_addr;
+	पूर्णांक found = 0;
 
 	bios = ioremap(0xF0000, 0x10000); /* Can't fail */
 
 	p = bios_signature(bios);
-	if (!p) {
+	अगर (!p) अणु
 		iounmap(bios);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* just use the first address */
 	p += 8;
-	i2c_addr = readb(p + 3) >> 1;
+	i2c_addr = पढ़ोb(p + 3) >> 1;
 
-	for ( ; (devno = readb(p)) & 0x7f; p += 4) {
-		unsigned char method, slave, chip;
+	क्रम ( ; (devno = पढ़ोb(p)) & 0x7f; p += 4) अणु
+		अचिन्हित अक्षर method, slave, chip;
 
-		method = readb(p + 1);
-		chip = readb(p + 2);
-		slave = readb(p + 3) >> 1;
+		method = पढ़ोb(p + 1);
+		chip = पढ़ोb(p + 2);
+		slave = पढ़ोb(p + 3) >> 1;
 
-		if (slave != i2c_addr) {
+		अगर (slave != i2c_addr) अणु
 			pr_notice(APANEL ": only one SMBus slave "
 				  "address supported, skipping device...\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* translate alternative device numbers */
-		switch (devno) {
-		case 6:
+		चयन (devno) अणु
+		हाल 6:
 			devno = APANEL_DEV_APPBTN;
-			break;
-		case 7:
+			अवरोध;
+		हाल 7:
 			devno = APANEL_DEV_LED;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (devno >= APANEL_DEV_MAX)
+		अगर (devno >= APANEL_DEV_MAX)
 			pr_notice(APANEL ": unknown device %u found\n", devno);
-		else if (device_chip[devno] != CHIP_NONE)
+		अन्यथा अगर (device_chip[devno] != CHIP_NONE)
 			pr_warn(APANEL ": duplicate entry for devno %u\n",
 				devno);
 
-		else if (method != 1 && method != 2 && method != 4) {
+		अन्यथा अगर (method != 1 && method != 2 && method != 4) अणु
 			pr_notice(APANEL ": unknown method %u for devno %u\n",
 				  method, devno);
-		} else {
-			device_chip[devno] = (enum apanel_chip) chip;
+		पूर्ण अन्यथा अणु
+			device_chip[devno] = (क्रमागत apanel_chip) chip;
 			++found;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	iounmap(bios);
 
-	if (found == 0) {
+	अगर (found == 0) अणु
 		pr_info(APANEL ": no input devices reported by BIOS\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return i2c_add_driver(&apanel_driver);
-}
+	वापस i2c_add_driver(&apanel_driver);
+पूर्ण
 module_init(apanel_init);
 
-static void __exit apanel_cleanup(void)
-{
+अटल व्योम __निकास apanel_cleanup(व्योम)
+अणु
 	i2c_del_driver(&apanel_driver);
-}
-module_exit(apanel_cleanup);
+पूर्ण
+module_निकास(apanel_cleanup);
 
 MODULE_AUTHOR("Stephen Hemminger <shemminger@linux-foundation.org>");
 MODULE_DESCRIPTION(APANEL_NAME " driver");

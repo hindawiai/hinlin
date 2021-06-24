@@ -1,80 +1,81 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __EVENT_FIFO_PUBLIC_H
-#define __EVENT_FIFO_PUBLIC_H
+#अगर_अघोषित __EVENT_FIFO_PUBLIC_H
+#घोषणा __EVENT_FIFO_PUBLIC_H
 
-#include <type_support.h>
-#include "system_local.h"
+#समावेश <type_support.h>
+#समावेश "system_local.h"
 
-/*! Blocking read from an event source EVENT[ID]
+/*! Blocking पढ़ो from an event source EVENT[ID]
 
- \param	ID[in]				EVENT identifier
+ \param	ID[in]				EVENT identअगरier
 
- \return none, dequeue(event_queue[ID])
+ \लeturn none, dequeue(event_queue[ID])
  */
-STORAGE_CLASS_EVENT_H void event_wait_for(
-    const event_ID_t		ID);
+STORAGE_CLASS_EVENT_H व्योम event_रुको_क्रम(
+    स्थिर event_ID_t		ID);
 
-/*! Conditional blocking wait for an event source EVENT[ID]
+/*! Conditional blocking रुको क्रम an event source EVENT[ID]
 
- \param	ID[in]				EVENT identifier
+ \param	ID[in]				EVENT identअगरier
  \param	cnd[in]				predicate
 
- \return none, if(cnd) dequeue(event_queue[ID])
+ \लeturn none, अगर(cnd) dequeue(event_queue[ID])
  */
-STORAGE_CLASS_EVENT_H void cnd_event_wait_for(
-    const event_ID_t		ID,
-    const bool				cnd);
+STORAGE_CLASS_EVENT_H व्योम cnd_event_रुको_क्रम(
+    स्थिर event_ID_t		ID,
+    स्थिर bool				cnd);
 
-/*! Blocking read from an event source EVENT[ID]
+/*! Blocking पढ़ो from an event source EVENT[ID]
 
- \param	ID[in]				EVENT identifier
+ \param	ID[in]				EVENT identअगरier
 
- \return dequeue(event_queue[ID])
+ \लeturn dequeue(event_queue[ID])
  */
 STORAGE_CLASS_EVENT_H hrt_data event_receive_token(
-    const event_ID_t		ID);
+    स्थिर event_ID_t		ID);
 
-/*! Blocking write to an event sink EVENT[ID]
+/*! Blocking ग_लिखो to an event sink EVENT[ID]
 
- \param	ID[in]				EVENT identifier
+ \param	ID[in]				EVENT identअगरier
  \param	token[in]			token to be written on the event
 
- \return none, enqueue(event_queue[ID])
+ \लeturn none, enqueue(event_queue[ID])
  */
-STORAGE_CLASS_EVENT_H void event_send_token(
-    const event_ID_t		ID,
-    const hrt_data			token);
+STORAGE_CLASS_EVENT_H व्योम event_send_token(
+    स्थिर event_ID_t		ID,
+    स्थिर hrt_data			token);
 
 /*! Query an event source EVENT[ID]
 
- \param	ID[in]				EVENT identifier
+ \param	ID[in]				EVENT identअगरier
 
- \return !isempty(event_queue[ID])
+ \लeturn !isempty(event_queue[ID])
  */
 STORAGE_CLASS_EVENT_H bool is_event_pending(
-    const event_ID_t		ID);
+    स्थिर event_ID_t		ID);
 
 /*! Query an event sink EVENT[ID]
 
- \param	ID[in]				EVENT identifier
+ \param	ID[in]				EVENT identअगरier
 
- \return !isfull(event_queue[ID])
+ \लeturn !isfull(event_queue[ID])
  */
 STORAGE_CLASS_EVENT_H bool can_event_send_token(
-    const event_ID_t		ID);
+    स्थिर event_ID_t		ID);
 
-#endif /* __EVENT_FIFO_PUBLIC_H */
+#पूर्ण_अगर /* __EVENT_FIFO_PUBLIC_H */

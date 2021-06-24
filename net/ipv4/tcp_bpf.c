@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2017 - 2018 Covalent IO, Inc. http://covalent.io */
 
-#include <linux/skmsg.h>
-#include <linux/filter.h>
-#include <linux/bpf.h>
-#include <linux/init.h>
-#include <linux/wait.h>
+#समावेश <linux/skmsg.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/init.h>
+#समावेश <linux/रुको.h>
 
-#include <net/inet_common.h>
-#include <net/tls.h>
+#समावेश <net/inet_common.h>
+#समावेश <net/tls.h>
 
-static int bpf_tcp_ingress(struct sock *sk, struct sk_psock *psock,
-			   struct sk_msg *msg, u32 apply_bytes, int flags)
-{
+अटल पूर्णांक bpf_tcp_ingress(काष्ठा sock *sk, काष्ठा sk_psock *psock,
+			   काष्ठा sk_msg *msg, u32 apply_bytes, पूर्णांक flags)
+अणु
 	bool apply = apply_bytes;
-	struct scatterlist *sge;
+	काष्ठा scatterlist *sge;
 	u32 size, copied = 0;
-	struct sk_msg *tmp;
-	int i, ret = 0;
+	काष्ठा sk_msg *पंचांगp;
+	पूर्णांक i, ret = 0;
 
-	tmp = kzalloc(sizeof(*tmp), __GFP_NOWARN | GFP_KERNEL);
-	if (unlikely(!tmp))
-		return -ENOMEM;
+	पंचांगp = kzalloc(माप(*पंचांगp), __GFP_NOWARN | GFP_KERNEL);
+	अगर (unlikely(!पंचांगp))
+		वापस -ENOMEM;
 
 	lock_sock(sk);
-	tmp->sg.start = msg->sg.start;
+	पंचांगp->sg.start = msg->sg.start;
 	i = msg->sg.start;
-	do {
+	करो अणु
 		sge = sk_msg_elem(msg, i);
 		size = (apply && apply_bytes < sge->length) ?
 			apply_bytes : sge->length;
-		if (!sk_wmem_schedule(sk, size)) {
-			if (!copied)
+		अगर (!sk_wmem_schedule(sk, size)) अणु
+			अगर (!copied)
 				ret = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		sk_mem_charge(sk, size);
-		sk_msg_xfer(tmp, msg, i, size);
+		sk_mem_अक्षरge(sk, size);
+		sk_msg_xfer(पंचांगp, msg, i, size);
 		copied += size;
-		if (sge->length)
-			get_page(sk_msg_page(tmp, i));
+		अगर (sge->length)
+			get_page(sk_msg_page(पंचांगp, i));
 		sk_msg_iter_var_next(i);
-		tmp->sg.end = i;
-		if (apply) {
+		पंचांगp->sg.end = i;
+		अगर (apply) अणु
 			apply_bytes -= size;
-			if (!apply_bytes)
-				break;
-		}
-	} while (i != msg->sg.end);
+			अगर (!apply_bytes)
+				अवरोध;
+		पूर्ण
+	पूर्ण जबतक (i != msg->sg.end);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		msg->sg.start = i;
-		sk_psock_queue_msg(psock, tmp);
-		sk_psock_data_ready(sk, psock);
-	} else {
-		sk_msg_free(sk, tmp);
-		kfree(tmp);
-	}
+		sk_psock_queue_msg(psock, पंचांगp);
+		sk_psock_data_पढ़ोy(sk, psock);
+	पूर्ण अन्यथा अणु
+		sk_msg_मुक्त(sk, पंचांगp);
+		kमुक्त(पंचांगp);
+	पूर्ण
 
 	release_sock(sk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tcp_bpf_push(struct sock *sk, struct sk_msg *msg, u32 apply_bytes,
-			int flags, bool uncharge)
-{
+अटल पूर्णांक tcp_bpf_push(काष्ठा sock *sk, काष्ठा sk_msg *msg, u32 apply_bytes,
+			पूर्णांक flags, bool unअक्षरge)
+अणु
 	bool apply = apply_bytes;
-	struct scatterlist *sge;
-	struct page *page;
-	int size, ret = 0;
+	काष्ठा scatterlist *sge;
+	काष्ठा page *page;
+	पूर्णांक size, ret = 0;
 	u32 off;
 
-	while (1) {
+	जबतक (1) अणु
 		bool has_tx_ulp;
 
 		sge = sk_msg_elem(msg, msg->sg.start);
@@ -84,470 +85,470 @@ static int tcp_bpf_push(struct sock *sk, struct sk_msg *msg, u32 apply_bytes,
 		tcp_rate_check_app_limited(sk);
 retry:
 		has_tx_ulp = tls_sw_has_ctx_tx(sk);
-		if (has_tx_ulp) {
+		अगर (has_tx_ulp) अणु
 			flags |= MSG_SENDPAGE_NOPOLICY;
 			ret = kernel_sendpage_locked(sk,
 						     page, off, size, flags);
-		} else {
-			ret = do_tcp_sendpages(sk, page, off, size, flags);
-		}
+		पूर्ण अन्यथा अणु
+			ret = करो_tcp_sendpages(sk, page, off, size, flags);
+		पूर्ण
 
-		if (ret <= 0)
-			return ret;
-		if (apply)
+		अगर (ret <= 0)
+			वापस ret;
+		अगर (apply)
 			apply_bytes -= ret;
 		msg->sg.size -= ret;
 		sge->offset += ret;
 		sge->length -= ret;
-		if (uncharge)
-			sk_mem_uncharge(sk, ret);
-		if (ret != size) {
+		अगर (unअक्षरge)
+			sk_mem_unअक्षरge(sk, ret);
+		अगर (ret != size) अणु
 			size -= ret;
 			off  += ret;
-			goto retry;
-		}
-		if (!sge->length) {
+			जाओ retry;
+		पूर्ण
+		अगर (!sge->length) अणु
 			put_page(page);
 			sk_msg_iter_next(msg, start);
 			sg_init_table(sge, 1);
-			if (msg->sg.start == msg->sg.end)
-				break;
-		}
-		if (apply && !apply_bytes)
-			break;
-	}
+			अगर (msg->sg.start == msg->sg.end)
+				अवरोध;
+		पूर्ण
+		अगर (apply && !apply_bytes)
+			अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcp_bpf_push_locked(struct sock *sk, struct sk_msg *msg,
-			       u32 apply_bytes, int flags, bool uncharge)
-{
-	int ret;
+अटल पूर्णांक tcp_bpf_push_locked(काष्ठा sock *sk, काष्ठा sk_msg *msg,
+			       u32 apply_bytes, पूर्णांक flags, bool unअक्षरge)
+अणु
+	पूर्णांक ret;
 
 	lock_sock(sk);
-	ret = tcp_bpf_push(sk, msg, apply_bytes, flags, uncharge);
+	ret = tcp_bpf_push(sk, msg, apply_bytes, flags, unअक्षरge);
 	release_sock(sk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tcp_bpf_sendmsg_redir(struct sock *sk, struct sk_msg *msg,
-			  u32 bytes, int flags)
-{
+पूर्णांक tcp_bpf_sendmsg_redir(काष्ठा sock *sk, काष्ठा sk_msg *msg,
+			  u32 bytes, पूर्णांक flags)
+अणु
 	bool ingress = sk_msg_to_ingress(msg);
-	struct sk_psock *psock = sk_psock_get(sk);
-	int ret;
+	काष्ठा sk_psock *psock = sk_psock_get(sk);
+	पूर्णांक ret;
 
-	if (unlikely(!psock)) {
-		sk_msg_free(sk, msg);
-		return 0;
-	}
+	अगर (unlikely(!psock)) अणु
+		sk_msg_मुक्त(sk, msg);
+		वापस 0;
+	पूर्ण
 	ret = ingress ? bpf_tcp_ingress(sk, psock, msg, bytes, flags) :
 			tcp_bpf_push_locked(sk, msg, bytes, flags, false);
 	sk_psock_put(sk, psock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(tcp_bpf_sendmsg_redir);
 
-#ifdef CONFIG_BPF_SYSCALL
-static bool tcp_bpf_stream_read(const struct sock *sk)
-{
-	struct sk_psock *psock;
+#अगर_घोषित CONFIG_BPF_SYSCALL
+अटल bool tcp_bpf_stream_पढ़ो(स्थिर काष्ठा sock *sk)
+अणु
+	काष्ठा sk_psock *psock;
 	bool empty = true;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	psock = sk_psock(sk);
-	if (likely(psock))
+	अगर (likely(psock))
 		empty = list_empty(&psock->ingress_msg);
-	rcu_read_unlock();
-	return !empty;
-}
+	rcu_पढ़ो_unlock();
+	वापस !empty;
+पूर्ण
 
-static int tcp_bpf_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
-		    int nonblock, int flags, int *addr_len)
-{
-	struct sk_psock *psock;
-	int copied, ret;
+अटल पूर्णांक tcp_bpf_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
+		    पूर्णांक nonblock, पूर्णांक flags, पूर्णांक *addr_len)
+अणु
+	काष्ठा sk_psock *psock;
+	पूर्णांक copied, ret;
 
-	if (unlikely(flags & MSG_ERRQUEUE))
-		return inet_recv_error(sk, msg, len, addr_len);
+	अगर (unlikely(flags & MSG_ERRQUEUE))
+		वापस inet_recv_error(sk, msg, len, addr_len);
 
 	psock = sk_psock_get(sk);
-	if (unlikely(!psock))
-		return tcp_recvmsg(sk, msg, len, nonblock, flags, addr_len);
-	if (!skb_queue_empty(&sk->sk_receive_queue) &&
-	    sk_psock_queue_empty(psock)) {
+	अगर (unlikely(!psock))
+		वापस tcp_recvmsg(sk, msg, len, nonblock, flags, addr_len);
+	अगर (!skb_queue_empty(&sk->sk_receive_queue) &&
+	    sk_psock_queue_empty(psock)) अणु
 		sk_psock_put(sk, psock);
-		return tcp_recvmsg(sk, msg, len, nonblock, flags, addr_len);
-	}
+		वापस tcp_recvmsg(sk, msg, len, nonblock, flags, addr_len);
+	पूर्ण
 	lock_sock(sk);
-msg_bytes_ready:
+msg_bytes_पढ़ोy:
 	copied = sk_msg_recvmsg(sk, psock, msg, len, flags);
-	if (!copied) {
-		int data, err = 0;
-		long timeo;
+	अगर (!copied) अणु
+		पूर्णांक data, err = 0;
+		दीर्घ समयo;
 
-		timeo = sock_rcvtimeo(sk, nonblock);
-		data = sk_msg_wait_data(sk, psock, flags, timeo, &err);
-		if (data) {
-			if (!sk_psock_queue_empty(psock))
-				goto msg_bytes_ready;
+		समयo = sock_rcvसमयo(sk, nonblock);
+		data = sk_msg_रुको_data(sk, psock, flags, समयo, &err);
+		अगर (data) अणु
+			अगर (!sk_psock_queue_empty(psock))
+				जाओ msg_bytes_पढ़ोy;
 			release_sock(sk);
 			sk_psock_put(sk, psock);
-			return tcp_recvmsg(sk, msg, len, nonblock, flags, addr_len);
-		}
-		if (err) {
+			वापस tcp_recvmsg(sk, msg, len, nonblock, flags, addr_len);
+		पूर्ण
+		अगर (err) अणु
 			ret = err;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		copied = -EAGAIN;
-	}
+	पूर्ण
 	ret = copied;
 out:
 	release_sock(sk);
 	sk_psock_put(sk, psock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tcp_bpf_send_verdict(struct sock *sk, struct sk_psock *psock,
-				struct sk_msg *msg, int *copied, int flags)
-{
+अटल पूर्णांक tcp_bpf_send_verdict(काष्ठा sock *sk, काष्ठा sk_psock *psock,
+				काष्ठा sk_msg *msg, पूर्णांक *copied, पूर्णांक flags)
+अणु
 	bool cork = false, enospc = sk_msg_full(msg);
-	struct sock *sk_redir;
+	काष्ठा sock *sk_redir;
 	u32 tosend, delta = 0;
-	int ret;
+	पूर्णांक ret;
 
 more_data:
-	if (psock->eval == __SK_NONE) {
+	अगर (psock->eval == __SK_NONE) अणु
 		/* Track delta in msg size to add/subtract it on SK_DROP from
-		 * returned to user copied size. This ensures user doesn't
-		 * get a positive return code with msg_cut_data and SK_DROP
+		 * वापसed to user copied size. This ensures user करोesn't
+		 * get a positive वापस code with msg_cut_data and SK_DROP
 		 * verdict.
 		 */
 		delta = msg->sg.size;
 		psock->eval = sk_psock_msg_verdict(sk, psock, msg);
 		delta -= msg->sg.size;
-	}
+	पूर्ण
 
-	if (msg->cork_bytes &&
-	    msg->cork_bytes > msg->sg.size && !enospc) {
+	अगर (msg->cork_bytes &&
+	    msg->cork_bytes > msg->sg.size && !enospc) अणु
 		psock->cork_bytes = msg->cork_bytes - msg->sg.size;
-		if (!psock->cork) {
-			psock->cork = kzalloc(sizeof(*psock->cork),
+		अगर (!psock->cork) अणु
+			psock->cork = kzalloc(माप(*psock->cork),
 					      GFP_ATOMIC | __GFP_NOWARN);
-			if (!psock->cork)
-				return -ENOMEM;
-		}
-		memcpy(psock->cork, msg, sizeof(*msg));
-		return 0;
-	}
+			अगर (!psock->cork)
+				वापस -ENOMEM;
+		पूर्ण
+		स_नकल(psock->cork, msg, माप(*msg));
+		वापस 0;
+	पूर्ण
 
 	tosend = msg->sg.size;
-	if (psock->apply_bytes && psock->apply_bytes < tosend)
+	अगर (psock->apply_bytes && psock->apply_bytes < tosend)
 		tosend = psock->apply_bytes;
 
-	switch (psock->eval) {
-	case __SK_PASS:
+	चयन (psock->eval) अणु
+	हाल __SK_PASS:
 		ret = tcp_bpf_push(sk, msg, tosend, flags, true);
-		if (unlikely(ret)) {
-			*copied -= sk_msg_free(sk, msg);
-			break;
-		}
+		अगर (unlikely(ret)) अणु
+			*copied -= sk_msg_मुक्त(sk, msg);
+			अवरोध;
+		पूर्ण
 		sk_msg_apply_bytes(psock, tosend);
-		break;
-	case __SK_REDIRECT:
+		अवरोध;
+	हाल __SK_REसूचीECT:
 		sk_redir = psock->sk_redir;
 		sk_msg_apply_bytes(psock, tosend);
-		if (psock->cork) {
+		अगर (psock->cork) अणु
 			cork = true;
-			psock->cork = NULL;
-		}
-		sk_msg_return(sk, msg, tosend);
+			psock->cork = शून्य;
+		पूर्ण
+		sk_msg_वापस(sk, msg, tosend);
 		release_sock(sk);
 		ret = tcp_bpf_sendmsg_redir(sk_redir, msg, tosend, flags);
 		lock_sock(sk);
-		if (unlikely(ret < 0)) {
-			int free = sk_msg_free_nocharge(sk, msg);
+		अगर (unlikely(ret < 0)) अणु
+			पूर्णांक मुक्त = sk_msg_मुक्त_noअक्षरge(sk, msg);
 
-			if (!cork)
-				*copied -= free;
-		}
-		if (cork) {
-			sk_msg_free(sk, msg);
-			kfree(msg);
-			msg = NULL;
+			अगर (!cork)
+				*copied -= मुक्त;
+		पूर्ण
+		अगर (cork) अणु
+			sk_msg_मुक्त(sk, msg);
+			kमुक्त(msg);
+			msg = शून्य;
 			ret = 0;
-		}
-		break;
-	case __SK_DROP:
-	default:
-		sk_msg_free_partial(sk, msg, tosend);
+		पूर्ण
+		अवरोध;
+	हाल __SK_DROP:
+	शेष:
+		sk_msg_मुक्त_partial(sk, msg, tosend);
 		sk_msg_apply_bytes(psock, tosend);
 		*copied -= (tosend + delta);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
-	if (likely(!ret)) {
-		if (!psock->apply_bytes) {
+	अगर (likely(!ret)) अणु
+		अगर (!psock->apply_bytes) अणु
 			psock->eval =  __SK_NONE;
-			if (psock->sk_redir) {
+			अगर (psock->sk_redir) अणु
 				sock_put(psock->sk_redir);
-				psock->sk_redir = NULL;
-			}
-		}
-		if (msg &&
+				psock->sk_redir = शून्य;
+			पूर्ण
+		पूर्ण
+		अगर (msg &&
 		    msg->sg.data[msg->sg.start].page_link &&
 		    msg->sg.data[msg->sg.start].length)
-			goto more_data;
-	}
-	return ret;
-}
+			जाओ more_data;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int tcp_bpf_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
-{
-	struct sk_msg tmp, *msg_tx = NULL;
-	int copied = 0, err = 0;
-	struct sk_psock *psock;
-	long timeo;
-	int flags;
+अटल पूर्णांक tcp_bpf_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार size)
+अणु
+	काष्ठा sk_msg पंचांगp, *msg_tx = शून्य;
+	पूर्णांक copied = 0, err = 0;
+	काष्ठा sk_psock *psock;
+	दीर्घ समयo;
+	पूर्णांक flags;
 
-	/* Don't let internal do_tcp_sendpages() flags through */
+	/* Don't let पूर्णांकernal करो_tcp_sendpages() flags through */
 	flags = (msg->msg_flags & ~MSG_SENDPAGE_DECRYPTED);
 	flags |= MSG_NO_SHARED_FRAGS;
 
 	psock = sk_psock_get(sk);
-	if (unlikely(!psock))
-		return tcp_sendmsg(sk, msg, size);
+	अगर (unlikely(!psock))
+		वापस tcp_sendmsg(sk, msg, size);
 
 	lock_sock(sk);
-	timeo = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
-	while (msg_data_left(msg)) {
+	समयo = sock_sndसमयo(sk, msg->msg_flags & MSG_DONTWAIT);
+	जबतक (msg_data_left(msg)) अणु
 		bool enospc = false;
 		u32 copy, osize;
 
-		if (sk->sk_err) {
+		अगर (sk->sk_err) अणु
 			err = -sk->sk_err;
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 
 		copy = msg_data_left(msg);
-		if (!sk_stream_memory_free(sk))
-			goto wait_for_sndbuf;
-		if (psock->cork) {
+		अगर (!sk_stream_memory_मुक्त(sk))
+			जाओ रुको_क्रम_sndbuf;
+		अगर (psock->cork) अणु
 			msg_tx = psock->cork;
-		} else {
-			msg_tx = &tmp;
+		पूर्ण अन्यथा अणु
+			msg_tx = &पंचांगp;
 			sk_msg_init(msg_tx);
-		}
+		पूर्ण
 
 		osize = msg_tx->sg.size;
 		err = sk_msg_alloc(sk, msg_tx, msg_tx->sg.size + copy, msg_tx->sg.end - 1);
-		if (err) {
-			if (err != -ENOSPC)
-				goto wait_for_memory;
+		अगर (err) अणु
+			अगर (err != -ENOSPC)
+				जाओ रुको_क्रम_memory;
 			enospc = true;
 			copy = msg_tx->sg.size - osize;
-		}
+		पूर्ण
 
 		err = sk_msg_memcopy_from_iter(sk, &msg->msg_iter, msg_tx,
 					       copy);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			sk_msg_trim(sk, msg_tx, osize);
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 
 		copied += copy;
-		if (psock->cork_bytes) {
-			if (size > psock->cork_bytes)
+		अगर (psock->cork_bytes) अणु
+			अगर (size > psock->cork_bytes)
 				psock->cork_bytes = 0;
-			else
+			अन्यथा
 				psock->cork_bytes -= size;
-			if (psock->cork_bytes && !enospc)
-				goto out_err;
+			अगर (psock->cork_bytes && !enospc)
+				जाओ out_err;
 			/* All cork bytes are accounted, rerun the prog. */
 			psock->eval = __SK_NONE;
 			psock->cork_bytes = 0;
-		}
+		पूर्ण
 
 		err = tcp_bpf_send_verdict(sk, psock, msg_tx, &copied, flags);
-		if (unlikely(err < 0))
-			goto out_err;
-		continue;
-wait_for_sndbuf:
+		अगर (unlikely(err < 0))
+			जाओ out_err;
+		जारी;
+रुको_क्रम_sndbuf:
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-wait_for_memory:
-		err = sk_stream_wait_memory(sk, &timeo);
-		if (err) {
-			if (msg_tx && msg_tx != psock->cork)
-				sk_msg_free(sk, msg_tx);
-			goto out_err;
-		}
-	}
+रुको_क्रम_memory:
+		err = sk_stream_रुको_memory(sk, &समयo);
+		अगर (err) अणु
+			अगर (msg_tx && msg_tx != psock->cork)
+				sk_msg_मुक्त(sk, msg_tx);
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 out_err:
-	if (err < 0)
+	अगर (err < 0)
 		err = sk_stream_error(sk, msg->msg_flags, err);
 	release_sock(sk);
 	sk_psock_put(sk, psock);
-	return copied ? copied : err;
-}
+	वापस copied ? copied : err;
+पूर्ण
 
-static int tcp_bpf_sendpage(struct sock *sk, struct page *page, int offset,
-			    size_t size, int flags)
-{
-	struct sk_msg tmp, *msg = NULL;
-	int err = 0, copied = 0;
-	struct sk_psock *psock;
+अटल पूर्णांक tcp_bpf_sendpage(काष्ठा sock *sk, काष्ठा page *page, पूर्णांक offset,
+			    माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा sk_msg पंचांगp, *msg = शून्य;
+	पूर्णांक err = 0, copied = 0;
+	काष्ठा sk_psock *psock;
 	bool enospc = false;
 
 	psock = sk_psock_get(sk);
-	if (unlikely(!psock))
-		return tcp_sendpage(sk, page, offset, size, flags);
+	अगर (unlikely(!psock))
+		वापस tcp_sendpage(sk, page, offset, size, flags);
 
 	lock_sock(sk);
-	if (psock->cork) {
+	अगर (psock->cork) अणु
 		msg = psock->cork;
-	} else {
-		msg = &tmp;
+	पूर्ण अन्यथा अणु
+		msg = &पंचांगp;
 		sk_msg_init(msg);
-	}
+	पूर्ण
 
-	/* Catch case where ring is full and sendpage is stalled. */
-	if (unlikely(sk_msg_full(msg)))
-		goto out_err;
+	/* Catch हाल where ring is full and sendpage is stalled. */
+	अगर (unlikely(sk_msg_full(msg)))
+		जाओ out_err;
 
 	sk_msg_page_add(msg, page, size, offset);
-	sk_mem_charge(sk, size);
+	sk_mem_अक्षरge(sk, size);
 	copied = size;
-	if (sk_msg_full(msg))
+	अगर (sk_msg_full(msg))
 		enospc = true;
-	if (psock->cork_bytes) {
-		if (size > psock->cork_bytes)
+	अगर (psock->cork_bytes) अणु
+		अगर (size > psock->cork_bytes)
 			psock->cork_bytes = 0;
-		else
+		अन्यथा
 			psock->cork_bytes -= size;
-		if (psock->cork_bytes && !enospc)
-			goto out_err;
+		अगर (psock->cork_bytes && !enospc)
+			जाओ out_err;
 		/* All cork bytes are accounted, rerun the prog. */
 		psock->eval = __SK_NONE;
 		psock->cork_bytes = 0;
-	}
+	पूर्ण
 
 	err = tcp_bpf_send_verdict(sk, psock, msg, &copied, flags);
 out_err:
 	release_sock(sk);
 	sk_psock_put(sk, psock);
-	return copied ? copied : err;
-}
+	वापस copied ? copied : err;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	TCP_BPF_IPV4,
 	TCP_BPF_IPV6,
 	TCP_BPF_NUM_PROTS,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCP_BPF_BASE,
 	TCP_BPF_TX,
 	TCP_BPF_NUM_CFGS,
-};
+पूर्ण;
 
-static struct proto *tcpv6_prot_saved __read_mostly;
-static DEFINE_SPINLOCK(tcpv6_prot_lock);
-static struct proto tcp_bpf_prots[TCP_BPF_NUM_PROTS][TCP_BPF_NUM_CFGS];
+अटल काष्ठा proto *tcpv6_prot_saved __पढ़ो_mostly;
+अटल DEFINE_SPINLOCK(tcpv6_prot_lock);
+अटल काष्ठा proto tcp_bpf_prots[TCP_BPF_NUM_PROTS][TCP_BPF_NUM_CFGS];
 
-static void tcp_bpf_rebuild_protos(struct proto prot[TCP_BPF_NUM_CFGS],
-				   struct proto *base)
-{
+अटल व्योम tcp_bpf_rebuild_protos(काष्ठा proto prot[TCP_BPF_NUM_CFGS],
+				   काष्ठा proto *base)
+अणु
 	prot[TCP_BPF_BASE]			= *base;
 	prot[TCP_BPF_BASE].unhash		= sock_map_unhash;
-	prot[TCP_BPF_BASE].close		= sock_map_close;
+	prot[TCP_BPF_BASE].बंद		= sock_map_बंद;
 	prot[TCP_BPF_BASE].recvmsg		= tcp_bpf_recvmsg;
-	prot[TCP_BPF_BASE].stream_memory_read	= tcp_bpf_stream_read;
+	prot[TCP_BPF_BASE].stream_memory_पढ़ो	= tcp_bpf_stream_पढ़ो;
 
 	prot[TCP_BPF_TX]			= prot[TCP_BPF_BASE];
 	prot[TCP_BPF_TX].sendmsg		= tcp_bpf_sendmsg;
 	prot[TCP_BPF_TX].sendpage		= tcp_bpf_sendpage;
-}
+पूर्ण
 
-static void tcp_bpf_check_v6_needs_rebuild(struct proto *ops)
-{
-	if (unlikely(ops != smp_load_acquire(&tcpv6_prot_saved))) {
+अटल व्योम tcp_bpf_check_v6_needs_rebuild(काष्ठा proto *ops)
+अणु
+	अगर (unlikely(ops != smp_load_acquire(&tcpv6_prot_saved))) अणु
 		spin_lock_bh(&tcpv6_prot_lock);
-		if (likely(ops != tcpv6_prot_saved)) {
+		अगर (likely(ops != tcpv6_prot_saved)) अणु
 			tcp_bpf_rebuild_protos(tcp_bpf_prots[TCP_BPF_IPV6], ops);
 			smp_store_release(&tcpv6_prot_saved, ops);
-		}
+		पूर्ण
 		spin_unlock_bh(&tcpv6_prot_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init tcp_bpf_v4_build_proto(void)
-{
+अटल पूर्णांक __init tcp_bpf_v4_build_proto(व्योम)
+अणु
 	tcp_bpf_rebuild_protos(tcp_bpf_prots[TCP_BPF_IPV4], &tcp_prot);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 core_initcall(tcp_bpf_v4_build_proto);
 
-static int tcp_bpf_assert_proto_ops(struct proto *ops)
-{
-	/* In order to avoid retpoline, we make assumptions when we call
-	 * into ops if e.g. a psock is not present. Make sure they are
+अटल पूर्णांक tcp_bpf_निश्चित_proto_ops(काष्ठा proto *ops)
+अणु
+	/* In order to aव्योम retpoline, we make assumptions when we call
+	 * पूर्णांकo ops अगर e.g. a psock is not present. Make sure they are
 	 * indeed valid assumptions.
 	 */
-	return ops->recvmsg  == tcp_recvmsg &&
+	वापस ops->recvmsg  == tcp_recvmsg &&
 	       ops->sendmsg  == tcp_sendmsg &&
 	       ops->sendpage == tcp_sendpage ? 0 : -ENOTSUPP;
-}
+पूर्ण
 
-int tcp_bpf_update_proto(struct sock *sk, struct sk_psock *psock, bool restore)
-{
-	int family = sk->sk_family == AF_INET6 ? TCP_BPF_IPV6 : TCP_BPF_IPV4;
-	int config = psock->progs.msg_parser   ? TCP_BPF_TX   : TCP_BPF_BASE;
+पूर्णांक tcp_bpf_update_proto(काष्ठा sock *sk, काष्ठा sk_psock *psock, bool restore)
+अणु
+	पूर्णांक family = sk->sk_family == AF_INET6 ? TCP_BPF_IPV6 : TCP_BPF_IPV4;
+	पूर्णांक config = psock->progs.msg_parser   ? TCP_BPF_TX   : TCP_BPF_BASE;
 
-	if (restore) {
-		if (inet_csk_has_ulp(sk)) {
-			/* TLS does not have an unhash proto in SW cases,
+	अगर (restore) अणु
+		अगर (inet_csk_has_ulp(sk)) अणु
+			/* TLS करोes not have an unhash proto in SW हालs,
 			 * but we need to ensure we stop using the sock_map
 			 * unhash routine because the associated psock is being
-			 * removed. So use the original unhash handler.
+			 * हटाओd. So use the original unhash handler.
 			 */
 			WRITE_ONCE(sk->sk_prot->unhash, psock->saved_unhash);
-			tcp_update_ulp(sk, psock->sk_proto, psock->saved_write_space);
-		} else {
-			sk->sk_write_space = psock->saved_write_space;
-			/* Pairs with lockless read in sk_clone_lock() */
+			tcp_update_ulp(sk, psock->sk_proto, psock->saved_ग_लिखो_space);
+		पूर्ण अन्यथा अणु
+			sk->sk_ग_लिखो_space = psock->saved_ग_लिखो_space;
+			/* Pairs with lockless पढ़ो in sk_clone_lock() */
 			WRITE_ONCE(sk->sk_prot, psock->sk_proto);
-		}
-		return 0;
-	}
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	if (inet_csk_has_ulp(sk))
-		return -EINVAL;
+	अगर (inet_csk_has_ulp(sk))
+		वापस -EINVAL;
 
-	if (sk->sk_family == AF_INET6) {
-		if (tcp_bpf_assert_proto_ops(psock->sk_proto))
-			return -EINVAL;
+	अगर (sk->sk_family == AF_INET6) अणु
+		अगर (tcp_bpf_निश्चित_proto_ops(psock->sk_proto))
+			वापस -EINVAL;
 
 		tcp_bpf_check_v6_needs_rebuild(psock->sk_proto);
-	}
+	पूर्ण
 
-	/* Pairs with lockless read in sk_clone_lock() */
+	/* Pairs with lockless पढ़ो in sk_clone_lock() */
 	WRITE_ONCE(sk->sk_prot, &tcp_bpf_prots[family][config]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(tcp_bpf_update_proto);
 
 /* If a child got cloned from a listening socket that had tcp_bpf
  * protocol callbacks installed, we need to restore the callbacks to
- * the default ones because the child does not inherit the psock state
+ * the शेष ones because the child करोes not inherit the psock state
  * that tcp_bpf callbacks expect.
  */
-void tcp_bpf_clone(const struct sock *sk, struct sock *newsk)
-{
-	int family = sk->sk_family == AF_INET6 ? TCP_BPF_IPV6 : TCP_BPF_IPV4;
-	struct proto *prot = newsk->sk_prot;
+व्योम tcp_bpf_clone(स्थिर काष्ठा sock *sk, काष्ठा sock *newsk)
+अणु
+	पूर्णांक family = sk->sk_family == AF_INET6 ? TCP_BPF_IPV6 : TCP_BPF_IPV4;
+	काष्ठा proto *prot = newsk->sk_prot;
 
-	if (prot == &tcp_bpf_prots[family][TCP_BPF_BASE])
+	अगर (prot == &tcp_bpf_prots[family][TCP_BPF_BASE])
 		newsk->sk_prot = sk->sk_prot_creator;
-}
-#endif /* CONFIG_BPF_SYSCALL */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_BPF_SYSCALL */

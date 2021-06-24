@@ -1,15 +1,16 @@
+<शैली गुरु>
 /*
  * MIPI DSI Bus
  *
  * Copyright (C) 2012-2013, Samsung Electronics, Co., Ltd.
  * Andrzej Hajda <a.hajda@samsung.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,17 +26,17 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_mipi_dsi.h>
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
 
-#include <drm/drm_dsc.h>
-#include <drm/drm_print.h>
-#include <video/mipi_display.h>
+#समावेश <drm/drm_dsc.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <video/mipi_display.h>
 
 /**
  * DOC: dsi helpers
@@ -43,95 +44,95 @@
  * These functions contain some common logic and helpers to deal with MIPI DSI
  * peripherals.
  *
- * Helpers are provided for a number of standard MIPI DSI command as well as a
+ * Helpers are provided क्रम a number of standard MIPI DSI command as well as a
  * subset of the MIPI DCS command set.
  */
 
-static int mipi_dsi_device_match(struct device *dev, struct device_driver *drv)
-{
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
+अटल पूर्णांक mipi_dsi_device_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
 
 	/* attempt OF style match */
-	if (of_driver_match_device(dev, drv))
-		return 1;
+	अगर (of_driver_match_device(dev, drv))
+		वापस 1;
 
 	/* compare DSI device and driver names */
-	if (!strcmp(dsi->name, drv->name))
-		return 1;
+	अगर (!म_भेद(dsi->name, drv->name))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mipi_dsi_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
-	int err;
+अटल पूर्णांक mipi_dsi_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
+	पूर्णांक err;
 
 	err = of_device_uevent_modalias(dev, env);
-	if (err != -ENODEV)
-		return err;
+	अगर (err != -ENODEV)
+		वापस err;
 
 	add_uevent_var(env, "MODALIAS=%s%s", MIPI_DSI_MODULE_PREFIX,
 		       dsi->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops mipi_dsi_device_pm_ops = {
-	.runtime_suspend = pm_generic_runtime_suspend,
-	.runtime_resume = pm_generic_runtime_resume,
+अटल स्थिर काष्ठा dev_pm_ops mipi_dsi_device_pm_ops = अणु
+	.runसमय_suspend = pm_generic_runसमय_suspend,
+	.runसमय_resume = pm_generic_runसमय_resume,
 	.suspend = pm_generic_suspend,
 	.resume = pm_generic_resume,
-	.freeze = pm_generic_freeze,
+	.मुक्तze = pm_generic_मुक्तze,
 	.thaw = pm_generic_thaw,
-	.poweroff = pm_generic_poweroff,
+	.घातeroff = pm_generic_घातeroff,
 	.restore = pm_generic_restore,
-};
+पूर्ण;
 
-static struct bus_type mipi_dsi_bus_type = {
+अटल काष्ठा bus_type mipi_dsi_bus_type = अणु
 	.name = "mipi-dsi",
 	.match = mipi_dsi_device_match,
 	.uevent = mipi_dsi_uevent,
 	.pm = &mipi_dsi_device_pm_ops,
-};
+पूर्ण;
 
 /**
  * of_find_mipi_dsi_device_by_node() - find the MIPI DSI device matching a
  *    device tree node
  * @np: device tree node
  *
- * Return: A pointer to the MIPI DSI device corresponding to @np or NULL if no
- *    such device exists (or has not been registered yet).
+ * Return: A poपूर्णांकer to the MIPI DSI device corresponding to @np or शून्य अगर no
+ *    such device exists (or has not been रेजिस्टरed yet).
  */
-struct mipi_dsi_device *of_find_mipi_dsi_device_by_node(struct device_node *np)
-{
-	struct device *dev;
+काष्ठा mipi_dsi_device *of_find_mipi_dsi_device_by_node(काष्ठा device_node *np)
+अणु
+	काष्ठा device *dev;
 
 	dev = bus_find_device_by_of_node(&mipi_dsi_bus_type, np);
 
-	return dev ? to_mipi_dsi_device(dev) : NULL;
-}
+	वापस dev ? to_mipi_dsi_device(dev) : शून्य;
+पूर्ण
 EXPORT_SYMBOL(of_find_mipi_dsi_device_by_node);
 
-static void mipi_dsi_dev_release(struct device *dev)
-{
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
+अटल व्योम mipi_dsi_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
 
 	of_node_put(dev->of_node);
-	kfree(dsi);
-}
+	kमुक्त(dsi);
+पूर्ण
 
-static const struct device_type mipi_dsi_device_type = {
+अटल स्थिर काष्ठा device_type mipi_dsi_device_type = अणु
 	.release = mipi_dsi_dev_release,
-};
+पूर्ण;
 
-static struct mipi_dsi_device *mipi_dsi_device_alloc(struct mipi_dsi_host *host)
-{
-	struct mipi_dsi_device *dsi;
+अटल काष्ठा mipi_dsi_device *mipi_dsi_device_alloc(काष्ठा mipi_dsi_host *host)
+अणु
+	काष्ठा mipi_dsi_device *dsi;
 
-	dsi = kzalloc(sizeof(*dsi), GFP_KERNEL);
-	if (!dsi)
-		return ERR_PTR(-ENOMEM);
+	dsi = kzalloc(माप(*dsi), GFP_KERNEL);
+	अगर (!dsi)
+		वापस ERR_PTR(-ENOMEM);
 
 	dsi->host = host;
 	dsi->dev.bus = &mipi_dsi_bus_type;
@@ -140,114 +141,114 @@ static struct mipi_dsi_device *mipi_dsi_device_alloc(struct mipi_dsi_host *host)
 
 	device_initialize(&dsi->dev);
 
-	return dsi;
-}
+	वापस dsi;
+पूर्ण
 
-static int mipi_dsi_device_add(struct mipi_dsi_device *dsi)
-{
-	struct mipi_dsi_host *host = dsi->host;
+अटल पूर्णांक mipi_dsi_device_add(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा mipi_dsi_host *host = dsi->host;
 
 	dev_set_name(&dsi->dev, "%s.%d", dev_name(host->dev),  dsi->channel);
 
-	return device_add(&dsi->dev);
-}
+	वापस device_add(&dsi->dev);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_OF)
-static struct mipi_dsi_device *
-of_mipi_dsi_device_add(struct mipi_dsi_host *host, struct device_node *node)
-{
-	struct mipi_dsi_device_info info = { };
-	int ret;
+#अगर IS_ENABLED(CONFIG_OF)
+अटल काष्ठा mipi_dsi_device *
+of_mipi_dsi_device_add(काष्ठा mipi_dsi_host *host, काष्ठा device_node *node)
+अणु
+	काष्ठा mipi_dsi_device_info info = अणु पूर्ण;
+	पूर्णांक ret;
 	u32 reg;
 
-	if (of_modalias_node(node, info.type, sizeof(info.type)) < 0) {
+	अगर (of_modalias_node(node, info.type, माप(info.type)) < 0) अणु
 		drm_err(host, "modalias failure on %pOF\n", node);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	ret = of_property_read_u32(node, "reg", &reg);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(node, "reg", &reg);
+	अगर (ret) अणु
 		drm_err(host, "device node %pOF has no valid reg property: %d\n",
 			node, ret);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	info.channel = reg;
 	info.node = of_node_get(node);
 
-	return mipi_dsi_device_register_full(host, &info);
-}
-#else
-static struct mipi_dsi_device *
-of_mipi_dsi_device_add(struct mipi_dsi_host *host, struct device_node *node)
-{
-	return ERR_PTR(-ENODEV);
-}
-#endif
+	वापस mipi_dsi_device_रेजिस्टर_full(host, &info);
+पूर्ण
+#अन्यथा
+अटल काष्ठा mipi_dsi_device *
+of_mipi_dsi_device_add(काष्ठा mipi_dsi_host *host, काष्ठा device_node *node)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * mipi_dsi_device_register_full - create a MIPI DSI device
+ * mipi_dsi_device_रेजिस्टर_full - create a MIPI DSI device
  * @host: DSI host to which this device is connected
- * @info: pointer to template containing DSI device information
+ * @info: poपूर्णांकer to ढाँचा containing DSI device inक्रमmation
  *
- * Create a MIPI DSI device by using the device information provided by
- * mipi_dsi_device_info template
+ * Create a MIPI DSI device by using the device inक्रमmation provided by
+ * mipi_dsi_device_info ढाँचा
  *
  * Returns:
- * A pointer to the newly created MIPI DSI device, or, a pointer encoded
+ * A poपूर्णांकer to the newly created MIPI DSI device, or, a poपूर्णांकer encoded
  * with an error
  */
-struct mipi_dsi_device *
-mipi_dsi_device_register_full(struct mipi_dsi_host *host,
-			      const struct mipi_dsi_device_info *info)
-{
-	struct mipi_dsi_device *dsi;
-	int ret;
+काष्ठा mipi_dsi_device *
+mipi_dsi_device_रेजिस्टर_full(काष्ठा mipi_dsi_host *host,
+			      स्थिर काष्ठा mipi_dsi_device_info *info)
+अणु
+	काष्ठा mipi_dsi_device *dsi;
+	पूर्णांक ret;
 
-	if (!info) {
+	अगर (!info) अणु
 		drm_err(host, "invalid mipi_dsi_device_info pointer\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (info->channel > 3) {
+	अगर (info->channel > 3) अणु
 		drm_err(host, "invalid virtual channel: %u\n", info->channel);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	dsi = mipi_dsi_device_alloc(host);
-	if (IS_ERR(dsi)) {
+	अगर (IS_ERR(dsi)) अणु
 		drm_err(host, "failed to allocate DSI device %ld\n",
 			PTR_ERR(dsi));
-		return dsi;
-	}
+		वापस dsi;
+	पूर्ण
 
 	dsi->dev.of_node = info->node;
 	dsi->channel = info->channel;
-	strlcpy(dsi->name, info->type, sizeof(dsi->name));
+	strlcpy(dsi->name, info->type, माप(dsi->name));
 
 	ret = mipi_dsi_device_add(dsi);
-	if (ret) {
+	अगर (ret) अणु
 		drm_err(host, "failed to add DSI device %d\n", ret);
-		kfree(dsi);
-		return ERR_PTR(ret);
-	}
+		kमुक्त(dsi);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return dsi;
-}
-EXPORT_SYMBOL(mipi_dsi_device_register_full);
+	वापस dsi;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_device_रेजिस्टर_full);
 
 /**
- * mipi_dsi_device_unregister - unregister MIPI DSI device
+ * mipi_dsi_device_unरेजिस्टर - unरेजिस्टर MIPI DSI device
  * @dsi: DSI peripheral device
  */
-void mipi_dsi_device_unregister(struct mipi_dsi_device *dsi)
-{
-	device_unregister(&dsi->dev);
-}
-EXPORT_SYMBOL(mipi_dsi_device_unregister);
+व्योम mipi_dsi_device_unरेजिस्टर(काष्ठा mipi_dsi_device *dsi)
+अणु
+	device_unरेजिस्टर(&dsi->dev);
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_device_unरेजिस्टर);
 
-static DEFINE_MUTEX(host_lock);
-static LIST_HEAD(host_list);
+अटल DEFINE_MUTEX(host_lock);
+अटल LIST_HEAD(host_list);
 
 /**
  * of_find_mipi_dsi_host_by_node() - find the MIPI DSI host matching a
@@ -255,253 +256,253 @@ static LIST_HEAD(host_list);
  * @node: device tree node
  *
  * Returns:
- * A pointer to the MIPI DSI host corresponding to @node or NULL if no
- * such device exists (or has not been registered yet).
+ * A poपूर्णांकer to the MIPI DSI host corresponding to @node or शून्य अगर no
+ * such device exists (or has not been रेजिस्टरed yet).
  */
-struct mipi_dsi_host *of_find_mipi_dsi_host_by_node(struct device_node *node)
-{
-	struct mipi_dsi_host *host;
+काष्ठा mipi_dsi_host *of_find_mipi_dsi_host_by_node(काष्ठा device_node *node)
+अणु
+	काष्ठा mipi_dsi_host *host;
 
 	mutex_lock(&host_lock);
 
-	list_for_each_entry(host, &host_list, list) {
-		if (host->dev->of_node == node) {
+	list_क्रम_each_entry(host, &host_list, list) अणु
+		अगर (host->dev->of_node == node) अणु
 			mutex_unlock(&host_lock);
-			return host;
-		}
-	}
+			वापस host;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&host_lock);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(of_find_mipi_dsi_host_by_node);
 
-int mipi_dsi_host_register(struct mipi_dsi_host *host)
-{
-	struct device_node *node;
+पूर्णांक mipi_dsi_host_रेजिस्टर(काष्ठा mipi_dsi_host *host)
+अणु
+	काष्ठा device_node *node;
 
-	for_each_available_child_of_node(host->dev->of_node, node) {
+	क्रम_each_available_child_of_node(host->dev->of_node, node) अणु
 		/* skip nodes without reg property */
-		if (!of_find_property(node, "reg", NULL))
-			continue;
+		अगर (!of_find_property(node, "reg", शून्य))
+			जारी;
 		of_mipi_dsi_device_add(host, node);
-	}
+	पूर्ण
 
 	mutex_lock(&host_lock);
 	list_add_tail(&host->list, &host_list);
 	mutex_unlock(&host_lock);
 
-	return 0;
-}
-EXPORT_SYMBOL(mipi_dsi_host_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_host_रेजिस्टर);
 
-static int mipi_dsi_remove_device_fn(struct device *dev, void *priv)
-{
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
+अटल पूर्णांक mipi_dsi_हटाओ_device_fn(काष्ठा device *dev, व्योम *priv)
+अणु
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
 
-	mipi_dsi_device_unregister(dsi);
+	mipi_dsi_device_unरेजिस्टर(dsi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mipi_dsi_host_unregister(struct mipi_dsi_host *host)
-{
-	device_for_each_child(host->dev, NULL, mipi_dsi_remove_device_fn);
+व्योम mipi_dsi_host_unरेजिस्टर(काष्ठा mipi_dsi_host *host)
+अणु
+	device_क्रम_each_child(host->dev, शून्य, mipi_dsi_हटाओ_device_fn);
 
 	mutex_lock(&host_lock);
 	list_del_init(&host->list);
 	mutex_unlock(&host_lock);
-}
-EXPORT_SYMBOL(mipi_dsi_host_unregister);
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_host_unरेजिस्टर);
 
 /**
  * mipi_dsi_attach - attach a DSI device to its DSI host
  * @dsi: DSI peripheral
  */
-int mipi_dsi_attach(struct mipi_dsi_device *dsi)
-{
-	const struct mipi_dsi_host_ops *ops = dsi->host->ops;
+पूर्णांक mipi_dsi_attach(काष्ठा mipi_dsi_device *dsi)
+अणु
+	स्थिर काष्ठा mipi_dsi_host_ops *ops = dsi->host->ops;
 
-	if (!ops || !ops->attach)
-		return -ENOSYS;
+	अगर (!ops || !ops->attach)
+		वापस -ENOSYS;
 
-	return ops->attach(dsi->host, dsi);
-}
+	वापस ops->attach(dsi->host, dsi);
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_attach);
 
 /**
  * mipi_dsi_detach - detach a DSI device from its DSI host
  * @dsi: DSI peripheral
  */
-int mipi_dsi_detach(struct mipi_dsi_device *dsi)
-{
-	const struct mipi_dsi_host_ops *ops = dsi->host->ops;
+पूर्णांक mipi_dsi_detach(काष्ठा mipi_dsi_device *dsi)
+अणु
+	स्थिर काष्ठा mipi_dsi_host_ops *ops = dsi->host->ops;
 
-	if (!ops || !ops->detach)
-		return -ENOSYS;
+	अगर (!ops || !ops->detach)
+		वापस -ENOSYS;
 
-	return ops->detach(dsi->host, dsi);
-}
+	वापस ops->detach(dsi->host, dsi);
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_detach);
 
-static ssize_t mipi_dsi_device_transfer(struct mipi_dsi_device *dsi,
-					struct mipi_dsi_msg *msg)
-{
-	const struct mipi_dsi_host_ops *ops = dsi->host->ops;
+अटल sमाप_प्रकार mipi_dsi_device_transfer(काष्ठा mipi_dsi_device *dsi,
+					काष्ठा mipi_dsi_msg *msg)
+अणु
+	स्थिर काष्ठा mipi_dsi_host_ops *ops = dsi->host->ops;
 
-	if (!ops || !ops->transfer)
-		return -ENOSYS;
+	अगर (!ops || !ops->transfer)
+		वापस -ENOSYS;
 
-	if (dsi->mode_flags & MIPI_DSI_MODE_LPM)
+	अगर (dsi->mode_flags & MIPI_DSI_MODE_LPM)
 		msg->flags |= MIPI_DSI_MSG_USE_LPM;
 
-	return ops->transfer(dsi->host, msg);
-}
+	वापस ops->transfer(dsi->host, msg);
+पूर्ण
 
 /**
- * mipi_dsi_packet_format_is_short - check if a packet is of the short format
+ * mipi_dsi_packet_क्रमmat_is_लघु - check अगर a packet is of the लघु क्रमmat
  * @type: MIPI DSI data type of the packet
  *
- * Return: true if the packet for the given data type is a short packet, false
+ * Return: true अगर the packet क्रम the given data type is a लघु packet, false
  * otherwise.
  */
-bool mipi_dsi_packet_format_is_short(u8 type)
-{
-	switch (type) {
-	case MIPI_DSI_V_SYNC_START:
-	case MIPI_DSI_V_SYNC_END:
-	case MIPI_DSI_H_SYNC_START:
-	case MIPI_DSI_H_SYNC_END:
-	case MIPI_DSI_COMPRESSION_MODE:
-	case MIPI_DSI_END_OF_TRANSMISSION:
-	case MIPI_DSI_COLOR_MODE_OFF:
-	case MIPI_DSI_COLOR_MODE_ON:
-	case MIPI_DSI_SHUTDOWN_PERIPHERAL:
-	case MIPI_DSI_TURN_ON_PERIPHERAL:
-	case MIPI_DSI_GENERIC_SHORT_WRITE_0_PARAM:
-	case MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM:
-	case MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM:
-	case MIPI_DSI_GENERIC_READ_REQUEST_0_PARAM:
-	case MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM:
-	case MIPI_DSI_GENERIC_READ_REQUEST_2_PARAM:
-	case MIPI_DSI_DCS_SHORT_WRITE:
-	case MIPI_DSI_DCS_SHORT_WRITE_PARAM:
-	case MIPI_DSI_DCS_READ:
-	case MIPI_DSI_EXECUTE_QUEUE:
-	case MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE:
-		return true;
-	}
+bool mipi_dsi_packet_क्रमmat_is_लघु(u8 type)
+अणु
+	चयन (type) अणु
+	हाल MIPI_DSI_V_SYNC_START:
+	हाल MIPI_DSI_V_SYNC_END:
+	हाल MIPI_DSI_H_SYNC_START:
+	हाल MIPI_DSI_H_SYNC_END:
+	हाल MIPI_DSI_COMPRESSION_MODE:
+	हाल MIPI_DSI_END_OF_TRANSMISSION:
+	हाल MIPI_DSI_COLOR_MODE_OFF:
+	हाल MIPI_DSI_COLOR_MODE_ON:
+	हाल MIPI_DSI_SHUTDOWN_PERIPHERAL:
+	हाल MIPI_DSI_TURN_ON_PERIPHERAL:
+	हाल MIPI_DSI_GENERIC_SHORT_WRITE_0_PARAM:
+	हाल MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM:
+	हाल MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM:
+	हाल MIPI_DSI_GENERIC_READ_REQUEST_0_PARAM:
+	हाल MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM:
+	हाल MIPI_DSI_GENERIC_READ_REQUEST_2_PARAM:
+	हाल MIPI_DSI_DCS_SHORT_WRITE:
+	हाल MIPI_DSI_DCS_SHORT_WRITE_PARAM:
+	हाल MIPI_DSI_DCS_READ:
+	हाल MIPI_DSI_EXECUTE_QUEUE:
+	हाल MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE:
+		वापस true;
+	पूर्ण
 
-	return false;
-}
-EXPORT_SYMBOL(mipi_dsi_packet_format_is_short);
+	वापस false;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_packet_क्रमmat_is_लघु);
 
 /**
- * mipi_dsi_packet_format_is_long - check if a packet is of the long format
+ * mipi_dsi_packet_क्रमmat_is_दीर्घ - check अगर a packet is of the दीर्घ क्रमmat
  * @type: MIPI DSI data type of the packet
  *
- * Return: true if the packet for the given data type is a long packet, false
+ * Return: true अगर the packet क्रम the given data type is a दीर्घ packet, false
  * otherwise.
  */
-bool mipi_dsi_packet_format_is_long(u8 type)
-{
-	switch (type) {
-	case MIPI_DSI_NULL_PACKET:
-	case MIPI_DSI_BLANKING_PACKET:
-	case MIPI_DSI_GENERIC_LONG_WRITE:
-	case MIPI_DSI_DCS_LONG_WRITE:
-	case MIPI_DSI_PICTURE_PARAMETER_SET:
-	case MIPI_DSI_COMPRESSED_PIXEL_STREAM:
-	case MIPI_DSI_LOOSELY_PACKED_PIXEL_STREAM_YCBCR20:
-	case MIPI_DSI_PACKED_PIXEL_STREAM_YCBCR24:
-	case MIPI_DSI_PACKED_PIXEL_STREAM_YCBCR16:
-	case MIPI_DSI_PACKED_PIXEL_STREAM_30:
-	case MIPI_DSI_PACKED_PIXEL_STREAM_36:
-	case MIPI_DSI_PACKED_PIXEL_STREAM_YCBCR12:
-	case MIPI_DSI_PACKED_PIXEL_STREAM_16:
-	case MIPI_DSI_PACKED_PIXEL_STREAM_18:
-	case MIPI_DSI_PIXEL_STREAM_3BYTE_18:
-	case MIPI_DSI_PACKED_PIXEL_STREAM_24:
-		return true;
-	}
+bool mipi_dsi_packet_क्रमmat_is_दीर्घ(u8 type)
+अणु
+	चयन (type) अणु
+	हाल MIPI_DSI_शून्य_PACKET:
+	हाल MIPI_DSI_BLANKING_PACKET:
+	हाल MIPI_DSI_GENERIC_LONG_WRITE:
+	हाल MIPI_DSI_DCS_LONG_WRITE:
+	हाल MIPI_DSI_PICTURE_PARAMETER_SET:
+	हाल MIPI_DSI_COMPRESSED_PIXEL_STREAM:
+	हाल MIPI_DSI_LOOSELY_PACKED_PIXEL_STREAM_YCBCR20:
+	हाल MIPI_DSI_PACKED_PIXEL_STREAM_YCBCR24:
+	हाल MIPI_DSI_PACKED_PIXEL_STREAM_YCBCR16:
+	हाल MIPI_DSI_PACKED_PIXEL_STREAM_30:
+	हाल MIPI_DSI_PACKED_PIXEL_STREAM_36:
+	हाल MIPI_DSI_PACKED_PIXEL_STREAM_YCBCR12:
+	हाल MIPI_DSI_PACKED_PIXEL_STREAM_16:
+	हाल MIPI_DSI_PACKED_PIXEL_STREAM_18:
+	हाल MIPI_DSI_PIXEL_STREAM_3BYTE_18:
+	हाल MIPI_DSI_PACKED_PIXEL_STREAM_24:
+		वापस true;
+	पूर्ण
 
-	return false;
-}
-EXPORT_SYMBOL(mipi_dsi_packet_format_is_long);
+	वापस false;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_packet_क्रमmat_is_दीर्घ);
 
 /**
  * mipi_dsi_create_packet - create a packet from a message according to the
  *     DSI protocol
- * @packet: pointer to a DSI packet structure
- * @msg: message to translate into a packet
+ * @packet: poपूर्णांकer to a DSI packet काष्ठाure
+ * @msg: message to translate पूर्णांकo a packet
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_create_packet(struct mipi_dsi_packet *packet,
-			   const struct mipi_dsi_msg *msg)
-{
-	if (!packet || !msg)
-		return -EINVAL;
+पूर्णांक mipi_dsi_create_packet(काष्ठा mipi_dsi_packet *packet,
+			   स्थिर काष्ठा mipi_dsi_msg *msg)
+अणु
+	अगर (!packet || !msg)
+		वापस -EINVAL;
 
-	/* do some minimum sanity checking */
-	if (!mipi_dsi_packet_format_is_short(msg->type) &&
-	    !mipi_dsi_packet_format_is_long(msg->type))
-		return -EINVAL;
+	/* करो some minimum sanity checking */
+	अगर (!mipi_dsi_packet_क्रमmat_is_लघु(msg->type) &&
+	    !mipi_dsi_packet_क्रमmat_is_दीर्घ(msg->type))
+		वापस -EINVAL;
 
-	if (msg->channel > 3)
-		return -EINVAL;
+	अगर (msg->channel > 3)
+		वापस -EINVAL;
 
-	memset(packet, 0, sizeof(*packet));
+	स_रखो(packet, 0, माप(*packet));
 	packet->header[0] = ((msg->channel & 0x3) << 6) | (msg->type & 0x3f);
 
-	/* TODO: compute ECC if hardware support is not available */
+	/* TODO: compute ECC अगर hardware support is not available */
 
 	/*
-	 * Long write packets contain the word count in header bytes 1 and 2.
-	 * The payload follows the header and is word count bytes long.
+	 * Long ग_लिखो packets contain the word count in header bytes 1 and 2.
+	 * The payload follows the header and is word count bytes दीर्घ.
 	 *
-	 * Short write packets encode up to two parameters in header bytes 1
+	 * Short ग_लिखो packets encode up to two parameters in header bytes 1
 	 * and 2.
 	 */
-	if (mipi_dsi_packet_format_is_long(msg->type)) {
+	अगर (mipi_dsi_packet_क्रमmat_is_दीर्घ(msg->type)) अणु
 		packet->header[1] = (msg->tx_len >> 0) & 0xff;
 		packet->header[2] = (msg->tx_len >> 8) & 0xff;
 
 		packet->payload_length = msg->tx_len;
 		packet->payload = msg->tx_buf;
-	} else {
-		const u8 *tx = msg->tx_buf;
+	पूर्ण अन्यथा अणु
+		स्थिर u8 *tx = msg->tx_buf;
 
 		packet->header[1] = (msg->tx_len > 0) ? tx[0] : 0;
 		packet->header[2] = (msg->tx_len > 1) ? tx[1] : 0;
-	}
+	पूर्ण
 
-	packet->size = sizeof(packet->header) + packet->payload_length;
+	packet->size = माप(packet->header) + packet->payload_length;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_create_packet);
 
 /**
- * mipi_dsi_shutdown_peripheral() - sends a Shutdown Peripheral command
+ * mipi_dsi_shutकरोwn_peripheral() - sends a Shutकरोwn Peripheral command
  * @dsi: DSI peripheral device
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_shutdown_peripheral(struct mipi_dsi_device *dsi)
-{
-	struct mipi_dsi_msg msg = {
+पूर्णांक mipi_dsi_shutकरोwn_peripheral(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा mipi_dsi_msg msg = अणु
 		.channel = dsi->channel,
 		.type = MIPI_DSI_SHUTDOWN_PERIPHERAL,
-		.tx_buf = (u8 [2]) { 0, 0 },
+		.tx_buf = (u8 [2]) अणु 0, 0 पूर्ण,
 		.tx_len = 2,
-	};
-	int ret = mipi_dsi_device_transfer(dsi, &msg);
+	पूर्ण;
+	पूर्णांक ret = mipi_dsi_device_transfer(dsi, &msg);
 
-	return (ret < 0) ? ret : 0;
-}
-EXPORT_SYMBOL(mipi_dsi_shutdown_peripheral);
+	वापस (ret < 0) ? ret : 0;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_shutकरोwn_peripheral);
 
 /**
  * mipi_dsi_turn_on_peripheral() - sends a Turn On Peripheral command
@@ -509,44 +510,44 @@ EXPORT_SYMBOL(mipi_dsi_shutdown_peripheral);
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_turn_on_peripheral(struct mipi_dsi_device *dsi)
-{
-	struct mipi_dsi_msg msg = {
+पूर्णांक mipi_dsi_turn_on_peripheral(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा mipi_dsi_msg msg = अणु
 		.channel = dsi->channel,
 		.type = MIPI_DSI_TURN_ON_PERIPHERAL,
-		.tx_buf = (u8 [2]) { 0, 0 },
+		.tx_buf = (u8 [2]) अणु 0, 0 पूर्ण,
 		.tx_len = 2,
-	};
-	int ret = mipi_dsi_device_transfer(dsi, &msg);
+	पूर्ण;
+	पूर्णांक ret = mipi_dsi_device_transfer(dsi, &msg);
 
-	return (ret < 0) ? ret : 0;
-}
+	वापस (ret < 0) ? ret : 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_turn_on_peripheral);
 
 /*
- * mipi_dsi_set_maximum_return_packet_size() - specify the maximum size of the
- *    the payload in a long packet transmitted from the peripheral back to the
+ * mipi_dsi_set_maximum_वापस_packet_size() - specअगरy the maximum size of the
+ *    the payload in a दीर्घ packet transmitted from the peripheral back to the
  *    host processor
  * @dsi: DSI peripheral device
  * @value: the maximum size of the payload
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_set_maximum_return_packet_size(struct mipi_dsi_device *dsi,
+पूर्णांक mipi_dsi_set_maximum_वापस_packet_size(काष्ठा mipi_dsi_device *dsi,
 					    u16 value)
-{
-	u8 tx[2] = { value & 0xff, value >> 8 };
-	struct mipi_dsi_msg msg = {
+अणु
+	u8 tx[2] = अणु value & 0xff, value >> 8 पूर्ण;
+	काष्ठा mipi_dsi_msg msg = अणु
 		.channel = dsi->channel,
 		.type = MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE,
-		.tx_len = sizeof(tx),
+		.tx_len = माप(tx),
 		.tx_buf = tx,
-	};
-	int ret = mipi_dsi_device_transfer(dsi, &msg);
+	पूर्ण;
+	पूर्णांक ret = mipi_dsi_device_transfer(dsi, &msg);
 
-	return (ret < 0) ? ret : 0;
-}
-EXPORT_SYMBOL(mipi_dsi_set_maximum_return_packet_size);
+	वापस (ret < 0) ? ret : 0;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_set_maximum_वापस_packet_size);
 
 /**
  * mipi_dsi_compression_mode() - enable/disable DSC on the peripheral
@@ -554,24 +555,24 @@ EXPORT_SYMBOL(mipi_dsi_set_maximum_return_packet_size);
  * @enable: Whether to enable or disable the DSC
  *
  * Enable or disable Display Stream Compression on the peripheral using the
- * default Picture Parameter Set and VESA DSC 1.1 algorithm.
+ * शेष Picture Parameter Set and VESA DSC 1.1 algorithm.
  *
  * Return: 0 on success or a negative error code on failure.
  */
-ssize_t mipi_dsi_compression_mode(struct mipi_dsi_device *dsi, bool enable)
-{
-	/* Note: Needs updating for non-default PPS or algorithm */
-	u8 tx[2] = { enable << 0, 0 };
-	struct mipi_dsi_msg msg = {
+sमाप_प्रकार mipi_dsi_compression_mode(काष्ठा mipi_dsi_device *dsi, bool enable)
+अणु
+	/* Note: Needs updating क्रम non-शेष PPS or algorithm */
+	u8 tx[2] = अणु enable << 0, 0 पूर्ण;
+	काष्ठा mipi_dsi_msg msg = अणु
 		.channel = dsi->channel,
 		.type = MIPI_DSI_COMPRESSION_MODE,
-		.tx_len = sizeof(tx),
+		.tx_len = माप(tx),
 		.tx_buf = tx,
-	};
-	int ret = mipi_dsi_device_transfer(dsi, &msg);
+	पूर्ण;
+	पूर्णांक ret = mipi_dsi_device_transfer(dsi, &msg);
 
-	return (ret < 0) ? ret : 0;
-}
+	वापस (ret < 0) ? ret : 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_compression_mode);
 
 /**
@@ -583,220 +584,220 @@ EXPORT_SYMBOL(mipi_dsi_compression_mode);
  *
  * Return: 0 on success or a negative error code on failure.
  */
-ssize_t mipi_dsi_picture_parameter_set(struct mipi_dsi_device *dsi,
-				       const struct drm_dsc_picture_parameter_set *pps)
-{
-	struct mipi_dsi_msg msg = {
+sमाप_प्रकार mipi_dsi_picture_parameter_set(काष्ठा mipi_dsi_device *dsi,
+				       स्थिर काष्ठा drm_dsc_picture_parameter_set *pps)
+अणु
+	काष्ठा mipi_dsi_msg msg = अणु
 		.channel = dsi->channel,
 		.type = MIPI_DSI_PICTURE_PARAMETER_SET,
-		.tx_len = sizeof(*pps),
+		.tx_len = माप(*pps),
 		.tx_buf = pps,
-	};
-	int ret = mipi_dsi_device_transfer(dsi, &msg);
+	पूर्ण;
+	पूर्णांक ret = mipi_dsi_device_transfer(dsi, &msg);
 
-	return (ret < 0) ? ret : 0;
-}
+	वापस (ret < 0) ? ret : 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_picture_parameter_set);
 
 /**
- * mipi_dsi_generic_write() - transmit data using a generic write packet
+ * mipi_dsi_generic_ग_लिखो() - transmit data using a generic ग_लिखो packet
  * @dsi: DSI peripheral device
  * @payload: buffer containing the payload
  * @size: size of payload buffer
  *
- * This function will automatically choose the right data type depending on
+ * This function will स्वतःmatically choose the right data type depending on
  * the payload length.
  *
  * Return: The number of bytes transmitted on success or a negative error code
  * on failure.
  */
-ssize_t mipi_dsi_generic_write(struct mipi_dsi_device *dsi, const void *payload,
-			       size_t size)
-{
-	struct mipi_dsi_msg msg = {
+sमाप_प्रकार mipi_dsi_generic_ग_लिखो(काष्ठा mipi_dsi_device *dsi, स्थिर व्योम *payload,
+			       माप_प्रकार size)
+अणु
+	काष्ठा mipi_dsi_msg msg = अणु
 		.channel = dsi->channel,
 		.tx_buf = payload,
 		.tx_len = size
-	};
+	पूर्ण;
 
-	switch (size) {
-	case 0:
+	चयन (size) अणु
+	हाल 0:
 		msg.type = MIPI_DSI_GENERIC_SHORT_WRITE_0_PARAM;
-		break;
+		अवरोध;
 
-	case 1:
+	हाल 1:
 		msg.type = MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM;
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		msg.type = MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		msg.type = MIPI_DSI_GENERIC_LONG_WRITE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return mipi_dsi_device_transfer(dsi, &msg);
-}
-EXPORT_SYMBOL(mipi_dsi_generic_write);
+	वापस mipi_dsi_device_transfer(dsi, &msg);
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_generic_ग_लिखो);
 
 /**
- * mipi_dsi_generic_read() - receive data using a generic read packet
+ * mipi_dsi_generic_पढ़ो() - receive data using a generic पढ़ो packet
  * @dsi: DSI peripheral device
  * @params: buffer containing the request parameters
  * @num_params: number of request parameters
- * @data: buffer in which to return the received data
+ * @data: buffer in which to वापस the received data
  * @size: size of receive buffer
  *
- * This function will automatically choose the right data type depending on
+ * This function will स्वतःmatically choose the right data type depending on
  * the number of parameters passed in.
  *
- * Return: The number of bytes successfully read or a negative error code on
+ * Return: The number of bytes successfully पढ़ो or a negative error code on
  * failure.
  */
-ssize_t mipi_dsi_generic_read(struct mipi_dsi_device *dsi, const void *params,
-			      size_t num_params, void *data, size_t size)
-{
-	struct mipi_dsi_msg msg = {
+sमाप_प्रकार mipi_dsi_generic_पढ़ो(काष्ठा mipi_dsi_device *dsi, स्थिर व्योम *params,
+			      माप_प्रकार num_params, व्योम *data, माप_प्रकार size)
+अणु
+	काष्ठा mipi_dsi_msg msg = अणु
 		.channel = dsi->channel,
 		.tx_len = num_params,
 		.tx_buf = params,
 		.rx_len = size,
 		.rx_buf = data
-	};
+	पूर्ण;
 
-	switch (num_params) {
-	case 0:
+	चयन (num_params) अणु
+	हाल 0:
 		msg.type = MIPI_DSI_GENERIC_READ_REQUEST_0_PARAM;
-		break;
+		अवरोध;
 
-	case 1:
+	हाल 1:
 		msg.type = MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM;
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		msg.type = MIPI_DSI_GENERIC_READ_REQUEST_2_PARAM;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return mipi_dsi_device_transfer(dsi, &msg);
-}
-EXPORT_SYMBOL(mipi_dsi_generic_read);
+	वापस mipi_dsi_device_transfer(dsi, &msg);
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_generic_पढ़ो);
 
 /**
- * mipi_dsi_dcs_write_buffer() - transmit a DCS command with payload
+ * mipi_dsi_dcs_ग_लिखो_buffer() - transmit a DCS command with payload
  * @dsi: DSI peripheral device
  * @data: buffer containing data to be transmitted
  * @len: size of transmission buffer
  *
- * This function will automatically choose the right data type depending on
+ * This function will स्वतःmatically choose the right data type depending on
  * the command payload length.
  *
  * Return: The number of bytes successfully transmitted or a negative error
  * code on failure.
  */
-ssize_t mipi_dsi_dcs_write_buffer(struct mipi_dsi_device *dsi,
-				  const void *data, size_t len)
-{
-	struct mipi_dsi_msg msg = {
+sमाप_प्रकार mipi_dsi_dcs_ग_लिखो_buffer(काष्ठा mipi_dsi_device *dsi,
+				  स्थिर व्योम *data, माप_प्रकार len)
+अणु
+	काष्ठा mipi_dsi_msg msg = अणु
 		.channel = dsi->channel,
 		.tx_buf = data,
 		.tx_len = len
-	};
+	पूर्ण;
 
-	switch (len) {
-	case 0:
-		return -EINVAL;
+	चयन (len) अणु
+	हाल 0:
+		वापस -EINVAL;
 
-	case 1:
+	हाल 1:
 		msg.type = MIPI_DSI_DCS_SHORT_WRITE;
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		msg.type = MIPI_DSI_DCS_SHORT_WRITE_PARAM;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		msg.type = MIPI_DSI_DCS_LONG_WRITE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return mipi_dsi_device_transfer(dsi, &msg);
-}
-EXPORT_SYMBOL(mipi_dsi_dcs_write_buffer);
+	वापस mipi_dsi_device_transfer(dsi, &msg);
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_dcs_ग_लिखो_buffer);
 
 /**
- * mipi_dsi_dcs_write() - send DCS write command
+ * mipi_dsi_dcs_ग_लिखो() - send DCS ग_लिखो command
  * @dsi: DSI peripheral device
  * @cmd: DCS command
  * @data: buffer containing the command payload
  * @len: command payload length
  *
- * This function will automatically choose the right data type depending on
+ * This function will स्वतःmatically choose the right data type depending on
  * the command payload length.
  *
  * Return: The number of bytes successfully transmitted or a negative error
  * code on failure.
  */
-ssize_t mipi_dsi_dcs_write(struct mipi_dsi_device *dsi, u8 cmd,
-			   const void *data, size_t len)
-{
-	ssize_t err;
-	size_t size;
+sमाप_प्रकार mipi_dsi_dcs_ग_लिखो(काष्ठा mipi_dsi_device *dsi, u8 cmd,
+			   स्थिर व्योम *data, माप_प्रकार len)
+अणु
+	sमाप_प्रकार err;
+	माप_प्रकार size;
 	u8 stack_tx[8];
 	u8 *tx;
 
 	size = 1 + len;
-	if (len > ARRAY_SIZE(stack_tx) - 1) {
-		tx = kmalloc(size, GFP_KERNEL);
-		if (!tx)
-			return -ENOMEM;
-	} else {
+	अगर (len > ARRAY_SIZE(stack_tx) - 1) अणु
+		tx = kदो_स्मृति(size, GFP_KERNEL);
+		अगर (!tx)
+			वापस -ENOMEM;
+	पूर्ण अन्यथा अणु
 		tx = stack_tx;
-	}
+	पूर्ण
 
 	/* concatenate the DCS command byte and the payload */
 	tx[0] = cmd;
-	if (data)
-		memcpy(&tx[1], data, len);
+	अगर (data)
+		स_नकल(&tx[1], data, len);
 
-	err = mipi_dsi_dcs_write_buffer(dsi, tx, size);
+	err = mipi_dsi_dcs_ग_लिखो_buffer(dsi, tx, size);
 
-	if (tx != stack_tx)
-		kfree(tx);
+	अगर (tx != stack_tx)
+		kमुक्त(tx);
 
-	return err;
-}
-EXPORT_SYMBOL(mipi_dsi_dcs_write);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_dcs_ग_लिखो);
 
 /**
- * mipi_dsi_dcs_read() - send DCS read request command
+ * mipi_dsi_dcs_पढ़ो() - send DCS पढ़ो request command
  * @dsi: DSI peripheral device
  * @cmd: DCS command
  * @data: buffer in which to receive data
  * @len: size of receive buffer
  *
- * Return: The number of bytes read or a negative error code on failure.
+ * Return: The number of bytes पढ़ो or a negative error code on failure.
  */
-ssize_t mipi_dsi_dcs_read(struct mipi_dsi_device *dsi, u8 cmd, void *data,
-			  size_t len)
-{
-	struct mipi_dsi_msg msg = {
+sमाप_प्रकार mipi_dsi_dcs_पढ़ो(काष्ठा mipi_dsi_device *dsi, u8 cmd, व्योम *data,
+			  माप_प्रकार len)
+अणु
+	काष्ठा mipi_dsi_msg msg = अणु
 		.channel = dsi->channel,
 		.type = MIPI_DSI_DCS_READ,
 		.tx_buf = &cmd,
 		.tx_len = 1,
 		.rx_buf = data,
 		.rx_len = len
-	};
+	पूर्ण;
 
-	return mipi_dsi_device_transfer(dsi, &msg);
-}
-EXPORT_SYMBOL(mipi_dsi_dcs_read);
+	वापस mipi_dsi_device_transfer(dsi, &msg);
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_dcs_पढ़ो);
 
 /**
  * mipi_dsi_dcs_nop() - send DCS nop packet
@@ -804,123 +805,123 @@ EXPORT_SYMBOL(mipi_dsi_dcs_read);
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_nop(struct mipi_dsi_device *dsi)
-{
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_nop(काष्ठा mipi_dsi_device *dsi)
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_NOP, NULL, 0);
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_NOP, शून्य, 0);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_nop);
 
 /**
- * mipi_dsi_dcs_soft_reset() - perform a software reset of the display module
+ * mipi_dsi_dcs_soft_reset() - perक्रमm a software reset of the display module
  * @dsi: DSI peripheral device
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_soft_reset(struct mipi_dsi_device *dsi)
-{
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_soft_reset(काष्ठा mipi_dsi_device *dsi)
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SOFT_RESET, NULL, 0);
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SOFT_RESET, शून्य, 0);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_soft_reset);
 
 /**
- * mipi_dsi_dcs_get_power_mode() - query the display module's current power
+ * mipi_dsi_dcs_get_घातer_mode() - query the display module's current घातer
  *    mode
  * @dsi: DSI peripheral device
- * @mode: return location for the current power mode
+ * @mode: वापस location क्रम the current घातer mode
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_get_power_mode(struct mipi_dsi_device *dsi, u8 *mode)
-{
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_get_घातer_mode(काष्ठा mipi_dsi_device *dsi, u8 *mode)
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_read(dsi, MIPI_DCS_GET_POWER_MODE, mode,
-				sizeof(*mode));
-	if (err <= 0) {
-		if (err == 0)
+	err = mipi_dsi_dcs_पढ़ो(dsi, MIPI_DCS_GET_POWER_MODE, mode,
+				माप(*mode));
+	अगर (err <= 0) अणु
+		अगर (err == 0)
 			err = -ENODATA;
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(mipi_dsi_dcs_get_power_mode);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_dcs_get_घातer_mode);
 
 /**
- * mipi_dsi_dcs_get_pixel_format() - gets the pixel format for the RGB image
- *    data used by the interface
+ * mipi_dsi_dcs_get_pixel_क्रमmat() - माला_लो the pixel क्रमmat क्रम the RGB image
+ *    data used by the पूर्णांकerface
  * @dsi: DSI peripheral device
- * @format: return location for the pixel format
+ * @क्रमmat: वापस location क्रम the pixel क्रमmat
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_get_pixel_format(struct mipi_dsi_device *dsi, u8 *format)
-{
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_get_pixel_क्रमmat(काष्ठा mipi_dsi_device *dsi, u8 *क्रमmat)
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_read(dsi, MIPI_DCS_GET_PIXEL_FORMAT, format,
-				sizeof(*format));
-	if (err <= 0) {
-		if (err == 0)
+	err = mipi_dsi_dcs_पढ़ो(dsi, MIPI_DCS_GET_PIXEL_FORMAT, क्रमmat,
+				माप(*क्रमmat));
+	अगर (err <= 0) अणु
+		अगर (err == 0)
 			err = -ENODATA;
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(mipi_dsi_dcs_get_pixel_format);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_dcs_get_pixel_क्रमmat);
 
 /**
  * mipi_dsi_dcs_enter_sleep_mode() - disable all unnecessary blocks inside the
- *    display module except interface communication
+ *    display module except पूर्णांकerface communication
  * @dsi: DSI peripheral device
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_enter_sleep_mode(struct mipi_dsi_device *dsi)
-{
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_enter_sleep_mode(काष्ठा mipi_dsi_device *dsi)
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_ENTER_SLEEP_MODE, NULL, 0);
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_ENTER_SLEEP_MODE, शून्य, 0);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_enter_sleep_mode);
 
 /**
- * mipi_dsi_dcs_exit_sleep_mode() - enable all blocks inside the display
+ * mipi_dsi_dcs_निकास_sleep_mode() - enable all blocks inside the display
  *    module
  * @dsi: DSI peripheral device
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_exit_sleep_mode(struct mipi_dsi_device *dsi)
-{
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_निकास_sleep_mode(काष्ठा mipi_dsi_device *dsi)
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_EXIT_SLEEP_MODE, NULL, 0);
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_EXIT_SLEEP_MODE, शून्य, 0);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
-EXPORT_SYMBOL(mipi_dsi_dcs_exit_sleep_mode);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_dcs_निकास_sleep_mode);
 
 /**
  * mipi_dsi_dcs_set_display_off() - stop displaying the image data on the
@@ -929,16 +930,16 @@ EXPORT_SYMBOL(mipi_dsi_dcs_exit_sleep_mode);
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_set_display_off(struct mipi_dsi_device *dsi)
-{
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_set_display_off(काष्ठा mipi_dsi_device *dsi)
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_OFF, NULL, 0);
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SET_DISPLAY_OFF, शून्य, 0);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_set_display_off);
 
 /**
@@ -948,16 +949,16 @@ EXPORT_SYMBOL(mipi_dsi_dcs_set_display_off);
  *
  * Return: 0 on success or a negative error code on failure
  */
-int mipi_dsi_dcs_set_display_on(struct mipi_dsi_device *dsi)
-{
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_set_display_on(काष्ठा mipi_dsi_device *dsi)
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_ON, NULL, 0);
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SET_DISPLAY_ON, शून्य, 0);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_set_display_on);
 
 /**
@@ -969,19 +970,19 @@ EXPORT_SYMBOL(mipi_dsi_dcs_set_display_on);
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_set_column_address(struct mipi_dsi_device *dsi, u16 start,
+पूर्णांक mipi_dsi_dcs_set_column_address(काष्ठा mipi_dsi_device *dsi, u16 start,
 				    u16 end)
-{
-	u8 payload[4] = { start >> 8, start & 0xff, end >> 8, end & 0xff };
-	ssize_t err;
+अणु
+	u8 payload[4] = अणु start >> 8, start & 0xff, end >> 8, end & 0xff पूर्ण;
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_COLUMN_ADDRESS, payload,
-				 sizeof(payload));
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SET_COLUMN_ADDRESS, payload,
+				 माप(payload));
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_set_column_address);
 
 /**
@@ -993,104 +994,104 @@ EXPORT_SYMBOL(mipi_dsi_dcs_set_column_address);
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_set_page_address(struct mipi_dsi_device *dsi, u16 start,
+पूर्णांक mipi_dsi_dcs_set_page_address(काष्ठा mipi_dsi_device *dsi, u16 start,
 				  u16 end)
-{
-	u8 payload[4] = { start >> 8, start & 0xff, end >> 8, end & 0xff };
-	ssize_t err;
+अणु
+	u8 payload[4] = अणु start >> 8, start & 0xff, end >> 8, end & 0xff पूर्ण;
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_PAGE_ADDRESS, payload,
-				 sizeof(payload));
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SET_PAGE_ADDRESS, payload,
+				 माप(payload));
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_set_page_address);
 
 /**
  * mipi_dsi_dcs_set_tear_off() - turn off the display module's Tearing Effect
- *    output signal on the TE signal line
+ *    output संकेत on the TE संकेत line
  * @dsi: DSI peripheral device
  *
  * Return: 0 on success or a negative error code on failure
  */
-int mipi_dsi_dcs_set_tear_off(struct mipi_dsi_device *dsi)
-{
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_set_tear_off(काष्ठा mipi_dsi_device *dsi)
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_TEAR_OFF, NULL, 0);
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SET_TEAR_OFF, शून्य, 0);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_set_tear_off);
 
 /**
  * mipi_dsi_dcs_set_tear_on() - turn on the display module's Tearing Effect
- *    output signal on the TE signal line.
+ *    output संकेत on the TE संकेत line.
  * @dsi: DSI peripheral device
  * @mode: the Tearing Effect Output Line mode
  *
  * Return: 0 on success or a negative error code on failure
  */
-int mipi_dsi_dcs_set_tear_on(struct mipi_dsi_device *dsi,
-			     enum mipi_dsi_dcs_tear_mode mode)
-{
+पूर्णांक mipi_dsi_dcs_set_tear_on(काष्ठा mipi_dsi_device *dsi,
+			     क्रमागत mipi_dsi_dcs_tear_mode mode)
+अणु
 	u8 value = mode;
-	ssize_t err;
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_TEAR_ON, &value,
-				 sizeof(value));
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SET_TEAR_ON, &value,
+				 माप(value));
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_set_tear_on);
 
 /**
- * mipi_dsi_dcs_set_pixel_format() - sets the pixel format for the RGB image
- *    data used by the interface
+ * mipi_dsi_dcs_set_pixel_क्रमmat() - sets the pixel क्रमmat क्रम the RGB image
+ *    data used by the पूर्णांकerface
  * @dsi: DSI peripheral device
- * @format: pixel format
+ * @क्रमmat: pixel क्रमmat
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_set_pixel_format(struct mipi_dsi_device *dsi, u8 format)
-{
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_set_pixel_क्रमmat(काष्ठा mipi_dsi_device *dsi, u8 क्रमmat)
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_PIXEL_FORMAT, &format,
-				 sizeof(format));
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SET_PIXEL_FORMAT, &क्रमmat,
+				 माप(क्रमmat));
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
-EXPORT_SYMBOL(mipi_dsi_dcs_set_pixel_format);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_dcs_set_pixel_क्रमmat);
 
 /**
- * mipi_dsi_dcs_set_tear_scanline() - set the scanline to use as trigger for
- *    the Tearing Effect output signal of the display module
+ * mipi_dsi_dcs_set_tear_scanline() - set the scanline to use as trigger क्रम
+ *    the Tearing Effect output संकेत of the display module
  * @dsi: DSI peripheral device
  * @scanline: scanline to use as trigger
  *
  * Return: 0 on success or a negative error code on failure
  */
-int mipi_dsi_dcs_set_tear_scanline(struct mipi_dsi_device *dsi, u16 scanline)
-{
-	u8 payload[2] = { scanline >> 8, scanline & 0xff };
-	ssize_t err;
+पूर्णांक mipi_dsi_dcs_set_tear_scanline(काष्ठा mipi_dsi_device *dsi, u16 scanline)
+अणु
+	u8 payload[2] = अणु scanline >> 8, scanline & 0xff पूर्ण;
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_TEAR_SCANLINE, payload,
-				 sizeof(payload));
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SET_TEAR_SCANLINE, payload,
+				 माप(payload));
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_set_tear_scanline);
 
 /**
@@ -1101,111 +1102,111 @@ EXPORT_SYMBOL(mipi_dsi_dcs_set_tear_scanline);
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_set_display_brightness(struct mipi_dsi_device *dsi,
+पूर्णांक mipi_dsi_dcs_set_display_brightness(काष्ठा mipi_dsi_device *dsi,
 					u16 brightness)
-{
-	u8 payload[2] = { brightness & 0xff, brightness >> 8 };
-	ssize_t err;
+अणु
+	u8 payload[2] = अणु brightness & 0xff, brightness >> 8 पूर्ण;
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
-				 payload, sizeof(payload));
-	if (err < 0)
-		return err;
+	err = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
+				 payload, माप(payload));
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_set_display_brightness);
 
 /**
- * mipi_dsi_dcs_get_display_brightness() - gets the current brightness value
+ * mipi_dsi_dcs_get_display_brightness() - माला_लो the current brightness value
  *    of the display
  * @dsi: DSI peripheral device
  * @brightness: brightness value
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_dcs_get_display_brightness(struct mipi_dsi_device *dsi,
+पूर्णांक mipi_dsi_dcs_get_display_brightness(काष्ठा mipi_dsi_device *dsi,
 					u16 *brightness)
-{
-	ssize_t err;
+अणु
+	sमाप_प्रकार err;
 
-	err = mipi_dsi_dcs_read(dsi, MIPI_DCS_GET_DISPLAY_BRIGHTNESS,
-				brightness, sizeof(*brightness));
-	if (err <= 0) {
-		if (err == 0)
+	err = mipi_dsi_dcs_पढ़ो(dsi, MIPI_DCS_GET_DISPLAY_BRIGHTNESS,
+				brightness, माप(*brightness));
+	अगर (err <= 0) अणु
+		अगर (err == 0)
 			err = -ENODATA;
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(mipi_dsi_dcs_get_display_brightness);
 
-static int mipi_dsi_drv_probe(struct device *dev)
-{
-	struct mipi_dsi_driver *drv = to_mipi_dsi_driver(dev->driver);
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
+अटल पूर्णांक mipi_dsi_drv_probe(काष्ठा device *dev)
+अणु
+	काष्ठा mipi_dsi_driver *drv = to_mipi_dsi_driver(dev->driver);
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
 
-	return drv->probe(dsi);
-}
+	वापस drv->probe(dsi);
+पूर्ण
 
-static int mipi_dsi_drv_remove(struct device *dev)
-{
-	struct mipi_dsi_driver *drv = to_mipi_dsi_driver(dev->driver);
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
+अटल पूर्णांक mipi_dsi_drv_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा mipi_dsi_driver *drv = to_mipi_dsi_driver(dev->driver);
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
 
-	return drv->remove(dsi);
-}
+	वापस drv->हटाओ(dsi);
+पूर्ण
 
-static void mipi_dsi_drv_shutdown(struct device *dev)
-{
-	struct mipi_dsi_driver *drv = to_mipi_dsi_driver(dev->driver);
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
+अटल व्योम mipi_dsi_drv_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा mipi_dsi_driver *drv = to_mipi_dsi_driver(dev->driver);
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
 
-	drv->shutdown(dsi);
-}
+	drv->shutकरोwn(dsi);
+पूर्ण
 
 /**
- * mipi_dsi_driver_register_full() - register a driver for DSI devices
- * @drv: DSI driver structure
+ * mipi_dsi_driver_रेजिस्टर_full() - रेजिस्टर a driver क्रम DSI devices
+ * @drv: DSI driver काष्ठाure
  * @owner: owner module
  *
  * Return: 0 on success or a negative error code on failure.
  */
-int mipi_dsi_driver_register_full(struct mipi_dsi_driver *drv,
-				  struct module *owner)
-{
+पूर्णांक mipi_dsi_driver_रेजिस्टर_full(काष्ठा mipi_dsi_driver *drv,
+				  काष्ठा module *owner)
+अणु
 	drv->driver.bus = &mipi_dsi_bus_type;
 	drv->driver.owner = owner;
 
-	if (drv->probe)
+	अगर (drv->probe)
 		drv->driver.probe = mipi_dsi_drv_probe;
-	if (drv->remove)
-		drv->driver.remove = mipi_dsi_drv_remove;
-	if (drv->shutdown)
-		drv->driver.shutdown = mipi_dsi_drv_shutdown;
+	अगर (drv->हटाओ)
+		drv->driver.हटाओ = mipi_dsi_drv_हटाओ;
+	अगर (drv->shutकरोwn)
+		drv->driver.shutकरोwn = mipi_dsi_drv_shutकरोwn;
 
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL(mipi_dsi_driver_register_full);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_driver_रेजिस्टर_full);
 
 /**
- * mipi_dsi_driver_unregister() - unregister a driver for DSI devices
- * @drv: DSI driver structure
+ * mipi_dsi_driver_unरेजिस्टर() - unरेजिस्टर a driver क्रम DSI devices
+ * @drv: DSI driver काष्ठाure
  *
  * Return: 0 on success or a negative error code on failure.
  */
-void mipi_dsi_driver_unregister(struct mipi_dsi_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL(mipi_dsi_driver_unregister);
+व्योम mipi_dsi_driver_unरेजिस्टर(काष्ठा mipi_dsi_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(mipi_dsi_driver_unरेजिस्टर);
 
-static int __init mipi_dsi_bus_init(void)
-{
-	return bus_register(&mipi_dsi_bus_type);
-}
+अटल पूर्णांक __init mipi_dsi_bus_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&mipi_dsi_bus_type);
+पूर्ण
 postcore_initcall(mipi_dsi_bus_init);
 
 MODULE_AUTHOR("Andrzej Hajda <a.hajda@samsung.com>");

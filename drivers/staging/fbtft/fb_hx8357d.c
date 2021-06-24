@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * FB driver for the HX8357D LCD Controller
+ * FB driver क्रम the HX8357D LCD Controller
  * Copyright (C) 2015 Adafruit Industries
  *
  * Based on the HX8347D FB driver
@@ -9,44 +10,44 @@
  * Based on driver code found here: https://github.com/watterott/r61505u-Adapter
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <video/mipi_display.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <video/mipi_display.h>
 
-#include "fbtft.h"
-#include "fb_hx8357d.h"
+#समावेश "fbtft.h"
+#समावेश "fb_hx8357d.h"
 
-#define DRVNAME		"fb_hx8357d"
-#define WIDTH		320
-#define HEIGHT		480
+#घोषणा DRVNAME		"fb_hx8357d"
+#घोषणा WIDTH		320
+#घोषणा HEIGHT		480
 
-static int init_display(struct fbtft_par *par)
-{
+अटल पूर्णांक init_display(काष्ठा fbtft_par *par)
+अणु
 	par->fbtftops.reset(par);
 
 	/* Reset things like Gamma */
-	write_reg(par, MIPI_DCS_SOFT_RESET);
+	ग_लिखो_reg(par, MIPI_DCS_SOFT_RESET);
 	usleep_range(5000, 7000);
 
 	/* setextc */
-	write_reg(par, HX8357D_SETC, 0xFF, 0x83, 0x57);
+	ग_लिखो_reg(par, HX8357D_SETC, 0xFF, 0x83, 0x57);
 	msleep(150);
 
 	/* setRGB which also enables SDO */
-	write_reg(par, HX8357_SETRGB, 0x00, 0x00, 0x06, 0x06);
+	ग_लिखो_reg(par, HX8357_SETRGB, 0x00, 0x00, 0x06, 0x06);
 
 	/* -1.52V */
-	write_reg(par, HX8357D_SETCOM, 0x25);
+	ग_लिखो_reg(par, HX8357D_SETCOM, 0x25);
 
 	/* Normal mode 70Hz, Idle mode 55 Hz */
-	write_reg(par, HX8357_SETOSC, 0x68);
+	ग_लिखो_reg(par, HX8357_SETOSC, 0x68);
 
 	/* Set Panel - BGR, Gate direction swapped */
-	write_reg(par, HX8357_SETPANEL, 0x05);
+	ग_लिखो_reg(par, HX8357_SETPANEL, 0x05);
 
-	write_reg(par, HX8357_SETPWR1,
+	ग_लिखो_reg(par, HX8357_SETPWR1,
 		  0x00,  /* Not deep standby */
 		  0x15,  /* BT */
 		  0x1C,  /* VSPR */
@@ -54,7 +55,7 @@ static int init_display(struct fbtft_par *par)
 		  0x83,  /* AP */
 		  0xAA);  /* FS */
 
-	write_reg(par, HX8357D_SETSTBA,
+	ग_लिखो_reg(par, HX8357D_SETSTBA,
 		  0x50,  /* OPON normal */
 		  0x50,  /* OPON idle */
 		  0x01,  /* STBA */
@@ -62,7 +63,7 @@ static int init_display(struct fbtft_par *par)
 		  0x1E,  /* STBA */
 		  0x08);  /* GEN */
 
-	write_reg(par, HX8357D_SETCYC,
+	ग_लिखो_reg(par, HX8357D_SETCYC,
 		  0x02,  /* NW 0x02 */
 		  0x40,  /* RTN */
 		  0x00,  /* DIV */
@@ -71,7 +72,7 @@ static int init_display(struct fbtft_par *par)
 		  0x0D,  /* GDON */
 		  0x78);  /* GDOFF */
 
-	write_reg(par, HX8357D_SETGAMMA,
+	ग_लिखो_reg(par, HX8357D_SETGAMMA,
 		  0x02,
 		  0x0A,
 		  0x11,
@@ -108,86 +109,86 @@ static int init_display(struct fbtft_par *par)
 		  0x01);
 
 	/* 16 bit */
-	write_reg(par, MIPI_DCS_SET_PIXEL_FORMAT, 0x55);
+	ग_लिखो_reg(par, MIPI_DCS_SET_PIXEL_FORMAT, 0x55);
 
-	write_reg(par, MIPI_DCS_SET_ADDRESS_MODE, 0xC0);
+	ग_लिखो_reg(par, MIPI_DCS_SET_ADDRESS_MODE, 0xC0);
 
 	/* TE off */
-	write_reg(par, MIPI_DCS_SET_TEAR_ON, 0x00);
+	ग_लिखो_reg(par, MIPI_DCS_SET_TEAR_ON, 0x00);
 
 	/* tear line */
-	write_reg(par, MIPI_DCS_SET_TEAR_SCANLINE, 0x00, 0x02);
+	ग_लिखो_reg(par, MIPI_DCS_SET_TEAR_SCANLINE, 0x00, 0x02);
 
 	/* Exit Sleep */
-	write_reg(par, MIPI_DCS_EXIT_SLEEP_MODE);
+	ग_लिखो_reg(par, MIPI_DCS_EXIT_SLEEP_MODE);
 	msleep(150);
 
 	/* display on */
-	write_reg(par, MIPI_DCS_SET_DISPLAY_ON);
+	ग_लिखो_reg(par, MIPI_DCS_SET_DISPLAY_ON);
 	usleep_range(5000, 7000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
-{
-	write_reg(par, MIPI_DCS_SET_COLUMN_ADDRESS,
+अटल व्योम set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe, पूर्णांक ye)
+अणु
+	ग_लिखो_reg(par, MIPI_DCS_SET_COLUMN_ADDRESS,
 		  xs >> 8, xs & 0xff,  /* XSTART */
 		  xe >> 8, xe & 0xff); /* XEND */
 
-	write_reg(par, MIPI_DCS_SET_PAGE_ADDRESS,
+	ग_लिखो_reg(par, MIPI_DCS_SET_PAGE_ADDRESS,
 		  ys >> 8, ys & 0xff,  /* YSTART */
 		  ye >> 8, ye & 0xff); /* YEND */
 
-	write_reg(par, MIPI_DCS_WRITE_MEMORY_START);
-}
+	ग_लिखो_reg(par, MIPI_DCS_WRITE_MEMORY_START);
+पूर्ण
 
-#define HX8357D_MADCTL_MY  0x80
-#define HX8357D_MADCTL_MX  0x40
-#define HX8357D_MADCTL_MV  0x20
-#define HX8357D_MADCTL_ML  0x10
-#define HX8357D_MADCTL_RGB 0x00
-#define HX8357D_MADCTL_BGR 0x08
-#define HX8357D_MADCTL_MH  0x04
-static int set_var(struct fbtft_par *par)
-{
+#घोषणा HX8357D_MADCTL_MY  0x80
+#घोषणा HX8357D_MADCTL_MX  0x40
+#घोषणा HX8357D_MADCTL_MV  0x20
+#घोषणा HX8357D_MADCTL_ML  0x10
+#घोषणा HX8357D_MADCTL_RGB 0x00
+#घोषणा HX8357D_MADCTL_BGR 0x08
+#घोषणा HX8357D_MADCTL_MH  0x04
+अटल पूर्णांक set_var(काष्ठा fbtft_par *par)
+अणु
 	u8 val;
 
-	switch (par->info->var.rotate) {
-	case 270:
+	चयन (par->info->var.rotate) अणु
+	हाल 270:
 		val = HX8357D_MADCTL_MV | HX8357D_MADCTL_MX;
-		break;
-	case 180:
+		अवरोध;
+	हाल 180:
 		val = 0;
-		break;
-	case 90:
+		अवरोध;
+	हाल 90:
 		val = HX8357D_MADCTL_MV | HX8357D_MADCTL_MY;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val = HX8357D_MADCTL_MX | HX8357D_MADCTL_MY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	val |= (par->bgr ? HX8357D_MADCTL_RGB : HX8357D_MADCTL_BGR);
 
 	/* Memory Access Control */
-	write_reg(par, MIPI_DCS_SET_ADDRESS_MODE, val);
+	ग_लिखो_reg(par, MIPI_DCS_SET_ADDRESS_MODE, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct fbtft_display display = {
+अटल काष्ठा fbtft_display display = अणु
 	.regwidth = 8,
 	.width = WIDTH,
 	.height = HEIGHT,
 	.gamma_num = 2,
 	.gamma_len = 14,
-	.fbtftops = {
+	.fbtftops = अणु
 		.init_display = init_display,
 		.set_addr_win = set_addr_win,
 		.set_var = set_var,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 FBTFT_REGISTER_DRIVER(DRVNAME, "himax,hx8357d", &display);
 

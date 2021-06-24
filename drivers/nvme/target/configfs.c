@@ -1,399 +1,400 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Configfs interface for the NVMe target.
+ * Configfs पूर्णांकerface क्रम the NVMe target.
  * Copyright (c) 2015-2016 HGST, a Western Digital Company.
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/stat.h>
-#include <linux/ctype.h>
-#include <linux/pci.h>
-#include <linux/pci-p2pdma.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci-p2pdma.h>
 
-#include "nvmet.h"
+#समावेश "nvmet.h"
 
-static const struct config_item_type nvmet_host_type;
-static const struct config_item_type nvmet_subsys_type;
+अटल स्थिर काष्ठा config_item_type nvmet_host_type;
+अटल स्थिर काष्ठा config_item_type nvmet_subsys_type;
 
-static LIST_HEAD(nvmet_ports_list);
-struct list_head *nvmet_ports = &nvmet_ports_list;
+अटल LIST_HEAD(nvmet_ports_list);
+काष्ठा list_head *nvmet_ports = &nvmet_ports_list;
 
-struct nvmet_type_name_map {
+काष्ठा nvmet_type_name_map अणु
 	u8		type;
-	const char	*name;
-};
+	स्थिर अक्षर	*name;
+पूर्ण;
 
-static struct nvmet_type_name_map nvmet_transport[] = {
-	{ NVMF_TRTYPE_RDMA,	"rdma" },
-	{ NVMF_TRTYPE_FC,	"fc" },
-	{ NVMF_TRTYPE_TCP,	"tcp" },
-	{ NVMF_TRTYPE_LOOP,	"loop" },
-};
+अटल काष्ठा nvmet_type_name_map nvmet_transport[] = अणु
+	अणु NVMF_TRTYPE_RDMA,	"rdma" पूर्ण,
+	अणु NVMF_TRTYPE_FC,	"fc" पूर्ण,
+	अणु NVMF_TRTYPE_TCP,	"tcp" पूर्ण,
+	अणु NVMF_TRTYPE_LOOP,	"loop" पूर्ण,
+पूर्ण;
 
-static const struct nvmet_type_name_map nvmet_addr_family[] = {
-	{ NVMF_ADDR_FAMILY_PCI,		"pcie" },
-	{ NVMF_ADDR_FAMILY_IP4,		"ipv4" },
-	{ NVMF_ADDR_FAMILY_IP6,		"ipv6" },
-	{ NVMF_ADDR_FAMILY_IB,		"ib" },
-	{ NVMF_ADDR_FAMILY_FC,		"fc" },
-	{ NVMF_ADDR_FAMILY_LOOP,	"loop" },
-};
+अटल स्थिर काष्ठा nvmet_type_name_map nvmet_addr_family[] = अणु
+	अणु NVMF_ADDR_FAMILY_PCI,		"pcie" पूर्ण,
+	अणु NVMF_ADDR_FAMILY_IP4,		"ipv4" पूर्ण,
+	अणु NVMF_ADDR_FAMILY_IP6,		"ipv6" पूर्ण,
+	अणु NVMF_ADDR_FAMILY_IB,		"ib" पूर्ण,
+	अणु NVMF_ADDR_FAMILY_FC,		"fc" पूर्ण,
+	अणु NVMF_ADDR_FAMILY_LOOP,	"loop" पूर्ण,
+पूर्ण;
 
-static bool nvmet_is_port_enabled(struct nvmet_port *p, const char *caller)
-{
-	if (p->enabled)
+अटल bool nvmet_is_port_enabled(काष्ठा nvmet_port *p, स्थिर अक्षर *caller)
+अणु
+	अगर (p->enabled)
 		pr_err("Disable port '%u' before changing attribute in %s\n",
 		       le16_to_cpu(p->disc_addr.portid), caller);
-	return p->enabled;
-}
+	वापस p->enabled;
+पूर्ण
 
 /*
  * nvmet_port Generic ConfigFS definitions.
  * Used in any place in the ConfigFS tree that refers to an address.
  */
-static ssize_t nvmet_addr_adrfam_show(struct config_item *item, char *page)
-{
+अटल sमाप_प्रकार nvmet_addr_adrfam_show(काष्ठा config_item *item, अक्षर *page)
+अणु
 	u8 adrfam = to_nvmet_port(item)->disc_addr.adrfam;
-	int i;
+	पूर्णांक i;
 
-	for (i = 1; i < ARRAY_SIZE(nvmet_addr_family); i++) {
-		if (nvmet_addr_family[i].type == adrfam)
-			return sprintf(page, "%s\n", nvmet_addr_family[i].name);
-	}
+	क्रम (i = 1; i < ARRAY_SIZE(nvmet_addr_family); i++) अणु
+		अगर (nvmet_addr_family[i].type == adrfam)
+			वापस प्र_लिखो(page, "%s\n", nvmet_addr_family[i].name);
+	पूर्ण
 
-	return sprintf(page, "\n");
-}
+	वापस प्र_लिखो(page, "\n");
+पूर्ण
 
-static ssize_t nvmet_addr_adrfam_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
-	int i;
+अटल sमाप_प्रकार nvmet_addr_adrfam_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
+	पूर्णांक i;
 
-	if (nvmet_is_port_enabled(port, __func__))
-		return -EACCES;
+	अगर (nvmet_is_port_enabled(port, __func__))
+		वापस -EACCES;
 
-	for (i = 1; i < ARRAY_SIZE(nvmet_addr_family); i++) {
-		if (sysfs_streq(page, nvmet_addr_family[i].name))
-			goto found;
-	}
+	क्रम (i = 1; i < ARRAY_SIZE(nvmet_addr_family); i++) अणु
+		अगर (sysfs_streq(page, nvmet_addr_family[i].name))
+			जाओ found;
+	पूर्ण
 
 	pr_err("Invalid value '%s' for adrfam\n", page);
-	return -EINVAL;
+	वापस -EINVAL;
 
 found:
 	port->disc_addr.adrfam = nvmet_addr_family[i].type;
-	return count;
-}
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_, addr_adrfam);
 
-static ssize_t nvmet_addr_portid_show(struct config_item *item,
-		char *page)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल sमाप_प्रकार nvmet_addr_portid_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 
-	return snprintf(page, PAGE_SIZE, "%d\n",
+	वापस snम_लिखो(page, PAGE_SIZE, "%d\n",
 			le16_to_cpu(port->disc_addr.portid));
-}
+पूर्ण
 
-static ssize_t nvmet_addr_portid_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल sमाप_प्रकार nvmet_addr_portid_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 	u16 portid = 0;
 
-	if (kstrtou16(page, 0, &portid)) {
+	अगर (kstrtou16(page, 0, &portid)) अणु
 		pr_err("Invalid value '%s' for portid\n", page);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (nvmet_is_port_enabled(port, __func__))
-		return -EACCES;
+	अगर (nvmet_is_port_enabled(port, __func__))
+		वापस -EACCES;
 
 	port->disc_addr.portid = cpu_to_le16(portid);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_, addr_portid);
 
-static ssize_t nvmet_addr_traddr_show(struct config_item *item,
-		char *page)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल sमाप_प्रकार nvmet_addr_traddr_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 
-	return snprintf(page, PAGE_SIZE, "%s\n",
+	वापस snम_लिखो(page, PAGE_SIZE, "%s\n",
 			port->disc_addr.traddr);
-}
+पूर्ण
 
-static ssize_t nvmet_addr_traddr_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल sमाप_प्रकार nvmet_addr_traddr_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 
-	if (count > NVMF_TRADDR_SIZE) {
+	अगर (count > NVMF_TRADDR_SIZE) अणु
 		pr_err("Invalid value '%s' for traddr\n", page);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (nvmet_is_port_enabled(port, __func__))
-		return -EACCES;
+	अगर (nvmet_is_port_enabled(port, __func__))
+		वापस -EACCES;
 
-	if (sscanf(page, "%s\n", port->disc_addr.traddr) != 1)
-		return -EINVAL;
-	return count;
-}
+	अगर (माला_पूछो(page, "%s\n", port->disc_addr.traddr) != 1)
+		वापस -EINVAL;
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_, addr_traddr);
 
-static const struct nvmet_type_name_map nvmet_addr_treq[] = {
-	{ NVMF_TREQ_NOT_SPECIFIED,	"not specified" },
-	{ NVMF_TREQ_REQUIRED,		"required" },
-	{ NVMF_TREQ_NOT_REQUIRED,	"not required" },
-};
+अटल स्थिर काष्ठा nvmet_type_name_map nvmet_addr_treq[] = अणु
+	अणु NVMF_TREQ_NOT_SPECIFIED,	"not specified" पूर्ण,
+	अणु NVMF_TREQ_REQUIRED,		"required" पूर्ण,
+	अणु NVMF_TREQ_NOT_REQUIRED,	"not required" पूर्ण,
+पूर्ण;
 
-static ssize_t nvmet_addr_treq_show(struct config_item *item, char *page)
-{
+अटल sमाप_प्रकार nvmet_addr_treq_show(काष्ठा config_item *item, अक्षर *page)
+अणु
 	u8 treq = to_nvmet_port(item)->disc_addr.treq &
 		NVME_TREQ_SECURE_CHANNEL_MASK;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(nvmet_addr_treq); i++) {
-		if (treq == nvmet_addr_treq[i].type)
-			return sprintf(page, "%s\n", nvmet_addr_treq[i].name);
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(nvmet_addr_treq); i++) अणु
+		अगर (treq == nvmet_addr_treq[i].type)
+			वापस प्र_लिखो(page, "%s\n", nvmet_addr_treq[i].name);
+	पूर्ण
 
-	return sprintf(page, "\n");
-}
+	वापस प्र_लिखो(page, "\n");
+पूर्ण
 
-static ssize_t nvmet_addr_treq_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल sमाप_प्रकार nvmet_addr_treq_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 	u8 treq = port->disc_addr.treq & ~NVME_TREQ_SECURE_CHANNEL_MASK;
-	int i;
+	पूर्णांक i;
 
-	if (nvmet_is_port_enabled(port, __func__))
-		return -EACCES;
+	अगर (nvmet_is_port_enabled(port, __func__))
+		वापस -EACCES;
 
-	for (i = 0; i < ARRAY_SIZE(nvmet_addr_treq); i++) {
-		if (sysfs_streq(page, nvmet_addr_treq[i].name))
-			goto found;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(nvmet_addr_treq); i++) अणु
+		अगर (sysfs_streq(page, nvmet_addr_treq[i].name))
+			जाओ found;
+	पूर्ण
 
 	pr_err("Invalid value '%s' for treq\n", page);
-	return -EINVAL;
+	वापस -EINVAL;
 
 found:
 	treq |= nvmet_addr_treq[i].type;
 	port->disc_addr.treq = treq;
-	return count;
-}
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_, addr_treq);
 
-static ssize_t nvmet_addr_trsvcid_show(struct config_item *item,
-		char *page)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल sमाप_प्रकार nvmet_addr_trsvcid_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 
-	return snprintf(page, PAGE_SIZE, "%s\n",
+	वापस snम_लिखो(page, PAGE_SIZE, "%s\n",
 			port->disc_addr.trsvcid);
-}
+पूर्ण
 
-static ssize_t nvmet_addr_trsvcid_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल sमाप_प्रकार nvmet_addr_trsvcid_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 
-	if (count > NVMF_TRSVCID_SIZE) {
+	अगर (count > NVMF_TRSVCID_SIZE) अणु
 		pr_err("Invalid value '%s' for trsvcid\n", page);
-		return -EINVAL;
-	}
-	if (nvmet_is_port_enabled(port, __func__))
-		return -EACCES;
+		वापस -EINVAL;
+	पूर्ण
+	अगर (nvmet_is_port_enabled(port, __func__))
+		वापस -EACCES;
 
-	if (sscanf(page, "%s\n", port->disc_addr.trsvcid) != 1)
-		return -EINVAL;
-	return count;
-}
+	अगर (माला_पूछो(page, "%s\n", port->disc_addr.trsvcid) != 1)
+		वापस -EINVAL;
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_, addr_trsvcid);
 
-static ssize_t nvmet_param_inline_data_size_show(struct config_item *item,
-		char *page)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल sमाप_प्रकार nvmet_param_अंतरभूत_data_size_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 
-	return snprintf(page, PAGE_SIZE, "%d\n", port->inline_data_size);
-}
+	वापस snम_लिखो(page, PAGE_SIZE, "%d\n", port->अंतरभूत_data_size);
+पूर्ण
 
-static ssize_t nvmet_param_inline_data_size_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
-	int ret;
+अटल sमाप_प्रकार nvmet_param_अंतरभूत_data_size_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
+	पूर्णांक ret;
 
-	if (nvmet_is_port_enabled(port, __func__))
-		return -EACCES;
-	ret = kstrtoint(page, 0, &port->inline_data_size);
-	if (ret) {
+	अगर (nvmet_is_port_enabled(port, __func__))
+		वापस -EACCES;
+	ret = kstrtoपूर्णांक(page, 0, &port->अंतरभूत_data_size);
+	अगर (ret) अणु
 		pr_err("Invalid value '%s' for inline_data_size\n", page);
-		return -EINVAL;
-	}
-	return count;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस count;
+पूर्ण
 
-CONFIGFS_ATTR(nvmet_, param_inline_data_size);
+CONFIGFS_ATTR(nvmet_, param_अंतरभूत_data_size);
 
-#ifdef CONFIG_BLK_DEV_INTEGRITY
-static ssize_t nvmet_param_pi_enable_show(struct config_item *item,
-		char *page)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
+अटल sमाप_प्रकार nvmet_param_pi_enable_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 
-	return snprintf(page, PAGE_SIZE, "%d\n", port->pi_enable);
-}
+	वापस snम_लिखो(page, PAGE_SIZE, "%d\n", port->pi_enable);
+पूर्ण
 
-static ssize_t nvmet_param_pi_enable_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल sमाप_प्रकार nvmet_param_pi_enable_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 	bool val;
 
-	if (strtobool(page, &val))
-		return -EINVAL;
+	अगर (strtobool(page, &val))
+		वापस -EINVAL;
 
-	if (nvmet_is_port_enabled(port, __func__))
-		return -EACCES;
+	अगर (nvmet_is_port_enabled(port, __func__))
+		वापस -EACCES;
 
 	port->pi_enable = val;
-	return count;
-}
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_, param_pi_enable);
-#endif
+#पूर्ण_अगर
 
-static ssize_t nvmet_addr_trtype_show(struct config_item *item,
-		char *page)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
-	int i;
+अटल sमाप_प्रकार nvmet_addr_trtype_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(nvmet_transport); i++) {
-		if (port->disc_addr.trtype == nvmet_transport[i].type)
-			return sprintf(page, "%s\n", nvmet_transport[i].name);
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(nvmet_transport); i++) अणु
+		अगर (port->disc_addr.trtype == nvmet_transport[i].type)
+			वापस प्र_लिखो(page, "%s\n", nvmet_transport[i].name);
+	पूर्ण
 
-	return sprintf(page, "\n");
-}
+	वापस प्र_लिखो(page, "\n");
+पूर्ण
 
-static void nvmet_port_init_tsas_rdma(struct nvmet_port *port)
-{
+अटल व्योम nvmet_port_init_tsas_rdma(काष्ठा nvmet_port *port)
+अणु
 	port->disc_addr.tsas.rdma.qptype = NVMF_RDMA_QPTYPE_CONNECTED;
 	port->disc_addr.tsas.rdma.prtype = NVMF_RDMA_PRTYPE_NOT_SPECIFIED;
 	port->disc_addr.tsas.rdma.cms = NVMF_RDMA_CMS_RDMA_CM;
-}
+पूर्ण
 
-static ssize_t nvmet_addr_trtype_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
-	int i;
+अटल sमाप_प्रकार nvmet_addr_trtype_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
+	पूर्णांक i;
 
-	if (nvmet_is_port_enabled(port, __func__))
-		return -EACCES;
+	अगर (nvmet_is_port_enabled(port, __func__))
+		वापस -EACCES;
 
-	for (i = 0; i < ARRAY_SIZE(nvmet_transport); i++) {
-		if (sysfs_streq(page, nvmet_transport[i].name))
-			goto found;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(nvmet_transport); i++) अणु
+		अगर (sysfs_streq(page, nvmet_transport[i].name))
+			जाओ found;
+	पूर्ण
 
 	pr_err("Invalid value '%s' for trtype\n", page);
-	return -EINVAL;
+	वापस -EINVAL;
 
 found:
-	memset(&port->disc_addr.tsas, 0, NVMF_TSAS_SIZE);
+	स_रखो(&port->disc_addr.tsas, 0, NVMF_TSAS_SIZE);
 	port->disc_addr.trtype = nvmet_transport[i].type;
-	if (port->disc_addr.trtype == NVMF_TRTYPE_RDMA)
+	अगर (port->disc_addr.trtype == NVMF_TRTYPE_RDMA)
 		nvmet_port_init_tsas_rdma(port);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_, addr_trtype);
 
 /*
- * Namespace structures & file operation functions below
+ * Namespace काष्ठाures & file operation functions below
  */
-static ssize_t nvmet_ns_device_path_show(struct config_item *item, char *page)
-{
-	return sprintf(page, "%s\n", to_nvmet_ns(item)->device_path);
-}
+अटल sमाप_प्रकार nvmet_ns_device_path_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%s\n", to_nvmet_ns(item)->device_path);
+पूर्ण
 
-static ssize_t nvmet_ns_device_path_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_ns *ns = to_nvmet_ns(item);
-	struct nvmet_subsys *subsys = ns->subsys;
-	size_t len;
-	int ret;
+अटल sमाप_प्रकार nvmet_ns_device_path_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_ns *ns = to_nvmet_ns(item);
+	काष्ठा nvmet_subsys *subsys = ns->subsys;
+	माप_प्रकार len;
+	पूर्णांक ret;
 
 	mutex_lock(&subsys->lock);
 	ret = -EBUSY;
-	if (ns->enabled)
-		goto out_unlock;
+	अगर (ns->enabled)
+		जाओ out_unlock;
 
 	ret = -EINVAL;
-	len = strcspn(page, "\n");
-	if (!len)
-		goto out_unlock;
+	len = म_खोज(page, "\n");
+	अगर (!len)
+		जाओ out_unlock;
 
-	kfree(ns->device_path);
+	kमुक्त(ns->device_path);
 	ret = -ENOMEM;
 	ns->device_path = kmemdup_nul(page, len, GFP_KERNEL);
-	if (!ns->device_path)
-		goto out_unlock;
+	अगर (!ns->device_path)
+		जाओ out_unlock;
 
 	mutex_unlock(&subsys->lock);
-	return count;
+	वापस count;
 
 out_unlock:
 	mutex_unlock(&subsys->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_ns_, device_path);
 
-#ifdef CONFIG_PCI_P2PDMA
-static ssize_t nvmet_ns_p2pmem_show(struct config_item *item, char *page)
-{
-	struct nvmet_ns *ns = to_nvmet_ns(item);
+#अगर_घोषित CONFIG_PCI_P2PDMA
+अटल sमाप_प्रकार nvmet_ns_p2pmem_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	काष्ठा nvmet_ns *ns = to_nvmet_ns(item);
 
-	return pci_p2pdma_enable_show(page, ns->p2p_dev, ns->use_p2pmem);
-}
+	वापस pci_p2pdma_enable_show(page, ns->p2p_dev, ns->use_p2pmem);
+पूर्ण
 
-static ssize_t nvmet_ns_p2pmem_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_ns *ns = to_nvmet_ns(item);
-	struct pci_dev *p2p_dev = NULL;
+अटल sमाप_प्रकार nvmet_ns_p2pmem_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_ns *ns = to_nvmet_ns(item);
+	काष्ठा pci_dev *p2p_dev = शून्य;
 	bool use_p2pmem;
-	int ret = count;
-	int error;
+	पूर्णांक ret = count;
+	पूर्णांक error;
 
 	mutex_lock(&ns->subsys->lock);
-	if (ns->enabled) {
+	अगर (ns->enabled) अणु
 		ret = -EBUSY;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	error = pci_p2pdma_enable_store(page, &p2p_dev, &use_p2pmem);
-	if (error) {
+	अगर (error) अणु
 		ret = error;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	ns->use_p2pmem = use_p2pmem;
 	pci_dev_put(ns->p2p_dev);
@@ -402,198 +403,198 @@ static ssize_t nvmet_ns_p2pmem_store(struct config_item *item,
 out_unlock:
 	mutex_unlock(&ns->subsys->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_ns_, p2pmem);
-#endif /* CONFIG_PCI_P2PDMA */
+#पूर्ण_अगर /* CONFIG_PCI_P2PDMA */
 
-static ssize_t nvmet_ns_device_uuid_show(struct config_item *item, char *page)
-{
-	return sprintf(page, "%pUb\n", &to_nvmet_ns(item)->uuid);
-}
+अटल sमाप_प्रकार nvmet_ns_device_uuid_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%pUb\n", &to_nvmet_ns(item)->uuid);
+पूर्ण
 
-static ssize_t nvmet_ns_device_uuid_store(struct config_item *item,
-					  const char *page, size_t count)
-{
-	struct nvmet_ns *ns = to_nvmet_ns(item);
-	struct nvmet_subsys *subsys = ns->subsys;
-	int ret = 0;
+अटल sमाप_प्रकार nvmet_ns_device_uuid_store(काष्ठा config_item *item,
+					  स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_ns *ns = to_nvmet_ns(item);
+	काष्ठा nvmet_subsys *subsys = ns->subsys;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&subsys->lock);
-	if (ns->enabled) {
+	अगर (ns->enabled) अणु
 		ret = -EBUSY;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (uuid_parse(page, &ns->uuid))
+	अगर (uuid_parse(page, &ns->uuid))
 		ret = -EINVAL;
 
 out_unlock:
 	mutex_unlock(&subsys->lock);
-	return ret ? ret : count;
-}
+	वापस ret ? ret : count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_ns_, device_uuid);
 
-static ssize_t nvmet_ns_device_nguid_show(struct config_item *item, char *page)
-{
-	return sprintf(page, "%pUb\n", &to_nvmet_ns(item)->nguid);
-}
+अटल sमाप_प्रकार nvmet_ns_device_nguid_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%pUb\n", &to_nvmet_ns(item)->nguid);
+पूर्ण
 
-static ssize_t nvmet_ns_device_nguid_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_ns *ns = to_nvmet_ns(item);
-	struct nvmet_subsys *subsys = ns->subsys;
+अटल sमाप_प्रकार nvmet_ns_device_nguid_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_ns *ns = to_nvmet_ns(item);
+	काष्ठा nvmet_subsys *subsys = ns->subsys;
 	u8 nguid[16];
-	const char *p = page;
-	int i;
-	int ret = 0;
+	स्थिर अक्षर *p = page;
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&subsys->lock);
-	if (ns->enabled) {
+	अगर (ns->enabled) अणु
 		ret = -EBUSY;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	for (i = 0; i < 16; i++) {
-		if (p + 2 > page + count) {
+	क्रम (i = 0; i < 16; i++) अणु
+		अगर (p + 2 > page + count) अणु
 			ret = -EINVAL;
-			goto out_unlock;
-		}
-		if (!isxdigit(p[0]) || !isxdigit(p[1])) {
+			जाओ out_unlock;
+		पूर्ण
+		अगर (!है_षष्ठादशक(p[0]) || !है_षष्ठादशक(p[1])) अणु
 			ret = -EINVAL;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		nguid[i] = (hex_to_bin(p[0]) << 4) | hex_to_bin(p[1]);
 		p += 2;
 
-		if (*p == '-' || *p == ':')
+		अगर (*p == '-' || *p == ':')
 			p++;
-	}
+	पूर्ण
 
-	memcpy(&ns->nguid, nguid, sizeof(nguid));
+	स_नकल(&ns->nguid, nguid, माप(nguid));
 out_unlock:
 	mutex_unlock(&subsys->lock);
-	return ret ? ret : count;
-}
+	वापस ret ? ret : count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_ns_, device_nguid);
 
-static ssize_t nvmet_ns_ana_grpid_show(struct config_item *item, char *page)
-{
-	return sprintf(page, "%u\n", to_nvmet_ns(item)->anagrpid);
-}
+अटल sमाप_प्रकार nvmet_ns_ana_grpid_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%u\n", to_nvmet_ns(item)->anagrpid);
+पूर्ण
 
-static ssize_t nvmet_ns_ana_grpid_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_ns *ns = to_nvmet_ns(item);
+अटल sमाप_प्रकार nvmet_ns_ana_grpid_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_ns *ns = to_nvmet_ns(item);
 	u32 oldgrpid, newgrpid;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou32(page, 0, &newgrpid);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (newgrpid < 1 || newgrpid > NVMET_MAX_ANAGRPS)
-		return -EINVAL;
+	अगर (newgrpid < 1 || newgrpid > NVMET_MAX_ANAGRPS)
+		वापस -EINVAL;
 
-	down_write(&nvmet_ana_sem);
+	करोwn_ग_लिखो(&nvmet_ana_sem);
 	oldgrpid = ns->anagrpid;
 	nvmet_ana_group_enabled[newgrpid]++;
 	ns->anagrpid = newgrpid;
 	nvmet_ana_group_enabled[oldgrpid]--;
 	nvmet_ana_chgcnt++;
-	up_write(&nvmet_ana_sem);
+	up_ग_लिखो(&nvmet_ana_sem);
 
-	nvmet_send_ana_event(ns->subsys, NULL);
-	return count;
-}
+	nvmet_send_ana_event(ns->subsys, शून्य);
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_ns_, ana_grpid);
 
-static ssize_t nvmet_ns_enable_show(struct config_item *item, char *page)
-{
-	return sprintf(page, "%d\n", to_nvmet_ns(item)->enabled);
-}
+अटल sमाप_प्रकार nvmet_ns_enable_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%d\n", to_nvmet_ns(item)->enabled);
+पूर्ण
 
-static ssize_t nvmet_ns_enable_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_ns *ns = to_nvmet_ns(item);
+अटल sमाप_प्रकार nvmet_ns_enable_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_ns *ns = to_nvmet_ns(item);
 	bool enable;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (strtobool(page, &enable))
-		return -EINVAL;
+	अगर (strtobool(page, &enable))
+		वापस -EINVAL;
 
-	if (enable)
+	अगर (enable)
 		ret = nvmet_ns_enable(ns);
-	else
+	अन्यथा
 		nvmet_ns_disable(ns);
 
-	return ret ? ret : count;
-}
+	वापस ret ? ret : count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_ns_, enable);
 
-static ssize_t nvmet_ns_buffered_io_show(struct config_item *item, char *page)
-{
-	return sprintf(page, "%d\n", to_nvmet_ns(item)->buffered_io);
-}
+अटल sमाप_प्रकार nvmet_ns_buffered_io_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%d\n", to_nvmet_ns(item)->buffered_io);
+पूर्ण
 
-static ssize_t nvmet_ns_buffered_io_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_ns *ns = to_nvmet_ns(item);
+अटल sमाप_प्रकार nvmet_ns_buffered_io_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_ns *ns = to_nvmet_ns(item);
 	bool val;
 
-	if (strtobool(page, &val))
-		return -EINVAL;
+	अगर (strtobool(page, &val))
+		वापस -EINVAL;
 
 	mutex_lock(&ns->subsys->lock);
-	if (ns->enabled) {
+	अगर (ns->enabled) अणु
 		pr_err("disable ns before setting buffered_io value.\n");
 		mutex_unlock(&ns->subsys->lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ns->buffered_io = val;
 	mutex_unlock(&ns->subsys->lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_ns_, buffered_io);
 
-static ssize_t nvmet_ns_revalidate_size_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_ns *ns = to_nvmet_ns(item);
+अटल sमाप_प्रकार nvmet_ns_revalidate_size_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_ns *ns = to_nvmet_ns(item);
 	bool val;
 
-	if (strtobool(page, &val))
-		return -EINVAL;
+	अगर (strtobool(page, &val))
+		वापस -EINVAL;
 
-	if (!val)
-		return -EINVAL;
+	अगर (!val)
+		वापस -EINVAL;
 
 	mutex_lock(&ns->subsys->lock);
-	if (!ns->enabled) {
+	अगर (!ns->enabled) अणु
 		pr_err("enable ns before revalidate.\n");
 		mutex_unlock(&ns->subsys->lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	nvmet_ns_revalidate(ns);
 	mutex_unlock(&ns->subsys->lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR_WO(nvmet_ns_, revalidate_size);
 
-static struct configfs_attribute *nvmet_ns_attrs[] = {
+अटल काष्ठा configfs_attribute *nvmet_ns_attrs[] = अणु
 	&nvmet_ns_attr_device_path,
 	&nvmet_ns_attr_device_nguid,
 	&nvmet_ns_attr_device_uuid,
@@ -601,715 +602,715 @@ static struct configfs_attribute *nvmet_ns_attrs[] = {
 	&nvmet_ns_attr_enable,
 	&nvmet_ns_attr_buffered_io,
 	&nvmet_ns_attr_revalidate_size,
-#ifdef CONFIG_PCI_P2PDMA
+#अगर_घोषित CONFIG_PCI_P2PDMA
 	&nvmet_ns_attr_p2pmem,
-#endif
-	NULL,
-};
+#पूर्ण_अगर
+	शून्य,
+पूर्ण;
 
-static void nvmet_ns_release(struct config_item *item)
-{
-	struct nvmet_ns *ns = to_nvmet_ns(item);
+अटल व्योम nvmet_ns_release(काष्ठा config_item *item)
+अणु
+	काष्ठा nvmet_ns *ns = to_nvmet_ns(item);
 
-	nvmet_ns_free(ns);
-}
+	nvmet_ns_मुक्त(ns);
+पूर्ण
 
-static struct configfs_item_operations nvmet_ns_item_ops = {
+अटल काष्ठा configfs_item_operations nvmet_ns_item_ops = अणु
 	.release		= nvmet_ns_release,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_ns_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_ns_type = अणु
 	.ct_item_ops		= &nvmet_ns_item_ops,
 	.ct_attrs		= nvmet_ns_attrs,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct config_group *nvmet_ns_make(struct config_group *group,
-		const char *name)
-{
-	struct nvmet_subsys *subsys = namespaces_to_subsys(&group->cg_item);
-	struct nvmet_ns *ns;
-	int ret;
+अटल काष्ठा config_group *nvmet_ns_make(काष्ठा config_group *group,
+		स्थिर अक्षर *name)
+अणु
+	काष्ठा nvmet_subsys *subsys = namespaces_to_subsys(&group->cg_item);
+	काष्ठा nvmet_ns *ns;
+	पूर्णांक ret;
 	u32 nsid;
 
 	ret = kstrtou32(name, 0, &nsid);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = -EINVAL;
-	if (nsid == 0 || nsid == NVME_NSID_ALL) {
+	अगर (nsid == 0 || nsid == NVME_NSID_ALL) अणु
 		pr_err("invalid nsid %#x", nsid);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = -ENOMEM;
 	ns = nvmet_ns_alloc(subsys, nsid);
-	if (!ns)
-		goto out;
+	अगर (!ns)
+		जाओ out;
 	config_group_init_type_name(&ns->group, name, &nvmet_ns_type);
 
 	pr_info("adding nsid %d to subsystem %s\n", nsid, subsys->subsysnqn);
 
-	return &ns->group;
+	वापस &ns->group;
 out:
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static struct configfs_group_operations nvmet_namespaces_group_ops = {
+अटल काष्ठा configfs_group_operations nvmet_namespaces_group_ops = अणु
 	.make_group		= nvmet_ns_make,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_namespaces_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_namespaces_type = अणु
 	.ct_group_ops		= &nvmet_namespaces_group_ops,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-#ifdef CONFIG_NVME_TARGET_PASSTHRU
+#अगर_घोषित CONFIG_NVME_TARGET_PASSTHRU
 
-static ssize_t nvmet_passthru_device_path_show(struct config_item *item,
-		char *page)
-{
-	struct nvmet_subsys *subsys = to_subsys(item->ci_parent);
+अटल sमाप_प्रकार nvmet_passthru_device_path_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item->ci_parent);
 
-	return snprintf(page, PAGE_SIZE, "%s\n", subsys->passthru_ctrl_path);
-}
+	वापस snम_लिखो(page, PAGE_SIZE, "%s\n", subsys->passthru_ctrl_path);
+पूर्ण
 
-static ssize_t nvmet_passthru_device_path_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_subsys *subsys = to_subsys(item->ci_parent);
-	size_t len;
-	int ret;
+अटल sमाप_प्रकार nvmet_passthru_device_path_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item->ci_parent);
+	माप_प्रकार len;
+	पूर्णांक ret;
 
 	mutex_lock(&subsys->lock);
 
 	ret = -EBUSY;
-	if (subsys->passthru_ctrl)
-		goto out_unlock;
+	अगर (subsys->passthru_ctrl)
+		जाओ out_unlock;
 
 	ret = -EINVAL;
-	len = strcspn(page, "\n");
-	if (!len)
-		goto out_unlock;
+	len = म_खोज(page, "\n");
+	अगर (!len)
+		जाओ out_unlock;
 
-	kfree(subsys->passthru_ctrl_path);
+	kमुक्त(subsys->passthru_ctrl_path);
 	ret = -ENOMEM;
 	subsys->passthru_ctrl_path = kstrndup(page, len, GFP_KERNEL);
-	if (!subsys->passthru_ctrl_path)
-		goto out_unlock;
+	अगर (!subsys->passthru_ctrl_path)
+		जाओ out_unlock;
 
 	mutex_unlock(&subsys->lock);
 
-	return count;
+	वापस count;
 out_unlock:
 	mutex_unlock(&subsys->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 CONFIGFS_ATTR(nvmet_passthru_, device_path);
 
-static ssize_t nvmet_passthru_enable_show(struct config_item *item,
-		char *page)
-{
-	struct nvmet_subsys *subsys = to_subsys(item->ci_parent);
+अटल sमाप_प्रकार nvmet_passthru_enable_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item->ci_parent);
 
-	return sprintf(page, "%d\n", subsys->passthru_ctrl ? 1 : 0);
-}
+	वापस प्र_लिखो(page, "%d\n", subsys->passthru_ctrl ? 1 : 0);
+पूर्ण
 
-static ssize_t nvmet_passthru_enable_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_subsys *subsys = to_subsys(item->ci_parent);
+अटल sमाप_प्रकार nvmet_passthru_enable_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item->ci_parent);
 	bool enable;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (strtobool(page, &enable))
-		return -EINVAL;
+	अगर (strtobool(page, &enable))
+		वापस -EINVAL;
 
-	if (enable)
+	अगर (enable)
 		ret = nvmet_passthru_ctrl_enable(subsys);
-	else
+	अन्यथा
 		nvmet_passthru_ctrl_disable(subsys);
 
-	return ret ? ret : count;
-}
+	वापस ret ? ret : count;
+पूर्ण
 CONFIGFS_ATTR(nvmet_passthru_, enable);
 
-static ssize_t nvmet_passthru_admin_timeout_show(struct config_item *item,
-		char *page)
-{
-	return sprintf(page, "%u\n", to_subsys(item->ci_parent)->admin_timeout);
-}
+अटल sमाप_प्रकार nvmet_passthru_admin_समयout_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%u\n", to_subsys(item->ci_parent)->admin_समयout);
+पूर्ण
 
-static ssize_t nvmet_passthru_admin_timeout_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_subsys *subsys = to_subsys(item->ci_parent);
-	unsigned int timeout;
+अटल sमाप_प्रकार nvmet_passthru_admin_समयout_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item->ci_parent);
+	अचिन्हित पूर्णांक समयout;
 
-	if (kstrtouint(page, 0, &timeout))
-		return -EINVAL;
-	subsys->admin_timeout = timeout;
-	return count;
-}
-CONFIGFS_ATTR(nvmet_passthru_, admin_timeout);
+	अगर (kstrtouपूर्णांक(page, 0, &समयout))
+		वापस -EINVAL;
+	subsys->admin_समयout = समयout;
+	वापस count;
+पूर्ण
+CONFIGFS_ATTR(nvmet_passthru_, admin_समयout);
 
-static ssize_t nvmet_passthru_io_timeout_show(struct config_item *item,
-		char *page)
-{
-	return sprintf(page, "%u\n", to_subsys(item->ci_parent)->io_timeout);
-}
+अटल sमाप_प्रकार nvmet_passthru_io_समयout_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%u\n", to_subsys(item->ci_parent)->io_समयout);
+पूर्ण
 
-static ssize_t nvmet_passthru_io_timeout_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_subsys *subsys = to_subsys(item->ci_parent);
-	unsigned int timeout;
+अटल sमाप_प्रकार nvmet_passthru_io_समयout_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item->ci_parent);
+	अचिन्हित पूर्णांक समयout;
 
-	if (kstrtouint(page, 0, &timeout))
-		return -EINVAL;
-	subsys->io_timeout = timeout;
-	return count;
-}
-CONFIGFS_ATTR(nvmet_passthru_, io_timeout);
+	अगर (kstrtouपूर्णांक(page, 0, &समयout))
+		वापस -EINVAL;
+	subsys->io_समयout = समयout;
+	वापस count;
+पूर्ण
+CONFIGFS_ATTR(nvmet_passthru_, io_समयout);
 
-static struct configfs_attribute *nvmet_passthru_attrs[] = {
+अटल काष्ठा configfs_attribute *nvmet_passthru_attrs[] = अणु
 	&nvmet_passthru_attr_device_path,
 	&nvmet_passthru_attr_enable,
-	&nvmet_passthru_attr_admin_timeout,
-	&nvmet_passthru_attr_io_timeout,
-	NULL,
-};
+	&nvmet_passthru_attr_admin_समयout,
+	&nvmet_passthru_attr_io_समयout,
+	शून्य,
+पूर्ण;
 
-static const struct config_item_type nvmet_passthru_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_passthru_type = अणु
 	.ct_attrs		= nvmet_passthru_attrs,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static void nvmet_add_passthru_group(struct nvmet_subsys *subsys)
-{
+अटल व्योम nvmet_add_passthru_group(काष्ठा nvmet_subsys *subsys)
+अणु
 	config_group_init_type_name(&subsys->passthru_group,
 				    "passthru", &nvmet_passthru_type);
-	configfs_add_default_group(&subsys->passthru_group,
+	configfs_add_शेष_group(&subsys->passthru_group,
 				   &subsys->group);
-}
+पूर्ण
 
-#else /* CONFIG_NVME_TARGET_PASSTHRU */
+#अन्यथा /* CONFIG_NVME_TARGET_PASSTHRU */
 
-static void nvmet_add_passthru_group(struct nvmet_subsys *subsys)
-{
-}
+अटल व्योम nvmet_add_passthru_group(काष्ठा nvmet_subsys *subsys)
+अणु
+पूर्ण
 
-#endif /* CONFIG_NVME_TARGET_PASSTHRU */
+#पूर्ण_अगर /* CONFIG_NVME_TARGET_PASSTHRU */
 
-static int nvmet_port_subsys_allow_link(struct config_item *parent,
-		struct config_item *target)
-{
-	struct nvmet_port *port = to_nvmet_port(parent->ci_parent);
-	struct nvmet_subsys *subsys;
-	struct nvmet_subsys_link *link, *p;
-	int ret;
+अटल पूर्णांक nvmet_port_subsys_allow_link(काष्ठा config_item *parent,
+		काष्ठा config_item *target)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(parent->ci_parent);
+	काष्ठा nvmet_subsys *subsys;
+	काष्ठा nvmet_subsys_link *link, *p;
+	पूर्णांक ret;
 
-	if (target->ci_type != &nvmet_subsys_type) {
+	अगर (target->ci_type != &nvmet_subsys_type) अणु
 		pr_err("can only link subsystems into the subsystems dir.!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	subsys = to_subsys(target);
-	link = kmalloc(sizeof(*link), GFP_KERNEL);
-	if (!link)
-		return -ENOMEM;
+	link = kदो_स्मृति(माप(*link), GFP_KERNEL);
+	अगर (!link)
+		वापस -ENOMEM;
 	link->subsys = subsys;
 
-	down_write(&nvmet_config_sem);
+	करोwn_ग_लिखो(&nvmet_config_sem);
 	ret = -EEXIST;
-	list_for_each_entry(p, &port->subsystems, entry) {
-		if (p->subsys == subsys)
-			goto out_free_link;
-	}
+	list_क्रम_each_entry(p, &port->subप्रणालीs, entry) अणु
+		अगर (p->subsys == subsys)
+			जाओ out_मुक्त_link;
+	पूर्ण
 
-	if (list_empty(&port->subsystems)) {
+	अगर (list_empty(&port->subप्रणालीs)) अणु
 		ret = nvmet_enable_port(port);
-		if (ret)
-			goto out_free_link;
-	}
+		अगर (ret)
+			जाओ out_मुक्त_link;
+	पूर्ण
 
-	list_add_tail(&link->entry, &port->subsystems);
+	list_add_tail(&link->entry, &port->subप्रणालीs);
 	nvmet_port_disc_changed(port, subsys);
 
-	up_write(&nvmet_config_sem);
-	return 0;
+	up_ग_लिखो(&nvmet_config_sem);
+	वापस 0;
 
-out_free_link:
-	up_write(&nvmet_config_sem);
-	kfree(link);
-	return ret;
-}
+out_मुक्त_link:
+	up_ग_लिखो(&nvmet_config_sem);
+	kमुक्त(link);
+	वापस ret;
+पूर्ण
 
-static void nvmet_port_subsys_drop_link(struct config_item *parent,
-		struct config_item *target)
-{
-	struct nvmet_port *port = to_nvmet_port(parent->ci_parent);
-	struct nvmet_subsys *subsys = to_subsys(target);
-	struct nvmet_subsys_link *p;
+अटल व्योम nvmet_port_subsys_drop_link(काष्ठा config_item *parent,
+		काष्ठा config_item *target)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(parent->ci_parent);
+	काष्ठा nvmet_subsys *subsys = to_subsys(target);
+	काष्ठा nvmet_subsys_link *p;
 
-	down_write(&nvmet_config_sem);
-	list_for_each_entry(p, &port->subsystems, entry) {
-		if (p->subsys == subsys)
-			goto found;
-	}
-	up_write(&nvmet_config_sem);
-	return;
+	करोwn_ग_लिखो(&nvmet_config_sem);
+	list_क्रम_each_entry(p, &port->subप्रणालीs, entry) अणु
+		अगर (p->subsys == subsys)
+			जाओ found;
+	पूर्ण
+	up_ग_लिखो(&nvmet_config_sem);
+	वापस;
 
 found:
 	list_del(&p->entry);
 	nvmet_port_del_ctrls(port, subsys);
 	nvmet_port_disc_changed(port, subsys);
 
-	if (list_empty(&port->subsystems))
+	अगर (list_empty(&port->subप्रणालीs))
 		nvmet_disable_port(port);
-	up_write(&nvmet_config_sem);
-	kfree(p);
-}
+	up_ग_लिखो(&nvmet_config_sem);
+	kमुक्त(p);
+पूर्ण
 
-static struct configfs_item_operations nvmet_port_subsys_item_ops = {
+अटल काष्ठा configfs_item_operations nvmet_port_subsys_item_ops = अणु
 	.allow_link		= nvmet_port_subsys_allow_link,
 	.drop_link		= nvmet_port_subsys_drop_link,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_port_subsys_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_port_subsys_type = अणु
 	.ct_item_ops		= &nvmet_port_subsys_item_ops,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int nvmet_allowed_hosts_allow_link(struct config_item *parent,
-		struct config_item *target)
-{
-	struct nvmet_subsys *subsys = to_subsys(parent->ci_parent);
-	struct nvmet_host *host;
-	struct nvmet_host_link *link, *p;
-	int ret;
+अटल पूर्णांक nvmet_allowed_hosts_allow_link(काष्ठा config_item *parent,
+		काष्ठा config_item *target)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(parent->ci_parent);
+	काष्ठा nvmet_host *host;
+	काष्ठा nvmet_host_link *link, *p;
+	पूर्णांक ret;
 
-	if (target->ci_type != &nvmet_host_type) {
+	अगर (target->ci_type != &nvmet_host_type) अणु
 		pr_err("can only link hosts into the allowed_hosts directory!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	host = to_host(target);
-	link = kmalloc(sizeof(*link), GFP_KERNEL);
-	if (!link)
-		return -ENOMEM;
+	link = kदो_स्मृति(माप(*link), GFP_KERNEL);
+	अगर (!link)
+		वापस -ENOMEM;
 	link->host = host;
 
-	down_write(&nvmet_config_sem);
+	करोwn_ग_लिखो(&nvmet_config_sem);
 	ret = -EINVAL;
-	if (subsys->allow_any_host) {
+	अगर (subsys->allow_any_host) अणु
 		pr_err("can't add hosts when allow_any_host is set!\n");
-		goto out_free_link;
-	}
+		जाओ out_मुक्त_link;
+	पूर्ण
 
 	ret = -EEXIST;
-	list_for_each_entry(p, &subsys->hosts, entry) {
-		if (!strcmp(nvmet_host_name(p->host), nvmet_host_name(host)))
-			goto out_free_link;
-	}
+	list_क्रम_each_entry(p, &subsys->hosts, entry) अणु
+		अगर (!म_भेद(nvmet_host_name(p->host), nvmet_host_name(host)))
+			जाओ out_मुक्त_link;
+	पूर्ण
 	list_add_tail(&link->entry, &subsys->hosts);
 	nvmet_subsys_disc_changed(subsys, host);
 
-	up_write(&nvmet_config_sem);
-	return 0;
-out_free_link:
-	up_write(&nvmet_config_sem);
-	kfree(link);
-	return ret;
-}
+	up_ग_लिखो(&nvmet_config_sem);
+	वापस 0;
+out_मुक्त_link:
+	up_ग_लिखो(&nvmet_config_sem);
+	kमुक्त(link);
+	वापस ret;
+पूर्ण
 
-static void nvmet_allowed_hosts_drop_link(struct config_item *parent,
-		struct config_item *target)
-{
-	struct nvmet_subsys *subsys = to_subsys(parent->ci_parent);
-	struct nvmet_host *host = to_host(target);
-	struct nvmet_host_link *p;
+अटल व्योम nvmet_allowed_hosts_drop_link(काष्ठा config_item *parent,
+		काष्ठा config_item *target)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(parent->ci_parent);
+	काष्ठा nvmet_host *host = to_host(target);
+	काष्ठा nvmet_host_link *p;
 
-	down_write(&nvmet_config_sem);
-	list_for_each_entry(p, &subsys->hosts, entry) {
-		if (!strcmp(nvmet_host_name(p->host), nvmet_host_name(host)))
-			goto found;
-	}
-	up_write(&nvmet_config_sem);
-	return;
+	करोwn_ग_लिखो(&nvmet_config_sem);
+	list_क्रम_each_entry(p, &subsys->hosts, entry) अणु
+		अगर (!म_भेद(nvmet_host_name(p->host), nvmet_host_name(host)))
+			जाओ found;
+	पूर्ण
+	up_ग_लिखो(&nvmet_config_sem);
+	वापस;
 
 found:
 	list_del(&p->entry);
 	nvmet_subsys_disc_changed(subsys, host);
 
-	up_write(&nvmet_config_sem);
-	kfree(p);
-}
+	up_ग_लिखो(&nvmet_config_sem);
+	kमुक्त(p);
+पूर्ण
 
-static struct configfs_item_operations nvmet_allowed_hosts_item_ops = {
+अटल काष्ठा configfs_item_operations nvmet_allowed_hosts_item_ops = अणु
 	.allow_link		= nvmet_allowed_hosts_allow_link,
 	.drop_link		= nvmet_allowed_hosts_drop_link,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_allowed_hosts_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_allowed_hosts_type = अणु
 	.ct_item_ops		= &nvmet_allowed_hosts_item_ops,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static ssize_t nvmet_subsys_attr_allow_any_host_show(struct config_item *item,
-		char *page)
-{
-	return snprintf(page, PAGE_SIZE, "%d\n",
+अटल sमाप_प्रकार nvmet_subsys_attr_allow_any_host_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	वापस snम_लिखो(page, PAGE_SIZE, "%d\n",
 		to_subsys(item)->allow_any_host);
-}
+पूर्ण
 
-static ssize_t nvmet_subsys_attr_allow_any_host_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_subsys *subsys = to_subsys(item);
+अटल sमाप_प्रकार nvmet_subsys_attr_allow_any_host_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item);
 	bool allow_any_host;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (strtobool(page, &allow_any_host))
-		return -EINVAL;
+	अगर (strtobool(page, &allow_any_host))
+		वापस -EINVAL;
 
-	down_write(&nvmet_config_sem);
-	if (allow_any_host && !list_empty(&subsys->hosts)) {
+	करोwn_ग_लिखो(&nvmet_config_sem);
+	अगर (allow_any_host && !list_empty(&subsys->hosts)) अणु
 		pr_err("Can't set allow_any_host when explicit hosts are set!\n");
 		ret = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (subsys->allow_any_host != allow_any_host) {
+	अगर (subsys->allow_any_host != allow_any_host) अणु
 		subsys->allow_any_host = allow_any_host;
-		nvmet_subsys_disc_changed(subsys, NULL);
-	}
+		nvmet_subsys_disc_changed(subsys, शून्य);
+	पूर्ण
 
 out_unlock:
-	up_write(&nvmet_config_sem);
-	return ret ? ret : count;
-}
+	up_ग_लिखो(&nvmet_config_sem);
+	वापस ret ? ret : count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_subsys_, attr_allow_any_host);
 
-static ssize_t nvmet_subsys_attr_version_show(struct config_item *item,
-					      char *page)
-{
-	struct nvmet_subsys *subsys = to_subsys(item);
+अटल sमाप_प्रकार nvmet_subsys_attr_version_show(काष्ठा config_item *item,
+					      अक्षर *page)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item);
 
-	if (NVME_TERTIARY(subsys->ver))
-		return snprintf(page, PAGE_SIZE, "%llu.%llu.%llu\n",
+	अगर (NVME_TERTIARY(subsys->ver))
+		वापस snम_लिखो(page, PAGE_SIZE, "%llu.%llu.%llu\n",
 				NVME_MAJOR(subsys->ver),
 				NVME_MINOR(subsys->ver),
 				NVME_TERTIARY(subsys->ver));
 
-	return snprintf(page, PAGE_SIZE, "%llu.%llu\n",
+	वापस snम_लिखो(page, PAGE_SIZE, "%llu.%llu\n",
 			NVME_MAJOR(subsys->ver),
 			NVME_MINOR(subsys->ver));
-}
+पूर्ण
 
-static ssize_t nvmet_subsys_attr_version_store(struct config_item *item,
-					       const char *page, size_t count)
-{
-	struct nvmet_subsys *subsys = to_subsys(item);
-	int major, minor, tertiary = 0;
-	int ret;
+अटल sमाप_प्रकार nvmet_subsys_attr_version_store(काष्ठा config_item *item,
+					       स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item);
+	पूर्णांक major, minor, tertiary = 0;
+	पूर्णांक ret;
 
-	/* passthru subsystems use the underlying controller's version */
-	if (nvmet_passthru_ctrl(subsys))
-		return -EINVAL;
+	/* passthru subप्रणालीs use the underlying controller's version */
+	अगर (nvmet_passthru_ctrl(subsys))
+		वापस -EINVAL;
 
-	ret = sscanf(page, "%d.%d.%d\n", &major, &minor, &tertiary);
-	if (ret != 2 && ret != 3)
-		return -EINVAL;
+	ret = माला_पूछो(page, "%d.%d.%d\n", &major, &minor, &tertiary);
+	अगर (ret != 2 && ret != 3)
+		वापस -EINVAL;
 
-	down_write(&nvmet_config_sem);
+	करोwn_ग_लिखो(&nvmet_config_sem);
 	subsys->ver = NVME_VS(major, minor, tertiary);
-	up_write(&nvmet_config_sem);
+	up_ग_लिखो(&nvmet_config_sem);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 CONFIGFS_ATTR(nvmet_subsys_, attr_version);
 
-static ssize_t nvmet_subsys_attr_serial_show(struct config_item *item,
-					     char *page)
-{
-	struct nvmet_subsys *subsys = to_subsys(item);
+अटल sमाप_प्रकार nvmet_subsys_attr_serial_show(काष्ठा config_item *item,
+					     अक्षर *page)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item);
 
-	return snprintf(page, PAGE_SIZE, "%llx\n", subsys->serial);
-}
+	वापस snम_लिखो(page, PAGE_SIZE, "%llx\n", subsys->serial);
+पूर्ण
 
-static ssize_t nvmet_subsys_attr_serial_store(struct config_item *item,
-					      const char *page, size_t count)
-{
+अटल sमाप_प्रकार nvmet_subsys_attr_serial_store(काष्ठा config_item *item,
+					      स्थिर अक्षर *page, माप_प्रकार count)
+अणु
 	u64 serial;
 
-	if (sscanf(page, "%llx\n", &serial) != 1)
-		return -EINVAL;
+	अगर (माला_पूछो(page, "%llx\n", &serial) != 1)
+		वापस -EINVAL;
 
-	down_write(&nvmet_config_sem);
+	करोwn_ग_लिखो(&nvmet_config_sem);
 	to_subsys(item)->serial = serial;
-	up_write(&nvmet_config_sem);
+	up_ग_लिखो(&nvmet_config_sem);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 CONFIGFS_ATTR(nvmet_subsys_, attr_serial);
 
-static ssize_t nvmet_subsys_attr_cntlid_min_show(struct config_item *item,
-						 char *page)
-{
-	return snprintf(page, PAGE_SIZE, "%u\n", to_subsys(item)->cntlid_min);
-}
+अटल sमाप_प्रकार nvmet_subsys_attr_cntlid_min_show(काष्ठा config_item *item,
+						 अक्षर *page)
+अणु
+	वापस snम_लिखो(page, PAGE_SIZE, "%u\n", to_subsys(item)->cntlid_min);
+पूर्ण
 
-static ssize_t nvmet_subsys_attr_cntlid_min_store(struct config_item *item,
-						  const char *page, size_t cnt)
-{
+अटल sमाप_प्रकार nvmet_subsys_attr_cntlid_min_store(काष्ठा config_item *item,
+						  स्थिर अक्षर *page, माप_प्रकार cnt)
+अणु
 	u16 cntlid_min;
 
-	if (sscanf(page, "%hu\n", &cntlid_min) != 1)
-		return -EINVAL;
+	अगर (माला_पूछो(page, "%hu\n", &cntlid_min) != 1)
+		वापस -EINVAL;
 
-	if (cntlid_min == 0)
-		return -EINVAL;
+	अगर (cntlid_min == 0)
+		वापस -EINVAL;
 
-	down_write(&nvmet_config_sem);
-	if (cntlid_min >= to_subsys(item)->cntlid_max)
-		goto out_unlock;
+	करोwn_ग_लिखो(&nvmet_config_sem);
+	अगर (cntlid_min >= to_subsys(item)->cntlid_max)
+		जाओ out_unlock;
 	to_subsys(item)->cntlid_min = cntlid_min;
-	up_write(&nvmet_config_sem);
-	return cnt;
+	up_ग_लिखो(&nvmet_config_sem);
+	वापस cnt;
 
 out_unlock:
-	up_write(&nvmet_config_sem);
-	return -EINVAL;
-}
+	up_ग_लिखो(&nvmet_config_sem);
+	वापस -EINVAL;
+पूर्ण
 CONFIGFS_ATTR(nvmet_subsys_, attr_cntlid_min);
 
-static ssize_t nvmet_subsys_attr_cntlid_max_show(struct config_item *item,
-						 char *page)
-{
-	return snprintf(page, PAGE_SIZE, "%u\n", to_subsys(item)->cntlid_max);
-}
+अटल sमाप_प्रकार nvmet_subsys_attr_cntlid_max_show(काष्ठा config_item *item,
+						 अक्षर *page)
+अणु
+	वापस snम_लिखो(page, PAGE_SIZE, "%u\n", to_subsys(item)->cntlid_max);
+पूर्ण
 
-static ssize_t nvmet_subsys_attr_cntlid_max_store(struct config_item *item,
-						  const char *page, size_t cnt)
-{
+अटल sमाप_प्रकार nvmet_subsys_attr_cntlid_max_store(काष्ठा config_item *item,
+						  स्थिर अक्षर *page, माप_प्रकार cnt)
+अणु
 	u16 cntlid_max;
 
-	if (sscanf(page, "%hu\n", &cntlid_max) != 1)
-		return -EINVAL;
+	अगर (माला_पूछो(page, "%hu\n", &cntlid_max) != 1)
+		वापस -EINVAL;
 
-	if (cntlid_max == 0)
-		return -EINVAL;
+	अगर (cntlid_max == 0)
+		वापस -EINVAL;
 
-	down_write(&nvmet_config_sem);
-	if (cntlid_max <= to_subsys(item)->cntlid_min)
-		goto out_unlock;
+	करोwn_ग_लिखो(&nvmet_config_sem);
+	अगर (cntlid_max <= to_subsys(item)->cntlid_min)
+		जाओ out_unlock;
 	to_subsys(item)->cntlid_max = cntlid_max;
-	up_write(&nvmet_config_sem);
-	return cnt;
+	up_ग_लिखो(&nvmet_config_sem);
+	वापस cnt;
 
 out_unlock:
-	up_write(&nvmet_config_sem);
-	return -EINVAL;
-}
+	up_ग_लिखो(&nvmet_config_sem);
+	वापस -EINVAL;
+पूर्ण
 CONFIGFS_ATTR(nvmet_subsys_, attr_cntlid_max);
 
-static ssize_t nvmet_subsys_attr_model_show(struct config_item *item,
-					    char *page)
-{
-	struct nvmet_subsys *subsys = to_subsys(item);
-	int ret;
+अटल sमाप_प्रकार nvmet_subsys_attr_model_show(काष्ठा config_item *item,
+					    अक्षर *page)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item);
+	पूर्णांक ret;
 
 	mutex_lock(&subsys->lock);
-	ret = snprintf(page, PAGE_SIZE, "%s\n", subsys->model_number ?
+	ret = snम_लिखो(page, PAGE_SIZE, "%s\n", subsys->model_number ?
 			subsys->model_number : NVMET_DEFAULT_CTRL_MODEL);
 	mutex_unlock(&subsys->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* See Section 1.5 of NVMe 1.4 */
-static bool nvmet_is_ascii(const char c)
-{
-	return c >= 0x20 && c <= 0x7e;
-}
+अटल bool nvmet_is_ascii(स्थिर अक्षर c)
+अणु
+	वापस c >= 0x20 && c <= 0x7e;
+पूर्ण
 
-static ssize_t nvmet_subsys_attr_model_store_locked(struct nvmet_subsys *subsys,
-		const char *page, size_t count)
-{
-	int pos = 0, len;
+अटल sमाप_प्रकार nvmet_subsys_attr_model_store_locked(काष्ठा nvmet_subsys *subsys,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	पूर्णांक pos = 0, len;
 
-	if (subsys->model_number) {
+	अगर (subsys->model_number) अणु
 		pr_err("Can't set model number. %s is already assigned\n",
 		       subsys->model_number);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	len = strcspn(page, "\n");
-	if (!len)
-		return -EINVAL;
+	len = म_खोज(page, "\n");
+	अगर (!len)
+		वापस -EINVAL;
 
-	if (len > NVMET_MN_MAX_SIZE) {
+	अगर (len > NVMET_MN_MAX_SIZE) अणु
 		pr_err("Model number size can not exceed %d Bytes\n",
 		       NVMET_MN_MAX_SIZE);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (pos = 0; pos < len; pos++) {
-		if (!nvmet_is_ascii(page[pos]))
-			return -EINVAL;
-	}
+	क्रम (pos = 0; pos < len; pos++) अणु
+		अगर (!nvmet_is_ascii(page[pos]))
+			वापस -EINVAL;
+	पूर्ण
 
 	subsys->model_number = kmemdup_nul(page, len, GFP_KERNEL);
-	if (!subsys->model_number)
-		return -ENOMEM;
-	return count;
-}
+	अगर (!subsys->model_number)
+		वापस -ENOMEM;
+	वापस count;
+पूर्ण
 
-static ssize_t nvmet_subsys_attr_model_store(struct config_item *item,
-					     const char *page, size_t count)
-{
-	struct nvmet_subsys *subsys = to_subsys(item);
-	ssize_t ret;
+अटल sमाप_प्रकार nvmet_subsys_attr_model_store(काष्ठा config_item *item,
+					     स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item);
+	sमाप_प्रकार ret;
 
-	down_write(&nvmet_config_sem);
+	करोwn_ग_लिखो(&nvmet_config_sem);
 	mutex_lock(&subsys->lock);
 	ret = nvmet_subsys_attr_model_store_locked(subsys, page, count);
 	mutex_unlock(&subsys->lock);
-	up_write(&nvmet_config_sem);
+	up_ग_लिखो(&nvmet_config_sem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 CONFIGFS_ATTR(nvmet_subsys_, attr_model);
 
-#ifdef CONFIG_BLK_DEV_INTEGRITY
-static ssize_t nvmet_subsys_attr_pi_enable_show(struct config_item *item,
-						char *page)
-{
-	return snprintf(page, PAGE_SIZE, "%d\n", to_subsys(item)->pi_support);
-}
+#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
+अटल sमाप_प्रकार nvmet_subsys_attr_pi_enable_show(काष्ठा config_item *item,
+						अक्षर *page)
+अणु
+	वापस snम_लिखो(page, PAGE_SIZE, "%d\n", to_subsys(item)->pi_support);
+पूर्ण
 
-static ssize_t nvmet_subsys_attr_pi_enable_store(struct config_item *item,
-						 const char *page, size_t count)
-{
-	struct nvmet_subsys *subsys = to_subsys(item);
+अटल sमाप_प्रकार nvmet_subsys_attr_pi_enable_store(काष्ठा config_item *item,
+						 स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item);
 	bool pi_enable;
 
-	if (strtobool(page, &pi_enable))
-		return -EINVAL;
+	अगर (strtobool(page, &pi_enable))
+		वापस -EINVAL;
 
 	subsys->pi_support = pi_enable;
-	return count;
-}
+	वापस count;
+पूर्ण
 CONFIGFS_ATTR(nvmet_subsys_, attr_pi_enable);
-#endif
+#पूर्ण_अगर
 
-static struct configfs_attribute *nvmet_subsys_attrs[] = {
+अटल काष्ठा configfs_attribute *nvmet_subsys_attrs[] = अणु
 	&nvmet_subsys_attr_attr_allow_any_host,
 	&nvmet_subsys_attr_attr_version,
 	&nvmet_subsys_attr_attr_serial,
 	&nvmet_subsys_attr_attr_cntlid_min,
 	&nvmet_subsys_attr_attr_cntlid_max,
 	&nvmet_subsys_attr_attr_model,
-#ifdef CONFIG_BLK_DEV_INTEGRITY
+#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
 	&nvmet_subsys_attr_attr_pi_enable,
-#endif
-	NULL,
-};
+#पूर्ण_अगर
+	शून्य,
+पूर्ण;
 
 /*
- * Subsystem structures & folder operation functions below
+ * Subप्रणाली काष्ठाures & folder operation functions below
  */
-static void nvmet_subsys_release(struct config_item *item)
-{
-	struct nvmet_subsys *subsys = to_subsys(item);
+अटल व्योम nvmet_subsys_release(काष्ठा config_item *item)
+अणु
+	काष्ठा nvmet_subsys *subsys = to_subsys(item);
 
 	nvmet_subsys_del_ctrls(subsys);
 	nvmet_subsys_put(subsys);
-}
+पूर्ण
 
-static struct configfs_item_operations nvmet_subsys_item_ops = {
+अटल काष्ठा configfs_item_operations nvmet_subsys_item_ops = अणु
 	.release		= nvmet_subsys_release,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_subsys_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_subsys_type = अणु
 	.ct_item_ops		= &nvmet_subsys_item_ops,
 	.ct_attrs		= nvmet_subsys_attrs,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct config_group *nvmet_subsys_make(struct config_group *group,
-		const char *name)
-{
-	struct nvmet_subsys *subsys;
+अटल काष्ठा config_group *nvmet_subsys_make(काष्ठा config_group *group,
+		स्थिर अक्षर *name)
+अणु
+	काष्ठा nvmet_subsys *subsys;
 
-	if (sysfs_streq(name, NVME_DISC_SUBSYS_NAME)) {
+	अगर (sysfs_streq(name, NVME_DISC_SUBSYS_NAME)) अणु
 		pr_err("can't create discovery subsystem through configfs\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	subsys = nvmet_subsys_alloc(name, NVME_NQN_NVME);
-	if (IS_ERR(subsys))
-		return ERR_CAST(subsys);
+	अगर (IS_ERR(subsys))
+		वापस ERR_CAST(subsys);
 
 	config_group_init_type_name(&subsys->group, name, &nvmet_subsys_type);
 
 	config_group_init_type_name(&subsys->namespaces_group,
 			"namespaces", &nvmet_namespaces_type);
-	configfs_add_default_group(&subsys->namespaces_group, &subsys->group);
+	configfs_add_शेष_group(&subsys->namespaces_group, &subsys->group);
 
 	config_group_init_type_name(&subsys->allowed_hosts_group,
 			"allowed_hosts", &nvmet_allowed_hosts_type);
-	configfs_add_default_group(&subsys->allowed_hosts_group,
+	configfs_add_शेष_group(&subsys->allowed_hosts_group,
 			&subsys->group);
 
 	nvmet_add_passthru_group(subsys);
 
-	return &subsys->group;
-}
+	वापस &subsys->group;
+पूर्ण
 
-static struct configfs_group_operations nvmet_subsystems_group_ops = {
+अटल काष्ठा configfs_group_operations nvmet_subप्रणालीs_group_ops = अणु
 	.make_group		= nvmet_subsys_make,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_subsystems_type = {
-	.ct_group_ops		= &nvmet_subsystems_group_ops,
+अटल स्थिर काष्ठा config_item_type nvmet_subप्रणालीs_type = अणु
+	.ct_group_ops		= &nvmet_subप्रणालीs_group_ops,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static ssize_t nvmet_referral_enable_show(struct config_item *item,
-		char *page)
-{
-	return snprintf(page, PAGE_SIZE, "%d\n", to_nvmet_port(item)->enabled);
-}
+अटल sमाप_प्रकार nvmet_referral_enable_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	वापस snम_लिखो(page, PAGE_SIZE, "%d\n", to_nvmet_port(item)->enabled);
+पूर्ण
 
-static ssize_t nvmet_referral_enable_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_port *parent = to_nvmet_port(item->ci_parent->ci_parent);
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल sमाप_प्रकार nvmet_referral_enable_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_port *parent = to_nvmet_port(item->ci_parent->ci_parent);
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 	bool enable;
 
-	if (strtobool(page, &enable))
-		goto inval;
+	अगर (strtobool(page, &enable))
+		जाओ inval;
 
-	if (enable)
+	अगर (enable)
 		nvmet_referral_enable(parent, port);
-	else
+	अन्यथा
 		nvmet_referral_disable(parent, port);
 
-	return count;
+	वापस count;
 inval:
 	pr_err("Invalid value '%s' for enable\n", page);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_referral_, enable);
 
 /*
- * Discovery Service subsystem definitions
+ * Discovery Service subप्रणाली definitions
  */
-static struct configfs_attribute *nvmet_referral_attrs[] = {
+अटल काष्ठा configfs_attribute *nvmet_referral_attrs[] = अणु
 	&nvmet_attr_addr_adrfam,
 	&nvmet_attr_addr_portid,
 	&nvmet_attr_addr_treq,
@@ -1317,254 +1318,254 @@ static struct configfs_attribute *nvmet_referral_attrs[] = {
 	&nvmet_attr_addr_trsvcid,
 	&nvmet_attr_addr_trtype,
 	&nvmet_referral_attr_enable,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void nvmet_referral_notify(struct config_group *group,
-		struct config_item *item)
-{
-	struct nvmet_port *parent = to_nvmet_port(item->ci_parent->ci_parent);
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल व्योम nvmet_referral_notअगरy(काष्ठा config_group *group,
+		काष्ठा config_item *item)
+अणु
+	काष्ठा nvmet_port *parent = to_nvmet_port(item->ci_parent->ci_parent);
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 
 	nvmet_referral_disable(parent, port);
-}
+पूर्ण
 
-static void nvmet_referral_release(struct config_item *item)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल व्योम nvmet_referral_release(काष्ठा config_item *item)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 
-	kfree(port);
-}
+	kमुक्त(port);
+पूर्ण
 
-static struct configfs_item_operations nvmet_referral_item_ops = {
+अटल काष्ठा configfs_item_operations nvmet_referral_item_ops = अणु
 	.release	= nvmet_referral_release,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_referral_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_referral_type = अणु
 	.ct_owner	= THIS_MODULE,
 	.ct_attrs	= nvmet_referral_attrs,
 	.ct_item_ops	= &nvmet_referral_item_ops,
-};
+पूर्ण;
 
-static struct config_group *nvmet_referral_make(
-		struct config_group *group, const char *name)
-{
-	struct nvmet_port *port;
+अटल काष्ठा config_group *nvmet_referral_make(
+		काष्ठा config_group *group, स्थिर अक्षर *name)
+अणु
+	काष्ठा nvmet_port *port;
 
-	port = kzalloc(sizeof(*port), GFP_KERNEL);
-	if (!port)
-		return ERR_PTR(-ENOMEM);
+	port = kzalloc(माप(*port), GFP_KERNEL);
+	अगर (!port)
+		वापस ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&port->entry);
 	config_group_init_type_name(&port->group, name, &nvmet_referral_type);
 
-	return &port->group;
-}
+	वापस &port->group;
+पूर्ण
 
-static struct configfs_group_operations nvmet_referral_group_ops = {
+अटल काष्ठा configfs_group_operations nvmet_referral_group_ops = अणु
 	.make_group		= nvmet_referral_make,
-	.disconnect_notify	= nvmet_referral_notify,
-};
+	.disconnect_notअगरy	= nvmet_referral_notअगरy,
+पूर्ण;
 
-static const struct config_item_type nvmet_referrals_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_referrals_type = अणु
 	.ct_owner	= THIS_MODULE,
 	.ct_group_ops	= &nvmet_referral_group_ops,
-};
+पूर्ण;
 
-static struct nvmet_type_name_map nvmet_ana_state[] = {
-	{ NVME_ANA_OPTIMIZED,		"optimized" },
-	{ NVME_ANA_NONOPTIMIZED,	"non-optimized" },
-	{ NVME_ANA_INACCESSIBLE,	"inaccessible" },
-	{ NVME_ANA_PERSISTENT_LOSS,	"persistent-loss" },
-	{ NVME_ANA_CHANGE,		"change" },
-};
+अटल काष्ठा nvmet_type_name_map nvmet_ana_state[] = अणु
+	अणु NVME_ANA_OPTIMIZED,		"optimized" पूर्ण,
+	अणु NVME_ANA_NONOPTIMIZED,	"non-optimized" पूर्ण,
+	अणु NVME_ANA_INACCESSIBLE,	"inaccessible" पूर्ण,
+	अणु NVME_ANA_PERSISTENT_LOSS,	"persistent-loss" पूर्ण,
+	अणु NVME_ANA_CHANGE,		"change" पूर्ण,
+पूर्ण;
 
-static ssize_t nvmet_ana_group_ana_state_show(struct config_item *item,
-		char *page)
-{
-	struct nvmet_ana_group *grp = to_ana_group(item);
-	enum nvme_ana_state state = grp->port->ana_state[grp->grpid];
-	int i;
+अटल sमाप_प्रकार nvmet_ana_group_ana_state_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	काष्ठा nvmet_ana_group *grp = to_ana_group(item);
+	क्रमागत nvme_ana_state state = grp->port->ana_state[grp->grpid];
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(nvmet_ana_state); i++) {
-		if (state == nvmet_ana_state[i].type)
-			return sprintf(page, "%s\n", nvmet_ana_state[i].name);
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(nvmet_ana_state); i++) अणु
+		अगर (state == nvmet_ana_state[i].type)
+			वापस प्र_लिखो(page, "%s\n", nvmet_ana_state[i].name);
+	पूर्ण
 
-	return sprintf(page, "\n");
-}
+	वापस प्र_लिखो(page, "\n");
+पूर्ण
 
-static ssize_t nvmet_ana_group_ana_state_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct nvmet_ana_group *grp = to_ana_group(item);
-	enum nvme_ana_state *ana_state = grp->port->ana_state;
-	int i;
+अटल sमाप_प्रकार nvmet_ana_group_ana_state_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा nvmet_ana_group *grp = to_ana_group(item);
+	क्रमागत nvme_ana_state *ana_state = grp->port->ana_state;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(nvmet_ana_state); i++) {
-		if (sysfs_streq(page, nvmet_ana_state[i].name))
-			goto found;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(nvmet_ana_state); i++) अणु
+		अगर (sysfs_streq(page, nvmet_ana_state[i].name))
+			जाओ found;
+	पूर्ण
 
 	pr_err("Invalid value '%s' for ana_state\n", page);
-	return -EINVAL;
+	वापस -EINVAL;
 
 found:
-	down_write(&nvmet_ana_sem);
-	ana_state[grp->grpid] = (enum nvme_ana_state) nvmet_ana_state[i].type;
+	करोwn_ग_लिखो(&nvmet_ana_sem);
+	ana_state[grp->grpid] = (क्रमागत nvme_ana_state) nvmet_ana_state[i].type;
 	nvmet_ana_chgcnt++;
-	up_write(&nvmet_ana_sem);
+	up_ग_लिखो(&nvmet_ana_sem);
 	nvmet_port_send_ana_event(grp->port);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(nvmet_ana_group_, ana_state);
 
-static struct configfs_attribute *nvmet_ana_group_attrs[] = {
+अटल काष्ठा configfs_attribute *nvmet_ana_group_attrs[] = अणु
 	&nvmet_ana_group_attr_ana_state,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void nvmet_ana_group_release(struct config_item *item)
-{
-	struct nvmet_ana_group *grp = to_ana_group(item);
+अटल व्योम nvmet_ana_group_release(काष्ठा config_item *item)
+अणु
+	काष्ठा nvmet_ana_group *grp = to_ana_group(item);
 
-	if (grp == &grp->port->ana_default_group)
-		return;
+	अगर (grp == &grp->port->ana_शेष_group)
+		वापस;
 
-	down_write(&nvmet_ana_sem);
+	करोwn_ग_लिखो(&nvmet_ana_sem);
 	grp->port->ana_state[grp->grpid] = NVME_ANA_INACCESSIBLE;
 	nvmet_ana_group_enabled[grp->grpid]--;
-	up_write(&nvmet_ana_sem);
+	up_ग_लिखो(&nvmet_ana_sem);
 
 	nvmet_port_send_ana_event(grp->port);
-	kfree(grp);
-}
+	kमुक्त(grp);
+पूर्ण
 
-static struct configfs_item_operations nvmet_ana_group_item_ops = {
+अटल काष्ठा configfs_item_operations nvmet_ana_group_item_ops = अणु
 	.release		= nvmet_ana_group_release,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_ana_group_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_ana_group_type = अणु
 	.ct_item_ops		= &nvmet_ana_group_item_ops,
 	.ct_attrs		= nvmet_ana_group_attrs,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct config_group *nvmet_ana_groups_make_group(
-		struct config_group *group, const char *name)
-{
-	struct nvmet_port *port = ana_groups_to_port(&group->cg_item);
-	struct nvmet_ana_group *grp;
+अटल काष्ठा config_group *nvmet_ana_groups_make_group(
+		काष्ठा config_group *group, स्थिर अक्षर *name)
+अणु
+	काष्ठा nvmet_port *port = ana_groups_to_port(&group->cg_item);
+	काष्ठा nvmet_ana_group *grp;
 	u32 grpid;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou32(name, 0, &grpid);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = -EINVAL;
-	if (grpid <= 1 || grpid > NVMET_MAX_ANAGRPS)
-		goto out;
+	अगर (grpid <= 1 || grpid > NVMET_MAX_ANAGRPS)
+		जाओ out;
 
 	ret = -ENOMEM;
-	grp = kzalloc(sizeof(*grp), GFP_KERNEL);
-	if (!grp)
-		goto out;
+	grp = kzalloc(माप(*grp), GFP_KERNEL);
+	अगर (!grp)
+		जाओ out;
 	grp->port = port;
 	grp->grpid = grpid;
 
-	down_write(&nvmet_ana_sem);
+	करोwn_ग_लिखो(&nvmet_ana_sem);
 	nvmet_ana_group_enabled[grpid]++;
-	up_write(&nvmet_ana_sem);
+	up_ग_लिखो(&nvmet_ana_sem);
 
 	nvmet_port_send_ana_event(grp->port);
 
 	config_group_init_type_name(&grp->group, name, &nvmet_ana_group_type);
-	return &grp->group;
+	वापस &grp->group;
 out:
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static struct configfs_group_operations nvmet_ana_groups_group_ops = {
+अटल काष्ठा configfs_group_operations nvmet_ana_groups_group_ops = अणु
 	.make_group		= nvmet_ana_groups_make_group,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_ana_groups_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_ana_groups_type = अणु
 	.ct_group_ops		= &nvmet_ana_groups_group_ops,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
 /*
  * Ports definitions.
  */
-static void nvmet_port_release(struct config_item *item)
-{
-	struct nvmet_port *port = to_nvmet_port(item);
+अटल व्योम nvmet_port_release(काष्ठा config_item *item)
+अणु
+	काष्ठा nvmet_port *port = to_nvmet_port(item);
 
 	list_del(&port->global_entry);
 
-	kfree(port->ana_state);
-	kfree(port);
-}
+	kमुक्त(port->ana_state);
+	kमुक्त(port);
+पूर्ण
 
-static struct configfs_attribute *nvmet_port_attrs[] = {
+अटल काष्ठा configfs_attribute *nvmet_port_attrs[] = अणु
 	&nvmet_attr_addr_adrfam,
 	&nvmet_attr_addr_treq,
 	&nvmet_attr_addr_traddr,
 	&nvmet_attr_addr_trsvcid,
 	&nvmet_attr_addr_trtype,
-	&nvmet_attr_param_inline_data_size,
-#ifdef CONFIG_BLK_DEV_INTEGRITY
+	&nvmet_attr_param_अंतरभूत_data_size,
+#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
 	&nvmet_attr_param_pi_enable,
-#endif
-	NULL,
-};
+#पूर्ण_अगर
+	शून्य,
+पूर्ण;
 
-static struct configfs_item_operations nvmet_port_item_ops = {
+अटल काष्ठा configfs_item_operations nvmet_port_item_ops = अणु
 	.release		= nvmet_port_release,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_port_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_port_type = अणु
 	.ct_attrs		= nvmet_port_attrs,
 	.ct_item_ops		= &nvmet_port_item_ops,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct config_group *nvmet_ports_make(struct config_group *group,
-		const char *name)
-{
-	struct nvmet_port *port;
+अटल काष्ठा config_group *nvmet_ports_make(काष्ठा config_group *group,
+		स्थिर अक्षर *name)
+अणु
+	काष्ठा nvmet_port *port;
 	u16 portid;
 	u32 i;
 
-	if (kstrtou16(name, 0, &portid))
-		return ERR_PTR(-EINVAL);
+	अगर (kstrtou16(name, 0, &portid))
+		वापस ERR_PTR(-EINVAL);
 
-	port = kzalloc(sizeof(*port), GFP_KERNEL);
-	if (!port)
-		return ERR_PTR(-ENOMEM);
+	port = kzalloc(माप(*port), GFP_KERNEL);
+	अगर (!port)
+		वापस ERR_PTR(-ENOMEM);
 
-	port->ana_state = kcalloc(NVMET_MAX_ANAGRPS + 1,
-			sizeof(*port->ana_state), GFP_KERNEL);
-	if (!port->ana_state) {
-		kfree(port);
-		return ERR_PTR(-ENOMEM);
-	}
+	port->ana_state = kसुस्मृति(NVMET_MAX_ANAGRPS + 1,
+			माप(*port->ana_state), GFP_KERNEL);
+	अगर (!port->ana_state) अणु
+		kमुक्त(port);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	for (i = 1; i <= NVMET_MAX_ANAGRPS; i++) {
-		if (i == NVMET_DEFAULT_ANA_GRPID)
+	क्रम (i = 1; i <= NVMET_MAX_ANAGRPS; i++) अणु
+		अगर (i == NVMET_DEFAULT_ANA_GRPID)
 			port->ana_state[1] = NVME_ANA_OPTIMIZED;
-		else
+		अन्यथा
 			port->ana_state[i] = NVME_ANA_INACCESSIBLE;
-	}
+	पूर्ण
 
 	list_add(&port->global_entry, &nvmet_ports_list);
 
 	INIT_LIST_HEAD(&port->entry);
-	INIT_LIST_HEAD(&port->subsystems);
+	INIT_LIST_HEAD(&port->subप्रणालीs);
 	INIT_LIST_HEAD(&port->referrals);
-	port->inline_data_size = -1;	/* < 0 == let the transport choose */
+	port->अंतरभूत_data_size = -1;	/* < 0 == let the transport choose */
 
 	port->disc_addr.portid = cpu_to_le16(portid);
 	port->disc_addr.adrfam = NVMF_ADDR_FAMILY_MAX;
@@ -1573,125 +1574,125 @@ static struct config_group *nvmet_ports_make(struct config_group *group,
 
 	config_group_init_type_name(&port->subsys_group,
 			"subsystems", &nvmet_port_subsys_type);
-	configfs_add_default_group(&port->subsys_group, &port->group);
+	configfs_add_शेष_group(&port->subsys_group, &port->group);
 
 	config_group_init_type_name(&port->referrals_group,
 			"referrals", &nvmet_referrals_type);
-	configfs_add_default_group(&port->referrals_group, &port->group);
+	configfs_add_शेष_group(&port->referrals_group, &port->group);
 
 	config_group_init_type_name(&port->ana_groups_group,
 			"ana_groups", &nvmet_ana_groups_type);
-	configfs_add_default_group(&port->ana_groups_group, &port->group);
+	configfs_add_शेष_group(&port->ana_groups_group, &port->group);
 
-	port->ana_default_group.port = port;
-	port->ana_default_group.grpid = NVMET_DEFAULT_ANA_GRPID;
-	config_group_init_type_name(&port->ana_default_group.group,
-			__stringify(NVMET_DEFAULT_ANA_GRPID),
+	port->ana_शेष_group.port = port;
+	port->ana_शेष_group.grpid = NVMET_DEFAULT_ANA_GRPID;
+	config_group_init_type_name(&port->ana_शेष_group.group,
+			__stringअगरy(NVMET_DEFAULT_ANA_GRPID),
 			&nvmet_ana_group_type);
-	configfs_add_default_group(&port->ana_default_group.group,
+	configfs_add_शेष_group(&port->ana_शेष_group.group,
 			&port->ana_groups_group);
 
-	return &port->group;
-}
+	वापस &port->group;
+पूर्ण
 
-static struct configfs_group_operations nvmet_ports_group_ops = {
+अटल काष्ठा configfs_group_operations nvmet_ports_group_ops = अणु
 	.make_group		= nvmet_ports_make,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_ports_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_ports_type = अणु
 	.ct_group_ops		= &nvmet_ports_group_ops,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct config_group nvmet_subsystems_group;
-static struct config_group nvmet_ports_group;
+अटल काष्ठा config_group nvmet_subप्रणालीs_group;
+अटल काष्ठा config_group nvmet_ports_group;
 
-static void nvmet_host_release(struct config_item *item)
-{
-	struct nvmet_host *host = to_host(item);
+अटल व्योम nvmet_host_release(काष्ठा config_item *item)
+अणु
+	काष्ठा nvmet_host *host = to_host(item);
 
-	kfree(host);
-}
+	kमुक्त(host);
+पूर्ण
 
-static struct configfs_item_operations nvmet_host_item_ops = {
+अटल काष्ठा configfs_item_operations nvmet_host_item_ops = अणु
 	.release		= nvmet_host_release,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_host_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_host_type = अणु
 	.ct_item_ops		= &nvmet_host_item_ops,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct config_group *nvmet_hosts_make_group(struct config_group *group,
-		const char *name)
-{
-	struct nvmet_host *host;
+अटल काष्ठा config_group *nvmet_hosts_make_group(काष्ठा config_group *group,
+		स्थिर अक्षर *name)
+अणु
+	काष्ठा nvmet_host *host;
 
-	host = kzalloc(sizeof(*host), GFP_KERNEL);
-	if (!host)
-		return ERR_PTR(-ENOMEM);
+	host = kzalloc(माप(*host), GFP_KERNEL);
+	अगर (!host)
+		वापस ERR_PTR(-ENOMEM);
 
 	config_group_init_type_name(&host->group, name, &nvmet_host_type);
 
-	return &host->group;
-}
+	वापस &host->group;
+पूर्ण
 
-static struct configfs_group_operations nvmet_hosts_group_ops = {
+अटल काष्ठा configfs_group_operations nvmet_hosts_group_ops = अणु
 	.make_group		= nvmet_hosts_make_group,
-};
+पूर्ण;
 
-static const struct config_item_type nvmet_hosts_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_hosts_type = अणु
 	.ct_group_ops		= &nvmet_hosts_group_ops,
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct config_group nvmet_hosts_group;
+अटल काष्ठा config_group nvmet_hosts_group;
 
-static const struct config_item_type nvmet_root_type = {
+अटल स्थिर काष्ठा config_item_type nvmet_root_type = अणु
 	.ct_owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static struct configfs_subsystem nvmet_configfs_subsystem = {
-	.su_group = {
-		.cg_item = {
+अटल काष्ठा configfs_subप्रणाली nvmet_configfs_subप्रणाली = अणु
+	.su_group = अणु
+		.cg_item = अणु
 			.ci_namebuf	= "nvmet",
 			.ci_type	= &nvmet_root_type,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-int __init nvmet_init_configfs(void)
-{
-	int ret;
+पूर्णांक __init nvmet_init_configfs(व्योम)
+अणु
+	पूर्णांक ret;
 
-	config_group_init(&nvmet_configfs_subsystem.su_group);
-	mutex_init(&nvmet_configfs_subsystem.su_mutex);
+	config_group_init(&nvmet_configfs_subप्रणाली.su_group);
+	mutex_init(&nvmet_configfs_subप्रणाली.su_mutex);
 
-	config_group_init_type_name(&nvmet_subsystems_group,
-			"subsystems", &nvmet_subsystems_type);
-	configfs_add_default_group(&nvmet_subsystems_group,
-			&nvmet_configfs_subsystem.su_group);
+	config_group_init_type_name(&nvmet_subप्रणालीs_group,
+			"subsystems", &nvmet_subप्रणालीs_type);
+	configfs_add_शेष_group(&nvmet_subप्रणालीs_group,
+			&nvmet_configfs_subप्रणाली.su_group);
 
 	config_group_init_type_name(&nvmet_ports_group,
 			"ports", &nvmet_ports_type);
-	configfs_add_default_group(&nvmet_ports_group,
-			&nvmet_configfs_subsystem.su_group);
+	configfs_add_शेष_group(&nvmet_ports_group,
+			&nvmet_configfs_subप्रणाली.su_group);
 
 	config_group_init_type_name(&nvmet_hosts_group,
 			"hosts", &nvmet_hosts_type);
-	configfs_add_default_group(&nvmet_hosts_group,
-			&nvmet_configfs_subsystem.su_group);
+	configfs_add_शेष_group(&nvmet_hosts_group,
+			&nvmet_configfs_subप्रणाली.su_group);
 
-	ret = configfs_register_subsystem(&nvmet_configfs_subsystem);
-	if (ret) {
+	ret = configfs_रेजिस्टर_subप्रणाली(&nvmet_configfs_subप्रणाली);
+	अगर (ret) अणु
 		pr_err("configfs_register_subsystem: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __exit nvmet_exit_configfs(void)
-{
-	configfs_unregister_subsystem(&nvmet_configfs_subsystem);
-}
+व्योम __निकास nvmet_निकास_configfs(व्योम)
+अणु
+	configfs_unरेजिस्टर_subप्रणाली(&nvmet_configfs_subप्रणाली);
+पूर्ण

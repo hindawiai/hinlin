@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * clk-xgene.c - AppliedMicro X-Gene Clock Interface
  *
  * Copyright (c) 2013, Applied Micro Circuits Corporation
  * Author: Loc Ho <lho@apm.com>
  */
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/clkdev.h>
-#include <linux/clk-provider.h>
-#include <linux/of_address.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of_address.h>
 
 /* Register SCU_PCPPLL bit fields */
-#define N_DIV_RD(src)			((src) & 0x000001ff)
-#define SC_N_DIV_RD(src)		((src) & 0x0000007f)
-#define SC_OUTDIV2(src)			(((src) & 0x00000100) >> 8)
+#घोषणा N_DIV_RD(src)			((src) & 0x000001ff)
+#घोषणा SC_N_DIV_RD(src)		((src) & 0x0000007f)
+#घोषणा SC_OUTDIV2(src)			(((src) & 0x00000100) >> 8)
 
 /* Register SCU_SOCPLL bit fields */
-#define CLKR_RD(src)			(((src) & 0x07000000)>>24)
-#define CLKOD_RD(src)			(((src) & 0x00300000)>>20)
-#define REGSPEC_RESET_F1_MASK		0x00010000
-#define CLKF_RD(src)			(((src) & 0x000001ff))
+#घोषणा CLKR_RD(src)			(((src) & 0x07000000)>>24)
+#घोषणा CLKOD_RD(src)			(((src) & 0x00300000)>>20)
+#घोषणा REGSPEC_RESET_F1_MASK		0x00010000
+#घोषणा CLKF_RD(src)			(((src) & 0x000001ff))
 
-#define XGENE_CLK_DRIVER_VER		"0.1"
+#घोषणा XGENE_CLK_DRIVER_VER		"0.1"
 
-static DEFINE_SPINLOCK(clk_lock);
+अटल DEFINE_SPINLOCK(clk_lock);
 
-static inline u32 xgene_clk_read(void __iomem *csr)
-{
-	return readl_relaxed(csr);
-}
+अटल अंतरभूत u32 xgene_clk_पढ़ो(व्योम __iomem *csr)
+अणु
+	वापस पढ़ोl_relaxed(csr);
+पूर्ण
 
-static inline void xgene_clk_write(u32 data, void __iomem *csr)
-{
-	writel_relaxed(data, csr);
-}
+अटल अंतरभूत व्योम xgene_clk_ग_लिखो(u32 data, व्योम __iomem *csr)
+अणु
+	ग_लिखोl_relaxed(data, csr);
+पूर्ण
 
 /* PLL Clock */
-enum xgene_pll_type {
+क्रमागत xgene_pll_type अणु
 	PLL_TYPE_PCP = 0,
 	PLL_TYPE_SOC = 1,
-};
+पूर्ण;
 
-struct xgene_clk_pll {
-	struct clk_hw	hw;
-	void __iomem	*reg;
+काष्ठा xgene_clk_pll अणु
+	काष्ठा clk_hw	hw;
+	व्योम __iomem	*reg;
 	spinlock_t	*lock;
 	u32		pll_offset;
-	enum xgene_pll_type	type;
-	int		version;
-};
+	क्रमागत xgene_pll_type	type;
+	पूर्णांक		version;
+पूर्ण;
 
-#define to_xgene_clk_pll(_hw) container_of(_hw, struct xgene_clk_pll, hw)
+#घोषणा to_xgene_clk_pll(_hw) container_of(_hw, काष्ठा xgene_clk_pll, hw)
 
-static int xgene_clk_pll_is_enabled(struct clk_hw *hw)
-{
-	struct xgene_clk_pll *pllclk = to_xgene_clk_pll(hw);
+अटल पूर्णांक xgene_clk_pll_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा xgene_clk_pll *pllclk = to_xgene_clk_pll(hw);
 	u32 data;
 
-	data = xgene_clk_read(pllclk->reg + pllclk->pll_offset);
+	data = xgene_clk_पढ़ो(pllclk->reg + pllclk->pll_offset);
 	pr_debug("%s pll %s\n", clk_hw_get_name(hw),
 		data & REGSPEC_RESET_F1_MASK ? "disabled" : "enabled");
 
-	return data & REGSPEC_RESET_F1_MASK ? 0 : 1;
-}
+	वापस data & REGSPEC_RESET_F1_MASK ? 0 : 1;
+पूर्ण
 
-static unsigned long xgene_clk_pll_recalc_rate(struct clk_hw *hw,
-				unsigned long parent_rate)
-{
-	struct xgene_clk_pll *pllclk = to_xgene_clk_pll(hw);
-	unsigned long fref;
-	unsigned long fvco;
+अटल अचिन्हित दीर्घ xgene_clk_pll_recalc_rate(काष्ठा clk_hw *hw,
+				अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा xgene_clk_pll *pllclk = to_xgene_clk_pll(hw);
+	अचिन्हित दीर्घ fref;
+	अचिन्हित दीर्घ fvco;
 	u32 pll;
 	u32 nref;
 	u32 nout;
 	u32 nfb;
 
-	pll = xgene_clk_read(pllclk->reg + pllclk->pll_offset);
+	pll = xgene_clk_पढ़ो(pllclk->reg + pllclk->pll_offset);
 
-	if (pllclk->version <= 1) {
-		if (pllclk->type == PLL_TYPE_PCP) {
+	अगर (pllclk->version <= 1) अणु
+		अगर (pllclk->type == PLL_TYPE_PCP) अणु
 			/*
-			* PLL VCO = Reference clock * NF
+			* PLL VCO = Reference घड़ी * NF
 			* PCP PLL = PLL_VCO / 2
 			*/
 			nout = 2;
 			fvco = parent_rate * (N_DIV_RD(pll) + 4);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			* Fref = Reference Clock / NREF;
 			* Fvco = Fref * NFB;
@@ -99,45 +100,45 @@ static unsigned long xgene_clk_pll_recalc_rate(struct clk_hw *hw,
 			nfb = CLKF_RD(pll);
 			fref = parent_rate / nref;
 			fvco = fref * nfb;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * fvco = Reference clock * FBDIVC
+		 * fvco = Reference घड़ी * FBDIVC
 		 * PLL freq = fvco / NOUT
 		 */
 		nout = SC_OUTDIV2(pll) ? 2 : 3;
 		fvco = parent_rate * SC_N_DIV_RD(pll);
-	}
+	पूर्ण
 	pr_debug("%s pll recalc rate %ld parent %ld version %d\n",
 		 clk_hw_get_name(hw), fvco / nout, parent_rate,
 		 pllclk->version);
 
-	return fvco / nout;
-}
+	वापस fvco / nout;
+पूर्ण
 
-static const struct clk_ops xgene_clk_pll_ops = {
+अटल स्थिर काष्ठा clk_ops xgene_clk_pll_ops = अणु
 	.is_enabled = xgene_clk_pll_is_enabled,
 	.recalc_rate = xgene_clk_pll_recalc_rate,
-};
+पूर्ण;
 
-static struct clk *xgene_register_clk_pll(struct device *dev,
-	const char *name, const char *parent_name,
-	unsigned long flags, void __iomem *reg, u32 pll_offset,
-	u32 type, spinlock_t *lock, int version)
-{
-	struct xgene_clk_pll *apmclk;
-	struct clk *clk;
-	struct clk_init_data init;
+अटल काष्ठा clk *xgene_रेजिस्टर_clk_pll(काष्ठा device *dev,
+	स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+	अचिन्हित दीर्घ flags, व्योम __iomem *reg, u32 pll_offset,
+	u32 type, spinlock_t *lock, पूर्णांक version)
+अणु
+	काष्ठा xgene_clk_pll *apmclk;
+	काष्ठा clk *clk;
+	काष्ठा clk_init_data init;
 
-	/* allocate the APM clock structure */
-	apmclk = kzalloc(sizeof(*apmclk), GFP_KERNEL);
-	if (!apmclk)
-		return ERR_PTR(-ENOMEM);
+	/* allocate the APM घड़ी काष्ठाure */
+	apmclk = kzalloc(माप(*apmclk), GFP_KERNEL);
+	अगर (!apmclk)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &xgene_clk_pll_ops;
 	init.flags = flags;
-	init.parent_names = parent_name ? &parent_name : NULL;
+	init.parent_names = parent_name ? &parent_name : शून्य;
 	init.num_parents = parent_name ? 1 : 0;
 
 	apmclk->version = version;
@@ -147,153 +148,153 @@ static struct clk *xgene_register_clk_pll(struct device *dev,
 	apmclk->type = type;
 	apmclk->hw.init = &init;
 
-	/* Register the clock */
-	clk = clk_register(dev, &apmclk->hw);
-	if (IS_ERR(clk)) {
+	/* Register the घड़ी */
+	clk = clk_रेजिस्टर(dev, &apmclk->hw);
+	अगर (IS_ERR(clk)) अणु
 		pr_err("%s: could not register clk %s\n", __func__, name);
-		kfree(apmclk);
-		return NULL;
-	}
-	return clk;
-}
+		kमुक्त(apmclk);
+		वापस शून्य;
+	पूर्ण
+	वापस clk;
+पूर्ण
 
-static int xgene_pllclk_version(struct device_node *np)
-{
-	if (of_device_is_compatible(np, "apm,xgene-socpll-clock"))
-		return 1;
-	if (of_device_is_compatible(np, "apm,xgene-pcppll-clock"))
-		return 1;
-	return 2;
-}
+अटल पूर्णांक xgene_pllclk_version(काष्ठा device_node *np)
+अणु
+	अगर (of_device_is_compatible(np, "apm,xgene-socpll-clock"))
+		वापस 1;
+	अगर (of_device_is_compatible(np, "apm,xgene-pcppll-clock"))
+		वापस 1;
+	वापस 2;
+पूर्ण
 
-static void xgene_pllclk_init(struct device_node *np, enum xgene_pll_type pll_type)
-{
-	const char *clk_name = np->full_name;
-	struct clk *clk;
-	void __iomem *reg;
-	int version = xgene_pllclk_version(np);
+अटल व्योम xgene_pllclk_init(काष्ठा device_node *np, क्रमागत xgene_pll_type pll_type)
+अणु
+	स्थिर अक्षर *clk_name = np->full_name;
+	काष्ठा clk *clk;
+	व्योम __iomem *reg;
+	पूर्णांक version = xgene_pllclk_version(np);
 
 	reg = of_iomap(np, 0);
-	if (!reg) {
+	अगर (!reg) अणु
 		pr_err("Unable to map CSR register for %pOF\n", np);
-		return;
-	}
-	of_property_read_string(np, "clock-output-names", &clk_name);
-	clk = xgene_register_clk_pll(NULL,
+		वापस;
+	पूर्ण
+	of_property_पढ़ो_string(np, "clock-output-names", &clk_name);
+	clk = xgene_रेजिस्टर_clk_pll(शून्य,
 			clk_name, of_clk_get_parent_name(np, 0),
 			0, reg, 0, pll_type, &clk_lock,
 			version);
-	if (!IS_ERR(clk)) {
+	अगर (!IS_ERR(clk)) अणु
 		of_clk_add_provider(np, of_clk_src_simple_get, clk);
-		clk_register_clkdev(clk, clk_name, NULL);
+		clk_रेजिस्टर_clkdev(clk, clk_name, शून्य);
 		pr_debug("Add %s clock PLL\n", clk_name);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgene_socpllclk_init(struct device_node *np)
-{
+अटल व्योम xgene_socpllclk_init(काष्ठा device_node *np)
+अणु
 	xgene_pllclk_init(np, PLL_TYPE_SOC);
-}
+पूर्ण
 
-static void xgene_pcppllclk_init(struct device_node *np)
-{
+अटल व्योम xgene_pcppllclk_init(काष्ठा device_node *np)
+अणु
 	xgene_pllclk_init(np, PLL_TYPE_PCP);
-}
+पूर्ण
 
 /**
- * struct xgene_clk_pmd - PMD clock
+ * काष्ठा xgene_clk_pmd - PMD घड़ी
  *
- * @hw:		handle between common and hardware-specific interfaces
- * @reg:	register containing the fractional scale multiplier (scaler)
- * @shift:	shift to the unit bit field
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @reg:	रेजिस्टर containing the fractional scale multiplier (scaler)
+ * @shअगरt:	shअगरt to the unit bit field
  * @mask:	mask to the unit bit field
  * @denom:	1/denominator unit
- * @lock:	register lock
- * @flags: XGENE_CLK_PMD_SCALE_INVERTED - By default the scaler is the value read
- *	from the register plus one. For example,
- *		0 for (0 + 1) / denom,
- *		1 for (1 + 1) / denom and etc.
+ * @lock:	रेजिस्टर lock
+ * @flags: XGENE_CLK_PMD_SCALE_INVERTED - By शेष the scaler is the value पढ़ो
+ *	from the रेजिस्टर plus one. For example,
+ *		0 क्रम (0 + 1) / denom,
+ *		1 क्रम (1 + 1) / denom and etc.
  *	If this flag is set, it is
- *		0 for (denom - 0) / denom,
- *		1 for (denom - 1) / denom and etc.
+ *		0 क्रम (denom - 0) / denom,
+ *		1 क्रम (denom - 1) / denom and etc.
  */
-struct xgene_clk_pmd {
-	struct clk_hw	hw;
-	void __iomem	*reg;
-	u8		shift;
+काष्ठा xgene_clk_pmd अणु
+	काष्ठा clk_hw	hw;
+	व्योम __iomem	*reg;
+	u8		shअगरt;
 	u32		mask;
 	u64		denom;
 	u32		flags;
 	spinlock_t	*lock;
-};
+पूर्ण;
 
-#define to_xgene_clk_pmd(_hw) container_of(_hw, struct xgene_clk_pmd, hw)
+#घोषणा to_xgene_clk_pmd(_hw) container_of(_hw, काष्ठा xgene_clk_pmd, hw)
 
-#define XGENE_CLK_PMD_SCALE_INVERTED	BIT(0)
-#define XGENE_CLK_PMD_SHIFT		8
-#define XGENE_CLK_PMD_WIDTH		3
+#घोषणा XGENE_CLK_PMD_SCALE_INVERTED	BIT(0)
+#घोषणा XGENE_CLK_PMD_SHIFT		8
+#घोषणा XGENE_CLK_PMD_WIDTH		3
 
-static unsigned long xgene_clk_pmd_recalc_rate(struct clk_hw *hw,
-					       unsigned long parent_rate)
-{
-	struct xgene_clk_pmd *fd = to_xgene_clk_pmd(hw);
-	unsigned long flags = 0;
+अटल अचिन्हित दीर्घ xgene_clk_pmd_recalc_rate(काष्ठा clk_hw *hw,
+					       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा xgene_clk_pmd *fd = to_xgene_clk_pmd(hw);
+	अचिन्हित दीर्घ flags = 0;
 	u64 ret, scale;
 	u32 val;
 
-	if (fd->lock)
+	अगर (fd->lock)
 		spin_lock_irqsave(fd->lock, flags);
-	else
+	अन्यथा
 		__acquire(fd->lock);
 
-	val = readl(fd->reg);
+	val = पढ़ोl(fd->reg);
 
-	if (fd->lock)
+	अगर (fd->lock)
 		spin_unlock_irqrestore(fd->lock, flags);
-	else
+	अन्यथा
 		__release(fd->lock);
 
 	ret = (u64)parent_rate;
 
-	scale = (val & fd->mask) >> fd->shift;
-	if (fd->flags & XGENE_CLK_PMD_SCALE_INVERTED)
+	scale = (val & fd->mask) >> fd->shअगरt;
+	अगर (fd->flags & XGENE_CLK_PMD_SCALE_INVERTED)
 		scale = fd->denom - scale;
-	else
+	अन्यथा
 		scale++;
 
 	/* freq = parent_rate * scaler / denom */
-	do_div(ret, fd->denom);
+	करो_भाग(ret, fd->denom);
 	ret *= scale;
-	if (ret == 0)
+	अगर (ret == 0)
 		ret = (u64)parent_rate;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long xgene_clk_pmd_round_rate(struct clk_hw *hw, unsigned long rate,
-				     unsigned long *parent_rate)
-{
-	struct xgene_clk_pmd *fd = to_xgene_clk_pmd(hw);
+अटल दीर्घ xgene_clk_pmd_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				     अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा xgene_clk_pmd *fd = to_xgene_clk_pmd(hw);
 	u64 ret, scale;
 
-	if (!rate || rate >= *parent_rate)
-		return *parent_rate;
+	अगर (!rate || rate >= *parent_rate)
+		वापस *parent_rate;
 
 	/* freq = parent_rate * scaler / denom */
 	ret = rate * fd->denom;
 	scale = DIV_ROUND_UP_ULL(ret, *parent_rate);
 
 	ret = (u64)*parent_rate * scale;
-	do_div(ret, fd->denom);
+	करो_भाग(ret, fd->denom);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgene_clk_pmd_set_rate(struct clk_hw *hw, unsigned long rate,
-				  unsigned long parent_rate)
-{
-	struct xgene_clk_pmd *fd = to_xgene_clk_pmd(hw);
-	unsigned long flags = 0;
+अटल पूर्णांक xgene_clk_pmd_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा xgene_clk_pmd *fd = to_xgene_clk_pmd(hw);
+	अचिन्हित दीर्घ flags = 0;
 	u64 scale, ret;
 	u32 val;
 
@@ -306,156 +307,156 @@ static int xgene_clk_pmd_set_rate(struct clk_hw *hw, unsigned long rate,
 	ret = rate * fd->denom;
 	scale = DIV_ROUND_UP_ULL(ret, (u64)parent_rate);
 
-	/* Check if inverted */
-	if (fd->flags & XGENE_CLK_PMD_SCALE_INVERTED)
+	/* Check अगर inverted */
+	अगर (fd->flags & XGENE_CLK_PMD_SCALE_INVERTED)
 		scale = fd->denom - scale;
-	else
+	अन्यथा
 		scale--;
 
-	if (fd->lock)
+	अगर (fd->lock)
 		spin_lock_irqsave(fd->lock, flags);
-	else
+	अन्यथा
 		__acquire(fd->lock);
 
-	val = readl(fd->reg);
+	val = पढ़ोl(fd->reg);
 	val &= ~fd->mask;
-	val |= (scale << fd->shift);
-	writel(val, fd->reg);
+	val |= (scale << fd->shअगरt);
+	ग_लिखोl(val, fd->reg);
 
-	if (fd->lock)
+	अगर (fd->lock)
 		spin_unlock_irqrestore(fd->lock, flags);
-	else
+	अन्यथा
 		__release(fd->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops xgene_clk_pmd_ops = {
+अटल स्थिर काष्ठा clk_ops xgene_clk_pmd_ops = अणु
 	.recalc_rate = xgene_clk_pmd_recalc_rate,
 	.round_rate = xgene_clk_pmd_round_rate,
 	.set_rate = xgene_clk_pmd_set_rate,
-};
+पूर्ण;
 
-static struct clk *
-xgene_register_clk_pmd(struct device *dev,
-		       const char *name, const char *parent_name,
-		       unsigned long flags, void __iomem *reg, u8 shift,
+अटल काष्ठा clk *
+xgene_रेजिस्टर_clk_pmd(काष्ठा device *dev,
+		       स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+		       अचिन्हित दीर्घ flags, व्योम __iomem *reg, u8 shअगरt,
 		       u8 width, u64 denom, u32 clk_flags, spinlock_t *lock)
-{
-	struct xgene_clk_pmd *fd;
-	struct clk_init_data init;
-	struct clk *clk;
+अणु
+	काष्ठा xgene_clk_pmd *fd;
+	काष्ठा clk_init_data init;
+	काष्ठा clk *clk;
 
-	fd = kzalloc(sizeof(*fd), GFP_KERNEL);
-	if (!fd)
-		return ERR_PTR(-ENOMEM);
+	fd = kzalloc(माप(*fd), GFP_KERNEL);
+	अगर (!fd)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &xgene_clk_pmd_ops;
 	init.flags = flags;
-	init.parent_names = parent_name ? &parent_name : NULL;
+	init.parent_names = parent_name ? &parent_name : शून्य;
 	init.num_parents = parent_name ? 1 : 0;
 
 	fd->reg = reg;
-	fd->shift = shift;
-	fd->mask = (BIT(width) - 1) << shift;
+	fd->shअगरt = shअगरt;
+	fd->mask = (BIT(width) - 1) << shअगरt;
 	fd->denom = denom;
 	fd->flags = clk_flags;
 	fd->lock = lock;
 	fd->hw.init = &init;
 
-	clk = clk_register(dev, &fd->hw);
-	if (IS_ERR(clk)) {
+	clk = clk_रेजिस्टर(dev, &fd->hw);
+	अगर (IS_ERR(clk)) अणु
 		pr_err("%s: could not register clk %s\n", __func__, name);
-		kfree(fd);
-		return NULL;
-	}
+		kमुक्त(fd);
+		वापस शून्य;
+	पूर्ण
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
-static void xgene_pmdclk_init(struct device_node *np)
-{
-	const char *clk_name = np->full_name;
-	void __iomem *csr_reg;
-	struct resource res;
-	struct clk *clk;
+अटल व्योम xgene_pmdclk_init(काष्ठा device_node *np)
+अणु
+	स्थिर अक्षर *clk_name = np->full_name;
+	व्योम __iomem *csr_reg;
+	काष्ठा resource res;
+	काष्ठा clk *clk;
 	u64 denom;
 	u32 flags = 0;
-	int rc;
+	पूर्णांक rc;
 
-	/* Check if the entry is disabled */
-	if (!of_device_is_available(np))
-		return;
+	/* Check अगर the entry is disabled */
+	अगर (!of_device_is_available(np))
+		वापस;
 
-	/* Parse the DTS register for resource */
+	/* Parse the DTS रेजिस्टर क्रम resource */
 	rc = of_address_to_resource(np, 0, &res);
-	if (rc != 0) {
+	अगर (rc != 0) अणु
 		pr_err("no DTS register for %pOF\n", np);
-		return;
-	}
+		वापस;
+	पूर्ण
 	csr_reg = of_iomap(np, 0);
-	if (!csr_reg) {
+	अगर (!csr_reg) अणु
 		pr_err("Unable to map resource for %pOF\n", np);
-		return;
-	}
-	of_property_read_string(np, "clock-output-names", &clk_name);
+		वापस;
+	पूर्ण
+	of_property_पढ़ो_string(np, "clock-output-names", &clk_name);
 
 	denom = BIT(XGENE_CLK_PMD_WIDTH);
 	flags |= XGENE_CLK_PMD_SCALE_INVERTED;
 
-	clk = xgene_register_clk_pmd(NULL, clk_name,
+	clk = xgene_रेजिस्टर_clk_pmd(शून्य, clk_name,
 				     of_clk_get_parent_name(np, 0), 0,
 				     csr_reg, XGENE_CLK_PMD_SHIFT,
 				     XGENE_CLK_PMD_WIDTH, denom,
 				     flags, &clk_lock);
-	if (!IS_ERR(clk)) {
+	अगर (!IS_ERR(clk)) अणु
 		of_clk_add_provider(np, of_clk_src_simple_get, clk);
-		clk_register_clkdev(clk, clk_name, NULL);
+		clk_रेजिस्टर_clkdev(clk, clk_name, शून्य);
 		pr_debug("Add %s clock\n", clk_name);
-	} else {
-		if (csr_reg)
+	पूर्ण अन्यथा अणु
+		अगर (csr_reg)
 			iounmap(csr_reg);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* IP Clock */
-struct xgene_dev_parameters {
-	void __iomem *csr_reg;		/* CSR for IP clock */
-	u32 reg_clk_offset;		/* Offset to clock enable CSR */
-	u32 reg_clk_mask;		/* Mask bit for clock enable */
+काष्ठा xgene_dev_parameters अणु
+	व्योम __iomem *csr_reg;		/* CSR क्रम IP घड़ी */
+	u32 reg_clk_offset;		/* Offset to घड़ी enable CSR */
+	u32 reg_clk_mask;		/* Mask bit क्रम घड़ी enable */
 	u32 reg_csr_offset;		/* Offset to CSR reset */
-	u32 reg_csr_mask;		/* Mask bit for disable CSR reset */
-	void __iomem *divider_reg;	/* CSR for divider */
-	u32 reg_divider_offset;		/* Offset to divider register */
-	u32 reg_divider_shift;		/* Bit shift to divider field */
-	u32 reg_divider_width;		/* Width of the bit to divider field */
-};
+	u32 reg_csr_mask;		/* Mask bit क्रम disable CSR reset */
+	व्योम __iomem *भागider_reg;	/* CSR क्रम भागider */
+	u32 reg_भागider_offset;		/* Offset to भागider रेजिस्टर */
+	u32 reg_भागider_shअगरt;		/* Bit shअगरt to भागider field */
+	u32 reg_भागider_width;		/* Width of the bit to भागider field */
+पूर्ण;
 
-struct xgene_clk {
-	struct clk_hw	hw;
+काष्ठा xgene_clk अणु
+	काष्ठा clk_hw	hw;
 	spinlock_t	*lock;
-	struct xgene_dev_parameters	param;
-};
+	काष्ठा xgene_dev_parameters	param;
+पूर्ण;
 
-#define to_xgene_clk(_hw) container_of(_hw, struct xgene_clk, hw)
+#घोषणा to_xgene_clk(_hw) container_of(_hw, काष्ठा xgene_clk, hw)
 
-static int xgene_clk_enable(struct clk_hw *hw)
-{
-	struct xgene_clk *pclk = to_xgene_clk(hw);
-	unsigned long flags = 0;
+अटल पूर्णांक xgene_clk_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा xgene_clk *pclk = to_xgene_clk(hw);
+	अचिन्हित दीर्घ flags = 0;
 	u32 data;
 
-	if (pclk->lock)
+	अगर (pclk->lock)
 		spin_lock_irqsave(pclk->lock, flags);
 
-	if (pclk->param.csr_reg) {
+	अगर (pclk->param.csr_reg) अणु
 		pr_debug("%s clock enabled\n", clk_hw_get_name(hw));
-		/* First enable the clock */
-		data = xgene_clk_read(pclk->param.csr_reg +
+		/* First enable the घड़ी */
+		data = xgene_clk_पढ़ो(pclk->param.csr_reg +
 					pclk->param.reg_clk_offset);
 		data |= pclk->param.reg_clk_mask;
-		xgene_clk_write(data, pclk->param.csr_reg +
+		xgene_clk_ग_लिखो(data, pclk->param.csr_reg +
 					pclk->param.reg_clk_offset);
 		pr_debug("%s clk offset 0x%08X mask 0x%08X value 0x%08X\n",
 			clk_hw_get_name(hw),
@@ -463,284 +464,284 @@ static int xgene_clk_enable(struct clk_hw *hw)
 			data);
 
 		/* Second enable the CSR */
-		data = xgene_clk_read(pclk->param.csr_reg +
+		data = xgene_clk_पढ़ो(pclk->param.csr_reg +
 					pclk->param.reg_csr_offset);
 		data &= ~pclk->param.reg_csr_mask;
-		xgene_clk_write(data, pclk->param.csr_reg +
+		xgene_clk_ग_लिखो(data, pclk->param.csr_reg +
 					pclk->param.reg_csr_offset);
 		pr_debug("%s csr offset 0x%08X mask 0x%08X value 0x%08X\n",
 			clk_hw_get_name(hw),
 			pclk->param.reg_csr_offset, pclk->param.reg_csr_mask,
 			data);
-	}
+	पूर्ण
 
-	if (pclk->lock)
+	अगर (pclk->lock)
 		spin_unlock_irqrestore(pclk->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgene_clk_disable(struct clk_hw *hw)
-{
-	struct xgene_clk *pclk = to_xgene_clk(hw);
-	unsigned long flags = 0;
+अटल व्योम xgene_clk_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा xgene_clk *pclk = to_xgene_clk(hw);
+	अचिन्हित दीर्घ flags = 0;
 	u32 data;
 
-	if (pclk->lock)
+	अगर (pclk->lock)
 		spin_lock_irqsave(pclk->lock, flags);
 
-	if (pclk->param.csr_reg) {
+	अगर (pclk->param.csr_reg) अणु
 		pr_debug("%s clock disabled\n", clk_hw_get_name(hw));
 		/* First put the CSR in reset */
-		data = xgene_clk_read(pclk->param.csr_reg +
+		data = xgene_clk_पढ़ो(pclk->param.csr_reg +
 					pclk->param.reg_csr_offset);
 		data |= pclk->param.reg_csr_mask;
-		xgene_clk_write(data, pclk->param.csr_reg +
+		xgene_clk_ग_लिखो(data, pclk->param.csr_reg +
 					pclk->param.reg_csr_offset);
 
-		/* Second disable the clock */
-		data = xgene_clk_read(pclk->param.csr_reg +
+		/* Second disable the घड़ी */
+		data = xgene_clk_पढ़ो(pclk->param.csr_reg +
 					pclk->param.reg_clk_offset);
 		data &= ~pclk->param.reg_clk_mask;
-		xgene_clk_write(data, pclk->param.csr_reg +
+		xgene_clk_ग_लिखो(data, pclk->param.csr_reg +
 					pclk->param.reg_clk_offset);
-	}
+	पूर्ण
 
-	if (pclk->lock)
+	अगर (pclk->lock)
 		spin_unlock_irqrestore(pclk->lock, flags);
-}
+पूर्ण
 
-static int xgene_clk_is_enabled(struct clk_hw *hw)
-{
-	struct xgene_clk *pclk = to_xgene_clk(hw);
+अटल पूर्णांक xgene_clk_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा xgene_clk *pclk = to_xgene_clk(hw);
 	u32 data = 0;
 
-	if (pclk->param.csr_reg) {
+	अगर (pclk->param.csr_reg) अणु
 		pr_debug("%s clock checking\n", clk_hw_get_name(hw));
-		data = xgene_clk_read(pclk->param.csr_reg +
+		data = xgene_clk_पढ़ो(pclk->param.csr_reg +
 					pclk->param.reg_clk_offset);
 		pr_debug("%s clock is %s\n", clk_hw_get_name(hw),
 			data & pclk->param.reg_clk_mask ? "enabled" :
 							"disabled");
-	}
+	पूर्ण
 
-	if (!pclk->param.csr_reg)
-		return 1;
-	return data & pclk->param.reg_clk_mask ? 1 : 0;
-}
+	अगर (!pclk->param.csr_reg)
+		वापस 1;
+	वापस data & pclk->param.reg_clk_mask ? 1 : 0;
+पूर्ण
 
-static unsigned long xgene_clk_recalc_rate(struct clk_hw *hw,
-				unsigned long parent_rate)
-{
-	struct xgene_clk *pclk = to_xgene_clk(hw);
+अटल अचिन्हित दीर्घ xgene_clk_recalc_rate(काष्ठा clk_hw *hw,
+				अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा xgene_clk *pclk = to_xgene_clk(hw);
 	u32 data;
 
-	if (pclk->param.divider_reg) {
-		data = xgene_clk_read(pclk->param.divider_reg +
-					pclk->param.reg_divider_offset);
-		data >>= pclk->param.reg_divider_shift;
-		data &= (1 << pclk->param.reg_divider_width) - 1;
+	अगर (pclk->param.भागider_reg) अणु
+		data = xgene_clk_पढ़ो(pclk->param.भागider_reg +
+					pclk->param.reg_भागider_offset);
+		data >>= pclk->param.reg_भागider_shअगरt;
+		data &= (1 << pclk->param.reg_भागider_width) - 1;
 
 		pr_debug("%s clock recalc rate %ld parent %ld\n",
 			clk_hw_get_name(hw),
 			parent_rate / data, parent_rate);
 
-		return parent_rate / data;
-	} else {
+		वापस parent_rate / data;
+	पूर्ण अन्यथा अणु
 		pr_debug("%s clock recalc rate %ld parent %ld\n",
 			clk_hw_get_name(hw), parent_rate, parent_rate);
-		return parent_rate;
-	}
-}
+		वापस parent_rate;
+	पूर्ण
+पूर्ण
 
-static int xgene_clk_set_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long parent_rate)
-{
-	struct xgene_clk *pclk = to_xgene_clk(hw);
-	unsigned long flags = 0;
+अटल पूर्णांक xgene_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा xgene_clk *pclk = to_xgene_clk(hw);
+	अचिन्हित दीर्घ flags = 0;
 	u32 data;
-	u32 divider;
-	u32 divider_save;
+	u32 भागider;
+	u32 भागider_save;
 
-	if (pclk->lock)
+	अगर (pclk->lock)
 		spin_lock_irqsave(pclk->lock, flags);
 
-	if (pclk->param.divider_reg) {
-		/* Let's compute the divider */
-		if (rate > parent_rate)
+	अगर (pclk->param.भागider_reg) अणु
+		/* Let's compute the भागider */
+		अगर (rate > parent_rate)
 			rate = parent_rate;
-		divider_save = divider = parent_rate / rate; /* Rounded down */
-		divider &= (1 << pclk->param.reg_divider_width) - 1;
-		divider <<= pclk->param.reg_divider_shift;
+		भागider_save = भागider = parent_rate / rate; /* Rounded करोwn */
+		भागider &= (1 << pclk->param.reg_भागider_width) - 1;
+		भागider <<= pclk->param.reg_भागider_shअगरt;
 
-		/* Set new divider */
-		data = xgene_clk_read(pclk->param.divider_reg +
-				pclk->param.reg_divider_offset);
-		data &= ~(((1 << pclk->param.reg_divider_width) - 1)
-				<< pclk->param.reg_divider_shift);
-		data |= divider;
-		xgene_clk_write(data, pclk->param.divider_reg +
-					pclk->param.reg_divider_offset);
+		/* Set new भागider */
+		data = xgene_clk_पढ़ो(pclk->param.भागider_reg +
+				pclk->param.reg_भागider_offset);
+		data &= ~(((1 << pclk->param.reg_भागider_width) - 1)
+				<< pclk->param.reg_भागider_shअगरt);
+		data |= भागider;
+		xgene_clk_ग_लिखो(data, pclk->param.भागider_reg +
+					pclk->param.reg_भागider_offset);
 		pr_debug("%s clock set rate %ld\n", clk_hw_get_name(hw),
-			parent_rate / divider_save);
-	} else {
-		divider_save = 1;
-	}
+			parent_rate / भागider_save);
+	पूर्ण अन्यथा अणु
+		भागider_save = 1;
+	पूर्ण
 
-	if (pclk->lock)
+	अगर (pclk->lock)
 		spin_unlock_irqrestore(pclk->lock, flags);
 
-	return parent_rate / divider_save;
-}
+	वापस parent_rate / भागider_save;
+पूर्ण
 
-static long xgene_clk_round_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long *prate)
-{
-	struct xgene_clk *pclk = to_xgene_clk(hw);
-	unsigned long parent_rate = *prate;
-	u32 divider;
+अटल दीर्घ xgene_clk_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा xgene_clk *pclk = to_xgene_clk(hw);
+	अचिन्हित दीर्घ parent_rate = *prate;
+	u32 भागider;
 
-	if (pclk->param.divider_reg) {
-		/* Let's compute the divider */
-		if (rate > parent_rate)
+	अगर (pclk->param.भागider_reg) अणु
+		/* Let's compute the भागider */
+		अगर (rate > parent_rate)
 			rate = parent_rate;
-		divider = parent_rate / rate;   /* Rounded down */
-	} else {
-		divider = 1;
-	}
+		भागider = parent_rate / rate;   /* Rounded करोwn */
+	पूर्ण अन्यथा अणु
+		भागider = 1;
+	पूर्ण
 
-	return parent_rate / divider;
-}
+	वापस parent_rate / भागider;
+पूर्ण
 
-static const struct clk_ops xgene_clk_ops = {
+अटल स्थिर काष्ठा clk_ops xgene_clk_ops = अणु
 	.enable = xgene_clk_enable,
 	.disable = xgene_clk_disable,
 	.is_enabled = xgene_clk_is_enabled,
 	.recalc_rate = xgene_clk_recalc_rate,
 	.set_rate = xgene_clk_set_rate,
 	.round_rate = xgene_clk_round_rate,
-};
+पूर्ण;
 
-static struct clk *xgene_register_clk(struct device *dev,
-		const char *name, const char *parent_name,
-		struct xgene_dev_parameters *parameters, spinlock_t *lock)
-{
-	struct xgene_clk *apmclk;
-	struct clk *clk;
-	struct clk_init_data init;
-	int rc;
+अटल काष्ठा clk *xgene_रेजिस्टर_clk(काष्ठा device *dev,
+		स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+		काष्ठा xgene_dev_parameters *parameters, spinlock_t *lock)
+अणु
+	काष्ठा xgene_clk *apmclk;
+	काष्ठा clk *clk;
+	काष्ठा clk_init_data init;
+	पूर्णांक rc;
 
-	/* allocate the APM clock structure */
-	apmclk = kzalloc(sizeof(*apmclk), GFP_KERNEL);
-	if (!apmclk)
-		return ERR_PTR(-ENOMEM);
+	/* allocate the APM घड़ी काष्ठाure */
+	apmclk = kzalloc(माप(*apmclk), GFP_KERNEL);
+	अगर (!apmclk)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &xgene_clk_ops;
 	init.flags = 0;
-	init.parent_names = parent_name ? &parent_name : NULL;
+	init.parent_names = parent_name ? &parent_name : शून्य;
 	init.num_parents = parent_name ? 1 : 0;
 
 	apmclk->lock = lock;
 	apmclk->hw.init = &init;
 	apmclk->param = *parameters;
 
-	/* Register the clock */
-	clk = clk_register(dev, &apmclk->hw);
-	if (IS_ERR(clk)) {
+	/* Register the घड़ी */
+	clk = clk_रेजिस्टर(dev, &apmclk->hw);
+	अगर (IS_ERR(clk)) अणु
 		pr_err("%s: could not register clk %s\n", __func__, name);
-		kfree(apmclk);
-		return clk;
-	}
+		kमुक्त(apmclk);
+		वापस clk;
+	पूर्ण
 
-	/* Register the clock for lookup */
-	rc = clk_register_clkdev(clk, name, NULL);
-	if (rc != 0) {
+	/* Register the घड़ी क्रम lookup */
+	rc = clk_रेजिस्टर_clkdev(clk, name, शून्य);
+	अगर (rc != 0) अणु
 		pr_err("%s: could not register lookup clk %s\n",
 			__func__, name);
-	}
-	return clk;
-}
+	पूर्ण
+	वापस clk;
+पूर्ण
 
-static void __init xgene_devclk_init(struct device_node *np)
-{
-	const char *clk_name = np->full_name;
-	struct clk *clk;
-	struct resource res;
-	int rc;
-	struct xgene_dev_parameters parameters;
-	int i;
+अटल व्योम __init xgene_devclk_init(काष्ठा device_node *np)
+अणु
+	स्थिर अक्षर *clk_name = np->full_name;
+	काष्ठा clk *clk;
+	काष्ठा resource res;
+	पूर्णांक rc;
+	काष्ठा xgene_dev_parameters parameters;
+	पूर्णांक i;
 
-	/* Check if the entry is disabled */
-        if (!of_device_is_available(np))
-                return;
+	/* Check अगर the entry is disabled */
+        अगर (!of_device_is_available(np))
+                वापस;
 
-	/* Parse the DTS register for resource */
-	parameters.csr_reg = NULL;
-	parameters.divider_reg = NULL;
-	for (i = 0; i < 2; i++) {
-		void __iomem *map_res;
+	/* Parse the DTS रेजिस्टर क्रम resource */
+	parameters.csr_reg = शून्य;
+	parameters.भागider_reg = शून्य;
+	क्रम (i = 0; i < 2; i++) अणु
+		व्योम __iomem *map_res;
 		rc = of_address_to_resource(np, i, &res);
-		if (rc != 0) {
-			if (i == 0) {
+		अगर (rc != 0) अणु
+			अगर (i == 0) अणु
 				pr_err("no DTS register for %pOF\n", np);
-				return;
-			}
-			break;
-		}
+				वापस;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 		map_res = of_iomap(np, i);
-		if (!map_res) {
+		अगर (!map_res) अणु
 			pr_err("Unable to map resource %d for %pOF\n", i, np);
-			goto err;
-		}
-		if (strcmp(res.name, "div-reg") == 0)
-			parameters.divider_reg = map_res;
-		else /* if (strcmp(res->name, "csr-reg") == 0) */
+			जाओ err;
+		पूर्ण
+		अगर (म_भेद(res.name, "div-reg") == 0)
+			parameters.भागider_reg = map_res;
+		अन्यथा /* अगर (म_भेद(res->name, "csr-reg") == 0) */
 			parameters.csr_reg = map_res;
-	}
-	if (of_property_read_u32(np, "csr-offset", &parameters.reg_csr_offset))
+	पूर्ण
+	अगर (of_property_पढ़ो_u32(np, "csr-offset", &parameters.reg_csr_offset))
 		parameters.reg_csr_offset = 0;
-	if (of_property_read_u32(np, "csr-mask", &parameters.reg_csr_mask))
+	अगर (of_property_पढ़ो_u32(np, "csr-mask", &parameters.reg_csr_mask))
 		parameters.reg_csr_mask = 0xF;
-	if (of_property_read_u32(np, "enable-offset",
+	अगर (of_property_पढ़ो_u32(np, "enable-offset",
 				&parameters.reg_clk_offset))
 		parameters.reg_clk_offset = 0x8;
-	if (of_property_read_u32(np, "enable-mask", &parameters.reg_clk_mask))
+	अगर (of_property_पढ़ो_u32(np, "enable-mask", &parameters.reg_clk_mask))
 		parameters.reg_clk_mask = 0xF;
-	if (of_property_read_u32(np, "divider-offset",
-				&parameters.reg_divider_offset))
-		parameters.reg_divider_offset = 0;
-	if (of_property_read_u32(np, "divider-width",
-				&parameters.reg_divider_width))
-		parameters.reg_divider_width = 0;
-	if (of_property_read_u32(np, "divider-shift",
-				&parameters.reg_divider_shift))
-		parameters.reg_divider_shift = 0;
-	of_property_read_string(np, "clock-output-names", &clk_name);
+	अगर (of_property_पढ़ो_u32(np, "divider-offset",
+				&parameters.reg_भागider_offset))
+		parameters.reg_भागider_offset = 0;
+	अगर (of_property_पढ़ो_u32(np, "divider-width",
+				&parameters.reg_भागider_width))
+		parameters.reg_भागider_width = 0;
+	अगर (of_property_पढ़ो_u32(np, "divider-shift",
+				&parameters.reg_भागider_shअगरt))
+		parameters.reg_भागider_shअगरt = 0;
+	of_property_पढ़ो_string(np, "clock-output-names", &clk_name);
 
-	clk = xgene_register_clk(NULL, clk_name,
+	clk = xgene_रेजिस्टर_clk(शून्य, clk_name,
 		of_clk_get_parent_name(np, 0), &parameters, &clk_lock);
-	if (IS_ERR(clk))
-		goto err;
+	अगर (IS_ERR(clk))
+		जाओ err;
 	pr_debug("Add %s clock\n", clk_name);
 	rc = of_clk_add_provider(np, of_clk_src_simple_get, clk);
-	if (rc != 0)
+	अगर (rc != 0)
 		pr_err("%s: could register provider clk %pOF\n", __func__, np);
 
-	return;
+	वापस;
 
 err:
-	if (parameters.csr_reg)
+	अगर (parameters.csr_reg)
 		iounmap(parameters.csr_reg);
-	if (parameters.divider_reg)
-		iounmap(parameters.divider_reg);
-}
+	अगर (parameters.भागider_reg)
+		iounmap(parameters.भागider_reg);
+पूर्ण
 
-CLK_OF_DECLARE(xgene_socpll_clock, "apm,xgene-socpll-clock", xgene_socpllclk_init);
-CLK_OF_DECLARE(xgene_pcppll_clock, "apm,xgene-pcppll-clock", xgene_pcppllclk_init);
-CLK_OF_DECLARE(xgene_pmd_clock, "apm,xgene-pmd-clock", xgene_pmdclk_init);
-CLK_OF_DECLARE(xgene_socpll_v2_clock, "apm,xgene-socpll-v2-clock",
+CLK_OF_DECLARE(xgene_socpll_घड़ी, "apm,xgene-socpll-clock", xgene_socpllclk_init);
+CLK_OF_DECLARE(xgene_pcppll_घड़ी, "apm,xgene-pcppll-clock", xgene_pcppllclk_init);
+CLK_OF_DECLARE(xgene_pmd_घड़ी, "apm,xgene-pmd-clock", xgene_pmdclk_init);
+CLK_OF_DECLARE(xgene_socpll_v2_घड़ी, "apm,xgene-socpll-v2-clock",
 	       xgene_socpllclk_init);
-CLK_OF_DECLARE(xgene_pcppll_v2_clock, "apm,xgene-pcppll-v2-clock",
+CLK_OF_DECLARE(xgene_pcppll_v2_घड़ी, "apm,xgene-pcppll-v2-clock",
 	       xgene_pcppllclk_init);
-CLK_OF_DECLARE(xgene_dev_clock, "apm,xgene-device-clock", xgene_devclk_init);
+CLK_OF_DECLARE(xgene_dev_घड़ी, "apm,xgene-device-clock", xgene_devclk_init);

@@ -1,381 +1,382 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <perf/evsel.h>
-#include <perf/cpumap.h>
-#include <perf/threadmap.h>
-#include <linux/list.h>
-#include <internal/evsel.h>
-#include <linux/zalloc.h>
-#include <stdlib.h>
-#include <internal/xyarray.h>
-#include <internal/cpumap.h>
-#include <internal/mmap.h>
-#include <internal/threadmap.h>
-#include <internal/lib.h>
-#include <linux/string.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
+#समावेश <perf/evsel.h>
+#समावेश <perf/cpumap.h>
+#समावेश <perf/thपढ़ोmap.h>
+#समावेश <linux/list.h>
+#समावेश <पूर्णांकernal/evsel.h>
+#समावेश <linux/zभाग.स>
+#समावेश <मानककोष.स>
+#समावेश <पूर्णांकernal/xyarray.h>
+#समावेश <पूर्णांकernal/cpumap.h>
+#समावेश <पूर्णांकernal/mmap.h>
+#समावेश <पूर्णांकernal/thपढ़ोmap.h>
+#समावेश <पूर्णांकernal/lib.h>
+#समावेश <linux/माला.स>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/mman.h>
 
-void perf_evsel__init(struct perf_evsel *evsel, struct perf_event_attr *attr)
-{
+व्योम perf_evsel__init(काष्ठा perf_evsel *evsel, काष्ठा perf_event_attr *attr)
+अणु
 	INIT_LIST_HEAD(&evsel->node);
 	evsel->attr = *attr;
-}
+पूर्ण
 
-struct perf_evsel *perf_evsel__new(struct perf_event_attr *attr)
-{
-	struct perf_evsel *evsel = zalloc(sizeof(*evsel));
+काष्ठा perf_evsel *perf_evsel__new(काष्ठा perf_event_attr *attr)
+अणु
+	काष्ठा perf_evsel *evsel = zalloc(माप(*evsel));
 
-	if (evsel != NULL)
+	अगर (evsel != शून्य)
 		perf_evsel__init(evsel, attr);
 
-	return evsel;
-}
+	वापस evsel;
+पूर्ण
 
-void perf_evsel__delete(struct perf_evsel *evsel)
-{
-	free(evsel);
-}
+व्योम perf_evsel__delete(काष्ठा perf_evsel *evsel)
+अणु
+	मुक्त(evsel);
+पूर्ण
 
-#define FD(e, x, y) (*(int *) xyarray__entry(e->fd, x, y))
-#define MMAP(e, x, y) (e->mmap ? ((struct perf_mmap *) xyarray__entry(e->mmap, x, y)) : NULL)
+#घोषणा FD(e, x, y) (*(पूर्णांक *) xyarray__entry(e->fd, x, y))
+#घोषणा MMAP(e, x, y) (e->mmap ? ((काष्ठा perf_mmap *) xyarray__entry(e->mmap, x, y)) : शून्य)
 
-int perf_evsel__alloc_fd(struct perf_evsel *evsel, int ncpus, int nthreads)
-{
-	evsel->fd = xyarray__new(ncpus, nthreads, sizeof(int));
+पूर्णांक perf_evsel__alloc_fd(काष्ठा perf_evsel *evsel, पूर्णांक ncpus, पूर्णांक nthपढ़ोs)
+अणु
+	evsel->fd = xyarray__new(ncpus, nthपढ़ोs, माप(पूर्णांक));
 
-	if (evsel->fd) {
-		int cpu, thread;
-		for (cpu = 0; cpu < ncpus; cpu++) {
-			for (thread = 0; thread < nthreads; thread++) {
-				FD(evsel, cpu, thread) = -1;
-			}
-		}
-	}
+	अगर (evsel->fd) अणु
+		पूर्णांक cpu, thपढ़ो;
+		क्रम (cpu = 0; cpu < ncpus; cpu++) अणु
+			क्रम (thपढ़ो = 0; thपढ़ो < nthपढ़ोs; thपढ़ो++) अणु
+				FD(evsel, cpu, thपढ़ो) = -1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return evsel->fd != NULL ? 0 : -ENOMEM;
-}
+	वापस evsel->fd != शून्य ? 0 : -ENOMEM;
+पूर्ण
 
-static int perf_evsel__alloc_mmap(struct perf_evsel *evsel, int ncpus, int nthreads)
-{
-	evsel->mmap = xyarray__new(ncpus, nthreads, sizeof(struct perf_mmap));
+अटल पूर्णांक perf_evsel__alloc_mmap(काष्ठा perf_evsel *evsel, पूर्णांक ncpus, पूर्णांक nthपढ़ोs)
+अणु
+	evsel->mmap = xyarray__new(ncpus, nthपढ़ोs, माप(काष्ठा perf_mmap));
 
-	return evsel->mmap != NULL ? 0 : -ENOMEM;
-}
+	वापस evsel->mmap != शून्य ? 0 : -ENOMEM;
+पूर्ण
 
-static int
-sys_perf_event_open(struct perf_event_attr *attr,
-		    pid_t pid, int cpu, int group_fd,
-		    unsigned long flags)
-{
-	return syscall(__NR_perf_event_open, attr, pid, cpu, group_fd, flags);
-}
+अटल पूर्णांक
+sys_perf_event_खोलो(काष्ठा perf_event_attr *attr,
+		    pid_t pid, पूर्णांक cpu, पूर्णांक group_fd,
+		    अचिन्हित दीर्घ flags)
+अणु
+	वापस syscall(__NR_perf_event_खोलो, attr, pid, cpu, group_fd, flags);
+पूर्ण
 
-int perf_evsel__open(struct perf_evsel *evsel, struct perf_cpu_map *cpus,
-		     struct perf_thread_map *threads)
-{
-	int cpu, thread, err = 0;
+पूर्णांक perf_evsel__खोलो(काष्ठा perf_evsel *evsel, काष्ठा perf_cpu_map *cpus,
+		     काष्ठा perf_thपढ़ो_map *thपढ़ोs)
+अणु
+	पूर्णांक cpu, thपढ़ो, err = 0;
 
-	if (cpus == NULL) {
-		static struct perf_cpu_map *empty_cpu_map;
+	अगर (cpus == शून्य) अणु
+		अटल काष्ठा perf_cpu_map *empty_cpu_map;
 
-		if (empty_cpu_map == NULL) {
+		अगर (empty_cpu_map == शून्य) अणु
 			empty_cpu_map = perf_cpu_map__dummy_new();
-			if (empty_cpu_map == NULL)
-				return -ENOMEM;
-		}
+			अगर (empty_cpu_map == शून्य)
+				वापस -ENOMEM;
+		पूर्ण
 
 		cpus = empty_cpu_map;
-	}
+	पूर्ण
 
-	if (threads == NULL) {
-		static struct perf_thread_map *empty_thread_map;
+	अगर (thपढ़ोs == शून्य) अणु
+		अटल काष्ठा perf_thपढ़ो_map *empty_thपढ़ो_map;
 
-		if (empty_thread_map == NULL) {
-			empty_thread_map = perf_thread_map__new_dummy();
-			if (empty_thread_map == NULL)
-				return -ENOMEM;
-		}
+		अगर (empty_thपढ़ो_map == शून्य) अणु
+			empty_thपढ़ो_map = perf_thपढ़ो_map__new_dummy();
+			अगर (empty_thपढ़ो_map == शून्य)
+				वापस -ENOMEM;
+		पूर्ण
 
-		threads = empty_thread_map;
-	}
+		thपढ़ोs = empty_thपढ़ो_map;
+	पूर्ण
 
-	if (evsel->fd == NULL &&
-	    perf_evsel__alloc_fd(evsel, cpus->nr, threads->nr) < 0)
-		return -ENOMEM;
+	अगर (evsel->fd == शून्य &&
+	    perf_evsel__alloc_fd(evsel, cpus->nr, thपढ़ोs->nr) < 0)
+		वापस -ENOMEM;
 
-	for (cpu = 0; cpu < cpus->nr; cpu++) {
-		for (thread = 0; thread < threads->nr; thread++) {
-			int fd;
+	क्रम (cpu = 0; cpu < cpus->nr; cpu++) अणु
+		क्रम (thपढ़ो = 0; thपढ़ो < thपढ़ोs->nr; thपढ़ो++) अणु
+			पूर्णांक fd;
 
-			fd = sys_perf_event_open(&evsel->attr,
-						 threads->map[thread].pid,
+			fd = sys_perf_event_खोलो(&evsel->attr,
+						 thपढ़ोs->map[thपढ़ो].pid,
 						 cpus->map[cpu], -1, 0);
 
-			if (fd < 0)
-				return -errno;
+			अगर (fd < 0)
+				वापस -त्रुटि_सं;
 
-			FD(evsel, cpu, thread) = fd;
-		}
-	}
+			FD(evsel, cpu, thपढ़ो) = fd;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void perf_evsel__close_fd_cpu(struct perf_evsel *evsel, int cpu)
-{
-	int thread;
+अटल व्योम perf_evsel__बंद_fd_cpu(काष्ठा perf_evsel *evsel, पूर्णांक cpu)
+अणु
+	पूर्णांक thपढ़ो;
 
-	for (thread = 0; thread < xyarray__max_y(evsel->fd); ++thread) {
-		if (FD(evsel, cpu, thread) >= 0)
-			close(FD(evsel, cpu, thread));
-		FD(evsel, cpu, thread) = -1;
-	}
-}
+	क्रम (thपढ़ो = 0; thपढ़ो < xyarray__max_y(evsel->fd); ++thपढ़ो) अणु
+		अगर (FD(evsel, cpu, thपढ़ो) >= 0)
+			बंद(FD(evsel, cpu, thपढ़ो));
+		FD(evsel, cpu, thपढ़ो) = -1;
+	पूर्ण
+पूर्ण
 
-void perf_evsel__close_fd(struct perf_evsel *evsel)
-{
-	int cpu;
+व्योम perf_evsel__बंद_fd(काष्ठा perf_evsel *evsel)
+अणु
+	पूर्णांक cpu;
 
-	for (cpu = 0; cpu < xyarray__max_x(evsel->fd); cpu++)
-		perf_evsel__close_fd_cpu(evsel, cpu);
-}
+	क्रम (cpu = 0; cpu < xyarray__max_x(evsel->fd); cpu++)
+		perf_evsel__बंद_fd_cpu(evsel, cpu);
+पूर्ण
 
-void perf_evsel__free_fd(struct perf_evsel *evsel)
-{
+व्योम perf_evsel__मुक्त_fd(काष्ठा perf_evsel *evsel)
+अणु
 	xyarray__delete(evsel->fd);
-	evsel->fd = NULL;
-}
+	evsel->fd = शून्य;
+पूर्ण
 
-void perf_evsel__close(struct perf_evsel *evsel)
-{
-	if (evsel->fd == NULL)
-		return;
+व्योम perf_evsel__बंद(काष्ठा perf_evsel *evsel)
+अणु
+	अगर (evsel->fd == शून्य)
+		वापस;
 
-	perf_evsel__close_fd(evsel);
-	perf_evsel__free_fd(evsel);
-}
+	perf_evsel__बंद_fd(evsel);
+	perf_evsel__मुक्त_fd(evsel);
+पूर्ण
 
-void perf_evsel__close_cpu(struct perf_evsel *evsel, int cpu)
-{
-	if (evsel->fd == NULL)
-		return;
+व्योम perf_evsel__बंद_cpu(काष्ठा perf_evsel *evsel, पूर्णांक cpu)
+अणु
+	अगर (evsel->fd == शून्य)
+		वापस;
 
-	perf_evsel__close_fd_cpu(evsel, cpu);
-}
+	perf_evsel__बंद_fd_cpu(evsel, cpu);
+पूर्ण
 
-void perf_evsel__munmap(struct perf_evsel *evsel)
-{
-	int cpu, thread;
+व्योम perf_evsel__munmap(काष्ठा perf_evsel *evsel)
+अणु
+	पूर्णांक cpu, thपढ़ो;
 
-	if (evsel->fd == NULL || evsel->mmap == NULL)
-		return;
+	अगर (evsel->fd == शून्य || evsel->mmap == शून्य)
+		वापस;
 
-	for (cpu = 0; cpu < xyarray__max_x(evsel->fd); cpu++) {
-		for (thread = 0; thread < xyarray__max_y(evsel->fd); thread++) {
-			int fd = FD(evsel, cpu, thread);
-			struct perf_mmap *map = MMAP(evsel, cpu, thread);
+	क्रम (cpu = 0; cpu < xyarray__max_x(evsel->fd); cpu++) अणु
+		क्रम (thपढ़ो = 0; thपढ़ो < xyarray__max_y(evsel->fd); thपढ़ो++) अणु
+			पूर्णांक fd = FD(evsel, cpu, thपढ़ो);
+			काष्ठा perf_mmap *map = MMAP(evsel, cpu, thपढ़ो);
 
-			if (fd < 0)
-				continue;
+			अगर (fd < 0)
+				जारी;
 
 			perf_mmap__munmap(map);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	xyarray__delete(evsel->mmap);
-	evsel->mmap = NULL;
-}
+	evsel->mmap = शून्य;
+पूर्ण
 
-int perf_evsel__mmap(struct perf_evsel *evsel, int pages)
-{
-	int ret, cpu, thread;
-	struct perf_mmap_param mp = {
+पूर्णांक perf_evsel__mmap(काष्ठा perf_evsel *evsel, पूर्णांक pages)
+अणु
+	पूर्णांक ret, cpu, thपढ़ो;
+	काष्ठा perf_mmap_param mp = अणु
 		.prot = PROT_READ | PROT_WRITE,
 		.mask = (pages * page_size) - 1,
-	};
+	पूर्ण;
 
-	if (evsel->fd == NULL || evsel->mmap)
-		return -EINVAL;
+	अगर (evsel->fd == शून्य || evsel->mmap)
+		वापस -EINVAL;
 
-	if (perf_evsel__alloc_mmap(evsel, xyarray__max_x(evsel->fd), xyarray__max_y(evsel->fd)) < 0)
-		return -ENOMEM;
+	अगर (perf_evsel__alloc_mmap(evsel, xyarray__max_x(evsel->fd), xyarray__max_y(evsel->fd)) < 0)
+		वापस -ENOMEM;
 
-	for (cpu = 0; cpu < xyarray__max_x(evsel->fd); cpu++) {
-		for (thread = 0; thread < xyarray__max_y(evsel->fd); thread++) {
-			int fd = FD(evsel, cpu, thread);
-			struct perf_mmap *map = MMAP(evsel, cpu, thread);
+	क्रम (cpu = 0; cpu < xyarray__max_x(evsel->fd); cpu++) अणु
+		क्रम (thपढ़ो = 0; thपढ़ो < xyarray__max_y(evsel->fd); thपढ़ो++) अणु
+			पूर्णांक fd = FD(evsel, cpu, thपढ़ो);
+			काष्ठा perf_mmap *map = MMAP(evsel, cpu, thपढ़ो);
 
-			if (fd < 0)
-				continue;
+			अगर (fd < 0)
+				जारी;
 
-			perf_mmap__init(map, NULL, false, NULL);
+			perf_mmap__init(map, शून्य, false, शून्य);
 
 			ret = perf_mmap__mmap(map, &mp, fd, cpu);
-			if (ret) {
+			अगर (ret) अणु
 				perf_evsel__munmap(evsel);
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void *perf_evsel__mmap_base(struct perf_evsel *evsel, int cpu, int thread)
-{
-	if (FD(evsel, cpu, thread) < 0 || MMAP(evsel, cpu, thread) == NULL)
-		return NULL;
+व्योम *perf_evsel__mmap_base(काष्ठा perf_evsel *evsel, पूर्णांक cpu, पूर्णांक thपढ़ो)
+अणु
+	अगर (FD(evsel, cpu, thपढ़ो) < 0 || MMAP(evsel, cpu, thपढ़ो) == शून्य)
+		वापस शून्य;
 
-	return MMAP(evsel, cpu, thread)->base;
-}
+	वापस MMAP(evsel, cpu, thपढ़ो)->base;
+पूर्ण
 
-int perf_evsel__read_size(struct perf_evsel *evsel)
-{
-	u64 read_format = evsel->attr.read_format;
-	int entry = sizeof(u64); /* value */
-	int size = 0;
-	int nr = 1;
+पूर्णांक perf_evsel__पढ़ो_size(काष्ठा perf_evsel *evsel)
+अणु
+	u64 पढ़ो_क्रमmat = evsel->attr.पढ़ो_क्रमmat;
+	पूर्णांक entry = माप(u64); /* value */
+	पूर्णांक size = 0;
+	पूर्णांक nr = 1;
 
-	if (read_format & PERF_FORMAT_TOTAL_TIME_ENABLED)
-		size += sizeof(u64);
+	अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_ENABLED)
+		size += माप(u64);
 
-	if (read_format & PERF_FORMAT_TOTAL_TIME_RUNNING)
-		size += sizeof(u64);
+	अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_RUNNING)
+		size += माप(u64);
 
-	if (read_format & PERF_FORMAT_ID)
-		entry += sizeof(u64);
+	अगर (पढ़ो_क्रमmat & PERF_FORMAT_ID)
+		entry += माप(u64);
 
-	if (read_format & PERF_FORMAT_GROUP) {
+	अगर (पढ़ो_क्रमmat & PERF_FORMAT_GROUP) अणु
 		nr = evsel->nr_members;
-		size += sizeof(u64);
-	}
+		size += माप(u64);
+	पूर्ण
 
 	size += entry * nr;
-	return size;
-}
+	वापस size;
+पूर्ण
 
-int perf_evsel__read(struct perf_evsel *evsel, int cpu, int thread,
-		     struct perf_counts_values *count)
-{
-	size_t size = perf_evsel__read_size(evsel);
+पूर्णांक perf_evsel__पढ़ो(काष्ठा perf_evsel *evsel, पूर्णांक cpu, पूर्णांक thपढ़ो,
+		     काष्ठा perf_counts_values *count)
+अणु
+	माप_प्रकार size = perf_evsel__पढ़ो_size(evsel);
 
-	memset(count, 0, sizeof(*count));
+	स_रखो(count, 0, माप(*count));
 
-	if (FD(evsel, cpu, thread) < 0)
-		return -EINVAL;
+	अगर (FD(evsel, cpu, thपढ़ो) < 0)
+		वापस -EINVAL;
 
-	if (MMAP(evsel, cpu, thread) &&
-	    !perf_mmap__read_self(MMAP(evsel, cpu, thread), count))
-		return 0;
+	अगर (MMAP(evsel, cpu, thपढ़ो) &&
+	    !perf_mmap__पढ़ो_self(MMAP(evsel, cpu, thपढ़ो), count))
+		वापस 0;
 
-	if (readn(FD(evsel, cpu, thread), count->values, size) <= 0)
-		return -errno;
+	अगर (पढ़ोn(FD(evsel, cpu, thपढ़ो), count->values, size) <= 0)
+		वापस -त्रुटि_सं;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_evsel__run_ioctl(struct perf_evsel *evsel,
-				 int ioc,  void *arg,
-				 int cpu)
-{
-	int thread;
+अटल पूर्णांक perf_evsel__run_ioctl(काष्ठा perf_evsel *evsel,
+				 पूर्णांक ioc,  व्योम *arg,
+				 पूर्णांक cpu)
+अणु
+	पूर्णांक thपढ़ो;
 
-	for (thread = 0; thread < xyarray__max_y(evsel->fd); thread++) {
-		int fd = FD(evsel, cpu, thread),
+	क्रम (thपढ़ो = 0; thपढ़ो < xyarray__max_y(evsel->fd); thपढ़ो++) अणु
+		पूर्णांक fd = FD(evsel, cpu, thपढ़ो),
 		    err = ioctl(fd, ioc, arg);
 
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int perf_evsel__enable_cpu(struct perf_evsel *evsel, int cpu)
-{
-	return perf_evsel__run_ioctl(evsel, PERF_EVENT_IOC_ENABLE, NULL, cpu);
-}
+पूर्णांक perf_evsel__enable_cpu(काष्ठा perf_evsel *evsel, पूर्णांक cpu)
+अणु
+	वापस perf_evsel__run_ioctl(evsel, PERF_EVENT_IOC_ENABLE, शून्य, cpu);
+पूर्ण
 
-int perf_evsel__enable(struct perf_evsel *evsel)
-{
-	int i;
-	int err = 0;
+पूर्णांक perf_evsel__enable(काष्ठा perf_evsel *evsel)
+अणु
+	पूर्णांक i;
+	पूर्णांक err = 0;
 
-	for (i = 0; i < xyarray__max_x(evsel->fd) && !err; i++)
-		err = perf_evsel__run_ioctl(evsel, PERF_EVENT_IOC_ENABLE, NULL, i);
-	return err;
-}
+	क्रम (i = 0; i < xyarray__max_x(evsel->fd) && !err; i++)
+		err = perf_evsel__run_ioctl(evsel, PERF_EVENT_IOC_ENABLE, शून्य, i);
+	वापस err;
+पूर्ण
 
-int perf_evsel__disable_cpu(struct perf_evsel *evsel, int cpu)
-{
-	return perf_evsel__run_ioctl(evsel, PERF_EVENT_IOC_DISABLE, NULL, cpu);
-}
+पूर्णांक perf_evsel__disable_cpu(काष्ठा perf_evsel *evsel, पूर्णांक cpu)
+अणु
+	वापस perf_evsel__run_ioctl(evsel, PERF_EVENT_IOC_DISABLE, शून्य, cpu);
+पूर्ण
 
-int perf_evsel__disable(struct perf_evsel *evsel)
-{
-	int i;
-	int err = 0;
+पूर्णांक perf_evsel__disable(काष्ठा perf_evsel *evsel)
+अणु
+	पूर्णांक i;
+	पूर्णांक err = 0;
 
-	for (i = 0; i < xyarray__max_x(evsel->fd) && !err; i++)
-		err = perf_evsel__run_ioctl(evsel, PERF_EVENT_IOC_DISABLE, NULL, i);
-	return err;
-}
+	क्रम (i = 0; i < xyarray__max_x(evsel->fd) && !err; i++)
+		err = perf_evsel__run_ioctl(evsel, PERF_EVENT_IOC_DISABLE, शून्य, i);
+	वापस err;
+पूर्ण
 
-int perf_evsel__apply_filter(struct perf_evsel *evsel, const char *filter)
-{
-	int err = 0, i;
+पूर्णांक perf_evsel__apply_filter(काष्ठा perf_evsel *evsel, स्थिर अक्षर *filter)
+अणु
+	पूर्णांक err = 0, i;
 
-	for (i = 0; i < evsel->cpus->nr && !err; i++)
+	क्रम (i = 0; i < evsel->cpus->nr && !err; i++)
 		err = perf_evsel__run_ioctl(evsel,
 				     PERF_EVENT_IOC_SET_FILTER,
-				     (void *)filter, i);
-	return err;
-}
+				     (व्योम *)filter, i);
+	वापस err;
+पूर्ण
 
-struct perf_cpu_map *perf_evsel__cpus(struct perf_evsel *evsel)
-{
-	return evsel->cpus;
-}
+काष्ठा perf_cpu_map *perf_evsel__cpus(काष्ठा perf_evsel *evsel)
+अणु
+	वापस evsel->cpus;
+पूर्ण
 
-struct perf_thread_map *perf_evsel__threads(struct perf_evsel *evsel)
-{
-	return evsel->threads;
-}
+काष्ठा perf_thपढ़ो_map *perf_evsel__thपढ़ोs(काष्ठा perf_evsel *evsel)
+अणु
+	वापस evsel->thपढ़ोs;
+पूर्ण
 
-struct perf_event_attr *perf_evsel__attr(struct perf_evsel *evsel)
-{
-	return &evsel->attr;
-}
+काष्ठा perf_event_attr *perf_evsel__attr(काष्ठा perf_evsel *evsel)
+अणु
+	वापस &evsel->attr;
+पूर्ण
 
-int perf_evsel__alloc_id(struct perf_evsel *evsel, int ncpus, int nthreads)
-{
-	if (ncpus == 0 || nthreads == 0)
-		return 0;
+पूर्णांक perf_evsel__alloc_id(काष्ठा perf_evsel *evsel, पूर्णांक ncpus, पूर्णांक nthपढ़ोs)
+अणु
+	अगर (ncpus == 0 || nthपढ़ोs == 0)
+		वापस 0;
 
-	if (evsel->system_wide)
-		nthreads = 1;
+	अगर (evsel->प्रणाली_wide)
+		nthपढ़ोs = 1;
 
-	evsel->sample_id = xyarray__new(ncpus, nthreads, sizeof(struct perf_sample_id));
-	if (evsel->sample_id == NULL)
-		return -ENOMEM;
+	evsel->sample_id = xyarray__new(ncpus, nthपढ़ोs, माप(काष्ठा perf_sample_id));
+	अगर (evsel->sample_id == शून्य)
+		वापस -ENOMEM;
 
-	evsel->id = zalloc(ncpus * nthreads * sizeof(u64));
-	if (evsel->id == NULL) {
+	evsel->id = zalloc(ncpus * nthपढ़ोs * माप(u64));
+	अगर (evsel->id == शून्य) अणु
 		xyarray__delete(evsel->sample_id);
-		evsel->sample_id = NULL;
-		return -ENOMEM;
-	}
+		evsel->sample_id = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void perf_evsel__free_id(struct perf_evsel *evsel)
-{
+व्योम perf_evsel__मुक्त_id(काष्ठा perf_evsel *evsel)
+अणु
 	xyarray__delete(evsel->sample_id);
-	evsel->sample_id = NULL;
-	zfree(&evsel->id);
+	evsel->sample_id = शून्य;
+	zमुक्त(&evsel->id);
 	evsel->ids = 0;
-}
+पूर्ण

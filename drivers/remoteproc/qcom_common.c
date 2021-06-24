@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Qualcomm Peripheral Image Loader helpers
  *
@@ -7,221 +8,221 @@
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/firmware.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/notifier.h>
-#include <linux/remoteproc.h>
-#include <linux/remoteproc/qcom_rproc.h>
-#include <linux/rpmsg/qcom_glink.h>
-#include <linux/rpmsg/qcom_smd.h>
-#include <linux/slab.h>
-#include <linux/soc/qcom/mdt_loader.h>
-#include <linux/soc/qcom/smem.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/remoteproc.h>
+#समावेश <linux/remoteproc/qcom_rproc.h>
+#समावेश <linux/rpmsg/qcom_glink.h>
+#समावेश <linux/rpmsg/qcom_smd.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/soc/qcom/mdt_loader.h>
+#समावेश <linux/soc/qcom/sस्मृति.स>
 
-#include "remoteproc_internal.h"
-#include "qcom_common.h"
+#समावेश "remoteproc_internal.h"
+#समावेश "qcom_common.h"
 
-#define to_glink_subdev(d) container_of(d, struct qcom_rproc_glink, subdev)
-#define to_smd_subdev(d) container_of(d, struct qcom_rproc_subdev, subdev)
-#define to_ssr_subdev(d) container_of(d, struct qcom_rproc_ssr, subdev)
+#घोषणा to_glink_subdev(d) container_of(d, काष्ठा qcom_rproc_glink, subdev)
+#घोषणा to_smd_subdev(d) container_of(d, काष्ठा qcom_rproc_subdev, subdev)
+#घोषणा to_ssr_subdev(d) container_of(d, काष्ठा qcom_rproc_ssr, subdev)
 
-#define MAX_NUM_OF_SS           10
-#define MAX_REGION_NAME_LENGTH  16
-#define SBL_MINIDUMP_SMEM_ID	602
-#define MD_REGION_VALID		('V' << 24 | 'A' << 16 | 'L' << 8 | 'I' << 0)
-#define MD_SS_ENCR_DONE		('D' << 24 | 'O' << 16 | 'N' << 8 | 'E' << 0)
-#define MD_SS_ENABLED		('E' << 24 | 'N' << 16 | 'B' << 8 | 'L' << 0)
+#घोषणा MAX_NUM_OF_SS           10
+#घोषणा MAX_REGION_NAME_LENGTH  16
+#घोषणा SBL_MINIDUMP_SMEM_ID	602
+#घोषणा MD_REGION_VALID		('V' << 24 | 'A' << 16 | 'L' << 8 | 'I' << 0)
+#घोषणा MD_SS_ENCR_DONE		('D' << 24 | 'O' << 16 | 'N' << 8 | 'E' << 0)
+#घोषणा MD_SS_ENABLED		('E' << 24 | 'N' << 16 | 'B' << 8 | 'L' << 0)
 
 /**
- * struct minidump_region - Minidump region
+ * काष्ठा minidump_region - Minidump region
  * @name		: Name of the region to be dumped
- * @seq_num:		: Use to differentiate regions with same name.
- * @valid		: This entry to be dumped (if set to 1)
+ * @seq_num:		: Use to dअगरferentiate regions with same name.
+ * @valid		: This entry to be dumped (अगर set to 1)
  * @address		: Physical address of region to be dumped
  * @size		: Size of the region
  */
-struct minidump_region {
-	char	name[MAX_REGION_NAME_LENGTH];
+काष्ठा minidump_region अणु
+	अक्षर	name[MAX_REGION_NAME_LENGTH];
 	__le32	seq_num;
 	__le32	valid;
 	__le64	address;
 	__le64	size;
-};
+पूर्ण;
 
 /**
- * struct minidump_subsystem_toc: Subsystem's SMEM Table of content
- * @status : Subsystem toc init status
- * @enabled : if set to 1, this region would be copied during coredump
- * @encryption_status: Encryption status for this subsystem
- * @encryption_required : Decides to encrypt the subsystem regions or not
- * @region_count : Number of regions added in this subsystem toc
- * @regions_baseptr : regions base pointer of the subsystem
+ * काष्ठा minidump_subप्रणाली_toc: Subप्रणाली's SMEM Table of content
+ * @status : Subप्रणाली toc init status
+ * @enabled : अगर set to 1, this region would be copied during coredump
+ * @encryption_status: Encryption status क्रम this subप्रणाली
+ * @encryption_required : Decides to encrypt the subप्रणाली regions or not
+ * @region_count : Number of regions added in this subप्रणाली toc
+ * @regions_baseptr : regions base poपूर्णांकer of the subप्रणाली
  */
-struct minidump_subsystem {
+काष्ठा minidump_subप्रणाली अणु
 	__le32	status;
 	__le32	enabled;
 	__le32	encryption_status;
 	__le32	encryption_required;
 	__le32	region_count;
 	__le64	regions_baseptr;
-};
+पूर्ण;
 
 /**
- * struct minidump_global_toc: Global Table of Content
+ * काष्ठा minidump_global_toc: Global Table of Content
  * @status : Global Minidump init status
  * @md_revision : Minidump revision
  * @enabled : Minidump enable status
- * @subsystems : Array of subsystems toc
+ * @subप्रणालीs : Array of subप्रणालीs toc
  */
-struct minidump_global_toc {
+काष्ठा minidump_global_toc अणु
 	__le32				status;
 	__le32				md_revision;
 	__le32				enabled;
-	struct minidump_subsystem	subsystems[MAX_NUM_OF_SS];
-};
+	काष्ठा minidump_subप्रणाली	subप्रणालीs[MAX_NUM_OF_SS];
+पूर्ण;
 
-struct qcom_ssr_subsystem {
-	const char *name;
-	struct srcu_notifier_head notifier_list;
-	struct list_head list;
-};
+काष्ठा qcom_ssr_subप्रणाली अणु
+	स्थिर अक्षर *name;
+	काष्ठा srcu_notअगरier_head notअगरier_list;
+	काष्ठा list_head list;
+पूर्ण;
 
-static LIST_HEAD(qcom_ssr_subsystem_list);
-static DEFINE_MUTEX(qcom_ssr_subsys_lock);
+अटल LIST_HEAD(qcom_ssr_subप्रणाली_list);
+अटल DEFINE_MUTEX(qcom_ssr_subsys_lock);
 
-static void qcom_minidump_cleanup(struct rproc *rproc)
-{
-	struct rproc_dump_segment *entry, *tmp;
+अटल व्योम qcom_minidump_cleanup(काष्ठा rproc *rproc)
+अणु
+	काष्ठा rproc_dump_segment *entry, *पंचांगp;
 
-	list_for_each_entry_safe(entry, tmp, &rproc->dump_segments, node) {
+	list_क्रम_each_entry_safe(entry, पंचांगp, &rproc->dump_segments, node) अणु
 		list_del(&entry->node);
-		kfree(entry->priv);
-		kfree(entry);
-	}
-}
+		kमुक्त(entry->priv);
+		kमुक्त(entry);
+	पूर्ण
+पूर्ण
 
-static int qcom_add_minidump_segments(struct rproc *rproc, struct minidump_subsystem *subsystem)
-{
-	struct minidump_region __iomem *ptr;
-	struct minidump_region region;
-	int seg_cnt, i;
+अटल पूर्णांक qcom_add_minidump_segments(काष्ठा rproc *rproc, काष्ठा minidump_subप्रणाली *subप्रणाली)
+अणु
+	काष्ठा minidump_region __iomem *ptr;
+	काष्ठा minidump_region region;
+	पूर्णांक seg_cnt, i;
 	dma_addr_t da;
-	size_t size;
-	char *name;
+	माप_प्रकार size;
+	अक्षर *name;
 
-	if (WARN_ON(!list_empty(&rproc->dump_segments))) {
+	अगर (WARN_ON(!list_empty(&rproc->dump_segments))) अणु
 		dev_err(&rproc->dev, "dump segment list already populated\n");
-		return -EUCLEAN;
-	}
+		वापस -EUCLEAN;
+	पूर्ण
 
-	seg_cnt = le32_to_cpu(subsystem->region_count);
-	ptr = ioremap((unsigned long)le64_to_cpu(subsystem->regions_baseptr),
-		      seg_cnt * sizeof(struct minidump_region));
-	if (!ptr)
-		return -EFAULT;
+	seg_cnt = le32_to_cpu(subप्रणाली->region_count);
+	ptr = ioremap((अचिन्हित दीर्घ)le64_to_cpu(subप्रणाली->regions_baseptr),
+		      seg_cnt * माप(काष्ठा minidump_region));
+	अगर (!ptr)
+		वापस -EFAULT;
 
-	for (i = 0; i < seg_cnt; i++) {
-		memcpy_fromio(&region, ptr + i, sizeof(region));
-		if (region.valid == MD_REGION_VALID) {
+	क्रम (i = 0; i < seg_cnt; i++) अणु
+		स_नकल_fromio(&region, ptr + i, माप(region));
+		अगर (region.valid == MD_REGION_VALID) अणु
 			name = kstrdup(region.name, GFP_KERNEL);
-			if (!name) {
+			अगर (!name) अणु
 				iounmap(ptr);
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 			da = le64_to_cpu(region.address);
 			size = le32_to_cpu(region.size);
-			rproc_coredump_add_custom_segment(rproc, da, size, NULL, name);
-		}
-	}
+			rproc_coredump_add_custom_segment(rproc, da, size, शून्य, name);
+		पूर्ण
+	पूर्ण
 
 	iounmap(ptr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void qcom_minidump(struct rproc *rproc, unsigned int minidump_id)
-{
-	int ret;
-	struct minidump_subsystem *subsystem;
-	struct minidump_global_toc *toc;
+व्योम qcom_minidump(काष्ठा rproc *rproc, अचिन्हित पूर्णांक minidump_id)
+अणु
+	पूर्णांक ret;
+	काष्ठा minidump_subप्रणाली *subप्रणाली;
+	काष्ठा minidump_global_toc *toc;
 
 	/* Get Global minidump ToC*/
-	toc = qcom_smem_get(QCOM_SMEM_HOST_ANY, SBL_MINIDUMP_SMEM_ID, NULL);
+	toc = qcom_smem_get(QCOM_SMEM_HOST_ANY, SBL_MINIDUMP_SMEM_ID, शून्य);
 
-	/* check if global table pointer exists and init is set */
-	if (IS_ERR(toc) || !toc->status) {
+	/* check अगर global table poपूर्णांकer exists and init is set */
+	अगर (IS_ERR(toc) || !toc->status) अणु
 		dev_err(&rproc->dev, "Minidump TOC not found in SMEM\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Get subsystem table of contents using the minidump id */
-	subsystem = &toc->subsystems[minidump_id];
+	/* Get subप्रणाली table of contents using the minidump id */
+	subप्रणाली = &toc->subप्रणालीs[minidump_id];
 
 	/**
-	 * Collect minidump if SS ToC is valid and segment table
+	 * Collect minidump अगर SS ToC is valid and segment table
 	 * is initialized in memory and encryption status is set.
 	 */
-	if (subsystem->regions_baseptr == 0 ||
-	    le32_to_cpu(subsystem->status) != 1 ||
-	    le32_to_cpu(subsystem->enabled) != MD_SS_ENABLED ||
-	    le32_to_cpu(subsystem->encryption_status) != MD_SS_ENCR_DONE) {
+	अगर (subप्रणाली->regions_baseptr == 0 ||
+	    le32_to_cpu(subप्रणाली->status) != 1 ||
+	    le32_to_cpu(subप्रणाली->enabled) != MD_SS_ENABLED ||
+	    le32_to_cpu(subप्रणाली->encryption_status) != MD_SS_ENCR_DONE) अणु
 		dev_err(&rproc->dev, "Minidump not ready, skipping\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ret = qcom_add_minidump_segments(rproc, subsystem);
-	if (ret) {
+	ret = qcom_add_minidump_segments(rproc, subप्रणाली);
+	अगर (ret) अणु
 		dev_err(&rproc->dev, "Failed with error: %d while adding minidump entries\n", ret);
-		goto clean_minidump;
-	}
+		जाओ clean_minidump;
+	पूर्ण
 	rproc_coredump_using_sections(rproc);
 clean_minidump:
 	qcom_minidump_cleanup(rproc);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_minidump);
 
-static int glink_subdev_start(struct rproc_subdev *subdev)
-{
-	struct qcom_rproc_glink *glink = to_glink_subdev(subdev);
+अटल पूर्णांक glink_subdev_start(काष्ठा rproc_subdev *subdev)
+अणु
+	काष्ठा qcom_rproc_glink *glink = to_glink_subdev(subdev);
 
-	glink->edge = qcom_glink_smem_register(glink->dev, glink->node);
+	glink->edge = qcom_glink_smem_रेजिस्टर(glink->dev, glink->node);
 
-	return PTR_ERR_OR_ZERO(glink->edge);
-}
+	वापस PTR_ERR_OR_ZERO(glink->edge);
+पूर्ण
 
-static void glink_subdev_stop(struct rproc_subdev *subdev, bool crashed)
-{
-	struct qcom_rproc_glink *glink = to_glink_subdev(subdev);
+अटल व्योम glink_subdev_stop(काष्ठा rproc_subdev *subdev, bool crashed)
+अणु
+	काष्ठा qcom_rproc_glink *glink = to_glink_subdev(subdev);
 
-	qcom_glink_smem_unregister(glink->edge);
-	glink->edge = NULL;
-}
+	qcom_glink_smem_unरेजिस्टर(glink->edge);
+	glink->edge = शून्य;
+पूर्ण
 
-static void glink_subdev_unprepare(struct rproc_subdev *subdev)
-{
-	struct qcom_rproc_glink *glink = to_glink_subdev(subdev);
+अटल व्योम glink_subdev_unprepare(काष्ठा rproc_subdev *subdev)
+अणु
+	काष्ठा qcom_rproc_glink *glink = to_glink_subdev(subdev);
 
-	qcom_glink_ssr_notify(glink->ssr_name);
-}
+	qcom_glink_ssr_notअगरy(glink->ssr_name);
+पूर्ण
 
 /**
  * qcom_add_glink_subdev() - try to add a GLINK subdevice to rproc
  * @rproc:	rproc handle to parent the subdevice
  * @glink:	reference to a GLINK subdev context
- * @ssr_name:	identifier of the associated remoteproc for ssr notifications
+ * @ssr_name:	identअगरier of the associated remoteproc क्रम ssr notअगरications
  */
-void qcom_add_glink_subdev(struct rproc *rproc, struct qcom_rproc_glink *glink,
-			   const char *ssr_name)
-{
-	struct device *dev = &rproc->dev;
+व्योम qcom_add_glink_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_glink *glink,
+			   स्थिर अक्षर *ssr_name)
+अणु
+	काष्ठा device *dev = &rproc->dev;
 
 	glink->node = of_get_child_by_name(dev->parent->of_node, "glink-edge");
-	if (!glink->node)
-		return;
+	अगर (!glink->node)
+		वापस;
 
-	glink->ssr_name = kstrdup_const(ssr_name, GFP_KERNEL);
-	if (!glink->ssr_name)
-		return;
+	glink->ssr_name = kstrdup_स्थिर(ssr_name, GFP_KERNEL);
+	अगर (!glink->ssr_name)
+		वापस;
 
 	glink->dev = dev;
 	glink->subdev.start = glink_subdev_start;
@@ -229,281 +230,281 @@ void qcom_add_glink_subdev(struct rproc *rproc, struct qcom_rproc_glink *glink,
 	glink->subdev.unprepare = glink_subdev_unprepare;
 
 	rproc_add_subdev(rproc, &glink->subdev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_add_glink_subdev);
 
 /**
- * qcom_remove_glink_subdev() - remove a GLINK subdevice from rproc
+ * qcom_हटाओ_glink_subdev() - हटाओ a GLINK subdevice from rproc
  * @rproc:	rproc handle
  * @glink:	reference to a GLINK subdev context
  */
-void qcom_remove_glink_subdev(struct rproc *rproc, struct qcom_rproc_glink *glink)
-{
-	if (!glink->node)
-		return;
+व्योम qcom_हटाओ_glink_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_glink *glink)
+अणु
+	अगर (!glink->node)
+		वापस;
 
-	rproc_remove_subdev(rproc, &glink->subdev);
-	kfree_const(glink->ssr_name);
+	rproc_हटाओ_subdev(rproc, &glink->subdev);
+	kमुक्त_स्थिर(glink->ssr_name);
 	of_node_put(glink->node);
-}
-EXPORT_SYMBOL_GPL(qcom_remove_glink_subdev);
+पूर्ण
+EXPORT_SYMBOL_GPL(qcom_हटाओ_glink_subdev);
 
 /**
- * qcom_register_dump_segments() - register segments for coredump
+ * qcom_रेजिस्टर_dump_segments() - रेजिस्टर segments क्रम coredump
  * @rproc:	remoteproc handle
  * @fw:		firmware header
  *
  * Register all segments of the ELF in the remoteproc coredump segment list
  *
- * Return: 0 on success, negative errno on failure.
+ * Return: 0 on success, negative त्रुटि_सं on failure.
  */
-int qcom_register_dump_segments(struct rproc *rproc,
-				const struct firmware *fw)
-{
-	const struct elf32_phdr *phdrs;
-	const struct elf32_phdr *phdr;
-	const struct elf32_hdr *ehdr;
-	int ret;
-	int i;
+पूर्णांक qcom_रेजिस्टर_dump_segments(काष्ठा rproc *rproc,
+				स्थिर काष्ठा firmware *fw)
+अणु
+	स्थिर काष्ठा elf32_phdr *phdrs;
+	स्थिर काष्ठा elf32_phdr *phdr;
+	स्थिर काष्ठा elf32_hdr *ehdr;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	ehdr = (struct elf32_hdr *)fw->data;
-	phdrs = (struct elf32_phdr *)(ehdr + 1);
+	ehdr = (काष्ठा elf32_hdr *)fw->data;
+	phdrs = (काष्ठा elf32_phdr *)(ehdr + 1);
 
-	for (i = 0; i < ehdr->e_phnum; i++) {
+	क्रम (i = 0; i < ehdr->e_phnum; i++) अणु
 		phdr = &phdrs[i];
 
-		if (phdr->p_type != PT_LOAD)
-			continue;
+		अगर (phdr->p_type != PT_LOAD)
+			जारी;
 
-		if ((phdr->p_flags & QCOM_MDT_TYPE_MASK) == QCOM_MDT_TYPE_HASH)
-			continue;
+		अगर ((phdr->p_flags & QCOM_MDT_TYPE_MASK) == QCOM_MDT_TYPE_HASH)
+			जारी;
 
-		if (!phdr->p_memsz)
-			continue;
+		अगर (!phdr->p_memsz)
+			जारी;
 
 		ret = rproc_coredump_add_segment(rproc, phdr->p_paddr,
 						 phdr->p_memsz);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(qcom_register_dump_segments);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(qcom_रेजिस्टर_dump_segments);
 
-static int smd_subdev_start(struct rproc_subdev *subdev)
-{
-	struct qcom_rproc_subdev *smd = to_smd_subdev(subdev);
+अटल पूर्णांक smd_subdev_start(काष्ठा rproc_subdev *subdev)
+अणु
+	काष्ठा qcom_rproc_subdev *smd = to_smd_subdev(subdev);
 
-	smd->edge = qcom_smd_register_edge(smd->dev, smd->node);
+	smd->edge = qcom_smd_रेजिस्टर_edge(smd->dev, smd->node);
 
-	return PTR_ERR_OR_ZERO(smd->edge);
-}
+	वापस PTR_ERR_OR_ZERO(smd->edge);
+पूर्ण
 
-static void smd_subdev_stop(struct rproc_subdev *subdev, bool crashed)
-{
-	struct qcom_rproc_subdev *smd = to_smd_subdev(subdev);
+अटल व्योम smd_subdev_stop(काष्ठा rproc_subdev *subdev, bool crashed)
+अणु
+	काष्ठा qcom_rproc_subdev *smd = to_smd_subdev(subdev);
 
-	qcom_smd_unregister_edge(smd->edge);
-	smd->edge = NULL;
-}
+	qcom_smd_unरेजिस्टर_edge(smd->edge);
+	smd->edge = शून्य;
+पूर्ण
 
 /**
  * qcom_add_smd_subdev() - try to add a SMD subdevice to rproc
  * @rproc:	rproc handle to parent the subdevice
  * @smd:	reference to a Qualcomm subdev context
  */
-void qcom_add_smd_subdev(struct rproc *rproc, struct qcom_rproc_subdev *smd)
-{
-	struct device *dev = &rproc->dev;
+व्योम qcom_add_smd_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_subdev *smd)
+अणु
+	काष्ठा device *dev = &rproc->dev;
 
 	smd->node = of_get_child_by_name(dev->parent->of_node, "smd-edge");
-	if (!smd->node)
-		return;
+	अगर (!smd->node)
+		वापस;
 
 	smd->dev = dev;
 	smd->subdev.start = smd_subdev_start;
 	smd->subdev.stop = smd_subdev_stop;
 
 	rproc_add_subdev(rproc, &smd->subdev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_add_smd_subdev);
 
 /**
- * qcom_remove_smd_subdev() - remove the smd subdevice from rproc
+ * qcom_हटाओ_smd_subdev() - हटाओ the smd subdevice from rproc
  * @rproc:	rproc handle
- * @smd:	the SMD subdevice to remove
+ * @smd:	the SMD subdevice to हटाओ
  */
-void qcom_remove_smd_subdev(struct rproc *rproc, struct qcom_rproc_subdev *smd)
-{
-	if (!smd->node)
-		return;
+व्योम qcom_हटाओ_smd_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_subdev *smd)
+अणु
+	अगर (!smd->node)
+		वापस;
 
-	rproc_remove_subdev(rproc, &smd->subdev);
+	rproc_हटाओ_subdev(rproc, &smd->subdev);
 	of_node_put(smd->node);
-}
-EXPORT_SYMBOL_GPL(qcom_remove_smd_subdev);
+पूर्ण
+EXPORT_SYMBOL_GPL(qcom_हटाओ_smd_subdev);
 
-static struct qcom_ssr_subsystem *qcom_ssr_get_subsys(const char *name)
-{
-	struct qcom_ssr_subsystem *info;
+अटल काष्ठा qcom_ssr_subप्रणाली *qcom_ssr_get_subsys(स्थिर अक्षर *name)
+अणु
+	काष्ठा qcom_ssr_subप्रणाली *info;
 
 	mutex_lock(&qcom_ssr_subsys_lock);
-	/* Match in the global qcom_ssr_subsystem_list with name */
-	list_for_each_entry(info, &qcom_ssr_subsystem_list, list)
-		if (!strcmp(info->name, name))
-			goto out;
+	/* Match in the global qcom_ssr_subप्रणाली_list with name */
+	list_क्रम_each_entry(info, &qcom_ssr_subप्रणाली_list, list)
+		अगर (!म_भेद(info->name, name))
+			जाओ out;
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info) {
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info) अणु
 		info = ERR_PTR(-ENOMEM);
-		goto out;
-	}
-	info->name = kstrdup_const(name, GFP_KERNEL);
-	srcu_init_notifier_head(&info->notifier_list);
+		जाओ out;
+	पूर्ण
+	info->name = kstrdup_स्थिर(name, GFP_KERNEL);
+	srcu_init_notअगरier_head(&info->notअगरier_list);
 
-	/* Add to global notification list */
-	list_add_tail(&info->list, &qcom_ssr_subsystem_list);
+	/* Add to global notअगरication list */
+	list_add_tail(&info->list, &qcom_ssr_subप्रणाली_list);
 
 out:
 	mutex_unlock(&qcom_ssr_subsys_lock);
-	return info;
-}
+	वापस info;
+पूर्ण
 
 /**
- * qcom_register_ssr_notifier() - register SSR notification handler
- * @name:	Subsystem's SSR name
- * @nb:		notifier_block to be invoked upon subsystem's state change
+ * qcom_रेजिस्टर_ssr_notअगरier() - रेजिस्टर SSR notअगरication handler
+ * @name:	Subप्रणाली's SSR name
+ * @nb:		notअगरier_block to be invoked upon subप्रणाली's state change
  *
- * This registers the @nb notifier block as part the notifier chain for a
- * remoteproc associated with @name. The notifier block's callback
+ * This रेजिस्टरs the @nb notअगरier block as part the notअगरier chain क्रम a
+ * remoteproc associated with @name. The notअगरier block's callback
  * will be invoked when the remote processor's SSR events occur
- * (pre/post startup and pre/post shutdown).
+ * (pre/post startup and pre/post shutकरोwn).
  *
- * Return: a subsystem cookie on success, ERR_PTR on failure.
+ * Return: a subप्रणाली cookie on success, ERR_PTR on failure.
  */
-void *qcom_register_ssr_notifier(const char *name, struct notifier_block *nb)
-{
-	struct qcom_ssr_subsystem *info;
+व्योम *qcom_रेजिस्टर_ssr_notअगरier(स्थिर अक्षर *name, काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा qcom_ssr_subप्रणाली *info;
 
 	info = qcom_ssr_get_subsys(name);
-	if (IS_ERR(info))
-		return info;
+	अगर (IS_ERR(info))
+		वापस info;
 
-	srcu_notifier_chain_register(&info->notifier_list, nb);
+	srcu_notअगरier_chain_रेजिस्टर(&info->notअगरier_list, nb);
 
-	return &info->notifier_list;
-}
-EXPORT_SYMBOL_GPL(qcom_register_ssr_notifier);
+	वापस &info->notअगरier_list;
+पूर्ण
+EXPORT_SYMBOL_GPL(qcom_रेजिस्टर_ssr_notअगरier);
 
 /**
- * qcom_unregister_ssr_notifier() - unregister SSR notification handler
- * @notify:	subsystem cookie returned from qcom_register_ssr_notifier
- * @nb:		notifier_block to unregister
+ * qcom_unरेजिस्टर_ssr_notअगरier() - unरेजिस्टर SSR notअगरication handler
+ * @notअगरy:	subप्रणाली cookie वापसed from qcom_रेजिस्टर_ssr_notअगरier
+ * @nb:		notअगरier_block to unरेजिस्टर
  *
- * This function will unregister the notifier from the particular notifier
+ * This function will unरेजिस्टर the notअगरier from the particular notअगरier
  * chain.
  *
  * Return: 0 on success, %ENOENT otherwise.
  */
-int qcom_unregister_ssr_notifier(void *notify, struct notifier_block *nb)
-{
-	return srcu_notifier_chain_unregister(notify, nb);
-}
-EXPORT_SYMBOL_GPL(qcom_unregister_ssr_notifier);
+पूर्णांक qcom_unरेजिस्टर_ssr_notअगरier(व्योम *notअगरy, काष्ठा notअगरier_block *nb)
+अणु
+	वापस srcu_notअगरier_chain_unरेजिस्टर(notअगरy, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(qcom_unरेजिस्टर_ssr_notअगरier);
 
-static int ssr_notify_prepare(struct rproc_subdev *subdev)
-{
-	struct qcom_rproc_ssr *ssr = to_ssr_subdev(subdev);
-	struct qcom_ssr_notify_data data = {
+अटल पूर्णांक ssr_notअगरy_prepare(काष्ठा rproc_subdev *subdev)
+अणु
+	काष्ठा qcom_rproc_ssr *ssr = to_ssr_subdev(subdev);
+	काष्ठा qcom_ssr_notअगरy_data data = अणु
 		.name = ssr->info->name,
 		.crashed = false,
-	};
+	पूर्ण;
 
-	srcu_notifier_call_chain(&ssr->info->notifier_list,
+	srcu_notअगरier_call_chain(&ssr->info->notअगरier_list,
 				 QCOM_SSR_BEFORE_POWERUP, &data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ssr_notify_start(struct rproc_subdev *subdev)
-{
-	struct qcom_rproc_ssr *ssr = to_ssr_subdev(subdev);
-	struct qcom_ssr_notify_data data = {
+अटल पूर्णांक ssr_notअगरy_start(काष्ठा rproc_subdev *subdev)
+अणु
+	काष्ठा qcom_rproc_ssr *ssr = to_ssr_subdev(subdev);
+	काष्ठा qcom_ssr_notअगरy_data data = अणु
 		.name = ssr->info->name,
 		.crashed = false,
-	};
+	पूर्ण;
 
-	srcu_notifier_call_chain(&ssr->info->notifier_list,
+	srcu_notअगरier_call_chain(&ssr->info->notअगरier_list,
 				 QCOM_SSR_AFTER_POWERUP, &data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ssr_notify_stop(struct rproc_subdev *subdev, bool crashed)
-{
-	struct qcom_rproc_ssr *ssr = to_ssr_subdev(subdev);
-	struct qcom_ssr_notify_data data = {
+अटल व्योम ssr_notअगरy_stop(काष्ठा rproc_subdev *subdev, bool crashed)
+अणु
+	काष्ठा qcom_rproc_ssr *ssr = to_ssr_subdev(subdev);
+	काष्ठा qcom_ssr_notअगरy_data data = अणु
 		.name = ssr->info->name,
 		.crashed = crashed,
-	};
+	पूर्ण;
 
-	srcu_notifier_call_chain(&ssr->info->notifier_list,
+	srcu_notअगरier_call_chain(&ssr->info->notअगरier_list,
 				 QCOM_SSR_BEFORE_SHUTDOWN, &data);
-}
+पूर्ण
 
-static void ssr_notify_unprepare(struct rproc_subdev *subdev)
-{
-	struct qcom_rproc_ssr *ssr = to_ssr_subdev(subdev);
-	struct qcom_ssr_notify_data data = {
+अटल व्योम ssr_notअगरy_unprepare(काष्ठा rproc_subdev *subdev)
+अणु
+	काष्ठा qcom_rproc_ssr *ssr = to_ssr_subdev(subdev);
+	काष्ठा qcom_ssr_notअगरy_data data = अणु
 		.name = ssr->info->name,
 		.crashed = false,
-	};
+	पूर्ण;
 
-	srcu_notifier_call_chain(&ssr->info->notifier_list,
+	srcu_notअगरier_call_chain(&ssr->info->notअगरier_list,
 				 QCOM_SSR_AFTER_SHUTDOWN, &data);
-}
+पूर्ण
 
 /**
- * qcom_add_ssr_subdev() - register subdevice as restart notification source
+ * qcom_add_ssr_subdev() - रेजिस्टर subdevice as restart notअगरication source
  * @rproc:	rproc handle
  * @ssr:	SSR subdevice handle
- * @ssr_name:	identifier to use for notifications originating from @rproc
+ * @ssr_name:	identअगरier to use क्रम notअगरications originating from @rproc
  *
- * As the @ssr is registered with the @rproc SSR events will be sent to all
- * registered listeners for the remoteproc when it's SSR events occur
- * (pre/post startup and pre/post shutdown).
+ * As the @ssr is रेजिस्टरed with the @rproc SSR events will be sent to all
+ * रेजिस्टरed listeners क्रम the remoteproc when it's SSR events occur
+ * (pre/post startup and pre/post shutकरोwn).
  */
-void qcom_add_ssr_subdev(struct rproc *rproc, struct qcom_rproc_ssr *ssr,
-			 const char *ssr_name)
-{
-	struct qcom_ssr_subsystem *info;
+व्योम qcom_add_ssr_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_ssr *ssr,
+			 स्थिर अक्षर *ssr_name)
+अणु
+	काष्ठा qcom_ssr_subप्रणाली *info;
 
 	info = qcom_ssr_get_subsys(ssr_name);
-	if (IS_ERR(info)) {
+	अगर (IS_ERR(info)) अणु
 		dev_err(&rproc->dev, "Failed to add ssr subdevice\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ssr->info = info;
-	ssr->subdev.prepare = ssr_notify_prepare;
-	ssr->subdev.start = ssr_notify_start;
-	ssr->subdev.stop = ssr_notify_stop;
-	ssr->subdev.unprepare = ssr_notify_unprepare;
+	ssr->subdev.prepare = ssr_notअगरy_prepare;
+	ssr->subdev.start = ssr_notअगरy_start;
+	ssr->subdev.stop = ssr_notअगरy_stop;
+	ssr->subdev.unprepare = ssr_notअगरy_unprepare;
 
 	rproc_add_subdev(rproc, &ssr->subdev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_add_ssr_subdev);
 
 /**
- * qcom_remove_ssr_subdev() - remove subdevice as restart notification source
+ * qcom_हटाओ_ssr_subdev() - हटाओ subdevice as restart notअगरication source
  * @rproc:	rproc handle
  * @ssr:	SSR subdevice handle
  */
-void qcom_remove_ssr_subdev(struct rproc *rproc, struct qcom_rproc_ssr *ssr)
-{
-	rproc_remove_subdev(rproc, &ssr->subdev);
-	ssr->info = NULL;
-}
-EXPORT_SYMBOL_GPL(qcom_remove_ssr_subdev);
+व्योम qcom_हटाओ_ssr_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_ssr *ssr)
+अणु
+	rproc_हटाओ_subdev(rproc, &ssr->subdev);
+	ssr->info = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(qcom_हटाओ_ssr_subdev);
 
 MODULE_DESCRIPTION("Qualcomm Remoteproc helper driver");
 MODULE_LICENSE("GPL v2");

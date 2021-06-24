@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright(c) 2015-17 Intel Corporation.
 
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/soundwire/sdw.h>
-#include "internal.h"
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/soundwire/sdw.h>
+#समावेश "internal.h"
 
-static int regmap_sdw_write(void *context, unsigned int reg, unsigned int val)
-{
-	struct device *dev = context;
-	struct sdw_slave *slave = dev_to_sdw_dev(dev);
+अटल पूर्णांक regmap_sdw_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);
 
-	return sdw_write_no_pm(slave, reg, val);
-}
+	वापस sdw_ग_लिखो_no_pm(slave, reg, val);
+पूर्ण
 
-static int regmap_sdw_read(void *context, unsigned int reg, unsigned int *val)
-{
-	struct device *dev = context;
-	struct sdw_slave *slave = dev_to_sdw_dev(dev);
-	int read;
+अटल पूर्णांक regmap_sdw_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val)
+अणु
+	काष्ठा device *dev = context;
+	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);
+	पूर्णांक पढ़ो;
 
-	read = sdw_read_no_pm(slave, reg);
-	if (read < 0)
-		return read;
+	पढ़ो = sdw_पढ़ो_no_pm(slave, reg);
+	अगर (पढ़ो < 0)
+		वापस पढ़ो;
 
-	*val = read;
-	return 0;
-}
+	*val = पढ़ो;
+	वापस 0;
+पूर्ण
 
-static struct regmap_bus regmap_sdw = {
-	.reg_read = regmap_sdw_read,
-	.reg_write = regmap_sdw_write,
-	.reg_format_endian_default = REGMAP_ENDIAN_LITTLE,
-	.val_format_endian_default = REGMAP_ENDIAN_LITTLE,
-};
+अटल काष्ठा regmap_bus regmap_sdw = अणु
+	.reg_पढ़ो = regmap_sdw_पढ़ो,
+	.reg_ग_लिखो = regmap_sdw_ग_लिखो,
+	.reg_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
+	.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_LITTLE,
+पूर्ण;
 
-static int regmap_sdw_config_check(const struct regmap_config *config)
-{
-	/* All register are 8-bits wide as per MIPI Soundwire 1.0 Spec */
-	if (config->val_bits != 8)
-		return -ENOTSUPP;
+अटल पूर्णांक regmap_sdw_config_check(स्थिर काष्ठा regmap_config *config)
+अणु
+	/* All रेजिस्टर are 8-bits wide as per MIPI Soundwire 1.0 Spec */
+	अगर (config->val_bits != 8)
+		वापस -ENOTSUPP;
 
 	/* Registers are 32 bits wide */
-	if (config->reg_bits != 32)
-		return -ENOTSUPP;
+	अगर (config->reg_bits != 32)
+		वापस -ENOTSUPP;
 
-	if (config->pad_bits != 0)
-		return -ENOTSUPP;
+	अगर (config->pad_bits != 0)
+		वापस -ENOTSUPP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct regmap *__regmap_init_sdw(struct sdw_slave *sdw,
-				 const struct regmap_config *config,
-				 struct lock_class_key *lock_key,
-				 const char *lock_name)
-{
-	int ret;
+काष्ठा regmap *__regmap_init_sdw(काष्ठा sdw_slave *sdw,
+				 स्थिर काष्ठा regmap_config *config,
+				 काष्ठा lock_class_key *lock_key,
+				 स्थिर अक्षर *lock_name)
+अणु
+	पूर्णांक ret;
 
 	ret = regmap_sdw_config_check(config);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	return __regmap_init(&sdw->dev, &regmap_sdw,
+	वापस __regmap_init(&sdw->dev, &regmap_sdw,
 			&sdw->dev, config, lock_key, lock_name);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__regmap_init_sdw);
 
-struct regmap *__devm_regmap_init_sdw(struct sdw_slave *sdw,
-				      const struct regmap_config *config,
-				      struct lock_class_key *lock_key,
-				      const char *lock_name)
-{
-	int ret;
+काष्ठा regmap *__devm_regmap_init_sdw(काष्ठा sdw_slave *sdw,
+				      स्थिर काष्ठा regmap_config *config,
+				      काष्ठा lock_class_key *lock_key,
+				      स्थिर अक्षर *lock_name)
+अणु
+	पूर्णांक ret;
 
 	ret = regmap_sdw_config_check(config);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	return __devm_regmap_init(&sdw->dev, &regmap_sdw,
+	वापस __devm_regmap_init(&sdw->dev, &regmap_sdw,
 			&sdw->dev, config, lock_key, lock_name);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__devm_regmap_init_sdw);
 
 MODULE_DESCRIPTION("Regmap SoundWire Module");

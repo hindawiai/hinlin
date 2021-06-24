@@ -1,145 +1,146 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * SoC audio for HP iPAQ hx4700
+ * SoC audio क्रम HP iPAQ hx4700
  *
  * Copyright (c) 2009 Philipp Zabel
  */
 
-#include <linux/module.h>
-#include <linux/timer.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/gpio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpपन.स>
 
-#include <sound/core.h>
-#include <sound/jack.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
+#समावेश <sound/core.h>
+#समावेश <sound/jack.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
 
-#include <mach/hx4700.h>
-#include <asm/mach-types.h>
-#include "pxa2xx-i2s.h"
+#समावेश <mach/hx4700.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश "pxa2xx-i2s.h"
 
-static struct snd_soc_jack hs_jack;
+अटल काष्ठा snd_soc_jack hs_jack;
 
 /* Headphones jack detection DAPM pin */
-static struct snd_soc_jack_pin hs_jack_pin[] = {
-	{
+अटल काष्ठा snd_soc_jack_pin hs_jack_pin[] = अणु
+	अणु
 		.pin	= "Headphone Jack",
 		.mask	= SND_JACK_HEADPHONE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.pin	= "Speaker",
 		/* disable speaker when hp jack is inserted */
 		.mask   = SND_JACK_HEADPHONE,
 		.invert	= 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* Headphones jack detection GPIO */
-static struct snd_soc_jack_gpio hs_jack_gpio = {
+अटल काष्ठा snd_soc_jack_gpio hs_jack_gpio = अणु
 	.gpio		= GPIO75_HX4700_EARPHONE_nDET,
 	.invert		= true,
 	.name		= "hp-gpio",
 	.report		= SND_JACK_HEADPHONE,
-	.debounce_time	= 200,
-};
+	.debounce_समय	= 200,
+पूर्ण;
 
 /*
- * iPAQ hx4700 uses I2S for capture and playback.
+ * iPAQ hx4700 uses I2S क्रम capture and playback.
  */
-static int hx4700_hw_params(struct snd_pcm_substream *substream,
-			    struct snd_pcm_hw_params *params)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	int ret = 0;
+अटल पूर्णांक hx4700_hw_params(काष्ठा snd_pcm_substream *substream,
+			    काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	पूर्णांक ret = 0;
 
-	/* set the I2S system clock as output */
+	/* set the I2S प्रणाली घड़ी as output */
 	ret = snd_soc_dai_set_sysclk(cpu_dai, PXA2XX_I2S_SYSCLK, 0,
 			SND_SOC_CLOCK_OUT);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* inform codec driver about clock freq *
-	 * (PXA I2S always uses divider 256)    */
+	/* inक्रमm codec driver about घड़ी freq *
+	 * (PXA I2S always uses भागider 256)    */
 	ret = snd_soc_dai_set_sysclk(codec_dai, 0, 256 * params_rate(params),
 			SND_SOC_CLOCK_IN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_ops hx4700_ops = {
+अटल स्थिर काष्ठा snd_soc_ops hx4700_ops = अणु
 	.hw_params = hx4700_hw_params,
-};
+पूर्ण;
 
-static int hx4700_spk_power(struct snd_soc_dapm_widget *w,
-			    struct snd_kcontrol *k, int event)
-{
+अटल पूर्णांक hx4700_spk_घातer(काष्ठा snd_soc_dapm_widget *w,
+			    काष्ठा snd_kcontrol *k, पूर्णांक event)
+अणु
 	gpio_set_value(GPIO107_HX4700_SPK_nSD, !!SND_SOC_DAPM_EVENT_ON(event));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hx4700_hp_power(struct snd_soc_dapm_widget *w,
-			   struct snd_kcontrol *k, int event)
-{
+अटल पूर्णांक hx4700_hp_घातer(काष्ठा snd_soc_dapm_widget *w,
+			   काष्ठा snd_kcontrol *k, पूर्णांक event)
+अणु
 	gpio_set_value(GPIO92_HX4700_HP_DRIVER, !!SND_SOC_DAPM_EVENT_ON(event));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* hx4700 machine dapm widgets */
-static const struct snd_soc_dapm_widget hx4700_dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", hx4700_hp_power),
-	SND_SOC_DAPM_SPK("Speaker", hx4700_spk_power),
-	SND_SOC_DAPM_MIC("Built-in Microphone", NULL),
-};
+/* hx4700 machine dapm widमाला_लो */
+अटल स्थिर काष्ठा snd_soc_dapm_widget hx4700_dapm_widमाला_लो[] = अणु
+	SND_SOC_DAPM_HP("Headphone Jack", hx4700_hp_घातer),
+	SND_SOC_DAPM_SPK("Speaker", hx4700_spk_घातer),
+	SND_SOC_DAPM_MIC("Built-in Microphone", शून्य),
+पूर्ण;
 
 /* hx4700 machine audio_map */
-static const struct snd_soc_dapm_route hx4700_audio_map[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route hx4700_audio_map[] = अणु
 
 	/* Headphone connected to LOUT, ROUT */
-	{"Headphone Jack", NULL, "LOUT"},
-	{"Headphone Jack", NULL, "ROUT"},
+	अणु"Headphone Jack", शून्य, "LOUT"पूर्ण,
+	अणु"Headphone Jack", शून्य, "ROUT"पूर्ण,
 
 	/* Speaker connected to MOUT2 */
-	{"Speaker", NULL, "MOUT2"},
+	अणु"Speaker", शून्य, "MOUT2"पूर्ण,
 
 	/* Microphone connected to MICIN */
-	{"MICIN", NULL, "Built-in Microphone"},
-	{"AIN", NULL, "MICOUT"},
-};
+	अणु"MICIN", शून्य, "Built-in Microphone"पूर्ण,
+	अणु"AIN", शून्य, "MICOUT"पूर्ण,
+पूर्ण;
 
 /*
- * Logic for a ak4641 as connected on a HP iPAQ hx4700
+ * Logic क्रम a ak4641 as connected on a HP iPAQ hx4700
  */
-static int hx4700_ak4641_init(struct snd_soc_pcm_runtime *rtd)
-{
-	int err;
+अटल पूर्णांक hx4700_ak4641_init(काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	पूर्णांक err;
 
 	/* Jack detection API stuff */
 	err = snd_soc_card_jack_new(rtd->card, "Headphone Jack",
 				    SND_JACK_HEADPHONE, &hs_jack, hs_jack_pin,
 				    ARRAY_SIZE(hs_jack_pin));
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = snd_soc_jack_add_gpios(&hs_jack, 1, &hs_jack_gpio);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* hx4700 digital audio interface glue - connects codec <--> CPU */
+/* hx4700 digital audio पूर्णांकerface glue - connects codec <--> CPU */
 SND_SOC_DAILINK_DEFS(ak4641,
 	DAILINK_COMP_ARRAY(COMP_CPU("pxa2xx-i2s")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("ak4641.0-0012", "ak4641-hifi")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("pxa-pcm-audio")));
 
-static struct snd_soc_dai_link hx4700_dai = {
+अटल काष्ठा snd_soc_dai_link hx4700_dai = अणु
 	.name = "ak4641",
 	.stream_name = "AK4641",
 	.init = hx4700_ak4641_init,
@@ -147,66 +148,66 @@ static struct snd_soc_dai_link hx4700_dai = {
 		   SND_SOC_DAIFMT_CBS_CFS,
 	.ops = &hx4700_ops,
 	SND_SOC_DAILINK_REG(ak4641),
-};
+पूर्ण;
 
 /* hx4700 audio machine driver */
-static struct snd_soc_card snd_soc_card_hx4700 = {
+अटल काष्ठा snd_soc_card snd_soc_card_hx4700 = अणु
 	.name			= "iPAQ hx4700",
 	.owner			= THIS_MODULE,
 	.dai_link		= &hx4700_dai,
 	.num_links		= 1,
-	.dapm_widgets		= hx4700_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(hx4700_dapm_widgets),
+	.dapm_widमाला_लो		= hx4700_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(hx4700_dapm_widमाला_लो),
 	.dapm_routes		= hx4700_audio_map,
 	.num_dapm_routes	= ARRAY_SIZE(hx4700_audio_map),
 	.fully_routed		= true,
-};
+पूर्ण;
 
-static struct gpio hx4700_audio_gpios[] = {
-	{ GPIO107_HX4700_SPK_nSD, GPIOF_OUT_INIT_HIGH, "SPK_POWER" },
-	{ GPIO92_HX4700_HP_DRIVER, GPIOF_OUT_INIT_LOW, "EP_POWER" },
-};
+अटल काष्ठा gpio hx4700_audio_gpios[] = अणु
+	अणु GPIO107_HX4700_SPK_nSD, GPIOF_OUT_INIT_HIGH, "SPK_POWER" पूर्ण,
+	अणु GPIO92_HX4700_HP_DRIVER, GPIOF_OUT_INIT_LOW, "EP_POWER" पूर्ण,
+पूर्ण;
 
-static int hx4700_audio_probe(struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक hx4700_audio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 
-	if (!machine_is_h4700())
-		return -ENODEV;
+	अगर (!machine_is_h4700())
+		वापस -ENODEV;
 
 	ret = gpio_request_array(hx4700_audio_gpios,
 				ARRAY_SIZE(hx4700_audio_gpios));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	snd_soc_card_hx4700.dev = &pdev->dev;
-	ret = devm_snd_soc_register_card(&pdev->dev, &snd_soc_card_hx4700);
-	if (ret)
-		gpio_free_array(hx4700_audio_gpios,
+	ret = devm_snd_soc_रेजिस्टर_card(&pdev->dev, &snd_soc_card_hx4700);
+	अगर (ret)
+		gpio_मुक्त_array(hx4700_audio_gpios,
 				ARRAY_SIZE(hx4700_audio_gpios));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hx4700_audio_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक hx4700_audio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	gpio_set_value(GPIO92_HX4700_HP_DRIVER, 0);
 	gpio_set_value(GPIO107_HX4700_SPK_nSD, 0);
 
-	gpio_free_array(hx4700_audio_gpios, ARRAY_SIZE(hx4700_audio_gpios));
-	return 0;
-}
+	gpio_मुक्त_array(hx4700_audio_gpios, ARRAY_SIZE(hx4700_audio_gpios));
+	वापस 0;
+पूर्ण
 
-static struct platform_driver hx4700_audio_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver hx4700_audio_driver = अणु
+	.driver	= अणु
 		.name = "hx4700-audio",
 		.pm = &snd_soc_pm_ops,
-	},
+	पूर्ण,
 	.probe	= hx4700_audio_probe,
-	.remove	= hx4700_audio_remove,
-};
+	.हटाओ	= hx4700_audio_हटाओ,
+पूर्ण;
 
-module_platform_driver(hx4700_audio_driver);
+module_platक्रमm_driver(hx4700_audio_driver);
 
 MODULE_AUTHOR("Philipp Zabel");
 MODULE_DESCRIPTION("ALSA SoC iPAQ hx4700");

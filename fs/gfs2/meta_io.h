@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
-#ifndef __DIO_DOT_H__
-#define __DIO_DOT_H__
+#अगर_अघोषित __DIO_DOT_H__
+#घोषणा __DIO_DOT_H__
 
-#include <linux/buffer_head.h>
-#include <linux/string.h>
-#include "incore.h"
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/माला.स>
+#समावेश "incore.h"
 
-static inline void gfs2_buffer_clear(struct buffer_head *bh)
-{
-	memset(bh->b_data, 0, bh->b_size);
-}
+अटल अंतरभूत व्योम gfs2_buffer_clear(काष्ठा buffer_head *bh)
+अणु
+	स_रखो(bh->b_data, 0, bh->b_size);
+पूर्ण
 
-static inline void gfs2_buffer_clear_tail(struct buffer_head *bh, int head)
-{
+अटल अंतरभूत व्योम gfs2_buffer_clear_tail(काष्ठा buffer_head *bh, पूर्णांक head)
+अणु
 	BUG_ON(head > bh->b_size);
-	memset(bh->b_data + head, 0, bh->b_size - head);
-}
+	स_रखो(bh->b_data + head, 0, bh->b_size - head);
+पूर्ण
 
-static inline void gfs2_buffer_copy_tail(struct buffer_head *to_bh,
-					 int to_head,
-					 struct buffer_head *from_bh,
-					 int from_head)
-{
+अटल अंतरभूत व्योम gfs2_buffer_copy_tail(काष्ठा buffer_head *to_bh,
+					 पूर्णांक to_head,
+					 काष्ठा buffer_head *from_bh,
+					 पूर्णांक from_head)
+अणु
 	BUG_ON(from_head < to_head);
-	memcpy(to_bh->b_data + to_head, from_bh->b_data + from_head,
+	स_नकल(to_bh->b_data + to_head, from_bh->b_data + from_head,
 	       from_bh->b_size - from_head);
-	memset(to_bh->b_data + to_bh->b_size + to_head - from_head,
+	स_रखो(to_bh->b_data + to_bh->b_size + to_head - from_head,
 	       0, from_head - to_head);
-}
+पूर्ण
 
-extern const struct address_space_operations gfs2_meta_aops;
-extern const struct address_space_operations gfs2_rgrp_aops;
+बाह्य स्थिर काष्ठा address_space_operations gfs2_meta_aops;
+बाह्य स्थिर काष्ठा address_space_operations gfs2_rgrp_aops;
 
-static inline struct gfs2_sbd *gfs2_mapping2sbd(struct address_space *mapping)
-{
-	struct inode *inode = mapping->host;
-	if (mapping->a_ops == &gfs2_meta_aops)
-		return (((struct gfs2_glock *)mapping) - 1)->gl_name.ln_sbd;
-	else if (mapping->a_ops == &gfs2_rgrp_aops)
-		return container_of(mapping, struct gfs2_sbd, sd_aspace);
-	else
-		return inode->i_sb->s_fs_info;
-}
+अटल अंतरभूत काष्ठा gfs2_sbd *gfs2_mapping2sbd(काष्ठा address_space *mapping)
+अणु
+	काष्ठा inode *inode = mapping->host;
+	अगर (mapping->a_ops == &gfs2_meta_aops)
+		वापस (((काष्ठा gfs2_glock *)mapping) - 1)->gl_name.ln_sbd;
+	अन्यथा अगर (mapping->a_ops == &gfs2_rgrp_aops)
+		वापस container_of(mapping, काष्ठा gfs2_sbd, sd_aspace);
+	अन्यथा
+		वापस inode->i_sb->s_fs_info;
+पूर्ण
 
-extern struct buffer_head *gfs2_meta_new(struct gfs2_glock *gl, u64 blkno);
-extern int gfs2_meta_read(struct gfs2_glock *gl, u64 blkno, int flags,
-			  int rahead, struct buffer_head **bhp);
-extern int gfs2_meta_wait(struct gfs2_sbd *sdp, struct buffer_head *bh);
-extern struct buffer_head *gfs2_getbuf(struct gfs2_glock *gl, u64 blkno,
-				       int create);
-enum {
+बाह्य काष्ठा buffer_head *gfs2_meta_new(काष्ठा gfs2_glock *gl, u64 blkno);
+बाह्य पूर्णांक gfs2_meta_पढ़ो(काष्ठा gfs2_glock *gl, u64 blkno, पूर्णांक flags,
+			  पूर्णांक rahead, काष्ठा buffer_head **bhp);
+बाह्य पूर्णांक gfs2_meta_रुको(काष्ठा gfs2_sbd *sdp, काष्ठा buffer_head *bh);
+बाह्य काष्ठा buffer_head *gfs2_getbuf(काष्ठा gfs2_glock *gl, u64 blkno,
+				       पूर्णांक create);
+क्रमागत अणु
 	REMOVE_JDATA = 0,
 	REMOVE_META = 1,
-};
+पूर्ण;
 
-extern void gfs2_remove_from_journal(struct buffer_head *bh, int meta);
-extern void gfs2_journal_wipe(struct gfs2_inode *ip, u64 bstart, u32 blen);
-extern int gfs2_meta_buffer(struct gfs2_inode *ip, u32 mtype, u64 num,
-			    struct buffer_head **bhp);
+बाह्य व्योम gfs2_हटाओ_from_journal(काष्ठा buffer_head *bh, पूर्णांक meta);
+बाह्य व्योम gfs2_journal_wipe(काष्ठा gfs2_inode *ip, u64 bstart, u32 blen);
+बाह्य पूर्णांक gfs2_meta_buffer(काष्ठा gfs2_inode *ip, u32 mtype, u64 num,
+			    काष्ठा buffer_head **bhp);
 
-static inline int gfs2_meta_inode_buffer(struct gfs2_inode *ip,
-					 struct buffer_head **bhp)
-{
-	return gfs2_meta_buffer(ip, GFS2_METATYPE_DI, ip->i_no_addr, bhp);
-}
+अटल अंतरभूत पूर्णांक gfs2_meta_inode_buffer(काष्ठा gfs2_inode *ip,
+					 काष्ठा buffer_head **bhp)
+अणु
+	वापस gfs2_meta_buffer(ip, GFS2_METATYPE_DI, ip->i_no_addr, bhp);
+पूर्ण
 
-struct buffer_head *gfs2_meta_ra(struct gfs2_glock *gl, u64 dblock, u32 extlen);
+काष्ठा buffer_head *gfs2_meta_ra(काष्ठा gfs2_glock *gl, u64 dblock, u32 extlen);
 
-#define buffer_busy(bh) \
+#घोषणा buffer_busy(bh) \
 ((bh)->b_state & ((1ul << BH_Dirty) | (1ul << BH_Lock) | (1ul << BH_Pinned)))
 
-#endif /* __DIO_DOT_H__ */
+#पूर्ण_अगर /* __DIO_DOT_H__ */
 

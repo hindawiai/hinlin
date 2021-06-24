@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_FB_NV50_H__
-#define __NVKM_FB_NV50_H__
-#define nv50_fb(p) container_of((p), struct nv50_fb, base)
-#include "priv.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_FB_NV50_H__
+#घोषणा __NVKM_FB_NV50_H__
+#घोषणा nv50_fb(p) container_of((p), काष्ठा nv50_fb, base)
+#समावेश "priv.h"
 
-struct nv50_fb {
-	const struct nv50_fb_func *func;
-	struct nvkm_fb base;
-	struct page *r100c08_page;
+काष्ठा nv50_fb अणु
+	स्थिर काष्ठा nv50_fb_func *func;
+	काष्ठा nvkm_fb base;
+	काष्ठा page *r100c08_page;
 	dma_addr_t r100c08;
-};
+पूर्ण;
 
-struct nv50_fb_func {
-	int (*ram_new)(struct nvkm_fb *, struct nvkm_ram **);
-	u32 (*tags)(struct nvkm_fb *);
+काष्ठा nv50_fb_func अणु
+	पूर्णांक (*ram_new)(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+	u32 (*tags)(काष्ठा nvkm_fb *);
 	u32 trap;
-};
+पूर्ण;
 
-int nv50_fb_new_(const struct nv50_fb_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
-		 struct nvkm_fb **pfb);
-#endif
+पूर्णांक nv50_fb_new_(स्थिर काष्ठा nv50_fb_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
+		 काष्ठा nvkm_fb **pfb);
+#पूर्ण_अगर

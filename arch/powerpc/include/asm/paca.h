@@ -1,298 +1,299 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * This control block defines the PACA which defines the processor
- * specific data for each logical processor on the system.
- * There are some pointers defined that are utilized by PLIC.
+ * specअगरic data क्रम each logical processor on the प्रणाली.
+ * There are some poपूर्णांकers defined that are utilized by PLIC.
  *
  * C 2001 PPC 64 Team, IBM Corp
  */
-#ifndef _ASM_POWERPC_PACA_H
-#define _ASM_POWERPC_PACA_H
-#ifdef __KERNEL__
+#अगर_अघोषित _ASM_POWERPC_PACA_H
+#घोषणा _ASM_POWERPC_PACA_H
+#अगर_घोषित __KERNEL__
 
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 
-#include <linux/string.h>
-#include <asm/types.h>
-#include <asm/lppaca.h>
-#include <asm/mmu.h>
-#include <asm/page.h>
-#ifdef CONFIG_PPC_BOOK3E
-#include <asm/exception-64e.h>
-#else
-#include <asm/exception-64s.h>
-#endif
-#ifdef CONFIG_KVM_BOOK3S_64_HANDLER
-#include <asm/kvm_book3s_asm.h>
-#endif
-#include <asm/accounting.h>
-#include <asm/hmi.h>
-#include <asm/cpuidle.h>
-#include <asm/atomic.h>
-#include <asm/mce.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/types.h>
+#समावेश <यंत्र/lppaca.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/page.h>
+#अगर_घोषित CONFIG_PPC_BOOK3E
+#समावेश <यंत्र/exception-64e.h>
+#अन्यथा
+#समावेश <यंत्र/exception-64s.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_KVM_BOOK3S_64_HANDLER
+#समावेश <यंत्र/kvm_book3s_यंत्र.h>
+#पूर्ण_अगर
+#समावेश <यंत्र/accounting.h>
+#समावेश <यंत्र/hmi.h>
+#समावेश <यंत्र/cpuidle.h>
+#समावेश <यंत्र/atomic.h>
+#समावेश <यंत्र/mce.h>
 
-#include <asm-generic/mmiowb_types.h>
+#समावेश <यंत्र-generic/mmiowb_types.h>
 
-register struct paca_struct *local_paca asm("r13");
+रेजिस्टर काष्ठा paca_काष्ठा *local_paca यंत्र("r13");
 
-#if defined(CONFIG_DEBUG_PREEMPT) && defined(CONFIG_SMP)
-extern unsigned int debug_smp_processor_id(void); /* from linux/smp.h */
+#अगर defined(CONFIG_DEBUG_PREEMPT) && defined(CONFIG_SMP)
+बाह्य अचिन्हित पूर्णांक debug_smp_processor_id(व्योम); /* from linux/smp.h */
 /*
  * Add standard checks that preemption cannot occur when using get_paca():
- * otherwise the paca_struct it points to may be the wrong one just after.
+ * otherwise the paca_काष्ठा it poपूर्णांकs to may be the wrong one just after.
  */
-#define get_paca()	((void) debug_smp_processor_id(), local_paca)
-#else
-#define get_paca()	local_paca
-#endif
+#घोषणा get_paca()	((व्योम) debug_smp_processor_id(), local_paca)
+#अन्यथा
+#घोषणा get_paca()	local_paca
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_PSERIES
-#define get_lppaca()	(get_paca()->lppaca_ptr)
-#endif
+#अगर_घोषित CONFIG_PPC_PSERIES
+#घोषणा get_lppaca()	(get_paca()->lppaca_ptr)
+#पूर्ण_अगर
 
-#define get_slb_shadow()	(get_paca()->slb_shadow_ptr)
+#घोषणा get_slb_shaकरोw()	(get_paca()->slb_shaकरोw_ptr)
 
-struct task_struct;
-struct rtas_args;
+काष्ठा task_काष्ठा;
+काष्ठा rtas_args;
 
 /*
  * Defines the layout of the paca.
  *
- * This structure is not directly accessed by firmware or the service
+ * This काष्ठाure is not directly accessed by firmware or the service
  * processor.
  */
-struct paca_struct {
-#ifdef CONFIG_PPC_PSERIES
+काष्ठा paca_काष्ठा अणु
+#अगर_घोषित CONFIG_PPC_PSERIES
 	/*
 	 * Because hw_cpu_id, unlike other paca fields, is accessed
 	 * routinely from other CPUs (from the IRQ code), we stick to
-	 * read-only (after boot) fields in the first cacheline to
-	 * avoid cacheline bouncing.
+	 * पढ़ो-only (after boot) fields in the first cacheline to
+	 * aव्योम cacheline bouncing.
 	 */
 
-	struct lppaca *lppaca_ptr;	/* Pointer to LpPaca for PLIC */
-#endif /* CONFIG_PPC_PSERIES */
+	काष्ठा lppaca *lppaca_ptr;	/* Poपूर्णांकer to LpPaca क्रम PLIC */
+#पूर्ण_अगर /* CONFIG_PPC_PSERIES */
 
 	/*
-	 * MAGIC: the spinlock functions in arch/powerpc/lib/locks.c 
+	 * MAGIC: the spinlock functions in arch/घातerpc/lib/locks.c 
 	 * load lock_token and paca_index with a single lwz
-	 * instruction.  They must travel together and be properly
+	 * inकाष्ठाion.  They must travel together and be properly
 	 * aligned.
 	 */
-#ifdef __BIG_ENDIAN__
+#अगर_घोषित __BIG_ENDIAN__
 	u16 lock_token;			/* Constant 0x8000, used in locks */
 	u16 paca_index;			/* Logical processor number */
-#else
+#अन्यथा
 	u16 paca_index;			/* Logical processor number */
 	u16 lock_token;			/* Constant 0x8000, used in locks */
-#endif
+#पूर्ण_अगर
 
 	u64 kernel_toc;			/* Kernel TOC address */
 	u64 kernelbase;			/* Base address of kernel */
-	u64 kernel_msr;			/* MSR while running in kernel */
-	void *emergency_sp;		/* pointer to emergency stack */
+	u64 kernel_msr;			/* MSR जबतक running in kernel */
+	व्योम *emergency_sp;		/* poपूर्णांकer to emergency stack */
 	u64 data_offset;		/* per cpu data offset */
 	s16 hw_cpu_id;			/* Physical processor number */
 	u8 cpu_start;			/* At startup, processor spins until */
 					/* this becomes non-zero. */
-	u8 kexec_state;		/* set when kexec down has irqs off */
-#ifdef CONFIG_PPC_BOOK3S_64
-	struct slb_shadow *slb_shadow_ptr;
-	struct dtl_entry *dispatch_log;
-	struct dtl_entry *dispatch_log_end;
-#endif
-	u64 dscr_default;		/* per-CPU default DSCR */
+	u8 kexec_state;		/* set when kexec करोwn has irqs off */
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+	काष्ठा slb_shaकरोw *slb_shaकरोw_ptr;
+	काष्ठा dtl_entry *dispatch_log;
+	काष्ठा dtl_entry *dispatch_log_end;
+#पूर्ण_अगर
+	u64 dscr_शेष;		/* per-CPU शेष DSCR */
 
-#ifdef CONFIG_PPC_BOOK3S_64
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
 	/*
 	 * Now, starting in cacheline 2, the exception save areas
 	 */
-	/* used for most interrupts/exceptions */
+	/* used क्रम most पूर्णांकerrupts/exceptions */
 	u64 exgen[EX_SIZE] __attribute__((aligned(0x80)));
 
 	/* SLB related definitions */
-	u16 vmalloc_sllp;
+	u16 vदो_स्मृति_sllp;
 	u8 slb_cache_ptr;
 	u8 stab_rr;			/* stab/slb round-robin counter */
-#ifdef CONFIG_DEBUG_VM
+#अगर_घोषित CONFIG_DEBUG_VM
 	u8 in_kernel_slb_handler;
-#endif
-	u32 slb_used_bitmap;		/* Bitmaps for first 32 SLB entries. */
-	u32 slb_kern_bitmap;
+#पूर्ण_अगर
+	u32 slb_used_biपंचांगap;		/* Biपंचांगaps क्रम first 32 SLB entries. */
+	u32 slb_kern_biपंचांगap;
 	u32 slb_cache[SLB_CACHE_ENTRIES];
-#endif /* CONFIG_PPC_BOOK3S_64 */
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
 
-#ifdef CONFIG_PPC_BOOK3E
+#अगर_घोषित CONFIG_PPC_BOOK3E
 	u64 exgen[8] __aligned(0x40);
 	/* Keep pgd in the same cacheline as the start of extlb */
 	pgd_t *pgd __aligned(0x40); /* Current PGD */
 	pgd_t *kernel_pgd;		/* Kernel PGD */
 
-	/* Shared by all threads of a core -- points to tcd of first thread */
-	struct tlb_core_data *tcd_ptr;
+	/* Shared by all thपढ़ोs of a core -- poपूर्णांकs to tcd of first thपढ़ो */
+	काष्ठा tlb_core_data *tcd_ptr;
 
 	/*
 	 * We can have up to 3 levels of reentrancy in the TLB miss handler,
 	 * in each of four exception levels (normal, crit, mcheck, debug).
 	 */
-	u64 extlb[12][EX_TLB_SIZE / sizeof(u64)];
-	u64 exmc[8];		/* used for machine checks */
-	u64 excrit[8];		/* used for crit interrupts */
-	u64 exdbg[8];		/* used for debug interrupts */
+	u64 extlb[12][EX_TLB_SIZE / माप(u64)];
+	u64 exmc[8];		/* used क्रम machine checks */
+	u64 excrit[8];		/* used क्रम crit पूर्णांकerrupts */
+	u64 exdbg[8];		/* used क्रम debug पूर्णांकerrupts */
 
-	/* Kernel stack pointers for use by special exceptions */
-	void *mc_kstack;
-	void *crit_kstack;
-	void *dbg_kstack;
+	/* Kernel stack poपूर्णांकers क्रम use by special exceptions */
+	व्योम *mc_kstack;
+	व्योम *crit_kstack;
+	व्योम *dbg_kstack;
 
-	struct tlb_core_data tcd;
-#endif /* CONFIG_PPC_BOOK3E */
+	काष्ठा tlb_core_data tcd;
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3E */
 
-#ifdef CONFIG_PPC_BOOK3S
+#अगर_घोषित CONFIG_PPC_BOOK3S
 	mm_context_id_t mm_ctx_id;
-#ifdef CONFIG_PPC_MM_SLICES
-	unsigned char mm_ctx_low_slices_psize[BITS_PER_LONG / BITS_PER_BYTE];
-	unsigned char mm_ctx_high_slices_psize[SLICE_ARRAY_SIZE];
-	unsigned long mm_ctx_slb_addr_limit;
-#else
+#अगर_घोषित CONFIG_PPC_MM_SLICES
+	अचिन्हित अक्षर mm_ctx_low_slices_psize[BITS_PER_LONG / BITS_PER_BYTE];
+	अचिन्हित अक्षर mm_ctx_high_slices_psize[SLICE_ARRAY_SIZE];
+	अचिन्हित दीर्घ mm_ctx_slb_addr_limit;
+#अन्यथा
 	u16 mm_ctx_user_psize;
 	u16 mm_ctx_sllp;
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
 
 	/*
-	 * then miscellaneous read-write fields
+	 * then miscellaneous पढ़ो-ग_लिखो fields
 	 */
-	struct task_struct *__current;	/* Pointer to current */
+	काष्ठा task_काष्ठा *__current;	/* Poपूर्णांकer to current */
 	u64 kstack;			/* Saved Kernel stack addr */
-	u64 saved_r1;			/* r1 save for RTAS calls or PM or EE=0 */
+	u64 saved_r1;			/* r1 save क्रम RTAS calls or PM or EE=0 */
 	u64 saved_msr;			/* MSR saved here by enter_rtas */
-#ifdef CONFIG_PPC_BOOK3E
+#अगर_घोषित CONFIG_PPC_BOOK3E
 	u16 trap_save;			/* Used when bad stack is encountered */
-#endif
-	u8 irq_soft_mask;		/* mask for irq soft masking */
-	u8 irq_happened;		/* irq happened while soft-disabled */
-	u8 irq_work_pending;		/* IRQ_WORK interrupt while soft-disable */
-#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
-	u8 pmcregs_in_use;		/* pseries puts this in lppaca */
-#endif
+#पूर्ण_अगर
+	u8 irq_soft_mask;		/* mask क्रम irq soft masking */
+	u8 irq_happened;		/* irq happened जबतक soft-disabled */
+	u8 irq_work_pending;		/* IRQ_WORK पूर्णांकerrupt जबतक soft-disable */
+#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
+	u8 pmcregs_in_use;		/* pseries माला_दो this in lppaca */
+#पूर्ण_अगर
 	u64 sprg_vdso;			/* Saved user-visible sprg */
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-	u64 tm_scratch;                 /* TM scratch area for reclaim */
-#endif
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+	u64 पंचांग_scratch;                 /* TM scratch area क्रम reclaim */
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_POWERNV
+#अगर_घोषित CONFIG_PPC_POWERNV
 	/* PowerNV idle fields */
-	/* PNV_CORE_IDLE_* bits, all siblings work on thread 0 paca */
-	unsigned long idle_state;
-	union {
-		/* P7/P8 specific fields */
-		struct {
+	/* PNV_CORE_IDLE_* bits, all siblings work on thपढ़ो 0 paca */
+	अचिन्हित दीर्घ idle_state;
+	जोड़ अणु
+		/* P7/P8 specअगरic fields */
+		काष्ठा अणु
 			/* PNV_THREAD_RUNNING/NAP/SLEEP	*/
-			u8 thread_idle_state;
-			/* Mask to denote subcore sibling threads */
+			u8 thपढ़ो_idle_state;
+			/* Mask to denote subcore sibling thपढ़ोs */
 			u8 subcore_sibling_mask;
-		};
+		पूर्ण;
 
-		/* P9 specific fields */
-		struct {
-#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
-			/* The PSSCR value that the kernel requested before going to stop */
+		/* P9 specअगरic fields */
+		काष्ठा अणु
+#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
+			/* The PSSCR value that the kernel requested beक्रमe going to stop */
 			u64 requested_psscr;
-			/* Flag to request this thread not to stop */
-			atomic_t dont_stop;
-#endif
-		};
-	};
-#endif
+			/* Flag to request this thपढ़ो not to stop */
+			atomic_t करोnt_stop;
+#पूर्ण_अगर
+		पूर्ण;
+	पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_BOOK3S_64
-	/* Non-maskable exceptions that are not performance critical */
-	u64 exnmi[EX_SIZE];	/* used for system reset (nmi) */
-	u64 exmc[EX_SIZE];	/* used for machine checks */
-#endif
-#ifdef CONFIG_PPC_BOOK3S_64
-	/* Exclusive stacks for system reset and machine check exception. */
-	void *nmi_emergency_sp;
-	void *mc_emergency_sp;
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+	/* Non-maskable exceptions that are not perक्रमmance critical */
+	u64 exnmi[EX_SIZE];	/* used क्रम प्रणाली reset (nmi) */
+	u64 exmc[EX_SIZE];	/* used क्रम machine checks */
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+	/* Exclusive stacks क्रम प्रणाली reset and machine check exception. */
+	व्योम *nmi_emergency_sp;
+	व्योम *mc_emergency_sp;
 
 	u16 in_nmi;			/* In nmi handler */
 
 	/*
 	 * Flag to check whether we are in machine check early handler
-	 * and already using emergency stack.
+	 * and alपढ़ोy using emergency stack.
 	 */
 	u16 in_mce;
 	u8 hmi_event_available;		/* HMI event is available */
 	u8 hmi_p9_special_emu;		/* HMI P9 special emulation */
 	u32 hmi_irqs;			/* HMI irq stat */
-#endif
+#पूर्ण_अगर
 	u8 ftrace_enabled;		/* Hard disable ftrace */
 
-	/* Stuff for accurate time accounting */
-	struct cpu_accounting_data accounting;
-	u64 dtl_ridx;			/* read index in dispatch log */
-	struct dtl_entry *dtl_curr;	/* pointer corresponding to dtl_ridx */
+	/* Stuff क्रम accurate समय accounting */
+	काष्ठा cpu_accounting_data accounting;
+	u64 dtl_ridx;			/* पढ़ो index in dispatch log */
+	काष्ठा dtl_entry *dtl_curr;	/* poपूर्णांकer corresponding to dtl_ridx */
 
-#ifdef CONFIG_KVM_BOOK3S_HANDLER
-#ifdef CONFIG_KVM_BOOK3S_PR_POSSIBLE
+#अगर_घोषित CONFIG_KVM_BOOK3S_HANDLER
+#अगर_घोषित CONFIG_KVM_BOOK3S_PR_POSSIBLE
 	/* We use this to store guest state in */
-	struct kvmppc_book3s_shadow_vcpu shadow_vcpu;
-#endif
-	struct kvmppc_host_state kvm_hstate;
-#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+	काष्ठा kvmppc_book3s_shaकरोw_vcpu shaकरोw_vcpu;
+#पूर्ण_अगर
+	काष्ठा kvmppc_host_state kvm_hstate;
+#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
 	/*
-	 * Bitmap for sibling subcore status. See kvm/book3s_hv_ras.c for
+	 * Biपंचांगap क्रम sibling subcore status. See kvm/book3s_hv_ras.c क्रम
 	 * more details
 	 */
-	struct sibling_subcore_state *sibling_subcore_state;
-#endif
-#endif
-#ifdef CONFIG_PPC_BOOK3S_64
+	काष्ठा sibling_subcore_state *sibling_subcore_state;
+#पूर्ण_अगर
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
 	/*
 	 * rfi fallback flush must be in its own cacheline to prevent
-	 * other paca data leaking into the L1d
+	 * other paca data leaking पूर्णांकo the L1d
 	 */
 	u64 exrfi[EX_SIZE] __aligned(0x80);
-	void *rfi_flush_fallback_area;
+	व्योम *rfi_flush_fallback_area;
 	u64 l1d_flush_size;
-#endif
-#ifdef CONFIG_PPC_PSERIES
-	struct rtas_args *rtas_args_reentrant;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PPC_PSERIES
+	काष्ठा rtas_args *rtas_args_reentrant;
 	u8 *mce_data_buf;		/* buffer to hold per cpu rtas errlog */
-#endif /* CONFIG_PPC_PSERIES */
+#पूर्ण_अगर /* CONFIG_PPC_PSERIES */
 
-#ifdef CONFIG_PPC_BOOK3S_64
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
 	/* Capture SLB related old contents in MCE handler. */
-	struct slb_entry *mce_faulty_slbs;
+	काष्ठा slb_entry *mce_faulty_slbs;
 	u16 slb_save_cache_ptr;
-#endif /* CONFIG_PPC_BOOK3S_64 */
-#ifdef CONFIG_STACKPROTECTOR
-	unsigned long canary;
-#endif
-#ifdef CONFIG_MMIOWB
-	struct mmiowb_state mmiowb_state;
-#endif
-#ifdef CONFIG_PPC_BOOK3S_64
-	struct mce_info *mce_info;
-#endif /* CONFIG_PPC_BOOK3S_64 */
-} ____cacheline_aligned;
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
+#अगर_घोषित CONFIG_STACKPROTECTOR
+	अचिन्हित दीर्घ canary;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MMIOWB
+	काष्ठा mmiowb_state mmiowb_state;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+	काष्ठा mce_info *mce_info;
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
+पूर्ण ____cacheline_aligned;
 
-extern void copy_mm_to_paca(struct mm_struct *mm);
-extern struct paca_struct **paca_ptrs;
-extern void initialise_paca(struct paca_struct *new_paca, int cpu);
-extern void setup_paca(struct paca_struct *new_paca);
-extern void allocate_paca_ptrs(void);
-extern void allocate_paca(int cpu);
-extern void free_unused_pacas(void);
+बाह्य व्योम copy_mm_to_paca(काष्ठा mm_काष्ठा *mm);
+बाह्य काष्ठा paca_काष्ठा **paca_ptrs;
+बाह्य व्योम initialise_paca(काष्ठा paca_काष्ठा *new_paca, पूर्णांक cpu);
+बाह्य व्योम setup_paca(काष्ठा paca_काष्ठा *new_paca);
+बाह्य व्योम allocate_paca_ptrs(व्योम);
+बाह्य व्योम allocate_paca(पूर्णांक cpu);
+बाह्य व्योम मुक्त_unused_pacas(व्योम);
 
-#else /* CONFIG_PPC64 */
+#अन्यथा /* CONFIG_PPC64 */
 
-static inline void allocate_paca_ptrs(void) { }
-static inline void allocate_paca(int cpu) { }
-static inline void free_unused_pacas(void) { }
+अटल अंतरभूत व्योम allocate_paca_ptrs(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम allocate_paca(पूर्णांक cpu) अणु पूर्ण
+अटल अंतरभूत व्योम मुक्त_unused_pacas(व्योम) अणु पूर्ण
 
-#endif /* CONFIG_PPC64 */
+#पूर्ण_अगर /* CONFIG_PPC64 */
 
-#endif /* __KERNEL__ */
-#endif /* _ASM_POWERPC_PACA_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* _ASM_POWERPC_PACA_H */

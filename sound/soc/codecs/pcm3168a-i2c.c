@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * PCM3168A codec i2c driver
  *
@@ -7,55 +8,55 @@
  * Author: Damien Horsley <Damien.Horsley@imgtec.com>
  */
 
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
 
-#include <sound/soc.h>
+#समावेश <sound/soc.h>
 
-#include "pcm3168a.h"
+#समावेश "pcm3168a.h"
 
-static int pcm3168a_i2c_probe(struct i2c_client *i2c,
-			     const struct i2c_device_id *id)
-{
-	struct regmap *regmap;
+अटल पूर्णांक pcm3168a_i2c_probe(काष्ठा i2c_client *i2c,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regmap *regmap;
 
 	regmap = devm_regmap_init_i2c(i2c, &pcm3168a_regmap);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	return pcm3168a_probe(&i2c->dev, regmap);
-}
+	वापस pcm3168a_probe(&i2c->dev, regmap);
+पूर्ण
 
-static int pcm3168a_i2c_remove(struct i2c_client *i2c)
-{
-	pcm3168a_remove(&i2c->dev);
+अटल पूर्णांक pcm3168a_i2c_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	pcm3168a_हटाओ(&i2c->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id pcm3168a_i2c_id[] = {
-	{ "pcm3168a", },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id pcm3168a_i2c_id[] = अणु
+	अणु "pcm3168a", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, pcm3168a_i2c_id);
 
-static const struct of_device_id pcm3168a_of_match[] = {
-	{ .compatible = "ti,pcm3168a", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id pcm3168a_of_match[] = अणु
+	अणु .compatible = "ti,pcm3168a", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pcm3168a_of_match);
 
-static struct i2c_driver pcm3168a_i2c_driver = {
+अटल काष्ठा i2c_driver pcm3168a_i2c_driver = अणु
 	.probe		= pcm3168a_i2c_probe,
-	.remove		= pcm3168a_i2c_remove,
+	.हटाओ		= pcm3168a_i2c_हटाओ,
 	.id_table	= pcm3168a_i2c_id,
-	.driver		= {
+	.driver		= अणु
 		.name	= "pcm3168a",
 		.of_match_table = pcm3168a_of_match,
 		.pm		= &pcm3168a_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_i2c_driver(pcm3168a_i2c_driver);
 
 MODULE_DESCRIPTION("PCM3168A I2C codec driver");

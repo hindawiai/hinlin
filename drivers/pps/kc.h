@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * PPS kernel consumer API header
  *
  * Copyright (C) 2009-2010   Alexander Gordeev <lasaine@lvk.cs.msu.su>
  */
 
-#ifndef LINUX_PPS_KC_H
-#define LINUX_PPS_KC_H
+#अगर_अघोषित LINUX_PPS_KC_H
+#घोषणा LINUX_PPS_KC_H
 
-#include <linux/errno.h>
-#include <linux/pps_kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pps_kernel.h>
 
-#ifdef CONFIG_NTP_PPS
+#अगर_घोषित CONFIG_NTP_PPS
 
-extern int pps_kc_bind(struct pps_device *pps,
-		struct pps_bind_args *bind_args);
-extern void pps_kc_remove(struct pps_device *pps);
-extern void pps_kc_event(struct pps_device *pps,
-		struct pps_event_time *ts, int event);
+बाह्य पूर्णांक pps_kc_bind(काष्ठा pps_device *pps,
+		काष्ठा pps_bind_args *bind_args);
+बाह्य व्योम pps_kc_हटाओ(काष्ठा pps_device *pps);
+बाह्य व्योम pps_kc_event(काष्ठा pps_device *pps,
+		काष्ठा pps_event_समय *ts, पूर्णांक event);
 
 
-#else /* CONFIG_NTP_PPS */
+#अन्यथा /* CONFIG_NTP_PPS */
 
-static inline int pps_kc_bind(struct pps_device *pps,
-		struct pps_bind_args *bind_args) { return -EOPNOTSUPP; }
-static inline void pps_kc_remove(struct pps_device *pps) {}
-static inline void pps_kc_event(struct pps_device *pps,
-		struct pps_event_time *ts, int event) {}
+अटल अंतरभूत पूर्णांक pps_kc_bind(काष्ठा pps_device *pps,
+		काष्ठा pps_bind_args *bind_args) अणु वापस -EOPNOTSUPP; पूर्ण
+अटल अंतरभूत व्योम pps_kc_हटाओ(काष्ठा pps_device *pps) अणुपूर्ण
+अटल अंतरभूत व्योम pps_kc_event(काष्ठा pps_device *pps,
+		काष्ठा pps_event_समय *ts, पूर्णांक event) अणुपूर्ण
 
-#endif /* CONFIG_NTP_PPS */
+#पूर्ण_अगर /* CONFIG_NTP_PPS */
 
-#endif /* LINUX_PPS_KC_H */
+#पूर्ण_अगर /* LINUX_PPS_KC_H */

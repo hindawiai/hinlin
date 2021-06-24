@@ -1,186 +1,187 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
- * Author: Rabin Vincent <rabin.vincent@stericsson.com> for ST-Ericsson
+ * Author: Rabin Vincent <rabin.vincent@stericsson.com> क्रम ST-Ericsson
  */
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/of.h>
-#include <linux/mfd/stmpe.h>
-#include <linux/seq_file.h>
-#include <linux/bitops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mfd/sपंचांगpe.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/bitops.h>
 
 /*
- * These registers are modified under the irq bus lock and cached to avoid
- * unnecessary writes in bus_sync_unlock.
+ * These रेजिस्टरs are modअगरied under the irq bus lock and cached to aव्योम
+ * unnecessary ग_लिखोs in bus_sync_unlock.
  */
-enum { REG_RE, REG_FE, REG_IE };
+क्रमागत अणु REG_RE, REG_FE, REG_IE पूर्ण;
 
-enum { LSB, CSB, MSB };
+क्रमागत अणु LSB, CSB, MSB पूर्ण;
 
-#define CACHE_NR_REGS	3
+#घोषणा CACHE_NR_REGS	3
 /* No variant has more than 24 GPIOs */
-#define CACHE_NR_BANKS	(24 / 8)
+#घोषणा CACHE_NR_BANKS	(24 / 8)
 
-struct stmpe_gpio {
-	struct gpio_chip chip;
-	struct stmpe *stmpe;
-	struct device *dev;
-	struct mutex irq_lock;
+काष्ठा sपंचांगpe_gpio अणु
+	काष्ठा gpio_chip chip;
+	काष्ठा sपंचांगpe *sपंचांगpe;
+	काष्ठा device *dev;
+	काष्ठा mutex irq_lock;
 	u32 norequest_mask;
-	/* Caches of interrupt control registers for bus_lock */
+	/* Caches of पूर्णांकerrupt control रेजिस्टरs क्रम bus_lock */
 	u8 regs[CACHE_NR_REGS][CACHE_NR_BANKS];
 	u8 oldregs[CACHE_NR_REGS][CACHE_NR_BANKS];
-};
+पूर्ण;
 
-static int stmpe_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(chip);
-	struct stmpe *stmpe = stmpe_gpio->stmpe;
-	u8 reg = stmpe->regs[STMPE_IDX_GPMR_LSB + (offset / 8)];
+अटल पूर्णांक sपंचांगpe_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(chip);
+	काष्ठा sपंचांगpe *sपंचांगpe = sपंचांगpe_gpio->sपंचांगpe;
+	u8 reg = sपंचांगpe->regs[STMPE_IDX_GPMR_LSB + (offset / 8)];
 	u8 mask = BIT(offset % 8);
-	int ret;
+	पूर्णांक ret;
 
-	ret = stmpe_reg_read(stmpe, reg);
-	if (ret < 0)
-		return ret;
+	ret = sपंचांगpe_reg_पढ़ो(sपंचांगpe, reg);
+	अगर (ret < 0)
+		वापस ret;
 
-	return !!(ret & mask);
-}
+	वापस !!(ret & mask);
+पूर्ण
 
-static void stmpe_gpio_set(struct gpio_chip *chip, unsigned offset, int val)
-{
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(chip);
-	struct stmpe *stmpe = stmpe_gpio->stmpe;
-	int which = val ? STMPE_IDX_GPSR_LSB : STMPE_IDX_GPCR_LSB;
-	u8 reg = stmpe->regs[which + (offset / 8)];
+अटल व्योम sपंचांगpe_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक val)
+अणु
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(chip);
+	काष्ठा sपंचांगpe *sपंचांगpe = sपंचांगpe_gpio->sपंचांगpe;
+	पूर्णांक which = val ? STMPE_IDX_GPSR_LSB : STMPE_IDX_GPCR_LSB;
+	u8 reg = sपंचांगpe->regs[which + (offset / 8)];
 	u8 mask = BIT(offset % 8);
 
 	/*
-	 * Some variants have single register for gpio set/clear functionality.
-	 * For them we need to write 0 to clear and 1 to set.
+	 * Some variants have single रेजिस्टर क्रम gpio set/clear functionality.
+	 * For them we need to ग_लिखो 0 to clear and 1 to set.
 	 */
-	if (stmpe->regs[STMPE_IDX_GPSR_LSB] == stmpe->regs[STMPE_IDX_GPCR_LSB])
-		stmpe_set_bits(stmpe, reg, mask, val ? mask : 0);
-	else
-		stmpe_reg_write(stmpe, reg, mask);
-}
+	अगर (sपंचांगpe->regs[STMPE_IDX_GPSR_LSB] == sपंचांगpe->regs[STMPE_IDX_GPCR_LSB])
+		sपंचांगpe_set_bits(sपंचांगpe, reg, mask, val ? mask : 0);
+	अन्यथा
+		sपंचांगpe_reg_ग_लिखो(sपंचांगpe, reg, mask);
+पूर्ण
 
-static int stmpe_gpio_get_direction(struct gpio_chip *chip,
-				    unsigned offset)
-{
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(chip);
-	struct stmpe *stmpe = stmpe_gpio->stmpe;
-	u8 reg = stmpe->regs[STMPE_IDX_GPDR_LSB] - (offset / 8);
+अटल पूर्णांक sपंचांगpe_gpio_get_direction(काष्ठा gpio_chip *chip,
+				    अचिन्हित offset)
+अणु
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(chip);
+	काष्ठा sपंचांगpe *sपंचांगpe = sपंचांगpe_gpio->sपंचांगpe;
+	u8 reg = sपंचांगpe->regs[STMPE_IDX_GPDR_LSB] - (offset / 8);
 	u8 mask = BIT(offset % 8);
-	int ret;
+	पूर्णांक ret;
 
-	ret = stmpe_reg_read(stmpe, reg);
-	if (ret < 0)
-		return ret;
+	ret = sपंचांगpe_reg_पढ़ो(sपंचांगpe, reg);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret & mask)
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (ret & mask)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int stmpe_gpio_direction_output(struct gpio_chip *chip,
-					 unsigned offset, int val)
-{
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(chip);
-	struct stmpe *stmpe = stmpe_gpio->stmpe;
-	u8 reg = stmpe->regs[STMPE_IDX_GPDR_LSB + (offset / 8)];
-	u8 mask = BIT(offset % 8);
-
-	stmpe_gpio_set(chip, offset, val);
-
-	return stmpe_set_bits(stmpe, reg, mask, mask);
-}
-
-static int stmpe_gpio_direction_input(struct gpio_chip *chip,
-					unsigned offset)
-{
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(chip);
-	struct stmpe *stmpe = stmpe_gpio->stmpe;
-	u8 reg = stmpe->regs[STMPE_IDX_GPDR_LSB + (offset / 8)];
+अटल पूर्णांक sपंचांगpe_gpio_direction_output(काष्ठा gpio_chip *chip,
+					 अचिन्हित offset, पूर्णांक val)
+अणु
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(chip);
+	काष्ठा sपंचांगpe *sपंचांगpe = sपंचांगpe_gpio->sपंचांगpe;
+	u8 reg = sपंचांगpe->regs[STMPE_IDX_GPDR_LSB + (offset / 8)];
 	u8 mask = BIT(offset % 8);
 
-	return stmpe_set_bits(stmpe, reg, mask, 0);
-}
+	sपंचांगpe_gpio_set(chip, offset, val);
 
-static int stmpe_gpio_request(struct gpio_chip *chip, unsigned offset)
-{
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(chip);
-	struct stmpe *stmpe = stmpe_gpio->stmpe;
+	वापस sपंचांगpe_set_bits(sपंचांगpe, reg, mask, mask);
+पूर्ण
 
-	if (stmpe_gpio->norequest_mask & BIT(offset))
-		return -EINVAL;
+अटल पूर्णांक sपंचांगpe_gpio_direction_input(काष्ठा gpio_chip *chip,
+					अचिन्हित offset)
+अणु
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(chip);
+	काष्ठा sपंचांगpe *sपंचांगpe = sपंचांगpe_gpio->sपंचांगpe;
+	u8 reg = sपंचांगpe->regs[STMPE_IDX_GPDR_LSB + (offset / 8)];
+	u8 mask = BIT(offset % 8);
 
-	return stmpe_set_altfunc(stmpe, BIT(offset), STMPE_BLOCK_GPIO);
-}
+	वापस sपंचांगpe_set_bits(sपंचांगpe, reg, mask, 0);
+पूर्ण
 
-static const struct gpio_chip template_chip = {
+अटल पूर्णांक sपंचांगpe_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(chip);
+	काष्ठा sपंचांगpe *sपंचांगpe = sपंचांगpe_gpio->sपंचांगpe;
+
+	अगर (sपंचांगpe_gpio->norequest_mask & BIT(offset))
+		वापस -EINVAL;
+
+	वापस sपंचांगpe_set_altfunc(sपंचांगpe, BIT(offset), STMPE_BLOCK_GPIO);
+पूर्ण
+
+अटल स्थिर काष्ठा gpio_chip ढाँचा_chip = अणु
 	.label			= "stmpe",
 	.owner			= THIS_MODULE,
-	.get_direction		= stmpe_gpio_get_direction,
-	.direction_input	= stmpe_gpio_direction_input,
-	.get			= stmpe_gpio_get,
-	.direction_output	= stmpe_gpio_direction_output,
-	.set			= stmpe_gpio_set,
-	.request		= stmpe_gpio_request,
+	.get_direction		= sपंचांगpe_gpio_get_direction,
+	.direction_input	= sपंचांगpe_gpio_direction_input,
+	.get			= sपंचांगpe_gpio_get,
+	.direction_output	= sपंचांगpe_gpio_direction_output,
+	.set			= sपंचांगpe_gpio_set,
+	.request		= sपंचांगpe_gpio_request,
 	.can_sleep		= true,
-};
+पूर्ण;
 
-static int stmpe_gpio_irq_set_type(struct irq_data *d, unsigned int type)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(gc);
-	int offset = d->hwirq;
-	int regoffset = offset / 8;
-	int mask = BIT(offset % 8);
+अटल पूर्णांक sपंचांगpe_gpio_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(gc);
+	पूर्णांक offset = d->hwirq;
+	पूर्णांक regoffset = offset / 8;
+	पूर्णांक mask = BIT(offset % 8);
 
-	if (type & IRQ_TYPE_LEVEL_LOW || type & IRQ_TYPE_LEVEL_HIGH)
-		return -EINVAL;
+	अगर (type & IRQ_TYPE_LEVEL_LOW || type & IRQ_TYPE_LEVEL_HIGH)
+		वापस -EINVAL;
 
-	/* STMPE801 and STMPE 1600 don't have RE and FE registers */
-	if (stmpe_gpio->stmpe->partnum == STMPE801 ||
-	    stmpe_gpio->stmpe->partnum == STMPE1600)
-		return 0;
+	/* STMPE801 and STMPE 1600 करोn't have RE and FE रेजिस्टरs */
+	अगर (sपंचांगpe_gpio->sपंचांगpe->partnum == STMPE801 ||
+	    sपंचांगpe_gpio->sपंचांगpe->partnum == STMPE1600)
+		वापस 0;
 
-	if (type & IRQ_TYPE_EDGE_RISING)
-		stmpe_gpio->regs[REG_RE][regoffset] |= mask;
-	else
-		stmpe_gpio->regs[REG_RE][regoffset] &= ~mask;
+	अगर (type & IRQ_TYPE_EDGE_RISING)
+		sपंचांगpe_gpio->regs[REG_RE][regoffset] |= mask;
+	अन्यथा
+		sपंचांगpe_gpio->regs[REG_RE][regoffset] &= ~mask;
 
-	if (type & IRQ_TYPE_EDGE_FALLING)
-		stmpe_gpio->regs[REG_FE][regoffset] |= mask;
-	else
-		stmpe_gpio->regs[REG_FE][regoffset] &= ~mask;
+	अगर (type & IRQ_TYPE_EDGE_FALLING)
+		sपंचांगpe_gpio->regs[REG_FE][regoffset] |= mask;
+	अन्यथा
+		sपंचांगpe_gpio->regs[REG_FE][regoffset] &= ~mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stmpe_gpio_irq_lock(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(gc);
+अटल व्योम sपंचांगpe_gpio_irq_lock(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(gc);
 
-	mutex_lock(&stmpe_gpio->irq_lock);
-}
+	mutex_lock(&sपंचांगpe_gpio->irq_lock);
+पूर्ण
 
-static void stmpe_gpio_irq_sync_unlock(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(gc);
-	struct stmpe *stmpe = stmpe_gpio->stmpe;
-	int num_banks = DIV_ROUND_UP(stmpe->num_gpios, 8);
-	static const u8 regmap[CACHE_NR_REGS][CACHE_NR_BANKS] = {
+अटल व्योम sपंचांगpe_gpio_irq_sync_unlock(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(gc);
+	काष्ठा sपंचांगpe *sपंचांगpe = sपंचांगpe_gpio->sपंचांगpe;
+	पूर्णांक num_banks = DIV_ROUND_UP(sपंचांगpe->num_gpios, 8);
+	अटल स्थिर u8 regmap[CACHE_NR_REGS][CACHE_NR_BANKS] = अणु
 		[REG_RE][LSB] = STMPE_IDX_GPRER_LSB,
 		[REG_RE][CSB] = STMPE_IDX_GPRER_CSB,
 		[REG_RE][MSB] = STMPE_IDX_GPRER_MSB,
@@ -190,358 +191,358 @@ static void stmpe_gpio_irq_sync_unlock(struct irq_data *d)
 		[REG_IE][LSB] = STMPE_IDX_IEGPIOR_LSB,
 		[REG_IE][CSB] = STMPE_IDX_IEGPIOR_CSB,
 		[REG_IE][MSB] = STMPE_IDX_IEGPIOR_MSB,
-	};
-	int i, j;
+	पूर्ण;
+	पूर्णांक i, j;
 
 	/*
 	 * STMPE1600: to be able to get IRQ from pins,
-	 * a read must be done on GPMR register, or a write in
-	 * GPSR or GPCR registers
+	 * a पढ़ो must be करोne on GPMR रेजिस्टर, or a ग_लिखो in
+	 * GPSR or GPCR रेजिस्टरs
 	 */
-	if (stmpe->partnum == STMPE1600) {
-		stmpe_reg_read(stmpe, stmpe->regs[STMPE_IDX_GPMR_LSB]);
-		stmpe_reg_read(stmpe, stmpe->regs[STMPE_IDX_GPMR_CSB]);
-	}
+	अगर (sपंचांगpe->partnum == STMPE1600) अणु
+		sपंचांगpe_reg_पढ़ो(sपंचांगpe, sपंचांगpe->regs[STMPE_IDX_GPMR_LSB]);
+		sपंचांगpe_reg_पढ़ो(sपंचांगpe, sपंचांगpe->regs[STMPE_IDX_GPMR_CSB]);
+	पूर्ण
 
-	for (i = 0; i < CACHE_NR_REGS; i++) {
-		/* STMPE801 and STMPE1600 don't have RE and FE registers */
-		if ((stmpe->partnum == STMPE801 ||
-		     stmpe->partnum == STMPE1600) &&
+	क्रम (i = 0; i < CACHE_NR_REGS; i++) अणु
+		/* STMPE801 and STMPE1600 करोn't have RE and FE रेजिस्टरs */
+		अगर ((sपंचांगpe->partnum == STMPE801 ||
+		     sपंचांगpe->partnum == STMPE1600) &&
 		     (i != REG_IE))
-			continue;
+			जारी;
 
-		for (j = 0; j < num_banks; j++) {
-			u8 old = stmpe_gpio->oldregs[i][j];
-			u8 new = stmpe_gpio->regs[i][j];
+		क्रम (j = 0; j < num_banks; j++) अणु
+			u8 old = sपंचांगpe_gpio->oldregs[i][j];
+			u8 new = sपंचांगpe_gpio->regs[i][j];
 
-			if (new == old)
-				continue;
+			अगर (new == old)
+				जारी;
 
-			stmpe_gpio->oldregs[i][j] = new;
-			stmpe_reg_write(stmpe, stmpe->regs[regmap[i][j]], new);
-		}
-	}
+			sपंचांगpe_gpio->oldregs[i][j] = new;
+			sपंचांगpe_reg_ग_लिखो(sपंचांगpe, sपंचांगpe->regs[regmap[i][j]], new);
+		पूर्ण
+	पूर्ण
 
-	mutex_unlock(&stmpe_gpio->irq_lock);
-}
+	mutex_unlock(&sपंचांगpe_gpio->irq_lock);
+पूर्ण
 
-static void stmpe_gpio_irq_mask(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(gc);
-	int offset = d->hwirq;
-	int regoffset = offset / 8;
-	int mask = BIT(offset % 8);
+अटल व्योम sपंचांगpe_gpio_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(gc);
+	पूर्णांक offset = d->hwirq;
+	पूर्णांक regoffset = offset / 8;
+	पूर्णांक mask = BIT(offset % 8);
 
-	stmpe_gpio->regs[REG_IE][regoffset] &= ~mask;
-}
+	sपंचांगpe_gpio->regs[REG_IE][regoffset] &= ~mask;
+पूर्ण
 
-static void stmpe_gpio_irq_unmask(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(gc);
-	int offset = d->hwirq;
-	int regoffset = offset / 8;
-	int mask = BIT(offset % 8);
+अटल व्योम sपंचांगpe_gpio_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(gc);
+	पूर्णांक offset = d->hwirq;
+	पूर्णांक regoffset = offset / 8;
+	पूर्णांक mask = BIT(offset % 8);
 
-	stmpe_gpio->regs[REG_IE][regoffset] |= mask;
-}
+	sपंचांगpe_gpio->regs[REG_IE][regoffset] |= mask;
+पूर्ण
 
-static void stmpe_dbg_show_one(struct seq_file *s,
-			       struct gpio_chip *gc,
-			       unsigned offset, unsigned gpio)
-{
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(gc);
-	struct stmpe *stmpe = stmpe_gpio->stmpe;
-	const char *label = gpiochip_is_requested(gc, offset);
-	bool val = !!stmpe_gpio_get(gc, offset);
+अटल व्योम sपंचांगpe_dbg_show_one(काष्ठा seq_file *s,
+			       काष्ठा gpio_chip *gc,
+			       अचिन्हित offset, अचिन्हित gpio)
+अणु
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(gc);
+	काष्ठा sपंचांगpe *sपंचांगpe = sपंचांगpe_gpio->sपंचांगpe;
+	स्थिर अक्षर *label = gpiochip_is_requested(gc, offset);
+	bool val = !!sपंचांगpe_gpio_get(gc, offset);
 	u8 bank = offset / 8;
-	u8 dir_reg = stmpe->regs[STMPE_IDX_GPDR_LSB + bank];
+	u8 dir_reg = sपंचांगpe->regs[STMPE_IDX_GPDR_LSB + bank];
 	u8 mask = BIT(offset % 8);
-	int ret;
+	पूर्णांक ret;
 	u8 dir;
 
-	ret = stmpe_reg_read(stmpe, dir_reg);
-	if (ret < 0)
-		return;
+	ret = sपंचांगpe_reg_पढ़ो(sपंचांगpe, dir_reg);
+	अगर (ret < 0)
+		वापस;
 	dir = !!(ret & mask);
 
-	if (dir) {
-		seq_printf(s, " gpio-%-3d (%-20.20s) out %s",
+	अगर (dir) अणु
+		seq_म_लिखो(s, " gpio-%-3d (%-20.20s) out %s",
 			   gpio, label ?: "(none)",
 			   val ? "hi" : "lo");
-	} else {
+	पूर्ण अन्यथा अणु
 		u8 edge_det_reg;
 		u8 rise_reg;
 		u8 fall_reg;
 		u8 irqen_reg;
 
-		static const char * const edge_det_values[] = {
+		अटल स्थिर अक्षर * स्थिर edge_det_values[] = अणु
 			"edge-inactive",
 			"edge-asserted",
 			"not-supported"
-		};
-		static const char * const rise_values[] = {
+		पूर्ण;
+		अटल स्थिर अक्षर * स्थिर rise_values[] = अणु
 			"no-rising-edge-detection",
 			"rising-edge-detection",
 			"not-supported"
-		};
-		static const char * const fall_values[] = {
+		पूर्ण;
+		अटल स्थिर अक्षर * स्थिर fall_values[] = अणु
 			"no-falling-edge-detection",
 			"falling-edge-detection",
 			"not-supported"
-		};
-		#define NOT_SUPPORTED_IDX 2
+		पूर्ण;
+		#घोषणा NOT_SUPPORTED_IDX 2
 		u8 edge_det = NOT_SUPPORTED_IDX;
 		u8 rise = NOT_SUPPORTED_IDX;
 		u8 fall = NOT_SUPPORTED_IDX;
 		bool irqen;
 
-		switch (stmpe->partnum) {
-		case STMPE610:
-		case STMPE811:
-		case STMPE1601:
-		case STMPE2401:
-		case STMPE2403:
-			edge_det_reg = stmpe->regs[STMPE_IDX_GPEDR_LSB + bank];
-			ret = stmpe_reg_read(stmpe, edge_det_reg);
-			if (ret < 0)
-				return;
+		चयन (sपंचांगpe->partnum) अणु
+		हाल STMPE610:
+		हाल STMPE811:
+		हाल STMPE1601:
+		हाल STMPE2401:
+		हाल STMPE2403:
+			edge_det_reg = sपंचांगpe->regs[STMPE_IDX_GPEDR_LSB + bank];
+			ret = sपंचांगpe_reg_पढ़ो(sपंचांगpe, edge_det_reg);
+			अगर (ret < 0)
+				वापस;
 			edge_det = !!(ret & mask);
 			fallthrough;
-		case STMPE1801:
-			rise_reg = stmpe->regs[STMPE_IDX_GPRER_LSB + bank];
-			fall_reg = stmpe->regs[STMPE_IDX_GPFER_LSB + bank];
+		हाल STMPE1801:
+			rise_reg = sपंचांगpe->regs[STMPE_IDX_GPRER_LSB + bank];
+			fall_reg = sपंचांगpe->regs[STMPE_IDX_GPFER_LSB + bank];
 
-			ret = stmpe_reg_read(stmpe, rise_reg);
-			if (ret < 0)
-				return;
+			ret = sपंचांगpe_reg_पढ़ो(sपंचांगpe, rise_reg);
+			अगर (ret < 0)
+				वापस;
 			rise = !!(ret & mask);
-			ret = stmpe_reg_read(stmpe, fall_reg);
-			if (ret < 0)
-				return;
+			ret = sपंचांगpe_reg_पढ़ो(sपंचांगpe, fall_reg);
+			अगर (ret < 0)
+				वापस;
 			fall = !!(ret & mask);
 			fallthrough;
-		case STMPE801:
-		case STMPE1600:
-			irqen_reg = stmpe->regs[STMPE_IDX_IEGPIOR_LSB + bank];
-			break;
+		हाल STMPE801:
+		हाल STMPE1600:
+			irqen_reg = sपंचांगpe->regs[STMPE_IDX_IEGPIOR_LSB + bank];
+			अवरोध;
 
-		default:
-			return;
-		}
+		शेष:
+			वापस;
+		पूर्ण
 
-		ret = stmpe_reg_read(stmpe, irqen_reg);
-		if (ret < 0)
-			return;
+		ret = sपंचांगpe_reg_पढ़ो(sपंचांगpe, irqen_reg);
+		अगर (ret < 0)
+			वापस;
 		irqen = !!(ret & mask);
 
-		seq_printf(s, " gpio-%-3d (%-20.20s) in  %s %13s %13s %25s %25s",
+		seq_म_लिखो(s, " gpio-%-3d (%-20.20s) in  %s %13s %13s %25s %25s",
 			   gpio, label ?: "(none)",
 			   val ? "hi" : "lo",
 			   edge_det_values[edge_det],
 			   irqen ? "IRQ-enabled" : "IRQ-disabled",
 			   rise_values[rise],
 			   fall_values[fall]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void stmpe_dbg_show(struct seq_file *s, struct gpio_chip *gc)
-{
-	unsigned i;
-	unsigned gpio = gc->base;
+अटल व्योम sपंचांगpe_dbg_show(काष्ठा seq_file *s, काष्ठा gpio_chip *gc)
+अणु
+	अचिन्हित i;
+	अचिन्हित gpio = gc->base;
 
-	for (i = 0; i < gc->ngpio; i++, gpio++) {
-		stmpe_dbg_show_one(s, gc, i, gpio);
-		seq_putc(s, '\n');
-	}
-}
+	क्रम (i = 0; i < gc->ngpio; i++, gpio++) अणु
+		sपंचांगpe_dbg_show_one(s, gc, i, gpio);
+		seq_अ_दो(s, '\n');
+	पूर्ण
+पूर्ण
 
-static struct irq_chip stmpe_gpio_irq_chip = {
+अटल काष्ठा irq_chip sपंचांगpe_gpio_irq_chip = अणु
 	.name			= "stmpe-gpio",
-	.irq_bus_lock		= stmpe_gpio_irq_lock,
-	.irq_bus_sync_unlock	= stmpe_gpio_irq_sync_unlock,
-	.irq_mask		= stmpe_gpio_irq_mask,
-	.irq_unmask		= stmpe_gpio_irq_unmask,
-	.irq_set_type		= stmpe_gpio_irq_set_type,
-};
+	.irq_bus_lock		= sपंचांगpe_gpio_irq_lock,
+	.irq_bus_sync_unlock	= sपंचांगpe_gpio_irq_sync_unlock,
+	.irq_mask		= sपंचांगpe_gpio_irq_mask,
+	.irq_unmask		= sपंचांगpe_gpio_irq_unmask,
+	.irq_set_type		= sपंचांगpe_gpio_irq_set_type,
+पूर्ण;
 
-#define MAX_GPIOS 24
+#घोषणा MAX_GPIOS 24
 
-static irqreturn_t stmpe_gpio_irq(int irq, void *dev)
-{
-	struct stmpe_gpio *stmpe_gpio = dev;
-	struct stmpe *stmpe = stmpe_gpio->stmpe;
-	u8 statmsbreg;
-	int num_banks = DIV_ROUND_UP(stmpe->num_gpios, 8);
+अटल irqवापस_t sपंचांगpe_gpio_irq(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = dev;
+	काष्ठा sपंचांगpe *sपंचांगpe = sपंचांगpe_gpio->sपंचांगpe;
+	u8 staपंचांगsbreg;
+	पूर्णांक num_banks = DIV_ROUND_UP(sपंचांगpe->num_gpios, 8);
 	u8 status[DIV_ROUND_UP(MAX_GPIOS, 8)];
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	/*
-	 * the stmpe_block_read() call below, imposes to set statmsbreg
-	 * with the register located at the lowest address. As STMPE1600
-	 * variant is the only one which respect registers address's order
+	 * the sपंचांगpe_block_पढ़ो() call below, imposes to set staपंचांगsbreg
+	 * with the रेजिस्टर located at the lowest address. As STMPE1600
+	 * variant is the only one which respect रेजिस्टरs address's order
 	 * (LSB regs located at lowest address than MSB ones) whereas all
-	 * the others have a registers layout with MSB located before the
+	 * the others have a रेजिस्टरs layout with MSB located beक्रमe the
 	 * LSB regs.
 	 */
-	if (stmpe->partnum == STMPE1600)
-		statmsbreg = stmpe->regs[STMPE_IDX_ISGPIOR_LSB];
-	else
-		statmsbreg = stmpe->regs[STMPE_IDX_ISGPIOR_MSB];
+	अगर (sपंचांगpe->partnum == STMPE1600)
+		staपंचांगsbreg = sपंचांगpe->regs[STMPE_IDX_ISGPIOR_LSB];
+	अन्यथा
+		staपंचांगsbreg = sपंचांगpe->regs[STMPE_IDX_ISGPIOR_MSB];
 
-	ret = stmpe_block_read(stmpe, statmsbreg, num_banks, status);
-	if (ret < 0)
-		return IRQ_NONE;
+	ret = sपंचांगpe_block_पढ़ो(sपंचांगpe, staपंचांगsbreg, num_banks, status);
+	अगर (ret < 0)
+		वापस IRQ_NONE;
 
-	for (i = 0; i < num_banks; i++) {
-		int bank = (stmpe_gpio->stmpe->partnum == STMPE1600) ? i :
+	क्रम (i = 0; i < num_banks; i++) अणु
+		पूर्णांक bank = (sपंचांगpe_gpio->sपंचांगpe->partnum == STMPE1600) ? i :
 			   num_banks - i - 1;
-		unsigned int enabled = stmpe_gpio->regs[REG_IE][bank];
-		unsigned int stat = status[i];
+		अचिन्हित पूर्णांक enabled = sपंचांगpe_gpio->regs[REG_IE][bank];
+		अचिन्हित पूर्णांक stat = status[i];
 
 		stat &= enabled;
-		if (!stat)
-			continue;
+		अगर (!stat)
+			जारी;
 
-		while (stat) {
-			int bit = __ffs(stat);
-			int line = bank * 8 + bit;
-			int child_irq = irq_find_mapping(stmpe_gpio->chip.irq.domain,
+		जबतक (stat) अणु
+			पूर्णांक bit = __ffs(stat);
+			पूर्णांक line = bank * 8 + bit;
+			पूर्णांक child_irq = irq_find_mapping(sपंचांगpe_gpio->chip.irq.करोमुख्य,
 							 line);
 
 			handle_nested_irq(child_irq);
 			stat &= ~BIT(bit);
-		}
+		पूर्ण
 
 		/*
-		 * interrupt status register write has no effect on
-		 * 801/1801/1600, bits are cleared when read.
-		 * Edge detect register is not present on 801/1600/1801
+		 * पूर्णांकerrupt status रेजिस्टर ग_लिखो has no effect on
+		 * 801/1801/1600, bits are cleared when पढ़ो.
+		 * Edge detect रेजिस्टर is not present on 801/1600/1801
 		 */
-		if (stmpe->partnum != STMPE801 && stmpe->partnum != STMPE1600 &&
-		    stmpe->partnum != STMPE1801) {
-			stmpe_reg_write(stmpe, statmsbreg + i, status[i]);
-			stmpe_reg_write(stmpe,
-					stmpe->regs[STMPE_IDX_GPEDR_MSB] + i,
+		अगर (sपंचांगpe->partnum != STMPE801 && sपंचांगpe->partnum != STMPE1600 &&
+		    sपंचांगpe->partnum != STMPE1801) अणु
+			sपंचांगpe_reg_ग_लिखो(sपंचांगpe, staपंचांगsbreg + i, status[i]);
+			sपंचांगpe_reg_ग_लिखो(sपंचांगpe,
+					sपंचांगpe->regs[STMPE_IDX_GPEDR_MSB] + i,
 					status[i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void stmpe_init_irq_valid_mask(struct gpio_chip *gc,
-				      unsigned long *valid_mask,
-				      unsigned int ngpios)
-{
-	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(gc);
-	int i;
+अटल व्योम sपंचांगpe_init_irq_valid_mask(काष्ठा gpio_chip *gc,
+				      अचिन्हित दीर्घ *valid_mask,
+				      अचिन्हित पूर्णांक ngpios)
+अणु
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio = gpiochip_get_data(gc);
+	पूर्णांक i;
 
-	if (!stmpe_gpio->norequest_mask)
-		return;
+	अगर (!sपंचांगpe_gpio->norequest_mask)
+		वापस;
 
 	/* Forbid unused lines to be mapped as IRQs */
-	for (i = 0; i < sizeof(u32); i++) {
-		if (stmpe_gpio->norequest_mask & BIT(i))
+	क्रम (i = 0; i < माप(u32); i++) अणु
+		अगर (sपंचांगpe_gpio->norequest_mask & BIT(i))
 			clear_bit(i, valid_mask);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int stmpe_gpio_probe(struct platform_device *pdev)
-{
-	struct stmpe *stmpe = dev_get_drvdata(pdev->dev.parent);
-	struct device_node *np = pdev->dev.of_node;
-	struct stmpe_gpio *stmpe_gpio;
-	int ret, irq;
+अटल पूर्णांक sपंचांगpe_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sपंचांगpe *sपंचांगpe = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा sपंचांगpe_gpio *sपंचांगpe_gpio;
+	पूर्णांक ret, irq;
 
-	if (stmpe->num_gpios > MAX_GPIOS) {
+	अगर (sपंचांगpe->num_gpios > MAX_GPIOS) अणु
 		dev_err(&pdev->dev, "Need to increase maximum GPIO number\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	stmpe_gpio = kzalloc(sizeof(*stmpe_gpio), GFP_KERNEL);
-	if (!stmpe_gpio)
-		return -ENOMEM;
+	sपंचांगpe_gpio = kzalloc(माप(*sपंचांगpe_gpio), GFP_KERNEL);
+	अगर (!sपंचांगpe_gpio)
+		वापस -ENOMEM;
 
-	mutex_init(&stmpe_gpio->irq_lock);
+	mutex_init(&sपंचांगpe_gpio->irq_lock);
 
-	stmpe_gpio->dev = &pdev->dev;
-	stmpe_gpio->stmpe = stmpe;
-	stmpe_gpio->chip = template_chip;
-	stmpe_gpio->chip.ngpio = stmpe->num_gpios;
-	stmpe_gpio->chip.parent = &pdev->dev;
-	stmpe_gpio->chip.of_node = np;
-	stmpe_gpio->chip.base = -1;
+	sपंचांगpe_gpio->dev = &pdev->dev;
+	sपंचांगpe_gpio->sपंचांगpe = sपंचांगpe;
+	sपंचांगpe_gpio->chip = ढाँचा_chip;
+	sपंचांगpe_gpio->chip.ngpio = sपंचांगpe->num_gpios;
+	sपंचांगpe_gpio->chip.parent = &pdev->dev;
+	sपंचांगpe_gpio->chip.of_node = np;
+	sपंचांगpe_gpio->chip.base = -1;
 
-	if (IS_ENABLED(CONFIG_DEBUG_FS))
-                stmpe_gpio->chip.dbg_show = stmpe_dbg_show;
+	अगर (IS_ENABLED(CONFIG_DEBUG_FS))
+                sपंचांगpe_gpio->chip.dbg_show = sपंचांगpe_dbg_show;
 
-	of_property_read_u32(np, "st,norequest-mask",
-			&stmpe_gpio->norequest_mask);
+	of_property_पढ़ो_u32(np, "st,norequest-mask",
+			&sपंचांगpe_gpio->norequest_mask);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
 		dev_info(&pdev->dev,
 			"device configured in no-irq mode: "
 			"irqs are not available\n");
 
-	ret = stmpe_enable(stmpe, STMPE_BLOCK_GPIO);
-	if (ret)
-		goto out_free;
+	ret = sपंचांगpe_enable(sपंचांगpe, STMPE_BLOCK_GPIO);
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	if (irq > 0) {
-		struct gpio_irq_chip *girq;
+	अगर (irq > 0) अणु
+		काष्ठा gpio_irq_chip *girq;
 
-		ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
-				stmpe_gpio_irq, IRQF_ONESHOT,
-				"stmpe-gpio", stmpe_gpio);
-		if (ret) {
+		ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
+				sपंचांगpe_gpio_irq, IRQF_ONESHOT,
+				"stmpe-gpio", sपंचांगpe_gpio);
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "unable to get irq: %d\n", ret);
-			goto out_disable;
-		}
+			जाओ out_disable;
+		पूर्ण
 
-		girq = &stmpe_gpio->chip.irq;
-		girq->chip = &stmpe_gpio_irq_chip;
+		girq = &sपंचांगpe_gpio->chip.irq;
+		girq->chip = &sपंचांगpe_gpio_irq_chip;
 		/* This will let us handle the parent IRQ in the driver */
-		girq->parent_handler = NULL;
+		girq->parent_handler = शून्य;
 		girq->num_parents = 0;
-		girq->parents = NULL;
-		girq->default_type = IRQ_TYPE_NONE;
+		girq->parents = शून्य;
+		girq->शेष_type = IRQ_TYPE_NONE;
 		girq->handler = handle_simple_irq;
-		girq->threaded = true;
-		girq->init_valid_mask = stmpe_init_irq_valid_mask;
-	}
+		girq->thपढ़ोed = true;
+		girq->init_valid_mask = sपंचांगpe_init_irq_valid_mask;
+	पूर्ण
 
-	ret = gpiochip_add_data(&stmpe_gpio->chip, stmpe_gpio);
-	if (ret) {
+	ret = gpiochip_add_data(&sपंचांगpe_gpio->chip, sपंचांगpe_gpio);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "unable to add gpiochip: %d\n", ret);
-		goto out_disable;
-	}
+		जाओ out_disable;
+	पूर्ण
 
-	platform_set_drvdata(pdev, stmpe_gpio);
+	platक्रमm_set_drvdata(pdev, sपंचांगpe_gpio);
 
-	return 0;
+	वापस 0;
 
 out_disable:
-	stmpe_disable(stmpe, STMPE_BLOCK_GPIO);
-	gpiochip_remove(&stmpe_gpio->chip);
-out_free:
-	kfree(stmpe_gpio);
-	return ret;
-}
+	sपंचांगpe_disable(sपंचांगpe, STMPE_BLOCK_GPIO);
+	gpiochip_हटाओ(&sपंचांगpe_gpio->chip);
+out_मुक्त:
+	kमुक्त(sपंचांगpe_gpio);
+	वापस ret;
+पूर्ण
 
-static struct platform_driver stmpe_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sपंचांगpe_gpio_driver = अणु
+	.driver = अणु
 		.suppress_bind_attrs	= true,
 		.name			= "stmpe-gpio",
-	},
-	.probe		= stmpe_gpio_probe,
-};
+	पूर्ण,
+	.probe		= sपंचांगpe_gpio_probe,
+पूर्ण;
 
-static int __init stmpe_gpio_init(void)
-{
-	return platform_driver_register(&stmpe_gpio_driver);
-}
-subsys_initcall(stmpe_gpio_init);
+अटल पूर्णांक __init sपंचांगpe_gpio_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&sपंचांगpe_gpio_driver);
+पूर्ण
+subsys_initcall(sपंचांगpe_gpio_init);

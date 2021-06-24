@@ -1,128 +1,129 @@
+<शैली गुरु>
 /*
  * arch/sh/mm/mmap.c
  *
  * Copyright (C) 2008 - 2009  Paul Mundt
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/io.h>
-#include <linux/mm.h>
-#include <linux/sched/mm.h>
-#include <linux/mman.h>
-#include <linux/module.h>
-#include <asm/page.h>
-#include <asm/processor.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/processor.h>
 
-unsigned long shm_align_mask = PAGE_SIZE - 1;	/* Sane caches */
+अचिन्हित दीर्घ shm_align_mask = PAGE_SIZE - 1;	/* Sane caches */
 EXPORT_SYMBOL(shm_align_mask);
 
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 /*
- * To avoid cache aliases, we map the shared page with same color.
+ * To aव्योम cache aliases, we map the shared page with same color.
  */
-static inline unsigned long COLOUR_ALIGN(unsigned long addr,
-					 unsigned long pgoff)
-{
-	unsigned long base = (addr + shm_align_mask) & ~shm_align_mask;
-	unsigned long off = (pgoff << PAGE_SHIFT) & shm_align_mask;
+अटल अंतरभूत अचिन्हित दीर्घ COLOUR_ALIGN(अचिन्हित दीर्घ addr,
+					 अचिन्हित दीर्घ pgoff)
+अणु
+	अचिन्हित दीर्घ base = (addr + shm_align_mask) & ~shm_align_mask;
+	अचिन्हित दीर्घ off = (pgoff << PAGE_SHIFT) & shm_align_mask;
 
-	return base + off;
-}
+	वापस base + off;
+पूर्ण
 
-unsigned long arch_get_unmapped_area(struct file *filp, unsigned long addr,
-	unsigned long len, unsigned long pgoff, unsigned long flags)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
-	int do_colour_align;
-	struct vm_unmapped_area_info info;
+अचिन्हित दीर्घ arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr,
+	अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	पूर्णांक करो_colour_align;
+	काष्ठा vm_unmapped_area_info info;
 
-	if (flags & MAP_FIXED) {
-		/* We do not accept a shared mapping if it would violate
-		 * cache aliasing constraints.
+	अगर (flags & MAP_FIXED) अणु
+		/* We करो not accept a shared mapping अगर it would violate
+		 * cache aliasing स्थिरraपूर्णांकs.
 		 */
-		if ((flags & MAP_SHARED) &&
+		अगर ((flags & MAP_SHARED) &&
 		    ((addr - (pgoff << PAGE_SHIFT)) & shm_align_mask))
-			return -EINVAL;
-		return addr;
-	}
+			वापस -EINVAL;
+		वापस addr;
+	पूर्ण
 
-	if (unlikely(len > TASK_SIZE))
-		return -ENOMEM;
+	अगर (unlikely(len > TASK_SIZE))
+		वापस -ENOMEM;
 
-	do_colour_align = 0;
-	if (filp || (flags & MAP_SHARED))
-		do_colour_align = 1;
+	करो_colour_align = 0;
+	अगर (filp || (flags & MAP_SHARED))
+		करो_colour_align = 1;
 
-	if (addr) {
-		if (do_colour_align)
+	अगर (addr) अणु
+		अगर (करो_colour_align)
 			addr = COLOUR_ALIGN(addr, pgoff);
-		else
+		अन्यथा
 			addr = PAGE_ALIGN(addr);
 
 		vma = find_vma(mm, addr);
-		if (TASK_SIZE - len >= addr &&
+		अगर (TASK_SIZE - len >= addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)))
-			return addr;
-	}
+			वापस addr;
+	पूर्ण
 
 	info.flags = 0;
 	info.length = len;
 	info.low_limit = TASK_UNMAPPED_BASE;
 	info.high_limit = TASK_SIZE;
-	info.align_mask = do_colour_align ? (PAGE_MASK & shm_align_mask) : 0;
+	info.align_mask = करो_colour_align ? (PAGE_MASK & shm_align_mask) : 0;
 	info.align_offset = pgoff << PAGE_SHIFT;
-	return vm_unmapped_area(&info);
-}
+	वापस vm_unmapped_area(&info);
+पूर्ण
 
-unsigned long
-arch_get_unmapped_area_topdown(struct file *filp, const unsigned long addr0,
-			  const unsigned long len, const unsigned long pgoff,
-			  const unsigned long flags)
-{
-	struct vm_area_struct *vma;
-	struct mm_struct *mm = current->mm;
-	unsigned long addr = addr0;
-	int do_colour_align;
-	struct vm_unmapped_area_info info;
+अचिन्हित दीर्घ
+arch_get_unmapped_area_topकरोwn(काष्ठा file *filp, स्थिर अचिन्हित दीर्घ addr0,
+			  स्थिर अचिन्हित दीर्घ len, स्थिर अचिन्हित दीर्घ pgoff,
+			  स्थिर अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	अचिन्हित दीर्घ addr = addr0;
+	पूर्णांक करो_colour_align;
+	काष्ठा vm_unmapped_area_info info;
 
-	if (flags & MAP_FIXED) {
-		/* We do not accept a shared mapping if it would violate
-		 * cache aliasing constraints.
+	अगर (flags & MAP_FIXED) अणु
+		/* We करो not accept a shared mapping अगर it would violate
+		 * cache aliasing स्थिरraपूर्णांकs.
 		 */
-		if ((flags & MAP_SHARED) &&
+		अगर ((flags & MAP_SHARED) &&
 		    ((addr - (pgoff << PAGE_SHIFT)) & shm_align_mask))
-			return -EINVAL;
-		return addr;
-	}
+			वापस -EINVAL;
+		वापस addr;
+	पूर्ण
 
-	if (unlikely(len > TASK_SIZE))
-		return -ENOMEM;
+	अगर (unlikely(len > TASK_SIZE))
+		वापस -ENOMEM;
 
-	do_colour_align = 0;
-	if (filp || (flags & MAP_SHARED))
-		do_colour_align = 1;
+	करो_colour_align = 0;
+	अगर (filp || (flags & MAP_SHARED))
+		करो_colour_align = 1;
 
-	/* requesting a specific address */
-	if (addr) {
-		if (do_colour_align)
+	/* requesting a specअगरic address */
+	अगर (addr) अणु
+		अगर (करो_colour_align)
 			addr = COLOUR_ALIGN(addr, pgoff);
-		else
+		अन्यथा
 			addr = PAGE_ALIGN(addr);
 
 		vma = find_vma(mm, addr);
-		if (TASK_SIZE - len >= addr &&
+		अगर (TASK_SIZE - len >= addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)))
-			return addr;
-	}
+			वापस addr;
+	पूर्ण
 
 	info.flags = VM_UNMAPPED_AREA_TOPDOWN;
 	info.length = len;
 	info.low_limit = PAGE_SIZE;
 	info.high_limit = mm->mmap_base;
-	info.align_mask = do_colour_align ? (PAGE_MASK & shm_align_mask) : 0;
+	info.align_mask = करो_colour_align ? (PAGE_MASK & shm_align_mask) : 0;
 	info.align_offset = pgoff << PAGE_SHIFT;
 	addr = vm_unmapped_area(&info);
 
@@ -132,33 +133,33 @@ arch_get_unmapped_area_topdown(struct file *filp, const unsigned long addr0,
 	 * can happen with large stack limits and large mmap()
 	 * allocations.
 	 */
-	if (addr & ~PAGE_MASK) {
+	अगर (addr & ~PAGE_MASK) अणु
 		VM_BUG_ON(addr != -ENOMEM);
 		info.flags = 0;
 		info.low_limit = TASK_UNMAPPED_BASE;
 		info.high_limit = TASK_SIZE;
 		addr = vm_unmapped_area(&info);
-	}
+	पूर्ण
 
-	return addr;
-}
-#endif /* CONFIG_MMU */
+	वापस addr;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MMU */
 
 /*
- * You really shouldn't be using read() or write() on /dev/mem.  This
+ * You really shouldn't be using पढ़ो() or ग_लिखो() on /dev/mem.  This
  * might go away in the future.
  */
-int valid_phys_addr_range(phys_addr_t addr, size_t count)
-{
-	if (addr < __MEMORY_START)
-		return 0;
-	if (addr + count > __pa(high_memory))
-		return 0;
+पूर्णांक valid_phys_addr_range(phys_addr_t addr, माप_प्रकार count)
+अणु
+	अगर (addr < __MEMORY_START)
+		वापस 0;
+	अगर (addr + count > __pa(high_memory))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int valid_mmap_phys_addr_range(unsigned long pfn, size_t size)
-{
-	return 1;
-}
+पूर्णांक valid_mmap_phys_addr_range(अचिन्हित दीर्घ pfn, माप_प्रकार size)
+अणु
+	वापस 1;
+पूर्ण

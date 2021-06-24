@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SH_SETUP_H
-#define _SH_SETUP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SH_SETUP_H
+#घोषणा _SH_SETUP_H
 
-#include <uapi/asm/setup.h>
+#समावेश <uapi/यंत्र/setup.h>
 
 /*
- * This is set up by the setup-routine at boot-time
+ * This is set up by the setup-routine at boot-समय
  */
-#define PARAM	((unsigned char *)empty_zero_page)
+#घोषणा PARAM	((अचिन्हित अक्षर *)empty_zero_page)
 
-#define MOUNT_ROOT_RDONLY (*(unsigned long *) (PARAM+0x000))
-#define RAMDISK_FLAGS (*(unsigned long *) (PARAM+0x004))
-#define ORIG_ROOT_DEV (*(unsigned long *) (PARAM+0x008))
-#define LOADER_TYPE (*(unsigned long *) (PARAM+0x00c))
-#define INITRD_START (*(unsigned long *) (PARAM+0x010))
-#define INITRD_SIZE (*(unsigned long *) (PARAM+0x014))
+#घोषणा MOUNT_ROOT_RDONLY (*(अचिन्हित दीर्घ *) (PARAM+0x000))
+#घोषणा RAMDISK_FLAGS (*(अचिन्हित दीर्घ *) (PARAM+0x004))
+#घोषणा ORIG_ROOT_DEV (*(अचिन्हित दीर्घ *) (PARAM+0x008))
+#घोषणा LOADER_TYPE (*(अचिन्हित दीर्घ *) (PARAM+0x00c))
+#घोषणा INITRD_START (*(अचिन्हित दीर्घ *) (PARAM+0x010))
+#घोषणा INITRD_SIZE (*(अचिन्हित दीर्घ *) (PARAM+0x014))
 /* ... */
-#define COMMAND_LINE ((char *) (PARAM+0x100))
+#घोषणा COMMAND_LINE ((अक्षर *) (PARAM+0x100))
 
-void sh_mv_setup(void);
-void check_for_initrd(void);
-void per_cpu_trap_init(void);
+व्योम sh_mv_setup(व्योम);
+व्योम check_क्रम_initrd(व्योम);
+व्योम per_cpu_trap_init(व्योम);
 
-#endif /* _SH_SETUP_H */
+#पूर्ण_अगर /* _SH_SETUP_H */

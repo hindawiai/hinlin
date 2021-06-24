@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2010 Francisco Jerez.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -23,27 +24,27 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include "priv.h"
-#include "ram.h"
+#समावेश "priv.h"
+#समावेश "ram.h"
 
-static void
-nv25_fb_tile_comp(struct nvkm_fb *fb, int i, u32 size, u32 flags,
-		  struct nvkm_fb_tile *tile)
-{
+अटल व्योम
+nv25_fb_tile_comp(काष्ठा nvkm_fb *fb, पूर्णांक i, u32 size, u32 flags,
+		  काष्ठा nvkm_fb_tile *tile)
+अणु
 	u32 tiles = DIV_ROUND_UP(size, 0x40);
 	u32 tags  = round_up(tiles / fb->ram->parts, 0x40);
-	if (!nvkm_mm_head(&fb->tags.mm, 0, 1, tags, tags, 1, &tile->tag)) {
-		if (!(flags & 2)) tile->zcomp = 0x00100000; /* Z16 */
-		else              tile->zcomp = 0x00200000; /* Z24S8 */
+	अगर (!nvkm_mm_head(&fb->tags.mm, 0, 1, tags, tags, 1, &tile->tag)) अणु
+		अगर (!(flags & 2)) tile->zcomp = 0x00100000; /* Z16 */
+		अन्यथा              tile->zcomp = 0x00200000; /* Z24S8 */
 		tile->zcomp |= tile->tag->offset;
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 		tile->zcomp |= 0x01000000;
-#endif
-	}
-}
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-static const struct nvkm_fb_func
-nv25_fb = {
+अटल स्थिर काष्ठा nvkm_fb_func
+nv25_fb = अणु
 	.tags = nv20_fb_tags,
 	.tile.regions = 8,
 	.tile.init = nv20_fb_tile_init,
@@ -51,10 +52,10 @@ nv25_fb = {
 	.tile.fini = nv20_fb_tile_fini,
 	.tile.prog = nv20_fb_tile_prog,
 	.ram_new = nv20_ram_new,
-};
+पूर्ण;
 
-int
-nv25_fb_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_fb **pfb)
-{
-	return nvkm_fb_new_(&nv25_fb, device, type, inst, pfb);
-}
+पूर्णांक
+nv25_fb_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fb **pfb)
+अणु
+	वापस nvkm_fb_new_(&nv25_fb, device, type, inst, pfb);
+पूर्ण

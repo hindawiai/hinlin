@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_SECTIONS_H
-#define _ASM_X86_SECTIONS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_SECTIONS_H
+#घोषणा _ASM_X86_SECTIONS_H
 
-#define arch_is_kernel_initmem_freed arch_is_kernel_initmem_freed
+#घोषणा arch_is_kernel_iniपंचांगem_मुक्तd arch_is_kernel_iniपंचांगem_मुक्तd
 
-#include <asm-generic/sections.h>
-#include <asm/extable.h>
+#समावेश <यंत्र-generic/sections.h>
+#समावेश <यंत्र/extable.h>
 
-extern char __brk_base[], __brk_limit[];
-extern char __end_rodata_aligned[];
+बाह्य अक्षर __brk_base[], __brk_limit[];
+बाह्य अक्षर __end_rodata_aligned[];
 
-#if defined(CONFIG_X86_64)
-extern char __end_rodata_hpage_align[];
-#endif
+#अगर defined(CONFIG_X86_64)
+बाह्य अक्षर __end_rodata_hpage_align[];
+#पूर्ण_अगर
 
-extern char __end_of_kernel_reserve[];
+बाह्य अक्षर __end_of_kernel_reserve[];
 
-extern unsigned long _brk_start, _brk_end;
+बाह्य अचिन्हित दीर्घ _brk_start, _brk_end;
 
-static inline bool arch_is_kernel_initmem_freed(unsigned long addr)
-{
+अटल अंतरभूत bool arch_is_kernel_iniपंचांगem_मुक्तd(अचिन्हित दीर्घ addr)
+अणु
 	/*
 	 * If _brk_start has not been cleared, brk allocation is incomplete,
 	 * and we can not make assumptions about its use.
 	 */
-	if (_brk_start)
-		return 0;
+	अगर (_brk_start)
+		वापस 0;
 
 	/*
 	 * After brk allocation is complete, space between _brk_end and _end
-	 * is available for allocation.
+	 * is available क्रम allocation.
 	 */
-	return addr >= _brk_end && addr < (unsigned long)&_end;
-}
+	वापस addr >= _brk_end && addr < (अचिन्हित दीर्घ)&_end;
+पूर्ण
 
-#endif	/* _ASM_X86_SECTIONS_H */
+#पूर्ण_अगर	/* _ASM_X86_SECTIONS_H */

@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Tiger Lake PCH pinctrl/GPIO driver
  *
  * Copyright (C) 2019 - 2020, Intel Corporation
- * Authors: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
- *          Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Authors: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
+ *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define TGL_PAD_OWN		0x020
-#define TGL_LP_PADCFGLOCK	0x080
-#define TGL_H_PADCFGLOCK	0x090
-#define TGL_LP_HOSTSW_OWN	0x0b0
-#define TGL_H_HOSTSW_OWN	0x0c0
-#define TGL_GPI_IS		0x100
-#define TGL_GPI_IE		0x120
+#घोषणा TGL_PAD_OWN		0x020
+#घोषणा TGL_LP_PADCFGLOCK	0x080
+#घोषणा TGL_H_PADCFGLOCK	0x090
+#घोषणा TGL_LP_HOSTSW_OWN	0x0b0
+#घोषणा TGL_H_HOSTSW_OWN	0x0c0
+#घोषणा TGL_GPI_IS		0x100
+#घोषणा TGL_GPI_IE		0x120
 
-#define TGL_GPP(r, s, e, g)				\
-	{						\
+#घोषणा TGL_GPP(r, s, e, g)				\
+	अणु						\
 		.reg_num = (r),				\
 		.base = (s),				\
 		.size = ((e) - (s) + 1),		\
 		.gpio_base = (g),			\
-	}
+	पूर्ण
 
-#define TGL_COMMUNITY(b, s, e, pl, ho, g)		\
-	{						\
+#घोषणा TGL_COMMUNITY(b, s, e, pl, ho, g)		\
+	अणु						\
 		.barno = (b),				\
-		.padown_offset = TGL_PAD_OWN,		\
+		.paकरोwn_offset = TGL_PAD_OWN,		\
 		.padcfglock_offset = (pl),		\
 		.hostown_offset = (ho),			\
 		.is_offset = TGL_GPI_IS,		\
@@ -43,16 +44,16 @@
 		.npins = ((e) - (s) + 1),		\
 		.gpps = (g),				\
 		.ngpps = ARRAY_SIZE(g),			\
-	}
+	पूर्ण
 
-#define TGL_LP_COMMUNITY(b, s, e, g)			\
+#घोषणा TGL_LP_COMMUNITY(b, s, e, g)			\
 	TGL_COMMUNITY(b, s, e, TGL_LP_PADCFGLOCK, TGL_LP_HOSTSW_OWN, g)
 
-#define TGL_H_COMMUNITY(b, s, e, g)			\
+#घोषणा TGL_H_COMMUNITY(b, s, e, g)			\
 	TGL_COMMUNITY(b, s, e, TGL_H_PADCFGLOCK, TGL_H_HOSTSW_OWN, g)
 
 /* Tiger Lake-LP */
-static const struct pinctrl_pin_desc tgllp_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc tgllp_pins[] = अणु
 	/* GPP_B */
 	PINCTRL_PIN(0, "CORE_VID_0"),
 	PINCTRL_PIN(1, "CORE_VID_1"),
@@ -345,51 +346,51 @@ static const struct pinctrl_pin_desc tgllp_pins[] = {
 	PINCTRL_PIN(274, "SPI0_FLASH_1_CSB"),
 	PINCTRL_PIN(275, "SPI0_CLK"),
 	PINCTRL_PIN(276, "SPI0_CLK_LOOPBK"),
-};
+पूर्ण;
 
-static const struct intel_padgroup tgllp_community0_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup tgllp_community0_gpps[] = अणु
 	TGL_GPP(0, 0, 25, 0),				/* GPP_B */
 	TGL_GPP(1, 26, 41, 32),				/* GPP_T */
 	TGL_GPP(2, 42, 66, 64),				/* GPP_A */
-};
+पूर्ण;
 
-static const struct intel_padgroup tgllp_community1_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup tgllp_community1_gpps[] = अणु
 	TGL_GPP(0, 67, 74, 96),				/* GPP_S */
 	TGL_GPP(1, 75, 98, 128),			/* GPP_H */
 	TGL_GPP(2, 99, 119, 160),			/* GPP_D */
 	TGL_GPP(3, 120, 143, 192),			/* GPP_U */
 	TGL_GPP(4, 144, 170, 224),			/* vGPIO */
-};
+पूर्ण;
 
-static const struct intel_padgroup tgllp_community4_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup tgllp_community4_gpps[] = अणु
 	TGL_GPP(0, 171, 194, 256),			/* GPP_C */
 	TGL_GPP(1, 195, 219, 288),			/* GPP_F */
 	TGL_GPP(2, 220, 225, INTEL_GPIO_BASE_NOMAP),	/* HVCMOS */
 	TGL_GPP(3, 226, 250, 320),			/* GPP_E */
 	TGL_GPP(4, 251, 259, INTEL_GPIO_BASE_NOMAP),	/* JTAG */
-};
+पूर्ण;
 
-static const struct intel_padgroup tgllp_community5_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup tgllp_community5_gpps[] = अणु
 	TGL_GPP(0, 260, 267, 352),			/* GPP_R */
 	TGL_GPP(1, 268, 276, INTEL_GPIO_BASE_NOMAP),	/* SPI */
-};
+पूर्ण;
 
-static const struct intel_community tgllp_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community tgllp_communities[] = अणु
 	TGL_LP_COMMUNITY(0, 0, 66, tgllp_community0_gpps),
 	TGL_LP_COMMUNITY(1, 67, 170, tgllp_community1_gpps),
 	TGL_LP_COMMUNITY(2, 171, 259, tgllp_community4_gpps),
 	TGL_LP_COMMUNITY(3, 260, 276, tgllp_community5_gpps),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data tgllp_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data tgllp_soc_data = अणु
 	.pins = tgllp_pins,
 	.npins = ARRAY_SIZE(tgllp_pins),
 	.communities = tgllp_communities,
 	.ncommunities = ARRAY_SIZE(tgllp_communities),
-};
+पूर्ण;
 
 /* Tiger Lake-H */
-static const struct pinctrl_pin_desc tglh_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc tglh_pins[] = अणु
 	/* GPP_A */
 	PINCTRL_PIN(0, "SPI0_IO_2"),
 	PINCTRL_PIN(1, "SPI0_IO_3"),
@@ -697,74 +698,74 @@ static const struct pinctrl_pin_desc tglh_pins[] = {
 	PINCTRL_PIN(288, "JTAG_TCK"),
 	PINCTRL_PIN(289, "DBG_PMODE"),
 	PINCTRL_PIN(290, "CPU_TRSTB"),
-};
+पूर्ण;
 
-static const struct intel_padgroup tglh_community0_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup tglh_community0_gpps[] = अणु
 	TGL_GPP(0, 0, 24, 0),				/* GPP_A */
 	TGL_GPP(1, 25, 44, 128),			/* GPP_R */
 	TGL_GPP(2, 45, 70, 32),				/* GPP_B */
 	TGL_GPP(3, 71, 78, INTEL_GPIO_BASE_NOMAP),	/* vGPIO_0 */
-};
+पूर्ण;
 
-static const struct intel_padgroup tglh_community1_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup tglh_community1_gpps[] = अणु
 	TGL_GPP(0, 79, 104, 96),			/* GPP_D */
 	TGL_GPP(1, 105, 128, 64),			/* GPP_C */
 	TGL_GPP(2, 129, 136, 160),			/* GPP_S */
 	TGL_GPP(3, 137, 153, 192),			/* GPP_G */
 	TGL_GPP(4, 154, 180, 224),			/* vGPIO */
-};
+पूर्ण;
 
-static const struct intel_padgroup tglh_community3_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup tglh_community3_gpps[] = अणु
 	TGL_GPP(0, 181, 193, 256),			/* GPP_E */
 	TGL_GPP(1, 194, 217, 288),			/* GPP_F */
-};
+पूर्ण;
 
-static const struct intel_padgroup tglh_community4_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup tglh_community4_gpps[] = अणु
 	TGL_GPP(0, 218, 241, 320),			/* GPP_H */
 	TGL_GPP(1, 242, 251, 384),			/* GPP_J */
 	TGL_GPP(2, 252, 266, 352),			/* GPP_K */
-};
+पूर्ण;
 
-static const struct intel_padgroup tglh_community5_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup tglh_community5_gpps[] = अणु
 	TGL_GPP(0, 267, 281, 416),			/* GPP_I */
 	TGL_GPP(1, 282, 290, INTEL_GPIO_BASE_NOMAP),	/* JTAG */
-};
+पूर्ण;
 
-static const struct intel_community tglh_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community tglh_communities[] = अणु
 	TGL_H_COMMUNITY(0, 0, 78, tglh_community0_gpps),
 	TGL_H_COMMUNITY(1, 79, 180, tglh_community1_gpps),
 	TGL_H_COMMUNITY(2, 181, 217, tglh_community3_gpps),
 	TGL_H_COMMUNITY(3, 218, 266, tglh_community4_gpps),
 	TGL_H_COMMUNITY(4, 267, 290, tglh_community5_gpps),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data tglh_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data tglh_soc_data = अणु
 	.pins = tglh_pins,
 	.npins = ARRAY_SIZE(tglh_pins),
 	.communities = tglh_communities,
 	.ncommunities = ARRAY_SIZE(tglh_communities),
-};
+पूर्ण;
 
-static const struct acpi_device_id tgl_pinctrl_acpi_match[] = {
-	{ "INT34C5", (kernel_ulong_t)&tgllp_soc_data },
-	{ "INT34C6", (kernel_ulong_t)&tglh_soc_data },
-	{ "INTC1055", (kernel_ulong_t)&tgllp_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id tgl_pinctrl_acpi_match[] = अणु
+	अणु "INT34C5", (kernel_uदीर्घ_t)&tgllp_soc_data पूर्ण,
+	अणु "INT34C6", (kernel_uदीर्घ_t)&tglh_soc_data पूर्ण,
+	अणु "INTC1055", (kernel_uदीर्घ_t)&tgllp_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, tgl_pinctrl_acpi_match);
 
-static INTEL_PINCTRL_PM_OPS(tgl_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(tgl_pinctrl_pm_ops);
 
-static struct platform_driver tgl_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_hid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver tgl_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_hid,
+	.driver = अणु
 		.name = "tigerlake-pinctrl",
 		.acpi_match_table = tgl_pinctrl_acpi_match,
 		.pm = &tgl_pinctrl_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(tgl_pinctrl_driver);
+module_platक्रमm_driver(tgl_pinctrl_driver);
 
 MODULE_AUTHOR("Andy Shevchenko <andriy.shevchenko@linux.intel.com>");
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");

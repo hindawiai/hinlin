@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2015, Mellanox Technologies inc.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,338 +31,338 @@
  * SOFTWARE.
  */
 
-#include <linux/module.h>
-#include <linux/configfs.h>
-#include <rdma/ib_verbs.h>
-#include <rdma/rdma_cm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/configfs.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/rdma_cm.h>
 
-#include "core_priv.h"
-#include "cma_priv.h"
+#समावेश "core_priv.h"
+#समावेश "cma_priv.h"
 
-struct cma_device;
+काष्ठा cma_device;
 
-struct cma_dev_group;
+काष्ठा cma_dev_group;
 
-struct cma_dev_port_group {
+काष्ठा cma_dev_port_group अणु
 	u32			port_num;
-	struct cma_dev_group	*cma_dev_group;
-	struct config_group	group;
-};
+	काष्ठा cma_dev_group	*cma_dev_group;
+	काष्ठा config_group	group;
+पूर्ण;
 
-struct cma_dev_group {
-	char				name[IB_DEVICE_NAME_MAX];
-	struct config_group		device_group;
-	struct config_group		ports_group;
-	struct cma_dev_port_group	*ports;
-};
+काष्ठा cma_dev_group अणु
+	अक्षर				name[IB_DEVICE_NAME_MAX];
+	काष्ठा config_group		device_group;
+	काष्ठा config_group		ports_group;
+	काष्ठा cma_dev_port_group	*ports;
+पूर्ण;
 
-static struct cma_dev_port_group *to_dev_port_group(struct config_item *item)
-{
-	struct config_group *group;
+अटल काष्ठा cma_dev_port_group *to_dev_port_group(काष्ठा config_item *item)
+अणु
+	काष्ठा config_group *group;
 
-	if (!item)
-		return NULL;
+	अगर (!item)
+		वापस शून्य;
 
-	group = container_of(item, struct config_group, cg_item);
-	return container_of(group, struct cma_dev_port_group, group);
-}
+	group = container_of(item, काष्ठा config_group, cg_item);
+	वापस container_of(group, काष्ठा cma_dev_port_group, group);
+पूर्ण
 
-static bool filter_by_name(struct ib_device *ib_dev, void *cookie)
-{
-	return !strcmp(dev_name(&ib_dev->dev), cookie);
-}
+अटल bool filter_by_name(काष्ठा ib_device *ib_dev, व्योम *cookie)
+अणु
+	वापस !म_भेद(dev_name(&ib_dev->dev), cookie);
+पूर्ण
 
-static int cma_configfs_params_get(struct config_item *item,
-				   struct cma_device **pcma_dev,
-				   struct cma_dev_port_group **pgroup)
-{
-	struct cma_dev_port_group *group = to_dev_port_group(item);
-	struct cma_device *cma_dev;
+अटल पूर्णांक cma_configfs_params_get(काष्ठा config_item *item,
+				   काष्ठा cma_device **pcma_dev,
+				   काष्ठा cma_dev_port_group **pgroup)
+अणु
+	काष्ठा cma_dev_port_group *group = to_dev_port_group(item);
+	काष्ठा cma_device *cma_dev;
 
-	if (!group)
-		return -ENODEV;
+	अगर (!group)
+		वापस -ENODEV;
 
-	cma_dev = cma_enum_devices_by_ibdev(filter_by_name,
+	cma_dev = cma_क्रमागत_devices_by_ibdev(filter_by_name,
 					    group->cma_dev_group->name);
-	if (!cma_dev)
-		return -ENODEV;
+	अगर (!cma_dev)
+		वापस -ENODEV;
 
 	*pcma_dev = cma_dev;
 	*pgroup = group;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cma_configfs_params_put(struct cma_device *cma_dev)
-{
+अटल व्योम cma_configfs_params_put(काष्ठा cma_device *cma_dev)
+अणु
 	cma_dev_put(cma_dev);
-}
+पूर्ण
 
-static ssize_t default_roce_mode_show(struct config_item *item,
-				      char *buf)
-{
-	struct cma_device *cma_dev;
-	struct cma_dev_port_group *group;
-	int gid_type;
-	ssize_t ret;
+अटल sमाप_प्रकार शेष_roce_mode_show(काष्ठा config_item *item,
+				      अक्षर *buf)
+अणु
+	काष्ठा cma_device *cma_dev;
+	काष्ठा cma_dev_port_group *group;
+	पूर्णांक gid_type;
+	sमाप_प्रकार ret;
 
 	ret = cma_configfs_params_get(item, &cma_dev, &group);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	gid_type = cma_get_default_gid_type(cma_dev, group->port_num);
+	gid_type = cma_get_शेष_gid_type(cma_dev, group->port_num);
 	cma_configfs_params_put(cma_dev);
 
-	if (gid_type < 0)
-		return gid_type;
+	अगर (gid_type < 0)
+		वापस gid_type;
 
-	return sysfs_emit(buf, "%s\n", ib_cache_gid_type_str(gid_type));
-}
+	वापस sysfs_emit(buf, "%s\n", ib_cache_gid_type_str(gid_type));
+पूर्ण
 
-static ssize_t default_roce_mode_store(struct config_item *item,
-				       const char *buf, size_t count)
-{
-	struct cma_device *cma_dev;
-	struct cma_dev_port_group *group;
-	int gid_type;
-	ssize_t ret;
+अटल sमाप_प्रकार शेष_roce_mode_store(काष्ठा config_item *item,
+				       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा cma_device *cma_dev;
+	काष्ठा cma_dev_port_group *group;
+	पूर्णांक gid_type;
+	sमाप_प्रकार ret;
 
 	ret = cma_configfs_params_get(item, &cma_dev, &group);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	gid_type = ib_cache_gid_parse_type_str(buf);
-	if (gid_type < 0) {
+	अगर (gid_type < 0) अणु
 		cma_configfs_params_put(cma_dev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = cma_set_default_gid_type(cma_dev, group->port_num, gid_type);
+	ret = cma_set_शेष_gid_type(cma_dev, group->port_num, gid_type);
 
 	cma_configfs_params_put(cma_dev);
 
-	return !ret ? strnlen(buf, count) : ret;
-}
+	वापस !ret ? strnlen(buf, count) : ret;
+पूर्ण
 
-CONFIGFS_ATTR(, default_roce_mode);
+CONFIGFS_ATTR(, शेष_roce_mode);
 
-static ssize_t default_roce_tos_show(struct config_item *item, char *buf)
-{
-	struct cma_device *cma_dev;
-	struct cma_dev_port_group *group;
-	ssize_t ret;
+अटल sमाप_प्रकार शेष_roce_tos_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	काष्ठा cma_device *cma_dev;
+	काष्ठा cma_dev_port_group *group;
+	sमाप_प्रकार ret;
 	u8 tos;
 
 	ret = cma_configfs_params_get(item, &cma_dev, &group);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	tos = cma_get_default_roce_tos(cma_dev, group->port_num);
+	tos = cma_get_शेष_roce_tos(cma_dev, group->port_num);
 	cma_configfs_params_put(cma_dev);
 
-	return sysfs_emit(buf, "%u\n", tos);
-}
+	वापस sysfs_emit(buf, "%u\n", tos);
+पूर्ण
 
-static ssize_t default_roce_tos_store(struct config_item *item,
-				      const char *buf, size_t count)
-{
-	struct cma_device *cma_dev;
-	struct cma_dev_port_group *group;
-	ssize_t ret;
+अटल sमाप_प्रकार शेष_roce_tos_store(काष्ठा config_item *item,
+				      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा cma_device *cma_dev;
+	काष्ठा cma_dev_port_group *group;
+	sमाप_प्रकार ret;
 	u8 tos;
 
 	ret = kstrtou8(buf, 0, &tos);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = cma_configfs_params_get(item, &cma_dev, &group);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = cma_set_default_roce_tos(cma_dev, group->port_num, tos);
+	ret = cma_set_शेष_roce_tos(cma_dev, group->port_num, tos);
 	cma_configfs_params_put(cma_dev);
 
-	return ret ? ret : strnlen(buf, count);
-}
+	वापस ret ? ret : strnlen(buf, count);
+पूर्ण
 
-CONFIGFS_ATTR(, default_roce_tos);
+CONFIGFS_ATTR(, शेष_roce_tos);
 
-static struct configfs_attribute *cma_configfs_attributes[] = {
-	&attr_default_roce_mode,
-	&attr_default_roce_tos,
-	NULL,
-};
+अटल काष्ठा configfs_attribute *cma_configfs_attributes[] = अणु
+	&attr_शेष_roce_mode,
+	&attr_शेष_roce_tos,
+	शून्य,
+पूर्ण;
 
-static const struct config_item_type cma_port_group_type = {
+अटल स्थिर काष्ठा config_item_type cma_port_group_type = अणु
 	.ct_attrs	= cma_configfs_attributes,
 	.ct_owner	= THIS_MODULE
-};
+पूर्ण;
 
-static int make_cma_ports(struct cma_dev_group *cma_dev_group,
-			  struct cma_device *cma_dev)
-{
-	struct cma_dev_port_group *ports;
-	struct ib_device *ibdev;
+अटल पूर्णांक make_cma_ports(काष्ठा cma_dev_group *cma_dev_group,
+			  काष्ठा cma_device *cma_dev)
+अणु
+	काष्ठा cma_dev_port_group *ports;
+	काष्ठा ib_device *ibdev;
 	u32 ports_num;
 	u32 i;
 
 	ibdev = cma_get_ib_dev(cma_dev);
 
-	if (!ibdev)
-		return -ENODEV;
+	अगर (!ibdev)
+		वापस -ENODEV;
 
 	ports_num = ibdev->phys_port_cnt;
-	ports = kcalloc(ports_num, sizeof(*cma_dev_group->ports),
+	ports = kसुस्मृति(ports_num, माप(*cma_dev_group->ports),
 			GFP_KERNEL);
 
-	if (!ports)
-		return -ENOMEM;
+	अगर (!ports)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ports_num; i++) {
-		char port_str[10];
+	क्रम (i = 0; i < ports_num; i++) अणु
+		अक्षर port_str[10];
 
 		ports[i].port_num = i + 1;
-		snprintf(port_str, sizeof(port_str), "%u", i + 1);
+		snम_लिखो(port_str, माप(port_str), "%u", i + 1);
 		ports[i].cma_dev_group = cma_dev_group;
 		config_group_init_type_name(&ports[i].group,
 					    port_str,
 					    &cma_port_group_type);
-		configfs_add_default_group(&ports[i].group,
+		configfs_add_शेष_group(&ports[i].group,
 				&cma_dev_group->ports_group);
 
-	}
+	पूर्ण
 	cma_dev_group->ports = ports;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void release_cma_dev(struct config_item  *item)
-{
-	struct config_group *group = container_of(item, struct config_group,
+अटल व्योम release_cma_dev(काष्ठा config_item  *item)
+अणु
+	काष्ठा config_group *group = container_of(item, काष्ठा config_group,
 						  cg_item);
-	struct cma_dev_group *cma_dev_group = container_of(group,
-							   struct cma_dev_group,
+	काष्ठा cma_dev_group *cma_dev_group = container_of(group,
+							   काष्ठा cma_dev_group,
 							   device_group);
 
-	kfree(cma_dev_group);
-};
+	kमुक्त(cma_dev_group);
+पूर्ण;
 
-static void release_cma_ports_group(struct config_item  *item)
-{
-	struct config_group *group = container_of(item, struct config_group,
+अटल व्योम release_cma_ports_group(काष्ठा config_item  *item)
+अणु
+	काष्ठा config_group *group = container_of(item, काष्ठा config_group,
 						  cg_item);
-	struct cma_dev_group *cma_dev_group = container_of(group,
-							   struct cma_dev_group,
+	काष्ठा cma_dev_group *cma_dev_group = container_of(group,
+							   काष्ठा cma_dev_group,
 							   ports_group);
 
-	kfree(cma_dev_group->ports);
-	cma_dev_group->ports = NULL;
-};
+	kमुक्त(cma_dev_group->ports);
+	cma_dev_group->ports = शून्य;
+पूर्ण;
 
-static struct configfs_item_operations cma_ports_item_ops = {
+अटल काष्ठा configfs_item_operations cma_ports_item_ops = अणु
 	.release = release_cma_ports_group
-};
+पूर्ण;
 
-static const struct config_item_type cma_ports_group_type = {
+अटल स्थिर काष्ठा config_item_type cma_ports_group_type = अणु
 	.ct_item_ops	= &cma_ports_item_ops,
 	.ct_owner	= THIS_MODULE
-};
+पूर्ण;
 
-static struct configfs_item_operations cma_device_item_ops = {
+अटल काष्ठा configfs_item_operations cma_device_item_ops = अणु
 	.release = release_cma_dev
-};
+पूर्ण;
 
-static const struct config_item_type cma_device_group_type = {
+अटल स्थिर काष्ठा config_item_type cma_device_group_type = अणु
 	.ct_item_ops	= &cma_device_item_ops,
 	.ct_owner	= THIS_MODULE
-};
+पूर्ण;
 
-static struct config_group *make_cma_dev(struct config_group *group,
-					 const char *name)
-{
-	int err = -ENODEV;
-	struct cma_device *cma_dev = cma_enum_devices_by_ibdev(filter_by_name,
-							       (void *)name);
-	struct cma_dev_group *cma_dev_group = NULL;
+अटल काष्ठा config_group *make_cma_dev(काष्ठा config_group *group,
+					 स्थिर अक्षर *name)
+अणु
+	पूर्णांक err = -ENODEV;
+	काष्ठा cma_device *cma_dev = cma_क्रमागत_devices_by_ibdev(filter_by_name,
+							       (व्योम *)name);
+	काष्ठा cma_dev_group *cma_dev_group = शून्य;
 
-	if (!cma_dev)
-		goto fail;
+	अगर (!cma_dev)
+		जाओ fail;
 
-	cma_dev_group = kzalloc(sizeof(*cma_dev_group), GFP_KERNEL);
+	cma_dev_group = kzalloc(माप(*cma_dev_group), GFP_KERNEL);
 
-	if (!cma_dev_group) {
+	अगर (!cma_dev_group) अणु
 		err = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	strlcpy(cma_dev_group->name, name, sizeof(cma_dev_group->name));
+	strlcpy(cma_dev_group->name, name, माप(cma_dev_group->name));
 
 	config_group_init_type_name(&cma_dev_group->ports_group, "ports",
 				    &cma_ports_group_type);
 
 	err = make_cma_ports(cma_dev_group, cma_dev);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
 	config_group_init_type_name(&cma_dev_group->device_group, name,
 				    &cma_device_group_type);
-	configfs_add_default_group(&cma_dev_group->ports_group,
+	configfs_add_शेष_group(&cma_dev_group->ports_group,
 			&cma_dev_group->device_group);
 
 	cma_dev_put(cma_dev);
-	return &cma_dev_group->device_group;
+	वापस &cma_dev_group->device_group;
 
 fail:
-	if (cma_dev)
+	अगर (cma_dev)
 		cma_dev_put(cma_dev);
-	kfree(cma_dev_group);
-	return ERR_PTR(err);
-}
+	kमुक्त(cma_dev_group);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void drop_cma_dev(struct config_group *cgroup, struct config_item *item)
-{
-	struct config_group *group =
-		container_of(item, struct config_group, cg_item);
-	struct cma_dev_group *cma_dev_group =
-		container_of(group, struct cma_dev_group, device_group);
+अटल व्योम drop_cma_dev(काष्ठा config_group *cgroup, काष्ठा config_item *item)
+अणु
+	काष्ठा config_group *group =
+		container_of(item, काष्ठा config_group, cg_item);
+	काष्ठा cma_dev_group *cma_dev_group =
+		container_of(group, काष्ठा cma_dev_group, device_group);
 
-	configfs_remove_default_groups(&cma_dev_group->ports_group);
-	configfs_remove_default_groups(&cma_dev_group->device_group);
+	configfs_हटाओ_शेष_groups(&cma_dev_group->ports_group);
+	configfs_हटाओ_शेष_groups(&cma_dev_group->device_group);
 	config_item_put(item);
-}
+पूर्ण
 
-static struct configfs_group_operations cma_subsys_group_ops = {
+अटल काष्ठा configfs_group_operations cma_subsys_group_ops = अणु
 	.make_group	= make_cma_dev,
 	.drop_item	= drop_cma_dev,
-};
+पूर्ण;
 
-static const struct config_item_type cma_subsys_type = {
+अटल स्थिर काष्ठा config_item_type cma_subsys_type = अणु
 	.ct_group_ops	= &cma_subsys_group_ops,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static struct configfs_subsystem cma_subsys = {
-	.su_group	= {
-		.cg_item	= {
+अटल काष्ठा configfs_subप्रणाली cma_subsys = अणु
+	.su_group	= अणु
+		.cg_item	= अणु
 			.ci_namebuf	= "rdma_cm",
 			.ci_type	= &cma_subsys_type,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-int __init cma_configfs_init(void)
-{
-	int ret;
+पूर्णांक __init cma_configfs_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	config_group_init(&cma_subsys.su_group);
 	mutex_init(&cma_subsys.su_mutex);
-	ret = configfs_register_subsystem(&cma_subsys);
-	if (ret)
+	ret = configfs_रेजिस्टर_subप्रणाली(&cma_subsys);
+	अगर (ret)
 		mutex_destroy(&cma_subsys.su_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void __exit cma_configfs_exit(void)
-{
-	configfs_unregister_subsystem(&cma_subsys);
+व्योम __निकास cma_configfs_निकास(व्योम)
+अणु
+	configfs_unरेजिस्टर_subप्रणाली(&cma_subsys);
 	mutex_destroy(&cma_subsys.su_mutex);
-}
+पूर्ण

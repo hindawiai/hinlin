@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Synaptics TouchPad PS/2 mouse driver
  */
 
-#ifndef _SYNAPTICS_H
-#define _SYNAPTICS_H
+#अगर_अघोषित _SYNAPTICS_H
+#घोषणा _SYNAPTICS_H
 
 /* synaptics queries */
-#define SYN_QUE_IDENTIFY		0x00
-#define SYN_QUE_MODES			0x01
-#define SYN_QUE_CAPABILITIES		0x02
-#define SYN_QUE_MODEL			0x03
-#define SYN_QUE_SERIAL_NUMBER_PREFIX	0x06
-#define SYN_QUE_SERIAL_NUMBER_SUFFIX	0x07
-#define SYN_QUE_RESOLUTION		0x08
-#define SYN_QUE_EXT_CAPAB		0x09
-#define SYN_QUE_FIRMWARE_ID		0x0a
-#define SYN_QUE_EXT_CAPAB_0C		0x0c
-#define SYN_QUE_EXT_MAX_COORDS		0x0d
-#define SYN_QUE_EXT_MIN_COORDS		0x0f
-#define SYN_QUE_MEXT_CAPAB_10		0x10
+#घोषणा SYN_QUE_IDENTIFY		0x00
+#घोषणा SYN_QUE_MODES			0x01
+#घोषणा SYN_QUE_CAPABILITIES		0x02
+#घोषणा SYN_QUE_MODEL			0x03
+#घोषणा SYN_QUE_SERIAL_NUMBER_PREFIX	0x06
+#घोषणा SYN_QUE_SERIAL_NUMBER_SUFFIX	0x07
+#घोषणा SYN_QUE_RESOLUTION		0x08
+#घोषणा SYN_QUE_EXT_CAPAB		0x09
+#घोषणा SYN_QUE_FIRMWARE_ID		0x0a
+#घोषणा SYN_QUE_EXT_CAPAB_0C		0x0c
+#घोषणा SYN_QUE_EXT_MAX_COORDS		0x0d
+#घोषणा SYN_QUE_EXT_MIN_COORDS		0x0f
+#घोषणा SYN_QUE_MEXT_CAPAB_10		0x10
 
 /* synatics modes */
-#define SYN_BIT_ABSOLUTE_MODE		BIT(7)
-#define SYN_BIT_HIGH_RATE		BIT(6)
-#define SYN_BIT_SLEEP_MODE		BIT(3)
-#define SYN_BIT_DISABLE_GESTURE		BIT(2)
-#define SYN_BIT_FOUR_BYTE_CLIENT	BIT(1)
-#define SYN_BIT_W_MODE			BIT(0)
+#घोषणा SYN_BIT_ABSOLUTE_MODE		BIT(7)
+#घोषणा SYN_BIT_HIGH_RATE		BIT(6)
+#घोषणा SYN_BIT_SLEEP_MODE		BIT(3)
+#घोषणा SYN_BIT_DISABLE_GESTURE		BIT(2)
+#घोषणा SYN_BIT_FOUR_BYTE_CLIENT	BIT(1)
+#घोषणा SYN_BIT_W_MODE			BIT(0)
 
 /* synaptics model ID bits */
-#define SYN_MODEL_ROT180(m)		((m) & BIT(23))
-#define SYN_MODEL_PORTRAIT(m)		((m) & BIT(22))
-#define SYN_MODEL_SENSOR(m)		(((m) & GENMASK(21, 16)) >> 16)
-#define SYN_MODEL_HARDWARE(m)		(((m) & GENMASK(15, 9)) >> 9)
-#define SYN_MODEL_NEWABS(m)		((m) & BIT(7))
-#define SYN_MODEL_PEN(m)		((m) & BIT(6))
-#define SYN_MODEL_SIMPLIC(m)		((m) & BIT(5))
-#define SYN_MODEL_GEOMETRY(m)		((m) & GENMASK(3, 0))
+#घोषणा SYN_MODEL_ROT180(m)		((m) & BIT(23))
+#घोषणा SYN_MODEL_PORTRAIT(m)		((m) & BIT(22))
+#घोषणा SYN_MODEL_SENSOR(m)		(((m) & GENMASK(21, 16)) >> 16)
+#घोषणा SYN_MODEL_HARDWARE(m)		(((m) & GENMASK(15, 9)) >> 9)
+#घोषणा SYN_MODEL_NEWABS(m)		((m) & BIT(7))
+#घोषणा SYN_MODEL_PEN(m)		((m) & BIT(6))
+#घोषणा SYN_MODEL_SIMPLIC(m)		((m) & BIT(5))
+#घोषणा SYN_MODEL_GEOMETRY(m)		((m) & GENMASK(3, 0))
 
 /* synaptics capability bits */
-#define SYN_CAP_EXTENDED(c)		((c) & BIT(23))
-#define SYN_CAP_MIDDLE_BUTTON(c)	((c) & BIT(18))
-#define SYN_CAP_PASS_THROUGH(c)		((c) & BIT(7))
-#define SYN_CAP_SLEEP(c)		((c) & BIT(4))
-#define SYN_CAP_FOUR_BUTTON(c)		((c) & BIT(3))
-#define SYN_CAP_MULTIFINGER(c)		((c) & BIT(1))
-#define SYN_CAP_PALMDETECT(c)		((c) & BIT(0))
-#define SYN_CAP_SUBMODEL_ID(c)		(((c) & GENMASK(15, 8)) >> 8)
-#define SYN_EXT_CAP_REQUESTS(c)		(((c) & GENMASK(22, 20)) >> 20)
-#define SYN_CAP_MB_MASK			GENMASK(15, 12)
-#define SYN_CAP_MULTI_BUTTON_NO(ec)	(((ec) & SYN_CAP_MB_MASK) >> 12)
-#define SYN_CAP_PRODUCT_ID(ec)		(((ec) & GENMASK(23, 16)) >> 16)
-#define SYN_MEXT_CAP_BIT(m)		((m) & BIT(1))
+#घोषणा SYN_CAP_EXTENDED(c)		((c) & BIT(23))
+#घोषणा SYN_CAP_MIDDLE_BUTTON(c)	((c) & BIT(18))
+#घोषणा SYN_CAP_PASS_THROUGH(c)		((c) & BIT(7))
+#घोषणा SYN_CAP_SLEEP(c)		((c) & BIT(4))
+#घोषणा SYN_CAP_FOUR_BUTTON(c)		((c) & BIT(3))
+#घोषणा SYN_CAP_MULTIFINGER(c)		((c) & BIT(1))
+#घोषणा SYN_CAP_PALMDETECT(c)		((c) & BIT(0))
+#घोषणा SYN_CAP_SUBMODEL_ID(c)		(((c) & GENMASK(15, 8)) >> 8)
+#घोषणा SYN_EXT_CAP_REQUESTS(c)		(((c) & GENMASK(22, 20)) >> 20)
+#घोषणा SYN_CAP_MB_MASK			GENMASK(15, 12)
+#घोषणा SYN_CAP_MULTI_BUTTON_NO(ec)	(((ec) & SYN_CAP_MB_MASK) >> 12)
+#घोषणा SYN_CAP_PRODUCT_ID(ec)		(((ec) & GENMASK(23, 16)) >> 16)
+#घोषणा SYN_MEXT_CAP_BIT(m)		((m) & BIT(1))
 
 /*
- * The following describes response for the 0x0c query.
+ * The following describes response क्रम the 0x0c query.
  *
  * byte	mask	name			meaning
  * ----	----	-------			------------
@@ -65,33 +66,33 @@
  * 1	0x04	clearpad		sensor is ClearPad product
  * 1	0x08	advanced gesture	not particularly meaningful
  * 1	0x10	clickpad bit 0		1-button ClickPad
- * 1	0x60	multifinger mode	identifies firmware finger counting
+ * 1	0x60	multअगरinger mode	identअगरies firmware finger counting
  *					(not reporting!) algorithm.
  *					Not particularly meaningful
  * 1	0x80	covered pad		W clipped to 14, 15 == pad mostly covered
  * 2	0x01	clickpad bit 1		2-button ClickPad
  * 2	0x02	deluxe LED controls	touchpad support LED commands
- *					ala multimedia control bar
- * 2	0x04	reduced filtering	firmware does less filtering on
+ *					ala mulसमयdia control bar
+ * 2	0x04	reduced filtering	firmware करोes less filtering on
  *					position data, driver should watch
- *					for noise.
+ *					क्रम noise.
  * 2	0x08	image sensor		image sensor tracks 5 fingers, but only
  *					reports 2.
- * 2	0x01	uniform clickpad	whole clickpad moves instead of being
+ * 2	0x01	unअगरorm clickpad	whole clickpad moves instead of being
  *					hinged at the top.
  * 2	0x20	report min		query 0x0f gives min coord reported
  */
-#define SYN_CAP_CLICKPAD(ex0c)		((ex0c) & BIT(20)) /* 1-button ClickPad */
-#define SYN_CAP_CLICKPAD2BTN(ex0c)	((ex0c) & BIT(8))  /* 2-button ClickPad */
-#define SYN_CAP_MAX_DIMENSIONS(ex0c)	((ex0c) & BIT(17))
-#define SYN_CAP_MIN_DIMENSIONS(ex0c)	((ex0c) & BIT(13))
-#define SYN_CAP_ADV_GESTURE(ex0c)	((ex0c) & BIT(19))
-#define SYN_CAP_REDUCED_FILTERING(ex0c)	((ex0c) & BIT(10))
-#define SYN_CAP_IMAGE_SENSOR(ex0c)	((ex0c) & BIT(11))
-#define SYN_CAP_INTERTOUCH(ex0c)	((ex0c) & BIT(14))
+#घोषणा SYN_CAP_CLICKPAD(ex0c)		((ex0c) & BIT(20)) /* 1-button ClickPad */
+#घोषणा SYN_CAP_CLICKPAD2BTN(ex0c)	((ex0c) & BIT(8))  /* 2-button ClickPad */
+#घोषणा SYN_CAP_MAX_DIMENSIONS(ex0c)	((ex0c) & BIT(17))
+#घोषणा SYN_CAP_MIN_DIMENSIONS(ex0c)	((ex0c) & BIT(13))
+#घोषणा SYN_CAP_ADV_GESTURE(ex0c)	((ex0c) & BIT(19))
+#घोषणा SYN_CAP_REDUCED_FILTERING(ex0c)	((ex0c) & BIT(10))
+#घोषणा SYN_CAP_IMAGE_SENSOR(ex0c)	((ex0c) & BIT(11))
+#घोषणा SYN_CAP_INTERTOUCH(ex0c)	((ex0c) & BIT(14))
 
 /*
- * The following descibes response for the 0x10 query.
+ * The following descibes response क्रम the 0x10 query.
  *
  * byte	mask	name			meaning
  * ----	----	-------			------------
@@ -99,71 +100,71 @@
  *					capability are actually meant to be used
  *					by the tracktick (pass-through).
  * 1	0x02	SecurePad		the touchpad is a SecurePad, so it
- *					contains a built-in fingerprint reader.
+ *					contains a built-in fingerprपूर्णांक पढ़ोer.
  * 1	0xe0	more ext count		how many more extented queries are
  *					available after this one.
- * 2	0xff	SecurePad width		the width of the SecurePad fingerprint
- *					reader.
- * 3	0xff	SecurePad height	the height of the SecurePad fingerprint
- *					reader.
+ * 2	0xff	SecurePad width		the width of the SecurePad fingerprपूर्णांक
+ *					पढ़ोer.
+ * 3	0xff	SecurePad height	the height of the SecurePad fingerprपूर्णांक
+ *					पढ़ोer.
  */
-#define SYN_CAP_EXT_BUTTONS_STICK(ex10)	((ex10) & BIT(16))
-#define SYN_CAP_SECUREPAD(ex10)		((ex10) & BIT(17))
+#घोषणा SYN_CAP_EXT_BUTTONS_STICK(ex10)	((ex10) & BIT(16))
+#घोषणा SYN_CAP_SECUREPAD(ex10)		((ex10) & BIT(17))
 
-#define SYN_EXT_BUTTON_STICK_L(eb)	(((eb) & BIT(0)) >> 0)
-#define SYN_EXT_BUTTON_STICK_M(eb)	(((eb) & BIT(1)) >> 1)
-#define SYN_EXT_BUTTON_STICK_R(eb)	(((eb) & BIT(2)) >> 2)
+#घोषणा SYN_EXT_BUTTON_STICK_L(eb)	(((eb) & BIT(0)) >> 0)
+#घोषणा SYN_EXT_BUTTON_STICK_M(eb)	(((eb) & BIT(1)) >> 1)
+#घोषणा SYN_EXT_BUTTON_STICK_R(eb)	(((eb) & BIT(2)) >> 2)
 
 /* synaptics modes query bits */
-#define SYN_MODE_ABSOLUTE(m)		((m) & BIT(7))
-#define SYN_MODE_RATE(m)		((m) & BIT(6))
-#define SYN_MODE_BAUD_SLEEP(m)		((m) & BIT(3))
-#define SYN_MODE_DISABLE_GESTURE(m)	((m) & BIT(2))
-#define SYN_MODE_PACKSIZE(m)		((m) & BIT(1))
-#define SYN_MODE_WMODE(m)		((m) & BIT(0))
+#घोषणा SYN_MODE_ABSOLUTE(m)		((m) & BIT(7))
+#घोषणा SYN_MODE_RATE(m)		((m) & BIT(6))
+#घोषणा SYN_MODE_BAUD_SLEEP(m)		((m) & BIT(3))
+#घोषणा SYN_MODE_DISABLE_GESTURE(m)	((m) & BIT(2))
+#घोषणा SYN_MODE_PACKSIZE(m)		((m) & BIT(1))
+#घोषणा SYN_MODE_WMODE(m)		((m) & BIT(0))
 
-/* synaptics identify query bits */
-#define SYN_ID_MODEL(i)			(((i) & GENMASK(7, 4)) >> 4)
-#define SYN_ID_MAJOR(i)			(((i) & GENMASK(3, 0)) >> 0)
-#define SYN_ID_MINOR(i)			(((i) & GENMASK(23, 16)) >> 16)
-#define SYN_ID_FULL(i)			((SYN_ID_MAJOR(i) << 8) | SYN_ID_MINOR(i))
-#define SYN_ID_IS_SYNAPTICS(i)		(((i) & GENMASK(15, 8)) == 0x004700U)
-#define SYN_ID_DISGEST_SUPPORTED(i)	(SYN_ID_MAJOR(i) >= 4)
+/* synaptics identअगरy query bits */
+#घोषणा SYN_ID_MODEL(i)			(((i) & GENMASK(7, 4)) >> 4)
+#घोषणा SYN_ID_MAJOR(i)			(((i) & GENMASK(3, 0)) >> 0)
+#घोषणा SYN_ID_MINOR(i)			(((i) & GENMASK(23, 16)) >> 16)
+#घोषणा SYN_ID_FULL(i)			((SYN_ID_MAJOR(i) << 8) | SYN_ID_MINOR(i))
+#घोषणा SYN_ID_IS_SYNAPTICS(i)		(((i) & GENMASK(15, 8)) == 0x004700U)
+#घोषणा SYN_ID_DISGEST_SUPPORTED(i)	(SYN_ID_MAJOR(i) >= 4)
 
 /* synaptics special commands */
-#define SYN_PS_SET_MODE2		0x14
-#define SYN_PS_CLIENT_CMD		0x28
+#घोषणा SYN_PS_SET_MODE2		0x14
+#घोषणा SYN_PS_CLIENT_CMD		0x28
 
 /* amount to fuzz position data when touchpad reports reduced filtering */
-#define SYN_REDUCED_FILTER_FUZZ		8
+#घोषणा SYN_REDUCED_FILTER_FUZZ		8
 
 /* synaptics packet types */
-enum synaptics_pkt_type {
+क्रमागत synaptics_pkt_type अणु
 	SYN_NEWABS,
 	SYN_NEWABS_STRICT,
 	SYN_NEWABS_RELAXED,
 	SYN_OLDABS,
-};
+पूर्ण;
 
 /*
- * A structure to describe the state of the touchpad hardware (buttons and pad)
+ * A काष्ठाure to describe the state of the touchpad hardware (buttons and pad)
  */
-struct synaptics_hw_state {
-	int x;
-	int y;
-	int z;
-	int w;
-	unsigned int left:1;
-	unsigned int right:1;
-	unsigned int middle:1;
-	unsigned int up:1;
-	unsigned int down:1;
+काष्ठा synaptics_hw_state अणु
+	पूर्णांक x;
+	पूर्णांक y;
+	पूर्णांक z;
+	पूर्णांक w;
+	अचिन्हित पूर्णांक left:1;
+	अचिन्हित पूर्णांक right:1;
+	अचिन्हित पूर्णांक middle:1;
+	अचिन्हित पूर्णांक up:1;
+	अचिन्हित पूर्णांक करोwn:1;
 	u8 ext_buttons;
 	s8 scroll;
-};
+पूर्ण;
 
-/* Data read from the touchpad */
-struct synaptics_device_info {
+/* Data पढ़ो from the touchpad */
+काष्ठा synaptics_device_info अणु
 	u32 model_id;		/* Model-ID */
 	u32 firmware_id;	/* Firmware-ID */
 	u32 board_id;		/* Board-ID */
@@ -171,44 +172,44 @@ struct synaptics_device_info {
 	u32 ext_cap;		/* Extended Capabilities */
 	u32 ext_cap_0c;		/* Ext Caps from 0x0c query */
 	u32 ext_cap_10;		/* Ext Caps from 0x10 query */
-	u32 identity;		/* Identification */
+	u32 identity;		/* Identअगरication */
 	u32 x_res, y_res;	/* X/Y resolution in units/mm */
 	u32 x_max, y_max;	/* Max coordinates (from FW) */
 	u32 x_min, y_min;	/* Min coordinates (from FW) */
-};
+पूर्ण;
 
-struct synaptics_data {
-	struct synaptics_device_info info;
+काष्ठा synaptics_data अणु
+	काष्ठा synaptics_device_info info;
 
-	enum synaptics_pkt_type pkt_type;	/* packet type - old, new, etc */
+	क्रमागत synaptics_pkt_type pkt_type;	/* packet type - old, new, etc */
 	u8 mode;				/* current mode byte */
-	int scroll;
+	पूर्णांक scroll;
 
-	bool absolute_mode;			/* run in Absolute mode */
+	bool असलolute_mode;			/* run in Absolute mode */
 	bool disable_gesture;			/* disable gestures */
 
-	struct serio *pt_port;			/* Pass-through serio port */
+	काष्ठा serio *pt_port;			/* Pass-through serio port */
 
 	/*
 	 * Last received Advanced Gesture Mode (AGM) packet. An AGM packet
-	 * contains position data for a second contact, at half resolution.
+	 * contains position data क्रम a second contact, at half resolution.
 	 */
-	struct synaptics_hw_state agm;
-	unsigned int agm_count;			/* finger count reported by agm */
+	काष्ठा synaptics_hw_state agm;
+	अचिन्हित पूर्णांक agm_count;			/* finger count reported by agm */
 
 	/* ForcePad handling */
-	unsigned long				press_start;
+	अचिन्हित दीर्घ				press_start;
 	bool					press;
 	bool					report_press;
-	bool					is_forcepad;
-};
+	bool					is_क्रमcepad;
+पूर्ण;
 
-void synaptics_module_init(void);
-int synaptics_detect(struct psmouse *psmouse, bool set_properties);
-int synaptics_init_absolute(struct psmouse *psmouse);
-int synaptics_init_relative(struct psmouse *psmouse);
-int synaptics_init_smbus(struct psmouse *psmouse);
-int synaptics_init(struct psmouse *psmouse);
-void synaptics_reset(struct psmouse *psmouse);
+व्योम synaptics_module_init(व्योम);
+पूर्णांक synaptics_detect(काष्ठा psmouse *psmouse, bool set_properties);
+पूर्णांक synaptics_init_असलolute(काष्ठा psmouse *psmouse);
+पूर्णांक synaptics_init_relative(काष्ठा psmouse *psmouse);
+पूर्णांक synaptics_init_smbus(काष्ठा psmouse *psmouse);
+पूर्णांक synaptics_init(काष्ठा psmouse *psmouse);
+व्योम synaptics_reset(काष्ठा psmouse *psmouse);
 
-#endif /* _SYNAPTICS_H */
+#पूर्ण_अगर /* _SYNAPTICS_H */

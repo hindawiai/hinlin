@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "../../util/perf_regs.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "../../util/perf_regs.h"
 
-const struct sample_reg sample_reg_masks[] = {
+स्थिर काष्ठा sample_reg sample_reg_masks[] = अणु
 	SMPL_REG_END
-};
+पूर्ण;

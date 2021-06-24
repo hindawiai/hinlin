@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,43 +22,43 @@
  *
  */
 
-#include <linux/firmware.h>
-#include <linux/module.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
 
-#include "amdgpu.h"
-#include "amdgpu_ih.h"
-#include "amdgpu_gfx.h"
-#include "cikd.h"
-#include "cik.h"
-#include "cik_structs.h"
-#include "atom.h"
-#include "amdgpu_ucode.h"
-#include "clearstate_ci.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_ih.h"
+#समावेश "amdgpu_gfx.h"
+#समावेश "cikd.h"
+#समावेश "cik.h"
+#समावेश "cik_structs.h"
+#समावेश "atom.h"
+#समावेश "amdgpu_ucode.h"
+#समावेश "clearstate_ci.h"
 
-#include "dce/dce_8_0_d.h"
-#include "dce/dce_8_0_sh_mask.h"
+#समावेश "dce/dce_8_0_d.h"
+#समावेश "dce/dce_8_0_sh_mask.h"
 
-#include "bif/bif_4_1_d.h"
-#include "bif/bif_4_1_sh_mask.h"
+#समावेश "bif/bif_4_1_d.h"
+#समावेश "bif/bif_4_1_sh_mask.h"
 
-#include "gca/gfx_7_0_d.h"
-#include "gca/gfx_7_2_enum.h"
-#include "gca/gfx_7_2_sh_mask.h"
+#समावेश "gca/gfx_7_0_d.h"
+#समावेश "gca/gfx_7_2_enum.h"
+#समावेश "gca/gfx_7_2_sh_mask.h"
 
-#include "gmc/gmc_7_0_d.h"
-#include "gmc/gmc_7_0_sh_mask.h"
+#समावेश "gmc/gmc_7_0_d.h"
+#समावेश "gmc/gmc_7_0_sh_mask.h"
 
-#include "oss/oss_2_0_d.h"
-#include "oss/oss_2_0_sh_mask.h"
+#समावेश "oss/oss_2_0_d.h"
+#समावेश "oss/oss_2_0_sh_mask.h"
 
-#define NUM_SIMD_PER_CU 0x4 /* missing from the gfx_7 IP headers */
+#घोषणा NUM_SIMD_PER_CU 0x4 /* missing from the gfx_7 IP headers */
 
-#define GFX7_NUM_GFX_RINGS     1
-#define GFX7_MEC_HPD_SIZE      2048
+#घोषणा GFX7_NUM_GFX_RINGS     1
+#घोषणा GFX7_MEC_HPD_SIZE      2048
 
-static void gfx_v7_0_set_ring_funcs(struct amdgpu_device *adev);
-static void gfx_v7_0_set_irq_funcs(struct amdgpu_device *adev);
-static void gfx_v7_0_set_gds_init(struct amdgpu_device *adev);
+अटल व्योम gfx_v7_0_set_ring_funcs(काष्ठा amdgpu_device *adev);
+अटल व्योम gfx_v7_0_set_irq_funcs(काष्ठा amdgpu_device *adev);
+अटल व्योम gfx_v7_0_set_gds_init(काष्ठा amdgpu_device *adev);
 
 MODULE_FIRMWARE("amdgpu/bonaire_pfp.bin");
 MODULE_FIRMWARE("amdgpu/bonaire_me.bin");
@@ -90,28 +91,28 @@ MODULE_FIRMWARE("amdgpu/mullins_ce.bin");
 MODULE_FIRMWARE("amdgpu/mullins_rlc.bin");
 MODULE_FIRMWARE("amdgpu/mullins_mec.bin");
 
-static const struct amdgpu_gds_reg_offset amdgpu_gds_reg_offset[] =
-{
-	{mmGDS_VMID0_BASE, mmGDS_VMID0_SIZE, mmGDS_GWS_VMID0, mmGDS_OA_VMID0},
-	{mmGDS_VMID1_BASE, mmGDS_VMID1_SIZE, mmGDS_GWS_VMID1, mmGDS_OA_VMID1},
-	{mmGDS_VMID2_BASE, mmGDS_VMID2_SIZE, mmGDS_GWS_VMID2, mmGDS_OA_VMID2},
-	{mmGDS_VMID3_BASE, mmGDS_VMID3_SIZE, mmGDS_GWS_VMID3, mmGDS_OA_VMID3},
-	{mmGDS_VMID4_BASE, mmGDS_VMID4_SIZE, mmGDS_GWS_VMID4, mmGDS_OA_VMID4},
-	{mmGDS_VMID5_BASE, mmGDS_VMID5_SIZE, mmGDS_GWS_VMID5, mmGDS_OA_VMID5},
-	{mmGDS_VMID6_BASE, mmGDS_VMID6_SIZE, mmGDS_GWS_VMID6, mmGDS_OA_VMID6},
-	{mmGDS_VMID7_BASE, mmGDS_VMID7_SIZE, mmGDS_GWS_VMID7, mmGDS_OA_VMID7},
-	{mmGDS_VMID8_BASE, mmGDS_VMID8_SIZE, mmGDS_GWS_VMID8, mmGDS_OA_VMID8},
-	{mmGDS_VMID9_BASE, mmGDS_VMID9_SIZE, mmGDS_GWS_VMID9, mmGDS_OA_VMID9},
-	{mmGDS_VMID10_BASE, mmGDS_VMID10_SIZE, mmGDS_GWS_VMID10, mmGDS_OA_VMID10},
-	{mmGDS_VMID11_BASE, mmGDS_VMID11_SIZE, mmGDS_GWS_VMID11, mmGDS_OA_VMID11},
-	{mmGDS_VMID12_BASE, mmGDS_VMID12_SIZE, mmGDS_GWS_VMID12, mmGDS_OA_VMID12},
-	{mmGDS_VMID13_BASE, mmGDS_VMID13_SIZE, mmGDS_GWS_VMID13, mmGDS_OA_VMID13},
-	{mmGDS_VMID14_BASE, mmGDS_VMID14_SIZE, mmGDS_GWS_VMID14, mmGDS_OA_VMID14},
-	{mmGDS_VMID15_BASE, mmGDS_VMID15_SIZE, mmGDS_GWS_VMID15, mmGDS_OA_VMID15}
-};
+अटल स्थिर काष्ठा amdgpu_gds_reg_offset amdgpu_gds_reg_offset[] =
+अणु
+	अणुmmGDS_VMID0_BASE, mmGDS_VMID0_SIZE, mmGDS_GWS_VMID0, mmGDS_OA_VMID0पूर्ण,
+	अणुmmGDS_VMID1_BASE, mmGDS_VMID1_SIZE, mmGDS_GWS_VMID1, mmGDS_OA_VMID1पूर्ण,
+	अणुmmGDS_VMID2_BASE, mmGDS_VMID2_SIZE, mmGDS_GWS_VMID2, mmGDS_OA_VMID2पूर्ण,
+	अणुmmGDS_VMID3_BASE, mmGDS_VMID3_SIZE, mmGDS_GWS_VMID3, mmGDS_OA_VMID3पूर्ण,
+	अणुmmGDS_VMID4_BASE, mmGDS_VMID4_SIZE, mmGDS_GWS_VMID4, mmGDS_OA_VMID4पूर्ण,
+	अणुmmGDS_VMID5_BASE, mmGDS_VMID5_SIZE, mmGDS_GWS_VMID5, mmGDS_OA_VMID5पूर्ण,
+	अणुmmGDS_VMID6_BASE, mmGDS_VMID6_SIZE, mmGDS_GWS_VMID6, mmGDS_OA_VMID6पूर्ण,
+	अणुmmGDS_VMID7_BASE, mmGDS_VMID7_SIZE, mmGDS_GWS_VMID7, mmGDS_OA_VMID7पूर्ण,
+	अणुmmGDS_VMID8_BASE, mmGDS_VMID8_SIZE, mmGDS_GWS_VMID8, mmGDS_OA_VMID8पूर्ण,
+	अणुmmGDS_VMID9_BASE, mmGDS_VMID9_SIZE, mmGDS_GWS_VMID9, mmGDS_OA_VMID9पूर्ण,
+	अणुmmGDS_VMID10_BASE, mmGDS_VMID10_SIZE, mmGDS_GWS_VMID10, mmGDS_OA_VMID10पूर्ण,
+	अणुmmGDS_VMID11_BASE, mmGDS_VMID11_SIZE, mmGDS_GWS_VMID11, mmGDS_OA_VMID11पूर्ण,
+	अणुmmGDS_VMID12_BASE, mmGDS_VMID12_SIZE, mmGDS_GWS_VMID12, mmGDS_OA_VMID12पूर्ण,
+	अणुmmGDS_VMID13_BASE, mmGDS_VMID13_SIZE, mmGDS_GWS_VMID13, mmGDS_OA_VMID13पूर्ण,
+	अणुmmGDS_VMID14_BASE, mmGDS_VMID14_SIZE, mmGDS_GWS_VMID14, mmGDS_OA_VMID14पूर्ण,
+	अणुmmGDS_VMID15_BASE, mmGDS_VMID15_SIZE, mmGDS_GWS_VMID15, mmGDS_OA_VMID15पूर्ण
+पूर्ण;
 
-static const u32 spectre_rlc_save_restore_register_list[] =
-{
+अटल स्थिर u32 spectre_rlc_save_restore_रेजिस्टर_list[] =
+अणु
 	(0x0e00 << 16) | (0xc12c >> 2),
 	0x00000000,
 	(0x0e00 << 16) | (0xc140 >> 2),
@@ -555,10 +556,10 @@ static const u32 spectre_rlc_save_restore_register_list[] =
 	(0x0e00 << 16) | (0x8c30 >> 2),
 	(0x0e00 << 16) | (0x8c34 >> 2),
 	(0x0e00 << 16) | (0x9600 >> 2),
-};
+पूर्ण;
 
-static const u32 kalindi_rlc_save_restore_register_list[] =
-{
+अटल स्थिर u32 kalindi_rlc_save_restore_रेजिस्टर_list[] =
+अणु
 	(0x0e00 << 16) | (0xc12c >> 2),
 	0x00000000,
 	(0x0e00 << 16) | (0xc140 >> 2),
@@ -880,12 +881,12 @@ static const u32 kalindi_rlc_save_restore_register_list[] =
 	(0x0e00 << 16) | (0x8c30 >> 2),
 	(0x0e00 << 16) | (0x8c34 >> 2),
 	(0x0e00 << 16) | (0x9600 >> 2),
-};
+पूर्ण;
 
-static u32 gfx_v7_0_get_csb_size(struct amdgpu_device *adev);
-static void gfx_v7_0_get_csb_buffer(struct amdgpu_device *adev, volatile u32 *buffer);
-static void gfx_v7_0_init_pg(struct amdgpu_device *adev);
-static void gfx_v7_0_get_cu_info(struct amdgpu_device *adev);
+अटल u32 gfx_v7_0_get_csb_size(काष्ठा amdgpu_device *adev);
+अटल व्योम gfx_v7_0_get_csb_buffer(काष्ठा amdgpu_device *adev, अस्थिर u32 *buffer);
+अटल व्योम gfx_v7_0_init_pg(काष्ठा amdgpu_device *adev);
+अटल व्योम gfx_v7_0_get_cu_info(काष्ठा amdgpu_device *adev);
 
 /*
  * Core functions
@@ -893,165 +894,165 @@ static void gfx_v7_0_get_cu_info(struct amdgpu_device *adev);
 /**
  * gfx_v7_0_init_microcode - load ucode images from disk
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Use the firmware interface to load the ucode images into
- * the driver (not loaded into hw).
+ * Use the firmware पूर्णांकerface to load the ucode images पूर्णांकo
+ * the driver (not loaded पूर्णांकo hw).
  * Returns 0 on success, error on failure.
  */
-static int gfx_v7_0_init_microcode(struct amdgpu_device *adev)
-{
-	const char *chip_name;
-	char fw_name[30];
-	int err;
+अटल पूर्णांक gfx_v7_0_init_microcode(काष्ठा amdgpu_device *adev)
+अणु
+	स्थिर अक्षर *chip_name;
+	अक्षर fw_name[30];
+	पूर्णांक err;
 
 	DRM_DEBUG("\n");
 
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
 		chip_name = "bonaire";
-		break;
-	case CHIP_HAWAII:
+		अवरोध;
+	हाल CHIP_HAWAII:
 		chip_name = "hawaii";
-		break;
-	case CHIP_KAVERI:
+		अवरोध;
+	हाल CHIP_KAVERI:
 		chip_name = "kaveri";
-		break;
-	case CHIP_KABINI:
+		अवरोध;
+	हाल CHIP_KABINI:
 		chip_name = "kabini";
-		break;
-	case CHIP_MULLINS:
+		अवरोध;
+	हाल CHIP_MULLINS:
 		chip_name = "mullins";
-		break;
-	default: BUG();
-	}
+		अवरोध;
+	शेष: BUG();
+	पूर्ण
 
-	snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_pfp.bin", chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "amdgpu/%s_pfp.bin", chip_name);
 	err = request_firmware(&adev->gfx.pfp_fw, fw_name, adev->dev);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	err = amdgpu_ucode_validate(adev->gfx.pfp_fw);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_me.bin", chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "amdgpu/%s_me.bin", chip_name);
 	err = request_firmware(&adev->gfx.me_fw, fw_name, adev->dev);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	err = amdgpu_ucode_validate(adev->gfx.me_fw);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_ce.bin", chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "amdgpu/%s_ce.bin", chip_name);
 	err = request_firmware(&adev->gfx.ce_fw, fw_name, adev->dev);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	err = amdgpu_ucode_validate(adev->gfx.ce_fw);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_mec.bin", chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "amdgpu/%s_mec.bin", chip_name);
 	err = request_firmware(&adev->gfx.mec_fw, fw_name, adev->dev);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	err = amdgpu_ucode_validate(adev->gfx.mec_fw);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (adev->asic_type == CHIP_KAVERI) {
-		snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_mec2.bin", chip_name);
+	अगर (adev->asic_type == CHIP_KAVERI) अणु
+		snम_लिखो(fw_name, माप(fw_name), "amdgpu/%s_mec2.bin", chip_name);
 		err = request_firmware(&adev->gfx.mec2_fw, fw_name, adev->dev);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		err = amdgpu_ucode_validate(adev->gfx.mec2_fw);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
-	snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_rlc.bin", chip_name);
+	snम_लिखो(fw_name, माप(fw_name), "amdgpu/%s_rlc.bin", chip_name);
 	err = request_firmware(&adev->gfx.rlc_fw, fw_name, adev->dev);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	err = amdgpu_ucode_validate(adev->gfx.rlc_fw);
 
 out:
-	if (err) {
+	अगर (err) अणु
 		pr_err("gfx7: Failed to load firmware \"%s\"\n", fw_name);
 		release_firmware(adev->gfx.pfp_fw);
-		adev->gfx.pfp_fw = NULL;
+		adev->gfx.pfp_fw = शून्य;
 		release_firmware(adev->gfx.me_fw);
-		adev->gfx.me_fw = NULL;
+		adev->gfx.me_fw = शून्य;
 		release_firmware(adev->gfx.ce_fw);
-		adev->gfx.ce_fw = NULL;
+		adev->gfx.ce_fw = शून्य;
 		release_firmware(adev->gfx.mec_fw);
-		adev->gfx.mec_fw = NULL;
+		adev->gfx.mec_fw = शून्य;
 		release_firmware(adev->gfx.mec2_fw);
-		adev->gfx.mec2_fw = NULL;
+		adev->gfx.mec2_fw = शून्य;
 		release_firmware(adev->gfx.rlc_fw);
-		adev->gfx.rlc_fw = NULL;
-	}
-	return err;
-}
+		adev->gfx.rlc_fw = शून्य;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void gfx_v7_0_free_microcode(struct amdgpu_device *adev)
-{
+अटल व्योम gfx_v7_0_मुक्त_microcode(काष्ठा amdgpu_device *adev)
+अणु
 	release_firmware(adev->gfx.pfp_fw);
-	adev->gfx.pfp_fw = NULL;
+	adev->gfx.pfp_fw = शून्य;
 	release_firmware(adev->gfx.me_fw);
-	adev->gfx.me_fw = NULL;
+	adev->gfx.me_fw = शून्य;
 	release_firmware(adev->gfx.ce_fw);
-	adev->gfx.ce_fw = NULL;
+	adev->gfx.ce_fw = शून्य;
 	release_firmware(adev->gfx.mec_fw);
-	adev->gfx.mec_fw = NULL;
+	adev->gfx.mec_fw = शून्य;
 	release_firmware(adev->gfx.mec2_fw);
-	adev->gfx.mec2_fw = NULL;
+	adev->gfx.mec2_fw = शून्य;
 	release_firmware(adev->gfx.rlc_fw);
-	adev->gfx.rlc_fw = NULL;
-}
+	adev->gfx.rlc_fw = शून्य;
+पूर्ण
 
 /**
  * gfx_v7_0_tiling_mode_table_init - init the hw tiling table
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Starting with SI, the tiling setup is done globally in a
+ * Starting with SI, the tiling setup is करोne globally in a
  * set of 32 tiling modes.  Rather than selecting each set of
  * parameters per surface as on older asics, we just select
  * which index in the tiling table we want to use, and the
  * surface uses those parameters (CIK).
  */
-static void gfx_v7_0_tiling_mode_table_init(struct amdgpu_device *adev)
-{
-	const u32 num_tile_mode_states =
+अटल व्योम gfx_v7_0_tiling_mode_table_init(काष्ठा amdgpu_device *adev)
+अणु
+	स्थिर u32 num_tile_mode_states =
 			ARRAY_SIZE(adev->gfx.config.tile_mode_array);
-	const u32 num_secondary_tile_mode_states =
+	स्थिर u32 num_secondary_tile_mode_states =
 			ARRAY_SIZE(adev->gfx.config.macrotile_mode_array);
 	u32 reg_offset, split_equal_to_row_size;
-	uint32_t *tile, *macrotile;
+	uपूर्णांक32_t *tile, *macrotile;
 
 	tile = adev->gfx.config.tile_mode_array;
 	macrotile = adev->gfx.config.macrotile_mode_array;
 
-	switch (adev->gfx.config.mem_row_size_in_kb) {
-	case 1:
+	चयन (adev->gfx.config.mem_row_size_in_kb) अणु
+	हाल 1:
 		split_equal_to_row_size = ADDR_SURF_TILE_SPLIT_1KB;
-		break;
-	case 2:
-	default:
+		अवरोध;
+	हाल 2:
+	शेष:
 		split_equal_to_row_size = ADDR_SURF_TILE_SPLIT_2KB;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		split_equal_to_row_size = ADDR_SURF_TILE_SPLIT_4KB;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	for (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
+	क्रम (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
 		tile[reg_offset] = 0;
-	for (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
+	क्रम (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
 		macrotile[reg_offset] = 0;
 
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
 		tile[0] = (ARRAY_MODE(ARRAY_2D_TILED_THIN1) |
 			   PIPE_CONFIG(ADDR_SURF_P4_16x16) |
 			   TILE_SPLIT(ADDR_SURF_TILE_SPLIT_64B) |
@@ -1212,13 +1213,13 @@ static void gfx_v7_0_tiling_mode_table_init(struct amdgpu_device *adev)
 				MACRO_TILE_ASPECT(ADDR_SURF_MACRO_ASPECT_1) |
 				NUM_BANKS(ADDR_SURF_4_BANK));
 
-		for (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
 			WREG32(mmGB_TILE_MODE0 + reg_offset, tile[reg_offset]);
-		for (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
-			if (reg_offset != 7)
+		क्रम (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
+			अगर (reg_offset != 7)
 				WREG32(mmGB_MACROTILE_MODE0 + reg_offset, macrotile[reg_offset]);
-		break;
-	case CHIP_HAWAII:
+		अवरोध;
+	हाल CHIP_HAWAII:
 		tile[0] = (ARRAY_MODE(ARRAY_2D_TILED_THIN1) |
 			   PIPE_CONFIG(ADDR_SURF_P16_32x32_16x16) |
 			   TILE_SPLIT(ADDR_SURF_TILE_SPLIT_64B) |
@@ -1395,16 +1396,16 @@ static void gfx_v7_0_tiling_mode_table_init(struct amdgpu_device *adev)
 				MACRO_TILE_ASPECT(ADDR_SURF_MACRO_ASPECT_1) |
 				NUM_BANKS(ADDR_SURF_4_BANK));
 
-		for (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
 			WREG32(mmGB_TILE_MODE0 + reg_offset, tile[reg_offset]);
-		for (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
-			if (reg_offset != 7)
+		क्रम (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
+			अगर (reg_offset != 7)
 				WREG32(mmGB_MACROTILE_MODE0 + reg_offset, macrotile[reg_offset]);
-		break;
-	case CHIP_KABINI:
-	case CHIP_KAVERI:
-	case CHIP_MULLINS:
-	default:
+		अवरोध;
+	हाल CHIP_KABINI:
+	हाल CHIP_KAVERI:
+	हाल CHIP_MULLINS:
+	शेष:
 		tile[0] = (ARRAY_MODE(ARRAY_2D_TILED_THIN1) |
 			   PIPE_CONFIG(ADDR_SURF_P2) |
 			   TILE_SPLIT(ADDR_SURF_TILE_SPLIT_64B) |
@@ -1565,61 +1566,61 @@ static void gfx_v7_0_tiling_mode_table_init(struct amdgpu_device *adev)
 				MACRO_TILE_ASPECT(ADDR_SURF_MACRO_ASPECT_2) |
 				NUM_BANKS(ADDR_SURF_8_BANK));
 
-		for (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
+		क्रम (reg_offset = 0; reg_offset < num_tile_mode_states; reg_offset++)
 			WREG32(mmGB_TILE_MODE0 + reg_offset, tile[reg_offset]);
-		for (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
-			if (reg_offset != 7)
+		क्रम (reg_offset = 0; reg_offset < num_secondary_tile_mode_states; reg_offset++)
+			अगर (reg_offset != 7)
 				WREG32(mmGB_MACROTILE_MODE0 + reg_offset, macrotile[reg_offset]);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * gfx_v7_0_select_se_sh - select which SE, SH to address
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @se_num: shader engine to address
  * @sh_num: sh block to address
- * @instance: Certain registers are instanced per SE or SH.
+ * @instance: Certain रेजिस्टरs are instanced per SE or SH.
  *            0xffffffff means broadcast to all SEs or SHs (CIK).
  *
  * Select which SE, SH combinations to address.
  */
-static void gfx_v7_0_select_se_sh(struct amdgpu_device *adev,
+अटल व्योम gfx_v7_0_select_se_sh(काष्ठा amdgpu_device *adev,
 				  u32 se_num, u32 sh_num, u32 instance)
-{
+अणु
 	u32 data;
 
-	if (instance == 0xffffffff)
+	अगर (instance == 0xffffffff)
 		data = REG_SET_FIELD(0, GRBM_GFX_INDEX, INSTANCE_BROADCAST_WRITES, 1);
-	else
+	अन्यथा
 		data = REG_SET_FIELD(0, GRBM_GFX_INDEX, INSTANCE_INDEX, instance);
 
-	if ((se_num == 0xffffffff) && (sh_num == 0xffffffff))
+	अगर ((se_num == 0xffffffff) && (sh_num == 0xffffffff))
 		data |= GRBM_GFX_INDEX__SH_BROADCAST_WRITES_MASK |
 			GRBM_GFX_INDEX__SE_BROADCAST_WRITES_MASK;
-	else if (se_num == 0xffffffff)
+	अन्यथा अगर (se_num == 0xffffffff)
 		data |= GRBM_GFX_INDEX__SE_BROADCAST_WRITES_MASK |
 			(sh_num << GRBM_GFX_INDEX__SH_INDEX__SHIFT);
-	else if (sh_num == 0xffffffff)
+	अन्यथा अगर (sh_num == 0xffffffff)
 		data |= GRBM_GFX_INDEX__SH_BROADCAST_WRITES_MASK |
 			(se_num << GRBM_GFX_INDEX__SE_INDEX__SHIFT);
-	else
+	अन्यथा
 		data |= (sh_num << GRBM_GFX_INDEX__SH_INDEX__SHIFT) |
 			(se_num << GRBM_GFX_INDEX__SE_INDEX__SHIFT);
 	WREG32(mmGRBM_GFX_INDEX, data);
-}
+पूर्ण
 
 /**
- * gfx_v7_0_get_rb_active_bitmap - computes the mask of enabled RBs
+ * gfx_v7_0_get_rb_active_biपंचांगap - computes the mask of enabled RBs
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Calculates the bitmask of enabled RBs (CIK).
- * Returns the enabled RB bitmask.
+ * Calculates the biपंचांगask of enabled RBs (CIK).
+ * Returns the enabled RB biपंचांगask.
  */
-static u32 gfx_v7_0_get_rb_active_bitmap(struct amdgpu_device *adev)
-{
+अटल u32 gfx_v7_0_get_rb_active_biपंचांगap(काष्ठा amdgpu_device *adev)
+अणु
 	u32 data, mask;
 
 	data = RREG32(mmCC_RB_BACKEND_DISABLE);
@@ -1628,55 +1629,55 @@ static u32 gfx_v7_0_get_rb_active_bitmap(struct amdgpu_device *adev)
 	data &= CC_RB_BACKEND_DISABLE__BACKEND_DISABLE_MASK;
 	data >>= GC_USER_RB_BACKEND_DISABLE__BACKEND_DISABLE__SHIFT;
 
-	mask = amdgpu_gfx_create_bitmask(adev->gfx.config.max_backends_per_se /
+	mask = amdgpu_gfx_create_biपंचांगask(adev->gfx.config.max_backends_per_se /
 					 adev->gfx.config.max_sh_per_se);
 
-	return (~data) & mask;
-}
+	वापस (~data) & mask;
+पूर्ण
 
-static void
-gfx_v7_0_raster_config(struct amdgpu_device *adev, u32 *rconf, u32 *rconf1)
-{
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
+अटल व्योम
+gfx_v7_0_raster_config(काष्ठा amdgpu_device *adev, u32 *rconf, u32 *rconf1)
+अणु
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
 		*rconf |= RB_MAP_PKR0(2) | RB_XSEL2(1) | SE_MAP(2) |
 			  SE_XSEL(1) | SE_YSEL(1);
 		*rconf1 |= 0x0;
-		break;
-	case CHIP_HAWAII:
+		अवरोध;
+	हाल CHIP_HAWAII:
 		*rconf |= RB_MAP_PKR0(2) | RB_MAP_PKR1(2) |
 			  RB_XSEL2(1) | PKR_MAP(2) | PKR_XSEL(1) |
 			  PKR_YSEL(1) | SE_MAP(2) | SE_XSEL(2) |
 			  SE_YSEL(3);
 		*rconf1 |= SE_PAIR_MAP(2) | SE_PAIR_XSEL(3) |
 			   SE_PAIR_YSEL(2);
-		break;
-	case CHIP_KAVERI:
+		अवरोध;
+	हाल CHIP_KAVERI:
 		*rconf |= RB_MAP_PKR0(2);
 		*rconf1 |= 0x0;
-		break;
-	case CHIP_KABINI:
-	case CHIP_MULLINS:
+		अवरोध;
+	हाल CHIP_KABINI:
+	हाल CHIP_MULLINS:
 		*rconf |= 0x0;
 		*rconf1 |= 0x0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_ERROR("unknown asic: 0x%x\n", adev->asic_type);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-gfx_v7_0_write_harvested_raster_configs(struct amdgpu_device *adev,
+अटल व्योम
+gfx_v7_0_ग_लिखो_harvested_raster_configs(काष्ठा amdgpu_device *adev,
 					u32 raster_config, u32 raster_config_1,
-					unsigned rb_mask, unsigned num_rb)
-{
-	unsigned sh_per_se = max_t(unsigned, adev->gfx.config.max_sh_per_se, 1);
-	unsigned num_se = max_t(unsigned, adev->gfx.config.max_shader_engines, 1);
-	unsigned rb_per_pkr = min_t(unsigned, num_rb / num_se / sh_per_se, 2);
-	unsigned rb_per_se = num_rb / num_se;
-	unsigned se_mask[4];
-	unsigned se;
+					अचिन्हित rb_mask, अचिन्हित num_rb)
+अणु
+	अचिन्हित sh_per_se = max_t(अचिन्हित, adev->gfx.config.max_sh_per_se, 1);
+	अचिन्हित num_se = max_t(अचिन्हित, adev->gfx.config.max_shader_engines, 1);
+	अचिन्हित rb_per_pkr = min_t(अचिन्हित, num_rb / num_se / sh_per_se, 2);
+	अचिन्हित rb_per_se = num_rb / num_se;
+	अचिन्हित se_mask[4];
+	अचिन्हित se;
 
 	se_mask[0] = ((1 << rb_per_se) - 1) & rb_mask;
 	se_mask[1] = (se_mask[0] << rb_per_se) & rb_mask;
@@ -1687,143 +1688,143 @@ gfx_v7_0_write_harvested_raster_configs(struct amdgpu_device *adev,
 	WARN_ON(!(sh_per_se == 1 || sh_per_se == 2));
 	WARN_ON(!(rb_per_pkr == 1 || rb_per_pkr == 2));
 
-	if ((num_se > 2) && ((!se_mask[0] && !se_mask[1]) ||
-			     (!se_mask[2] && !se_mask[3]))) {
+	अगर ((num_se > 2) && ((!se_mask[0] && !se_mask[1]) ||
+			     (!se_mask[2] && !se_mask[3]))) अणु
 		raster_config_1 &= ~SE_PAIR_MAP_MASK;
 
-		if (!se_mask[0] && !se_mask[1]) {
+		अगर (!se_mask[0] && !se_mask[1]) अणु
 			raster_config_1 |=
 				SE_PAIR_MAP(RASTER_CONFIG_SE_PAIR_MAP_3);
-		} else {
+		पूर्ण अन्यथा अणु
 			raster_config_1 |=
 				SE_PAIR_MAP(RASTER_CONFIG_SE_PAIR_MAP_0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (se = 0; se < num_se; se++) {
-		unsigned raster_config_se = raster_config;
-		unsigned pkr0_mask = ((1 << rb_per_pkr) - 1) << (se * rb_per_se);
-		unsigned pkr1_mask = pkr0_mask << rb_per_pkr;
-		int idx = (se / 2) * 2;
+	क्रम (se = 0; se < num_se; se++) अणु
+		अचिन्हित raster_config_se = raster_config;
+		अचिन्हित pkr0_mask = ((1 << rb_per_pkr) - 1) << (se * rb_per_se);
+		अचिन्हित pkr1_mask = pkr0_mask << rb_per_pkr;
+		पूर्णांक idx = (se / 2) * 2;
 
-		if ((num_se > 1) && (!se_mask[idx] || !se_mask[idx + 1])) {
+		अगर ((num_se > 1) && (!se_mask[idx] || !se_mask[idx + 1])) अणु
 			raster_config_se &= ~SE_MAP_MASK;
 
-			if (!se_mask[idx]) {
+			अगर (!se_mask[idx]) अणु
 				raster_config_se |= SE_MAP(RASTER_CONFIG_SE_MAP_3);
-			} else {
+			पूर्ण अन्यथा अणु
 				raster_config_se |= SE_MAP(RASTER_CONFIG_SE_MAP_0);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		pkr0_mask &= rb_mask;
 		pkr1_mask &= rb_mask;
-		if (rb_per_se > 2 && (!pkr0_mask || !pkr1_mask)) {
+		अगर (rb_per_se > 2 && (!pkr0_mask || !pkr1_mask)) अणु
 			raster_config_se &= ~PKR_MAP_MASK;
 
-			if (!pkr0_mask) {
+			अगर (!pkr0_mask) अणु
 				raster_config_se |= PKR_MAP(RASTER_CONFIG_PKR_MAP_3);
-			} else {
+			पूर्ण अन्यथा अणु
 				raster_config_se |= PKR_MAP(RASTER_CONFIG_PKR_MAP_0);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (rb_per_se >= 2) {
-			unsigned rb0_mask = 1 << (se * rb_per_se);
-			unsigned rb1_mask = rb0_mask << 1;
+		अगर (rb_per_se >= 2) अणु
+			अचिन्हित rb0_mask = 1 << (se * rb_per_se);
+			अचिन्हित rb1_mask = rb0_mask << 1;
 
 			rb0_mask &= rb_mask;
 			rb1_mask &= rb_mask;
-			if (!rb0_mask || !rb1_mask) {
+			अगर (!rb0_mask || !rb1_mask) अणु
 				raster_config_se &= ~RB_MAP_PKR0_MASK;
 
-				if (!rb0_mask) {
+				अगर (!rb0_mask) अणु
 					raster_config_se |=
 						RB_MAP_PKR0(RASTER_CONFIG_RB_MAP_3);
-				} else {
+				पूर्ण अन्यथा अणु
 					raster_config_se |=
 						RB_MAP_PKR0(RASTER_CONFIG_RB_MAP_0);
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if (rb_per_se > 2) {
+			अगर (rb_per_se > 2) अणु
 				rb0_mask = 1 << (se * rb_per_se + rb_per_pkr);
 				rb1_mask = rb0_mask << 1;
 				rb0_mask &= rb_mask;
 				rb1_mask &= rb_mask;
-				if (!rb0_mask || !rb1_mask) {
+				अगर (!rb0_mask || !rb1_mask) अणु
 					raster_config_se &= ~RB_MAP_PKR1_MASK;
 
-					if (!rb0_mask) {
+					अगर (!rb0_mask) अणु
 						raster_config_se |=
 							RB_MAP_PKR1(RASTER_CONFIG_RB_MAP_3);
-					} else {
+					पूर्ण अन्यथा अणु
 						raster_config_se |=
 							RB_MAP_PKR1(RASTER_CONFIG_RB_MAP_0);
-					}
-				}
-			}
-		}
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		/* GRBM_GFX_INDEX has a different offset on CI+ */
+		/* GRBM_GFX_INDEX has a dअगरferent offset on CI+ */
 		gfx_v7_0_select_se_sh(adev, se, 0xffffffff, 0xffffffff);
 		WREG32(mmPA_SC_RASTER_CONFIG, raster_config_se);
 		WREG32(mmPA_SC_RASTER_CONFIG_1, raster_config_1);
-	}
+	पूर्ण
 
-	/* GRBM_GFX_INDEX has a different offset on CI+ */
+	/* GRBM_GFX_INDEX has a dअगरferent offset on CI+ */
 	gfx_v7_0_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
-}
+पूर्ण
 
 /**
  * gfx_v7_0_setup_rb - setup the RBs on the asic
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Configures per-SE/SH RB registers (CIK).
+ * Configures per-SE/SH RB रेजिस्टरs (CIK).
  */
-static void gfx_v7_0_setup_rb(struct amdgpu_device *adev)
-{
-	int i, j;
+अटल व्योम gfx_v7_0_setup_rb(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i, j;
 	u32 data;
 	u32 raster_config = 0, raster_config_1 = 0;
 	u32 active_rbs = 0;
-	u32 rb_bitmap_width_per_sh = adev->gfx.config.max_backends_per_se /
+	u32 rb_biपंचांगap_width_per_sh = adev->gfx.config.max_backends_per_se /
 					adev->gfx.config.max_sh_per_se;
-	unsigned num_rb_pipes;
+	अचिन्हित num_rb_pipes;
 
 	mutex_lock(&adev->grbm_idx_mutex);
-	for (i = 0; i < adev->gfx.config.max_shader_engines; i++) {
-		for (j = 0; j < adev->gfx.config.max_sh_per_se; j++) {
+	क्रम (i = 0; i < adev->gfx.config.max_shader_engines; i++) अणु
+		क्रम (j = 0; j < adev->gfx.config.max_sh_per_se; j++) अणु
 			gfx_v7_0_select_se_sh(adev, i, j, 0xffffffff);
-			data = gfx_v7_0_get_rb_active_bitmap(adev);
+			data = gfx_v7_0_get_rb_active_biपंचांगap(adev);
 			active_rbs |= data << ((i * adev->gfx.config.max_sh_per_se + j) *
-					       rb_bitmap_width_per_sh);
-		}
-	}
+					       rb_biपंचांगap_width_per_sh);
+		पूर्ण
+	पूर्ण
 	gfx_v7_0_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
 
 	adev->gfx.config.backend_enable_mask = active_rbs;
 	adev->gfx.config.num_rbs = hweight32(active_rbs);
 
-	num_rb_pipes = min_t(unsigned, adev->gfx.config.max_backends_per_se *
+	num_rb_pipes = min_t(अचिन्हित, adev->gfx.config.max_backends_per_se *
 			     adev->gfx.config.max_shader_engines, 16);
 
 	gfx_v7_0_raster_config(adev, &raster_config, &raster_config_1);
 
-	if (!adev->gfx.config.backend_enable_mask ||
-			adev->gfx.config.num_rbs >= num_rb_pipes) {
+	अगर (!adev->gfx.config.backend_enable_mask ||
+			adev->gfx.config.num_rbs >= num_rb_pipes) अणु
 		WREG32(mmPA_SC_RASTER_CONFIG, raster_config);
 		WREG32(mmPA_SC_RASTER_CONFIG_1, raster_config_1);
-	} else {
-		gfx_v7_0_write_harvested_raster_configs(adev, raster_config, raster_config_1,
+	पूर्ण अन्यथा अणु
+		gfx_v7_0_ग_लिखो_harvested_raster_configs(adev, raster_config, raster_config_1,
 							adev->gfx.config.backend_enable_mask,
 							num_rb_pipes);
-	}
+	पूर्ण
 
-	/* cache the values for userspace */
-	for (i = 0; i < adev->gfx.config.max_shader_engines; i++) {
-		for (j = 0; j < adev->gfx.config.max_sh_per_se; j++) {
+	/* cache the values क्रम userspace */
+	क्रम (i = 0; i < adev->gfx.config.max_shader_engines; i++) अणु
+		क्रम (j = 0; j < adev->gfx.config.max_sh_per_se; j++) अणु
 			gfx_v7_0_select_se_sh(adev, i, j, 0xffffffff);
 			adev->gfx.config.rb_config[i][j].rb_backend_disable =
 				RREG32(mmCC_RB_BACKEND_DISABLE);
@@ -1833,26 +1834,26 @@ static void gfx_v7_0_setup_rb(struct amdgpu_device *adev)
 				RREG32(mmPA_SC_RASTER_CONFIG);
 			adev->gfx.config.rb_config[i][j].raster_config_1 =
 				RREG32(mmPA_SC_RASTER_CONFIG_1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	gfx_v7_0_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
 	mutex_unlock(&adev->grbm_idx_mutex);
-}
+पूर्ण
 
-#define DEFAULT_SH_MEM_BASES	(0x6000)
+#घोषणा DEFAULT_SH_MEM_BASES	(0x6000)
 /**
  * gfx_v7_0_init_compute_vmid - gart enable
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Initialize compute vmid sh_mem registers
+ * Initialize compute vmid sh_mem रेजिस्टरs
  *
  */
-static void gfx_v7_0_init_compute_vmid(struct amdgpu_device *adev)
-{
-	int i;
-	uint32_t sh_mem_config;
-	uint32_t sh_mem_bases;
+अटल व्योम gfx_v7_0_init_compute_vmid(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
+	uपूर्णांक32_t sh_mem_config;
+	uपूर्णांक32_t sh_mem_bases;
 
 	/*
 	 * Configure apertures:
@@ -1865,63 +1866,63 @@ static void gfx_v7_0_init_compute_vmid(struct amdgpu_device *adev)
 			SH_MEM_CONFIG__ALIGNMENT_MODE__SHIFT;
 	sh_mem_config |= MTYPE_NONCACHED << SH_MEM_CONFIG__DEFAULT_MTYPE__SHIFT;
 	mutex_lock(&adev->srbm_mutex);
-	for (i = adev->vm_manager.first_kfd_vmid; i < AMDGPU_NUM_VMID; i++) {
+	क्रम (i = adev->vm_manager.first_kfd_vmid; i < AMDGPU_NUM_VMID; i++) अणु
 		cik_srbm_select(adev, 0, 0, 0, i);
 		/* CP and shaders */
 		WREG32(mmSH_MEM_CONFIG, sh_mem_config);
 		WREG32(mmSH_MEM_APE1_BASE, 1);
 		WREG32(mmSH_MEM_APE1_LIMIT, 0);
 		WREG32(mmSH_MEM_BASES, sh_mem_bases);
-	}
+	पूर्ण
 	cik_srbm_select(adev, 0, 0, 0, 0);
 	mutex_unlock(&adev->srbm_mutex);
 
 	/* Initialize all compute VMIDs to have no GDS, GWS, or OA
-	   access. These should be enabled by FW for target VMIDs. */
-	for (i = adev->vm_manager.first_kfd_vmid; i < AMDGPU_NUM_VMID; i++) {
+	   access. These should be enabled by FW क्रम target VMIDs. */
+	क्रम (i = adev->vm_manager.first_kfd_vmid; i < AMDGPU_NUM_VMID; i++) अणु
 		WREG32(amdgpu_gds_reg_offset[i].mem_base, 0);
 		WREG32(amdgpu_gds_reg_offset[i].mem_size, 0);
 		WREG32(amdgpu_gds_reg_offset[i].gws, 0);
 		WREG32(amdgpu_gds_reg_offset[i].oa, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_init_gds_vmid(struct amdgpu_device *adev)
-{
-	int vmid;
+अटल व्योम gfx_v7_0_init_gds_vmid(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक vmid;
 
 	/*
 	 * Initialize all compute and user-gfx VMIDs to have no GDS, GWS, or OA
-	 * access. Compute VMIDs should be enabled by FW for target VMIDs,
-	 * the driver can enable them for graphics. VMID0 should maintain
+	 * access. Compute VMIDs should be enabled by FW क्रम target VMIDs,
+	 * the driver can enable them क्रम graphics. VMID0 should मुख्यtain
 	 * access so that HWS firmware can save/restore entries.
 	 */
-	for (vmid = 1; vmid < AMDGPU_NUM_VMID; vmid++) {
+	क्रम (vmid = 1; vmid < AMDGPU_NUM_VMID; vmid++) अणु
 		WREG32(amdgpu_gds_reg_offset[vmid].mem_base, 0);
 		WREG32(amdgpu_gds_reg_offset[vmid].mem_size, 0);
 		WREG32(amdgpu_gds_reg_offset[vmid].gws, 0);
 		WREG32(amdgpu_gds_reg_offset[vmid].oa, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_config_init(struct amdgpu_device *adev)
-{
-	adev->gfx.config.double_offchip_lds_buf = 1;
-}
+अटल व्योम gfx_v7_0_config_init(काष्ठा amdgpu_device *adev)
+अणु
+	adev->gfx.config.द्विगुन_offchip_lds_buf = 1;
+पूर्ण
 
 /**
- * gfx_v7_0_constants_init - setup the 3D engine
+ * gfx_v7_0_स्थिरants_init - setup the 3D engine
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * init the gfx constants such as the 3D engine, tiling configuration
- * registers, maximum number of quad pipes, render backends...
+ * init the gfx स्थिरants such as the 3D engine, tiling configuration
+ * रेजिस्टरs, maximum number of quad pipes, render backends...
  */
-static void gfx_v7_0_constants_init(struct amdgpu_device *adev)
-{
-	u32 sh_mem_cfg, sh_static_mem_cfg, sh_mem_base;
-	u32 tmp;
-	int i;
+अटल व्योम gfx_v7_0_स्थिरants_init(काष्ठा amdgpu_device *adev)
+अणु
+	u32 sh_mem_cfg, sh_अटल_mem_cfg, sh_mem_base;
+	u32 पंचांगp;
+	पूर्णांक i;
 
 	WREG32(mmGRBM_CNTL, (0xff << GRBM_CNTL__READ_TIMEOUT__SHIFT));
 
@@ -1935,14 +1936,14 @@ static void gfx_v7_0_constants_init(struct amdgpu_device *adev)
 	gfx_v7_0_get_cu_info(adev);
 	gfx_v7_0_config_init(adev);
 
-	/* set HW defaults for 3D engine */
+	/* set HW शेषs क्रम 3D engine */
 	WREG32(mmCP_MEQ_THRESHOLDS,
 	       (0x30 << CP_MEQ_THRESHOLDS__MEQ1_START__SHIFT) |
 	       (0x60 << CP_MEQ_THRESHOLDS__MEQ2_START__SHIFT));
 
 	mutex_lock(&adev->grbm_idx_mutex);
 	/*
-	 * making sure that the following register writes will be broadcasted
+	 * making sure that the following रेजिस्टर ग_लिखोs will be broadcasted
 	 * to all the shaders
 	 */
 	gfx_v7_0_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
@@ -1957,19 +1958,19 @@ static void gfx_v7_0_constants_init(struct amdgpu_device *adev)
 				   MTYPE_UC);
 	sh_mem_cfg = REG_SET_FIELD(sh_mem_cfg, SH_MEM_CONFIG, PRIVATE_ATC, 0);
 
-	sh_static_mem_cfg = REG_SET_FIELD(0, SH_STATIC_MEM_CONFIG,
+	sh_अटल_mem_cfg = REG_SET_FIELD(0, SH_STATIC_MEM_CONFIG,
 				   SWIZZLE_ENABLE, 1);
-	sh_static_mem_cfg = REG_SET_FIELD(sh_static_mem_cfg, SH_STATIC_MEM_CONFIG,
+	sh_अटल_mem_cfg = REG_SET_FIELD(sh_अटल_mem_cfg, SH_STATIC_MEM_CONFIG,
 				   ELEMENT_SIZE, 1);
-	sh_static_mem_cfg = REG_SET_FIELD(sh_static_mem_cfg, SH_STATIC_MEM_CONFIG,
+	sh_अटल_mem_cfg = REG_SET_FIELD(sh_अटल_mem_cfg, SH_STATIC_MEM_CONFIG,
 				   INDEX_STRIDE, 3);
-	WREG32(mmSH_STATIC_MEM_CONFIG, sh_static_mem_cfg);
+	WREG32(mmSH_STATIC_MEM_CONFIG, sh_अटल_mem_cfg);
 
 	mutex_lock(&adev->srbm_mutex);
-	for (i = 0; i < adev->vm_manager.id_mgr[0].num_ids; i++) {
-		if (i == 0)
+	क्रम (i = 0; i < adev->vm_manager.id_mgr[0].num_ids; i++) अणु
+		अगर (i == 0)
 			sh_mem_base = 0;
-		else
+		अन्यथा
 			sh_mem_base = adev->gmc.shared_aperture_start >> 48;
 		cik_srbm_select(adev, 0, 0, 0, i);
 		/* CP and shaders */
@@ -1977,7 +1978,7 @@ static void gfx_v7_0_constants_init(struct amdgpu_device *adev)
 		WREG32(mmSH_MEM_APE1_BASE, 1);
 		WREG32(mmSH_MEM_APE1_LIMIT, 0);
 		WREG32(mmSH_MEM_BASES, sh_mem_base);
-	}
+	पूर्ण
 	cik_srbm_select(adev, 0, 0, 0, 0);
 	mutex_unlock(&adev->srbm_mutex);
 
@@ -1988,33 +1989,33 @@ static void gfx_v7_0_constants_init(struct amdgpu_device *adev)
 
 	WREG32(mmTA_CNTL_AUX, 0x00010000);
 
-	tmp = RREG32(mmSPI_CONFIG_CNTL);
-	tmp |= 0x03000000;
-	WREG32(mmSPI_CONFIG_CNTL, tmp);
+	पंचांगp = RREG32(mmSPI_CONFIG_CNTL);
+	पंचांगp |= 0x03000000;
+	WREG32(mmSPI_CONFIG_CNTL, पंचांगp);
 
 	WREG32(mmSQ_CONFIG, 1);
 
 	WREG32(mmDB_DEBUG, 0);
 
-	tmp = RREG32(mmDB_DEBUG2) & ~0xf00fffff;
-	tmp |= 0x00000400;
-	WREG32(mmDB_DEBUG2, tmp);
+	पंचांगp = RREG32(mmDB_DEBUG2) & ~0xf00fffff;
+	पंचांगp |= 0x00000400;
+	WREG32(mmDB_DEBUG2, पंचांगp);
 
-	tmp = RREG32(mmDB_DEBUG3) & ~0x0002021c;
-	tmp |= 0x00020200;
-	WREG32(mmDB_DEBUG3, tmp);
+	पंचांगp = RREG32(mmDB_DEBUG3) & ~0x0002021c;
+	पंचांगp |= 0x00020200;
+	WREG32(mmDB_DEBUG3, पंचांगp);
 
-	tmp = RREG32(mmCB_HW_CONTROL) & ~0x00010000;
-	tmp |= 0x00018208;
-	WREG32(mmCB_HW_CONTROL, tmp);
+	पंचांगp = RREG32(mmCB_HW_CONTROL) & ~0x00010000;
+	पंचांगp |= 0x00018208;
+	WREG32(mmCB_HW_CONTROL, पंचांगp);
 
 	WREG32(mmSPI_CONFIG_CNTL_1, (4 << SPI_CONFIG_CNTL_1__VTX_DONE_DELAY__SHIFT));
 
 	WREG32(mmPA_SC_FIFO_SIZE,
-		((adev->gfx.config.sc_prim_fifo_size_frontend << PA_SC_FIFO_SIZE__SC_FRONTEND_PRIM_FIFO_SIZE__SHIFT) |
-		(adev->gfx.config.sc_prim_fifo_size_backend << PA_SC_FIFO_SIZE__SC_BACKEND_PRIM_FIFO_SIZE__SHIFT) |
-		(adev->gfx.config.sc_hiz_tile_fifo_size << PA_SC_FIFO_SIZE__SC_HIZ_TILE_FIFO_SIZE__SHIFT) |
-		(adev->gfx.config.sc_earlyz_tile_fifo_size << PA_SC_FIFO_SIZE__SC_EARLYZ_TILE_FIFO_SIZE__SHIFT)));
+		((adev->gfx.config.sc_prim_fअगरo_size_frontend << PA_SC_FIFO_SIZE__SC_FRONTEND_PRIM_FIFO_SIZE__SHIFT) |
+		(adev->gfx.config.sc_prim_fअगरo_size_backend << PA_SC_FIFO_SIZE__SC_BACKEND_PRIM_FIFO_SIZE__SHIFT) |
+		(adev->gfx.config.sc_hiz_tile_fअगरo_size << PA_SC_FIFO_SIZE__SC_HIZ_TILE_FIFO_SIZE__SHIFT) |
+		(adev->gfx.config.sc_earlyz_tile_fअगरo_size << PA_SC_FIFO_SIZE__SC_EARLYZ_TILE_FIFO_SIZE__SHIFT)));
 
 	WREG32(mmVGT_NUM_INSTANCES, 1);
 
@@ -2037,137 +2038,137 @@ static void gfx_v7_0_constants_init(struct amdgpu_device *adev)
 			(3 << PA_CL_ENHANCE__NUM_CLIP_SEQ__SHIFT));
 	WREG32(mmPA_SC_ENHANCE, PA_SC_ENHANCE__ENABLE_PA_SC_OUT_OF_ORDER_MASK);
 
-	tmp = RREG32(mmSPI_ARB_PRIORITY);
-	tmp = REG_SET_FIELD(tmp, SPI_ARB_PRIORITY, PIPE_ORDER_TS0, 2);
-	tmp = REG_SET_FIELD(tmp, SPI_ARB_PRIORITY, PIPE_ORDER_TS1, 2);
-	tmp = REG_SET_FIELD(tmp, SPI_ARB_PRIORITY, PIPE_ORDER_TS2, 2);
-	tmp = REG_SET_FIELD(tmp, SPI_ARB_PRIORITY, PIPE_ORDER_TS3, 2);
-	WREG32(mmSPI_ARB_PRIORITY, tmp);
+	पंचांगp = RREG32(mmSPI_ARB_PRIORITY);
+	पंचांगp = REG_SET_FIELD(पंचांगp, SPI_ARB_PRIORITY, PIPE_ORDER_TS0, 2);
+	पंचांगp = REG_SET_FIELD(पंचांगp, SPI_ARB_PRIORITY, PIPE_ORDER_TS1, 2);
+	पंचांगp = REG_SET_FIELD(पंचांगp, SPI_ARB_PRIORITY, PIPE_ORDER_TS2, 2);
+	पंचांगp = REG_SET_FIELD(पंचांगp, SPI_ARB_PRIORITY, PIPE_ORDER_TS3, 2);
+	WREG32(mmSPI_ARB_PRIORITY, पंचांगp);
 
 	mutex_unlock(&adev->grbm_idx_mutex);
 
 	udelay(50);
-}
+पूर्ण
 
 /*
- * GPU scratch registers helpers function.
+ * GPU scratch रेजिस्टरs helpers function.
  */
 /**
- * gfx_v7_0_scratch_init - setup driver info for CP scratch regs
+ * gfx_v7_0_scratch_init - setup driver info क्रम CP scratch regs
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Set up the number and offset of the CP scratch registers.
- * NOTE: use of CP scratch registers is a legacy interface and
- * is not used by default on newer asics (r6xx+).  On newer asics,
- * memory buffers are used for fences rather than scratch regs.
+ * Set up the number and offset of the CP scratch रेजिस्टरs.
+ * NOTE: use of CP scratch रेजिस्टरs is a legacy पूर्णांकerface and
+ * is not used by शेष on newer asics (r6xx+).  On newer asics,
+ * memory buffers are used क्रम fences rather than scratch regs.
  */
-static void gfx_v7_0_scratch_init(struct amdgpu_device *adev)
-{
+अटल व्योम gfx_v7_0_scratch_init(काष्ठा amdgpu_device *adev)
+अणु
 	adev->gfx.scratch.num_reg = 8;
 	adev->gfx.scratch.reg_base = mmSCRATCH_REG0;
-	adev->gfx.scratch.free_mask = (1u << adev->gfx.scratch.num_reg) - 1;
-}
+	adev->gfx.scratch.मुक्त_mask = (1u << adev->gfx.scratch.num_reg) - 1;
+पूर्ण
 
 /**
  * gfx_v7_0_ring_test_ring - basic gfx ring test
  *
- * @ring: amdgpu_ring structure holding ring information
+ * @ring: amdgpu_ring काष्ठाure holding ring inक्रमmation
  *
- * Allocate a scratch register and write to it using the gfx ring (CIK).
- * Provides a basic gfx ring test to verify that the ring is working.
+ * Allocate a scratch रेजिस्टर and ग_लिखो to it using the gfx ring (CIK).
+ * Provides a basic gfx ring test to verअगरy that the ring is working.
  * Used by gfx_v7_0_cp_gfx_resume();
  * Returns 0 on success, error on failure.
  */
-static int gfx_v7_0_ring_test_ring(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
-	uint32_t scratch;
-	uint32_t tmp = 0;
-	unsigned i;
-	int r;
+अटल पूर्णांक gfx_v7_0_ring_test_ring(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	uपूर्णांक32_t scratch;
+	uपूर्णांक32_t पंचांगp = 0;
+	अचिन्हित i;
+	पूर्णांक r;
 
 	r = amdgpu_gfx_scratch_get(adev, &scratch);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	WREG32(scratch, 0xCAFEDEAD);
 	r = amdgpu_ring_alloc(ring, 3);
-	if (r)
-		goto error_free_scratch;
+	अगर (r)
+		जाओ error_मुक्त_scratch;
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_SET_UCONFIG_REG, 1));
-	amdgpu_ring_write(ring, (scratch - PACKET3_SET_UCONFIG_REG_START));
-	amdgpu_ring_write(ring, 0xDEADBEEF);
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SET_UCONFIG_REG, 1));
+	amdgpu_ring_ग_लिखो(ring, (scratch - PACKET3_SET_UCONFIG_REG_START));
+	amdgpu_ring_ग_लिखो(ring, 0xDEADBEEF);
 	amdgpu_ring_commit(ring);
 
-	for (i = 0; i < adev->usec_timeout; i++) {
-		tmp = RREG32(scratch);
-		if (tmp == 0xDEADBEEF)
-			break;
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		पंचांगp = RREG32(scratch);
+		अगर (पंचांगp == 0xDEADBEEF)
+			अवरोध;
 		udelay(1);
-	}
-	if (i >= adev->usec_timeout)
+	पूर्ण
+	अगर (i >= adev->usec_समयout)
 		r = -ETIMEDOUT;
 
-error_free_scratch:
-	amdgpu_gfx_scratch_free(adev, scratch);
-	return r;
-}
+error_मुक्त_scratch:
+	amdgpu_gfx_scratch_मुक्त(adev, scratch);
+	वापस r;
+पूर्ण
 
 /**
  * gfx_v7_0_ring_emit_hdp - emit an hdp flush on the cp
  *
- * @ring: amdgpu_ring structure holding ring information
+ * @ring: amdgpu_ring काष्ठाure holding ring inक्रमmation
  *
  * Emits an hdp flush on the cp.
  */
-static void gfx_v7_0_ring_emit_hdp_flush(struct amdgpu_ring *ring)
-{
+अटल व्योम gfx_v7_0_ring_emit_hdp_flush(काष्ठा amdgpu_ring *ring)
+अणु
 	u32 ref_and_mask;
-	int usepfp = ring->funcs->type == AMDGPU_RING_TYPE_COMPUTE ? 0 : 1;
+	पूर्णांक usepfp = ring->funcs->type == AMDGPU_RING_TYPE_COMPUTE ? 0 : 1;
 
-	if (ring->funcs->type == AMDGPU_RING_TYPE_COMPUTE) {
-		switch (ring->me) {
-		case 1:
+	अगर (ring->funcs->type == AMDGPU_RING_TYPE_COMPUTE) अणु
+		चयन (ring->me) अणु
+		हाल 1:
 			ref_and_mask = GPU_HDP_FLUSH_DONE__CP2_MASK << ring->pipe;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			ref_and_mask = GPU_HDP_FLUSH_DONE__CP6_MASK << ring->pipe;
-			break;
-		default:
-			return;
-		}
-	} else {
+			अवरोध;
+		शेष:
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ref_and_mask = GPU_HDP_FLUSH_DONE__CP0_MASK;
-	}
+	पूर्ण
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_WAIT_REG_MEM, 5));
-	amdgpu_ring_write(ring, (WAIT_REG_MEM_OPERATION(1) | /* write, wait, write */
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_WAIT_REG_MEM, 5));
+	amdgpu_ring_ग_लिखो(ring, (WAIT_REG_MEM_OPERATION(1) | /* ग_लिखो, रुको, ग_लिखो */
 				 WAIT_REG_MEM_FUNCTION(3) |  /* == */
 				 WAIT_REG_MEM_ENGINE(usepfp)));   /* pfp or me */
-	amdgpu_ring_write(ring, mmGPU_HDP_FLUSH_REQ);
-	amdgpu_ring_write(ring, mmGPU_HDP_FLUSH_DONE);
-	amdgpu_ring_write(ring, ref_and_mask);
-	amdgpu_ring_write(ring, ref_and_mask);
-	amdgpu_ring_write(ring, 0x20); /* poll interval */
-}
+	amdgpu_ring_ग_लिखो(ring, mmGPU_HDP_FLUSH_REQ);
+	amdgpu_ring_ग_लिखो(ring, mmGPU_HDP_FLUSH_DONE);
+	amdgpu_ring_ग_लिखो(ring, ref_and_mask);
+	amdgpu_ring_ग_लिखो(ring, ref_and_mask);
+	amdgpu_ring_ग_लिखो(ring, 0x20); /* poll पूर्णांकerval */
+पूर्ण
 
-static void gfx_v7_0_ring_emit_vgt_flush(struct amdgpu_ring *ring)
-{
-	amdgpu_ring_write(ring, PACKET3(PACKET3_EVENT_WRITE, 0));
-	amdgpu_ring_write(ring, EVENT_TYPE(VS_PARTIAL_FLUSH) |
+अटल व्योम gfx_v7_0_ring_emit_vgt_flush(काष्ठा amdgpu_ring *ring)
+अणु
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_EVENT_WRITE, 0));
+	amdgpu_ring_ग_लिखो(ring, EVENT_TYPE(VS_PARTIAL_FLUSH) |
 		EVENT_INDEX(4));
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_EVENT_WRITE, 0));
-	amdgpu_ring_write(ring, EVENT_TYPE(VGT_FLUSH) |
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_EVENT_WRITE, 0));
+	amdgpu_ring_ग_लिखो(ring, EVENT_TYPE(VGT_FLUSH) |
 		EVENT_INDEX(0));
-}
+पूर्ण
 
 /**
  * gfx_v7_0_ring_emit_fence_gfx - emit a fence on the gfx ring
  *
- * @ring: amdgpu_ring structure holding ring information
+ * @ring: amdgpu_ring काष्ठाure holding ring inक्रमmation
  * @addr: address
  * @seq: sequence number
  * @flags: fence related flags
@@ -2175,42 +2176,42 @@ static void gfx_v7_0_ring_emit_vgt_flush(struct amdgpu_ring *ring)
  * Emits a fence sequence number on the gfx ring and flushes
  * GPU caches.
  */
-static void gfx_v7_0_ring_emit_fence_gfx(struct amdgpu_ring *ring, u64 addr,
-					 u64 seq, unsigned flags)
-{
-	bool write64bit = flags & AMDGPU_FENCE_FLAG_64BIT;
-	bool int_sel = flags & AMDGPU_FENCE_FLAG_INT;
-	/* Workaround for cache flush problems. First send a dummy EOP
-	 * event down the pipe with seq one below.
+अटल व्योम gfx_v7_0_ring_emit_fence_gfx(काष्ठा amdgpu_ring *ring, u64 addr,
+					 u64 seq, अचिन्हित flags)
+अणु
+	bool ग_लिखो64bit = flags & AMDGPU_FENCE_FLAG_64BIT;
+	bool पूर्णांक_sel = flags & AMDGPU_FENCE_FLAG_INT;
+	/* Workaround क्रम cache flush problems. First send a dummy EOP
+	 * event करोwn the pipe with seq one below.
 	 */
-	amdgpu_ring_write(ring, PACKET3(PACKET3_EVENT_WRITE_EOP, 4));
-	amdgpu_ring_write(ring, (EOP_TCL1_ACTION_EN |
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_EVENT_WRITE_EOP, 4));
+	amdgpu_ring_ग_लिखो(ring, (EOP_TCL1_ACTION_EN |
 				 EOP_TC_ACTION_EN |
 				 EVENT_TYPE(CACHE_FLUSH_AND_INV_TS_EVENT) |
 				 EVENT_INDEX(5)));
-	amdgpu_ring_write(ring, addr & 0xfffffffc);
-	amdgpu_ring_write(ring, (upper_32_bits(addr) & 0xffff) |
+	amdgpu_ring_ग_लिखो(ring, addr & 0xfffffffc);
+	amdgpu_ring_ग_लिखो(ring, (upper_32_bits(addr) & 0xffff) |
 				DATA_SEL(1) | INT_SEL(0));
-	amdgpu_ring_write(ring, lower_32_bits(seq - 1));
-	amdgpu_ring_write(ring, upper_32_bits(seq - 1));
+	amdgpu_ring_ग_लिखो(ring, lower_32_bits(seq - 1));
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(seq - 1));
 
-	/* Then send the real EOP event down the pipe. */
-	amdgpu_ring_write(ring, PACKET3(PACKET3_EVENT_WRITE_EOP, 4));
-	amdgpu_ring_write(ring, (EOP_TCL1_ACTION_EN |
+	/* Then send the real EOP event करोwn the pipe. */
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_EVENT_WRITE_EOP, 4));
+	amdgpu_ring_ग_लिखो(ring, (EOP_TCL1_ACTION_EN |
 				 EOP_TC_ACTION_EN |
 				 EVENT_TYPE(CACHE_FLUSH_AND_INV_TS_EVENT) |
 				 EVENT_INDEX(5)));
-	amdgpu_ring_write(ring, addr & 0xfffffffc);
-	amdgpu_ring_write(ring, (upper_32_bits(addr) & 0xffff) |
-				DATA_SEL(write64bit ? 2 : 1) | INT_SEL(int_sel ? 2 : 0));
-	amdgpu_ring_write(ring, lower_32_bits(seq));
-	amdgpu_ring_write(ring, upper_32_bits(seq));
-}
+	amdgpu_ring_ग_लिखो(ring, addr & 0xfffffffc);
+	amdgpu_ring_ग_लिखो(ring, (upper_32_bits(addr) & 0xffff) |
+				DATA_SEL(ग_लिखो64bit ? 2 : 1) | INT_SEL(पूर्णांक_sel ? 2 : 0));
+	amdgpu_ring_ग_लिखो(ring, lower_32_bits(seq));
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(seq));
+पूर्ण
 
 /**
  * gfx_v7_0_ring_emit_fence_compute - emit a fence on the compute ring
  *
- * @ring: amdgpu_ring structure holding ring information
+ * @ring: amdgpu_ring काष्ठाure holding ring inक्रमmation
  * @addr: address
  * @seq: sequence number
  * @flags: fence related flags
@@ -2218,25 +2219,25 @@ static void gfx_v7_0_ring_emit_fence_gfx(struct amdgpu_ring *ring, u64 addr,
  * Emits a fence sequence number on the compute ring and flushes
  * GPU caches.
  */
-static void gfx_v7_0_ring_emit_fence_compute(struct amdgpu_ring *ring,
+अटल व्योम gfx_v7_0_ring_emit_fence_compute(काष्ठा amdgpu_ring *ring,
 					     u64 addr, u64 seq,
-					     unsigned flags)
-{
-	bool write64bit = flags & AMDGPU_FENCE_FLAG_64BIT;
-	bool int_sel = flags & AMDGPU_FENCE_FLAG_INT;
+					     अचिन्हित flags)
+अणु
+	bool ग_लिखो64bit = flags & AMDGPU_FENCE_FLAG_64BIT;
+	bool पूर्णांक_sel = flags & AMDGPU_FENCE_FLAG_INT;
 
-	/* RELEASE_MEM - flush caches, send int */
-	amdgpu_ring_write(ring, PACKET3(PACKET3_RELEASE_MEM, 5));
-	amdgpu_ring_write(ring, (EOP_TCL1_ACTION_EN |
+	/* RELEASE_MEM - flush caches, send पूर्णांक */
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_RELEASE_MEM, 5));
+	amdgpu_ring_ग_लिखो(ring, (EOP_TCL1_ACTION_EN |
 				 EOP_TC_ACTION_EN |
 				 EVENT_TYPE(CACHE_FLUSH_AND_INV_TS_EVENT) |
 				 EVENT_INDEX(5)));
-	amdgpu_ring_write(ring, DATA_SEL(write64bit ? 2 : 1) | INT_SEL(int_sel ? 2 : 0));
-	amdgpu_ring_write(ring, addr & 0xfffffffc);
-	amdgpu_ring_write(ring, upper_32_bits(addr));
-	amdgpu_ring_write(ring, lower_32_bits(seq));
-	amdgpu_ring_write(ring, upper_32_bits(seq));
-}
+	amdgpu_ring_ग_लिखो(ring, DATA_SEL(ग_लिखो64bit ? 2 : 1) | INT_SEL(पूर्णांक_sel ? 2 : 0));
+	amdgpu_ring_ग_लिखो(ring, addr & 0xfffffffc);
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(addr));
+	amdgpu_ring_ग_लिखो(ring, lower_32_bits(seq));
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(seq));
+पूर्ण
 
 /*
  * IB stuff
@@ -2244,88 +2245,88 @@ static void gfx_v7_0_ring_emit_fence_compute(struct amdgpu_ring *ring,
 /**
  * gfx_v7_0_ring_emit_ib - emit an IB (Indirect Buffer) on the ring
  *
- * @ring: amdgpu_ring structure holding ring information
+ * @ring: amdgpu_ring काष्ठाure holding ring inक्रमmation
  * @job: job to retrieve vmid from
  * @ib: amdgpu indirect buffer object
  * @flags: options (AMDGPU_HAVE_CTX_SWITCH)
  *
- * Emits an DE (drawing engine) or CE (constant engine) IB
+ * Emits an DE (drawing engine) or CE (स्थिरant engine) IB
  * on the gfx ring.  IBs are usually generated by userspace
- * acceleration drivers and submitted to the kernel for
+ * acceleration drivers and submitted to the kernel क्रम
  * scheduling on the ring.  This function schedules the IB
- * on the gfx ring for execution by the GPU.
+ * on the gfx ring क्रम execution by the GPU.
  */
-static void gfx_v7_0_ring_emit_ib_gfx(struct amdgpu_ring *ring,
-					struct amdgpu_job *job,
-					struct amdgpu_ib *ib,
-					uint32_t flags)
-{
-	unsigned vmid = AMDGPU_JOB_GET_VMID(job);
+अटल व्योम gfx_v7_0_ring_emit_ib_gfx(काष्ठा amdgpu_ring *ring,
+					काष्ठा amdgpu_job *job,
+					काष्ठा amdgpu_ib *ib,
+					uपूर्णांक32_t flags)
+अणु
+	अचिन्हित vmid = AMDGPU_JOB_GET_VMID(job);
 	u32 header, control = 0;
 
-	/* insert SWITCH_BUFFER packet before first IB in the ring frame */
-	if (flags & AMDGPU_HAVE_CTX_SWITCH) {
-		amdgpu_ring_write(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
-		amdgpu_ring_write(ring, 0);
-	}
+	/* insert SWITCH_BUFFER packet beक्रमe first IB in the ring frame */
+	अगर (flags & AMDGPU_HAVE_CTX_SWITCH) अणु
+		amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
+		amdgpu_ring_ग_लिखो(ring, 0);
+	पूर्ण
 
-	if (ib->flags & AMDGPU_IB_FLAG_CE)
-		header = PACKET3(PACKET3_INDIRECT_BUFFER_CONST, 2);
-	else
-		header = PACKET3(PACKET3_INDIRECT_BUFFER, 2);
+	अगर (ib->flags & AMDGPU_IB_FLAG_CE)
+		header = PACKET3(PACKET3_INसूचीECT_BUFFER_CONST, 2);
+	अन्यथा
+		header = PACKET3(PACKET3_INसूचीECT_BUFFER, 2);
 
 	control |= ib->length_dw | (vmid << 24);
 
-	amdgpu_ring_write(ring, header);
-	amdgpu_ring_write(ring,
-#ifdef __BIG_ENDIAN
+	amdgpu_ring_ग_लिखो(ring, header);
+	amdgpu_ring_ग_लिखो(ring,
+#अगर_घोषित __BIG_ENDIAN
 			  (2 << 0) |
-#endif
+#पूर्ण_अगर
 			  (ib->gpu_addr & 0xFFFFFFFC));
-	amdgpu_ring_write(ring, upper_32_bits(ib->gpu_addr) & 0xFFFF);
-	amdgpu_ring_write(ring, control);
-}
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(ib->gpu_addr) & 0xFFFF);
+	amdgpu_ring_ग_लिखो(ring, control);
+पूर्ण
 
-static void gfx_v7_0_ring_emit_ib_compute(struct amdgpu_ring *ring,
-					  struct amdgpu_job *job,
-					  struct amdgpu_ib *ib,
-					  uint32_t flags)
-{
-	unsigned vmid = AMDGPU_JOB_GET_VMID(job);
-	u32 control = INDIRECT_BUFFER_VALID | ib->length_dw | (vmid << 24);
+अटल व्योम gfx_v7_0_ring_emit_ib_compute(काष्ठा amdgpu_ring *ring,
+					  काष्ठा amdgpu_job *job,
+					  काष्ठा amdgpu_ib *ib,
+					  uपूर्णांक32_t flags)
+अणु
+	अचिन्हित vmid = AMDGPU_JOB_GET_VMID(job);
+	u32 control = INसूचीECT_BUFFER_VALID | ib->length_dw | (vmid << 24);
 
 	/* Currently, there is a high possibility to get wave ID mismatch
 	 * between ME and GDS, leading to a hw deadlock, because ME generates
-	 * different wave IDs than the GDS expects. This situation happens
-	 * randomly when at least 5 compute pipes use GDS ordered append.
+	 * dअगरferent wave IDs than the GDS expects. This situation happens
+	 * अक्रमomly when at least 5 compute pipes use GDS ordered append.
 	 * The wave IDs generated by ME are also wrong after suspend/resume.
-	 * Those are probably bugs somewhere else in the kernel driver.
+	 * Those are probably bugs somewhere अन्यथा in the kernel driver.
 	 *
 	 * Writing GDS_COMPUTE_MAX_WAVE_ID resets wave ID counters in ME and
-	 * GDS to 0 for this ring (me/pipe).
+	 * GDS to 0 क्रम this ring (me/pipe).
 	 */
-	if (ib->flags & AMDGPU_IB_FLAG_RESET_GDS_MAX_WAVE_ID) {
-		amdgpu_ring_write(ring, PACKET3(PACKET3_SET_CONFIG_REG, 1));
-		amdgpu_ring_write(ring, mmGDS_COMPUTE_MAX_WAVE_ID - PACKET3_SET_CONFIG_REG_START);
-		amdgpu_ring_write(ring, ring->adev->gds.gds_compute_max_wave_id);
-	}
+	अगर (ib->flags & AMDGPU_IB_FLAG_RESET_GDS_MAX_WAVE_ID) अणु
+		amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SET_CONFIG_REG, 1));
+		amdgpu_ring_ग_लिखो(ring, mmGDS_COMPUTE_MAX_WAVE_ID - PACKET3_SET_CONFIG_REG_START);
+		amdgpu_ring_ग_लिखो(ring, ring->adev->gds.gds_compute_max_wave_id);
+	पूर्ण
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_INDIRECT_BUFFER, 2));
-	amdgpu_ring_write(ring,
-#ifdef __BIG_ENDIAN
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_INसूचीECT_BUFFER, 2));
+	amdgpu_ring_ग_लिखो(ring,
+#अगर_घोषित __BIG_ENDIAN
 					  (2 << 0) |
-#endif
+#पूर्ण_अगर
 					  (ib->gpu_addr & 0xFFFFFFFC));
-	amdgpu_ring_write(ring, upper_32_bits(ib->gpu_addr) & 0xFFFF);
-	amdgpu_ring_write(ring, control);
-}
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(ib->gpu_addr) & 0xFFFF);
+	amdgpu_ring_ग_लिखो(ring, control);
+पूर्ण
 
-static void gfx_v7_ring_emit_cntxcntl(struct amdgpu_ring *ring, uint32_t flags)
-{
-	uint32_t dw2 = 0;
+अटल व्योम gfx_v7_ring_emit_cntxcntl(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t flags)
+अणु
+	uपूर्णांक32_t dw2 = 0;
 
 	dw2 |= 0x80000000; /* set load_enable otherwise this package is just NOPs */
-	if (flags & AMDGPU_HAVE_CTX_SWITCH) {
+	अगर (flags & AMDGPU_HAVE_CTX_SWITCH) अणु
 		gfx_v7_0_ring_emit_vgt_flush(ring);
 		/* set load_global_config & load_global_uconfig */
 		dw2 |= 0x8001;
@@ -2333,72 +2334,72 @@ static void gfx_v7_ring_emit_cntxcntl(struct amdgpu_ring *ring, uint32_t flags)
 		dw2 |= 0x01000000;
 		/* set load_per_context_state & load_gfx_sh_regs */
 		dw2 |= 0x10002;
-	}
+	पूर्ण
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_CONTEXT_CONTROL, 1));
-	amdgpu_ring_write(ring, dw2);
-	amdgpu_ring_write(ring, 0);
-}
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_CONTEXT_CONTROL, 1));
+	amdgpu_ring_ग_लिखो(ring, dw2);
+	amdgpu_ring_ग_लिखो(ring, 0);
+पूर्ण
 
 /**
  * gfx_v7_0_ring_test_ib - basic ring IB test
  *
- * @ring: amdgpu_ring structure holding ring information
- * @timeout: timeout value in jiffies, or MAX_SCHEDULE_TIMEOUT
+ * @ring: amdgpu_ring काष्ठाure holding ring inक्रमmation
+ * @समयout: समयout value in jअगरfies, or MAX_SCHEDULE_TIMEOUT
  *
  * Allocate an IB and execute it on the gfx ring (CIK).
- * Provides a basic gfx ring test to verify that IBs are working.
+ * Provides a basic gfx ring test to verअगरy that IBs are working.
  * Returns 0 on success, error on failure.
  */
-static int gfx_v7_0_ring_test_ib(struct amdgpu_ring *ring, long timeout)
-{
-	struct amdgpu_device *adev = ring->adev;
-	struct amdgpu_ib ib;
-	struct dma_fence *f = NULL;
-	uint32_t scratch;
-	uint32_t tmp = 0;
-	long r;
+अटल पूर्णांक gfx_v7_0_ring_test_ib(काष्ठा amdgpu_ring *ring, दीर्घ समयout)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	काष्ठा amdgpu_ib ib;
+	काष्ठा dma_fence *f = शून्य;
+	uपूर्णांक32_t scratch;
+	uपूर्णांक32_t पंचांगp = 0;
+	दीर्घ r;
 
 	r = amdgpu_gfx_scratch_get(adev, &scratch);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	WREG32(scratch, 0xCAFEDEAD);
-	memset(&ib, 0, sizeof(ib));
-	r = amdgpu_ib_get(adev, NULL, 256,
-					AMDGPU_IB_POOL_DIRECT, &ib);
-	if (r)
-		goto err1;
+	स_रखो(&ib, 0, माप(ib));
+	r = amdgpu_ib_get(adev, शून्य, 256,
+					AMDGPU_IB_POOL_सूचीECT, &ib);
+	अगर (r)
+		जाओ err1;
 
 	ib.ptr[0] = PACKET3(PACKET3_SET_UCONFIG_REG, 1);
 	ib.ptr[1] = ((scratch - PACKET3_SET_UCONFIG_REG_START));
 	ib.ptr[2] = 0xDEADBEEF;
 	ib.length_dw = 3;
 
-	r = amdgpu_ib_schedule(ring, 1, &ib, NULL, &f);
-	if (r)
-		goto err2;
+	r = amdgpu_ib_schedule(ring, 1, &ib, शून्य, &f);
+	अगर (r)
+		जाओ err2;
 
-	r = dma_fence_wait_timeout(f, false, timeout);
-	if (r == 0) {
+	r = dma_fence_रुको_समयout(f, false, समयout);
+	अगर (r == 0) अणु
 		r = -ETIMEDOUT;
-		goto err2;
-	} else if (r < 0) {
-		goto err2;
-	}
-	tmp = RREG32(scratch);
-	if (tmp == 0xDEADBEEF)
+		जाओ err2;
+	पूर्ण अन्यथा अगर (r < 0) अणु
+		जाओ err2;
+	पूर्ण
+	पंचांगp = RREG32(scratch);
+	अगर (पंचांगp == 0xDEADBEEF)
 		r = 0;
-	else
+	अन्यथा
 		r = -EINVAL;
 
 err2:
-	amdgpu_ib_free(adev, &ib, NULL);
+	amdgpu_ib_मुक्त(adev, &ib, शून्य);
 	dma_fence_put(f);
 err1:
-	amdgpu_gfx_scratch_free(adev, scratch);
-	return r;
-}
+	amdgpu_gfx_scratch_मुक्त(adev, scratch);
+	वापस r;
+पूर्ण
 
 /*
  * CP.
@@ -2411,9 +2412,9 @@ err1:
  * ME - Micro Engine
  * CE - Constant Engine
  * The PFP and ME make up what is considered the Drawing Engine (DE).
- * The CE is an asynchronous engine used for updating buffer desciptors
- * used by the DE so that they can be loaded into cache in parallel
- * while the DE is processing state update packets.
+ * The CE is an asynchronous engine used क्रम updating buffer desciptors
+ * used by the DE so that they can be loaded पूर्णांकo cache in parallel
+ * जबतक the DE is processing state update packets.
  *
  * Compute
  * The compute CP consists of two microengines (ME):
@@ -2421,53 +2422,53 @@ err1:
  * MEC2 - Compute MicroEngine 2
  * Each MEC supports 4 compute pipes and each pipe supports 8 queues.
  * The queues are exposed to userspace and are programmed directly
- * by the compute runtime.
+ * by the compute runसमय.
  */
 /**
  * gfx_v7_0_cp_gfx_enable - enable/disable the gfx CP MEs
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @enable: enable or disable the MEs
  *
  * Halts or unhalts the gfx MEs.
  */
-static void gfx_v7_0_cp_gfx_enable(struct amdgpu_device *adev, bool enable)
-{
-	if (enable)
+अटल व्योम gfx_v7_0_cp_gfx_enable(काष्ठा amdgpu_device *adev, bool enable)
+अणु
+	अगर (enable)
 		WREG32(mmCP_ME_CNTL, 0);
-	else
+	अन्यथा
 		WREG32(mmCP_ME_CNTL, (CP_ME_CNTL__ME_HALT_MASK |
 				      CP_ME_CNTL__PFP_HALT_MASK |
 				      CP_ME_CNTL__CE_HALT_MASK));
 	udelay(50);
-}
+पूर्ण
 
 /**
  * gfx_v7_0_cp_gfx_load_microcode - load the gfx CP ME ucode
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Loads the gfx PFP, ME, and CE ucode.
- * Returns 0 for success, -EINVAL if the ucode is not available.
+ * Returns 0 क्रम success, -EINVAL अगर the ucode is not available.
  */
-static int gfx_v7_0_cp_gfx_load_microcode(struct amdgpu_device *adev)
-{
-	const struct gfx_firmware_header_v1_0 *pfp_hdr;
-	const struct gfx_firmware_header_v1_0 *ce_hdr;
-	const struct gfx_firmware_header_v1_0 *me_hdr;
-	const __le32 *fw_data;
-	unsigned i, fw_size;
+अटल पूर्णांक gfx_v7_0_cp_gfx_load_microcode(काष्ठा amdgpu_device *adev)
+अणु
+	स्थिर काष्ठा gfx_firmware_header_v1_0 *pfp_hdr;
+	स्थिर काष्ठा gfx_firmware_header_v1_0 *ce_hdr;
+	स्थिर काष्ठा gfx_firmware_header_v1_0 *me_hdr;
+	स्थिर __le32 *fw_data;
+	अचिन्हित i, fw_size;
 
-	if (!adev->gfx.me_fw || !adev->gfx.pfp_fw || !adev->gfx.ce_fw)
-		return -EINVAL;
+	अगर (!adev->gfx.me_fw || !adev->gfx.pfp_fw || !adev->gfx.ce_fw)
+		वापस -EINVAL;
 
-	pfp_hdr = (const struct gfx_firmware_header_v1_0 *)adev->gfx.pfp_fw->data;
-	ce_hdr = (const struct gfx_firmware_header_v1_0 *)adev->gfx.ce_fw->data;
-	me_hdr = (const struct gfx_firmware_header_v1_0 *)adev->gfx.me_fw->data;
+	pfp_hdr = (स्थिर काष्ठा gfx_firmware_header_v1_0 *)adev->gfx.pfp_fw->data;
+	ce_hdr = (स्थिर काष्ठा gfx_firmware_header_v1_0 *)adev->gfx.ce_fw->data;
+	me_hdr = (स्थिर काष्ठा gfx_firmware_header_v1_0 *)adev->gfx.me_fw->data;
 
-	amdgpu_ucode_print_gfx_hdr(&pfp_hdr->header);
-	amdgpu_ucode_print_gfx_hdr(&ce_hdr->header);
-	amdgpu_ucode_print_gfx_hdr(&me_hdr->header);
+	amdgpu_ucode_prपूर्णांक_gfx_hdr(&pfp_hdr->header);
+	amdgpu_ucode_prपूर्णांक_gfx_hdr(&ce_hdr->header);
+	amdgpu_ucode_prपूर्णांक_gfx_hdr(&me_hdr->header);
 	adev->gfx.pfp_fw_version = le32_to_cpu(pfp_hdr->header.ucode_version);
 	adev->gfx.ce_fw_version = le32_to_cpu(ce_hdr->header.ucode_version);
 	adev->gfx.me_fw_version = le32_to_cpu(me_hdr->header.ucode_version);
@@ -2478,53 +2479,53 @@ static int gfx_v7_0_cp_gfx_load_microcode(struct amdgpu_device *adev)
 	gfx_v7_0_cp_gfx_enable(adev, false);
 
 	/* PFP */
-	fw_data = (const __le32 *)
+	fw_data = (स्थिर __le32 *)
 		(adev->gfx.pfp_fw->data +
 		 le32_to_cpu(pfp_hdr->header.ucode_array_offset_bytes));
 	fw_size = le32_to_cpu(pfp_hdr->header.ucode_size_bytes) / 4;
 	WREG32(mmCP_PFP_UCODE_ADDR, 0);
-	for (i = 0; i < fw_size; i++)
+	क्रम (i = 0; i < fw_size; i++)
 		WREG32(mmCP_PFP_UCODE_DATA, le32_to_cpup(fw_data++));
 	WREG32(mmCP_PFP_UCODE_ADDR, adev->gfx.pfp_fw_version);
 
 	/* CE */
-	fw_data = (const __le32 *)
+	fw_data = (स्थिर __le32 *)
 		(adev->gfx.ce_fw->data +
 		 le32_to_cpu(ce_hdr->header.ucode_array_offset_bytes));
 	fw_size = le32_to_cpu(ce_hdr->header.ucode_size_bytes) / 4;
 	WREG32(mmCP_CE_UCODE_ADDR, 0);
-	for (i = 0; i < fw_size; i++)
+	क्रम (i = 0; i < fw_size; i++)
 		WREG32(mmCP_CE_UCODE_DATA, le32_to_cpup(fw_data++));
 	WREG32(mmCP_CE_UCODE_ADDR, adev->gfx.ce_fw_version);
 
 	/* ME */
-	fw_data = (const __le32 *)
+	fw_data = (स्थिर __le32 *)
 		(adev->gfx.me_fw->data +
 		 le32_to_cpu(me_hdr->header.ucode_array_offset_bytes));
 	fw_size = le32_to_cpu(me_hdr->header.ucode_size_bytes) / 4;
 	WREG32(mmCP_ME_RAM_WADDR, 0);
-	for (i = 0; i < fw_size; i++)
+	क्रम (i = 0; i < fw_size; i++)
 		WREG32(mmCP_ME_RAM_DATA, le32_to_cpup(fw_data++));
 	WREG32(mmCP_ME_RAM_WADDR, adev->gfx.me_fw_version);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * gfx_v7_0_cp_gfx_start - start the gfx ring
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Enables the ring and loads the clear state context and other
  * packets required to init the ring.
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int gfx_v7_0_cp_gfx_start(struct amdgpu_device *adev)
-{
-	struct amdgpu_ring *ring = &adev->gfx.gfx_ring[0];
-	const struct cs_section_def *sect = NULL;
-	const struct cs_extent_def *ext = NULL;
-	int r, i;
+अटल पूर्णांक gfx_v7_0_cp_gfx_start(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ring *ring = &adev->gfx.gfx_ring[0];
+	स्थिर काष्ठा cs_section_def *sect = शून्य;
+	स्थिर काष्ठा cs_extent_def *ext = शून्य;
+	पूर्णांक r, i;
 
 	/* init the CP */
 	WREG32(mmCP_MAX_CONTEXT, adev->gfx.config.max_hw_contexts - 1);
@@ -2534,80 +2535,80 @@ static int gfx_v7_0_cp_gfx_start(struct amdgpu_device *adev)
 	gfx_v7_0_cp_gfx_enable(adev, true);
 
 	r = amdgpu_ring_alloc(ring, gfx_v7_0_get_csb_size(adev) + 8);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("amdgpu: cp failed to lock ring (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	/* init the CE partitions.  CE only used for gfx on CIK */
-	amdgpu_ring_write(ring, PACKET3(PACKET3_SET_BASE, 2));
-	amdgpu_ring_write(ring, PACKET3_BASE_INDEX(CE_PARTITION_BASE));
-	amdgpu_ring_write(ring, 0x8000);
-	amdgpu_ring_write(ring, 0x8000);
+	/* init the CE partitions.  CE only used क्रम gfx on CIK */
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SET_BASE, 2));
+	amdgpu_ring_ग_लिखो(ring, PACKET3_BASE_INDEX(CE_PARTITION_BASE));
+	amdgpu_ring_ग_लिखो(ring, 0x8000);
+	amdgpu_ring_ग_लिखो(ring, 0x8000);
 
 	/* clear state buffer */
-	amdgpu_ring_write(ring, PACKET3(PACKET3_PREAMBLE_CNTL, 0));
-	amdgpu_ring_write(ring, PACKET3_PREAMBLE_BEGIN_CLEAR_STATE);
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_PREAMBLE_CNTL, 0));
+	amdgpu_ring_ग_लिखो(ring, PACKET3_PREAMBLE_BEGIN_CLEAR_STATE);
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_CONTEXT_CONTROL, 1));
-	amdgpu_ring_write(ring, 0x80000000);
-	amdgpu_ring_write(ring, 0x80000000);
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_CONTEXT_CONTROL, 1));
+	amdgpu_ring_ग_लिखो(ring, 0x80000000);
+	amdgpu_ring_ग_लिखो(ring, 0x80000000);
 
-	for (sect = adev->gfx.rlc.cs_data; sect->section != NULL; ++sect) {
-		for (ext = sect->section; ext->extent != NULL; ++ext) {
-			if (sect->id == SECT_CONTEXT) {
-				amdgpu_ring_write(ring,
+	क्रम (sect = adev->gfx.rlc.cs_data; sect->section != शून्य; ++sect) अणु
+		क्रम (ext = sect->section; ext->extent != शून्य; ++ext) अणु
+			अगर (sect->id == SECT_CONTEXT) अणु
+				amdgpu_ring_ग_लिखो(ring,
 						  PACKET3(PACKET3_SET_CONTEXT_REG, ext->reg_count));
-				amdgpu_ring_write(ring, ext->reg_index - PACKET3_SET_CONTEXT_REG_START);
-				for (i = 0; i < ext->reg_count; i++)
-					amdgpu_ring_write(ring, ext->extent[i]);
-			}
-		}
-	}
+				amdgpu_ring_ग_लिखो(ring, ext->reg_index - PACKET3_SET_CONTEXT_REG_START);
+				क्रम (i = 0; i < ext->reg_count; i++)
+					amdgpu_ring_ग_लिखो(ring, ext->extent[i]);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_SET_CONTEXT_REG, 2));
-	amdgpu_ring_write(ring, mmPA_SC_RASTER_CONFIG - PACKET3_SET_CONTEXT_REG_START);
-	amdgpu_ring_write(ring, adev->gfx.config.rb_config[0][0].raster_config);
-	amdgpu_ring_write(ring, adev->gfx.config.rb_config[0][0].raster_config_1);
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SET_CONTEXT_REG, 2));
+	amdgpu_ring_ग_लिखो(ring, mmPA_SC_RASTER_CONFIG - PACKET3_SET_CONTEXT_REG_START);
+	amdgpu_ring_ग_लिखो(ring, adev->gfx.config.rb_config[0][0].raster_config);
+	amdgpu_ring_ग_लिखो(ring, adev->gfx.config.rb_config[0][0].raster_config_1);
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_PREAMBLE_CNTL, 0));
-	amdgpu_ring_write(ring, PACKET3_PREAMBLE_END_CLEAR_STATE);
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_PREAMBLE_CNTL, 0));
+	amdgpu_ring_ग_लिखो(ring, PACKET3_PREAMBLE_END_CLEAR_STATE);
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_CLEAR_STATE, 0));
-	amdgpu_ring_write(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_CLEAR_STATE, 0));
+	amdgpu_ring_ग_लिखो(ring, 0);
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_SET_CONTEXT_REG, 2));
-	amdgpu_ring_write(ring, 0x00000316);
-	amdgpu_ring_write(ring, 0x0000000e); /* VGT_VERTEX_REUSE_BLOCK_CNTL */
-	amdgpu_ring_write(ring, 0x00000010); /* VGT_OUT_DEALLOC_CNTL */
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SET_CONTEXT_REG, 2));
+	amdgpu_ring_ग_लिखो(ring, 0x00000316);
+	amdgpu_ring_ग_लिखो(ring, 0x0000000e); /* VGT_VERTEX_REUSE_BLOCK_CNTL */
+	amdgpu_ring_ग_लिखो(ring, 0x00000010); /* VGT_OUT_DEALLOC_CNTL */
 
 	amdgpu_ring_commit(ring);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * gfx_v7_0_cp_gfx_resume - setup the gfx ring buffer registers
+ * gfx_v7_0_cp_gfx_resume - setup the gfx ring buffer रेजिस्टरs
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Program the location and size of the gfx ring buffer
  * and test it to make sure it's working.
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int gfx_v7_0_cp_gfx_resume(struct amdgpu_device *adev)
-{
-	struct amdgpu_ring *ring;
-	u32 tmp;
+अटल पूर्णांक gfx_v7_0_cp_gfx_resume(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ring *ring;
+	u32 पंचांगp;
 	u32 rb_bufsz;
 	u64 rb_addr, rptr_addr;
-	int r;
+	पूर्णांक r;
 
 	WREG32(mmCP_SEM_WAIT_TIMER, 0x0);
-	if (adev->asic_type != CHIP_HAWAII)
+	अगर (adev->asic_type != CHIP_HAWAII)
 		WREG32(mmCP_SEM_INCOMPLETE_TIMER_CNTL, 0x0);
 
-	/* Set the write pointer delay */
+	/* Set the ग_लिखो poपूर्णांकer delay */
 	WREG32(mmCP_RB_WPTR_DELAY, 0);
 
 	/* set the RB to use vmid 0 */
@@ -2619,14 +2620,14 @@ static int gfx_v7_0_cp_gfx_resume(struct amdgpu_device *adev)
 	/* Set ring buffer size */
 	ring = &adev->gfx.gfx_ring[0];
 	rb_bufsz = order_base_2(ring->ring_size / 8);
-	tmp = (order_base_2(AMDGPU_GPU_PAGE_SIZE/8) << 8) | rb_bufsz;
-#ifdef __BIG_ENDIAN
-	tmp |= 2 << CP_RB0_CNTL__BUF_SWAP__SHIFT;
-#endif
-	WREG32(mmCP_RB0_CNTL, tmp);
+	पंचांगp = (order_base_2(AMDGPU_GPU_PAGE_SIZE/8) << 8) | rb_bufsz;
+#अगर_घोषित __BIG_ENDIAN
+	पंचांगp |= 2 << CP_RB0_CNTL__BUF_SWAP__SHIFT;
+#पूर्ण_अगर
+	WREG32(mmCP_RB0_CNTL, पंचांगp);
 
-	/* Initialize the ring buffer's read and write pointers */
-	WREG32(mmCP_RB0_CNTL, tmp | CP_RB0_CNTL__RB_RPTR_WR_ENA_MASK);
+	/* Initialize the ring buffer's पढ़ो and ग_लिखो poपूर्णांकers */
+	WREG32(mmCP_RB0_CNTL, पंचांगp | CP_RB0_CNTL__RB_RPTR_WR_ENA_MASK);
 	ring->wptr = 0;
 	WREG32(mmCP_RB0_WPTR, lower_32_bits(ring->wptr));
 
@@ -2635,11 +2636,11 @@ static int gfx_v7_0_cp_gfx_resume(struct amdgpu_device *adev)
 	WREG32(mmCP_RB0_RPTR_ADDR, lower_32_bits(rptr_addr));
 	WREG32(mmCP_RB0_RPTR_ADDR_HI, upper_32_bits(rptr_addr) & 0xFF);
 
-	/* scratch register shadowing is no longer supported */
+	/* scratch रेजिस्टर shaकरोwing is no दीर्घer supported */
 	WREG32(mmSCRATCH_UMSK, 0);
 
 	mdelay(1);
-	WREG32(mmCP_RB0_CNTL, tmp);
+	WREG32(mmCP_RB0_CNTL, पंचांगp);
 
 	rb_addr = ring->gpu_addr >> 8;
 	WREG32(mmCP_RB0_BASE, rb_addr);
@@ -2648,84 +2649,84 @@ static int gfx_v7_0_cp_gfx_resume(struct amdgpu_device *adev)
 	/* start the ring */
 	gfx_v7_0_cp_gfx_start(adev);
 	r = amdgpu_ring_test_helper(ring);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64 gfx_v7_0_ring_get_rptr(struct amdgpu_ring *ring)
-{
-	return ring->adev->wb.wb[ring->rptr_offs];
-}
+अटल u64 gfx_v7_0_ring_get_rptr(काष्ठा amdgpu_ring *ring)
+अणु
+	वापस ring->adev->wb.wb[ring->rptr_offs];
+पूर्ण
 
-static u64 gfx_v7_0_ring_get_wptr_gfx(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल u64 gfx_v7_0_ring_get_wptr_gfx(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
-	return RREG32(mmCP_RB0_WPTR);
-}
+	वापस RREG32(mmCP_RB0_WPTR);
+पूर्ण
 
-static void gfx_v7_0_ring_set_wptr_gfx(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल व्योम gfx_v7_0_ring_set_wptr_gfx(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
 	WREG32(mmCP_RB0_WPTR, lower_32_bits(ring->wptr));
-	(void)RREG32(mmCP_RB0_WPTR);
-}
+	(व्योम)RREG32(mmCP_RB0_WPTR);
+पूर्ण
 
-static u64 gfx_v7_0_ring_get_wptr_compute(struct amdgpu_ring *ring)
-{
-	/* XXX check if swapping is necessary on BE */
-	return ring->adev->wb.wb[ring->wptr_offs];
-}
+अटल u64 gfx_v7_0_ring_get_wptr_compute(काष्ठा amdgpu_ring *ring)
+अणु
+	/* XXX check अगर swapping is necessary on BE */
+	वापस ring->adev->wb.wb[ring->wptr_offs];
+पूर्ण
 
-static void gfx_v7_0_ring_set_wptr_compute(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल व्योम gfx_v7_0_ring_set_wptr_compute(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
-	/* XXX check if swapping is necessary on BE */
+	/* XXX check अगर swapping is necessary on BE */
 	adev->wb.wb[ring->wptr_offs] = lower_32_bits(ring->wptr);
-	WDOORBELL32(ring->doorbell_index, lower_32_bits(ring->wptr));
-}
+	WDOORBELL32(ring->करोorbell_index, lower_32_bits(ring->wptr));
+पूर्ण
 
 /**
  * gfx_v7_0_cp_compute_enable - enable/disable the compute CP MEs
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  * @enable: enable or disable the MEs
  *
  * Halts or unhalts the compute MEs.
  */
-static void gfx_v7_0_cp_compute_enable(struct amdgpu_device *adev, bool enable)
-{
-	if (enable)
+अटल व्योम gfx_v7_0_cp_compute_enable(काष्ठा amdgpu_device *adev, bool enable)
+अणु
+	अगर (enable)
 		WREG32(mmCP_MEC_CNTL, 0);
-	else
+	अन्यथा
 		WREG32(mmCP_MEC_CNTL, (CP_MEC_CNTL__MEC_ME1_HALT_MASK |
 				       CP_MEC_CNTL__MEC_ME2_HALT_MASK));
 	udelay(50);
-}
+पूर्ण
 
 /**
  * gfx_v7_0_cp_compute_load_microcode - load the compute CP ME ucode
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Loads the compute MEC1&2 ucode.
- * Returns 0 for success, -EINVAL if the ucode is not available.
+ * Returns 0 क्रम success, -EINVAL अगर the ucode is not available.
  */
-static int gfx_v7_0_cp_compute_load_microcode(struct amdgpu_device *adev)
-{
-	const struct gfx_firmware_header_v1_0 *mec_hdr;
-	const __le32 *fw_data;
-	unsigned i, fw_size;
+अटल पूर्णांक gfx_v7_0_cp_compute_load_microcode(काष्ठा amdgpu_device *adev)
+अणु
+	स्थिर काष्ठा gfx_firmware_header_v1_0 *mec_hdr;
+	स्थिर __le32 *fw_data;
+	अचिन्हित i, fw_size;
 
-	if (!adev->gfx.mec_fw)
-		return -EINVAL;
+	अगर (!adev->gfx.mec_fw)
+		वापस -EINVAL;
 
-	mec_hdr = (const struct gfx_firmware_header_v1_0 *)adev->gfx.mec_fw->data;
-	amdgpu_ucode_print_gfx_hdr(&mec_hdr->header);
+	mec_hdr = (स्थिर काष्ठा gfx_firmware_header_v1_0 *)adev->gfx.mec_fw->data;
+	amdgpu_ucode_prपूर्णांक_gfx_hdr(&mec_hdr->header);
 	adev->gfx.mec_fw_version = le32_to_cpu(mec_hdr->header.ucode_version);
 	adev->gfx.mec_feature_version = le32_to_cpu(
 					mec_hdr->ucode_feature_version);
@@ -2733,77 +2734,77 @@ static int gfx_v7_0_cp_compute_load_microcode(struct amdgpu_device *adev)
 	gfx_v7_0_cp_compute_enable(adev, false);
 
 	/* MEC1 */
-	fw_data = (const __le32 *)
+	fw_data = (स्थिर __le32 *)
 		(adev->gfx.mec_fw->data +
 		 le32_to_cpu(mec_hdr->header.ucode_array_offset_bytes));
 	fw_size = le32_to_cpu(mec_hdr->header.ucode_size_bytes) / 4;
 	WREG32(mmCP_MEC_ME1_UCODE_ADDR, 0);
-	for (i = 0; i < fw_size; i++)
+	क्रम (i = 0; i < fw_size; i++)
 		WREG32(mmCP_MEC_ME1_UCODE_DATA, le32_to_cpup(fw_data++));
 	WREG32(mmCP_MEC_ME1_UCODE_ADDR, 0);
 
-	if (adev->asic_type == CHIP_KAVERI) {
-		const struct gfx_firmware_header_v1_0 *mec2_hdr;
+	अगर (adev->asic_type == CHIP_KAVERI) अणु
+		स्थिर काष्ठा gfx_firmware_header_v1_0 *mec2_hdr;
 
-		if (!adev->gfx.mec2_fw)
-			return -EINVAL;
+		अगर (!adev->gfx.mec2_fw)
+			वापस -EINVAL;
 
-		mec2_hdr = (const struct gfx_firmware_header_v1_0 *)adev->gfx.mec2_fw->data;
-		amdgpu_ucode_print_gfx_hdr(&mec2_hdr->header);
+		mec2_hdr = (स्थिर काष्ठा gfx_firmware_header_v1_0 *)adev->gfx.mec2_fw->data;
+		amdgpu_ucode_prपूर्णांक_gfx_hdr(&mec2_hdr->header);
 		adev->gfx.mec2_fw_version = le32_to_cpu(mec2_hdr->header.ucode_version);
 		adev->gfx.mec2_feature_version = le32_to_cpu(
 				mec2_hdr->ucode_feature_version);
 
 		/* MEC2 */
-		fw_data = (const __le32 *)
+		fw_data = (स्थिर __le32 *)
 			(adev->gfx.mec2_fw->data +
 			 le32_to_cpu(mec2_hdr->header.ucode_array_offset_bytes));
 		fw_size = le32_to_cpu(mec2_hdr->header.ucode_size_bytes) / 4;
 		WREG32(mmCP_MEC_ME2_UCODE_ADDR, 0);
-		for (i = 0; i < fw_size; i++)
+		क्रम (i = 0; i < fw_size; i++)
 			WREG32(mmCP_MEC_ME2_UCODE_DATA, le32_to_cpup(fw_data++));
 		WREG32(mmCP_MEC_ME2_UCODE_ADDR, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * gfx_v7_0_cp_compute_fini - stop the compute queues
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Stop the compute queues and tear down the driver queue
+ * Stop the compute queues and tear करोwn the driver queue
  * info.
  */
-static void gfx_v7_0_cp_compute_fini(struct amdgpu_device *adev)
-{
-	int i;
+अटल व्योम gfx_v7_0_cp_compute_fini(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adev->gfx.num_compute_rings; i++) {
-		struct amdgpu_ring *ring = &adev->gfx.compute_ring[i];
+	क्रम (i = 0; i < adev->gfx.num_compute_rings; i++) अणु
+		काष्ठा amdgpu_ring *ring = &adev->gfx.compute_ring[i];
 
-		amdgpu_bo_free_kernel(&ring->mqd_obj, NULL, NULL);
-	}
-}
+		amdgpu_bo_मुक्त_kernel(&ring->mqd_obj, शून्य, शून्य);
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_mec_fini(struct amdgpu_device *adev)
-{
-	amdgpu_bo_free_kernel(&adev->gfx.mec.hpd_eop_obj, NULL, NULL);
-}
+अटल व्योम gfx_v7_0_mec_fini(काष्ठा amdgpu_device *adev)
+अणु
+	amdgpu_bo_मुक्त_kernel(&adev->gfx.mec.hpd_eop_obj, शून्य, शून्य);
+पूर्ण
 
-static int gfx_v7_0_mec_init(struct amdgpu_device *adev)
-{
-	int r;
+अटल पूर्णांक gfx_v7_0_mec_init(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
 	u32 *hpd;
-	size_t mec_hpd_size;
+	माप_प्रकार mec_hpd_size;
 
-	bitmap_zero(adev->gfx.mec.queue_bitmap, AMDGPU_MAX_COMPUTE_QUEUES);
+	biपंचांगap_zero(adev->gfx.mec.queue_biपंचांगap, AMDGPU_MAX_COMPUTE_QUEUES);
 
 	/* take ownership of the relevant compute queues */
 	amdgpu_gfx_compute_queue_acquire(adev);
 
-	/* allocate space for ALL pipes (even the ones we don't own) */
+	/* allocate space क्रम ALL pipes (even the ones we करोn't own) */
 	mec_hpd_size = adev->gfx.mec.num_mec * adev->gfx.mec.num_pipe_per_mec
 		* GFX7_MEC_HPD_SIZE * 2;
 
@@ -2811,24 +2812,24 @@ static int gfx_v7_0_mec_init(struct amdgpu_device *adev)
 				      AMDGPU_GEM_DOMAIN_VRAM,
 				      &adev->gfx.mec.hpd_eop_obj,
 				      &adev->gfx.mec.hpd_eop_gpu_addr,
-				      (void **)&hpd);
-	if (r) {
+				      (व्योम **)&hpd);
+	अगर (r) अणु
 		dev_warn(adev->dev, "(%d) create, pin or map of HDP EOP bo failed\n", r);
 		gfx_v7_0_mec_fini(adev);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	/* clear memory.  Not sure if this is required or not */
-	memset(hpd, 0, mec_hpd_size);
+	/* clear memory.  Not sure अगर this is required or not */
+	स_रखो(hpd, 0, mec_hpd_size);
 
 	amdgpu_bo_kunmap(adev->gfx.mec.hpd_eop_obj);
 	amdgpu_bo_unreserve(adev->gfx.mec.hpd_eop_obj);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct hqd_registers
-{
+काष्ठा hqd_रेजिस्टरs
+अणु
 	u32 cp_mqd_base_addr;
 	u32 cp_mqd_base_addr_hi;
 	u32 cp_hqd_active;
@@ -2844,14 +2845,14 @@ struct hqd_registers
 	u32 cp_hqd_pq_rptr_report_addr_hi;
 	u32 cp_hqd_pq_wptr_poll_addr;
 	u32 cp_hqd_pq_wptr_poll_addr_hi;
-	u32 cp_hqd_pq_doorbell_control;
+	u32 cp_hqd_pq_करोorbell_control;
 	u32 cp_hqd_pq_wptr;
 	u32 cp_hqd_pq_control;
 	u32 cp_hqd_ib_base_addr;
 	u32 cp_hqd_ib_base_addr_hi;
 	u32 cp_hqd_ib_rptr;
 	u32 cp_hqd_ib_control;
-	u32 cp_hqd_iq_timer;
+	u32 cp_hqd_iq_समयr;
 	u32 cp_hqd_iq_rptr;
 	u32 cp_hqd_dequeue_request;
 	u32 cp_hqd_dma_offload;
@@ -2864,14 +2865,14 @@ struct hqd_registers
 	u32 cp_hqd_hq_scheduler0;
 	u32 cp_hqd_hq_scheduler1;
 	u32 cp_mqd_control;
-};
+पूर्ण;
 
-static void gfx_v7_0_compute_pipe_init(struct amdgpu_device *adev,
-				       int mec, int pipe)
-{
+अटल व्योम gfx_v7_0_compute_pipe_init(काष्ठा amdgpu_device *adev,
+				       पूर्णांक mec, पूर्णांक pipe)
+अणु
 	u64 eop_gpu_addr;
-	u32 tmp;
-	size_t eop_offset = (mec * adev->gfx.mec.num_pipe_per_mec + pipe)
+	u32 पंचांगp;
+	माप_प्रकार eop_offset = (mec * adev->gfx.mec.num_pipe_per_mec + pipe)
 			    * GFX7_MEC_HPD_SIZE * 2;
 
 	mutex_lock(&adev->srbm_mutex);
@@ -2879,73 +2880,73 @@ static void gfx_v7_0_compute_pipe_init(struct amdgpu_device *adev,
 
 	cik_srbm_select(adev, mec + 1, pipe, 0, 0);
 
-	/* write the EOP addr */
+	/* ग_लिखो the EOP addr */
 	WREG32(mmCP_HPD_EOP_BASE_ADDR, eop_gpu_addr >> 8);
 	WREG32(mmCP_HPD_EOP_BASE_ADDR_HI, upper_32_bits(eop_gpu_addr) >> 8);
 
-	/* set the VMID assigned */
+	/* set the VMID asचिन्हित */
 	WREG32(mmCP_HPD_EOP_VMID, 0);
 
-	/* set the EOP size, register value is 2^(EOP_SIZE+1) dwords */
-	tmp = RREG32(mmCP_HPD_EOP_CONTROL);
-	tmp &= ~CP_HPD_EOP_CONTROL__EOP_SIZE_MASK;
-	tmp |= order_base_2(GFX7_MEC_HPD_SIZE / 8);
-	WREG32(mmCP_HPD_EOP_CONTROL, tmp);
+	/* set the EOP size, रेजिस्टर value is 2^(EOP_SIZE+1) dwords */
+	पंचांगp = RREG32(mmCP_HPD_EOP_CONTROL);
+	पंचांगp &= ~CP_HPD_EOP_CONTROL__EOP_SIZE_MASK;
+	पंचांगp |= order_base_2(GFX7_MEC_HPD_SIZE / 8);
+	WREG32(mmCP_HPD_EOP_CONTROL, पंचांगp);
 
 	cik_srbm_select(adev, 0, 0, 0, 0);
 	mutex_unlock(&adev->srbm_mutex);
-}
+पूर्ण
 
-static int gfx_v7_0_mqd_deactivate(struct amdgpu_device *adev)
-{
-	int i;
+अटल पूर्णांक gfx_v7_0_mqd_deactivate(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
 
-	/* disable the queue if it's active */
-	if (RREG32(mmCP_HQD_ACTIVE) & 1) {
+	/* disable the queue अगर it's active */
+	अगर (RREG32(mmCP_HQD_ACTIVE) & 1) अणु
 		WREG32(mmCP_HQD_DEQUEUE_REQUEST, 1);
-		for (i = 0; i < adev->usec_timeout; i++) {
-			if (!(RREG32(mmCP_HQD_ACTIVE) & 1))
-				break;
+		क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+			अगर (!(RREG32(mmCP_HQD_ACTIVE) & 1))
+				अवरोध;
 			udelay(1);
-		}
+		पूर्ण
 
-		if (i == adev->usec_timeout)
-			return -ETIMEDOUT;
+		अगर (i == adev->usec_समयout)
+			वापस -ETIMEDOUT;
 
 		WREG32(mmCP_HQD_DEQUEUE_REQUEST, 0);
 		WREG32(mmCP_HQD_PQ_RPTR, 0);
 		WREG32(mmCP_HQD_PQ_WPTR, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gfx_v7_0_mqd_init(struct amdgpu_device *adev,
-			     struct cik_mqd *mqd,
-			     uint64_t mqd_gpu_addr,
-			     struct amdgpu_ring *ring)
-{
+अटल व्योम gfx_v7_0_mqd_init(काष्ठा amdgpu_device *adev,
+			     काष्ठा cik_mqd *mqd,
+			     uपूर्णांक64_t mqd_gpu_addr,
+			     काष्ठा amdgpu_ring *ring)
+अणु
 	u64 hqd_gpu_addr;
 	u64 wb_gpu_addr;
 
-	/* init the mqd struct */
-	memset(mqd, 0, sizeof(struct cik_mqd));
+	/* init the mqd काष्ठा */
+	स_रखो(mqd, 0, माप(काष्ठा cik_mqd));
 
 	mqd->header = 0xC0310800;
-	mqd->compute_static_thread_mgmt_se0 = 0xffffffff;
-	mqd->compute_static_thread_mgmt_se1 = 0xffffffff;
-	mqd->compute_static_thread_mgmt_se2 = 0xffffffff;
-	mqd->compute_static_thread_mgmt_se3 = 0xffffffff;
+	mqd->compute_अटल_thपढ़ो_mgmt_se0 = 0xffffffff;
+	mqd->compute_अटल_thपढ़ो_mgmt_se1 = 0xffffffff;
+	mqd->compute_अटल_thपढ़ो_mgmt_se2 = 0xffffffff;
+	mqd->compute_अटल_thपढ़ो_mgmt_se3 = 0xffffffff;
 
-	/* enable doorbell? */
-	mqd->cp_hqd_pq_doorbell_control =
+	/* enable करोorbell? */
+	mqd->cp_hqd_pq_करोorbell_control =
 		RREG32(mmCP_HQD_PQ_DOORBELL_CONTROL);
-	if (ring->use_doorbell)
-		mqd->cp_hqd_pq_doorbell_control |= CP_HQD_PQ_DOORBELL_CONTROL__DOORBELL_EN_MASK;
-	else
-		mqd->cp_hqd_pq_doorbell_control &= ~CP_HQD_PQ_DOORBELL_CONTROL__DOORBELL_EN_MASK;
+	अगर (ring->use_करोorbell)
+		mqd->cp_hqd_pq_करोorbell_control |= CP_HQD_PQ_DOORBELL_CONTROL__DOORBELL_EN_MASK;
+	अन्यथा
+		mqd->cp_hqd_pq_करोorbell_control &= ~CP_HQD_PQ_DOORBELL_CONTROL__DOORBELL_EN_MASK;
 
-	/* set the pointer to the MQD */
+	/* set the poपूर्णांकer to the MQD */
 	mqd->cp_mqd_base_addr_lo = mqd_gpu_addr & 0xfffffffc;
 	mqd->cp_mqd_base_addr_hi = upper_32_bits(mqd_gpu_addr);
 
@@ -2953,7 +2954,7 @@ static void gfx_v7_0_mqd_init(struct amdgpu_device *adev,
 	mqd->cp_mqd_control = RREG32(mmCP_MQD_CONTROL);
 	mqd->cp_mqd_control &= ~CP_MQD_CONTROL__VMID_MASK;
 
-	/* set the pointer to the HQD, this is similar CP_RB0_BASE/_HI */
+	/* set the poपूर्णांकer to the HQD, this is similar CP_RB0_BASE/_HI */
 	hqd_gpu_addr = ring->gpu_addr >> 8;
 	mqd->cp_hqd_pq_base_lo = hqd_gpu_addr;
 	mqd->cp_hqd_pq_base_hi = upper_32_bits(hqd_gpu_addr);
@@ -2968,10 +2969,10 @@ static void gfx_v7_0_mqd_init(struct amdgpu_device *adev,
 		order_base_2(ring->ring_size / 8);
 	mqd->cp_hqd_pq_control |=
 		(order_base_2(AMDGPU_GPU_PAGE_SIZE/8) << 8);
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 	mqd->cp_hqd_pq_control |=
 		2 << CP_HQD_PQ_CONTROL__ENDIAN_SWAP__SHIFT;
-#endif
+#पूर्ण_अगर
 	mqd->cp_hqd_pq_control &=
 		~(CP_HQD_PQ_CONTROL__UNORD_DISPATCH_MASK |
 				CP_HQD_PQ_CONTROL__ROQ_PQ_IB_FLIP_MASK |
@@ -2980,7 +2981,7 @@ static void gfx_v7_0_mqd_init(struct amdgpu_device *adev,
 		CP_HQD_PQ_CONTROL__PRIV_STATE_MASK |
 		CP_HQD_PQ_CONTROL__KMD_QUEUE_MASK; /* assuming kernel queue control */
 
-	/* only used if CP_PQ_WPTR_POLL_CNTL.CP_PQ_WPTR_POLL_CNTL__EN_MASK=1 */
+	/* only used अगर CP_PQ_WPTR_POLL_CNTL.CP_PQ_WPTR_POLL_CNTL__EN_MASK=1 */
 	wb_gpu_addr = adev->wb.gpu_addr + (ring->wptr_offs * 4);
 	mqd->cp_hqd_pq_wptr_poll_addr_lo = wb_gpu_addr & 0xfffffffc;
 	mqd->cp_hqd_pq_wptr_poll_addr_hi = upper_32_bits(wb_gpu_addr) & 0xffff;
@@ -2991,34 +2992,34 @@ static void gfx_v7_0_mqd_init(struct amdgpu_device *adev,
 	mqd->cp_hqd_pq_rptr_report_addr_hi =
 		upper_32_bits(wb_gpu_addr) & 0xffff;
 
-	/* enable the doorbell if requested */
-	if (ring->use_doorbell) {
-		mqd->cp_hqd_pq_doorbell_control =
+	/* enable the करोorbell अगर requested */
+	अगर (ring->use_करोorbell) अणु
+		mqd->cp_hqd_pq_करोorbell_control =
 			RREG32(mmCP_HQD_PQ_DOORBELL_CONTROL);
-		mqd->cp_hqd_pq_doorbell_control &=
+		mqd->cp_hqd_pq_करोorbell_control &=
 			~CP_HQD_PQ_DOORBELL_CONTROL__DOORBELL_OFFSET_MASK;
-		mqd->cp_hqd_pq_doorbell_control |=
-			(ring->doorbell_index <<
+		mqd->cp_hqd_pq_करोorbell_control |=
+			(ring->करोorbell_index <<
 			 CP_HQD_PQ_DOORBELL_CONTROL__DOORBELL_OFFSET__SHIFT);
-		mqd->cp_hqd_pq_doorbell_control |=
+		mqd->cp_hqd_pq_करोorbell_control |=
 			CP_HQD_PQ_DOORBELL_CONTROL__DOORBELL_EN_MASK;
-		mqd->cp_hqd_pq_doorbell_control &=
+		mqd->cp_hqd_pq_करोorbell_control &=
 			~(CP_HQD_PQ_DOORBELL_CONTROL__DOORBELL_SOURCE_MASK |
 					CP_HQD_PQ_DOORBELL_CONTROL__DOORBELL_HIT_MASK);
 
-	} else {
-		mqd->cp_hqd_pq_doorbell_control = 0;
-	}
+	पूर्ण अन्यथा अणु
+		mqd->cp_hqd_pq_करोorbell_control = 0;
+	पूर्ण
 
-	/* read and write pointers, similar to CP_RB0_WPTR/_RPTR */
+	/* पढ़ो and ग_लिखो poपूर्णांकers, similar to CP_RB0_WPTR/_RPTR */
 	ring->wptr = 0;
 	mqd->cp_hqd_pq_wptr = lower_32_bits(ring->wptr);
 	mqd->cp_hqd_pq_rptr = RREG32(mmCP_HQD_PQ_RPTR);
 
-	/* set the vmid for the queue */
+	/* set the vmid क्रम the queue */
 	mqd->cp_hqd_vmid = 0;
 
-	/* defaults */
+	/* शेषs */
 	mqd->cp_hqd_ib_control = RREG32(mmCP_HQD_IB_CONTROL);
 	mqd->cp_hqd_ib_base_addr_lo = RREG32(mmCP_HQD_IB_BASE_ADDR);
 	mqd->cp_hqd_ib_base_addr_hi = RREG32(mmCP_HQD_IB_BASE_ADDR_HI);
@@ -3038,47 +3039,47 @@ static void gfx_v7_0_mqd_init(struct amdgpu_device *adev,
 
 	/* activate the queue */
 	mqd->cp_hqd_active = 1;
-}
+पूर्ण
 
-static int gfx_v7_0_mqd_commit(struct amdgpu_device *adev, struct cik_mqd *mqd)
-{
-	uint32_t tmp;
-	uint32_t mqd_reg;
-	uint32_t *mqd_data;
+अटल पूर्णांक gfx_v7_0_mqd_commit(काष्ठा amdgpu_device *adev, काष्ठा cik_mqd *mqd)
+अणु
+	uपूर्णांक32_t पंचांगp;
+	uपूर्णांक32_t mqd_reg;
+	uपूर्णांक32_t *mqd_data;
 
-	/* HQD registers extend from mmCP_MQD_BASE_ADDR to mmCP_MQD_CONTROL */
+	/* HQD रेजिस्टरs extend from mmCP_MQD_BASE_ADDR to mmCP_MQD_CONTROL */
 	mqd_data = &mqd->cp_mqd_base_addr_lo;
 
 	/* disable wptr polling */
-	tmp = RREG32(mmCP_PQ_WPTR_POLL_CNTL);
-	tmp = REG_SET_FIELD(tmp, CP_PQ_WPTR_POLL_CNTL, EN, 0);
-	WREG32(mmCP_PQ_WPTR_POLL_CNTL, tmp);
+	पंचांगp = RREG32(mmCP_PQ_WPTR_POLL_CNTL);
+	पंचांगp = REG_SET_FIELD(पंचांगp, CP_PQ_WPTR_POLL_CNTL, EN, 0);
+	WREG32(mmCP_PQ_WPTR_POLL_CNTL, पंचांगp);
 
-	/* program all HQD registers */
-	for (mqd_reg = mmCP_HQD_VMID; mqd_reg <= mmCP_MQD_CONTROL; mqd_reg++)
+	/* program all HQD रेजिस्टरs */
+	क्रम (mqd_reg = mmCP_HQD_VMID; mqd_reg <= mmCP_MQD_CONTROL; mqd_reg++)
 		WREG32(mqd_reg, mqd_data[mqd_reg - mmCP_MQD_BASE_ADDR]);
 
 	/* activate the HQD */
-	for (mqd_reg = mmCP_MQD_BASE_ADDR; mqd_reg <= mmCP_HQD_ACTIVE; mqd_reg++)
+	क्रम (mqd_reg = mmCP_MQD_BASE_ADDR; mqd_reg <= mmCP_HQD_ACTIVE; mqd_reg++)
 		WREG32(mqd_reg, mqd_data[mqd_reg - mmCP_MQD_BASE_ADDR]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_compute_queue_init(struct amdgpu_device *adev, int ring_id)
-{
-	int r;
+अटल पूर्णांक gfx_v7_0_compute_queue_init(काष्ठा amdgpu_device *adev, पूर्णांक ring_id)
+अणु
+	पूर्णांक r;
 	u64 mqd_gpu_addr;
-	struct cik_mqd *mqd;
-	struct amdgpu_ring *ring = &adev->gfx.compute_ring[ring_id];
+	काष्ठा cik_mqd *mqd;
+	काष्ठा amdgpu_ring *ring = &adev->gfx.compute_ring[ring_id];
 
-	r = amdgpu_bo_create_reserved(adev, sizeof(struct cik_mqd), PAGE_SIZE,
+	r = amdgpu_bo_create_reserved(adev, माप(काष्ठा cik_mqd), PAGE_SIZE,
 				      AMDGPU_GEM_DOMAIN_GTT, &ring->mqd_obj,
-				      &mqd_gpu_addr, (void **)&mqd);
-	if (r) {
+				      &mqd_gpu_addr, (व्योम **)&mqd);
+	अगर (r) अणु
 		dev_warn(adev->dev, "(%d) create MQD bo failed\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	mutex_lock(&adev->srbm_mutex);
 	cik_srbm_select(adev, ring->me, ring->pipe, ring->queue, 0);
@@ -3092,227 +3093,227 @@ static int gfx_v7_0_compute_queue_init(struct amdgpu_device *adev, int ring_id)
 
 	amdgpu_bo_kunmap(ring->mqd_obj);
 	amdgpu_bo_unreserve(ring->mqd_obj);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * gfx_v7_0_cp_compute_resume - setup the compute queue registers
+ * gfx_v7_0_cp_compute_resume - setup the compute queue रेजिस्टरs
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Program the compute queues and test them to make sure they
  * are working.
- * Returns 0 for success, error for failure.
+ * Returns 0 क्रम success, error क्रम failure.
  */
-static int gfx_v7_0_cp_compute_resume(struct amdgpu_device *adev)
-{
-	int r, i, j;
-	u32 tmp;
-	struct amdgpu_ring *ring;
+अटल पूर्णांक gfx_v7_0_cp_compute_resume(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r, i, j;
+	u32 पंचांगp;
+	काष्ठा amdgpu_ring *ring;
 
 	/* fix up chicken bits */
-	tmp = RREG32(mmCP_CPF_DEBUG);
-	tmp |= (1 << 23);
-	WREG32(mmCP_CPF_DEBUG, tmp);
+	पंचांगp = RREG32(mmCP_CPF_DEBUG);
+	पंचांगp |= (1 << 23);
+	WREG32(mmCP_CPF_DEBUG, पंचांगp);
 
-	/* init all pipes (even the ones we don't own) */
-	for (i = 0; i < adev->gfx.mec.num_mec; i++)
-		for (j = 0; j < adev->gfx.mec.num_pipe_per_mec; j++)
+	/* init all pipes (even the ones we करोn't own) */
+	क्रम (i = 0; i < adev->gfx.mec.num_mec; i++)
+		क्रम (j = 0; j < adev->gfx.mec.num_pipe_per_mec; j++)
 			gfx_v7_0_compute_pipe_init(adev, i, j);
 
 	/* init the queues */
-	for (i = 0; i < adev->gfx.num_compute_rings; i++) {
+	क्रम (i = 0; i < adev->gfx.num_compute_rings; i++) अणु
 		r = gfx_v7_0_compute_queue_init(adev, i);
-		if (r) {
+		अगर (r) अणु
 			gfx_v7_0_cp_compute_fini(adev);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	gfx_v7_0_cp_compute_enable(adev, true);
 
-	for (i = 0; i < adev->gfx.num_compute_rings; i++) {
+	क्रम (i = 0; i < adev->gfx.num_compute_rings; i++) अणु
 		ring = &adev->gfx.compute_ring[i];
 		amdgpu_ring_test_helper(ring);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gfx_v7_0_cp_enable(struct amdgpu_device *adev, bool enable)
-{
+अटल व्योम gfx_v7_0_cp_enable(काष्ठा amdgpu_device *adev, bool enable)
+अणु
 	gfx_v7_0_cp_gfx_enable(adev, enable);
 	gfx_v7_0_cp_compute_enable(adev, enable);
-}
+पूर्ण
 
-static int gfx_v7_0_cp_load_microcode(struct amdgpu_device *adev)
-{
-	int r;
+अटल पूर्णांक gfx_v7_0_cp_load_microcode(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
 
 	r = gfx_v7_0_cp_gfx_load_microcode(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	r = gfx_v7_0_cp_compute_load_microcode(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gfx_v7_0_enable_gui_idle_interrupt(struct amdgpu_device *adev,
+अटल व्योम gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(काष्ठा amdgpu_device *adev,
 					       bool enable)
-{
-	u32 tmp = RREG32(mmCP_INT_CNTL_RING0);
+अणु
+	u32 पंचांगp = RREG32(mmCP_INT_CNTL_RING0);
 
-	if (enable)
-		tmp |= (CP_INT_CNTL_RING0__CNTX_BUSY_INT_ENABLE_MASK |
+	अगर (enable)
+		पंचांगp |= (CP_INT_CNTL_RING0__CNTX_BUSY_INT_ENABLE_MASK |
 				CP_INT_CNTL_RING0__CNTX_EMPTY_INT_ENABLE_MASK);
-	else
-		tmp &= ~(CP_INT_CNTL_RING0__CNTX_BUSY_INT_ENABLE_MASK |
+	अन्यथा
+		पंचांगp &= ~(CP_INT_CNTL_RING0__CNTX_BUSY_INT_ENABLE_MASK |
 				CP_INT_CNTL_RING0__CNTX_EMPTY_INT_ENABLE_MASK);
-	WREG32(mmCP_INT_CNTL_RING0, tmp);
-}
+	WREG32(mmCP_INT_CNTL_RING0, पंचांगp);
+पूर्ण
 
-static int gfx_v7_0_cp_resume(struct amdgpu_device *adev)
-{
-	int r;
+अटल पूर्णांक gfx_v7_0_cp_resume(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
 
-	gfx_v7_0_enable_gui_idle_interrupt(adev, false);
+	gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, false);
 
 	r = gfx_v7_0_cp_load_microcode(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = gfx_v7_0_cp_gfx_resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	r = gfx_v7_0_cp_compute_resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	gfx_v7_0_enable_gui_idle_interrupt(adev, true);
+	gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * gfx_v7_0_ring_emit_vm_flush - cik vm flush using the CP
  *
  * @ring: the ring to emit the commands to
  *
- * Sync the command pipeline with the PFP. E.g. wait for everything
+ * Sync the command pipeline with the PFP. E.g. रुको क्रम everything
  * to be completed.
  */
-static void gfx_v7_0_ring_emit_pipeline_sync(struct amdgpu_ring *ring)
-{
-	int usepfp = (ring->funcs->type == AMDGPU_RING_TYPE_GFX);
-	uint32_t seq = ring->fence_drv.sync_seq;
-	uint64_t addr = ring->fence_drv.gpu_addr;
+अटल व्योम gfx_v7_0_ring_emit_pipeline_sync(काष्ठा amdgpu_ring *ring)
+अणु
+	पूर्णांक usepfp = (ring->funcs->type == AMDGPU_RING_TYPE_GFX);
+	uपूर्णांक32_t seq = ring->fence_drv.sync_seq;
+	uपूर्णांक64_t addr = ring->fence_drv.gpu_addr;
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_WAIT_REG_MEM, 5));
-	amdgpu_ring_write(ring, (WAIT_REG_MEM_MEM_SPACE(1) | /* memory */
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_WAIT_REG_MEM, 5));
+	amdgpu_ring_ग_लिखो(ring, (WAIT_REG_MEM_MEM_SPACE(1) | /* memory */
 				 WAIT_REG_MEM_FUNCTION(3) | /* equal */
 				 WAIT_REG_MEM_ENGINE(usepfp)));   /* pfp or me */
-	amdgpu_ring_write(ring, addr & 0xfffffffc);
-	amdgpu_ring_write(ring, upper_32_bits(addr) & 0xffffffff);
-	amdgpu_ring_write(ring, seq);
-	amdgpu_ring_write(ring, 0xffffffff);
-	amdgpu_ring_write(ring, 4); /* poll interval */
+	amdgpu_ring_ग_लिखो(ring, addr & 0xfffffffc);
+	amdgpu_ring_ग_लिखो(ring, upper_32_bits(addr) & 0xffffffff);
+	amdgpu_ring_ग_लिखो(ring, seq);
+	amdgpu_ring_ग_लिखो(ring, 0xffffffff);
+	amdgpu_ring_ग_लिखो(ring, 4); /* poll पूर्णांकerval */
 
-	if (usepfp) {
-		/* sync CE with ME to prevent CE fetch CEIB before context switch done */
-		amdgpu_ring_write(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
-		amdgpu_ring_write(ring, 0);
-		amdgpu_ring_write(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
-		amdgpu_ring_write(ring, 0);
-	}
-}
+	अगर (usepfp) अणु
+		/* sync CE with ME to prevent CE fetch CEIB beक्रमe context चयन करोne */
+		amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
+		amdgpu_ring_ग_लिखो(ring, 0);
+		amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
+		amdgpu_ring_ग_लिखो(ring, 0);
+	पूर्ण
+पूर्ण
 
 /*
  * vm
  * VMID 0 is the physical GPU addresses as used by the kernel.
- * VMIDs 1-15 are used for userspace clients and are handled
+ * VMIDs 1-15 are used क्रम userspace clients and are handled
  * by the amdgpu vm/hsa code.
  */
 /**
  * gfx_v7_0_ring_emit_vm_flush - cik vm flush using the CP
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  * @vmid: vmid number to use
  * @pd_addr: address
  *
  * Update the page table base and flush the VM TLB
  * using the CP (CIK).
  */
-static void gfx_v7_0_ring_emit_vm_flush(struct amdgpu_ring *ring,
-					unsigned vmid, uint64_t pd_addr)
-{
-	int usepfp = (ring->funcs->type == AMDGPU_RING_TYPE_GFX);
+अटल व्योम gfx_v7_0_ring_emit_vm_flush(काष्ठा amdgpu_ring *ring,
+					अचिन्हित vmid, uपूर्णांक64_t pd_addr)
+अणु
+	पूर्णांक usepfp = (ring->funcs->type == AMDGPU_RING_TYPE_GFX);
 
 	amdgpu_gmc_emit_flush_gpu_tlb(ring, vmid, pd_addr);
 
-	/* wait for the invalidate to complete */
-	amdgpu_ring_write(ring, PACKET3(PACKET3_WAIT_REG_MEM, 5));
-	amdgpu_ring_write(ring, (WAIT_REG_MEM_OPERATION(0) | /* wait */
+	/* रुको क्रम the invalidate to complete */
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_WAIT_REG_MEM, 5));
+	amdgpu_ring_ग_लिखो(ring, (WAIT_REG_MEM_OPERATION(0) | /* रुको */
 				 WAIT_REG_MEM_FUNCTION(0) |  /* always */
 				 WAIT_REG_MEM_ENGINE(0))); /* me */
-	amdgpu_ring_write(ring, mmVM_INVALIDATE_REQUEST);
-	amdgpu_ring_write(ring, 0);
-	amdgpu_ring_write(ring, 0); /* ref */
-	amdgpu_ring_write(ring, 0); /* mask */
-	amdgpu_ring_write(ring, 0x20); /* poll interval */
+	amdgpu_ring_ग_लिखो(ring, mmVM_INVALIDATE_REQUEST);
+	amdgpu_ring_ग_लिखो(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, 0); /* ref */
+	amdgpu_ring_ग_लिखो(ring, 0); /* mask */
+	amdgpu_ring_ग_लिखो(ring, 0x20); /* poll पूर्णांकerval */
 
-	/* compute doesn't have PFP */
-	if (usepfp) {
-		/* sync PFP to ME, otherwise we might get invalid PFP reads */
-		amdgpu_ring_write(ring, PACKET3(PACKET3_PFP_SYNC_ME, 0));
-		amdgpu_ring_write(ring, 0x0);
+	/* compute करोesn't have PFP */
+	अगर (usepfp) अणु
+		/* sync PFP to ME, otherwise we might get invalid PFP पढ़ोs */
+		amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_PFP_SYNC_ME, 0));
+		amdgpu_ring_ग_लिखो(ring, 0x0);
 
-		/* synce CE with ME to prevent CE fetch CEIB before context switch done */
-		amdgpu_ring_write(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
-		amdgpu_ring_write(ring, 0);
-		amdgpu_ring_write(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
-		amdgpu_ring_write(ring, 0);
-	}
-}
+		/* synce CE with ME to prevent CE fetch CEIB beक्रमe context चयन करोne */
+		amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
+		amdgpu_ring_ग_लिखो(ring, 0);
+		amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SWITCH_BUFFER, 0));
+		amdgpu_ring_ग_लिखो(ring, 0);
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_ring_emit_wreg(struct amdgpu_ring *ring,
-				    uint32_t reg, uint32_t val)
-{
-	int usepfp = (ring->funcs->type == AMDGPU_RING_TYPE_GFX);
+अटल व्योम gfx_v7_0_ring_emit_wreg(काष्ठा amdgpu_ring *ring,
+				    uपूर्णांक32_t reg, uपूर्णांक32_t val)
+अणु
+	पूर्णांक usepfp = (ring->funcs->type == AMDGPU_RING_TYPE_GFX);
 
-	amdgpu_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 3));
-	amdgpu_ring_write(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 3));
+	amdgpu_ring_ग_लिखो(ring, (WRITE_DATA_ENGINE_SEL(usepfp) |
 				 WRITE_DATA_DST_SEL(0)));
-	amdgpu_ring_write(ring, reg);
-	amdgpu_ring_write(ring, 0);
-	amdgpu_ring_write(ring, val);
-}
+	amdgpu_ring_ग_लिखो(ring, reg);
+	amdgpu_ring_ग_लिखो(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, val);
+पूर्ण
 
 /*
  * RLC
  * The RLC is a multi-purpose microengine that handles a
  * variety of functions.
  */
-static int gfx_v7_0_rlc_init(struct amdgpu_device *adev)
-{
-	const u32 *src_ptr;
+अटल पूर्णांक gfx_v7_0_rlc_init(काष्ठा amdgpu_device *adev)
+अणु
+	स्थिर u32 *src_ptr;
 	u32 dws;
-	const struct cs_section_def *cs_data;
-	int r;
+	स्थिर काष्ठा cs_section_def *cs_data;
+	पूर्णांक r;
 
 	/* allocate rlc buffers */
-	if (adev->flags & AMD_IS_APU) {
-		if (adev->asic_type == CHIP_KAVERI) {
-			adev->gfx.rlc.reg_list = spectre_rlc_save_restore_register_list;
+	अगर (adev->flags & AMD_IS_APU) अणु
+		अगर (adev->asic_type == CHIP_KAVERI) अणु
+			adev->gfx.rlc.reg_list = spectre_rlc_save_restore_रेजिस्टर_list;
 			adev->gfx.rlc.reg_list_size =
-				(u32)ARRAY_SIZE(spectre_rlc_save_restore_register_list);
-		} else {
-			adev->gfx.rlc.reg_list = kalindi_rlc_save_restore_register_list;
+				(u32)ARRAY_SIZE(spectre_rlc_save_restore_रेजिस्टर_list);
+		पूर्ण अन्यथा अणु
+			adev->gfx.rlc.reg_list = kalindi_rlc_save_restore_रेजिस्टर_list;
 			adev->gfx.rlc.reg_list_size =
-				(u32)ARRAY_SIZE(kalindi_rlc_save_restore_register_list);
-		}
-	}
+				(u32)ARRAY_SIZE(kalindi_rlc_save_restore_रेजिस्टर_list);
+		पूर्ण
+	पूर्ण
 	adev->gfx.rlc.cs_data = ci_cs_data;
 	adev->gfx.rlc.cp_table_size = ALIGN(CP_ME_TABLE_SIZE * 5 * 4, 2048); /* CP JT */
 	adev->gfx.rlc.cp_table_size += 64 * 1024; /* GDS */
@@ -3323,61 +3324,61 @@ static int gfx_v7_0_rlc_init(struct amdgpu_device *adev)
 
 	cs_data = adev->gfx.rlc.cs_data;
 
-	if (src_ptr) {
+	अगर (src_ptr) अणु
 		/* init save restore block */
 		r = amdgpu_gfx_rlc_init_sr(adev, dws);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	if (cs_data) {
+	अगर (cs_data) अणु
 		/* init clear state block */
 		r = amdgpu_gfx_rlc_init_csb(adev);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	if (adev->gfx.rlc.cp_table_size) {
+	अगर (adev->gfx.rlc.cp_table_size) अणु
 		r = amdgpu_gfx_rlc_init_cpt(adev);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	/* init spm vmid with 0xf */
-	if (adev->gfx.rlc.funcs->update_spm_vmid)
+	अगर (adev->gfx.rlc.funcs->update_spm_vmid)
 		adev->gfx.rlc.funcs->update_spm_vmid(adev, 0xf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gfx_v7_0_enable_lbpw(struct amdgpu_device *adev, bool enable)
-{
-	u32 tmp;
+अटल व्योम gfx_v7_0_enable_lbpw(काष्ठा amdgpu_device *adev, bool enable)
+अणु
+	u32 पंचांगp;
 
-	tmp = RREG32(mmRLC_LB_CNTL);
-	if (enable)
-		tmp |= RLC_LB_CNTL__LOAD_BALANCE_ENABLE_MASK;
-	else
-		tmp &= ~RLC_LB_CNTL__LOAD_BALANCE_ENABLE_MASK;
-	WREG32(mmRLC_LB_CNTL, tmp);
-}
+	पंचांगp = RREG32(mmRLC_LB_CNTL);
+	अगर (enable)
+		पंचांगp |= RLC_LB_CNTL__LOAD_BALANCE_ENABLE_MASK;
+	अन्यथा
+		पंचांगp &= ~RLC_LB_CNTL__LOAD_BALANCE_ENABLE_MASK;
+	WREG32(mmRLC_LB_CNTL, पंचांगp);
+पूर्ण
 
-static void gfx_v7_0_wait_for_rlc_serdes(struct amdgpu_device *adev)
-{
+अटल व्योम gfx_v7_0_रुको_क्रम_rlc_serdes(काष्ठा amdgpu_device *adev)
+अणु
 	u32 i, j, k;
 	u32 mask;
 
 	mutex_lock(&adev->grbm_idx_mutex);
-	for (i = 0; i < adev->gfx.config.max_shader_engines; i++) {
-		for (j = 0; j < adev->gfx.config.max_sh_per_se; j++) {
+	क्रम (i = 0; i < adev->gfx.config.max_shader_engines; i++) अणु
+		क्रम (j = 0; j < adev->gfx.config.max_sh_per_se; j++) अणु
 			gfx_v7_0_select_se_sh(adev, i, j, 0xffffffff);
-			for (k = 0; k < adev->usec_timeout; k++) {
-				if (RREG32(mmRLC_SERDES_CU_MASTER_BUSY) == 0)
-					break;
+			क्रम (k = 0; k < adev->usec_समयout; k++) अणु
+				अगर (RREG32(mmRLC_SERDES_CU_MASTER_BUSY) == 0)
+					अवरोध;
 				udelay(1);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	gfx_v7_0_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
@@ -3385,146 +3386,146 @@ static void gfx_v7_0_wait_for_rlc_serdes(struct amdgpu_device *adev)
 		RLC_SERDES_NONCU_MASTER_BUSY__GC_MASTER_BUSY_MASK |
 		RLC_SERDES_NONCU_MASTER_BUSY__TC0_MASTER_BUSY_MASK |
 		RLC_SERDES_NONCU_MASTER_BUSY__TC1_MASTER_BUSY_MASK;
-	for (k = 0; k < adev->usec_timeout; k++) {
-		if ((RREG32(mmRLC_SERDES_NONCU_MASTER_BUSY) & mask) == 0)
-			break;
+	क्रम (k = 0; k < adev->usec_समयout; k++) अणु
+		अगर ((RREG32(mmRLC_SERDES_NONCU_MASTER_BUSY) & mask) == 0)
+			अवरोध;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_update_rlc(struct amdgpu_device *adev, u32 rlc)
-{
-	u32 tmp;
+अटल व्योम gfx_v7_0_update_rlc(काष्ठा amdgpu_device *adev, u32 rlc)
+अणु
+	u32 पंचांगp;
 
-	tmp = RREG32(mmRLC_CNTL);
-	if (tmp != rlc)
+	पंचांगp = RREG32(mmRLC_CNTL);
+	अगर (पंचांगp != rlc)
 		WREG32(mmRLC_CNTL, rlc);
-}
+पूर्ण
 
-static u32 gfx_v7_0_halt_rlc(struct amdgpu_device *adev)
-{
+अटल u32 gfx_v7_0_halt_rlc(काष्ठा amdgpu_device *adev)
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(mmRLC_CNTL);
 
-	if (data & RLC_CNTL__RLC_ENABLE_F32_MASK) {
+	अगर (data & RLC_CNTL__RLC_ENABLE_F32_MASK) अणु
 		u32 i;
 
 		data &= ~RLC_CNTL__RLC_ENABLE_F32_MASK;
 		WREG32(mmRLC_CNTL, data);
 
-		for (i = 0; i < adev->usec_timeout; i++) {
-			if ((RREG32(mmRLC_GPM_STAT) & RLC_GPM_STAT__RLC_BUSY_MASK) == 0)
-				break;
+		क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+			अगर ((RREG32(mmRLC_GPM_STAT) & RLC_GPM_STAT__RLC_BUSY_MASK) == 0)
+				अवरोध;
 			udelay(1);
-		}
+		पूर्ण
 
-		gfx_v7_0_wait_for_rlc_serdes(adev);
-	}
+		gfx_v7_0_रुको_क्रम_rlc_serdes(adev);
+	पूर्ण
 
-	return orig;
-}
+	वापस orig;
+पूर्ण
 
-static bool gfx_v7_0_is_rlc_enabled(struct amdgpu_device *adev)
-{
-	return true;
-}
+अटल bool gfx_v7_0_is_rlc_enabled(काष्ठा amdgpu_device *adev)
+अणु
+	वापस true;
+पूर्ण
 
-static void gfx_v7_0_set_safe_mode(struct amdgpu_device *adev)
-{
-	u32 tmp, i, mask;
+अटल व्योम gfx_v7_0_set_safe_mode(काष्ठा amdgpu_device *adev)
+अणु
+	u32 पंचांगp, i, mask;
 
-	tmp = 0x1 | (1 << 1);
-	WREG32(mmRLC_GPR_REG2, tmp);
+	पंचांगp = 0x1 | (1 << 1);
+	WREG32(mmRLC_GPR_REG2, पंचांगp);
 
 	mask = RLC_GPM_STAT__GFX_POWER_STATUS_MASK |
 		RLC_GPM_STAT__GFX_CLOCK_STATUS_MASK;
-	for (i = 0; i < adev->usec_timeout; i++) {
-		if ((RREG32(mmRLC_GPM_STAT) & mask) == mask)
-			break;
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		अगर ((RREG32(mmRLC_GPM_STAT) & mask) == mask)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
-	for (i = 0; i < adev->usec_timeout; i++) {
-		if ((RREG32(mmRLC_GPR_REG2) & 0x1) == 0)
-			break;
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		अगर ((RREG32(mmRLC_GPR_REG2) & 0x1) == 0)
+			अवरोध;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_unset_safe_mode(struct amdgpu_device *adev)
-{
-	u32 tmp;
+अटल व्योम gfx_v7_0_unset_safe_mode(काष्ठा amdgpu_device *adev)
+अणु
+	u32 पंचांगp;
 
-	tmp = 0x1 | (0 << 1);
-	WREG32(mmRLC_GPR_REG2, tmp);
-}
+	पंचांगp = 0x1 | (0 << 1);
+	WREG32(mmRLC_GPR_REG2, पंचांगp);
+पूर्ण
 
 /**
  * gfx_v7_0_rlc_stop - stop the RLC ME
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Halt the RLC ME (MicroEngine) (CIK).
  */
-static void gfx_v7_0_rlc_stop(struct amdgpu_device *adev)
-{
+अटल व्योम gfx_v7_0_rlc_stop(काष्ठा amdgpu_device *adev)
+अणु
 	WREG32(mmRLC_CNTL, 0);
 
-	gfx_v7_0_enable_gui_idle_interrupt(adev, false);
+	gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, false);
 
-	gfx_v7_0_wait_for_rlc_serdes(adev);
-}
+	gfx_v7_0_रुको_क्रम_rlc_serdes(adev);
+पूर्ण
 
 /**
  * gfx_v7_0_rlc_start - start the RLC ME
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Unhalt the RLC ME (MicroEngine) (CIK).
  */
-static void gfx_v7_0_rlc_start(struct amdgpu_device *adev)
-{
+अटल व्योम gfx_v7_0_rlc_start(काष्ठा amdgpu_device *adev)
+अणु
 	WREG32(mmRLC_CNTL, RLC_CNTL__RLC_ENABLE_F32_MASK);
 
-	gfx_v7_0_enable_gui_idle_interrupt(adev, true);
+	gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, true);
 
 	udelay(50);
-}
+पूर्ण
 
-static void gfx_v7_0_rlc_reset(struct amdgpu_device *adev)
-{
-	u32 tmp = RREG32(mmGRBM_SOFT_RESET);
+अटल व्योम gfx_v7_0_rlc_reset(काष्ठा amdgpu_device *adev)
+अणु
+	u32 पंचांगp = RREG32(mmGRBM_SOFT_RESET);
 
-	tmp |= GRBM_SOFT_RESET__SOFT_RESET_RLC_MASK;
-	WREG32(mmGRBM_SOFT_RESET, tmp);
+	पंचांगp |= GRBM_SOFT_RESET__SOFT_RESET_RLC_MASK;
+	WREG32(mmGRBM_SOFT_RESET, पंचांगp);
 	udelay(50);
-	tmp &= ~GRBM_SOFT_RESET__SOFT_RESET_RLC_MASK;
-	WREG32(mmGRBM_SOFT_RESET, tmp);
+	पंचांगp &= ~GRBM_SOFT_RESET__SOFT_RESET_RLC_MASK;
+	WREG32(mmGRBM_SOFT_RESET, पंचांगp);
 	udelay(50);
-}
+पूर्ण
 
 /**
  * gfx_v7_0_rlc_resume - setup the RLC hw
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Initialize the RLC registers, load the ucode,
+ * Initialize the RLC रेजिस्टरs, load the ucode,
  * and start the RLC (CIK).
- * Returns 0 for success, -EINVAL if the ucode is not available.
+ * Returns 0 क्रम success, -EINVAL अगर the ucode is not available.
  */
-static int gfx_v7_0_rlc_resume(struct amdgpu_device *adev)
-{
-	const struct rlc_firmware_header_v1_0 *hdr;
-	const __le32 *fw_data;
-	unsigned i, fw_size;
-	u32 tmp;
+अटल पूर्णांक gfx_v7_0_rlc_resume(काष्ठा amdgpu_device *adev)
+अणु
+	स्थिर काष्ठा rlc_firmware_header_v1_0 *hdr;
+	स्थिर __le32 *fw_data;
+	अचिन्हित i, fw_size;
+	u32 पंचांगp;
 
-	if (!adev->gfx.rlc_fw)
-		return -EINVAL;
+	अगर (!adev->gfx.rlc_fw)
+		वापस -EINVAL;
 
-	hdr = (const struct rlc_firmware_header_v1_0 *)adev->gfx.rlc_fw->data;
-	amdgpu_ucode_print_rlc_hdr(&hdr->header);
+	hdr = (स्थिर काष्ठा rlc_firmware_header_v1_0 *)adev->gfx.rlc_fw->data;
+	amdgpu_ucode_prपूर्णांक_rlc_hdr(&hdr->header);
 	adev->gfx.rlc_fw_version = le32_to_cpu(hdr->header.ucode_version);
 	adev->gfx.rlc_feature_version = le32_to_cpu(
 					hdr->ucode_feature_version);
@@ -3532,8 +3533,8 @@ static int gfx_v7_0_rlc_resume(struct amdgpu_device *adev)
 	adev->gfx.rlc.funcs->stop(adev);
 
 	/* disable CG */
-	tmp = RREG32(mmRLC_CGCG_CGLS_CTRL) & 0xfffffffc;
-	WREG32(mmRLC_CGCG_CGLS_CTRL, tmp);
+	पंचांगp = RREG32(mmRLC_CGCG_CGLS_CTRL) & 0xfffffffc;
+	WREG32(mmRLC_CGCG_CGLS_CTRL, पंचांगp);
 
 	adev->gfx.rlc.funcs->reset(adev);
 
@@ -3552,27 +3553,27 @@ static int gfx_v7_0_rlc_resume(struct amdgpu_device *adev)
 	WREG32(mmRLC_MC_CNTL, 0);
 	WREG32(mmRLC_UCODE_CNTL, 0);
 
-	fw_data = (const __le32 *)
+	fw_data = (स्थिर __le32 *)
 		(adev->gfx.rlc_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 	fw_size = le32_to_cpu(hdr->header.ucode_size_bytes) / 4;
 	WREG32(mmRLC_GPM_UCODE_ADDR, 0);
-	for (i = 0; i < fw_size; i++)
+	क्रम (i = 0; i < fw_size; i++)
 		WREG32(mmRLC_GPM_UCODE_DATA, le32_to_cpup(fw_data++));
 	WREG32(mmRLC_GPM_UCODE_ADDR, adev->gfx.rlc_fw_version);
 
 	/* XXX - find out what chips support lbpw */
 	gfx_v7_0_enable_lbpw(adev, false);
 
-	if (adev->asic_type == CHIP_BONAIRE)
+	अगर (adev->asic_type == CHIP_BONAIRE)
 		WREG32(mmRLC_DRIVER_CPDMA_STATUS, 0);
 
 	adev->gfx.rlc.funcs->start(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gfx_v7_0_update_spm_vmid(struct amdgpu_device *adev, unsigned vmid)
-{
+अटल व्योम gfx_v7_0_update_spm_vmid(काष्ठा amdgpu_device *adev, अचिन्हित vmid)
+अणु
 	u32 data;
 
 	data = RREG32(mmRLC_SPM_VMID);
@@ -3581,37 +3582,37 @@ static void gfx_v7_0_update_spm_vmid(struct amdgpu_device *adev, unsigned vmid)
 	data |= (vmid & RLC_SPM_VMID__RLC_SPM_VMID_MASK) << RLC_SPM_VMID__RLC_SPM_VMID__SHIFT;
 
 	WREG32(mmRLC_SPM_VMID, data);
-}
+पूर्ण
 
-static void gfx_v7_0_enable_cgcg(struct amdgpu_device *adev, bool enable)
-{
-	u32 data, orig, tmp, tmp2;
+अटल व्योम gfx_v7_0_enable_cgcg(काष्ठा amdgpu_device *adev, bool enable)
+अणु
+	u32 data, orig, पंचांगp, पंचांगp2;
 
 	orig = data = RREG32(mmRLC_CGCG_CGLS_CTRL);
 
-	if (enable && (adev->cg_flags & AMD_CG_SUPPORT_GFX_CGCG)) {
-		gfx_v7_0_enable_gui_idle_interrupt(adev, true);
+	अगर (enable && (adev->cg_flags & AMD_CG_SUPPORT_GFX_CGCG)) अणु
+		gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, true);
 
-		tmp = gfx_v7_0_halt_rlc(adev);
+		पंचांगp = gfx_v7_0_halt_rlc(adev);
 
 		mutex_lock(&adev->grbm_idx_mutex);
 		gfx_v7_0_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
 		WREG32(mmRLC_SERDES_WR_CU_MASTER_MASK, 0xffffffff);
 		WREG32(mmRLC_SERDES_WR_NONCU_MASTER_MASK, 0xffffffff);
-		tmp2 = RLC_SERDES_WR_CTRL__BPM_ADDR_MASK |
+		पंचांगp2 = RLC_SERDES_WR_CTRL__BPM_ADDR_MASK |
 			RLC_SERDES_WR_CTRL__CGCG_OVERRIDE_0_MASK |
 			RLC_SERDES_WR_CTRL__CGLS_ENABLE_MASK;
-		WREG32(mmRLC_SERDES_WR_CTRL, tmp2);
+		WREG32(mmRLC_SERDES_WR_CTRL, पंचांगp2);
 		mutex_unlock(&adev->grbm_idx_mutex);
 
-		gfx_v7_0_update_rlc(adev, tmp);
+		gfx_v7_0_update_rlc(adev, पंचांगp);
 
 		data |= RLC_CGCG_CGLS_CTRL__CGCG_EN_MASK | RLC_CGCG_CGLS_CTRL__CGLS_EN_MASK;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmRLC_CGCG_CGLS_CTRL, data);
 
-	} else {
-		gfx_v7_0_enable_gui_idle_interrupt(adev, false);
+	पूर्ण अन्यथा अणु
+		gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, false);
 
 		RREG32(mmCB_CGTT_SCLK_CTRL);
 		RREG32(mmCB_CGTT_SCLK_CTRL);
@@ -3619,34 +3620,34 @@ static void gfx_v7_0_enable_cgcg(struct amdgpu_device *adev, bool enable)
 		RREG32(mmCB_CGTT_SCLK_CTRL);
 
 		data &= ~(RLC_CGCG_CGLS_CTRL__CGCG_EN_MASK | RLC_CGCG_CGLS_CTRL__CGLS_EN_MASK);
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmRLC_CGCG_CGLS_CTRL, data);
 
-		gfx_v7_0_enable_gui_idle_interrupt(adev, true);
-	}
-}
+		gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, true);
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_enable_mgcg(struct amdgpu_device *adev, bool enable)
-{
-	u32 data, orig, tmp = 0;
+अटल व्योम gfx_v7_0_enable_mgcg(काष्ठा amdgpu_device *adev, bool enable)
+अणु
+	u32 data, orig, पंचांगp = 0;
 
-	if (enable && (adev->cg_flags & AMD_CG_SUPPORT_GFX_MGCG)) {
-		if (adev->cg_flags & AMD_CG_SUPPORT_GFX_MGLS) {
-			if (adev->cg_flags & AMD_CG_SUPPORT_GFX_CP_LS) {
+	अगर (enable && (adev->cg_flags & AMD_CG_SUPPORT_GFX_MGCG)) अणु
+		अगर (adev->cg_flags & AMD_CG_SUPPORT_GFX_MGLS) अणु
+			अगर (adev->cg_flags & AMD_CG_SUPPORT_GFX_CP_LS) अणु
 				orig = data = RREG32(mmCP_MEM_SLP_CNTL);
 				data |= CP_MEM_SLP_CNTL__CP_MEM_LS_EN_MASK;
-				if (orig != data)
+				अगर (orig != data)
 					WREG32(mmCP_MEM_SLP_CNTL, data);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		orig = data = RREG32(mmRLC_CGTT_MGCG_OVERRIDE);
 		data |= 0x00000001;
 		data &= 0xfffffffd;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmRLC_CGTT_MGCG_OVERRIDE, data);
 
-		tmp = gfx_v7_0_halt_rlc(adev);
+		पंचांगp = gfx_v7_0_halt_rlc(adev);
 
 		mutex_lock(&adev->grbm_idx_mutex);
 		gfx_v7_0_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
@@ -3657,47 +3658,47 @@ static void gfx_v7_0_enable_mgcg(struct amdgpu_device *adev, bool enable)
 		WREG32(mmRLC_SERDES_WR_CTRL, data);
 		mutex_unlock(&adev->grbm_idx_mutex);
 
-		gfx_v7_0_update_rlc(adev, tmp);
+		gfx_v7_0_update_rlc(adev, पंचांगp);
 
-		if (adev->cg_flags & AMD_CG_SUPPORT_GFX_CGTS) {
+		अगर (adev->cg_flags & AMD_CG_SUPPORT_GFX_CGTS) अणु
 			orig = data = RREG32(mmCGTS_SM_CTRL_REG);
 			data &= ~CGTS_SM_CTRL_REG__SM_MODE_MASK;
 			data |= (0x2 << CGTS_SM_CTRL_REG__SM_MODE__SHIFT);
 			data |= CGTS_SM_CTRL_REG__SM_MODE_ENABLE_MASK;
 			data &= ~CGTS_SM_CTRL_REG__OVERRIDE_MASK;
-			if ((adev->cg_flags & AMD_CG_SUPPORT_GFX_MGLS) &&
+			अगर ((adev->cg_flags & AMD_CG_SUPPORT_GFX_MGLS) &&
 			    (adev->cg_flags & AMD_CG_SUPPORT_GFX_CGTS_LS))
 				data &= ~CGTS_SM_CTRL_REG__LS_OVERRIDE_MASK;
 			data &= ~CGTS_SM_CTRL_REG__ON_MONITOR_ADD_MASK;
 			data |= CGTS_SM_CTRL_REG__ON_MONITOR_ADD_EN_MASK;
 			data |= (0x96 << CGTS_SM_CTRL_REG__ON_MONITOR_ADD__SHIFT);
-			if (orig != data)
+			अगर (orig != data)
 				WREG32(mmCGTS_SM_CTRL_REG, data);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		orig = data = RREG32(mmRLC_CGTT_MGCG_OVERRIDE);
 		data |= 0x00000003;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmRLC_CGTT_MGCG_OVERRIDE, data);
 
 		data = RREG32(mmRLC_MEM_SLP_CNTL);
-		if (data & RLC_MEM_SLP_CNTL__RLC_MEM_LS_EN_MASK) {
+		अगर (data & RLC_MEM_SLP_CNTL__RLC_MEM_LS_EN_MASK) अणु
 			data &= ~RLC_MEM_SLP_CNTL__RLC_MEM_LS_EN_MASK;
 			WREG32(mmRLC_MEM_SLP_CNTL, data);
-		}
+		पूर्ण
 
 		data = RREG32(mmCP_MEM_SLP_CNTL);
-		if (data & CP_MEM_SLP_CNTL__CP_MEM_LS_EN_MASK) {
+		अगर (data & CP_MEM_SLP_CNTL__CP_MEM_LS_EN_MASK) अणु
 			data &= ~CP_MEM_SLP_CNTL__CP_MEM_LS_EN_MASK;
 			WREG32(mmCP_MEM_SLP_CNTL, data);
-		}
+		पूर्ण
 
 		orig = data = RREG32(mmCGTS_SM_CTRL_REG);
 		data |= CGTS_SM_CTRL_REG__OVERRIDE_MASK | CGTS_SM_CTRL_REG__LS_OVERRIDE_MASK;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmCGTS_SM_CTRL_REG, data);
 
-		tmp = gfx_v7_0_halt_rlc(adev);
+		पंचांगp = gfx_v7_0_halt_rlc(adev);
 
 		mutex_lock(&adev->grbm_idx_mutex);
 		gfx_v7_0_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
@@ -3707,133 +3708,133 @@ static void gfx_v7_0_enable_mgcg(struct amdgpu_device *adev, bool enable)
 		WREG32(mmRLC_SERDES_WR_CTRL, data);
 		mutex_unlock(&adev->grbm_idx_mutex);
 
-		gfx_v7_0_update_rlc(adev, tmp);
-	}
-}
+		gfx_v7_0_update_rlc(adev, पंचांगp);
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_update_cg(struct amdgpu_device *adev,
+अटल व्योम gfx_v7_0_update_cg(काष्ठा amdgpu_device *adev,
 			       bool enable)
-{
-	gfx_v7_0_enable_gui_idle_interrupt(adev, false);
+अणु
+	gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, false);
 	/* order matters! */
-	if (enable) {
+	अगर (enable) अणु
 		gfx_v7_0_enable_mgcg(adev, true);
 		gfx_v7_0_enable_cgcg(adev, true);
-	} else {
+	पूर्ण अन्यथा अणु
 		gfx_v7_0_enable_cgcg(adev, false);
 		gfx_v7_0_enable_mgcg(adev, false);
-	}
-	gfx_v7_0_enable_gui_idle_interrupt(adev, true);
-}
+	पूर्ण
+	gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, true);
+पूर्ण
 
-static void gfx_v7_0_enable_sclk_slowdown_on_pu(struct amdgpu_device *adev,
+अटल व्योम gfx_v7_0_enable_sclk_slowकरोwn_on_pu(काष्ठा amdgpu_device *adev,
 						bool enable)
-{
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(mmRLC_PG_CNTL);
-	if (enable && (adev->pg_flags & AMD_PG_SUPPORT_RLC_SMU_HS))
+	अगर (enable && (adev->pg_flags & AMD_PG_SUPPORT_RLC_SMU_HS))
 		data |= RLC_PG_CNTL__SMU_CLK_SLOWDOWN_ON_PU_ENABLE_MASK;
-	else
+	अन्यथा
 		data &= ~RLC_PG_CNTL__SMU_CLK_SLOWDOWN_ON_PU_ENABLE_MASK;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(mmRLC_PG_CNTL, data);
-}
+पूर्ण
 
-static void gfx_v7_0_enable_sclk_slowdown_on_pd(struct amdgpu_device *adev,
+अटल व्योम gfx_v7_0_enable_sclk_slowकरोwn_on_pd(काष्ठा amdgpu_device *adev,
 						bool enable)
-{
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(mmRLC_PG_CNTL);
-	if (enable && (adev->pg_flags & AMD_PG_SUPPORT_RLC_SMU_HS))
+	अगर (enable && (adev->pg_flags & AMD_PG_SUPPORT_RLC_SMU_HS))
 		data |= RLC_PG_CNTL__SMU_CLK_SLOWDOWN_ON_PD_ENABLE_MASK;
-	else
+	अन्यथा
 		data &= ~RLC_PG_CNTL__SMU_CLK_SLOWDOWN_ON_PD_ENABLE_MASK;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(mmRLC_PG_CNTL, data);
-}
+पूर्ण
 
-static void gfx_v7_0_enable_cp_pg(struct amdgpu_device *adev, bool enable)
-{
+अटल व्योम gfx_v7_0_enable_cp_pg(काष्ठा amdgpu_device *adev, bool enable)
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(mmRLC_PG_CNTL);
-	if (enable && (adev->pg_flags & AMD_PG_SUPPORT_CP))
+	अगर (enable && (adev->pg_flags & AMD_PG_SUPPORT_CP))
 		data &= ~0x8000;
-	else
+	अन्यथा
 		data |= 0x8000;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(mmRLC_PG_CNTL, data);
-}
+पूर्ण
 
-static void gfx_v7_0_enable_gds_pg(struct amdgpu_device *adev, bool enable)
-{
+अटल व्योम gfx_v7_0_enable_gds_pg(काष्ठा amdgpu_device *adev, bool enable)
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(mmRLC_PG_CNTL);
-	if (enable && (adev->pg_flags & AMD_PG_SUPPORT_GDS))
+	अगर (enable && (adev->pg_flags & AMD_PG_SUPPORT_GDS))
 		data &= ~0x2000;
-	else
+	अन्यथा
 		data |= 0x2000;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(mmRLC_PG_CNTL, data);
-}
+पूर्ण
 
-static int gfx_v7_0_cp_pg_table_num(struct amdgpu_device *adev)
-{
-	if (adev->asic_type == CHIP_KAVERI)
-		return 5;
-	else
-		return 4;
-}
+अटल पूर्णांक gfx_v7_0_cp_pg_table_num(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (adev->asic_type == CHIP_KAVERI)
+		वापस 5;
+	अन्यथा
+		वापस 4;
+पूर्ण
 
-static void gfx_v7_0_enable_gfx_cgpg(struct amdgpu_device *adev,
+अटल व्योम gfx_v7_0_enable_gfx_cgpg(काष्ठा amdgpu_device *adev,
 				     bool enable)
-{
+अणु
 	u32 data, orig;
 
-	if (enable && (adev->pg_flags & AMD_PG_SUPPORT_GFX_PG)) {
+	अगर (enable && (adev->pg_flags & AMD_PG_SUPPORT_GFX_PG)) अणु
 		orig = data = RREG32(mmRLC_PG_CNTL);
 		data |= RLC_PG_CNTL__GFX_POWER_GATING_ENABLE_MASK;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmRLC_PG_CNTL, data);
 
 		orig = data = RREG32(mmRLC_AUTO_PG_CTRL);
 		data |= RLC_AUTO_PG_CTRL__AUTO_PG_EN_MASK;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmRLC_AUTO_PG_CTRL, data);
-	} else {
+	पूर्ण अन्यथा अणु
 		orig = data = RREG32(mmRLC_PG_CNTL);
 		data &= ~RLC_PG_CNTL__GFX_POWER_GATING_ENABLE_MASK;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmRLC_PG_CNTL, data);
 
 		orig = data = RREG32(mmRLC_AUTO_PG_CTRL);
 		data &= ~RLC_AUTO_PG_CTRL__AUTO_PG_EN_MASK;
-		if (orig != data)
+		अगर (orig != data)
 			WREG32(mmRLC_AUTO_PG_CTRL, data);
 
 		data = RREG32(mmDB_RENDER_CONTROL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_set_user_cu_inactive_bitmap(struct amdgpu_device *adev,
-						 u32 bitmap)
-{
+अटल व्योम gfx_v7_0_set_user_cu_inactive_biपंचांगap(काष्ठा amdgpu_device *adev,
+						 u32 biपंचांगap)
+अणु
 	u32 data;
 
-	if (!bitmap)
-		return;
+	अगर (!biपंचांगap)
+		वापस;
 
-	data = bitmap << GC_USER_SHADER_ARRAY_CONFIG__INACTIVE_CUS__SHIFT;
+	data = biपंचांगap << GC_USER_SHADER_ARRAY_CONFIG__INACTIVE_CUS__SHIFT;
 	data &= GC_USER_SHADER_ARRAY_CONFIG__INACTIVE_CUS_MASK;
 
 	WREG32(mmGC_USER_SHADER_ARRAY_CONFIG, data);
-}
+पूर्ण
 
-static u32 gfx_v7_0_get_cu_active_bitmap(struct amdgpu_device *adev)
-{
+अटल u32 gfx_v7_0_get_cu_active_biपंचांगap(काष्ठा amdgpu_device *adev)
+अणु
 	u32 data, mask;
 
 	data = RREG32(mmCC_GC_SHADER_ARRAY_CONFIG);
@@ -3842,78 +3843,78 @@ static u32 gfx_v7_0_get_cu_active_bitmap(struct amdgpu_device *adev)
 	data &= CC_GC_SHADER_ARRAY_CONFIG__INACTIVE_CUS_MASK;
 	data >>= CC_GC_SHADER_ARRAY_CONFIG__INACTIVE_CUS__SHIFT;
 
-	mask = amdgpu_gfx_create_bitmask(adev->gfx.config.max_cu_per_sh);
+	mask = amdgpu_gfx_create_biपंचांगask(adev->gfx.config.max_cu_per_sh);
 
-	return (~data) & mask;
-}
+	वापस (~data) & mask;
+पूर्ण
 
-static void gfx_v7_0_init_ao_cu_mask(struct amdgpu_device *adev)
-{
-	u32 tmp;
+अटल व्योम gfx_v7_0_init_ao_cu_mask(काष्ठा amdgpu_device *adev)
+अणु
+	u32 पंचांगp;
 
 	WREG32(mmRLC_PG_ALWAYS_ON_CU_MASK, adev->gfx.cu_info.ao_cu_mask);
 
-	tmp = RREG32(mmRLC_MAX_PG_CU);
-	tmp &= ~RLC_MAX_PG_CU__MAX_POWERED_UP_CU_MASK;
-	tmp |= (adev->gfx.cu_info.number << RLC_MAX_PG_CU__MAX_POWERED_UP_CU__SHIFT);
-	WREG32(mmRLC_MAX_PG_CU, tmp);
-}
+	पंचांगp = RREG32(mmRLC_MAX_PG_CU);
+	पंचांगp &= ~RLC_MAX_PG_CU__MAX_POWERED_UP_CU_MASK;
+	पंचांगp |= (adev->gfx.cu_info.number << RLC_MAX_PG_CU__MAX_POWERED_UP_CU__SHIFT);
+	WREG32(mmRLC_MAX_PG_CU, पंचांगp);
+पूर्ण
 
-static void gfx_v7_0_enable_gfx_static_mgpg(struct amdgpu_device *adev,
+अटल व्योम gfx_v7_0_enable_gfx_अटल_mgpg(काष्ठा amdgpu_device *adev,
 					    bool enable)
-{
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(mmRLC_PG_CNTL);
-	if (enable && (adev->pg_flags & AMD_PG_SUPPORT_GFX_SMG))
+	अगर (enable && (adev->pg_flags & AMD_PG_SUPPORT_GFX_SMG))
 		data |= RLC_PG_CNTL__STATIC_PER_CU_PG_ENABLE_MASK;
-	else
+	अन्यथा
 		data &= ~RLC_PG_CNTL__STATIC_PER_CU_PG_ENABLE_MASK;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(mmRLC_PG_CNTL, data);
-}
+पूर्ण
 
-static void gfx_v7_0_enable_gfx_dynamic_mgpg(struct amdgpu_device *adev,
+अटल व्योम gfx_v7_0_enable_gfx_dynamic_mgpg(काष्ठा amdgpu_device *adev,
 					     bool enable)
-{
+अणु
 	u32 data, orig;
 
 	orig = data = RREG32(mmRLC_PG_CNTL);
-	if (enable && (adev->pg_flags & AMD_PG_SUPPORT_GFX_DMG))
+	अगर (enable && (adev->pg_flags & AMD_PG_SUPPORT_GFX_DMG))
 		data |= RLC_PG_CNTL__DYN_PER_CU_PG_ENABLE_MASK;
-	else
+	अन्यथा
 		data &= ~RLC_PG_CNTL__DYN_PER_CU_PG_ENABLE_MASK;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(mmRLC_PG_CNTL, data);
-}
+पूर्ण
 
-#define RLC_SAVE_AND_RESTORE_STARTING_OFFSET 0x90
-#define RLC_CLEAR_STATE_DESCRIPTOR_OFFSET    0x3D
+#घोषणा RLC_SAVE_AND_RESTORE_STARTING_OFFSET 0x90
+#घोषणा RLC_CLEAR_STATE_DESCRIPTOR_OFFSET    0x3D
 
-static void gfx_v7_0_init_gfx_cgpg(struct amdgpu_device *adev)
-{
+अटल व्योम gfx_v7_0_init_gfx_cgpg(काष्ठा amdgpu_device *adev)
+अणु
 	u32 data, orig;
 	u32 i;
 
-	if (adev->gfx.rlc.cs_data) {
+	अगर (adev->gfx.rlc.cs_data) अणु
 		WREG32(mmRLC_GPM_SCRATCH_ADDR, RLC_CLEAR_STATE_DESCRIPTOR_OFFSET);
 		WREG32(mmRLC_GPM_SCRATCH_DATA, upper_32_bits(adev->gfx.rlc.clear_state_gpu_addr));
 		WREG32(mmRLC_GPM_SCRATCH_DATA, lower_32_bits(adev->gfx.rlc.clear_state_gpu_addr));
 		WREG32(mmRLC_GPM_SCRATCH_DATA, adev->gfx.rlc.clear_state_size);
-	} else {
+	पूर्ण अन्यथा अणु
 		WREG32(mmRLC_GPM_SCRATCH_ADDR, RLC_CLEAR_STATE_DESCRIPTOR_OFFSET);
-		for (i = 0; i < 3; i++)
+		क्रम (i = 0; i < 3; i++)
 			WREG32(mmRLC_GPM_SCRATCH_DATA, 0);
-	}
-	if (adev->gfx.rlc.reg_list) {
+	पूर्ण
+	अगर (adev->gfx.rlc.reg_list) अणु
 		WREG32(mmRLC_GPM_SCRATCH_ADDR, RLC_SAVE_AND_RESTORE_STARTING_OFFSET);
-		for (i = 0; i < adev->gfx.rlc.reg_list_size; i++)
+		क्रम (i = 0; i < adev->gfx.rlc.reg_list_size; i++)
 			WREG32(mmRLC_GPM_SCRATCH_DATA, adev->gfx.rlc.reg_list[i]);
-	}
+	पूर्ण
 
 	orig = data = RREG32(mmRLC_PG_CNTL);
 	data |= RLC_PG_CNTL__GFX_POWER_GATING_SRC_MASK;
-	if (orig != data)
+	अगर (orig != data)
 		WREG32(mmRLC_PG_CNTL, data);
 
 	WREG32(mmRLC_SAVE_AND_RESTORE_BASE, adev->gfx.rlc.save_restore_gpu_addr >> 8);
@@ -3937,37 +3938,37 @@ static void gfx_v7_0_init_gfx_cgpg(struct amdgpu_device *adev)
 	data |= (0x700 << RLC_AUTO_PG_CTRL__GRBM_REG_SAVE_GFX_IDLE_THRESHOLD__SHIFT);
 	WREG32(mmRLC_AUTO_PG_CTRL, data);
 
-}
+पूर्ण
 
-static void gfx_v7_0_update_gfx_pg(struct amdgpu_device *adev, bool enable)
-{
+अटल व्योम gfx_v7_0_update_gfx_pg(काष्ठा amdgpu_device *adev, bool enable)
+अणु
 	gfx_v7_0_enable_gfx_cgpg(adev, enable);
-	gfx_v7_0_enable_gfx_static_mgpg(adev, enable);
+	gfx_v7_0_enable_gfx_अटल_mgpg(adev, enable);
 	gfx_v7_0_enable_gfx_dynamic_mgpg(adev, enable);
-}
+पूर्ण
 
-static u32 gfx_v7_0_get_csb_size(struct amdgpu_device *adev)
-{
+अटल u32 gfx_v7_0_get_csb_size(काष्ठा amdgpu_device *adev)
+अणु
 	u32 count = 0;
-	const struct cs_section_def *sect = NULL;
-	const struct cs_extent_def *ext = NULL;
+	स्थिर काष्ठा cs_section_def *sect = शून्य;
+	स्थिर काष्ठा cs_extent_def *ext = शून्य;
 
-	if (adev->gfx.rlc.cs_data == NULL)
-		return 0;
+	अगर (adev->gfx.rlc.cs_data == शून्य)
+		वापस 0;
 
 	/* begin clear state */
 	count += 2;
 	/* context control state */
 	count += 3;
 
-	for (sect = adev->gfx.rlc.cs_data; sect->section != NULL; ++sect) {
-		for (ext = sect->section; ext->extent != NULL; ++ext) {
-			if (sect->id == SECT_CONTEXT)
+	क्रम (sect = adev->gfx.rlc.cs_data; sect->section != शून्य; ++sect) अणु
+		क्रम (ext = sect->section; ext->extent != शून्य; ++ext) अणु
+			अगर (sect->id == SECT_CONTEXT)
 				count += 2 + ext->reg_count;
-			else
-				return 0;
-		}
-	}
+			अन्यथा
+				वापस 0;
+		पूर्ण
+	पूर्ण
 	/* pa_sc_raster_config/pa_sc_raster_config1 */
 	count += 4;
 	/* end clear state */
@@ -3975,20 +3976,20 @@ static u32 gfx_v7_0_get_csb_size(struct amdgpu_device *adev)
 	/* clear state */
 	count += 2;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void gfx_v7_0_get_csb_buffer(struct amdgpu_device *adev,
-				    volatile u32 *buffer)
-{
+अटल व्योम gfx_v7_0_get_csb_buffer(काष्ठा amdgpu_device *adev,
+				    अस्थिर u32 *buffer)
+अणु
 	u32 count = 0, i;
-	const struct cs_section_def *sect = NULL;
-	const struct cs_extent_def *ext = NULL;
+	स्थिर काष्ठा cs_section_def *sect = शून्य;
+	स्थिर काष्ठा cs_extent_def *ext = शून्य;
 
-	if (adev->gfx.rlc.cs_data == NULL)
-		return;
-	if (buffer == NULL)
-		return;
+	अगर (adev->gfx.rlc.cs_data == शून्य)
+		वापस;
+	अगर (buffer == शून्य)
+		वापस;
 
 	buffer[count++] = cpu_to_le32(PACKET3(PACKET3_PREAMBLE_CNTL, 0));
 	buffer[count++] = cpu_to_le32(PACKET3_PREAMBLE_BEGIN_CLEAR_STATE);
@@ -3997,233 +3998,233 @@ static void gfx_v7_0_get_csb_buffer(struct amdgpu_device *adev,
 	buffer[count++] = cpu_to_le32(0x80000000);
 	buffer[count++] = cpu_to_le32(0x80000000);
 
-	for (sect = adev->gfx.rlc.cs_data; sect->section != NULL; ++sect) {
-		for (ext = sect->section; ext->extent != NULL; ++ext) {
-			if (sect->id == SECT_CONTEXT) {
+	क्रम (sect = adev->gfx.rlc.cs_data; sect->section != शून्य; ++sect) अणु
+		क्रम (ext = sect->section; ext->extent != शून्य; ++ext) अणु
+			अगर (sect->id == SECT_CONTEXT) अणु
 				buffer[count++] =
 					cpu_to_le32(PACKET3(PACKET3_SET_CONTEXT_REG, ext->reg_count));
 				buffer[count++] = cpu_to_le32(ext->reg_index - PACKET3_SET_CONTEXT_REG_START);
-				for (i = 0; i < ext->reg_count; i++)
+				क्रम (i = 0; i < ext->reg_count; i++)
 					buffer[count++] = cpu_to_le32(ext->extent[i]);
-			} else {
-				return;
-			}
-		}
-	}
+			पूर्ण अन्यथा अणु
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	buffer[count++] = cpu_to_le32(PACKET3(PACKET3_SET_CONTEXT_REG, 2));
 	buffer[count++] = cpu_to_le32(mmPA_SC_RASTER_CONFIG - PACKET3_SET_CONTEXT_REG_START);
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
 		buffer[count++] = cpu_to_le32(0x16000012);
 		buffer[count++] = cpu_to_le32(0x00000000);
-		break;
-	case CHIP_KAVERI:
+		अवरोध;
+	हाल CHIP_KAVERI:
 		buffer[count++] = cpu_to_le32(0x00000000); /* XXX */
 		buffer[count++] = cpu_to_le32(0x00000000);
-		break;
-	case CHIP_KABINI:
-	case CHIP_MULLINS:
+		अवरोध;
+	हाल CHIP_KABINI:
+	हाल CHIP_MULLINS:
 		buffer[count++] = cpu_to_le32(0x00000000); /* XXX */
 		buffer[count++] = cpu_to_le32(0x00000000);
-		break;
-	case CHIP_HAWAII:
+		अवरोध;
+	हाल CHIP_HAWAII:
 		buffer[count++] = cpu_to_le32(0x3a00161a);
 		buffer[count++] = cpu_to_le32(0x0000002e);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		buffer[count++] = cpu_to_le32(0x00000000);
 		buffer[count++] = cpu_to_le32(0x00000000);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	buffer[count++] = cpu_to_le32(PACKET3(PACKET3_PREAMBLE_CNTL, 0));
 	buffer[count++] = cpu_to_le32(PACKET3_PREAMBLE_END_CLEAR_STATE);
 
 	buffer[count++] = cpu_to_le32(PACKET3(PACKET3_CLEAR_STATE, 0));
 	buffer[count++] = cpu_to_le32(0);
-}
+पूर्ण
 
-static void gfx_v7_0_init_pg(struct amdgpu_device *adev)
-{
-	if (adev->pg_flags & (AMD_PG_SUPPORT_GFX_PG |
+अटल व्योम gfx_v7_0_init_pg(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (adev->pg_flags & (AMD_PG_SUPPORT_GFX_PG |
 			      AMD_PG_SUPPORT_GFX_SMG |
 			      AMD_PG_SUPPORT_GFX_DMG |
 			      AMD_PG_SUPPORT_CP |
 			      AMD_PG_SUPPORT_GDS |
-			      AMD_PG_SUPPORT_RLC_SMU_HS)) {
-		gfx_v7_0_enable_sclk_slowdown_on_pu(adev, true);
-		gfx_v7_0_enable_sclk_slowdown_on_pd(adev, true);
-		if (adev->pg_flags & AMD_PG_SUPPORT_GFX_PG) {
+			      AMD_PG_SUPPORT_RLC_SMU_HS)) अणु
+		gfx_v7_0_enable_sclk_slowकरोwn_on_pu(adev, true);
+		gfx_v7_0_enable_sclk_slowकरोwn_on_pd(adev, true);
+		अगर (adev->pg_flags & AMD_PG_SUPPORT_GFX_PG) अणु
 			gfx_v7_0_init_gfx_cgpg(adev);
 			gfx_v7_0_enable_cp_pg(adev, true);
 			gfx_v7_0_enable_gds_pg(adev, true);
-		}
+		पूर्ण
 		gfx_v7_0_init_ao_cu_mask(adev);
 		gfx_v7_0_update_gfx_pg(adev, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_fini_pg(struct amdgpu_device *adev)
-{
-	if (adev->pg_flags & (AMD_PG_SUPPORT_GFX_PG |
+अटल व्योम gfx_v7_0_fini_pg(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (adev->pg_flags & (AMD_PG_SUPPORT_GFX_PG |
 			      AMD_PG_SUPPORT_GFX_SMG |
 			      AMD_PG_SUPPORT_GFX_DMG |
 			      AMD_PG_SUPPORT_CP |
 			      AMD_PG_SUPPORT_GDS |
-			      AMD_PG_SUPPORT_RLC_SMU_HS)) {
+			      AMD_PG_SUPPORT_RLC_SMU_HS)) अणु
 		gfx_v7_0_update_gfx_pg(adev, false);
-		if (adev->pg_flags & AMD_PG_SUPPORT_GFX_PG) {
+		अगर (adev->pg_flags & AMD_PG_SUPPORT_GFX_PG) अणु
 			gfx_v7_0_enable_cp_pg(adev, false);
 			gfx_v7_0_enable_gds_pg(adev, false);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * gfx_v7_0_get_gpu_clock_counter - return GPU clock counter snapshot
+ * gfx_v7_0_get_gpu_घड़ी_counter - वापस GPU घड़ी counter snapshot
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Fetches a GPU clock counter snapshot (SI).
- * Returns the 64 bit clock counter snapshot.
+ * Fetches a GPU घड़ी counter snapshot (SI).
+ * Returns the 64 bit घड़ी counter snapshot.
  */
-static uint64_t gfx_v7_0_get_gpu_clock_counter(struct amdgpu_device *adev)
-{
-	uint64_t clock;
+अटल uपूर्णांक64_t gfx_v7_0_get_gpu_घड़ी_counter(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक64_t घड़ी;
 
-	mutex_lock(&adev->gfx.gpu_clock_mutex);
+	mutex_lock(&adev->gfx.gpu_घड़ी_mutex);
 	WREG32(mmRLC_CAPTURE_GPU_CLOCK_COUNT, 1);
-	clock = (uint64_t)RREG32(mmRLC_GPU_CLOCK_COUNT_LSB) |
-		((uint64_t)RREG32(mmRLC_GPU_CLOCK_COUNT_MSB) << 32ULL);
-	mutex_unlock(&adev->gfx.gpu_clock_mutex);
-	return clock;
-}
+	घड़ी = (uपूर्णांक64_t)RREG32(mmRLC_GPU_CLOCK_COUNT_LSB) |
+		((uपूर्णांक64_t)RREG32(mmRLC_GPU_CLOCK_COUNT_MSB) << 32ULL);
+	mutex_unlock(&adev->gfx.gpu_घड़ी_mutex);
+	वापस घड़ी;
+पूर्ण
 
-static void gfx_v7_0_ring_emit_gds_switch(struct amdgpu_ring *ring,
-					  uint32_t vmid,
-					  uint32_t gds_base, uint32_t gds_size,
-					  uint32_t gws_base, uint32_t gws_size,
-					  uint32_t oa_base, uint32_t oa_size)
-{
+अटल व्योम gfx_v7_0_ring_emit_gds_चयन(काष्ठा amdgpu_ring *ring,
+					  uपूर्णांक32_t vmid,
+					  uपूर्णांक32_t gds_base, uपूर्णांक32_t gds_size,
+					  uपूर्णांक32_t gws_base, uपूर्णांक32_t gws_size,
+					  uपूर्णांक32_t oa_base, uपूर्णांक32_t oa_size)
+अणु
 	/* GDS Base */
-	amdgpu_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 3));
-	amdgpu_ring_write(ring, (WRITE_DATA_ENGINE_SEL(0) |
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 3));
+	amdgpu_ring_ग_लिखो(ring, (WRITE_DATA_ENGINE_SEL(0) |
 				WRITE_DATA_DST_SEL(0)));
-	amdgpu_ring_write(ring, amdgpu_gds_reg_offset[vmid].mem_base);
-	amdgpu_ring_write(ring, 0);
-	amdgpu_ring_write(ring, gds_base);
+	amdgpu_ring_ग_लिखो(ring, amdgpu_gds_reg_offset[vmid].mem_base);
+	amdgpu_ring_ग_लिखो(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, gds_base);
 
 	/* GDS Size */
-	amdgpu_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 3));
-	amdgpu_ring_write(ring, (WRITE_DATA_ENGINE_SEL(0) |
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 3));
+	amdgpu_ring_ग_लिखो(ring, (WRITE_DATA_ENGINE_SEL(0) |
 				WRITE_DATA_DST_SEL(0)));
-	amdgpu_ring_write(ring, amdgpu_gds_reg_offset[vmid].mem_size);
-	amdgpu_ring_write(ring, 0);
-	amdgpu_ring_write(ring, gds_size);
+	amdgpu_ring_ग_लिखो(ring, amdgpu_gds_reg_offset[vmid].mem_size);
+	amdgpu_ring_ग_लिखो(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, gds_size);
 
 	/* GWS */
-	amdgpu_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 3));
-	amdgpu_ring_write(ring, (WRITE_DATA_ENGINE_SEL(0) |
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 3));
+	amdgpu_ring_ग_लिखो(ring, (WRITE_DATA_ENGINE_SEL(0) |
 				WRITE_DATA_DST_SEL(0)));
-	amdgpu_ring_write(ring, amdgpu_gds_reg_offset[vmid].gws);
-	amdgpu_ring_write(ring, 0);
-	amdgpu_ring_write(ring, gws_size << GDS_GWS_VMID0__SIZE__SHIFT | gws_base);
+	amdgpu_ring_ग_लिखो(ring, amdgpu_gds_reg_offset[vmid].gws);
+	amdgpu_ring_ग_लिखो(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, gws_size << GDS_GWS_VMID0__SIZE__SHIFT | gws_base);
 
 	/* OA */
-	amdgpu_ring_write(ring, PACKET3(PACKET3_WRITE_DATA, 3));
-	amdgpu_ring_write(ring, (WRITE_DATA_ENGINE_SEL(0) |
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_WRITE_DATA, 3));
+	amdgpu_ring_ग_लिखो(ring, (WRITE_DATA_ENGINE_SEL(0) |
 				WRITE_DATA_DST_SEL(0)));
-	amdgpu_ring_write(ring, amdgpu_gds_reg_offset[vmid].oa);
-	amdgpu_ring_write(ring, 0);
-	amdgpu_ring_write(ring, (1 << (oa_size + oa_base)) - (1 << oa_base));
-}
+	amdgpu_ring_ग_लिखो(ring, amdgpu_gds_reg_offset[vmid].oa);
+	amdgpu_ring_ग_लिखो(ring, 0);
+	amdgpu_ring_ग_लिखो(ring, (1 << (oa_size + oa_base)) - (1 << oa_base));
+पूर्ण
 
-static void gfx_v7_0_ring_soft_recovery(struct amdgpu_ring *ring, unsigned vmid)
-{
-	struct amdgpu_device *adev = ring->adev;
-	uint32_t value = 0;
+अटल व्योम gfx_v7_0_ring_soft_recovery(काष्ठा amdgpu_ring *ring, अचिन्हित vmid)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	uपूर्णांक32_t value = 0;
 
 	value = REG_SET_FIELD(value, SQ_CMD, CMD, 0x03);
 	value = REG_SET_FIELD(value, SQ_CMD, MODE, 0x01);
 	value = REG_SET_FIELD(value, SQ_CMD, CHECK_VMID, 1);
 	value = REG_SET_FIELD(value, SQ_CMD, VM_ID, vmid);
 	WREG32(mmSQ_CMD, value);
-}
+पूर्ण
 
-static uint32_t wave_read_ind(struct amdgpu_device *adev, uint32_t simd, uint32_t wave, uint32_t address)
-{
+अटल uपूर्णांक32_t wave_पढ़ो_ind(काष्ठा amdgpu_device *adev, uपूर्णांक32_t simd, uपूर्णांक32_t wave, uपूर्णांक32_t address)
+अणु
 	WREG32(mmSQ_IND_INDEX,
 		(wave << SQ_IND_INDEX__WAVE_ID__SHIFT) |
 		(simd << SQ_IND_INDEX__SIMD_ID__SHIFT) |
 		(address << SQ_IND_INDEX__INDEX__SHIFT) |
 		(SQ_IND_INDEX__FORCE_READ_MASK));
-	return RREG32(mmSQ_IND_DATA);
-}
+	वापस RREG32(mmSQ_IND_DATA);
+पूर्ण
 
-static void wave_read_regs(struct amdgpu_device *adev, uint32_t simd,
-			   uint32_t wave, uint32_t thread,
-			   uint32_t regno, uint32_t num, uint32_t *out)
-{
+अटल व्योम wave_पढ़ो_regs(काष्ठा amdgpu_device *adev, uपूर्णांक32_t simd,
+			   uपूर्णांक32_t wave, uपूर्णांक32_t thपढ़ो,
+			   uपूर्णांक32_t regno, uपूर्णांक32_t num, uपूर्णांक32_t *out)
+अणु
 	WREG32(mmSQ_IND_INDEX,
 		(wave << SQ_IND_INDEX__WAVE_ID__SHIFT) |
 		(simd << SQ_IND_INDEX__SIMD_ID__SHIFT) |
 		(regno << SQ_IND_INDEX__INDEX__SHIFT) |
-		(thread << SQ_IND_INDEX__THREAD_ID__SHIFT) |
+		(thपढ़ो << SQ_IND_INDEX__THREAD_ID__SHIFT) |
 		(SQ_IND_INDEX__FORCE_READ_MASK) |
 		(SQ_IND_INDEX__AUTO_INCR_MASK));
-	while (num--)
+	जबतक (num--)
 		*(out++) = RREG32(mmSQ_IND_DATA);
-}
+पूर्ण
 
-static void gfx_v7_0_read_wave_data(struct amdgpu_device *adev, uint32_t simd, uint32_t wave, uint32_t *dst, int *no_fields)
-{
+अटल व्योम gfx_v7_0_पढ़ो_wave_data(काष्ठा amdgpu_device *adev, uपूर्णांक32_t simd, uपूर्णांक32_t wave, uपूर्णांक32_t *dst, पूर्णांक *no_fields)
+अणु
 	/* type 0 wave data */
 	dst[(*no_fields)++] = 0;
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_STATUS);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_PC_LO);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_PC_HI);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_EXEC_LO);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_EXEC_HI);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_HW_ID);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_INST_DW0);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_INST_DW1);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_GPR_ALLOC);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_LDS_ALLOC);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_TRAPSTS);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_IB_STS);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_TBA_LO);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_TBA_HI);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_TMA_LO);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_TMA_HI);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_IB_DBG0);
-	dst[(*no_fields)++] = wave_read_ind(adev, simd, wave, ixSQ_WAVE_M0);
-}
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_STATUS);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_PC_LO);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_PC_HI);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_EXEC_LO);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_EXEC_HI);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_HW_ID);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_INST_DW0);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_INST_DW1);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_GPR_ALLOC);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_LDS_ALLOC);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_TRAPSTS);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_IB_STS);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_TBA_LO);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_TBA_HI);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_TMA_LO);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_TMA_HI);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_IB_DBG0);
+	dst[(*no_fields)++] = wave_पढ़ो_ind(adev, simd, wave, ixSQ_WAVE_M0);
+पूर्ण
 
-static void gfx_v7_0_read_wave_sgprs(struct amdgpu_device *adev, uint32_t simd,
-				     uint32_t wave, uint32_t start,
-				     uint32_t size, uint32_t *dst)
-{
-	wave_read_regs(
+अटल व्योम gfx_v7_0_पढ़ो_wave_sgprs(काष्ठा amdgpu_device *adev, uपूर्णांक32_t simd,
+				     uपूर्णांक32_t wave, uपूर्णांक32_t start,
+				     uपूर्णांक32_t size, uपूर्णांक32_t *dst)
+अणु
+	wave_पढ़ो_regs(
 		adev, simd, wave, 0,
 		start + SQIND_WAVE_SGPRS_OFFSET, size, dst);
-}
+पूर्ण
 
-static void gfx_v7_0_select_me_pipe_q(struct amdgpu_device *adev,
+अटल व्योम gfx_v7_0_select_me_pipe_q(काष्ठा amdgpu_device *adev,
 				  u32 me, u32 pipe, u32 q, u32 vm)
-{
+अणु
 	cik_srbm_select(adev, me, pipe, q, vm);
-}
+पूर्ण
 
-static const struct amdgpu_gfx_funcs gfx_v7_0_gfx_funcs = {
-	.get_gpu_clock_counter = &gfx_v7_0_get_gpu_clock_counter,
+अटल स्थिर काष्ठा amdgpu_gfx_funcs gfx_v7_0_gfx_funcs = अणु
+	.get_gpu_घड़ी_counter = &gfx_v7_0_get_gpu_घड़ी_counter,
 	.select_se_sh = &gfx_v7_0_select_se_sh,
-	.read_wave_data = &gfx_v7_0_read_wave_data,
-	.read_wave_sgprs = &gfx_v7_0_read_wave_sgprs,
+	.पढ़ो_wave_data = &gfx_v7_0_पढ़ो_wave_data,
+	.पढ़ो_wave_sgprs = &gfx_v7_0_पढ़ो_wave_sgprs,
 	.select_me_pipe_q = &gfx_v7_0_select_me_pipe_q
-};
+पूर्ण;
 
-static const struct amdgpu_rlc_funcs gfx_v7_0_rlc_funcs = {
+अटल स्थिर काष्ठा amdgpu_rlc_funcs gfx_v7_0_rlc_funcs = अणु
 	.is_rlc_enabled = gfx_v7_0_is_rlc_enabled,
 	.set_safe_mode = gfx_v7_0_set_safe_mode,
 	.unset_safe_mode = gfx_v7_0_unset_safe_mode,
@@ -4236,11 +4237,11 @@ static const struct amdgpu_rlc_funcs gfx_v7_0_rlc_funcs = {
 	.reset = gfx_v7_0_rlc_reset,
 	.start = gfx_v7_0_rlc_start,
 	.update_spm_vmid = gfx_v7_0_update_spm_vmid
-};
+पूर्ण;
 
-static int gfx_v7_0_early_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक gfx_v7_0_early_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	adev->gfx.num_gfx_rings = GFX7_NUM_GFX_RINGS;
 	adev->gfx.num_compute_rings = min(amdgpu_gfx_get_num_kcq(adev),
@@ -4251,34 +4252,34 @@ static int gfx_v7_0_early_init(void *handle)
 	gfx_v7_0_set_irq_funcs(adev);
 	gfx_v7_0_set_gds_init(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_late_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int r;
+अटल पूर्णांक gfx_v7_0_late_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक r;
 
 	r = amdgpu_irq_get(adev, &adev->gfx.priv_reg_irq, 0);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_irq_get(adev, &adev->gfx.priv_inst_irq, 0);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gfx_v7_0_gpu_early_init(struct amdgpu_device *adev)
-{
+अटल व्योम gfx_v7_0_gpu_early_init(काष्ठा amdgpu_device *adev)
+अणु
 	u32 gb_addr_config;
 	u32 mc_arb_ramcfg;
 	u32 dimm00_addr_map, dimm01_addr_map, dimm10_addr_map, dimm11_addr_map;
-	u32 tmp;
+	u32 पंचांगp;
 
-	switch (adev->asic_type) {
-	case CHIP_BONAIRE:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_BONAIRE:
 		adev->gfx.config.max_shader_engines = 2;
 		adev->gfx.config.max_tile_pipes = 4;
 		adev->gfx.config.max_cu_per_sh = 7;
@@ -4286,16 +4287,16 @@ static void gfx_v7_0_gpu_early_init(struct amdgpu_device *adev)
 		adev->gfx.config.max_backends_per_se = 2;
 		adev->gfx.config.max_texture_channel_caches = 4;
 		adev->gfx.config.max_gprs = 256;
-		adev->gfx.config.max_gs_threads = 32;
+		adev->gfx.config.max_gs_thपढ़ोs = 32;
 		adev->gfx.config.max_hw_contexts = 8;
 
-		adev->gfx.config.sc_prim_fifo_size_frontend = 0x20;
-		adev->gfx.config.sc_prim_fifo_size_backend = 0x100;
-		adev->gfx.config.sc_hiz_tile_fifo_size = 0x30;
-		adev->gfx.config.sc_earlyz_tile_fifo_size = 0x130;
+		adev->gfx.config.sc_prim_fअगरo_size_frontend = 0x20;
+		adev->gfx.config.sc_prim_fअगरo_size_backend = 0x100;
+		adev->gfx.config.sc_hiz_tile_fअगरo_size = 0x30;
+		adev->gfx.config.sc_earlyz_tile_fअगरo_size = 0x130;
 		gb_addr_config = BONAIRE_GB_ADDR_CONFIG_GOLDEN;
-		break;
-	case CHIP_HAWAII:
+		अवरोध;
+	हाल CHIP_HAWAII:
 		adev->gfx.config.max_shader_engines = 4;
 		adev->gfx.config.max_tile_pipes = 16;
 		adev->gfx.config.max_cu_per_sh = 11;
@@ -4303,16 +4304,16 @@ static void gfx_v7_0_gpu_early_init(struct amdgpu_device *adev)
 		adev->gfx.config.max_backends_per_se = 4;
 		adev->gfx.config.max_texture_channel_caches = 16;
 		adev->gfx.config.max_gprs = 256;
-		adev->gfx.config.max_gs_threads = 32;
+		adev->gfx.config.max_gs_thपढ़ोs = 32;
 		adev->gfx.config.max_hw_contexts = 8;
 
-		adev->gfx.config.sc_prim_fifo_size_frontend = 0x20;
-		adev->gfx.config.sc_prim_fifo_size_backend = 0x100;
-		adev->gfx.config.sc_hiz_tile_fifo_size = 0x30;
-		adev->gfx.config.sc_earlyz_tile_fifo_size = 0x130;
+		adev->gfx.config.sc_prim_fअगरo_size_frontend = 0x20;
+		adev->gfx.config.sc_prim_fअगरo_size_backend = 0x100;
+		adev->gfx.config.sc_hiz_tile_fअगरo_size = 0x30;
+		adev->gfx.config.sc_earlyz_tile_fअगरo_size = 0x130;
 		gb_addr_config = HAWAII_GB_ADDR_CONFIG_GOLDEN;
-		break;
-	case CHIP_KAVERI:
+		अवरोध;
+	हाल CHIP_KAVERI:
 		adev->gfx.config.max_shader_engines = 1;
 		adev->gfx.config.max_tile_pipes = 4;
 		adev->gfx.config.max_cu_per_sh = 8;
@@ -4320,18 +4321,18 @@ static void gfx_v7_0_gpu_early_init(struct amdgpu_device *adev)
 		adev->gfx.config.max_sh_per_se = 1;
 		adev->gfx.config.max_texture_channel_caches = 4;
 		adev->gfx.config.max_gprs = 256;
-		adev->gfx.config.max_gs_threads = 16;
+		adev->gfx.config.max_gs_thपढ़ोs = 16;
 		adev->gfx.config.max_hw_contexts = 8;
 
-		adev->gfx.config.sc_prim_fifo_size_frontend = 0x20;
-		adev->gfx.config.sc_prim_fifo_size_backend = 0x100;
-		adev->gfx.config.sc_hiz_tile_fifo_size = 0x30;
-		adev->gfx.config.sc_earlyz_tile_fifo_size = 0x130;
+		adev->gfx.config.sc_prim_fअगरo_size_frontend = 0x20;
+		adev->gfx.config.sc_prim_fअगरo_size_backend = 0x100;
+		adev->gfx.config.sc_hiz_tile_fअगरo_size = 0x30;
+		adev->gfx.config.sc_earlyz_tile_fअगरo_size = 0x130;
 		gb_addr_config = BONAIRE_GB_ADDR_CONFIG_GOLDEN;
-		break;
-	case CHIP_KABINI:
-	case CHIP_MULLINS:
-	default:
+		अवरोध;
+	हाल CHIP_KABINI:
+	हाल CHIP_MULLINS:
+	शेष:
 		adev->gfx.config.max_shader_engines = 1;
 		adev->gfx.config.max_tile_pipes = 2;
 		adev->gfx.config.max_cu_per_sh = 2;
@@ -4339,16 +4340,16 @@ static void gfx_v7_0_gpu_early_init(struct amdgpu_device *adev)
 		adev->gfx.config.max_backends_per_se = 1;
 		adev->gfx.config.max_texture_channel_caches = 2;
 		adev->gfx.config.max_gprs = 256;
-		adev->gfx.config.max_gs_threads = 16;
+		adev->gfx.config.max_gs_thपढ़ोs = 16;
 		adev->gfx.config.max_hw_contexts = 8;
 
-		adev->gfx.config.sc_prim_fifo_size_frontend = 0x20;
-		adev->gfx.config.sc_prim_fifo_size_backend = 0x100;
-		adev->gfx.config.sc_hiz_tile_fifo_size = 0x30;
-		adev->gfx.config.sc_earlyz_tile_fifo_size = 0x130;
+		adev->gfx.config.sc_prim_fअगरo_size_frontend = 0x20;
+		adev->gfx.config.sc_prim_fअगरo_size_backend = 0x100;
+		adev->gfx.config.sc_hiz_tile_fअगरo_size = 0x30;
+		adev->gfx.config.sc_earlyz_tile_fअगरo_size = 0x130;
 		gb_addr_config = BONAIRE_GB_ADDR_CONFIG_GOLDEN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	adev->gfx.config.mc_arb_ramcfg = RREG32(mmMC_ARB_RAMCFG);
 	mc_arb_ramcfg = adev->gfx.config.mc_arb_ramcfg;
@@ -4360,38 +4361,38 @@ static void gfx_v7_0_gpu_early_init(struct amdgpu_device *adev)
 
 	adev->gfx.config.num_tile_pipes = adev->gfx.config.max_tile_pipes;
 	adev->gfx.config.mem_max_burst_length_bytes = 256;
-	if (adev->flags & AMD_IS_APU) {
+	अगर (adev->flags & AMD_IS_APU) अणु
 		/* Get memory bank mapping mode. */
-		tmp = RREG32(mmMC_FUS_DRAM0_BANK_ADDR_MAPPING);
-		dimm00_addr_map = REG_GET_FIELD(tmp, MC_FUS_DRAM0_BANK_ADDR_MAPPING, DIMM0ADDRMAP);
-		dimm01_addr_map = REG_GET_FIELD(tmp, MC_FUS_DRAM0_BANK_ADDR_MAPPING, DIMM1ADDRMAP);
+		पंचांगp = RREG32(mmMC_FUS_DRAM0_BANK_ADDR_MAPPING);
+		dimm00_addr_map = REG_GET_FIELD(पंचांगp, MC_FUS_DRAM0_BANK_ADDR_MAPPING, DIMM0ADDRMAP);
+		dimm01_addr_map = REG_GET_FIELD(पंचांगp, MC_FUS_DRAM0_BANK_ADDR_MAPPING, DIMM1ADDRMAP);
 
-		tmp = RREG32(mmMC_FUS_DRAM1_BANK_ADDR_MAPPING);
-		dimm10_addr_map = REG_GET_FIELD(tmp, MC_FUS_DRAM1_BANK_ADDR_MAPPING, DIMM0ADDRMAP);
-		dimm11_addr_map = REG_GET_FIELD(tmp, MC_FUS_DRAM1_BANK_ADDR_MAPPING, DIMM1ADDRMAP);
+		पंचांगp = RREG32(mmMC_FUS_DRAM1_BANK_ADDR_MAPPING);
+		dimm10_addr_map = REG_GET_FIELD(पंचांगp, MC_FUS_DRAM1_BANK_ADDR_MAPPING, DIMM0ADDRMAP);
+		dimm11_addr_map = REG_GET_FIELD(पंचांगp, MC_FUS_DRAM1_BANK_ADDR_MAPPING, DIMM1ADDRMAP);
 
-		/* Validate settings in case only one DIMM installed. */
-		if ((dimm00_addr_map == 0) || (dimm00_addr_map == 3) || (dimm00_addr_map == 4) || (dimm00_addr_map > 12))
+		/* Validate settings in हाल only one DIMM installed. */
+		अगर ((dimm00_addr_map == 0) || (dimm00_addr_map == 3) || (dimm00_addr_map == 4) || (dimm00_addr_map > 12))
 			dimm00_addr_map = 0;
-		if ((dimm01_addr_map == 0) || (dimm01_addr_map == 3) || (dimm01_addr_map == 4) || (dimm01_addr_map > 12))
+		अगर ((dimm01_addr_map == 0) || (dimm01_addr_map == 3) || (dimm01_addr_map == 4) || (dimm01_addr_map > 12))
 			dimm01_addr_map = 0;
-		if ((dimm10_addr_map == 0) || (dimm10_addr_map == 3) || (dimm10_addr_map == 4) || (dimm10_addr_map > 12))
+		अगर ((dimm10_addr_map == 0) || (dimm10_addr_map == 3) || (dimm10_addr_map == 4) || (dimm10_addr_map > 12))
 			dimm10_addr_map = 0;
-		if ((dimm11_addr_map == 0) || (dimm11_addr_map == 3) || (dimm11_addr_map == 4) || (dimm11_addr_map > 12))
+		अगर ((dimm11_addr_map == 0) || (dimm11_addr_map == 3) || (dimm11_addr_map == 4) || (dimm11_addr_map > 12))
 			dimm11_addr_map = 0;
 
 		/* If DIMM Addr map is 8GB, ROW size should be 2KB. Otherwise 1KB. */
 		/* If ROW size(DIMM1) != ROW size(DMIMM0), ROW size should be larger one. */
-		if ((dimm00_addr_map == 11) || (dimm01_addr_map == 11) || (dimm10_addr_map == 11) || (dimm11_addr_map == 11))
+		अगर ((dimm00_addr_map == 11) || (dimm01_addr_map == 11) || (dimm10_addr_map == 11) || (dimm11_addr_map == 11))
 			adev->gfx.config.mem_row_size_in_kb = 2;
-		else
+		अन्यथा
 			adev->gfx.config.mem_row_size_in_kb = 1;
-	} else {
-		tmp = (mc_arb_ramcfg & MC_ARB_RAMCFG__NOOFCOLS_MASK) >> MC_ARB_RAMCFG__NOOFCOLS__SHIFT;
-		adev->gfx.config.mem_row_size_in_kb = (4 * (1 << (8 + tmp))) / 1024;
-		if (adev->gfx.config.mem_row_size_in_kb > 4)
+	पूर्ण अन्यथा अणु
+		पंचांगp = (mc_arb_ramcfg & MC_ARB_RAMCFG__NOOFCOLS_MASK) >> MC_ARB_RAMCFG__NOOFCOLS__SHIFT;
+		adev->gfx.config.mem_row_size_in_kb = (4 * (1 << (8 + पंचांगp))) / 1024;
+		अगर (adev->gfx.config.mem_row_size_in_kb > 4)
 			adev->gfx.config.mem_row_size_in_kb = 4;
-	}
+	पूर्ण
 	/* XXX use MC settings? */
 	adev->gfx.config.shader_engine_tile_size = 32;
 	adev->gfx.config.num_gpus = 1;
@@ -4399,37 +4400,37 @@ static void gfx_v7_0_gpu_early_init(struct amdgpu_device *adev)
 
 	/* fix up row size */
 	gb_addr_config &= ~GB_ADDR_CONFIG__ROW_SIZE_MASK;
-	switch (adev->gfx.config.mem_row_size_in_kb) {
-	case 1:
-	default:
+	चयन (adev->gfx.config.mem_row_size_in_kb) अणु
+	हाल 1:
+	शेष:
 		gb_addr_config |= (0 << GB_ADDR_CONFIG__ROW_SIZE__SHIFT);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		gb_addr_config |= (1 << GB_ADDR_CONFIG__ROW_SIZE__SHIFT);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		gb_addr_config |= (2 << GB_ADDR_CONFIG__ROW_SIZE__SHIFT);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	adev->gfx.config.gb_addr_config = gb_addr_config;
-}
+पूर्ण
 
-static int gfx_v7_0_compute_ring_init(struct amdgpu_device *adev, int ring_id,
-					int mec, int pipe, int queue)
-{
-	int r;
-	unsigned irq_type;
-	struct amdgpu_ring *ring = &adev->gfx.compute_ring[ring_id];
+अटल पूर्णांक gfx_v7_0_compute_ring_init(काष्ठा amdgpu_device *adev, पूर्णांक ring_id,
+					पूर्णांक mec, पूर्णांक pipe, पूर्णांक queue)
+अणु
+	पूर्णांक r;
+	अचिन्हित irq_type;
+	काष्ठा amdgpu_ring *ring = &adev->gfx.compute_ring[ring_id];
 
 	/* mec0 is me1 */
 	ring->me = mec + 1;
 	ring->pipe = pipe;
 	ring->queue = queue;
 
-	ring->ring_obj = NULL;
-	ring->use_doorbell = true;
-	ring->doorbell_index = adev->doorbell_index.mec_ring0 + ring_id;
-	sprintf(ring->name, "comp_%d.%d.%d", ring->me, ring->pipe, ring->queue);
+	ring->ring_obj = शून्य;
+	ring->use_करोorbell = true;
+	ring->करोorbell_index = adev->करोorbell_index.mec_ring0 + ring_id;
+	प्र_लिखो(ring->name, "comp_%d.%d.%d", ring->me, ring->pipe, ring->queue);
 
 	irq_type = AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE0_EOP
 		+ ((ring->me - 1) * adev->gfx.mec.num_pipe_per_mec)
@@ -4438,161 +4439,161 @@ static int gfx_v7_0_compute_ring_init(struct amdgpu_device *adev, int ring_id,
 	/* type-2 packets are deprecated on MEC, use type-3 instead */
 	r = amdgpu_ring_init(adev, ring, 1024,
 			     &adev->gfx.eop_irq, irq_type,
-			     AMDGPU_RING_PRIO_DEFAULT, NULL);
-	if (r)
-		return r;
+			     AMDGPU_RING_PRIO_DEFAULT, शून्य);
+	अगर (r)
+		वापस r;
 
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_sw_init(void *handle)
-{
-	struct amdgpu_ring *ring;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int i, j, k, r, ring_id;
+अटल पूर्णांक gfx_v7_0_sw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_ring *ring;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक i, j, k, r, ring_id;
 
-	switch (adev->asic_type) {
-	case CHIP_KAVERI:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_KAVERI:
 		adev->gfx.mec.num_mec = 2;
-		break;
-	case CHIP_BONAIRE:
-	case CHIP_HAWAII:
-	case CHIP_KABINI:
-	case CHIP_MULLINS:
-	default:
+		अवरोध;
+	हाल CHIP_BONAIRE:
+	हाल CHIP_HAWAII:
+	हाल CHIP_KABINI:
+	हाल CHIP_MULLINS:
+	शेष:
 		adev->gfx.mec.num_mec = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	adev->gfx.mec.num_pipe_per_mec = 4;
 	adev->gfx.mec.num_queue_per_pipe = 8;
 
 	/* EOP Event */
 	r = amdgpu_irq_add_id(adev, AMDGPU_IRQ_CLIENTID_LEGACY, 181, &adev->gfx.eop_irq);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* Privileged reg */
 	r = amdgpu_irq_add_id(adev, AMDGPU_IRQ_CLIENTID_LEGACY, 184,
 			      &adev->gfx.priv_reg_irq);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* Privileged inst */
 	r = amdgpu_irq_add_id(adev, AMDGPU_IRQ_CLIENTID_LEGACY, 185,
 			      &adev->gfx.priv_inst_irq);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	gfx_v7_0_scratch_init(adev);
 
 	r = gfx_v7_0_init_microcode(adev);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to load gfx firmware!\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = adev->gfx.rlc.funcs->init(adev);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to init rlc BOs!\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	/* allocate mec buffers */
 	r = gfx_v7_0_mec_init(adev);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to init MEC BOs!\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	for (i = 0; i < adev->gfx.num_gfx_rings; i++) {
+	क्रम (i = 0; i < adev->gfx.num_gfx_rings; i++) अणु
 		ring = &adev->gfx.gfx_ring[i];
-		ring->ring_obj = NULL;
-		sprintf(ring->name, "gfx");
+		ring->ring_obj = शून्य;
+		प्र_लिखो(ring->name, "gfx");
 		r = amdgpu_ring_init(adev, ring, 1024,
 				     &adev->gfx.eop_irq,
 				     AMDGPU_CP_IRQ_GFX_ME0_PIPE0_EOP,
-				     AMDGPU_RING_PRIO_DEFAULT, NULL);
-		if (r)
-			return r;
-	}
+				     AMDGPU_RING_PRIO_DEFAULT, शून्य);
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	/* set up the compute queues - allocate horizontally across pipes */
 	ring_id = 0;
-	for (i = 0; i < adev->gfx.mec.num_mec; ++i) {
-		for (j = 0; j < adev->gfx.mec.num_queue_per_pipe; j++) {
-			for (k = 0; k < adev->gfx.mec.num_pipe_per_mec; k++) {
-				if (!amdgpu_gfx_is_mec_queue_enabled(adev, i, k, j))
-					continue;
+	क्रम (i = 0; i < adev->gfx.mec.num_mec; ++i) अणु
+		क्रम (j = 0; j < adev->gfx.mec.num_queue_per_pipe; j++) अणु
+			क्रम (k = 0; k < adev->gfx.mec.num_pipe_per_mec; k++) अणु
+				अगर (!amdgpu_gfx_is_mec_queue_enabled(adev, i, k, j))
+					जारी;
 
 				r = gfx_v7_0_compute_ring_init(adev,
 								ring_id,
 								i, k, j);
-				if (r)
-					return r;
+				अगर (r)
+					वापस r;
 
 				ring_id++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	adev->gfx.ce_ram_size = 0x8000;
 
 	gfx_v7_0_gpu_early_init(adev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int gfx_v7_0_sw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int i;
+अटल पूर्णांक gfx_v7_0_sw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक i;
 
-	for (i = 0; i < adev->gfx.num_gfx_rings; i++)
+	क्रम (i = 0; i < adev->gfx.num_gfx_rings; i++)
 		amdgpu_ring_fini(&adev->gfx.gfx_ring[i]);
-	for (i = 0; i < adev->gfx.num_compute_rings; i++)
+	क्रम (i = 0; i < adev->gfx.num_compute_rings; i++)
 		amdgpu_ring_fini(&adev->gfx.compute_ring[i]);
 
 	gfx_v7_0_cp_compute_fini(adev);
 	amdgpu_gfx_rlc_fini(adev);
 	gfx_v7_0_mec_fini(adev);
-	amdgpu_bo_free_kernel(&adev->gfx.rlc.clear_state_obj,
+	amdgpu_bo_मुक्त_kernel(&adev->gfx.rlc.clear_state_obj,
 				&adev->gfx.rlc.clear_state_gpu_addr,
-				(void **)&adev->gfx.rlc.cs_ptr);
-	if (adev->gfx.rlc.cp_table_size) {
-		amdgpu_bo_free_kernel(&adev->gfx.rlc.cp_table_obj,
+				(व्योम **)&adev->gfx.rlc.cs_ptr);
+	अगर (adev->gfx.rlc.cp_table_size) अणु
+		amdgpu_bo_मुक्त_kernel(&adev->gfx.rlc.cp_table_obj,
 				&adev->gfx.rlc.cp_table_gpu_addr,
-				(void **)&adev->gfx.rlc.cp_table_ptr);
-	}
-	gfx_v7_0_free_microcode(adev);
+				(व्योम **)&adev->gfx.rlc.cp_table_ptr);
+	पूर्ण
+	gfx_v7_0_मुक्त_microcode(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_hw_init(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक gfx_v7_0_hw_init(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	gfx_v7_0_constants_init(adev);
+	gfx_v7_0_स्थिरants_init(adev);
 
 	/* init CSB */
 	adev->gfx.rlc.funcs->get_csb_buffer(adev, adev->gfx.rlc.cs_ptr);
 	/* init rlc */
 	r = adev->gfx.rlc.funcs->resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = gfx_v7_0_cp_resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int gfx_v7_0_hw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक gfx_v7_0_hw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	amdgpu_irq_put(adev, &adev->gfx.priv_reg_irq, 0);
 	amdgpu_irq_put(adev, &adev->gfx.priv_inst_irq, 0);
@@ -4600,59 +4601,59 @@ static int gfx_v7_0_hw_fini(void *handle)
 	adev->gfx.rlc.funcs->stop(adev);
 	gfx_v7_0_fini_pg(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_suspend(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक gfx_v7_0_suspend(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return gfx_v7_0_hw_fini(adev);
-}
+	वापस gfx_v7_0_hw_fini(adev);
+पूर्ण
 
-static int gfx_v7_0_resume(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक gfx_v7_0_resume(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return gfx_v7_0_hw_init(adev);
-}
+	वापस gfx_v7_0_hw_init(adev);
+पूर्ण
 
-static bool gfx_v7_0_is_idle(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल bool gfx_v7_0_is_idle(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	if (RREG32(mmGRBM_STATUS) & GRBM_STATUS__GUI_ACTIVE_MASK)
-		return false;
-	else
-		return true;
-}
+	अगर (RREG32(mmGRBM_STATUS) & GRBM_STATUS__GUI_ACTIVE_MASK)
+		वापस false;
+	अन्यथा
+		वापस true;
+पूर्ण
 
-static int gfx_v7_0_wait_for_idle(void *handle)
-{
-	unsigned i;
-	u32 tmp;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक gfx_v7_0_रुको_क्रम_idle(व्योम *handle)
+अणु
+	अचिन्हित i;
+	u32 पंचांगp;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	for (i = 0; i < adev->usec_timeout; i++) {
-		/* read MC_STATUS */
-		tmp = RREG32(mmGRBM_STATUS) & GRBM_STATUS__GUI_ACTIVE_MASK;
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		/* पढ़ो MC_STATUS */
+		पंचांगp = RREG32(mmGRBM_STATUS) & GRBM_STATUS__GUI_ACTIVE_MASK;
 
-		if (!tmp)
-			return 0;
+		अगर (!पंचांगp)
+			वापस 0;
 		udelay(1);
-	}
-	return -ETIMEDOUT;
-}
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int gfx_v7_0_soft_reset(void *handle)
-{
+अटल पूर्णांक gfx_v7_0_soft_reset(व्योम *handle)
+अणु
 	u32 grbm_soft_reset = 0, srbm_soft_reset = 0;
-	u32 tmp;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	u32 पंचांगp;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	/* GRBM_STATUS */
-	tmp = RREG32(mmGRBM_STATUS);
-	if (tmp & (GRBM_STATUS__PA_BUSY_MASK | GRBM_STATUS__SC_BUSY_MASK |
+	पंचांगp = RREG32(mmGRBM_STATUS);
+	अगर (पंचांगp & (GRBM_STATUS__PA_BUSY_MASK | GRBM_STATUS__SC_BUSY_MASK |
 		   GRBM_STATUS__BCI_BUSY_MASK | GRBM_STATUS__SX_BUSY_MASK |
 		   GRBM_STATUS__TA_BUSY_MASK | GRBM_STATUS__VGT_BUSY_MASK |
 		   GRBM_STATUS__DB_BUSY_MASK | GRBM_STATUS__CB_BUSY_MASK |
@@ -4661,22 +4662,22 @@ static int gfx_v7_0_soft_reset(void *handle)
 		grbm_soft_reset |= GRBM_SOFT_RESET__SOFT_RESET_CP_MASK |
 			GRBM_SOFT_RESET__SOFT_RESET_GFX_MASK;
 
-	if (tmp & (GRBM_STATUS__CP_BUSY_MASK | GRBM_STATUS__CP_COHERENCY_BUSY_MASK)) {
+	अगर (पंचांगp & (GRBM_STATUS__CP_BUSY_MASK | GRBM_STATUS__CP_COHERENCY_BUSY_MASK)) अणु
 		grbm_soft_reset |= GRBM_SOFT_RESET__SOFT_RESET_CP_MASK;
 		srbm_soft_reset |= SRBM_SOFT_RESET__SOFT_RESET_GRBM_MASK;
-	}
+	पूर्ण
 
 	/* GRBM_STATUS2 */
-	tmp = RREG32(mmGRBM_STATUS2);
-	if (tmp & GRBM_STATUS2__RLC_BUSY_MASK)
+	पंचांगp = RREG32(mmGRBM_STATUS2);
+	अगर (पंचांगp & GRBM_STATUS2__RLC_BUSY_MASK)
 		grbm_soft_reset |= GRBM_SOFT_RESET__SOFT_RESET_RLC_MASK;
 
 	/* SRBM_STATUS */
-	tmp = RREG32(mmSRBM_STATUS);
-	if (tmp & SRBM_STATUS__GRBM_RQ_PENDING_MASK)
+	पंचांगp = RREG32(mmSRBM_STATUS);
+	अगर (पंचांगp & SRBM_STATUS__GRBM_RQ_PENDING_MASK)
 		srbm_soft_reset |= SRBM_SOFT_RESET__SOFT_RESET_GRBM_MASK;
 
-	if (grbm_soft_reset || srbm_soft_reset) {
+	अगर (grbm_soft_reset || srbm_soft_reset) अणु
 		/* disable CG/PG */
 		gfx_v7_0_fini_pg(adev);
 		gfx_v7_0_update_cg(adev, false);
@@ -4690,345 +4691,345 @@ static int gfx_v7_0_soft_reset(void *handle)
 		/* Disable MEC parsing/prefetching */
 		WREG32(mmCP_MEC_CNTL, CP_MEC_CNTL__MEC_ME1_HALT_MASK | CP_MEC_CNTL__MEC_ME2_HALT_MASK);
 
-		if (grbm_soft_reset) {
-			tmp = RREG32(mmGRBM_SOFT_RESET);
-			tmp |= grbm_soft_reset;
-			dev_info(adev->dev, "GRBM_SOFT_RESET=0x%08X\n", tmp);
-			WREG32(mmGRBM_SOFT_RESET, tmp);
-			tmp = RREG32(mmGRBM_SOFT_RESET);
+		अगर (grbm_soft_reset) अणु
+			पंचांगp = RREG32(mmGRBM_SOFT_RESET);
+			पंचांगp |= grbm_soft_reset;
+			dev_info(adev->dev, "GRBM_SOFT_RESET=0x%08X\n", पंचांगp);
+			WREG32(mmGRBM_SOFT_RESET, पंचांगp);
+			पंचांगp = RREG32(mmGRBM_SOFT_RESET);
 
 			udelay(50);
 
-			tmp &= ~grbm_soft_reset;
-			WREG32(mmGRBM_SOFT_RESET, tmp);
-			tmp = RREG32(mmGRBM_SOFT_RESET);
-		}
+			पंचांगp &= ~grbm_soft_reset;
+			WREG32(mmGRBM_SOFT_RESET, पंचांगp);
+			पंचांगp = RREG32(mmGRBM_SOFT_RESET);
+		पूर्ण
 
-		if (srbm_soft_reset) {
-			tmp = RREG32(mmSRBM_SOFT_RESET);
-			tmp |= srbm_soft_reset;
-			dev_info(adev->dev, "SRBM_SOFT_RESET=0x%08X\n", tmp);
-			WREG32(mmSRBM_SOFT_RESET, tmp);
-			tmp = RREG32(mmSRBM_SOFT_RESET);
+		अगर (srbm_soft_reset) अणु
+			पंचांगp = RREG32(mmSRBM_SOFT_RESET);
+			पंचांगp |= srbm_soft_reset;
+			dev_info(adev->dev, "SRBM_SOFT_RESET=0x%08X\n", पंचांगp);
+			WREG32(mmSRBM_SOFT_RESET, पंचांगp);
+			पंचांगp = RREG32(mmSRBM_SOFT_RESET);
 
 			udelay(50);
 
-			tmp &= ~srbm_soft_reset;
-			WREG32(mmSRBM_SOFT_RESET, tmp);
-			tmp = RREG32(mmSRBM_SOFT_RESET);
-		}
-		/* Wait a little for things to settle down */
+			पंचांगp &= ~srbm_soft_reset;
+			WREG32(mmSRBM_SOFT_RESET, पंचांगp);
+			पंचांगp = RREG32(mmSRBM_SOFT_RESET);
+		पूर्ण
+		/* Wait a little क्रम things to settle करोwn */
 		udelay(50);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void gfx_v7_0_set_gfx_eop_interrupt_state(struct amdgpu_device *adev,
-						 enum amdgpu_interrupt_state state)
-{
-	u32 cp_int_cntl;
+अटल व्योम gfx_v7_0_set_gfx_eop_पूर्णांकerrupt_state(काष्ठा amdgpu_device *adev,
+						 क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
+	u32 cp_पूर्णांक_cntl;
 
-	switch (state) {
-	case AMDGPU_IRQ_STATE_DISABLE:
-		cp_int_cntl = RREG32(mmCP_INT_CNTL_RING0);
-		cp_int_cntl &= ~CP_INT_CNTL_RING0__TIME_STAMP_INT_ENABLE_MASK;
-		WREG32(mmCP_INT_CNTL_RING0, cp_int_cntl);
-		break;
-	case AMDGPU_IRQ_STATE_ENABLE:
-		cp_int_cntl = RREG32(mmCP_INT_CNTL_RING0);
-		cp_int_cntl |= CP_INT_CNTL_RING0__TIME_STAMP_INT_ENABLE_MASK;
-		WREG32(mmCP_INT_CNTL_RING0, cp_int_cntl);
-		break;
-	default:
-		break;
-	}
-}
+	चयन (state) अणु
+	हाल AMDGPU_IRQ_STATE_DISABLE:
+		cp_पूर्णांक_cntl = RREG32(mmCP_INT_CNTL_RING0);
+		cp_पूर्णांक_cntl &= ~CP_INT_CNTL_RING0__TIME_STAMP_INT_ENABLE_MASK;
+		WREG32(mmCP_INT_CNTL_RING0, cp_पूर्णांक_cntl);
+		अवरोध;
+	हाल AMDGPU_IRQ_STATE_ENABLE:
+		cp_पूर्णांक_cntl = RREG32(mmCP_INT_CNTL_RING0);
+		cp_पूर्णांक_cntl |= CP_INT_CNTL_RING0__TIME_STAMP_INT_ENABLE_MASK;
+		WREG32(mmCP_INT_CNTL_RING0, cp_पूर्णांक_cntl);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void gfx_v7_0_set_compute_eop_interrupt_state(struct amdgpu_device *adev,
-						     int me, int pipe,
-						     enum amdgpu_interrupt_state state)
-{
-	u32 mec_int_cntl, mec_int_cntl_reg;
+अटल व्योम gfx_v7_0_set_compute_eop_पूर्णांकerrupt_state(काष्ठा amdgpu_device *adev,
+						     पूर्णांक me, पूर्णांक pipe,
+						     क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
+	u32 mec_पूर्णांक_cntl, mec_पूर्णांक_cntl_reg;
 
 	/*
 	 * amdgpu controls only the first MEC. That's why this function only
-	 * handles the setting of interrupts for this specific MEC. All other
-	 * pipes' interrupts are set by amdkfd.
+	 * handles the setting of पूर्णांकerrupts क्रम this specअगरic MEC. All other
+	 * pipes' पूर्णांकerrupts are set by amdkfd.
 	 */
 
-	if (me == 1) {
-		switch (pipe) {
-		case 0:
-			mec_int_cntl_reg = mmCP_ME1_PIPE0_INT_CNTL;
-			break;
-		case 1:
-			mec_int_cntl_reg = mmCP_ME1_PIPE1_INT_CNTL;
-			break;
-		case 2:
-			mec_int_cntl_reg = mmCP_ME1_PIPE2_INT_CNTL;
-			break;
-		case 3:
-			mec_int_cntl_reg = mmCP_ME1_PIPE3_INT_CNTL;
-			break;
-		default:
+	अगर (me == 1) अणु
+		चयन (pipe) अणु
+		हाल 0:
+			mec_पूर्णांक_cntl_reg = mmCP_ME1_PIPE0_INT_CNTL;
+			अवरोध;
+		हाल 1:
+			mec_पूर्णांक_cntl_reg = mmCP_ME1_PIPE1_INT_CNTL;
+			अवरोध;
+		हाल 2:
+			mec_पूर्णांक_cntl_reg = mmCP_ME1_PIPE2_INT_CNTL;
+			अवरोध;
+		हाल 3:
+			mec_पूर्णांक_cntl_reg = mmCP_ME1_PIPE3_INT_CNTL;
+			अवरोध;
+		शेष:
 			DRM_DEBUG("invalid pipe %d\n", pipe);
-			return;
-		}
-	} else {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		DRM_DEBUG("invalid me %d\n", me);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (state) {
-	case AMDGPU_IRQ_STATE_DISABLE:
-		mec_int_cntl = RREG32(mec_int_cntl_reg);
-		mec_int_cntl &= ~CP_INT_CNTL_RING0__TIME_STAMP_INT_ENABLE_MASK;
-		WREG32(mec_int_cntl_reg, mec_int_cntl);
-		break;
-	case AMDGPU_IRQ_STATE_ENABLE:
-		mec_int_cntl = RREG32(mec_int_cntl_reg);
-		mec_int_cntl |= CP_INT_CNTL_RING0__TIME_STAMP_INT_ENABLE_MASK;
-		WREG32(mec_int_cntl_reg, mec_int_cntl);
-		break;
-	default:
-		break;
-	}
-}
+	चयन (state) अणु
+	हाल AMDGPU_IRQ_STATE_DISABLE:
+		mec_पूर्णांक_cntl = RREG32(mec_पूर्णांक_cntl_reg);
+		mec_पूर्णांक_cntl &= ~CP_INT_CNTL_RING0__TIME_STAMP_INT_ENABLE_MASK;
+		WREG32(mec_पूर्णांक_cntl_reg, mec_पूर्णांक_cntl);
+		अवरोध;
+	हाल AMDGPU_IRQ_STATE_ENABLE:
+		mec_पूर्णांक_cntl = RREG32(mec_पूर्णांक_cntl_reg);
+		mec_पूर्णांक_cntl |= CP_INT_CNTL_RING0__TIME_STAMP_INT_ENABLE_MASK;
+		WREG32(mec_पूर्णांक_cntl_reg, mec_पूर्णांक_cntl);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int gfx_v7_0_set_priv_reg_fault_state(struct amdgpu_device *adev,
-					     struct amdgpu_irq_src *src,
-					     unsigned type,
-					     enum amdgpu_interrupt_state state)
-{
-	u32 cp_int_cntl;
+अटल पूर्णांक gfx_v7_0_set_priv_reg_fault_state(काष्ठा amdgpu_device *adev,
+					     काष्ठा amdgpu_irq_src *src,
+					     अचिन्हित type,
+					     क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
+	u32 cp_पूर्णांक_cntl;
 
-	switch (state) {
-	case AMDGPU_IRQ_STATE_DISABLE:
-		cp_int_cntl = RREG32(mmCP_INT_CNTL_RING0);
-		cp_int_cntl &= ~CP_INT_CNTL_RING0__PRIV_REG_INT_ENABLE_MASK;
-		WREG32(mmCP_INT_CNTL_RING0, cp_int_cntl);
-		break;
-	case AMDGPU_IRQ_STATE_ENABLE:
-		cp_int_cntl = RREG32(mmCP_INT_CNTL_RING0);
-		cp_int_cntl |= CP_INT_CNTL_RING0__PRIV_REG_INT_ENABLE_MASK;
-		WREG32(mmCP_INT_CNTL_RING0, cp_int_cntl);
-		break;
-	default:
-		break;
-	}
+	चयन (state) अणु
+	हाल AMDGPU_IRQ_STATE_DISABLE:
+		cp_पूर्णांक_cntl = RREG32(mmCP_INT_CNTL_RING0);
+		cp_पूर्णांक_cntl &= ~CP_INT_CNTL_RING0__PRIV_REG_INT_ENABLE_MASK;
+		WREG32(mmCP_INT_CNTL_RING0, cp_पूर्णांक_cntl);
+		अवरोध;
+	हाल AMDGPU_IRQ_STATE_ENABLE:
+		cp_पूर्णांक_cntl = RREG32(mmCP_INT_CNTL_RING0);
+		cp_पूर्णांक_cntl |= CP_INT_CNTL_RING0__PRIV_REG_INT_ENABLE_MASK;
+		WREG32(mmCP_INT_CNTL_RING0, cp_पूर्णांक_cntl);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_set_priv_inst_fault_state(struct amdgpu_device *adev,
-					      struct amdgpu_irq_src *src,
-					      unsigned type,
-					      enum amdgpu_interrupt_state state)
-{
-	u32 cp_int_cntl;
+अटल पूर्णांक gfx_v7_0_set_priv_inst_fault_state(काष्ठा amdgpu_device *adev,
+					      काष्ठा amdgpu_irq_src *src,
+					      अचिन्हित type,
+					      क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
+	u32 cp_पूर्णांक_cntl;
 
-	switch (state) {
-	case AMDGPU_IRQ_STATE_DISABLE:
-		cp_int_cntl = RREG32(mmCP_INT_CNTL_RING0);
-		cp_int_cntl &= ~CP_INT_CNTL_RING0__PRIV_INSTR_INT_ENABLE_MASK;
-		WREG32(mmCP_INT_CNTL_RING0, cp_int_cntl);
-		break;
-	case AMDGPU_IRQ_STATE_ENABLE:
-		cp_int_cntl = RREG32(mmCP_INT_CNTL_RING0);
-		cp_int_cntl |= CP_INT_CNTL_RING0__PRIV_INSTR_INT_ENABLE_MASK;
-		WREG32(mmCP_INT_CNTL_RING0, cp_int_cntl);
-		break;
-	default:
-		break;
-	}
+	चयन (state) अणु
+	हाल AMDGPU_IRQ_STATE_DISABLE:
+		cp_पूर्णांक_cntl = RREG32(mmCP_INT_CNTL_RING0);
+		cp_पूर्णांक_cntl &= ~CP_INT_CNTL_RING0__PRIV_INSTR_INT_ENABLE_MASK;
+		WREG32(mmCP_INT_CNTL_RING0, cp_पूर्णांक_cntl);
+		अवरोध;
+	हाल AMDGPU_IRQ_STATE_ENABLE:
+		cp_पूर्णांक_cntl = RREG32(mmCP_INT_CNTL_RING0);
+		cp_पूर्णांक_cntl |= CP_INT_CNTL_RING0__PRIV_INSTR_INT_ENABLE_MASK;
+		WREG32(mmCP_INT_CNTL_RING0, cp_पूर्णांक_cntl);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_set_eop_interrupt_state(struct amdgpu_device *adev,
-					    struct amdgpu_irq_src *src,
-					    unsigned type,
-					    enum amdgpu_interrupt_state state)
-{
-	switch (type) {
-	case AMDGPU_CP_IRQ_GFX_ME0_PIPE0_EOP:
-		gfx_v7_0_set_gfx_eop_interrupt_state(adev, state);
-		break;
-	case AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE0_EOP:
-		gfx_v7_0_set_compute_eop_interrupt_state(adev, 1, 0, state);
-		break;
-	case AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE1_EOP:
-		gfx_v7_0_set_compute_eop_interrupt_state(adev, 1, 1, state);
-		break;
-	case AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE2_EOP:
-		gfx_v7_0_set_compute_eop_interrupt_state(adev, 1, 2, state);
-		break;
-	case AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE3_EOP:
-		gfx_v7_0_set_compute_eop_interrupt_state(adev, 1, 3, state);
-		break;
-	case AMDGPU_CP_IRQ_COMPUTE_MEC2_PIPE0_EOP:
-		gfx_v7_0_set_compute_eop_interrupt_state(adev, 2, 0, state);
-		break;
-	case AMDGPU_CP_IRQ_COMPUTE_MEC2_PIPE1_EOP:
-		gfx_v7_0_set_compute_eop_interrupt_state(adev, 2, 1, state);
-		break;
-	case AMDGPU_CP_IRQ_COMPUTE_MEC2_PIPE2_EOP:
-		gfx_v7_0_set_compute_eop_interrupt_state(adev, 2, 2, state);
-		break;
-	case AMDGPU_CP_IRQ_COMPUTE_MEC2_PIPE3_EOP:
-		gfx_v7_0_set_compute_eop_interrupt_state(adev, 2, 3, state);
-		break;
-	default:
-		break;
-	}
-	return 0;
-}
+अटल पूर्णांक gfx_v7_0_set_eop_पूर्णांकerrupt_state(काष्ठा amdgpu_device *adev,
+					    काष्ठा amdgpu_irq_src *src,
+					    अचिन्हित type,
+					    क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
+	चयन (type) अणु
+	हाल AMDGPU_CP_IRQ_GFX_ME0_PIPE0_EOP:
+		gfx_v7_0_set_gfx_eop_पूर्णांकerrupt_state(adev, state);
+		अवरोध;
+	हाल AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE0_EOP:
+		gfx_v7_0_set_compute_eop_पूर्णांकerrupt_state(adev, 1, 0, state);
+		अवरोध;
+	हाल AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE1_EOP:
+		gfx_v7_0_set_compute_eop_पूर्णांकerrupt_state(adev, 1, 1, state);
+		अवरोध;
+	हाल AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE2_EOP:
+		gfx_v7_0_set_compute_eop_पूर्णांकerrupt_state(adev, 1, 2, state);
+		अवरोध;
+	हाल AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE3_EOP:
+		gfx_v7_0_set_compute_eop_पूर्णांकerrupt_state(adev, 1, 3, state);
+		अवरोध;
+	हाल AMDGPU_CP_IRQ_COMPUTE_MEC2_PIPE0_EOP:
+		gfx_v7_0_set_compute_eop_पूर्णांकerrupt_state(adev, 2, 0, state);
+		अवरोध;
+	हाल AMDGPU_CP_IRQ_COMPUTE_MEC2_PIPE1_EOP:
+		gfx_v7_0_set_compute_eop_पूर्णांकerrupt_state(adev, 2, 1, state);
+		अवरोध;
+	हाल AMDGPU_CP_IRQ_COMPUTE_MEC2_PIPE2_EOP:
+		gfx_v7_0_set_compute_eop_पूर्णांकerrupt_state(adev, 2, 2, state);
+		अवरोध;
+	हाल AMDGPU_CP_IRQ_COMPUTE_MEC2_PIPE3_EOP:
+		gfx_v7_0_set_compute_eop_पूर्णांकerrupt_state(adev, 2, 3, state);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_eop_irq(struct amdgpu_device *adev,
-			    struct amdgpu_irq_src *source,
-			    struct amdgpu_iv_entry *entry)
-{
+अटल पूर्णांक gfx_v7_0_eop_irq(काष्ठा amdgpu_device *adev,
+			    काष्ठा amdgpu_irq_src *source,
+			    काष्ठा amdgpu_iv_entry *entry)
+अणु
 	u8 me_id, pipe_id;
-	struct amdgpu_ring *ring;
-	int i;
+	काष्ठा amdgpu_ring *ring;
+	पूर्णांक i;
 
 	DRM_DEBUG("IH: CP EOP\n");
 	me_id = (entry->ring_id & 0x0c) >> 2;
 	pipe_id = (entry->ring_id & 0x03) >> 0;
-	switch (me_id) {
-	case 0:
+	चयन (me_id) अणु
+	हाल 0:
 		amdgpu_fence_process(&adev->gfx.gfx_ring[0]);
-		break;
-	case 1:
-	case 2:
-		for (i = 0; i < adev->gfx.num_compute_rings; i++) {
+		अवरोध;
+	हाल 1:
+	हाल 2:
+		क्रम (i = 0; i < adev->gfx.num_compute_rings; i++) अणु
 			ring = &adev->gfx.compute_ring[i];
-			if ((ring->me == me_id) && (ring->pipe == pipe_id))
+			अगर ((ring->me == me_id) && (ring->pipe == pipe_id))
 				amdgpu_fence_process(ring);
-		}
-		break;
-	}
-	return 0;
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void gfx_v7_0_fault(struct amdgpu_device *adev,
-			   struct amdgpu_iv_entry *entry)
-{
-	struct amdgpu_ring *ring;
+अटल व्योम gfx_v7_0_fault(काष्ठा amdgpu_device *adev,
+			   काष्ठा amdgpu_iv_entry *entry)
+अणु
+	काष्ठा amdgpu_ring *ring;
 	u8 me_id, pipe_id;
-	int i;
+	पूर्णांक i;
 
 	me_id = (entry->ring_id & 0x0c) >> 2;
 	pipe_id = (entry->ring_id & 0x03) >> 0;
-	switch (me_id) {
-	case 0:
+	चयन (me_id) अणु
+	हाल 0:
 		drm_sched_fault(&adev->gfx.gfx_ring[0].sched);
-		break;
-	case 1:
-	case 2:
-		for (i = 0; i < adev->gfx.num_compute_rings; i++) {
+		अवरोध;
+	हाल 1:
+	हाल 2:
+		क्रम (i = 0; i < adev->gfx.num_compute_rings; i++) अणु
 			ring = &adev->gfx.compute_ring[i];
-			if ((ring->me == me_id) && (ring->pipe == pipe_id))
+			अगर ((ring->me == me_id) && (ring->pipe == pipe_id))
 				drm_sched_fault(&ring->sched);
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int gfx_v7_0_priv_reg_irq(struct amdgpu_device *adev,
-				 struct amdgpu_irq_src *source,
-				 struct amdgpu_iv_entry *entry)
-{
+अटल पूर्णांक gfx_v7_0_priv_reg_irq(काष्ठा amdgpu_device *adev,
+				 काष्ठा amdgpu_irq_src *source,
+				 काष्ठा amdgpu_iv_entry *entry)
+अणु
 	DRM_ERROR("Illegal register access in command stream\n");
 	gfx_v7_0_fault(adev, entry);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_priv_inst_irq(struct amdgpu_device *adev,
-				  struct amdgpu_irq_src *source,
-				  struct amdgpu_iv_entry *entry)
-{
+अटल पूर्णांक gfx_v7_0_priv_inst_irq(काष्ठा amdgpu_device *adev,
+				  काष्ठा amdgpu_irq_src *source,
+				  काष्ठा amdgpu_iv_entry *entry)
+अणु
 	DRM_ERROR("Illegal instruction in command stream\n");
 	// XXX soft reset the gfx block only
 	gfx_v7_0_fault(adev, entry);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_set_clockgating_state(void *handle,
-					  enum amd_clockgating_state state)
-{
+अटल पूर्णांक gfx_v7_0_set_घड़ीgating_state(व्योम *handle,
+					  क्रमागत amd_घड़ीgating_state state)
+अणु
 	bool gate = false;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	if (state == AMD_CG_STATE_GATE)
+	अगर (state == AMD_CG_STATE_GATE)
 		gate = true;
 
-	gfx_v7_0_enable_gui_idle_interrupt(adev, false);
+	gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, false);
 	/* order matters! */
-	if (gate) {
+	अगर (gate) अणु
 		gfx_v7_0_enable_mgcg(adev, true);
 		gfx_v7_0_enable_cgcg(adev, true);
-	} else {
+	पूर्ण अन्यथा अणु
 		gfx_v7_0_enable_cgcg(adev, false);
 		gfx_v7_0_enable_mgcg(adev, false);
-	}
-	gfx_v7_0_enable_gui_idle_interrupt(adev, true);
+	पूर्ण
+	gfx_v7_0_enable_gui_idle_पूर्णांकerrupt(adev, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gfx_v7_0_set_powergating_state(void *handle,
-					  enum amd_powergating_state state)
-{
+अटल पूर्णांक gfx_v7_0_set_घातergating_state(व्योम *handle,
+					  क्रमागत amd_घातergating_state state)
+अणु
 	bool gate = false;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	if (state == AMD_PG_STATE_GATE)
+	अगर (state == AMD_PG_STATE_GATE)
 		gate = true;
 
-	if (adev->pg_flags & (AMD_PG_SUPPORT_GFX_PG |
+	अगर (adev->pg_flags & (AMD_PG_SUPPORT_GFX_PG |
 			      AMD_PG_SUPPORT_GFX_SMG |
 			      AMD_PG_SUPPORT_GFX_DMG |
 			      AMD_PG_SUPPORT_CP |
 			      AMD_PG_SUPPORT_GDS |
-			      AMD_PG_SUPPORT_RLC_SMU_HS)) {
+			      AMD_PG_SUPPORT_RLC_SMU_HS)) अणु
 		gfx_v7_0_update_gfx_pg(adev, gate);
-		if (adev->pg_flags & AMD_PG_SUPPORT_GFX_PG) {
+		अगर (adev->pg_flags & AMD_PG_SUPPORT_GFX_PG) अणु
 			gfx_v7_0_enable_cp_pg(adev, gate);
 			gfx_v7_0_enable_gds_pg(adev, gate);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gfx_v7_0_emit_mem_sync(struct amdgpu_ring *ring)
-{
-	amdgpu_ring_write(ring, PACKET3(PACKET3_SURFACE_SYNC, 3));
-	amdgpu_ring_write(ring, PACKET3_TCL1_ACTION_ENA |
+अटल व्योम gfx_v7_0_emit_mem_sync(काष्ठा amdgpu_ring *ring)
+अणु
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_SURFACE_SYNC, 3));
+	amdgpu_ring_ग_लिखो(ring, PACKET3_TCL1_ACTION_ENA |
 			  PACKET3_TC_ACTION_ENA |
 			  PACKET3_SH_KCACHE_ACTION_ENA |
 			  PACKET3_SH_ICACHE_ACTION_ENA);  /* CP_COHER_CNTL */
-	amdgpu_ring_write(ring, 0xffffffff);  /* CP_COHER_SIZE */
-	amdgpu_ring_write(ring, 0);  /* CP_COHER_BASE */
-	amdgpu_ring_write(ring, 0x0000000A); /* poll interval */
-}
+	amdgpu_ring_ग_लिखो(ring, 0xffffffff);  /* CP_COHER_SIZE */
+	amdgpu_ring_ग_लिखो(ring, 0);  /* CP_COHER_BASE */
+	amdgpu_ring_ग_लिखो(ring, 0x0000000A); /* poll पूर्णांकerval */
+पूर्ण
 
-static void gfx_v7_0_emit_mem_sync_compute(struct amdgpu_ring *ring)
-{
-	amdgpu_ring_write(ring, PACKET3(PACKET3_ACQUIRE_MEM, 5));
-	amdgpu_ring_write(ring, PACKET3_TCL1_ACTION_ENA |
+अटल व्योम gfx_v7_0_emit_mem_sync_compute(काष्ठा amdgpu_ring *ring)
+अणु
+	amdgpu_ring_ग_लिखो(ring, PACKET3(PACKET3_ACQUIRE_MEM, 5));
+	amdgpu_ring_ग_लिखो(ring, PACKET3_TCL1_ACTION_ENA |
 			  PACKET3_TC_ACTION_ENA |
 			  PACKET3_SH_KCACHE_ACTION_ENA |
 			  PACKET3_SH_ICACHE_ACTION_ENA);  /* CP_COHER_CNTL */
-	amdgpu_ring_write(ring, 0xffffffff);	/* CP_COHER_SIZE */
-	amdgpu_ring_write(ring, 0xff);		/* CP_COHER_SIZE_HI */
-	amdgpu_ring_write(ring, 0);		/* CP_COHER_BASE */
-	amdgpu_ring_write(ring, 0);		/* CP_COHER_BASE_HI */
-	amdgpu_ring_write(ring, 0x0000000A);	/* poll interval */
-}
+	amdgpu_ring_ग_लिखो(ring, 0xffffffff);	/* CP_COHER_SIZE */
+	amdgpu_ring_ग_लिखो(ring, 0xff);		/* CP_COHER_SIZE_HI */
+	amdgpu_ring_ग_लिखो(ring, 0);		/* CP_COHER_BASE */
+	amdgpu_ring_ग_लिखो(ring, 0);		/* CP_COHER_BASE_HI */
+	amdgpu_ring_ग_लिखो(ring, 0x0000000A);	/* poll पूर्णांकerval */
+पूर्ण
 
-static const struct amd_ip_funcs gfx_v7_0_ip_funcs = {
+अटल स्थिर काष्ठा amd_ip_funcs gfx_v7_0_ip_funcs = अणु
 	.name = "gfx_v7_0",
 	.early_init = gfx_v7_0_early_init,
 	.late_init = gfx_v7_0_late_init,
@@ -5039,13 +5040,13 @@ static const struct amd_ip_funcs gfx_v7_0_ip_funcs = {
 	.suspend = gfx_v7_0_suspend,
 	.resume = gfx_v7_0_resume,
 	.is_idle = gfx_v7_0_is_idle,
-	.wait_for_idle = gfx_v7_0_wait_for_idle,
+	.रुको_क्रम_idle = gfx_v7_0_रुको_क्रम_idle,
 	.soft_reset = gfx_v7_0_soft_reset,
-	.set_clockgating_state = gfx_v7_0_set_clockgating_state,
-	.set_powergating_state = gfx_v7_0_set_powergating_state,
-};
+	.set_घड़ीgating_state = gfx_v7_0_set_घड़ीgating_state,
+	.set_घातergating_state = gfx_v7_0_set_घातergating_state,
+पूर्ण;
 
-static const struct amdgpu_ring_funcs gfx_v7_0_ring_funcs_gfx = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs gfx_v7_0_ring_funcs_gfx = अणु
 	.type = AMDGPU_RING_TYPE_GFX,
 	.align_mask = 0xff,
 	.nop = PACKET3(PACKET3_NOP, 0x3FFF),
@@ -5054,10 +5055,10 @@ static const struct amdgpu_ring_funcs gfx_v7_0_ring_funcs_gfx = {
 	.get_wptr = gfx_v7_0_ring_get_wptr_gfx,
 	.set_wptr = gfx_v7_0_ring_set_wptr_gfx,
 	.emit_frame_size =
-		20 + /* gfx_v7_0_ring_emit_gds_switch */
+		20 + /* gfx_v7_0_ring_emit_gds_चयन */
 		7 + /* gfx_v7_0_ring_emit_hdp_flush */
 		5 + /* hdp invalidate */
-		12 + 12 + 12 + /* gfx_v7_0_ring_emit_fence_gfx x3 for user fence, vm fence */
+		12 + 12 + 12 + /* gfx_v7_0_ring_emit_fence_gfx x3 क्रम user fence, vm fence */
 		7 + 4 + /* gfx_v7_0_ring_emit_pipeline_sync */
 		CIK_FLUSH_GPU_TLB_NUM_WREG * 5 + 7 + 6 + /* gfx_v7_0_ring_emit_vm_flush */
 		3 + 4 + /* gfx_v7_ring_emit_cntxcntl including vgt flush*/
@@ -5067,7 +5068,7 @@ static const struct amdgpu_ring_funcs gfx_v7_0_ring_funcs_gfx = {
 	.emit_fence = gfx_v7_0_ring_emit_fence_gfx,
 	.emit_pipeline_sync = gfx_v7_0_ring_emit_pipeline_sync,
 	.emit_vm_flush = gfx_v7_0_ring_emit_vm_flush,
-	.emit_gds_switch = gfx_v7_0_ring_emit_gds_switch,
+	.emit_gds_चयन = gfx_v7_0_ring_emit_gds_चयन,
 	.emit_hdp_flush = gfx_v7_0_ring_emit_hdp_flush,
 	.test_ring = gfx_v7_0_ring_test_ring,
 	.test_ib = gfx_v7_0_ring_test_ib,
@@ -5077,9 +5078,9 @@ static const struct amdgpu_ring_funcs gfx_v7_0_ring_funcs_gfx = {
 	.emit_wreg = gfx_v7_0_ring_emit_wreg,
 	.soft_recovery = gfx_v7_0_ring_soft_recovery,
 	.emit_mem_sync = gfx_v7_0_emit_mem_sync,
-};
+पूर्ण;
 
-static const struct amdgpu_ring_funcs gfx_v7_0_ring_funcs_compute = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs gfx_v7_0_ring_funcs_compute = अणु
 	.type = AMDGPU_RING_TYPE_COMPUTE,
 	.align_mask = 0xff,
 	.nop = PACKET3(PACKET3_NOP, 0x3FFF),
@@ -5088,19 +5089,19 @@ static const struct amdgpu_ring_funcs gfx_v7_0_ring_funcs_compute = {
 	.get_wptr = gfx_v7_0_ring_get_wptr_compute,
 	.set_wptr = gfx_v7_0_ring_set_wptr_compute,
 	.emit_frame_size =
-		20 + /* gfx_v7_0_ring_emit_gds_switch */
+		20 + /* gfx_v7_0_ring_emit_gds_चयन */
 		7 + /* gfx_v7_0_ring_emit_hdp_flush */
 		5 + /* hdp invalidate */
 		7 + /* gfx_v7_0_ring_emit_pipeline_sync */
 		CIK_FLUSH_GPU_TLB_NUM_WREG * 5 + 7 + /* gfx_v7_0_ring_emit_vm_flush */
-		7 + 7 + 7 + /* gfx_v7_0_ring_emit_fence_compute x3 for user fence, vm fence */
+		7 + 7 + 7 + /* gfx_v7_0_ring_emit_fence_compute x3 क्रम user fence, vm fence */
 		7, /* gfx_v7_0_emit_mem_sync_compute */
 	.emit_ib_size =	7, /* gfx_v7_0_ring_emit_ib_compute */
 	.emit_ib = gfx_v7_0_ring_emit_ib_compute,
 	.emit_fence = gfx_v7_0_ring_emit_fence_compute,
 	.emit_pipeline_sync = gfx_v7_0_ring_emit_pipeline_sync,
 	.emit_vm_flush = gfx_v7_0_ring_emit_vm_flush,
-	.emit_gds_switch = gfx_v7_0_ring_emit_gds_switch,
+	.emit_gds_चयन = gfx_v7_0_ring_emit_gds_चयन,
 	.emit_hdp_flush = gfx_v7_0_ring_emit_hdp_flush,
 	.test_ring = gfx_v7_0_ring_test_ring,
 	.test_ib = gfx_v7_0_ring_test_ib,
@@ -5108,35 +5109,35 @@ static const struct amdgpu_ring_funcs gfx_v7_0_ring_funcs_compute = {
 	.pad_ib = amdgpu_ring_generic_pad_ib,
 	.emit_wreg = gfx_v7_0_ring_emit_wreg,
 	.emit_mem_sync = gfx_v7_0_emit_mem_sync_compute,
-};
+पूर्ण;
 
-static void gfx_v7_0_set_ring_funcs(struct amdgpu_device *adev)
-{
-	int i;
+अटल व्योम gfx_v7_0_set_ring_funcs(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adev->gfx.num_gfx_rings; i++)
+	क्रम (i = 0; i < adev->gfx.num_gfx_rings; i++)
 		adev->gfx.gfx_ring[i].funcs = &gfx_v7_0_ring_funcs_gfx;
-	for (i = 0; i < adev->gfx.num_compute_rings; i++)
+	क्रम (i = 0; i < adev->gfx.num_compute_rings; i++)
 		adev->gfx.compute_ring[i].funcs = &gfx_v7_0_ring_funcs_compute;
-}
+पूर्ण
 
-static const struct amdgpu_irq_src_funcs gfx_v7_0_eop_irq_funcs = {
-	.set = gfx_v7_0_set_eop_interrupt_state,
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs gfx_v7_0_eop_irq_funcs = अणु
+	.set = gfx_v7_0_set_eop_पूर्णांकerrupt_state,
 	.process = gfx_v7_0_eop_irq,
-};
+पूर्ण;
 
-static const struct amdgpu_irq_src_funcs gfx_v7_0_priv_reg_irq_funcs = {
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs gfx_v7_0_priv_reg_irq_funcs = अणु
 	.set = gfx_v7_0_set_priv_reg_fault_state,
 	.process = gfx_v7_0_priv_reg_irq,
-};
+पूर्ण;
 
-static const struct amdgpu_irq_src_funcs gfx_v7_0_priv_inst_irq_funcs = {
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs gfx_v7_0_priv_inst_irq_funcs = अणु
 	.set = gfx_v7_0_set_priv_inst_fault_state,
 	.process = gfx_v7_0_priv_inst_irq,
-};
+पूर्ण;
 
-static void gfx_v7_0_set_irq_funcs(struct amdgpu_device *adev)
-{
+अटल व्योम gfx_v7_0_set_irq_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->gfx.eop_irq.num_types = AMDGPU_CP_IRQ_LAST;
 	adev->gfx.eop_irq.funcs = &gfx_v7_0_eop_irq_funcs;
 
@@ -5145,62 +5146,62 @@ static void gfx_v7_0_set_irq_funcs(struct amdgpu_device *adev)
 
 	adev->gfx.priv_inst_irq.num_types = 1;
 	adev->gfx.priv_inst_irq.funcs = &gfx_v7_0_priv_inst_irq_funcs;
-}
+पूर्ण
 
-static void gfx_v7_0_set_gds_init(struct amdgpu_device *adev)
-{
+अटल व्योम gfx_v7_0_set_gds_init(काष्ठा amdgpu_device *adev)
+अणु
 	/* init asci gds info */
 	adev->gds.gds_size = RREG32(mmGDS_VMID0_SIZE);
 	adev->gds.gws_size = 64;
 	adev->gds.oa_size = 16;
 	adev->gds.gds_compute_max_wave_id = RREG32(mmGDS_COMPUTE_MAX_WAVE_ID);
-}
+पूर्ण
 
 
-static void gfx_v7_0_get_cu_info(struct amdgpu_device *adev)
-{
-	int i, j, k, counter, active_cu_number = 0;
-	u32 mask, bitmap, ao_bitmap, ao_cu_mask = 0;
-	struct amdgpu_cu_info *cu_info = &adev->gfx.cu_info;
-	unsigned disable_masks[4 * 2];
+अटल व्योम gfx_v7_0_get_cu_info(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i, j, k, counter, active_cu_number = 0;
+	u32 mask, biपंचांगap, ao_biपंचांगap, ao_cu_mask = 0;
+	काष्ठा amdgpu_cu_info *cu_info = &adev->gfx.cu_info;
+	अचिन्हित disable_masks[4 * 2];
 	u32 ao_cu_num;
 
-	if (adev->flags & AMD_IS_APU)
+	अगर (adev->flags & AMD_IS_APU)
 		ao_cu_num = 2;
-	else
+	अन्यथा
 		ao_cu_num = adev->gfx.config.max_cu_per_sh;
 
-	memset(cu_info, 0, sizeof(*cu_info));
+	स_रखो(cu_info, 0, माप(*cu_info));
 
 	amdgpu_gfx_parse_disable_cu(disable_masks, 4, 2);
 
 	mutex_lock(&adev->grbm_idx_mutex);
-	for (i = 0; i < adev->gfx.config.max_shader_engines; i++) {
-		for (j = 0; j < adev->gfx.config.max_sh_per_se; j++) {
+	क्रम (i = 0; i < adev->gfx.config.max_shader_engines; i++) अणु
+		क्रम (j = 0; j < adev->gfx.config.max_sh_per_se; j++) अणु
 			mask = 1;
-			ao_bitmap = 0;
+			ao_biपंचांगap = 0;
 			counter = 0;
 			gfx_v7_0_select_se_sh(adev, i, j, 0xffffffff);
-			if (i < 4 && j < 2)
-				gfx_v7_0_set_user_cu_inactive_bitmap(
+			अगर (i < 4 && j < 2)
+				gfx_v7_0_set_user_cu_inactive_biपंचांगap(
 					adev, disable_masks[i * 2 + j]);
-			bitmap = gfx_v7_0_get_cu_active_bitmap(adev);
-			cu_info->bitmap[i][j] = bitmap;
+			biपंचांगap = gfx_v7_0_get_cu_active_biपंचांगap(adev);
+			cu_info->biपंचांगap[i][j] = biपंचांगap;
 
-			for (k = 0; k < adev->gfx.config.max_cu_per_sh; k ++) {
-				if (bitmap & mask) {
-					if (counter < ao_cu_num)
-						ao_bitmap |= mask;
+			क्रम (k = 0; k < adev->gfx.config.max_cu_per_sh; k ++) अणु
+				अगर (biपंचांगap & mask) अणु
+					अगर (counter < ao_cu_num)
+						ao_biपंचांगap |= mask;
 					counter ++;
-				}
+				पूर्ण
 				mask <<= 1;
-			}
+			पूर्ण
 			active_cu_number += counter;
-			if (i < 2 && j < 2)
-				ao_cu_mask |= (ao_bitmap << (i * 16 + j * 8));
-			cu_info->ao_cu_bitmap[i][j] = ao_bitmap;
-		}
-	}
+			अगर (i < 2 && j < 2)
+				ao_cu_mask |= (ao_biपंचांगap << (i * 16 + j * 8));
+			cu_info->ao_cu_biपंचांगap[i][j] = ao_biपंचांगap;
+		पूर्ण
+	पूर्ण
 	gfx_v7_0_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
 	mutex_unlock(&adev->grbm_idx_mutex);
 
@@ -5211,31 +5212,31 @@ static void gfx_v7_0_get_cu_info(struct amdgpu_device *adev)
 	cu_info->max_scratch_slots_per_cu = 32;
 	cu_info->wave_front_size = 64;
 	cu_info->lds_size = 64;
-}
+पूर्ण
 
-const struct amdgpu_ip_block_version gfx_v7_1_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version gfx_v7_1_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_GFX,
 	.major = 7,
 	.minor = 1,
 	.rev = 0,
 	.funcs = &gfx_v7_0_ip_funcs,
-};
+पूर्ण;
 
-const struct amdgpu_ip_block_version gfx_v7_2_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version gfx_v7_2_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_GFX,
 	.major = 7,
 	.minor = 2,
 	.rev = 0,
 	.funcs = &gfx_v7_0_ip_funcs,
-};
+पूर्ण;
 
-const struct amdgpu_ip_block_version gfx_v7_3_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version gfx_v7_3_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_GFX,
 	.major = 7,
 	.minor = 3,
 	.rev = 0,
 	.funcs = &gfx_v7_0_ip_funcs,
-};
+पूर्ण;

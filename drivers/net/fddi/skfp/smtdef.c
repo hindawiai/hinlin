@@ -1,89 +1,90 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
+ *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
  *
- *	See the file "skfddi.c" for further information.
+ *	See the file "skfddi.c" क्रम further inक्रमmation.
  *
- *	The information in this file is provided "AS IS" without warranty.
+ *	The inक्रमmation in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
 /*
-	SMT/CMT defaults
+	SMT/CMT शेषs
 */
 
-#include "h/types.h"
-#include "h/fddi.h"
-#include "h/smc.h"
+#समावेश "h/types.h"
+#समावेश "h/fddi.h"
+#समावेश "h/smc.h"
 
-#ifndef OEM_USER_DATA
-#define OEM_USER_DATA	"SK-NET FDDI V2.0 Userdata"
-#endif
+#अगर_अघोषित OEM_USER_DATA
+#घोषणा OEM_USER_DATA	"SK-NET FDDI V2.0 Userdata"
+#पूर्ण_अगर
 
 /*
- * defaults
+ * शेषs
  */
-#define TTMS(x)	((u_long)(x)*1000L)
-#define TTS(x)	((u_long)(x)*1000000L)
-#define TTUS(x)	((u_long)(x))
+#घोषणा TTMS(x)	((u_दीर्घ)(x)*1000L)
+#घोषणा TTS(x)	((u_दीर्घ)(x)*1000000L)
+#घोषणा TTUS(x)	((u_दीर्घ)(x))
 
-#define DEFAULT_TB_MIN		TTMS(5)
-#define DEFAULT_TB_MAX		TTMS(50)
-#define DEFAULT_C_MIN		TTUS(1600)
-#define DEFAULT_T_OUT		TTMS(100+5)
-#define DEFAULT_TL_MIN		TTUS(30)
-#define DEFAULT_LC_SHORT	TTMS(50+5)
-#define DEFAULT_LC_MEDIUM	TTMS(500+20)
-#define DEFAULT_LC_LONG		TTS(5)+TTMS(50)
-#define DEFAULT_LC_EXTENDED	TTS(50)+TTMS(50)
-#define DEFAULT_T_NEXT_9	TTMS(200+10)
-#define DEFAULT_NS_MAX		TTUS(1310)
-#define DEFAULT_I_MAX		TTMS(25)
-#define DEFAULT_IN_MAX		TTMS(40)
-#define DEFAULT_TD_MIN		TTMS(5)
-#define DEFAULT_T_NON_OP	TTS(1)
-#define DEFAULT_T_STUCK		TTS(8)
-#define DEFAULT_T_DIRECT	TTMS(370)
-#define DEFAULT_T_JAM		TTMS(370)
-#define DEFAULT_T_ANNOUNCE	TTMS(2500)
-#define DEFAULT_D_MAX		TTUS(1617)
-#define DEFAULT_LEM_ALARM	(8)
-#define DEFAULT_LEM_CUTOFF	(7)
-#define DEFAULT_TEST_DONE	TTS(1)
-#define DEFAULT_CHECK_POLL	TTS(1)
-#define DEFAULT_POLL		TTMS(50)
+#घोषणा DEFAULT_TB_MIN		TTMS(5)
+#घोषणा DEFAULT_TB_MAX		TTMS(50)
+#घोषणा DEFAULT_C_MIN		TTUS(1600)
+#घोषणा DEFAULT_T_OUT		TTMS(100+5)
+#घोषणा DEFAULT_TL_MIN		TTUS(30)
+#घोषणा DEFAULT_LC_SHORT	TTMS(50+5)
+#घोषणा DEFAULT_LC_MEDIUM	TTMS(500+20)
+#घोषणा DEFAULT_LC_LONG		TTS(5)+TTMS(50)
+#घोषणा DEFAULT_LC_EXTENDED	TTS(50)+TTMS(50)
+#घोषणा DEFAULT_T_NEXT_9	TTMS(200+10)
+#घोषणा DEFAULT_NS_MAX		TTUS(1310)
+#घोषणा DEFAULT_I_MAX		TTMS(25)
+#घोषणा DEFAULT_IN_MAX		TTMS(40)
+#घोषणा DEFAULT_TD_MIN		TTMS(5)
+#घोषणा DEFAULT_T_NON_OP	TTS(1)
+#घोषणा DEFAULT_T_STUCK		TTS(8)
+#घोषणा DEFAULT_T_सूचीECT	TTMS(370)
+#घोषणा DEFAULT_T_JAM		TTMS(370)
+#घोषणा DEFAULT_T_ANNOUNCE	TTMS(2500)
+#घोषणा DEFAULT_D_MAX		TTUS(1617)
+#घोषणा DEFAULT_LEM_ALARM	(8)
+#घोषणा DEFAULT_LEM_CUTOFF	(7)
+#घोषणा DEFAULT_TEST_DONE	TTS(1)
+#घोषणा DEFAULT_CHECK_POLL	TTS(1)
+#घोषणा DEFAULT_POLL		TTMS(50)
 
 /*
  * LCT errors threshold
  */
-#define DEFAULT_LCT_SHORT	1
-#define DEFAULT_LCT_MEDIUM	3
-#define DEFAULT_LCT_LONG	5
-#define DEFAULT_LCT_EXTEND	50
+#घोषणा DEFAULT_LCT_SHORT	1
+#घोषणा DEFAULT_LCT_MEDIUM	3
+#घोषणा DEFAULT_LCT_LONG	5
+#घोषणा DEFAULT_LCT_EXTEND	50
 
 /* Forward declarations */
-void smt_reset_defaults(struct s_smc *smc, int level);
-static void smt_init_mib(struct s_smc *smc, int level);
-static int set_min_max(int maxflag, u_long mib, u_long limit, u_long *oper);
+व्योम smt_reset_शेषs(काष्ठा s_smc *smc, पूर्णांक level);
+अटल व्योम smt_init_mib(काष्ठा s_smc *smc, पूर्णांक level);
+अटल पूर्णांक set_min_max(पूर्णांक maxflag, u_दीर्घ mib, u_दीर्घ limit, u_दीर्घ *oper);
 
-#define MS2BCLK(x)	((x)*12500L)
-#define US2BCLK(x)	((x)*1250L)
+#घोषणा MS2BCLK(x)	((x)*12500L)
+#घोषणा US2BCLK(x)	((x)*1250L)
 
-void smt_reset_defaults(struct s_smc *smc, int level)
-{
-	struct smt_config	*smt ;
-	int			i ;
-	u_long			smt_boot_time;
+व्योम smt_reset_शेषs(काष्ठा s_smc *smc, पूर्णांक level)
+अणु
+	काष्ठा smt_config	*smt ;
+	पूर्णांक			i ;
+	u_दीर्घ			smt_boot_समय;
 
 
 	smt_init_mib(smc,level) ;
 
 	smc->os.smc_version = SMC_VERSION ;
-	smt_boot_time = smt_get_time();
-	for( i = 0; i < NUMMACS; i++ )
-		smc->sm.last_tok_time[i] = smt_boot_time ;
+	smt_boot_समय = smt_get_समय();
+	क्रम( i = 0; i < NUMMACS; i++ )
+		smc->sm.last_tok_समय[i] = smt_boot_समय ;
 	smt = &smc->s ;
 	smt->attach_s = 0 ;
 	smt->build_ring_map = 1 ;
@@ -94,95 +95,95 @@ void smt_reset_defaults(struct s_smc *smc, int level)
 	smt->pcm_c_min = DEFAULT_C_MIN ;
 	smt->pcm_t_out = DEFAULT_T_OUT ;
 	smt->pcm_tl_min = DEFAULT_TL_MIN ;
-	smt->pcm_lc_short = DEFAULT_LC_SHORT ;
+	smt->pcm_lc_लघु = DEFAULT_LC_SHORT ;
 	smt->pcm_lc_medium = DEFAULT_LC_MEDIUM ;
-	smt->pcm_lc_long = DEFAULT_LC_LONG ;
+	smt->pcm_lc_दीर्घ = DEFAULT_LC_LONG ;
 	smt->pcm_lc_extended = DEFAULT_LC_EXTENDED ;
 	smt->pcm_t_next_9 = DEFAULT_T_NEXT_9 ;
 	smt->pcm_ns_max = DEFAULT_NS_MAX ;
 	smt->ecm_i_max = DEFAULT_I_MAX ;
 	smt->ecm_in_max = DEFAULT_IN_MAX ;
 	smt->ecm_td_min = DEFAULT_TD_MIN ;
-	smt->ecm_test_done = DEFAULT_TEST_DONE ;
+	smt->ecm_test_करोne = DEFAULT_TEST_DONE ;
 	smt->ecm_check_poll = DEFAULT_CHECK_POLL ;
 	smt->rmt_t_non_op = DEFAULT_T_NON_OP ;
 	smt->rmt_t_stuck = DEFAULT_T_STUCK ;
-	smt->rmt_t_direct = DEFAULT_T_DIRECT ;
+	smt->rmt_t_direct = DEFAULT_T_सूचीECT ;
 	smt->rmt_t_jam = DEFAULT_T_JAM ;
 	smt->rmt_t_announce = DEFAULT_T_ANNOUNCE ;
 	smt->rmt_t_poll = DEFAULT_POLL ;
         smt->rmt_dup_mac_behavior = FALSE ;  /* See Struct smt_config */
 	smt->mac_d_max = DEFAULT_D_MAX ;
 
-	smt->lct_short = DEFAULT_LCT_SHORT ;
+	smt->lct_लघु = DEFAULT_LCT_SHORT ;
 	smt->lct_medium = DEFAULT_LCT_MEDIUM ;
-	smt->lct_long = DEFAULT_LCT_LONG ;
+	smt->lct_दीर्घ = DEFAULT_LCT_LONG ;
 	smt->lct_extended = DEFAULT_LCT_EXTEND ;
 
-#ifndef	SLIM_SMT
-#ifdef	ESS
-	if (level == 0) {
+#अगर_अघोषित	SLIM_SMT
+#अगर_घोषित	ESS
+	अगर (level == 0) अणु
 		smc->ess.sync_bw_available = FALSE ;
 		smc->mib.fddiESSPayload = 0 ;
 		smc->mib.fddiESSOverhead = 0 ;
-		smc->mib.fddiESSMaxTNeg = (u_long)(- MS2BCLK(25)) ;
+		smc->mib.fddiESSMaxTNeg = (u_दीर्घ)(- MS2BCLK(25)) ;
 		smc->mib.fddiESSMinSegmentSize = 1 ;
 		smc->mib.fddiESSCategory = SB_STATIC ;
 		smc->mib.fddiESSSynchTxMode = FALSE ;
-		smc->ess.raf_act_timer_poll = FALSE ;
-		smc->ess.timer_count = 7 ; 	/* first RAF alc req after 3s */
-	}
+		smc->ess.raf_act_समयr_poll = FALSE ;
+		smc->ess.समयr_count = 7 ; 	/* first RAF alc req after 3s */
+	पूर्ण
 	smc->ess.local_sba_active = FALSE ;
-	smc->ess.sba_reply_pend = NULL ;
-#endif
-#ifdef	SBA
+	smc->ess.sba_reply_pend = शून्य ;
+#पूर्ण_अगर
+#अगर_घोषित	SBA
 	smt_init_sba(smc,level) ;
-#endif
-#endif	/* no SLIM_SMT */
-#ifdef	TAG_MODE
-	if (level == 0) {
+#पूर्ण_अगर
+#पूर्ण_अगर	/* no SLIM_SMT */
+#अगर_घोषित	TAG_MODE
+	अगर (level == 0) अणु
 		smc->hw.pci_fix_value = 0 ;
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * manufacturer data
  */
-static const char man_data[32] =
+अटल स्थिर अक्षर man_data[32] =
 /*	 01234567890123456789012345678901	*/
 	"xxxSK-NET FDDI SMT 7.3 - V2.8.8" ;
 
-static void smt_init_mib(struct s_smc *smc, int level)
-{
-	struct fddi_mib		*mib ;
-	struct fddi_mib_p	*pm ;
-	int			port ;
-	int			path ;
+अटल व्योम smt_init_mib(काष्ठा s_smc *smc, पूर्णांक level)
+अणु
+	काष्ठा fddi_mib		*mib ;
+	काष्ठा fddi_mib_p	*pm ;
+	पूर्णांक			port ;
+	पूर्णांक			path ;
 
 	mib = &smc->mib ;
-	if (level == 0) {
+	अगर (level == 0) अणु
 		/*
 		 * set EVERYTHING to ZERO
 		 * EXCEPT hw and os
 		 */
-		memset(((char *)smc)+
-			sizeof(struct s_smt_os)+sizeof(struct s_smt_hw), 0,
-			sizeof(struct s_smc) -
-			sizeof(struct s_smt_os) - sizeof(struct s_smt_hw)) ;
-	}
-	else {
+		स_रखो(((अक्षर *)smc)+
+			माप(काष्ठा s_smt_os)+माप(काष्ठा s_smt_hw), 0,
+			माप(काष्ठा s_smc) -
+			माप(काष्ठा s_smt_os) - माप(काष्ठा s_smt_hw)) ;
+	पूर्ण
+	अन्यथा अणु
 		mib->fddiSMTRemoteDisconnectFlag = 0 ;
 		mib->fddiSMTPeerWrapFlag = 0 ;
-	}
+	पूर्ण
 
 	mib->fddiSMTOpVersionId = 2 ;
 	mib->fddiSMTHiVersionId = 2 ;
 	mib->fddiSMTLoVersionId = 2 ;
-	memcpy((char *) mib->fddiSMTManufacturerData,man_data,32) ;
-	if (level == 0) {
-		strcpy(mib->fddiSMTUserData,OEM_USER_DATA) ;
-	}
+	स_नकल((अक्षर *) mib->fddiSMTManufacturerData,man_data,32) ;
+	अगर (level == 0) अणु
+		म_नकल(mib->fddiSMTUserData,OEM_USER_DATA) ;
+	पूर्ण
 	mib->fddiSMTMIBVersionId = 1 ;
 	mib->fddiSMTMac_Ct = NUMMACS ;
 	mib->fddiSMTConnectionPolicy = POLICY_MM | POLICY_AA | POLICY_BB ;
@@ -194,7 +195,7 @@ static void smt_init_mib(struct s_smc *smc, int level)
 	mib->fddiSMTAvailablePaths = MIB_PATH_P | MIB_PATH_S ;
 
 	mib->fddiSMTConfigCapabilities = 0 ;	/* no hold,no wrap_ab*/
-	mib->fddiSMTTT_Notify = 10 ;
+	mib->fddiSMTTT_Notअगरy = 10 ;
 	mib->fddiSMTStatRptPolicy = TRUE ;
 	mib->fddiSMTTrace_MaxExpiration = SEC2MIB(7) ;
 	mib->fddiSMTMACIndexes = INDEX_MAC ;
@@ -208,17 +209,17 @@ static void smt_init_mib(struct s_smc *smc, int level)
 		MIB_P_PATH_PRIM_ALTER ;
 	mib->m[MAC0].fddiMACAvailablePaths = MIB_PATH_P ;
 	mib->m[MAC0].fddiMACCurrentPath = MIB_PATH_PRIMARY ;
-	mib->m[MAC0].fddiMACT_MaxCapabilitiy = (u_long)(- MS2BCLK(165)) ;
-	mib->m[MAC0].fddiMACTVXCapabilitiy = (u_long)(- US2BCLK(52)) ;
-	if (level == 0) {
-		mib->m[MAC0].fddiMACTvxValue = (u_long)(- US2BCLK(27)) ;
-		mib->m[MAC0].fddiMACTvxValueMIB = (u_long)(- US2BCLK(27)) ;
-		mib->m[MAC0].fddiMACT_Req = (u_long)(- MS2BCLK(165)) ;
-		mib->m[MAC0].fddiMACT_ReqMIB = (u_long)(- MS2BCLK(165)) ;
-		mib->m[MAC0].fddiMACT_Max = (u_long)(- MS2BCLK(165)) ;
-		mib->m[MAC0].fddiMACT_MaxMIB = (u_long)(- MS2BCLK(165)) ;
-		mib->m[MAC0].fddiMACT_Min = (u_long)(- MS2BCLK(4)) ;
-	}
+	mib->m[MAC0].fddiMACT_MaxCapabilitiy = (u_दीर्घ)(- MS2BCLK(165)) ;
+	mib->m[MAC0].fddiMACTVXCapabilitiy = (u_दीर्घ)(- US2BCLK(52)) ;
+	अगर (level == 0) अणु
+		mib->m[MAC0].fddiMACTvxValue = (u_दीर्घ)(- US2BCLK(27)) ;
+		mib->m[MAC0].fddiMACTvxValueMIB = (u_दीर्घ)(- US2BCLK(27)) ;
+		mib->m[MAC0].fddiMACT_Req = (u_दीर्घ)(- MS2BCLK(165)) ;
+		mib->m[MAC0].fddiMACT_ReqMIB = (u_दीर्घ)(- MS2BCLK(165)) ;
+		mib->m[MAC0].fddiMACT_Max = (u_दीर्घ)(- MS2BCLK(165)) ;
+		mib->m[MAC0].fddiMACT_MaxMIB = (u_दीर्घ)(- MS2BCLK(165)) ;
+		mib->m[MAC0].fddiMACT_Min = (u_दीर्घ)(- MS2BCLK(4)) ;
+	पूर्ण
 	mib->m[MAC0].fddiMACHardwarePresent = TRUE ;
 	mib->m[MAC0].fddiMACMA_UnitdataEnable = TRUE ;
 	mib->m[MAC0].fddiMACFrameErrorThreshold = 1 ;
@@ -226,41 +227,41 @@ static void smt_init_mib(struct s_smc *smc, int level)
 	/*
 	 * Path attributes
 	 */
-	for (path = 0 ; path < NUMPATHS ; path++) {
+	क्रम (path = 0 ; path < NUMPATHS ; path++) अणु
 		mib->a[path].fddiPATHIndex = INDEX_PATH + path ;
-		if (level == 0) {
+		अगर (level == 0) अणु
 			mib->a[path].fddiPATHTVXLowerBound =
-				(u_long)(- US2BCLK(27)) ;
+				(u_दीर्घ)(- US2BCLK(27)) ;
 			mib->a[path].fddiPATHT_MaxLowerBound =
-				(u_long)(- MS2BCLK(165)) ;
+				(u_दीर्घ)(- MS2BCLK(165)) ;
 			mib->a[path].fddiPATHMaxT_Req =
-				(u_long)(- MS2BCLK(165)) ;
-		}
-	}
+				(u_दीर्घ)(- MS2BCLK(165)) ;
+		पूर्ण
+	पूर्ण
 
 
 	/*
 	 * Port attributes
 	 */
 	pm = mib->p ;
-	for (port = 0 ; port <  NUMPHYS ; port++) {
+	क्रम (port = 0 ; port <  NUMPHYS ; port++) अणु
 		/*
-		 * set MIB pointer in phy
+		 * set MIB poपूर्णांकer in phy
 		 */
-		/* Attention: don't initialize mib pointer here! */
+		/* Attention: करोn't initialize mib poपूर्णांकer here! */
 		/*  It must be initialized during phase 2 */
-		smc->y[port].mib = NULL;
+		smc->y[port].mib = शून्य;
 		mib->fddiSMTPORTIndexes[port] = port+INDEX_PORT ;
 
 		pm->fddiPORTIndex = port+INDEX_PORT ;
 		pm->fddiPORTHardwarePresent = TRUE ;
-		if (level == 0) {
+		अगर (level == 0) अणु
 			pm->fddiPORTLer_Alarm = DEFAULT_LEM_ALARM ;
 			pm->fddiPORTLer_Cutoff = DEFAULT_LEM_CUTOFF ;
-		}
+		पूर्ण
 		/*
 		 * fddiPORTRequestedPaths are set in pcmplc.c
-		 * we don't know the port type yet !
+		 * we करोn't know the port type yet !
 		 */
 		pm->fddiPORTRequestedPaths[1] = 0 ;
 		pm->fddiPORTRequestedPaths[2] = 0 ;
@@ -268,15 +269,15 @@ static void smt_init_mib(struct s_smc *smc, int level)
 		pm->fddiPORTAvailablePaths = MIB_PATH_P ;
 		pm->fddiPORTPMDClass = MIB_PMDCLASS_MULTI ;
 		pm++ ;
-	}
+	पूर्ण
 
-	(void) smt_set_mac_opvalues(smc) ;
-}
+	(व्योम) smt_set_mac_opvalues(smc) ;
+पूर्ण
 
-int smt_set_mac_opvalues(struct s_smc *smc)
-{
-	int	st ;
-	int	st2 ;
+पूर्णांक smt_set_mac_opvalues(काष्ठा s_smc *smc)
+अणु
+	पूर्णांक	st ;
+	पूर्णांक	st2 ;
 
 	st = set_min_max(1,smc->mib.m[MAC0].fddiMACTvxValueMIB,
 		smc->mib.a[PATH0].fddiPATHTVXLowerBound,
@@ -287,61 +288,61 @@ int smt_set_mac_opvalues(struct s_smc *smc)
 	st |= (st2 = set_min_max(0,smc->mib.m[MAC0].fddiMACT_ReqMIB,
 		smc->mib.a[PATH0].fddiPATHMaxT_Req,
 		&smc->mib.m[MAC0].fddiMACT_Req)) ;
-	if (st2) {
+	अगर (st2) अणु
 		/* Treq attribute changed remotely. So send an AIX_EVENT to the
 		 * user
 		 */
-		AIX_EVENT(smc, (u_long) FDDI_RING_STATUS, (u_long)
-			FDDI_SMT_EVENT, (u_long) FDDI_REMOTE_T_REQ,
+		AIX_EVENT(smc, (u_दीर्घ) FDDI_RING_STATUS, (u_दीर्घ)
+			FDDI_SMT_EVENT, (u_दीर्घ) FDDI_REMOTE_T_REQ,
 			smt_get_event_word(smc));
-	}
-	return st;
-}
+	पूर्ण
+	वापस st;
+पूर्ण
 
-void smt_fixup_mib(struct s_smc *smc)
-{
-#ifdef	CONCENTRATOR
-	switch (smc->s.sas) {
-	case SMT_SAS :
+व्योम smt_fixup_mib(काष्ठा s_smc *smc)
+अणु
+#अगर_घोषित	CONCENTRATOR
+	चयन (smc->s.sas) अणु
+	हाल SMT_SAS :
 		smc->mib.fddiSMTNonMaster_Ct = 1 ;
-		break ;
-	case SMT_DAS :
+		अवरोध ;
+	हाल SMT_DAS :
 		smc->mib.fddiSMTNonMaster_Ct = 2 ;
-		break ;
-	case SMT_NAC :
+		अवरोध ;
+	हाल SMT_NAC :
 		smc->mib.fddiSMTNonMaster_Ct = 0 ;
-		break ;
-	}
+		अवरोध ;
+	पूर्ण
 	smc->mib.fddiSMTMaster_Ct = NUMPHYS - smc->mib.fddiSMTNonMaster_Ct ;
-#else
-	switch (smc->s.sas) {
-	case SMT_SAS :
+#अन्यथा
+	चयन (smc->s.sas) अणु
+	हाल SMT_SAS :
 		smc->mib.fddiSMTNonMaster_Ct = 1 ;
-		break ;
-	case SMT_DAS :
+		अवरोध ;
+	हाल SMT_DAS :
 		smc->mib.fddiSMTNonMaster_Ct = 2 ;
-		break ;
-	}
+		अवरोध ;
+	पूर्ण
 	smc->mib.fddiSMTMaster_Ct = 0 ;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * determine new setting for operational value
- * if limit is lower than mib
+ * determine new setting क्रम operational value
+ * अगर limit is lower than mib
  *	use limit
- * else
+ * अन्यथा
  *	use mib
  * NOTE : numbers are negative, negate comparison !
  */
-static int set_min_max(int maxflag, u_long mib, u_long limit, u_long *oper)
-{
-	u_long	old ;
+अटल पूर्णांक set_min_max(पूर्णांक maxflag, u_दीर्घ mib, u_दीर्घ limit, u_दीर्घ *oper)
+अणु
+	u_दीर्घ	old ;
 	old = *oper ;
-	if ((limit > mib) ^ maxflag)
+	अगर ((limit > mib) ^ maxflag)
 		*oper = limit ;
-	else
+	अन्यथा
 		*oper = mib ;
-	return old != *oper;
-}
+	वापस old != *oper;
+पूर्ण
 

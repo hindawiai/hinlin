@@ -1,431 +1,432 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * This file contains driver for the Cadence Triple Timer Counter Rev 06
+ * This file contains driver क्रम the Cadence Triple Timer Counter Rev 06
  *
  *  Copyright (C) 2011-2013 Xilinx
  *
- * based on arch/mips/kernel/time.c timer driver
+ * based on arch/mips/kernel/समय.c समयr driver
  */
 
-#include <linux/clk.h>
-#include <linux/interrupt.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/slab.h>
-#include <linux/sched_clock.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
 
 /*
- * This driver configures the 2 16/32-bit count-up timers as follows:
+ * This driver configures the 2 16/32-bit count-up समयrs as follows:
  *
- * T1: Timer 1, clocksource for generic timekeeping
- * T2: Timer 2, clockevent source for hrtimers
+ * T1: Timer 1, घड़ीsource क्रम generic समयkeeping
+ * T2: Timer 2, घड़ीevent source क्रम hrसमयrs
  * T3: Timer 3, <unused>
  *
- * The input frequency to the timer module for emulation is 2.5MHz which is
- * common to all the timer channels (T1, T2, and T3). With a pre-scaler of 32,
- * the timers are clocked at 78.125KHz (12.8 us resolution).
+ * The input frequency to the समयr module क्रम emulation is 2.5MHz which is
+ * common to all the समयr channels (T1, T2, and T3). With a pre-scaler of 32,
+ * the समयrs are घड़ीed at 78.125KHz (12.8 us resolution).
 
- * The input frequency to the timer module in silicon is configurable and
+ * The input frequency to the समयr module in silicon is configurable and
  * obtained from device tree. The pre-scaler of 32 is used.
  */
 
 /*
  * Timer Register Offset Definitions of Timer 1, Increment base address by 4
- * and use same offsets for Timer 2
+ * and use same offsets क्रम Timer 2
  */
-#define TTC_CLK_CNTRL_OFFSET		0x00 /* Clock Control Reg, RW */
-#define TTC_CNT_CNTRL_OFFSET		0x0C /* Counter Control Reg, RW */
-#define TTC_COUNT_VAL_OFFSET		0x18 /* Counter Value Reg, RO */
-#define TTC_INTR_VAL_OFFSET		0x24 /* Interval Count Reg, RW */
-#define TTC_ISR_OFFSET		0x54 /* Interrupt Status Reg, RO */
-#define TTC_IER_OFFSET		0x60 /* Interrupt Enable Reg, RW */
+#घोषणा TTC_CLK_CNTRL_OFFSET		0x00 /* Clock Control Reg, RW */
+#घोषणा TTC_CNT_CNTRL_OFFSET		0x0C /* Counter Control Reg, RW */
+#घोषणा TTC_COUNT_VAL_OFFSET		0x18 /* Counter Value Reg, RO */
+#घोषणा TTC_INTR_VAL_OFFSET		0x24 /* Interval Count Reg, RW */
+#घोषणा TTC_ISR_OFFSET		0x54 /* Interrupt Status Reg, RO */
+#घोषणा TTC_IER_OFFSET		0x60 /* Interrupt Enable Reg, RW */
 
-#define TTC_CNT_CNTRL_DISABLE_MASK	0x1
+#घोषणा TTC_CNT_CNTRL_DISABLE_MASK	0x1
 
-#define TTC_CLK_CNTRL_CSRC_MASK		(1 << 5)	/* clock source */
-#define TTC_CLK_CNTRL_PSV_MASK		0x1e
-#define TTC_CLK_CNTRL_PSV_SHIFT		1
+#घोषणा TTC_CLK_CNTRL_CSRC_MASK		(1 << 5)	/* घड़ी source */
+#घोषणा TTC_CLK_CNTRL_PSV_MASK		0x1e
+#घोषणा TTC_CLK_CNTRL_PSV_SHIFT		1
 
 /*
- * Setup the timers to use pre-scaling, using a fixed value for now that will
+ * Setup the समयrs to use pre-scaling, using a fixed value क्रम now that will
  * work across most input frequency, but it may need to be more dynamic
  */
-#define PRESCALE_EXPONENT	11	/* 2 ^ PRESCALE_EXPONENT = PRESCALE */
-#define PRESCALE		2048	/* The exponent must match this */
-#define CLK_CNTRL_PRESCALE	((PRESCALE_EXPONENT - 1) << 1)
-#define CLK_CNTRL_PRESCALE_EN	1
-#define CNT_CNTRL_RESET		(1 << 4)
+#घोषणा PRESCALE_EXPONENT	11	/* 2 ^ PRESCALE_EXPONENT = PRESCALE */
+#घोषणा PRESCALE		2048	/* The exponent must match this */
+#घोषणा CLK_CNTRL_PRESCALE	((PRESCALE_EXPONENT - 1) << 1)
+#घोषणा CLK_CNTRL_PRESCALE_EN	1
+#घोषणा CNT_CNTRL_RESET		(1 << 4)
 
-#define MAX_F_ERR 50
+#घोषणा MAX_F_ERR 50
 
 /**
- * struct ttc_timer - This definition defines local timer structure
+ * काष्ठा ttc_समयr - This definition defines local समयr काष्ठाure
  *
- * @base_addr:	Base address of timer
- * @freq:	Timer input clock frequency
- * @clk:	Associated clock source
- * @clk_rate_change_nb	Notifier block for clock rate changes
+ * @base_addr:	Base address of समयr
+ * @freq:	Timer input घड़ी frequency
+ * @clk:	Associated घड़ी source
+ * @clk_rate_change_nb	Notअगरier block क्रम घड़ी rate changes
  */
-struct ttc_timer {
-	void __iomem *base_addr;
-	unsigned long freq;
-	struct clk *clk;
-	struct notifier_block clk_rate_change_nb;
-};
+काष्ठा ttc_समयr अणु
+	व्योम __iomem *base_addr;
+	अचिन्हित दीर्घ freq;
+	काष्ठा clk *clk;
+	काष्ठा notअगरier_block clk_rate_change_nb;
+पूर्ण;
 
-#define to_ttc_timer(x) \
-		container_of(x, struct ttc_timer, clk_rate_change_nb)
+#घोषणा to_ttc_समयr(x) \
+		container_of(x, काष्ठा ttc_समयr, clk_rate_change_nb)
 
-struct ttc_timer_clocksource {
+काष्ठा ttc_समयr_घड़ीsource अणु
 	u32			scale_clk_ctrl_reg_old;
 	u32			scale_clk_ctrl_reg_new;
-	struct ttc_timer	ttc;
-	struct clocksource	cs;
-};
+	काष्ठा ttc_समयr	ttc;
+	काष्ठा घड़ीsource	cs;
+पूर्ण;
 
-#define to_ttc_timer_clksrc(x) \
-		container_of(x, struct ttc_timer_clocksource, cs)
+#घोषणा to_ttc_समयr_clksrc(x) \
+		container_of(x, काष्ठा ttc_समयr_घड़ीsource, cs)
 
-struct ttc_timer_clockevent {
-	struct ttc_timer		ttc;
-	struct clock_event_device	ce;
-};
+काष्ठा ttc_समयr_घड़ीevent अणु
+	काष्ठा ttc_समयr		ttc;
+	काष्ठा घड़ी_event_device	ce;
+पूर्ण;
 
-#define to_ttc_timer_clkevent(x) \
-		container_of(x, struct ttc_timer_clockevent, ce)
+#घोषणा to_ttc_समयr_clkevent(x) \
+		container_of(x, काष्ठा ttc_समयr_घड़ीevent, ce)
 
-static void __iomem *ttc_sched_clock_val_reg;
+अटल व्योम __iomem *ttc_sched_घड़ी_val_reg;
 
 /**
- * ttc_set_interval - Set the timer interval value
+ * ttc_set_पूर्णांकerval - Set the समयr पूर्णांकerval value
  *
- * @timer:	Pointer to the timer instance
- * @cycles:	Timer interval ticks
+ * @समयr:	Poपूर्णांकer to the समयr instance
+ * @cycles:	Timer पूर्णांकerval ticks
  **/
-static void ttc_set_interval(struct ttc_timer *timer,
-					unsigned long cycles)
-{
+अटल व्योम ttc_set_पूर्णांकerval(काष्ठा ttc_समयr *समयr,
+					अचिन्हित दीर्घ cycles)
+अणु
 	u32 ctrl_reg;
 
 	/* Disable the counter, set the counter value  and re-enable counter */
-	ctrl_reg = readl_relaxed(timer->base_addr + TTC_CNT_CNTRL_OFFSET);
+	ctrl_reg = पढ़ोl_relaxed(समयr->base_addr + TTC_CNT_CNTRL_OFFSET);
 	ctrl_reg |= TTC_CNT_CNTRL_DISABLE_MASK;
-	writel_relaxed(ctrl_reg, timer->base_addr + TTC_CNT_CNTRL_OFFSET);
+	ग_लिखोl_relaxed(ctrl_reg, समयr->base_addr + TTC_CNT_CNTRL_OFFSET);
 
-	writel_relaxed(cycles, timer->base_addr + TTC_INTR_VAL_OFFSET);
+	ग_लिखोl_relaxed(cycles, समयr->base_addr + TTC_INTR_VAL_OFFSET);
 
 	/*
 	 * Reset the counter (0x10) so that it starts from 0, one-shot
-	 * mode makes this needed for timing to be right.
+	 * mode makes this needed क्रम timing to be right.
 	 */
 	ctrl_reg |= CNT_CNTRL_RESET;
 	ctrl_reg &= ~TTC_CNT_CNTRL_DISABLE_MASK;
-	writel_relaxed(ctrl_reg, timer->base_addr + TTC_CNT_CNTRL_OFFSET);
-}
+	ग_लिखोl_relaxed(ctrl_reg, समयr->base_addr + TTC_CNT_CNTRL_OFFSET);
+पूर्ण
 
 /**
- * ttc_clock_event_interrupt - Clock event timer interrupt handler
+ * ttc_घड़ी_event_पूर्णांकerrupt - Clock event समयr पूर्णांकerrupt handler
  *
  * @irq:	IRQ number of the Timer
- * @dev_id:	void pointer to the ttc_timer instance
+ * @dev_id:	व्योम poपूर्णांकer to the ttc_समयr instance
  *
- * returns: Always IRQ_HANDLED - success
+ * वापसs: Always IRQ_HANDLED - success
  **/
-static irqreturn_t ttc_clock_event_interrupt(int irq, void *dev_id)
-{
-	struct ttc_timer_clockevent *ttce = dev_id;
-	struct ttc_timer *timer = &ttce->ttc;
+अटल irqवापस_t ttc_घड़ी_event_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा ttc_समयr_घड़ीevent *ttce = dev_id;
+	काष्ठा ttc_समयr *समयr = &ttce->ttc;
 
-	/* Acknowledge the interrupt and call event handler */
-	readl_relaxed(timer->base_addr + TTC_ISR_OFFSET);
+	/* Acknowledge the पूर्णांकerrupt and call event handler */
+	पढ़ोl_relaxed(समयr->base_addr + TTC_ISR_OFFSET);
 
 	ttce->ce.event_handler(&ttce->ce);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * __ttc_clocksource_read - Reads the timer counter register
+ * __ttc_घड़ीsource_पढ़ो - Reads the समयr counter रेजिस्टर
  *
- * returns: Current timer counter register value
+ * वापसs: Current समयr counter रेजिस्टर value
  **/
-static u64 __ttc_clocksource_read(struct clocksource *cs)
-{
-	struct ttc_timer *timer = &to_ttc_timer_clksrc(cs)->ttc;
+अटल u64 __ttc_घड़ीsource_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	काष्ठा ttc_समयr *समयr = &to_ttc_समयr_clksrc(cs)->ttc;
 
-	return (u64)readl_relaxed(timer->base_addr +
+	वापस (u64)पढ़ोl_relaxed(समयr->base_addr +
 				TTC_COUNT_VAL_OFFSET);
-}
+पूर्ण
 
-static u64 notrace ttc_sched_clock_read(void)
-{
-	return readl_relaxed(ttc_sched_clock_val_reg);
-}
-
-/**
- * ttc_set_next_event - Sets the time interval for next event
- *
- * @cycles:	Timer interval ticks
- * @evt:	Address of clock event instance
- *
- * returns: Always 0 - success
- **/
-static int ttc_set_next_event(unsigned long cycles,
-					struct clock_event_device *evt)
-{
-	struct ttc_timer_clockevent *ttce = to_ttc_timer_clkevent(evt);
-	struct ttc_timer *timer = &ttce->ttc;
-
-	ttc_set_interval(timer, cycles);
-	return 0;
-}
+अटल u64 notrace ttc_sched_घड़ी_पढ़ो(व्योम)
+अणु
+	वापस पढ़ोl_relaxed(ttc_sched_घड़ी_val_reg);
+पूर्ण
 
 /**
- * ttc_set_{shutdown|oneshot|periodic} - Sets the state of timer
+ * ttc_set_next_event - Sets the समय पूर्णांकerval क्रम next event
  *
- * @evt:	Address of clock event instance
+ * @cycles:	Timer पूर्णांकerval ticks
+ * @evt:	Address of घड़ी event instance
+ *
+ * वापसs: Always 0 - success
  **/
-static int ttc_shutdown(struct clock_event_device *evt)
-{
-	struct ttc_timer_clockevent *ttce = to_ttc_timer_clkevent(evt);
-	struct ttc_timer *timer = &ttce->ttc;
+अटल पूर्णांक ttc_set_next_event(अचिन्हित दीर्घ cycles,
+					काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा ttc_समयr_घड़ीevent *ttce = to_ttc_समयr_clkevent(evt);
+	काष्ठा ttc_समयr *समयr = &ttce->ttc;
+
+	ttc_set_पूर्णांकerval(समयr, cycles);
+	वापस 0;
+पूर्ण
+
+/**
+ * ttc_set_अणुshutकरोwn|oneshot|periodicपूर्ण - Sets the state of समयr
+ *
+ * @evt:	Address of घड़ी event instance
+ **/
+अटल पूर्णांक ttc_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा ttc_समयr_घड़ीevent *ttce = to_ttc_समयr_clkevent(evt);
+	काष्ठा ttc_समयr *समयr = &ttce->ttc;
 	u32 ctrl_reg;
 
-	ctrl_reg = readl_relaxed(timer->base_addr + TTC_CNT_CNTRL_OFFSET);
+	ctrl_reg = पढ़ोl_relaxed(समयr->base_addr + TTC_CNT_CNTRL_OFFSET);
 	ctrl_reg |= TTC_CNT_CNTRL_DISABLE_MASK;
-	writel_relaxed(ctrl_reg, timer->base_addr + TTC_CNT_CNTRL_OFFSET);
-	return 0;
-}
+	ग_लिखोl_relaxed(ctrl_reg, समयr->base_addr + TTC_CNT_CNTRL_OFFSET);
+	वापस 0;
+पूर्ण
 
-static int ttc_set_periodic(struct clock_event_device *evt)
-{
-	struct ttc_timer_clockevent *ttce = to_ttc_timer_clkevent(evt);
-	struct ttc_timer *timer = &ttce->ttc;
+अटल पूर्णांक ttc_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा ttc_समयr_घड़ीevent *ttce = to_ttc_समयr_clkevent(evt);
+	काष्ठा ttc_समयr *समयr = &ttce->ttc;
 
-	ttc_set_interval(timer,
+	ttc_set_पूर्णांकerval(समयr,
 			 DIV_ROUND_CLOSEST(ttce->ttc.freq, PRESCALE * HZ));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ttc_resume(struct clock_event_device *evt)
-{
-	struct ttc_timer_clockevent *ttce = to_ttc_timer_clkevent(evt);
-	struct ttc_timer *timer = &ttce->ttc;
+अटल पूर्णांक ttc_resume(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा ttc_समयr_घड़ीevent *ttce = to_ttc_समयr_clkevent(evt);
+	काष्ठा ttc_समयr *समयr = &ttce->ttc;
 	u32 ctrl_reg;
 
-	ctrl_reg = readl_relaxed(timer->base_addr + TTC_CNT_CNTRL_OFFSET);
+	ctrl_reg = पढ़ोl_relaxed(समयr->base_addr + TTC_CNT_CNTRL_OFFSET);
 	ctrl_reg &= ~TTC_CNT_CNTRL_DISABLE_MASK;
-	writel_relaxed(ctrl_reg, timer->base_addr + TTC_CNT_CNTRL_OFFSET);
-	return 0;
-}
+	ग_लिखोl_relaxed(ctrl_reg, समयr->base_addr + TTC_CNT_CNTRL_OFFSET);
+	वापस 0;
+पूर्ण
 
-static int ttc_rate_change_clocksource_cb(struct notifier_block *nb,
-		unsigned long event, void *data)
-{
-	struct clk_notifier_data *ndata = data;
-	struct ttc_timer *ttc = to_ttc_timer(nb);
-	struct ttc_timer_clocksource *ttccs = container_of(ttc,
-			struct ttc_timer_clocksource, ttc);
+अटल पूर्णांक ttc_rate_change_घड़ीsource_cb(काष्ठा notअगरier_block *nb,
+		अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा clk_notअगरier_data *ndata = data;
+	काष्ठा ttc_समयr *ttc = to_ttc_समयr(nb);
+	काष्ठा ttc_समयr_घड़ीsource *ttccs = container_of(ttc,
+			काष्ठा ttc_समयr_घड़ीsource, ttc);
 
-	switch (event) {
-	case PRE_RATE_CHANGE:
-	{
+	चयन (event) अणु
+	हाल PRE_RATE_CHANGE:
+	अणु
 		u32 psv;
-		unsigned long factor, rate_low, rate_high;
+		अचिन्हित दीर्घ factor, rate_low, rate_high;
 
-		if (ndata->new_rate > ndata->old_rate) {
+		अगर (ndata->new_rate > ndata->old_rate) अणु
 			factor = DIV_ROUND_CLOSEST(ndata->new_rate,
 					ndata->old_rate);
 			rate_low = ndata->old_rate;
 			rate_high = ndata->new_rate;
-		} else {
+		पूर्ण अन्यथा अणु
 			factor = DIV_ROUND_CLOSEST(ndata->old_rate,
 					ndata->new_rate);
 			rate_low = ndata->new_rate;
 			rate_high = ndata->old_rate;
-		}
+		पूर्ण
 
-		if (!is_power_of_2(factor))
-				return NOTIFY_BAD;
+		अगर (!is_घातer_of_2(factor))
+				वापस NOTIFY_BAD;
 
-		if (abs(rate_high - (factor * rate_low)) > MAX_F_ERR)
-			return NOTIFY_BAD;
+		अगर (असल(rate_high - (factor * rate_low)) > MAX_F_ERR)
+			वापस NOTIFY_BAD;
 
 		factor = __ilog2_u32(factor);
 
 		/*
-		 * store timer clock ctrl register so we can restore it in case
-		 * of an abort.
+		 * store समयr घड़ी ctrl रेजिस्टर so we can restore it in हाल
+		 * of an पात.
 		 */
 		ttccs->scale_clk_ctrl_reg_old =
-			readl_relaxed(ttccs->ttc.base_addr +
+			पढ़ोl_relaxed(ttccs->ttc.base_addr +
 			TTC_CLK_CNTRL_OFFSET);
 
 		psv = (ttccs->scale_clk_ctrl_reg_old &
 				TTC_CLK_CNTRL_PSV_MASK) >>
 				TTC_CLK_CNTRL_PSV_SHIFT;
-		if (ndata->new_rate < ndata->old_rate)
+		अगर (ndata->new_rate < ndata->old_rate)
 			psv -= factor;
-		else
+		अन्यथा
 			psv += factor;
 
 		/* prescaler within legal range? */
-		if (psv & ~(TTC_CLK_CNTRL_PSV_MASK >> TTC_CLK_CNTRL_PSV_SHIFT))
-			return NOTIFY_BAD;
+		अगर (psv & ~(TTC_CLK_CNTRL_PSV_MASK >> TTC_CLK_CNTRL_PSV_SHIFT))
+			वापस NOTIFY_BAD;
 
 		ttccs->scale_clk_ctrl_reg_new = ttccs->scale_clk_ctrl_reg_old &
 			~TTC_CLK_CNTRL_PSV_MASK;
 		ttccs->scale_clk_ctrl_reg_new |= psv << TTC_CLK_CNTRL_PSV_SHIFT;
 
 
-		/* scale down: adjust divider in post-change notification */
-		if (ndata->new_rate < ndata->old_rate)
-			return NOTIFY_DONE;
+		/* scale करोwn: adjust भागider in post-change notअगरication */
+		अगर (ndata->new_rate < ndata->old_rate)
+			वापस NOTIFY_DONE;
 
-		/* scale up: adjust divider now - before frequency change */
-		writel_relaxed(ttccs->scale_clk_ctrl_reg_new,
+		/* scale up: adjust भागider now - beक्रमe frequency change */
+		ग_लिखोl_relaxed(ttccs->scale_clk_ctrl_reg_new,
 			       ttccs->ttc.base_addr + TTC_CLK_CNTRL_OFFSET);
-		break;
-	}
-	case POST_RATE_CHANGE:
-		/* scale up: pre-change notification did the adjustment */
-		if (ndata->new_rate > ndata->old_rate)
-			return NOTIFY_OK;
+		अवरोध;
+	पूर्ण
+	हाल POST_RATE_CHANGE:
+		/* scale up: pre-change notअगरication did the adjusपंचांगent */
+		अगर (ndata->new_rate > ndata->old_rate)
+			वापस NOTIFY_OK;
 
-		/* scale down: adjust divider now - after frequency change */
-		writel_relaxed(ttccs->scale_clk_ctrl_reg_new,
+		/* scale करोwn: adjust भागider now - after frequency change */
+		ग_लिखोl_relaxed(ttccs->scale_clk_ctrl_reg_new,
 			       ttccs->ttc.base_addr + TTC_CLK_CNTRL_OFFSET);
-		break;
+		अवरोध;
 
-	case ABORT_RATE_CHANGE:
-		/* we have to undo the adjustment in case we scale up */
-		if (ndata->new_rate < ndata->old_rate)
-			return NOTIFY_OK;
+	हाल ABORT_RATE_CHANGE:
+		/* we have to unकरो the adjusपंचांगent in हाल we scale up */
+		अगर (ndata->new_rate < ndata->old_rate)
+			वापस NOTIFY_OK;
 
-		/* restore original register value */
-		writel_relaxed(ttccs->scale_clk_ctrl_reg_old,
+		/* restore original रेजिस्टर value */
+		ग_लिखोl_relaxed(ttccs->scale_clk_ctrl_reg_old,
 			       ttccs->ttc.base_addr + TTC_CLK_CNTRL_OFFSET);
 		fallthrough;
-	default:
-		return NOTIFY_DONE;
-	}
+	शेष:
+		वापस NOTIFY_DONE;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int __init ttc_setup_clocksource(struct clk *clk, void __iomem *base,
-					 u32 timer_width)
-{
-	struct ttc_timer_clocksource *ttccs;
-	int err;
+अटल पूर्णांक __init ttc_setup_घड़ीsource(काष्ठा clk *clk, व्योम __iomem *base,
+					 u32 समयr_width)
+अणु
+	काष्ठा ttc_समयr_घड़ीsource *ttccs;
+	पूर्णांक err;
 
-	ttccs = kzalloc(sizeof(*ttccs), GFP_KERNEL);
-	if (!ttccs)
-		return -ENOMEM;
+	ttccs = kzalloc(माप(*ttccs), GFP_KERNEL);
+	अगर (!ttccs)
+		वापस -ENOMEM;
 
 	ttccs->ttc.clk = clk;
 
 	err = clk_prepare_enable(ttccs->ttc.clk);
-	if (err) {
-		kfree(ttccs);
-		return err;
-	}
+	अगर (err) अणु
+		kमुक्त(ttccs);
+		वापस err;
+	पूर्ण
 
 	ttccs->ttc.freq = clk_get_rate(ttccs->ttc.clk);
 
-	ttccs->ttc.clk_rate_change_nb.notifier_call =
-		ttc_rate_change_clocksource_cb;
-	ttccs->ttc.clk_rate_change_nb.next = NULL;
+	ttccs->ttc.clk_rate_change_nb.notअगरier_call =
+		ttc_rate_change_घड़ीsource_cb;
+	ttccs->ttc.clk_rate_change_nb.next = शून्य;
 
-	err = clk_notifier_register(ttccs->ttc.clk,
+	err = clk_notअगरier_रेजिस्टर(ttccs->ttc.clk,
 				    &ttccs->ttc.clk_rate_change_nb);
-	if (err)
+	अगर (err)
 		pr_warn("Unable to register clock notifier.\n");
 
 	ttccs->ttc.base_addr = base;
 	ttccs->cs.name = "ttc_clocksource";
 	ttccs->cs.rating = 200;
-	ttccs->cs.read = __ttc_clocksource_read;
-	ttccs->cs.mask = CLOCKSOURCE_MASK(timer_width);
+	ttccs->cs.पढ़ो = __ttc_घड़ीsource_पढ़ो;
+	ttccs->cs.mask = CLOCKSOURCE_MASK(समयr_width);
 	ttccs->cs.flags = CLOCK_SOURCE_IS_CONTINUOUS;
 
 	/*
-	 * Setup the clock source counter to be an incrementing counter
-	 * with no interrupt and it rolls over at 0xFFFF. Pre-scale
+	 * Setup the घड़ी source counter to be an incrementing counter
+	 * with no पूर्णांकerrupt and it rolls over at 0xFFFF. Pre-scale
 	 * it by 32 also. Let it start running now.
 	 */
-	writel_relaxed(0x0,  ttccs->ttc.base_addr + TTC_IER_OFFSET);
-	writel_relaxed(CLK_CNTRL_PRESCALE | CLK_CNTRL_PRESCALE_EN,
+	ग_लिखोl_relaxed(0x0,  ttccs->ttc.base_addr + TTC_IER_OFFSET);
+	ग_लिखोl_relaxed(CLK_CNTRL_PRESCALE | CLK_CNTRL_PRESCALE_EN,
 		     ttccs->ttc.base_addr + TTC_CLK_CNTRL_OFFSET);
-	writel_relaxed(CNT_CNTRL_RESET,
+	ग_लिखोl_relaxed(CNT_CNTRL_RESET,
 		     ttccs->ttc.base_addr + TTC_CNT_CNTRL_OFFSET);
 
-	err = clocksource_register_hz(&ttccs->cs, ttccs->ttc.freq / PRESCALE);
-	if (err) {
-		kfree(ttccs);
-		return err;
-	}
+	err = घड़ीsource_रेजिस्टर_hz(&ttccs->cs, ttccs->ttc.freq / PRESCALE);
+	अगर (err) अणु
+		kमुक्त(ttccs);
+		वापस err;
+	पूर्ण
 
-	ttc_sched_clock_val_reg = base + TTC_COUNT_VAL_OFFSET;
-	sched_clock_register(ttc_sched_clock_read, timer_width,
+	ttc_sched_घड़ी_val_reg = base + TTC_COUNT_VAL_OFFSET;
+	sched_घड़ी_रेजिस्टर(ttc_sched_घड़ी_पढ़ो, समयr_width,
 			     ttccs->ttc.freq / PRESCALE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ttc_rate_change_clockevent_cb(struct notifier_block *nb,
-		unsigned long event, void *data)
-{
-	struct clk_notifier_data *ndata = data;
-	struct ttc_timer *ttc = to_ttc_timer(nb);
-	struct ttc_timer_clockevent *ttcce = container_of(ttc,
-			struct ttc_timer_clockevent, ttc);
+अटल पूर्णांक ttc_rate_change_घड़ीevent_cb(काष्ठा notअगरier_block *nb,
+		अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा clk_notअगरier_data *ndata = data;
+	काष्ठा ttc_समयr *ttc = to_ttc_समयr(nb);
+	काष्ठा ttc_समयr_घड़ीevent *ttcce = container_of(ttc,
+			काष्ठा ttc_समयr_घड़ीevent, ttc);
 
-	switch (event) {
-	case POST_RATE_CHANGE:
+	चयन (event) अणु
+	हाल POST_RATE_CHANGE:
 		/* update cached frequency */
 		ttc->freq = ndata->new_rate;
 
-		clockevents_update_freq(&ttcce->ce, ndata->new_rate / PRESCALE);
+		घड़ीevents_update_freq(&ttcce->ce, ndata->new_rate / PRESCALE);
 
 		fallthrough;
-	case PRE_RATE_CHANGE:
-	case ABORT_RATE_CHANGE:
-	default:
-		return NOTIFY_DONE;
-	}
-}
+	हाल PRE_RATE_CHANGE:
+	हाल ABORT_RATE_CHANGE:
+	शेष:
+		वापस NOTIFY_DONE;
+	पूर्ण
+पूर्ण
 
-static int __init ttc_setup_clockevent(struct clk *clk,
-				       void __iomem *base, u32 irq)
-{
-	struct ttc_timer_clockevent *ttcce;
-	int err;
+अटल पूर्णांक __init ttc_setup_घड़ीevent(काष्ठा clk *clk,
+				       व्योम __iomem *base, u32 irq)
+अणु
+	काष्ठा ttc_समयr_घड़ीevent *ttcce;
+	पूर्णांक err;
 
-	ttcce = kzalloc(sizeof(*ttcce), GFP_KERNEL);
-	if (!ttcce)
-		return -ENOMEM;
+	ttcce = kzalloc(माप(*ttcce), GFP_KERNEL);
+	अगर (!ttcce)
+		वापस -ENOMEM;
 
 	ttcce->ttc.clk = clk;
 
 	err = clk_prepare_enable(ttcce->ttc.clk);
-	if (err)
-		goto out_kfree;
+	अगर (err)
+		जाओ out_kमुक्त;
 
-	ttcce->ttc.clk_rate_change_nb.notifier_call =
-		ttc_rate_change_clockevent_cb;
-	ttcce->ttc.clk_rate_change_nb.next = NULL;
+	ttcce->ttc.clk_rate_change_nb.notअगरier_call =
+		ttc_rate_change_घड़ीevent_cb;
+	ttcce->ttc.clk_rate_change_nb.next = शून्य;
 
-	err = clk_notifier_register(ttcce->ttc.clk,
+	err = clk_notअगरier_रेजिस्टर(ttcce->ttc.clk,
 				    &ttcce->ttc.clk_rate_change_nb);
-	if (err) {
+	अगर (err) अणु
 		pr_warn("Unable to register clock notifier.\n");
-		goto out_kfree;
-	}
+		जाओ out_kमुक्त;
+	पूर्ण
 
 	ttcce->ttc.freq = clk_get_rate(ttcce->ttc.clk);
 
@@ -433,113 +434,113 @@ static int __init ttc_setup_clockevent(struct clk *clk,
 	ttcce->ce.name = "ttc_clockevent";
 	ttcce->ce.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
 	ttcce->ce.set_next_event = ttc_set_next_event;
-	ttcce->ce.set_state_shutdown = ttc_shutdown;
+	ttcce->ce.set_state_shutकरोwn = ttc_shutकरोwn;
 	ttcce->ce.set_state_periodic = ttc_set_periodic;
-	ttcce->ce.set_state_oneshot = ttc_shutdown;
+	ttcce->ce.set_state_oneshot = ttc_shutकरोwn;
 	ttcce->ce.tick_resume = ttc_resume;
 	ttcce->ce.rating = 200;
 	ttcce->ce.irq = irq;
 	ttcce->ce.cpumask = cpu_possible_mask;
 
 	/*
-	 * Setup the clock event timer to be an interval timer which
-	 * is prescaled by 32 using the interval interrupt. Leave it
-	 * disabled for now.
+	 * Setup the घड़ी event समयr to be an पूर्णांकerval समयr which
+	 * is prescaled by 32 using the पूर्णांकerval पूर्णांकerrupt. Leave it
+	 * disabled क्रम now.
 	 */
-	writel_relaxed(0x23, ttcce->ttc.base_addr + TTC_CNT_CNTRL_OFFSET);
-	writel_relaxed(CLK_CNTRL_PRESCALE | CLK_CNTRL_PRESCALE_EN,
+	ग_लिखोl_relaxed(0x23, ttcce->ttc.base_addr + TTC_CNT_CNTRL_OFFSET);
+	ग_लिखोl_relaxed(CLK_CNTRL_PRESCALE | CLK_CNTRL_PRESCALE_EN,
 		     ttcce->ttc.base_addr + TTC_CLK_CNTRL_OFFSET);
-	writel_relaxed(0x1,  ttcce->ttc.base_addr + TTC_IER_OFFSET);
+	ग_लिखोl_relaxed(0x1,  ttcce->ttc.base_addr + TTC_IER_OFFSET);
 
-	err = request_irq(irq, ttc_clock_event_interrupt,
+	err = request_irq(irq, ttc_घड़ी_event_पूर्णांकerrupt,
 			  IRQF_TIMER, ttcce->ce.name, ttcce);
-	if (err)
-		goto out_kfree;
+	अगर (err)
+		जाओ out_kमुक्त;
 
-	clockevents_config_and_register(&ttcce->ce,
+	घड़ीevents_config_and_रेजिस्टर(&ttcce->ce,
 			ttcce->ttc.freq / PRESCALE, 1, 0xfffe);
 
-	return 0;
+	वापस 0;
 
-out_kfree:
-	kfree(ttcce);
-	return err;
-}
+out_kमुक्त:
+	kमुक्त(ttcce);
+	वापस err;
+पूर्ण
 
-static int __init ttc_timer_probe(struct platform_device *pdev)
-{
-	unsigned int irq;
-	void __iomem *timer_baseaddr;
-	struct clk *clk_cs, *clk_ce;
-	static int initialized;
-	int clksel, ret;
-	u32 timer_width = 16;
-	struct device_node *timer = pdev->dev.of_node;
+अटल पूर्णांक __init ttc_समयr_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	अचिन्हित पूर्णांक irq;
+	व्योम __iomem *समयr_baseaddr;
+	काष्ठा clk *clk_cs, *clk_ce;
+	अटल पूर्णांक initialized;
+	पूर्णांक clksel, ret;
+	u32 समयr_width = 16;
+	काष्ठा device_node *समयr = pdev->dev.of_node;
 
-	if (initialized)
-		return 0;
+	अगर (initialized)
+		वापस 0;
 
 	initialized = 1;
 
 	/*
 	 * Get the 1st Triple Timer Counter (TTC) block from the device tree
-	 * and use it. Note that the event timer uses the interrupt and it's the
+	 * and use it. Note that the event समयr uses the पूर्णांकerrupt and it's the
 	 * 2nd TTC hence the irq_of_parse_and_map(,1)
 	 */
-	timer_baseaddr = of_iomap(timer, 0);
-	if (!timer_baseaddr) {
+	समयr_baseaddr = of_iomap(समयr, 0);
+	अगर (!समयr_baseaddr) अणु
 		pr_err("ERROR: invalid timer base address\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	irq = irq_of_parse_and_map(timer, 1);
-	if (irq <= 0) {
+	irq = irq_of_parse_and_map(समयr, 1);
+	अगर (irq <= 0) अणु
 		pr_err("ERROR: invalid interrupt number\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	of_property_read_u32(timer, "timer-width", &timer_width);
+	of_property_पढ़ो_u32(समयr, "timer-width", &समयr_width);
 
-	clksel = readl_relaxed(timer_baseaddr + TTC_CLK_CNTRL_OFFSET);
+	clksel = पढ़ोl_relaxed(समयr_baseaddr + TTC_CLK_CNTRL_OFFSET);
 	clksel = !!(clksel & TTC_CLK_CNTRL_CSRC_MASK);
-	clk_cs = of_clk_get(timer, clksel);
-	if (IS_ERR(clk_cs)) {
+	clk_cs = of_clk_get(समयr, clksel);
+	अगर (IS_ERR(clk_cs)) अणु
 		pr_err("ERROR: timer input clock not found\n");
-		return PTR_ERR(clk_cs);
-	}
+		वापस PTR_ERR(clk_cs);
+	पूर्ण
 
-	clksel = readl_relaxed(timer_baseaddr + 4 + TTC_CLK_CNTRL_OFFSET);
+	clksel = पढ़ोl_relaxed(समयr_baseaddr + 4 + TTC_CLK_CNTRL_OFFSET);
 	clksel = !!(clksel & TTC_CLK_CNTRL_CSRC_MASK);
-	clk_ce = of_clk_get(timer, clksel);
-	if (IS_ERR(clk_ce)) {
+	clk_ce = of_clk_get(समयr, clksel);
+	अगर (IS_ERR(clk_ce)) अणु
 		pr_err("ERROR: timer input clock not found\n");
-		return PTR_ERR(clk_ce);
-	}
+		वापस PTR_ERR(clk_ce);
+	पूर्ण
 
-	ret = ttc_setup_clocksource(clk_cs, timer_baseaddr, timer_width);
-	if (ret)
-		return ret;
+	ret = ttc_setup_घड़ीsource(clk_cs, समयr_baseaddr, समयr_width);
+	अगर (ret)
+		वापस ret;
 
-	ret = ttc_setup_clockevent(clk_ce, timer_baseaddr + 4, irq);
-	if (ret)
-		return ret;
+	ret = ttc_setup_घड़ीevent(clk_ce, समयr_baseaddr + 4, irq);
+	अगर (ret)
+		वापस ret;
 
-	pr_info("%pOFn #0 at %p, irq=%d\n", timer, timer_baseaddr, irq);
+	pr_info("%pOFn #0 at %p, irq=%d\n", समयr, समयr_baseaddr, irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ttc_timer_of_match[] = {
-	{.compatible = "cdns,ttc"},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ttc_समयr_of_match[] = अणु
+	अणु.compatible = "cdns,ttc"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-MODULE_DEVICE_TABLE(of, ttc_timer_of_match);
+MODULE_DEVICE_TABLE(of, ttc_समयr_of_match);
 
-static struct platform_driver ttc_timer_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ttc_समयr_driver = अणु
+	.driver = अणु
 		.name	= "cdns_ttc_timer",
-		.of_match_table = ttc_timer_of_match,
-	},
-};
-builtin_platform_driver_probe(ttc_timer_driver, ttc_timer_probe);
+		.of_match_table = ttc_समयr_of_match,
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver_probe(ttc_समयr_driver, ttc_समयr_probe);

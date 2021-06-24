@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_CPU_H_
-#define _ASM_IA64_CPU_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_CPU_H_
+#घोषणा _ASM_IA64_CPU_H_
 
-#include <linux/device.h>
-#include <linux/cpu.h>
-#include <linux/topology.h>
-#include <linux/percpu.h>
+#समावेश <linux/device.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/topology.h>
+#समावेश <linux/percpu.h>
 
-struct ia64_cpu {
-	struct cpu cpu;
-};
+काष्ठा ia64_cpu अणु
+	काष्ठा cpu cpu;
+पूर्ण;
 
-DECLARE_PER_CPU(struct ia64_cpu, cpu_devices);
+DECLARE_PER_CPU(काष्ठा ia64_cpu, cpu_devices);
 
-DECLARE_PER_CPU(int, cpu_state);
+DECLARE_PER_CPU(पूर्णांक, cpu_state);
 
-#ifdef CONFIG_HOTPLUG_CPU
-extern int arch_register_cpu(int num);
-extern void arch_unregister_cpu(int);
-#endif
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+बाह्य पूर्णांक arch_रेजिस्टर_cpu(पूर्णांक num);
+बाह्य व्योम arch_unरेजिस्टर_cpu(पूर्णांक);
+#पूर्ण_अगर
 
-#endif /* _ASM_IA64_CPU_H_ */
+#पूर्ण_अगर /* _ASM_IA64_CPU_H_ */

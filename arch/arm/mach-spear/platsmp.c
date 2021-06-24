@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * arch/arm/mach-spear13xx/platsmp.c
  *
@@ -8,54 +9,54 @@
  * Shiraz Hashim <shiraz.linux.kernel@gmail.com>
  */
 
-#include <linux/delay.h>
-#include <linux/jiffies.h>
-#include <linux/io.h>
-#include <linux/smp.h>
-#include <asm/cacheflush.h>
-#include <asm/smp_scu.h>
-#include <mach/spear.h>
-#include "generic.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/smp.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/smp_scu.h>
+#समावेश <mach/spear.h>
+#समावेश "generic.h"
 
 /* XXX spear_pen_release is cargo culted code - DO NOT COPY XXX */
-volatile int spear_pen_release = -1;
+अस्थिर पूर्णांक spear_pen_release = -1;
 
 /*
  * XXX CARGO CULTED CODE - DO NOT COPY XXX
  *
  * Write spear_pen_release in a way that is guaranteed to be visible to
  * all observers, irrespective of whether they're taking part in coherency
- * or not.  This is necessary for the hotplug code to work reliably.
+ * or not.  This is necessary क्रम the hotplug code to work reliably.
  */
-static void spear_write_pen_release(int val)
-{
+अटल व्योम spear_ग_लिखो_pen_release(पूर्णांक val)
+अणु
 	spear_pen_release = val;
 	smp_wmb();
 	sync_cache_w(&spear_pen_release);
-}
+पूर्ण
 
-static DEFINE_SPINLOCK(boot_lock);
+अटल DEFINE_SPINLOCK(boot_lock);
 
-static void __iomem *scu_base = IOMEM(VA_SCU_BASE);
+अटल व्योम __iomem *scu_base = IOMEM(VA_SCU_BASE);
 
-static void spear13xx_secondary_init(unsigned int cpu)
-{
+अटल व्योम spear13xx_secondary_init(अचिन्हित पूर्णांक cpu)
+अणु
 	/*
 	 * let the primary processor know we're out of the
-	 * pen, then head off into the C entry point
+	 * pen, then head off पूर्णांकo the C entry poपूर्णांक
 	 */
-	spear_write_pen_release(-1);
+	spear_ग_लिखो_pen_release(-1);
 
 	/*
-	 * Synchronise with the boot thread.
+	 * Synchronise with the boot thपढ़ो.
 	 */
 	spin_lock(&boot_lock);
 	spin_unlock(&boot_lock);
-}
+पूर्ण
 
-static int spear13xx_boot_secondary(unsigned int cpu, struct task_struct *idle)
-{
-	unsigned long timeout;
+अटल पूर्णांक spear13xx_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	अचिन्हित दीर्घ समयout;
 
 	/*
 	 * set synchronisation state between this boot processor
@@ -64,70 +65,70 @@ static int spear13xx_boot_secondary(unsigned int cpu, struct task_struct *idle)
 	spin_lock(&boot_lock);
 
 	/*
-	 * The secondary processor is waiting to be released from
-	 * the holding pen - release it, then wait for it to flag
+	 * The secondary processor is रुकोing to be released from
+	 * the holding pen - release it, then रुको क्रम it to flag
 	 * that it has been released by resetting spear_pen_release.
 	 *
 	 * Note that "spear_pen_release" is the hardware CPU ID, whereas
-	 * "cpu" is Linux's internal ID.
+	 * "cpu" is Linux's पूर्णांकernal ID.
 	 */
-	spear_write_pen_release(cpu);
+	spear_ग_लिखो_pen_release(cpu);
 
-	timeout = jiffies + (1 * HZ);
-	while (time_before(jiffies, timeout)) {
+	समयout = jअगरfies + (1 * HZ);
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
 		smp_rmb();
-		if (spear_pen_release == -1)
-			break;
+		अगर (spear_pen_release == -1)
+			अवरोध;
 
 		udelay(10);
-	}
+	पूर्ण
 
 	/*
 	 * now the secondary core is starting up let it run its
-	 * calibrations, then wait for it to finish
+	 * calibrations, then रुको क्रम it to finish
 	 */
 	spin_unlock(&boot_lock);
 
-	return spear_pen_release != -1 ? -ENOSYS : 0;
-}
+	वापस spear_pen_release != -1 ? -ENOSYS : 0;
+पूर्ण
 
 /*
  * Initialise the CPU possible map early - this describes the CPUs
- * which may be present or become present in the system.
+ * which may be present or become present in the प्रणाली.
  */
-static void __init spear13xx_smp_init_cpus(void)
-{
-	unsigned int i, ncores = scu_get_core_count(scu_base);
+अटल व्योम __init spear13xx_smp_init_cpus(व्योम)
+अणु
+	अचिन्हित पूर्णांक i, ncores = scu_get_core_count(scu_base);
 
-	if (ncores > nr_cpu_ids) {
+	अगर (ncores > nr_cpu_ids) अणु
 		pr_warn("SMP: %u cores greater than maximum (%u), clipping\n",
 			ncores, nr_cpu_ids);
 		ncores = nr_cpu_ids;
-	}
+	पूर्ण
 
-	for (i = 0; i < ncores; i++)
+	क्रम (i = 0; i < ncores; i++)
 		set_cpu_possible(i, true);
-}
+पूर्ण
 
-static void __init spear13xx_smp_prepare_cpus(unsigned int max_cpus)
-{
+अटल व्योम __init spear13xx_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
 
 	scu_enable(scu_base);
 
 	/*
-	 * Write the address of secondary startup into the system-wide location
-	 * (presently it is in SRAM). The BootMonitor waits until it receives a
-	 * soft interrupt, and then the secondary CPU branches to this address.
+	 * Write the address of secondary startup पूर्णांकo the प्रणाली-wide location
+	 * (presently it is in SRAM). The BootMonitor रुकोs until it receives a
+	 * soft पूर्णांकerrupt, and then the secondary CPU branches to this address.
 	 */
-	__raw_writel(__pa_symbol(spear13xx_secondary_startup), SYS_LOCATION);
-}
+	__raw_ग_लिखोl(__pa_symbol(spear13xx_secondary_startup), SYS_LOCATION);
+पूर्ण
 
-const struct smp_operations spear13xx_smp_ops __initconst = {
+स्थिर काष्ठा smp_operations spear13xx_smp_ops __initस्थिर = अणु
        .smp_init_cpus		= spear13xx_smp_init_cpus,
        .smp_prepare_cpus	= spear13xx_smp_prepare_cpus,
        .smp_secondary_init	= spear13xx_secondary_init,
        .smp_boot_secondary	= spear13xx_boot_secondary,
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
        .cpu_die			= spear13xx_cpu_die,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

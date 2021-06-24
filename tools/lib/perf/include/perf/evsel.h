@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LIBPERF_EVSEL_H
-#define __LIBPERF_EVSEL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LIBPERF_EVSEL_H
+#घोषणा __LIBPERF_EVSEL_H
 
-#include <stdint.h>
-#include <perf/core.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <perf/core.h>
 
-struct perf_evsel;
-struct perf_event_attr;
-struct perf_cpu_map;
-struct perf_thread_map;
+काष्ठा perf_evsel;
+काष्ठा perf_event_attr;
+काष्ठा perf_cpu_map;
+काष्ठा perf_thपढ़ो_map;
 
-struct perf_counts_values {
-	union {
-		struct {
-			uint64_t val;
-			uint64_t ena;
-			uint64_t run;
-		};
-		uint64_t values[3];
-	};
-};
+काष्ठा perf_counts_values अणु
+	जोड़ अणु
+		काष्ठा अणु
+			uपूर्णांक64_t val;
+			uपूर्णांक64_t ena;
+			uपूर्णांक64_t run;
+		पूर्ण;
+		uपूर्णांक64_t values[3];
+	पूर्ण;
+पूर्ण;
 
-LIBPERF_API struct perf_evsel *perf_evsel__new(struct perf_event_attr *attr);
-LIBPERF_API void perf_evsel__delete(struct perf_evsel *evsel);
-LIBPERF_API int perf_evsel__open(struct perf_evsel *evsel, struct perf_cpu_map *cpus,
-				 struct perf_thread_map *threads);
-LIBPERF_API void perf_evsel__close(struct perf_evsel *evsel);
-LIBPERF_API void perf_evsel__close_cpu(struct perf_evsel *evsel, int cpu);
-LIBPERF_API int perf_evsel__mmap(struct perf_evsel *evsel, int pages);
-LIBPERF_API void perf_evsel__munmap(struct perf_evsel *evsel);
-LIBPERF_API void *perf_evsel__mmap_base(struct perf_evsel *evsel, int cpu, int thread);
-LIBPERF_API int perf_evsel__read(struct perf_evsel *evsel, int cpu, int thread,
-				 struct perf_counts_values *count);
-LIBPERF_API int perf_evsel__enable(struct perf_evsel *evsel);
-LIBPERF_API int perf_evsel__enable_cpu(struct perf_evsel *evsel, int cpu);
-LIBPERF_API int perf_evsel__disable(struct perf_evsel *evsel);
-LIBPERF_API int perf_evsel__disable_cpu(struct perf_evsel *evsel, int cpu);
-LIBPERF_API struct perf_cpu_map *perf_evsel__cpus(struct perf_evsel *evsel);
-LIBPERF_API struct perf_thread_map *perf_evsel__threads(struct perf_evsel *evsel);
-LIBPERF_API struct perf_event_attr *perf_evsel__attr(struct perf_evsel *evsel);
+LIBPERF_API काष्ठा perf_evsel *perf_evsel__new(काष्ठा perf_event_attr *attr);
+LIBPERF_API व्योम perf_evsel__delete(काष्ठा perf_evsel *evsel);
+LIBPERF_API पूर्णांक perf_evsel__खोलो(काष्ठा perf_evsel *evsel, काष्ठा perf_cpu_map *cpus,
+				 काष्ठा perf_thपढ़ो_map *thपढ़ोs);
+LIBPERF_API व्योम perf_evsel__बंद(काष्ठा perf_evsel *evsel);
+LIBPERF_API व्योम perf_evsel__बंद_cpu(काष्ठा perf_evsel *evsel, पूर्णांक cpu);
+LIBPERF_API पूर्णांक perf_evsel__mmap(काष्ठा perf_evsel *evsel, पूर्णांक pages);
+LIBPERF_API व्योम perf_evsel__munmap(काष्ठा perf_evsel *evsel);
+LIBPERF_API व्योम *perf_evsel__mmap_base(काष्ठा perf_evsel *evsel, पूर्णांक cpu, पूर्णांक thपढ़ो);
+LIBPERF_API पूर्णांक perf_evsel__पढ़ो(काष्ठा perf_evsel *evsel, पूर्णांक cpu, पूर्णांक thपढ़ो,
+				 काष्ठा perf_counts_values *count);
+LIBPERF_API पूर्णांक perf_evsel__enable(काष्ठा perf_evsel *evsel);
+LIBPERF_API पूर्णांक perf_evsel__enable_cpu(काष्ठा perf_evsel *evsel, पूर्णांक cpu);
+LIBPERF_API पूर्णांक perf_evsel__disable(काष्ठा perf_evsel *evsel);
+LIBPERF_API पूर्णांक perf_evsel__disable_cpu(काष्ठा perf_evsel *evsel, पूर्णांक cpu);
+LIBPERF_API काष्ठा perf_cpu_map *perf_evsel__cpus(काष्ठा perf_evsel *evsel);
+LIBPERF_API काष्ठा perf_thपढ़ो_map *perf_evsel__thपढ़ोs(काष्ठा perf_evsel *evsel);
+LIBPERF_API काष्ठा perf_event_attr *perf_evsel__attr(काष्ठा perf_evsel *evsel);
 
-#endif /* __LIBPERF_EVSEL_H */
+#पूर्ण_अगर /* __LIBPERF_EVSEL_H */

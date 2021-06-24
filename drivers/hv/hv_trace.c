@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include "hyperv_vmbus.h"
+#समावेश "hyperv_vmbus.h"
 
-#define CREATE_TRACE_POINTS
-#include "hv_trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "hv_trace.h"

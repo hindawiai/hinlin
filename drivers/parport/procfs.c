@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Sysctl interface for parport devices.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Sysctl पूर्णांकerface क्रम parport devices.
  * 
  * Authors: David Campbell
  *          Tim Waugh <tim@cyberelk.demon.co.uk>
  *          Philip Blundell <philb@gnu.org>
  *          Andrea Arcangeli
- *          Riccardo Facchetti <fizban@tin.it>
+ *          Riccarकरो Facchetti <fizban@tin.it>
  *
  * based on work by Grant Guenther <grant@torque.net>
  *              and Philip Blundell
@@ -13,485 +14,485 @@
  * Cleaned up include files - Russell King <linux@arm.uk.linux.org>
  */
 
-#include <linux/string.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/parport.h>
-#include <linux/ctype.h>
-#include <linux/sysctl.h>
-#include <linux/device.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/parport.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/device.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#if defined(CONFIG_SYSCTL) && defined(CONFIG_PROC_FS)
+#अगर defined(CONFIG_SYSCTL) && defined(CONFIG_PROC_FS)
 
-#define PARPORT_MIN_TIMESLICE_VALUE 1ul 
-#define PARPORT_MAX_TIMESLICE_VALUE ((unsigned long) HZ)
-#define PARPORT_MIN_SPINTIME_VALUE 1
-#define PARPORT_MAX_SPINTIME_VALUE 1000
+#घोषणा PARPORT_MIN_TIMESLICE_VALUE 1ul 
+#घोषणा PARPORT_MAX_TIMESLICE_VALUE ((अचिन्हित दीर्घ) HZ)
+#घोषणा PARPORT_MIN_SPINTIME_VALUE 1
+#घोषणा PARPORT_MAX_SPINTIME_VALUE 1000
 
-static int do_active_device(struct ctl_table *table, int write,
-		      void *result, size_t *lenp, loff_t *ppos)
-{
-	struct parport *port = (struct parport *)table->extra1;
-	char buffer[256];
-	struct pardevice *dev;
-	int len = 0;
+अटल पूर्णांक करो_active_device(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		      व्योम *result, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा parport *port = (काष्ठा parport *)table->extra1;
+	अक्षर buffer[256];
+	काष्ठा pardevice *dev;
+	पूर्णांक len = 0;
 
-	if (write)		/* can't happen anyway */
-		return -EACCES;
+	अगर (ग_लिखो)		/* can't happen anyway */
+		वापस -EACCES;
 
-	if (*ppos) {
+	अगर (*ppos) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	
-	for (dev = port->devices; dev ; dev = dev->next) {
-		if(dev == port->cad) {
-			len += sprintf(buffer, "%s\n", dev->name);
-		}
-	}
+	क्रम (dev = port->devices; dev ; dev = dev->next) अणु
+		अगर(dev == port->cad) अणु
+			len += प्र_लिखो(buffer, "%s\n", dev->name);
+		पूर्ण
+	पूर्ण
 
-	if(!len) {
-		len += sprintf(buffer, "%s\n", "none");
-	}
+	अगर(!len) अणु
+		len += प्र_लिखो(buffer, "%s\n", "none");
+	पूर्ण
 
-	if (len > *lenp)
+	अगर (len > *lenp)
 		len = *lenp;
-	else
+	अन्यथा
 		*lenp = len;
 
 	*ppos += len;
-	memcpy(result, buffer, len);
-	return 0;
-}
+	स_नकल(result, buffer, len);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PARPORT_1284
-static int do_autoprobe(struct ctl_table *table, int write,
-			void *result, size_t *lenp, loff_t *ppos)
-{
-	struct parport_device_info *info = table->extra2;
-	const char *str;
-	char buffer[256];
-	int len = 0;
+#अगर_घोषित CONFIG_PARPORT_1284
+अटल पूर्णांक करो_स्वतःprobe(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			व्योम *result, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा parport_device_info *info = table->extra2;
+	स्थिर अक्षर *str;
+	अक्षर buffer[256];
+	पूर्णांक len = 0;
 
-	if (write) /* permissions stop this */
-		return -EACCES;
+	अगर (ग_लिखो) /* permissions stop this */
+		वापस -EACCES;
 
-	if (*ppos) {
+	अगर (*ppos) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	
-	if ((str = info->class_name) != NULL)
-		len += sprintf (buffer + len, "CLASS:%s;\n", str);
+	अगर ((str = info->class_name) != शून्य)
+		len += प्र_लिखो (buffer + len, "CLASS:%s;\n", str);
 
-	if ((str = info->model) != NULL)
-		len += sprintf (buffer + len, "MODEL:%s;\n", str);
+	अगर ((str = info->model) != शून्य)
+		len += प्र_लिखो (buffer + len, "MODEL:%s;\n", str);
 
-	if ((str = info->mfr) != NULL)
-		len += sprintf (buffer + len, "MANUFACTURER:%s;\n", str);
+	अगर ((str = info->mfr) != शून्य)
+		len += प्र_लिखो (buffer + len, "MANUFACTURER:%s;\n", str);
 
-	if ((str = info->description) != NULL)
-		len += sprintf (buffer + len, "DESCRIPTION:%s;\n", str);
+	अगर ((str = info->description) != शून्य)
+		len += प्र_लिखो (buffer + len, "DESCRIPTION:%s;\n", str);
 
-	if ((str = info->cmdset) != NULL)
-		len += sprintf (buffer + len, "COMMAND SET:%s;\n", str);
+	अगर ((str = info->cmdset) != शून्य)
+		len += प्र_लिखो (buffer + len, "COMMAND SET:%s;\n", str);
 
-	if (len > *lenp)
+	अगर (len > *lenp)
 		len = *lenp;
-	else
+	अन्यथा
 		*lenp = len;
 
 	*ppos += len;
 
-	memcpy(result, buffer, len);
-	return 0;
-}
-#endif /* IEEE1284.3 support. */
+	स_नकल(result, buffer, len);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* IEEE1284.3 support. */
 
-static int do_hardware_base_addr(struct ctl_table *table, int write,
-				 void *result, size_t *lenp, loff_t *ppos)
-{
-	struct parport *port = (struct parport *)table->extra1;
-	char buffer[20];
-	int len = 0;
+अटल पूर्णांक करो_hardware_base_addr(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+				 व्योम *result, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा parport *port = (काष्ठा parport *)table->extra1;
+	अक्षर buffer[20];
+	पूर्णांक len = 0;
 
-	if (*ppos) {
+	अगर (*ppos) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (write) /* permissions prevent this anyway */
-		return -EACCES;
+	अगर (ग_लिखो) /* permissions prevent this anyway */
+		वापस -EACCES;
 
-	len += sprintf (buffer, "%lu\t%lu\n", port->base, port->base_hi);
+	len += प्र_लिखो (buffer, "%lu\t%lu\n", port->base, port->base_hi);
 
-	if (len > *lenp)
+	अगर (len > *lenp)
 		len = *lenp;
-	else
+	अन्यथा
 		*lenp = len;
 
 	*ppos += len;
-	memcpy(result, buffer, len);
-	return 0;
-}
+	स_नकल(result, buffer, len);
+	वापस 0;
+पूर्ण
 
-static int do_hardware_irq(struct ctl_table *table, int write,
-			   void *result, size_t *lenp, loff_t *ppos)
-{
-	struct parport *port = (struct parport *)table->extra1;
-	char buffer[20];
-	int len = 0;
+अटल पूर्णांक करो_hardware_irq(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			   व्योम *result, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा parport *port = (काष्ठा parport *)table->extra1;
+	अक्षर buffer[20];
+	पूर्णांक len = 0;
 
-	if (*ppos) {
+	अगर (*ppos) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (write) /* permissions prevent this anyway */
-		return -EACCES;
+	अगर (ग_लिखो) /* permissions prevent this anyway */
+		वापस -EACCES;
 
-	len += sprintf (buffer, "%d\n", port->irq);
+	len += प्र_लिखो (buffer, "%d\n", port->irq);
 
-	if (len > *lenp)
+	अगर (len > *lenp)
 		len = *lenp;
-	else
+	अन्यथा
 		*lenp = len;
 
 	*ppos += len;
-	memcpy(result, buffer, len);
-	return 0;
-}
+	स_नकल(result, buffer, len);
+	वापस 0;
+पूर्ण
 
-static int do_hardware_dma(struct ctl_table *table, int write,
-			   void *result, size_t *lenp, loff_t *ppos)
-{
-	struct parport *port = (struct parport *)table->extra1;
-	char buffer[20];
-	int len = 0;
+अटल पूर्णांक करो_hardware_dma(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			   व्योम *result, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा parport *port = (काष्ठा parport *)table->extra1;
+	अक्षर buffer[20];
+	पूर्णांक len = 0;
 
-	if (*ppos) {
+	अगर (*ppos) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (write) /* permissions prevent this anyway */
-		return -EACCES;
+	अगर (ग_लिखो) /* permissions prevent this anyway */
+		वापस -EACCES;
 
-	len += sprintf (buffer, "%d\n", port->dma);
+	len += प्र_लिखो (buffer, "%d\n", port->dma);
 
-	if (len > *lenp)
+	अगर (len > *lenp)
 		len = *lenp;
-	else
+	अन्यथा
 		*lenp = len;
 
 	*ppos += len;
-	memcpy(result, buffer, len);
-	return 0;
-}
+	स_नकल(result, buffer, len);
+	वापस 0;
+पूर्ण
 
-static int do_hardware_modes(struct ctl_table *table, int write,
-			     void *result, size_t *lenp, loff_t *ppos)
-{
-	struct parport *port = (struct parport *)table->extra1;
-	char buffer[40];
-	int len = 0;
+अटल पूर्णांक करो_hardware_modes(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			     व्योम *result, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा parport *port = (काष्ठा parport *)table->extra1;
+	अक्षर buffer[40];
+	पूर्णांक len = 0;
 
-	if (*ppos) {
+	अगर (*ppos) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (write) /* permissions prevent this anyway */
-		return -EACCES;
+	अगर (ग_लिखो) /* permissions prevent this anyway */
+		वापस -EACCES;
 
-	{
-#define printmode(x)							\
-do {									\
-	if (port->modes & PARPORT_MODE_##x)				\
-		len += sprintf(buffer + len, "%s%s", f++ ? "," : "", #x); \
-} while (0)
-		int f = 0;
-		printmode(PCSPP);
-		printmode(TRISTATE);
-		printmode(COMPAT);
-		printmode(EPP);
-		printmode(ECP);
-		printmode(DMA);
-#undef printmode
-	}
+	अणु
+#घोषणा prपूर्णांकmode(x)							\
+करो अणु									\
+	अगर (port->modes & PARPORT_MODE_##x)				\
+		len += प्र_लिखो(buffer + len, "%s%s", f++ ? "," : "", #x); \
+पूर्ण जबतक (0)
+		पूर्णांक f = 0;
+		prपूर्णांकmode(PCSPP);
+		prपूर्णांकmode(TRISTATE);
+		prपूर्णांकmode(COMPAT);
+		prपूर्णांकmode(EPP);
+		prपूर्णांकmode(ECP);
+		prपूर्णांकmode(DMA);
+#अघोषित prपूर्णांकmode
+	पूर्ण
 	buffer[len++] = '\n';
 
-	if (len > *lenp)
+	अगर (len > *lenp)
 		len = *lenp;
-	else
+	अन्यथा
 		*lenp = len;
 
 	*ppos += len;
-	memcpy(result, buffer, len);
-	return 0;
-}
+	स_नकल(result, buffer, len);
+	वापस 0;
+पूर्ण
 
-#define PARPORT_PORT_DIR(CHILD) { .procname = NULL, .mode = 0555, .child = CHILD }
-#define PARPORT_PARPORT_DIR(CHILD) { .procname = "parport", \
-                                     .mode = 0555, .child = CHILD }
-#define PARPORT_DEV_DIR(CHILD) { .procname = "dev", .mode = 0555, .child = CHILD }
-#define PARPORT_DEVICES_ROOT_DIR  {  .procname = "devices", \
-                                    .mode = 0555, .child = NULL }
+#घोषणा PARPORT_PORT_सूची(CHILD) अणु .procname = शून्य, .mode = 0555, .child = CHILD पूर्ण
+#घोषणा PARPORT_PARPORT_सूची(CHILD) अणु .procname = "parport", \
+                                     .mode = 0555, .child = CHILD पूर्ण
+#घोषणा PARPORT_DEV_सूची(CHILD) अणु .procname = "dev", .mode = 0555, .child = CHILD पूर्ण
+#घोषणा PARPORT_DEVICES_ROOT_सूची  अणु  .procname = "devices", \
+                                    .mode = 0555, .child = शून्य पूर्ण
 
-static const unsigned long parport_min_timeslice_value =
+अटल स्थिर अचिन्हित दीर्घ parport_min_बारlice_value =
 PARPORT_MIN_TIMESLICE_VALUE;
 
-static const unsigned long parport_max_timeslice_value =
+अटल स्थिर अचिन्हित दीर्घ parport_max_बारlice_value =
 PARPORT_MAX_TIMESLICE_VALUE;
 
-static const  int parport_min_spintime_value =
+अटल स्थिर  पूर्णांक parport_min_spपूर्णांकime_value =
 PARPORT_MIN_SPINTIME_VALUE;
 
-static const int parport_max_spintime_value =
+अटल स्थिर पूर्णांक parport_max_spपूर्णांकime_value =
 PARPORT_MAX_SPINTIME_VALUE;
 
 
-struct parport_sysctl_table {
-	struct ctl_table_header *sysctl_header;
-	struct ctl_table vars[12];
-	struct ctl_table device_dir[2];
-	struct ctl_table port_dir[2];
-	struct ctl_table parport_dir[2];
-	struct ctl_table dev_dir[2];
-};
+काष्ठा parport_sysctl_table अणु
+	काष्ठा ctl_table_header *sysctl_header;
+	काष्ठा ctl_table vars[12];
+	काष्ठा ctl_table device_dir[2];
+	काष्ठा ctl_table port_dir[2];
+	काष्ठा ctl_table parport_dir[2];
+	काष्ठा ctl_table dev_dir[2];
+पूर्ण;
 
-static const struct parport_sysctl_table parport_sysctl_template = {
-	.sysctl_header = NULL,
-        {
-		{
+अटल स्थिर काष्ठा parport_sysctl_table parport_sysctl_ढाँचा = अणु
+	.sysctl_header = शून्य,
+        अणु
+		अणु
 			.procname	= "spintime",
-			.data		= NULL,
-			.maxlen		= sizeof(int),
+			.data		= शून्य,
+			.maxlen		= माप(पूर्णांक),
 			.mode		= 0644,
-			.proc_handler	= proc_dointvec_minmax,
-			.extra1		= (void*) &parport_min_spintime_value,
-			.extra2		= (void*) &parport_max_spintime_value
-		},
-		{
+			.proc_handler	= proc_करोपूर्णांकvec_minmax,
+			.extra1		= (व्योम*) &parport_min_spपूर्णांकime_value,
+			.extra2		= (व्योम*) &parport_max_spपूर्णांकime_value
+		पूर्ण,
+		अणु
 			.procname	= "base-addr",
-			.data		= NULL,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0444,
-			.proc_handler	= do_hardware_base_addr
-		},
-		{
+			.proc_handler	= करो_hardware_base_addr
+		पूर्ण,
+		अणु
 			.procname	= "irq",
-			.data		= NULL,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0444,
-			.proc_handler	= do_hardware_irq
-		},
-		{
+			.proc_handler	= करो_hardware_irq
+		पूर्ण,
+		अणु
 			.procname	= "dma",
-			.data		= NULL,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0444,
-			.proc_handler	= do_hardware_dma
-		},
-		{
+			.proc_handler	= करो_hardware_dma
+		पूर्ण,
+		अणु
 			.procname	= "modes",
-			.data		= NULL,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0444,
-			.proc_handler	= do_hardware_modes
-		},
-		PARPORT_DEVICES_ROOT_DIR,
-#ifdef CONFIG_PARPORT_1284
-		{
+			.proc_handler	= करो_hardware_modes
+		पूर्ण,
+		PARPORT_DEVICES_ROOT_सूची,
+#अगर_घोषित CONFIG_PARPORT_1284
+		अणु
 			.procname	= "autoprobe",
-			.data		= NULL,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0444,
-			.proc_handler	= do_autoprobe
-		},
-		{
+			.proc_handler	= करो_स्वतःprobe
+		पूर्ण,
+		अणु
 			.procname	= "autoprobe0",
-			.data		= NULL,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0444,
-			.proc_handler	= do_autoprobe
-		},
-		{
+			.proc_handler	= करो_स्वतःprobe
+		पूर्ण,
+		अणु
 			.procname	= "autoprobe1",
-			.data		= NULL,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0444,
-			.proc_handler	= do_autoprobe
-		},
-		{
+			.proc_handler	= करो_स्वतःprobe
+		पूर्ण,
+		अणु
 			.procname	= "autoprobe2",
-			.data		= NULL,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0444,
-			.proc_handler	= do_autoprobe
-		},
-		{
+			.proc_handler	= करो_स्वतःprobe
+		पूर्ण,
+		अणु
 			.procname	= "autoprobe3",
-			.data		= NULL,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0444,
-			.proc_handler	= do_autoprobe
-		},
-#endif /* IEEE 1284 support */
-		{}
-	},
-	{
-		{
+			.proc_handler	= करो_स्वतःprobe
+		पूर्ण,
+#पूर्ण_अगर /* IEEE 1284 support */
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		अणु
 			.procname	= "active",
-			.data		= NULL,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0444,
-			.proc_handler	= do_active_device
-		},
-		{}
-	},
-	{
-		PARPORT_PORT_DIR(NULL),
-		{}
-	},
-	{
-		PARPORT_PARPORT_DIR(NULL),
-		{}
-	},
-	{
-		PARPORT_DEV_DIR(NULL),
-		{}
-	}
-};
+			.proc_handler	= करो_active_device
+		पूर्ण,
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		PARPORT_PORT_सूची(शून्य),
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		PARPORT_PARPORT_सूची(शून्य),
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		PARPORT_DEV_सूची(शून्य),
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-struct parport_device_sysctl_table
-{
-	struct ctl_table_header *sysctl_header;
-	struct ctl_table vars[2];
-	struct ctl_table device_dir[2];
-	struct ctl_table devices_root_dir[2];
-	struct ctl_table port_dir[2];
-	struct ctl_table parport_dir[2];
-	struct ctl_table dev_dir[2];
-};
+काष्ठा parport_device_sysctl_table
+अणु
+	काष्ठा ctl_table_header *sysctl_header;
+	काष्ठा ctl_table vars[2];
+	काष्ठा ctl_table device_dir[2];
+	काष्ठा ctl_table devices_root_dir[2];
+	काष्ठा ctl_table port_dir[2];
+	काष्ठा ctl_table parport_dir[2];
+	काष्ठा ctl_table dev_dir[2];
+पूर्ण;
 
-static const struct parport_device_sysctl_table
-parport_device_sysctl_template = {
-	.sysctl_header = NULL,
-	{
-		{
+अटल स्थिर काष्ठा parport_device_sysctl_table
+parport_device_sysctl_ढाँचा = अणु
+	.sysctl_header = शून्य,
+	अणु
+		अणु
 			.procname 	= "timeslice",
-			.data		= NULL,
-			.maxlen		= sizeof(unsigned long),
+			.data		= शून्य,
+			.maxlen		= माप(अचिन्हित दीर्घ),
 			.mode		= 0644,
-			.proc_handler	= proc_doulongvec_ms_jiffies_minmax,
-			.extra1		= (void*) &parport_min_timeslice_value,
-			.extra2		= (void*) &parport_max_timeslice_value
-		},
-	},
-	{
-		{
-			.procname	= NULL,
-			.data		= NULL,
+			.proc_handler	= proc_करोuदीर्घvec_ms_jअगरfies_minmax,
+			.extra1		= (व्योम*) &parport_min_बारlice_value,
+			.extra2		= (व्योम*) &parport_max_बारlice_value
+		पूर्ण,
+	पूर्ण,
+	अणु
+		अणु
+			.procname	= शून्य,
+			.data		= शून्य,
 			.maxlen		= 0,
 			.mode		= 0555,
-			.child		= NULL
-		},
-		{}
-	},
-	{
-		PARPORT_DEVICES_ROOT_DIR,
-		{}
-	},
-	{
-		PARPORT_PORT_DIR(NULL),
-		{}
-	},
-	{
-		PARPORT_PARPORT_DIR(NULL),
-		{}
-	},
-	{
-		PARPORT_DEV_DIR(NULL),
-		{}
-	}
-};
+			.child		= शून्य
+		पूर्ण,
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		PARPORT_DEVICES_ROOT_सूची,
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		PARPORT_PORT_सूची(शून्य),
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		PARPORT_PARPORT_सूची(शून्य),
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		PARPORT_DEV_सूची(शून्य),
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-struct parport_default_sysctl_table
-{
-	struct ctl_table_header *sysctl_header;
-	struct ctl_table vars[3];
-	struct ctl_table default_dir[2];
-	struct ctl_table parport_dir[2];
-	struct ctl_table dev_dir[2];
-};
+काष्ठा parport_शेष_sysctl_table
+अणु
+	काष्ठा ctl_table_header *sysctl_header;
+	काष्ठा ctl_table vars[3];
+	काष्ठा ctl_table शेष_dir[2];
+	काष्ठा ctl_table parport_dir[2];
+	काष्ठा ctl_table dev_dir[2];
+पूर्ण;
 
-static struct parport_default_sysctl_table
-parport_default_sysctl_table = {
-	.sysctl_header	= NULL,
-	{
-		{
+अटल काष्ठा parport_शेष_sysctl_table
+parport_शेष_sysctl_table = अणु
+	.sysctl_header	= शून्य,
+	अणु
+		अणु
 			.procname	= "timeslice",
-			.data		= &parport_default_timeslice,
-			.maxlen		= sizeof(parport_default_timeslice),
+			.data		= &parport_शेष_बारlice,
+			.maxlen		= माप(parport_शेष_बारlice),
 			.mode		= 0644,
-			.proc_handler	= proc_doulongvec_ms_jiffies_minmax,
-			.extra1		= (void*) &parport_min_timeslice_value,
-			.extra2		= (void*) &parport_max_timeslice_value
-		},
-		{
+			.proc_handler	= proc_करोuदीर्घvec_ms_jअगरfies_minmax,
+			.extra1		= (व्योम*) &parport_min_बारlice_value,
+			.extra2		= (व्योम*) &parport_max_बारlice_value
+		पूर्ण,
+		अणु
 			.procname	= "spintime",
-			.data		= &parport_default_spintime,
-			.maxlen		= sizeof(parport_default_spintime),
+			.data		= &parport_शेष_spपूर्णांकime,
+			.maxlen		= माप(parport_शेष_spपूर्णांकime),
 			.mode		= 0644,
-			.proc_handler	= proc_dointvec_minmax,
-			.extra1		= (void*) &parport_min_spintime_value,
-			.extra2		= (void*) &parport_max_spintime_value
-		},
-		{}
-	},
-	{
-		{
+			.proc_handler	= proc_करोपूर्णांकvec_minmax,
+			.extra1		= (व्योम*) &parport_min_spपूर्णांकime_value,
+			.extra2		= (व्योम*) &parport_max_spपूर्णांकime_value
+		पूर्ण,
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		अणु
 			.procname	= "default",
 			.mode		= 0555,
-			.child		= parport_default_sysctl_table.vars
-		},
-		{}
-	},
-	{
-		PARPORT_PARPORT_DIR(parport_default_sysctl_table.default_dir),
-		{}
-	},
-	{
-		PARPORT_DEV_DIR(parport_default_sysctl_table.parport_dir),
-		{}
-	}
-};
+			.child		= parport_शेष_sysctl_table.vars
+		पूर्ण,
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		PARPORT_PARPORT_सूची(parport_शेष_sysctl_table.शेष_dir),
+		अणुपूर्ण
+	पूर्ण,
+	अणु
+		PARPORT_DEV_सूची(parport_शेष_sysctl_table.parport_dir),
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
 
-int parport_proc_register(struct parport *port)
-{
-	struct parport_sysctl_table *t;
-	int i;
+पूर्णांक parport_proc_रेजिस्टर(काष्ठा parport *port)
+अणु
+	काष्ठा parport_sysctl_table *t;
+	पूर्णांक i;
 
-	t = kmemdup(&parport_sysctl_template, sizeof(*t), GFP_KERNEL);
-	if (t == NULL)
-		return -ENOMEM;
+	t = kmemdup(&parport_sysctl_ढाँचा, माप(*t), GFP_KERNEL);
+	अगर (t == शून्य)
+		वापस -ENOMEM;
 
 	t->device_dir[0].extra1 = port;
 
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		t->vars[i].extra1 = port;
 
-	t->vars[0].data = &port->spintime;
+	t->vars[0].data = &port->spपूर्णांकime;
 	t->vars[5].child = t->device_dir;
 	
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		t->vars[6 + i].extra2 = &port->probe_info[i];
 
 	t->port_dir[0].procname = port->name;
@@ -500,34 +501,34 @@ int parport_proc_register(struct parport *port)
 	t->parport_dir[0].child = t->port_dir;
 	t->dev_dir[0].child = t->parport_dir;
 
-	t->sysctl_header = register_sysctl_table(t->dev_dir);
-	if (t->sysctl_header == NULL) {
-		kfree(t);
-		t = NULL;
-	}
+	t->sysctl_header = रेजिस्टर_sysctl_table(t->dev_dir);
+	अगर (t->sysctl_header == शून्य) अणु
+		kमुक्त(t);
+		t = शून्य;
+	पूर्ण
 	port->sysctl_table = t;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int parport_proc_unregister(struct parport *port)
-{
-	if (port->sysctl_table) {
-		struct parport_sysctl_table *t = port->sysctl_table;
-		port->sysctl_table = NULL;
-		unregister_sysctl_table(t->sysctl_header);
-		kfree(t);
-	}
-	return 0;
-}
+पूर्णांक parport_proc_unरेजिस्टर(काष्ठा parport *port)
+अणु
+	अगर (port->sysctl_table) अणु
+		काष्ठा parport_sysctl_table *t = port->sysctl_table;
+		port->sysctl_table = शून्य;
+		unरेजिस्टर_sysctl_table(t->sysctl_header);
+		kमुक्त(t);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int parport_device_proc_register(struct pardevice *device)
-{
-	struct parport_device_sysctl_table *t;
-	struct parport * port = device->port;
+पूर्णांक parport_device_proc_रेजिस्टर(काष्ठा pardevice *device)
+अणु
+	काष्ठा parport_device_sysctl_table *t;
+	काष्ठा parport * port = device->port;
 	
-	t = kmemdup(&parport_device_sysctl_template, sizeof(*t), GFP_KERNEL);
-	if (t == NULL)
-		return -ENOMEM;
+	t = kmemdup(&parport_device_sysctl_ढाँचा, माप(*t), GFP_KERNEL);
+	अगर (t == शून्य)
+		वापस -ENOMEM;
 
 	t->dev_dir[0].child = t->parport_dir;
 	t->parport_dir[0].child = t->port_dir;
@@ -537,87 +538,87 @@ int parport_device_proc_register(struct pardevice *device)
 
 	t->device_dir[0].procname = device->name;
 	t->device_dir[0].child = t->vars;
-	t->vars[0].data = &device->timeslice;
+	t->vars[0].data = &device->बारlice;
 
-	t->sysctl_header = register_sysctl_table(t->dev_dir);
-	if (t->sysctl_header == NULL) {
-		kfree(t);
-		t = NULL;
-	}
+	t->sysctl_header = रेजिस्टर_sysctl_table(t->dev_dir);
+	अगर (t->sysctl_header == शून्य) अणु
+		kमुक्त(t);
+		t = शून्य;
+	पूर्ण
 	device->sysctl_table = t;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int parport_device_proc_unregister(struct pardevice *device)
-{
-	if (device->sysctl_table) {
-		struct parport_device_sysctl_table *t = device->sysctl_table;
-		device->sysctl_table = NULL;
-		unregister_sysctl_table(t->sysctl_header);
-		kfree(t);
-	}
-	return 0;
-}
+पूर्णांक parport_device_proc_unरेजिस्टर(काष्ठा pardevice *device)
+अणु
+	अगर (device->sysctl_table) अणु
+		काष्ठा parport_device_sysctl_table *t = device->sysctl_table;
+		device->sysctl_table = शून्य;
+		unरेजिस्टर_sysctl_table(t->sysctl_header);
+		kमुक्त(t);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __init parport_default_proc_register(void)
-{
-	int ret;
+अटल पूर्णांक __init parport_शेष_proc_रेजिस्टर(व्योम)
+अणु
+	पूर्णांक ret;
 
-	parport_default_sysctl_table.sysctl_header =
-		register_sysctl_table(parport_default_sysctl_table.dev_dir);
-	if (!parport_default_sysctl_table.sysctl_header)
-		return -ENOMEM;
+	parport_शेष_sysctl_table.sysctl_header =
+		रेजिस्टर_sysctl_table(parport_शेष_sysctl_table.dev_dir);
+	अगर (!parport_शेष_sysctl_table.sysctl_header)
+		वापस -ENOMEM;
 	ret = parport_bus_init();
-	if (ret) {
-		unregister_sysctl_table(parport_default_sysctl_table.
+	अगर (ret) अणु
+		unरेजिस्टर_sysctl_table(parport_शेष_sysctl_table.
 					sysctl_header);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __exit parport_default_proc_unregister(void)
-{
-	if (parport_default_sysctl_table.sysctl_header) {
-		unregister_sysctl_table(parport_default_sysctl_table.
+अटल व्योम __निकास parport_शेष_proc_unरेजिस्टर(व्योम)
+अणु
+	अगर (parport_शेष_sysctl_table.sysctl_header) अणु
+		unरेजिस्टर_sysctl_table(parport_शेष_sysctl_table.
 					sysctl_header);
-		parport_default_sysctl_table.sysctl_header = NULL;
-	}
-	parport_bus_exit();
-}
+		parport_शेष_sysctl_table.sysctl_header = शून्य;
+	पूर्ण
+	parport_bus_निकास();
+पूर्ण
 
-#else /* no sysctl or no procfs*/
+#अन्यथा /* no sysctl or no procfs*/
 
-int parport_proc_register(struct parport *pp)
-{
-	return 0;
-}
+पूर्णांक parport_proc_रेजिस्टर(काष्ठा parport *pp)
+अणु
+	वापस 0;
+पूर्ण
 
-int parport_proc_unregister(struct parport *pp)
-{
-	return 0;
-}
+पूर्णांक parport_proc_unरेजिस्टर(काष्ठा parport *pp)
+अणु
+	वापस 0;
+पूर्ण
 
-int parport_device_proc_register(struct pardevice *device)
-{
-	return 0;
-}
+पूर्णांक parport_device_proc_रेजिस्टर(काष्ठा pardevice *device)
+अणु
+	वापस 0;
+पूर्ण
 
-int parport_device_proc_unregister(struct pardevice *device)
-{
-	return 0;
-}
+पूर्णांक parport_device_proc_unरेजिस्टर(काष्ठा pardevice *device)
+अणु
+	वापस 0;
+पूर्ण
 
-static int __init parport_default_proc_register (void)
-{
-	return parport_bus_init();
-}
+अटल पूर्णांक __init parport_शेष_proc_रेजिस्टर (व्योम)
+अणु
+	वापस parport_bus_init();
+पूर्ण
 
-static void __exit parport_default_proc_unregister (void)
-{
-	parport_bus_exit();
-}
-#endif
+अटल व्योम __निकास parport_शेष_proc_unरेजिस्टर (व्योम)
+अणु
+	parport_bus_निकास();
+पूर्ण
+#पूर्ण_अगर
 
-subsys_initcall(parport_default_proc_register)
-module_exit(parport_default_proc_unregister)
+subsys_initcall(parport_शेष_proc_रेजिस्टर)
+module_निकास(parport_शेष_proc_unरेजिस्टर)

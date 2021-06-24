@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Martin Peres
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,39 +20,39 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Martin Peres <martin.peres@free.fr>
+ * Authors: Martin Peres <martin.peres@मुक्त.fr>
  */
 
-#ifndef __NOUVEAU_LED_H__
-#define __NOUVEAU_LED_H__
+#अगर_अघोषित __NOUVEAU_LED_H__
+#घोषणा __NOUVEAU_LED_H__
 
-#include "nouveau_drv.h"
+#समावेश "nouveau_drv.h"
 
-struct led_classdev;
+काष्ठा led_classdev;
 
-struct nouveau_led {
-	struct drm_device *dev;
+काष्ठा nouveau_led अणु
+	काष्ठा drm_device *dev;
 
-	struct led_classdev led;
-};
+	काष्ठा led_classdev led;
+पूर्ण;
 
-static inline struct nouveau_led *
-nouveau_led(struct drm_device *dev)
-{
-	return nouveau_drm(dev)->led;
-}
+अटल अंतरभूत काष्ठा nouveau_led *
+nouveau_led(काष्ठा drm_device *dev)
+अणु
+	वापस nouveau_drm(dev)->led;
+पूर्ण
 
 /* nouveau_led.c */
-#if IS_REACHABLE(CONFIG_LEDS_CLASS)
-int  nouveau_led_init(struct drm_device *dev);
-void nouveau_led_suspend(struct drm_device *dev);
-void nouveau_led_resume(struct drm_device *dev);
-void nouveau_led_fini(struct drm_device *dev);
-#else
-static inline int  nouveau_led_init(struct drm_device *dev) { return 0; };
-static inline void nouveau_led_suspend(struct drm_device *dev) { };
-static inline void nouveau_led_resume(struct drm_device *dev) { };
-static inline void nouveau_led_fini(struct drm_device *dev) { };
-#endif
+#अगर IS_REACHABLE(CONFIG_LEDS_CLASS)
+पूर्णांक  nouveau_led_init(काष्ठा drm_device *dev);
+व्योम nouveau_led_suspend(काष्ठा drm_device *dev);
+व्योम nouveau_led_resume(काष्ठा drm_device *dev);
+व्योम nouveau_led_fini(काष्ठा drm_device *dev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक  nouveau_led_init(काष्ठा drm_device *dev) अणु वापस 0; पूर्ण;
+अटल अंतरभूत व्योम nouveau_led_suspend(काष्ठा drm_device *dev) अणु पूर्ण;
+अटल अंतरभूत व्योम nouveau_led_resume(काष्ठा drm_device *dev) अणु पूर्ण;
+अटल अंतरभूत व्योम nouveau_led_fini(काष्ठा drm_device *dev) अणु पूर्ण;
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

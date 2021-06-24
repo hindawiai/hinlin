@@ -1,16 +1,17 @@
+<शैली गुरु>
 /*
  * Copyright 2008-2015 Freescale Semiconductor Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
+ *     * Redistributions in binary क्रमm must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
+ *       करोcumentation and/or other materials provided with the distribution.
  *     * Neither the name of Freescale Semiconductor nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this software without specific prior written permission.
+ *       names of its contributors may be used to enकरोrse or promote products
+ *       derived from this software without specअगरic prior written permission.
  *
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
@@ -22,7 +23,7 @@
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL Freescale Semiconductor BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -31,21 +32,21 @@
  */
 
 /* FM MAC ... */
-#ifndef __FM_MAC_H
-#define __FM_MAC_H
+#अगर_अघोषित __FM_MAC_H
+#घोषणा __FM_MAC_H
 
-#include "fman.h"
+#समावेश "fman.h"
 
-#include <linux/slab.h>
-#include <linux/phy.h>
-#include <linux/if_ether.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/अगर_ether.h>
 
-struct fman_mac;
+काष्ठा fman_mac;
 
 /* Ethernet Address */
-typedef u8 enet_addr_t[ETH_ALEN];
+प्रकार u8 enet_addr_t[ETH_ALEN];
 
-#define ENET_ADDR_TO_UINT64(_enet_addr)		\
+#घोषणा ENET_ADDR_TO_UINT64(_enet_addr)		\
 	(u64)(((u64)(_enet_addr)[0] << 40) |		\
 	      ((u64)(_enet_addr)[1] << 32) |		\
 	      ((u64)(_enet_addr)[2] << 24) |		\
@@ -53,84 +54,84 @@ typedef u8 enet_addr_t[ETH_ALEN];
 	      ((u64)(_enet_addr)[4] << 8) |		\
 	      ((u64)(_enet_addr)[5]))
 
-#define MAKE_ENET_ADDR_FROM_UINT64(_addr64, _enet_addr) \
-	do { \
-		int i; \
-		for (i = 0; i < ETH_ALEN; i++) \
+#घोषणा MAKE_ENET_ADDR_FROM_UINT64(_addr64, _enet_addr) \
+	करो अणु \
+		पूर्णांक i; \
+		क्रम (i = 0; i < ETH_ALEN; i++) \
 			(_enet_addr)[i] = \
 			(u8)((_addr64) >> ((5 - i) * 8)); \
-	} while (0)
+	पूर्ण जबतक (0)
 
-/* defaults */
-#define DEFAULT_RESET_ON_INIT                 false
+/* शेषs */
+#घोषणा DEFAULT_RESET_ON_INIT                 false
 
 /* PFC defines */
-#define FSL_FM_PAUSE_TIME_ENABLE	0xf000
-#define FSL_FM_PAUSE_TIME_DISABLE	0
-#define FSL_FM_PAUSE_THRESH_DEFAULT	0
+#घोषणा FSL_FM_PAUSE_TIME_ENABLE	0xf000
+#घोषणा FSL_FM_PAUSE_TIME_DISABLE	0
+#घोषणा FSL_FM_PAUSE_THRESH_DEFAULT	0
 
-#define FM_MAC_NO_PFC   0xff
+#घोषणा FM_MAC_NO_PFC   0xff
 
 /* HASH defines */
-#define ETH_HASH_ENTRY_OBJ(ptr)	\
-	hlist_entry_safe(ptr, struct eth_hash_entry, node)
+#घोषणा ETH_HASH_ENTRY_OBJ(ptr)	\
+	hlist_entry_safe(ptr, काष्ठा eth_hash_entry, node)
 
 /* Enumeration (bit flags) of communication modes (Transmit,
  * receive or both).
  */
-enum comm_mode {
+क्रमागत comm_mode अणु
 	COMM_MODE_NONE = 0,	/* No transmit/receive communication */
 	COMM_MODE_RX = 1,	/* Only receive communication */
 	COMM_MODE_TX = 2,	/* Only transmit communication */
 	COMM_MODE_RX_AND_TX = 3	/* Both transmit and receive communication */
-};
+पूर्ण;
 
 /* FM MAC Exceptions */
-enum fman_mac_exceptions {
+क्रमागत fman_mac_exceptions अणु
 	FM_MAC_EX_10G_MDIO_SCAN_EVENT = 0
-	/* 10GEC MDIO scan event interrupt */
+	/* 10GEC MDIO scan event पूर्णांकerrupt */
 	, FM_MAC_EX_10G_MDIO_CMD_CMPL
-	/* 10GEC MDIO command completion interrupt */
+	/* 10GEC MDIO command completion पूर्णांकerrupt */
 	, FM_MAC_EX_10G_REM_FAULT
-	/* 10GEC, mEMAC Remote fault interrupt */
+	/* 10GEC, mEMAC Remote fault पूर्णांकerrupt */
 	, FM_MAC_EX_10G_LOC_FAULT
-	/* 10GEC, mEMAC Local fault interrupt */
+	/* 10GEC, mEMAC Local fault पूर्णांकerrupt */
 	, FM_MAC_EX_10G_TX_ECC_ER
-	/* 10GEC, mEMAC Transmit frame ECC error interrupt */
+	/* 10GEC, mEMAC Transmit frame ECC error पूर्णांकerrupt */
 	, FM_MAC_EX_10G_TX_FIFO_UNFL
-	/* 10GEC, mEMAC Transmit FIFO underflow interrupt */
+	/* 10GEC, mEMAC Transmit FIFO underflow पूर्णांकerrupt */
 	, FM_MAC_EX_10G_TX_FIFO_OVFL
-	/* 10GEC, mEMAC Transmit FIFO overflow interrupt */
+	/* 10GEC, mEMAC Transmit FIFO overflow पूर्णांकerrupt */
 	, FM_MAC_EX_10G_TX_ER
-	/* 10GEC Transmit frame error interrupt */
+	/* 10GEC Transmit frame error पूर्णांकerrupt */
 	, FM_MAC_EX_10G_RX_FIFO_OVFL
-	/* 10GEC, mEMAC Receive FIFO overflow interrupt */
+	/* 10GEC, mEMAC Receive FIFO overflow पूर्णांकerrupt */
 	, FM_MAC_EX_10G_RX_ECC_ER
-	/* 10GEC, mEMAC Receive frame ECC error interrupt */
+	/* 10GEC, mEMAC Receive frame ECC error पूर्णांकerrupt */
 	, FM_MAC_EX_10G_RX_JAB_FRM
-	/* 10GEC Receive jabber frame interrupt */
+	/* 10GEC Receive jabber frame पूर्णांकerrupt */
 	, FM_MAC_EX_10G_RX_OVRSZ_FRM
-	/* 10GEC Receive oversized frame interrupt */
+	/* 10GEC Receive oversized frame पूर्णांकerrupt */
 	, FM_MAC_EX_10G_RX_RUNT_FRM
-	/* 10GEC Receive runt frame interrupt */
+	/* 10GEC Receive runt frame पूर्णांकerrupt */
 	, FM_MAC_EX_10G_RX_FRAG_FRM
-	/* 10GEC Receive fragment frame interrupt */
+	/* 10GEC Receive fragment frame पूर्णांकerrupt */
 	, FM_MAC_EX_10G_RX_LEN_ER
-	/* 10GEC Receive payload length error interrupt */
+	/* 10GEC Receive payload length error पूर्णांकerrupt */
 	, FM_MAC_EX_10G_RX_CRC_ER
-	/* 10GEC Receive CRC error interrupt */
+	/* 10GEC Receive CRC error पूर्णांकerrupt */
 	, FM_MAC_EX_10G_RX_ALIGN_ER
-	/* 10GEC Receive alignment error interrupt */
+	/* 10GEC Receive alignment error पूर्णांकerrupt */
 	, FM_MAC_EX_1G_BAB_RX
 	/* dTSEC Babbling receive error */
 	, FM_MAC_EX_1G_RX_CTL
-	/* dTSEC Receive control (pause frame) interrupt */
+	/* dTSEC Receive control (छोड़ो frame) पूर्णांकerrupt */
 	, FM_MAC_EX_1G_GRATEFUL_TX_STP_COMPLET
 	/* dTSEC Graceful transmit stop complete */
 	, FM_MAC_EX_1G_BAB_TX
 	/* dTSEC Babbling transmit error */
 	, FM_MAC_EX_1G_TX_CTL
-	/* dTSEC Transmit control (pause frame) interrupt */
+	/* dTSEC Transmit control (छोड़ो frame) पूर्णांकerrupt */
 	, FM_MAC_EX_1G_TX_ERR
 	/* dTSEC Transmit error */
 	, FM_MAC_EX_1G_LATE_COL
@@ -142,9 +143,9 @@ enum fman_mac_exceptions {
 	, FM_MAC_EX_1G_MAG_PCKT
 	/* dTSEC Magic Packet detection */
 	, FM_MAC_EX_1G_MII_MNG_RD_COMPLET
-	/* dTSEC MII management read completion */
+	/* dTSEC MII management पढ़ो completion */
 	, FM_MAC_EX_1G_MII_MNG_WR_COMPLET
-	/* dTSEC MII management write completion */
+	/* dTSEC MII management ग_लिखो completion */
 	, FM_MAC_EX_1G_GRATEFUL_RX_STP_COMPLET
 	/* dTSEC Graceful receive stop complete */
 	, FM_MAC_EX_1G_DATA_ERR
@@ -156,25 +157,25 @@ enum fman_mac_exceptions {
 	, FM_MAC_EX_1G_RX_MIB_CNT_OVFL
 	/* dTSEC MIB counter overflow */
 	, FM_MAC_EX_TS_FIFO_ECC_ERR
-	/* mEMAC Time-stamp FIFO ECC error interrupt;
+	/* mEMAC Time-stamp FIFO ECC error पूर्णांकerrupt;
 	 * not supported on T4240/B4860 rev1 chips
 	 */
 	, FM_MAC_EX_MAGIC_PACKET_INDICATION = FM_MAC_EX_1G_MAG_PCKT
 	/* mEMAC Magic Packet Indication Interrupt */
-};
+पूर्ण;
 
-struct eth_hash_entry {
+काष्ठा eth_hash_entry अणु
 	u64 addr;		/* Ethernet Address  */
-	struct list_head node;
-};
+	काष्ठा list_head node;
+पूर्ण;
 
-typedef void (fman_mac_exception_cb)(void *dev_id,
-				    enum fman_mac_exceptions exceptions);
+प्रकार व्योम (fman_mac_exception_cb)(व्योम *dev_id,
+				    क्रमागत fman_mac_exceptions exceptions);
 
 /* FMan MAC config input */
-struct fman_mac_params {
-	/* Base of memory mapped FM MAC registers */
-	void __iomem *base_addr;
+काष्ठा fman_mac_params अणु
+	/* Base of memory mapped FM MAC रेजिस्टरs */
+	व्योम __iomem *base_addr;
 	/* MAC address of device; First octet is sent first */
 	enet_addr_t addr;
 	/* MAC ID; numbering of dTSEC and 1G-mEMAC:
@@ -183,92 +184,92 @@ struct fman_mac_params {
 	 * 0 - FM_MAX_NUM_OF_10G_MACS
 	 */
 	u8 mac_id;
-	/* PHY interface */
-	phy_interface_t	 phy_if;
+	/* PHY पूर्णांकerface */
+	phy_पूर्णांकerface_t	 phy_अगर;
 	/* Note that the speed should indicate the maximum rate that
 	 * this MAC should support rather than the actual speed;
 	 */
 	u16 max_speed;
 	/* A handle to the FM object this port related to */
-	void *fm;
-	void *dev_id; /* device cookie used by the exception cbs */
+	व्योम *fm;
+	व्योम *dev_id; /* device cookie used by the exception cbs */
 	fman_mac_exception_cb *event_cb;    /* MDIO Events Callback Routine */
 	fman_mac_exception_cb *exception_cb;/* Exception Callback Routine */
-	/* SGMII/QSGII interface with 1000BaseX auto-negotiation between MAC
-	 * and phy or backplane; Note: 1000BaseX auto-negotiation relates only
-	 * to interface between MAC and phy/backplane, SGMII phy can still
+	/* SGMII/QSGII पूर्णांकerface with 1000BaseX स्वतः-negotiation between MAC
+	 * and phy or backplane; Note: 1000BaseX स्वतः-negotiation relates only
+	 * to पूर्णांकerface between MAC and phy/backplane, SGMII phy can still
 	 * synchronize with far-end phy at 10Mbps, 100Mbps or 1000Mbps
 	*/
-	bool basex_if;
-	/* Pointer to TBI/PCS PHY node, used for TBI/PCS PHY access */
-	struct device_node *internal_phy_node;
-};
+	bool basex_अगर;
+	/* Poपूर्णांकer to TBI/PCS PHY node, used क्रम TBI/PCS PHY access */
+	काष्ठा device_node *पूर्णांकernal_phy_node;
+पूर्ण;
 
-struct eth_hash_t {
+काष्ठा eth_hash_t अणु
 	u16 size;
-	struct list_head *lsts;
-};
+	काष्ठा list_head *lsts;
+पूर्ण;
 
-static inline struct eth_hash_entry
-*dequeue_addr_from_hash_entry(struct list_head *addr_lst)
-{
-	struct eth_hash_entry *hash_entry = NULL;
+अटल अंतरभूत काष्ठा eth_hash_entry
+*dequeue_addr_from_hash_entry(काष्ठा list_head *addr_lst)
+अणु
+	काष्ठा eth_hash_entry *hash_entry = शून्य;
 
-	if (!list_empty(addr_lst)) {
+	अगर (!list_empty(addr_lst)) अणु
 		hash_entry = ETH_HASH_ENTRY_OBJ(addr_lst->next);
 		list_del_init(&hash_entry->node);
-	}
-	return hash_entry;
-}
+	पूर्ण
+	वापस hash_entry;
+पूर्ण
 
-static inline void free_hash_table(struct eth_hash_t *hash)
-{
-	struct eth_hash_entry *hash_entry;
-	int i = 0;
+अटल अंतरभूत व्योम मुक्त_hash_table(काष्ठा eth_hash_t *hash)
+अणु
+	काष्ठा eth_hash_entry *hash_entry;
+	पूर्णांक i = 0;
 
-	if (hash) {
-		if (hash->lsts) {
-			for (i = 0; i < hash->size; i++) {
+	अगर (hash) अणु
+		अगर (hash->lsts) अणु
+			क्रम (i = 0; i < hash->size; i++) अणु
 				hash_entry =
 				dequeue_addr_from_hash_entry(&hash->lsts[i]);
-				while (hash_entry) {
-					kfree(hash_entry);
+				जबतक (hash_entry) अणु
+					kमुक्त(hash_entry);
 					hash_entry =
 					dequeue_addr_from_hash_entry(&hash->
 								     lsts[i]);
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			kfree(hash->lsts);
-		}
+			kमुक्त(hash->lsts);
+		पूर्ण
 
-		kfree(hash);
-	}
-}
+		kमुक्त(hash);
+	पूर्ण
+पूर्ण
 
-static inline struct eth_hash_t *alloc_hash_table(u16 size)
-{
+अटल अंतरभूत काष्ठा eth_hash_t *alloc_hash_table(u16 size)
+अणु
 	u32 i;
-	struct eth_hash_t *hash;
+	काष्ठा eth_hash_t *hash;
 
 	/* Allocate address hash table */
-	hash = kmalloc(sizeof(*hash), GFP_KERNEL);
-	if (!hash)
-		return NULL;
+	hash = kदो_स्मृति(माप(*hash), GFP_KERNEL);
+	अगर (!hash)
+		वापस शून्य;
 
 	hash->size = size;
 
-	hash->lsts = kmalloc_array(hash->size, sizeof(struct list_head),
+	hash->lsts = kदो_स्मृति_array(hash->size, माप(काष्ठा list_head),
 				   GFP_KERNEL);
-	if (!hash->lsts) {
-		kfree(hash);
-		return NULL;
-	}
+	अगर (!hash->lsts) अणु
+		kमुक्त(hash);
+		वापस शून्य;
+	पूर्ण
 
-	for (i = 0; i < hash->size; i++)
+	क्रम (i = 0; i < hash->size; i++)
 		INIT_LIST_HEAD(&hash->lsts[i]);
 
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
-#endif /* __FM_MAC_H */
+#पूर्ण_अगर /* __FM_MAC_H */

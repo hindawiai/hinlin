@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Zynq UltraScale+ MPSoC clock controller
+ * Zynq UltraScale+ MPSoC घड़ी controller
  *
  *  Copyright (C) 2016-2019 Xilinx
  *
  * Based on drivers/clk/zynq/clkc.c
  */
 
-#include <linux/bitfield.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/slab.h>
-#include <linux/string.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
 
-#include "clk-zynqmp.h"
+#समावेश "clk-zynqmp.h"
 
-#define MAX_PARENT			100
-#define MAX_NODES			6
-#define MAX_NAME_LEN			50
+#घोषणा MAX_PARENT			100
+#घोषणा MAX_NODES			6
+#घोषणा MAX_NAME_LEN			50
 
-/* Flags for parents */
-#define PARENT_CLK_SELF			0
-#define PARENT_CLK_NODE1		1
-#define PARENT_CLK_NODE2		2
-#define PARENT_CLK_NODE3		3
-#define PARENT_CLK_NODE4		4
-#define PARENT_CLK_EXTERNAL		5
+/* Flags क्रम parents */
+#घोषणा PARENT_CLK_SELF			0
+#घोषणा PARENT_CLK_NODE1		1
+#घोषणा PARENT_CLK_NODE2		2
+#घोषणा PARENT_CLK_NODE3		3
+#घोषणा PARENT_CLK_NODE4		4
+#घोषणा PARENT_CLK_EXTERNAL		5
 
-#define END_OF_CLK_NAME			"END_OF_CLK"
-#define END_OF_TOPOLOGY_NODE		1
-#define END_OF_PARENTS			1
-#define RESERVED_CLK_NAME		""
+#घोषणा END_OF_CLK_NAME			"END_OF_CLK"
+#घोषणा END_OF_TOPOLOGY_NODE		1
+#घोषणा END_OF_PARENTS			1
+#घोषणा RESERVED_CLK_NAME		""
 
-#define CLK_GET_NAME_RESP_LEN		16
-#define CLK_GET_TOPOLOGY_RESP_WORDS	3
-#define CLK_GET_PARENTS_RESP_WORDS	3
-#define CLK_GET_ATTR_RESP_WORDS		1
+#घोषणा CLK_GET_NAME_RESP_LEN		16
+#घोषणा CLK_GET_TOPOLOGY_RESP_WORDS	3
+#घोषणा CLK_GET_PARENTS_RESP_WORDS	3
+#घोषणा CLK_GET_ATTR_RESP_WORDS		1
 
-enum clk_type {
+क्रमागत clk_type अणु
 	CLK_TYPE_OUTPUT,
 	CLK_TYPE_EXTERNAL,
-};
+पूर्ण;
 
 /**
- * struct clock_parent - Clock parent
+ * काष्ठा घड़ी_parent - Clock parent
  * @name:	Parent name
- * @id:		Parent clock ID
+ * @id:		Parent घड़ी ID
  * @flag:	Parent flags
  */
-struct clock_parent {
-	char name[MAX_NAME_LEN];
-	int id;
+काष्ठा घड़ी_parent अणु
+	अक्षर name[MAX_NAME_LEN];
+	पूर्णांक id;
 	u32 flag;
-};
+पूर्ण;
 
 /**
- * struct zynqmp_clock - Clock
+ * काष्ठा zynqmp_घड़ी - Clock
  * @clk_name:		Clock name
- * @valid:		Validity flag of clock
+ * @valid:		Validity flag of घड़ी
  * @type:		Clock type (Output/External)
  * @node:		Clock topology nodes
  * @num_nodes:		Number of nodes present in topology
- * @parent:		Parent of clock
- * @num_parents:	Number of parents of clock
+ * @parent:		Parent of घड़ी
+ * @num_parents:	Number of parents of घड़ी
  * @clk_id:		Clock id
  */
-struct zynqmp_clock {
-	char clk_name[MAX_NAME_LEN];
+काष्ठा zynqmp_घड़ी अणु
+	अक्षर clk_name[MAX_NAME_LEN];
 	u32 valid;
-	enum clk_type type;
-	struct clock_topology node[MAX_NODES];
+	क्रमागत clk_type type;
+	काष्ठा घड़ी_प्रकारopology node[MAX_NODES];
 	u32 num_nodes;
-	struct clock_parent parent[MAX_PARENT];
+	काष्ठा घड़ी_parent parent[MAX_PARENT];
 	u32 num_parents;
 	u32 clk_id;
-};
+पूर्ण;
 
-struct name_resp {
-	char name[CLK_GET_NAME_RESP_LEN];
-};
+काष्ठा name_resp अणु
+	अक्षर name[CLK_GET_NAME_RESP_LEN];
+पूर्ण;
 
-struct topology_resp {
-#define CLK_TOPOLOGY_TYPE		GENMASK(3, 0)
-#define CLK_TOPOLOGY_CUSTOM_TYPE_FLAGS	GENMASK(7, 4)
-#define CLK_TOPOLOGY_FLAGS		GENMASK(23, 8)
-#define CLK_TOPOLOGY_TYPE_FLAGS		GENMASK(31, 24)
+काष्ठा topology_resp अणु
+#घोषणा CLK_TOPOLOGY_TYPE		GENMASK(3, 0)
+#घोषणा CLK_TOPOLOGY_CUSTOM_TYPE_FLAGS	GENMASK(7, 4)
+#घोषणा CLK_TOPOLOGY_FLAGS		GENMASK(23, 8)
+#घोषणा CLK_TOPOLOGY_TYPE_FLAGS		GENMASK(31, 24)
 	u32 topology[CLK_GET_TOPOLOGY_RESP_WORDS];
-};
+पूर्ण;
 
-struct parents_resp {
-#define NA_PARENT			0xFFFFFFFF
-#define DUMMY_PARENT			0xFFFFFFFE
-#define CLK_PARENTS_ID			GENMASK(15, 0)
-#define CLK_PARENTS_FLAGS		GENMASK(31, 16)
+काष्ठा parents_resp अणु
+#घोषणा NA_PARENT			0xFFFFFFFF
+#घोषणा DUMMY_PARENT			0xFFFFFFFE
+#घोषणा CLK_PARENTS_ID			GENMASK(15, 0)
+#घोषणा CLK_PARENTS_FLAGS		GENMASK(31, 16)
 	u32 parents[CLK_GET_PARENTS_RESP_WORDS];
-};
+पूर्ण;
 
-struct attr_resp {
-#define CLK_ATTR_VALID			BIT(0)
-#define CLK_ATTR_TYPE			BIT(2)
-#define CLK_ATTR_NODE_INDEX		GENMASK(13, 0)
-#define CLK_ATTR_NODE_TYPE		GENMASK(19, 14)
-#define CLK_ATTR_NODE_SUBCLASS		GENMASK(25, 20)
-#define CLK_ATTR_NODE_CLASS		GENMASK(31, 26)
+काष्ठा attr_resp अणु
+#घोषणा CLK_ATTR_VALID			BIT(0)
+#घोषणा CLK_ATTR_TYPE			BIT(2)
+#घोषणा CLK_ATTR_NODE_INDEX		GENMASK(13, 0)
+#घोषणा CLK_ATTR_NODE_TYPE		GENMASK(19, 14)
+#घोषणा CLK_ATTR_NODE_SUBCLASS		GENMASK(25, 20)
+#घोषणा CLK_ATTR_NODE_CLASS		GENMASK(31, 26)
 	u32 attr[CLK_GET_ATTR_RESP_WORDS];
-};
+पूर्ण;
 
-static const char clk_type_postfix[][10] = {
+अटल स्थिर अक्षर clk_type_postfix[][10] = अणु
 	[TYPE_INVALID] = "",
 	[TYPE_MUX] = "_mux",
 	[TYPE_GATE] = "",
@@ -116,280 +117,280 @@ static const char clk_type_postfix[][10] = {
 	[TYPE_DIV2] = "_div2",
 	[TYPE_FIXEDFACTOR] = "_ff",
 	[TYPE_PLL] = ""
-};
+पूर्ण;
 
-static struct clk_hw *(* const clk_topology[]) (const char *name, u32 clk_id,
-					const char * const *parents,
+अटल काष्ठा clk_hw *(* स्थिर clk_topology[]) (स्थिर अक्षर *name, u32 clk_id,
+					स्थिर अक्षर * स्थिर *parents,
 					u8 num_parents,
-					const struct clock_topology *nodes)
-					= {
-	[TYPE_INVALID] = NULL,
-	[TYPE_MUX] = zynqmp_clk_register_mux,
-	[TYPE_PLL] = zynqmp_clk_register_pll,
-	[TYPE_FIXEDFACTOR] = zynqmp_clk_register_fixed_factor,
-	[TYPE_DIV1] = zynqmp_clk_register_divider,
-	[TYPE_DIV2] = zynqmp_clk_register_divider,
-	[TYPE_GATE] = zynqmp_clk_register_gate
-};
+					स्थिर काष्ठा घड़ी_प्रकारopology *nodes)
+					= अणु
+	[TYPE_INVALID] = शून्य,
+	[TYPE_MUX] = zynqmp_clk_रेजिस्टर_mux,
+	[TYPE_PLL] = zynqmp_clk_रेजिस्टर_pll,
+	[TYPE_FIXEDFACTOR] = zynqmp_clk_रेजिस्टर_fixed_factor,
+	[TYPE_DIV1] = zynqmp_clk_रेजिस्टर_भागider,
+	[TYPE_DIV2] = zynqmp_clk_रेजिस्टर_भागider,
+	[TYPE_GATE] = zynqmp_clk_रेजिस्टर_gate
+पूर्ण;
 
-static struct zynqmp_clock *clock;
-static struct clk_hw_onecell_data *zynqmp_data;
-static unsigned int clock_max_idx;
+अटल काष्ठा zynqmp_घड़ी *घड़ी;
+अटल काष्ठा clk_hw_onecell_data *zynqmp_data;
+अटल अचिन्हित पूर्णांक घड़ी_max_idx;
 
 /**
- * zynqmp_is_valid_clock() - Check whether clock is valid or not
+ * zynqmp_is_valid_घड़ी() - Check whether घड़ी is valid or not
  * @clk_id:	Clock index
  *
- * Return: 1 if clock is valid, 0 if clock is invalid else error code
+ * Return: 1 अगर घड़ी is valid, 0 अगर घड़ी is invalid अन्यथा error code
  */
-static inline int zynqmp_is_valid_clock(u32 clk_id)
-{
-	if (clk_id >= clock_max_idx)
-		return -ENODEV;
+अटल अंतरभूत पूर्णांक zynqmp_is_valid_घड़ी(u32 clk_id)
+अणु
+	अगर (clk_id >= घड़ी_max_idx)
+		वापस -ENODEV;
 
-	return clock[clk_id].valid;
-}
+	वापस घड़ी[clk_id].valid;
+पूर्ण
 
 /**
- * zynqmp_get_clock_name() - Get name of clock from Clock index
+ * zynqmp_get_घड़ी_name() - Get name of घड़ी from Clock index
  * @clk_id:	Clock index
- * @clk_name:	Name of clock
+ * @clk_name:	Name of घड़ी
  *
- * Return: 0 on success else error code
+ * Return: 0 on success अन्यथा error code
  */
-static int zynqmp_get_clock_name(u32 clk_id, char *clk_name)
-{
-	int ret;
+अटल पूर्णांक zynqmp_get_घड़ी_name(u32 clk_id, अक्षर *clk_name)
+अणु
+	पूर्णांक ret;
 
-	ret = zynqmp_is_valid_clock(clk_id);
-	if (ret == 1) {
-		strncpy(clk_name, clock[clk_id].clk_name, MAX_NAME_LEN);
-		return 0;
-	}
+	ret = zynqmp_is_valid_घड़ी(clk_id);
+	अगर (ret == 1) अणु
+		म_नकलन(clk_name, घड़ी[clk_id].clk_name, MAX_NAME_LEN);
+		वापस 0;
+	पूर्ण
 
-	return ret == 0 ? -EINVAL : ret;
-}
+	वापस ret == 0 ? -EINVAL : ret;
+पूर्ण
 
 /**
- * zynqmp_get_clock_type() - Get type of clock
+ * zynqmp_get_घड़ी_प्रकारype() - Get type of घड़ी
  * @clk_id:	Clock index
  * @type:	Clock type: CLK_TYPE_OUTPUT or CLK_TYPE_EXTERNAL
  *
- * Return: 0 on success else error code
+ * Return: 0 on success अन्यथा error code
  */
-static int zynqmp_get_clock_type(u32 clk_id, u32 *type)
-{
-	int ret;
+अटल पूर्णांक zynqmp_get_घड़ी_प्रकारype(u32 clk_id, u32 *type)
+अणु
+	पूर्णांक ret;
 
-	ret = zynqmp_is_valid_clock(clk_id);
-	if (ret == 1) {
-		*type = clock[clk_id].type;
-		return 0;
-	}
+	ret = zynqmp_is_valid_घड़ी(clk_id);
+	अगर (ret == 1) अणु
+		*type = घड़ी[clk_id].type;
+		वापस 0;
+	पूर्ण
 
-	return ret == 0 ? -EINVAL : ret;
-}
+	वापस ret == 0 ? -EINVAL : ret;
+पूर्ण
 
 /**
- * zynqmp_pm_clock_get_num_clocks() - Get number of clocks in system
- * @nclocks:	Number of clocks in system/board.
+ * zynqmp_pm_घड़ी_get_num_घड़ीs() - Get number of घड़ीs in प्रणाली
+ * @nघड़ीs:	Number of घड़ीs in प्रणाली/board.
  *
- * Call firmware API to get number of clocks.
+ * Call firmware API to get number of घड़ीs.
  *
- * Return: 0 on success else error code.
+ * Return: 0 on success अन्यथा error code.
  */
-static int zynqmp_pm_clock_get_num_clocks(u32 *nclocks)
-{
-	struct zynqmp_pm_query_data qdata = {0};
+अटल पूर्णांक zynqmp_pm_घड़ी_get_num_घड़ीs(u32 *nघड़ीs)
+अणु
+	काष्ठा zynqmp_pm_query_data qdata = अणु0पूर्ण;
 	u32 ret_payload[PAYLOAD_ARG_CNT];
-	int ret;
+	पूर्णांक ret;
 
 	qdata.qid = PM_QID_CLOCK_GET_NUM_CLOCKS;
 
 	ret = zynqmp_pm_query_data(qdata, ret_payload);
-	*nclocks = ret_payload[1];
+	*nघड़ीs = ret_payload[1];
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * zynqmp_pm_clock_get_name() - Get the name of clock for given id
- * @clock_id:	ID of the clock to be queried
- * @response:	Name of the clock with the given id
+ * zynqmp_pm_घड़ी_get_name() - Get the name of घड़ी क्रम given id
+ * @घड़ी_id:	ID of the घड़ी to be queried
+ * @response:	Name of the घड़ी with the given id
  *
- * This function is used to get name of clock specified by given
- * clock ID.
+ * This function is used to get name of घड़ी specअगरied by given
+ * घड़ी ID.
  *
  * Return: Returns 0
  */
-static int zynqmp_pm_clock_get_name(u32 clock_id,
-				    struct name_resp *response)
-{
-	struct zynqmp_pm_query_data qdata = {0};
+अटल पूर्णांक zynqmp_pm_घड़ी_get_name(u32 घड़ी_id,
+				    काष्ठा name_resp *response)
+अणु
+	काष्ठा zynqmp_pm_query_data qdata = अणु0पूर्ण;
 	u32 ret_payload[PAYLOAD_ARG_CNT];
 
 	qdata.qid = PM_QID_CLOCK_GET_NAME;
-	qdata.arg1 = clock_id;
+	qdata.arg1 = घड़ी_id;
 
 	zynqmp_pm_query_data(qdata, ret_payload);
-	memcpy(response, ret_payload, sizeof(*response));
+	स_नकल(response, ret_payload, माप(*response));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * zynqmp_pm_clock_get_topology() - Get the topology of clock for given id
- * @clock_id:	ID of the clock to be queried
- * @index:	Node index of clock topology
- * @response:	Buffer used for the topology response
+ * zynqmp_pm_घड़ी_get_topology() - Get the topology of घड़ी क्रम given id
+ * @घड़ी_id:	ID of the घड़ी to be queried
+ * @index:	Node index of घड़ी topology
+ * @response:	Buffer used क्रम the topology response
  *
- * This function is used to get topology information for the clock
- * specified by given clock ID.
+ * This function is used to get topology inक्रमmation क्रम the घड़ी
+ * specअगरied by given घड़ी ID.
  *
- * This API will return 3 node of topology with a single response. To get
+ * This API will वापस 3 node of topology with a single response. To get
  * other nodes, master should call same API in loop with new
- * index till error is returned. E.g First call should have
- * index 0 which will return nodes 0,1 and 2. Next call, index
- * should be 3 which will return nodes 3,4 and 5 and so on.
+ * index till error is वापसed. E.g First call should have
+ * index 0 which will वापस nodes 0,1 and 2. Next call, index
+ * should be 3 which will वापस nodes 3,4 and 5 and so on.
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static int zynqmp_pm_clock_get_topology(u32 clock_id, u32 index,
-					struct topology_resp *response)
-{
-	struct zynqmp_pm_query_data qdata = {0};
+अटल पूर्णांक zynqmp_pm_घड़ी_get_topology(u32 घड़ी_id, u32 index,
+					काष्ठा topology_resp *response)
+अणु
+	काष्ठा zynqmp_pm_query_data qdata = अणु0पूर्ण;
 	u32 ret_payload[PAYLOAD_ARG_CNT];
-	int ret;
+	पूर्णांक ret;
 
 	qdata.qid = PM_QID_CLOCK_GET_TOPOLOGY;
-	qdata.arg1 = clock_id;
+	qdata.arg1 = घड़ी_id;
 	qdata.arg2 = index;
 
 	ret = zynqmp_pm_query_data(qdata, ret_payload);
-	memcpy(response, &ret_payload[1], sizeof(*response));
+	स_नकल(response, &ret_payload[1], माप(*response));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * zynqmp_clk_register_fixed_factor() - Register fixed factor with the
- *					clock framework
- * @name:		Name of this clock
+ * zynqmp_clk_रेजिस्टर_fixed_factor() - Register fixed factor with the
+ *					घड़ी framework
+ * @name:		Name of this घड़ी
  * @clk_id:		Clock ID
- * @parents:		Name of this clock's parents
+ * @parents:		Name of this घड़ी's parents
  * @num_parents:	Number of parents
  * @nodes:		Clock topology node
  *
- * Return: clock hardware to the registered clock
+ * Return: घड़ी hardware to the रेजिस्टरed घड़ी
  */
-struct clk_hw *zynqmp_clk_register_fixed_factor(const char *name, u32 clk_id,
-					const char * const *parents,
+काष्ठा clk_hw *zynqmp_clk_रेजिस्टर_fixed_factor(स्थिर अक्षर *name, u32 clk_id,
+					स्थिर अक्षर * स्थिर *parents,
 					u8 num_parents,
-					const struct clock_topology *nodes)
-{
-	u32 mult, div;
-	struct clk_hw *hw;
-	struct zynqmp_pm_query_data qdata = {0};
+					स्थिर काष्ठा घड़ी_प्रकारopology *nodes)
+अणु
+	u32 mult, भाग;
+	काष्ठा clk_hw *hw;
+	काष्ठा zynqmp_pm_query_data qdata = अणु0पूर्ण;
 	u32 ret_payload[PAYLOAD_ARG_CNT];
-	int ret;
+	पूर्णांक ret;
 
 	qdata.qid = PM_QID_CLOCK_GET_FIXEDFACTOR_PARAMS;
 	qdata.arg1 = clk_id;
 
 	ret = zynqmp_pm_query_data(qdata, ret_payload);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	mult = ret_payload[1];
-	div = ret_payload[2];
+	भाग = ret_payload[2];
 
-	hw = clk_hw_register_fixed_factor(NULL, name,
+	hw = clk_hw_रेजिस्टर_fixed_factor(शून्य, name,
 					  parents[0],
 					  nodes->flag, mult,
-					  div);
+					  भाग);
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
 /**
- * zynqmp_pm_clock_get_parents() - Get the first 3 parents of clock for given id
- * @clock_id:	Clock ID
+ * zynqmp_pm_घड़ी_get_parents() - Get the first 3 parents of घड़ी क्रम given id
+ * @घड़ी_id:	Clock ID
  * @index:	Parent index
- * @response:	Parents of the given clock
+ * @response:	Parents of the given घड़ी
  *
- * This function is used to get 3 parents for the clock specified by
- * given clock ID.
+ * This function is used to get 3 parents क्रम the घड़ी specअगरied by
+ * given घड़ी ID.
  *
- * This API will return 3 parents with a single response. To get
+ * This API will वापस 3 parents with a single response. To get
  * other parents, master should call same API in loop with new
- * parent index till error is returned. E.g First call should have
- * index 0 which will return parents 0,1 and 2. Next call, index
- * should be 3 which will return parent 3,4 and 5 and so on.
+ * parent index till error is वापसed. E.g First call should have
+ * index 0 which will वापस parents 0,1 and 2. Next call, index
+ * should be 3 which will वापस parent 3,4 and 5 and so on.
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static int zynqmp_pm_clock_get_parents(u32 clock_id, u32 index,
-				       struct parents_resp *response)
-{
-	struct zynqmp_pm_query_data qdata = {0};
+अटल पूर्णांक zynqmp_pm_घड़ी_get_parents(u32 घड़ी_id, u32 index,
+				       काष्ठा parents_resp *response)
+अणु
+	काष्ठा zynqmp_pm_query_data qdata = अणु0पूर्ण;
 	u32 ret_payload[PAYLOAD_ARG_CNT];
-	int ret;
+	पूर्णांक ret;
 
 	qdata.qid = PM_QID_CLOCK_GET_PARENTS;
-	qdata.arg1 = clock_id;
+	qdata.arg1 = घड़ी_id;
 	qdata.arg2 = index;
 
 	ret = zynqmp_pm_query_data(qdata, ret_payload);
-	memcpy(response, &ret_payload[1], sizeof(*response));
+	स_नकल(response, &ret_payload[1], माप(*response));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * zynqmp_pm_clock_get_attributes() - Get the attributes of clock for given id
- * @clock_id:	Clock ID
+ * zynqmp_pm_घड़ी_get_attributes() - Get the attributes of घड़ी क्रम given id
+ * @घड़ी_id:	Clock ID
  * @response:	Clock attributes response
  *
- * This function is used to get clock's attributes(e.g. valid, clock type, etc).
+ * This function is used to get घड़ी's attributes(e.g. valid, घड़ी type, etc).
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static int zynqmp_pm_clock_get_attributes(u32 clock_id,
-					  struct attr_resp *response)
-{
-	struct zynqmp_pm_query_data qdata = {0};
+अटल पूर्णांक zynqmp_pm_घड़ी_get_attributes(u32 घड़ी_id,
+					  काष्ठा attr_resp *response)
+अणु
+	काष्ठा zynqmp_pm_query_data qdata = अणु0पूर्ण;
 	u32 ret_payload[PAYLOAD_ARG_CNT];
-	int ret;
+	पूर्णांक ret;
 
 	qdata.qid = PM_QID_CLOCK_GET_ATTRIBUTES;
-	qdata.arg1 = clock_id;
+	qdata.arg1 = घड़ी_id;
 
 	ret = zynqmp_pm_query_data(qdata, ret_payload);
-	memcpy(response, &ret_payload[1], sizeof(*response));
+	स_नकल(response, &ret_payload[1], माप(*response));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * __zynqmp_clock_get_topology() - Get topology data of clock from firmware
+ * __zynqmp_घड़ी_get_topology() - Get topology data of घड़ी from firmware
  *				   response data
  * @topology:		Clock topology
  * @response:		Clock topology data received from firmware
  * @nnodes:		Number of nodes
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static int __zynqmp_clock_get_topology(struct clock_topology *topology,
-				       struct topology_resp *response,
+अटल पूर्णांक __zynqmp_घड़ी_get_topology(काष्ठा घड़ी_प्रकारopology *topology,
+				       काष्ठा topology_resp *response,
 				       u32 *nnodes)
-{
-	int i;
+अणु
+	पूर्णांक i;
 	u32 type;
 
-	for (i = 0; i < ARRAY_SIZE(response->topology); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(response->topology); i++) अणु
 		type = FIELD_GET(CLK_TOPOLOGY_TYPE, response->topology[i]);
-		if (type == TYPE_INVALID)
-			return END_OF_TOPOLOGY_NODE;
+		अगर (type == TYPE_INVALID)
+			वापस END_OF_TOPOLOGY_NODE;
 		topology[*nnodes].type = type;
 		topology[*nnodes].flag = FIELD_GET(CLK_TOPOLOGY_FLAGS,
 						   response->topology[i]);
@@ -400,110 +401,110 @@ static int __zynqmp_clock_get_topology(struct clock_topology *topology,
 			FIELD_GET(CLK_TOPOLOGY_CUSTOM_TYPE_FLAGS,
 				  response->topology[i]);
 		(*nnodes)++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * zynqmp_clock_get_topology() - Get topology of clock from firmware using
+ * zynqmp_घड़ी_get_topology() - Get topology of घड़ी from firmware using
  *				 PM_API
  * @clk_id:		Clock index
  * @topology:		Clock topology
  * @num_nodes:		Number of nodes
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static int zynqmp_clock_get_topology(u32 clk_id,
-				     struct clock_topology *topology,
+अटल पूर्णांक zynqmp_घड़ी_get_topology(u32 clk_id,
+				     काष्ठा घड़ी_प्रकारopology *topology,
 				     u32 *num_nodes)
-{
-	int j, ret;
-	struct topology_resp response = { };
+अणु
+	पूर्णांक j, ret;
+	काष्ठा topology_resp response = अणु पूर्ण;
 
 	*num_nodes = 0;
-	for (j = 0; j <= MAX_NODES; j += ARRAY_SIZE(response.topology)) {
-		ret = zynqmp_pm_clock_get_topology(clock[clk_id].clk_id, j,
+	क्रम (j = 0; j <= MAX_NODES; j += ARRAY_SIZE(response.topology)) अणु
+		ret = zynqmp_pm_घड़ी_get_topology(घड़ी[clk_id].clk_id, j,
 						   &response);
-		if (ret)
-			return ret;
-		ret = __zynqmp_clock_get_topology(topology, &response,
+		अगर (ret)
+			वापस ret;
+		ret = __zynqmp_घड़ी_get_topology(topology, &response,
 						  num_nodes);
-		if (ret == END_OF_TOPOLOGY_NODE)
-			return 0;
-	}
+		अगर (ret == END_OF_TOPOLOGY_NODE)
+			वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * __zynqmp_clock_get_parents() - Get parents info of clock from firmware
+ * __zynqmp_घड़ी_get_parents() - Get parents info of घड़ी from firmware
  *				   response data
  * @parents:		Clock parents
  * @response:		Clock parents data received from firmware
  * @nparent:		Number of parent
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static int __zynqmp_clock_get_parents(struct clock_parent *parents,
-				      struct parents_resp *response,
+अटल पूर्णांक __zynqmp_घड़ी_get_parents(काष्ठा घड़ी_parent *parents,
+				      काष्ठा parents_resp *response,
 				      u32 *nparent)
-{
-	int i;
-	struct clock_parent *parent;
+अणु
+	पूर्णांक i;
+	काष्ठा घड़ी_parent *parent;
 
-	for (i = 0; i < ARRAY_SIZE(response->parents); i++) {
-		if (response->parents[i] == NA_PARENT)
-			return END_OF_PARENTS;
+	क्रम (i = 0; i < ARRAY_SIZE(response->parents); i++) अणु
+		अगर (response->parents[i] == NA_PARENT)
+			वापस END_OF_PARENTS;
 
 		parent = &parents[i];
 		parent->id = FIELD_GET(CLK_PARENTS_ID, response->parents[i]);
-		if (response->parents[i] == DUMMY_PARENT) {
-			strcpy(parent->name, "dummy_name");
+		अगर (response->parents[i] == DUMMY_PARENT) अणु
+			म_नकल(parent->name, "dummy_name");
 			parent->flag = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			parent->flag = FIELD_GET(CLK_PARENTS_FLAGS,
 						 response->parents[i]);
-			if (zynqmp_get_clock_name(parent->id, parent->name))
-				continue;
-		}
+			अगर (zynqmp_get_घड़ी_name(parent->id, parent->name))
+				जारी;
+		पूर्ण
 		*nparent += 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * zynqmp_clock_get_parents() - Get parents info from firmware using PM_API
+ * zynqmp_घड़ी_get_parents() - Get parents info from firmware using PM_API
  * @clk_id:		Clock index
  * @parents:		Clock parents
  * @num_parents:	Total number of parents
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static int zynqmp_clock_get_parents(u32 clk_id, struct clock_parent *parents,
+अटल पूर्णांक zynqmp_घड़ी_get_parents(u32 clk_id, काष्ठा घड़ी_parent *parents,
 				    u32 *num_parents)
-{
-	int j = 0, ret;
-	struct parents_resp response = { };
+अणु
+	पूर्णांक j = 0, ret;
+	काष्ठा parents_resp response = अणु पूर्ण;
 
 	*num_parents = 0;
-	do {
+	करो अणु
 		/* Get parents from firmware */
-		ret = zynqmp_pm_clock_get_parents(clock[clk_id].clk_id, j,
+		ret = zynqmp_pm_घड़ी_get_parents(घड़ी[clk_id].clk_id, j,
 						  &response);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = __zynqmp_clock_get_parents(&parents[j], &response,
+		ret = __zynqmp_घड़ी_get_parents(&parents[j], &response,
 						 num_parents);
-		if (ret == END_OF_PARENTS)
-			return 0;
+		अगर (ret == END_OF_PARENTS)
+			वापस 0;
 		j += ARRAY_SIZE(response.parents);
-	} while (*num_parents <= MAX_PARENT);
+	पूर्ण जबतक (*num_parents <= MAX_PARENT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * zynqmp_get_parent_list() - Create list of parents name
@@ -512,260 +513,260 @@ static int zynqmp_clock_get_parents(u32 clk_id, struct clock_parent *parents,
  * @parent_list:	List of parent's name
  * @num_parents:	Total number of parents
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static int zynqmp_get_parent_list(struct device_node *np, u32 clk_id,
-				  const char **parent_list, u32 *num_parents)
-{
-	int i = 0, ret;
-	u32 total_parents = clock[clk_id].num_parents;
-	struct clock_topology *clk_nodes;
-	struct clock_parent *parents;
+अटल पूर्णांक zynqmp_get_parent_list(काष्ठा device_node *np, u32 clk_id,
+				  स्थिर अक्षर **parent_list, u32 *num_parents)
+अणु
+	पूर्णांक i = 0, ret;
+	u32 total_parents = घड़ी[clk_id].num_parents;
+	काष्ठा घड़ी_प्रकारopology *clk_nodes;
+	काष्ठा घड़ी_parent *parents;
 
-	clk_nodes = clock[clk_id].node;
-	parents = clock[clk_id].parent;
+	clk_nodes = घड़ी[clk_id].node;
+	parents = घड़ी[clk_id].parent;
 
-	for (i = 0; i < total_parents; i++) {
-		if (!parents[i].flag) {
+	क्रम (i = 0; i < total_parents; i++) अणु
+		अगर (!parents[i].flag) अणु
 			parent_list[i] = parents[i].name;
-		} else if (parents[i].flag == PARENT_CLK_EXTERNAL) {
+		पूर्ण अन्यथा अगर (parents[i].flag == PARENT_CLK_EXTERNAL) अणु
 			ret = of_property_match_string(np, "clock-names",
 						       parents[i].name);
-			if (ret < 0)
-				strcpy(parents[i].name, "dummy_name");
+			अगर (ret < 0)
+				म_नकल(parents[i].name, "dummy_name");
 			parent_list[i] = parents[i].name;
-		} else {
-			strcat(parents[i].name,
+		पूर्ण अन्यथा अणु
+			म_जोड़ो(parents[i].name,
 			       clk_type_postfix[clk_nodes[parents[i].flag - 1].
 			       type]);
 			parent_list[i] = parents[i].name;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*num_parents = total_parents;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * zynqmp_register_clk_topology() - Register clock topology
+ * zynqmp_रेजिस्टर_clk_topology() - Register घड़ी topology
  * @clk_id:		Clock index
  * @clk_name:		Clock Name
  * @num_parents:	Total number of parents
  * @parent_names:	List of parents name
  *
- * Return: Returns either clock hardware or error+reason
+ * Return: Returns either घड़ी hardware or error+reason
  */
-static struct clk_hw *zynqmp_register_clk_topology(int clk_id, char *clk_name,
-						   int num_parents,
-						   const char **parent_names)
-{
-	int j;
+अटल काष्ठा clk_hw *zynqmp_रेजिस्टर_clk_topology(पूर्णांक clk_id, अक्षर *clk_name,
+						   पूर्णांक num_parents,
+						   स्थिर अक्षर **parent_names)
+अणु
+	पूर्णांक j;
 	u32 num_nodes, clk_dev_id;
-	char *clk_out[MAX_NODES];
-	struct clock_topology *nodes;
-	struct clk_hw *hw = NULL;
+	अक्षर *clk_out[MAX_NODES];
+	काष्ठा घड़ी_प्रकारopology *nodes;
+	काष्ठा clk_hw *hw = शून्य;
 
-	nodes = clock[clk_id].node;
-	num_nodes = clock[clk_id].num_nodes;
-	clk_dev_id = clock[clk_id].clk_id;
+	nodes = घड़ी[clk_id].node;
+	num_nodes = घड़ी[clk_id].num_nodes;
+	clk_dev_id = घड़ी[clk_id].clk_id;
 
-	for (j = 0; j < num_nodes; j++) {
+	क्रम (j = 0; j < num_nodes; j++) अणु
 		/*
-		 * Clock name received from firmware is output clock name.
-		 * Intermediate clock names are postfixed with type of clock.
+		 * Clock name received from firmware is output घड़ी name.
+		 * Intermediate घड़ी names are postfixed with type of घड़ी.
 		 */
-		if (j != (num_nodes - 1)) {
-			clk_out[j] = kasprintf(GFP_KERNEL, "%s%s", clk_name,
+		अगर (j != (num_nodes - 1)) अणु
+			clk_out[j] = kaप्र_लिखो(GFP_KERNEL, "%s%s", clk_name,
 					    clk_type_postfix[nodes[j].type]);
-		} else {
-			clk_out[j] = kasprintf(GFP_KERNEL, "%s", clk_name);
-		}
+		पूर्ण अन्यथा अणु
+			clk_out[j] = kaप्र_लिखो(GFP_KERNEL, "%s", clk_name);
+		पूर्ण
 
-		if (!clk_topology[nodes[j].type])
-			continue;
+		अगर (!clk_topology[nodes[j].type])
+			जारी;
 
 		hw = (*clk_topology[nodes[j].type])(clk_out[j], clk_dev_id,
 						    parent_names,
 						    num_parents,
 						    &nodes[j]);
-		if (IS_ERR(hw))
+		अगर (IS_ERR(hw))
 			pr_warn_once("%s() 0x%x: %s register fail with %ld\n",
 				     __func__,  clk_dev_id, clk_name,
 				     PTR_ERR(hw));
 
 		parent_names[0] = clk_out[j];
-	}
+	पूर्ण
 
-	for (j = 0; j < num_nodes; j++)
-		kfree(clk_out[j]);
+	क्रम (j = 0; j < num_nodes; j++)
+		kमुक्त(clk_out[j]);
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
 /**
- * zynqmp_register_clocks() - Register clocks
+ * zynqmp_रेजिस्टर_घड़ीs() - Register घड़ीs
  * @np:		Device node
  *
- * Return: 0 on success else error code
+ * Return: 0 on success अन्यथा error code
  */
-static int zynqmp_register_clocks(struct device_node *np)
-{
-	int ret;
+अटल पूर्णांक zynqmp_रेजिस्टर_घड़ीs(काष्ठा device_node *np)
+अणु
+	पूर्णांक ret;
 	u32 i, total_parents = 0, type = 0;
-	const char *parent_names[MAX_PARENT];
+	स्थिर अक्षर *parent_names[MAX_PARENT];
 
-	for (i = 0; i < clock_max_idx; i++) {
-		char clk_name[MAX_NAME_LEN];
+	क्रम (i = 0; i < घड़ी_max_idx; i++) अणु
+		अक्षर clk_name[MAX_NAME_LEN];
 
-		/* get clock name, continue to next clock if name not found */
-		if (zynqmp_get_clock_name(i, clk_name))
-			continue;
+		/* get घड़ी name, जारी to next घड़ी अगर name not found */
+		अगर (zynqmp_get_घड़ी_name(i, clk_name))
+			जारी;
 
-		/* Check if clock is valid and output clock.
-		 * Do not register invalid or external clock.
+		/* Check अगर घड़ी is valid and output घड़ी.
+		 * Do not रेजिस्टर invalid or बाह्यal घड़ी.
 		 */
-		ret = zynqmp_get_clock_type(i, &type);
-		if (ret || type != CLK_TYPE_OUTPUT)
-			continue;
+		ret = zynqmp_get_घड़ी_प्रकारype(i, &type);
+		अगर (ret || type != CLK_TYPE_OUTPUT)
+			जारी;
 
-		/* Get parents of clock*/
-		if (zynqmp_get_parent_list(np, i, parent_names,
-					   &total_parents)) {
+		/* Get parents of घड़ी*/
+		अगर (zynqmp_get_parent_list(np, i, parent_names,
+					   &total_parents)) अणु
 			WARN_ONCE(1, "No parents found for %s\n",
-				  clock[i].clk_name);
-			continue;
-		}
+				  घड़ी[i].clk_name);
+			जारी;
+		पूर्ण
 
 		zynqmp_data->hws[i] =
-			zynqmp_register_clk_topology(i, clk_name,
+			zynqmp_रेजिस्टर_clk_topology(i, clk_name,
 						     total_parents,
 						     parent_names);
-	}
+	पूर्ण
 
-	for (i = 0; i < clock_max_idx; i++) {
-		if (IS_ERR(zynqmp_data->hws[i])) {
+	क्रम (i = 0; i < घड़ी_max_idx; i++) अणु
+		अगर (IS_ERR(zynqmp_data->hws[i])) अणु
 			pr_err("Zynq Ultrascale+ MPSoC clk %s: register failed with %ld\n",
-			       clock[i].clk_name, PTR_ERR(zynqmp_data->hws[i]));
+			       घड़ी[i].clk_name, PTR_ERR(zynqmp_data->hws[i]));
 			WARN_ON(1);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * zynqmp_get_clock_info() - Get clock information from firmware using PM_API
+ * zynqmp_get_घड़ी_info() - Get घड़ी inक्रमmation from firmware using PM_API
  */
-static void zynqmp_get_clock_info(void)
-{
-	int i, ret;
+अटल व्योम zynqmp_get_घड़ी_info(व्योम)
+अणु
+	पूर्णांक i, ret;
 	u32 type = 0;
 	u32 nodetype, subclass, class;
-	struct attr_resp attr;
-	struct name_resp name;
+	काष्ठा attr_resp attr;
+	काष्ठा name_resp name;
 
-	for (i = 0; i < clock_max_idx; i++) {
-		ret = zynqmp_pm_clock_get_attributes(i, &attr);
-		if (ret)
-			continue;
+	क्रम (i = 0; i < घड़ी_max_idx; i++) अणु
+		ret = zynqmp_pm_घड़ी_get_attributes(i, &attr);
+		अगर (ret)
+			जारी;
 
-		clock[i].valid = FIELD_GET(CLK_ATTR_VALID, attr.attr[0]);
-		/* skip query for Invalid clock */
-		ret = zynqmp_is_valid_clock(i);
-		if (ret != CLK_ATTR_VALID)
-			continue;
+		घड़ी[i].valid = FIELD_GET(CLK_ATTR_VALID, attr.attr[0]);
+		/* skip query क्रम Invalid घड़ी */
+		ret = zynqmp_is_valid_घड़ी(i);
+		अगर (ret != CLK_ATTR_VALID)
+			जारी;
 
-		clock[i].type = FIELD_GET(CLK_ATTR_TYPE, attr.attr[0]) ?
+		घड़ी[i].type = FIELD_GET(CLK_ATTR_TYPE, attr.attr[0]) ?
 			CLK_TYPE_EXTERNAL : CLK_TYPE_OUTPUT;
 
 		nodetype = FIELD_GET(CLK_ATTR_NODE_TYPE, attr.attr[0]);
 		subclass = FIELD_GET(CLK_ATTR_NODE_SUBCLASS, attr.attr[0]);
 		class = FIELD_GET(CLK_ATTR_NODE_CLASS, attr.attr[0]);
 
-		clock[i].clk_id = FIELD_PREP(CLK_ATTR_NODE_CLASS, class) |
+		घड़ी[i].clk_id = FIELD_PREP(CLK_ATTR_NODE_CLASS, class) |
 				  FIELD_PREP(CLK_ATTR_NODE_SUBCLASS, subclass) |
 				  FIELD_PREP(CLK_ATTR_NODE_TYPE, nodetype) |
 				  FIELD_PREP(CLK_ATTR_NODE_INDEX, i);
 
-		zynqmp_pm_clock_get_name(clock[i].clk_id, &name);
-		if (!strcmp(name.name, RESERVED_CLK_NAME))
-			continue;
-		strncpy(clock[i].clk_name, name.name, MAX_NAME_LEN);
-	}
+		zynqmp_pm_घड़ी_get_name(घड़ी[i].clk_id, &name);
+		अगर (!म_भेद(name.name, RESERVED_CLK_NAME))
+			जारी;
+		म_नकलन(घड़ी[i].clk_name, name.name, MAX_NAME_LEN);
+	पूर्ण
 
-	/* Get topology of all clock */
-	for (i = 0; i < clock_max_idx; i++) {
-		ret = zynqmp_get_clock_type(i, &type);
-		if (ret || type != CLK_TYPE_OUTPUT)
-			continue;
+	/* Get topology of all घड़ी */
+	क्रम (i = 0; i < घड़ी_max_idx; i++) अणु
+		ret = zynqmp_get_घड़ी_प्रकारype(i, &type);
+		अगर (ret || type != CLK_TYPE_OUTPUT)
+			जारी;
 
-		ret = zynqmp_clock_get_topology(i, clock[i].node,
-						&clock[i].num_nodes);
-		if (ret)
-			continue;
+		ret = zynqmp_घड़ी_get_topology(i, घड़ी[i].node,
+						&घड़ी[i].num_nodes);
+		अगर (ret)
+			जारी;
 
-		ret = zynqmp_clock_get_parents(i, clock[i].parent,
-					       &clock[i].num_parents);
-		if (ret)
-			continue;
-	}
-}
+		ret = zynqmp_घड़ी_get_parents(i, घड़ी[i].parent,
+					       &घड़ी[i].num_parents);
+		अगर (ret)
+			जारी;
+	पूर्ण
+पूर्ण
 
 /**
- * zynqmp_clk_setup() - Setup the clock framework and register clocks
+ * zynqmp_clk_setup() - Setup the घड़ी framework and रेजिस्टर घड़ीs
  * @np:		Device node
  *
- * Return: 0 on success else error code
+ * Return: 0 on success अन्यथा error code
  */
-static int zynqmp_clk_setup(struct device_node *np)
-{
-	int ret;
+अटल पूर्णांक zynqmp_clk_setup(काष्ठा device_node *np)
+अणु
+	पूर्णांक ret;
 
-	ret = zynqmp_pm_clock_get_num_clocks(&clock_max_idx);
-	if (ret)
-		return ret;
+	ret = zynqmp_pm_घड़ी_get_num_घड़ीs(&घड़ी_max_idx);
+	अगर (ret)
+		वापस ret;
 
-	zynqmp_data = kzalloc(struct_size(zynqmp_data, hws, clock_max_idx),
+	zynqmp_data = kzalloc(काष्ठा_size(zynqmp_data, hws, घड़ी_max_idx),
 			      GFP_KERNEL);
-	if (!zynqmp_data)
-		return -ENOMEM;
+	अगर (!zynqmp_data)
+		वापस -ENOMEM;
 
-	clock = kcalloc(clock_max_idx, sizeof(*clock), GFP_KERNEL);
-	if (!clock) {
-		kfree(zynqmp_data);
-		return -ENOMEM;
-	}
+	घड़ी = kसुस्मृति(घड़ी_max_idx, माप(*घड़ी), GFP_KERNEL);
+	अगर (!घड़ी) अणु
+		kमुक्त(zynqmp_data);
+		वापस -ENOMEM;
+	पूर्ण
 
-	zynqmp_get_clock_info();
-	zynqmp_register_clocks(np);
+	zynqmp_get_घड़ी_info();
+	zynqmp_रेजिस्टर_घड़ीs(np);
 
-	zynqmp_data->num = clock_max_idx;
+	zynqmp_data->num = घड़ी_max_idx;
 	of_clk_add_hw_provider(np, of_clk_hw_onecell_get, zynqmp_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zynqmp_clock_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक zynqmp_घड़ी_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा device *dev = &pdev->dev;
 
 	ret = zynqmp_clk_setup(dev->of_node);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id zynqmp_clock_of_match[] = {
-	{.compatible = "xlnx,zynqmp-clk"},
-	{.compatible = "xlnx,versal-clk"},
-	{},
-};
-MODULE_DEVICE_TABLE(of, zynqmp_clock_of_match);
+अटल स्थिर काष्ठा of_device_id zynqmp_घड़ी_of_match[] = अणु
+	अणु.compatible = "xlnx,zynqmp-clk"पूर्ण,
+	अणु.compatible = "xlnx,versal-clk"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, zynqmp_घड़ी_of_match);
 
-static struct platform_driver zynqmp_clock_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver zynqmp_घड़ी_driver = अणु
+	.driver = अणु
 		.name = "zynqmp_clock",
-		.of_match_table = zynqmp_clock_of_match,
-	},
-	.probe = zynqmp_clock_probe,
-};
-module_platform_driver(zynqmp_clock_driver);
+		.of_match_table = zynqmp_घड़ी_of_match,
+	पूर्ण,
+	.probe = zynqmp_घड़ी_probe,
+पूर्ण;
+module_platक्रमm_driver(zynqmp_घड़ी_driver);

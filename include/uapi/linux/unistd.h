@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _LINUX_UNISTD_H_
-#define _LINUX_UNISTD_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _LINUX_UNISTD_H_
+#घोषणा _LINUX_UNISTD_H_
 
 /*
- * Include machine specific syscall numbers
+ * Include machine specअगरic syscall numbers
  */
-#include <asm/unistd.h>
+#समावेश <यंत्र/unistd.h>
 
-#endif /* _LINUX_UNISTD_H_ */
+#पूर्ण_अगर /* _LINUX_UNISTD_H_ */

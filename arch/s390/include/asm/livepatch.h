@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * livepatch.h - s390-specific Kernel Live Patching Core
+ * livepatch.h - s390-specअगरic Kernel Live Patching Core
  *
  *  Copyright (c) 2013-2015 SUSE
  *   Authors: Jiri Kosina
@@ -8,17 +9,17 @@
  *	      Jiri Slaby
  */
 
-#ifndef ASM_LIVEPATCH_H
-#define ASM_LIVEPATCH_H
+#अगर_अघोषित ASM_LIVEPATCH_H
+#घोषणा ASM_LIVEPATCH_H
 
-#include <linux/ftrace.h>
-#include <asm/ptrace.h>
+#समावेश <linux/ftrace.h>
+#समावेश <यंत्र/ptrace.h>
 
-static inline void klp_arch_set_pc(struct ftrace_regs *fregs, unsigned long ip)
-{
-	struct pt_regs *regs = ftrace_get_regs(fregs);
+अटल अंतरभूत व्योम klp_arch_set_pc(काष्ठा ftrace_regs *fregs, अचिन्हित दीर्घ ip)
+अणु
+	काष्ठा pt_regs *regs = ftrace_get_regs(fregs);
 
 	regs->psw.addr = ip;
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

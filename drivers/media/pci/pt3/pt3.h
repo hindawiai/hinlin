@@ -1,177 +1,178 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Earthsoft PT3 driver
  *
  * Copyright (C) 2014 Akihiro Tsukada <tskd08@gmail.com>
  */
 
-#ifndef PT3_H
-#define PT3_H
+#अगर_अघोषित PT3_H
+#घोषणा PT3_H
 
-#include <linux/atomic.h>
-#include <linux/types.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/types.h>
 
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
-#include <media/dmxdev.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dmxdev.h>
 
-#include "tc90522.h"
-#include "mxl301rf.h"
-#include "qm1d1c0042.h"
+#समावेश "tc90522.h"
+#समावेश "mxl301rf.h"
+#समावेश "qm1d1c0042.h"
 
-#define DRV_NAME KBUILD_MODNAME
+#घोषणा DRV_NAME KBUILD_MODNAME
 
-#define PT3_NUM_FE 4
-
-/*
- * register index of the FPGA chip
- */
-#define REG_VERSION	0x00
-#define REG_BUS		0x04
-#define REG_SYSTEM_W	0x08
-#define REG_SYSTEM_R	0x0c
-#define REG_I2C_W	0x10
-#define REG_I2C_R	0x14
-#define REG_RAM_W	0x18
-#define REG_RAM_R	0x1c
-#define REG_DMA_BASE	0x40	/* regs for FE[i] = REG_DMA_BASE + 0x18 * i */
-#define OFST_DMA_DESC_L	0x00
-#define OFST_DMA_DESC_H	0x04
-#define OFST_DMA_CTL	0x08
-#define OFST_TS_CTL	0x0c
-#define OFST_STATUS	0x10
-#define OFST_TS_ERR	0x14
+#घोषणा PT3_NUM_FE 4
 
 /*
- * internal buffer for I2C
+ * रेजिस्टर index of the FPGA chip
  */
-#define PT3_I2C_MAX 4091
-struct pt3_i2cbuf {
+#घोषणा REG_VERSION	0x00
+#घोषणा REG_BUS		0x04
+#घोषणा REG_SYSTEM_W	0x08
+#घोषणा REG_SYSTEM_R	0x0c
+#घोषणा REG_I2C_W	0x10
+#घोषणा REG_I2C_R	0x14
+#घोषणा REG_RAM_W	0x18
+#घोषणा REG_RAM_R	0x1c
+#घोषणा REG_DMA_BASE	0x40	/* regs क्रम FE[i] = REG_DMA_BASE + 0x18 * i */
+#घोषणा OFST_DMA_DESC_L	0x00
+#घोषणा OFST_DMA_DESC_H	0x04
+#घोषणा OFST_DMA_CTL	0x08
+#घोषणा OFST_TS_CTL	0x0c
+#घोषणा OFST_STATUS	0x10
+#घोषणा OFST_TS_ERR	0x14
+
+/*
+ * पूर्णांकernal buffer क्रम I2C
+ */
+#घोषणा PT3_I2C_MAX 4091
+काष्ठा pt3_i2cbuf अणु
 	u8  data[PT3_I2C_MAX];
-	u8  tmp;
+	u8  पंचांगp;
 	u32 num_cmds;
-};
+पूर्ण;
 
 /*
  * DMA things
  */
-#define TS_PACKET_SZ  188
+#घोषणा TS_PACKET_SZ  188
 /* DMA transfers must not cross 4GiB, so use one page / transfer */
-#define DATA_XFER_SZ   4096
-#define DATA_BUF_XFERS 47
+#घोषणा DATA_XFER_SZ   4096
+#घोषणा DATA_BUF_XFERS 47
 /* (num_bufs * DATA_BUF_SZ) % TS_PACKET_SZ must be 0 */
-#define DATA_BUF_SZ    (DATA_BUF_XFERS * DATA_XFER_SZ)
-#define MAX_DATA_BUFS  16
-#define MIN_DATA_BUFS   2
+#घोषणा DATA_BUF_SZ    (DATA_BUF_XFERS * DATA_XFER_SZ)
+#घोषणा MAX_DATA_BUFS  16
+#घोषणा MIN_DATA_BUFS   2
 
-#define DESCS_IN_PAGE (PAGE_SIZE / sizeof(struct xfer_desc))
-#define MAX_NUM_XFERS (MAX_DATA_BUFS * DATA_BUF_XFERS)
-#define MAX_DESC_BUFS DIV_ROUND_UP(MAX_NUM_XFERS, DESCS_IN_PAGE)
+#घोषणा DESCS_IN_PAGE (PAGE_SIZE / माप(काष्ठा xfer_desc))
+#घोषणा MAX_NUM_XFERS (MAX_DATA_BUFS * DATA_BUF_XFERS)
+#घोषणा MAX_DESC_BUFS DIV_ROUND_UP(MAX_NUM_XFERS, DESCS_IN_PAGE)
 
 /* DMA transfer description.
- * device is passed a pointer to this struct, dma-reads it,
- * and gets the DMA buffer ring for storing TS data.
+ * device is passed a poपूर्णांकer to this काष्ठा, dma-पढ़ोs it,
+ * and माला_लो the DMA buffer ring क्रम storing TS data.
  */
-struct xfer_desc {
+काष्ठा xfer_desc अणु
 	u32 addr_l; /* bus address of target data buffer */
 	u32 addr_h;
 	u32 size;
 	u32 next_l; /* bus address of the next xfer_desc */
 	u32 next_h;
-};
+पूर्ण;
 
 /* A DMA mapping of a page containing xfer_desc's */
-struct xfer_desc_buffer {
+काष्ठा xfer_desc_buffer अणु
 	dma_addr_t b_addr;
-	struct xfer_desc *descs; /* PAGE_SIZE (xfer_desc[DESCS_IN_PAGE]) */
-};
+	काष्ठा xfer_desc *descs; /* PAGE_SIZE (xfer_desc[DESCS_IN_PAGE]) */
+पूर्ण;
 
 /* A DMA mapping of a data buffer */
-struct dma_data_buffer {
+काष्ठा dma_data_buffer अणु
 	dma_addr_t b_addr;
 	u8 *data; /* size: u8[PAGE_SIZE] */
-};
+पूर्ण;
 
 /*
  * device things
  */
-struct pt3_adap_config {
-	struct i2c_board_info demod_info;
-	struct tc90522_config demod_cfg;
+काष्ठा pt3_adap_config अणु
+	काष्ठा i2c_board_info demod_info;
+	काष्ठा tc90522_config demod_cfg;
 
-	struct i2c_board_info tuner_info;
-	union tuner_config {
-		struct qm1d1c0042_config qm1d1c0042;
-		struct mxl301rf_config   mxl301rf;
-	} tuner_cfg;
+	काष्ठा i2c_board_info tuner_info;
+	जोड़ tuner_config अणु
+		काष्ठा qm1d1c0042_config qm1d1c0042;
+		काष्ठा mxl301rf_config   mxl301rf;
+	पूर्ण tuner_cfg;
 	u32 init_freq;
-};
+पूर्ण;
 
-struct pt3_adapter {
-	struct dvb_adapter  dvb_adap;  /* dvb_adap.priv => struct pt3_board */
-	int adap_idx;
+काष्ठा pt3_adapter अणु
+	काष्ठा dvb_adapter  dvb_adap;  /* dvb_adap.priv => काष्ठा pt3_board */
+	पूर्णांक adap_idx;
 
-	struct dvb_demux    demux;
-	struct dmxdev       dmxdev;
-	struct dvb_frontend *fe;
-	struct i2c_client   *i2c_demod;
-	struct i2c_client   *i2c_tuner;
+	काष्ठा dvb_demux    demux;
+	काष्ठा dmxdev       dmxdev;
+	काष्ठा dvb_frontend *fe;
+	काष्ठा i2c_client   *i2c_demod;
+	काष्ठा i2c_client   *i2c_tuner;
 
-	/* data fetch thread */
-	struct task_struct *thread;
-	int num_feeds;
+	/* data fetch thपढ़ो */
+	काष्ठा task_काष्ठा *thपढ़ो;
+	पूर्णांक num_feeds;
 
 	bool cur_lna;
-	bool cur_lnb; /* current LNB power status (on/off) */
+	bool cur_lnb; /* current LNB घातer status (on/off) */
 
-	/* items below are for DMA */
-	struct dma_data_buffer buffer[MAX_DATA_BUFS];
-	int buf_idx;
-	int buf_ofs;
-	int num_bufs;  /* == pt3_board->num_bufs */
-	int num_discard; /* how many access units to discard initially */
+	/* items below are क्रम DMA */
+	काष्ठा dma_data_buffer buffer[MAX_DATA_BUFS];
+	पूर्णांक buf_idx;
+	पूर्णांक buf_ofs;
+	पूर्णांक num_bufs;  /* == pt3_board->num_bufs */
+	पूर्णांक num_discard; /* how many access units to discard initially */
 
-	struct xfer_desc_buffer desc_buf[MAX_DESC_BUFS];
-	int num_desc_bufs;  /* == num_bufs * DATA_BUF_XFERS / DESCS_IN_PAGE */
-};
+	काष्ठा xfer_desc_buffer desc_buf[MAX_DESC_BUFS];
+	पूर्णांक num_desc_bufs;  /* == num_bufs * DATA_BUF_XFERS / DESCS_IN_PAGE */
+पूर्ण;
 
 
-struct pt3_board {
-	struct pci_dev *pdev;
-	void __iomem *regs[2];
-	/* regs[0]: registers, regs[1]: internal memory, used for I2C */
+काष्ठा pt3_board अणु
+	काष्ठा pci_dev *pdev;
+	व्योम __iomem *regs[2];
+	/* regs[0]: रेजिस्टरs, regs[1]: पूर्णांकernal memory, used क्रम I2C */
 
-	struct mutex lock;
+	काष्ठा mutex lock;
 
-	/* LNB power shared among sat-FEs */
-	int lnb_on_cnt; /* LNB power on count */
+	/* LNB घातer shared among sat-FEs */
+	पूर्णांक lnb_on_cnt; /* LNB घातer on count */
 
 	/* LNA shared among terr-FEs */
-	int lna_on_cnt; /* booster enabled count */
+	पूर्णांक lna_on_cnt; /* booster enabled count */
 
-	int num_bufs;  /* number of DMA buffers allocated/mapped per FE */
+	पूर्णांक num_bufs;  /* number of DMA buffers allocated/mapped per FE */
 
-	struct i2c_adapter i2c_adap;
-	struct pt3_i2cbuf *i2c_buf;
+	काष्ठा i2c_adapter i2c_adap;
+	काष्ठा pt3_i2cbuf *i2c_buf;
 
-	struct pt3_adapter *adaps[PT3_NUM_FE];
-};
+	काष्ठा pt3_adapter *adaps[PT3_NUM_FE];
+पूर्ण;
 
 
 /*
  * prototypes
  */
-extern int  pt3_alloc_dmabuf(struct pt3_adapter *adap);
-extern void pt3_init_dmabuf(struct pt3_adapter *adap);
-extern void pt3_free_dmabuf(struct pt3_adapter *adap);
-extern int  pt3_start_dma(struct pt3_adapter *adap);
-extern int  pt3_stop_dma(struct pt3_adapter *adap);
-extern int  pt3_proc_dma(struct pt3_adapter *adap);
+बाह्य पूर्णांक  pt3_alloc_dmabuf(काष्ठा pt3_adapter *adap);
+बाह्य व्योम pt3_init_dmabuf(काष्ठा pt3_adapter *adap);
+बाह्य व्योम pt3_मुक्त_dmabuf(काष्ठा pt3_adapter *adap);
+बाह्य पूर्णांक  pt3_start_dma(काष्ठा pt3_adapter *adap);
+बाह्य पूर्णांक  pt3_stop_dma(काष्ठा pt3_adapter *adap);
+बाह्य पूर्णांक  pt3_proc_dma(काष्ठा pt3_adapter *adap);
 
-extern int  pt3_i2c_master_xfer(struct i2c_adapter *adap,
-				struct i2c_msg *msgs, int num);
-extern u32  pt3_i2c_functionality(struct i2c_adapter *adap);
-extern void pt3_i2c_reset(struct pt3_board *pt3);
-extern int  pt3_init_all_demods(struct pt3_board *pt3);
-extern int  pt3_init_all_mxl301rf(struct pt3_board *pt3);
-#endif /* PT3_H */
+बाह्य पूर्णांक  pt3_i2c_master_xfer(काष्ठा i2c_adapter *adap,
+				काष्ठा i2c_msg *msgs, पूर्णांक num);
+बाह्य u32  pt3_i2c_functionality(काष्ठा i2c_adapter *adap);
+बाह्य व्योम pt3_i2c_reset(काष्ठा pt3_board *pt3);
+बाह्य पूर्णांक  pt3_init_all_demods(काष्ठा pt3_board *pt3);
+बाह्य पूर्णांक  pt3_init_all_mxl301rf(काष्ठा pt3_board *pt3);
+#पूर्ण_अगर /* PT3_H */

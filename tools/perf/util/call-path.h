@@ -1,68 +1,69 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * call-path.h: Manipulate a tree data structure containing function call paths
+ * call-path.h: Manipulate a tree data काष्ठाure containing function call paths
  * Copyright (c) 2014, Intel Corporation.
  */
 
-#ifndef __PERF_CALL_PATH_H
-#define __PERF_CALL_PATH_H
+#अगर_अघोषित __PERF_CALL_PATH_H
+#घोषणा __PERF_CALL_PATH_H
 
-#include <sys/types.h>
+#समावेश <sys/types.h>
 
-#include <linux/types.h>
-#include <linux/rbtree.h>
+#समावेश <linux/types.h>
+#समावेश <linux/rbtree.h>
 
 /**
- * struct call_path - node in list of calls leading to a function call.
+ * काष्ठा call_path - node in list of calls leading to a function call.
  * @parent: call path to the parent function call
  * @sym: symbol of function called
- * @ip: only if sym is null, the ip of the function
- * @db_id: id used for db-export
+ * @ip: only अगर sym is null, the ip of the function
+ * @db_id: id used क्रम db-export
  * @in_kernel: whether function is a in the kernel
  * @rb_node: node in parent's tree of called functions
  * @children: tree of call paths of functions called
  *
- * In combination with the call_return structure, the call_path structure
+ * In combination with the call_वापस काष्ठाure, the call_path काष्ठाure
  * defines a context-sensitive call-graph.
  */
-struct call_path {
-	struct call_path *parent;
-	struct symbol *sym;
+काष्ठा call_path अणु
+	काष्ठा call_path *parent;
+	काष्ठा symbol *sym;
 	u64 ip;
 	u64 db_id;
 	bool in_kernel;
-	struct rb_node rb_node;
-	struct rb_root children;
-};
+	काष्ठा rb_node rb_node;
+	काष्ठा rb_root children;
+पूर्ण;
 
-#define CALL_PATH_BLOCK_SHIFT 8
-#define CALL_PATH_BLOCK_SIZE (1 << CALL_PATH_BLOCK_SHIFT)
-#define CALL_PATH_BLOCK_MASK (CALL_PATH_BLOCK_SIZE - 1)
+#घोषणा CALL_PATH_BLOCK_SHIFT 8
+#घोषणा CALL_PATH_BLOCK_SIZE (1 << CALL_PATH_BLOCK_SHIFT)
+#घोषणा CALL_PATH_BLOCK_MASK (CALL_PATH_BLOCK_SIZE - 1)
 
-struct call_path_block {
-	struct call_path cp[CALL_PATH_BLOCK_SIZE];
-	struct list_head node;
-};
+काष्ठा call_path_block अणु
+	काष्ठा call_path cp[CALL_PATH_BLOCK_SIZE];
+	काष्ठा list_head node;
+पूर्ण;
 
 /**
- * struct call_path_root - root of all call paths.
+ * काष्ठा call_path_root - root of all call paths.
  * @call_path: root call path
  * @blocks: list of blocks to store call paths
- * @next: next free space
+ * @next: next मुक्त space
  * @sz: number of spaces
  */
-struct call_path_root {
-	struct call_path call_path;
-	struct list_head blocks;
-	size_t next;
-	size_t sz;
-};
+काष्ठा call_path_root अणु
+	काष्ठा call_path call_path;
+	काष्ठा list_head blocks;
+	माप_प्रकार next;
+	माप_प्रकार sz;
+पूर्ण;
 
-struct call_path_root *call_path_root__new(void);
-void call_path_root__free(struct call_path_root *cpr);
+काष्ठा call_path_root *call_path_root__new(व्योम);
+व्योम call_path_root__मुक्त(काष्ठा call_path_root *cpr);
 
-struct call_path *call_path__findnew(struct call_path_root *cpr,
-				     struct call_path *parent,
-				     struct symbol *sym, u64 ip, u64 ks);
+काष्ठा call_path *call_path__findnew(काष्ठा call_path_root *cpr,
+				     काष्ठा call_path *parent,
+				     काष्ठा symbol *sym, u64 ip, u64 ks);
 
-#endif
+#पूर्ण_अगर

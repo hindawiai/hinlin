@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SCREEN_INFO_H
-#define _SCREEN_INFO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SCREEN_INFO_H
+#घोषणा _SCREEN_INFO_H
 
-#include <uapi/linux/screen_info.h>
+#समावेश <uapi/linux/screen_info.h>
 
-extern struct screen_info screen_info;
+बाह्य काष्ठा screen_info screen_info;
 
-#endif /* _SCREEN_INFO_H */
+#पूर्ण_अगर /* _SCREEN_INFO_H */

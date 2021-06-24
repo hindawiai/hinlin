@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * pmi driver
  *
  * (C) Copyright IBM Deutschland Entwicklung GmbH 2005
  *
- * PMI (Platform Management Interrupt) is a way to communicate
- * with the BMC (Baseboard Management Controller) via interrupts.
+ * PMI (Platक्रमm Management Interrupt) is a way to communicate
+ * with the BMC (Baseboard Management Controller) via पूर्णांकerrupts.
  * Unlike IPMI it is bidirectional and has a low latency.
  *
  * Author: Christian Krafft <krafft@de.ibm.com>
  */
 
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/completion.h>
-#include <linux/spinlock.h>
-#include <linux/module.h>
-#include <linux/workqueue.h>
-#include <linux/of_device.h>
-#include <linux/of_platform.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/module.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/io.h>
-#include <asm/pmi.h>
-#include <asm/prom.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/pmi.h>
+#समावेश <यंत्र/prom.h>
 
-struct pmi_data {
-	struct list_head	handler;
+काष्ठा pmi_data अणु
+	काष्ठा list_head	handler;
 	spinlock_t		handler_spinlock;
 	spinlock_t		pmi_spinlock;
-	struct mutex		msg_mutex;
+	काष्ठा mutex		msg_mutex;
 	pmi_message_t		msg;
-	struct completion	*completion;
-	struct platform_device	*dev;
-	int			irq;
+	काष्ठा completion	*completion;
+	काष्ठा platक्रमm_device	*dev;
+	पूर्णांक			irq;
 	u8 __iomem		*pmi_reg;
-	struct work_struct	work;
-};
+	काष्ठा work_काष्ठा	work;
+पूर्ण;
 
-static struct pmi_data *data;
+अटल काष्ठा pmi_data *data;
 
-static irqreturn_t pmi_irq_handler(int irq, void *dev_id)
-{
+अटल irqवापस_t pmi_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
 	u8 type;
-	int rc;
+	पूर्णांक rc;
 
 	spin_lock(&data->pmi_spinlock);
 
-	type = ioread8(data->pmi_reg + PMI_READ_TYPE);
+	type = ioपढ़ो8(data->pmi_reg + PMI_READ_TYPE);
 	pr_debug("pmi: got message of type %d\n", type);
 
-	if (type & PMI_ACK && !data->completion) {
-		printk(KERN_WARNING "pmi: got unexpected ACK message.\n");
+	अगर (type & PMI_ACK && !data->completion) अणु
+		prपूर्णांकk(KERN_WARNING "pmi: got unexpected ACK message.\n");
 		rc = -EIO;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	if (data->completion && !(type & PMI_ACK)) {
-		printk(KERN_WARNING "pmi: expected ACK, but got %d\n", type);
+	अगर (data->completion && !(type & PMI_ACK)) अणु
+		prपूर्णांकk(KERN_WARNING "pmi: expected ACK, but got %d\n", type);
 		rc = -EIO;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	data->msg.type = type;
-	data->msg.data0 = ioread8(data->pmi_reg + PMI_READ_DATA0);
-	data->msg.data1 = ioread8(data->pmi_reg + PMI_READ_DATA1);
-	data->msg.data2 = ioread8(data->pmi_reg + PMI_READ_DATA2);
+	data->msg.data0 = ioपढ़ो8(data->pmi_reg + PMI_READ_DATA0);
+	data->msg.data1 = ioपढ़ो8(data->pmi_reg + PMI_READ_DATA1);
+	data->msg.data2 = ioपढ़ो8(data->pmi_reg + PMI_READ_DATA2);
 	rc = 0;
 unlock:
 	spin_unlock(&data->pmi_spinlock);
 
-	if (rc == -EIO) {
+	अगर (rc == -EIO) अणु
 		rc = IRQ_HANDLED;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (data->msg.type & PMI_ACK) {
+	अगर (data->msg.type & PMI_ACK) अणु
 		complete(data->completion);
 		rc = IRQ_HANDLED;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	schedule_work(&data->work);
 
 	rc = IRQ_HANDLED;
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-static const struct of_device_id pmi_match[] = {
-	{ .type = "ibm,pmi", .name = "ibm,pmi" },
-	{ .type = "ibm,pmi" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id pmi_match[] = अणु
+	अणु .type = "ibm,pmi", .name = "ibm,pmi" पूर्ण,
+	अणु .type = "ibm,pmi" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, pmi_match);
 
-static void pmi_notify_handlers(struct work_struct *work)
-{
-	struct pmi_handler *handler;
+अटल व्योम pmi_notअगरy_handlers(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pmi_handler *handler;
 
 	spin_lock(&data->handler_spinlock);
-	list_for_each_entry(handler, &data->handler, node) {
+	list_क्रम_each_entry(handler, &data->handler, node) अणु
 		pr_debug("pmi: notifying handler %p\n", handler);
-		if (handler->type == data->msg.type)
+		अगर (handler->type == data->msg.type)
 			handler->handle_pmi_message(data->msg);
-	}
+	पूर्ण
 	spin_unlock(&data->handler_spinlock);
-}
+पूर्ण
 
-static int pmi_of_probe(struct platform_device *dev)
-{
-	struct device_node *np = dev->dev.of_node;
-	int rc;
+अटल पूर्णांक pmi_of_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा device_node *np = dev->dev.of_node;
+	पूर्णांक rc;
 
-	if (data) {
-		printk(KERN_ERR "pmi: driver has already been initialized.\n");
+	अगर (data) अणु
+		prपूर्णांकk(KERN_ERR "pmi: driver has already been initialized.\n");
 		rc = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	data = kzalloc(sizeof(struct pmi_data), GFP_KERNEL);
-	if (!data) {
-		printk(KERN_ERR "pmi: could not allocate memory.\n");
+	data = kzalloc(माप(काष्ठा pmi_data), GFP_KERNEL);
+	अगर (!data) अणु
+		prपूर्णांकk(KERN_ERR "pmi: could not allocate memory.\n");
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	data->pmi_reg = of_iomap(np, 0);
-	if (!data->pmi_reg) {
-		printk(KERN_ERR "pmi: invalid register address.\n");
+	अगर (!data->pmi_reg) अणु
+		prपूर्णांकk(KERN_ERR "pmi: invalid register address.\n");
 		rc = -EFAULT;
-		goto error_cleanup_data;
-	}
+		जाओ error_cleanup_data;
+	पूर्ण
 
 	INIT_LIST_HEAD(&data->handler);
 
@@ -140,75 +141,75 @@ static int pmi_of_probe(struct platform_device *dev)
 	spin_lock_init(&data->pmi_spinlock);
 	spin_lock_init(&data->handler_spinlock);
 
-	INIT_WORK(&data->work, pmi_notify_handlers);
+	INIT_WORK(&data->work, pmi_notअगरy_handlers);
 
 	data->dev = dev;
 
 	data->irq = irq_of_parse_and_map(np, 0);
-	if (!data->irq) {
-		printk(KERN_ERR "pmi: invalid interrupt.\n");
+	अगर (!data->irq) अणु
+		prपूर्णांकk(KERN_ERR "pmi: invalid interrupt.\n");
 		rc = -EFAULT;
-		goto error_cleanup_iomap;
-	}
+		जाओ error_cleanup_iomap;
+	पूर्ण
 
-	rc = request_irq(data->irq, pmi_irq_handler, 0, "pmi", NULL);
-	if (rc) {
-		printk(KERN_ERR "pmi: can't request IRQ %d: returned %d\n",
+	rc = request_irq(data->irq, pmi_irq_handler, 0, "pmi", शून्य);
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR "pmi: can't request IRQ %d: returned %d\n",
 				data->irq, rc);
-		goto error_cleanup_iomap;
-	}
+		जाओ error_cleanup_iomap;
+	पूर्ण
 
-	printk(KERN_INFO "pmi: found pmi device at addr %p.\n", data->pmi_reg);
+	prपूर्णांकk(KERN_INFO "pmi: found pmi device at addr %p.\n", data->pmi_reg);
 
-	goto out;
+	जाओ out;
 
 error_cleanup_iomap:
 	iounmap(data->pmi_reg);
 
 error_cleanup_data:
-	kfree(data);
+	kमुक्त(data);
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pmi_of_remove(struct platform_device *dev)
-{
-	struct pmi_handler *handler, *tmp;
+अटल पूर्णांक pmi_of_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा pmi_handler *handler, *पंचांगp;
 
-	free_irq(data->irq, NULL);
+	मुक्त_irq(data->irq, शून्य);
 	iounmap(data->pmi_reg);
 
 	spin_lock(&data->handler_spinlock);
 
-	list_for_each_entry_safe(handler, tmp, &data->handler, node)
+	list_क्रम_each_entry_safe(handler, पंचांगp, &data->handler, node)
 		list_del(&handler->node);
 
 	spin_unlock(&data->handler_spinlock);
 
-	kfree(data);
-	data = NULL;
+	kमुक्त(data);
+	data = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver pmi_of_platform_driver = {
+अटल काष्ठा platक्रमm_driver pmi_of_platक्रमm_driver = अणु
 	.probe		= pmi_of_probe,
-	.remove		= pmi_of_remove,
-	.driver = {
+	.हटाओ		= pmi_of_हटाओ,
+	.driver = अणु
 		.name = "pmi",
 		.of_match_table = pmi_match,
-	},
-};
-module_platform_driver(pmi_of_platform_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(pmi_of_platक्रमm_driver);
 
-int pmi_send_message(pmi_message_t msg)
-{
-	unsigned long flags;
+पूर्णांक pmi_send_message(pmi_message_t msg)
+अणु
+	अचिन्हित दीर्घ flags;
 	DECLARE_COMPLETION_ONSTACK(completion);
 
-	if (!data)
-		return -ENODEV;
+	अगर (!data)
+		वापस -ENODEV;
 
 	mutex_lock(&data->msg_mutex);
 
@@ -218,50 +219,50 @@ int pmi_send_message(pmi_message_t msg)
 	data->completion = &completion;
 
 	spin_lock_irqsave(&data->pmi_spinlock, flags);
-	iowrite8(msg.data0, data->pmi_reg + PMI_WRITE_DATA0);
-	iowrite8(msg.data1, data->pmi_reg + PMI_WRITE_DATA1);
-	iowrite8(msg.data2, data->pmi_reg + PMI_WRITE_DATA2);
-	iowrite8(msg.type, data->pmi_reg + PMI_WRITE_TYPE);
+	ioग_लिखो8(msg.data0, data->pmi_reg + PMI_WRITE_DATA0);
+	ioग_लिखो8(msg.data1, data->pmi_reg + PMI_WRITE_DATA1);
+	ioग_लिखो8(msg.data2, data->pmi_reg + PMI_WRITE_DATA2);
+	ioग_लिखो8(msg.type, data->pmi_reg + PMI_WRITE_TYPE);
 	spin_unlock_irqrestore(&data->pmi_spinlock, flags);
 
 	pr_debug("pmi_send_message: wait for completion\n");
 
-	wait_for_completion_interruptible_timeout(data->completion,
+	रुको_क्रम_completion_पूर्णांकerruptible_समयout(data->completion,
 						  PMI_TIMEOUT);
 
-	data->completion = NULL;
+	data->completion = शून्य;
 
 	mutex_unlock(&data->msg_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pmi_send_message);
 
-int pmi_register_handler(struct pmi_handler *handler)
-{
-	if (!data)
-		return -ENODEV;
+पूर्णांक pmi_रेजिस्टर_handler(काष्ठा pmi_handler *handler)
+अणु
+	अगर (!data)
+		वापस -ENODEV;
 
 	spin_lock(&data->handler_spinlock);
 	list_add_tail(&handler->node, &data->handler);
 	spin_unlock(&data->handler_spinlock);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(pmi_register_handler);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(pmi_रेजिस्टर_handler);
 
-void pmi_unregister_handler(struct pmi_handler *handler)
-{
-	if (!data)
-		return;
+व्योम pmi_unरेजिस्टर_handler(काष्ठा pmi_handler *handler)
+अणु
+	अगर (!data)
+		वापस;
 
 	pr_debug("pmi: unregistering handler %p\n", handler);
 
 	spin_lock(&data->handler_spinlock);
 	list_del(&handler->node);
 	spin_unlock(&data->handler_spinlock);
-}
-EXPORT_SYMBOL_GPL(pmi_unregister_handler);
+पूर्ण
+EXPORT_SYMBOL_GPL(pmi_unरेजिस्टर_handler);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Christian Krafft <krafft@de.ibm.com>");

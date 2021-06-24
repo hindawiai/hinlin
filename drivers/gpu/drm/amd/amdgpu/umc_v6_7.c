@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2021 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,31 +21,31 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include "umc_v6_7.h"
-#include "amdgpu_ras.h"
-#include "amdgpu_umc.h"
-#include "amdgpu.h"
+#समावेश "umc_v6_7.h"
+#समावेश "amdgpu_ras.h"
+#समावेश "amdgpu_umc.h"
+#समावेश "amdgpu.h"
 
-#include "umc/umc_6_7_0_offset.h"
-#include "umc/umc_6_7_0_sh_mask.h"
+#समावेश "umc/umc_6_7_0_offset.h"
+#समावेश "umc/umc_6_7_0_sh_mask.h"
 
-static inline uint32_t get_umc_v6_7_reg_offset(struct amdgpu_device *adev,
-					      uint32_t umc_inst,
-					      uint32_t ch_inst)
-{
-	return adev->umc.channel_offs * ch_inst + UMC_V6_7_INST_DIST * umc_inst;
-}
+अटल अंतरभूत uपूर्णांक32_t get_umc_v6_7_reg_offset(काष्ठा amdgpu_device *adev,
+					      uपूर्णांक32_t umc_inst,
+					      uपूर्णांक32_t ch_inst)
+अणु
+	वापस adev->umc.channel_offs * ch_inst + UMC_V6_7_INST_DIST * umc_inst;
+पूर्ण
 
-static void umc_v6_7_query_correctable_error_count(struct amdgpu_device *adev,
-						   uint32_t umc_reg_offset,
-						   unsigned long *error_count)
-{
-	uint32_t ecc_err_cnt_sel, ecc_err_cnt_sel_addr;
-	uint32_t ecc_err_cnt, ecc_err_cnt_addr;
-	uint64_t mc_umc_status;
-	uint32_t mc_umc_status_addr;
+अटल व्योम umc_v6_7_query_correctable_error_count(काष्ठा amdgpu_device *adev,
+						   uपूर्णांक32_t umc_reg_offset,
+						   अचिन्हित दीर्घ *error_count)
+अणु
+	uपूर्णांक32_t ecc_err_cnt_sel, ecc_err_cnt_sel_addr;
+	uपूर्णांक32_t ecc_err_cnt, ecc_err_cnt_addr;
+	uपूर्णांक64_t mc_umc_status;
+	uपूर्णांक32_t mc_umc_status_addr;
 
-	/* UMC 6_1_1 registers */
+	/* UMC 6_1_1 रेजिस्टरs */
 	ecc_err_cnt_sel_addr =
 		SOC15_REG_OFFSET(UMC, 0, regUMCCH0_0_EccErrCntSel);
 	ecc_err_cnt_addr =
@@ -73,40 +74,40 @@ static void umc_v6_7_query_correctable_error_count(struct amdgpu_device *adev,
 		(REG_GET_FIELD(ecc_err_cnt, UMCCH0_0_EccErrCnt, EccErrCnt) -
 		 UMC_V6_7_CE_CNT_INIT);
 
-	/* check for SRAM correctable error
-	  MCUMC_STATUS is a 64 bit register */
+	/* check क्रम SRAM correctable error
+	  MCUMC_STATUS is a 64 bit रेजिस्टर */
 	mc_umc_status = RREG64_PCIE((mc_umc_status_addr + umc_reg_offset) * 4);
-	if (REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, Val) == 1 &&
+	अगर (REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, Val) == 1 &&
 	    REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, CECC) == 1)
 		*error_count += 1;
-}
+पूर्ण
 
-static void umc_v6_7_querry_uncorrectable_error_count(struct amdgpu_device *adev,
-						      uint32_t umc_reg_offset,
-						      unsigned long *error_count)
-{
-	uint64_t mc_umc_status;
-	uint32_t mc_umc_status_addr;
+अटल व्योम umc_v6_7_querry_uncorrectable_error_count(काष्ठा amdgpu_device *adev,
+						      uपूर्णांक32_t umc_reg_offset,
+						      अचिन्हित दीर्घ *error_count)
+अणु
+	uपूर्णांक64_t mc_umc_status;
+	uपूर्णांक32_t mc_umc_status_addr;
 
 	mc_umc_status_addr =
 		SOC15_REG_OFFSET(UMC, 0, regMCA_UMC_UMC0_MCUMC_STATUST0);
 
 	/* check the MCUMC_STATUS */
 	mc_umc_status = RREG64_PCIE((mc_umc_status_addr + umc_reg_offset) * 4);
-	if ((REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, Val) == 1) &&
+	अगर ((REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, Val) == 1) &&
 	    (REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, Deferred) == 1 ||
 	    REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, UECC) == 1 ||
 	    REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, PCC) == 1 ||
 	    REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, UC) == 1 ||
 	    REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, TCC) == 1))
 		*error_count += 1;
-}
+पूर्ण
 
-static void umc_v6_7_reset_error_count_per_channel(struct amdgpu_device *adev,
-						   uint32_t umc_reg_offset)
-{
-	uint32_t ecc_err_cnt_addr;
-	uint32_t ecc_err_cnt_sel, ecc_err_cnt_sel_addr;
+अटल व्योम umc_v6_7_reset_error_count_per_channel(काष्ठा amdgpu_device *adev,
+						   uपूर्णांक32_t umc_reg_offset)
+अणु
+	uपूर्णांक32_t ecc_err_cnt_addr;
+	uपूर्णांक32_t ecc_err_cnt_sel, ecc_err_cnt_sel_addr;
 
 	ecc_err_cnt_sel_addr =
 		SOC15_REG_OFFSET(UMC, 0,
@@ -140,36 +141,36 @@ static void umc_v6_7_reset_error_count_per_channel(struct amdgpu_device *adev,
 	/* clear higher chip error count */
 	WREG32_PCIE((ecc_err_cnt_addr + umc_reg_offset) * 4,
 			UMC_V6_7_CE_CNT_INIT);
-}
+पूर्ण
 
-static void umc_v6_7_reset_error_count(struct amdgpu_device *adev)
-{
-	uint32_t umc_inst        = 0;
-	uint32_t ch_inst         = 0;
-	uint32_t umc_reg_offset  = 0;
+अटल व्योम umc_v6_7_reset_error_count(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक32_t umc_inst        = 0;
+	uपूर्णांक32_t ch_inst         = 0;
+	uपूर्णांक32_t umc_reg_offset  = 0;
 
-	LOOP_UMC_INST_AND_CH(umc_inst, ch_inst) {
+	LOOP_UMC_INST_AND_CH(umc_inst, ch_inst) अणु
 		umc_reg_offset = get_umc_v6_7_reg_offset(adev,
 							 umc_inst,
 							 ch_inst);
 
 		umc_v6_7_reset_error_count_per_channel(adev,
 						       umc_reg_offset);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void umc_v6_7_query_ras_error_count(struct amdgpu_device *adev,
-					   void *ras_error_status)
-{
-	struct ras_err_data *err_data = (struct ras_err_data *)ras_error_status;
+अटल व्योम umc_v6_7_query_ras_error_count(काष्ठा amdgpu_device *adev,
+					   व्योम *ras_error_status)
+अणु
+	काष्ठा ras_err_data *err_data = (काष्ठा ras_err_data *)ras_error_status;
 
-	uint32_t umc_inst        = 0;
-	uint32_t ch_inst         = 0;
-	uint32_t umc_reg_offset  = 0;
+	uपूर्णांक32_t umc_inst        = 0;
+	uपूर्णांक32_t ch_inst         = 0;
+	uपूर्णांक32_t umc_reg_offset  = 0;
 
 	/*TODO: driver needs to toggle DF Cstate to ensure
-	 * safe access of UMC registers. Will add the protection */
-	LOOP_UMC_INST_AND_CH(umc_inst, ch_inst) {
+	 * safe access of UMC रेजिस्टरs. Will add the protection */
+	LOOP_UMC_INST_AND_CH(umc_inst, ch_inst) अणु
 		umc_reg_offset = get_umc_v6_7_reg_offset(adev,
 							 umc_inst,
 							 ch_inst);
@@ -179,21 +180,21 @@ static void umc_v6_7_query_ras_error_count(struct amdgpu_device *adev,
 		umc_v6_7_querry_uncorrectable_error_count(adev,
 							  umc_reg_offset,
 							  &(err_data->ue_count));
-	}
+	पूर्ण
 
 	umc_v6_7_reset_error_count(adev);
-}
+पूर्ण
 
-static void umc_v6_7_query_error_address(struct amdgpu_device *adev,
-					 struct ras_err_data *err_data,
-					 uint32_t umc_reg_offset,
-					 uint32_t ch_inst,
-					 uint32_t umc_inst)
-{
-	uint32_t mc_umc_status_addr;
-	uint64_t mc_umc_status, err_addr, retired_page, mc_umc_addrt0;
-	struct eeprom_table_record *err_rec;
-	uint32_t channel_index;
+अटल व्योम umc_v6_7_query_error_address(काष्ठा amdgpu_device *adev,
+					 काष्ठा ras_err_data *err_data,
+					 uपूर्णांक32_t umc_reg_offset,
+					 uपूर्णांक32_t ch_inst,
+					 uपूर्णांक32_t umc_inst)
+अणु
+	uपूर्णांक32_t mc_umc_status_addr;
+	uपूर्णांक64_t mc_umc_status, err_addr, retired_page, mc_umc_addrt0;
+	काष्ठा eeprom_table_record *err_rec;
+	uपूर्णांक32_t channel_index;
 
 	mc_umc_status_addr =
 		SOC15_REG_OFFSET(UMC, 0, regMCA_UMC_UMC0_MCUMC_STATUST0);
@@ -202,24 +203,24 @@ static void umc_v6_7_query_error_address(struct amdgpu_device *adev,
 
 	mc_umc_status = RREG64_PCIE((mc_umc_status_addr + umc_reg_offset) * 4);
 
-	if (mc_umc_status == 0)
-		return;
+	अगर (mc_umc_status == 0)
+		वापस;
 
-	if (!err_data->err_addr) {
+	अगर (!err_data->err_addr) अणु
 		/* clear umc status */
 		WREG64_PCIE((mc_umc_status_addr + umc_reg_offset) * 4, 0x0ULL);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	err_rec = &err_data->err_addr[err_data->err_addr_cnt];
 
 	channel_index =
 		adev->umc.channel_idx_tbl[umc_inst * adev->umc.channel_inst_num + ch_inst];
 
-	/* calculate error address if ue/ce error is detected */
-	if (REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, Val) == 1 &&
+	/* calculate error address अगर ue/ce error is detected */
+	अगर (REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, Val) == 1 &&
 	    (REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, UECC) == 1 ||
-	    REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, CECC) == 1)) {
+	    REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, CECC) == 1)) अणु
 
 		err_addr = RREG64_PCIE((mc_umc_addrt0 + umc_reg_offset) * 4);
 		err_addr = REG_GET_FIELD(err_addr, MCA_UMC_UMC0_MCUMC_ADDRT0, ErrorAddr);
@@ -229,39 +230,39 @@ static void umc_v6_7_query_error_address(struct amdgpu_device *adev,
 				ADDR_OF_256B_BLOCK(channel_index) |
 				OFFSET_IN_256B_BLOCK(err_addr);
 
-		/* we only save ue error information currently, ce is skipped */
-		if (REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, UECC)
-				== 1) {
+		/* we only save ue error inक्रमmation currently, ce is skipped */
+		अगर (REG_GET_FIELD(mc_umc_status, MCA_UMC_UMC0_MCUMC_STATUST0, UECC)
+				== 1) अणु
 			err_rec->address = err_addr;
 			/* page frame address is saved */
 			err_rec->retired_page = retired_page >> AMDGPU_GPU_PAGE_SHIFT;
-			err_rec->ts = (uint64_t)ktime_get_real_seconds();
+			err_rec->ts = (uपूर्णांक64_t)kसमय_get_real_seconds();
 			err_rec->err_type = AMDGPU_RAS_EEPROM_ERR_NON_RECOVERABLE;
 			err_rec->cu = 0;
 			err_rec->mem_channel = channel_index;
 			err_rec->mcumc_id = umc_inst;
 
 			err_data->err_addr_cnt++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* clear umc status */
 	WREG64_PCIE((mc_umc_status_addr + umc_reg_offset) * 4, 0x0ULL);
-}
+पूर्ण
 
-static void umc_v6_7_query_ras_error_address(struct amdgpu_device *adev,
-					     void *ras_error_status)
-{
-	struct ras_err_data *err_data = (struct ras_err_data *)ras_error_status;
+अटल व्योम umc_v6_7_query_ras_error_address(काष्ठा amdgpu_device *adev,
+					     व्योम *ras_error_status)
+अणु
+	काष्ठा ras_err_data *err_data = (काष्ठा ras_err_data *)ras_error_status;
 
-	uint32_t umc_inst        = 0;
-	uint32_t ch_inst         = 0;
-	uint32_t umc_reg_offset  = 0;
+	uपूर्णांक32_t umc_inst        = 0;
+	uपूर्णांक32_t ch_inst         = 0;
+	uपूर्णांक32_t umc_reg_offset  = 0;
 
 	/*TODO: driver needs to toggle DF Cstate to ensure
 	 * safe access of UMC resgisters. Will add the protection
-	 * when firmware interface is ready */
-	LOOP_UMC_INST_AND_CH(umc_inst, ch_inst) {
+	 * when firmware पूर्णांकerface is पढ़ोy */
+	LOOP_UMC_INST_AND_CH(umc_inst, ch_inst) अणु
 		umc_reg_offset = get_umc_v6_7_reg_offset(adev,
 							 umc_inst,
 							 ch_inst);
@@ -270,12 +271,12 @@ static void umc_v6_7_query_ras_error_address(struct amdgpu_device *adev,
 					     umc_reg_offset,
 					     ch_inst,
 					     umc_inst);
-	}
-}
+	पूर्ण
+पूर्ण
 
-const struct amdgpu_umc_ras_funcs umc_v6_7_ras_funcs = {
+स्थिर काष्ठा amdgpu_umc_ras_funcs umc_v6_7_ras_funcs = अणु
 	.ras_late_init = amdgpu_umc_ras_late_init,
 	.ras_fini = amdgpu_umc_ras_fini,
 	.query_ras_error_count = umc_v6_7_query_ras_error_count,
 	.query_ras_error_address = umc_v6_7_query_ras_error_address,
-};
+पूर्ण;

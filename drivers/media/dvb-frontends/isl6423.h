@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Intersil ISL6423 SEC and LNB Power supply controller
 
@@ -6,46 +7,46 @@
 
 */
 
-#ifndef __ISL_6423_H
-#define __ISL_6423_H
+#अगर_अघोषित __ISL_6423_H
+#घोषणा __ISL_6423_H
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-enum isl6423_current {
+क्रमागत isl6423_current अणु
 	SEC_CURRENT_275m = 0,
 	SEC_CURRENT_515m,
 	SEC_CURRENT_635m,
 	SEC_CURRENT_800m,
-};
+पूर्ण;
 
-enum isl6423_curlim {
+क्रमागत isl6423_curlim अणु
 	SEC_CURRENT_LIM_ON = 1,
 	SEC_CURRENT_LIM_OFF
-};
+पूर्ण;
 
-struct isl6423_config {
-	enum isl6423_current current_max;
-	enum isl6423_curlim curlim;
+काष्ठा isl6423_config अणु
+	क्रमागत isl6423_current current_max;
+	क्रमागत isl6423_curlim curlim;
 	u8 addr;
-	u8 mod_extern;
-};
+	u8 mod_बाह्य;
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_ISL6423)
+#अगर IS_REACHABLE(CONFIG_DVB_ISL6423)
 
 
-extern struct dvb_frontend *isl6423_attach(struct dvb_frontend *fe,
-					   struct i2c_adapter *i2c,
-					   const struct isl6423_config *config);
+बाह्य काष्ठा dvb_frontend *isl6423_attach(काष्ठा dvb_frontend *fe,
+					   काष्ठा i2c_adapter *i2c,
+					   स्थिर काष्ठा isl6423_config *config);
 
-#else
-static inline struct dvb_frontend *isl6423_attach(struct dvb_frontend *fe,
-						  struct i2c_adapter *i2c,
-						  const struct isl6423_config *config)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *isl6423_attach(काष्ठा dvb_frontend *fe,
+						  काष्ठा i2c_adapter *i2c,
+						  स्थिर काष्ठा isl6423_config *config)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
 
-#endif /* CONFIG_DVB_ISL6423 */
+#पूर्ण_अगर /* CONFIG_DVB_ISL6423 */
 
-#endif /* __ISL_6423_H */
+#पूर्ण_अगर /* __ISL_6423_H */

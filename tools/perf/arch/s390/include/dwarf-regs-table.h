@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef S390_DWARF_REGS_TABLE_H
-#define S390_DWARF_REGS_TABLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित S390_DWARF_REGS_TABLE_H
+#घोषणा S390_DWARF_REGS_TABLE_H
 
-#define REG_DWARFNUM_NAME(reg, idx)	[idx] = "%" #reg
+#घोषणा REG_DWARFNUM_NAME(reg, idx)	[idx] = "%" #reg
 
 /*
- * For reference, see DWARF register mapping:
- * http://refspecs.linuxfoundation.org/ELF/zSeries/lzsabi0_s390/x1542.html
+ * For reference, see DWARF रेजिस्टर mapping:
+ * http://refspecs.linuxfoundation.org/ELF/zSeries/lzsabi0_s390/x1542.hपंचांगl
  */
-static const char * const s390_dwarf_regs[] = {
+अटल स्थिर अक्षर * स्थिर s390_dwarf_regs[] = अणु
 	"%r0", "%r1",  "%r2",  "%r3",  "%r4",  "%r5",  "%r6",  "%r7",
 	"%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15",
 	REG_DWARFNUM_NAME(f0, 16),
@@ -61,12 +62,12 @@ static const char * const s390_dwarf_regs[] = {
 	REG_DWARFNUM_NAME(a15, 63),
 	REG_DWARFNUM_NAME(pswm, 64),
 	REG_DWARFNUM_NAME(pswa, 65),
-};
+पूर्ण;
 
-#ifdef DEFINE_DWARF_REGSTR_TABLE
+#अगर_घोषित DEFINE_DWARF_REGSTR_TABLE
 /* This is included in perf/util/dwarf-regs.c */
 
-#define s390_regstr_tbl s390_dwarf_regs
+#घोषणा s390_regstr_tbl s390_dwarf_regs
 
-#endif	/* DEFINE_DWARF_REGSTR_TABLE */
-#endif	/* S390_DWARF_REGS_TABLE_H */
+#पूर्ण_अगर	/* DEFINE_DWARF_REGSTR_TABLE */
+#पूर्ण_अगर	/* S390_DWARF_REGS_TABLE_H */

@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* Expectation handling for nf_conntrack. */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* Expectation handling क्रम nf_conntrack. */
 
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2006 Netfilter Core Team <coreteam@netfilter.org>
@@ -7,54 +8,54 @@
  * (c) 2005-2012 Patrick McHardy <kaber@trash.net>
  */
 
-#include <linux/types.h>
-#include <linux/netfilter.h>
-#include <linux/skbuff.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/stddef.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/percpu.h>
-#include <linux/kernel.h>
-#include <linux/jhash.h>
-#include <linux/moduleparam.h>
-#include <linux/export.h>
-#include <net/net_namespace.h>
-#include <net/netns/hash.h>
+#समावेश <linux/types.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/export.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/hash.h>
 
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_core.h>
-#include <net/netfilter/nf_conntrack_ecache.h>
-#include <net/netfilter/nf_conntrack_expect.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <net/netfilter/nf_conntrack_l4proto.h>
-#include <net/netfilter/nf_conntrack_tuple.h>
-#include <net/netfilter/nf_conntrack_zones.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_core.h>
+#समावेश <net/netfilter/nf_conntrack_ecache.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <net/netfilter/nf_conntrack_l4proto.h>
+#समावेश <net/netfilter/nf_conntrack_tuple.h>
+#समावेश <net/netfilter/nf_conntrack_zones.h>
 
-unsigned int nf_ct_expect_hsize __read_mostly;
+अचिन्हित पूर्णांक nf_ct_expect_hsize __पढ़ो_mostly;
 EXPORT_SYMBOL_GPL(nf_ct_expect_hsize);
 
-struct hlist_head *nf_ct_expect_hash __read_mostly;
+काष्ठा hlist_head *nf_ct_expect_hash __पढ़ो_mostly;
 EXPORT_SYMBOL_GPL(nf_ct_expect_hash);
 
-unsigned int nf_ct_expect_max __read_mostly;
+अचिन्हित पूर्णांक nf_ct_expect_max __पढ़ो_mostly;
 
-static struct kmem_cache *nf_ct_expect_cachep __read_mostly;
-static unsigned int nf_ct_expect_hashrnd __read_mostly;
+अटल काष्ठा kmem_cache *nf_ct_expect_cachep __पढ़ो_mostly;
+अटल अचिन्हित पूर्णांक nf_ct_expect_hashrnd __पढ़ो_mostly;
 
-extern unsigned int nf_conntrack_net_id;
+बाह्य अचिन्हित पूर्णांक nf_conntrack_net_id;
 
 /* nf_conntrack_expect helper functions */
-void nf_ct_unlink_expect_report(struct nf_conntrack_expect *exp,
-				u32 portid, int report)
-{
-	struct nf_conn_help *master_help = nfct_help(exp->master);
-	struct net *net = nf_ct_exp_net(exp);
-	struct nf_conntrack_net *cnet;
+व्योम nf_ct_unlink_expect_report(काष्ठा nf_conntrack_expect *exp,
+				u32 portid, पूर्णांक report)
+अणु
+	काष्ठा nf_conn_help *master_help = nfct_help(exp->master);
+	काष्ठा net *net = nf_ct_exp_net(exp);
+	काष्ठा nf_conntrack_net *cnet;
 
 	WARN_ON(!master_help);
-	WARN_ON(timer_pending(&exp->timeout));
+	WARN_ON(समयr_pending(&exp->समयout));
 
 	hlist_del_rcu(&exp->hnode);
 
@@ -68,330 +69,330 @@ void nf_ct_unlink_expect_report(struct nf_conntrack_expect *exp,
 	nf_ct_expect_put(exp);
 
 	NF_CT_STAT_INC(net, expect_delete);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_ct_unlink_expect_report);
 
-static void nf_ct_expectation_timed_out(struct timer_list *t)
-{
-	struct nf_conntrack_expect *exp = from_timer(exp, t, timeout);
+अटल व्योम nf_ct_expectation_समयd_out(काष्ठा समयr_list *t)
+अणु
+	काष्ठा nf_conntrack_expect *exp = from_समयr(exp, t, समयout);
 
 	spin_lock_bh(&nf_conntrack_expect_lock);
 	nf_ct_unlink_expect(exp);
 	spin_unlock_bh(&nf_conntrack_expect_lock);
 	nf_ct_expect_put(exp);
-}
+पूर्ण
 
-static unsigned int nf_ct_expect_dst_hash(const struct net *n, const struct nf_conntrack_tuple *tuple)
-{
-	unsigned int hash, seed;
+अटल अचिन्हित पूर्णांक nf_ct_expect_dst_hash(स्थिर काष्ठा net *n, स्थिर काष्ठा nf_conntrack_tuple *tuple)
+अणु
+	अचिन्हित पूर्णांक hash, seed;
 
-	get_random_once(&nf_ct_expect_hashrnd, sizeof(nf_ct_expect_hashrnd));
+	get_अक्रमom_once(&nf_ct_expect_hashrnd, माप(nf_ct_expect_hashrnd));
 
 	seed = nf_ct_expect_hashrnd ^ net_hash_mix(n);
 
 	hash = jhash2(tuple->dst.u3.all, ARRAY_SIZE(tuple->dst.u3.all),
 		      (((tuple->dst.protonum ^ tuple->src.l3num) << 16) |
-		       (__force __u16)tuple->dst.u.all) ^ seed);
+		       (__क्रमce __u16)tuple->dst.u.all) ^ seed);
 
-	return reciprocal_scale(hash, nf_ct_expect_hsize);
-}
+	वापस reciprocal_scale(hash, nf_ct_expect_hsize);
+पूर्ण
 
-static bool
-nf_ct_exp_equal(const struct nf_conntrack_tuple *tuple,
-		const struct nf_conntrack_expect *i,
-		const struct nf_conntrack_zone *zone,
-		const struct net *net)
-{
-	return nf_ct_tuple_mask_cmp(tuple, &i->tuple, &i->mask) &&
+अटल bool
+nf_ct_exp_equal(स्थिर काष्ठा nf_conntrack_tuple *tuple,
+		स्थिर काष्ठा nf_conntrack_expect *i,
+		स्थिर काष्ठा nf_conntrack_zone *zone,
+		स्थिर काष्ठा net *net)
+अणु
+	वापस nf_ct_tuple_mask_cmp(tuple, &i->tuple, &i->mask) &&
 	       net_eq(net, nf_ct_net(i->master)) &&
 	       nf_ct_zone_equal_any(i->master, zone);
-}
+पूर्ण
 
-bool nf_ct_remove_expect(struct nf_conntrack_expect *exp)
-{
-	if (del_timer(&exp->timeout)) {
+bool nf_ct_हटाओ_expect(काष्ठा nf_conntrack_expect *exp)
+अणु
+	अगर (del_समयr(&exp->समयout)) अणु
 		nf_ct_unlink_expect(exp);
 		nf_ct_expect_put(exp);
-		return true;
-	}
-	return false;
-}
-EXPORT_SYMBOL_GPL(nf_ct_remove_expect);
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
+EXPORT_SYMBOL_GPL(nf_ct_हटाओ_expect);
 
-struct nf_conntrack_expect *
-__nf_ct_expect_find(struct net *net,
-		    const struct nf_conntrack_zone *zone,
-		    const struct nf_conntrack_tuple *tuple)
-{
-	struct nf_conntrack_net *cnet = net_generic(net, nf_conntrack_net_id);
-	struct nf_conntrack_expect *i;
-	unsigned int h;
+काष्ठा nf_conntrack_expect *
+__nf_ct_expect_find(काष्ठा net *net,
+		    स्थिर काष्ठा nf_conntrack_zone *zone,
+		    स्थिर काष्ठा nf_conntrack_tuple *tuple)
+अणु
+	काष्ठा nf_conntrack_net *cnet = net_generic(net, nf_conntrack_net_id);
+	काष्ठा nf_conntrack_expect *i;
+	अचिन्हित पूर्णांक h;
 
-	if (!cnet->expect_count)
-		return NULL;
+	अगर (!cnet->expect_count)
+		वापस शून्य;
 
 	h = nf_ct_expect_dst_hash(net, tuple);
-	hlist_for_each_entry_rcu(i, &nf_ct_expect_hash[h], hnode) {
-		if (nf_ct_exp_equal(tuple, i, zone, net))
-			return i;
-	}
-	return NULL;
-}
+	hlist_क्रम_each_entry_rcu(i, &nf_ct_expect_hash[h], hnode) अणु
+		अगर (nf_ct_exp_equal(tuple, i, zone, net))
+			वापस i;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(__nf_ct_expect_find);
 
 /* Just find a expectation corresponding to a tuple. */
-struct nf_conntrack_expect *
-nf_ct_expect_find_get(struct net *net,
-		      const struct nf_conntrack_zone *zone,
-		      const struct nf_conntrack_tuple *tuple)
-{
-	struct nf_conntrack_expect *i;
+काष्ठा nf_conntrack_expect *
+nf_ct_expect_find_get(काष्ठा net *net,
+		      स्थिर काष्ठा nf_conntrack_zone *zone,
+		      स्थिर काष्ठा nf_conntrack_tuple *tuple)
+अणु
+	काष्ठा nf_conntrack_expect *i;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	i = __nf_ct_expect_find(net, zone, tuple);
-	if (i && !refcount_inc_not_zero(&i->use))
-		i = NULL;
-	rcu_read_unlock();
+	अगर (i && !refcount_inc_not_zero(&i->use))
+		i = शून्य;
+	rcu_पढ़ो_unlock();
 
-	return i;
-}
+	वापस i;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_ct_expect_find_get);
 
-/* If an expectation for this connection is found, it gets delete from
- * global list then returned. */
-struct nf_conntrack_expect *
-nf_ct_find_expectation(struct net *net,
-		       const struct nf_conntrack_zone *zone,
-		       const struct nf_conntrack_tuple *tuple)
-{
-	struct nf_conntrack_net *cnet = net_generic(net, nf_conntrack_net_id);
-	struct nf_conntrack_expect *i, *exp = NULL;
-	unsigned int h;
+/* If an expectation क्रम this connection is found, it माला_लो delete from
+ * global list then वापसed. */
+काष्ठा nf_conntrack_expect *
+nf_ct_find_expectation(काष्ठा net *net,
+		       स्थिर काष्ठा nf_conntrack_zone *zone,
+		       स्थिर काष्ठा nf_conntrack_tuple *tuple)
+अणु
+	काष्ठा nf_conntrack_net *cnet = net_generic(net, nf_conntrack_net_id);
+	काष्ठा nf_conntrack_expect *i, *exp = शून्य;
+	अचिन्हित पूर्णांक h;
 
-	if (!cnet->expect_count)
-		return NULL;
+	अगर (!cnet->expect_count)
+		वापस शून्य;
 
 	h = nf_ct_expect_dst_hash(net, tuple);
-	hlist_for_each_entry(i, &nf_ct_expect_hash[h], hnode) {
-		if (!(i->flags & NF_CT_EXPECT_INACTIVE) &&
-		    nf_ct_exp_equal(tuple, i, zone, net)) {
+	hlist_क्रम_each_entry(i, &nf_ct_expect_hash[h], hnode) अणु
+		अगर (!(i->flags & NF_CT_EXPECT_INACTIVE) &&
+		    nf_ct_exp_equal(tuple, i, zone, net)) अणु
 			exp = i;
-			break;
-		}
-	}
-	if (!exp)
-		return NULL;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!exp)
+		वापस शून्य;
 
 	/* If master is not in hash table yet (ie. packet hasn't left
 	   this machine yet), how can other end know about expected?
-	   Hence these are not the droids you are looking for (if
+	   Hence these are not the droids you are looking क्रम (अगर
 	   master ct never got confirmed, we'd hold a reference to it
 	   and weird things would happen to future packets). */
-	if (!nf_ct_is_confirmed(exp->master))
-		return NULL;
+	अगर (!nf_ct_is_confirmed(exp->master))
+		वापस शून्य;
 
-	/* Avoid race with other CPUs, that for exp->master ct, is
-	 * about to invoke ->destroy(), or nf_ct_delete() via timeout
+	/* Aव्योम race with other CPUs, that क्रम exp->master ct, is
+	 * about to invoke ->destroy(), or nf_ct_delete() via समयout
 	 * or early_drop().
 	 *
 	 * The atomic_inc_not_zero() check tells:  If that fails, we
 	 * know that the ct is being destroyed.  If it succeeds, we
 	 * can be sure the ct cannot disappear underneath.
 	 */
-	if (unlikely(nf_ct_is_dying(exp->master) ||
+	अगर (unlikely(nf_ct_is_dying(exp->master) ||
 		     !atomic_inc_not_zero(&exp->master->ct_general.use)))
-		return NULL;
+		वापस शून्य;
 
-	if (exp->flags & NF_CT_EXPECT_PERMANENT) {
+	अगर (exp->flags & NF_CT_EXPECT_PERMANENT) अणु
 		refcount_inc(&exp->use);
-		return exp;
-	} else if (del_timer(&exp->timeout)) {
+		वापस exp;
+	पूर्ण अन्यथा अगर (del_समयr(&exp->समयout)) अणु
 		nf_ct_unlink_expect(exp);
-		return exp;
-	}
-	/* Undo exp->master refcnt increase, if del_timer() failed */
+		वापस exp;
+	पूर्ण
+	/* Unकरो exp->master refcnt increase, अगर del_समयr() failed */
 	nf_ct_put(exp->master);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* delete all expectations for this conntrack */
-void nf_ct_remove_expectations(struct nf_conn *ct)
-{
-	struct nf_conn_help *help = nfct_help(ct);
-	struct nf_conntrack_expect *exp;
-	struct hlist_node *next;
+/* delete all expectations क्रम this conntrack */
+व्योम nf_ct_हटाओ_expectations(काष्ठा nf_conn *ct)
+अणु
+	काष्ठा nf_conn_help *help = nfct_help(ct);
+	काष्ठा nf_conntrack_expect *exp;
+	काष्ठा hlist_node *next;
 
 	/* Optimization: most connection never expect any others. */
-	if (!help)
-		return;
+	अगर (!help)
+		वापस;
 
 	spin_lock_bh(&nf_conntrack_expect_lock);
-	hlist_for_each_entry_safe(exp, next, &help->expectations, lnode) {
-		nf_ct_remove_expect(exp);
-	}
+	hlist_क्रम_each_entry_safe(exp, next, &help->expectations, lnode) अणु
+		nf_ct_हटाओ_expect(exp);
+	पूर्ण
 	spin_unlock_bh(&nf_conntrack_expect_lock);
-}
-EXPORT_SYMBOL_GPL(nf_ct_remove_expectations);
+पूर्ण
+EXPORT_SYMBOL_GPL(nf_ct_हटाओ_expectations);
 
 /* Would two expected things clash? */
-static inline int expect_clash(const struct nf_conntrack_expect *a,
-			       const struct nf_conntrack_expect *b)
-{
-	/* Part covered by intersection of masks must be unequal,
+अटल अंतरभूत पूर्णांक expect_clash(स्थिर काष्ठा nf_conntrack_expect *a,
+			       स्थिर काष्ठा nf_conntrack_expect *b)
+अणु
+	/* Part covered by पूर्णांकersection of masks must be unequal,
 	   otherwise they clash */
-	struct nf_conntrack_tuple_mask intersect_mask;
-	int count;
+	काष्ठा nf_conntrack_tuple_mask पूर्णांकersect_mask;
+	पूर्णांक count;
 
-	intersect_mask.src.u.all = a->mask.src.u.all & b->mask.src.u.all;
+	पूर्णांकersect_mask.src.u.all = a->mask.src.u.all & b->mask.src.u.all;
 
-	for (count = 0; count < NF_CT_TUPLE_L3SIZE; count++){
-		intersect_mask.src.u3.all[count] =
+	क्रम (count = 0; count < NF_CT_TUPLE_L3SIZE; count++)अणु
+		पूर्णांकersect_mask.src.u3.all[count] =
 			a->mask.src.u3.all[count] & b->mask.src.u3.all[count];
-	}
+	पूर्ण
 
-	return nf_ct_tuple_mask_cmp(&a->tuple, &b->tuple, &intersect_mask) &&
+	वापस nf_ct_tuple_mask_cmp(&a->tuple, &b->tuple, &पूर्णांकersect_mask) &&
 	       net_eq(nf_ct_net(a->master), nf_ct_net(b->master)) &&
 	       nf_ct_zone_equal_any(a->master, nf_ct_zone(b->master));
-}
+पूर्ण
 
-static inline int expect_matches(const struct nf_conntrack_expect *a,
-				 const struct nf_conntrack_expect *b)
-{
-	return nf_ct_tuple_equal(&a->tuple, &b->tuple) &&
+अटल अंतरभूत पूर्णांक expect_matches(स्थिर काष्ठा nf_conntrack_expect *a,
+				 स्थिर काष्ठा nf_conntrack_expect *b)
+अणु
+	वापस nf_ct_tuple_equal(&a->tuple, &b->tuple) &&
 	       nf_ct_tuple_mask_equal(&a->mask, &b->mask) &&
 	       net_eq(nf_ct_net(a->master), nf_ct_net(b->master)) &&
 	       nf_ct_zone_equal_any(a->master, nf_ct_zone(b->master));
-}
+पूर्ण
 
-static bool master_matches(const struct nf_conntrack_expect *a,
-			   const struct nf_conntrack_expect *b,
-			   unsigned int flags)
-{
-	if (flags & NF_CT_EXP_F_SKIP_MASTER)
-		return true;
+अटल bool master_matches(स्थिर काष्ठा nf_conntrack_expect *a,
+			   स्थिर काष्ठा nf_conntrack_expect *b,
+			   अचिन्हित पूर्णांक flags)
+अणु
+	अगर (flags & NF_CT_EXP_F_SKIP_MASTER)
+		वापस true;
 
-	return a->master == b->master;
-}
+	वापस a->master == b->master;
+पूर्ण
 
-/* Generally a bad idea to call this: could have matched already. */
-void nf_ct_unexpect_related(struct nf_conntrack_expect *exp)
-{
+/* Generally a bad idea to call this: could have matched alपढ़ोy. */
+व्योम nf_ct_unexpect_related(काष्ठा nf_conntrack_expect *exp)
+अणु
 	spin_lock_bh(&nf_conntrack_expect_lock);
-	nf_ct_remove_expect(exp);
+	nf_ct_हटाओ_expect(exp);
 	spin_unlock_bh(&nf_conntrack_expect_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_ct_unexpect_related);
 
-/* We don't increase the master conntrack refcount for non-fulfilled
- * conntracks. During the conntrack destruction, the expectations are
- * always killed before the conntrack itself */
-struct nf_conntrack_expect *nf_ct_expect_alloc(struct nf_conn *me)
-{
-	struct nf_conntrack_expect *new;
+/* We करोn't increase the master conntrack refcount क्रम non-fulfilled
+ * conntracks. During the conntrack deकाष्ठाion, the expectations are
+ * always समाप्तed beक्रमe the conntrack itself */
+काष्ठा nf_conntrack_expect *nf_ct_expect_alloc(काष्ठा nf_conn *me)
+अणु
+	काष्ठा nf_conntrack_expect *new;
 
 	new = kmem_cache_alloc(nf_ct_expect_cachep, GFP_ATOMIC);
-	if (!new)
-		return NULL;
+	अगर (!new)
+		वापस शून्य;
 
 	new->master = me;
 	refcount_set(&new->use, 1);
-	return new;
-}
+	वापस new;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_ct_expect_alloc);
 
-void nf_ct_expect_init(struct nf_conntrack_expect *exp, unsigned int class,
-		       u_int8_t family,
-		       const union nf_inet_addr *saddr,
-		       const union nf_inet_addr *daddr,
-		       u_int8_t proto, const __be16 *src, const __be16 *dst)
-{
-	int len;
+व्योम nf_ct_expect_init(काष्ठा nf_conntrack_expect *exp, अचिन्हित पूर्णांक class,
+		       u_पूर्णांक8_t family,
+		       स्थिर जोड़ nf_inet_addr *saddr,
+		       स्थिर जोड़ nf_inet_addr *daddr,
+		       u_पूर्णांक8_t proto, स्थिर __be16 *src, स्थिर __be16 *dst)
+अणु
+	पूर्णांक len;
 
-	if (family == AF_INET)
+	अगर (family == AF_INET)
 		len = 4;
-	else
+	अन्यथा
 		len = 16;
 
 	exp->flags = 0;
 	exp->class = class;
-	exp->expectfn = NULL;
-	exp->helper = NULL;
+	exp->expectfn = शून्य;
+	exp->helper = शून्य;
 	exp->tuple.src.l3num = family;
 	exp->tuple.dst.protonum = proto;
 
-	if (saddr) {
-		memcpy(&exp->tuple.src.u3, saddr, len);
-		if (sizeof(exp->tuple.src.u3) > len)
-			/* address needs to be cleared for nf_ct_tuple_equal */
-			memset((void *)&exp->tuple.src.u3 + len, 0x00,
-			       sizeof(exp->tuple.src.u3) - len);
-		memset(&exp->mask.src.u3, 0xFF, len);
-		if (sizeof(exp->mask.src.u3) > len)
-			memset((void *)&exp->mask.src.u3 + len, 0x00,
-			       sizeof(exp->mask.src.u3) - len);
-	} else {
-		memset(&exp->tuple.src.u3, 0x00, sizeof(exp->tuple.src.u3));
-		memset(&exp->mask.src.u3, 0x00, sizeof(exp->mask.src.u3));
-	}
+	अगर (saddr) अणु
+		स_नकल(&exp->tuple.src.u3, saddr, len);
+		अगर (माप(exp->tuple.src.u3) > len)
+			/* address needs to be cleared क्रम nf_ct_tuple_equal */
+			स_रखो((व्योम *)&exp->tuple.src.u3 + len, 0x00,
+			       माप(exp->tuple.src.u3) - len);
+		स_रखो(&exp->mask.src.u3, 0xFF, len);
+		अगर (माप(exp->mask.src.u3) > len)
+			स_रखो((व्योम *)&exp->mask.src.u3 + len, 0x00,
+			       माप(exp->mask.src.u3) - len);
+	पूर्ण अन्यथा अणु
+		स_रखो(&exp->tuple.src.u3, 0x00, माप(exp->tuple.src.u3));
+		स_रखो(&exp->mask.src.u3, 0x00, माप(exp->mask.src.u3));
+	पूर्ण
 
-	if (src) {
+	अगर (src) अणु
 		exp->tuple.src.u.all = *src;
 		exp->mask.src.u.all = htons(0xFFFF);
-	} else {
+	पूर्ण अन्यथा अणु
 		exp->tuple.src.u.all = 0;
 		exp->mask.src.u.all = 0;
-	}
+	पूर्ण
 
-	memcpy(&exp->tuple.dst.u3, daddr, len);
-	if (sizeof(exp->tuple.dst.u3) > len)
-		/* address needs to be cleared for nf_ct_tuple_equal */
-		memset((void *)&exp->tuple.dst.u3 + len, 0x00,
-		       sizeof(exp->tuple.dst.u3) - len);
+	स_नकल(&exp->tuple.dst.u3, daddr, len);
+	अगर (माप(exp->tuple.dst.u3) > len)
+		/* address needs to be cleared क्रम nf_ct_tuple_equal */
+		स_रखो((व्योम *)&exp->tuple.dst.u3 + len, 0x00,
+		       माप(exp->tuple.dst.u3) - len);
 
 	exp->tuple.dst.u.all = *dst;
 
-#if IS_ENABLED(CONFIG_NF_NAT)
-	memset(&exp->saved_addr, 0, sizeof(exp->saved_addr));
-	memset(&exp->saved_proto, 0, sizeof(exp->saved_proto));
-#endif
-}
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+	स_रखो(&exp->saved_addr, 0, माप(exp->saved_addr));
+	स_रखो(&exp->saved_proto, 0, माप(exp->saved_proto));
+#पूर्ण_अगर
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_ct_expect_init);
 
-static void nf_ct_expect_free_rcu(struct rcu_head *head)
-{
-	struct nf_conntrack_expect *exp;
+अटल व्योम nf_ct_expect_मुक्त_rcu(काष्ठा rcu_head *head)
+अणु
+	काष्ठा nf_conntrack_expect *exp;
 
-	exp = container_of(head, struct nf_conntrack_expect, rcu);
-	kmem_cache_free(nf_ct_expect_cachep, exp);
-}
+	exp = container_of(head, काष्ठा nf_conntrack_expect, rcu);
+	kmem_cache_मुक्त(nf_ct_expect_cachep, exp);
+पूर्ण
 
-void nf_ct_expect_put(struct nf_conntrack_expect *exp)
-{
-	if (refcount_dec_and_test(&exp->use))
-		call_rcu(&exp->rcu, nf_ct_expect_free_rcu);
-}
+व्योम nf_ct_expect_put(काष्ठा nf_conntrack_expect *exp)
+अणु
+	अगर (refcount_dec_and_test(&exp->use))
+		call_rcu(&exp->rcu, nf_ct_expect_मुक्त_rcu);
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_ct_expect_put);
 
-static void nf_ct_expect_insert(struct nf_conntrack_expect *exp)
-{
-	struct nf_conntrack_net *cnet;
-	struct nf_conn_help *master_help = nfct_help(exp->master);
-	struct nf_conntrack_helper *helper;
-	struct net *net = nf_ct_exp_net(exp);
-	unsigned int h = nf_ct_expect_dst_hash(net, &exp->tuple);
+अटल व्योम nf_ct_expect_insert(काष्ठा nf_conntrack_expect *exp)
+अणु
+	काष्ठा nf_conntrack_net *cnet;
+	काष्ठा nf_conn_help *master_help = nfct_help(exp->master);
+	काष्ठा nf_conntrack_helper *helper;
+	काष्ठा net *net = nf_ct_exp_net(exp);
+	अचिन्हित पूर्णांक h = nf_ct_expect_dst_hash(net, &exp->tuple);
 
-	/* two references : one for hash insert, one for the timer */
+	/* two references : one क्रम hash insert, one क्रम the समयr */
 	refcount_add(2, &exp->use);
 
-	timer_setup(&exp->timeout, nf_ct_expectation_timed_out, 0);
-	helper = rcu_dereference_protected(master_help->helper,
+	समयr_setup(&exp->समयout, nf_ct_expectation_समयd_out, 0);
+	helper = rcu_dereference_रक्षित(master_help->helper,
 					   lockdep_is_held(&nf_conntrack_expect_lock));
-	if (helper) {
-		exp->timeout.expires = jiffies +
-			helper->expect_policy[exp->class].timeout * HZ;
-	}
-	add_timer(&exp->timeout);
+	अगर (helper) अणु
+		exp->समयout.expires = jअगरfies +
+			helper->expect_policy[exp->class].समयout * HZ;
+	पूर्ण
+	add_समयr(&exp->समयout);
 
 	hlist_add_head_rcu(&exp->lnode, &master_help->expectations);
 	master_help->expecting[exp->class]++;
@@ -401,336 +402,336 @@ static void nf_ct_expect_insert(struct nf_conntrack_expect *exp)
 	cnet->expect_count++;
 
 	NF_CT_STAT_INC(net, expect_create);
-}
+पूर्ण
 
 /* Race with expectations being used means we could have none to find; OK. */
-static void evict_oldest_expect(struct nf_conn *master,
-				struct nf_conntrack_expect *new)
-{
-	struct nf_conn_help *master_help = nfct_help(master);
-	struct nf_conntrack_expect *exp, *last = NULL;
+अटल व्योम evict_oldest_expect(काष्ठा nf_conn *master,
+				काष्ठा nf_conntrack_expect *new)
+अणु
+	काष्ठा nf_conn_help *master_help = nfct_help(master);
+	काष्ठा nf_conntrack_expect *exp, *last = शून्य;
 
-	hlist_for_each_entry(exp, &master_help->expectations, lnode) {
-		if (exp->class == new->class)
+	hlist_क्रम_each_entry(exp, &master_help->expectations, lnode) अणु
+		अगर (exp->class == new->class)
 			last = exp;
-	}
+	पूर्ण
 
-	if (last)
-		nf_ct_remove_expect(last);
-}
+	अगर (last)
+		nf_ct_हटाओ_expect(last);
+पूर्ण
 
-static inline int __nf_ct_expect_check(struct nf_conntrack_expect *expect,
-				       unsigned int flags)
-{
-	const struct nf_conntrack_expect_policy *p;
-	struct nf_conntrack_expect *i;
-	struct nf_conntrack_net *cnet;
-	struct nf_conn *master = expect->master;
-	struct nf_conn_help *master_help = nfct_help(master);
-	struct nf_conntrack_helper *helper;
-	struct net *net = nf_ct_exp_net(expect);
-	struct hlist_node *next;
-	unsigned int h;
-	int ret = 0;
+अटल अंतरभूत पूर्णांक __nf_ct_expect_check(काष्ठा nf_conntrack_expect *expect,
+				       अचिन्हित पूर्णांक flags)
+अणु
+	स्थिर काष्ठा nf_conntrack_expect_policy *p;
+	काष्ठा nf_conntrack_expect *i;
+	काष्ठा nf_conntrack_net *cnet;
+	काष्ठा nf_conn *master = expect->master;
+	काष्ठा nf_conn_help *master_help = nfct_help(master);
+	काष्ठा nf_conntrack_helper *helper;
+	काष्ठा net *net = nf_ct_exp_net(expect);
+	काष्ठा hlist_node *next;
+	अचिन्हित पूर्णांक h;
+	पूर्णांक ret = 0;
 
-	if (!master_help) {
+	अगर (!master_help) अणु
 		ret = -ESHUTDOWN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	h = nf_ct_expect_dst_hash(net, &expect->tuple);
-	hlist_for_each_entry_safe(i, next, &nf_ct_expect_hash[h], hnode) {
-		if (master_matches(i, expect, flags) &&
-		    expect_matches(i, expect)) {
-			if (i->class != expect->class ||
+	hlist_क्रम_each_entry_safe(i, next, &nf_ct_expect_hash[h], hnode) अणु
+		अगर (master_matches(i, expect, flags) &&
+		    expect_matches(i, expect)) अणु
+			अगर (i->class != expect->class ||
 			    i->master != expect->master)
-				return -EALREADY;
+				वापस -EALREADY;
 
-			if (nf_ct_remove_expect(i))
-				break;
-		} else if (expect_clash(i, expect)) {
+			अगर (nf_ct_हटाओ_expect(i))
+				अवरोध;
+		पूर्ण अन्यथा अगर (expect_clash(i, expect)) अणु
 			ret = -EBUSY;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	/* Will be over limit? */
-	helper = rcu_dereference_protected(master_help->helper,
+	helper = rcu_dereference_रक्षित(master_help->helper,
 					   lockdep_is_held(&nf_conntrack_expect_lock));
-	if (helper) {
+	अगर (helper) अणु
 		p = &helper->expect_policy[expect->class];
-		if (p->max_expected &&
-		    master_help->expecting[expect->class] >= p->max_expected) {
+		अगर (p->max_expected &&
+		    master_help->expecting[expect->class] >= p->max_expected) अणु
 			evict_oldest_expect(master, expect);
-			if (master_help->expecting[expect->class]
-						>= p->max_expected) {
-				ret = -EMFILE;
-				goto out;
-			}
-		}
-	}
+			अगर (master_help->expecting[expect->class]
+						>= p->max_expected) अणु
+				ret = -EMखाता;
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	cnet = net_generic(net, nf_conntrack_net_id);
-	if (cnet->expect_count >= nf_ct_expect_max) {
+	अगर (cnet->expect_count >= nf_ct_expect_max) अणु
 		net_warn_ratelimited("nf_conntrack: expectation table full\n");
-		ret = -EMFILE;
-	}
+		ret = -EMखाता;
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int nf_ct_expect_related_report(struct nf_conntrack_expect *expect,
-				u32 portid, int report, unsigned int flags)
-{
-	int ret;
+पूर्णांक nf_ct_expect_related_report(काष्ठा nf_conntrack_expect *expect,
+				u32 portid, पूर्णांक report, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक ret;
 
 	spin_lock_bh(&nf_conntrack_expect_lock);
 	ret = __nf_ct_expect_check(expect, flags);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	nf_ct_expect_insert(expect);
 
 	spin_unlock_bh(&nf_conntrack_expect_lock);
 	nf_ct_expect_event_report(IPEXP_NEW, expect, portid, report);
-	return 0;
+	वापस 0;
 out:
 	spin_unlock_bh(&nf_conntrack_expect_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_ct_expect_related_report);
 
-void nf_ct_expect_iterate_destroy(bool (*iter)(struct nf_conntrack_expect *e, void *data),
-				  void *data)
-{
-	struct nf_conntrack_expect *exp;
-	const struct hlist_node *next;
-	unsigned int i;
+व्योम nf_ct_expect_iterate_destroy(bool (*iter)(काष्ठा nf_conntrack_expect *e, व्योम *data),
+				  व्योम *data)
+अणु
+	काष्ठा nf_conntrack_expect *exp;
+	स्थिर काष्ठा hlist_node *next;
+	अचिन्हित पूर्णांक i;
 
 	spin_lock_bh(&nf_conntrack_expect_lock);
 
-	for (i = 0; i < nf_ct_expect_hsize; i++) {
-		hlist_for_each_entry_safe(exp, next,
+	क्रम (i = 0; i < nf_ct_expect_hsize; i++) अणु
+		hlist_क्रम_each_entry_safe(exp, next,
 					  &nf_ct_expect_hash[i],
-					  hnode) {
-			if (iter(exp, data) && del_timer(&exp->timeout)) {
+					  hnode) अणु
+			अगर (iter(exp, data) && del_समयr(&exp->समयout)) अणु
 				nf_ct_unlink_expect(exp);
 				nf_ct_expect_put(exp);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_bh(&nf_conntrack_expect_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_ct_expect_iterate_destroy);
 
-void nf_ct_expect_iterate_net(struct net *net,
-			      bool (*iter)(struct nf_conntrack_expect *e, void *data),
-			      void *data,
-			      u32 portid, int report)
-{
-	struct nf_conntrack_expect *exp;
-	const struct hlist_node *next;
-	unsigned int i;
+व्योम nf_ct_expect_iterate_net(काष्ठा net *net,
+			      bool (*iter)(काष्ठा nf_conntrack_expect *e, व्योम *data),
+			      व्योम *data,
+			      u32 portid, पूर्णांक report)
+अणु
+	काष्ठा nf_conntrack_expect *exp;
+	स्थिर काष्ठा hlist_node *next;
+	अचिन्हित पूर्णांक i;
 
 	spin_lock_bh(&nf_conntrack_expect_lock);
 
-	for (i = 0; i < nf_ct_expect_hsize; i++) {
-		hlist_for_each_entry_safe(exp, next,
+	क्रम (i = 0; i < nf_ct_expect_hsize; i++) अणु
+		hlist_क्रम_each_entry_safe(exp, next,
 					  &nf_ct_expect_hash[i],
-					  hnode) {
+					  hnode) अणु
 
-			if (!net_eq(nf_ct_exp_net(exp), net))
-				continue;
+			अगर (!net_eq(nf_ct_exp_net(exp), net))
+				जारी;
 
-			if (iter(exp, data) && del_timer(&exp->timeout)) {
+			अगर (iter(exp, data) && del_समयr(&exp->समयout)) अणु
 				nf_ct_unlink_expect_report(exp, portid, report);
 				nf_ct_expect_put(exp);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_bh(&nf_conntrack_expect_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_ct_expect_iterate_net);
 
-#ifdef CONFIG_NF_CONNTRACK_PROCFS
-struct ct_expect_iter_state {
-	struct seq_net_private p;
-	unsigned int bucket;
-};
+#अगर_घोषित CONFIG_NF_CONNTRACK_PROCFS
+काष्ठा ct_expect_iter_state अणु
+	काष्ठा seq_net_निजी p;
+	अचिन्हित पूर्णांक bucket;
+पूर्ण;
 
-static struct hlist_node *ct_expect_get_first(struct seq_file *seq)
-{
-	struct ct_expect_iter_state *st = seq->private;
-	struct hlist_node *n;
+अटल काष्ठा hlist_node *ct_expect_get_first(काष्ठा seq_file *seq)
+अणु
+	काष्ठा ct_expect_iter_state *st = seq->निजी;
+	काष्ठा hlist_node *n;
 
-	for (st->bucket = 0; st->bucket < nf_ct_expect_hsize; st->bucket++) {
+	क्रम (st->bucket = 0; st->bucket < nf_ct_expect_hsize; st->bucket++) अणु
 		n = rcu_dereference(hlist_first_rcu(&nf_ct_expect_hash[st->bucket]));
-		if (n)
-			return n;
-	}
-	return NULL;
-}
+		अगर (n)
+			वापस n;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct hlist_node *ct_expect_get_next(struct seq_file *seq,
-					     struct hlist_node *head)
-{
-	struct ct_expect_iter_state *st = seq->private;
+अटल काष्ठा hlist_node *ct_expect_get_next(काष्ठा seq_file *seq,
+					     काष्ठा hlist_node *head)
+अणु
+	काष्ठा ct_expect_iter_state *st = seq->निजी;
 
 	head = rcu_dereference(hlist_next_rcu(head));
-	while (head == NULL) {
-		if (++st->bucket >= nf_ct_expect_hsize)
-			return NULL;
+	जबतक (head == शून्य) अणु
+		अगर (++st->bucket >= nf_ct_expect_hsize)
+			वापस शून्य;
 		head = rcu_dereference(hlist_first_rcu(&nf_ct_expect_hash[st->bucket]));
-	}
-	return head;
-}
+	पूर्ण
+	वापस head;
+पूर्ण
 
-static struct hlist_node *ct_expect_get_idx(struct seq_file *seq, loff_t pos)
-{
-	struct hlist_node *head = ct_expect_get_first(seq);
+अटल काष्ठा hlist_node *ct_expect_get_idx(काष्ठा seq_file *seq, loff_t pos)
+अणु
+	काष्ठा hlist_node *head = ct_expect_get_first(seq);
 
-	if (head)
-		while (pos && (head = ct_expect_get_next(seq, head)))
+	अगर (head)
+		जबतक (pos && (head = ct_expect_get_next(seq, head)))
 			pos--;
-	return pos ? NULL : head;
-}
+	वापस pos ? शून्य : head;
+पूर्ण
 
-static void *exp_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *exp_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(RCU)
-{
-	rcu_read_lock();
-	return ct_expect_get_idx(seq, *pos);
-}
+अणु
+	rcu_पढ़ो_lock();
+	वापस ct_expect_get_idx(seq, *pos);
+पूर्ण
 
-static void *exp_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
+अटल व्योम *exp_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
 	(*pos)++;
-	return ct_expect_get_next(seq, v);
-}
+	वापस ct_expect_get_next(seq, v);
+पूर्ण
 
-static void exp_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम exp_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(RCU)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int exp_seq_show(struct seq_file *s, void *v)
-{
-	struct nf_conntrack_expect *expect;
-	struct nf_conntrack_helper *helper;
-	struct hlist_node *n = v;
-	char *delim = "";
+अटल पूर्णांक exp_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	काष्ठा nf_conntrack_expect *expect;
+	काष्ठा nf_conntrack_helper *helper;
+	काष्ठा hlist_node *n = v;
+	अक्षर *delim = "";
 
-	expect = hlist_entry(n, struct nf_conntrack_expect, hnode);
+	expect = hlist_entry(n, काष्ठा nf_conntrack_expect, hnode);
 
-	if (expect->timeout.function)
-		seq_printf(s, "%ld ", timer_pending(&expect->timeout)
-			   ? (long)(expect->timeout.expires - jiffies)/HZ : 0);
-	else
-		seq_puts(s, "- ");
-	seq_printf(s, "l3proto = %u proto=%u ",
+	अगर (expect->समयout.function)
+		seq_म_लिखो(s, "%ld ", समयr_pending(&expect->समयout)
+			   ? (दीर्घ)(expect->समयout.expires - jअगरfies)/HZ : 0);
+	अन्यथा
+		seq_माला_दो(s, "- ");
+	seq_म_लिखो(s, "l3proto = %u proto=%u ",
 		   expect->tuple.src.l3num,
 		   expect->tuple.dst.protonum);
-	print_tuple(s, &expect->tuple,
+	prपूर्णांक_tuple(s, &expect->tuple,
 		    nf_ct_l4proto_find(expect->tuple.dst.protonum));
 
-	if (expect->flags & NF_CT_EXPECT_PERMANENT) {
-		seq_puts(s, "PERMANENT");
+	अगर (expect->flags & NF_CT_EXPECT_PERMANENT) अणु
+		seq_माला_दो(s, "PERMANENT");
 		delim = ",";
-	}
-	if (expect->flags & NF_CT_EXPECT_INACTIVE) {
-		seq_printf(s, "%sINACTIVE", delim);
+	पूर्ण
+	अगर (expect->flags & NF_CT_EXPECT_INACTIVE) अणु
+		seq_म_लिखो(s, "%sINACTIVE", delim);
 		delim = ",";
-	}
-	if (expect->flags & NF_CT_EXPECT_USERSPACE)
-		seq_printf(s, "%sUSERSPACE", delim);
+	पूर्ण
+	अगर (expect->flags & NF_CT_EXPECT_USERSPACE)
+		seq_म_लिखो(s, "%sUSERSPACE", delim);
 
 	helper = rcu_dereference(nfct_help(expect->master)->helper);
-	if (helper) {
-		seq_printf(s, "%s%s", expect->flags ? " " : "", helper->name);
-		if (helper->expect_policy[expect->class].name[0])
-			seq_printf(s, "/%s",
+	अगर (helper) अणु
+		seq_म_लिखो(s, "%s%s", expect->flags ? " " : "", helper->name);
+		अगर (helper->expect_policy[expect->class].name[0])
+			seq_म_लिखो(s, "/%s",
 				   helper->expect_policy[expect->class].name);
-	}
+	पूर्ण
 
-	seq_putc(s, '\n');
+	seq_अ_दो(s, '\n');
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations exp_seq_ops = {
+अटल स्थिर काष्ठा seq_operations exp_seq_ops = अणु
 	.start = exp_seq_start,
 	.next = exp_seq_next,
 	.stop = exp_seq_stop,
 	.show = exp_seq_show
-};
-#endif /* CONFIG_NF_CONNTRACK_PROCFS */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_PROCFS */
 
-static int exp_proc_init(struct net *net)
-{
-#ifdef CONFIG_NF_CONNTRACK_PROCFS
-	struct proc_dir_entry *proc;
+अटल पूर्णांक exp_proc_init(काष्ठा net *net)
+अणु
+#अगर_घोषित CONFIG_NF_CONNTRACK_PROCFS
+	काष्ठा proc_dir_entry *proc;
 	kuid_t root_uid;
 	kgid_t root_gid;
 
 	proc = proc_create_net("nf_conntrack_expect", 0440, net->proc_net,
-			&exp_seq_ops, sizeof(struct ct_expect_iter_state));
-	if (!proc)
-		return -ENOMEM;
+			&exp_seq_ops, माप(काष्ठा ct_expect_iter_state));
+	अगर (!proc)
+		वापस -ENOMEM;
 
 	root_uid = make_kuid(net->user_ns, 0);
 	root_gid = make_kgid(net->user_ns, 0);
-	if (uid_valid(root_uid) && gid_valid(root_gid))
+	अगर (uid_valid(root_uid) && gid_valid(root_gid))
 		proc_set_user(proc, root_uid, root_gid);
-#endif /* CONFIG_NF_CONNTRACK_PROCFS */
-	return 0;
-}
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_PROCFS */
+	वापस 0;
+पूर्ण
 
-static void exp_proc_remove(struct net *net)
-{
-#ifdef CONFIG_NF_CONNTRACK_PROCFS
-	remove_proc_entry("nf_conntrack_expect", net->proc_net);
-#endif /* CONFIG_NF_CONNTRACK_PROCFS */
-}
+अटल व्योम exp_proc_हटाओ(काष्ठा net *net)
+अणु
+#अगर_घोषित CONFIG_NF_CONNTRACK_PROCFS
+	हटाओ_proc_entry("nf_conntrack_expect", net->proc_net);
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_PROCFS */
+पूर्ण
 
-module_param_named(expect_hashsize, nf_ct_expect_hsize, uint, 0400);
+module_param_named(expect_hashsize, nf_ct_expect_hsize, uपूर्णांक, 0400);
 
-int nf_conntrack_expect_pernet_init(struct net *net)
-{
-	return exp_proc_init(net);
-}
+पूर्णांक nf_conntrack_expect_pernet_init(काष्ठा net *net)
+अणु
+	वापस exp_proc_init(net);
+पूर्ण
 
-void nf_conntrack_expect_pernet_fini(struct net *net)
-{
-	exp_proc_remove(net);
-}
+व्योम nf_conntrack_expect_pernet_fini(काष्ठा net *net)
+अणु
+	exp_proc_हटाओ(net);
+पूर्ण
 
-int nf_conntrack_expect_init(void)
-{
-	if (!nf_ct_expect_hsize) {
+पूर्णांक nf_conntrack_expect_init(व्योम)
+अणु
+	अगर (!nf_ct_expect_hsize) अणु
 		nf_ct_expect_hsize = nf_conntrack_htable_size / 256;
-		if (!nf_ct_expect_hsize)
+		अगर (!nf_ct_expect_hsize)
 			nf_ct_expect_hsize = 1;
-	}
+	पूर्ण
 	nf_ct_expect_max = nf_ct_expect_hsize * 4;
 	nf_ct_expect_cachep = kmem_cache_create("nf_conntrack_expect",
-				sizeof(struct nf_conntrack_expect),
-				0, 0, NULL);
-	if (!nf_ct_expect_cachep)
-		return -ENOMEM;
+				माप(काष्ठा nf_conntrack_expect),
+				0, 0, शून्य);
+	अगर (!nf_ct_expect_cachep)
+		वापस -ENOMEM;
 
 	nf_ct_expect_hash = nf_ct_alloc_hashtable(&nf_ct_expect_hsize, 0);
-	if (!nf_ct_expect_hash) {
+	अगर (!nf_ct_expect_hash) अणु
 		kmem_cache_destroy(nf_ct_expect_cachep);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void nf_conntrack_expect_fini(void)
-{
-	rcu_barrier(); /* Wait for call_rcu() before destroy */
+व्योम nf_conntrack_expect_fini(व्योम)
+अणु
+	rcu_barrier(); /* Wait क्रम call_rcu() beक्रमe destroy */
 	kmem_cache_destroy(nf_ct_expect_cachep);
-	kvfree(nf_ct_expect_hash);
-}
+	kvमुक्त(nf_ct_expect_hash);
+पूर्ण

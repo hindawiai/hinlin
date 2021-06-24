@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -26,75 +27,75 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  */
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_managed.h>
+#समावेश <drm/drm_managed.h>
 
-#include "mgag200_drv.h"
+#समावेश "mgag200_drv.h"
 
-static size_t mgag200_probe_vram(struct mga_device *mdev, void __iomem *mem,
-				 size_t size)
-{
-	int offset;
-	int orig;
-	int test1, test2;
-	int orig1, orig2;
-	size_t vram_size;
+अटल माप_प्रकार mgag200_probe_vram(काष्ठा mga_device *mdev, व्योम __iomem *mem,
+				 माप_प्रकार size)
+अणु
+	पूर्णांक offset;
+	पूर्णांक orig;
+	पूर्णांक test1, test2;
+	पूर्णांक orig1, orig2;
+	माप_प्रकार vram_size;
 
 	/* Probe */
-	orig = ioread16(mem);
-	iowrite16(0, mem);
+	orig = ioपढ़ो16(mem);
+	ioग_लिखो16(0, mem);
 
 	vram_size = size;
 
-	if ((mdev->type == G200_EW3) && (vram_size >= 0x1000000))
+	अगर ((mdev->type == G200_EW3) && (vram_size >= 0x1000000))
 		vram_size = vram_size - 0x400000;
 
-	for (offset = 0x100000; offset < vram_size; offset += 0x4000) {
-		orig1 = ioread8(mem + offset);
-		orig2 = ioread8(mem + offset + 0x100);
+	क्रम (offset = 0x100000; offset < vram_size; offset += 0x4000) अणु
+		orig1 = ioपढ़ो8(mem + offset);
+		orig2 = ioपढ़ो8(mem + offset + 0x100);
 
-		iowrite16(0xaa55, mem + offset);
-		iowrite16(0xaa55, mem + offset + 0x100);
+		ioग_लिखो16(0xaa55, mem + offset);
+		ioग_लिखो16(0xaa55, mem + offset + 0x100);
 
-		test1 = ioread16(mem + offset);
-		test2 = ioread16(mem);
+		test1 = ioपढ़ो16(mem + offset);
+		test2 = ioपढ़ो16(mem);
 
-		iowrite16(orig1, mem + offset);
-		iowrite16(orig2, mem + offset + 0x100);
+		ioग_लिखो16(orig1, mem + offset);
+		ioग_लिखो16(orig2, mem + offset + 0x100);
 
-		if (test1 != 0xaa55)
-			break;
+		अगर (test1 != 0xaa55)
+			अवरोध;
 
-		if (test2)
-			break;
-	}
+		अगर (test2)
+			अवरोध;
+	पूर्ण
 
-	iowrite16(orig, mem);
+	ioग_लिखो16(orig, mem);
 
-	return offset - 65536;
-}
+	वापस offset - 65536;
+पूर्ण
 
-static void mgag200_mm_release(struct drm_device *dev, void *ptr)
-{
-	struct mga_device *mdev = to_mga_device(dev);
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
+अटल व्योम mgag200_mm_release(काष्ठा drm_device *dev, व्योम *ptr)
+अणु
+	काष्ठा mga_device *mdev = to_mga_device(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
 
 	mdev->vram_fb_available = 0;
 	iounmap(mdev->vram);
-	arch_io_free_memtype_wc(pci_resource_start(pdev, 0),
+	arch_io_मुक्त_memtype_wc(pci_resource_start(pdev, 0),
 				pci_resource_len(pdev, 0));
 	arch_phys_wc_del(mdev->fb_mtrr);
 	mdev->fb_mtrr = 0;
-}
+पूर्ण
 
-int mgag200_mm_init(struct mga_device *mdev)
-{
-	struct drm_device *dev = &mdev->base;
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
+पूर्णांक mgag200_mm_init(काष्ठा mga_device *mdev)
+अणु
+	काष्ठा drm_device *dev = &mdev->base;
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
 	u8 misc;
-	resource_size_t start, len;
-	int ret;
+	resource_माप_प्रकार start, len;
+	पूर्णांक ret;
 
 	WREG_ECRT(0x04, 0x00);
 
@@ -107,31 +108,31 @@ int mgag200_mm_init(struct mga_device *mdev)
 	start = pci_resource_start(pdev, 0);
 	len = pci_resource_len(pdev, 0);
 
-	if (!devm_request_mem_region(dev->dev, start, len, "mgadrmfb_vram")) {
+	अगर (!devm_request_mem_region(dev->dev, start, len, "mgadrmfb_vram")) अणु
 		drm_err(dev, "can't reserve VRAM\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	arch_io_reserve_memtype_wc(start, len);
 
 	mdev->fb_mtrr = arch_phys_wc_add(start, len);
 
 	mdev->vram = ioremap(start, len);
-	if (!mdev->vram) {
+	अगर (!mdev->vram) अणु
 		ret = -ENOMEM;
-		goto err_arch_phys_wc_del;
-	}
+		जाओ err_arch_phys_wc_del;
+	पूर्ण
 
 	mdev->mc.vram_size = mgag200_probe_vram(mdev, mdev->vram, len);
 	mdev->mc.vram_base = start;
-	mdev->mc.vram_window = len;
+	mdev->mc.vram_winकरोw = len;
 
 	mdev->vram_fb_available = mdev->mc.vram_size;
 
-	return drmm_add_action_or_reset(dev, mgag200_mm_release, NULL);
+	वापस drmm_add_action_or_reset(dev, mgag200_mm_release, शून्य);
 
 err_arch_phys_wc_del:
 	arch_phys_wc_del(mdev->fb_mtrr);
-	arch_io_free_memtype_wc(start, len);
-	return ret;
-}
+	arch_io_मुक्त_memtype_wc(start, len);
+	वापस ret;
+पूर्ण

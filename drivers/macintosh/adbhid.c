@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * drivers/macintosh/adbhid.c
+ * drivers/macपूर्णांकosh/adbhid.c
  *
- * ADB HID driver for Power Macintosh computers.
+ * ADB HID driver क्रम Power Macपूर्णांकosh computers.
  *
- * Adapted from drivers/macintosh/mac_keyb.c by Franz Sirl.
- * drivers/macintosh/mac_keyb.c was Copyright (C) 1996 Paul Mackerras
+ * Adapted from drivers/macपूर्णांकosh/mac_keyb.c by Franz Sirl.
+ * drivers/macपूर्णांकosh/mac_keyb.c was Copyright (C) 1996 Paul Mackerras
  * with considerable contributions from Ben Herrenschmidt and others.
  *
  * Copyright (C) 2000 Franz Sirl.
  *
- * Adapted to ADB changes and support for more devices by
+ * Adapted to ADB changes and support क्रम more devices by
  * Benjamin Herrenschmidt. Adapted from code in MkLinux
  * and reworked.
  * 
@@ -19,7 +20,7 @@
  * - Standard 1 button mouse
  * - All standard Apple Extended protocol (handler ID 4)
  * - mouseman and trackman mice & trackballs 
- * - PowerBook Trackpad (default setup: enable tapping)
+ * - PowerBook Trackpad (शेष setup: enable tapping)
  * - MicroSpeed mouse & trackball (needs testing)
  * - CH Products Trackball Pro (needs testing)
  * - Contour Design (Contour Mouse)
@@ -28,55 +29,55 @@
  * - Mouse Systems A3 mice and trackballs <aidan@kublai.com>
  * - MacAlly 2-buttons mouse (needs testing) <pochini@denise.shiny.it>
  *
- * To do:
+ * To करो:
  *
  * Improve Kensington support.
  * Split mouse/kbd
  * Move to syfs
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/notifier.h>
-#include <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/input.h>
 
-#include <linux/adb.h>
-#include <linux/cuda.h>
-#include <linux/pmu.h>
+#समावेश <linux/adb.h>
+#समावेश <linux/cuda.h>
+#समावेश <linux/pmu.h>
 
-#include <asm/machdep.h>
-#ifdef CONFIG_PPC_PMAC
-#include <asm/backlight.h>
-#include <asm/pmac_feature.h>
-#endif
+#समावेश <यंत्र/machdep.h>
+#अगर_घोषित CONFIG_PPC_PMAC
+#समावेश <यंत्र/backlight.h>
+#समावेश <यंत्र/pmac_feature.h>
+#पूर्ण_अगर
 
 MODULE_AUTHOR("Franz Sirl <Franz.Sirl-kernel@lauterbach.com>");
 
-static int restore_capslock_events;
-module_param(restore_capslock_events, int, 0644);
+अटल पूर्णांक restore_capslock_events;
+module_param(restore_capslock_events, पूर्णांक, 0644);
 MODULE_PARM_DESC(restore_capslock_events,
 	"Produce keypress events for capslock on both keyup and keydown.");
 
-#define KEYB_KEYREG	0	/* register # for key up/down data */
-#define KEYB_LEDREG	2	/* register # for leds on ADB keyboard */
-#define MOUSE_DATAREG	0	/* reg# for movement/button codes from mouse */
+#घोषणा KEYB_KEYREG	0	/* रेजिस्टर # क्रम key up/करोwn data */
+#घोषणा KEYB_LEDREG	2	/* रेजिस्टर # क्रम leds on ADB keyboard */
+#घोषणा MOUSE_DATAREG	0	/* reg# क्रम movement/button codes from mouse */
 
-static int adb_message_handler(struct notifier_block *, unsigned long, void *);
-static struct notifier_block adbhid_adb_notifier = {
-	.notifier_call	= adb_message_handler,
-};
+अटल पूर्णांक adb_message_handler(काष्ठा notअगरier_block *, अचिन्हित दीर्घ, व्योम *);
+अटल काष्ठा notअगरier_block adbhid_adb_notअगरier = अणु
+	.notअगरier_call	= adb_message_handler,
+पूर्ण;
 
 /* Some special keys */
-#define ADB_KEY_DEL		0x33
-#define ADB_KEY_CMD		0x37
-#define ADB_KEY_CAPSLOCK	0x39
-#define ADB_KEY_FN		0x3f
-#define ADB_KEY_FWDEL		0x75
-#define ADB_KEY_POWER_OLD	0x7e
-#define ADB_KEY_POWER		0x7f
+#घोषणा ADB_KEY_DEL		0x33
+#घोषणा ADB_KEY_CMD		0x37
+#घोषणा ADB_KEY_CAPSLOCK	0x39
+#घोषणा ADB_KEY_FN		0x3f
+#घोषणा ADB_KEY_FWDEL		0x75
+#घोषणा ADB_KEY_POWER_OLD	0x7e
+#घोषणा ADB_KEY_POWER		0x7f
 
-static const u16 adb_to_linux_keycodes[128] = {
+अटल स्थिर u16 adb_to_linux_keycodes[128] = अणु
 	/* 0x00 */ KEY_A, 		/*  30 */
 	/* 0x01 */ KEY_S, 		/*  31 */
 	/* 0x02 */ KEY_D,		/*  32 */
@@ -205,211 +206,211 @@ static const u16 adb_to_linux_keycodes[128] = {
 	/* 0x7d */ KEY_RIGHTCTRL,	/*  97 */
 	/* 0x7e */ KEY_RIGHTMETA,	/* 126 */
 	/* 0x7f */ KEY_POWER,		/* 116 */
-};
+पूर्ण;
 
-struct adbhid {
-	struct input_dev *input;
-	int id;
-	int default_id;
-	int original_handler_id;
-	int current_handler_id;
-	int mouse_kind;
+काष्ठा adbhid अणु
+	काष्ठा input_dev *input;
+	पूर्णांक id;
+	पूर्णांक शेष_id;
+	पूर्णांक original_handler_id;
+	पूर्णांक current_handler_id;
+	पूर्णांक mouse_kind;
 	u16 *keycode;
-	char name[64];
-	char phys[32];
-	int flags;
-};
+	अक्षर name[64];
+	अक्षर phys[32];
+	पूर्णांक flags;
+पूर्ण;
 
-#define FLAG_FN_KEY_PRESSED		0x00000001
-#define FLAG_POWER_FROM_FN		0x00000002
-#define FLAG_EMU_FWDEL_DOWN		0x00000004
-#define FLAG_CAPSLOCK_TRANSLATE		0x00000008
-#define FLAG_CAPSLOCK_DOWN		0x00000010
-#define FLAG_CAPSLOCK_IGNORE_NEXT	0x00000020
-#define FLAG_POWER_KEY_PRESSED		0x00000040
+#घोषणा FLAG_FN_KEY_PRESSED		0x00000001
+#घोषणा FLAG_POWER_FROM_FN		0x00000002
+#घोषणा FLAG_EMU_FWDEL_DOWN		0x00000004
+#घोषणा FLAG_CAPSLOCK_TRANSLATE		0x00000008
+#घोषणा FLAG_CAPSLOCK_DOWN		0x00000010
+#घोषणा FLAG_CAPSLOCK_IGNORE_NEXT	0x00000020
+#घोषणा FLAG_POWER_KEY_PRESSED		0x00000040
 
-static struct adbhid *adbhid[16];
+अटल काष्ठा adbhid *adbhid[16];
 
-static void adbhid_probe(void);
+अटल व्योम adbhid_probe(व्योम);
 
-static void adbhid_input_keycode(int, int, int);
+अटल व्योम adbhid_input_keycode(पूर्णांक, पूर्णांक, पूर्णांक);
 
-static void init_trackpad(int id);
-static void init_trackball(int id);
-static void init_turbomouse(int id);
-static void init_microspeed(int id);
-static void init_ms_a3(int id);
+अटल व्योम init_trackpad(पूर्णांक id);
+अटल व्योम init_trackball(पूर्णांक id);
+अटल व्योम init_turbomouse(पूर्णांक id);
+अटल व्योम init_microspeed(पूर्णांक id);
+अटल व्योम init_ms_a3(पूर्णांक id);
 
-static struct adb_ids keyboard_ids;
-static struct adb_ids mouse_ids;
-static struct adb_ids buttons_ids;
+अटल काष्ठा adb_ids keyboard_ids;
+अटल काष्ठा adb_ids mouse_ids;
+अटल काष्ठा adb_ids buttons_ids;
 
 /* Kind of keyboard, see Apple technote 1152  */
-#define ADB_KEYBOARD_UNKNOWN	0
-#define ADB_KEYBOARD_ANSI	0x0100
-#define ADB_KEYBOARD_ISO	0x0200
-#define ADB_KEYBOARD_JIS	0x0300
+#घोषणा ADB_KEYBOARD_UNKNOWN	0
+#घोषणा ADB_KEYBOARD_ANSI	0x0100
+#घोषणा ADB_KEYBOARD_ISO	0x0200
+#घोषणा ADB_KEYBOARD_JIS	0x0300
 
 /* Kind of mouse  */
-#define ADBMOUSE_STANDARD_100	0	/* Standard 100cpi mouse (handler 1) */
-#define ADBMOUSE_STANDARD_200	1	/* Standard 200cpi mouse (handler 2) */
-#define ADBMOUSE_EXTENDED	2	/* Apple Extended mouse (handler 4) */
-#define ADBMOUSE_TRACKBALL	3	/* TrackBall (handler 4) */
-#define ADBMOUSE_TRACKPAD       4	/* Apple's PowerBook trackpad (handler 4) */
-#define ADBMOUSE_TURBOMOUSE5    5	/* Turbomouse 5 (previously req. mousehack) */
-#define ADBMOUSE_MICROSPEED	6	/* Microspeed mouse (&trackball ?), MacPoint */
-#define ADBMOUSE_TRACKBALLPRO	7	/* Trackball Pro (special buttons) */
-#define ADBMOUSE_MS_A3		8	/* Mouse systems A3 trackball (handler 3) */
-#define ADBMOUSE_MACALLY2	9	/* MacAlly 2-button mouse */
+#घोषणा ADBMOUSE_STANDARD_100	0	/* Standard 100cpi mouse (handler 1) */
+#घोषणा ADBMOUSE_STANDARD_200	1	/* Standard 200cpi mouse (handler 2) */
+#घोषणा ADBMOUSE_EXTENDED	2	/* Apple Extended mouse (handler 4) */
+#घोषणा ADBMOUSE_TRACKBALL	3	/* TrackBall (handler 4) */
+#घोषणा ADBMOUSE_TRACKPAD       4	/* Apple's PowerBook trackpad (handler 4) */
+#घोषणा ADBMOUSE_TURBOMOUSE5    5	/* Turbomouse 5 (previously req. mousehack) */
+#घोषणा ADBMOUSE_MICROSPEED	6	/* Microspeed mouse (&trackball ?), MacPoपूर्णांक */
+#घोषणा ADBMOUSE_TRACKBALLPRO	7	/* Trackball Pro (special buttons) */
+#घोषणा ADBMOUSE_MS_A3		8	/* Mouse प्रणालीs A3 trackball (handler 3) */
+#घोषणा ADBMOUSE_MACALLY2	9	/* MacAlly 2-button mouse */
 
-static void
-adbhid_keyboard_input(unsigned char *data, int nb, int apoll)
-{
-	int id = (data[0] >> 4) & 0x0f;
+अटल व्योम
+adbhid_keyboard_input(अचिन्हित अक्षर *data, पूर्णांक nb, पूर्णांक apoll)
+अणु
+	पूर्णांक id = (data[0] >> 4) & 0x0f;
 
-	if (!adbhid[id]) {
+	अगर (!adbhid[id]) अणु
 		pr_err("ADB HID on ID %d not yet registered, packet %#02x, %#02x, %#02x, %#02x\n",
 		       id, data[0], data[1], data[2], data[3]);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* first check this is from register 0 */
-	if (nb != 3 || (data[0] & 3) != KEYB_KEYREG)
-		return;		/* ignore it */
+	/* first check this is from रेजिस्टर 0 */
+	अगर (nb != 3 || (data[0] & 3) != KEYB_KEYREG)
+		वापस;		/* ignore it */
 	adbhid_input_keycode(id, data[1], 0);
-	if (!(data[2] == 0xff || (data[2] == 0x7f && data[1] == 0x7f)))
+	अगर (!(data[2] == 0xff || (data[2] == 0x7f && data[1] == 0x7f)))
 		adbhid_input_keycode(id, data[2], 0);
-}
+पूर्ण
 
-static void
-adbhid_input_keycode(int id, int scancode, int repeat)
-{
-	struct adbhid *ahid = adbhid[id];
-	int keycode, up_flag, key;
+अटल व्योम
+adbhid_input_keycode(पूर्णांक id, पूर्णांक scancode, पूर्णांक repeat)
+अणु
+	काष्ठा adbhid *ahid = adbhid[id];
+	पूर्णांक keycode, up_flag, key;
 
 	keycode = scancode & 0x7f;
 	up_flag = scancode & 0x80;
 
-	if (restore_capslock_events) {
-		if (keycode == ADB_KEY_CAPSLOCK && !up_flag) {
+	अगर (restore_capslock_events) अणु
+		अगर (keycode == ADB_KEY_CAPSLOCK && !up_flag) अणु
 			/* Key pressed, turning on the CapsLock LED.
-			 * The next 0xff will be interpreted as a release. */
-			if (ahid->flags & FLAG_CAPSLOCK_IGNORE_NEXT) {
-				/* Throw away this key event if it happens
+			 * The next 0xff will be पूर्णांकerpreted as a release. */
+			अगर (ahid->flags & FLAG_CAPSLOCK_IGNORE_NEXT) अणु
+				/* Throw away this key event अगर it happens
 				 * just after resume. */
 				ahid->flags &= ~FLAG_CAPSLOCK_IGNORE_NEXT;
-				return;
-			} else {
+				वापस;
+			पूर्ण अन्यथा अणु
 				ahid->flags |= FLAG_CAPSLOCK_TRANSLATE
 					| FLAG_CAPSLOCK_DOWN;
-			}
-		} else if (scancode == 0xff &&
-			   !(ahid->flags & FLAG_POWER_KEY_PRESSED)) {
-			/* Scancode 0xff usually signifies that the capslock
+			पूर्ण
+		पूर्ण अन्यथा अगर (scancode == 0xff &&
+			   !(ahid->flags & FLAG_POWER_KEY_PRESSED)) अणु
+			/* Scancode 0xff usually signअगरies that the capslock
 			 * key was either pressed or released, or that the
-			 * power button was released. */
-			if (ahid->flags & FLAG_CAPSLOCK_TRANSLATE) {
+			 * घातer button was released. */
+			अगर (ahid->flags & FLAG_CAPSLOCK_TRANSLATE) अणु
 				keycode = ADB_KEY_CAPSLOCK;
-				if (ahid->flags & FLAG_CAPSLOCK_DOWN) {
+				अगर (ahid->flags & FLAG_CAPSLOCK_DOWN) अणु
 					/* Key released */
 					up_flag = 1;
 					ahid->flags &= ~FLAG_CAPSLOCK_DOWN;
-				} else {
+				पूर्ण अन्यथा अणु
 					/* Key pressed */
 					up_flag = 0;
 					ahid->flags &= ~FLAG_CAPSLOCK_TRANSLATE;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				pr_info("Spurious caps lock event (scancode 0xff).\n");
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	switch (keycode) {
-	case ADB_KEY_CAPSLOCK:
-		if (!restore_capslock_events) {
-			/* Generate down/up events for CapsLock every time. */
+	चयन (keycode) अणु
+	हाल ADB_KEY_CAPSLOCK:
+		अगर (!restore_capslock_events) अणु
+			/* Generate करोwn/up events क्रम CapsLock every समय. */
 			input_report_key(ahid->input, KEY_CAPSLOCK, 1);
 			input_sync(ahid->input);
 			input_report_key(ahid->input, KEY_CAPSLOCK, 0);
 			input_sync(ahid->input);
-			return;
-		}
-		break;
-#ifdef CONFIG_PPC_PMAC
-	case ADB_KEY_POWER_OLD: /* Power key on PBook 3400 needs remapping */
-		switch(pmac_call_feature(PMAC_FTR_GET_MB_INFO,
-			NULL, PMAC_MB_INFO_MODEL, 0)) {
-		case PMAC_TYPE_COMET:
-		case PMAC_TYPE_HOOPER:
-		case PMAC_TYPE_KANGA:
+			वापस;
+		पूर्ण
+		अवरोध;
+#अगर_घोषित CONFIG_PPC_PMAC
+	हाल ADB_KEY_POWER_OLD: /* Power key on PBook 3400 needs remapping */
+		चयन(pmac_call_feature(PMAC_FTR_GET_MB_INFO,
+			शून्य, PMAC_MB_INFO_MODEL, 0)) अणु
+		हाल PMAC_TYPE_COMET:
+		हाल PMAC_TYPE_HOOPER:
+		हाल PMAC_TYPE_KANGA:
 			keycode = ADB_KEY_POWER;
-		}
-		break;
-	case ADB_KEY_POWER:
-		/* Keep track of the power key state */
-		if (up_flag)
+		पूर्ण
+		अवरोध;
+	हाल ADB_KEY_POWER:
+		/* Keep track of the घातer key state */
+		अगर (up_flag)
 			ahid->flags &= ~FLAG_POWER_KEY_PRESSED;
-		else
+		अन्यथा
 			ahid->flags |= FLAG_POWER_KEY_PRESSED;
 
 		/* Fn + Command will produce a bogus "power" keycode */
-		if (ahid->flags & FLAG_FN_KEY_PRESSED) {
+		अगर (ahid->flags & FLAG_FN_KEY_PRESSED) अणु
 			keycode = ADB_KEY_CMD;
-			if (up_flag)
+			अगर (up_flag)
 				ahid->flags &= ~FLAG_POWER_FROM_FN;
-			else
+			अन्यथा
 				ahid->flags |= FLAG_POWER_FROM_FN;
-		} else if (ahid->flags & FLAG_POWER_FROM_FN) {
+		पूर्ण अन्यथा अगर (ahid->flags & FLAG_POWER_FROM_FN) अणु
 			keycode = ADB_KEY_CMD;
 			ahid->flags &= ~FLAG_POWER_FROM_FN;
-		}
-		break;
-	case ADB_KEY_FN:
+		पूर्ण
+		अवरोध;
+	हाल ADB_KEY_FN:
 		/* Keep track of the Fn key state */
-		if (up_flag) {
+		अगर (up_flag) अणु
 			ahid->flags &= ~FLAG_FN_KEY_PRESSED;
-			/* Emulate Fn+delete = forward delete */
-			if (ahid->flags & FLAG_EMU_FWDEL_DOWN) {
+			/* Emulate Fn+delete = क्रमward delete */
+			अगर (ahid->flags & FLAG_EMU_FWDEL_DOWN) अणु
 				ahid->flags &= ~FLAG_EMU_FWDEL_DOWN;
 				keycode = ADB_KEY_FWDEL;
-				break;
-			}
-		} else
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा
 			ahid->flags |= FLAG_FN_KEY_PRESSED;
-		break;
-	case ADB_KEY_DEL:
-		/* Emulate Fn+delete = forward delete */
-		if (ahid->flags & FLAG_FN_KEY_PRESSED) {
+		अवरोध;
+	हाल ADB_KEY_DEL:
+		/* Emulate Fn+delete = क्रमward delete */
+		अगर (ahid->flags & FLAG_FN_KEY_PRESSED) अणु
 			keycode = ADB_KEY_FWDEL;
-			if (up_flag)
+			अगर (up_flag)
 				ahid->flags &= ~FLAG_EMU_FWDEL_DOWN;
-			else
+			अन्यथा
 				ahid->flags |= FLAG_EMU_FWDEL_DOWN;
-		}
-		break;
-#endif /* CONFIG_PPC_PMAC */
-	}
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर /* CONFIG_PPC_PMAC */
+	पूर्ण
 
 	key = adbhid[id]->keycode[keycode];
-	if (key) {
+	अगर (key) अणु
 		input_report_key(adbhid[id]->input, key, !up_flag);
 		input_sync(adbhid[id]->input);
-	} else
+	पूर्ण अन्यथा
 		pr_info("Unhandled ADB key (scancode %#02x) %s.\n", keycode,
 			up_flag ? "released" : "pressed");
 
-}
+पूर्ण
 
-static void
-adbhid_mouse_input(unsigned char *data, int nb, int autopoll)
-{
-	int id = (data[0] >> 4) & 0x0f;
+अटल व्योम
+adbhid_mouse_input(अचिन्हित अक्षर *data, पूर्णांक nb, पूर्णांक स्वतःpoll)
+अणु
+	पूर्णांक id = (data[0] >> 4) & 0x0f;
 
-	if (!adbhid[id]) {
+	अगर (!adbhid[id]) अणु
 		pr_err("ADB HID on ID %d not yet registered\n", id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
   /*
     Handler 1 -- 100cpi original Apple mouse protocol.
@@ -419,7 +420,7 @@ adbhid_mouse_input(unsigned char *data, int nb, int autopoll)
     contain the following values:
 
                 BITS    COMMENTS
-    data[0] = dddd 1100 ADB command: Talk, register 0, for device dddd.
+    data[0] = dddd 1100 ADB command: Talk, रेजिस्टर 0, क्रम device dddd.
     data[1] = bxxx xxxx First button and x-axis motion.
     data[2] = byyy yyyy Second button and y-axis motion.
 
@@ -429,7 +430,7 @@ adbhid_mouse_input(unsigned char *data, int nb, int autopoll)
     following values:
 
 		BITS    COMMENTS
-    data[0] = dddd 1100 ADB command: Talk, register 0, for device dddd.
+    data[0] = dddd 1100 ADB command: Talk, रेजिस्टर 0, क्रम device dddd.
     data[1] = bxxx xxxx Left button and x-axis motion.
     data[2] = byyy yyyy Second button and y-axis motion.
     data[3] = byyy bxxx Third button and fourth button.  Y is additional
@@ -442,7 +443,7 @@ adbhid_mouse_input(unsigned char *data, int nb, int autopoll)
     following values:
 
 		BITS    COMMENTS
-    data[0] = dddd 1100 ADB command: Talk, register 0, for device dddd.
+    data[0] = dddd 1100 ADB command: Talk, रेजिस्टर 0, क्रम device dddd.
     data[1] = bxxx xxxx Left button and x-axis motion.
     data[2] = byyy yyyy Right button and y-axis motion.
     data[3] = ???? ???? unknown
@@ -452,43 +453,43 @@ adbhid_mouse_input(unsigned char *data, int nb, int autopoll)
 
 	/* If it's a trackpad, we alias the second button to the first.
 	   NOTE: Apple sends an ADB flush command to the trackpad when
-	         the first (the real) button is released. We could do
+	         the first (the real) button is released. We could करो
 		 this here using async flush requests.
 	*/
-	switch (adbhid[id]->mouse_kind)
-	{
-	    case ADBMOUSE_TRACKPAD:
+	चयन (adbhid[id]->mouse_kind)
+	अणु
+	    हाल ADBMOUSE_TRACKPAD:
 		data[1] = (data[1] & 0x7f) | ((data[1] & data[2]) & 0x80);
 		data[2] = data[2] | 0x80;
-		break;
-	    case ADBMOUSE_MICROSPEED:
+		अवरोध;
+	    हाल ADBMOUSE_MICROSPEED:
 		data[1] = (data[1] & 0x7f) | ((data[3] & 0x01) << 7);
 		data[2] = (data[2] & 0x7f) | ((data[3] & 0x02) << 6);
 		data[3] = (data[3] & 0x77) | ((data[3] & 0x04) << 5)
 			| (data[3] & 0x08);
-		break;
-	    case ADBMOUSE_TRACKBALLPRO:
+		अवरोध;
+	    हाल ADBMOUSE_TRACKBALLPRO:
 		data[1] = (data[1] & 0x7f) | (((data[3] & 0x04) << 5)
 			& ((data[3] & 0x08) << 4));
 		data[2] = (data[2] & 0x7f) | ((data[3] & 0x01) << 7);
 		data[3] = (data[3] & 0x77) | ((data[3] & 0x02) << 6);
-		break;
-	    case ADBMOUSE_MS_A3:
+		अवरोध;
+	    हाल ADBMOUSE_MS_A3:
 		data[1] = (data[1] & 0x7f) | ((data[3] & 0x01) << 7);
 		data[2] = (data[2] & 0x7f) | ((data[3] & 0x02) << 6);
 		data[3] = ((data[3] & 0x04) << 5);
-		break;
-            case ADBMOUSE_MACALLY2:
+		अवरोध;
+            हाल ADBMOUSE_MACALLY2:
 		data[3] = (data[2] & 0x80) ? 0x80 : 0x00;
 		data[2] |= 0x80;  /* Right button is mapped as button 3 */
 		nb=4;
-                break;
-	}
+                अवरोध;
+	पूर्ण
 
 	input_report_key(adbhid[id]->input, BTN_LEFT,   !((data[1] >> 7) & 1));
 	input_report_key(adbhid[id]->input, BTN_MIDDLE, !((data[2] >> 7) & 1));
 
-	if (nb >= 4 && adbhid[id]->mouse_kind != ADBMOUSE_TRACKPAD)
+	अगर (nb >= 4 && adbhid[id]->mouse_kind != ADBMOUSE_TRACKPAD)
 		input_report_key(adbhid[id]->input, BTN_RIGHT,  !((data[3] >> 7) & 1));
 
 	input_report_rel(adbhid[id]->input, REL_X,
@@ -497,284 +498,284 @@ adbhid_mouse_input(unsigned char *data, int nb, int autopoll)
 			 ((data[1]&0x7f) < 64 ? (data[1]&0x7f) : (data[1]&0x7f)-128 ));
 
 	input_sync(adbhid[id]->input);
-}
+पूर्ण
 
-static void
-adbhid_buttons_input(unsigned char *data, int nb, int autopoll)
-{
-	int id = (data[0] >> 4) & 0x0f;
+अटल व्योम
+adbhid_buttons_input(अचिन्हित अक्षर *data, पूर्णांक nb, पूर्णांक स्वतःpoll)
+अणु
+	पूर्णांक id = (data[0] >> 4) & 0x0f;
 
-	if (!adbhid[id]) {
+	अगर (!adbhid[id]) अणु
 		pr_err("ADB HID on ID %d not yet registered\n", id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (adbhid[id]->original_handler_id) {
-	default:
-	case 0x02: /* Adjustable keyboard button device */
-	  {
-		int down = (data[1] == (data[1] & 0xf));
+	चयन (adbhid[id]->original_handler_id) अणु
+	शेष:
+	हाल 0x02: /* Adjustable keyboard button device */
+	  अणु
+		पूर्णांक करोwn = (data[1] == (data[1] & 0xf));
 
-		switch (data[1] & 0x0f) {
-		case 0x0:	/* microphone */
-			input_report_key(adbhid[id]->input, KEY_SOUND, down);
-			break;
+		चयन (data[1] & 0x0f) अणु
+		हाल 0x0:	/* microphone */
+			input_report_key(adbhid[id]->input, KEY_SOUND, करोwn);
+			अवरोध;
 
-		case 0x1:	/* mute */
-			input_report_key(adbhid[id]->input, KEY_MUTE, down);
-			break;
+		हाल 0x1:	/* mute */
+			input_report_key(adbhid[id]->input, KEY_MUTE, करोwn);
+			अवरोध;
 
-		case 0x2:	/* volume decrease */
-			input_report_key(adbhid[id]->input, KEY_VOLUMEDOWN, down);
-			break;
+		हाल 0x2:	/* volume decrease */
+			input_report_key(adbhid[id]->input, KEY_VOLUMEDOWN, करोwn);
+			अवरोध;
 
-		case 0x3:	/* volume increase */
-			input_report_key(adbhid[id]->input, KEY_VOLUMEUP, down);
-			break;
+		हाल 0x3:	/* volume increase */
+			input_report_key(adbhid[id]->input, KEY_VOLUMEUP, करोwn);
+			अवरोध;
 
-		default:
+		शेष:
 			pr_info("Unhandled ADB_MISC event %02x, %02x, %02x, %02x\n",
 				data[0], data[1], data[2], data[3]);
-			break;
-		}
-	  }
-	  break;
+			अवरोध;
+		पूर्ण
+	  पूर्ण
+	  अवरोध;
 
-	case 0x1f: /* Powerbook button device */
-	  {
-		int down = (data[1] == (data[1] & 0xf));
+	हाल 0x1f: /* Powerbook button device */
+	  अणु
+		पूर्णांक करोwn = (data[1] == (data[1] & 0xf));
 
 		/*
-		 * XXX: Where is the contrast control for the passive?
+		 * XXX: Where is the contrast control क्रम the passive?
 		 *  -- Cort
 		 */
 
-		switch (data[1] & 0x0f) {
-		case 0x8:	/* mute */
-			input_report_key(adbhid[id]->input, KEY_MUTE, down);
-			break;
+		चयन (data[1] & 0x0f) अणु
+		हाल 0x8:	/* mute */
+			input_report_key(adbhid[id]->input, KEY_MUTE, करोwn);
+			अवरोध;
 
-		case 0x7:	/* volume decrease */
-			input_report_key(adbhid[id]->input, KEY_VOLUMEDOWN, down);
-			break;
+		हाल 0x7:	/* volume decrease */
+			input_report_key(adbhid[id]->input, KEY_VOLUMEDOWN, करोwn);
+			अवरोध;
 
-		case 0x6:	/* volume increase */
-			input_report_key(adbhid[id]->input, KEY_VOLUMEUP, down);
-			break;
+		हाल 0x6:	/* volume increase */
+			input_report_key(adbhid[id]->input, KEY_VOLUMEUP, करोwn);
+			अवरोध;
 
-		case 0xb:	/* eject */
-			input_report_key(adbhid[id]->input, KEY_EJECTCD, down);
-			break;
+		हाल 0xb:	/* eject */
+			input_report_key(adbhid[id]->input, KEY_EJECTCD, करोwn);
+			अवरोध;
 
-		case 0xa:	/* brightness decrease */
-#ifdef CONFIG_PMAC_BACKLIGHT
-			if (down)
-				pmac_backlight_key_down();
-#endif
-			input_report_key(adbhid[id]->input, KEY_BRIGHTNESSDOWN, down);
-			break;
+		हाल 0xa:	/* brightness decrease */
+#अगर_घोषित CONFIG_PMAC_BACKLIGHT
+			अगर (करोwn)
+				pmac_backlight_key_करोwn();
+#पूर्ण_अगर
+			input_report_key(adbhid[id]->input, KEY_BRIGHTNESSDOWN, करोwn);
+			अवरोध;
 
-		case 0x9:	/* brightness increase */
-#ifdef CONFIG_PMAC_BACKLIGHT
-			if (down)
+		हाल 0x9:	/* brightness increase */
+#अगर_घोषित CONFIG_PMAC_BACKLIGHT
+			अगर (करोwn)
 				pmac_backlight_key_up();
-#endif
-			input_report_key(adbhid[id]->input, KEY_BRIGHTNESSUP, down);
-			break;
+#पूर्ण_अगर
+			input_report_key(adbhid[id]->input, KEY_BRIGHTNESSUP, करोwn);
+			अवरोध;
 
-		case 0xc:	/* videomode switch */
-			input_report_key(adbhid[id]->input, KEY_SWITCHVIDEOMODE, down);
-			break;
+		हाल 0xc:	/* videomode चयन */
+			input_report_key(adbhid[id]->input, KEY_SWITCHVIDEOMODE, करोwn);
+			अवरोध;
 
-		case 0xd:	/* keyboard illumination toggle */
-			input_report_key(adbhid[id]->input, KEY_KBDILLUMTOGGLE, down);
-			break;
+		हाल 0xd:	/* keyboard illumination toggle */
+			input_report_key(adbhid[id]->input, KEY_KBDILLUMTOGGLE, करोwn);
+			अवरोध;
 
-		case 0xe:	/* keyboard illumination decrease */
-			input_report_key(adbhid[id]->input, KEY_KBDILLUMDOWN, down);
-			break;
+		हाल 0xe:	/* keyboard illumination decrease */
+			input_report_key(adbhid[id]->input, KEY_KBDILLUMDOWN, करोwn);
+			अवरोध;
 
-		case 0xf:
-			switch (data[1]) {
-			case 0x8f:
-			case 0x0f:
+		हाल 0xf:
+			चयन (data[1]) अणु
+			हाल 0x8f:
+			हाल 0x0f:
 				/* keyboard illumination increase */
-				input_report_key(adbhid[id]->input, KEY_KBDILLUMUP, down);
-				break;
+				input_report_key(adbhid[id]->input, KEY_KBDILLUMUP, करोwn);
+				अवरोध;
 
-			case 0x7f:
-			case 0xff:
+			हाल 0x7f:
+			हाल 0xff:
 				/* keypad overlay toogle */
-				break;
+				अवरोध;
 
-			default:
+			शेष:
 				pr_info("Unhandled ADB_MISC event %02x, %02x, %02x, %02x\n",
 					data[0], data[1], data[2], data[3]);
-				break;
-			}
-			break;
-		default:
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		शेष:
 			pr_info("Unhandled ADB_MISC event %02x, %02x, %02x, %02x\n",
 				data[0], data[1], data[2], data[3]);
-			break;
-		}
-	  }
-	  break;
-	}
+			अवरोध;
+		पूर्ण
+	  पूर्ण
+	  अवरोध;
+	पूर्ण
 
 	input_sync(adbhid[id]->input);
-}
+पूर्ण
 
-static struct adb_request led_request;
-static int leds_pending[16];
-static int leds_req_pending;
-static int pending_devs[16];
-static int pending_led_start;
-static int pending_led_end;
-static DEFINE_SPINLOCK(leds_lock);
+अटल काष्ठा adb_request led_request;
+अटल पूर्णांक leds_pending[16];
+अटल पूर्णांक leds_req_pending;
+अटल पूर्णांक pending_devs[16];
+अटल पूर्णांक pending_led_start;
+अटल पूर्णांक pending_led_end;
+अटल DEFINE_SPINLOCK(leds_lock);
 
-static void leds_done(struct adb_request *req)
-{
-	int leds = 0, device = 0, pending = 0;
-	unsigned long flags;
+अटल व्योम leds_करोne(काष्ठा adb_request *req)
+अणु
+	पूर्णांक leds = 0, device = 0, pending = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&leds_lock, flags);
 
-	if (pending_led_start != pending_led_end) {
+	अगर (pending_led_start != pending_led_end) अणु
 		device = pending_devs[pending_led_start];
 		leds = leds_pending[device] & 0xff;
 		leds_pending[device] = 0;
 		pending_led_start++;
 		pending_led_start = (pending_led_start < 16) ? pending_led_start : 0;
 		pending = leds_req_pending;
-	} else
+	पूर्ण अन्यथा
 		leds_req_pending = 0;
 	spin_unlock_irqrestore(&leds_lock, flags);
-	if (pending)
-		adb_request(&led_request, leds_done, 0, 3,
+	अगर (pending)
+		adb_request(&led_request, leds_करोne, 0, 3,
 			    ADB_WRITEREG(device, KEYB_LEDREG), 0xff, ~leds);
-}
+पूर्ण
 
-static void real_leds(unsigned char leds, int device)
-{
-	unsigned long flags;
+अटल व्योम real_leds(अचिन्हित अक्षर leds, पूर्णांक device)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&leds_lock, flags);
-	if (!leds_req_pending) {
+	अगर (!leds_req_pending) अणु
 		leds_req_pending = 1;
 		spin_unlock_irqrestore(&leds_lock, flags);	       
-		adb_request(&led_request, leds_done, 0, 3,
+		adb_request(&led_request, leds_करोne, 0, 3,
 			    ADB_WRITEREG(device, KEYB_LEDREG), 0xff, ~leds);
-		return;
-	} else {
-		if (!(leds_pending[device] & 0x100)) {
+		वापस;
+	पूर्ण अन्यथा अणु
+		अगर (!(leds_pending[device] & 0x100)) अणु
 			pending_devs[pending_led_end] = device;
 			pending_led_end++;
 			pending_led_end = (pending_led_end < 16) ? pending_led_end : 0;
-		}
+		पूर्ण
 		leds_pending[device] = leds | 0x100;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&leds_lock, flags);	       
-}
+पूर्ण
 
 /*
  * Event callback from the input module. Events that change the state of
  * the hardware are processed here.
  */
-static int adbhid_kbd_event(struct input_dev *dev, unsigned int type, unsigned int code, int value)
-{
-	struct adbhid *adbhid = input_get_drvdata(dev);
-	unsigned char leds;
+अटल पूर्णांक adbhid_kbd_event(काष्ठा input_dev *dev, अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक code, पूर्णांक value)
+अणु
+	काष्ठा adbhid *adbhid = input_get_drvdata(dev);
+	अचिन्हित अक्षर leds;
 
-	switch (type) {
-	case EV_LED:
+	चयन (type) अणु
+	हाल EV_LED:
 		leds =  (test_bit(LED_SCROLLL, dev->led) ? 4 : 0) |
 			(test_bit(LED_NUML,    dev->led) ? 1 : 0) |
 			(test_bit(LED_CAPSL,   dev->led) ? 2 : 0);
 		real_leds(leds, adbhid->id);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void
-adbhid_kbd_capslock_remember(void)
-{
-	struct adbhid *ahid;
-	int i;
+अटल व्योम
+adbhid_kbd_capslock_remember(व्योम)
+अणु
+	काष्ठा adbhid *ahid;
+	पूर्णांक i;
 
-	for (i = 1; i < 16; i++) {
+	क्रम (i = 1; i < 16; i++) अणु
 		ahid = adbhid[i];
 
-		if (ahid && ahid->id == ADB_KEYBOARD)
-			if (ahid->flags & FLAG_CAPSLOCK_TRANSLATE)
+		अगर (ahid && ahid->id == ADB_KEYBOARD)
+			अगर (ahid->flags & FLAG_CAPSLOCK_TRANSLATE)
 				ahid->flags |= FLAG_CAPSLOCK_IGNORE_NEXT;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-adb_message_handler(struct notifier_block *this, unsigned long code, void *x)
-{
-	switch (code) {
-	case ADB_MSG_PRE_RESET:
-	case ADB_MSG_POWERDOWN:
-		/* Stop the repeat timer. Autopoll is already off at this point */
-		{
-			int i;
-			for (i = 1; i < 16; i++) {
-				if (adbhid[i])
-					del_timer_sync(&adbhid[i]->input->timer);
-			}
-		}
+अटल पूर्णांक
+adb_message_handler(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code, व्योम *x)
+अणु
+	चयन (code) अणु
+	हाल ADB_MSG_PRE_RESET:
+	हाल ADB_MSG_POWERDOWN:
+		/* Stop the repeat समयr. Autopoll is alपढ़ोy off at this poपूर्णांक */
+		अणु
+			पूर्णांक i;
+			क्रम (i = 1; i < 16; i++) अणु
+				अगर (adbhid[i])
+					del_समयr_sync(&adbhid[i]->input->समयr);
+			पूर्ण
+		पूर्ण
 
 		/* Stop pending led requests */
-		while (leds_req_pending)
+		जबतक (leds_req_pending)
 			adb_poll();
 
-		/* After resume, and if the capslock LED is on, the PMU will
+		/* After resume, and अगर the capslock LED is on, the PMU will
 		 * send a "capslock down" key event. This confuses the
-		 * restore_capslock_events logic. Remember if the capslock
-		 * LED was on before suspend so the unwanted key event can
+		 * restore_capslock_events logic. Remember अगर the capslock
+		 * LED was on beक्रमe suspend so the unwanted key event can
 		 * be ignored after resume. */
-		if (restore_capslock_events)
+		अगर (restore_capslock_events)
 			adbhid_kbd_capslock_remember();
 
-		break;
+		अवरोध;
 
-	case ADB_MSG_POST_RESET:
+	हाल ADB_MSG_POST_RESET:
 		adbhid_probe();
-		break;
-	}
-	return NOTIFY_DONE;
-}
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int
-adbhid_input_register(int id, int default_id, int original_handler_id,
-		      int current_handler_id, int mouse_kind)
-{
-	struct adbhid *hid;
-	struct input_dev *input_dev;
-	int err;
-	int i;
-	char *keyboard_type;
+अटल पूर्णांक
+adbhid_input_रेजिस्टर(पूर्णांक id, पूर्णांक शेष_id, पूर्णांक original_handler_id,
+		      पूर्णांक current_handler_id, पूर्णांक mouse_kind)
+अणु
+	काष्ठा adbhid *hid;
+	काष्ठा input_dev *input_dev;
+	पूर्णांक err;
+	पूर्णांक i;
+	अक्षर *keyboard_type;
 
-	if (adbhid[id]) {
+	अगर (adbhid[id]) अणु
 		pr_err("Trying to reregister ADB HID on ID %d\n", id);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
-	adbhid[id] = hid = kzalloc(sizeof(struct adbhid), GFP_KERNEL);
+	adbhid[id] = hid = kzalloc(माप(काष्ठा adbhid), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	if (!hid || !input_dev) {
+	अगर (!hid || !input_dev) अणु
 		err = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	sprintf(hid->phys, "adb%d:%d.%02x/input", id, default_id, original_handler_id);
+	प्र_लिखो(hid->phys, "adb%d:%d.%02x/input", id, शेष_id, original_handler_id);
 
 	hid->input = input_dev;
-	hid->id = default_id;
+	hid->id = शेष_id;
 	hid->original_handler_id = original_handler_id;
 	hid->current_handler_id = current_handler_id;
 	hid->mouse_kind = mouse_kind;
@@ -783,55 +784,55 @@ adbhid_input_register(int id, int default_id, int original_handler_id,
 	input_dev->name = hid->name;
 	input_dev->phys = hid->phys;
 	input_dev->id.bustype = BUS_ADB;
-	input_dev->id.vendor = 0x0001;
-	input_dev->id.product = (id << 12) | (default_id << 8) | original_handler_id;
+	input_dev->id.venकरोr = 0x0001;
+	input_dev->id.product = (id << 12) | (शेष_id << 8) | original_handler_id;
 	input_dev->id.version = 0x0100;
 
-	switch (default_id) {
-	case ADB_KEYBOARD:
-		hid->keycode = kmalloc(sizeof(adb_to_linux_keycodes), GFP_KERNEL);
-		if (!hid->keycode) {
+	चयन (शेष_id) अणु
+	हाल ADB_KEYBOARD:
+		hid->keycode = kदो_स्मृति(माप(adb_to_linux_keycodes), GFP_KERNEL);
+		अगर (!hid->keycode) अणु
 			err = -ENOMEM;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 
-		sprintf(hid->name, "ADB keyboard");
+		प्र_लिखो(hid->name, "ADB keyboard");
 
-		memcpy(hid->keycode, adb_to_linux_keycodes, sizeof(adb_to_linux_keycodes));
+		स_नकल(hid->keycode, adb_to_linux_keycodes, माप(adb_to_linux_keycodes));
 
-		switch (original_handler_id) {
-		default:
+		चयन (original_handler_id) अणु
+		शेष:
 			keyboard_type = "<unknown>";
 			input_dev->id.version = ADB_KEYBOARD_UNKNOWN;
-			break;
+			अवरोध;
 
-		case 0x01: case 0x02: case 0x03: case 0x06: case 0x08:
-		case 0x0C: case 0x10: case 0x18: case 0x1B: case 0x1C:
-		case 0xC0: case 0xC3: case 0xC6:
+		हाल 0x01: हाल 0x02: हाल 0x03: हाल 0x06: हाल 0x08:
+		हाल 0x0C: हाल 0x10: हाल 0x18: हाल 0x1B: हाल 0x1C:
+		हाल 0xC0: हाल 0xC3: हाल 0xC6:
 			keyboard_type = "ANSI";
 			input_dev->id.version = ADB_KEYBOARD_ANSI;
-			break;
+			अवरोध;
 
-		case 0x04: case 0x05: case 0x07: case 0x09: case 0x0D:
-		case 0x11: case 0x14: case 0x19: case 0x1D: case 0xC1:
-		case 0xC4: case 0xC7:
+		हाल 0x04: हाल 0x05: हाल 0x07: हाल 0x09: हाल 0x0D:
+		हाल 0x11: हाल 0x14: हाल 0x19: हाल 0x1D: हाल 0xC1:
+		हाल 0xC4: हाल 0xC7:
 			keyboard_type = "ISO, swapping keys";
 			input_dev->id.version = ADB_KEYBOARD_ISO;
 			i = hid->keycode[10];
 			hid->keycode[10] = hid->keycode[50];
 			hid->keycode[50] = i;
-			break;
+			अवरोध;
 
-		case 0x12: case 0x15: case 0x16: case 0x17: case 0x1A:
-		case 0x1E: case 0xC2: case 0xC5: case 0xC8: case 0xC9:
+		हाल 0x12: हाल 0x15: हाल 0x16: हाल 0x17: हाल 0x1A:
+		हाल 0x1E: हाल 0xC2: हाल 0xC5: हाल 0xC8: हाल 0xC9:
 			keyboard_type = "JIS";
 			input_dev->id.version = ADB_KEYBOARD_JIS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pr_info("Detected ADB keyboard, type %s.\n", keyboard_type);
 
-		for (i = 0; i < 128; i++)
-			if (hid->keycode[i])
+		क्रम (i = 0; i < 128; i++)
+			अगर (hid->keycode[i])
 				set_bit(hid->keycode[i], input_dev->keybit);
 
 		input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_LED) |
@@ -840,31 +841,31 @@ adbhid_input_register(int id, int default_id, int original_handler_id,
 			BIT_MASK(LED_CAPSL) | BIT_MASK(LED_NUML);
 		input_dev->event = adbhid_kbd_event;
 		input_dev->keycodemax = KEY_FN;
-		input_dev->keycodesize = sizeof(hid->keycode[0]);
-		break;
+		input_dev->keycodesize = माप(hid->keycode[0]);
+		अवरोध;
 
-	case ADB_MOUSE:
-		sprintf(hid->name, "ADB mouse");
+	हाल ADB_MOUSE:
+		प्र_लिखो(hid->name, "ADB mouse");
 
 		input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REL);
 		input_dev->keybit[BIT_WORD(BTN_MOUSE)] = BIT_MASK(BTN_LEFT) |
 			BIT_MASK(BTN_MIDDLE) | BIT_MASK(BTN_RIGHT);
 		input_dev->relbit[0] = BIT_MASK(REL_X) | BIT_MASK(REL_Y);
-		break;
+		अवरोध;
 
-	case ADB_MISC:
-		switch (original_handler_id) {
-		case 0x02: /* Adjustable keyboard button device */
-			sprintf(hid->name, "ADB adjustable keyboard buttons");
+	हाल ADB_MISC:
+		चयन (original_handler_id) अणु
+		हाल 0x02: /* Adjustable keyboard button device */
+			प्र_लिखो(hid->name, "ADB adjustable keyboard buttons");
 			input_dev->evbit[0] = BIT_MASK(EV_KEY) |
 				BIT_MASK(EV_REP);
 			set_bit(KEY_SOUND, input_dev->keybit);
 			set_bit(KEY_MUTE, input_dev->keybit);
 			set_bit(KEY_VOLUMEUP, input_dev->keybit);
 			set_bit(KEY_VOLUMEDOWN, input_dev->keybit);
-			break;
-		case 0x1f: /* Powerbook button device */
-			sprintf(hid->name, "ADB Powerbook buttons");
+			अवरोध;
+		हाल 0x1f: /* Powerbook button device */
+			प्र_लिखो(hid->name, "ADB Powerbook buttons");
 			input_dev->evbit[0] = BIT_MASK(EV_KEY) |
 				BIT_MASK(EV_REP);
 			set_bit(KEY_MUTE, input_dev->keybit);
@@ -877,228 +878,228 @@ adbhid_input_register(int id, int default_id, int original_handler_id,
 			set_bit(KEY_KBDILLUMTOGGLE, input_dev->keybit);
 			set_bit(KEY_KBDILLUMDOWN, input_dev->keybit);
 			set_bit(KEY_KBDILLUMUP, input_dev->keybit);
-			break;
-		}
-		if (hid->name[0])
-			break;
+			अवरोध;
+		पूर्ण
+		अगर (hid->name[0])
+			अवरोध;
 		fallthrough;
 
-	default:
+	शेष:
 		pr_info("Trying to register unknown ADB device to input layer.\n");
 		err = -ENODEV;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	input_dev->keycode = hid->keycode;
 
-	err = input_register_device(input_dev);
-	if (err)
-		goto fail;
+	err = input_रेजिस्टर_device(input_dev);
+	अगर (err)
+		जाओ fail;
 
-	if (default_id == ADB_KEYBOARD) {
+	अगर (शेष_id == ADB_KEYBOARD) अणु
 		/* HACK WARNING!! This should go away as soon there is an utility
-		 * to control that for event devices.
+		 * to control that क्रम event devices.
 		 */
-		input_dev->rep[REP_DELAY] = 500;   /* input layer default: 250 */
-		input_dev->rep[REP_PERIOD] = 66; /* input layer default: 33 */
-	}
+		input_dev->rep[REP_DELAY] = 500;   /* input layer शेष: 250 */
+		input_dev->rep[REP_PERIOD] = 66; /* input layer शेष: 33 */
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- fail:	input_free_device(input_dev);
-	if (hid) {
-		kfree(hid->keycode);
-		kfree(hid);
-	}
-	adbhid[id] = NULL;
-	return err;
-}
+ fail:	input_मुक्त_device(input_dev);
+	अगर (hid) अणु
+		kमुक्त(hid->keycode);
+		kमुक्त(hid);
+	पूर्ण
+	adbhid[id] = शून्य;
+	वापस err;
+पूर्ण
 
-static void adbhid_input_unregister(int id)
-{
-	input_unregister_device(adbhid[id]->input);
-	kfree(adbhid[id]->keycode);
-	kfree(adbhid[id]);
-	adbhid[id] = NULL;
-}
+अटल व्योम adbhid_input_unरेजिस्टर(पूर्णांक id)
+अणु
+	input_unरेजिस्टर_device(adbhid[id]->input);
+	kमुक्त(adbhid[id]->keycode);
+	kमुक्त(adbhid[id]);
+	adbhid[id] = शून्य;
+पूर्ण
 
 
-static u16
-adbhid_input_reregister(int id, int default_id, int org_handler_id,
-			int cur_handler_id, int mk)
-{
-	if (adbhid[id]) {
-		if (adbhid[id]->input->id.product !=
-		    ((id << 12)|(default_id << 8)|org_handler_id)) {
-			adbhid_input_unregister(id);
-			adbhid_input_register(id, default_id, org_handler_id,
+अटल u16
+adbhid_input_reरेजिस्टर(पूर्णांक id, पूर्णांक शेष_id, पूर्णांक org_handler_id,
+			पूर्णांक cur_handler_id, पूर्णांक mk)
+अणु
+	अगर (adbhid[id]) अणु
+		अगर (adbhid[id]->input->id.product !=
+		    ((id << 12)|(शेष_id << 8)|org_handler_id)) अणु
+			adbhid_input_unरेजिस्टर(id);
+			adbhid_input_रेजिस्टर(id, शेष_id, org_handler_id,
 					      cur_handler_id, mk);
-		}
-	} else
-		adbhid_input_register(id, default_id, org_handler_id,
+		पूर्ण
+	पूर्ण अन्यथा
+		adbhid_input_रेजिस्टर(id, शेष_id, org_handler_id,
 				      cur_handler_id, mk);
-	return 1<<id;
-}
+	वापस 1<<id;
+पूर्ण
 
-static void
+अटल व्योम
 adbhid_input_devcleanup(u16 exist)
-{
-	int i;
-	for(i=1; i<16; i++)
-		if (adbhid[i] && !(exist&(1<<i)))
-			adbhid_input_unregister(i);
-}
+अणु
+	पूर्णांक i;
+	क्रम(i=1; i<16; i++)
+		अगर (adbhid[i] && !(exist&(1<<i)))
+			adbhid_input_unरेजिस्टर(i);
+पूर्ण
 
-static void
-adbhid_probe(void)
-{
-	struct adb_request req;
-	int i, default_id, org_handler_id, cur_handler_id;
+अटल व्योम
+adbhid_probe(व्योम)
+अणु
+	काष्ठा adb_request req;
+	पूर्णांक i, शेष_id, org_handler_id, cur_handler_id;
 	u16 reg = 0;
 
-	adb_register(ADB_MOUSE, 0, &mouse_ids, adbhid_mouse_input);
-	adb_register(ADB_KEYBOARD, 0, &keyboard_ids, adbhid_keyboard_input);
-	adb_register(ADB_MISC, 0, &buttons_ids, adbhid_buttons_input);
+	adb_रेजिस्टर(ADB_MOUSE, 0, &mouse_ids, adbhid_mouse_input);
+	adb_रेजिस्टर(ADB_KEYBOARD, 0, &keyboard_ids, adbhid_keyboard_input);
+	adb_रेजिस्टर(ADB_MISC, 0, &buttons_ids, adbhid_buttons_input);
 
-	for (i = 0; i < keyboard_ids.nids; i++) {
-		int id = keyboard_ids.id[i];
+	क्रम (i = 0; i < keyboard_ids.nids; i++) अणु
+		पूर्णांक id = keyboard_ids.id[i];
 
-		adb_get_infos(id, &default_id, &org_handler_id);
+		adb_get_infos(id, &शेष_id, &org_handler_id);
 
 		/* turn off all leds */
-		adb_request(&req, NULL, ADBREQ_SYNC, 3,
+		adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 			    ADB_WRITEREG(id, KEYB_LEDREG), 0xff, 0xff);
 
 		/* Enable full feature set of the keyboard
-		   ->get it to send separate codes for left and right shift,
+		   ->get it to send separate codes क्रम left and right shअगरt,
 		   control, option keys */
-#if 0		/* handler 5 doesn't send separate codes for R modifiers */
-		if (!adb_try_handler_change(id, 5))
-#endif
+#अगर 0		/* handler 5 करोesn't send separate codes क्रम R modअगरiers */
+		अगर (!adb_try_handler_change(id, 5))
+#पूर्ण_अगर
 		adb_try_handler_change(id, 3);
 
-		adb_get_infos(id, &default_id, &cur_handler_id);
-		printk(KERN_DEBUG "ADB keyboard at %d has handler 0x%X\n",
+		adb_get_infos(id, &शेष_id, &cur_handler_id);
+		prपूर्णांकk(KERN_DEBUG "ADB keyboard at %d has handler 0x%X\n",
 		       id, cur_handler_id);
-		reg |= adbhid_input_reregister(id, default_id, org_handler_id,
+		reg |= adbhid_input_reरेजिस्टर(id, शेष_id, org_handler_id,
 					       cur_handler_id, 0);
-	}
+	पूर्ण
 
-	for (i = 0; i < buttons_ids.nids; i++) {
-		int id = buttons_ids.id[i];
+	क्रम (i = 0; i < buttons_ids.nids; i++) अणु
+		पूर्णांक id = buttons_ids.id[i];
 
-		adb_get_infos(id, &default_id, &org_handler_id);
-		reg |= adbhid_input_reregister(id, default_id, org_handler_id,
+		adb_get_infos(id, &शेष_id, &org_handler_id);
+		reg |= adbhid_input_reरेजिस्टर(id, शेष_id, org_handler_id,
 					       org_handler_id, 0);
-	}
+	पूर्ण
 
-	/* Try to switch all mice to handler 4, or 2 for three-button
+	/* Try to चयन all mice to handler 4, or 2 क्रम three-button
 	   mode and full resolution. */
-	for (i = 0; i < mouse_ids.nids; i++) {
-		int id = mouse_ids.id[i];
-		int mouse_kind;
-		char *desc = "standard";
+	क्रम (i = 0; i < mouse_ids.nids; i++) अणु
+		पूर्णांक id = mouse_ids.id[i];
+		पूर्णांक mouse_kind;
+		अक्षर *desc = "standard";
 
-		adb_get_infos(id, &default_id, &org_handler_id);
+		adb_get_infos(id, &शेष_id, &org_handler_id);
 
-		if (adb_try_handler_change(id, 4)) {
+		अगर (adb_try_handler_change(id, 4)) अणु
 			mouse_kind = ADBMOUSE_EXTENDED;
-		}
-		else if (adb_try_handler_change(id, 0x2F)) {
+		पूर्ण
+		अन्यथा अगर (adb_try_handler_change(id, 0x2F)) अणु
 			mouse_kind = ADBMOUSE_MICROSPEED;
-		}
-		else if (adb_try_handler_change(id, 0x42)) {
+		पूर्ण
+		अन्यथा अगर (adb_try_handler_change(id, 0x42)) अणु
 			mouse_kind = ADBMOUSE_TRACKBALLPRO;
-		}
-		else if (adb_try_handler_change(id, 0x66)) {
+		पूर्ण
+		अन्यथा अगर (adb_try_handler_change(id, 0x66)) अणु
 			mouse_kind = ADBMOUSE_MICROSPEED;
-		}
-		else if (adb_try_handler_change(id, 0x5F)) {
+		पूर्ण
+		अन्यथा अगर (adb_try_handler_change(id, 0x5F)) अणु
 			mouse_kind = ADBMOUSE_MICROSPEED;
-		}
-		else if (adb_try_handler_change(id, 3)) {
+		पूर्ण
+		अन्यथा अगर (adb_try_handler_change(id, 3)) अणु
 			mouse_kind = ADBMOUSE_MS_A3;
-		}
-		else if (adb_try_handler_change(id, 2)) {
+		पूर्ण
+		अन्यथा अगर (adb_try_handler_change(id, 2)) अणु
 			mouse_kind = ADBMOUSE_STANDARD_200;
-		}
-		else {
+		पूर्ण
+		अन्यथा अणु
 			mouse_kind = ADBMOUSE_STANDARD_100;
-		}
+		पूर्ण
 
-		if ((mouse_kind == ADBMOUSE_TRACKBALLPRO)
-		    || (mouse_kind == ADBMOUSE_MICROSPEED)) {
+		अगर ((mouse_kind == ADBMOUSE_TRACKBALLPRO)
+		    || (mouse_kind == ADBMOUSE_MICROSPEED)) अणु
 			desc = "Microspeed/MacPoint or compatible";
 			init_microspeed(id);
-		} else if (mouse_kind == ADBMOUSE_MS_A3) {
+		पूर्ण अन्यथा अगर (mouse_kind == ADBMOUSE_MS_A3) अणु
 			desc = "Mouse Systems A3 Mouse or compatible";
 			init_ms_a3(id);
-		} else if (mouse_kind ==  ADBMOUSE_EXTENDED) {
+		पूर्ण अन्यथा अगर (mouse_kind ==  ADBMOUSE_EXTENDED) अणु
 			desc = "extended";
 			/*
-			 * Register 1 is usually used for device
-			 * identification.  Here, we try to identify
+			 * Register 1 is usually used क्रम device
+			 * identअगरication.  Here, we try to identअगरy
 			 * a known device and call the appropriate
 			 * init function.
 			 */
-			adb_request(&req, NULL, ADBREQ_SYNC | ADBREQ_REPLY, 1,
+			adb_request(&req, शून्य, ADBREQ_SYNC | ADBREQ_REPLY, 1,
 				    ADB_READREG(id, 1));
 
-			if ((req.reply_len) &&
+			अगर ((req.reply_len) &&
 			    (req.reply[1] == 0x9a) && ((req.reply[2] == 0x21)
-			    	|| (req.reply[2] == 0x20))) {
+			    	|| (req.reply[2] == 0x20))) अणु
 				mouse_kind = ADBMOUSE_TRACKBALL;
 				desc = "trackman/mouseman";
 				init_trackball(id);
-			}
-			else if ((req.reply_len >= 4) &&
+			पूर्ण
+			अन्यथा अगर ((req.reply_len >= 4) &&
 			    (req.reply[1] == 0x74) && (req.reply[2] == 0x70) &&
-			    (req.reply[3] == 0x61) && (req.reply[4] == 0x64)) {
+			    (req.reply[3] == 0x61) && (req.reply[4] == 0x64)) अणु
 				mouse_kind = ADBMOUSE_TRACKPAD;
 				desc = "trackpad";
 				init_trackpad(id);
-			}
-			else if ((req.reply_len >= 4) &&
+			पूर्ण
+			अन्यथा अगर ((req.reply_len >= 4) &&
 			    (req.reply[1] == 0x4b) && (req.reply[2] == 0x4d) &&
-			    (req.reply[3] == 0x4c) && (req.reply[4] == 0x31)) {
+			    (req.reply[3] == 0x4c) && (req.reply[4] == 0x31)) अणु
 				mouse_kind = ADBMOUSE_TURBOMOUSE5;
 				desc = "TurboMouse 5";
 				init_turbomouse(id);
-			}
-			else if ((req.reply_len == 9) &&
+			पूर्ण
+			अन्यथा अगर ((req.reply_len == 9) &&
 			    (req.reply[1] == 0x4b) && (req.reply[2] == 0x4f) &&
-			    (req.reply[3] == 0x49) && (req.reply[4] == 0x54)) {
-				if (adb_try_handler_change(id, 0x42)) {
+			    (req.reply[3] == 0x49) && (req.reply[4] == 0x54)) अणु
+				अगर (adb_try_handler_change(id, 0x42)) अणु
 					mouse_kind = ADBMOUSE_MACALLY2;
 					desc = "MacAlly 2-button";
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		adb_get_infos(id, &default_id, &cur_handler_id);
-		printk(KERN_DEBUG "ADB mouse (%s) at %d has handler 0x%X\n",
+		adb_get_infos(id, &शेष_id, &cur_handler_id);
+		prपूर्णांकk(KERN_DEBUG "ADB mouse (%s) at %d has handler 0x%X\n",
 		       desc, id, cur_handler_id);
-		reg |= adbhid_input_reregister(id, default_id, org_handler_id,
+		reg |= adbhid_input_reरेजिस्टर(id, शेष_id, org_handler_id,
 					       cur_handler_id, mouse_kind);
-	}
+	पूर्ण
 	adbhid_input_devcleanup(reg);
-}
+पूर्ण
 
-static void 
-init_trackpad(int id)
-{
-	struct adb_request req;
-	unsigned char r1_buffer[8];
+अटल व्योम 
+init_trackpad(पूर्णांक id)
+अणु
+	काष्ठा adb_request req;
+	अचिन्हित अक्षर r1_buffer[8];
 
-	adb_request(&req, NULL, ADBREQ_SYNC | ADBREQ_REPLY, 1,
+	adb_request(&req, शून्य, ADBREQ_SYNC | ADBREQ_REPLY, 1,
 		    ADB_READREG(id,1));
-	if (req.reply_len < 8)
+	अगर (req.reply_len < 8)
 		pr_err("%s: bad length for reg. 1\n", __func__);
-	else
-	{
-	    memcpy(r1_buffer, &req.reply[1], 8);
+	अन्यथा
+	अणु
+	    स_नकल(r1_buffer, &req.reply[1], 8);
 
-	    adb_request(&req, NULL, ADBREQ_SYNC, 9,
+	    adb_request(&req, शून्य, ADBREQ_SYNC, 9,
 	        ADB_WRITEREG(id,1),
 	            r1_buffer[0],
 	            r1_buffer[1],
@@ -1109,7 +1110,7 @@ init_trackpad(int id)
 	            0x0d,
 	            r1_buffer[7]);
 
-            adb_request(&req, NULL, ADBREQ_SYNC, 9,
+            adb_request(&req, शून्य, ADBREQ_SYNC, 9,
 	        ADB_WRITEREG(id,2),
 	    	    0x99,
 	    	    0x94,
@@ -1120,7 +1121,7 @@ init_trackpad(int id)
 	    	    0x1b,
 	    	    0x50);
 
-	    adb_request(&req, NULL, ADBREQ_SYNC, 9,
+	    adb_request(&req, शून्य, ADBREQ_SYNC, 9,
 	        ADB_WRITEREG(id,1),
 	            r1_buffer[0],
 	            r1_buffer[1],
@@ -1132,50 +1133,50 @@ init_trackpad(int id)
 	            r1_buffer[7]);
 
 	    /* Without this flush, the trackpad may be locked up */
-	    adb_request(&req, NULL, ADBREQ_SYNC, 1, ADB_FLUSH(id));
-        }
-}
+	    adb_request(&req, शून्य, ADBREQ_SYNC, 1, ADB_FLUSH(id));
+        पूर्ण
+पूर्ण
 
-static void 
-init_trackball(int id)
-{
-	struct adb_request req;
+अटल व्योम 
+init_trackball(पूर्णांक id)
+अणु
+	काष्ठा adb_request req;
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 3,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 	ADB_WRITEREG(id,1), 00,0x81);
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 3,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 	ADB_WRITEREG(id,1), 01,0x81);
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 3,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 	ADB_WRITEREG(id,1), 02,0x81);
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 3,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 	ADB_WRITEREG(id,1), 03,0x38);
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 3,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 	ADB_WRITEREG(id,1), 00,0x81);
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 3,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 	ADB_WRITEREG(id,1), 01,0x81);
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 3,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 	ADB_WRITEREG(id,1), 02,0x81);
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 3,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 	ADB_WRITEREG(id,1), 03,0x38);
-}
+पूर्ण
 
-static void
-init_turbomouse(int id)
-{
-	struct adb_request req;
+अटल व्योम
+init_turbomouse(पूर्णांक id)
+अणु
+	काष्ठा adb_request req;
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 1, ADB_FLUSH(id));
+	adb_request(&req, शून्य, ADBREQ_SYNC, 1, ADB_FLUSH(id));
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 1, ADB_FLUSH(3));
+	adb_request(&req, शून्य, ADBREQ_SYNC, 1, ADB_FLUSH(3));
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 9,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 9,
 	ADB_WRITEREG(3,2),
 	    0xe7,
 	    0x8c,
@@ -1186,9 +1187,9 @@ init_turbomouse(int id)
 	    0xff,
 	    0x94);
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 1, ADB_FLUSH(3));
+	adb_request(&req, शून्य, ADBREQ_SYNC, 1, ADB_FLUSH(3));
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 9,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 9,
 	ADB_WRITEREG(3,2),
 	    0xa5,
 	    0x14,
@@ -1198,20 +1199,20 @@ init_turbomouse(int id)
 	    0xff,
 	    0xff,
 	    0x27);
-}
+पूर्ण
 
-static void
-init_microspeed(int id)
-{
-	struct adb_request req;
+अटल व्योम
+init_microspeed(पूर्णांक id)
+अणु
+	काष्ठा adb_request req;
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 1, ADB_FLUSH(id));
+	adb_request(&req, शून्य, ADBREQ_SYNC, 1, ADB_FLUSH(id));
 
-	/* This will initialize mice using the Microspeed, MacPoint and
+	/* This will initialize mice using the Microspeed, MacPoपूर्णांक and
 	   other compatible firmware. Bit 12 enables extended protocol.
 	   
 	   Register 1 Listen (4 Bytes)
-            0 -  3     Button is mouse (set also for double clicking!!!)
+            0 -  3     Button is mouse (set also क्रम द्विगुन clicking!!!)
             4 -  7     Button is locking (affects change speed also)
             8 - 11     Button changes speed
            12          1 = Extended mouse mode, 0 = normal mouse mode
@@ -1219,7 +1220,7 @@ init_microspeed(int id)
            16 - 23     normal speed
            24 - 31     changed speed
 
-       Register 1 talk holds version and product identification information.
+       Register 1 talk holds version and product identअगरication inक्रमmation.
        Register 1 Talk (4 Bytes):
             0 -  7     Product code
             8 - 23     undefined, reserved
@@ -1227,7 +1228,7 @@ init_microspeed(int id)
         
        Speed 0 is max. 1 to 255 set speed in increments of 1/256 of max.
  */
-	adb_request(&req, NULL, ADBREQ_SYNC, 5,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 5,
 	ADB_WRITEREG(id,1),
 	    0x20,	/* alt speed = 0x20 (rather slow) */
 	    0x00,	/* norm speed = 0x00 (fastest) */
@@ -1235,42 +1236,42 @@ init_microspeed(int id)
 	    0x07);	/* all buttons enabled as mouse buttons, no locking */
 
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 1, ADB_FLUSH(id));
-}
+	adb_request(&req, शून्य, ADBREQ_SYNC, 1, ADB_FLUSH(id));
+पूर्ण
 
-static void
-init_ms_a3(int id)
-{
-	struct adb_request req;
+अटल व्योम
+init_ms_a3(पूर्णांक id)
+अणु
+	काष्ठा adb_request req;
 
-	adb_request(&req, NULL, ADBREQ_SYNC, 3,
+	adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 	ADB_WRITEREG(id, 0x2),
 	    0x00,
 	    0x07);
  
- 	adb_request(&req, NULL, ADBREQ_SYNC, 1, ADB_FLUSH(id));
-}
+ 	adb_request(&req, शून्य, ADBREQ_SYNC, 1, ADB_FLUSH(id));
+पूर्ण
 
-static int __init adbhid_init(void)
-{
-#ifndef CONFIG_MAC
-	if (!machine_is(chrp) && !machine_is(powermac))
-		return 0;
-#endif
+अटल पूर्णांक __init adbhid_init(व्योम)
+अणु
+#अगर_अघोषित CONFIG_MAC
+	अगर (!machine_is(chrp) && !machine_is(घातermac))
+		वापस 0;
+#पूर्ण_अगर
 
 	led_request.complete = 1;
 
 	adbhid_probe();
 
-	blocking_notifier_chain_register(&adb_client_list,
-			&adbhid_adb_notifier);
+	blocking_notअगरier_chain_रेजिस्टर(&adb_client_list,
+			&adbhid_adb_notअगरier);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit adbhid_exit(void)
-{
-}
+अटल व्योम __निकास adbhid_निकास(व्योम)
+अणु
+पूर्ण
  
 module_init(adbhid_init);
-module_exit(adbhid_exit);
+module_निकास(adbhid_निकास);

@@ -1,6 +1,7 @@
-#ifndef _ASM_H8300_MMU_CONTEXT_H
-#define _ASM_H8300_MMU_CONTEXT_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_H8300_MMU_CONTEXT_H
+#घोषणा _ASM_H8300_MMU_CONTEXT_H
 
-#include <asm-generic/nommu_context.h>
+#समावेश <यंत्र-generic/nommu_context.h>
 
-#endif /* _ASM_H8300_MMU_CONTEXT_H */
+#पूर्ण_अगर /* _ASM_H8300_MMU_CONTEXT_H */

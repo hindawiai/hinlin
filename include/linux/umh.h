@@ -1,69 +1,70 @@
-#ifndef __LINUX_UMH_H__
-#define __LINUX_UMH_H__
+<शैली गुरु>
+#अगर_अघोषित __LINUX_UMH_H__
+#घोषणा __LINUX_UMH_H__
 
-#include <linux/gfp.h>
-#include <linux/stddef.h>
-#include <linux/errno.h>
-#include <linux/compiler.h>
-#include <linux/workqueue.h>
-#include <linux/sysctl.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/compiler.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/sysctl.h>
 
-struct cred;
-struct file;
+काष्ठा cred;
+काष्ठा file;
 
-#define UMH_NO_WAIT	0	/* don't wait at all */
-#define UMH_WAIT_EXEC	1	/* wait for the exec, but not the process */
-#define UMH_WAIT_PROC	2	/* wait for the process to complete */
-#define UMH_KILLABLE	4	/* wait for EXEC/PROC killable */
+#घोषणा UMH_NO_WAIT	0	/* करोn't रुको at all */
+#घोषणा UMH_WAIT_EXEC	1	/* रुको क्रम the exec, but not the process */
+#घोषणा UMH_WAIT_PROC	2	/* रुको क्रम the process to complete */
+#घोषणा UMH_KILLABLE	4	/* रुको क्रम EXEC/PROC समाप्तable */
 
-struct subprocess_info {
-	struct work_struct work;
-	struct completion *complete;
-	const char *path;
-	char **argv;
-	char **envp;
-	int wait;
-	int retval;
-	int (*init)(struct subprocess_info *info, struct cred *new);
-	void (*cleanup)(struct subprocess_info *info);
-	void *data;
-} __randomize_layout;
+काष्ठा subprocess_info अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा completion *complete;
+	स्थिर अक्षर *path;
+	अक्षर **argv;
+	अक्षर **envp;
+	पूर्णांक रुको;
+	पूर्णांक retval;
+	पूर्णांक (*init)(काष्ठा subprocess_info *info, काष्ठा cred *new);
+	व्योम (*cleanup)(काष्ठा subprocess_info *info);
+	व्योम *data;
+पूर्ण __अक्रमomize_layout;
 
-extern int
-call_usermodehelper(const char *path, char **argv, char **envp, int wait);
+बाह्य पूर्णांक
+call_usermodehelper(स्थिर अक्षर *path, अक्षर **argv, अक्षर **envp, पूर्णांक रुको);
 
-extern struct subprocess_info *
-call_usermodehelper_setup(const char *path, char **argv, char **envp,
+बाह्य काष्ठा subprocess_info *
+call_usermodehelper_setup(स्थिर अक्षर *path, अक्षर **argv, अक्षर **envp,
 			  gfp_t gfp_mask,
-			  int (*init)(struct subprocess_info *info, struct cred *new),
-			  void (*cleanup)(struct subprocess_info *), void *data);
+			  पूर्णांक (*init)(काष्ठा subprocess_info *info, काष्ठा cred *new),
+			  व्योम (*cleanup)(काष्ठा subprocess_info *), व्योम *data);
 
-extern int
-call_usermodehelper_exec(struct subprocess_info *info, int wait);
+बाह्य पूर्णांक
+call_usermodehelper_exec(काष्ठा subprocess_info *info, पूर्णांक रुको);
 
-extern struct ctl_table usermodehelper_table[];
+बाह्य काष्ठा ctl_table usermodehelper_table[];
 
-enum umh_disable_depth {
+क्रमागत umh_disable_depth अणु
 	UMH_ENABLED = 0,
 	UMH_FREEZING,
 	UMH_DISABLED,
-};
+पूर्ण;
 
-extern int __usermodehelper_disable(enum umh_disable_depth depth);
-extern void __usermodehelper_set_disable_depth(enum umh_disable_depth depth);
+बाह्य पूर्णांक __usermodehelper_disable(क्रमागत umh_disable_depth depth);
+बाह्य व्योम __usermodehelper_set_disable_depth(क्रमागत umh_disable_depth depth);
 
-static inline int usermodehelper_disable(void)
-{
-	return __usermodehelper_disable(UMH_DISABLED);
-}
+अटल अंतरभूत पूर्णांक usermodehelper_disable(व्योम)
+अणु
+	वापस __usermodehelper_disable(UMH_DISABLED);
+पूर्ण
 
-static inline void usermodehelper_enable(void)
-{
+अटल अंतरभूत व्योम usermodehelper_enable(व्योम)
+अणु
 	__usermodehelper_set_disable_depth(UMH_ENABLED);
-}
+पूर्ण
 
-extern int usermodehelper_read_trylock(void);
-extern long usermodehelper_read_lock_wait(long timeout);
-extern void usermodehelper_read_unlock(void);
+बाह्य पूर्णांक usermodehelper_पढ़ो_trylock(व्योम);
+बाह्य दीर्घ usermodehelper_पढ़ो_lock_रुको(दीर्घ समयout);
+बाह्य व्योम usermodehelper_पढ़ो_unlock(व्योम);
 
-#endif /* __LINUX_UMH_H__ */
+#पूर्ण_अगर /* __LINUX_UMH_H__ */

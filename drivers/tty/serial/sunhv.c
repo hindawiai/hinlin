@@ -1,550 +1,551 @@
-// SPDX-License-Identifier: GPL-2.0
-/* sunhv.c: Serial driver for SUN4V hypervisor console.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* sunhv.c: Serial driver क्रम SUN4V hypervisor console.
  *
  * Copyright (C) 2006, 2007 David S. Miller (davem@davemloft.net)
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/major.h>
-#include <linux/circ_buf.h>
-#include <linux/serial.h>
-#include <linux/sysrq.h>
-#include <linux/console.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/of_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/major.h>
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/console.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_device.h>
 
-#include <asm/hypervisor.h>
-#include <asm/spitfire.h>
-#include <asm/prom.h>
-#include <asm/irq.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/hypervisor.h>
+#समावेश <यंत्र/spitfire.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/setup.h>
 
-#include <linux/serial_core.h>
-#include <linux/sunserialcore.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/sunserialcore.h>
 
-#define CON_BREAK	((long)-1)
-#define CON_HUP		((long)-2)
+#घोषणा CON_BREAK	((दीर्घ)-1)
+#घोषणा CON_HUP		((दीर्घ)-2)
 
-#define IGNORE_BREAK	0x1
-#define IGNORE_ALL	0x2
+#घोषणा IGNORE_BREAK	0x1
+#घोषणा IGNORE_ALL	0x2
 
-static char *con_write_page;
-static char *con_read_page;
+अटल अक्षर *con_ग_लिखो_page;
+अटल अक्षर *con_पढ़ो_page;
 
-static int hung_up = 0;
+अटल पूर्णांक hung_up = 0;
 
-static void transmit_chars_putchar(struct uart_port *port, struct circ_buf *xmit)
-{
-	while (!uart_circ_empty(xmit)) {
-		long status = sun4v_con_putchar(xmit->buf[xmit->tail]);
+अटल व्योम transmit_अक्षरs_अक्षर_दो(काष्ठा uart_port *port, काष्ठा circ_buf *xmit)
+अणु
+	जबतक (!uart_circ_empty(xmit)) अणु
+		दीर्घ status = sun4v_con_अक्षर_दो(xmit->buf[xmit->tail]);
 
-		if (status != HV_EOK)
-			break;
+		अगर (status != HV_EOK)
+			अवरोध;
 
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void transmit_chars_write(struct uart_port *port, struct circ_buf *xmit)
-{
-	while (!uart_circ_empty(xmit)) {
-		unsigned long ra = __pa(xmit->buf + xmit->tail);
-		unsigned long len, status, sent;
+अटल व्योम transmit_अक्षरs_ग_लिखो(काष्ठा uart_port *port, काष्ठा circ_buf *xmit)
+अणु
+	जबतक (!uart_circ_empty(xmit)) अणु
+		अचिन्हित दीर्घ ra = __pa(xmit->buf + xmit->tail);
+		अचिन्हित दीर्घ len, status, sent;
 
 		len = CIRC_CNT_TO_END(xmit->head, xmit->tail,
 				      UART_XMIT_SIZE);
-		status = sun4v_con_write(ra, len, &sent);
-		if (status != HV_EOK)
-			break;
+		status = sun4v_con_ग_लिखो(ra, len, &sent);
+		अगर (status != HV_EOK)
+			अवरोध;
 		xmit->tail = (xmit->tail + sent) & (UART_XMIT_SIZE - 1);
 		port->icount.tx += sent;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int receive_chars_getchar(struct uart_port *port)
-{
-	int saw_console_brk = 0;
-	int limit = 10000;
+अटल पूर्णांक receive_अक्षरs_अक्षर_लो(काष्ठा uart_port *port)
+अणु
+	पूर्णांक saw_console_brk = 0;
+	पूर्णांक limit = 10000;
 
-	while (limit-- > 0) {
-		long status;
-		long c = sun4v_con_getchar(&status);
+	जबतक (limit-- > 0) अणु
+		दीर्घ status;
+		दीर्घ c = sun4v_con_अक्षर_लो(&status);
 
-		if (status == HV_EWOULDBLOCK)
-			break;
+		अगर (status == HV_EWOULDBLOCK)
+			अवरोध;
 
-		if (c == CON_BREAK) {
-			if (uart_handle_break(port))
-				continue;
+		अगर (c == CON_BREAK) अणु
+			अगर (uart_handle_अवरोध(port))
+				जारी;
 			saw_console_brk = 1;
 			c = 0;
-		}
+		पूर्ण
 
-		if (c == CON_HUP) {
+		अगर (c == CON_HUP) अणु
 			hung_up = 1;
 			uart_handle_dcd_change(port, 0);
-		} else if (hung_up) {
+		पूर्ण अन्यथा अगर (hung_up) अणु
 			hung_up = 0;
 			uart_handle_dcd_change(port, 1);
-		}
+		पूर्ण
 
-		if (port->state == NULL) {
-			uart_handle_sysrq_char(port, c);
-			continue;
-		}
+		अगर (port->state == शून्य) अणु
+			uart_handle_sysrq_अक्षर(port, c);
+			जारी;
+		पूर्ण
 
 		port->icount.rx++;
 
-		if (uart_handle_sysrq_char(port, c))
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(port, c))
+			जारी;
 
-		tty_insert_flip_char(&port->state->port, c, TTY_NORMAL);
-	}
+		tty_insert_flip_अक्षर(&port->state->port, c, TTY_NORMAL);
+	पूर्ण
 
-	return saw_console_brk;
-}
+	वापस saw_console_brk;
+पूर्ण
 
-static int receive_chars_read(struct uart_port *port)
-{
-	static int saw_console_brk;
-	int limit = 10000;
+अटल पूर्णांक receive_अक्षरs_पढ़ो(काष्ठा uart_port *port)
+अणु
+	अटल पूर्णांक saw_console_brk;
+	पूर्णांक limit = 10000;
 
-	while (limit-- > 0) {
-		unsigned long ra = __pa(con_read_page);
-		unsigned long bytes_read, i;
-		long stat = sun4v_con_read(ra, PAGE_SIZE, &bytes_read);
+	जबतक (limit-- > 0) अणु
+		अचिन्हित दीर्घ ra = __pa(con_पढ़ो_page);
+		अचिन्हित दीर्घ bytes_पढ़ो, i;
+		दीर्घ stat = sun4v_con_पढ़ो(ra, PAGE_SIZE, &bytes_पढ़ो);
 
-		if (stat != HV_EOK) {
-			bytes_read = 0;
+		अगर (stat != HV_EOK) अणु
+			bytes_पढ़ो = 0;
 
-			if (stat == CON_BREAK) {
-				if (saw_console_brk)
-					sun_do_break();
+			अगर (stat == CON_BREAK) अणु
+				अगर (saw_console_brk)
+					sun_करो_अवरोध();
 
-				if (uart_handle_break(port))
-					continue;
+				अगर (uart_handle_अवरोध(port))
+					जारी;
 				saw_console_brk = 1;
-				*con_read_page = 0;
-				bytes_read = 1;
-			} else if (stat == CON_HUP) {
+				*con_पढ़ो_page = 0;
+				bytes_पढ़ो = 1;
+			पूर्ण अन्यथा अगर (stat == CON_HUP) अणु
 				hung_up = 1;
 				uart_handle_dcd_change(port, 0);
-				continue;
-			} else {
+				जारी;
+			पूर्ण अन्यथा अणु
 				/* HV_EWOULDBLOCK, etc.  */
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (hung_up) {
+		अगर (hung_up) अणु
 			hung_up = 0;
 			uart_handle_dcd_change(port, 1);
-		}
+		पूर्ण
 
-		if (port->sysrq != 0 &&  *con_read_page) {
-			for (i = 0; i < bytes_read; i++)
-				uart_handle_sysrq_char(port, con_read_page[i]);
+		अगर (port->sysrq != 0 &&  *con_पढ़ो_page) अणु
+			क्रम (i = 0; i < bytes_पढ़ो; i++)
+				uart_handle_sysrq_अक्षर(port, con_पढ़ो_page[i]);
 			saw_console_brk = 0;
-		}
+		पूर्ण
 
-		if (port->state == NULL)
-			continue;
+		अगर (port->state == शून्य)
+			जारी;
 
-		port->icount.rx += bytes_read;
+		port->icount.rx += bytes_पढ़ो;
 
-		tty_insert_flip_string(&port->state->port, con_read_page,
-				bytes_read);
-	}
+		tty_insert_flip_string(&port->state->port, con_पढ़ो_page,
+				bytes_पढ़ो);
+	पूर्ण
 
-	return saw_console_brk;
-}
+	वापस saw_console_brk;
+पूर्ण
 
-struct sunhv_ops {
-	void (*transmit_chars)(struct uart_port *port, struct circ_buf *xmit);
-	int (*receive_chars)(struct uart_port *port);
-};
+काष्ठा sunhv_ops अणु
+	व्योम (*transmit_अक्षरs)(काष्ठा uart_port *port, काष्ठा circ_buf *xmit);
+	पूर्णांक (*receive_अक्षरs)(काष्ठा uart_port *port);
+पूर्ण;
 
-static const struct sunhv_ops bychar_ops = {
-	.transmit_chars = transmit_chars_putchar,
-	.receive_chars = receive_chars_getchar,
-};
+अटल स्थिर काष्ठा sunhv_ops byअक्षर_ops = अणु
+	.transmit_अक्षरs = transmit_अक्षरs_अक्षर_दो,
+	.receive_अक्षरs = receive_अक्षरs_अक्षर_लो,
+पूर्ण;
 
-static const struct sunhv_ops bywrite_ops = {
-	.transmit_chars = transmit_chars_write,
-	.receive_chars = receive_chars_read,
-};
+अटल स्थिर काष्ठा sunhv_ops byग_लिखो_ops = अणु
+	.transmit_अक्षरs = transmit_अक्षरs_ग_लिखो,
+	.receive_अक्षरs = receive_अक्षरs_पढ़ो,
+पूर्ण;
 
-static const struct sunhv_ops *sunhv_ops = &bychar_ops;
+अटल स्थिर काष्ठा sunhv_ops *sunhv_ops = &byअक्षर_ops;
 
-static struct tty_port *receive_chars(struct uart_port *port)
-{
-	struct tty_port *tport = NULL;
+अटल काष्ठा tty_port *receive_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा tty_port *tport = शून्य;
 
-	if (port->state != NULL)		/* Unopened serial console */
+	अगर (port->state != शून्य)		/* Unखोलोed serial console */
 		tport = &port->state->port;
 
-	if (sunhv_ops->receive_chars(port))
-		sun_do_break();
+	अगर (sunhv_ops->receive_अक्षरs(port))
+		sun_करो_अवरोध();
 
-	return tport;
-}
+	वापस tport;
+पूर्ण
 
-static void transmit_chars(struct uart_port *port)
-{
-	struct circ_buf *xmit;
+अटल व्योम transmit_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा circ_buf *xmit;
 
-	if (!port->state)
-		return;
+	अगर (!port->state)
+		वापस;
 
 	xmit = &port->state->xmit;
-	if (uart_circ_empty(xmit) || uart_tx_stopped(port))
-		return;
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port))
+		वापस;
 
-	sunhv_ops->transmit_chars(port, xmit);
+	sunhv_ops->transmit_अक्षरs(port, xmit);
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
-}
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
+पूर्ण
 
-static irqreturn_t sunhv_interrupt(int irq, void *dev_id)
-{
-	struct uart_port *port = dev_id;
-	struct tty_port *tport;
-	unsigned long flags;
+अटल irqवापस_t sunhv_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा uart_port *port = dev_id;
+	काष्ठा tty_port *tport;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	tport = receive_chars(port);
-	transmit_chars(port);
+	tport = receive_अक्षरs(port);
+	transmit_अक्षरs(port);
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	if (tport)
+	अगर (tport)
 		tty_flip_buffer_push(tport);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* port->lock is not held.  */
-static unsigned int sunhv_tx_empty(struct uart_port *port)
-{
-	/* Transmitter is always empty for us.  If the circ buffer
-	 * is non-empty or there is an x_char pending, our caller
-	 * will do the right thing and ignore what we return here.
+अटल अचिन्हित पूर्णांक sunhv_tx_empty(काष्ठा uart_port *port)
+अणु
+	/* Transmitter is always empty क्रम us.  If the circ buffer
+	 * is non-empty or there is an x_अक्षर pending, our caller
+	 * will करो the right thing and ignore what we वापस here.
 	 */
-	return TIOCSER_TEMT;
-}
+	वापस TIOCSER_TEMT;
+पूर्ण
 
 /* port->lock held by caller.  */
-static void sunhv_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	return;
-}
+अटल व्योम sunhv_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	वापस;
+पूर्ण
 
-/* port->lock is held by caller and interrupts are disabled.  */
-static unsigned int sunhv_get_mctrl(struct uart_port *port)
-{
-	return TIOCM_DSR | TIOCM_CAR | TIOCM_CTS;
-}
-
-/* port->lock held by caller.  */
-static void sunhv_stop_tx(struct uart_port *port)
-{
-	return;
-}
+/* port->lock is held by caller and पूर्णांकerrupts are disabled.  */
+अटल अचिन्हित पूर्णांक sunhv_get_mctrl(काष्ठा uart_port *port)
+अणु
+	वापस TIOCM_DSR | TIOCM_CAR | TIOCM_CTS;
+पूर्ण
 
 /* port->lock held by caller.  */
-static void sunhv_start_tx(struct uart_port *port)
-{
-	transmit_chars(port);
-}
+अटल व्योम sunhv_stop_tx(काष्ठा uart_port *port)
+अणु
+	वापस;
+पूर्ण
+
+/* port->lock held by caller.  */
+अटल व्योम sunhv_start_tx(काष्ठा uart_port *port)
+अणु
+	transmit_अक्षरs(port);
+पूर्ण
 
 /* port->lock is not held.  */
-static void sunhv_send_xchar(struct uart_port *port, char ch)
-{
-	unsigned long flags;
-	int limit = 10000;
+अटल व्योम sunhv_send_xअक्षर(काष्ठा uart_port *port, अक्षर ch)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक limit = 10000;
 
-	if (ch == __DISABLED_CHAR)
-		return;
+	अगर (ch == __DISABLED_CHAR)
+		वापस;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	while (limit-- > 0) {
-		long status = sun4v_con_putchar(ch);
-		if (status == HV_EOK)
-			break;
+	जबतक (limit-- > 0) अणु
+		दीर्घ status = sun4v_con_अक्षर_दो(ch);
+		अगर (status == HV_EOK)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
 /* port->lock held by caller.  */
-static void sunhv_stop_rx(struct uart_port *port)
-{
-}
+अटल व्योम sunhv_stop_rx(काष्ठा uart_port *port)
+अणु
+पूर्ण
 
 /* port->lock is not held.  */
-static void sunhv_break_ctl(struct uart_port *port, int break_state)
-{
-	if (break_state) {
-		unsigned long flags;
-		int limit = 10000;
+अटल व्योम sunhv_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	अगर (अवरोध_state) अणु
+		अचिन्हित दीर्घ flags;
+		पूर्णांक limit = 10000;
 
 		spin_lock_irqsave(&port->lock, flags);
 
-		while (limit-- > 0) {
-			long status = sun4v_con_putchar(CON_BREAK);
-			if (status == HV_EOK)
-				break;
+		जबतक (limit-- > 0) अणु
+			दीर्घ status = sun4v_con_अक्षर_दो(CON_BREAK);
+			अगर (status == HV_EOK)
+				अवरोध;
 			udelay(1);
-		}
+		पूर्ण
 
 		spin_unlock_irqrestore(&port->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* port->lock is not held.  */
-static int sunhv_startup(struct uart_port *port)
-{
-	return 0;
-}
+अटल पूर्णांक sunhv_startup(काष्ठा uart_port *port)
+अणु
+	वापस 0;
+पूर्ण
 
 /* port->lock is not held.  */
-static void sunhv_shutdown(struct uart_port *port)
-{
-}
+अटल व्योम sunhv_shutकरोwn(काष्ठा uart_port *port)
+अणु
+पूर्ण
 
 /* port->lock is not held.  */
-static void sunhv_set_termios(struct uart_port *port, struct ktermios *termios,
-			      struct ktermios *old)
-{
-	unsigned int baud = uart_get_baud_rate(port, termios, old, 0, 4000000);
-	unsigned int quot = uart_get_divisor(port, baud);
-	unsigned int iflag, cflag;
-	unsigned long flags;
+अटल व्योम sunhv_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+			      काष्ठा ktermios *old)
+अणु
+	अचिन्हित पूर्णांक baud = uart_get_baud_rate(port, termios, old, 0, 4000000);
+	अचिन्हित पूर्णांक quot = uart_get_भागisor(port, baud);
+	अचिन्हित पूर्णांक अगरlag, cflag;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	iflag = termios->c_iflag;
+	अगरlag = termios->c_अगरlag;
 	cflag = termios->c_cflag;
 
 	port->ignore_status_mask = 0;
-	if (iflag & IGNBRK)
+	अगर (अगरlag & IGNBRK)
 		port->ignore_status_mask |= IGNORE_BREAK;
-	if ((cflag & CREAD) == 0)
+	अगर ((cflag & CREAD) == 0)
 		port->ignore_status_mask |= IGNORE_ALL;
 
 	/* XXX */
-	uart_update_timeout(port, cflag,
+	uart_update_समयout(port, cflag,
 			    (port->uartclk / (16 * quot)));
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static const char *sunhv_type(struct uart_port *port)
-{
-	return "SUN4V HCONS";
-}
+अटल स्थिर अक्षर *sunhv_type(काष्ठा uart_port *port)
+अणु
+	वापस "SUN4V HCONS";
+पूर्ण
 
-static void sunhv_release_port(struct uart_port *port)
-{
-}
+अटल व्योम sunhv_release_port(काष्ठा uart_port *port)
+अणु
+पूर्ण
 
-static int sunhv_request_port(struct uart_port *port)
-{
-	return 0;
-}
+अटल पूर्णांक sunhv_request_port(काष्ठा uart_port *port)
+अणु
+	वापस 0;
+पूर्ण
 
-static void sunhv_config_port(struct uart_port *port, int flags)
-{
-}
+अटल व्योम sunhv_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+पूर्ण
 
-static int sunhv_verify_port(struct uart_port *port, struct serial_struct *ser)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक sunhv_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static const struct uart_ops sunhv_pops = {
+अटल स्थिर काष्ठा uart_ops sunhv_pops = अणु
 	.tx_empty	= sunhv_tx_empty,
 	.set_mctrl	= sunhv_set_mctrl,
 	.get_mctrl	= sunhv_get_mctrl,
 	.stop_tx	= sunhv_stop_tx,
 	.start_tx	= sunhv_start_tx,
-	.send_xchar	= sunhv_send_xchar,
+	.send_xअक्षर	= sunhv_send_xअक्षर,
 	.stop_rx	= sunhv_stop_rx,
-	.break_ctl	= sunhv_break_ctl,
+	.अवरोध_ctl	= sunhv_अवरोध_ctl,
 	.startup	= sunhv_startup,
-	.shutdown	= sunhv_shutdown,
+	.shutकरोwn	= sunhv_shutकरोwn,
 	.set_termios	= sunhv_set_termios,
 	.type		= sunhv_type,
 	.release_port	= sunhv_release_port,
 	.request_port	= sunhv_request_port,
 	.config_port	= sunhv_config_port,
-	.verify_port	= sunhv_verify_port,
-};
+	.verअगरy_port	= sunhv_verअगरy_port,
+पूर्ण;
 
-static struct uart_driver sunhv_reg = {
+अटल काष्ठा uart_driver sunhv_reg = अणु
 	.owner			= THIS_MODULE,
 	.driver_name		= "sunhv",
 	.dev_name		= "ttyHV",
 	.major			= TTY_MAJOR,
-};
+पूर्ण;
 
-static struct uart_port *sunhv_port;
+अटल काष्ठा uart_port *sunhv_port;
 
-void sunhv_migrate_hvcons_irq(int cpu)
-{
+व्योम sunhv_migrate_hvcons_irq(पूर्णांक cpu)
+अणु
 	/* Migrate hvcons irq to param cpu */
-	irq_force_affinity(sunhv_port->irq, cpumask_of(cpu));
-}
+	irq_क्रमce_affinity(sunhv_port->irq, cpumask_of(cpu));
+पूर्ण
 
-/* Copy 's' into the con_write_page, decoding "\n" into
- * "\r\n" along the way.  We have to return two lengths
+/* Copy 's' पूर्णांकo the con_ग_लिखो_page, decoding "\n" पूर्णांकo
+ * "\r\n" aदीर्घ the way.  We have to वापस two lengths
  * because the caller needs to know how much to advance
- * 's' and also how many bytes to output via con_write_page.
+ * 's' and also how many bytes to output via con_ग_लिखो_page.
  */
-static int fill_con_write_page(const char *s, unsigned int n,
-			       unsigned long *page_bytes)
-{
-	const char *orig_s = s;
-	char *p = con_write_page;
-	int left = PAGE_SIZE;
+अटल पूर्णांक fill_con_ग_लिखो_page(स्थिर अक्षर *s, अचिन्हित पूर्णांक n,
+			       अचिन्हित दीर्घ *page_bytes)
+अणु
+	स्थिर अक्षर *orig_s = s;
+	अक्षर *p = con_ग_लिखो_page;
+	पूर्णांक left = PAGE_SIZE;
 
-	while (n--) {
-		if (*s == '\n') {
-			if (left < 2)
-				break;
+	जबतक (n--) अणु
+		अगर (*s == '\n') अणु
+			अगर (left < 2)
+				अवरोध;
 			*p++ = '\r';
 			left--;
-		} else if (left < 1)
-			break;
+		पूर्ण अन्यथा अगर (left < 1)
+			अवरोध;
 		*p++ = *s++;
 		left--;
-	}
-	*page_bytes = p - con_write_page;
-	return s - orig_s;
-}
+	पूर्ण
+	*page_bytes = p - con_ग_लिखो_page;
+	वापस s - orig_s;
+पूर्ण
 
-static void sunhv_console_write_paged(struct console *con, const char *s, unsigned n)
-{
-	struct uart_port *port = sunhv_port;
-	unsigned long flags;
-	int locked = 1;
+अटल व्योम sunhv_console_ग_लिखो_paged(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
+अणु
+	काष्ठा uart_port *port = sunhv_port;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक locked = 1;
 
-	if (port->sysrq || oops_in_progress)
+	अगर (port->sysrq || oops_in_progress)
 		locked = spin_trylock_irqsave(&port->lock, flags);
-	else
+	अन्यथा
 		spin_lock_irqsave(&port->lock, flags);
 
-	while (n > 0) {
-		unsigned long ra = __pa(con_write_page);
-		unsigned long page_bytes;
-		unsigned int cpy = fill_con_write_page(s, n,
+	जबतक (n > 0) अणु
+		अचिन्हित दीर्घ ra = __pa(con_ग_लिखो_page);
+		अचिन्हित दीर्घ page_bytes;
+		अचिन्हित पूर्णांक cpy = fill_con_ग_लिखो_page(s, n,
 						       &page_bytes);
 
 		n -= cpy;
 		s += cpy;
-		while (page_bytes > 0) {
-			unsigned long written;
-			int limit = 1000000;
+		जबतक (page_bytes > 0) अणु
+			अचिन्हित दीर्घ written;
+			पूर्णांक limit = 1000000;
 
-			while (limit--) {
-				unsigned long stat;
+			जबतक (limit--) अणु
+				अचिन्हित दीर्घ stat;
 
-				stat = sun4v_con_write(ra, page_bytes,
+				stat = sun4v_con_ग_लिखो(ra, page_bytes,
 						       &written);
-				if (stat == HV_EOK)
-					break;
+				अगर (stat == HV_EOK)
+					अवरोध;
 				udelay(1);
-			}
-			if (limit < 0)
-				break;
+			पूर्ण
+			अगर (limit < 0)
+				अवरोध;
 			page_bytes -= written;
 			ra += written;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (locked)
+	अगर (locked)
 		spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static inline void sunhv_console_putchar(struct uart_port *port, char c)
-{
-	int limit = 1000000;
+अटल अंतरभूत व्योम sunhv_console_अक्षर_दो(काष्ठा uart_port *port, अक्षर c)
+अणु
+	पूर्णांक limit = 1000000;
 
-	while (limit-- > 0) {
-		long status = sun4v_con_putchar(c);
-		if (status == HV_EOK)
-			break;
+	जबतक (limit-- > 0) अणु
+		दीर्घ status = sun4v_con_अक्षर_दो(c);
+		अगर (status == HV_EOK)
+			अवरोध;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sunhv_console_write_bychar(struct console *con, const char *s, unsigned n)
-{
-	struct uart_port *port = sunhv_port;
-	unsigned long flags;
-	int i, locked = 1;
+अटल व्योम sunhv_console_ग_लिखो_byअक्षर(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
+अणु
+	काष्ठा uart_port *port = sunhv_port;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, locked = 1;
 
-	if (port->sysrq || oops_in_progress)
+	अगर (port->sysrq || oops_in_progress)
 		locked = spin_trylock_irqsave(&port->lock, flags);
-	else
+	अन्यथा
 		spin_lock_irqsave(&port->lock, flags);
 
-	for (i = 0; i < n; i++) {
-		if (*s == '\n')
-			sunhv_console_putchar(port, '\r');
-		sunhv_console_putchar(port, *s++);
-	}
+	क्रम (i = 0; i < n; i++) अणु
+		अगर (*s == '\n')
+			sunhv_console_अक्षर_दो(port, '\r');
+		sunhv_console_अक्षर_दो(port, *s++);
+	पूर्ण
 
-	if (locked)
+	अगर (locked)
 		spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static struct console sunhv_console = {
+अटल काष्ठा console sunhv_console = अणु
 	.name	=	"ttyHV",
-	.write	=	sunhv_console_write_bychar,
+	.ग_लिखो	=	sunhv_console_ग_लिखो_byअक्षर,
 	.device	=	uart_console_device,
 	.flags	=	CON_PRINTBUFFER,
 	.index	=	-1,
 	.data	=	&sunhv_reg,
-};
+पूर्ण;
 
-static int hv_probe(struct platform_device *op)
-{
-	struct uart_port *port;
-	unsigned long minor;
-	int err;
+अटल पूर्णांक hv_probe(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा uart_port *port;
+	अचिन्हित दीर्घ minor;
+	पूर्णांक err;
 
-	if (op->archdata.irqs[0] == 0xffffffff)
-		return -ENODEV;
+	अगर (op->archdata.irqs[0] == 0xffffffff)
+		वापस -ENODEV;
 
-	port = kzalloc(sizeof(struct uart_port), GFP_KERNEL);
-	if (unlikely(!port))
-		return -ENOMEM;
+	port = kzalloc(माप(काष्ठा uart_port), GFP_KERNEL);
+	अगर (unlikely(!port))
+		वापस -ENOMEM;
 
 	minor = 1;
-	if (sun4v_hvapi_register(HV_GRP_CORE, 1, &minor) == 0 &&
-	    minor >= 1) {
+	अगर (sun4v_hvapi_रेजिस्टर(HV_GRP_CORE, 1, &minor) == 0 &&
+	    minor >= 1) अणु
 		err = -ENOMEM;
-		con_write_page = kzalloc(PAGE_SIZE, GFP_KERNEL);
-		if (!con_write_page)
-			goto out_free_port;
+		con_ग_लिखो_page = kzalloc(PAGE_SIZE, GFP_KERNEL);
+		अगर (!con_ग_लिखो_page)
+			जाओ out_मुक्त_port;
 
-		con_read_page = kzalloc(PAGE_SIZE, GFP_KERNEL);
-		if (!con_read_page)
-			goto out_free_con_write_page;
+		con_पढ़ो_page = kzalloc(PAGE_SIZE, GFP_KERNEL);
+		अगर (!con_पढ़ो_page)
+			जाओ out_मुक्त_con_ग_लिखो_page;
 
-		sunhv_console.write = sunhv_console_write_paged;
-		sunhv_ops = &bywrite_ops;
-	}
+		sunhv_console.ग_लिखो = sunhv_console_ग_लिखो_paged;
+		sunhv_ops = &byग_लिखो_ops;
+	पूर्ण
 
 	sunhv_port = port;
 
@@ -554,99 +555,99 @@ static int hv_probe(struct platform_device *op)
 	port->type = PORT_SUNHV;
 	port->uartclk = ( 29491200 / 16 ); /* arbitrary */
 
-	port->membase = (unsigned char __iomem *) __pa(port);
+	port->membase = (अचिन्हित अक्षर __iomem *) __pa(port);
 
 	port->irq = op->archdata.irqs[0];
 
 	port->dev = &op->dev;
 
-	err = sunserial_register_minors(&sunhv_reg, 1);
-	if (err)
-		goto out_free_con_read_page;
+	err = sunserial_रेजिस्टर_minors(&sunhv_reg, 1);
+	अगर (err)
+		जाओ out_मुक्त_con_पढ़ो_page;
 
 	sunserial_console_match(&sunhv_console, op->dev.of_node,
 				&sunhv_reg, port->line, false);
 
 	err = uart_add_one_port(&sunhv_reg, port);
-	if (err)
-		goto out_unregister_driver;
+	अगर (err)
+		जाओ out_unरेजिस्टर_driver;
 
-	err = request_irq(port->irq, sunhv_interrupt, 0, "hvcons", port);
-	if (err)
-		goto out_remove_port;
+	err = request_irq(port->irq, sunhv_पूर्णांकerrupt, 0, "hvcons", port);
+	अगर (err)
+		जाओ out_हटाओ_port;
 
-	platform_set_drvdata(op, port);
+	platक्रमm_set_drvdata(op, port);
 
-	return 0;
+	वापस 0;
 
-out_remove_port:
-	uart_remove_one_port(&sunhv_reg, port);
+out_हटाओ_port:
+	uart_हटाओ_one_port(&sunhv_reg, port);
 
-out_unregister_driver:
-	sunserial_unregister_minors(&sunhv_reg, 1);
+out_unरेजिस्टर_driver:
+	sunserial_unरेजिस्टर_minors(&sunhv_reg, 1);
 
-out_free_con_read_page:
-	kfree(con_read_page);
+out_मुक्त_con_पढ़ो_page:
+	kमुक्त(con_पढ़ो_page);
 
-out_free_con_write_page:
-	kfree(con_write_page);
+out_मुक्त_con_ग_लिखो_page:
+	kमुक्त(con_ग_लिखो_page);
 
-out_free_port:
-	kfree(port);
-	sunhv_port = NULL;
-	return err;
-}
+out_मुक्त_port:
+	kमुक्त(port);
+	sunhv_port = शून्य;
+	वापस err;
+पूर्ण
 
-static int hv_remove(struct platform_device *dev)
-{
-	struct uart_port *port = platform_get_drvdata(dev);
+अटल पूर्णांक hv_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा uart_port *port = platक्रमm_get_drvdata(dev);
 
-	free_irq(port->irq, port);
+	मुक्त_irq(port->irq, port);
 
-	uart_remove_one_port(&sunhv_reg, port);
+	uart_हटाओ_one_port(&sunhv_reg, port);
 
-	sunserial_unregister_minors(&sunhv_reg, 1);
-	kfree(con_read_page);
-	kfree(con_write_page);
-	kfree(port);
-	sunhv_port = NULL;
+	sunserial_unरेजिस्टर_minors(&sunhv_reg, 1);
+	kमुक्त(con_पढ़ो_page);
+	kमुक्त(con_ग_लिखो_page);
+	kमुक्त(port);
+	sunhv_port = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id hv_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id hv_match[] = अणु
+	अणु
 		.name = "console",
 		.compatible = "qcn",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "console",
 		.compatible = "SUNW,sun4v-console",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver hv_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver hv_driver = अणु
+	.driver = अणु
 		.name = "hv",
 		.of_match_table = hv_match,
-	},
+	पूर्ण,
 	.probe		= hv_probe,
-	.remove		= hv_remove,
-};
+	.हटाओ		= hv_हटाओ,
+पूर्ण;
 
-static int __init sunhv_init(void)
-{
-	if (tlb_type != hypervisor)
-		return -ENODEV;
+अटल पूर्णांक __init sunhv_init(व्योम)
+अणु
+	अगर (tlb_type != hypervisor)
+		वापस -ENODEV;
 
-	return platform_driver_register(&hv_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&hv_driver);
+पूर्ण
 device_initcall(sunhv_init);
 
-#if 0 /* ...def MODULE ; never supported as such */
+#अगर 0 /* ...def MODULE ; never supported as such */
 MODULE_AUTHOR("David S. Miller");
 MODULE_DESCRIPTION("SUN4V Hypervisor console driver");
 MODULE_VERSION("2.0");
 MODULE_LICENSE("GPL");
-#endif
+#पूर्ण_अगर

@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wlcore
  *
  * Copyright (C) 2013 Texas Instruments Inc.
  */
 
-#ifndef __SYSFS_H__
-#define __SYSFS_H__
+#अगर_अघोषित __SYSFS_H__
+#घोषणा __SYSFS_H__
 
-int wlcore_sysfs_init(struct wl1271 *wl);
-void wlcore_sysfs_free(struct wl1271 *wl);
+पूर्णांक wlcore_sysfs_init(काष्ठा wl1271 *wl);
+व्योम wlcore_sysfs_मुक्त(काष्ठा wl1271 *wl);
 
-#endif
+#पूर्ण_अगर

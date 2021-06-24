@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * DPAA2 Ethernet Switch ethtool support
  *
@@ -7,183 +8,183 @@
  *
  */
 
-#include <linux/ethtool.h>
+#समावेश <linux/ethtool.h>
 
-#include "dpaa2-switch.h"
+#समावेश "dpaa2-switch.h"
 
-static struct {
-	enum dpsw_counter id;
-	char name[ETH_GSTRING_LEN];
-} dpaa2_switch_ethtool_counters[] =  {
-	{DPSW_CNT_ING_FRAME,		"rx frames"},
-	{DPSW_CNT_ING_BYTE,		"rx bytes"},
-	{DPSW_CNT_ING_FLTR_FRAME,	"rx filtered frames"},
-	{DPSW_CNT_ING_FRAME_DISCARD,	"rx discarded frames"},
-	{DPSW_CNT_ING_BCAST_FRAME,	"rx b-cast frames"},
-	{DPSW_CNT_ING_BCAST_BYTES,	"rx b-cast bytes"},
-	{DPSW_CNT_ING_MCAST_FRAME,	"rx m-cast frames"},
-	{DPSW_CNT_ING_MCAST_BYTE,	"rx m-cast bytes"},
-	{DPSW_CNT_EGR_FRAME,		"tx frames"},
-	{DPSW_CNT_EGR_BYTE,		"tx bytes"},
-	{DPSW_CNT_EGR_FRAME_DISCARD,	"tx discarded frames"},
-	{DPSW_CNT_ING_NO_BUFF_DISCARD,	"rx discarded no buffer frames"},
-};
+अटल काष्ठा अणु
+	क्रमागत dpsw_counter id;
+	अक्षर name[ETH_GSTRING_LEN];
+पूर्ण dpaa2_चयन_ethtool_counters[] =  अणु
+	अणुDPSW_CNT_ING_FRAME,		"rx frames"पूर्ण,
+	अणुDPSW_CNT_ING_BYTE,		"rx bytes"पूर्ण,
+	अणुDPSW_CNT_ING_FLTR_FRAME,	"rx filtered frames"पूर्ण,
+	अणुDPSW_CNT_ING_FRAME_DISCARD,	"rx discarded frames"पूर्ण,
+	अणुDPSW_CNT_ING_BCAST_FRAME,	"rx b-cast frames"पूर्ण,
+	अणुDPSW_CNT_ING_BCAST_BYTES,	"rx b-cast bytes"पूर्ण,
+	अणुDPSW_CNT_ING_MCAST_FRAME,	"rx m-cast frames"पूर्ण,
+	अणुDPSW_CNT_ING_MCAST_BYTE,	"rx m-cast bytes"पूर्ण,
+	अणुDPSW_CNT_EGR_FRAME,		"tx frames"पूर्ण,
+	अणुDPSW_CNT_EGR_BYTE,		"tx bytes"पूर्ण,
+	अणुDPSW_CNT_EGR_FRAME_DISCARD,	"tx discarded frames"पूर्ण,
+	अणुDPSW_CNT_ING_NO_BUFF_DISCARD,	"rx discarded no buffer frames"पूर्ण,
+पूर्ण;
 
-#define DPAA2_SWITCH_NUM_COUNTERS	ARRAY_SIZE(dpaa2_switch_ethtool_counters)
+#घोषणा DPAA2_SWITCH_NUM_COUNTERS	ARRAY_SIZE(dpaa2_चयन_ethtool_counters)
 
-static void dpaa2_switch_get_drvinfo(struct net_device *netdev,
-				     struct ethtool_drvinfo *drvinfo)
-{
-	struct ethsw_port_priv *port_priv = netdev_priv(netdev);
+अटल व्योम dpaa2_चयन_get_drvinfo(काष्ठा net_device *netdev,
+				     काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	काष्ठा ethsw_port_priv *port_priv = netdev_priv(netdev);
 	u16 version_major, version_minor;
-	int err;
+	पूर्णांक err;
 
-	strscpy(drvinfo->driver, KBUILD_MODNAME, sizeof(drvinfo->driver));
+	strscpy(drvinfo->driver, KBUILD_MODNAME, माप(drvinfo->driver));
 
 	err = dpsw_get_api_version(port_priv->ethsw_data->mc_io, 0,
 				   &version_major,
 				   &version_minor);
-	if (err)
+	अगर (err)
 		strscpy(drvinfo->fw_version, "N/A",
-			sizeof(drvinfo->fw_version));
-	else
-		snprintf(drvinfo->fw_version, sizeof(drvinfo->fw_version),
+			माप(drvinfo->fw_version));
+	अन्यथा
+		snम_लिखो(drvinfo->fw_version, माप(drvinfo->fw_version),
 			 "%u.%u", version_major, version_minor);
 
 	strscpy(drvinfo->bus_info, dev_name(netdev->dev.parent->parent),
-		sizeof(drvinfo->bus_info));
-}
+		माप(drvinfo->bus_info));
+पूर्ण
 
-static int
-dpaa2_switch_get_link_ksettings(struct net_device *netdev,
-				struct ethtool_link_ksettings *link_ksettings)
-{
-	struct ethsw_port_priv *port_priv = netdev_priv(netdev);
-	struct dpsw_link_state state = {0};
-	int err = 0;
+अटल पूर्णांक
+dpaa2_चयन_get_link_ksettings(काष्ठा net_device *netdev,
+				काष्ठा ethtool_link_ksettings *link_ksettings)
+अणु
+	काष्ठा ethsw_port_priv *port_priv = netdev_priv(netdev);
+	काष्ठा dpsw_link_state state = अणु0पूर्ण;
+	पूर्णांक err = 0;
 
-	err = dpsw_if_get_link_state(port_priv->ethsw_data->mc_io, 0,
+	err = dpsw_अगर_get_link_state(port_priv->ethsw_data->mc_io, 0,
 				     port_priv->ethsw_data->dpsw_handle,
 				     port_priv->idx,
 				     &state);
-	if (err) {
+	अगर (err) अणु
 		netdev_err(netdev, "ERROR %d getting link state\n", err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* At the moment, we have no way of interrogating the DPMAC
+	/* At the moment, we have no way of पूर्णांकerrogating the DPMAC
 	 * from the DPSW side or there may not exist a DPMAC at all.
-	 * Report only autoneg state, duplexity and speed.
+	 * Report only स्वतःneg state, duplनिकासy and speed.
 	 */
-	if (state.options & DPSW_LINK_OPT_AUTONEG)
-		link_ksettings->base.autoneg = AUTONEG_ENABLE;
-	if (!(state.options & DPSW_LINK_OPT_HALF_DUPLEX))
+	अगर (state.options & DPSW_LINK_OPT_AUTONEG)
+		link_ksettings->base.स्वतःneg = AUTONEG_ENABLE;
+	अगर (!(state.options & DPSW_LINK_OPT_HALF_DUPLEX))
 		link_ksettings->base.duplex = DUPLEX_FULL;
 	link_ksettings->base.speed = state.rate;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-dpaa2_switch_set_link_ksettings(struct net_device *netdev,
-				const struct ethtool_link_ksettings *link_ksettings)
-{
-	struct ethsw_port_priv *port_priv = netdev_priv(netdev);
-	struct ethsw_core *ethsw = port_priv->ethsw_data;
-	struct dpsw_link_cfg cfg = {0};
-	bool if_running;
-	int err = 0, ret;
+अटल पूर्णांक
+dpaa2_चयन_set_link_ksettings(काष्ठा net_device *netdev,
+				स्थिर काष्ठा ethtool_link_ksettings *link_ksettings)
+अणु
+	काष्ठा ethsw_port_priv *port_priv = netdev_priv(netdev);
+	काष्ठा ethsw_core *ethsw = port_priv->ethsw_data;
+	काष्ठा dpsw_link_cfg cfg = अणु0पूर्ण;
+	bool अगर_running;
+	पूर्णांक err = 0, ret;
 
-	/* Interface needs to be down to change link settings */
-	if_running = netif_running(netdev);
-	if (if_running) {
-		err = dpsw_if_disable(ethsw->mc_io, 0,
+	/* Interface needs to be करोwn to change link settings */
+	अगर_running = netअगर_running(netdev);
+	अगर (अगर_running) अणु
+		err = dpsw_अगर_disable(ethsw->mc_io, 0,
 				      ethsw->dpsw_handle,
 				      port_priv->idx);
-		if (err) {
+		अगर (err) अणु
 			netdev_err(netdev, "dpsw_if_disable err %d\n", err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	cfg.rate = link_ksettings->base.speed;
-	if (link_ksettings->base.autoneg == AUTONEG_ENABLE)
+	अगर (link_ksettings->base.स्वतःneg == AUTONEG_ENABLE)
 		cfg.options |= DPSW_LINK_OPT_AUTONEG;
-	else
+	अन्यथा
 		cfg.options &= ~DPSW_LINK_OPT_AUTONEG;
-	if (link_ksettings->base.duplex  == DUPLEX_HALF)
+	अगर (link_ksettings->base.duplex  == DUPLEX_HALF)
 		cfg.options |= DPSW_LINK_OPT_HALF_DUPLEX;
-	else
+	अन्यथा
 		cfg.options &= ~DPSW_LINK_OPT_HALF_DUPLEX;
 
-	err = dpsw_if_set_link_cfg(port_priv->ethsw_data->mc_io, 0,
+	err = dpsw_अगर_set_link_cfg(port_priv->ethsw_data->mc_io, 0,
 				   port_priv->ethsw_data->dpsw_handle,
 				   port_priv->idx,
 				   &cfg);
 
-	if (if_running) {
-		ret = dpsw_if_enable(ethsw->mc_io, 0,
+	अगर (अगर_running) अणु
+		ret = dpsw_अगर_enable(ethsw->mc_io, 0,
 				     ethsw->dpsw_handle,
 				     port_priv->idx);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(netdev, "dpsw_if_enable err %d\n", ret);
-			return ret;
-		}
-	}
-	return err;
-}
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int dpaa2_switch_ethtool_get_sset_count(struct net_device *dev, int sset)
-{
-	switch (sset) {
-	case ETH_SS_STATS:
-		return DPAA2_SWITCH_NUM_COUNTERS;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक dpaa2_चयन_ethtool_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		वापस DPAA2_SWITCH_NUM_COUNTERS;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void dpaa2_switch_ethtool_get_strings(struct net_device *netdev,
+अटल व्योम dpaa2_चयन_ethtool_get_strings(काष्ठा net_device *netdev,
 					     u32 stringset, u8 *data)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < DPAA2_SWITCH_NUM_COUNTERS; i++)
-			memcpy(data + i * ETH_GSTRING_LEN,
-			       dpaa2_switch_ethtool_counters[i].name,
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < DPAA2_SWITCH_NUM_COUNTERS; i++)
+			स_नकल(data + i * ETH_GSTRING_LEN,
+			       dpaa2_चयन_ethtool_counters[i].name,
 			       ETH_GSTRING_LEN);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void dpaa2_switch_ethtool_get_stats(struct net_device *netdev,
-					   struct ethtool_stats *stats,
+अटल व्योम dpaa2_चयन_ethtool_get_stats(काष्ठा net_device *netdev,
+					   काष्ठा ethtool_stats *stats,
 					   u64 *data)
-{
-	struct ethsw_port_priv *port_priv = netdev_priv(netdev);
-	int i, err;
+अणु
+	काष्ठा ethsw_port_priv *port_priv = netdev_priv(netdev);
+	पूर्णांक i, err;
 
-	for (i = 0; i < DPAA2_SWITCH_NUM_COUNTERS; i++) {
-		err = dpsw_if_get_counter(port_priv->ethsw_data->mc_io, 0,
+	क्रम (i = 0; i < DPAA2_SWITCH_NUM_COUNTERS; i++) अणु
+		err = dpsw_अगर_get_counter(port_priv->ethsw_data->mc_io, 0,
 					  port_priv->ethsw_data->dpsw_handle,
 					  port_priv->idx,
-					  dpaa2_switch_ethtool_counters[i].id,
+					  dpaa2_चयन_ethtool_counters[i].id,
 					  &data[i]);
-		if (err)
+		अगर (err)
 			netdev_err(netdev, "dpsw_if_get_counter[%s] err %d\n",
-				   dpaa2_switch_ethtool_counters[i].name, err);
-	}
-}
+				   dpaa2_चयन_ethtool_counters[i].name, err);
+	पूर्ण
+पूर्ण
 
-const struct ethtool_ops dpaa2_switch_port_ethtool_ops = {
-	.get_drvinfo		= dpaa2_switch_get_drvinfo,
+स्थिर काष्ठा ethtool_ops dpaa2_चयन_port_ethtool_ops = अणु
+	.get_drvinfo		= dpaa2_चयन_get_drvinfo,
 	.get_link		= ethtool_op_get_link,
-	.get_link_ksettings	= dpaa2_switch_get_link_ksettings,
-	.set_link_ksettings	= dpaa2_switch_set_link_ksettings,
-	.get_strings		= dpaa2_switch_ethtool_get_strings,
-	.get_ethtool_stats	= dpaa2_switch_ethtool_get_stats,
-	.get_sset_count		= dpaa2_switch_ethtool_get_sset_count,
-};
+	.get_link_ksettings	= dpaa2_चयन_get_link_ksettings,
+	.set_link_ksettings	= dpaa2_चयन_set_link_ksettings,
+	.get_strings		= dpaa2_चयन_ethtool_get_strings,
+	.get_ethtool_stats	= dpaa2_चयन_ethtool_get_stats,
+	.get_sset_count		= dpaa2_चयन_ethtool_get_sset_count,
+पूर्ण;

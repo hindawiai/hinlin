@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: (GPL-2.0+ OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-2-Clause)
 /*
  * Copyright (c) 2003, 2004
- *	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
+ *	Damien Bergamini <damien.bergamini@मुक्त.fr>. All rights reserved.
  *
- * Copyright (c) 2005-2007 Matthieu Castet <castet.matthieu@free.fr>
+ * Copyright (c) 2005-2007 Matthieu Castet <castet.matthieu@मुक्त.fr>
  * Copyright (c) 2005-2007 Stanislaw Gruszka <stf_xl@wp.pl>
  *
  * HISTORY : some part of the code was base on ueagle 1.3 BSD driver,
@@ -12,132 +13,132 @@
  * The rest of the code was was rewritten from scratch.
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/crc32.h>
-#include <linux/usb.h>
-#include <linux/firmware.h>
-#include <linux/ctype.h>
-#include <linux/sched.h>
-#include <linux/kthread.h>
-#include <linux/mutex.h>
-#include <linux/freezer.h>
-#include <linux/slab.h>
-#include <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "usbatm.h"
+#समावेश "usbatm.h"
 
-#define EAGLEUSBVERSION "ueagle 1.4"
+#घोषणा EAGLEUSBVERSION "ueagle 1.4"
 
 
 /*
  * Debug macros
  */
-#define uea_dbg(usb_dev, format, args...)	\
-	do { \
-		if (debug >= 1) \
+#घोषणा uea_dbg(usb_dev, क्रमmat, args...)	\
+	करो अणु \
+		अगर (debug >= 1) \
 			dev_dbg(&(usb_dev)->dev, \
-				"[ueagle-atm dbg] %s: " format, \
+				"[ueagle-atm dbg] %s: " क्रमmat, \
 					__func__, ##args); \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define uea_vdbg(usb_dev, format, args...)	\
-	do { \
-		if (debug >= 2) \
+#घोषणा uea_vdbg(usb_dev, क्रमmat, args...)	\
+	करो अणु \
+		अगर (debug >= 2) \
 			dev_dbg(&(usb_dev)->dev, \
-				"[ueagle-atm vdbg]  " format, ##args); \
-	} while (0)
+				"[ueagle-atm vdbg]  " क्रमmat, ##args); \
+	पूर्ण जबतक (0)
 
-#define uea_enters(usb_dev) \
+#घोषणा uea_enters(usb_dev) \
 	uea_vdbg(usb_dev, "entering %s\n" , __func__)
 
-#define uea_leaves(usb_dev) \
+#घोषणा uea_leaves(usb_dev) \
 	uea_vdbg(usb_dev, "leaving  %s\n" , __func__)
 
-#define uea_err(usb_dev, format, args...) \
-	dev_err(&(usb_dev)->dev , "[UEAGLE-ATM] " format , ##args)
+#घोषणा uea_err(usb_dev, क्रमmat, args...) \
+	dev_err(&(usb_dev)->dev , "[UEAGLE-ATM] " क्रमmat , ##args)
 
-#define uea_warn(usb_dev, format, args...) \
-	dev_warn(&(usb_dev)->dev , "[Ueagle-atm] " format, ##args)
+#घोषणा uea_warn(usb_dev, क्रमmat, args...) \
+	dev_warn(&(usb_dev)->dev , "[Ueagle-atm] " क्रमmat, ##args)
 
-#define uea_info(usb_dev, format, args...) \
-	dev_info(&(usb_dev)->dev , "[ueagle-atm] " format, ##args)
+#घोषणा uea_info(usb_dev, क्रमmat, args...) \
+	dev_info(&(usb_dev)->dev , "[ueagle-atm] " क्रमmat, ##args)
 
-struct intr_pkt;
+काष्ठा पूर्णांकr_pkt;
 
 /* cmv's from firmware */
-struct uea_cmvs_v1 {
+काष्ठा uea_cmvs_v1 अणु
 	u32 address;
 	u16 offset;
 	u32 data;
-} __packed;
+पूर्ण __packed;
 
-struct uea_cmvs_v2 {
+काष्ठा uea_cmvs_v2 अणु
 	u32 group;
 	u32 address;
 	u32 offset;
 	u32 data;
-} __packed;
+पूर्ण __packed;
 
-/* information about currently processed cmv */
-struct cmv_dsc_e1 {
+/* inक्रमmation about currently processed cmv */
+काष्ठा cmv_dsc_e1 अणु
 	u8 function;
 	u16 idx;
 	u32 address;
 	u16 offset;
-};
+पूर्ण;
 
-struct cmv_dsc_e4 {
+काष्ठा cmv_dsc_e4 अणु
 	u16 function;
 	u16 offset;
 	u16 address;
 	u16 group;
-};
+पूर्ण;
 
-union cmv_dsc {
-	struct cmv_dsc_e1 e1;
-	struct cmv_dsc_e4 e4;
-};
+जोड़ cmv_dsc अणु
+	काष्ठा cmv_dsc_e1 e1;
+	काष्ठा cmv_dsc_e4 e4;
+पूर्ण;
 
-struct uea_softc {
-	struct usb_device *usb_dev;
-	struct usbatm_data *usbatm;
+काष्ठा uea_softc अणु
+	काष्ठा usb_device *usb_dev;
+	काष्ठा usbaपंचांग_data *usbaपंचांग;
 
-	int modem_index;
-	unsigned int driver_info;
-	int annex;
-#define ANNEXA 0
-#define ANNEXB 1
+	पूर्णांक modem_index;
+	अचिन्हित पूर्णांक driver_info;
+	पूर्णांक annex;
+#घोषणा ANNEXA 0
+#घोषणा ANNEXB 1
 
-	int booting;
-	int reset;
+	पूर्णांक booting;
+	पूर्णांक reset;
 
-	wait_queue_head_t sync_q;
+	रुको_queue_head_t sync_q;
 
-	struct task_struct *kthread;
+	काष्ठा task_काष्ठा *kthपढ़ो;
 	u32 data;
 	u32 data1;
 
-	int cmv_ack;
-	union cmv_dsc cmv_dsc;
+	पूर्णांक cmv_ack;
+	जोड़ cmv_dsc cmv_dsc;
 
-	struct work_struct task;
+	काष्ठा work_काष्ठा task;
 	u16 pageno;
 	u16 ovl;
 
-	const struct firmware *dsp_firm;
-	struct urb *urb_int;
+	स्थिर काष्ठा firmware *dsp_firm;
+	काष्ठा urb *urb_पूर्णांक;
 
-	void (*dispatch_cmv)(struct uea_softc *, struct intr_pkt *);
-	void (*schedule_load_page)(struct uea_softc *, struct intr_pkt *);
-	int (*stat)(struct uea_softc *);
-	int (*send_cmvs)(struct uea_softc *);
+	व्योम (*dispatch_cmv)(काष्ठा uea_softc *, काष्ठा पूर्णांकr_pkt *);
+	व्योम (*schedule_load_page)(काष्ठा uea_softc *, काष्ठा पूर्णांकr_pkt *);
+	पूर्णांक (*stat)(काष्ठा uea_softc *);
+	पूर्णांक (*send_cmvs)(काष्ठा uea_softc *);
 
 	/* keep in sync with eaglectl */
-	struct uea_stats {
-		struct {
+	काष्ठा uea_stats अणु
+		काष्ठा अणु
 			u32 state;
 			u32 flags;
 			u32 mflags;
@@ -156,179 +157,179 @@ struct uea_softc {
 			u32 dsmargin;
 			u32 usmargin;
 			u32 firmid;
-		} phy;
-	} stats;
-};
+		पूर्ण phy;
+	पूर्ण stats;
+पूर्ण;
 
 /*
  * Elsa IDs
  */
-#define ELSA_VID		0x05CC
-#define ELSA_PID_PSTFIRM	0x3350
-#define ELSA_PID_PREFIRM	0x3351
+#घोषणा ELSA_VID		0x05CC
+#घोषणा ELSA_PID_PSTFIRM	0x3350
+#घोषणा ELSA_PID_PREFIRM	0x3351
 
-#define ELSA_PID_A_PREFIRM	0x3352
-#define ELSA_PID_A_PSTFIRM	0x3353
-#define ELSA_PID_B_PREFIRM	0x3362
-#define ELSA_PID_B_PSTFIRM	0x3363
+#घोषणा ELSA_PID_A_PREFIRM	0x3352
+#घोषणा ELSA_PID_A_PSTFIRM	0x3353
+#घोषणा ELSA_PID_B_PREFIRM	0x3362
+#घोषणा ELSA_PID_B_PSTFIRM	0x3363
 
 /*
- * Devolo IDs : pots if (pid & 0x10)
+ * Devolo IDs : pots अगर (pid & 0x10)
  */
-#define DEVOLO_VID			0x1039
-#define DEVOLO_EAGLE_I_A_PID_PSTFIRM	0x2110
-#define DEVOLO_EAGLE_I_A_PID_PREFIRM	0x2111
+#घोषणा DEVOLO_VID			0x1039
+#घोषणा DEVOLO_EAGLE_I_A_PID_PSTFIRM	0x2110
+#घोषणा DEVOLO_EAGLE_I_A_PID_PREFIRM	0x2111
 
-#define DEVOLO_EAGLE_I_B_PID_PSTFIRM	0x2100
-#define DEVOLO_EAGLE_I_B_PID_PREFIRM	0x2101
+#घोषणा DEVOLO_EAGLE_I_B_PID_PSTFIRM	0x2100
+#घोषणा DEVOLO_EAGLE_I_B_PID_PREFIRM	0x2101
 
-#define DEVOLO_EAGLE_II_A_PID_PSTFIRM	0x2130
-#define DEVOLO_EAGLE_II_A_PID_PREFIRM	0x2131
+#घोषणा DEVOLO_EAGLE_II_A_PID_PSTFIRM	0x2130
+#घोषणा DEVOLO_EAGLE_II_A_PID_PREFIRM	0x2131
 
-#define DEVOLO_EAGLE_II_B_PID_PSTFIRM	0x2120
-#define DEVOLO_EAGLE_II_B_PID_PREFIRM	0x2121
+#घोषणा DEVOLO_EAGLE_II_B_PID_PSTFIRM	0x2120
+#घोषणा DEVOLO_EAGLE_II_B_PID_PREFIRM	0x2121
 
 /*
  * Reference design USB IDs
  */
-#define ANALOG_VID		0x1110
-#define ADI930_PID_PREFIRM	0x9001
-#define ADI930_PID_PSTFIRM	0x9000
+#घोषणा ANALOG_VID		0x1110
+#घोषणा ADI930_PID_PREFIRM	0x9001
+#घोषणा ADI930_PID_PSTFIRM	0x9000
 
-#define EAGLE_I_PID_PREFIRM	0x9010	/* Eagle I */
-#define EAGLE_I_PID_PSTFIRM	0x900F	/* Eagle I */
+#घोषणा EAGLE_I_PID_PREFIRM	0x9010	/* Eagle I */
+#घोषणा EAGLE_I_PID_PSTFIRM	0x900F	/* Eagle I */
 
-#define EAGLE_IIC_PID_PREFIRM	0x9024	/* Eagle IIC */
-#define EAGLE_IIC_PID_PSTFIRM	0x9023	/* Eagle IIC */
+#घोषणा EAGLE_IIC_PID_PREFIRM	0x9024	/* Eagle IIC */
+#घोषणा EAGLE_IIC_PID_PSTFIRM	0x9023	/* Eagle IIC */
 
-#define EAGLE_II_PID_PREFIRM	0x9022	/* Eagle II */
-#define EAGLE_II_PID_PSTFIRM	0x9021	/* Eagle II */
+#घोषणा EAGLE_II_PID_PREFIRM	0x9022	/* Eagle II */
+#घोषणा EAGLE_II_PID_PSTFIRM	0x9021	/* Eagle II */
 
-#define EAGLE_III_PID_PREFIRM	0x9032	/* Eagle III */
-#define EAGLE_III_PID_PSTFIRM	0x9031	/* Eagle III */
+#घोषणा EAGLE_III_PID_PREFIRM	0x9032	/* Eagle III */
+#घोषणा EAGLE_III_PID_PSTFIRM	0x9031	/* Eagle III */
 
-#define EAGLE_IV_PID_PREFIRM	0x9042  /* Eagle IV */
-#define EAGLE_IV_PID_PSTFIRM	0x9041  /* Eagle IV */
+#घोषणा EAGLE_IV_PID_PREFIRM	0x9042  /* Eagle IV */
+#घोषणा EAGLE_IV_PID_PSTFIRM	0x9041  /* Eagle IV */
 
 /*
  * USR USB IDs
  */
-#define USR_VID			0x0BAF
-#define MILLER_A_PID_PREFIRM	0x00F2
-#define MILLER_A_PID_PSTFIRM	0x00F1
-#define MILLER_B_PID_PREFIRM	0x00FA
-#define MILLER_B_PID_PSTFIRM	0x00F9
-#define HEINEKEN_A_PID_PREFIRM	0x00F6
-#define HEINEKEN_A_PID_PSTFIRM	0x00F5
-#define HEINEKEN_B_PID_PREFIRM	0x00F8
-#define HEINEKEN_B_PID_PSTFIRM	0x00F7
+#घोषणा USR_VID			0x0BAF
+#घोषणा MILLER_A_PID_PREFIRM	0x00F2
+#घोषणा MILLER_A_PID_PSTFIRM	0x00F1
+#घोषणा MILLER_B_PID_PREFIRM	0x00FA
+#घोषणा MILLER_B_PID_PSTFIRM	0x00F9
+#घोषणा HEINEKEN_A_PID_PREFIRM	0x00F6
+#घोषणा HEINEKEN_A_PID_PSTFIRM	0x00F5
+#घोषणा HEINEKEN_B_PID_PREFIRM	0x00F8
+#घोषणा HEINEKEN_B_PID_PSTFIRM	0x00F7
 
-#define PREFIRM 0
-#define PSTFIRM (1<<7)
-#define AUTO_ANNEX_A (1<<8)
-#define AUTO_ANNEX_B (1<<9)
+#घोषणा PREFIRM 0
+#घोषणा PSTFIRM (1<<7)
+#घोषणा AUTO_ANNEX_A (1<<8)
+#घोषणा AUTO_ANNEX_B (1<<9)
 
-enum {
+क्रमागत अणु
 	ADI930 = 0,
 	EAGLE_I,
 	EAGLE_II,
 	EAGLE_III,
 	EAGLE_IV
-};
+पूर्ण;
 
-/* macros for both struct usb_device_id and struct uea_softc */
-#define UEA_IS_PREFIRM(x) \
+/* macros क्रम both काष्ठा usb_device_id and काष्ठा uea_softc */
+#घोषणा UEA_IS_PREFIRM(x) \
 	(!((x)->driver_info & PSTFIRM))
-#define UEA_CHIP_VERSION(x) \
+#घोषणा UEA_CHIP_VERSION(x) \
 	((x)->driver_info & 0xf)
 
-#define IS_ISDN(x) \
+#घोषणा IS_ISDN(x) \
 	((x)->annex & ANNEXB)
 
-#define INS_TO_USBDEV(ins) (ins->usb_dev)
+#घोषणा INS_TO_USBDEV(ins) (ins->usb_dev)
 
-#define GET_STATUS(data) \
+#घोषणा GET_STATUS(data) \
 	((data >> 8) & 0xf)
 
-#define IS_OPERATIONAL(sc) \
+#घोषणा IS_OPERATIONAL(sc) \
 	((UEA_CHIP_VERSION(sc) != EAGLE_IV) ? \
 	(GET_STATUS(sc->stats.phy.state) == 2) : \
 	(sc->stats.phy.state == 7))
 
 /*
  * Set of macros to handle unaligned data in the firmware blob.
- * The FW_GET_BYTE() macro is provided only for consistency.
+ * The FW_GET_BYTE() macro is provided only क्रम consistency.
  */
 
-#define FW_GET_BYTE(p) (*((__u8 *) (p)))
+#घोषणा FW_GET_BYTE(p) (*((__u8 *) (p)))
 
-#define FW_DIR "ueagle-atm/"
-#define EAGLE_FIRMWARE FW_DIR "eagle.fw"
-#define ADI930_FIRMWARE FW_DIR "adi930.fw"
-#define EAGLE_I_FIRMWARE FW_DIR "eagleI.fw"
-#define EAGLE_II_FIRMWARE FW_DIR "eagleII.fw"
-#define EAGLE_III_FIRMWARE FW_DIR "eagleIII.fw"
-#define EAGLE_IV_FIRMWARE FW_DIR "eagleIV.fw"
+#घोषणा FW_सूची "ueagle-atm/"
+#घोषणा EAGLE_FIRMWARE FW_सूची "eagle.fw"
+#घोषणा ADI930_FIRMWARE FW_सूची "adi930.fw"
+#घोषणा EAGLE_I_FIRMWARE FW_सूची "eagleI.fw"
+#घोषणा EAGLE_II_FIRMWARE FW_सूची "eagleII.fw"
+#घोषणा EAGLE_III_FIRMWARE FW_सूची "eagleIII.fw"
+#घोषणा EAGLE_IV_FIRMWARE FW_सूची "eagleIV.fw"
 
-#define DSP4I_FIRMWARE FW_DIR "DSP4i.bin"
-#define DSP4P_FIRMWARE FW_DIR "DSP4p.bin"
-#define DSP9I_FIRMWARE FW_DIR "DSP9i.bin"
-#define DSP9P_FIRMWARE FW_DIR "DSP9p.bin"
-#define DSPEI_FIRMWARE FW_DIR "DSPei.bin"
-#define DSPEP_FIRMWARE FW_DIR "DSPep.bin"
-#define FPGA930_FIRMWARE FW_DIR "930-fpga.bin"
+#घोषणा DSP4I_FIRMWARE FW_सूची "DSP4i.bin"
+#घोषणा DSP4P_FIRMWARE FW_सूची "DSP4p.bin"
+#घोषणा DSP9I_FIRMWARE FW_सूची "DSP9i.bin"
+#घोषणा DSP9P_FIRMWARE FW_सूची "DSP9p.bin"
+#घोषणा DSPEI_FIRMWARE FW_सूची "DSPei.bin"
+#घोषणा DSPEP_FIRMWARE FW_सूची "DSPep.bin"
+#घोषणा FPGA930_FIRMWARE FW_सूची "930-fpga.bin"
 
-#define CMV4P_FIRMWARE FW_DIR "CMV4p.bin"
-#define CMV4PV2_FIRMWARE FW_DIR "CMV4p.bin.v2"
-#define CMV4I_FIRMWARE FW_DIR "CMV4i.bin"
-#define CMV4IV2_FIRMWARE FW_DIR "CMV4i.bin.v2"
-#define CMV9P_FIRMWARE FW_DIR "CMV9p.bin"
-#define CMV9PV2_FIRMWARE FW_DIR "CMV9p.bin.v2"
-#define CMV9I_FIRMWARE FW_DIR "CMV9i.bin"
-#define CMV9IV2_FIRMWARE FW_DIR "CMV9i.bin.v2"
-#define CMVEP_FIRMWARE FW_DIR "CMVep.bin"
-#define CMVEPV2_FIRMWARE FW_DIR "CMVep.bin.v2"
-#define CMVEI_FIRMWARE FW_DIR "CMVei.bin"
-#define CMVEIV2_FIRMWARE FW_DIR "CMVei.bin.v2"
+#घोषणा CMV4P_FIRMWARE FW_सूची "CMV4p.bin"
+#घोषणा CMV4PV2_FIRMWARE FW_सूची "CMV4p.bin.v2"
+#घोषणा CMV4I_FIRMWARE FW_सूची "CMV4i.bin"
+#घोषणा CMV4IV2_FIRMWARE FW_सूची "CMV4i.bin.v2"
+#घोषणा CMV9P_FIRMWARE FW_सूची "CMV9p.bin"
+#घोषणा CMV9PV2_FIRMWARE FW_सूची "CMV9p.bin.v2"
+#घोषणा CMV9I_FIRMWARE FW_सूची "CMV9i.bin"
+#घोषणा CMV9IV2_FIRMWARE FW_सूची "CMV9i.bin.v2"
+#घोषणा CMVEP_FIRMWARE FW_सूची "CMVep.bin"
+#घोषणा CMVEPV2_FIRMWARE FW_सूची "CMVep.bin.v2"
+#घोषणा CMVEI_FIRMWARE FW_सूची "CMVei.bin"
+#घोषणा CMVEIV2_FIRMWARE FW_सूची "CMVei.bin.v2"
 
-#define UEA_FW_NAME_MAX 30
-#define NB_MODEM 4
+#घोषणा UEA_FW_NAME_MAX 30
+#घोषणा NB_MODEM 4
 
-#define BULK_TIMEOUT 300
-#define CTRL_TIMEOUT 1000
+#घोषणा BULK_TIMEOUT 300
+#घोषणा CTRL_TIMEOUT 1000
 
-#define ACK_TIMEOUT msecs_to_jiffies(3000)
+#घोषणा ACK_TIMEOUT msecs_to_jअगरfies(3000)
 
-#define UEA_INTR_IFACE_NO	0
-#define UEA_US_IFACE_NO		1
-#define UEA_DS_IFACE_NO		2
+#घोषणा UEA_INTR_IFACE_NO	0
+#घोषणा UEA_US_IFACE_NO		1
+#घोषणा UEA_DS_IFACE_NO		2
 
-#define FASTEST_ISO_INTF	8
+#घोषणा FASTEST_ISO_INTF	8
 
-#define UEA_BULK_DATA_PIPE	0x02
-#define UEA_IDMA_PIPE		0x04
-#define UEA_INTR_PIPE		0x04
-#define UEA_ISO_DATA_PIPE	0x08
+#घोषणा UEA_BULK_DATA_PIPE	0x02
+#घोषणा UEA_IDMA_PIPE		0x04
+#घोषणा UEA_INTR_PIPE		0x04
+#घोषणा UEA_ISO_DATA_PIPE	0x08
 
-#define UEA_E1_SET_BLOCK	0x0001
-#define UEA_E4_SET_BLOCK	0x002c
-#define UEA_SET_MODE		0x0003
-#define UEA_SET_2183_DATA	0x0004
-#define UEA_SET_TIMEOUT		0x0011
+#घोषणा UEA_E1_SET_BLOCK	0x0001
+#घोषणा UEA_E4_SET_BLOCK	0x002c
+#घोषणा UEA_SET_MODE		0x0003
+#घोषणा UEA_SET_2183_DATA	0x0004
+#घोषणा UEA_SET_TIMEOUT		0x0011
 
-#define UEA_LOOPBACK_OFF	0x0002
-#define UEA_LOOPBACK_ON		0x0003
-#define UEA_BOOT_IDMA		0x0006
-#define UEA_START_RESET		0x0007
-#define UEA_END_RESET		0x0008
+#घोषणा UEA_LOOPBACK_OFF	0x0002
+#घोषणा UEA_LOOPBACK_ON		0x0003
+#घोषणा UEA_BOOT_IDMA		0x0006
+#घोषणा UEA_START_RESET		0x0007
+#घोषणा UEA_END_RESET		0x0008
 
-#define UEA_SWAP_MAILBOX	(0x3fcd | 0x4000)
-#define UEA_MPTX_START		(0x3fce | 0x4000)
-#define UEA_MPTX_MAILBOX	(0x3fd6 | 0x4000)
-#define UEA_MPRX_MAILBOX	(0x3fdf | 0x4000)
+#घोषणा UEA_SWAP_MAILBOX	(0x3fcd | 0x4000)
+#घोषणा UEA_MPTX_START		(0x3fce | 0x4000)
+#घोषणा UEA_MPTX_MAILBOX	(0x3fd6 | 0x4000)
+#घोषणा UEA_MPRX_MAILBOX	(0x3fdf | 0x4000)
 
-/* block information in eagle4 dsp firmware  */
-struct block_index {
+/* block inक्रमmation in eagle4 dsp firmware  */
+काष्ठा block_index अणु
 	__le32 PageOffset;
 	__le32 NotLastBlock;
 	__le32 dummy;
@@ -336,114 +337,114 @@ struct block_index {
 	__le32 PageAddress;
 	__le16 dummy1;
 	__le16 PageNumber;
-} __packed;
+पूर्ण __packed;
 
-#define E4_IS_BOOT_PAGE(PageSize) ((le32_to_cpu(PageSize)) & 0x80000000)
-#define E4_PAGE_BYTES(PageSize) ((le32_to_cpu(PageSize) & 0x7fffffff) * 4)
+#घोषणा E4_IS_BOOT_PAGE(PageSize) ((le32_to_cpu(PageSize)) & 0x80000000)
+#घोषणा E4_PAGE_BYTES(PageSize) ((le32_to_cpu(PageSize) & 0x7fffffff) * 4)
 
-#define E4_L1_STRING_HEADER 0x10
-#define E4_MAX_PAGE_NUMBER 0x58
-#define E4_NO_SWAPPAGE_HEADERS 0x31
+#घोषणा E4_L1_STRING_HEADER 0x10
+#घोषणा E4_MAX_PAGE_NUMBER 0x58
+#घोषणा E4_NO_SWAPPAGE_HEADERS 0x31
 
-/* l1_code is eagle4 dsp firmware format */
-struct l1_code {
+/* l1_code is eagle4 dsp firmware क्रमmat */
+काष्ठा l1_code अणु
 	u8 string_header[E4_L1_STRING_HEADER];
 	u8 page_number_to_block_index[E4_MAX_PAGE_NUMBER];
-	struct block_index page_header[E4_NO_SWAPPAGE_HEADERS];
+	काष्ठा block_index page_header[E4_NO_SWAPPAGE_HEADERS];
 	u8 code[];
-} __packed;
+पूर्ण __packed;
 
-/* structures describing a block within a DSP page */
-struct block_info_e1 {
+/* काष्ठाures describing a block within a DSP page */
+काष्ठा block_info_e1 अणु
 	__le16 wHdr;
 	__le16 wAddress;
 	__le16 wSize;
 	__le16 wOvlOffset;
 	__le16 wOvl;		/* overlay */
 	__le16 wLast;
-} __packed;
-#define E1_BLOCK_INFO_SIZE 12
+पूर्ण __packed;
+#घोषणा E1_BLOCK_INFO_SIZE 12
 
-struct block_info_e4 {
+काष्ठा block_info_e4 अणु
 	__be16 wHdr;
 	__u8 bBootPage;
 	__u8 bPageNumber;
 	__be32 dwSize;
 	__be32 dwAddress;
 	__be16 wReserved;
-} __packed;
-#define E4_BLOCK_INFO_SIZE 14
+पूर्ण __packed;
+#घोषणा E4_BLOCK_INFO_SIZE 14
 
-#define UEA_BIHDR 0xabcd
-#define UEA_RESERVED 0xffff
+#घोषणा UEA_BIHDR 0xabcd
+#घोषणा UEA_RESERVED 0xffff
 
-/* constants describing cmv type */
-#define E1_PREAMBLE 0x535c
-#define E1_MODEMTOHOST 0x01
-#define E1_HOSTTOMODEM 0x10
+/* स्थिरants describing cmv type */
+#घोषणा E1_PREAMBLE 0x535c
+#घोषणा E1_MODEMTOHOST 0x01
+#घोषणा E1_HOSTTOMODEM 0x10
 
-#define E1_MEMACCESS 0x1
-#define E1_ADSLDIRECTIVE 0x7
-#define E1_FUNCTION_TYPE(f) ((f) >> 4)
-#define E1_FUNCTION_SUBTYPE(f) ((f) & 0x0f)
+#घोषणा E1_MEMACCESS 0x1
+#घोषणा E1_ADSLसूचीECTIVE 0x7
+#घोषणा E1_FUNCTION_TYPE(f) ((f) >> 4)
+#घोषणा E1_FUNCTION_SUBTYPE(f) ((f) & 0x0f)
 
-#define E4_MEMACCESS 0
-#define E4_ADSLDIRECTIVE 0xf
-#define E4_FUNCTION_TYPE(f) ((f) >> 8)
-#define E4_FUNCTION_SIZE(f) ((f) & 0x0f)
-#define E4_FUNCTION_SUBTYPE(f) (((f) >> 4) & 0x0f)
+#घोषणा E4_MEMACCESS 0
+#घोषणा E4_ADSLसूचीECTIVE 0xf
+#घोषणा E4_FUNCTION_TYPE(f) ((f) >> 8)
+#घोषणा E4_FUNCTION_SIZE(f) ((f) & 0x0f)
+#घोषणा E4_FUNCTION_SUBTYPE(f) (((f) >> 4) & 0x0f)
 
-/* for MEMACCESS */
-#define E1_REQUESTREAD	0x0
-#define E1_REQUESTWRITE	0x1
-#define E1_REPLYREAD	0x2
-#define E1_REPLYWRITE	0x3
+/* क्रम MEMACCESS */
+#घोषणा E1_REQUESTREAD	0x0
+#घोषणा E1_REQUESTWRITE	0x1
+#घोषणा E1_REPLYREAD	0x2
+#घोषणा E1_REPLYWRITE	0x3
 
-#define E4_REQUESTREAD	0x0
-#define E4_REQUESTWRITE	0x4
-#define E4_REPLYREAD	(E4_REQUESTREAD | 1)
-#define E4_REPLYWRITE	(E4_REQUESTWRITE | 1)
+#घोषणा E4_REQUESTREAD	0x0
+#घोषणा E4_REQUESTWRITE	0x4
+#घोषणा E4_REPLYREAD	(E4_REQUESTREAD | 1)
+#घोषणा E4_REPLYWRITE	(E4_REQUESTWRITE | 1)
 
-/* for ADSLDIRECTIVE */
-#define E1_KERNELREADY 0x0
-#define E1_MODEMREADY  0x1
+/* क्रम ADSLसूचीECTIVE */
+#घोषणा E1_KERNELREADY 0x0
+#घोषणा E1_MODEMREADY  0x1
 
-#define E4_KERNELREADY 0x0
-#define E4_MODEMREADY  0x1
+#घोषणा E4_KERNELREADY 0x0
+#घोषणा E4_MODEMREADY  0x1
 
-#define E1_MAKEFUNCTION(t, s) (((t) & 0xf) << 4 | ((s) & 0xf))
-#define E4_MAKEFUNCTION(t, st, s) (((t) & 0xf) << 8 | \
+#घोषणा E1_MAKEFUNCTION(t, s) (((t) & 0xf) << 4 | ((s) & 0xf))
+#घोषणा E4_MAKEFUNCTION(t, st, s) (((t) & 0xf) << 8 | \
 	((st) & 0xf) << 4 | ((s) & 0xf))
 
-#define E1_MAKESA(a, b, c, d)						\
+#घोषणा E1_MAKESA(a, b, c, d)						\
 	(((c) & 0xff) << 24 |						\
 	 ((d) & 0xff) << 16 |						\
 	 ((a) & 0xff) << 8  |						\
 	 ((b) & 0xff))
 
-#define E1_GETSA1(a) ((a >> 8) & 0xff)
-#define E1_GETSA2(a) (a & 0xff)
-#define E1_GETSA3(a) ((a >> 24) & 0xff)
-#define E1_GETSA4(a) ((a >> 16) & 0xff)
+#घोषणा E1_GETSA1(a) ((a >> 8) & 0xff)
+#घोषणा E1_GETSA2(a) (a & 0xff)
+#घोषणा E1_GETSA3(a) ((a >> 24) & 0xff)
+#घोषणा E1_GETSA4(a) ((a >> 16) & 0xff)
 
-#define E1_SA_CNTL E1_MAKESA('C', 'N', 'T', 'L')
-#define E1_SA_DIAG E1_MAKESA('D', 'I', 'A', 'G')
-#define E1_SA_INFO E1_MAKESA('I', 'N', 'F', 'O')
-#define E1_SA_OPTN E1_MAKESA('O', 'P', 'T', 'N')
-#define E1_SA_RATE E1_MAKESA('R', 'A', 'T', 'E')
-#define E1_SA_STAT E1_MAKESA('S', 'T', 'A', 'T')
+#घोषणा E1_SA_CNTL E1_MAKESA('C', 'N', 'T', 'L')
+#घोषणा E1_SA_DIAG E1_MAKESA('D', 'I', 'A', 'G')
+#घोषणा E1_SA_INFO E1_MAKESA('I', 'N', 'F', 'O')
+#घोषणा E1_SA_OPTN E1_MAKESA('O', 'P', 'T', 'N')
+#घोषणा E1_SA_RATE E1_MAKESA('R', 'A', 'T', 'E')
+#घोषणा E1_SA_STAT E1_MAKESA('S', 'T', 'A', 'T')
 
-#define E4_SA_CNTL 1
-#define E4_SA_STAT 2
-#define E4_SA_INFO 3
-#define E4_SA_TEST 4
-#define E4_SA_OPTN 5
-#define E4_SA_RATE 6
-#define E4_SA_DIAG 7
-#define E4_SA_CNFG 8
+#घोषणा E4_SA_CNTL 1
+#घोषणा E4_SA_STAT 2
+#घोषणा E4_SA_INFO 3
+#घोषणा E4_SA_TEST 4
+#घोषणा E4_SA_OPTN 5
+#घोषणा E4_SA_RATE 6
+#घोषणा E4_SA_DIAG 7
+#घोषणा E4_SA_CNFG 8
 
-/* structures representing a CMV (Configuration and Management Variable) */
-struct cmv_e1 {
+/* काष्ठाures representing a CMV (Configuration and Management Variable) */
+काष्ठा cmv_e1 अणु
 	__le16 wPreamble;
 	__u8 bDirection;
 	__u8 bFunction;
@@ -451,484 +452,484 @@ struct cmv_e1 {
 	__le32 dwSymbolicAddress;
 	__le16 wOffsetAddress;
 	__le32 dwData;
-} __packed;
+पूर्ण __packed;
 
-struct cmv_e4 {
+काष्ठा cmv_e4 अणु
 	__be16 wGroup;
 	__be16 wFunction;
 	__be16 wOffset;
 	__be16 wAddress;
 	__be32 dwData[6];
-} __packed;
+पूर्ण __packed;
 
-/* structures representing swap information */
-struct swap_info_e1 {
+/* काष्ठाures representing swap inक्रमmation */
+काष्ठा swap_info_e1 अणु
 	__u8 bSwapPageNo;
 	__u8 bOvl;		/* overlay */
-} __packed;
+पूर्ण __packed;
 
-struct swap_info_e4 {
+काष्ठा swap_info_e4 अणु
 	__u8 bSwapPageNo;
-} __packed;
+पूर्ण __packed;
 
-/* structures representing interrupt data */
-#define e1_bSwapPageNo	u.e1.s1.swapinfo.bSwapPageNo
-#define e1_bOvl		u.e1.s1.swapinfo.bOvl
-#define e4_bSwapPageNo  u.e4.s1.swapinfo.bSwapPageNo
+/* काष्ठाures representing पूर्णांकerrupt data */
+#घोषणा e1_bSwapPageNo	u.e1.s1.swapinfo.bSwapPageNo
+#घोषणा e1_bOvl		u.e1.s1.swapinfo.bOvl
+#घोषणा e4_bSwapPageNo  u.e4.s1.swapinfo.bSwapPageNo
 
-#define INT_LOADSWAPPAGE 0x0001
-#define INT_INCOMINGCMV  0x0002
+#घोषणा INT_LOADSWAPPAGE 0x0001
+#घोषणा INT_INCOMINGCMV  0x0002
 
-union intr_data_e1 {
-	struct {
-		struct swap_info_e1 swapinfo;
+जोड़ पूर्णांकr_data_e1 अणु
+	काष्ठा अणु
+		काष्ठा swap_info_e1 swapinfo;
 		__le16 wDataSize;
-	} __packed s1;
-	struct {
-		struct cmv_e1 cmv;
+	पूर्ण __packed s1;
+	काष्ठा अणु
+		काष्ठा cmv_e1 cmv;
 		__le16 wDataSize;
-	} __packed s2;
-} __packed;
+	पूर्ण __packed s2;
+पूर्ण __packed;
 
-union intr_data_e4 {
-	struct {
-		struct swap_info_e4 swapinfo;
+जोड़ पूर्णांकr_data_e4 अणु
+	काष्ठा अणु
+		काष्ठा swap_info_e4 swapinfo;
 		__le16 wDataSize;
-	} __packed s1;
-	struct {
-		struct cmv_e4 cmv;
+	पूर्ण __packed s1;
+	काष्ठा अणु
+		काष्ठा cmv_e4 cmv;
 		__le16 wDataSize;
-	} __packed s2;
-} __packed;
+	पूर्ण __packed s2;
+पूर्ण __packed;
 
-struct intr_pkt {
+काष्ठा पूर्णांकr_pkt अणु
 	__u8 bType;
-	__u8 bNotification;
+	__u8 bNotअगरication;
 	__le16 wValue;
 	__le16 wIndex;
 	__le16 wLength;
 	__le16 wInterrupt;
-	union {
-		union intr_data_e1 e1;
-		union intr_data_e4 e4;
-	} u;
-} __packed;
+	जोड़ अणु
+		जोड़ पूर्णांकr_data_e1 e1;
+		जोड़ पूर्णांकr_data_e4 e4;
+	पूर्ण u;
+पूर्ण __packed;
 
-#define E1_INTR_PKT_SIZE 28
-#define E4_INTR_PKT_SIZE 64
+#घोषणा E1_INTR_PKT_SIZE 28
+#घोषणा E4_INTR_PKT_SIZE 64
 
-static struct usb_driver uea_driver;
-static DEFINE_MUTEX(uea_mutex);
-static const char * const chip_name[] = {
-	"ADI930", "Eagle I", "Eagle II", "Eagle III", "Eagle IV"};
+अटल काष्ठा usb_driver uea_driver;
+अटल DEFINE_MUTEX(uea_mutex);
+अटल स्थिर अक्षर * स्थिर chip_name[] = अणु
+	"ADI930", "Eagle I", "Eagle II", "Eagle III", "Eagle IV"पूर्ण;
 
-static int modem_index;
-static unsigned int debug;
-static unsigned int altsetting[NB_MODEM] = {
-				[0 ... (NB_MODEM - 1)] = FASTEST_ISO_INTF};
-static bool sync_wait[NB_MODEM];
-static char *cmv_file[NB_MODEM];
-static int annex[NB_MODEM];
+अटल पूर्णांक modem_index;
+अटल अचिन्हित पूर्णांक debug;
+अटल अचिन्हित पूर्णांक altsetting[NB_MODEM] = अणु
+				[0 ... (NB_MODEM - 1)] = FASTEST_ISO_INTFपूर्ण;
+अटल bool sync_रुको[NB_MODEM];
+अटल अक्षर *cmv_file[NB_MODEM];
+अटल पूर्णांक annex[NB_MODEM];
 
-module_param(debug, uint, 0644);
+module_param(debug, uपूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "module debug level (0=off,1=on,2=verbose)");
-module_param_array(altsetting, uint, NULL, 0644);
+module_param_array(altsetting, uपूर्णांक, शून्य, 0644);
 MODULE_PARM_DESC(altsetting, "alternate setting for incoming traffic: 0=bulk, "
 			     "1=isoc slowest, ... , 8=isoc fastest (default)");
-module_param_array(sync_wait, bool, NULL, 0644);
-MODULE_PARM_DESC(sync_wait, "wait the synchronisation before starting ATM");
-module_param_array(cmv_file, charp, NULL, 0644);
+module_param_array(sync_रुको, bool, शून्य, 0644);
+MODULE_PARM_DESC(sync_रुको, "wait the synchronisation before starting ATM");
+module_param_array(cmv_file, अक्षरp, शून्य, 0644);
 MODULE_PARM_DESC(cmv_file,
 		"file name with configuration and management variables");
-module_param_array(annex, uint, NULL, 0644);
+module_param_array(annex, uपूर्णांक, शून्य, 0644);
 MODULE_PARM_DESC(annex,
 		"manually set annex a/b (0=auto, 1=annex a, 2=annex b)");
 
-#define uea_wait(sc, cond, timeo) \
-({ \
-	int _r = wait_event_interruptible_timeout(sc->sync_q, \
-			(cond) || kthread_should_stop(), timeo); \
-	if (kthread_should_stop()) \
+#घोषणा uea_रुको(sc, cond, समयo) \
+(अणु \
+	पूर्णांक _r = रुको_event_पूर्णांकerruptible_समयout(sc->sync_q, \
+			(cond) || kthपढ़ो_should_stop(), समयo); \
+	अगर (kthपढ़ो_should_stop()) \
 		_r = -ENODEV; \
 	_r; \
-})
+पूर्ण)
 
-#define UPDATE_ATM_STAT(type, val) \
-	do { \
-		if (sc->usbatm->atm_dev) \
-			sc->usbatm->atm_dev->type = val; \
-	} while (0)
+#घोषणा UPDATE_ATM_STAT(type, val) \
+	करो अणु \
+		अगर (sc->usbaपंचांग->aपंचांग_dev) \
+			sc->usbaपंचांग->aपंचांग_dev->type = val; \
+	पूर्ण जबतक (0)
 
-#define UPDATE_ATM_SIGNAL(val) \
-	do { \
-		if (sc->usbatm->atm_dev) \
-			atm_dev_signal_change(sc->usbatm->atm_dev, val); \
-	} while (0)
+#घोषणा UPDATE_ATM_SIGNAL(val) \
+	करो अणु \
+		अगर (sc->usbaपंचांग->aपंचांग_dev) \
+			aपंचांग_dev_संकेत_change(sc->usbaपंचांग->aपंचांग_dev, val); \
+	पूर्ण जबतक (0)
 
 
 /* Firmware loading */
-#define LOAD_INTERNAL     0xA0
-#define F8051_USBCS       0x7f92
+#घोषणा LOAD_INTERNAL     0xA0
+#घोषणा F8051_USBCS       0x7f92
 
 /*
- * uea_send_modem_cmd - Send a command for pre-firmware devices.
+ * uea_send_modem_cmd - Send a command क्रम pre-firmware devices.
  */
-static int uea_send_modem_cmd(struct usb_device *usb,
-			      u16 addr, u16 size, const u8 *buff)
-{
-	int ret = -ENOMEM;
+अटल पूर्णांक uea_send_modem_cmd(काष्ठा usb_device *usb,
+			      u16 addr, u16 size, स्थिर u8 *buff)
+अणु
+	पूर्णांक ret = -ENOMEM;
 	u8 *xfer_buff;
 
 	xfer_buff = kmemdup(buff, size, GFP_KERNEL);
-	if (xfer_buff) {
+	अगर (xfer_buff) अणु
 		ret = usb_control_msg(usb,
 				      usb_sndctrlpipe(usb, 0),
 				      LOAD_INTERNAL,
-				      USB_DIR_OUT | USB_TYPE_VENDOR |
+				      USB_सूची_OUT | USB_TYPE_VENDOR |
 				      USB_RECIP_DEVICE, addr, 0, xfer_buff,
 				      size, CTRL_TIMEOUT);
-		kfree(xfer_buff);
-	}
+		kमुक्त(xfer_buff);
+	पूर्ण
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return (ret == size) ? 0 : -EIO;
-}
+	वापस (ret == size) ? 0 : -EIO;
+पूर्ण
 
-static void uea_upload_pre_firmware(const struct firmware *fw_entry,
-								void *context)
-{
-	struct usb_device *usb = context;
-	const u8 *pfw;
+अटल व्योम uea_upload_pre_firmware(स्थिर काष्ठा firmware *fw_entry,
+								व्योम *context)
+अणु
+	काष्ठा usb_device *usb = context;
+	स्थिर u8 *pfw;
 	u8 value;
 	u32 crc = 0;
-	int ret, size;
+	पूर्णांक ret, size;
 
 	uea_enters(usb);
-	if (!fw_entry) {
+	अगर (!fw_entry) अणु
 		uea_err(usb, "firmware is not available\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	pfw = fw_entry->data;
 	size = fw_entry->size;
-	if (size < 4)
-		goto err_fw_corrupted;
+	अगर (size < 4)
+		जाओ err_fw_corrupted;
 
 	crc = get_unaligned_le32(pfw);
 	pfw += 4;
 	size -= 4;
-	if (crc32_be(0, pfw, size) != crc)
-		goto err_fw_corrupted;
+	अगर (crc32_be(0, pfw, size) != crc)
+		जाओ err_fw_corrupted;
 
 	/*
 	 * Start to upload firmware : send reset
 	 */
 	value = 1;
-	ret = uea_send_modem_cmd(usb, F8051_USBCS, sizeof(value), &value);
+	ret = uea_send_modem_cmd(usb, F8051_USBCS, माप(value), &value);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		uea_err(usb, "modem reset failed with error %d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	while (size > 3) {
+	जबतक (size > 3) अणु
 		u8 len = FW_GET_BYTE(pfw);
 		u16 add = get_unaligned_le16(pfw + 1);
 
 		size -= len + 3;
-		if (size < 0)
-			goto err_fw_corrupted;
+		अगर (size < 0)
+			जाओ err_fw_corrupted;
 
 		ret = uea_send_modem_cmd(usb, add, len, pfw + 3);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			uea_err(usb, "uploading firmware data failed "
 					"with error %d\n", ret);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		pfw += len + 3;
-	}
+	पूर्ण
 
-	if (size != 0)
-		goto err_fw_corrupted;
+	अगर (size != 0)
+		जाओ err_fw_corrupted;
 
 	/*
-	 * Tell the modem we finish : de-assert reset
+	 * Tell the modem we finish : de-निश्चित reset
 	 */
 	value = 0;
 	ret = uea_send_modem_cmd(usb, F8051_USBCS, 1, &value);
-	if (ret < 0)
+	अगर (ret < 0)
 		uea_err(usb, "modem de-assert failed with error %d\n", ret);
-	else
+	अन्यथा
 		uea_info(usb, "firmware uploaded\n");
 
-	goto err;
+	जाओ err;
 
 err_fw_corrupted:
 	uea_err(usb, "firmware is corrupted\n");
 err:
 	release_firmware(fw_entry);
 	uea_leaves(usb);
-}
+पूर्ण
 
 /*
- * uea_load_firmware - Load usb firmware for pre-firmware devices.
+ * uea_load_firmware - Load usb firmware क्रम pre-firmware devices.
  */
-static int uea_load_firmware(struct usb_device *usb, unsigned int ver)
-{
-	int ret;
-	char *fw_name = EAGLE_FIRMWARE;
+अटल पूर्णांक uea_load_firmware(काष्ठा usb_device *usb, अचिन्हित पूर्णांक ver)
+अणु
+	पूर्णांक ret;
+	अक्षर *fw_name = EAGLE_FIRMWARE;
 
 	uea_enters(usb);
 	uea_info(usb, "pre-firmware device, uploading firmware\n");
 
-	switch (ver) {
-	case ADI930:
+	चयन (ver) अणु
+	हाल ADI930:
 		fw_name = ADI930_FIRMWARE;
-		break;
-	case EAGLE_I:
+		अवरोध;
+	हाल EAGLE_I:
 		fw_name = EAGLE_I_FIRMWARE;
-		break;
-	case EAGLE_II:
+		अवरोध;
+	हाल EAGLE_II:
 		fw_name = EAGLE_II_FIRMWARE;
-		break;
-	case EAGLE_III:
+		अवरोध;
+	हाल EAGLE_III:
 		fw_name = EAGLE_III_FIRMWARE;
-		break;
-	case EAGLE_IV:
+		अवरोध;
+	हाल EAGLE_IV:
 		fw_name = EAGLE_IV_FIRMWARE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	ret = request_firmware_nowait(THIS_MODULE, 1, fw_name, &usb->dev,
+	ret = request_firmware_noरुको(THIS_MODULE, 1, fw_name, &usb->dev,
 					GFP_KERNEL, usb,
 					uea_upload_pre_firmware);
-	if (ret)
+	अगर (ret)
 		uea_err(usb, "firmware %s is not available\n", fw_name);
-	else
+	अन्यथा
 		uea_info(usb, "loading firmware %s\n", fw_name);
 
 	uea_leaves(usb);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* modem management : dsp firmware, send/read CMV, monitoring statistic
+/* modem management : dsp firmware, send/पढ़ो CMV, monitoring statistic
  */
 
 /*
  * Make sure that the DSP code provided is safe to use.
  */
-static int check_dsp_e1(const u8 *dsp, unsigned int len)
-{
+अटल पूर्णांक check_dsp_e1(स्थिर u8 *dsp, अचिन्हित पूर्णांक len)
+अणु
 	u8 pagecount, blockcount;
 	u16 blocksize;
 	u32 pageoffset;
-	unsigned int i, j, p, pp;
+	अचिन्हित पूर्णांक i, j, p, pp;
 
 	pagecount = FW_GET_BYTE(dsp);
 	p = 1;
 
-	/* enough space for page offsets? */
-	if (p + 4 * pagecount > len)
-		return 1;
+	/* enough space क्रम page offsets? */
+	अगर (p + 4 * pagecount > len)
+		वापस 1;
 
-	for (i = 0; i < pagecount; i++) {
+	क्रम (i = 0; i < pagecount; i++) अणु
 
 		pageoffset = get_unaligned_le32(dsp + p);
 		p += 4;
 
-		if (pageoffset == 0)
-			continue;
+		अगर (pageoffset == 0)
+			जारी;
 
-		/* enough space for blockcount? */
-		if (pageoffset >= len)
-			return 1;
+		/* enough space क्रम blockcount? */
+		अगर (pageoffset >= len)
+			वापस 1;
 
 		pp = pageoffset;
 		blockcount = FW_GET_BYTE(dsp + pp);
 		pp += 1;
 
-		for (j = 0; j < blockcount; j++) {
+		क्रम (j = 0; j < blockcount; j++) अणु
 
-			/* enough space for block header? */
-			if (pp + 4 > len)
-				return 1;
+			/* enough space क्रम block header? */
+			अगर (pp + 4 > len)
+				वापस 1;
 
 			pp += 2;	/* skip blockaddr */
 			blocksize = get_unaligned_le16(dsp + pp);
 			pp += 2;
 
-			/* enough space for block data? */
-			if (pp + blocksize > len)
-				return 1;
+			/* enough space क्रम block data? */
+			अगर (pp + blocksize > len)
+				वापस 1;
 
 			pp += blocksize;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_dsp_e4(const u8 *dsp, int len)
-{
-	int i;
-	struct l1_code *p = (struct l1_code *) dsp;
-	unsigned int sum = p->code - dsp;
+अटल पूर्णांक check_dsp_e4(स्थिर u8 *dsp, पूर्णांक len)
+अणु
+	पूर्णांक i;
+	काष्ठा l1_code *p = (काष्ठा l1_code *) dsp;
+	अचिन्हित पूर्णांक sum = p->code - dsp;
 
-	if (len < sum)
-		return 1;
+	अगर (len < sum)
+		वापस 1;
 
-	if (strcmp("STRATIPHY ANEXA", p->string_header) != 0 &&
-	    strcmp("STRATIPHY ANEXB", p->string_header) != 0)
-		return 1;
+	अगर (म_भेद("STRATIPHY ANEXA", p->string_header) != 0 &&
+	    म_भेद("STRATIPHY ANEXB", p->string_header) != 0)
+		वापस 1;
 
-	for (i = 0; i < E4_MAX_PAGE_NUMBER; i++) {
-		struct block_index *blockidx;
+	क्रम (i = 0; i < E4_MAX_PAGE_NUMBER; i++) अणु
+		काष्ठा block_index *blockidx;
 		u8 blockno = p->page_number_to_block_index[i];
-		if (blockno >= E4_NO_SWAPPAGE_HEADERS)
-			continue;
+		अगर (blockno >= E4_NO_SWAPPAGE_HEADERS)
+			जारी;
 
-		do {
+		करो अणु
 			u64 l;
 
-			if (blockno >= E4_NO_SWAPPAGE_HEADERS)
-				return 1;
+			अगर (blockno >= E4_NO_SWAPPAGE_HEADERS)
+				वापस 1;
 
 			blockidx = &p->page_header[blockno++];
-			if ((u8 *)(blockidx + 1) - dsp  >= len)
-				return 1;
+			अगर ((u8 *)(blockidx + 1) - dsp  >= len)
+				वापस 1;
 
-			if (le16_to_cpu(blockidx->PageNumber) != i)
-				return 1;
+			अगर (le16_to_cpu(blockidx->PageNumber) != i)
+				वापस 1;
 
 			l = E4_PAGE_BYTES(blockidx->PageSize);
 			sum += l;
 			l += le32_to_cpu(blockidx->PageOffset);
-			if (l > len)
-				return 1;
+			अगर (l > len)
+				वापस 1;
 
 		/* zero is zero regardless endianes */
-		} while (blockidx->NotLastBlock);
-	}
+		पूर्ण जबतक (blockidx->NotLastBlock);
+	पूर्ण
 
-	return (sum == len) ? 0 : 1;
-}
+	वापस (sum == len) ? 0 : 1;
+पूर्ण
 
 /*
  * send data to the idma pipe
  * */
-static int uea_idma_write(struct uea_softc *sc, const void *data, u32 size)
-{
-	int ret = -ENOMEM;
+अटल पूर्णांक uea_idma_ग_लिखो(काष्ठा uea_softc *sc, स्थिर व्योम *data, u32 size)
+अणु
+	पूर्णांक ret = -ENOMEM;
 	u8 *xfer_buff;
-	int bytes_read;
+	पूर्णांक bytes_पढ़ो;
 
 	xfer_buff = kmemdup(data, size, GFP_KERNEL);
-	if (!xfer_buff) {
+	अगर (!xfer_buff) अणु
 		uea_err(INS_TO_USBDEV(sc), "can't allocate xfer_buff\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = usb_bulk_msg(sc->usb_dev,
 			 usb_sndbulkpipe(sc->usb_dev, UEA_IDMA_PIPE),
-			 xfer_buff, size, &bytes_read, BULK_TIMEOUT);
+			 xfer_buff, size, &bytes_पढ़ो, BULK_TIMEOUT);
 
-	kfree(xfer_buff);
-	if (ret < 0)
-		return ret;
-	if (size != bytes_read) {
+	kमुक्त(xfer_buff);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (size != bytes_पढ़ो) अणु
 		uea_err(INS_TO_USBDEV(sc), "size != bytes_read %d %d\n", size,
-		       bytes_read);
-		return -EIO;
-	}
+		       bytes_पढ़ो);
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int request_dsp(struct uea_softc *sc)
-{
-	int ret;
-	char *dsp_name;
+अटल पूर्णांक request_dsp(काष्ठा uea_softc *sc)
+अणु
+	पूर्णांक ret;
+	अक्षर *dsp_name;
 
-	if (UEA_CHIP_VERSION(sc) == EAGLE_IV) {
-		if (IS_ISDN(sc))
+	अगर (UEA_CHIP_VERSION(sc) == EAGLE_IV) अणु
+		अगर (IS_ISDN(sc))
 			dsp_name = DSP4I_FIRMWARE;
-		else
+		अन्यथा
 			dsp_name = DSP4P_FIRMWARE;
-	} else if (UEA_CHIP_VERSION(sc) == ADI930) {
-		if (IS_ISDN(sc))
+	पूर्ण अन्यथा अगर (UEA_CHIP_VERSION(sc) == ADI930) अणु
+		अगर (IS_ISDN(sc))
 			dsp_name = DSP9I_FIRMWARE;
-		else
+		अन्यथा
 			dsp_name = DSP9P_FIRMWARE;
-	} else {
-		if (IS_ISDN(sc))
+	पूर्ण अन्यथा अणु
+		अगर (IS_ISDN(sc))
 			dsp_name = DSPEI_FIRMWARE;
-		else
+		अन्यथा
 			dsp_name = DSPEP_FIRMWARE;
-	}
+	पूर्ण
 
 	ret = request_firmware(&sc->dsp_firm, dsp_name, &sc->usb_dev->dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		uea_err(INS_TO_USBDEV(sc),
 		       "requesting firmware %s failed with error %d\n",
 			dsp_name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (UEA_CHIP_VERSION(sc) == EAGLE_IV)
+	अगर (UEA_CHIP_VERSION(sc) == EAGLE_IV)
 		ret = check_dsp_e4(sc->dsp_firm->data, sc->dsp_firm->size);
-	else
+	अन्यथा
 		ret = check_dsp_e1(sc->dsp_firm->data, sc->dsp_firm->size);
 
-	if (ret) {
+	अगर (ret) अणु
 		uea_err(INS_TO_USBDEV(sc), "firmware %s is corrupted\n",
 		       dsp_name);
 		release_firmware(sc->dsp_firm);
-		sc->dsp_firm = NULL;
-		return -EILSEQ;
-	}
+		sc->dsp_firm = शून्य;
+		वापस -EILSEQ;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * The uea_load_page() function must be called within a process context
  */
-static void uea_load_page_e1(struct work_struct *work)
-{
-	struct uea_softc *sc = container_of(work, struct uea_softc, task);
+अटल व्योम uea_load_page_e1(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा uea_softc *sc = container_of(work, काष्ठा uea_softc, task);
 	u16 pageno = sc->pageno;
 	u16 ovl = sc->ovl;
-	struct block_info_e1 bi;
+	काष्ठा block_info_e1 bi;
 
-	const u8 *p;
+	स्थिर u8 *p;
 	u8 pagecount, blockcount;
 	u16 blockaddr, blocksize;
 	u32 pageoffset;
-	int i;
+	पूर्णांक i;
 
-	/* reload firmware when reboot start and it's loaded already */
-	if (ovl == 0 && pageno == 0) {
+	/* reload firmware when reboot start and it's loaded alपढ़ोy */
+	अगर (ovl == 0 && pageno == 0) अणु
 		release_firmware(sc->dsp_firm);
-		sc->dsp_firm = NULL;
-	}
+		sc->dsp_firm = शून्य;
+	पूर्ण
 
-	if (sc->dsp_firm == NULL && request_dsp(sc) < 0)
-		return;
+	अगर (sc->dsp_firm == शून्य && request_dsp(sc) < 0)
+		वापस;
 
 	p = sc->dsp_firm->data;
 	pagecount = FW_GET_BYTE(p);
 	p += 1;
 
-	if (pageno >= pagecount)
-		goto bad1;
+	अगर (pageno >= pagecount)
+		जाओ bad1;
 
 	p += 4 * pageno;
 	pageoffset = get_unaligned_le32(p);
 
-	if (pageoffset == 0)
-		goto bad1;
+	अगर (pageoffset == 0)
+		जाओ bad1;
 
 	p = sc->dsp_firm->data + pageoffset;
 	blockcount = FW_GET_BYTE(p);
@@ -941,7 +942,7 @@ static void uea_load_page_e1(struct work_struct *work)
 	bi.wOvl = cpu_to_le16(ovl);
 	bi.wOvlOffset = cpu_to_le16(ovl | 0x8000);
 
-	for (i = 0; i < blockcount; i++) {
+	क्रम (i = 0; i < blockcount; i++) अणु
 		blockaddr = get_unaligned_le16(p);
 		p += 2;
 
@@ -953,30 +954,30 @@ static void uea_load_page_e1(struct work_struct *work)
 		bi.wLast = cpu_to_le16((i == blockcount - 1) ? 1 : 0);
 
 		/* send block info through the IDMA pipe */
-		if (uea_idma_write(sc, &bi, E1_BLOCK_INFO_SIZE))
-			goto bad2;
+		अगर (uea_idma_ग_लिखो(sc, &bi, E1_BLOCK_INFO_SIZE))
+			जाओ bad2;
 
 		/* send block data through the IDMA pipe */
-		if (uea_idma_write(sc, p, blocksize))
-			goto bad2;
+		अगर (uea_idma_ग_लिखो(sc, p, blocksize))
+			जाओ bad2;
 
 		p += blocksize;
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
 bad2:
 	uea_err(INS_TO_USBDEV(sc), "sending DSP block %u failed\n", i);
-	return;
+	वापस;
 bad1:
 	uea_err(INS_TO_USBDEV(sc), "invalid DSP page %u requested\n", pageno);
-}
+पूर्ण
 
-static void __uea_load_page_e4(struct uea_softc *sc, u8 pageno, int boot)
-{
-	struct block_info_e4 bi;
-	struct block_index *blockidx;
-	struct l1_code *p = (struct l1_code *) sc->dsp_firm->data;
+अटल व्योम __uea_load_page_e4(काष्ठा uea_softc *sc, u8 pageno, पूर्णांक boot)
+अणु
+	काष्ठा block_info_e4 bi;
+	काष्ठा block_index *blockidx;
+	काष्ठा l1_code *p = (काष्ठा l1_code *) sc->dsp_firm->data;
 	u8 blockno = p->page_number_to_block_index[pageno];
 
 	bi.wHdr = cpu_to_be16(UEA_BIHDR);
@@ -984,9 +985,9 @@ static void __uea_load_page_e4(struct uea_softc *sc, u8 pageno, int boot)
 	bi.bPageNumber = pageno;
 	bi.wReserved = cpu_to_be16(UEA_RESERVED);
 
-	do {
-		const u8 *blockoffset;
-		unsigned int blocksize;
+	करो अणु
+		स्थिर u8 *blockoffset;
+		अचिन्हित पूर्णांक blocksize;
 
 		blockidx = &p->page_header[blockno];
 		blocksize = E4_PAGE_BYTES(blockidx->PageSize);
@@ -1003,61 +1004,61 @@ static void __uea_load_page_e4(struct uea_softc *sc, u8 pageno, int boot)
 			le32_to_cpu(blockidx->PageAddress));
 
 		/* send block info through the IDMA pipe */
-		if (uea_idma_write(sc, &bi, E4_BLOCK_INFO_SIZE))
-			goto bad;
+		अगर (uea_idma_ग_लिखो(sc, &bi, E4_BLOCK_INFO_SIZE))
+			जाओ bad;
 
 		/* send block data through the IDMA pipe */
-		if (uea_idma_write(sc, blockoffset, blocksize))
-			goto bad;
+		अगर (uea_idma_ग_लिखो(sc, blockoffset, blocksize))
+			जाओ bad;
 
 		blockno++;
-	} while (blockidx->NotLastBlock);
+	पूर्ण जबतक (blockidx->NotLastBlock);
 
-	return;
+	वापस;
 
 bad:
 	uea_err(INS_TO_USBDEV(sc), "sending DSP block %u failed\n", blockno);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void uea_load_page_e4(struct work_struct *work)
-{
-	struct uea_softc *sc = container_of(work, struct uea_softc, task);
+अटल व्योम uea_load_page_e4(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा uea_softc *sc = container_of(work, काष्ठा uea_softc, task);
 	u8 pageno = sc->pageno;
-	int i;
-	struct block_info_e4 bi;
-	struct l1_code *p;
+	पूर्णांक i;
+	काष्ठा block_info_e4 bi;
+	काष्ठा l1_code *p;
 
 	uea_dbg(INS_TO_USBDEV(sc), "sending DSP page %u\n", pageno);
 
-	/* reload firmware when reboot start and it's loaded already */
-	if (pageno == 0) {
+	/* reload firmware when reboot start and it's loaded alपढ़ोy */
+	अगर (pageno == 0) अणु
 		release_firmware(sc->dsp_firm);
-		sc->dsp_firm = NULL;
-	}
+		sc->dsp_firm = शून्य;
+	पूर्ण
 
-	if (sc->dsp_firm == NULL && request_dsp(sc) < 0)
-		return;
+	अगर (sc->dsp_firm == शून्य && request_dsp(sc) < 0)
+		वापस;
 
-	p = (struct l1_code *) sc->dsp_firm->data;
-	if (pageno >= le16_to_cpu(p->page_header[0].PageNumber)) {
+	p = (काष्ठा l1_code *) sc->dsp_firm->data;
+	अगर (pageno >= le16_to_cpu(p->page_header[0].PageNumber)) अणु
 		uea_err(INS_TO_USBDEV(sc), "invalid DSP "
 						"page %u requested\n", pageno);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (pageno != 0) {
+	अगर (pageno != 0) अणु
 		__uea_load_page_e4(sc, pageno, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	uea_dbg(INS_TO_USBDEV(sc),
 	       "sending Main DSP page %u\n", p->page_header[0].PageNumber);
 
-	for (i = 0; i < le16_to_cpu(p->page_header[0].PageNumber); i++) {
-		if (E4_IS_BOOT_PAGE(p->page_header[i].PageSize))
+	क्रम (i = 0; i < le16_to_cpu(p->page_header[0].PageNumber); i++) अणु
+		अगर (E4_IS_BOOT_PAGE(p->page_header[i].PageSize))
 			__uea_load_page_e4(sc, i, 1);
-	}
+	पूर्ण
 
 	uea_dbg(INS_TO_USBDEV(sc) , "sending start bi\n");
 
@@ -1069,72 +1070,72 @@ static void uea_load_page_e4(struct work_struct *work)
 	bi.dwAddress = cpu_to_be32(le32_to_cpu(p->page_header[0].PageAddress));
 
 	/* send block info through the IDMA pipe */
-	if (uea_idma_write(sc, &bi, E4_BLOCK_INFO_SIZE))
+	अगर (uea_idma_ग_लिखो(sc, &bi, E4_BLOCK_INFO_SIZE))
 		uea_err(INS_TO_USBDEV(sc), "sending DSP start bi failed\n");
-}
+पूर्ण
 
-static inline void wake_up_cmv_ack(struct uea_softc *sc)
-{
+अटल अंतरभूत व्योम wake_up_cmv_ack(काष्ठा uea_softc *sc)
+अणु
 	BUG_ON(sc->cmv_ack);
 	sc->cmv_ack = 1;
 	wake_up(&sc->sync_q);
-}
+पूर्ण
 
-static inline int wait_cmv_ack(struct uea_softc *sc)
-{
-	int ret = uea_wait(sc, sc->cmv_ack , ACK_TIMEOUT);
+अटल अंतरभूत पूर्णांक रुको_cmv_ack(काष्ठा uea_softc *sc)
+अणु
+	पूर्णांक ret = uea_रुको(sc, sc->cmv_ack , ACK_TIMEOUT);
 
 	sc->cmv_ack = 0;
 
 	uea_dbg(INS_TO_USBDEV(sc), "wait_event_timeout : %d ms\n",
-			jiffies_to_msecs(ret));
+			jअगरfies_to_msecs(ret));
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return (ret == 0) ? -ETIMEDOUT : 0;
-}
+	वापस (ret == 0) ? -ETIMEDOUT : 0;
+पूर्ण
 
-#define UCDC_SEND_ENCAPSULATED_COMMAND 0x00
+#घोषणा UCDC_SEND_ENCAPSULATED_COMMAND 0x00
 
-static int uea_request(struct uea_softc *sc,
-		u16 value, u16 index, u16 size, const void *data)
-{
+अटल पूर्णांक uea_request(काष्ठा uea_softc *sc,
+		u16 value, u16 index, u16 size, स्थिर व्योम *data)
+अणु
 	u8 *xfer_buff;
-	int ret = -ENOMEM;
+	पूर्णांक ret = -ENOMEM;
 
 	xfer_buff = kmemdup(data, size, GFP_KERNEL);
-	if (!xfer_buff) {
+	अगर (!xfer_buff) अणु
 		uea_err(INS_TO_USBDEV(sc), "can't allocate xfer_buff\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = usb_control_msg(sc->usb_dev, usb_sndctrlpipe(sc->usb_dev, 0),
 			      UCDC_SEND_ENCAPSULATED_COMMAND,
-			      USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			      USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			      value, index, xfer_buff, size, CTRL_TIMEOUT);
 
-	kfree(xfer_buff);
-	if (ret < 0) {
+	kमुक्त(xfer_buff);
+	अगर (ret < 0) अणु
 		uea_err(INS_TO_USBDEV(sc), "usb_control_msg error %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ret != size) {
+	अगर (ret != size) अणु
 		uea_err(INS_TO_USBDEV(sc),
 		       "usb_control_msg send only %d bytes (instead of %d)\n",
 		       ret, size);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uea_cmv_e1(struct uea_softc *sc,
+अटल पूर्णांक uea_cmv_e1(काष्ठा uea_softc *sc,
 		u8 function, u32 address, u16 offset, u32 data)
-{
-	struct cmv_e1 cmv;
-	int ret;
+अणु
+	काष्ठा cmv_e1 cmv;
+	पूर्णांक ret;
 
 	uea_enters(INS_TO_USBDEV(sc));
 	uea_vdbg(INS_TO_USBDEV(sc), "Function : %d-%d, Address : %c%c%c%c, "
@@ -1160,22 +1161,22 @@ static int uea_cmv_e1(struct uea_softc *sc,
 	put_unaligned_le32(data >> 16 | data << 16, &cmv.dwData);
 
 	ret = uea_request(sc, UEA_E1_SET_BLOCK, UEA_MPTX_START,
-							sizeof(cmv), &cmv);
-	if (ret < 0)
-		return ret;
-	ret = wait_cmv_ack(sc);
+							माप(cmv), &cmv);
+	अगर (ret < 0)
+		वापस ret;
+	ret = रुको_cmv_ack(sc);
 	uea_leaves(INS_TO_USBDEV(sc));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int uea_cmv_e4(struct uea_softc *sc,
+अटल पूर्णांक uea_cmv_e4(काष्ठा uea_softc *sc,
 		u16 function, u16 group, u16 address, u16 offset, u32 data)
-{
-	struct cmv_e4 cmv;
-	int ret;
+अणु
+	काष्ठा cmv_e4 cmv;
+	पूर्णांक ret;
 
 	uea_enters(INS_TO_USBDEV(sc));
-	memset(&cmv, 0, sizeof(cmv));
+	स_रखो(&cmv, 0, माप(cmv));
 
 	uea_vdbg(INS_TO_USBDEV(sc), "Function : %d-%d, Group : 0x%04x, "
 		 "Address : 0x%04x, offset : 0x%04x, data : 0x%08x\n",
@@ -1195,664 +1196,664 @@ static int uea_cmv_e4(struct uea_softc *sc,
 	cmv.dwData[0] = cpu_to_be32(data);
 
 	ret = uea_request(sc, UEA_E4_SET_BLOCK, UEA_MPTX_START,
-							sizeof(cmv), &cmv);
-	if (ret < 0)
-		return ret;
-	ret = wait_cmv_ack(sc);
+							माप(cmv), &cmv);
+	अगर (ret < 0)
+		वापस ret;
+	ret = रुको_cmv_ack(sc);
 	uea_leaves(INS_TO_USBDEV(sc));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int uea_read_cmv_e1(struct uea_softc *sc,
+अटल अंतरभूत पूर्णांक uea_पढ़ो_cmv_e1(काष्ठा uea_softc *sc,
 		u32 address, u16 offset, u32 *data)
-{
-	int ret = uea_cmv_e1(sc, E1_MAKEFUNCTION(E1_MEMACCESS, E1_REQUESTREAD),
+अणु
+	पूर्णांक ret = uea_cmv_e1(sc, E1_MAKEFUNCTION(E1_MEMACCESS, E1_REQUESTREAD),
 			  address, offset, 0);
-	if (ret < 0)
+	अगर (ret < 0)
 		uea_err(INS_TO_USBDEV(sc),
 			"reading cmv failed with error %d\n", ret);
-	else
+	अन्यथा
 		*data = sc->data;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int uea_read_cmv_e4(struct uea_softc *sc,
+अटल अंतरभूत पूर्णांक uea_पढ़ो_cmv_e4(काष्ठा uea_softc *sc,
 		u8 size, u16 group, u16 address, u16 offset, u32 *data)
-{
-	int ret = uea_cmv_e4(sc, E4_MAKEFUNCTION(E4_MEMACCESS,
+अणु
+	पूर्णांक ret = uea_cmv_e4(sc, E4_MAKEFUNCTION(E4_MEMACCESS,
 							E4_REQUESTREAD, size),
 			  group, address, offset, 0);
-	if (ret < 0)
+	अगर (ret < 0)
 		uea_err(INS_TO_USBDEV(sc),
 			"reading cmv failed with error %d\n", ret);
-	else {
+	अन्यथा अणु
 		*data = sc->data;
 		/* size is in 16-bit word quantities */
-		if (size > 2)
+		अगर (size > 2)
 			*(data + 1) = sc->data1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static inline int uea_write_cmv_e1(struct uea_softc *sc,
+अटल अंतरभूत पूर्णांक uea_ग_लिखो_cmv_e1(काष्ठा uea_softc *sc,
 		u32 address, u16 offset, u32 data)
-{
-	int ret = uea_cmv_e1(sc, E1_MAKEFUNCTION(E1_MEMACCESS, E1_REQUESTWRITE),
+अणु
+	पूर्णांक ret = uea_cmv_e1(sc, E1_MAKEFUNCTION(E1_MEMACCESS, E1_REQUESTWRITE),
 			  address, offset, data);
-	if (ret < 0)
+	अगर (ret < 0)
 		uea_err(INS_TO_USBDEV(sc),
 			"writing cmv failed with error %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int uea_write_cmv_e4(struct uea_softc *sc,
+अटल अंतरभूत पूर्णांक uea_ग_लिखो_cmv_e4(काष्ठा uea_softc *sc,
 		u8 size, u16 group, u16 address, u16 offset, u32 data)
-{
-	int ret = uea_cmv_e4(sc, E4_MAKEFUNCTION(E4_MEMACCESS,
+अणु
+	पूर्णांक ret = uea_cmv_e4(sc, E4_MAKEFUNCTION(E4_MEMACCESS,
 							E4_REQUESTWRITE, size),
 			  group, address, offset, data);
-	if (ret < 0)
+	अगर (ret < 0)
 		uea_err(INS_TO_USBDEV(sc),
 			"writing cmv failed with error %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void uea_set_bulk_timeout(struct uea_softc *sc, u32 dsrate)
-{
-	int ret;
-	u16 timeout;
+अटल व्योम uea_set_bulk_समयout(काष्ठा uea_softc *sc, u32 dsrate)
+अणु
+	पूर्णांक ret;
+	u16 समयout;
 
 	/* in bulk mode the modem have problem with high rate
-	 * changing internal timing could improve things, but the
+	 * changing पूर्णांकernal timing could improve things, but the
 	 * value is mysterious.
-	 * ADI930 don't support it (-EPIPE error).
+	 * ADI930 करोn't support it (-EPIPE error).
 	 */
 
-	if (UEA_CHIP_VERSION(sc) == ADI930 ||
+	अगर (UEA_CHIP_VERSION(sc) == ADI930 ||
 	    altsetting[sc->modem_index] > 0 ||
 	    sc->stats.phy.dsrate == dsrate)
-		return;
+		वापस;
 
-	/* Original timming (1Mbit/s) from ADI (used in windows driver) */
-	timeout = (dsrate <= 1024*1024) ? 0 : 1;
-	ret = uea_request(sc, UEA_SET_TIMEOUT, timeout, 0, NULL);
+	/* Original timming (1Mbit/s) from ADI (used in winकरोws driver) */
+	समयout = (dsrate <= 1024*1024) ? 0 : 1;
+	ret = uea_request(sc, UEA_SET_TIMEOUT, समयout, 0, शून्य);
 	uea_info(INS_TO_USBDEV(sc), "setting new timeout %d%s\n",
-		 timeout,  ret < 0 ? " failed" : "");
+		 समयout,  ret < 0 ? " failed" : "");
 
-}
+पूर्ण
 
 /*
  * Monitor the modem and update the stat
- * return 0 if everything is ok
- * return < 0 if an error occurs (-EAGAIN reboot needed)
+ * वापस 0 अगर everything is ok
+ * वापस < 0 अगर an error occurs (-EAGAIN reboot needed)
  */
-static int uea_stat_e1(struct uea_softc *sc)
-{
+अटल पूर्णांक uea_stat_e1(काष्ठा uea_softc *sc)
+अणु
 	u32 data;
-	int ret;
+	पूर्णांक ret;
 
 	uea_enters(INS_TO_USBDEV(sc));
 	data = sc->stats.phy.state;
 
-	ret = uea_read_cmv_e1(sc, E1_SA_STAT, 0, &sc->stats.phy.state);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_STAT, 0, &sc->stats.phy.state);
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (GET_STATUS(sc->stats.phy.state)) {
-	case 0:		/* not yet synchronized */
+	चयन (GET_STATUS(sc->stats.phy.state)) अणु
+	हाल 0:		/* not yet synchronized */
 		uea_dbg(INS_TO_USBDEV(sc),
 		       "modem not yet synchronized\n");
-		return 0;
+		वापस 0;
 
-	case 1:		/* initialization */
+	हाल 1:		/* initialization */
 		uea_dbg(INS_TO_USBDEV(sc), "modem initializing\n");
-		return 0;
+		वापस 0;
 
-	case 2:		/* operational */
+	हाल 2:		/* operational */
 		uea_vdbg(INS_TO_USBDEV(sc), "modem operational\n");
-		break;
+		अवरोध;
 
-	case 3:		/* fail ... */
+	हाल 3:		/* fail ... */
 		uea_info(INS_TO_USBDEV(sc), "modem synchronization failed"
 					" (may be try other cmv/dsp)\n");
-		return -EAGAIN;
+		वापस -EAGAIN;
 
-	case 4 ... 6:	/* test state */
+	हाल 4 ... 6:	/* test state */
 		uea_warn(INS_TO_USBDEV(sc),
 				"modem in test mode - not supported\n");
-		return -EAGAIN;
+		वापस -EAGAIN;
 
-	case 7:		/* fast-retain ... */
+	हाल 7:		/* fast-retain ... */
 		uea_info(INS_TO_USBDEV(sc), "modem in fast-retain mode\n");
-		return 0;
-	default:
+		वापस 0;
+	शेष:
 		uea_err(INS_TO_USBDEV(sc), "modem invalid SW mode %d\n",
 			GET_STATUS(sc->stats.phy.state));
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (GET_STATUS(data) != 2) {
-		uea_request(sc, UEA_SET_MODE, UEA_LOOPBACK_OFF, 0, NULL);
+	अगर (GET_STATUS(data) != 2) अणु
+		uea_request(sc, UEA_SET_MODE, UEA_LOOPBACK_OFF, 0, शून्य);
 		uea_info(INS_TO_USBDEV(sc), "modem operational\n");
 
 		/* release the dsp firmware as it is not needed until
 		 * the next failure
 		 */
 		release_firmware(sc->dsp_firm);
-		sc->dsp_firm = NULL;
-	}
+		sc->dsp_firm = शून्य;
+	पूर्ण
 
-	/* always update it as atm layer could not be init when we switch to
+	/* always update it as aपंचांग layer could not be init when we चयन to
 	 * operational state
 	 */
 	UPDATE_ATM_SIGNAL(ATM_PHY_SIG_FOUND);
 
-	/* wake up processes waiting for synchronization */
+	/* wake up processes रुकोing क्रम synchronization */
 	wake_up(&sc->sync_q);
 
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 2, &sc->stats.phy.flags);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 2, &sc->stats.phy.flags);
+	अगर (ret < 0)
+		वापस ret;
 	sc->stats.phy.mflags |= sc->stats.phy.flags;
 
-	/* in case of a flags ( for example delineation LOSS (& 0x10)),
+	/* in हाल of a flags ( क्रम example delineation LOSS (& 0x10)),
 	 * we check the status again in order to detect the failure earlier
 	 */
-	if (sc->stats.phy.flags) {
+	अगर (sc->stats.phy.flags) अणु
 		uea_dbg(INS_TO_USBDEV(sc), "Stat flag = 0x%x\n",
 		       sc->stats.phy.flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ret = uea_read_cmv_e1(sc, E1_SA_RATE, 0, &data);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_RATE, 0, &data);
+	अगर (ret < 0)
+		वापस ret;
 
-	uea_set_bulk_timeout(sc, (data >> 16) * 32);
+	uea_set_bulk_समयout(sc, (data >> 16) * 32);
 	sc->stats.phy.dsrate = (data >> 16) * 32;
 	sc->stats.phy.usrate = (data & 0xffff) * 32;
 	UPDATE_ATM_STAT(link_rate, sc->stats.phy.dsrate * 1000 / 424);
 
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 23, &data);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 23, &data);
+	अगर (ret < 0)
+		वापस ret;
 	sc->stats.phy.dsattenuation = (data & 0xff) / 2;
 
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 47, &data);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 47, &data);
+	अगर (ret < 0)
+		वापस ret;
 	sc->stats.phy.usattenuation = (data & 0xff) / 2;
 
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 25, &sc->stats.phy.dsmargin);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 25, &sc->stats.phy.dsmargin);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 49, &sc->stats.phy.usmargin);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 49, &sc->stats.phy.usmargin);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 51, &sc->stats.phy.rxflow);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 51, &sc->stats.phy.rxflow);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 52, &sc->stats.phy.txflow);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 52, &sc->stats.phy.txflow);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 54, &sc->stats.phy.dsunc);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 54, &sc->stats.phy.dsunc);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* only for atu-c */
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 58, &sc->stats.phy.usunc);
-	if (ret < 0)
-		return ret;
+	/* only क्रम atu-c */
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 58, &sc->stats.phy.usunc);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 53, &sc->stats.phy.dscorr);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 53, &sc->stats.phy.dscorr);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* only for atu-c */
-	ret = uea_read_cmv_e1(sc, E1_SA_DIAG, 57, &sc->stats.phy.uscorr);
-	if (ret < 0)
-		return ret;
+	/* only क्रम atu-c */
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_DIAG, 57, &sc->stats.phy.uscorr);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = uea_read_cmv_e1(sc, E1_SA_INFO, 8, &sc->stats.phy.vidco);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_INFO, 8, &sc->stats.phy.vidco);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = uea_read_cmv_e1(sc, E1_SA_INFO, 13, &sc->stats.phy.vidcpe);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_INFO, 13, &sc->stats.phy.vidcpe);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uea_stat_e4(struct uea_softc *sc)
-{
+अटल पूर्णांक uea_stat_e4(काष्ठा uea_softc *sc)
+अणु
 	u32 data;
-	u32 tmp_arr[2];
-	int ret;
+	u32 पंचांगp_arr[2];
+	पूर्णांक ret;
 
 	uea_enters(INS_TO_USBDEV(sc));
 	data = sc->stats.phy.state;
 
-	/* XXX only need to be done before operationnal... */
-	ret = uea_read_cmv_e4(sc, 1, E4_SA_STAT, 0, 0, &sc->stats.phy.state);
-	if (ret < 0)
-		return ret;
+	/* XXX only need to be करोne beक्रमe operationnal... */
+	ret = uea_पढ़ो_cmv_e4(sc, 1, E4_SA_STAT, 0, 0, &sc->stats.phy.state);
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (sc->stats.phy.state) {
-	case 0x0:	/* not yet synchronized */
-	case 0x1:
-	case 0x3:
-	case 0x4:
+	चयन (sc->stats.phy.state) अणु
+	हाल 0x0:	/* not yet synchronized */
+	हाल 0x1:
+	हाल 0x3:
+	हाल 0x4:
 		uea_dbg(INS_TO_USBDEV(sc), "modem not yet "
 						"synchronized\n");
-		return 0;
-	case 0x5:	/* initialization */
-	case 0x6:
-	case 0x9:
-	case 0xa:
+		वापस 0;
+	हाल 0x5:	/* initialization */
+	हाल 0x6:
+	हाल 0x9:
+	हाल 0xa:
 		uea_dbg(INS_TO_USBDEV(sc), "modem initializing\n");
-		return 0;
-	case 0x2:	/* fail ... */
+		वापस 0;
+	हाल 0x2:	/* fail ... */
 		uea_info(INS_TO_USBDEV(sc), "modem synchronization "
 				"failed (may be try other cmv/dsp)\n");
-		return -EAGAIN;
-	case 0x7:	/* operational */
-		break;
-	default:
+		वापस -EAGAIN;
+	हाल 0x7:	/* operational */
+		अवरोध;
+	शेष:
 		uea_warn(INS_TO_USBDEV(sc), "unknown state: %x\n",
 						sc->stats.phy.state);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (data != 7) {
-		uea_request(sc, UEA_SET_MODE, UEA_LOOPBACK_OFF, 0, NULL);
+	अगर (data != 7) अणु
+		uea_request(sc, UEA_SET_MODE, UEA_LOOPBACK_OFF, 0, शून्य);
 		uea_info(INS_TO_USBDEV(sc), "modem operational\n");
 
 		/* release the dsp firmware as it is not needed until
 		 * the next failure
 		 */
 		release_firmware(sc->dsp_firm);
-		sc->dsp_firm = NULL;
-	}
+		sc->dsp_firm = शून्य;
+	पूर्ण
 
-	/* always update it as atm layer could not be init when we switch to
+	/* always update it as aपंचांग layer could not be init when we चयन to
 	 * operational state
 	 */
 	UPDATE_ATM_SIGNAL(ATM_PHY_SIG_FOUND);
 
-	/* wake up processes waiting for synchronization */
+	/* wake up processes रुकोing क्रम synchronization */
 	wake_up(&sc->sync_q);
 
 	/* TODO improve this state machine :
-	 * we need some CMV info : what they do and their unit
+	 * we need some CMV info : what they करो and their unit
 	 * we should find the equivalent of eagle3- CMV
 	 */
 	/* check flags */
-	ret = uea_read_cmv_e4(sc, 1, E4_SA_DIAG, 0, 0, &sc->stats.phy.flags);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e4(sc, 1, E4_SA_DIAG, 0, 0, &sc->stats.phy.flags);
+	अगर (ret < 0)
+		वापस ret;
 	sc->stats.phy.mflags |= sc->stats.phy.flags;
 
-	/* in case of a flags ( for example delineation LOSS (& 0x10)),
+	/* in हाल of a flags ( क्रम example delineation LOSS (& 0x10)),
 	 * we check the status again in order to detect the failure earlier
 	 */
-	if (sc->stats.phy.flags) {
+	अगर (sc->stats.phy.flags) अणु
 		uea_dbg(INS_TO_USBDEV(sc), "Stat flag = 0x%x\n",
 		       sc->stats.phy.flags);
-		if (sc->stats.phy.flags & 1) /* delineation LOSS */
-			return -EAGAIN;
-		if (sc->stats.phy.flags & 0x4000) /* Reset Flag */
-			return -EAGAIN;
-		return 0;
-	}
+		अगर (sc->stats.phy.flags & 1) /* delineation LOSS */
+			वापस -EAGAIN;
+		अगर (sc->stats.phy.flags & 0x4000) /* Reset Flag */
+			वापस -EAGAIN;
+		वापस 0;
+	पूर्ण
 
 	/* rate data may be in upper or lower half of 64 bit word, strange */
-	ret = uea_read_cmv_e4(sc, 4, E4_SA_RATE, 0, 0, tmp_arr);
-	if (ret < 0)
-		return ret;
-	data = (tmp_arr[0]) ? tmp_arr[0] : tmp_arr[1];
+	ret = uea_पढ़ो_cmv_e4(sc, 4, E4_SA_RATE, 0, 0, पंचांगp_arr);
+	अगर (ret < 0)
+		वापस ret;
+	data = (पंचांगp_arr[0]) ? पंचांगp_arr[0] : पंचांगp_arr[1];
 	sc->stats.phy.usrate = data / 1000;
 
-	ret = uea_read_cmv_e4(sc, 4, E4_SA_RATE, 1, 0, tmp_arr);
-	if (ret < 0)
-		return ret;
-	data = (tmp_arr[0]) ? tmp_arr[0] : tmp_arr[1];
-	uea_set_bulk_timeout(sc, data / 1000);
+	ret = uea_पढ़ो_cmv_e4(sc, 4, E4_SA_RATE, 1, 0, पंचांगp_arr);
+	अगर (ret < 0)
+		वापस ret;
+	data = (पंचांगp_arr[0]) ? पंचांगp_arr[0] : पंचांगp_arr[1];
+	uea_set_bulk_समयout(sc, data / 1000);
 	sc->stats.phy.dsrate = data / 1000;
 	UPDATE_ATM_STAT(link_rate, sc->stats.phy.dsrate * 1000 / 424);
 
-	ret = uea_read_cmv_e4(sc, 1, E4_SA_INFO, 68, 1, &data);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e4(sc, 1, E4_SA_INFO, 68, 1, &data);
+	अगर (ret < 0)
+		वापस ret;
 	sc->stats.phy.dsattenuation = data / 10;
 
-	ret = uea_read_cmv_e4(sc, 1, E4_SA_INFO, 69, 1, &data);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e4(sc, 1, E4_SA_INFO, 69, 1, &data);
+	अगर (ret < 0)
+		वापस ret;
 	sc->stats.phy.usattenuation = data / 10;
 
-	ret = uea_read_cmv_e4(sc, 1, E4_SA_INFO, 68, 3, &data);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e4(sc, 1, E4_SA_INFO, 68, 3, &data);
+	अगर (ret < 0)
+		वापस ret;
 	sc->stats.phy.dsmargin = data / 2;
 
-	ret = uea_read_cmv_e4(sc, 1, E4_SA_INFO, 69, 3, &data);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e4(sc, 1, E4_SA_INFO, 69, 3, &data);
+	अगर (ret < 0)
+		वापस ret;
 	sc->stats.phy.usmargin = data / 10;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cmvs_file_name(struct uea_softc *sc, char *const cmv_name, int ver)
-{
-	char file_arr[] = "CMVxy.bin";
-	char *file;
+अटल व्योम cmvs_file_name(काष्ठा uea_softc *sc, अक्षर *स्थिर cmv_name, पूर्णांक ver)
+अणु
+	अक्षर file_arr[] = "CMVxy.bin";
+	अक्षर *file;
 
 	kernel_param_lock(THIS_MODULE);
 	/* set proper name corresponding modem version and line type */
-	if (cmv_file[sc->modem_index] == NULL) {
-		if (UEA_CHIP_VERSION(sc) == ADI930)
+	अगर (cmv_file[sc->modem_index] == शून्य) अणु
+		अगर (UEA_CHIP_VERSION(sc) == ADI930)
 			file_arr[3] = '9';
-		else if (UEA_CHIP_VERSION(sc) == EAGLE_IV)
+		अन्यथा अगर (UEA_CHIP_VERSION(sc) == EAGLE_IV)
 			file_arr[3] = '4';
-		else
+		अन्यथा
 			file_arr[3] = 'e';
 
 		file_arr[4] = IS_ISDN(sc) ? 'i' : 'p';
 		file = file_arr;
-	} else
+	पूर्ण अन्यथा
 		file = cmv_file[sc->modem_index];
 
-	strcpy(cmv_name, FW_DIR);
+	म_नकल(cmv_name, FW_सूची);
 	strlcat(cmv_name, file, UEA_FW_NAME_MAX);
-	if (ver == 2)
+	अगर (ver == 2)
 		strlcat(cmv_name, ".v2", UEA_FW_NAME_MAX);
 	kernel_param_unlock(THIS_MODULE);
-}
+पूर्ण
 
-static int request_cmvs_old(struct uea_softc *sc,
-		 void **cmvs, const struct firmware **fw)
-{
-	int ret, size;
+अटल पूर्णांक request_cmvs_old(काष्ठा uea_softc *sc,
+		 व्योम **cmvs, स्थिर काष्ठा firmware **fw)
+अणु
+	पूर्णांक ret, size;
 	u8 *data;
-	char cmv_name[UEA_FW_NAME_MAX]; /* 30 bytes stack variable */
+	अक्षर cmv_name[UEA_FW_NAME_MAX]; /* 30 bytes stack variable */
 
 	cmvs_file_name(sc, cmv_name, 1);
 	ret = request_firmware(fw, cmv_name, &sc->usb_dev->dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		uea_err(INS_TO_USBDEV(sc),
 		       "requesting firmware %s failed with error %d\n",
 		       cmv_name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	data = (u8 *) (*fw)->data;
 	size = (*fw)->size;
-	if (size < 1)
-		goto err_fw_corrupted;
+	अगर (size < 1)
+		जाओ err_fw_corrupted;
 
-	if (size != *data * sizeof(struct uea_cmvs_v1) + 1)
-		goto err_fw_corrupted;
+	अगर (size != *data * माप(काष्ठा uea_cmvs_v1) + 1)
+		जाओ err_fw_corrupted;
 
-	*cmvs = (void *)(data + 1);
-	return *data;
+	*cmvs = (व्योम *)(data + 1);
+	वापस *data;
 
 err_fw_corrupted:
 	uea_err(INS_TO_USBDEV(sc), "firmware %s is corrupted\n", cmv_name);
 	release_firmware(*fw);
-	return -EILSEQ;
-}
+	वापस -EILSEQ;
+पूर्ण
 
-static int request_cmvs(struct uea_softc *sc,
-		 void **cmvs, const struct firmware **fw, int *ver)
-{
-	int ret, size;
+अटल पूर्णांक request_cmvs(काष्ठा uea_softc *sc,
+		 व्योम **cmvs, स्थिर काष्ठा firmware **fw, पूर्णांक *ver)
+अणु
+	पूर्णांक ret, size;
 	u32 crc;
 	u8 *data;
-	char cmv_name[UEA_FW_NAME_MAX]; /* 30 bytes stack variable */
+	अक्षर cmv_name[UEA_FW_NAME_MAX]; /* 30 bytes stack variable */
 
 	cmvs_file_name(sc, cmv_name, 2);
 	ret = request_firmware(fw, cmv_name, &sc->usb_dev->dev);
-	if (ret < 0) {
-		/* if caller can handle old version, try to provide it */
-		if (*ver == 1) {
+	अगर (ret < 0) अणु
+		/* अगर caller can handle old version, try to provide it */
+		अगर (*ver == 1) अणु
 			uea_warn(INS_TO_USBDEV(sc), "requesting "
 							"firmware %s failed, "
 				"try to get older cmvs\n", cmv_name);
-			return request_cmvs_old(sc, cmvs, fw);
-		}
+			वापस request_cmvs_old(sc, cmvs, fw);
+		पूर्ण
 		uea_err(INS_TO_USBDEV(sc),
 		       "requesting firmware %s failed with error %d\n",
 		       cmv_name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	size = (*fw)->size;
 	data = (u8 *) (*fw)->data;
-	if (size < 4 || strncmp(data, "cmv2", 4) != 0) {
-		if (*ver == 1) {
+	अगर (size < 4 || म_भेदन(data, "cmv2", 4) != 0) अणु
+		अगर (*ver == 1) अणु
 			uea_warn(INS_TO_USBDEV(sc), "firmware %s is corrupted,"
 				" try to get older cmvs\n", cmv_name);
 			release_firmware(*fw);
-			return request_cmvs_old(sc, cmvs, fw);
-		}
-		goto err_fw_corrupted;
-	}
+			वापस request_cmvs_old(sc, cmvs, fw);
+		पूर्ण
+		जाओ err_fw_corrupted;
+	पूर्ण
 
 	*ver = 2;
 
 	data += 4;
 	size -= 4;
-	if (size < 5)
-		goto err_fw_corrupted;
+	अगर (size < 5)
+		जाओ err_fw_corrupted;
 
 	crc = get_unaligned_le32(data);
 	data += 4;
 	size -= 4;
-	if (crc32_be(0, data, size) != crc)
-		goto err_fw_corrupted;
+	अगर (crc32_be(0, data, size) != crc)
+		जाओ err_fw_corrupted;
 
-	if (size != *data * sizeof(struct uea_cmvs_v2) + 1)
-		goto err_fw_corrupted;
+	अगर (size != *data * माप(काष्ठा uea_cmvs_v2) + 1)
+		जाओ err_fw_corrupted;
 
-	*cmvs = (void *) (data + 1);
-	return *data;
+	*cmvs = (व्योम *) (data + 1);
+	वापस *data;
 
 err_fw_corrupted:
 	uea_err(INS_TO_USBDEV(sc), "firmware %s is corrupted\n", cmv_name);
 	release_firmware(*fw);
-	return -EILSEQ;
-}
+	वापस -EILSEQ;
+पूर्ण
 
-static int uea_send_cmvs_e1(struct uea_softc *sc)
-{
-	int i, ret, len;
-	void *cmvs_ptr;
-	const struct firmware *cmvs_fw;
-	int ver = 1; /* we can handle v1 cmv firmware version; */
+अटल पूर्णांक uea_send_cmvs_e1(काष्ठा uea_softc *sc)
+अणु
+	पूर्णांक i, ret, len;
+	व्योम *cmvs_ptr;
+	स्थिर काष्ठा firmware *cmvs_fw;
+	पूर्णांक ver = 1; /* we can handle v1 cmv firmware version; */
 
-	/* Enter in R-IDLE (cmv) until instructed otherwise */
-	ret = uea_write_cmv_e1(sc, E1_SA_CNTL, 0, 1);
-	if (ret < 0)
-		return ret;
+	/* Enter in R-IDLE (cmv) until inकाष्ठाed otherwise */
+	ret = uea_ग_लिखो_cmv_e1(sc, E1_SA_CNTL, 0, 1);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Dump firmware version */
-	ret = uea_read_cmv_e1(sc, E1_SA_INFO, 10, &sc->stats.phy.firmid);
-	if (ret < 0)
-		return ret;
+	ret = uea_पढ़ो_cmv_e1(sc, E1_SA_INFO, 10, &sc->stats.phy.firmid);
+	अगर (ret < 0)
+		वापस ret;
 	uea_info(INS_TO_USBDEV(sc), "ATU-R firmware version : %x\n",
 			sc->stats.phy.firmid);
 
 	/* get options */
 	ret = len = request_cmvs(sc, &cmvs_ptr, &cmvs_fw, &ver);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* send options */
-	if (ver == 1) {
-		struct uea_cmvs_v1 *cmvs_v1 = cmvs_ptr;
+	अगर (ver == 1) अणु
+		काष्ठा uea_cmvs_v1 *cmvs_v1 = cmvs_ptr;
 
 		uea_warn(INS_TO_USBDEV(sc), "use deprecated cmvs version, "
 			"please update your firmware\n");
 
-		for (i = 0; i < len; i++) {
-			ret = uea_write_cmv_e1(sc,
+		क्रम (i = 0; i < len; i++) अणु
+			ret = uea_ग_लिखो_cmv_e1(sc,
 				get_unaligned_le32(&cmvs_v1[i].address),
 				get_unaligned_le16(&cmvs_v1[i].offset),
 				get_unaligned_le32(&cmvs_v1[i].data));
-			if (ret < 0)
-				goto out;
-		}
-	} else if (ver == 2) {
-		struct uea_cmvs_v2 *cmvs_v2 = cmvs_ptr;
+			अगर (ret < 0)
+				जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अगर (ver == 2) अणु
+		काष्ठा uea_cmvs_v2 *cmvs_v2 = cmvs_ptr;
 
-		for (i = 0; i < len; i++) {
-			ret = uea_write_cmv_e1(sc,
+		क्रम (i = 0; i < len; i++) अणु
+			ret = uea_ग_लिखो_cmv_e1(sc,
 				get_unaligned_le32(&cmvs_v2[i].address),
 				(u16) get_unaligned_le32(&cmvs_v2[i].offset),
 				get_unaligned_le32(&cmvs_v2[i].data));
-			if (ret < 0)
-				goto out;
-		}
-	} else {
+			अगर (ret < 0)
+				जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* This really should not happen */
 		uea_err(INS_TO_USBDEV(sc), "bad cmvs version %d\n", ver);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Enter in R-ACT-REQ */
-	ret = uea_write_cmv_e1(sc, E1_SA_CNTL, 0, 2);
+	ret = uea_ग_लिखो_cmv_e1(sc, E1_SA_CNTL, 0, 2);
 	uea_vdbg(INS_TO_USBDEV(sc), "Entering in R-ACT-REQ state\n");
 	uea_info(INS_TO_USBDEV(sc), "modem started, waiting "
 						"synchronization...\n");
 out:
 	release_firmware(cmvs_fw);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int uea_send_cmvs_e4(struct uea_softc *sc)
-{
-	int i, ret, len;
-	void *cmvs_ptr;
-	const struct firmware *cmvs_fw;
-	int ver = 2; /* we can only handle v2 cmv firmware version; */
+अटल पूर्णांक uea_send_cmvs_e4(काष्ठा uea_softc *sc)
+अणु
+	पूर्णांक i, ret, len;
+	व्योम *cmvs_ptr;
+	स्थिर काष्ठा firmware *cmvs_fw;
+	पूर्णांक ver = 2; /* we can only handle v2 cmv firmware version; */
 
-	/* Enter in R-IDLE (cmv) until instructed otherwise */
-	ret = uea_write_cmv_e4(sc, 1, E4_SA_CNTL, 0, 0, 1);
-	if (ret < 0)
-		return ret;
+	/* Enter in R-IDLE (cmv) until inकाष्ठाed otherwise */
+	ret = uea_ग_लिखो_cmv_e4(sc, 1, E4_SA_CNTL, 0, 0, 1);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Dump firmware version */
-	/* XXX don't read the 3th byte as it is always 6 */
-	ret = uea_read_cmv_e4(sc, 2, E4_SA_INFO, 55, 0, &sc->stats.phy.firmid);
-	if (ret < 0)
-		return ret;
+	/* XXX करोn't पढ़ो the 3th byte as it is always 6 */
+	ret = uea_पढ़ो_cmv_e4(sc, 2, E4_SA_INFO, 55, 0, &sc->stats.phy.firmid);
+	अगर (ret < 0)
+		वापस ret;
 	uea_info(INS_TO_USBDEV(sc), "ATU-R firmware version : %x\n",
 			sc->stats.phy.firmid);
 
 
 	/* get options */
 	ret = len = request_cmvs(sc, &cmvs_ptr, &cmvs_fw, &ver);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* send options */
-	if (ver == 2) {
-		struct uea_cmvs_v2 *cmvs_v2 = cmvs_ptr;
+	अगर (ver == 2) अणु
+		काष्ठा uea_cmvs_v2 *cmvs_v2 = cmvs_ptr;
 
-		for (i = 0; i < len; i++) {
-			ret = uea_write_cmv_e4(sc, 1,
+		क्रम (i = 0; i < len; i++) अणु
+			ret = uea_ग_लिखो_cmv_e4(sc, 1,
 				get_unaligned_le32(&cmvs_v2[i].group),
 				get_unaligned_le32(&cmvs_v2[i].address),
 				get_unaligned_le32(&cmvs_v2[i].offset),
 				get_unaligned_le32(&cmvs_v2[i].data));
-			if (ret < 0)
-				goto out;
-		}
-	} else {
+			अगर (ret < 0)
+				जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* This really should not happen */
 		uea_err(INS_TO_USBDEV(sc), "bad cmvs version %d\n", ver);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Enter in R-ACT-REQ */
-	ret = uea_write_cmv_e4(sc, 1, E4_SA_CNTL, 0, 0, 2);
+	ret = uea_ग_लिखो_cmv_e4(sc, 1, E4_SA_CNTL, 0, 0, 2);
 	uea_vdbg(INS_TO_USBDEV(sc), "Entering in R-ACT-REQ state\n");
 	uea_info(INS_TO_USBDEV(sc), "modem started, waiting "
 						"synchronization...\n");
 out:
 	release_firmware(cmvs_fw);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Start boot post firmware modem:
  * - send reset commands through usb control pipe
- * - start workqueue for DSP loading
+ * - start workqueue क्रम DSP loading
  * - send CMV options to modem
  */
 
-static int uea_start_reset(struct uea_softc *sc)
-{
+अटल पूर्णांक uea_start_reset(काष्ठा uea_softc *sc)
+अणु
 	u16 zero = 0;	/* ;-) */
-	int ret;
+	पूर्णांक ret;
 
 	uea_enters(INS_TO_USBDEV(sc));
 	uea_info(INS_TO_USBDEV(sc), "(re)booting started\n");
 
-	/* mask interrupt */
+	/* mask पूर्णांकerrupt */
 	sc->booting = 1;
-	/* We need to set this here because, a ack timeout could have occurred,
-	 * but before we start the reboot, the ack occurs and set this to 1.
-	 * So we will failed to wait Ready CMV.
+	/* We need to set this here because, a ack समयout could have occurred,
+	 * but beक्रमe we start the reboot, the ack occurs and set this to 1.
+	 * So we will failed to रुको Ready CMV.
 	 */
 	sc->cmv_ack = 0;
 	UPDATE_ATM_SIGNAL(ATM_PHY_SIG_LOST);
 
 	/* reset statistics */
-	memset(&sc->stats, 0, sizeof(struct uea_stats));
+	स_रखो(&sc->stats, 0, माप(काष्ठा uea_stats));
 
 	/* tell the modem that we want to boot in IDMA mode */
-	uea_request(sc, UEA_SET_MODE, UEA_LOOPBACK_ON, 0, NULL);
-	uea_request(sc, UEA_SET_MODE, UEA_BOOT_IDMA, 0, NULL);
+	uea_request(sc, UEA_SET_MODE, UEA_LOOPBACK_ON, 0, शून्य);
+	uea_request(sc, UEA_SET_MODE, UEA_BOOT_IDMA, 0, शून्य);
 
 	/* enter reset mode */
-	uea_request(sc, UEA_SET_MODE, UEA_START_RESET, 0, NULL);
+	uea_request(sc, UEA_SET_MODE, UEA_START_RESET, 0, शून्य);
 
-	/* original driver use 200ms, but windows driver use 100ms */
-	ret = uea_wait(sc, 0, msecs_to_jiffies(100));
-	if (ret < 0)
-		return ret;
+	/* original driver use 200ms, but winकरोws driver use 100ms */
+	ret = uea_रुको(sc, 0, msecs_to_jअगरfies(100));
+	अगर (ret < 0)
+		वापस ret;
 
 	/* leave reset mode */
-	uea_request(sc, UEA_SET_MODE, UEA_END_RESET, 0, NULL);
+	uea_request(sc, UEA_SET_MODE, UEA_END_RESET, 0, शून्य);
 
-	if (UEA_CHIP_VERSION(sc) != EAGLE_IV) {
+	अगर (UEA_CHIP_VERSION(sc) != EAGLE_IV) अणु
 		/* clear tx and rx mailboxes */
 		uea_request(sc, UEA_SET_2183_DATA, UEA_MPTX_MAILBOX, 2, &zero);
 		uea_request(sc, UEA_SET_2183_DATA, UEA_MPRX_MAILBOX, 2, &zero);
 		uea_request(sc, UEA_SET_2183_DATA, UEA_SWAP_MAILBOX, 2, &zero);
-	}
+	पूर्ण
 
-	ret = uea_wait(sc, 0, msecs_to_jiffies(1000));
-	if (ret < 0)
-		return ret;
+	ret = uea_रुको(sc, 0, msecs_to_jअगरfies(1000));
+	अगर (ret < 0)
+		वापस ret;
 
-	if (UEA_CHIP_VERSION(sc) == EAGLE_IV)
-		sc->cmv_dsc.e4.function = E4_MAKEFUNCTION(E4_ADSLDIRECTIVE,
+	अगर (UEA_CHIP_VERSION(sc) == EAGLE_IV)
+		sc->cmv_dsc.e4.function = E4_MAKEFUNCTION(E4_ADSLसूचीECTIVE,
 							E4_MODEMREADY, 1);
-	else
-		sc->cmv_dsc.e1.function = E1_MAKEFUNCTION(E1_ADSLDIRECTIVE,
+	अन्यथा
+		sc->cmv_dsc.e1.function = E1_MAKEFUNCTION(E1_ADSLसूचीECTIVE,
 							E1_MODEMREADY);
 
-	/* demask interrupt */
+	/* demask पूर्णांकerrupt */
 	sc->booting = 0;
 
 	/* start loading DSP */
@@ -1860,96 +1861,96 @@ static int uea_start_reset(struct uea_softc *sc)
 	sc->ovl = 0;
 	schedule_work(&sc->task);
 
-	/* wait for modem ready CMV */
-	ret = wait_cmv_ack(sc);
-	if (ret < 0)
-		return ret;
+	/* रुको क्रम modem पढ़ोy CMV */
+	ret = रुको_cmv_ack(sc);
+	अगर (ret < 0)
+		वापस ret;
 
 	uea_vdbg(INS_TO_USBDEV(sc), "Ready CMV received\n");
 
 	ret = sc->send_cmvs(sc);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	sc->reset = 0;
 	uea_leaves(INS_TO_USBDEV(sc));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * In case of an error wait 1s before rebooting the modem
- * if the modem don't request reboot (-EAGAIN).
+ * In हाल of an error रुको 1s beक्रमe rebooting the modem
+ * अगर the modem करोn't request reboot (-EAGAIN).
  * Monitor the modem every 1s.
  */
 
-static int uea_kthread(void *data)
-{
-	struct uea_softc *sc = data;
-	int ret = -EAGAIN;
+अटल पूर्णांक uea_kthपढ़ो(व्योम *data)
+अणु
+	काष्ठा uea_softc *sc = data;
+	पूर्णांक ret = -EAGAIN;
 
-	set_freezable();
+	set_मुक्तzable();
 	uea_enters(INS_TO_USBDEV(sc));
-	while (!kthread_should_stop()) {
-		if (ret < 0 || sc->reset)
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		अगर (ret < 0 || sc->reset)
 			ret = uea_start_reset(sc);
-		if (!ret)
+		अगर (!ret)
 			ret = sc->stat(sc);
-		if (ret != -EAGAIN)
-			uea_wait(sc, 0, msecs_to_jiffies(1000));
-		try_to_freeze();
-	}
+		अगर (ret != -EAGAIN)
+			uea_रुको(sc, 0, msecs_to_jअगरfies(1000));
+		try_to_मुक्तze();
+	पूर्ण
 	uea_leaves(INS_TO_USBDEV(sc));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Load second usb firmware for ADI930 chip */
-static int load_XILINX_firmware(struct uea_softc *sc)
-{
-	const struct firmware *fw_entry;
-	int ret, size, u, ln;
-	const u8 *pfw;
+/* Load second usb firmware क्रम ADI930 chip */
+अटल पूर्णांक load_XILINX_firmware(काष्ठा uea_softc *sc)
+अणु
+	स्थिर काष्ठा firmware *fw_entry;
+	पूर्णांक ret, size, u, ln;
+	स्थिर u8 *pfw;
 	u8 value;
-	char *fw_name = FPGA930_FIRMWARE;
+	अक्षर *fw_name = FPGA930_FIRMWARE;
 
 	uea_enters(INS_TO_USBDEV(sc));
 
 	ret = request_firmware(&fw_entry, fw_name, &sc->usb_dev->dev);
-	if (ret) {
+	अगर (ret) अणु
 		uea_err(INS_TO_USBDEV(sc), "firmware %s is not available\n",
 		       fw_name);
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
 	pfw = fw_entry->data;
 	size = fw_entry->size;
-	if (size != 0x577B) {
+	अगर (size != 0x577B) अणु
 		uea_err(INS_TO_USBDEV(sc), "firmware %s is corrupted\n",
 		       fw_name);
 		ret = -EILSEQ;
-		goto err1;
-	}
-	for (u = 0; u < size; u += ln) {
+		जाओ err1;
+	पूर्ण
+	क्रम (u = 0; u < size; u += ln) अणु
 		ln = min(size - u, 64);
 		ret = uea_request(sc, 0xe, 0, ln, pfw + u);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			uea_err(INS_TO_USBDEV(sc),
 			       "elsa download data failed (%d)\n", ret);
-			goto err1;
-		}
-	}
+			जाओ err1;
+		पूर्ण
+	पूर्ण
 
 	/* finish to send the fpga */
-	ret = uea_request(sc, 0xe, 1, 0, NULL);
-	if (ret < 0) {
+	ret = uea_request(sc, 0xe, 1, 0, शून्य);
+	अगर (ret < 0) अणु
 		uea_err(INS_TO_USBDEV(sc),
 				"elsa download data failed (%d)\n", ret);
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	/* Tell the modem we finish : de-assert reset */
+	/* Tell the modem we finish : de-निश्चित reset */
 	value = 0;
 	ret = uea_send_modem_cmd(sc->usb_dev, 0xe, 1, &value);
-	if (ret < 0)
+	अगर (ret < 0)
 		uea_err(sc->usb_dev, "elsa de-assert failed with error"
 								" %d\n", ret);
 
@@ -1957,55 +1958,55 @@ err1:
 	release_firmware(fw_entry);
 err0:
 	uea_leaves(INS_TO_USBDEV(sc));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* The modem send us an ack. First with check if it right */
-static void uea_dispatch_cmv_e1(struct uea_softc *sc, struct intr_pkt *intr)
-{
-	struct cmv_dsc_e1 *dsc = &sc->cmv_dsc.e1;
-	struct cmv_e1 *cmv = &intr->u.e1.s2.cmv;
+/* The modem send us an ack. First with check अगर it right */
+अटल व्योम uea_dispatch_cmv_e1(काष्ठा uea_softc *sc, काष्ठा पूर्णांकr_pkt *पूर्णांकr)
+अणु
+	काष्ठा cmv_dsc_e1 *dsc = &sc->cmv_dsc.e1;
+	काष्ठा cmv_e1 *cmv = &पूर्णांकr->u.e1.s2.cmv;
 
 	uea_enters(INS_TO_USBDEV(sc));
-	if (le16_to_cpu(cmv->wPreamble) != E1_PREAMBLE)
-		goto bad1;
+	अगर (le16_to_cpu(cmv->wPreamble) != E1_PREAMBLE)
+		जाओ bad1;
 
-	if (cmv->bDirection != E1_MODEMTOHOST)
-		goto bad1;
+	अगर (cmv->bDirection != E1_MODEMTOHOST)
+		जाओ bad1;
 
 	/* FIXME : ADI930 reply wrong preambule (func = 2, sub = 2) to
 	 * the first MEMACCESS cmv. Ignore it...
 	 */
-	if (cmv->bFunction != dsc->function) {
-		if (UEA_CHIP_VERSION(sc) == ADI930
-				&& cmv->bFunction ==  E1_MAKEFUNCTION(2, 2)) {
+	अगर (cmv->bFunction != dsc->function) अणु
+		अगर (UEA_CHIP_VERSION(sc) == ADI930
+				&& cmv->bFunction ==  E1_MAKEFUNCTION(2, 2)) अणु
 			cmv->wIndex = cpu_to_le16(dsc->idx);
 			put_unaligned_le32(dsc->address,
 						&cmv->dwSymbolicAddress);
 			cmv->wOffsetAddress = cpu_to_le16(dsc->offset);
-		} else
-			goto bad2;
-	}
+		पूर्ण अन्यथा
+			जाओ bad2;
+	पूर्ण
 
-	if (cmv->bFunction == E1_MAKEFUNCTION(E1_ADSLDIRECTIVE,
-							E1_MODEMREADY)) {
+	अगर (cmv->bFunction == E1_MAKEFUNCTION(E1_ADSLसूचीECTIVE,
+							E1_MODEMREADY)) अणु
 		wake_up_cmv_ack(sc);
 		uea_leaves(INS_TO_USBDEV(sc));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* in case of MEMACCESS */
-	if (le16_to_cpu(cmv->wIndex) != dsc->idx ||
+	/* in हाल of MEMACCESS */
+	अगर (le16_to_cpu(cmv->wIndex) != dsc->idx ||
 	    get_unaligned_le32(&cmv->dwSymbolicAddress) != dsc->address ||
 	    le16_to_cpu(cmv->wOffsetAddress) != dsc->offset)
-		goto bad2;
+		जाओ bad2;
 
 	sc->data = get_unaligned_le32(&cmv->dwData);
 	sc->data = sc->data << 16 | sc->data >> 16;
 
 	wake_up_cmv_ack(sc);
 	uea_leaves(INS_TO_USBDEV(sc));
-	return;
+	वापस;
 
 bad2:
 	uea_err(INS_TO_USBDEV(sc), "unexpected cmv received, "
@@ -2013,20 +2014,20 @@ bad2:
 			E1_FUNCTION_TYPE(cmv->bFunction),
 			E1_FUNCTION_SUBTYPE(cmv->bFunction));
 	uea_leaves(INS_TO_USBDEV(sc));
-	return;
+	वापस;
 
 bad1:
 	uea_err(INS_TO_USBDEV(sc), "invalid cmv received, "
 			"wPreamble %d, bDirection %d\n",
 			le16_to_cpu(cmv->wPreamble), cmv->bDirection);
 	uea_leaves(INS_TO_USBDEV(sc));
-}
+पूर्ण
 
-/* The modem send us an ack. First with check if it right */
-static void uea_dispatch_cmv_e4(struct uea_softc *sc, struct intr_pkt *intr)
-{
-	struct cmv_dsc_e4 *dsc = &sc->cmv_dsc.e4;
-	struct cmv_e4 *cmv = &intr->u.e4.s2.cmv;
+/* The modem send us an ack. First with check अगर it right */
+अटल व्योम uea_dispatch_cmv_e4(काष्ठा uea_softc *sc, काष्ठा पूर्णांकr_pkt *पूर्णांकr)
+अणु
+	काष्ठा cmv_dsc_e4 *dsc = &sc->cmv_dsc.e4;
+	काष्ठा cmv_e4 *cmv = &पूर्णांकr->u.e4.s2.cmv;
 
 	uea_enters(INS_TO_USBDEV(sc));
 	uea_dbg(INS_TO_USBDEV(sc), "cmv %x %x %x %x %x %x\n",
@@ -2034,27 +2035,27 @@ static void uea_dispatch_cmv_e4(struct uea_softc *sc, struct intr_pkt *intr)
 		be16_to_cpu(cmv->wOffset), be16_to_cpu(cmv->wAddress),
 		be32_to_cpu(cmv->dwData[0]), be32_to_cpu(cmv->dwData[1]));
 
-	if (be16_to_cpu(cmv->wFunction) != dsc->function)
-		goto bad2;
+	अगर (be16_to_cpu(cmv->wFunction) != dsc->function)
+		जाओ bad2;
 
-	if (be16_to_cpu(cmv->wFunction) == E4_MAKEFUNCTION(E4_ADSLDIRECTIVE,
-						E4_MODEMREADY, 1)) {
+	अगर (be16_to_cpu(cmv->wFunction) == E4_MAKEFUNCTION(E4_ADSLसूचीECTIVE,
+						E4_MODEMREADY, 1)) अणु
 		wake_up_cmv_ack(sc);
 		uea_leaves(INS_TO_USBDEV(sc));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* in case of MEMACCESS */
-	if (be16_to_cpu(cmv->wOffset) != dsc->offset ||
+	/* in हाल of MEMACCESS */
+	अगर (be16_to_cpu(cmv->wOffset) != dsc->offset ||
 	    be16_to_cpu(cmv->wGroup) != dsc->group ||
 	    be16_to_cpu(cmv->wAddress) != dsc->address)
-		goto bad2;
+		जाओ bad2;
 
 	sc->data = be32_to_cpu(cmv->dwData[0]);
 	sc->data1 = be32_to_cpu(cmv->dwData[1]);
 	wake_up_cmv_ack(sc);
 	uea_leaves(INS_TO_USBDEV(sc));
-	return;
+	वापस;
 
 bad2:
 	uea_err(INS_TO_USBDEV(sc), "unexpected cmv received, "
@@ -2062,337 +2063,337 @@ bad2:
 			E4_FUNCTION_TYPE(cmv->wFunction),
 			E4_FUNCTION_SUBTYPE(cmv->wFunction));
 	uea_leaves(INS_TO_USBDEV(sc));
-	return;
-}
+	वापस;
+पूर्ण
 
-static void uea_schedule_load_page_e1(struct uea_softc *sc,
-						struct intr_pkt *intr)
-{
-	sc->pageno = intr->e1_bSwapPageNo;
-	sc->ovl = intr->e1_bOvl >> 4 | intr->e1_bOvl << 4;
+अटल व्योम uea_schedule_load_page_e1(काष्ठा uea_softc *sc,
+						काष्ठा पूर्णांकr_pkt *पूर्णांकr)
+अणु
+	sc->pageno = पूर्णांकr->e1_bSwapPageNo;
+	sc->ovl = पूर्णांकr->e1_bOvl >> 4 | पूर्णांकr->e1_bOvl << 4;
 	schedule_work(&sc->task);
-}
+पूर्ण
 
-static void uea_schedule_load_page_e4(struct uea_softc *sc,
-						struct intr_pkt *intr)
-{
-	sc->pageno = intr->e4_bSwapPageNo;
+अटल व्योम uea_schedule_load_page_e4(काष्ठा uea_softc *sc,
+						काष्ठा पूर्णांकr_pkt *पूर्णांकr)
+अणु
+	sc->pageno = पूर्णांकr->e4_bSwapPageNo;
 	schedule_work(&sc->task);
-}
+पूर्ण
 
 /*
- * interrupt handler
+ * पूर्णांकerrupt handler
  */
-static void uea_intr(struct urb *urb)
-{
-	struct uea_softc *sc = urb->context;
-	struct intr_pkt *intr = urb->transfer_buffer;
-	int status = urb->status;
+अटल व्योम uea_पूर्णांकr(काष्ठा urb *urb)
+अणु
+	काष्ठा uea_softc *sc = urb->context;
+	काष्ठा पूर्णांकr_pkt *पूर्णांकr = urb->transfer_buffer;
+	पूर्णांक status = urb->status;
 
 	uea_enters(INS_TO_USBDEV(sc));
 
-	if (unlikely(status < 0)) {
+	अगर (unlikely(status < 0)) अणु
 		uea_err(INS_TO_USBDEV(sc), "uea_intr() failed with %d\n",
 		       status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* device-to-host interrupt */
-	if (intr->bType != 0x08 || sc->booting) {
+	/* device-to-host पूर्णांकerrupt */
+	अगर (पूर्णांकr->bType != 0x08 || sc->booting) अणु
 		uea_err(INS_TO_USBDEV(sc), "wrong interrupt\n");
-		goto resubmit;
-	}
+		जाओ resubmit;
+	पूर्ण
 
-	switch (le16_to_cpu(intr->wInterrupt)) {
-	case INT_LOADSWAPPAGE:
-		sc->schedule_load_page(sc, intr);
-		break;
+	चयन (le16_to_cpu(पूर्णांकr->wInterrupt)) अणु
+	हाल INT_LOADSWAPPAGE:
+		sc->schedule_load_page(sc, पूर्णांकr);
+		अवरोध;
 
-	case INT_INCOMINGCMV:
-		sc->dispatch_cmv(sc, intr);
-		break;
+	हाल INT_INCOMINGCMV:
+		sc->dispatch_cmv(sc, पूर्णांकr);
+		अवरोध;
 
-	default:
+	शेष:
 		uea_err(INS_TO_USBDEV(sc), "unknown interrupt %u\n",
-		       le16_to_cpu(intr->wInterrupt));
-	}
+		       le16_to_cpu(पूर्णांकr->wInterrupt));
+	पूर्ण
 
 resubmit:
-	usb_submit_urb(sc->urb_int, GFP_ATOMIC);
-}
+	usb_submit_urb(sc->urb_पूर्णांक, GFP_ATOMIC);
+पूर्ण
 
 /*
- * Start the modem : init the data and start kernel thread
+ * Start the modem : init the data and start kernel thपढ़ो
  */
-static int uea_boot(struct uea_softc *sc, struct usb_interface *intf)
-{
-	struct intr_pkt *intr;
-	int ret = -ENOMEM;
-	int size;
+अटल पूर्णांक uea_boot(काष्ठा uea_softc *sc, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा पूर्णांकr_pkt *पूर्णांकr;
+	पूर्णांक ret = -ENOMEM;
+	पूर्णांक size;
 
 	uea_enters(INS_TO_USBDEV(sc));
 
-	if (UEA_CHIP_VERSION(sc) == EAGLE_IV) {
+	अगर (UEA_CHIP_VERSION(sc) == EAGLE_IV) अणु
 		size = E4_INTR_PKT_SIZE;
 		sc->dispatch_cmv = uea_dispatch_cmv_e4;
 		sc->schedule_load_page = uea_schedule_load_page_e4;
 		sc->stat = uea_stat_e4;
 		sc->send_cmvs = uea_send_cmvs_e4;
 		INIT_WORK(&sc->task, uea_load_page_e4);
-	} else {
+	पूर्ण अन्यथा अणु
 		size = E1_INTR_PKT_SIZE;
 		sc->dispatch_cmv = uea_dispatch_cmv_e1;
 		sc->schedule_load_page = uea_schedule_load_page_e1;
 		sc->stat = uea_stat_e1;
 		sc->send_cmvs = uea_send_cmvs_e1;
 		INIT_WORK(&sc->task, uea_load_page_e1);
-	}
+	पूर्ण
 
-	init_waitqueue_head(&sc->sync_q);
+	init_रुकोqueue_head(&sc->sync_q);
 
-	if (UEA_CHIP_VERSION(sc) == ADI930)
+	अगर (UEA_CHIP_VERSION(sc) == ADI930)
 		load_XILINX_firmware(sc);
 
-	if (intf->cur_altsetting->desc.bNumEndpoints < 1) {
+	अगर (पूर्णांकf->cur_altsetting->desc.bNumEndpoपूर्णांकs < 1) अणु
 		ret = -ENODEV;
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
-	intr = kmalloc(size, GFP_KERNEL);
-	if (!intr)
-		goto err0;
+	पूर्णांकr = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!पूर्णांकr)
+		जाओ err0;
 
-	sc->urb_int = usb_alloc_urb(0, GFP_KERNEL);
-	if (!sc->urb_int)
-		goto err1;
+	sc->urb_पूर्णांक = usb_alloc_urb(0, GFP_KERNEL);
+	अगर (!sc->urb_पूर्णांक)
+		जाओ err1;
 
-	usb_fill_int_urb(sc->urb_int, sc->usb_dev,
-			 usb_rcvintpipe(sc->usb_dev, UEA_INTR_PIPE),
-			 intr, size, uea_intr, sc,
-			 intf->cur_altsetting->endpoint[0].desc.bInterval);
+	usb_fill_पूर्णांक_urb(sc->urb_पूर्णांक, sc->usb_dev,
+			 usb_rcvपूर्णांकpipe(sc->usb_dev, UEA_INTR_PIPE),
+			 पूर्णांकr, size, uea_पूर्णांकr, sc,
+			 पूर्णांकf->cur_altsetting->endpoपूर्णांक[0].desc.bInterval);
 
-	ret = usb_submit_urb(sc->urb_int, GFP_KERNEL);
-	if (ret < 0) {
+	ret = usb_submit_urb(sc->urb_पूर्णांक, GFP_KERNEL);
+	अगर (ret < 0) अणु
 		uea_err(INS_TO_USBDEV(sc),
 		       "urb submission failed with error %d\n", ret);
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	/* Create worker thread, but don't start it here.  Start it after
-	 * all usbatm generic initialization is done.
+	/* Create worker thपढ़ो, but करोn't start it here.  Start it after
+	 * all usbaपंचांग generic initialization is करोne.
 	 */
-	sc->kthread = kthread_create(uea_kthread, sc, "ueagle-atm");
-	if (IS_ERR(sc->kthread)) {
+	sc->kthपढ़ो = kthपढ़ो_create(uea_kthपढ़ो, sc, "ueagle-atm");
+	अगर (IS_ERR(sc->kthपढ़ो)) अणु
 		uea_err(INS_TO_USBDEV(sc), "failed to create thread\n");
-		ret = PTR_ERR(sc->kthread);
-		goto err2;
-	}
+		ret = PTR_ERR(sc->kthपढ़ो);
+		जाओ err2;
+	पूर्ण
 
 	uea_leaves(INS_TO_USBDEV(sc));
-	return 0;
+	वापस 0;
 
 err2:
-	usb_kill_urb(sc->urb_int);
+	usb_समाप्त_urb(sc->urb_पूर्णांक);
 err1:
-	usb_free_urb(sc->urb_int);
-	sc->urb_int = NULL;
-	kfree(intr);
+	usb_मुक्त_urb(sc->urb_पूर्णांक);
+	sc->urb_पूर्णांक = शून्य;
+	kमुक्त(पूर्णांकr);
 err0:
 	uea_leaves(INS_TO_USBDEV(sc));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Stop the modem : kill kernel thread and free data
+ * Stop the modem : समाप्त kernel thपढ़ो and मुक्त data
  */
-static void uea_stop(struct uea_softc *sc)
-{
-	int ret;
+अटल व्योम uea_stop(काष्ठा uea_softc *sc)
+अणु
+	पूर्णांक ret;
 	uea_enters(INS_TO_USBDEV(sc));
-	ret = kthread_stop(sc->kthread);
+	ret = kthपढ़ो_stop(sc->kthपढ़ो);
 	uea_dbg(INS_TO_USBDEV(sc), "kthread finish with status %d\n", ret);
 
-	uea_request(sc, UEA_SET_MODE, UEA_LOOPBACK_ON, 0, NULL);
+	uea_request(sc, UEA_SET_MODE, UEA_LOOPBACK_ON, 0, शून्य);
 
-	usb_kill_urb(sc->urb_int);
-	kfree(sc->urb_int->transfer_buffer);
-	usb_free_urb(sc->urb_int);
+	usb_समाप्त_urb(sc->urb_पूर्णांक);
+	kमुक्त(sc->urb_पूर्णांक->transfer_buffer);
+	usb_मुक्त_urb(sc->urb_पूर्णांक);
 
 	/* flush the work item, when no one can schedule it */
 	flush_work(&sc->task);
 
 	release_firmware(sc->dsp_firm);
 	uea_leaves(INS_TO_USBDEV(sc));
-}
+पूर्ण
 
-/* syfs interface */
-static struct uea_softc *dev_to_uea(struct device *dev)
-{
-	struct usb_interface *intf;
-	struct usbatm_data *usbatm;
+/* syfs पूर्णांकerface */
+अटल काष्ठा uea_softc *dev_to_uea(काष्ठा device *dev)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	काष्ठा usbaपंचांग_data *usbaपंचांग;
 
-	intf = to_usb_interface(dev);
-	if (!intf)
-		return NULL;
+	पूर्णांकf = to_usb_पूर्णांकerface(dev);
+	अगर (!पूर्णांकf)
+		वापस शून्य;
 
-	usbatm = usb_get_intfdata(intf);
-	if (!usbatm)
-		return NULL;
+	usbaपंचांग = usb_get_पूर्णांकfdata(पूर्णांकf);
+	अगर (!usbaपंचांग)
+		वापस शून्य;
 
-	return usbatm->driver_data;
-}
+	वापस usbaपंचांग->driver_data;
+पूर्ण
 
-static ssize_t stat_status_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	int ret = -ENODEV;
-	struct uea_softc *sc;
+अटल sमाप_प्रकार stat_status_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	पूर्णांक ret = -ENODEV;
+	काष्ठा uea_softc *sc;
 
 	mutex_lock(&uea_mutex);
 	sc = dev_to_uea(dev);
-	if (!sc)
-		goto out;
-	ret = snprintf(buf, 10, "%08x\n", sc->stats.phy.state);
+	अगर (!sc)
+		जाओ out;
+	ret = snम_लिखो(buf, 10, "%08x\n", sc->stats.phy.state);
 out:
 	mutex_unlock(&uea_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t stat_status_store(struct device *dev, struct device_attribute *attr,
-		const char *buf, size_t count)
-{
-	int ret = -ENODEV;
-	struct uea_softc *sc;
+अटल sमाप_प्रकार stat_status_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक ret = -ENODEV;
+	काष्ठा uea_softc *sc;
 
 	mutex_lock(&uea_mutex);
 	sc = dev_to_uea(dev);
-	if (!sc)
-		goto out;
+	अगर (!sc)
+		जाओ out;
 	sc->reset = 1;
 	ret = count;
 out:
 	mutex_unlock(&uea_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static DEVICE_ATTR_RW(stat_status);
+अटल DEVICE_ATTR_RW(stat_status);
 
-static ssize_t stat_human_status_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	int ret = -ENODEV;
-	int modem_state;
-	struct uea_softc *sc;
+अटल sमाप_प्रकार stat_human_status_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक ret = -ENODEV;
+	पूर्णांक modem_state;
+	काष्ठा uea_softc *sc;
 
 	mutex_lock(&uea_mutex);
 	sc = dev_to_uea(dev);
-	if (!sc)
-		goto out;
+	अगर (!sc)
+		जाओ out;
 
-	if (UEA_CHIP_VERSION(sc) == EAGLE_IV) {
-		switch (sc->stats.phy.state) {
-		case 0x0:	/* not yet synchronized */
-		case 0x1:
-		case 0x3:
-		case 0x4:
+	अगर (UEA_CHIP_VERSION(sc) == EAGLE_IV) अणु
+		चयन (sc->stats.phy.state) अणु
+		हाल 0x0:	/* not yet synchronized */
+		हाल 0x1:
+		हाल 0x3:
+		हाल 0x4:
 			modem_state = 0;
-			break;
-		case 0x5:	/* initialization */
-		case 0x6:
-		case 0x9:
-		case 0xa:
+			अवरोध;
+		हाल 0x5:	/* initialization */
+		हाल 0x6:
+		हाल 0x9:
+		हाल 0xa:
 			modem_state = 1;
-			break;
-		case 0x7:	/* operational */
+			अवरोध;
+		हाल 0x7:	/* operational */
 			modem_state = 2;
-			break;
-		case 0x2:	/* fail ... */
+			अवरोध;
+		हाल 0x2:	/* fail ... */
 			modem_state = 3;
-			break;
-		default:	/* unknown */
+			अवरोध;
+		शेष:	/* unknown */
 			modem_state = 4;
-			break;
-		}
-	} else
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा
 		modem_state = GET_STATUS(sc->stats.phy.state);
 
-	switch (modem_state) {
-	case 0:
-		ret = sprintf(buf, "Modem is booting\n");
-		break;
-	case 1:
-		ret = sprintf(buf, "Modem is initializing\n");
-		break;
-	case 2:
-		ret = sprintf(buf, "Modem is operational\n");
-		break;
-	case 3:
-		ret = sprintf(buf, "Modem synchronization failed\n");
-		break;
-	default:
-		ret = sprintf(buf, "Modem state is unknown\n");
-		break;
-	}
+	चयन (modem_state) अणु
+	हाल 0:
+		ret = प्र_लिखो(buf, "Modem is booting\n");
+		अवरोध;
+	हाल 1:
+		ret = प्र_लिखो(buf, "Modem is initializing\n");
+		अवरोध;
+	हाल 2:
+		ret = प्र_लिखो(buf, "Modem is operational\n");
+		अवरोध;
+	हाल 3:
+		ret = प्र_लिखो(buf, "Modem synchronization failed\n");
+		अवरोध;
+	शेष:
+		ret = प्र_लिखो(buf, "Modem state is unknown\n");
+		अवरोध;
+	पूर्ण
 out:
 	mutex_unlock(&uea_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static DEVICE_ATTR_RO(stat_human_status);
+अटल DEVICE_ATTR_RO(stat_human_status);
 
-static ssize_t stat_delin_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	int ret = -ENODEV;
-	struct uea_softc *sc;
-	char *delin = "GOOD";
+अटल sमाप_प्रकार stat_delin_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	पूर्णांक ret = -ENODEV;
+	काष्ठा uea_softc *sc;
+	अक्षर *delin = "GOOD";
 
 	mutex_lock(&uea_mutex);
 	sc = dev_to_uea(dev);
-	if (!sc)
-		goto out;
+	अगर (!sc)
+		जाओ out;
 
-	if (UEA_CHIP_VERSION(sc) == EAGLE_IV) {
-		if (sc->stats.phy.flags & 0x4000)
+	अगर (UEA_CHIP_VERSION(sc) == EAGLE_IV) अणु
+		अगर (sc->stats.phy.flags & 0x4000)
 			delin = "RESET";
-		else if (sc->stats.phy.flags & 0x0001)
+		अन्यथा अगर (sc->stats.phy.flags & 0x0001)
 			delin = "LOSS";
-	} else {
-		if (sc->stats.phy.flags & 0x0C00)
+	पूर्ण अन्यथा अणु
+		अगर (sc->stats.phy.flags & 0x0C00)
 			delin = "ERROR";
-		else if (sc->stats.phy.flags & 0x0030)
+		अन्यथा अगर (sc->stats.phy.flags & 0x0030)
 			delin = "LOSS";
-	}
+	पूर्ण
 
-	ret = sprintf(buf, "%s\n", delin);
+	ret = प्र_लिखो(buf, "%s\n", delin);
 out:
 	mutex_unlock(&uea_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static DEVICE_ATTR_RO(stat_delin);
+अटल DEVICE_ATTR_RO(stat_delin);
 
-#define UEA_ATTR(name, reset)					\
+#घोषणा UEA_ATTR(name, reset)					\
 								\
-static ssize_t stat_##name##_show(struct device *dev,		\
-		struct device_attribute *attr, char *buf)	\
-{								\
-	int ret = -ENODEV;					\
-	struct uea_softc *sc;					\
+अटल sमाप_प्रकार stat_##name##_show(काष्ठा device *dev,		\
+		काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु								\
+	पूर्णांक ret = -ENODEV;					\
+	काष्ठा uea_softc *sc;					\
 								\
 	mutex_lock(&uea_mutex);					\
 	sc = dev_to_uea(dev);					\
-	if (!sc)						\
-		goto out;					\
-	ret = snprintf(buf, 10, "%08x\n", sc->stats.phy.name);	\
-	if (reset)						\
+	अगर (!sc)						\
+		जाओ out;					\
+	ret = snम_लिखो(buf, 10, "%08x\n", sc->stats.phy.name);	\
+	अगर (reset)						\
 		sc->stats.phy.name = 0;				\
 out:								\
 	mutex_unlock(&uea_mutex);				\
-	return ret;						\
-}								\
+	वापस ret;						\
+पूर्ण								\
 								\
-static DEVICE_ATTR_RO(stat_##name)
+अटल DEVICE_ATTR_RO(stat_##name)
 
 UEA_ATTR(mflags, 1);
 UEA_ATTR(vidcpe, 0);
@@ -2410,61 +2411,61 @@ UEA_ATTR(usunc, 0);
 UEA_ATTR(dsunc, 0);
 UEA_ATTR(firmid, 0);
 
-/* Retrieve the device End System Identifier (MAC) */
+/* Retrieve the device End System Identअगरier (MAC) */
 
-static int uea_getesi(struct uea_softc *sc, u_char *esi)
-{
-	unsigned char mac_str[2 * ETH_ALEN + 1];
-	int i;
-	if (usb_string
+अटल पूर्णांक uea_getesi(काष्ठा uea_softc *sc, u_अक्षर *esi)
+अणु
+	अचिन्हित अक्षर mac_str[2 * ETH_ALEN + 1];
+	पूर्णांक i;
+	अगर (usb_string
 	    (sc->usb_dev, sc->usb_dev->descriptor.iSerialNumber, mac_str,
-	     sizeof(mac_str)) != 2 * ETH_ALEN)
-		return 1;
+	     माप(mac_str)) != 2 * ETH_ALEN)
+		वापस 1;
 
-	for (i = 0; i < ETH_ALEN; i++)
+	क्रम (i = 0; i < ETH_ALEN; i++)
 		esi[i] = hex_to_bin(mac_str[2 * i]) * 16 +
 			 hex_to_bin(mac_str[2 * i + 1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ATM stuff */
-static int uea_atm_open(struct usbatm_data *usbatm, struct atm_dev *atm_dev)
-{
-	struct uea_softc *sc = usbatm->driver_data;
+अटल पूर्णांक uea_aपंचांग_खोलो(काष्ठा usbaपंचांग_data *usbaपंचांग, काष्ठा aपंचांग_dev *aपंचांग_dev)
+अणु
+	काष्ठा uea_softc *sc = usbaपंचांग->driver_data;
 
-	return uea_getesi(sc, atm_dev->esi);
-}
+	वापस uea_getesi(sc, aपंचांग_dev->esi);
+पूर्ण
 
-static int uea_heavy(struct usbatm_data *usbatm, struct usb_interface *intf)
-{
-	struct uea_softc *sc = usbatm->driver_data;
+अटल पूर्णांक uea_heavy(काष्ठा usbaपंचांग_data *usbaपंचांग, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा uea_softc *sc = usbaपंचांग->driver_data;
 
-	wait_event_interruptible(sc->sync_q, IS_OPERATIONAL(sc));
+	रुको_event_पूर्णांकerruptible(sc->sync_q, IS_OPERATIONAL(sc));
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int claim_interface(struct usb_device *usb_dev,
-			   struct usbatm_data *usbatm, int ifnum)
-{
-	int ret;
-	struct usb_interface *intf = usb_ifnum_to_if(usb_dev, ifnum);
+अटल पूर्णांक claim_पूर्णांकerface(काष्ठा usb_device *usb_dev,
+			   काष्ठा usbaपंचांग_data *usbaपंचांग, पूर्णांक अगरnum)
+अणु
+	पूर्णांक ret;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = usb_अगरnum_to_अगर(usb_dev, अगरnum);
 
-	if (!intf) {
-		uea_err(usb_dev, "interface %d not found\n", ifnum);
-		return -ENODEV;
-	}
+	अगर (!पूर्णांकf) अणु
+		uea_err(usb_dev, "interface %d not found\n", अगरnum);
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = usb_driver_claim_interface(&uea_driver, intf, usbatm);
-	if (ret != 0)
-		uea_err(usb_dev, "can't claim interface %d, error %d\n", ifnum,
+	ret = usb_driver_claim_पूर्णांकerface(&uea_driver, पूर्णांकf, usbaपंचांग);
+	अगर (ret != 0)
+		uea_err(usb_dev, "can't claim interface %d, error %d\n", अगरnum,
 		       ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct attribute *uea_attrs[] = {
+अटल काष्ठा attribute *uea_attrs[] = अणु
 	&dev_attr_stat_status.attr,
 	&dev_attr_stat_mflags.attr,
 	&dev_attr_stat_human_status.attr,
@@ -2483,243 +2484,243 @@ static struct attribute *uea_attrs[] = {
 	&dev_attr_stat_usunc.attr,
 	&dev_attr_stat_dsunc.attr,
 	&dev_attr_stat_firmid.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(uea);
 
-static int uea_bind(struct usbatm_data *usbatm, struct usb_interface *intf,
-		   const struct usb_device_id *id)
-{
-	struct usb_device *usb = interface_to_usbdev(intf);
-	struct uea_softc *sc;
-	int ret, ifnum = intf->altsetting->desc.bInterfaceNumber;
-	unsigned int alt;
+अटल पूर्णांक uea_bind(काष्ठा usbaपंचांग_data *usbaपंचांग, काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		   स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *usb = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा uea_softc *sc;
+	पूर्णांक ret, अगरnum = पूर्णांकf->altsetting->desc.bInterfaceNumber;
+	अचिन्हित पूर्णांक alt;
 
 	uea_enters(usb);
 
-	/* interface 0 is for firmware/monitoring */
-	if (ifnum != UEA_INTR_IFACE_NO)
-		return -ENODEV;
+	/* पूर्णांकerface 0 is क्रम firmware/monitoring */
+	अगर (अगरnum != UEA_INTR_IFACE_NO)
+		वापस -ENODEV;
 
-	usbatm->flags = (sync_wait[modem_index] ? 0 : UDSL_SKIP_HEAVY_INIT);
+	usbaपंचांग->flags = (sync_रुको[modem_index] ? 0 : UDSL_SKIP_HEAVY_INIT);
 
-	/* interface 1 is for outbound traffic */
-	ret = claim_interface(usb, usbatm, UEA_US_IFACE_NO);
-	if (ret < 0)
-		return ret;
+	/* पूर्णांकerface 1 is क्रम outbound traffic */
+	ret = claim_पूर्णांकerface(usb, usbaपंचांग, UEA_US_IFACE_NO);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* ADI930 has only 2 interfaces and inbound traffic is on interface 1 */
-	if (UEA_CHIP_VERSION(id) != ADI930) {
-		/* interface 2 is for inbound traffic */
-		ret = claim_interface(usb, usbatm, UEA_DS_IFACE_NO);
-		if (ret < 0)
-			return ret;
-	}
+	/* ADI930 has only 2 पूर्णांकerfaces and inbound traffic is on पूर्णांकerface 1 */
+	अगर (UEA_CHIP_VERSION(id) != ADI930) अणु
+		/* पूर्णांकerface 2 is क्रम inbound traffic */
+		ret = claim_पूर्णांकerface(usb, usbaपंचांग, UEA_DS_IFACE_NO);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	sc = kzalloc(sizeof(struct uea_softc), GFP_KERNEL);
-	if (!sc)
-		return -ENOMEM;
+	sc = kzalloc(माप(काष्ठा uea_softc), GFP_KERNEL);
+	अगर (!sc)
+		वापस -ENOMEM;
 
 	sc->usb_dev = usb;
-	usbatm->driver_data = sc;
-	sc->usbatm = usbatm;
+	usbaपंचांग->driver_data = sc;
+	sc->usbaपंचांग = usbaपंचांग;
 	sc->modem_index = (modem_index < NB_MODEM) ? modem_index++ : 0;
 	sc->driver_info = id->driver_info;
 
 	/* first try to use module parameter */
-	if (annex[sc->modem_index] == 1)
+	अगर (annex[sc->modem_index] == 1)
 		sc->annex = ANNEXA;
-	else if (annex[sc->modem_index] == 2)
+	अन्यथा अगर (annex[sc->modem_index] == 2)
 		sc->annex = ANNEXB;
-	/* try to autodetect annex */
-	else if (sc->driver_info & AUTO_ANNEX_A)
+	/* try to स्वतःdetect annex */
+	अन्यथा अगर (sc->driver_info & AUTO_ANNEX_A)
 		sc->annex = ANNEXA;
-	else if (sc->driver_info & AUTO_ANNEX_B)
+	अन्यथा अगर (sc->driver_info & AUTO_ANNEX_B)
 		sc->annex = ANNEXB;
-	else
+	अन्यथा
 		sc->annex = (le16_to_cpu
 		(sc->usb_dev->descriptor.bcdDevice) & 0x80) ? ANNEXB : ANNEXA;
 
 	alt = altsetting[sc->modem_index];
-	/* ADI930 don't support iso */
-	if (UEA_CHIP_VERSION(id) != ADI930 && alt > 0) {
-		if (alt <= 8 &&
-			usb_set_interface(usb, UEA_DS_IFACE_NO, alt) == 0) {
+	/* ADI930 करोn't support iso */
+	अगर (UEA_CHIP_VERSION(id) != ADI930 && alt > 0) अणु
+		अगर (alt <= 8 &&
+			usb_set_पूर्णांकerface(usb, UEA_DS_IFACE_NO, alt) == 0) अणु
 			uea_dbg(usb, "set alternate %u for 2 interface\n", alt);
 			uea_info(usb, "using iso mode\n");
-			usbatm->flags |= UDSL_USE_ISOC | UDSL_IGNORE_EILSEQ;
-		} else {
+			usbaपंचांग->flags |= UDSL_USE_ISOC | UDSL_IGNORE_EILSEQ;
+		पूर्ण अन्यथा अणु
 			uea_err(usb, "setting alternate %u failed for "
 					"2 interface, using bulk mode\n", alt);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ret = uea_boot(sc, intf);
-	if (ret < 0)
-		goto error;
+	ret = uea_boot(sc, पूर्णांकf);
+	अगर (ret < 0)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 
 error:
-	kfree(sc);
-	return ret;
-}
+	kमुक्त(sc);
+	वापस ret;
+पूर्ण
 
-static void uea_unbind(struct usbatm_data *usbatm, struct usb_interface *intf)
-{
-	struct uea_softc *sc = usbatm->driver_data;
+अटल व्योम uea_unbind(काष्ठा usbaपंचांग_data *usbaपंचांग, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा uea_softc *sc = usbaपंचांग->driver_data;
 
 	uea_stop(sc);
-	kfree(sc);
-}
+	kमुक्त(sc);
+पूर्ण
 
-static struct usbatm_driver uea_usbatm_driver = {
+अटल काष्ठा usbaपंचांग_driver uea_usbaपंचांग_driver = अणु
 	.driver_name = "ueagle-atm",
 	.bind = uea_bind,
-	.atm_start = uea_atm_open,
+	.aपंचांग_start = uea_aपंचांग_खोलो,
 	.unbind = uea_unbind,
 	.heavy_init = uea_heavy,
 	.bulk_in = UEA_BULK_DATA_PIPE,
 	.bulk_out = UEA_BULK_DATA_PIPE,
 	.isoc_in = UEA_ISO_DATA_PIPE,
-};
+पूर्ण;
 
-static int uea_probe(struct usb_interface *intf, const struct usb_device_id *id)
-{
-	struct usb_device *usb = interface_to_usbdev(intf);
-	int ret;
+अटल पूर्णांक uea_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *usb = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	पूर्णांक ret;
 
 	uea_enters(usb);
 	uea_info(usb, "ADSL device founded vid (%#X) pid (%#X) Rev (%#X): %s\n",
-		le16_to_cpu(usb->descriptor.idVendor),
+		le16_to_cpu(usb->descriptor.idVenकरोr),
 		le16_to_cpu(usb->descriptor.idProduct),
 		le16_to_cpu(usb->descriptor.bcdDevice),
 		chip_name[UEA_CHIP_VERSION(id)]);
 
 	usb_reset_device(usb);
 
-	if (UEA_IS_PREFIRM(id))
-		return uea_load_firmware(usb, UEA_CHIP_VERSION(id));
+	अगर (UEA_IS_PREFIRM(id))
+		वापस uea_load_firmware(usb, UEA_CHIP_VERSION(id));
 
-	ret = usbatm_usb_probe(intf, id, &uea_usbatm_driver);
-	if (ret == 0) {
-		struct usbatm_data *usbatm = usb_get_intfdata(intf);
-		struct uea_softc *sc = usbatm->driver_data;
+	ret = usbaपंचांग_usb_probe(पूर्णांकf, id, &uea_usbaपंचांग_driver);
+	अगर (ret == 0) अणु
+		काष्ठा usbaपंचांग_data *usbaपंचांग = usb_get_पूर्णांकfdata(पूर्णांकf);
+		काष्ठा uea_softc *sc = usbaपंचांग->driver_data;
 
 		/* Ensure carrier is initialized to off as early as possible */
 		UPDATE_ATM_SIGNAL(ATM_PHY_SIG_LOST);
 
-		/* Only start the worker thread when all init is done */
-		wake_up_process(sc->kthread);
-	}
+		/* Only start the worker thपढ़ो when all init is करोne */
+		wake_up_process(sc->kthपढ़ो);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void uea_disconnect(struct usb_interface *intf)
-{
-	struct usb_device *usb = interface_to_usbdev(intf);
-	int ifnum = intf->altsetting->desc.bInterfaceNumber;
+अटल व्योम uea_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा usb_device *usb = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	पूर्णांक अगरnum = पूर्णांकf->altsetting->desc.bInterfaceNumber;
 	uea_enters(usb);
 
-	/* ADI930 has 2 interfaces and eagle 3 interfaces.
-	 * Pre-firmware device has one interface
+	/* ADI930 has 2 पूर्णांकerfaces and eagle 3 पूर्णांकerfaces.
+	 * Pre-firmware device has one पूर्णांकerface
 	 */
-	if (usb->config->desc.bNumInterfaces != 1 && ifnum == 0) {
+	अगर (usb->config->desc.bNumInterfaces != 1 && अगरnum == 0) अणु
 		mutex_lock(&uea_mutex);
-		usbatm_usb_disconnect(intf);
+		usbaपंचांग_usb_disconnect(पूर्णांकf);
 		mutex_unlock(&uea_mutex);
 		uea_info(usb, "ADSL device removed\n");
-	}
+	पूर्ण
 
 	uea_leaves(usb);
-}
+पूर्ण
 
 /*
  * List of supported VID/PID
  */
-static const struct usb_device_id uea_ids[] = {
-	{USB_DEVICE(ANALOG_VID,	ADI930_PID_PREFIRM),
-		.driver_info = ADI930 | PREFIRM},
-	{USB_DEVICE(ANALOG_VID,	ADI930_PID_PSTFIRM),
-		.driver_info = ADI930 | PSTFIRM},
-	{USB_DEVICE(ANALOG_VID,	EAGLE_I_PID_PREFIRM),
-		.driver_info = EAGLE_I | PREFIRM},
-	{USB_DEVICE(ANALOG_VID,	EAGLE_I_PID_PSTFIRM),
-		.driver_info = EAGLE_I | PSTFIRM},
-	{USB_DEVICE(ANALOG_VID,	EAGLE_II_PID_PREFIRM),
-		.driver_info = EAGLE_II | PREFIRM},
-	{USB_DEVICE(ANALOG_VID,	EAGLE_II_PID_PSTFIRM),
-		.driver_info = EAGLE_II | PSTFIRM},
-	{USB_DEVICE(ANALOG_VID,	EAGLE_IIC_PID_PREFIRM),
-		.driver_info = EAGLE_II | PREFIRM},
-	{USB_DEVICE(ANALOG_VID,	EAGLE_IIC_PID_PSTFIRM),
-		.driver_info = EAGLE_II | PSTFIRM},
-	{USB_DEVICE(ANALOG_VID,	EAGLE_III_PID_PREFIRM),
-		.driver_info = EAGLE_III | PREFIRM},
-	{USB_DEVICE(ANALOG_VID,	EAGLE_III_PID_PSTFIRM),
-		.driver_info = EAGLE_III | PSTFIRM},
-	{USB_DEVICE(ANALOG_VID,	EAGLE_IV_PID_PREFIRM),
-		.driver_info = EAGLE_IV | PREFIRM},
-	{USB_DEVICE(ANALOG_VID,	EAGLE_IV_PID_PSTFIRM),
-		.driver_info = EAGLE_IV | PSTFIRM},
-	{USB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_I_A_PID_PREFIRM),
-		.driver_info = EAGLE_I | PREFIRM},
-	{USB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_I_A_PID_PSTFIRM),
-		.driver_info = EAGLE_I | PSTFIRM | AUTO_ANNEX_A},
-	{USB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_I_B_PID_PREFIRM),
-		.driver_info = EAGLE_I | PREFIRM},
-	{USB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_I_B_PID_PSTFIRM),
-		.driver_info = EAGLE_I | PSTFIRM | AUTO_ANNEX_B},
-	{USB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_II_A_PID_PREFIRM),
-		.driver_info = EAGLE_II | PREFIRM},
-	{USB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_II_A_PID_PSTFIRM),
-		.driver_info = EAGLE_II | PSTFIRM | AUTO_ANNEX_A},
-	{USB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_II_B_PID_PREFIRM),
-		.driver_info = EAGLE_II | PREFIRM},
-	{USB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_II_B_PID_PSTFIRM),
-		.driver_info = EAGLE_II | PSTFIRM | AUTO_ANNEX_B},
-	{USB_DEVICE(ELSA_VID,	ELSA_PID_PREFIRM),
-		.driver_info = ADI930 | PREFIRM},
-	{USB_DEVICE(ELSA_VID,	ELSA_PID_PSTFIRM),
-		.driver_info = ADI930 | PSTFIRM},
-	{USB_DEVICE(ELSA_VID,	ELSA_PID_A_PREFIRM),
-		.driver_info = ADI930 | PREFIRM},
-	{USB_DEVICE(ELSA_VID,	ELSA_PID_A_PSTFIRM),
-		.driver_info = ADI930 | PSTFIRM | AUTO_ANNEX_A},
-	{USB_DEVICE(ELSA_VID,	ELSA_PID_B_PREFIRM),
-		.driver_info = ADI930 | PREFIRM},
-	{USB_DEVICE(ELSA_VID,	ELSA_PID_B_PSTFIRM),
-		.driver_info = ADI930 | PSTFIRM | AUTO_ANNEX_B},
-	{USB_DEVICE(USR_VID,	MILLER_A_PID_PREFIRM),
-		.driver_info = EAGLE_I | PREFIRM},
-	{USB_DEVICE(USR_VID,	MILLER_A_PID_PSTFIRM),
-		.driver_info = EAGLE_I | PSTFIRM  | AUTO_ANNEX_A},
-	{USB_DEVICE(USR_VID,	MILLER_B_PID_PREFIRM),
-		.driver_info = EAGLE_I | PREFIRM},
-	{USB_DEVICE(USR_VID,	MILLER_B_PID_PSTFIRM),
-		.driver_info = EAGLE_I | PSTFIRM  | AUTO_ANNEX_B},
-	{USB_DEVICE(USR_VID,	HEINEKEN_A_PID_PREFIRM),
-		.driver_info = EAGLE_I | PREFIRM},
-	{USB_DEVICE(USR_VID,	HEINEKEN_A_PID_PSTFIRM),
-		.driver_info = EAGLE_I | PSTFIRM | AUTO_ANNEX_A},
-	{USB_DEVICE(USR_VID,	HEINEKEN_B_PID_PREFIRM),
-		.driver_info = EAGLE_I | PREFIRM},
-	{USB_DEVICE(USR_VID,	HEINEKEN_B_PID_PSTFIRM),
-		.driver_info = EAGLE_I | PSTFIRM | AUTO_ANNEX_B},
-	{}
-};
+अटल स्थिर काष्ठा usb_device_id uea_ids[] = अणु
+	अणुUSB_DEVICE(ANALOG_VID,	ADI930_PID_PREFIRM),
+		.driver_info = ADI930 | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	ADI930_PID_PSTFIRM),
+		.driver_info = ADI930 | PSTFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	EAGLE_I_PID_PREFIRM),
+		.driver_info = EAGLE_I | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	EAGLE_I_PID_PSTFIRM),
+		.driver_info = EAGLE_I | PSTFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	EAGLE_II_PID_PREFIRM),
+		.driver_info = EAGLE_II | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	EAGLE_II_PID_PSTFIRM),
+		.driver_info = EAGLE_II | PSTFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	EAGLE_IIC_PID_PREFIRM),
+		.driver_info = EAGLE_II | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	EAGLE_IIC_PID_PSTFIRM),
+		.driver_info = EAGLE_II | PSTFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	EAGLE_III_PID_PREFIRM),
+		.driver_info = EAGLE_III | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	EAGLE_III_PID_PSTFIRM),
+		.driver_info = EAGLE_III | PSTFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	EAGLE_IV_PID_PREFIRM),
+		.driver_info = EAGLE_IV | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(ANALOG_VID,	EAGLE_IV_PID_PSTFIRM),
+		.driver_info = EAGLE_IV | PSTFIRMपूर्ण,
+	अणुUSB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_I_A_PID_PREFIRM),
+		.driver_info = EAGLE_I | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_I_A_PID_PSTFIRM),
+		.driver_info = EAGLE_I | PSTFIRM | AUTO_ANNEX_Aपूर्ण,
+	अणुUSB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_I_B_PID_PREFIRM),
+		.driver_info = EAGLE_I | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_I_B_PID_PSTFIRM),
+		.driver_info = EAGLE_I | PSTFIRM | AUTO_ANNEX_Bपूर्ण,
+	अणुUSB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_II_A_PID_PREFIRM),
+		.driver_info = EAGLE_II | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_II_A_PID_PSTFIRM),
+		.driver_info = EAGLE_II | PSTFIRM | AUTO_ANNEX_Aपूर्ण,
+	अणुUSB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_II_B_PID_PREFIRM),
+		.driver_info = EAGLE_II | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(DEVOLO_VID,	DEVOLO_EAGLE_II_B_PID_PSTFIRM),
+		.driver_info = EAGLE_II | PSTFIRM | AUTO_ANNEX_Bपूर्ण,
+	अणुUSB_DEVICE(ELSA_VID,	ELSA_PID_PREFIRM),
+		.driver_info = ADI930 | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(ELSA_VID,	ELSA_PID_PSTFIRM),
+		.driver_info = ADI930 | PSTFIRMपूर्ण,
+	अणुUSB_DEVICE(ELSA_VID,	ELSA_PID_A_PREFIRM),
+		.driver_info = ADI930 | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(ELSA_VID,	ELSA_PID_A_PSTFIRM),
+		.driver_info = ADI930 | PSTFIRM | AUTO_ANNEX_Aपूर्ण,
+	अणुUSB_DEVICE(ELSA_VID,	ELSA_PID_B_PREFIRM),
+		.driver_info = ADI930 | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(ELSA_VID,	ELSA_PID_B_PSTFIRM),
+		.driver_info = ADI930 | PSTFIRM | AUTO_ANNEX_Bपूर्ण,
+	अणुUSB_DEVICE(USR_VID,	MILLER_A_PID_PREFIRM),
+		.driver_info = EAGLE_I | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(USR_VID,	MILLER_A_PID_PSTFIRM),
+		.driver_info = EAGLE_I | PSTFIRM  | AUTO_ANNEX_Aपूर्ण,
+	अणुUSB_DEVICE(USR_VID,	MILLER_B_PID_PREFIRM),
+		.driver_info = EAGLE_I | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(USR_VID,	MILLER_B_PID_PSTFIRM),
+		.driver_info = EAGLE_I | PSTFIRM  | AUTO_ANNEX_Bपूर्ण,
+	अणुUSB_DEVICE(USR_VID,	HEINEKEN_A_PID_PREFIRM),
+		.driver_info = EAGLE_I | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(USR_VID,	HEINEKEN_A_PID_PSTFIRM),
+		.driver_info = EAGLE_I | PSTFIRM | AUTO_ANNEX_Aपूर्ण,
+	अणुUSB_DEVICE(USR_VID,	HEINEKEN_B_PID_PREFIRM),
+		.driver_info = EAGLE_I | PREFIRMपूर्ण,
+	अणुUSB_DEVICE(USR_VID,	HEINEKEN_B_PID_PSTFIRM),
+		.driver_info = EAGLE_I | PSTFIRM | AUTO_ANNEX_Bपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
  * USB driver descriptor
  */
-static struct usb_driver uea_driver = {
+अटल काष्ठा usb_driver uea_driver = अणु
 	.name = "ueagle-atm",
 	.id_table = uea_ids,
 	.probe = uea_probe,
 	.disconnect = uea_disconnect,
 	.dev_groups = uea_groups,
-};
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, uea_ids);
 

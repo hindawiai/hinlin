@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <unistd.h>
-#include <bpf/libbpf.h>
-#include "trace_helpers.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <bpf/libbpf.h>
+#समावेश "trace_helpers.h"
 
-int main(int ac, char **argv)
-{
-	struct bpf_link *link = NULL;
-	struct bpf_program *prog;
-	struct bpf_object *obj;
-	char filename[256];
-	FILE *f;
+पूर्णांक मुख्य(पूर्णांक ac, अक्षर **argv)
+अणु
+	काष्ठा bpf_link *link = शून्य;
+	काष्ठा bpf_program *prog;
+	काष्ठा bpf_object *obj;
+	अक्षर filename[256];
+	खाता *f;
 
-	snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
-	obj = bpf_object__open_file(filename, NULL);
-	if (libbpf_get_error(obj)) {
-		fprintf(stderr, "ERROR: opening BPF object file failed\n");
-		return 0;
-	}
+	snम_लिखो(filename, माप(filename), "%s_kern.o", argv[0]);
+	obj = bpf_object__खोलो_file(filename, शून्य);
+	अगर (libbpf_get_error(obj)) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: opening BPF object file failed\n");
+		वापस 0;
+	पूर्ण
 
 	prog = bpf_object__find_program_by_name(obj, "bpf_prog1");
-	if (!prog) {
-		fprintf(stderr, "ERROR: finding a prog in obj file failed\n");
-		goto cleanup;
-	}
+	अगर (!prog) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: finding a prog in obj file failed\n");
+		जाओ cleanup;
+	पूर्ण
 
 	/* load BPF program */
-	if (bpf_object__load(obj)) {
-		fprintf(stderr, "ERROR: loading BPF object file failed\n");
-		goto cleanup;
-	}
+	अगर (bpf_object__load(obj)) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: loading BPF object file failed\n");
+		जाओ cleanup;
+	पूर्ण
 
 	link = bpf_program__attach(prog);
-	if (libbpf_get_error(link)) {
-		fprintf(stderr, "ERROR: bpf_program__attach failed\n");
-		link = NULL;
-		goto cleanup;
-	}
+	अगर (libbpf_get_error(link)) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: bpf_program__attach failed\n");
+		link = शून्य;
+		जाओ cleanup;
+	पूर्ण
 
-	f = popen("taskset 1 ping -c5 localhost", "r");
-	(void) f;
+	f = pखोलो("taskset 1 ping -c5 localhost", "r");
+	(व्योम) f;
 
-	read_trace_pipe();
+	पढ़ो_trace_pipe();
 
 cleanup:
 	bpf_link__destroy(link);
-	bpf_object__close(obj);
-	return 0;
-}
+	bpf_object__बंद(obj);
+	वापस 0;
+पूर्ण

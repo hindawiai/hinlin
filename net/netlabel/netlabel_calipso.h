@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * NetLabel CALIPSO Support
  *
- * This file defines the CALIPSO functions for the NetLabel system.  The
- * NetLabel system manages static and dynamic label mappings for network
+ * This file defines the CALIPSO functions क्रम the NetLabel प्रणाली.  The
+ * NetLabel प्रणाली manages अटल and dynamic label mappings क्रम network
  * protocols such as CIPSO and RIPSO.
  *
  * Authors: Paul Moore <paul@paul-moore.com>
@@ -14,13 +15,13 @@
  * (c) Copyright Huw Davies <huw@codeweavers.com>, 2015
  */
 
-#ifndef _NETLABEL_CALIPSO
-#define _NETLABEL_CALIPSO
+#अगर_अघोषित _NETLABEL_CALIPSO
+#घोषणा _NETLABEL_CALIPSO
 
-#include <net/netlabel.h>
-#include <net/calipso.h>
+#समावेश <net/netlabel.h>
+#समावेश <net/calipso.h>
 
-/* The following NetLabel payloads are supported by the CALIPSO subsystem.
+/* The following NetLabel payloads are supported by the CALIPSO subप्रणाली.
  *
  * o ADD:
  *   Sent by an application to add a new DOI mapping table.
@@ -33,8 +34,8 @@
  *   If using CALIPSO_MAP_PASS no additional attributes are required.
  *
  * o REMOVE:
- *   Sent by an application to remove a specific DOI mapping table from the
- *   CALIPSO system.
+ *   Sent by an application to हटाओ a specअगरic DOI mapping table from the
+ *   CALIPSO प्रणाली.
  *
  *   Required attributes:
  *
@@ -42,14 +43,14 @@
  *
  * o LIST:
  *   Sent by an application to list the details of a DOI definition.  On
- *   success the kernel should send a response using the following format.
+ *   success the kernel should send a response using the following क्रमmat.
  *
  *   Required attributes:
  *
  *     NLBL_CALIPSO_A_DOI
  *
- *   The valid response message format depends on the type of the DOI mapping,
- *   the defined formats are shown below.
+ *   The valid response message क्रमmat depends on the type of the DOI mapping,
+ *   the defined क्रमmats are shown below.
  *
  *   Required attributes:
  *
@@ -59,7 +60,7 @@
  *
  * o LISTALL:
  *   This message is sent by an application to list the valid DOIs on the
- *   system.  When sent by an application there is no payload and the
+ *   प्रणाली.  When sent by an application there is no payload and the
  *   NLM_F_DUMP flag should be set.  The kernel should respond with a series of
  *   the following messages.
  *
@@ -71,17 +72,17 @@
  */
 
 /* NetLabel CALIPSO commands */
-enum {
+क्रमागत अणु
 	NLBL_CALIPSO_C_UNSPEC,
 	NLBL_CALIPSO_C_ADD,
 	NLBL_CALIPSO_C_REMOVE,
 	NLBL_CALIPSO_C_LIST,
 	NLBL_CALIPSO_C_LISTALL,
 	__NLBL_CALIPSO_C_MAX,
-};
+पूर्ण;
 
 /* NetLabel CALIPSO attributes */
-enum {
+क्रमागत अणु
 	NLBL_CALIPSO_A_UNSPEC,
 	NLBL_CALIPSO_A_DOI,
 	/* (NLA_U32)
@@ -91,47 +92,47 @@ enum {
 	 * the mapping table type (defined in the calipso.h header as
 	 * CALIPSO_MAP_*) */
 	__NLBL_CALIPSO_A_MAX,
-};
+पूर्ण;
 
-#define NLBL_CALIPSO_A_MAX (__NLBL_CALIPSO_A_MAX - 1)
+#घोषणा NLBL_CALIPSO_A_MAX (__NLBL_CALIPSO_A_MAX - 1)
 
 /* NetLabel protocol functions */
-#if IS_ENABLED(CONFIG_IPV6)
-int netlbl_calipso_genl_init(void);
-#else
-static inline int netlbl_calipso_genl_init(void)
-{
-	return 0;
-}
-#endif
+#अगर IS_ENABLED(CONFIG_IPV6)
+पूर्णांक netlbl_calipso_genl_init(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक netlbl_calipso_genl_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-int calipso_doi_add(struct calipso_doi *doi_def,
-		    struct netlbl_audit *audit_info);
-void calipso_doi_free(struct calipso_doi *doi_def);
-int calipso_doi_remove(u32 doi, struct netlbl_audit *audit_info);
-struct calipso_doi *calipso_doi_getdef(u32 doi);
-void calipso_doi_putdef(struct calipso_doi *doi_def);
-int calipso_doi_walk(u32 *skip_cnt,
-		     int (*callback)(struct calipso_doi *doi_def, void *arg),
-		     void *cb_arg);
-int calipso_sock_getattr(struct sock *sk, struct netlbl_lsm_secattr *secattr);
-int calipso_sock_setattr(struct sock *sk,
-			 const struct calipso_doi *doi_def,
-			 const struct netlbl_lsm_secattr *secattr);
-void calipso_sock_delattr(struct sock *sk);
-int calipso_req_setattr(struct request_sock *req,
-			const struct calipso_doi *doi_def,
-			const struct netlbl_lsm_secattr *secattr);
-void calipso_req_delattr(struct request_sock *req);
-unsigned char *calipso_optptr(const struct sk_buff *skb);
-int calipso_getattr(const unsigned char *calipso,
-		    struct netlbl_lsm_secattr *secattr);
-int calipso_skbuff_setattr(struct sk_buff *skb,
-			   const struct calipso_doi *doi_def,
-			   const struct netlbl_lsm_secattr *secattr);
-int calipso_skbuff_delattr(struct sk_buff *skb);
-void calipso_cache_invalidate(void);
-int calipso_cache_add(const unsigned char *calipso_ptr,
-		      const struct netlbl_lsm_secattr *secattr);
+पूर्णांक calipso_करोi_add(काष्ठा calipso_करोi *करोi_def,
+		    काष्ठा netlbl_audit *audit_info);
+व्योम calipso_करोi_मुक्त(काष्ठा calipso_करोi *करोi_def);
+पूर्णांक calipso_करोi_हटाओ(u32 करोi, काष्ठा netlbl_audit *audit_info);
+काष्ठा calipso_करोi *calipso_करोi_getdef(u32 करोi);
+व्योम calipso_करोi_putdef(काष्ठा calipso_करोi *करोi_def);
+पूर्णांक calipso_करोi_walk(u32 *skip_cnt,
+		     पूर्णांक (*callback)(काष्ठा calipso_करोi *करोi_def, व्योम *arg),
+		     व्योम *cb_arg);
+पूर्णांक calipso_sock_getattr(काष्ठा sock *sk, काष्ठा netlbl_lsm_secattr *secattr);
+पूर्णांक calipso_sock_setattr(काष्ठा sock *sk,
+			 स्थिर काष्ठा calipso_करोi *करोi_def,
+			 स्थिर काष्ठा netlbl_lsm_secattr *secattr);
+व्योम calipso_sock_delattr(काष्ठा sock *sk);
+पूर्णांक calipso_req_setattr(काष्ठा request_sock *req,
+			स्थिर काष्ठा calipso_करोi *करोi_def,
+			स्थिर काष्ठा netlbl_lsm_secattr *secattr);
+व्योम calipso_req_delattr(काष्ठा request_sock *req);
+अचिन्हित अक्षर *calipso_optptr(स्थिर काष्ठा sk_buff *skb);
+पूर्णांक calipso_getattr(स्थिर अचिन्हित अक्षर *calipso,
+		    काष्ठा netlbl_lsm_secattr *secattr);
+पूर्णांक calipso_skbuff_setattr(काष्ठा sk_buff *skb,
+			   स्थिर काष्ठा calipso_करोi *करोi_def,
+			   स्थिर काष्ठा netlbl_lsm_secattr *secattr);
+पूर्णांक calipso_skbuff_delattr(काष्ठा sk_buff *skb);
+व्योम calipso_cache_invalidate(व्योम);
+पूर्णांक calipso_cache_add(स्थिर अचिन्हित अक्षर *calipso_ptr,
+		      स्थिर काष्ठा netlbl_lsm_secattr *secattr);
 
-#endif
+#पूर्ण_अगर

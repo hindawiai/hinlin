@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
 /*
  * Sample code to test CAP protocol
  *
@@ -6,89 +7,89 @@
  * Copyright(c) 2016 Linaro Ltd. All rights reserved.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
 
-#include "../../greybus_authentication.h"
+#समावेश "../../greybus_authentication.h"
 
-struct cap_ioc_get_endpoint_uid uid;
-struct cap_ioc_get_ims_certificate cert = {
-	.certificate_class = 0,
-	.certificate_id = 0,
-};
+काष्ठा cap_ioc_get_endpoपूर्णांक_uid uid;
+काष्ठा cap_ioc_get_ims_certअगरicate cert = अणु
+	.certअगरicate_class = 0,
+	.certअगरicate_id = 0,
+पूर्ण;
 
-struct cap_ioc_authenticate authenticate = {
+काष्ठा cap_ioc_authenticate authenticate = अणु
 	.auth_type = 0,
-	.challenge = {0},
-};
+	.challenge = अणु0पूर्ण,
+पूर्ण;
 
-int main(int argc, char *argv[])
-{
-	unsigned int timeout = 10000;
-	char *capdev;
-	int fd, ret;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	अचिन्हित पूर्णांक समयout = 10000;
+	अक्षर *capdev;
+	पूर्णांक fd, ret;
 
 	/* Make sure arguments are correct */
-	if (argc != 2) {
-		printf("\nUsage: ./firmware <Path of the gb-cap-X dev>\n");
-		return 0;
-	}
+	अगर (argc != 2) अणु
+		म_लिखो("\nUsage: ./firmware <Path of the gb-cap-X dev>\n");
+		वापस 0;
+	पूर्ण
 
 	capdev = argv[1];
 
-	printf("Opening %s authentication device\n", capdev);
+	म_लिखो("Opening %s authentication device\n", capdev);
 
-	fd = open(capdev, O_RDWR);
-	if (fd < 0) {
-		printf("Failed to open: %s\n", capdev);
-		return -1;
-	}
+	fd = खोलो(capdev, O_RDWR);
+	अगर (fd < 0) अणु
+		म_लिखो("Failed to open: %s\n", capdev);
+		वापस -1;
+	पूर्ण
 
 	/* Get UID */
-	printf("Get UID\n");
+	म_लिखो("Get UID\n");
 
 	ret = ioctl(fd, CAP_IOC_GET_ENDPOINT_UID, &uid);
-	if (ret < 0) {
-		printf("Failed to get UID: %s (%d)\n", capdev, ret);
+	अगर (ret < 0) अणु
+		म_लिखो("Failed to get UID: %s (%d)\n", capdev, ret);
 		ret = -1;
-		goto close_fd;
-	}
+		जाओ बंद_fd;
+	पूर्ण
 
-	printf("UID received: 0x%llx\n", *(unsigned long long int *)(uid.uid));
+	म_लिखो("UID received: 0x%llx\n", *(अचिन्हित दीर्घ दीर्घ पूर्णांक *)(uid.uid));
 
-	/* Get certificate */
-	printf("Get IMS certificate\n");
+	/* Get certअगरicate */
+	म_लिखो("Get IMS certificate\n");
 
 	ret = ioctl(fd, CAP_IOC_GET_IMS_CERTIFICATE, &cert);
-	if (ret < 0) {
-		printf("Failed to get IMS certificate: %s (%d)\n", capdev, ret);
+	अगर (ret < 0) अणु
+		म_लिखो("Failed to get IMS certificate: %s (%d)\n", capdev, ret);
 		ret = -1;
-		goto close_fd;
-	}
+		जाओ बंद_fd;
+	पूर्ण
 
-	printf("IMS Certificate size: %d\n", cert.cert_size);
+	म_लिखो("IMS Certificate size: %d\n", cert.cert_size);
 
 	/* Authenticate */
-	printf("Authenticate module\n");
+	म_लिखो("Authenticate module\n");
 
-	memcpy(authenticate.uid, uid.uid, 8);
+	स_नकल(authenticate.uid, uid.uid, 8);
 
 	ret = ioctl(fd, CAP_IOC_AUTHENTICATE, &authenticate);
-	if (ret < 0) {
-		printf("Failed to authenticate module: %s (%d)\n", capdev, ret);
+	अगर (ret < 0) अणु
+		म_लिखो("Failed to authenticate module: %s (%d)\n", capdev, ret);
 		ret = -1;
-		goto close_fd;
-	}
+		जाओ बंद_fd;
+	पूर्ण
 
-	printf("Authenticated, result (%02x), sig-size (%02x)\n",
+	म_लिखो("Authenticated, result (%02x), sig-size (%02x)\n",
 		authenticate.result_code, authenticate.signature_size);
 
-close_fd:
-	close(fd);
+बंद_fd:
+	बंद(fd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

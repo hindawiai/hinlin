@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVBIOS_PMU_H__
-#define __NVBIOS_PMU_H__
-struct nvbios_pmuT {
-};
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVBIOS_PMU_H__
+#घोषणा __NVBIOS_PMU_H__
+काष्ठा nvbios_pmuT अणु
+पूर्ण;
 
-u32 nvbios_pmuTe(struct nvkm_bios *, u8 *ver, u8 *hdr, u8 *cnt, u8 *len);
+u32 nvbios_pmuTe(काष्ठा nvkm_bios *, u8 *ver, u8 *hdr, u8 *cnt, u8 *len);
 
-struct nvbios_pmuE {
+काष्ठा nvbios_pmuE अणु
 	u8  type;
 	u32 data;
-};
+पूर्ण;
 
-u32 nvbios_pmuEe(struct nvkm_bios *, int idx, u8 *ver, u8 *hdr);
-u32 nvbios_pmuEp(struct nvkm_bios *, int idx, u8 *ver, u8 *hdr,
-		 struct nvbios_pmuE *);
+u32 nvbios_pmuEe(काष्ठा nvkm_bios *, पूर्णांक idx, u8 *ver, u8 *hdr);
+u32 nvbios_pmuEp(काष्ठा nvkm_bios *, पूर्णांक idx, u8 *ver, u8 *hdr,
+		 काष्ठा nvbios_pmuE *);
 
-struct nvbios_pmuR {
+काष्ठा nvbios_pmuR अणु
 	u32 boot_addr_pmu;
 	u32 boot_addr;
 	u32 boot_size;
@@ -28,7 +29,7 @@ struct nvbios_pmuR {
 	u32 data_addr;
 	u32 data_size;
 	u32 args_addr_pmu;
-};
+पूर्ण;
 
-bool nvbios_pmuRm(struct nvkm_bios *, u8 type, struct nvbios_pmuR *);
-#endif
+bool nvbios_pmuRm(काष्ठा nvkm_bios *, u8 type, काष्ठा nvbios_pmuR *);
+#पूर्ण_अगर

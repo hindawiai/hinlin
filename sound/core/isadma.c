@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  ISA DMA support functions
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
 /*
- * Defining following add some delay. Maybe this helps for some broken
+ * Defining following add some delay. Maybe this helps क्रम some broken
  * ISA DMA controllers.
  */
 
-#undef HAVE_REALLY_SLOW_DMA_CONTROLLER
+#अघोषित HAVE_REALLY_SLOW_DMA_CONTROLLER
 
-#include <linux/export.h>
-#include <sound/core.h>
-#include <asm/dma.h>
+#समावेश <linux/export.h>
+#समावेश <sound/core.h>
+#समावेश <यंत्र/dma.h>
 
 /**
  * snd_dma_program - program an ISA DMA transfer
@@ -22,13 +23,13 @@
  * @size: the DMA transfer size
  * @mode: the DMA transfer mode, DMA_MODE_XXX
  *
- * Programs an ISA DMA transfer for the given buffer.
+ * Programs an ISA DMA transfer क्रम the given buffer.
  */
-void snd_dma_program(unsigned long dma,
-		     unsigned long addr, unsigned int size,
-                     unsigned short mode)
-{
-	unsigned long flags;
+व्योम snd_dma_program(अचिन्हित दीर्घ dma,
+		     अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक size,
+                     अचिन्हित लघु mode)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	flags = claim_dma_lock();
 	disable_dma(dma);
@@ -36,10 +37,10 @@ void snd_dma_program(unsigned long dma,
 	set_dma_mode(dma, mode);
 	set_dma_addr(dma, addr);
 	set_dma_count(dma, size);
-	if (!(mode & DMA_MODE_NO_ENABLE))
+	अगर (!(mode & DMA_MODE_NO_ENABLE))
 		enable_dma(dma);
 	release_dma_lock(flags);
-}
+पूर्ण
 EXPORT_SYMBOL(snd_dma_program);
 
 /**
@@ -48,52 +49,52 @@ EXPORT_SYMBOL(snd_dma_program);
  *
  * Stops the ISA DMA transfer.
  */
-void snd_dma_disable(unsigned long dma)
-{
-	unsigned long flags;
+व्योम snd_dma_disable(अचिन्हित दीर्घ dma)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	flags = claim_dma_lock();
 	clear_dma_ff(dma);
 	disable_dma(dma);
 	release_dma_lock(flags);
-}
+पूर्ण
 EXPORT_SYMBOL(snd_dma_disable);
 
 /**
- * snd_dma_pointer - return the current pointer to DMA transfer buffer in bytes
+ * snd_dma_poपूर्णांकer - वापस the current poपूर्णांकer to DMA transfer buffer in bytes
  * @dma: the dma number
  * @size: the dma transfer size
  *
- * Return: The current pointer in DMA transfer buffer in bytes.
+ * Return: The current poपूर्णांकer in DMA transfer buffer in bytes.
  */
-unsigned int snd_dma_pointer(unsigned long dma, unsigned int size)
-{
-	unsigned long flags;
-	unsigned int result, result1;
+अचिन्हित पूर्णांक snd_dma_poपूर्णांकer(अचिन्हित दीर्घ dma, अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक result, result1;
 
 	flags = claim_dma_lock();
 	clear_dma_ff(dma);
-	if (!isa_dma_bridge_buggy)
+	अगर (!isa_dma_bridge_buggy)
 		disable_dma(dma);
 	result = get_dma_residue(dma);
 	/*
-	 * HACK - read the counter again and choose higher value in order to
-	 * avoid reading during counter lower byte roll over if the
+	 * HACK - पढ़ो the counter again and choose higher value in order to
+	 * aव्योम पढ़ोing during counter lower byte roll over अगर the
 	 * isa_dma_bridge_buggy is set.
 	 */
 	result1 = get_dma_residue(dma);
-	if (!isa_dma_bridge_buggy)
+	अगर (!isa_dma_bridge_buggy)
 		enable_dma(dma);
 	release_dma_lock(flags);
-	if (unlikely(result < result1))
+	अगर (unlikely(result < result1))
 		result = result1;
-#ifdef CONFIG_SND_DEBUG
-	if (result > size)
+#अगर_घोषित CONFIG_SND_DEBUG
+	अगर (result > size)
 		pr_err("ALSA: pointer (0x%x) for DMA #%ld is greater than transfer size (0x%x)\n", result, dma, size);
-#endif
-	if (result >= size || result == 0)
-		return 0;
-	else
-		return size - result;
-}
-EXPORT_SYMBOL(snd_dma_pointer);
+#पूर्ण_अगर
+	अगर (result >= size || result == 0)
+		वापस 0;
+	अन्यथा
+		वापस size - result;
+पूर्ण
+EXPORT_SYMBOL(snd_dma_poपूर्णांकer);

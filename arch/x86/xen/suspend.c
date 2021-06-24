@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/tick.h>
-#include <linux/percpu-defs.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/tick.h>
+#समावेश <linux/percpu-defs.h>
 
-#include <xen/xen.h>
-#include <xen/interface/xen.h>
-#include <xen/grant_table.h>
-#include <xen/events.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <xen/grant_table.h>
+#समावेश <xen/events.h>
 
-#include <asm/cpufeatures.h>
-#include <asm/msr-index.h>
-#include <asm/xen/hypercall.h>
-#include <asm/xen/page.h>
-#include <asm/fixmap.h>
+#समावेश <यंत्र/cpufeatures.h>
+#समावेश <यंत्र/msr-index.h>
+#समावेश <यंत्र/xen/hypercall.h>
+#समावेश <यंत्र/xen/page.h>
+#समावेश <यंत्र/fixmap.h>
 
-#include "xen-ops.h"
-#include "mmu.h"
-#include "pmu.h"
+#समावेश "xen-ops.h"
+#समावेश "mmu.h"
+#समावेश "pmu.h"
 
-static DEFINE_PER_CPU(u64, spec_ctrl);
+अटल DEFINE_PER_CPU(u64, spec_ctrl);
 
-void xen_arch_pre_suspend(void)
-{
-	xen_save_time_memory_area();
+व्योम xen_arch_pre_suspend(व्योम)
+अणु
+	xen_save_समय_memory_area();
 
-	if (xen_pv_domain())
+	अगर (xen_pv_करोमुख्य())
 		xen_pv_pre_suspend();
-}
+पूर्ण
 
-void xen_arch_post_suspend(int cancelled)
-{
-	if (xen_pv_domain())
+व्योम xen_arch_post_suspend(पूर्णांक cancelled)
+अणु
+	अगर (xen_pv_करोमुख्य())
 		xen_pv_post_suspend(cancelled);
-	else
+	अन्यथा
 		xen_hvm_post_suspend(cancelled);
 
-	xen_restore_time_memory_area();
-}
+	xen_restore_समय_memory_area();
+पूर्ण
 
-static void xen_vcpu_notify_restore(void *data)
-{
-	if (xen_pv_domain() && boot_cpu_has(X86_FEATURE_SPEC_CTRL))
-		wrmsrl(MSR_IA32_SPEC_CTRL, this_cpu_read(spec_ctrl));
+अटल व्योम xen_vcpu_notअगरy_restore(व्योम *data)
+अणु
+	अगर (xen_pv_करोमुख्य() && boot_cpu_has(X86_FEATURE_SPEC_CTRL))
+		wrmsrl(MSR_IA32_SPEC_CTRL, this_cpu_पढ़ो(spec_ctrl));
 
-	/* Boot processor notified via generic timekeeping_resume() */
-	if (smp_processor_id() == 0)
-		return;
+	/* Boot processor notअगरied via generic समयkeeping_resume() */
+	अगर (smp_processor_id() == 0)
+		वापस;
 
 	tick_resume_local();
-}
+पूर्ण
 
-static void xen_vcpu_notify_suspend(void *data)
-{
-	u64 tmp;
+अटल व्योम xen_vcpu_notअगरy_suspend(व्योम *data)
+अणु
+	u64 पंचांगp;
 
 	tick_suspend_local();
 
-	if (xen_pv_domain() && boot_cpu_has(X86_FEATURE_SPEC_CTRL)) {
-		rdmsrl(MSR_IA32_SPEC_CTRL, tmp);
-		this_cpu_write(spec_ctrl, tmp);
+	अगर (xen_pv_करोमुख्य() && boot_cpu_has(X86_FEATURE_SPEC_CTRL)) अणु
+		rdmsrl(MSR_IA32_SPEC_CTRL, पंचांगp);
+		this_cpu_ग_लिखो(spec_ctrl, पंचांगp);
 		wrmsrl(MSR_IA32_SPEC_CTRL, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void xen_arch_resume(void)
-{
-	int cpu;
+व्योम xen_arch_resume(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	on_each_cpu(xen_vcpu_notify_restore, NULL, 1);
+	on_each_cpu(xen_vcpu_notअगरy_restore, शून्य, 1);
 
-	for_each_online_cpu(cpu)
+	क्रम_each_online_cpu(cpu)
 		xen_pmu_init(cpu);
-}
+पूर्ण
 
-void xen_arch_suspend(void)
-{
-	int cpu;
+व्योम xen_arch_suspend(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	for_each_online_cpu(cpu)
+	क्रम_each_online_cpu(cpu)
 		xen_pmu_finish(cpu);
 
-	on_each_cpu(xen_vcpu_notify_suspend, NULL, 1);
-}
+	on_each_cpu(xen_vcpu_notअगरy_suspend, शून्य, 1);
+पूर्ण

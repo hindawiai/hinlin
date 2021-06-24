@@ -1,87 +1,88 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#define MPPE_PAD                4      /* MPPE growth per frame */
-#define MPPE_MAX_KEY_LEN       16      /* largest key length (128-bit) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#घोषणा MPPE_PAD                4      /* MPPE growth per frame */
+#घोषणा MPPE_MAX_KEY_LEN       16      /* largest key length (128-bit) */
 
-/* option bits for ccp_options.mppe */
-#define MPPE_OPT_40            0x01    /* 40 bit */
-#define MPPE_OPT_128           0x02    /* 128 bit */
-#define MPPE_OPT_STATEFUL      0x04    /* stateful mode */
+/* option bits क्रम ccp_options.mppe */
+#घोषणा MPPE_OPT_40            0x01    /* 40 bit */
+#घोषणा MPPE_OPT_128           0x02    /* 128 bit */
+#घोषणा MPPE_OPT_STATEFUL      0x04    /* stateful mode */
 /* unsupported opts */
-#define MPPE_OPT_56            0x08    /* 56 bit */
-#define MPPE_OPT_MPPC          0x10    /* MPPC compression */
-#define MPPE_OPT_D             0x20    /* Unknown */
-#define MPPE_OPT_UNSUPPORTED (MPPE_OPT_56|MPPE_OPT_MPPC|MPPE_OPT_D)
-#define MPPE_OPT_UNKNOWN       0x40    /* Bits !defined in RFC 3078 were set */
+#घोषणा MPPE_OPT_56            0x08    /* 56 bit */
+#घोषणा MPPE_OPT_MPPC          0x10    /* MPPC compression */
+#घोषणा MPPE_OPT_D             0x20    /* Unknown */
+#घोषणा MPPE_OPT_UNSUPPORTED (MPPE_OPT_56|MPPE_OPT_MPPC|MPPE_OPT_D)
+#घोषणा MPPE_OPT_UNKNOWN       0x40    /* Bits !defined in RFC 3078 were set */
 
 /*
- * This is not nice ... the alternative is a bitfield struct though.
- * And unfortunately, we cannot share the same bits for the option
- * names above since C and H are the same bit.  We could do a u_int32
- * but then we have to do a htonl() all the time and/or we still need
+ * This is not nice ... the alternative is a bitfield काष्ठा though.
+ * And unक्रमtunately, we cannot share the same bits क्रम the option
+ * names above since C and H are the same bit.  We could करो a u_पूर्णांक32
+ * but then we have to करो a htonl() all the समय and/or we still need
  * to know which octet is which.
  */
-#define MPPE_C_BIT             0x01    /* MPPC */
-#define MPPE_D_BIT             0x10    /* Obsolete, usage unknown */
-#define MPPE_L_BIT             0x20    /* 40-bit */
-#define MPPE_S_BIT             0x40    /* 128-bit */
-#define MPPE_M_BIT             0x80    /* 56-bit, not supported */
-#define MPPE_H_BIT             0x01    /* Stateless (in a different byte) */
+#घोषणा MPPE_C_BIT             0x01    /* MPPC */
+#घोषणा MPPE_D_BIT             0x10    /* Obsolete, usage unknown */
+#घोषणा MPPE_L_BIT             0x20    /* 40-bit */
+#घोषणा MPPE_S_BIT             0x40    /* 128-bit */
+#घोषणा MPPE_M_BIT             0x80    /* 56-bit, not supported */
+#घोषणा MPPE_H_BIT             0x01    /* Stateless (in a dअगरferent byte) */
 
-/* Does not include H bit; used for least significant octet only. */
-#define MPPE_ALL_BITS (MPPE_D_BIT|MPPE_L_BIT|MPPE_S_BIT|MPPE_M_BIT|MPPE_H_BIT)
+/* Does not include H bit; used क्रम least signअगरicant octet only. */
+#घोषणा MPPE_ALL_BITS (MPPE_D_BIT|MPPE_L_BIT|MPPE_S_BIT|MPPE_M_BIT|MPPE_H_BIT)
 
 /* Build a CI from mppe opts (see RFC 3078) */
-#define MPPE_OPTS_TO_CI(opts, ci)              \
-    do {                                       \
-       u_char *ptr = ci; /* u_char[4] */       \
+#घोषणा MPPE_OPTS_TO_CI(opts, ci)              \
+    करो अणु                                       \
+       u_अक्षर *ptr = ci; /* u_अक्षर[4] */       \
                                                \
        /* H bit */                             \
-       if (opts & MPPE_OPT_STATEFUL)           \
+       अगर (opts & MPPE_OPT_STATEFUL)           \
            *ptr++ = 0x0;                       \
-       else                                    \
+       अन्यथा                                    \
            *ptr++ = MPPE_H_BIT;                \
        *ptr++ = 0;                             \
        *ptr++ = 0;                             \
                                                \
        /* S,L bits */                          \
        *ptr = 0;                               \
-       if (opts & MPPE_OPT_128)                \
+       अगर (opts & MPPE_OPT_128)                \
            *ptr |= MPPE_S_BIT;                 \
-       if (opts & MPPE_OPT_40)                 \
+       अगर (opts & MPPE_OPT_40)                 \
            *ptr |= MPPE_L_BIT;                 \
        /* M,D,C bits not supported */          \
-    } while (/* CONSTCOND */ 0)
+    पूर्ण जबतक (/* CONSTCOND */ 0)
 
 /* The reverse of the above */
-#define MPPE_CI_TO_OPTS(ci, opts)              \
-    do {                                       \
-       u_char *ptr = ci; /* u_char[4] */       \
+#घोषणा MPPE_CI_TO_OPTS(ci, opts)              \
+    करो अणु                                       \
+       u_अक्षर *ptr = ci; /* u_अक्षर[4] */       \
                                                \
        opts = 0;                               \
                                                \
        /* H bit */                             \
-       if (!(ptr[0] & MPPE_H_BIT))             \
+       अगर (!(ptr[0] & MPPE_H_BIT))             \
            opts |= MPPE_OPT_STATEFUL;          \
                                                \
        /* S,L bits */                          \
-       if (ptr[3] & MPPE_S_BIT)                \
+       अगर (ptr[3] & MPPE_S_BIT)                \
            opts |= MPPE_OPT_128;               \
-       if (ptr[3] & MPPE_L_BIT)                \
+       अगर (ptr[3] & MPPE_L_BIT)                \
            opts |= MPPE_OPT_40;                \
                                                \
        /* M,D,C bits */                        \
-       if (ptr[3] & MPPE_M_BIT)                \
+       अगर (ptr[3] & MPPE_M_BIT)                \
            opts |= MPPE_OPT_56;                \
-       if (ptr[3] & MPPE_D_BIT)                \
+       अगर (ptr[3] & MPPE_D_BIT)                \
            opts |= MPPE_OPT_D;                 \
-       if (ptr[3] & MPPE_C_BIT)                \
+       अगर (ptr[3] & MPPE_C_BIT)                \
            opts |= MPPE_OPT_MPPC;              \
                                                \
        /* Other bits */                        \
-       if (ptr[0] & ~MPPE_H_BIT)               \
+       अगर (ptr[0] & ~MPPE_H_BIT)               \
            opts |= MPPE_OPT_UNKNOWN;           \
-       if (ptr[1] || ptr[2])                   \
+       अगर (ptr[1] || ptr[2])                   \
            opts |= MPPE_OPT_UNKNOWN;           \
-       if (ptr[3] & ~MPPE_ALL_BITS)            \
+       अगर (ptr[3] & ~MPPE_ALL_BITS)            \
            opts |= MPPE_OPT_UNKNOWN;           \
-    } while (/* CONSTCOND */ 0)
+    पूर्ण जबतक (/* CONSTCOND */ 0)

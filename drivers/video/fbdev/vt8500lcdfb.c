@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/drivers/video/vt8500lcdfb.c
  *
- *  Copyright (C) 2010 Alexey Charkov <alchark@gmail.com>
+ *  Copyright (C) 2010 Alexey Charkov <alअक्षरk@gmail.com>
  *
  * Based on skeletonfb.c and pxafb.c
  */
 
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/errno.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/wait.h>
-#include <video/of_display_timing.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/रुको.h>
+#समावेश <video/of_display_timing.h>
 
-#include "vt8500lcdfb.h"
-#include "wmt_ge_rops.h"
+#समावेश "vt8500lcdfb.h"
+#समावेश "wmt_ge_rops.h"
 
-#ifdef CONFIG_OF
-#include <linux/of.h>
-#include <linux/of_fdt.h>
-#include <linux/memblock.h>
-#endif
+#अगर_घोषित CONFIG_OF
+#समावेश <linux/of.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/memblock.h>
+#पूर्ण_अगर
 
 
-#define to_vt8500lcd_info(__info) container_of(__info, \
-						struct vt8500lcd_info, fb)
+#घोषणा to_vt8500lcd_info(__info) container_of(__info, \
+						काष्ठा vt8500lcd_info, fb)
 
-static int vt8500lcd_set_par(struct fb_info *info)
-{
-	struct vt8500lcd_info *fbi = to_vt8500lcd_info(info);
-	int reg_bpp = 5; /* 16bpp */
-	int i;
-	unsigned long control0;
+अटल पूर्णांक vt8500lcd_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा vt8500lcd_info *fbi = to_vt8500lcd_info(info);
+	पूर्णांक reg_bpp = 5; /* 16bpp */
+	पूर्णांक i;
+	अचिन्हित दीर्घ control0;
 
-	if (!fbi)
-		return -EINVAL;
+	अगर (!fbi)
+		वापस -EINVAL;
 
-	if (info->var.bits_per_pixel <= 8) {
+	अगर (info->var.bits_per_pixel <= 8) अणु
 		/* palettized */
 		info->var.red.offset    = 0;
 		info->var.red.length    = info->var.bits_per_pixel;
@@ -65,15 +66,15 @@ static int vt8500lcd_set_par(struct fb_info *info)
 		info->var.transp.msb_right = 0;
 
 		info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
-		info->fix.line_length = info->var.xres_virtual /
+		info->fix.line_length = info->var.xres_भव /
 						(8/info->var.bits_per_pixel);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* non-palettized */
 		info->var.transp.offset = 0;
 		info->var.transp.length = 0;
 		info->var.transp.msb_right = 0;
 
-		if (info->var.bits_per_pixel == 16) {
+		अगर (info->var.bits_per_pixel == 16) अणु
 			/* RGB565 */
 			info->var.red.offset = 11;
 			info->var.red.length = 5;
@@ -84,7 +85,7 @@ static int vt8500lcd_set_par(struct fb_info *info)
 			info->var.blue.offset = 0;
 			info->var.blue.length = 5;
 			info->var.blue.msb_right = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Equal depths per channel */
 			info->var.red.offset = info->var.bits_per_pixel
 							* 2 / 3;
@@ -96,63 +97,63 @@ static int vt8500lcd_set_par(struct fb_info *info)
 			info->var.blue.offset = 0;
 			info->var.blue.length = info->var.bits_per_pixel / 3;
 			info->var.blue.msb_right = 0;
-		}
+		पूर्ण
 
 		info->fix.visual = FB_VISUAL_TRUECOLOR;
 		info->fix.line_length = info->var.bits_per_pixel > 16 ?
-					info->var.xres_virtual << 2 :
-					info->var.xres_virtual << 1;
-	}
+					info->var.xres_भव << 2 :
+					info->var.xres_भव << 1;
+	पूर्ण
 
-	for (i = 0; i < 8; i++) {
-		if (bpp_values[i] == info->var.bits_per_pixel)
+	क्रम (i = 0; i < 8; i++) अणु
+		अगर (bpp_values[i] == info->var.bits_per_pixel)
 			reg_bpp = i;
-	}
+	पूर्ण
 
-	control0 = readl(fbi->regbase) & ~0xf;
-	writel(0, fbi->regbase);
-	while (readl(fbi->regbase + 0x38) & 0x10)
-		/* wait */;
-	writel((((info->var.hsync_len - 1) & 0x3f) << 26)
+	control0 = पढ़ोl(fbi->regbase) & ~0xf;
+	ग_लिखोl(0, fbi->regbase);
+	जबतक (पढ़ोl(fbi->regbase + 0x38) & 0x10)
+		/* रुको */;
+	ग_लिखोl((((info->var.hsync_len - 1) & 0x3f) << 26)
 		| ((info->var.left_margin & 0xff) << 18)
 		| (((info->var.xres - 1) & 0x3ff) << 8)
 		| (info->var.right_margin & 0xff), fbi->regbase + 0x4);
-	writel((((info->var.vsync_len - 1) & 0x3f) << 26)
+	ग_लिखोl((((info->var.vsync_len - 1) & 0x3f) << 26)
 		| ((info->var.upper_margin & 0xff) << 18)
 		| (((info->var.yres - 1) & 0x3ff) << 8)
 		| (info->var.lower_margin & 0xff), fbi->regbase + 0x8);
-	writel((((info->var.yres - 1) & 0x400) << 2)
+	ग_लिखोl((((info->var.yres - 1) & 0x400) << 2)
 		| ((info->var.xres - 1) & 0x400), fbi->regbase + 0x10);
-	writel(0x80000000, fbi->regbase + 0x20);
-	writel(control0 | (reg_bpp << 1) | 0x100, fbi->regbase);
+	ग_लिखोl(0x80000000, fbi->regbase + 0x20);
+	ग_लिखोl(control0 | (reg_bpp << 1) | 0x100, fbi->regbase);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline u_int chan_to_field(u_int chan, struct fb_bitfield *bf)
-{
+अटल अंतरभूत u_पूर्णांक chan_to_field(u_पूर्णांक chan, काष्ठा fb_bitfield *bf)
+अणु
 	chan &= 0xffff;
 	chan >>= 16 - bf->length;
-	return chan << bf->offset;
-}
+	वापस chan << bf->offset;
+पूर्ण
 
-static int vt8500lcd_setcolreg(unsigned regno, unsigned red, unsigned green,
-			   unsigned blue, unsigned transp,
-			   struct fb_info *info) {
-	struct vt8500lcd_info *fbi = to_vt8500lcd_info(info);
-	int ret = 1;
-	unsigned int val;
-	if (regno >= 256)
-		return -EINVAL;
+अटल पूर्णांक vt8500lcd_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
+			   अचिन्हित blue, अचिन्हित transp,
+			   काष्ठा fb_info *info) अणु
+	काष्ठा vt8500lcd_info *fbi = to_vt8500lcd_info(info);
+	पूर्णांक ret = 1;
+	अचिन्हित पूर्णांक val;
+	अगर (regno >= 256)
+		वापस -EINVAL;
 
-	if (info->var.grayscale)
+	अगर (info->var.grayscale)
 		red = green = blue =
 			(19595 * red + 38470 * green + 7471 * blue) >> 16;
 
-	switch (fbi->fb.fix.visual) {
-	case FB_VISUAL_TRUECOLOR:
-		if (regno < 16) {
-			u32 *pal = fbi->fb.pseudo_palette;
+	चयन (fbi->fb.fix.visual) अणु
+	हाल FB_VISUAL_TRUECOLOR:
+		अगर (regno < 16) अणु
+			u32 *pal = fbi->fb.pseuकरो_palette;
 
 			val  = chan_to_field(red, &fbi->fb.var.red);
 			val |= chan_to_field(green, &fbi->fb.var.green);
@@ -160,86 +161,86 @@ static int vt8500lcd_setcolreg(unsigned regno, unsigned red, unsigned green,
 
 			pal[regno] = val;
 			ret = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FB_VISUAL_STATIC_PSEUDOCOLOR:
-	case FB_VISUAL_PSEUDOCOLOR:
-		writew((red & 0xf800)
+	हाल FB_VISUAL_STATIC_PSEUDOCOLOR:
+	हाल FB_VISUAL_PSEUDOCOLOR:
+		ग_लिखोw((red & 0xf800)
 		      | ((green >> 5) & 0x7e0)
 		      | ((blue >> 11) & 0x1f),
-		       fbi->palette_cpu + sizeof(u16) * regno);
-		break;
-	}
+		       fbi->palette_cpu + माप(u16) * regno);
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vt8500lcd_ioctl(struct fb_info *info, unsigned int cmd,
-			 unsigned long arg)
-{
-	int ret = 0;
-	struct vt8500lcd_info *fbi = to_vt8500lcd_info(info);
+अटल पूर्णांक vt8500lcd_ioctl(काष्ठा fb_info *info, अचिन्हित पूर्णांक cmd,
+			 अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा vt8500lcd_info *fbi = to_vt8500lcd_info(info);
 
-	if (cmd == FBIO_WAITFORVSYNC) {
-		/* Unmask End of Frame interrupt */
-		writel(0xffffffff ^ (1 << 3), fbi->regbase + 0x3c);
-		ret = wait_event_interruptible_timeout(fbi->wait,
-			readl(fbi->regbase + 0x38) & (1 << 3), HZ / 10);
-		/* Mask back to reduce unwanted interrupt traffic */
-		writel(0xffffffff, fbi->regbase + 0x3c);
-		if (ret < 0)
-			return ret;
-		if (ret == 0)
-			return -ETIMEDOUT;
-	}
+	अगर (cmd == FBIO_WAITFORVSYNC) अणु
+		/* Unmask End of Frame पूर्णांकerrupt */
+		ग_लिखोl(0xffffffff ^ (1 << 3), fbi->regbase + 0x3c);
+		ret = रुको_event_पूर्णांकerruptible_समयout(fbi->रुको,
+			पढ़ोl(fbi->regbase + 0x38) & (1 << 3), HZ / 10);
+		/* Mask back to reduce unwanted पूर्णांकerrupt traffic */
+		ग_लिखोl(0xffffffff, fbi->regbase + 0x3c);
+		अगर (ret < 0)
+			वापस ret;
+		अगर (ret == 0)
+			वापस -ETIMEDOUT;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vt8500lcd_pan_display(struct fb_var_screeninfo *var,
-				struct fb_info *info)
-{
-	unsigned pixlen = info->fix.line_length / info->var.xres_virtual;
-	unsigned off = pixlen * var->xoffset
+अटल पूर्णांक vt8500lcd_pan_display(काष्ठा fb_var_screeninfo *var,
+				काष्ठा fb_info *info)
+अणु
+	अचिन्हित pixlen = info->fix.line_length / info->var.xres_भव;
+	अचिन्हित off = pixlen * var->xoffset
 		      + info->fix.line_length * var->yoffset;
-	struct vt8500lcd_info *fbi = to_vt8500lcd_info(info);
+	काष्ठा vt8500lcd_info *fbi = to_vt8500lcd_info(info);
 
-	writel((1 << 31)
-	     | (((info->var.xres_virtual - info->var.xres) * pixlen / 4) << 20)
+	ग_लिखोl((1 << 31)
+	     | (((info->var.xres_भव - info->var.xres) * pixlen / 4) << 20)
 	     | (off >> 2), fbi->regbase + 0x20);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * vt8500lcd_blank():
  *	Blank the display by setting all palette values to zero.  Note,
- * 	True Color modes do not really use the palette, so this will not
+ * 	True Color modes करो not really use the palette, so this will not
  *      blank the display in all modes.
  */
-static int vt8500lcd_blank(int blank, struct fb_info *info)
-{
-	int i;
+अटल पूर्णांक vt8500lcd_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	पूर्णांक i;
 
-	switch (blank) {
-	case FB_BLANK_POWERDOWN:
-	case FB_BLANK_VSYNC_SUSPEND:
-	case FB_BLANK_HSYNC_SUSPEND:
-	case FB_BLANK_NORMAL:
-		if (info->fix.visual == FB_VISUAL_PSEUDOCOLOR ||
+	चयन (blank) अणु
+	हाल FB_BLANK_POWERDOWN:
+	हाल FB_BLANK_VSYNC_SUSPEND:
+	हाल FB_BLANK_HSYNC_SUSPEND:
+	हाल FB_BLANK_NORMAL:
+		अगर (info->fix.visual == FB_VISUAL_PSEUDOCOLOR ||
 		    info->fix.visual == FB_VISUAL_STATIC_PSEUDOCOLOR)
-			for (i = 0; i < 256; i++)
+			क्रम (i = 0; i < 256; i++)
 				vt8500lcd_setcolreg(i, 0, 0, 0, 0, info);
 		fallthrough;
-	case FB_BLANK_UNBLANK:
-		if (info->fix.visual == FB_VISUAL_PSEUDOCOLOR ||
+	हाल FB_BLANK_UNBLANK:
+		अगर (info->fix.visual == FB_VISUAL_PSEUDOCOLOR ||
 		    info->fix.visual == FB_VISUAL_STATIC_PSEUDOCOLOR)
 			fb_set_cmap(&info->cmap, info);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct fb_ops vt8500lcd_ops = {
+अटल स्थिर काष्ठा fb_ops vt8500lcd_ops = अणु
 	.owner		= THIS_MODULE,
 	.fb_set_par	= vt8500lcd_set_par,
 	.fb_setcolreg	= vt8500lcd_setcolreg,
@@ -250,42 +251,42 @@ static const struct fb_ops vt8500lcd_ops = {
 	.fb_ioctl	= vt8500lcd_ioctl,
 	.fb_pan_display	= vt8500lcd_pan_display,
 	.fb_blank	= vt8500lcd_blank,
-};
+पूर्ण;
 
-static irqreturn_t vt8500lcd_handle_irq(int irq, void *dev_id)
-{
-	struct vt8500lcd_info *fbi = dev_id;
+अटल irqवापस_t vt8500lcd_handle_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा vt8500lcd_info *fbi = dev_id;
 
-	if (readl(fbi->regbase + 0x38) & (1 << 3))
-		wake_up_interruptible(&fbi->wait);
+	अगर (पढ़ोl(fbi->regbase + 0x38) & (1 << 3))
+		wake_up_पूर्णांकerruptible(&fbi->रुको);
 
-	writel(0xffffffff, fbi->regbase + 0x38);
-	return IRQ_HANDLED;
-}
+	ग_लिखोl(0xffffffff, fbi->regbase + 0x38);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int vt8500lcd_probe(struct platform_device *pdev)
-{
-	struct vt8500lcd_info *fbi;
-	struct resource *res;
-	struct display_timings *disp_timing;
-	void *addr;
-	int irq, ret;
+अटल पूर्णांक vt8500lcd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vt8500lcd_info *fbi;
+	काष्ठा resource *res;
+	काष्ठा display_timings *disp_timing;
+	व्योम *addr;
+	पूर्णांक irq, ret;
 
-	struct fb_videomode	of_mode;
+	काष्ठा fb_videomode	of_mode;
 	u32			bpp;
 	dma_addr_t fb_mem_phys;
-	unsigned long fb_mem_len;
-	void *fb_mem_virt;
+	अचिन्हित दीर्घ fb_mem_len;
+	व्योम *fb_mem_virt;
 
 	ret = -ENOMEM;
-	fbi = NULL;
+	fbi = शून्य;
 
-	fbi = devm_kzalloc(&pdev->dev, sizeof(struct vt8500lcd_info)
-			+ sizeof(u32) * 16, GFP_KERNEL);
-	if (!fbi)
-		return -ENOMEM;
+	fbi = devm_kzalloc(&pdev->dev, माप(काष्ठा vt8500lcd_info)
+			+ माप(u32) * 16, GFP_KERNEL);
+	अगर (!fbi)
+		वापस -ENOMEM;
 
-	strcpy(fbi->fb.fix.id, "VT8500 LCD");
+	म_नकल(fbi->fb.fix.id, "VT8500 LCD");
 
 	fbi->fb.fix.type	= FB_TYPE_PACKED_PIXELS;
 	fbi->fb.fix.xpanstep	= 0;
@@ -309,52 +310,52 @@ static int vt8500lcd_probe(struct platform_device *pdev)
 	fbi->fb.node		= -1;
 
 	addr = fbi;
-	addr = addr + sizeof(struct vt8500lcd_info);
-	fbi->fb.pseudo_palette	= addr;
+	addr = addr + माप(काष्ठा vt8500lcd_info);
+	fbi->fb.pseuकरो_palette	= addr;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य) अणु
 		dev_err(&pdev->dev, "no I/O memory resource defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	res = request_mem_region(res->start, resource_size(res), "vt8500lcd");
-	if (res == NULL) {
+	अगर (res == शून्य) अणु
 		dev_err(&pdev->dev, "failed to request I/O memory\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	fbi->regbase = ioremap(res->start, resource_size(res));
-	if (fbi->regbase == NULL) {
+	अगर (fbi->regbase == शून्य) अणु
 		dev_err(&pdev->dev, "failed to map I/O memory\n");
 		ret = -EBUSY;
-		goto failed_free_res;
-	}
+		जाओ failed_मुक्त_res;
+	पूर्ण
 
 	disp_timing = of_get_display_timings(pdev->dev.of_node);
-	if (!disp_timing) {
+	अगर (!disp_timing) अणु
 		ret = -EINVAL;
-		goto failed_free_io;
-	}
+		जाओ failed_मुक्त_io;
+	पूर्ण
 
 	ret = of_get_fb_videomode(pdev->dev.of_node, &of_mode,
 							OF_USE_NATIVE_MODE);
-	if (ret)
-		goto failed_free_io;
+	अगर (ret)
+		जाओ failed_मुक्त_io;
 
-	ret = of_property_read_u32(pdev->dev.of_node, "bits-per-pixel", &bpp);
-	if (ret)
-		goto failed_free_io;
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node, "bits-per-pixel", &bpp);
+	अगर (ret)
+		जाओ failed_मुक्त_io;
 
 	/* try allocating the framebuffer */
 	fb_mem_len = of_mode.xres * of_mode.yres * 2 * (bpp / 8);
 	fb_mem_virt = dma_alloc_coherent(&pdev->dev, fb_mem_len, &fb_mem_phys,
 				GFP_KERNEL);
-	if (!fb_mem_virt) {
+	अगर (!fb_mem_virt) अणु
 		pr_err("%s: Failed to allocate framebuffer\n", __func__);
 		ret = -ENOMEM;
-		goto failed_free_io;
-	}
+		जाओ failed_मुक्त_io;
+	पूर्ण
 
 	fbi->fb.fix.smem_start	= fb_mem_phys;
 	fbi->fb.fix.smem_len	= fb_mem_len;
@@ -365,122 +366,122 @@ static int vt8500lcd_probe(struct platform_device *pdev)
 						     fbi->palette_size,
 						     &fbi->palette_phys,
 						     GFP_KERNEL);
-	if (fbi->palette_cpu == NULL) {
+	अगर (fbi->palette_cpu == शून्य) अणु
 		dev_err(&pdev->dev, "Failed to allocate palette buffer\n");
 		ret = -ENOMEM;
-		goto failed_free_io;
-	}
+		जाओ failed_मुक्त_io;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		dev_err(&pdev->dev, "no IRQ defined\n");
 		ret = -ENODEV;
-		goto failed_free_palette;
-	}
+		जाओ failed_मुक्त_palette;
+	पूर्ण
 
 	ret = request_irq(irq, vt8500lcd_handle_irq, 0, "LCD", fbi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "request_irq failed: %d\n", ret);
 		ret = -EBUSY;
-		goto failed_free_palette;
-	}
+		जाओ failed_मुक्त_palette;
+	पूर्ण
 
-	init_waitqueue_head(&fbi->wait);
+	init_रुकोqueue_head(&fbi->रुको);
 
-	if (fb_alloc_cmap(&fbi->fb.cmap, 256, 0) < 0) {
+	अगर (fb_alloc_cmap(&fbi->fb.cmap, 256, 0) < 0) अणु
 		dev_err(&pdev->dev, "Failed to allocate color map\n");
 		ret = -ENOMEM;
-		goto failed_free_irq;
-	}
+		जाओ failed_मुक्त_irq;
+	पूर्ण
 
 	fb_videomode_to_var(&fbi->fb.var, &of_mode);
 
-	fbi->fb.var.xres_virtual	= of_mode.xres;
-	fbi->fb.var.yres_virtual	= of_mode.yres * 2;
+	fbi->fb.var.xres_भव	= of_mode.xres;
+	fbi->fb.var.yres_भव	= of_mode.yres * 2;
 	fbi->fb.var.bits_per_pixel	= bpp;
 
 	ret = vt8500lcd_set_par(&fbi->fb);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to set parameters\n");
-		goto failed_free_cmap;
-	}
+		जाओ failed_मुक्त_cmap;
+	पूर्ण
 
-	writel(fbi->fb.fix.smem_start >> 22, fbi->regbase + 0x1c);
-	writel((fbi->palette_phys & 0xfffffe00) | 1, fbi->regbase + 0x18);
+	ग_लिखोl(fbi->fb.fix.smem_start >> 22, fbi->regbase + 0x1c);
+	ग_लिखोl((fbi->palette_phys & 0xfffffe00) | 1, fbi->regbase + 0x18);
 
-	platform_set_drvdata(pdev, fbi);
+	platक्रमm_set_drvdata(pdev, fbi);
 
-	ret = register_framebuffer(&fbi->fb);
-	if (ret < 0) {
+	ret = रेजिस्टर_framebuffer(&fbi->fb);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev,
 			"Failed to register framebuffer device: %d\n", ret);
-		goto failed_free_cmap;
-	}
+		जाओ failed_मुक्त_cmap;
+	पूर्ण
 
 	/*
 	 * Ok, now enable the LCD controller
 	 */
-	writel(readl(fbi->regbase) | 1, fbi->regbase);
+	ग_लिखोl(पढ़ोl(fbi->regbase) | 1, fbi->regbase);
 
-	return 0;
+	वापस 0;
 
-failed_free_cmap:
-	if (fbi->fb.cmap.len)
+failed_मुक्त_cmap:
+	अगर (fbi->fb.cmap.len)
 		fb_dealloc_cmap(&fbi->fb.cmap);
-failed_free_irq:
-	free_irq(irq, fbi);
-failed_free_palette:
-	dma_free_coherent(&pdev->dev, fbi->palette_size,
+failed_मुक्त_irq:
+	मुक्त_irq(irq, fbi);
+failed_मुक्त_palette:
+	dma_मुक्त_coherent(&pdev->dev, fbi->palette_size,
 			  fbi->palette_cpu, fbi->palette_phys);
-failed_free_io:
+failed_मुक्त_io:
 	iounmap(fbi->regbase);
-failed_free_res:
+failed_मुक्त_res:
 	release_mem_region(res->start, resource_size(res));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vt8500lcd_remove(struct platform_device *pdev)
-{
-	struct vt8500lcd_info *fbi = platform_get_drvdata(pdev);
-	struct resource *res;
-	int irq;
+अटल पूर्णांक vt8500lcd_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vt8500lcd_info *fbi = platक्रमm_get_drvdata(pdev);
+	काष्ठा resource *res;
+	पूर्णांक irq;
 
-	unregister_framebuffer(&fbi->fb);
+	unरेजिस्टर_framebuffer(&fbi->fb);
 
-	writel(0, fbi->regbase);
+	ग_लिखोl(0, fbi->regbase);
 
-	if (fbi->fb.cmap.len)
+	अगर (fbi->fb.cmap.len)
 		fb_dealloc_cmap(&fbi->fb.cmap);
 
-	irq = platform_get_irq(pdev, 0);
-	free_irq(irq, fbi);
+	irq = platक्रमm_get_irq(pdev, 0);
+	मुक्त_irq(irq, fbi);
 
-	dma_free_coherent(&pdev->dev, fbi->palette_size,
+	dma_मुक्त_coherent(&pdev->dev, fbi->palette_size,
 			  fbi->palette_cpu, fbi->palette_phys);
 
 	iounmap(fbi->regbase);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	release_mem_region(res->start, resource_size(res));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id via_dt_ids[] = {
-	{ .compatible = "via,vt8500-fb", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id via_dt_ids[] = अणु
+	अणु .compatible = "via,vt8500-fb", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver vt8500lcd_driver = {
+अटल काष्ठा platक्रमm_driver vt8500lcd_driver = अणु
 	.probe		= vt8500lcd_probe,
-	.remove		= vt8500lcd_remove,
-	.driver		= {
+	.हटाओ		= vt8500lcd_हटाओ,
+	.driver		= अणु
 		.name	= "vt8500-lcd",
 		.of_match_table = of_match_ptr(via_dt_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(vt8500lcd_driver);
+module_platक्रमm_driver(vt8500lcd_driver);
 
 MODULE_AUTHOR("Alexey Charkov <alchark@gmail.com>");
 MODULE_DESCRIPTION("LCD controller driver for VIA VT8500");

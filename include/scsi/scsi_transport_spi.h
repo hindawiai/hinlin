@@ -1,149 +1,150 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* 
- *  Parallel SCSI (SPI) transport specific attributes exported to sysfs.
+ *  Parallel SCSI (SPI) transport specअगरic attributes exported to sysfs.
  *
  *  Copyright (c) 2003 Silicon Graphics, Inc.  All rights reserved.
  */
-#ifndef SCSI_TRANSPORT_SPI_H
-#define SCSI_TRANSPORT_SPI_H
+#अगर_अघोषित SCSI_TRANSPORT_SPI_H
+#घोषणा SCSI_TRANSPORT_SPI_H
 
-#include <linux/transport_class.h>
-#include <linux/mutex.h>
+#समावेश <linux/transport_class.h>
+#समावेश <linux/mutex.h>
 
-struct scsi_transport_template;
-struct scsi_target;
-struct scsi_device;
-struct Scsi_Host;
+काष्ठा scsi_transport_ढाँचा;
+काष्ठा scsi_target;
+काष्ठा scsi_device;
+काष्ठा Scsi_Host;
 
-struct spi_transport_attrs {
-	int period;		/* value in the PPR/SDTR command */
-	int min_period;
-	int offset;
-	int max_offset;
-	unsigned int width:1;	/* 0 - narrow, 1 - wide */
-	unsigned int max_width:1;
-	unsigned int iu:1;	/* Information Units enabled */
-	unsigned int max_iu:1;
-	unsigned int dt:1;	/* DT clocking enabled */
-	unsigned int qas:1;	/* Quick Arbitration and Selection enabled */
-	unsigned int max_qas:1;
-	unsigned int wr_flow:1;	/* Write Flow control enabled */
-	unsigned int rd_strm:1;	/* Read streaming enabled */
-	unsigned int rti:1;	/* Retain Training Information */
-	unsigned int pcomp_en:1;/* Precompensation enabled */
-	unsigned int hold_mcs:1;/* Hold Margin Control Settings */
-	unsigned int initial_dv:1; /* DV done to this target yet  */
-	unsigned long flags;	/* flags field for drivers to use */
+काष्ठा spi_transport_attrs अणु
+	पूर्णांक period;		/* value in the PPR/SDTR command */
+	पूर्णांक min_period;
+	पूर्णांक offset;
+	पूर्णांक max_offset;
+	अचिन्हित पूर्णांक width:1;	/* 0 - narrow, 1 - wide */
+	अचिन्हित पूर्णांक max_width:1;
+	अचिन्हित पूर्णांक iu:1;	/* Inक्रमmation Units enabled */
+	अचिन्हित पूर्णांक max_iu:1;
+	अचिन्हित पूर्णांक dt:1;	/* DT घड़ीing enabled */
+	अचिन्हित पूर्णांक qas:1;	/* Quick Arbitration and Selection enabled */
+	अचिन्हित पूर्णांक max_qas:1;
+	अचिन्हित पूर्णांक wr_flow:1;	/* Write Flow control enabled */
+	अचिन्हित पूर्णांक rd_strm:1;	/* Read streaming enabled */
+	अचिन्हित पूर्णांक rti:1;	/* Retain Training Inक्रमmation */
+	अचिन्हित पूर्णांक pcomp_en:1;/* Precompensation enabled */
+	अचिन्हित पूर्णांक hold_mcs:1;/* Hold Margin Control Settings */
+	अचिन्हित पूर्णांक initial_dv:1; /* DV करोne to this target yet  */
+	अचिन्हित दीर्घ flags;	/* flags field क्रम drivers to use */
 	/* Device Properties fields */
-	unsigned int support_sync:1; /* synchronous support */
-	unsigned int support_wide:1; /* wide support */
-	unsigned int support_dt:1; /* allows DT phases */
-	unsigned int support_dt_only; /* disallows ST phases */
-	unsigned int support_ius; /* support Information Units */
-	unsigned int support_qas; /* supports quick arbitration and selection */
+	अचिन्हित पूर्णांक support_sync:1; /* synchronous support */
+	अचिन्हित पूर्णांक support_wide:1; /* wide support */
+	अचिन्हित पूर्णांक support_dt:1; /* allows DT phases */
+	अचिन्हित पूर्णांक support_dt_only; /* disallows ST phases */
+	अचिन्हित पूर्णांक support_ius; /* support Inक्रमmation Units */
+	अचिन्हित पूर्णांक support_qas; /* supports quick arbitration and selection */
 	/* Private Fields */
-	unsigned int dv_pending:1; /* Internal flag: DV Requested */
-	unsigned int dv_in_progress:1;	/* Internal: DV started */
-	struct mutex dv_mutex; /* semaphore to serialise dv */
-};
+	अचिन्हित पूर्णांक dv_pending:1; /* Internal flag: DV Requested */
+	अचिन्हित पूर्णांक dv_in_progress:1;	/* Internal: DV started */
+	काष्ठा mutex dv_mutex; /* semaphore to serialise dv */
+पूर्ण;
 
-enum spi_signal_type {
+क्रमागत spi_संकेत_type अणु
 	SPI_SIGNAL_UNKNOWN = 1,
 	SPI_SIGNAL_SE,
 	SPI_SIGNAL_LVD,
 	SPI_SIGNAL_HVD,
-};
+पूर्ण;
 
-struct spi_host_attrs {
-	enum spi_signal_type signalling;
-};
+काष्ठा spi_host_attrs अणु
+	क्रमागत spi_संकेत_type संकेतling;
+पूर्ण;
 
 /* accessor functions */
-#define spi_period(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->period)
-#define spi_min_period(x) (((struct spi_transport_attrs *)&(x)->starget_data)->min_period)
-#define spi_offset(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->offset)
-#define spi_max_offset(x) (((struct spi_transport_attrs *)&(x)->starget_data)->max_offset)
-#define spi_width(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->width)
-#define spi_max_width(x) (((struct spi_transport_attrs *)&(x)->starget_data)->max_width)
-#define spi_iu(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->iu)
-#define spi_max_iu(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->max_iu)
-#define spi_dt(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->dt)
-#define spi_qas(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->qas)
-#define spi_max_qas(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->max_qas)
-#define spi_wr_flow(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->wr_flow)
-#define spi_rd_strm(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->rd_strm)
-#define spi_rti(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->rti)
-#define spi_pcomp_en(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->pcomp_en)
-#define spi_hold_mcs(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->hold_mcs)
-#define spi_initial_dv(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->initial_dv)
-#define spi_dv_pending(x) (((struct spi_transport_attrs *)&(x)->starget_data)->dv_pending)
+#घोषणा spi_period(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->period)
+#घोषणा spi_min_period(x) (((काष्ठा spi_transport_attrs *)&(x)->starget_data)->min_period)
+#घोषणा spi_offset(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->offset)
+#घोषणा spi_max_offset(x) (((काष्ठा spi_transport_attrs *)&(x)->starget_data)->max_offset)
+#घोषणा spi_width(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->width)
+#घोषणा spi_max_width(x) (((काष्ठा spi_transport_attrs *)&(x)->starget_data)->max_width)
+#घोषणा spi_iu(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->iu)
+#घोषणा spi_max_iu(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->max_iu)
+#घोषणा spi_dt(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->dt)
+#घोषणा spi_qas(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->qas)
+#घोषणा spi_max_qas(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->max_qas)
+#घोषणा spi_wr_flow(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->wr_flow)
+#घोषणा spi_rd_strm(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->rd_strm)
+#घोषणा spi_rti(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->rti)
+#घोषणा spi_pcomp_en(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->pcomp_en)
+#घोषणा spi_hold_mcs(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->hold_mcs)
+#घोषणा spi_initial_dv(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->initial_dv)
+#घोषणा spi_dv_pending(x) (((काष्ठा spi_transport_attrs *)&(x)->starget_data)->dv_pending)
 
-#define spi_support_sync(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->support_sync)
-#define spi_support_wide(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->support_wide)
-#define spi_support_dt(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->support_dt)
-#define spi_support_dt_only(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->support_dt_only)
-#define spi_support_ius(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->support_ius)
-#define spi_support_qas(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->support_qas)
+#घोषणा spi_support_sync(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->support_sync)
+#घोषणा spi_support_wide(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->support_wide)
+#घोषणा spi_support_dt(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->support_dt)
+#घोषणा spi_support_dt_only(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->support_dt_only)
+#घोषणा spi_support_ius(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->support_ius)
+#घोषणा spi_support_qas(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->support_qas)
 
-#define spi_flags(x)	(((struct spi_transport_attrs *)&(x)->starget_data)->flags)
-#define spi_signalling(h)	(((struct spi_host_attrs *)(h)->shost_data)->signalling)
+#घोषणा spi_flags(x)	(((काष्ठा spi_transport_attrs *)&(x)->starget_data)->flags)
+#घोषणा spi_संकेतling(h)	(((काष्ठा spi_host_attrs *)(h)->shost_data)->संकेतling)
 
 
 
 /* The functions by which the transport class and the driver communicate */
-struct spi_function_template {
-	void	(*get_period)(struct scsi_target *);
-	void	(*set_period)(struct scsi_target *, int);
-	void	(*get_offset)(struct scsi_target *);
-	void	(*set_offset)(struct scsi_target *, int);
-	void	(*get_width)(struct scsi_target *);
-	void	(*set_width)(struct scsi_target *, int);
-	void	(*get_iu)(struct scsi_target *);
-	void	(*set_iu)(struct scsi_target *, int);
-	void	(*get_dt)(struct scsi_target *);
-	void	(*set_dt)(struct scsi_target *, int);
-	void	(*get_qas)(struct scsi_target *);
-	void	(*set_qas)(struct scsi_target *, int);
-	void	(*get_wr_flow)(struct scsi_target *);
-	void	(*set_wr_flow)(struct scsi_target *, int);
-	void	(*get_rd_strm)(struct scsi_target *);
-	void	(*set_rd_strm)(struct scsi_target *, int);
-	void	(*get_rti)(struct scsi_target *);
-	void	(*set_rti)(struct scsi_target *, int);
-	void	(*get_pcomp_en)(struct scsi_target *);
-	void	(*set_pcomp_en)(struct scsi_target *, int);
-	void	(*get_hold_mcs)(struct scsi_target *);
-	void	(*set_hold_mcs)(struct scsi_target *, int);
-	void	(*get_signalling)(struct Scsi_Host *);
-	void	(*set_signalling)(struct Scsi_Host *, enum spi_signal_type);
-	int	(*deny_binding)(struct scsi_target *);
+काष्ठा spi_function_ढाँचा अणु
+	व्योम	(*get_period)(काष्ठा scsi_target *);
+	व्योम	(*set_period)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_offset)(काष्ठा scsi_target *);
+	व्योम	(*set_offset)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_width)(काष्ठा scsi_target *);
+	व्योम	(*set_width)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_iu)(काष्ठा scsi_target *);
+	व्योम	(*set_iu)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_dt)(काष्ठा scsi_target *);
+	व्योम	(*set_dt)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_qas)(काष्ठा scsi_target *);
+	व्योम	(*set_qas)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_wr_flow)(काष्ठा scsi_target *);
+	व्योम	(*set_wr_flow)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_rd_strm)(काष्ठा scsi_target *);
+	व्योम	(*set_rd_strm)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_rti)(काष्ठा scsi_target *);
+	व्योम	(*set_rti)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_pcomp_en)(काष्ठा scsi_target *);
+	व्योम	(*set_pcomp_en)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_hold_mcs)(काष्ठा scsi_target *);
+	व्योम	(*set_hold_mcs)(काष्ठा scsi_target *, पूर्णांक);
+	व्योम	(*get_संकेतling)(काष्ठा Scsi_Host *);
+	व्योम	(*set_संकेतling)(काष्ठा Scsi_Host *, क्रमागत spi_संकेत_type);
+	पूर्णांक	(*deny_binding)(काष्ठा scsi_target *);
 	/* The driver sets these to tell the transport class it
 	 * wants the attributes displayed in sysfs.  If the show_ flag
-	 * is not set, the attribute will be private to the transport
+	 * is not set, the attribute will be निजी to the transport
 	 * class */
-	unsigned long	show_period:1;
-	unsigned long	show_offset:1;
-	unsigned long	show_width:1;
-	unsigned long	show_iu:1;
-	unsigned long	show_dt:1;
-	unsigned long	show_qas:1;
-	unsigned long	show_wr_flow:1;
-	unsigned long	show_rd_strm:1;
-	unsigned long	show_rti:1;
-	unsigned long	show_pcomp_en:1;
-	unsigned long	show_hold_mcs:1;
-};
+	अचिन्हित दीर्घ	show_period:1;
+	अचिन्हित दीर्घ	show_offset:1;
+	अचिन्हित दीर्घ	show_width:1;
+	अचिन्हित दीर्घ	show_iu:1;
+	अचिन्हित दीर्घ	show_dt:1;
+	अचिन्हित दीर्घ	show_qas:1;
+	अचिन्हित दीर्घ	show_wr_flow:1;
+	अचिन्हित दीर्घ	show_rd_strm:1;
+	अचिन्हित दीर्घ	show_rti:1;
+	अचिन्हित दीर्घ	show_pcomp_en:1;
+	अचिन्हित दीर्घ	show_hold_mcs:1;
+पूर्ण;
 
-struct scsi_transport_template *spi_attach_transport(struct spi_function_template *);
-void spi_release_transport(struct scsi_transport_template *);
-void spi_schedule_dv_device(struct scsi_device *);
-void spi_dv_device(struct scsi_device *);
-void spi_display_xfer_agreement(struct scsi_target *);
-int spi_print_msg(const unsigned char *);
-int spi_populate_width_msg(unsigned char *msg, int width);
-int spi_populate_sync_msg(unsigned char *msg, int period, int offset);
-int spi_populate_ppr_msg(unsigned char *msg, int period, int offset, int width,
-		int options);
-int spi_populate_tag_msg(unsigned char *msg, struct scsi_cmnd *cmd);
+काष्ठा scsi_transport_ढाँचा *spi_attach_transport(काष्ठा spi_function_ढाँचा *);
+व्योम spi_release_transport(काष्ठा scsi_transport_ढाँचा *);
+व्योम spi_schedule_dv_device(काष्ठा scsi_device *);
+व्योम spi_dv_device(काष्ठा scsi_device *);
+व्योम spi_display_xfer_agreement(काष्ठा scsi_target *);
+पूर्णांक spi_prपूर्णांक_msg(स्थिर अचिन्हित अक्षर *);
+पूर्णांक spi_populate_width_msg(अचिन्हित अक्षर *msg, पूर्णांक width);
+पूर्णांक spi_populate_sync_msg(अचिन्हित अक्षर *msg, पूर्णांक period, पूर्णांक offset);
+पूर्णांक spi_populate_ppr_msg(अचिन्हित अक्षर *msg, पूर्णांक period, पूर्णांक offset, पूर्णांक width,
+		पूर्णांक options);
+पूर्णांक spi_populate_tag_msg(अचिन्हित अक्षर *msg, काष्ठा scsi_cmnd *cmd);
 
-#endif /* SCSI_TRANSPORT_SPI_H */
+#पूर्ण_अगर /* SCSI_TRANSPORT_SPI_H */

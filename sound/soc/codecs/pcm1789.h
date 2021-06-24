@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
-// Definitions for PCM1789 audio driver
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Definitions क्रम PCM1789 audio driver
 // Copyright (C) 2018 Bootlin
-// Mylène Josserand <mylene.josserand@bootlin.com>
+// Mylथउne Josseअक्रम <mylene.josseअक्रम@bootlin.com>
 
-#ifndef __PCM1789_H__
-#define __PCM1789_H__
+#अगर_अघोषित __PCM1789_H__
+#घोषणा __PCM1789_H__
 
-#define PCM1789_FORMATS (SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S24_LE | \
+#घोषणा PCM1789_FORMATS (SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S24_LE | \
 			 SNDRV_PCM_FMTBIT_S16_LE)
 
-extern const struct regmap_config pcm1789_regmap_config;
+बाह्य स्थिर काष्ठा regmap_config pcm1789_regmap_config;
 
-int pcm1789_common_init(struct device *dev, struct regmap *regmap);
-int pcm1789_common_exit(struct device *dev);
+पूर्णांक pcm1789_common_init(काष्ठा device *dev, काष्ठा regmap *regmap);
+पूर्णांक pcm1789_common_निकास(काष्ठा device *dev);
 
-#endif
+#पूर्ण_अगर

@@ -1,233 +1,234 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * sparse memory mappings.
  */
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/mmzone.h>
-#include <linux/memblock.h>
-#include <linux/compiler.h>
-#include <linux/highmem.h>
-#include <linux/export.h>
-#include <linux/spinlock.h>
-#include <linux/vmalloc.h>
-#include <linux/swap.h>
-#include <linux/swapops.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/export.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/swapops.h>
 
-#include "internal.h"
-#include <asm/dma.h>
+#समावेश "internal.h"
+#समावेश <यंत्र/dma.h>
 
 /*
  * Permanent SPARSEMEM data:
  *
- * 1) mem_section	- memory sections, mem_map's for valid memory
+ * 1) mem_section	- memory sections, mem_map's क्रम valid memory
  */
-#ifdef CONFIG_SPARSEMEM_EXTREME
-struct mem_section **mem_section;
-#else
-struct mem_section mem_section[NR_SECTION_ROOTS][SECTIONS_PER_ROOT]
-	____cacheline_internodealigned_in_smp;
-#endif
+#अगर_घोषित CONFIG_SPARSEMEM_EXTREME
+काष्ठा mem_section **mem_section;
+#अन्यथा
+काष्ठा mem_section mem_section[NR_SECTION_ROOTS][SECTIONS_PER_ROOT]
+	____cacheline_पूर्णांकernodealigned_in_smp;
+#पूर्ण_अगर
 EXPORT_SYMBOL(mem_section);
 
-#ifdef NODE_NOT_IN_PAGE_FLAGS
+#अगर_घोषित NODE_NOT_IN_PAGE_FLAGS
 /*
  * If we did not store the node number in the page then we have to
- * do a lookup in the section_to_node_table in order to find which
- * node the page belongs to.
+ * करो a lookup in the section_to_node_table in order to find which
+ * node the page beदीर्घs to.
  */
-#if MAX_NUMNODES <= 256
-static u8 section_to_node_table[NR_MEM_SECTIONS] __cacheline_aligned;
-#else
-static u16 section_to_node_table[NR_MEM_SECTIONS] __cacheline_aligned;
-#endif
+#अगर MAX_NUMNODES <= 256
+अटल u8 section_to_node_table[NR_MEM_SECTIONS] __cacheline_aligned;
+#अन्यथा
+अटल u16 section_to_node_table[NR_MEM_SECTIONS] __cacheline_aligned;
+#पूर्ण_अगर
 
-int page_to_nid(const struct page *page)
-{
-	return section_to_node_table[page_to_section(page)];
-}
+पूर्णांक page_to_nid(स्थिर काष्ठा page *page)
+अणु
+	वापस section_to_node_table[page_to_section(page)];
+पूर्ण
 EXPORT_SYMBOL(page_to_nid);
 
-static void set_section_nid(unsigned long section_nr, int nid)
-{
+अटल व्योम set_section_nid(अचिन्हित दीर्घ section_nr, पूर्णांक nid)
+अणु
 	section_to_node_table[section_nr] = nid;
-}
-#else /* !NODE_NOT_IN_PAGE_FLAGS */
-static inline void set_section_nid(unsigned long section_nr, int nid)
-{
-}
-#endif
+पूर्ण
+#अन्यथा /* !NODE_NOT_IN_PAGE_FLAGS */
+अटल अंतरभूत व्योम set_section_nid(अचिन्हित दीर्घ section_nr, पूर्णांक nid)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_SPARSEMEM_EXTREME
-static noinline struct mem_section __ref *sparse_index_alloc(int nid)
-{
-	struct mem_section *section = NULL;
-	unsigned long array_size = SECTIONS_PER_ROOT *
-				   sizeof(struct mem_section);
+#अगर_घोषित CONFIG_SPARSEMEM_EXTREME
+अटल noअंतरभूत काष्ठा mem_section __ref *sparse_index_alloc(पूर्णांक nid)
+अणु
+	काष्ठा mem_section *section = शून्य;
+	अचिन्हित दीर्घ array_size = SECTIONS_PER_ROOT *
+				   माप(काष्ठा mem_section);
 
-	if (slab_is_available()) {
+	अगर (slab_is_available()) अणु
 		section = kzalloc_node(array_size, GFP_KERNEL, nid);
-	} else {
+	पूर्ण अन्यथा अणु
 		section = memblock_alloc_node(array_size, SMP_CACHE_BYTES,
 					      nid);
-		if (!section)
+		अगर (!section)
 			panic("%s: Failed to allocate %lu bytes nid=%d\n",
 			      __func__, array_size, nid);
-	}
+	पूर्ण
 
-	return section;
-}
+	वापस section;
+पूर्ण
 
-static int __meminit sparse_index_init(unsigned long section_nr, int nid)
-{
-	unsigned long root = SECTION_NR_TO_ROOT(section_nr);
-	struct mem_section *section;
+अटल पूर्णांक __meminit sparse_index_init(अचिन्हित दीर्घ section_nr, पूर्णांक nid)
+अणु
+	अचिन्हित दीर्घ root = SECTION_NR_TO_ROOT(section_nr);
+	काष्ठा mem_section *section;
 
 	/*
 	 * An existing section is possible in the sub-section hotplug
-	 * case. First hot-add instantiates, follow-on hot-add reuses
+	 * हाल. First hot-add instantiates, follow-on hot-add reuses
 	 * the existing section.
 	 *
 	 * The mem_hotplug_lock resolves the apparent race below.
 	 */
-	if (mem_section[root])
-		return 0;
+	अगर (mem_section[root])
+		वापस 0;
 
 	section = sparse_index_alloc(nid);
-	if (!section)
-		return -ENOMEM;
+	अगर (!section)
+		वापस -ENOMEM;
 
 	mem_section[root] = section;
 
-	return 0;
-}
-#else /* !SPARSEMEM_EXTREME */
-static inline int sparse_index_init(unsigned long section_nr, int nid)
-{
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा /* !SPARSEMEM_EXTREME */
+अटल अंतरभूत पूर्णांक sparse_index_init(अचिन्हित दीर्घ section_nr, पूर्णांक nid)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_SPARSEMEM_EXTREME
-unsigned long __section_nr(struct mem_section *ms)
-{
-	unsigned long root_nr;
-	struct mem_section *root = NULL;
+#अगर_घोषित CONFIG_SPARSEMEM_EXTREME
+अचिन्हित दीर्घ __section_nr(काष्ठा mem_section *ms)
+अणु
+	अचिन्हित दीर्घ root_nr;
+	काष्ठा mem_section *root = शून्य;
 
-	for (root_nr = 0; root_nr < NR_SECTION_ROOTS; root_nr++) {
+	क्रम (root_nr = 0; root_nr < NR_SECTION_ROOTS; root_nr++) अणु
 		root = __nr_to_section(root_nr * SECTIONS_PER_ROOT);
-		if (!root)
-			continue;
+		अगर (!root)
+			जारी;
 
-		if ((ms >= root) && (ms < (root + SECTIONS_PER_ROOT)))
-		     break;
-	}
+		अगर ((ms >= root) && (ms < (root + SECTIONS_PER_ROOT)))
+		     अवरोध;
+	पूर्ण
 
 	VM_BUG_ON(!root);
 
-	return (root_nr * SECTIONS_PER_ROOT) + (ms - root);
-}
-#else
-unsigned long __section_nr(struct mem_section *ms)
-{
-	return (unsigned long)(ms - mem_section[0]);
-}
-#endif
+	वापस (root_nr * SECTIONS_PER_ROOT) + (ms - root);
+पूर्ण
+#अन्यथा
+अचिन्हित दीर्घ __section_nr(काष्ठा mem_section *ms)
+अणु
+	वापस (अचिन्हित दीर्घ)(ms - mem_section[0]);
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * During early boot, before section_mem_map is used for an actual
+ * During early boot, beक्रमe section_mem_map is used क्रम an actual
  * mem_map, we use section_mem_map to store the section's NUMA
- * node.  This keeps us from having to use another data structure.  The
- * node information is cleared just before we store the real mem_map.
+ * node.  This keeps us from having to use another data काष्ठाure.  The
+ * node inक्रमmation is cleared just beक्रमe we store the real mem_map.
  */
-static inline unsigned long sparse_encode_early_nid(int nid)
-{
-	return (nid << SECTION_NID_SHIFT);
-}
+अटल अंतरभूत अचिन्हित दीर्घ sparse_encode_early_nid(पूर्णांक nid)
+अणु
+	वापस (nid << SECTION_NID_SHIFT);
+पूर्ण
 
-static inline int sparse_early_nid(struct mem_section *section)
-{
-	return (section->section_mem_map >> SECTION_NID_SHIFT);
-}
+अटल अंतरभूत पूर्णांक sparse_early_nid(काष्ठा mem_section *section)
+अणु
+	वापस (section->section_mem_map >> SECTION_NID_SHIFT);
+पूर्ण
 
 /* Validate the physical addressing limitations of the model */
-void __meminit mminit_validate_memmodel_limits(unsigned long *start_pfn,
-						unsigned long *end_pfn)
-{
-	unsigned long max_sparsemem_pfn = 1UL << (MAX_PHYSMEM_BITS-PAGE_SHIFT);
+व्योम __meminit mminit_validate_memmodel_limits(अचिन्हित दीर्घ *start_pfn,
+						अचिन्हित दीर्घ *end_pfn)
+अणु
+	अचिन्हित दीर्घ max_sparsemem_pfn = 1UL << (MAX_PHYSMEM_BITS-PAGE_SHIFT);
 
 	/*
-	 * Sanity checks - do not allow an architecture to pass
+	 * Sanity checks - करो not allow an architecture to pass
 	 * in larger pfns than the maximum scope of sparsemem:
 	 */
-	if (*start_pfn > max_sparsemem_pfn) {
-		mminit_dprintk(MMINIT_WARNING, "pfnvalidation",
+	अगर (*start_pfn > max_sparsemem_pfn) अणु
+		mminit_dprपूर्णांकk(MMINIT_WARNING, "pfnvalidation",
 			"Start of range %lu -> %lu exceeds SPARSEMEM max %lu\n",
 			*start_pfn, *end_pfn, max_sparsemem_pfn);
 		WARN_ON_ONCE(1);
 		*start_pfn = max_sparsemem_pfn;
 		*end_pfn = max_sparsemem_pfn;
-	} else if (*end_pfn > max_sparsemem_pfn) {
-		mminit_dprintk(MMINIT_WARNING, "pfnvalidation",
+	पूर्ण अन्यथा अगर (*end_pfn > max_sparsemem_pfn) अणु
+		mminit_dprपूर्णांकk(MMINIT_WARNING, "pfnvalidation",
 			"End of range %lu -> %lu exceeds SPARSEMEM max %lu\n",
 			*start_pfn, *end_pfn, max_sparsemem_pfn);
 		WARN_ON_ONCE(1);
 		*end_pfn = max_sparsemem_pfn;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * There are a number of times that we loop over NR_MEM_SECTIONS,
- * looking for section_present() on each.  But, when we have very
+ * There are a number of बार that we loop over NR_MEM_SECTIONS,
+ * looking क्रम section_present() on each.  But, when we have very
  * large physical address spaces, NR_MEM_SECTIONS can also be
- * very large which makes the loops quite long.
+ * very large which makes the loops quite दीर्घ.
  *
- * Keeping track of this gives us an easy way to break out of
+ * Keeping track of this gives us an easy way to अवरोध out of
  * those loops early.
  */
-unsigned long __highest_present_section_nr;
-static void section_mark_present(struct mem_section *ms)
-{
-	unsigned long section_nr = __section_nr(ms);
+अचिन्हित दीर्घ __highest_present_section_nr;
+अटल व्योम section_mark_present(काष्ठा mem_section *ms)
+अणु
+	अचिन्हित दीर्घ section_nr = __section_nr(ms);
 
-	if (section_nr > __highest_present_section_nr)
+	अगर (section_nr > __highest_present_section_nr)
 		__highest_present_section_nr = section_nr;
 
 	ms->section_mem_map |= SECTION_MARKED_PRESENT;
-}
+पूर्ण
 
-#define for_each_present_section_nr(start, section_nr)		\
-	for (section_nr = next_present_section_nr(start-1);	\
+#घोषणा क्रम_each_present_section_nr(start, section_nr)		\
+	क्रम (section_nr = next_present_section_nr(start-1);	\
 	     ((section_nr != -1) &&				\
 	      (section_nr <= __highest_present_section_nr));	\
 	     section_nr = next_present_section_nr(section_nr))
 
-static inline unsigned long first_present_section_nr(void)
-{
-	return next_present_section_nr(-1);
-}
+अटल अंतरभूत अचिन्हित दीर्घ first_present_section_nr(व्योम)
+अणु
+	वापस next_present_section_nr(-1);
+पूर्ण
 
-#ifdef CONFIG_SPARSEMEM_VMEMMAP
-static void subsection_mask_set(unsigned long *map, unsigned long pfn,
-		unsigned long nr_pages)
-{
-	int idx = subsection_map_index(pfn);
-	int end = subsection_map_index(pfn + nr_pages - 1);
+#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
+अटल व्योम subsection_mask_set(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ pfn,
+		अचिन्हित दीर्घ nr_pages)
+अणु
+	पूर्णांक idx = subsection_map_index(pfn);
+	पूर्णांक end = subsection_map_index(pfn + nr_pages - 1);
 
-	bitmap_set(map, idx, end - idx + 1);
-}
+	biपंचांगap_set(map, idx, end - idx + 1);
+पूर्ण
 
-void __init subsection_map_init(unsigned long pfn, unsigned long nr_pages)
-{
-	int end_sec = pfn_to_section_nr(pfn + nr_pages - 1);
-	unsigned long nr, start_sec = pfn_to_section_nr(pfn);
+व्योम __init subsection_map_init(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages)
+अणु
+	पूर्णांक end_sec = pfn_to_section_nr(pfn + nr_pages - 1);
+	अचिन्हित दीर्घ nr, start_sec = pfn_to_section_nr(pfn);
 
-	if (!nr_pages)
-		return;
+	अगर (!nr_pages)
+		वापस;
 
-	for (nr = start_sec; nr <= end_sec; nr++) {
-		struct mem_section *ms;
-		unsigned long pfns;
+	क्रम (nr = start_sec; nr <= end_sec; nr++) अणु
+		काष्ठा mem_section *ms;
+		अचिन्हित दीर्घ pfns;
 
 		pfns = min(nr_pages, PAGES_PER_SECTION
 				- (pfn & ~PAGE_SECTION_MASK));
@@ -240,135 +241,135 @@ void __init subsection_map_init(unsigned long pfn, unsigned long nr_pages)
 
 		pfn += pfns;
 		nr_pages -= pfns;
-	}
-}
-#else
-void __init subsection_map_init(unsigned long pfn, unsigned long nr_pages)
-{
-}
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा
+व्योम __init subsection_map_init(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /* Record a memory area against a node. */
-static void __init memory_present(int nid, unsigned long start, unsigned long end)
-{
-	unsigned long pfn;
+अटल व्योम __init memory_present(पूर्णांक nid, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ pfn;
 
-#ifdef CONFIG_SPARSEMEM_EXTREME
-	if (unlikely(!mem_section)) {
-		unsigned long size, align;
+#अगर_घोषित CONFIG_SPARSEMEM_EXTREME
+	अगर (unlikely(!mem_section)) अणु
+		अचिन्हित दीर्घ size, align;
 
-		size = sizeof(struct mem_section *) * NR_SECTION_ROOTS;
+		size = माप(काष्ठा mem_section *) * NR_SECTION_ROOTS;
 		align = 1 << (INTERNODE_CACHE_SHIFT);
 		mem_section = memblock_alloc(size, align);
-		if (!mem_section)
+		अगर (!mem_section)
 			panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 			      __func__, size, align);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	start &= PAGE_SECTION_MASK;
 	mminit_validate_memmodel_limits(&start, &end);
-	for (pfn = start; pfn < end; pfn += PAGES_PER_SECTION) {
-		unsigned long section = pfn_to_section_nr(pfn);
-		struct mem_section *ms;
+	क्रम (pfn = start; pfn < end; pfn += PAGES_PER_SECTION) अणु
+		अचिन्हित दीर्घ section = pfn_to_section_nr(pfn);
+		काष्ठा mem_section *ms;
 
 		sparse_index_init(section, nid);
 		set_section_nid(section, nid);
 
 		ms = __nr_to_section(section);
-		if (!ms->section_mem_map) {
+		अगर (!ms->section_mem_map) अणु
 			ms->section_mem_map = sparse_encode_early_nid(nid) |
 							SECTION_IS_ONLINE;
 			section_mark_present(ms);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Mark all memblocks as present using memory_present().
- * This is a convenience function that is useful to mark all of the systems
+ * This is a convenience function that is useful to mark all of the प्रणालीs
  * memory as present during initialization.
  */
-static void __init memblocks_present(void)
-{
-	unsigned long start, end;
-	int i, nid;
+अटल व्योम __init memblocks_present(व्योम)
+अणु
+	अचिन्हित दीर्घ start, end;
+	पूर्णांक i, nid;
 
-	for_each_mem_pfn_range(i, MAX_NUMNODES, &start, &end, &nid)
+	क्रम_each_mem_pfn_range(i, MAX_NUMNODES, &start, &end, &nid)
 		memory_present(nid, start, end);
-}
+पूर्ण
 
 /*
- * Subtle, we encode the real pfn into the mem_map such that
- * the identity pfn - section_mem_map will return the actual
+ * Subtle, we encode the real pfn पूर्णांकo the mem_map such that
+ * the identity pfn - section_mem_map will वापस the actual
  * physical page frame number.
  */
-static unsigned long sparse_encode_mem_map(struct page *mem_map, unsigned long pnum)
-{
-	unsigned long coded_mem_map =
-		(unsigned long)(mem_map - (section_nr_to_pfn(pnum)));
+अटल अचिन्हित दीर्घ sparse_encode_mem_map(काष्ठा page *mem_map, अचिन्हित दीर्घ pnum)
+अणु
+	अचिन्हित दीर्घ coded_mem_map =
+		(अचिन्हित दीर्घ)(mem_map - (section_nr_to_pfn(pnum)));
 	BUILD_BUG_ON(SECTION_MAP_LAST_BIT > (1UL<<PFN_SECTION_SHIFT));
 	BUG_ON(coded_mem_map & ~SECTION_MAP_MASK);
-	return coded_mem_map;
-}
+	वापस coded_mem_map;
+पूर्ण
 
-#ifdef CONFIG_MEMORY_HOTPLUG
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
 /*
  * Decode mem_map from the coded memmap
  */
-struct page *sparse_decode_mem_map(unsigned long coded_mem_map, unsigned long pnum)
-{
-	/* mask off the extra low bits of information */
+काष्ठा page *sparse_decode_mem_map(अचिन्हित दीर्घ coded_mem_map, अचिन्हित दीर्घ pnum)
+अणु
+	/* mask off the extra low bits of inक्रमmation */
 	coded_mem_map &= SECTION_MAP_MASK;
-	return ((struct page *)coded_mem_map) + section_nr_to_pfn(pnum);
-}
-#endif /* CONFIG_MEMORY_HOTPLUG */
+	वापस ((काष्ठा page *)coded_mem_map) + section_nr_to_pfn(pnum);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MEMORY_HOTPLUG */
 
-static void __meminit sparse_init_one_section(struct mem_section *ms,
-		unsigned long pnum, struct page *mem_map,
-		struct mem_section_usage *usage, unsigned long flags)
-{
+अटल व्योम __meminit sparse_init_one_section(काष्ठा mem_section *ms,
+		अचिन्हित दीर्घ pnum, काष्ठा page *mem_map,
+		काष्ठा mem_section_usage *usage, अचिन्हित दीर्घ flags)
+अणु
 	ms->section_mem_map &= ~SECTION_MAP_MASK;
 	ms->section_mem_map |= sparse_encode_mem_map(mem_map, pnum)
 		| SECTION_HAS_MEM_MAP | flags;
 	ms->usage = usage;
-}
+पूर्ण
 
-static unsigned long usemap_size(void)
-{
-	return BITS_TO_LONGS(SECTION_BLOCKFLAGS_BITS) * sizeof(unsigned long);
-}
+अटल अचिन्हित दीर्घ usemap_size(व्योम)
+अणु
+	वापस BITS_TO_LONGS(SECTION_BLOCKFLAGS_BITS) * माप(अचिन्हित दीर्घ);
+पूर्ण
 
-size_t mem_section_usage_size(void)
-{
-	return sizeof(struct mem_section_usage) + usemap_size();
-}
+माप_प्रकार mem_section_usage_size(व्योम)
+अणु
+	वापस माप(काष्ठा mem_section_usage) + usemap_size();
+पूर्ण
 
-static inline phys_addr_t pgdat_to_phys(struct pglist_data *pgdat)
-{
-#ifndef CONFIG_NEED_MULTIPLE_NODES
-	return __pa_symbol(pgdat);
-#else
-	return __pa(pgdat);
-#endif
-}
+अटल अंतरभूत phys_addr_t pgdat_to_phys(काष्ठा pglist_data *pgdat)
+अणु
+#अगर_अघोषित CONFIG_NEED_MULTIPLE_NODES
+	वापस __pa_symbol(pgdat);
+#अन्यथा
+	वापस __pa(pgdat);
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_MEMORY_HOTREMOVE
-static struct mem_section_usage * __init
-sparse_early_usemaps_alloc_pgdat_section(struct pglist_data *pgdat,
-					 unsigned long size)
-{
-	struct mem_section_usage *usage;
-	unsigned long goal, limit;
-	int nid;
+#अगर_घोषित CONFIG_MEMORY_HOTREMOVE
+अटल काष्ठा mem_section_usage * __init
+sparse_early_usemaps_alloc_pgdat_section(काष्ठा pglist_data *pgdat,
+					 अचिन्हित दीर्घ size)
+अणु
+	काष्ठा mem_section_usage *usage;
+	अचिन्हित दीर्घ goal, limit;
+	पूर्णांक nid;
 	/*
-	 * A page may contain usemaps for other sections preventing the
-	 * page being freed and making a section unremovable while
-	 * other sections referencing the usemap remain active. Similarly,
-	 * a pgdat can prevent a section being removed. If section A
+	 * A page may contain usemaps क्रम other sections preventing the
+	 * page being मुक्तd and making a section unremovable जबतक
+	 * other sections referencing the usemap reमुख्य active. Similarly,
+	 * a pgdat can prevent a section being हटाओd. If section A
 	 * contains a pgdat and section B contains the usemap, both
-	 * sections become inter-dependent. This allocates usemaps
-	 * from the same section as the pgdat where possible to avoid
+	 * sections become पूर्णांकer-dependent. This allocates usemaps
+	 * from the same section as the pgdat where possible to aव्योम
 	 * this problem.
 	 */
 	goal = pgdat_to_phys(pgdat) & (PAGE_SECTION_MASK << PAGE_SHIFT);
@@ -376,529 +377,529 @@ sparse_early_usemaps_alloc_pgdat_section(struct pglist_data *pgdat,
 	nid = early_pfn_to_nid(goal >> PAGE_SHIFT);
 again:
 	usage = memblock_alloc_try_nid(size, SMP_CACHE_BYTES, goal, limit, nid);
-	if (!usage && limit) {
+	अगर (!usage && limit) अणु
 		limit = 0;
-		goto again;
-	}
-	return usage;
-}
+		जाओ again;
+	पूर्ण
+	वापस usage;
+पूर्ण
 
-static void __init check_usemap_section_nr(int nid,
-		struct mem_section_usage *usage)
-{
-	unsigned long usemap_snr, pgdat_snr;
-	static unsigned long old_usemap_snr;
-	static unsigned long old_pgdat_snr;
-	struct pglist_data *pgdat = NODE_DATA(nid);
-	int usemap_nid;
+अटल व्योम __init check_usemap_section_nr(पूर्णांक nid,
+		काष्ठा mem_section_usage *usage)
+अणु
+	अचिन्हित दीर्घ usemap_snr, pgdat_snr;
+	अटल अचिन्हित दीर्घ old_usemap_snr;
+	अटल अचिन्हित दीर्घ old_pgdat_snr;
+	काष्ठा pglist_data *pgdat = NODE_DATA(nid);
+	पूर्णांक usemap_nid;
 
 	/* First call */
-	if (!old_usemap_snr) {
+	अगर (!old_usemap_snr) अणु
 		old_usemap_snr = NR_MEM_SECTIONS;
 		old_pgdat_snr = NR_MEM_SECTIONS;
-	}
+	पूर्ण
 
 	usemap_snr = pfn_to_section_nr(__pa(usage) >> PAGE_SHIFT);
 	pgdat_snr = pfn_to_section_nr(pgdat_to_phys(pgdat) >> PAGE_SHIFT);
-	if (usemap_snr == pgdat_snr)
-		return;
+	अगर (usemap_snr == pgdat_snr)
+		वापस;
 
-	if (old_usemap_snr == usemap_snr && old_pgdat_snr == pgdat_snr)
+	अगर (old_usemap_snr == usemap_snr && old_pgdat_snr == pgdat_snr)
 		/* skip redundant message */
-		return;
+		वापस;
 
 	old_usemap_snr = usemap_snr;
 	old_pgdat_snr = pgdat_snr;
 
 	usemap_nid = sparse_early_nid(__nr_to_section(usemap_snr));
-	if (usemap_nid != nid) {
+	अगर (usemap_nid != nid) अणु
 		pr_info("node %d must be removed before remove section %ld\n",
 			nid, usemap_snr);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/*
 	 * There is a circular dependency.
-	 * Some platforms allow un-removable section because they will just
-	 * gather other removable sections for dynamic partitioning.
-	 * Just notify un-removable section's number here.
+	 * Some platक्रमms allow un-removable section because they will just
+	 * gather other removable sections क्रम dynamic partitioning.
+	 * Just notअगरy un-removable section's number here.
 	 */
 	pr_info("Section %ld and %ld (node %d) have a circular dependency on usemap and pgdat allocations\n",
 		usemap_snr, pgdat_snr, nid);
-}
-#else
-static struct mem_section_usage * __init
-sparse_early_usemaps_alloc_pgdat_section(struct pglist_data *pgdat,
-					 unsigned long size)
-{
-	return memblock_alloc_node(size, SMP_CACHE_BYTES, pgdat->node_id);
-}
+पूर्ण
+#अन्यथा
+अटल काष्ठा mem_section_usage * __init
+sparse_early_usemaps_alloc_pgdat_section(काष्ठा pglist_data *pgdat,
+					 अचिन्हित दीर्घ size)
+अणु
+	वापस memblock_alloc_node(size, SMP_CACHE_BYTES, pgdat->node_id);
+पूर्ण
 
-static void __init check_usemap_section_nr(int nid,
-		struct mem_section_usage *usage)
-{
-}
-#endif /* CONFIG_MEMORY_HOTREMOVE */
+अटल व्योम __init check_usemap_section_nr(पूर्णांक nid,
+		काष्ठा mem_section_usage *usage)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MEMORY_HOTREMOVE */
 
-#ifdef CONFIG_SPARSEMEM_VMEMMAP
-static unsigned long __init section_map_size(void)
-{
-	return ALIGN(sizeof(struct page) * PAGES_PER_SECTION, PMD_SIZE);
-}
+#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
+अटल अचिन्हित दीर्घ __init section_map_size(व्योम)
+अणु
+	वापस ALIGN(माप(काष्ठा page) * PAGES_PER_SECTION, PMD_SIZE);
+पूर्ण
 
-#else
-static unsigned long __init section_map_size(void)
-{
-	return PAGE_ALIGN(sizeof(struct page) * PAGES_PER_SECTION);
-}
+#अन्यथा
+अटल अचिन्हित दीर्घ __init section_map_size(व्योम)
+अणु
+	वापस PAGE_ALIGN(माप(काष्ठा page) * PAGES_PER_SECTION);
+पूर्ण
 
-struct page __init *__populate_section_memmap(unsigned long pfn,
-		unsigned long nr_pages, int nid, struct vmem_altmap *altmap)
-{
-	unsigned long size = section_map_size();
-	struct page *map = sparse_buffer_alloc(size);
+काष्ठा page __init *__populate_section_memmap(अचिन्हित दीर्घ pfn,
+		अचिन्हित दीर्घ nr_pages, पूर्णांक nid, काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	अचिन्हित दीर्घ size = section_map_size();
+	काष्ठा page *map = sparse_buffer_alloc(size);
 	phys_addr_t addr = __pa(MAX_DMA_ADDRESS);
 
-	if (map)
-		return map;
+	अगर (map)
+		वापस map;
 
 	map = memblock_alloc_try_nid_raw(size, size, addr,
 					  MEMBLOCK_ALLOC_ACCESSIBLE, nid);
-	if (!map)
+	अगर (!map)
 		panic("%s: Failed to allocate %lu bytes align=0x%lx nid=%d from=%pa\n",
 		      __func__, size, PAGE_SIZE, nid, &addr);
 
-	return map;
-}
-#endif /* !CONFIG_SPARSEMEM_VMEMMAP */
+	वापस map;
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_SPARSEMEM_VMEMMAP */
 
-static void *sparsemap_buf __meminitdata;
-static void *sparsemap_buf_end __meminitdata;
+अटल व्योम *sparsemap_buf __meminitdata;
+अटल व्योम *sparsemap_buf_end __meminitdata;
 
-static inline void __meminit sparse_buffer_free(unsigned long size)
-{
+अटल अंतरभूत व्योम __meminit sparse_buffer_मुक्त(अचिन्हित दीर्घ size)
+अणु
 	WARN_ON(!sparsemap_buf || size == 0);
-	memblock_free_early(__pa(sparsemap_buf), size);
-}
+	memblock_मुक्त_early(__pa(sparsemap_buf), size);
+पूर्ण
 
-static void __init sparse_buffer_init(unsigned long size, int nid)
-{
+अटल व्योम __init sparse_buffer_init(अचिन्हित दीर्घ size, पूर्णांक nid)
+अणु
 	phys_addr_t addr = __pa(MAX_DMA_ADDRESS);
-	WARN_ON(sparsemap_buf);	/* forgot to call sparse_buffer_fini()? */
+	WARN_ON(sparsemap_buf);	/* क्रमgot to call sparse_buffer_fini()? */
 	/*
-	 * Pre-allocated buffer is mainly used by __populate_section_memmap
+	 * Pre-allocated buffer is मुख्यly used by __populate_section_memmap
 	 * and we want it to be properly aligned to the section size - this is
-	 * especially the case for VMEMMAP which maps memmap to PMDs
+	 * especially the हाल क्रम VMEMMAP which maps memmap to PMDs
 	 */
 	sparsemap_buf = memblock_alloc_exact_nid_raw(size, section_map_size(),
 					addr, MEMBLOCK_ALLOC_ACCESSIBLE, nid);
 	sparsemap_buf_end = sparsemap_buf + size;
-}
+पूर्ण
 
-static void __init sparse_buffer_fini(void)
-{
-	unsigned long size = sparsemap_buf_end - sparsemap_buf;
+अटल व्योम __init sparse_buffer_fini(व्योम)
+अणु
+	अचिन्हित दीर्घ size = sparsemap_buf_end - sparsemap_buf;
 
-	if (sparsemap_buf && size > 0)
-		sparse_buffer_free(size);
-	sparsemap_buf = NULL;
-}
+	अगर (sparsemap_buf && size > 0)
+		sparse_buffer_मुक्त(size);
+	sparsemap_buf = शून्य;
+पूर्ण
 
-void * __meminit sparse_buffer_alloc(unsigned long size)
-{
-	void *ptr = NULL;
+व्योम * __meminit sparse_buffer_alloc(अचिन्हित दीर्घ size)
+अणु
+	व्योम *ptr = शून्य;
 
-	if (sparsemap_buf) {
-		ptr = (void *) roundup((unsigned long)sparsemap_buf, size);
-		if (ptr + size > sparsemap_buf_end)
-			ptr = NULL;
-		else {
+	अगर (sparsemap_buf) अणु
+		ptr = (व्योम *) roundup((अचिन्हित दीर्घ)sparsemap_buf, size);
+		अगर (ptr + size > sparsemap_buf_end)
+			ptr = शून्य;
+		अन्यथा अणु
 			/* Free redundant aligned space */
-			if ((unsigned long)(ptr - sparsemap_buf) > 0)
-				sparse_buffer_free((unsigned long)(ptr - sparsemap_buf));
+			अगर ((अचिन्हित दीर्घ)(ptr - sparsemap_buf) > 0)
+				sparse_buffer_मुक्त((अचिन्हित दीर्घ)(ptr - sparsemap_buf));
 			sparsemap_buf = ptr + size;
-		}
-	}
-	return ptr;
-}
+		पूर्ण
+	पूर्ण
+	वापस ptr;
+पूर्ण
 
-void __weak __meminit vmemmap_populate_print_last(void)
-{
-}
+व्योम __weak __meminit vmemmap_populate_prपूर्णांक_last(व्योम)
+अणु
+पूर्ण
 
 /*
- * Initialize sparse on a specific node. The node spans [pnum_begin, pnum_end)
+ * Initialize sparse on a specअगरic node. The node spans [pnum_begin, pnum_end)
  * And number of present sections in this node is map_count.
  */
-static void __init sparse_init_nid(int nid, unsigned long pnum_begin,
-				   unsigned long pnum_end,
-				   unsigned long map_count)
-{
-	struct mem_section_usage *usage;
-	unsigned long pnum;
-	struct page *map;
+अटल व्योम __init sparse_init_nid(पूर्णांक nid, अचिन्हित दीर्घ pnum_begin,
+				   अचिन्हित दीर्घ pnum_end,
+				   अचिन्हित दीर्घ map_count)
+अणु
+	काष्ठा mem_section_usage *usage;
+	अचिन्हित दीर्घ pnum;
+	काष्ठा page *map;
 
 	usage = sparse_early_usemaps_alloc_pgdat_section(NODE_DATA(nid),
 			mem_section_usage_size() * map_count);
-	if (!usage) {
+	अगर (!usage) अणु
 		pr_err("%s: node[%d] usemap allocation failed", __func__, nid);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 	sparse_buffer_init(map_count * section_map_size(), nid);
-	for_each_present_section_nr(pnum_begin, pnum) {
-		unsigned long pfn = section_nr_to_pfn(pnum);
+	क्रम_each_present_section_nr(pnum_begin, pnum) अणु
+		अचिन्हित दीर्घ pfn = section_nr_to_pfn(pnum);
 
-		if (pnum >= pnum_end)
-			break;
+		अगर (pnum >= pnum_end)
+			अवरोध;
 
 		map = __populate_section_memmap(pfn, PAGES_PER_SECTION,
-				nid, NULL);
-		if (!map) {
+				nid, शून्य);
+		अगर (!map) अणु
 			pr_err("%s: node[%d] memory map backing failed. Some memory will not be available.",
 			       __func__, nid);
 			pnum_begin = pnum;
 			sparse_buffer_fini();
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 		check_usemap_section_nr(nid, usage);
 		sparse_init_one_section(__nr_to_section(pnum), pnum, map, usage,
 				SECTION_IS_EARLY);
-		usage = (void *) usage + mem_section_usage_size();
-	}
+		usage = (व्योम *) usage + mem_section_usage_size();
+	पूर्ण
 	sparse_buffer_fini();
-	return;
+	वापस;
 failed:
 	/* We failed to allocate, mark all the following pnums as not present */
-	for_each_present_section_nr(pnum_begin, pnum) {
-		struct mem_section *ms;
+	क्रम_each_present_section_nr(pnum_begin, pnum) अणु
+		काष्ठा mem_section *ms;
 
-		if (pnum >= pnum_end)
-			break;
+		अगर (pnum >= pnum_end)
+			अवरोध;
 		ms = __nr_to_section(pnum);
 		ms->section_mem_map = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Allocate the accumulated non-linear sections, allocate a mem_map
- * for each and record the physical to section mapping.
+ * क्रम each and record the physical to section mapping.
  */
-void __init sparse_init(void)
-{
-	unsigned long pnum_end, pnum_begin, map_count = 1;
-	int nid_begin;
+व्योम __init sparse_init(व्योम)
+अणु
+	अचिन्हित दीर्घ pnum_end, pnum_begin, map_count = 1;
+	पूर्णांक nid_begin;
 
 	memblocks_present();
 
 	pnum_begin = first_present_section_nr();
 	nid_begin = sparse_early_nid(__nr_to_section(pnum_begin));
 
-	/* Setup pageblock_order for HUGETLB_PAGE_SIZE_VARIABLE */
+	/* Setup pageblock_order क्रम HUGETLB_PAGE_SIZE_VARIABLE */
 	set_pageblock_order();
 
-	for_each_present_section_nr(pnum_begin + 1, pnum_end) {
-		int nid = sparse_early_nid(__nr_to_section(pnum_end));
+	क्रम_each_present_section_nr(pnum_begin + 1, pnum_end) अणु
+		पूर्णांक nid = sparse_early_nid(__nr_to_section(pnum_end));
 
-		if (nid == nid_begin) {
+		अगर (nid == nid_begin) अणु
 			map_count++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		/* Init node with sections in range [pnum_begin, pnum_end) */
 		sparse_init_nid(nid_begin, pnum_begin, pnum_end, map_count);
 		nid_begin = nid;
 		pnum_begin = pnum_end;
 		map_count = 1;
-	}
+	पूर्ण
 	/* cover the last node */
 	sparse_init_nid(nid_begin, pnum_begin, pnum_end, map_count);
-	vmemmap_populate_print_last();
-}
+	vmemmap_populate_prपूर्णांक_last();
+पूर्ण
 
-#ifdef CONFIG_MEMORY_HOTPLUG
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
 
 /* Mark all memory sections within the pfn range as online */
-void online_mem_sections(unsigned long start_pfn, unsigned long end_pfn)
-{
-	unsigned long pfn;
+व्योम online_mem_sections(अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ end_pfn)
+अणु
+	अचिन्हित दीर्घ pfn;
 
-	for (pfn = start_pfn; pfn < end_pfn; pfn += PAGES_PER_SECTION) {
-		unsigned long section_nr = pfn_to_section_nr(pfn);
-		struct mem_section *ms;
+	क्रम (pfn = start_pfn; pfn < end_pfn; pfn += PAGES_PER_SECTION) अणु
+		अचिन्हित दीर्घ section_nr = pfn_to_section_nr(pfn);
+		काष्ठा mem_section *ms;
 
 		/* onlining code should never touch invalid ranges */
-		if (WARN_ON(!valid_section_nr(section_nr)))
-			continue;
+		अगर (WARN_ON(!valid_section_nr(section_nr)))
+			जारी;
 
 		ms = __nr_to_section(section_nr);
 		ms->section_mem_map |= SECTION_IS_ONLINE;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Mark all memory sections within the pfn range as offline */
-void offline_mem_sections(unsigned long start_pfn, unsigned long end_pfn)
-{
-	unsigned long pfn;
+व्योम offline_mem_sections(अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ end_pfn)
+अणु
+	अचिन्हित दीर्घ pfn;
 
-	for (pfn = start_pfn; pfn < end_pfn; pfn += PAGES_PER_SECTION) {
-		unsigned long section_nr = pfn_to_section_nr(pfn);
-		struct mem_section *ms;
+	क्रम (pfn = start_pfn; pfn < end_pfn; pfn += PAGES_PER_SECTION) अणु
+		अचिन्हित दीर्घ section_nr = pfn_to_section_nr(pfn);
+		काष्ठा mem_section *ms;
 
 		/*
-		 * TODO this needs some double checking. Offlining code makes
+		 * TODO this needs some द्विगुन checking. Offlining code makes
 		 * sure to check pfn_valid but those checks might be just bogus
 		 */
-		if (WARN_ON(!valid_section_nr(section_nr)))
-			continue;
+		अगर (WARN_ON(!valid_section_nr(section_nr)))
+			जारी;
 
 		ms = __nr_to_section(section_nr);
 		ms->section_mem_map &= ~SECTION_IS_ONLINE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_SPARSEMEM_VMEMMAP
-static struct page * __meminit populate_section_memmap(unsigned long pfn,
-		unsigned long nr_pages, int nid, struct vmem_altmap *altmap)
-{
-	return __populate_section_memmap(pfn, nr_pages, nid, altmap);
-}
+#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
+अटल काष्ठा page * __meminit populate_section_memmap(अचिन्हित दीर्घ pfn,
+		अचिन्हित दीर्घ nr_pages, पूर्णांक nid, काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	वापस __populate_section_memmap(pfn, nr_pages, nid, alपंचांगap);
+पूर्ण
 
-static void depopulate_section_memmap(unsigned long pfn, unsigned long nr_pages,
-		struct vmem_altmap *altmap)
-{
-	unsigned long start = (unsigned long) pfn_to_page(pfn);
-	unsigned long end = start + nr_pages * sizeof(struct page);
+अटल व्योम depopulate_section_memmap(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages,
+		काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ) pfn_to_page(pfn);
+	अचिन्हित दीर्घ end = start + nr_pages * माप(काष्ठा page);
 
-	vmemmap_free(start, end, altmap);
-}
-static void free_map_bootmem(struct page *memmap)
-{
-	unsigned long start = (unsigned long)memmap;
-	unsigned long end = (unsigned long)(memmap + PAGES_PER_SECTION);
+	vmemmap_मुक्त(start, end, alपंचांगap);
+पूर्ण
+अटल व्योम मुक्त_map_booपंचांगem(काष्ठा page *memmap)
+अणु
+	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ)memmap;
+	अचिन्हित दीर्घ end = (अचिन्हित दीर्घ)(memmap + PAGES_PER_SECTION);
 
-	vmemmap_free(start, end, NULL);
-}
+	vmemmap_मुक्त(start, end, शून्य);
+पूर्ण
 
-static int clear_subsection_map(unsigned long pfn, unsigned long nr_pages)
-{
-	DECLARE_BITMAP(map, SUBSECTIONS_PER_SECTION) = { 0 };
-	DECLARE_BITMAP(tmp, SUBSECTIONS_PER_SECTION) = { 0 };
-	struct mem_section *ms = __pfn_to_section(pfn);
-	unsigned long *subsection_map = ms->usage
-		? &ms->usage->subsection_map[0] : NULL;
+अटल पूर्णांक clear_subsection_map(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages)
+अणु
+	DECLARE_BITMAP(map, SUBSECTIONS_PER_SECTION) = अणु 0 पूर्ण;
+	DECLARE_BITMAP(पंचांगp, SUBSECTIONS_PER_SECTION) = अणु 0 पूर्ण;
+	काष्ठा mem_section *ms = __pfn_to_section(pfn);
+	अचिन्हित दीर्घ *subsection_map = ms->usage
+		? &ms->usage->subsection_map[0] : शून्य;
 
 	subsection_mask_set(map, pfn, nr_pages);
-	if (subsection_map)
-		bitmap_and(tmp, map, subsection_map, SUBSECTIONS_PER_SECTION);
+	अगर (subsection_map)
+		biपंचांगap_and(पंचांगp, map, subsection_map, SUBSECTIONS_PER_SECTION);
 
-	if (WARN(!subsection_map || !bitmap_equal(tmp, map, SUBSECTIONS_PER_SECTION),
+	अगर (WARN(!subsection_map || !biपंचांगap_equal(पंचांगp, map, SUBSECTIONS_PER_SECTION),
 				"section already deactivated (%#lx + %ld)\n",
 				pfn, nr_pages))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	bitmap_xor(subsection_map, map, subsection_map, SUBSECTIONS_PER_SECTION);
-	return 0;
-}
+	biपंचांगap_xor(subsection_map, map, subsection_map, SUBSECTIONS_PER_SECTION);
+	वापस 0;
+पूर्ण
 
-static bool is_subsection_map_empty(struct mem_section *ms)
-{
-	return bitmap_empty(&ms->usage->subsection_map[0],
+अटल bool is_subsection_map_empty(काष्ठा mem_section *ms)
+अणु
+	वापस biपंचांगap_empty(&ms->usage->subsection_map[0],
 			    SUBSECTIONS_PER_SECTION);
-}
+पूर्ण
 
-static int fill_subsection_map(unsigned long pfn, unsigned long nr_pages)
-{
-	struct mem_section *ms = __pfn_to_section(pfn);
-	DECLARE_BITMAP(map, SUBSECTIONS_PER_SECTION) = { 0 };
-	unsigned long *subsection_map;
-	int rc = 0;
+अटल पूर्णांक fill_subsection_map(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages)
+अणु
+	काष्ठा mem_section *ms = __pfn_to_section(pfn);
+	DECLARE_BITMAP(map, SUBSECTIONS_PER_SECTION) = अणु 0 पूर्ण;
+	अचिन्हित दीर्घ *subsection_map;
+	पूर्णांक rc = 0;
 
 	subsection_mask_set(map, pfn, nr_pages);
 
 	subsection_map = &ms->usage->subsection_map[0];
 
-	if (bitmap_empty(map, SUBSECTIONS_PER_SECTION))
+	अगर (biपंचांगap_empty(map, SUBSECTIONS_PER_SECTION))
 		rc = -EINVAL;
-	else if (bitmap_intersects(map, subsection_map, SUBSECTIONS_PER_SECTION))
+	अन्यथा अगर (biपंचांगap_पूर्णांकersects(map, subsection_map, SUBSECTIONS_PER_SECTION))
 		rc = -EEXIST;
-	else
-		bitmap_or(subsection_map, map, subsection_map,
+	अन्यथा
+		biपंचांगap_or(subsection_map, map, subsection_map,
 				SUBSECTIONS_PER_SECTION);
 
-	return rc;
-}
-#else
-struct page * __meminit populate_section_memmap(unsigned long pfn,
-		unsigned long nr_pages, int nid, struct vmem_altmap *altmap)
-{
-	return kvmalloc_node(array_size(sizeof(struct page),
+	वापस rc;
+पूर्ण
+#अन्यथा
+काष्ठा page * __meminit populate_section_memmap(अचिन्हित दीर्घ pfn,
+		अचिन्हित दीर्घ nr_pages, पूर्णांक nid, काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	वापस kvदो_स्मृति_node(array_size(माप(काष्ठा page),
 					PAGES_PER_SECTION), GFP_KERNEL, nid);
-}
+पूर्ण
 
-static void depopulate_section_memmap(unsigned long pfn, unsigned long nr_pages,
-		struct vmem_altmap *altmap)
-{
-	kvfree(pfn_to_page(pfn));
-}
+अटल व्योम depopulate_section_memmap(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages,
+		काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	kvमुक्त(pfn_to_page(pfn));
+पूर्ण
 
-static void free_map_bootmem(struct page *memmap)
-{
-	unsigned long maps_section_nr, removing_section_nr, i;
-	unsigned long magic, nr_pages;
-	struct page *page = virt_to_page(memmap);
+अटल व्योम मुक्त_map_booपंचांगem(काष्ठा page *memmap)
+अणु
+	अचिन्हित दीर्घ maps_section_nr, removing_section_nr, i;
+	अचिन्हित दीर्घ magic, nr_pages;
+	काष्ठा page *page = virt_to_page(memmap);
 
-	nr_pages = PAGE_ALIGN(PAGES_PER_SECTION * sizeof(struct page))
+	nr_pages = PAGE_ALIGN(PAGES_PER_SECTION * माप(काष्ठा page))
 		>> PAGE_SHIFT;
 
-	for (i = 0; i < nr_pages; i++, page++) {
-		magic = (unsigned long) page->freelist;
+	क्रम (i = 0; i < nr_pages; i++, page++) अणु
+		magic = (अचिन्हित दीर्घ) page->मुक्तlist;
 
 		BUG_ON(magic == NODE_INFO);
 
 		maps_section_nr = pfn_to_section_nr(page_to_pfn(page));
-		removing_section_nr = page_private(page);
+		removing_section_nr = page_निजी(page);
 
 		/*
 		 * When this function is called, the removing section is
 		 * logical offlined state. This means all pages are isolated
 		 * from page allocator. If removing section's memmap is placed
-		 * on the same section, it must not be freed.
-		 * If it is freed, page allocator may allocate it which will
-		 * be removed physically soon.
+		 * on the same section, it must not be मुक्तd.
+		 * If it is मुक्तd, page allocator may allocate it which will
+		 * be हटाओd physically soon.
 		 */
-		if (maps_section_nr != removing_section_nr)
-			put_page_bootmem(page);
-	}
-}
+		अगर (maps_section_nr != removing_section_nr)
+			put_page_booपंचांगem(page);
+	पूर्ण
+पूर्ण
 
-static int clear_subsection_map(unsigned long pfn, unsigned long nr_pages)
-{
-	return 0;
-}
+अटल पूर्णांक clear_subsection_map(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages)
+अणु
+	वापस 0;
+पूर्ण
 
-static bool is_subsection_map_empty(struct mem_section *ms)
-{
-	return true;
-}
+अटल bool is_subsection_map_empty(काष्ठा mem_section *ms)
+अणु
+	वापस true;
+पूर्ण
 
-static int fill_subsection_map(unsigned long pfn, unsigned long nr_pages)
-{
-	return 0;
-}
-#endif /* CONFIG_SPARSEMEM_VMEMMAP */
+अटल पूर्णांक fill_subsection_map(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SPARSEMEM_VMEMMAP */
 
 /*
- * To deactivate a memory region, there are 3 cases to handle across
- * two configurations (SPARSEMEM_VMEMMAP={y,n}):
+ * To deactivate a memory region, there are 3 हालs to handle across
+ * two configurations (SPARSEMEM_VMEMMAP=अणुy,nपूर्ण):
  *
  * 1. deactivation of a partial hot-added section (only possible in
- *    the SPARSEMEM_VMEMMAP=y case).
+ *    the SPARSEMEM_VMEMMAP=y हाल).
  *      a) section was present at memory init.
  *      b) section was hot-added post memory init.
  * 2. deactivation of a complete hot-added section.
  * 3. deactivation of a complete section from memory init.
  *
- * For 1, when subsection_map does not empty we will not be freeing the
- * usage map, but still need to free the vmemmap range.
+ * For 1, when subsection_map करोes not empty we will not be मुक्तing the
+ * usage map, but still need to मुक्त the vmemmap range.
  *
- * For 2 and 3, the SPARSEMEM_VMEMMAP={y,n} cases are unified
+ * For 2 and 3, the SPARSEMEM_VMEMMAP=अणुy,nपूर्ण हालs are unअगरied
  */
-static void section_deactivate(unsigned long pfn, unsigned long nr_pages,
-		struct vmem_altmap *altmap)
-{
-	struct mem_section *ms = __pfn_to_section(pfn);
+अटल व्योम section_deactivate(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages,
+		काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	काष्ठा mem_section *ms = __pfn_to_section(pfn);
 	bool section_is_early = early_section(ms);
-	struct page *memmap = NULL;
+	काष्ठा page *memmap = शून्य;
 	bool empty;
 
-	if (clear_subsection_map(pfn, nr_pages))
-		return;
+	अगर (clear_subsection_map(pfn, nr_pages))
+		वापस;
 
 	empty = is_subsection_map_empty(ms);
-	if (empty) {
-		unsigned long section_nr = pfn_to_section_nr(pfn);
+	अगर (empty) अणु
+		अचिन्हित दीर्घ section_nr = pfn_to_section_nr(pfn);
 
 		/*
 		 * When removing an early section, the usage map is kept (as the
-		 * usage maps of other sections fall into the same page). It
+		 * usage maps of other sections fall पूर्णांकo the same page). It
 		 * will be re-used when re-adding the section - which is then no
-		 * longer an early section. If the usage map is PageReserved, it
+		 * दीर्घer an early section. If the usage map is PageReserved, it
 		 * was allocated during boot.
 		 */
-		if (!PageReserved(virt_to_page(ms->usage))) {
-			kfree(ms->usage);
-			ms->usage = NULL;
-		}
+		अगर (!PageReserved(virt_to_page(ms->usage))) अणु
+			kमुक्त(ms->usage);
+			ms->usage = शून्य;
+		पूर्ण
 		memmap = sparse_decode_mem_map(ms->section_mem_map, section_nr);
 		/*
 		 * Mark the section invalid so that valid_section()
-		 * return false. This prevents code from dereferencing
+		 * वापस false. This prevents code from dereferencing
 		 * ms->usage array.
 		 */
 		ms->section_mem_map &= ~SECTION_HAS_MEM_MAP;
-	}
+	पूर्ण
 
 	/*
 	 * The memmap of early sections is always fully populated. See
 	 * section_activate() and pfn_valid() .
 	 */
-	if (!section_is_early)
-		depopulate_section_memmap(pfn, nr_pages, altmap);
-	else if (memmap)
-		free_map_bootmem(memmap);
+	अगर (!section_is_early)
+		depopulate_section_memmap(pfn, nr_pages, alपंचांगap);
+	अन्यथा अगर (memmap)
+		मुक्त_map_booपंचांगem(memmap);
 
-	if (empty)
-		ms->section_mem_map = (unsigned long)NULL;
-}
+	अगर (empty)
+		ms->section_mem_map = (अचिन्हित दीर्घ)शून्य;
+पूर्ण
 
-static struct page * __meminit section_activate(int nid, unsigned long pfn,
-		unsigned long nr_pages, struct vmem_altmap *altmap)
-{
-	struct mem_section *ms = __pfn_to_section(pfn);
-	struct mem_section_usage *usage = NULL;
-	struct page *memmap;
-	int rc = 0;
+अटल काष्ठा page * __meminit section_activate(पूर्णांक nid, अचिन्हित दीर्घ pfn,
+		अचिन्हित दीर्घ nr_pages, काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	काष्ठा mem_section *ms = __pfn_to_section(pfn);
+	काष्ठा mem_section_usage *usage = शून्य;
+	काष्ठा page *memmap;
+	पूर्णांक rc = 0;
 
-	if (!ms->usage) {
+	अगर (!ms->usage) अणु
 		usage = kzalloc(mem_section_usage_size(), GFP_KERNEL);
-		if (!usage)
-			return ERR_PTR(-ENOMEM);
+		अगर (!usage)
+			वापस ERR_PTR(-ENOMEM);
 		ms->usage = usage;
-	}
+	पूर्ण
 
 	rc = fill_subsection_map(pfn, nr_pages);
-	if (rc) {
-		if (usage)
-			ms->usage = NULL;
-		kfree(usage);
-		return ERR_PTR(rc);
-	}
+	अगर (rc) अणु
+		अगर (usage)
+			ms->usage = शून्य;
+		kमुक्त(usage);
+		वापस ERR_PTR(rc);
+	पूर्ण
 
 	/*
-	 * The early init code does not consider partially populated
+	 * The early init code करोes not consider partially populated
 	 * initial sections, it simply assumes that memory will never be
-	 * referenced.  If we hot-add memory into such a section then we
-	 * do not need to populate the memmap and can simply reuse what
-	 * is already there.
+	 * referenced.  If we hot-add memory पूर्णांकo such a section then we
+	 * करो not need to populate the memmap and can simply reuse what
+	 * is alपढ़ोy there.
 	 */
-	if (nr_pages < PAGES_PER_SECTION && early_section(ms))
-		return pfn_to_page(pfn);
+	अगर (nr_pages < PAGES_PER_SECTION && early_section(ms))
+		वापस pfn_to_page(pfn);
 
-	memmap = populate_section_memmap(pfn, nr_pages, nid, altmap);
-	if (!memmap) {
-		section_deactivate(pfn, nr_pages, altmap);
-		return ERR_PTR(-ENOMEM);
-	}
+	memmap = populate_section_memmap(pfn, nr_pages, nid, alपंचांगap);
+	अगर (!memmap) अणु
+		section_deactivate(pfn, nr_pages, alपंचांगap);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	return memmap;
-}
+	वापस memmap;
+पूर्ण
 
 /**
  * sparse_add_section - add a memory section, or populate an existing one
  * @nid: The node to add section on
  * @start_pfn: start pfn of the memory range
  * @nr_pages: number of pfns to add in the section
- * @altmap: device page map
+ * @alपंचांगap: device page map
  *
- * This is only intended for hotplug.
+ * This is only पूर्णांकended क्रम hotplug.
  *
  * Note that only VMEMMAP supports sub-section aligned hotplug,
  * the proper alignment and size are gated by check_pfn_span().
@@ -909,73 +910,73 @@ static struct page * __meminit section_activate(int nid, unsigned long pfn,
  * * -EEXIST	- Section has been present.
  * * -ENOMEM	- Out of memory.
  */
-int __meminit sparse_add_section(int nid, unsigned long start_pfn,
-		unsigned long nr_pages, struct vmem_altmap *altmap)
-{
-	unsigned long section_nr = pfn_to_section_nr(start_pfn);
-	struct mem_section *ms;
-	struct page *memmap;
-	int ret;
+पूर्णांक __meminit sparse_add_section(पूर्णांक nid, अचिन्हित दीर्घ start_pfn,
+		अचिन्हित दीर्घ nr_pages, काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	अचिन्हित दीर्घ section_nr = pfn_to_section_nr(start_pfn);
+	काष्ठा mem_section *ms;
+	काष्ठा page *memmap;
+	पूर्णांक ret;
 
 	ret = sparse_index_init(section_nr, nid);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	memmap = section_activate(nid, start_pfn, nr_pages, altmap);
-	if (IS_ERR(memmap))
-		return PTR_ERR(memmap);
+	memmap = section_activate(nid, start_pfn, nr_pages, alपंचांगap);
+	अगर (IS_ERR(memmap))
+		वापस PTR_ERR(memmap);
 
 	/*
-	 * Poison uninitialized struct pages in order to catch invalid flags
+	 * Poison uninitialized काष्ठा pages in order to catch invalid flags
 	 * combinations.
 	 */
-	page_init_poison(memmap, sizeof(struct page) * nr_pages);
+	page_init_poison(memmap, माप(काष्ठा page) * nr_pages);
 
 	ms = __nr_to_section(section_nr);
 	set_section_nid(section_nr, nid);
 	section_mark_present(ms);
 
-	/* Align memmap to section boundary in the subsection case */
-	if (section_nr_to_pfn(section_nr) != start_pfn)
+	/* Align memmap to section boundary in the subsection हाल */
+	अगर (section_nr_to_pfn(section_nr) != start_pfn)
 		memmap = pfn_to_page(section_nr_to_pfn(section_nr));
 	sparse_init_one_section(ms, section_nr, memmap, ms->usage, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_MEMORY_FAILURE
-static void clear_hwpoisoned_pages(struct page *memmap, int nr_pages)
-{
-	int i;
+#अगर_घोषित CONFIG_MEMORY_FAILURE
+अटल व्योम clear_hwpoisoned_pages(काष्ठा page *memmap, पूर्णांक nr_pages)
+अणु
+	पूर्णांक i;
 
 	/*
 	 * A further optimization is to have per section refcounted
 	 * num_poisoned_pages.  But that would need more space per memmap, so
-	 * for now just do a quick global check to speed up this routine in the
-	 * absence of bad pages.
+	 * क्रम now just करो a quick global check to speed up this routine in the
+	 * असलence of bad pages.
 	 */
-	if (atomic_long_read(&num_poisoned_pages) == 0)
-		return;
+	अगर (atomic_दीर्घ_पढ़ो(&num_poisoned_pages) == 0)
+		वापस;
 
-	for (i = 0; i < nr_pages; i++) {
-		if (PageHWPoison(&memmap[i])) {
+	क्रम (i = 0; i < nr_pages; i++) अणु
+		अगर (PageHWPoison(&memmap[i])) अणु
 			num_poisoned_pages_dec();
 			ClearPageHWPoison(&memmap[i]);
-		}
-	}
-}
-#else
-static inline void clear_hwpoisoned_pages(struct page *memmap, int nr_pages)
-{
-}
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम clear_hwpoisoned_pages(काष्ठा page *memmap, पूर्णांक nr_pages)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-void sparse_remove_section(struct mem_section *ms, unsigned long pfn,
-		unsigned long nr_pages, unsigned long map_offset,
-		struct vmem_altmap *altmap)
-{
+व्योम sparse_हटाओ_section(काष्ठा mem_section *ms, अचिन्हित दीर्घ pfn,
+		अचिन्हित दीर्घ nr_pages, अचिन्हित दीर्घ map_offset,
+		काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
 	clear_hwpoisoned_pages(pfn_to_page(pfn) + map_offset,
 			nr_pages - map_offset);
-	section_deactivate(pfn, nr_pages, altmap);
-}
-#endif /* CONFIG_MEMORY_HOTPLUG */
+	section_deactivate(pfn, nr_pages, alपंचांगap);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MEMORY_HOTPLUG */

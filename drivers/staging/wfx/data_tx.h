@@ -1,68 +1,69 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Datapath implementation.
  *
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
-#ifndef WFX_DATA_TX_H
-#define WFX_DATA_TX_H
+#अगर_अघोषित WFX_DATA_TX_H
+#घोषणा WFX_DATA_TX_H
 
-#include <linux/list.h>
-#include <net/mac80211.h>
+#समावेश <linux/list.h>
+#समावेश <net/mac80211.h>
 
-#include "hif_api_cmd.h"
-#include "hif_api_mib.h"
+#समावेश "hif_api_cmd.h"
+#समावेश "hif_api_mib.h"
 
-struct wfx_tx_priv;
-struct wfx_dev;
-struct wfx_vif;
+काष्ठा wfx_tx_priv;
+काष्ठा wfx_dev;
+काष्ठा wfx_vअगर;
 
-struct tx_policy {
-	struct list_head link;
-	int usage_count;
+काष्ठा tx_policy अणु
+	काष्ठा list_head link;
+	पूर्णांक usage_count;
 	u8 rates[12];
 	bool uploaded;
-};
+पूर्ण;
 
-struct tx_policy_cache {
-	struct tx_policy cache[HIF_TX_RETRY_POLICY_MAX];
+काष्ठा tx_policy_cache अणु
+	काष्ठा tx_policy cache[HIF_TX_RETRY_POLICY_MAX];
 	// FIXME: use a trees and drop hash from tx_policy
-	struct list_head used;
-	struct list_head free;
+	काष्ठा list_head used;
+	काष्ठा list_head मुक्त;
 	spinlock_t lock;
-};
+पूर्ण;
 
-struct wfx_tx_priv {
-	ktime_t xmit_timestamp;
-	unsigned char icv_size;
-};
+काष्ठा wfx_tx_priv अणु
+	kसमय_प्रकार xmit_बारtamp;
+	अचिन्हित अक्षर icv_size;
+पूर्ण;
 
-void wfx_tx_policy_init(struct wfx_vif *wvif);
-void wfx_tx_policy_upload_work(struct work_struct *work);
+व्योम wfx_tx_policy_init(काष्ठा wfx_vअगर *wvअगर);
+व्योम wfx_tx_policy_upload_work(काष्ठा work_काष्ठा *work);
 
-void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
-	    struct sk_buff *skb);
-void wfx_tx_confirm_cb(struct wfx_dev *wdev, const struct hif_cnf_tx *arg);
-void wfx_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+व्योम wfx_tx(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_tx_control *control,
+	    काष्ठा sk_buff *skb);
+व्योम wfx_tx_confirm_cb(काष्ठा wfx_dev *wdev, स्थिर काष्ठा hअगर_cnf_tx *arg);
+व्योम wfx_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
 	       u32 queues, bool drop);
 
-static inline struct wfx_tx_priv *wfx_skb_tx_priv(struct sk_buff *skb)
-{
-	struct ieee80211_tx_info *tx_info;
+अटल अंतरभूत काष्ठा wfx_tx_priv *wfx_skb_tx_priv(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_tx_info *tx_info;
 
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 	tx_info = IEEE80211_SKB_CB(skb);
-	return (struct wfx_tx_priv *)tx_info->rate_driver_data;
-}
+	वापस (काष्ठा wfx_tx_priv *)tx_info->rate_driver_data;
+पूर्ण
 
-static inline struct hif_req_tx *wfx_skb_txreq(struct sk_buff *skb)
-{
-	struct hif_msg *hif = (struct hif_msg *)skb->data;
-	struct hif_req_tx *req = (struct hif_req_tx *)hif->body;
+अटल अंतरभूत काष्ठा hअगर_req_tx *wfx_skb_txreq(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा hअगर_msg *hअगर = (काष्ठा hअगर_msg *)skb->data;
+	काष्ठा hअगर_req_tx *req = (काष्ठा hअगर_req_tx *)hअगर->body;
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
-#endif /* WFX_DATA_TX_H */
+#पूर्ण_अगर /* WFX_DATA_TX_H */

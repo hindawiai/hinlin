@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2006, 2019 Oracle and/or its affiliates. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,254 +31,254 @@
  * SOFTWARE.
  *
  */
-#include <linux/kernel.h>
-#include <net/sock.h>
-#include <linux/in.h>
-#include <linux/ipv6.h>
-#include <linux/if_arp.h>
-#include <linux/jhash.h>
-#include <linux/ratelimit.h>
-#include "rds.h"
+#समावेश <linux/kernel.h>
+#समावेश <net/sock.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/ratelimit.h>
+#समावेश "rds.h"
 
-static struct rhashtable bind_hash_table;
+अटल काष्ठा rhashtable bind_hash_table;
 
-static const struct rhashtable_params ht_parms = {
-	.nelem_hint = 768,
+अटल स्थिर काष्ठा rhashtable_params ht_parms = अणु
+	.nelem_hपूर्णांक = 768,
 	.key_len = RDS_BOUND_KEY_LEN,
-	.key_offset = offsetof(struct rds_sock, rs_bound_key),
-	.head_offset = offsetof(struct rds_sock, rs_bound_node),
+	.key_offset = दुरत्व(काष्ठा rds_sock, rs_bound_key),
+	.head_offset = दुरत्व(काष्ठा rds_sock, rs_bound_node),
 	.max_size = 16384,
 	.min_size = 1024,
-};
+पूर्ण;
 
-/* Create a key for the bind hash table manipulation.  Port is in network byte
+/* Create a key क्रम the bind hash table manipulation.  Port is in network byte
  * order.
  */
-static inline void __rds_create_bind_key(u8 *key, const struct in6_addr *addr,
+अटल अंतरभूत व्योम __rds_create_bind_key(u8 *key, स्थिर काष्ठा in6_addr *addr,
 					 __be16 port, __u32 scope_id)
-{
-	memcpy(key, addr, sizeof(*addr));
-	key += sizeof(*addr);
-	memcpy(key, &port, sizeof(port));
-	key += sizeof(port);
-	memcpy(key, &scope_id, sizeof(scope_id));
-}
+अणु
+	स_नकल(key, addr, माप(*addr));
+	key += माप(*addr);
+	स_नकल(key, &port, माप(port));
+	key += माप(port);
+	स_नकल(key, &scope_id, माप(scope_id));
+पूर्ण
 
 /*
  * Return the rds_sock bound at the given local address.
  *
- * The rx path can race with rds_release.  We notice if rds_release() has
- * marked this socket and don't return a rs ref to the rx path.
+ * The rx path can race with rds_release.  We notice अगर rds_release() has
+ * marked this socket and करोn't वापस a rs ref to the rx path.
  */
-struct rds_sock *rds_find_bound(const struct in6_addr *addr, __be16 port,
+काष्ठा rds_sock *rds_find_bound(स्थिर काष्ठा in6_addr *addr, __be16 port,
 				__u32 scope_id)
-{
+अणु
 	u8 key[RDS_BOUND_KEY_LEN];
-	struct rds_sock *rs;
+	काष्ठा rds_sock *rs;
 
 	__rds_create_bind_key(key, addr, port, scope_id);
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	rs = rhashtable_lookup(&bind_hash_table, key, ht_parms);
-	if (rs && (sock_flag(rds_rs_to_sk(rs), SOCK_DEAD) ||
+	अगर (rs && (sock_flag(rds_rs_to_sk(rs), SOCK_DEAD) ||
 		   !refcount_inc_not_zero(&rds_rs_to_sk(rs)->sk_refcnt)))
-		rs = NULL;
+		rs = शून्य;
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	rdsdebug("returning rs %p for %pI6c:%u\n", rs, addr,
 		 ntohs(port));
 
-	return rs;
-}
+	वापस rs;
+पूर्ण
 
-/* returns -ve errno or +ve port */
-static int rds_add_bound(struct rds_sock *rs, const struct in6_addr *addr,
+/* वापसs -ve त्रुटि_सं or +ve port */
+अटल पूर्णांक rds_add_bound(काष्ठा rds_sock *rs, स्थिर काष्ठा in6_addr *addr,
 			 __be16 *port, __u32 scope_id)
-{
-	int ret = -EADDRINUSE;
+अणु
+	पूर्णांक ret = -EADDRINUSE;
 	u16 rover, last;
 	u8 key[RDS_BOUND_KEY_LEN];
 
-	if (*port != 0) {
+	अगर (*port != 0) अणु
 		rover = be16_to_cpu(*port);
-		if (rover == RDS_FLAG_PROBE_PORT)
-			return -EINVAL;
+		अगर (rover == RDS_FLAG_PROBE_PORT)
+			वापस -EINVAL;
 		last = rover;
-	} else {
-		rover = max_t(u16, prandom_u32(), 2);
+	पूर्ण अन्यथा अणु
+		rover = max_t(u16, pअक्रमom_u32(), 2);
 		last = rover - 1;
-	}
+	पूर्ण
 
-	do {
-		if (rover == 0)
+	करो अणु
+		अगर (rover == 0)
 			rover++;
 
-		if (rover == RDS_FLAG_PROBE_PORT)
-			continue;
+		अगर (rover == RDS_FLAG_PROBE_PORT)
+			जारी;
 		__rds_create_bind_key(key, addr, cpu_to_be16(rover),
 				      scope_id);
-		if (rhashtable_lookup_fast(&bind_hash_table, key, ht_parms))
-			continue;
+		अगर (rhashtable_lookup_fast(&bind_hash_table, key, ht_parms))
+			जारी;
 
-		memcpy(rs->rs_bound_key, key, sizeof(rs->rs_bound_key));
+		स_नकल(rs->rs_bound_key, key, माप(rs->rs_bound_key));
 		rs->rs_bound_addr = *addr;
-		net_get_random_once(&rs->rs_hash_initval,
-				    sizeof(rs->rs_hash_initval));
+		net_get_अक्रमom_once(&rs->rs_hash_initval,
+				    माप(rs->rs_hash_initval));
 		rs->rs_bound_port = cpu_to_be16(rover);
-		rs->rs_bound_node.next = NULL;
+		rs->rs_bound_node.next = शून्य;
 		rds_sock_addref(rs);
-		if (!rhashtable_insert_fast(&bind_hash_table,
-					    &rs->rs_bound_node, ht_parms)) {
+		अगर (!rhashtable_insert_fast(&bind_hash_table,
+					    &rs->rs_bound_node, ht_parms)) अणु
 			*port = rs->rs_bound_port;
 			rs->rs_bound_scope_id = scope_id;
 			ret = 0;
 			rdsdebug("rs %p binding to %pI6c:%d\n",
-				 rs, addr, (int)ntohs(*port));
-			break;
-		} else {
+				 rs, addr, (पूर्णांक)ntohs(*port));
+			अवरोध;
+		पूर्ण अन्यथा अणु
 			rs->rs_bound_addr = in6addr_any;
 			rds_sock_put(rs);
 			ret = -ENOMEM;
-			break;
-		}
-	} while (rover++ != last);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (rover++ != last);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void rds_remove_bound(struct rds_sock *rs)
-{
+व्योम rds_हटाओ_bound(काष्ठा rds_sock *rs)
+अणु
 
-	if (ipv6_addr_any(&rs->rs_bound_addr))
-		return;
+	अगर (ipv6_addr_any(&rs->rs_bound_addr))
+		वापस;
 
 	rdsdebug("rs %p unbinding from %pI6c:%d\n",
 		 rs, &rs->rs_bound_addr,
 		 ntohs(rs->rs_bound_port));
 
-	rhashtable_remove_fast(&bind_hash_table, &rs->rs_bound_node, ht_parms);
+	rhashtable_हटाओ_fast(&bind_hash_table, &rs->rs_bound_node, ht_parms);
 	rds_sock_put(rs);
 	rs->rs_bound_addr = in6addr_any;
-}
+पूर्ण
 
-int rds_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
-{
-	struct sock *sk = sock->sk;
-	struct rds_sock *rs = rds_sk_to_rs(sk);
-	struct in6_addr v6addr, *binding_addr;
-	struct rds_transport *trans;
+पूर्णांक rds_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा rds_sock *rs = rds_sk_to_rs(sk);
+	काष्ठा in6_addr v6addr, *binding_addr;
+	काष्ठा rds_transport *trans;
 	__u32 scope_id = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 	__be16 port;
 
 	/* We allow an RDS socket to be bound to either IPv4 or IPv6
 	 * address.
 	 */
-	if (addr_len < offsetofend(struct sockaddr, sa_family))
-		return -EINVAL;
-	if (uaddr->sa_family == AF_INET) {
-		struct sockaddr_in *sin = (struct sockaddr_in *)uaddr;
+	अगर (addr_len < दुरत्वend(काष्ठा sockaddr, sa_family))
+		वापस -EINVAL;
+	अगर (uaddr->sa_family == AF_INET) अणु
+		काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)uaddr;
 
-		if (addr_len < sizeof(struct sockaddr_in) ||
+		अगर (addr_len < माप(काष्ठा sockaddr_in) ||
 		    sin->sin_addr.s_addr == htonl(INADDR_ANY) ||
 		    sin->sin_addr.s_addr == htonl(INADDR_BROADCAST) ||
 		    ipv4_is_multicast(sin->sin_addr.s_addr))
-			return -EINVAL;
+			वापस -EINVAL;
 		ipv6_addr_set_v4mapped(sin->sin_addr.s_addr, &v6addr);
 		binding_addr = &v6addr;
 		port = sin->sin_port;
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (uaddr->sa_family == AF_INET6) {
-		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)uaddr;
-		int addr_type;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (uaddr->sa_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)uaddr;
+		पूर्णांक addr_type;
 
-		if (addr_len < sizeof(struct sockaddr_in6))
-			return -EINVAL;
+		अगर (addr_len < माप(काष्ठा sockaddr_in6))
+			वापस -EINVAL;
 		addr_type = ipv6_addr_type(&sin6->sin6_addr);
-		if (!(addr_type & IPV6_ADDR_UNICAST)) {
+		अगर (!(addr_type & IPV6_ADDR_UNICAST)) अणु
 			__be32 addr4;
 
-			if (!(addr_type & IPV6_ADDR_MAPPED))
-				return -EINVAL;
+			अगर (!(addr_type & IPV6_ADDR_MAPPED))
+				वापस -EINVAL;
 
-			/* It is a mapped address.  Need to do some sanity
+			/* It is a mapped address.  Need to करो some sanity
 			 * checks.
 			 */
 			addr4 = sin6->sin6_addr.s6_addr32[3];
-			if (addr4 == htonl(INADDR_ANY) ||
+			अगर (addr4 == htonl(INADDR_ANY) ||
 			    addr4 == htonl(INADDR_BROADCAST) ||
 			    ipv4_is_multicast(addr4))
-				return -EINVAL;
-		}
-		/* The scope ID must be specified for link local address. */
-		if (addr_type & IPV6_ADDR_LINKLOCAL) {
-			if (sin6->sin6_scope_id == 0)
-				return -EINVAL;
+				वापस -EINVAL;
+		पूर्ण
+		/* The scope ID must be specअगरied क्रम link local address. */
+		अगर (addr_type & IPV6_ADDR_LINKLOCAL) अणु
+			अगर (sin6->sin6_scope_id == 0)
+				वापस -EINVAL;
 			scope_id = sin6->sin6_scope_id;
-		}
+		पूर्ण
 		binding_addr = &sin6->sin6_addr;
 		port = sin6->sin6_port;
-#endif
-	} else {
-		return -EINVAL;
-	}
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 	lock_sock(sk);
 
-	/* RDS socket does not allow re-binding. */
-	if (!ipv6_addr_any(&rs->rs_bound_addr)) {
+	/* RDS socket करोes not allow re-binding. */
+	अगर (!ipv6_addr_any(&rs->rs_bound_addr)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/* Socket is connected.  The binding address should have the same
-	 * scope ID as the connected address, except the case when one is
+	 * scope ID as the connected address, except the हाल when one is
 	 * non-link local address (scope_id is 0).
 	 */
-	if (!ipv6_addr_any(&rs->rs_conn_addr) && scope_id &&
+	अगर (!ipv6_addr_any(&rs->rs_conn_addr) && scope_id &&
 	    rs->rs_bound_scope_id &&
-	    scope_id != rs->rs_bound_scope_id) {
+	    scope_id != rs->rs_bound_scope_id) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* The transport can be set using SO_RDS_TRANSPORT option before the
+	/* The transport can be set using SO_RDS_TRANSPORT option beक्रमe the
 	 * socket is bound.
 	 */
-	if (rs->rs_transport) {
+	अगर (rs->rs_transport) अणु
 		trans = rs->rs_transport;
-		if (!trans->laddr_check ||
+		अगर (!trans->laddr_check ||
 		    trans->laddr_check(sock_net(sock->sk),
-				       binding_addr, scope_id) != 0) {
+				       binding_addr, scope_id) != 0) अणु
 			ret = -ENOPROTOOPT;
-			goto out;
-		}
-	} else {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		trans = rds_trans_get_preferred(sock_net(sock->sk),
 						binding_addr, scope_id);
-		if (!trans) {
+		अगर (!trans) अणु
 			ret = -EADDRNOTAVAIL;
 			pr_info_ratelimited("RDS: %s could not find a transport for %pI6c, load rds_tcp or rds_rdma?\n",
 					    __func__, binding_addr);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		rs->rs_transport = trans;
-	}
+	पूर्ण
 
 	sock_set_flag(sk, SOCK_RCU_FREE);
 	ret = rds_add_bound(rs, binding_addr, &port, scope_id);
-	if (ret)
-		rs->rs_transport = NULL;
+	अगर (ret)
+		rs->rs_transport = शून्य;
 
 out:
 	release_sock(sk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void rds_bind_lock_destroy(void)
-{
+व्योम rds_bind_lock_destroy(व्योम)
+अणु
 	rhashtable_destroy(&bind_hash_table);
-}
+पूर्ण
 
-int rds_bind_lock_init(void)
-{
-	return rhashtable_init(&bind_hash_table, &ht_parms);
-}
+पूर्णांक rds_bind_lock_init(व्योम)
+अणु
+	वापस rhashtable_init(&bind_hash_table, &ht_parms);
+पूर्ण

@@ -1,77 +1,78 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * Liberally adapted from alpha/termios.h.  In particular, the c_cc[]
  * fields have been reordered so that termio & termios share the
- * common subset in the same order (for brain dead programs that don't
- * know or care about the differences).
+ * common subset in the same order (क्रम brain dead programs that करोn't
+ * know or care about the dअगरferences).
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version
  * 2 of the License, or (at your option) any later version.
  */
-#ifndef _UAPI_ASM_POWERPC_TERMIOS_H
-#define _UAPI_ASM_POWERPC_TERMIOS_H
+#अगर_अघोषित _UAPI_ASM_POWERPC_TERMIOS_H
+#घोषणा _UAPI_ASM_POWERPC_TERMIOS_H
 
 
-#include <asm/ioctls.h>
-#include <asm/termbits.h>
+#समावेश <यंत्र/ioctls.h>
+#समावेश <यंत्र/termbits.h>
 
-struct sgttyb {
-	char	sg_ispeed;
-	char	sg_ospeed;
-	char	sg_erase;
-	char	sg_kill;
-	short	sg_flags;
-};
+काष्ठा sgttyb अणु
+	अक्षर	sg_ispeed;
+	अक्षर	sg_ospeed;
+	अक्षर	sg_erase;
+	अक्षर	sg_समाप्त;
+	लघु	sg_flags;
+पूर्ण;
 
-struct tchars {
-	char	t_intrc;
-	char	t_quitc;
-	char	t_startc;
-	char	t_stopc;
-	char	t_eofc;
-	char	t_brkc;
-};
+काष्ठा tअक्षरs अणु
+	अक्षर	t_पूर्णांकrc;
+	अक्षर	t_quitc;
+	अक्षर	t_startc;
+	अक्षर	t_stopc;
+	अक्षर	t_eofc;
+	अक्षर	t_brkc;
+पूर्ण;
 
-struct ltchars {
-	char	t_suspc;
-	char	t_dsuspc;
-	char	t_rprntc;
-	char	t_flushc;
-	char	t_werasc;
-	char	t_lnextc;
-};
+काष्ठा ltअक्षरs अणु
+	अक्षर	t_suspc;
+	अक्षर	t_dsuspc;
+	अक्षर	t_rprntc;
+	अक्षर	t_flushc;
+	अक्षर	t_werasc;
+	अक्षर	t_lnextc;
+पूर्ण;
 
-struct winsize {
-	unsigned short ws_row;
-	unsigned short ws_col;
-	unsigned short ws_xpixel;
-	unsigned short ws_ypixel;
-};
+काष्ठा winsize अणु
+	अचिन्हित लघु ws_row;
+	अचिन्हित लघु ws_col;
+	अचिन्हित लघु ws_xpixel;
+	अचिन्हित लघु ws_ypixel;
+पूर्ण;
 
-#define NCC 10
-struct termio {
-	unsigned short c_iflag;		/* input mode flags */
-	unsigned short c_oflag;		/* output mode flags */
-	unsigned short c_cflag;		/* control mode flags */
-	unsigned short c_lflag;		/* local mode flags */
-	unsigned char c_line;		/* line discipline */
-	unsigned char c_cc[NCC];	/* control characters */
-};
+#घोषणा NCC 10
+काष्ठा termio अणु
+	अचिन्हित लघु c_अगरlag;		/* input mode flags */
+	अचिन्हित लघु c_oflag;		/* output mode flags */
+	अचिन्हित लघु c_cflag;		/* control mode flags */
+	अचिन्हित लघु c_lflag;		/* local mode flags */
+	अचिन्हित अक्षर c_line;		/* line discipline */
+	अचिन्हित अक्षर c_cc[NCC];	/* control अक्षरacters */
+पूर्ण;
 
-/* c_cc characters */
-#define _VINTR	0
-#define _VQUIT	1
-#define _VERASE	2
-#define _VKILL	3
-#define _VEOF	4
-#define _VMIN	5
-#define _VEOL	6
-#define _VTIME	7
-#define _VEOL2	8
-#define _VSWTC	9
+/* c_cc अक्षरacters */
+#घोषणा _VINTR	0
+#घोषणा _VQUIT	1
+#घोषणा _VERASE	2
+#घोषणा _VKILL	3
+#घोषणा _Vखातापूर्ण	4
+#घोषणा _VMIN	5
+#घोषणा _VEOL	6
+#घोषणा _VTIME	7
+#घोषणा _VEOL2	8
+#घोषणा _VSWTC	9
 
 
 
-#endif /* _UAPI_ASM_POWERPC_TERMIOS_H */
+#पूर्ण_अगर /* _UAPI_ASM_POWERPC_TERMIOS_H */

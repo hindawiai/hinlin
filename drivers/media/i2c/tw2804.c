@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2005-2006 Micronas USA Inc.
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/i2c.h>
-#include <linux/videodev2.h>
-#include <linux/ioctl.h>
-#include <linux/slab.h>
-#include <media/v4l2-subdev.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ctrls.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/slab.h>
+#समावेश <media/v4l2-subdev.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ctrls.h>
 
-#define TW2804_REG_AUTOGAIN		0x02
-#define TW2804_REG_HUE			0x0f
-#define TW2804_REG_SATURATION		0x10
-#define TW2804_REG_CONTRAST		0x11
-#define TW2804_REG_BRIGHTNESS		0x12
-#define TW2804_REG_COLOR_KILLER		0x14
-#define TW2804_REG_GAIN			0x3c
-#define TW2804_REG_CHROMA_GAIN		0x3d
-#define TW2804_REG_BLUE_BALANCE		0x3e
-#define TW2804_REG_RED_BALANCE		0x3f
+#घोषणा TW2804_REG_AUTOGAIN		0x02
+#घोषणा TW2804_REG_HUE			0x0f
+#घोषणा TW2804_REG_SATURATION		0x10
+#घोषणा TW2804_REG_CONTRAST		0x11
+#घोषणा TW2804_REG_BRIGHTNESS		0x12
+#घोषणा TW2804_REG_COLOR_KILLER		0x14
+#घोषणा TW2804_REG_GAIN			0x3c
+#घोषणा TW2804_REG_CHROMA_GAIN		0x3d
+#घोषणा TW2804_REG_BLUE_BALANCE		0x3e
+#घोषणा TW2804_REG_RED_BALANCE		0x3f
 
-struct tw2804 {
-	struct v4l2_subdev sd;
-	struct v4l2_ctrl_handler hdl;
+काष्ठा tw2804 अणु
+	काष्ठा v4l2_subdev sd;
+	काष्ठा v4l2_ctrl_handler hdl;
 	u8 channel:2;
 	u8 input:1;
-	int norm;
-};
+	पूर्णांक norm;
+पूर्ण;
 
-static const u8 global_registers[] = {
+अटल स्थिर u8 global_रेजिस्टरs[] = अणु
 	0x39, 0x00,
 	0x3a, 0xff,
 	0x3b, 0x84,
@@ -41,10 +42,10 @@ static const u8 global_registers[] = {
 	0x3e, 0x82,
 	0x3f, 0x82,
 	0x78, 0x00,
-	0xff, 0xff, /* Terminator (reg 0xff does not exist) */
-};
+	0xff, 0xff, /* Terminator (reg 0xff करोes not exist) */
+पूर्ण;
 
-static const u8 channel_registers[] = {
+अटल स्थिर u8 channel_रेजिस्टरs[] = अणु
 	0x01, 0xc4,
 	0x02, 0xa5,
 	0x03, 0x20,
@@ -100,159 +101,159 @@ static const u8 channel_registers[] = {
 	0x35, 0x00,
 	0x36, 0x00,
 	0x37, 0x00,
-	0xff, 0xff, /* Terminator (reg 0xff does not exist) */
-};
+	0xff, 0xff, /* Terminator (reg 0xff करोes not exist) */
+पूर्ण;
 
-static int write_reg(struct i2c_client *client, u8 reg, u8 value, u8 channel)
-{
-	return i2c_smbus_write_byte_data(client, reg | (channel << 6), value);
-}
+अटल पूर्णांक ग_लिखो_reg(काष्ठा i2c_client *client, u8 reg, u8 value, u8 channel)
+अणु
+	वापस i2c_smbus_ग_लिखो_byte_data(client, reg | (channel << 6), value);
+पूर्ण
 
-static int write_regs(struct i2c_client *client, const u8 *regs, u8 channel)
-{
-	int ret;
-	int i;
+अटल पूर्णांक ग_लिखो_regs(काष्ठा i2c_client *client, स्थिर u8 *regs, u8 channel)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; regs[i] != 0xff; i += 2) {
-		ret = i2c_smbus_write_byte_data(client,
+	क्रम (i = 0; regs[i] != 0xff; i += 2) अणु
+		ret = i2c_smbus_ग_लिखो_byte_data(client,
 				regs[i] | (channel << 6), regs[i + 1]);
-		if (ret < 0)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int read_reg(struct i2c_client *client, u8 reg, u8 channel)
-{
-	return i2c_smbus_read_byte_data(client, (reg) | (channel << 6));
-}
+अटल पूर्णांक पढ़ो_reg(काष्ठा i2c_client *client, u8 reg, u8 channel)
+अणु
+	वापस i2c_smbus_पढ़ो_byte_data(client, (reg) | (channel << 6));
+पूर्ण
 
-static inline struct tw2804 *to_state(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct tw2804, sd);
-}
+अटल अंतरभूत काष्ठा tw2804 *to_state(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा tw2804, sd);
+पूर्ण
 
-static inline struct tw2804 *to_state_from_ctrl(struct v4l2_ctrl *ctrl)
-{
-	return container_of(ctrl->handler, struct tw2804, hdl);
-}
+अटल अंतरभूत काष्ठा tw2804 *to_state_from_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	वापस container_of(ctrl->handler, काष्ठा tw2804, hdl);
+पूर्ण
 
-static int tw2804_log_status(struct v4l2_subdev *sd)
-{
-	struct tw2804 *state = to_state(sd);
+अटल पूर्णांक tw2804_log_status(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा tw2804 *state = to_state(sd);
 
 	v4l2_info(sd, "Standard: %s\n",
 			state->norm & V4L2_STD_525_60 ? "60 Hz" : "50 Hz");
 	v4l2_info(sd, "Channel: %d\n", state->channel);
 	v4l2_info(sd, "Input: %d\n", state->input);
-	return v4l2_ctrl_subdev_log_status(sd);
-}
+	वापस v4l2_ctrl_subdev_log_status(sd);
+पूर्ण
 
 /*
- * These volatile controls are needed because all four channels share
+ * These अस्थिर controls are needed because all four channels share
  * these controls. So a change made to them through one channel would
  * require another channel to be updated.
  *
- * Normally this would have been done in a different way, but since the one
- * board that uses this driver sees this single chip as if it was on four
- * different i2c adapters (each adapter belonging to a separate instance of
+ * Normally this would have been करोne in a dअगरferent way, but since the one
+ * board that uses this driver sees this single chip as अगर it was on four
+ * dअगरferent i2c adapters (each adapter beदीर्घing to a separate instance of
  * the same USB driver) there is no reliable method that I have found to let
  * the instances know about each other.
  *
- * So implementing these global registers as volatile is the best we can do.
+ * So implementing these global रेजिस्टरs as अस्थिर is the best we can करो.
  */
-static int tw2804_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct tw2804 *state = to_state_from_ctrl(ctrl);
-	struct i2c_client *client = v4l2_get_subdevdata(&state->sd);
+अटल पूर्णांक tw2804_g_अस्थिर_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा tw2804 *state = to_state_from_ctrl(ctrl);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&state->sd);
 
-	switch (ctrl->id) {
-	case V4L2_CID_GAIN:
-		ctrl->val = read_reg(client, TW2804_REG_GAIN, 0);
-		return 0;
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_GAIN:
+		ctrl->val = पढ़ो_reg(client, TW2804_REG_GAIN, 0);
+		वापस 0;
 
-	case V4L2_CID_CHROMA_GAIN:
-		ctrl->val = read_reg(client, TW2804_REG_CHROMA_GAIN, 0);
-		return 0;
+	हाल V4L2_CID_CHROMA_GAIN:
+		ctrl->val = पढ़ो_reg(client, TW2804_REG_CHROMA_GAIN, 0);
+		वापस 0;
 
-	case V4L2_CID_BLUE_BALANCE:
-		ctrl->val = read_reg(client, TW2804_REG_BLUE_BALANCE, 0);
-		return 0;
+	हाल V4L2_CID_BLUE_BALANCE:
+		ctrl->val = पढ़ो_reg(client, TW2804_REG_BLUE_BALANCE, 0);
+		वापस 0;
 
-	case V4L2_CID_RED_BALANCE:
-		ctrl->val = read_reg(client, TW2804_REG_RED_BALANCE, 0);
-		return 0;
-	}
-	return 0;
-}
+	हाल V4L2_CID_RED_BALANCE:
+		ctrl->val = पढ़ो_reg(client, TW2804_REG_RED_BALANCE, 0);
+		वापस 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int tw2804_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct tw2804 *state = to_state_from_ctrl(ctrl);
-	struct i2c_client *client = v4l2_get_subdevdata(&state->sd);
-	int addr;
-	int reg;
+अटल पूर्णांक tw2804_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा tw2804 *state = to_state_from_ctrl(ctrl);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&state->sd);
+	पूर्णांक addr;
+	पूर्णांक reg;
 
-	switch (ctrl->id) {
-	case V4L2_CID_AUTOGAIN:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_AUTOGAIN:
 		addr = TW2804_REG_AUTOGAIN;
-		reg = read_reg(client, addr, state->channel);
-		if (reg < 0)
-			return reg;
-		if (ctrl->val == 0)
+		reg = पढ़ो_reg(client, addr, state->channel);
+		अगर (reg < 0)
+			वापस reg;
+		अगर (ctrl->val == 0)
 			reg &= ~(1 << 7);
-		else
+		अन्यथा
 			reg |= 1 << 7;
-		return write_reg(client, addr, reg, state->channel);
+		वापस ग_लिखो_reg(client, addr, reg, state->channel);
 
-	case V4L2_CID_COLOR_KILLER:
+	हाल V4L2_CID_COLOR_KILLER:
 		addr = TW2804_REG_COLOR_KILLER;
-		reg = read_reg(client, addr, state->channel);
-		if (reg < 0)
-			return reg;
+		reg = पढ़ो_reg(client, addr, state->channel);
+		अगर (reg < 0)
+			वापस reg;
 		reg = (reg & ~(0x03)) | (ctrl->val == 0 ? 0x02 : 0x03);
-		return write_reg(client, addr, reg, state->channel);
+		वापस ग_लिखो_reg(client, addr, reg, state->channel);
 
-	case V4L2_CID_GAIN:
-		return write_reg(client, TW2804_REG_GAIN, ctrl->val, 0);
+	हाल V4L2_CID_GAIN:
+		वापस ग_लिखो_reg(client, TW2804_REG_GAIN, ctrl->val, 0);
 
-	case V4L2_CID_CHROMA_GAIN:
-		return write_reg(client, TW2804_REG_CHROMA_GAIN, ctrl->val, 0);
+	हाल V4L2_CID_CHROMA_GAIN:
+		वापस ग_लिखो_reg(client, TW2804_REG_CHROMA_GAIN, ctrl->val, 0);
 
-	case V4L2_CID_BLUE_BALANCE:
-		return write_reg(client, TW2804_REG_BLUE_BALANCE, ctrl->val, 0);
+	हाल V4L2_CID_BLUE_BALANCE:
+		वापस ग_लिखो_reg(client, TW2804_REG_BLUE_BALANCE, ctrl->val, 0);
 
-	case V4L2_CID_RED_BALANCE:
-		return write_reg(client, TW2804_REG_RED_BALANCE, ctrl->val, 0);
+	हाल V4L2_CID_RED_BALANCE:
+		वापस ग_लिखो_reg(client, TW2804_REG_RED_BALANCE, ctrl->val, 0);
 
-	case V4L2_CID_BRIGHTNESS:
-		return write_reg(client, TW2804_REG_BRIGHTNESS,
+	हाल V4L2_CID_BRIGHTNESS:
+		वापस ग_लिखो_reg(client, TW2804_REG_BRIGHTNESS,
 				ctrl->val, state->channel);
 
-	case V4L2_CID_CONTRAST:
-		return write_reg(client, TW2804_REG_CONTRAST,
+	हाल V4L2_CID_CONTRAST:
+		वापस ग_लिखो_reg(client, TW2804_REG_CONTRAST,
 				ctrl->val, state->channel);
 
-	case V4L2_CID_SATURATION:
-		return write_reg(client, TW2804_REG_SATURATION,
+	हाल V4L2_CID_SATURATION:
+		वापस ग_लिखो_reg(client, TW2804_REG_SATURATION,
 				ctrl->val, state->channel);
 
-	case V4L2_CID_HUE:
-		return write_reg(client, TW2804_REG_HUE,
+	हाल V4L2_CID_HUE:
+		वापस ग_लिखो_reg(client, TW2804_REG_HUE,
 				ctrl->val, state->channel);
 
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int tw2804_s_std(struct v4l2_subdev *sd, v4l2_std_id norm)
-{
-	struct tw2804 *dec = to_state(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+अटल पूर्णांक tw2804_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id norm)
+अणु
+	काष्ठा tw2804 *dec = to_state(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 	bool is_60hz = norm & V4L2_STD_525_60;
-	u8 regs[] = {
+	u8 regs[] = अणु
 		0x01, is_60hz ? 0xc4 : 0x84,
 		0x09, is_60hz ? 0x07 : 0x04,
 		0x0a, is_60hz ? 0xf0 : 0x20,
@@ -264,100 +265,100 @@ static int tw2804_s_std(struct v4l2_subdev *sd, v4l2_std_id norm)
 		0x20, is_60hz ? 0x07 : 0x0f,
 		0x21, is_60hz ? 0x07 : 0x0f,
 		0xff, 0xff,
-	};
+	पूर्ण;
 
-	write_regs(client, regs, dec->channel);
+	ग_लिखो_regs(client, regs, dec->channel);
 	dec->norm = norm;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw2804_s_video_routing(struct v4l2_subdev *sd, u32 input, u32 output,
+अटल पूर्णांक tw2804_s_video_routing(काष्ठा v4l2_subdev *sd, u32 input, u32 output,
 	u32 config)
-{
-	struct tw2804 *dec = to_state(sd);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int reg;
+अणु
+	काष्ठा tw2804 *dec = to_state(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक reg;
 
-	if (config && config - 1 != dec->channel) {
-		if (config > 4) {
+	अगर (config && config - 1 != dec->channel) अणु
+		अगर (config > 4) अणु
 			dev_err(&client->dev,
 				"channel %d is not between 1 and 4!\n", config);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		dec->channel = config - 1;
 		dev_dbg(&client->dev, "initializing TW2804 channel %d\n",
 			dec->channel);
-		if (dec->channel == 0 &&
-				write_regs(client, global_registers, 0) < 0) {
+		अगर (dec->channel == 0 &&
+				ग_लिखो_regs(client, global_रेजिस्टरs, 0) < 0) अणु
 			dev_err(&client->dev,
 				"error initializing TW2804 global registers\n");
-			return -EIO;
-		}
-		if (write_regs(client, channel_registers, dec->channel) < 0) {
+			वापस -EIO;
+		पूर्ण
+		अगर (ग_लिखो_regs(client, channel_रेजिस्टरs, dec->channel) < 0) अणु
 			dev_err(&client->dev,
 				"error initializing TW2804 channel %d\n",
 				dec->channel);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	if (input > 1)
-		return -EINVAL;
+	अगर (input > 1)
+		वापस -EINVAL;
 
-	if (input == dec->input)
-		return 0;
+	अगर (input == dec->input)
+		वापस 0;
 
-	reg = read_reg(client, 0x22, dec->channel);
+	reg = पढ़ो_reg(client, 0x22, dec->channel);
 
-	if (reg >= 0) {
-		if (input == 0)
+	अगर (reg >= 0) अणु
+		अगर (input == 0)
 			reg &= ~(1 << 2);
-		else
+		अन्यथा
 			reg |= 1 << 2;
-		reg = write_reg(client, 0x22, reg, dec->channel);
-	}
+		reg = ग_लिखो_reg(client, 0x22, reg, dec->channel);
+	पूर्ण
 
-	if (reg >= 0)
+	अगर (reg >= 0)
 		dec->input = input;
-	else
-		return reg;
-	return 0;
-}
+	अन्यथा
+		वापस reg;
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ctrl_ops tw2804_ctrl_ops = {
-	.g_volatile_ctrl = tw2804_g_volatile_ctrl,
+अटल स्थिर काष्ठा v4l2_ctrl_ops tw2804_ctrl_ops = अणु
+	.g_अस्थिर_ctrl = tw2804_g_अस्थिर_ctrl,
 	.s_ctrl = tw2804_s_ctrl,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_video_ops tw2804_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops tw2804_video_ops = अणु
 	.s_std = tw2804_s_std,
 	.s_routing = tw2804_s_video_routing,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_core_ops tw2804_core_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_core_ops tw2804_core_ops = अणु
 	.log_status = tw2804_log_status,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops tw2804_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops tw2804_ops = अणु
 	.core = &tw2804_core_ops,
 	.video = &tw2804_video_ops,
-};
+पूर्ण;
 
-static int tw2804_probe(struct i2c_client *client,
-			    const struct i2c_device_id *id)
-{
-	struct i2c_adapter *adapter = client->adapter;
-	struct tw2804 *state;
-	struct v4l2_subdev *sd;
-	struct v4l2_ctrl *ctrl;
-	int err;
+अटल पूर्णांक tw2804_probe(काष्ठा i2c_client *client,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
+	काष्ठा tw2804 *state;
+	काष्ठा v4l2_subdev *sd;
+	काष्ठा v4l2_ctrl *ctrl;
+	पूर्णांक err;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -ENODEV;
 
-	state = devm_kzalloc(&client->dev, sizeof(*state), GFP_KERNEL);
-	if (state == NULL)
-		return -ENOMEM;
+	state = devm_kzalloc(&client->dev, माप(*state), GFP_KERNEL);
+	अगर (state == शून्य)
+		वापस -ENOMEM;
 	sd = &state->sd;
 	v4l2_i2c_subdev_init(sd, client, &tw2804_ops);
 	state->channel = -1;
@@ -378,57 +379,57 @@ static int tw2804_probe(struct i2c_client *client,
 				V4L2_CID_AUTOGAIN, 0, 1, 1, 0);
 	ctrl = v4l2_ctrl_new_std(&state->hdl, &tw2804_ctrl_ops,
 				V4L2_CID_GAIN, 0, 255, 1, 128);
-	if (ctrl)
+	अगर (ctrl)
 		ctrl->flags |= V4L2_CTRL_FLAG_VOLATILE;
 	ctrl = v4l2_ctrl_new_std(&state->hdl, &tw2804_ctrl_ops,
 				V4L2_CID_CHROMA_GAIN, 0, 255, 1, 128);
-	if (ctrl)
+	अगर (ctrl)
 		ctrl->flags |= V4L2_CTRL_FLAG_VOLATILE;
 	ctrl = v4l2_ctrl_new_std(&state->hdl, &tw2804_ctrl_ops,
 				V4L2_CID_BLUE_BALANCE, 0, 255, 1, 122);
-	if (ctrl)
+	अगर (ctrl)
 		ctrl->flags |= V4L2_CTRL_FLAG_VOLATILE;
 	ctrl = v4l2_ctrl_new_std(&state->hdl, &tw2804_ctrl_ops,
 				V4L2_CID_RED_BALANCE, 0, 255, 1, 122);
-	if (ctrl)
+	अगर (ctrl)
 		ctrl->flags |= V4L2_CTRL_FLAG_VOLATILE;
 	sd->ctrl_handler = &state->hdl;
 	err = state->hdl.error;
-	if (err) {
-		v4l2_ctrl_handler_free(&state->hdl);
-		return err;
-	}
+	अगर (err) अणु
+		v4l2_ctrl_handler_मुक्त(&state->hdl);
+		वापस err;
+	पूर्ण
 
 	v4l_info(client, "chip found @ 0x%02x (%s)\n",
 			client->addr << 1, client->adapter->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw2804_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct tw2804 *state = to_state(sd);
+अटल पूर्णांक tw2804_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा tw2804 *state = to_state(sd);
 
-	v4l2_device_unregister_subdev(sd);
-	v4l2_ctrl_handler_free(&state->hdl);
-	return 0;
-}
+	v4l2_device_unरेजिस्टर_subdev(sd);
+	v4l2_ctrl_handler_मुक्त(&state->hdl);
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id tw2804_id[] = {
-	{ "tw2804", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id tw2804_id[] = अणु
+	अणु "tw2804", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, tw2804_id);
 
-static struct i2c_driver tw2804_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver tw2804_driver = अणु
+	.driver = अणु
 		.name	= "tw2804",
-	},
+	पूर्ण,
 	.probe		= tw2804_probe,
-	.remove		= tw2804_remove,
+	.हटाओ		= tw2804_हटाओ,
 	.id_table	= tw2804_id,
-};
+पूर्ण;
 
 module_i2c_driver(tw2804_driver);
 

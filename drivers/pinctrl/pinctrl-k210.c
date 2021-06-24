@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2020 Sean Anderson <seanga2@gmail.com>
  * Copyright (c) 2020 Western Digital Corporation or its affiliates.
  */
-#include <linux/io.h>
-#include <linux/of_device.h>
-#include <linux/clk.h>
-#include <linux/mfd/syscon.h>
-#include <linux/platform_device.h>
-#include <linux/bitfield.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
 
-#include <dt-bindings/pinctrl/k210-fpioa.h>
+#समावेश <dt-bindings/pinctrl/k210-fpioa.h>
 
-#include "core.h"
-#include "pinconf.h"
-#include "pinctrl-utils.h"
+#समावेश "core.h"
+#समावेश "pinconf.h"
+#समावेश "pinctrl-utils.h"
 
 /*
  * The K210 only implements 8 drive levels, even though
- * there is register space for 16
+ * there is रेजिस्टर space क्रम 16
  */
-#define K210_PC_DRIVE_MASK	GENMASK(11, 8)
-#define K210_PC_DRIVE_SHIFT	8
-#define K210_PC_DRIVE_0		(0 << K210_PC_DRIVE_SHIFT)
-#define K210_PC_DRIVE_1		(1 << K210_PC_DRIVE_SHIFT)
-#define K210_PC_DRIVE_2		(2 << K210_PC_DRIVE_SHIFT)
-#define K210_PC_DRIVE_3		(3 << K210_PC_DRIVE_SHIFT)
-#define K210_PC_DRIVE_4		(4 << K210_PC_DRIVE_SHIFT)
-#define K210_PC_DRIVE_5		(5 << K210_PC_DRIVE_SHIFT)
-#define K210_PC_DRIVE_6		(6 << K210_PC_DRIVE_SHIFT)
-#define K210_PC_DRIVE_7		(7 << K210_PC_DRIVE_SHIFT)
-#define K210_PC_DRIVE_MAX	7
-#define K210_PC_MODE_MASK	GENMASK(23, 12)
+#घोषणा K210_PC_DRIVE_MASK	GENMASK(11, 8)
+#घोषणा K210_PC_DRIVE_SHIFT	8
+#घोषणा K210_PC_DRIVE_0		(0 << K210_PC_DRIVE_SHIFT)
+#घोषणा K210_PC_DRIVE_1		(1 << K210_PC_DRIVE_SHIFT)
+#घोषणा K210_PC_DRIVE_2		(2 << K210_PC_DRIVE_SHIFT)
+#घोषणा K210_PC_DRIVE_3		(3 << K210_PC_DRIVE_SHIFT)
+#घोषणा K210_PC_DRIVE_4		(4 << K210_PC_DRIVE_SHIFT)
+#घोषणा K210_PC_DRIVE_5		(5 << K210_PC_DRIVE_SHIFT)
+#घोषणा K210_PC_DRIVE_6		(6 << K210_PC_DRIVE_SHIFT)
+#घोषणा K210_PC_DRIVE_7		(7 << K210_PC_DRIVE_SHIFT)
+#घोषणा K210_PC_DRIVE_MAX	7
+#घोषणा K210_PC_MODE_MASK	GENMASK(23, 12)
 
 /*
  * output enabled == PC_OE & (PC_OE_INV ^ FUNCTION_OE)
- * where FUNCTION_OE is a physical signal from the function.
+ * where FUNCTION_OE is a physical संकेत from the function.
  */
-#define K210_PC_OE		BIT(12) /* Output Enable */
-#define K210_PC_OE_INV		BIT(13) /* INVert Output Enable */
-#define K210_PC_DO_OE		BIT(14) /* set Data Out to Output Enable sig */
-#define K210_PC_DO_INV		BIT(15) /* INVert final Data Output */
-#define K210_PC_PU		BIT(16) /* Pull Up */
-#define K210_PC_PD		BIT(17) /* Pull Down */
+#घोषणा K210_PC_OE		BIT(12) /* Output Enable */
+#घोषणा K210_PC_OE_INV		BIT(13) /* INVert Output Enable */
+#घोषणा K210_PC_DO_OE		BIT(14) /* set Data Out to Output Enable sig */
+#घोषणा K210_PC_DO_INV		BIT(15) /* INVert final Data Output */
+#घोषणा K210_PC_PU		BIT(16) /* Pull Up */
+#घोषणा K210_PC_PD		BIT(17) /* Pull Down */
 /* Strong pull up not implemented on K210 */
-#define K210_PC_SL		BIT(19) /* reduce SLew rate */
+#घोषणा K210_PC_SL		BIT(19) /* reduce SLew rate */
 /* Same semantics as OE above */
-#define K210_PC_IE		BIT(20) /* Input Enable */
-#define K210_PC_IE_INV		BIT(21) /* INVert Input Enable */
-#define K210_PC_DI_INV		BIT(22) /* INVert Data Input */
-#define K210_PC_ST		BIT(23) /* Schmitt Trigger */
-#define K210_PC_DI		BIT(31) /* raw Data Input */
+#घोषणा K210_PC_IE		BIT(20) /* Input Enable */
+#घोषणा K210_PC_IE_INV		BIT(21) /* INVert Input Enable */
+#घोषणा K210_PC_DI_INV		BIT(22) /* INVert Data Input */
+#घोषणा K210_PC_ST		BIT(23) /* Schmitt Trigger */
+#घोषणा K210_PC_DI		BIT(31) /* raw Data Input */
 
-#define K210_PC_BIAS_MASK	(K210_PC_PU & K210_PC_PD)
+#घोषणा K210_PC_BIAS_MASK	(K210_PC_PU & K210_PC_PD)
 
-#define K210_PC_MODE_IN		(K210_PC_IE | K210_PC_ST)
-#define K210_PC_MODE_OUT	(K210_PC_DRIVE_7 | K210_PC_OE)
-#define K210_PC_MODE_I2C	(K210_PC_MODE_IN | K210_PC_SL | \
+#घोषणा K210_PC_MODE_IN		(K210_PC_IE | K210_PC_ST)
+#घोषणा K210_PC_MODE_OUT	(K210_PC_DRIVE_7 | K210_PC_OE)
+#घोषणा K210_PC_MODE_I2C	(K210_PC_MODE_IN | K210_PC_SL | \
 				 K210_PC_OE | K210_PC_PU)
-#define K210_PC_MODE_SCCB	(K210_PC_MODE_I2C | \
+#घोषणा K210_PC_MODE_SCCB	(K210_PC_MODE_I2C | \
 				 K210_PC_OE_INV | K210_PC_IE_INV)
-#define K210_PC_MODE_SPI	(K210_PC_MODE_IN | K210_PC_IE_INV | \
+#घोषणा K210_PC_MODE_SPI	(K210_PC_MODE_IN | K210_PC_IE_INV | \
 				 K210_PC_MODE_OUT | K210_PC_OE_INV)
-#define K210_PC_MODE_GPIO	(K210_PC_MODE_IN | K210_PC_MODE_OUT)
+#घोषणा K210_PC_MODE_GPIO	(K210_PC_MODE_IN | K210_PC_MODE_OUT)
 
-#define K210_PG_FUNC		GENMASK(7, 0)
-#define K210_PG_DO		BIT(8)
-#define K210_PG_PIN		GENMASK(22, 16)
+#घोषणा K210_PG_FUNC		GENMASK(7, 0)
+#घोषणा K210_PG_DO		BIT(8)
+#घोषणा K210_PG_PIN		GENMASK(22, 16)
 
 /*
- * struct k210_fpioa: Kendryte K210 FPIOA memory mapped registers
- * @pins: 48 32-bits IO pin registers
+ * काष्ठा k210_fpioa: Kendryte K210 FPIOA memory mapped रेजिस्टरs
+ * @pins: 48 32-bits IO pin रेजिस्टरs
  * @tie_en: 256 (one per function) input tie enable bits
  * @tie_val: 256 (one per function) input tie value bits
  */
-struct k210_fpioa {
+काष्ठा k210_fpioa अणु
 	u32 pins[48];
 	u32 tie_en[8];
 	u32 tie_val[8];
-};
+पूर्ण;
 
-struct k210_fpioa_data {
+काष्ठा k210_fpioa_data अणु
 
-	struct device *dev;
-	struct pinctrl_dev *pctl;
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctl;
 
-	struct k210_fpioa __iomem *fpioa;
-	struct regmap *sysctl_map;
-	u32 power_offset;
-	struct clk *clk;
-	struct clk *pclk;
-};
+	काष्ठा k210_fpioa __iomem *fpioa;
+	काष्ठा regmap *sysctl_map;
+	u32 घातer_offset;
+	काष्ठा clk *clk;
+	काष्ठा clk *pclk;
+पूर्ण;
 
-#define K210_PIN_NAME(i)	("IO_" #i)
-#define K210_PIN(i)		[(i)] = PINCTRL_PIN((i), K210_PIN_NAME(i))
+#घोषणा K210_PIN_NAME(i)	("IO_" #i)
+#घोषणा K210_PIN(i)		[(i)] = PINCTRL_PIN((i), K210_PIN_NAME(i))
 
-static const struct pinctrl_pin_desc k210_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc k210_pins[] = अणु
 	K210_PIN(0),  K210_PIN(1),  K210_PIN(2),
 	K210_PIN(3),  K210_PIN(4),  K210_PIN(5),
 	K210_PIN(6),  K210_PIN(7),  K210_PIN(8),
@@ -118,19 +119,19 @@ static const struct pinctrl_pin_desc k210_pins[] = {
 	K210_PIN(39), K210_PIN(40), K210_PIN(41),
 	K210_PIN(42), K210_PIN(43), K210_PIN(44),
 	K210_PIN(45), K210_PIN(46), K210_PIN(47)
-};
+पूर्ण;
 
-#define K210_NPINS ARRAY_SIZE(k210_pins)
+#घोषणा K210_NPINS ARRAY_SIZE(k210_pins)
 
 /*
  * Pin groups: each of the 48 programmable pins is a group.
- * To this are added 8 power domain groups, which for the purposes of
- * the pin subsystem, contain no pins. The power domain groups only exist
- * to set the power level. The id should never be used (since there are
+ * To this are added 8 घातer करोमुख्य groups, which क्रम the purposes of
+ * the pin subप्रणाली, contain no pins. The घातer करोमुख्य groups only exist
+ * to set the घातer level. The id should never be used (since there are
  * no pins 48-55).
  */
-static const char *const k210_group_names[] = {
-	/* The first 48 groups are for pins, one each */
+अटल स्थिर अक्षर *स्थिर k210_group_names[] = अणु
+	/* The first 48 groups are क्रम pins, one each */
 	K210_PIN_NAME(0),  K210_PIN_NAME(1),  K210_PIN_NAME(2),
 	K210_PIN_NAME(3),  K210_PIN_NAME(4),  K210_PIN_NAME(5),
 	K210_PIN_NAME(6),  K210_PIN_NAME(7),  K210_PIN_NAME(8),
@@ -150,11 +151,11 @@ static const char *const k210_group_names[] = {
 	[48] = "A0", [49] = "A1", [50] = "A2",
 	[51] = "B3", [52] = "B4", [53] = "B5",
 	[54] = "C6", [55] = "C7"
-};
+पूर्ण;
 
-#define K210_NGROUPS	ARRAY_SIZE(k210_group_names)
+#घोषणा K210_NGROUPS	ARRAY_SIZE(k210_group_names)
 
-enum k210_pinctrl_mode_id {
+क्रमागत k210_pinctrl_mode_id अणु
 	K210_PC_DEFAULT_DISABLED,
 	K210_PC_DEFAULT_IN,
 	K210_PC_DEFAULT_IN_TIE,
@@ -164,12 +165,12 @@ enum k210_pinctrl_mode_id {
 	K210_PC_DEFAULT_SPI,
 	K210_PC_DEFAULT_GPIO,
 	K210_PC_DEFAULT_INT13,
-};
+पूर्ण;
 
-#define K210_PC_DEFAULT(mode) \
+#घोषणा K210_PC_DEFAULT(mode) \
 	[K210_PC_DEFAULT_##mode] = K210_PC_MODE_##mode
 
-static const u32 k210_pinconf_mode_id_to_mode[] = {
+अटल स्थिर u32 k210_pinconf_mode_id_to_mode[] = अणु
 	[K210_PC_DEFAULT_DISABLED] = 0,
 	K210_PC_DEFAULT(IN),
 	[K210_PC_DEFAULT_IN_TIE] = K210_PC_MODE_IN,
@@ -179,25 +180,25 @@ static const u32 k210_pinconf_mode_id_to_mode[] = {
 	K210_PC_DEFAULT(SPI),
 	K210_PC_DEFAULT(GPIO),
 	[K210_PC_DEFAULT_INT13] = K210_PC_MODE_IN | K210_PC_PU,
-};
+पूर्ण;
 
-#undef DEFAULT
+#अघोषित DEFAULT
 
 /*
- * Pin functions configuration information.
+ * Pin functions configuration inक्रमmation.
  */
-struct k210_pcf_info {
-	char name[15];
+काष्ठा k210_pcf_info अणु
+	अक्षर name[15];
 	u8 mode_id;
-};
+पूर्ण;
 
-#define K210_FUNC(id, mode)				\
-	[K210_PCF_##id] = {				\
+#घोषणा K210_FUNC(id, mode)				\
+	[K210_PCF_##id] = अणु				\
 		.name = #id,				\
 		.mode_id = K210_PC_DEFAULT_##mode	\
-	}
+	पूर्ण
 
-static const struct k210_pcf_info k210_pcf_infos[] = {
+अटल स्थिर काष्ठा k210_pcf_info k210_pcf_infos[] = अणु
 	K210_FUNC(JTAG_TCLK,		IN),
 	K210_FUNC(JTAG_TDI,		IN),
 	K210_FUNC(JTAG_TMS,		IN),
@@ -454,20 +455,20 @@ static const struct k210_pcf_info k210_pcf_infos[] = {
 	K210_FUNC(DEBUG29,		OUT),
 	K210_FUNC(DEBUG30,		OUT),
 	K210_FUNC(DEBUG31,		OUT),
-};
+पूर्ण;
 
-#define PIN_CONFIG_OUTPUT_INVERT	(PIN_CONFIG_END + 1)
-#define PIN_CONFIG_INPUT_INVERT		(PIN_CONFIG_END + 2)
+#घोषणा PIN_CONFIG_OUTPUT_INVERT	(PIN_CONFIG_END + 1)
+#घोषणा PIN_CONFIG_INPUT_INVERT		(PIN_CONFIG_END + 2)
 
-static const struct pinconf_generic_params k210_pinconf_custom_params[] = {
-	{ "output-polarity-invert", PIN_CONFIG_OUTPUT_INVERT, 1 },
-	{ "input-polarity-invert",  PIN_CONFIG_INPUT_INVERT, 1 },
-};
+अटल स्थिर काष्ठा pinconf_generic_params k210_pinconf_custom_params[] = अणु
+	अणु "output-polarity-invert", PIN_CONFIG_OUTPUT_INVERT, 1 पूर्ण,
+	अणु "input-polarity-invert",  PIN_CONFIG_INPUT_INVERT, 1 पूर्ण,
+पूर्ण;
 
 /*
  * Max drive strength in uA.
  */
-static const int k210_pinconf_drive_strength[] = {
+अटल स्थिर पूर्णांक k210_pinconf_drive_strength[] = अणु
 	[0] = 11200,
 	[1] = 16800,
 	[2] = 22300,
@@ -476,334 +477,334 @@ static const int k210_pinconf_drive_strength[] = {
 	[5] = 38700,
 	[6] = 44100,
 	[7] = 49500,
-};
+पूर्ण;
 
-static int k210_pinconf_get_drive(unsigned int max_strength_ua)
-{
-	int i;
+अटल पूर्णांक k210_pinconf_get_drive(अचिन्हित पूर्णांक max_strength_ua)
+अणु
+	पूर्णांक i;
 
-	for (i = K210_PC_DRIVE_MAX; i; i--) {
-		if (k210_pinconf_drive_strength[i] <= max_strength_ua)
-			return i;
-	}
+	क्रम (i = K210_PC_DRIVE_MAX; i; i--) अणु
+		अगर (k210_pinconf_drive_strength[i] <= max_strength_ua)
+			वापस i;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void k210_pinmux_set_pin_function(struct pinctrl_dev *pctldev,
+अटल व्योम k210_pinmux_set_pin_function(काष्ठा pinctrl_dev *pctldev,
 					 u32 pin, u32 func)
-{
-	struct k210_fpioa_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	const struct k210_pcf_info *info = &k210_pcf_infos[func];
+अणु
+	काष्ठा k210_fpioa_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा k210_pcf_info *info = &k210_pcf_infos[func];
 	u32 mode = k210_pinconf_mode_id_to_mode[info->mode_id];
 	u32 val = func | mode;
 
 	dev_dbg(pdata->dev, "set pin %u function %s (%u) -> 0x%08x\n",
 		pin, info->name, func, val);
 
-	writel(val, &pdata->fpioa->pins[pin]);
-}
+	ग_लिखोl(val, &pdata->fpioa->pins[pin]);
+पूर्ण
 
-static int k210_pinconf_set_param(struct pinctrl_dev *pctldev,
-				  unsigned int pin,
-				  unsigned int param, unsigned int arg)
-{
-	struct k210_fpioa_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	u32 val = readl(&pdata->fpioa->pins[pin]);
-	int drive;
+अटल पूर्णांक k210_pinconf_set_param(काष्ठा pinctrl_dev *pctldev,
+				  अचिन्हित पूर्णांक pin,
+				  अचिन्हित पूर्णांक param, अचिन्हित पूर्णांक arg)
+अणु
+	काष्ठा k210_fpioa_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	u32 val = पढ़ोl(&pdata->fpioa->pins[pin]);
+	पूर्णांक drive;
 
 	dev_dbg(pdata->dev, "set pin %u param %u, arg 0x%x\n",
 		pin, param, arg);
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
 		val &= ~K210_PC_BIAS_MASK;
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		if (!arg)
-			return -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		अगर (!arg)
+			वापस -EINVAL;
 		val |= K210_PC_PD;
-		break;
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if (!arg)
-			return -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर (!arg)
+			वापस -EINVAL;
 		val |= K210_PC_PD;
-		break;
-	case PIN_CONFIG_DRIVE_STRENGTH:
+		अवरोध;
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
 		arg *= 1000;
 		fallthrough;
-	case PIN_CONFIG_DRIVE_STRENGTH_UA:
+	हाल PIN_CONFIG_DRIVE_STRENGTH_UA:
 		drive = k210_pinconf_get_drive(arg);
-		if (drive < 0)
-			return drive;
+		अगर (drive < 0)
+			वापस drive;
 		val &= ~K210_PC_DRIVE_MASK;
 		val |= FIELD_PREP(K210_PC_DRIVE_MASK, drive);
-		break;
-	case PIN_CONFIG_INPUT_ENABLE:
-		if (arg)
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_ENABLE:
+		अगर (arg)
 			val |= K210_PC_IE;
-		else
+		अन्यथा
 			val &= ~K210_PC_IE;
-		break;
-	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
-		if (arg)
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		अगर (arg)
 			val |= K210_PC_ST;
-		else
+		अन्यथा
 			val &= ~K210_PC_ST;
-		break;
-	case PIN_CONFIG_OUTPUT:
+		अवरोध;
+	हाल PIN_CONFIG_OUTPUT:
 		k210_pinmux_set_pin_function(pctldev, pin, K210_PCF_CONSTANT);
-		val = readl(&pdata->fpioa->pins[pin]);
+		val = पढ़ोl(&pdata->fpioa->pins[pin]);
 		val |= K210_PC_MODE_OUT;
-		if (!arg)
+		अगर (!arg)
 			val |= K210_PC_DO_INV;
-		break;
-	case PIN_CONFIG_OUTPUT_ENABLE:
-		if (arg)
+		अवरोध;
+	हाल PIN_CONFIG_OUTPUT_ENABLE:
+		अगर (arg)
 			val |= K210_PC_OE;
-		else
+		अन्यथा
 			val &= ~K210_PC_OE;
-		break;
-	case PIN_CONFIG_SLEW_RATE:
-		if (arg)
+		अवरोध;
+	हाल PIN_CONFIG_SLEW_RATE:
+		अगर (arg)
 			val |= K210_PC_SL;
-		else
+		अन्यथा
 			val &= ~K210_PC_SL;
-		break;
-	case PIN_CONFIG_OUTPUT_INVERT:
-		if (arg)
+		अवरोध;
+	हाल PIN_CONFIG_OUTPUT_INVERT:
+		अगर (arg)
 			val |= K210_PC_DO_INV;
-		else
+		अन्यथा
 			val &= ~K210_PC_DO_INV;
-		break;
-	case PIN_CONFIG_INPUT_INVERT:
-		if (arg)
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_INVERT:
+		अगर (arg)
 			val |= K210_PC_DI_INV;
-		else
+		अन्यथा
 			val &= ~K210_PC_DI_INV;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	writel(val, &pdata->fpioa->pins[pin]);
+	ग_लिखोl(val, &pdata->fpioa->pins[pin]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int k210_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
-			    unsigned long *configs, unsigned int num_configs)
-{
-	unsigned int param, arg;
-	int i, ret;
+अटल पूर्णांक k210_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			    अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs)
+अणु
+	अचिन्हित पूर्णांक param, arg;
+	पूर्णांक i, ret;
 
-	if (WARN_ON(pin >= K210_NPINS))
-		return -EINVAL;
+	अगर (WARN_ON(pin >= K210_NPINS))
+		वापस -EINVAL;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 		ret = k210_pinconf_set_param(pctldev, pin, param, arg);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void k210_pinconf_dbg_show(struct pinctrl_dev *pctldev,
-				  struct seq_file *s, unsigned int pin)
-{
-	struct k210_fpioa_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+अटल व्योम k210_pinconf_dbg_show(काष्ठा pinctrl_dev *pctldev,
+				  काष्ठा seq_file *s, अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा k210_fpioa_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	seq_printf(s, "%#x", readl(&pdata->fpioa->pins[pin]));
-}
+	seq_म_लिखो(s, "%#x", पढ़ोl(&pdata->fpioa->pins[pin]));
+पूर्ण
 
-static int k210_pinconf_group_set(struct pinctrl_dev *pctldev,
-				  unsigned int selector, unsigned long *configs,
-				  unsigned int num_configs)
-{
-	struct k210_fpioa_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	unsigned int param, arg;
+अटल पूर्णांक k210_pinconf_group_set(काष्ठा pinctrl_dev *pctldev,
+				  अचिन्हित पूर्णांक selector, अचिन्हित दीर्घ *configs,
+				  अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा k210_fpioa_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित पूर्णांक param, arg;
 	u32 bit;
-	int i;
+	पूर्णांक i;
 
 	/* Pins should be configured with pinmux, not groups*/
-	if (selector < K210_NPINS)
-		return -EINVAL;
+	अगर (selector < K210_NPINS)
+		वापस -EINVAL;
 
-	/* Otherwise it's a power domain */
-	for (i = 0; i < num_configs; i++) {
+	/* Otherwise it's a घातer करोमुख्य */
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
-		if (param != PIN_CONFIG_POWER_SOURCE)
-			return -EINVAL;
+		अगर (param != PIN_CONFIG_POWER_SOURCE)
+			वापस -EINVAL;
 
 		arg = pinconf_to_config_argument(configs[i]);
 		bit = BIT(selector - K210_NPINS);
 		regmap_update_bits(pdata->sysctl_map,
-				   pdata->power_offset,
+				   pdata->घातer_offset,
 				   bit, arg ? bit : 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void k210_pinconf_group_dbg_show(struct pinctrl_dev *pctldev,
-					struct seq_file *s,
-					unsigned int selector)
-{
-	struct k210_fpioa_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	int ret;
+अटल व्योम k210_pinconf_group_dbg_show(काष्ठा pinctrl_dev *pctldev,
+					काष्ठा seq_file *s,
+					अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा k210_fpioa_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक ret;
 	u32 val;
 
-	if (selector < K210_NPINS)
-		return k210_pinconf_dbg_show(pctldev, s, selector);
+	अगर (selector < K210_NPINS)
+		वापस k210_pinconf_dbg_show(pctldev, s, selector);
 
-	ret = regmap_read(pdata->sysctl_map, pdata->power_offset, &val);
-	if (ret) {
+	ret = regmap_पढ़ो(pdata->sysctl_map, pdata->घातer_offset, &val);
+	अगर (ret) अणु
 		dev_err(pdata->dev, "Failed to read power reg\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	seq_printf(s, "%s: %s V", k210_group_names[selector],
+	seq_म_लिखो(s, "%s: %s V", k210_group_names[selector],
 		   val & BIT(selector - K210_NPINS) ? "1.8" : "3.3");
-}
+पूर्ण
 
-static const struct pinconf_ops k210_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops k210_pinconf_ops = अणु
 	.is_generic = true,
 	.pin_config_set = k210_pinconf_set,
 	.pin_config_group_set = k210_pinconf_group_set,
 	.pin_config_dbg_show = k210_pinconf_dbg_show,
 	.pin_config_group_dbg_show = k210_pinconf_group_dbg_show,
-};
+पूर्ण;
 
-static int k210_pinmux_get_function_count(struct pinctrl_dev *pctldev)
-{
-	return ARRAY_SIZE(k210_pcf_infos);
-}
+अटल पूर्णांक k210_pinmux_get_function_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस ARRAY_SIZE(k210_pcf_infos);
+पूर्ण
 
-static const char *k210_pinmux_get_function_name(struct pinctrl_dev *pctldev,
-						 unsigned int selector)
-{
-	return k210_pcf_infos[selector].name;
-}
+अटल स्थिर अक्षर *k210_pinmux_get_function_name(काष्ठा pinctrl_dev *pctldev,
+						 अचिन्हित पूर्णांक selector)
+अणु
+	वापस k210_pcf_infos[selector].name;
+पूर्ण
 
-static int k210_pinmux_get_function_groups(struct pinctrl_dev *pctldev,
-					   unsigned int selector,
-					   const char * const **groups,
-					   unsigned int * const num_groups)
-{
+अटल पूर्णांक k210_pinmux_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+					   अचिन्हित पूर्णांक selector,
+					   स्थिर अक्षर * स्थिर **groups,
+					   अचिन्हित पूर्णांक * स्थिर num_groups)
+अणु
 	/* Any function can be mapped to any pin */
 	*groups = k210_group_names;
 	*num_groups = K210_NPINS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int k210_pinmux_set_mux(struct pinctrl_dev *pctldev,
-			       unsigned int function,
-			       unsigned int group)
-{
-	/* Can't mux power domains */
-	if (group >= K210_NPINS)
-		return -EINVAL;
+अटल पूर्णांक k210_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev,
+			       अचिन्हित पूर्णांक function,
+			       अचिन्हित पूर्णांक group)
+अणु
+	/* Can't mux घातer करोमुख्यs */
+	अगर (group >= K210_NPINS)
+		वापस -EINVAL;
 
 	k210_pinmux_set_pin_function(pctldev, group, function);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops k210_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops k210_pinmux_ops = अणु
 	.get_functions_count = k210_pinmux_get_function_count,
 	.get_function_name = k210_pinmux_get_function_name,
 	.get_function_groups = k210_pinmux_get_function_groups,
 	.set_mux = k210_pinmux_set_mux,
 	.strict = true,
-};
+पूर्ण;
 
-static int k210_pinctrl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	return K210_NGROUPS;
-}
+अटल पूर्णांक k210_pinctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस K210_NGROUPS;
+पूर्ण
 
-static const char *k210_pinctrl_get_group_name(struct pinctrl_dev *pctldev,
-					       unsigned int group)
-{
-	return k210_group_names[group];
-}
+अटल स्थिर अक्षर *k210_pinctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+					       अचिन्हित पूर्णांक group)
+अणु
+	वापस k210_group_names[group];
+पूर्ण
 
-static int k210_pinctrl_get_group_pins(struct pinctrl_dev *pctldev,
-				       unsigned int group,
-				       const unsigned int **pins,
-				       unsigned int *npins)
-{
-	if (group >= K210_NPINS) {
-		*pins = NULL;
+अटल पूर्णांक k210_pinctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+				       अचिन्हित पूर्णांक group,
+				       स्थिर अचिन्हित पूर्णांक **pins,
+				       अचिन्हित पूर्णांक *npins)
+अणु
+	अगर (group >= K210_NPINS) अणु
+		*pins = शून्य;
 		*npins = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	*pins = &k210_pins[group].number;
 	*npins = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void k210_pinctrl_pin_dbg_show(struct pinctrl_dev *pctldev,
-				      struct seq_file *s, unsigned int offset)
-{
-	seq_printf(s, "%s", dev_name(pctldev->dev));
-}
+अटल व्योम k210_pinctrl_pin_dbg_show(काष्ठा pinctrl_dev *pctldev,
+				      काष्ठा seq_file *s, अचिन्हित पूर्णांक offset)
+अणु
+	seq_म_लिखो(s, "%s", dev_name(pctldev->dev));
+पूर्ण
 
-static int k210_pinctrl_dt_subnode_to_map(struct pinctrl_dev *pctldev,
-					  struct device_node *np,
-					  struct pinctrl_map **map,
-					  unsigned int *reserved_maps,
-					  unsigned int *num_maps)
-{
-	struct property *prop;
-	const __be32 *p;
-	int ret, pinmux_groups;
+अटल पूर्णांक k210_pinctrl_dt_subnode_to_map(काष्ठा pinctrl_dev *pctldev,
+					  काष्ठा device_node *np,
+					  काष्ठा pinctrl_map **map,
+					  अचिन्हित पूर्णांक *reserved_maps,
+					  अचिन्हित पूर्णांक *num_maps)
+अणु
+	काष्ठा property *prop;
+	स्थिर __be32 *p;
+	पूर्णांक ret, pinmux_groups;
 	u32 pinmux_group;
-	unsigned long *configs = NULL;
-	unsigned int num_configs = 0;
-	unsigned int reserve = 0;
+	अचिन्हित दीर्घ *configs = शून्य;
+	अचिन्हित पूर्णांक num_configs = 0;
+	अचिन्हित पूर्णांक reserve = 0;
 
 	ret = of_property_count_strings(np, "groups");
-	if (!ret)
-		return pinconf_generic_dt_subnode_to_map(pctldev, np, map,
+	अगर (!ret)
+		वापस pinconf_generic_dt_subnode_to_map(pctldev, np, map,
 						reserved_maps, num_maps,
 						PIN_MAP_TYPE_CONFIGS_GROUP);
 
 	pinmux_groups = of_property_count_u32_elems(np, "pinmux");
-	if (pinmux_groups <= 0) {
+	अगर (pinmux_groups <= 0) अणु
 		/* Ignore this node */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = pinconf_generic_parse_dt_config(np, pctldev, &configs,
 					      &num_configs);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(pctldev->dev, "%pOF: could not parse node property\n",
 			np);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	reserve = pinmux_groups * (1 + num_configs);
 	ret = pinctrl_utils_reserve_map(pctldev, map, reserved_maps, num_maps,
 					reserve);
-	if (ret < 0)
-		goto exit;
+	अगर (ret < 0)
+		जाओ निकास;
 
-	of_property_for_each_u32(np, "pinmux", prop, p, pinmux_group) {
-		const char *group_name, *func_name;
+	of_property_क्रम_each_u32(np, "pinmux", prop, p, pinmux_group) अणु
+		स्थिर अक्षर *group_name, *func_name;
 		u32 pin = FIELD_GET(K210_PG_PIN, pinmux_group);
 		u32 func = FIELD_GET(K210_PG_FUNC, pinmux_group);
 
-		if (pin >= K210_NPINS) {
+		अगर (pin >= K210_NPINS) अणु
 			ret = -EINVAL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		group_name = k210_group_names[pin];
 		func_name = k210_pcf_infos[func].name;
@@ -814,75 +815,75 @@ static int k210_pinctrl_dt_subnode_to_map(struct pinctrl_dev *pctldev,
 		ret = pinctrl_utils_add_map_mux(pctldev, map, reserved_maps,
 						num_maps, group_name,
 						func_name);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(pctldev->dev, "%pOF add mux map failed %d\n",
 				np, ret);
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		if (num_configs) {
+		अगर (num_configs) अणु
 			ret = pinctrl_utils_add_map_configs(pctldev, map,
 					reserved_maps, num_maps, group_name,
 					configs, num_configs,
 					PIN_MAP_TYPE_CONFIGS_PIN);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(pctldev->dev,
 					"%pOF add configs map failed %d\n",
 					np, ret);
-				goto exit;
-			}
-		}
-	}
+				जाओ निकास;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
 
-exit:
-	kfree(configs);
-	return ret;
-}
+निकास:
+	kमुक्त(configs);
+	वापस ret;
+पूर्ण
 
-static int k210_pinctrl_dt_node_to_map(struct pinctrl_dev *pctldev,
-				       struct device_node *np_config,
-				       struct pinctrl_map **map,
-				       unsigned int *num_maps)
-{
-	unsigned int reserved_maps;
-	struct device_node *np;
-	int ret;
+अटल पूर्णांक k210_pinctrl_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
+				       काष्ठा device_node *np_config,
+				       काष्ठा pinctrl_map **map,
+				       अचिन्हित पूर्णांक *num_maps)
+अणु
+	अचिन्हित पूर्णांक reserved_maps;
+	काष्ठा device_node *np;
+	पूर्णांक ret;
 
 	reserved_maps = 0;
-	*map = NULL;
+	*map = शून्य;
 	*num_maps = 0;
 
 	ret = k210_pinctrl_dt_subnode_to_map(pctldev, np_config, map,
 					     &reserved_maps, num_maps);
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
-	for_each_available_child_of_node(np_config, np) {
+	क्रम_each_available_child_of_node(np_config, np) अणु
 		ret = k210_pinctrl_dt_subnode_to_map(pctldev, np, map,
 						     &reserved_maps, num_maps);
-		if (ret < 0)
-			goto err;
-	}
-	return 0;
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
+	वापस 0;
 
 err:
-	pinctrl_utils_free_map(pctldev, *map, *num_maps);
-	return ret;
-}
+	pinctrl_utils_मुक्त_map(pctldev, *map, *num_maps);
+	वापस ret;
+पूर्ण
 
 
-static const struct pinctrl_ops k210_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops k210_pinctrl_ops = अणु
 	.get_groups_count = k210_pinctrl_get_groups_count,
 	.get_group_name = k210_pinctrl_get_group_name,
 	.get_group_pins = k210_pinctrl_get_group_pins,
 	.pin_dbg_show = k210_pinctrl_pin_dbg_show,
 	.dt_node_to_map = k210_pinctrl_dt_node_to_map,
-	.dt_free_map = pinconf_generic_dt_free_map,
-};
+	.dt_मुक्त_map = pinconf_generic_dt_मुक्त_map,
+पूर्ण;
 
-static struct pinctrl_desc k210_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc k210_pinctrl_desc = अणु
 	.name = "k210-pinctrl",
 	.pins = k210_pins,
 	.npins = K210_NPINS,
@@ -891,94 +892,94 @@ static struct pinctrl_desc k210_pinctrl_desc = {
 	.confops = &k210_pinconf_ops,
 	.custom_params = k210_pinconf_custom_params,
 	.num_custom_params = ARRAY_SIZE(k210_pinconf_custom_params),
-};
+पूर्ण;
 
-static void k210_fpioa_init_ties(struct k210_fpioa_data *pdata)
-{
-	struct k210_fpioa __iomem *fpioa = pdata->fpioa;
+अटल व्योम k210_fpioa_init_ties(काष्ठा k210_fpioa_data *pdata)
+अणु
+	काष्ठा k210_fpioa __iomem *fpioa = pdata->fpioa;
 	u32 val;
-	int i, j;
+	पूर्णांक i, j;
 
 	dev_dbg(pdata->dev, "Init pin ties\n");
 
 	/* Init pin functions input ties */
-	for (i = 0; i < ARRAY_SIZE(fpioa->tie_en); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(fpioa->tie_en); i++) अणु
 		val = 0;
-		for (j = 0; j < 32; j++) {
-			if (k210_pcf_infos[i * 32 + j].mode_id ==
-			    K210_PC_DEFAULT_IN_TIE) {
+		क्रम (j = 0; j < 32; j++) अणु
+			अगर (k210_pcf_infos[i * 32 + j].mode_id ==
+			    K210_PC_DEFAULT_IN_TIE) अणु
 				dev_dbg(pdata->dev,
 					"tie_en function %d (%s)\n",
 					i * 32 + j,
 					k210_pcf_infos[i * 32 + j].name);
 				val |= BIT(j);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* Set value before enable */
-		writel(val, &fpioa->tie_val[i]);
-		writel(val, &fpioa->tie_en[i]);
-	}
-}
+		/* Set value beक्रमe enable */
+		ग_लिखोl(val, &fpioa->tie_val[i]);
+		ग_लिखोl(val, &fpioa->tie_en[i]);
+	पूर्ण
+पूर्ण
 
-static int k210_fpioa_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct k210_fpioa_data *pdata;
-	int ret;
+अटल पूर्णांक k210_fpioa_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा k210_fpioa_data *pdata;
+	पूर्णांक ret;
 
 	dev_info(dev, "K210 FPIOA pin controller\n");
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस -ENOMEM;
 
 	pdata->dev = dev;
-	platform_set_drvdata(pdev, pdata);
+	platक्रमm_set_drvdata(pdev, pdata);
 
-	pdata->fpioa = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(pdata->fpioa))
-		return PTR_ERR(pdata->fpioa);
+	pdata->fpioa = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(pdata->fpioa))
+		वापस PTR_ERR(pdata->fpioa);
 
 	pdata->clk = devm_clk_get(dev, "ref");
-	if (IS_ERR(pdata->clk))
-		return PTR_ERR(pdata->clk);
+	अगर (IS_ERR(pdata->clk))
+		वापस PTR_ERR(pdata->clk);
 
 	ret = clk_prepare_enable(pdata->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pdata->pclk = devm_clk_get_optional(dev, "pclk");
-	if (!IS_ERR(pdata->pclk))
+	अगर (!IS_ERR(pdata->pclk))
 		clk_prepare_enable(pdata->pclk);
 
 	pdata->sysctl_map =
 		syscon_regmap_lookup_by_phandle_args(np,
 						"canaan,k210-sysctl-power",
-						1, &pdata->power_offset);
-	if (IS_ERR(pdata->sysctl_map))
-		return PTR_ERR(pdata->sysctl_map);
+						1, &pdata->घातer_offset);
+	अगर (IS_ERR(pdata->sysctl_map))
+		वापस PTR_ERR(pdata->sysctl_map);
 
 	k210_fpioa_init_ties(pdata);
 
-	pdata->pctl = pinctrl_register(&k210_pinctrl_desc, dev, (void *)pdata);
-	if (IS_ERR(pdata->pctl))
-		return PTR_ERR(pdata->pctl);
+	pdata->pctl = pinctrl_रेजिस्टर(&k210_pinctrl_desc, dev, (व्योम *)pdata);
+	अगर (IS_ERR(pdata->pctl))
+		वापस PTR_ERR(pdata->pctl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id k210_fpioa_dt_ids[] = {
-	{ .compatible = "canaan,k210-fpioa" },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id k210_fpioa_dt_ids[] = अणु
+	अणु .compatible = "canaan,k210-fpioa" पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 
-static struct platform_driver k210_fpioa_driver = {
+अटल काष्ठा platक्रमm_driver k210_fpioa_driver = अणु
 	.probe	= k210_fpioa_probe,
-	.driver = {
+	.driver = अणु
 		.name		= "k210-fpioa",
 		.of_match_table	= k210_fpioa_dt_ids,
-	},
-};
-builtin_platform_driver(k210_fpioa_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(k210_fpioa_driver);

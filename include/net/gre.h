@@ -1,149 +1,150 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_GRE_H
-#define __LINUX_GRE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_GRE_H
+#घोषणा __LINUX_GRE_H
 
-#include <linux/skbuff.h>
-#include <net/ip_tunnels.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/ip_tunnels.h>
 
-struct gre_base_hdr {
+काष्ठा gre_base_hdr अणु
 	__be16 flags;
 	__be16 protocol;
-} __packed;
+पूर्ण __packed;
 
-struct gre_full_hdr {
-	struct gre_base_hdr fixed_header;
+काष्ठा gre_full_hdr अणु
+	काष्ठा gre_base_hdr fixed_header;
 	__be16 csum;
 	__be16 reserved1;
 	__be32 key;
 	__be32 seq;
-} __packed;
-#define GRE_HEADER_SECTION 4
+पूर्ण __packed;
+#घोषणा GRE_HEADER_SECTION 4
 
-#define GREPROTO_CISCO		0
-#define GREPROTO_PPTP		1
-#define GREPROTO_MAX		2
-#define GRE_IP_PROTO_MAX	2
+#घोषणा GREPROTO_CISCO		0
+#घोषणा GREPROTO_PPTP		1
+#घोषणा GREPROTO_MAX		2
+#घोषणा GRE_IP_PROTO_MAX	2
 
-struct gre_protocol {
-	int  (*handler)(struct sk_buff *skb);
-	void (*err_handler)(struct sk_buff *skb, u32 info);
-};
+काष्ठा gre_protocol अणु
+	पूर्णांक  (*handler)(काष्ठा sk_buff *skb);
+	व्योम (*err_handler)(काष्ठा sk_buff *skb, u32 info);
+पूर्ण;
 
-int gre_add_protocol(const struct gre_protocol *proto, u8 version);
-int gre_del_protocol(const struct gre_protocol *proto, u8 version);
+पूर्णांक gre_add_protocol(स्थिर काष्ठा gre_protocol *proto, u8 version);
+पूर्णांक gre_del_protocol(स्थिर काष्ठा gre_protocol *proto, u8 version);
 
-struct net_device *gretap_fb_dev_create(struct net *net, const char *name,
+काष्ठा net_device *gretap_fb_dev_create(काष्ठा net *net, स्थिर अक्षर *name,
 				       u8 name_assign_type);
-int gre_parse_header(struct sk_buff *skb, struct tnl_ptk_info *tpi,
-		     bool *csum_err, __be16 proto, int nhs);
+पूर्णांक gre_parse_header(काष्ठा sk_buff *skb, काष्ठा tnl_ptk_info *tpi,
+		     bool *csum_err, __be16 proto, पूर्णांक nhs);
 
-static inline bool netif_is_gretap(const struct net_device *dev)
-{
-	return dev->rtnl_link_ops &&
-	       !strcmp(dev->rtnl_link_ops->kind, "gretap");
-}
+अटल अंतरभूत bool netअगर_is_gretap(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस dev->rtnl_link_ops &&
+	       !म_भेद(dev->rtnl_link_ops->kind, "gretap");
+पूर्ण
 
-static inline bool netif_is_ip6gretap(const struct net_device *dev)
-{
-	return dev->rtnl_link_ops &&
-	       !strcmp(dev->rtnl_link_ops->kind, "ip6gretap");
-}
+अटल अंतरभूत bool netअगर_is_ip6gretap(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस dev->rtnl_link_ops &&
+	       !म_भेद(dev->rtnl_link_ops->kind, "ip6gretap");
+पूर्ण
 
-static inline int gre_calc_hlen(__be16 o_flags)
-{
-	int addend = 4;
+अटल अंतरभूत पूर्णांक gre_calc_hlen(__be16 o_flags)
+अणु
+	पूर्णांक addend = 4;
 
-	if (o_flags & TUNNEL_CSUM)
+	अगर (o_flags & TUNNEL_CSUM)
 		addend += 4;
-	if (o_flags & TUNNEL_KEY)
+	अगर (o_flags & TUNNEL_KEY)
 		addend += 4;
-	if (o_flags & TUNNEL_SEQ)
+	अगर (o_flags & TUNNEL_SEQ)
 		addend += 4;
-	return addend;
-}
+	वापस addend;
+पूर्ण
 
-static inline __be16 gre_flags_to_tnl_flags(__be16 flags)
-{
+अटल अंतरभूत __be16 gre_flags_to_tnl_flags(__be16 flags)
+अणु
 	__be16 tflags = 0;
 
-	if (flags & GRE_CSUM)
+	अगर (flags & GRE_CSUM)
 		tflags |= TUNNEL_CSUM;
-	if (flags & GRE_ROUTING)
+	अगर (flags & GRE_ROUTING)
 		tflags |= TUNNEL_ROUTING;
-	if (flags & GRE_KEY)
+	अगर (flags & GRE_KEY)
 		tflags |= TUNNEL_KEY;
-	if (flags & GRE_SEQ)
+	अगर (flags & GRE_SEQ)
 		tflags |= TUNNEL_SEQ;
-	if (flags & GRE_STRICT)
+	अगर (flags & GRE_STRICT)
 		tflags |= TUNNEL_STRICT;
-	if (flags & GRE_REC)
+	अगर (flags & GRE_REC)
 		tflags |= TUNNEL_REC;
-	if (flags & GRE_VERSION)
+	अगर (flags & GRE_VERSION)
 		tflags |= TUNNEL_VERSION;
 
-	return tflags;
-}
+	वापस tflags;
+पूर्ण
 
-static inline __be16 gre_tnl_flags_to_gre_flags(__be16 tflags)
-{
+अटल अंतरभूत __be16 gre_tnl_flags_to_gre_flags(__be16 tflags)
+अणु
 	__be16 flags = 0;
 
-	if (tflags & TUNNEL_CSUM)
+	अगर (tflags & TUNNEL_CSUM)
 		flags |= GRE_CSUM;
-	if (tflags & TUNNEL_ROUTING)
+	अगर (tflags & TUNNEL_ROUTING)
 		flags |= GRE_ROUTING;
-	if (tflags & TUNNEL_KEY)
+	अगर (tflags & TUNNEL_KEY)
 		flags |= GRE_KEY;
-	if (tflags & TUNNEL_SEQ)
+	अगर (tflags & TUNNEL_SEQ)
 		flags |= GRE_SEQ;
-	if (tflags & TUNNEL_STRICT)
+	अगर (tflags & TUNNEL_STRICT)
 		flags |= GRE_STRICT;
-	if (tflags & TUNNEL_REC)
+	अगर (tflags & TUNNEL_REC)
 		flags |= GRE_REC;
-	if (tflags & TUNNEL_VERSION)
+	अगर (tflags & TUNNEL_VERSION)
 		flags |= GRE_VERSION;
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static inline void gre_build_header(struct sk_buff *skb, int hdr_len,
+अटल अंतरभूत व्योम gre_build_header(काष्ठा sk_buff *skb, पूर्णांक hdr_len,
 				    __be16 flags, __be16 proto,
 				    __be32 key, __be32 seq)
-{
-	struct gre_base_hdr *greh;
+अणु
+	काष्ठा gre_base_hdr *greh;
 
 	skb_push(skb, hdr_len);
 
 	skb_set_inner_protocol(skb, proto);
 	skb_reset_transport_header(skb);
-	greh = (struct gre_base_hdr *)skb->data;
+	greh = (काष्ठा gre_base_hdr *)skb->data;
 	greh->flags = gre_tnl_flags_to_gre_flags(flags);
 	greh->protocol = proto;
 
-	if (flags & (TUNNEL_KEY | TUNNEL_CSUM | TUNNEL_SEQ)) {
+	अगर (flags & (TUNNEL_KEY | TUNNEL_CSUM | TUNNEL_SEQ)) अणु
 		__be32 *ptr = (__be32 *)(((u8 *)greh) + hdr_len - 4);
 
-		if (flags & TUNNEL_SEQ) {
+		अगर (flags & TUNNEL_SEQ) अणु
 			*ptr = seq;
 			ptr--;
-		}
-		if (flags & TUNNEL_KEY) {
+		पूर्ण
+		अगर (flags & TUNNEL_KEY) अणु
 			*ptr = key;
 			ptr--;
-		}
-		if (flags & TUNNEL_CSUM &&
+		पूर्ण
+		अगर (flags & TUNNEL_CSUM &&
 		    !(skb_shinfo(skb)->gso_type &
-		      (SKB_GSO_GRE | SKB_GSO_GRE_CSUM))) {
+		      (SKB_GSO_GRE | SKB_GSO_GRE_CSUM))) अणु
 			*ptr = 0;
-			if (skb->ip_summed == CHECKSUM_PARTIAL) {
+			अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
 				*(__sum16 *)ptr = csum_fold(lco_csum(skb));
-			} else {
+			पूर्ण अन्यथा अणु
 				skb->ip_summed = CHECKSUM_PARTIAL;
 				skb->csum_start = skb_transport_header(skb) - skb->head;
-				skb->csum_offset = sizeof(*greh);
-			}
-		}
-	}
-}
+				skb->csum_offset = माप(*greh);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर

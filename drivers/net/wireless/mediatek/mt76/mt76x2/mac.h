@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
-#ifndef __MT76x2_MAC_H
-#define __MT76x2_MAC_H
+#अगर_अघोषित __MT76x2_MAC_H
+#घोषणा __MT76x2_MAC_H
 
-#include "mt76x2.h"
+#समावेश "mt76x2.h"
 
-struct mt76x02_dev;
-struct mt76x2_sta;
-struct mt76x02_vif;
+काष्ठा mt76x02_dev;
+काष्ठा mt76x2_sta;
+काष्ठा mt76x02_vअगर;
 
-void mt76x2_mac_stop(struct mt76x02_dev *dev, bool force);
+व्योम mt76x2_mac_stop(काष्ठा mt76x02_dev *dev, bool क्रमce);
 
-static inline void mt76x2_mac_resume(struct mt76x02_dev *dev)
-{
+अटल अंतरभूत व्योम mt76x2_mac_resume(काष्ठा mt76x02_dev *dev)
+अणु
 	mt76_wr(dev, MT_MAC_SYS_CTRL,
 		MT_MAC_SYS_CTRL_ENABLE_TX |
 		MT_MAC_SYS_CTRL_ENABLE_RX);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "libgcc.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "libgcc.h"
 
 word_type __ucmpdi2(DWtype a, DWtype b)
-{
-	const DWunion au = {.ll = a};
-	const DWunion bu = {.ll = b};
+अणु
+	स्थिर DWजोड़ au = अणु.ll = aपूर्ण;
+	स्थिर DWजोड़ bu = अणु.ll = bपूर्ण;
 
-	if ((UWtype) au.s.high < (UWtype) bu.s.high)
-		return 0;
-	else if ((UWtype) au.s.high > (UWtype) bu.s.high)
-		return 2;
-	if ((UWtype) au.s.low < (UWtype) bu.s.low)
-		return 0;
-	else if ((UWtype) au.s.low > (UWtype) bu.s.low)
-		return 2;
-	return 1;
-}
+	अगर ((UWtype) au.s.high < (UWtype) bu.s.high)
+		वापस 0;
+	अन्यथा अगर ((UWtype) au.s.high > (UWtype) bu.s.high)
+		वापस 2;
+	अगर ((UWtype) au.s.low < (UWtype) bu.s.low)
+		वापस 0;
+	अन्यथा अगर ((UWtype) au.s.low > (UWtype) bu.s.low)
+		वापस 2;
+	वापस 1;
+पूर्ण

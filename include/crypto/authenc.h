@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Authenc: Simple AEAD wrapper for IPsec
+ * Authenc: Simple AEAD wrapper क्रम IPsec
  *
- * Copyright (c) 2007 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2007 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
-#ifndef _CRYPTO_AUTHENC_H
-#define _CRYPTO_AUTHENC_H
+#अगर_अघोषित _CRYPTO_AUTHENC_H
+#घोषणा _CRYPTO_AUTHENC_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum {
+क्रमागत अणु
 	CRYPTO_AUTHENC_KEYA_UNSPEC,
 	CRYPTO_AUTHENC_KEYA_PARAM,
-};
+पूर्ण;
 
-struct crypto_authenc_key_param {
+काष्ठा crypto_authenc_key_param अणु
 	__be32 enckeylen;
-};
+पूर्ण;
 
-struct crypto_authenc_keys {
-	const u8 *authkey;
-	const u8 *enckey;
+काष्ठा crypto_authenc_keys अणु
+	स्थिर u8 *authkey;
+	स्थिर u8 *enckey;
 
-	unsigned int authkeylen;
-	unsigned int enckeylen;
-};
+	अचिन्हित पूर्णांक authkeylen;
+	अचिन्हित पूर्णांक enckeylen;
+पूर्ण;
 
-int crypto_authenc_extractkeys(struct crypto_authenc_keys *keys, const u8 *key,
-			       unsigned int keylen);
+पूर्णांक crypto_authenc_extractkeys(काष्ठा crypto_authenc_keys *keys, स्थिर u8 *key,
+			       अचिन्हित पूर्णांक keylen);
 
-#endif	/* _CRYPTO_AUTHENC_H */
+#पूर्ण_अगर	/* _CRYPTO_AUTHENC_H */

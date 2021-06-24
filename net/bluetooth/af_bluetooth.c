@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
-   BlueZ - Bluetooth protocol stack for Linux
+   BlueZ - Bluetooth protocol stack क्रम Linux
    Copyright (C) 2000-2001 Qualcomm Incorporated
 
    Written 2000,2001 by Maxim Krasnyansky <maxk@qualcomm.com>
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -12,7 +13,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -24,26 +25,26 @@
 
 /* Bluetooth address family and sockets. */
 
-#include <linux/module.h>
-#include <linux/debugfs.h>
-#include <linux/stringify.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/module.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <asm/ioctls.h>
+#समावेश <यंत्र/ioctls.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <linux/proc_fs.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <linux/proc_fs.h>
 
-#include "leds.h"
-#include "selftest.h"
+#समावेश "leds.h"
+#समावेश "selftest.h"
 
 /* Bluetooth sockets */
-#define BT_MAX_PROTO	8
-static const struct net_proto_family *bt_proto[BT_MAX_PROTO];
-static DEFINE_RWLOCK(bt_proto_lock);
+#घोषणा BT_MAX_PROTO	8
+अटल स्थिर काष्ठा net_proto_family *bt_proto[BT_MAX_PROTO];
+अटल DEFINE_RWLOCK(bt_proto_lock);
 
-static struct lock_class_key bt_lock_key[BT_MAX_PROTO];
-static const char *const bt_key_strings[BT_MAX_PROTO] = {
+अटल काष्ठा lock_class_key bt_lock_key[BT_MAX_PROTO];
+अटल स्थिर अक्षर *स्थिर bt_key_strings[BT_MAX_PROTO] = अणु
 	"sk_lock-AF_BLUETOOTH-BTPROTO_L2CAP",
 	"sk_lock-AF_BLUETOOTH-BTPROTO_HCI",
 	"sk_lock-AF_BLUETOOTH-BTPROTO_SCO",
@@ -52,10 +53,10 @@ static const char *const bt_key_strings[BT_MAX_PROTO] = {
 	"sk_lock-AF_BLUETOOTH-BTPROTO_CMTP",
 	"sk_lock-AF_BLUETOOTH-BTPROTO_HIDP",
 	"sk_lock-AF_BLUETOOTH-BTPROTO_AVDTP",
-};
+पूर्ण;
 
-static struct lock_class_key bt_slock_key[BT_MAX_PROTO];
-static const char *const bt_slock_key_strings[BT_MAX_PROTO] = {
+अटल काष्ठा lock_class_key bt_slock_key[BT_MAX_PROTO];
+अटल स्थिर अक्षर *स्थिर bt_slock_key_strings[BT_MAX_PROTO] = अणु
 	"slock-AF_BLUETOOTH-BTPROTO_L2CAP",
 	"slock-AF_BLUETOOTH-BTPROTO_HCI",
 	"slock-AF_BLUETOOTH-BTPROTO_SCO",
@@ -64,738 +65,738 @@ static const char *const bt_slock_key_strings[BT_MAX_PROTO] = {
 	"slock-AF_BLUETOOTH-BTPROTO_CMTP",
 	"slock-AF_BLUETOOTH-BTPROTO_HIDP",
 	"slock-AF_BLUETOOTH-BTPROTO_AVDTP",
-};
+पूर्ण;
 
-void bt_sock_reclassify_lock(struct sock *sk, int proto)
-{
+व्योम bt_sock_reclassअगरy_lock(काष्ठा sock *sk, पूर्णांक proto)
+अणु
 	BUG_ON(!sk);
-	BUG_ON(!sock_allow_reclassification(sk));
+	BUG_ON(!sock_allow_reclassअगरication(sk));
 
 	sock_lock_init_class_and_name(sk,
 				      bt_slock_key_strings[proto], &bt_slock_key[proto],
 				      bt_key_strings[proto], &bt_lock_key[proto]);
-}
-EXPORT_SYMBOL(bt_sock_reclassify_lock);
+पूर्ण
+EXPORT_SYMBOL(bt_sock_reclassअगरy_lock);
 
-int bt_sock_register(int proto, const struct net_proto_family *ops)
-{
-	int err = 0;
+पूर्णांक bt_sock_रेजिस्टर(पूर्णांक proto, स्थिर काष्ठा net_proto_family *ops)
+अणु
+	पूर्णांक err = 0;
 
-	if (proto < 0 || proto >= BT_MAX_PROTO)
-		return -EINVAL;
+	अगर (proto < 0 || proto >= BT_MAX_PROTO)
+		वापस -EINVAL;
 
-	write_lock(&bt_proto_lock);
+	ग_लिखो_lock(&bt_proto_lock);
 
-	if (bt_proto[proto])
+	अगर (bt_proto[proto])
 		err = -EEXIST;
-	else
+	अन्यथा
 		bt_proto[proto] = ops;
 
-	write_unlock(&bt_proto_lock);
+	ग_लिखो_unlock(&bt_proto_lock);
 
-	return err;
-}
-EXPORT_SYMBOL(bt_sock_register);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(bt_sock_रेजिस्टर);
 
-void bt_sock_unregister(int proto)
-{
-	if (proto < 0 || proto >= BT_MAX_PROTO)
-		return;
+व्योम bt_sock_unरेजिस्टर(पूर्णांक proto)
+अणु
+	अगर (proto < 0 || proto >= BT_MAX_PROTO)
+		वापस;
 
-	write_lock(&bt_proto_lock);
-	bt_proto[proto] = NULL;
-	write_unlock(&bt_proto_lock);
-}
-EXPORT_SYMBOL(bt_sock_unregister);
+	ग_लिखो_lock(&bt_proto_lock);
+	bt_proto[proto] = शून्य;
+	ग_लिखो_unlock(&bt_proto_lock);
+पूर्ण
+EXPORT_SYMBOL(bt_sock_unरेजिस्टर);
 
-static int bt_sock_create(struct net *net, struct socket *sock, int proto,
-			  int kern)
-{
-	int err;
+अटल पूर्णांक bt_sock_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक proto,
+			  पूर्णांक kern)
+अणु
+	पूर्णांक err;
 
-	if (net != &init_net)
-		return -EAFNOSUPPORT;
+	अगर (net != &init_net)
+		वापस -EAFNOSUPPORT;
 
-	if (proto < 0 || proto >= BT_MAX_PROTO)
-		return -EINVAL;
+	अगर (proto < 0 || proto >= BT_MAX_PROTO)
+		वापस -EINVAL;
 
-	if (!bt_proto[proto])
+	अगर (!bt_proto[proto])
 		request_module("bt-proto-%d", proto);
 
 	err = -EPROTONOSUPPORT;
 
-	read_lock(&bt_proto_lock);
+	पढ़ो_lock(&bt_proto_lock);
 
-	if (bt_proto[proto] && try_module_get(bt_proto[proto]->owner)) {
+	अगर (bt_proto[proto] && try_module_get(bt_proto[proto]->owner)) अणु
 		err = bt_proto[proto]->create(net, sock, proto, kern);
-		if (!err)
-			bt_sock_reclassify_lock(sock->sk, proto);
+		अगर (!err)
+			bt_sock_reclassअगरy_lock(sock->sk, proto);
 		module_put(bt_proto[proto]->owner);
-	}
+	पूर्ण
 
-	read_unlock(&bt_proto_lock);
+	पढ़ो_unlock(&bt_proto_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void bt_sock_link(struct bt_sock_list *l, struct sock *sk)
-{
-	write_lock(&l->lock);
+व्योम bt_sock_link(काष्ठा bt_sock_list *l, काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock(&l->lock);
 	sk_add_node(sk, &l->head);
-	write_unlock(&l->lock);
-}
+	ग_लिखो_unlock(&l->lock);
+पूर्ण
 EXPORT_SYMBOL(bt_sock_link);
 
-void bt_sock_unlink(struct bt_sock_list *l, struct sock *sk)
-{
-	write_lock(&l->lock);
+व्योम bt_sock_unlink(काष्ठा bt_sock_list *l, काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock(&l->lock);
 	sk_del_node_init(sk);
-	write_unlock(&l->lock);
-}
+	ग_लिखो_unlock(&l->lock);
+पूर्ण
 EXPORT_SYMBOL(bt_sock_unlink);
 
-void bt_accept_enqueue(struct sock *parent, struct sock *sk, bool bh)
-{
+व्योम bt_accept_enqueue(काष्ठा sock *parent, काष्ठा sock *sk, bool bh)
+अणु
 	BT_DBG("parent %p, sk %p", parent, sk);
 
 	sock_hold(sk);
 
-	if (bh)
+	अगर (bh)
 		bh_lock_sock_nested(sk);
-	else
+	अन्यथा
 		lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
 
 	list_add_tail(&bt_sk(sk)->accept_q, &bt_sk(parent)->accept_q);
 	bt_sk(sk)->parent = parent;
 
-	if (bh)
+	अगर (bh)
 		bh_unlock_sock(sk);
-	else
+	अन्यथा
 		release_sock(sk);
 
 	sk_acceptq_added(parent);
-}
+पूर्ण
 EXPORT_SYMBOL(bt_accept_enqueue);
 
 /* Calling function must hold the sk lock.
- * bt_sk(sk)->parent must be non-NULL meaning sk is in the parent list.
+ * bt_sk(sk)->parent must be non-शून्य meaning sk is in the parent list.
  */
-void bt_accept_unlink(struct sock *sk)
-{
+व्योम bt_accept_unlink(काष्ठा sock *sk)
+अणु
 	BT_DBG("sk %p state %d", sk, sk->sk_state);
 
 	list_del_init(&bt_sk(sk)->accept_q);
-	sk_acceptq_removed(bt_sk(sk)->parent);
-	bt_sk(sk)->parent = NULL;
+	sk_acceptq_हटाओd(bt_sk(sk)->parent);
+	bt_sk(sk)->parent = शून्य;
 	sock_put(sk);
-}
+पूर्ण
 EXPORT_SYMBOL(bt_accept_unlink);
 
-struct sock *bt_accept_dequeue(struct sock *parent, struct socket *newsock)
-{
-	struct bt_sock *s, *n;
-	struct sock *sk;
+काष्ठा sock *bt_accept_dequeue(काष्ठा sock *parent, काष्ठा socket *newsock)
+अणु
+	काष्ठा bt_sock *s, *n;
+	काष्ठा sock *sk;
 
 	BT_DBG("parent %p", parent);
 
 restart:
-	list_for_each_entry_safe(s, n, &bt_sk(parent)->accept_q, accept_q) {
-		sk = (struct sock *)s;
+	list_क्रम_each_entry_safe(s, n, &bt_sk(parent)->accept_q, accept_q) अणु
+		sk = (काष्ठा sock *)s;
 
-		/* Prevent early freeing of sk due to unlink and sock_kill */
+		/* Prevent early मुक्तing of sk due to unlink and sock_समाप्त */
 		sock_hold(sk);
 		lock_sock(sk);
 
-		/* Check sk has not already been unlinked via
+		/* Check sk has not alपढ़ोy been unlinked via
 		 * bt_accept_unlink() due to serialisation caused by sk locking
 		 */
-		if (!bt_sk(sk)->parent) {
+		अगर (!bt_sk(sk)->parent) अणु
 			BT_DBG("sk %p, already unlinked", sk);
 			release_sock(sk);
 			sock_put(sk);
 
-			/* Restart the loop as sk is no longer in the list
-			 * and also avoid a potential infinite loop because
-			 * list_for_each_entry_safe() is not thread safe.
+			/* Restart the loop as sk is no दीर्घer in the list
+			 * and also aव्योम a potential infinite loop because
+			 * list_क्रम_each_entry_safe() is not thपढ़ो safe.
 			 */
-			goto restart;
-		}
+			जाओ restart;
+		पूर्ण
 
 		/* sk is safely in the parent list so reduce reference count */
 		sock_put(sk);
 
 		/* FIXME: Is this check still needed */
-		if (sk->sk_state == BT_CLOSED) {
+		अगर (sk->sk_state == BT_CLOSED) अणु
 			bt_accept_unlink(sk);
 			release_sock(sk);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (sk->sk_state == BT_CONNECTED || !newsock ||
-		    test_bit(BT_SK_DEFER_SETUP, &bt_sk(parent)->flags)) {
+		अगर (sk->sk_state == BT_CONNECTED || !newsock ||
+		    test_bit(BT_SK_DEFER_SETUP, &bt_sk(parent)->flags)) अणु
 			bt_accept_unlink(sk);
-			if (newsock)
+			अगर (newsock)
 				sock_graft(sk, newsock);
 
 			release_sock(sk);
-			return sk;
-		}
+			वापस sk;
+		पूर्ण
 
 		release_sock(sk);
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(bt_accept_dequeue);
 
-int bt_sock_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
-		    int flags)
-{
-	int noblock = flags & MSG_DONTWAIT;
-	struct sock *sk = sock->sk;
-	struct sk_buff *skb;
-	size_t copied;
-	size_t skblen;
-	int err;
+पूर्णांक bt_sock_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len,
+		    पूर्णांक flags)
+अणु
+	पूर्णांक noblock = flags & MSG_DONTWAIT;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sk_buff *skb;
+	माप_प्रकार copied;
+	माप_प्रकार skblen;
+	पूर्णांक err;
 
 	BT_DBG("sock %p sk %p len %zu", sock, sk, len);
 
-	if (flags & MSG_OOB)
-		return -EOPNOTSUPP;
+	अगर (flags & MSG_OOB)
+		वापस -EOPNOTSUPP;
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
-	if (!skb) {
-		if (sk->sk_shutdown & RCV_SHUTDOWN)
-			return 0;
+	अगर (!skb) अणु
+		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+			वापस 0;
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	skblen = skb->len;
 	copied = skb->len;
-	if (len < copied) {
+	अगर (len < copied) अणु
 		msg->msg_flags |= MSG_TRUNC;
 		copied = len;
-	}
+	पूर्ण
 
 	skb_reset_transport_header(skb);
 	err = skb_copy_datagram_msg(skb, 0, msg, copied);
-	if (err == 0) {
+	अगर (err == 0) अणु
 		sock_recv_ts_and_drops(msg, sk, skb);
 
-		if (msg->msg_name && bt_sk(sk)->skb_msg_name)
+		अगर (msg->msg_name && bt_sk(sk)->skb_msg_name)
 			bt_sk(sk)->skb_msg_name(skb, msg->msg_name,
 						&msg->msg_namelen);
 
-		if (bt_sk(sk)->skb_put_cmsg)
+		अगर (bt_sk(sk)->skb_put_cmsg)
 			bt_sk(sk)->skb_put_cmsg(skb, msg, sk);
-	}
+	पूर्ण
 
-	skb_free_datagram(sk, skb);
+	skb_मुक्त_datagram(sk, skb);
 
-	if (flags & MSG_TRUNC)
+	अगर (flags & MSG_TRUNC)
 		copied = skblen;
 
-	return err ? : copied;
-}
+	वापस err ? : copied;
+पूर्ण
 EXPORT_SYMBOL(bt_sock_recvmsg);
 
-static long bt_sock_data_wait(struct sock *sk, long timeo)
-{
-	DECLARE_WAITQUEUE(wait, current);
+अटल दीर्घ bt_sock_data_रुको(काष्ठा sock *sk, दीर्घ समयo)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
 
-	add_wait_queue(sk_sleep(sk), &wait);
-	for (;;) {
+	add_रुको_queue(sk_sleep(sk), &रुको);
+	क्रम (;;) अणु
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		if (!skb_queue_empty(&sk->sk_receive_queue))
-			break;
+		अगर (!skb_queue_empty(&sk->sk_receive_queue))
+			अवरोध;
 
-		if (sk->sk_err || (sk->sk_shutdown & RCV_SHUTDOWN))
-			break;
+		अगर (sk->sk_err || (sk->sk_shutकरोwn & RCV_SHUTDOWN))
+			अवरोध;
 
-		if (signal_pending(current) || !timeo)
-			break;
+		अगर (संकेत_pending(current) || !समयo)
+			अवरोध;
 
 		sk_set_bit(SOCKWQ_ASYNC_WAITDATA, sk);
 		release_sock(sk);
-		timeo = schedule_timeout(timeo);
+		समयo = schedule_समयout(समयo);
 		lock_sock(sk);
 		sk_clear_bit(SOCKWQ_ASYNC_WAITDATA, sk);
-	}
+	पूर्ण
 
 	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(sk_sleep(sk), &wait);
-	return timeo;
-}
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+	वापस समयo;
+पूर्ण
 
-int bt_sock_stream_recvmsg(struct socket *sock, struct msghdr *msg,
-			   size_t size, int flags)
-{
-	struct sock *sk = sock->sk;
-	int err = 0;
-	size_t target, copied = 0;
-	long timeo;
+पूर्णांक bt_sock_stream_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			   माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक err = 0;
+	माप_प्रकार target, copied = 0;
+	दीर्घ समयo;
 
-	if (flags & MSG_OOB)
-		return -EOPNOTSUPP;
+	अगर (flags & MSG_OOB)
+		वापस -EOPNOTSUPP;
 
 	BT_DBG("sk %p size %zu", sk, size);
 
 	lock_sock(sk);
 
 	target = sock_rcvlowat(sk, flags & MSG_WAITALL, size);
-	timeo  = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
+	समयo  = sock_rcvसमयo(sk, flags & MSG_DONTWAIT);
 
-	do {
-		struct sk_buff *skb;
-		int chunk;
+	करो अणु
+		काष्ठा sk_buff *skb;
+		पूर्णांक chunk;
 
 		skb = skb_dequeue(&sk->sk_receive_queue);
-		if (!skb) {
-			if (copied >= target)
-				break;
+		अगर (!skb) अणु
+			अगर (copied >= target)
+				अवरोध;
 
 			err = sock_error(sk);
-			if (err)
-				break;
-			if (sk->sk_shutdown & RCV_SHUTDOWN)
-				break;
+			अगर (err)
+				अवरोध;
+			अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+				अवरोध;
 
 			err = -EAGAIN;
-			if (!timeo)
-				break;
+			अगर (!समयo)
+				अवरोध;
 
-			timeo = bt_sock_data_wait(sk, timeo);
+			समयo = bt_sock_data_रुको(sk, समयo);
 
-			if (signal_pending(current)) {
-				err = sock_intr_errno(timeo);
-				goto out;
-			}
-			continue;
-		}
+			अगर (संकेत_pending(current)) अणु
+				err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+				जाओ out;
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		chunk = min_t(unsigned int, skb->len, size);
-		if (skb_copy_datagram_msg(skb, 0, msg, chunk)) {
+		chunk = min_t(अचिन्हित पूर्णांक, skb->len, size);
+		अगर (skb_copy_datagram_msg(skb, 0, msg, chunk)) अणु
 			skb_queue_head(&sk->sk_receive_queue, skb);
-			if (!copied)
+			अगर (!copied)
 				copied = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		copied += chunk;
 		size   -= chunk;
 
 		sock_recv_ts_and_drops(msg, sk, skb);
 
-		if (!(flags & MSG_PEEK)) {
-			int skb_len = skb_headlen(skb);
+		अगर (!(flags & MSG_PEEK)) अणु
+			पूर्णांक skb_len = skb_headlen(skb);
 
-			if (chunk <= skb_len) {
+			अगर (chunk <= skb_len) अणु
 				__skb_pull(skb, chunk);
-			} else {
-				struct sk_buff *frag;
+			पूर्ण अन्यथा अणु
+				काष्ठा sk_buff *frag;
 
 				__skb_pull(skb, skb_len);
 				chunk -= skb_len;
 
-				skb_walk_frags(skb, frag) {
-					if (chunk <= frag->len) {
+				skb_walk_frags(skb, frag) अणु
+					अगर (chunk <= frag->len) अणु
 						/* Pulling partial data */
 						skb->len -= chunk;
 						skb->data_len -= chunk;
 						__skb_pull(frag, chunk);
-						break;
-					} else if (frag->len) {
+						अवरोध;
+					पूर्ण अन्यथा अगर (frag->len) अणु
 						/* Pulling all frag data */
 						chunk -= frag->len;
 						skb->len -= frag->len;
 						skb->data_len -= frag->len;
 						__skb_pull(frag, frag->len);
-					}
-				}
-			}
+					पूर्ण
+				पूर्ण
+			पूर्ण
 
-			if (skb->len) {
+			अगर (skb->len) अणु
 				skb_queue_head(&sk->sk_receive_queue, skb);
-				break;
-			}
-			kfree_skb(skb);
+				अवरोध;
+			पूर्ण
+			kमुक्त_skb(skb);
 
-		} else {
-			/* put message back and return */
+		पूर्ण अन्यथा अणु
+			/* put message back and वापस */
 			skb_queue_head(&sk->sk_receive_queue, skb);
-			break;
-		}
-	} while (size);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (size);
 
 out:
 	release_sock(sk);
-	return copied ? : err;
-}
+	वापस copied ? : err;
+पूर्ण
 EXPORT_SYMBOL(bt_sock_stream_recvmsg);
 
-static inline __poll_t bt_accept_poll(struct sock *parent)
-{
-	struct bt_sock *s, *n;
-	struct sock *sk;
+अटल अंतरभूत __poll_t bt_accept_poll(काष्ठा sock *parent)
+अणु
+	काष्ठा bt_sock *s, *n;
+	काष्ठा sock *sk;
 
-	list_for_each_entry_safe(s, n, &bt_sk(parent)->accept_q, accept_q) {
-		sk = (struct sock *)s;
-		if (sk->sk_state == BT_CONNECTED ||
+	list_क्रम_each_entry_safe(s, n, &bt_sk(parent)->accept_q, accept_q) अणु
+		sk = (काष्ठा sock *)s;
+		अगर (sk->sk_state == BT_CONNECTED ||
 		    (test_bit(BT_SK_DEFER_SETUP, &bt_sk(parent)->flags) &&
 		     sk->sk_state == BT_CONNECT2))
-			return EPOLLIN | EPOLLRDNORM;
-	}
+			वापस EPOLLIN | EPOLLRDNORM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__poll_t bt_sock_poll(struct file *file, struct socket *sock,
-		      poll_table *wait)
-{
-	struct sock *sk = sock->sk;
+__poll_t bt_sock_poll(काष्ठा file *file, काष्ठा socket *sock,
+		      poll_table *रुको)
+अणु
+	काष्ठा sock *sk = sock->sk;
 	__poll_t mask = 0;
 
-	poll_wait(file, sk_sleep(sk), wait);
+	poll_रुको(file, sk_sleep(sk), रुको);
 
-	if (sk->sk_state == BT_LISTEN)
-		return bt_accept_poll(sk);
+	अगर (sk->sk_state == BT_LISTEN)
+		वापस bt_accept_poll(sk);
 
-	if (sk->sk_err || !skb_queue_empty_lockless(&sk->sk_error_queue))
+	अगर (sk->sk_err || !skb_queue_empty_lockless(&sk->sk_error_queue))
 		mask |= EPOLLERR |
 			(sock_flag(sk, SOCK_SELECT_ERR_QUEUE) ? EPOLLPRI : 0);
 
-	if (sk->sk_shutdown & RCV_SHUTDOWN)
+	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
 		mask |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
 
-	if (sk->sk_shutdown == SHUTDOWN_MASK)
+	अगर (sk->sk_shutकरोwn == SHUTDOWN_MASK)
 		mask |= EPOLLHUP;
 
-	if (!skb_queue_empty_lockless(&sk->sk_receive_queue))
+	अगर (!skb_queue_empty_lockless(&sk->sk_receive_queue))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	if (sk->sk_state == BT_CLOSED)
+	अगर (sk->sk_state == BT_CLOSED)
 		mask |= EPOLLHUP;
 
-	if (sk->sk_state == BT_CONNECT ||
+	अगर (sk->sk_state == BT_CONNECT ||
 	    sk->sk_state == BT_CONNECT2 ||
 	    sk->sk_state == BT_CONFIG)
-		return mask;
+		वापस mask;
 
-	if (!test_bit(BT_SK_SUSPEND, &bt_sk(sk)->flags) && sock_writeable(sk))
+	अगर (!test_bit(BT_SK_SUSPEND, &bt_sk(sk)->flags) && sock_ग_लिखोable(sk))
 		mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
-	else
+	अन्यथा
 		sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 EXPORT_SYMBOL(bt_sock_poll);
 
-int bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
-{
-	struct sock *sk = sock->sk;
-	struct sk_buff *skb;
-	long amount;
-	int err;
+पूर्णांक bt_sock_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sk_buff *skb;
+	दीर्घ amount;
+	पूर्णांक err;
 
 	BT_DBG("sk %p cmd %x arg %lx", sk, cmd, arg);
 
-	switch (cmd) {
-	case TIOCOUTQ:
-		if (sk->sk_state == BT_LISTEN)
-			return -EINVAL;
+	चयन (cmd) अणु
+	हाल TIOCOUTQ:
+		अगर (sk->sk_state == BT_LISTEN)
+			वापस -EINVAL;
 
 		amount = sk->sk_sndbuf - sk_wmem_alloc_get(sk);
-		if (amount < 0)
+		अगर (amount < 0)
 			amount = 0;
-		err = put_user(amount, (int __user *)arg);
-		break;
+		err = put_user(amount, (पूर्णांक __user *)arg);
+		अवरोध;
 
-	case TIOCINQ:
-		if (sk->sk_state == BT_LISTEN)
-			return -EINVAL;
+	हाल TIOCINQ:
+		अगर (sk->sk_state == BT_LISTEN)
+			वापस -EINVAL;
 
 		lock_sock(sk);
 		skb = skb_peek(&sk->sk_receive_queue);
 		amount = skb ? skb->len : 0;
 		release_sock(sk);
-		err = put_user(amount, (int __user *)arg);
-		break;
+		err = put_user(amount, (पूर्णांक __user *)arg);
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOIOCTLCMD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(bt_sock_ioctl);
 
 /* This function expects the sk lock to be held when called */
-int bt_sock_wait_state(struct sock *sk, int state, unsigned long timeo)
-{
-	DECLARE_WAITQUEUE(wait, current);
-	int err = 0;
+पूर्णांक bt_sock_रुको_state(काष्ठा sock *sk, पूर्णांक state, अचिन्हित दीर्घ समयo)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
+	पूर्णांक err = 0;
 
 	BT_DBG("sk %p", sk);
 
-	add_wait_queue(sk_sleep(sk), &wait);
+	add_रुको_queue(sk_sleep(sk), &रुको);
 	set_current_state(TASK_INTERRUPTIBLE);
-	while (sk->sk_state != state) {
-		if (!timeo) {
+	जबतक (sk->sk_state != state) अणु
+		अगर (!समयo) अणु
 			err = -EINPROGRESS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (signal_pending(current)) {
-			err = sock_intr_errno(timeo);
-			break;
-		}
+		अगर (संकेत_pending(current)) अणु
+			err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+			अवरोध;
+		पूर्ण
 
 		release_sock(sk);
-		timeo = schedule_timeout(timeo);
+		समयo = schedule_समयout(समयo);
 		lock_sock(sk);
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		err = sock_error(sk);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(sk_sleep(sk), &wait);
-	return err;
-}
-EXPORT_SYMBOL(bt_sock_wait_state);
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(bt_sock_रुको_state);
 
 /* This function expects the sk lock to be held when called */
-int bt_sock_wait_ready(struct sock *sk, unsigned long flags)
-{
-	DECLARE_WAITQUEUE(wait, current);
-	unsigned long timeo;
-	int err = 0;
+पूर्णांक bt_sock_रुको_पढ़ोy(काष्ठा sock *sk, अचिन्हित दीर्घ flags)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
+	अचिन्हित दीर्घ समयo;
+	पूर्णांक err = 0;
 
 	BT_DBG("sk %p", sk);
 
-	timeo = sock_sndtimeo(sk, flags & O_NONBLOCK);
+	समयo = sock_sndसमयo(sk, flags & O_NONBLOCK);
 
-	add_wait_queue(sk_sleep(sk), &wait);
+	add_रुको_queue(sk_sleep(sk), &रुको);
 	set_current_state(TASK_INTERRUPTIBLE);
-	while (test_bit(BT_SK_SUSPEND, &bt_sk(sk)->flags)) {
-		if (!timeo) {
+	जबतक (test_bit(BT_SK_SUSPEND, &bt_sk(sk)->flags)) अणु
+		अगर (!समयo) अणु
 			err = -EAGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (signal_pending(current)) {
-			err = sock_intr_errno(timeo);
-			break;
-		}
+		अगर (संकेत_pending(current)) अणु
+			err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+			अवरोध;
+		पूर्ण
 
 		release_sock(sk);
-		timeo = schedule_timeout(timeo);
+		समयo = schedule_समयout(समयo);
 		lock_sock(sk);
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		err = sock_error(sk);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(sk_sleep(sk), &wait);
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
 
-	return err;
-}
-EXPORT_SYMBOL(bt_sock_wait_ready);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(bt_sock_रुको_पढ़ोy);
 
-#ifdef CONFIG_PROC_FS
-static void *bt_seq_start(struct seq_file *seq, loff_t *pos)
-	__acquires(seq->private->l->lock)
-{
-	struct bt_sock_list *l = PDE_DATA(file_inode(seq->file));
+#अगर_घोषित CONFIG_PROC_FS
+अटल व्योम *bt_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+	__acquires(seq->निजी->l->lock)
+अणु
+	काष्ठा bt_sock_list *l = PDE_DATA(file_inode(seq->file));
 
-	read_lock(&l->lock);
-	return seq_hlist_start_head(&l->head, *pos);
-}
+	पढ़ो_lock(&l->lock);
+	वापस seq_hlist_start_head(&l->head, *pos);
+पूर्ण
 
-static void *bt_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct bt_sock_list *l = PDE_DATA(file_inode(seq->file));
+अटल व्योम *bt_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा bt_sock_list *l = PDE_DATA(file_inode(seq->file));
 
-	return seq_hlist_next(v, &l->head, pos);
-}
+	वापस seq_hlist_next(v, &l->head, pos);
+पूर्ण
 
-static void bt_seq_stop(struct seq_file *seq, void *v)
-	__releases(seq->private->l->lock)
-{
-	struct bt_sock_list *l = PDE_DATA(file_inode(seq->file));
+अटल व्योम bt_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+	__releases(seq->निजी->l->lock)
+अणु
+	काष्ठा bt_sock_list *l = PDE_DATA(file_inode(seq->file));
 
-	read_unlock(&l->lock);
-}
+	पढ़ो_unlock(&l->lock);
+पूर्ण
 
-static int bt_seq_show(struct seq_file *seq, void *v)
-{
-	struct bt_sock_list *l = PDE_DATA(file_inode(seq->file));
+अटल पूर्णांक bt_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा bt_sock_list *l = PDE_DATA(file_inode(seq->file));
 
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq, "sk               RefCnt Rmem   Wmem   User   Inode  Parent");
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(seq, "sk               RefCnt Rmem   Wmem   User   Inode  Parent");
 
-		if (l->custom_seq_show) {
-			seq_putc(seq, ' ');
+		अगर (l->custom_seq_show) अणु
+			seq_अ_दो(seq, ' ');
 			l->custom_seq_show(seq, v);
-		}
+		पूर्ण
 
-		seq_putc(seq, '\n');
-	} else {
-		struct sock *sk = sk_entry(v);
-		struct bt_sock *bt = bt_sk(sk);
+		seq_अ_दो(seq, '\n');
+	पूर्ण अन्यथा अणु
+		काष्ठा sock *sk = sk_entry(v);
+		काष्ठा bt_sock *bt = bt_sk(sk);
 
-		seq_printf(seq,
+		seq_म_लिखो(seq,
 			   "%pK %-6d %-6u %-6u %-6u %-6lu %-6lu",
 			   sk,
-			   refcount_read(&sk->sk_refcnt),
+			   refcount_पढ़ो(&sk->sk_refcnt),
 			   sk_rmem_alloc_get(sk),
 			   sk_wmem_alloc_get(sk),
 			   from_kuid(seq_user_ns(seq), sock_i_uid(sk)),
 			   sock_i_ino(sk),
 			   bt->parent ? sock_i_ino(bt->parent) : 0LU);
 
-		if (l->custom_seq_show) {
-			seq_putc(seq, ' ');
+		अगर (l->custom_seq_show) अणु
+			seq_अ_दो(seq, ' ');
 			l->custom_seq_show(seq, v);
-		}
+		पूर्ण
 
-		seq_putc(seq, '\n');
-	}
-	return 0;
-}
+		seq_अ_दो(seq, '\n');
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations bt_seq_ops = {
+अटल स्थिर काष्ठा seq_operations bt_seq_ops = अणु
 	.start = bt_seq_start,
 	.next  = bt_seq_next,
 	.stop  = bt_seq_stop,
 	.show  = bt_seq_show,
-};
+पूर्ण;
 
-int bt_procfs_init(struct net *net, const char *name,
-		   struct bt_sock_list *sk_list,
-		   int (*seq_show)(struct seq_file *, void *))
-{
+पूर्णांक bt_procfs_init(काष्ठा net *net, स्थिर अक्षर *name,
+		   काष्ठा bt_sock_list *sk_list,
+		   पूर्णांक (*seq_show)(काष्ठा seq_file *, व्योम *))
+अणु
 	sk_list->custom_seq_show = seq_show;
 
-	if (!proc_create_seq_data(name, 0, net->proc_net, &bt_seq_ops, sk_list))
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!proc_create_seq_data(name, 0, net->proc_net, &bt_seq_ops, sk_list))
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-void bt_procfs_cleanup(struct net *net, const char *name)
-{
-	remove_proc_entry(name, net->proc_net);
-}
-#else
-int bt_procfs_init(struct net *net, const char *name,
-		   struct bt_sock_list *sk_list,
-		   int (*seq_show)(struct seq_file *, void *))
-{
-	return 0;
-}
+व्योम bt_procfs_cleanup(काष्ठा net *net, स्थिर अक्षर *name)
+अणु
+	हटाओ_proc_entry(name, net->proc_net);
+पूर्ण
+#अन्यथा
+पूर्णांक bt_procfs_init(काष्ठा net *net, स्थिर अक्षर *name,
+		   काष्ठा bt_sock_list *sk_list,
+		   पूर्णांक (*seq_show)(काष्ठा seq_file *, व्योम *))
+अणु
+	वापस 0;
+पूर्ण
 
-void bt_procfs_cleanup(struct net *net, const char *name)
-{
-}
-#endif
+व्योम bt_procfs_cleanup(काष्ठा net *net, स्थिर अक्षर *name)
+अणु
+पूर्ण
+#पूर्ण_अगर
 EXPORT_SYMBOL(bt_procfs_init);
 EXPORT_SYMBOL(bt_procfs_cleanup);
 
-static const struct net_proto_family bt_sock_family_ops = {
+अटल स्थिर काष्ठा net_proto_family bt_sock_family_ops = अणु
 	.owner	= THIS_MODULE,
 	.family	= PF_BLUETOOTH,
 	.create	= bt_sock_create,
-};
+पूर्ण;
 
-struct dentry *bt_debugfs;
+काष्ठा dentry *bt_debugfs;
 EXPORT_SYMBOL_GPL(bt_debugfs);
 
-#define VERSION __stringify(BT_SUBSYS_VERSION) "." \
-		__stringify(BT_SUBSYS_REVISION)
+#घोषणा VERSION __stringअगरy(BT_SUBSYS_VERSION) "." \
+		__stringअगरy(BT_SUBSYS_REVISION)
 
-static int __init bt_init(void)
-{
-	int err;
+अटल पूर्णांक __init bt_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	sock_skb_cb_check_size(sizeof(struct bt_skb_cb));
+	sock_skb_cb_check_size(माप(काष्ठा bt_skb_cb));
 
 	BT_INFO("Core ver %s", VERSION);
 
 	err = bt_selftest();
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	bt_debugfs = debugfs_create_dir("bluetooth", NULL);
+	bt_debugfs = debugfs_create_dir("bluetooth", शून्य);
 
 	bt_leds_init();
 
 	err = bt_sysfs_init();
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = sock_register(&bt_sock_family_ops);
-	if (err)
-		goto cleanup_sysfs;
+	err = sock_रेजिस्टर(&bt_sock_family_ops);
+	अगर (err)
+		जाओ cleanup_sysfs;
 
 	BT_INFO("HCI device and connection manager initialized");
 
 	err = hci_sock_init();
-	if (err)
-		goto unregister_socket;
+	अगर (err)
+		जाओ unरेजिस्टर_socket;
 
 	err = l2cap_init();
-	if (err)
-		goto cleanup_socket;
+	अगर (err)
+		जाओ cleanup_socket;
 
 	err = sco_init();
-	if (err)
-		goto cleanup_cap;
+	अगर (err)
+		जाओ cleanup_cap;
 
 	err = mgmt_init();
-	if (err)
-		goto cleanup_sco;
+	अगर (err)
+		जाओ cleanup_sco;
 
-	return 0;
+	वापस 0;
 
 cleanup_sco:
-	sco_exit();
+	sco_निकास();
 cleanup_cap:
-	l2cap_exit();
+	l2cap_निकास();
 cleanup_socket:
 	hci_sock_cleanup();
-unregister_socket:
-	sock_unregister(PF_BLUETOOTH);
+unरेजिस्टर_socket:
+	sock_unरेजिस्टर(PF_BLUETOOTH);
 cleanup_sysfs:
 	bt_sysfs_cleanup();
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit bt_exit(void)
-{
-	mgmt_exit();
+अटल व्योम __निकास bt_निकास(व्योम)
+अणु
+	mgmt_निकास();
 
-	sco_exit();
+	sco_निकास();
 
-	l2cap_exit();
+	l2cap_निकास();
 
 	hci_sock_cleanup();
 
-	sock_unregister(PF_BLUETOOTH);
+	sock_unरेजिस्टर(PF_BLUETOOTH);
 
 	bt_sysfs_cleanup();
 
 	bt_leds_cleanup();
 
-	debugfs_remove_recursive(bt_debugfs);
-}
+	debugfs_हटाओ_recursive(bt_debugfs);
+पूर्ण
 
 subsys_initcall(bt_init);
-module_exit(bt_exit);
+module_निकास(bt_निकास);
 
 MODULE_AUTHOR("Marcel Holtmann <marcel@holtmann.org>");
 MODULE_DESCRIPTION("Bluetooth Core ver " VERSION);

@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/err_ev7.c
  *
  *	Copyright (C) 2000 Jeff Wiedemeier (Compaq Computer Corporation)
  *
- *	Error handling code supporting Alpha systems
+ *	Error handling code supporting Alpha प्रणालीs
  */
 
-#include <linux/init.h>
-#include <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
 
-#include <asm/io.h>
-#include <asm/hwrpb.h>
-#include <asm/smp.h>
-#include <asm/err_common.h>
-#include <asm/err_ev7.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/hwrpb.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/err_common.h>
+#समावेश <यंत्र/err_ev7.h>
 
-#include "err_impl.h"
-#include "proto.h"
+#समावेश "err_impl.h"
+#समावेश "proto.h"
 
-struct ev7_lf_subpackets *
-ev7_collect_logout_frame_subpackets(struct el_subpacket *el_ptr,
-				    struct ev7_lf_subpackets *lf_subpackets)
-{
-	struct el_subpacket *subpacket;
-	int i;
+काष्ठा ev7_lf_subpackets *
+ev7_collect_logout_frame_subpackets(काष्ठा el_subpacket *el_ptr,
+				    काष्ठा ev7_lf_subpackets *lf_subpackets)
+अणु
+	काष्ठा el_subpacket *subpacket;
+	पूर्णांक i;
 
 	/*
 	 * A Marvel machine check frame is always packaged in an
 	 * el_subpacket of class HEADER, type LOGOUT_FRAME.
 	 */
-	if (el_ptr->class != EL_CLASS__HEADER || 
+	अगर (el_ptr->class != EL_CLASS__HEADER || 
 	    el_ptr->type != EL_TYPE__HEADER__LOGOUT_FRAME)
-		return NULL;
+		वापस शून्य;
 
 	/*
 	 * It is a logout frame header. Look at the one subpacket.
 	 */
-	el_ptr = (struct el_subpacket *)
-		((unsigned long)el_ptr + el_ptr->length);
+	el_ptr = (काष्ठा el_subpacket *)
+		((अचिन्हित दीर्घ)el_ptr + el_ptr->length);
 
 	/*
 	 * It has to be class PAL, type LOGOUT_FRAME.
 	 */
-	if (el_ptr->class != EL_CLASS__PAL ||
+	अगर (el_ptr->class != EL_CLASS__PAL ||
 	    el_ptr->type != EL_TYPE__PAL__LOGOUT_FRAME)
-		return NULL;
+		वापस शून्य;
 
-	lf_subpackets->logout = (struct ev7_pal_logout_subpacket *)
+	lf_subpackets->logout = (काष्ठा ev7_pal_logout_subpacket *)
 		el_ptr->by_type.raw.data_start;
 
 	/*
 	 * Process the subpackets.
 	 */
-	subpacket = (struct el_subpacket *)
-		((unsigned long)el_ptr + el_ptr->length);
-	for (i = 0;
+	subpacket = (काष्ठा el_subpacket *)
+		((अचिन्हित दीर्घ)el_ptr + el_ptr->length);
+	क्रम (i = 0;
 	     subpacket && i < lf_subpackets->logout->subpacket_count;
-	     subpacket = (struct el_subpacket *)
-		     ((unsigned long)subpacket + subpacket->length), i++) {
+	     subpacket = (काष्ठा el_subpacket *)
+		     ((अचिन्हित दीर्घ)subpacket + subpacket->length), i++) अणु
 		/*
 		 * All subpackets should be class PAL.
 		 */
-		if (subpacket->class != EL_CLASS__PAL) {
-			printk("%s**UNEXPECTED SUBPACKET CLASS %d "
+		अगर (subpacket->class != EL_CLASS__PAL) अणु
+			prपूर्णांकk("%s**UNEXPECTED SUBPACKET CLASS %d "
 			       "IN LOGOUT FRAME (packet %d\n",
-			       err_print_prefix, subpacket->class, i);
-			return NULL;
-		}
+			       err_prपूर्णांक_prefix, subpacket->class, i);
+			वापस शून्य;
+		पूर्ण
 
 		/*
 		 * Remember the subpacket.
 		 */
-		switch(subpacket->type) {
-		case EL_TYPE__PAL__EV7_PROCESSOR:
+		चयन(subpacket->type) अणु
+		हाल EL_TYPE__PAL__EV7_PROCESSOR:
 			lf_subpackets->ev7 =
-				(struct ev7_pal_processor_subpacket *)
+				(काष्ठा ev7_pal_processor_subpacket *)
 				subpacket->by_type.raw.data_start;
-			break;
+			अवरोध;
 
-		case EL_TYPE__PAL__EV7_RBOX:
-			lf_subpackets->rbox = (struct ev7_pal_rbox_subpacket *)
+		हाल EL_TYPE__PAL__EV7_RBOX:
+			lf_subpackets->rbox = (काष्ठा ev7_pal_rbox_subpacket *)
 				subpacket->by_type.raw.data_start;
-			break;
+			अवरोध;
 
-		case EL_TYPE__PAL__EV7_ZBOX:
-			lf_subpackets->zbox = (struct ev7_pal_zbox_subpacket *)
+		हाल EL_TYPE__PAL__EV7_ZBOX:
+			lf_subpackets->zbox = (काष्ठा ev7_pal_zbox_subpacket *)
 				subpacket->by_type.raw.data_start;
-			break;
+			अवरोध;
 
-		case EL_TYPE__PAL__EV7_IO:
-			lf_subpackets->io = (struct ev7_pal_io_subpacket *)
+		हाल EL_TYPE__PAL__EV7_IO:
+			lf_subpackets->io = (काष्ठा ev7_pal_io_subpacket *)
 				subpacket->by_type.raw.data_start;
-			break;
+			अवरोध;
 
-		case EL_TYPE__PAL__ENV__AMBIENT_TEMPERATURE:
-		case EL_TYPE__PAL__ENV__AIRMOVER_FAN:
-		case EL_TYPE__PAL__ENV__VOLTAGE:
-		case EL_TYPE__PAL__ENV__INTRUSION:
-		case EL_TYPE__PAL__ENV__POWER_SUPPLY:
-		case EL_TYPE__PAL__ENV__LAN:
-		case EL_TYPE__PAL__ENV__HOT_PLUG:
+		हाल EL_TYPE__PAL__ENV__AMBIENT_TEMPERATURE:
+		हाल EL_TYPE__PAL__ENV__AIRMOVER_FAN:
+		हाल EL_TYPE__PAL__ENV__VOLTAGE:
+		हाल EL_TYPE__PAL__ENV__INTRUSION:
+		हाल EL_TYPE__PAL__ENV__POWER_SUPPLY:
+		हाल EL_TYPE__PAL__ENV__LAN:
+		हाल EL_TYPE__PAL__ENV__HOT_PLUG:
 			lf_subpackets->env[ev7_lf_env_index(subpacket->type)] =
- 				(struct ev7_pal_environmental_subpacket *)
+ 				(काष्ठा ev7_pal_environmental_subpacket *)
 				subpacket->by_type.raw.data_start;
-			break;
+			अवरोध;
 				
-		default:
+		शेष:
 			/*
 			 * Don't know what kind of frame this is.
 			 */
-			return NULL;
-		}
-	}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return lf_subpackets;
-}
+	वापस lf_subpackets;
+पूर्ण
 
-void
-ev7_machine_check(unsigned long vector, unsigned long la_ptr)
-{
-	struct el_subpacket *el_ptr = (struct el_subpacket *)la_ptr;
-	char *saved_err_prefix = err_print_prefix;
+व्योम
+ev7_machine_check(अचिन्हित दीर्घ vector, अचिन्हित दीर्घ la_ptr)
+अणु
+	काष्ठा el_subpacket *el_ptr = (काष्ठा el_subpacket *)la_ptr;
+	अक्षर *saved_err_prefix = err_prपूर्णांक_prefix;
 
 	/*
 	 * Sync the processor
@@ -129,22 +130,22 @@ ev7_machine_check(unsigned long vector, unsigned long la_ptr)
 	mb();
 	draina();
 
-	err_print_prefix = KERN_CRIT;
-	printk("%s*CPU %s Error (Vector 0x%x) reported on CPU %d\n",
-	       err_print_prefix, 
+	err_prपूर्णांक_prefix = KERN_CRIT;
+	prपूर्णांकk("%s*CPU %s Error (Vector 0x%x) reported on CPU %d\n",
+	       err_prपूर्णांक_prefix, 
 	       (vector == SCB_Q_PROCERR) ? "Correctable" : "Uncorrectable",
-	       (unsigned int)vector, (int)smp_processor_id());
+	       (अचिन्हित पूर्णांक)vector, (पूर्णांक)smp_processor_id());
 	el_process_subpacket(el_ptr);
-	err_print_prefix = saved_err_prefix;
+	err_prपूर्णांक_prefix = saved_err_prefix;
 
 	/* 
 	 * Release the logout frame 
 	 */
 	wrmces(0x7);
 	mb();
-}
+पूर्ण
 
-static char *el_ev7_processor_subpacket_annotation[] = {
+अटल अक्षर *el_ev7_processor_subpacket_annotation[] = अणु
 	"Subpacket Header",	"I_STAT",	"DC_STAT",
 	"C_ADDR",		"C_SYNDROME_1",	"C_SYNDROME_0",
 	"C_STAT",		"C_STS",	"MM_STAT",
@@ -153,10 +154,10 @@ static char *el_ev7_processor_subpacket_annotation[] = {
 	"CBOX_CTL",		"CBOX_STP_CTL",	"CBOX_ACC_CTL",
 	"CBOX_LCL_SET",		"CBOX_GLB_SET",	"BBOX_CTL",
 	"BBOX_ERR_STS",		"BBOX_ERR_IDX",	"CBOX_DDP_ERR_STS",
-	"BBOX_DAT_RMP",		NULL
-};
+	"BBOX_DAT_RMP",		शून्य
+पूर्ण;
 
-static char *el_ev7_zbox_subpacket_annotation[] = {
+अटल अक्षर *el_ev7_zbox_subpacket_annotation[] = अणु
 	"Subpacket Header", 	
 	"ZBOX(0): DRAM_ERR_STATUS_2 / DRAM_ERR_STATUS_1",
 	"ZBOX(0): DRAM_ERROR_CTL    / DRAM_ERR_STATUS_3",
@@ -171,19 +172,19 @@ static char *el_ev7_zbox_subpacket_annotation[] = {
 	"CBOX_CTL",		"CBOX_STP_CTL",
 	"ZBOX(0)_ERROR_PA",	"ZBOX(1)_ERROR_PA",
 	"ZBOX(0)_ORED_SYNDROME","ZBOX(1)_ORED_SYNDROME",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static char *el_ev7_rbox_subpacket_annotation[] = {
+अटल अक्षर *el_ev7_rbox_subpacket_annotation[] = अणु
 	"Subpacket Header",	"RBOX_CFG",	"RBOX_N_CFG",
 	"RBOX_S_CFG",		"RBOX_E_CFG",	"RBOX_W_CFG",
 	"RBOX_N_ERR",		"RBOX_S_ERR",	"RBOX_E_ERR",
 	"RBOX_W_ERR",		"RBOX_IO_CFG",	"RBOX_IO_ERR",
 	"RBOX_L_ERR",		"RBOX_WHOAMI",	"RBOX_IMASL",
-	"RBOX_INTQ",		"RBOX_INT",	NULL
-};
+	"RBOX_INTQ",		"RBOX_INT",	शून्य
+पूर्ण;
 
-static char *el_ev7_io_subpacket_annotation[] = {
+अटल अक्षर *el_ev7_io_subpacket_annotation[] = अणु
 	"Subpacket Header",	"IO_ASIC_REV",	"IO_SYS_REV",
 	"IO7_UPH",		"HPI_CTL",	"CRD_CTL",
 	"HEI_CTL",		"PO7_ERROR_SUM","PO7_UNCRR_SYM",
@@ -205,10 +206,10 @@ static char *el_ev7_io_subpacket_annotation[] = {
 	"PO3_TRANS_SUM",	"PO3_FIRST_ERR","PO3_MULT_ERR",
 	"DM CSR PH",		"DM CSR PH",	"DM CSR PH",
 	"DM CSR PH",		"reserved",	
-	NULL
-};
+	शून्य
+पूर्ण;
 	
-static struct el_subpacket_annotation el_ev7_pal_annotations[] = {
+अटल काष्ठा el_subpacket_annotation el_ev7_pal_annotations[] = अणु
 	SUBPACKET_ANNOTATION(EL_CLASS__PAL,
 			     EL_TYPE__PAL__EV7_PROCESSOR,
 			     1,
@@ -229,59 +230,59 @@ static struct el_subpacket_annotation el_ev7_pal_annotations[] = {
 			     1,
 			     "EV7 IO Subpacket",
 			     el_ev7_io_subpacket_annotation)
-};
+पूर्ण;
 
-static struct el_subpacket *
-ev7_process_pal_subpacket(struct el_subpacket *header)
-{
-	struct ev7_pal_subpacket *packet;
+अटल काष्ठा el_subpacket *
+ev7_process_pal_subpacket(काष्ठा el_subpacket *header)
+अणु
+	काष्ठा ev7_pal_subpacket *packet;
 
-	if (header->class != EL_CLASS__PAL) {
-		printk("%s  ** Unexpected header CLASS %d TYPE %d, aborting\n",
-		       err_print_prefix,
+	अगर (header->class != EL_CLASS__PAL) अणु
+		prपूर्णांकk("%s  ** Unexpected header CLASS %d TYPE %d, aborting\n",
+		       err_prपूर्णांक_prefix,
 		       header->class, header->type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	packet = (struct ev7_pal_subpacket *)header->by_type.raw.data_start;
+	packet = (काष्ठा ev7_pal_subpacket *)header->by_type.raw.data_start;
 
-	switch(header->type) {
-	case EL_TYPE__PAL__LOGOUT_FRAME:
-		printk("%s*** MCHK occurred on LPID %lld (RBOX %llx)\n",
-		       err_print_prefix,
+	चयन(header->type) अणु
+	हाल EL_TYPE__PAL__LOGOUT_FRAME:
+		prपूर्णांकk("%s*** MCHK occurred on LPID %lld (RBOX %llx)\n",
+		       err_prपूर्णांक_prefix,
 		       packet->by_type.logout.whami, 
 		       packet->by_type.logout.rbox_whami);
-		el_print_timestamp(&packet->by_type.logout.timestamp);
-		printk("%s  EXC_ADDR: %016llx\n"
+		el_prपूर्णांक_बारtamp(&packet->by_type.logout.बारtamp);
+		prपूर्णांकk("%s  EXC_ADDR: %016llx\n"
 		         "  HALT_CODE: %llx\n",
-		       err_print_prefix,
+		       err_prपूर्णांक_prefix,
 		       packet->by_type.logout.exc_addr,
 		       packet->by_type.logout.halt_code);
 		el_process_subpackets(header,
                                       packet->by_type.logout.subpacket_count);
-		break;
-	default:
-		printk("%s  ** PAL TYPE %d SUBPACKET\n", 
-		       err_print_prefix,
+		अवरोध;
+	शेष:
+		prपूर्णांकk("%s  ** PAL TYPE %d SUBPACKET\n", 
+		       err_prपूर्णांक_prefix,
 		       header->type);
 		el_annotate_subpacket(header);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	
-	return (struct el_subpacket *)((unsigned long)header + header->length);
-}
+	वापस (काष्ठा el_subpacket *)((अचिन्हित दीर्घ)header + header->length);
+पूर्ण
 
-struct el_subpacket_handler ev7_pal_subpacket_handler =
+काष्ठा el_subpacket_handler ev7_pal_subpacket_handler =
 	SUBPACKET_HANDLER_INIT(EL_CLASS__PAL, ev7_process_pal_subpacket);
 
-void __init
-ev7_register_error_handlers(void)
-{
-	int i;
+व्योम __init
+ev7_रेजिस्टर_error_handlers(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(el_ev7_pal_annotations); i++)
-		cdl_register_subpacket_annotation(&el_ev7_pal_annotations[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(el_ev7_pal_annotations); i++)
+		cdl_रेजिस्टर_subpacket_annotation(&el_ev7_pal_annotations[i]);
 
-	cdl_register_subpacket_handler(&ev7_pal_subpacket_handler);
-}
+	cdl_रेजिस्टर_subpacket_handler(&ev7_pal_subpacket_handler);
+पूर्ण
 

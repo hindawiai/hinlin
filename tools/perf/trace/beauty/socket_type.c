@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: LGPL-2.1
-#include <sys/types.h>
-#include <sys/socket.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
+#समावेश <sys/types.h>
+#समावेश <sys/socket.h>
 
-#ifndef SOCK_DCCP
+#अगर_अघोषित SOCK_DCCP
 # define SOCK_DCCP		6
-#endif
+#पूर्ण_अगर
 
-#ifndef SOCK_CLOEXEC
+#अगर_अघोषित SOCK_CLOEXEC
 # define SOCK_CLOEXEC		02000000
-#endif
+#पूर्ण_अगर
 
-#ifndef SOCK_NONBLOCK
+#अगर_अघोषित SOCK_NONBLOCK
 # define SOCK_NONBLOCK		00004000
-#endif
+#पूर्ण_अगर
 
-#ifndef SOCK_TYPE_MASK
-#define SOCK_TYPE_MASK 0xf
-#endif
+#अगर_अघोषित SOCK_TYPE_MASK
+#घोषणा SOCK_TYPE_MASK 0xf
+#पूर्ण_अगर
 
-static size_t syscall_arg__scnprintf_socket_type(char *bf, size_t size, struct syscall_arg *arg)
-{
+अटल माप_प्रकार syscall_arg__scnम_लिखो_socket_type(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
+अणु
 	bool show_prefix = arg->show_string_prefix;
-	const char *prefix = "SOCK_";
-	size_t printed;
-	int type = arg->val,
+	स्थिर अक्षर *prefix = "SOCK_";
+	माप_प्रकार prपूर्णांकed;
+	पूर्णांक type = arg->val,
 	    flags = type & ~SOCK_TYPE_MASK;
 
 	type &= SOCK_TYPE_MASK;
 	/*
-	 * Can't use a strarray, MIPS may override for ABI reasons.
+	 * Can't use a strarray, MIPS may override क्रम ABI reasons.
 	 */
-	switch (type) {
-#define	P_SK_TYPE(n) case SOCK_##n: printed = scnprintf(bf, size, "%s%s", show_prefix ? prefix : "", #n); break;
+	चयन (type) अणु
+#घोषणा	P_SK_TYPE(n) हाल SOCK_##n: prपूर्णांकed = scnम_लिखो(bf, size, "%s%s", show_prefix ? prefix : "", #n); अवरोध;
 	P_SK_TYPE(STREAM);
 	P_SK_TYPE(DGRAM);
 	P_SK_TYPE(RAW);
@@ -39,25 +40,25 @@ static size_t syscall_arg__scnprintf_socket_type(char *bf, size_t size, struct s
 	P_SK_TYPE(SEQPACKET);
 	P_SK_TYPE(DCCP);
 	P_SK_TYPE(PACKET);
-#undef P_SK_TYPE
-	default:
-		printed = scnprintf(bf, size, "%#x", type);
-	}
+#अघोषित P_SK_TYPE
+	शेष:
+		prपूर्णांकed = scnम_लिखो(bf, size, "%#x", type);
+	पूर्ण
 
-#define	P_SK_FLAG(n) \
-	if (flags & SOCK_##n) { \
-		printed += scnprintf(bf + printed, size - printed, "|%s", #n); \
+#घोषणा	P_SK_FLAG(n) \
+	अगर (flags & SOCK_##n) अणु \
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "|%s", #n); \
 		flags &= ~SOCK_##n; \
-	}
+	पूर्ण
 
 	P_SK_FLAG(CLOEXEC);
 	P_SK_FLAG(NONBLOCK);
-#undef P_SK_FLAG
+#अघोषित P_SK_FLAG
 
-	if (flags)
-		printed += scnprintf(bf + printed, size - printed, "|%#x", flags);
+	अगर (flags)
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "|%#x", flags);
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-#define SCA_SK_TYPE syscall_arg__scnprintf_socket_type
+#घोषणा SCA_SK_TYPE syscall_arg__scnम_लिखो_socket_type

@@ -1,221 +1,222 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * suballoc.h
+ * subभाग.स
  *
  * Defines sub allocator api
  *
  * Copyright (C) 2003, 2004 Oracle.  All rights reserved.
  */
 
-#ifndef _CHAINALLOC_H_
-#define _CHAINALLOC_H_
+#अगर_अघोषित _CHAINALLOC_H_
+#घोषणा _CHAINALLOC_H_
 
-struct ocfs2_suballoc_result;
-typedef int (group_search_t)(struct inode *,
-			     struct buffer_head *,
+काष्ठा ocfs2_suballoc_result;
+प्रकार पूर्णांक (group_search_t)(काष्ठा inode *,
+			     काष्ठा buffer_head *,
 			     u32,			/* bits_wanted */
 			     u32,			/* min_bits */
 			     u64,			/* max_block */
-			     struct ocfs2_suballoc_result *);
+			     काष्ठा ocfs2_suballoc_result *);
 							/* found bits */
 
-struct ocfs2_alloc_context {
-	struct inode *ac_inode;    /* which bitmap are we allocating from? */
-	struct buffer_head *ac_bh; /* file entry bh */
+काष्ठा ocfs2_alloc_context अणु
+	काष्ठा inode *ac_inode;    /* which biपंचांगap are we allocating from? */
+	काष्ठा buffer_head *ac_bh; /* file entry bh */
 	u32    ac_alloc_slot;   /* which slot are we allocating from? */
 	u32    ac_bits_wanted;
 	u32    ac_bits_given;
-#define OCFS2_AC_USE_LOCAL 1
-#define OCFS2_AC_USE_MAIN  2
-#define OCFS2_AC_USE_INODE 3
-#define OCFS2_AC_USE_META  4
+#घोषणा OCFS2_AC_USE_LOCAL 1
+#घोषणा OCFS2_AC_USE_MAIN  2
+#घोषणा OCFS2_AC_USE_INODE 3
+#घोषणा OCFS2_AC_USE_META  4
 	u32    ac_which;
 
 	/* these are used by the chain search */
 	u16    ac_chain;
-	int    ac_disable_chain_relink;
+	पूर्णांक    ac_disable_chain_relink;
 	group_search_t *ac_group_search;
 
 	u64    ac_last_group;
 	u64    ac_max_block;  /* Highest block number to allocate. 0 is
 				 the same as ~0 - unlimited */
 
-	int    ac_find_loc_only;  /* hack for reflink operation ordering */
-	struct ocfs2_suballoc_result *ac_find_loc_priv; /* */
+	पूर्णांक    ac_find_loc_only;  /* hack क्रम reflink operation ordering */
+	काष्ठा ocfs2_suballoc_result *ac_find_loc_priv; /* */
 
-	struct ocfs2_alloc_reservation	*ac_resv;
-};
+	काष्ठा ocfs2_alloc_reservation	*ac_resv;
+पूर्ण;
 
-void ocfs2_init_steal_slots(struct ocfs2_super *osb);
-void ocfs2_free_alloc_context(struct ocfs2_alloc_context *ac);
-static inline int ocfs2_alloc_context_bits_left(struct ocfs2_alloc_context *ac)
-{
-	return ac->ac_bits_wanted - ac->ac_bits_given;
-}
+व्योम ocfs2_init_steal_slots(काष्ठा ocfs2_super *osb);
+व्योम ocfs2_मुक्त_alloc_context(काष्ठा ocfs2_alloc_context *ac);
+अटल अंतरभूत पूर्णांक ocfs2_alloc_context_bits_left(काष्ठा ocfs2_alloc_context *ac)
+अणु
+	वापस ac->ac_bits_wanted - ac->ac_bits_given;
+पूर्ण
 
 /*
  * Please note that the caller must make sure that root_el is the root
- * of extent tree. So for an inode, it should be &fe->id2.i_list. Otherwise
+ * of extent tree. So क्रम an inode, it should be &fe->id2.i_list. Otherwise
  * the result may be wrong.
  */
-int ocfs2_reserve_new_metadata(struct ocfs2_super *osb,
-			       struct ocfs2_extent_list *root_el,
-			       struct ocfs2_alloc_context **ac);
-int ocfs2_reserve_new_metadata_blocks(struct ocfs2_super *osb,
-				      int blocks,
-				      struct ocfs2_alloc_context **ac);
-int ocfs2_reserve_new_inode(struct ocfs2_super *osb,
-			    struct ocfs2_alloc_context **ac);
-int ocfs2_reserve_clusters(struct ocfs2_super *osb,
+पूर्णांक ocfs2_reserve_new_metadata(काष्ठा ocfs2_super *osb,
+			       काष्ठा ocfs2_extent_list *root_el,
+			       काष्ठा ocfs2_alloc_context **ac);
+पूर्णांक ocfs2_reserve_new_metadata_blocks(काष्ठा ocfs2_super *osb,
+				      पूर्णांक blocks,
+				      काष्ठा ocfs2_alloc_context **ac);
+पूर्णांक ocfs2_reserve_new_inode(काष्ठा ocfs2_super *osb,
+			    काष्ठा ocfs2_alloc_context **ac);
+पूर्णांक ocfs2_reserve_clusters(काष्ठा ocfs2_super *osb,
 			   u32 bits_wanted,
-			   struct ocfs2_alloc_context **ac);
+			   काष्ठा ocfs2_alloc_context **ac);
 
-int ocfs2_alloc_dinode_update_counts(struct inode *inode,
+पूर्णांक ocfs2_alloc_dinode_update_counts(काष्ठा inode *inode,
 			 handle_t *handle,
-			 struct buffer_head *di_bh,
+			 काष्ठा buffer_head *di_bh,
 			 u32 num_bits,
 			 u16 chain);
-void ocfs2_rollback_alloc_dinode_counts(struct inode *inode,
-			 struct buffer_head *di_bh,
+व्योम ocfs2_rollback_alloc_dinode_counts(काष्ठा inode *inode,
+			 काष्ठा buffer_head *di_bh,
 			 u32 num_bits,
 			 u16 chain);
-int ocfs2_block_group_set_bits(handle_t *handle,
-			 struct inode *alloc_inode,
-			 struct ocfs2_group_desc *bg,
-			 struct buffer_head *group_bh,
-			 unsigned int bit_off,
-			 unsigned int num_bits);
+पूर्णांक ocfs2_block_group_set_bits(handle_t *handle,
+			 काष्ठा inode *alloc_inode,
+			 काष्ठा ocfs2_group_desc *bg,
+			 काष्ठा buffer_head *group_bh,
+			 अचिन्हित पूर्णांक bit_off,
+			 अचिन्हित पूर्णांक num_bits);
 
-int ocfs2_claim_metadata(handle_t *handle,
-			 struct ocfs2_alloc_context *ac,
+पूर्णांक ocfs2_claim_metadata(handle_t *handle,
+			 काष्ठा ocfs2_alloc_context *ac,
 			 u32 bits_wanted,
 			 u64 *suballoc_loc,
 			 u16 *suballoc_bit_start,
 			 u32 *num_bits,
 			 u64 *blkno_start);
-int ocfs2_claim_new_inode(handle_t *handle,
-			  struct inode *dir,
-			  struct buffer_head *parent_fe_bh,
-			  struct ocfs2_alloc_context *ac,
+पूर्णांक ocfs2_claim_new_inode(handle_t *handle,
+			  काष्ठा inode *dir,
+			  काष्ठा buffer_head *parent_fe_bh,
+			  काष्ठा ocfs2_alloc_context *ac,
 			  u64 *suballoc_loc,
 			  u16 *suballoc_bit,
 			  u64 *fe_blkno);
-int ocfs2_claim_clusters(handle_t *handle,
-			 struct ocfs2_alloc_context *ac,
+पूर्णांक ocfs2_claim_clusters(handle_t *handle,
+			 काष्ठा ocfs2_alloc_context *ac,
 			 u32 min_clusters,
 			 u32 *cluster_start,
 			 u32 *num_clusters);
 /*
- * Use this variant of ocfs2_claim_clusters to specify a maxiumum
+ * Use this variant of ocfs2_claim_clusters to specअगरy a maxiumum
  * number of clusters smaller than the allocation reserved.
  */
-int __ocfs2_claim_clusters(handle_t *handle,
-			   struct ocfs2_alloc_context *ac,
+पूर्णांक __ocfs2_claim_clusters(handle_t *handle,
+			   काष्ठा ocfs2_alloc_context *ac,
 			   u32 min_clusters,
 			   u32 max_clusters,
 			   u32 *cluster_start,
 			   u32 *num_clusters);
 
-int ocfs2_free_suballoc_bits(handle_t *handle,
-			     struct inode *alloc_inode,
-			     struct buffer_head *alloc_bh,
-			     unsigned int start_bit,
+पूर्णांक ocfs2_मुक्त_suballoc_bits(handle_t *handle,
+			     काष्ठा inode *alloc_inode,
+			     काष्ठा buffer_head *alloc_bh,
+			     अचिन्हित पूर्णांक start_bit,
 			     u64 bg_blkno,
-			     unsigned int count);
-int ocfs2_free_dinode(handle_t *handle,
-		      struct inode *inode_alloc_inode,
-		      struct buffer_head *inode_alloc_bh,
-		      struct ocfs2_dinode *di);
-int ocfs2_free_clusters(handle_t *handle,
-			struct inode *bitmap_inode,
-			struct buffer_head *bitmap_bh,
+			     अचिन्हित पूर्णांक count);
+पूर्णांक ocfs2_मुक्त_dinode(handle_t *handle,
+		      काष्ठा inode *inode_alloc_inode,
+		      काष्ठा buffer_head *inode_alloc_bh,
+		      काष्ठा ocfs2_dinode *di);
+पूर्णांक ocfs2_मुक्त_clusters(handle_t *handle,
+			काष्ठा inode *biपंचांगap_inode,
+			काष्ठा buffer_head *biपंचांगap_bh,
 			u64 start_blk,
-			unsigned int num_clusters);
-int ocfs2_release_clusters(handle_t *handle,
-			   struct inode *bitmap_inode,
-			   struct buffer_head *bitmap_bh,
+			अचिन्हित पूर्णांक num_clusters);
+पूर्णांक ocfs2_release_clusters(handle_t *handle,
+			   काष्ठा inode *biपंचांगap_inode,
+			   काष्ठा buffer_head *biपंचांगap_bh,
 			   u64 start_blk,
-			   unsigned int num_clusters);
+			   अचिन्हित पूर्णांक num_clusters);
 
-static inline u64 ocfs2_which_suballoc_group(u64 block, unsigned int bit)
-{
+अटल अंतरभूत u64 ocfs2_which_suballoc_group(u64 block, अचिन्हित पूर्णांक bit)
+अणु
 	u64 group = block - (u64) bit;
 
-	return group;
-}
+	वापस group;
+पूर्ण
 
-static inline u32 ocfs2_cluster_from_desc(struct ocfs2_super *osb,
+अटल अंतरभूत u32 ocfs2_cluster_from_desc(काष्ठा ocfs2_super *osb,
 					  u64 bg_blkno)
-{
-	/* This should work for all block group descriptors as only
-	 * the 1st group descriptor of the cluster bitmap is
-	 * different. */
+अणु
+	/* This should work क्रम all block group descriptors as only
+	 * the 1st group descriptor of the cluster biपंचांगap is
+	 * dअगरferent. */
 
-	if (bg_blkno == osb->first_cluster_group_blkno)
-		return 0;
+	अगर (bg_blkno == osb->first_cluster_group_blkno)
+		वापस 0;
 
 	/* the rest of the block groups are located at the beginning
 	 * of their 1st cluster, so a direct translation just
 	 * works. */
-	return ocfs2_blocks_to_clusters(osb->sb, bg_blkno);
-}
+	वापस ocfs2_blocks_to_clusters(osb->sb, bg_blkno);
+पूर्ण
 
-static inline int ocfs2_is_cluster_bitmap(struct inode *inode)
-{
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	return osb->bitmap_blkno == OCFS2_I(inode)->ip_blkno;
-}
+अटल अंतरभूत पूर्णांक ocfs2_is_cluster_biपंचांगap(काष्ठा inode *inode)
+अणु
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	वापस osb->biपंचांगap_blkno == OCFS2_I(inode)->ip_blkno;
+पूर्ण
 
-/* This is for local alloc ONLY. Others should use the task-specific
+/* This is क्रम local alloc ONLY. Others should use the task-specअगरic
  * apis above. */
-int ocfs2_reserve_cluster_bitmap_bits(struct ocfs2_super *osb,
-				      struct ocfs2_alloc_context *ac);
-void ocfs2_free_ac_resource(struct ocfs2_alloc_context *ac);
+पूर्णांक ocfs2_reserve_cluster_biपंचांगap_bits(काष्ठा ocfs2_super *osb,
+				      काष्ठा ocfs2_alloc_context *ac);
+व्योम ocfs2_मुक्त_ac_resource(काष्ठा ocfs2_alloc_context *ac);
 
-/* given a cluster offset, calculate which block group it belongs to
- * and return that block offset. */
-u64 ocfs2_which_cluster_group(struct inode *inode, u32 cluster);
+/* given a cluster offset, calculate which block group it beदीर्घs to
+ * and वापस that block offset. */
+u64 ocfs2_which_cluster_group(काष्ठा inode *inode, u32 cluster);
 
 /*
- * By default, ocfs2_read_group_descriptor() calls ocfs2_error() when it
+ * By शेष, ocfs2_पढ़ो_group_descriptor() calls ocfs2_error() when it
  * finds a problem.  A caller that wants to check a group descriptor
- * without going readonly should read the block with ocfs2_read_block[s]()
+ * without going पढ़ोonly should पढ़ो the block with ocfs2_पढ़ो_block[s]()
  * and then checking it with this function.  This is only resize, really.
- * Everyone else should be using ocfs2_read_group_descriptor().
+ * Everyone अन्यथा should be using ocfs2_पढ़ो_group_descriptor().
  */
-int ocfs2_check_group_descriptor(struct super_block *sb,
-				 struct ocfs2_dinode *di,
-				 struct buffer_head *bh);
+पूर्णांक ocfs2_check_group_descriptor(काष्ठा super_block *sb,
+				 काष्ठा ocfs2_dinode *di,
+				 काष्ठा buffer_head *bh);
 /*
- * Read a group descriptor block into *bh.  If *bh is NULL, a bh will be
- * allocated.  This is a cached read.  The descriptor will be validated with
+ * Read a group descriptor block पूर्णांकo *bh.  If *bh is शून्य, a bh will be
+ * allocated.  This is a cached पढ़ो.  The descriptor will be validated with
  * ocfs2_validate_group_descriptor().
  */
-int ocfs2_read_group_descriptor(struct inode *inode, struct ocfs2_dinode *di,
-				u64 gd_blkno, struct buffer_head **bh);
+पूर्णांक ocfs2_पढ़ो_group_descriptor(काष्ठा inode *inode, काष्ठा ocfs2_dinode *di,
+				u64 gd_blkno, काष्ठा buffer_head **bh);
 
-int ocfs2_lock_allocators(struct inode *inode, struct ocfs2_extent_tree *et,
+पूर्णांक ocfs2_lock_allocators(काष्ठा inode *inode, काष्ठा ocfs2_extent_tree *et,
 			  u32 clusters_to_add, u32 extents_to_split,
-			  struct ocfs2_alloc_context **data_ac,
-			  struct ocfs2_alloc_context **meta_ac);
+			  काष्ठा ocfs2_alloc_context **data_ac,
+			  काष्ठा ocfs2_alloc_context **meta_ac);
 
-int ocfs2_test_inode_bit(struct ocfs2_super *osb, u64 blkno, int *res);
+पूर्णांक ocfs2_test_inode_bit(काष्ठा ocfs2_super *osb, u64 blkno, पूर्णांक *res);
 
 
 
 /*
- * The following two interfaces are for ocfs2_create_inode_in_orphan().
+ * The following two पूर्णांकerfaces are क्रम ocfs2_create_inode_in_orphan().
  */
-int ocfs2_find_new_inode_loc(struct inode *dir,
-			     struct buffer_head *parent_fe_bh,
-			     struct ocfs2_alloc_context *ac,
+पूर्णांक ocfs2_find_new_inode_loc(काष्ठा inode *dir,
+			     काष्ठा buffer_head *parent_fe_bh,
+			     काष्ठा ocfs2_alloc_context *ac,
 			     u64 *fe_blkno);
 
-int ocfs2_claim_new_inode_at_loc(handle_t *handle,
-				 struct inode *dir,
-				 struct ocfs2_alloc_context *ac,
+पूर्णांक ocfs2_claim_new_inode_at_loc(handle_t *handle,
+				 काष्ठा inode *dir,
+				 काष्ठा ocfs2_alloc_context *ac,
 				 u64 *suballoc_loc,
 				 u16 *suballoc_bit,
 				 u64 di_blkno);
 
-#endif /* _CHAINALLOC_H_ */
+#पूर्ण_अगर /* _CHAINALLOC_H_ */

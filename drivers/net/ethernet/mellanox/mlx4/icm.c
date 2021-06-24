@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2005, 2006, 2007, 2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006, 2007 Cisco Systems, Inc.  All rights reserved.
@@ -5,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,268 +32,268 @@
  * SOFTWARE.
  */
 
-#include <linux/errno.h>
-#include <linux/mm.h>
-#include <linux/scatterlist.h>
-#include <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/slab.h>
 
-#include <linux/mlx4/cmd.h>
+#समावेश <linux/mlx4/cmd.h>
 
-#include "mlx4.h"
-#include "icm.h"
-#include "fw.h"
+#समावेश "mlx4.h"
+#समावेश "icm.h"
+#समावेश "fw.h"
 
 /*
  * We allocate in as big chunks as we can, up to a maximum of 256 KB
  * per chunk. Note that the chunks are not necessarily in contiguous
  * physical memory.
  */
-enum {
+क्रमागत अणु
 	MLX4_ICM_ALLOC_SIZE	= 1 << 18,
 	MLX4_TABLE_CHUNK_SIZE	= 1 << 18,
-};
+पूर्ण;
 
-static void mlx4_free_icm_pages(struct mlx4_dev *dev, struct mlx4_icm_chunk *chunk)
-{
-	int i;
+अटल व्योम mlx4_मुक्त_icm_pages(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm_chunk *chunk)
+अणु
+	पूर्णांक i;
 
-	if (chunk->nsg > 0)
+	अगर (chunk->nsg > 0)
 		dma_unmap_sg(&dev->persist->pdev->dev, chunk->sg, chunk->npages,
-			     DMA_BIDIRECTIONAL);
+			     DMA_BIसूचीECTIONAL);
 
-	for (i = 0; i < chunk->npages; ++i)
-		__free_pages(sg_page(&chunk->sg[i]),
+	क्रम (i = 0; i < chunk->npages; ++i)
+		__मुक्त_pages(sg_page(&chunk->sg[i]),
 			     get_order(chunk->sg[i].length));
-}
+पूर्ण
 
-static void mlx4_free_icm_coherent(struct mlx4_dev *dev, struct mlx4_icm_chunk *chunk)
-{
-	int i;
+अटल व्योम mlx4_मुक्त_icm_coherent(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm_chunk *chunk)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < chunk->npages; ++i)
-		dma_free_coherent(&dev->persist->pdev->dev,
+	क्रम (i = 0; i < chunk->npages; ++i)
+		dma_मुक्त_coherent(&dev->persist->pdev->dev,
 				  chunk->buf[i].size,
 				  chunk->buf[i].addr,
 				  chunk->buf[i].dma_addr);
-}
+पूर्ण
 
-void mlx4_free_icm(struct mlx4_dev *dev, struct mlx4_icm *icm, int coherent)
-{
-	struct mlx4_icm_chunk *chunk, *tmp;
+व्योम mlx4_मुक्त_icm(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm *icm, पूर्णांक coherent)
+अणु
+	काष्ठा mlx4_icm_chunk *chunk, *पंचांगp;
 
-	if (!icm)
-		return;
+	अगर (!icm)
+		वापस;
 
-	list_for_each_entry_safe(chunk, tmp, &icm->chunk_list, list) {
-		if (coherent)
-			mlx4_free_icm_coherent(dev, chunk);
-		else
-			mlx4_free_icm_pages(dev, chunk);
+	list_क्रम_each_entry_safe(chunk, पंचांगp, &icm->chunk_list, list) अणु
+		अगर (coherent)
+			mlx4_मुक्त_icm_coherent(dev, chunk);
+		अन्यथा
+			mlx4_मुक्त_icm_pages(dev, chunk);
 
-		kfree(chunk);
-	}
+		kमुक्त(chunk);
+	पूर्ण
 
-	kfree(icm);
-}
+	kमुक्त(icm);
+पूर्ण
 
-static int mlx4_alloc_icm_pages(struct scatterlist *mem, int order,
-				gfp_t gfp_mask, int node)
-{
-	struct page *page;
+अटल पूर्णांक mlx4_alloc_icm_pages(काष्ठा scatterlist *mem, पूर्णांक order,
+				gfp_t gfp_mask, पूर्णांक node)
+अणु
+	काष्ठा page *page;
 
 	page = alloc_pages_node(node, gfp_mask, order);
-	if (!page) {
+	अगर (!page) अणु
 		page = alloc_pages(gfp_mask, order);
-		if (!page)
-			return -ENOMEM;
-	}
+		अगर (!page)
+			वापस -ENOMEM;
+	पूर्ण
 
 	sg_set_page(mem, page, PAGE_SIZE << order, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlx4_alloc_icm_coherent(struct device *dev, struct mlx4_icm_buf *buf,
-				   int order, gfp_t gfp_mask)
-{
+अटल पूर्णांक mlx4_alloc_icm_coherent(काष्ठा device *dev, काष्ठा mlx4_icm_buf *buf,
+				   पूर्णांक order, gfp_t gfp_mask)
+अणु
 	buf->addr = dma_alloc_coherent(dev, PAGE_SIZE << order,
 				       &buf->dma_addr, gfp_mask);
-	if (!buf->addr)
-		return -ENOMEM;
+	अगर (!buf->addr)
+		वापस -ENOMEM;
 
-	if (offset_in_page(buf->addr)) {
-		dma_free_coherent(dev, PAGE_SIZE << order, buf->addr,
+	अगर (offset_in_page(buf->addr)) अणु
+		dma_मुक्त_coherent(dev, PAGE_SIZE << order, buf->addr,
 				  buf->dma_addr);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	buf->size = PAGE_SIZE << order;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct mlx4_icm *mlx4_alloc_icm(struct mlx4_dev *dev, int npages,
-				gfp_t gfp_mask, int coherent)
-{
-	struct mlx4_icm *icm;
-	struct mlx4_icm_chunk *chunk = NULL;
-	int cur_order;
+काष्ठा mlx4_icm *mlx4_alloc_icm(काष्ठा mlx4_dev *dev, पूर्णांक npages,
+				gfp_t gfp_mask, पूर्णांक coherent)
+अणु
+	काष्ठा mlx4_icm *icm;
+	काष्ठा mlx4_icm_chunk *chunk = शून्य;
+	पूर्णांक cur_order;
 	gfp_t mask;
-	int ret;
+	पूर्णांक ret;
 
-	/* We use sg_set_buf for coherent allocs, which assumes low memory */
+	/* We use sg_set_buf क्रम coherent allocs, which assumes low memory */
 	BUG_ON(coherent && (gfp_mask & __GFP_HIGHMEM));
 
-	icm = kmalloc_node(sizeof(*icm),
+	icm = kदो_स्मृति_node(माप(*icm),
 			   gfp_mask & ~(__GFP_HIGHMEM | __GFP_NOWARN),
 			   dev->numa_node);
-	if (!icm) {
-		icm = kmalloc(sizeof(*icm),
+	अगर (!icm) अणु
+		icm = kदो_स्मृति(माप(*icm),
 			      gfp_mask & ~(__GFP_HIGHMEM | __GFP_NOWARN));
-		if (!icm)
-			return NULL;
-	}
+		अगर (!icm)
+			वापस शून्य;
+	पूर्ण
 
 	icm->refcount = 0;
 	INIT_LIST_HEAD(&icm->chunk_list);
 
 	cur_order = get_order(MLX4_ICM_ALLOC_SIZE);
 
-	while (npages > 0) {
-		if (!chunk) {
-			chunk = kzalloc_node(sizeof(*chunk),
+	जबतक (npages > 0) अणु
+		अगर (!chunk) अणु
+			chunk = kzalloc_node(माप(*chunk),
 					     gfp_mask & ~(__GFP_HIGHMEM |
 							  __GFP_NOWARN),
 					     dev->numa_node);
-			if (!chunk) {
-				chunk = kzalloc(sizeof(*chunk),
+			अगर (!chunk) अणु
+				chunk = kzalloc(माप(*chunk),
 						gfp_mask & ~(__GFP_HIGHMEM |
 							     __GFP_NOWARN));
-				if (!chunk)
-					goto fail;
-			}
+				अगर (!chunk)
+					जाओ fail;
+			पूर्ण
 			chunk->coherent = coherent;
 
-			if (!coherent)
+			अगर (!coherent)
 				sg_init_table(chunk->sg, MLX4_ICM_CHUNK_LEN);
 			list_add_tail(&chunk->list, &icm->chunk_list);
-		}
+		पूर्ण
 
-		while (1 << cur_order > npages)
+		जबतक (1 << cur_order > npages)
 			--cur_order;
 
 		mask = gfp_mask;
-		if (cur_order)
-			mask &= ~__GFP_DIRECT_RECLAIM;
+		अगर (cur_order)
+			mask &= ~__GFP_सूचीECT_RECLAIM;
 
-		if (coherent)
+		अगर (coherent)
 			ret = mlx4_alloc_icm_coherent(&dev->persist->pdev->dev,
 						&chunk->buf[chunk->npages],
 						cur_order, mask);
-		else
+		अन्यथा
 			ret = mlx4_alloc_icm_pages(&chunk->sg[chunk->npages],
 						   cur_order, mask,
 						   dev->numa_node);
 
-		if (ret) {
-			if (--cur_order < 0)
-				goto fail;
-			else
-				continue;
-		}
+		अगर (ret) अणु
+			अगर (--cur_order < 0)
+				जाओ fail;
+			अन्यथा
+				जारी;
+		पूर्ण
 
 		++chunk->npages;
 
-		if (coherent)
+		अगर (coherent)
 			++chunk->nsg;
-		else if (chunk->npages == MLX4_ICM_CHUNK_LEN) {
+		अन्यथा अगर (chunk->npages == MLX4_ICM_CHUNK_LEN) अणु
 			chunk->nsg = dma_map_sg(&dev->persist->pdev->dev,
 						chunk->sg, chunk->npages,
-						DMA_BIDIRECTIONAL);
+						DMA_BIसूचीECTIONAL);
 
-			if (chunk->nsg <= 0)
-				goto fail;
-		}
+			अगर (chunk->nsg <= 0)
+				जाओ fail;
+		पूर्ण
 
-		if (chunk->npages == MLX4_ICM_CHUNK_LEN)
-			chunk = NULL;
+		अगर (chunk->npages == MLX4_ICM_CHUNK_LEN)
+			chunk = शून्य;
 
 		npages -= 1 << cur_order;
-	}
+	पूर्ण
 
-	if (!coherent && chunk) {
+	अगर (!coherent && chunk) अणु
 		chunk->nsg = dma_map_sg(&dev->persist->pdev->dev, chunk->sg,
-					chunk->npages, DMA_BIDIRECTIONAL);
+					chunk->npages, DMA_BIसूचीECTIONAL);
 
-		if (chunk->nsg <= 0)
-			goto fail;
-	}
+		अगर (chunk->nsg <= 0)
+			जाओ fail;
+	पूर्ण
 
-	return icm;
+	वापस icm;
 
 fail:
-	mlx4_free_icm(dev, icm, coherent);
-	return NULL;
-}
+	mlx4_मुक्त_icm(dev, icm, coherent);
+	वापस शून्य;
+पूर्ण
 
-static int mlx4_MAP_ICM(struct mlx4_dev *dev, struct mlx4_icm *icm, u64 virt)
-{
-	return mlx4_map_cmd(dev, MLX4_CMD_MAP_ICM, icm, virt);
-}
+अटल पूर्णांक mlx4_MAP_ICM(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm *icm, u64 virt)
+अणु
+	वापस mlx4_map_cmd(dev, MLX4_CMD_MAP_ICM, icm, virt);
+पूर्ण
 
-static int mlx4_UNMAP_ICM(struct mlx4_dev *dev, u64 virt, u32 page_count)
-{
-	return mlx4_cmd(dev, virt, page_count, 0, MLX4_CMD_UNMAP_ICM,
+अटल पूर्णांक mlx4_UNMAP_ICM(काष्ठा mlx4_dev *dev, u64 virt, u32 page_count)
+अणु
+	वापस mlx4_cmd(dev, virt, page_count, 0, MLX4_CMD_UNMAP_ICM,
 			MLX4_CMD_TIME_CLASS_B, MLX4_CMD_NATIVE);
-}
+पूर्ण
 
-int mlx4_MAP_ICM_AUX(struct mlx4_dev *dev, struct mlx4_icm *icm)
-{
-	return mlx4_map_cmd(dev, MLX4_CMD_MAP_ICM_AUX, icm, -1);
-}
+पूर्णांक mlx4_MAP_ICM_AUX(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm *icm)
+अणु
+	वापस mlx4_map_cmd(dev, MLX4_CMD_MAP_ICM_AUX, icm, -1);
+पूर्ण
 
-int mlx4_UNMAP_ICM_AUX(struct mlx4_dev *dev)
-{
-	return mlx4_cmd(dev, 0, 0, 0, MLX4_CMD_UNMAP_ICM_AUX,
+पूर्णांक mlx4_UNMAP_ICM_AUX(काष्ठा mlx4_dev *dev)
+अणु
+	वापस mlx4_cmd(dev, 0, 0, 0, MLX4_CMD_UNMAP_ICM_AUX,
 			MLX4_CMD_TIME_CLASS_B, MLX4_CMD_NATIVE);
-}
+पूर्ण
 
-int mlx4_table_get(struct mlx4_dev *dev, struct mlx4_icm_table *table, u32 obj)
-{
+पूर्णांक mlx4_table_get(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm_table *table, u32 obj)
+अणु
 	u32 i = (obj & (table->num_obj - 1)) /
 			(MLX4_TABLE_CHUNK_SIZE / table->obj_size);
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&table->mutex);
 
-	if (table->icm[i]) {
+	अगर (table->icm[i]) अणु
 		++table->icm[i]->refcount;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	table->icm[i] = mlx4_alloc_icm(dev, MLX4_TABLE_CHUNK_SIZE >> PAGE_SHIFT,
 				       (table->lowmem ? GFP_KERNEL : GFP_HIGHUSER) |
 				       __GFP_NOWARN, table->coherent);
-	if (!table->icm[i]) {
+	अगर (!table->icm[i]) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (mlx4_MAP_ICM(dev, table->icm[i], table->virt +
-			 (u64) i * MLX4_TABLE_CHUNK_SIZE)) {
-		mlx4_free_icm(dev, table->icm[i], table->coherent);
-		table->icm[i] = NULL;
+	अगर (mlx4_MAP_ICM(dev, table->icm[i], table->virt +
+			 (u64) i * MLX4_TABLE_CHUNK_SIZE)) अणु
+		mlx4_मुक्त_icm(dev, table->icm[i], table->coherent);
+		table->icm[i] = शून्य;
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	++table->icm[i]->refcount;
 
 out:
 	mutex_unlock(&table->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void mlx4_table_put(struct mlx4_dev *dev, struct mlx4_icm_table *table, u32 obj)
-{
+व्योम mlx4_table_put(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm_table *table, u32 obj)
+अणु
 	u32 i;
 	u64 offset;
 
@@ -300,28 +301,28 @@ void mlx4_table_put(struct mlx4_dev *dev, struct mlx4_icm_table *table, u32 obj)
 
 	mutex_lock(&table->mutex);
 
-	if (--table->icm[i]->refcount == 0) {
+	अगर (--table->icm[i]->refcount == 0) अणु
 		offset = (u64) i * MLX4_TABLE_CHUNK_SIZE;
 		mlx4_UNMAP_ICM(dev, table->virt + offset,
 			       MLX4_TABLE_CHUNK_SIZE / MLX4_ICM_PAGE_SIZE);
-		mlx4_free_icm(dev, table->icm[i], table->coherent);
-		table->icm[i] = NULL;
-	}
+		mlx4_मुक्त_icm(dev, table->icm[i], table->coherent);
+		table->icm[i] = शून्य;
+	पूर्ण
 
 	mutex_unlock(&table->mutex);
-}
+पूर्ण
 
-void *mlx4_table_find(struct mlx4_icm_table *table, u32 obj,
+व्योम *mlx4_table_find(काष्ठा mlx4_icm_table *table, u32 obj,
 			dma_addr_t *dma_handle)
-{
-	int offset, dma_offset, i;
+अणु
+	पूर्णांक offset, dma_offset, i;
 	u64 idx;
-	struct mlx4_icm_chunk *chunk;
-	struct mlx4_icm *icm;
-	void *addr = NULL;
+	काष्ठा mlx4_icm_chunk *chunk;
+	काष्ठा mlx4_icm *icm;
+	व्योम *addr = शून्य;
 
-	if (!table->lowmem)
-		return NULL;
+	अगर (!table->lowmem)
+		वापस शून्य;
 
 	mutex_lock(&table->mutex);
 
@@ -329,107 +330,107 @@ void *mlx4_table_find(struct mlx4_icm_table *table, u32 obj,
 	icm = table->icm[idx / MLX4_TABLE_CHUNK_SIZE];
 	dma_offset = offset = idx % MLX4_TABLE_CHUNK_SIZE;
 
-	if (!icm)
-		goto out;
+	अगर (!icm)
+		जाओ out;
 
-	list_for_each_entry(chunk, &icm->chunk_list, list) {
-		for (i = 0; i < chunk->npages; ++i) {
+	list_क्रम_each_entry(chunk, &icm->chunk_list, list) अणु
+		क्रम (i = 0; i < chunk->npages; ++i) अणु
 			dma_addr_t dma_addr;
-			size_t len;
+			माप_प्रकार len;
 
-			if (table->coherent) {
+			अगर (table->coherent) अणु
 				len = chunk->buf[i].size;
 				dma_addr = chunk->buf[i].dma_addr;
 				addr = chunk->buf[i].addr;
-			} else {
-				struct page *page;
+			पूर्ण अन्यथा अणु
+				काष्ठा page *page;
 
 				len = sg_dma_len(&chunk->sg[i]);
 				dma_addr = sg_dma_address(&chunk->sg[i]);
 
-				/* XXX: we should never do this for highmem
+				/* XXX: we should never करो this क्रम highmem
 				 * allocation.  This function either needs
-				 * to be split, or the kernel virtual address
-				 * return needs to be made optional.
+				 * to be split, or the kernel भव address
+				 * वापस needs to be made optional.
 				 */
 				page = sg_page(&chunk->sg[i]);
 				addr = lowmem_page_address(page);
-			}
+			पूर्ण
 
-			if (dma_handle && dma_offset >= 0) {
-				if (len > dma_offset)
+			अगर (dma_handle && dma_offset >= 0) अणु
+				अगर (len > dma_offset)
 					*dma_handle = dma_addr + dma_offset;
 				dma_offset -= len;
-			}
+			पूर्ण
 
 			/*
 			 * DMA mapping can merge pages but not split them,
-			 * so if we found the page, dma_handle has already
-			 * been assigned to.
+			 * so अगर we found the page, dma_handle has alपढ़ोy
+			 * been asचिन्हित to.
 			 */
-			if (len > offset)
-				goto out;
+			अगर (len > offset)
+				जाओ out;
 			offset -= len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	addr = NULL;
+	addr = शून्य;
 out:
 	mutex_unlock(&table->mutex);
-	return addr ? addr + offset : NULL;
-}
+	वापस addr ? addr + offset : शून्य;
+पूर्ण
 
-int mlx4_table_get_range(struct mlx4_dev *dev, struct mlx4_icm_table *table,
+पूर्णांक mlx4_table_get_range(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm_table *table,
 			 u32 start, u32 end)
-{
-	int inc = MLX4_TABLE_CHUNK_SIZE / table->obj_size;
-	int err;
+अणु
+	पूर्णांक inc = MLX4_TABLE_CHUNK_SIZE / table->obj_size;
+	पूर्णांक err;
 	u32 i;
 
-	for (i = start; i <= end; i += inc) {
+	क्रम (i = start; i <= end; i += inc) अणु
 		err = mlx4_table_get(dev, table, i);
-		if (err)
-			goto fail;
-	}
+		अगर (err)
+			जाओ fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
-	while (i > start) {
+	जबतक (i > start) अणु
 		i -= inc;
 		mlx4_table_put(dev, table, i);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mlx4_table_put_range(struct mlx4_dev *dev, struct mlx4_icm_table *table,
+व्योम mlx4_table_put_range(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm_table *table,
 			  u32 start, u32 end)
-{
+अणु
 	u32 i;
 
-	for (i = start; i <= end; i += MLX4_TABLE_CHUNK_SIZE / table->obj_size)
+	क्रम (i = start; i <= end; i += MLX4_TABLE_CHUNK_SIZE / table->obj_size)
 		mlx4_table_put(dev, table, i);
-}
+पूर्ण
 
-int mlx4_init_icm_table(struct mlx4_dev *dev, struct mlx4_icm_table *table,
-			u64 virt, int obj_size,	u32 nobj, int reserved,
-			int use_lowmem, int use_coherent)
-{
-	int obj_per_chunk;
-	int num_icm;
-	unsigned chunk_size;
-	int i;
+पूर्णांक mlx4_init_icm_table(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm_table *table,
+			u64 virt, पूर्णांक obj_size,	u32 nobj, पूर्णांक reserved,
+			पूर्णांक use_lowmem, पूर्णांक use_coherent)
+अणु
+	पूर्णांक obj_per_chunk;
+	पूर्णांक num_icm;
+	अचिन्हित chunk_size;
+	पूर्णांक i;
 	u64 size;
 
 	obj_per_chunk = MLX4_TABLE_CHUNK_SIZE / obj_size;
-	if (WARN_ON(!obj_per_chunk))
-		return -EINVAL;
+	अगर (WARN_ON(!obj_per_chunk))
+		वापस -EINVAL;
 	num_icm = DIV_ROUND_UP(nobj, obj_per_chunk);
 
-	table->icm      = kvcalloc(num_icm, sizeof(*table->icm), GFP_KERNEL);
-	if (!table->icm)
-		return -ENOMEM;
+	table->icm      = kvसुस्मृति(num_icm, माप(*table->icm), GFP_KERNEL);
+	अगर (!table->icm)
+		वापस -ENOMEM;
 	table->virt     = virt;
 	table->num_icm  = num_icm;
 	table->num_obj  = nobj;
@@ -439,55 +440,55 @@ int mlx4_init_icm_table(struct mlx4_dev *dev, struct mlx4_icm_table *table,
 	mutex_init(&table->mutex);
 
 	size = (u64) nobj * obj_size;
-	for (i = 0; i * MLX4_TABLE_CHUNK_SIZE < reserved * obj_size; ++i) {
+	क्रम (i = 0; i * MLX4_TABLE_CHUNK_SIZE < reserved * obj_size; ++i) अणु
 		chunk_size = MLX4_TABLE_CHUNK_SIZE;
-		if ((i + 1) * MLX4_TABLE_CHUNK_SIZE > size)
+		अगर ((i + 1) * MLX4_TABLE_CHUNK_SIZE > size)
 			chunk_size = PAGE_ALIGN(size -
 					i * MLX4_TABLE_CHUNK_SIZE);
 
 		table->icm[i] = mlx4_alloc_icm(dev, chunk_size >> PAGE_SHIFT,
 					       (use_lowmem ? GFP_KERNEL : GFP_HIGHUSER) |
 					       __GFP_NOWARN, use_coherent);
-		if (!table->icm[i])
-			goto err;
-		if (mlx4_MAP_ICM(dev, table->icm[i], virt + i * MLX4_TABLE_CHUNK_SIZE)) {
-			mlx4_free_icm(dev, table->icm[i], use_coherent);
-			table->icm[i] = NULL;
-			goto err;
-		}
+		अगर (!table->icm[i])
+			जाओ err;
+		अगर (mlx4_MAP_ICM(dev, table->icm[i], virt + i * MLX4_TABLE_CHUNK_SIZE)) अणु
+			mlx4_मुक्त_icm(dev, table->icm[i], use_coherent);
+			table->icm[i] = शून्य;
+			जाओ err;
+		पूर्ण
 
 		/*
 		 * Add a reference to this ICM chunk so that it never
-		 * gets freed (since it contains reserved firmware objects).
+		 * माला_लो मुक्तd (since it contains reserved firmware objects).
 		 */
 		++table->icm[i]->refcount;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	for (i = 0; i < num_icm; ++i)
-		if (table->icm[i]) {
+	क्रम (i = 0; i < num_icm; ++i)
+		अगर (table->icm[i]) अणु
 			mlx4_UNMAP_ICM(dev, virt + i * MLX4_TABLE_CHUNK_SIZE,
 				       MLX4_TABLE_CHUNK_SIZE / MLX4_ICM_PAGE_SIZE);
-			mlx4_free_icm(dev, table->icm[i], use_coherent);
-		}
+			mlx4_मुक्त_icm(dev, table->icm[i], use_coherent);
+		पूर्ण
 
-	kvfree(table->icm);
+	kvमुक्त(table->icm);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-void mlx4_cleanup_icm_table(struct mlx4_dev *dev, struct mlx4_icm_table *table)
-{
-	int i;
+व्योम mlx4_cleanup_icm_table(काष्ठा mlx4_dev *dev, काष्ठा mlx4_icm_table *table)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < table->num_icm; ++i)
-		if (table->icm[i]) {
+	क्रम (i = 0; i < table->num_icm; ++i)
+		अगर (table->icm[i]) अणु
 			mlx4_UNMAP_ICM(dev, table->virt + i * MLX4_TABLE_CHUNK_SIZE,
 				       MLX4_TABLE_CHUNK_SIZE / MLX4_ICM_PAGE_SIZE);
-			mlx4_free_icm(dev, table->icm[i], table->coherent);
-		}
+			mlx4_मुक्त_icm(dev, table->icm[i], table->coherent);
+		पूर्ण
 
-	kvfree(table->icm);
-}
+	kvमुक्त(table->icm);
+पूर्ण

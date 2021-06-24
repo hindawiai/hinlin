@@ -1,145 +1,146 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "ddk750_chip.h"
-#include "ddk750_reg.h"
-#include "ddk750_power.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "ddk750_chip.h"
+#समावेश "ddk750_reg.h"
+#समावेश "ddk750_power.h"
 
-void ddk750_set_dpms(enum dpms state)
-{
-	unsigned int value;
+व्योम ddk750_set_dpms(क्रमागत dpms state)
+अणु
+	अचिन्हित पूर्णांक value;
 
-	if (sm750_get_chip_type() == SM750LE) {
+	अगर (sm750_get_chip_type() == SM750LE) अणु
 		value = peek32(CRT_DISPLAY_CTRL) & ~CRT_DISPLAY_CTRL_DPMS_MASK;
 		value |= (state << CRT_DISPLAY_CTRL_DPMS_SHIFT);
 		poke32(CRT_DISPLAY_CTRL, value);
-	} else {
+	पूर्ण अन्यथा अणु
 		value = peek32(SYSTEM_CTRL);
 		value = (value & ~SYSTEM_CTRL_DPMS_MASK) | state;
 		poke32(SYSTEM_CTRL, value);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int get_power_mode(void)
-{
-	if (sm750_get_chip_type() == SM750LE)
-		return 0;
-	return peek32(POWER_MODE_CTRL) & POWER_MODE_CTRL_MODE_MASK;
-}
+अटल अचिन्हित पूर्णांक get_घातer_mode(व्योम)
+अणु
+	अगर (sm750_get_chip_type() == SM750LE)
+		वापस 0;
+	वापस peek32(POWER_MODE_CTRL) & POWER_MODE_CTRL_MODE_MASK;
+पूर्ण
 
 /*
  * SM50x can operate in one of three modes: 0, 1 or Sleep.
- * On hardware reset, power mode 0 is default.
+ * On hardware reset, घातer mode 0 is शेष.
  */
-void sm750_set_power_mode(unsigned int mode)
-{
-	unsigned int ctrl = 0;
+व्योम sm750_set_घातer_mode(अचिन्हित पूर्णांक mode)
+अणु
+	अचिन्हित पूर्णांक ctrl = 0;
 
 	ctrl = peek32(POWER_MODE_CTRL) & ~POWER_MODE_CTRL_MODE_MASK;
 
-	if (sm750_get_chip_type() == SM750LE)
-		return;
+	अगर (sm750_get_chip_type() == SM750LE)
+		वापस;
 
-	switch (mode) {
-	case POWER_MODE_CTRL_MODE_MODE0:
+	चयन (mode) अणु
+	हाल POWER_MODE_CTRL_MODE_MODE0:
 		ctrl |= POWER_MODE_CTRL_MODE_MODE0;
-		break;
+		अवरोध;
 
-	case POWER_MODE_CTRL_MODE_MODE1:
+	हाल POWER_MODE_CTRL_MODE_MODE1:
 		ctrl |= POWER_MODE_CTRL_MODE_MODE1;
-		break;
+		अवरोध;
 
-	case POWER_MODE_CTRL_MODE_SLEEP:
+	हाल POWER_MODE_CTRL_MODE_SLEEP:
 		ctrl |= POWER_MODE_CTRL_MODE_SLEEP;
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* Set up other fields in Power Control Register */
-	if (mode == POWER_MODE_CTRL_MODE_SLEEP) {
+	अगर (mode == POWER_MODE_CTRL_MODE_SLEEP) अणु
 		ctrl &= ~POWER_MODE_CTRL_OSC_INPUT;
-#ifdef VALIDATION_CHIP
+#अगर_घोषित VALIDATION_CHIP
 		ctrl &= ~POWER_MODE_CTRL_336CLK;
-#endif
-	} else {
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 		ctrl |= POWER_MODE_CTRL_OSC_INPUT;
-#ifdef VALIDATION_CHIP
+#अगर_घोषित VALIDATION_CHIP
 		ctrl |= POWER_MODE_CTRL_336CLK;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	/* Program new power mode. */
+	/* Program new घातer mode. */
 	poke32(POWER_MODE_CTRL, ctrl);
-}
+पूर्ण
 
-void sm750_set_current_gate(unsigned int gate)
-{
-	if (get_power_mode() == POWER_MODE_CTRL_MODE_MODE1)
+व्योम sm750_set_current_gate(अचिन्हित पूर्णांक gate)
+अणु
+	अगर (get_घातer_mode() == POWER_MODE_CTRL_MODE_MODE1)
 		poke32(MODE1_GATE, gate);
-	else
+	अन्यथा
 		poke32(MODE0_GATE, gate);
-}
+पूर्ण
 
 /*
  * This function enable/disable the 2D engine.
  */
-void sm750_enable_2d_engine(unsigned int enable)
-{
+व्योम sm750_enable_2d_engine(अचिन्हित पूर्णांक enable)
+अणु
 	u32 gate;
 
 	gate = peek32(CURRENT_GATE);
-	if (enable)
+	अगर (enable)
 		gate |= (CURRENT_GATE_DE | CURRENT_GATE_CSC);
-	else
+	अन्यथा
 		gate &= ~(CURRENT_GATE_DE | CURRENT_GATE_CSC);
 
 	sm750_set_current_gate(gate);
-}
+पूर्ण
 
-void sm750_enable_dma(unsigned int enable)
-{
+व्योम sm750_enable_dma(अचिन्हित पूर्णांक enable)
+अणु
 	u32 gate;
 
 	/* Enable DMA Gate */
 	gate = peek32(CURRENT_GATE);
-	if (enable)
+	अगर (enable)
 		gate |= CURRENT_GATE_DMA;
-	else
+	अन्यथा
 		gate &= ~CURRENT_GATE_DMA;
 
 	sm750_set_current_gate(gate);
-}
+पूर्ण
 
 /*
  * This function enable/disable the GPIO Engine
  */
-void sm750_enable_gpio(unsigned int enable)
-{
+व्योम sm750_enable_gpio(अचिन्हित पूर्णांक enable)
+अणु
 	u32 gate;
 
 	/* Enable GPIO Gate */
 	gate = peek32(CURRENT_GATE);
-	if (enable)
+	अगर (enable)
 		gate |= CURRENT_GATE_GPIO;
-	else
+	अन्यथा
 		gate &= ~CURRENT_GATE_GPIO;
 
 	sm750_set_current_gate(gate);
-}
+पूर्ण
 
 /*
  * This function enable/disable the I2C Engine
  */
-void sm750_enable_i2c(unsigned int enable)
-{
+व्योम sm750_enable_i2c(अचिन्हित पूर्णांक enable)
+अणु
 	u32 gate;
 
 	/* Enable I2C Gate */
 	gate = peek32(CURRENT_GATE);
-	if (enable)
+	अगर (enable)
 		gate |= CURRENT_GATE_I2C;
-	else
+	अन्यथा
 		gate &= ~CURRENT_GATE_I2C;
 
 	sm750_set_current_gate(gate);
-}
+पूर्ण

@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2009-2013  Realtek Corporation.
  *
- * Contact Information:
+ * Contact Inक्रमmation:
  * wlanfae <wlanfae@realtek.com>
  * Realtek Corporation, No. 2, Innovation Road II, Hsinchu Science Park,
  * Hsinchu 300, Taiwan.
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  *****************************************************************************/
-#include "drv_types.h"
-#include <linux/types.h>
+#समावेश "drv_types.h"
+#समावेश <linux/types.h>
 
-#ifndef __RTL92C__FW__H__
-#define __RTL92C__FW__H__
+#अगर_अघोषित __RTL92C__FW__H__
+#घोषणा __RTL92C__FW__H__
 
-#define FW_8192C_START_ADDRESS		0x1000
-#define FW_8192C_PAGE_SIZE			4096
-#define FW_8192C_POLLING_DELAY		5
+#घोषणा FW_8192C_START_ADDRESS		0x1000
+#घोषणा FW_8192C_PAGE_SIZE			4096
+#घोषणा FW_8192C_POLLING_DELAY		5
 
-struct rtl92c_firmware_header {
+काष्ठा rtl92c_firmware_header अणु
 	__le16 signature;
 	u8 category;
 	u8 function;
@@ -37,8 +38,8 @@ struct rtl92c_firmware_header {
 	u32 rsvd3;
 	u32 rsvd4;
 	u32 rsvd5;
-};
+पूर्ण;
 
-int rtl88eu_download_fw(struct adapter *adapt);
+पूर्णांक rtl88eu_करोwnload_fw(काष्ठा adapter *adapt);
 
-#endif
+#पूर्ण_अगर

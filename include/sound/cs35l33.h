@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * linux/sound/cs35l33.h -- Platform data for CS35l33
+ * linux/sound/cs35l33.h -- Platक्रमm data क्रम CS35l33
  *
  * Copyright (c) 2016 Cirrus Logic Inc.
  */
 
-#ifndef __CS35L33_H
-#define __CS35L33_H
+#अगर_अघोषित __CS35L33_H
+#घोषणा __CS35L33_H
 
-struct cs35l33_hg {
+काष्ठा cs35l33_hg अणु
 	bool enable_hg_algo;
-	unsigned int mem_depth;
-	unsigned int release_rate;
-	unsigned int hd_rm;
-	unsigned int ldo_thld;
-	unsigned int ldo_path_disable;
-	unsigned int ldo_entry_delay;
-	bool vp_hg_auto;
-	unsigned int vp_hg;
-	unsigned int vp_hg_rate;
-	unsigned int vp_hg_va;
-};
+	अचिन्हित पूर्णांक mem_depth;
+	अचिन्हित पूर्णांक release_rate;
+	अचिन्हित पूर्णांक hd_rm;
+	अचिन्हित पूर्णांक lकरो_thld;
+	अचिन्हित पूर्णांक lकरो_path_disable;
+	अचिन्हित पूर्णांक lकरो_entry_delay;
+	bool vp_hg_स्वतः;
+	अचिन्हित पूर्णांक vp_hg;
+	अचिन्हित पूर्णांक vp_hg_rate;
+	अचिन्हित पूर्णांक vp_hg_va;
+पूर्ण;
 
-struct cs35l33_pdata {
+काष्ठा cs35l33_pdata अणु
 	/* Boost Controller Voltage Setting */
-	unsigned int boost_ctl;
+	अचिन्हित पूर्णांक boost_ctl;
 
 	/* Boost Controller Peak Current */
-	unsigned int boost_ipk;
+	अचिन्हित पूर्णांक boost_ipk;
 
-	/* Amplifier Drive Select */
-	unsigned int amp_drv_sel;
+	/* Amplअगरier Drive Select */
+	अचिन्हित पूर्णांक amp_drv_sel;
 
 	/* soft volume ramp */
-	unsigned int ramp_rate;
+	अचिन्हित पूर्णांक ramp_rate;
 
 	/* IMON adc scale */
-	unsigned int imon_adc_scale;
+	अचिन्हित पूर्णांक imon_adc_scale;
 
 	/* H/G algo configuration */
-	struct cs35l33_hg hg_config;
-};
+	काष्ठा cs35l33_hg hg_config;
+पूर्ण;
 
-#endif /* __CS35L33_H */
+#पूर्ण_अगर /* __CS35L33_H */

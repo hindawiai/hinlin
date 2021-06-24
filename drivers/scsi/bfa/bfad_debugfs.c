@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2005-2014 Brocade Communications Systems, Inc.
  * Copyright (c) 2014- QLogic Corporation.
  * All rights reserved
  * www.qlogic.com
  *
- * Linux driver for QLogic BR-series Fibre Channel Host Bus Adapter.
+ * Linux driver क्रम QLogic BR-series Fibre Channel Host Bus Adapter.
  */
 
-#include <linux/debugfs.h>
-#include <linux/export.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/export.h>
 
-#include "bfad_drv.h"
-#include "bfad_im.h"
+#समावेश "bfad_drv.h"
+#समावेश "bfad_im.h"
 
 /*
- * BFA debufs interface
+ * BFA debufs पूर्णांकerface
  *
- * To access the interface, debugfs file system should be mounted
- * if not already mounted using:
+ * To access the पूर्णांकerface, debugfs file प्रणाली should be mounted
+ * अगर not alपढ़ोy mounted using:
  * mount -t debugfs none /sys/kernel/debug
  *
  * BFA Hierarchy:
@@ -29,251 +30,251 @@
  * fwtrc:  To collect current firmware trace.
  * drvtrc: To collect current driver trace
  * fwsave: To collect last saved fw trace as a result of firmware crash.
- * regwr:  To write one word to chip register
- * regrd:  To read one or more words from chip register.
+ * regwr:  To ग_लिखो one word to chip रेजिस्टर
+ * regrd:  To पढ़ो one or more words from chip रेजिस्टर.
  */
 
-struct bfad_debug_info {
-	char *debug_buffer;
-	void *i_private;
-	int buffer_len;
-};
+काष्ठा bfad_debug_info अणु
+	अक्षर *debug_buffer;
+	व्योम *i_निजी;
+	पूर्णांक buffer_len;
+पूर्ण;
 
-static int
-bfad_debugfs_open_drvtrc(struct inode *inode, struct file *file)
-{
-	struct bfad_port_s *port = inode->i_private;
-	struct bfad_s *bfad = port->bfad;
-	struct bfad_debug_info *debug;
+अटल पूर्णांक
+bfad_debugfs_खोलो_drvtrc(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा bfad_port_s *port = inode->i_निजी;
+	काष्ठा bfad_s *bfad = port->bfad;
+	काष्ठा bfad_debug_info *debug;
 
-	debug = kzalloc(sizeof(struct bfad_debug_info), GFP_KERNEL);
-	if (!debug)
-		return -ENOMEM;
+	debug = kzalloc(माप(काष्ठा bfad_debug_info), GFP_KERNEL);
+	अगर (!debug)
+		वापस -ENOMEM;
 
-	debug->debug_buffer = (void *) bfad->trcmod;
-	debug->buffer_len = sizeof(struct bfa_trc_mod_s);
+	debug->debug_buffer = (व्योम *) bfad->trcmod;
+	debug->buffer_len = माप(काष्ठा bfa_trc_mod_s);
 
-	file->private_data = debug;
+	file->निजी_data = debug;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bfad_debugfs_open_fwtrc(struct inode *inode, struct file *file)
-{
-	struct bfad_port_s *port = inode->i_private;
-	struct bfad_s *bfad = port->bfad;
-	struct bfad_debug_info *fw_debug;
-	unsigned long flags;
-	int rc;
+अटल पूर्णांक
+bfad_debugfs_खोलो_fwtrc(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा bfad_port_s *port = inode->i_निजी;
+	काष्ठा bfad_s *bfad = port->bfad;
+	काष्ठा bfad_debug_info *fw_debug;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
-	fw_debug = kzalloc(sizeof(struct bfad_debug_info), GFP_KERNEL);
-	if (!fw_debug)
-		return -ENOMEM;
+	fw_debug = kzalloc(माप(काष्ठा bfad_debug_info), GFP_KERNEL);
+	अगर (!fw_debug)
+		वापस -ENOMEM;
 
-	fw_debug->buffer_len = sizeof(struct bfa_trc_mod_s);
+	fw_debug->buffer_len = माप(काष्ठा bfa_trc_mod_s);
 
 	fw_debug->debug_buffer = vzalloc(fw_debug->buffer_len);
-	if (!fw_debug->debug_buffer) {
-		kfree(fw_debug);
-		printk(KERN_INFO "bfad[%d]: Failed to allocate fwtrc buffer\n",
+	अगर (!fw_debug->debug_buffer) अणु
+		kमुक्त(fw_debug);
+		prपूर्णांकk(KERN_INFO "bfad[%d]: Failed to allocate fwtrc buffer\n",
 				bfad->inst_no);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	spin_lock_irqsave(&bfad->bfad_lock, flags);
 	rc = bfa_ioc_debug_fwtrc(&bfad->bfa.ioc,
 			fw_debug->debug_buffer,
 			&fw_debug->buffer_len);
 	spin_unlock_irqrestore(&bfad->bfad_lock, flags);
-	if (rc != BFA_STATUS_OK) {
-		vfree(fw_debug->debug_buffer);
-		fw_debug->debug_buffer = NULL;
-		kfree(fw_debug);
-		printk(KERN_INFO "bfad[%d]: Failed to collect fwtrc\n",
+	अगर (rc != BFA_STATUS_OK) अणु
+		vमुक्त(fw_debug->debug_buffer);
+		fw_debug->debug_buffer = शून्य;
+		kमुक्त(fw_debug);
+		prपूर्णांकk(KERN_INFO "bfad[%d]: Failed to collect fwtrc\n",
 				bfad->inst_no);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	file->private_data = fw_debug;
+	file->निजी_data = fw_debug;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bfad_debugfs_open_fwsave(struct inode *inode, struct file *file)
-{
-	struct bfad_port_s *port = inode->i_private;
-	struct bfad_s *bfad = port->bfad;
-	struct bfad_debug_info *fw_debug;
-	unsigned long flags;
-	int rc;
+अटल पूर्णांक
+bfad_debugfs_खोलो_fwsave(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा bfad_port_s *port = inode->i_निजी;
+	काष्ठा bfad_s *bfad = port->bfad;
+	काष्ठा bfad_debug_info *fw_debug;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
-	fw_debug = kzalloc(sizeof(struct bfad_debug_info), GFP_KERNEL);
-	if (!fw_debug)
-		return -ENOMEM;
+	fw_debug = kzalloc(माप(काष्ठा bfad_debug_info), GFP_KERNEL);
+	अगर (!fw_debug)
+		वापस -ENOMEM;
 
-	fw_debug->buffer_len = sizeof(struct bfa_trc_mod_s);
+	fw_debug->buffer_len = माप(काष्ठा bfa_trc_mod_s);
 
 	fw_debug->debug_buffer = vzalloc(fw_debug->buffer_len);
-	if (!fw_debug->debug_buffer) {
-		kfree(fw_debug);
-		printk(KERN_INFO "bfad[%d]: Failed to allocate fwsave buffer\n",
+	अगर (!fw_debug->debug_buffer) अणु
+		kमुक्त(fw_debug);
+		prपूर्णांकk(KERN_INFO "bfad[%d]: Failed to allocate fwsave buffer\n",
 				bfad->inst_no);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	spin_lock_irqsave(&bfad->bfad_lock, flags);
 	rc = bfa_ioc_debug_fwsave(&bfad->bfa.ioc,
 			fw_debug->debug_buffer,
 			&fw_debug->buffer_len);
 	spin_unlock_irqrestore(&bfad->bfad_lock, flags);
-	if (rc != BFA_STATUS_OK) {
-		vfree(fw_debug->debug_buffer);
-		fw_debug->debug_buffer = NULL;
-		kfree(fw_debug);
-		printk(KERN_INFO "bfad[%d]: Failed to collect fwsave\n",
+	अगर (rc != BFA_STATUS_OK) अणु
+		vमुक्त(fw_debug->debug_buffer);
+		fw_debug->debug_buffer = शून्य;
+		kमुक्त(fw_debug);
+		prपूर्णांकk(KERN_INFO "bfad[%d]: Failed to collect fwsave\n",
 				bfad->inst_no);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	file->private_data = fw_debug;
+	file->निजी_data = fw_debug;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-bfad_debugfs_open_reg(struct inode *inode, struct file *file)
-{
-	struct bfad_debug_info *reg_debug;
+अटल पूर्णांक
+bfad_debugfs_खोलो_reg(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा bfad_debug_info *reg_debug;
 
-	reg_debug = kzalloc(sizeof(struct bfad_debug_info), GFP_KERNEL);
-	if (!reg_debug)
-		return -ENOMEM;
+	reg_debug = kzalloc(माप(काष्ठा bfad_debug_info), GFP_KERNEL);
+	अगर (!reg_debug)
+		वापस -ENOMEM;
 
-	reg_debug->i_private = inode->i_private;
+	reg_debug->i_निजी = inode->i_निजी;
 
-	file->private_data = reg_debug;
+	file->निजी_data = reg_debug;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Changes the current file position */
-static loff_t
-bfad_debugfs_lseek(struct file *file, loff_t offset, int orig)
-{
-	struct bfad_debug_info *debug = file->private_data;
-	return fixed_size_llseek(file, offset, orig,
+अटल loff_t
+bfad_debugfs_lseek(काष्ठा file *file, loff_t offset, पूर्णांक orig)
+अणु
+	काष्ठा bfad_debug_info *debug = file->निजी_data;
+	वापस fixed_size_llseek(file, offset, orig,
 				debug->buffer_len);
-}
+पूर्ण
 
-static ssize_t
-bfad_debugfs_read(struct file *file, char __user *buf,
-			size_t nbytes, loff_t *pos)
-{
-	struct bfad_debug_info *debug = file->private_data;
+अटल sमाप_प्रकार
+bfad_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			माप_प्रकार nbytes, loff_t *pos)
+अणु
+	काष्ठा bfad_debug_info *debug = file->निजी_data;
 
-	if (!debug || !debug->debug_buffer)
-		return 0;
+	अगर (!debug || !debug->debug_buffer)
+		वापस 0;
 
-	return simple_read_from_buffer(buf, nbytes, pos,
+	वापस simple_पढ़ो_from_buffer(buf, nbytes, pos,
 				debug->debug_buffer, debug->buffer_len);
-}
+पूर्ण
 
-#define BFA_REG_CT_ADDRSZ	(0x40000)
-#define BFA_REG_CB_ADDRSZ	(0x20000)
-#define BFA_REG_ADDRSZ(__ioc)	\
+#घोषणा BFA_REG_CT_ADDRSZ	(0x40000)
+#घोषणा BFA_REG_CB_ADDRSZ	(0x20000)
+#घोषणा BFA_REG_ADDRSZ(__ioc)	\
 	((u32)(bfa_asic_id_ctc(bfa_ioc_devid(__ioc)) ?	\
 	 BFA_REG_CT_ADDRSZ : BFA_REG_CB_ADDRSZ))
-#define BFA_REG_ADDRMSK(__ioc)	(BFA_REG_ADDRSZ(__ioc) - 1)
+#घोषणा BFA_REG_ADDRMSK(__ioc)	(BFA_REG_ADDRSZ(__ioc) - 1)
 
-static bfa_status_t
-bfad_reg_offset_check(struct bfa_s *bfa, u32 offset, u32 len)
-{
+अटल bfa_status_t
+bfad_reg_offset_check(काष्ठा bfa_s *bfa, u32 offset, u32 len)
+अणु
 	u8	area;
 
 	/* check [16:15] */
 	area = (offset >> 15) & 0x7;
-	if (area == 0) {
-		/* PCIe core register */
-		if ((offset + (len<<2)) > 0x8000)    /* 8k dwords or 32KB */
-			return BFA_STATUS_EINVAL;
-	} else if (area == 0x1) {
+	अगर (area == 0) अणु
+		/* PCIe core रेजिस्टर */
+		अगर ((offset + (len<<2)) > 0x8000)    /* 8k dwords or 32KB */
+			वापस BFA_STATUS_EINVAL;
+	पूर्ण अन्यथा अगर (area == 0x1) अणु
 		/* CB 32 KB memory page */
-		if ((offset + (len<<2)) > 0x10000)    /* 8k dwords or 32KB */
-			return BFA_STATUS_EINVAL;
-	} else {
-		/* CB register space 64KB */
-		if ((offset + (len<<2)) > BFA_REG_ADDRMSK(&bfa->ioc))
-			return BFA_STATUS_EINVAL;
-	}
-	return BFA_STATUS_OK;
-}
+		अगर ((offset + (len<<2)) > 0x10000)    /* 8k dwords or 32KB */
+			वापस BFA_STATUS_EINVAL;
+	पूर्ण अन्यथा अणु
+		/* CB रेजिस्टर space 64KB */
+		अगर ((offset + (len<<2)) > BFA_REG_ADDRMSK(&bfa->ioc))
+			वापस BFA_STATUS_EINVAL;
+	पूर्ण
+	वापस BFA_STATUS_OK;
+पूर्ण
 
-static ssize_t
-bfad_debugfs_read_regrd(struct file *file, char __user *buf,
-		size_t nbytes, loff_t *pos)
-{
-	struct bfad_debug_info *regrd_debug = file->private_data;
-	struct bfad_port_s *port = (struct bfad_port_s *)regrd_debug->i_private;
-	struct bfad_s *bfad = port->bfad;
-	ssize_t rc;
+अटल sमाप_प्रकार
+bfad_debugfs_पढ़ो_regrd(काष्ठा file *file, अक्षर __user *buf,
+		माप_प्रकार nbytes, loff_t *pos)
+अणु
+	काष्ठा bfad_debug_info *regrd_debug = file->निजी_data;
+	काष्ठा bfad_port_s *port = (काष्ठा bfad_port_s *)regrd_debug->i_निजी;
+	काष्ठा bfad_s *bfad = port->bfad;
+	sमाप_प्रकार rc;
 
-	if (!bfad->regdata)
-		return 0;
+	अगर (!bfad->regdata)
+		वापस 0;
 
-	rc = simple_read_from_buffer(buf, nbytes, pos,
+	rc = simple_पढ़ो_from_buffer(buf, nbytes, pos,
 			bfad->regdata, bfad->reglen);
 
-	if ((*pos + nbytes) >= bfad->reglen) {
-		kfree(bfad->regdata);
-		bfad->regdata = NULL;
+	अगर ((*pos + nbytes) >= bfad->reglen) अणु
+		kमुक्त(bfad->regdata);
+		bfad->regdata = शून्य;
 		bfad->reglen = 0;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t
-bfad_debugfs_write_regrd(struct file *file, const char __user *buf,
-		size_t nbytes, loff_t *ppos)
-{
-	struct bfad_debug_info *regrd_debug = file->private_data;
-	struct bfad_port_s *port = (struct bfad_port_s *)regrd_debug->i_private;
-	struct bfad_s *bfad = port->bfad;
-	struct bfa_s *bfa = &bfad->bfa;
-	struct bfa_ioc_s *ioc = &bfa->ioc;
-	int addr, rc, i;
+अटल sमाप_प्रकार
+bfad_debugfs_ग_लिखो_regrd(काष्ठा file *file, स्थिर अक्षर __user *buf,
+		माप_प्रकार nbytes, loff_t *ppos)
+अणु
+	काष्ठा bfad_debug_info *regrd_debug = file->निजी_data;
+	काष्ठा bfad_port_s *port = (काष्ठा bfad_port_s *)regrd_debug->i_निजी;
+	काष्ठा bfad_s *bfad = port->bfad;
+	काष्ठा bfa_s *bfa = &bfad->bfa;
+	काष्ठा bfa_ioc_s *ioc = &bfa->ioc;
+	पूर्णांक addr, rc, i;
 	u32 len;
 	u32 *regbuf;
-	void __iomem *rb, *reg_addr;
-	unsigned long flags;
-	void *kern_buf;
+	व्योम __iomem *rb, *reg_addr;
+	अचिन्हित दीर्घ flags;
+	व्योम *kern_buf;
 
 	kern_buf = memdup_user(buf, nbytes);
-	if (IS_ERR(kern_buf))
-		return PTR_ERR(kern_buf);
+	अगर (IS_ERR(kern_buf))
+		वापस PTR_ERR(kern_buf);
 
-	rc = sscanf(kern_buf, "%x:%x", &addr, &len);
-	if (rc < 2 || len > (UINT_MAX >> 2)) {
-		printk(KERN_INFO
+	rc = माला_पूछो(kern_buf, "%x:%x", &addr, &len);
+	अगर (rc < 2 || len > (अच_पूर्णांक_उच्च >> 2)) अणु
+		prपूर्णांकk(KERN_INFO
 			"bfad[%d]: %s failed to read user buf\n",
 			bfad->inst_no, __func__);
-		kfree(kern_buf);
-		return -EINVAL;
-	}
+		kमुक्त(kern_buf);
+		वापस -EINVAL;
+	पूर्ण
 
-	kfree(kern_buf);
-	kfree(bfad->regdata);
-	bfad->regdata = NULL;
+	kमुक्त(kern_buf);
+	kमुक्त(bfad->regdata);
+	bfad->regdata = शून्य;
 	bfad->reglen = 0;
 
 	bfad->regdata = kzalloc(len << 2, GFP_KERNEL);
-	if (!bfad->regdata) {
-		printk(KERN_INFO "bfad[%d]: Failed to allocate regrd buffer\n",
+	अगर (!bfad->regdata) अणु
+		prपूर्णांकk(KERN_INFO "bfad[%d]: Failed to allocate regrd buffer\n",
 				bfad->inst_no);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	bfad->reglen = len << 2;
 	rb = bfa_ioc_bar0(ioc);
@@ -281,188 +282,188 @@ bfad_debugfs_write_regrd(struct file *file, const char __user *buf,
 
 	/* offset and len sanity check */
 	rc = bfad_reg_offset_check(bfa, addr, len);
-	if (rc) {
-		printk(KERN_INFO "bfad[%d]: Failed reg offset check\n",
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_INFO "bfad[%d]: Failed reg offset check\n",
 				bfad->inst_no);
-		kfree(bfad->regdata);
-		bfad->regdata = NULL;
+		kमुक्त(bfad->regdata);
+		bfad->regdata = शून्य;
 		bfad->reglen = 0;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	reg_addr = rb + addr;
 	regbuf =  (u32 *)bfad->regdata;
 	spin_lock_irqsave(&bfad->bfad_lock, flags);
-	for (i = 0; i < len; i++) {
-		*regbuf = readl(reg_addr);
+	क्रम (i = 0; i < len; i++) अणु
+		*regbuf = पढ़ोl(reg_addr);
 		regbuf++;
-		reg_addr += sizeof(u32);
-	}
+		reg_addr += माप(u32);
+	पूर्ण
 	spin_unlock_irqrestore(&bfad->bfad_lock, flags);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static ssize_t
-bfad_debugfs_write_regwr(struct file *file, const char __user *buf,
-		size_t nbytes, loff_t *ppos)
-{
-	struct bfad_debug_info *debug = file->private_data;
-	struct bfad_port_s *port = (struct bfad_port_s *)debug->i_private;
-	struct bfad_s *bfad = port->bfad;
-	struct bfa_s *bfa = &bfad->bfa;
-	struct bfa_ioc_s *ioc = &bfa->ioc;
-	int addr, val, rc;
-	void __iomem *reg_addr;
-	unsigned long flags;
-	void *kern_buf;
+अटल sमाप_प्रकार
+bfad_debugfs_ग_लिखो_regwr(काष्ठा file *file, स्थिर अक्षर __user *buf,
+		माप_प्रकार nbytes, loff_t *ppos)
+अणु
+	काष्ठा bfad_debug_info *debug = file->निजी_data;
+	काष्ठा bfad_port_s *port = (काष्ठा bfad_port_s *)debug->i_निजी;
+	काष्ठा bfad_s *bfad = port->bfad;
+	काष्ठा bfa_s *bfa = &bfad->bfa;
+	काष्ठा bfa_ioc_s *ioc = &bfa->ioc;
+	पूर्णांक addr, val, rc;
+	व्योम __iomem *reg_addr;
+	अचिन्हित दीर्घ flags;
+	व्योम *kern_buf;
 
 	kern_buf = memdup_user(buf, nbytes);
-	if (IS_ERR(kern_buf))
-		return PTR_ERR(kern_buf);
+	अगर (IS_ERR(kern_buf))
+		वापस PTR_ERR(kern_buf);
 
-	rc = sscanf(kern_buf, "%x:%x", &addr, &val);
-	if (rc < 2) {
-		printk(KERN_INFO
+	rc = माला_पूछो(kern_buf, "%x:%x", &addr, &val);
+	अगर (rc < 2) अणु
+		prपूर्णांकk(KERN_INFO
 			"bfad[%d]: %s failed to read user buf\n",
 			bfad->inst_no, __func__);
-		kfree(kern_buf);
-		return -EINVAL;
-	}
-	kfree(kern_buf);
+		kमुक्त(kern_buf);
+		वापस -EINVAL;
+	पूर्ण
+	kमुक्त(kern_buf);
 
 	addr &= BFA_REG_ADDRMSK(ioc); /* offset only 17 bit and word align */
 
 	/* offset and len sanity check */
 	rc = bfad_reg_offset_check(bfa, addr, 1);
-	if (rc) {
-		printk(KERN_INFO
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_INFO
 			"bfad[%d]: Failed reg offset check\n",
 			bfad->inst_no);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	reg_addr = (bfa_ioc_bar0(ioc)) + addr;
 	spin_lock_irqsave(&bfad->bfad_lock, flags);
-	writel(val, reg_addr);
+	ग_लिखोl(val, reg_addr);
 	spin_unlock_irqrestore(&bfad->bfad_lock, flags);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int
-bfad_debugfs_release(struct inode *inode, struct file *file)
-{
-	struct bfad_debug_info *debug = file->private_data;
+अटल पूर्णांक
+bfad_debugfs_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा bfad_debug_info *debug = file->निजी_data;
 
-	if (!debug)
-		return 0;
+	अगर (!debug)
+		वापस 0;
 
-	file->private_data = NULL;
-	kfree(debug);
-	return 0;
-}
+	file->निजी_data = शून्य;
+	kमुक्त(debug);
+	वापस 0;
+पूर्ण
 
-static int
-bfad_debugfs_release_fwtrc(struct inode *inode, struct file *file)
-{
-	struct bfad_debug_info *fw_debug = file->private_data;
+अटल पूर्णांक
+bfad_debugfs_release_fwtrc(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा bfad_debug_info *fw_debug = file->निजी_data;
 
-	if (!fw_debug)
-		return 0;
+	अगर (!fw_debug)
+		वापस 0;
 
-	if (fw_debug->debug_buffer)
-		vfree(fw_debug->debug_buffer);
+	अगर (fw_debug->debug_buffer)
+		vमुक्त(fw_debug->debug_buffer);
 
-	file->private_data = NULL;
-	kfree(fw_debug);
-	return 0;
-}
+	file->निजी_data = शून्य;
+	kमुक्त(fw_debug);
+	वापस 0;
+पूर्ण
 
-static const struct file_operations bfad_debugfs_op_drvtrc = {
+अटल स्थिर काष्ठा file_operations bfad_debugfs_op_drvtrc = अणु
 	.owner		=	THIS_MODULE,
-	.open		=	bfad_debugfs_open_drvtrc,
+	.खोलो		=	bfad_debugfs_खोलो_drvtrc,
 	.llseek		=	bfad_debugfs_lseek,
-	.read		=	bfad_debugfs_read,
+	.पढ़ो		=	bfad_debugfs_पढ़ो,
 	.release	=	bfad_debugfs_release,
-};
+पूर्ण;
 
-static const struct file_operations bfad_debugfs_op_fwtrc = {
+अटल स्थिर काष्ठा file_operations bfad_debugfs_op_fwtrc = अणु
 	.owner		=	THIS_MODULE,
-	.open		=	bfad_debugfs_open_fwtrc,
+	.खोलो		=	bfad_debugfs_खोलो_fwtrc,
 	.llseek		=	bfad_debugfs_lseek,
-	.read		=	bfad_debugfs_read,
+	.पढ़ो		=	bfad_debugfs_पढ़ो,
 	.release	=	bfad_debugfs_release_fwtrc,
-};
+पूर्ण;
 
-static const struct file_operations bfad_debugfs_op_fwsave = {
+अटल स्थिर काष्ठा file_operations bfad_debugfs_op_fwsave = अणु
 	.owner		=	THIS_MODULE,
-	.open		=	bfad_debugfs_open_fwsave,
+	.खोलो		=	bfad_debugfs_खोलो_fwsave,
 	.llseek		=	bfad_debugfs_lseek,
-	.read		=	bfad_debugfs_read,
+	.पढ़ो		=	bfad_debugfs_पढ़ो,
 	.release	=	bfad_debugfs_release_fwtrc,
-};
+पूर्ण;
 
-static const struct file_operations bfad_debugfs_op_regrd = {
+अटल स्थिर काष्ठा file_operations bfad_debugfs_op_regrd = अणु
 	.owner		=	THIS_MODULE,
-	.open		=	bfad_debugfs_open_reg,
+	.खोलो		=	bfad_debugfs_खोलो_reg,
 	.llseek		=	bfad_debugfs_lseek,
-	.read		=	bfad_debugfs_read_regrd,
-	.write		=	bfad_debugfs_write_regrd,
+	.पढ़ो		=	bfad_debugfs_पढ़ो_regrd,
+	.ग_लिखो		=	bfad_debugfs_ग_लिखो_regrd,
 	.release	=	bfad_debugfs_release,
-};
+पूर्ण;
 
-static const struct file_operations bfad_debugfs_op_regwr = {
+अटल स्थिर काष्ठा file_operations bfad_debugfs_op_regwr = अणु
 	.owner		=	THIS_MODULE,
-	.open		=	bfad_debugfs_open_reg,
+	.खोलो		=	bfad_debugfs_खोलो_reg,
 	.llseek		=	bfad_debugfs_lseek,
-	.write		=	bfad_debugfs_write_regwr,
+	.ग_लिखो		=	bfad_debugfs_ग_लिखो_regwr,
 	.release	=	bfad_debugfs_release,
-};
+पूर्ण;
 
-struct bfad_debugfs_entry {
-	const char *name;
+काष्ठा bfad_debugfs_entry अणु
+	स्थिर अक्षर *name;
 	umode_t	mode;
-	const struct file_operations *fops;
-};
+	स्थिर काष्ठा file_operations *fops;
+पूर्ण;
 
-static const struct bfad_debugfs_entry bfad_debugfs_files[] = {
-	{ "drvtrc", S_IFREG|S_IRUGO, &bfad_debugfs_op_drvtrc, },
-	{ "fwtrc",  S_IFREG|S_IRUGO, &bfad_debugfs_op_fwtrc,  },
-	{ "fwsave", S_IFREG|S_IRUGO, &bfad_debugfs_op_fwsave, },
-	{ "regrd",  S_IFREG|S_IRUGO|S_IWUSR, &bfad_debugfs_op_regrd,  },
-	{ "regwr",  S_IFREG|S_IWUSR, &bfad_debugfs_op_regwr,  },
-};
+अटल स्थिर काष्ठा bfad_debugfs_entry bfad_debugfs_files[] = अणु
+	अणु "drvtrc", S_IFREG|S_IRUGO, &bfad_debugfs_op_drvtrc, पूर्ण,
+	अणु "fwtrc",  S_IFREG|S_IRUGO, &bfad_debugfs_op_fwtrc,  पूर्ण,
+	अणु "fwsave", S_IFREG|S_IRUGO, &bfad_debugfs_op_fwsave, पूर्ण,
+	अणु "regrd",  S_IFREG|S_IRUGO|S_IWUSR, &bfad_debugfs_op_regrd,  पूर्ण,
+	अणु "regwr",  S_IFREG|S_IWUSR, &bfad_debugfs_op_regwr,  पूर्ण,
+पूर्ण;
 
-static struct dentry *bfa_debugfs_root;
-static atomic_t bfa_debugfs_port_count;
+अटल काष्ठा dentry *bfa_debugfs_root;
+अटल atomic_t bfa_debugfs_port_count;
 
-inline void
-bfad_debugfs_init(struct bfad_port_s *port)
-{
-	struct bfad_s *bfad = port->bfad;
-	const struct bfad_debugfs_entry *file;
-	char name[64];
-	int i;
+अंतरभूत व्योम
+bfad_debugfs_init(काष्ठा bfad_port_s *port)
+अणु
+	काष्ठा bfad_s *bfad = port->bfad;
+	स्थिर काष्ठा bfad_debugfs_entry *file;
+	अक्षर name[64];
+	पूर्णांक i;
 
-	if (!bfa_debugfs_enable)
-		return;
+	अगर (!bfa_debugfs_enable)
+		वापस;
 
 	/* Setup the BFA debugfs root directory*/
-	if (!bfa_debugfs_root) {
-		bfa_debugfs_root = debugfs_create_dir("bfa", NULL);
+	अगर (!bfa_debugfs_root) अणु
+		bfa_debugfs_root = debugfs_create_dir("bfa", शून्य);
 		atomic_set(&bfa_debugfs_port_count, 0);
-	}
+	पूर्ण
 
-	/* Setup the pci_dev debugfs directory for the port */
-	snprintf(name, sizeof(name), "pci_dev:%s", bfad->pci_name);
-	if (!port->port_debugfs_root) {
+	/* Setup the pci_dev debugfs directory क्रम the port */
+	snम_लिखो(name, माप(name), "pci_dev:%s", bfad->pci_name);
+	अगर (!port->port_debugfs_root) अणु
 		port->port_debugfs_root =
 			debugfs_create_dir(name, bfa_debugfs_root);
 
 		atomic_inc(&bfa_debugfs_port_count);
 
-		for (i = 0; i < ARRAY_SIZE(bfad_debugfs_files); i++) {
+		क्रम (i = 0; i < ARRAY_SIZE(bfad_debugfs_files); i++) अणु
 			file = &bfad_debugfs_files[i];
 			bfad->bfad_dentry_files[i] =
 					debugfs_create_file(file->name,
@@ -470,35 +471,35 @@ bfad_debugfs_init(struct bfad_port_s *port)
 							port->port_debugfs_root,
 							port,
 							file->fops);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-inline void
-bfad_debugfs_exit(struct bfad_port_s *port)
-{
-	struct bfad_s *bfad = port->bfad;
-	int i;
+अंतरभूत व्योम
+bfad_debugfs_निकास(काष्ठा bfad_port_s *port)
+अणु
+	काष्ठा bfad_s *bfad = port->bfad;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(bfad_debugfs_files); i++) {
-		if (bfad->bfad_dentry_files[i]) {
-			debugfs_remove(bfad->bfad_dentry_files[i]);
-			bfad->bfad_dentry_files[i] = NULL;
-		}
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(bfad_debugfs_files); i++) अणु
+		अगर (bfad->bfad_dentry_files[i]) अणु
+			debugfs_हटाओ(bfad->bfad_dentry_files[i]);
+			bfad->bfad_dentry_files[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	/* Remove the pci_dev debugfs directory for the port */
-	if (port->port_debugfs_root) {
-		debugfs_remove(port->port_debugfs_root);
-		port->port_debugfs_root = NULL;
+	/* Remove the pci_dev debugfs directory क्रम the port */
+	अगर (port->port_debugfs_root) अणु
+		debugfs_हटाओ(port->port_debugfs_root);
+		port->port_debugfs_root = शून्य;
 		atomic_dec(&bfa_debugfs_port_count);
-	}
+	पूर्ण
 
 	/* Remove the BFA debugfs root directory */
-	if (atomic_read(&bfa_debugfs_port_count) == 0) {
-		debugfs_remove(bfa_debugfs_root);
-		bfa_debugfs_root = NULL;
-	}
-}
+	अगर (atomic_पढ़ो(&bfa_debugfs_port_count) == 0) अणु
+		debugfs_हटाओ(bfa_debugfs_root);
+		bfa_debugfs_root = शून्य;
+	पूर्ण
+पूर्ण

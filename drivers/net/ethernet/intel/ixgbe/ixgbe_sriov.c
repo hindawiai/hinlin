@@ -1,369 +1,370 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <linux/vmalloc.h>
-#include <linux/string.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/ipv6.h>
-#include <linux/if_bridge.h>
-#ifdef NETIF_F_HW_VLAN_CTAG_TX
-#include <linux/if_vlan.h>
-#endif
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/अगर_bridge.h>
+#अगर_घोषित NETIF_F_HW_VLAN_CTAG_TX
+#समावेश <linux/अगर_vlan.h>
+#पूर्ण_अगर
 
-#include "ixgbe.h"
-#include "ixgbe_type.h"
-#include "ixgbe_sriov.h"
+#समावेश "ixgbe.h"
+#समावेश "ixgbe_type.h"
+#समावेश "ixgbe_sriov.h"
 
-#ifdef CONFIG_PCI_IOV
-static inline void ixgbe_alloc_vf_macvlans(struct ixgbe_adapter *adapter,
-					   unsigned int num_vfs)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct vf_macvlans *mv_list;
-	int num_vf_macvlans, i;
+#अगर_घोषित CONFIG_PCI_IOV
+अटल अंतरभूत व्योम ixgbe_alloc_vf_macvlans(काष्ठा ixgbe_adapter *adapter,
+					   अचिन्हित पूर्णांक num_vfs)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा vf_macvlans *mv_list;
+	पूर्णांक num_vf_macvlans, i;
 
 	num_vf_macvlans = hw->mac.num_rar_entries -
 			  (IXGBE_MAX_PF_MACVLANS + 1 + num_vfs);
-	if (!num_vf_macvlans)
-		return;
+	अगर (!num_vf_macvlans)
+		वापस;
 
-	mv_list = kcalloc(num_vf_macvlans, sizeof(struct vf_macvlans),
+	mv_list = kसुस्मृति(num_vf_macvlans, माप(काष्ठा vf_macvlans),
 			  GFP_KERNEL);
-	if (mv_list) {
+	अगर (mv_list) अणु
 		/* Initialize list of VF macvlans */
 		INIT_LIST_HEAD(&adapter->vf_mvs.l);
-		for (i = 0; i < num_vf_macvlans; i++) {
+		क्रम (i = 0; i < num_vf_macvlans; i++) अणु
 			mv_list[i].vf = -1;
-			mv_list[i].free = true;
+			mv_list[i].मुक्त = true;
 			list_add(&mv_list[i].l, &adapter->vf_mvs.l);
-		}
+		पूर्ण
 		adapter->mv_list = mv_list;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __ixgbe_enable_sriov(struct ixgbe_adapter *adapter,
-				unsigned int num_vfs)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+अटल पूर्णांक __ixgbe_enable_sriov(काष्ठा ixgbe_adapter *adapter,
+				अचिन्हित पूर्णांक num_vfs)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	if (adapter->xdp_prog) {
+	अगर (adapter->xdp_prog) अणु
 		e_warn(probe, "SRIOV is not supported with XDP\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Enable VMDq flag so device will be set in VM mode */
 	adapter->flags |= IXGBE_FLAG_SRIOV_ENABLED |
 			  IXGBE_FLAG_VMDQ_ENABLED;
 
-	/* Allocate memory for per VF control structures */
-	adapter->vfinfo = kcalloc(num_vfs, sizeof(struct vf_data_storage),
+	/* Allocate memory क्रम per VF control काष्ठाures */
+	adapter->vfinfo = kसुस्मृति(num_vfs, माप(काष्ठा vf_data_storage),
 				  GFP_KERNEL);
-	if (!adapter->vfinfo)
-		return -ENOMEM;
+	अगर (!adapter->vfinfo)
+		वापस -ENOMEM;
 
 	adapter->num_vfs = num_vfs;
 
 	ixgbe_alloc_vf_macvlans(adapter, num_vfs);
 	adapter->ring_feature[RING_F_VMDQ].offset = num_vfs;
 
-	/* Initialize default switching mode VEB */
+	/* Initialize शेष चयनing mode VEB */
 	IXGBE_WRITE_REG(hw, IXGBE_PFDTXGSWC, IXGBE_PFDTXGSWC_VT_LBEN);
 	adapter->bridge_mode = BRIDGE_MODE_VEB;
 
 	/* limit trafffic classes based on VFs enabled */
-	if ((adapter->hw.mac.type == ixgbe_mac_82599EB) && (num_vfs < 16)) {
+	अगर ((adapter->hw.mac.type == ixgbe_mac_82599EB) && (num_vfs < 16)) अणु
 		adapter->dcb_cfg.num_tcs.pg_tcs = MAX_TRAFFIC_CLASS;
 		adapter->dcb_cfg.num_tcs.pfc_tcs = MAX_TRAFFIC_CLASS;
-	} else if (num_vfs < 32) {
+	पूर्ण अन्यथा अगर (num_vfs < 32) अणु
 		adapter->dcb_cfg.num_tcs.pg_tcs = 4;
 		adapter->dcb_cfg.num_tcs.pfc_tcs = 4;
-	} else {
+	पूर्ण अन्यथा अणु
 		adapter->dcb_cfg.num_tcs.pg_tcs = 1;
 		adapter->dcb_cfg.num_tcs.pfc_tcs = 1;
-	}
+	पूर्ण
 
 	/* Disable RSC when in SR-IOV mode */
 	adapter->flags2 &= ~(IXGBE_FLAG2_RSC_CAPABLE |
 			     IXGBE_FLAG2_RSC_ENABLED);
 
-	for (i = 0; i < num_vfs; i++) {
-		/* enable spoof checking for all VFs */
+	क्रम (i = 0; i < num_vfs; i++) अणु
+		/* enable spoof checking क्रम all VFs */
 		adapter->vfinfo[i].spoofchk_enabled = true;
 
-		/* We support VF RSS querying only for 82599 and x540
+		/* We support VF RSS querying only क्रम 82599 and x540
 		 * devices at the moment. These devices share RSS
-		 * indirection table and RSS hash key with PF therefore
-		 * we want to disable the querying by default.
+		 * indirection table and RSS hash key with PF thereक्रमe
+		 * we want to disable the querying by शेष.
 		 */
 		adapter->vfinfo[i].rss_query_enabled = false;
 
 		/* Untrust all VFs */
 		adapter->vfinfo[i].trusted = false;
 
-		/* set the default xcast mode */
+		/* set the शेष xcast mode */
 		adapter->vfinfo[i].xcast_mode = IXGBEVF_XCAST_MODE_NONE;
-	}
+	पूर्ण
 
 	e_info(probe, "SR-IOV enabled with %d VFs\n", num_vfs);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ixgbe_get_vfs - Find and take references to all vf devices
- * @adapter: Pointer to adapter struct
+ * @adapter: Poपूर्णांकer to adapter काष्ठा
  */
-static void ixgbe_get_vfs(struct ixgbe_adapter *adapter)
-{
-	struct pci_dev *pdev = adapter->pdev;
-	u16 vendor = pdev->vendor;
-	struct pci_dev *vfdev;
-	int vf = 0;
+अटल व्योम ixgbe_get_vfs(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	u16 venकरोr = pdev->venकरोr;
+	काष्ठा pci_dev *vfdev;
+	पूर्णांक vf = 0;
 	u16 vf_id;
-	int pos;
+	पूर्णांक pos;
 
 	pos = pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_SRIOV);
-	if (!pos)
-		return;
-	pci_read_config_word(pdev, pos + PCI_SRIOV_VF_DID, &vf_id);
+	अगर (!pos)
+		वापस;
+	pci_पढ़ो_config_word(pdev, pos + PCI_SRIOV_VF_DID, &vf_id);
 
-	vfdev = pci_get_device(vendor, vf_id, NULL);
-	for (; vfdev; vfdev = pci_get_device(vendor, vf_id, vfdev)) {
-		if (!vfdev->is_virtfn)
-			continue;
-		if (vfdev->physfn != pdev)
-			continue;
-		if (vf >= adapter->num_vfs)
-			continue;
+	vfdev = pci_get_device(venकरोr, vf_id, शून्य);
+	क्रम (; vfdev; vfdev = pci_get_device(venकरोr, vf_id, vfdev)) अणु
+		अगर (!vfdev->is_virtfn)
+			जारी;
+		अगर (vfdev->physfn != pdev)
+			जारी;
+		अगर (vf >= adapter->num_vfs)
+			जारी;
 		pci_dev_get(vfdev);
 		adapter->vfinfo[vf].vfdev = vfdev;
 		++vf;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Note this function is called when the user wants to enable SR-IOV
  * VFs using the now deprecated module parameter
  */
-void ixgbe_enable_sriov(struct ixgbe_adapter *adapter, unsigned int max_vfs)
-{
-	int pre_existing_vfs = 0;
-	unsigned int num_vfs;
+व्योम ixgbe_enable_sriov(काष्ठा ixgbe_adapter *adapter, अचिन्हित पूर्णांक max_vfs)
+अणु
+	पूर्णांक pre_existing_vfs = 0;
+	अचिन्हित पूर्णांक num_vfs;
 
 	pre_existing_vfs = pci_num_vf(adapter->pdev);
-	if (!pre_existing_vfs && !max_vfs)
-		return;
+	अगर (!pre_existing_vfs && !max_vfs)
+		वापस;
 
-	/* If there are pre-existing VFs then we have to force
+	/* If there are pre-existing VFs then we have to क्रमce
 	 * use of that many - over ride any module parameter value.
 	 * This may result from the user unloading the PF driver
-	 * while VFs were assigned to guest VMs or because the VFs
-	 * have been created via the new PCI SR-IOV sysfs interface.
+	 * जबतक VFs were asचिन्हित to guest VMs or because the VFs
+	 * have been created via the new PCI SR-IOV sysfs पूर्णांकerface.
 	 */
-	if (pre_existing_vfs) {
+	अगर (pre_existing_vfs) अणु
 		num_vfs = pre_existing_vfs;
 		dev_warn(&adapter->pdev->dev,
 			 "Virtual Functions already enabled for this device - Please reload all VF drivers to avoid spoofed packet errors\n");
-	} else {
-		int err;
+	पूर्ण अन्यथा अणु
+		पूर्णांक err;
 		/*
 		 * The 82599 supports up to 64 VFs per physical function
 		 * but this implementation limits allocation to 63 so that
 		 * basic networking resources are still available to the
 		 * physical function.  If the user requests greater than
-		 * 63 VFs then it is an error - reset to default of zero.
+		 * 63 VFs then it is an error - reset to शेष of zero.
 		 */
-		num_vfs = min_t(unsigned int, max_vfs, IXGBE_MAX_VFS_DRV_LIMIT);
+		num_vfs = min_t(अचिन्हित पूर्णांक, max_vfs, IXGBE_MAX_VFS_DRV_LIMIT);
 
 		err = pci_enable_sriov(adapter->pdev, num_vfs);
-		if (err) {
+		अगर (err) अणु
 			e_err(probe, "Failed to enable PCI sriov: %d\n", err);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (!__ixgbe_enable_sriov(adapter, num_vfs)) {
+	अगर (!__ixgbe_enable_sriov(adapter, num_vfs)) अणु
 		ixgbe_get_vfs(adapter);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* If we have gotten to this point then there is no memory available
-	 * to manage the VF devices - print message and bail.
+	/* If we have gotten to this poपूर्णांक then there is no memory available
+	 * to manage the VF devices - prपूर्णांक message and bail.
 	 */
 	e_err(probe, "Unable to allocate memory for VF Data Storage - "
 	      "SRIOV disabled\n");
 	ixgbe_disable_sriov(adapter);
-}
+पूर्ण
 
-#endif /* #ifdef CONFIG_PCI_IOV */
-int ixgbe_disable_sriov(struct ixgbe_adapter *adapter)
-{
-	unsigned int num_vfs = adapter->num_vfs, vf;
-	int rss;
+#पूर्ण_अगर /* #अगर_घोषित CONFIG_PCI_IOV */
+पूर्णांक ixgbe_disable_sriov(काष्ठा ixgbe_adapter *adapter)
+अणु
+	अचिन्हित पूर्णांक num_vfs = adapter->num_vfs, vf;
+	पूर्णांक rss;
 
 	/* set num VFs to 0 to prevent access to vfinfo */
 	adapter->num_vfs = 0;
 
 	/* put the reference to all of the vf devices */
-	for (vf = 0; vf < num_vfs; ++vf) {
-		struct pci_dev *vfdev = adapter->vfinfo[vf].vfdev;
+	क्रम (vf = 0; vf < num_vfs; ++vf) अणु
+		काष्ठा pci_dev *vfdev = adapter->vfinfo[vf].vfdev;
 
-		if (!vfdev)
-			continue;
-		adapter->vfinfo[vf].vfdev = NULL;
+		अगर (!vfdev)
+			जारी;
+		adapter->vfinfo[vf].vfdev = शून्य;
 		pci_dev_put(vfdev);
-	}
+	पूर्ण
 
-	/* free VF control structures */
-	kfree(adapter->vfinfo);
-	adapter->vfinfo = NULL;
+	/* मुक्त VF control काष्ठाures */
+	kमुक्त(adapter->vfinfo);
+	adapter->vfinfo = शून्य;
 
-	/* free macvlan list */
-	kfree(adapter->mv_list);
-	adapter->mv_list = NULL;
+	/* मुक्त macvlan list */
+	kमुक्त(adapter->mv_list);
+	adapter->mv_list = शून्य;
 
-	/* if SR-IOV is already disabled then there is nothing to do */
-	if (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
-		return 0;
+	/* अगर SR-IOV is alपढ़ोy disabled then there is nothing to करो */
+	अगर (!(adapter->flags & IXGBE_FLAG_SRIOV_ENABLED))
+		वापस 0;
 
-#ifdef CONFIG_PCI_IOV
+#अगर_घोषित CONFIG_PCI_IOV
 	/*
-	 * If our VFs are assigned we cannot shut down SR-IOV
+	 * If our VFs are asचिन्हित we cannot shut करोwn SR-IOV
 	 * without causing issues, so just leave the hardware
 	 * available but disabled
 	 */
-	if (pci_vfs_assigned(adapter->pdev)) {
+	अगर (pci_vfs_asचिन्हित(adapter->pdev)) अणु
 		e_dev_warn("Unloading driver while VFs are assigned - VFs will not be deallocated\n");
-		return -EPERM;
-	}
-	/* disable iov and allow time for transactions to clear */
+		वापस -EPERM;
+	पूर्ण
+	/* disable iov and allow समय क्रम transactions to clear */
 	pci_disable_sriov(adapter->pdev);
-#endif
+#पूर्ण_अगर
 
 	/* Disable VMDq flag so device will be set in VM mode */
-	if (bitmap_weight(adapter->fwd_bitmask, adapter->num_rx_pools) == 1) {
+	अगर (biपंचांगap_weight(adapter->fwd_biपंचांगask, adapter->num_rx_pools) == 1) अणु
 		adapter->flags &= ~IXGBE_FLAG_VMDQ_ENABLED;
 		adapter->flags &= ~IXGBE_FLAG_SRIOV_ENABLED;
-		rss = min_t(int, ixgbe_max_rss_indices(adapter),
+		rss = min_t(पूर्णांक, ixgbe_max_rss_indices(adapter),
 			    num_online_cpus());
-	} else {
-		rss = min_t(int, IXGBE_MAX_L2A_QUEUES, num_online_cpus());
-	}
+	पूर्ण अन्यथा अणु
+		rss = min_t(पूर्णांक, IXGBE_MAX_L2A_QUEUES, num_online_cpus());
+	पूर्ण
 
 	adapter->ring_feature[RING_F_VMDQ].offset = 0;
 	adapter->ring_feature[RING_F_RSS].limit = rss;
 
 	/* take a breather then clean up driver data */
 	msleep(100);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_pci_sriov_enable(struct pci_dev *dev, int num_vfs)
-{
-#ifdef CONFIG_PCI_IOV
-	struct ixgbe_adapter *adapter = pci_get_drvdata(dev);
-	int pre_existing_vfs = pci_num_vf(dev);
-	int err = 0, num_rx_pools, i, limit;
+अटल पूर्णांक ixgbe_pci_sriov_enable(काष्ठा pci_dev *dev, पूर्णांक num_vfs)
+अणु
+#अगर_घोषित CONFIG_PCI_IOV
+	काष्ठा ixgbe_adapter *adapter = pci_get_drvdata(dev);
+	पूर्णांक pre_existing_vfs = pci_num_vf(dev);
+	पूर्णांक err = 0, num_rx_pools, i, limit;
 	u8 num_tc;
 
-	if (pre_existing_vfs && pre_existing_vfs != num_vfs)
+	अगर (pre_existing_vfs && pre_existing_vfs != num_vfs)
 		err = ixgbe_disable_sriov(adapter);
-	else if (pre_existing_vfs && pre_existing_vfs == num_vfs)
-		return num_vfs;
+	अन्यथा अगर (pre_existing_vfs && pre_existing_vfs == num_vfs)
+		वापस num_vfs;
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* While the SR-IOV capability structure reports total VFs to be 64,
+	/* While the SR-IOV capability काष्ठाure reports total VFs to be 64,
 	 * we limit the actual number allocated as below based on two factors.
 	 *    Num_TCs	MAX_VFs
 	 *	1	  63
 	 *	<=4	  31
 	 *	>4	  15
-	 * First, we reserve some transmit/receive resources for the PF.
-	 * Second, VMDQ also uses the same pools that SR-IOV does. We need to
-	 * account for this, so that we don't accidentally allocate more VFs
-	 * than we have available pools. The PCI bus driver already checks for
+	 * First, we reserve some transmit/receive resources क्रम the PF.
+	 * Second, VMDQ also uses the same pools that SR-IOV करोes. We need to
+	 * account क्रम this, so that we करोn't accidentally allocate more VFs
+	 * than we have available pools. The PCI bus driver alपढ़ोy checks क्रम
 	 * other values out of range.
 	 */
 	num_tc = adapter->hw_tcs;
-	num_rx_pools = bitmap_weight(adapter->fwd_bitmask,
+	num_rx_pools = biपंचांगap_weight(adapter->fwd_biपंचांगask,
 				     adapter->num_rx_pools);
 	limit = (num_tc > 4) ? IXGBE_MAX_VFS_8TC :
 		(num_tc > 1) ? IXGBE_MAX_VFS_4TC : IXGBE_MAX_VFS_1TC;
 
-	if (num_vfs > (limit - num_rx_pools)) {
+	अगर (num_vfs > (limit - num_rx_pools)) अणु
 		e_dev_err("Currently configured with %d TCs, and %d offloaded macvlans. Creating more than %d VFs is not allowed\n",
 			  num_tc, num_rx_pools - 1, limit - num_rx_pools);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	err = __ixgbe_enable_sriov(adapter, num_vfs);
-	if (err)
-		return  err;
+	अगर (err)
+		वापस  err;
 
-	for (i = 0; i < num_vfs; i++)
+	क्रम (i = 0; i < num_vfs; i++)
 		ixgbe_vf_configuration(dev, (i | 0x10000000));
 
-	/* reset before enabling SRIOV to avoid mailbox issues */
+	/* reset beक्रमe enabling SRIOV to aव्योम mailbox issues */
 	ixgbe_sriov_reinit(adapter);
 
 	err = pci_enable_sriov(dev, num_vfs);
-	if (err) {
+	अगर (err) अणु
 		e_dev_warn("Failed to enable PCI sriov: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	ixgbe_get_vfs(adapter);
 
-	return num_vfs;
-#else
-	return 0;
-#endif
-}
+	वापस num_vfs;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-static int ixgbe_pci_sriov_disable(struct pci_dev *dev)
-{
-	struct ixgbe_adapter *adapter = pci_get_drvdata(dev);
-	int err;
-#ifdef CONFIG_PCI_IOV
+अटल पूर्णांक ixgbe_pci_sriov_disable(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा ixgbe_adapter *adapter = pci_get_drvdata(dev);
+	पूर्णांक err;
+#अगर_घोषित CONFIG_PCI_IOV
 	u32 current_flags = adapter->flags;
-	int prev_num_vf = pci_num_vf(dev);
-#endif
+	पूर्णांक prev_num_vf = pci_num_vf(dev);
+#पूर्ण_अगर
 
 	err = ixgbe_disable_sriov(adapter);
 
-	/* Only reinit if no error and state changed */
-#ifdef CONFIG_PCI_IOV
-	if (!err && (current_flags != adapter->flags ||
+	/* Only reinit अगर no error and state changed */
+#अगर_घोषित CONFIG_PCI_IOV
+	अगर (!err && (current_flags != adapter->flags ||
 		     prev_num_vf != pci_num_vf(dev)))
 		ixgbe_sriov_reinit(adapter);
-#endif
+#पूर्ण_अगर
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ixgbe_pci_sriov_configure(struct pci_dev *dev, int num_vfs)
-{
-	if (num_vfs == 0)
-		return ixgbe_pci_sriov_disable(dev);
-	else
-		return ixgbe_pci_sriov_enable(dev, num_vfs);
-}
+पूर्णांक ixgbe_pci_sriov_configure(काष्ठा pci_dev *dev, पूर्णांक num_vfs)
+अणु
+	अगर (num_vfs == 0)
+		वापस ixgbe_pci_sriov_disable(dev);
+	अन्यथा
+		वापस ixgbe_pci_sriov_enable(dev, num_vfs);
+पूर्ण
 
-static int ixgbe_set_vf_multicasts(struct ixgbe_adapter *adapter,
+अटल पूर्णांक ixgbe_set_vf_multicasts(काष्ठा ixgbe_adapter *adapter,
 				   u32 *msgbuf, u32 vf)
-{
-	int entries = (msgbuf[0] & IXGBE_VT_MSGINFO_MASK)
+अणु
+	पूर्णांक entries = (msgbuf[0] & IXGBE_VT_MSGINFO_MASK)
 		       >> IXGBE_VT_MSGINFO_SHIFT;
 	u16 *hash_list = (u16 *)&msgbuf[1];
-	struct vf_data_storage *vfinfo = &adapter->vfinfo[vf];
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+	काष्ठा vf_data_storage *vfinfo = &adapter->vfinfo[vf];
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 	u32 vector_bit;
 	u32 vector_reg;
 	u32 mta_reg;
@@ -373,359 +374,359 @@ static int ixgbe_set_vf_multicasts(struct ixgbe_adapter *adapter,
 	entries = min(entries, IXGBE_MAX_VF_MC_ENTRIES);
 
 	/*
-	 * salt away the number of multi cast addresses assigned
-	 * to this VF for later use to restore when the PF multi cast
+	 * salt away the number of multi cast addresses asचिन्हित
+	 * to this VF क्रम later use to restore when the PF multi cast
 	 * list changes
 	 */
 	vfinfo->num_vf_mc_hashes = entries;
 
 	/*
-	 * VFs are limited to using the MTA hash table for their multicast
+	 * VFs are limited to using the MTA hash table क्रम their multicast
 	 * addresses
 	 */
-	for (i = 0; i < entries; i++) {
+	क्रम (i = 0; i < entries; i++) अणु
 		vfinfo->vf_mc_hashes[i] = hash_list[i];
-	}
+	पूर्ण
 
-	for (i = 0; i < vfinfo->num_vf_mc_hashes; i++) {
+	क्रम (i = 0; i < vfinfo->num_vf_mc_hashes; i++) अणु
 		vector_reg = (vfinfo->vf_mc_hashes[i] >> 5) & 0x7F;
 		vector_bit = vfinfo->vf_mc_hashes[i] & 0x1F;
 		mta_reg = IXGBE_READ_REG(hw, IXGBE_MTA(vector_reg));
 		mta_reg |= BIT(vector_bit);
 		IXGBE_WRITE_REG(hw, IXGBE_MTA(vector_reg), mta_reg);
-	}
+	पूर्ण
 	vmolr |= IXGBE_VMOLR_ROMPE;
 	IXGBE_WRITE_REG(hw, IXGBE_VMOLR(vf), vmolr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PCI_IOV
-void ixgbe_restore_vf_multicasts(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct vf_data_storage *vfinfo;
-	int i, j;
+#अगर_घोषित CONFIG_PCI_IOV
+व्योम ixgbe_restore_vf_multicasts(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा vf_data_storage *vfinfo;
+	पूर्णांक i, j;
 	u32 vector_bit;
 	u32 vector_reg;
 	u32 mta_reg;
 
-	for (i = 0; i < adapter->num_vfs; i++) {
+	क्रम (i = 0; i < adapter->num_vfs; i++) अणु
 		u32 vmolr = IXGBE_READ_REG(hw, IXGBE_VMOLR(i));
 		vfinfo = &adapter->vfinfo[i];
-		for (j = 0; j < vfinfo->num_vf_mc_hashes; j++) {
+		क्रम (j = 0; j < vfinfo->num_vf_mc_hashes; j++) अणु
 			hw->addr_ctrl.mta_in_use++;
 			vector_reg = (vfinfo->vf_mc_hashes[j] >> 5) & 0x7F;
 			vector_bit = vfinfo->vf_mc_hashes[j] & 0x1F;
 			mta_reg = IXGBE_READ_REG(hw, IXGBE_MTA(vector_reg));
 			mta_reg |= BIT(vector_bit);
 			IXGBE_WRITE_REG(hw, IXGBE_MTA(vector_reg), mta_reg);
-		}
+		पूर्ण
 
-		if (vfinfo->num_vf_mc_hashes)
+		अगर (vfinfo->num_vf_mc_hashes)
 			vmolr |= IXGBE_VMOLR_ROMPE;
-		else
+		अन्यथा
 			vmolr &= ~IXGBE_VMOLR_ROMPE;
 		IXGBE_WRITE_REG(hw, IXGBE_VMOLR(i), vmolr);
-	}
+	पूर्ण
 
 	/* Restore any VF macvlans */
 	ixgbe_full_sync_mac_table(adapter);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int ixgbe_set_vf_vlan(struct ixgbe_adapter *adapter, int add, int vid,
+अटल पूर्णांक ixgbe_set_vf_vlan(काष्ठा ixgbe_adapter *adapter, पूर्णांक add, पूर्णांक vid,
 			     u32 vf)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int err;
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक err;
 
 	/* If VLAN overlaps with one the PF is currently monitoring make
 	 * sure that we are able to allocate a VLVF entry.  This may be
-	 * redundant but it guarantees PF will maintain visibility to
+	 * redundant but it guarantees PF will मुख्यtain visibility to
 	 * the VLAN.
 	 */
-	if (add && test_bit(vid, adapter->active_vlans)) {
+	अगर (add && test_bit(vid, adapter->active_vlans)) अणु
 		err = hw->mac.ops.set_vfta(hw, vid, VMDQ_P(0), true, false);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	err = hw->mac.ops.set_vfta(hw, vid, vf, !!add, false);
 
-	if (add && !err)
-		return err;
+	अगर (add && !err)
+		वापस err;
 
 	/* If we failed to add the VF VLAN or we are removing the VF VLAN
-	 * we may need to drop the PF pool bit in order to allow us to free
+	 * we may need to drop the PF pool bit in order to allow us to मुक्त
 	 * up the VLVF resources.
 	 */
-	if (test_bit(vid, adapter->active_vlans) ||
+	अगर (test_bit(vid, adapter->active_vlans) ||
 	    (adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
 		ixgbe_update_pf_promisc_vlvf(adapter, vid);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ixgbe_set_vf_lpe(struct ixgbe_adapter *adapter, u32 max_frame, u32 vf)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल पूर्णांक ixgbe_set_vf_lpe(काष्ठा ixgbe_adapter *adapter, u32 max_frame, u32 vf)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 max_frs;
 
-	if (max_frame < ETH_MIN_MTU || max_frame > IXGBE_MAX_JUMBO_FRAME_SIZE) {
+	अगर (max_frame < ETH_MIN_MTU || max_frame > IXGBE_MAX_JUMBO_FRAME_SIZE) अणु
 		e_err(drv, "VF max_frame %d out of range\n", max_frame);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * For 82599EB we have to keep all PFs and VFs operating with
-	 * the same max_frame value in order to avoid sending an oversize
+	 * the same max_frame value in order to aव्योम sending an oversize
 	 * frame to a VF.  In order to guarantee this is handled correctly
-	 * for all cases we have several special exceptions to take into
-	 * account before we can enable the VF for receive
+	 * क्रम all हालs we have several special exceptions to take पूर्णांकo
+	 * account beक्रमe we can enable the VF क्रम receive
 	 */
-	if (adapter->hw.mac.type == ixgbe_mac_82599EB) {
-		struct net_device *dev = adapter->netdev;
-		int pf_max_frame = dev->mtu + ETH_HLEN;
-		u32 reg_offset, vf_shift, vfre;
+	अगर (adapter->hw.mac.type == ixgbe_mac_82599EB) अणु
+		काष्ठा net_device *dev = adapter->netdev;
+		पूर्णांक pf_max_frame = dev->mtu + ETH_HLEN;
+		u32 reg_offset, vf_shअगरt, vfre;
 		s32 err = 0;
 
-#ifdef CONFIG_FCOE
-		if (dev->features & NETIF_F_FCOE_MTU)
-			pf_max_frame = max_t(int, pf_max_frame,
+#अगर_घोषित CONFIG_FCOE
+		अगर (dev->features & NETIF_F_FCOE_MTU)
+			pf_max_frame = max_t(पूर्णांक, pf_max_frame,
 					     IXGBE_FCOE_JUMBO_FRAME_SIZE);
 
-#endif /* CONFIG_FCOE */
-		switch (adapter->vfinfo[vf].vf_api) {
-		case ixgbe_mbox_api_11:
-		case ixgbe_mbox_api_12:
-		case ixgbe_mbox_api_13:
-		case ixgbe_mbox_api_14:
-			/* Version 1.1 supports jumbo frames on VFs if PF has
+#पूर्ण_अगर /* CONFIG_FCOE */
+		चयन (adapter->vfinfo[vf].vf_api) अणु
+		हाल ixgbe_mbox_api_11:
+		हाल ixgbe_mbox_api_12:
+		हाल ixgbe_mbox_api_13:
+		हाल ixgbe_mbox_api_14:
+			/* Version 1.1 supports jumbo frames on VFs अगर PF has
 			 * jumbo frames enabled which means legacy VFs are
 			 * disabled
 			 */
-			if (pf_max_frame > ETH_FRAME_LEN)
-				break;
+			अगर (pf_max_frame > ETH_FRAME_LEN)
+				अवरोध;
 			fallthrough;
-		default:
+		शेष:
 			/* If the PF or VF are running w/ jumbo frames enabled
-			 * we need to shut down the VF Rx path as we cannot
+			 * we need to shut करोwn the VF Rx path as we cannot
 			 * support jumbo frames on legacy VFs
 			 */
-			if ((pf_max_frame > ETH_FRAME_LEN) ||
+			अगर ((pf_max_frame > ETH_FRAME_LEN) ||
 			    (max_frame > (ETH_FRAME_LEN + ETH_FCS_LEN)))
 				err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* determine VF receive enable location */
-		vf_shift = vf % 32;
+		vf_shअगरt = vf % 32;
 		reg_offset = vf / 32;
 
 		/* enable or disable receive depending on error */
 		vfre = IXGBE_READ_REG(hw, IXGBE_VFRE(reg_offset));
-		if (err)
-			vfre &= ~BIT(vf_shift);
-		else
-			vfre |= BIT(vf_shift);
+		अगर (err)
+			vfre &= ~BIT(vf_shअगरt);
+		अन्यथा
+			vfre |= BIT(vf_shअगरt);
 		IXGBE_WRITE_REG(hw, IXGBE_VFRE(reg_offset), vfre);
 
-		if (err) {
+		अगर (err) अणु
 			e_err(drv, "VF max_frame %d out of range\n", max_frame);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	/* pull current max frame size from hardware */
 	max_frs = IXGBE_READ_REG(hw, IXGBE_MAXFRS);
 	max_frs &= IXGBE_MHADD_MFS_MASK;
 	max_frs >>= IXGBE_MHADD_MFS_SHIFT;
 
-	if (max_frs < max_frame) {
+	अगर (max_frs < max_frame) अणु
 		max_frs = max_frame << IXGBE_MHADD_MFS_SHIFT;
 		IXGBE_WRITE_REG(hw, IXGBE_MAXFRS, max_frs);
-	}
+	पूर्ण
 
 	e_info(hw, "VF requests change max MTU to %d\n", max_frame);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ixgbe_set_vmolr(struct ixgbe_hw *hw, u32 vf, bool aupe)
-{
+अटल व्योम ixgbe_set_vmolr(काष्ठा ixgbe_hw *hw, u32 vf, bool aupe)
+अणु
 	u32 vmolr = IXGBE_READ_REG(hw, IXGBE_VMOLR(vf));
 	vmolr |= IXGBE_VMOLR_BAM;
-	if (aupe)
+	अगर (aupe)
 		vmolr |= IXGBE_VMOLR_AUPE;
-	else
+	अन्यथा
 		vmolr &= ~IXGBE_VMOLR_AUPE;
 	IXGBE_WRITE_REG(hw, IXGBE_VMOLR(vf), vmolr);
-}
+पूर्ण
 
-static void ixgbe_clear_vmvir(struct ixgbe_adapter *adapter, u32 vf)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_clear_vmvir(काष्ठा ixgbe_adapter *adapter, u32 vf)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	IXGBE_WRITE_REG(hw, IXGBE_VMVIR(vf), 0);
-}
+पूर्ण
 
-static void ixgbe_clear_vf_vlans(struct ixgbe_adapter *adapter, u32 vf)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_clear_vf_vlans(काष्ठा ixgbe_adapter *adapter, u32 vf)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 vlvfb_mask, pool_mask, i;
 
-	/* create mask for VF and other pools */
+	/* create mask क्रम VF and other pools */
 	pool_mask = ~BIT(VMDQ_P(0) % 32);
 	vlvfb_mask = BIT(vf % 32);
 
 	/* post increment loop, covers VLVF_ENTRIES - 1 to 0 */
-	for (i = IXGBE_VLVF_ENTRIES; i--;) {
+	क्रम (i = IXGBE_VLVF_ENTRIES; i--;) अणु
 		u32 bits[2], vlvfb, vid, vfta, vlvf;
 		u32 word = i * 2 + vf / 32;
 		u32 mask;
 
 		vlvfb = IXGBE_READ_REG(hw, IXGBE_VLVFB(word));
 
-		/* if our bit isn't set we can skip it */
-		if (!(vlvfb & vlvfb_mask))
-			continue;
+		/* अगर our bit isn't set we can skip it */
+		अगर (!(vlvfb & vlvfb_mask))
+			जारी;
 
 		/* clear our bit from vlvfb */
 		vlvfb ^= vlvfb_mask;
 
-		/* create 64b mask to chedk to see if we should clear VLVF */
+		/* create 64b mask to chedk to see अगर we should clear VLVF */
 		bits[word % 2] = vlvfb;
 		bits[~word % 2] = IXGBE_READ_REG(hw, IXGBE_VLVFB(word ^ 1));
 
-		/* if other pools are present, just remove ourselves */
-		if (bits[(VMDQ_P(0) / 32) ^ 1] ||
+		/* अगर other pools are present, just हटाओ ourselves */
+		अगर (bits[(VMDQ_P(0) / 32) ^ 1] ||
 		    (bits[VMDQ_P(0) / 32] & pool_mask))
-			goto update_vlvfb;
+			जाओ update_vlvfb;
 
-		/* if PF is present, leave VFTA */
-		if (bits[0] || bits[1])
-			goto update_vlvf;
+		/* अगर PF is present, leave VFTA */
+		अगर (bits[0] || bits[1])
+			जाओ update_vlvf;
 
-		/* if we cannot determine VLAN just remove ourselves */
+		/* अगर we cannot determine VLAN just हटाओ ourselves */
 		vlvf = IXGBE_READ_REG(hw, IXGBE_VLVF(i));
-		if (!vlvf)
-			goto update_vlvfb;
+		अगर (!vlvf)
+			जाओ update_vlvfb;
 
 		vid = vlvf & VLAN_VID_MASK;
 		mask = BIT(vid % 32);
 
 		/* clear bit from VFTA */
 		vfta = IXGBE_READ_REG(hw, IXGBE_VFTA(vid / 32));
-		if (vfta & mask)
+		अगर (vfta & mask)
 			IXGBE_WRITE_REG(hw, IXGBE_VFTA(vid / 32), vfta ^ mask);
 update_vlvf:
 		/* clear POOL selection enable */
 		IXGBE_WRITE_REG(hw, IXGBE_VLVF(i), 0);
 
-		if (!(adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
+		अगर (!(adapter->flags2 & IXGBE_FLAG2_VLAN_PROMISC))
 			vlvfb = 0;
 update_vlvfb:
 		/* clear pool bits */
 		IXGBE_WRITE_REG(hw, IXGBE_VLVFB(word), vlvfb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ixgbe_set_vf_macvlan(struct ixgbe_adapter *adapter,
-				int vf, int index, unsigned char *mac_addr)
-{
-	struct vf_macvlans *entry;
-	struct list_head *pos;
-	int retval = 0;
+अटल पूर्णांक ixgbe_set_vf_macvlan(काष्ठा ixgbe_adapter *adapter,
+				पूर्णांक vf, पूर्णांक index, अचिन्हित अक्षर *mac_addr)
+अणु
+	काष्ठा vf_macvlans *entry;
+	काष्ठा list_head *pos;
+	पूर्णांक retval = 0;
 
-	if (index <= 1) {
-		list_for_each(pos, &adapter->vf_mvs.l) {
-			entry = list_entry(pos, struct vf_macvlans, l);
-			if (entry->vf == vf) {
+	अगर (index <= 1) अणु
+		list_क्रम_each(pos, &adapter->vf_mvs.l) अणु
+			entry = list_entry(pos, काष्ठा vf_macvlans, l);
+			अगर (entry->vf == vf) अणु
 				entry->vf = -1;
-				entry->free = true;
+				entry->मुक्त = true;
 				entry->is_macvlan = false;
 				ixgbe_del_mac_filter(adapter,
 						     entry->vf_macvlan, vf);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If index was zero then we were asked to clear the uc list
-	 * for the VF.  We're done.
+	 * क्रम the VF.  We're करोne.
 	 */
-	if (!index)
-		return 0;
+	अगर (!index)
+		वापस 0;
 
-	entry = NULL;
+	entry = शून्य;
 
-	list_for_each(pos, &adapter->vf_mvs.l) {
-		entry = list_entry(pos, struct vf_macvlans, l);
-		if (entry->free)
-			break;
-	}
+	list_क्रम_each(pos, &adapter->vf_mvs.l) अणु
+		entry = list_entry(pos, काष्ठा vf_macvlans, l);
+		अगर (entry->मुक्त)
+			अवरोध;
+	पूर्ण
 
 	/*
-	 * If we traversed the entire list and didn't find a free entry
+	 * If we traversed the entire list and didn't find a मुक्त entry
 	 * then we're out of space on the RAR table.  Also entry may
-	 * be NULL because the original memory allocation for the list
-	 * failed, which is not fatal but does mean we can't support
-	 * VF requests for MACVLAN because we couldn't allocate
-	 * memory for the list management required.
+	 * be शून्य because the original memory allocation क्रम the list
+	 * failed, which is not fatal but करोes mean we can't support
+	 * VF requests क्रम MACVLAN because we couldn't allocate
+	 * memory क्रम the list management required.
 	 */
-	if (!entry || !entry->free)
-		return -ENOSPC;
+	अगर (!entry || !entry->मुक्त)
+		वापस -ENOSPC;
 
 	retval = ixgbe_add_mac_filter(adapter, mac_addr, vf);
-	if (retval < 0)
-		return retval;
+	अगर (retval < 0)
+		वापस retval;
 
-	entry->free = false;
+	entry->मुक्त = false;
 	entry->is_macvlan = true;
 	entry->vf = vf;
-	memcpy(entry->vf_macvlan, mac_addr, ETH_ALEN);
+	स_नकल(entry->vf_macvlan, mac_addr, ETH_ALEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void ixgbe_vf_reset_event(struct ixgbe_adapter *adapter, u32 vf)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
-	struct vf_data_storage *vfinfo = &adapter->vfinfo[vf];
+अटल अंतरभूत व्योम ixgbe_vf_reset_event(काष्ठा ixgbe_adapter *adapter, u32 vf)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
+	काष्ठा vf_data_storage *vfinfo = &adapter->vfinfo[vf];
 	u32 q_per_pool = __ALIGN_MASK(1, ~vmdq->mask);
 	u8 num_tcs = adapter->hw_tcs;
 	u32 reg_val;
 	u32 queue;
 
-	/* remove VLAN filters beloning to this VF */
+	/* हटाओ VLAN filters beloning to this VF */
 	ixgbe_clear_vf_vlans(adapter, vf);
 
-	/* add back PF assigned VLAN or VLAN 0 */
+	/* add back PF asचिन्हित VLAN or VLAN 0 */
 	ixgbe_set_vf_vlan(adapter, true, vfinfo->pf_vlan, vf);
 
-	/* reset offloads to defaults */
+	/* reset offloads to शेषs */
 	ixgbe_set_vmolr(hw, vf, !vfinfo->pf_vlan);
 
-	/* set outgoing tags for VFs */
-	if (!vfinfo->pf_vlan && !vfinfo->pf_qos && !num_tcs) {
+	/* set outgoing tags क्रम VFs */
+	अगर (!vfinfo->pf_vlan && !vfinfo->pf_qos && !num_tcs) अणु
 		ixgbe_clear_vmvir(adapter, vf);
-	} else {
-		if (vfinfo->pf_qos || !num_tcs)
+	पूर्ण अन्यथा अणु
+		अगर (vfinfo->pf_qos || !num_tcs)
 			ixgbe_set_vmvir(adapter, vfinfo->pf_vlan,
 					vfinfo->pf_qos, vf);
-		else
+		अन्यथा
 			ixgbe_set_vmvir(adapter, vfinfo->pf_vlan,
-					adapter->default_up, vf);
+					adapter->शेष_up, vf);
 
-		if (vfinfo->spoofchk_enabled) {
+		अगर (vfinfo->spoofchk_enabled) अणु
 			hw->mac.ops.set_vlan_anti_spoofing(hw, true, vf);
 			hw->mac.ops.set_mac_anti_spoofing(hw, true, vf);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* reset multicast table array for vf */
+	/* reset multicast table array क्रम vf */
 	adapter->vfinfo[vf].num_vf_mc_hashes = 0;
 
 	/* clear any ipsec table info */
@@ -735,459 +736,459 @@ static inline void ixgbe_vf_reset_event(struct ixgbe_adapter *adapter, u32 vf)
 	ixgbe_set_rx_mode(adapter->netdev);
 
 	ixgbe_del_mac_filter(adapter, adapter->vfinfo[vf].vf_mac_addresses, vf);
-	ixgbe_set_vf_macvlan(adapter, vf, 0, NULL);
+	ixgbe_set_vf_macvlan(adapter, vf, 0, शून्य);
 
 	/* reset VF api back to unknown */
 	adapter->vfinfo[vf].vf_api = ixgbe_mbox_api_10;
 
-	/* Restart each queue for given VF */
-	for (queue = 0; queue < q_per_pool; queue++) {
-		unsigned int reg_idx = (vf * q_per_pool) + queue;
+	/* Restart each queue क्रम given VF */
+	क्रम (queue = 0; queue < q_per_pool; queue++) अणु
+		अचिन्हित पूर्णांक reg_idx = (vf * q_per_pool) + queue;
 
 		reg_val = IXGBE_READ_REG(hw, IXGBE_PVFTXDCTL(reg_idx));
 
 		/* Re-enabling only configured queues */
-		if (reg_val) {
+		अगर (reg_val) अणु
 			reg_val |= IXGBE_TXDCTL_ENABLE;
 			IXGBE_WRITE_REG(hw, IXGBE_PVFTXDCTL(reg_idx), reg_val);
 			reg_val &= ~IXGBE_TXDCTL_ENABLE;
 			IXGBE_WRITE_REG(hw, IXGBE_PVFTXDCTL(reg_idx), reg_val);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	IXGBE_WRITE_FLUSH(hw);
-}
+पूर्ण
 
-static void ixgbe_vf_clear_mbx(struct ixgbe_adapter *adapter, u32 vf)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_vf_clear_mbx(काष्ठा ixgbe_adapter *adapter, u32 vf)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 word;
 
 	/* Clear VF's mailbox memory */
-	for (word = 0; word < IXGBE_VFMAILBOX_SIZE; word++)
+	क्रम (word = 0; word < IXGBE_VFMAILBOX_SIZE; word++)
 		IXGBE_WRITE_REG_ARRAY(hw, IXGBE_PFMBMEM(vf), word, 0);
 
 	IXGBE_WRITE_FLUSH(hw);
-}
+पूर्ण
 
-static int ixgbe_set_vf_mac(struct ixgbe_adapter *adapter,
-			    int vf, unsigned char *mac_addr)
-{
+अटल पूर्णांक ixgbe_set_vf_mac(काष्ठा ixgbe_adapter *adapter,
+			    पूर्णांक vf, अचिन्हित अक्षर *mac_addr)
+अणु
 	s32 retval;
 
 	ixgbe_del_mac_filter(adapter, adapter->vfinfo[vf].vf_mac_addresses, vf);
 	retval = ixgbe_add_mac_filter(adapter, mac_addr, vf);
-	if (retval >= 0)
-		memcpy(adapter->vfinfo[vf].vf_mac_addresses, mac_addr,
+	अगर (retval >= 0)
+		स_नकल(adapter->vfinfo[vf].vf_mac_addresses, mac_addr,
 		       ETH_ALEN);
-	else
+	अन्यथा
 		eth_zero_addr(adapter->vfinfo[vf].vf_mac_addresses);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-int ixgbe_vf_configuration(struct pci_dev *pdev, unsigned int event_mask)
-{
-	struct ixgbe_adapter *adapter = pci_get_drvdata(pdev);
-	unsigned int vfn = (event_mask & 0x3f);
+पूर्णांक ixgbe_vf_configuration(काष्ठा pci_dev *pdev, अचिन्हित पूर्णांक event_mask)
+अणु
+	काष्ठा ixgbe_adapter *adapter = pci_get_drvdata(pdev);
+	अचिन्हित पूर्णांक vfn = (event_mask & 0x3f);
 
 	bool enable = ((event_mask & 0x10000000U) != 0);
 
-	if (enable)
+	अगर (enable)
 		eth_zero_addr(adapter->vfinfo[vfn].vf_mac_addresses);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void ixgbe_write_qde(struct ixgbe_adapter *adapter, u32 vf,
+अटल अंतरभूत व्योम ixgbe_ग_लिखो_qde(काष्ठा ixgbe_adapter *adapter, u32 vf,
 				   u32 qde)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
 	u32 q_per_pool = __ALIGN_MASK(1, ~vmdq->mask);
-	int i;
+	पूर्णांक i;
 
-	for (i = vf * q_per_pool; i < ((vf + 1) * q_per_pool); i++) {
+	क्रम (i = vf * q_per_pool; i < ((vf + 1) * q_per_pool); i++) अणु
 		u32 reg;
 
-		/* flush previous write */
+		/* flush previous ग_लिखो */
 		IXGBE_WRITE_FLUSH(hw);
 
 		/* indicate to hardware that we want to set drop enable */
 		reg = IXGBE_QDE_WRITE | qde;
 		reg |= i <<  IXGBE_QDE_IDX_SHIFT;
 		IXGBE_WRITE_REG(hw, IXGBE_QDE, reg);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ixgbe_vf_reset_msg(struct ixgbe_adapter *adapter, u32 vf)
-{
-	struct ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
-	struct ixgbe_hw *hw = &adapter->hw;
-	unsigned char *vf_mac = adapter->vfinfo[vf].vf_mac_addresses;
-	u32 reg, reg_offset, vf_shift;
-	u32 msgbuf[4] = {0, 0, 0, 0};
+अटल पूर्णांक ixgbe_vf_reset_msg(काष्ठा ixgbe_adapter *adapter, u32 vf)
+अणु
+	काष्ठा ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	अचिन्हित अक्षर *vf_mac = adapter->vfinfo[vf].vf_mac_addresses;
+	u32 reg, reg_offset, vf_shअगरt;
+	u32 msgbuf[4] = अणु0, 0, 0, 0पूर्ण;
 	u8 *addr = (u8 *)(&msgbuf[1]);
 	u32 q_per_pool = __ALIGN_MASK(1, ~vmdq->mask);
-	int i;
+	पूर्णांक i;
 
 	e_info(probe, "VF Reset msg received from vf %d\n", vf);
 
-	/* reset the filters for the device */
+	/* reset the filters क्रम the device */
 	ixgbe_vf_reset_event(adapter, vf);
 
 	ixgbe_vf_clear_mbx(adapter, vf);
 
 	/* set vf mac address */
-	if (!is_zero_ether_addr(vf_mac))
+	अगर (!is_zero_ether_addr(vf_mac))
 		ixgbe_set_vf_mac(adapter, vf, vf_mac);
 
-	vf_shift = vf % 32;
+	vf_shअगरt = vf % 32;
 	reg_offset = vf / 32;
 
-	/* enable transmit for vf */
+	/* enable transmit क्रम vf */
 	reg = IXGBE_READ_REG(hw, IXGBE_VFTE(reg_offset));
-	reg |= BIT(vf_shift);
+	reg |= BIT(vf_shअगरt);
 	IXGBE_WRITE_REG(hw, IXGBE_VFTE(reg_offset), reg);
 
-	/* force drop enable for all VF Rx queues */
+	/* क्रमce drop enable क्रम all VF Rx queues */
 	reg = IXGBE_QDE_ENABLE;
-	if (adapter->vfinfo[vf].pf_vlan)
+	अगर (adapter->vfinfo[vf].pf_vlan)
 		reg |= IXGBE_QDE_HIDE_VLAN;
 
-	ixgbe_write_qde(adapter, vf, reg);
+	ixgbe_ग_लिखो_qde(adapter, vf, reg);
 
-	/* enable receive for vf */
+	/* enable receive क्रम vf */
 	reg = IXGBE_READ_REG(hw, IXGBE_VFRE(reg_offset));
-	reg |= BIT(vf_shift);
+	reg |= BIT(vf_shअगरt);
 	/*
 	 * The 82599 cannot support a mix of jumbo and non-jumbo PF/VFs.
 	 * For more info take a look at ixgbe_set_vf_lpe
 	 */
-	if (adapter->hw.mac.type == ixgbe_mac_82599EB) {
-		struct net_device *dev = adapter->netdev;
-		int pf_max_frame = dev->mtu + ETH_HLEN;
+	अगर (adapter->hw.mac.type == ixgbe_mac_82599EB) अणु
+		काष्ठा net_device *dev = adapter->netdev;
+		पूर्णांक pf_max_frame = dev->mtu + ETH_HLEN;
 
-#ifdef CONFIG_FCOE
-		if (dev->features & NETIF_F_FCOE_MTU)
-			pf_max_frame = max_t(int, pf_max_frame,
+#अगर_घोषित CONFIG_FCOE
+		अगर (dev->features & NETIF_F_FCOE_MTU)
+			pf_max_frame = max_t(पूर्णांक, pf_max_frame,
 					     IXGBE_FCOE_JUMBO_FRAME_SIZE);
 
-#endif /* CONFIG_FCOE */
-		if (pf_max_frame > ETH_FRAME_LEN)
-			reg &= ~BIT(vf_shift);
-	}
+#पूर्ण_अगर /* CONFIG_FCOE */
+		अगर (pf_max_frame > ETH_FRAME_LEN)
+			reg &= ~BIT(vf_shअगरt);
+	पूर्ण
 	IXGBE_WRITE_REG(hw, IXGBE_VFRE(reg_offset), reg);
 
-	/* enable VF mailbox for further messages */
+	/* enable VF mailbox क्रम further messages */
 	adapter->vfinfo[vf].clear_to_send = true;
 
-	/* Enable counting of spoofed packets in the SSVPC register */
+	/* Enable counting of spoofed packets in the SSVPC रेजिस्टर */
 	reg = IXGBE_READ_REG(hw, IXGBE_VMECM(reg_offset));
-	reg |= BIT(vf_shift);
+	reg |= BIT(vf_shअगरt);
 	IXGBE_WRITE_REG(hw, IXGBE_VMECM(reg_offset), reg);
 
 	/*
-	 * Reset the VFs TDWBAL and TDWBAH registers
+	 * Reset the VFs TDWBAL and TDWBAH रेजिस्टरs
 	 * which are not cleared by an FLR
 	 */
-	for (i = 0; i < q_per_pool; i++) {
+	क्रम (i = 0; i < q_per_pool; i++) अणु
 		IXGBE_WRITE_REG(hw, IXGBE_PVFTDWBAHn(q_per_pool, vf, i), 0);
 		IXGBE_WRITE_REG(hw, IXGBE_PVFTDWBALn(q_per_pool, vf, i), 0);
-	}
+	पूर्ण
 
 	/* reply to reset with ack and vf mac address */
 	msgbuf[0] = IXGBE_VF_RESET;
-	if (!is_zero_ether_addr(vf_mac) && adapter->vfinfo[vf].pf_set_mac) {
+	अगर (!is_zero_ether_addr(vf_mac) && adapter->vfinfo[vf].pf_set_mac) अणु
 		msgbuf[0] |= IXGBE_VT_MSGTYPE_ACK;
-		memcpy(addr, vf_mac, ETH_ALEN);
-	} else {
+		स_नकल(addr, vf_mac, ETH_ALEN);
+	पूर्ण अन्यथा अणु
 		msgbuf[0] |= IXGBE_VT_MSGTYPE_NACK;
-	}
+	पूर्ण
 
 	/*
 	 * Piggyback the multicast filter type so VF can compute the
 	 * correct vectors
 	 */
 	msgbuf[3] = hw->mac.mc_filter_type;
-	ixgbe_write_mbx(hw, msgbuf, IXGBE_VF_PERMADDR_MSG_LEN, vf);
+	ixgbe_ग_लिखो_mbx(hw, msgbuf, IXGBE_VF_PERMADDR_MSG_LEN, vf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_set_vf_mac_addr(struct ixgbe_adapter *adapter,
+अटल पूर्णांक ixgbe_set_vf_mac_addr(काष्ठा ixgbe_adapter *adapter,
 				 u32 *msgbuf, u32 vf)
-{
+अणु
 	u8 *new_mac = ((u8 *)(&msgbuf[1]));
 
-	if (!is_valid_ether_addr(new_mac)) {
+	अगर (!is_valid_ether_addr(new_mac)) अणु
 		e_warn(drv, "VF %d attempted to set invalid mac\n", vf);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (adapter->vfinfo[vf].pf_set_mac && !adapter->vfinfo[vf].trusted &&
-	    !ether_addr_equal(adapter->vfinfo[vf].vf_mac_addresses, new_mac)) {
+	अगर (adapter->vfinfo[vf].pf_set_mac && !adapter->vfinfo[vf].trusted &&
+	    !ether_addr_equal(adapter->vfinfo[vf].vf_mac_addresses, new_mac)) अणु
 		e_warn(drv,
 		       "VF %d attempted to override administratively set MAC address\n"
 		       "Reload the VF driver to resume operations\n",
 		       vf);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return ixgbe_set_vf_mac(adapter, vf, new_mac) < 0;
-}
+	वापस ixgbe_set_vf_mac(adapter, vf, new_mac) < 0;
+पूर्ण
 
-static int ixgbe_set_vf_vlan_msg(struct ixgbe_adapter *adapter,
+अटल पूर्णांक ixgbe_set_vf_vlan_msg(काष्ठा ixgbe_adapter *adapter,
 				 u32 *msgbuf, u32 vf)
-{
+अणु
 	u32 add = (msgbuf[0] & IXGBE_VT_MSGINFO_MASK) >> IXGBE_VT_MSGINFO_SHIFT;
 	u32 vid = (msgbuf[1] & IXGBE_VLVF_VLANID_MASK);
 	u8 tcs = adapter->hw_tcs;
 
-	if (adapter->vfinfo[vf].pf_vlan || tcs) {
+	अगर (adapter->vfinfo[vf].pf_vlan || tcs) अणु
 		e_warn(drv,
 		       "VF %d attempted to override administratively set VLAN configuration\n"
 		       "Reload the VF driver to resume operations\n",
 		       vf);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	/* VLAN 0 is a special case, don't allow it to be removed */
-	if (!vid && !add)
-		return 0;
+	/* VLAN 0 is a special हाल, करोn't allow it to be हटाओd */
+	अगर (!vid && !add)
+		वापस 0;
 
-	return ixgbe_set_vf_vlan(adapter, add, vid, vf);
-}
+	वापस ixgbe_set_vf_vlan(adapter, add, vid, vf);
+पूर्ण
 
-static int ixgbe_set_vf_macvlan_msg(struct ixgbe_adapter *adapter,
+अटल पूर्णांक ixgbe_set_vf_macvlan_msg(काष्ठा ixgbe_adapter *adapter,
 				    u32 *msgbuf, u32 vf)
-{
+अणु
 	u8 *new_mac = ((u8 *)(&msgbuf[1]));
-	int index = (msgbuf[0] & IXGBE_VT_MSGINFO_MASK) >>
+	पूर्णांक index = (msgbuf[0] & IXGBE_VT_MSGINFO_MASK) >>
 		    IXGBE_VT_MSGINFO_SHIFT;
-	int err;
+	पूर्णांक err;
 
-	if (adapter->vfinfo[vf].pf_set_mac && !adapter->vfinfo[vf].trusted &&
-	    index > 0) {
+	अगर (adapter->vfinfo[vf].pf_set_mac && !adapter->vfinfo[vf].trusted &&
+	    index > 0) अणु
 		e_warn(drv,
 		       "VF %d requested MACVLAN filter but is administratively denied\n",
 		       vf);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/* An non-zero index indicates the VF is setting a filter */
-	if (index) {
-		if (!is_valid_ether_addr(new_mac)) {
+	अगर (index) अणु
+		अगर (!is_valid_ether_addr(new_mac)) अणु
 			e_warn(drv, "VF %d attempted to set invalid mac\n", vf);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		/*
 		 * If the VF is allowed to set MAC filters then turn off
-		 * anti-spoofing to avoid false positives.
+		 * anti-spoofing to aव्योम false positives.
 		 */
-		if (adapter->vfinfo[vf].spoofchk_enabled) {
-			struct ixgbe_hw *hw = &adapter->hw;
+		अगर (adapter->vfinfo[vf].spoofchk_enabled) अणु
+			काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 			hw->mac.ops.set_mac_anti_spoofing(hw, false, vf);
 			hw->mac.ops.set_vlan_anti_spoofing(hw, false, vf);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	err = ixgbe_set_vf_macvlan(adapter, vf, index, new_mac);
-	if (err == -ENOSPC)
+	अगर (err == -ENOSPC)
 		e_warn(drv,
 		       "VF %d has requested a MACVLAN filter but there is no space for it\n",
 		       vf);
 
-	return err < 0;
-}
+	वापस err < 0;
+पूर्ण
 
-static int ixgbe_negotiate_vf_api(struct ixgbe_adapter *adapter,
+अटल पूर्णांक ixgbe_negotiate_vf_api(काष्ठा ixgbe_adapter *adapter,
 				  u32 *msgbuf, u32 vf)
-{
-	int api = msgbuf[1];
+अणु
+	पूर्णांक api = msgbuf[1];
 
-	switch (api) {
-	case ixgbe_mbox_api_10:
-	case ixgbe_mbox_api_11:
-	case ixgbe_mbox_api_12:
-	case ixgbe_mbox_api_13:
-	case ixgbe_mbox_api_14:
+	चयन (api) अणु
+	हाल ixgbe_mbox_api_10:
+	हाल ixgbe_mbox_api_11:
+	हाल ixgbe_mbox_api_12:
+	हाल ixgbe_mbox_api_13:
+	हाल ixgbe_mbox_api_14:
 		adapter->vfinfo[vf].vf_api = api;
-		return 0;
-	default:
-		break;
-	}
+		वापस 0;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	e_info(drv, "VF %d requested invalid api version %u\n", vf, api);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int ixgbe_get_vf_queues(struct ixgbe_adapter *adapter,
+अटल पूर्णांक ixgbe_get_vf_queues(काष्ठा ixgbe_adapter *adapter,
 			       u32 *msgbuf, u32 vf)
-{
-	struct net_device *dev = adapter->netdev;
-	struct ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
-	unsigned int default_tc = 0;
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	काष्ठा ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
+	अचिन्हित पूर्णांक शेष_tc = 0;
 	u8 num_tcs = adapter->hw_tcs;
 
-	/* verify the PF is supporting the correct APIs */
-	switch (adapter->vfinfo[vf].vf_api) {
-	case ixgbe_mbox_api_20:
-	case ixgbe_mbox_api_11:
-	case ixgbe_mbox_api_12:
-	case ixgbe_mbox_api_13:
-	case ixgbe_mbox_api_14:
-		break;
-	default:
-		return -1;
-	}
+	/* verअगरy the PF is supporting the correct APIs */
+	चयन (adapter->vfinfo[vf].vf_api) अणु
+	हाल ixgbe_mbox_api_20:
+	हाल ixgbe_mbox_api_11:
+	हाल ixgbe_mbox_api_12:
+	हाल ixgbe_mbox_api_13:
+	हाल ixgbe_mbox_api_14:
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	/* only allow 1 Tx queue for bandwidth limiting */
+	/* only allow 1 Tx queue क्रम bandwidth limiting */
 	msgbuf[IXGBE_VF_TX_QUEUES] = __ALIGN_MASK(1, ~vmdq->mask);
 	msgbuf[IXGBE_VF_RX_QUEUES] = __ALIGN_MASK(1, ~vmdq->mask);
 
-	/* if TCs > 1 determine which TC belongs to default user priority */
-	if (num_tcs > 1)
-		default_tc = netdev_get_prio_tc_map(dev, adapter->default_up);
+	/* अगर TCs > 1 determine which TC beदीर्घs to शेष user priority */
+	अगर (num_tcs > 1)
+		शेष_tc = netdev_get_prio_tc_map(dev, adapter->शेष_up);
 
-	/* notify VF of need for VLAN tag stripping, and correct queue */
-	if (num_tcs)
+	/* notअगरy VF of need क्रम VLAN tag stripping, and correct queue */
+	अगर (num_tcs)
 		msgbuf[IXGBE_VF_TRANS_VLAN] = num_tcs;
-	else if (adapter->vfinfo[vf].pf_vlan || adapter->vfinfo[vf].pf_qos)
+	अन्यथा अगर (adapter->vfinfo[vf].pf_vlan || adapter->vfinfo[vf].pf_qos)
 		msgbuf[IXGBE_VF_TRANS_VLAN] = 1;
-	else
+	अन्यथा
 		msgbuf[IXGBE_VF_TRANS_VLAN] = 0;
 
-	/* notify VF of default queue */
-	msgbuf[IXGBE_VF_DEF_QUEUE] = default_tc;
+	/* notअगरy VF of शेष queue */
+	msgbuf[IXGBE_VF_DEF_QUEUE] = शेष_tc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_get_vf_reta(struct ixgbe_adapter *adapter, u32 *msgbuf, u32 vf)
-{
+अटल पूर्णांक ixgbe_get_vf_reta(काष्ठा ixgbe_adapter *adapter, u32 *msgbuf, u32 vf)
+अणु
 	u32 i, j;
 	u32 *out_buf = &msgbuf[1];
-	const u8 *reta = adapter->rss_indir_tbl;
+	स्थिर u8 *reta = adapter->rss_indir_tbl;
 	u32 reta_size = ixgbe_rss_indir_tbl_entries(adapter);
 
-	/* Check if operation is permitted */
-	if (!adapter->vfinfo[vf].rss_query_enabled)
-		return -EPERM;
+	/* Check अगर operation is permitted */
+	अगर (!adapter->vfinfo[vf].rss_query_enabled)
+		वापस -EPERM;
 
-	/* verify the PF is supporting the correct API */
-	switch (adapter->vfinfo[vf].vf_api) {
-	case ixgbe_mbox_api_14:
-	case ixgbe_mbox_api_13:
-	case ixgbe_mbox_api_12:
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+	/* verअगरy the PF is supporting the correct API */
+	चयन (adapter->vfinfo[vf].vf_api) अणु
+	हाल ixgbe_mbox_api_14:
+	हाल ixgbe_mbox_api_13:
+	हाल ixgbe_mbox_api_12:
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	/* This mailbox command is supported (required) only for 82599 and x540
-	 * VFs which support up to 4 RSS queues. Therefore we will compress the
+	/* This mailbox command is supported (required) only क्रम 82599 and x540
+	 * VFs which support up to 4 RSS queues. Thereक्रमe we will compress the
 	 * RETA by saving only 2 bits from each entry. This way we will be able
 	 * to transfer the whole RETA in a single mailbox operation.
 	 */
-	for (i = 0; i < reta_size / 16; i++) {
+	क्रम (i = 0; i < reta_size / 16; i++) अणु
 		out_buf[i] = 0;
-		for (j = 0; j < 16; j++)
+		क्रम (j = 0; j < 16; j++)
 			out_buf[i] |= (u32)(reta[16 * i + j] & 0x3) << (2 * j);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_get_vf_rss_key(struct ixgbe_adapter *adapter,
+अटल पूर्णांक ixgbe_get_vf_rss_key(काष्ठा ixgbe_adapter *adapter,
 				u32 *msgbuf, u32 vf)
-{
+अणु
 	u32 *rss_key = &msgbuf[1];
 
-	/* Check if the operation is permitted */
-	if (!adapter->vfinfo[vf].rss_query_enabled)
-		return -EPERM;
+	/* Check अगर the operation is permitted */
+	अगर (!adapter->vfinfo[vf].rss_query_enabled)
+		वापस -EPERM;
 
-	/* verify the PF is supporting the correct API */
-	switch (adapter->vfinfo[vf].vf_api) {
-	case ixgbe_mbox_api_14:
-	case ixgbe_mbox_api_13:
-	case ixgbe_mbox_api_12:
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+	/* verअगरy the PF is supporting the correct API */
+	चयन (adapter->vfinfo[vf].vf_api) अणु
+	हाल ixgbe_mbox_api_14:
+	हाल ixgbe_mbox_api_13:
+	हाल ixgbe_mbox_api_12:
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	memcpy(rss_key, adapter->rss_key, IXGBE_RSS_KEY_SIZE);
+	स_नकल(rss_key, adapter->rss_key, IXGBE_RSS_KEY_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_update_vf_xcast_mode(struct ixgbe_adapter *adapter,
+अटल पूर्णांक ixgbe_update_vf_xcast_mode(काष्ठा ixgbe_adapter *adapter,
 				      u32 *msgbuf, u32 vf)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int xcast_mode = msgbuf[1];
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक xcast_mode = msgbuf[1];
 	u32 vmolr, fctrl, disable, enable;
 
-	/* verify the PF is supporting the correct APIs */
-	switch (adapter->vfinfo[vf].vf_api) {
-	case ixgbe_mbox_api_12:
-		/* promisc introduced in 1.3 version */
-		if (xcast_mode == IXGBEVF_XCAST_MODE_PROMISC)
-			return -EOPNOTSUPP;
+	/* verअगरy the PF is supporting the correct APIs */
+	चयन (adapter->vfinfo[vf].vf_api) अणु
+	हाल ixgbe_mbox_api_12:
+		/* promisc पूर्णांकroduced in 1.3 version */
+		अगर (xcast_mode == IXGBEVF_XCAST_MODE_PROMISC)
+			वापस -EOPNOTSUPP;
 		fallthrough;
-	case ixgbe_mbox_api_13:
-	case ixgbe_mbox_api_14:
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+	हाल ixgbe_mbox_api_13:
+	हाल ixgbe_mbox_api_14:
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (xcast_mode > IXGBEVF_XCAST_MODE_MULTI &&
-	    !adapter->vfinfo[vf].trusted) {
+	अगर (xcast_mode > IXGBEVF_XCAST_MODE_MULTI &&
+	    !adapter->vfinfo[vf].trusted) अणु
 		xcast_mode = IXGBEVF_XCAST_MODE_MULTI;
-	}
+	पूर्ण
 
-	if (adapter->vfinfo[vf].xcast_mode == xcast_mode)
-		goto out;
+	अगर (adapter->vfinfo[vf].xcast_mode == xcast_mode)
+		जाओ out;
 
-	switch (xcast_mode) {
-	case IXGBEVF_XCAST_MODE_NONE:
+	चयन (xcast_mode) अणु
+	हाल IXGBEVF_XCAST_MODE_NONE:
 		disable = IXGBE_VMOLR_BAM | IXGBE_VMOLR_ROMPE |
 			  IXGBE_VMOLR_MPE | IXGBE_VMOLR_UPE | IXGBE_VMOLR_VPE;
 		enable = 0;
-		break;
-	case IXGBEVF_XCAST_MODE_MULTI:
+		अवरोध;
+	हाल IXGBEVF_XCAST_MODE_MULTI:
 		disable = IXGBE_VMOLR_MPE | IXGBE_VMOLR_UPE | IXGBE_VMOLR_VPE;
 		enable = IXGBE_VMOLR_BAM | IXGBE_VMOLR_ROMPE;
-		break;
-	case IXGBEVF_XCAST_MODE_ALLMULTI:
+		अवरोध;
+	हाल IXGBEVF_XCAST_MODE_ALLMULTI:
 		disable = IXGBE_VMOLR_UPE | IXGBE_VMOLR_VPE;
 		enable = IXGBE_VMOLR_BAM | IXGBE_VMOLR_ROMPE | IXGBE_VMOLR_MPE;
-		break;
-	case IXGBEVF_XCAST_MODE_PROMISC:
-		if (hw->mac.type <= ixgbe_mac_82599EB)
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल IXGBEVF_XCAST_MODE_PROMISC:
+		अगर (hw->mac.type <= ixgbe_mac_82599EB)
+			वापस -EOPNOTSUPP;
 
 		fctrl = IXGBE_READ_REG(hw, IXGBE_FCTRL);
-		if (!(fctrl & IXGBE_FCTRL_UPE)) {
+		अगर (!(fctrl & IXGBE_FCTRL_UPE)) अणु
 			/* VF promisc requires PF in promisc */
 			e_warn(drv,
 			       "Enabling VF promisc requires PF in promisc\n");
-			return -EPERM;
-		}
+			वापस -EPERM;
+		पूर्ण
 
 		disable = 0;
 		enable = IXGBE_VMOLR_BAM | IXGBE_VMOLR_ROMPE |
 			 IXGBE_VMOLR_MPE | IXGBE_VMOLR_UPE | IXGBE_VMOLR_VPE;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	vmolr = IXGBE_READ_REG(hw, IXGBE_VMOLR(vf));
 	vmolr &= ~disable;
@@ -1199,223 +1200,223 @@ static int ixgbe_update_vf_xcast_mode(struct ixgbe_adapter *adapter,
 out:
 	msgbuf[1] = xcast_mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbe_rcv_msg_from_vf(struct ixgbe_adapter *adapter, u32 vf)
-{
+अटल पूर्णांक ixgbe_rcv_msg_from_vf(काष्ठा ixgbe_adapter *adapter, u32 vf)
+अणु
 	u32 mbx_size = IXGBE_VFMAILBOX_SIZE;
 	u32 msgbuf[IXGBE_VFMAILBOX_SIZE];
-	struct ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	s32 retval;
 
-	retval = ixgbe_read_mbx(hw, msgbuf, mbx_size, vf);
+	retval = ixgbe_पढ़ो_mbx(hw, msgbuf, mbx_size, vf);
 
-	if (retval) {
+	अगर (retval) अणु
 		pr_err("Error receiving message from VF\n");
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	/* this is a message we already processed, do nothing */
-	if (msgbuf[0] & (IXGBE_VT_MSGTYPE_ACK | IXGBE_VT_MSGTYPE_NACK))
-		return 0;
+	/* this is a message we alपढ़ोy processed, करो nothing */
+	अगर (msgbuf[0] & (IXGBE_VT_MSGTYPE_ACK | IXGBE_VT_MSGTYPE_NACK))
+		वापस 0;
 
-	/* flush the ack before we write any messages back */
+	/* flush the ack beक्रमe we ग_लिखो any messages back */
 	IXGBE_WRITE_FLUSH(hw);
 
-	if (msgbuf[0] == IXGBE_VF_RESET)
-		return ixgbe_vf_reset_msg(adapter, vf);
+	अगर (msgbuf[0] == IXGBE_VF_RESET)
+		वापस ixgbe_vf_reset_msg(adapter, vf);
 
 	/*
-	 * until the vf completes a virtual function reset it should not be
+	 * until the vf completes a भव function reset it should not be
 	 * allowed to start any configuration.
 	 */
-	if (!adapter->vfinfo[vf].clear_to_send) {
+	अगर (!adapter->vfinfo[vf].clear_to_send) अणु
 		msgbuf[0] |= IXGBE_VT_MSGTYPE_NACK;
-		ixgbe_write_mbx(hw, msgbuf, 1, vf);
-		return 0;
-	}
+		ixgbe_ग_लिखो_mbx(hw, msgbuf, 1, vf);
+		वापस 0;
+	पूर्ण
 
-	switch ((msgbuf[0] & 0xFFFF)) {
-	case IXGBE_VF_SET_MAC_ADDR:
+	चयन ((msgbuf[0] & 0xFFFF)) अणु
+	हाल IXGBE_VF_SET_MAC_ADDR:
 		retval = ixgbe_set_vf_mac_addr(adapter, msgbuf, vf);
-		break;
-	case IXGBE_VF_SET_MULTICAST:
+		अवरोध;
+	हाल IXGBE_VF_SET_MULTICAST:
 		retval = ixgbe_set_vf_multicasts(adapter, msgbuf, vf);
-		break;
-	case IXGBE_VF_SET_VLAN:
+		अवरोध;
+	हाल IXGBE_VF_SET_VLAN:
 		retval = ixgbe_set_vf_vlan_msg(adapter, msgbuf, vf);
-		break;
-	case IXGBE_VF_SET_LPE:
+		अवरोध;
+	हाल IXGBE_VF_SET_LPE:
 		retval = ixgbe_set_vf_lpe(adapter, msgbuf[1], vf);
-		break;
-	case IXGBE_VF_SET_MACVLAN:
+		अवरोध;
+	हाल IXGBE_VF_SET_MACVLAN:
 		retval = ixgbe_set_vf_macvlan_msg(adapter, msgbuf, vf);
-		break;
-	case IXGBE_VF_API_NEGOTIATE:
+		अवरोध;
+	हाल IXGBE_VF_API_NEGOTIATE:
 		retval = ixgbe_negotiate_vf_api(adapter, msgbuf, vf);
-		break;
-	case IXGBE_VF_GET_QUEUES:
+		अवरोध;
+	हाल IXGBE_VF_GET_QUEUES:
 		retval = ixgbe_get_vf_queues(adapter, msgbuf, vf);
-		break;
-	case IXGBE_VF_GET_RETA:
+		अवरोध;
+	हाल IXGBE_VF_GET_RETA:
 		retval = ixgbe_get_vf_reta(adapter, msgbuf, vf);
-		break;
-	case IXGBE_VF_GET_RSS_KEY:
+		अवरोध;
+	हाल IXGBE_VF_GET_RSS_KEY:
 		retval = ixgbe_get_vf_rss_key(adapter, msgbuf, vf);
-		break;
-	case IXGBE_VF_UPDATE_XCAST_MODE:
+		अवरोध;
+	हाल IXGBE_VF_UPDATE_XCAST_MODE:
 		retval = ixgbe_update_vf_xcast_mode(adapter, msgbuf, vf);
-		break;
-	case IXGBE_VF_IPSEC_ADD:
+		अवरोध;
+	हाल IXGBE_VF_IPSEC_ADD:
 		retval = ixgbe_ipsec_vf_add_sa(adapter, msgbuf, vf);
-		break;
-	case IXGBE_VF_IPSEC_DEL:
+		अवरोध;
+	हाल IXGBE_VF_IPSEC_DEL:
 		retval = ixgbe_ipsec_vf_del_sa(adapter, msgbuf, vf);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		e_err(drv, "Unhandled Msg %8.8x\n", msgbuf[0]);
 		retval = IXGBE_ERR_MBX;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* notify the VF of the results of what it sent us */
-	if (retval)
+	/* notअगरy the VF of the results of what it sent us */
+	अगर (retval)
 		msgbuf[0] |= IXGBE_VT_MSGTYPE_NACK;
-	else
+	अन्यथा
 		msgbuf[0] |= IXGBE_VT_MSGTYPE_ACK;
 
 	msgbuf[0] |= IXGBE_VT_MSGTYPE_CTS;
 
-	ixgbe_write_mbx(hw, msgbuf, mbx_size, vf);
+	ixgbe_ग_लिखो_mbx(hw, msgbuf, mbx_size, vf);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void ixgbe_rcv_ack_from_vf(struct ixgbe_adapter *adapter, u32 vf)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_rcv_ack_from_vf(काष्ठा ixgbe_adapter *adapter, u32 vf)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 msg = IXGBE_VT_MSGTYPE_NACK;
 
-	/* if device isn't clear to send it shouldn't be reading either */
-	if (!adapter->vfinfo[vf].clear_to_send)
-		ixgbe_write_mbx(hw, &msg, 1, vf);
-}
+	/* अगर device isn't clear to send it shouldn't be पढ़ोing either */
+	अगर (!adapter->vfinfo[vf].clear_to_send)
+		ixgbe_ग_लिखो_mbx(hw, &msg, 1, vf);
+पूर्ण
 
-void ixgbe_msg_task(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+व्योम ixgbe_msg_task(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 vf;
 
-	for (vf = 0; vf < adapter->num_vfs; vf++) {
+	क्रम (vf = 0; vf < adapter->num_vfs; vf++) अणु
 		/* process any reset requests */
-		if (!ixgbe_check_for_rst(hw, vf))
+		अगर (!ixgbe_check_क्रम_rst(hw, vf))
 			ixgbe_vf_reset_event(adapter, vf);
 
 		/* process any messages pending */
-		if (!ixgbe_check_for_msg(hw, vf))
+		अगर (!ixgbe_check_क्रम_msg(hw, vf))
 			ixgbe_rcv_msg_from_vf(adapter, vf);
 
 		/* process any acks */
-		if (!ixgbe_check_for_ack(hw, vf))
+		अगर (!ixgbe_check_क्रम_ack(hw, vf))
 			ixgbe_rcv_ack_from_vf(adapter, vf);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ixgbe_disable_tx_rx(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+व्योम ixgbe_disable_tx_rx(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	/* disable transmit and receive for all vfs */
+	/* disable transmit and receive क्रम all vfs */
 	IXGBE_WRITE_REG(hw, IXGBE_VFTE(0), 0);
 	IXGBE_WRITE_REG(hw, IXGBE_VFTE(1), 0);
 
 	IXGBE_WRITE_REG(hw, IXGBE_VFRE(0), 0);
 	IXGBE_WRITE_REG(hw, IXGBE_VFRE(1), 0);
-}
+पूर्ण
 
-static inline void ixgbe_ping_vf(struct ixgbe_adapter *adapter, int vf)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल अंतरभूत व्योम ixgbe_ping_vf(काष्ठा ixgbe_adapter *adapter, पूर्णांक vf)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 ping;
 
 	ping = IXGBE_PF_CONTROL_MSG;
-	if (adapter->vfinfo[vf].clear_to_send)
+	अगर (adapter->vfinfo[vf].clear_to_send)
 		ping |= IXGBE_VT_MSGTYPE_CTS;
-	ixgbe_write_mbx(hw, &ping, 1, vf);
-}
+	ixgbe_ग_लिखो_mbx(hw, &ping, 1, vf);
+पूर्ण
 
-void ixgbe_ping_all_vfs(struct ixgbe_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+व्योम ixgbe_ping_all_vfs(काष्ठा ixgbe_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 ping;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0 ; i < adapter->num_vfs; i++) {
+	क्रम (i = 0 ; i < adapter->num_vfs; i++) अणु
 		ping = IXGBE_PF_CONTROL_MSG;
-		if (adapter->vfinfo[i].clear_to_send)
+		अगर (adapter->vfinfo[i].clear_to_send)
 			ping |= IXGBE_VT_MSGTYPE_CTS;
-		ixgbe_write_mbx(hw, &ping, 1, i);
-	}
-}
+		ixgbe_ग_लिखो_mbx(hw, &ping, 1, i);
+	पूर्ण
+पूर्ण
 
-int ixgbe_ndo_set_vf_mac(struct net_device *netdev, int vf, u8 *mac)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+पूर्णांक ixgbe_nकरो_set_vf_mac(काष्ठा net_device *netdev, पूर्णांक vf, u8 *mac)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 	s32 retval;
 
-	if (vf >= adapter->num_vfs)
-		return -EINVAL;
+	अगर (vf >= adapter->num_vfs)
+		वापस -EINVAL;
 
-	if (is_valid_ether_addr(mac)) {
+	अगर (is_valid_ether_addr(mac)) अणु
 		dev_info(&adapter->pdev->dev, "setting MAC %pM on VF %d\n",
 			 mac, vf);
 		dev_info(&adapter->pdev->dev, "Reload the VF driver to make this change effective.");
 
 		retval = ixgbe_set_vf_mac(adapter, vf, mac);
-		if (retval >= 0) {
+		अगर (retval >= 0) अणु
 			adapter->vfinfo[vf].pf_set_mac = true;
 
-			if (test_bit(__IXGBE_DOWN, &adapter->state)) {
+			अगर (test_bit(__IXGBE_DOWN, &adapter->state)) अणु
 				dev_warn(&adapter->pdev->dev, "The VF MAC address has been set, but the PF device is not up.\n");
 				dev_warn(&adapter->pdev->dev, "Bring the PF device up before attempting to use the VF device.\n");
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			dev_warn(&adapter->pdev->dev, "The VF MAC address was NOT set due to invalid or duplicate MAC address.\n");
-		}
-	} else if (is_zero_ether_addr(mac)) {
-		unsigned char *vf_mac_addr =
+		पूर्ण
+	पूर्ण अन्यथा अगर (is_zero_ether_addr(mac)) अणु
+		अचिन्हित अक्षर *vf_mac_addr =
 					   adapter->vfinfo[vf].vf_mac_addresses;
 
-		/* nothing to do */
-		if (is_zero_ether_addr(vf_mac_addr))
-			return 0;
+		/* nothing to करो */
+		अगर (is_zero_ether_addr(vf_mac_addr))
+			वापस 0;
 
 		dev_info(&adapter->pdev->dev, "removing MAC on VF %d\n", vf);
 
 		retval = ixgbe_del_mac_filter(adapter, vf_mac_addr, vf);
-		if (retval >= 0) {
+		अगर (retval >= 0) अणु
 			adapter->vfinfo[vf].pf_set_mac = false;
-			memcpy(vf_mac_addr, mac, ETH_ALEN);
-		} else {
+			स_नकल(vf_mac_addr, mac, ETH_ALEN);
+		पूर्ण अन्यथा अणु
 			dev_warn(&adapter->pdev->dev, "Could NOT remove the VF MAC address.\n");
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		retval = -EINVAL;
-	}
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int ixgbe_enable_port_vlan(struct ixgbe_adapter *adapter, int vf,
+अटल पूर्णांक ixgbe_enable_port_vlan(काष्ठा ixgbe_adapter *adapter, पूर्णांक vf,
 				  u16 vlan, u8 qos)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int err;
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक err;
 
 	err = ixgbe_set_vf_vlan(adapter, true, vlan, vf);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	/* Revoke tagless access via VLAN 0 */
 	ixgbe_set_vf_vlan(adapter, false, 0, vf);
@@ -1424,29 +1425,29 @@ static int ixgbe_enable_port_vlan(struct ixgbe_adapter *adapter, int vf,
 	ixgbe_set_vmolr(hw, vf, false);
 
 	/* enable hide vlan on X550 */
-	if (hw->mac.type >= ixgbe_mac_X550)
-		ixgbe_write_qde(adapter, vf, IXGBE_QDE_ENABLE |
+	अगर (hw->mac.type >= ixgbe_mac_X550)
+		ixgbe_ग_लिखो_qde(adapter, vf, IXGBE_QDE_ENABLE |
 				IXGBE_QDE_HIDE_VLAN);
 
 	adapter->vfinfo[vf].pf_vlan = vlan;
 	adapter->vfinfo[vf].pf_qos = qos;
 	dev_info(&adapter->pdev->dev,
 		 "Setting VLAN %d, QOS 0x%x on VF %d\n", vlan, qos, vf);
-	if (test_bit(__IXGBE_DOWN, &adapter->state)) {
+	अगर (test_bit(__IXGBE_DOWN, &adapter->state)) अणु
 		dev_warn(&adapter->pdev->dev,
 			 "The VF VLAN has been set, but the PF device is not up.\n");
 		dev_warn(&adapter->pdev->dev,
 			 "Bring the PF device up before attempting to use the VF device.\n");
-	}
+	पूर्ण
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ixgbe_disable_port_vlan(struct ixgbe_adapter *adapter, int vf)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int err;
+अटल पूर्णांक ixgbe_disable_port_vlan(काष्ठा ixgbe_adapter *adapter, पूर्णांक vf)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक err;
 
 	err = ixgbe_set_vf_vlan(adapter, false,
 				adapter->vfinfo[vf].pf_vlan, vf);
@@ -1456,69 +1457,69 @@ static int ixgbe_disable_port_vlan(struct ixgbe_adapter *adapter, int vf)
 	ixgbe_set_vmolr(hw, vf, true);
 
 	/* disable hide VLAN on X550 */
-	if (hw->mac.type >= ixgbe_mac_X550)
-		ixgbe_write_qde(adapter, vf, IXGBE_QDE_ENABLE);
+	अगर (hw->mac.type >= ixgbe_mac_X550)
+		ixgbe_ग_लिखो_qde(adapter, vf, IXGBE_QDE_ENABLE);
 
 	adapter->vfinfo[vf].pf_vlan = 0;
 	adapter->vfinfo[vf].pf_qos = 0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ixgbe_ndo_set_vf_vlan(struct net_device *netdev, int vf, u16 vlan,
+पूर्णांक ixgbe_nकरो_set_vf_vlan(काष्ठा net_device *netdev, पूर्णांक vf, u16 vlan,
 			  u8 qos, __be16 vlan_proto)
-{
-	int err = 0;
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+अणु
+	पूर्णांक err = 0;
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 
-	if ((vf >= adapter->num_vfs) || (vlan > 4095) || (qos > 7))
-		return -EINVAL;
-	if (vlan_proto != htons(ETH_P_8021Q))
-		return -EPROTONOSUPPORT;
-	if (vlan || qos) {
-		/* Check if there is already a port VLAN set, if so
-		 * we have to delete the old one first before we
+	अगर ((vf >= adapter->num_vfs) || (vlan > 4095) || (qos > 7))
+		वापस -EINVAL;
+	अगर (vlan_proto != htons(ETH_P_8021Q))
+		वापस -EPROTONOSUPPORT;
+	अगर (vlan || qos) अणु
+		/* Check अगर there is alपढ़ोy a port VLAN set, अगर so
+		 * we have to delete the old one first beक्रमe we
 		 * can set the new one.  The usage model had
 		 * previously assumed the user would delete the
-		 * old port VLAN before setting a new one but this
-		 * is not necessarily the case.
+		 * old port VLAN beक्रमe setting a new one but this
+		 * is not necessarily the हाल.
 		 */
-		if (adapter->vfinfo[vf].pf_vlan)
+		अगर (adapter->vfinfo[vf].pf_vlan)
 			err = ixgbe_disable_port_vlan(adapter, vf);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		err = ixgbe_enable_port_vlan(adapter, vf, vlan, qos);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = ixgbe_disable_port_vlan(adapter, vf);
-	}
+	पूर्ण
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ixgbe_link_mbps(struct ixgbe_adapter *adapter)
-{
-	switch (adapter->link_speed) {
-	case IXGBE_LINK_SPEED_100_FULL:
-		return 100;
-	case IXGBE_LINK_SPEED_1GB_FULL:
-		return 1000;
-	case IXGBE_LINK_SPEED_10GB_FULL:
-		return 10000;
-	default:
-		return 0;
-	}
-}
+पूर्णांक ixgbe_link_mbps(काष्ठा ixgbe_adapter *adapter)
+अणु
+	चयन (adapter->link_speed) अणु
+	हाल IXGBE_LINK_SPEED_100_FULL:
+		वापस 100;
+	हाल IXGBE_LINK_SPEED_1GB_FULL:
+		वापस 1000;
+	हाल IXGBE_LINK_SPEED_10GB_FULL:
+		वापस 10000;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void ixgbe_set_vf_rate_limit(struct ixgbe_adapter *adapter, int vf)
-{
-	struct ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbe_set_vf_rate_limit(काष्ठा ixgbe_adapter *adapter, पूर्णांक vf)
+अणु
+	काष्ठा ixgbe_ring_feature *vmdq = &adapter->ring_feature[RING_F_VMDQ];
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 bcnrc_val = 0;
 	u16 queue, queues_per_pool;
 	u16 tx_rate = adapter->vfinfo[vf].tx_rate;
 
-	if (tx_rate) {
+	अगर (tx_rate) अणु
 		/* start with base link speed value */
 		bcnrc_val = adapter->vf_rate_link_speed;
 
@@ -1532,83 +1533,83 @@ static void ixgbe_set_vf_rate_limit(struct ixgbe_adapter *adapter, int vf)
 
 		/* enable the rate scheduler */
 		bcnrc_val |= IXGBE_RTTBCNRC_RS_ENA;
-	}
+	पूर्ण
 
 	/*
-	 * Set global transmit compensation time to the MMW_SIZE in RTTBCNRM
-	 * register. Typically MMW_SIZE=0x014 if 9728-byte jumbo is supported
+	 * Set global transmit compensation समय to the MMW_SIZE in RTTBCNRM
+	 * रेजिस्टर. Typically MMW_SIZE=0x014 अगर 9728-byte jumbo is supported
 	 * and 0x004 otherwise.
 	 */
-	switch (hw->mac.type) {
-	case ixgbe_mac_82599EB:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_82599EB:
 		IXGBE_WRITE_REG(hw, IXGBE_RTTBCNRM, 0x4);
-		break;
-	case ixgbe_mac_X540:
+		अवरोध;
+	हाल ixgbe_mac_X540:
 		IXGBE_WRITE_REG(hw, IXGBE_RTTBCNRM, 0x14);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* determine how many queues per pool based on VMDq mask */
 	queues_per_pool = __ALIGN_MASK(1, ~vmdq->mask);
 
-	/* write value for all Tx queues belonging to VF */
-	for (queue = 0; queue < queues_per_pool; queue++) {
-		unsigned int reg_idx = (vf * queues_per_pool) + queue;
+	/* ग_लिखो value क्रम all Tx queues beदीर्घing to VF */
+	क्रम (queue = 0; queue < queues_per_pool; queue++) अणु
+		अचिन्हित पूर्णांक reg_idx = (vf * queues_per_pool) + queue;
 
 		IXGBE_WRITE_REG(hw, IXGBE_RTTDQSEL, reg_idx);
 		IXGBE_WRITE_REG(hw, IXGBE_RTTBCNRC, bcnrc_val);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ixgbe_check_vf_rate_limit(struct ixgbe_adapter *adapter)
-{
-	int i;
+व्योम ixgbe_check_vf_rate_limit(काष्ठा ixgbe_adapter *adapter)
+अणु
+	पूर्णांक i;
 
 	/* VF Tx rate limit was not set */
-	if (!adapter->vf_rate_link_speed)
-		return;
+	अगर (!adapter->vf_rate_link_speed)
+		वापस;
 
-	if (ixgbe_link_mbps(adapter) != adapter->vf_rate_link_speed) {
+	अगर (ixgbe_link_mbps(adapter) != adapter->vf_rate_link_speed) अणु
 		adapter->vf_rate_link_speed = 0;
 		dev_info(&adapter->pdev->dev,
 			 "Link speed has been changed. VF Transmit rate is disabled\n");
-	}
+	पूर्ण
 
-	for (i = 0; i < adapter->num_vfs; i++) {
-		if (!adapter->vf_rate_link_speed)
+	क्रम (i = 0; i < adapter->num_vfs; i++) अणु
+		अगर (!adapter->vf_rate_link_speed)
 			adapter->vfinfo[i].tx_rate = 0;
 
 		ixgbe_set_vf_rate_limit(adapter, i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int ixgbe_ndo_set_vf_bw(struct net_device *netdev, int vf, int min_tx_rate,
-			int max_tx_rate)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	int link_speed;
+पूर्णांक ixgbe_nकरो_set_vf_bw(काष्ठा net_device *netdev, पूर्णांक vf, पूर्णांक min_tx_rate,
+			पूर्णांक max_tx_rate)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक link_speed;
 
-	/* verify VF is active */
-	if (vf >= adapter->num_vfs)
-		return -EINVAL;
+	/* verअगरy VF is active */
+	अगर (vf >= adapter->num_vfs)
+		वापस -EINVAL;
 
-	/* verify link is up */
-	if (!adapter->link_up)
-		return -EINVAL;
+	/* verअगरy link is up */
+	अगर (!adapter->link_up)
+		वापस -EINVAL;
 
-	/* verify we are linked at 10Gbps */
+	/* verअगरy we are linked at 10Gbps */
 	link_speed = ixgbe_link_mbps(adapter);
-	if (link_speed != 10000)
-		return -EINVAL;
+	अगर (link_speed != 10000)
+		वापस -EINVAL;
 
-	if (min_tx_rate)
-		return -EINVAL;
+	अगर (min_tx_rate)
+		वापस -EINVAL;
 
 	/* rate limit cannot be less than 10Mbs or greater than link speed */
-	if (max_tx_rate && ((max_tx_rate <= 10) || (max_tx_rate > link_speed)))
-		return -EINVAL;
+	अगर (max_tx_rate && ((max_tx_rate <= 10) || (max_tx_rate > link_speed)))
+		वापस -EINVAL;
 
 	/* store values */
 	adapter->vf_rate_link_speed = link_speed;
@@ -1617,16 +1618,16 @@ int ixgbe_ndo_set_vf_bw(struct net_device *netdev, int vf, int min_tx_rate,
 	/* update hardware configuration */
 	ixgbe_set_vf_rate_limit(adapter, vf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ixgbe_ndo_set_vf_spoofchk(struct net_device *netdev, int vf, bool setting)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+पूर्णांक ixgbe_nकरो_set_vf_spoofchk(काष्ठा net_device *netdev, पूर्णांक vf, bool setting)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	if (vf >= adapter->num_vfs)
-		return -EINVAL;
+	अगर (vf >= adapter->num_vfs)
+		वापस -EINVAL;
 
 	adapter->vfinfo[vf].spoofchk_enabled = setting;
 
@@ -1636,10 +1637,10 @@ int ixgbe_ndo_set_vf_spoofchk(struct net_device *netdev, int vf, bool setting)
 	/* configure VLAN spoofing */
 	hw->mac.ops.set_vlan_anti_spoofing(hw, setting, vf);
 
-	/* Ensure LLDP and FC is set for Ethertype Antispoofing if we will be
-	 * calling set_ethertype_anti_spoofing for each VF in loop below
+	/* Ensure LLDP and FC is set क्रम Ethertype Antispoofing अगर we will be
+	 * calling set_ethertype_anti_spoofing क्रम each VF in loop below
 	 */
-	if (hw->mac.ops.set_ethertype_anti_spoofing) {
+	अगर (hw->mac.ops.set_ethertype_anti_spoofing) अणु
 		IXGBE_WRITE_REG(hw, IXGBE_ETQF(IXGBE_ETQF_FILTER_LLDP),
 				(IXGBE_ETQF_FILTER_EN    |
 				 IXGBE_ETQF_TX_ANTISPOOF |
@@ -1651,41 +1652,41 @@ int ixgbe_ndo_set_vf_spoofchk(struct net_device *netdev, int vf, bool setting)
 				 ETH_P_PAUSE));
 
 		hw->mac.ops.set_ethertype_anti_spoofing(hw, setting, vf);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ixgbe_ndo_set_vf_rss_query_en(struct net_device *netdev, int vf,
+पूर्णांक ixgbe_nकरो_set_vf_rss_query_en(काष्ठा net_device *netdev, पूर्णांक vf,
 				  bool setting)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 
-	/* This operation is currently supported only for 82599 and x540
+	/* This operation is currently supported only क्रम 82599 and x540
 	 * devices.
 	 */
-	if (adapter->hw.mac.type < ixgbe_mac_82599EB ||
+	अगर (adapter->hw.mac.type < ixgbe_mac_82599EB ||
 	    adapter->hw.mac.type >= ixgbe_mac_X550)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (vf >= adapter->num_vfs)
-		return -EINVAL;
+	अगर (vf >= adapter->num_vfs)
+		वापस -EINVAL;
 
 	adapter->vfinfo[vf].rss_query_enabled = setting;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ixgbe_ndo_set_vf_trust(struct net_device *netdev, int vf, bool setting)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
+पूर्णांक ixgbe_nकरो_set_vf_trust(काष्ठा net_device *netdev, पूर्णांक vf, bool setting)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
 
-	if (vf >= adapter->num_vfs)
-		return -EINVAL;
+	अगर (vf >= adapter->num_vfs)
+		वापस -EINVAL;
 
-	/* nothing to do */
-	if (adapter->vfinfo[vf].trusted == setting)
-		return 0;
+	/* nothing to करो */
+	अगर (adapter->vfinfo[vf].trusted == setting)
+		वापस 0;
 
 	adapter->vfinfo[vf].trusted = setting;
 
@@ -1695,17 +1696,17 @@ int ixgbe_ndo_set_vf_trust(struct net_device *netdev, int vf, bool setting)
 
 	e_info(drv, "VF %u is %strusted\n", vf, setting ? "" : "not ");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ixgbe_ndo_get_vf_config(struct net_device *netdev,
-			    int vf, struct ifla_vf_info *ivi)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	if (vf >= adapter->num_vfs)
-		return -EINVAL;
+पूर्णांक ixgbe_nकरो_get_vf_config(काष्ठा net_device *netdev,
+			    पूर्णांक vf, काष्ठा अगरla_vf_info *ivi)
+अणु
+	काष्ठा ixgbe_adapter *adapter = netdev_priv(netdev);
+	अगर (vf >= adapter->num_vfs)
+		वापस -EINVAL;
 	ivi->vf = vf;
-	memcpy(&ivi->mac, adapter->vfinfo[vf].vf_mac_addresses, ETH_ALEN);
+	स_नकल(&ivi->mac, adapter->vfinfo[vf].vf_mac_addresses, ETH_ALEN);
 	ivi->max_tx_rate = adapter->vfinfo[vf].tx_rate;
 	ivi->min_tx_rate = 0;
 	ivi->vlan = adapter->vfinfo[vf].pf_vlan;
@@ -1713,5 +1714,5 @@ int ixgbe_ndo_get_vf_config(struct net_device *netdev,
 	ivi->spoofchk = adapter->vfinfo[vf].spoofchk_enabled;
 	ivi->rss_query_en = adapter->vfinfo[vf].rss_query_enabled;
 	ivi->trusted = adapter->vfinfo[vf].trusted;
-	return 0;
-}
+	वापस 0;
+पूर्ण

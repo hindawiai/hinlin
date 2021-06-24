@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *	pci.h
  *
@@ -8,41 +9,41 @@
  *
  *	PCI Express ASPM defines and function prototypes
  *	Copyright (c) 2007 Intel Corp.
- *		Zhang Yanmin (yanmin.zhang@intel.com)
- *		Shaohua Li (shaohua.li@intel.com)
+ *		Zhang Yanmin (yanmin.zhang@पूर्णांकel.com)
+ *		Shaohua Li (shaohua.li@पूर्णांकel.com)
  *
- *	For more information, please consult the following manuals (look at
- *	http://www.pcisig.com/ for how to get them):
+ *	For more inक्रमmation, please consult the following manuals (look at
+ *	http://www.pcisig.com/ क्रम how to get them):
  *
- *	PCI BIOS Specification
- *	PCI Local Bus Specification
- *	PCI to PCI Bridge Specification
- *	PCI Express Specification
+ *	PCI BIOS Specअगरication
+ *	PCI Local Bus Specअगरication
+ *	PCI to PCI Bridge Specअगरication
+ *	PCI Express Specअगरication
  *	PCI System Design Guide
  */
-#ifndef LINUX_PCI_H
-#define LINUX_PCI_H
+#अगर_अघोषित LINUX_PCI_H
+#घोषणा LINUX_PCI_H
 
 
-#include <linux/mod_devicetable.h>
+#समावेश <linux/mod_devicetable.h>
 
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/list.h>
-#include <linux/compiler.h>
-#include <linux/errno.h>
-#include <linux/kobject.h>
-#include <linux/atomic.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/resource_ext.h>
-#include <uapi/linux/pci.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/list.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kobject.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/resource_ext.h>
+#समावेश <uapi/linux/pci.h>
 
-#include <linux/pci_ids.h>
+#समावेश <linux/pci_ids.h>
 
-#define PCI_STATUS_ERROR_BITS (PCI_STATUS_DETECTED_PARITY  | \
+#घोषणा PCI_STATUS_ERROR_BITS (PCI_STATUS_DETECTED_PARITY  | \
 			       PCI_STATUS_SIG_SYSTEM_ERROR | \
 			       PCI_STATUS_REC_MASTER_ABORT | \
 			       PCI_STATUS_REC_TARGET_ABORT | \
@@ -50,7 +51,7 @@
 			       PCI_STATUS_PARITY)
 
 /*
- * The PCI interface treats multi-function devices as independent
+ * The PCI पूर्णांकerface treats multi-function devices as independent
  * devices.  The slot/function address of each device is encoded
  * in a single byte as follows:
  *
@@ -58,35 +59,35 @@
  *	2:0 = function
  *
  * PCI_DEVFN(), PCI_SLOT(), and PCI_FUNC() are defined in uapi/linux/pci.h.
- * In the interest of not exposing interfaces to user-space unnecessarily,
+ * In the पूर्णांकerest of not exposing पूर्णांकerfaces to user-space unnecessarily,
  * the following kernel-only defines are being added here.
  */
-#define PCI_DEVID(bus, devfn)	((((u16)(bus)) << 8) | (devfn))
-/* return bus from PCI devid = ((u16)bus_number) << 8) | devfn */
-#define PCI_BUS_NUM(x) (((x) >> 8) & 0xff)
+#घोषणा PCI_DEVID(bus, devfn)	((((u16)(bus)) << 8) | (devfn))
+/* वापस bus from PCI devid = ((u16)bus_number) << 8) | devfn */
+#घोषणा PCI_BUS_NUM(x) (((x) >> 8) & 0xff)
 
 /* pci_slot represents a physical slot */
-struct pci_slot {
-	struct pci_bus		*bus;		/* Bus this slot is on */
-	struct list_head	list;		/* Node in list of slots */
-	struct hotplug_slot	*hotplug;	/* Hotplug info (move here) */
-	unsigned char		number;		/* PCI_SLOT(pci_dev->devfn) */
-	struct kobject		kobj;
-};
+काष्ठा pci_slot अणु
+	काष्ठा pci_bus		*bus;		/* Bus this slot is on */
+	काष्ठा list_head	list;		/* Node in list of slots */
+	काष्ठा hotplug_slot	*hotplug;	/* Hotplug info (move here) */
+	अचिन्हित अक्षर		number;		/* PCI_SLOT(pci_dev->devfn) */
+	काष्ठा kobject		kobj;
+पूर्ण;
 
-static inline const char *pci_slot_name(const struct pci_slot *slot)
-{
-	return kobject_name(&slot->kobj);
-}
+अटल अंतरभूत स्थिर अक्षर *pci_slot_name(स्थिर काष्ठा pci_slot *slot)
+अणु
+	वापस kobject_name(&slot->kobj);
+पूर्ण
 
-/* File state for mmap()s on /proc/bus/pci/X/Y */
-enum pci_mmap_state {
+/* File state क्रम mmap()s on /proc/bus/pci/X/Y */
+क्रमागत pci_mmap_state अणु
 	pci_mmap_io,
 	pci_mmap_mem
-};
+पूर्ण;
 
-/* For PCI devices, the region numbers are assigned this way: */
-enum {
+/* For PCI devices, the region numbers are asचिन्हित this way: */
+क्रमागत अणु
 	/* #0-5: standard PCI resources */
 	PCI_STD_RESOURCES,
 	PCI_STD_RESOURCE_END = PCI_STD_RESOURCES + PCI_STD_NUM_BARS - 1,
@@ -94,27 +95,27 @@ enum {
 	/* #6: expansion ROM resource */
 	PCI_ROM_RESOURCE,
 
-	/* Device-specific resources */
-#ifdef CONFIG_PCI_IOV
+	/* Device-specअगरic resources */
+#अगर_घोषित CONFIG_PCI_IOV
 	PCI_IOV_RESOURCES,
 	PCI_IOV_RESOURCE_END = PCI_IOV_RESOURCES + PCI_SRIOV_NUM_BARS - 1,
-#endif
+#पूर्ण_अगर
 
-/* PCI-to-PCI (P2P) bridge windows */
-#define PCI_BRIDGE_IO_WINDOW		(PCI_BRIDGE_RESOURCES + 0)
-#define PCI_BRIDGE_MEM_WINDOW		(PCI_BRIDGE_RESOURCES + 1)
-#define PCI_BRIDGE_PREF_MEM_WINDOW	(PCI_BRIDGE_RESOURCES + 2)
+/* PCI-to-PCI (P2P) bridge winकरोws */
+#घोषणा PCI_BRIDGE_IO_WINDOW		(PCI_BRIDGE_RESOURCES + 0)
+#घोषणा PCI_BRIDGE_MEM_WINDOW		(PCI_BRIDGE_RESOURCES + 1)
+#घोषणा PCI_BRIDGE_PREF_MEM_WINDOW	(PCI_BRIDGE_RESOURCES + 2)
 
-/* CardBus bridge windows */
-#define PCI_CB_BRIDGE_IO_0_WINDOW	(PCI_BRIDGE_RESOURCES + 0)
-#define PCI_CB_BRIDGE_IO_1_WINDOW	(PCI_BRIDGE_RESOURCES + 1)
-#define PCI_CB_BRIDGE_MEM_0_WINDOW	(PCI_BRIDGE_RESOURCES + 2)
-#define PCI_CB_BRIDGE_MEM_1_WINDOW	(PCI_BRIDGE_RESOURCES + 3)
+/* CardBus bridge winकरोws */
+#घोषणा PCI_CB_BRIDGE_IO_0_WINDOW	(PCI_BRIDGE_RESOURCES + 0)
+#घोषणा PCI_CB_BRIDGE_IO_1_WINDOW	(PCI_BRIDGE_RESOURCES + 1)
+#घोषणा PCI_CB_BRIDGE_MEM_0_WINDOW	(PCI_BRIDGE_RESOURCES + 2)
+#घोषणा PCI_CB_BRIDGE_MEM_1_WINDOW	(PCI_BRIDGE_RESOURCES + 3)
 
-/* Total number of bridge resources for P2P and CardBus */
-#define PCI_BRIDGE_RESOURCE_NUM 4
+/* Total number of bridge resources क्रम P2P and CardBus */
+#घोषणा PCI_BRIDGE_RESOURCE_NUM 4
 
-	/* Resources assigned to buses behind the bridge */
+	/* Resources asचिन्हित to buses behind the bridge */
 	PCI_BRIDGE_RESOURCES,
 	PCI_BRIDGE_RESOURCE_END = PCI_BRIDGE_RESOURCES +
 				  PCI_BRIDGE_RESOURCE_NUM - 1,
@@ -122,128 +123,128 @@ enum {
 	/* Total resources associated with a PCI device */
 	PCI_NUM_RESOURCES,
 
-	/* Preserve this for compatibility */
+	/* Preserve this क्रम compatibility */
 	DEVICE_COUNT_RESOURCE = PCI_NUM_RESOURCES,
-};
+पूर्ण;
 
 /**
- * enum pci_interrupt_pin - PCI INTx interrupt values
- * @PCI_INTERRUPT_UNKNOWN: Unknown or unassigned interrupt
+ * क्रमागत pci_पूर्णांकerrupt_pin - PCI INTx पूर्णांकerrupt values
+ * @PCI_INTERRUPT_UNKNOWN: Unknown or unasचिन्हित पूर्णांकerrupt
  * @PCI_INTERRUPT_INTA: PCI INTA pin
  * @PCI_INTERRUPT_INTB: PCI INTB pin
  * @PCI_INTERRUPT_INTC: PCI INTC pin
  * @PCI_INTERRUPT_INTD: PCI INTD pin
  *
- * Corresponds to values for legacy PCI INTx interrupts, as can be found in the
- * PCI_INTERRUPT_PIN register.
+ * Corresponds to values क्रम legacy PCI INTx पूर्णांकerrupts, as can be found in the
+ * PCI_INTERRUPT_PIN रेजिस्टर.
  */
-enum pci_interrupt_pin {
+क्रमागत pci_पूर्णांकerrupt_pin अणु
 	PCI_INTERRUPT_UNKNOWN,
 	PCI_INTERRUPT_INTA,
 	PCI_INTERRUPT_INTB,
 	PCI_INTERRUPT_INTC,
 	PCI_INTERRUPT_INTD,
-};
+पूर्ण;
 
-/* The number of legacy PCI INTx interrupts */
-#define PCI_NUM_INTX	4
+/* The number of legacy PCI INTx पूर्णांकerrupts */
+#घोषणा PCI_NUM_INTX	4
 
 /*
- * pci_power_t values must match the bits in the Capabilities PME_Support
+ * pci_घातer_t values must match the bits in the Capabilities PME_Support
  * and Control/Status PowerState fields in the Power Management capability.
  */
-typedef int __bitwise pci_power_t;
+प्रकार पूर्णांक __bitwise pci_घातer_t;
 
-#define PCI_D0		((pci_power_t __force) 0)
-#define PCI_D1		((pci_power_t __force) 1)
-#define PCI_D2		((pci_power_t __force) 2)
-#define PCI_D3hot	((pci_power_t __force) 3)
-#define PCI_D3cold	((pci_power_t __force) 4)
-#define PCI_UNKNOWN	((pci_power_t __force) 5)
-#define PCI_POWER_ERROR	((pci_power_t __force) -1)
+#घोषणा PCI_D0		((pci_घातer_t __क्रमce) 0)
+#घोषणा PCI_D1		((pci_घातer_t __क्रमce) 1)
+#घोषणा PCI_D2		((pci_घातer_t __क्रमce) 2)
+#घोषणा PCI_D3hot	((pci_घातer_t __क्रमce) 3)
+#घोषणा PCI_D3cold	((pci_घातer_t __क्रमce) 4)
+#घोषणा PCI_UNKNOWN	((pci_घातer_t __क्रमce) 5)
+#घोषणा PCI_POWER_ERROR	((pci_घातer_t __क्रमce) -1)
 
 /* Remember to update this when the list above changes! */
-extern const char *pci_power_names[];
+बाह्य स्थिर अक्षर *pci_घातer_names[];
 
-static inline const char *pci_power_name(pci_power_t state)
-{
-	return pci_power_names[1 + (__force int) state];
-}
+अटल अंतरभूत स्थिर अक्षर *pci_घातer_name(pci_घातer_t state)
+अणु
+	वापस pci_घातer_names[1 + (__क्रमce पूर्णांक) state];
+पूर्ण
 
 /**
- * typedef pci_channel_state_t
+ * प्रकार pci_channel_state_t
  *
  * The pci_channel state describes connectivity between the CPU and
  * the PCI device.  If some PCI bus between here and the PCI device
  * has crashed or locked up, this info is reflected here.
  */
-typedef unsigned int __bitwise pci_channel_state_t;
+प्रकार अचिन्हित पूर्णांक __bitwise pci_channel_state_t;
 
-enum {
+क्रमागत अणु
 	/* I/O channel is in normal state */
-	pci_channel_io_normal = (__force pci_channel_state_t) 1,
+	pci_channel_io_normal = (__क्रमce pci_channel_state_t) 1,
 
 	/* I/O to channel is blocked */
-	pci_channel_io_frozen = (__force pci_channel_state_t) 2,
+	pci_channel_io_frozen = (__क्रमce pci_channel_state_t) 2,
 
 	/* PCI card is dead */
-	pci_channel_io_perm_failure = (__force pci_channel_state_t) 3,
-};
+	pci_channel_io_perm_failure = (__क्रमce pci_channel_state_t) 3,
+पूर्ण;
 
-typedef unsigned int __bitwise pcie_reset_state_t;
+प्रकार अचिन्हित पूर्णांक __bitwise pcie_reset_state_t;
 
-enum pcie_reset_state {
-	/* Reset is NOT asserted (Use to deassert reset) */
-	pcie_deassert_reset = (__force pcie_reset_state_t) 1,
+क्रमागत pcie_reset_state अणु
+	/* Reset is NOT निश्चितed (Use to deनिश्चित reset) */
+	pcie_deनिश्चित_reset = (__क्रमce pcie_reset_state_t) 1,
 
 	/* Use #PERST to reset PCIe device */
-	pcie_warm_reset = (__force pcie_reset_state_t) 2,
+	pcie_warm_reset = (__क्रमce pcie_reset_state_t) 2,
 
 	/* Use PCIe Hot Reset to reset device */
-	pcie_hot_reset = (__force pcie_reset_state_t) 3
-};
+	pcie_hot_reset = (__क्रमce pcie_reset_state_t) 3
+पूर्ण;
 
-typedef unsigned short __bitwise pci_dev_flags_t;
-enum pci_dev_flags {
-	/* INTX_DISABLE in PCI_COMMAND register disables MSI too */
-	PCI_DEV_FLAGS_MSI_INTX_DISABLE_BUG = (__force pci_dev_flags_t) (1 << 0),
-	/* Device configuration is irrevocably lost if disabled into D3 */
-	PCI_DEV_FLAGS_NO_D3 = (__force pci_dev_flags_t) (1 << 1),
-	/* Provide indication device is assigned by a Virtual Machine Manager */
-	PCI_DEV_FLAGS_ASSIGNED = (__force pci_dev_flags_t) (1 << 2),
-	/* Flag for quirk use to store if quirk-specific ACS is enabled */
-	PCI_DEV_FLAGS_ACS_ENABLED_QUIRK = (__force pci_dev_flags_t) (1 << 3),
-	/* Use a PCIe-to-PCI bridge alias even if !pci_is_pcie */
-	PCI_DEV_FLAG_PCIE_BRIDGE_ALIAS = (__force pci_dev_flags_t) (1 << 5),
-	/* Do not use bus resets for device */
-	PCI_DEV_FLAGS_NO_BUS_RESET = (__force pci_dev_flags_t) (1 << 6),
-	/* Do not use PM reset even if device advertises NoSoftRst- */
-	PCI_DEV_FLAGS_NO_PM_RESET = (__force pci_dev_flags_t) (1 << 7),
+प्रकार अचिन्हित लघु __bitwise pci_dev_flags_t;
+क्रमागत pci_dev_flags अणु
+	/* INTX_DISABLE in PCI_COMMAND रेजिस्टर disables MSI too */
+	PCI_DEV_FLAGS_MSI_INTX_DISABLE_BUG = (__क्रमce pci_dev_flags_t) (1 << 0),
+	/* Device configuration is irrevocably lost अगर disabled पूर्णांकo D3 */
+	PCI_DEV_FLAGS_NO_D3 = (__क्रमce pci_dev_flags_t) (1 << 1),
+	/* Provide indication device is asचिन्हित by a Virtual Machine Manager */
+	PCI_DEV_FLAGS_ASSIGNED = (__क्रमce pci_dev_flags_t) (1 << 2),
+	/* Flag क्रम quirk use to store अगर quirk-specअगरic ACS is enabled */
+	PCI_DEV_FLAGS_ACS_ENABLED_QUIRK = (__क्रमce pci_dev_flags_t) (1 << 3),
+	/* Use a PCIe-to-PCI bridge alias even अगर !pci_is_pcie */
+	PCI_DEV_FLAG_PCIE_BRIDGE_ALIAS = (__क्रमce pci_dev_flags_t) (1 << 5),
+	/* Do not use bus resets क्रम device */
+	PCI_DEV_FLAGS_NO_BUS_RESET = (__क्रमce pci_dev_flags_t) (1 << 6),
+	/* Do not use PM reset even अगर device advertises NoSoftRst- */
+	PCI_DEV_FLAGS_NO_PM_RESET = (__क्रमce pci_dev_flags_t) (1 << 7),
 	/* Get VPD from function 0 VPD */
-	PCI_DEV_FLAGS_VPD_REF_F0 = (__force pci_dev_flags_t) (1 << 8),
+	PCI_DEV_FLAGS_VPD_REF_F0 = (__क्रमce pci_dev_flags_t) (1 << 8),
 	/* A non-root bridge where translation occurs, stop alias search here */
-	PCI_DEV_FLAGS_BRIDGE_XLATE_ROOT = (__force pci_dev_flags_t) (1 << 9),
-	/* Do not use FLR even if device advertises PCI_AF_CAP */
-	PCI_DEV_FLAGS_NO_FLR_RESET = (__force pci_dev_flags_t) (1 << 10),
-	/* Don't use Relaxed Ordering for TLPs directed at this device */
-	PCI_DEV_FLAGS_NO_RELAXED_ORDERING = (__force pci_dev_flags_t) (1 << 11),
-};
+	PCI_DEV_FLAGS_BRIDGE_XLATE_ROOT = (__क्रमce pci_dev_flags_t) (1 << 9),
+	/* Do not use FLR even अगर device advertises PCI_AF_CAP */
+	PCI_DEV_FLAGS_NO_FLR_RESET = (__क्रमce pci_dev_flags_t) (1 << 10),
+	/* Don't use Relaxed Ordering क्रम TLPs directed at this device */
+	PCI_DEV_FLAGS_NO_RELAXED_ORDERING = (__क्रमce pci_dev_flags_t) (1 << 11),
+पूर्ण;
 
-enum pci_irq_reroute_variant {
+क्रमागत pci_irq_reroute_variant अणु
 	INTEL_IRQ_REROUTE_VARIANT = 1,
 	MAX_IRQ_REROUTE_VARIANTS = 3
-};
+पूर्ण;
 
-typedef unsigned short __bitwise pci_bus_flags_t;
-enum pci_bus_flags {
-	PCI_BUS_FLAGS_NO_MSI	= (__force pci_bus_flags_t) 1,
-	PCI_BUS_FLAGS_NO_MMRBC	= (__force pci_bus_flags_t) 2,
-	PCI_BUS_FLAGS_NO_AERSID	= (__force pci_bus_flags_t) 4,
-	PCI_BUS_FLAGS_NO_EXTCFG	= (__force pci_bus_flags_t) 8,
-};
+प्रकार अचिन्हित लघु __bitwise pci_bus_flags_t;
+क्रमागत pci_bus_flags अणु
+	PCI_BUS_FLAGS_NO_MSI	= (__क्रमce pci_bus_flags_t) 1,
+	PCI_BUS_FLAGS_NO_MMRBC	= (__क्रमce pci_bus_flags_t) 2,
+	PCI_BUS_FLAGS_NO_AERSID	= (__क्रमce pci_bus_flags_t) 4,
+	PCI_BUS_FLAGS_NO_EXTCFG	= (__क्रमce pci_bus_flags_t) 8,
+पूर्ण;
 
-/* Values from Link Status register, PCIe r3.1, sec 7.8.8 */
-enum pcie_link_width {
+/* Values from Link Status रेजिस्टर, PCIe r3.1, sec 7.8.8 */
+क्रमागत pcie_link_width अणु
 	PCIE_LNK_WIDTH_RESRV	= 0x00,
 	PCIE_LNK_X1		= 0x01,
 	PCIE_LNK_X2		= 0x02,
@@ -253,10 +254,10 @@ enum pcie_link_width {
 	PCIE_LNK_X16		= 0x10,
 	PCIE_LNK_X32		= 0x20,
 	PCIE_LNK_WIDTH_UNKNOWN	= 0xff,
-};
+पूर्ण;
 
 /* See matching string table in pci_speed_string() */
-enum pci_bus_speed {
+क्रमागत pci_bus_speed अणु
 	PCI_SPEED_33MHz			= 0x00,
 	PCI_SPEED_66MHz			= 0x01,
 	PCI_SPEED_66MHz_PCIX		= 0x02,
@@ -283,1594 +284,1594 @@ enum pci_bus_speed {
 	PCIE_SPEED_32_0GT		= 0x18,
 	PCIE_SPEED_64_0GT		= 0x19,
 	PCI_SPEED_UNKNOWN		= 0xff,
-};
+पूर्ण;
 
-enum pci_bus_speed pcie_get_speed_cap(struct pci_dev *dev);
-enum pcie_link_width pcie_get_width_cap(struct pci_dev *dev);
+क्रमागत pci_bus_speed pcie_get_speed_cap(काष्ठा pci_dev *dev);
+क्रमागत pcie_link_width pcie_get_width_cap(काष्ठा pci_dev *dev);
 
-struct pci_cap_saved_data {
+काष्ठा pci_cap_saved_data अणु
 	u16		cap_nr;
 	bool		cap_extended;
-	unsigned int	size;
+	अचिन्हित पूर्णांक	size;
 	u32		data[];
-};
+पूर्ण;
 
-struct pci_cap_saved_state {
-	struct hlist_node		next;
-	struct pci_cap_saved_data	cap;
-};
+काष्ठा pci_cap_saved_state अणु
+	काष्ठा hlist_node		next;
+	काष्ठा pci_cap_saved_data	cap;
+पूर्ण;
 
-struct irq_affinity;
-struct pcie_link_state;
-struct pci_vpd;
-struct pci_sriov;
-struct pci_p2pdma;
-struct rcec_ea;
+काष्ठा irq_affinity;
+काष्ठा pcie_link_state;
+काष्ठा pci_vpd;
+काष्ठा pci_sriov;
+काष्ठा pci_p2pdma;
+काष्ठा rcec_ea;
 
-/* The pci_dev structure describes PCI devices */
-struct pci_dev {
-	struct list_head bus_list;	/* Node in per-bus list */
-	struct pci_bus	*bus;		/* Bus this device is on */
-	struct pci_bus	*subordinate;	/* Bus this device bridges to */
+/* The pci_dev काष्ठाure describes PCI devices */
+काष्ठा pci_dev अणु
+	काष्ठा list_head bus_list;	/* Node in per-bus list */
+	काष्ठा pci_bus	*bus;		/* Bus this device is on */
+	काष्ठा pci_bus	*subordinate;	/* Bus this device bridges to */
 
-	void		*sysdata;	/* Hook for sys-specific extension */
-	struct proc_dir_entry *procent;	/* Device entry in /proc/bus/pci */
-	struct pci_slot	*slot;		/* Physical slot this device is in */
+	व्योम		*sysdata;	/* Hook क्रम sys-specअगरic extension */
+	काष्ठा proc_dir_entry *procent;	/* Device entry in /proc/bus/pci */
+	काष्ठा pci_slot	*slot;		/* Physical slot this device is in */
 
-	unsigned int	devfn;		/* Encoded device & function index */
-	unsigned short	vendor;
-	unsigned short	device;
-	unsigned short	subsystem_vendor;
-	unsigned short	subsystem_device;
-	unsigned int	class;		/* 3 bytes: (base,sub,prog-if) */
+	अचिन्हित पूर्णांक	devfn;		/* Encoded device & function index */
+	अचिन्हित लघु	venकरोr;
+	अचिन्हित लघु	device;
+	अचिन्हित लघु	subप्रणाली_venकरोr;
+	अचिन्हित लघु	subप्रणाली_device;
+	अचिन्हित पूर्णांक	class;		/* 3 bytes: (base,sub,prog-अगर) */
 	u8		revision;	/* PCI revision, low byte of class word */
 	u8		hdr_type;	/* PCI header type (`multi' flag masked out) */
-#ifdef CONFIG_PCIEAER
+#अगर_घोषित CONFIG_PCIEAER
 	u16		aer_cap;	/* AER capability offset */
-	struct aer_stats *aer_stats;	/* AER stats for this device */
-#endif
-#ifdef CONFIG_PCIEPORTBUS
-	struct rcec_ea	*rcec_ea;	/* RCEC cached endpoint association */
-	struct pci_dev  *rcec;          /* Associated RCEC device */
-#endif
+	काष्ठा aer_stats *aer_stats;	/* AER stats क्रम this device */
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PCIEPORTBUS
+	काष्ठा rcec_ea	*rcec_ea;	/* RCEC cached endpoपूर्णांक association */
+	काष्ठा pci_dev  *rcec;          /* Associated RCEC device */
+#पूर्ण_अगर
 	u8		pcie_cap;	/* PCIe capability offset */
 	u8		msi_cap;	/* MSI capability offset */
 	u8		msix_cap;	/* MSI-X capability offset */
 	u8		pcie_mpss:3;	/* PCIe Max Payload Size Supported */
-	u8		rom_base_reg;	/* Config register controlling ROM */
+	u8		rom_base_reg;	/* Config रेजिस्टर controlling ROM */
 	u8		pin;		/* Interrupt pin this device uses */
 	u16		pcie_flags_reg;	/* Cached PCIe Capabilities Register */
-	unsigned long	*dma_alias_mask;/* Mask of enabled devfn aliases */
+	अचिन्हित दीर्घ	*dma_alias_mask;/* Mask of enabled devfn aliases */
 
-	struct pci_driver *driver;	/* Driver bound to this device */
+	काष्ठा pci_driver *driver;	/* Driver bound to this device */
 	u64		dma_mask;	/* Mask of the bits of bus address this
 					   device implements.  Normally this is
 					   0xffffffff.  You only need to change
-					   this if your device has broken DMA
+					   this अगर your device has broken DMA
 					   or supports 64-bit transfers.  */
 
-	struct device_dma_parameters dma_parms;
+	काष्ठा device_dma_parameters dma_parms;
 
-	pci_power_t	current_state;	/* Current operating state. In ACPI,
+	pci_घातer_t	current_state;	/* Current operating state. In ACPI,
 					   this is D0-D3, D0 being fully
 					   functional, and D3 being off. */
-	unsigned int	imm_ready:1;	/* Supports Immediate Readiness */
+	अचिन्हित पूर्णांक	imm_पढ़ोy:1;	/* Supports Immediate Readiness */
 	u8		pm_cap;		/* PM capability offset */
-	unsigned int	pme_support:5;	/* Bitmask of states from which PME#
+	अचिन्हित पूर्णांक	pme_support:5;	/* Biपंचांगask of states from which PME#
 					   can be generated */
-	unsigned int	pme_poll:1;	/* Poll device's PME status bit */
-	unsigned int	d1_support:1;	/* Low power state D1 is supported */
-	unsigned int	d2_support:1;	/* Low power state D2 is supported */
-	unsigned int	no_d1d2:1;	/* D1 and D2 are forbidden */
-	unsigned int	no_d3cold:1;	/* D3cold is forbidden */
-	unsigned int	bridge_d3:1;	/* Allow D3 for bridge */
-	unsigned int	d3cold_allowed:1;	/* D3cold is allowed by user */
-	unsigned int	mmio_always_on:1;	/* Disallow turning off io/mem
+	अचिन्हित पूर्णांक	pme_poll:1;	/* Poll device's PME status bit */
+	अचिन्हित पूर्णांक	d1_support:1;	/* Low घातer state D1 is supported */
+	अचिन्हित पूर्णांक	d2_support:1;	/* Low घातer state D2 is supported */
+	अचिन्हित पूर्णांक	no_d1d2:1;	/* D1 and D2 are क्रमbidden */
+	अचिन्हित पूर्णांक	no_d3cold:1;	/* D3cold is क्रमbidden */
+	अचिन्हित पूर्णांक	bridge_d3:1;	/* Allow D3 क्रम bridge */
+	अचिन्हित पूर्णांक	d3cold_allowed:1;	/* D3cold is allowed by user */
+	अचिन्हित पूर्णांक	mmio_always_on:1;	/* Disallow turning off io/mem
 						   decoding during BAR sizing */
-	unsigned int	wakeup_prepared:1;
-	unsigned int	runtime_d3cold:1;	/* Whether go through runtime
-						   D3cold, not set for devices
-						   powered on/off by the
+	अचिन्हित पूर्णांक	wakeup_prepared:1;
+	अचिन्हित पूर्णांक	runसमय_d3cold:1;	/* Whether go through runसमय
+						   D3cold, not set क्रम devices
+						   घातered on/off by the
 						   corresponding bridge */
-	unsigned int	skip_bus_pm:1;	/* Internal: Skip bus-level PM */
-	unsigned int	ignore_hotplug:1;	/* Ignore hotplug events */
-	unsigned int	hotplug_user_indicators:1; /* SlotCtl indicators
+	अचिन्हित पूर्णांक	skip_bus_pm:1;	/* Internal: Skip bus-level PM */
+	अचिन्हित पूर्णांक	ignore_hotplug:1;	/* Ignore hotplug events */
+	अचिन्हित पूर्णांक	hotplug_user_indicators:1; /* SlotCtl indicators
 						      controlled exclusively by
 						      user sysfs */
-	unsigned int	clear_retrain_link:1;	/* Need to clear Retrain Link
+	अचिन्हित पूर्णांक	clear_retrain_link:1;	/* Need to clear Retrain Link
 						   bit manually */
-	unsigned int	d3hot_delay;	/* D3hot->D0 transition time in ms */
-	unsigned int	d3cold_delay;	/* D3cold->D0 transition time in ms */
+	अचिन्हित पूर्णांक	d3hot_delay;	/* D3hot->D0 transition समय in ms */
+	अचिन्हित पूर्णांक	d3cold_delay;	/* D3cold->D0 transition समय in ms */
 
-#ifdef CONFIG_PCIEASPM
-	struct pcie_link_state	*link_state;	/* ASPM link state */
-	unsigned int	ltr_path:1;	/* Latency Tolerance Reporting
+#अगर_घोषित CONFIG_PCIEASPM
+	काष्ठा pcie_link_state	*link_state;	/* ASPM link state */
+	अचिन्हित पूर्णांक	ltr_path:1;	/* Latency Tolerance Reporting
 					   supported from root to here */
-	u16		l1ss;		/* L1SS Capability pointer */
-#endif
-	unsigned int	eetlp_prefix_path:1;	/* End-to-End TLP Prefix */
+	u16		l1ss;		/* L1SS Capability poपूर्णांकer */
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक	eetlp_prefix_path:1;	/* End-to-End TLP Prefix */
 
 	pci_channel_state_t error_state;	/* Current connectivity state */
-	struct device	dev;			/* Generic device interface */
+	काष्ठा device	dev;			/* Generic device पूर्णांकerface */
 
-	int		cfg_size;		/* Size of config space */
+	पूर्णांक		cfg_size;		/* Size of config space */
 
 	/*
-	 * Instead of touching interrupt line and base address registers
-	 * directly, use the values stored here. They might be different!
+	 * Instead of touching पूर्णांकerrupt line and base address रेजिस्टरs
+	 * directly, use the values stored here. They might be dअगरferent!
 	 */
-	unsigned int	irq;
-	struct resource resource[DEVICE_COUNT_RESOURCE]; /* I/O and memory regions + expansion ROMs */
+	अचिन्हित पूर्णांक	irq;
+	काष्ठा resource resource[DEVICE_COUNT_RESOURCE]; /* I/O and memory regions + expansion ROMs */
 
 	bool		match_driver;		/* Skip attaching driver */
 
-	unsigned int	transparent:1;		/* Subtractive decode bridge */
-	unsigned int	io_window:1;		/* Bridge has I/O window */
-	unsigned int	pref_window:1;		/* Bridge has pref mem window */
-	unsigned int	pref_64_window:1;	/* Pref mem window is 64-bit */
-	unsigned int	multifunction:1;	/* Multi-function device */
+	अचिन्हित पूर्णांक	transparent:1;		/* Subtractive decode bridge */
+	अचिन्हित पूर्णांक	io_winकरोw:1;		/* Bridge has I/O winकरोw */
+	अचिन्हित पूर्णांक	pref_winकरोw:1;		/* Bridge has pref mem winकरोw */
+	अचिन्हित पूर्णांक	pref_64_winकरोw:1;	/* Pref mem winकरोw is 64-bit */
+	अचिन्हित पूर्णांक	multअगरunction:1;	/* Multi-function device */
 
-	unsigned int	is_busmaster:1;		/* Is busmaster */
-	unsigned int	no_msi:1;		/* May not use MSI */
-	unsigned int	no_64bit_msi:1;		/* May only use 32-bit MSIs */
-	unsigned int	block_cfg_access:1;	/* Config space access blocked */
-	unsigned int	broken_parity_status:1;	/* Generates false positive parity */
-	unsigned int	irq_reroute_variant:2;	/* Needs IRQ rerouting variant */
-	unsigned int	msi_enabled:1;
-	unsigned int	msix_enabled:1;
-	unsigned int	ari_enabled:1;		/* ARI forwarding */
-	unsigned int	ats_enabled:1;		/* Address Translation Svc */
-	unsigned int	pasid_enabled:1;	/* Process Address Space ID */
-	unsigned int	pri_enabled:1;		/* Page Request Interface */
-	unsigned int	is_managed:1;
-	unsigned int	needs_freset:1;		/* Requires fundamental reset */
-	unsigned int	state_saved:1;
-	unsigned int	is_physfn:1;
-	unsigned int	is_virtfn:1;
-	unsigned int	reset_fn:1;
-	unsigned int	is_hotplug_bridge:1;
-	unsigned int	shpc_managed:1;		/* SHPC owned by shpchp */
-	unsigned int	is_thunderbolt:1;	/* Thunderbolt controller */
+	अचिन्हित पूर्णांक	is_busmaster:1;		/* Is busmaster */
+	अचिन्हित पूर्णांक	no_msi:1;		/* May not use MSI */
+	अचिन्हित पूर्णांक	no_64bit_msi:1;		/* May only use 32-bit MSIs */
+	अचिन्हित पूर्णांक	block_cfg_access:1;	/* Config space access blocked */
+	अचिन्हित पूर्णांक	broken_parity_status:1;	/* Generates false positive parity */
+	अचिन्हित पूर्णांक	irq_reroute_variant:2;	/* Needs IRQ rerouting variant */
+	अचिन्हित पूर्णांक	msi_enabled:1;
+	अचिन्हित पूर्णांक	msix_enabled:1;
+	अचिन्हित पूर्णांक	ari_enabled:1;		/* ARI क्रमwarding */
+	अचिन्हित पूर्णांक	ats_enabled:1;		/* Address Translation Svc */
+	अचिन्हित पूर्णांक	pasid_enabled:1;	/* Process Address Space ID */
+	अचिन्हित पूर्णांक	pri_enabled:1;		/* Page Request Interface */
+	अचिन्हित पूर्णांक	is_managed:1;
+	अचिन्हित पूर्णांक	needs_freset:1;		/* Requires fundamental reset */
+	अचिन्हित पूर्णांक	state_saved:1;
+	अचिन्हित पूर्णांक	is_physfn:1;
+	अचिन्हित पूर्णांक	is_virtfn:1;
+	अचिन्हित पूर्णांक	reset_fn:1;
+	अचिन्हित पूर्णांक	is_hotplug_bridge:1;
+	अचिन्हित पूर्णांक	shpc_managed:1;		/* SHPC owned by shpchp */
+	अचिन्हित पूर्णांक	is_thunderbolt:1;	/* Thunderbolt controller */
 	/*
 	 * Devices marked being untrusted are the ones that can potentially
 	 * execute DMA attacks and similar. They are typically connected
-	 * through external ports such as Thunderbolt but not limited to
+	 * through बाह्यal ports such as Thunderbolt but not limited to
 	 * that. When an IOMMU is enabled they should be getting full
 	 * mappings to make sure they cannot access arbitrary memory.
 	 */
-	unsigned int	untrusted:1;
+	अचिन्हित पूर्णांक	untrusted:1;
 	/*
-	 * Info from the platform, e.g., ACPI or device tree, may mark a
-	 * device as "external-facing".  An external-facing device is
-	 * itself internal but devices downstream from it are external.
+	 * Info from the platक्रमm, e.g., ACPI or device tree, may mark a
+	 * device as "external-facing".  An बाह्यal-facing device is
+	 * itself पूर्णांकernal but devices करोwnstream from it are बाह्यal.
 	 */
-	unsigned int	external_facing:1;
-	unsigned int	broken_intx_masking:1;	/* INTx masking can't be used */
-	unsigned int	io_window_1k:1;		/* Intel bridge 1K I/O windows */
-	unsigned int	irq_managed:1;
-	unsigned int	non_compliant_bars:1;	/* Broken BARs; ignore them */
-	unsigned int	is_probed:1;		/* Device probing in progress */
-	unsigned int	link_active_reporting:1;/* Device capable of reporting link active */
-	unsigned int	no_vf_scan:1;		/* Don't scan for VFs after IOV enablement */
-	unsigned int	no_command_memory:1;	/* No PCI_COMMAND_MEMORY */
+	अचिन्हित पूर्णांक	बाह्यal_facing:1;
+	अचिन्हित पूर्णांक	broken_पूर्णांकx_masking:1;	/* INTx masking can't be used */
+	अचिन्हित पूर्णांक	io_winकरोw_1k:1;		/* Intel bridge 1K I/O winकरोws */
+	अचिन्हित पूर्णांक	irq_managed:1;
+	अचिन्हित पूर्णांक	non_compliant_bars:1;	/* Broken BARs; ignore them */
+	अचिन्हित पूर्णांक	is_probed:1;		/* Device probing in progress */
+	अचिन्हित पूर्णांक	link_active_reporting:1;/* Device capable of reporting link active */
+	अचिन्हित पूर्णांक	no_vf_scan:1;		/* Don't scan क्रम VFs after IOV enablement */
+	अचिन्हित पूर्णांक	no_command_memory:1;	/* No PCI_COMMAND_MEMORY */
 	pci_dev_flags_t dev_flags;
 	atomic_t	enable_cnt;	/* pci_enable_device has been called */
 
-	u32		saved_config_space[16]; /* Config space saved at suspend time */
-	struct hlist_head saved_cap_space;
-	int		rom_attr_enabled;	/* Display of ROM attribute enabled? */
-	struct bin_attribute *res_attr[DEVICE_COUNT_RESOURCE]; /* sysfs file for resources */
-	struct bin_attribute *res_attr_wc[DEVICE_COUNT_RESOURCE]; /* sysfs file for WC mapping of resources */
+	u32		saved_config_space[16]; /* Config space saved at suspend समय */
+	काष्ठा hlist_head saved_cap_space;
+	पूर्णांक		rom_attr_enabled;	/* Display of ROM attribute enabled? */
+	काष्ठा bin_attribute *res_attr[DEVICE_COUNT_RESOURCE]; /* sysfs file क्रम resources */
+	काष्ठा bin_attribute *res_attr_wc[DEVICE_COUNT_RESOURCE]; /* sysfs file क्रम WC mapping of resources */
 
-#ifdef CONFIG_HOTPLUG_PCI_PCIE
-	unsigned int	broken_cmd_compl:1;	/* No compl for some cmds */
-#endif
-#ifdef CONFIG_PCIE_PTM
-	unsigned int	ptm_root:1;
-	unsigned int	ptm_enabled:1;
-	u8		ptm_granularity;
-#endif
-#ifdef CONFIG_PCI_MSI
-	const struct attribute_group **msi_irq_groups;
-#endif
-	struct pci_vpd *vpd;
-#ifdef CONFIG_PCIE_DPC
+#अगर_घोषित CONFIG_HOTPLUG_PCI_PCIE
+	अचिन्हित पूर्णांक	broken_cmd_compl:1;	/* No compl क्रम some cmds */
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PCIE_PTM
+	अचिन्हित पूर्णांक	pपंचांग_root:1;
+	अचिन्हित पूर्णांक	pपंचांग_enabled:1;
+	u8		pपंचांग_granularity;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PCI_MSI
+	स्थिर काष्ठा attribute_group **msi_irq_groups;
+#पूर्ण_अगर
+	काष्ठा pci_vpd *vpd;
+#अगर_घोषित CONFIG_PCIE_DPC
 	u16		dpc_cap;
-	unsigned int	dpc_rp_extensions:1;
+	अचिन्हित पूर्णांक	dpc_rp_extensions:1;
 	u8		dpc_rp_log_size;
-#endif
-#ifdef CONFIG_PCI_ATS
-	union {
-		struct pci_sriov	*sriov;		/* PF: SR-IOV info */
-		struct pci_dev		*physfn;	/* VF: related PF */
-	};
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PCI_ATS
+	जोड़ अणु
+		काष्ठा pci_sriov	*sriov;		/* PF: SR-IOV info */
+		काष्ठा pci_dev		*physfn;	/* VF: related PF */
+	पूर्ण;
 	u16		ats_cap;	/* ATS Capability offset */
 	u8		ats_stu;	/* ATS Smallest Translation Unit */
-#endif
-#ifdef CONFIG_PCI_PRI
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PCI_PRI
 	u16		pri_cap;	/* PRI Capability offset */
 	u32		pri_reqs_alloc; /* Number of PRI requests allocated */
-	unsigned int	pasid_required:1; /* PRG Response PASID Required */
-#endif
-#ifdef CONFIG_PCI_PASID
+	अचिन्हित पूर्णांक	pasid_required:1; /* PRG Response PASID Required */
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PCI_PASID
 	u16		pasid_cap;	/* PASID Capability offset */
 	u16		pasid_features;
-#endif
-#ifdef CONFIG_PCI_P2PDMA
-	struct pci_p2pdma *p2pdma;
-#endif
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PCI_P2PDMA
+	काष्ठा pci_p2pdma *p2pdma;
+#पूर्ण_अगर
 	u16		acs_cap;	/* ACS Capability offset */
-	phys_addr_t	rom;		/* Physical address if not from BAR */
-	size_t		romlen;		/* Length if not from BAR */
-	char		*driver_override; /* Driver name to force a match */
+	phys_addr_t	rom;		/* Physical address अगर not from BAR */
+	माप_प्रकार		romlen;		/* Length अगर not from BAR */
+	अक्षर		*driver_override; /* Driver name to क्रमce a match */
 
-	unsigned long	priv_flags;	/* Private flags for the PCI driver */
-};
+	अचिन्हित दीर्घ	priv_flags;	/* Private flags क्रम the PCI driver */
+पूर्ण;
 
-static inline struct pci_dev *pci_physfn(struct pci_dev *dev)
-{
-#ifdef CONFIG_PCI_IOV
-	if (dev->is_virtfn)
+अटल अंतरभूत काष्ठा pci_dev *pci_physfn(काष्ठा pci_dev *dev)
+अणु
+#अगर_घोषित CONFIG_PCI_IOV
+	अगर (dev->is_virtfn)
 		dev = dev->physfn;
-#endif
-	return dev;
-}
+#पूर्ण_अगर
+	वापस dev;
+पूर्ण
 
-struct pci_dev *pci_alloc_dev(struct pci_bus *bus);
+काष्ठा pci_dev *pci_alloc_dev(काष्ठा pci_bus *bus);
 
-#define	to_pci_dev(n) container_of(n, struct pci_dev, dev)
-#define for_each_pci_dev(d) while ((d = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, d)) != NULL)
+#घोषणा	to_pci_dev(n) container_of(n, काष्ठा pci_dev, dev)
+#घोषणा क्रम_each_pci_dev(d) जबतक ((d = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, d)) != शून्य)
 
-static inline int pci_channel_offline(struct pci_dev *pdev)
-{
-	return (pdev->error_state != pci_channel_io_normal);
-}
+अटल अंतरभूत पूर्णांक pci_channel_offline(काष्ठा pci_dev *pdev)
+अणु
+	वापस (pdev->error_state != pci_channel_io_normal);
+पूर्ण
 
-struct pci_host_bridge {
-	struct device	dev;
-	struct pci_bus	*bus;		/* Root bus */
-	struct pci_ops	*ops;
-	struct pci_ops	*child_ops;
-	void		*sysdata;
-	int		busnr;
-	struct list_head windows;	/* resource_entry */
-	struct list_head dma_ranges;	/* dma ranges resource list */
-	u8 (*swizzle_irq)(struct pci_dev *, u8 *); /* Platform IRQ swizzler */
-	int (*map_irq)(const struct pci_dev *, u8, u8);
-	void (*release_fn)(struct pci_host_bridge *);
-	void		*release_data;
-	unsigned int	ignore_reset_delay:1;	/* For entire hierarchy */
-	unsigned int	no_ext_tags:1;		/* No Extended Tags */
-	unsigned int	native_aer:1;		/* OS may use PCIe AER */
-	unsigned int	native_pcie_hotplug:1;	/* OS may use PCIe hotplug */
-	unsigned int	native_shpc_hotplug:1;	/* OS may use SHPC hotplug */
-	unsigned int	native_pme:1;		/* OS may use PCIe PME */
-	unsigned int	native_ltr:1;		/* OS may use PCIe LTR */
-	unsigned int	native_dpc:1;		/* OS may use PCIe DPC */
-	unsigned int	preserve_config:1;	/* Preserve FW resource setup */
-	unsigned int	size_windows:1;		/* Enable root bus sizing */
-	unsigned int	msi_domain:1;		/* Bridge wants MSI domain */
+काष्ठा pci_host_bridge अणु
+	काष्ठा device	dev;
+	काष्ठा pci_bus	*bus;		/* Root bus */
+	काष्ठा pci_ops	*ops;
+	काष्ठा pci_ops	*child_ops;
+	व्योम		*sysdata;
+	पूर्णांक		busnr;
+	काष्ठा list_head winकरोws;	/* resource_entry */
+	काष्ठा list_head dma_ranges;	/* dma ranges resource list */
+	u8 (*swizzle_irq)(काष्ठा pci_dev *, u8 *); /* Platक्रमm IRQ swizzler */
+	पूर्णांक (*map_irq)(स्थिर काष्ठा pci_dev *, u8, u8);
+	व्योम (*release_fn)(काष्ठा pci_host_bridge *);
+	व्योम		*release_data;
+	अचिन्हित पूर्णांक	ignore_reset_delay:1;	/* For entire hierarchy */
+	अचिन्हित पूर्णांक	no_ext_tags:1;		/* No Extended Tags */
+	अचिन्हित पूर्णांक	native_aer:1;		/* OS may use PCIe AER */
+	अचिन्हित पूर्णांक	native_pcie_hotplug:1;	/* OS may use PCIe hotplug */
+	अचिन्हित पूर्णांक	native_shpc_hotplug:1;	/* OS may use SHPC hotplug */
+	अचिन्हित पूर्णांक	native_pme:1;		/* OS may use PCIe PME */
+	अचिन्हित पूर्णांक	native_ltr:1;		/* OS may use PCIe LTR */
+	अचिन्हित पूर्णांक	native_dpc:1;		/* OS may use PCIe DPC */
+	अचिन्हित पूर्णांक	preserve_config:1;	/* Preserve FW resource setup */
+	अचिन्हित पूर्णांक	size_winकरोws:1;		/* Enable root bus sizing */
+	अचिन्हित पूर्णांक	msi_करोमुख्य:1;		/* Bridge wants MSI करोमुख्य */
 
 	/* Resource alignment requirements */
-	resource_size_t (*align_resource)(struct pci_dev *dev,
-			const struct resource *res,
-			resource_size_t start,
-			resource_size_t size,
-			resource_size_t align);
-	unsigned long	private[] ____cacheline_aligned;
-};
+	resource_माप_प्रकार (*align_resource)(काष्ठा pci_dev *dev,
+			स्थिर काष्ठा resource *res,
+			resource_माप_प्रकार start,
+			resource_माप_प्रकार size,
+			resource_माप_प्रकार align);
+	अचिन्हित दीर्घ	निजी[] ____cacheline_aligned;
+पूर्ण;
 
-#define	to_pci_host_bridge(n) container_of(n, struct pci_host_bridge, dev)
+#घोषणा	to_pci_host_bridge(n) container_of(n, काष्ठा pci_host_bridge, dev)
 
-static inline void *pci_host_bridge_priv(struct pci_host_bridge *bridge)
-{
-	return (void *)bridge->private;
-}
+अटल अंतरभूत व्योम *pci_host_bridge_priv(काष्ठा pci_host_bridge *bridge)
+अणु
+	वापस (व्योम *)bridge->निजी;
+पूर्ण
 
-static inline struct pci_host_bridge *pci_host_bridge_from_priv(void *priv)
-{
-	return container_of(priv, struct pci_host_bridge, private);
-}
+अटल अंतरभूत काष्ठा pci_host_bridge *pci_host_bridge_from_priv(व्योम *priv)
+अणु
+	वापस container_of(priv, काष्ठा pci_host_bridge, निजी);
+पूर्ण
 
-struct pci_host_bridge *pci_alloc_host_bridge(size_t priv);
-struct pci_host_bridge *devm_pci_alloc_host_bridge(struct device *dev,
-						   size_t priv);
-void pci_free_host_bridge(struct pci_host_bridge *bridge);
-struct pci_host_bridge *pci_find_host_bridge(struct pci_bus *bus);
+काष्ठा pci_host_bridge *pci_alloc_host_bridge(माप_प्रकार priv);
+काष्ठा pci_host_bridge *devm_pci_alloc_host_bridge(काष्ठा device *dev,
+						   माप_प्रकार priv);
+व्योम pci_मुक्त_host_bridge(काष्ठा pci_host_bridge *bridge);
+काष्ठा pci_host_bridge *pci_find_host_bridge(काष्ठा pci_bus *bus);
 
-void pci_set_host_bridge_release(struct pci_host_bridge *bridge,
-				 void (*release_fn)(struct pci_host_bridge *),
-				 void *release_data);
+व्योम pci_set_host_bridge_release(काष्ठा pci_host_bridge *bridge,
+				 व्योम (*release_fn)(काष्ठा pci_host_bridge *),
+				 व्योम *release_data);
 
-int pcibios_root_bridge_prepare(struct pci_host_bridge *bridge);
+पूर्णांक pcibios_root_bridge_prepare(काष्ठा pci_host_bridge *bridge);
 
 /*
  * The first PCI_BRIDGE_RESOURCE_NUM PCI bus resources (those that correspond
- * to P2P or CardBus bridge windows) go in a table.  Additional ones (for
+ * to P2P or CardBus bridge winकरोws) go in a table.  Additional ones (क्रम
  * buses below host bridges or subtractive decode bridges) go in the list.
- * Use pci_bus_for_each_resource() to iterate through all the resources.
+ * Use pci_bus_क्रम_each_resource() to iterate through all the resources.
  */
 
 /*
- * PCI_SUBTRACTIVE_DECODE means the bridge forwards the window implicitly
- * and there's no way to program the bridge with the details of the window.
- * This does not apply to ACPI _CRS windows, even with the _DEC subtractive-
+ * PCI_SUBTRACTIVE_DECODE means the bridge क्रमwards the winकरोw implicitly
+ * and there's no way to program the bridge with the details of the winकरोw.
+ * This करोes not apply to ACPI _CRS winकरोws, even with the _DEC subtractive-
  * decode bit set, because they are explicit and can be programmed with _SRS.
  */
-#define PCI_SUBTRACTIVE_DECODE	0x1
+#घोषणा PCI_SUBTRACTIVE_DECODE	0x1
 
-struct pci_bus_resource {
-	struct list_head	list;
-	struct resource		*res;
-	unsigned int		flags;
-};
+काष्ठा pci_bus_resource अणु
+	काष्ठा list_head	list;
+	काष्ठा resource		*res;
+	अचिन्हित पूर्णांक		flags;
+पूर्ण;
 
-#define PCI_REGION_FLAG_MASK	0x0fU	/* These bits of resource flags tell us the PCI region flags */
+#घोषणा PCI_REGION_FLAG_MASK	0x0fU	/* These bits of resource flags tell us the PCI region flags */
 
-struct pci_bus {
-	struct list_head node;		/* Node in list of buses */
-	struct pci_bus	*parent;	/* Parent bus this bridge is on */
-	struct list_head children;	/* List of child buses */
-	struct list_head devices;	/* List of devices on this bus */
-	struct pci_dev	*self;		/* Bridge device as seen by parent */
-	struct list_head slots;		/* List of slots on this bus;
-					   protected by pci_slot_mutex */
-	struct resource *resource[PCI_BRIDGE_RESOURCE_NUM];
-	struct list_head resources;	/* Address space routed to this bus */
-	struct resource busn_res;	/* Bus numbers routed to this bus */
+काष्ठा pci_bus अणु
+	काष्ठा list_head node;		/* Node in list of buses */
+	काष्ठा pci_bus	*parent;	/* Parent bus this bridge is on */
+	काष्ठा list_head children;	/* List of child buses */
+	काष्ठा list_head devices;	/* List of devices on this bus */
+	काष्ठा pci_dev	*self;		/* Bridge device as seen by parent */
+	काष्ठा list_head slots;		/* List of slots on this bus;
+					   रक्षित by pci_slot_mutex */
+	काष्ठा resource *resource[PCI_BRIDGE_RESOURCE_NUM];
+	काष्ठा list_head resources;	/* Address space routed to this bus */
+	काष्ठा resource busn_res;	/* Bus numbers routed to this bus */
 
-	struct pci_ops	*ops;		/* Configuration access functions */
-	void		*sysdata;	/* Hook for sys-specific extension */
-	struct proc_dir_entry *procdir;	/* Directory entry in /proc/bus/pci */
+	काष्ठा pci_ops	*ops;		/* Configuration access functions */
+	व्योम		*sysdata;	/* Hook क्रम sys-specअगरic extension */
+	काष्ठा proc_dir_entry *procdir;	/* Directory entry in /proc/bus/pci */
 
-	unsigned char	number;		/* Bus number */
-	unsigned char	primary;	/* Number of primary bridge */
-	unsigned char	max_bus_speed;	/* enum pci_bus_speed */
-	unsigned char	cur_bus_speed;	/* enum pci_bus_speed */
-#ifdef CONFIG_PCI_DOMAINS_GENERIC
-	int		domain_nr;
-#endif
+	अचिन्हित अक्षर	number;		/* Bus number */
+	अचिन्हित अक्षर	primary;	/* Number of primary bridge */
+	अचिन्हित अक्षर	max_bus_speed;	/* क्रमागत pci_bus_speed */
+	अचिन्हित अक्षर	cur_bus_speed;	/* क्रमागत pci_bus_speed */
+#अगर_घोषित CONFIG_PCI_DOMAINS_GENERIC
+	पूर्णांक		करोमुख्य_nr;
+#पूर्ण_अगर
 
-	char		name[48];
+	अक्षर		name[48];
 
-	unsigned short	bridge_ctl;	/* Manage NO_ISA/FBB/et al behaviors */
+	अचिन्हित लघु	bridge_ctl;	/* Manage NO_ISA/FBB/et al behaviors */
 	pci_bus_flags_t bus_flags;	/* Inherited by child buses */
-	struct device		*bridge;
-	struct device		dev;
-	struct bin_attribute	*legacy_io;	/* Legacy I/O for this bus */
-	struct bin_attribute	*legacy_mem;	/* Legacy mem */
-	unsigned int		is_added:1;
-};
+	काष्ठा device		*bridge;
+	काष्ठा device		dev;
+	काष्ठा bin_attribute	*legacy_io;	/* Legacy I/O क्रम this bus */
+	काष्ठा bin_attribute	*legacy_mem;	/* Legacy mem */
+	अचिन्हित पूर्णांक		is_added:1;
+पूर्ण;
 
-#define to_pci_bus(n)	container_of(n, struct pci_bus, dev)
+#घोषणा to_pci_bus(n)	container_of(n, काष्ठा pci_bus, dev)
 
-static inline u16 pci_dev_id(struct pci_dev *dev)
-{
-	return PCI_DEVID(dev->bus->number, dev->devfn);
-}
+अटल अंतरभूत u16 pci_dev_id(काष्ठा pci_dev *dev)
+अणु
+	वापस PCI_DEVID(dev->bus->number, dev->devfn);
+पूर्ण
 
 /*
- * Returns true if the PCI bus is root (behind host-PCI bridge),
+ * Returns true अगर the PCI bus is root (behind host-PCI bridge),
  * false otherwise
  *
  * Some code assumes that "bus->self == NULL" means that bus is a root bus.
- * This is incorrect because "virtual" buses added for SR-IOV (via
+ * This is incorrect because "virtual" buses added क्रम SR-IOV (via
  * virtfn_add_bus()) have "bus->self == NULL" but are not root buses.
  */
-static inline bool pci_is_root_bus(struct pci_bus *pbus)
-{
-	return !(pbus->parent);
-}
+अटल अंतरभूत bool pci_is_root_bus(काष्ठा pci_bus *pbus)
+अणु
+	वापस !(pbus->parent);
+पूर्ण
 
 /**
- * pci_is_bridge - check if the PCI device is a bridge
+ * pci_is_bridge - check अगर the PCI device is a bridge
  * @dev: PCI device
  *
- * Return true if the PCI device is bridge whether it has subordinate
+ * Return true अगर the PCI device is bridge whether it has subordinate
  * or not.
  */
-static inline bool pci_is_bridge(struct pci_dev *dev)
-{
-	return dev->hdr_type == PCI_HEADER_TYPE_BRIDGE ||
+अटल अंतरभूत bool pci_is_bridge(काष्ठा pci_dev *dev)
+अणु
+	वापस dev->hdr_type == PCI_HEADER_TYPE_BRIDGE ||
 		dev->hdr_type == PCI_HEADER_TYPE_CARDBUS;
-}
+पूर्ण
 
-#define for_each_pci_bridge(dev, bus)				\
-	list_for_each_entry(dev, &bus->devices, bus_list)	\
-		if (!pci_is_bridge(dev)) {} else
+#घोषणा क्रम_each_pci_bridge(dev, bus)				\
+	list_क्रम_each_entry(dev, &bus->devices, bus_list)	\
+		अगर (!pci_is_bridge(dev)) अणुपूर्ण अन्यथा
 
-static inline struct pci_dev *pci_upstream_bridge(struct pci_dev *dev)
-{
+अटल अंतरभूत काष्ठा pci_dev *pci_upstream_bridge(काष्ठा pci_dev *dev)
+अणु
 	dev = pci_physfn(dev);
-	if (pci_is_root_bus(dev->bus))
-		return NULL;
+	अगर (pci_is_root_bus(dev->bus))
+		वापस शून्य;
 
-	return dev->bus->self;
-}
+	वापस dev->bus->self;
+पूर्ण
 
-#ifdef CONFIG_PCI_MSI
-static inline bool pci_dev_msi_enabled(struct pci_dev *pci_dev)
-{
-	return pci_dev->msi_enabled || pci_dev->msix_enabled;
-}
-#else
-static inline bool pci_dev_msi_enabled(struct pci_dev *pci_dev) { return false; }
-#endif
+#अगर_घोषित CONFIG_PCI_MSI
+अटल अंतरभूत bool pci_dev_msi_enabled(काष्ठा pci_dev *pci_dev)
+अणु
+	वापस pci_dev->msi_enabled || pci_dev->msix_enabled;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool pci_dev_msi_enabled(काष्ठा pci_dev *pci_dev) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-/* Error values that may be returned by PCI functions */
-#define PCIBIOS_SUCCESSFUL		0x00
-#define PCIBIOS_FUNC_NOT_SUPPORTED	0x81
-#define PCIBIOS_BAD_VENDOR_ID		0x83
-#define PCIBIOS_DEVICE_NOT_FOUND	0x86
-#define PCIBIOS_BAD_REGISTER_NUMBER	0x87
-#define PCIBIOS_SET_FAILED		0x88
-#define PCIBIOS_BUFFER_TOO_SMALL	0x89
+/* Error values that may be वापसed by PCI functions */
+#घोषणा PCIBIOS_SUCCESSFUL		0x00
+#घोषणा PCIBIOS_FUNC_NOT_SUPPORTED	0x81
+#घोषणा PCIBIOS_BAD_VENDOR_ID		0x83
+#घोषणा PCIBIOS_DEVICE_NOT_FOUND	0x86
+#घोषणा PCIBIOS_BAD_REGISTER_NUMBER	0x87
+#घोषणा PCIBIOS_SET_FAILED		0x88
+#घोषणा PCIBIOS_BUFFER_TOO_SMALL	0x89
 
-/* Translate above to generic errno for passing back through non-PCI code */
-static inline int pcibios_err_to_errno(int err)
-{
-	if (err <= PCIBIOS_SUCCESSFUL)
-		return err; /* Assume already errno */
+/* Translate above to generic त्रुटि_सं क्रम passing back through non-PCI code */
+अटल अंतरभूत पूर्णांक pcibios_err_to_त्रुटि_सं(पूर्णांक err)
+अणु
+	अगर (err <= PCIBIOS_SUCCESSFUL)
+		वापस err; /* Assume alपढ़ोy त्रुटि_सं */
 
-	switch (err) {
-	case PCIBIOS_FUNC_NOT_SUPPORTED:
-		return -ENOENT;
-	case PCIBIOS_BAD_VENDOR_ID:
-		return -ENOTTY;
-	case PCIBIOS_DEVICE_NOT_FOUND:
-		return -ENODEV;
-	case PCIBIOS_BAD_REGISTER_NUMBER:
-		return -EFAULT;
-	case PCIBIOS_SET_FAILED:
-		return -EIO;
-	case PCIBIOS_BUFFER_TOO_SMALL:
-		return -ENOSPC;
-	}
+	चयन (err) अणु
+	हाल PCIBIOS_FUNC_NOT_SUPPORTED:
+		वापस -ENOENT;
+	हाल PCIBIOS_BAD_VENDOR_ID:
+		वापस -ENOTTY;
+	हाल PCIBIOS_DEVICE_NOT_FOUND:
+		वापस -ENODEV;
+	हाल PCIBIOS_BAD_REGISTER_NUMBER:
+		वापस -EFAULT;
+	हाल PCIBIOS_SET_FAILED:
+		वापस -EIO;
+	हाल PCIBIOS_BUFFER_TOO_SMALL:
+		वापस -ENOSPC;
+	पूर्ण
 
-	return -ERANGE;
-}
+	वापस -दुस्फल;
+पूर्ण
 
 /* Low-level architecture-dependent routines */
 
-struct pci_ops {
-	int (*add_bus)(struct pci_bus *bus);
-	void (*remove_bus)(struct pci_bus *bus);
-	void __iomem *(*map_bus)(struct pci_bus *bus, unsigned int devfn, int where);
-	int (*read)(struct pci_bus *bus, unsigned int devfn, int where, int size, u32 *val);
-	int (*write)(struct pci_bus *bus, unsigned int devfn, int where, int size, u32 val);
-};
+काष्ठा pci_ops अणु
+	पूर्णांक (*add_bus)(काष्ठा pci_bus *bus);
+	व्योम (*हटाओ_bus)(काष्ठा pci_bus *bus);
+	व्योम __iomem *(*map_bus)(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where);
+	पूर्णांक (*पढ़ो)(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where, पूर्णांक size, u32 *val);
+	पूर्णांक (*ग_लिखो)(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where, पूर्णांक size, u32 val);
+पूर्ण;
 
 /*
- * ACPI needs to be able to access PCI config space before we've done a
- * PCI bus scan and created pci_bus structures.
+ * ACPI needs to be able to access PCI config space beक्रमe we've करोne a
+ * PCI bus scan and created pci_bus काष्ठाures.
  */
-int raw_pci_read(unsigned int domain, unsigned int bus, unsigned int devfn,
-		 int reg, int len, u32 *val);
-int raw_pci_write(unsigned int domain, unsigned int bus, unsigned int devfn,
-		  int reg, int len, u32 val);
+पूर्णांक raw_pci_पढ़ो(अचिन्हित पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक devfn,
+		 पूर्णांक reg, पूर्णांक len, u32 *val);
+पूर्णांक raw_pci_ग_लिखो(अचिन्हित पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक devfn,
+		  पूर्णांक reg, पूर्णांक len, u32 val);
 
-#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-typedef u64 pci_bus_addr_t;
-#else
-typedef u32 pci_bus_addr_t;
-#endif
+#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
+प्रकार u64 pci_bus_addr_t;
+#अन्यथा
+प्रकार u32 pci_bus_addr_t;
+#पूर्ण_अगर
 
-struct pci_bus_region {
+काष्ठा pci_bus_region अणु
 	pci_bus_addr_t	start;
 	pci_bus_addr_t	end;
-};
+पूर्ण;
 
-struct pci_dynids {
+काष्ठा pci_dynids अणु
 	spinlock_t		lock;	/* Protects list, index */
-	struct list_head	list;	/* For IDs added at runtime */
-};
+	काष्ठा list_head	list;	/* For IDs added at runसमय */
+पूर्ण;
 
 
 /*
  * PCI Error Recovery System (PCI-ERS).  If a PCI device driver provides
- * a set of callbacks in struct pci_error_handlers, that device driver
- * will be notified of PCI bus errors, and will be driven to recovery
+ * a set of callbacks in काष्ठा pci_error_handlers, that device driver
+ * will be notअगरied of PCI bus errors, and will be driven to recovery
  * when an error occurs.
  */
 
-typedef unsigned int __bitwise pci_ers_result_t;
+प्रकार अचिन्हित पूर्णांक __bitwise pci_ers_result_t;
 
-enum pci_ers_result {
+क्रमागत pci_ers_result अणु
 	/* No result/none/not supported in device driver */
-	PCI_ERS_RESULT_NONE = (__force pci_ers_result_t) 1,
+	PCI_ERS_RESULT_NONE = (__क्रमce pci_ers_result_t) 1,
 
 	/* Device driver can recover without slot reset */
-	PCI_ERS_RESULT_CAN_RECOVER = (__force pci_ers_result_t) 2,
+	PCI_ERS_RESULT_CAN_RECOVER = (__क्रमce pci_ers_result_t) 2,
 
 	/* Device driver wants slot to be reset */
-	PCI_ERS_RESULT_NEED_RESET = (__force pci_ers_result_t) 3,
+	PCI_ERS_RESULT_NEED_RESET = (__क्रमce pci_ers_result_t) 3,
 
 	/* Device has completely failed, is unrecoverable */
-	PCI_ERS_RESULT_DISCONNECT = (__force pci_ers_result_t) 4,
+	PCI_ERS_RESULT_DISCONNECT = (__क्रमce pci_ers_result_t) 4,
 
 	/* Device driver is fully recovered and operational */
-	PCI_ERS_RESULT_RECOVERED = (__force pci_ers_result_t) 5,
+	PCI_ERS_RESULT_RECOVERED = (__क्रमce pci_ers_result_t) 5,
 
-	/* No AER capabilities registered for the driver */
-	PCI_ERS_RESULT_NO_AER_DRIVER = (__force pci_ers_result_t) 6,
-};
+	/* No AER capabilities रेजिस्टरed क्रम the driver */
+	PCI_ERS_RESULT_NO_AER_DRIVER = (__क्रमce pci_ers_result_t) 6,
+पूर्ण;
 
 /* PCI bus error event callbacks */
-struct pci_error_handlers {
+काष्ठा pci_error_handlers अणु
 	/* PCI bus error detected on this device */
-	pci_ers_result_t (*error_detected)(struct pci_dev *dev,
+	pci_ers_result_t (*error_detected)(काष्ठा pci_dev *dev,
 					   pci_channel_state_t error);
 
 	/* MMIO has been re-enabled, but not DMA */
-	pci_ers_result_t (*mmio_enabled)(struct pci_dev *dev);
+	pci_ers_result_t (*mmio_enabled)(काष्ठा pci_dev *dev);
 
 	/* PCI slot has been reset */
-	pci_ers_result_t (*slot_reset)(struct pci_dev *dev);
+	pci_ers_result_t (*slot_reset)(काष्ठा pci_dev *dev);
 
 	/* PCI function reset prepare or completed */
-	void (*reset_prepare)(struct pci_dev *dev);
-	void (*reset_done)(struct pci_dev *dev);
+	व्योम (*reset_prepare)(काष्ठा pci_dev *dev);
+	व्योम (*reset_करोne)(काष्ठा pci_dev *dev);
 
 	/* Device driver may resume normal operations */
-	void (*resume)(struct pci_dev *dev);
-};
+	व्योम (*resume)(काष्ठा pci_dev *dev);
+पूर्ण;
 
 
-struct module;
+काष्ठा module;
 
 /**
- * struct pci_driver - PCI driver structure
- * @node:	List of driver structures.
+ * काष्ठा pci_driver - PCI driver काष्ठाure
+ * @node:	List of driver काष्ठाures.
  * @name:	Driver name.
- * @id_table:	Pointer to table of device IDs the driver is
- *		interested in.  Most drivers should export this
+ * @id_table:	Poपूर्णांकer to table of device IDs the driver is
+ *		पूर्णांकerested in.  Most drivers should export this
  *		table using MODULE_DEVICE_TABLE(pci,...).
- * @probe:	This probing function gets called (during execution
- *		of pci_register_driver() for already existing
- *		devices or later if a new device gets inserted) for
+ * @probe:	This probing function माला_लो called (during execution
+ *		of pci_रेजिस्टर_driver() क्रम alपढ़ोy existing
+ *		devices or later अगर a new device माला_लो inserted) क्रम
  *		all PCI devices which match the ID table and are not
- *		"owned" by the other drivers yet. This function gets
- *		passed a "struct pci_dev \*" for each device whose
+ *		"owned" by the other drivers yet. This function माला_लो
+ *		passed a "struct pci_dev \*" क्रम each device whose
  *		entry in the ID table matches the device. The probe
- *		function returns zero when the driver chooses to
+ *		function वापसs zero when the driver chooses to
  *		take "ownership" of the device or an error code
  *		(negative number) otherwise.
- *		The probe function always gets called from process
+ *		The probe function always माला_लो called from process
  *		context, so it can sleep.
- * @remove:	The remove() function gets called whenever a device
- *		being handled by this driver is removed (either during
+ * @हटाओ:	The हटाओ() function माला_लो called whenever a device
+ *		being handled by this driver is हटाओd (either during
  *		deregistration of the driver or when it's manually
  *		pulled out of a hot-pluggable slot).
- *		The remove function always gets called from process
+ *		The हटाओ function always माला_लो called from process
  *		context, so it can sleep.
- * @suspend:	Put device into low power state.
- * @resume:	Wake device from low power state.
- *		(Please see Documentation/power/pci.rst for descriptions
+ * @suspend:	Put device पूर्णांकo low घातer state.
+ * @resume:	Wake device from low घातer state.
+ *		(Please see Documentation/घातer/pci.rst क्रम descriptions
  *		of PCI Power Management and the related functions.)
- * @shutdown:	Hook into reboot_notifier_list (kernel/sys.c).
+ * @shutकरोwn:	Hook पूर्णांकo reboot_notअगरier_list (kernel/sys.c).
  *		Intended to stop any idling DMA operations.
- *		Useful for enabling wake-on-lan (NIC) or changing
- *		the power state of a device before reboot.
+ *		Useful क्रम enabling wake-on-lan (NIC) or changing
+ *		the घातer state of a device beक्रमe reboot.
  *		e.g. drivers/net/e100.c.
  * @sriov_configure: Optional driver callback to allow configuration of
  *		number of VFs to enable via sysfs "sriov_numvfs" file.
  * @sriov_set_msix_vec_count: PF Driver callback to change number of MSI-X
  *              vectors on a VF. Triggered via sysfs "sriov_vf_msix_count".
  *              This will change MSI-X Table Size in the VF Message Control
- *              registers.
+ *              रेजिस्टरs.
  * @sriov_get_vf_total_msix: PF driver callback to get the total number of
- *              MSI-X vectors available for distribution to the VFs.
+ *              MSI-X vectors available क्रम distribution to the VFs.
  * @err_handler: See Documentation/PCI/pci-error-recovery.rst
  * @groups:	Sysfs attribute groups.
- * @driver:	Driver model structure.
+ * @driver:	Driver model काष्ठाure.
  * @dynids:	List of dynamically added device IDs.
  */
-struct pci_driver {
-	struct list_head	node;
-	const char		*name;
-	const struct pci_device_id *id_table;	/* Must be non-NULL for probe to be called */
-	int  (*probe)(struct pci_dev *dev, const struct pci_device_id *id);	/* New device inserted */
-	void (*remove)(struct pci_dev *dev);	/* Device removed (NULL if not a hot-plug capable driver) */
-	int  (*suspend)(struct pci_dev *dev, pm_message_t state);	/* Device suspended */
-	int  (*resume)(struct pci_dev *dev);	/* Device woken up */
-	void (*shutdown)(struct pci_dev *dev);
-	int  (*sriov_configure)(struct pci_dev *dev, int num_vfs); /* On PF */
-	int  (*sriov_set_msix_vec_count)(struct pci_dev *vf, int msix_vec_count); /* On PF */
-	u32  (*sriov_get_vf_total_msix)(struct pci_dev *pf);
-	const struct pci_error_handlers *err_handler;
-	const struct attribute_group **groups;
-	struct device_driver	driver;
-	struct pci_dynids	dynids;
-};
+काष्ठा pci_driver अणु
+	काष्ठा list_head	node;
+	स्थिर अक्षर		*name;
+	स्थिर काष्ठा pci_device_id *id_table;	/* Must be non-शून्य क्रम probe to be called */
+	पूर्णांक  (*probe)(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id);	/* New device inserted */
+	व्योम (*हटाओ)(काष्ठा pci_dev *dev);	/* Device हटाओd (शून्य अगर not a hot-plug capable driver) */
+	पूर्णांक  (*suspend)(काष्ठा pci_dev *dev, pm_message_t state);	/* Device suspended */
+	पूर्णांक  (*resume)(काष्ठा pci_dev *dev);	/* Device woken up */
+	व्योम (*shutकरोwn)(काष्ठा pci_dev *dev);
+	पूर्णांक  (*sriov_configure)(काष्ठा pci_dev *dev, पूर्णांक num_vfs); /* On PF */
+	पूर्णांक  (*sriov_set_msix_vec_count)(काष्ठा pci_dev *vf, पूर्णांक msix_vec_count); /* On PF */
+	u32  (*sriov_get_vf_total_msix)(काष्ठा pci_dev *pf);
+	स्थिर काष्ठा pci_error_handlers *err_handler;
+	स्थिर काष्ठा attribute_group **groups;
+	काष्ठा device_driver	driver;
+	काष्ठा pci_dynids	dynids;
+पूर्ण;
 
-#define	to_pci_driver(drv) container_of(drv, struct pci_driver, driver)
+#घोषणा	to_pci_driver(drv) container_of(drv, काष्ठा pci_driver, driver)
 
 /**
- * PCI_DEVICE - macro used to describe a specific PCI device
- * @vend: the 16 bit PCI Vendor ID
+ * PCI_DEVICE - macro used to describe a specअगरic PCI device
+ * @vend: the 16 bit PCI Venकरोr ID
  * @dev: the 16 bit PCI Device ID
  *
- * This macro is used to create a struct pci_device_id that matches a
- * specific device.  The subvendor and subdevice fields will be set to
+ * This macro is used to create a काष्ठा pci_device_id that matches a
+ * specअगरic device.  The subvenकरोr and subdevice fields will be set to
  * PCI_ANY_ID.
  */
-#define PCI_DEVICE(vend,dev) \
-	.vendor = (vend), .device = (dev), \
-	.subvendor = PCI_ANY_ID, .subdevice = PCI_ANY_ID
+#घोषणा PCI_DEVICE(vend,dev) \
+	.venकरोr = (vend), .device = (dev), \
+	.subvenकरोr = PCI_ANY_ID, .subdevice = PCI_ANY_ID
 
 /**
- * PCI_DEVICE_SUB - macro used to describe a specific PCI device with subsystem
- * @vend: the 16 bit PCI Vendor ID
+ * PCI_DEVICE_SUB - macro used to describe a specअगरic PCI device with subप्रणाली
+ * @vend: the 16 bit PCI Venकरोr ID
  * @dev: the 16 bit PCI Device ID
- * @subvend: the 16 bit PCI Subvendor ID
+ * @subvend: the 16 bit PCI Subvenकरोr ID
  * @subdev: the 16 bit PCI Subdevice ID
  *
- * This macro is used to create a struct pci_device_id that matches a
- * specific device with subsystem information.
+ * This macro is used to create a काष्ठा pci_device_id that matches a
+ * specअगरic device with subप्रणाली inक्रमmation.
  */
-#define PCI_DEVICE_SUB(vend, dev, subvend, subdev) \
-	.vendor = (vend), .device = (dev), \
-	.subvendor = (subvend), .subdevice = (subdev)
+#घोषणा PCI_DEVICE_SUB(vend, dev, subvend, subdev) \
+	.venकरोr = (vend), .device = (dev), \
+	.subvenकरोr = (subvend), .subdevice = (subdev)
 
 /**
- * PCI_DEVICE_CLASS - macro used to describe a specific PCI device class
- * @dev_class: the class, subclass, prog-if triple for this device
- * @dev_class_mask: the class mask for this device
+ * PCI_DEVICE_CLASS - macro used to describe a specअगरic PCI device class
+ * @dev_class: the class, subclass, prog-अगर triple क्रम this device
+ * @dev_class_mask: the class mask क्रम this device
  *
- * This macro is used to create a struct pci_device_id that matches a
- * specific PCI class.  The vendor, device, subvendor, and subdevice
+ * This macro is used to create a काष्ठा pci_device_id that matches a
+ * specअगरic PCI class.  The venकरोr, device, subvenकरोr, and subdevice
  * fields will be set to PCI_ANY_ID.
  */
-#define PCI_DEVICE_CLASS(dev_class,dev_class_mask) \
+#घोषणा PCI_DEVICE_CLASS(dev_class,dev_class_mask) \
 	.class = (dev_class), .class_mask = (dev_class_mask), \
-	.vendor = PCI_ANY_ID, .device = PCI_ANY_ID, \
-	.subvendor = PCI_ANY_ID, .subdevice = PCI_ANY_ID
+	.venकरोr = PCI_ANY_ID, .device = PCI_ANY_ID, \
+	.subvenकरोr = PCI_ANY_ID, .subdevice = PCI_ANY_ID
 
 /**
- * PCI_VDEVICE - macro used to describe a specific PCI device in short form
- * @vend: the vendor name
+ * PCI_VDEVICE - macro used to describe a specअगरic PCI device in लघु क्रमm
+ * @vend: the venकरोr name
  * @dev: the 16 bit PCI Device ID
  *
- * This macro is used to create a struct pci_device_id that matches a
- * specific PCI device.  The subvendor, and subdevice fields will be set
+ * This macro is used to create a काष्ठा pci_device_id that matches a
+ * specअगरic PCI device.  The subvenकरोr, and subdevice fields will be set
  * to PCI_ANY_ID. The macro allows the next field to follow as the device
- * private data.
+ * निजी data.
  */
-#define PCI_VDEVICE(vend, dev) \
-	.vendor = PCI_VENDOR_ID_##vend, .device = (dev), \
-	.subvendor = PCI_ANY_ID, .subdevice = PCI_ANY_ID, 0, 0
+#घोषणा PCI_VDEVICE(vend, dev) \
+	.venकरोr = PCI_VENDOR_ID_##vend, .device = (dev), \
+	.subvenकरोr = PCI_ANY_ID, .subdevice = PCI_ANY_ID, 0, 0
 
 /**
- * PCI_DEVICE_DATA - macro used to describe a specific PCI device in very short form
- * @vend: the vendor name (without PCI_VENDOR_ID_ prefix)
+ * PCI_DEVICE_DATA - macro used to describe a specअगरic PCI device in very लघु क्रमm
+ * @vend: the venकरोr name (without PCI_VENDOR_ID_ prefix)
  * @dev: the device name (without PCI_DEVICE_ID_<vend>_ prefix)
  * @data: the driver data to be filled
  *
- * This macro is used to create a struct pci_device_id that matches a
- * specific PCI device.  The subvendor, and subdevice fields will be set
+ * This macro is used to create a काष्ठा pci_device_id that matches a
+ * specअगरic PCI device.  The subvenकरोr, and subdevice fields will be set
  * to PCI_ANY_ID.
  */
-#define PCI_DEVICE_DATA(vend, dev, data) \
-	.vendor = PCI_VENDOR_ID_##vend, .device = PCI_DEVICE_ID_##vend##_##dev, \
-	.subvendor = PCI_ANY_ID, .subdevice = PCI_ANY_ID, 0, 0, \
-	.driver_data = (kernel_ulong_t)(data)
+#घोषणा PCI_DEVICE_DATA(vend, dev, data) \
+	.venकरोr = PCI_VENDOR_ID_##vend, .device = PCI_DEVICE_ID_##vend##_##dev, \
+	.subvenकरोr = PCI_ANY_ID, .subdevice = PCI_ANY_ID, 0, 0, \
+	.driver_data = (kernel_uदीर्घ_t)(data)
 
-enum {
+क्रमागत अणु
 	PCI_REASSIGN_ALL_RSRC	= 0x00000001,	/* Ignore firmware setup */
 	PCI_REASSIGN_ALL_BUS	= 0x00000002,	/* Reassign all bus numbers */
 	PCI_PROBE_ONLY		= 0x00000004,	/* Use existing setup */
-	PCI_CAN_SKIP_ISA_ALIGN	= 0x00000008,	/* Don't do ISA alignment */
-	PCI_ENABLE_PROC_DOMAINS	= 0x00000010,	/* Enable domains in /proc */
-	PCI_COMPAT_DOMAIN_0	= 0x00000020,	/* ... except domain 0 */
+	PCI_CAN_SKIP_ISA_ALIGN	= 0x00000008,	/* Don't करो ISA alignment */
+	PCI_ENABLE_PROC_DOMAINS	= 0x00000010,	/* Enable करोमुख्यs in /proc */
+	PCI_COMPAT_DOMAIN_0	= 0x00000020,	/* ... except करोमुख्य 0 */
 	PCI_SCAN_ALL_PCIE_DEVS	= 0x00000040,	/* Scan all, not just dev 0 */
-};
+पूर्ण;
 
-#define PCI_IRQ_LEGACY		(1 << 0) /* Allow legacy interrupts */
-#define PCI_IRQ_MSI		(1 << 1) /* Allow MSI interrupts */
-#define PCI_IRQ_MSIX		(1 << 2) /* Allow MSI-X interrupts */
-#define PCI_IRQ_AFFINITY	(1 << 3) /* Auto-assign affinity */
+#घोषणा PCI_IRQ_LEGACY		(1 << 0) /* Allow legacy पूर्णांकerrupts */
+#घोषणा PCI_IRQ_MSI		(1 << 1) /* Allow MSI पूर्णांकerrupts */
+#घोषणा PCI_IRQ_MSIX		(1 << 2) /* Allow MSI-X पूर्णांकerrupts */
+#घोषणा PCI_IRQ_AFFINITY	(1 << 3) /* Auto-assign affinity */
 
-/* These external functions are only available when PCI support is enabled */
-#ifdef CONFIG_PCI
+/* These बाह्यal functions are only available when PCI support is enabled */
+#अगर_घोषित CONFIG_PCI
 
-extern unsigned int pci_flags;
+बाह्य अचिन्हित पूर्णांक pci_flags;
 
-static inline void pci_set_flags(int flags) { pci_flags = flags; }
-static inline void pci_add_flags(int flags) { pci_flags |= flags; }
-static inline void pci_clear_flags(int flags) { pci_flags &= ~flags; }
-static inline int pci_has_flag(int flag) { return pci_flags & flag; }
+अटल अंतरभूत व्योम pci_set_flags(पूर्णांक flags) अणु pci_flags = flags; पूर्ण
+अटल अंतरभूत व्योम pci_add_flags(पूर्णांक flags) अणु pci_flags |= flags; पूर्ण
+अटल अंतरभूत व्योम pci_clear_flags(पूर्णांक flags) अणु pci_flags &= ~flags; पूर्ण
+अटल अंतरभूत पूर्णांक pci_has_flag(पूर्णांक flag) अणु वापस pci_flags & flag; पूर्ण
 
-void pcie_bus_configure_settings(struct pci_bus *bus);
+व्योम pcie_bus_configure_settings(काष्ठा pci_bus *bus);
 
-enum pcie_bus_config_types {
+क्रमागत pcie_bus_config_types अणु
 	PCIE_BUS_TUNE_OFF,	/* Don't touch MPS at all */
 	PCIE_BUS_DEFAULT,	/* Ensure MPS matches upstream bridge */
-	PCIE_BUS_SAFE,		/* Use largest MPS boot-time devices support */
-	PCIE_BUS_PERFORMANCE,	/* Use MPS and MRRS for best performance */
-	PCIE_BUS_PEER2PEER,	/* Set MPS = 128 for all devices */
-};
+	PCIE_BUS_SAFE,		/* Use largest MPS boot-समय devices support */
+	PCIE_BUS_PERFORMANCE,	/* Use MPS and MRRS क्रम best perक्रमmance */
+	PCIE_BUS_PEER2PEER,	/* Set MPS = 128 क्रम all devices */
+पूर्ण;
 
-extern enum pcie_bus_config_types pcie_bus_config;
+बाह्य क्रमागत pcie_bus_config_types pcie_bus_config;
 
-extern struct bus_type pci_bus_type;
+बाह्य काष्ठा bus_type pci_bus_type;
 
-/* Do NOT directly access these two variables, unless you are arch-specific PCI
+/* Do NOT directly access these two variables, unless you are arch-specअगरic PCI
  * code, or PCI core code. */
-extern struct list_head pci_root_buses;	/* List of all known PCI buses */
-/* Some device drivers need know if PCI is initiated */
-int no_pci_devices(void);
+बाह्य काष्ठा list_head pci_root_buses;	/* List of all known PCI buses */
+/* Some device drivers need know अगर PCI is initiated */
+पूर्णांक no_pci_devices(व्योम);
 
-void pcibios_resource_survey_bus(struct pci_bus *bus);
-void pcibios_bus_add_device(struct pci_dev *pdev);
-void pcibios_add_bus(struct pci_bus *bus);
-void pcibios_remove_bus(struct pci_bus *bus);
-void pcibios_fixup_bus(struct pci_bus *);
-int __must_check pcibios_enable_device(struct pci_dev *, int mask);
-/* Architecture-specific versions may override this (weak) */
-char *pcibios_setup(char *str);
+व्योम pcibios_resource_survey_bus(काष्ठा pci_bus *bus);
+व्योम pcibios_bus_add_device(काष्ठा pci_dev *pdev);
+व्योम pcibios_add_bus(काष्ठा pci_bus *bus);
+व्योम pcibios_हटाओ_bus(काष्ठा pci_bus *bus);
+व्योम pcibios_fixup_bus(काष्ठा pci_bus *);
+पूर्णांक __must_check pcibios_enable_device(काष्ठा pci_dev *, पूर्णांक mask);
+/* Architecture-specअगरic versions may override this (weak) */
+अक्षर *pcibios_setup(अक्षर *str);
 
 /* Used only when drivers/pci/setup.c is used */
-resource_size_t pcibios_align_resource(void *, const struct resource *,
-				resource_size_t,
-				resource_size_t);
+resource_माप_प्रकार pcibios_align_resource(व्योम *, स्थिर काष्ठा resource *,
+				resource_माप_प्रकार,
+				resource_माप_प्रकार);
 
 /* Weak but can be overridden by arch */
-void pci_fixup_cardbus(struct pci_bus *);
+व्योम pci_fixup_cardbus(काष्ठा pci_bus *);
 
-/* Generic PCI functions used internally */
+/* Generic PCI functions used पूर्णांकernally */
 
-void pcibios_resource_to_bus(struct pci_bus *bus, struct pci_bus_region *region,
-			     struct resource *res);
-void pcibios_bus_to_resource(struct pci_bus *bus, struct resource *res,
-			     struct pci_bus_region *region);
-void pcibios_scan_specific_bus(int busn);
-struct pci_bus *pci_find_bus(int domain, int busnr);
-void pci_bus_add_devices(const struct pci_bus *bus);
-struct pci_bus *pci_scan_bus(int bus, struct pci_ops *ops, void *sysdata);
-struct pci_bus *pci_create_root_bus(struct device *parent, int bus,
-				    struct pci_ops *ops, void *sysdata,
-				    struct list_head *resources);
-int pci_host_probe(struct pci_host_bridge *bridge);
-int pci_bus_insert_busn_res(struct pci_bus *b, int bus, int busmax);
-int pci_bus_update_busn_res_end(struct pci_bus *b, int busmax);
-void pci_bus_release_busn_res(struct pci_bus *b);
-struct pci_bus *pci_scan_root_bus(struct device *parent, int bus,
-				  struct pci_ops *ops, void *sysdata,
-				  struct list_head *resources);
-int pci_scan_root_bus_bridge(struct pci_host_bridge *bridge);
-struct pci_bus *pci_add_new_bus(struct pci_bus *parent, struct pci_dev *dev,
-				int busnr);
-struct pci_slot *pci_create_slot(struct pci_bus *parent, int slot_nr,
-				 const char *name,
-				 struct hotplug_slot *hotplug);
-void pci_destroy_slot(struct pci_slot *slot);
-#ifdef CONFIG_SYSFS
-void pci_dev_assign_slot(struct pci_dev *dev);
-#else
-static inline void pci_dev_assign_slot(struct pci_dev *dev) { }
-#endif
-int pci_scan_slot(struct pci_bus *bus, int devfn);
-struct pci_dev *pci_scan_single_device(struct pci_bus *bus, int devfn);
-void pci_device_add(struct pci_dev *dev, struct pci_bus *bus);
-unsigned int pci_scan_child_bus(struct pci_bus *bus);
-void pci_bus_add_device(struct pci_dev *dev);
-void pci_read_bridge_bases(struct pci_bus *child);
-struct resource *pci_find_parent_resource(const struct pci_dev *dev,
-					  struct resource *res);
-u8 pci_swizzle_interrupt_pin(const struct pci_dev *dev, u8 pin);
-int pci_get_interrupt_pin(struct pci_dev *dev, struct pci_dev **bridge);
-u8 pci_common_swizzle(struct pci_dev *dev, u8 *pinp);
-struct pci_dev *pci_dev_get(struct pci_dev *dev);
-void pci_dev_put(struct pci_dev *dev);
-void pci_remove_bus(struct pci_bus *b);
-void pci_stop_and_remove_bus_device(struct pci_dev *dev);
-void pci_stop_and_remove_bus_device_locked(struct pci_dev *dev);
-void pci_stop_root_bus(struct pci_bus *bus);
-void pci_remove_root_bus(struct pci_bus *bus);
-void pci_setup_cardbus(struct pci_bus *bus);
-void pcibios_setup_bridge(struct pci_bus *bus, unsigned long type);
-void pci_sort_breadthfirst(void);
-#define dev_is_pci(d) ((d)->bus == &pci_bus_type)
-#define dev_is_pf(d) ((dev_is_pci(d) ? to_pci_dev(d)->is_physfn : false))
+व्योम pcibios_resource_to_bus(काष्ठा pci_bus *bus, काष्ठा pci_bus_region *region,
+			     काष्ठा resource *res);
+व्योम pcibios_bus_to_resource(काष्ठा pci_bus *bus, काष्ठा resource *res,
+			     काष्ठा pci_bus_region *region);
+व्योम pcibios_scan_specअगरic_bus(पूर्णांक busn);
+काष्ठा pci_bus *pci_find_bus(पूर्णांक करोमुख्य, पूर्णांक busnr);
+व्योम pci_bus_add_devices(स्थिर काष्ठा pci_bus *bus);
+काष्ठा pci_bus *pci_scan_bus(पूर्णांक bus, काष्ठा pci_ops *ops, व्योम *sysdata);
+काष्ठा pci_bus *pci_create_root_bus(काष्ठा device *parent, पूर्णांक bus,
+				    काष्ठा pci_ops *ops, व्योम *sysdata,
+				    काष्ठा list_head *resources);
+पूर्णांक pci_host_probe(काष्ठा pci_host_bridge *bridge);
+पूर्णांक pci_bus_insert_busn_res(काष्ठा pci_bus *b, पूर्णांक bus, पूर्णांक busmax);
+पूर्णांक pci_bus_update_busn_res_end(काष्ठा pci_bus *b, पूर्णांक busmax);
+व्योम pci_bus_release_busn_res(काष्ठा pci_bus *b);
+काष्ठा pci_bus *pci_scan_root_bus(काष्ठा device *parent, पूर्णांक bus,
+				  काष्ठा pci_ops *ops, व्योम *sysdata,
+				  काष्ठा list_head *resources);
+पूर्णांक pci_scan_root_bus_bridge(काष्ठा pci_host_bridge *bridge);
+काष्ठा pci_bus *pci_add_new_bus(काष्ठा pci_bus *parent, काष्ठा pci_dev *dev,
+				पूर्णांक busnr);
+काष्ठा pci_slot *pci_create_slot(काष्ठा pci_bus *parent, पूर्णांक slot_nr,
+				 स्थिर अक्षर *name,
+				 काष्ठा hotplug_slot *hotplug);
+व्योम pci_destroy_slot(काष्ठा pci_slot *slot);
+#अगर_घोषित CONFIG_SYSFS
+व्योम pci_dev_assign_slot(काष्ठा pci_dev *dev);
+#अन्यथा
+अटल अंतरभूत व्योम pci_dev_assign_slot(काष्ठा pci_dev *dev) अणु पूर्ण
+#पूर्ण_अगर
+पूर्णांक pci_scan_slot(काष्ठा pci_bus *bus, पूर्णांक devfn);
+काष्ठा pci_dev *pci_scan_single_device(काष्ठा pci_bus *bus, पूर्णांक devfn);
+व्योम pci_device_add(काष्ठा pci_dev *dev, काष्ठा pci_bus *bus);
+अचिन्हित पूर्णांक pci_scan_child_bus(काष्ठा pci_bus *bus);
+व्योम pci_bus_add_device(काष्ठा pci_dev *dev);
+व्योम pci_पढ़ो_bridge_bases(काष्ठा pci_bus *child);
+काष्ठा resource *pci_find_parent_resource(स्थिर काष्ठा pci_dev *dev,
+					  काष्ठा resource *res);
+u8 pci_swizzle_पूर्णांकerrupt_pin(स्थिर काष्ठा pci_dev *dev, u8 pin);
+पूर्णांक pci_get_पूर्णांकerrupt_pin(काष्ठा pci_dev *dev, काष्ठा pci_dev **bridge);
+u8 pci_common_swizzle(काष्ठा pci_dev *dev, u8 *pinp);
+काष्ठा pci_dev *pci_dev_get(काष्ठा pci_dev *dev);
+व्योम pci_dev_put(काष्ठा pci_dev *dev);
+व्योम pci_हटाओ_bus(काष्ठा pci_bus *b);
+व्योम pci_stop_and_हटाओ_bus_device(काष्ठा pci_dev *dev);
+व्योम pci_stop_and_हटाओ_bus_device_locked(काष्ठा pci_dev *dev);
+व्योम pci_stop_root_bus(काष्ठा pci_bus *bus);
+व्योम pci_हटाओ_root_bus(काष्ठा pci_bus *bus);
+व्योम pci_setup_cardbus(काष्ठा pci_bus *bus);
+व्योम pcibios_setup_bridge(काष्ठा pci_bus *bus, अचिन्हित दीर्घ type);
+व्योम pci_sort_bपढ़ोthfirst(व्योम);
+#घोषणा dev_is_pci(d) ((d)->bus == &pci_bus_type)
+#घोषणा dev_is_pf(d) ((dev_is_pci(d) ? to_pci_dev(d)->is_physfn : false))
 
 /* Generic PCI functions exported to card drivers */
 
-u8 pci_bus_find_capability(struct pci_bus *bus, unsigned int devfn, int cap);
-u8 pci_find_capability(struct pci_dev *dev, int cap);
-u8 pci_find_next_capability(struct pci_dev *dev, u8 pos, int cap);
-u8 pci_find_ht_capability(struct pci_dev *dev, int ht_cap);
-u8 pci_find_next_ht_capability(struct pci_dev *dev, u8 pos, int ht_cap);
-u16 pci_find_ext_capability(struct pci_dev *dev, int cap);
-u16 pci_find_next_ext_capability(struct pci_dev *dev, u16 pos, int cap);
-struct pci_bus *pci_find_next_bus(const struct pci_bus *from);
-u16 pci_find_vsec_capability(struct pci_dev *dev, u16 vendor, int cap);
+u8 pci_bus_find_capability(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक cap);
+u8 pci_find_capability(काष्ठा pci_dev *dev, पूर्णांक cap);
+u8 pci_find_next_capability(काष्ठा pci_dev *dev, u8 pos, पूर्णांक cap);
+u8 pci_find_ht_capability(काष्ठा pci_dev *dev, पूर्णांक ht_cap);
+u8 pci_find_next_ht_capability(काष्ठा pci_dev *dev, u8 pos, पूर्णांक ht_cap);
+u16 pci_find_ext_capability(काष्ठा pci_dev *dev, पूर्णांक cap);
+u16 pci_find_next_ext_capability(काष्ठा pci_dev *dev, u16 pos, पूर्णांक cap);
+काष्ठा pci_bus *pci_find_next_bus(स्थिर काष्ठा pci_bus *from);
+u16 pci_find_vsec_capability(काष्ठा pci_dev *dev, u16 venकरोr, पूर्णांक cap);
 
-u64 pci_get_dsn(struct pci_dev *dev);
+u64 pci_get_dsn(काष्ठा pci_dev *dev);
 
-struct pci_dev *pci_get_device(unsigned int vendor, unsigned int device,
-			       struct pci_dev *from);
-struct pci_dev *pci_get_subsys(unsigned int vendor, unsigned int device,
-			       unsigned int ss_vendor, unsigned int ss_device,
-			       struct pci_dev *from);
-struct pci_dev *pci_get_slot(struct pci_bus *bus, unsigned int devfn);
-struct pci_dev *pci_get_domain_bus_and_slot(int domain, unsigned int bus,
-					    unsigned int devfn);
-struct pci_dev *pci_get_class(unsigned int class, struct pci_dev *from);
-int pci_dev_present(const struct pci_device_id *ids);
+काष्ठा pci_dev *pci_get_device(अचिन्हित पूर्णांक venकरोr, अचिन्हित पूर्णांक device,
+			       काष्ठा pci_dev *from);
+काष्ठा pci_dev *pci_get_subsys(अचिन्हित पूर्णांक venकरोr, अचिन्हित पूर्णांक device,
+			       अचिन्हित पूर्णांक ss_venकरोr, अचिन्हित पूर्णांक ss_device,
+			       काष्ठा pci_dev *from);
+काष्ठा pci_dev *pci_get_slot(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn);
+काष्ठा pci_dev *pci_get_करोमुख्य_bus_and_slot(पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus,
+					    अचिन्हित पूर्णांक devfn);
+काष्ठा pci_dev *pci_get_class(अचिन्हित पूर्णांक class, काष्ठा pci_dev *from);
+पूर्णांक pci_dev_present(स्थिर काष्ठा pci_device_id *ids);
 
-int pci_bus_read_config_byte(struct pci_bus *bus, unsigned int devfn,
-			     int where, u8 *val);
-int pci_bus_read_config_word(struct pci_bus *bus, unsigned int devfn,
-			     int where, u16 *val);
-int pci_bus_read_config_dword(struct pci_bus *bus, unsigned int devfn,
-			      int where, u32 *val);
-int pci_bus_write_config_byte(struct pci_bus *bus, unsigned int devfn,
-			      int where, u8 val);
-int pci_bus_write_config_word(struct pci_bus *bus, unsigned int devfn,
-			      int where, u16 val);
-int pci_bus_write_config_dword(struct pci_bus *bus, unsigned int devfn,
-			       int where, u32 val);
+पूर्णांक pci_bus_पढ़ो_config_byte(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			     पूर्णांक where, u8 *val);
+पूर्णांक pci_bus_पढ़ो_config_word(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			     पूर्णांक where, u16 *val);
+पूर्णांक pci_bus_पढ़ो_config_dword(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			      पूर्णांक where, u32 *val);
+पूर्णांक pci_bus_ग_लिखो_config_byte(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			      पूर्णांक where, u8 val);
+पूर्णांक pci_bus_ग_लिखो_config_word(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			      पूर्णांक where, u16 val);
+पूर्णांक pci_bus_ग_लिखो_config_dword(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			       पूर्णांक where, u32 val);
 
-int pci_generic_config_read(struct pci_bus *bus, unsigned int devfn,
-			    int where, int size, u32 *val);
-int pci_generic_config_write(struct pci_bus *bus, unsigned int devfn,
-			    int where, int size, u32 val);
-int pci_generic_config_read32(struct pci_bus *bus, unsigned int devfn,
-			      int where, int size, u32 *val);
-int pci_generic_config_write32(struct pci_bus *bus, unsigned int devfn,
-			       int where, int size, u32 val);
+पूर्णांक pci_generic_config_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			    पूर्णांक where, पूर्णांक size, u32 *val);
+पूर्णांक pci_generic_config_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			    पूर्णांक where, पूर्णांक size, u32 val);
+पूर्णांक pci_generic_config_पढ़ो32(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			      पूर्णांक where, पूर्णांक size, u32 *val);
+पूर्णांक pci_generic_config_ग_लिखो32(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			       पूर्णांक where, पूर्णांक size, u32 val);
 
-struct pci_ops *pci_bus_set_ops(struct pci_bus *bus, struct pci_ops *ops);
+काष्ठा pci_ops *pci_bus_set_ops(काष्ठा pci_bus *bus, काष्ठा pci_ops *ops);
 
-int pci_read_config_byte(const struct pci_dev *dev, int where, u8 *val);
-int pci_read_config_word(const struct pci_dev *dev, int where, u16 *val);
-int pci_read_config_dword(const struct pci_dev *dev, int where, u32 *val);
-int pci_write_config_byte(const struct pci_dev *dev, int where, u8 val);
-int pci_write_config_word(const struct pci_dev *dev, int where, u16 val);
-int pci_write_config_dword(const struct pci_dev *dev, int where, u32 val);
+पूर्णांक pci_पढ़ो_config_byte(स्थिर काष्ठा pci_dev *dev, पूर्णांक where, u8 *val);
+पूर्णांक pci_पढ़ो_config_word(स्थिर काष्ठा pci_dev *dev, पूर्णांक where, u16 *val);
+पूर्णांक pci_पढ़ो_config_dword(स्थिर काष्ठा pci_dev *dev, पूर्णांक where, u32 *val);
+पूर्णांक pci_ग_लिखो_config_byte(स्थिर काष्ठा pci_dev *dev, पूर्णांक where, u8 val);
+पूर्णांक pci_ग_लिखो_config_word(स्थिर काष्ठा pci_dev *dev, पूर्णांक where, u16 val);
+पूर्णांक pci_ग_लिखो_config_dword(स्थिर काष्ठा pci_dev *dev, पूर्णांक where, u32 val);
 
-int pcie_capability_read_word(struct pci_dev *dev, int pos, u16 *val);
-int pcie_capability_read_dword(struct pci_dev *dev, int pos, u32 *val);
-int pcie_capability_write_word(struct pci_dev *dev, int pos, u16 val);
-int pcie_capability_write_dword(struct pci_dev *dev, int pos, u32 val);
-int pcie_capability_clear_and_set_word(struct pci_dev *dev, int pos,
+पूर्णांक pcie_capability_पढ़ो_word(काष्ठा pci_dev *dev, पूर्णांक pos, u16 *val);
+पूर्णांक pcie_capability_पढ़ो_dword(काष्ठा pci_dev *dev, पूर्णांक pos, u32 *val);
+पूर्णांक pcie_capability_ग_लिखो_word(काष्ठा pci_dev *dev, पूर्णांक pos, u16 val);
+पूर्णांक pcie_capability_ग_लिखो_dword(काष्ठा pci_dev *dev, पूर्णांक pos, u32 val);
+पूर्णांक pcie_capability_clear_and_set_word(काष्ठा pci_dev *dev, पूर्णांक pos,
 				       u16 clear, u16 set);
-int pcie_capability_clear_and_set_dword(struct pci_dev *dev, int pos,
+पूर्णांक pcie_capability_clear_and_set_dword(काष्ठा pci_dev *dev, पूर्णांक pos,
 					u32 clear, u32 set);
 
-static inline int pcie_capability_set_word(struct pci_dev *dev, int pos,
+अटल अंतरभूत पूर्णांक pcie_capability_set_word(काष्ठा pci_dev *dev, पूर्णांक pos,
 					   u16 set)
-{
-	return pcie_capability_clear_and_set_word(dev, pos, 0, set);
-}
+अणु
+	वापस pcie_capability_clear_and_set_word(dev, pos, 0, set);
+पूर्ण
 
-static inline int pcie_capability_set_dword(struct pci_dev *dev, int pos,
+अटल अंतरभूत पूर्णांक pcie_capability_set_dword(काष्ठा pci_dev *dev, पूर्णांक pos,
 					    u32 set)
-{
-	return pcie_capability_clear_and_set_dword(dev, pos, 0, set);
-}
+अणु
+	वापस pcie_capability_clear_and_set_dword(dev, pos, 0, set);
+पूर्ण
 
-static inline int pcie_capability_clear_word(struct pci_dev *dev, int pos,
+अटल अंतरभूत पूर्णांक pcie_capability_clear_word(काष्ठा pci_dev *dev, पूर्णांक pos,
 					     u16 clear)
-{
-	return pcie_capability_clear_and_set_word(dev, pos, clear, 0);
-}
+अणु
+	वापस pcie_capability_clear_and_set_word(dev, pos, clear, 0);
+पूर्ण
 
-static inline int pcie_capability_clear_dword(struct pci_dev *dev, int pos,
+अटल अंतरभूत पूर्णांक pcie_capability_clear_dword(काष्ठा pci_dev *dev, पूर्णांक pos,
 					      u32 clear)
-{
-	return pcie_capability_clear_and_set_dword(dev, pos, clear, 0);
-}
+अणु
+	वापस pcie_capability_clear_and_set_dword(dev, pos, clear, 0);
+पूर्ण
 
 /* User-space driven config access */
-int pci_user_read_config_byte(struct pci_dev *dev, int where, u8 *val);
-int pci_user_read_config_word(struct pci_dev *dev, int where, u16 *val);
-int pci_user_read_config_dword(struct pci_dev *dev, int where, u32 *val);
-int pci_user_write_config_byte(struct pci_dev *dev, int where, u8 val);
-int pci_user_write_config_word(struct pci_dev *dev, int where, u16 val);
-int pci_user_write_config_dword(struct pci_dev *dev, int where, u32 val);
+पूर्णांक pci_user_पढ़ो_config_byte(काष्ठा pci_dev *dev, पूर्णांक where, u8 *val);
+पूर्णांक pci_user_पढ़ो_config_word(काष्ठा pci_dev *dev, पूर्णांक where, u16 *val);
+पूर्णांक pci_user_पढ़ो_config_dword(काष्ठा pci_dev *dev, पूर्णांक where, u32 *val);
+पूर्णांक pci_user_ग_लिखो_config_byte(काष्ठा pci_dev *dev, पूर्णांक where, u8 val);
+पूर्णांक pci_user_ग_लिखो_config_word(काष्ठा pci_dev *dev, पूर्णांक where, u16 val);
+पूर्णांक pci_user_ग_लिखो_config_dword(काष्ठा pci_dev *dev, पूर्णांक where, u32 val);
 
-int __must_check pci_enable_device(struct pci_dev *dev);
-int __must_check pci_enable_device_io(struct pci_dev *dev);
-int __must_check pci_enable_device_mem(struct pci_dev *dev);
-int __must_check pci_reenable_device(struct pci_dev *);
-int __must_check pcim_enable_device(struct pci_dev *pdev);
-void pcim_pin_device(struct pci_dev *pdev);
+पूर्णांक __must_check pci_enable_device(काष्ठा pci_dev *dev);
+पूर्णांक __must_check pci_enable_device_io(काष्ठा pci_dev *dev);
+पूर्णांक __must_check pci_enable_device_mem(काष्ठा pci_dev *dev);
+पूर्णांक __must_check pci_reenable_device(काष्ठा pci_dev *);
+पूर्णांक __must_check pcim_enable_device(काष्ठा pci_dev *pdev);
+व्योम pcim_pin_device(काष्ठा pci_dev *pdev);
 
-static inline bool pci_intx_mask_supported(struct pci_dev *pdev)
-{
+अटल अंतरभूत bool pci_पूर्णांकx_mask_supported(काष्ठा pci_dev *pdev)
+अणु
 	/*
-	 * INTx masking is supported if PCI_COMMAND_INTX_DISABLE is
+	 * INTx masking is supported अगर PCI_COMMAND_INTX_DISABLE is
 	 * writable and no quirk has marked the feature broken.
 	 */
-	return !pdev->broken_intx_masking;
-}
+	वापस !pdev->broken_पूर्णांकx_masking;
+पूर्ण
 
-static inline int pci_is_enabled(struct pci_dev *pdev)
-{
-	return (atomic_read(&pdev->enable_cnt) > 0);
-}
+अटल अंतरभूत पूर्णांक pci_is_enabled(काष्ठा pci_dev *pdev)
+अणु
+	वापस (atomic_पढ़ो(&pdev->enable_cnt) > 0);
+पूर्ण
 
-static inline int pci_is_managed(struct pci_dev *pdev)
-{
-	return pdev->is_managed;
-}
+अटल अंतरभूत पूर्णांक pci_is_managed(काष्ठा pci_dev *pdev)
+अणु
+	वापस pdev->is_managed;
+पूर्ण
 
-void pci_disable_device(struct pci_dev *dev);
+व्योम pci_disable_device(काष्ठा pci_dev *dev);
 
-extern unsigned int pcibios_max_latency;
-void pci_set_master(struct pci_dev *dev);
-void pci_clear_master(struct pci_dev *dev);
+बाह्य अचिन्हित पूर्णांक pcibios_max_latency;
+व्योम pci_set_master(काष्ठा pci_dev *dev);
+व्योम pci_clear_master(काष्ठा pci_dev *dev);
 
-int pci_set_pcie_reset_state(struct pci_dev *dev, enum pcie_reset_state state);
-int pci_set_cacheline_size(struct pci_dev *dev);
-int __must_check pci_set_mwi(struct pci_dev *dev);
-int __must_check pcim_set_mwi(struct pci_dev *dev);
-int pci_try_set_mwi(struct pci_dev *dev);
-void pci_clear_mwi(struct pci_dev *dev);
-void pci_disable_parity(struct pci_dev *dev);
-void pci_intx(struct pci_dev *dev, int enable);
-bool pci_check_and_mask_intx(struct pci_dev *dev);
-bool pci_check_and_unmask_intx(struct pci_dev *dev);
-int pci_wait_for_pending(struct pci_dev *dev, int pos, u16 mask);
-int pci_wait_for_pending_transaction(struct pci_dev *dev);
-int pcix_get_max_mmrbc(struct pci_dev *dev);
-int pcix_get_mmrbc(struct pci_dev *dev);
-int pcix_set_mmrbc(struct pci_dev *dev, int mmrbc);
-int pcie_get_readrq(struct pci_dev *dev);
-int pcie_set_readrq(struct pci_dev *dev, int rq);
-int pcie_get_mps(struct pci_dev *dev);
-int pcie_set_mps(struct pci_dev *dev, int mps);
-u32 pcie_bandwidth_available(struct pci_dev *dev, struct pci_dev **limiting_dev,
-			     enum pci_bus_speed *speed,
-			     enum pcie_link_width *width);
-void pcie_print_link_status(struct pci_dev *dev);
-bool pcie_has_flr(struct pci_dev *dev);
-int pcie_flr(struct pci_dev *dev);
-int __pci_reset_function_locked(struct pci_dev *dev);
-int pci_reset_function(struct pci_dev *dev);
-int pci_reset_function_locked(struct pci_dev *dev);
-int pci_try_reset_function(struct pci_dev *dev);
-int pci_probe_reset_slot(struct pci_slot *slot);
-int pci_probe_reset_bus(struct pci_bus *bus);
-int pci_reset_bus(struct pci_dev *dev);
-void pci_reset_secondary_bus(struct pci_dev *dev);
-void pcibios_reset_secondary_bus(struct pci_dev *dev);
-void pci_update_resource(struct pci_dev *dev, int resno);
-int __must_check pci_assign_resource(struct pci_dev *dev, int i);
-int __must_check pci_reassign_resource(struct pci_dev *dev, int i, resource_size_t add_size, resource_size_t align);
-void pci_release_resource(struct pci_dev *dev, int resno);
-static inline int pci_rebar_bytes_to_size(u64 bytes)
-{
-	bytes = roundup_pow_of_two(bytes);
+पूर्णांक pci_set_pcie_reset_state(काष्ठा pci_dev *dev, क्रमागत pcie_reset_state state);
+पूर्णांक pci_set_cacheline_size(काष्ठा pci_dev *dev);
+पूर्णांक __must_check pci_set_mwi(काष्ठा pci_dev *dev);
+पूर्णांक __must_check pcim_set_mwi(काष्ठा pci_dev *dev);
+पूर्णांक pci_try_set_mwi(काष्ठा pci_dev *dev);
+व्योम pci_clear_mwi(काष्ठा pci_dev *dev);
+व्योम pci_disable_parity(काष्ठा pci_dev *dev);
+व्योम pci_पूर्णांकx(काष्ठा pci_dev *dev, पूर्णांक enable);
+bool pci_check_and_mask_पूर्णांकx(काष्ठा pci_dev *dev);
+bool pci_check_and_unmask_पूर्णांकx(काष्ठा pci_dev *dev);
+पूर्णांक pci_रुको_क्रम_pending(काष्ठा pci_dev *dev, पूर्णांक pos, u16 mask);
+पूर्णांक pci_रुको_क्रम_pending_transaction(काष्ठा pci_dev *dev);
+पूर्णांक pcix_get_max_mmrbc(काष्ठा pci_dev *dev);
+पूर्णांक pcix_get_mmrbc(काष्ठा pci_dev *dev);
+पूर्णांक pcix_set_mmrbc(काष्ठा pci_dev *dev, पूर्णांक mmrbc);
+पूर्णांक pcie_get_पढ़ोrq(काष्ठा pci_dev *dev);
+पूर्णांक pcie_set_पढ़ोrq(काष्ठा pci_dev *dev, पूर्णांक rq);
+पूर्णांक pcie_get_mps(काष्ठा pci_dev *dev);
+पूर्णांक pcie_set_mps(काष्ठा pci_dev *dev, पूर्णांक mps);
+u32 pcie_bandwidth_available(काष्ठा pci_dev *dev, काष्ठा pci_dev **limiting_dev,
+			     क्रमागत pci_bus_speed *speed,
+			     क्रमागत pcie_link_width *width);
+व्योम pcie_prपूर्णांक_link_status(काष्ठा pci_dev *dev);
+bool pcie_has_flr(काष्ठा pci_dev *dev);
+पूर्णांक pcie_flr(काष्ठा pci_dev *dev);
+पूर्णांक __pci_reset_function_locked(काष्ठा pci_dev *dev);
+पूर्णांक pci_reset_function(काष्ठा pci_dev *dev);
+पूर्णांक pci_reset_function_locked(काष्ठा pci_dev *dev);
+पूर्णांक pci_try_reset_function(काष्ठा pci_dev *dev);
+पूर्णांक pci_probe_reset_slot(काष्ठा pci_slot *slot);
+पूर्णांक pci_probe_reset_bus(काष्ठा pci_bus *bus);
+पूर्णांक pci_reset_bus(काष्ठा pci_dev *dev);
+व्योम pci_reset_secondary_bus(काष्ठा pci_dev *dev);
+व्योम pcibios_reset_secondary_bus(काष्ठा pci_dev *dev);
+व्योम pci_update_resource(काष्ठा pci_dev *dev, पूर्णांक resno);
+पूर्णांक __must_check pci_assign_resource(काष्ठा pci_dev *dev, पूर्णांक i);
+पूर्णांक __must_check pci_reassign_resource(काष्ठा pci_dev *dev, पूर्णांक i, resource_माप_प्रकार add_size, resource_माप_प्रकार align);
+व्योम pci_release_resource(काष्ठा pci_dev *dev, पूर्णांक resno);
+अटल अंतरभूत पूर्णांक pci_rebar_bytes_to_size(u64 bytes)
+अणु
+	bytes = roundup_घात_of_two(bytes);
 
-	/* Return BAR size as defined in the resizable BAR specification */
-	return max(ilog2(bytes), 20) - 20;
-}
+	/* Return BAR size as defined in the resizable BAR specअगरication */
+	वापस max(ilog2(bytes), 20) - 20;
+पूर्ण
 
-u32 pci_rebar_get_possible_sizes(struct pci_dev *pdev, int bar);
-int __must_check pci_resize_resource(struct pci_dev *dev, int i, int size);
-int pci_select_bars(struct pci_dev *dev, unsigned long flags);
-bool pci_device_is_present(struct pci_dev *pdev);
-void pci_ignore_hotplug(struct pci_dev *dev);
-struct pci_dev *pci_real_dma_dev(struct pci_dev *dev);
-int pci_status_get_and_clear_errors(struct pci_dev *pdev);
+u32 pci_rebar_get_possible_sizes(काष्ठा pci_dev *pdev, पूर्णांक bar);
+पूर्णांक __must_check pci_resize_resource(काष्ठा pci_dev *dev, पूर्णांक i, पूर्णांक size);
+पूर्णांक pci_select_bars(काष्ठा pci_dev *dev, अचिन्हित दीर्घ flags);
+bool pci_device_is_present(काष्ठा pci_dev *pdev);
+व्योम pci_ignore_hotplug(काष्ठा pci_dev *dev);
+काष्ठा pci_dev *pci_real_dma_dev(काष्ठा pci_dev *dev);
+पूर्णांक pci_status_get_and_clear_errors(काष्ठा pci_dev *pdev);
 
-int __printf(6, 7) pci_request_irq(struct pci_dev *dev, unsigned int nr,
-		irq_handler_t handler, irq_handler_t thread_fn, void *dev_id,
-		const char *fmt, ...);
-void pci_free_irq(struct pci_dev *dev, unsigned int nr, void *dev_id);
+पूर्णांक __म_लिखो(6, 7) pci_request_irq(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक nr,
+		irq_handler_t handler, irq_handler_t thपढ़ो_fn, व्योम *dev_id,
+		स्थिर अक्षर *fmt, ...);
+व्योम pci_मुक्त_irq(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक nr, व्योम *dev_id);
 
 /* ROM control related routines */
-int pci_enable_rom(struct pci_dev *pdev);
-void pci_disable_rom(struct pci_dev *pdev);
-void __iomem __must_check *pci_map_rom(struct pci_dev *pdev, size_t *size);
-void pci_unmap_rom(struct pci_dev *pdev, void __iomem *rom);
+पूर्णांक pci_enable_rom(काष्ठा pci_dev *pdev);
+व्योम pci_disable_rom(काष्ठा pci_dev *pdev);
+व्योम __iomem __must_check *pci_map_rom(काष्ठा pci_dev *pdev, माप_प्रकार *size);
+व्योम pci_unmap_rom(काष्ठा pci_dev *pdev, व्योम __iomem *rom);
 
 /* Power management related routines */
-int pci_save_state(struct pci_dev *dev);
-void pci_restore_state(struct pci_dev *dev);
-struct pci_saved_state *pci_store_saved_state(struct pci_dev *dev);
-int pci_load_saved_state(struct pci_dev *dev,
-			 struct pci_saved_state *state);
-int pci_load_and_free_saved_state(struct pci_dev *dev,
-				  struct pci_saved_state **state);
-struct pci_cap_saved_state *pci_find_saved_cap(struct pci_dev *dev, char cap);
-struct pci_cap_saved_state *pci_find_saved_ext_cap(struct pci_dev *dev,
+पूर्णांक pci_save_state(काष्ठा pci_dev *dev);
+व्योम pci_restore_state(काष्ठा pci_dev *dev);
+काष्ठा pci_saved_state *pci_store_saved_state(काष्ठा pci_dev *dev);
+पूर्णांक pci_load_saved_state(काष्ठा pci_dev *dev,
+			 काष्ठा pci_saved_state *state);
+पूर्णांक pci_load_and_मुक्त_saved_state(काष्ठा pci_dev *dev,
+				  काष्ठा pci_saved_state **state);
+काष्ठा pci_cap_saved_state *pci_find_saved_cap(काष्ठा pci_dev *dev, अक्षर cap);
+काष्ठा pci_cap_saved_state *pci_find_saved_ext_cap(काष्ठा pci_dev *dev,
 						   u16 cap);
-int pci_add_cap_save_buffer(struct pci_dev *dev, char cap, unsigned int size);
-int pci_add_ext_cap_save_buffer(struct pci_dev *dev,
-				u16 cap, unsigned int size);
-int pci_platform_power_transition(struct pci_dev *dev, pci_power_t state);
-int pci_set_power_state(struct pci_dev *dev, pci_power_t state);
-pci_power_t pci_choose_state(struct pci_dev *dev, pm_message_t state);
-bool pci_pme_capable(struct pci_dev *dev, pci_power_t state);
-void pci_pme_active(struct pci_dev *dev, bool enable);
-int pci_enable_wake(struct pci_dev *dev, pci_power_t state, bool enable);
-int pci_wake_from_d3(struct pci_dev *dev, bool enable);
-int pci_prepare_to_sleep(struct pci_dev *dev);
-int pci_back_from_sleep(struct pci_dev *dev);
-bool pci_dev_run_wake(struct pci_dev *dev);
-void pci_d3cold_enable(struct pci_dev *dev);
-void pci_d3cold_disable(struct pci_dev *dev);
-bool pcie_relaxed_ordering_enabled(struct pci_dev *dev);
-void pci_resume_bus(struct pci_bus *bus);
-void pci_bus_set_current_state(struct pci_bus *bus, pci_power_t state);
+पूर्णांक pci_add_cap_save_buffer(काष्ठा pci_dev *dev, अक्षर cap, अचिन्हित पूर्णांक size);
+पूर्णांक pci_add_ext_cap_save_buffer(काष्ठा pci_dev *dev,
+				u16 cap, अचिन्हित पूर्णांक size);
+पूर्णांक pci_platक्रमm_घातer_transition(काष्ठा pci_dev *dev, pci_घातer_t state);
+पूर्णांक pci_set_घातer_state(काष्ठा pci_dev *dev, pci_घातer_t state);
+pci_घातer_t pci_choose_state(काष्ठा pci_dev *dev, pm_message_t state);
+bool pci_pme_capable(काष्ठा pci_dev *dev, pci_घातer_t state);
+व्योम pci_pme_active(काष्ठा pci_dev *dev, bool enable);
+पूर्णांक pci_enable_wake(काष्ठा pci_dev *dev, pci_घातer_t state, bool enable);
+पूर्णांक pci_wake_from_d3(काष्ठा pci_dev *dev, bool enable);
+पूर्णांक pci_prepare_to_sleep(काष्ठा pci_dev *dev);
+पूर्णांक pci_back_from_sleep(काष्ठा pci_dev *dev);
+bool pci_dev_run_wake(काष्ठा pci_dev *dev);
+व्योम pci_d3cold_enable(काष्ठा pci_dev *dev);
+व्योम pci_d3cold_disable(काष्ठा pci_dev *dev);
+bool pcie_relaxed_ordering_enabled(काष्ठा pci_dev *dev);
+व्योम pci_resume_bus(काष्ठा pci_bus *bus);
+व्योम pci_bus_set_current_state(काष्ठा pci_bus *bus, pci_घातer_t state);
 
 /* For use by arch with custom probe code */
-void set_pcie_port_type(struct pci_dev *pdev);
-void set_pcie_hotplug_bridge(struct pci_dev *pdev);
+व्योम set_pcie_port_type(काष्ठा pci_dev *pdev);
+व्योम set_pcie_hotplug_bridge(काष्ठा pci_dev *pdev);
 
-/* Functions for PCI Hotplug drivers to use */
-unsigned int pci_rescan_bus_bridge_resize(struct pci_dev *bridge);
-unsigned int pci_rescan_bus(struct pci_bus *bus);
-void pci_lock_rescan_remove(void);
-void pci_unlock_rescan_remove(void);
+/* Functions क्रम PCI Hotplug drivers to use */
+अचिन्हित पूर्णांक pci_rescan_bus_bridge_resize(काष्ठा pci_dev *bridge);
+अचिन्हित पूर्णांक pci_rescan_bus(काष्ठा pci_bus *bus);
+व्योम pci_lock_rescan_हटाओ(व्योम);
+व्योम pci_unlock_rescan_हटाओ(व्योम);
 
 /* Vital Product Data routines */
-ssize_t pci_read_vpd(struct pci_dev *dev, loff_t pos, size_t count, void *buf);
-ssize_t pci_write_vpd(struct pci_dev *dev, loff_t pos, size_t count, const void *buf);
+sमाप_प्रकार pci_पढ़ो_vpd(काष्ठा pci_dev *dev, loff_t pos, माप_प्रकार count, व्योम *buf);
+sमाप_प्रकार pci_ग_लिखो_vpd(काष्ठा pci_dev *dev, loff_t pos, माप_प्रकार count, स्थिर व्योम *buf);
 
-/* Helper functions for low-level code (drivers/pci/setup-[bus,res].c) */
-resource_size_t pcibios_retrieve_fw_addr(struct pci_dev *dev, int idx);
-void pci_bus_assign_resources(const struct pci_bus *bus);
-void pci_bus_claim_resources(struct pci_bus *bus);
-void pci_bus_size_bridges(struct pci_bus *bus);
-int pci_claim_resource(struct pci_dev *, int);
-int pci_claim_bridge_resource(struct pci_dev *bridge, int i);
-void pci_assign_unassigned_resources(void);
-void pci_assign_unassigned_bridge_resources(struct pci_dev *bridge);
-void pci_assign_unassigned_bus_resources(struct pci_bus *bus);
-void pci_assign_unassigned_root_bus_resources(struct pci_bus *bus);
-int pci_reassign_bridge_resources(struct pci_dev *bridge, unsigned long type);
-void pdev_enable_device(struct pci_dev *);
-int pci_enable_resources(struct pci_dev *, int mask);
-void pci_assign_irq(struct pci_dev *dev);
-struct resource *pci_find_resource(struct pci_dev *dev, struct resource *res);
-#define HAVE_PCI_REQ_REGIONS	2
-int __must_check pci_request_regions(struct pci_dev *, const char *);
-int __must_check pci_request_regions_exclusive(struct pci_dev *, const char *);
-void pci_release_regions(struct pci_dev *);
-int __must_check pci_request_region(struct pci_dev *, int, const char *);
-void pci_release_region(struct pci_dev *, int);
-int pci_request_selected_regions(struct pci_dev *, int, const char *);
-int pci_request_selected_regions_exclusive(struct pci_dev *, int, const char *);
-void pci_release_selected_regions(struct pci_dev *, int);
+/* Helper functions क्रम low-level code (drivers/pci/setup-[bus,res].c) */
+resource_माप_प्रकार pcibios_retrieve_fw_addr(काष्ठा pci_dev *dev, पूर्णांक idx);
+व्योम pci_bus_assign_resources(स्थिर काष्ठा pci_bus *bus);
+व्योम pci_bus_claim_resources(काष्ठा pci_bus *bus);
+व्योम pci_bus_size_bridges(काष्ठा pci_bus *bus);
+पूर्णांक pci_claim_resource(काष्ठा pci_dev *, पूर्णांक);
+पूर्णांक pci_claim_bridge_resource(काष्ठा pci_dev *bridge, पूर्णांक i);
+व्योम pci_assign_unasचिन्हित_resources(व्योम);
+व्योम pci_assign_unasचिन्हित_bridge_resources(काष्ठा pci_dev *bridge);
+व्योम pci_assign_unasचिन्हित_bus_resources(काष्ठा pci_bus *bus);
+व्योम pci_assign_unasचिन्हित_root_bus_resources(काष्ठा pci_bus *bus);
+पूर्णांक pci_reassign_bridge_resources(काष्ठा pci_dev *bridge, अचिन्हित दीर्घ type);
+व्योम pdev_enable_device(काष्ठा pci_dev *);
+पूर्णांक pci_enable_resources(काष्ठा pci_dev *, पूर्णांक mask);
+व्योम pci_assign_irq(काष्ठा pci_dev *dev);
+काष्ठा resource *pci_find_resource(काष्ठा pci_dev *dev, काष्ठा resource *res);
+#घोषणा HAVE_PCI_REQ_REGIONS	2
+पूर्णांक __must_check pci_request_regions(काष्ठा pci_dev *, स्थिर अक्षर *);
+पूर्णांक __must_check pci_request_regions_exclusive(काष्ठा pci_dev *, स्थिर अक्षर *);
+व्योम pci_release_regions(काष्ठा pci_dev *);
+पूर्णांक __must_check pci_request_region(काष्ठा pci_dev *, पूर्णांक, स्थिर अक्षर *);
+व्योम pci_release_region(काष्ठा pci_dev *, पूर्णांक);
+पूर्णांक pci_request_selected_regions(काष्ठा pci_dev *, पूर्णांक, स्थिर अक्षर *);
+पूर्णांक pci_request_selected_regions_exclusive(काष्ठा pci_dev *, पूर्णांक, स्थिर अक्षर *);
+व्योम pci_release_selected_regions(काष्ठा pci_dev *, पूर्णांक);
 
 /* drivers/pci/bus.c */
-void pci_add_resource(struct list_head *resources, struct resource *res);
-void pci_add_resource_offset(struct list_head *resources, struct resource *res,
-			     resource_size_t offset);
-void pci_free_resource_list(struct list_head *resources);
-void pci_bus_add_resource(struct pci_bus *bus, struct resource *res,
-			  unsigned int flags);
-struct resource *pci_bus_resource_n(const struct pci_bus *bus, int n);
-void pci_bus_remove_resources(struct pci_bus *bus);
-int devm_request_pci_bus_resources(struct device *dev,
-				   struct list_head *resources);
+व्योम pci_add_resource(काष्ठा list_head *resources, काष्ठा resource *res);
+व्योम pci_add_resource_offset(काष्ठा list_head *resources, काष्ठा resource *res,
+			     resource_माप_प्रकार offset);
+व्योम pci_मुक्त_resource_list(काष्ठा list_head *resources);
+व्योम pci_bus_add_resource(काष्ठा pci_bus *bus, काष्ठा resource *res,
+			  अचिन्हित पूर्णांक flags);
+काष्ठा resource *pci_bus_resource_n(स्थिर काष्ठा pci_bus *bus, पूर्णांक n);
+व्योम pci_bus_हटाओ_resources(काष्ठा pci_bus *bus);
+पूर्णांक devm_request_pci_bus_resources(काष्ठा device *dev,
+				   काष्ठा list_head *resources);
 
 /* Temporary until new and working PCI SBR API in place */
-int pci_bridge_secondary_bus_reset(struct pci_dev *dev);
+पूर्णांक pci_bridge_secondary_bus_reset(काष्ठा pci_dev *dev);
 
-#define pci_bus_for_each_resource(bus, res, i)				\
-	for (i = 0;							\
+#घोषणा pci_bus_क्रम_each_resource(bus, res, i)				\
+	क्रम (i = 0;							\
 	    (res = pci_bus_resource_n(bus, i)) || i < PCI_BRIDGE_RESOURCE_NUM; \
 	     i++)
 
-int __must_check pci_bus_alloc_resource(struct pci_bus *bus,
-			struct resource *res, resource_size_t size,
-			resource_size_t align, resource_size_t min,
-			unsigned long type_mask,
-			resource_size_t (*alignf)(void *,
-						  const struct resource *,
-						  resource_size_t,
-						  resource_size_t),
-			void *alignf_data);
+पूर्णांक __must_check pci_bus_alloc_resource(काष्ठा pci_bus *bus,
+			काष्ठा resource *res, resource_माप_प्रकार size,
+			resource_माप_प्रकार align, resource_माप_प्रकार min,
+			अचिन्हित दीर्घ type_mask,
+			resource_माप_प्रकार (*alignf)(व्योम *,
+						  स्थिर काष्ठा resource *,
+						  resource_माप_प्रकार,
+						  resource_माप_प्रकार),
+			व्योम *alignf_data);
 
 
-int pci_register_io_range(struct fwnode_handle *fwnode, phys_addr_t addr,
-			resource_size_t size);
-unsigned long pci_address_to_pio(phys_addr_t addr);
-phys_addr_t pci_pio_to_address(unsigned long pio);
-int pci_remap_iospace(const struct resource *res, phys_addr_t phys_addr);
-int devm_pci_remap_iospace(struct device *dev, const struct resource *res,
+पूर्णांक pci_रेजिस्टर_io_range(काष्ठा fwnode_handle *fwnode, phys_addr_t addr,
+			resource_माप_प्रकार size);
+अचिन्हित दीर्घ pci_address_to_pio(phys_addr_t addr);
+phys_addr_t pci_pio_to_address(अचिन्हित दीर्घ pio);
+पूर्णांक pci_remap_iospace(स्थिर काष्ठा resource *res, phys_addr_t phys_addr);
+पूर्णांक devm_pci_remap_iospace(काष्ठा device *dev, स्थिर काष्ठा resource *res,
 			   phys_addr_t phys_addr);
-void pci_unmap_iospace(struct resource *res);
-void __iomem *devm_pci_remap_cfgspace(struct device *dev,
-				      resource_size_t offset,
-				      resource_size_t size);
-void __iomem *devm_pci_remap_cfg_resource(struct device *dev,
-					  struct resource *res);
+व्योम pci_unmap_iospace(काष्ठा resource *res);
+व्योम __iomem *devm_pci_remap_cfgspace(काष्ठा device *dev,
+				      resource_माप_प्रकार offset,
+				      resource_माप_प्रकार size);
+व्योम __iomem *devm_pci_remap_cfg_resource(काष्ठा device *dev,
+					  काष्ठा resource *res);
 
-static inline pci_bus_addr_t pci_bus_address(struct pci_dev *pdev, int bar)
-{
-	struct pci_bus_region region;
+अटल अंतरभूत pci_bus_addr_t pci_bus_address(काष्ठा pci_dev *pdev, पूर्णांक bar)
+अणु
+	काष्ठा pci_bus_region region;
 
 	pcibios_resource_to_bus(pdev->bus, &region, &pdev->resource[bar]);
-	return region.start;
-}
+	वापस region.start;
+पूर्ण
 
 /* Proper probing supporting hot-pluggable devices */
-int __must_check __pci_register_driver(struct pci_driver *, struct module *,
-				       const char *mod_name);
+पूर्णांक __must_check __pci_रेजिस्टर_driver(काष्ठा pci_driver *, काष्ठा module *,
+				       स्थिर अक्षर *mod_name);
 
-/* pci_register_driver() must be a macro so KBUILD_MODNAME can be expanded */
-#define pci_register_driver(driver)		\
-	__pci_register_driver(driver, THIS_MODULE, KBUILD_MODNAME)
+/* pci_रेजिस्टर_driver() must be a macro so KBUILD_MODNAME can be expanded */
+#घोषणा pci_रेजिस्टर_driver(driver)		\
+	__pci_रेजिस्टर_driver(driver, THIS_MODULE, KBUILD_MODNAME)
 
-void pci_unregister_driver(struct pci_driver *dev);
+व्योम pci_unरेजिस्टर_driver(काष्ठा pci_driver *dev);
 
 /**
- * module_pci_driver() - Helper macro for registering a PCI driver
- * @__pci_driver: pci_driver struct
+ * module_pci_driver() - Helper macro क्रम रेजिस्टरing a PCI driver
+ * @__pci_driver: pci_driver काष्ठा
  *
- * Helper macro for PCI drivers which do not do anything special in module
- * init/exit. This eliminates a lot of boilerplate. Each module may only
- * use this macro once, and calling it replaces module_init() and module_exit()
+ * Helper macro क्रम PCI drivers which करो not करो anything special in module
+ * init/निकास. This eliminates a lot of boilerplate. Each module may only
+ * use this macro once, and calling it replaces module_init() and module_निकास()
  */
-#define module_pci_driver(__pci_driver) \
-	module_driver(__pci_driver, pci_register_driver, pci_unregister_driver)
+#घोषणा module_pci_driver(__pci_driver) \
+	module_driver(__pci_driver, pci_रेजिस्टर_driver, pci_unरेजिस्टर_driver)
 
 /**
- * builtin_pci_driver() - Helper macro for registering a PCI driver
- * @__pci_driver: pci_driver struct
+ * builtin_pci_driver() - Helper macro क्रम रेजिस्टरing a PCI driver
+ * @__pci_driver: pci_driver काष्ठा
  *
- * Helper macro for PCI drivers which do not do anything special in their
+ * Helper macro क्रम PCI drivers which करो not करो anything special in their
  * init code. This eliminates a lot of boilerplate. Each driver may only
  * use this macro once, and calling it replaces device_initcall(...)
  */
-#define builtin_pci_driver(__pci_driver) \
-	builtin_driver(__pci_driver, pci_register_driver)
+#घोषणा builtin_pci_driver(__pci_driver) \
+	builtin_driver(__pci_driver, pci_रेजिस्टर_driver)
 
-struct pci_driver *pci_dev_driver(const struct pci_dev *dev);
-int pci_add_dynid(struct pci_driver *drv,
-		  unsigned int vendor, unsigned int device,
-		  unsigned int subvendor, unsigned int subdevice,
-		  unsigned int class, unsigned int class_mask,
-		  unsigned long driver_data);
-const struct pci_device_id *pci_match_id(const struct pci_device_id *ids,
-					 struct pci_dev *dev);
-int pci_scan_bridge(struct pci_bus *bus, struct pci_dev *dev, int max,
-		    int pass);
+काष्ठा pci_driver *pci_dev_driver(स्थिर काष्ठा pci_dev *dev);
+पूर्णांक pci_add_dynid(काष्ठा pci_driver *drv,
+		  अचिन्हित पूर्णांक venकरोr, अचिन्हित पूर्णांक device,
+		  अचिन्हित पूर्णांक subvenकरोr, अचिन्हित पूर्णांक subdevice,
+		  अचिन्हित पूर्णांक class, अचिन्हित पूर्णांक class_mask,
+		  अचिन्हित दीर्घ driver_data);
+स्थिर काष्ठा pci_device_id *pci_match_id(स्थिर काष्ठा pci_device_id *ids,
+					 काष्ठा pci_dev *dev);
+पूर्णांक pci_scan_bridge(काष्ठा pci_bus *bus, काष्ठा pci_dev *dev, पूर्णांक max,
+		    पूर्णांक pass);
 
-void pci_walk_bus(struct pci_bus *top, int (*cb)(struct pci_dev *, void *),
-		  void *userdata);
-int pci_cfg_space_size(struct pci_dev *dev);
-unsigned char pci_bus_max_busnr(struct pci_bus *bus);
-void pci_setup_bridge(struct pci_bus *bus);
-resource_size_t pcibios_window_alignment(struct pci_bus *bus,
-					 unsigned long type);
+व्योम pci_walk_bus(काष्ठा pci_bus *top, पूर्णांक (*cb)(काष्ठा pci_dev *, व्योम *),
+		  व्योम *userdata);
+पूर्णांक pci_cfg_space_size(काष्ठा pci_dev *dev);
+अचिन्हित अक्षर pci_bus_max_busnr(काष्ठा pci_bus *bus);
+व्योम pci_setup_bridge(काष्ठा pci_bus *bus);
+resource_माप_प्रकार pcibios_winकरोw_alignment(काष्ठा pci_bus *bus,
+					 अचिन्हित दीर्घ type);
 
-#define PCI_VGA_STATE_CHANGE_BRIDGE (1 << 0)
-#define PCI_VGA_STATE_CHANGE_DECODES (1 << 1)
+#घोषणा PCI_VGA_STATE_CHANGE_BRIDGE (1 << 0)
+#घोषणा PCI_VGA_STATE_CHANGE_DECODES (1 << 1)
 
-int pci_set_vga_state(struct pci_dev *pdev, bool decode,
-		      unsigned int command_bits, u32 flags);
+पूर्णांक pci_set_vga_state(काष्ठा pci_dev *pdev, bool decode,
+		      अचिन्हित पूर्णांक command_bits, u32 flags);
 
 /*
- * Virtual interrupts allow for more interrupts to be allocated
- * than the device has interrupts for. These are not programmed
- * into the device's MSI-X table and must be handled by some
+ * Virtual पूर्णांकerrupts allow क्रम more पूर्णांकerrupts to be allocated
+ * than the device has पूर्णांकerrupts क्रम. These are not programmed
+ * पूर्णांकo the device's MSI-X table and must be handled by some
  * other driver means.
  */
-#define PCI_IRQ_VIRTUAL		(1 << 4)
+#घोषणा PCI_IRQ_VIRTUAL		(1 << 4)
 
-#define PCI_IRQ_ALL_TYPES \
+#घोषणा PCI_IRQ_ALL_TYPES \
 	(PCI_IRQ_LEGACY | PCI_IRQ_MSI | PCI_IRQ_MSIX)
 
 /* kmem_cache style wrapper around pci_alloc_consistent() */
 
-#include <linux/dmapool.h>
+#समावेश <linux/dmapool.h>
 
-#define	pci_pool dma_pool
-#define pci_pool_create(name, pdev, size, align, allocation) \
+#घोषणा	pci_pool dma_pool
+#घोषणा pci_pool_create(name, pdev, size, align, allocation) \
 		dma_pool_create(name, &pdev->dev, size, align, allocation)
-#define	pci_pool_destroy(pool) dma_pool_destroy(pool)
-#define	pci_pool_alloc(pool, flags, handle) dma_pool_alloc(pool, flags, handle)
-#define	pci_pool_zalloc(pool, flags, handle) \
+#घोषणा	pci_pool_destroy(pool) dma_pool_destroy(pool)
+#घोषणा	pci_pool_alloc(pool, flags, handle) dma_pool_alloc(pool, flags, handle)
+#घोषणा	pci_pool_zalloc(pool, flags, handle) \
 		dma_pool_zalloc(pool, flags, handle)
-#define	pci_pool_free(pool, vaddr, addr) dma_pool_free(pool, vaddr, addr)
+#घोषणा	pci_pool_मुक्त(pool, vaddr, addr) dma_pool_मुक्त(pool, vaddr, addr)
 
-struct msix_entry {
-	u32	vector;	/* Kernel uses to write allocated vector */
-	u16	entry;	/* Driver uses to specify entry, OS writes */
-};
+काष्ठा msix_entry अणु
+	u32	vector;	/* Kernel uses to ग_लिखो allocated vector */
+	u16	entry;	/* Driver uses to specअगरy entry, OS ग_लिखोs */
+पूर्ण;
 
-#ifdef CONFIG_PCI_MSI
-int pci_msi_vec_count(struct pci_dev *dev);
-void pci_disable_msi(struct pci_dev *dev);
-int pci_msix_vec_count(struct pci_dev *dev);
-void pci_disable_msix(struct pci_dev *dev);
-void pci_restore_msi_state(struct pci_dev *dev);
-int pci_msi_enabled(void);
-int pci_enable_msi(struct pci_dev *dev);
-int pci_enable_msix_range(struct pci_dev *dev, struct msix_entry *entries,
-			  int minvec, int maxvec);
-static inline int pci_enable_msix_exact(struct pci_dev *dev,
-					struct msix_entry *entries, int nvec)
-{
-	int rc = pci_enable_msix_range(dev, entries, nvec, nvec);
-	if (rc < 0)
-		return rc;
-	return 0;
-}
-int pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
-				   unsigned int max_vecs, unsigned int flags,
-				   struct irq_affinity *affd);
+#अगर_घोषित CONFIG_PCI_MSI
+पूर्णांक pci_msi_vec_count(काष्ठा pci_dev *dev);
+व्योम pci_disable_msi(काष्ठा pci_dev *dev);
+पूर्णांक pci_msix_vec_count(काष्ठा pci_dev *dev);
+व्योम pci_disable_msix(काष्ठा pci_dev *dev);
+व्योम pci_restore_msi_state(काष्ठा pci_dev *dev);
+पूर्णांक pci_msi_enabled(व्योम);
+पूर्णांक pci_enable_msi(काष्ठा pci_dev *dev);
+पूर्णांक pci_enable_msix_range(काष्ठा pci_dev *dev, काष्ठा msix_entry *entries,
+			  पूर्णांक minvec, पूर्णांक maxvec);
+अटल अंतरभूत पूर्णांक pci_enable_msix_exact(काष्ठा pci_dev *dev,
+					काष्ठा msix_entry *entries, पूर्णांक nvec)
+अणु
+	पूर्णांक rc = pci_enable_msix_range(dev, entries, nvec, nvec);
+	अगर (rc < 0)
+		वापस rc;
+	वापस 0;
+पूर्ण
+पूर्णांक pci_alloc_irq_vectors_affinity(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक min_vecs,
+				   अचिन्हित पूर्णांक max_vecs, अचिन्हित पूर्णांक flags,
+				   काष्ठा irq_affinity *affd);
 
-void pci_free_irq_vectors(struct pci_dev *dev);
-int pci_irq_vector(struct pci_dev *dev, unsigned int nr);
-const struct cpumask *pci_irq_get_affinity(struct pci_dev *pdev, int vec);
+व्योम pci_मुक्त_irq_vectors(काष्ठा pci_dev *dev);
+पूर्णांक pci_irq_vector(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक nr);
+स्थिर काष्ठा cpumask *pci_irq_get_affinity(काष्ठा pci_dev *pdev, पूर्णांक vec);
 
-#else
-static inline int pci_msi_vec_count(struct pci_dev *dev) { return -ENOSYS; }
-static inline void pci_disable_msi(struct pci_dev *dev) { }
-static inline int pci_msix_vec_count(struct pci_dev *dev) { return -ENOSYS; }
-static inline void pci_disable_msix(struct pci_dev *dev) { }
-static inline void pci_restore_msi_state(struct pci_dev *dev) { }
-static inline int pci_msi_enabled(void) { return 0; }
-static inline int pci_enable_msi(struct pci_dev *dev)
-{ return -ENOSYS; }
-static inline int pci_enable_msix_range(struct pci_dev *dev,
-			struct msix_entry *entries, int minvec, int maxvec)
-{ return -ENOSYS; }
-static inline int pci_enable_msix_exact(struct pci_dev *dev,
-			struct msix_entry *entries, int nvec)
-{ return -ENOSYS; }
+#अन्यथा
+अटल अंतरभूत पूर्णांक pci_msi_vec_count(काष्ठा pci_dev *dev) अणु वापस -ENOSYS; पूर्ण
+अटल अंतरभूत व्योम pci_disable_msi(काष्ठा pci_dev *dev) अणु पूर्ण
+अटल अंतरभूत पूर्णांक pci_msix_vec_count(काष्ठा pci_dev *dev) अणु वापस -ENOSYS; पूर्ण
+अटल अंतरभूत व्योम pci_disable_msix(काष्ठा pci_dev *dev) अणु पूर्ण
+अटल अंतरभूत व्योम pci_restore_msi_state(काष्ठा pci_dev *dev) अणु पूर्ण
+अटल अंतरभूत पूर्णांक pci_msi_enabled(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_enable_msi(काष्ठा pci_dev *dev)
+अणु वापस -ENOSYS; पूर्ण
+अटल अंतरभूत पूर्णांक pci_enable_msix_range(काष्ठा pci_dev *dev,
+			काष्ठा msix_entry *entries, पूर्णांक minvec, पूर्णांक maxvec)
+अणु वापस -ENOSYS; पूर्ण
+अटल अंतरभूत पूर्णांक pci_enable_msix_exact(काष्ठा pci_dev *dev,
+			काष्ठा msix_entry *entries, पूर्णांक nvec)
+अणु वापस -ENOSYS; पूर्ण
 
-static inline int
-pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
-			       unsigned int max_vecs, unsigned int flags,
-			       struct irq_affinity *aff_desc)
-{
-	if ((flags & PCI_IRQ_LEGACY) && min_vecs == 1 && dev->irq)
-		return 1;
-	return -ENOSPC;
-}
+अटल अंतरभूत पूर्णांक
+pci_alloc_irq_vectors_affinity(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक min_vecs,
+			       अचिन्हित पूर्णांक max_vecs, अचिन्हित पूर्णांक flags,
+			       काष्ठा irq_affinity *aff_desc)
+अणु
+	अगर ((flags & PCI_IRQ_LEGACY) && min_vecs == 1 && dev->irq)
+		वापस 1;
+	वापस -ENOSPC;
+पूर्ण
 
-static inline void pci_free_irq_vectors(struct pci_dev *dev)
-{
-}
+अटल अंतरभूत व्योम pci_मुक्त_irq_vectors(काष्ठा pci_dev *dev)
+अणु
+पूर्ण
 
-static inline int pci_irq_vector(struct pci_dev *dev, unsigned int nr)
-{
-	if (WARN_ON_ONCE(nr > 0))
-		return -EINVAL;
-	return dev->irq;
-}
-static inline const struct cpumask *pci_irq_get_affinity(struct pci_dev *pdev,
-		int vec)
-{
-	return cpu_possible_mask;
-}
-#endif
+अटल अंतरभूत पूर्णांक pci_irq_vector(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक nr)
+अणु
+	अगर (WARN_ON_ONCE(nr > 0))
+		वापस -EINVAL;
+	वापस dev->irq;
+पूर्ण
+अटल अंतरभूत स्थिर काष्ठा cpumask *pci_irq_get_affinity(काष्ठा pci_dev *pdev,
+		पूर्णांक vec)
+अणु
+	वापस cpu_possible_mask;
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * pci_irqd_intx_xlate() - Translate PCI INTx value to an IRQ domain hwirq
- * @d: the INTx IRQ domain
- * @node: the DT node for the device whose interrupt we're translating
- * @intspec: the interrupt specifier data from the DT
- * @intsize: the number of entries in @intspec
- * @out_hwirq: pointer at which to write the hwirq number
- * @out_type: pointer at which to write the interrupt type
+ * pci_irqd_पूर्णांकx_xlate() - Translate PCI INTx value to an IRQ करोमुख्य hwirq
+ * @d: the INTx IRQ करोमुख्य
+ * @node: the DT node क्रम the device whose पूर्णांकerrupt we're translating
+ * @पूर्णांकspec: the पूर्णांकerrupt specअगरier data from the DT
+ * @पूर्णांकsize: the number of entries in @पूर्णांकspec
+ * @out_hwirq: poपूर्णांकer at which to ग_लिखो the hwirq number
+ * @out_type: poपूर्णांकer at which to ग_लिखो the पूर्णांकerrupt type
  *
- * Translate a PCI INTx interrupt number from device tree in the range 1-4, as
- * stored in the standard PCI_INTERRUPT_PIN register, to a value in the range
- * 0-3 suitable for use in a 4 entry IRQ domain. That is, subtract one from the
+ * Translate a PCI INTx पूर्णांकerrupt number from device tree in the range 1-4, as
+ * stored in the standard PCI_INTERRUPT_PIN रेजिस्टर, to a value in the range
+ * 0-3 suitable क्रम use in a 4 entry IRQ करोमुख्य. That is, subtract one from the
  * INTx value to obtain the hwirq number.
  *
- * Returns 0 on success, or -EINVAL if the interrupt specifier is out of range.
+ * Returns 0 on success, or -EINVAL अगर the पूर्णांकerrupt specअगरier is out of range.
  */
-static inline int pci_irqd_intx_xlate(struct irq_domain *d,
-				      struct device_node *node,
-				      const u32 *intspec,
-				      unsigned int intsize,
-				      unsigned long *out_hwirq,
-				      unsigned int *out_type)
-{
-	const u32 intx = intspec[0];
+अटल अंतरभूत पूर्णांक pci_irqd_पूर्णांकx_xlate(काष्ठा irq_करोमुख्य *d,
+				      काष्ठा device_node *node,
+				      स्थिर u32 *पूर्णांकspec,
+				      अचिन्हित पूर्णांक पूर्णांकsize,
+				      अचिन्हित दीर्घ *out_hwirq,
+				      अचिन्हित पूर्णांक *out_type)
+अणु
+	स्थिर u32 पूर्णांकx = पूर्णांकspec[0];
 
-	if (intx < PCI_INTERRUPT_INTA || intx > PCI_INTERRUPT_INTD)
-		return -EINVAL;
+	अगर (पूर्णांकx < PCI_INTERRUPT_INTA || पूर्णांकx > PCI_INTERRUPT_INTD)
+		वापस -EINVAL;
 
-	*out_hwirq = intx - PCI_INTERRUPT_INTA;
-	return 0;
-}
+	*out_hwirq = पूर्णांकx - PCI_INTERRUPT_INTA;
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PCIEPORTBUS
-extern bool pcie_ports_disabled;
-extern bool pcie_ports_native;
-#else
-#define pcie_ports_disabled	true
-#define pcie_ports_native	false
-#endif
+#अगर_घोषित CONFIG_PCIEPORTBUS
+बाह्य bool pcie_ports_disabled;
+बाह्य bool pcie_ports_native;
+#अन्यथा
+#घोषणा pcie_ports_disabled	true
+#घोषणा pcie_ports_native	false
+#पूर्ण_अगर
 
-#define PCIE_LINK_STATE_L0S		BIT(0)
-#define PCIE_LINK_STATE_L1		BIT(1)
-#define PCIE_LINK_STATE_CLKPM		BIT(2)
-#define PCIE_LINK_STATE_L1_1		BIT(3)
-#define PCIE_LINK_STATE_L1_2		BIT(4)
-#define PCIE_LINK_STATE_L1_1_PCIPM	BIT(5)
-#define PCIE_LINK_STATE_L1_2_PCIPM	BIT(6)
+#घोषणा PCIE_LINK_STATE_L0S		BIT(0)
+#घोषणा PCIE_LINK_STATE_L1		BIT(1)
+#घोषणा PCIE_LINK_STATE_CLKPM		BIT(2)
+#घोषणा PCIE_LINK_STATE_L1_1		BIT(3)
+#घोषणा PCIE_LINK_STATE_L1_2		BIT(4)
+#घोषणा PCIE_LINK_STATE_L1_1_PCIPM	BIT(5)
+#घोषणा PCIE_LINK_STATE_L1_2_PCIPM	BIT(6)
 
-#ifdef CONFIG_PCIEASPM
-int pci_disable_link_state(struct pci_dev *pdev, int state);
-int pci_disable_link_state_locked(struct pci_dev *pdev, int state);
-void pcie_no_aspm(void);
-bool pcie_aspm_support_enabled(void);
-bool pcie_aspm_enabled(struct pci_dev *pdev);
-#else
-static inline int pci_disable_link_state(struct pci_dev *pdev, int state)
-{ return 0; }
-static inline int pci_disable_link_state_locked(struct pci_dev *pdev, int state)
-{ return 0; }
-static inline void pcie_no_aspm(void) { }
-static inline bool pcie_aspm_support_enabled(void) { return false; }
-static inline bool pcie_aspm_enabled(struct pci_dev *pdev) { return false; }
-#endif
+#अगर_घोषित CONFIG_PCIEASPM
+पूर्णांक pci_disable_link_state(काष्ठा pci_dev *pdev, पूर्णांक state);
+पूर्णांक pci_disable_link_state_locked(काष्ठा pci_dev *pdev, पूर्णांक state);
+व्योम pcie_no_aspm(व्योम);
+bool pcie_aspm_support_enabled(व्योम);
+bool pcie_aspm_enabled(काष्ठा pci_dev *pdev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक pci_disable_link_state(काष्ठा pci_dev *pdev, पूर्णांक state)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_disable_link_state_locked(काष्ठा pci_dev *pdev, पूर्णांक state)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम pcie_no_aspm(व्योम) अणु पूर्ण
+अटल अंतरभूत bool pcie_aspm_support_enabled(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत bool pcie_aspm_enabled(काष्ठा pci_dev *pdev) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PCIEAER
-bool pci_aer_available(void);
-#else
-static inline bool pci_aer_available(void) { return false; }
-#endif
+#अगर_घोषित CONFIG_PCIEAER
+bool pci_aer_available(व्योम);
+#अन्यथा
+अटल अंतरभूत bool pci_aer_available(व्योम) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-bool pci_ats_disabled(void);
+bool pci_ats_disabled(व्योम);
 
-void pci_cfg_access_lock(struct pci_dev *dev);
-bool pci_cfg_access_trylock(struct pci_dev *dev);
-void pci_cfg_access_unlock(struct pci_dev *dev);
+व्योम pci_cfg_access_lock(काष्ठा pci_dev *dev);
+bool pci_cfg_access_trylock(काष्ठा pci_dev *dev);
+व्योम pci_cfg_access_unlock(काष्ठा pci_dev *dev);
 
 /*
- * PCI domain support.  Sometimes called PCI segment (eg by ACPI),
- * a PCI domain is defined to be a set of PCI buses which share
+ * PCI करोमुख्य support.  Someबार called PCI segment (eg by ACPI),
+ * a PCI करोमुख्य is defined to be a set of PCI buses which share
  * configuration space.
  */
-#ifdef CONFIG_PCI_DOMAINS
-extern int pci_domains_supported;
-#else
-enum { pci_domains_supported = 0 };
-static inline int pci_domain_nr(struct pci_bus *bus) { return 0; }
-static inline int pci_proc_domain(struct pci_bus *bus) { return 0; }
-#endif /* CONFIG_PCI_DOMAINS */
+#अगर_घोषित CONFIG_PCI_DOMAINS
+बाह्य पूर्णांक pci_करोमुख्यs_supported;
+#अन्यथा
+क्रमागत अणु pci_करोमुख्यs_supported = 0 पूर्ण;
+अटल अंतरभूत पूर्णांक pci_करोमुख्य_nr(काष्ठा pci_bus *bus) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_proc_करोमुख्य(काष्ठा pci_bus *bus) अणु वापस 0; पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_DOMAINS */
 
 /*
- * Generic implementation for PCI domain support. If your
- * architecture does not need custom management of PCI
- * domains then this implementation will be used
+ * Generic implementation क्रम PCI करोमुख्य support. If your
+ * architecture करोes not need custom management of PCI
+ * करोमुख्यs then this implementation will be used
  */
-#ifdef CONFIG_PCI_DOMAINS_GENERIC
-static inline int pci_domain_nr(struct pci_bus *bus)
-{
-	return bus->domain_nr;
-}
-#ifdef CONFIG_ACPI
-int acpi_pci_bus_find_domain_nr(struct pci_bus *bus);
-#else
-static inline int acpi_pci_bus_find_domain_nr(struct pci_bus *bus)
-{ return 0; }
-#endif
-int pci_bus_find_domain_nr(struct pci_bus *bus, struct device *parent);
-#endif
+#अगर_घोषित CONFIG_PCI_DOMAINS_GENERIC
+अटल अंतरभूत पूर्णांक pci_करोमुख्य_nr(काष्ठा pci_bus *bus)
+अणु
+	वापस bus->करोमुख्य_nr;
+पूर्ण
+#अगर_घोषित CONFIG_ACPI
+पूर्णांक acpi_pci_bus_find_करोमुख्य_nr(काष्ठा pci_bus *bus);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_pci_bus_find_करोमुख्य_nr(काष्ठा pci_bus *bus)
+अणु वापस 0; पूर्ण
+#पूर्ण_अगर
+पूर्णांक pci_bus_find_करोमुख्य_nr(काष्ठा pci_bus *bus, काष्ठा device *parent);
+#पूर्ण_अगर
 
 /* Some architectures require additional setup to direct VGA traffic */
-typedef int (*arch_set_vga_state_t)(struct pci_dev *pdev, bool decode,
-				    unsigned int command_bits, u32 flags);
-void pci_register_set_vga_state(arch_set_vga_state_t func);
+प्रकार पूर्णांक (*arch_set_vga_state_t)(काष्ठा pci_dev *pdev, bool decode,
+				    अचिन्हित पूर्णांक command_bits, u32 flags);
+व्योम pci_रेजिस्टर_set_vga_state(arch_set_vga_state_t func);
 
-static inline int
-pci_request_io_regions(struct pci_dev *pdev, const char *name)
-{
-	return pci_request_selected_regions(pdev,
+अटल अंतरभूत पूर्णांक
+pci_request_io_regions(काष्ठा pci_dev *pdev, स्थिर अक्षर *name)
+अणु
+	वापस pci_request_selected_regions(pdev,
 			    pci_select_bars(pdev, IORESOURCE_IO), name);
-}
+पूर्ण
 
-static inline void
-pci_release_io_regions(struct pci_dev *pdev)
-{
-	return pci_release_selected_regions(pdev,
+अटल अंतरभूत व्योम
+pci_release_io_regions(काष्ठा pci_dev *pdev)
+अणु
+	वापस pci_release_selected_regions(pdev,
 			    pci_select_bars(pdev, IORESOURCE_IO));
-}
+पूर्ण
 
-static inline int
-pci_request_mem_regions(struct pci_dev *pdev, const char *name)
-{
-	return pci_request_selected_regions(pdev,
+अटल अंतरभूत पूर्णांक
+pci_request_mem_regions(काष्ठा pci_dev *pdev, स्थिर अक्षर *name)
+अणु
+	वापस pci_request_selected_regions(pdev,
 			    pci_select_bars(pdev, IORESOURCE_MEM), name);
-}
+पूर्ण
 
-static inline void
-pci_release_mem_regions(struct pci_dev *pdev)
-{
-	return pci_release_selected_regions(pdev,
+अटल अंतरभूत व्योम
+pci_release_mem_regions(काष्ठा pci_dev *pdev)
+अणु
+	वापस pci_release_selected_regions(pdev,
 			    pci_select_bars(pdev, IORESOURCE_MEM));
-}
+पूर्ण
 
-#else /* CONFIG_PCI is not enabled */
+#अन्यथा /* CONFIG_PCI is not enabled */
 
-static inline void pci_set_flags(int flags) { }
-static inline void pci_add_flags(int flags) { }
-static inline void pci_clear_flags(int flags) { }
-static inline int pci_has_flag(int flag) { return 0; }
+अटल अंतरभूत व्योम pci_set_flags(पूर्णांक flags) अणु पूर्ण
+अटल अंतरभूत व्योम pci_add_flags(पूर्णांक flags) अणु पूर्ण
+अटल अंतरभूत व्योम pci_clear_flags(पूर्णांक flags) अणु पूर्ण
+अटल अंतरभूत पूर्णांक pci_has_flag(पूर्णांक flag) अणु वापस 0; पूर्ण
 
 /*
- * If the system does not have PCI, clearly these return errors.  Define
- * these as simple inline functions to avoid hair in drivers.
+ * If the प्रणाली करोes not have PCI, clearly these वापस errors.  Define
+ * these as simple अंतरभूत functions to aव्योम hair in drivers.
  */
-#define _PCI_NOP(o, s, t) \
-	static inline int pci_##o##_config_##s(struct pci_dev *dev, \
-						int where, t val) \
-		{ return PCIBIOS_FUNC_NOT_SUPPORTED; }
+#घोषणा _PCI_NOP(o, s, t) \
+	अटल अंतरभूत पूर्णांक pci_##o##_config_##s(काष्ठा pci_dev *dev, \
+						पूर्णांक where, t val) \
+		अणु वापस PCIBIOS_FUNC_NOT_SUPPORTED; पूर्ण
 
-#define _PCI_NOP_ALL(o, x)	_PCI_NOP(o, byte, u8 x) \
+#घोषणा _PCI_NOP_ALL(o, x)	_PCI_NOP(o, byte, u8 x) \
 				_PCI_NOP(o, word, u16 x) \
 				_PCI_NOP(o, dword, u32 x)
-_PCI_NOP_ALL(read, *)
-_PCI_NOP_ALL(write,)
+_PCI_NOP_ALL(पढ़ो, *)
+_PCI_NOP_ALL(ग_लिखो,)
 
-static inline struct pci_dev *pci_get_device(unsigned int vendor,
-					     unsigned int device,
-					     struct pci_dev *from)
-{ return NULL; }
+अटल अंतरभूत काष्ठा pci_dev *pci_get_device(अचिन्हित पूर्णांक venकरोr,
+					     अचिन्हित पूर्णांक device,
+					     काष्ठा pci_dev *from)
+अणु वापस शून्य; पूर्ण
 
-static inline struct pci_dev *pci_get_subsys(unsigned int vendor,
-					     unsigned int device,
-					     unsigned int ss_vendor,
-					     unsigned int ss_device,
-					     struct pci_dev *from)
-{ return NULL; }
+अटल अंतरभूत काष्ठा pci_dev *pci_get_subsys(अचिन्हित पूर्णांक venकरोr,
+					     अचिन्हित पूर्णांक device,
+					     अचिन्हित पूर्णांक ss_venकरोr,
+					     अचिन्हित पूर्णांक ss_device,
+					     काष्ठा pci_dev *from)
+अणु वापस शून्य; पूर्ण
 
-static inline struct pci_dev *pci_get_class(unsigned int class,
-					    struct pci_dev *from)
-{ return NULL; }
+अटल अंतरभूत काष्ठा pci_dev *pci_get_class(अचिन्हित पूर्णांक class,
+					    काष्ठा pci_dev *from)
+अणु वापस शून्य; पूर्ण
 
-#define pci_dev_present(ids)	(0)
-#define no_pci_devices()	(1)
-#define pci_dev_put(dev)	do { } while (0)
+#घोषणा pci_dev_present(ids)	(0)
+#घोषणा no_pci_devices()	(1)
+#घोषणा pci_dev_put(dev)	करो अणु पूर्ण जबतक (0)
 
-static inline void pci_set_master(struct pci_dev *dev) { }
-static inline int pci_enable_device(struct pci_dev *dev) { return -EIO; }
-static inline void pci_disable_device(struct pci_dev *dev) { }
-static inline int pcim_enable_device(struct pci_dev *pdev) { return -EIO; }
-static inline int pci_assign_resource(struct pci_dev *dev, int i)
-{ return -EBUSY; }
-static inline int __pci_register_driver(struct pci_driver *drv,
-					struct module *owner)
-{ return 0; }
-static inline int pci_register_driver(struct pci_driver *drv)
-{ return 0; }
-static inline void pci_unregister_driver(struct pci_driver *drv) { }
-static inline u8 pci_find_capability(struct pci_dev *dev, int cap)
-{ return 0; }
-static inline int pci_find_next_capability(struct pci_dev *dev, u8 post,
-					   int cap)
-{ return 0; }
-static inline int pci_find_ext_capability(struct pci_dev *dev, int cap)
-{ return 0; }
+अटल अंतरभूत व्योम pci_set_master(काष्ठा pci_dev *dev) अणु पूर्ण
+अटल अंतरभूत पूर्णांक pci_enable_device(काष्ठा pci_dev *dev) अणु वापस -EIO; पूर्ण
+अटल अंतरभूत व्योम pci_disable_device(काष्ठा pci_dev *dev) अणु पूर्ण
+अटल अंतरभूत पूर्णांक pcim_enable_device(काष्ठा pci_dev *pdev) अणु वापस -EIO; पूर्ण
+अटल अंतरभूत पूर्णांक pci_assign_resource(काष्ठा pci_dev *dev, पूर्णांक i)
+अणु वापस -EBUSY; पूर्ण
+अटल अंतरभूत पूर्णांक __pci_रेजिस्टर_driver(काष्ठा pci_driver *drv,
+					काष्ठा module *owner)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_रेजिस्टर_driver(काष्ठा pci_driver *drv)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम pci_unरेजिस्टर_driver(काष्ठा pci_driver *drv) अणु पूर्ण
+अटल अंतरभूत u8 pci_find_capability(काष्ठा pci_dev *dev, पूर्णांक cap)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_find_next_capability(काष्ठा pci_dev *dev, u8 post,
+					   पूर्णांक cap)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_find_ext_capability(काष्ठा pci_dev *dev, पूर्णांक cap)
+अणु वापस 0; पूर्ण
 
-static inline u64 pci_get_dsn(struct pci_dev *dev)
-{ return 0; }
+अटल अंतरभूत u64 pci_get_dsn(काष्ठा pci_dev *dev)
+अणु वापस 0; पूर्ण
 
 /* Power management related routines */
-static inline int pci_save_state(struct pci_dev *dev) { return 0; }
-static inline void pci_restore_state(struct pci_dev *dev) { }
-static inline int pci_set_power_state(struct pci_dev *dev, pci_power_t state)
-{ return 0; }
-static inline int pci_wake_from_d3(struct pci_dev *dev, bool enable)
-{ return 0; }
-static inline pci_power_t pci_choose_state(struct pci_dev *dev,
+अटल अंतरभूत पूर्णांक pci_save_state(काष्ठा pci_dev *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम pci_restore_state(काष्ठा pci_dev *dev) अणु पूर्ण
+अटल अंतरभूत पूर्णांक pci_set_घातer_state(काष्ठा pci_dev *dev, pci_घातer_t state)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_wake_from_d3(काष्ठा pci_dev *dev, bool enable)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत pci_घातer_t pci_choose_state(काष्ठा pci_dev *dev,
 					   pm_message_t state)
-{ return PCI_D0; }
-static inline int pci_enable_wake(struct pci_dev *dev, pci_power_t state,
-				  int enable)
-{ return 0; }
+अणु वापस PCI_D0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_enable_wake(काष्ठा pci_dev *dev, pci_घातer_t state,
+				  पूर्णांक enable)
+अणु वापस 0; पूर्ण
 
-static inline struct resource *pci_find_resource(struct pci_dev *dev,
-						 struct resource *res)
-{ return NULL; }
-static inline int pci_request_regions(struct pci_dev *dev, const char *res_name)
-{ return -EIO; }
-static inline void pci_release_regions(struct pci_dev *dev) { }
+अटल अंतरभूत काष्ठा resource *pci_find_resource(काष्ठा pci_dev *dev,
+						 काष्ठा resource *res)
+अणु वापस शून्य; पूर्ण
+अटल अंतरभूत पूर्णांक pci_request_regions(काष्ठा pci_dev *dev, स्थिर अक्षर *res_name)
+अणु वापस -EIO; पूर्ण
+अटल अंतरभूत व्योम pci_release_regions(काष्ठा pci_dev *dev) अणु पूर्ण
 
-static inline unsigned long pci_address_to_pio(phys_addr_t addr) { return -1; }
+अटल अंतरभूत अचिन्हित दीर्घ pci_address_to_pio(phys_addr_t addr) अणु वापस -1; पूर्ण
 
-static inline struct pci_bus *pci_find_next_bus(const struct pci_bus *from)
-{ return NULL; }
-static inline struct pci_dev *pci_get_slot(struct pci_bus *bus,
-						unsigned int devfn)
-{ return NULL; }
-static inline struct pci_dev *pci_get_domain_bus_and_slot(int domain,
-					unsigned int bus, unsigned int devfn)
-{ return NULL; }
+अटल अंतरभूत काष्ठा pci_bus *pci_find_next_bus(स्थिर काष्ठा pci_bus *from)
+अणु वापस शून्य; पूर्ण
+अटल अंतरभूत काष्ठा pci_dev *pci_get_slot(काष्ठा pci_bus *bus,
+						अचिन्हित पूर्णांक devfn)
+अणु वापस शून्य; पूर्ण
+अटल अंतरभूत काष्ठा pci_dev *pci_get_करोमुख्य_bus_and_slot(पूर्णांक करोमुख्य,
+					अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक devfn)
+अणु वापस शून्य; पूर्ण
 
-static inline int pci_domain_nr(struct pci_bus *bus) { return 0; }
-static inline struct pci_dev *pci_dev_get(struct pci_dev *dev) { return NULL; }
+अटल अंतरभूत पूर्णांक pci_करोमुख्य_nr(काष्ठा pci_bus *bus) अणु वापस 0; पूर्ण
+अटल अंतरभूत काष्ठा pci_dev *pci_dev_get(काष्ठा pci_dev *dev) अणु वापस शून्य; पूर्ण
 
-#define dev_is_pci(d) (false)
-#define dev_is_pf(d) (false)
-static inline bool pci_acs_enabled(struct pci_dev *pdev, u16 acs_flags)
-{ return false; }
-static inline int pci_irqd_intx_xlate(struct irq_domain *d,
-				      struct device_node *node,
-				      const u32 *intspec,
-				      unsigned int intsize,
-				      unsigned long *out_hwirq,
-				      unsigned int *out_type)
-{ return -EINVAL; }
+#घोषणा dev_is_pci(d) (false)
+#घोषणा dev_is_pf(d) (false)
+अटल अंतरभूत bool pci_acs_enabled(काष्ठा pci_dev *pdev, u16 acs_flags)
+अणु वापस false; पूर्ण
+अटल अंतरभूत पूर्णांक pci_irqd_पूर्णांकx_xlate(काष्ठा irq_करोमुख्य *d,
+				      काष्ठा device_node *node,
+				      स्थिर u32 *पूर्णांकspec,
+				      अचिन्हित पूर्णांक पूर्णांकsize,
+				      अचिन्हित दीर्घ *out_hwirq,
+				      अचिन्हित पूर्णांक *out_type)
+अणु वापस -EINVAL; पूर्ण
 
-static inline const struct pci_device_id *pci_match_id(const struct pci_device_id *ids,
-							 struct pci_dev *dev)
-{ return NULL; }
-static inline bool pci_ats_disabled(void) { return true; }
+अटल अंतरभूत स्थिर काष्ठा pci_device_id *pci_match_id(स्थिर काष्ठा pci_device_id *ids,
+							 काष्ठा pci_dev *dev)
+अणु वापस शून्य; पूर्ण
+अटल अंतरभूत bool pci_ats_disabled(व्योम) अणु वापस true; पूर्ण
 
-static inline int pci_irq_vector(struct pci_dev *dev, unsigned int nr)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक pci_irq_vector(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक nr)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int
-pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
-			       unsigned int max_vecs, unsigned int flags,
-			       struct irq_affinity *aff_desc)
-{
-	return -ENOSPC;
-}
-#endif /* CONFIG_PCI */
+अटल अंतरभूत पूर्णांक
+pci_alloc_irq_vectors_affinity(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक min_vecs,
+			       अचिन्हित पूर्णांक max_vecs, अचिन्हित पूर्णांक flags,
+			       काष्ठा irq_affinity *aff_desc)
+अणु
+	वापस -ENOSPC;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI */
 
-static inline int
-pci_alloc_irq_vectors(struct pci_dev *dev, unsigned int min_vecs,
-		      unsigned int max_vecs, unsigned int flags)
-{
-	return pci_alloc_irq_vectors_affinity(dev, min_vecs, max_vecs, flags,
-					      NULL);
-}
+अटल अंतरभूत पूर्णांक
+pci_alloc_irq_vectors(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक min_vecs,
+		      अचिन्हित पूर्णांक max_vecs, अचिन्हित पूर्णांक flags)
+अणु
+	वापस pci_alloc_irq_vectors_affinity(dev, min_vecs, max_vecs, flags,
+					      शून्य);
+पूर्ण
 
 /* Include architecture-dependent settings and functions */
 
-#include <asm/pci.h>
+#समावेश <यंत्र/pci.h>
 
 /* These two functions provide almost identical functionality. Depending
  * on the architecture, one will be implemented as a wrapper around the
  * other (in drivers/pci/mmap.c).
  *
- * pci_mmap_resource_range() maps a specific BAR, and vm->vm_pgoff
+ * pci_mmap_resource_range() maps a specअगरic BAR, and vm->vm_pgoff
  * is expected to be an offset within that region.
  *
- * pci_mmap_page_range() is the legacy architecture-specific interface,
+ * pci_mmap_page_range() is the legacy architecture-specअगरic पूर्णांकerface,
  * which accepts a "user visible" resource address converted by
- * pci_resource_to_user(), as used in the legacy mmap() interface in
+ * pci_resource_to_user(), as used in the legacy mmap() पूर्णांकerface in
  * /proc/bus/pci/.
  */
-int pci_mmap_resource_range(struct pci_dev *dev, int bar,
-			    struct vm_area_struct *vma,
-			    enum pci_mmap_state mmap_state, int write_combine);
-int pci_mmap_page_range(struct pci_dev *pdev, int bar,
-			struct vm_area_struct *vma,
-			enum pci_mmap_state mmap_state, int write_combine);
+पूर्णांक pci_mmap_resource_range(काष्ठा pci_dev *dev, पूर्णांक bar,
+			    काष्ठा vm_area_काष्ठा *vma,
+			    क्रमागत pci_mmap_state mmap_state, पूर्णांक ग_लिखो_combine);
+पूर्णांक pci_mmap_page_range(काष्ठा pci_dev *pdev, पूर्णांक bar,
+			काष्ठा vm_area_काष्ठा *vma,
+			क्रमागत pci_mmap_state mmap_state, पूर्णांक ग_लिखो_combine);
 
-#ifndef arch_can_pci_mmap_wc
-#define arch_can_pci_mmap_wc()		0
-#endif
+#अगर_अघोषित arch_can_pci_mmap_wc
+#घोषणा arch_can_pci_mmap_wc()		0
+#पूर्ण_अगर
 
-#ifndef arch_can_pci_mmap_io
-#define arch_can_pci_mmap_io()		0
-#define pci_iobar_pfn(pdev, bar, vma) (-EINVAL)
-#else
-int pci_iobar_pfn(struct pci_dev *pdev, int bar, struct vm_area_struct *vma);
-#endif
+#अगर_अघोषित arch_can_pci_mmap_io
+#घोषणा arch_can_pci_mmap_io()		0
+#घोषणा pci_iobar_pfn(pdev, bar, vma) (-EINVAL)
+#अन्यथा
+पूर्णांक pci_iobar_pfn(काष्ठा pci_dev *pdev, पूर्णांक bar, काष्ठा vm_area_काष्ठा *vma);
+#पूर्ण_अगर
 
-#ifndef pci_root_bus_fwnode
-#define pci_root_bus_fwnode(bus)	NULL
-#endif
+#अगर_अघोषित pci_root_bus_fwnode
+#घोषणा pci_root_bus_fwnode(bus)	शून्य
+#पूर्ण_अगर
 
 /*
  * These helpers provide future and backwards compatibility
- * for accessing popular PCI BAR info
+ * क्रम accessing popular PCI BAR info
  */
-#define pci_resource_start(dev, bar)	((dev)->resource[(bar)].start)
-#define pci_resource_end(dev, bar)	((dev)->resource[(bar)].end)
-#define pci_resource_flags(dev, bar)	((dev)->resource[(bar)].flags)
-#define pci_resource_len(dev,bar) \
+#घोषणा pci_resource_start(dev, bar)	((dev)->resource[(bar)].start)
+#घोषणा pci_resource_end(dev, bar)	((dev)->resource[(bar)].end)
+#घोषणा pci_resource_flags(dev, bar)	((dev)->resource[(bar)].flags)
+#घोषणा pci_resource_len(dev,bar) \
 	((pci_resource_start((dev), (bar)) == 0 &&	\
 	  pci_resource_end((dev), (bar)) ==		\
 	  pci_resource_start((dev), (bar))) ? 0 :	\
@@ -1880,595 +1881,595 @@ int pci_iobar_pfn(struct pci_dev *pdev, int bar, struct vm_area_struct *vma);
 
 /*
  * Similar to the helpers above, these manipulate per-pci_dev
- * driver-specific data.  They are really just a wrapper around
- * the generic device structure functions of these calls.
+ * driver-specअगरic data.  They are really just a wrapper around
+ * the generic device काष्ठाure functions of these calls.
  */
-static inline void *pci_get_drvdata(struct pci_dev *pdev)
-{
-	return dev_get_drvdata(&pdev->dev);
-}
+अटल अंतरभूत व्योम *pci_get_drvdata(काष्ठा pci_dev *pdev)
+अणु
+	वापस dev_get_drvdata(&pdev->dev);
+पूर्ण
 
-static inline void pci_set_drvdata(struct pci_dev *pdev, void *data)
-{
+अटल अंतरभूत व्योम pci_set_drvdata(काष्ठा pci_dev *pdev, व्योम *data)
+अणु
 	dev_set_drvdata(&pdev->dev, data);
-}
+पूर्ण
 
-static inline const char *pci_name(const struct pci_dev *pdev)
-{
-	return dev_name(&pdev->dev);
-}
+अटल अंतरभूत स्थिर अक्षर *pci_name(स्थिर काष्ठा pci_dev *pdev)
+अणु
+	वापस dev_name(&pdev->dev);
+पूर्ण
 
-void pci_resource_to_user(const struct pci_dev *dev, int bar,
-			  const struct resource *rsrc,
-			  resource_size_t *start, resource_size_t *end);
+व्योम pci_resource_to_user(स्थिर काष्ठा pci_dev *dev, पूर्णांक bar,
+			  स्थिर काष्ठा resource *rsrc,
+			  resource_माप_प्रकार *start, resource_माप_प्रकार *end);
 
 /*
  * The world is not perfect and supplies us with broken PCI devices.
  * For at least a part of these bugs we need a work-around, so both
  * generic (drivers/pci/quirks.c) and per-architecture code can define
- * fixup hooks to be called for particular buggy devices.
+ * fixup hooks to be called क्रम particular buggy devices.
  */
 
-struct pci_fixup {
-	u16 vendor;			/* Or PCI_ANY_ID */
+काष्ठा pci_fixup अणु
+	u16 venकरोr;			/* Or PCI_ANY_ID */
 	u16 device;			/* Or PCI_ANY_ID */
 	u32 class;			/* Or PCI_ANY_ID */
-	unsigned int class_shift;	/* should be 0, 8, 16 */
-#ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
-	int hook_offset;
-#else
-	void (*hook)(struct pci_dev *dev);
-#endif
-};
+	अचिन्हित पूर्णांक class_shअगरt;	/* should be 0, 8, 16 */
+#अगर_घोषित CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
+	पूर्णांक hook_offset;
+#अन्यथा
+	व्योम (*hook)(काष्ठा pci_dev *dev);
+#पूर्ण_अगर
+पूर्ण;
 
-enum pci_fixup_pass {
-	pci_fixup_early,	/* Before probing BARs */
-	pci_fixup_header,	/* After reading configuration header */
+क्रमागत pci_fixup_pass अणु
+	pci_fixup_early,	/* Beक्रमe probing BARs */
+	pci_fixup_header,	/* After पढ़ोing configuration header */
 	pci_fixup_final,	/* Final phase of device fixups */
-	pci_fixup_enable,	/* pci_enable_device() time */
+	pci_fixup_enable,	/* pci_enable_device() समय */
 	pci_fixup_resume,	/* pci_device_resume() */
 	pci_fixup_suspend,	/* pci_device_suspend() */
 	pci_fixup_resume_early, /* pci_device_resume_early() */
 	pci_fixup_suspend_late,	/* pci_device_suspend_late() */
-};
+पूर्ण;
 
-#ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
-#define ___DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
-				    class_shift, hook)			\
+#अगर_घोषित CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
+#घोषणा ___DECLARE_PCI_FIXUP_SECTION(sec, name, venकरोr, device, class,	\
+				    class_shअगरt, hook)			\
 	__ADDRESSABLE(hook)						\
-	asm(".section "	#sec ", \"a\"				\n"	\
+	यंत्र(".section "	#sec ", \"a\"				\n"	\
 	    ".balign	16					\n"	\
-	    ".short "	#vendor ", " #device "			\n"	\
-	    ".long "	#class ", " #class_shift "		\n"	\
+	    ".short "	#venकरोr ", " #device "			\n"	\
+	    ".long "	#class ", " #class_shअगरt "		\n"	\
 	    ".long "	#hook " - .				\n"	\
 	    ".previous						\n");
 
 /*
- * Clang's LTO may rename static functions in C, but has no way to
- * handle such renamings when referenced from inline asm. To work
- * around this, create global C stubs for these cases.
+ * Clang's LTO may नाम अटल functions in C, but has no way to
+ * handle such renamings when referenced from अंतरभूत यंत्र. To work
+ * around this, create global C stubs क्रम these हालs.
  */
-#ifdef CONFIG_LTO_CLANG
-#define __DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
-				  class_shift, hook, stub)		\
-	void __cficanonical stub(struct pci_dev *dev);			\
-	void __cficanonical stub(struct pci_dev *dev)			\
-	{ 								\
+#अगर_घोषित CONFIG_LTO_CLANG
+#घोषणा __DECLARE_PCI_FIXUP_SECTION(sec, name, venकरोr, device, class,	\
+				  class_shअगरt, hook, stub)		\
+	व्योम __cficanonical stub(काष्ठा pci_dev *dev);			\
+	व्योम __cficanonical stub(काष्ठा pci_dev *dev)			\
+	अणु 								\
 		hook(dev); 						\
-	}								\
-	___DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
-				  class_shift, stub)
-#else
-#define __DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
-				  class_shift, hook, stub)		\
-	___DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
-				  class_shift, hook)
-#endif
+	पूर्ण								\
+	___DECLARE_PCI_FIXUP_SECTION(sec, name, venकरोr, device, class,	\
+				  class_shअगरt, stub)
+#अन्यथा
+#घोषणा __DECLARE_PCI_FIXUP_SECTION(sec, name, venकरोr, device, class,	\
+				  class_shअगरt, hook, stub)		\
+	___DECLARE_PCI_FIXUP_SECTION(sec, name, venकरोr, device, class,	\
+				  class_shअगरt, hook)
+#पूर्ण_अगर
 
-#define DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
-				  class_shift, hook)			\
-	__DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
-				  class_shift, hook, __UNIQUE_ID(hook))
-#else
+#घोषणा DECLARE_PCI_FIXUP_SECTION(sec, name, venकरोr, device, class,	\
+				  class_shअगरt, hook)			\
+	__DECLARE_PCI_FIXUP_SECTION(sec, name, venकरोr, device, class,	\
+				  class_shअगरt, hook, __UNIQUE_ID(hook))
+#अन्यथा
 /* Anonymous variables would be nice... */
-#define DECLARE_PCI_FIXUP_SECTION(section, name, vendor, device, class,	\
-				  class_shift, hook)			\
-	static const struct pci_fixup __PASTE(__pci_fixup_##name,__LINE__) __used	\
-	__attribute__((__section__(#section), aligned((sizeof(void *)))))    \
-		= { vendor, device, class, class_shift, hook };
-#endif
+#घोषणा DECLARE_PCI_FIXUP_SECTION(section, name, venकरोr, device, class,	\
+				  class_shअगरt, hook)			\
+	अटल स्थिर काष्ठा pci_fixup __PASTE(__pci_fixup_##name,__LINE__) __used	\
+	__attribute__((__section__(#section), aligned((माप(व्योम *)))))    \
+		= अणु venकरोr, device, class, class_shअगरt, hook पूर्ण;
+#पूर्ण_अगर
 
-#define DECLARE_PCI_FIXUP_CLASS_EARLY(vendor, device, class,		\
-					 class_shift, hook)		\
+#घोषणा DECLARE_PCI_FIXUP_CLASS_EARLY(venकरोr, device, class,		\
+					 class_shअगरt, hook)		\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_early,			\
-		hook, vendor, device, class, class_shift, hook)
-#define DECLARE_PCI_FIXUP_CLASS_HEADER(vendor, device, class,		\
-					 class_shift, hook)		\
+		hook, venकरोr, device, class, class_shअगरt, hook)
+#घोषणा DECLARE_PCI_FIXUP_CLASS_HEADER(venकरोr, device, class,		\
+					 class_shअगरt, hook)		\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_header,			\
-		hook, vendor, device, class, class_shift, hook)
-#define DECLARE_PCI_FIXUP_CLASS_FINAL(vendor, device, class,		\
-					 class_shift, hook)		\
+		hook, venकरोr, device, class, class_shअगरt, hook)
+#घोषणा DECLARE_PCI_FIXUP_CLASS_FINAL(venकरोr, device, class,		\
+					 class_shअगरt, hook)		\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_final,			\
-		hook, vendor, device, class, class_shift, hook)
-#define DECLARE_PCI_FIXUP_CLASS_ENABLE(vendor, device, class,		\
-					 class_shift, hook)		\
+		hook, venकरोr, device, class, class_shअगरt, hook)
+#घोषणा DECLARE_PCI_FIXUP_CLASS_ENABLE(venकरोr, device, class,		\
+					 class_shअगरt, hook)		\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_enable,			\
-		hook, vendor, device, class, class_shift, hook)
-#define DECLARE_PCI_FIXUP_CLASS_RESUME(vendor, device, class,		\
-					 class_shift, hook)		\
+		hook, venकरोr, device, class, class_shअगरt, hook)
+#घोषणा DECLARE_PCI_FIXUP_CLASS_RESUME(venकरोr, device, class,		\
+					 class_shअगरt, hook)		\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_resume,			\
-		resume##hook, vendor, device, class, class_shift, hook)
-#define DECLARE_PCI_FIXUP_CLASS_RESUME_EARLY(vendor, device, class,	\
-					 class_shift, hook)		\
+		resume##hook, venकरोr, device, class, class_shअगरt, hook)
+#घोषणा DECLARE_PCI_FIXUP_CLASS_RESUME_EARLY(venकरोr, device, class,	\
+					 class_shअगरt, hook)		\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_resume_early,		\
-		resume_early##hook, vendor, device, class, class_shift, hook)
-#define DECLARE_PCI_FIXUP_CLASS_SUSPEND(vendor, device, class,		\
-					 class_shift, hook)		\
+		resume_early##hook, venकरोr, device, class, class_shअगरt, hook)
+#घोषणा DECLARE_PCI_FIXUP_CLASS_SUSPEND(venकरोr, device, class,		\
+					 class_shअगरt, hook)		\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_suspend,			\
-		suspend##hook, vendor, device, class, class_shift, hook)
-#define DECLARE_PCI_FIXUP_CLASS_SUSPEND_LATE(vendor, device, class,	\
-					 class_shift, hook)		\
+		suspend##hook, venकरोr, device, class, class_shअगरt, hook)
+#घोषणा DECLARE_PCI_FIXUP_CLASS_SUSPEND_LATE(venकरोr, device, class,	\
+					 class_shअगरt, hook)		\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_suspend_late,		\
-		suspend_late##hook, vendor, device, class, class_shift, hook)
+		suspend_late##hook, venकरोr, device, class, class_shअगरt, hook)
 
-#define DECLARE_PCI_FIXUP_EARLY(vendor, device, hook)			\
+#घोषणा DECLARE_PCI_FIXUP_EARLY(venकरोr, device, hook)			\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_early,			\
-		hook, vendor, device, PCI_ANY_ID, 0, hook)
-#define DECLARE_PCI_FIXUP_HEADER(vendor, device, hook)			\
+		hook, venकरोr, device, PCI_ANY_ID, 0, hook)
+#घोषणा DECLARE_PCI_FIXUP_HEADER(venकरोr, device, hook)			\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_header,			\
-		hook, vendor, device, PCI_ANY_ID, 0, hook)
-#define DECLARE_PCI_FIXUP_FINAL(vendor, device, hook)			\
+		hook, venकरोr, device, PCI_ANY_ID, 0, hook)
+#घोषणा DECLARE_PCI_FIXUP_FINAL(venकरोr, device, hook)			\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_final,			\
-		hook, vendor, device, PCI_ANY_ID, 0, hook)
-#define DECLARE_PCI_FIXUP_ENABLE(vendor, device, hook)			\
+		hook, venकरोr, device, PCI_ANY_ID, 0, hook)
+#घोषणा DECLARE_PCI_FIXUP_ENABLE(venकरोr, device, hook)			\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_enable,			\
-		hook, vendor, device, PCI_ANY_ID, 0, hook)
-#define DECLARE_PCI_FIXUP_RESUME(vendor, device, hook)			\
+		hook, venकरोr, device, PCI_ANY_ID, 0, hook)
+#घोषणा DECLARE_PCI_FIXUP_RESUME(venकरोr, device, hook)			\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_resume,			\
-		resume##hook, vendor, device, PCI_ANY_ID, 0, hook)
-#define DECLARE_PCI_FIXUP_RESUME_EARLY(vendor, device, hook)		\
+		resume##hook, venकरोr, device, PCI_ANY_ID, 0, hook)
+#घोषणा DECLARE_PCI_FIXUP_RESUME_EARLY(venकरोr, device, hook)		\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_resume_early,		\
-		resume_early##hook, vendor, device, PCI_ANY_ID, 0, hook)
-#define DECLARE_PCI_FIXUP_SUSPEND(vendor, device, hook)			\
+		resume_early##hook, venकरोr, device, PCI_ANY_ID, 0, hook)
+#घोषणा DECLARE_PCI_FIXUP_SUSPEND(venकरोr, device, hook)			\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_suspend,			\
-		suspend##hook, vendor, device, PCI_ANY_ID, 0, hook)
-#define DECLARE_PCI_FIXUP_SUSPEND_LATE(vendor, device, hook)		\
+		suspend##hook, venकरोr, device, PCI_ANY_ID, 0, hook)
+#घोषणा DECLARE_PCI_FIXUP_SUSPEND_LATE(venकरोr, device, hook)		\
 	DECLARE_PCI_FIXUP_SECTION(.pci_fixup_suspend_late,		\
-		suspend_late##hook, vendor, device, PCI_ANY_ID, 0, hook)
+		suspend_late##hook, venकरोr, device, PCI_ANY_ID, 0, hook)
 
-#ifdef CONFIG_PCI_QUIRKS
-void pci_fixup_device(enum pci_fixup_pass pass, struct pci_dev *dev);
-#else
-static inline void pci_fixup_device(enum pci_fixup_pass pass,
-				    struct pci_dev *dev) { }
-#endif
+#अगर_घोषित CONFIG_PCI_QUIRKS
+व्योम pci_fixup_device(क्रमागत pci_fixup_pass pass, काष्ठा pci_dev *dev);
+#अन्यथा
+अटल अंतरभूत व्योम pci_fixup_device(क्रमागत pci_fixup_pass pass,
+				    काष्ठा pci_dev *dev) अणु पूर्ण
+#पूर्ण_अगर
 
-void __iomem *pcim_iomap(struct pci_dev *pdev, int bar, unsigned long maxlen);
-void pcim_iounmap(struct pci_dev *pdev, void __iomem *addr);
-void __iomem * const *pcim_iomap_table(struct pci_dev *pdev);
-int pcim_iomap_regions(struct pci_dev *pdev, int mask, const char *name);
-int pcim_iomap_regions_request_all(struct pci_dev *pdev, int mask,
-				   const char *name);
-void pcim_iounmap_regions(struct pci_dev *pdev, int mask);
+व्योम __iomem *pcim_iomap(काष्ठा pci_dev *pdev, पूर्णांक bar, अचिन्हित दीर्घ maxlen);
+व्योम pcim_iounmap(काष्ठा pci_dev *pdev, व्योम __iomem *addr);
+व्योम __iomem * स्थिर *pcim_iomap_table(काष्ठा pci_dev *pdev);
+पूर्णांक pcim_iomap_regions(काष्ठा pci_dev *pdev, पूर्णांक mask, स्थिर अक्षर *name);
+पूर्णांक pcim_iomap_regions_request_all(काष्ठा pci_dev *pdev, पूर्णांक mask,
+				   स्थिर अक्षर *name);
+व्योम pcim_iounmap_regions(काष्ठा pci_dev *pdev, पूर्णांक mask);
 
-extern int pci_pci_problems;
-#define PCIPCI_FAIL		1	/* No PCI PCI DMA */
-#define PCIPCI_TRITON		2
-#define PCIPCI_NATOMA		4
-#define PCIPCI_VIAETBF		8
-#define PCIPCI_VSFX		16
-#define PCIPCI_ALIMAGIK		32	/* Need low latency setting */
-#define PCIAGP_FAIL		64	/* No PCI to AGP DMA */
+बाह्य पूर्णांक pci_pci_problems;
+#घोषणा PCIPCI_FAIL		1	/* No PCI PCI DMA */
+#घोषणा PCIPCI_TRITON		2
+#घोषणा PCIPCI_NATOMA		4
+#घोषणा PCIPCI_VIAETBF		8
+#घोषणा PCIPCI_VSFX		16
+#घोषणा PCIPCI_ALIMAGIK		32	/* Need low latency setting */
+#घोषणा PCIAGP_FAIL		64	/* No PCI to AGP DMA */
 
-extern unsigned long pci_cardbus_io_size;
-extern unsigned long pci_cardbus_mem_size;
-extern u8 pci_dfl_cache_line_size;
-extern u8 pci_cache_line_size;
+बाह्य अचिन्हित दीर्घ pci_cardbus_io_size;
+बाह्य अचिन्हित दीर्घ pci_cardbus_mem_size;
+बाह्य u8 pci_dfl_cache_line_size;
+बाह्य u8 pci_cache_line_size;
 
-/* Architecture-specific versions may override these (weak) */
-void pcibios_disable_device(struct pci_dev *dev);
-void pcibios_set_master(struct pci_dev *dev);
-int pcibios_set_pcie_reset_state(struct pci_dev *dev,
-				 enum pcie_reset_state state);
-int pcibios_add_device(struct pci_dev *dev);
-void pcibios_release_device(struct pci_dev *dev);
-#ifdef CONFIG_PCI
-void pcibios_penalize_isa_irq(int irq, int active);
-#else
-static inline void pcibios_penalize_isa_irq(int irq, int active) {}
-#endif
-int pcibios_alloc_irq(struct pci_dev *dev);
-void pcibios_free_irq(struct pci_dev *dev);
-resource_size_t pcibios_default_alignment(void);
+/* Architecture-specअगरic versions may override these (weak) */
+व्योम pcibios_disable_device(काष्ठा pci_dev *dev);
+व्योम pcibios_set_master(काष्ठा pci_dev *dev);
+पूर्णांक pcibios_set_pcie_reset_state(काष्ठा pci_dev *dev,
+				 क्रमागत pcie_reset_state state);
+पूर्णांक pcibios_add_device(काष्ठा pci_dev *dev);
+व्योम pcibios_release_device(काष्ठा pci_dev *dev);
+#अगर_घोषित CONFIG_PCI
+व्योम pcibios_penalize_isa_irq(पूर्णांक irq, पूर्णांक active);
+#अन्यथा
+अटल अंतरभूत व्योम pcibios_penalize_isa_irq(पूर्णांक irq, पूर्णांक active) अणुपूर्ण
+#पूर्ण_अगर
+पूर्णांक pcibios_alloc_irq(काष्ठा pci_dev *dev);
+व्योम pcibios_मुक्त_irq(काष्ठा pci_dev *dev);
+resource_माप_प्रकार pcibios_शेष_alignment(व्योम);
 
-#if defined(CONFIG_PCI_MMCONFIG) || defined(CONFIG_ACPI_MCFG)
-void __init pci_mmcfg_early_init(void);
-void __init pci_mmcfg_late_init(void);
-#else
-static inline void pci_mmcfg_early_init(void) { }
-static inline void pci_mmcfg_late_init(void) { }
-#endif
+#अगर defined(CONFIG_PCI_MMCONFIG) || defined(CONFIG_ACPI_MCFG)
+व्योम __init pci_mmcfg_early_init(व्योम);
+व्योम __init pci_mmcfg_late_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम pci_mmcfg_early_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम pci_mmcfg_late_init(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-int pci_ext_cfg_avail(void);
+पूर्णांक pci_ext_cfg_avail(व्योम);
 
-void __iomem *pci_ioremap_bar(struct pci_dev *pdev, int bar);
-void __iomem *pci_ioremap_wc_bar(struct pci_dev *pdev, int bar);
+व्योम __iomem *pci_ioremap_bar(काष्ठा pci_dev *pdev, पूर्णांक bar);
+व्योम __iomem *pci_ioremap_wc_bar(काष्ठा pci_dev *pdev, पूर्णांक bar);
 
-#ifdef CONFIG_PCI_IOV
-int pci_iov_virtfn_bus(struct pci_dev *dev, int id);
-int pci_iov_virtfn_devfn(struct pci_dev *dev, int id);
+#अगर_घोषित CONFIG_PCI_IOV
+पूर्णांक pci_iov_virtfn_bus(काष्ठा pci_dev *dev, पूर्णांक id);
+पूर्णांक pci_iov_virtfn_devfn(काष्ठा pci_dev *dev, पूर्णांक id);
 
-int pci_enable_sriov(struct pci_dev *dev, int nr_virtfn);
-void pci_disable_sriov(struct pci_dev *dev);
+पूर्णांक pci_enable_sriov(काष्ठा pci_dev *dev, पूर्णांक nr_virtfn);
+व्योम pci_disable_sriov(काष्ठा pci_dev *dev);
 
-int pci_iov_sysfs_link(struct pci_dev *dev, struct pci_dev *virtfn, int id);
-int pci_iov_add_virtfn(struct pci_dev *dev, int id);
-void pci_iov_remove_virtfn(struct pci_dev *dev, int id);
-int pci_num_vf(struct pci_dev *dev);
-int pci_vfs_assigned(struct pci_dev *dev);
-int pci_sriov_set_totalvfs(struct pci_dev *dev, u16 numvfs);
-int pci_sriov_get_totalvfs(struct pci_dev *dev);
-int pci_sriov_configure_simple(struct pci_dev *dev, int nr_virtfn);
-resource_size_t pci_iov_resource_size(struct pci_dev *dev, int resno);
-void pci_vf_drivers_autoprobe(struct pci_dev *dev, bool probe);
+पूर्णांक pci_iov_sysfs_link(काष्ठा pci_dev *dev, काष्ठा pci_dev *virtfn, पूर्णांक id);
+पूर्णांक pci_iov_add_virtfn(काष्ठा pci_dev *dev, पूर्णांक id);
+व्योम pci_iov_हटाओ_virtfn(काष्ठा pci_dev *dev, पूर्णांक id);
+पूर्णांक pci_num_vf(काष्ठा pci_dev *dev);
+पूर्णांक pci_vfs_asचिन्हित(काष्ठा pci_dev *dev);
+पूर्णांक pci_sriov_set_totalvfs(काष्ठा pci_dev *dev, u16 numvfs);
+पूर्णांक pci_sriov_get_totalvfs(काष्ठा pci_dev *dev);
+पूर्णांक pci_sriov_configure_simple(काष्ठा pci_dev *dev, पूर्णांक nr_virtfn);
+resource_माप_प्रकार pci_iov_resource_size(काष्ठा pci_dev *dev, पूर्णांक resno);
+व्योम pci_vf_drivers_स्वतःprobe(काष्ठा pci_dev *dev, bool probe);
 
 /* Arch may override these (weak) */
-int pcibios_sriov_enable(struct pci_dev *pdev, u16 num_vfs);
-int pcibios_sriov_disable(struct pci_dev *pdev);
-resource_size_t pcibios_iov_resource_alignment(struct pci_dev *dev, int resno);
-#else
-static inline int pci_iov_virtfn_bus(struct pci_dev *dev, int id)
-{
-	return -ENOSYS;
-}
-static inline int pci_iov_virtfn_devfn(struct pci_dev *dev, int id)
-{
-	return -ENOSYS;
-}
-static inline int pci_enable_sriov(struct pci_dev *dev, int nr_virtfn)
-{ return -ENODEV; }
+पूर्णांक pcibios_sriov_enable(काष्ठा pci_dev *pdev, u16 num_vfs);
+पूर्णांक pcibios_sriov_disable(काष्ठा pci_dev *pdev);
+resource_माप_प्रकार pcibios_iov_resource_alignment(काष्ठा pci_dev *dev, पूर्णांक resno);
+#अन्यथा
+अटल अंतरभूत पूर्णांक pci_iov_virtfn_bus(काष्ठा pci_dev *dev, पूर्णांक id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+अटल अंतरभूत पूर्णांक pci_iov_virtfn_devfn(काष्ठा pci_dev *dev, पूर्णांक id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+अटल अंतरभूत पूर्णांक pci_enable_sriov(काष्ठा pci_dev *dev, पूर्णांक nr_virtfn)
+अणु वापस -ENODEV; पूर्ण
 
-static inline int pci_iov_sysfs_link(struct pci_dev *dev,
-				     struct pci_dev *virtfn, int id)
-{
-	return -ENODEV;
-}
-static inline int pci_iov_add_virtfn(struct pci_dev *dev, int id)
-{
-	return -ENOSYS;
-}
-static inline void pci_iov_remove_virtfn(struct pci_dev *dev,
-					 int id) { }
-static inline void pci_disable_sriov(struct pci_dev *dev) { }
-static inline int pci_num_vf(struct pci_dev *dev) { return 0; }
-static inline int pci_vfs_assigned(struct pci_dev *dev)
-{ return 0; }
-static inline int pci_sriov_set_totalvfs(struct pci_dev *dev, u16 numvfs)
-{ return 0; }
-static inline int pci_sriov_get_totalvfs(struct pci_dev *dev)
-{ return 0; }
-#define pci_sriov_configure_simple	NULL
-static inline resource_size_t pci_iov_resource_size(struct pci_dev *dev, int resno)
-{ return 0; }
-static inline void pci_vf_drivers_autoprobe(struct pci_dev *dev, bool probe) { }
-#endif
+अटल अंतरभूत पूर्णांक pci_iov_sysfs_link(काष्ठा pci_dev *dev,
+				     काष्ठा pci_dev *virtfn, पूर्णांक id)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल अंतरभूत पूर्णांक pci_iov_add_virtfn(काष्ठा pci_dev *dev, पूर्णांक id)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+अटल अंतरभूत व्योम pci_iov_हटाओ_virtfn(काष्ठा pci_dev *dev,
+					 पूर्णांक id) अणु पूर्ण
+अटल अंतरभूत व्योम pci_disable_sriov(काष्ठा pci_dev *dev) अणु पूर्ण
+अटल अंतरभूत पूर्णांक pci_num_vf(काष्ठा pci_dev *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_vfs_asचिन्हित(काष्ठा pci_dev *dev)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_sriov_set_totalvfs(काष्ठा pci_dev *dev, u16 numvfs)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक pci_sriov_get_totalvfs(काष्ठा pci_dev *dev)
+अणु वापस 0; पूर्ण
+#घोषणा pci_sriov_configure_simple	शून्य
+अटल अंतरभूत resource_माप_प्रकार pci_iov_resource_size(काष्ठा pci_dev *dev, पूर्णांक resno)
+अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम pci_vf_drivers_स्वतःprobe(काष्ठा pci_dev *dev, bool probe) अणु पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_HOTPLUG_PCI) || defined(CONFIG_HOTPLUG_PCI_MODULE)
-void pci_hp_create_module_link(struct pci_slot *pci_slot);
-void pci_hp_remove_module_link(struct pci_slot *pci_slot);
-#endif
+#अगर defined(CONFIG_HOTPLUG_PCI) || defined(CONFIG_HOTPLUG_PCI_MODULE)
+व्योम pci_hp_create_module_link(काष्ठा pci_slot *pci_slot);
+व्योम pci_hp_हटाओ_module_link(काष्ठा pci_slot *pci_slot);
+#पूर्ण_अगर
 
 /**
  * pci_pcie_cap - get the saved PCIe capability offset
  * @dev: PCI device
  *
  * PCIe capability offset is calculated at PCI device initialization
- * time and saved in the data structure. This function returns saved
+ * समय and saved in the data काष्ठाure. This function वापसs saved
  * PCIe capability offset. Using this instead of pci_find_capability()
  * reduces unnecessary search in the PCI configuration space. If you
- * need to calculate PCIe capability offset from raw device for some
+ * need to calculate PCIe capability offset from raw device क्रम some
  * reasons, please use pci_find_capability() instead.
  */
-static inline int pci_pcie_cap(struct pci_dev *dev)
-{
-	return dev->pcie_cap;
-}
+अटल अंतरभूत पूर्णांक pci_pcie_cap(काष्ठा pci_dev *dev)
+अणु
+	वापस dev->pcie_cap;
+पूर्ण
 
 /**
- * pci_is_pcie - check if the PCI device is PCI Express capable
+ * pci_is_pcie - check अगर the PCI device is PCI Express capable
  * @dev: PCI device
  *
- * Returns: true if the PCI device is PCI Express capable, false otherwise.
+ * Returns: true अगर the PCI device is PCI Express capable, false otherwise.
  */
-static inline bool pci_is_pcie(struct pci_dev *dev)
-{
-	return pci_pcie_cap(dev);
-}
+अटल अंतरभूत bool pci_is_pcie(काष्ठा pci_dev *dev)
+अणु
+	वापस pci_pcie_cap(dev);
+पूर्ण
 
 /**
  * pcie_caps_reg - get the PCIe Capabilities Register
  * @dev: PCI device
  */
-static inline u16 pcie_caps_reg(const struct pci_dev *dev)
-{
-	return dev->pcie_flags_reg;
-}
+अटल अंतरभूत u16 pcie_caps_reg(स्थिर काष्ठा pci_dev *dev)
+अणु
+	वापस dev->pcie_flags_reg;
+पूर्ण
 
 /**
  * pci_pcie_type - get the PCIe device/port type
  * @dev: PCI device
  */
-static inline int pci_pcie_type(const struct pci_dev *dev)
-{
-	return (pcie_caps_reg(dev) & PCI_EXP_FLAGS_TYPE) >> 4;
-}
+अटल अंतरभूत पूर्णांक pci_pcie_type(स्थिर काष्ठा pci_dev *dev)
+अणु
+	वापस (pcie_caps_reg(dev) & PCI_EXP_FLAGS_TYPE) >> 4;
+पूर्ण
 
 /**
  * pcie_find_root_port - Get the PCIe root port device
  * @dev: PCI device
  *
- * Traverse up the parent chain and return the PCIe Root Port PCI Device
- * for a given PCI/PCIe Device.
+ * Traverse up the parent chain and वापस the PCIe Root Port PCI Device
+ * क्रम a given PCI/PCIe Device.
  */
-static inline struct pci_dev *pcie_find_root_port(struct pci_dev *dev)
-{
-	while (dev) {
-		if (pci_is_pcie(dev) &&
+अटल अंतरभूत काष्ठा pci_dev *pcie_find_root_port(काष्ठा pci_dev *dev)
+अणु
+	जबतक (dev) अणु
+		अगर (pci_is_pcie(dev) &&
 		    pci_pcie_type(dev) == PCI_EXP_TYPE_ROOT_PORT)
-			return dev;
+			वापस dev;
 		dev = pci_upstream_bridge(dev);
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void pci_request_acs(void);
-bool pci_acs_enabled(struct pci_dev *pdev, u16 acs_flags);
-bool pci_acs_path_enabled(struct pci_dev *start,
-			  struct pci_dev *end, u16 acs_flags);
-int pci_enable_atomic_ops_to_root(struct pci_dev *dev, u32 cap_mask);
+व्योम pci_request_acs(व्योम);
+bool pci_acs_enabled(काष्ठा pci_dev *pdev, u16 acs_flags);
+bool pci_acs_path_enabled(काष्ठा pci_dev *start,
+			  काष्ठा pci_dev *end, u16 acs_flags);
+पूर्णांक pci_enable_atomic_ops_to_root(काष्ठा pci_dev *dev, u32 cap_mask);
 
-#define PCI_VPD_LRDT			0x80	/* Large Resource Data Type */
-#define PCI_VPD_LRDT_ID(x)		((x) | PCI_VPD_LRDT)
+#घोषणा PCI_VPD_LRDT			0x80	/* Large Resource Data Type */
+#घोषणा PCI_VPD_LRDT_ID(x)		((x) | PCI_VPD_LRDT)
 
 /* Large Resource Data Type Tag Item Names */
-#define PCI_VPD_LTIN_ID_STRING		0x02	/* Identifier String */
-#define PCI_VPD_LTIN_RO_DATA		0x10	/* Read-Only Data */
-#define PCI_VPD_LTIN_RW_DATA		0x11	/* Read-Write Data */
+#घोषणा PCI_VPD_LTIN_ID_STRING		0x02	/* Identअगरier String */
+#घोषणा PCI_VPD_LTIN_RO_DATA		0x10	/* Read-Only Data */
+#घोषणा PCI_VPD_LTIN_RW_DATA		0x11	/* Read-Write Data */
 
-#define PCI_VPD_LRDT_ID_STRING		PCI_VPD_LRDT_ID(PCI_VPD_LTIN_ID_STRING)
-#define PCI_VPD_LRDT_RO_DATA		PCI_VPD_LRDT_ID(PCI_VPD_LTIN_RO_DATA)
-#define PCI_VPD_LRDT_RW_DATA		PCI_VPD_LRDT_ID(PCI_VPD_LTIN_RW_DATA)
+#घोषणा PCI_VPD_LRDT_ID_STRING		PCI_VPD_LRDT_ID(PCI_VPD_LTIN_ID_STRING)
+#घोषणा PCI_VPD_LRDT_RO_DATA		PCI_VPD_LRDT_ID(PCI_VPD_LTIN_RO_DATA)
+#घोषणा PCI_VPD_LRDT_RW_DATA		PCI_VPD_LRDT_ID(PCI_VPD_LTIN_RW_DATA)
 
 /* Small Resource Data Type Tag Item Names */
-#define PCI_VPD_STIN_END		0x0f	/* End */
+#घोषणा PCI_VPD_STIN_END		0x0f	/* End */
 
-#define PCI_VPD_SRDT_END		(PCI_VPD_STIN_END << 3)
+#घोषणा PCI_VPD_SRDT_END		(PCI_VPD_STIN_END << 3)
 
-#define PCI_VPD_SRDT_TIN_MASK		0x78
-#define PCI_VPD_SRDT_LEN_MASK		0x07
-#define PCI_VPD_LRDT_TIN_MASK		0x7f
+#घोषणा PCI_VPD_SRDT_TIN_MASK		0x78
+#घोषणा PCI_VPD_SRDT_LEN_MASK		0x07
+#घोषणा PCI_VPD_LRDT_TIN_MASK		0x7f
 
-#define PCI_VPD_LRDT_TAG_SIZE		3
-#define PCI_VPD_SRDT_TAG_SIZE		1
+#घोषणा PCI_VPD_LRDT_TAG_SIZE		3
+#घोषणा PCI_VPD_SRDT_TAG_SIZE		1
 
-#define PCI_VPD_INFO_FLD_HDR_SIZE	3
+#घोषणा PCI_VPD_INFO_FLD_HDR_SIZE	3
 
-#define PCI_VPD_RO_KEYWORD_PARTNO	"PN"
-#define PCI_VPD_RO_KEYWORD_SERIALNO	"SN"
-#define PCI_VPD_RO_KEYWORD_MFR_ID	"MN"
-#define PCI_VPD_RO_KEYWORD_VENDOR0	"V0"
-#define PCI_VPD_RO_KEYWORD_CHKSUM	"RV"
+#घोषणा PCI_VPD_RO_KEYWORD_PARTNO	"PN"
+#घोषणा PCI_VPD_RO_KEYWORD_SERIALNO	"SN"
+#घोषणा PCI_VPD_RO_KEYWORD_MFR_ID	"MN"
+#घोषणा PCI_VPD_RO_KEYWORD_VENDOR0	"V0"
+#घोषणा PCI_VPD_RO_KEYWORD_CHKSUM	"RV"
 
 /**
  * pci_vpd_lrdt_size - Extracts the Large Resource Data Type length
- * @lrdt: Pointer to the beginning of the Large Resource Data Type tag
+ * @lrdt: Poपूर्णांकer to the beginning of the Large Resource Data Type tag
  *
  * Returns the extracted Large Resource Data Type length.
  */
-static inline u16 pci_vpd_lrdt_size(const u8 *lrdt)
-{
-	return (u16)lrdt[1] + ((u16)lrdt[2] << 8);
-}
+अटल अंतरभूत u16 pci_vpd_lrdt_size(स्थिर u8 *lrdt)
+अणु
+	वापस (u16)lrdt[1] + ((u16)lrdt[2] << 8);
+पूर्ण
 
 /**
  * pci_vpd_lrdt_tag - Extracts the Large Resource Data Type Tag Item
- * @lrdt: Pointer to the beginning of the Large Resource Data Type tag
+ * @lrdt: Poपूर्णांकer to the beginning of the Large Resource Data Type tag
  *
  * Returns the extracted Large Resource Data Type Tag item.
  */
-static inline u16 pci_vpd_lrdt_tag(const u8 *lrdt)
-{
-	return (u16)(lrdt[0] & PCI_VPD_LRDT_TIN_MASK);
-}
+अटल अंतरभूत u16 pci_vpd_lrdt_tag(स्थिर u8 *lrdt)
+अणु
+	वापस (u16)(lrdt[0] & PCI_VPD_LRDT_TIN_MASK);
+पूर्ण
 
 /**
  * pci_vpd_srdt_size - Extracts the Small Resource Data Type length
- * @srdt: Pointer to the beginning of the Small Resource Data Type tag
+ * @srdt: Poपूर्णांकer to the beginning of the Small Resource Data Type tag
  *
  * Returns the extracted Small Resource Data Type length.
  */
-static inline u8 pci_vpd_srdt_size(const u8 *srdt)
-{
-	return (*srdt) & PCI_VPD_SRDT_LEN_MASK;
-}
+अटल अंतरभूत u8 pci_vpd_srdt_size(स्थिर u8 *srdt)
+अणु
+	वापस (*srdt) & PCI_VPD_SRDT_LEN_MASK;
+पूर्ण
 
 /**
  * pci_vpd_srdt_tag - Extracts the Small Resource Data Type Tag Item
- * @srdt: Pointer to the beginning of the Small Resource Data Type tag
+ * @srdt: Poपूर्णांकer to the beginning of the Small Resource Data Type tag
  *
  * Returns the extracted Small Resource Data Type Tag Item.
  */
-static inline u8 pci_vpd_srdt_tag(const u8 *srdt)
-{
-	return ((*srdt) & PCI_VPD_SRDT_TIN_MASK) >> 3;
-}
+अटल अंतरभूत u8 pci_vpd_srdt_tag(स्थिर u8 *srdt)
+अणु
+	वापस ((*srdt) & PCI_VPD_SRDT_TIN_MASK) >> 3;
+पूर्ण
 
 /**
- * pci_vpd_info_field_size - Extracts the information field length
- * @info_field: Pointer to the beginning of an information field header
+ * pci_vpd_info_field_size - Extracts the inक्रमmation field length
+ * @info_field: Poपूर्णांकer to the beginning of an inक्रमmation field header
  *
- * Returns the extracted information field length.
+ * Returns the extracted inक्रमmation field length.
  */
-static inline u8 pci_vpd_info_field_size(const u8 *info_field)
-{
-	return info_field[2];
-}
+अटल अंतरभूत u8 pci_vpd_info_field_size(स्थिर u8 *info_field)
+अणु
+	वापस info_field[2];
+पूर्ण
 
 /**
  * pci_vpd_find_tag - Locates the Resource Data Type tag provided
- * @buf: Pointer to buffered vpd data
+ * @buf: Poपूर्णांकer to buffered vpd data
  * @len: The length of the vpd buffer
- * @rdt: The Resource Data Type to search for
+ * @rdt: The Resource Data Type to search क्रम
  *
  * Returns the index where the Resource Data Type was found or
  * -ENOENT otherwise.
  */
-int pci_vpd_find_tag(const u8 *buf, unsigned int len, u8 rdt);
+पूर्णांक pci_vpd_find_tag(स्थिर u8 *buf, अचिन्हित पूर्णांक len, u8 rdt);
 
 /**
- * pci_vpd_find_info_keyword - Locates an information field keyword in the VPD
- * @buf: Pointer to buffered vpd data
- * @off: The offset into the buffer at which to begin the search
+ * pci_vpd_find_info_keyword - Locates an inक्रमmation field keyword in the VPD
+ * @buf: Poपूर्णांकer to buffered vpd data
+ * @off: The offset पूर्णांकo the buffer at which to begin the search
  * @len: The length of the buffer area, relative to off, in which to search
- * @kw: The keyword to search for
+ * @kw: The keyword to search क्रम
  *
- * Returns the index where the information field keyword was found or
+ * Returns the index where the inक्रमmation field keyword was found or
  * -ENOENT otherwise.
  */
-int pci_vpd_find_info_keyword(const u8 *buf, unsigned int off,
-			      unsigned int len, const char *kw);
+पूर्णांक pci_vpd_find_info_keyword(स्थिर u8 *buf, अचिन्हित पूर्णांक off,
+			      अचिन्हित पूर्णांक len, स्थिर अक्षर *kw);
 
 /* PCI <-> OF binding helpers */
-#ifdef CONFIG_OF
-struct device_node;
-struct irq_domain;
-struct irq_domain *pci_host_bridge_of_msi_domain(struct pci_bus *bus);
-bool pci_host_of_has_msi_map(struct device *dev);
+#अगर_घोषित CONFIG_OF
+काष्ठा device_node;
+काष्ठा irq_करोमुख्य;
+काष्ठा irq_करोमुख्य *pci_host_bridge_of_msi_करोमुख्य(काष्ठा pci_bus *bus);
+bool pci_host_of_has_msi_map(काष्ठा device *dev);
 
 /* Arch may override this (weak) */
-struct device_node *pcibios_get_phb_of_node(struct pci_bus *bus);
+काष्ठा device_node *pcibios_get_phb_of_node(काष्ठा pci_bus *bus);
 
-#else	/* CONFIG_OF */
-static inline struct irq_domain *
-pci_host_bridge_of_msi_domain(struct pci_bus *bus) { return NULL; }
-static inline bool pci_host_of_has_msi_map(struct device *dev) { return false; }
-#endif  /* CONFIG_OF */
+#अन्यथा	/* CONFIG_OF */
+अटल अंतरभूत काष्ठा irq_करोमुख्य *
+pci_host_bridge_of_msi_करोमुख्य(काष्ठा pci_bus *bus) अणु वापस शून्य; पूर्ण
+अटल अंतरभूत bool pci_host_of_has_msi_map(काष्ठा device *dev) अणु वापस false; पूर्ण
+#पूर्ण_अगर  /* CONFIG_OF */
 
-static inline struct device_node *
-pci_device_to_OF_node(const struct pci_dev *pdev)
-{
-	return pdev ? pdev->dev.of_node : NULL;
-}
+अटल अंतरभूत काष्ठा device_node *
+pci_device_to_OF_node(स्थिर काष्ठा pci_dev *pdev)
+अणु
+	वापस pdev ? pdev->dev.of_node : शून्य;
+पूर्ण
 
-static inline struct device_node *pci_bus_to_OF_node(struct pci_bus *bus)
-{
-	return bus ? bus->dev.of_node : NULL;
-}
+अटल अंतरभूत काष्ठा device_node *pci_bus_to_OF_node(काष्ठा pci_bus *bus)
+अणु
+	वापस bus ? bus->dev.of_node : शून्य;
+पूर्ण
 
-#ifdef CONFIG_ACPI
-struct irq_domain *pci_host_bridge_acpi_msi_domain(struct pci_bus *bus);
+#अगर_घोषित CONFIG_ACPI
+काष्ठा irq_करोमुख्य *pci_host_bridge_acpi_msi_करोमुख्य(काष्ठा pci_bus *bus);
 
-void
-pci_msi_register_fwnode_provider(struct fwnode_handle *(*fn)(struct device *));
-bool pci_pr3_present(struct pci_dev *pdev);
-#else
-static inline struct irq_domain *
-pci_host_bridge_acpi_msi_domain(struct pci_bus *bus) { return NULL; }
-static inline bool pci_pr3_present(struct pci_dev *pdev) { return false; }
-#endif
+व्योम
+pci_msi_रेजिस्टर_fwnode_provider(काष्ठा fwnode_handle *(*fn)(काष्ठा device *));
+bool pci_pr3_present(काष्ठा pci_dev *pdev);
+#अन्यथा
+अटल अंतरभूत काष्ठा irq_करोमुख्य *
+pci_host_bridge_acpi_msi_करोमुख्य(काष्ठा pci_bus *bus) अणु वापस शून्य; पूर्ण
+अटल अंतरभूत bool pci_pr3_present(काष्ठा pci_dev *pdev) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_EEH
-static inline struct eeh_dev *pci_dev_to_eeh_dev(struct pci_dev *pdev)
-{
-	return pdev->dev.archdata.edev;
-}
-#endif
+#अगर_घोषित CONFIG_EEH
+अटल अंतरभूत काष्ठा eeh_dev *pci_dev_to_eeh_dev(काष्ठा pci_dev *pdev)
+अणु
+	वापस pdev->dev.archdata.edev;
+पूर्ण
+#पूर्ण_अगर
 
-void pci_add_dma_alias(struct pci_dev *dev, u8 devfn_from, unsigned nr_devfns);
-bool pci_devs_are_dma_aliases(struct pci_dev *dev1, struct pci_dev *dev2);
-int pci_for_each_dma_alias(struct pci_dev *pdev,
-			   int (*fn)(struct pci_dev *pdev,
-				     u16 alias, void *data), void *data);
+व्योम pci_add_dma_alias(काष्ठा pci_dev *dev, u8 devfn_from, अचिन्हित nr_devfns);
+bool pci_devs_are_dma_aliases(काष्ठा pci_dev *dev1, काष्ठा pci_dev *dev2);
+पूर्णांक pci_क्रम_each_dma_alias(काष्ठा pci_dev *pdev,
+			   पूर्णांक (*fn)(काष्ठा pci_dev *pdev,
+				     u16 alias, व्योम *data), व्योम *data);
 
-/* Helper functions for operation of device flag */
-static inline void pci_set_dev_assigned(struct pci_dev *pdev)
-{
+/* Helper functions क्रम operation of device flag */
+अटल अंतरभूत व्योम pci_set_dev_asचिन्हित(काष्ठा pci_dev *pdev)
+अणु
 	pdev->dev_flags |= PCI_DEV_FLAGS_ASSIGNED;
-}
-static inline void pci_clear_dev_assigned(struct pci_dev *pdev)
-{
+पूर्ण
+अटल अंतरभूत व्योम pci_clear_dev_asचिन्हित(काष्ठा pci_dev *pdev)
+अणु
 	pdev->dev_flags &= ~PCI_DEV_FLAGS_ASSIGNED;
-}
-static inline bool pci_is_dev_assigned(struct pci_dev *pdev)
-{
-	return (pdev->dev_flags & PCI_DEV_FLAGS_ASSIGNED) == PCI_DEV_FLAGS_ASSIGNED;
-}
+पूर्ण
+अटल अंतरभूत bool pci_is_dev_asचिन्हित(काष्ठा pci_dev *pdev)
+अणु
+	वापस (pdev->dev_flags & PCI_DEV_FLAGS_ASSIGNED) == PCI_DEV_FLAGS_ASSIGNED;
+पूर्ण
 
 /**
- * pci_ari_enabled - query ARI forwarding status
+ * pci_ari_enabled - query ARI क्रमwarding status
  * @bus: the PCI bus
  *
- * Returns true if ARI forwarding is enabled.
+ * Returns true अगर ARI क्रमwarding is enabled.
  */
-static inline bool pci_ari_enabled(struct pci_bus *bus)
-{
-	return bus->self && bus->self->ari_enabled;
-}
+अटल अंतरभूत bool pci_ari_enabled(काष्ठा pci_bus *bus)
+अणु
+	वापस bus->self && bus->self->ari_enabled;
+पूर्ण
 
 /**
  * pci_is_thunderbolt_attached - whether device is on a Thunderbolt daisy chain
  * @pdev: PCI device to check
  *
- * Walk upwards from @pdev and check for each encountered bridge if it's part
+ * Walk upwards from @pdev and check क्रम each encountered bridge अगर it's part
  * of a Thunderbolt controller.  Reaching the host bridge means @pdev is not
- * Thunderbolt-attached.  (But rather soldered to the mainboard usually.)
+ * Thunderbolt-attached.  (But rather soldered to the मुख्यboard usually.)
  */
-static inline bool pci_is_thunderbolt_attached(struct pci_dev *pdev)
-{
-	struct pci_dev *parent = pdev;
+अटल अंतरभूत bool pci_is_thunderbolt_attached(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_dev *parent = pdev;
 
-	if (pdev->is_thunderbolt)
-		return true;
+	अगर (pdev->is_thunderbolt)
+		वापस true;
 
-	while ((parent = pci_upstream_bridge(parent)))
-		if (parent->is_thunderbolt)
-			return true;
+	जबतक ((parent = pci_upstream_bridge(parent)))
+		अगर (parent->is_thunderbolt)
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#if defined(CONFIG_PCIEPORTBUS) || defined(CONFIG_EEH)
-void pci_uevent_ers(struct pci_dev *pdev, enum  pci_ers_result err_type);
-#endif
+#अगर defined(CONFIG_PCIEPORTBUS) || defined(CONFIG_EEH)
+व्योम pci_uevent_ers(काष्ठा pci_dev *pdev, क्रमागत  pci_ers_result err_type);
+#पूर्ण_अगर
 
 /* Provide the legacy pci_dma_* API */
-#include <linux/pci-dma-compat.h>
+#समावेश <linux/pci-dma-compat.h>
 
-#define pci_printk(level, pdev, fmt, arg...) \
-	dev_printk(level, &(pdev)->dev, fmt, ##arg)
+#घोषणा pci_prपूर्णांकk(level, pdev, fmt, arg...) \
+	dev_prपूर्णांकk(level, &(pdev)->dev, fmt, ##arg)
 
-#define pci_emerg(pdev, fmt, arg...)	dev_emerg(&(pdev)->dev, fmt, ##arg)
-#define pci_alert(pdev, fmt, arg...)	dev_alert(&(pdev)->dev, fmt, ##arg)
-#define pci_crit(pdev, fmt, arg...)	dev_crit(&(pdev)->dev, fmt, ##arg)
-#define pci_err(pdev, fmt, arg...)	dev_err(&(pdev)->dev, fmt, ##arg)
-#define pci_warn(pdev, fmt, arg...)	dev_warn(&(pdev)->dev, fmt, ##arg)
-#define pci_notice(pdev, fmt, arg...)	dev_notice(&(pdev)->dev, fmt, ##arg)
-#define pci_info(pdev, fmt, arg...)	dev_info(&(pdev)->dev, fmt, ##arg)
-#define pci_dbg(pdev, fmt, arg...)	dev_dbg(&(pdev)->dev, fmt, ##arg)
+#घोषणा pci_emerg(pdev, fmt, arg...)	dev_emerg(&(pdev)->dev, fmt, ##arg)
+#घोषणा pci_alert(pdev, fmt, arg...)	dev_alert(&(pdev)->dev, fmt, ##arg)
+#घोषणा pci_crit(pdev, fmt, arg...)	dev_crit(&(pdev)->dev, fmt, ##arg)
+#घोषणा pci_err(pdev, fmt, arg...)	dev_err(&(pdev)->dev, fmt, ##arg)
+#घोषणा pci_warn(pdev, fmt, arg...)	dev_warn(&(pdev)->dev, fmt, ##arg)
+#घोषणा pci_notice(pdev, fmt, arg...)	dev_notice(&(pdev)->dev, fmt, ##arg)
+#घोषणा pci_info(pdev, fmt, arg...)	dev_info(&(pdev)->dev, fmt, ##arg)
+#घोषणा pci_dbg(pdev, fmt, arg...)	dev_dbg(&(pdev)->dev, fmt, ##arg)
 
-#define pci_notice_ratelimited(pdev, fmt, arg...) \
+#घोषणा pci_notice_ratelimited(pdev, fmt, arg...) \
 	dev_notice_ratelimited(&(pdev)->dev, fmt, ##arg)
 
-#define pci_info_ratelimited(pdev, fmt, arg...) \
+#घोषणा pci_info_ratelimited(pdev, fmt, arg...) \
 	dev_info_ratelimited(&(pdev)->dev, fmt, ##arg)
 
-#define pci_WARN(pdev, condition, fmt, arg...) \
+#घोषणा pci_WARN(pdev, condition, fmt, arg...) \
 	WARN(condition, "%s %s: " fmt, \
 	     dev_driver_string(&(pdev)->dev), pci_name(pdev), ##arg)
 
-#define pci_WARN_ONCE(pdev, condition, fmt, arg...) \
+#घोषणा pci_WARN_ONCE(pdev, condition, fmt, arg...) \
 	WARN_ONCE(condition, "%s %s: " fmt, \
 		  dev_driver_string(&(pdev)->dev), pci_name(pdev), ##arg)
 
-#endif /* LINUX_PCI_H */
+#पूर्ण_अगर /* LINUX_PCI_H */

@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Trace point definitions for the RDMA Connect Manager.
+ * Trace poपूर्णांक definitions क्रम the RDMA Connect Manager.
  *
  * Author: Chuck Lever <chuck.lever@oracle.com>
  *
  * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  */
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM rdma_cma
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM rdma_cma
 
-#if !defined(_TRACE_RDMA_CMA_H) || defined(TRACE_HEADER_MULTI_READ)
+#अगर !defined(_TRACE_RDMA_CMA_H) || defined(TRACE_HEADER_MULTI_READ)
 
-#define _TRACE_RDMA_CMA_H
+#घोषणा _TRACE_RDMA_CMA_H
 
-#include <linux/tracepoint.h>
-#include <trace/events/rdma.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <trace/events/rdma.h>
 
 
 DECLARE_EVENT_CLASS(cma_fsm_class,
 	TP_PROTO(
-		const struct rdma_id_private *id_priv
+		स्थिर काष्ठा rdma_id_निजी *id_priv
 	),
 
 	TP_ARGS(id_priv),
@@ -28,28 +29,28 @@ DECLARE_EVENT_CLASS(cma_fsm_class,
 	TP_STRUCT__entry(
 		__field(u32, cm_id)
 		__field(u32, tos)
-		__array(unsigned char, srcaddr, sizeof(struct sockaddr_in6))
-		__array(unsigned char, dstaddr, sizeof(struct sockaddr_in6))
+		__array(अचिन्हित अक्षर, srcaddr, माप(काष्ठा sockaddr_in6))
+		__array(अचिन्हित अक्षर, dstaddr, माप(काष्ठा sockaddr_in6))
 	),
 
 	TP_fast_assign(
 		__entry->cm_id = id_priv->res.id;
 		__entry->tos = id_priv->tos;
-		memcpy(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
-		       sizeof(struct sockaddr_in6));
-		memcpy(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
-		       sizeof(struct sockaddr_in6));
+		स_नकल(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
+		       माप(काष्ठा sockaddr_in6));
+		स_नकल(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
+		       माप(काष्ठा sockaddr_in6));
 	),
 
-	TP_printk("cm.id=%u src=%pISpc dst=%pISpc tos=%u",
+	TP_prपूर्णांकk("cm.id=%u src=%pISpc dst=%pISpc tos=%u",
 		__entry->cm_id, __entry->srcaddr, __entry->dstaddr, __entry->tos
 	)
 );
 
-#define DEFINE_CMA_FSM_EVENT(name)						\
+#घोषणा DEFINE_CMA_FSM_EVENT(name)						\
 		DEFINE_EVENT(cma_fsm_class, cm_##name,				\
 				TP_PROTO(					\
-					const struct rdma_id_private *id_priv	\
+					स्थिर काष्ठा rdma_id_निजी *id_priv	\
 				),						\
 				TP_ARGS(id_priv))
 
@@ -65,29 +66,29 @@ DEFINE_CMA_FSM_EVENT(id_destroy);
 
 TRACE_EVENT(cm_id_attach,
 	TP_PROTO(
-		const struct rdma_id_private *id_priv,
-		const struct ib_device *device
+		स्थिर काष्ठा rdma_id_निजी *id_priv,
+		स्थिर काष्ठा ib_device *device
 	),
 
 	TP_ARGS(id_priv, device),
 
 	TP_STRUCT__entry(
 		__field(u32, cm_id)
-		__array(unsigned char, srcaddr, sizeof(struct sockaddr_in6))
-		__array(unsigned char, dstaddr, sizeof(struct sockaddr_in6))
+		__array(अचिन्हित अक्षर, srcaddr, माप(काष्ठा sockaddr_in6))
+		__array(अचिन्हित अक्षर, dstaddr, माप(काष्ठा sockaddr_in6))
 		__string(devname, device->name)
 	),
 
 	TP_fast_assign(
 		__entry->cm_id = id_priv->res.id;
-		memcpy(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
-		       sizeof(struct sockaddr_in6));
-		memcpy(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
-		       sizeof(struct sockaddr_in6));
+		स_नकल(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
+		       माप(काष्ठा sockaddr_in6));
+		स_नकल(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
+		       माप(काष्ठा sockaddr_in6));
 		__assign_str(devname, device->name);
 	),
 
-	TP_printk("cm.id=%u src=%pISpc dst=%pISpc device=%s",
+	TP_prपूर्णांकk("cm.id=%u src=%pISpc dst=%pISpc device=%s",
 		__entry->cm_id, __entry->srcaddr, __entry->dstaddr,
 		__get_str(devname)
 	)
@@ -95,7 +96,7 @@ TRACE_EVENT(cm_id_attach,
 
 DECLARE_EVENT_CLASS(cma_qp_class,
 	TP_PROTO(
-		const struct rdma_id_private *id_priv
+		स्थिर काष्ठा rdma_id_निजी *id_priv
 	),
 
 	TP_ARGS(id_priv),
@@ -104,30 +105,30 @@ DECLARE_EVENT_CLASS(cma_qp_class,
 		__field(u32, cm_id)
 		__field(u32, tos)
 		__field(u32, qp_num)
-		__array(unsigned char, srcaddr, sizeof(struct sockaddr_in6))
-		__array(unsigned char, dstaddr, sizeof(struct sockaddr_in6))
+		__array(अचिन्हित अक्षर, srcaddr, माप(काष्ठा sockaddr_in6))
+		__array(अचिन्हित अक्षर, dstaddr, माप(काष्ठा sockaddr_in6))
 	),
 
 	TP_fast_assign(
 		__entry->cm_id = id_priv->res.id;
 		__entry->tos = id_priv->tos;
 		__entry->qp_num = id_priv->qp_num;
-		memcpy(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
-		       sizeof(struct sockaddr_in6));
-		memcpy(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
-		       sizeof(struct sockaddr_in6));
+		स_नकल(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
+		       माप(काष्ठा sockaddr_in6));
+		स_नकल(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
+		       माप(काष्ठा sockaddr_in6));
 	),
 
-	TP_printk("cm.id=%u src=%pISpc dst=%pISpc tos=%u qp_num=%u",
+	TP_prपूर्णांकk("cm.id=%u src=%pISpc dst=%pISpc tos=%u qp_num=%u",
 		__entry->cm_id, __entry->srcaddr, __entry->dstaddr, __entry->tos,
 		__entry->qp_num
 	)
 );
 
-#define DEFINE_CMA_QP_EVENT(name)						\
+#घोषणा DEFINE_CMA_QP_EVENT(name)						\
 		DEFINE_EVENT(cma_qp_class, cm_##name,				\
 				TP_PROTO(					\
-					const struct rdma_id_private *id_priv	\
+					स्थिर काष्ठा rdma_id_निजी *id_priv	\
 				),						\
 				TP_ARGS(id_priv))
 
@@ -136,9 +137,9 @@ DEFINE_CMA_QP_EVENT(send_rep);
 DEFINE_CMA_QP_EVENT(qp_destroy);
 
 /*
- * enum ib_wp_type, from include/rdma/ib_verbs.h
+ * क्रमागत ib_wp_type, from include/rdma/ib_verbs.h
  */
-#define IB_QP_TYPE_LIST				\
+#घोषणा IB_QP_TYPE_LIST				\
 	ib_qp_type(SMI)				\
 	ib_qp_type(GSI)				\
 	ib_qp_type(RC)				\
@@ -150,30 +151,30 @@ DEFINE_CMA_QP_EVENT(qp_destroy);
 	ib_qp_type(XRC_INI)			\
 	ib_qp_type_end(XRC_TGT)
 
-#undef ib_qp_type
-#undef ib_qp_type_end
+#अघोषित ib_qp_type
+#अघोषित ib_qp_type_end
 
-#define ib_qp_type(x)		TRACE_DEFINE_ENUM(IB_QPT_##x);
-#define ib_qp_type_end(x)	TRACE_DEFINE_ENUM(IB_QPT_##x);
+#घोषणा ib_qp_type(x)		TRACE_DEFINE_ENUM(IB_QPT_##x);
+#घोषणा ib_qp_type_end(x)	TRACE_DEFINE_ENUM(IB_QPT_##x);
 
 IB_QP_TYPE_LIST
 
-#undef ib_qp_type
-#undef ib_qp_type_end
+#अघोषित ib_qp_type
+#अघोषित ib_qp_type_end
 
-#define ib_qp_type(x)		{ IB_QPT_##x, #x },
-#define ib_qp_type_end(x)	{ IB_QPT_##x, #x }
+#घोषणा ib_qp_type(x)		अणु IB_QPT_##x, #x पूर्ण,
+#घोषणा ib_qp_type_end(x)	अणु IB_QPT_##x, #x पूर्ण
 
-#define rdma_show_qp_type(x) \
-		__print_symbolic(x, IB_QP_TYPE_LIST)
+#घोषणा rdma_show_qp_type(x) \
+		__prपूर्णांक_symbolic(x, IB_QP_TYPE_LIST)
 
 
 TRACE_EVENT(cm_qp_create,
 	TP_PROTO(
-		const struct rdma_id_private *id_priv,
-		const struct ib_pd *pd,
-		const struct ib_qp_init_attr *qp_init_attr,
-		int rc
+		स्थिर काष्ठा rdma_id_निजी *id_priv,
+		स्थिर काष्ठा ib_pd *pd,
+		स्थिर काष्ठा ib_qp_init_attr *qp_init_attr,
+		पूर्णांक rc
 	),
 
 	TP_ARGS(id_priv, pd, qp_init_attr, rc),
@@ -185,10 +186,10 @@ TRACE_EVENT(cm_qp_create,
 		__field(u32, qp_num)
 		__field(u32, send_wr)
 		__field(u32, recv_wr)
-		__field(int, rc)
-		__field(unsigned long, qp_type)
-		__array(unsigned char, srcaddr, sizeof(struct sockaddr_in6))
-		__array(unsigned char, dstaddr, sizeof(struct sockaddr_in6))
+		__field(पूर्णांक, rc)
+		__field(अचिन्हित दीर्घ, qp_type)
+		__array(अचिन्हित अक्षर, srcaddr, माप(काष्ठा sockaddr_in6))
+		__array(अचिन्हित अक्षर, dstaddr, माप(काष्ठा sockaddr_in6))
 	),
 
 	TP_fast_assign(
@@ -198,20 +199,20 @@ TRACE_EVENT(cm_qp_create,
 		__entry->send_wr = qp_init_attr->cap.max_send_wr;
 		__entry->recv_wr = qp_init_attr->cap.max_recv_wr;
 		__entry->rc = rc;
-		if (!rc) {
+		अगर (!rc) अणु
 			__entry->qp_num = id_priv->qp_num;
 			__entry->qp_type = id_priv->id.qp_type;
-		} else {
+		पूर्ण अन्यथा अणु
 			__entry->qp_num = 0;
 			__entry->qp_type = 0;
-		}
-		memcpy(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
-		       sizeof(struct sockaddr_in6));
-		memcpy(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
-		       sizeof(struct sockaddr_in6));
+		पूर्ण
+		स_नकल(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
+		       माप(काष्ठा sockaddr_in6));
+		स_नकल(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
+		       माप(काष्ठा sockaddr_in6));
 	),
 
-	TP_printk("cm.id=%u src=%pISpc dst=%pISpc tos=%u pd.id=%u qp_type=%s"
+	TP_prपूर्णांकk("cm.id=%u src=%pISpc dst=%pISpc tos=%u pd.id=%u qp_type=%s"
 		" send_wr=%u recv_wr=%u qp_num=%u rc=%d",
 		__entry->cm_id, __entry->srcaddr, __entry->dstaddr,
 		__entry->tos, __entry->pd_id,
@@ -222,8 +223,8 @@ TRACE_EVENT(cm_qp_create,
 
 TRACE_EVENT(cm_req_handler,
 	TP_PROTO(
-		const struct rdma_id_private *id_priv,
-		int event
+		स्थिर काष्ठा rdma_id_निजी *id_priv,
+		पूर्णांक event
 	),
 
 	TP_ARGS(id_priv, event),
@@ -231,22 +232,22 @@ TRACE_EVENT(cm_req_handler,
 	TP_STRUCT__entry(
 		__field(u32, cm_id)
 		__field(u32, tos)
-		__field(unsigned long, event)
-		__array(unsigned char, srcaddr, sizeof(struct sockaddr_in6))
-		__array(unsigned char, dstaddr, sizeof(struct sockaddr_in6))
+		__field(अचिन्हित दीर्घ, event)
+		__array(अचिन्हित अक्षर, srcaddr, माप(काष्ठा sockaddr_in6))
+		__array(अचिन्हित अक्षर, dstaddr, माप(काष्ठा sockaddr_in6))
 	),
 
 	TP_fast_assign(
 		__entry->cm_id = id_priv->res.id;
 		__entry->tos = id_priv->tos;
 		__entry->event = event;
-		memcpy(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
-		       sizeof(struct sockaddr_in6));
-		memcpy(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
-		       sizeof(struct sockaddr_in6));
+		स_नकल(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
+		       माप(काष्ठा sockaddr_in6));
+		स_नकल(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
+		       माप(काष्ठा sockaddr_in6));
 	),
 
-	TP_printk("cm.id=%u src=%pISpc dst=%pISpc tos=%u %s (%lu)",
+	TP_prपूर्णांकk("cm.id=%u src=%pISpc dst=%pISpc tos=%u %s (%lu)",
 		__entry->cm_id, __entry->srcaddr, __entry->dstaddr, __entry->tos,
 		rdma_show_ib_cm_event(__entry->event), __entry->event
 	)
@@ -254,8 +255,8 @@ TRACE_EVENT(cm_req_handler,
 
 TRACE_EVENT(cm_event_handler,
 	TP_PROTO(
-		const struct rdma_id_private *id_priv,
-		const struct rdma_cm_event *event
+		स्थिर काष्ठा rdma_id_निजी *id_priv,
+		स्थिर काष्ठा rdma_cm_event *event
 	),
 
 	TP_ARGS(id_priv, event),
@@ -263,10 +264,10 @@ TRACE_EVENT(cm_event_handler,
 	TP_STRUCT__entry(
 		__field(u32, cm_id)
 		__field(u32, tos)
-		__field(unsigned long, event)
-		__field(int, status)
-		__array(unsigned char, srcaddr, sizeof(struct sockaddr_in6))
-		__array(unsigned char, dstaddr, sizeof(struct sockaddr_in6))
+		__field(अचिन्हित दीर्घ, event)
+		__field(पूर्णांक, status)
+		__array(अचिन्हित अक्षर, srcaddr, माप(काष्ठा sockaddr_in6))
+		__array(अचिन्हित अक्षर, dstaddr, माप(काष्ठा sockaddr_in6))
 	),
 
 	TP_fast_assign(
@@ -274,24 +275,24 @@ TRACE_EVENT(cm_event_handler,
 		__entry->tos = id_priv->tos;
 		__entry->event = event->event;
 		__entry->status = event->status;
-		memcpy(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
-		       sizeof(struct sockaddr_in6));
-		memcpy(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
-		       sizeof(struct sockaddr_in6));
+		स_नकल(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
+		       माप(काष्ठा sockaddr_in6));
+		स_नकल(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
+		       माप(काष्ठा sockaddr_in6));
 	),
 
-	TP_printk("cm.id=%u src=%pISpc dst=%pISpc tos=%u %s (%lu/%d)",
+	TP_prपूर्णांकk("cm.id=%u src=%pISpc dst=%pISpc tos=%u %s (%lu/%d)",
 		__entry->cm_id, __entry->srcaddr, __entry->dstaddr, __entry->tos,
 		rdma_show_cm_event(__entry->event), __entry->event,
 		__entry->status
 	)
 );
 
-TRACE_EVENT(cm_event_done,
+TRACE_EVENT(cm_event_करोne,
 	TP_PROTO(
-		const struct rdma_id_private *id_priv,
-		const struct rdma_cm_event *event,
-		int result
+		स्थिर काष्ठा rdma_id_निजी *id_priv,
+		स्थिर काष्ठा rdma_cm_event *event,
+		पूर्णांक result
 	),
 
 	TP_ARGS(id_priv, event, result),
@@ -299,10 +300,10 @@ TRACE_EVENT(cm_event_done,
 	TP_STRUCT__entry(
 		__field(u32, cm_id)
 		__field(u32, tos)
-		__field(unsigned long, event)
-		__field(int, result)
-		__array(unsigned char, srcaddr, sizeof(struct sockaddr_in6))
-		__array(unsigned char, dstaddr, sizeof(struct sockaddr_in6))
+		__field(अचिन्हित दीर्घ, event)
+		__field(पूर्णांक, result)
+		__array(अचिन्हित अक्षर, srcaddr, माप(काष्ठा sockaddr_in6))
+		__array(अचिन्हित अक्षर, dstaddr, माप(काष्ठा sockaddr_in6))
 	),
 
 	TP_fast_assign(
@@ -310,13 +311,13 @@ TRACE_EVENT(cm_event_done,
 		__entry->tos = id_priv->tos;
 		__entry->event = event->event;
 		__entry->result = result;
-		memcpy(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
-		       sizeof(struct sockaddr_in6));
-		memcpy(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
-		       sizeof(struct sockaddr_in6));
+		स_नकल(__entry->srcaddr, &id_priv->id.route.addr.src_addr,
+		       माप(काष्ठा sockaddr_in6));
+		स_नकल(__entry->dstaddr, &id_priv->id.route.addr.dst_addr,
+		       माप(काष्ठा sockaddr_in6));
 	),
 
-	TP_printk("cm.id=%u src=%pISpc dst=%pISpc tos=%u %s consumer returns %d",
+	TP_prपूर्णांकk("cm.id=%u src=%pISpc dst=%pISpc tos=%u %s consumer returns %d",
 		__entry->cm_id, __entry->srcaddr, __entry->dstaddr, __entry->tos,
 		rdma_show_cm_event(__entry->event), __entry->result
 	)
@@ -324,7 +325,7 @@ TRACE_EVENT(cm_event_done,
 
 DECLARE_EVENT_CLASS(cma_client_class,
 	TP_PROTO(
-		const struct ib_device *device
+		स्थिर काष्ठा ib_device *device
 	),
 
 	TP_ARGS(device),
@@ -337,25 +338,25 @@ DECLARE_EVENT_CLASS(cma_client_class,
 		__assign_str(name, device->name);
 	),
 
-	TP_printk("device name=%s",
+	TP_prपूर्णांकk("device name=%s",
 		__get_str(name)
 	)
 );
 
-#define DEFINE_CMA_CLIENT_EVENT(name)						\
+#घोषणा DEFINE_CMA_CLIENT_EVENT(name)						\
 		DEFINE_EVENT(cma_client_class, cm_##name,			\
 				TP_PROTO(					\
-					const struct ib_device *device		\
+					स्थिर काष्ठा ib_device *device		\
 				),						\
 				TP_ARGS(device))
 
 DEFINE_CMA_CLIENT_EVENT(add_one);
-DEFINE_CMA_CLIENT_EVENT(remove_one);
+DEFINE_CMA_CLIENT_EVENT(हटाओ_one);
 
-#endif /* _TRACE_RDMA_CMA_H */
+#पूर्ण_अगर /* _TRACE_RDMA_CMA_H */
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#define TRACE_INCLUDE_FILE cma_trace
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#घोषणा TRACE_INCLUDE_खाता cma_trace
 
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

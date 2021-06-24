@@ -1,262 +1,263 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_GENERIC_BUG_H
-#define _ASM_GENERIC_BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_GENERIC_BUG_H
+#घोषणा _ASM_GENERIC_BUG_H
 
-#include <linux/compiler.h>
-#include <linux/instrumentation.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/instrumentation.h>
 
-#define CUT_HERE		"------------[ cut here ]------------\n"
+#घोषणा CUT_HERE		"------------[ cut here ]------------\n"
 
-#ifdef CONFIG_GENERIC_BUG
-#define BUGFLAG_WARNING		(1 << 0)
-#define BUGFLAG_ONCE		(1 << 1)
-#define BUGFLAG_DONE		(1 << 2)
-#define BUGFLAG_NO_CUT_HERE	(1 << 3)	/* CUT_HERE already sent */
-#define BUGFLAG_TAINT(taint)	((taint) << 8)
-#define BUG_GET_TAINT(bug)	((bug)->flags >> 8)
-#endif
+#अगर_घोषित CONFIG_GENERIC_BUG
+#घोषणा BUGFLAG_WARNING		(1 << 0)
+#घोषणा BUGFLAG_ONCE		(1 << 1)
+#घोषणा BUGFLAG_DONE		(1 << 2)
+#घोषणा BUGFLAG_NO_CUT_HERE	(1 << 3)	/* CUT_HERE alपढ़ोy sent */
+#घोषणा BUGFLAG_TAINT(taपूर्णांक)	((taपूर्णांक) << 8)
+#घोषणा BUG_GET_TAINT(bug)	((bug)->flags >> 8)
+#पूर्ण_अगर
 
-#ifndef __ASSEMBLY__
-#include <linux/kernel.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <linux/kernel.h>
 
-#ifdef CONFIG_BUG
+#अगर_घोषित CONFIG_BUG
 
-#ifdef CONFIG_GENERIC_BUG
-struct bug_entry {
-#ifndef CONFIG_GENERIC_BUG_RELATIVE_POINTERS
-	unsigned long	bug_addr;
-#else
-	signed int	bug_addr_disp;
-#endif
-#ifdef CONFIG_DEBUG_BUGVERBOSE
-#ifndef CONFIG_GENERIC_BUG_RELATIVE_POINTERS
-	const char	*file;
-#else
-	signed int	file_disp;
-#endif
-	unsigned short	line;
-#endif
-	unsigned short	flags;
-};
-#endif	/* CONFIG_GENERIC_BUG */
+#अगर_घोषित CONFIG_GENERIC_BUG
+काष्ठा bug_entry अणु
+#अगर_अघोषित CONFIG_GENERIC_BUG_RELATIVE_POINTERS
+	अचिन्हित दीर्घ	bug_addr;
+#अन्यथा
+	चिन्हित पूर्णांक	bug_addr_disp;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_DEBUG_BUGVERBOSE
+#अगर_अघोषित CONFIG_GENERIC_BUG_RELATIVE_POINTERS
+	स्थिर अक्षर	*file;
+#अन्यथा
+	चिन्हित पूर्णांक	file_disp;
+#पूर्ण_अगर
+	अचिन्हित लघु	line;
+#पूर्ण_अगर
+	अचिन्हित लघु	flags;
+पूर्ण;
+#पूर्ण_अगर	/* CONFIG_GENERIC_BUG */
 
 /*
  * Don't use BUG() or BUG_ON() unless there's really no way out; one
- * example might be detecting data structure corruption in the middle
- * of an operation that can't be backed out of.  If the (sub)system
- * can somehow continue operating, perhaps with reduced functionality,
+ * example might be detecting data काष्ठाure corruption in the middle
+ * of an operation that can't be backed out of.  If the (sub)प्रणाली
+ * can somehow जारी operating, perhaps with reduced functionality,
  * it's probably not BUG-worthy.
  *
  * If you're tempted to BUG(), think again:  is completely giving up
  * really the *only* solution?  There are usually better options, where
- * users don't need to reboot ASAP and can mostly shut down cleanly.
+ * users करोn't need to reboot ASAP and can mostly shut करोwn cleanly.
  */
-#ifndef HAVE_ARCH_BUG
-#define BUG() do { \
-	printk("BUG: failure at %s:%d/%s()!\n", __FILE__, __LINE__, __func__); \
-	barrier_before_unreachable(); \
+#अगर_अघोषित HAVE_ARCH_BUG
+#घोषणा BUG() करो अणु \
+	prपूर्णांकk("BUG: failure at %s:%d/%s()!\n", __खाता__, __LINE__, __func__); \
+	barrier_beक्रमe_unreachable(); \
 	panic("BUG!"); \
-} while (0)
-#endif
+पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifndef HAVE_ARCH_BUG_ON
-#define BUG_ON(condition) do { if (unlikely(condition)) BUG(); } while (0)
-#endif
+#अगर_अघोषित HAVE_ARCH_BUG_ON
+#घोषणा BUG_ON(condition) करो अणु अगर (unlikely(condition)) BUG(); पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /*
  * WARN(), WARN_ON(), WARN_ON_ONCE, and so on can be used to report
- * significant kernel issues that need prompt attention if they should ever
- * appear at runtime.
+ * signअगरicant kernel issues that need prompt attention अगर they should ever
+ * appear at runसमय.
  *
- * Do not use these macros when checking for invalid external inputs
- * (e.g. invalid system call arguments, or invalid data coming from
+ * Do not use these macros when checking क्रम invalid बाह्यal inमाला_दो
+ * (e.g. invalid प्रणाली call arguments, or invalid data coming from
  * network/devices), and on transient conditions like ENOMEM or EAGAIN.
- * These macros should be used for recoverable kernel issues only.
- * For invalid external inputs, transient conditions, etc use
- * pr_err[_once/_ratelimited]() followed by dump_stack(), if necessary.
- * Do not include "BUG"/"WARNING" in format strings manually to make these
+ * These macros should be used क्रम recoverable kernel issues only.
+ * For invalid बाह्यal inमाला_दो, transient conditions, etc use
+ * pr_err[_once/_ratelimited]() followed by dump_stack(), अगर necessary.
+ * Do not include "BUG"/"WARNING" in क्रमmat strings manually to make these
  * conditions distinguishable from kernel issues.
  *
- * Use the versions with printk format strings to provide better diagnostics.
+ * Use the versions with prपूर्णांकk क्रमmat strings to provide better diagnostics.
  */
-#ifndef __WARN_FLAGS
-extern __printf(4, 5)
-void warn_slowpath_fmt(const char *file, const int line, unsigned taint,
-		       const char *fmt, ...);
-#define __WARN()		__WARN_printf(TAINT_WARN, NULL)
-#define __WARN_printf(taint, arg...) do {				\
+#अगर_अघोषित __WARN_FLAGS
+बाह्य __म_लिखो(4, 5)
+व्योम warn_slowpath_fmt(स्थिर अक्षर *file, स्थिर पूर्णांक line, अचिन्हित taपूर्णांक,
+		       स्थिर अक्षर *fmt, ...);
+#घोषणा __WARN()		__WARN_म_लिखो(TAINT_WARN, शून्य)
+#घोषणा __WARN_म_लिखो(taपूर्णांक, arg...) करो अणु				\
 		instrumentation_begin();				\
-		warn_slowpath_fmt(__FILE__, __LINE__, taint, arg);	\
+		warn_slowpath_fmt(__खाता__, __LINE__, taपूर्णांक, arg);	\
 		instrumentation_end();					\
-	} while (0)
-#else
-extern __printf(1, 2) void __warn_printk(const char *fmt, ...);
-#define __WARN()		__WARN_FLAGS(BUGFLAG_TAINT(TAINT_WARN))
-#define __WARN_printf(taint, arg...) do {				\
+	पूर्ण जबतक (0)
+#अन्यथा
+बाह्य __म_लिखो(1, 2) व्योम __warn_prपूर्णांकk(स्थिर अक्षर *fmt, ...);
+#घोषणा __WARN()		__WARN_FLAGS(BUGFLAG_TAINT(TAINT_WARN))
+#घोषणा __WARN_म_लिखो(taपूर्णांक, arg...) करो अणु				\
 		instrumentation_begin();				\
-		__warn_printk(arg);					\
-		__WARN_FLAGS(BUGFLAG_NO_CUT_HERE | BUGFLAG_TAINT(taint));\
+		__warn_prपूर्णांकk(arg);					\
+		__WARN_FLAGS(BUGFLAG_NO_CUT_HERE | BUGFLAG_TAINT(taपूर्णांक));\
 		instrumentation_end();					\
-	} while (0)
-#define WARN_ON_ONCE(condition) ({				\
-	int __ret_warn_on = !!(condition);			\
-	if (unlikely(__ret_warn_on))				\
+	पूर्ण जबतक (0)
+#घोषणा WARN_ON_ONCE(condition) (अणु				\
+	पूर्णांक __ret_warn_on = !!(condition);			\
+	अगर (unlikely(__ret_warn_on))				\
 		__WARN_FLAGS(BUGFLAG_ONCE |			\
 			     BUGFLAG_TAINT(TAINT_WARN));	\
 	unlikely(__ret_warn_on);				\
-})
-#endif
+पूर्ण)
+#पूर्ण_अगर
 
-/* used internally by panic.c */
-struct warn_args;
-struct pt_regs;
+/* used पूर्णांकernally by panic.c */
+काष्ठा warn_args;
+काष्ठा pt_regs;
 
-void __warn(const char *file, int line, void *caller, unsigned taint,
-	    struct pt_regs *regs, struct warn_args *args);
+व्योम __warn(स्थिर अक्षर *file, पूर्णांक line, व्योम *caller, अचिन्हित taपूर्णांक,
+	    काष्ठा pt_regs *regs, काष्ठा warn_args *args);
 
-#ifndef WARN_ON
-#define WARN_ON(condition) ({						\
-	int __ret_warn_on = !!(condition);				\
-	if (unlikely(__ret_warn_on))					\
+#अगर_अघोषित WARN_ON
+#घोषणा WARN_ON(condition) (अणु						\
+	पूर्णांक __ret_warn_on = !!(condition);				\
+	अगर (unlikely(__ret_warn_on))					\
 		__WARN();						\
 	unlikely(__ret_warn_on);					\
-})
-#endif
+पूर्ण)
+#पूर्ण_अगर
 
-#ifndef WARN
-#define WARN(condition, format...) ({					\
-	int __ret_warn_on = !!(condition);				\
-	if (unlikely(__ret_warn_on))					\
-		__WARN_printf(TAINT_WARN, format);			\
+#अगर_अघोषित WARN
+#घोषणा WARN(condition, क्रमmat...) (अणु					\
+	पूर्णांक __ret_warn_on = !!(condition);				\
+	अगर (unlikely(__ret_warn_on))					\
+		__WARN_म_लिखो(TAINT_WARN, क्रमmat);			\
 	unlikely(__ret_warn_on);					\
-})
-#endif
+पूर्ण)
+#पूर्ण_अगर
 
-#define WARN_TAINT(condition, taint, format...) ({			\
-	int __ret_warn_on = !!(condition);				\
-	if (unlikely(__ret_warn_on))					\
-		__WARN_printf(taint, format);				\
+#घोषणा WARN_TAINT(condition, taपूर्णांक, क्रमmat...) (अणु			\
+	पूर्णांक __ret_warn_on = !!(condition);				\
+	अगर (unlikely(__ret_warn_on))					\
+		__WARN_म_लिखो(taपूर्णांक, क्रमmat);				\
 	unlikely(__ret_warn_on);					\
-})
+पूर्ण)
 
-#ifndef WARN_ON_ONCE
-#define WARN_ON_ONCE(condition)	({				\
-	static bool __section(".data.once") __warned;		\
-	int __ret_warn_once = !!(condition);			\
+#अगर_अघोषित WARN_ON_ONCE
+#घोषणा WARN_ON_ONCE(condition)	(अणु				\
+	अटल bool __section(".data.once") __warned;		\
+	पूर्णांक __ret_warn_once = !!(condition);			\
 								\
-	if (unlikely(__ret_warn_once && !__warned)) {		\
+	अगर (unlikely(__ret_warn_once && !__warned)) अणु		\
 		__warned = true;				\
 		WARN_ON(1);					\
-	}							\
+	पूर्ण							\
 	unlikely(__ret_warn_once);				\
-})
-#endif
+पूर्ण)
+#पूर्ण_अगर
 
-#define WARN_ONCE(condition, format...)	({			\
-	static bool __section(".data.once") __warned;		\
-	int __ret_warn_once = !!(condition);			\
+#घोषणा WARN_ONCE(condition, क्रमmat...)	(अणु			\
+	अटल bool __section(".data.once") __warned;		\
+	पूर्णांक __ret_warn_once = !!(condition);			\
 								\
-	if (unlikely(__ret_warn_once && !__warned)) {		\
+	अगर (unlikely(__ret_warn_once && !__warned)) अणु		\
 		__warned = true;				\
-		WARN(1, format);				\
-	}							\
+		WARN(1, क्रमmat);				\
+	पूर्ण							\
 	unlikely(__ret_warn_once);				\
-})
+पूर्ण)
 
-#define WARN_TAINT_ONCE(condition, taint, format...)	({	\
-	static bool __section(".data.once") __warned;		\
-	int __ret_warn_once = !!(condition);			\
+#घोषणा WARN_TAINT_ONCE(condition, taपूर्णांक, क्रमmat...)	(अणु	\
+	अटल bool __section(".data.once") __warned;		\
+	पूर्णांक __ret_warn_once = !!(condition);			\
 								\
-	if (unlikely(__ret_warn_once && !__warned)) {		\
+	अगर (unlikely(__ret_warn_once && !__warned)) अणु		\
 		__warned = true;				\
-		WARN_TAINT(1, taint, format);			\
-	}							\
+		WARN_TAINT(1, taपूर्णांक, क्रमmat);			\
+	पूर्ण							\
 	unlikely(__ret_warn_once);				\
-})
+पूर्ण)
 
-#else /* !CONFIG_BUG */
-#ifndef HAVE_ARCH_BUG
-#define BUG() do {} while (1)
-#endif
+#अन्यथा /* !CONFIG_BUG */
+#अगर_अघोषित HAVE_ARCH_BUG
+#घोषणा BUG() करो अणुपूर्ण जबतक (1)
+#पूर्ण_अगर
 
-#ifndef HAVE_ARCH_BUG_ON
-#define BUG_ON(condition) do { if (unlikely(condition)) BUG(); } while (0)
-#endif
+#अगर_अघोषित HAVE_ARCH_BUG_ON
+#घोषणा BUG_ON(condition) करो अणु अगर (unlikely(condition)) BUG(); पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#ifndef HAVE_ARCH_WARN_ON
-#define WARN_ON(condition) ({						\
-	int __ret_warn_on = !!(condition);				\
+#अगर_अघोषित HAVE_ARCH_WARN_ON
+#घोषणा WARN_ON(condition) (अणु						\
+	पूर्णांक __ret_warn_on = !!(condition);				\
 	unlikely(__ret_warn_on);					\
-})
-#endif
+पूर्ण)
+#पूर्ण_अगर
 
-#ifndef WARN
-#define WARN(condition, format...) ({					\
-	int __ret_warn_on = !!(condition);				\
-	no_printk(format);						\
+#अगर_अघोषित WARN
+#घोषणा WARN(condition, क्रमmat...) (अणु					\
+	पूर्णांक __ret_warn_on = !!(condition);				\
+	no_prपूर्णांकk(क्रमmat);						\
 	unlikely(__ret_warn_on);					\
-})
-#endif
+पूर्ण)
+#पूर्ण_अगर
 
-#define WARN_ON_ONCE(condition) WARN_ON(condition)
-#define WARN_ONCE(condition, format...) WARN(condition, format)
-#define WARN_TAINT(condition, taint, format...) WARN(condition, format)
-#define WARN_TAINT_ONCE(condition, taint, format...) WARN(condition, format)
+#घोषणा WARN_ON_ONCE(condition) WARN_ON(condition)
+#घोषणा WARN_ONCE(condition, क्रमmat...) WARN(condition, क्रमmat)
+#घोषणा WARN_TAINT(condition, taपूर्णांक, क्रमmat...) WARN(condition, क्रमmat)
+#घोषणा WARN_TAINT_ONCE(condition, taपूर्णांक, क्रमmat...) WARN(condition, क्रमmat)
 
-#endif
+#पूर्ण_अगर
 
 /*
- * WARN_ON_SMP() is for cases that the warning is either
- * meaningless for !SMP or may even cause failures.
+ * WARN_ON_SMP() is क्रम हालs that the warning is either
+ * meaningless क्रम !SMP or may even cause failures.
  * It can also be used with values that are only defined
  * on SMP:
  *
- * struct foo {
+ * काष्ठा foo अणु
  *  [...]
- * #ifdef CONFIG_SMP
- *	int bar;
- * #endif
- * };
+ * #अगर_घोषित CONFIG_SMP
+ *	पूर्णांक bar;
+ * #पूर्ण_अगर
+ * पूर्ण;
  *
- * void func(struct foo *zoot)
- * {
+ * व्योम func(काष्ठा foo *zoot)
+ * अणु
  *	WARN_ON_SMP(!zoot->bar);
  *
  * For CONFIG_SMP, WARN_ON_SMP() should act the same as WARN_ON(),
- * and should be a nop and return false for uniprocessor.
+ * and should be a nop and वापस false क्रम uniprocessor.
  *
- * if (WARN_ON_SMP(x)) returns true only when CONFIG_SMP is set
+ * अगर (WARN_ON_SMP(x)) वापसs true only when CONFIG_SMP is set
  * and x is true.
  */
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 # define WARN_ON_SMP(x)			WARN_ON(x)
-#else
+#अन्यथा
 /*
- * Use of ({0;}) because WARN_ON_SMP(x) may be used either as
- * a stand alone line statement or as a condition in an if ()
+ * Use of (अणु0;पूर्ण) because WARN_ON_SMP(x) may be used either as
+ * a stand alone line statement or as a condition in an अगर ()
  * statement.
  * A simple "0" would cause gcc to give a "statement has no effect"
  * warning.
  */
-# define WARN_ON_SMP(x)			({0;})
-#endif
+# define WARN_ON_SMP(x)			(अणु0;पूर्ण)
+#पूर्ण_अगर
 
 /*
- * WARN_ON_FUNCTION_MISMATCH() warns if a value doesn't match a
- * function address, and can be useful for catching issues with
- * callback functions, for example.
+ * WARN_ON_FUNCTION_MISMATCH() warns अगर a value करोesn't match a
+ * function address, and can be useful क्रम catching issues with
+ * callback functions, क्रम example.
  *
  * With CONFIG_CFI_CLANG, the warning is disabled because the
  * compiler replaces function addresses taken in C code with
- * local jump table addresses, which breaks cross-module function
+ * local jump table addresses, which अवरोधs cross-module function
  * address equality.
  */
-#if defined(CONFIG_CFI_CLANG) && defined(CONFIG_MODULES)
-# define WARN_ON_FUNCTION_MISMATCH(x, fn) ({ 0; })
-#else
+#अगर defined(CONFIG_CFI_CLANG) && defined(CONFIG_MODULES)
+# define WARN_ON_FUNCTION_MISMATCH(x, fn) (अणु 0; पूर्ण)
+#अन्यथा
 # define WARN_ON_FUNCTION_MISMATCH(x, fn) WARN_ON_ONCE((x) != (fn))
-#endif
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

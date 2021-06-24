@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) STRATO AG 2011.  All rights reserved.
  */
 
-#ifndef BTRFS_CHECK_INTEGRITY_H
-#define BTRFS_CHECK_INTEGRITY_H
+#अगर_अघोषित BTRFS_CHECK_INTEGRITY_H
+#घोषणा BTRFS_CHECK_INTEGRITY_H
 
-#ifdef CONFIG_BTRFS_FS_CHECK_INTEGRITY
-void btrfsic_submit_bio(struct bio *bio);
-int btrfsic_submit_bio_wait(struct bio *bio);
-#else
-#define btrfsic_submit_bio submit_bio
-#define btrfsic_submit_bio_wait submit_bio_wait
-#endif
+#अगर_घोषित CONFIG_BTRFS_FS_CHECK_INTEGRITY
+व्योम btrfsic_submit_bio(काष्ठा bio *bio);
+पूर्णांक btrfsic_submit_bio_रुको(काष्ठा bio *bio);
+#अन्यथा
+#घोषणा btrfsic_submit_bio submit_bio
+#घोषणा btrfsic_submit_bio_रुको submit_bio_रुको
+#पूर्ण_अगर
 
-int btrfsic_mount(struct btrfs_fs_info *fs_info,
-		  struct btrfs_fs_devices *fs_devices,
-		  int including_extent_data, u32 print_mask);
-void btrfsic_unmount(struct btrfs_fs_devices *fs_devices);
+पूर्णांक btrfsic_mount(काष्ठा btrfs_fs_info *fs_info,
+		  काष्ठा btrfs_fs_devices *fs_devices,
+		  पूर्णांक including_extent_data, u32 prपूर्णांक_mask);
+व्योम btrfsic_unmount(काष्ठा btrfs_fs_devices *fs_devices);
 
-#endif
+#पूर्ण_अगर

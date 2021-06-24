@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,97 +32,97 @@
  *
  */
 
-#ifndef __MLX5E_IPSEC_RXTX_H__
-#define __MLX5E_IPSEC_RXTX_H__
+#अगर_अघोषित __MLX5E_IPSEC_RXTX_H__
+#घोषणा __MLX5E_IPSEC_RXTX_H__
 
-#include <linux/skbuff.h>
-#include <net/xfrm.h>
-#include "en.h"
-#include "en/txrx.h"
+#समावेश <linux/skbuff.h>
+#समावेश <net/xfrm.h>
+#समावेश "en.h"
+#समावेश "en/txrx.h"
 
 /* Bit31: IPsec marker, Bit30-24: IPsec syndrome, Bit23-0: IPsec obj id */
-#define MLX5_IPSEC_METADATA_MARKER(metadata)  (((metadata) >> 31) & 0x1)
-#define MLX5_IPSEC_METADATA_SYNDROM(metadata) (((metadata) >> 24) & GENMASK(6, 0))
-#define MLX5_IPSEC_METADATA_HANDLE(metadata)  ((metadata) & GENMASK(23, 0))
+#घोषणा MLX5_IPSEC_METADATA_MARKER(metadata)  (((metadata) >> 31) & 0x1)
+#घोषणा MLX5_IPSEC_METADATA_SYNDROM(metadata) (((metadata) >> 24) & GENMASK(6, 0))
+#घोषणा MLX5_IPSEC_METADATA_HANDLE(metadata)  ((metadata) & GENMASK(23, 0))
 
-struct mlx5e_accel_tx_ipsec_state {
-	struct xfrm_offload *xo;
-	struct xfrm_state *x;
+काष्ठा mlx5e_accel_tx_ipsec_state अणु
+	काष्ठा xfrm_offload *xo;
+	काष्ठा xfrm_state *x;
 	u32 tailen;
 	u32 plen;
-};
+पूर्ण;
 
-#ifdef CONFIG_MLX5_EN_IPSEC
+#अगर_घोषित CONFIG_MLX5_EN_IPSEC
 
-struct sk_buff *mlx5e_ipsec_handle_rx_skb(struct net_device *netdev,
-					  struct sk_buff *skb, u32 *cqe_bcnt);
+काष्ठा sk_buff *mlx5e_ipsec_handle_rx_skb(काष्ठा net_device *netdev,
+					  काष्ठा sk_buff *skb, u32 *cqe_bcnt);
 
-void mlx5e_ipsec_inverse_table_init(void);
-void mlx5e_ipsec_set_iv_esn(struct sk_buff *skb, struct xfrm_state *x,
-			    struct xfrm_offload *xo);
-void mlx5e_ipsec_set_iv(struct sk_buff *skb, struct xfrm_state *x,
-			struct xfrm_offload *xo);
-bool mlx5e_ipsec_handle_tx_skb(struct net_device *netdev,
-			       struct sk_buff *skb,
-			       struct mlx5e_accel_tx_ipsec_state *ipsec_st);
-void mlx5e_ipsec_handle_tx_wqe(struct mlx5e_tx_wqe *wqe,
-			       struct mlx5e_accel_tx_ipsec_state *ipsec_st,
-			       struct mlx5_wqe_inline_seg *inlseg);
-void mlx5e_ipsec_offload_handle_rx_skb(struct net_device *netdev,
-				       struct sk_buff *skb,
-				       struct mlx5_cqe64 *cqe);
-static inline unsigned int mlx5e_ipsec_tx_ids_len(struct mlx5e_accel_tx_ipsec_state *ipsec_st)
-{
-	return ipsec_st->tailen;
-}
+व्योम mlx5e_ipsec_inverse_table_init(व्योम);
+व्योम mlx5e_ipsec_set_iv_esn(काष्ठा sk_buff *skb, काष्ठा xfrm_state *x,
+			    काष्ठा xfrm_offload *xo);
+व्योम mlx5e_ipsec_set_iv(काष्ठा sk_buff *skb, काष्ठा xfrm_state *x,
+			काष्ठा xfrm_offload *xo);
+bool mlx5e_ipsec_handle_tx_skb(काष्ठा net_device *netdev,
+			       काष्ठा sk_buff *skb,
+			       काष्ठा mlx5e_accel_tx_ipsec_state *ipsec_st);
+व्योम mlx5e_ipsec_handle_tx_wqe(काष्ठा mlx5e_tx_wqe *wqe,
+			       काष्ठा mlx5e_accel_tx_ipsec_state *ipsec_st,
+			       काष्ठा mlx5_wqe_अंतरभूत_seg *inlseg);
+व्योम mlx5e_ipsec_offload_handle_rx_skb(काष्ठा net_device *netdev,
+				       काष्ठा sk_buff *skb,
+				       काष्ठा mlx5_cqe64 *cqe);
+अटल अंतरभूत अचिन्हित पूर्णांक mlx5e_ipsec_tx_ids_len(काष्ठा mlx5e_accel_tx_ipsec_state *ipsec_st)
+अणु
+	वापस ipsec_st->tailen;
+पूर्ण
 
-static inline bool mlx5_ipsec_is_rx_flow(struct mlx5_cqe64 *cqe)
-{
-	return MLX5_IPSEC_METADATA_MARKER(be32_to_cpu(cqe->ft_metadata));
-}
+अटल अंतरभूत bool mlx5_ipsec_is_rx_flow(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस MLX5_IPSEC_METADATA_MARKER(be32_to_cpu(cqe->ft_metadata));
+पूर्ण
 
-static inline bool mlx5e_ipsec_is_tx_flow(struct mlx5e_accel_tx_ipsec_state *ipsec_st)
-{
-	return ipsec_st->x;
-}
+अटल अंतरभूत bool mlx5e_ipsec_is_tx_flow(काष्ठा mlx5e_accel_tx_ipsec_state *ipsec_st)
+अणु
+	वापस ipsec_st->x;
+पूर्ण
 
-static inline bool mlx5e_ipsec_eseg_meta(struct mlx5_wqe_eth_seg *eseg)
-{
-	return eseg->flow_table_metadata & cpu_to_be32(MLX5_ETH_WQE_FT_META_IPSEC);
-}
+अटल अंतरभूत bool mlx5e_ipsec_eseg_meta(काष्ठा mlx5_wqe_eth_seg *eseg)
+अणु
+	वापस eseg->flow_table_metadata & cpu_to_be32(MLX5_ETH_WQE_FT_META_IPSEC);
+पूर्ण
 
-void mlx5e_ipsec_tx_build_eseg(struct mlx5e_priv *priv, struct sk_buff *skb,
-			       struct mlx5_wqe_eth_seg *eseg);
+व्योम mlx5e_ipsec_tx_build_eseg(काष्ठा mlx5e_priv *priv, काष्ठा sk_buff *skb,
+			       काष्ठा mlx5_wqe_eth_seg *eseg);
 
-static inline bool mlx5e_ipsec_feature_check(struct sk_buff *skb, struct net_device *netdev,
+अटल अंतरभूत bool mlx5e_ipsec_feature_check(काष्ठा sk_buff *skb, काष्ठा net_device *netdev,
 					     netdev_features_t features)
-{
-	struct sec_path *sp = skb_sec_path(skb);
+अणु
+	काष्ठा sec_path *sp = skb_sec_path(skb);
 
-	if (sp && sp->len) {
-		struct xfrm_state *x = sp->xvec[0];
+	अगर (sp && sp->len) अणु
+		काष्ठा xfrm_state *x = sp->xvec[0];
 
-		if (x && x->xso.offload_handle)
-			return true;
-	}
-	return false;
-}
+		अगर (x && x->xso.offload_handle)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-#else
-static inline
-void mlx5e_ipsec_offload_handle_rx_skb(struct net_device *netdev,
-				       struct sk_buff *skb,
-				       struct mlx5_cqe64 *cqe)
-{}
+#अन्यथा
+अटल अंतरभूत
+व्योम mlx5e_ipsec_offload_handle_rx_skb(काष्ठा net_device *netdev,
+				       काष्ठा sk_buff *skb,
+				       काष्ठा mlx5_cqe64 *cqe)
+अणुपूर्ण
 
-static inline bool mlx5e_ipsec_eseg_meta(struct mlx5_wqe_eth_seg *eseg)
-{
-	return false;
-}
+अटल अंतरभूत bool mlx5e_ipsec_eseg_meta(काष्ठा mlx5_wqe_eth_seg *eseg)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool mlx5_ipsec_is_rx_flow(struct mlx5_cqe64 *cqe) { return false; }
-static inline bool mlx5e_ipsec_feature_check(struct sk_buff *skb, struct net_device *netdev,
-					     netdev_features_t features) { return false; }
-#endif /* CONFIG_MLX5_EN_IPSEC */
+अटल अंतरभूत bool mlx5_ipsec_is_rx_flow(काष्ठा mlx5_cqe64 *cqe) अणु वापस false; पूर्ण
+अटल अंतरभूत bool mlx5e_ipsec_feature_check(काष्ठा sk_buff *skb, काष्ठा net_device *netdev,
+					     netdev_features_t features) अणु वापस false; पूर्ण
+#पूर्ण_अगर /* CONFIG_MLX5_EN_IPSEC */
 
-#endif /* __MLX5E_IPSEC_RXTX_H__ */
+#पूर्ण_अगर /* __MLX5E_IPSEC_RXTX_H__ */

@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_log_format.h"
-#include "xfs_trans.h"
-#include "xfs_inode.h"
-#include "xfs_quota.h"
-#include "xfs_qm.h"
-#include "xfs_errortag.h"
-#include "xfs_error.h"
-#include "xfs_scrub.h"
-#include "scrub/scrub.h"
-#include "scrub/common.h"
-#include "scrub/trace.h"
-#include "scrub/repair.h"
-#include "scrub/health.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_quota.h"
+#समावेश "xfs_qm.h"
+#समावेश "xfs_errortag.h"
+#समावेश "xfs_error.h"
+#समावेश "xfs_scrub.h"
+#समावेश "scrub/scrub.h"
+#समावेश "scrub/common.h"
+#समावेश "scrub/trace.h"
+#समावेश "scrub/repair.h"
+#समावेश "scrub/health.h"
 
 /*
  * Online Scrub and Repair
  *
  * Traditionally, XFS (the kernel driver) did not know how to check or
- * repair on-disk data structures.  That task was left to the xfs_check
- * and xfs_repair tools, both of which require taking the filesystem
- * offline for a thorough but time consuming examination.  Online
+ * repair on-disk data काष्ठाures.  That task was left to the xfs_check
+ * and xfs_repair tools, both of which require taking the fileप्रणाली
+ * offline क्रम a thorough but समय consuming examination.  Online
  * scrub & repair, on the other hand, enables us to check the metadata
- * for obvious errors while carefully stepping around the filesystem's
+ * क्रम obvious errors जबतक carefully stepping around the fileप्रणाली's
  * ongoing operations, locking rules, etc.
  *
  * Given that most XFS metadata consist of records stored in a btree,
  * most of the checking functions iterate the btree blocks themselves
- * looking for irregularities.  When a record block is encountered, each
- * record can be checked for obviously bad values.  Record values can
- * also be cross-referenced against other btrees to look for potential
+ * looking क्रम irregularities.  When a record block is encountered, each
+ * record can be checked क्रम obviously bad values.  Record values can
+ * also be cross-referenced against other btrees to look क्रम potential
  * misunderstandings between pieces of metadata.
  *
- * It is expected that the checkers responsible for per-AG metadata
- * structures will lock the AG headers (AGI, AGF, AGFL), iterate the
- * metadata structure, and perform any relevant cross-referencing before
- * unlocking the AG and returning the results to userspace.  These
- * scrubbers must not keep an AG locked for too long to avoid tying up
+ * It is expected that the checkers responsible क्रम per-AG metadata
+ * काष्ठाures will lock the AG headers (AGI, AGF, AGFL), iterate the
+ * metadata काष्ठाure, and perक्रमm any relevant cross-referencing beक्रमe
+ * unlocking the AG and वापसing the results to userspace.  These
+ * scrubbers must not keep an AG locked क्रम too दीर्घ to aव्योम tying up
  * the block and inode allocators.
  *
  * Block maps and b-trees rooted in an inode present a special challenge
  * because they can involve extents from any AG.  The general scrubber
- * structure of lock -> check -> xref -> unlock still holds, but AG
- * locking order rules /must/ be obeyed to avoid deadlocks.  The
+ * काष्ठाure of lock -> check -> xref -> unlock still holds, but AG
+ * locking order rules /must/ be obeyed to aव्योम deadlocks.  The
  * ordering rule, of course, is that we must lock in increasing AG
  * order.  Helper functions are provided to track which AG headers we've
- * already locked.  If we detect an imminent locking order violation, we
- * can signal a potential deadlock, in which case the scrubber can jump
+ * alपढ़ोy locked.  If we detect an imminent locking order violation, we
+ * can संकेत a potential deadlock, in which हाल the scrubber can jump
  * out to the top level, lock all the AGs in order, and retry the scrub.
  *
  * For file data (directories, extended attributes, symlinks) scrub, we
@@ -63,33 +64,33 @@
  * (directories and attributes) we follow the same btree-scrubbing
  * strategy outlined previously to check the records.
  *
- * We use a bit of trickery with transactions to avoid buffer deadlocks
- * if there is a cycle in the metadata.  The basic problem is that
- * travelling down a btree involves locking the current buffer at each
- * tree level.  If a pointer should somehow point back to a buffer that
- * we've already examined, we will deadlock due to the second buffer
+ * We use a bit of trickery with transactions to aव्योम buffer deadlocks
+ * अगर there is a cycle in the metadata.  The basic problem is that
+ * travelling करोwn a btree involves locking the current buffer at each
+ * tree level.  If a poपूर्णांकer should somehow poपूर्णांक back to a buffer that
+ * we've alपढ़ोy examined, we will deadlock due to the second buffer
  * locking attempt.  Note however that grabbing a buffer in transaction
  * context links the locked buffer to the transaction.  If we try to
- * re-grab the buffer in the context of the same transaction, we avoid
- * the second lock attempt and continue.  Between the verifier and the
+ * re-grab the buffer in the context of the same transaction, we aव्योम
+ * the second lock attempt and जारी.  Between the verअगरier and the
  * scrubber, something will notice that something is amiss and report
- * the corruption.  Therefore, each scrubber will allocate an empty
+ * the corruption.  Thereक्रमe, each scrubber will allocate an empty
  * transaction, attach buffers to it, and cancel the transaction at the
  * end of the scrub run.  Cancelling a non-dirty transaction simply
  * unlocks the buffers.
  *
  * There are four pieces of data that scrub can communicate to
- * userspace.  The first is the error code (errno), which can be used to
- * communicate operational errors in performing the scrub.  There are
+ * userspace.  The first is the error code (त्रुटि_सं), which can be used to
+ * communicate operational errors in perक्रमming the scrub.  There are
  * also three flags that can be set in the scrub context.  If the data
- * structure itself is corrupt, the CORRUPT flag will be set.  If
+ * काष्ठाure itself is corrupt, the CORRUPT flag will be set.  If
  * the metadata is correct but otherwise suboptimal, the PREEN flag
  * will be set.
  *
- * We perform secondary validation of filesystem metadata by
+ * We perक्रमm secondary validation of fileप्रणाली metadata by
  * cross-referencing every record with all other available metadata.
- * For example, for block mapping extents, we verify that there are no
- * records in the free space and inode btrees corresponding to that
+ * For example, क्रम block mapping extents, we verअगरy that there are no
+ * records in the मुक्त space and inode btrees corresponding to that
  * space extent and that there is a corresponding entry in the reverse
  * mapping btree.  Inconsistent metadata is noted by setting the
  * XCORRUPT flag; btree query function errors are noted by setting the
@@ -100,17 +101,17 @@
  * program can ask the kernel to apply some tender loving care (TLC) to
  * the metadata object by setting the REPAIR flag and re-calling the
  * scrub ioctl.  "Corruption" is defined by metadata violating the
- * on-disk specification; operations cannot continue if the violation is
- * left untreated.  It is possible for XFS to continue if an object is
- * "suboptimal", however performance may be degraded.  Repairs are
- * usually performed by rebuilding the metadata entirely out of
- * redundant metadata.  Optimizing, on the other hand, can sometimes be
- * done without rebuilding entire structures.
+ * on-disk specअगरication; operations cannot जारी अगर the violation is
+ * left untreated.  It is possible क्रम XFS to जारी अगर an object is
+ * "suboptimal", however perक्रमmance may be degraded.  Repairs are
+ * usually perक्रमmed by rebuilding the metadata entirely out of
+ * redundant metadata.  Optimizing, on the other hand, can someबार be
+ * करोne without rebuilding entire काष्ठाures.
  *
- * Generally speaking, the repair code has the following code structure:
+ * Generally speaking, the repair code has the following code काष्ठाure:
  * Lock -> scrub -> repair -> commit -> re-lock -> re-scrub -> unlock.
- * The first check helps us figure out if we need to rebuild or simply
- * optimize the structure so that the rebuild knows what to do.  The
+ * The first check helps us figure out अगर we need to rebuild or simply
+ * optimize the काष्ठाure so that the rebuild knows what to करो.  The
  * second check evaluates the completeness of the repair; that is what
  * is reported to userspace.
  *
@@ -122,461 +123,461 @@
  */
 
 /*
- * Scrub probe -- userspace uses this to probe if we're willing to scrub
- * or repair a given mountpoint.  This will be used by xfs_scrub to
+ * Scrub probe -- userspace uses this to probe अगर we're willing to scrub
+ * or repair a given mountpoपूर्णांक.  This will be used by xfs_scrub to
  * probe the kernel's abilities to scrub (and repair) the metadata.  We
- * do this by validating the ioctl inputs from userspace, preparing the
- * filesystem for a scrub (or a repair) operation, and immediately
- * returning to userspace.  Userspace can use the returned errno and
- * structure state to decide (in broad terms) if scrub/repair are
+ * करो this by validating the ioctl inमाला_दो from userspace, preparing the
+ * fileप्रणाली क्रम a scrub (or a repair) operation, and immediately
+ * वापसing to userspace.  Userspace can use the वापसed त्रुटि_सं and
+ * काष्ठाure state to decide (in broad terms) अगर scrub/repair are
  * supported by the running kernel.
  */
-static int
+अटल पूर्णांक
 xchk_probe(
-	struct xfs_scrub	*sc)
-{
-	int			error = 0;
+	काष्ठा xfs_scrub	*sc)
+अणु
+	पूर्णांक			error = 0;
 
-	if (xchk_should_terminate(sc, &error))
-		return error;
+	अगर (xchk_should_terminate(sc, &error))
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Scrub setup and teardown */
+/* Scrub setup and tearकरोwn */
 
 /* Free all the resources and finish the transactions. */
-STATIC int
-xchk_teardown(
-	struct xfs_scrub	*sc,
-	int			error)
-{
-	struct xfs_inode	*ip_in = XFS_I(file_inode(sc->file));
+STATIC पूर्णांक
+xchk_tearकरोwn(
+	काष्ठा xfs_scrub	*sc,
+	पूर्णांक			error)
+अणु
+	काष्ठा xfs_inode	*ip_in = XFS_I(file_inode(sc->file));
 
-	xchk_ag_free(sc, &sc->sa);
-	if (sc->tp) {
-		if (error == 0 && (sc->sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR))
+	xchk_ag_मुक्त(sc, &sc->sa);
+	अगर (sc->tp) अणु
+		अगर (error == 0 && (sc->sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR))
 			error = xfs_trans_commit(sc->tp);
-		else
+		अन्यथा
 			xfs_trans_cancel(sc->tp);
-		sc->tp = NULL;
-	}
-	if (sc->ip) {
-		if (sc->ilock_flags)
+		sc->tp = शून्य;
+	पूर्ण
+	अगर (sc->ip) अणु
+		अगर (sc->ilock_flags)
 			xfs_iunlock(sc->ip, sc->ilock_flags);
-		if (sc->ip != ip_in &&
-		    !xfs_internal_inum(sc->mp, sc->ip->i_ino))
+		अगर (sc->ip != ip_in &&
+		    !xfs_पूर्णांकernal_inum(sc->mp, sc->ip->i_ino))
 			xfs_irele(sc->ip);
-		sc->ip = NULL;
-	}
-	if (sc->sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR)
-		mnt_drop_write_file(sc->file);
-	if (sc->flags & XCHK_REAPING_DISABLED)
+		sc->ip = शून्य;
+	पूर्ण
+	अगर (sc->sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR)
+		mnt_drop_ग_लिखो_file(sc->file);
+	अगर (sc->flags & XCHK_REAPING_DISABLED)
 		xchk_start_reaping(sc);
-	if (sc->flags & XCHK_HAS_QUOTAOFFLOCK) {
+	अगर (sc->flags & XCHK_HAS_QUOTAOFFLOCK) अणु
 		mutex_unlock(&sc->mp->m_quotainfo->qi_quotaofflock);
 		sc->flags &= ~XCHK_HAS_QUOTAOFFLOCK;
-	}
-	if (sc->buf) {
-		kmem_free(sc->buf);
-		sc->buf = NULL;
-	}
-	return error;
-}
+	पूर्ण
+	अगर (sc->buf) अणु
+		kmem_मुक्त(sc->buf);
+		sc->buf = शून्य;
+	पूर्ण
+	वापस error;
+पूर्ण
 
 /* Scrubbing dispatch. */
 
-static const struct xchk_meta_ops meta_scrub_ops[] = {
-	[XFS_SCRUB_TYPE_PROBE] = {	/* ioctl presence test */
+अटल स्थिर काष्ठा xchk_meta_ops meta_scrub_ops[] = अणु
+	[XFS_SCRUB_TYPE_PROBE] = अणु	/* ioctl presence test */
 		.type	= ST_NONE,
 		.setup	= xchk_setup_fs,
 		.scrub	= xchk_probe,
 		.repair = xrep_probe,
-	},
-	[XFS_SCRUB_TYPE_SB] = {		/* superblock */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_SB] = अणु		/* superblock */
 		.type	= ST_PERAG,
 		.setup	= xchk_setup_fs,
 		.scrub	= xchk_superblock,
 		.repair	= xrep_superblock,
-	},
-	[XFS_SCRUB_TYPE_AGF] = {	/* agf */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_AGF] = अणु	/* agf */
 		.type	= ST_PERAG,
 		.setup	= xchk_setup_fs,
 		.scrub	= xchk_agf,
 		.repair	= xrep_agf,
-	},
-	[XFS_SCRUB_TYPE_AGFL]= {	/* agfl */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_AGFL]= अणु	/* agfl */
 		.type	= ST_PERAG,
 		.setup	= xchk_setup_fs,
 		.scrub	= xchk_agfl,
 		.repair	= xrep_agfl,
-	},
-	[XFS_SCRUB_TYPE_AGI] = {	/* agi */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_AGI] = अणु	/* agi */
 		.type	= ST_PERAG,
 		.setup	= xchk_setup_fs,
 		.scrub	= xchk_agi,
 		.repair	= xrep_agi,
-	},
-	[XFS_SCRUB_TYPE_BNOBT] = {	/* bnobt */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_BNOBT] = अणु	/* bnobt */
 		.type	= ST_PERAG,
 		.setup	= xchk_setup_ag_allocbt,
 		.scrub	= xchk_bnobt,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_CNTBT] = {	/* cntbt */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_CNTBT] = अणु	/* cntbt */
 		.type	= ST_PERAG,
 		.setup	= xchk_setup_ag_allocbt,
 		.scrub	= xchk_cntbt,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_INOBT] = {	/* inobt */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_INOBT] = अणु	/* inobt */
 		.type	= ST_PERAG,
 		.setup	= xchk_setup_ag_iallocbt,
 		.scrub	= xchk_inobt,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_FINOBT] = {	/* finobt */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_FINOBT] = अणु	/* finobt */
 		.type	= ST_PERAG,
 		.setup	= xchk_setup_ag_iallocbt,
 		.scrub	= xchk_finobt,
 		.has	= xfs_sb_version_hasfinobt,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_RMAPBT] = {	/* rmapbt */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_RMAPBT] = अणु	/* rmapbt */
 		.type	= ST_PERAG,
 		.setup	= xchk_setup_ag_rmapbt,
 		.scrub	= xchk_rmapbt,
 		.has	= xfs_sb_version_hasrmapbt,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_REFCNTBT] = {	/* refcountbt */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_REFCNTBT] = अणु	/* refcountbt */
 		.type	= ST_PERAG,
 		.setup	= xchk_setup_ag_refcountbt,
 		.scrub	= xchk_refcountbt,
 		.has	= xfs_sb_version_hasreflink,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_INODE] = {	/* inode record */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_INODE] = अणु	/* inode record */
 		.type	= ST_INODE,
 		.setup	= xchk_setup_inode,
 		.scrub	= xchk_inode,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_BMBTD] = {	/* inode data fork */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_BMBTD] = अणु	/* inode data विभाजन */
 		.type	= ST_INODE,
 		.setup	= xchk_setup_inode_bmap,
 		.scrub	= xchk_bmap_data,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_BMBTA] = {	/* inode attr fork */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_BMBTA] = अणु	/* inode attr विभाजन */
 		.type	= ST_INODE,
 		.setup	= xchk_setup_inode_bmap,
 		.scrub	= xchk_bmap_attr,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_BMBTC] = {	/* inode CoW fork */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_BMBTC] = अणु	/* inode CoW विभाजन */
 		.type	= ST_INODE,
 		.setup	= xchk_setup_inode_bmap,
 		.scrub	= xchk_bmap_cow,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_DIR] = {	/* directory */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_सूची] = अणु	/* directory */
 		.type	= ST_INODE,
 		.setup	= xchk_setup_directory,
 		.scrub	= xchk_directory,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_XATTR] = {	/* extended attributes */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_XATTR] = अणु	/* extended attributes */
 		.type	= ST_INODE,
 		.setup	= xchk_setup_xattr,
 		.scrub	= xchk_xattr,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_SYMLINK] = {	/* symbolic link */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_SYMLINK] = अणु	/* symbolic link */
 		.type	= ST_INODE,
 		.setup	= xchk_setup_symlink,
 		.scrub	= xchk_symlink,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_PARENT] = {	/* parent pointers */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_PARENT] = अणु	/* parent poपूर्णांकers */
 		.type	= ST_INODE,
 		.setup	= xchk_setup_parent,
 		.scrub	= xchk_parent,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_RTBITMAP] = {	/* realtime bitmap */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_RTBITMAP] = अणु	/* realसमय biपंचांगap */
 		.type	= ST_FS,
 		.setup	= xchk_setup_rt,
-		.scrub	= xchk_rtbitmap,
-		.has	= xfs_sb_version_hasrealtime,
+		.scrub	= xchk_rtbiपंचांगap,
+		.has	= xfs_sb_version_hasrealसमय,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_RTSUM] = {	/* realtime summary */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_RTSUM] = अणु	/* realसमय summary */
 		.type	= ST_FS,
 		.setup	= xchk_setup_rt,
 		.scrub	= xchk_rtsummary,
-		.has	= xfs_sb_version_hasrealtime,
+		.has	= xfs_sb_version_hasrealसमय,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_UQUOTA] = {	/* user quota */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_UQUOTA] = अणु	/* user quota */
 		.type	= ST_FS,
 		.setup	= xchk_setup_quota,
 		.scrub	= xchk_quota,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_GQUOTA] = {	/* group quota */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_GQUOTA] = अणु	/* group quota */
 		.type	= ST_FS,
 		.setup	= xchk_setup_quota,
 		.scrub	= xchk_quota,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_PQUOTA] = {	/* project quota */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_PQUOTA] = अणु	/* project quota */
 		.type	= ST_FS,
 		.setup	= xchk_setup_quota,
 		.scrub	= xchk_quota,
 		.repair	= xrep_notsupported,
-	},
-	[XFS_SCRUB_TYPE_FSCOUNTERS] = {	/* fs summary counters */
+	पूर्ण,
+	[XFS_SCRUB_TYPE_FSCOUNTERS] = अणु	/* fs summary counters */
 		.type	= ST_FS,
 		.setup	= xchk_setup_fscounters,
 		.scrub	= xchk_fscounters,
 		.repair	= xrep_notsupported,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* This isn't a stable feature, warn once per day. */
-static inline void
+अटल अंतरभूत व्योम
 xchk_experimental_warning(
-	struct xfs_mount	*mp)
-{
-	static struct ratelimit_state scrub_warning = RATELIMIT_STATE_INIT(
+	काष्ठा xfs_mount	*mp)
+अणु
+	अटल काष्ठा ratelimit_state scrub_warning = RATELIMIT_STATE_INIT(
 			"xchk_warning", 86400 * HZ, 1);
 	ratelimit_set_flags(&scrub_warning, RATELIMIT_MSG_ON_RELEASE);
 
-	if (__ratelimit(&scrub_warning))
+	अगर (__ratelimit(&scrub_warning))
 		xfs_alert(mp,
 "EXPERIMENTAL online scrub feature in use. Use at your own risk!");
-}
+पूर्ण
 
-static int
-xchk_validate_inputs(
-	struct xfs_mount		*mp,
-	struct xfs_scrub_metadata	*sm)
-{
-	int				error;
-	const struct xchk_meta_ops	*ops;
+अटल पूर्णांक
+xchk_validate_inमाला_दो(
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_scrub_metadata	*sm)
+अणु
+	पूर्णांक				error;
+	स्थिर काष्ठा xchk_meta_ops	*ops;
 
 	error = -EINVAL;
-	/* Check our inputs. */
+	/* Check our inमाला_दो. */
 	sm->sm_flags &= ~XFS_SCRUB_FLAGS_OUT;
-	if (sm->sm_flags & ~XFS_SCRUB_FLAGS_IN)
-		goto out;
+	अगर (sm->sm_flags & ~XFS_SCRUB_FLAGS_IN)
+		जाओ out;
 	/* sm_reserved[] must be zero */
-	if (memchr_inv(sm->sm_reserved, 0, sizeof(sm->sm_reserved)))
-		goto out;
+	अगर (स_प्रथम_inv(sm->sm_reserved, 0, माप(sm->sm_reserved)))
+		जाओ out;
 
 	error = -ENOENT;
 	/* Do we know about this type of metadata? */
-	if (sm->sm_type >= XFS_SCRUB_TYPE_NR)
-		goto out;
+	अगर (sm->sm_type >= XFS_SCRUB_TYPE_NR)
+		जाओ out;
 	ops = &meta_scrub_ops[sm->sm_type];
-	if (ops->setup == NULL || ops->scrub == NULL)
-		goto out;
+	अगर (ops->setup == शून्य || ops->scrub == शून्य)
+		जाओ out;
 	/* Does this fs even support this type of metadata? */
-	if (ops->has && !ops->has(&mp->m_sb))
-		goto out;
+	अगर (ops->has && !ops->has(&mp->m_sb))
+		जाओ out;
 
 	error = -EINVAL;
-	/* restricting fields must be appropriate for type */
-	switch (ops->type) {
-	case ST_NONE:
-	case ST_FS:
-		if (sm->sm_ino || sm->sm_gen || sm->sm_agno)
-			goto out;
-		break;
-	case ST_PERAG:
-		if (sm->sm_ino || sm->sm_gen ||
+	/* restricting fields must be appropriate क्रम type */
+	चयन (ops->type) अणु
+	हाल ST_NONE:
+	हाल ST_FS:
+		अगर (sm->sm_ino || sm->sm_gen || sm->sm_agno)
+			जाओ out;
+		अवरोध;
+	हाल ST_PERAG:
+		अगर (sm->sm_ino || sm->sm_gen ||
 		    sm->sm_agno >= mp->m_sb.sb_agcount)
-			goto out;
-		break;
-	case ST_INODE:
-		if (sm->sm_agno || (sm->sm_gen && !sm->sm_ino))
-			goto out;
-		break;
-	default:
-		goto out;
-	}
+			जाओ out;
+		अवरोध;
+	हाल ST_INODE:
+		अगर (sm->sm_agno || (sm->sm_gen && !sm->sm_ino))
+			जाओ out;
+		अवरोध;
+	शेष:
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * We only want to repair read-write v5+ filesystems.  Defer the check
-	 * for ops->repair until after our scrub confirms that we need to
-	 * perform repairs so that we avoid failing due to not supporting
-	 * repairing an object that doesn't need repairs.
+	 * We only want to repair पढ़ो-ग_लिखो v5+ fileप्रणालीs.  Defer the check
+	 * क्रम ops->repair until after our scrub confirms that we need to
+	 * perक्रमm repairs so that we aव्योम failing due to not supporting
+	 * repairing an object that करोesn't need repairs.
 	 */
-	if (sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR) {
+	अगर (sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR) अणु
 		error = -EOPNOTSUPP;
-		if (!xfs_sb_version_hascrc(&mp->m_sb))
-			goto out;
+		अगर (!xfs_sb_version_hascrc(&mp->m_sb))
+			जाओ out;
 
 		error = -EROFS;
-		if (mp->m_flags & XFS_MOUNT_RDONLY)
-			goto out;
-	}
+		अगर (mp->m_flags & XFS_MOUNT_RDONLY)
+			जाओ out;
+	पूर्ण
 
 	error = 0;
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-#ifdef CONFIG_XFS_ONLINE_REPAIR
-static inline void xchk_postmortem(struct xfs_scrub *sc)
-{
+#अगर_घोषित CONFIG_XFS_ONLINE_REPAIR
+अटल अंतरभूत व्योम xchk_posपंचांगortem(काष्ठा xfs_scrub *sc)
+अणु
 	/*
 	 * Userspace asked us to repair something, we repaired it, rescanned
 	 * it, and the rescan says it's still broken.  Scream about this in
-	 * the system logs.
+	 * the प्रणाली logs.
 	 */
-	if ((sc->sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR) &&
+	अगर ((sc->sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR) &&
 	    (sc->sm->sm_flags & (XFS_SCRUB_OFLAG_CORRUPT |
 				 XFS_SCRUB_OFLAG_XCORRUPT)))
 		xrep_failure(sc->mp);
-}
-#else
-static inline void xchk_postmortem(struct xfs_scrub *sc)
-{
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम xchk_posपंचांगortem(काष्ठा xfs_scrub *sc)
+अणु
 	/*
 	 * Userspace asked us to scrub something, it's broken, and we have no
 	 * way of fixing it.  Scream in the logs.
 	 */
-	if (sc->sm->sm_flags & (XFS_SCRUB_OFLAG_CORRUPT |
+	अगर (sc->sm->sm_flags & (XFS_SCRUB_OFLAG_CORRUPT |
 				XFS_SCRUB_OFLAG_XCORRUPT))
 		xfs_alert_ratelimited(sc->mp,
 				"Corruption detected during scrub.");
-}
-#endif /* CONFIG_XFS_ONLINE_REPAIR */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_XFS_ONLINE_REPAIR */
 
 /* Dispatch metadata scrubbing. */
-int
+पूर्णांक
 xfs_scrub_metadata(
-	struct file			*file,
-	struct xfs_scrub_metadata	*sm)
-{
-	struct xfs_scrub		sc = {
+	काष्ठा file			*file,
+	काष्ठा xfs_scrub_metadata	*sm)
+अणु
+	काष्ठा xfs_scrub		sc = अणु
 		.file			= file,
 		.sm			= sm,
-		.sa			= {
-			.agno		= NULLAGNUMBER,
-		},
-	};
-	struct xfs_mount		*mp = XFS_I(file_inode(file))->i_mount;
-	int				error = 0;
+		.sa			= अणु
+			.agno		= शून्यAGNUMBER,
+		पूर्ण,
+	पूर्ण;
+	काष्ठा xfs_mount		*mp = XFS_I(file_inode(file))->i_mount;
+	पूर्णांक				error = 0;
 
 	sc.mp = mp;
 
-	BUILD_BUG_ON(sizeof(meta_scrub_ops) !=
-		(sizeof(struct xchk_meta_ops) * XFS_SCRUB_TYPE_NR));
+	BUILD_BUG_ON(माप(meta_scrub_ops) !=
+		(माप(काष्ठा xchk_meta_ops) * XFS_SCRUB_TYPE_NR));
 
 	trace_xchk_start(XFS_I(file_inode(file)), sm, error);
 
-	/* Forbidden if we are shut down or mounted norecovery. */
+	/* Forbidden अगर we are shut करोwn or mounted norecovery. */
 	error = -ESHUTDOWN;
-	if (XFS_FORCED_SHUTDOWN(mp))
-		goto out;
+	अगर (XFS_FORCED_SHUTDOWN(mp))
+		जाओ out;
 	error = -ENOTRECOVERABLE;
-	if (mp->m_flags & XFS_MOUNT_NORECOVERY)
-		goto out;
+	अगर (mp->m_flags & XFS_MOUNT_NORECOVERY)
+		जाओ out;
 
-	error = xchk_validate_inputs(mp, sm);
-	if (error)
-		goto out;
+	error = xchk_validate_inमाला_दो(mp, sm);
+	अगर (error)
+		जाओ out;
 
 	xchk_experimental_warning(mp);
 
 	sc.ops = &meta_scrub_ops[sm->sm_type];
-	sc.sick_mask = xchk_health_mask_for_scrub_type(sm->sm_type);
+	sc.sick_mask = xchk_health_mask_क्रम_scrub_type(sm->sm_type);
 retry_op:
 	/*
-	 * When repairs are allowed, prevent freezing or readonly remount while
+	 * When repairs are allowed, prevent मुक्तzing or पढ़ोonly remount जबतक
 	 * scrub is running with a real transaction.
 	 */
-	if (sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR) {
-		error = mnt_want_write_file(sc.file);
-		if (error)
-			goto out;
-	}
+	अगर (sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR) अणु
+		error = mnt_want_ग_लिखो_file(sc.file);
+		अगर (error)
+			जाओ out;
+	पूर्ण
 
-	/* Set up for the operation. */
+	/* Set up क्रम the operation. */
 	error = sc.ops->setup(&sc);
-	if (error)
-		goto out_teardown;
+	अगर (error)
+		जाओ out_tearकरोwn;
 
-	/* Scrub for errors. */
+	/* Scrub क्रम errors. */
 	error = sc.ops->scrub(&sc);
-	if (!(sc.flags & XCHK_TRY_HARDER) && error == -EDEADLOCK) {
+	अगर (!(sc.flags & XCHK_TRY_HARDER) && error == -EDEADLOCK) अणु
 		/*
-		 * Scrubbers return -EDEADLOCK to mean 'try harder'.
-		 * Tear down everything we hold, then set up again with
-		 * preparation for worst-case scenarios.
+		 * Scrubbers वापस -EDEADLOCK to mean 'try harder'.
+		 * Tear करोwn everything we hold, then set up again with
+		 * preparation क्रम worst-हाल scenarios.
 		 */
-		error = xchk_teardown(&sc, 0);
-		if (error)
-			goto out;
+		error = xchk_tearकरोwn(&sc, 0);
+		अगर (error)
+			जाओ out;
 		sc.flags |= XCHK_TRY_HARDER;
-		goto retry_op;
-	} else if (error || (sm->sm_flags & XFS_SCRUB_OFLAG_INCOMPLETE))
-		goto out_teardown;
+		जाओ retry_op;
+	पूर्ण अन्यथा अगर (error || (sm->sm_flags & XFS_SCRUB_OFLAG_INCOMPLETE))
+		जाओ out_tearकरोwn;
 
 	xchk_update_health(&sc);
 
-	if ((sc.sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR) &&
-	    !(sc.flags & XREP_ALREADY_FIXED)) {
+	अगर ((sc.sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR) &&
+	    !(sc.flags & XREP_ALREADY_FIXED)) अणु
 		bool needs_fix;
 
-		/* Let debug users force us into the repair routines. */
-		if (XFS_TEST_ERROR(false, mp, XFS_ERRTAG_FORCE_SCRUB_REPAIR))
+		/* Let debug users क्रमce us पूर्णांकo the repair routines. */
+		अगर (XFS_TEST_ERROR(false, mp, XFS_ERRTAG_FORCE_SCRUB_REPAIR))
 			sc.sm->sm_flags |= XFS_SCRUB_OFLAG_CORRUPT;
 
 		needs_fix = (sc.sm->sm_flags & (XFS_SCRUB_OFLAG_CORRUPT |
 						XFS_SCRUB_OFLAG_XCORRUPT |
 						XFS_SCRUB_OFLAG_PREEN));
 		/*
-		 * If userspace asked for a repair but it wasn't necessary,
+		 * If userspace asked क्रम a repair but it wasn't necessary,
 		 * report that back to userspace.
 		 */
-		if (!needs_fix) {
+		अगर (!needs_fix) अणु
 			sc.sm->sm_flags |= XFS_SCRUB_OFLAG_NO_REPAIR_NEEDED;
-			goto out_nofix;
-		}
+			जाओ out_nofix;
+		पूर्ण
 
 		/*
 		 * If it's broken, userspace wants us to fix it, and we haven't
-		 * already tried to fix it, then attempt a repair.
+		 * alपढ़ोy tried to fix it, then attempt a repair.
 		 */
 		error = xrep_attempt(&sc);
-		if (error == -EAGAIN) {
+		अगर (error == -EAGAIN) अणु
 			/*
 			 * Either the repair function succeeded or it couldn't
 			 * get all the resources it needs; either way, we go
 			 * back to the beginning and call the scrub function.
 			 */
-			error = xchk_teardown(&sc, 0);
-			if (error) {
+			error = xchk_tearकरोwn(&sc, 0);
+			अगर (error) अणु
 				xrep_failure(mp);
-				goto out;
-			}
-			goto retry_op;
-		}
-	}
+				जाओ out;
+			पूर्ण
+			जाओ retry_op;
+		पूर्ण
+	पूर्ण
 
 out_nofix:
-	xchk_postmortem(&sc);
-out_teardown:
-	error = xchk_teardown(&sc, error);
+	xchk_posपंचांगortem(&sc);
+out_tearकरोwn:
+	error = xchk_tearकरोwn(&sc, error);
 out:
-	trace_xchk_done(XFS_I(file_inode(file)), sm, error);
-	if (error == -EFSCORRUPTED || error == -EFSBADCRC) {
+	trace_xchk_करोne(XFS_I(file_inode(file)), sm, error);
+	अगर (error == -EFSCORRUPTED || error == -EFSBADCRC) अणु
 		sm->sm_flags |= XFS_SCRUB_OFLAG_CORRUPT;
 		error = 0;
-	}
-	return error;
-}
+	पूर्ण
+	वापस error;
+पूर्ण

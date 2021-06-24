@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2012-2014 Intel Corporation
+ * Copyright तऊ 2012-2014 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,634 +22,634 @@
  * IN THE SOFTWARE.
  *
  * Authors:
- *    Eugeni Dodonov <eugeni.dodonov@intel.com>
+ *    Eugeni Doकरोnov <eugeni.करोकरोnov@पूर्णांकel.com>
  *    Daniel Vetter <daniel.vetter@ffwll.ch>
  *
  */
 
-#include <linux/pm_runtime.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <drm/drm_print.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "i915_drv.h"
-#include "i915_trace.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_trace.h"
 
 /**
- * DOC: runtime pm
+ * DOC: runसमय pm
  *
  * The i915 driver supports dynamic enabling and disabling of entire hardware
- * blocks at runtime. This is especially important on the display side where
- * software is supposed to control many power gates manually on recent hardware,
- * since on the GT side a lot of the power management is done by the hardware.
+ * blocks at runसमय. This is especially important on the display side where
+ * software is supposed to control many घातer gates manually on recent hardware,
+ * since on the GT side a lot of the घातer management is करोne by the hardware.
  * But even there some manual control at the device level is required.
  *
- * Since i915 supports a diverse set of platforms with a unified codebase and
- * hardware engineers just love to shuffle functionality around between power
- * domains there's a sizeable amount of indirection required. This file provides
- * generic functions to the driver for grabbing and releasing references for
- * abstract power domains. It then maps those to the actual power wells
- * present for a given platform.
+ * Since i915 supports a भागerse set of platक्रमms with a unअगरied codebase and
+ * hardware engineers just love to shuffle functionality around between घातer
+ * करोमुख्यs there's a sizeable amount of indirection required. This file provides
+ * generic functions to the driver क्रम grabbing and releasing references क्रम
+ * असलtract घातer करोमुख्यs. It then maps those to the actual घातer wells
+ * present क्रम a given platक्रमm.
  */
 
-#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
+#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
 
-#include <linux/sort.h>
+#समावेश <linux/sort.h>
 
-#define STACKDEPTH 8
+#घोषणा STACKDEPTH 8
 
-static noinline depot_stack_handle_t __save_depot_stack(void)
-{
-	unsigned long entries[STACKDEPTH];
-	unsigned int n;
+अटल noअंतरभूत depot_stack_handle_t __save_depot_stack(व्योम)
+अणु
+	अचिन्हित दीर्घ entries[STACKDEPTH];
+	अचिन्हित पूर्णांक n;
 
 	n = stack_trace_save(entries, ARRAY_SIZE(entries), 1);
-	return stack_depot_save(entries, n, GFP_NOWAIT | __GFP_NOWARN);
-}
+	वापस stack_depot_save(entries, n, GFP_NOWAIT | __GFP_NOWARN);
+पूर्ण
 
-static void __print_depot_stack(depot_stack_handle_t stack,
-				char *buf, int sz, int indent)
-{
-	unsigned long *entries;
-	unsigned int nr_entries;
+अटल व्योम __prपूर्णांक_depot_stack(depot_stack_handle_t stack,
+				अक्षर *buf, पूर्णांक sz, पूर्णांक indent)
+अणु
+	अचिन्हित दीर्घ *entries;
+	अचिन्हित पूर्णांक nr_entries;
 
 	nr_entries = stack_depot_fetch(stack, &entries);
-	stack_trace_snprint(buf, sz, entries, nr_entries, indent);
-}
+	stack_trace_snprपूर्णांक(buf, sz, entries, nr_entries, indent);
+पूर्ण
 
-static void init_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm)
-{
+अटल व्योम init_पूर्णांकel_runसमय_pm_wakeref(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
 	spin_lock_init(&rpm->debug.lock);
-}
+पूर्ण
 
-static noinline depot_stack_handle_t
-track_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm)
-{
+अटल noअंतरभूत depot_stack_handle_t
+track_पूर्णांकel_runसमय_pm_wakeref(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
 	depot_stack_handle_t stack, *stacks;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (!rpm->available)
-		return -1;
+	अगर (!rpm->available)
+		वापस -1;
 
 	stack = __save_depot_stack();
-	if (!stack)
-		return -1;
+	अगर (!stack)
+		वापस -1;
 
 	spin_lock_irqsave(&rpm->debug.lock, flags);
 
-	if (!rpm->debug.count)
+	अगर (!rpm->debug.count)
 		rpm->debug.last_acquire = stack;
 
-	stacks = krealloc(rpm->debug.owners,
-			  (rpm->debug.count + 1) * sizeof(*stacks),
+	stacks = kपुनः_स्मृति(rpm->debug.owners,
+			  (rpm->debug.count + 1) * माप(*stacks),
 			  GFP_NOWAIT | __GFP_NOWARN);
-	if (stacks) {
+	अगर (stacks) अणु
 		stacks[rpm->debug.count++] = stack;
 		rpm->debug.owners = stacks;
-	} else {
+	पूर्ण अन्यथा अणु
 		stack = -1;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&rpm->debug.lock, flags);
 
-	return stack;
-}
+	वापस stack;
+पूर्ण
 
-static void untrack_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm,
+अटल व्योम untrack_पूर्णांकel_runसमय_pm_wakeref(काष्ठा पूर्णांकel_runसमय_pm *rpm,
 					     depot_stack_handle_t stack)
-{
-	struct drm_i915_private *i915 = container_of(rpm,
-						     struct drm_i915_private,
-						     runtime_pm);
-	unsigned long flags, n;
+अणु
+	काष्ठा drm_i915_निजी *i915 = container_of(rpm,
+						     काष्ठा drm_i915_निजी,
+						     runसमय_pm);
+	अचिन्हित दीर्घ flags, n;
 	bool found = false;
 
-	if (unlikely(stack == -1))
-		return;
+	अगर (unlikely(stack == -1))
+		वापस;
 
 	spin_lock_irqsave(&rpm->debug.lock, flags);
-	for (n = rpm->debug.count; n--; ) {
-		if (rpm->debug.owners[n] == stack) {
-			memmove(rpm->debug.owners + n,
+	क्रम (n = rpm->debug.count; n--; ) अणु
+		अगर (rpm->debug.owners[n] == stack) अणु
+			स_हटाओ(rpm->debug.owners + n,
 				rpm->debug.owners + n + 1,
-				(--rpm->debug.count - n) * sizeof(stack));
+				(--rpm->debug.count - n) * माप(stack));
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&rpm->debug.lock, flags);
 
-	if (drm_WARN(&i915->drm, !found,
+	अगर (drm_WARN(&i915->drm, !found,
 		     "Unmatched wakeref (tracking %lu), count %u\n",
-		     rpm->debug.count, atomic_read(&rpm->wakeref_count))) {
-		char *buf;
+		     rpm->debug.count, atomic_पढ़ो(&rpm->wakeref_count))) अणु
+		अक्षर *buf;
 
-		buf = kmalloc(PAGE_SIZE, GFP_NOWAIT | __GFP_NOWARN);
-		if (!buf)
-			return;
+		buf = kदो_स्मृति(PAGE_SIZE, GFP_NOWAIT | __GFP_NOWARN);
+		अगर (!buf)
+			वापस;
 
-		__print_depot_stack(stack, buf, PAGE_SIZE, 2);
+		__prपूर्णांक_depot_stack(stack, buf, PAGE_SIZE, 2);
 		DRM_DEBUG_DRIVER("wakeref %x from\n%s", stack, buf);
 
 		stack = READ_ONCE(rpm->debug.last_release);
-		if (stack) {
-			__print_depot_stack(stack, buf, PAGE_SIZE, 2);
+		अगर (stack) अणु
+			__prपूर्णांक_depot_stack(stack, buf, PAGE_SIZE, 2);
 			DRM_DEBUG_DRIVER("wakeref last released at\n%s", buf);
-		}
+		पूर्ण
 
-		kfree(buf);
-	}
-}
+		kमुक्त(buf);
+	पूर्ण
+पूर्ण
 
-static int cmphandle(const void *_a, const void *_b)
-{
-	const depot_stack_handle_t * const a = _a, * const b = _b;
+अटल पूर्णांक cmphandle(स्थिर व्योम *_a, स्थिर व्योम *_b)
+अणु
+	स्थिर depot_stack_handle_t * स्थिर a = _a, * स्थिर b = _b;
 
-	if (*a < *b)
-		return -1;
-	else if (*a > *b)
-		return 1;
-	else
-		return 0;
-}
+	अगर (*a < *b)
+		वापस -1;
+	अन्यथा अगर (*a > *b)
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static void
-__print_intel_runtime_pm_wakeref(struct drm_printer *p,
-				 const struct intel_runtime_pm_debug *dbg)
-{
-	unsigned long i;
-	char *buf;
+अटल व्योम
+__prपूर्णांक_पूर्णांकel_runसमय_pm_wakeref(काष्ठा drm_prपूर्णांकer *p,
+				 स्थिर काष्ठा पूर्णांकel_runसमय_pm_debug *dbg)
+अणु
+	अचिन्हित दीर्घ i;
+	अक्षर *buf;
 
-	buf = kmalloc(PAGE_SIZE, GFP_NOWAIT | __GFP_NOWARN);
-	if (!buf)
-		return;
+	buf = kदो_स्मृति(PAGE_SIZE, GFP_NOWAIT | __GFP_NOWARN);
+	अगर (!buf)
+		वापस;
 
-	if (dbg->last_acquire) {
-		__print_depot_stack(dbg->last_acquire, buf, PAGE_SIZE, 2);
-		drm_printf(p, "Wakeref last acquired:\n%s", buf);
-	}
+	अगर (dbg->last_acquire) अणु
+		__prपूर्णांक_depot_stack(dbg->last_acquire, buf, PAGE_SIZE, 2);
+		drm_म_लिखो(p, "Wakeref last acquired:\n%s", buf);
+	पूर्ण
 
-	if (dbg->last_release) {
-		__print_depot_stack(dbg->last_release, buf, PAGE_SIZE, 2);
-		drm_printf(p, "Wakeref last released:\n%s", buf);
-	}
+	अगर (dbg->last_release) अणु
+		__prपूर्णांक_depot_stack(dbg->last_release, buf, PAGE_SIZE, 2);
+		drm_म_लिखो(p, "Wakeref last released:\n%s", buf);
+	पूर्ण
 
-	drm_printf(p, "Wakeref count: %lu\n", dbg->count);
+	drm_म_लिखो(p, "Wakeref count: %lu\n", dbg->count);
 
-	sort(dbg->owners, dbg->count, sizeof(*dbg->owners), cmphandle, NULL);
+	sort(dbg->owners, dbg->count, माप(*dbg->owners), cmphandle, शून्य);
 
-	for (i = 0; i < dbg->count; i++) {
+	क्रम (i = 0; i < dbg->count; i++) अणु
 		depot_stack_handle_t stack = dbg->owners[i];
-		unsigned long rep;
+		अचिन्हित दीर्घ rep;
 
 		rep = 1;
-		while (i + 1 < dbg->count && dbg->owners[i + 1] == stack)
+		जबतक (i + 1 < dbg->count && dbg->owners[i + 1] == stack)
 			rep++, i++;
-		__print_depot_stack(stack, buf, PAGE_SIZE, 2);
-		drm_printf(p, "Wakeref x%lu taken at:\n%s", rep, buf);
-	}
+		__prपूर्णांक_depot_stack(stack, buf, PAGE_SIZE, 2);
+		drm_म_लिखो(p, "Wakeref x%lu taken at:\n%s", rep, buf);
+	पूर्ण
 
-	kfree(buf);
-}
+	kमुक्त(buf);
+पूर्ण
 
-static noinline void
-__untrack_all_wakerefs(struct intel_runtime_pm_debug *debug,
-		       struct intel_runtime_pm_debug *saved)
-{
+अटल noअंतरभूत व्योम
+__untrack_all_wakerefs(काष्ठा पूर्णांकel_runसमय_pm_debug *debug,
+		       काष्ठा पूर्णांकel_runसमय_pm_debug *saved)
+अणु
 	*saved = *debug;
 
-	debug->owners = NULL;
+	debug->owners = शून्य;
 	debug->count = 0;
 	debug->last_release = __save_depot_stack();
-}
+पूर्ण
 
-static void
-dump_and_free_wakeref_tracking(struct intel_runtime_pm_debug *debug)
-{
-	if (debug->count) {
-		struct drm_printer p = drm_debug_printer("i915");
+अटल व्योम
+dump_and_मुक्त_wakeref_tracking(काष्ठा पूर्णांकel_runसमय_pm_debug *debug)
+अणु
+	अगर (debug->count) अणु
+		काष्ठा drm_prपूर्णांकer p = drm_debug_prपूर्णांकer("i915");
 
-		__print_intel_runtime_pm_wakeref(&p, debug);
-	}
+		__prपूर्णांक_पूर्णांकel_runसमय_pm_wakeref(&p, debug);
+	पूर्ण
 
-	kfree(debug->owners);
-}
+	kमुक्त(debug->owners);
+पूर्ण
 
-static noinline void
-__intel_wakeref_dec_and_check_tracking(struct intel_runtime_pm *rpm)
-{
-	struct intel_runtime_pm_debug dbg = {};
-	unsigned long flags;
+अटल noअंतरभूत व्योम
+__पूर्णांकel_wakeref_dec_and_check_tracking(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	काष्ठा पूर्णांकel_runसमय_pm_debug dbg = अणुपूर्ण;
+	अचिन्हित दीर्घ flags;
 
-	if (!atomic_dec_and_lock_irqsave(&rpm->wakeref_count,
+	अगर (!atomic_dec_and_lock_irqsave(&rpm->wakeref_count,
 					 &rpm->debug.lock,
 					 flags))
-		return;
+		वापस;
 
 	__untrack_all_wakerefs(&rpm->debug, &dbg);
 	spin_unlock_irqrestore(&rpm->debug.lock, flags);
 
-	dump_and_free_wakeref_tracking(&dbg);
-}
+	dump_and_मुक्त_wakeref_tracking(&dbg);
+पूर्ण
 
-static noinline void
-untrack_all_intel_runtime_pm_wakerefs(struct intel_runtime_pm *rpm)
-{
-	struct intel_runtime_pm_debug dbg = {};
-	unsigned long flags;
+अटल noअंतरभूत व्योम
+untrack_all_पूर्णांकel_runसमय_pm_wakerefs(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	काष्ठा पूर्णांकel_runसमय_pm_debug dbg = अणुपूर्ण;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rpm->debug.lock, flags);
 	__untrack_all_wakerefs(&rpm->debug, &dbg);
 	spin_unlock_irqrestore(&rpm->debug.lock, flags);
 
-	dump_and_free_wakeref_tracking(&dbg);
-}
+	dump_and_मुक्त_wakeref_tracking(&dbg);
+पूर्ण
 
-void print_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm,
-				    struct drm_printer *p)
-{
-	struct intel_runtime_pm_debug dbg = {};
+व्योम prपूर्णांक_पूर्णांकel_runसमय_pm_wakeref(काष्ठा पूर्णांकel_runसमय_pm *rpm,
+				    काष्ठा drm_prपूर्णांकer *p)
+अणु
+	काष्ठा पूर्णांकel_runसमय_pm_debug dbg = अणुपूर्ण;
 
-	do {
-		unsigned long alloc = dbg.count;
+	करो अणु
+		अचिन्हित दीर्घ alloc = dbg.count;
 		depot_stack_handle_t *s;
 
 		spin_lock_irq(&rpm->debug.lock);
 		dbg.count = rpm->debug.count;
-		if (dbg.count <= alloc) {
-			memcpy(dbg.owners,
+		अगर (dbg.count <= alloc) अणु
+			स_नकल(dbg.owners,
 			       rpm->debug.owners,
-			       dbg.count * sizeof(*s));
-		}
+			       dbg.count * माप(*s));
+		पूर्ण
 		dbg.last_acquire = rpm->debug.last_acquire;
 		dbg.last_release = rpm->debug.last_release;
 		spin_unlock_irq(&rpm->debug.lock);
-		if (dbg.count <= alloc)
-			break;
+		अगर (dbg.count <= alloc)
+			अवरोध;
 
-		s = krealloc(dbg.owners,
-			     dbg.count * sizeof(*s),
+		s = kपुनः_स्मृति(dbg.owners,
+			     dbg.count * माप(*s),
 			     GFP_NOWAIT | __GFP_NOWARN);
-		if (!s)
-			goto out;
+		अगर (!s)
+			जाओ out;
 
 		dbg.owners = s;
-	} while (1);
+	पूर्ण जबतक (1);
 
-	__print_intel_runtime_pm_wakeref(p, &dbg);
+	__prपूर्णांक_पूर्णांकel_runसमय_pm_wakeref(p, &dbg);
 
 out:
-	kfree(dbg.owners);
-}
+	kमुक्त(dbg.owners);
+पूर्ण
 
-#else
+#अन्यथा
 
-static void init_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm)
-{
-}
+अटल व्योम init_पूर्णांकel_runसमय_pm_wakeref(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+पूर्ण
 
-static depot_stack_handle_t
-track_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm)
-{
-	return -1;
-}
+अटल depot_stack_handle_t
+track_पूर्णांकel_runसमय_pm_wakeref(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	वापस -1;
+पूर्ण
 
-static void untrack_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm,
-					     intel_wakeref_t wref)
-{
-}
+अटल व्योम untrack_पूर्णांकel_runसमय_pm_wakeref(काष्ठा पूर्णांकel_runसमय_pm *rpm,
+					     पूर्णांकel_wakeref_t wref)
+अणु
+पूर्ण
 
-static void
-__intel_wakeref_dec_and_check_tracking(struct intel_runtime_pm *rpm)
-{
+अटल व्योम
+__पूर्णांकel_wakeref_dec_and_check_tracking(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
 	atomic_dec(&rpm->wakeref_count);
-}
+पूर्ण
 
-static void
-untrack_all_intel_runtime_pm_wakerefs(struct intel_runtime_pm *rpm)
-{
-}
+अटल व्योम
+untrack_all_पूर्णांकel_runसमय_pm_wakerefs(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static void
-intel_runtime_pm_acquire(struct intel_runtime_pm *rpm, bool wakelock)
-{
-	if (wakelock) {
+अटल व्योम
+पूर्णांकel_runसमय_pm_acquire(काष्ठा पूर्णांकel_runसमय_pm *rpm, bool wakelock)
+अणु
+	अगर (wakelock) अणु
 		atomic_add(1 + INTEL_RPM_WAKELOCK_BIAS, &rpm->wakeref_count);
-		assert_rpm_wakelock_held(rpm);
-	} else {
+		निश्चित_rpm_wakelock_held(rpm);
+	पूर्ण अन्यथा अणु
 		atomic_inc(&rpm->wakeref_count);
-		assert_rpm_raw_wakeref_held(rpm);
-	}
-}
+		निश्चित_rpm_raw_wakeref_held(rpm);
+	पूर्ण
+पूर्ण
 
-static void
-intel_runtime_pm_release(struct intel_runtime_pm *rpm, int wakelock)
-{
-	if (wakelock) {
-		assert_rpm_wakelock_held(rpm);
+अटल व्योम
+पूर्णांकel_runसमय_pm_release(काष्ठा पूर्णांकel_runसमय_pm *rpm, पूर्णांक wakelock)
+अणु
+	अगर (wakelock) अणु
+		निश्चित_rpm_wakelock_held(rpm);
 		atomic_sub(INTEL_RPM_WAKELOCK_BIAS, &rpm->wakeref_count);
-	} else {
-		assert_rpm_raw_wakeref_held(rpm);
-	}
+	पूर्ण अन्यथा अणु
+		निश्चित_rpm_raw_wakeref_held(rpm);
+	पूर्ण
 
-	__intel_wakeref_dec_and_check_tracking(rpm);
-}
+	__पूर्णांकel_wakeref_dec_and_check_tracking(rpm);
+पूर्ण
 
-static intel_wakeref_t __intel_runtime_pm_get(struct intel_runtime_pm *rpm,
+अटल पूर्णांकel_wakeref_t __पूर्णांकel_runसमय_pm_get(काष्ठा पूर्णांकel_runसमय_pm *rpm,
 					      bool wakelock)
-{
-	struct drm_i915_private *i915 = container_of(rpm,
-						     struct drm_i915_private,
-						     runtime_pm);
-	int ret;
+अणु
+	काष्ठा drm_i915_निजी *i915 = container_of(rpm,
+						     काष्ठा drm_i915_निजी,
+						     runसमय_pm);
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(rpm->kdev);
+	ret = pm_runसमय_get_sync(rpm->kdev);
 	drm_WARN_ONCE(&i915->drm, ret < 0,
 		      "pm_runtime_get_sync() failed: %d\n", ret);
 
-	intel_runtime_pm_acquire(rpm, wakelock);
+	पूर्णांकel_runसमय_pm_acquire(rpm, wakelock);
 
-	return track_intel_runtime_pm_wakeref(rpm);
-}
+	वापस track_पूर्णांकel_runसमय_pm_wakeref(rpm);
+पूर्ण
 
 /**
- * intel_runtime_pm_get_raw - grab a raw runtime pm reference
- * @rpm: the intel_runtime_pm structure
+ * पूर्णांकel_runसमय_pm_get_raw - grab a raw runसमय pm reference
+ * @rpm: the पूर्णांकel_runसमय_pm काष्ठाure
  *
- * This is the unlocked version of intel_display_power_is_enabled() and should
+ * This is the unlocked version of पूर्णांकel_display_घातer_is_enabled() and should
  * only be used from error capture and recovery code where deadlocks are
  * possible.
- * This function grabs a device-level runtime pm reference (mostly used for
- * asynchronous PM management from display code) and ensures that it is powered
- * up. Raw references are not considered during wakelock assert checks.
+ * This function grअसल a device-level runसमय pm reference (mostly used क्रम
+ * asynchronous PM management from display code) and ensures that it is घातered
+ * up. Raw references are not considered during wakelock निश्चित checks.
  *
- * Any runtime pm reference obtained by this function must have a symmetric
- * call to intel_runtime_pm_put_raw() to release the reference again.
+ * Any runसमय pm reference obtained by this function must have a symmetric
+ * call to पूर्णांकel_runसमय_pm_put_raw() to release the reference again.
  *
- * Returns: the wakeref cookie to pass to intel_runtime_pm_put_raw(), evaluates
- * as True if the wakeref was acquired, or False otherwise.
+ * Returns: the wakeref cookie to pass to पूर्णांकel_runसमय_pm_put_raw(), evaluates
+ * as True अगर the wakeref was acquired, or False otherwise.
  */
-intel_wakeref_t intel_runtime_pm_get_raw(struct intel_runtime_pm *rpm)
-{
-	return __intel_runtime_pm_get(rpm, false);
-}
+पूर्णांकel_wakeref_t पूर्णांकel_runसमय_pm_get_raw(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	वापस __पूर्णांकel_runसमय_pm_get(rpm, false);
+पूर्ण
 
 /**
- * intel_runtime_pm_get - grab a runtime pm reference
- * @rpm: the intel_runtime_pm structure
+ * पूर्णांकel_runसमय_pm_get - grab a runसमय pm reference
+ * @rpm: the पूर्णांकel_runसमय_pm काष्ठाure
  *
- * This function grabs a device-level runtime pm reference (mostly used for GEM
- * code to ensure the GTT or GT is on) and ensures that it is powered up.
+ * This function grअसल a device-level runसमय pm reference (mostly used क्रम GEM
+ * code to ensure the GTT or GT is on) and ensures that it is घातered up.
  *
- * Any runtime pm reference obtained by this function must have a symmetric
- * call to intel_runtime_pm_put() to release the reference again.
+ * Any runसमय pm reference obtained by this function must have a symmetric
+ * call to पूर्णांकel_runसमय_pm_put() to release the reference again.
  *
- * Returns: the wakeref cookie to pass to intel_runtime_pm_put()
+ * Returns: the wakeref cookie to pass to पूर्णांकel_runसमय_pm_put()
  */
-intel_wakeref_t intel_runtime_pm_get(struct intel_runtime_pm *rpm)
-{
-	return __intel_runtime_pm_get(rpm, true);
-}
+पूर्णांकel_wakeref_t पूर्णांकel_runसमय_pm_get(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	वापस __पूर्णांकel_runसमय_pm_get(rpm, true);
+पूर्ण
 
 /**
- * __intel_runtime_pm_get_if_active - grab a runtime pm reference if device is active
- * @rpm: the intel_runtime_pm structure
- * @ignore_usecount: get a ref even if dev->power.usage_count is 0
+ * __पूर्णांकel_runसमय_pm_get_अगर_active - grab a runसमय pm reference अगर device is active
+ * @rpm: the पूर्णांकel_runसमय_pm काष्ठाure
+ * @ignore_usecount: get a ref even अगर dev->घातer.usage_count is 0
  *
- * This function grabs a device-level runtime pm reference if the device is
- * already active and ensures that it is powered up. It is illegal to try
- * and access the HW should intel_runtime_pm_get_if_active() report failure.
+ * This function grअसल a device-level runसमय pm reference अगर the device is
+ * alपढ़ोy active and ensures that it is घातered up. It is illegal to try
+ * and access the HW should पूर्णांकel_runसमय_pm_get_अगर_active() report failure.
  *
- * If @ignore_usecount is true, a reference will be acquired even if there is no
- * user requiring the device to be powered up (dev->power.usage_count == 0).
- * If the function returns false in this case then it's guaranteed that the
- * device's runtime suspend hook has been called already or that it will be
- * called (and hence it's also guaranteed that the device's runtime resume
+ * If @ignore_usecount is true, a reference will be acquired even अगर there is no
+ * user requiring the device to be घातered up (dev->घातer.usage_count == 0).
+ * If the function वापसs false in this हाल then it's guaranteed that the
+ * device's runसमय suspend hook has been called alपढ़ोy or that it will be
+ * called (and hence it's also guaranteed that the device's runसमय resume
  * hook will be called eventually).
  *
- * Any runtime pm reference obtained by this function must have a symmetric
- * call to intel_runtime_pm_put() to release the reference again.
+ * Any runसमय pm reference obtained by this function must have a symmetric
+ * call to पूर्णांकel_runसमय_pm_put() to release the reference again.
  *
- * Returns: the wakeref cookie to pass to intel_runtime_pm_put(), evaluates
- * as True if the wakeref was acquired, or False otherwise.
+ * Returns: the wakeref cookie to pass to पूर्णांकel_runसमय_pm_put(), evaluates
+ * as True अगर the wakeref was acquired, or False otherwise.
  */
-static intel_wakeref_t __intel_runtime_pm_get_if_active(struct intel_runtime_pm *rpm,
+अटल पूर्णांकel_wakeref_t __पूर्णांकel_runसमय_pm_get_अगर_active(काष्ठा पूर्णांकel_runसमय_pm *rpm,
 							bool ignore_usecount)
-{
-	if (IS_ENABLED(CONFIG_PM)) {
+अणु
+	अगर (IS_ENABLED(CONFIG_PM)) अणु
 		/*
-		 * In cases runtime PM is disabled by the RPM core and we get
-		 * an -EINVAL return value we are not supposed to call this
-		 * function, since the power state is undefined. This applies
-		 * atm to the late/early system suspend/resume handlers.
+		 * In हालs runसमय PM is disabled by the RPM core and we get
+		 * an -EINVAL वापस value we are not supposed to call this
+		 * function, since the घातer state is undefined. This applies
+		 * aपंचांग to the late/early प्रणाली suspend/resume handlers.
 		 */
-		if (pm_runtime_get_if_active(rpm->kdev, ignore_usecount) <= 0)
-			return 0;
-	}
+		अगर (pm_runसमय_get_अगर_active(rpm->kdev, ignore_usecount) <= 0)
+			वापस 0;
+	पूर्ण
 
-	intel_runtime_pm_acquire(rpm, true);
+	पूर्णांकel_runसमय_pm_acquire(rpm, true);
 
-	return track_intel_runtime_pm_wakeref(rpm);
-}
+	वापस track_पूर्णांकel_runसमय_pm_wakeref(rpm);
+पूर्ण
 
-intel_wakeref_t intel_runtime_pm_get_if_in_use(struct intel_runtime_pm *rpm)
-{
-	return __intel_runtime_pm_get_if_active(rpm, false);
-}
+पूर्णांकel_wakeref_t पूर्णांकel_runसमय_pm_get_अगर_in_use(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	वापस __पूर्णांकel_runसमय_pm_get_अगर_active(rpm, false);
+पूर्ण
 
-intel_wakeref_t intel_runtime_pm_get_if_active(struct intel_runtime_pm *rpm)
-{
-	return __intel_runtime_pm_get_if_active(rpm, true);
-}
+पूर्णांकel_wakeref_t पूर्णांकel_runसमय_pm_get_अगर_active(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	वापस __पूर्णांकel_runसमय_pm_get_अगर_active(rpm, true);
+पूर्ण
 
 /**
- * intel_runtime_pm_get_noresume - grab a runtime pm reference
- * @rpm: the intel_runtime_pm structure
+ * पूर्णांकel_runसमय_pm_get_noresume - grab a runसमय pm reference
+ * @rpm: the पूर्णांकel_runसमय_pm काष्ठाure
  *
- * This function grabs a device-level runtime pm reference (mostly used for GEM
+ * This function grअसल a device-level runसमय pm reference (mostly used क्रम GEM
  * code to ensure the GTT or GT is on).
  *
- * It will _not_ power up the device but instead only check that it's powered
- * on.  Therefore it is only valid to call this functions from contexts where
- * the device is known to be powered up and where trying to power it up would
- * result in hilarity and deadlocks. That pretty much means only the system
- * suspend/resume code where this is used to grab runtime pm references for
- * delayed setup down in work items.
+ * It will _not_ घातer up the device but instead only check that it's घातered
+ * on.  Thereक्रमe it is only valid to call this functions from contexts where
+ * the device is known to be घातered up and where trying to घातer it up would
+ * result in hilarity and deadlocks. That pretty much means only the प्रणाली
+ * suspend/resume code where this is used to grab runसमय pm references क्रम
+ * delayed setup करोwn in work items.
  *
- * Any runtime pm reference obtained by this function must have a symmetric
- * call to intel_runtime_pm_put() to release the reference again.
+ * Any runसमय pm reference obtained by this function must have a symmetric
+ * call to पूर्णांकel_runसमय_pm_put() to release the reference again.
  *
- * Returns: the wakeref cookie to pass to intel_runtime_pm_put()
+ * Returns: the wakeref cookie to pass to पूर्णांकel_runसमय_pm_put()
  */
-intel_wakeref_t intel_runtime_pm_get_noresume(struct intel_runtime_pm *rpm)
-{
-	assert_rpm_wakelock_held(rpm);
-	pm_runtime_get_noresume(rpm->kdev);
+पूर्णांकel_wakeref_t पूर्णांकel_runसमय_pm_get_noresume(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	निश्चित_rpm_wakelock_held(rpm);
+	pm_runसमय_get_noresume(rpm->kdev);
 
-	intel_runtime_pm_acquire(rpm, true);
+	पूर्णांकel_runसमय_pm_acquire(rpm, true);
 
-	return track_intel_runtime_pm_wakeref(rpm);
-}
+	वापस track_पूर्णांकel_runसमय_pm_wakeref(rpm);
+पूर्ण
 
-static void __intel_runtime_pm_put(struct intel_runtime_pm *rpm,
-				   intel_wakeref_t wref,
+अटल व्योम __पूर्णांकel_runसमय_pm_put(काष्ठा पूर्णांकel_runसमय_pm *rpm,
+				   पूर्णांकel_wakeref_t wref,
 				   bool wakelock)
-{
-	struct device *kdev = rpm->kdev;
+अणु
+	काष्ठा device *kdev = rpm->kdev;
 
-	untrack_intel_runtime_pm_wakeref(rpm, wref);
+	untrack_पूर्णांकel_runसमय_pm_wakeref(rpm, wref);
 
-	intel_runtime_pm_release(rpm, wakelock);
+	पूर्णांकel_runसमय_pm_release(rpm, wakelock);
 
-	pm_runtime_mark_last_busy(kdev);
-	pm_runtime_put_autosuspend(kdev);
-}
+	pm_runसमय_mark_last_busy(kdev);
+	pm_runसमय_put_स्वतःsuspend(kdev);
+पूर्ण
 
 /**
- * intel_runtime_pm_put_raw - release a raw runtime pm reference
- * @rpm: the intel_runtime_pm structure
- * @wref: wakeref acquired for the reference that is being released
+ * पूर्णांकel_runसमय_pm_put_raw - release a raw runसमय pm reference
+ * @rpm: the पूर्णांकel_runसमय_pm काष्ठाure
+ * @wref: wakeref acquired क्रम the reference that is being released
  *
- * This function drops the device-level runtime pm reference obtained by
- * intel_runtime_pm_get_raw() and might power down the corresponding
- * hardware block right away if this is the last reference.
+ * This function drops the device-level runसमय pm reference obtained by
+ * पूर्णांकel_runसमय_pm_get_raw() and might घातer करोwn the corresponding
+ * hardware block right away अगर this is the last reference.
  */
-void
-intel_runtime_pm_put_raw(struct intel_runtime_pm *rpm, intel_wakeref_t wref)
-{
-	__intel_runtime_pm_put(rpm, wref, false);
-}
+व्योम
+पूर्णांकel_runसमय_pm_put_raw(काष्ठा पूर्णांकel_runसमय_pm *rpm, पूर्णांकel_wakeref_t wref)
+अणु
+	__पूर्णांकel_runसमय_pm_put(rpm, wref, false);
+पूर्ण
 
 /**
- * intel_runtime_pm_put_unchecked - release an unchecked runtime pm reference
- * @rpm: the intel_runtime_pm structure
+ * पूर्णांकel_runसमय_pm_put_unchecked - release an unchecked runसमय pm reference
+ * @rpm: the पूर्णांकel_runसमय_pm काष्ठाure
  *
- * This function drops the device-level runtime pm reference obtained by
- * intel_runtime_pm_get() and might power down the corresponding
- * hardware block right away if this is the last reference.
+ * This function drops the device-level runसमय pm reference obtained by
+ * पूर्णांकel_runसमय_pm_get() and might घातer करोwn the corresponding
+ * hardware block right away अगर this is the last reference.
  *
- * This function exists only for historical reasons and should be avoided in
+ * This function exists only क्रम historical reasons and should be aव्योमed in
  * new code, as the correctness of its use cannot be checked. Always use
- * intel_runtime_pm_put() instead.
+ * पूर्णांकel_runसमय_pm_put() instead.
  */
-void intel_runtime_pm_put_unchecked(struct intel_runtime_pm *rpm)
-{
-	__intel_runtime_pm_put(rpm, -1, true);
-}
+व्योम पूर्णांकel_runसमय_pm_put_unchecked(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	__पूर्णांकel_runसमय_pm_put(rpm, -1, true);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
+#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
 /**
- * intel_runtime_pm_put - release a runtime pm reference
- * @rpm: the intel_runtime_pm structure
- * @wref: wakeref acquired for the reference that is being released
+ * पूर्णांकel_runसमय_pm_put - release a runसमय pm reference
+ * @rpm: the पूर्णांकel_runसमय_pm काष्ठाure
+ * @wref: wakeref acquired क्रम the reference that is being released
  *
- * This function drops the device-level runtime pm reference obtained by
- * intel_runtime_pm_get() and might power down the corresponding
- * hardware block right away if this is the last reference.
+ * This function drops the device-level runसमय pm reference obtained by
+ * पूर्णांकel_runसमय_pm_get() and might घातer करोwn the corresponding
+ * hardware block right away अगर this is the last reference.
  */
-void intel_runtime_pm_put(struct intel_runtime_pm *rpm, intel_wakeref_t wref)
-{
-	__intel_runtime_pm_put(rpm, wref, true);
-}
-#endif
+व्योम पूर्णांकel_runसमय_pm_put(काष्ठा पूर्णांकel_runसमय_pm *rpm, पूर्णांकel_wakeref_t wref)
+अणु
+	__पूर्णांकel_runसमय_pm_put(rpm, wref, true);
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * intel_runtime_pm_enable - enable runtime pm
- * @rpm: the intel_runtime_pm structure
+ * पूर्णांकel_runसमय_pm_enable - enable runसमय pm
+ * @rpm: the पूर्णांकel_runसमय_pm काष्ठाure
  *
- * This function enables runtime pm at the end of the driver load sequence.
+ * This function enables runसमय pm at the end of the driver load sequence.
  *
- * Note that this function does currently not enable runtime pm for the
- * subordinate display power domains. That is done by
- * intel_power_domains_enable().
+ * Note that this function करोes currently not enable runसमय pm क्रम the
+ * subordinate display घातer करोमुख्यs. That is करोne by
+ * पूर्णांकel_घातer_करोमुख्यs_enable().
  */
-void intel_runtime_pm_enable(struct intel_runtime_pm *rpm)
-{
-	struct drm_i915_private *i915 = container_of(rpm,
-						     struct drm_i915_private,
-						     runtime_pm);
-	struct device *kdev = rpm->kdev;
+व्योम पूर्णांकel_runसमय_pm_enable(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	काष्ठा drm_i915_निजी *i915 = container_of(rpm,
+						     काष्ठा drm_i915_निजी,
+						     runसमय_pm);
+	काष्ठा device *kdev = rpm->kdev;
 
 	/*
-	 * Disable the system suspend direct complete optimization, which can
+	 * Disable the प्रणाली suspend direct complete optimization, which can
 	 * leave the device suspended skipping the driver's suspend handlers
-	 * if the device was already runtime suspended. This is needed due to
-	 * the difference in our runtime and system suspend sequence and
-	 * becaue the HDA driver may require us to enable the audio power
-	 * domain during system suspend.
+	 * अगर the device was alपढ़ोy runसमय suspended. This is needed due to
+	 * the dअगरference in our runसमय and प्रणाली suspend sequence and
+	 * becaue the HDA driver may require us to enable the audio घातer
+	 * करोमुख्य during प्रणाली suspend.
 	 */
-	dev_pm_set_driver_flags(kdev, DPM_FLAG_NO_DIRECT_COMPLETE);
+	dev_pm_set_driver_flags(kdev, DPM_FLAG_NO_सूचीECT_COMPLETE);
 
-	pm_runtime_set_autosuspend_delay(kdev, 10000); /* 10s */
-	pm_runtime_mark_last_busy(kdev);
+	pm_runसमय_set_स्वतःsuspend_delay(kdev, 10000); /* 10s */
+	pm_runसमय_mark_last_busy(kdev);
 
 	/*
 	 * Take a permanent reference to disable the RPM functionality and drop
 	 * it only when unloading the driver. Use the low level get/put helpers,
-	 * so the driver's own RPM reference tracking asserts also work on
-	 * platforms without RPM support.
+	 * so the driver's own RPM reference tracking निश्चितs also work on
+	 * platक्रमms without RPM support.
 	 */
-	if (!rpm->available) {
-		int ret;
+	अगर (!rpm->available) अणु
+		पूर्णांक ret;
 
-		pm_runtime_dont_use_autosuspend(kdev);
-		ret = pm_runtime_get_sync(kdev);
+		pm_runसमय_करोnt_use_स्वतःsuspend(kdev);
+		ret = pm_runसमय_get_sync(kdev);
 		drm_WARN(&i915->drm, ret < 0,
 			 "pm_runtime_get_sync() failed: %d\n", ret);
-	} else {
-		pm_runtime_use_autosuspend(kdev);
-	}
+	पूर्ण अन्यथा अणु
+		pm_runसमय_use_स्वतःsuspend(kdev);
+	पूर्ण
 
 	/*
 	 * The core calls the driver load handler with an RPM reference held.
 	 * We drop that here and will reacquire it during unloading in
-	 * intel_power_domains_fini().
+	 * पूर्णांकel_घातer_करोमुख्यs_fini().
 	 */
-	pm_runtime_put_autosuspend(kdev);
-}
+	pm_runसमय_put_स्वतःsuspend(kdev);
+पूर्ण
 
-void intel_runtime_pm_disable(struct intel_runtime_pm *rpm)
-{
-	struct drm_i915_private *i915 = container_of(rpm,
-						     struct drm_i915_private,
-						     runtime_pm);
-	struct device *kdev = rpm->kdev;
+व्योम पूर्णांकel_runसमय_pm_disable(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	काष्ठा drm_i915_निजी *i915 = container_of(rpm,
+						     काष्ठा drm_i915_निजी,
+						     runसमय_pm);
+	काष्ठा device *kdev = rpm->kdev;
 
 	/* Transfer rpm ownership back to core */
-	drm_WARN(&i915->drm, pm_runtime_get_sync(kdev) < 0,
+	drm_WARN(&i915->drm, pm_runसमय_get_sync(kdev) < 0,
 		 "Failed to pass rpm ownership back to core\n");
 
-	pm_runtime_dont_use_autosuspend(kdev);
+	pm_runसमय_करोnt_use_स्वतःsuspend(kdev);
 
-	if (!rpm->available)
-		pm_runtime_put(kdev);
-}
+	अगर (!rpm->available)
+		pm_runसमय_put(kdev);
+पूर्ण
 
-void intel_runtime_pm_driver_release(struct intel_runtime_pm *rpm)
-{
-	struct drm_i915_private *i915 = container_of(rpm,
-						     struct drm_i915_private,
-						     runtime_pm);
-	int count = atomic_read(&rpm->wakeref_count);
+व्योम पूर्णांकel_runसमय_pm_driver_release(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	काष्ठा drm_i915_निजी *i915 = container_of(rpm,
+						     काष्ठा drm_i915_निजी,
+						     runसमय_pm);
+	पूर्णांक count = atomic_पढ़ो(&rpm->wakeref_count);
 
 	drm_WARN(&i915->drm, count,
 		 "i915 raw-wakerefs=%d wakelocks=%d on cleanup\n",
-		 intel_rpm_raw_wakeref_count(count),
-		 intel_rpm_wakelock_count(count));
+		 पूर्णांकel_rpm_raw_wakeref_count(count),
+		 पूर्णांकel_rpm_wakelock_count(count));
 
-	untrack_all_intel_runtime_pm_wakerefs(rpm);
-}
+	untrack_all_पूर्णांकel_runसमय_pm_wakerefs(rpm);
+पूर्ण
 
-void intel_runtime_pm_init_early(struct intel_runtime_pm *rpm)
-{
-	struct drm_i915_private *i915 =
-			container_of(rpm, struct drm_i915_private, runtime_pm);
-	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
-	struct device *kdev = &pdev->dev;
+व्योम पूर्णांकel_runसमय_pm_init_early(काष्ठा पूर्णांकel_runसमय_pm *rpm)
+अणु
+	काष्ठा drm_i915_निजी *i915 =
+			container_of(rpm, काष्ठा drm_i915_निजी, runसमय_pm);
+	काष्ठा pci_dev *pdev = to_pci_dev(i915->drm.dev);
+	काष्ठा device *kdev = &pdev->dev;
 
 	rpm->kdev = kdev;
 	rpm->available = HAS_RUNTIME_PM(i915);
 
-	init_intel_runtime_pm_wakeref(rpm);
-}
+	init_पूर्णांकel_runसमय_pm_wakeref(rpm);
+पूर्ण

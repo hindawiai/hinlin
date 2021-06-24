@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Video Capture Subdev for Freescale i.MX5/6 SOC
+ * Video Capture Subdev क्रम Freescale i.MX5/6 SOC
  *
  * Copyright (c) 2012-2016 Mentor Graphics Inc.
  */
-#include <linux/delay.h>
-#include <linux/fs.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/timer.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-event.h>
-#include <media/v4l2-fwnode.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-mc.h>
-#include <media/v4l2-subdev.h>
-#include <media/videobuf2-dma-contig.h>
-#include <video/imx-ipu-v3.h>
-#include <media/imx.h>
-#include "imx-media.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/समयr.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/v4l2-fwnode.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-mc.h>
+#समावेश <media/v4l2-subdev.h>
+#समावेश <media/videobuf2-dma-contig.h>
+#समावेश <video/imx-ipu-v3.h>
+#समावेश <media/imx.h>
+#समावेश "imx-media.h"
 
-#define IMX_CAPTURE_NAME "imx-capture"
+#घोषणा IMX_CAPTURE_NAME "imx-capture"
 
-struct capture_priv {
-	struct imx_media_dev *md;		/* Media device */
-	struct device *dev;			/* Physical device */
+काष्ठा capture_priv अणु
+	काष्ठा imx_media_dev *md;		/* Media device */
+	काष्ठा device *dev;			/* Physical device */
 
-	struct imx_media_video_dev vdev;	/* Video device */
-	struct media_pad vdev_pad;		/* Video device pad */
+	काष्ठा imx_media_video_dev vdev;	/* Video device */
+	काष्ठा media_pad vdev_pad;		/* Video device pad */
 
-	struct v4l2_subdev *src_sd;		/* Source subdev */
-	int src_sd_pad;				/* Source subdev pad */
+	काष्ठा v4l2_subdev *src_sd;		/* Source subdev */
+	पूर्णांक src_sd_pad;				/* Source subdev pad */
 
-	struct mutex mutex;			/* Protect vdev operations */
+	काष्ठा mutex mutex;			/* Protect vdev operations */
 
-	struct vb2_queue q;			/* The videobuf2 queue */
-	struct list_head ready_q;		/* List of queued buffers */
-	spinlock_t q_lock;			/* Protect ready_q */
+	काष्ठा vb2_queue q;			/* The videobuf2 queue */
+	काष्ठा list_head पढ़ोy_q;		/* List of queued buffers */
+	spinlock_t q_lock;			/* Protect पढ़ोy_q */
 
-	struct v4l2_ctrl_handler ctrl_hdlr;	/* Controls inherited from subdevs */
+	काष्ठा v4l2_ctrl_handler ctrl_hdlr;	/* Controls inherited from subdevs */
 
 	bool legacy_api;			/* Use the legacy (pre-MC) API */
-};
+पूर्ण;
 
-#define to_capture_priv(v) container_of(v, struct capture_priv, vdev)
+#घोषणा to_capture_priv(v) container_of(v, काष्ठा capture_priv, vdev)
 
 /* In bytes, per queue */
-#define VID_MEM_LIMIT	SZ_64M
+#घोषणा VID_MEM_LIMIT	SZ_64M
 
 /* -----------------------------------------------------------------------------
  * MC-Centric Video IOCTLs
  */
 
-static const struct imx_media_pixfmt *capture_find_format(u32 code, u32 fourcc)
-{
-	const struct imx_media_pixfmt *cc;
+अटल स्थिर काष्ठा imx_media_pixfmt *capture_find_क्रमmat(u32 code, u32 fourcc)
+अणु
+	स्थिर काष्ठा imx_media_pixfmt *cc;
 
-	cc = imx_media_find_ipu_format(code, PIXFMT_SEL_YUV_RGB);
-	if (cc) {
-		enum imx_pixfmt_sel fmt_sel = cc->cs == IPUV3_COLORSPACE_YUV
+	cc = imx_media_find_ipu_क्रमmat(code, PIXFMT_SEL_YUV_RGB);
+	अगर (cc) अणु
+		क्रमागत imx_pixfmt_sel fmt_sel = cc->cs == IPUV3_COLORSPACE_YUV
 					    ? PIXFMT_SEL_YUV : PIXFMT_SEL_RGB;
 
-		cc = imx_media_find_pixel_format(fourcc, fmt_sel);
-		if (!cc) {
-			imx_media_enum_pixel_formats(&fourcc, 0, fmt_sel, 0);
-			cc = imx_media_find_pixel_format(fourcc, fmt_sel);
-		}
+		cc = imx_media_find_pixel_क्रमmat(fourcc, fmt_sel);
+		अगर (!cc) अणु
+			imx_media_क्रमागत_pixel_क्रमmats(&fourcc, 0, fmt_sel, 0);
+			cc = imx_media_find_pixel_क्रमmat(fourcc, fmt_sel);
+		पूर्ण
 
-		return cc;
-	}
+		वापस cc;
+	पूर्ण
 
-	return imx_media_find_mbus_format(code, PIXFMT_SEL_ANY);
-}
+	वापस imx_media_find_mbus_क्रमmat(code, PIXFMT_SEL_ANY);
+पूर्ण
 
-static int capture_querycap(struct file *file, void *fh,
-			    struct v4l2_capability *cap)
-{
-	struct capture_priv *priv = video_drvdata(file);
+अटल पूर्णांक capture_querycap(काष्ठा file *file, व्योम *fh,
+			    काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
 
-	strscpy(cap->driver, IMX_CAPTURE_NAME, sizeof(cap->driver));
-	strscpy(cap->card, IMX_CAPTURE_NAME, sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info),
+	strscpy(cap->driver, IMX_CAPTURE_NAME, माप(cap->driver));
+	strscpy(cap->card, IMX_CAPTURE_NAME, माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info),
 		 "platform:%s", dev_name(priv->dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_enum_fmt_vid_cap(struct file *file, void *fh,
-				    struct v4l2_fmtdesc *f)
-{
-	return imx_media_enum_pixel_formats(&f->pixelformat, f->index,
+अटल पूर्णांक capture_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *fh,
+				    काष्ठा v4l2_fmtdesc *f)
+अणु
+	वापस imx_media_क्रमागत_pixel_क्रमmats(&f->pixelक्रमmat, f->index,
 					    PIXFMT_SEL_ANY, f->mbus_code);
-}
+पूर्ण
 
-static int capture_enum_framesizes(struct file *file, void *fh,
-				   struct v4l2_frmsizeenum *fsize)
-{
-	const struct imx_media_pixfmt *cc;
+अटल पूर्णांक capture_क्रमागत_framesizes(काष्ठा file *file, व्योम *fh,
+				   काष्ठा v4l2_frmsizeक्रमागत *fsize)
+अणु
+	स्थिर काष्ठा imx_media_pixfmt *cc;
 
-	if (fsize->index > 0)
-		return -EINVAL;
+	अगर (fsize->index > 0)
+		वापस -EINVAL;
 
-	cc = imx_media_find_pixel_format(fsize->pixel_format, PIXFMT_SEL_ANY);
-	if (!cc)
-		return -EINVAL;
+	cc = imx_media_find_pixel_क्रमmat(fsize->pixel_क्रमmat, PIXFMT_SEL_ANY);
+	अगर (!cc)
+		वापस -EINVAL;
 
 	/*
-	 * TODO: The constraints are hardware-specific and may depend on the
-	 * pixel format. This should come from the driver using
+	 * TODO: The स्थिरraपूर्णांकs are hardware-specअगरic and may depend on the
+	 * pixel क्रमmat. This should come from the driver using
 	 * imx_media_capture.
 	 */
 	fsize->type = V4L2_FRMSIZE_TYPE_CONTINUOUS;
@@ -124,134 +125,134 @@ static int capture_enum_framesizes(struct file *file, void *fh,
 	fsize->stepwise.step_width = 1;
 	fsize->stepwise.step_height = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_g_fmt_vid_cap(struct file *file, void *fh,
-				 struct v4l2_format *f)
-{
-	struct capture_priv *priv = video_drvdata(file);
+अटल पूर्णांक capture_g_fmt_vid_cap(काष्ठा file *file, व्योम *fh,
+				 काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
 
 	f->fmt.pix = priv->vdev.fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct imx_media_pixfmt *
-__capture_try_fmt(struct v4l2_pix_format *pixfmt, struct v4l2_rect *compose)
-{
-	struct v4l2_mbus_framefmt fmt_src;
-	const struct imx_media_pixfmt *cc;
+अटल स्थिर काष्ठा imx_media_pixfmt *
+__capture_try_fmt(काष्ठा v4l2_pix_क्रमmat *pixfmt, काष्ठा v4l2_rect *compose)
+अणु
+	काष्ठा v4l2_mbus_framefmt fmt_src;
+	स्थिर काष्ठा imx_media_pixfmt *cc;
 
 	/*
-	 * Find the pixel format, default to the first supported format if not
+	 * Find the pixel क्रमmat, शेष to the first supported क्रमmat अगर not
 	 * found.
 	 */
-	cc = imx_media_find_pixel_format(pixfmt->pixelformat, PIXFMT_SEL_ANY);
-	if (!cc) {
-		imx_media_enum_pixel_formats(&pixfmt->pixelformat, 0,
+	cc = imx_media_find_pixel_क्रमmat(pixfmt->pixelक्रमmat, PIXFMT_SEL_ANY);
+	अगर (!cc) अणु
+		imx_media_क्रमागत_pixel_क्रमmats(&pixfmt->pixelक्रमmat, 0,
 					     PIXFMT_SEL_ANY, 0);
-		cc = imx_media_find_pixel_format(pixfmt->pixelformat,
+		cc = imx_media_find_pixel_क्रमmat(pixfmt->pixelक्रमmat,
 						 PIXFMT_SEL_ANY);
-	}
+	पूर्ण
 
-	/* Allow IDMAC interweave but enforce field order from source. */
-	if (V4L2_FIELD_IS_INTERLACED(pixfmt->field)) {
-		switch (pixfmt->field) {
-		case V4L2_FIELD_SEQ_TB:
+	/* Allow IDMAC पूर्णांकerweave but enक्रमce field order from source. */
+	अगर (V4L2_FIELD_IS_INTERLACED(pixfmt->field)) अणु
+		चयन (pixfmt->field) अणु
+		हाल V4L2_FIELD_SEQ_TB:
 			pixfmt->field = V4L2_FIELD_INTERLACED_TB;
-			break;
-		case V4L2_FIELD_SEQ_BT:
+			अवरोध;
+		हाल V4L2_FIELD_SEQ_BT:
 			pixfmt->field = V4L2_FIELD_INTERLACED_BT;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	v4l2_fill_mbus_format(&fmt_src, pixfmt, 0);
+	v4l2_fill_mbus_क्रमmat(&fmt_src, pixfmt, 0);
 	imx_media_mbus_fmt_to_pix_fmt(pixfmt, &fmt_src, cc);
 
-	if (compose) {
+	अगर (compose) अणु
 		compose->width = fmt_src.width;
 		compose->height = fmt_src.height;
-	}
+	पूर्ण
 
-	return cc;
-}
+	वापस cc;
+पूर्ण
 
-static int capture_try_fmt_vid_cap(struct file *file, void *fh,
-				   struct v4l2_format *f)
-{
-	__capture_try_fmt(&f->fmt.pix, NULL);
-	return 0;
-}
+अटल पूर्णांक capture_try_fmt_vid_cap(काष्ठा file *file, व्योम *fh,
+				   काष्ठा v4l2_क्रमmat *f)
+अणु
+	__capture_try_fmt(&f->fmt.pix, शून्य);
+	वापस 0;
+पूर्ण
 
-static int capture_s_fmt_vid_cap(struct file *file, void *fh,
-				 struct v4l2_format *f)
-{
-	struct capture_priv *priv = video_drvdata(file);
-	const struct imx_media_pixfmt *cc;
+अटल पूर्णांक capture_s_fmt_vid_cap(काष्ठा file *file, व्योम *fh,
+				 काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
+	स्थिर काष्ठा imx_media_pixfmt *cc;
 
-	if (vb2_is_busy(&priv->q)) {
+	अगर (vb2_is_busy(&priv->q)) अणु
 		dev_err(priv->dev, "%s queue busy\n", __func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	cc = __capture_try_fmt(&f->fmt.pix, &priv->vdev.compose);
 
 	priv->vdev.cc = cc;
 	priv->vdev.fmt = f->fmt.pix;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_g_selection(struct file *file, void *fh,
-			       struct v4l2_selection *s)
-{
-	struct capture_priv *priv = video_drvdata(file);
+अटल पूर्णांक capture_g_selection(काष्ठा file *file, व्योम *fh,
+			       काष्ठा v4l2_selection *s)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
 
-	switch (s->target) {
-	case V4L2_SEL_TGT_COMPOSE:
-	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
-	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
-		/* The compose rectangle is fixed to the source format. */
+	चयन (s->target) अणु
+	हाल V4L2_SEL_TGT_COMPOSE:
+	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
+		/* The compose rectangle is fixed to the source क्रमmat. */
 		s->r = priv->vdev.compose;
-		break;
-	case V4L2_SEL_TGT_COMPOSE_PADDED:
+		अवरोध;
+	हाल V4L2_SEL_TGT_COMPOSE_PADDED:
 		/*
-		 * The hardware writes with a configurable but fixed DMA burst
-		 * size. If the source format width is not burst size aligned,
+		 * The hardware ग_लिखोs with a configurable but fixed DMA burst
+		 * size. If the source क्रमmat width is not burst size aligned,
 		 * the written frame contains padding to the right.
 		 */
 		s->r.left = 0;
 		s->r.top = 0;
 		s->r.width = priv->vdev.fmt.width;
 		s->r.height = priv->vdev.fmt.height;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_subscribe_event(struct v4l2_fh *fh,
-				   const struct v4l2_event_subscription *sub)
-{
-	switch (sub->type) {
-	case V4L2_EVENT_IMX_FRAME_INTERVAL_ERROR:
-		return v4l2_event_subscribe(fh, sub, 0, NULL);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक capture_subscribe_event(काष्ठा v4l2_fh *fh,
+				   स्थिर काष्ठा v4l2_event_subscription *sub)
+अणु
+	चयन (sub->type) अणु
+	हाल V4L2_EVENT_IMX_FRAME_INTERVAL_ERROR:
+		वापस v4l2_event_subscribe(fh, sub, 0, शून्य);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct v4l2_ioctl_ops capture_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops capture_ioctl_ops = अणु
 	.vidioc_querycap		= capture_querycap,
 
-	.vidioc_enum_fmt_vid_cap	= capture_enum_fmt_vid_cap,
-	.vidioc_enum_framesizes		= capture_enum_framesizes,
+	.vidioc_क्रमागत_fmt_vid_cap	= capture_क्रमागत_fmt_vid_cap,
+	.vidioc_क्रमागत_framesizes		= capture_क्रमागत_framesizes,
 
 	.vidioc_g_fmt_vid_cap		= capture_g_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap		= capture_try_fmt_vid_cap,
@@ -271,40 +272,40 @@ static const struct v4l2_ioctl_ops capture_ioctl_ops = {
 
 	.vidioc_subscribe_event		= capture_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * Legacy Video IOCTLs
  */
 
-static int capture_legacy_enum_framesizes(struct file *file, void *fh,
-					  struct v4l2_frmsizeenum *fsize)
-{
-	struct capture_priv *priv = video_drvdata(file);
-	const struct imx_media_pixfmt *cc;
-	struct v4l2_subdev_frame_size_enum fse = {
+अटल पूर्णांक capture_legacy_क्रमागत_framesizes(काष्ठा file *file, व्योम *fh,
+					  काष्ठा v4l2_frmsizeक्रमागत *fsize)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
+	स्थिर काष्ठा imx_media_pixfmt *cc;
+	काष्ठा v4l2_subdev_frame_size_क्रमागत fse = अणु
 		.index = fsize->index,
 		.pad = priv->src_sd_pad,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	cc = imx_media_find_pixel_format(fsize->pixel_format, PIXFMT_SEL_ANY);
-	if (!cc)
-		return -EINVAL;
+	cc = imx_media_find_pixel_क्रमmat(fsize->pixel_क्रमmat, PIXFMT_SEL_ANY);
+	अगर (!cc)
+		वापस -EINVAL;
 
 	fse.code = cc->codes ? cc->codes[0] : 0;
 
-	ret = v4l2_subdev_call(priv->src_sd, pad, enum_frame_size, NULL, &fse);
-	if (ret)
-		return ret;
+	ret = v4l2_subdev_call(priv->src_sd, pad, क्रमागत_frame_size, शून्य, &fse);
+	अगर (ret)
+		वापस ret;
 
-	if (fse.min_width == fse.max_width &&
-	    fse.min_height == fse.max_height) {
+	अगर (fse.min_width == fse.max_width &&
+	    fse.min_height == fse.max_height) अणु
 		fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
 		fsize->discrete.width = fse.min_width;
 		fsize->discrete.height = fse.min_height;
-	} else {
+	पूर्ण अन्यथा अणु
 		fsize->type = V4L2_FRMSIZE_TYPE_CONTINUOUS;
 		fsize->stepwise.min_width = fse.min_width;
 		fsize->stepwise.max_width = fse.max_width;
@@ -312,258 +313,258 @@ static int capture_legacy_enum_framesizes(struct file *file, void *fh,
 		fsize->stepwise.max_height = fse.max_height;
 		fsize->stepwise.step_width = 1;
 		fsize->stepwise.step_height = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_legacy_enum_frameintervals(struct file *file, void *fh,
-					      struct v4l2_frmivalenum *fival)
-{
-	struct capture_priv *priv = video_drvdata(file);
-	const struct imx_media_pixfmt *cc;
-	struct v4l2_subdev_frame_interval_enum fie = {
+अटल पूर्णांक capture_legacy_क्रमागत_frameपूर्णांकervals(काष्ठा file *file, व्योम *fh,
+					      काष्ठा v4l2_frmivalक्रमागत *fival)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
+	स्थिर काष्ठा imx_media_pixfmt *cc;
+	काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत fie = अणु
 		.index = fival->index,
 		.pad = priv->src_sd_pad,
 		.width = fival->width,
 		.height = fival->height,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	cc = imx_media_find_pixel_format(fival->pixel_format, PIXFMT_SEL_ANY);
-	if (!cc)
-		return -EINVAL;
+	cc = imx_media_find_pixel_क्रमmat(fival->pixel_क्रमmat, PIXFMT_SEL_ANY);
+	अगर (!cc)
+		वापस -EINVAL;
 
 	fie.code = cc->codes ? cc->codes[0] : 0;
 
-	ret = v4l2_subdev_call(priv->src_sd, pad, enum_frame_interval,
-			       NULL, &fie);
-	if (ret)
-		return ret;
+	ret = v4l2_subdev_call(priv->src_sd, pad, क्रमागत_frame_पूर्णांकerval,
+			       शून्य, &fie);
+	अगर (ret)
+		वापस ret;
 
 	fival->type = V4L2_FRMIVAL_TYPE_DISCRETE;
-	fival->discrete = fie.interval;
+	fival->discrete = fie.पूर्णांकerval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_legacy_enum_fmt_vid_cap(struct file *file, void *fh,
-					   struct v4l2_fmtdesc *f)
-{
-	struct capture_priv *priv = video_drvdata(file);
-	const struct imx_media_pixfmt *cc_src;
-	struct v4l2_subdev_format fmt_src;
+अटल पूर्णांक capture_legacy_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *fh,
+					   काष्ठा v4l2_fmtdesc *f)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
+	स्थिर काष्ठा imx_media_pixfmt *cc_src;
+	काष्ठा v4l2_subdev_क्रमmat fmt_src;
 	u32 fourcc;
-	int ret;
+	पूर्णांक ret;
 
 	fmt_src.pad = priv->src_sd_pad;
 	fmt_src.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	ret = v4l2_subdev_call(priv->src_sd, pad, get_fmt, NULL, &fmt_src);
-	if (ret) {
+	ret = v4l2_subdev_call(priv->src_sd, pad, get_fmt, शून्य, &fmt_src);
+	अगर (ret) अणु
 		dev_err(priv->dev, "failed to get src_sd format\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	cc_src = imx_media_find_ipu_format(fmt_src.format.code,
+	cc_src = imx_media_find_ipu_क्रमmat(fmt_src.क्रमmat.code,
 					   PIXFMT_SEL_YUV_RGB);
-	if (cc_src) {
-		enum imx_pixfmt_sel fmt_sel =
+	अगर (cc_src) अणु
+		क्रमागत imx_pixfmt_sel fmt_sel =
 			(cc_src->cs == IPUV3_COLORSPACE_YUV) ?
 			PIXFMT_SEL_YUV : PIXFMT_SEL_RGB;
 
-		ret = imx_media_enum_pixel_formats(&fourcc, f->index, fmt_sel,
+		ret = imx_media_क्रमागत_pixel_क्रमmats(&fourcc, f->index, fmt_sel,
 						   0);
-		if (ret)
-			return ret;
-	} else {
-		cc_src = imx_media_find_mbus_format(fmt_src.format.code,
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		cc_src = imx_media_find_mbus_क्रमmat(fmt_src.क्रमmat.code,
 						    PIXFMT_SEL_ANY);
-		if (WARN_ON(!cc_src))
-			return -EINVAL;
+		अगर (WARN_ON(!cc_src))
+			वापस -EINVAL;
 
-		if (f->index != 0)
-			return -EINVAL;
+		अगर (f->index != 0)
+			वापस -EINVAL;
 		fourcc = cc_src->fourcc;
-	}
+	पूर्ण
 
-	f->pixelformat = fourcc;
+	f->pixelक्रमmat = fourcc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct imx_media_pixfmt *
-__capture_legacy_try_fmt(struct capture_priv *priv,
-			 struct v4l2_subdev_format *fmt_src,
-			 struct v4l2_pix_format *pixfmt)
-{
-	const struct imx_media_pixfmt *cc;
+अटल स्थिर काष्ठा imx_media_pixfmt *
+__capture_legacy_try_fmt(काष्ठा capture_priv *priv,
+			 काष्ठा v4l2_subdev_क्रमmat *fmt_src,
+			 काष्ठा v4l2_pix_क्रमmat *pixfmt)
+अणु
+	स्थिर काष्ठा imx_media_pixfmt *cc;
 
-	cc = capture_find_format(fmt_src->format.code, pixfmt->pixelformat);
-	if (WARN_ON(!cc))
-		return NULL;
+	cc = capture_find_क्रमmat(fmt_src->क्रमmat.code, pixfmt->pixelक्रमmat);
+	अगर (WARN_ON(!cc))
+		वापस शून्य;
 
-	/* allow IDMAC interweave but enforce field order from source */
-	if (V4L2_FIELD_IS_INTERLACED(pixfmt->field)) {
-		switch (fmt_src->format.field) {
-		case V4L2_FIELD_SEQ_TB:
-			fmt_src->format.field = V4L2_FIELD_INTERLACED_TB;
-			break;
-		case V4L2_FIELD_SEQ_BT:
-			fmt_src->format.field = V4L2_FIELD_INTERLACED_BT;
-			break;
-		default:
-			break;
-		}
-	}
+	/* allow IDMAC पूर्णांकerweave but enक्रमce field order from source */
+	अगर (V4L2_FIELD_IS_INTERLACED(pixfmt->field)) अणु
+		चयन (fmt_src->क्रमmat.field) अणु
+		हाल V4L2_FIELD_SEQ_TB:
+			fmt_src->क्रमmat.field = V4L2_FIELD_INTERLACED_TB;
+			अवरोध;
+		हाल V4L2_FIELD_SEQ_BT:
+			fmt_src->क्रमmat.field = V4L2_FIELD_INTERLACED_BT;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	imx_media_mbus_fmt_to_pix_fmt(pixfmt, &fmt_src->format, cc);
+	imx_media_mbus_fmt_to_pix_fmt(pixfmt, &fmt_src->क्रमmat, cc);
 
-	return cc;
-}
+	वापस cc;
+पूर्ण
 
-static int capture_legacy_try_fmt_vid_cap(struct file *file, void *fh,
-					  struct v4l2_format *f)
-{
-	struct capture_priv *priv = video_drvdata(file);
-	struct v4l2_subdev_format fmt_src;
-	int ret;
+अटल पूर्णांक capture_legacy_try_fmt_vid_cap(काष्ठा file *file, व्योम *fh,
+					  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
+	काष्ठा v4l2_subdev_क्रमmat fmt_src;
+	पूर्णांक ret;
 
 	fmt_src.pad = priv->src_sd_pad;
 	fmt_src.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	ret = v4l2_subdev_call(priv->src_sd, pad, get_fmt, NULL, &fmt_src);
-	if (ret)
-		return ret;
+	ret = v4l2_subdev_call(priv->src_sd, pad, get_fmt, शून्य, &fmt_src);
+	अगर (ret)
+		वापस ret;
 
-	if (!__capture_legacy_try_fmt(priv, &fmt_src, &f->fmt.pix))
-		return -EINVAL;
+	अगर (!__capture_legacy_try_fmt(priv, &fmt_src, &f->fmt.pix))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_legacy_s_fmt_vid_cap(struct file *file, void *fh,
-					struct v4l2_format *f)
-{
-	struct capture_priv *priv = video_drvdata(file);
-	struct v4l2_subdev_format fmt_src;
-	const struct imx_media_pixfmt *cc;
-	int ret;
+अटल पूर्णांक capture_legacy_s_fmt_vid_cap(काष्ठा file *file, व्योम *fh,
+					काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
+	काष्ठा v4l2_subdev_क्रमmat fmt_src;
+	स्थिर काष्ठा imx_media_pixfmt *cc;
+	पूर्णांक ret;
 
-	if (vb2_is_busy(&priv->q)) {
+	अगर (vb2_is_busy(&priv->q)) अणु
 		dev_err(priv->dev, "%s queue busy\n", __func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	fmt_src.pad = priv->src_sd_pad;
 	fmt_src.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	ret = v4l2_subdev_call(priv->src_sd, pad, get_fmt, NULL, &fmt_src);
-	if (ret)
-		return ret;
+	ret = v4l2_subdev_call(priv->src_sd, pad, get_fmt, शून्य, &fmt_src);
+	अगर (ret)
+		वापस ret;
 
 	cc = __capture_legacy_try_fmt(priv, &fmt_src, &f->fmt.pix);
-	if (!cc)
-		return -EINVAL;
+	अगर (!cc)
+		वापस -EINVAL;
 
 	priv->vdev.cc = cc;
 	priv->vdev.fmt = f->fmt.pix;
-	priv->vdev.compose.width = fmt_src.format.width;
-	priv->vdev.compose.height = fmt_src.format.height;
+	priv->vdev.compose.width = fmt_src.क्रमmat.width;
+	priv->vdev.compose.height = fmt_src.क्रमmat.height;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_legacy_querystd(struct file *file, void *fh,
+अटल पूर्णांक capture_legacy_querystd(काष्ठा file *file, व्योम *fh,
 				   v4l2_std_id *std)
-{
-	struct capture_priv *priv = video_drvdata(file);
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
 
-	return v4l2_subdev_call(priv->src_sd, video, querystd, std);
-}
+	वापस v4l2_subdev_call(priv->src_sd, video, querystd, std);
+पूर्ण
 
-static int capture_legacy_g_std(struct file *file, void *fh, v4l2_std_id *std)
-{
-	struct capture_priv *priv = video_drvdata(file);
+अटल पूर्णांक capture_legacy_g_std(काष्ठा file *file, व्योम *fh, v4l2_std_id *std)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
 
-	return v4l2_subdev_call(priv->src_sd, video, g_std, std);
-}
+	वापस v4l2_subdev_call(priv->src_sd, video, g_std, std);
+पूर्ण
 
-static int capture_legacy_s_std(struct file *file, void *fh, v4l2_std_id std)
-{
-	struct capture_priv *priv = video_drvdata(file);
+अटल पूर्णांक capture_legacy_s_std(काष्ठा file *file, व्योम *fh, v4l2_std_id std)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
 
-	if (vb2_is_busy(&priv->q))
-		return -EBUSY;
+	अगर (vb2_is_busy(&priv->q))
+		वापस -EBUSY;
 
-	return v4l2_subdev_call(priv->src_sd, video, s_std, std);
-}
+	वापस v4l2_subdev_call(priv->src_sd, video, s_std, std);
+पूर्ण
 
-static int capture_legacy_g_parm(struct file *file, void *fh,
-				 struct v4l2_streamparm *a)
-{
-	struct capture_priv *priv = video_drvdata(file);
-	struct v4l2_subdev_frame_interval fi;
-	int ret;
+अटल पूर्णांक capture_legacy_g_parm(काष्ठा file *file, व्योम *fh,
+				 काष्ठा v4l2_streamparm *a)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
+	काष्ठा v4l2_subdev_frame_पूर्णांकerval fi;
+	पूर्णांक ret;
 
-	if (a->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+	अगर (a->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
 
-	memset(&fi, 0, sizeof(fi));
+	स_रखो(&fi, 0, माप(fi));
 	fi.pad = priv->src_sd_pad;
-	ret = v4l2_subdev_call(priv->src_sd, video, g_frame_interval, &fi);
-	if (ret < 0)
-		return ret;
+	ret = v4l2_subdev_call(priv->src_sd, video, g_frame_पूर्णांकerval, &fi);
+	अगर (ret < 0)
+		वापस ret;
 
 	a->parm.capture.capability = V4L2_CAP_TIMEPERFRAME;
-	a->parm.capture.timeperframe = fi.interval;
+	a->parm.capture.समयperframe = fi.पूर्णांकerval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_legacy_s_parm(struct file *file, void *fh,
-				 struct v4l2_streamparm *a)
-{
-	struct capture_priv *priv = video_drvdata(file);
-	struct v4l2_subdev_frame_interval fi;
-	int ret;
+अटल पूर्णांक capture_legacy_s_parm(काष्ठा file *file, व्योम *fh,
+				 काष्ठा v4l2_streamparm *a)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
+	काष्ठा v4l2_subdev_frame_पूर्णांकerval fi;
+	पूर्णांक ret;
 
-	if (a->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+	अगर (a->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
 
-	memset(&fi, 0, sizeof(fi));
+	स_रखो(&fi, 0, माप(fi));
 	fi.pad = priv->src_sd_pad;
-	fi.interval = a->parm.capture.timeperframe;
-	ret = v4l2_subdev_call(priv->src_sd, video, s_frame_interval, &fi);
-	if (ret < 0)
-		return ret;
+	fi.पूर्णांकerval = a->parm.capture.समयperframe;
+	ret = v4l2_subdev_call(priv->src_sd, video, s_frame_पूर्णांकerval, &fi);
+	अगर (ret < 0)
+		वापस ret;
 
 	a->parm.capture.capability = V4L2_CAP_TIMEPERFRAME;
-	a->parm.capture.timeperframe = fi.interval;
+	a->parm.capture.समयperframe = fi.पूर्णांकerval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_legacy_subscribe_event(struct v4l2_fh *fh,
-					  const struct v4l2_event_subscription *sub)
-{
-	switch (sub->type) {
-	case V4L2_EVENT_IMX_FRAME_INTERVAL_ERROR:
-		return v4l2_event_subscribe(fh, sub, 0, NULL);
-	case V4L2_EVENT_SOURCE_CHANGE:
-		return v4l2_src_change_event_subscribe(fh, sub);
-	case V4L2_EVENT_CTRL:
-		return v4l2_ctrl_subscribe_event(fh, sub);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक capture_legacy_subscribe_event(काष्ठा v4l2_fh *fh,
+					  स्थिर काष्ठा v4l2_event_subscription *sub)
+अणु
+	चयन (sub->type) अणु
+	हाल V4L2_EVENT_IMX_FRAME_INTERVAL_ERROR:
+		वापस v4l2_event_subscribe(fh, sub, 0, शून्य);
+	हाल V4L2_EVENT_SOURCE_CHANGE:
+		वापस v4l2_src_change_event_subscribe(fh, sub);
+	हाल V4L2_EVENT_CTRL:
+		वापस v4l2_ctrl_subscribe_event(fh, sub);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct v4l2_ioctl_ops capture_legacy_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops capture_legacy_ioctl_ops = अणु
 	.vidioc_querycap		= capture_querycap,
 
-	.vidioc_enum_framesizes		= capture_legacy_enum_framesizes,
-	.vidioc_enum_frameintervals	= capture_legacy_enum_frameintervals,
+	.vidioc_क्रमागत_framesizes		= capture_legacy_क्रमागत_framesizes,
+	.vidioc_क्रमागत_frameपूर्णांकervals	= capture_legacy_क्रमागत_frameपूर्णांकervals,
 
-	.vidioc_enum_fmt_vid_cap	= capture_legacy_enum_fmt_vid_cap,
+	.vidioc_क्रमागत_fmt_vid_cap	= capture_legacy_क्रमागत_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap		= capture_g_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap		= capture_legacy_try_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap		= capture_legacy_s_fmt_vid_cap,
@@ -589,384 +590,384 @@ static const struct v4l2_ioctl_ops capture_legacy_ioctl_ops = {
 
 	.vidioc_subscribe_event		= capture_legacy_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * Queue Operations
  */
 
-static int capture_queue_setup(struct vb2_queue *vq,
-			       unsigned int *nbuffers,
-			       unsigned int *nplanes,
-			       unsigned int sizes[],
-			       struct device *alloc_devs[])
-{
-	struct capture_priv *priv = vb2_get_drv_priv(vq);
-	struct v4l2_pix_format *pix = &priv->vdev.fmt;
-	unsigned int count = *nbuffers;
+अटल पूर्णांक capture_queue_setup(काष्ठा vb2_queue *vq,
+			       अचिन्हित पूर्णांक *nbuffers,
+			       अचिन्हित पूर्णांक *nplanes,
+			       अचिन्हित पूर्णांक sizes[],
+			       काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा capture_priv *priv = vb2_get_drv_priv(vq);
+	काष्ठा v4l2_pix_क्रमmat *pix = &priv->vdev.fmt;
+	अचिन्हित पूर्णांक count = *nbuffers;
 
-	if (vq->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+	अगर (vq->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
 
-	if (*nplanes) {
-		if (*nplanes != 1 || sizes[0] < pix->sizeimage)
-			return -EINVAL;
+	अगर (*nplanes) अणु
+		अगर (*nplanes != 1 || sizes[0] < pix->sizeimage)
+			वापस -EINVAL;
 		count += vq->num_buffers;
-	}
+	पूर्ण
 
 	count = min_t(__u32, VID_MEM_LIMIT / pix->sizeimage, count);
 
-	if (*nplanes)
+	अगर (*nplanes)
 		*nbuffers = (count < vq->num_buffers) ? 0 :
 			count - vq->num_buffers;
-	else
+	अन्यथा
 		*nbuffers = count;
 
 	*nplanes = 1;
 	sizes[0] = pix->sizeimage;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_buf_init(struct vb2_buffer *vb)
-{
-	struct imx_media_buffer *buf = to_imx_media_vb(vb);
+अटल पूर्णांक capture_buf_init(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा imx_media_buffer *buf = to_imx_media_vb(vb);
 
 	INIT_LIST_HEAD(&buf->list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_buf_prepare(struct vb2_buffer *vb)
-{
-	struct vb2_queue *vq = vb->vb2_queue;
-	struct capture_priv *priv = vb2_get_drv_priv(vq);
-	struct v4l2_pix_format *pix = &priv->vdev.fmt;
+अटल पूर्णांक capture_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_queue *vq = vb->vb2_queue;
+	काष्ठा capture_priv *priv = vb2_get_drv_priv(vq);
+	काष्ठा v4l2_pix_क्रमmat *pix = &priv->vdev.fmt;
 
-	if (vb2_plane_size(vb, 0) < pix->sizeimage) {
+	अगर (vb2_plane_size(vb, 0) < pix->sizeimage) अणु
 		dev_err(priv->dev,
 			"data will not fit into plane (%lu < %lu)\n",
-			vb2_plane_size(vb, 0), (long)pix->sizeimage);
-		return -EINVAL;
-	}
+			vb2_plane_size(vb, 0), (दीर्घ)pix->sizeimage);
+		वापस -EINVAL;
+	पूर्ण
 
 	vb2_set_plane_payload(vb, 0, pix->sizeimage);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void capture_buf_queue(struct vb2_buffer *vb)
-{
-	struct capture_priv *priv = vb2_get_drv_priv(vb->vb2_queue);
-	struct imx_media_buffer *buf = to_imx_media_vb(vb);
-	unsigned long flags;
+अटल व्योम capture_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा capture_priv *priv = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा imx_media_buffer *buf = to_imx_media_vb(vb);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&priv->q_lock, flags);
 
-	list_add_tail(&buf->list, &priv->ready_q);
+	list_add_tail(&buf->list, &priv->पढ़ोy_q);
 
 	spin_unlock_irqrestore(&priv->q_lock, flags);
-}
+पूर्ण
 
-static int capture_validate_fmt(struct capture_priv *priv)
-{
-	struct v4l2_subdev_format fmt_src;
-	const struct imx_media_pixfmt *cc;
-	int ret;
+अटल पूर्णांक capture_validate_fmt(काष्ठा capture_priv *priv)
+अणु
+	काष्ठा v4l2_subdev_क्रमmat fmt_src;
+	स्थिर काष्ठा imx_media_pixfmt *cc;
+	पूर्णांक ret;
 
-	/* Retrieve the media bus format on the source subdev. */
+	/* Retrieve the media bus क्रमmat on the source subdev. */
 	fmt_src.pad = priv->src_sd_pad;
 	fmt_src.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-	ret = v4l2_subdev_call(priv->src_sd, pad, get_fmt, NULL, &fmt_src);
-	if (ret)
-		return ret;
+	ret = v4l2_subdev_call(priv->src_sd, pad, get_fmt, शून्य, &fmt_src);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Verify that the media bus size matches the size set on the video
+	 * Verअगरy that the media bus size matches the size set on the video
 	 * node. It is sufficient to check the compose rectangle size without
 	 * checking the rounded size from vdev.fmt, as the rounded size is
 	 * derived directly from the compose rectangle size, and will thus
-	 * always match if the compose rectangle matches.
+	 * always match अगर the compose rectangle matches.
 	 */
-	if (priv->vdev.compose.width != fmt_src.format.width ||
-	    priv->vdev.compose.height != fmt_src.format.height)
-		return -EPIPE;
+	अगर (priv->vdev.compose.width != fmt_src.क्रमmat.width ||
+	    priv->vdev.compose.height != fmt_src.क्रमmat.height)
+		वापस -EPIPE;
 
 	/*
-	 * Verify that the media bus code is compatible with the pixel format
+	 * Verअगरy that the media bus code is compatible with the pixel क्रमmat
 	 * set on the video node.
 	 */
-	cc = capture_find_format(fmt_src.format.code, 0);
-	if (!cc || priv->vdev.cc->cs != cc->cs)
-		return -EPIPE;
+	cc = capture_find_क्रमmat(fmt_src.क्रमmat.code, 0);
+	अगर (!cc || priv->vdev.cc->cs != cc->cs)
+		वापस -EPIPE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct capture_priv *priv = vb2_get_drv_priv(vq);
-	struct imx_media_buffer *buf, *tmp;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक capture_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा capture_priv *priv = vb2_get_drv_priv(vq);
+	काष्ठा imx_media_buffer *buf, *पंचांगp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	ret = capture_validate_fmt(priv);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->dev, "capture format not valid\n");
-		goto return_bufs;
-	}
+		जाओ वापस_bufs;
+	पूर्ण
 
 	ret = imx_media_pipeline_set_stream(priv->md, &priv->src_sd->entity,
 					    true);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->dev, "pipeline start failed with %d\n", ret);
-		goto return_bufs;
-	}
+		जाओ वापस_bufs;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-return_bufs:
+वापस_bufs:
 	spin_lock_irqsave(&priv->q_lock, flags);
-	list_for_each_entry_safe(buf, tmp, &priv->ready_q, list) {
+	list_क्रम_each_entry_safe(buf, पंचांगp, &priv->पढ़ोy_q, list) अणु
 		list_del(&buf->list);
-		vb2_buffer_done(&buf->vbuf.vb2_buf, VB2_BUF_STATE_QUEUED);
-	}
+		vb2_buffer_करोne(&buf->vbuf.vb2_buf, VB2_BUF_STATE_QUEUED);
+	पूर्ण
 	spin_unlock_irqrestore(&priv->q_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void capture_stop_streaming(struct vb2_queue *vq)
-{
-	struct capture_priv *priv = vb2_get_drv_priv(vq);
-	struct imx_media_buffer *frame;
-	struct imx_media_buffer *tmp;
-	unsigned long flags;
-	int ret;
+अटल व्योम capture_stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा capture_priv *priv = vb2_get_drv_priv(vq);
+	काष्ठा imx_media_buffer *frame;
+	काष्ठा imx_media_buffer *पंचांगp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	ret = imx_media_pipeline_set_stream(priv->md, &priv->src_sd->entity,
 					    false);
-	if (ret)
+	अगर (ret)
 		dev_warn(priv->dev, "pipeline stop failed with %d\n", ret);
 
 	/* release all active buffers */
 	spin_lock_irqsave(&priv->q_lock, flags);
-	list_for_each_entry_safe(frame, tmp, &priv->ready_q, list) {
+	list_क्रम_each_entry_safe(frame, पंचांगp, &priv->पढ़ोy_q, list) अणु
 		list_del(&frame->list);
-		vb2_buffer_done(&frame->vbuf.vb2_buf, VB2_BUF_STATE_ERROR);
-	}
+		vb2_buffer_करोne(&frame->vbuf.vb2_buf, VB2_BUF_STATE_ERROR);
+	पूर्ण
 	spin_unlock_irqrestore(&priv->q_lock, flags);
-}
+पूर्ण
 
-static const struct vb2_ops capture_qops = {
+अटल स्थिर काष्ठा vb2_ops capture_qops = अणु
 	.queue_setup	 = capture_queue_setup,
 	.buf_init        = capture_buf_init,
 	.buf_prepare	 = capture_buf_prepare,
 	.buf_queue	 = capture_buf_queue,
-	.wait_prepare	 = vb2_ops_wait_prepare,
-	.wait_finish	 = vb2_ops_wait_finish,
+	.रुको_prepare	 = vb2_ops_रुको_prepare,
+	.रुको_finish	 = vb2_ops_रुको_finish,
 	.start_streaming = capture_start_streaming,
 	.stop_streaming  = capture_stop_streaming,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * File Operations
  */
 
-static int capture_open(struct file *file)
-{
-	struct capture_priv *priv = video_drvdata(file);
-	struct video_device *vfd = priv->vdev.vfd;
-	int ret;
+अटल पूर्णांक capture_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
+	काष्ठा video_device *vfd = priv->vdev.vfd;
+	पूर्णांक ret;
 
-	if (mutex_lock_interruptible(&priv->mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&priv->mutex))
+		वापस -ERESTARTSYS;
 
-	ret = v4l2_fh_open(file);
-	if (ret) {
+	ret = v4l2_fh_खोलो(file);
+	अगर (ret) अणु
 		dev_err(priv->dev, "v4l2_fh_open failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = v4l2_pipeline_pm_get(&vfd->entity);
-	if (ret)
+	अगर (ret)
 		v4l2_fh_release(file);
 
 out:
 	mutex_unlock(&priv->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int capture_release(struct file *file)
-{
-	struct capture_priv *priv = video_drvdata(file);
-	struct video_device *vfd = priv->vdev.vfd;
-	struct vb2_queue *vq = &priv->q;
+अटल पूर्णांक capture_release(काष्ठा file *file)
+अणु
+	काष्ठा capture_priv *priv = video_drvdata(file);
+	काष्ठा video_device *vfd = priv->vdev.vfd;
+	काष्ठा vb2_queue *vq = &priv->q;
 
 	mutex_lock(&priv->mutex);
 
-	if (file->private_data == vq->owner) {
+	अगर (file->निजी_data == vq->owner) अणु
 		vb2_queue_release(vq);
-		vq->owner = NULL;
-	}
+		vq->owner = शून्य;
+	पूर्ण
 
 	v4l2_pipeline_pm_put(&vfd->entity);
 
 	v4l2_fh_release(file);
 	mutex_unlock(&priv->mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_file_operations capture_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations capture_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= capture_open,
+	.खोलो		= capture_खोलो,
 	.release	= capture_release,
 	.poll		= vb2_fop_poll,
 	.unlocked_ioctl	= video_ioctl2,
 	.mmap		= vb2_fop_mmap,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * Public API
  */
 
-struct imx_media_buffer *
-imx_media_capture_device_next_buf(struct imx_media_video_dev *vdev)
-{
-	struct capture_priv *priv = to_capture_priv(vdev);
-	struct imx_media_buffer *buf = NULL;
-	unsigned long flags;
+काष्ठा imx_media_buffer *
+imx_media_capture_device_next_buf(काष्ठा imx_media_video_dev *vdev)
+अणु
+	काष्ठा capture_priv *priv = to_capture_priv(vdev);
+	काष्ठा imx_media_buffer *buf = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&priv->q_lock, flags);
 
 	/* get next queued buffer */
-	if (!list_empty(&priv->ready_q)) {
-		buf = list_entry(priv->ready_q.next, struct imx_media_buffer,
+	अगर (!list_empty(&priv->पढ़ोy_q)) अणु
+		buf = list_entry(priv->पढ़ोy_q.next, काष्ठा imx_media_buffer,
 				 list);
 		list_del(&buf->list);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&priv->q_lock, flags);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_capture_device_next_buf);
 
-void imx_media_capture_device_error(struct imx_media_video_dev *vdev)
-{
-	struct capture_priv *priv = to_capture_priv(vdev);
-	struct vb2_queue *vq = &priv->q;
-	unsigned long flags;
+व्योम imx_media_capture_device_error(काष्ठा imx_media_video_dev *vdev)
+अणु
+	काष्ठा capture_priv *priv = to_capture_priv(vdev);
+	काष्ठा vb2_queue *vq = &priv->q;
+	अचिन्हित दीर्घ flags;
 
-	if (!vb2_is_streaming(vq))
-		return;
+	अगर (!vb2_is_streaming(vq))
+		वापस;
 
 	spin_lock_irqsave(&priv->q_lock, flags);
 	vb2_queue_error(vq);
 	spin_unlock_irqrestore(&priv->q_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_capture_device_error);
 
-static int capture_init_format(struct capture_priv *priv)
-{
-	struct v4l2_subdev_format fmt_src = {
+अटल पूर्णांक capture_init_क्रमmat(काष्ठा capture_priv *priv)
+अणु
+	काष्ठा v4l2_subdev_क्रमmat fmt_src = अणु
 		.pad = priv->src_sd_pad,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	};
-	struct imx_media_video_dev *vdev = &priv->vdev;
-	int ret;
+	पूर्ण;
+	काष्ठा imx_media_video_dev *vdev = &priv->vdev;
+	पूर्णांक ret;
 
-	if (priv->legacy_api) {
-		ret = v4l2_subdev_call(priv->src_sd, pad, get_fmt, NULL,
+	अगर (priv->legacy_api) अणु
+		ret = v4l2_subdev_call(priv->src_sd, pad, get_fmt, शून्य,
 				       &fmt_src);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(priv->dev, "failed to get source format\n");
-			return ret;
-		}
-	} else {
-		fmt_src.format.code = MEDIA_BUS_FMT_UYVY8_2X8;
-		fmt_src.format.width = IMX_MEDIA_DEF_PIX_WIDTH;
-		fmt_src.format.height = IMX_MEDIA_DEF_PIX_HEIGHT;
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		fmt_src.क्रमmat.code = MEDIA_BUS_FMT_UYVY8_2X8;
+		fmt_src.क्रमmat.width = IMX_MEDIA_DEF_PIX_WIDTH;
+		fmt_src.क्रमmat.height = IMX_MEDIA_DEF_PIX_HEIGHT;
+	पूर्ण
 
-	imx_media_mbus_fmt_to_pix_fmt(&vdev->fmt, &fmt_src.format, NULL);
-	vdev->compose.width = fmt_src.format.width;
-	vdev->compose.height = fmt_src.format.height;
+	imx_media_mbus_fmt_to_pix_fmt(&vdev->fmt, &fmt_src.क्रमmat, शून्य);
+	vdev->compose.width = fmt_src.क्रमmat.width;
+	vdev->compose.height = fmt_src.क्रमmat.height;
 
-	vdev->cc = imx_media_find_pixel_format(vdev->fmt.pixelformat,
+	vdev->cc = imx_media_find_pixel_क्रमmat(vdev->fmt.pixelक्रमmat,
 					       PIXFMT_SEL_ANY);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int imx_media_capture_device_register(struct imx_media_video_dev *vdev,
+पूर्णांक imx_media_capture_device_रेजिस्टर(काष्ठा imx_media_video_dev *vdev,
 				      u32 link_flags)
-{
-	struct capture_priv *priv = to_capture_priv(vdev);
-	struct v4l2_subdev *sd = priv->src_sd;
-	struct v4l2_device *v4l2_dev = sd->v4l2_dev;
-	struct video_device *vfd = vdev->vfd;
-	int ret;
+अणु
+	काष्ठा capture_priv *priv = to_capture_priv(vdev);
+	काष्ठा v4l2_subdev *sd = priv->src_sd;
+	काष्ठा v4l2_device *v4l2_dev = sd->v4l2_dev;
+	काष्ठा video_device *vfd = vdev->vfd;
+	पूर्णांक ret;
 
 	/* get media device */
-	priv->md = container_of(v4l2_dev->mdev, struct imx_media_dev, md);
+	priv->md = container_of(v4l2_dev->mdev, काष्ठा imx_media_dev, md);
 
 	vfd->v4l2_dev = v4l2_dev;
 
-	/* Initialize the default format and compose rectangle. */
-	ret = capture_init_format(priv);
-	if (ret < 0)
-		return ret;
+	/* Initialize the शेष क्रमmat and compose rectangle. */
+	ret = capture_init_क्रमmat(priv);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Register the video device. */
-	ret = video_register_device(vfd, VFL_TYPE_VIDEO, -1);
-	if (ret) {
+	ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, -1);
+	अगर (ret) अणु
 		dev_err(priv->dev, "Failed to register video device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_info(priv->dev, "Registered %s as /dev/%s\n", vfd->name,
 		 video_device_node_name(vfd));
 
 	/* Create the link from the src_sd devnode pad to device node. */
-	if (link_flags & MEDIA_LNK_FL_IMMUTABLE)
+	अगर (link_flags & MEDIA_LNK_FL_IMMUTABLE)
 		link_flags |= MEDIA_LNK_FL_ENABLED;
 	ret = media_create_pad_link(&sd->entity, priv->src_sd_pad,
 				    &vfd->entity, 0, link_flags);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->dev, "failed to create link to device node\n");
-		video_unregister_device(vfd);
-		return ret;
-	}
+		video_unरेजिस्टर_device(vfd);
+		वापस ret;
+	पूर्ण
 
 	/* Add vdev to the video devices list. */
 	imx_media_add_video_device(priv->md, vdev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(imx_media_capture_device_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(imx_media_capture_device_रेजिस्टर);
 
-void imx_media_capture_device_unregister(struct imx_media_video_dev *vdev)
-{
-	struct capture_priv *priv = to_capture_priv(vdev);
-	struct video_device *vfd = priv->vdev.vfd;
+व्योम imx_media_capture_device_unरेजिस्टर(काष्ठा imx_media_video_dev *vdev)
+अणु
+	काष्ठा capture_priv *priv = to_capture_priv(vdev);
+	काष्ठा video_device *vfd = priv->vdev.vfd;
 
 	media_entity_cleanup(&vfd->entity);
-	video_unregister_device(vfd);
-}
-EXPORT_SYMBOL_GPL(imx_media_capture_device_unregister);
+	video_unरेजिस्टर_device(vfd);
+पूर्ण
+EXPORT_SYMBOL_GPL(imx_media_capture_device_unरेजिस्टर);
 
-struct imx_media_video_dev *
-imx_media_capture_device_init(struct device *dev, struct v4l2_subdev *src_sd,
-			      int pad, bool legacy_api)
-{
-	struct capture_priv *priv;
-	struct video_device *vfd;
-	struct vb2_queue *vq;
-	int ret;
+काष्ठा imx_media_video_dev *
+imx_media_capture_device_init(काष्ठा device *dev, काष्ठा v4l2_subdev *src_sd,
+			      पूर्णांक pad, bool legacy_api)
+अणु
+	काष्ठा capture_priv *priv;
+	काष्ठा video_device *vfd;
+	काष्ठा vb2_queue *vq;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return ERR_PTR(-ENOMEM);
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस ERR_PTR(-ENOMEM);
 
 	priv->src_sd = src_sd;
 	priv->src_sd_pad = pad;
@@ -974,27 +975,27 @@ imx_media_capture_device_init(struct device *dev, struct v4l2_subdev *src_sd,
 	priv->legacy_api = legacy_api;
 
 	mutex_init(&priv->mutex);
-	INIT_LIST_HEAD(&priv->ready_q);
+	INIT_LIST_HEAD(&priv->पढ़ोy_q);
 	spin_lock_init(&priv->q_lock);
 
 	/* Allocate and initialize the video device. */
 	vfd = video_device_alloc();
-	if (!vfd)
-		return ERR_PTR(-ENOMEM);
+	अगर (!vfd)
+		वापस ERR_PTR(-ENOMEM);
 
 	vfd->fops = &capture_fops;
 	vfd->ioctl_ops = legacy_api ? &capture_legacy_ioctl_ops
 		       : &capture_ioctl_ops;
 	vfd->minor = -1;
 	vfd->release = video_device_release;
-	vfd->vfl_dir = VFL_DIR_RX;
+	vfd->vfl_dir = VFL_सूची_RX;
 	vfd->tvnorms = V4L2_STD_NTSC | V4L2_STD_PAL | V4L2_STD_SECAM;
 	vfd->device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING
 			 | (!legacy_api ? V4L2_CAP_IO_MC : 0);
 	vfd->lock = &priv->mutex;
 	vfd->queue = &priv->q;
 
-	snprintf(vfd->name, sizeof(vfd->name), "%s capture", src_sd->name);
+	snम_लिखो(vfd->name, माप(vfd->name), "%s capture", src_sd->name);
 
 	video_set_drvdata(vfd, priv);
 	priv->vdev.vfd = vfd;
@@ -1003,48 +1004,48 @@ imx_media_capture_device_init(struct device *dev, struct v4l2_subdev *src_sd,
 	/* Initialize the video device pad. */
 	priv->vdev_pad.flags = MEDIA_PAD_FL_SINK;
 	ret = media_entity_pads_init(&vfd->entity, 1, &priv->vdev_pad);
-	if (ret) {
+	अगर (ret) अणु
 		video_device_release(vfd);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	/* Initialize the vb2 queue. */
 	vq = &priv->q;
 	vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	vq->io_modes = VB2_MMAP | VB2_DMABUF;
 	vq->drv_priv = priv;
-	vq->buf_struct_size = sizeof(struct imx_media_buffer);
+	vq->buf_काष्ठा_size = माप(काष्ठा imx_media_buffer);
 	vq->ops = &capture_qops;
 	vq->mem_ops = &vb2_dma_contig_memops;
-	vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	vq->lock = &priv->mutex;
 	vq->min_buffers_needed = 2;
 	vq->dev = priv->dev;
 
 	ret = vb2_queue_init(vq);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->dev, "vb2_queue_init failed\n");
 		video_device_release(vfd);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	if (legacy_api) {
+	अगर (legacy_api) अणु
 		/* Initialize the control handler. */
 		v4l2_ctrl_handler_init(&priv->ctrl_hdlr, 0);
 		vfd->ctrl_handler = &priv->ctrl_hdlr;
-	}
+	पूर्ण
 
-	return &priv->vdev;
-}
+	वापस &priv->vdev;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_media_capture_device_init);
 
-void imx_media_capture_device_remove(struct imx_media_video_dev *vdev)
-{
-	struct capture_priv *priv = to_capture_priv(vdev);
+व्योम imx_media_capture_device_हटाओ(काष्ठा imx_media_video_dev *vdev)
+अणु
+	काष्ठा capture_priv *priv = to_capture_priv(vdev);
 
-	v4l2_ctrl_handler_free(&priv->ctrl_hdlr);
-}
-EXPORT_SYMBOL_GPL(imx_media_capture_device_remove);
+	v4l2_ctrl_handler_मुक्त(&priv->ctrl_hdlr);
+पूर्ण
+EXPORT_SYMBOL_GPL(imx_media_capture_device_हटाओ);
 
 MODULE_DESCRIPTION("i.MX5/6 v4l2 video capture interface driver");
 MODULE_AUTHOR("Steve Longerbeam <steve_longerbeam@mentor.com>");

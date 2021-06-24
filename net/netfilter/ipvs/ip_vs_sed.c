@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * IPVS:        Shortest Expected Delay scheduling module
  *
- * Authors:     Wensong Zhang <wensong@linuxvirtualserver.org>
+ * Authors:     Wensong Zhang <wensong@linuxभवserver.org>
  *
  * Changes:
  */
@@ -10,55 +11,55 @@
 /*
  * The SED algorithm attempts to minimize each job's expected delay until
  * completion. The expected delay that the job will experience is
- * (Ci + 1) / Ui if sent to the ith server, in which Ci is the number of
+ * (Ci + 1) / Ui अगर sent to the ith server, in which Ci is the number of
  * jobs on the ith server and Ui is the fixed service rate (weight) of
- * the ith server. The SED algorithm adopts a greedy policy that each does
- * what is in its own best interest, i.e. to join the queue which would
+ * the ith server. The SED algorithm aकरोpts a greedy policy that each करोes
+ * what is in its own best पूर्णांकerest, i.e. to join the queue which would
  * minimize its expected delay of completion.
  *
- * See the following paper for more information:
+ * See the following paper क्रम more inक्रमmation:
  * A. Weinrib and S. Shenker, Greed is not enough: Adaptive load sharing
- * in large heterogeneous systems. In Proceedings IEEE INFOCOM'88,
+ * in large heterogeneous प्रणालीs. In Proceedings IEEE INFOCOM'88,
  * pages 986-994, 1988.
  *
- * Thanks must go to Marko Buuri <marko@buuri.name> for talking SED to me.
+ * Thanks must go to Marko Buuri <marko@buuri.name> क्रम talking SED to me.
  *
- * The difference between SED and WLC is that SED includes the incoming
- * job in the cost function (the increment of 1). SED may outperform
- * WLC, while scheduling big jobs under larger heterogeneous systems
+ * The dअगरference between SED and WLC is that SED includes the incoming
+ * job in the cost function (the increment of 1). SED may outperक्रमm
+ * WLC, जबतक scheduling big jobs under larger heterogeneous प्रणालीs
  * (the server weight varies a lot).
  *
  */
 
-#define KMSG_COMPONENT "IPVS"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "IPVS"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
 
-#include <net/ip_vs.h>
+#समावेश <net/ip_vs.h>
 
 
-static inline int
-ip_vs_sed_dest_overhead(struct ip_vs_dest *dest)
-{
+अटल अंतरभूत पूर्णांक
+ip_vs_sed_dest_overhead(काष्ठा ip_vs_dest *dest)
+अणु
 	/*
 	 * We only use the active connection number in the cost
 	 * calculation here.
 	 */
-	return atomic_read(&dest->activeconns) + 1;
-}
+	वापस atomic_पढ़ो(&dest->activeconns) + 1;
+पूर्ण
 
 
 /*
  *	Weighted Least Connection scheduling
  */
-static struct ip_vs_dest *
-ip_vs_sed_schedule(struct ip_vs_service *svc, const struct sk_buff *skb,
-		   struct ip_vs_iphdr *iph)
-{
-	struct ip_vs_dest *dest, *least;
-	int loh, doh;
+अटल काष्ठा ip_vs_dest *
+ip_vs_sed_schedule(काष्ठा ip_vs_service *svc, स्थिर काष्ठा sk_buff *skb,
+		   काष्ठा ip_vs_iphdr *iph)
+अणु
+	काष्ठा ip_vs_dest *dest, *least;
+	पूर्णांक loh, करोh;
 
 	IP_VS_DBG(6, "%s(): Scheduling...\n", __func__);
 
@@ -66,74 +67,74 @@ ip_vs_sed_schedule(struct ip_vs_service *svc, const struct sk_buff *skb,
 	 * We calculate the load of each dest server as follows:
 	 *	(server expected overhead) / dest->weight
 	 *
-	 * Remember -- no floats in kernel mode!!!
+	 * Remember -- no भग्नs in kernel mode!!!
 	 * The comparison of h1*w2 > h2*w1 is equivalent to that of
 	 *		  h1/w1 > h2/w2
-	 * if every weight is larger than zero.
+	 * अगर every weight is larger than zero.
 	 *
 	 * The server with weight=0 is quiesced and will not receive any
 	 * new connections.
 	 */
 
-	list_for_each_entry_rcu(dest, &svc->destinations, n_list) {
-		if (!(dest->flags & IP_VS_DEST_F_OVERLOAD) &&
-		    atomic_read(&dest->weight) > 0) {
+	list_क्रम_each_entry_rcu(dest, &svc->destinations, n_list) अणु
+		अगर (!(dest->flags & IP_VS_DEST_F_OVERLOAD) &&
+		    atomic_पढ़ो(&dest->weight) > 0) अणु
 			least = dest;
 			loh = ip_vs_sed_dest_overhead(least);
-			goto nextstage;
-		}
-	}
+			जाओ nextstage;
+		पूर्ण
+	पूर्ण
 	ip_vs_scheduler_err(svc, "no destination available");
-	return NULL;
+	वापस शून्य;
 
 	/*
 	 *    Find the destination with the least load.
 	 */
   nextstage:
-	list_for_each_entry_continue_rcu(dest, &svc->destinations, n_list) {
-		if (dest->flags & IP_VS_DEST_F_OVERLOAD)
-			continue;
-		doh = ip_vs_sed_dest_overhead(dest);
-		if ((__s64)loh * atomic_read(&dest->weight) >
-		    (__s64)doh * atomic_read(&least->weight)) {
+	list_क्रम_each_entry_जारी_rcu(dest, &svc->destinations, n_list) अणु
+		अगर (dest->flags & IP_VS_DEST_F_OVERLOAD)
+			जारी;
+		करोh = ip_vs_sed_dest_overhead(dest);
+		अगर ((__s64)loh * atomic_पढ़ो(&dest->weight) >
+		    (__s64)करोh * atomic_पढ़ो(&least->weight)) अणु
 			least = dest;
-			loh = doh;
-		}
-	}
+			loh = करोh;
+		पूर्ण
+	पूर्ण
 
 	IP_VS_DBG_BUF(6, "SED: server %s:%u "
 		      "activeconns %d refcnt %d weight %d overhead %d\n",
 		      IP_VS_DBG_ADDR(least->af, &least->addr),
 		      ntohs(least->port),
-		      atomic_read(&least->activeconns),
-		      refcount_read(&least->refcnt),
-		      atomic_read(&least->weight), loh);
+		      atomic_पढ़ो(&least->activeconns),
+		      refcount_पढ़ो(&least->refcnt),
+		      atomic_पढ़ो(&least->weight), loh);
 
-	return least;
-}
+	वापस least;
+पूर्ण
 
 
-static struct ip_vs_scheduler ip_vs_sed_scheduler =
-{
+अटल काष्ठा ip_vs_scheduler ip_vs_sed_scheduler =
+अणु
 	.name =			"sed",
 	.refcnt =		ATOMIC_INIT(0),
 	.module =		THIS_MODULE,
 	.n_list =		LIST_HEAD_INIT(ip_vs_sed_scheduler.n_list),
 	.schedule =		ip_vs_sed_schedule,
-};
+पूर्ण;
 
 
-static int __init ip_vs_sed_init(void)
-{
-	return register_ip_vs_scheduler(&ip_vs_sed_scheduler);
-}
+अटल पूर्णांक __init ip_vs_sed_init(व्योम)
+अणु
+	वापस रेजिस्टर_ip_vs_scheduler(&ip_vs_sed_scheduler);
+पूर्ण
 
-static void __exit ip_vs_sed_cleanup(void)
-{
-	unregister_ip_vs_scheduler(&ip_vs_sed_scheduler);
+अटल व्योम __निकास ip_vs_sed_cleanup(व्योम)
+अणु
+	unरेजिस्टर_ip_vs_scheduler(&ip_vs_sed_scheduler);
 	synchronize_rcu();
-}
+पूर्ण
 
 module_init(ip_vs_sed_init);
-module_exit(ip_vs_sed_cleanup);
+module_निकास(ip_vs_sed_cleanup);
 MODULE_LICENSE("GPL");

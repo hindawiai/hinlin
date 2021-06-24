@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Fence mechanism for dma-buf and to allow for asynchronous dma access
+ * Fence mechanism क्रम dma-buf and to allow क्रम asynchronous dma access
  *
  * Copyright (C) 2012 Canonical Ltd
  * Copyright (C) 2012 Texas Instruments
@@ -10,58 +11,58 @@
  * Maarten Lankhorst <maarten.lankhorst@canonical.com>
  */
 
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/atomic.h>
-#include <linux/dma-fence.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/dma-fence.h>
+#समावेश <linux/sched/संकेत.स>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/dma_fence.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/dma_fence.h>
 
 EXPORT_TRACEPOINT_SYMBOL(dma_fence_emit);
-EXPORT_TRACEPOINT_SYMBOL(dma_fence_enable_signal);
-EXPORT_TRACEPOINT_SYMBOL(dma_fence_signaled);
+EXPORT_TRACEPOINT_SYMBOL(dma_fence_enable_संकेत);
+EXPORT_TRACEPOINT_SYMBOL(dma_fence_संकेतed);
 
-static DEFINE_SPINLOCK(dma_fence_stub_lock);
-static struct dma_fence dma_fence_stub;
+अटल DEFINE_SPINLOCK(dma_fence_stub_lock);
+अटल काष्ठा dma_fence dma_fence_stub;
 
 /*
  * fence context counter: each execution context should have its own
- * fence context, this allows checking if fences belong to the same
+ * fence context, this allows checking अगर fences beदीर्घ to the same
  * context or not. One device can have multiple separate contexts,
- * and they're used if some engine can run independently of another.
+ * and they're used अगर some engine can run independently of another.
  */
-static atomic64_t dma_fence_context_counter = ATOMIC64_INIT(1);
+अटल atomic64_t dma_fence_context_counter = ATOMIC64_INIT(1);
 
 /**
  * DOC: DMA fences overview
  *
- * DMA fences, represented by &struct dma_fence, are the kernel internal
- * synchronization primitive for DMA operations like GPU rendering, video
+ * DMA fences, represented by &काष्ठा dma_fence, are the kernel पूर्णांकernal
+ * synchronization primitive क्रम DMA operations like GPU rendering, video
  * encoding/decoding, or displaying buffers on a screen.
  *
  * A fence is initialized using dma_fence_init() and completed using
- * dma_fence_signal(). Fences are associated with a context, allocated through
+ * dma_fence_संकेत(). Fences are associated with a context, allocated through
  * dma_fence_context_alloc(), and all fences on the same context are
  * fully ordered.
  *
  * Since the purposes of fences is to facilitate cross-device and
  * cross-application synchronization, there's multiple ways to use one:
  *
- * - Individual fences can be exposed as a &sync_file, accessed as a file
+ * - Inभागidual fences can be exposed as a &sync_file, accessed as a file
  *   descriptor from userspace, created by calling sync_file_create(). This is
  *   called explicit fencing, since userspace passes around explicit
- *   synchronization points.
+ *   synchronization poपूर्णांकs.
  *
- * - Some subsystems also have their own explicit fencing primitives, like
+ * - Some subप्रणालीs also have their own explicit fencing primitives, like
  *   &drm_syncobj. Compared to &sync_file, a &drm_syncobj allows the underlying
  *   fence to be updated.
  *
- * - Then there's also implicit fencing, where the synchronization points are
+ * - Then there's also implicit fencing, where the synchronization poपूर्णांकs are
  *   implicitly passed around as part of shared &dma_buf instances. Such
- *   implicit fences are stored in &struct dma_resv through the
- *   &dma_buf.resv pointer.
+ *   implicit fences are stored in &काष्ठा dma_resv through the
+ *   &dma_buf.resv poपूर्णांकer.
  */
 
 /**
@@ -70,867 +71,867 @@ static atomic64_t dma_fence_context_counter = ATOMIC64_INIT(1);
  * Since &dma_fence provide a cross driver contract, all drivers must follow the
  * same rules:
  *
- * * Fences must complete in a reasonable time. Fences which represent kernels
- *   and shaders submitted by userspace, which could run forever, must be backed
- *   up by timeout and gpu hang recovery code. Minimally that code must prevent
- *   further command submission and force complete all in-flight fences, e.g.
- *   when the driver or hardware do not support gpu reset, or if the gpu reset
- *   failed for some reason. Ideally the driver supports gpu recovery which only
+ * * Fences must complete in a reasonable समय. Fences which represent kernels
+ *   and shaders submitted by userspace, which could run क्रमever, must be backed
+ *   up by समयout and gpu hang recovery code. Minimally that code must prevent
+ *   further command submission and क्रमce complete all in-flight fences, e.g.
+ *   when the driver or hardware करो not support gpu reset, or अगर the gpu reset
+ *   failed क्रम some reason. Ideally the driver supports gpu recovery which only
  *   affects the offending userspace context, and no other userspace
  *   submissions.
  *
- * * Drivers may have different ideas of what completion within a reasonable
- *   time means. Some hang recovery code uses a fixed timeout, others a mix
- *   between observing forward progress and increasingly strict timeouts.
- *   Drivers should not try to second guess timeout handling of fences from
+ * * Drivers may have dअगरferent ideas of what completion within a reasonable
+ *   समय means. Some hang recovery code uses a fixed समयout, others a mix
+ *   between observing क्रमward progress and increasingly strict समयouts.
+ *   Drivers should not try to second guess समयout handling of fences from
  *   other drivers.
  *
- * * To ensure there's no deadlocks of dma_fence_wait() against other locks
- *   drivers should annotate all code required to reach dma_fence_signal(),
- *   which completes the fences, with dma_fence_begin_signalling() and
- *   dma_fence_end_signalling().
+ * * To ensure there's no deadlocks of dma_fence_रुको() against other locks
+ *   drivers should annotate all code required to reach dma_fence_संकेत(),
+ *   which completes the fences, with dma_fence_begin_संकेतling() and
+ *   dma_fence_end_संकेतling().
  *
- * * Drivers are allowed to call dma_fence_wait() while holding dma_resv_lock().
- *   This means any code required for fence completion cannot acquire a
+ * * Drivers are allowed to call dma_fence_रुको() जबतक holding dma_resv_lock().
+ *   This means any code required क्रम fence completion cannot acquire a
  *   &dma_resv lock. Note that this also pulls in the entire established
  *   locking hierarchy around dma_resv_lock() and dma_resv_unlock().
  *
- * * Drivers are allowed to call dma_fence_wait() from their &shrinker
- *   callbacks. This means any code required for fence completion cannot
+ * * Drivers are allowed to call dma_fence_रुको() from their &shrinker
+ *   callbacks. This means any code required क्रम fence completion cannot
  *   allocate memory with GFP_KERNEL.
  *
- * * Drivers are allowed to call dma_fence_wait() from their &mmu_notifier
- *   respectively &mmu_interval_notifier callbacks. This means any code required
- *   for fence completeion cannot allocate memory with GFP_NOFS or GFP_NOIO.
+ * * Drivers are allowed to call dma_fence_रुको() from their &mmu_notअगरier
+ *   respectively &mmu_पूर्णांकerval_notअगरier callbacks. This means any code required
+ *   क्रम fence completeion cannot allocate memory with GFP_NOFS or GFP_NOIO.
  *   Only GFP_ATOMIC is permissible, which might fail.
  *
- * Note that only GPU drivers have a reasonable excuse for both requiring
- * &mmu_interval_notifier and &shrinker callbacks at the same time as having to
+ * Note that only GPU drivers have a reasonable excuse क्रम both requiring
+ * &mmu_पूर्णांकerval_notअगरier and &shrinker callbacks at the same समय as having to
  * track asynchronous compute work using &dma_fence. No driver outside of
- * drivers/gpu should ever call dma_fence_wait() in such contexts.
+ * drivers/gpu should ever call dma_fence_रुको() in such contexts.
  */
 
-static const char *dma_fence_stub_get_name(struct dma_fence *fence)
-{
-        return "stub";
-}
+अटल स्थिर अक्षर *dma_fence_stub_get_name(काष्ठा dma_fence *fence)
+अणु
+        वापस "stub";
+पूर्ण
 
-static const struct dma_fence_ops dma_fence_stub_ops = {
+अटल स्थिर काष्ठा dma_fence_ops dma_fence_stub_ops = अणु
 	.get_driver_name = dma_fence_stub_get_name,
-	.get_timeline_name = dma_fence_stub_get_name,
-};
+	.get_समयline_name = dma_fence_stub_get_name,
+पूर्ण;
 
 /**
- * dma_fence_get_stub - return a signaled fence
+ * dma_fence_get_stub - वापस a संकेतed fence
  *
- * Return a stub fence which is already signaled. The fence's
- * timestamp corresponds to the first time after boot this
+ * Return a stub fence which is alपढ़ोy संकेतed. The fence's
+ * बारtamp corresponds to the first समय after boot this
  * function is called.
  */
-struct dma_fence *dma_fence_get_stub(void)
-{
+काष्ठा dma_fence *dma_fence_get_stub(व्योम)
+अणु
 	spin_lock(&dma_fence_stub_lock);
-	if (!dma_fence_stub.ops) {
+	अगर (!dma_fence_stub.ops) अणु
 		dma_fence_init(&dma_fence_stub,
 			       &dma_fence_stub_ops,
 			       &dma_fence_stub_lock,
 			       0, 0);
-		dma_fence_signal_locked(&dma_fence_stub);
-	}
+		dma_fence_संकेत_locked(&dma_fence_stub);
+	पूर्ण
 	spin_unlock(&dma_fence_stub_lock);
 
-	return dma_fence_get(&dma_fence_stub);
-}
+	वापस dma_fence_get(&dma_fence_stub);
+पूर्ण
 EXPORT_SYMBOL(dma_fence_get_stub);
 
 /**
- * dma_fence_allocate_private_stub - return a private, signaled fence
+ * dma_fence_allocate_निजी_stub - वापस a निजी, संकेतed fence
  *
- * Return a newly allocated and signaled stub fence.
+ * Return a newly allocated and संकेतed stub fence.
  */
-struct dma_fence *dma_fence_allocate_private_stub(void)
-{
-	struct dma_fence *fence;
+काष्ठा dma_fence *dma_fence_allocate_निजी_stub(व्योम)
+अणु
+	काष्ठा dma_fence *fence;
 
-	fence = kzalloc(sizeof(*fence), GFP_KERNEL);
-	if (fence == NULL)
-		return ERR_PTR(-ENOMEM);
+	fence = kzalloc(माप(*fence), GFP_KERNEL);
+	अगर (fence == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
 	dma_fence_init(fence,
 		       &dma_fence_stub_ops,
 		       &dma_fence_stub_lock,
 		       0, 0);
-	dma_fence_signal(fence);
+	dma_fence_संकेत(fence);
 
-	return fence;
-}
-EXPORT_SYMBOL(dma_fence_allocate_private_stub);
+	वापस fence;
+पूर्ण
+EXPORT_SYMBOL(dma_fence_allocate_निजी_stub);
 
 /**
  * dma_fence_context_alloc - allocate an array of fence contexts
  * @num: amount of contexts to allocate
  *
- * This function will return the first index of the number of fence contexts
- * allocated.  The fence context is used for setting &dma_fence.context to a
+ * This function will वापस the first index of the number of fence contexts
+ * allocated.  The fence context is used क्रम setting &dma_fence.context to a
  * unique number by passing the context to dma_fence_init().
  */
-u64 dma_fence_context_alloc(unsigned num)
-{
+u64 dma_fence_context_alloc(अचिन्हित num)
+अणु
 	WARN_ON(!num);
-	return atomic64_fetch_add(num, &dma_fence_context_counter);
-}
+	वापस atomic64_fetch_add(num, &dma_fence_context_counter);
+पूर्ण
 EXPORT_SYMBOL(dma_fence_context_alloc);
 
 /**
- * DOC: fence signalling annotation
+ * DOC: fence संकेतling annotation
  *
  * Proving correctness of all the kernel code around &dma_fence through code
- * review and testing is tricky for a few reasons:
+ * review and testing is tricky क्रम a few reasons:
  *
- * * It is a cross-driver contract, and therefore all drivers must follow the
- *   same rules for lock nesting order, calling contexts for various functions
- *   and anything else significant for in-kernel interfaces. But it is also
- *   impossible to test all drivers in a single machine, hence brute-force N vs.
+ * * It is a cross-driver contract, and thereक्रमe all drivers must follow the
+ *   same rules क्रम lock nesting order, calling contexts क्रम various functions
+ *   and anything अन्यथा signअगरicant क्रम in-kernel पूर्णांकerfaces. But it is also
+ *   impossible to test all drivers in a single machine, hence brute-क्रमce N vs.
  *   N testing of all combinations is impossible. Even just limiting to the
  *   possible combinations is infeasible.
  *
  * * There is an enormous amount of driver code involved. For render drivers
  *   there's the tail of command submission, after fences are published,
- *   scheduler code, interrupt and workers to process job completion,
- *   and timeout, gpu reset and gpu hang recovery code. Plus for integration
- *   with core mm with have &mmu_notifier, respectively &mmu_interval_notifier,
+ *   scheduler code, पूर्णांकerrupt and workers to process job completion,
+ *   and समयout, gpu reset and gpu hang recovery code. Plus क्रम पूर्णांकegration
+ *   with core mm with have &mmu_notअगरier, respectively &mmu_पूर्णांकerval_notअगरier,
  *   and &shrinker. For modesetting drivers there's the commit tail functions
- *   between when fences for an atomic modeset are published, and when the
- *   corresponding vblank completes, including any interrupt processing and
+ *   between when fences क्रम an atomic modeset are published, and when the
+ *   corresponding vblank completes, including any पूर्णांकerrupt processing and
  *   related workers. Auditing all that code, across all drivers, is not
  *   feasible.
  *
- * * Due to how many other subsystems are involved and the locking hierarchies
- *   this pulls in there is extremely thin wiggle-room for driver-specific
- *   differences. &dma_fence interacts with almost all of the core memory
+ * * Due to how many other subप्रणालीs are involved and the locking hierarchies
+ *   this pulls in there is extremely thin wiggle-room क्रम driver-specअगरic
+ *   dअगरferences. &dma_fence पूर्णांकeracts with almost all of the core memory
  *   handling through page fault handlers via &dma_resv, dma_resv_lock() and
- *   dma_resv_unlock(). On the other side it also interacts through all
- *   allocation sites through &mmu_notifier and &shrinker.
+ *   dma_resv_unlock(). On the other side it also पूर्णांकeracts through all
+ *   allocation sites through &mmu_notअगरier and &shrinker.
  *
- * Furthermore lockdep does not handle cross-release dependencies, which means
- * any deadlocks between dma_fence_wait() and dma_fence_signal() can't be caught
- * at runtime with some quick testing. The simplest example is one thread
- * waiting on a &dma_fence while holding a lock::
+ * Furthermore lockdep करोes not handle cross-release dependencies, which means
+ * any deadlocks between dma_fence_रुको() and dma_fence_संकेत() can't be caught
+ * at runसमय with some quick testing. The simplest example is one thपढ़ो
+ * रुकोing on a &dma_fence जबतक holding a lock::
  *
  *     lock(A);
- *     dma_fence_wait(B);
+ *     dma_fence_रुको(B);
  *     unlock(A);
  *
- * while the other thread is stuck trying to acquire the same lock, which
- * prevents it from signalling the fence the previous thread is stuck waiting
+ * जबतक the other thपढ़ो is stuck trying to acquire the same lock, which
+ * prevents it from संकेतling the fence the previous thपढ़ो is stuck रुकोing
  * on::
  *
  *     lock(A);
  *     unlock(A);
- *     dma_fence_signal(B);
+ *     dma_fence_संकेत(B);
  *
- * By manually annotating all code relevant to signalling a &dma_fence we can
+ * By manually annotating all code relevant to संकेतling a &dma_fence we can
  * teach lockdep about these dependencies, which also helps with the validation
- * headache since now lockdep can check all the rules for us::
+ * headache since now lockdep can check all the rules क्रम us::
  *
- *    cookie = dma_fence_begin_signalling();
+ *    cookie = dma_fence_begin_संकेतling();
  *    lock(A);
  *    unlock(A);
- *    dma_fence_signal(B);
- *    dma_fence_end_signalling(cookie);
+ *    dma_fence_संकेत(B);
+ *    dma_fence_end_संकेतling(cookie);
  *
- * For using dma_fence_begin_signalling() and dma_fence_end_signalling() to
+ * For using dma_fence_begin_संकेतling() and dma_fence_end_संकेतling() to
  * annotate critical sections the following rules need to be observed:
  *
  * * All code necessary to complete a &dma_fence must be annotated, from the
- *   point where a fence is accessible to other threads, to the point where
- *   dma_fence_signal() is called. Un-annotated code can contain deadlock issues,
- *   and due to the very strict rules and many corner cases it is infeasible to
+ *   poपूर्णांक where a fence is accessible to other thपढ़ोs, to the poपूर्णांक where
+ *   dma_fence_संकेत() is called. Un-annotated code can contain deadlock issues,
+ *   and due to the very strict rules and many corner हालs it is infeasible to
  *   catch these just with review or normal stress testing.
  *
- * * &struct dma_resv deserves a special note, since the readers are only
- *   protected by rcu. This means the signalling critical section starts as soon
- *   as the new fences are installed, even before dma_resv_unlock() is called.
+ * * &काष्ठा dma_resv deserves a special note, since the पढ़ोers are only
+ *   रक्षित by rcu. This means the संकेतling critical section starts as soon
+ *   as the new fences are installed, even beक्रमe dma_resv_unlock() is called.
  *
- * * The only exception are fast paths and opportunistic signalling code, which
- *   calls dma_fence_signal() purely as an optimization, but is not required to
- *   guarantee completion of a &dma_fence. The usual example is a wait IOCTL
- *   which calls dma_fence_signal(), while the mandatory completion path goes
- *   through a hardware interrupt and possible job completion worker.
+ * * The only exception are fast paths and opportunistic संकेतling code, which
+ *   calls dma_fence_संकेत() purely as an optimization, but is not required to
+ *   guarantee completion of a &dma_fence. The usual example is a रुको IOCTL
+ *   which calls dma_fence_संकेत(), जबतक the mandatory completion path goes
+ *   through a hardware पूर्णांकerrupt and possible job completion worker.
  *
- * * To aid composability of code, the annotations can be freely nested, as long
+ * * To aid composability of code, the annotations can be मुक्तly nested, as दीर्घ
  *   as the overall locking hierarchy is consistent. The annotations also work
- *   both in interrupt and process context. Due to implementation details this
+ *   both in पूर्णांकerrupt and process context. Due to implementation details this
  *   requires that callers pass an opaque cookie from
- *   dma_fence_begin_signalling() to dma_fence_end_signalling().
+ *   dma_fence_begin_संकेतling() to dma_fence_end_संकेतling().
  *
  * * Validation against the cross driver contract is implemented by priming
  *   lockdep with the relevant hierarchy at boot-up. This means even just
  *   testing with a single device is enough to validate a driver, at least as
- *   far as deadlocks with dma_fence_wait() against dma_fence_signal() are
+ *   far as deadlocks with dma_fence_रुको() against dma_fence_संकेत() are
  *   concerned.
  */
-#ifdef CONFIG_LOCKDEP
-static struct lockdep_map dma_fence_lockdep_map = {
+#अगर_घोषित CONFIG_LOCKDEP
+अटल काष्ठा lockdep_map dma_fence_lockdep_map = अणु
 	.name = "dma_fence_map"
-};
+पूर्ण;
 
 /**
- * dma_fence_begin_signalling - begin a critical DMA fence signalling section
+ * dma_fence_begin_संकेतling - begin a critical DMA fence संकेतling section
  *
  * Drivers should use this to annotate the beginning of any code section
- * required to eventually complete &dma_fence by calling dma_fence_signal().
+ * required to eventually complete &dma_fence by calling dma_fence_संकेत().
  *
  * The end of these critical sections are annotated with
- * dma_fence_end_signalling().
+ * dma_fence_end_संकेतling().
  *
  * Returns:
  *
  * Opaque cookie needed by the implementation, which needs to be passed to
- * dma_fence_end_signalling().
+ * dma_fence_end_संकेतling().
  */
-bool dma_fence_begin_signalling(void)
-{
+bool dma_fence_begin_संकेतling(व्योम)
+अणु
 	/* explicitly nesting ... */
-	if (lock_is_held_type(&dma_fence_lockdep_map, 1))
-		return true;
+	अगर (lock_is_held_type(&dma_fence_lockdep_map, 1))
+		वापस true;
 
-	/* rely on might_sleep check for soft/hardirq locks */
-	if (in_atomic())
-		return true;
+	/* rely on might_sleep check क्रम soft/hardirq locks */
+	अगर (in_atomic())
+		वापस true;
 
-	/* ... and non-recursive readlock */
-	lock_acquire(&dma_fence_lockdep_map, 0, 0, 1, 1, NULL, _RET_IP_);
+	/* ... and non-recursive पढ़ोlock */
+	lock_acquire(&dma_fence_lockdep_map, 0, 0, 1, 1, शून्य, _RET_IP_);
 
-	return false;
-}
-EXPORT_SYMBOL(dma_fence_begin_signalling);
+	वापस false;
+पूर्ण
+EXPORT_SYMBOL(dma_fence_begin_संकेतling);
 
 /**
- * dma_fence_end_signalling - end a critical DMA fence signalling section
- * @cookie: opaque cookie from dma_fence_begin_signalling()
+ * dma_fence_end_संकेतling - end a critical DMA fence संकेतling section
+ * @cookie: opaque cookie from dma_fence_begin_संकेतling()
  *
- * Closes a critical section annotation opened by dma_fence_begin_signalling().
+ * Closes a critical section annotation खोलोed by dma_fence_begin_संकेतling().
  */
-void dma_fence_end_signalling(bool cookie)
-{
-	if (cookie)
-		return;
+व्योम dma_fence_end_संकेतling(bool cookie)
+अणु
+	अगर (cookie)
+		वापस;
 
 	lock_release(&dma_fence_lockdep_map, _RET_IP_);
-}
-EXPORT_SYMBOL(dma_fence_end_signalling);
+पूर्ण
+EXPORT_SYMBOL(dma_fence_end_संकेतling);
 
-void __dma_fence_might_wait(void)
-{
-	bool tmp;
+व्योम __dma_fence_might_रुको(व्योम)
+अणु
+	bool पंचांगp;
 
-	tmp = lock_is_held_type(&dma_fence_lockdep_map, 1);
-	if (tmp)
+	पंचांगp = lock_is_held_type(&dma_fence_lockdep_map, 1);
+	अगर (पंचांगp)
 		lock_release(&dma_fence_lockdep_map, _THIS_IP_);
 	lock_map_acquire(&dma_fence_lockdep_map);
 	lock_map_release(&dma_fence_lockdep_map);
-	if (tmp)
-		lock_acquire(&dma_fence_lockdep_map, 0, 0, 1, 1, NULL, _THIS_IP_);
-}
-#endif
+	अगर (पंचांगp)
+		lock_acquire(&dma_fence_lockdep_map, 0, 0, 1, 1, शून्य, _THIS_IP_);
+पूर्ण
+#पूर्ण_अगर
 
 
 /**
- * dma_fence_signal_timestamp_locked - signal completion of a fence
- * @fence: the fence to signal
- * @timestamp: fence signal timestamp in kernel's CLOCK_MONOTONIC time domain
+ * dma_fence_संकेत_बारtamp_locked - संकेत completion of a fence
+ * @fence: the fence to संकेत
+ * @बारtamp: fence संकेत बारtamp in kernel's CLOCK_MONOTONIC समय करोमुख्य
  *
- * Signal completion for software callbacks on a fence, this will unblock
- * dma_fence_wait() calls and run all the callbacks added with
- * dma_fence_add_callback(). Can be called multiple times, but since a fence
- * can only go from the unsignaled to the signaled state and not back, it will
- * only be effective the first time. Set the timestamp provided as the fence
- * signal timestamp.
+ * Signal completion क्रम software callbacks on a fence, this will unblock
+ * dma_fence_रुको() calls and run all the callbacks added with
+ * dma_fence_add_callback(). Can be called multiple बार, but since a fence
+ * can only go from the unसंकेतed to the संकेतed state and not back, it will
+ * only be effective the first समय. Set the बारtamp provided as the fence
+ * संकेत बारtamp.
  *
- * Unlike dma_fence_signal_timestamp(), this function must be called with
+ * Unlike dma_fence_संकेत_बारtamp(), this function must be called with
  * &dma_fence.lock held.
  *
  * Returns 0 on success and a negative error value when @fence has been
- * signalled already.
+ * संकेतled alपढ़ोy.
  */
-int dma_fence_signal_timestamp_locked(struct dma_fence *fence,
-				      ktime_t timestamp)
-{
-	struct dma_fence_cb *cur, *tmp;
-	struct list_head cb_list;
+पूर्णांक dma_fence_संकेत_बारtamp_locked(काष्ठा dma_fence *fence,
+				      kसमय_प्रकार बारtamp)
+अणु
+	काष्ठा dma_fence_cb *cur, *पंचांगp;
+	काष्ठा list_head cb_list;
 
-	lockdep_assert_held(fence->lock);
+	lockdep_निश्चित_held(fence->lock);
 
-	if (unlikely(test_and_set_bit(DMA_FENCE_FLAG_SIGNALED_BIT,
+	अगर (unlikely(test_and_set_bit(DMA_FENCE_FLAG_SIGNALED_BIT,
 				      &fence->flags)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Stash the cb_list before replacing it with the timestamp */
+	/* Stash the cb_list beक्रमe replacing it with the बारtamp */
 	list_replace(&fence->cb_list, &cb_list);
 
-	fence->timestamp = timestamp;
+	fence->बारtamp = बारtamp;
 	set_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags);
-	trace_dma_fence_signaled(fence);
+	trace_dma_fence_संकेतed(fence);
 
-	list_for_each_entry_safe(cur, tmp, &cb_list, node) {
+	list_क्रम_each_entry_safe(cur, पंचांगp, &cb_list, node) अणु
 		INIT_LIST_HEAD(&cur->node);
 		cur->func(fence, cur);
-	}
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(dma_fence_signal_timestamp_locked);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(dma_fence_संकेत_बारtamp_locked);
 
 /**
- * dma_fence_signal_timestamp - signal completion of a fence
- * @fence: the fence to signal
- * @timestamp: fence signal timestamp in kernel's CLOCK_MONOTONIC time domain
+ * dma_fence_संकेत_बारtamp - संकेत completion of a fence
+ * @fence: the fence to संकेत
+ * @बारtamp: fence संकेत बारtamp in kernel's CLOCK_MONOTONIC समय करोमुख्य
  *
- * Signal completion for software callbacks on a fence, this will unblock
- * dma_fence_wait() calls and run all the callbacks added with
- * dma_fence_add_callback(). Can be called multiple times, but since a fence
- * can only go from the unsignaled to the signaled state and not back, it will
- * only be effective the first time. Set the timestamp provided as the fence
- * signal timestamp.
+ * Signal completion क्रम software callbacks on a fence, this will unblock
+ * dma_fence_रुको() calls and run all the callbacks added with
+ * dma_fence_add_callback(). Can be called multiple बार, but since a fence
+ * can only go from the unसंकेतed to the संकेतed state and not back, it will
+ * only be effective the first समय. Set the बारtamp provided as the fence
+ * संकेत बारtamp.
  *
  * Returns 0 on success and a negative error value when @fence has been
- * signalled already.
+ * संकेतled alपढ़ोy.
  */
-int dma_fence_signal_timestamp(struct dma_fence *fence, ktime_t timestamp)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक dma_fence_संकेत_बारtamp(काष्ठा dma_fence *fence, kसमय_प्रकार बारtamp)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (!fence)
-		return -EINVAL;
+	अगर (!fence)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(fence->lock, flags);
-	ret = dma_fence_signal_timestamp_locked(fence, timestamp);
+	ret = dma_fence_संकेत_बारtamp_locked(fence, बारtamp);
 	spin_unlock_irqrestore(fence->lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL(dma_fence_signal_timestamp);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(dma_fence_संकेत_बारtamp);
 
 /**
- * dma_fence_signal_locked - signal completion of a fence
- * @fence: the fence to signal
+ * dma_fence_संकेत_locked - संकेत completion of a fence
+ * @fence: the fence to संकेत
  *
- * Signal completion for software callbacks on a fence, this will unblock
- * dma_fence_wait() calls and run all the callbacks added with
- * dma_fence_add_callback(). Can be called multiple times, but since a fence
- * can only go from the unsignaled to the signaled state and not back, it will
- * only be effective the first time.
+ * Signal completion क्रम software callbacks on a fence, this will unblock
+ * dma_fence_रुको() calls and run all the callbacks added with
+ * dma_fence_add_callback(). Can be called multiple बार, but since a fence
+ * can only go from the unसंकेतed to the संकेतed state and not back, it will
+ * only be effective the first समय.
  *
- * Unlike dma_fence_signal(), this function must be called with &dma_fence.lock
+ * Unlike dma_fence_संकेत(), this function must be called with &dma_fence.lock
  * held.
  *
  * Returns 0 on success and a negative error value when @fence has been
- * signalled already.
+ * संकेतled alपढ़ोy.
  */
-int dma_fence_signal_locked(struct dma_fence *fence)
-{
-	return dma_fence_signal_timestamp_locked(fence, ktime_get());
-}
-EXPORT_SYMBOL(dma_fence_signal_locked);
+पूर्णांक dma_fence_संकेत_locked(काष्ठा dma_fence *fence)
+अणु
+	वापस dma_fence_संकेत_बारtamp_locked(fence, kसमय_get());
+पूर्ण
+EXPORT_SYMBOL(dma_fence_संकेत_locked);
 
 /**
- * dma_fence_signal - signal completion of a fence
- * @fence: the fence to signal
+ * dma_fence_संकेत - संकेत completion of a fence
+ * @fence: the fence to संकेत
  *
- * Signal completion for software callbacks on a fence, this will unblock
- * dma_fence_wait() calls and run all the callbacks added with
- * dma_fence_add_callback(). Can be called multiple times, but since a fence
- * can only go from the unsignaled to the signaled state and not back, it will
- * only be effective the first time.
+ * Signal completion क्रम software callbacks on a fence, this will unblock
+ * dma_fence_रुको() calls and run all the callbacks added with
+ * dma_fence_add_callback(). Can be called multiple बार, but since a fence
+ * can only go from the unसंकेतed to the संकेतed state and not back, it will
+ * only be effective the first समय.
  *
  * Returns 0 on success and a negative error value when @fence has been
- * signalled already.
+ * संकेतled alपढ़ोy.
  */
-int dma_fence_signal(struct dma_fence *fence)
-{
-	unsigned long flags;
-	int ret;
-	bool tmp;
+पूर्णांक dma_fence_संकेत(काष्ठा dma_fence *fence)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
+	bool पंचांगp;
 
-	if (!fence)
-		return -EINVAL;
+	अगर (!fence)
+		वापस -EINVAL;
 
-	tmp = dma_fence_begin_signalling();
+	पंचांगp = dma_fence_begin_संकेतling();
 
 	spin_lock_irqsave(fence->lock, flags);
-	ret = dma_fence_signal_timestamp_locked(fence, ktime_get());
+	ret = dma_fence_संकेत_बारtamp_locked(fence, kसमय_get());
 	spin_unlock_irqrestore(fence->lock, flags);
 
-	dma_fence_end_signalling(tmp);
+	dma_fence_end_संकेतling(पंचांगp);
 
-	return ret;
-}
-EXPORT_SYMBOL(dma_fence_signal);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(dma_fence_संकेत);
 
 /**
- * dma_fence_wait_timeout - sleep until the fence gets signaled
- * or until timeout elapses
- * @fence: the fence to wait on
- * @intr: if true, do an interruptible wait
- * @timeout: timeout value in jiffies, or MAX_SCHEDULE_TIMEOUT
+ * dma_fence_रुको_समयout - sleep until the fence माला_लो संकेतed
+ * or until समयout elapses
+ * @fence: the fence to रुको on
+ * @पूर्णांकr: अगर true, करो an पूर्णांकerruptible रुको
+ * @समयout: समयout value in jअगरfies, or MAX_SCHEDULE_TIMEOUT
  *
- * Returns -ERESTARTSYS if interrupted, 0 if the wait timed out, or the
- * remaining timeout in jiffies on success. Other error values may be
- * returned on custom implementations.
+ * Returns -ERESTARTSYS अगर पूर्णांकerrupted, 0 अगर the रुको समयd out, or the
+ * reमुख्यing समयout in jअगरfies on success. Other error values may be
+ * वापसed on custom implementations.
  *
- * Performs a synchronous wait on this fence. It is assumed the caller
+ * Perक्रमms a synchronous रुको on this fence. It is assumed the caller
  * directly or indirectly (buf-mgr between reservation and committing)
  * holds a reference to the fence, otherwise the fence might be
- * freed before return, resulting in undefined behavior.
+ * मुक्तd beक्रमe वापस, resulting in undefined behavior.
  *
- * See also dma_fence_wait() and dma_fence_wait_any_timeout().
+ * See also dma_fence_रुको() and dma_fence_रुको_any_समयout().
  */
-signed long
-dma_fence_wait_timeout(struct dma_fence *fence, bool intr, signed long timeout)
-{
-	signed long ret;
+चिन्हित दीर्घ
+dma_fence_रुको_समयout(काष्ठा dma_fence *fence, bool पूर्णांकr, चिन्हित दीर्घ समयout)
+अणु
+	चिन्हित दीर्घ ret;
 
-	if (WARN_ON(timeout < 0))
-		return -EINVAL;
+	अगर (WARN_ON(समयout < 0))
+		वापस -EINVAL;
 
 	might_sleep();
 
-	__dma_fence_might_wait();
+	__dma_fence_might_रुको();
 
-	trace_dma_fence_wait_start(fence);
-	if (fence->ops->wait)
-		ret = fence->ops->wait(fence, intr, timeout);
-	else
-		ret = dma_fence_default_wait(fence, intr, timeout);
-	trace_dma_fence_wait_end(fence);
-	return ret;
-}
-EXPORT_SYMBOL(dma_fence_wait_timeout);
+	trace_dma_fence_रुको_start(fence);
+	अगर (fence->ops->रुको)
+		ret = fence->ops->रुको(fence, पूर्णांकr, समयout);
+	अन्यथा
+		ret = dma_fence_शेष_रुको(fence, पूर्णांकr, समयout);
+	trace_dma_fence_रुको_end(fence);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(dma_fence_रुको_समयout);
 
 /**
- * dma_fence_release - default relese function for fences
+ * dma_fence_release - शेष relese function क्रम fences
  * @kref: &dma_fence.recfount
  *
- * This is the default release functions for &dma_fence. Drivers shouldn't call
+ * This is the शेष release functions क्रम &dma_fence. Drivers shouldn't call
  * this directly, but instead call dma_fence_put().
  */
-void dma_fence_release(struct kref *kref)
-{
-	struct dma_fence *fence =
-		container_of(kref, struct dma_fence, refcount);
+व्योम dma_fence_release(काष्ठा kref *kref)
+अणु
+	काष्ठा dma_fence *fence =
+		container_of(kref, काष्ठा dma_fence, refcount);
 
 	trace_dma_fence_destroy(fence);
 
-	if (WARN(!list_empty(&fence->cb_list) &&
+	अगर (WARN(!list_empty(&fence->cb_list) &&
 		 !test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags),
 		 "Fence %s:%s:%llx:%llx released with pending signals!\n",
 		 fence->ops->get_driver_name(fence),
-		 fence->ops->get_timeline_name(fence),
-		 fence->context, fence->seqno)) {
-		unsigned long flags;
+		 fence->ops->get_समयline_name(fence),
+		 fence->context, fence->seqno)) अणु
+		अचिन्हित दीर्घ flags;
 
 		/*
-		 * Failed to signal before release, likely a refcounting issue.
+		 * Failed to संकेत beक्रमe release, likely a refcounting issue.
 		 *
-		 * This should never happen, but if it does make sure that we
-		 * don't leave chains dangling. We set the error flag first
-		 * so that the callbacks know this signal is due to an error.
+		 * This should never happen, but अगर it करोes make sure that we
+		 * करोn't leave chains dangling. We set the error flag first
+		 * so that the callbacks know this संकेत is due to an error.
 		 */
 		spin_lock_irqsave(fence->lock, flags);
 		fence->error = -EDEADLK;
-		dma_fence_signal_locked(fence);
+		dma_fence_संकेत_locked(fence);
 		spin_unlock_irqrestore(fence->lock, flags);
-	}
+	पूर्ण
 
-	if (fence->ops->release)
+	अगर (fence->ops->release)
 		fence->ops->release(fence);
-	else
-		dma_fence_free(fence);
-}
+	अन्यथा
+		dma_fence_मुक्त(fence);
+पूर्ण
 EXPORT_SYMBOL(dma_fence_release);
 
 /**
- * dma_fence_free - default release function for &dma_fence.
+ * dma_fence_मुक्त - शेष release function क्रम &dma_fence.
  * @fence: fence to release
  *
- * This is the default implementation for &dma_fence_ops.release. It calls
- * kfree_rcu() on @fence.
+ * This is the शेष implementation क्रम &dma_fence_ops.release. It calls
+ * kमुक्त_rcu() on @fence.
  */
-void dma_fence_free(struct dma_fence *fence)
-{
-	kfree_rcu(fence, rcu);
-}
-EXPORT_SYMBOL(dma_fence_free);
+व्योम dma_fence_मुक्त(काष्ठा dma_fence *fence)
+अणु
+	kमुक्त_rcu(fence, rcu);
+पूर्ण
+EXPORT_SYMBOL(dma_fence_मुक्त);
 
-static bool __dma_fence_enable_signaling(struct dma_fence *fence)
-{
+अटल bool __dma_fence_enable_संकेतing(काष्ठा dma_fence *fence)
+अणु
 	bool was_set;
 
-	lockdep_assert_held(fence->lock);
+	lockdep_निश्चित_held(fence->lock);
 
 	was_set = test_and_set_bit(DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT,
 				   &fence->flags);
 
-	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		return false;
+	अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		वापस false;
 
-	if (!was_set && fence->ops->enable_signaling) {
-		trace_dma_fence_enable_signal(fence);
+	अगर (!was_set && fence->ops->enable_संकेतing) अणु
+		trace_dma_fence_enable_संकेत(fence);
 
-		if (!fence->ops->enable_signaling(fence)) {
-			dma_fence_signal_locked(fence);
-			return false;
-		}
-	}
+		अगर (!fence->ops->enable_संकेतing(fence)) अणु
+			dma_fence_संकेत_locked(fence);
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * dma_fence_enable_sw_signaling - enable signaling on fence
+ * dma_fence_enable_sw_संकेतing - enable संकेतing on fence
  * @fence: the fence to enable
  *
- * This will request for sw signaling to be enabled, to make the fence
- * complete as soon as possible. This calls &dma_fence_ops.enable_signaling
- * internally.
+ * This will request क्रम sw संकेतing to be enabled, to make the fence
+ * complete as soon as possible. This calls &dma_fence_ops.enable_संकेतing
+ * पूर्णांकernally.
  */
-void dma_fence_enable_sw_signaling(struct dma_fence *fence)
-{
-	unsigned long flags;
+व्योम dma_fence_enable_sw_संकेतing(काष्ठा dma_fence *fence)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		return;
+	अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		वापस;
 
 	spin_lock_irqsave(fence->lock, flags);
-	__dma_fence_enable_signaling(fence);
+	__dma_fence_enable_संकेतing(fence);
 	spin_unlock_irqrestore(fence->lock, flags);
-}
-EXPORT_SYMBOL(dma_fence_enable_sw_signaling);
+पूर्ण
+EXPORT_SYMBOL(dma_fence_enable_sw_संकेतing);
 
 /**
  * dma_fence_add_callback - add a callback to be called when the fence
- * is signaled
- * @fence: the fence to wait on
- * @cb: the callback to register
+ * is संकेतed
+ * @fence: the fence to रुको on
+ * @cb: the callback to रेजिस्टर
  * @func: the function to call
  *
  * @cb will be initialized by dma_fence_add_callback(), no initialization
- * by the caller is required. Any number of callbacks can be registered
- * to a fence, but a callback can only be registered to one fence at a time.
+ * by the caller is required. Any number of callbacks can be रेजिस्टरed
+ * to a fence, but a callback can only be रेजिस्टरed to one fence at a समय.
  *
  * Note that the callback can be called from an atomic context.  If
- * fence is already signaled, this function will return -ENOENT (and
+ * fence is alपढ़ोy संकेतed, this function will वापस -ENOENT (and
  * *not* call the callback).
  *
  * Add a software callback to the fence. Same restrictions apply to
- * refcount as it does to dma_fence_wait(), however the caller doesn't need to
- * keep a refcount to fence afterward dma_fence_add_callback() has returned:
+ * refcount as it करोes to dma_fence_रुको(), however the caller करोesn't need to
+ * keep a refcount to fence afterward dma_fence_add_callback() has वापसed:
  * when software access is enabled, the creator of the fence is required to keep
- * the fence alive until after it signals with dma_fence_signal(). The callback
+ * the fence alive until after it संकेतs with dma_fence_संकेत(). The callback
  * itself can be called from irq context.
  *
- * Returns 0 in case of success, -ENOENT if the fence is already signaled
- * and -EINVAL in case of error.
+ * Returns 0 in हाल of success, -ENOENT अगर the fence is alपढ़ोy संकेतed
+ * and -EINVAL in हाल of error.
  */
-int dma_fence_add_callback(struct dma_fence *fence, struct dma_fence_cb *cb,
+पूर्णांक dma_fence_add_callback(काष्ठा dma_fence *fence, काष्ठा dma_fence_cb *cb,
 			   dma_fence_func_t func)
-{
-	unsigned long flags;
-	int ret = 0;
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	if (WARN_ON(!fence || !func))
-		return -EINVAL;
+	अगर (WARN_ON(!fence || !func))
+		वापस -EINVAL;
 
-	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
+	अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) अणु
 		INIT_LIST_HEAD(&cb->node);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	spin_lock_irqsave(fence->lock, flags);
 
-	if (__dma_fence_enable_signaling(fence)) {
+	अगर (__dma_fence_enable_संकेतing(fence)) अणु
 		cb->func = func;
 		list_add_tail(&cb->node, &fence->cb_list);
-	} else {
+	पूर्ण अन्यथा अणु
 		INIT_LIST_HEAD(&cb->node);
 		ret = -ENOENT;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(fence->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(dma_fence_add_callback);
 
 /**
- * dma_fence_get_status - returns the status upon completion
+ * dma_fence_get_status - वापसs the status upon completion
  * @fence: the dma_fence to query
  *
- * This wraps dma_fence_get_status_locked() to return the error status
- * condition on a signaled fence. See dma_fence_get_status_locked() for more
+ * This wraps dma_fence_get_status_locked() to वापस the error status
+ * condition on a संकेतed fence. See dma_fence_get_status_locked() क्रम more
  * details.
  *
- * Returns 0 if the fence has not yet been signaled, 1 if the fence has
- * been signaled without an error condition, or a negative error code
- * if the fence has been completed in err.
+ * Returns 0 अगर the fence has not yet been संकेतed, 1 अगर the fence has
+ * been संकेतed without an error condition, or a negative error code
+ * अगर the fence has been completed in err.
  */
-int dma_fence_get_status(struct dma_fence *fence)
-{
-	unsigned long flags;
-	int status;
+पूर्णांक dma_fence_get_status(काष्ठा dma_fence *fence)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक status;
 
 	spin_lock_irqsave(fence->lock, flags);
 	status = dma_fence_get_status_locked(fence);
 	spin_unlock_irqrestore(fence->lock, flags);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL(dma_fence_get_status);
 
 /**
- * dma_fence_remove_callback - remove a callback from the signaling list
- * @fence: the fence to wait on
- * @cb: the callback to remove
+ * dma_fence_हटाओ_callback - हटाओ a callback from the संकेतing list
+ * @fence: the fence to रुको on
+ * @cb: the callback to हटाओ
  *
- * Remove a previously queued callback from the fence. This function returns
- * true if the callback is successfully removed, or false if the fence has
- * already been signaled.
+ * Remove a previously queued callback from the fence. This function वापसs
+ * true अगर the callback is successfully हटाओd, or false अगर the fence has
+ * alपढ़ोy been संकेतed.
  *
  * *WARNING*:
- * Cancelling a callback should only be done if you really know what you're
- * doing, since deadlocks and race conditions could occur all too easily. For
- * this reason, it should only ever be done on hardware lockup recovery,
+ * Cancelling a callback should only be करोne अगर you really know what you're
+ * करोing, since deadlocks and race conditions could occur all too easily. For
+ * this reason, it should only ever be करोne on hardware lockup recovery,
  * with a reference held to the fence.
  *
- * Behaviour is undefined if @cb has not been added to @fence using
- * dma_fence_add_callback() beforehand.
+ * Behaviour is undefined अगर @cb has not been added to @fence using
+ * dma_fence_add_callback() beक्रमehand.
  */
 bool
-dma_fence_remove_callback(struct dma_fence *fence, struct dma_fence_cb *cb)
-{
-	unsigned long flags;
+dma_fence_हटाओ_callback(काष्ठा dma_fence *fence, काष्ठा dma_fence_cb *cb)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool ret;
 
 	spin_lock_irqsave(fence->lock, flags);
 
 	ret = !list_empty(&cb->node);
-	if (ret)
+	अगर (ret)
 		list_del_init(&cb->node);
 
 	spin_unlock_irqrestore(fence->lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL(dma_fence_remove_callback);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(dma_fence_हटाओ_callback);
 
-struct default_wait_cb {
-	struct dma_fence_cb base;
-	struct task_struct *task;
-};
+काष्ठा शेष_रुको_cb अणु
+	काष्ठा dma_fence_cb base;
+	काष्ठा task_काष्ठा *task;
+पूर्ण;
 
-static void
-dma_fence_default_wait_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
-{
-	struct default_wait_cb *wait =
-		container_of(cb, struct default_wait_cb, base);
+अटल व्योम
+dma_fence_शेष_रुको_cb(काष्ठा dma_fence *fence, काष्ठा dma_fence_cb *cb)
+अणु
+	काष्ठा शेष_रुको_cb *रुको =
+		container_of(cb, काष्ठा शेष_रुको_cb, base);
 
-	wake_up_state(wait->task, TASK_NORMAL);
-}
+	wake_up_state(रुको->task, TASK_NORMAL);
+पूर्ण
 
 /**
- * dma_fence_default_wait - default sleep until the fence gets signaled
- * or until timeout elapses
- * @fence: the fence to wait on
- * @intr: if true, do an interruptible wait
- * @timeout: timeout value in jiffies, or MAX_SCHEDULE_TIMEOUT
+ * dma_fence_शेष_रुको - शेष sleep until the fence माला_लो संकेतed
+ * or until समयout elapses
+ * @fence: the fence to रुको on
+ * @पूर्णांकr: अगर true, करो an पूर्णांकerruptible रुको
+ * @समयout: समयout value in jअगरfies, or MAX_SCHEDULE_TIMEOUT
  *
- * Returns -ERESTARTSYS if interrupted, 0 if the wait timed out, or the
- * remaining timeout in jiffies on success. If timeout is zero the value one is
- * returned if the fence is already signaled for consistency with other
- * functions taking a jiffies timeout.
+ * Returns -ERESTARTSYS अगर पूर्णांकerrupted, 0 अगर the रुको समयd out, or the
+ * reमुख्यing समयout in jअगरfies on success. If समयout is zero the value one is
+ * वापसed अगर the fence is alपढ़ोy संकेतed क्रम consistency with other
+ * functions taking a jअगरfies समयout.
  */
-signed long
-dma_fence_default_wait(struct dma_fence *fence, bool intr, signed long timeout)
-{
-	struct default_wait_cb cb;
-	unsigned long flags;
-	signed long ret = timeout ? timeout : 1;
+चिन्हित दीर्घ
+dma_fence_शेष_रुको(काष्ठा dma_fence *fence, bool पूर्णांकr, चिन्हित दीर्घ समयout)
+अणु
+	काष्ठा शेष_रुको_cb cb;
+	अचिन्हित दीर्घ flags;
+	चिन्हित दीर्घ ret = समयout ? समयout : 1;
 
-	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
-		return ret;
+	अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		वापस ret;
 
 	spin_lock_irqsave(fence->lock, flags);
 
-	if (intr && signal_pending(current)) {
+	अगर (पूर्णांकr && संकेत_pending(current)) अणु
 		ret = -ERESTARTSYS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!__dma_fence_enable_signaling(fence))
-		goto out;
+	अगर (!__dma_fence_enable_संकेतing(fence))
+		जाओ out;
 
-	if (!timeout) {
+	अगर (!समयout) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	cb.base.func = dma_fence_default_wait_cb;
+	cb.base.func = dma_fence_शेष_रुको_cb;
 	cb.task = current;
 	list_add(&cb.base.node, &fence->cb_list);
 
-	while (!test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags) && ret > 0) {
-		if (intr)
+	जबतक (!test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags) && ret > 0) अणु
+		अगर (पूर्णांकr)
 			__set_current_state(TASK_INTERRUPTIBLE);
-		else
+		अन्यथा
 			__set_current_state(TASK_UNINTERRUPTIBLE);
 		spin_unlock_irqrestore(fence->lock, flags);
 
-		ret = schedule_timeout(ret);
+		ret = schedule_समयout(ret);
 
 		spin_lock_irqsave(fence->lock, flags);
-		if (ret > 0 && intr && signal_pending(current))
+		अगर (ret > 0 && पूर्णांकr && संकेत_pending(current))
 			ret = -ERESTARTSYS;
-	}
+	पूर्ण
 
-	if (!list_empty(&cb.base.node))
+	अगर (!list_empty(&cb.base.node))
 		list_del(&cb.base.node);
 	__set_current_state(TASK_RUNNING);
 
 out:
 	spin_unlock_irqrestore(fence->lock, flags);
-	return ret;
-}
-EXPORT_SYMBOL(dma_fence_default_wait);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(dma_fence_शेष_रुको);
 
-static bool
-dma_fence_test_signaled_any(struct dma_fence **fences, uint32_t count,
-			    uint32_t *idx)
-{
-	int i;
+अटल bool
+dma_fence_test_संकेतed_any(काष्ठा dma_fence **fences, uपूर्णांक32_t count,
+			    uपूर्णांक32_t *idx)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; ++i) {
-		struct dma_fence *fence = fences[i];
-		if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
-			if (idx)
+	क्रम (i = 0; i < count; ++i) अणु
+		काष्ठा dma_fence *fence = fences[i];
+		अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) अणु
+			अगर (idx)
 				*idx = i;
-			return true;
-		}
-	}
-	return false;
-}
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * dma_fence_wait_any_timeout - sleep until any fence gets signaled
- * or until timeout elapses
- * @fences: array of fences to wait on
- * @count: number of fences to wait on
- * @intr: if true, do an interruptible wait
- * @timeout: timeout value in jiffies, or MAX_SCHEDULE_TIMEOUT
- * @idx: used to store the first signaled fence index, meaningful only on
- *	positive return
+ * dma_fence_रुको_any_समयout - sleep until any fence माला_लो संकेतed
+ * or until समयout elapses
+ * @fences: array of fences to रुको on
+ * @count: number of fences to रुको on
+ * @पूर्णांकr: अगर true, करो an पूर्णांकerruptible रुको
+ * @समयout: समयout value in jअगरfies, or MAX_SCHEDULE_TIMEOUT
+ * @idx: used to store the first संकेतed fence index, meaningful only on
+ *	positive वापस
  *
- * Returns -EINVAL on custom fence wait implementation, -ERESTARTSYS if
- * interrupted, 0 if the wait timed out, or the remaining timeout in jiffies
+ * Returns -EINVAL on custom fence रुको implementation, -ERESTARTSYS अगर
+ * पूर्णांकerrupted, 0 अगर the रुको समयd out, or the reमुख्यing समयout in jअगरfies
  * on success.
  *
- * Synchronous waits for the first fence in the array to be signaled. The
+ * Synchronous रुकोs क्रम the first fence in the array to be संकेतed. The
  * caller needs to hold a reference to all fences in the array, otherwise a
- * fence might be freed before return, resulting in undefined behavior.
+ * fence might be मुक्तd beक्रमe वापस, resulting in undefined behavior.
  *
- * See also dma_fence_wait() and dma_fence_wait_timeout().
+ * See also dma_fence_रुको() and dma_fence_रुको_समयout().
  */
-signed long
-dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t count,
-			   bool intr, signed long timeout, uint32_t *idx)
-{
-	struct default_wait_cb *cb;
-	signed long ret = timeout;
-	unsigned i;
+चिन्हित दीर्घ
+dma_fence_रुको_any_समयout(काष्ठा dma_fence **fences, uपूर्णांक32_t count,
+			   bool पूर्णांकr, चिन्हित दीर्घ समयout, uपूर्णांक32_t *idx)
+अणु
+	काष्ठा शेष_रुको_cb *cb;
+	चिन्हित दीर्घ ret = समयout;
+	अचिन्हित i;
 
-	if (WARN_ON(!fences || !count || timeout < 0))
-		return -EINVAL;
+	अगर (WARN_ON(!fences || !count || समयout < 0))
+		वापस -EINVAL;
 
-	if (timeout == 0) {
-		for (i = 0; i < count; ++i)
-			if (dma_fence_is_signaled(fences[i])) {
-				if (idx)
+	अगर (समयout == 0) अणु
+		क्रम (i = 0; i < count; ++i)
+			अगर (dma_fence_is_संकेतed(fences[i])) अणु
+				अगर (idx)
 					*idx = i;
-				return 1;
-			}
+				वापस 1;
+			पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	cb = kcalloc(count, sizeof(struct default_wait_cb), GFP_KERNEL);
-	if (cb == NULL) {
+	cb = kसुस्मृति(count, माप(काष्ठा शेष_रुको_cb), GFP_KERNEL);
+	अगर (cb == शून्य) अणु
 		ret = -ENOMEM;
-		goto err_free_cb;
-	}
+		जाओ err_मुक्त_cb;
+	पूर्ण
 
-	for (i = 0; i < count; ++i) {
-		struct dma_fence *fence = fences[i];
+	क्रम (i = 0; i < count; ++i) अणु
+		काष्ठा dma_fence *fence = fences[i];
 
 		cb[i].task = current;
-		if (dma_fence_add_callback(fence, &cb[i].base,
-					   dma_fence_default_wait_cb)) {
-			/* This fence is already signaled */
-			if (idx)
+		अगर (dma_fence_add_callback(fence, &cb[i].base,
+					   dma_fence_शेष_रुको_cb)) अणु
+			/* This fence is alपढ़ोy संकेतed */
+			अगर (idx)
 				*idx = i;
-			goto fence_rm_cb;
-		}
-	}
+			जाओ fence_rm_cb;
+		पूर्ण
+	पूर्ण
 
-	while (ret > 0) {
-		if (intr)
+	जबतक (ret > 0) अणु
+		अगर (पूर्णांकr)
 			set_current_state(TASK_INTERRUPTIBLE);
-		else
+		अन्यथा
 			set_current_state(TASK_UNINTERRUPTIBLE);
 
-		if (dma_fence_test_signaled_any(fences, count, idx))
-			break;
+		अगर (dma_fence_test_संकेतed_any(fences, count, idx))
+			अवरोध;
 
-		ret = schedule_timeout(ret);
+		ret = schedule_समयout(ret);
 
-		if (ret > 0 && intr && signal_pending(current))
+		अगर (ret > 0 && पूर्णांकr && संकेत_pending(current))
 			ret = -ERESTARTSYS;
-	}
+	पूर्ण
 
 	__set_current_state(TASK_RUNNING);
 
 fence_rm_cb:
-	while (i-- > 0)
-		dma_fence_remove_callback(fences[i], &cb[i].base);
+	जबतक (i-- > 0)
+		dma_fence_हटाओ_callback(fences[i], &cb[i].base);
 
-err_free_cb:
-	kfree(cb);
+err_मुक्त_cb:
+	kमुक्त(cb);
 
-	return ret;
-}
-EXPORT_SYMBOL(dma_fence_wait_any_timeout);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(dma_fence_रुको_any_समयout);
 
 /**
  * dma_fence_init - Initialize a custom fence.
  * @fence: the fence to initialize
- * @ops: the dma_fence_ops for operations on this fence
- * @lock: the irqsafe spinlock to use for locking this fence
+ * @ops: the dma_fence_ops क्रम operations on this fence
+ * @lock: the irqsafe spinlock to use क्रम locking this fence
  * @context: the execution context this fence is run on
- * @seqno: a linear increasing sequence number for this context
+ * @seqno: a linear increasing sequence number क्रम this context
  *
- * Initializes an allocated fence, the caller doesn't have to keep its
+ * Initializes an allocated fence, the caller करोesn't have to keep its
  * refcount after committing with this fence, but it will need to hold a
- * refcount again if &dma_fence_ops.enable_signaling gets called.
+ * refcount again अगर &dma_fence_ops.enable_संकेतing माला_लो called.
  *
- * context and seqno are used for easy comparison between fences, allowing
+ * context and seqno are used क्रम easy comparison between fences, allowing
  * to check which fence is later by simply using dma_fence_later().
  */
-void
-dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
+व्योम
+dma_fence_init(काष्ठा dma_fence *fence, स्थिर काष्ठा dma_fence_ops *ops,
 	       spinlock_t *lock, u64 context, u64 seqno)
-{
+अणु
 	BUG_ON(!lock);
-	BUG_ON(!ops || !ops->get_driver_name || !ops->get_timeline_name);
+	BUG_ON(!ops || !ops->get_driver_name || !ops->get_समयline_name);
 
 	kref_init(&fence->refcount);
 	fence->ops = ops;
@@ -942,5 +943,5 @@ dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
 	fence->error = 0;
 
 	trace_dma_fence_init(fence);
-}
+पूर्ण
 EXPORT_SYMBOL(dma_fence_init);

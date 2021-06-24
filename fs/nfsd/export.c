@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * NFS exporting and validation.
  *
- * We maintain a list of clients, each of which has a list of
+ * We मुख्यtain a list of clients, each of which has a list of
  * exports. To export an fs to a given client, you first have
  * to create the client entry with NFSCTL_ADDCLIENT, which
  * creates a client control block and adds it to the hash
- * table. Then, you call NFSCTL_EXPORT for each fs.
+ * table. Then, you call NFSCTL_EXPORT क्रम each fs.
  *
  *
  * Copyright (C) 1995, 1996 Olaf Kirch, <okir@monad.swb.de>
  */
 
-#include <linux/slab.h>
-#include <linux/namei.h>
-#include <linux/module.h>
-#include <linux/exportfs.h>
-#include <linux/sunrpc/svc_xprt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/module.h>
+#समावेश <linux/exportfs.h>
+#समावेश <linux/sunrpc/svc_xprt.h>
 
-#include "nfsd.h"
-#include "nfsfh.h"
-#include "netns.h"
-#include "pnfs.h"
-#include "filecache.h"
-#include "trace.h"
+#समावेश "nfsd.h"
+#समावेश "nfsfh.h"
+#समावेश "netns.h"
+#समावेश "pnfs.h"
+#समावेश "filecache.h"
+#समावेश "trace.h"
 
-#define NFSDDBG_FACILITY	NFSDDBG_EXPORT
+#घोषणा NFSDDBG_FACILITY	NFSDDBG_EXPORT
 
 /*
  * We have two caches.
@@ -36,225 +37,225 @@
  * second map contains a reference to the entry in the first map.
  */
 
-#define	EXPKEY_HASHBITS		8
-#define	EXPKEY_HASHMAX		(1 << EXPKEY_HASHBITS)
-#define	EXPKEY_HASHMASK		(EXPKEY_HASHMAX -1)
+#घोषणा	EXPKEY_HASHBITS		8
+#घोषणा	EXPKEY_HASHMAX		(1 << EXPKEY_HASHBITS)
+#घोषणा	EXPKEY_HASHMASK		(EXPKEY_HASHMAX -1)
 
-static void expkey_put(struct kref *ref)
-{
-	struct svc_expkey *key = container_of(ref, struct svc_expkey, h.ref);
+अटल व्योम expkey_put(काष्ठा kref *ref)
+अणु
+	काष्ठा svc_expkey *key = container_of(ref, काष्ठा svc_expkey, h.ref);
 
-	if (test_bit(CACHE_VALID, &key->h.flags) &&
+	अगर (test_bit(CACHE_VALID, &key->h.flags) &&
 	    !test_bit(CACHE_NEGATIVE, &key->h.flags))
 		path_put(&key->ek_path);
-	auth_domain_put(key->ek_client);
-	kfree_rcu(key, ek_rcu);
-}
+	auth_करोमुख्य_put(key->ek_client);
+	kमुक्त_rcu(key, ek_rcu);
+पूर्ण
 
-static int expkey_upcall(struct cache_detail *cd, struct cache_head *h)
-{
-	return sunrpc_cache_pipe_upcall(cd, h);
-}
+अटल पूर्णांक expkey_upcall(काष्ठा cache_detail *cd, काष्ठा cache_head *h)
+अणु
+	वापस sunrpc_cache_pipe_upcall(cd, h);
+पूर्ण
 
-static void expkey_request(struct cache_detail *cd,
-			   struct cache_head *h,
-			   char **bpp, int *blen)
-{
-	/* client fsidtype \xfsid */
-	struct svc_expkey *ek = container_of(h, struct svc_expkey, h);
-	char type[5];
+अटल व्योम expkey_request(काष्ठा cache_detail *cd,
+			   काष्ठा cache_head *h,
+			   अक्षर **bpp, पूर्णांक *blen)
+अणु
+	/* client fsidtype \षfsid */
+	काष्ठा svc_expkey *ek = container_of(h, काष्ठा svc_expkey, h);
+	अक्षर type[5];
 
 	qword_add(bpp, blen, ek->ek_client->name);
-	snprintf(type, 5, "%d", ek->ek_fsidtype);
+	snम_लिखो(type, 5, "%d", ek->ek_fsidtype);
 	qword_add(bpp, blen, type);
-	qword_addhex(bpp, blen, (char*)ek->ek_fsid, key_len(ek->ek_fsidtype));
+	qword_addhex(bpp, blen, (अक्षर*)ek->ek_fsid, key_len(ek->ek_fsidtype));
 	(*bpp)[-1] = '\n';
-}
+पूर्ण
 
-static struct svc_expkey *svc_expkey_update(struct cache_detail *cd, struct svc_expkey *new,
-					    struct svc_expkey *old);
-static struct svc_expkey *svc_expkey_lookup(struct cache_detail *cd, struct svc_expkey *);
+अटल काष्ठा svc_expkey *svc_expkey_update(काष्ठा cache_detail *cd, काष्ठा svc_expkey *new,
+					    काष्ठा svc_expkey *old);
+अटल काष्ठा svc_expkey *svc_expkey_lookup(काष्ठा cache_detail *cd, काष्ठा svc_expkey *);
 
-static int expkey_parse(struct cache_detail *cd, char *mesg, int mlen)
-{
+अटल पूर्णांक expkey_parse(काष्ठा cache_detail *cd, अक्षर *mesg, पूर्णांक mlen)
+अणु
 	/* client fsidtype fsid expiry [path] */
-	char *buf;
-	int len;
-	struct auth_domain *dom = NULL;
-	int err;
-	int fsidtype;
-	char *ep;
-	struct svc_expkey key;
-	struct svc_expkey *ek = NULL;
+	अक्षर *buf;
+	पूर्णांक len;
+	काष्ठा auth_करोमुख्य *करोm = शून्य;
+	पूर्णांक err;
+	पूर्णांक fsidtype;
+	अक्षर *ep;
+	काष्ठा svc_expkey key;
+	काष्ठा svc_expkey *ek = शून्य;
 
-	if (mesg[mlen - 1] != '\n')
-		return -EINVAL;
+	अगर (mesg[mlen - 1] != '\n')
+		वापस -EINVAL;
 	mesg[mlen-1] = 0;
 
-	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
 	err = -ENOMEM;
-	if (!buf)
-		goto out;
+	अगर (!buf)
+		जाओ out;
 
 	err = -EINVAL;
-	if ((len=qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
-		goto out;
+	अगर ((len=qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
+		जाओ out;
 
 	err = -ENOENT;
-	dom = auth_domain_find(buf);
-	if (!dom)
-		goto out;
-	dprintk("found domain %s\n", buf);
+	करोm = auth_करोमुख्य_find(buf);
+	अगर (!करोm)
+		जाओ out;
+	dprपूर्णांकk("found domain %s\n", buf);
 
 	err = -EINVAL;
-	if ((len=qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
-		goto out;
-	fsidtype = simple_strtoul(buf, &ep, 10);
-	if (*ep)
-		goto out;
-	dprintk("found fsidtype %d\n", fsidtype);
-	if (key_len(fsidtype)==0) /* invalid type */
-		goto out;
-	if ((len=qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
-		goto out;
-	dprintk("found fsid length %d\n", len);
-	if (len != key_len(fsidtype))
-		goto out;
+	अगर ((len=qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
+		जाओ out;
+	fsidtype = simple_म_से_अदीर्घ(buf, &ep, 10);
+	अगर (*ep)
+		जाओ out;
+	dprपूर्णांकk("found fsidtype %d\n", fsidtype);
+	अगर (key_len(fsidtype)==0) /* invalid type */
+		जाओ out;
+	अगर ((len=qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
+		जाओ out;
+	dprपूर्णांकk("found fsid length %d\n", len);
+	अगर (len != key_len(fsidtype))
+		जाओ out;
 
 	/* OK, we seem to have a valid key */
 	key.h.flags = 0;
-	key.h.expiry_time = get_expiry(&mesg);
-	if (key.h.expiry_time == 0)
-		goto out;
+	key.h.expiry_समय = get_expiry(&mesg);
+	अगर (key.h.expiry_समय == 0)
+		जाओ out;
 
-	key.ek_client = dom;	
+	key.ek_client = करोm;	
 	key.ek_fsidtype = fsidtype;
-	memcpy(key.ek_fsid, buf, len);
+	स_नकल(key.ek_fsid, buf, len);
 
 	ek = svc_expkey_lookup(cd, &key);
 	err = -ENOMEM;
-	if (!ek)
-		goto out;
+	अगर (!ek)
+		जाओ out;
 
 	/* now we want a pathname, or empty meaning NEGATIVE  */
 	err = -EINVAL;
 	len = qword_get(&mesg, buf, PAGE_SIZE);
-	if (len < 0)
-		goto out;
-	dprintk("Path seems to be <%s>\n", buf);
+	अगर (len < 0)
+		जाओ out;
+	dprपूर्णांकk("Path seems to be <%s>\n", buf);
 	err = 0;
-	if (len == 0) {
+	अगर (len == 0) अणु
 		set_bit(CACHE_NEGATIVE, &key.h.flags);
 		ek = svc_expkey_update(cd, &key, ek);
-		if (ek)
-			trace_nfsd_expkey_update(ek, NULL);
-		else
+		अगर (ek)
+			trace_nfsd_expkey_update(ek, शून्य);
+		अन्यथा
 			err = -ENOMEM;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = kern_path(buf, 0, &key.ek_path);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
-		dprintk("Found the path %s\n", buf);
+		dprपूर्णांकk("Found the path %s\n", buf);
 
 		ek = svc_expkey_update(cd, &key, ek);
-		if (ek)
+		अगर (ek)
 			trace_nfsd_expkey_update(ek, buf);
-		else
+		अन्यथा
 			err = -ENOMEM;
 		path_put(&key.ek_path);
-	}
+	पूर्ण
 	cache_flush();
  out:
-	if (ek)
+	अगर (ek)
 		cache_put(&ek->h, cd);
-	if (dom)
-		auth_domain_put(dom);
-	kfree(buf);
-	return err;
-}
+	अगर (करोm)
+		auth_करोमुख्य_put(करोm);
+	kमुक्त(buf);
+	वापस err;
+पूर्ण
 
-static int expkey_show(struct seq_file *m,
-		       struct cache_detail *cd,
-		       struct cache_head *h)
-{
-	struct svc_expkey *ek ;
-	int i;
+अटल पूर्णांक expkey_show(काष्ठा seq_file *m,
+		       काष्ठा cache_detail *cd,
+		       काष्ठा cache_head *h)
+अणु
+	काष्ठा svc_expkey *ek ;
+	पूर्णांक i;
 
-	if (h ==NULL) {
-		seq_puts(m, "#domain fsidtype fsid [path]\n");
-		return 0;
-	}
-	ek = container_of(h, struct svc_expkey, h);
-	seq_printf(m, "%s %d 0x", ek->ek_client->name,
+	अगर (h ==शून्य) अणु
+		seq_माला_दो(m, "#domain fsidtype fsid [path]\n");
+		वापस 0;
+	पूर्ण
+	ek = container_of(h, काष्ठा svc_expkey, h);
+	seq_म_लिखो(m, "%s %d 0x", ek->ek_client->name,
 		   ek->ek_fsidtype);
-	for (i=0; i < key_len(ek->ek_fsidtype)/4; i++)
-		seq_printf(m, "%08x", ek->ek_fsid[i]);
-	if (test_bit(CACHE_VALID, &h->flags) && 
-	    !test_bit(CACHE_NEGATIVE, &h->flags)) {
-		seq_printf(m, " ");
+	क्रम (i=0; i < key_len(ek->ek_fsidtype)/4; i++)
+		seq_म_लिखो(m, "%08x", ek->ek_fsid[i]);
+	अगर (test_bit(CACHE_VALID, &h->flags) && 
+	    !test_bit(CACHE_NEGATIVE, &h->flags)) अणु
+		seq_म_लिखो(m, " ");
 		seq_path(m, &ek->ek_path, "\\ \t\n");
-	}
-	seq_printf(m, "\n");
-	return 0;
-}
+	पूर्ण
+	seq_म_लिखो(m, "\n");
+	वापस 0;
+पूर्ण
 
-static inline int expkey_match (struct cache_head *a, struct cache_head *b)
-{
-	struct svc_expkey *orig = container_of(a, struct svc_expkey, h);
-	struct svc_expkey *new = container_of(b, struct svc_expkey, h);
+अटल अंतरभूत पूर्णांक expkey_match (काष्ठा cache_head *a, काष्ठा cache_head *b)
+अणु
+	काष्ठा svc_expkey *orig = container_of(a, काष्ठा svc_expkey, h);
+	काष्ठा svc_expkey *new = container_of(b, काष्ठा svc_expkey, h);
 
-	if (orig->ek_fsidtype != new->ek_fsidtype ||
+	अगर (orig->ek_fsidtype != new->ek_fsidtype ||
 	    orig->ek_client != new->ek_client ||
-	    memcmp(orig->ek_fsid, new->ek_fsid, key_len(orig->ek_fsidtype)) != 0)
-		return 0;
-	return 1;
-}
+	    स_भेद(orig->ek_fsid, new->ek_fsid, key_len(orig->ek_fsidtype)) != 0)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-static inline void expkey_init(struct cache_head *cnew,
-				   struct cache_head *citem)
-{
-	struct svc_expkey *new = container_of(cnew, struct svc_expkey, h);
-	struct svc_expkey *item = container_of(citem, struct svc_expkey, h);
+अटल अंतरभूत व्योम expkey_init(काष्ठा cache_head *cnew,
+				   काष्ठा cache_head *citem)
+अणु
+	काष्ठा svc_expkey *new = container_of(cnew, काष्ठा svc_expkey, h);
+	काष्ठा svc_expkey *item = container_of(citem, काष्ठा svc_expkey, h);
 
 	kref_get(&item->ek_client->ref);
 	new->ek_client = item->ek_client;
 	new->ek_fsidtype = item->ek_fsidtype;
 
-	memcpy(new->ek_fsid, item->ek_fsid, sizeof(new->ek_fsid));
-}
+	स_नकल(new->ek_fsid, item->ek_fsid, माप(new->ek_fsid));
+पूर्ण
 
-static inline void expkey_update(struct cache_head *cnew,
-				   struct cache_head *citem)
-{
-	struct svc_expkey *new = container_of(cnew, struct svc_expkey, h);
-	struct svc_expkey *item = container_of(citem, struct svc_expkey, h);
+अटल अंतरभूत व्योम expkey_update(काष्ठा cache_head *cnew,
+				   काष्ठा cache_head *citem)
+अणु
+	काष्ठा svc_expkey *new = container_of(cnew, काष्ठा svc_expkey, h);
+	काष्ठा svc_expkey *item = container_of(citem, काष्ठा svc_expkey, h);
 
 	new->ek_path = item->ek_path;
 	path_get(&item->ek_path);
-}
+पूर्ण
 
-static struct cache_head *expkey_alloc(void)
-{
-	struct svc_expkey *i = kmalloc(sizeof(*i), GFP_KERNEL);
-	if (i)
-		return &i->h;
-	else
-		return NULL;
-}
+अटल काष्ठा cache_head *expkey_alloc(व्योम)
+अणु
+	काष्ठा svc_expkey *i = kदो_स्मृति(माप(*i), GFP_KERNEL);
+	अगर (i)
+		वापस &i->h;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-static void expkey_flush(void)
-{
+अटल व्योम expkey_flush(व्योम)
+अणु
 	/*
 	 * Take the nfsd_mutex here to ensure that the file cache is not
-	 * destroyed while we're in the middle of flushing.
+	 * destroyed जबतक we're in the middle of flushing.
 	 */
 	mutex_lock(&nfsd_mutex);
 	nfsd_file_cache_purge(current->nsproxy->net_ns);
 	mutex_unlock(&nfsd_mutex);
-}
+पूर्ण
 
-static const struct cache_detail svc_expkey_cache_template = {
+अटल स्थिर काष्ठा cache_detail svc_expkey_cache_ढाँचा = अणु
 	.owner		= THIS_MODULE,
 	.hash_size	= EXPKEY_HASHMAX,
 	.name		= "nfsd.fh",
@@ -268,579 +269,579 @@ static const struct cache_detail svc_expkey_cache_template = {
 	.update       	= expkey_update,
 	.alloc		= expkey_alloc,
 	.flush		= expkey_flush,
-};
+पूर्ण;
 
-static int
-svc_expkey_hash(struct svc_expkey *item)
-{
-	int hash = item->ek_fsidtype;
-	char * cp = (char*)item->ek_fsid;
-	int len = key_len(item->ek_fsidtype);
+अटल पूर्णांक
+svc_expkey_hash(काष्ठा svc_expkey *item)
+अणु
+	पूर्णांक hash = item->ek_fsidtype;
+	अक्षर * cp = (अक्षर*)item->ek_fsid;
+	पूर्णांक len = key_len(item->ek_fsidtype);
 
 	hash ^= hash_mem(cp, len, EXPKEY_HASHBITS);
 	hash ^= hash_ptr(item->ek_client, EXPKEY_HASHBITS);
 	hash &= EXPKEY_HASHMASK;
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
-static struct svc_expkey *
-svc_expkey_lookup(struct cache_detail *cd, struct svc_expkey *item)
-{
-	struct cache_head *ch;
-	int hash = svc_expkey_hash(item);
+अटल काष्ठा svc_expkey *
+svc_expkey_lookup(काष्ठा cache_detail *cd, काष्ठा svc_expkey *item)
+अणु
+	काष्ठा cache_head *ch;
+	पूर्णांक hash = svc_expkey_hash(item);
 
 	ch = sunrpc_cache_lookup_rcu(cd, &item->h, hash);
-	if (ch)
-		return container_of(ch, struct svc_expkey, h);
-	else
-		return NULL;
-}
+	अगर (ch)
+		वापस container_of(ch, काष्ठा svc_expkey, h);
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-static struct svc_expkey *
-svc_expkey_update(struct cache_detail *cd, struct svc_expkey *new,
-		  struct svc_expkey *old)
-{
-	struct cache_head *ch;
-	int hash = svc_expkey_hash(new);
+अटल काष्ठा svc_expkey *
+svc_expkey_update(काष्ठा cache_detail *cd, काष्ठा svc_expkey *new,
+		  काष्ठा svc_expkey *old)
+अणु
+	काष्ठा cache_head *ch;
+	पूर्णांक hash = svc_expkey_hash(new);
 
 	ch = sunrpc_cache_update(cd, &new->h, &old->h, hash);
-	if (ch)
-		return container_of(ch, struct svc_expkey, h);
-	else
-		return NULL;
-}
+	अगर (ch)
+		वापस container_of(ch, काष्ठा svc_expkey, h);
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
 
-#define	EXPORT_HASHBITS		8
-#define	EXPORT_HASHMAX		(1<< EXPORT_HASHBITS)
+#घोषणा	EXPORT_HASHBITS		8
+#घोषणा	EXPORT_HASHMAX		(1<< EXPORT_HASHBITS)
 
-static void nfsd4_fslocs_free(struct nfsd4_fs_locations *fsloc)
-{
-	struct nfsd4_fs_location *locations = fsloc->locations;
-	int i;
+अटल व्योम nfsd4_fslocs_मुक्त(काष्ठा nfsd4_fs_locations *fsloc)
+अणु
+	काष्ठा nfsd4_fs_location *locations = fsloc->locations;
+	पूर्णांक i;
 
-	if (!locations)
-		return;
+	अगर (!locations)
+		वापस;
 
-	for (i = 0; i < fsloc->locations_count; i++) {
-		kfree(locations[i].path);
-		kfree(locations[i].hosts);
-	}
+	क्रम (i = 0; i < fsloc->locations_count; i++) अणु
+		kमुक्त(locations[i].path);
+		kमुक्त(locations[i].hosts);
+	पूर्ण
 
-	kfree(locations);
-	fsloc->locations = NULL;
-}
+	kमुक्त(locations);
+	fsloc->locations = शून्य;
+पूर्ण
 
-static int export_stats_init(struct export_stats *stats)
-{
-	stats->start_time = ktime_get_seconds();
-	return nfsd_percpu_counters_init(stats->counter, EXP_STATS_COUNTERS_NUM);
-}
+अटल पूर्णांक export_stats_init(काष्ठा export_stats *stats)
+अणु
+	stats->start_समय = kसमय_get_seconds();
+	वापस nfsd_percpu_counters_init(stats->counter, EXP_STATS_COUNTERS_NUM);
+पूर्ण
 
-static void export_stats_reset(struct export_stats *stats)
-{
+अटल व्योम export_stats_reset(काष्ठा export_stats *stats)
+अणु
 	nfsd_percpu_counters_reset(stats->counter, EXP_STATS_COUNTERS_NUM);
-}
+पूर्ण
 
-static void export_stats_destroy(struct export_stats *stats)
-{
+अटल व्योम export_stats_destroy(काष्ठा export_stats *stats)
+अणु
 	nfsd_percpu_counters_destroy(stats->counter, EXP_STATS_COUNTERS_NUM);
-}
+पूर्ण
 
-static void svc_export_put(struct kref *ref)
-{
-	struct svc_export *exp = container_of(ref, struct svc_export, h.ref);
+अटल व्योम svc_export_put(काष्ठा kref *ref)
+अणु
+	काष्ठा svc_export *exp = container_of(ref, काष्ठा svc_export, h.ref);
 	path_put(&exp->ex_path);
-	auth_domain_put(exp->ex_client);
-	nfsd4_fslocs_free(&exp->ex_fslocs);
+	auth_करोमुख्य_put(exp->ex_client);
+	nfsd4_fslocs_मुक्त(&exp->ex_fslocs);
 	export_stats_destroy(&exp->ex_stats);
-	kfree(exp->ex_uuid);
-	kfree_rcu(exp, ex_rcu);
-}
+	kमुक्त(exp->ex_uuid);
+	kमुक्त_rcu(exp, ex_rcu);
+पूर्ण
 
-static int svc_export_upcall(struct cache_detail *cd, struct cache_head *h)
-{
-	return sunrpc_cache_pipe_upcall(cd, h);
-}
+अटल पूर्णांक svc_export_upcall(काष्ठा cache_detail *cd, काष्ठा cache_head *h)
+अणु
+	वापस sunrpc_cache_pipe_upcall(cd, h);
+पूर्ण
 
-static void svc_export_request(struct cache_detail *cd,
-			       struct cache_head *h,
-			       char **bpp, int *blen)
-{
+अटल व्योम svc_export_request(काष्ठा cache_detail *cd,
+			       काष्ठा cache_head *h,
+			       अक्षर **bpp, पूर्णांक *blen)
+अणु
 	/*  client path */
-	struct svc_export *exp = container_of(h, struct svc_export, h);
-	char *pth;
+	काष्ठा svc_export *exp = container_of(h, काष्ठा svc_export, h);
+	अक्षर *pth;
 
 	qword_add(bpp, blen, exp->ex_client->name);
 	pth = d_path(&exp->ex_path, *bpp, *blen);
-	if (IS_ERR(pth)) {
+	अगर (IS_ERR(pth)) अणु
 		/* is this correct? */
 		(*bpp)[0] = '\n';
-		return;
-	}
+		वापस;
+	पूर्ण
 	qword_add(bpp, blen, pth);
 	(*bpp)[-1] = '\n';
-}
+पूर्ण
 
-static struct svc_export *svc_export_update(struct svc_export *new,
-					    struct svc_export *old);
-static struct svc_export *svc_export_lookup(struct svc_export *);
+अटल काष्ठा svc_export *svc_export_update(काष्ठा svc_export *new,
+					    काष्ठा svc_export *old);
+अटल काष्ठा svc_export *svc_export_lookup(काष्ठा svc_export *);
 
-static int check_export(struct path *path, int *flags, unsigned char *uuid)
-{
-	struct inode *inode = d_inode(path->dentry);
+अटल पूर्णांक check_export(काष्ठा path *path, पूर्णांक *flags, अचिन्हित अक्षर *uuid)
+अणु
+	काष्ठा inode *inode = d_inode(path->dentry);
 
 	/*
-	 * We currently export only dirs, regular files, and (for v4
-	 * pseudoroot) symlinks.
+	 * We currently export only dirs, regular files, and (क्रम v4
+	 * pseuकरोroot) symlinks.
 	 */
-	if (!S_ISDIR(inode->i_mode) &&
+	अगर (!S_ISसूची(inode->i_mode) &&
 	    !S_ISLNK(inode->i_mode) &&
 	    !S_ISREG(inode->i_mode))
-		return -ENOTDIR;
+		वापस -ENOTसूची;
 
 	/*
-	 * Mountd should never pass down a writeable V4ROOT export, but,
+	 * Mountd should never pass करोwn a ग_लिखोable V4ROOT export, but,
 	 * just to make sure:
 	 */
-	if (*flags & NFSEXP_V4ROOT)
+	अगर (*flags & NFSEXP_V4ROOT)
 		*flags |= NFSEXP_READONLY;
 
-	/* There are two requirements on a filesystem to be exportable.
-	 * 1:  We must be able to identify the filesystem from a number.
+	/* There are two requirements on a fileप्रणाली to be exportable.
+	 * 1:  We must be able to identअगरy the fileप्रणाली from a number.
 	 *       either a device number (so FS_REQUIRES_DEV needed)
 	 *       or an FSID number (so NFSEXP_FSID or ->uuid is needed).
 	 * 2:  We must be able to find an inode from a filehandle.
 	 *       This means that s_export_op must be set.
 	 * 3: We must not currently be on an idmapped mount.
 	 */
-	if (!(inode->i_sb->s_type->fs_flags & FS_REQUIRES_DEV) &&
+	अगर (!(inode->i_sb->s_type->fs_flags & FS_REQUIRES_DEV) &&
 	    !(*flags & NFSEXP_FSID) &&
-	    uuid == NULL) {
-		dprintk("exp_export: export of non-dev fs without fsid\n");
-		return -EINVAL;
-	}
+	    uuid == शून्य) अणु
+		dprपूर्णांकk("exp_export: export of non-dev fs without fsid\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!inode->i_sb->s_export_op ||
-	    !inode->i_sb->s_export_op->fh_to_dentry) {
-		dprintk("exp_export: export of invalid fs type.\n");
-		return -EINVAL;
-	}
+	अगर (!inode->i_sb->s_export_op ||
+	    !inode->i_sb->s_export_op->fh_to_dentry) अणु
+		dprपूर्णांकk("exp_export: export of invalid fs type.\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (mnt_user_ns(path->mnt) != &init_user_ns) {
-		dprintk("exp_export: export of idmapped mounts not yet supported.\n");
-		return -EINVAL;
-	}
+	अगर (mnt_user_ns(path->mnt) != &init_user_ns) अणु
+		dprपूर्णांकk("exp_export: export of idmapped mounts not yet supported.\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (inode->i_sb->s_export_op->flags & EXPORT_OP_NOSUBTREECHK &&
-	    !(*flags & NFSEXP_NOSUBTREECHECK)) {
-		dprintk("%s: %s does not support subtree checking!\n",
+	अगर (inode->i_sb->s_export_op->flags & EXPORT_OP_NOSUBTREECHK &&
+	    !(*flags & NFSEXP_NOSUBTREECHECK)) अणु
+		dprपूर्णांकk("%s: %s does not support subtree checking!\n",
 			__func__, inode->i_sb->s_type->name);
-		return -EINVAL;
-	}
-	return 0;
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
 
-}
+पूर्ण
 
-#ifdef CONFIG_NFSD_V4
+#अगर_घोषित CONFIG_NFSD_V4
 
-static int
-fsloc_parse(char **mesg, char *buf, struct nfsd4_fs_locations *fsloc)
-{
-	int len;
-	int migrated, i, err;
+अटल पूर्णांक
+fsloc_parse(अक्षर **mesg, अक्षर *buf, काष्ठा nfsd4_fs_locations *fsloc)
+अणु
+	पूर्णांक len;
+	पूर्णांक migrated, i, err;
 
 	/* more than one fsloc */
-	if (fsloc->locations)
-		return -EINVAL;
+	अगर (fsloc->locations)
+		वापस -EINVAL;
 
 	/* listsize */
-	err = get_uint(mesg, &fsloc->locations_count);
-	if (err)
-		return err;
-	if (fsloc->locations_count > MAX_FS_LOCATIONS)
-		return -EINVAL;
-	if (fsloc->locations_count == 0)
-		return 0;
+	err = get_uपूर्णांक(mesg, &fsloc->locations_count);
+	अगर (err)
+		वापस err;
+	अगर (fsloc->locations_count > MAX_FS_LOCATIONS)
+		वापस -EINVAL;
+	अगर (fsloc->locations_count == 0)
+		वापस 0;
 
-	fsloc->locations = kcalloc(fsloc->locations_count,
-				   sizeof(struct nfsd4_fs_location),
+	fsloc->locations = kसुस्मृति(fsloc->locations_count,
+				   माप(काष्ठा nfsd4_fs_location),
 				   GFP_KERNEL);
-	if (!fsloc->locations)
-		return -ENOMEM;
-	for (i=0; i < fsloc->locations_count; i++) {
+	अगर (!fsloc->locations)
+		वापस -ENOMEM;
+	क्रम (i=0; i < fsloc->locations_count; i++) अणु
 		/* colon separated host list */
 		err = -EINVAL;
 		len = qword_get(mesg, buf, PAGE_SIZE);
-		if (len <= 0)
-			goto out_free_all;
+		अगर (len <= 0)
+			जाओ out_मुक्त_all;
 		err = -ENOMEM;
 		fsloc->locations[i].hosts = kstrdup(buf, GFP_KERNEL);
-		if (!fsloc->locations[i].hosts)
-			goto out_free_all;
+		अगर (!fsloc->locations[i].hosts)
+			जाओ out_मुक्त_all;
 		err = -EINVAL;
 		/* slash separated path component list */
 		len = qword_get(mesg, buf, PAGE_SIZE);
-		if (len <= 0)
-			goto out_free_all;
+		अगर (len <= 0)
+			जाओ out_मुक्त_all;
 		err = -ENOMEM;
 		fsloc->locations[i].path = kstrdup(buf, GFP_KERNEL);
-		if (!fsloc->locations[i].path)
-			goto out_free_all;
-	}
+		अगर (!fsloc->locations[i].path)
+			जाओ out_मुक्त_all;
+	पूर्ण
 	/* migrated */
-	err = get_int(mesg, &migrated);
-	if (err)
-		goto out_free_all;
+	err = get_पूर्णांक(mesg, &migrated);
+	अगर (err)
+		जाओ out_मुक्त_all;
 	err = -EINVAL;
-	if (migrated < 0 || migrated > 1)
-		goto out_free_all;
+	अगर (migrated < 0 || migrated > 1)
+		जाओ out_मुक्त_all;
 	fsloc->migrated = migrated;
-	return 0;
-out_free_all:
-	nfsd4_fslocs_free(fsloc);
-	return err;
-}
+	वापस 0;
+out_मुक्त_all:
+	nfsd4_fslocs_मुक्त(fsloc);
+	वापस err;
+पूर्ण
 
-static int secinfo_parse(char **mesg, char *buf, struct svc_export *exp)
-{
-	struct exp_flavor_info *f;
+अटल पूर्णांक secinfo_parse(अक्षर **mesg, अक्षर *buf, काष्ठा svc_export *exp)
+अणु
+	काष्ठा exp_flavor_info *f;
 	u32 listsize;
-	int err;
+	पूर्णांक err;
 
 	/* more than one secinfo */
-	if (exp->ex_nflavors)
-		return -EINVAL;
+	अगर (exp->ex_nflavors)
+		वापस -EINVAL;
 
-	err = get_uint(mesg, &listsize);
-	if (err)
-		return err;
-	if (listsize > MAX_SECINFO_LIST)
-		return -EINVAL;
+	err = get_uपूर्णांक(mesg, &listsize);
+	अगर (err)
+		वापस err;
+	अगर (listsize > MAX_SECINFO_LIST)
+		वापस -EINVAL;
 
-	for (f = exp->ex_flavors; f < exp->ex_flavors + listsize; f++) {
-		err = get_uint(mesg, &f->pseudoflavor);
-		if (err)
-			return err;
+	क्रम (f = exp->ex_flavors; f < exp->ex_flavors + listsize; f++) अणु
+		err = get_uपूर्णांक(mesg, &f->pseuकरोflavor);
+		अगर (err)
+			वापस err;
 		/*
 		 * XXX: It would be nice to also check whether this
-		 * pseudoflavor is supported, so we can discover the
-		 * problem at export time instead of when a client fails
+		 * pseuकरोflavor is supported, so we can discover the
+		 * problem at export समय instead of when a client fails
 		 * to authenticate.
 		 */
-		err = get_uint(mesg, &f->flags);
-		if (err)
-			return err;
-		/* Only some flags are allowed to differ between flavors: */
-		if (~NFSEXP_SECINFO_FLAGS & (f->flags ^ exp->ex_flags))
-			return -EINVAL;
-	}
+		err = get_uपूर्णांक(mesg, &f->flags);
+		अगर (err)
+			वापस err;
+		/* Only some flags are allowed to dअगरfer between flavors: */
+		अगर (~NFSEXP_SECINFO_FLAGS & (f->flags ^ exp->ex_flags))
+			वापस -EINVAL;
+	पूर्ण
 	exp->ex_nflavors = listsize;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* CONFIG_NFSD_V4 */
-static inline int
-fsloc_parse(char **mesg, char *buf, struct nfsd4_fs_locations *fsloc){return 0;}
-static inline int
-secinfo_parse(char **mesg, char *buf, struct svc_export *exp) { return 0; }
-#endif
+#अन्यथा /* CONFIG_NFSD_V4 */
+अटल अंतरभूत पूर्णांक
+fsloc_parse(अक्षर **mesg, अक्षर *buf, काष्ठा nfsd4_fs_locations *fsloc)अणुवापस 0;पूर्ण
+अटल अंतरभूत पूर्णांक
+secinfo_parse(अक्षर **mesg, अक्षर *buf, काष्ठा svc_export *exp) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-static inline int
-nfsd_uuid_parse(char **mesg, char *buf, unsigned char **puuid)
-{
-	int len;
+अटल अंतरभूत पूर्णांक
+nfsd_uuid_parse(अक्षर **mesg, अक्षर *buf, अचिन्हित अक्षर **puuid)
+अणु
+	पूर्णांक len;
 
 	/* more than one uuid */
-	if (*puuid)
-		return -EINVAL;
+	अगर (*puuid)
+		वापस -EINVAL;
 
-	/* expect a 16 byte uuid encoded as \xXXXX... */
+	/* expect a 16 byte uuid encoded as \षXXXX... */
 	len = qword_get(mesg, buf, PAGE_SIZE);
-	if (len != EX_UUID_LEN)
-		return -EINVAL;
+	अगर (len != EX_UUID_LEN)
+		वापस -EINVAL;
 
 	*puuid = kmemdup(buf, EX_UUID_LEN, GFP_KERNEL);
-	if (*puuid == NULL)
-		return -ENOMEM;
+	अगर (*puuid == शून्य)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int svc_export_parse(struct cache_detail *cd, char *mesg, int mlen)
-{
+अटल पूर्णांक svc_export_parse(काष्ठा cache_detail *cd, अक्षर *mesg, पूर्णांक mlen)
+अणु
 	/* client path expiry [flags anonuid anongid fsid] */
-	char *buf;
-	int len;
-	int err;
-	struct auth_domain *dom = NULL;
-	struct svc_export exp = {}, *expp;
-	int an_int;
+	अक्षर *buf;
+	पूर्णांक len;
+	पूर्णांक err;
+	काष्ठा auth_करोमुख्य *करोm = शून्य;
+	काष्ठा svc_export exp = अणुपूर्ण, *expp;
+	पूर्णांक an_पूर्णांक;
 
-	if (mesg[mlen-1] != '\n')
-		return -EINVAL;
+	अगर (mesg[mlen-1] != '\n')
+		वापस -EINVAL;
 	mesg[mlen-1] = 0;
 
-	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	/* client */
 	err = -EINVAL;
 	len = qword_get(&mesg, buf, PAGE_SIZE);
-	if (len <= 0)
-		goto out;
+	अगर (len <= 0)
+		जाओ out;
 
 	err = -ENOENT;
-	dom = auth_domain_find(buf);
-	if (!dom)
-		goto out;
+	करोm = auth_करोमुख्य_find(buf);
+	अगर (!करोm)
+		जाओ out;
 
 	/* path */
 	err = -EINVAL;
-	if ((len = qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
-		goto out1;
+	अगर ((len = qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
+		जाओ out1;
 
 	err = kern_path(buf, 0, &exp.ex_path);
-	if (err)
-		goto out1;
+	अगर (err)
+		जाओ out1;
 
-	exp.ex_client = dom;
+	exp.ex_client = करोm;
 	exp.cd = cd;
-	exp.ex_devid_map = NULL;
+	exp.ex_devid_map = शून्य;
 
 	/* expiry */
 	err = -EINVAL;
-	exp.h.expiry_time = get_expiry(&mesg);
-	if (exp.h.expiry_time == 0)
-		goto out3;
+	exp.h.expiry_समय = get_expiry(&mesg);
+	अगर (exp.h.expiry_समय == 0)
+		जाओ out3;
 
 	/* flags */
-	err = get_int(&mesg, &an_int);
-	if (err == -ENOENT) {
+	err = get_पूर्णांक(&mesg, &an_पूर्णांक);
+	अगर (err == -ENOENT) अणु
 		err = 0;
 		set_bit(CACHE_NEGATIVE, &exp.h.flags);
-	} else {
-		if (err || an_int < 0)
-			goto out3;
-		exp.ex_flags= an_int;
+	पूर्ण अन्यथा अणु
+		अगर (err || an_पूर्णांक < 0)
+			जाओ out3;
+		exp.ex_flags= an_पूर्णांक;
 	
 		/* anon uid */
-		err = get_int(&mesg, &an_int);
-		if (err)
-			goto out3;
-		exp.ex_anon_uid= make_kuid(current_user_ns(), an_int);
+		err = get_पूर्णांक(&mesg, &an_पूर्णांक);
+		अगर (err)
+			जाओ out3;
+		exp.ex_anon_uid= make_kuid(current_user_ns(), an_पूर्णांक);
 
 		/* anon gid */
-		err = get_int(&mesg, &an_int);
-		if (err)
-			goto out3;
-		exp.ex_anon_gid= make_kgid(current_user_ns(), an_int);
+		err = get_पूर्णांक(&mesg, &an_पूर्णांक);
+		अगर (err)
+			जाओ out3;
+		exp.ex_anon_gid= make_kgid(current_user_ns(), an_पूर्णांक);
 
 		/* fsid */
-		err = get_int(&mesg, &an_int);
-		if (err)
-			goto out3;
-		exp.ex_fsid = an_int;
+		err = get_पूर्णांक(&mesg, &an_पूर्णांक);
+		अगर (err)
+			जाओ out3;
+		exp.ex_fsid = an_पूर्णांक;
 
-		while ((len = qword_get(&mesg, buf, PAGE_SIZE)) > 0) {
-			if (strcmp(buf, "fsloc") == 0)
+		जबतक ((len = qword_get(&mesg, buf, PAGE_SIZE)) > 0) अणु
+			अगर (म_भेद(buf, "fsloc") == 0)
 				err = fsloc_parse(&mesg, buf, &exp.ex_fslocs);
-			else if (strcmp(buf, "uuid") == 0)
+			अन्यथा अगर (म_भेद(buf, "uuid") == 0)
 				err = nfsd_uuid_parse(&mesg, buf, &exp.ex_uuid);
-			else if (strcmp(buf, "secinfo") == 0)
+			अन्यथा अगर (म_भेद(buf, "secinfo") == 0)
 				err = secinfo_parse(&mesg, buf, &exp);
-			else
+			अन्यथा
 				/* quietly ignore unknown words and anything
 				 * following. Newer user-space can try to set
 				 * new values, then see what the result was.
 				 */
-				break;
-			if (err)
-				goto out4;
-		}
+				अवरोध;
+			अगर (err)
+				जाओ out4;
+		पूर्ण
 
 		err = check_export(&exp.ex_path, &exp.ex_flags, exp.ex_uuid);
-		if (err)
-			goto out4;
+		अगर (err)
+			जाओ out4;
 		/*
-		 * No point caching this if it would immediately expire.
+		 * No poपूर्णांक caching this अगर it would immediately expire.
 		 * Also, this protects exportfs's dummy export from the
 		 * anon_uid/anon_gid checks:
 		 */
-		if (exp.h.expiry_time < seconds_since_boot())
-			goto out4;
+		अगर (exp.h.expiry_समय < seconds_since_boot())
+			जाओ out4;
 		/*
-		 * For some reason exportfs has been passing down an
+		 * For some reason exportfs has been passing करोwn an
 		 * invalid (-1) uid & gid on the "dummy" export which it
 		 * uses to test export support.  To make sure exportfs
-		 * sees errors from check_export we therefore need to
+		 * sees errors from check_export we thereक्रमe need to
 		 * delay these checks till after check_export:
 		 */
 		err = -EINVAL;
-		if (!uid_valid(exp.ex_anon_uid))
-			goto out4;
-		if (!gid_valid(exp.ex_anon_gid))
-			goto out4;
+		अगर (!uid_valid(exp.ex_anon_uid))
+			जाओ out4;
+		अगर (!gid_valid(exp.ex_anon_gid))
+			जाओ out4;
 		err = 0;
 
 		nfsd4_setup_layout_type(&exp);
-	}
+	पूर्ण
 
 	expp = svc_export_lookup(&exp);
-	if (!expp) {
+	अगर (!expp) अणु
 		err = -ENOMEM;
-		goto out4;
-	}
+		जाओ out4;
+	पूर्ण
 	expp = svc_export_update(&exp, expp);
-	if (expp) {
+	अगर (expp) अणु
 		trace_nfsd_export_update(expp);
 		cache_flush();
 		exp_put(expp);
-	} else
+	पूर्ण अन्यथा
 		err = -ENOMEM;
 out4:
-	nfsd4_fslocs_free(&exp.ex_fslocs);
-	kfree(exp.ex_uuid);
+	nfsd4_fslocs_मुक्त(&exp.ex_fslocs);
+	kमुक्त(exp.ex_uuid);
 out3:
 	path_put(&exp.ex_path);
 out1:
-	auth_domain_put(dom);
+	auth_करोमुख्य_put(करोm);
 out:
-	kfree(buf);
-	return err;
-}
+	kमुक्त(buf);
+	वापस err;
+पूर्ण
 
-static void exp_flags(struct seq_file *m, int flag, int fsid,
-		kuid_t anonu, kgid_t anong, struct nfsd4_fs_locations *fslocs);
-static void show_secinfo(struct seq_file *m, struct svc_export *exp);
+अटल व्योम exp_flags(काष्ठा seq_file *m, पूर्णांक flag, पूर्णांक fsid,
+		kuid_t anonu, kgid_t anong, काष्ठा nfsd4_fs_locations *fslocs);
+अटल व्योम show_secinfo(काष्ठा seq_file *m, काष्ठा svc_export *exp);
 
-static int is_export_stats_file(struct seq_file *m)
-{
+अटल पूर्णांक is_export_stats_file(काष्ठा seq_file *m)
+अणु
 	/*
 	 * The export_stats file uses the same ops as the exports file.
 	 * We use the file's name to determine the reported info per export.
-	 * There is no rename in nsfdfs, so d_name.name is stable.
+	 * There is no नाम in nsfdfs, so d_name.name is stable.
 	 */
-	return !strcmp(m->file->f_path.dentry->d_name.name, "export_stats");
-}
+	वापस !म_भेद(m->file->f_path.dentry->d_name.name, "export_stats");
+पूर्ण
 
-static int svc_export_show(struct seq_file *m,
-			   struct cache_detail *cd,
-			   struct cache_head *h)
-{
-	struct svc_export *exp;
+अटल पूर्णांक svc_export_show(काष्ठा seq_file *m,
+			   काष्ठा cache_detail *cd,
+			   काष्ठा cache_head *h)
+अणु
+	काष्ठा svc_export *exp;
 	bool export_stats = is_export_stats_file(m);
 
-	if (h == NULL) {
-		if (export_stats)
-			seq_puts(m, "#path domain start-time\n#\tstats\n");
-		else
-			seq_puts(m, "#path domain(flags)\n");
-		return 0;
-	}
-	exp = container_of(h, struct svc_export, h);
+	अगर (h == शून्य) अणु
+		अगर (export_stats)
+			seq_माला_दो(m, "#path domain start-time\n#\tstats\n");
+		अन्यथा
+			seq_माला_दो(m, "#path domain(flags)\n");
+		वापस 0;
+	पूर्ण
+	exp = container_of(h, काष्ठा svc_export, h);
 	seq_path(m, &exp->ex_path, " \t\n\\");
-	seq_putc(m, '\t');
+	seq_अ_दो(m, '\t');
 	seq_escape(m, exp->ex_client->name, " \t\n\\");
-	if (export_stats) {
-		seq_printf(m, "\t%lld\n", exp->ex_stats.start_time);
-		seq_printf(m, "\tfh_stale: %lld\n",
+	अगर (export_stats) अणु
+		seq_म_लिखो(m, "\t%lld\n", exp->ex_stats.start_समय);
+		seq_म_लिखो(m, "\tfh_stale: %lld\n",
 			   percpu_counter_sum_positive(&exp->ex_stats.counter[EXP_STATS_FH_STALE]));
-		seq_printf(m, "\tio_read: %lld\n",
+		seq_म_लिखो(m, "\tio_read: %lld\n",
 			   percpu_counter_sum_positive(&exp->ex_stats.counter[EXP_STATS_IO_READ]));
-		seq_printf(m, "\tio_write: %lld\n",
+		seq_म_लिखो(m, "\tio_write: %lld\n",
 			   percpu_counter_sum_positive(&exp->ex_stats.counter[EXP_STATS_IO_WRITE]));
-		seq_putc(m, '\n');
-		return 0;
-	}
-	seq_putc(m, '(');
-	if (test_bit(CACHE_VALID, &h->flags) &&
-	    !test_bit(CACHE_NEGATIVE, &h->flags)) {
+		seq_अ_दो(m, '\n');
+		वापस 0;
+	पूर्ण
+	seq_अ_दो(m, '(');
+	अगर (test_bit(CACHE_VALID, &h->flags) &&
+	    !test_bit(CACHE_NEGATIVE, &h->flags)) अणु
 		exp_flags(m, exp->ex_flags, exp->ex_fsid,
 			  exp->ex_anon_uid, exp->ex_anon_gid, &exp->ex_fslocs);
-		if (exp->ex_uuid) {
-			int i;
-			seq_puts(m, ",uuid=");
-			for (i = 0; i < EX_UUID_LEN; i++) {
-				if ((i&3) == 0 && i)
-					seq_putc(m, ':');
-				seq_printf(m, "%02x", exp->ex_uuid[i]);
-			}
-		}
+		अगर (exp->ex_uuid) अणु
+			पूर्णांक i;
+			seq_माला_दो(m, ",uuid=");
+			क्रम (i = 0; i < EX_UUID_LEN; i++) अणु
+				अगर ((i&3) == 0 && i)
+					seq_अ_दो(m, ':');
+				seq_म_लिखो(m, "%02x", exp->ex_uuid[i]);
+			पूर्ण
+		पूर्ण
 		show_secinfo(m, exp);
-	}
-	seq_puts(m, ")\n");
-	return 0;
-}
-static int svc_export_match(struct cache_head *a, struct cache_head *b)
-{
-	struct svc_export *orig = container_of(a, struct svc_export, h);
-	struct svc_export *new = container_of(b, struct svc_export, h);
-	return orig->ex_client == new->ex_client &&
+	पूर्ण
+	seq_माला_दो(m, ")\n");
+	वापस 0;
+पूर्ण
+अटल पूर्णांक svc_export_match(काष्ठा cache_head *a, काष्ठा cache_head *b)
+अणु
+	काष्ठा svc_export *orig = container_of(a, काष्ठा svc_export, h);
+	काष्ठा svc_export *new = container_of(b, काष्ठा svc_export, h);
+	वापस orig->ex_client == new->ex_client &&
 		path_equal(&orig->ex_path, &new->ex_path);
-}
+पूर्ण
 
-static void svc_export_init(struct cache_head *cnew, struct cache_head *citem)
-{
-	struct svc_export *new = container_of(cnew, struct svc_export, h);
-	struct svc_export *item = container_of(citem, struct svc_export, h);
+अटल व्योम svc_export_init(काष्ठा cache_head *cnew, काष्ठा cache_head *citem)
+अणु
+	काष्ठा svc_export *new = container_of(cnew, काष्ठा svc_export, h);
+	काष्ठा svc_export *item = container_of(citem, काष्ठा svc_export, h);
 
 	kref_get(&item->ex_client->ref);
 	new->ex_client = item->ex_client;
 	new->ex_path = item->ex_path;
 	path_get(&item->ex_path);
-	new->ex_fslocs.locations = NULL;
+	new->ex_fslocs.locations = शून्य;
 	new->ex_fslocs.locations_count = 0;
 	new->ex_fslocs.migrated = 0;
 	new->ex_layout_types = 0;
-	new->ex_uuid = NULL;
+	new->ex_uuid = शून्य;
 	new->cd = item->cd;
 	export_stats_reset(&new->ex_stats);
-}
+पूर्ण
 
-static void export_update(struct cache_head *cnew, struct cache_head *citem)
-{
-	struct svc_export *new = container_of(cnew, struct svc_export, h);
-	struct svc_export *item = container_of(citem, struct svc_export, h);
-	int i;
+अटल व्योम export_update(काष्ठा cache_head *cnew, काष्ठा cache_head *citem)
+अणु
+	काष्ठा svc_export *new = container_of(cnew, काष्ठा svc_export, h);
+	काष्ठा svc_export *item = container_of(citem, काष्ठा svc_export, h);
+	पूर्णांक i;
 
 	new->ex_flags = item->ex_flags;
 	new->ex_anon_uid = item->ex_anon_uid;
 	new->ex_anon_gid = item->ex_anon_gid;
 	new->ex_fsid = item->ex_fsid;
 	new->ex_devid_map = item->ex_devid_map;
-	item->ex_devid_map = NULL;
+	item->ex_devid_map = शून्य;
 	new->ex_uuid = item->ex_uuid;
-	item->ex_uuid = NULL;
+	item->ex_uuid = शून्य;
 	new->ex_fslocs.locations = item->ex_fslocs.locations;
-	item->ex_fslocs.locations = NULL;
+	item->ex_fslocs.locations = शून्य;
 	new->ex_fslocs.locations_count = item->ex_fslocs.locations_count;
 	item->ex_fslocs.locations_count = 0;
 	new->ex_fslocs.migrated = item->ex_fslocs.migrated;
 	item->ex_fslocs.migrated = 0;
 	new->ex_layout_types = item->ex_layout_types;
 	new->ex_nflavors = item->ex_nflavors;
-	for (i = 0; i < MAX_SECINFO_LIST; i++) {
+	क्रम (i = 0; i < MAX_SECINFO_LIST; i++) अणु
 		new->ex_flavors[i] = item->ex_flavors[i];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct cache_head *svc_export_alloc(void)
-{
-	struct svc_export *i = kmalloc(sizeof(*i), GFP_KERNEL);
-	if (!i)
-		return NULL;
+अटल काष्ठा cache_head *svc_export_alloc(व्योम)
+अणु
+	काष्ठा svc_export *i = kदो_स्मृति(माप(*i), GFP_KERNEL);
+	अगर (!i)
+		वापस शून्य;
 
-	if (export_stats_init(&i->ex_stats)) {
-		kfree(i);
-		return NULL;
-	}
+	अगर (export_stats_init(&i->ex_stats)) अणु
+		kमुक्त(i);
+		वापस शून्य;
+	पूर्ण
 
-	return &i->h;
-}
+	वापस &i->h;
+पूर्ण
 
-static const struct cache_detail svc_export_cache_template = {
+अटल स्थिर काष्ठा cache_detail svc_export_cache_ढाँचा = अणु
 	.owner		= THIS_MODULE,
 	.hash_size	= EXPORT_HASHMAX,
 	.name		= "nfsd.export",
@@ -853,541 +854,541 @@ static const struct cache_detail svc_export_cache_template = {
 	.init		= svc_export_init,
 	.update		= export_update,
 	.alloc		= svc_export_alloc,
-};
+पूर्ण;
 
-static int
-svc_export_hash(struct svc_export *exp)
-{
-	int hash;
+अटल पूर्णांक
+svc_export_hash(काष्ठा svc_export *exp)
+अणु
+	पूर्णांक hash;
 
 	hash = hash_ptr(exp->ex_client, EXPORT_HASHBITS);
 	hash ^= hash_ptr(exp->ex_path.dentry, EXPORT_HASHBITS);
 	hash ^= hash_ptr(exp->ex_path.mnt, EXPORT_HASHBITS);
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
-static struct svc_export *
-svc_export_lookup(struct svc_export *exp)
-{
-	struct cache_head *ch;
-	int hash = svc_export_hash(exp);
+अटल काष्ठा svc_export *
+svc_export_lookup(काष्ठा svc_export *exp)
+अणु
+	काष्ठा cache_head *ch;
+	पूर्णांक hash = svc_export_hash(exp);
 
 	ch = sunrpc_cache_lookup_rcu(exp->cd, &exp->h, hash);
-	if (ch)
-		return container_of(ch, struct svc_export, h);
-	else
-		return NULL;
-}
+	अगर (ch)
+		वापस container_of(ch, काष्ठा svc_export, h);
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-static struct svc_export *
-svc_export_update(struct svc_export *new, struct svc_export *old)
-{
-	struct cache_head *ch;
-	int hash = svc_export_hash(old);
+अटल काष्ठा svc_export *
+svc_export_update(काष्ठा svc_export *new, काष्ठा svc_export *old)
+अणु
+	काष्ठा cache_head *ch;
+	पूर्णांक hash = svc_export_hash(old);
 
 	ch = sunrpc_cache_update(old->cd, &new->h, &old->h, hash);
-	if (ch)
-		return container_of(ch, struct svc_export, h);
-	else
-		return NULL;
-}
+	अगर (ch)
+		वापस container_of(ch, काष्ठा svc_export, h);
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
 
-static struct svc_expkey *
-exp_find_key(struct cache_detail *cd, struct auth_domain *clp, int fsid_type,
-	     u32 *fsidv, struct cache_req *reqp)
-{
-	struct svc_expkey key, *ek;
-	int err;
+अटल काष्ठा svc_expkey *
+exp_find_key(काष्ठा cache_detail *cd, काष्ठा auth_करोमुख्य *clp, पूर्णांक fsid_type,
+	     u32 *fsidv, काष्ठा cache_req *reqp)
+अणु
+	काष्ठा svc_expkey key, *ek;
+	पूर्णांक err;
 	
-	if (!clp)
-		return ERR_PTR(-ENOENT);
+	अगर (!clp)
+		वापस ERR_PTR(-ENOENT);
 
 	key.ek_client = clp;
 	key.ek_fsidtype = fsid_type;
-	memcpy(key.ek_fsid, fsidv, key_len(fsid_type));
+	स_नकल(key.ek_fsid, fsidv, key_len(fsid_type));
 
 	ek = svc_expkey_lookup(cd, &key);
-	if (ek == NULL)
-		return ERR_PTR(-ENOMEM);
+	अगर (ek == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 	err = cache_check(cd, &ek->h, reqp);
-	if (err) {
+	अगर (err) अणु
 		trace_nfsd_exp_find_key(&key, err);
-		return ERR_PTR(err);
-	}
-	return ek;
-}
+		वापस ERR_PTR(err);
+	पूर्ण
+	वापस ek;
+पूर्ण
 
-static struct svc_export *
-exp_get_by_name(struct cache_detail *cd, struct auth_domain *clp,
-		const struct path *path, struct cache_req *reqp)
-{
-	struct svc_export *exp, key;
-	int err;
+अटल काष्ठा svc_export *
+exp_get_by_name(काष्ठा cache_detail *cd, काष्ठा auth_करोमुख्य *clp,
+		स्थिर काष्ठा path *path, काष्ठा cache_req *reqp)
+अणु
+	काष्ठा svc_export *exp, key;
+	पूर्णांक err;
 
-	if (!clp)
-		return ERR_PTR(-ENOENT);
+	अगर (!clp)
+		वापस ERR_PTR(-ENOENT);
 
 	key.ex_client = clp;
 	key.ex_path = *path;
 	key.cd = cd;
 
 	exp = svc_export_lookup(&key);
-	if (exp == NULL)
-		return ERR_PTR(-ENOMEM);
+	अगर (exp == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 	err = cache_check(cd, &exp->h, reqp);
-	if (err) {
+	अगर (err) अणु
 		trace_nfsd_exp_get_by_name(&key, err);
-		return ERR_PTR(err);
-	}
-	return exp;
-}
+		वापस ERR_PTR(err);
+	पूर्ण
+	वापस exp;
+पूर्ण
 
 /*
- * Find the export entry for a given dentry.
+ * Find the export entry क्रम a given dentry.
  */
-static struct svc_export *
-exp_parent(struct cache_detail *cd, struct auth_domain *clp, struct path *path)
-{
-	struct dentry *saved = dget(path->dentry);
-	struct svc_export *exp = exp_get_by_name(cd, clp, path, NULL);
+अटल काष्ठा svc_export *
+exp_parent(काष्ठा cache_detail *cd, काष्ठा auth_करोमुख्य *clp, काष्ठा path *path)
+अणु
+	काष्ठा dentry *saved = dget(path->dentry);
+	काष्ठा svc_export *exp = exp_get_by_name(cd, clp, path, शून्य);
 
-	while (PTR_ERR(exp) == -ENOENT && !IS_ROOT(path->dentry)) {
-		struct dentry *parent = dget_parent(path->dentry);
+	जबतक (PTR_ERR(exp) == -ENOENT && !IS_ROOT(path->dentry)) अणु
+		काष्ठा dentry *parent = dget_parent(path->dentry);
 		dput(path->dentry);
 		path->dentry = parent;
-		exp = exp_get_by_name(cd, clp, path, NULL);
-	}
+		exp = exp_get_by_name(cd, clp, path, शून्य);
+	पूर्ण
 	dput(path->dentry);
 	path->dentry = saved;
-	return exp;
-}
+	वापस exp;
+पूर्ण
 
 
 
 /*
  * Obtain the root fh on behalf of a client.
- * This could be done in user space, but I feel that it adds some safety
+ * This could be करोne in user space, but I feel that it adds some safety
  * since its harder to fool a kernel module than a user space program.
  */
-int
-exp_rootfh(struct net *net, struct auth_domain *clp, char *name,
-	   struct knfsd_fh *f, int maxsize)
-{
-	struct svc_export	*exp;
-	struct path		path;
-	struct inode		*inode;
-	struct svc_fh		fh;
-	int			err;
-	struct nfsd_net		*nn = net_generic(net, nfsd_net_id);
-	struct cache_detail	*cd = nn->svc_export_cache;
+पूर्णांक
+exp_rootfh(काष्ठा net *net, काष्ठा auth_करोमुख्य *clp, अक्षर *name,
+	   काष्ठा knfsd_fh *f, पूर्णांक maxsize)
+अणु
+	काष्ठा svc_export	*exp;
+	काष्ठा path		path;
+	काष्ठा inode		*inode;
+	काष्ठा svc_fh		fh;
+	पूर्णांक			err;
+	काष्ठा nfsd_net		*nn = net_generic(net, nfsd_net_id);
+	काष्ठा cache_detail	*cd = nn->svc_export_cache;
 
 	err = -EPERM;
 	/* NB: we probably ought to check that it's NUL-terminated */
-	if (kern_path(name, 0, &path)) {
-		printk("nfsd: exp_rootfh path not found %s", name);
-		return err;
-	}
+	अगर (kern_path(name, 0, &path)) अणु
+		prपूर्णांकk("nfsd: exp_rootfh path not found %s", name);
+		वापस err;
+	पूर्ण
 	inode = d_inode(path.dentry);
 
-	dprintk("nfsd: exp_rootfh(%s [%p] %s:%s/%ld)\n",
+	dprपूर्णांकk("nfsd: exp_rootfh(%s [%p] %s:%s/%ld)\n",
 		 name, path.dentry, clp->name,
 		 inode->i_sb->s_id, inode->i_ino);
 	exp = exp_parent(cd, clp, &path);
-	if (IS_ERR(exp)) {
+	अगर (IS_ERR(exp)) अणु
 		err = PTR_ERR(exp);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * fh must be initialized before calling fh_compose
+	 * fh must be initialized beक्रमe calling fh_compose
 	 */
 	fh_init(&fh, maxsize);
-	if (fh_compose(&fh, exp, path.dentry, NULL))
+	अगर (fh_compose(&fh, exp, path.dentry, शून्य))
 		err = -EINVAL;
-	else
+	अन्यथा
 		err = 0;
-	memcpy(f, &fh.fh_handle, sizeof(struct knfsd_fh));
+	स_नकल(f, &fh.fh_handle, माप(काष्ठा knfsd_fh));
 	fh_put(&fh);
 	exp_put(exp);
 out:
 	path_put(&path);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct svc_export *exp_find(struct cache_detail *cd,
-				   struct auth_domain *clp, int fsid_type,
-				   u32 *fsidv, struct cache_req *reqp)
-{
-	struct svc_export *exp;
-	struct nfsd_net *nn = net_generic(cd->net, nfsd_net_id);
-	struct svc_expkey *ek = exp_find_key(nn->svc_expkey_cache, clp, fsid_type, fsidv, reqp);
-	if (IS_ERR(ek))
-		return ERR_CAST(ek);
+अटल काष्ठा svc_export *exp_find(काष्ठा cache_detail *cd,
+				   काष्ठा auth_करोमुख्य *clp, पूर्णांक fsid_type,
+				   u32 *fsidv, काष्ठा cache_req *reqp)
+अणु
+	काष्ठा svc_export *exp;
+	काष्ठा nfsd_net *nn = net_generic(cd->net, nfsd_net_id);
+	काष्ठा svc_expkey *ek = exp_find_key(nn->svc_expkey_cache, clp, fsid_type, fsidv, reqp);
+	अगर (IS_ERR(ek))
+		वापस ERR_CAST(ek);
 
 	exp = exp_get_by_name(cd, clp, &ek->ek_path, reqp);
 	cache_put(&ek->h, nn->svc_expkey_cache);
 
-	if (IS_ERR(exp))
-		return ERR_CAST(exp);
-	return exp;
-}
+	अगर (IS_ERR(exp))
+		वापस ERR_CAST(exp);
+	वापस exp;
+पूर्ण
 
-__be32 check_nfsd_access(struct svc_export *exp, struct svc_rqst *rqstp)
-{
-	struct exp_flavor_info *f;
-	struct exp_flavor_info *end = exp->ex_flavors + exp->ex_nflavors;
+__be32 check_nfsd_access(काष्ठा svc_export *exp, काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा exp_flavor_info *f;
+	काष्ठा exp_flavor_info *end = exp->ex_flavors + exp->ex_nflavors;
 
 	/* legacy gss-only clients are always OK: */
-	if (exp->ex_client == rqstp->rq_gssclient)
-		return 0;
+	अगर (exp->ex_client == rqstp->rq_gssclient)
+		वापस 0;
 	/* ip-address based client; check sec= export option: */
-	for (f = exp->ex_flavors; f < end; f++) {
-		if (f->pseudoflavor == rqstp->rq_cred.cr_flavor)
-			return 0;
-	}
-	/* defaults in absence of sec= options: */
-	if (exp->ex_nflavors == 0) {
-		if (rqstp->rq_cred.cr_flavor == RPC_AUTH_NULL ||
+	क्रम (f = exp->ex_flavors; f < end; f++) अणु
+		अगर (f->pseuकरोflavor == rqstp->rq_cred.cr_flavor)
+			वापस 0;
+	पूर्ण
+	/* शेषs in असलence of sec= options: */
+	अगर (exp->ex_nflavors == 0) अणु
+		अगर (rqstp->rq_cred.cr_flavor == RPC_AUTH_शून्य ||
 		    rqstp->rq_cred.cr_flavor == RPC_AUTH_UNIX)
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
 	/* If the compound op contains a spo_must_allowed op,
-	 * it will be sent with integrity/protection which
+	 * it will be sent with पूर्णांकegrity/protection which
 	 * will have to be expressly allowed on mounts that
-	 * don't support it
+	 * करोn't support it
 	 */
 
-	if (nfsd4_spo_must_allow(rqstp))
-		return 0;
+	अगर (nfsd4_spo_must_allow(rqstp))
+		वापस 0;
 
-	return rqstp->rq_vers < 4 ? nfserr_acces : nfserr_wrongsec;
-}
+	वापस rqstp->rq_vers < 4 ? nfserr_acces : nfserr_wrongsec;
+पूर्ण
 
 /*
  * Uses rq_client and rq_gssclient to find an export; uses rq_client (an
- * auth_unix client) if it's available and has secinfo information;
+ * auth_unix client) अगर it's available and has secinfo inक्रमmation;
  * otherwise, will try to use rq_gssclient.
  *
- * Called from functions that handle requests; functions that do work on
+ * Called from functions that handle requests; functions that करो work on
  * behalf of mountd are passed a single client name to use, and should
  * use exp_get_by_name() or exp_find().
  */
-struct svc_export *
-rqst_exp_get_by_name(struct svc_rqst *rqstp, struct path *path)
-{
-	struct svc_export *gssexp, *exp = ERR_PTR(-ENOENT);
-	struct nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
-	struct cache_detail *cd = nn->svc_export_cache;
+काष्ठा svc_export *
+rqst_exp_get_by_name(काष्ठा svc_rqst *rqstp, काष्ठा path *path)
+अणु
+	काष्ठा svc_export *gssexp, *exp = ERR_PTR(-ENOENT);
+	काष्ठा nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
+	काष्ठा cache_detail *cd = nn->svc_export_cache;
 
-	if (rqstp->rq_client == NULL)
-		goto gss;
+	अगर (rqstp->rq_client == शून्य)
+		जाओ gss;
 
 	/* First try the auth_unix client: */
 	exp = exp_get_by_name(cd, rqstp->rq_client, path, &rqstp->rq_chandle);
-	if (PTR_ERR(exp) == -ENOENT)
-		goto gss;
-	if (IS_ERR(exp))
-		return exp;
+	अगर (PTR_ERR(exp) == -ENOENT)
+		जाओ gss;
+	अगर (IS_ERR(exp))
+		वापस exp;
 	/* If it has secinfo, assume there are no gss/... clients */
-	if (exp->ex_nflavors > 0)
-		return exp;
+	अगर (exp->ex_nflavors > 0)
+		वापस exp;
 gss:
 	/* Otherwise, try falling back on gss client */
-	if (rqstp->rq_gssclient == NULL)
-		return exp;
+	अगर (rqstp->rq_gssclient == शून्य)
+		वापस exp;
 	gssexp = exp_get_by_name(cd, rqstp->rq_gssclient, path, &rqstp->rq_chandle);
-	if (PTR_ERR(gssexp) == -ENOENT)
-		return exp;
-	if (!IS_ERR(exp))
+	अगर (PTR_ERR(gssexp) == -ENOENT)
+		वापस exp;
+	अगर (!IS_ERR(exp))
 		exp_put(exp);
-	return gssexp;
-}
+	वापस gssexp;
+पूर्ण
 
-struct svc_export *
-rqst_exp_find(struct svc_rqst *rqstp, int fsid_type, u32 *fsidv)
-{
-	struct svc_export *gssexp, *exp = ERR_PTR(-ENOENT);
-	struct nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
-	struct cache_detail *cd = nn->svc_export_cache;
+काष्ठा svc_export *
+rqst_exp_find(काष्ठा svc_rqst *rqstp, पूर्णांक fsid_type, u32 *fsidv)
+अणु
+	काष्ठा svc_export *gssexp, *exp = ERR_PTR(-ENOENT);
+	काष्ठा nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
+	काष्ठा cache_detail *cd = nn->svc_export_cache;
 
-	if (rqstp->rq_client == NULL)
-		goto gss;
+	अगर (rqstp->rq_client == शून्य)
+		जाओ gss;
 
 	/* First try the auth_unix client: */
 	exp = exp_find(cd, rqstp->rq_client, fsid_type,
 		       fsidv, &rqstp->rq_chandle);
-	if (PTR_ERR(exp) == -ENOENT)
-		goto gss;
-	if (IS_ERR(exp))
-		return exp;
+	अगर (PTR_ERR(exp) == -ENOENT)
+		जाओ gss;
+	अगर (IS_ERR(exp))
+		वापस exp;
 	/* If it has secinfo, assume there are no gss/... clients */
-	if (exp->ex_nflavors > 0)
-		return exp;
+	अगर (exp->ex_nflavors > 0)
+		वापस exp;
 gss:
 	/* Otherwise, try falling back on gss client */
-	if (rqstp->rq_gssclient == NULL)
-		return exp;
+	अगर (rqstp->rq_gssclient == शून्य)
+		वापस exp;
 	gssexp = exp_find(cd, rqstp->rq_gssclient, fsid_type, fsidv,
 						&rqstp->rq_chandle);
-	if (PTR_ERR(gssexp) == -ENOENT)
-		return exp;
-	if (!IS_ERR(exp))
+	अगर (PTR_ERR(gssexp) == -ENOENT)
+		वापस exp;
+	अगर (!IS_ERR(exp))
 		exp_put(exp);
-	return gssexp;
-}
+	वापस gssexp;
+पूर्ण
 
-struct svc_export *
-rqst_exp_parent(struct svc_rqst *rqstp, struct path *path)
-{
-	struct dentry *saved = dget(path->dentry);
-	struct svc_export *exp = rqst_exp_get_by_name(rqstp, path);
+काष्ठा svc_export *
+rqst_exp_parent(काष्ठा svc_rqst *rqstp, काष्ठा path *path)
+अणु
+	काष्ठा dentry *saved = dget(path->dentry);
+	काष्ठा svc_export *exp = rqst_exp_get_by_name(rqstp, path);
 
-	while (PTR_ERR(exp) == -ENOENT && !IS_ROOT(path->dentry)) {
-		struct dentry *parent = dget_parent(path->dentry);
+	जबतक (PTR_ERR(exp) == -ENOENT && !IS_ROOT(path->dentry)) अणु
+		काष्ठा dentry *parent = dget_parent(path->dentry);
 		dput(path->dentry);
 		path->dentry = parent;
 		exp = rqst_exp_get_by_name(rqstp, path);
-	}
+	पूर्ण
 	dput(path->dentry);
 	path->dentry = saved;
-	return exp;
-}
+	वापस exp;
+पूर्ण
 
-struct svc_export *rqst_find_fsidzero_export(struct svc_rqst *rqstp)
-{
+काष्ठा svc_export *rqst_find_fsidzero_export(काष्ठा svc_rqst *rqstp)
+अणु
 	u32 fsidv[2];
 
-	mk_fsid(FSID_NUM, fsidv, 0, 0, 0, NULL);
+	mk_fsid(FSID_NUM, fsidv, 0, 0, 0, शून्य);
 
-	return rqst_exp_find(rqstp, FSID_NUM, fsidv);
-}
+	वापस rqst_exp_find(rqstp, FSID_NUM, fsidv);
+पूर्ण
 
 /*
- * Called when we need the filehandle for the root of the pseudofs,
- * for a given NFSv4 client.   The root is defined to be the
- * export point with fsid==0
+ * Called when we need the filehandle क्रम the root of the pseuकरोfs,
+ * क्रम a given NFSv4 client.   The root is defined to be the
+ * export poपूर्णांक with fsid==0
  */
 __be32
-exp_pseudoroot(struct svc_rqst *rqstp, struct svc_fh *fhp)
-{
-	struct svc_export *exp;
+exp_pseuकरोroot(काष्ठा svc_rqst *rqstp, काष्ठा svc_fh *fhp)
+अणु
+	काष्ठा svc_export *exp;
 	__be32 rv;
 
 	exp = rqst_find_fsidzero_export(rqstp);
-	if (IS_ERR(exp))
-		return nfserrno(PTR_ERR(exp));
-	rv = fh_compose(fhp, exp, exp->ex_path.dentry, NULL);
+	अगर (IS_ERR(exp))
+		वापस nfsत्रुटि_सं(PTR_ERR(exp));
+	rv = fh_compose(fhp, exp, exp->ex_path.dentry, शून्य);
 	exp_put(exp);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static struct flags {
-	int flag;
-	char *name[2];
-} expflags[] = {
-	{ NFSEXP_READONLY, {"ro", "rw"}},
-	{ NFSEXP_INSECURE_PORT, {"insecure", ""}},
-	{ NFSEXP_ROOTSQUASH, {"root_squash", "no_root_squash"}},
-	{ NFSEXP_ALLSQUASH, {"all_squash", ""}},
-	{ NFSEXP_ASYNC, {"async", "sync"}},
-	{ NFSEXP_GATHERED_WRITES, {"wdelay", "no_wdelay"}},
-	{ NFSEXP_NOREADDIRPLUS, {"nordirplus", ""}},
-	{ NFSEXP_NOHIDE, {"nohide", ""}},
-	{ NFSEXP_CROSSMOUNT, {"crossmnt", ""}},
-	{ NFSEXP_NOSUBTREECHECK, {"no_subtree_check", ""}},
-	{ NFSEXP_NOAUTHNLM, {"insecure_locks", ""}},
-	{ NFSEXP_V4ROOT, {"v4root", ""}},
-	{ NFSEXP_PNFS, {"pnfs", ""}},
-	{ NFSEXP_SECURITY_LABEL, {"security_label", ""}},
-	{ 0, {"", ""}}
-};
+अटल काष्ठा flags अणु
+	पूर्णांक flag;
+	अक्षर *name[2];
+पूर्ण expflags[] = अणु
+	अणु NFSEXP_READONLY, अणु"ro", "rw"पूर्णपूर्ण,
+	अणु NFSEXP_INSECURE_PORT, अणु"insecure", ""पूर्णपूर्ण,
+	अणु NFSEXP_ROOTSQUASH, अणु"root_squash", "no_root_squash"पूर्णपूर्ण,
+	अणु NFSEXP_ALLSQUASH, अणु"all_squash", ""पूर्णपूर्ण,
+	अणु NFSEXP_ASYNC, अणु"async", "sync"पूर्णपूर्ण,
+	अणु NFSEXP_GATHERED_WRITES, अणु"wdelay", "no_wdelay"पूर्णपूर्ण,
+	अणु NFSEXP_NOREADसूचीPLUS, अणु"nordirplus", ""पूर्णपूर्ण,
+	अणु NFSEXP_NOHIDE, अणु"nohide", ""पूर्णपूर्ण,
+	अणु NFSEXP_CROSSMOUNT, अणु"crossmnt", ""पूर्णपूर्ण,
+	अणु NFSEXP_NOSUBTREECHECK, अणु"no_subtree_check", ""पूर्णपूर्ण,
+	अणु NFSEXP_NOAUTHNLM, अणु"insecure_locks", ""पूर्णपूर्ण,
+	अणु NFSEXP_V4ROOT, अणु"v4root", ""पूर्णपूर्ण,
+	अणु NFSEXP_PNFS, अणु"pnfs", ""पूर्णपूर्ण,
+	अणु NFSEXP_SECURITY_LABEL, अणु"security_label", ""पूर्णपूर्ण,
+	अणु 0, अणु"", ""पूर्णपूर्ण
+पूर्ण;
 
-static void show_expflags(struct seq_file *m, int flags, int mask)
-{
-	struct flags *flg;
-	int state, first = 0;
+अटल व्योम show_expflags(काष्ठा seq_file *m, पूर्णांक flags, पूर्णांक mask)
+अणु
+	काष्ठा flags *flg;
+	पूर्णांक state, first = 0;
 
-	for (flg = expflags; flg->flag; flg++) {
-		if (flg->flag & ~mask)
-			continue;
+	क्रम (flg = expflags; flg->flag; flg++) अणु
+		अगर (flg->flag & ~mask)
+			जारी;
 		state = (flg->flag & flags) ? 0 : 1;
-		if (*flg->name[state])
-			seq_printf(m, "%s%s", first++?",":"", flg->name[state]);
-	}
-}
+		अगर (*flg->name[state])
+			seq_म_लिखो(m, "%s%s", first++?",":"", flg->name[state]);
+	पूर्ण
+पूर्ण
 
-static void show_secinfo_flags(struct seq_file *m, int flags)
-{
-	seq_printf(m, ",");
+अटल व्योम show_secinfo_flags(काष्ठा seq_file *m, पूर्णांक flags)
+अणु
+	seq_म_लिखो(m, ",");
 	show_expflags(m, flags, NFSEXP_SECINFO_FLAGS);
-}
+पूर्ण
 
-static bool secinfo_flags_equal(int f, int g)
-{
+अटल bool secinfo_flags_equal(पूर्णांक f, पूर्णांक g)
+अणु
 	f &= NFSEXP_SECINFO_FLAGS;
 	g &= NFSEXP_SECINFO_FLAGS;
-	return f == g;
-}
+	वापस f == g;
+पूर्ण
 
-static int show_secinfo_run(struct seq_file *m, struct exp_flavor_info **fp, struct exp_flavor_info *end)
-{
-	int flags;
+अटल पूर्णांक show_secinfo_run(काष्ठा seq_file *m, काष्ठा exp_flavor_info **fp, काष्ठा exp_flavor_info *end)
+अणु
+	पूर्णांक flags;
 
 	flags = (*fp)->flags;
-	seq_printf(m, ",sec=%d", (*fp)->pseudoflavor);
+	seq_म_लिखो(m, ",sec=%d", (*fp)->pseuकरोflavor);
 	(*fp)++;
-	while (*fp != end && secinfo_flags_equal(flags, (*fp)->flags)) {
-		seq_printf(m, ":%d", (*fp)->pseudoflavor);
+	जबतक (*fp != end && secinfo_flags_equal(flags, (*fp)->flags)) अणु
+		seq_म_लिखो(m, ":%d", (*fp)->pseuकरोflavor);
 		(*fp)++;
-	}
-	return flags;
-}
+	पूर्ण
+	वापस flags;
+पूर्ण
 
-static void show_secinfo(struct seq_file *m, struct svc_export *exp)
-{
-	struct exp_flavor_info *f;
-	struct exp_flavor_info *end = exp->ex_flavors + exp->ex_nflavors;
-	int flags;
+अटल व्योम show_secinfo(काष्ठा seq_file *m, काष्ठा svc_export *exp)
+अणु
+	काष्ठा exp_flavor_info *f;
+	काष्ठा exp_flavor_info *end = exp->ex_flavors + exp->ex_nflavors;
+	पूर्णांक flags;
 
-	if (exp->ex_nflavors == 0)
-		return;
+	अगर (exp->ex_nflavors == 0)
+		वापस;
 	f = exp->ex_flavors;
 	flags = show_secinfo_run(m, &f, end);
-	if (!secinfo_flags_equal(flags, exp->ex_flags))
+	अगर (!secinfo_flags_equal(flags, exp->ex_flags))
 		show_secinfo_flags(m, flags);
-	while (f != end) {
+	जबतक (f != end) अणु
 		flags = show_secinfo_run(m, &f, end);
 		show_secinfo_flags(m, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void exp_flags(struct seq_file *m, int flag, int fsid,
-		kuid_t anonu, kgid_t anong, struct nfsd4_fs_locations *fsloc)
-{
-	struct user_namespace *userns = m->file->f_cred->user_ns;
+अटल व्योम exp_flags(काष्ठा seq_file *m, पूर्णांक flag, पूर्णांक fsid,
+		kuid_t anonu, kgid_t anong, काष्ठा nfsd4_fs_locations *fsloc)
+अणु
+	काष्ठा user_namespace *userns = m->file->f_cred->user_ns;
 
 	show_expflags(m, flag, NFSEXP_ALLFLAGS);
-	if (flag & NFSEXP_FSID)
-		seq_printf(m, ",fsid=%d", fsid);
-	if (!uid_eq(anonu, make_kuid(userns, (uid_t)-2)) &&
+	अगर (flag & NFSEXP_FSID)
+		seq_म_लिखो(m, ",fsid=%d", fsid);
+	अगर (!uid_eq(anonu, make_kuid(userns, (uid_t)-2)) &&
 	    !uid_eq(anonu, make_kuid(userns, 0x10000-2)))
-		seq_printf(m, ",anonuid=%u", from_kuid_munged(userns, anonu));
-	if (!gid_eq(anong, make_kgid(userns, (gid_t)-2)) &&
+		seq_म_लिखो(m, ",anonuid=%u", from_kuid_munged(userns, anonu));
+	अगर (!gid_eq(anong, make_kgid(userns, (gid_t)-2)) &&
 	    !gid_eq(anong, make_kgid(userns, 0x10000-2)))
-		seq_printf(m, ",anongid=%u", from_kgid_munged(userns, anong));
-	if (fsloc && fsloc->locations_count > 0) {
-		char *loctype = (fsloc->migrated) ? "refer" : "replicas";
-		int i;
+		seq_म_लिखो(m, ",anongid=%u", from_kgid_munged(userns, anong));
+	अगर (fsloc && fsloc->locations_count > 0) अणु
+		अक्षर *loctype = (fsloc->migrated) ? "refer" : "replicas";
+		पूर्णांक i;
 
-		seq_printf(m, ",%s=", loctype);
+		seq_म_लिखो(m, ",%s=", loctype);
 		seq_escape(m, fsloc->locations[0].path, ",;@ \t\n\\");
-		seq_putc(m, '@');
+		seq_अ_दो(m, '@');
 		seq_escape(m, fsloc->locations[0].hosts, ",;@ \t\n\\");
-		for (i = 1; i < fsloc->locations_count; i++) {
-			seq_putc(m, ';');
+		क्रम (i = 1; i < fsloc->locations_count; i++) अणु
+			seq_अ_दो(m, ';');
 			seq_escape(m, fsloc->locations[i].path, ",;@ \t\n\\");
-			seq_putc(m, '@');
+			seq_अ_दो(m, '@');
 			seq_escape(m, fsloc->locations[i].hosts, ",;@ \t\n\\");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int e_show(struct seq_file *m, void *p)
-{
-	struct cache_head *cp = p;
-	struct svc_export *exp = container_of(cp, struct svc_export, h);
-	struct cache_detail *cd = m->private;
+अटल पूर्णांक e_show(काष्ठा seq_file *m, व्योम *p)
+अणु
+	काष्ठा cache_head *cp = p;
+	काष्ठा svc_export *exp = container_of(cp, काष्ठा svc_export, h);
+	काष्ठा cache_detail *cd = m->निजी;
 	bool export_stats = is_export_stats_file(m);
 
-	if (p == SEQ_START_TOKEN) {
-		seq_puts(m, "# Version 1.1\n");
-		if (export_stats)
-			seq_puts(m, "# Path Client Start-time\n#\tStats\n");
-		else
-			seq_puts(m, "# Path Client(Flags) # IPs\n");
-		return 0;
-	}
+	अगर (p == SEQ_START_TOKEN) अणु
+		seq_माला_दो(m, "# Version 1.1\n");
+		अगर (export_stats)
+			seq_माला_दो(m, "# Path Client Start-time\n#\tStats\n");
+		अन्यथा
+			seq_माला_दो(m, "# Path Client(Flags) # IPs\n");
+		वापस 0;
+	पूर्ण
 
 	exp_get(exp);
-	if (cache_check(cd, &exp->h, NULL))
-		return 0;
+	अगर (cache_check(cd, &exp->h, शून्य))
+		वापस 0;
 	exp_put(exp);
-	return svc_export_show(m, cd, cp);
-}
+	वापस svc_export_show(m, cd, cp);
+पूर्ण
 
-const struct seq_operations nfs_exports_op = {
+स्थिर काष्ठा seq_operations nfs_exports_op = अणु
 	.start	= cache_seq_start_rcu,
 	.next	= cache_seq_next_rcu,
 	.stop	= cache_seq_stop_rcu,
 	.show	= e_show,
-};
+पूर्ण;
 
 /*
  * Initialize the exports module.
  */
-int
-nfsd_export_init(struct net *net)
-{
-	int rv;
-	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+पूर्णांक
+nfsd_export_init(काष्ठा net *net)
+अणु
+	पूर्णांक rv;
+	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	dprintk("nfsd: initializing export module (net: %x).\n", net->ns.inum);
+	dprपूर्णांकk("nfsd: initializing export module (net: %x).\n", net->ns.inum);
 
-	nn->svc_export_cache = cache_create_net(&svc_export_cache_template, net);
-	if (IS_ERR(nn->svc_export_cache))
-		return PTR_ERR(nn->svc_export_cache);
-	rv = cache_register_net(nn->svc_export_cache, net);
-	if (rv)
-		goto destroy_export_cache;
+	nn->svc_export_cache = cache_create_net(&svc_export_cache_ढाँचा, net);
+	अगर (IS_ERR(nn->svc_export_cache))
+		वापस PTR_ERR(nn->svc_export_cache);
+	rv = cache_रेजिस्टर_net(nn->svc_export_cache, net);
+	अगर (rv)
+		जाओ destroy_export_cache;
 
-	nn->svc_expkey_cache = cache_create_net(&svc_expkey_cache_template, net);
-	if (IS_ERR(nn->svc_expkey_cache)) {
+	nn->svc_expkey_cache = cache_create_net(&svc_expkey_cache_ढाँचा, net);
+	अगर (IS_ERR(nn->svc_expkey_cache)) अणु
 		rv = PTR_ERR(nn->svc_expkey_cache);
-		goto unregister_export_cache;
-	}
-	rv = cache_register_net(nn->svc_expkey_cache, net);
-	if (rv)
-		goto destroy_expkey_cache;
-	return 0;
+		जाओ unरेजिस्टर_export_cache;
+	पूर्ण
+	rv = cache_रेजिस्टर_net(nn->svc_expkey_cache, net);
+	अगर (rv)
+		जाओ destroy_expkey_cache;
+	वापस 0;
 
 destroy_expkey_cache:
 	cache_destroy_net(nn->svc_expkey_cache, net);
-unregister_export_cache:
-	cache_unregister_net(nn->svc_export_cache, net);
+unरेजिस्टर_export_cache:
+	cache_unरेजिस्टर_net(nn->svc_export_cache, net);
 destroy_export_cache:
 	cache_destroy_net(nn->svc_export_cache, net);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
 /*
- * Flush exports table - called when last nfsd thread is killed
+ * Flush exports table - called when last nfsd thपढ़ो is समाप्तed
  */
-void
-nfsd_export_flush(struct net *net)
-{
-	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+व्योम
+nfsd_export_flush(काष्ठा net *net)
+अणु
+	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
 
 	cache_purge(nn->svc_expkey_cache);
 	cache_purge(nn->svc_export_cache);
-}
+पूर्ण
 
 /*
- * Shutdown the exports module.
+ * Shutकरोwn the exports module.
  */
-void
-nfsd_export_shutdown(struct net *net)
-{
-	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+व्योम
+nfsd_export_shutकरोwn(काष्ठा net *net)
+अणु
+	काष्ठा nfsd_net *nn = net_generic(net, nfsd_net_id);
 
-	dprintk("nfsd: shutting down export module (net: %x).\n", net->ns.inum);
+	dprपूर्णांकk("nfsd: shutting down export module (net: %x).\n", net->ns.inum);
 
-	cache_unregister_net(nn->svc_expkey_cache, net);
-	cache_unregister_net(nn->svc_export_cache, net);
+	cache_unरेजिस्टर_net(nn->svc_expkey_cache, net);
+	cache_unरेजिस्टर_net(nn->svc_export_cache, net);
 	cache_destroy_net(nn->svc_expkey_cache, net);
 	cache_destroy_net(nn->svc_export_cache, net);
 	svcauth_unix_purge(net);
 
-	dprintk("nfsd: export shutdown complete (net: %x).\n", net->ns.inum);
-}
+	dprपूर्णांकk("nfsd: export shutdown complete (net: %x).\n", net->ns.inum);
+पूर्ण

@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
- * Xtensa MX interrupt distributor
+ * Xtensa MX पूर्णांकerrupt distributor
  *
  * Copyright (C) 2002 - 2013 Tensilica, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#ifndef __LINUX_IRQCHIP_XTENSA_MX_H
-#define __LINUX_IRQCHIP_XTENSA_MX_H
+#अगर_अघोषित __LINUX_IRQCHIP_XTENSA_MX_H
+#घोषणा __LINUX_IRQCHIP_XTENSA_MX_H
 
-struct device_node;
-int xtensa_mx_init_legacy(struct device_node *interrupt_parent);
+काष्ठा device_node;
+पूर्णांक xtensa_mx_init_legacy(काष्ठा device_node *पूर्णांकerrupt_parent);
 
-#endif /* __LINUX_IRQCHIP_XTENSA_MX_H */
+#पूर्ण_अगर /* __LINUX_IRQCHIP_XTENSA_MX_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Samsung SoC USB 1.1/2.0 PHY driver - Exynos 4x12 support
  *
@@ -6,85 +7,85 @@
  * Author: Kamil Debski <k.debski@samsung.com>
  */
 
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/phy/phy.h>
-#include <linux/regmap.h>
-#include "phy-samsung-usb2.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/regmap.h>
+#समावेश "phy-samsung-usb2.h"
 
-/* Exynos USB PHY registers */
+/* Exynos USB PHY रेजिस्टरs */
 
-/* PHY power control */
-#define EXYNOS_4x12_UPHYPWR			0x0
+/* PHY घातer control */
+#घोषणा EXYNOS_4x12_UPHYPWR			0x0
 
-#define EXYNOS_4x12_UPHYPWR_PHY0_SUSPEND	BIT(0)
-#define EXYNOS_4x12_UPHYPWR_PHY0_PWR		BIT(3)
-#define EXYNOS_4x12_UPHYPWR_PHY0_OTG_PWR	BIT(4)
-#define EXYNOS_4x12_UPHYPWR_PHY0_SLEEP		BIT(5)
-#define EXYNOS_4x12_UPHYPWR_PHY0 ( \
+#घोषणा EXYNOS_4x12_UPHYPWR_PHY0_SUSPEND	BIT(0)
+#घोषणा EXYNOS_4x12_UPHYPWR_PHY0_PWR		BIT(3)
+#घोषणा EXYNOS_4x12_UPHYPWR_PHY0_OTG_PWR	BIT(4)
+#घोषणा EXYNOS_4x12_UPHYPWR_PHY0_SLEEP		BIT(5)
+#घोषणा EXYNOS_4x12_UPHYPWR_PHY0 ( \
 	EXYNOS_4x12_UPHYPWR_PHY0_SUSPEND | \
 	EXYNOS_4x12_UPHYPWR_PHY0_PWR | \
 	EXYNOS_4x12_UPHYPWR_PHY0_OTG_PWR | \
 	EXYNOS_4x12_UPHYPWR_PHY0_SLEEP)
 
-#define EXYNOS_4x12_UPHYPWR_PHY1_SUSPEND	BIT(6)
-#define EXYNOS_4x12_UPHYPWR_PHY1_PWR		BIT(7)
-#define EXYNOS_4x12_UPHYPWR_PHY1_SLEEP		BIT(8)
-#define EXYNOS_4x12_UPHYPWR_PHY1 ( \
+#घोषणा EXYNOS_4x12_UPHYPWR_PHY1_SUSPEND	BIT(6)
+#घोषणा EXYNOS_4x12_UPHYPWR_PHY1_PWR		BIT(7)
+#घोषणा EXYNOS_4x12_UPHYPWR_PHY1_SLEEP		BIT(8)
+#घोषणा EXYNOS_4x12_UPHYPWR_PHY1 ( \
 	EXYNOS_4x12_UPHYPWR_PHY1_SUSPEND | \
 	EXYNOS_4x12_UPHYPWR_PHY1_PWR | \
 	EXYNOS_4x12_UPHYPWR_PHY1_SLEEP)
 
-#define EXYNOS_4x12_UPHYPWR_HSIC0_SUSPEND	BIT(9)
-#define EXYNOS_4x12_UPHYPWR_HSIC0_PWR		BIT(10)
-#define EXYNOS_4x12_UPHYPWR_HSIC0_SLEEP		BIT(11)
-#define EXYNOS_4x12_UPHYPWR_HSIC0 ( \
+#घोषणा EXYNOS_4x12_UPHYPWR_HSIC0_SUSPEND	BIT(9)
+#घोषणा EXYNOS_4x12_UPHYPWR_HSIC0_PWR		BIT(10)
+#घोषणा EXYNOS_4x12_UPHYPWR_HSIC0_SLEEP		BIT(11)
+#घोषणा EXYNOS_4x12_UPHYPWR_HSIC0 ( \
 	EXYNOS_4x12_UPHYPWR_HSIC0_SUSPEND | \
 	EXYNOS_4x12_UPHYPWR_HSIC0_PWR | \
 	EXYNOS_4x12_UPHYPWR_HSIC0_SLEEP)
 
-#define EXYNOS_4x12_UPHYPWR_HSIC1_SUSPEND	BIT(12)
-#define EXYNOS_4x12_UPHYPWR_HSIC1_PWR		BIT(13)
-#define EXYNOS_4x12_UPHYPWR_HSIC1_SLEEP		BIT(14)
-#define EXYNOS_4x12_UPHYPWR_HSIC1 ( \
+#घोषणा EXYNOS_4x12_UPHYPWR_HSIC1_SUSPEND	BIT(12)
+#घोषणा EXYNOS_4x12_UPHYPWR_HSIC1_PWR		BIT(13)
+#घोषणा EXYNOS_4x12_UPHYPWR_HSIC1_SLEEP		BIT(14)
+#घोषणा EXYNOS_4x12_UPHYPWR_HSIC1 ( \
 	EXYNOS_4x12_UPHYPWR_HSIC1_SUSPEND | \
 	EXYNOS_4x12_UPHYPWR_HSIC1_PWR | \
 	EXYNOS_4x12_UPHYPWR_HSIC1_SLEEP)
 
-/* PHY clock control */
-#define EXYNOS_4x12_UPHYCLK			0x4
+/* PHY घड़ी control */
+#घोषणा EXYNOS_4x12_UPHYCLK			0x4
 
-#define EXYNOS_4x12_UPHYCLK_PHYFSEL_MASK	(0x7 << 0)
-#define EXYNOS_4x12_UPHYCLK_PHYFSEL_OFFSET	0
-#define EXYNOS_4x12_UPHYCLK_PHYFSEL_9MHZ6	(0x0 << 0)
-#define EXYNOS_4x12_UPHYCLK_PHYFSEL_10MHZ	(0x1 << 0)
-#define EXYNOS_4x12_UPHYCLK_PHYFSEL_12MHZ	(0x2 << 0)
-#define EXYNOS_4x12_UPHYCLK_PHYFSEL_19MHZ2	(0x3 << 0)
-#define EXYNOS_4x12_UPHYCLK_PHYFSEL_20MHZ	(0x4 << 0)
-#define EXYNOS_4x12_UPHYCLK_PHYFSEL_24MHZ	(0x5 << 0)
-#define EXYNOS_4x12_UPHYCLK_PHYFSEL_50MHZ	(0x7 << 0)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHYFSEL_MASK	(0x7 << 0)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHYFSEL_OFFSET	0
+#घोषणा EXYNOS_4x12_UPHYCLK_PHYFSEL_9MHZ6	(0x0 << 0)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHYFSEL_10MHZ	(0x1 << 0)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHYFSEL_12MHZ	(0x2 << 0)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHYFSEL_19MHZ2	(0x3 << 0)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHYFSEL_20MHZ	(0x4 << 0)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHYFSEL_24MHZ	(0x5 << 0)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHYFSEL_50MHZ	(0x7 << 0)
 
-#define EXYNOS_3250_UPHYCLK_REFCLKSEL		(0x2 << 8)
+#घोषणा EXYNOS_3250_UPHYCLK_REFCLKSEL		(0x2 << 8)
 
-#define EXYNOS_4x12_UPHYCLK_PHY0_ID_PULLUP	BIT(3)
-#define EXYNOS_4x12_UPHYCLK_PHY0_COMMON_ON	BIT(4)
-#define EXYNOS_4x12_UPHYCLK_PHY1_COMMON_ON	BIT(7)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHY0_ID_PULLUP	BIT(3)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHY0_COMMON_ON	BIT(4)
+#घोषणा EXYNOS_4x12_UPHYCLK_PHY1_COMMON_ON	BIT(7)
 
-#define EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_MASK	(0x7f << 10)
-#define EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_OFFSET  10
-#define EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_12MHZ	(0x24 << 10)
-#define EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_15MHZ	(0x1c << 10)
-#define EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_16MHZ	(0x1a << 10)
-#define EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_19MHZ2	(0x15 << 10)
-#define EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_20MHZ	(0x14 << 10)
+#घोषणा EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_MASK	(0x7f << 10)
+#घोषणा EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_OFFSET  10
+#घोषणा EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_12MHZ	(0x24 << 10)
+#घोषणा EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_15MHZ	(0x1c << 10)
+#घोषणा EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_16MHZ	(0x1a << 10)
+#घोषणा EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_19MHZ2	(0x15 << 10)
+#घोषणा EXYNOS_4x12_UPHYCLK_HSIC_REFCLK_20MHZ	(0x14 << 10)
 
 /* PHY reset control */
-#define EXYNOS_4x12_UPHYRST			0x8
+#घोषणा EXYNOS_4x12_UPHYRST			0x8
 
-#define EXYNOS_4x12_URSTCON_PHY0		BIT(0)
-#define EXYNOS_4x12_URSTCON_OTG_HLINK		BIT(1)
-#define EXYNOS_4x12_URSTCON_OTG_PHYLINK		BIT(2)
-#define EXYNOS_4x12_URSTCON_HOST_PHY		BIT(3)
+#घोषणा EXYNOS_4x12_URSTCON_PHY0		BIT(0)
+#घोषणा EXYNOS_4x12_URSTCON_OTG_HLINK		BIT(1)
+#घोषणा EXYNOS_4x12_URSTCON_OTG_PHYLINK		BIT(2)
+#घोषणा EXYNOS_4x12_URSTCON_HOST_PHY		BIT(3)
 /* The following bit defines are presented in the
  * order taken from the Exynos4412 reference manual.
  *
@@ -95,281 +96,281 @@
  * The following bit values were chaned accordingly to the
  * results of real hardware experiments.
  */
-#define EXYNOS_4x12_URSTCON_PHY1		BIT(4)
-#define EXYNOS_4x12_URSTCON_HSIC0		BIT(6)
-#define EXYNOS_4x12_URSTCON_HSIC1		BIT(5)
-#define EXYNOS_4x12_URSTCON_HOST_LINK_ALL	BIT(7)
-#define EXYNOS_4x12_URSTCON_HOST_LINK_P0	BIT(10)
-#define EXYNOS_4x12_URSTCON_HOST_LINK_P1	BIT(9)
-#define EXYNOS_4x12_URSTCON_HOST_LINK_P2	BIT(8)
+#घोषणा EXYNOS_4x12_URSTCON_PHY1		BIT(4)
+#घोषणा EXYNOS_4x12_URSTCON_HSIC0		BIT(6)
+#घोषणा EXYNOS_4x12_URSTCON_HSIC1		BIT(5)
+#घोषणा EXYNOS_4x12_URSTCON_HOST_LINK_ALL	BIT(7)
+#घोषणा EXYNOS_4x12_URSTCON_HOST_LINK_P0	BIT(10)
+#घोषणा EXYNOS_4x12_URSTCON_HOST_LINK_P1	BIT(9)
+#घोषणा EXYNOS_4x12_URSTCON_HOST_LINK_P2	BIT(8)
 
-/* Isolation, configured in the power management unit */
-#define EXYNOS_4x12_USB_ISOL_OFFSET		0x704
-#define EXYNOS_4x12_USB_ISOL_OTG		BIT(0)
-#define EXYNOS_4x12_USB_ISOL_HSIC0_OFFSET	0x708
-#define EXYNOS_4x12_USB_ISOL_HSIC0		BIT(0)
-#define EXYNOS_4x12_USB_ISOL_HSIC1_OFFSET	0x70c
-#define EXYNOS_4x12_USB_ISOL_HSIC1		BIT(0)
+/* Isolation, configured in the घातer management unit */
+#घोषणा EXYNOS_4x12_USB_ISOL_OFFSET		0x704
+#घोषणा EXYNOS_4x12_USB_ISOL_OTG		BIT(0)
+#घोषणा EXYNOS_4x12_USB_ISOL_HSIC0_OFFSET	0x708
+#घोषणा EXYNOS_4x12_USB_ISOL_HSIC0		BIT(0)
+#घोषणा EXYNOS_4x12_USB_ISOL_HSIC1_OFFSET	0x70c
+#घोषणा EXYNOS_4x12_USB_ISOL_HSIC1		BIT(0)
 
-/* Mode switching SUB Device <-> Host */
-#define EXYNOS_4x12_MODE_SWITCH_OFFSET		0x21c
-#define EXYNOS_4x12_MODE_SWITCH_MASK		1
-#define EXYNOS_4x12_MODE_SWITCH_DEVICE		0
-#define EXYNOS_4x12_MODE_SWITCH_HOST		1
+/* Mode चयनing SUB Device <-> Host */
+#घोषणा EXYNOS_4x12_MODE_SWITCH_OFFSET		0x21c
+#घोषणा EXYNOS_4x12_MODE_SWITCH_MASK		1
+#घोषणा EXYNOS_4x12_MODE_SWITCH_DEVICE		0
+#घोषणा EXYNOS_4x12_MODE_SWITCH_HOST		1
 
-enum exynos4x12_phy_id {
+क्रमागत exynos4x12_phy_id अणु
 	EXYNOS4x12_DEVICE,
 	EXYNOS4x12_HOST,
 	EXYNOS4x12_HSIC0,
 	EXYNOS4x12_HSIC1,
 	EXYNOS4x12_NUM_PHYS,
-};
+पूर्ण;
 
 /*
- * exynos4x12_rate_to_clk() converts the supplied clock rate to the value that
- * can be written to the phy register.
+ * exynos4x12_rate_to_clk() converts the supplied घड़ी rate to the value that
+ * can be written to the phy रेजिस्टर.
  */
-static int exynos4x12_rate_to_clk(unsigned long rate, u32 *reg)
-{
+अटल पूर्णांक exynos4x12_rate_to_clk(अचिन्हित दीर्घ rate, u32 *reg)
+अणु
 	/* EXYNOS_4x12_UPHYCLK_PHYFSEL_MASK */
 
-	switch (rate) {
-	case 9600 * KHZ:
+	चयन (rate) अणु
+	हाल 9600 * KHZ:
 		*reg = EXYNOS_4x12_UPHYCLK_PHYFSEL_9MHZ6;
-		break;
-	case 10 * MHZ:
+		अवरोध;
+	हाल 10 * MHZ:
 		*reg = EXYNOS_4x12_UPHYCLK_PHYFSEL_10MHZ;
-		break;
-	case 12 * MHZ:
+		अवरोध;
+	हाल 12 * MHZ:
 		*reg = EXYNOS_4x12_UPHYCLK_PHYFSEL_12MHZ;
-		break;
-	case 19200 * KHZ:
+		अवरोध;
+	हाल 19200 * KHZ:
 		*reg = EXYNOS_4x12_UPHYCLK_PHYFSEL_19MHZ2;
-		break;
-	case 20 * MHZ:
+		अवरोध;
+	हाल 20 * MHZ:
 		*reg = EXYNOS_4x12_UPHYCLK_PHYFSEL_20MHZ;
-		break;
-	case 24 * MHZ:
+		अवरोध;
+	हाल 24 * MHZ:
 		*reg = EXYNOS_4x12_UPHYCLK_PHYFSEL_24MHZ;
-		break;
-	case 50 * MHZ:
+		अवरोध;
+	हाल 50 * MHZ:
 		*reg = EXYNOS_4x12_UPHYCLK_PHYFSEL_50MHZ;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void exynos4x12_isol(struct samsung_usb2_phy_instance *inst, bool on)
-{
-	struct samsung_usb2_phy_driver *drv = inst->drv;
+अटल व्योम exynos4x12_isol(काष्ठा samsung_usb2_phy_instance *inst, bool on)
+अणु
+	काष्ठा samsung_usb2_phy_driver *drv = inst->drv;
 	u32 offset;
 	u32 mask;
 
-	switch (inst->cfg->id) {
-	case EXYNOS4x12_DEVICE:
-	case EXYNOS4x12_HOST:
+	चयन (inst->cfg->id) अणु
+	हाल EXYNOS4x12_DEVICE:
+	हाल EXYNOS4x12_HOST:
 		offset = EXYNOS_4x12_USB_ISOL_OFFSET;
 		mask = EXYNOS_4x12_USB_ISOL_OTG;
-		break;
-	case EXYNOS4x12_HSIC0:
+		अवरोध;
+	हाल EXYNOS4x12_HSIC0:
 		offset = EXYNOS_4x12_USB_ISOL_HSIC0_OFFSET;
 		mask = EXYNOS_4x12_USB_ISOL_HSIC0;
-		break;
-	case EXYNOS4x12_HSIC1:
+		अवरोध;
+	हाल EXYNOS4x12_HSIC1:
 		offset = EXYNOS_4x12_USB_ISOL_HSIC1_OFFSET;
 		mask = EXYNOS_4x12_USB_ISOL_HSIC1;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	regmap_update_bits(drv->reg_pmu, offset, mask, on ? 0 : mask);
-}
+पूर्ण
 
-static void exynos4x12_setup_clk(struct samsung_usb2_phy_instance *inst)
-{
-	struct samsung_usb2_phy_driver *drv = inst->drv;
+अटल व्योम exynos4x12_setup_clk(काष्ठा samsung_usb2_phy_instance *inst)
+अणु
+	काष्ठा samsung_usb2_phy_driver *drv = inst->drv;
 	u32 clk;
 
-	clk = readl(drv->reg_phy + EXYNOS_4x12_UPHYCLK);
+	clk = पढ़ोl(drv->reg_phy + EXYNOS_4x12_UPHYCLK);
 	clk &= ~EXYNOS_4x12_UPHYCLK_PHYFSEL_MASK;
 
-	if (drv->cfg->has_refclk_sel)
+	अगर (drv->cfg->has_refclk_sel)
 		clk = EXYNOS_3250_UPHYCLK_REFCLKSEL;
 
 	clk |= drv->ref_reg_val << EXYNOS_4x12_UPHYCLK_PHYFSEL_OFFSET;
 	clk |= EXYNOS_4x12_UPHYCLK_PHY1_COMMON_ON;
-	writel(clk, drv->reg_phy + EXYNOS_4x12_UPHYCLK);
-}
+	ग_लिखोl(clk, drv->reg_phy + EXYNOS_4x12_UPHYCLK);
+पूर्ण
 
-static void exynos4x12_phy_pwr(struct samsung_usb2_phy_instance *inst, bool on)
-{
-	struct samsung_usb2_phy_driver *drv = inst->drv;
+अटल व्योम exynos4x12_phy_pwr(काष्ठा samsung_usb2_phy_instance *inst, bool on)
+अणु
+	काष्ठा samsung_usb2_phy_driver *drv = inst->drv;
 	u32 rstbits = 0;
 	u32 phypwr = 0;
 	u32 rst;
 	u32 pwr;
 
-	switch (inst->cfg->id) {
-	case EXYNOS4x12_DEVICE:
+	चयन (inst->cfg->id) अणु
+	हाल EXYNOS4x12_DEVICE:
 		phypwr =	EXYNOS_4x12_UPHYPWR_PHY0;
 		rstbits =	EXYNOS_4x12_URSTCON_PHY0;
-		break;
-	case EXYNOS4x12_HOST:
+		अवरोध;
+	हाल EXYNOS4x12_HOST:
 		phypwr =	EXYNOS_4x12_UPHYPWR_PHY1;
 		rstbits =	EXYNOS_4x12_URSTCON_HOST_PHY |
 				EXYNOS_4x12_URSTCON_PHY1 |
 				EXYNOS_4x12_URSTCON_HOST_LINK_P0;
-		break;
-	case EXYNOS4x12_HSIC0:
+		अवरोध;
+	हाल EXYNOS4x12_HSIC0:
 		phypwr =	EXYNOS_4x12_UPHYPWR_HSIC0;
 		rstbits =	EXYNOS_4x12_URSTCON_HSIC0 |
 				EXYNOS_4x12_URSTCON_HOST_LINK_P1;
-		break;
-	case EXYNOS4x12_HSIC1:
+		अवरोध;
+	हाल EXYNOS4x12_HSIC1:
 		phypwr =	EXYNOS_4x12_UPHYPWR_HSIC1;
 		rstbits =	EXYNOS_4x12_URSTCON_HSIC1 |
 				EXYNOS_4x12_URSTCON_HOST_LINK_P1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (on) {
-		pwr = readl(drv->reg_phy + EXYNOS_4x12_UPHYPWR);
+	अगर (on) अणु
+		pwr = पढ़ोl(drv->reg_phy + EXYNOS_4x12_UPHYPWR);
 		pwr &= ~phypwr;
-		writel(pwr, drv->reg_phy + EXYNOS_4x12_UPHYPWR);
+		ग_लिखोl(pwr, drv->reg_phy + EXYNOS_4x12_UPHYPWR);
 
-		rst = readl(drv->reg_phy + EXYNOS_4x12_UPHYRST);
+		rst = पढ़ोl(drv->reg_phy + EXYNOS_4x12_UPHYRST);
 		rst |= rstbits;
-		writel(rst, drv->reg_phy + EXYNOS_4x12_UPHYRST);
+		ग_लिखोl(rst, drv->reg_phy + EXYNOS_4x12_UPHYRST);
 		udelay(10);
 		rst &= ~rstbits;
-		writel(rst, drv->reg_phy + EXYNOS_4x12_UPHYRST);
-		/* The following delay is necessary for the reset sequence to be
+		ग_लिखोl(rst, drv->reg_phy + EXYNOS_4x12_UPHYRST);
+		/* The following delay is necessary क्रम the reset sequence to be
 		 * completed */
 		udelay(80);
-	} else {
-		pwr = readl(drv->reg_phy + EXYNOS_4x12_UPHYPWR);
+	पूर्ण अन्यथा अणु
+		pwr = पढ़ोl(drv->reg_phy + EXYNOS_4x12_UPHYPWR);
 		pwr |= phypwr;
-		writel(pwr, drv->reg_phy + EXYNOS_4x12_UPHYPWR);
-	}
-}
+		ग_लिखोl(pwr, drv->reg_phy + EXYNOS_4x12_UPHYPWR);
+	पूर्ण
+पूर्ण
 
-static void exynos4x12_power_on_int(struct samsung_usb2_phy_instance *inst)
-{
-	if (inst->int_cnt++ > 0)
-		return;
+अटल व्योम exynos4x12_घातer_on_पूर्णांक(काष्ठा samsung_usb2_phy_instance *inst)
+अणु
+	अगर (inst->पूर्णांक_cnt++ > 0)
+		वापस;
 
 	exynos4x12_setup_clk(inst);
 	exynos4x12_isol(inst, 0);
 	exynos4x12_phy_pwr(inst, 1);
-}
+पूर्ण
 
-static int exynos4x12_power_on(struct samsung_usb2_phy_instance *inst)
-{
-	struct samsung_usb2_phy_driver *drv = inst->drv;
+अटल पूर्णांक exynos4x12_घातer_on(काष्ठा samsung_usb2_phy_instance *inst)
+अणु
+	काष्ठा samsung_usb2_phy_driver *drv = inst->drv;
 
-	if (inst->ext_cnt++ > 0)
-		return 0;
+	अगर (inst->ext_cnt++ > 0)
+		वापस 0;
 
-	if (inst->cfg->id == EXYNOS4x12_HOST) {
+	अगर (inst->cfg->id == EXYNOS4x12_HOST) अणु
 		regmap_update_bits(drv->reg_sys, EXYNOS_4x12_MODE_SWITCH_OFFSET,
 						EXYNOS_4x12_MODE_SWITCH_MASK,
 						EXYNOS_4x12_MODE_SWITCH_HOST);
-		exynos4x12_power_on_int(&drv->instances[EXYNOS4x12_DEVICE]);
-	}
+		exynos4x12_घातer_on_पूर्णांक(&drv->instances[EXYNOS4x12_DEVICE]);
+	पूर्ण
 
-	if (inst->cfg->id == EXYNOS4x12_DEVICE && drv->cfg->has_mode_switch)
+	अगर (inst->cfg->id == EXYNOS4x12_DEVICE && drv->cfg->has_mode_चयन)
 		regmap_update_bits(drv->reg_sys, EXYNOS_4x12_MODE_SWITCH_OFFSET,
 						EXYNOS_4x12_MODE_SWITCH_MASK,
 						EXYNOS_4x12_MODE_SWITCH_DEVICE);
 
-	if (inst->cfg->id == EXYNOS4x12_HSIC0 ||
-		inst->cfg->id == EXYNOS4x12_HSIC1) {
-		exynos4x12_power_on_int(&drv->instances[EXYNOS4x12_DEVICE]);
-		exynos4x12_power_on_int(&drv->instances[EXYNOS4x12_HOST]);
-	}
+	अगर (inst->cfg->id == EXYNOS4x12_HSIC0 ||
+		inst->cfg->id == EXYNOS4x12_HSIC1) अणु
+		exynos4x12_घातer_on_पूर्णांक(&drv->instances[EXYNOS4x12_DEVICE]);
+		exynos4x12_घातer_on_पूर्णांक(&drv->instances[EXYNOS4x12_HOST]);
+	पूर्ण
 
-	exynos4x12_power_on_int(inst);
+	exynos4x12_घातer_on_पूर्णांक(inst);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void exynos4x12_power_off_int(struct samsung_usb2_phy_instance *inst)
-{
-	if (inst->int_cnt-- > 1)
-		return;
+अटल व्योम exynos4x12_घातer_off_पूर्णांक(काष्ठा samsung_usb2_phy_instance *inst)
+अणु
+	अगर (inst->पूर्णांक_cnt-- > 1)
+		वापस;
 
 	exynos4x12_isol(inst, 1);
 	exynos4x12_phy_pwr(inst, 0);
-}
+पूर्ण
 
-static int exynos4x12_power_off(struct samsung_usb2_phy_instance *inst)
-{
-	struct samsung_usb2_phy_driver *drv = inst->drv;
+अटल पूर्णांक exynos4x12_घातer_off(काष्ठा samsung_usb2_phy_instance *inst)
+अणु
+	काष्ठा samsung_usb2_phy_driver *drv = inst->drv;
 
-	if (inst->ext_cnt-- > 1)
-		return 0;
+	अगर (inst->ext_cnt-- > 1)
+		वापस 0;
 
-	if (inst->cfg->id == EXYNOS4x12_DEVICE && drv->cfg->has_mode_switch)
+	अगर (inst->cfg->id == EXYNOS4x12_DEVICE && drv->cfg->has_mode_चयन)
 		regmap_update_bits(drv->reg_sys, EXYNOS_4x12_MODE_SWITCH_OFFSET,
 						EXYNOS_4x12_MODE_SWITCH_MASK,
 						EXYNOS_4x12_MODE_SWITCH_HOST);
 
-	if (inst->cfg->id == EXYNOS4x12_HOST)
-		exynos4x12_power_off_int(&drv->instances[EXYNOS4x12_DEVICE]);
+	अगर (inst->cfg->id == EXYNOS4x12_HOST)
+		exynos4x12_घातer_off_पूर्णांक(&drv->instances[EXYNOS4x12_DEVICE]);
 
-	if (inst->cfg->id == EXYNOS4x12_HSIC0 ||
-		inst->cfg->id == EXYNOS4x12_HSIC1) {
-		exynos4x12_power_off_int(&drv->instances[EXYNOS4x12_DEVICE]);
-		exynos4x12_power_off_int(&drv->instances[EXYNOS4x12_HOST]);
-	}
+	अगर (inst->cfg->id == EXYNOS4x12_HSIC0 ||
+		inst->cfg->id == EXYNOS4x12_HSIC1) अणु
+		exynos4x12_घातer_off_पूर्णांक(&drv->instances[EXYNOS4x12_DEVICE]);
+		exynos4x12_घातer_off_पूर्णांक(&drv->instances[EXYNOS4x12_HOST]);
+	पूर्ण
 
-	exynos4x12_power_off_int(inst);
+	exynos4x12_घातer_off_पूर्णांक(inst);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct samsung_usb2_common_phy exynos4x12_phys[] = {
-	{
+अटल स्थिर काष्ठा samsung_usb2_common_phy exynos4x12_phys[] = अणु
+	अणु
 		.label		= "device",
 		.id		= EXYNOS4x12_DEVICE,
-		.power_on	= exynos4x12_power_on,
-		.power_off	= exynos4x12_power_off,
-	},
-	{
+		.घातer_on	= exynos4x12_घातer_on,
+		.घातer_off	= exynos4x12_घातer_off,
+	पूर्ण,
+	अणु
 		.label		= "host",
 		.id		= EXYNOS4x12_HOST,
-		.power_on	= exynos4x12_power_on,
-		.power_off	= exynos4x12_power_off,
-	},
-	{
+		.घातer_on	= exynos4x12_घातer_on,
+		.घातer_off	= exynos4x12_घातer_off,
+	पूर्ण,
+	अणु
 		.label		= "hsic0",
 		.id		= EXYNOS4x12_HSIC0,
-		.power_on	= exynos4x12_power_on,
-		.power_off	= exynos4x12_power_off,
-	},
-	{
+		.घातer_on	= exynos4x12_घातer_on,
+		.घातer_off	= exynos4x12_घातer_off,
+	पूर्ण,
+	अणु
 		.label		= "hsic1",
 		.id		= EXYNOS4x12_HSIC1,
-		.power_on	= exynos4x12_power_on,
-		.power_off	= exynos4x12_power_off,
-	},
-};
+		.घातer_on	= exynos4x12_घातer_on,
+		.घातer_off	= exynos4x12_घातer_off,
+	पूर्ण,
+पूर्ण;
 
-const struct samsung_usb2_phy_config exynos3250_usb2_phy_config = {
+स्थिर काष्ठा samsung_usb2_phy_config exynos3250_usb2_phy_config = अणु
 	.has_refclk_sel		= 1,
 	.num_phys		= 1,
 	.phys			= exynos4x12_phys,
 	.rate_to_clk		= exynos4x12_rate_to_clk,
-};
+पूर्ण;
 
-const struct samsung_usb2_phy_config exynos4x12_usb2_phy_config = {
-	.has_mode_switch	= 1,
+स्थिर काष्ठा samsung_usb2_phy_config exynos4x12_usb2_phy_config = अणु
+	.has_mode_चयन	= 1,
 	.num_phys		= EXYNOS4x12_NUM_PHYS,
 	.phys			= exynos4x12_phys,
 	.rate_to_clk		= exynos4x12_rate_to_clk,
-};
+पूर्ण;

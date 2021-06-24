@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2016, Cyril Bur, IBM Corp.
  *
- * Sending one self a signal should always get delivered.
+ * Sending one self a संकेत should always get delivered.
  */
 
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
-#include <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश <unistd.h>
 
-#include <altivec.h>
+#समावेश <altivec.h>
 
-#include "utils.h"
-#include "../tm/tm.h"
+#समावेश "utils.h"
+#समावेश "../tm/tm.h"
 
-#define MAX_ATTEMPT 500000
-#define TIMEOUT 10
+#घोषणा MAX_ATTEMPT 500000
+#घोषणा TIMEOUT 10
 
-extern long tm_signal_self(pid_t pid, int sig, long *ret);
+बाह्य दीर्घ पंचांग_संकेत_self(pid_t pid, पूर्णांक sig, दीर्घ *ret);
 
-static sig_atomic_t signaled;
-static sig_atomic_t fail;
+अटल संक_पूर्ण_प्रकार संकेतed;
+अटल संक_पूर्ण_प्रकार fail;
 
-static void signal_handler(int sig)
-{
-	if (tcheck_active()) {
+अटल व्योम संकेत_handler(पूर्णांक sig)
+अणु
+	अगर (tcheck_active()) अणु
 		fail = 2;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sig == SIGUSR1)
-		signaled = 1;
-	else
+	अगर (sig == SIGUSR1)
+		संकेतed = 1;
+	अन्यथा
 		fail = 1;
-}
+पूर्ण
 
-static int test_signal_tm()
-{
-	int i;
-	struct sigaction act;
+अटल पूर्णांक test_संकेत_पंचांग()
+अणु
+	पूर्णांक i;
+	काष्ठा sigaction act;
 
-	act.sa_handler = signal_handler;
+	act.sa_handler = संकेत_handler;
 	act.sa_flags = 0;
 	sigemptyset(&act.sa_mask);
-	if (sigaction(SIGUSR1, &act, NULL) < 0) {
-		perror("sigaction SIGUSR1");
-		exit(1);
-	}
-	if (sigaction(SIGALRM, &act, NULL) < 0) {
-		perror("sigaction SIGALRM");
-		exit(1);
-	}
+	अगर (sigaction(SIGUSR1, &act, शून्य) < 0) अणु
+		लिखो_त्रुटि("sigaction SIGUSR1");
+		निकास(1);
+	पूर्ण
+	अगर (sigaction(SIGALRM, &act, शून्य) < 0) अणु
+		लिखो_त्रुटि("sigaction SIGALRM");
+		निकास(1);
+	पूर्ण
 
-	SKIP_IF(!have_htm());
+	SKIP_IF(!have_hपंचांग());
 
-	for (i = 0; i < MAX_ATTEMPT; i++) {
+	क्रम (i = 0; i < MAX_ATTEMPT; i++) अणु
 		/*
 		 * If anything bad happens in ASM and we fail to set ret
 		 * because *handwave* TM this will cause failure
 		 */
-		long ret = 0xdead;
-		long rc = 0xbeef;
+		दीर्घ ret = 0xdead;
+		दीर्घ rc = 0xbeef;
 
 		alarm(0); /* Disable any pending */
-		signaled = 0;
+		संकेतed = 0;
 		alarm(TIMEOUT);
 		FAIL_IF(tcheck_transactional());
-		rc = tm_signal_self(getpid(), SIGUSR1, &ret);
-		if (ret == 0xdead)
+		rc = पंचांग_संकेत_self(getpid(), SIGUSR1, &ret);
+		अगर (ret == 0xdead)
 			/*
-			 * This basically means the transaction aborted before we
+			 * This basically means the transaction पातed beक्रमe we
 			 * even got to the suspend... this is crazy but it
 			 * happens.
-			 * Yes this also means we might never make forward
+			 * Yes this also means we might never make क्रमward
 			 * progress... the alarm() will trip eventually...
 			 */
-			continue;
+			जारी;
 
-		if (rc || ret) {
-			/* Ret is actually an errno */
-			printf("TEXASR 0x%016lx, TFIAR 0x%016lx\n",
+		अगर (rc || ret) अणु
+			/* Ret is actually an त्रुटि_सं */
+			म_लिखो("TEXASR 0x%016lx, TFIAR 0x%016lx\n",
 					__builtin_get_texasr(), __builtin_get_tfiar());
-			fprintf(stderr, "(%d) Fail reason: %d rc=0x%lx ret=0x%lx\n",
+			ख_लिखो(मानक_त्रुटि, "(%d) Fail reason: %d rc=0x%lx ret=0x%lx\n",
 					i, fail, rc, ret);
 			FAIL_IF(ret);
-		}
-		while(!signaled && !fail)
-			asm volatile("": : :"memory");
-		if (!signaled) {
-			fprintf(stderr, "(%d) Fail reason: %d rc=0x%lx ret=0x%lx\n",
+		पूर्ण
+		जबतक(!संकेतed && !fail)
+			यंत्र अस्थिर("": : :"memory");
+		अगर (!संकेतed) अणु
+			ख_लिखो(मानक_त्रुटि, "(%d) Fail reason: %d rc=0x%lx ret=0x%lx\n",
 					i, fail, rc, ret);
 			FAIL_IF(fail); /* For the line number */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(test_signal_tm, "signal_tm");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(test_संकेत_पंचांग, "signal_tm");
+पूर्ण

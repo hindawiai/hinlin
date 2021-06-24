@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef CEPH_CRUSH_HASH_H
-#define CEPH_CRUSH_HASH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित CEPH_CRUSH_HASH_H
+#घोषणा CEPH_CRUSH_HASH_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 # include <linux/types.h>
-#else
+#अन्यथा
 # include "crush_compat.h"
-#endif
+#पूर्ण_अगर
 
-#define CRUSH_HASH_RJENKINS1   0
+#घोषणा CRUSH_HASH_RJENKINS1   0
 
-#define CRUSH_HASH_DEFAULT CRUSH_HASH_RJENKINS1
+#घोषणा CRUSH_HASH_DEFAULT CRUSH_HASH_RJENKINS1
 
-extern const char *crush_hash_name(int type);
+बाह्य स्थिर अक्षर *crush_hash_name(पूर्णांक type);
 
-extern __u32 crush_hash32(int type, __u32 a);
-extern __u32 crush_hash32_2(int type, __u32 a, __u32 b);
-extern __u32 crush_hash32_3(int type, __u32 a, __u32 b, __u32 c);
-extern __u32 crush_hash32_4(int type, __u32 a, __u32 b, __u32 c, __u32 d);
-extern __u32 crush_hash32_5(int type, __u32 a, __u32 b, __u32 c, __u32 d,
+बाह्य __u32 crush_hash32(पूर्णांक type, __u32 a);
+बाह्य __u32 crush_hash32_2(पूर्णांक type, __u32 a, __u32 b);
+बाह्य __u32 crush_hash32_3(पूर्णांक type, __u32 a, __u32 b, __u32 c);
+बाह्य __u32 crush_hash32_4(पूर्णांक type, __u32 a, __u32 b, __u32 c, __u32 d);
+बाह्य __u32 crush_hash32_5(पूर्णांक type, __u32 a, __u32 b, __u32 c, __u32 d,
 			    __u32 e);
 
-#endif
+#पूर्ण_अगर

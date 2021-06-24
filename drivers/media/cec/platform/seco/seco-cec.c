@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
- * CEC driver for SECO X86 Boards
+ * CEC driver क्रम SECO X86 Boards
  *
  * Author:  Ettore Chimenti <ek5.chimenti@gmail.com>
  * Copyright (C) 2018, SECO SpA.
  * Copyright (C) 2018, Aidilab Srl.
  */
 
-#include <linux/module.h>
-#include <linux/acpi.h>
-#include <linux/delay.h>
-#include <linux/dmi.h>
-#include <linux/gpio/consumer.h>
-#include <linux/gpio.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
 
 /* CEC Framework */
-#include <media/cec-notifier.h>
+#समावेश <media/cec-notअगरier.h>
 
-#include "seco-cec.h"
+#समावेश "seco-cec.h"
 
-struct secocec_data {
-	struct device *dev;
-	struct platform_device *pdev;
-	struct cec_adapter *cec_adap;
-	struct cec_notifier *notifier;
-	struct rc_dev *ir;
-	char ir_input_phys[32];
-	int irq;
-};
+काष्ठा secocec_data अणु
+	काष्ठा device *dev;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा cec_adapter *cec_adap;
+	काष्ठा cec_notअगरier *notअगरier;
+	काष्ठा rc_dev *ir;
+	अक्षर ir_input_phys[32];
+	पूर्णांक irq;
+पूर्ण;
 
-#define smb_wr16(cmd, data) smb_word_op(CMD_WORD_DATA, SECOCEC_MICRO_ADDRESS, \
-					     cmd, data, SMBUS_WRITE, NULL)
-#define smb_rd16(cmd, res) smb_word_op(CMD_WORD_DATA, SECOCEC_MICRO_ADDRESS, \
+#घोषणा smb_wr16(cmd, data) smb_word_op(CMD_WORD_DATA, SECOCEC_MICRO_ADDRESS, \
+					     cmd, data, SMBUS_WRITE, शून्य)
+#घोषणा smb_rd16(cmd, res) smb_word_op(CMD_WORD_DATA, SECOCEC_MICRO_ADDRESS, \
 				       cmd, 0, SMBUS_READ, res)
 
-static int smb_word_op(short data_format, u16 slave_addr, u8 cmd, u16 data,
+अटल पूर्णांक smb_word_op(लघु data_क्रमmat, u16 slave_addr, u8 cmd, u16 data,
 		       u8 operation, u16 *result)
-{
-	unsigned int count;
-	short _data_format;
-	int status = 0;
+अणु
+	अचिन्हित पूर्णांक count;
+	लघु _data_क्रमmat;
+	पूर्णांक status = 0;
 
-	switch (data_format) {
-	case CMD_BYTE_DATA:
-		_data_format = BRA_SMB_CMD_BYTE_DATA;
-		break;
-	case CMD_WORD_DATA:
-		_data_format = BRA_SMB_CMD_WORD_DATA;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (data_क्रमmat) अणु
+	हाल CMD_BYTE_DATA:
+		_data_क्रमmat = BRA_SMB_CMD_BYTE_DATA;
+		अवरोध;
+	हाल CMD_WORD_DATA:
+		_data_क्रमmat = BRA_SMB_CMD_WORD_DATA;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Active wait until ready */
-	for (count = 0; count <= SMBTIMEOUT; ++count) {
-		if (!(inb(HSTS) & BRA_INUSE_STS))
-			break;
+	/* Active रुको until पढ़ोy */
+	क्रम (count = 0; count <= SMBTIMEOUT; ++count) अणु
+		अगर (!(inb(HSTS) & BRA_INUSE_STS))
+			अवरोध;
 		udelay(SMB_POLL_UDELAY);
-	}
+	पूर्ण
 
-	if (count > SMBTIMEOUT)
+	अगर (count > SMBTIMEOUT)
 		/* Reset the lock instead of failing */
 		outb(0xff, HSTS);
 
@@ -71,145 +72,145 @@ static int smb_word_op(short data_format, u16 slave_addr, u8 cmd, u16 data,
 	outb(cmd, HCMD);
 	inb(HCNT);
 
-	if (operation == SMBUS_WRITE) {
+	अगर (operation == SMBUS_WRITE) अणु
 		outb((u8)data, HDAT0);
 		outb((u8)(data >> 8), HDAT1);
-	}
+	पूर्ण
 
-	outb(BRA_START + _data_format, HCNT);
+	outb(BRA_START + _data_क्रमmat, HCNT);
 
-	for (count = 0; count <= SMBTIMEOUT; count++) {
-		if (!(inb(HSTS) & BRA_HOST_BUSY))
-			break;
+	क्रम (count = 0; count <= SMBTIMEOUT; count++) अणु
+		अगर (!(inb(HSTS) & BRA_HOST_BUSY))
+			अवरोध;
 		udelay(SMB_POLL_UDELAY);
-	}
+	पूर्ण
 
-	if (count > SMBTIMEOUT) {
+	अगर (count > SMBTIMEOUT) अणु
 		status = -EBUSY;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (inb(HSTS) & BRA_HSTS_ERR_MASK) {
+	अगर (inb(HSTS) & BRA_HSTS_ERR_MASK) अणु
 		status = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (operation == SMBUS_READ)
+	अगर (operation == SMBUS_READ)
 		*result = ((inb(HDAT0) & 0xff) + ((inb(HDAT1) & 0xff) << 8));
 
 err:
 	outb(0xff, HSTS);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int secocec_adap_enable(struct cec_adapter *adap, bool enable)
-{
-	struct secocec_data *cec = cec_get_drvdata(adap);
-	struct device *dev = cec->dev;
+अटल पूर्णांक secocec_adap_enable(काष्ठा cec_adapter *adap, bool enable)
+अणु
+	काष्ठा secocec_data *cec = cec_get_drvdata(adap);
+	काष्ठा device *dev = cec->dev;
 	u16 val = 0;
-	int status;
+	पूर्णांक status;
 
-	if (enable) {
-		/* Clear the status register */
+	अगर (enable) अणु
+		/* Clear the status रेजिस्टर */
 		status = smb_rd16(SECOCEC_STATUS_REG_1, &val);
-		if (status)
-			goto err;
+		अगर (status)
+			जाओ err;
 
 		status = smb_wr16(SECOCEC_STATUS_REG_1, val);
-		if (status)
-			goto err;
+		अगर (status)
+			जाओ err;
 
-		/* Enable the interrupts */
+		/* Enable the पूर्णांकerrupts */
 		status = smb_rd16(SECOCEC_ENABLE_REG_1, &val);
-		if (status)
-			goto err;
+		अगर (status)
+			जाओ err;
 
 		status = smb_wr16(SECOCEC_ENABLE_REG_1,
 				  val | SECOCEC_ENABLE_REG_1_CEC);
-		if (status)
-			goto err;
+		अगर (status)
+			जाओ err;
 
 		dev_dbg(dev, "Device enabled");
-	} else {
-		/* Clear the status register */
+	पूर्ण अन्यथा अणु
+		/* Clear the status रेजिस्टर */
 		status = smb_rd16(SECOCEC_STATUS_REG_1, &val);
 		status = smb_wr16(SECOCEC_STATUS_REG_1, val);
 
-		/* Disable the interrupts */
+		/* Disable the पूर्णांकerrupts */
 		status = smb_rd16(SECOCEC_ENABLE_REG_1, &val);
 		status = smb_wr16(SECOCEC_ENABLE_REG_1, val &
 				  ~SECOCEC_ENABLE_REG_1_CEC &
 				  ~SECOCEC_ENABLE_REG_1_IR);
 
 		dev_dbg(dev, "Device disabled");
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int secocec_adap_log_addr(struct cec_adapter *adap, u8 logical_addr)
-{
+अटल पूर्णांक secocec_adap_log_addr(काष्ठा cec_adapter *adap, u8 logical_addr)
+अणु
 	u16 enable_val = 0;
-	int status;
+	पूर्णांक status;
 
 	/* Disable device */
 	status = smb_rd16(SECOCEC_ENABLE_REG_1, &enable_val);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	status = smb_wr16(SECOCEC_ENABLE_REG_1,
 			  enable_val & ~SECOCEC_ENABLE_REG_1_CEC);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	/* Write logical address
 	 * NOTE: CEC_LOG_ADDR_INVALID is mapped to the 'Unregistered' LA
 	 */
 	status = smb_wr16(SECOCEC_DEVICE_LA, logical_addr & 0xf);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	/* Re-enable device */
 	status = smb_wr16(SECOCEC_ENABLE_REG_1,
 			  enable_val | SECOCEC_ENABLE_REG_1_CEC);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int secocec_adap_transmit(struct cec_adapter *adap, u8 attempts,
-				 u32 signal_free_time, struct cec_msg *msg)
-{
+अटल पूर्णांक secocec_adap_transmit(काष्ठा cec_adapter *adap, u8 attempts,
+				 u32 संकेत_मुक्त_समय, काष्ठा cec_msg *msg)
+अणु
 	u16 payload_len, payload_id_len, destination, val = 0;
 	u8 *payload_msg;
-	int status;
+	पूर्णांक status;
 	u8 i;
 
-	/* Device msg len already accounts for header */
+	/* Device msg len alपढ़ोy accounts क्रम header */
 	payload_id_len = msg->len - 1;
 
 	/* Send data length */
 	status = smb_wr16(SECOCEC_WRITE_DATA_LENGTH, payload_id_len);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
-	/* Send Operation ID if present */
-	if (payload_id_len > 0) {
+	/* Send Operation ID अगर present */
+	अगर (payload_id_len > 0) अणु
 		status = smb_wr16(SECOCEC_WRITE_OPERATION_ID, msg->msg[1]);
-		if (status)
-			goto err;
-	}
-	/* Send data if present */
-	if (payload_id_len > 1) {
+		अगर (status)
+			जाओ err;
+	पूर्ण
+	/* Send data अगर present */
+	अगर (payload_id_len > 1) अणु
 		/* Only data; */
 		payload_len = msg->len - 2;
 		payload_msg = &msg->msg[2];
 
-		/* Copy message into registers */
-		for (i = 0; i < payload_len; i += 2) {
+		/* Copy message पूर्णांकo रेजिस्टरs */
+		क्रम (i = 0; i < payload_len; i += 2) अणु
 			/* hi byte */
 			val = payload_msg[i + 1] << 8;
 
@@ -217,190 +218,190 @@ static int secocec_adap_transmit(struct cec_adapter *adap, u8 attempts,
 			val |= payload_msg[i];
 
 			status = smb_wr16(SECOCEC_WRITE_DATA_00 + i / 2, val);
-			if (status)
-				goto err;
-		}
-	}
+			अगर (status)
+				जाओ err;
+		पूर्ण
+	पूर्ण
 	/* Send msg source/destination and fire msg */
 	destination = msg->msg[0];
 	status = smb_wr16(SECOCEC_WRITE_BYTE0, destination);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void secocec_tx_done(struct cec_adapter *adap, u16 status_val)
-{
-	if (status_val & SECOCEC_STATUS_TX_ERROR_MASK) {
-		if (status_val & SECOCEC_STATUS_TX_NACK_ERROR)
-			cec_transmit_attempt_done(adap, CEC_TX_STATUS_NACK);
-		else
-			cec_transmit_attempt_done(adap, CEC_TX_STATUS_ERROR);
-	} else {
-		cec_transmit_attempt_done(adap, CEC_TX_STATUS_OK);
-	}
+अटल व्योम secocec_tx_करोne(काष्ठा cec_adapter *adap, u16 status_val)
+अणु
+	अगर (status_val & SECOCEC_STATUS_TX_ERROR_MASK) अणु
+		अगर (status_val & SECOCEC_STATUS_TX_NACK_ERROR)
+			cec_transmit_attempt_करोne(adap, CEC_TX_STATUS_NACK);
+		अन्यथा
+			cec_transmit_attempt_करोne(adap, CEC_TX_STATUS_ERROR);
+	पूर्ण अन्यथा अणु
+		cec_transmit_attempt_करोne(adap, CEC_TX_STATUS_OK);
+	पूर्ण
 
 	/* Reset status reg */
 	status_val = SECOCEC_STATUS_TX_ERROR_MASK |
 		SECOCEC_STATUS_MSG_SENT_MASK |
 		SECOCEC_STATUS_TX_NACK_ERROR;
 	smb_wr16(SECOCEC_STATUS, status_val);
-}
+पूर्ण
 
-static void secocec_rx_done(struct cec_adapter *adap, u16 status_val)
-{
-	struct secocec_data *cec = cec_get_drvdata(adap);
-	struct device *dev = cec->dev;
-	struct cec_msg msg = { };
+अटल व्योम secocec_rx_करोne(काष्ठा cec_adapter *adap, u16 status_val)
+अणु
+	काष्ठा secocec_data *cec = cec_get_drvdata(adap);
+	काष्ठा device *dev = cec->dev;
+	काष्ठा cec_msg msg = अणु पूर्ण;
 	bool flag_overflow = false;
 	u8 payload_len, i = 0;
 	u8 *payload_msg;
 	u16 val = 0;
-	int status;
+	पूर्णांक status;
 
-	if (status_val & SECOCEC_STATUS_RX_OVERFLOW_MASK) {
+	अगर (status_val & SECOCEC_STATUS_RX_OVERFLOW_MASK) अणु
 		/* NOTE: Untested, it also might not be necessary */
 		dev_warn(dev, "Received more than 16 bytes. Discarding");
 		flag_overflow = true;
-	}
+	पूर्ण
 
-	if (status_val & SECOCEC_STATUS_RX_ERROR_MASK) {
+	अगर (status_val & SECOCEC_STATUS_RX_ERROR_MASK) अणु
 		dev_warn(dev, "Message received with errors. Discarding");
 		status = -EIO;
-		goto rxerr;
-	}
+		जाओ rxerr;
+	पूर्ण
 
 	/* Read message length */
 	status = smb_rd16(SECOCEC_READ_DATA_LENGTH, &val);
-	if (status)
-		return;
+	अगर (status)
+		वापस;
 
-	/* Device msg len already accounts for the header */
+	/* Device msg len alपढ़ोy accounts क्रम the header */
 	msg.len = min(val + 1, CEC_MAX_MSG_SIZE);
 
 	/* Read logical address */
 	status = smb_rd16(SECOCEC_READ_BYTE0, &val);
-	if (status)
-		return;
+	अगर (status)
+		वापस;
 
 	/* device stores source LA and destination */
 	msg.msg[0] = val;
 
 	/* Read operation ID */
 	status = smb_rd16(SECOCEC_READ_OPERATION_ID, &val);
-	if (status)
-		return;
+	अगर (status)
+		वापस;
 
 	msg.msg[1] = val;
 
-	/* Read data if present */
-	if (msg.len > 1) {
+	/* Read data अगर present */
+	अगर (msg.len > 1) अणु
 		payload_len = msg.len - 2;
 		payload_msg = &msg.msg[2];
 
 		/* device stores 2 bytes in every 16-bit val */
-		for (i = 0; i < payload_len; i += 2) {
+		क्रम (i = 0; i < payload_len; i += 2) अणु
 			status = smb_rd16(SECOCEC_READ_DATA_00 + i / 2, &val);
-			if (status)
-				return;
+			अगर (status)
+				वापस;
 
 			/* low byte, skipping header */
 			payload_msg[i] = val & 0x00ff;
 
 			/* hi byte */
 			payload_msg[i + 1] = (val & 0xff00) >> 8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	cec_received_msg(cec->cec_adap, &msg);
 
 	/* Reset status reg */
 	status_val = SECOCEC_STATUS_MSG_RECEIVED_MASK;
-	if (flag_overflow)
+	अगर (flag_overflow)
 		status_val |= SECOCEC_STATUS_RX_OVERFLOW_MASK;
 
 	status = smb_wr16(SECOCEC_STATUS, status_val);
 
-	return;
+	वापस;
 
 rxerr:
 	/* Reset error reg */
 	status_val = SECOCEC_STATUS_MSG_RECEIVED_MASK |
 		SECOCEC_STATUS_RX_ERROR_MASK;
-	if (flag_overflow)
+	अगर (flag_overflow)
 		status_val |= SECOCEC_STATUS_RX_OVERFLOW_MASK;
 	smb_wr16(SECOCEC_STATUS, status_val);
-}
+पूर्ण
 
-static const struct cec_adap_ops secocec_cec_adap_ops = {
+अटल स्थिर काष्ठा cec_adap_ops secocec_cec_adap_ops = अणु
 	/* Low-level callbacks */
 	.adap_enable = secocec_adap_enable,
 	.adap_log_addr = secocec_adap_log_addr,
 	.adap_transmit = secocec_adap_transmit,
-};
+पूर्ण;
 
-#ifdef CONFIG_CEC_SECO_RC
-static int secocec_ir_probe(void *priv)
-{
-	struct secocec_data *cec = priv;
-	struct device *dev = cec->dev;
-	int status;
+#अगर_घोषित CONFIG_CEC_SECO_RC
+अटल पूर्णांक secocec_ir_probe(व्योम *priv)
+अणु
+	काष्ठा secocec_data *cec = priv;
+	काष्ठा device *dev = cec->dev;
+	पूर्णांक status;
 	u16 val;
 
 	/* Prepare the RC input device */
 	cec->ir = devm_rc_allocate_device(dev, RC_DRIVER_SCANCODE);
-	if (!cec->ir)
-		return -ENOMEM;
+	अगर (!cec->ir)
+		वापस -ENOMEM;
 
-	snprintf(cec->ir_input_phys, sizeof(cec->ir_input_phys),
+	snम_लिखो(cec->ir_input_phys, माप(cec->ir_input_phys),
 		 "%s/input0", dev_name(dev));
 
 	cec->ir->device_name = dev_name(dev);
 	cec->ir->input_phys = cec->ir_input_phys;
 	cec->ir->input_id.bustype = BUS_HOST;
-	cec->ir->input_id.vendor = 0;
+	cec->ir->input_id.venकरोr = 0;
 	cec->ir->input_id.product = 0;
 	cec->ir->input_id.version = 1;
 	cec->ir->driver_name = SECOCEC_DEV_NAME;
 	cec->ir->allowed_protocols = RC_PROTO_BIT_RC5;
 	cec->ir->priv = cec;
 	cec->ir->map_name = RC_MAP_HAUPPAUGE;
-	cec->ir->timeout = MS_TO_US(100);
+	cec->ir->समयout = MS_TO_US(100);
 
-	/* Clear the status register */
+	/* Clear the status रेजिस्टर */
 	status = smb_rd16(SECOCEC_STATUS_REG_1, &val);
-	if (status != 0)
-		goto err;
+	अगर (status != 0)
+		जाओ err;
 
 	status = smb_wr16(SECOCEC_STATUS_REG_1, val);
-	if (status != 0)
-		goto err;
+	अगर (status != 0)
+		जाओ err;
 
-	/* Enable the interrupts */
+	/* Enable the पूर्णांकerrupts */
 	status = smb_rd16(SECOCEC_ENABLE_REG_1, &val);
-	if (status != 0)
-		goto err;
+	अगर (status != 0)
+		जाओ err;
 
 	status = smb_wr16(SECOCEC_ENABLE_REG_1,
 			  val | SECOCEC_ENABLE_REG_1_IR);
-	if (status != 0)
-		goto err;
+	अगर (status != 0)
+		जाओ err;
 
 	dev_dbg(dev, "IR enabled");
 
-	status = devm_rc_register_device(dev, cec->ir);
+	status = devm_rc_रेजिस्टर_device(dev, cec->ir);
 
-	if (status) {
+	अगर (status) अणु
 		dev_err(dev, "Failed to prepare input device");
-		cec->ir = NULL;
-		goto err;
-	}
+		cec->ir = शून्य;
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
 	smb_rd16(SECOCEC_ENABLE_REG_1, &val);
@@ -409,232 +410,232 @@ err:
 		 val & ~SECOCEC_ENABLE_REG_1_IR);
 
 	dev_dbg(dev, "IR disabled");
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int secocec_ir_rx(struct secocec_data *priv)
-{
-	struct secocec_data *cec = priv;
-	struct device *dev = cec->dev;
+अटल पूर्णांक secocec_ir_rx(काष्ठा secocec_data *priv)
+अणु
+	काष्ठा secocec_data *cec = priv;
+	काष्ठा device *dev = cec->dev;
 	u16 val, status, key, addr, toggle;
 
-	if (!cec->ir)
-		return -ENODEV;
+	अगर (!cec->ir)
+		वापस -ENODEV;
 
 	status = smb_rd16(SECOCEC_IR_READ_DATA, &val);
-	if (status != 0)
-		goto err;
+	अगर (status != 0)
+		जाओ err;
 
 	key = val & SECOCEC_IR_COMMAND_MASK;
 	addr = (val & SECOCEC_IR_ADDRESS_MASK) >> SECOCEC_IR_ADDRESS_SHL;
 	toggle = (val & SECOCEC_IR_TOGGLE_MASK) >> SECOCEC_IR_TOGGLE_SHL;
 
-	rc_keydown(cec->ir, RC_PROTO_RC5, RC_SCANCODE_RC5(addr, key), toggle);
+	rc_keyकरोwn(cec->ir, RC_PROTO_RC5, RC_SCANCODE_RC5(addr, key), toggle);
 
 	dev_dbg(dev, "IR key pressed: 0x%02x addr 0x%02x toggle 0x%02x", key,
 		addr, toggle);
 
-	return 0;
+	वापस 0;
 
 err:
 	dev_err(dev, "IR Receive message failed (%d)", status);
-	return -EIO;
-}
-#else
-static void secocec_ir_rx(struct secocec_data *priv)
-{
-}
+	वापस -EIO;
+पूर्ण
+#अन्यथा
+अटल व्योम secocec_ir_rx(काष्ठा secocec_data *priv)
+अणु
+पूर्ण
 
-static int secocec_ir_probe(void *priv)
-{
-	return 0;
-}
-#endif
+अटल पूर्णांक secocec_ir_probe(व्योम *priv)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static irqreturn_t secocec_irq_handler(int irq, void *priv)
-{
-	struct secocec_data *cec = priv;
-	struct device *dev = cec->dev;
+अटल irqवापस_t secocec_irq_handler(पूर्णांक irq, व्योम *priv)
+अणु
+	काष्ठा secocec_data *cec = priv;
+	काष्ठा device *dev = cec->dev;
 	u16 status_val, cec_val, val = 0;
-	int status;
+	पूर्णांक status;
 
-	/*  Read status register */
+	/*  Read status रेजिस्टर */
 	status = smb_rd16(SECOCEC_STATUS_REG_1, &status_val);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
-	if (status_val & SECOCEC_STATUS_REG_1_CEC) {
-		/* Read CEC status register */
+	अगर (status_val & SECOCEC_STATUS_REG_1_CEC) अणु
+		/* Read CEC status रेजिस्टर */
 		status = smb_rd16(SECOCEC_STATUS, &cec_val);
-		if (status)
-			goto err;
+		अगर (status)
+			जाओ err;
 
-		if (cec_val & SECOCEC_STATUS_MSG_RECEIVED_MASK)
-			secocec_rx_done(cec->cec_adap, cec_val);
+		अगर (cec_val & SECOCEC_STATUS_MSG_RECEIVED_MASK)
+			secocec_rx_करोne(cec->cec_adap, cec_val);
 
-		if (cec_val & SECOCEC_STATUS_MSG_SENT_MASK)
-			secocec_tx_done(cec->cec_adap, cec_val);
+		अगर (cec_val & SECOCEC_STATUS_MSG_SENT_MASK)
+			secocec_tx_करोne(cec->cec_adap, cec_val);
 
-		if ((~cec_val & SECOCEC_STATUS_MSG_SENT_MASK) &&
+		अगर ((~cec_val & SECOCEC_STATUS_MSG_SENT_MASK) &&
 		    (~cec_val & SECOCEC_STATUS_MSG_RECEIVED_MASK))
 			dev_warn_once(dev,
 				      "Message not received or sent, but interrupt fired");
 
 		val = SECOCEC_STATUS_REG_1_CEC;
-	}
+	पूर्ण
 
-	if (status_val & SECOCEC_STATUS_REG_1_IR) {
+	अगर (status_val & SECOCEC_STATUS_REG_1_IR) अणु
 		val |= SECOCEC_STATUS_REG_1_IR;
 
 		secocec_ir_rx(cec);
-	}
+	पूर्ण
 
-	/*  Reset status register */
+	/*  Reset status रेजिस्टर */
 	status = smb_wr16(SECOCEC_STATUS_REG_1, val);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 
 err:
 	dev_err_once(dev, "IRQ: R/W SMBus operation failed (%d)", status);
 
-	/*  Reset status register */
+	/*  Reset status रेजिस्टर */
 	val = SECOCEC_STATUS_REG_1_CEC | SECOCEC_STATUS_REG_1_IR;
 	smb_wr16(SECOCEC_STATUS_REG_1, val);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-struct cec_dmi_match {
-	const char *sys_vendor;
-	const char *product_name;
-	const char *devname;
-	const char *conn;
-};
+काष्ठा cec_dmi_match अणु
+	स्थिर अक्षर *sys_venकरोr;
+	स्थिर अक्षर *product_name;
+	स्थिर अक्षर *devname;
+	स्थिर अक्षर *conn;
+पूर्ण;
 
-static const struct cec_dmi_match secocec_dmi_match_table[] = {
+अटल स्थिर काष्ठा cec_dmi_match secocec_dmi_match_table[] = अणु
 	/* UDOO X86 */
-	{ "SECO", "UDOO x86", "0000:00:02.0", "Port B" },
-};
+	अणु "SECO", "UDOO x86", "0000:00:02.0", "Port B" पूर्ण,
+पूर्ण;
 
-static struct device *secocec_cec_find_hdmi_dev(struct device *dev,
-						const char **conn)
-{
-	int i;
+अटल काष्ठा device *secocec_cec_find_hdmi_dev(काष्ठा device *dev,
+						स्थिर अक्षर **conn)
+अणु
+	पूर्णांक i;
 
-	for (i = 0 ; i < ARRAY_SIZE(secocec_dmi_match_table) ; ++i) {
-		const struct cec_dmi_match *m = &secocec_dmi_match_table[i];
+	क्रम (i = 0 ; i < ARRAY_SIZE(secocec_dmi_match_table) ; ++i) अणु
+		स्थिर काष्ठा cec_dmi_match *m = &secocec_dmi_match_table[i];
 
-		if (dmi_match(DMI_SYS_VENDOR, m->sys_vendor) &&
-		    dmi_match(DMI_PRODUCT_NAME, m->product_name)) {
-			struct device *d;
+		अगर (dmi_match(DMI_SYS_VENDOR, m->sys_venकरोr) &&
+		    dmi_match(DMI_PRODUCT_NAME, m->product_name)) अणु
+			काष्ठा device *d;
 
-			/* Find the device, bail out if not yet registered */
-			d = bus_find_device_by_name(&pci_bus_type, NULL,
+			/* Find the device, bail out अगर not yet रेजिस्टरed */
+			d = bus_find_device_by_name(&pci_bus_type, शून्य,
 						    m->devname);
-			if (!d)
-				return ERR_PTR(-EPROBE_DEFER);
+			अगर (!d)
+				वापस ERR_PTR(-EPROBE_DEFER);
 
 			put_device(d);
 			*conn = m->conn;
-			return d;
-		}
-	}
+			वापस d;
+		पूर्ण
+	पूर्ण
 
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static int secocec_acpi_probe(struct secocec_data *sdev)
-{
-	struct device *dev = sdev->dev;
-	struct gpio_desc *gpio;
-	int irq = 0;
+अटल पूर्णांक secocec_acpi_probe(काष्ठा secocec_data *sdev)
+अणु
+	काष्ठा device *dev = sdev->dev;
+	काष्ठा gpio_desc *gpio;
+	पूर्णांक irq = 0;
 
-	gpio = devm_gpiod_get(dev, NULL, GPIOF_IN);
-	if (IS_ERR(gpio)) {
+	gpio = devm_gpiod_get(dev, शून्य, GPIOF_IN);
+	अगर (IS_ERR(gpio)) अणु
 		dev_err(dev, "Cannot request interrupt gpio");
-		return PTR_ERR(gpio);
-	}
+		वापस PTR_ERR(gpio);
+	पूर्ण
 
 	irq = gpiod_to_irq(gpio);
-	if (irq < 0) {
+	अगर (irq < 0) अणु
 		dev_err(dev, "Cannot find valid irq");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	dev_dbg(dev, "irq-gpio is bound to IRQ %d", irq);
 
 	sdev->irq = irq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int secocec_probe(struct platform_device *pdev)
-{
-	struct secocec_data *secocec;
-	struct device *dev = &pdev->dev;
-	struct device *hdmi_dev;
-	const char *conn = NULL;
-	int ret;
+अटल पूर्णांक secocec_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा secocec_data *secocec;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device *hdmi_dev;
+	स्थिर अक्षर *conn = शून्य;
+	पूर्णांक ret;
 	u16 val;
 
 	hdmi_dev = secocec_cec_find_hdmi_dev(&pdev->dev, &conn);
-	if (IS_ERR(hdmi_dev))
-		return PTR_ERR(hdmi_dev);
+	अगर (IS_ERR(hdmi_dev))
+		वापस PTR_ERR(hdmi_dev);
 
-	secocec = devm_kzalloc(dev, sizeof(*secocec), GFP_KERNEL);
-	if (!secocec)
-		return -ENOMEM;
+	secocec = devm_kzalloc(dev, माप(*secocec), GFP_KERNEL);
+	अगर (!secocec)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(dev, secocec);
 
 	/* Request SMBus regions */
-	if (!request_muxed_region(BRA_SMB_BASE_ADDR, 7, "CEC00001")) {
+	अगर (!request_muxed_region(BRA_SMB_BASE_ADDR, 7, "CEC00001")) अणु
 		dev_err(dev, "Request memory region failed");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	secocec->pdev = pdev;
 	secocec->dev = dev;
 
-	if (!has_acpi_companion(dev)) {
+	अगर (!has_acpi_companion(dev)) अणु
 		dev_dbg(dev, "Cannot find any ACPI companion");
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = secocec_acpi_probe(secocec);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Cannot assign gpio to IRQ");
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* Firmware version check */
 	ret = smb_rd16(SECOCEC_VERSION, &val);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Cannot check fw version");
-		goto err;
-	}
-	if (val < SECOCEC_LATEST_FW) {
+		जाओ err;
+	पूर्ण
+	अगर (val < SECOCEC_LATEST_FW) अणु
 		dev_err(dev, "CEC Firmware not supported (v.%04x). Use ver > v.%04x",
 			val, SECOCEC_LATEST_FW);
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = devm_request_threaded_irq(dev,
+	ret = devm_request_thपढ़ोed_irq(dev,
 					secocec->irq,
-					NULL,
+					शून्य,
 					secocec_irq_handler,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					dev_name(&pdev->dev), secocec);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Cannot request IRQ %d", secocec->irq);
 		ret = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* Allocate CEC adapter */
 	secocec->cec_adap = cec_allocate_adapter(&secocec_cec_adap_ops,
@@ -644,159 +645,159 @@ static int secocec_probe(struct platform_device *pdev)
 						 CEC_CAP_CONNECTOR_INFO,
 						 SECOCEC_MAX_ADDRS);
 
-	if (IS_ERR(secocec->cec_adap)) {
+	अगर (IS_ERR(secocec->cec_adap)) अणु
 		ret = PTR_ERR(secocec->cec_adap);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	secocec->notifier = cec_notifier_cec_adap_register(hdmi_dev, conn,
+	secocec->notअगरier = cec_notअगरier_cec_adap_रेजिस्टर(hdmi_dev, conn,
 							   secocec->cec_adap);
-	if (!secocec->notifier) {
+	अगर (!secocec->notअगरier) अणु
 		ret = -ENOMEM;
-		goto err_delete_adapter;
-	}
+		जाओ err_delete_adapter;
+	पूर्ण
 
-	ret = cec_register_adapter(secocec->cec_adap, dev);
-	if (ret)
-		goto err_notifier;
+	ret = cec_रेजिस्टर_adapter(secocec->cec_adap, dev);
+	अगर (ret)
+		जाओ err_notअगरier;
 
 	ret = secocec_ir_probe(secocec);
-	if (ret)
-		goto err_notifier;
+	अगर (ret)
+		जाओ err_notअगरier;
 
-	platform_set_drvdata(pdev, secocec);
+	platक्रमm_set_drvdata(pdev, secocec);
 
 	dev_dbg(dev, "Device registered");
 
-	return ret;
+	वापस ret;
 
-err_notifier:
-	cec_notifier_cec_adap_unregister(secocec->notifier, secocec->cec_adap);
+err_notअगरier:
+	cec_notअगरier_cec_adap_unरेजिस्टर(secocec->notअगरier, secocec->cec_adap);
 err_delete_adapter:
 	cec_delete_adapter(secocec->cec_adap);
 err:
 	release_region(BRA_SMB_BASE_ADDR, 7);
 	dev_err(dev, "%s device probe failed\n", dev_name(dev));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int secocec_remove(struct platform_device *pdev)
-{
-	struct secocec_data *secocec = platform_get_drvdata(pdev);
+अटल पूर्णांक secocec_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा secocec_data *secocec = platक्रमm_get_drvdata(pdev);
 	u16 val;
 
-	if (secocec->ir) {
+	अगर (secocec->ir) अणु
 		smb_rd16(SECOCEC_ENABLE_REG_1, &val);
 
 		smb_wr16(SECOCEC_ENABLE_REG_1, val & ~SECOCEC_ENABLE_REG_1_IR);
 
 		dev_dbg(&pdev->dev, "IR disabled");
-	}
-	cec_notifier_cec_adap_unregister(secocec->notifier, secocec->cec_adap);
-	cec_unregister_adapter(secocec->cec_adap);
+	पूर्ण
+	cec_notअगरier_cec_adap_unरेजिस्टर(secocec->notअगरier, secocec->cec_adap);
+	cec_unरेजिस्टर_adapter(secocec->cec_adap);
 
 	release_region(BRA_SMB_BASE_ADDR, 7);
 
 	dev_dbg(&pdev->dev, "CEC device removed");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int secocec_suspend(struct device *dev)
-{
-	int status;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक secocec_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक status;
 	u16 val;
 
 	dev_dbg(dev, "Device going to suspend, disabling");
 
-	/* Clear the status register */
+	/* Clear the status रेजिस्टर */
 	status = smb_rd16(SECOCEC_STATUS_REG_1, &val);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
 	status = smb_wr16(SECOCEC_STATUS_REG_1, val);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
-	/* Disable the interrupts */
+	/* Disable the पूर्णांकerrupts */
 	status = smb_rd16(SECOCEC_ENABLE_REG_1, &val);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
 	status = smb_wr16(SECOCEC_ENABLE_REG_1, val &
 			  ~SECOCEC_ENABLE_REG_1_CEC & ~SECOCEC_ENABLE_REG_1_IR);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
 	dev_err(dev, "Suspend failed (err: %d)", status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int secocec_resume(struct device *dev)
-{
-	int status;
+अटल पूर्णांक secocec_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक status;
 	u16 val;
 
 	dev_dbg(dev, "Resuming device from suspend");
 
-	/* Clear the status register */
+	/* Clear the status रेजिस्टर */
 	status = smb_rd16(SECOCEC_STATUS_REG_1, &val);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
 	status = smb_wr16(SECOCEC_STATUS_REG_1, val);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
-	/* Enable the interrupts */
+	/* Enable the पूर्णांकerrupts */
 	status = smb_rd16(SECOCEC_ENABLE_REG_1, &val);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
 	status = smb_wr16(SECOCEC_ENABLE_REG_1, val | SECOCEC_ENABLE_REG_1_CEC);
-	if (status)
-		goto err;
+	अगर (status)
+		जाओ err;
 
 	dev_dbg(dev, "Device resumed from suspend");
 
-	return 0;
+	वापस 0;
 
 err:
 	dev_err(dev, "Resume failed (err: %d)", status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(secocec_pm_ops, secocec_suspend, secocec_resume);
-#define SECOCEC_PM_OPS (&secocec_pm_ops)
-#else
-#define SECOCEC_PM_OPS NULL
-#endif
+अटल SIMPLE_DEV_PM_OPS(secocec_pm_ops, secocec_suspend, secocec_resume);
+#घोषणा SECOCEC_PM_OPS (&secocec_pm_ops)
+#अन्यथा
+#घोषणा SECOCEC_PM_OPS शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id secocec_acpi_match[] = {
-	{"CEC00001", 0},
-	{},
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id secocec_acpi_match[] = अणु
+	अणु"CEC00001", 0पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(acpi, secocec_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver secocec_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver secocec_driver = अणु
+	.driver = अणु
 		   .name = SECOCEC_DEV_NAME,
 		   .acpi_match_table = ACPI_PTR(secocec_acpi_match),
 		   .pm = SECOCEC_PM_OPS,
-	},
+	पूर्ण,
 	.probe = secocec_probe,
-	.remove = secocec_remove,
-};
+	.हटाओ = secocec_हटाओ,
+पूर्ण;
 
-module_platform_driver(secocec_driver);
+module_platक्रमm_driver(secocec_driver);
 
 MODULE_DESCRIPTION("SECO CEC X86 Driver");
 MODULE_AUTHOR("Ettore Chimenti <ek5.chimenti@gmail.com>");

@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0+ OR MIT)
 /*
  * Copyright (c) 2019 Amlogic, Inc.
  * Author: Jianxin Pan <jianxin.pan@amlogic.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/io.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_domain.h>
-#include <dt-bindings/power/meson-a1-power.h>
-#include <linux/arm-smccc.h>
-#include <linux/firmware/meson/meson_sm.h>
-#include <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <dt-bindings/घातer/meson-a1-घातer.h>
+#समावेश <linux/arm-smccc.h>
+#समावेश <linux/firmware/meson/meson_sm.h>
+#समावेश <linux/module.h>
 
-#define PWRC_ON		1
-#define PWRC_OFF	0
+#घोषणा PWRC_ON		1
+#घोषणा PWRC_OFF	0
 
-struct meson_secure_pwrc_domain {
-	struct generic_pm_domain base;
-	unsigned int index;
-	struct meson_secure_pwrc *pwrc;
-};
+काष्ठा meson_secure_pwrc_करोमुख्य अणु
+	काष्ठा generic_pm_करोमुख्य base;
+	अचिन्हित पूर्णांक index;
+	काष्ठा meson_secure_pwrc *pwrc;
+पूर्ण;
 
-struct meson_secure_pwrc {
-	struct meson_secure_pwrc_domain *domains;
-	struct genpd_onecell_data xlate;
-	struct meson_sm_firmware *fw;
-};
+काष्ठा meson_secure_pwrc अणु
+	काष्ठा meson_secure_pwrc_करोमुख्य *करोमुख्यs;
+	काष्ठा genpd_onecell_data xlate;
+	काष्ठा meson_sm_firmware *fw;
+पूर्ण;
 
-struct meson_secure_pwrc_domain_desc {
-	unsigned int index;
-	unsigned int flags;
-	char *name;
-	bool (*is_off)(struct meson_secure_pwrc_domain *pwrc_domain);
-};
+काष्ठा meson_secure_pwrc_करोमुख्य_desc अणु
+	अचिन्हित पूर्णांक index;
+	अचिन्हित पूर्णांक flags;
+	अक्षर *name;
+	bool (*is_off)(काष्ठा meson_secure_pwrc_करोमुख्य *pwrc_करोमुख्य);
+पूर्ण;
 
-struct meson_secure_pwrc_domain_data {
-	unsigned int count;
-	struct meson_secure_pwrc_domain_desc *domains;
-};
+काष्ठा meson_secure_pwrc_करोमुख्य_data अणु
+	अचिन्हित पूर्णांक count;
+	काष्ठा meson_secure_pwrc_करोमुख्य_desc *करोमुख्यs;
+पूर्ण;
 
-static bool pwrc_secure_is_off(struct meson_secure_pwrc_domain *pwrc_domain)
-{
-	int is_off = 1;
+अटल bool pwrc_secure_is_off(काष्ठा meson_secure_pwrc_करोमुख्य *pwrc_करोमुख्य)
+अणु
+	पूर्णांक is_off = 1;
 
-	if (meson_sm_call(pwrc_domain->pwrc->fw, SM_A1_PWRC_GET, &is_off,
-			  pwrc_domain->index, 0, 0, 0, 0) < 0)
+	अगर (meson_sm_call(pwrc_करोमुख्य->pwrc->fw, SM_A1_PWRC_GET, &is_off,
+			  pwrc_करोमुख्य->index, 0, 0, 0, 0) < 0)
 		pr_err("failed to get power domain status\n");
 
-	return is_off;
-}
+	वापस is_off;
+पूर्ण
 
-static int meson_secure_pwrc_off(struct generic_pm_domain *domain)
-{
-	int ret = 0;
-	struct meson_secure_pwrc_domain *pwrc_domain =
-		container_of(domain, struct meson_secure_pwrc_domain, base);
+अटल पूर्णांक meson_secure_pwrc_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा meson_secure_pwrc_करोमुख्य *pwrc_करोमुख्य =
+		container_of(करोमुख्य, काष्ठा meson_secure_pwrc_करोमुख्य, base);
 
-	if (meson_sm_call(pwrc_domain->pwrc->fw, SM_A1_PWRC_SET, NULL,
-			  pwrc_domain->index, PWRC_OFF, 0, 0, 0) < 0) {
+	अगर (meson_sm_call(pwrc_करोमुख्य->pwrc->fw, SM_A1_PWRC_SET, शून्य,
+			  pwrc_करोमुख्य->index, PWRC_OFF, 0, 0, 0) < 0) अणु
 		pr_err("failed to set power domain off\n");
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int meson_secure_pwrc_on(struct generic_pm_domain *domain)
-{
-	int ret = 0;
-	struct meson_secure_pwrc_domain *pwrc_domain =
-		container_of(domain, struct meson_secure_pwrc_domain, base);
+अटल पूर्णांक meson_secure_pwrc_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा meson_secure_pwrc_करोमुख्य *pwrc_करोमुख्य =
+		container_of(करोमुख्य, काष्ठा meson_secure_pwrc_करोमुख्य, base);
 
-	if (meson_sm_call(pwrc_domain->pwrc->fw, SM_A1_PWRC_SET, NULL,
-			  pwrc_domain->index, PWRC_ON, 0, 0, 0) < 0) {
+	अगर (meson_sm_call(pwrc_करोमुख्य->pwrc->fw, SM_A1_PWRC_SET, शून्य,
+			  pwrc_करोमुख्य->index, PWRC_ON, 0, 0, 0) < 0) अणु
 		pr_err("failed to set power domain on\n");
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define SEC_PD(__name, __flag)			\
+#घोषणा SEC_PD(__name, __flag)			\
 [PWRC_##__name##_ID] =				\
-{						\
+अणु						\
 	.name = #__name,			\
 	.index = PWRC_##__name##_ID,		\
 	.is_off = pwrc_secure_is_off,	\
 	.flags = __flag,			\
-}
+पूर्ण
 
-static struct meson_secure_pwrc_domain_desc a1_pwrc_domains[] = {
+अटल काष्ठा meson_secure_pwrc_करोमुख्य_desc a1_pwrc_करोमुख्यs[] = अणु
 	SEC_PD(DSPA,	0),
 	SEC_PD(DSPB,	0),
-	/* UART should keep working in ATF after suspend and before resume */
+	/* UART should keep working in ATF after suspend and beक्रमe resume */
 	SEC_PD(UART,	GENPD_FLAG_ALWAYS_ON),
-	/* DMC is for DDR PHY ana/dig and DMC, and should be always on */
+	/* DMC is क्रम DDR PHY ana/dig and DMC, and should be always on */
 	SEC_PD(DMC,	GENPD_FLAG_ALWAYS_ON),
 	SEC_PD(I2C,	0),
 	SEC_PD(PSRAM,	0),
@@ -107,101 +108,101 @@ static struct meson_secure_pwrc_domain_desc a1_pwrc_domains[] = {
 	SEC_PD(DMA,	0),
 	SEC_PD(SD_EMMC,	0),
 	SEC_PD(RAMA,	0),
-	/* SRAMB is used as ATF runtime memory, and should be always on */
+	/* SRAMB is used as ATF runसमय memory, and should be always on */
 	SEC_PD(RAMB,	GENPD_FLAG_ALWAYS_ON),
 	SEC_PD(IR,	0),
 	SEC_PD(SPICC,	0),
 	SEC_PD(SPIFC,	0),
 	SEC_PD(USB,	0),
-	/* NIC is for the Arm NIC-400 interconnect, and should be always on */
+	/* NIC is क्रम the Arm NIC-400 पूर्णांकerconnect, and should be always on */
 	SEC_PD(NIC,	GENPD_FLAG_ALWAYS_ON),
 	SEC_PD(PDMIN,	0),
 	SEC_PD(RSA,	0),
-};
+पूर्ण;
 
-static int meson_secure_pwrc_probe(struct platform_device *pdev)
-{
-	int i;
-	struct device_node *sm_np;
-	struct meson_secure_pwrc *pwrc;
-	const struct meson_secure_pwrc_domain_data *match;
+अटल पूर्णांक meson_secure_pwrc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक i;
+	काष्ठा device_node *sm_np;
+	काष्ठा meson_secure_pwrc *pwrc;
+	स्थिर काष्ठा meson_secure_pwrc_करोमुख्य_data *match;
 
 	match = of_device_get_match_data(&pdev->dev);
-	if (!match) {
+	अगर (!match) अणु
 		dev_err(&pdev->dev, "failed to get match data\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	sm_np = of_find_compatible_node(NULL, NULL, "amlogic,meson-gxbb-sm");
-	if (!sm_np) {
+	sm_np = of_find_compatible_node(शून्य, शून्य, "amlogic,meson-gxbb-sm");
+	अगर (!sm_np) अणु
 		dev_err(&pdev->dev, "no secure-monitor node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	pwrc = devm_kzalloc(&pdev->dev, sizeof(*pwrc), GFP_KERNEL);
-	if (!pwrc)
-		return -ENOMEM;
+	pwrc = devm_kzalloc(&pdev->dev, माप(*pwrc), GFP_KERNEL);
+	अगर (!pwrc)
+		वापस -ENOMEM;
 
 	pwrc->fw = meson_sm_get(sm_np);
 	of_node_put(sm_np);
-	if (!pwrc->fw)
-		return -EPROBE_DEFER;
+	अगर (!pwrc->fw)
+		वापस -EPROBE_DEFER;
 
-	pwrc->xlate.domains = devm_kcalloc(&pdev->dev, match->count,
-					   sizeof(*pwrc->xlate.domains),
+	pwrc->xlate.करोमुख्यs = devm_kसुस्मृति(&pdev->dev, match->count,
+					   माप(*pwrc->xlate.करोमुख्यs),
 					   GFP_KERNEL);
-	if (!pwrc->xlate.domains)
-		return -ENOMEM;
+	अगर (!pwrc->xlate.करोमुख्यs)
+		वापस -ENOMEM;
 
-	pwrc->domains = devm_kcalloc(&pdev->dev, match->count,
-				     sizeof(*pwrc->domains), GFP_KERNEL);
-	if (!pwrc->domains)
-		return -ENOMEM;
+	pwrc->करोमुख्यs = devm_kसुस्मृति(&pdev->dev, match->count,
+				     माप(*pwrc->करोमुख्यs), GFP_KERNEL);
+	अगर (!pwrc->करोमुख्यs)
+		वापस -ENOMEM;
 
-	pwrc->xlate.num_domains = match->count;
-	platform_set_drvdata(pdev, pwrc);
+	pwrc->xlate.num_करोमुख्यs = match->count;
+	platक्रमm_set_drvdata(pdev, pwrc);
 
-	for (i = 0 ; i < match->count ; ++i) {
-		struct meson_secure_pwrc_domain *dom = &pwrc->domains[i];
+	क्रम (i = 0 ; i < match->count ; ++i) अणु
+		काष्ठा meson_secure_pwrc_करोमुख्य *करोm = &pwrc->करोमुख्यs[i];
 
-		if (!match->domains[i].index)
-			continue;
+		अगर (!match->करोमुख्यs[i].index)
+			जारी;
 
-		dom->pwrc = pwrc;
-		dom->index = match->domains[i].index;
-		dom->base.name = match->domains[i].name;
-		dom->base.flags = match->domains[i].flags;
-		dom->base.power_on = meson_secure_pwrc_on;
-		dom->base.power_off = meson_secure_pwrc_off;
+		करोm->pwrc = pwrc;
+		करोm->index = match->करोमुख्यs[i].index;
+		करोm->base.name = match->करोमुख्यs[i].name;
+		करोm->base.flags = match->करोमुख्यs[i].flags;
+		करोm->base.घातer_on = meson_secure_pwrc_on;
+		करोm->base.घातer_off = meson_secure_pwrc_off;
 
-		pm_genpd_init(&dom->base, NULL, match->domains[i].is_off(dom));
+		pm_genpd_init(&करोm->base, शून्य, match->करोमुख्यs[i].is_off(करोm));
 
-		pwrc->xlate.domains[i] = &dom->base;
-	}
+		pwrc->xlate.करोमुख्यs[i] = &करोm->base;
+	पूर्ण
 
-	return of_genpd_add_provider_onecell(pdev->dev.of_node, &pwrc->xlate);
-}
+	वापस of_genpd_add_provider_onecell(pdev->dev.of_node, &pwrc->xlate);
+पूर्ण
 
-static struct meson_secure_pwrc_domain_data meson_secure_a1_pwrc_data = {
-	.domains = a1_pwrc_domains,
-	.count = ARRAY_SIZE(a1_pwrc_domains),
-};
+अटल काष्ठा meson_secure_pwrc_करोमुख्य_data meson_secure_a1_pwrc_data = अणु
+	.करोमुख्यs = a1_pwrc_करोमुख्यs,
+	.count = ARRAY_SIZE(a1_pwrc_करोमुख्यs),
+पूर्ण;
 
-static const struct of_device_id meson_secure_pwrc_match_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id meson_secure_pwrc_match_table[] = अणु
+	अणु
 		.compatible = "amlogic,meson-a1-pwrc",
 		.data = &meson_secure_a1_pwrc_data,
-	},
-	{ /* sentinel */ }
-};
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, meson_secure_pwrc_match_table);
 
-static struct platform_driver meson_secure_pwrc_driver = {
+अटल काष्ठा platक्रमm_driver meson_secure_pwrc_driver = अणु
 	.probe = meson_secure_pwrc_probe,
-	.driver = {
+	.driver = अणु
 		.name		= "meson_secure_pwrc",
 		.of_match_table	= meson_secure_pwrc_match_table,
-	},
-};
-module_platform_driver(meson_secure_pwrc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(meson_secure_pwrc_driver);
 MODULE_LICENSE("Dual MIT/GPL");

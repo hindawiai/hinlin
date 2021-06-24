@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* mt9v011 sensor
  *
  * Copyright (C) 2011 Hans Verkuil <hverkuil@xs4all.nl>
  */
 
-#ifndef __MT9V011_H__
-#define __MT9V011_H__
+#अगर_अघोषित __MT9V011_H__
+#घोषणा __MT9V011_H__
 
-struct mt9v011_platform_data {
-	unsigned xtal;	/* Hz */
-};
+काष्ठा mt9v011_platक्रमm_data अणु
+	अचिन्हित xtal;	/* Hz */
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

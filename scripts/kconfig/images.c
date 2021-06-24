@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2002 Roman Zippel <zippel@linux-m68k.org>
  */
 
-#include "images.h"
+#समावेश "images.h"
 
-const char * const xpm_load[] = {
+स्थिर अक्षर * स्थिर xpm_load[] = अणु
 "22 22 5 1",
 ". c None",
 "# c #000000",
@@ -33,9 +34,9 @@ const char * const xpm_load[] = {
 "###cccccccccccc##.....",
 "##cccccccccccc##......",
 "###############.......",
-"......................"};
+"......................"पूर्ण;
 
-const char * const xpm_save[] = {
+स्थिर अक्षर * स्थिर xpm_save[] = अणु
 "22 22 5 1",
 ". c None",
 "# c #000000",
@@ -63,9 +64,9 @@ const char * const xpm_save[] = {
 ".#aaa#########bbb#aa#.",
 ".#aaa#########bbb#aa#.",
 "..##################..",
-"......................"};
+"......................"पूर्ण;
 
-const char * const xpm_back[] = {
+स्थिर अक्षर * स्थिर xpm_back[] = अणु
 "22 22 3 1",
 ". c None",
 "# c #000083",
@@ -91,9 +92,9 @@ const char * const xpm_back[] = {
 "......................",
 "......................",
 "......................",
-"......................"};
+"......................"पूर्ण;
 
-const char * const xpm_tree_view[] = {
+स्थिर अक्षर * स्थिर xpm_tree_view[] = अणु
 "22 22 2 1",
 ". c None",
 "# c #000000",
@@ -118,9 +119,9 @@ const char * const xpm_tree_view[] = {
 "......#...............",
 "......########........",
 "......................",
-"......................"};
+"......................"पूर्ण;
 
-const char * const xpm_single_view[] = {
+स्थिर अक्षर * स्थिर xpm_single_view[] = अणु
 "22 22 2 1",
 ". c None",
 "# c #000000",
@@ -145,9 +146,9 @@ const char * const xpm_single_view[] = {
 "..........#...........",
 "..........#...........",
 "......................",
-"......................"};
+"......................"पूर्ण;
 
-const char * const xpm_split_view[] = {
+स्थिर अक्षर * स्थिर xpm_split_view[] = अणु
 "22 22 2 1",
 ". c None",
 "# c #000000",
@@ -172,9 +173,9 @@ const char * const xpm_split_view[] = {
 "......#......#........",
 "......#......#........",
 "......................",
-"......................"};
+"......................"पूर्ण;
 
-const char * const xpm_symbol_no[] = {
+स्थिर अक्षर * स्थिर xpm_symbol_no[] = अणु
 "12 12 2 1",
 "  c white",
 ". c black",
@@ -189,9 +190,9 @@ const char * const xpm_symbol_no[] = {
 " .        . ",
 " .        . ",
 " .......... ",
-"            "};
+"            "पूर्ण;
 
-const char * const xpm_symbol_mod[] = {
+स्थिर अक्षर * स्थिर xpm_symbol_mod[] = अणु
 "12 12 2 1",
 "  c white",
 ". c black",
@@ -206,9 +207,9 @@ const char * const xpm_symbol_mod[] = {
 " .        . ",
 " .        . ",
 " .......... ",
-"            "};
+"            "पूर्ण;
 
-const char * const xpm_symbol_yes[] = {
+स्थिर अक्षर * स्थिर xpm_symbol_yes[] = अणु
 "12 12 2 1",
 "  c white",
 ". c black",
@@ -223,9 +224,9 @@ const char * const xpm_symbol_yes[] = {
 " .  ..    . ",
 " .        . ",
 " .......... ",
-"            "};
+"            "पूर्ण;
 
-const char * const xpm_choice_no[] = {
+स्थिर अक्षर * स्थिर xpm_choice_no[] = अणु
 "12 12 2 1",
 "  c white",
 ". c black",
@@ -240,9 +241,9 @@ const char * const xpm_choice_no[] = {
 "  .      .  ",
 "  ..    ..  ",
 "    ....    ",
-"            "};
+"            "पूर्ण;
 
-const char * const xpm_choice_yes[] = {
+स्थिर अक्षर * स्थिर xpm_choice_yes[] = अणु
 "12 12 2 1",
 "  c white",
 ". c black",
@@ -257,9 +258,9 @@ const char * const xpm_choice_yes[] = {
 "  .      .  ",
 "  ..    ..  ",
 "    ....    ",
-"            "};
+"            "पूर्ण;
 
-const char * const xpm_menu[] = {
+स्थिर अक्षर * स्थिर xpm_menu[] = अणु
 "12 12 2 1",
 "  c white",
 ". c black",
@@ -274,9 +275,9 @@ const char * const xpm_menu[] = {
 " . ..     . ",
 " .        . ",
 " .......... ",
-"            "};
+"            "पूर्ण;
 
-const char * const xpm_menu_inv[] = {
+स्थिर अक्षर * स्थिर xpm_menu_inv[] = अणु
 "12 12 2 1",
 "  c white",
 ". c black",
@@ -291,9 +292,9 @@ const char * const xpm_menu_inv[] = {
 " ..  ...... ",
 " .......... ",
 " .......... ",
-"            "};
+"            "पूर्ण;
 
-const char * const xpm_menuback[] = {
+स्थिर अक्षर * स्थिर xpm_menuback[] = अणु
 "12 12 2 1",
 "  c white",
 ". c black",
@@ -308,9 +309,9 @@ const char * const xpm_menuback[] = {
 " .     .. . ",
 " .        . ",
 " .......... ",
-"            "};
+"            "पूर्ण;
 
-const char * const xpm_void[] = {
+स्थिर अक्षर * स्थिर xpm_व्योम[] = अणु
 "12 12 2 1",
 "  c white",
 ". c black",
@@ -325,4 +326,4 @@ const char * const xpm_void[] = {
 "            ",
 "            ",
 "            ",
-"            "};
+"            "पूर्ण;

@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Digital Audio (PCM) abstract layer
+ *  Digital Audio (PCM) असलtract layer
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <linux/compat.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/file.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
-#include <linux/time.h>
-#include <linux/pm_qos.h>
-#include <linux/io.h>
-#include <linux/dma-mapping.h>
-#include <linux/vmalloc.h>
-#include <sound/core.h>
-#include <sound/control.h>
-#include <sound/info.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/timer.h>
-#include <sound/minors.h>
-#include <linux/uio.h>
-#include <linux/delay.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/pm_qos.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <sound/core.h>
+#समावेश <sound/control.h>
+#समावेश <sound/info.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/समयr.h>
+#समावेश <sound/minors.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/delay.h>
 
-#include "pcm_local.h"
+#समावेश "pcm_local.h"
 
-#ifdef CONFIG_SND_DEBUG
-#define CREATE_TRACE_POINTS
-#include "pcm_param_trace.h"
-#else
-#define trace_hw_mask_param_enabled()		0
-#define trace_hw_interval_param_enabled()	0
-#define trace_hw_mask_param(substream, type, index, prev, curr)
-#define trace_hw_interval_param(substream, type, index, prev, curr)
-#endif
+#अगर_घोषित CONFIG_SND_DEBUG
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "pcm_param_trace.h"
+#अन्यथा
+#घोषणा trace_hw_mask_param_enabled()		0
+#घोषणा trace_hw_पूर्णांकerval_param_enabled()	0
+#घोषणा trace_hw_mask_param(substream, type, index, prev, curr)
+#घोषणा trace_hw_पूर्णांकerval_param(substream, type, index, prev, curr)
+#पूर्ण_अगर
 
 /*
  *  Compatibility
  */
 
-struct snd_pcm_hw_params_old {
-	unsigned int flags;
-	unsigned int masks[SNDRV_PCM_HW_PARAM_SUBFORMAT -
+काष्ठा snd_pcm_hw_params_old अणु
+	अचिन्हित पूर्णांक flags;
+	अचिन्हित पूर्णांक masks[SNDRV_PCM_HW_PARAM_SUBFORMAT -
 			   SNDRV_PCM_HW_PARAM_ACCESS + 1];
-	struct snd_interval intervals[SNDRV_PCM_HW_PARAM_TICK_TIME -
+	काष्ठा snd_पूर्णांकerval पूर्णांकervals[SNDRV_PCM_HW_PARAM_TICK_TIME -
 					SNDRV_PCM_HW_PARAM_SAMPLE_BITS + 1];
-	unsigned int rmask;
-	unsigned int cmask;
-	unsigned int info;
-	unsigned int msbits;
-	unsigned int rate_num;
-	unsigned int rate_den;
-	snd_pcm_uframes_t fifo_size;
-	unsigned char reserved[64];
-};
+	अचिन्हित पूर्णांक rmask;
+	अचिन्हित पूर्णांक cmask;
+	अचिन्हित पूर्णांक info;
+	अचिन्हित पूर्णांक msbits;
+	अचिन्हित पूर्णांक rate_num;
+	अचिन्हित पूर्णांक rate_den;
+	snd_pcm_uframes_t fअगरo_size;
+	अचिन्हित अक्षर reserved[64];
+पूर्ण;
 
-#ifdef CONFIG_SND_SUPPORT_OLD_API
-#define SNDRV_PCM_IOCTL_HW_REFINE_OLD _IOWR('A', 0x10, struct snd_pcm_hw_params_old)
-#define SNDRV_PCM_IOCTL_HW_PARAMS_OLD _IOWR('A', 0x11, struct snd_pcm_hw_params_old)
+#अगर_घोषित CONFIG_SND_SUPPORT_OLD_API
+#घोषणा SNDRV_PCM_IOCTL_HW_REFINE_OLD _IOWR('A', 0x10, काष्ठा snd_pcm_hw_params_old)
+#घोषणा SNDRV_PCM_IOCTL_HW_PARAMS_OLD _IOWR('A', 0x11, काष्ठा snd_pcm_hw_params_old)
 
-static int snd_pcm_hw_refine_old_user(struct snd_pcm_substream *substream,
-				      struct snd_pcm_hw_params_old __user * _oparams);
-static int snd_pcm_hw_params_old_user(struct snd_pcm_substream *substream,
-				      struct snd_pcm_hw_params_old __user * _oparams);
-#endif
-static int snd_pcm_open(struct file *file, struct snd_pcm *pcm, int stream);
+अटल पूर्णांक snd_pcm_hw_refine_old_user(काष्ठा snd_pcm_substream *substream,
+				      काष्ठा snd_pcm_hw_params_old __user * _oparams);
+अटल पूर्णांक snd_pcm_hw_params_old_user(काष्ठा snd_pcm_substream *substream,
+				      काष्ठा snd_pcm_hw_params_old __user * _oparams);
+#पूर्ण_अगर
+अटल पूर्णांक snd_pcm_खोलो(काष्ठा file *file, काष्ठा snd_pcm *pcm, पूर्णांक stream);
 
 /*
  *
  */
 
-static DECLARE_RWSEM(snd_pcm_link_rwsem);
+अटल DECLARE_RWSEM(snd_pcm_link_rwsem);
 
-void snd_pcm_group_init(struct snd_pcm_group *group)
-{
+व्योम snd_pcm_group_init(काष्ठा snd_pcm_group *group)
+अणु
 	spin_lock_init(&group->lock);
 	mutex_init(&group->mutex);
 	INIT_LIST_HEAD(&group->substreams);
 	refcount_set(&group->refs, 1);
-}
+पूर्ण
 
 /* define group lock helpers */
-#define DEFINE_PCM_GROUP_LOCK(action, mutex_action) \
-static void snd_pcm_group_ ## action(struct snd_pcm_group *group, bool nonatomic) \
-{ \
-	if (nonatomic) \
+#घोषणा DEFINE_PCM_GROUP_LOCK(action, mutex_action) \
+अटल व्योम snd_pcm_group_ ## action(काष्ठा snd_pcm_group *group, bool nonatomic) \
+अणु \
+	अगर (nonatomic) \
 		mutex_ ## mutex_action(&group->mutex); \
-	else \
+	अन्यथा \
 		spin_ ## action(&group->lock); \
-}
+पूर्ण
 
 DEFINE_PCM_GROUP_LOCK(lock, lock);
 DEFINE_PCM_GROUP_LOCK(unlock, unlock);
@@ -103,12 +104,12 @@ DEFINE_PCM_GROUP_LOCK(unlock_irq, unlock);
  *
  * This locks the PCM stream's spinlock or mutex depending on the nonatomic
  * flag of the given substream.  This also takes the global link rw lock
- * (or rw sem), too, for avoiding the race with linked streams.
+ * (or rw sem), too, क्रम aव्योमing the race with linked streams.
  */
-void snd_pcm_stream_lock(struct snd_pcm_substream *substream)
-{
+व्योम snd_pcm_stream_lock(काष्ठा snd_pcm_substream *substream)
+अणु
 	snd_pcm_group_lock(&substream->self_group, substream->pcm->nonatomic);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_pcm_stream_lock);
 
 /**
@@ -117,10 +118,10 @@ EXPORT_SYMBOL_GPL(snd_pcm_stream_lock);
  *
  * This unlocks the PCM stream that has been locked via snd_pcm_stream_lock().
  */
-void snd_pcm_stream_unlock(struct snd_pcm_substream *substream)
-{
+व्योम snd_pcm_stream_unlock(काष्ठा snd_pcm_substream *substream)
+अणु
 	snd_pcm_group_unlock(&substream->self_group, substream->pcm->nonatomic);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock);
 
 /**
@@ -128,25 +129,25 @@ EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock);
  * @substream: PCM substream
  *
  * This locks the PCM stream like snd_pcm_stream_lock() and disables the local
- * IRQ (only when nonatomic is false).  In nonatomic case, this is identical
+ * IRQ (only when nonatomic is false).  In nonatomic हाल, this is identical
  * as snd_pcm_stream_lock().
  */
-void snd_pcm_stream_lock_irq(struct snd_pcm_substream *substream)
-{
+व्योम snd_pcm_stream_lock_irq(काष्ठा snd_pcm_substream *substream)
+अणु
 	snd_pcm_group_lock_irq(&substream->self_group,
 			       substream->pcm->nonatomic);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_pcm_stream_lock_irq);
 
-static void snd_pcm_stream_lock_nested(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_group *group = &substream->self_group;
+अटल व्योम snd_pcm_stream_lock_nested(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_group *group = &substream->self_group;
 
-	if (substream->pcm->nonatomic)
+	अगर (substream->pcm->nonatomic)
 		mutex_lock_nested(&group->mutex, SINGLE_DEPTH_NESTING);
-	else
+	अन्यथा
 		spin_lock_nested(&group->lock, SINGLE_DEPTH_NESTING);
-}
+पूर्ण
 
 /**
  * snd_pcm_stream_unlock_irq - Unlock the PCM stream
@@ -154,22 +155,22 @@ static void snd_pcm_stream_lock_nested(struct snd_pcm_substream *substream)
  *
  * This is a counter-part of snd_pcm_stream_lock_irq().
  */
-void snd_pcm_stream_unlock_irq(struct snd_pcm_substream *substream)
-{
+व्योम snd_pcm_stream_unlock_irq(काष्ठा snd_pcm_substream *substream)
+अणु
 	snd_pcm_group_unlock_irq(&substream->self_group,
 				 substream->pcm->nonatomic);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock_irq);
 
-unsigned long _snd_pcm_stream_lock_irqsave(struct snd_pcm_substream *substream)
-{
-	unsigned long flags = 0;
-	if (substream->pcm->nonatomic)
+अचिन्हित दीर्घ _snd_pcm_stream_lock_irqsave(काष्ठा snd_pcm_substream *substream)
+अणु
+	अचिन्हित दीर्घ flags = 0;
+	अगर (substream->pcm->nonatomic)
 		mutex_lock(&substream->self_group.mutex);
-	else
+	अन्यथा
 		spin_lock_irqsave(&substream->self_group.lock, flags);
-	return flags;
-}
+	वापस flags;
+पूर्ण
 EXPORT_SYMBOL_GPL(_snd_pcm_stream_lock_irqsave);
 
 /**
@@ -179,168 +180,168 @@ EXPORT_SYMBOL_GPL(_snd_pcm_stream_lock_irqsave);
  *
  * This is a counter-part of snd_pcm_stream_lock_irqsave().
  */
-void snd_pcm_stream_unlock_irqrestore(struct snd_pcm_substream *substream,
-				      unsigned long flags)
-{
-	if (substream->pcm->nonatomic)
+व्योम snd_pcm_stream_unlock_irqrestore(काष्ठा snd_pcm_substream *substream,
+				      अचिन्हित दीर्घ flags)
+अणु
+	अगर (substream->pcm->nonatomic)
 		mutex_unlock(&substream->self_group.mutex);
-	else
+	अन्यथा
 		spin_unlock_irqrestore(&substream->self_group.lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock_irqrestore);
 
 /* Run PCM ioctl ops */
-static int snd_pcm_ops_ioctl(struct snd_pcm_substream *substream,
-			     unsigned cmd, void *arg)
-{
-	if (substream->ops->ioctl)
-		return substream->ops->ioctl(substream, cmd, arg);
-	else
-		return snd_pcm_lib_ioctl(substream, cmd, arg);
-}
+अटल पूर्णांक snd_pcm_ops_ioctl(काष्ठा snd_pcm_substream *substream,
+			     अचिन्हित cmd, व्योम *arg)
+अणु
+	अगर (substream->ops->ioctl)
+		वापस substream->ops->ioctl(substream, cmd, arg);
+	अन्यथा
+		वापस snd_pcm_lib_ioctl(substream, cmd, arg);
+पूर्ण
 
-int snd_pcm_info(struct snd_pcm_substream *substream, struct snd_pcm_info *info)
-{
-	struct snd_pcm *pcm = substream->pcm;
-	struct snd_pcm_str *pstr = substream->pstr;
+पूर्णांक snd_pcm_info(काष्ठा snd_pcm_substream *substream, काष्ठा snd_pcm_info *info)
+अणु
+	काष्ठा snd_pcm *pcm = substream->pcm;
+	काष्ठा snd_pcm_str *pstr = substream->pstr;
 
-	memset(info, 0, sizeof(*info));
+	स_रखो(info, 0, माप(*info));
 	info->card = pcm->card->number;
 	info->device = pcm->device;
 	info->stream = substream->stream;
 	info->subdevice = substream->number;
-	strscpy(info->id, pcm->id, sizeof(info->id));
-	strscpy(info->name, pcm->name, sizeof(info->name));
+	strscpy(info->id, pcm->id, माप(info->id));
+	strscpy(info->name, pcm->name, माप(info->name));
 	info->dev_class = pcm->dev_class;
 	info->dev_subclass = pcm->dev_subclass;
 	info->subdevices_count = pstr->substream_count;
-	info->subdevices_avail = pstr->substream_count - pstr->substream_opened;
-	strscpy(info->subname, substream->name, sizeof(info->subname));
+	info->subdevices_avail = pstr->substream_count - pstr->substream_खोलोed;
+	strscpy(info->subname, substream->name, माप(info->subname));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_pcm_info_user(struct snd_pcm_substream *substream,
-		      struct snd_pcm_info __user * _info)
-{
-	struct snd_pcm_info *info;
-	int err;
+पूर्णांक snd_pcm_info_user(काष्ठा snd_pcm_substream *substream,
+		      काष्ठा snd_pcm_info __user * _info)
+अणु
+	काष्ठा snd_pcm_info *info;
+	पूर्णांक err;
 
-	info = kmalloc(sizeof(*info), GFP_KERNEL);
-	if (! info)
-		return -ENOMEM;
+	info = kदो_स्मृति(माप(*info), GFP_KERNEL);
+	अगर (! info)
+		वापस -ENOMEM;
 	err = snd_pcm_info(substream, info);
-	if (err >= 0) {
-		if (copy_to_user(_info, info, sizeof(*info)))
+	अगर (err >= 0) अणु
+		अगर (copy_to_user(_info, info, माप(*info)))
 			err = -EFAULT;
-	}
-	kfree(info);
-	return err;
-}
+	पूर्ण
+	kमुक्त(info);
+	वापस err;
+पूर्ण
 
-/* macro for simplified cast */
-#define PARAM_MASK_BIT(b)	(1U << (__force int)(b))
+/* macro क्रम simplअगरied cast */
+#घोषणा PARAM_MASK_BIT(b)	(1U << (__क्रमce पूर्णांक)(b))
 
-static bool hw_support_mmap(struct snd_pcm_substream *substream)
-{
-	if (!(substream->runtime->hw.info & SNDRV_PCM_INFO_MMAP))
-		return false;
+अटल bool hw_support_mmap(काष्ठा snd_pcm_substream *substream)
+अणु
+	अगर (!(substream->runसमय->hw.info & SNDRV_PCM_INFO_MMAP))
+		वापस false;
 
-	if (substream->ops->mmap ||
+	अगर (substream->ops->mmap ||
 	    (substream->dma_buffer.dev.type != SNDRV_DMA_TYPE_DEV &&
 	     substream->dma_buffer.dev.type != SNDRV_DMA_TYPE_DEV_UC))
-		return true;
+		वापस true;
 
-	return dma_can_mmap(substream->dma_buffer.dev.dev);
-}
+	वापस dma_can_mmap(substream->dma_buffer.dev.dev);
+पूर्ण
 
-static int constrain_mask_params(struct snd_pcm_substream *substream,
-				 struct snd_pcm_hw_params *params)
-{
-	struct snd_pcm_hw_constraints *constrs =
-					&substream->runtime->hw_constraints;
-	struct snd_mask *m;
-	unsigned int k;
-	struct snd_mask old_mask;
-	int changed;
+अटल पूर्णांक स्थिरrain_mask_params(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_pcm_hw_स्थिरraपूर्णांकs *स्थिरrs =
+					&substream->runसमय->hw_स्थिरraपूर्णांकs;
+	काष्ठा snd_mask *m;
+	अचिन्हित पूर्णांक k;
+	काष्ठा snd_mask old_mask;
+	पूर्णांक changed;
 
-	for (k = SNDRV_PCM_HW_PARAM_FIRST_MASK; k <= SNDRV_PCM_HW_PARAM_LAST_MASK; k++) {
+	क्रम (k = SNDRV_PCM_HW_PARAM_FIRST_MASK; k <= SNDRV_PCM_HW_PARAM_LAST_MASK; k++) अणु
 		m = hw_param_mask(params, k);
-		if (snd_mask_empty(m))
-			return -EINVAL;
+		अगर (snd_mask_empty(m))
+			वापस -EINVAL;
 
 		/* This parameter is not requested to change by a caller. */
-		if (!(params->rmask & PARAM_MASK_BIT(k)))
-			continue;
+		अगर (!(params->rmask & PARAM_MASK_BIT(k)))
+			जारी;
 
-		if (trace_hw_mask_param_enabled())
+		अगर (trace_hw_mask_param_enabled())
 			old_mask = *m;
 
-		changed = snd_mask_refine(m, constrs_mask(constrs, k));
-		if (changed < 0)
-			return changed;
-		if (changed == 0)
-			continue;
+		changed = snd_mask_refine(m, स्थिरrs_mask(स्थिरrs, k));
+		अगर (changed < 0)
+			वापस changed;
+		अगर (changed == 0)
+			जारी;
 
-		/* Set corresponding flag so that the caller gets it. */
+		/* Set corresponding flag so that the caller माला_लो it. */
 		trace_hw_mask_param(substream, k, 0, &old_mask, m);
 		params->cmask |= PARAM_MASK_BIT(k);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int constrain_interval_params(struct snd_pcm_substream *substream,
-				     struct snd_pcm_hw_params *params)
-{
-	struct snd_pcm_hw_constraints *constrs =
-					&substream->runtime->hw_constraints;
-	struct snd_interval *i;
-	unsigned int k;
-	struct snd_interval old_interval;
-	int changed;
+अटल पूर्णांक स्थिरrain_पूर्णांकerval_params(काष्ठा snd_pcm_substream *substream,
+				     काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_pcm_hw_स्थिरraपूर्णांकs *स्थिरrs =
+					&substream->runसमय->hw_स्थिरraपूर्णांकs;
+	काष्ठा snd_पूर्णांकerval *i;
+	अचिन्हित पूर्णांक k;
+	काष्ठा snd_पूर्णांकerval old_पूर्णांकerval;
+	पूर्णांक changed;
 
-	for (k = SNDRV_PCM_HW_PARAM_FIRST_INTERVAL; k <= SNDRV_PCM_HW_PARAM_LAST_INTERVAL; k++) {
-		i = hw_param_interval(params, k);
-		if (snd_interval_empty(i))
-			return -EINVAL;
+	क्रम (k = SNDRV_PCM_HW_PARAM_FIRST_INTERVAL; k <= SNDRV_PCM_HW_PARAM_LAST_INTERVAL; k++) अणु
+		i = hw_param_पूर्णांकerval(params, k);
+		अगर (snd_पूर्णांकerval_empty(i))
+			वापस -EINVAL;
 
 		/* This parameter is not requested to change by a caller. */
-		if (!(params->rmask & PARAM_MASK_BIT(k)))
-			continue;
+		अगर (!(params->rmask & PARAM_MASK_BIT(k)))
+			जारी;
 
-		if (trace_hw_interval_param_enabled())
-			old_interval = *i;
+		अगर (trace_hw_पूर्णांकerval_param_enabled())
+			old_पूर्णांकerval = *i;
 
-		changed = snd_interval_refine(i, constrs_interval(constrs, k));
-		if (changed < 0)
-			return changed;
-		if (changed == 0)
-			continue;
+		changed = snd_पूर्णांकerval_refine(i, स्थिरrs_पूर्णांकerval(स्थिरrs, k));
+		अगर (changed < 0)
+			वापस changed;
+		अगर (changed == 0)
+			जारी;
 
-		/* Set corresponding flag so that the caller gets it. */
-		trace_hw_interval_param(substream, k, 0, &old_interval, i);
+		/* Set corresponding flag so that the caller माला_लो it. */
+		trace_hw_पूर्णांकerval_param(substream, k, 0, &old_पूर्णांकerval, i);
 		params->cmask |= PARAM_MASK_BIT(k);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int constrain_params_by_rules(struct snd_pcm_substream *substream,
-				     struct snd_pcm_hw_params *params)
-{
-	struct snd_pcm_hw_constraints *constrs =
-					&substream->runtime->hw_constraints;
-	unsigned int k;
-	unsigned int *rstamps;
-	unsigned int vstamps[SNDRV_PCM_HW_PARAM_LAST_INTERVAL + 1];
-	unsigned int stamp;
-	struct snd_pcm_hw_rule *r;
-	unsigned int d;
-	struct snd_mask old_mask;
-	struct snd_interval old_interval;
+अटल पूर्णांक स्थिरrain_params_by_rules(काष्ठा snd_pcm_substream *substream,
+				     काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_pcm_hw_स्थिरraपूर्णांकs *स्थिरrs =
+					&substream->runसमय->hw_स्थिरraपूर्णांकs;
+	अचिन्हित पूर्णांक k;
+	अचिन्हित पूर्णांक *rstamps;
+	अचिन्हित पूर्णांक vstamps[SNDRV_PCM_HW_PARAM_LAST_INTERVAL + 1];
+	अचिन्हित पूर्णांक stamp;
+	काष्ठा snd_pcm_hw_rule *r;
+	अचिन्हित पूर्णांक d;
+	काष्ठा snd_mask old_mask;
+	काष्ठा snd_पूर्णांकerval old_पूर्णांकerval;
 	bool again;
-	int changed, err = 0;
+	पूर्णांक changed, err = 0;
 
 	/*
 	 * Each application of rule has own sequence number.
@@ -348,9 +349,9 @@ static int constrain_params_by_rules(struct snd_pcm_substream *substream,
 	 * Each member of 'rstamps' array represents the sequence number of
 	 * recent application of corresponding rule.
 	 */
-	rstamps = kcalloc(constrs->rules_num, sizeof(unsigned int), GFP_KERNEL);
-	if (!rstamps)
-		return -ENOMEM;
+	rstamps = kसुस्मृति(स्थिरrs->rules_num, माप(अचिन्हित पूर्णांक), GFP_KERNEL);
+	अगर (!rstamps)
+		वापस -ENOMEM;
 
 	/*
 	 * Each member of 'vstamps' array represents the sequence number of
@@ -361,7 +362,7 @@ static int constrain_params_by_rules(struct snd_pcm_substream *substream,
 	 * a caller is 1. For unrequested parameters, corresponding members
 	 * have 0 so that the parameters are never changed anymore.
 	 */
-	for (k = 0; k <= SNDRV_PCM_HW_PARAM_LAST_INTERVAL; k++)
+	क्रम (k = 0; k <= SNDRV_PCM_HW_PARAM_LAST_INTERVAL; k++)
 		vstamps[k] = (params->rmask & PARAM_MASK_BIT(k)) ? 1 : 0;
 
 	/* Due to the above design, actual sequence number starts at 2. */
@@ -369,8 +370,8 @@ static int constrain_params_by_rules(struct snd_pcm_substream *substream,
 retry:
 	/* Apply all rules in order. */
 	again = false;
-	for (k = 0; k < constrs->rules_num; k++) {
-		r = &constrs->rules[k];
+	क्रम (k = 0; k < स्थिरrs->rules_num; k++) अणु
+		r = &स्थिरrs->rules[k];
 
 		/*
 		 * Check condition bits of this rule. When the rule has
@@ -378,221 +379,221 @@ retry:
 		 * never processed. SNDRV_PCM_HW_PARAMS_NO_PERIOD_WAKEUP
 		 * is an example of the condition bits.
 		 */
-		if (r->cond && !(r->cond & params->flags))
-			continue;
+		अगर (r->cond && !(r->cond & params->flags))
+			जारी;
 
 		/*
 		 * The 'deps' array includes maximum four dependencies
-		 * to SNDRV_PCM_HW_PARAM_XXXs for this rule. The fifth
+		 * to SNDRV_PCM_HW_PARAM_XXXs क्रम this rule. The fअगरth
 		 * member of this array is a sentinel and should be
 		 * negative value.
 		 *
-		 * This rule should be processed in this time when dependent
-		 * parameters were changed at former applications of the other
+		 * This rule should be processed in this समय when dependent
+		 * parameters were changed at क्रमmer applications of the other
 		 * rules.
 		 */
-		for (d = 0; r->deps[d] >= 0; d++) {
-			if (vstamps[r->deps[d]] > rstamps[k])
-				break;
-		}
-		if (r->deps[d] < 0)
-			continue;
+		क्रम (d = 0; r->deps[d] >= 0; d++) अणु
+			अगर (vstamps[r->deps[d]] > rstamps[k])
+				अवरोध;
+		पूर्ण
+		अगर (r->deps[d] < 0)
+			जारी;
 
-		if (trace_hw_mask_param_enabled()) {
-			if (hw_is_mask(r->var))
+		अगर (trace_hw_mask_param_enabled()) अणु
+			अगर (hw_is_mask(r->var))
 				old_mask = *hw_param_mask(params, r->var);
-		}
-		if (trace_hw_interval_param_enabled()) {
-			if (hw_is_interval(r->var))
-				old_interval = *hw_param_interval(params, r->var);
-		}
+		पूर्ण
+		अगर (trace_hw_पूर्णांकerval_param_enabled()) अणु
+			अगर (hw_is_पूर्णांकerval(r->var))
+				old_पूर्णांकerval = *hw_param_पूर्णांकerval(params, r->var);
+		पूर्ण
 
 		changed = r->func(params, r);
-		if (changed < 0) {
+		अगर (changed < 0) अणु
 			err = changed;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/*
-		 * When the parameter is changed, notify it to the caller
-		 * by corresponding returned bit, then preparing for next
+		 * When the parameter is changed, notअगरy it to the caller
+		 * by corresponding वापसed bit, then preparing क्रम next
 		 * iteration.
 		 */
-		if (changed && r->var >= 0) {
-			if (hw_is_mask(r->var)) {
+		अगर (changed && r->var >= 0) अणु
+			अगर (hw_is_mask(r->var)) अणु
 				trace_hw_mask_param(substream, r->var,
 					k + 1, &old_mask,
 					hw_param_mask(params, r->var));
-			}
-			if (hw_is_interval(r->var)) {
-				trace_hw_interval_param(substream, r->var,
-					k + 1, &old_interval,
-					hw_param_interval(params, r->var));
-			}
+			पूर्ण
+			अगर (hw_is_पूर्णांकerval(r->var)) अणु
+				trace_hw_पूर्णांकerval_param(substream, r->var,
+					k + 1, &old_पूर्णांकerval,
+					hw_param_पूर्णांकerval(params, r->var));
+			पूर्ण
 
 			params->cmask |= PARAM_MASK_BIT(r->var);
 			vstamps[r->var] = stamp;
 			again = true;
-		}
+		पूर्ण
 
 		rstamps[k] = stamp++;
-	}
+	पूर्ण
 
 	/* Iterate to evaluate all rules till no parameters are changed. */
-	if (again)
-		goto retry;
+	अगर (again)
+		जाओ retry;
 
  out:
-	kfree(rstamps);
-	return err;
-}
+	kमुक्त(rstamps);
+	वापस err;
+पूर्ण
 
-static int fixup_unreferenced_params(struct snd_pcm_substream *substream,
-				     struct snd_pcm_hw_params *params)
-{
-	const struct snd_interval *i;
-	const struct snd_mask *m;
-	int err;
+अटल पूर्णांक fixup_unreferenced_params(काष्ठा snd_pcm_substream *substream,
+				     काष्ठा snd_pcm_hw_params *params)
+अणु
+	स्थिर काष्ठा snd_पूर्णांकerval *i;
+	स्थिर काष्ठा snd_mask *m;
+	पूर्णांक err;
 
-	if (!params->msbits) {
-		i = hw_param_interval_c(params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS);
-		if (snd_interval_single(i))
-			params->msbits = snd_interval_value(i);
-	}
+	अगर (!params->msbits) अणु
+		i = hw_param_पूर्णांकerval_c(params, SNDRV_PCM_HW_PARAM_SAMPLE_BITS);
+		अगर (snd_पूर्णांकerval_single(i))
+			params->msbits = snd_पूर्णांकerval_value(i);
+	पूर्ण
 
-	if (!params->rate_den) {
-		i = hw_param_interval_c(params, SNDRV_PCM_HW_PARAM_RATE);
-		if (snd_interval_single(i)) {
-			params->rate_num = snd_interval_value(i);
+	अगर (!params->rate_den) अणु
+		i = hw_param_पूर्णांकerval_c(params, SNDRV_PCM_HW_PARAM_RATE);
+		अगर (snd_पूर्णांकerval_single(i)) अणु
+			params->rate_num = snd_पूर्णांकerval_value(i);
 			params->rate_den = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!params->fifo_size) {
+	अगर (!params->fअगरo_size) अणु
 		m = hw_param_mask_c(params, SNDRV_PCM_HW_PARAM_FORMAT);
-		i = hw_param_interval_c(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-		if (snd_mask_single(m) && snd_interval_single(i)) {
+		i = hw_param_पूर्णांकerval_c(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+		अगर (snd_mask_single(m) && snd_पूर्णांकerval_single(i)) अणु
 			err = snd_pcm_ops_ioctl(substream,
 						SNDRV_PCM_IOCTL1_FIFO_SIZE,
 						params);
-			if (err < 0)
-				return err;
-		}
-	}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (!params->info) {
-		params->info = substream->runtime->hw.info;
+	अगर (!params->info) अणु
+		params->info = substream->runसमय->hw.info;
 		params->info &= ~(SNDRV_PCM_INFO_FIFO_IN_FRAMES |
 				  SNDRV_PCM_INFO_DRAIN_TRIGGER);
-		if (!hw_support_mmap(substream))
+		अगर (!hw_support_mmap(substream))
 			params->info &= ~(SNDRV_PCM_INFO_MMAP |
 					  SNDRV_PCM_INFO_MMAP_VALID);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_pcm_hw_refine(struct snd_pcm_substream *substream,
-		      struct snd_pcm_hw_params *params)
-{
-	int err;
+पूर्णांक snd_pcm_hw_refine(काष्ठा snd_pcm_substream *substream,
+		      काष्ठा snd_pcm_hw_params *params)
+अणु
+	पूर्णांक err;
 
 	params->info = 0;
-	params->fifo_size = 0;
-	if (params->rmask & PARAM_MASK_BIT(SNDRV_PCM_HW_PARAM_SAMPLE_BITS))
+	params->fअगरo_size = 0;
+	अगर (params->rmask & PARAM_MASK_BIT(SNDRV_PCM_HW_PARAM_SAMPLE_BITS))
 		params->msbits = 0;
-	if (params->rmask & PARAM_MASK_BIT(SNDRV_PCM_HW_PARAM_RATE)) {
+	अगर (params->rmask & PARAM_MASK_BIT(SNDRV_PCM_HW_PARAM_RATE)) अणु
 		params->rate_num = 0;
 		params->rate_den = 0;
-	}
+	पूर्ण
 
-	err = constrain_mask_params(substream, params);
-	if (err < 0)
-		return err;
+	err = स्थिरrain_mask_params(substream, params);
+	अगर (err < 0)
+		वापस err;
 
-	err = constrain_interval_params(substream, params);
-	if (err < 0)
-		return err;
+	err = स्थिरrain_पूर्णांकerval_params(substream, params);
+	अगर (err < 0)
+		वापस err;
 
-	err = constrain_params_by_rules(substream, params);
-	if (err < 0)
-		return err;
+	err = स्थिरrain_params_by_rules(substream, params);
+	अगर (err < 0)
+		वापस err;
 
 	params->rmask = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(snd_pcm_hw_refine);
 
-static int snd_pcm_hw_refine_user(struct snd_pcm_substream *substream,
-				  struct snd_pcm_hw_params __user * _params)
-{
-	struct snd_pcm_hw_params *params;
-	int err;
+अटल पूर्णांक snd_pcm_hw_refine_user(काष्ठा snd_pcm_substream *substream,
+				  काष्ठा snd_pcm_hw_params __user * _params)
+अणु
+	काष्ठा snd_pcm_hw_params *params;
+	पूर्णांक err;
 
-	params = memdup_user(_params, sizeof(*params));
-	if (IS_ERR(params))
-		return PTR_ERR(params);
+	params = memdup_user(_params, माप(*params));
+	अगर (IS_ERR(params))
+		वापस PTR_ERR(params);
 
 	err = snd_pcm_hw_refine(substream, params);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
 	err = fixup_unreferenced_params(substream, params);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
-	if (copy_to_user(_params, params, sizeof(*params)))
+	अगर (copy_to_user(_params, params, माप(*params)))
 		err = -EFAULT;
 end:
-	kfree(params);
-	return err;
-}
+	kमुक्त(params);
+	वापस err;
+पूर्ण
 
-static int period_to_usecs(struct snd_pcm_runtime *runtime)
-{
-	int usecs;
+अटल पूर्णांक period_to_usecs(काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	पूर्णांक usecs;
 
-	if (! runtime->rate)
-		return -1; /* invalid */
+	अगर (! runसमय->rate)
+		वापस -1; /* invalid */
 
-	/* take 75% of period time as the deadline */
-	usecs = (750000 / runtime->rate) * runtime->period_size;
-	usecs += ((750000 % runtime->rate) * runtime->period_size) /
-		runtime->rate;
+	/* take 75% of period समय as the deadline */
+	usecs = (750000 / runसमय->rate) * runसमय->period_size;
+	usecs += ((750000 % runसमय->rate) * runसमय->period_size) /
+		runसमय->rate;
 
-	return usecs;
-}
+	वापस usecs;
+पूर्ण
 
-static void snd_pcm_set_state(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_set_state(काष्ठा snd_pcm_substream *substream,
 			      snd_pcm_state_t state)
-{
+अणु
 	snd_pcm_stream_lock_irq(substream);
-	if (substream->runtime->status->state != SNDRV_PCM_STATE_DISCONNECTED)
-		substream->runtime->status->state = state;
+	अगर (substream->runसमय->status->state != SNDRV_PCM_STATE_DISCONNECTED)
+		substream->runसमय->status->state = state;
 	snd_pcm_stream_unlock_irq(substream);
-}
+पूर्ण
 
-static inline void snd_pcm_timer_notify(struct snd_pcm_substream *substream,
-					int event)
-{
-#ifdef CONFIG_SND_PCM_TIMER
-	if (substream->timer)
-		snd_timer_notify(substream->timer, event,
-					&substream->runtime->trigger_tstamp);
-#endif
-}
+अटल अंतरभूत व्योम snd_pcm_समयr_notअगरy(काष्ठा snd_pcm_substream *substream,
+					पूर्णांक event)
+अणु
+#अगर_घोषित CONFIG_SND_PCM_TIMER
+	अगर (substream->समयr)
+		snd_समयr_notअगरy(substream->समयr, event,
+					&substream->runसमय->trigger_tstamp);
+#पूर्ण_अगर
+पूर्ण
 
-void snd_pcm_sync_stop(struct snd_pcm_substream *substream, bool sync_irq)
-{
-	if (substream->runtime && substream->runtime->stop_operating) {
-		substream->runtime->stop_operating = false;
-		if (substream->ops && substream->ops->sync_stop)
+व्योम snd_pcm_sync_stop(काष्ठा snd_pcm_substream *substream, bool sync_irq)
+अणु
+	अगर (substream->runसमय && substream->runसमय->stop_operating) अणु
+		substream->runसमय->stop_operating = false;
+		अगर (substream->ops && substream->ops->sync_stop)
 			substream->ops->sync_stop(substream);
-		else if (sync_irq && substream->pcm->card->sync_irq > 0)
+		अन्यथा अगर (sync_irq && substream->pcm->card->sync_irq > 0)
 			synchronize_irq(substream->pcm->card->sync_irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * snd_pcm_hw_params_choose - choose a configuration defined by @params
@@ -601,15 +602,15 @@ void snd_pcm_sync_stop(struct snd_pcm_substream *substream, bool sync_irq)
  *
  * Choose one configuration from configuration space defined by @params.
  * The configuration chosen is that obtained fixing in this order:
- * first access, first format, first subformat, min channels,
- * min rate, min period time, max buffer size, min tick time
+ * first access, first क्रमmat, first subक्रमmat, min channels,
+ * min rate, min period समय, max buffer size, min tick समय
  *
- * Return: Zero if successful, or a negative error code on failure.
+ * Return: Zero अगर successful, or a negative error code on failure.
  */
-static int snd_pcm_hw_params_choose(struct snd_pcm_substream *pcm,
-				    struct snd_pcm_hw_params *params)
-{
-	static const int vars[] = {
+अटल पूर्णांक snd_pcm_hw_params_choose(काष्ठा snd_pcm_substream *pcm,
+				    काष्ठा snd_pcm_hw_params *params)
+अणु
+	अटल स्थिर पूर्णांक vars[] = अणु
 		SNDRV_PCM_HW_PARAM_ACCESS,
 		SNDRV_PCM_HW_PARAM_FORMAT,
 		SNDRV_PCM_HW_PARAM_SUBFORMAT,
@@ -619,433 +620,433 @@ static int snd_pcm_hw_params_choose(struct snd_pcm_substream *pcm,
 		SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
 		SNDRV_PCM_HW_PARAM_TICK_TIME,
 		-1
-	};
-	const int *v;
-	struct snd_mask old_mask;
-	struct snd_interval old_interval;
-	int changed;
+	पूर्ण;
+	स्थिर पूर्णांक *v;
+	काष्ठा snd_mask old_mask;
+	काष्ठा snd_पूर्णांकerval old_पूर्णांकerval;
+	पूर्णांक changed;
 
-	for (v = vars; *v != -1; v++) {
+	क्रम (v = vars; *v != -1; v++) अणु
 		/* Keep old parameter to trace. */
-		if (trace_hw_mask_param_enabled()) {
-			if (hw_is_mask(*v))
+		अगर (trace_hw_mask_param_enabled()) अणु
+			अगर (hw_is_mask(*v))
 				old_mask = *hw_param_mask(params, *v);
-		}
-		if (trace_hw_interval_param_enabled()) {
-			if (hw_is_interval(*v))
-				old_interval = *hw_param_interval(params, *v);
-		}
-		if (*v != SNDRV_PCM_HW_PARAM_BUFFER_SIZE)
-			changed = snd_pcm_hw_param_first(pcm, params, *v, NULL);
-		else
-			changed = snd_pcm_hw_param_last(pcm, params, *v, NULL);
-		if (changed < 0)
-			return changed;
-		if (changed == 0)
-			continue;
+		पूर्ण
+		अगर (trace_hw_पूर्णांकerval_param_enabled()) अणु
+			अगर (hw_is_पूर्णांकerval(*v))
+				old_पूर्णांकerval = *hw_param_पूर्णांकerval(params, *v);
+		पूर्ण
+		अगर (*v != SNDRV_PCM_HW_PARAM_BUFFER_SIZE)
+			changed = snd_pcm_hw_param_first(pcm, params, *v, शून्य);
+		अन्यथा
+			changed = snd_pcm_hw_param_last(pcm, params, *v, शून्य);
+		अगर (changed < 0)
+			वापस changed;
+		अगर (changed == 0)
+			जारी;
 
 		/* Trace the changed parameter. */
-		if (hw_is_mask(*v)) {
+		अगर (hw_is_mask(*v)) अणु
 			trace_hw_mask_param(pcm, *v, 0, &old_mask,
 					    hw_param_mask(params, *v));
-		}
-		if (hw_is_interval(*v)) {
-			trace_hw_interval_param(pcm, *v, 0, &old_interval,
-						hw_param_interval(params, *v));
-		}
-	}
+		पूर्ण
+		अगर (hw_is_पूर्णांकerval(*v)) अणु
+			trace_hw_पूर्णांकerval_param(pcm, *v, 0, &old_पूर्णांकerval,
+						hw_param_पूर्णांकerval(params, *v));
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_hw_params(struct snd_pcm_substream *substream,
-			     struct snd_pcm_hw_params *params)
-{
-	struct snd_pcm_runtime *runtime;
-	int err, usecs;
-	unsigned int bits;
+अटल पूर्णांक snd_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय;
+	पूर्णांक err, usecs;
+	अचिन्हित पूर्णांक bits;
 	snd_pcm_uframes_t frames;
 
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
-	runtime = substream->runtime;
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
+	runसमय = substream->runसमय;
 	snd_pcm_stream_lock_irq(substream);
-	switch (runtime->status->state) {
-	case SNDRV_PCM_STATE_OPEN:
-	case SNDRV_PCM_STATE_SETUP:
-	case SNDRV_PCM_STATE_PREPARED:
-		break;
-	default:
+	चयन (runसमय->status->state) अणु
+	हाल SNDRV_PCM_STATE_OPEN:
+	हाल SNDRV_PCM_STATE_SETUP:
+	हाल SNDRV_PCM_STATE_PREPARED:
+		अवरोध;
+	शेष:
 		snd_pcm_stream_unlock_irq(substream);
-		return -EBADFD;
-	}
+		वापस -EBADFD;
+	पूर्ण
 	snd_pcm_stream_unlock_irq(substream);
-#if IS_ENABLED(CONFIG_SND_PCM_OSS)
-	if (!substream->oss.oss)
-#endif
-		if (atomic_read(&substream->mmap_count))
-			return -EBADFD;
+#अगर IS_ENABLED(CONFIG_SND_PCM_OSS)
+	अगर (!substream->oss.oss)
+#पूर्ण_अगर
+		अगर (atomic_पढ़ो(&substream->mmap_count))
+			वापस -EBADFD;
 
 	snd_pcm_sync_stop(substream, true);
 
 	params->rmask = ~0U;
 	err = snd_pcm_hw_refine(substream, params);
-	if (err < 0)
-		goto _error;
+	अगर (err < 0)
+		जाओ _error;
 
 	err = snd_pcm_hw_params_choose(substream, params);
-	if (err < 0)
-		goto _error;
+	अगर (err < 0)
+		जाओ _error;
 
 	err = fixup_unreferenced_params(substream, params);
-	if (err < 0)
-		goto _error;
+	अगर (err < 0)
+		जाओ _error;
 
-	if (substream->managed_buffer_alloc) {
-		err = snd_pcm_lib_malloc_pages(substream,
+	अगर (substream->managed_buffer_alloc) अणु
+		err = snd_pcm_lib_दो_स्मृति_pages(substream,
 					       params_buffer_bytes(params));
-		if (err < 0)
-			goto _error;
-		runtime->buffer_changed = err > 0;
-	}
+		अगर (err < 0)
+			जाओ _error;
+		runसमय->buffer_changed = err > 0;
+	पूर्ण
 
-	if (substream->ops->hw_params != NULL) {
+	अगर (substream->ops->hw_params != शून्य) अणु
 		err = substream->ops->hw_params(substream, params);
-		if (err < 0)
-			goto _error;
-	}
+		अगर (err < 0)
+			जाओ _error;
+	पूर्ण
 
-	runtime->access = params_access(params);
-	runtime->format = params_format(params);
-	runtime->subformat = params_subformat(params);
-	runtime->channels = params_channels(params);
-	runtime->rate = params_rate(params);
-	runtime->period_size = params_period_size(params);
-	runtime->periods = params_periods(params);
-	runtime->buffer_size = params_buffer_size(params);
-	runtime->info = params->info;
-	runtime->rate_num = params->rate_num;
-	runtime->rate_den = params->rate_den;
-	runtime->no_period_wakeup =
+	runसमय->access = params_access(params);
+	runसमय->क्रमmat = params_क्रमmat(params);
+	runसमय->subक्रमmat = params_subक्रमmat(params);
+	runसमय->channels = params_channels(params);
+	runसमय->rate = params_rate(params);
+	runसमय->period_size = params_period_size(params);
+	runसमय->periods = params_periods(params);
+	runसमय->buffer_size = params_buffer_size(params);
+	runसमय->info = params->info;
+	runसमय->rate_num = params->rate_num;
+	runसमय->rate_den = params->rate_den;
+	runसमय->no_period_wakeup =
 			(params->info & SNDRV_PCM_INFO_NO_PERIOD_WAKEUP) &&
 			(params->flags & SNDRV_PCM_HW_PARAMS_NO_PERIOD_WAKEUP);
 
-	bits = snd_pcm_format_physical_width(runtime->format);
-	runtime->sample_bits = bits;
-	bits *= runtime->channels;
-	runtime->frame_bits = bits;
+	bits = snd_pcm_क्रमmat_physical_width(runसमय->क्रमmat);
+	runसमय->sample_bits = bits;
+	bits *= runसमय->channels;
+	runसमय->frame_bits = bits;
 	frames = 1;
-	while (bits % 8 != 0) {
+	जबतक (bits % 8 != 0) अणु
 		bits *= 2;
 		frames *= 2;
-	}
-	runtime->byte_align = bits / 8;
-	runtime->min_align = frames;
+	पूर्ण
+	runसमय->byte_align = bits / 8;
+	runसमय->min_align = frames;
 
 	/* Default sw params */
-	runtime->tstamp_mode = SNDRV_PCM_TSTAMP_NONE;
-	runtime->period_step = 1;
-	runtime->control->avail_min = runtime->period_size;
-	runtime->start_threshold = 1;
-	runtime->stop_threshold = runtime->buffer_size;
-	runtime->silence_threshold = 0;
-	runtime->silence_size = 0;
-	runtime->boundary = runtime->buffer_size;
-	while (runtime->boundary * 2 <= LONG_MAX - runtime->buffer_size)
-		runtime->boundary *= 2;
+	runसमय->tstamp_mode = SNDRV_PCM_TSTAMP_NONE;
+	runसमय->period_step = 1;
+	runसमय->control->avail_min = runसमय->period_size;
+	runसमय->start_threshold = 1;
+	runसमय->stop_threshold = runसमय->buffer_size;
+	runसमय->silence_threshold = 0;
+	runसमय->silence_size = 0;
+	runसमय->boundary = runसमय->buffer_size;
+	जबतक (runसमय->boundary * 2 <= दीर्घ_उच्च - runसमय->buffer_size)
+		runसमय->boundary *= 2;
 
-	/* clear the buffer for avoiding possible kernel info leaks */
-	if (runtime->dma_area && !substream->ops->copy_user) {
-		size_t size = runtime->dma_bytes;
+	/* clear the buffer क्रम aव्योमing possible kernel info leaks */
+	अगर (runसमय->dma_area && !substream->ops->copy_user) अणु
+		माप_प्रकार size = runसमय->dma_bytes;
 
-		if (runtime->info & SNDRV_PCM_INFO_MMAP)
+		अगर (runसमय->info & SNDRV_PCM_INFO_MMAP)
 			size = PAGE_ALIGN(size);
-		memset(runtime->dma_area, 0, size);
-	}
+		स_रखो(runसमय->dma_area, 0, size);
+	पूर्ण
 
-	snd_pcm_timer_resolution_change(substream);
+	snd_pcm_समयr_resolution_change(substream);
 	snd_pcm_set_state(substream, SNDRV_PCM_STATE_SETUP);
 
-	if (cpu_latency_qos_request_active(&substream->latency_pm_qos_req))
-		cpu_latency_qos_remove_request(&substream->latency_pm_qos_req);
-	if ((usecs = period_to_usecs(runtime)) >= 0)
+	अगर (cpu_latency_qos_request_active(&substream->latency_pm_qos_req))
+		cpu_latency_qos_हटाओ_request(&substream->latency_pm_qos_req);
+	अगर ((usecs = period_to_usecs(runसमय)) >= 0)
 		cpu_latency_qos_add_request(&substream->latency_pm_qos_req,
 					    usecs);
-	return 0;
+	वापस 0;
  _error:
-	/* hardware might be unusable from this time,
-	   so we force application to retry to set
+	/* hardware might be unusable from this समय,
+	   so we क्रमce application to retry to set
 	   the correct hardware parameter settings */
 	snd_pcm_set_state(substream, SNDRV_PCM_STATE_OPEN);
-	if (substream->ops->hw_free != NULL)
-		substream->ops->hw_free(substream);
-	if (substream->managed_buffer_alloc)
-		snd_pcm_lib_free_pages(substream);
-	return err;
-}
+	अगर (substream->ops->hw_मुक्त != शून्य)
+		substream->ops->hw_मुक्त(substream);
+	अगर (substream->managed_buffer_alloc)
+		snd_pcm_lib_मुक्त_pages(substream);
+	वापस err;
+पूर्ण
 
-static int snd_pcm_hw_params_user(struct snd_pcm_substream *substream,
-				  struct snd_pcm_hw_params __user * _params)
-{
-	struct snd_pcm_hw_params *params;
-	int err;
+अटल पूर्णांक snd_pcm_hw_params_user(काष्ठा snd_pcm_substream *substream,
+				  काष्ठा snd_pcm_hw_params __user * _params)
+अणु
+	काष्ठा snd_pcm_hw_params *params;
+	पूर्णांक err;
 
-	params = memdup_user(_params, sizeof(*params));
-	if (IS_ERR(params))
-		return PTR_ERR(params);
+	params = memdup_user(_params, माप(*params));
+	अगर (IS_ERR(params))
+		वापस PTR_ERR(params);
 
 	err = snd_pcm_hw_params(substream, params);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
-	if (copy_to_user(_params, params, sizeof(*params)))
+	अगर (copy_to_user(_params, params, माप(*params)))
 		err = -EFAULT;
 end:
-	kfree(params);
-	return err;
-}
+	kमुक्त(params);
+	वापस err;
+पूर्ण
 
-static int do_hw_free(struct snd_pcm_substream *substream)
-{
-	int result = 0;
+अटल पूर्णांक करो_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक result = 0;
 
 	snd_pcm_sync_stop(substream, true);
-	if (substream->ops->hw_free)
-		result = substream->ops->hw_free(substream);
-	if (substream->managed_buffer_alloc)
-		snd_pcm_lib_free_pages(substream);
-	return result;
-}
+	अगर (substream->ops->hw_मुक्त)
+		result = substream->ops->hw_मुक्त(substream);
+	अगर (substream->managed_buffer_alloc)
+		snd_pcm_lib_मुक्त_pages(substream);
+	वापस result;
+पूर्ण
 
-static int snd_pcm_hw_free(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime;
-	int result;
+अटल पूर्णांक snd_pcm_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय;
+	पूर्णांक result;
 
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
-	runtime = substream->runtime;
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
+	runसमय = substream->runसमय;
 	snd_pcm_stream_lock_irq(substream);
-	switch (runtime->status->state) {
-	case SNDRV_PCM_STATE_SETUP:
-	case SNDRV_PCM_STATE_PREPARED:
-		break;
-	default:
+	चयन (runसमय->status->state) अणु
+	हाल SNDRV_PCM_STATE_SETUP:
+	हाल SNDRV_PCM_STATE_PREPARED:
+		अवरोध;
+	शेष:
 		snd_pcm_stream_unlock_irq(substream);
-		return -EBADFD;
-	}
+		वापस -EBADFD;
+	पूर्ण
 	snd_pcm_stream_unlock_irq(substream);
-	if (atomic_read(&substream->mmap_count))
-		return -EBADFD;
-	result = do_hw_free(substream);
+	अगर (atomic_पढ़ो(&substream->mmap_count))
+		वापस -EBADFD;
+	result = करो_hw_मुक्त(substream);
 	snd_pcm_set_state(substream, SNDRV_PCM_STATE_OPEN);
-	cpu_latency_qos_remove_request(&substream->latency_pm_qos_req);
-	return result;
-}
+	cpu_latency_qos_हटाओ_request(&substream->latency_pm_qos_req);
+	वापस result;
+पूर्ण
 
-static int snd_pcm_sw_params(struct snd_pcm_substream *substream,
-			     struct snd_pcm_sw_params *params)
-{
-	struct snd_pcm_runtime *runtime;
-	int err;
+अटल पूर्णांक snd_pcm_sw_params(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_pcm_sw_params *params)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय;
+	पूर्णांक err;
 
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
-	runtime = substream->runtime;
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
+	runसमय = substream->runसमय;
 	snd_pcm_stream_lock_irq(substream);
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN) {
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN) अणु
 		snd_pcm_stream_unlock_irq(substream);
-		return -EBADFD;
-	}
+		वापस -EBADFD;
+	पूर्ण
 	snd_pcm_stream_unlock_irq(substream);
 
-	if (params->tstamp_mode < 0 ||
+	अगर (params->tstamp_mode < 0 ||
 	    params->tstamp_mode > SNDRV_PCM_TSTAMP_LAST)
-		return -EINVAL;
-	if (params->proto >= SNDRV_PROTOCOL_VERSION(2, 0, 12) &&
+		वापस -EINVAL;
+	अगर (params->proto >= SNDRV_PROTOCOL_VERSION(2, 0, 12) &&
 	    params->tstamp_type > SNDRV_PCM_TSTAMP_TYPE_LAST)
-		return -EINVAL;
-	if (params->avail_min == 0)
-		return -EINVAL;
-	if (params->silence_size >= runtime->boundary) {
-		if (params->silence_threshold != 0)
-			return -EINVAL;
-	} else {
-		if (params->silence_size > params->silence_threshold)
-			return -EINVAL;
-		if (params->silence_threshold > runtime->buffer_size)
-			return -EINVAL;
-	}
+		वापस -EINVAL;
+	अगर (params->avail_min == 0)
+		वापस -EINVAL;
+	अगर (params->silence_size >= runसमय->boundary) अणु
+		अगर (params->silence_threshold != 0)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (params->silence_size > params->silence_threshold)
+			वापस -EINVAL;
+		अगर (params->silence_threshold > runसमय->buffer_size)
+			वापस -EINVAL;
+	पूर्ण
 	err = 0;
 	snd_pcm_stream_lock_irq(substream);
-	runtime->tstamp_mode = params->tstamp_mode;
-	if (params->proto >= SNDRV_PROTOCOL_VERSION(2, 0, 12))
-		runtime->tstamp_type = params->tstamp_type;
-	runtime->period_step = params->period_step;
-	runtime->control->avail_min = params->avail_min;
-	runtime->start_threshold = params->start_threshold;
-	runtime->stop_threshold = params->stop_threshold;
-	runtime->silence_threshold = params->silence_threshold;
-	runtime->silence_size = params->silence_size;
-        params->boundary = runtime->boundary;
-	if (snd_pcm_running(substream)) {
-		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
-		    runtime->silence_size > 0)
-			snd_pcm_playback_silence(substream, ULONG_MAX);
-		err = snd_pcm_update_state(substream, runtime);
-	}
+	runसमय->tstamp_mode = params->tstamp_mode;
+	अगर (params->proto >= SNDRV_PROTOCOL_VERSION(2, 0, 12))
+		runसमय->tstamp_type = params->tstamp_type;
+	runसमय->period_step = params->period_step;
+	runसमय->control->avail_min = params->avail_min;
+	runसमय->start_threshold = params->start_threshold;
+	runसमय->stop_threshold = params->stop_threshold;
+	runसमय->silence_threshold = params->silence_threshold;
+	runसमय->silence_size = params->silence_size;
+        params->boundary = runसमय->boundary;
+	अगर (snd_pcm_running(substream)) अणु
+		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+		    runसमय->silence_size > 0)
+			snd_pcm_playback_silence(substream, अच_दीर्घ_उच्च);
+		err = snd_pcm_update_state(substream, runसमय);
+	पूर्ण
 	snd_pcm_stream_unlock_irq(substream);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int snd_pcm_sw_params_user(struct snd_pcm_substream *substream,
-				  struct snd_pcm_sw_params __user * _params)
-{
-	struct snd_pcm_sw_params params;
-	int err;
-	if (copy_from_user(&params, _params, sizeof(params)))
-		return -EFAULT;
+अटल पूर्णांक snd_pcm_sw_params_user(काष्ठा snd_pcm_substream *substream,
+				  काष्ठा snd_pcm_sw_params __user * _params)
+अणु
+	काष्ठा snd_pcm_sw_params params;
+	पूर्णांक err;
+	अगर (copy_from_user(&params, _params, माप(params)))
+		वापस -EFAULT;
 	err = snd_pcm_sw_params(substream, &params);
-	if (copy_to_user(_params, &params, sizeof(params)))
-		return -EFAULT;
-	return err;
-}
+	अगर (copy_to_user(_params, &params, माप(params)))
+		वापस -EFAULT;
+	वापस err;
+पूर्ण
 
-static inline snd_pcm_uframes_t
-snd_pcm_calc_delay(struct snd_pcm_substream *substream)
-{
+अटल अंतरभूत snd_pcm_uframes_t
+snd_pcm_calc_delay(काष्ठा snd_pcm_substream *substream)
+अणु
 	snd_pcm_uframes_t delay;
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		delay = snd_pcm_playback_hw_avail(substream->runtime);
-	else
-		delay = snd_pcm_capture_avail(substream->runtime);
-	return delay + substream->runtime->delay;
-}
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		delay = snd_pcm_playback_hw_avail(substream->runसमय);
+	अन्यथा
+		delay = snd_pcm_capture_avail(substream->runसमय);
+	वापस delay + substream->runसमय->delay;
+पूर्ण
 
-int snd_pcm_status64(struct snd_pcm_substream *substream,
-		     struct snd_pcm_status64 *status)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
+पूर्णांक snd_pcm_status64(काष्ठा snd_pcm_substream *substream,
+		     काष्ठा snd_pcm_status64 *status)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
 	snd_pcm_stream_lock_irq(substream);
 
 	snd_pcm_unpack_audio_tstamp_config(status->audio_tstamp_data,
-					&runtime->audio_tstamp_config);
+					&runसमय->audio_tstamp_config);
 
 	/* backwards compatible behavior */
-	if (runtime->audio_tstamp_config.type_requested ==
-		SNDRV_PCM_AUDIO_TSTAMP_TYPE_COMPAT) {
-		if (runtime->hw.info & SNDRV_PCM_INFO_HAS_WALL_CLOCK)
-			runtime->audio_tstamp_config.type_requested =
+	अगर (runसमय->audio_tstamp_config.type_requested ==
+		SNDRV_PCM_AUDIO_TSTAMP_TYPE_COMPAT) अणु
+		अगर (runसमय->hw.info & SNDRV_PCM_INFO_HAS_WALL_CLOCK)
+			runसमय->audio_tstamp_config.type_requested =
 				SNDRV_PCM_AUDIO_TSTAMP_TYPE_LINK;
-		else
-			runtime->audio_tstamp_config.type_requested =
+		अन्यथा
+			runसमय->audio_tstamp_config.type_requested =
 				SNDRV_PCM_AUDIO_TSTAMP_TYPE_DEFAULT;
-		runtime->audio_tstamp_report.valid = 0;
-	} else
-		runtime->audio_tstamp_report.valid = 1;
+		runसमय->audio_tstamp_report.valid = 0;
+	पूर्ण अन्यथा
+		runसमय->audio_tstamp_report.valid = 1;
 
-	status->state = runtime->status->state;
-	status->suspended_state = runtime->status->suspended_state;
-	if (status->state == SNDRV_PCM_STATE_OPEN)
-		goto _end;
-	status->trigger_tstamp_sec = runtime->trigger_tstamp.tv_sec;
-	status->trigger_tstamp_nsec = runtime->trigger_tstamp.tv_nsec;
-	if (snd_pcm_running(substream)) {
+	status->state = runसमय->status->state;
+	status->suspended_state = runसमय->status->suspended_state;
+	अगर (status->state == SNDRV_PCM_STATE_OPEN)
+		जाओ _end;
+	status->trigger_tstamp_sec = runसमय->trigger_tstamp.tv_sec;
+	status->trigger_tstamp_nsec = runसमय->trigger_tstamp.tv_nsec;
+	अगर (snd_pcm_running(substream)) अणु
 		snd_pcm_update_hw_ptr(substream);
-		if (runtime->tstamp_mode == SNDRV_PCM_TSTAMP_ENABLE) {
-			status->tstamp_sec = runtime->status->tstamp.tv_sec;
+		अगर (runसमय->tstamp_mode == SNDRV_PCM_TSTAMP_ENABLE) अणु
+			status->tstamp_sec = runसमय->status->tstamp.tv_sec;
 			status->tstamp_nsec =
-				runtime->status->tstamp.tv_nsec;
+				runसमय->status->tstamp.tv_nsec;
 			status->driver_tstamp_sec =
-				runtime->driver_tstamp.tv_sec;
+				runसमय->driver_tstamp.tv_sec;
 			status->driver_tstamp_nsec =
-				runtime->driver_tstamp.tv_nsec;
+				runसमय->driver_tstamp.tv_nsec;
 			status->audio_tstamp_sec =
-				runtime->status->audio_tstamp.tv_sec;
+				runसमय->status->audio_tstamp.tv_sec;
 			status->audio_tstamp_nsec =
-				runtime->status->audio_tstamp.tv_nsec;
-			if (runtime->audio_tstamp_report.valid == 1)
+				runसमय->status->audio_tstamp.tv_nsec;
+			अगर (runसमय->audio_tstamp_report.valid == 1)
 				/* backwards compatibility, no report provided in COMPAT mode */
 				snd_pcm_pack_audio_tstamp_report(&status->audio_tstamp_data,
 								&status->audio_tstamp_accuracy,
-								&runtime->audio_tstamp_report);
+								&runसमय->audio_tstamp_report);
 
-			goto _tstamp_end;
-		}
-	} else {
-		/* get tstamp only in fallback mode and only if enabled */
-		if (runtime->tstamp_mode == SNDRV_PCM_TSTAMP_ENABLE) {
-			struct timespec64 tstamp;
+			जाओ _tstamp_end;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* get tstamp only in fallback mode and only अगर enabled */
+		अगर (runसमय->tstamp_mode == SNDRV_PCM_TSTAMP_ENABLE) अणु
+			काष्ठा बारpec64 tstamp;
 
-			snd_pcm_gettime(runtime, &tstamp);
+			snd_pcm_समय_लो(runसमय, &tstamp);
 			status->tstamp_sec = tstamp.tv_sec;
 			status->tstamp_nsec = tstamp.tv_nsec;
-		}
-	}
+		पूर्ण
+	पूर्ण
  _tstamp_end:
-	status->appl_ptr = runtime->control->appl_ptr;
-	status->hw_ptr = runtime->status->hw_ptr;
+	status->appl_ptr = runसमय->control->appl_ptr;
+	status->hw_ptr = runसमय->status->hw_ptr;
 	status->avail = snd_pcm_avail(substream);
 	status->delay = snd_pcm_running(substream) ?
 		snd_pcm_calc_delay(substream) : 0;
-	status->avail_max = runtime->avail_max;
-	status->overrange = runtime->overrange;
-	runtime->avail_max = 0;
-	runtime->overrange = 0;
+	status->avail_max = runसमय->avail_max;
+	status->overrange = runसमय->overrange;
+	runसमय->avail_max = 0;
+	runसमय->overrange = 0;
  _end:
  	snd_pcm_stream_unlock_irq(substream);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_status_user64(struct snd_pcm_substream *substream,
-				 struct snd_pcm_status64 __user * _status,
+अटल पूर्णांक snd_pcm_status_user64(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_pcm_status64 __user * _status,
 				 bool ext)
-{
-	struct snd_pcm_status64 status;
-	int res;
+अणु
+	काष्ठा snd_pcm_status64 status;
+	पूर्णांक res;
 
-	memset(&status, 0, sizeof(status));
+	स_रखो(&status, 0, माप(status));
 	/*
-	 * with extension, parameters are read/write,
+	 * with extension, parameters are पढ़ो/ग_लिखो,
 	 * get audio_tstamp_data from user,
-	 * ignore rest of status structure
+	 * ignore rest of status काष्ठाure
 	 */
-	if (ext && get_user(status.audio_tstamp_data,
+	अगर (ext && get_user(status.audio_tstamp_data,
 				(u32 __user *)(&_status->audio_tstamp_data)))
-		return -EFAULT;
+		वापस -EFAULT;
 	res = snd_pcm_status64(substream, &status);
-	if (res < 0)
-		return res;
-	if (copy_to_user(_status, &status, sizeof(status)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (res < 0)
+		वापस res;
+	अगर (copy_to_user(_status, &status, माप(status)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_status_user32(struct snd_pcm_substream *substream,
-				 struct snd_pcm_status32 __user * _status,
+अटल पूर्णांक snd_pcm_status_user32(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_pcm_status32 __user * _status,
 				 bool ext)
-{
-	struct snd_pcm_status64 status64;
-	struct snd_pcm_status32 status32;
-	int res;
+अणु
+	काष्ठा snd_pcm_status64 status64;
+	काष्ठा snd_pcm_status32 status32;
+	पूर्णांक res;
 
-	memset(&status64, 0, sizeof(status64));
-	memset(&status32, 0, sizeof(status32));
+	स_रखो(&status64, 0, माप(status64));
+	स_रखो(&status32, 0, माप(status32));
 	/*
-	 * with extension, parameters are read/write,
+	 * with extension, parameters are पढ़ो/ग_लिखो,
 	 * get audio_tstamp_data from user,
-	 * ignore rest of status structure
+	 * ignore rest of status काष्ठाure
 	 */
-	if (ext && get_user(status64.audio_tstamp_data,
+	अगर (ext && get_user(status64.audio_tstamp_data,
 			    (u32 __user *)(&_status->audio_tstamp_data)))
-		return -EFAULT;
+		वापस -EFAULT;
 	res = snd_pcm_status64(substream, &status64);
-	if (res < 0)
-		return res;
+	अगर (res < 0)
+		वापस res;
 
-	status32 = (struct snd_pcm_status32) {
+	status32 = (काष्ठा snd_pcm_status32) अणु
 		.state = status64.state,
 		.trigger_tstamp_sec = status64.trigger_tstamp_sec,
 		.trigger_tstamp_nsec = status64.trigger_tstamp_nsec,
@@ -1064,388 +1065,388 @@ static int snd_pcm_status_user32(struct snd_pcm_substream *substream,
 		.driver_tstamp_sec = status64.audio_tstamp_sec,
 		.driver_tstamp_nsec = status64.audio_tstamp_nsec,
 		.audio_tstamp_accuracy = status64.audio_tstamp_accuracy,
-	};
+	पूर्ण;
 
-	if (copy_to_user(_status, &status32, sizeof(status32)))
-		return -EFAULT;
+	अगर (copy_to_user(_status, &status32, माप(status32)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_channel_info(struct snd_pcm_substream *substream,
-				struct snd_pcm_channel_info * info)
-{
-	struct snd_pcm_runtime *runtime;
-	unsigned int channel;
+अटल पूर्णांक snd_pcm_channel_info(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_pcm_channel_info * info)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय;
+	अचिन्हित पूर्णांक channel;
 	
 	channel = info->channel;
-	runtime = substream->runtime;
+	runसमय = substream->runसमय;
 	snd_pcm_stream_lock_irq(substream);
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN) {
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN) अणु
 		snd_pcm_stream_unlock_irq(substream);
-		return -EBADFD;
-	}
+		वापस -EBADFD;
+	पूर्ण
 	snd_pcm_stream_unlock_irq(substream);
-	if (channel >= runtime->channels)
-		return -EINVAL;
-	memset(info, 0, sizeof(*info));
+	अगर (channel >= runसमय->channels)
+		वापस -EINVAL;
+	स_रखो(info, 0, माप(*info));
 	info->channel = channel;
-	return snd_pcm_ops_ioctl(substream, SNDRV_PCM_IOCTL1_CHANNEL_INFO, info);
-}
+	वापस snd_pcm_ops_ioctl(substream, SNDRV_PCM_IOCTL1_CHANNEL_INFO, info);
+पूर्ण
 
-static int snd_pcm_channel_info_user(struct snd_pcm_substream *substream,
-				     struct snd_pcm_channel_info __user * _info)
-{
-	struct snd_pcm_channel_info info;
-	int res;
+अटल पूर्णांक snd_pcm_channel_info_user(काष्ठा snd_pcm_substream *substream,
+				     काष्ठा snd_pcm_channel_info __user * _info)
+अणु
+	काष्ठा snd_pcm_channel_info info;
+	पूर्णांक res;
 	
-	if (copy_from_user(&info, _info, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_from_user(&info, _info, माप(info)))
+		वापस -EFAULT;
 	res = snd_pcm_channel_info(substream, &info);
-	if (res < 0)
-		return res;
-	if (copy_to_user(_info, &info, sizeof(info)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (res < 0)
+		वापस res;
+	अगर (copy_to_user(_info, &info, माप(info)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static void snd_pcm_trigger_tstamp(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	if (runtime->trigger_master == NULL)
-		return;
-	if (runtime->trigger_master == substream) {
-		if (!runtime->trigger_tstamp_latched)
-			snd_pcm_gettime(runtime, &runtime->trigger_tstamp);
-	} else {
-		snd_pcm_trigger_tstamp(runtime->trigger_master);
-		runtime->trigger_tstamp = runtime->trigger_master->runtime->trigger_tstamp;
-	}
-	runtime->trigger_master = NULL;
-}
+अटल व्योम snd_pcm_trigger_tstamp(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अगर (runसमय->trigger_master == शून्य)
+		वापस;
+	अगर (runसमय->trigger_master == substream) अणु
+		अगर (!runसमय->trigger_tstamp_latched)
+			snd_pcm_समय_लो(runसमय, &runसमय->trigger_tstamp);
+	पूर्ण अन्यथा अणु
+		snd_pcm_trigger_tstamp(runसमय->trigger_master);
+		runसमय->trigger_tstamp = runसमय->trigger_master->runसमय->trigger_tstamp;
+	पूर्ण
+	runसमय->trigger_master = शून्य;
+पूर्ण
 
-#define ACTION_ARG_IGNORE	(__force snd_pcm_state_t)0
+#घोषणा ACTION_ARG_IGNORE	(__क्रमce snd_pcm_state_t)0
 
-struct action_ops {
-	int (*pre_action)(struct snd_pcm_substream *substream,
+काष्ठा action_ops अणु
+	पूर्णांक (*pre_action)(काष्ठा snd_pcm_substream *substream,
 			  snd_pcm_state_t state);
-	int (*do_action)(struct snd_pcm_substream *substream,
+	पूर्णांक (*करो_action)(काष्ठा snd_pcm_substream *substream,
 			 snd_pcm_state_t state);
-	void (*undo_action)(struct snd_pcm_substream *substream,
+	व्योम (*unकरो_action)(काष्ठा snd_pcm_substream *substream,
 			    snd_pcm_state_t state);
-	void (*post_action)(struct snd_pcm_substream *substream,
+	व्योम (*post_action)(काष्ठा snd_pcm_substream *substream,
 			    snd_pcm_state_t state);
-};
+पूर्ण;
 
 /*
- *  this functions is core for handling of linked stream
+ *  this functions is core क्रम handling of linked stream
  *  Note: the stream state might be changed also on failure
  *  Note2: call with calling stream lock + link lock
  */
-static int snd_pcm_action_group(const struct action_ops *ops,
-				struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_action_group(स्थिर काष्ठा action_ops *ops,
+				काष्ठा snd_pcm_substream *substream,
 				snd_pcm_state_t state,
-				bool do_lock)
-{
-	struct snd_pcm_substream *s = NULL;
-	struct snd_pcm_substream *s1;
-	int res = 0, depth = 1;
+				bool करो_lock)
+अणु
+	काष्ठा snd_pcm_substream *s = शून्य;
+	काष्ठा snd_pcm_substream *s1;
+	पूर्णांक res = 0, depth = 1;
 
-	snd_pcm_group_for_each_entry(s, substream) {
-		if (do_lock && s != substream) {
-			if (s->pcm->nonatomic)
+	snd_pcm_group_क्रम_each_entry(s, substream) अणु
+		अगर (करो_lock && s != substream) अणु
+			अगर (s->pcm->nonatomic)
 				mutex_lock_nested(&s->self_group.mutex, depth);
-			else
+			अन्यथा
 				spin_lock_nested(&s->self_group.lock, depth);
 			depth++;
-		}
+		पूर्ण
 		res = ops->pre_action(s, state);
-		if (res < 0)
-			goto _unlock;
-	}
-	snd_pcm_group_for_each_entry(s, substream) {
-		res = ops->do_action(s, state);
-		if (res < 0) {
-			if (ops->undo_action) {
-				snd_pcm_group_for_each_entry(s1, substream) {
-					if (s1 == s) /* failed stream */
-						break;
-					ops->undo_action(s1, state);
-				}
-			}
-			s = NULL; /* unlock all */
-			goto _unlock;
-		}
-	}
-	snd_pcm_group_for_each_entry(s, substream) {
+		अगर (res < 0)
+			जाओ _unlock;
+	पूर्ण
+	snd_pcm_group_क्रम_each_entry(s, substream) अणु
+		res = ops->करो_action(s, state);
+		अगर (res < 0) अणु
+			अगर (ops->unकरो_action) अणु
+				snd_pcm_group_क्रम_each_entry(s1, substream) अणु
+					अगर (s1 == s) /* failed stream */
+						अवरोध;
+					ops->unकरो_action(s1, state);
+				पूर्ण
+			पूर्ण
+			s = शून्य; /* unlock all */
+			जाओ _unlock;
+		पूर्ण
+	पूर्ण
+	snd_pcm_group_क्रम_each_entry(s, substream) अणु
 		ops->post_action(s, state);
-	}
+	पूर्ण
  _unlock:
-	if (do_lock) {
+	अगर (करो_lock) अणु
 		/* unlock streams */
-		snd_pcm_group_for_each_entry(s1, substream) {
-			if (s1 != substream) {
-				if (s1->pcm->nonatomic)
+		snd_pcm_group_क्रम_each_entry(s1, substream) अणु
+			अगर (s1 != substream) अणु
+				अगर (s1->pcm->nonatomic)
 					mutex_unlock(&s1->self_group.mutex);
-				else
+				अन्यथा
 					spin_unlock(&s1->self_group.lock);
-			}
-			if (s1 == s)	/* end */
-				break;
-		}
-	}
-	return res;
-}
+			पूर्ण
+			अगर (s1 == s)	/* end */
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस res;
+पूर्ण
 
 /*
  *  Note: call with stream lock
  */
-static int snd_pcm_action_single(const struct action_ops *ops,
-				 struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_action_single(स्थिर काष्ठा action_ops *ops,
+				 काष्ठा snd_pcm_substream *substream,
 				 snd_pcm_state_t state)
-{
-	int res;
+अणु
+	पूर्णांक res;
 	
 	res = ops->pre_action(substream, state);
-	if (res < 0)
-		return res;
-	res = ops->do_action(substream, state);
-	if (res == 0)
+	अगर (res < 0)
+		वापस res;
+	res = ops->करो_action(substream, state);
+	अगर (res == 0)
 		ops->post_action(substream, state);
-	else if (ops->undo_action)
-		ops->undo_action(substream, state);
-	return res;
-}
+	अन्यथा अगर (ops->unकरो_action)
+		ops->unकरो_action(substream, state);
+	वापस res;
+पूर्ण
 
-static void snd_pcm_group_assign(struct snd_pcm_substream *substream,
-				 struct snd_pcm_group *new_group)
-{
+अटल व्योम snd_pcm_group_assign(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_pcm_group *new_group)
+अणु
 	substream->group = new_group;
 	list_move(&substream->link_list, &new_group->substreams);
-}
+पूर्ण
 
 /*
  * Unref and unlock the group, but keep the stream lock;
- * when the group becomes empty and no longer referred, destroy itself
+ * when the group becomes empty and no दीर्घer referred, destroy itself
  */
-static void snd_pcm_group_unref(struct snd_pcm_group *group,
-				struct snd_pcm_substream *substream)
-{
-	bool do_free;
+अटल व्योम snd_pcm_group_unref(काष्ठा snd_pcm_group *group,
+				काष्ठा snd_pcm_substream *substream)
+अणु
+	bool करो_मुक्त;
 
-	if (!group)
-		return;
-	do_free = refcount_dec_and_test(&group->refs);
+	अगर (!group)
+		वापस;
+	करो_मुक्त = refcount_dec_and_test(&group->refs);
 	snd_pcm_group_unlock(group, substream->pcm->nonatomic);
-	if (do_free)
-		kfree(group);
-}
+	अगर (करो_मुक्त)
+		kमुक्त(group);
+पूर्ण
 
 /*
  * Lock the group inside a stream lock and reference it;
- * return the locked group object, or NULL if not linked
+ * वापस the locked group object, or शून्य अगर not linked
  */
-static struct snd_pcm_group *
-snd_pcm_stream_group_ref(struct snd_pcm_substream *substream)
-{
+अटल काष्ठा snd_pcm_group *
+snd_pcm_stream_group_ref(काष्ठा snd_pcm_substream *substream)
+अणु
 	bool nonatomic = substream->pcm->nonatomic;
-	struct snd_pcm_group *group;
+	काष्ठा snd_pcm_group *group;
 	bool trylock;
 
-	for (;;) {
-		if (!snd_pcm_stream_linked(substream))
-			return NULL;
+	क्रम (;;) अणु
+		अगर (!snd_pcm_stream_linked(substream))
+			वापस शून्य;
 		group = substream->group;
-		/* block freeing the group object */
+		/* block मुक्तing the group object */
 		refcount_inc(&group->refs);
 
 		trylock = nonatomic ? mutex_trylock(&group->mutex) :
 			spin_trylock(&group->lock);
-		if (trylock)
-			break; /* OK */
+		अगर (trylock)
+			अवरोध; /* OK */
 
-		/* re-lock for avoiding ABBA deadlock */
+		/* re-lock क्रम aव्योमing ABBA deadlock */
 		snd_pcm_stream_unlock(substream);
 		snd_pcm_group_lock(group, nonatomic);
 		snd_pcm_stream_lock(substream);
 
-		/* check the group again; the above opens a small race window */
-		if (substream->group == group)
-			break; /* OK */
+		/* check the group again; the above खोलोs a small race winकरोw */
+		अगर (substream->group == group)
+			अवरोध; /* OK */
 		/* group changed, try again */
 		snd_pcm_group_unref(group, substream);
-	}
-	return group;
-}
+	पूर्ण
+	वापस group;
+पूर्ण
 
 /*
  *  Note: call with stream lock
  */
-static int snd_pcm_action(const struct action_ops *ops,
-			  struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_action(स्थिर काष्ठा action_ops *ops,
+			  काष्ठा snd_pcm_substream *substream,
 			  snd_pcm_state_t state)
-{
-	struct snd_pcm_group *group;
-	int res;
+अणु
+	काष्ठा snd_pcm_group *group;
+	पूर्णांक res;
 
 	group = snd_pcm_stream_group_ref(substream);
-	if (group)
+	अगर (group)
 		res = snd_pcm_action_group(ops, substream, state, true);
-	else
+	अन्यथा
 		res = snd_pcm_action_single(ops, substream, state);
 	snd_pcm_group_unref(group, substream);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
- *  Note: don't use any locks before
+ *  Note: करोn't use any locks beक्रमe
  */
-static int snd_pcm_action_lock_irq(const struct action_ops *ops,
-				   struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_action_lock_irq(स्थिर काष्ठा action_ops *ops,
+				   काष्ठा snd_pcm_substream *substream,
 				   snd_pcm_state_t state)
-{
-	int res;
+अणु
+	पूर्णांक res;
 
 	snd_pcm_stream_lock_irq(substream);
 	res = snd_pcm_action(ops, substream, state);
 	snd_pcm_stream_unlock_irq(substream);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
  */
-static int snd_pcm_action_nonatomic(const struct action_ops *ops,
-				    struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_action_nonatomic(स्थिर काष्ठा action_ops *ops,
+				    काष्ठा snd_pcm_substream *substream,
 				    snd_pcm_state_t state)
-{
-	int res;
+अणु
+	पूर्णांक res;
 
 	/* Guarantee the group members won't change during non-atomic action */
-	down_read(&snd_pcm_link_rwsem);
-	if (snd_pcm_stream_linked(substream))
+	करोwn_पढ़ो(&snd_pcm_link_rwsem);
+	अगर (snd_pcm_stream_linked(substream))
 		res = snd_pcm_action_group(ops, substream, state, false);
-	else
+	अन्यथा
 		res = snd_pcm_action_single(ops, substream, state);
-	up_read(&snd_pcm_link_rwsem);
-	return res;
-}
+	up_पढ़ो(&snd_pcm_link_rwsem);
+	वापस res;
+पूर्ण
 
 /*
  * start callbacks
  */
-static int snd_pcm_pre_start(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_pre_start(काष्ठा snd_pcm_substream *substream,
 			     snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	if (runtime->status->state != SNDRV_PCM_STATE_PREPARED)
-		return -EBADFD;
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अगर (runसमय->status->state != SNDRV_PCM_STATE_PREPARED)
+		वापस -EBADFD;
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
 	    !snd_pcm_playback_data(substream))
-		return -EPIPE;
-	runtime->trigger_tstamp_latched = false;
-	runtime->trigger_master = substream;
-	return 0;
-}
+		वापस -EPIPE;
+	runसमय->trigger_tstamp_latched = false;
+	runसमय->trigger_master = substream;
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_do_start(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_करो_start(काष्ठा snd_pcm_substream *substream,
 			    snd_pcm_state_t state)
-{
-	if (substream->runtime->trigger_master != substream)
-		return 0;
-	return substream->ops->trigger(substream, SNDRV_PCM_TRIGGER_START);
-}
+अणु
+	अगर (substream->runसमय->trigger_master != substream)
+		वापस 0;
+	वापस substream->ops->trigger(substream, SNDRV_PCM_TRIGGER_START);
+पूर्ण
 
-static void snd_pcm_undo_start(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_unकरो_start(काष्ठा snd_pcm_substream *substream,
 			       snd_pcm_state_t state)
-{
-	if (substream->runtime->trigger_master == substream)
+अणु
+	अगर (substream->runसमय->trigger_master == substream)
 		substream->ops->trigger(substream, SNDRV_PCM_TRIGGER_STOP);
-}
+पूर्ण
 
-static void snd_pcm_post_start(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_post_start(काष्ठा snd_pcm_substream *substream,
 			       snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 	snd_pcm_trigger_tstamp(substream);
-	runtime->hw_ptr_jiffies = jiffies;
-	runtime->hw_ptr_buffer_jiffies = (runtime->buffer_size * HZ) / 
-							    runtime->rate;
-	runtime->status->state = state;
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
-	    runtime->silence_size > 0)
-		snd_pcm_playback_silence(substream, ULONG_MAX);
-	snd_pcm_timer_notify(substream, SNDRV_TIMER_EVENT_MSTART);
-}
+	runसमय->hw_ptr_jअगरfies = jअगरfies;
+	runसमय->hw_ptr_buffer_jअगरfies = (runसमय->buffer_size * HZ) / 
+							    runसमय->rate;
+	runसमय->status->state = state;
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    runसमय->silence_size > 0)
+		snd_pcm_playback_silence(substream, अच_दीर्घ_उच्च);
+	snd_pcm_समयr_notअगरy(substream, SNDRV_TIMER_EVENT_MSTART);
+पूर्ण
 
-static const struct action_ops snd_pcm_action_start = {
+अटल स्थिर काष्ठा action_ops snd_pcm_action_start = अणु
 	.pre_action = snd_pcm_pre_start,
-	.do_action = snd_pcm_do_start,
-	.undo_action = snd_pcm_undo_start,
+	.करो_action = snd_pcm_करो_start,
+	.unकरो_action = snd_pcm_unकरो_start,
 	.post_action = snd_pcm_post_start
-};
+पूर्ण;
 
 /**
  * snd_pcm_start - start all linked streams
  * @substream: the PCM substream instance
  *
- * Return: Zero if successful, or a negative error code.
- * The stream lock must be acquired before calling this function.
+ * Return: Zero अगर successful, or a negative error code.
+ * The stream lock must be acquired beक्रमe calling this function.
  */
-int snd_pcm_start(struct snd_pcm_substream *substream)
-{
-	return snd_pcm_action(&snd_pcm_action_start, substream,
+पूर्णांक snd_pcm_start(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_pcm_action(&snd_pcm_action_start, substream,
 			      SNDRV_PCM_STATE_RUNNING);
-}
+पूर्ण
 
 /* take the stream lock and start the streams */
-static int snd_pcm_start_lock_irq(struct snd_pcm_substream *substream)
-{
-	return snd_pcm_action_lock_irq(&snd_pcm_action_start, substream,
+अटल पूर्णांक snd_pcm_start_lock_irq(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_pcm_action_lock_irq(&snd_pcm_action_start, substream,
 				       SNDRV_PCM_STATE_RUNNING);
-}
+पूर्ण
 
 /*
  * stop callbacks
  */
-static int snd_pcm_pre_stop(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_pre_stop(काष्ठा snd_pcm_substream *substream,
 			    snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
-	runtime->trigger_master = substream;
-	return 0;
-}
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN)
+		वापस -EBADFD;
+	runसमय->trigger_master = substream;
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_do_stop(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_करो_stop(काष्ठा snd_pcm_substream *substream,
 			   snd_pcm_state_t state)
-{
-	if (substream->runtime->trigger_master == substream &&
-	    snd_pcm_running(substream)) {
+अणु
+	अगर (substream->runसमय->trigger_master == substream &&
+	    snd_pcm_running(substream)) अणु
 		substream->ops->trigger(substream, SNDRV_PCM_TRIGGER_STOP);
-		substream->runtime->stop_operating = true;
-	}
-	return 0; /* unconditionally stop all substreams */
-}
+		substream->runसमय->stop_operating = true;
+	पूर्ण
+	वापस 0; /* unconditionally stop all substreams */
+पूर्ण
 
-static void snd_pcm_post_stop(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_post_stop(काष्ठा snd_pcm_substream *substream,
 			      snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	if (runtime->status->state != state) {
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अगर (runसमय->status->state != state) अणु
 		snd_pcm_trigger_tstamp(substream);
-		runtime->status->state = state;
-		snd_pcm_timer_notify(substream, SNDRV_TIMER_EVENT_MSTOP);
-	}
-	wake_up(&runtime->sleep);
-	wake_up(&runtime->tsleep);
-}
+		runसमय->status->state = state;
+		snd_pcm_समयr_notअगरy(substream, SNDRV_TIMER_EVENT_MSTOP);
+	पूर्ण
+	wake_up(&runसमय->sleep);
+	wake_up(&runसमय->tsleep);
+पूर्ण
 
-static const struct action_ops snd_pcm_action_stop = {
+अटल स्थिर काष्ठा action_ops snd_pcm_action_stop = अणु
 	.pre_action = snd_pcm_pre_stop,
-	.do_action = snd_pcm_do_stop,
+	.करो_action = snd_pcm_करो_stop,
 	.post_action = snd_pcm_post_stop
-};
+पूर्ण;
 
 /**
  * snd_pcm_stop - try to stop all running streams in the substream group
@@ -1454,28 +1455,28 @@ static const struct action_ops snd_pcm_action_stop = {
  *
  * The state of each stream is then changed to the given state unconditionally.
  *
- * Return: Zero if successful, or a negative error code.
+ * Return: Zero अगर successful, or a negative error code.
  */
-int snd_pcm_stop(struct snd_pcm_substream *substream, snd_pcm_state_t state)
-{
-	return snd_pcm_action(&snd_pcm_action_stop, substream, state);
-}
+पूर्णांक snd_pcm_stop(काष्ठा snd_pcm_substream *substream, snd_pcm_state_t state)
+अणु
+	वापस snd_pcm_action(&snd_pcm_action_stop, substream, state);
+पूर्ण
 EXPORT_SYMBOL(snd_pcm_stop);
 
 /**
- * snd_pcm_drain_done - stop the DMA only when the given stream is playback
+ * snd_pcm_drain_करोne - stop the DMA only when the given stream is playback
  * @substream: the PCM substream
  *
  * After stopping, the state is changed to SETUP.
  * Unlike snd_pcm_stop(), this affects only the given stream.
  *
- * Return: Zero if successful, or a negative error code.
+ * Return: Zero अगर successful, or a negative error code.
  */
-int snd_pcm_drain_done(struct snd_pcm_substream *substream)
-{
-	return snd_pcm_action_single(&snd_pcm_action_stop, substream,
+पूर्णांक snd_pcm_drain_करोne(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_pcm_action_single(&snd_pcm_action_stop, substream,
 				     SNDRV_PCM_STATE_SETUP);
-}
+पूर्ण
 
 /**
  * snd_pcm_stop_xrun - stop the running streams as XRUN
@@ -1484,159 +1485,159 @@ int snd_pcm_drain_done(struct snd_pcm_substream *substream)
  * This stops the given running substream (and all linked substreams) as XRUN.
  * Unlike snd_pcm_stop(), this function takes the substream lock by itself.
  *
- * Return: Zero if successful, or a negative error code.
+ * Return: Zero अगर successful, or a negative error code.
  */
-int snd_pcm_stop_xrun(struct snd_pcm_substream *substream)
-{
-	unsigned long flags;
+पूर्णांक snd_pcm_stop_xrun(काष्ठा snd_pcm_substream *substream)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	snd_pcm_stream_lock_irqsave(substream, flags);
-	if (substream->runtime && snd_pcm_running(substream))
+	अगर (substream->runसमय && snd_pcm_running(substream))
 		__snd_pcm_xrun(substream);
 	snd_pcm_stream_unlock_irqrestore(substream, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_pcm_stop_xrun);
 
 /*
- * pause callbacks: pass boolean (to start pause or resume) as state argument
+ * छोड़ो callbacks: pass boolean (to start छोड़ो or resume) as state argument
  */
-#define pause_pushed(state)	(__force bool)(state)
+#घोषणा छोड़ो_pushed(state)	(__क्रमce bool)(state)
 
-static int snd_pcm_pre_pause(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_pre_छोड़ो(काष्ठा snd_pcm_substream *substream,
 			     snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	if (!(runtime->info & SNDRV_PCM_INFO_PAUSE))
-		return -ENOSYS;
-	if (pause_pushed(state)) {
-		if (runtime->status->state != SNDRV_PCM_STATE_RUNNING)
-			return -EBADFD;
-	} else if (runtime->status->state != SNDRV_PCM_STATE_PAUSED)
-		return -EBADFD;
-	runtime->trigger_master = substream;
-	return 0;
-}
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अगर (!(runसमय->info & SNDRV_PCM_INFO_PAUSE))
+		वापस -ENOSYS;
+	अगर (छोड़ो_pushed(state)) अणु
+		अगर (runसमय->status->state != SNDRV_PCM_STATE_RUNNING)
+			वापस -EBADFD;
+	पूर्ण अन्यथा अगर (runसमय->status->state != SNDRV_PCM_STATE_PAUSED)
+		वापस -EBADFD;
+	runसमय->trigger_master = substream;
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_do_pause(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_करो_छोड़ो(काष्ठा snd_pcm_substream *substream,
 			    snd_pcm_state_t state)
-{
-	if (substream->runtime->trigger_master != substream)
-		return 0;
-	/* some drivers might use hw_ptr to recover from the pause -
+अणु
+	अगर (substream->runसमय->trigger_master != substream)
+		वापस 0;
+	/* some drivers might use hw_ptr to recover from the छोड़ो -
 	   update the hw_ptr now */
-	if (pause_pushed(state))
+	अगर (छोड़ो_pushed(state))
 		snd_pcm_update_hw_ptr(substream);
-	/* The jiffies check in snd_pcm_update_hw_ptr*() is done by
-	 * a delta between the current jiffies, this gives a large enough
+	/* The jअगरfies check in snd_pcm_update_hw_ptr*() is करोne by
+	 * a delta between the current jअगरfies, this gives a large enough
 	 * delta, effectively to skip the check once.
 	 */
-	substream->runtime->hw_ptr_jiffies = jiffies - HZ * 1000;
-	return substream->ops->trigger(substream,
-				       pause_pushed(state) ?
+	substream->runसमय->hw_ptr_jअगरfies = jअगरfies - HZ * 1000;
+	वापस substream->ops->trigger(substream,
+				       छोड़ो_pushed(state) ?
 				       SNDRV_PCM_TRIGGER_PAUSE_PUSH :
 				       SNDRV_PCM_TRIGGER_PAUSE_RELEASE);
-}
+पूर्ण
 
-static void snd_pcm_undo_pause(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_unकरो_छोड़ो(काष्ठा snd_pcm_substream *substream,
 			       snd_pcm_state_t state)
-{
-	if (substream->runtime->trigger_master == substream)
+अणु
+	अगर (substream->runसमय->trigger_master == substream)
 		substream->ops->trigger(substream,
-					pause_pushed(state) ?
+					छोड़ो_pushed(state) ?
 					SNDRV_PCM_TRIGGER_PAUSE_RELEASE :
 					SNDRV_PCM_TRIGGER_PAUSE_PUSH);
-}
+पूर्ण
 
-static void snd_pcm_post_pause(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_post_छोड़ो(काष्ठा snd_pcm_substream *substream,
 			       snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 	snd_pcm_trigger_tstamp(substream);
-	if (pause_pushed(state)) {
-		runtime->status->state = SNDRV_PCM_STATE_PAUSED;
-		snd_pcm_timer_notify(substream, SNDRV_TIMER_EVENT_MPAUSE);
-		wake_up(&runtime->sleep);
-		wake_up(&runtime->tsleep);
-	} else {
-		runtime->status->state = SNDRV_PCM_STATE_RUNNING;
-		snd_pcm_timer_notify(substream, SNDRV_TIMER_EVENT_MCONTINUE);
-	}
-}
+	अगर (छोड़ो_pushed(state)) अणु
+		runसमय->status->state = SNDRV_PCM_STATE_PAUSED;
+		snd_pcm_समयr_notअगरy(substream, SNDRV_TIMER_EVENT_MPAUSE);
+		wake_up(&runसमय->sleep);
+		wake_up(&runसमय->tsleep);
+	पूर्ण अन्यथा अणु
+		runसमय->status->state = SNDRV_PCM_STATE_RUNNING;
+		snd_pcm_समयr_notअगरy(substream, SNDRV_TIMER_EVENT_MCONTINUE);
+	पूर्ण
+पूर्ण
 
-static const struct action_ops snd_pcm_action_pause = {
-	.pre_action = snd_pcm_pre_pause,
-	.do_action = snd_pcm_do_pause,
-	.undo_action = snd_pcm_undo_pause,
-	.post_action = snd_pcm_post_pause
-};
+अटल स्थिर काष्ठा action_ops snd_pcm_action_छोड़ो = अणु
+	.pre_action = snd_pcm_pre_छोड़ो,
+	.करो_action = snd_pcm_करो_छोड़ो,
+	.unकरो_action = snd_pcm_unकरो_छोड़ो,
+	.post_action = snd_pcm_post_छोड़ो
+पूर्ण;
 
 /*
- * Push/release the pause for all linked streams.
+ * Push/release the छोड़ो क्रम all linked streams.
  */
-static int snd_pcm_pause(struct snd_pcm_substream *substream, bool push)
-{
-	return snd_pcm_action(&snd_pcm_action_pause, substream,
-			      (__force snd_pcm_state_t)push);
-}
+अटल पूर्णांक snd_pcm_छोड़ो(काष्ठा snd_pcm_substream *substream, bool push)
+अणु
+	वापस snd_pcm_action(&snd_pcm_action_छोड़ो, substream,
+			      (__क्रमce snd_pcm_state_t)push);
+पूर्ण
 
-static int snd_pcm_pause_lock_irq(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_छोड़ो_lock_irq(काष्ठा snd_pcm_substream *substream,
 				  bool push)
-{
-	return snd_pcm_action_lock_irq(&snd_pcm_action_pause, substream,
-				       (__force snd_pcm_state_t)push);
-}
+अणु
+	वापस snd_pcm_action_lock_irq(&snd_pcm_action_छोड़ो, substream,
+				       (__क्रमce snd_pcm_state_t)push);
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /* suspend callback: state argument ignored */
 
-static int snd_pcm_pre_suspend(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_pre_suspend(काष्ठा snd_pcm_substream *substream,
 			       snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	switch (runtime->status->state) {
-	case SNDRV_PCM_STATE_SUSPENDED:
-		return -EBUSY;
-	/* unresumable PCM state; return -EBUSY for skipping suspend */
-	case SNDRV_PCM_STATE_OPEN:
-	case SNDRV_PCM_STATE_SETUP:
-	case SNDRV_PCM_STATE_DISCONNECTED:
-		return -EBUSY;
-	}
-	runtime->trigger_master = substream;
-	return 0;
-}
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	चयन (runसमय->status->state) अणु
+	हाल SNDRV_PCM_STATE_SUSPENDED:
+		वापस -EBUSY;
+	/* unresumable PCM state; वापस -EBUSY क्रम skipping suspend */
+	हाल SNDRV_PCM_STATE_OPEN:
+	हाल SNDRV_PCM_STATE_SETUP:
+	हाल SNDRV_PCM_STATE_DISCONNECTED:
+		वापस -EBUSY;
+	पूर्ण
+	runसमय->trigger_master = substream;
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_do_suspend(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_करो_suspend(काष्ठा snd_pcm_substream *substream,
 			      snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	if (runtime->trigger_master != substream)
-		return 0;
-	if (! snd_pcm_running(substream))
-		return 0;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अगर (runसमय->trigger_master != substream)
+		वापस 0;
+	अगर (! snd_pcm_running(substream))
+		वापस 0;
 	substream->ops->trigger(substream, SNDRV_PCM_TRIGGER_SUSPEND);
-	runtime->stop_operating = true;
-	return 0; /* suspend unconditionally */
-}
+	runसमय->stop_operating = true;
+	वापस 0; /* suspend unconditionally */
+पूर्ण
 
-static void snd_pcm_post_suspend(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_post_suspend(काष्ठा snd_pcm_substream *substream,
 				 snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 	snd_pcm_trigger_tstamp(substream);
-	runtime->status->suspended_state = runtime->status->state;
-	runtime->status->state = SNDRV_PCM_STATE_SUSPENDED;
-	snd_pcm_timer_notify(substream, SNDRV_TIMER_EVENT_MSUSPEND);
-	wake_up(&runtime->sleep);
-	wake_up(&runtime->tsleep);
-}
+	runसमय->status->suspended_state = runसमय->status->state;
+	runसमय->status->state = SNDRV_PCM_STATE_SUSPENDED;
+	snd_pcm_समयr_notअगरy(substream, SNDRV_TIMER_EVENT_MSUSPEND);
+	wake_up(&runसमय->sleep);
+	wake_up(&runसमय->tsleep);
+पूर्ण
 
-static const struct action_ops snd_pcm_action_suspend = {
+अटल स्थिर काष्ठा action_ops snd_pcm_action_suspend = अणु
 	.pre_action = snd_pcm_pre_suspend,
-	.do_action = snd_pcm_do_suspend,
+	.करो_action = snd_pcm_करो_suspend,
 	.post_action = snd_pcm_post_suspend
-};
+पूर्ण;
 
 /*
  * snd_pcm_suspend - trigger SUSPEND to all linked streams
@@ -1644,19 +1645,19 @@ static const struct action_ops snd_pcm_action_suspend = {
  *
  * After this call, all streams are changed to SUSPENDED state.
  *
- * Return: Zero if successful, or a negative error code.
+ * Return: Zero अगर successful, or a negative error code.
  */
-static int snd_pcm_suspend(struct snd_pcm_substream *substream)
-{
-	int err;
-	unsigned long flags;
+अटल पूर्णांक snd_pcm_suspend(काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक err;
+	अचिन्हित दीर्घ flags;
 
 	snd_pcm_stream_lock_irqsave(substream, flags);
 	err = snd_pcm_action(&snd_pcm_action_suspend, substream,
 			     ACTION_ARG_IGNORE);
 	snd_pcm_stream_unlock_irqrestore(substream, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * snd_pcm_suspend_all - trigger SUSPEND to all substreams in the given pcm
@@ -1664,338 +1665,338 @@ static int snd_pcm_suspend(struct snd_pcm_substream *substream)
  *
  * After this call, all streams are changed to SUSPENDED state.
  *
- * Return: Zero if successful (or @pcm is %NULL), or a negative error code.
+ * Return: Zero अगर successful (or @pcm is %शून्य), or a negative error code.
  */
-int snd_pcm_suspend_all(struct snd_pcm *pcm)
-{
-	struct snd_pcm_substream *substream;
-	int stream, err = 0;
+पूर्णांक snd_pcm_suspend_all(काष्ठा snd_pcm *pcm)
+अणु
+	काष्ठा snd_pcm_substream *substream;
+	पूर्णांक stream, err = 0;
 
-	if (! pcm)
-		return 0;
+	अगर (! pcm)
+		वापस 0;
 
-	for_each_pcm_substream(pcm, stream, substream) {
-		/* FIXME: the open/close code should lock this as well */
-		if (!substream->runtime)
-			continue;
+	क्रम_each_pcm_substream(pcm, stream, substream) अणु
+		/* FIXME: the खोलो/बंद code should lock this as well */
+		अगर (!substream->runसमय)
+			जारी;
 
 		/*
-		 * Skip BE dai link PCM's that are internal and may
+		 * Skip BE dai link PCM's that are पूर्णांकernal and may
 		 * not have their substream ops set.
 		 */
-		if (!substream->ops)
-			continue;
+		अगर (!substream->ops)
+			जारी;
 
 		err = snd_pcm_suspend(substream);
-		if (err < 0 && err != -EBUSY)
-			return err;
-	}
+		अगर (err < 0 && err != -EBUSY)
+			वापस err;
+	पूर्ण
 
-	for_each_pcm_substream(pcm, stream, substream)
+	क्रम_each_pcm_substream(pcm, stream, substream)
 		snd_pcm_sync_stop(substream, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(snd_pcm_suspend_all);
 
 /* resume callbacks: state argument ignored */
 
-static int snd_pcm_pre_resume(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_pre_resume(काष्ठा snd_pcm_substream *substream,
 			      snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	if (!(runtime->info & SNDRV_PCM_INFO_RESUME))
-		return -ENOSYS;
-	runtime->trigger_master = substream;
-	return 0;
-}
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अगर (!(runसमय->info & SNDRV_PCM_INFO_RESUME))
+		वापस -ENOSYS;
+	runसमय->trigger_master = substream;
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_do_resume(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_करो_resume(काष्ठा snd_pcm_substream *substream,
 			     snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	if (runtime->trigger_master != substream)
-		return 0;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अगर (runसमय->trigger_master != substream)
+		वापस 0;
 	/* DMA not running previously? */
-	if (runtime->status->suspended_state != SNDRV_PCM_STATE_RUNNING &&
-	    (runtime->status->suspended_state != SNDRV_PCM_STATE_DRAINING ||
+	अगर (runसमय->status->suspended_state != SNDRV_PCM_STATE_RUNNING &&
+	    (runसमय->status->suspended_state != SNDRV_PCM_STATE_DRAINING ||
 	     substream->stream != SNDRV_PCM_STREAM_PLAYBACK))
-		return 0;
-	return substream->ops->trigger(substream, SNDRV_PCM_TRIGGER_RESUME);
-}
+		वापस 0;
+	वापस substream->ops->trigger(substream, SNDRV_PCM_TRIGGER_RESUME);
+पूर्ण
 
-static void snd_pcm_undo_resume(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_unकरो_resume(काष्ठा snd_pcm_substream *substream,
 				snd_pcm_state_t state)
-{
-	if (substream->runtime->trigger_master == substream &&
+अणु
+	अगर (substream->runसमय->trigger_master == substream &&
 	    snd_pcm_running(substream))
 		substream->ops->trigger(substream, SNDRV_PCM_TRIGGER_SUSPEND);
-}
+पूर्ण
 
-static void snd_pcm_post_resume(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_post_resume(काष्ठा snd_pcm_substream *substream,
 				snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 	snd_pcm_trigger_tstamp(substream);
-	runtime->status->state = runtime->status->suspended_state;
-	snd_pcm_timer_notify(substream, SNDRV_TIMER_EVENT_MRESUME);
-}
+	runसमय->status->state = runसमय->status->suspended_state;
+	snd_pcm_समयr_notअगरy(substream, SNDRV_TIMER_EVENT_MRESUME);
+पूर्ण
 
-static const struct action_ops snd_pcm_action_resume = {
+अटल स्थिर काष्ठा action_ops snd_pcm_action_resume = अणु
 	.pre_action = snd_pcm_pre_resume,
-	.do_action = snd_pcm_do_resume,
-	.undo_action = snd_pcm_undo_resume,
+	.करो_action = snd_pcm_करो_resume,
+	.unकरो_action = snd_pcm_unकरो_resume,
 	.post_action = snd_pcm_post_resume
-};
+पूर्ण;
 
-static int snd_pcm_resume(struct snd_pcm_substream *substream)
-{
-	return snd_pcm_action_lock_irq(&snd_pcm_action_resume, substream,
+अटल पूर्णांक snd_pcm_resume(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_pcm_action_lock_irq(&snd_pcm_action_resume, substream,
 				       ACTION_ARG_IGNORE);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static int snd_pcm_resume(struct snd_pcm_substream *substream)
-{
-	return -ENOSYS;
-}
+अटल पूर्णांक snd_pcm_resume(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
 /*
  * xrun ioctl
  *
  * Change the RUNNING stream(s) to XRUN state.
  */
-static int snd_pcm_xrun(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int result;
+अटल पूर्णांक snd_pcm_xrun(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक result;
 
 	snd_pcm_stream_lock_irq(substream);
-	switch (runtime->status->state) {
-	case SNDRV_PCM_STATE_XRUN:
-		result = 0;	/* already there */
-		break;
-	case SNDRV_PCM_STATE_RUNNING:
+	चयन (runसमय->status->state) अणु
+	हाल SNDRV_PCM_STATE_XRUN:
+		result = 0;	/* alपढ़ोy there */
+		अवरोध;
+	हाल SNDRV_PCM_STATE_RUNNING:
 		__snd_pcm_xrun(substream);
 		result = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		result = -EBADFD;
-	}
+	पूर्ण
 	snd_pcm_stream_unlock_irq(substream);
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
  * reset ioctl
  */
 /* reset callbacks:  state argument ignored */
-static int snd_pcm_pre_reset(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_pre_reset(काष्ठा snd_pcm_substream *substream,
 			     snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	switch (runtime->status->state) {
-	case SNDRV_PCM_STATE_RUNNING:
-	case SNDRV_PCM_STATE_PREPARED:
-	case SNDRV_PCM_STATE_PAUSED:
-	case SNDRV_PCM_STATE_SUSPENDED:
-		return 0;
-	default:
-		return -EBADFD;
-	}
-}
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	चयन (runसमय->status->state) अणु
+	हाल SNDRV_PCM_STATE_RUNNING:
+	हाल SNDRV_PCM_STATE_PREPARED:
+	हाल SNDRV_PCM_STATE_PAUSED:
+	हाल SNDRV_PCM_STATE_SUSPENDED:
+		वापस 0;
+	शेष:
+		वापस -EBADFD;
+	पूर्ण
+पूर्ण
 
-static int snd_pcm_do_reset(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_करो_reset(काष्ठा snd_pcm_substream *substream,
 			    snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int err = snd_pcm_ops_ioctl(substream, SNDRV_PCM_IOCTL1_RESET, NULL);
-	if (err < 0)
-		return err;
-	runtime->hw_ptr_base = 0;
-	runtime->hw_ptr_interrupt = runtime->status->hw_ptr -
-		runtime->status->hw_ptr % runtime->period_size;
-	runtime->silence_start = runtime->status->hw_ptr;
-	runtime->silence_filled = 0;
-	return 0;
-}
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक err = snd_pcm_ops_ioctl(substream, SNDRV_PCM_IOCTL1_RESET, शून्य);
+	अगर (err < 0)
+		वापस err;
+	runसमय->hw_ptr_base = 0;
+	runसमय->hw_ptr_पूर्णांकerrupt = runसमय->status->hw_ptr -
+		runसमय->status->hw_ptr % runसमय->period_size;
+	runसमय->silence_start = runसमय->status->hw_ptr;
+	runसमय->silence_filled = 0;
+	वापस 0;
+पूर्ण
 
-static void snd_pcm_post_reset(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_post_reset(काष्ठा snd_pcm_substream *substream,
 			       snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	runtime->control->appl_ptr = runtime->status->hw_ptr;
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
-	    runtime->silence_size > 0)
-		snd_pcm_playback_silence(substream, ULONG_MAX);
-}
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	runसमय->control->appl_ptr = runसमय->status->hw_ptr;
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+	    runसमय->silence_size > 0)
+		snd_pcm_playback_silence(substream, अच_दीर्घ_उच्च);
+पूर्ण
 
-static const struct action_ops snd_pcm_action_reset = {
+अटल स्थिर काष्ठा action_ops snd_pcm_action_reset = अणु
 	.pre_action = snd_pcm_pre_reset,
-	.do_action = snd_pcm_do_reset,
+	.करो_action = snd_pcm_करो_reset,
 	.post_action = snd_pcm_post_reset
-};
+पूर्ण;
 
-static int snd_pcm_reset(struct snd_pcm_substream *substream)
-{
-	return snd_pcm_action_nonatomic(&snd_pcm_action_reset, substream,
+अटल पूर्णांक snd_pcm_reset(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_pcm_action_nonatomic(&snd_pcm_action_reset, substream,
 					ACTION_ARG_IGNORE);
-}
+पूर्ण
 
 /*
  * prepare ioctl
  */
 /* pass f_flags as state argument */
-static int snd_pcm_pre_prepare(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_pre_prepare(काष्ठा snd_pcm_substream *substream,
 			       snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int f_flags = (__force int)state;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक f_flags = (__क्रमce पूर्णांक)state;
 
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN ||
-	    runtime->status->state == SNDRV_PCM_STATE_DISCONNECTED)
-		return -EBADFD;
-	if (snd_pcm_running(substream))
-		return -EBUSY;
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN ||
+	    runसमय->status->state == SNDRV_PCM_STATE_DISCONNECTED)
+		वापस -EBADFD;
+	अगर (snd_pcm_running(substream))
+		वापस -EBUSY;
 	substream->f_flags = f_flags;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_do_prepare(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_करो_prepare(काष्ठा snd_pcm_substream *substream,
 			      snd_pcm_state_t state)
-{
-	int err;
+अणु
+	पूर्णांक err;
 	snd_pcm_sync_stop(substream, true);
 	err = substream->ops->prepare(substream);
-	if (err < 0)
-		return err;
-	return snd_pcm_do_reset(substream, state);
-}
+	अगर (err < 0)
+		वापस err;
+	वापस snd_pcm_करो_reset(substream, state);
+पूर्ण
 
-static void snd_pcm_post_prepare(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_post_prepare(काष्ठा snd_pcm_substream *substream,
 				 snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	runtime->control->appl_ptr = runtime->status->hw_ptr;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	runसमय->control->appl_ptr = runसमय->status->hw_ptr;
 	snd_pcm_set_state(substream, SNDRV_PCM_STATE_PREPARED);
-}
+पूर्ण
 
-static const struct action_ops snd_pcm_action_prepare = {
+अटल स्थिर काष्ठा action_ops snd_pcm_action_prepare = अणु
 	.pre_action = snd_pcm_pre_prepare,
-	.do_action = snd_pcm_do_prepare,
+	.करो_action = snd_pcm_करो_prepare,
 	.post_action = snd_pcm_post_prepare
-};
+पूर्ण;
 
 /**
  * snd_pcm_prepare - prepare the PCM substream to be triggerable
  * @substream: the PCM substream instance
  * @file: file to refer f_flags
  *
- * Return: Zero if successful, or a negative error code.
+ * Return: Zero अगर successful, or a negative error code.
  */
-static int snd_pcm_prepare(struct snd_pcm_substream *substream,
-			   struct file *file)
-{
-	int f_flags;
+अटल पूर्णांक snd_pcm_prepare(काष्ठा snd_pcm_substream *substream,
+			   काष्ठा file *file)
+अणु
+	पूर्णांक f_flags;
 
-	if (file)
+	अगर (file)
 		f_flags = file->f_flags;
-	else
+	अन्यथा
 		f_flags = substream->f_flags;
 
 	snd_pcm_stream_lock_irq(substream);
-	switch (substream->runtime->status->state) {
-	case SNDRV_PCM_STATE_PAUSED:
-		snd_pcm_pause(substream, false);
+	चयन (substream->runसमय->status->state) अणु
+	हाल SNDRV_PCM_STATE_PAUSED:
+		snd_pcm_छोड़ो(substream, false);
 		fallthrough;
-	case SNDRV_PCM_STATE_SUSPENDED:
+	हाल SNDRV_PCM_STATE_SUSPENDED:
 		snd_pcm_stop(substream, SNDRV_PCM_STATE_SETUP);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	snd_pcm_stream_unlock_irq(substream);
 
-	return snd_pcm_action_nonatomic(&snd_pcm_action_prepare,
+	वापस snd_pcm_action_nonatomic(&snd_pcm_action_prepare,
 					substream,
-					(__force snd_pcm_state_t)f_flags);
-}
+					(__क्रमce snd_pcm_state_t)f_flags);
+पूर्ण
 
 /*
  * drain ioctl
  */
 
 /* drain init callbacks: state argument ignored */
-static int snd_pcm_pre_drain_init(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_pre_drain_init(काष्ठा snd_pcm_substream *substream,
 				  snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	switch (runtime->status->state) {
-	case SNDRV_PCM_STATE_OPEN:
-	case SNDRV_PCM_STATE_DISCONNECTED:
-	case SNDRV_PCM_STATE_SUSPENDED:
-		return -EBADFD;
-	}
-	runtime->trigger_master = substream;
-	return 0;
-}
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	चयन (runसमय->status->state) अणु
+	हाल SNDRV_PCM_STATE_OPEN:
+	हाल SNDRV_PCM_STATE_DISCONNECTED:
+	हाल SNDRV_PCM_STATE_SUSPENDED:
+		वापस -EBADFD;
+	पूर्ण
+	runसमय->trigger_master = substream;
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_do_drain_init(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_करो_drain_init(काष्ठा snd_pcm_substream *substream,
 				 snd_pcm_state_t state)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		switch (runtime->status->state) {
-		case SNDRV_PCM_STATE_PREPARED:
-			/* start playback stream if possible */
-			if (! snd_pcm_playback_empty(substream)) {
-				snd_pcm_do_start(substream, SNDRV_PCM_STATE_DRAINING);
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		चयन (runसमय->status->state) अणु
+		हाल SNDRV_PCM_STATE_PREPARED:
+			/* start playback stream अगर possible */
+			अगर (! snd_pcm_playback_empty(substream)) अणु
+				snd_pcm_करो_start(substream, SNDRV_PCM_STATE_DRAINING);
 				snd_pcm_post_start(substream, SNDRV_PCM_STATE_DRAINING);
-			} else {
-				runtime->status->state = SNDRV_PCM_STATE_SETUP;
-			}
-			break;
-		case SNDRV_PCM_STATE_RUNNING:
-			runtime->status->state = SNDRV_PCM_STATE_DRAINING;
-			break;
-		case SNDRV_PCM_STATE_XRUN:
-			runtime->status->state = SNDRV_PCM_STATE_SETUP;
-			break;
-		default:
-			break;
-		}
-	} else {
+			पूर्ण अन्यथा अणु
+				runसमय->status->state = SNDRV_PCM_STATE_SETUP;
+			पूर्ण
+			अवरोध;
+		हाल SNDRV_PCM_STATE_RUNNING:
+			runसमय->status->state = SNDRV_PCM_STATE_DRAINING;
+			अवरोध;
+		हाल SNDRV_PCM_STATE_XRUN:
+			runसमय->status->state = SNDRV_PCM_STATE_SETUP;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* stop running stream */
-		if (runtime->status->state == SNDRV_PCM_STATE_RUNNING) {
+		अगर (runसमय->status->state == SNDRV_PCM_STATE_RUNNING) अणु
 			snd_pcm_state_t new_state;
 
-			new_state = snd_pcm_capture_avail(runtime) > 0 ?
+			new_state = snd_pcm_capture_avail(runसमय) > 0 ?
 				SNDRV_PCM_STATE_DRAINING : SNDRV_PCM_STATE_SETUP;
-			snd_pcm_do_stop(substream, new_state);
+			snd_pcm_करो_stop(substream, new_state);
 			snd_pcm_post_stop(substream, new_state);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (runtime->status->state == SNDRV_PCM_STATE_DRAINING &&
-	    runtime->trigger_master == substream &&
-	    (runtime->hw.info & SNDRV_PCM_INFO_DRAIN_TRIGGER))
-		return substream->ops->trigger(substream,
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_DRAINING &&
+	    runसमय->trigger_master == substream &&
+	    (runसमय->hw.info & SNDRV_PCM_INFO_DRAIN_TRIGGER))
+		वापस substream->ops->trigger(substream,
 					       SNDRV_PCM_TRIGGER_DRAIN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_pcm_post_drain_init(struct snd_pcm_substream *substream,
+अटल व्योम snd_pcm_post_drain_init(काष्ठा snd_pcm_substream *substream,
 				    snd_pcm_state_t state)
-{
-}
+अणु
+पूर्ण
 
-static const struct action_ops snd_pcm_action_drain_init = {
+अटल स्थिर काष्ठा action_ops snd_pcm_action_drain_init = अणु
 	.pre_action = snd_pcm_pre_drain_init,
-	.do_action = snd_pcm_do_drain_init,
+	.करो_action = snd_pcm_करो_drain_init,
 	.post_action = snd_pcm_post_drain_init
-};
+पूर्ण;
 
 /*
  * Drain the stream(s).
@@ -2004,215 +2005,215 @@ static const struct action_ops snd_pcm_action_drain_init = {
  * After this call, all streams are supposed to be either SETUP or DRAINING
  * (capture only) state.
  */
-static int snd_pcm_drain(struct snd_pcm_substream *substream,
-			 struct file *file)
-{
-	struct snd_card *card;
-	struct snd_pcm_runtime *runtime;
-	struct snd_pcm_substream *s;
-	struct snd_pcm_group *group;
-	wait_queue_entry_t wait;
-	int result = 0;
-	int nonblock = 0;
+अटल पूर्णांक snd_pcm_drain(काष्ठा snd_pcm_substream *substream,
+			 काष्ठा file *file)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_pcm_runसमय *runसमय;
+	काष्ठा snd_pcm_substream *s;
+	काष्ठा snd_pcm_group *group;
+	रुको_queue_entry_t रुको;
+	पूर्णांक result = 0;
+	पूर्णांक nonblock = 0;
 
 	card = substream->pcm->card;
-	runtime = substream->runtime;
+	runसमय = substream->runसमय;
 
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN)
+		वापस -EBADFD;
 
-	if (file) {
-		if (file->f_flags & O_NONBLOCK)
+	अगर (file) अणु
+		अगर (file->f_flags & O_NONBLOCK)
 			nonblock = 1;
-	} else if (substream->f_flags & O_NONBLOCK)
+	पूर्ण अन्यथा अगर (substream->f_flags & O_NONBLOCK)
 		nonblock = 1;
 
 	snd_pcm_stream_lock_irq(substream);
-	/* resume pause */
-	if (runtime->status->state == SNDRV_PCM_STATE_PAUSED)
-		snd_pcm_pause(substream, false);
+	/* resume छोड़ो */
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_PAUSED)
+		snd_pcm_छोड़ो(substream, false);
 
 	/* pre-start/stop - all running streams are changed to DRAINING state */
 	result = snd_pcm_action(&snd_pcm_action_drain_init, substream,
 				ACTION_ARG_IGNORE);
-	if (result < 0)
-		goto unlock;
-	/* in non-blocking, we don't wait in ioctl but let caller poll */
-	if (nonblock) {
+	अगर (result < 0)
+		जाओ unlock;
+	/* in non-blocking, we करोn't रुको in ioctl but let caller poll */
+	अगर (nonblock) अणु
 		result = -EAGAIN;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	for (;;) {
-		long tout;
-		struct snd_pcm_runtime *to_check;
-		if (signal_pending(current)) {
+	क्रम (;;) अणु
+		दीर्घ tout;
+		काष्ठा snd_pcm_runसमय *to_check;
+		अगर (संकेत_pending(current)) अणु
 			result = -ERESTARTSYS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/* find a substream to drain */
-		to_check = NULL;
+		to_check = शून्य;
 		group = snd_pcm_stream_group_ref(substream);
-		snd_pcm_group_for_each_entry(s, substream) {
-			if (s->stream != SNDRV_PCM_STREAM_PLAYBACK)
-				continue;
-			runtime = s->runtime;
-			if (runtime->status->state == SNDRV_PCM_STATE_DRAINING) {
-				to_check = runtime;
-				break;
-			}
-		}
+		snd_pcm_group_क्रम_each_entry(s, substream) अणु
+			अगर (s->stream != SNDRV_PCM_STREAM_PLAYBACK)
+				जारी;
+			runसमय = s->runसमय;
+			अगर (runसमय->status->state == SNDRV_PCM_STATE_DRAINING) अणु
+				to_check = runसमय;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		snd_pcm_group_unref(group, substream);
-		if (!to_check)
-			break; /* all drained */
-		init_waitqueue_entry(&wait, current);
+		अगर (!to_check)
+			अवरोध; /* all drained */
+		init_रुकोqueue_entry(&रुको, current);
 		set_current_state(TASK_INTERRUPTIBLE);
-		add_wait_queue(&to_check->sleep, &wait);
+		add_रुको_queue(&to_check->sleep, &रुको);
 		snd_pcm_stream_unlock_irq(substream);
-		if (runtime->no_period_wakeup)
+		अगर (runसमय->no_period_wakeup)
 			tout = MAX_SCHEDULE_TIMEOUT;
-		else {
+		अन्यथा अणु
 			tout = 10;
-			if (runtime->rate) {
-				long t = runtime->period_size * 2 / runtime->rate;
+			अगर (runसमय->rate) अणु
+				दीर्घ t = runसमय->period_size * 2 / runसमय->rate;
 				tout = max(t, tout);
-			}
-			tout = msecs_to_jiffies(tout * 1000);
-		}
-		tout = schedule_timeout(tout);
+			पूर्ण
+			tout = msecs_to_jअगरfies(tout * 1000);
+		पूर्ण
+		tout = schedule_समयout(tout);
 
 		snd_pcm_stream_lock_irq(substream);
 		group = snd_pcm_stream_group_ref(substream);
-		snd_pcm_group_for_each_entry(s, substream) {
-			if (s->runtime == to_check) {
-				remove_wait_queue(&to_check->sleep, &wait);
-				break;
-			}
-		}
+		snd_pcm_group_क्रम_each_entry(s, substream) अणु
+			अगर (s->runसमय == to_check) अणु
+				हटाओ_रुको_queue(&to_check->sleep, &रुको);
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		snd_pcm_group_unref(group, substream);
 
-		if (card->shutdown) {
+		अगर (card->shutकरोwn) अणु
 			result = -ENODEV;
-			break;
-		}
-		if (tout == 0) {
-			if (substream->runtime->status->state == SNDRV_PCM_STATE_SUSPENDED)
+			अवरोध;
+		पूर्ण
+		अगर (tout == 0) अणु
+			अगर (substream->runसमय->status->state == SNDRV_PCM_STATE_SUSPENDED)
 				result = -ESTRPIPE;
-			else {
+			अन्यथा अणु
 				dev_dbg(substream->pcm->card->dev,
 					"playback drain error (DMA or IRQ trouble?)\n");
 				snd_pcm_stop(substream, SNDRV_PCM_STATE_SETUP);
 				result = -EIO;
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
  unlock:
 	snd_pcm_stream_unlock_irq(substream);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
  * drop ioctl
  *
- * Immediately put all linked substreams into SETUP state.
+ * Immediately put all linked substreams पूर्णांकo SETUP state.
  */
-static int snd_pcm_drop(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime;
-	int result = 0;
+अटल पूर्णांक snd_pcm_drop(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय;
+	पूर्णांक result = 0;
 	
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
-	runtime = substream->runtime;
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
+	runसमय = substream->runसमय;
 
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN ||
-	    runtime->status->state == SNDRV_PCM_STATE_DISCONNECTED)
-		return -EBADFD;
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN ||
+	    runसमय->status->state == SNDRV_PCM_STATE_DISCONNECTED)
+		वापस -EBADFD;
 
 	snd_pcm_stream_lock_irq(substream);
-	/* resume pause */
-	if (runtime->status->state == SNDRV_PCM_STATE_PAUSED)
-		snd_pcm_pause(substream, false);
+	/* resume छोड़ो */
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_PAUSED)
+		snd_pcm_छोड़ो(substream, false);
 
 	snd_pcm_stop(substream, SNDRV_PCM_STATE_SETUP);
-	/* runtime->control->appl_ptr = runtime->status->hw_ptr; */
+	/* runसमय->control->appl_ptr = runसमय->status->hw_ptr; */
 	snd_pcm_stream_unlock_irq(substream);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 
-static bool is_pcm_file(struct file *file)
-{
-	struct inode *inode = file_inode(file);
-	struct snd_pcm *pcm;
-	unsigned int minor;
+अटल bool is_pcm_file(काष्ठा file *file)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा snd_pcm *pcm;
+	अचिन्हित पूर्णांक minor;
 
-	if (!S_ISCHR(inode->i_mode) || imajor(inode) != snd_major)
-		return false;
+	अगर (!S_ISCHR(inode->i_mode) || imajor(inode) != snd_major)
+		वापस false;
 	minor = iminor(inode);
 	pcm = snd_lookup_minor_data(minor, SNDRV_DEVICE_TYPE_PCM_PLAYBACK);
-	if (!pcm)
+	अगर (!pcm)
 		pcm = snd_lookup_minor_data(minor, SNDRV_DEVICE_TYPE_PCM_CAPTURE);
-	if (!pcm)
-		return false;
+	अगर (!pcm)
+		वापस false;
 	snd_card_unref(pcm->card);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * PCM link handling
  */
-static int snd_pcm_link(struct snd_pcm_substream *substream, int fd)
-{
-	int res = 0;
-	struct snd_pcm_file *pcm_file;
-	struct snd_pcm_substream *substream1;
-	struct snd_pcm_group *group, *target_group;
+अटल पूर्णांक snd_pcm_link(काष्ठा snd_pcm_substream *substream, पूर्णांक fd)
+अणु
+	पूर्णांक res = 0;
+	काष्ठा snd_pcm_file *pcm_file;
+	काष्ठा snd_pcm_substream *substream1;
+	काष्ठा snd_pcm_group *group, *target_group;
 	bool nonatomic = substream->pcm->nonatomic;
-	struct fd f = fdget(fd);
+	काष्ठा fd f = fdget(fd);
 
-	if (!f.file)
-		return -EBADFD;
-	if (!is_pcm_file(f.file)) {
+	अगर (!f.file)
+		वापस -EBADFD;
+	अगर (!is_pcm_file(f.file)) अणु
 		res = -EBADFD;
-		goto _badf;
-	}
-	pcm_file = f.file->private_data;
+		जाओ _badf;
+	पूर्ण
+	pcm_file = f.file->निजी_data;
 	substream1 = pcm_file->substream;
 
-	if (substream == substream1) {
+	अगर (substream == substream1) अणु
 		res = -EINVAL;
-		goto _badf;
-	}
+		जाओ _badf;
+	पूर्ण
 
-	group = kzalloc(sizeof(*group), GFP_KERNEL);
-	if (!group) {
+	group = kzalloc(माप(*group), GFP_KERNEL);
+	अगर (!group) अणु
 		res = -ENOMEM;
-		goto _nolock;
-	}
+		जाओ _nolock;
+	पूर्ण
 	snd_pcm_group_init(group);
 
-	down_write(&snd_pcm_link_rwsem);
-	if (substream->runtime->status->state == SNDRV_PCM_STATE_OPEN ||
-	    substream->runtime->status->state != substream1->runtime->status->state ||
-	    substream->pcm->nonatomic != substream1->pcm->nonatomic) {
+	करोwn_ग_लिखो(&snd_pcm_link_rwsem);
+	अगर (substream->runसमय->status->state == SNDRV_PCM_STATE_OPEN ||
+	    substream->runसमय->status->state != substream1->runसमय->status->state ||
+	    substream->pcm->nonatomic != substream1->pcm->nonatomic) अणु
 		res = -EBADFD;
-		goto _end;
-	}
-	if (snd_pcm_stream_linked(substream1)) {
+		जाओ _end;
+	पूर्ण
+	अगर (snd_pcm_stream_linked(substream1)) अणु
 		res = -EALREADY;
-		goto _end;
-	}
+		जाओ _end;
+	पूर्ण
 
 	snd_pcm_stream_lock_irq(substream);
-	if (!snd_pcm_stream_linked(substream)) {
+	अगर (!snd_pcm_stream_linked(substream)) अणु
 		snd_pcm_group_assign(substream, group);
-		group = NULL; /* assigned, don't free this one below */
-	}
+		group = शून्य; /* asचिन्हित, करोn't मुक्त this one below */
+	पूर्ण
 	target_group = substream->group;
 	snd_pcm_stream_unlock_irq(substream);
 
@@ -2223,34 +2224,34 @@ static int snd_pcm_link(struct snd_pcm_substream *substream, int fd)
 	snd_pcm_stream_unlock(substream1);
 	snd_pcm_group_unlock_irq(target_group, nonatomic);
  _end:
-	up_write(&snd_pcm_link_rwsem);
+	up_ग_लिखो(&snd_pcm_link_rwsem);
  _nolock:
-	kfree(group);
+	kमुक्त(group);
  _badf:
 	fdput(f);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void relink_to_local(struct snd_pcm_substream *substream)
-{
+अटल व्योम relink_to_local(काष्ठा snd_pcm_substream *substream)
+अणु
 	snd_pcm_stream_lock_nested(substream);
 	snd_pcm_group_assign(substream, &substream->self_group);
 	snd_pcm_stream_unlock(substream);
-}
+पूर्ण
 
-static int snd_pcm_unlink(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_group *group;
+अटल पूर्णांक snd_pcm_unlink(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_group *group;
 	bool nonatomic = substream->pcm->nonatomic;
-	bool do_free = false;
-	int res = 0;
+	bool करो_मुक्त = false;
+	पूर्णांक res = 0;
 
-	down_write(&snd_pcm_link_rwsem);
+	करोwn_ग_लिखो(&snd_pcm_link_rwsem);
 
-	if (!snd_pcm_stream_linked(substream)) {
+	अगर (!snd_pcm_stream_linked(substream)) अणु
 		res = -EALREADY;
-		goto _end;
-	}
+		जाओ _end;
+	पूर्ण
 
 	group = substream->group;
 	snd_pcm_group_lock_irq(group, nonatomic);
@@ -2259,720 +2260,720 @@ static int snd_pcm_unlink(struct snd_pcm_substream *substream)
 	refcount_dec(&group->refs);
 
 	/* detach the last stream, too */
-	if (list_is_singular(&group->substreams)) {
+	अगर (list_is_singular(&group->substreams)) अणु
 		relink_to_local(list_first_entry(&group->substreams,
-						 struct snd_pcm_substream,
+						 काष्ठा snd_pcm_substream,
 						 link_list));
-		do_free = refcount_dec_and_test(&group->refs);
-	}
+		करो_मुक्त = refcount_dec_and_test(&group->refs);
+	पूर्ण
 
 	snd_pcm_group_unlock_irq(group, nonatomic);
-	if (do_free)
-		kfree(group);
+	अगर (करो_मुक्त)
+		kमुक्त(group);
 
        _end:
-	up_write(&snd_pcm_link_rwsem);
-	return res;
-}
+	up_ग_लिखो(&snd_pcm_link_rwsem);
+	वापस res;
+पूर्ण
 
 /*
  * hw configurator
  */
-static int snd_pcm_hw_rule_mul(struct snd_pcm_hw_params *params,
-			       struct snd_pcm_hw_rule *rule)
-{
-	struct snd_interval t;
-	snd_interval_mul(hw_param_interval_c(params, rule->deps[0]),
-		     hw_param_interval_c(params, rule->deps[1]), &t);
-	return snd_interval_refine(hw_param_interval(params, rule->var), &t);
-}
+अटल पूर्णांक snd_pcm_hw_rule_mul(काष्ठा snd_pcm_hw_params *params,
+			       काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा snd_पूर्णांकerval t;
+	snd_पूर्णांकerval_mul(hw_param_पूर्णांकerval_c(params, rule->deps[0]),
+		     hw_param_पूर्णांकerval_c(params, rule->deps[1]), &t);
+	वापस snd_पूर्णांकerval_refine(hw_param_पूर्णांकerval(params, rule->var), &t);
+पूर्ण
 
-static int snd_pcm_hw_rule_div(struct snd_pcm_hw_params *params,
-			       struct snd_pcm_hw_rule *rule)
-{
-	struct snd_interval t;
-	snd_interval_div(hw_param_interval_c(params, rule->deps[0]),
-		     hw_param_interval_c(params, rule->deps[1]), &t);
-	return snd_interval_refine(hw_param_interval(params, rule->var), &t);
-}
+अटल पूर्णांक snd_pcm_hw_rule_भाग(काष्ठा snd_pcm_hw_params *params,
+			       काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा snd_पूर्णांकerval t;
+	snd_पूर्णांकerval_भाग(hw_param_पूर्णांकerval_c(params, rule->deps[0]),
+		     hw_param_पूर्णांकerval_c(params, rule->deps[1]), &t);
+	वापस snd_पूर्णांकerval_refine(hw_param_पूर्णांकerval(params, rule->var), &t);
+पूर्ण
 
-static int snd_pcm_hw_rule_muldivk(struct snd_pcm_hw_params *params,
-				   struct snd_pcm_hw_rule *rule)
-{
-	struct snd_interval t;
-	snd_interval_muldivk(hw_param_interval_c(params, rule->deps[0]),
-			 hw_param_interval_c(params, rule->deps[1]),
-			 (unsigned long) rule->private, &t);
-	return snd_interval_refine(hw_param_interval(params, rule->var), &t);
-}
+अटल पूर्णांक snd_pcm_hw_rule_muद_भागk(काष्ठा snd_pcm_hw_params *params,
+				   काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा snd_पूर्णांकerval t;
+	snd_पूर्णांकerval_muद_भागk(hw_param_पूर्णांकerval_c(params, rule->deps[0]),
+			 hw_param_पूर्णांकerval_c(params, rule->deps[1]),
+			 (अचिन्हित दीर्घ) rule->निजी, &t);
+	वापस snd_पूर्णांकerval_refine(hw_param_पूर्णांकerval(params, rule->var), &t);
+पूर्ण
 
-static int snd_pcm_hw_rule_mulkdiv(struct snd_pcm_hw_params *params,
-				   struct snd_pcm_hw_rule *rule)
-{
-	struct snd_interval t;
-	snd_interval_mulkdiv(hw_param_interval_c(params, rule->deps[0]),
-			 (unsigned long) rule->private,
-			 hw_param_interval_c(params, rule->deps[1]), &t);
-	return snd_interval_refine(hw_param_interval(params, rule->var), &t);
-}
+अटल पूर्णांक snd_pcm_hw_rule_mulkभाग(काष्ठा snd_pcm_hw_params *params,
+				   काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा snd_पूर्णांकerval t;
+	snd_पूर्णांकerval_mulkभाग(hw_param_पूर्णांकerval_c(params, rule->deps[0]),
+			 (अचिन्हित दीर्घ) rule->निजी,
+			 hw_param_पूर्णांकerval_c(params, rule->deps[1]), &t);
+	वापस snd_पूर्णांकerval_refine(hw_param_पूर्णांकerval(params, rule->var), &t);
+पूर्ण
 
-static int snd_pcm_hw_rule_format(struct snd_pcm_hw_params *params,
-				  struct snd_pcm_hw_rule *rule)
-{
-	snd_pcm_format_t k;
-	const struct snd_interval *i =
-				hw_param_interval_c(params, rule->deps[0]);
-	struct snd_mask m;
-	struct snd_mask *mask = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
+अटल पूर्णांक snd_pcm_hw_rule_क्रमmat(काष्ठा snd_pcm_hw_params *params,
+				  काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	snd_pcm_क्रमmat_t k;
+	स्थिर काष्ठा snd_पूर्णांकerval *i =
+				hw_param_पूर्णांकerval_c(params, rule->deps[0]);
+	काष्ठा snd_mask m;
+	काष्ठा snd_mask *mask = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
 	snd_mask_any(&m);
-	pcm_for_each_format(k) {
-		int bits;
-		if (!snd_mask_test_format(mask, k))
-			continue;
-		bits = snd_pcm_format_physical_width(k);
-		if (bits <= 0)
-			continue; /* ignore invalid formats */
-		if ((unsigned)bits < i->min || (unsigned)bits > i->max)
-			snd_mask_reset(&m, (__force unsigned)k);
-	}
-	return snd_mask_refine(mask, &m);
-}
+	pcm_क्रम_each_क्रमmat(k) अणु
+		पूर्णांक bits;
+		अगर (!snd_mask_test_क्रमmat(mask, k))
+			जारी;
+		bits = snd_pcm_क्रमmat_physical_width(k);
+		अगर (bits <= 0)
+			जारी; /* ignore invalid क्रमmats */
+		अगर ((अचिन्हित)bits < i->min || (अचिन्हित)bits > i->max)
+			snd_mask_reset(&m, (__क्रमce अचिन्हित)k);
+	पूर्ण
+	वापस snd_mask_refine(mask, &m);
+पूर्ण
 
-static int snd_pcm_hw_rule_sample_bits(struct snd_pcm_hw_params *params,
-				       struct snd_pcm_hw_rule *rule)
-{
-	struct snd_interval t;
-	snd_pcm_format_t k;
+अटल पूर्णांक snd_pcm_hw_rule_sample_bits(काष्ठा snd_pcm_hw_params *params,
+				       काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा snd_पूर्णांकerval t;
+	snd_pcm_क्रमmat_t k;
 
-	t.min = UINT_MAX;
+	t.min = अच_पूर्णांक_उच्च;
 	t.max = 0;
-	t.openmin = 0;
-	t.openmax = 0;
-	pcm_for_each_format(k) {
-		int bits;
-		if (!snd_mask_test_format(hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT), k))
-			continue;
-		bits = snd_pcm_format_physical_width(k);
-		if (bits <= 0)
-			continue; /* ignore invalid formats */
-		if (t.min > (unsigned)bits)
+	t.खोलोmin = 0;
+	t.खोलोmax = 0;
+	pcm_क्रम_each_क्रमmat(k) अणु
+		पूर्णांक bits;
+		अगर (!snd_mask_test_क्रमmat(hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT), k))
+			जारी;
+		bits = snd_pcm_क्रमmat_physical_width(k);
+		अगर (bits <= 0)
+			जारी; /* ignore invalid क्रमmats */
+		अगर (t.min > (अचिन्हित)bits)
 			t.min = bits;
-		if (t.max < (unsigned)bits)
+		अगर (t.max < (अचिन्हित)bits)
 			t.max = bits;
-	}
-	t.integer = 1;
-	return snd_interval_refine(hw_param_interval(params, rule->var), &t);
-}
+	पूर्ण
+	t.पूर्णांकeger = 1;
+	वापस snd_पूर्णांकerval_refine(hw_param_पूर्णांकerval(params, rule->var), &t);
+पूर्ण
 
-#if SNDRV_PCM_RATE_5512 != 1 << 0 || SNDRV_PCM_RATE_192000 != 1 << 12
-#error "Change this table"
-#endif
+#अगर SNDRV_PCM_RATE_5512 != 1 << 0 || SNDRV_PCM_RATE_192000 != 1 << 12
+#त्रुटि "Change this table"
+#पूर्ण_अगर
 
-static const unsigned int rates[] = {
+अटल स्थिर अचिन्हित पूर्णांक rates[] = अणु
 	5512, 8000, 11025, 16000, 22050, 32000, 44100,
 	48000, 64000, 88200, 96000, 176400, 192000, 352800, 384000
-};
+पूर्ण;
 
-const struct snd_pcm_hw_constraint_list snd_pcm_known_rates = {
+स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list snd_pcm_known_rates = अणु
 	.count = ARRAY_SIZE(rates),
 	.list = rates,
-};
+पूर्ण;
 
-static int snd_pcm_hw_rule_rate(struct snd_pcm_hw_params *params,
-				struct snd_pcm_hw_rule *rule)
-{
-	struct snd_pcm_hardware *hw = rule->private;
-	return snd_interval_list(hw_param_interval(params, rule->var),
+अटल पूर्णांक snd_pcm_hw_rule_rate(काष्ठा snd_pcm_hw_params *params,
+				काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा snd_pcm_hardware *hw = rule->निजी;
+	वापस snd_पूर्णांकerval_list(hw_param_पूर्णांकerval(params, rule->var),
 				 snd_pcm_known_rates.count,
 				 snd_pcm_known_rates.list, hw->rates);
-}		
+पूर्ण		
 
-static int snd_pcm_hw_rule_buffer_bytes_max(struct snd_pcm_hw_params *params,
-					    struct snd_pcm_hw_rule *rule)
-{
-	struct snd_interval t;
-	struct snd_pcm_substream *substream = rule->private;
+अटल पूर्णांक snd_pcm_hw_rule_buffer_bytes_max(काष्ठा snd_pcm_hw_params *params,
+					    काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा snd_पूर्णांकerval t;
+	काष्ठा snd_pcm_substream *substream = rule->निजी;
 	t.min = 0;
 	t.max = substream->buffer_bytes_max;
-	t.openmin = 0;
-	t.openmax = 0;
-	t.integer = 1;
-	return snd_interval_refine(hw_param_interval(params, rule->var), &t);
-}		
+	t.खोलोmin = 0;
+	t.खोलोmax = 0;
+	t.पूर्णांकeger = 1;
+	वापस snd_पूर्णांकerval_refine(hw_param_पूर्णांकerval(params, rule->var), &t);
+पूर्ण		
 
-static int snd_pcm_hw_constraints_init(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_pcm_hw_constraints *constrs = &runtime->hw_constraints;
-	int k, err;
+अटल पूर्णांक snd_pcm_hw_स्थिरraपूर्णांकs_init(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_pcm_hw_स्थिरraपूर्णांकs *स्थिरrs = &runसमय->hw_स्थिरraपूर्णांकs;
+	पूर्णांक k, err;
 
-	for (k = SNDRV_PCM_HW_PARAM_FIRST_MASK; k <= SNDRV_PCM_HW_PARAM_LAST_MASK; k++) {
-		snd_mask_any(constrs_mask(constrs, k));
-	}
+	क्रम (k = SNDRV_PCM_HW_PARAM_FIRST_MASK; k <= SNDRV_PCM_HW_PARAM_LAST_MASK; k++) अणु
+		snd_mask_any(स्थिरrs_mask(स्थिरrs, k));
+	पूर्ण
 
-	for (k = SNDRV_PCM_HW_PARAM_FIRST_INTERVAL; k <= SNDRV_PCM_HW_PARAM_LAST_INTERVAL; k++) {
-		snd_interval_any(constrs_interval(constrs, k));
-	}
+	क्रम (k = SNDRV_PCM_HW_PARAM_FIRST_INTERVAL; k <= SNDRV_PCM_HW_PARAM_LAST_INTERVAL; k++) अणु
+		snd_पूर्णांकerval_any(स्थिरrs_पूर्णांकerval(स्थिरrs, k));
+	पूर्ण
 
-	snd_interval_setinteger(constrs_interval(constrs, SNDRV_PCM_HW_PARAM_CHANNELS));
-	snd_interval_setinteger(constrs_interval(constrs, SNDRV_PCM_HW_PARAM_BUFFER_SIZE));
-	snd_interval_setinteger(constrs_interval(constrs, SNDRV_PCM_HW_PARAM_BUFFER_BYTES));
-	snd_interval_setinteger(constrs_interval(constrs, SNDRV_PCM_HW_PARAM_SAMPLE_BITS));
-	snd_interval_setinteger(constrs_interval(constrs, SNDRV_PCM_HW_PARAM_FRAME_BITS));
+	snd_पूर्णांकerval_setपूर्णांकeger(स्थिरrs_पूर्णांकerval(स्थिरrs, SNDRV_PCM_HW_PARAM_CHANNELS));
+	snd_पूर्णांकerval_setपूर्णांकeger(स्थिरrs_पूर्णांकerval(स्थिरrs, SNDRV_PCM_HW_PARAM_BUFFER_SIZE));
+	snd_पूर्णांकerval_setपूर्णांकeger(स्थिरrs_पूर्णांकerval(स्थिरrs, SNDRV_PCM_HW_PARAM_BUFFER_BYTES));
+	snd_पूर्णांकerval_setपूर्णांकeger(स्थिरrs_पूर्णांकerval(स्थिरrs, SNDRV_PCM_HW_PARAM_SAMPLE_BITS));
+	snd_पूर्णांकerval_setपूर्णांकeger(स्थिरrs_पूर्णांकerval(स्थिरrs, SNDRV_PCM_HW_PARAM_FRAME_BITS));
 
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_FORMAT,
-				   snd_pcm_hw_rule_format, NULL,
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_FORMAT,
+				   snd_pcm_hw_rule_क्रमmat, शून्य,
 				   SNDRV_PCM_HW_PARAM_SAMPLE_BITS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_SAMPLE_BITS, 
-				  snd_pcm_hw_rule_sample_bits, NULL,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_SAMPLE_BITS, 
+				  snd_pcm_hw_rule_sample_bits, शून्य,
 				  SNDRV_PCM_HW_PARAM_FORMAT, 
 				  SNDRV_PCM_HW_PARAM_SAMPLE_BITS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_SAMPLE_BITS, 
-				  snd_pcm_hw_rule_div, NULL,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_SAMPLE_BITS, 
+				  snd_pcm_hw_rule_भाग, शून्य,
 				  SNDRV_PCM_HW_PARAM_FRAME_BITS, SNDRV_PCM_HW_PARAM_CHANNELS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_FRAME_BITS, 
-				  snd_pcm_hw_rule_mul, NULL,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_FRAME_BITS, 
+				  snd_pcm_hw_rule_mul, शून्य,
 				  SNDRV_PCM_HW_PARAM_SAMPLE_BITS, SNDRV_PCM_HW_PARAM_CHANNELS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_FRAME_BITS, 
-				  snd_pcm_hw_rule_mulkdiv, (void*) 8,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_FRAME_BITS, 
+				  snd_pcm_hw_rule_mulkभाग, (व्योम*) 8,
 				  SNDRV_PCM_HW_PARAM_PERIOD_BYTES, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_FRAME_BITS, 
-				  snd_pcm_hw_rule_mulkdiv, (void*) 8,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_FRAME_BITS, 
+				  snd_pcm_hw_rule_mulkभाग, (व्योम*) 8,
 				  SNDRV_PCM_HW_PARAM_BUFFER_BYTES, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS, 
-				  snd_pcm_hw_rule_div, NULL,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS, 
+				  snd_pcm_hw_rule_भाग, शून्य,
 				  SNDRV_PCM_HW_PARAM_FRAME_BITS, SNDRV_PCM_HW_PARAM_SAMPLE_BITS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE, 
-				  snd_pcm_hw_rule_mulkdiv, (void*) 1000000,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE, 
+				  snd_pcm_hw_rule_mulkभाग, (व्योम*) 1000000,
 				  SNDRV_PCM_HW_PARAM_PERIOD_SIZE, SNDRV_PCM_HW_PARAM_PERIOD_TIME, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE, 
-				  snd_pcm_hw_rule_mulkdiv, (void*) 1000000,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE, 
+				  snd_pcm_hw_rule_mulkभाग, (व्योम*) 1000000,
 				  SNDRV_PCM_HW_PARAM_BUFFER_SIZE, SNDRV_PCM_HW_PARAM_BUFFER_TIME, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_PERIODS, 
-				  snd_pcm_hw_rule_div, NULL,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIODS, 
+				  snd_pcm_hw_rule_भाग, शून्य,
 				  SNDRV_PCM_HW_PARAM_BUFFER_SIZE, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, 
-				  snd_pcm_hw_rule_div, NULL,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, 
+				  snd_pcm_hw_rule_भाग, शून्य,
 				  SNDRV_PCM_HW_PARAM_BUFFER_SIZE, SNDRV_PCM_HW_PARAM_PERIODS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, 
-				  snd_pcm_hw_rule_mulkdiv, (void*) 8,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, 
+				  snd_pcm_hw_rule_mulkभाग, (व्योम*) 8,
 				  SNDRV_PCM_HW_PARAM_PERIOD_BYTES, SNDRV_PCM_HW_PARAM_FRAME_BITS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, 
-				  snd_pcm_hw_rule_muldivk, (void*) 1000000,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_SIZE, 
+				  snd_pcm_hw_rule_muद_भागk, (व्योम*) 1000000,
 				  SNDRV_PCM_HW_PARAM_PERIOD_TIME, SNDRV_PCM_HW_PARAM_RATE, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 
-				  snd_pcm_hw_rule_mul, NULL,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 
+				  snd_pcm_hw_rule_mul, शून्य,
 				  SNDRV_PCM_HW_PARAM_PERIOD_SIZE, SNDRV_PCM_HW_PARAM_PERIODS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 
-				  snd_pcm_hw_rule_mulkdiv, (void*) 8,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 
+				  snd_pcm_hw_rule_mulkभाग, (व्योम*) 8,
 				  SNDRV_PCM_HW_PARAM_BUFFER_BYTES, SNDRV_PCM_HW_PARAM_FRAME_BITS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 
-				  snd_pcm_hw_rule_muldivk, (void*) 1000000,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 
+				  snd_pcm_hw_rule_muद_भागk, (व्योम*) 1000000,
 				  SNDRV_PCM_HW_PARAM_BUFFER_TIME, SNDRV_PCM_HW_PARAM_RATE, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 
-				  snd_pcm_hw_rule_muldivk, (void*) 8,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 
+				  snd_pcm_hw_rule_muद_भागk, (व्योम*) 8,
 				  SNDRV_PCM_HW_PARAM_PERIOD_SIZE, SNDRV_PCM_HW_PARAM_FRAME_BITS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 
-				  snd_pcm_hw_rule_muldivk, (void*) 8,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 
+				  snd_pcm_hw_rule_muद_भागk, (व्योम*) 8,
 				  SNDRV_PCM_HW_PARAM_BUFFER_SIZE, SNDRV_PCM_HW_PARAM_FRAME_BITS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_TIME, 
-				  snd_pcm_hw_rule_mulkdiv, (void*) 1000000,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_TIME, 
+				  snd_pcm_hw_rule_mulkभाग, (व्योम*) 1000000,
 				  SNDRV_PCM_HW_PARAM_PERIOD_SIZE, SNDRV_PCM_HW_PARAM_RATE, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_TIME, 
-				  snd_pcm_hw_rule_mulkdiv, (void*) 1000000,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_TIME, 
+				  snd_pcm_hw_rule_mulkभाग, (व्योम*) 1000000,
 				  SNDRV_PCM_HW_PARAM_BUFFER_SIZE, SNDRV_PCM_HW_PARAM_RATE, -1);
-	if (err < 0)
-		return err;
-	return 0;
-}
+	अगर (err < 0)
+		वापस err;
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_hw_constraints_complete(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_pcm_hardware *hw = &runtime->hw;
-	int err;
-	unsigned int mask = 0;
+अटल पूर्णांक snd_pcm_hw_स्थिरraपूर्णांकs_complete(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_pcm_hardware *hw = &runसमय->hw;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक mask = 0;
 
-        if (hw->info & SNDRV_PCM_INFO_INTERLEAVED)
+        अगर (hw->info & SNDRV_PCM_INFO_INTERLEAVED)
 		mask |= PARAM_MASK_BIT(SNDRV_PCM_ACCESS_RW_INTERLEAVED);
-        if (hw->info & SNDRV_PCM_INFO_NONINTERLEAVED)
+        अगर (hw->info & SNDRV_PCM_INFO_NONINTERLEAVED)
 		mask |= PARAM_MASK_BIT(SNDRV_PCM_ACCESS_RW_NONINTERLEAVED);
-	if (hw_support_mmap(substream)) {
-		if (hw->info & SNDRV_PCM_INFO_INTERLEAVED)
+	अगर (hw_support_mmap(substream)) अणु
+		अगर (hw->info & SNDRV_PCM_INFO_INTERLEAVED)
 			mask |= PARAM_MASK_BIT(SNDRV_PCM_ACCESS_MMAP_INTERLEAVED);
-		if (hw->info & SNDRV_PCM_INFO_NONINTERLEAVED)
+		अगर (hw->info & SNDRV_PCM_INFO_NONINTERLEAVED)
 			mask |= PARAM_MASK_BIT(SNDRV_PCM_ACCESS_MMAP_NONINTERLEAVED);
-		if (hw->info & SNDRV_PCM_INFO_COMPLEX)
+		अगर (hw->info & SNDRV_PCM_INFO_COMPLEX)
 			mask |= PARAM_MASK_BIT(SNDRV_PCM_ACCESS_MMAP_COMPLEX);
-	}
-	err = snd_pcm_hw_constraint_mask(runtime, SNDRV_PCM_HW_PARAM_ACCESS, mask);
-	if (err < 0)
-		return err;
+	पूर्ण
+	err = snd_pcm_hw_स्थिरraपूर्णांक_mask(runसमय, SNDRV_PCM_HW_PARAM_ACCESS, mask);
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_pcm_hw_constraint_mask64(runtime, SNDRV_PCM_HW_PARAM_FORMAT, hw->formats);
-	if (err < 0)
-		return err;
+	err = snd_pcm_hw_स्थिरraपूर्णांक_mask64(runसमय, SNDRV_PCM_HW_PARAM_FORMAT, hw->क्रमmats);
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_pcm_hw_constraint_mask(runtime, SNDRV_PCM_HW_PARAM_SUBFORMAT,
+	err = snd_pcm_hw_स्थिरraपूर्णांक_mask(runसमय, SNDRV_PCM_HW_PARAM_SUBFORMAT,
 					 PARAM_MASK_BIT(SNDRV_PCM_SUBFORMAT_STD));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_CHANNELS,
+	err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_CHANNELS,
 					   hw->channels_min, hw->channels_max);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_RATE,
+	err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_RATE,
 					   hw->rate_min, hw->rate_max);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_PERIOD_BYTES,
+	err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_PERIOD_BYTES,
 					   hw->period_bytes_min, hw->period_bytes_max);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_PERIODS,
+	err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_PERIODS,
 					   hw->periods_min, hw->periods_max);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_BUFFER_BYTES,
+	err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_BUFFER_BYTES,
 					   hw->period_bytes_min, hw->buffer_bytes_max);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 
 				  snd_pcm_hw_rule_buffer_bytes_max, substream,
 				  SNDRV_PCM_HW_PARAM_BUFFER_BYTES, -1);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* FIXME: remove */
-	if (runtime->dma_bytes) {
-		err = snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 0, runtime->dma_bytes);
-		if (err < 0)
-			return err;
-	}
+	/* FIXME: हटाओ */
+	अगर (runसमय->dma_bytes) अणु
+		err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 0, runसमय->dma_bytes);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (!(hw->rates & (SNDRV_PCM_RATE_KNOT | SNDRV_PCM_RATE_CONTINUOUS))) {
-		err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE, 
+	अगर (!(hw->rates & (SNDRV_PCM_RATE_KNOT | SNDRV_PCM_RATE_CONTINUOUS))) अणु
+		err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE, 
 					  snd_pcm_hw_rule_rate, hw,
 					  SNDRV_PCM_HW_PARAM_RATE, -1);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	/* FIXME: this belong to lowlevel */
-	snd_pcm_hw_constraint_integer(runtime, SNDRV_PCM_HW_PARAM_PERIOD_SIZE);
+	/* FIXME: this beदीर्घ to lowlevel */
+	snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय, SNDRV_PCM_HW_PARAM_PERIOD_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pcm_release_private(struct snd_pcm_substream *substream)
-{
-	if (snd_pcm_stream_linked(substream))
+अटल व्योम pcm_release_निजी(काष्ठा snd_pcm_substream *substream)
+अणु
+	अगर (snd_pcm_stream_linked(substream))
 		snd_pcm_unlink(substream);
-}
+पूर्ण
 
-void snd_pcm_release_substream(struct snd_pcm_substream *substream)
-{
+व्योम snd_pcm_release_substream(काष्ठा snd_pcm_substream *substream)
+अणु
 	substream->ref_count--;
-	if (substream->ref_count > 0)
-		return;
+	अगर (substream->ref_count > 0)
+		वापस;
 
 	snd_pcm_drop(substream);
-	if (substream->hw_opened) {
-		if (substream->runtime->status->state != SNDRV_PCM_STATE_OPEN)
-			do_hw_free(substream);
-		substream->ops->close(substream);
-		substream->hw_opened = 0;
-	}
-	if (cpu_latency_qos_request_active(&substream->latency_pm_qos_req))
-		cpu_latency_qos_remove_request(&substream->latency_pm_qos_req);
-	if (substream->pcm_release) {
+	अगर (substream->hw_खोलोed) अणु
+		अगर (substream->runसमय->status->state != SNDRV_PCM_STATE_OPEN)
+			करो_hw_मुक्त(substream);
+		substream->ops->बंद(substream);
+		substream->hw_खोलोed = 0;
+	पूर्ण
+	अगर (cpu_latency_qos_request_active(&substream->latency_pm_qos_req))
+		cpu_latency_qos_हटाओ_request(&substream->latency_pm_qos_req);
+	अगर (substream->pcm_release) अणु
 		substream->pcm_release(substream);
-		substream->pcm_release = NULL;
-	}
+		substream->pcm_release = शून्य;
+	पूर्ण
 	snd_pcm_detach_substream(substream);
-}
+पूर्ण
 EXPORT_SYMBOL(snd_pcm_release_substream);
 
-int snd_pcm_open_substream(struct snd_pcm *pcm, int stream,
-			   struct file *file,
-			   struct snd_pcm_substream **rsubstream)
-{
-	struct snd_pcm_substream *substream;
-	int err;
+पूर्णांक snd_pcm_खोलो_substream(काष्ठा snd_pcm *pcm, पूर्णांक stream,
+			   काष्ठा file *file,
+			   काष्ठा snd_pcm_substream **rsubstream)
+अणु
+	काष्ठा snd_pcm_substream *substream;
+	पूर्णांक err;
 
 	err = snd_pcm_attach_substream(pcm, stream, file, &substream);
-	if (err < 0)
-		return err;
-	if (substream->ref_count > 1) {
+	अगर (err < 0)
+		वापस err;
+	अगर (substream->ref_count > 1) अणु
 		*rsubstream = substream;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	err = snd_pcm_hw_constraints_init(substream);
-	if (err < 0) {
+	err = snd_pcm_hw_स्थिरraपूर्णांकs_init(substream);
+	अगर (err < 0) अणु
 		pcm_dbg(pcm, "snd_pcm_hw_constraints_init failed\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if ((err = substream->ops->open(substream)) < 0)
-		goto error;
+	अगर ((err = substream->ops->खोलो(substream)) < 0)
+		जाओ error;
 
-	substream->hw_opened = 1;
+	substream->hw_खोलोed = 1;
 
-	err = snd_pcm_hw_constraints_complete(substream);
-	if (err < 0) {
+	err = snd_pcm_hw_स्थिरraपूर्णांकs_complete(substream);
+	अगर (err < 0) अणु
 		pcm_dbg(pcm, "snd_pcm_hw_constraints_complete failed\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	*rsubstream = substream;
-	return 0;
+	वापस 0;
 
  error:
 	snd_pcm_release_substream(substream);
-	return err;
-}
-EXPORT_SYMBOL(snd_pcm_open_substream);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(snd_pcm_खोलो_substream);
 
-static int snd_pcm_open_file(struct file *file,
-			     struct snd_pcm *pcm,
-			     int stream)
-{
-	struct snd_pcm_file *pcm_file;
-	struct snd_pcm_substream *substream;
-	int err;
+अटल पूर्णांक snd_pcm_खोलो_file(काष्ठा file *file,
+			     काष्ठा snd_pcm *pcm,
+			     पूर्णांक stream)
+अणु
+	काष्ठा snd_pcm_file *pcm_file;
+	काष्ठा snd_pcm_substream *substream;
+	पूर्णांक err;
 
-	err = snd_pcm_open_substream(pcm, stream, file, &substream);
-	if (err < 0)
-		return err;
+	err = snd_pcm_खोलो_substream(pcm, stream, file, &substream);
+	अगर (err < 0)
+		वापस err;
 
-	pcm_file = kzalloc(sizeof(*pcm_file), GFP_KERNEL);
-	if (pcm_file == NULL) {
+	pcm_file = kzalloc(माप(*pcm_file), GFP_KERNEL);
+	अगर (pcm_file == शून्य) अणु
 		snd_pcm_release_substream(substream);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	pcm_file->substream = substream;
-	if (substream->ref_count == 1)
-		substream->pcm_release = pcm_release_private;
-	file->private_data = pcm_file;
+	अगर (substream->ref_count == 1)
+		substream->pcm_release = pcm_release_निजी;
+	file->निजी_data = pcm_file;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_playback_open(struct inode *inode, struct file *file)
-{
-	struct snd_pcm *pcm;
-	int err = nonseekable_open(inode, file);
-	if (err < 0)
-		return err;
+अटल पूर्णांक snd_pcm_playback_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक err = nonseekable_खोलो(inode, file);
+	अगर (err < 0)
+		वापस err;
 	pcm = snd_lookup_minor_data(iminor(inode),
 				    SNDRV_DEVICE_TYPE_PCM_PLAYBACK);
-	err = snd_pcm_open(file, pcm, SNDRV_PCM_STREAM_PLAYBACK);
-	if (pcm)
+	err = snd_pcm_खोलो(file, pcm, SNDRV_PCM_STREAM_PLAYBACK);
+	अगर (pcm)
 		snd_card_unref(pcm->card);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int snd_pcm_capture_open(struct inode *inode, struct file *file)
-{
-	struct snd_pcm *pcm;
-	int err = nonseekable_open(inode, file);
-	if (err < 0)
-		return err;
+अटल पूर्णांक snd_pcm_capture_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक err = nonseekable_खोलो(inode, file);
+	अगर (err < 0)
+		वापस err;
 	pcm = snd_lookup_minor_data(iminor(inode),
 				    SNDRV_DEVICE_TYPE_PCM_CAPTURE);
-	err = snd_pcm_open(file, pcm, SNDRV_PCM_STREAM_CAPTURE);
-	if (pcm)
+	err = snd_pcm_खोलो(file, pcm, SNDRV_PCM_STREAM_CAPTURE);
+	अगर (pcm)
 		snd_card_unref(pcm->card);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int snd_pcm_open(struct file *file, struct snd_pcm *pcm, int stream)
-{
-	int err;
-	wait_queue_entry_t wait;
+अटल पूर्णांक snd_pcm_खोलो(काष्ठा file *file, काष्ठा snd_pcm *pcm, पूर्णांक stream)
+अणु
+	पूर्णांक err;
+	रुको_queue_entry_t रुको;
 
-	if (pcm == NULL) {
+	अगर (pcm == शून्य) अणु
 		err = -ENODEV;
-		goto __error1;
-	}
+		जाओ __error1;
+	पूर्ण
 	err = snd_card_file_add(pcm->card, file);
-	if (err < 0)
-		goto __error1;
-	if (!try_module_get(pcm->card->module)) {
+	अगर (err < 0)
+		जाओ __error1;
+	अगर (!try_module_get(pcm->card->module)) अणु
 		err = -EFAULT;
-		goto __error2;
-	}
-	init_waitqueue_entry(&wait, current);
-	add_wait_queue(&pcm->open_wait, &wait);
-	mutex_lock(&pcm->open_mutex);
-	while (1) {
-		err = snd_pcm_open_file(file, pcm, stream);
-		if (err >= 0)
-			break;
-		if (err == -EAGAIN) {
-			if (file->f_flags & O_NONBLOCK) {
+		जाओ __error2;
+	पूर्ण
+	init_रुकोqueue_entry(&रुको, current);
+	add_रुको_queue(&pcm->खोलो_रुको, &रुको);
+	mutex_lock(&pcm->खोलो_mutex);
+	जबतक (1) अणु
+		err = snd_pcm_खोलो_file(file, pcm, stream);
+		अगर (err >= 0)
+			अवरोध;
+		अगर (err == -EAGAIN) अणु
+			अगर (file->f_flags & O_NONBLOCK) अणु
 				err = -EBUSY;
-				break;
-			}
-		} else
-			break;
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा
+			अवरोध;
 		set_current_state(TASK_INTERRUPTIBLE);
-		mutex_unlock(&pcm->open_mutex);
+		mutex_unlock(&pcm->खोलो_mutex);
 		schedule();
-		mutex_lock(&pcm->open_mutex);
-		if (pcm->card->shutdown) {
+		mutex_lock(&pcm->खोलो_mutex);
+		अगर (pcm->card->shutकरोwn) अणु
 			err = -ENODEV;
-			break;
-		}
-		if (signal_pending(current)) {
+			अवरोध;
+		पूर्ण
+		अगर (संकेत_pending(current)) अणु
 			err = -ERESTARTSYS;
-			break;
-		}
-	}
-	remove_wait_queue(&pcm->open_wait, &wait);
-	mutex_unlock(&pcm->open_mutex);
-	if (err < 0)
-		goto __error;
-	return err;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	हटाओ_रुको_queue(&pcm->खोलो_रुको, &रुको);
+	mutex_unlock(&pcm->खोलो_mutex);
+	अगर (err < 0)
+		जाओ __error;
+	वापस err;
 
       __error:
 	module_put(pcm->card->module);
       __error2:
-      	snd_card_file_remove(pcm->card, file);
+      	snd_card_file_हटाओ(pcm->card, file);
       __error1:
-      	return err;
-}
+      	वापस err;
+पूर्ण
 
-static int snd_pcm_release(struct inode *inode, struct file *file)
-{
-	struct snd_pcm *pcm;
-	struct snd_pcm_substream *substream;
-	struct snd_pcm_file *pcm_file;
+अटल पूर्णांक snd_pcm_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा snd_pcm *pcm;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_pcm_file *pcm_file;
 
-	pcm_file = file->private_data;
+	pcm_file = file->निजी_data;
 	substream = pcm_file->substream;
-	if (snd_BUG_ON(!substream))
-		return -ENXIO;
+	अगर (snd_BUG_ON(!substream))
+		वापस -ENXIO;
 	pcm = substream->pcm;
-	mutex_lock(&pcm->open_mutex);
+	mutex_lock(&pcm->खोलो_mutex);
 	snd_pcm_release_substream(substream);
-	kfree(pcm_file);
-	mutex_unlock(&pcm->open_mutex);
-	wake_up(&pcm->open_wait);
+	kमुक्त(pcm_file);
+	mutex_unlock(&pcm->खोलो_mutex);
+	wake_up(&pcm->खोलो_रुको);
 	module_put(pcm->card->module);
-	snd_card_file_remove(pcm->card, file);
-	return 0;
-}
+	snd_card_file_हटाओ(pcm->card, file);
+	वापस 0;
+पूर्ण
 
-/* check and update PCM state; return 0 or a negative error
+/* check and update PCM state; वापस 0 or a negative error
  * call this inside PCM lock
  */
-static int do_pcm_hwsync(struct snd_pcm_substream *substream)
-{
-	switch (substream->runtime->status->state) {
-	case SNDRV_PCM_STATE_DRAINING:
-		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
-			return -EBADFD;
+अटल पूर्णांक करो_pcm_hwsync(काष्ठा snd_pcm_substream *substream)
+अणु
+	चयन (substream->runसमय->status->state) अणु
+	हाल SNDRV_PCM_STATE_DRAINING:
+		अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+			वापस -EBADFD;
 		fallthrough;
-	case SNDRV_PCM_STATE_RUNNING:
-		return snd_pcm_update_hw_ptr(substream);
-	case SNDRV_PCM_STATE_PREPARED:
-	case SNDRV_PCM_STATE_PAUSED:
-		return 0;
-	case SNDRV_PCM_STATE_SUSPENDED:
-		return -ESTRPIPE;
-	case SNDRV_PCM_STATE_XRUN:
-		return -EPIPE;
-	default:
-		return -EBADFD;
-	}
-}
+	हाल SNDRV_PCM_STATE_RUNNING:
+		वापस snd_pcm_update_hw_ptr(substream);
+	हाल SNDRV_PCM_STATE_PREPARED:
+	हाल SNDRV_PCM_STATE_PAUSED:
+		वापस 0;
+	हाल SNDRV_PCM_STATE_SUSPENDED:
+		वापस -ESTRPIPE;
+	हाल SNDRV_PCM_STATE_XRUN:
+		वापस -EPIPE;
+	शेष:
+		वापस -EBADFD;
+	पूर्ण
+पूर्ण
 
-/* increase the appl_ptr; returns the processed frames or a negative error */
-static snd_pcm_sframes_t forward_appl_ptr(struct snd_pcm_substream *substream,
+/* increase the appl_ptr; वापसs the processed frames or a negative error */
+अटल snd_pcm_sframes_t क्रमward_appl_ptr(काष्ठा snd_pcm_substream *substream,
 					  snd_pcm_uframes_t frames,
 					   snd_pcm_sframes_t avail)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 	snd_pcm_sframes_t appl_ptr;
-	int ret;
+	पूर्णांक ret;
 
-	if (avail <= 0)
-		return 0;
-	if (frames > (snd_pcm_uframes_t)avail)
+	अगर (avail <= 0)
+		वापस 0;
+	अगर (frames > (snd_pcm_uframes_t)avail)
 		frames = avail;
-	appl_ptr = runtime->control->appl_ptr + frames;
-	if (appl_ptr >= (snd_pcm_sframes_t)runtime->boundary)
-		appl_ptr -= runtime->boundary;
+	appl_ptr = runसमय->control->appl_ptr + frames;
+	अगर (appl_ptr >= (snd_pcm_sframes_t)runसमय->boundary)
+		appl_ptr -= runसमय->boundary;
 	ret = pcm_lib_apply_appl_ptr(substream, appl_ptr);
-	return ret < 0 ? ret : frames;
-}
+	वापस ret < 0 ? ret : frames;
+पूर्ण
 
-/* decrease the appl_ptr; returns the processed frames or zero for error */
-static snd_pcm_sframes_t rewind_appl_ptr(struct snd_pcm_substream *substream,
+/* decrease the appl_ptr; वापसs the processed frames or zero क्रम error */
+अटल snd_pcm_sframes_t शुरुआत_appl_ptr(काष्ठा snd_pcm_substream *substream,
 					 snd_pcm_uframes_t frames,
 					 snd_pcm_sframes_t avail)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 	snd_pcm_sframes_t appl_ptr;
-	int ret;
+	पूर्णांक ret;
 
-	if (avail <= 0)
-		return 0;
-	if (frames > (snd_pcm_uframes_t)avail)
+	अगर (avail <= 0)
+		वापस 0;
+	अगर (frames > (snd_pcm_uframes_t)avail)
 		frames = avail;
-	appl_ptr = runtime->control->appl_ptr - frames;
-	if (appl_ptr < 0)
-		appl_ptr += runtime->boundary;
+	appl_ptr = runसमय->control->appl_ptr - frames;
+	अगर (appl_ptr < 0)
+		appl_ptr += runसमय->boundary;
 	ret = pcm_lib_apply_appl_ptr(substream, appl_ptr);
-	/* NOTE: we return zero for errors because PulseAudio gets depressed
-	 * upon receiving an error from rewind ioctl and stops processing
-	 * any longer.  Returning zero means that no rewind is done, so
-	 * it's not absolutely wrong to answer like that.
+	/* NOTE: we वापस zero क्रम errors because PulseAudio माला_लो depressed
+	 * upon receiving an error from शुरुआत ioctl and stops processing
+	 * any दीर्घer.  Returning zero means that no शुरुआत is करोne, so
+	 * it's not असलolutely wrong to answer like that.
 	 */
-	return ret < 0 ? 0 : frames;
-}
+	वापस ret < 0 ? 0 : frames;
+पूर्ण
 
-static snd_pcm_sframes_t snd_pcm_rewind(struct snd_pcm_substream *substream,
+अटल snd_pcm_sframes_t snd_pcm_शुरुआत(काष्ठा snd_pcm_substream *substream,
 					snd_pcm_uframes_t frames)
-{
+अणु
 	snd_pcm_sframes_t ret;
 
-	if (frames == 0)
-		return 0;
+	अगर (frames == 0)
+		वापस 0;
 
 	snd_pcm_stream_lock_irq(substream);
-	ret = do_pcm_hwsync(substream);
-	if (!ret)
-		ret = rewind_appl_ptr(substream, frames,
+	ret = करो_pcm_hwsync(substream);
+	अगर (!ret)
+		ret = शुरुआत_appl_ptr(substream, frames,
 				      snd_pcm_hw_avail(substream));
 	snd_pcm_stream_unlock_irq(substream);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static snd_pcm_sframes_t snd_pcm_forward(struct snd_pcm_substream *substream,
+अटल snd_pcm_sframes_t snd_pcm_क्रमward(काष्ठा snd_pcm_substream *substream,
 					 snd_pcm_uframes_t frames)
-{
+अणु
 	snd_pcm_sframes_t ret;
 
-	if (frames == 0)
-		return 0;
+	अगर (frames == 0)
+		वापस 0;
 
 	snd_pcm_stream_lock_irq(substream);
-	ret = do_pcm_hwsync(substream);
-	if (!ret)
-		ret = forward_appl_ptr(substream, frames,
+	ret = करो_pcm_hwsync(substream);
+	अगर (!ret)
+		ret = क्रमward_appl_ptr(substream, frames,
 				       snd_pcm_avail(substream));
 	snd_pcm_stream_unlock_irq(substream);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int snd_pcm_hwsync(struct snd_pcm_substream *substream)
-{
-	int err;
+अटल पूर्णांक snd_pcm_hwsync(काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक err;
 
 	snd_pcm_stream_lock_irq(substream);
-	err = do_pcm_hwsync(substream);
+	err = करो_pcm_hwsync(substream);
 	snd_pcm_stream_unlock_irq(substream);
-	return err;
-}
+	वापस err;
+पूर्ण
 		
-static int snd_pcm_delay(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_delay(काष्ठा snd_pcm_substream *substream,
 			 snd_pcm_sframes_t *delay)
-{
-	int err;
+अणु
+	पूर्णांक err;
 	snd_pcm_sframes_t n = 0;
 
 	snd_pcm_stream_lock_irq(substream);
-	err = do_pcm_hwsync(substream);
-	if (!err)
+	err = करो_pcm_hwsync(substream);
+	अगर (!err)
 		n = snd_pcm_calc_delay(substream);
 	snd_pcm_stream_unlock_irq(substream);
-	if (!err)
+	अगर (!err)
 		*delay = n;
-	return err;
-}
+	वापस err;
+पूर्ण
 		
-static int snd_pcm_sync_ptr(struct snd_pcm_substream *substream,
-			    struct snd_pcm_sync_ptr __user *_sync_ptr)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_pcm_sync_ptr sync_ptr;
-	volatile struct snd_pcm_mmap_status *status;
-	volatile struct snd_pcm_mmap_control *control;
-	int err;
+अटल पूर्णांक snd_pcm_sync_ptr(काष्ठा snd_pcm_substream *substream,
+			    काष्ठा snd_pcm_sync_ptr __user *_sync_ptr)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_pcm_sync_ptr sync_ptr;
+	अस्थिर काष्ठा snd_pcm_mmap_status *status;
+	अस्थिर काष्ठा snd_pcm_mmap_control *control;
+	पूर्णांक err;
 
-	memset(&sync_ptr, 0, sizeof(sync_ptr));
-	if (get_user(sync_ptr.flags, (unsigned __user *)&(_sync_ptr->flags)))
-		return -EFAULT;
-	if (copy_from_user(&sync_ptr.c.control, &(_sync_ptr->c.control), sizeof(struct snd_pcm_mmap_control)))
-		return -EFAULT;	
-	status = runtime->status;
-	control = runtime->control;
-	if (sync_ptr.flags & SNDRV_PCM_SYNC_PTR_HWSYNC) {
+	स_रखो(&sync_ptr, 0, माप(sync_ptr));
+	अगर (get_user(sync_ptr.flags, (अचिन्हित __user *)&(_sync_ptr->flags)))
+		वापस -EFAULT;
+	अगर (copy_from_user(&sync_ptr.c.control, &(_sync_ptr->c.control), माप(काष्ठा snd_pcm_mmap_control)))
+		वापस -EFAULT;	
+	status = runसमय->status;
+	control = runसमय->control;
+	अगर (sync_ptr.flags & SNDRV_PCM_SYNC_PTR_HWSYNC) अणु
 		err = snd_pcm_hwsync(substream);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 	snd_pcm_stream_lock_irq(substream);
-	if (!(sync_ptr.flags & SNDRV_PCM_SYNC_PTR_APPL)) {
+	अगर (!(sync_ptr.flags & SNDRV_PCM_SYNC_PTR_APPL)) अणु
 		err = pcm_lib_apply_appl_ptr(substream,
 					     sync_ptr.c.control.appl_ptr);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			snd_pcm_stream_unlock_irq(substream);
-			return err;
-		}
-	} else {
+			वापस err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		sync_ptr.c.control.appl_ptr = control->appl_ptr;
-	}
-	if (!(sync_ptr.flags & SNDRV_PCM_SYNC_PTR_AVAIL_MIN))
+	पूर्ण
+	अगर (!(sync_ptr.flags & SNDRV_PCM_SYNC_PTR_AVAIL_MIN))
 		control->avail_min = sync_ptr.c.control.avail_min;
-	else
+	अन्यथा
 		sync_ptr.c.control.avail_min = control->avail_min;
 	sync_ptr.s.status.state = status->state;
 	sync_ptr.s.status.hw_ptr = status->hw_ptr;
@@ -2980,12 +2981,12 @@ static int snd_pcm_sync_ptr(struct snd_pcm_substream *substream,
 	sync_ptr.s.status.suspended_state = status->suspended_state;
 	sync_ptr.s.status.audio_tstamp = status->audio_tstamp;
 	snd_pcm_stream_unlock_irq(substream);
-	if (copy_to_user(_sync_ptr, &sync_ptr, sizeof(sync_ptr)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(_sync_ptr, &sync_ptr, माप(sync_ptr)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-struct snd_pcm_mmap_status32 {
+काष्ठा snd_pcm_mmap_status32 अणु
 	snd_pcm_state_t state;
 	s32 pad1;
 	u32 hw_ptr;
@@ -2994,76 +2995,76 @@ struct snd_pcm_mmap_status32 {
 	snd_pcm_state_t suspended_state;
 	s32 audio_tstamp_sec;
 	s32 audio_tstamp_nsec;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct snd_pcm_mmap_control32 {
+काष्ठा snd_pcm_mmap_control32 अणु
 	u32 appl_ptr;
 	u32 avail_min;
-};
+पूर्ण;
 
-struct snd_pcm_sync_ptr32 {
+काष्ठा snd_pcm_sync_ptr32 अणु
 	u32 flags;
-	union {
-		struct snd_pcm_mmap_status32 status;
-		unsigned char reserved[64];
-	} s;
-	union {
-		struct snd_pcm_mmap_control32 control;
-		unsigned char reserved[64];
-	} c;
-} __attribute__((packed));
+	जोड़ अणु
+		काष्ठा snd_pcm_mmap_status32 status;
+		अचिन्हित अक्षर reserved[64];
+	पूर्ण s;
+	जोड़ अणु
+		काष्ठा snd_pcm_mmap_control32 control;
+		अचिन्हित अक्षर reserved[64];
+	पूर्ण c;
+पूर्ण __attribute__((packed));
 
 /* recalcuate the boundary within 32bit */
-static snd_pcm_uframes_t recalculate_boundary(struct snd_pcm_runtime *runtime)
-{
+अटल snd_pcm_uframes_t recalculate_boundary(काष्ठा snd_pcm_runसमय *runसमय)
+अणु
 	snd_pcm_uframes_t boundary;
 
-	if (! runtime->buffer_size)
-		return 0;
-	boundary = runtime->buffer_size;
-	while (boundary * 2 <= 0x7fffffffUL - runtime->buffer_size)
+	अगर (! runसमय->buffer_size)
+		वापस 0;
+	boundary = runसमय->buffer_size;
+	जबतक (boundary * 2 <= 0x7fffffffUL - runसमय->buffer_size)
 		boundary *= 2;
-	return boundary;
-}
+	वापस boundary;
+पूर्ण
 
-static int snd_pcm_ioctl_sync_ptr_compat(struct snd_pcm_substream *substream,
-					 struct snd_pcm_sync_ptr32 __user *src)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	volatile struct snd_pcm_mmap_status *status;
-	volatile struct snd_pcm_mmap_control *control;
+अटल पूर्णांक snd_pcm_ioctl_sync_ptr_compat(काष्ठा snd_pcm_substream *substream,
+					 काष्ठा snd_pcm_sync_ptr32 __user *src)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अस्थिर काष्ठा snd_pcm_mmap_status *status;
+	अस्थिर काष्ठा snd_pcm_mmap_control *control;
 	u32 sflags;
-	struct snd_pcm_mmap_control scontrol;
-	struct snd_pcm_mmap_status sstatus;
+	काष्ठा snd_pcm_mmap_control scontrol;
+	काष्ठा snd_pcm_mmap_status sstatus;
 	snd_pcm_uframes_t boundary;
-	int err;
+	पूर्णांक err;
 
-	if (snd_BUG_ON(!runtime))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!runसमय))
+		वापस -EINVAL;
 
-	if (get_user(sflags, &src->flags) ||
+	अगर (get_user(sflags, &src->flags) ||
 	    get_user(scontrol.appl_ptr, &src->c.control.appl_ptr) ||
 	    get_user(scontrol.avail_min, &src->c.control.avail_min))
-		return -EFAULT;
-	if (sflags & SNDRV_PCM_SYNC_PTR_HWSYNC) {
+		वापस -EFAULT;
+	अगर (sflags & SNDRV_PCM_SYNC_PTR_HWSYNC) अणु
 		err = snd_pcm_hwsync(substream);
-		if (err < 0)
-			return err;
-	}
-	status = runtime->status;
-	control = runtime->control;
-	boundary = recalculate_boundary(runtime);
-	if (! boundary)
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	status = runसमय->status;
+	control = runसमय->control;
+	boundary = recalculate_boundary(runसमय);
+	अगर (! boundary)
 		boundary = 0x7fffffff;
 	snd_pcm_stream_lock_irq(substream);
-	/* FIXME: we should consider the boundary for the sync from app */
-	if (!(sflags & SNDRV_PCM_SYNC_PTR_APPL))
+	/* FIXME: we should consider the boundary क्रम the sync from app */
+	अगर (!(sflags & SNDRV_PCM_SYNC_PTR_APPL))
 		control->appl_ptr = scontrol.appl_ptr;
-	else
+	अन्यथा
 		scontrol.appl_ptr = control->appl_ptr % boundary;
-	if (!(sflags & SNDRV_PCM_SYNC_PTR_AVAIL_MIN))
+	अगर (!(sflags & SNDRV_PCM_SYNC_PTR_AVAIL_MIN))
 		control->avail_min = scontrol.avail_min;
-	else
+	अन्यथा
 		scontrol.avail_min = control->avail_min;
 	sstatus.state = status->state;
 	sstatus.hw_ptr = status->hw_ptr % boundary;
@@ -3071,7 +3072,7 @@ static int snd_pcm_ioctl_sync_ptr_compat(struct snd_pcm_substream *substream,
 	sstatus.suspended_state = status->suspended_state;
 	sstatus.audio_tstamp = status->audio_tstamp;
 	snd_pcm_stream_unlock_irq(substream);
-	if (put_user(sstatus.state, &src->s.status.state) ||
+	अगर (put_user(sstatus.state, &src->s.status.state) ||
 	    put_user(sstatus.hw_ptr, &src->s.status.hw_ptr) ||
 	    put_user(sstatus.tstamp.tv_sec, &src->s.status.tstamp_sec) ||
 	    put_user(sstatus.tstamp.tv_nsec, &src->s.status.tstamp_nsec) ||
@@ -3080,228 +3081,228 @@ static int snd_pcm_ioctl_sync_ptr_compat(struct snd_pcm_substream *substream,
 	    put_user(sstatus.audio_tstamp.tv_nsec, &src->s.status.audio_tstamp_nsec) ||
 	    put_user(scontrol.appl_ptr, &src->c.control.appl_ptr) ||
 	    put_user(scontrol.avail_min, &src->c.control.avail_min))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	return 0;
-}
-#define __SNDRV_PCM_IOCTL_SYNC_PTR32 _IOWR('A', 0x23, struct snd_pcm_sync_ptr32)
+	वापस 0;
+पूर्ण
+#घोषणा __SNDRV_PCM_IOCTL_SYNC_PTR32 _IOWR('A', 0x23, काष्ठा snd_pcm_sync_ptr32)
 
-static int snd_pcm_tstamp(struct snd_pcm_substream *substream, int __user *_arg)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int arg;
+अटल पूर्णांक snd_pcm_tstamp(काष्ठा snd_pcm_substream *substream, पूर्णांक __user *_arg)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक arg;
 	
-	if (get_user(arg, _arg))
-		return -EFAULT;
-	if (arg < 0 || arg > SNDRV_PCM_TSTAMP_TYPE_LAST)
-		return -EINVAL;
-	runtime->tstamp_type = arg;
-	return 0;
-}
+	अगर (get_user(arg, _arg))
+		वापस -EFAULT;
+	अगर (arg < 0 || arg > SNDRV_PCM_TSTAMP_TYPE_LAST)
+		वापस -EINVAL;
+	runसमय->tstamp_type = arg;
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_xferi_frames_ioctl(struct snd_pcm_substream *substream,
-				      struct snd_xferi __user *_xferi)
-{
-	struct snd_xferi xferi;
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक snd_pcm_xferi_frames_ioctl(काष्ठा snd_pcm_substream *substream,
+				      काष्ठा snd_xferi __user *_xferi)
+अणु
+	काष्ठा snd_xferi xferi;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 	snd_pcm_sframes_t result;
 
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
-	if (put_user(0, &_xferi->result))
-		return -EFAULT;
-	if (copy_from_user(&xferi, _xferi, sizeof(xferi)))
-		return -EFAULT;
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		result = snd_pcm_lib_write(substream, xferi.buf, xferi.frames);
-	else
-		result = snd_pcm_lib_read(substream, xferi.buf, xferi.frames);
-	if (put_user(result, &_xferi->result))
-		return -EFAULT;
-	return result < 0 ? result : 0;
-}
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN)
+		वापस -EBADFD;
+	अगर (put_user(0, &_xferi->result))
+		वापस -EFAULT;
+	अगर (copy_from_user(&xferi, _xferi, माप(xferi)))
+		वापस -EFAULT;
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		result = snd_pcm_lib_ग_लिखो(substream, xferi.buf, xferi.frames);
+	अन्यथा
+		result = snd_pcm_lib_पढ़ो(substream, xferi.buf, xferi.frames);
+	अगर (put_user(result, &_xferi->result))
+		वापस -EFAULT;
+	वापस result < 0 ? result : 0;
+पूर्ण
 
-static int snd_pcm_xfern_frames_ioctl(struct snd_pcm_substream *substream,
-				      struct snd_xfern __user *_xfern)
-{
-	struct snd_xfern xfern;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	void *bufs;
+अटल पूर्णांक snd_pcm_xfern_frames_ioctl(काष्ठा snd_pcm_substream *substream,
+				      काष्ठा snd_xfern __user *_xfern)
+अणु
+	काष्ठा snd_xfern xfern;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	व्योम *bufs;
 	snd_pcm_sframes_t result;
 
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
-	if (runtime->channels > 128)
-		return -EINVAL;
-	if (put_user(0, &_xfern->result))
-		return -EFAULT;
-	if (copy_from_user(&xfern, _xfern, sizeof(xfern)))
-		return -EFAULT;
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN)
+		वापस -EBADFD;
+	अगर (runसमय->channels > 128)
+		वापस -EINVAL;
+	अगर (put_user(0, &_xfern->result))
+		वापस -EFAULT;
+	अगर (copy_from_user(&xfern, _xfern, माप(xfern)))
+		वापस -EFAULT;
 
-	bufs = memdup_user(xfern.bufs, sizeof(void *) * runtime->channels);
-	if (IS_ERR(bufs))
-		return PTR_ERR(bufs);
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		result = snd_pcm_lib_writev(substream, bufs, xfern.frames);
-	else
-		result = snd_pcm_lib_readv(substream, bufs, xfern.frames);
-	kfree(bufs);
-	if (put_user(result, &_xfern->result))
-		return -EFAULT;
-	return result < 0 ? result : 0;
-}
+	bufs = memdup_user(xfern.bufs, माप(व्योम *) * runसमय->channels);
+	अगर (IS_ERR(bufs))
+		वापस PTR_ERR(bufs);
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		result = snd_pcm_lib_ग_लिखोv(substream, bufs, xfern.frames);
+	अन्यथा
+		result = snd_pcm_lib_पढ़ोv(substream, bufs, xfern.frames);
+	kमुक्त(bufs);
+	अगर (put_user(result, &_xfern->result))
+		वापस -EFAULT;
+	वापस result < 0 ? result : 0;
+पूर्ण
 
-static int snd_pcm_rewind_ioctl(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_शुरुआत_ioctl(काष्ठा snd_pcm_substream *substream,
 				snd_pcm_uframes_t __user *_frames)
-{
+अणु
 	snd_pcm_uframes_t frames;
 	snd_pcm_sframes_t result;
 
-	if (get_user(frames, _frames))
-		return -EFAULT;
-	if (put_user(0, _frames))
-		return -EFAULT;
-	result = snd_pcm_rewind(substream, frames);
-	if (put_user(result, _frames))
-		return -EFAULT;
-	return result < 0 ? result : 0;
-}
+	अगर (get_user(frames, _frames))
+		वापस -EFAULT;
+	अगर (put_user(0, _frames))
+		वापस -EFAULT;
+	result = snd_pcm_शुरुआत(substream, frames);
+	अगर (put_user(result, _frames))
+		वापस -EFAULT;
+	वापस result < 0 ? result : 0;
+पूर्ण
 
-static int snd_pcm_forward_ioctl(struct snd_pcm_substream *substream,
+अटल पूर्णांक snd_pcm_क्रमward_ioctl(काष्ठा snd_pcm_substream *substream,
 				 snd_pcm_uframes_t __user *_frames)
-{
+अणु
 	snd_pcm_uframes_t frames;
 	snd_pcm_sframes_t result;
 
-	if (get_user(frames, _frames))
-		return -EFAULT;
-	if (put_user(0, _frames))
-		return -EFAULT;
-	result = snd_pcm_forward(substream, frames);
-	if (put_user(result, _frames))
-		return -EFAULT;
-	return result < 0 ? result : 0;
-}
+	अगर (get_user(frames, _frames))
+		वापस -EFAULT;
+	अगर (put_user(0, _frames))
+		वापस -EFAULT;
+	result = snd_pcm_क्रमward(substream, frames);
+	अगर (put_user(result, _frames))
+		वापस -EFAULT;
+	वापस result < 0 ? result : 0;
+पूर्ण
 
-static int snd_pcm_common_ioctl(struct file *file,
-				 struct snd_pcm_substream *substream,
-				 unsigned int cmd, void __user *arg)
-{
-	struct snd_pcm_file *pcm_file = file->private_data;
-	int res;
+अटल पूर्णांक snd_pcm_common_ioctl(काष्ठा file *file,
+				 काष्ठा snd_pcm_substream *substream,
+				 अचिन्हित पूर्णांक cmd, व्योम __user *arg)
+अणु
+	काष्ठा snd_pcm_file *pcm_file = file->निजी_data;
+	पूर्णांक res;
 
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
 
-	res = snd_power_wait(substream->pcm->card, SNDRV_CTL_POWER_D0);
-	if (res < 0)
-		return res;
+	res = snd_घातer_रुको(substream->pcm->card, SNDRV_CTL_POWER_D0);
+	अगर (res < 0)
+		वापस res;
 
-	switch (cmd) {
-	case SNDRV_PCM_IOCTL_PVERSION:
-		return put_user(SNDRV_PCM_VERSION, (int __user *)arg) ? -EFAULT : 0;
-	case SNDRV_PCM_IOCTL_INFO:
-		return snd_pcm_info_user(substream, arg);
-	case SNDRV_PCM_IOCTL_TSTAMP:	/* just for compatibility */
-		return 0;
-	case SNDRV_PCM_IOCTL_TTSTAMP:
-		return snd_pcm_tstamp(substream, arg);
-	case SNDRV_PCM_IOCTL_USER_PVERSION:
-		if (get_user(pcm_file->user_pversion,
-			     (unsigned int __user *)arg))
-			return -EFAULT;
-		return 0;
-	case SNDRV_PCM_IOCTL_HW_REFINE:
-		return snd_pcm_hw_refine_user(substream, arg);
-	case SNDRV_PCM_IOCTL_HW_PARAMS:
-		return snd_pcm_hw_params_user(substream, arg);
-	case SNDRV_PCM_IOCTL_HW_FREE:
-		return snd_pcm_hw_free(substream);
-	case SNDRV_PCM_IOCTL_SW_PARAMS:
-		return snd_pcm_sw_params_user(substream, arg);
-	case SNDRV_PCM_IOCTL_STATUS32:
-		return snd_pcm_status_user32(substream, arg, false);
-	case SNDRV_PCM_IOCTL_STATUS_EXT32:
-		return snd_pcm_status_user32(substream, arg, true);
-	case SNDRV_PCM_IOCTL_STATUS64:
-		return snd_pcm_status_user64(substream, arg, false);
-	case SNDRV_PCM_IOCTL_STATUS_EXT64:
-		return snd_pcm_status_user64(substream, arg, true);
-	case SNDRV_PCM_IOCTL_CHANNEL_INFO:
-		return snd_pcm_channel_info_user(substream, arg);
-	case SNDRV_PCM_IOCTL_PREPARE:
-		return snd_pcm_prepare(substream, file);
-	case SNDRV_PCM_IOCTL_RESET:
-		return snd_pcm_reset(substream);
-	case SNDRV_PCM_IOCTL_START:
-		return snd_pcm_start_lock_irq(substream);
-	case SNDRV_PCM_IOCTL_LINK:
-		return snd_pcm_link(substream, (int)(unsigned long) arg);
-	case SNDRV_PCM_IOCTL_UNLINK:
-		return snd_pcm_unlink(substream);
-	case SNDRV_PCM_IOCTL_RESUME:
-		return snd_pcm_resume(substream);
-	case SNDRV_PCM_IOCTL_XRUN:
-		return snd_pcm_xrun(substream);
-	case SNDRV_PCM_IOCTL_HWSYNC:
-		return snd_pcm_hwsync(substream);
-	case SNDRV_PCM_IOCTL_DELAY:
-	{
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_IOCTL_PVERSION:
+		वापस put_user(SNDRV_PCM_VERSION, (पूर्णांक __user *)arg) ? -EFAULT : 0;
+	हाल SNDRV_PCM_IOCTL_INFO:
+		वापस snd_pcm_info_user(substream, arg);
+	हाल SNDRV_PCM_IOCTL_TSTAMP:	/* just क्रम compatibility */
+		वापस 0;
+	हाल SNDRV_PCM_IOCTL_TTSTAMP:
+		वापस snd_pcm_tstamp(substream, arg);
+	हाल SNDRV_PCM_IOCTL_USER_PVERSION:
+		अगर (get_user(pcm_file->user_pversion,
+			     (अचिन्हित पूर्णांक __user *)arg))
+			वापस -EFAULT;
+		वापस 0;
+	हाल SNDRV_PCM_IOCTL_HW_REFINE:
+		वापस snd_pcm_hw_refine_user(substream, arg);
+	हाल SNDRV_PCM_IOCTL_HW_PARAMS:
+		वापस snd_pcm_hw_params_user(substream, arg);
+	हाल SNDRV_PCM_IOCTL_HW_FREE:
+		वापस snd_pcm_hw_मुक्त(substream);
+	हाल SNDRV_PCM_IOCTL_SW_PARAMS:
+		वापस snd_pcm_sw_params_user(substream, arg);
+	हाल SNDRV_PCM_IOCTL_STATUS32:
+		वापस snd_pcm_status_user32(substream, arg, false);
+	हाल SNDRV_PCM_IOCTL_STATUS_EXT32:
+		वापस snd_pcm_status_user32(substream, arg, true);
+	हाल SNDRV_PCM_IOCTL_STATUS64:
+		वापस snd_pcm_status_user64(substream, arg, false);
+	हाल SNDRV_PCM_IOCTL_STATUS_EXT64:
+		वापस snd_pcm_status_user64(substream, arg, true);
+	हाल SNDRV_PCM_IOCTL_CHANNEL_INFO:
+		वापस snd_pcm_channel_info_user(substream, arg);
+	हाल SNDRV_PCM_IOCTL_PREPARE:
+		वापस snd_pcm_prepare(substream, file);
+	हाल SNDRV_PCM_IOCTL_RESET:
+		वापस snd_pcm_reset(substream);
+	हाल SNDRV_PCM_IOCTL_START:
+		वापस snd_pcm_start_lock_irq(substream);
+	हाल SNDRV_PCM_IOCTL_LINK:
+		वापस snd_pcm_link(substream, (पूर्णांक)(अचिन्हित दीर्घ) arg);
+	हाल SNDRV_PCM_IOCTL_UNLINK:
+		वापस snd_pcm_unlink(substream);
+	हाल SNDRV_PCM_IOCTL_RESUME:
+		वापस snd_pcm_resume(substream);
+	हाल SNDRV_PCM_IOCTL_XRUN:
+		वापस snd_pcm_xrun(substream);
+	हाल SNDRV_PCM_IOCTL_HWSYNC:
+		वापस snd_pcm_hwsync(substream);
+	हाल SNDRV_PCM_IOCTL_DELAY:
+	अणु
 		snd_pcm_sframes_t delay;
 		snd_pcm_sframes_t __user *res = arg;
-		int err;
+		पूर्णांक err;
 
 		err = snd_pcm_delay(substream, &delay);
-		if (err)
-			return err;
-		if (put_user(delay, res))
-			return -EFAULT;
-		return 0;
-	}
-	case __SNDRV_PCM_IOCTL_SYNC_PTR32:
-		return snd_pcm_ioctl_sync_ptr_compat(substream, arg);
-	case __SNDRV_PCM_IOCTL_SYNC_PTR64:
-		return snd_pcm_sync_ptr(substream, arg);
-#ifdef CONFIG_SND_SUPPORT_OLD_API
-	case SNDRV_PCM_IOCTL_HW_REFINE_OLD:
-		return snd_pcm_hw_refine_old_user(substream, arg);
-	case SNDRV_PCM_IOCTL_HW_PARAMS_OLD:
-		return snd_pcm_hw_params_old_user(substream, arg);
-#endif
-	case SNDRV_PCM_IOCTL_DRAIN:
-		return snd_pcm_drain(substream, file);
-	case SNDRV_PCM_IOCTL_DROP:
-		return snd_pcm_drop(substream);
-	case SNDRV_PCM_IOCTL_PAUSE:
-		return snd_pcm_pause_lock_irq(substream, (unsigned long)arg);
-	case SNDRV_PCM_IOCTL_WRITEI_FRAMES:
-	case SNDRV_PCM_IOCTL_READI_FRAMES:
-		return snd_pcm_xferi_frames_ioctl(substream, arg);
-	case SNDRV_PCM_IOCTL_WRITEN_FRAMES:
-	case SNDRV_PCM_IOCTL_READN_FRAMES:
-		return snd_pcm_xfern_frames_ioctl(substream, arg);
-	case SNDRV_PCM_IOCTL_REWIND:
-		return snd_pcm_rewind_ioctl(substream, arg);
-	case SNDRV_PCM_IOCTL_FORWARD:
-		return snd_pcm_forward_ioctl(substream, arg);
-	}
+		अगर (err)
+			वापस err;
+		अगर (put_user(delay, res))
+			वापस -EFAULT;
+		वापस 0;
+	पूर्ण
+	हाल __SNDRV_PCM_IOCTL_SYNC_PTR32:
+		वापस snd_pcm_ioctl_sync_ptr_compat(substream, arg);
+	हाल __SNDRV_PCM_IOCTL_SYNC_PTR64:
+		वापस snd_pcm_sync_ptr(substream, arg);
+#अगर_घोषित CONFIG_SND_SUPPORT_OLD_API
+	हाल SNDRV_PCM_IOCTL_HW_REFINE_OLD:
+		वापस snd_pcm_hw_refine_old_user(substream, arg);
+	हाल SNDRV_PCM_IOCTL_HW_PARAMS_OLD:
+		वापस snd_pcm_hw_params_old_user(substream, arg);
+#पूर्ण_अगर
+	हाल SNDRV_PCM_IOCTL_DRAIN:
+		वापस snd_pcm_drain(substream, file);
+	हाल SNDRV_PCM_IOCTL_DROP:
+		वापस snd_pcm_drop(substream);
+	हाल SNDRV_PCM_IOCTL_PAUSE:
+		वापस snd_pcm_छोड़ो_lock_irq(substream, (अचिन्हित दीर्घ)arg);
+	हाल SNDRV_PCM_IOCTL_WRITEI_FRAMES:
+	हाल SNDRV_PCM_IOCTL_READI_FRAMES:
+		वापस snd_pcm_xferi_frames_ioctl(substream, arg);
+	हाल SNDRV_PCM_IOCTL_WRITEN_FRAMES:
+	हाल SNDRV_PCM_IOCTL_READN_FRAMES:
+		वापस snd_pcm_xfern_frames_ioctl(substream, arg);
+	हाल SNDRV_PCM_IOCTL_REWIND:
+		वापस snd_pcm_शुरुआत_ioctl(substream, arg);
+	हाल SNDRV_PCM_IOCTL_FORWARD:
+		वापस snd_pcm_क्रमward_ioctl(substream, arg);
+	पूर्ण
 	pcm_dbg(substream->pcm, "unknown ioctl = 0x%x\n", cmd);
-	return -ENOTTY;
-}
+	वापस -ENOTTY;
+पूर्ण
 
-static long snd_pcm_ioctl(struct file *file, unsigned int cmd,
-			  unsigned long arg)
-{
-	struct snd_pcm_file *pcm_file;
+अटल दीर्घ snd_pcm_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			  अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा snd_pcm_file *pcm_file;
 
-	pcm_file = file->private_data;
+	pcm_file = file->निजी_data;
 
-	if (((cmd >> 8) & 0xff) != 'A')
-		return -ENOTTY;
+	अगर (((cmd >> 8) & 0xff) != 'A')
+		वापस -ENOTTY;
 
-	return snd_pcm_common_ioctl(file, pcm_file->substream, cmd,
-				     (void __user *)arg);
-}
+	वापस snd_pcm_common_ioctl(file, pcm_file->substream, cmd,
+				     (व्योम __user *)arg);
+पूर्ण
 
 /**
  * snd_pcm_kernel_ioctl - Execute PCM ioctl in the kernel-space
@@ -3309,209 +3310,209 @@ static long snd_pcm_ioctl(struct file *file, unsigned int cmd,
  * @cmd: IOCTL cmd
  * @arg: IOCTL argument
  *
- * The function is provided primarily for OSS layer and USB gadget drivers,
+ * The function is provided primarily क्रम OSS layer and USB gadget drivers,
  * and it allows only the limited set of ioctls (hw_params, sw_params,
- * prepare, start, drain, drop, forward).
+ * prepare, start, drain, drop, क्रमward).
  */
-int snd_pcm_kernel_ioctl(struct snd_pcm_substream *substream,
-			 unsigned int cmd, void *arg)
-{
+पूर्णांक snd_pcm_kernel_ioctl(काष्ठा snd_pcm_substream *substream,
+			 अचिन्हित पूर्णांक cmd, व्योम *arg)
+अणु
 	snd_pcm_uframes_t *frames = arg;
 	snd_pcm_sframes_t result;
 	
-	switch (cmd) {
-	case SNDRV_PCM_IOCTL_FORWARD:
-	{
-		/* provided only for OSS; capture-only and no value returned */
-		if (substream->stream != SNDRV_PCM_STREAM_CAPTURE)
-			return -EINVAL;
-		result = snd_pcm_forward(substream, *frames);
-		return result < 0 ? result : 0;
-	}
-	case SNDRV_PCM_IOCTL_HW_PARAMS:
-		return snd_pcm_hw_params(substream, arg);
-	case SNDRV_PCM_IOCTL_SW_PARAMS:
-		return snd_pcm_sw_params(substream, arg);
-	case SNDRV_PCM_IOCTL_PREPARE:
-		return snd_pcm_prepare(substream, NULL);
-	case SNDRV_PCM_IOCTL_START:
-		return snd_pcm_start_lock_irq(substream);
-	case SNDRV_PCM_IOCTL_DRAIN:
-		return snd_pcm_drain(substream, NULL);
-	case SNDRV_PCM_IOCTL_DROP:
-		return snd_pcm_drop(substream);
-	case SNDRV_PCM_IOCTL_DELAY:
-		return snd_pcm_delay(substream, frames);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_IOCTL_FORWARD:
+	अणु
+		/* provided only क्रम OSS; capture-only and no value वापसed */
+		अगर (substream->stream != SNDRV_PCM_STREAM_CAPTURE)
+			वापस -EINVAL;
+		result = snd_pcm_क्रमward(substream, *frames);
+		वापस result < 0 ? result : 0;
+	पूर्ण
+	हाल SNDRV_PCM_IOCTL_HW_PARAMS:
+		वापस snd_pcm_hw_params(substream, arg);
+	हाल SNDRV_PCM_IOCTL_SW_PARAMS:
+		वापस snd_pcm_sw_params(substream, arg);
+	हाल SNDRV_PCM_IOCTL_PREPARE:
+		वापस snd_pcm_prepare(substream, शून्य);
+	हाल SNDRV_PCM_IOCTL_START:
+		वापस snd_pcm_start_lock_irq(substream);
+	हाल SNDRV_PCM_IOCTL_DRAIN:
+		वापस snd_pcm_drain(substream, शून्य);
+	हाल SNDRV_PCM_IOCTL_DROP:
+		वापस snd_pcm_drop(substream);
+	हाल SNDRV_PCM_IOCTL_DELAY:
+		वापस snd_pcm_delay(substream, frames);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(snd_pcm_kernel_ioctl);
 
-static ssize_t snd_pcm_read(struct file *file, char __user *buf, size_t count,
+अटल sमाप_प्रकार snd_pcm_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
 			    loff_t * offset)
-{
-	struct snd_pcm_file *pcm_file;
-	struct snd_pcm_substream *substream;
-	struct snd_pcm_runtime *runtime;
+अणु
+	काष्ठा snd_pcm_file *pcm_file;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_pcm_runसमय *runसमय;
 	snd_pcm_sframes_t result;
 
-	pcm_file = file->private_data;
+	pcm_file = file->निजी_data;
 	substream = pcm_file->substream;
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
-	runtime = substream->runtime;
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
-	if (!frame_aligned(runtime, count))
-		return -EINVAL;
-	count = bytes_to_frames(runtime, count);
-	result = snd_pcm_lib_read(substream, buf, count);
-	if (result > 0)
-		result = frames_to_bytes(runtime, result);
-	return result;
-}
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
+	runसमय = substream->runसमय;
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN)
+		वापस -EBADFD;
+	अगर (!frame_aligned(runसमय, count))
+		वापस -EINVAL;
+	count = bytes_to_frames(runसमय, count);
+	result = snd_pcm_lib_पढ़ो(substream, buf, count);
+	अगर (result > 0)
+		result = frames_to_bytes(runसमय, result);
+	वापस result;
+पूर्ण
 
-static ssize_t snd_pcm_write(struct file *file, const char __user *buf,
-			     size_t count, loff_t * offset)
-{
-	struct snd_pcm_file *pcm_file;
-	struct snd_pcm_substream *substream;
-	struct snd_pcm_runtime *runtime;
+अटल sमाप_प्रकार snd_pcm_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			     माप_प्रकार count, loff_t * offset)
+अणु
+	काष्ठा snd_pcm_file *pcm_file;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_pcm_runसमय *runसमय;
 	snd_pcm_sframes_t result;
 
-	pcm_file = file->private_data;
+	pcm_file = file->निजी_data;
 	substream = pcm_file->substream;
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
-	runtime = substream->runtime;
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
-	if (!frame_aligned(runtime, count))
-		return -EINVAL;
-	count = bytes_to_frames(runtime, count);
-	result = snd_pcm_lib_write(substream, buf, count);
-	if (result > 0)
-		result = frames_to_bytes(runtime, result);
-	return result;
-}
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
+	runसमय = substream->runसमय;
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN)
+		वापस -EBADFD;
+	अगर (!frame_aligned(runसमय, count))
+		वापस -EINVAL;
+	count = bytes_to_frames(runसमय, count);
+	result = snd_pcm_lib_ग_लिखो(substream, buf, count);
+	अगर (result > 0)
+		result = frames_to_bytes(runसमय, result);
+	वापस result;
+पूर्ण
 
-static ssize_t snd_pcm_readv(struct kiocb *iocb, struct iov_iter *to)
-{
-	struct snd_pcm_file *pcm_file;
-	struct snd_pcm_substream *substream;
-	struct snd_pcm_runtime *runtime;
+अटल sमाप_प्रकार snd_pcm_पढ़ोv(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
+अणु
+	काष्ठा snd_pcm_file *pcm_file;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_pcm_runसमय *runसमय;
 	snd_pcm_sframes_t result;
-	unsigned long i;
-	void __user **bufs;
+	अचिन्हित दीर्घ i;
+	व्योम __user **bufs;
 	snd_pcm_uframes_t frames;
 
-	pcm_file = iocb->ki_filp->private_data;
+	pcm_file = iocb->ki_filp->निजी_data;
 	substream = pcm_file->substream;
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
-	runtime = substream->runtime;
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
-	if (!iter_is_iovec(to))
-		return -EINVAL;
-	if (to->nr_segs > 1024 || to->nr_segs != runtime->channels)
-		return -EINVAL;
-	if (!frame_aligned(runtime, to->iov->iov_len))
-		return -EINVAL;
-	frames = bytes_to_samples(runtime, to->iov->iov_len);
-	bufs = kmalloc_array(to->nr_segs, sizeof(void *), GFP_KERNEL);
-	if (bufs == NULL)
-		return -ENOMEM;
-	for (i = 0; i < to->nr_segs; ++i)
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
+	runसमय = substream->runसमय;
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN)
+		वापस -EBADFD;
+	अगर (!iter_is_iovec(to))
+		वापस -EINVAL;
+	अगर (to->nr_segs > 1024 || to->nr_segs != runसमय->channels)
+		वापस -EINVAL;
+	अगर (!frame_aligned(runसमय, to->iov->iov_len))
+		वापस -EINVAL;
+	frames = bytes_to_samples(runसमय, to->iov->iov_len);
+	bufs = kदो_स्मृति_array(to->nr_segs, माप(व्योम *), GFP_KERNEL);
+	अगर (bufs == शून्य)
+		वापस -ENOMEM;
+	क्रम (i = 0; i < to->nr_segs; ++i)
 		bufs[i] = to->iov[i].iov_base;
-	result = snd_pcm_lib_readv(substream, bufs, frames);
-	if (result > 0)
-		result = frames_to_bytes(runtime, result);
-	kfree(bufs);
-	return result;
-}
+	result = snd_pcm_lib_पढ़ोv(substream, bufs, frames);
+	अगर (result > 0)
+		result = frames_to_bytes(runसमय, result);
+	kमुक्त(bufs);
+	वापस result;
+पूर्ण
 
-static ssize_t snd_pcm_writev(struct kiocb *iocb, struct iov_iter *from)
-{
-	struct snd_pcm_file *pcm_file;
-	struct snd_pcm_substream *substream;
-	struct snd_pcm_runtime *runtime;
+अटल sमाप_प्रकार snd_pcm_ग_लिखोv(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
+अणु
+	काष्ठा snd_pcm_file *pcm_file;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_pcm_runसमय *runसमय;
 	snd_pcm_sframes_t result;
-	unsigned long i;
-	void __user **bufs;
+	अचिन्हित दीर्घ i;
+	व्योम __user **bufs;
 	snd_pcm_uframes_t frames;
 
-	pcm_file = iocb->ki_filp->private_data;
+	pcm_file = iocb->ki_filp->निजी_data;
 	substream = pcm_file->substream;
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
-	runtime = substream->runtime;
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
-	if (!iter_is_iovec(from))
-		return -EINVAL;
-	if (from->nr_segs > 128 || from->nr_segs != runtime->channels ||
-	    !frame_aligned(runtime, from->iov->iov_len))
-		return -EINVAL;
-	frames = bytes_to_samples(runtime, from->iov->iov_len);
-	bufs = kmalloc_array(from->nr_segs, sizeof(void *), GFP_KERNEL);
-	if (bufs == NULL)
-		return -ENOMEM;
-	for (i = 0; i < from->nr_segs; ++i)
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
+	runसमय = substream->runसमय;
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN)
+		वापस -EBADFD;
+	अगर (!iter_is_iovec(from))
+		वापस -EINVAL;
+	अगर (from->nr_segs > 128 || from->nr_segs != runसमय->channels ||
+	    !frame_aligned(runसमय, from->iov->iov_len))
+		वापस -EINVAL;
+	frames = bytes_to_samples(runसमय, from->iov->iov_len);
+	bufs = kदो_स्मृति_array(from->nr_segs, माप(व्योम *), GFP_KERNEL);
+	अगर (bufs == शून्य)
+		वापस -ENOMEM;
+	क्रम (i = 0; i < from->nr_segs; ++i)
 		bufs[i] = from->iov[i].iov_base;
-	result = snd_pcm_lib_writev(substream, bufs, frames);
-	if (result > 0)
-		result = frames_to_bytes(runtime, result);
-	kfree(bufs);
-	return result;
-}
+	result = snd_pcm_lib_ग_लिखोv(substream, bufs, frames);
+	अगर (result > 0)
+		result = frames_to_bytes(runसमय, result);
+	kमुक्त(bufs);
+	वापस result;
+पूर्ण
 
-static __poll_t snd_pcm_poll(struct file *file, poll_table *wait)
-{
-	struct snd_pcm_file *pcm_file;
-	struct snd_pcm_substream *substream;
-	struct snd_pcm_runtime *runtime;
+अटल __poll_t snd_pcm_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा snd_pcm_file *pcm_file;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_pcm_runसमय *runसमय;
 	__poll_t mask, ok;
 	snd_pcm_uframes_t avail;
 
-	pcm_file = file->private_data;
+	pcm_file = file->निजी_data;
 
 	substream = pcm_file->substream;
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		ok = EPOLLOUT | EPOLLWRNORM;
-	else
+	अन्यथा
 		ok = EPOLLIN | EPOLLRDNORM;
-	if (PCM_RUNTIME_CHECK(substream))
-		return ok | EPOLLERR;
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस ok | EPOLLERR;
 
-	runtime = substream->runtime;
-	poll_wait(file, &runtime->sleep, wait);
+	runसमय = substream->runसमय;
+	poll_रुको(file, &runसमय->sleep, रुको);
 
 	mask = 0;
 	snd_pcm_stream_lock_irq(substream);
 	avail = snd_pcm_avail(substream);
-	switch (runtime->status->state) {
-	case SNDRV_PCM_STATE_RUNNING:
-	case SNDRV_PCM_STATE_PREPARED:
-	case SNDRV_PCM_STATE_PAUSED:
-		if (avail >= runtime->control->avail_min)
+	चयन (runसमय->status->state) अणु
+	हाल SNDRV_PCM_STATE_RUNNING:
+	हाल SNDRV_PCM_STATE_PREPARED:
+	हाल SNDRV_PCM_STATE_PAUSED:
+		अगर (avail >= runसमय->control->avail_min)
 			mask = ok;
-		break;
-	case SNDRV_PCM_STATE_DRAINING:
-		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
+		अवरोध;
+	हाल SNDRV_PCM_STATE_DRAINING:
+		अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
 			mask = ok;
-			if (!avail)
+			अगर (!avail)
 				mask |= EPOLLERR;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		mask = ok | EPOLLERR;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	snd_pcm_stream_unlock_irq(substream);
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 /*
  * mmap support
@@ -3519,227 +3520,227 @@ static __poll_t snd_pcm_poll(struct file *file, poll_table *wait)
 
 /*
  * Only on coherent architectures, we can mmap the status and the control records
- * for effcient data transfer.  On others, we have to use HWSYNC ioctl...
+ * क्रम effcient data transfer.  On others, we have to use HWSYNC ioctl...
  */
-#if defined(CONFIG_X86) || defined(CONFIG_PPC) || defined(CONFIG_ALPHA)
+#अगर defined(CONFIG_X86) || defined(CONFIG_PPC) || defined(CONFIG_ALPHA)
 /*
  * mmap status record
  */
-static vm_fault_t snd_pcm_mmap_status_fault(struct vm_fault *vmf)
-{
-	struct snd_pcm_substream *substream = vmf->vma->vm_private_data;
-	struct snd_pcm_runtime *runtime;
+अटल vm_fault_t snd_pcm_mmap_status_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा snd_pcm_substream *substream = vmf->vma->vm_निजी_data;
+	काष्ठा snd_pcm_runसमय *runसमय;
 	
-	if (substream == NULL)
-		return VM_FAULT_SIGBUS;
-	runtime = substream->runtime;
-	vmf->page = virt_to_page(runtime->status);
+	अगर (substream == शून्य)
+		वापस VM_FAULT_SIGBUS;
+	runसमय = substream->runसमय;
+	vmf->page = virt_to_page(runसमय->status);
 	get_page(vmf->page);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct vm_operations_struct snd_pcm_vm_ops_status =
-{
+अटल स्थिर काष्ठा vm_operations_काष्ठा snd_pcm_vm_ops_status =
+अणु
 	.fault =	snd_pcm_mmap_status_fault,
-};
+पूर्ण;
 
-static int snd_pcm_mmap_status(struct snd_pcm_substream *substream, struct file *file,
-			       struct vm_area_struct *area)
-{
-	long size;
-	if (!(area->vm_flags & VM_READ))
-		return -EINVAL;
+अटल पूर्णांक snd_pcm_mmap_status(काष्ठा snd_pcm_substream *substream, काष्ठा file *file,
+			       काष्ठा vm_area_काष्ठा *area)
+अणु
+	दीर्घ size;
+	अगर (!(area->vm_flags & VM_READ))
+		वापस -EINVAL;
 	size = area->vm_end - area->vm_start;
-	if (size != PAGE_ALIGN(sizeof(struct snd_pcm_mmap_status)))
-		return -EINVAL;
+	अगर (size != PAGE_ALIGN(माप(काष्ठा snd_pcm_mmap_status)))
+		वापस -EINVAL;
 	area->vm_ops = &snd_pcm_vm_ops_status;
-	area->vm_private_data = substream;
+	area->vm_निजी_data = substream;
 	area->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * mmap control record
  */
-static vm_fault_t snd_pcm_mmap_control_fault(struct vm_fault *vmf)
-{
-	struct snd_pcm_substream *substream = vmf->vma->vm_private_data;
-	struct snd_pcm_runtime *runtime;
+अटल vm_fault_t snd_pcm_mmap_control_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा snd_pcm_substream *substream = vmf->vma->vm_निजी_data;
+	काष्ठा snd_pcm_runसमय *runसमय;
 	
-	if (substream == NULL)
-		return VM_FAULT_SIGBUS;
-	runtime = substream->runtime;
-	vmf->page = virt_to_page(runtime->control);
+	अगर (substream == शून्य)
+		वापस VM_FAULT_SIGBUS;
+	runसमय = substream->runसमय;
+	vmf->page = virt_to_page(runसमय->control);
 	get_page(vmf->page);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct vm_operations_struct snd_pcm_vm_ops_control =
-{
+अटल स्थिर काष्ठा vm_operations_काष्ठा snd_pcm_vm_ops_control =
+अणु
 	.fault =	snd_pcm_mmap_control_fault,
-};
+पूर्ण;
 
-static int snd_pcm_mmap_control(struct snd_pcm_substream *substream, struct file *file,
-				struct vm_area_struct *area)
-{
-	long size;
-	if (!(area->vm_flags & VM_READ))
-		return -EINVAL;
+अटल पूर्णांक snd_pcm_mmap_control(काष्ठा snd_pcm_substream *substream, काष्ठा file *file,
+				काष्ठा vm_area_काष्ठा *area)
+अणु
+	दीर्घ size;
+	अगर (!(area->vm_flags & VM_READ))
+		वापस -EINVAL;
 	size = area->vm_end - area->vm_start;
-	if (size != PAGE_ALIGN(sizeof(struct snd_pcm_mmap_control)))
-		return -EINVAL;
+	अगर (size != PAGE_ALIGN(माप(काष्ठा snd_pcm_mmap_control)))
+		वापस -EINVAL;
 	area->vm_ops = &snd_pcm_vm_ops_control;
-	area->vm_private_data = substream;
+	area->vm_निजी_data = substream;
 	area->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool pcm_status_mmap_allowed(struct snd_pcm_file *pcm_file)
-{
+अटल bool pcm_status_mmap_allowed(काष्ठा snd_pcm_file *pcm_file)
+अणु
 	/* See pcm_control_mmap_allowed() below.
 	 * Since older alsa-lib requires both status and control mmaps to be
-	 * coupled, we have to disable the status mmap for old alsa-lib, too.
+	 * coupled, we have to disable the status mmap क्रम old alsa-lib, too.
 	 */
-	if (pcm_file->user_pversion < SNDRV_PROTOCOL_VERSION(2, 0, 14) &&
-	    (pcm_file->substream->runtime->hw.info & SNDRV_PCM_INFO_SYNC_APPLPTR))
-		return false;
-	return true;
-}
+	अगर (pcm_file->user_pversion < SNDRV_PROTOCOL_VERSION(2, 0, 14) &&
+	    (pcm_file->substream->runसमय->hw.info & SNDRV_PCM_INFO_SYNC_APPLPTR))
+		वापस false;
+	वापस true;
+पूर्ण
 
-static bool pcm_control_mmap_allowed(struct snd_pcm_file *pcm_file)
-{
-	if (pcm_file->no_compat_mmap)
-		return false;
+अटल bool pcm_control_mmap_allowed(काष्ठा snd_pcm_file *pcm_file)
+अणु
+	अगर (pcm_file->no_compat_mmap)
+		वापस false;
 	/* Disallow the control mmap when SYNC_APPLPTR flag is set;
-	 * it enforces the user-space to fall back to snd_pcm_sync_ptr(),
+	 * it enक्रमces the user-space to fall back to snd_pcm_sync_ptr(),
 	 * thus it effectively assures the manual update of appl_ptr.
 	 */
-	if (pcm_file->substream->runtime->hw.info & SNDRV_PCM_INFO_SYNC_APPLPTR)
-		return false;
-	return true;
-}
+	अगर (pcm_file->substream->runसमय->hw.info & SNDRV_PCM_INFO_SYNC_APPLPTR)
+		वापस false;
+	वापस true;
+पूर्ण
 
-#else /* ! coherent mmap */
+#अन्यथा /* ! coherent mmap */
 /*
- * don't support mmap for status and control records.
+ * करोn't support mmap क्रम status and control records.
  */
-#define pcm_status_mmap_allowed(pcm_file)	false
-#define pcm_control_mmap_allowed(pcm_file)	false
+#घोषणा pcm_status_mmap_allowed(pcm_file)	false
+#घोषणा pcm_control_mmap_allowed(pcm_file)	false
 
-static int snd_pcm_mmap_status(struct snd_pcm_substream *substream, struct file *file,
-			       struct vm_area_struct *area)
-{
-	return -ENXIO;
-}
-static int snd_pcm_mmap_control(struct snd_pcm_substream *substream, struct file *file,
-				struct vm_area_struct *area)
-{
-	return -ENXIO;
-}
-#endif /* coherent mmap */
+अटल पूर्णांक snd_pcm_mmap_status(काष्ठा snd_pcm_substream *substream, काष्ठा file *file,
+			       काष्ठा vm_area_काष्ठा *area)
+अणु
+	वापस -ENXIO;
+पूर्ण
+अटल पूर्णांक snd_pcm_mmap_control(काष्ठा snd_pcm_substream *substream, काष्ठा file *file,
+				काष्ठा vm_area_काष्ठा *area)
+अणु
+	वापस -ENXIO;
+पूर्ण
+#पूर्ण_अगर /* coherent mmap */
 
-static inline struct page *
-snd_pcm_default_page_ops(struct snd_pcm_substream *substream, unsigned long ofs)
-{
-	void *vaddr = substream->runtime->dma_area + ofs;
+अटल अंतरभूत काष्ठा page *
+snd_pcm_शेष_page_ops(काष्ठा snd_pcm_substream *substream, अचिन्हित दीर्घ ofs)
+अणु
+	व्योम *vaddr = substream->runसमय->dma_area + ofs;
 
-	switch (substream->dma_buffer.dev.type) {
-#ifdef CONFIG_SND_DMA_SGBUF
-	case SNDRV_DMA_TYPE_DEV_SG:
-	case SNDRV_DMA_TYPE_DEV_UC_SG:
-		return snd_pcm_sgbuf_ops_page(substream, ofs);
-#endif /* CONFIG_SND_DMA_SGBUF */
-	case SNDRV_DMA_TYPE_VMALLOC:
-		return vmalloc_to_page(vaddr);
-	default:
-		return virt_to_page(vaddr);
-	}
-}
+	चयन (substream->dma_buffer.dev.type) अणु
+#अगर_घोषित CONFIG_SND_DMA_SGBUF
+	हाल SNDRV_DMA_TYPE_DEV_SG:
+	हाल SNDRV_DMA_TYPE_DEV_UC_SG:
+		वापस snd_pcm_sgbuf_ops_page(substream, ofs);
+#पूर्ण_अगर /* CONFIG_SND_DMA_SGBUF */
+	हाल SNDRV_DMA_TYPE_VMALLOC:
+		वापस vदो_स्मृति_to_page(vaddr);
+	शेष:
+		वापस virt_to_page(vaddr);
+	पूर्ण
+पूर्ण
 
 /*
- * fault callback for mmapping a RAM page
+ * fault callback क्रम mmapping a RAM page
  */
-static vm_fault_t snd_pcm_mmap_data_fault(struct vm_fault *vmf)
-{
-	struct snd_pcm_substream *substream = vmf->vma->vm_private_data;
-	struct snd_pcm_runtime *runtime;
-	unsigned long offset;
-	struct page * page;
-	size_t dma_bytes;
+अटल vm_fault_t snd_pcm_mmap_data_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा snd_pcm_substream *substream = vmf->vma->vm_निजी_data;
+	काष्ठा snd_pcm_runसमय *runसमय;
+	अचिन्हित दीर्घ offset;
+	काष्ठा page * page;
+	माप_प्रकार dma_bytes;
 	
-	if (substream == NULL)
-		return VM_FAULT_SIGBUS;
-	runtime = substream->runtime;
+	अगर (substream == शून्य)
+		वापस VM_FAULT_SIGBUS;
+	runसमय = substream->runसमय;
 	offset = vmf->pgoff << PAGE_SHIFT;
-	dma_bytes = PAGE_ALIGN(runtime->dma_bytes);
-	if (offset > dma_bytes - PAGE_SIZE)
-		return VM_FAULT_SIGBUS;
-	if (substream->ops->page)
+	dma_bytes = PAGE_ALIGN(runसमय->dma_bytes);
+	अगर (offset > dma_bytes - PAGE_SIZE)
+		वापस VM_FAULT_SIGBUS;
+	अगर (substream->ops->page)
 		page = substream->ops->page(substream, offset);
-	else
-		page = snd_pcm_default_page_ops(substream, offset);
-	if (!page)
-		return VM_FAULT_SIGBUS;
+	अन्यथा
+		page = snd_pcm_शेष_page_ops(substream, offset);
+	अगर (!page)
+		वापस VM_FAULT_SIGBUS;
 	get_page(page);
 	vmf->page = page;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct vm_operations_struct snd_pcm_vm_ops_data = {
-	.open =		snd_pcm_mmap_data_open,
-	.close =	snd_pcm_mmap_data_close,
-};
+अटल स्थिर काष्ठा vm_operations_काष्ठा snd_pcm_vm_ops_data = अणु
+	.खोलो =		snd_pcm_mmap_data_खोलो,
+	.बंद =	snd_pcm_mmap_data_बंद,
+पूर्ण;
 
-static const struct vm_operations_struct snd_pcm_vm_ops_data_fault = {
-	.open =		snd_pcm_mmap_data_open,
-	.close =	snd_pcm_mmap_data_close,
+अटल स्थिर काष्ठा vm_operations_काष्ठा snd_pcm_vm_ops_data_fault = अणु
+	.खोलो =		snd_pcm_mmap_data_खोलो,
+	.बंद =	snd_pcm_mmap_data_बंद,
 	.fault =	snd_pcm_mmap_data_fault,
-};
+पूर्ण;
 
 /*
  * mmap the DMA buffer on RAM
  */
 
 /**
- * snd_pcm_lib_default_mmap - Default PCM data mmap function
+ * snd_pcm_lib_शेष_mmap - Default PCM data mmap function
  * @substream: PCM substream
  * @area: VMA
  *
- * This is the default mmap handler for PCM data.  When mmap pcm_ops is NULL,
+ * This is the शेष mmap handler क्रम PCM data.  When mmap pcm_ops is शून्य,
  * this function is invoked implicitly.
  */
-int snd_pcm_lib_default_mmap(struct snd_pcm_substream *substream,
-			     struct vm_area_struct *area)
-{
+पूर्णांक snd_pcm_lib_शेष_mmap(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा vm_area_काष्ठा *area)
+अणु
 	area->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
-#ifdef CONFIG_GENERIC_ALLOCATOR
-	if (substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV_IRAM) {
-		area->vm_page_prot = pgprot_writecombine(area->vm_page_prot);
-		return remap_pfn_range(area, area->vm_start,
+#अगर_घोषित CONFIG_GENERIC_ALLOCATOR
+	अगर (substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV_IRAM) अणु
+		area->vm_page_prot = pgprot_ग_लिखोcombine(area->vm_page_prot);
+		वापस remap_pfn_range(area, area->vm_start,
 				substream->dma_buffer.addr >> PAGE_SHIFT,
 				area->vm_end - area->vm_start, area->vm_page_prot);
-	}
-#endif /* CONFIG_GENERIC_ALLOCATOR */
-	if (IS_ENABLED(CONFIG_HAS_DMA) && !substream->ops->page &&
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_GENERIC_ALLOCATOR */
+	अगर (IS_ENABLED(CONFIG_HAS_DMA) && !substream->ops->page &&
 	    (substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV ||
 	     substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV_UC))
-		return dma_mmap_coherent(substream->dma_buffer.dev.dev,
+		वापस dma_mmap_coherent(substream->dma_buffer.dev.dev,
 					 area,
-					 substream->runtime->dma_area,
-					 substream->runtime->dma_addr,
-					 substream->runtime->dma_bytes);
+					 substream->runसमय->dma_area,
+					 substream->runसमय->dma_addr,
+					 substream->runसमय->dma_bytes);
 	/* mmap with fault handler */
 	area->vm_ops = &snd_pcm_vm_ops_data_fault;
-	return 0;
-}
-EXPORT_SYMBOL_GPL(snd_pcm_lib_default_mmap);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_pcm_lib_शेष_mmap);
 
 /*
  * mmap the DMA buffer on I/O memory area
  */
-#if SNDRV_PCM_INFO_MMAP_IOMEM
+#अगर SNDRV_PCM_INFO_MMAP_IOMEM
 /**
- * snd_pcm_lib_mmap_iomem - Default PCM data mmap function for I/O mem
+ * snd_pcm_lib_mmap_iomem - Default PCM data mmap function क्रम I/O mem
  * @substream: PCM substream
  * @area: VMA
  *
@@ -3747,271 +3748,271 @@ EXPORT_SYMBOL_GPL(snd_pcm_lib_default_mmap);
  * wants to mmap it, pass this function as mmap pcm_ops.  Note that this
  * is supposed to work only on limited architectures.
  */
-int snd_pcm_lib_mmap_iomem(struct snd_pcm_substream *substream,
-			   struct vm_area_struct *area)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
+पूर्णांक snd_pcm_lib_mmap_iomem(काष्ठा snd_pcm_substream *substream,
+			   काष्ठा vm_area_काष्ठा *area)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
 	area->vm_page_prot = pgprot_noncached(area->vm_page_prot);
-	return vm_iomap_memory(area, runtime->dma_addr, runtime->dma_bytes);
-}
+	वापस vm_iomap_memory(area, runसमय->dma_addr, runसमय->dma_bytes);
+पूर्ण
 EXPORT_SYMBOL(snd_pcm_lib_mmap_iomem);
-#endif /* SNDRV_PCM_INFO_MMAP */
+#पूर्ण_अगर /* SNDRV_PCM_INFO_MMAP */
 
 /*
  * mmap DMA buffer
  */
-int snd_pcm_mmap_data(struct snd_pcm_substream *substream, struct file *file,
-		      struct vm_area_struct *area)
-{
-	struct snd_pcm_runtime *runtime;
-	long size;
-	unsigned long offset;
-	size_t dma_bytes;
-	int err;
+पूर्णांक snd_pcm_mmap_data(काष्ठा snd_pcm_substream *substream, काष्ठा file *file,
+		      काष्ठा vm_area_काष्ठा *area)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय;
+	दीर्घ size;
+	अचिन्हित दीर्घ offset;
+	माप_प्रकार dma_bytes;
+	पूर्णांक err;
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		if (!(area->vm_flags & (VM_WRITE|VM_READ)))
-			return -EINVAL;
-	} else {
-		if (!(area->vm_flags & VM_READ))
-			return -EINVAL;
-	}
-	runtime = substream->runtime;
-	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
-	if (!(runtime->info & SNDRV_PCM_INFO_MMAP))
-		return -ENXIO;
-	if (runtime->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED ||
-	    runtime->access == SNDRV_PCM_ACCESS_RW_NONINTERLEAVED)
-		return -EINVAL;
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		अगर (!(area->vm_flags & (VM_WRITE|VM_READ)))
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (!(area->vm_flags & VM_READ))
+			वापस -EINVAL;
+	पूर्ण
+	runसमय = substream->runसमय;
+	अगर (runसमय->status->state == SNDRV_PCM_STATE_OPEN)
+		वापस -EBADFD;
+	अगर (!(runसमय->info & SNDRV_PCM_INFO_MMAP))
+		वापस -ENXIO;
+	अगर (runसमय->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED ||
+	    runसमय->access == SNDRV_PCM_ACCESS_RW_NONINTERLEAVED)
+		वापस -EINVAL;
 	size = area->vm_end - area->vm_start;
 	offset = area->vm_pgoff << PAGE_SHIFT;
-	dma_bytes = PAGE_ALIGN(runtime->dma_bytes);
-	if ((size_t)size > dma_bytes)
-		return -EINVAL;
-	if (offset > dma_bytes - size)
-		return -EINVAL;
+	dma_bytes = PAGE_ALIGN(runसमय->dma_bytes);
+	अगर ((माप_प्रकार)size > dma_bytes)
+		वापस -EINVAL;
+	अगर (offset > dma_bytes - size)
+		वापस -EINVAL;
 
 	area->vm_ops = &snd_pcm_vm_ops_data;
-	area->vm_private_data = substream;
-	if (substream->ops->mmap)
+	area->vm_निजी_data = substream;
+	अगर (substream->ops->mmap)
 		err = substream->ops->mmap(substream, area);
-	else
-		err = snd_pcm_lib_default_mmap(substream, area);
-	if (!err)
+	अन्यथा
+		err = snd_pcm_lib_शेष_mmap(substream, area);
+	अगर (!err)
 		atomic_inc(&substream->mmap_count);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(snd_pcm_mmap_data);
 
-static int snd_pcm_mmap(struct file *file, struct vm_area_struct *area)
-{
-	struct snd_pcm_file * pcm_file;
-	struct snd_pcm_substream *substream;	
-	unsigned long offset;
+अटल पूर्णांक snd_pcm_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *area)
+अणु
+	काष्ठा snd_pcm_file * pcm_file;
+	काष्ठा snd_pcm_substream *substream;	
+	अचिन्हित दीर्घ offset;
 	
-	pcm_file = file->private_data;
+	pcm_file = file->निजी_data;
 	substream = pcm_file->substream;
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
 
 	offset = area->vm_pgoff << PAGE_SHIFT;
-	switch (offset) {
-	case SNDRV_PCM_MMAP_OFFSET_STATUS_OLD:
-		if (pcm_file->no_compat_mmap || !IS_ENABLED(CONFIG_64BIT))
-			return -ENXIO;
+	चयन (offset) अणु
+	हाल SNDRV_PCM_MMAP_OFFSET_STATUS_OLD:
+		अगर (pcm_file->no_compat_mmap || !IS_ENABLED(CONFIG_64BIT))
+			वापस -ENXIO;
 		fallthrough;
-	case SNDRV_PCM_MMAP_OFFSET_STATUS_NEW:
-		if (!pcm_status_mmap_allowed(pcm_file))
-			return -ENXIO;
-		return snd_pcm_mmap_status(substream, file, area);
-	case SNDRV_PCM_MMAP_OFFSET_CONTROL_OLD:
-		if (pcm_file->no_compat_mmap || !IS_ENABLED(CONFIG_64BIT))
-			return -ENXIO;
+	हाल SNDRV_PCM_MMAP_OFFSET_STATUS_NEW:
+		अगर (!pcm_status_mmap_allowed(pcm_file))
+			वापस -ENXIO;
+		वापस snd_pcm_mmap_status(substream, file, area);
+	हाल SNDRV_PCM_MMAP_OFFSET_CONTROL_OLD:
+		अगर (pcm_file->no_compat_mmap || !IS_ENABLED(CONFIG_64BIT))
+			वापस -ENXIO;
 		fallthrough;
-	case SNDRV_PCM_MMAP_OFFSET_CONTROL_NEW:
-		if (!pcm_control_mmap_allowed(pcm_file))
-			return -ENXIO;
-		return snd_pcm_mmap_control(substream, file, area);
-	default:
-		return snd_pcm_mmap_data(substream, file, area);
-	}
-	return 0;
-}
+	हाल SNDRV_PCM_MMAP_OFFSET_CONTROL_NEW:
+		अगर (!pcm_control_mmap_allowed(pcm_file))
+			वापस -ENXIO;
+		वापस snd_pcm_mmap_control(substream, file, area);
+	शेष:
+		वापस snd_pcm_mmap_data(substream, file, area);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_pcm_fasync(int fd, struct file * file, int on)
-{
-	struct snd_pcm_file * pcm_file;
-	struct snd_pcm_substream *substream;
-	struct snd_pcm_runtime *runtime;
+अटल पूर्णांक snd_pcm_fasync(पूर्णांक fd, काष्ठा file * file, पूर्णांक on)
+अणु
+	काष्ठा snd_pcm_file * pcm_file;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_pcm_runसमय *runसमय;
 
-	pcm_file = file->private_data;
+	pcm_file = file->निजी_data;
 	substream = pcm_file->substream;
-	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
-	runtime = substream->runtime;
-	return fasync_helper(fd, file, on, &runtime->fasync);
-}
+	अगर (PCM_RUNTIME_CHECK(substream))
+		वापस -ENXIO;
+	runसमय = substream->runसमय;
+	वापस fasync_helper(fd, file, on, &runसमय->fasync);
+पूर्ण
 
 /*
  * ioctl32 compat
  */
-#ifdef CONFIG_COMPAT
-#include "pcm_compat.c"
-#else
-#define snd_pcm_ioctl_compat	NULL
-#endif
+#अगर_घोषित CONFIG_COMPAT
+#समावेश "pcm_compat.c"
+#अन्यथा
+#घोषणा snd_pcm_ioctl_compat	शून्य
+#पूर्ण_अगर
 
 /*
- *  To be removed helpers to keep binary compatibility
+ *  To be हटाओd helpers to keep binary compatibility
  */
 
-#ifdef CONFIG_SND_SUPPORT_OLD_API
-#define __OLD_TO_NEW_MASK(x) ((x&7)|((x&0x07fffff8)<<5))
-#define __NEW_TO_OLD_MASK(x) ((x&7)|((x&0xffffff00)>>5))
+#अगर_घोषित CONFIG_SND_SUPPORT_OLD_API
+#घोषणा __OLD_TO_NEW_MASK(x) ((x&7)|((x&0x07fffff8)<<5))
+#घोषणा __NEW_TO_OLD_MASK(x) ((x&7)|((x&0xffffff00)>>5))
 
-static void snd_pcm_hw_convert_from_old_params(struct snd_pcm_hw_params *params,
-					       struct snd_pcm_hw_params_old *oparams)
-{
-	unsigned int i;
+अटल व्योम snd_pcm_hw_convert_from_old_params(काष्ठा snd_pcm_hw_params *params,
+					       काष्ठा snd_pcm_hw_params_old *oparams)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	memset(params, 0, sizeof(*params));
+	स_रखो(params, 0, माप(*params));
 	params->flags = oparams->flags;
-	for (i = 0; i < ARRAY_SIZE(oparams->masks); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(oparams->masks); i++)
 		params->masks[i].bits[0] = oparams->masks[i];
-	memcpy(params->intervals, oparams->intervals, sizeof(oparams->intervals));
+	स_नकल(params->पूर्णांकervals, oparams->पूर्णांकervals, माप(oparams->पूर्णांकervals));
 	params->rmask = __OLD_TO_NEW_MASK(oparams->rmask);
 	params->cmask = __OLD_TO_NEW_MASK(oparams->cmask);
 	params->info = oparams->info;
 	params->msbits = oparams->msbits;
 	params->rate_num = oparams->rate_num;
 	params->rate_den = oparams->rate_den;
-	params->fifo_size = oparams->fifo_size;
-}
+	params->fअगरo_size = oparams->fअगरo_size;
+पूर्ण
 
-static void snd_pcm_hw_convert_to_old_params(struct snd_pcm_hw_params_old *oparams,
-					     struct snd_pcm_hw_params *params)
-{
-	unsigned int i;
+अटल व्योम snd_pcm_hw_convert_to_old_params(काष्ठा snd_pcm_hw_params_old *oparams,
+					     काष्ठा snd_pcm_hw_params *params)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	memset(oparams, 0, sizeof(*oparams));
+	स_रखो(oparams, 0, माप(*oparams));
 	oparams->flags = params->flags;
-	for (i = 0; i < ARRAY_SIZE(oparams->masks); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(oparams->masks); i++)
 		oparams->masks[i] = params->masks[i].bits[0];
-	memcpy(oparams->intervals, params->intervals, sizeof(oparams->intervals));
+	स_नकल(oparams->पूर्णांकervals, params->पूर्णांकervals, माप(oparams->पूर्णांकervals));
 	oparams->rmask = __NEW_TO_OLD_MASK(params->rmask);
 	oparams->cmask = __NEW_TO_OLD_MASK(params->cmask);
 	oparams->info = params->info;
 	oparams->msbits = params->msbits;
 	oparams->rate_num = params->rate_num;
 	oparams->rate_den = params->rate_den;
-	oparams->fifo_size = params->fifo_size;
-}
+	oparams->fअगरo_size = params->fअगरo_size;
+पूर्ण
 
-static int snd_pcm_hw_refine_old_user(struct snd_pcm_substream *substream,
-				      struct snd_pcm_hw_params_old __user * _oparams)
-{
-	struct snd_pcm_hw_params *params;
-	struct snd_pcm_hw_params_old *oparams = NULL;
-	int err;
+अटल पूर्णांक snd_pcm_hw_refine_old_user(काष्ठा snd_pcm_substream *substream,
+				      काष्ठा snd_pcm_hw_params_old __user * _oparams)
+अणु
+	काष्ठा snd_pcm_hw_params *params;
+	काष्ठा snd_pcm_hw_params_old *oparams = शून्य;
+	पूर्णांक err;
 
-	params = kmalloc(sizeof(*params), GFP_KERNEL);
-	if (!params)
-		return -ENOMEM;
+	params = kदो_स्मृति(माप(*params), GFP_KERNEL);
+	अगर (!params)
+		वापस -ENOMEM;
 
-	oparams = memdup_user(_oparams, sizeof(*oparams));
-	if (IS_ERR(oparams)) {
+	oparams = memdup_user(_oparams, माप(*oparams));
+	अगर (IS_ERR(oparams)) अणु
 		err = PTR_ERR(oparams);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	snd_pcm_hw_convert_from_old_params(params, oparams);
 	err = snd_pcm_hw_refine(substream, params);
-	if (err < 0)
-		goto out_old;
+	अगर (err < 0)
+		जाओ out_old;
 
 	err = fixup_unreferenced_params(substream, params);
-	if (err < 0)
-		goto out_old;
+	अगर (err < 0)
+		जाओ out_old;
 
 	snd_pcm_hw_convert_to_old_params(oparams, params);
-	if (copy_to_user(_oparams, oparams, sizeof(*oparams)))
+	अगर (copy_to_user(_oparams, oparams, माप(*oparams)))
 		err = -EFAULT;
 out_old:
-	kfree(oparams);
+	kमुक्त(oparams);
 out:
-	kfree(params);
-	return err;
-}
+	kमुक्त(params);
+	वापस err;
+पूर्ण
 
-static int snd_pcm_hw_params_old_user(struct snd_pcm_substream *substream,
-				      struct snd_pcm_hw_params_old __user * _oparams)
-{
-	struct snd_pcm_hw_params *params;
-	struct snd_pcm_hw_params_old *oparams = NULL;
-	int err;
+अटल पूर्णांक snd_pcm_hw_params_old_user(काष्ठा snd_pcm_substream *substream,
+				      काष्ठा snd_pcm_hw_params_old __user * _oparams)
+अणु
+	काष्ठा snd_pcm_hw_params *params;
+	काष्ठा snd_pcm_hw_params_old *oparams = शून्य;
+	पूर्णांक err;
 
-	params = kmalloc(sizeof(*params), GFP_KERNEL);
-	if (!params)
-		return -ENOMEM;
+	params = kदो_स्मृति(माप(*params), GFP_KERNEL);
+	अगर (!params)
+		वापस -ENOMEM;
 
-	oparams = memdup_user(_oparams, sizeof(*oparams));
-	if (IS_ERR(oparams)) {
+	oparams = memdup_user(_oparams, माप(*oparams));
+	अगर (IS_ERR(oparams)) अणु
 		err = PTR_ERR(oparams);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	snd_pcm_hw_convert_from_old_params(params, oparams);
 	err = snd_pcm_hw_params(substream, params);
-	if (err < 0)
-		goto out_old;
+	अगर (err < 0)
+		जाओ out_old;
 
 	snd_pcm_hw_convert_to_old_params(oparams, params);
-	if (copy_to_user(_oparams, oparams, sizeof(*oparams)))
+	अगर (copy_to_user(_oparams, oparams, माप(*oparams)))
 		err = -EFAULT;
 out_old:
-	kfree(oparams);
+	kमुक्त(oparams);
 out:
-	kfree(params);
-	return err;
-}
-#endif /* CONFIG_SND_SUPPORT_OLD_API */
+	kमुक्त(params);
+	वापस err;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SND_SUPPORT_OLD_API */
 
-#ifndef CONFIG_MMU
-static unsigned long snd_pcm_get_unmapped_area(struct file *file,
-					       unsigned long addr,
-					       unsigned long len,
-					       unsigned long pgoff,
-					       unsigned long flags)
-{
-	struct snd_pcm_file *pcm_file = file->private_data;
-	struct snd_pcm_substream *substream = pcm_file->substream;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	unsigned long offset = pgoff << PAGE_SHIFT;
+#अगर_अघोषित CONFIG_MMU
+अटल अचिन्हित दीर्घ snd_pcm_get_unmapped_area(काष्ठा file *file,
+					       अचिन्हित दीर्घ addr,
+					       अचिन्हित दीर्घ len,
+					       अचिन्हित दीर्घ pgoff,
+					       अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा snd_pcm_file *pcm_file = file->निजी_data;
+	काष्ठा snd_pcm_substream *substream = pcm_file->substream;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अचिन्हित दीर्घ offset = pgoff << PAGE_SHIFT;
 
-	switch (offset) {
-	case SNDRV_PCM_MMAP_OFFSET_STATUS_NEW:
-		return (unsigned long)runtime->status;
-	case SNDRV_PCM_MMAP_OFFSET_CONTROL_NEW:
-		return (unsigned long)runtime->control;
-	default:
-		return (unsigned long)runtime->dma_area + offset;
-	}
-}
-#else
-# define snd_pcm_get_unmapped_area NULL
-#endif
+	चयन (offset) अणु
+	हाल SNDRV_PCM_MMAP_OFFSET_STATUS_NEW:
+		वापस (अचिन्हित दीर्घ)runसमय->status;
+	हाल SNDRV_PCM_MMAP_OFFSET_CONTROL_NEW:
+		वापस (अचिन्हित दीर्घ)runसमय->control;
+	शेष:
+		वापस (अचिन्हित दीर्घ)runसमय->dma_area + offset;
+	पूर्ण
+पूर्ण
+#अन्यथा
+# define snd_pcm_get_unmapped_area शून्य
+#पूर्ण_अगर
 
 /*
  *  Register section
  */
 
-const struct file_operations snd_pcm_f_ops[2] = {
-	{
+स्थिर काष्ठा file_operations snd_pcm_f_ops[2] = अणु
+	अणु
 		.owner =		THIS_MODULE,
-		.write =		snd_pcm_write,
-		.write_iter =		snd_pcm_writev,
-		.open =			snd_pcm_playback_open,
+		.ग_लिखो =		snd_pcm_ग_लिखो,
+		.ग_लिखो_iter =		snd_pcm_ग_लिखोv,
+		.खोलो =			snd_pcm_playback_खोलो,
 		.release =		snd_pcm_release,
 		.llseek =		no_llseek,
 		.poll =			snd_pcm_poll,
@@ -4020,12 +4021,12 @@ const struct file_operations snd_pcm_f_ops[2] = {
 		.mmap =			snd_pcm_mmap,
 		.fasync =		snd_pcm_fasync,
 		.get_unmapped_area =	snd_pcm_get_unmapped_area,
-	},
-	{
+	पूर्ण,
+	अणु
 		.owner =		THIS_MODULE,
-		.read =			snd_pcm_read,
-		.read_iter =		snd_pcm_readv,
-		.open =			snd_pcm_capture_open,
+		.पढ़ो =			snd_pcm_पढ़ो,
+		.पढ़ो_iter =		snd_pcm_पढ़ोv,
+		.खोलो =			snd_pcm_capture_खोलो,
 		.release =		snd_pcm_release,
 		.llseek =		no_llseek,
 		.poll =			snd_pcm_poll,
@@ -4034,5 +4035,5 @@ const struct file_operations snd_pcm_f_ops[2] = {
 		.mmap =			snd_pcm_mmap,
 		.fasync =		snd_pcm_fasync,
 		.get_unmapped_area =	snd_pcm_get_unmapped_area,
-	}
-};
+	पूर्ण
+पूर्ण;

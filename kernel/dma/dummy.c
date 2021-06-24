@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Dummy DMA ops that always fail.
  */
-#include <linux/dma-map-ops.h>
+#समावेश <linux/dma-map-ops.h>
 
-static int dma_dummy_mmap(struct device *dev, struct vm_area_struct *vma,
-		void *cpu_addr, dma_addr_t dma_addr, size_t size,
-		unsigned long attrs)
-{
-	return -ENXIO;
-}
+अटल पूर्णांक dma_dummy_mmap(काष्ठा device *dev, काष्ठा vm_area_काष्ठा *vma,
+		व्योम *cpu_addr, dma_addr_t dma_addr, माप_प्रकार size,
+		अचिन्हित दीर्घ attrs)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-static dma_addr_t dma_dummy_map_page(struct device *dev, struct page *page,
-		unsigned long offset, size_t size, enum dma_data_direction dir,
-		unsigned long attrs)
-{
-	return DMA_MAPPING_ERROR;
-}
+अटल dma_addr_t dma_dummy_map_page(काष्ठा device *dev, काष्ठा page *page,
+		अचिन्हित दीर्घ offset, माप_प्रकार size, क्रमागत dma_data_direction dir,
+		अचिन्हित दीर्घ attrs)
+अणु
+	वापस DMA_MAPPING_ERROR;
+पूर्ण
 
-static int dma_dummy_map_sg(struct device *dev, struct scatterlist *sgl,
-		int nelems, enum dma_data_direction dir,
-		unsigned long attrs)
-{
-	return 0;
-}
+अटल पूर्णांक dma_dummy_map_sg(काष्ठा device *dev, काष्ठा scatterlist *sgl,
+		पूर्णांक nelems, क्रमागत dma_data_direction dir,
+		अचिन्हित दीर्घ attrs)
+अणु
+	वापस 0;
+पूर्ण
 
-static int dma_dummy_supported(struct device *hwdev, u64 mask)
-{
-	return 0;
-}
+अटल पूर्णांक dma_dummy_supported(काष्ठा device *hwdev, u64 mask)
+अणु
+	वापस 0;
+पूर्ण
 
-const struct dma_map_ops dma_dummy_ops = {
+स्थिर काष्ठा dma_map_ops dma_dummy_ops = अणु
 	.mmap                   = dma_dummy_mmap,
 	.map_page               = dma_dummy_map_page,
 	.map_sg                 = dma_dummy_map_sg,
 	.dma_supported          = dma_dummy_supported,
-};
+पूर्ण;

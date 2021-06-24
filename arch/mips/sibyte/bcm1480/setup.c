@@ -1,128 +1,129 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2000,2001,2002,2003,2004 Broadcom Corporation
  */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/reboot.h>
-#include <linux/string.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/माला.स>
 
-#include <asm/bootinfo.h>
-#include <asm/cpu.h>
-#include <asm/mipsregs.h>
-#include <asm/io.h>
-#include <asm/sibyte/sb1250.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/sibyte/sb1250.h>
 
-#include <asm/sibyte/bcm1480_regs.h>
-#include <asm/sibyte/bcm1480_scd.h>
-#include <asm/sibyte/sb1250_scd.h>
+#समावेश <यंत्र/sibyte/bcm1480_regs.h>
+#समावेश <यंत्र/sibyte/bcm1480_scd.h>
+#समावेश <यंत्र/sibyte/sb1250_scd.h>
 
-unsigned int sb1_pass;
-unsigned int soc_pass;
-unsigned int soc_type;
+अचिन्हित पूर्णांक sb1_pass;
+अचिन्हित पूर्णांक soc_pass;
+अचिन्हित पूर्णांक soc_type;
 EXPORT_SYMBOL(soc_type);
-unsigned int periph_rev;
+अचिन्हित पूर्णांक periph_rev;
 EXPORT_SYMBOL_GPL(periph_rev);
-unsigned int zbbus_mhz;
+अचिन्हित पूर्णांक zbbus_mhz;
 EXPORT_SYMBOL(zbbus_mhz);
 
-static unsigned int part_type;
+अटल अचिन्हित पूर्णांक part_type;
 
-static char *soc_str;
-static char *pass_str;
+अटल अक्षर *soc_str;
+अटल अक्षर *pass_str;
 
-static int __init setup_bcm1x80_bcm1x55(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init setup_bcm1x80_bcm1x55(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (soc_pass) {
-	case K_SYS_REVISION_BCM1480_S0:
+	चयन (soc_pass) अणु
+	हाल K_SYS_REVISION_BCM1480_S0:
 		periph_rev = 1;
 		pass_str = "S0 (pass1)";
-		break;
-	case K_SYS_REVISION_BCM1480_A1:
+		अवरोध;
+	हाल K_SYS_REVISION_BCM1480_A1:
 		periph_rev = 1;
 		pass_str = "A1 (pass1)";
-		break;
-	case K_SYS_REVISION_BCM1480_A2:
+		अवरोध;
+	हाल K_SYS_REVISION_BCM1480_A2:
 		periph_rev = 1;
 		pass_str = "A2 (pass1)";
-		break;
-	case K_SYS_REVISION_BCM1480_A3:
+		अवरोध;
+	हाल K_SYS_REVISION_BCM1480_A3:
 		periph_rev = 1;
 		pass_str = "A3 (pass1)";
-		break;
-	case K_SYS_REVISION_BCM1480_B0:
+		अवरोध;
+	हाल K_SYS_REVISION_BCM1480_B0:
 		periph_rev = 1;
 		pass_str = "B0 (pass2)";
-		break;
-	default:
-		printk("Unknown %s rev %x\n", soc_str, soc_pass);
+		अवरोध;
+	शेष:
+		prपूर्णांकk("Unknown %s rev %x\n", soc_str, soc_pass);
 		periph_rev = 1;
 		pass_str = "Unknown Revision";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Setup code likely to be common to all SiByte platforms */
+/* Setup code likely to be common to all SiByte platक्रमms */
 
-static int __init sys_rev_decode(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init sys_rev_decode(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (soc_type) {
-	case K_SYS_SOC_TYPE_BCM1x80:
-		if (part_type == K_SYS_PART_BCM1480)
+	चयन (soc_type) अणु
+	हाल K_SYS_SOC_TYPE_BCM1x80:
+		अगर (part_type == K_SYS_PART_BCM1480)
 		    soc_str = "BCM1480";
-		else if (part_type == K_SYS_PART_BCM1280)
+		अन्यथा अगर (part_type == K_SYS_PART_BCM1280)
 		    soc_str = "BCM1280";
-		else
+		अन्यथा
 		    soc_str = "BCM1x80";
 		ret = setup_bcm1x80_bcm1x55();
-		break;
+		अवरोध;
 
-	case K_SYS_SOC_TYPE_BCM1x55:
-		if (part_type == K_SYS_PART_BCM1455)
+	हाल K_SYS_SOC_TYPE_BCM1x55:
+		अगर (part_type == K_SYS_PART_BCM1455)
 		    soc_str = "BCM1455";
-		else if (part_type == K_SYS_PART_BCM1255)
+		अन्यथा अगर (part_type == K_SYS_PART_BCM1255)
 		    soc_str = "BCM1255";
-		else
+		अन्यथा
 		    soc_str = "BCM1x55";
 		ret = setup_bcm1x80_bcm1x55();
-		break;
+		अवरोध;
 
-	default:
-		printk("Unknown part type %x\n", part_type);
+	शेष:
+		prपूर्णांकk("Unknown part type %x\n", part_type);
 		ret = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void __init bcm1480_setup(void)
-{
-	uint64_t sys_rev;
-	int plldiv;
+व्योम __init bcm1480_setup(व्योम)
+अणु
+	uपूर्णांक64_t sys_rev;
+	पूर्णांक plद_भाग;
 
-	sb1_pass = read_c0_prid() & PRID_REV_MASK;
-	sys_rev = __raw_readq(IOADDR(A_SCD_SYSTEM_REVISION));
+	sb1_pass = पढ़ो_c0_prid() & PRID_REV_MASK;
+	sys_rev = __raw_पढ़ोq(IOADDR(A_SCD_SYSTEM_REVISION));
 	soc_type = SYS_SOC_TYPE(sys_rev);
 	part_type = G_SYS_PART(sys_rev);
 	soc_pass = G_SYS_REVISION(sys_rev);
 
-	if (sys_rev_decode()) {
-		printk("Restart after failure to identify SiByte chip\n");
-		machine_restart(NULL);
-	}
+	अगर (sys_rev_decode()) अणु
+		prपूर्णांकk("Restart after failure to identify SiByte chip\n");
+		machine_restart(शून्य);
+	पूर्ण
 
-	plldiv = G_BCM1480_SYS_PLL_DIV(__raw_readq(IOADDR(A_SCD_SYSTEM_CFG)));
-	zbbus_mhz = ((plldiv >> 1) * 50) + ((plldiv & 1) * 25);
+	plद_भाग = G_BCM1480_SYS_PLL_DIV(__raw_पढ़ोq(IOADDR(A_SCD_SYSTEM_CFG)));
+	zbbus_mhz = ((plद_भाग >> 1) * 50) + ((plद_भाग & 1) * 25);
 
-	printk("Broadcom SiByte %s %s @ %d MHz (SB-1A rev %d)\n",
+	prपूर्णांकk("Broadcom SiByte %s %s @ %d MHz (SB-1A rev %d)\n",
 		    soc_str, pass_str, zbbus_mhz * 2, sb1_pass);
-	printk("Board type: %s\n", get_system_type());
-}
+	prपूर्णांकk("Board type: %s\n", get_प्रणाली_type());
+पूर्ण

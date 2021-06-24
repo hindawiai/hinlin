@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Copyright (C) 2006, 2007 Florian Fainelli <florian@openwrt.org>
+ * Copyright (C) 2006, 2007 Florian Fainelli <florian@खोलोwrt.org>
  */
 
-#ifndef __PROM_H__
-#define __PROM_H__
+#अगर_अघोषित __PROM_H__
+#घोषणा __PROM_H__
 
-extern char *prom_getenv(const char *name);
-extern void prom_meminit(void);
+बाह्य अक्षर *prom_दो_पर्या(स्थिर अक्षर *name);
+बाह्य व्योम prom_meminit(व्योम);
 
-#endif /* __PROM_H__ */
+#पूर्ण_अगर /* __PROM_H__ */

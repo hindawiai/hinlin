@@ -1,216 +1,217 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Patch transfer callback for Emu10k1
+ *  Patch transfer callback क्रम Emu10k1
  *
  *  Copyright (C) 2000 Takashi iwai <tiwai@suse.de>
  */
 /*
- * All the code for loading in a patch.  There is very little that is
- * chip specific here.  Just the actual writing to the board.
+ * All the code क्रम loading in a patch.  There is very little that is
+ * chip specअगरic here.  Just the actual writing to the board.
  */
 
-#include "emu10k1_synth_local.h"
+#समावेश "emu10k1_synth_local.h"
 
 /*
  */
-#define BLANK_LOOP_START	4
-#define BLANK_LOOP_END		8
-#define BLANK_LOOP_SIZE		12
-#define BLANK_HEAD_SIZE		32
+#घोषणा BLANK_LOOP_START	4
+#घोषणा BLANK_LOOP_END		8
+#घोषणा BLANK_LOOP_SIZE		12
+#घोषणा BLANK_HEAD_SIZE		32
 
 /*
  * allocate a sample block and copy data from userspace
  */
-int
-snd_emu10k1_sample_new(struct snd_emux *rec, struct snd_sf_sample *sp,
-		       struct snd_util_memhdr *hdr,
-		       const void __user *data, long count)
-{
-	int offset;
-	int truesize, size, blocksize;
-	__maybe_unused int loopsize;
-	int loopend, sampleend;
-	unsigned int start_addr;
-	struct snd_emu10k1 *emu;
+पूर्णांक
+snd_emu10k1_sample_new(काष्ठा snd_emux *rec, काष्ठा snd_sf_sample *sp,
+		       काष्ठा snd_util_memhdr *hdr,
+		       स्थिर व्योम __user *data, दीर्घ count)
+अणु
+	पूर्णांक offset;
+	पूर्णांक truesize, size, blocksize;
+	__maybe_unused पूर्णांक loopsize;
+	पूर्णांक loखोलोd, sampleend;
+	अचिन्हित पूर्णांक start_addr;
+	काष्ठा snd_emu10k1 *emu;
 
 	emu = rec->hw;
-	if (snd_BUG_ON(!sp || !hdr))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!sp || !hdr))
+		वापस -EINVAL;
 
-	if (sp->v.size == 0) {
+	अगर (sp->v.size == 0) अणु
 		dev_dbg(emu->card->dev,
 			"emu: rom font for sample %d\n", sp->v.sample);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* recalculate address offset */
 	sp->v.end -= sp->v.start;
 	sp->v.loopstart -= sp->v.start;
-	sp->v.loopend -= sp->v.start;
+	sp->v.loखोलोd -= sp->v.start;
 	sp->v.start = 0;
 
 	/* some samples have invalid data.  the addresses are corrected in voice info */
 	sampleend = sp->v.end;
-	if (sampleend > sp->v.size)
+	अगर (sampleend > sp->v.size)
 		sampleend = sp->v.size;
-	loopend = sp->v.loopend;
-	if (loopend > sampleend)
-		loopend = sampleend;
+	loखोलोd = sp->v.loखोलोd;
+	अगर (loखोलोd > sampleend)
+		loखोलोd = sampleend;
 
-	/* be sure loop points start < end */
-	if (sp->v.loopstart >= sp->v.loopend)
-		swap(sp->v.loopstart, sp->v.loopend);
+	/* be sure loop poपूर्णांकs start < end */
+	अगर (sp->v.loopstart >= sp->v.loखोलोd)
+		swap(sp->v.loopstart, sp->v.loखोलोd);
 
 	/* compute true data size to be loaded */
 	truesize = sp->v.size + BLANK_HEAD_SIZE;
 	loopsize = 0;
-#if 0 /* not supported */
-	if (sp->v.mode_flags & (SNDRV_SFNT_SAMPLE_BIDIR_LOOP|SNDRV_SFNT_SAMPLE_REVERSE_LOOP))
-		loopsize = sp->v.loopend - sp->v.loopstart;
+#अगर 0 /* not supported */
+	अगर (sp->v.mode_flags & (SNDRV_SFNT_SAMPLE_BIसूची_LOOP|SNDRV_SFNT_SAMPLE_REVERSE_LOOP))
+		loopsize = sp->v.loखोलोd - sp->v.loopstart;
 	truesize += loopsize;
-#endif
-	if (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_NO_BLANK)
+#पूर्ण_अगर
+	अगर (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_NO_BLANK)
 		truesize += BLANK_LOOP_SIZE;
 
 	/* try to allocate a memory block */
 	blocksize = truesize;
-	if (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
+	अगर (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
 		blocksize *= 2;
 	sp->block = snd_emu10k1_synth_alloc(emu, blocksize);
-	if (sp->block == NULL) {
+	अगर (sp->block == शून्य) अणु
 		dev_dbg(emu->card->dev,
 			"synth malloc failed (size=%d)\n", blocksize);
-		/* not ENOMEM (for compatibility with OSS) */
-		return -ENOSPC;
-	}
+		/* not ENOMEM (क्रम compatibility with OSS) */
+		वापस -ENOSPC;
+	पूर्ण
 	/* set the total size */
 	sp->v.truesize = blocksize;
 
-	/* write blank samples at head */
+	/* ग_लिखो blank samples at head */
 	offset = 0;
 	size = BLANK_HEAD_SIZE;
-	if (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
+	अगर (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
 		size *= 2;
-	if (offset + size > blocksize)
-		return -EINVAL;
+	अगर (offset + size > blocksize)
+		वापस -EINVAL;
 	snd_emu10k1_synth_bzero(emu, sp->block, offset, size);
 	offset += size;
 
-	/* copy start->loopend */
-	size = loopend;
-	if (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
+	/* copy start->loखोलोd */
+	size = loखोलोd;
+	अगर (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
 		size *= 2;
-	if (offset + size > blocksize)
-		return -EINVAL;
-	if (snd_emu10k1_synth_copy_from_user(emu, sp->block, offset, data, size)) {
-		snd_emu10k1_synth_free(emu, sp->block);
-		sp->block = NULL;
-		return -EFAULT;
-	}
+	अगर (offset + size > blocksize)
+		वापस -EINVAL;
+	अगर (snd_emu10k1_synth_copy_from_user(emu, sp->block, offset, data, size)) अणु
+		snd_emu10k1_synth_मुक्त(emu, sp->block);
+		sp->block = शून्य;
+		वापस -EFAULT;
+	पूर्ण
 	offset += size;
 	data += size;
 
-#if 0 /* not supported yet */
+#अगर 0 /* not supported yet */
 	/* handle reverse (or bidirectional) loop */
-	if (sp->v.mode_flags & (SNDRV_SFNT_SAMPLE_BIDIR_LOOP|SNDRV_SFNT_SAMPLE_REVERSE_LOOP)) {
+	अगर (sp->v.mode_flags & (SNDRV_SFNT_SAMPLE_BIसूची_LOOP|SNDRV_SFNT_SAMPLE_REVERSE_LOOP)) अणु
 		/* copy loop in reverse */
-		if (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS)) {
-			int woffset;
-			unsigned short *wblock = (unsigned short*)block;
+		अगर (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS)) अणु
+			पूर्णांक woffset;
+			अचिन्हित लघु *wblock = (अचिन्हित लघु*)block;
 			woffset = offset / 2;
-			if (offset + loopsize * 2 > blocksize)
-				return -EINVAL;
-			for (i = 0; i < loopsize; i++)
+			अगर (offset + loopsize * 2 > blocksize)
+				वापस -EINVAL;
+			क्रम (i = 0; i < loopsize; i++)
 				wblock[woffset + i] = wblock[woffset - i -1];
 			offset += loopsize * 2;
-		} else {
-			if (offset + loopsize > blocksize)
-				return -EINVAL;
-			for (i = 0; i < loopsize; i++)
+		पूर्ण अन्यथा अणु
+			अगर (offset + loopsize > blocksize)
+				वापस -EINVAL;
+			क्रम (i = 0; i < loopsize; i++)
 				block[offset + i] = block[offset - i -1];
 			offset += loopsize;
-		}
+		पूर्ण
 
-		/* modify loop pointers */
-		if (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_BIDIR_LOOP) {
-			sp->v.loopend += loopsize;
-		} else {
+		/* modअगरy loop poपूर्णांकers */
+		अगर (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_BIसूची_LOOP) अणु
+			sp->v.loखोलोd += loopsize;
+		पूर्ण अन्यथा अणु
 			sp->v.loopstart += loopsize;
-			sp->v.loopend += loopsize;
-		}
-		/* add sample pointer */
+			sp->v.loखोलोd += loopsize;
+		पूर्ण
+		/* add sample poपूर्णांकer */
 		sp->v.end += loopsize;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	/* loopend -> sample end */
-	size = sp->v.size - loopend;
-	if (size < 0)
-		return -EINVAL;
-	if (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
+	/* loखोलोd -> sample end */
+	size = sp->v.size - loखोलोd;
+	अगर (size < 0)
+		वापस -EINVAL;
+	अगर (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
 		size *= 2;
-	if (snd_emu10k1_synth_copy_from_user(emu, sp->block, offset, data, size)) {
-		snd_emu10k1_synth_free(emu, sp->block);
-		sp->block = NULL;
-		return -EFAULT;
-	}
+	अगर (snd_emu10k1_synth_copy_from_user(emu, sp->block, offset, data, size)) अणु
+		snd_emu10k1_synth_मुक्त(emu, sp->block);
+		sp->block = शून्य;
+		वापस -EFAULT;
+	पूर्ण
 	offset += size;
 
-	/* clear rest of samples (if any) */
-	if (offset < blocksize)
+	/* clear rest of samples (अगर any) */
+	अगर (offset < blocksize)
 		snd_emu10k1_synth_bzero(emu, sp->block, offset, blocksize - offset);
 
-	if (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_NO_BLANK) {
-		/* if no blank loop is attached in the sample, add it */
-		if (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_SINGLESHOT) {
+	अगर (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_NO_BLANK) अणु
+		/* अगर no blank loop is attached in the sample, add it */
+		अगर (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_SINGLESHOT) अणु
 			sp->v.loopstart = sp->v.end + BLANK_LOOP_START;
-			sp->v.loopend = sp->v.end + BLANK_LOOP_END;
-		}
-	}
+			sp->v.loखोलोd = sp->v.end + BLANK_LOOP_END;
+		पूर्ण
+	पूर्ण
 
-#if 0 /* not supported yet */
-	if (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_UNSIGNED) {
-		/* unsigned -> signed */
-		if (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS)) {
-			unsigned short *wblock = (unsigned short*)block;
-			for (i = 0; i < truesize; i++)
+#अगर 0 /* not supported yet */
+	अगर (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_UNSIGNED) अणु
+		/* अचिन्हित -> चिन्हित */
+		अगर (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS)) अणु
+			अचिन्हित लघु *wblock = (अचिन्हित लघु*)block;
+			क्रम (i = 0; i < truesize; i++)
 				wblock[i] ^= 0x8000;
-		} else {
-			for (i = 0; i < truesize; i++)
+		पूर्ण अन्यथा अणु
+			क्रम (i = 0; i < truesize; i++)
 				block[i] ^= 0x80;
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	/* recalculate offset */
 	start_addr = BLANK_HEAD_SIZE * 2;
-	if (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
+	अगर (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
 		start_addr >>= 1;
 	sp->v.start += start_addr;
 	sp->v.end += start_addr;
 	sp->v.loopstart += start_addr;
-	sp->v.loopend += start_addr;
+	sp->v.loखोलोd += start_addr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * free a sample block
+ * मुक्त a sample block
  */
-int
-snd_emu10k1_sample_free(struct snd_emux *rec, struct snd_sf_sample *sp,
-			struct snd_util_memhdr *hdr)
-{
-	struct snd_emu10k1 *emu;
+पूर्णांक
+snd_emu10k1_sample_मुक्त(काष्ठा snd_emux *rec, काष्ठा snd_sf_sample *sp,
+			काष्ठा snd_util_memhdr *hdr)
+अणु
+	काष्ठा snd_emu10k1 *emu;
 
 	emu = rec->hw;
-	if (snd_BUG_ON(!sp || !hdr))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!sp || !hdr))
+		वापस -EINVAL;
 
-	if (sp->block) {
-		snd_emu10k1_synth_free(emu, sp->block);
-		sp->block = NULL;
-	}
-	return 0;
-}
+	अगर (sp->block) अणु
+		snd_emu10k1_synth_मुक्त(emu, sp->block);
+		sp->block = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 

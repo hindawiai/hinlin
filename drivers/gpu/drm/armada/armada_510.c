@@ -1,158 +1,159 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Russell King
  *
  * Armada 510 (aka Dove) variant support
  */
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <drm/drm_probe_helper.h>
-#include "armada_crtc.h"
-#include "armada_drm.h"
-#include "armada_hw.h"
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश "armada_crtc.h"
+#समावेश "armada_drm.h"
+#समावेश "armada_hw.h"
 
-struct armada510_variant_data {
-	struct clk *clks[4];
-	struct clk *sel_clk;
-};
+काष्ठा armada510_variant_data अणु
+	काष्ठा clk *clks[4];
+	काष्ठा clk *sel_clk;
+पूर्ण;
 
-static int armada510_crtc_init(struct armada_crtc *dcrtc, struct device *dev)
-{
-	struct armada510_variant_data *v;
-	struct clk *clk;
-	int idx;
+अटल पूर्णांक armada510_crtc_init(काष्ठा armada_crtc *dcrtc, काष्ठा device *dev)
+अणु
+	काष्ठा armada510_variant_data *v;
+	काष्ठा clk *clk;
+	पूर्णांक idx;
 
-	v = devm_kzalloc(dev, sizeof(*v), GFP_KERNEL);
-	if (!v)
-		return -ENOMEM;
+	v = devm_kzalloc(dev, माप(*v), GFP_KERNEL);
+	अगर (!v)
+		वापस -ENOMEM;
 
 	dcrtc->variant_data = v;
 
-	if (dev->of_node) {
-		struct property *prop;
-		const char *s;
+	अगर (dev->of_node) अणु
+		काष्ठा property *prop;
+		स्थिर अक्षर *s;
 
-		of_property_for_each_string(dev->of_node, "clock-names", prop,
-					    s) {
-			if (!strcmp(s, "ext_ref_clk0"))
+		of_property_क्रम_each_string(dev->of_node, "clock-names", prop,
+					    s) अणु
+			अगर (!म_भेद(s, "ext_ref_clk0"))
 				idx = 0;
-			else if (!strcmp(s, "ext_ref_clk1"))
+			अन्यथा अगर (!म_भेद(s, "ext_ref_clk1"))
 				idx = 1;
-			else if (!strcmp(s, "plldivider"))
+			अन्यथा अगर (!म_भेद(s, "plldivider"))
 				idx = 2;
-			else if (!strcmp(s, "axibus"))
+			अन्यथा अगर (!म_भेद(s, "axibus"))
 				idx = 3;
-			else
-				continue;
+			अन्यथा
+				जारी;
 
 			clk = devm_clk_get(dev, s);
-			if (IS_ERR(clk))
-				return PTR_ERR(clk) == -ENOENT ? -EPROBE_DEFER :
+			अगर (IS_ERR(clk))
+				वापस PTR_ERR(clk) == -ENOENT ? -EPROBE_DEFER :
 					PTR_ERR(clk);
 			v->clks[idx] = clk;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		clk = devm_clk_get(dev, "ext_ref_clk1");
-		if (IS_ERR(clk))
-			return PTR_ERR(clk) == -ENOENT ? -EPROBE_DEFER :
+		अगर (IS_ERR(clk))
+			वापस PTR_ERR(clk) == -ENOENT ? -EPROBE_DEFER :
 				PTR_ERR(clk);
 
 		v->clks[1] = clk;
-	}
+	पूर्ण
 
 	/*
 	 * Lower the watermark so to eliminate jitter at higher bandwidths.
-	 * Disable SRAM read wait state to avoid system hang with external
-	 * clock.
+	 * Disable SRAM पढ़ो रुको state to aव्योम प्रणाली hang with बाह्यal
+	 * घड़ी.
 	 */
 	armada_updatel(CFG_DMA_WM(0x20), CFG_SRAM_WAIT | CFG_DMA_WM_MASK,
 		       dcrtc->base + LCD_CFG_RDREG4F);
 
-	/* Initialise SPU register */
-	writel_relaxed(ADV_HWC32ENABLE | ADV_HWC32ARGB | ADV_HWC32BLEND,
+	/* Initialise SPU रेजिस्टर */
+	ग_लिखोl_relaxed(ADV_HWC32ENABLE | ADV_HWC32ARGB | ADV_HWC32BLEND,
 		       dcrtc->base + LCD_SPU_ADV_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const u32 armada510_clk_sels[] = {
+अटल स्थिर u32 armada510_clk_sels[] = अणु
 	SCLK_510_EXTCLK0,
 	SCLK_510_EXTCLK1,
 	SCLK_510_PLL,
 	SCLK_510_AXI,
-};
+पूर्ण;
 
-static const struct armada_clocking_params armada510_clocking = {
+अटल स्थिर काष्ठा armada_घड़ीing_params armada510_घड़ीing = अणु
 	/* HDMI requires -0.6%..+0.5% */
 	.permillage_min = 994,
 	.permillage_max = 1005,
 	.settable = BIT(0) | BIT(1),
-	.div_max = SCLK_510_INT_DIV_MASK,
-};
+	.भाग_max = SCLK_510_INT_DIV_MASK,
+पूर्ण;
 
 /*
- * Armada510 specific SCLK register selection.
- * This gets called with sclk = NULL to test whether the mode is
- * supportable, and again with sclk != NULL to set the clocks up for
- * that.  The former can return an error, but the latter is expected
+ * Armada510 specअगरic SCLK रेजिस्टर selection.
+ * This माला_लो called with sclk = शून्य to test whether the mode is
+ * supportable, and again with sclk != शून्य to set the घड़ीs up क्रम
+ * that.  The क्रमmer can वापस an error, but the latter is expected
  * not to.
  */
-static int armada510_crtc_compute_clock(struct armada_crtc *dcrtc,
-	const struct drm_display_mode *mode, uint32_t *sclk)
-{
-	struct armada510_variant_data *v = dcrtc->variant_data;
-	unsigned long desired_khz = mode->crtc_clock;
-	struct armada_clk_result res;
-	int ret, idx;
+अटल पूर्णांक armada510_crtc_compute_घड़ी(काष्ठा armada_crtc *dcrtc,
+	स्थिर काष्ठा drm_display_mode *mode, uपूर्णांक32_t *sclk)
+अणु
+	काष्ठा armada510_variant_data *v = dcrtc->variant_data;
+	अचिन्हित दीर्घ desired_khz = mode->crtc_घड़ी;
+	काष्ठा armada_clk_result res;
+	पूर्णांक ret, idx;
 
-	idx = armada_crtc_select_clock(dcrtc, &res, &armada510_clocking,
+	idx = armada_crtc_select_घड़ी(dcrtc, &res, &armada510_घड़ीing,
 				       v->clks, ARRAY_SIZE(v->clks),
 				       desired_khz);
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 
 	ret = clk_prepare_enable(res.clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (sclk) {
+	अगर (sclk) अणु
 		clk_set_rate(res.clk, res.desired_clk_hz);
 
-		*sclk = res.div | armada510_clk_sels[idx];
+		*sclk = res.भाग | armada510_clk_sels[idx];
 
-		/* We are now using this clock */
+		/* We are now using this घड़ी */
 		v->sel_clk = res.clk;
 		swap(dcrtc->clk, res.clk);
-	}
+	पूर्ण
 
 	clk_disable_unprepare(res.clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void armada510_crtc_disable(struct armada_crtc *dcrtc)
-{
-	if (dcrtc->clk) {
+अटल व्योम armada510_crtc_disable(काष्ठा armada_crtc *dcrtc)
+अणु
+	अगर (dcrtc->clk) अणु
 		clk_disable_unprepare(dcrtc->clk);
-		dcrtc->clk = NULL;
-	}
-}
+		dcrtc->clk = शून्य;
+	पूर्ण
+पूर्ण
 
-static void armada510_crtc_enable(struct armada_crtc *dcrtc,
-	const struct drm_display_mode *mode)
-{
-	struct armada510_variant_data *v = dcrtc->variant_data;
+अटल व्योम armada510_crtc_enable(काष्ठा armada_crtc *dcrtc,
+	स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा armada510_variant_data *v = dcrtc->variant_data;
 
-	if (!dcrtc->clk && v->sel_clk) {
-		if (!WARN_ON(clk_prepare_enable(v->sel_clk)))
+	अगर (!dcrtc->clk && v->sel_clk) अणु
+		अगर (!WARN_ON(clk_prepare_enable(v->sel_clk)))
 			dcrtc->clk = v->sel_clk;
-	}
-}
+	पूर्ण
+पूर्ण
 
-const struct armada_variant armada510_ops = {
+स्थिर काष्ठा armada_variant armada510_ops = अणु
 	.has_spu_adv_reg = true,
 	.init = armada510_crtc_init,
-	.compute_clock = armada510_crtc_compute_clock,
+	.compute_घड़ी = armada510_crtc_compute_घड़ी,
 	.disable = armada510_crtc_disable,
 	.enable = armada510_crtc_enable,
-};
+पूर्ण;

@@ -1,303 +1,304 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Copyright(c) 2017 - 2021 Pensando Systems, Inc */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Copyright(c) 2017 - 2021 Pensanकरो Systems, Inc */
 
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
 
-#include "ionic.h"
-#include "ionic_bus.h"
-#include "ionic_lif.h"
-#include "ionic_ethtool.h"
+#समावेश "ionic.h"
+#समावेश "ionic_bus.h"
+#समावेश "ionic_lif.h"
+#समावेश "ionic_ethtool.h"
 
-static int ionic_hwstamp_tx_mode(int config_tx_type)
-{
-	switch (config_tx_type) {
-	case HWTSTAMP_TX_OFF:
-		return IONIC_TXSTAMP_OFF;
-	case HWTSTAMP_TX_ON:
-		return IONIC_TXSTAMP_ON;
-	case HWTSTAMP_TX_ONESTEP_SYNC:
-		return IONIC_TXSTAMP_ONESTEP_SYNC;
-	case HWTSTAMP_TX_ONESTEP_P2P:
-		return IONIC_TXSTAMP_ONESTEP_P2P;
-	default:
-		return -ERANGE;
-	}
-}
+अटल पूर्णांक ionic_hwstamp_tx_mode(पूर्णांक config_tx_type)
+अणु
+	चयन (config_tx_type) अणु
+	हाल HWTSTAMP_TX_OFF:
+		वापस IONIC_TXSTAMP_OFF;
+	हाल HWTSTAMP_TX_ON:
+		वापस IONIC_TXSTAMP_ON;
+	हाल HWTSTAMP_TX_ONESTEP_SYNC:
+		वापस IONIC_TXSTAMP_ONESTEP_SYNC;
+	हाल HWTSTAMP_TX_ONESTEP_P2P:
+		वापस IONIC_TXSTAMP_ONESTEP_P2P;
+	शेष:
+		वापस -दुस्फल;
+	पूर्ण
+पूर्ण
 
-static u64 ionic_hwstamp_rx_filt(int config_rx_filter)
-{
-	switch (config_rx_filter) {
-	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
-		return IONIC_PKT_CLS_PTP1_ALL;
-	case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
-		return IONIC_PKT_CLS_PTP1_SYNC;
-	case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
-		return IONIC_PKT_CLS_PTP1_SYNC | IONIC_PKT_CLS_PTP1_DREQ;
+अटल u64 ionic_hwstamp_rx_filt(पूर्णांक config_rx_filter)
+अणु
+	चयन (config_rx_filter) अणु
+	हाल HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+		वापस IONIC_PKT_CLS_PTP1_ALL;
+	हाल HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+		वापस IONIC_PKT_CLS_PTP1_SYNC;
+	हाल HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+		वापस IONIC_PKT_CLS_PTP1_SYNC | IONIC_PKT_CLS_PTP1_DREQ;
 
-	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-		return IONIC_PKT_CLS_PTP2_L4_ALL;
-	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-		return IONIC_PKT_CLS_PTP2_L4_SYNC;
-	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
-		return IONIC_PKT_CLS_PTP2_L4_SYNC | IONIC_PKT_CLS_PTP2_L4_DREQ;
+	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+		वापस IONIC_PKT_CLS_PTP2_L4_ALL;
+	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+		वापस IONIC_PKT_CLS_PTP2_L4_SYNC;
+	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+		वापस IONIC_PKT_CLS_PTP2_L4_SYNC | IONIC_PKT_CLS_PTP2_L4_DREQ;
 
-	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-		return IONIC_PKT_CLS_PTP2_L2_ALL;
-	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-		return IONIC_PKT_CLS_PTP2_L2_SYNC;
-	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
-		return IONIC_PKT_CLS_PTP2_L2_SYNC | IONIC_PKT_CLS_PTP2_L2_DREQ;
+	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+		वापस IONIC_PKT_CLS_PTP2_L2_ALL;
+	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+		वापस IONIC_PKT_CLS_PTP2_L2_SYNC;
+	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+		वापस IONIC_PKT_CLS_PTP2_L2_SYNC | IONIC_PKT_CLS_PTP2_L2_DREQ;
 
-	case HWTSTAMP_FILTER_PTP_V2_EVENT:
-		return IONIC_PKT_CLS_PTP2_ALL;
-	case HWTSTAMP_FILTER_PTP_V2_SYNC:
-		return IONIC_PKT_CLS_PTP2_SYNC;
-	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
-		return IONIC_PKT_CLS_PTP2_SYNC | IONIC_PKT_CLS_PTP2_DREQ;
+	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
+		वापस IONIC_PKT_CLS_PTP2_ALL;
+	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
+		वापस IONIC_PKT_CLS_PTP2_SYNC;
+	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+		वापस IONIC_PKT_CLS_PTP2_SYNC | IONIC_PKT_CLS_PTP2_DREQ;
 
-	case HWTSTAMP_FILTER_NTP_ALL:
-		return IONIC_PKT_CLS_NTP_ALL;
+	हाल HWTSTAMP_FILTER_NTP_ALL:
+		वापस IONIC_PKT_CLS_NTP_ALL;
 
-	default:
-		return 0;
-	}
-}
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int ionic_lif_hwstamp_set_ts_config(struct ionic_lif *lif,
-					   struct hwtstamp_config *new_ts)
-{
-	struct ionic *ionic = lif->ionic;
-	struct hwtstamp_config *config;
-	struct hwtstamp_config ts;
-	int tx_mode = 0;
+अटल पूर्णांक ionic_lअगर_hwstamp_set_ts_config(काष्ठा ionic_lअगर *lअगर,
+					   काष्ठा hwtstamp_config *new_ts)
+अणु
+	काष्ठा ionic *ionic = lअगर->ionic;
+	काष्ठा hwtstamp_config *config;
+	काष्ठा hwtstamp_config ts;
+	पूर्णांक tx_mode = 0;
 	u64 rx_filt = 0;
-	int err, err2;
+	पूर्णांक err, err2;
 	bool rx_all;
 	__le64 mask;
 
-	if (!lif->phc || !lif->phc->ptp)
-		return -EOPNOTSUPP;
+	अगर (!lअगर->phc || !lअगर->phc->ptp)
+		वापस -EOPNOTSUPP;
 
-	mutex_lock(&lif->phc->config_lock);
+	mutex_lock(&lअगर->phc->config_lock);
 
-	if (new_ts) {
+	अगर (new_ts) अणु
 		config = new_ts;
-	} else {
-		/* If called with new_ts == NULL, replay the previous request
-		 * primarily for recovery after a FW_RESET.
+	पूर्ण अन्यथा अणु
+		/* If called with new_ts == शून्य, replay the previous request
+		 * primarily क्रम recovery after a FW_RESET.
 		 * We saved the previous configuration request info, so copy
-		 * the previous request for reference, clear the current state
+		 * the previous request क्रम reference, clear the current state
 		 * to match the device's reset state, and run with it.
 		 */
 		config = &ts;
-		memcpy(config, &lif->phc->ts_config, sizeof(*config));
-		memset(&lif->phc->ts_config, 0, sizeof(lif->phc->ts_config));
-		lif->phc->ts_config_tx_mode = 0;
-		lif->phc->ts_config_rx_filt = 0;
-	}
+		स_नकल(config, &lअगर->phc->ts_config, माप(*config));
+		स_रखो(&lअगर->phc->ts_config, 0, माप(lअगर->phc->ts_config));
+		lअगर->phc->ts_config_tx_mode = 0;
+		lअगर->phc->ts_config_rx_filt = 0;
+	पूर्ण
 
 	tx_mode = ionic_hwstamp_tx_mode(config->tx_type);
-	if (tx_mode < 0) {
+	अगर (tx_mode < 0) अणु
 		err = tx_mode;
-		goto err_queues;
-	}
+		जाओ err_queues;
+	पूर्ण
 
 	mask = cpu_to_le64(BIT_ULL(tx_mode));
-	if ((ionic->ident.lif.eth.hwstamp_tx_modes & mask) != mask) {
-		err = -ERANGE;
-		goto err_queues;
-	}
+	अगर ((ionic->ident.lअगर.eth.hwstamp_tx_modes & mask) != mask) अणु
+		err = -दुस्फल;
+		जाओ err_queues;
+	पूर्ण
 
 	rx_filt = ionic_hwstamp_rx_filt(config->rx_filter);
 	rx_all = config->rx_filter != HWTSTAMP_FILTER_NONE && !rx_filt;
 
 	mask = cpu_to_le64(rx_filt);
-	if ((ionic->ident.lif.eth.hwstamp_rx_filters & mask) != mask) {
+	अगर ((ionic->ident.lअगर.eth.hwstamp_rx_filters & mask) != mask) अणु
 		rx_filt = 0;
 		rx_all = true;
 		config->rx_filter = HWTSTAMP_FILTER_ALL;
-	}
+	पूर्ण
 
 	dev_dbg(ionic->dev, "config_rx_filter %d rx_filt %#llx rx_all %d\n",
 		config->rx_filter, rx_filt, rx_all);
 
-	if (tx_mode) {
-		err = ionic_lif_create_hwstamp_txq(lif);
-		if (err)
-			goto err_queues;
-	}
+	अगर (tx_mode) अणु
+		err = ionic_lअगर_create_hwstamp_txq(lअगर);
+		अगर (err)
+			जाओ err_queues;
+	पूर्ण
 
-	if (rx_filt) {
-		err = ionic_lif_create_hwstamp_rxq(lif);
-		if (err)
-			goto err_queues;
-	}
+	अगर (rx_filt) अणु
+		err = ionic_lअगर_create_hwstamp_rxq(lअगर);
+		अगर (err)
+			जाओ err_queues;
+	पूर्ण
 
-	if (tx_mode != lif->phc->ts_config_tx_mode) {
-		err = ionic_lif_set_hwstamp_txmode(lif, tx_mode);
-		if (err)
-			goto err_txmode;
-	}
+	अगर (tx_mode != lअगर->phc->ts_config_tx_mode) अणु
+		err = ionic_lअगर_set_hwstamp_txmode(lअगर, tx_mode);
+		अगर (err)
+			जाओ err_txmode;
+	पूर्ण
 
-	if (rx_filt != lif->phc->ts_config_rx_filt) {
-		err = ionic_lif_set_hwstamp_rxfilt(lif, rx_filt);
-		if (err)
-			goto err_rxfilt;
-	}
+	अगर (rx_filt != lअगर->phc->ts_config_rx_filt) अणु
+		err = ionic_lअगर_set_hwstamp_rxfilt(lअगर, rx_filt);
+		अगर (err)
+			जाओ err_rxfilt;
+	पूर्ण
 
-	if (rx_all != (lif->phc->ts_config.rx_filter == HWTSTAMP_FILTER_ALL)) {
-		err = ionic_lif_config_hwstamp_rxq_all(lif, rx_all);
-		if (err)
-			goto err_rxall;
-	}
+	अगर (rx_all != (lअगर->phc->ts_config.rx_filter == HWTSTAMP_FILTER_ALL)) अणु
+		err = ionic_lअगर_config_hwstamp_rxq_all(lअगर, rx_all);
+		अगर (err)
+			जाओ err_rxall;
+	पूर्ण
 
-	memcpy(&lif->phc->ts_config, config, sizeof(*config));
-	lif->phc->ts_config_rx_filt = rx_filt;
-	lif->phc->ts_config_tx_mode = tx_mode;
+	स_नकल(&lअगर->phc->ts_config, config, माप(*config));
+	lअगर->phc->ts_config_rx_filt = rx_filt;
+	lअगर->phc->ts_config_tx_mode = tx_mode;
 
-	mutex_unlock(&lif->phc->config_lock);
+	mutex_unlock(&lअगर->phc->config_lock);
 
-	return 0;
+	वापस 0;
 
 err_rxall:
-	if (rx_filt != lif->phc->ts_config_rx_filt) {
-		rx_filt = lif->phc->ts_config_rx_filt;
-		err2 = ionic_lif_set_hwstamp_rxfilt(lif, rx_filt);
-		if (err2)
+	अगर (rx_filt != lअगर->phc->ts_config_rx_filt) अणु
+		rx_filt = lअगर->phc->ts_config_rx_filt;
+		err2 = ionic_lअगर_set_hwstamp_rxfilt(lअगर, rx_filt);
+		अगर (err2)
 			dev_err(ionic->dev,
 				"Failed to revert rx timestamp filter: %d\n", err2);
-	}
+	पूर्ण
 err_rxfilt:
-	if (tx_mode != lif->phc->ts_config_tx_mode) {
-		tx_mode = lif->phc->ts_config_tx_mode;
-		err2 = ionic_lif_set_hwstamp_txmode(lif, tx_mode);
-		if (err2)
+	अगर (tx_mode != lअगर->phc->ts_config_tx_mode) अणु
+		tx_mode = lअगर->phc->ts_config_tx_mode;
+		err2 = ionic_lअगर_set_hwstamp_txmode(lअगर, tx_mode);
+		अगर (err2)
 			dev_err(ionic->dev,
 				"Failed to revert tx timestamp mode: %d\n", err2);
-	}
+	पूर्ण
 err_txmode:
-	/* special queues remain allocated, just unused */
+	/* special queues reमुख्य allocated, just unused */
 err_queues:
-	mutex_unlock(&lif->phc->config_lock);
-	return err;
-}
+	mutex_unlock(&lअगर->phc->config_lock);
+	वापस err;
+पूर्ण
 
-int ionic_lif_hwstamp_set(struct ionic_lif *lif, struct ifreq *ifr)
-{
-	struct hwtstamp_config config;
-	int err;
+पूर्णांक ionic_lअगर_hwstamp_set(काष्ठा ionic_lअगर *lअगर, काष्ठा अगरreq *अगरr)
+अणु
+	काष्ठा hwtstamp_config config;
+	पूर्णांक err;
 
-	if (copy_from_user(&config, ifr->ifr_data, sizeof(config)))
-		return -EFAULT;
+	अगर (copy_from_user(&config, अगरr->अगरr_data, माप(config)))
+		वापस -EFAULT;
 
-	err = ionic_lif_hwstamp_set_ts_config(lif, &config);
-	if (err) {
-		netdev_info(lif->netdev, "hwstamp set failed: %d\n", err);
-		return err;
-	}
+	err = ionic_lअगर_hwstamp_set_ts_config(lअगर, &config);
+	अगर (err) अणु
+		netdev_info(lअगर->netdev, "hwstamp set failed: %d\n", err);
+		वापस err;
+	पूर्ण
 
-	if (copy_to_user(ifr->ifr_data, &config, sizeof(config)))
-		return -EFAULT;
+	अगर (copy_to_user(अगरr->अगरr_data, &config, माप(config)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ionic_lif_hwstamp_replay(struct ionic_lif *lif)
-{
-	int err;
+पूर्णांक ionic_lअगर_hwstamp_replay(काष्ठा ionic_lअगर *lअगर)
+अणु
+	पूर्णांक err;
 
-	err = ionic_lif_hwstamp_set_ts_config(lif, NULL);
-	if (err)
-		netdev_info(lif->netdev, "hwstamp replay failed: %d\n", err);
+	err = ionic_lअगर_hwstamp_set_ts_config(lअगर, शून्य);
+	अगर (err)
+		netdev_info(lअगर->netdev, "hwstamp replay failed: %d\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ionic_lif_hwstamp_get(struct ionic_lif *lif, struct ifreq *ifr)
-{
-	struct hwtstamp_config config;
+पूर्णांक ionic_lअगर_hwstamp_get(काष्ठा ionic_lअगर *lअगर, काष्ठा अगरreq *अगरr)
+अणु
+	काष्ठा hwtstamp_config config;
 
-	if (!lif->phc || !lif->phc->ptp)
-		return -EOPNOTSUPP;
+	अगर (!lअगर->phc || !lअगर->phc->ptp)
+		वापस -EOPNOTSUPP;
 
-	mutex_lock(&lif->phc->config_lock);
-	memcpy(&config, &lif->phc->ts_config, sizeof(config));
-	mutex_unlock(&lif->phc->config_lock);
+	mutex_lock(&lअगर->phc->config_lock);
+	स_नकल(&config, &lअगर->phc->ts_config, माप(config));
+	mutex_unlock(&lअगर->phc->config_lock);
 
-	if (copy_to_user(ifr->ifr_data, &config, sizeof(config)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(अगरr->अगरr_data, &config, माप(config)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static u64 ionic_hwstamp_read(struct ionic *ionic,
-			      struct ptp_system_timestamp *sts)
-{
-	u32 tick_high_before, tick_high, tick_low;
+अटल u64 ionic_hwstamp_पढ़ो(काष्ठा ionic *ionic,
+			      काष्ठा ptp_प्रणाली_बारtamp *sts)
+अणु
+	u32 tick_high_beक्रमe, tick_high, tick_low;
 
-	/* read and discard low part to defeat hw staging of high part */
-	(void)ioread32(&ionic->idev.hwstamp_regs->tick_low);
+	/* पढ़ो and discard low part to defeat hw staging of high part */
+	(व्योम)ioपढ़ो32(&ionic->idev.hwstamp_regs->tick_low);
 
-	tick_high_before = ioread32(&ionic->idev.hwstamp_regs->tick_high);
+	tick_high_beक्रमe = ioपढ़ो32(&ionic->idev.hwstamp_regs->tick_high);
 
-	ptp_read_system_prets(sts);
-	tick_low = ioread32(&ionic->idev.hwstamp_regs->tick_low);
-	ptp_read_system_postts(sts);
+	ptp_पढ़ो_प्रणाली_prets(sts);
+	tick_low = ioपढ़ो32(&ionic->idev.hwstamp_regs->tick_low);
+	ptp_पढ़ो_प्रणाली_postts(sts);
 
-	tick_high = ioread32(&ionic->idev.hwstamp_regs->tick_high);
+	tick_high = ioपढ़ो32(&ionic->idev.hwstamp_regs->tick_high);
 
-	/* If tick_high changed, re-read tick_low once more.  Assume tick_high
-	 * cannot change again so soon as in the span of re-reading tick_low.
+	/* If tick_high changed, re-पढ़ो tick_low once more.  Assume tick_high
+	 * cannot change again so soon as in the span of re-पढ़ोing tick_low.
 	 */
-	if (tick_high != tick_high_before) {
-		ptp_read_system_prets(sts);
-		tick_low = ioread32(&ionic->idev.hwstamp_regs->tick_low);
-		ptp_read_system_postts(sts);
-	}
+	अगर (tick_high != tick_high_beक्रमe) अणु
+		ptp_पढ़ो_प्रणाली_prets(sts);
+		tick_low = ioपढ़ो32(&ionic->idev.hwstamp_regs->tick_low);
+		ptp_पढ़ो_प्रणाली_postts(sts);
+	पूर्ण
 
-	return (u64)tick_low | ((u64)tick_high << 32);
-}
+	वापस (u64)tick_low | ((u64)tick_high << 32);
+पूर्ण
 
-static u64 ionic_cc_read(const struct cyclecounter *cc)
-{
-	struct ionic_phc *phc = container_of(cc, struct ionic_phc, cc);
-	struct ionic *ionic = phc->lif->ionic;
+अटल u64 ionic_cc_पढ़ो(स्थिर काष्ठा cyclecounter *cc)
+अणु
+	काष्ठा ionic_phc *phc = container_of(cc, काष्ठा ionic_phc, cc);
+	काष्ठा ionic *ionic = phc->lअगर->ionic;
 
-	return ionic_hwstamp_read(ionic, NULL);
-}
+	वापस ionic_hwstamp_पढ़ो(ionic, शून्य);
+पूर्ण
 
-static int ionic_setphc_cmd(struct ionic_phc *phc, struct ionic_admin_ctx *ctx)
-{
+अटल पूर्णांक ionic_setphc_cmd(काष्ठा ionic_phc *phc, काष्ठा ionic_admin_ctx *ctx)
+अणु
 	ctx->work = COMPLETION_INITIALIZER_ONSTACK(ctx->work);
 
-	ctx->cmd.lif_setphc.opcode = IONIC_CMD_LIF_SETPHC;
-	ctx->cmd.lif_setphc.lif_index = cpu_to_le16(phc->lif->index);
+	ctx->cmd.lअगर_setphc.opcode = IONIC_CMD_LIF_SETPHC;
+	ctx->cmd.lअगर_setphc.lअगर_index = cpu_to_le16(phc->lअगर->index);
 
-	ctx->cmd.lif_setphc.tick = cpu_to_le64(phc->tc.cycle_last);
-	ctx->cmd.lif_setphc.nsec = cpu_to_le64(phc->tc.nsec);
-	ctx->cmd.lif_setphc.frac = cpu_to_le64(phc->tc.frac);
-	ctx->cmd.lif_setphc.mult = cpu_to_le32(phc->cc.mult);
-	ctx->cmd.lif_setphc.shift = cpu_to_le32(phc->cc.shift);
+	ctx->cmd.lअगर_setphc.tick = cpu_to_le64(phc->tc.cycle_last);
+	ctx->cmd.lअगर_setphc.nsec = cpu_to_le64(phc->tc.nsec);
+	ctx->cmd.lअगर_setphc.frac = cpu_to_le64(phc->tc.frac);
+	ctx->cmd.lअगर_setphc.mult = cpu_to_le32(phc->cc.mult);
+	ctx->cmd.lअगर_setphc.shअगरt = cpu_to_le32(phc->cc.shअगरt);
 
-	return ionic_adminq_post(phc->lif, ctx);
-}
+	वापस ionic_adminq_post(phc->lअगर, ctx);
+पूर्ण
 
-static int ionic_phc_adjfine(struct ptp_clock_info *info, long scaled_ppm)
-{
-	struct ionic_phc *phc = container_of(info, struct ionic_phc, ptp_info);
-	struct ionic_admin_ctx ctx = {};
-	unsigned long irqflags;
+अटल पूर्णांक ionic_phc_adjfine(काष्ठा ptp_घड़ी_info *info, दीर्घ scaled_ppm)
+अणु
+	काष्ठा ionic_phc *phc = container_of(info, काष्ठा ionic_phc, ptp_info);
+	काष्ठा ionic_admin_ctx ctx = अणुपूर्ण;
+	अचिन्हित दीर्घ irqflags;
 	s64 adj;
-	int err;
+	पूर्णांक err;
 
-	/* Reject phc adjustments during device upgrade */
-	if (test_bit(IONIC_LIF_F_FW_RESET, phc->lif->state))
-		return -EBUSY;
+	/* Reject phc adjusपंचांगents during device upgrade */
+	अगर (test_bit(IONIC_LIF_F_FW_RESET, phc->lअगर->state))
+		वापस -EBUSY;
 
-	/* Adjustment value scaled by 2^16 million */
+	/* Adjusपंचांगent value scaled by 2^16 million */
 	adj = (s64)scaled_ppm * phc->init_cc_mult;
 
-	/* Adjustment value to scale */
+	/* Adjusपंचांगent value to scale */
 	adj /= (s64)SCALED_PPM;
 
 	/* Final adjusted multiplier */
@@ -305,293 +306,293 @@ static int ionic_phc_adjfine(struct ptp_clock_info *info, long scaled_ppm)
 
 	spin_lock_irqsave(&phc->lock, irqflags);
 
-	/* update the point-in-time basis to now, before adjusting the rate */
-	timecounter_read(&phc->tc);
+	/* update the poपूर्णांक-in-समय basis to now, beक्रमe adjusting the rate */
+	समयcounter_पढ़ो(&phc->tc);
 	phc->cc.mult = adj;
 
 	/* Setphc commands are posted in-order, sequenced by phc->lock.  We
-	 * need to drop the lock before waiting for the command to complete.
+	 * need to drop the lock beक्रमe रुकोing क्रम the command to complete.
 	 */
 	err = ionic_setphc_cmd(phc, &ctx);
 
 	spin_unlock_irqrestore(&phc->lock, irqflags);
 
-	return ionic_adminq_wait(phc->lif, &ctx, err);
-}
+	वापस ionic_adminq_रुको(phc->lअगर, &ctx, err);
+पूर्ण
 
-static int ionic_phc_adjtime(struct ptp_clock_info *info, s64 delta)
-{
-	struct ionic_phc *phc = container_of(info, struct ionic_phc, ptp_info);
-	struct ionic_admin_ctx ctx = {};
-	unsigned long irqflags;
-	int err;
+अटल पूर्णांक ionic_phc_adjसमय(काष्ठा ptp_घड़ी_info *info, s64 delta)
+अणु
+	काष्ठा ionic_phc *phc = container_of(info, काष्ठा ionic_phc, ptp_info);
+	काष्ठा ionic_admin_ctx ctx = अणुपूर्ण;
+	अचिन्हित दीर्घ irqflags;
+	पूर्णांक err;
 
-	/* Reject phc adjustments during device upgrade */
-	if (test_bit(IONIC_LIF_F_FW_RESET, phc->lif->state))
-		return -EBUSY;
+	/* Reject phc adjusपंचांगents during device upgrade */
+	अगर (test_bit(IONIC_LIF_F_FW_RESET, phc->lअगर->state))
+		वापस -EBUSY;
 
 	spin_lock_irqsave(&phc->lock, irqflags);
 
-	timecounter_adjtime(&phc->tc, delta);
+	समयcounter_adjसमय(&phc->tc, delta);
 
 	/* Setphc commands are posted in-order, sequenced by phc->lock.  We
-	 * need to drop the lock before waiting for the command to complete.
+	 * need to drop the lock beक्रमe रुकोing क्रम the command to complete.
 	 */
 	err = ionic_setphc_cmd(phc, &ctx);
 
 	spin_unlock_irqrestore(&phc->lock, irqflags);
 
-	return ionic_adminq_wait(phc->lif, &ctx, err);
-}
+	वापस ionic_adminq_रुको(phc->lअगर, &ctx, err);
+पूर्ण
 
-static int ionic_phc_settime64(struct ptp_clock_info *info,
-			       const struct timespec64 *ts)
-{
-	struct ionic_phc *phc = container_of(info, struct ionic_phc, ptp_info);
-	struct ionic_admin_ctx ctx = {};
-	unsigned long irqflags;
-	int err;
+अटल पूर्णांक ionic_phc_समय_रखो64(काष्ठा ptp_घड़ी_info *info,
+			       स्थिर काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा ionic_phc *phc = container_of(info, काष्ठा ionic_phc, ptp_info);
+	काष्ठा ionic_admin_ctx ctx = अणुपूर्ण;
+	अचिन्हित दीर्घ irqflags;
+	पूर्णांक err;
 	u64 ns;
 
-	/* Reject phc adjustments during device upgrade */
-	if (test_bit(IONIC_LIF_F_FW_RESET, phc->lif->state))
-		return -EBUSY;
+	/* Reject phc adjusपंचांगents during device upgrade */
+	अगर (test_bit(IONIC_LIF_F_FW_RESET, phc->lअगर->state))
+		वापस -EBUSY;
 
-	ns = timespec64_to_ns(ts);
+	ns = बारpec64_to_ns(ts);
 
 	spin_lock_irqsave(&phc->lock, irqflags);
 
-	timecounter_init(&phc->tc, &phc->cc, ns);
+	समयcounter_init(&phc->tc, &phc->cc, ns);
 
 	/* Setphc commands are posted in-order, sequenced by phc->lock.  We
-	 * need to drop the lock before waiting for the command to complete.
+	 * need to drop the lock beक्रमe रुकोing क्रम the command to complete.
 	 */
 	err = ionic_setphc_cmd(phc, &ctx);
 
 	spin_unlock_irqrestore(&phc->lock, irqflags);
 
-	return ionic_adminq_wait(phc->lif, &ctx, err);
-}
+	वापस ionic_adminq_रुको(phc->lअगर, &ctx, err);
+पूर्ण
 
-static int ionic_phc_gettimex64(struct ptp_clock_info *info,
-				struct timespec64 *ts,
-				struct ptp_system_timestamp *sts)
-{
-	struct ionic_phc *phc = container_of(info, struct ionic_phc, ptp_info);
-	struct ionic *ionic = phc->lif->ionic;
-	unsigned long irqflags;
+अटल पूर्णांक ionic_phc_समय_लोx64(काष्ठा ptp_घड़ी_info *info,
+				काष्ठा बारpec64 *ts,
+				काष्ठा ptp_प्रणाली_बारtamp *sts)
+अणु
+	काष्ठा ionic_phc *phc = container_of(info, काष्ठा ionic_phc, ptp_info);
+	काष्ठा ionic *ionic = phc->lअगर->ionic;
+	अचिन्हित दीर्घ irqflags;
 	u64 tick, ns;
 
-	/* Do not attempt to read device time during upgrade */
-	if (test_bit(IONIC_LIF_F_FW_RESET, phc->lif->state))
-		return -EBUSY;
+	/* Do not attempt to पढ़ो device समय during upgrade */
+	अगर (test_bit(IONIC_LIF_F_FW_RESET, phc->lअगर->state))
+		वापस -EBUSY;
 
 	spin_lock_irqsave(&phc->lock, irqflags);
 
-	tick = ionic_hwstamp_read(ionic, sts);
+	tick = ionic_hwstamp_पढ़ो(ionic, sts);
 
-	ns = timecounter_cyc2time(&phc->tc, tick);
+	ns = समयcounter_cyc2समय(&phc->tc, tick);
 
 	spin_unlock_irqrestore(&phc->lock, irqflags);
 
-	*ts = ns_to_timespec64(ns);
+	*ts = ns_to_बारpec64(ns);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long ionic_phc_aux_work(struct ptp_clock_info *info)
-{
-	struct ionic_phc *phc = container_of(info, struct ionic_phc, ptp_info);
-	struct ionic_admin_ctx ctx = {};
-	unsigned long irqflags;
-	int err;
+अटल दीर्घ ionic_phc_aux_work(काष्ठा ptp_घड़ी_info *info)
+अणु
+	काष्ठा ionic_phc *phc = container_of(info, काष्ठा ionic_phc, ptp_info);
+	काष्ठा ionic_admin_ctx ctx = अणुपूर्ण;
+	अचिन्हित दीर्घ irqflags;
+	पूर्णांक err;
 
 	/* Do not update phc during device upgrade, but keep polling to resume
-	 * after upgrade.  Since we don't update the point in time basis, there
-	 * is no expectation that we are maintaining the phc time during the
-	 * upgrade.  After upgrade, it will need to be readjusted back to the
-	 * correct time by the ptp daemon.
+	 * after upgrade.  Since we करोn't update the poपूर्णांक in समय basis, there
+	 * is no expectation that we are मुख्यtaining the phc समय during the
+	 * upgrade.  After upgrade, it will need to be पढ़ोjusted back to the
+	 * correct समय by the ptp daemon.
 	 */
-	if (test_bit(IONIC_LIF_F_FW_RESET, phc->lif->state))
-		return phc->aux_work_delay;
+	अगर (test_bit(IONIC_LIF_F_FW_RESET, phc->lअगर->state))
+		वापस phc->aux_work_delay;
 
 	spin_lock_irqsave(&phc->lock, irqflags);
 
-	/* update point-in-time basis to now */
-	timecounter_read(&phc->tc);
+	/* update poपूर्णांक-in-समय basis to now */
+	समयcounter_पढ़ो(&phc->tc);
 
 	/* Setphc commands are posted in-order, sequenced by phc->lock.  We
-	 * need to drop the lock before waiting for the command to complete.
+	 * need to drop the lock beक्रमe रुकोing क्रम the command to complete.
 	 */
 	err = ionic_setphc_cmd(phc, &ctx);
 
 	spin_unlock_irqrestore(&phc->lock, irqflags);
 
-	ionic_adminq_wait(phc->lif, &ctx, err);
+	ionic_adminq_रुको(phc->lअगर, &ctx, err);
 
-	return phc->aux_work_delay;
-}
+	वापस phc->aux_work_delay;
+पूर्ण
 
-ktime_t ionic_lif_phc_ktime(struct ionic_lif *lif, u64 tick)
-{
-	unsigned long irqflags;
+kसमय_प्रकार ionic_lअगर_phc_kसमय(काष्ठा ionic_lअगर *lअगर, u64 tick)
+अणु
+	अचिन्हित दीर्घ irqflags;
 	u64 ns;
 
-	if (!lif->phc)
-		return 0;
+	अगर (!lअगर->phc)
+		वापस 0;
 
-	spin_lock_irqsave(&lif->phc->lock, irqflags);
-	ns = timecounter_cyc2time(&lif->phc->tc, tick);
-	spin_unlock_irqrestore(&lif->phc->lock, irqflags);
+	spin_lock_irqsave(&lअगर->phc->lock, irqflags);
+	ns = समयcounter_cyc2समय(&lअगर->phc->tc, tick);
+	spin_unlock_irqrestore(&lअगर->phc->lock, irqflags);
 
-	return ns_to_ktime(ns);
-}
+	वापस ns_to_kसमय(ns);
+पूर्ण
 
-static const struct ptp_clock_info ionic_ptp_info = {
+अटल स्थिर काष्ठा ptp_घड़ी_info ionic_ptp_info = अणु
 	.owner		= THIS_MODULE,
 	.name		= "ionic_ptp",
 	.adjfine	= ionic_phc_adjfine,
-	.adjtime	= ionic_phc_adjtime,
-	.gettimex64	= ionic_phc_gettimex64,
-	.settime64	= ionic_phc_settime64,
-	.do_aux_work	= ionic_phc_aux_work,
-};
+	.adjसमय	= ionic_phc_adjसमय,
+	.समय_लोx64	= ionic_phc_समय_लोx64,
+	.समय_रखो64	= ionic_phc_समय_रखो64,
+	.करो_aux_work	= ionic_phc_aux_work,
+पूर्ण;
 
-void ionic_lif_register_phc(struct ionic_lif *lif)
-{
-	if (!lif->phc || !(lif->hw_features & IONIC_ETH_HW_TIMESTAMP))
-		return;
+व्योम ionic_lअगर_रेजिस्टर_phc(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अगर (!lअगर->phc || !(lअगर->hw_features & IONIC_ETH_HW_TIMESTAMP))
+		वापस;
 
-	lif->phc->ptp = ptp_clock_register(&lif->phc->ptp_info, lif->ionic->dev);
+	lअगर->phc->ptp = ptp_घड़ी_रेजिस्टर(&lअगर->phc->ptp_info, lअगर->ionic->dev);
 
-	if (IS_ERR(lif->phc->ptp)) {
-		dev_warn(lif->ionic->dev, "Cannot register phc device: %ld\n",
-			 PTR_ERR(lif->phc->ptp));
+	अगर (IS_ERR(lअगर->phc->ptp)) अणु
+		dev_warn(lअगर->ionic->dev, "Cannot register phc device: %ld\n",
+			 PTR_ERR(lअगर->phc->ptp));
 
-		lif->phc->ptp = NULL;
-	}
+		lअगर->phc->ptp = शून्य;
+	पूर्ण
 
-	if (lif->phc->ptp)
-		ptp_schedule_worker(lif->phc->ptp, lif->phc->aux_work_delay);
-}
+	अगर (lअगर->phc->ptp)
+		ptp_schedule_worker(lअगर->phc->ptp, lअगर->phc->aux_work_delay);
+पूर्ण
 
-void ionic_lif_unregister_phc(struct ionic_lif *lif)
-{
-	if (!lif->phc || !lif->phc->ptp)
-		return;
+व्योम ionic_lअगर_unरेजिस्टर_phc(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अगर (!lअगर->phc || !lअगर->phc->ptp)
+		वापस;
 
-	ptp_clock_unregister(lif->phc->ptp);
+	ptp_घड़ी_unरेजिस्टर(lअगर->phc->ptp);
 
-	lif->phc->ptp = NULL;
-}
+	lअगर->phc->ptp = शून्य;
+पूर्ण
 
-void ionic_lif_alloc_phc(struct ionic_lif *lif)
-{
-	struct ionic *ionic = lif->ionic;
-	struct ionic_phc *phc;
-	u64 delay, diff, mult;
+व्योम ionic_lअगर_alloc_phc(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा ionic *ionic = lअगर->ionic;
+	काष्ठा ionic_phc *phc;
+	u64 delay, dअगरf, mult;
 	u64 frac = 0;
 	u64 features;
-	u32 shift;
+	u32 shअगरt;
 
-	if (!ionic->idev.hwstamp_regs)
-		return;
+	अगर (!ionic->idev.hwstamp_regs)
+		वापस;
 
-	features = le64_to_cpu(ionic->ident.lif.eth.config.features);
-	if (!(features & IONIC_ETH_HW_TIMESTAMP))
-		return;
+	features = le64_to_cpu(ionic->ident.lअगर.eth.config.features);
+	अगर (!(features & IONIC_ETH_HW_TIMESTAMP))
+		वापस;
 
-	phc = devm_kzalloc(ionic->dev, sizeof(*phc), GFP_KERNEL);
-	if (!phc)
-		return;
+	phc = devm_kzalloc(ionic->dev, माप(*phc), GFP_KERNEL);
+	अगर (!phc)
+		वापस;
 
-	phc->lif = lif;
+	phc->lअगर = lअगर;
 
-	phc->cc.read = ionic_cc_read;
+	phc->cc.पढ़ो = ionic_cc_पढ़ो;
 	phc->cc.mask = le64_to_cpu(ionic->ident.dev.hwstamp_mask);
 	phc->cc.mult = le32_to_cpu(ionic->ident.dev.hwstamp_mult);
-	phc->cc.shift = le32_to_cpu(ionic->ident.dev.hwstamp_shift);
+	phc->cc.shअगरt = le32_to_cpu(ionic->ident.dev.hwstamp_shअगरt);
 
-	if (!phc->cc.mult) {
-		dev_err(lif->ionic->dev,
+	अगर (!phc->cc.mult) अणु
+		dev_err(lअगर->ionic->dev,
 			"Invalid device PHC mask multiplier %u, disabling HW timestamp support\n",
 			phc->cc.mult);
-		devm_kfree(lif->ionic->dev, phc);
-		lif->phc = NULL;
-		return;
-	}
+		devm_kमुक्त(lअगर->ionic->dev, phc);
+		lअगर->phc = शून्य;
+		वापस;
+	पूर्ण
 
-	dev_dbg(lif->ionic->dev, "Device PHC mask %#llx mult %u shift %u\n",
-		phc->cc.mask, phc->cc.mult, phc->cc.shift);
+	dev_dbg(lअगर->ionic->dev, "Device PHC mask %#llx mult %u shift %u\n",
+		phc->cc.mask, phc->cc.mult, phc->cc.shअगरt);
 
 	spin_lock_init(&phc->lock);
 	mutex_init(&phc->config_lock);
 
 	/* max ticks is limited by the multiplier, or by the update period. */
-	if (phc->cc.shift + 2 + ilog2(IONIC_PHC_UPDATE_NS) >= 64) {
-		/* max ticks that do not overflow when multiplied by max
+	अगर (phc->cc.shअगरt + 2 + ilog2(IONIC_PHC_UPDATE_NS) >= 64) अणु
+		/* max ticks that करो not overflow when multiplied by max
 		 * adjusted multiplier (twice the initial multiplier)
 		 */
-		diff = U64_MAX / phc->cc.mult / 2;
-	} else {
-		/* approx ticks at four times the update period */
-		diff = (u64)IONIC_PHC_UPDATE_NS << (phc->cc.shift + 2);
-		diff = DIV_ROUND_UP(diff, phc->cc.mult);
-	}
+		dअगरf = U64_MAX / phc->cc.mult / 2;
+	पूर्ण अन्यथा अणु
+		/* approx ticks at four बार the update period */
+		dअगरf = (u64)IONIC_PHC_UPDATE_NS << (phc->cc.shअगरt + 2);
+		dअगरf = DIV_ROUND_UP(dअगरf, phc->cc.mult);
+	पूर्ण
 
-	/* transform to bitmask */
-	diff |= diff >> 1;
-	diff |= diff >> 2;
-	diff |= diff >> 4;
-	diff |= diff >> 8;
-	diff |= diff >> 16;
-	diff |= diff >> 32;
+	/* transक्रमm to biपंचांगask */
+	dअगरf |= dअगरf >> 1;
+	dअगरf |= dअगरf >> 2;
+	dअगरf |= dअगरf >> 4;
+	dअगरf |= dअगरf >> 8;
+	dअगरf |= dअगरf >> 16;
+	dअगरf |= dअगरf >> 32;
 
-	/* constrain to the hardware bitmask, and use this as the bitmask */
-	diff &= phc->cc.mask;
-	phc->cc.mask = diff;
+	/* स्थिरrain to the hardware biपंचांगask, and use this as the biपंचांगask */
+	dअगरf &= phc->cc.mask;
+	phc->cc.mask = dअगरf;
 
-	/* the wrap period is now defined by diff (or phc->cc.mask)
+	/* the wrap period is now defined by dअगरf (or phc->cc.mask)
 	 *
-	 * we will update the time basis at about 1/4 the wrap period, so
-	 * should not see a difference of more than +/- diff/4.
+	 * we will update the समय basis at about 1/4 the wrap period, so
+	 * should not see a dअगरference of more than +/- dअगरf/4.
 	 *
-	 * this is sufficient not see a difference of more than +/- diff/2, as
-	 * required by timecounter_cyc2time, to detect an old time stamp.
+	 * this is sufficient not see a dअगरference of more than +/- dअगरf/2, as
+	 * required by समयcounter_cyc2समय, to detect an old समय stamp.
 	 *
-	 * adjust the initial multiplier, being careful to avoid overflow:
-	 *  - do not overflow 63 bits: init_cc_mult * SCALED_PPM
-	 *  - do not overflow 64 bits: max_mult * (diff / 2)
+	 * adjust the initial multiplier, being careful to aव्योम overflow:
+	 *  - करो not overflow 63 bits: init_cc_mult * SCALED_PPM
+	 *  - करो not overflow 64 bits: max_mult * (dअगरf / 2)
 	 *
 	 * we want to increase the initial multiplier as much as possible, to
-	 * allow for more precise adjustment in ionic_phc_adjfine.
+	 * allow क्रम more precise adjusपंचांगent in ionic_phc_adjfine.
 	 *
-	 * only adjust the multiplier if we can double it or more.
+	 * only adjust the multiplier अगर we can द्विगुन it or more.
 	 */
-	mult = U64_MAX / 2 / max(diff / 2, SCALED_PPM);
-	shift = mult / phc->cc.mult;
-	if (shift >= 2) {
+	mult = U64_MAX / 2 / max(dअगरf / 2, SCALED_PPM);
+	shअगरt = mult / phc->cc.mult;
+	अगर (shअगरt >= 2) अणु
 		/* initial multiplier will be 2^n of hardware cc.mult */
-		shift = fls(shift);
-		/* increase cc.mult and cc.shift by the same 2^n and n. */
-		phc->cc.mult <<= shift;
-		phc->cc.shift += shift;
-	}
+		shअगरt = fls(shअगरt);
+		/* increase cc.mult and cc.shअगरt by the same 2^n and n. */
+		phc->cc.mult <<= shअगरt;
+		phc->cc.shअगरt += shअगरt;
+	पूर्ण
 
-	dev_dbg(lif->ionic->dev, "Initial PHC mask %#llx mult %u shift %u\n",
-		phc->cc.mask, phc->cc.mult, phc->cc.shift);
+	dev_dbg(lअगर->ionic->dev, "Initial PHC mask %#llx mult %u shift %u\n",
+		phc->cc.mask, phc->cc.mult, phc->cc.shअगरt);
 
-	/* frequency adjustments are relative to the initial multiplier */
+	/* frequency adjusपंचांगents are relative to the initial multiplier */
 	phc->init_cc_mult = phc->cc.mult;
 
-	timecounter_init(&phc->tc, &phc->cc, ktime_get_real_ns());
+	समयcounter_init(&phc->tc, &phc->cc, kसमय_get_real_ns());
 
 	/* Update cycle_last at 1/4 the wrap period, or IONIC_PHC_UPDATE_NS */
 	delay = min_t(u64, IONIC_PHC_UPDATE_NS,
-		      cyclecounter_cyc2ns(&phc->cc, diff / 4, 0, &frac));
-	dev_dbg(lif->ionic->dev, "Work delay %llu ms\n", delay / NSEC_PER_MSEC);
+		      cyclecounter_cyc2ns(&phc->cc, dअगरf / 4, 0, &frac));
+	dev_dbg(lअगर->ionic->dev, "Work delay %llu ms\n", delay / NSEC_PER_MSEC);
 
-	phc->aux_work_delay = nsecs_to_jiffies(delay);
+	phc->aux_work_delay = nsecs_to_jअगरfies(delay);
 
 	phc->ptp_info = ionic_ptp_info;
 
@@ -600,16 +601,16 @@ void ionic_lif_alloc_phc(struct ionic_lif *lif)
 	 */
 	phc->ptp_info.max_adj = NORMAL_PPB;
 
-	lif->phc = phc;
-}
+	lअगर->phc = phc;
+पूर्ण
 
-void ionic_lif_free_phc(struct ionic_lif *lif)
-{
-	if (!lif->phc)
-		return;
+व्योम ionic_lअगर_मुक्त_phc(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अगर (!lअगर->phc)
+		वापस;
 
-	mutex_destroy(&lif->phc->config_lock);
+	mutex_destroy(&lअगर->phc->config_lock);
 
-	devm_kfree(lif->ionic->dev, lif->phc);
-	lif->phc = NULL;
-}
+	devm_kमुक्त(lअगर->ionic->dev, lअगर->phc);
+	lअगर->phc = शून्य;
+पूर्ण

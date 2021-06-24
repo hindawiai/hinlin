@@ -1,137 +1,138 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  arch/arm/mach-rpc/include/mach/acornfb.h
  *
  *  Copyright (C) 1999 Russell King
  *
- *  AcornFB architecture specific code
+ *  AcornFB architecture specअगरic code
  */
 
-#define acornfb_bandwidth(var) ((var)->pixclock * 8 / (var)->bits_per_pixel)
+#घोषणा acornfb_bandwidth(var) ((var)->pixघड़ी * 8 / (var)->bits_per_pixel)
 
-static inline int
-acornfb_valid_pixrate(struct fb_var_screeninfo *var)
-{
-	u_long limit;
+अटल अंतरभूत पूर्णांक
+acornfb_valid_pixrate(काष्ठा fb_var_screeninfo *var)
+अणु
+	u_दीर्घ limit;
 
-	if (!var->pixclock)
-		return 0;
+	अगर (!var->pixघड़ी)
+		वापस 0;
 
 	/*
 	 * Limits below are taken from RISC OS bandwidthlimit file
 	 */
-	if (current_par.using_vram) {
-		if (current_par.vram_half_sam == 2048)
+	अगर (current_par.using_vram) अणु
+		अगर (current_par.vram_half_sam == 2048)
 			limit = 6578;
-		else
+		अन्यथा
 			limit = 13157;
-	} else {
+	पूर्ण अन्यथा अणु
 		limit = 26315;
-	}
+	पूर्ण
 
-	return acornfb_bandwidth(var) >= limit;
-}
+	वापस acornfb_bandwidth(var) >= limit;
+पूर्ण
 
 /*
- * Try to find the best PLL parameters for the pixel clock.
+ * Try to find the best PLL parameters क्रम the pixel घड़ी.
  * This algorithm seems to give best predictable results,
  * and produces the same values as detailed in the VIDC20
  * data sheet.
  */
-static inline u_int
-acornfb_vidc20_find_pll(u_int pixclk)
-{
-	u_int r, best_r = 2, best_v = 2;
-	int best_d = 0x7fffffff;
+अटल अंतरभूत u_पूर्णांक
+acornfb_vidc20_find_pll(u_पूर्णांक pixclk)
+अणु
+	u_पूर्णांक r, best_r = 2, best_v = 2;
+	पूर्णांक best_d = 0x7fffffff;
 
-	for (r = 2; r <= 32; r++) {
-		u_int rr, v, p;
-		int d;
+	क्रम (r = 2; r <= 32; r++) अणु
+		u_पूर्णांक rr, v, p;
+		पूर्णांक d;
 
 		rr = 41667 * r;
 
 		v = (rr + pixclk / 2) / pixclk;
 
-		if (v > 32 || v < 2)
-			continue;
+		अगर (v > 32 || v < 2)
+			जारी;
 
 		p = (rr + v / 2) / v;
 
 		d = pixclk - p;
 
-		if (d < 0)
+		अगर (d < 0)
 			d = -d;
 
-		if (d < best_d) {
+		अगर (d < best_d) अणु
 			best_d = d;
 			best_v = v - 1;
 			best_r = r - 1;
-		}
+		पूर्ण
 
-		if (d == 0)
-			break;
-	}
+		अगर (d == 0)
+			अवरोध;
+	पूर्ण
 
-	return best_v << 8 | best_r;
-}
+	वापस best_v << 8 | best_r;
+पूर्ण
 
-static inline void
-acornfb_vidc20_find_rates(struct vidc_timing *vidc,
-			  struct fb_var_screeninfo *var)
-{
-	u_int div;
+अटल अंतरभूत व्योम
+acornfb_vidc20_find_rates(काष्ठा vidc_timing *vidc,
+			  काष्ठा fb_var_screeninfo *var)
+अणु
+	u_पूर्णांक भाग;
 
-	/* Select pixel-clock divisor to keep PLL in range */
-	div = var->pixclock / 9090; /*9921*/
+	/* Select pixel-घड़ी भागisor to keep PLL in range */
+	भाग = var->pixघड़ी / 9090; /*9921*/
 
-	/* Limit divisor */
-	if (div == 0)
-		div = 1;
-	if (div > 8)
-		div = 8;
+	/* Limit भागisor */
+	अगर (भाग == 0)
+		भाग = 1;
+	अगर (भाग > 8)
+		भाग = 8;
 
-	/* Encode divisor to VIDC20 setting */
-	switch (div) {
-	case 1:	vidc->control |= VIDC20_CTRL_PIX_CK;  break;
-	case 2:	vidc->control |= VIDC20_CTRL_PIX_CK2; break;
-	case 3:	vidc->control |= VIDC20_CTRL_PIX_CK3; break;
-	case 4:	vidc->control |= VIDC20_CTRL_PIX_CK4; break;
-	case 5:	vidc->control |= VIDC20_CTRL_PIX_CK5; break;
-	case 6:	vidc->control |= VIDC20_CTRL_PIX_CK6; break;
-	case 7:	vidc->control |= VIDC20_CTRL_PIX_CK7; break;
-	case 8: vidc->control |= VIDC20_CTRL_PIX_CK8; break;
-	}
+	/* Encode भागisor to VIDC20 setting */
+	चयन (भाग) अणु
+	हाल 1:	vidc->control |= VIDC20_CTRL_PIX_CK;  अवरोध;
+	हाल 2:	vidc->control |= VIDC20_CTRL_PIX_CK2; अवरोध;
+	हाल 3:	vidc->control |= VIDC20_CTRL_PIX_CK3; अवरोध;
+	हाल 4:	vidc->control |= VIDC20_CTRL_PIX_CK4; अवरोध;
+	हाल 5:	vidc->control |= VIDC20_CTRL_PIX_CK5; अवरोध;
+	हाल 6:	vidc->control |= VIDC20_CTRL_PIX_CK6; अवरोध;
+	हाल 7:	vidc->control |= VIDC20_CTRL_PIX_CK7; अवरोध;
+	हाल 8: vidc->control |= VIDC20_CTRL_PIX_CK8; अवरोध;
+	पूर्ण
 
 	/*
 	 * With VRAM, the FIFO can be set to the highest possible setting
-	 * because there are no latency considerations for other memory
+	 * because there are no latency considerations क्रम other memory
 	 * accesses. However, in 64 bit bus mode the FIFO preload value
 	 * must not be set to VIDC20_CTRL_FIFO_28 because this will let
 	 * the FIFO overflow. See VIDC20 manual page 33 (6.0 Setting the
 	 * FIFO preload value).
 	 */
-	if (current_par.using_vram) {
-		if (current_par.vram_half_sam == 2048)
+	अगर (current_par.using_vram) अणु
+		अगर (current_par.vram_half_sam == 2048)
 			vidc->control |= VIDC20_CTRL_FIFO_24;
-		else
+		अन्यथा
 			vidc->control |= VIDC20_CTRL_FIFO_28;
-	} else {
-		unsigned long bandwidth = acornfb_bandwidth(var);
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ bandwidth = acornfb_bandwidth(var);
 
 		/* Encode bandwidth as VIDC20 setting */
-		if (bandwidth > 33334)		/* < 30.0MB/s */
+		अगर (bandwidth > 33334)		/* < 30.0MB/s */
 			vidc->control |= VIDC20_CTRL_FIFO_16;
-		else if (bandwidth > 26666)	/* < 37.5MB/s */
+		अन्यथा अगर (bandwidth > 26666)	/* < 37.5MB/s */
 			vidc->control |= VIDC20_CTRL_FIFO_20;
-		else if (bandwidth > 22222)	/* < 45.0MB/s */
+		अन्यथा अगर (bandwidth > 22222)	/* < 45.0MB/s */
 			vidc->control |= VIDC20_CTRL_FIFO_24;
-		else				/* > 45.0MB/s */
+		अन्यथा				/* > 45.0MB/s */
 			vidc->control |= VIDC20_CTRL_FIFO_28;
-	}
+	पूर्ण
 
 	/* Find the PLL values */
-	vidc->pll_ctl = acornfb_vidc20_find_pll(var->pixclock / div);
-}
+	vidc->pll_ctl = acornfb_vidc20_find_pll(var->pixघड़ी / भाग);
+पूर्ण
 
-#define acornfb_default_control()	(VIDC20_CTRL_PIX_VCLK)
-#define acornfb_default_econtrol()	(VIDC20_ECTL_DAC | VIDC20_ECTL_REG(3))
+#घोषणा acornfb_शेष_control()	(VIDC20_CTRL_PIX_VCLK)
+#घोषणा acornfb_शेष_econtrol()	(VIDC20_ECTL_DAC | VIDC20_ECTL_REG(3))

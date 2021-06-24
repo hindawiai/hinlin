@@ -1,105 +1,106 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * drivers/media/i2c/smiapp/ccs.h
  *
- * Generic driver for MIPI CCS/SMIA/SMIA++ compliant camera sensors
+ * Generic driver क्रम MIPI CCS/SMIA/SMIA++ compliant camera sensors
  *
  * Copyright (C) 2020 Intel Corporation
  * Copyright (C) 2010--2012 Nokia Corporation
- * Contact: Sakari Ailus <sakari.ailus@linux.intel.com>
+ * Contact: Sakari Ailus <sakari.ailus@linux.पूर्णांकel.com>
  */
 
-#ifndef __CCS_H__
-#define __CCS_H__
+#अगर_अघोषित __CCS_H__
+#घोषणा __CCS_H__
 
-#include <linux/mutex.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-subdev.h>
+#समावेश <linux/mutex.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-subdev.h>
 
-#include "ccs-data.h"
-#include "ccs-limits.h"
-#include "ccs-quirk.h"
-#include "ccs-regs.h"
-#include "ccs-reg-access.h"
-#include "../ccs-pll.h"
-#include "smiapp-reg-defs.h"
+#समावेश "ccs-data.h"
+#समावेश "ccs-limits.h"
+#समावेश "ccs-quirk.h"
+#समावेश "ccs-regs.h"
+#समावेश "ccs-reg-access.h"
+#समावेश "../ccs-pll.h"
+#समावेश "smiapp-reg-defs.h"
 
 /*
- * Standard SMIA++ constants
+ * Standard SMIA++ स्थिरants
  */
-#define SMIA_VERSION_1			10
-#define SMIAPP_VERSION_0_8		8 /* Draft 0.8 */
-#define SMIAPP_VERSION_0_9		9 /* Draft 0.9 */
-#define SMIAPP_VERSION_1		10
+#घोषणा SMIA_VERSION_1			10
+#घोषणा SMIAPP_VERSION_0_8		8 /* Draft 0.8 */
+#घोषणा SMIAPP_VERSION_0_9		9 /* Draft 0.9 */
+#घोषणा SMIAPP_VERSION_1		10
 
-#define SMIAPP_PROFILE_0		0
-#define SMIAPP_PROFILE_1		1
-#define SMIAPP_PROFILE_2		2
+#घोषणा SMIAPP_PROखाता_0		0
+#घोषणा SMIAPP_PROखाता_1		1
+#घोषणा SMIAPP_PROखाता_2		2
 
-#define SMIAPP_NVM_PAGE_SIZE		64	/* bytes */
+#घोषणा SMIAPP_NVM_PAGE_SIZE		64	/* bytes */
 
-#define SMIAPP_RESET_DELAY_CLOCKS	2400
-#define SMIAPP_RESET_DELAY(clk)				\
+#घोषणा SMIAPP_RESET_DELAY_CLOCKS	2400
+#घोषणा SMIAPP_RESET_DELAY(clk)				\
 	(1000 +	(SMIAPP_RESET_DELAY_CLOCKS * 1000	\
 		 + (clk) / 1000 - 1) / ((clk) / 1000))
 
-#define CCS_COLOUR_COMPONENTS		4
+#घोषणा CCS_COLOUR_COMPONENTS		4
 
-#define SMIAPP_NAME			"smiapp"
-#define CCS_NAME			"ccs"
+#घोषणा SMIAPP_NAME			"smiapp"
+#घोषणा CCS_NAME			"ccs"
 
-#define CCS_DFL_I2C_ADDR	(0x20 >> 1) /* Default I2C Address */
-#define CCS_ALT_I2C_ADDR	(0x6e >> 1) /* Alternate I2C Address */
+#घोषणा CCS_DFL_I2C_ADDR	(0x20 >> 1) /* Default I2C Address */
+#घोषणा CCS_ALT_I2C_ADDR	(0x6e >> 1) /* Alternate I2C Address */
 
-#define CCS_LIM(sensor, limit) \
+#घोषणा CCS_LIM(sensor, limit) \
 	ccs_get_limit(sensor, CCS_L_##limit, 0)
 
-#define CCS_LIM_AT(sensor, limit, offset)	\
+#घोषणा CCS_LIM_AT(sensor, limit, offset)	\
 	ccs_get_limit(sensor, CCS_L_##limit, CCS_L_##limit##_OFFSET(offset))
 
 /*
- * Sometimes due to board layout considerations the camera module can be
+ * Someबार due to board layout considerations the camera module can be
  * mounted rotated. The typical rotation used is 180 degrees which can be
- * corrected by giving a default H-FLIP and V-FLIP in the sensor readout.
+ * corrected by giving a शेष H-FLIP and V-FLIP in the sensor पढ़ोout.
  * FIXME: rotation also changes the bayer pattern.
  */
-enum ccs_module_board_orient {
+क्रमागत ccs_module_board_orient अणु
 	CCS_MODULE_BOARD_ORIENT_0 = 0,
 	CCS_MODULE_BOARD_ORIENT_180,
-};
+पूर्ण;
 
-struct ccs_flash_strobe_parms {
+काष्ठा ccs_flash_strobe_parms अणु
 	u8 mode;
 	u32 strobe_width_high_us;
 	u16 strobe_delay;
-	u16 stobe_start_point;
+	u16 stobe_start_poपूर्णांक;
 	u8 trigger;
-};
+पूर्ण;
 
-struct ccs_hwconfig {
+काष्ठा ccs_hwconfig अणु
 	/*
-	 * Change the cci address if i2c_addr_alt is set.
-	 * Both default and alternate cci addr need to be present
+	 * Change the cci address अगर i2c_addr_alt is set.
+	 * Both शेष and alternate cci addr need to be present
 	 */
-	unsigned short i2c_addr_dfl;	/* Default i2c addr */
-	unsigned short i2c_addr_alt;	/* Alternate i2c addr */
+	अचिन्हित लघु i2c_addr_dfl;	/* Default i2c addr */
+	अचिन्हित लघु i2c_addr_alt;	/* Alternate i2c addr */
 
-	u32 ext_clk;			/* sensor external clk */
+	u32 ext_clk;			/* sensor बाह्यal clk */
 
-	unsigned int lanes;		/* Number of CSI-2 lanes */
-	u32 csi_signalling_mode;	/* CCS_CSI_SIGNALLING_MODE_* */
-	u64 *op_sys_clock;
+	अचिन्हित पूर्णांक lanes;		/* Number of CSI-2 lanes */
+	u32 csi_संकेतling_mode;	/* CCS_CSI_SIGNALLING_MODE_* */
+	u64 *op_sys_घड़ी;
 
-	enum ccs_module_board_orient module_board_orient;
+	क्रमागत ccs_module_board_orient module_board_orient;
 
-	struct ccs_flash_strobe_parms *strobe_setup;
-};
+	काष्ठा ccs_flash_strobe_parms *strobe_setup;
+पूर्ण;
 
-struct ccs_quirk;
+काष्ठा ccs_quirk;
 
-#define CCS_MODULE_IDENT_FLAG_REV_LE		(1 << 0)
+#घोषणा CCS_MODULE_IDENT_FLAG_REV_LE		(1 << 0)
 
-struct ccs_module_ident {
+काष्ठा ccs_module_ident अणु
 	u16 mipi_manufacturer_id;
 	u16 model_id;
 	u8 smia_manufacturer_id;
@@ -107,11 +108,11 @@ struct ccs_module_ident {
 
 	u8 flags;
 
-	char *name;
-	const struct ccs_quirk *quirk;
-};
+	अक्षर *name;
+	स्थिर काष्ठा ccs_quirk *quirk;
+पूर्ण;
 
-struct ccs_module_info {
+काष्ठा ccs_module_info अणु
 	u32 smia_manufacturer_id;
 	u32 mipi_manufacturer_id;
 	u32 model_id;
@@ -131,111 +132,111 @@ struct ccs_module_info {
 	u32 smiapp_version;
 	u32 ccs_version;
 
-	char *name;
-	const struct ccs_quirk *quirk;
-};
+	अक्षर *name;
+	स्थिर काष्ठा ccs_quirk *quirk;
+पूर्ण;
 
-#define CCS_IDENT_FQ(manufacturer, model, rev, fl, _name, _quirk)	\
-	{ .smia_manufacturer_id = manufacturer,				\
+#घोषणा CCS_IDENT_FQ(manufacturer, model, rev, fl, _name, _quirk)	\
+	अणु .smia_manufacturer_id = manufacturer,				\
 	  .model_id = model,						\
 	  .revision_number_major = rev,					\
 	  .flags = fl,							\
 	  .name = _name,						\
-	  .quirk = _quirk, }
+	  .quirk = _quirk, पूर्ण
 
-#define CCS_IDENT_LQ(manufacturer, model, rev, _name, _quirk)	\
-	{ .smia_manufacturer_id = manufacturer,				\
+#घोषणा CCS_IDENT_LQ(manufacturer, model, rev, _name, _quirk)	\
+	अणु .smia_manufacturer_id = manufacturer,				\
 	  .model_id = model,						\
 	  .revision_number_major = rev,					\
 	  .flags = CCS_MODULE_IDENT_FLAG_REV_LE,			\
 	  .name = _name,						\
-	  .quirk = _quirk, }
+	  .quirk = _quirk, पूर्ण
 
-#define CCS_IDENT_L(manufacturer, model, rev, _name)			\
-	{ .smia_manufacturer_id = manufacturer,				\
+#घोषणा CCS_IDENT_L(manufacturer, model, rev, _name)			\
+	अणु .smia_manufacturer_id = manufacturer,				\
 	  .model_id = model,						\
 	  .revision_number_major = rev,					\
 	  .flags = CCS_MODULE_IDENT_FLAG_REV_LE,			\
-	  .name = _name, }
+	  .name = _name, पूर्ण
 
-#define CCS_IDENT_Q(manufacturer, model, rev, _name, _quirk)		\
-	{ .smia_manufacturer_id = manufacturer,				\
+#घोषणा CCS_IDENT_Q(manufacturer, model, rev, _name, _quirk)		\
+	अणु .smia_manufacturer_id = manufacturer,				\
 	  .model_id = model,						\
 	  .revision_number_major = rev,					\
 	  .flags = 0,							\
 	  .name = _name,						\
-	  .quirk = _quirk, }
+	  .quirk = _quirk, पूर्ण
 
-#define CCS_IDENT(manufacturer, model, rev, _name)			\
-	{ .smia_manufacturer_id = manufacturer,				\
+#घोषणा CCS_IDENT(manufacturer, model, rev, _name)			\
+	अणु .smia_manufacturer_id = manufacturer,				\
 	  .model_id = model,						\
 	  .revision_number_major = rev,					\
 	  .flags = 0,							\
-	  .name = _name, }
+	  .name = _name, पूर्ण
 
-struct ccs_csi_data_format {
+काष्ठा ccs_csi_data_क्रमmat अणु
 	u32 code;
 	u8 width;
 	u8 compressed;
 	u8 pixel_order;
-};
+पूर्ण;
 
-#define CCS_SUBDEVS			3
+#घोषणा CCS_SUBDEVS			3
 
-#define CCS_PA_PAD_SRC			0
-#define CCS_PAD_SINK			0
-#define CCS_PAD_SRC			1
-#define CCS_PADS			2
+#घोषणा CCS_PA_PAD_SRC			0
+#घोषणा CCS_PAD_SINK			0
+#घोषणा CCS_PAD_SRC			1
+#घोषणा CCS_PADS			2
 
-struct ccs_binning_subtype {
+काष्ठा ccs_binning_subtype अणु
 	u8 horizontal:4;
 	u8 vertical:4;
-} __packed;
+पूर्ण __packed;
 
-struct ccs_subdev {
-	struct v4l2_subdev sd;
-	struct media_pad pads[CCS_PADS];
-	struct v4l2_rect sink_fmt;
-	struct v4l2_rect crop[CCS_PADS];
-	struct v4l2_rect compose; /* compose on sink */
-	unsigned short sink_pad;
-	unsigned short source_pad;
-	int npads;
-	struct ccs_sensor *sensor;
-	struct v4l2_ctrl_handler ctrl_handler;
-};
+काष्ठा ccs_subdev अणु
+	काष्ठा v4l2_subdev sd;
+	काष्ठा media_pad pads[CCS_PADS];
+	काष्ठा v4l2_rect sink_fmt;
+	काष्ठा v4l2_rect crop[CCS_PADS];
+	काष्ठा v4l2_rect compose; /* compose on sink */
+	अचिन्हित लघु sink_pad;
+	अचिन्हित लघु source_pad;
+	पूर्णांक npads;
+	काष्ठा ccs_sensor *sensor;
+	काष्ठा v4l2_ctrl_handler ctrl_handler;
+पूर्ण;
 
 /*
- * struct ccs_sensor - Main device structure
+ * काष्ठा ccs_sensor - Main device काष्ठाure
  */
-struct ccs_sensor {
+काष्ठा ccs_sensor अणु
 	/*
 	 * "mutex" is used to serialise access to all fields here
-	 * except v4l2_ctrls at the end of the struct. "mutex" is also
-	 * used to serialise access to file handle specific
-	 * information.
+	 * except v4l2_ctrls at the end of the काष्ठा. "mutex" is also
+	 * used to serialise access to file handle specअगरic
+	 * inक्रमmation.
 	 */
-	struct mutex mutex;
-	struct ccs_subdev ssds[CCS_SUBDEVS];
+	काष्ठा mutex mutex;
+	काष्ठा ccs_subdev ssds[CCS_SUBDEVS];
 	u32 ssds_used;
-	struct ccs_subdev *src;
-	struct ccs_subdev *binner;
-	struct ccs_subdev *scaler;
-	struct ccs_subdev *pixel_array;
-	struct ccs_hwconfig hwcfg;
-	struct regulator_bulk_data *regulators;
-	struct clk *ext_clk;
-	struct gpio_desc *xshutdown;
-	struct gpio_desc *reset;
-	void *ccs_limits;
+	काष्ठा ccs_subdev *src;
+	काष्ठा ccs_subdev *binner;
+	काष्ठा ccs_subdev *scaler;
+	काष्ठा ccs_subdev *pixel_array;
+	काष्ठा ccs_hwconfig hwcfg;
+	काष्ठा regulator_bulk_data *regulators;
+	काष्ठा clk *ext_clk;
+	काष्ठा gpio_desc *xshutकरोwn;
+	काष्ठा gpio_desc *reset;
+	व्योम *ccs_limits;
 	u8 nbinning_subtypes;
-	struct ccs_binning_subtype binning_subtypes[CCS_LIM_BINNING_SUB_TYPE_MAX_N + 1];
+	काष्ठा ccs_binning_subtype binning_subtypes[CCS_LIM_BINNING_SUB_TYPE_MAX_N + 1];
 	u32 mbus_frame_fmts;
-	const struct ccs_csi_data_format *csi_format;
-	const struct ccs_csi_data_format *internal_csi_format;
-	u32 default_mbus_frame_fmts;
-	int default_pixel_order;
-	struct ccs_data_container sdata, mdata;
+	स्थिर काष्ठा ccs_csi_data_क्रमmat *csi_क्रमmat;
+	स्थिर काष्ठा ccs_csi_data_क्रमmat *पूर्णांकernal_csi_क्रमmat;
+	u32 शेष_mbus_frame_fmts;
+	पूर्णांक शेष_pixel_order;
+	काष्ठा ccs_data_container sdata, mdata;
 
 	u8 binning_horizontal;
 	u8 binning_vertical;
@@ -251,40 +252,40 @@ struct ccs_sensor {
 	u16 visible_pixel_start; /* start pixel of the visible image */
 
 	bool streaming;
-	bool dev_init_done;
+	bool dev_init_करोne;
 	u8 compressed_min_bpp;
 
-	struct ccs_module_info minfo;
+	काष्ठा ccs_module_info minfo;
 
-	struct ccs_pll pll;
+	काष्ठा ccs_pll pll;
 
-	/* Is a default format supported for a given BPP? */
-	unsigned long *valid_link_freqs;
+	/* Is a शेष क्रमmat supported क्रम a given BPP? */
+	अचिन्हित दीर्घ *valid_link_freqs;
 
 	/* Pixel array controls */
-	struct v4l2_ctrl *exposure;
-	struct v4l2_ctrl *hflip;
-	struct v4l2_ctrl *vflip;
-	struct v4l2_ctrl *vblank;
-	struct v4l2_ctrl *hblank;
-	struct v4l2_ctrl *pixel_rate_parray;
-	struct v4l2_ctrl *luminance_level;
+	काष्ठा v4l2_ctrl *exposure;
+	काष्ठा v4l2_ctrl *hflip;
+	काष्ठा v4l2_ctrl *vflip;
+	काष्ठा v4l2_ctrl *vblank;
+	काष्ठा v4l2_ctrl *hblank;
+	काष्ठा v4l2_ctrl *pixel_rate_parray;
+	काष्ठा v4l2_ctrl *luminance_level;
 	/* src controls */
-	struct v4l2_ctrl *link_freq;
-	struct v4l2_ctrl *pixel_rate_csi;
+	काष्ठा v4l2_ctrl *link_freq;
+	काष्ठा v4l2_ctrl *pixel_rate_csi;
 	/* test pattern colour components */
-	struct v4l2_ctrl *test_data[CCS_COLOUR_COMPONENTS];
-};
+	काष्ठा v4l2_ctrl *test_data[CCS_COLOUR_COMPONENTS];
+पूर्ण;
 
-#define to_ccs_subdev(_sd)				\
-	container_of(_sd, struct ccs_subdev, sd)
+#घोषणा to_ccs_subdev(_sd)				\
+	container_of(_sd, काष्ठा ccs_subdev, sd)
 
-#define to_ccs_sensor(_sd)	\
+#घोषणा to_ccs_sensor(_sd)	\
 	(to_ccs_subdev(_sd)->sensor)
 
-void ccs_replace_limit(struct ccs_sensor *sensor,
-		       unsigned int limit, unsigned int offset, u32 val);
-u32 ccs_get_limit(struct ccs_sensor *sensor, unsigned int limit,
-		  unsigned int offset);
+व्योम ccs_replace_limit(काष्ठा ccs_sensor *sensor,
+		       अचिन्हित पूर्णांक limit, अचिन्हित पूर्णांक offset, u32 val);
+u32 ccs_get_limit(काष्ठा ccs_sensor *sensor, अचिन्हित पूर्णांक limit,
+		  अचिन्हित पूर्णांक offset);
 
-#endif /* __CCS_H__ */
+#पूर्ण_अगर /* __CCS_H__ */

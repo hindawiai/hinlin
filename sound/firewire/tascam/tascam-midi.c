@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * tascam-midi.c - a part of driver for TASCAM FireWire series
+ * tascam-midi.c - a part of driver क्रम TASCAM FireWire series
  *
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
-#include "tascam.h"
+#समावेश "tascam.h"
 
-static int midi_capture_open(struct snd_rawmidi_substream *substream)
-{
+अटल पूर्णांक midi_capture_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
 	/* Do nothing. */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int midi_playback_open(struct snd_rawmidi_substream *substream)
-{
-	struct snd_tscm *tscm = substream->rmidi->private_data;
+अटल पूर्णांक midi_playback_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_tscm *tscm = substream->rmidi->निजी_data;
 
 	snd_fw_async_midi_port_init(&tscm->out_ports[substream->number]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int midi_capture_close(struct snd_rawmidi_substream *substream)
-{
+अटल पूर्णांक midi_capture_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
 	/* Do nothing. */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int midi_playback_close(struct snd_rawmidi_substream *substream)
-{
-	return 0;
-}
+अटल पूर्णांक midi_playback_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	वापस 0;
+पूर्ण
 
-static void midi_playback_drain(struct snd_rawmidi_substream *substream)
-{
-	struct snd_tscm *tscm = substream->rmidi->private_data;
+अटल व्योम midi_playback_drain(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_tscm *tscm = substream->rmidi->निजी_data;
 
 	snd_fw_async_midi_port_finish(&tscm->out_ports[substream->number]);
-}
+पूर्ण
 
-static void midi_capture_trigger(struct snd_rawmidi_substream *substrm, int up)
-{
-	struct snd_tscm *tscm = substrm->rmidi->private_data;
-	unsigned long flags;
+अटल व्योम midi_capture_trigger(काष्ठा snd_rawmidi_substream *substrm, पूर्णांक up)
+अणु
+	काष्ठा snd_tscm *tscm = substrm->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&tscm->lock, flags);
 
-	if (up)
+	अगर (up)
 		tscm->tx_midi_substreams[substrm->number] = substrm;
-	else
-		tscm->tx_midi_substreams[substrm->number] = NULL;
+	अन्यथा
+		tscm->tx_midi_substreams[substrm->number] = शून्य;
 
 	spin_unlock_irqrestore(&tscm->lock, flags);
-}
+पूर्ण
 
-static void midi_playback_trigger(struct snd_rawmidi_substream *substrm, int up)
-{
-	struct snd_tscm *tscm = substrm->rmidi->private_data;
-	unsigned long flags;
+अटल व्योम midi_playback_trigger(काष्ठा snd_rawmidi_substream *substrm, पूर्णांक up)
+अणु
+	काष्ठा snd_tscm *tscm = substrm->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&tscm->lock, flags);
 
-	if (up)
+	अगर (up)
 		snd_fw_async_midi_port_run(&tscm->out_ports[substrm->number],
 					   substrm);
 
 	spin_unlock_irqrestore(&tscm->lock, flags);
-}
+पूर्ण
 
-int snd_tscm_create_midi_devices(struct snd_tscm *tscm)
-{
-	static const struct snd_rawmidi_ops capture_ops = {
-		.open		= midi_capture_open,
-		.close		= midi_capture_close,
+पूर्णांक snd_tscm_create_midi_devices(काष्ठा snd_tscm *tscm)
+अणु
+	अटल स्थिर काष्ठा snd_rawmidi_ops capture_ops = अणु
+		.खोलो		= midi_capture_खोलो,
+		.बंद		= midi_capture_बंद,
 		.trigger	= midi_capture_trigger,
-	};
-	static const struct snd_rawmidi_ops playback_ops = {
-		.open		= midi_playback_open,
-		.close		= midi_playback_close,
+	पूर्ण;
+	अटल स्थिर काष्ठा snd_rawmidi_ops playback_ops = अणु
+		.खोलो		= midi_playback_खोलो,
+		.बंद		= midi_playback_बंद,
 		.drain		= midi_playback_drain,
 		.trigger	= midi_playback_trigger,
-	};
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_str *stream;
-	struct snd_rawmidi_substream *subs;
-	int err;
+	पूर्ण;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_str *stream;
+	काष्ठा snd_rawmidi_substream *subs;
+	पूर्णांक err;
 
 	err = snd_rawmidi_new(tscm->card, tscm->card->driver, 0,
 			      tscm->spec->midi_playback_ports,
 			      tscm->spec->midi_capture_ports,
 			      &rmidi);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	snprintf(rmidi->name, sizeof(rmidi->name),
-		 "%s MIDI", tscm->card->shortname);
-	rmidi->private_data = tscm;
+	snम_लिखो(rmidi->name, माप(rmidi->name),
+		 "%s MIDI", tscm->card->लघुname);
+	rmidi->निजी_data = tscm;
 
 	rmidi->info_flags |= SNDRV_RAWMIDI_INFO_INPUT;
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_INPUT,
 			    &capture_ops);
 	stream = &rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT];
 
-	/* Set port names for MIDI input. */
-	list_for_each_entry(subs, &stream->substreams, list) {
-		/* TODO: support virtual MIDI ports. */
-		if (subs->number < tscm->spec->midi_capture_ports) {
+	/* Set port names क्रम MIDI input. */
+	list_क्रम_each_entry(subs, &stream->substreams, list) अणु
+		/* TODO: support भव MIDI ports. */
+		अगर (subs->number < tscm->spec->midi_capture_ports) अणु
 			/* Hardware MIDI ports. */
-			snprintf(subs->name, sizeof(subs->name),
+			snम_लिखो(subs->name, माप(subs->name),
 				 "%s MIDI %d",
-				 tscm->card->shortname, subs->number + 1);
-		}
-	}
+				 tscm->card->लघुname, subs->number + 1);
+		पूर्ण
+	पूर्ण
 
 	rmidi->info_flags |= SNDRV_RAWMIDI_INFO_OUTPUT;
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT,
 			    &playback_ops);
 	stream = &rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT];
 
-	/* Set port names for MIDI ourput. */
-	list_for_each_entry(subs, &stream->substreams, list) {
-		if (subs->number < tscm->spec->midi_playback_ports) {
+	/* Set port names क्रम MIDI ourput. */
+	list_क्रम_each_entry(subs, &stream->substreams, list) अणु
+		अगर (subs->number < tscm->spec->midi_playback_ports) अणु
 			/* Hardware MIDI ports only. */
-			snprintf(subs->name, sizeof(subs->name),
+			snम_लिखो(subs->name, माप(subs->name),
 				 "%s MIDI %d",
-				 tscm->card->shortname, subs->number + 1);
-		}
-	}
+				 tscm->card->लघुname, subs->number + 1);
+		पूर्ण
+	पूर्ण
 
 	rmidi->info_flags |= SNDRV_RAWMIDI_INFO_DUPLEX;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

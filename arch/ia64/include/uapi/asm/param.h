@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Fundamental kernel parameters.
  *
- * Based on <asm-i386/param.h>.
+ * Based on <यंत्र-i386/param.h>.
  *
- * Modified 1998, 1999, 2002-2003
+ * Modअगरied 1998, 1999, 2002-2003
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  */
-#ifndef _UAPI_ASM_IA64_PARAM_H
-#define _UAPI_ASM_IA64_PARAM_H
+#अगर_अघोषित _UAPI_ASM_IA64_PARAM_H
+#घोषणा _UAPI_ASM_IA64_PARAM_H
 
 
-#define EXEC_PAGESIZE	65536
+#घोषणा EXEC_PAGESIZE	65536
 
-#ifndef NOGROUP
+#अगर_अघोषित NOGROUP
 # define NOGROUP	(-1)
-#endif
+#पूर्ण_अगर
 
-#define MAXHOSTNAMELEN	64	/* max length of hostname */
+#घोषणा MAXHOSTNAMELEN	64	/* max length of hostname */
 
-#ifndef __KERNEL__
+#अगर_अघोषित __KERNEL__
    /*
     * Technically, this is wrong, but some old apps still refer to it.  The proper way to
-    * get the HZ value is via sysconf(_SC_CLK_TCK).
+    * get the HZ value is via sysconf(_SC_घड़ी_टिक).
     */
 # define HZ 1024
-#endif
+#पूर्ण_अगर
 
-#endif /* _UAPI_ASM_IA64_PARAM_H */
+#पूर्ण_अगर /* _UAPI_ASM_IA64_PARAM_H */

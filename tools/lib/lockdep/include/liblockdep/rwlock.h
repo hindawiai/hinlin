@@ -1,87 +1,88 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LIBLOCKDEP_RWLOCK_H
-#define _LIBLOCKDEP_RWLOCK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LIBLOCKDEP_RWLOCK_H
+#घोषणा _LIBLOCKDEP_RWLOCK_H
 
-#include <pthread.h>
-#include "common.h"
+#समावेश <pthपढ़ो.h>
+#समावेश "common.h"
 
-struct liblockdep_pthread_rwlock {
-	pthread_rwlock_t rwlock;
-	struct lockdep_map dep_map;
-};
+काष्ठा liblockdep_pthपढ़ो_rwlock अणु
+	pthपढ़ो_rwlock_t rwlock;
+	काष्ठा lockdep_map dep_map;
+पूर्ण;
 
-typedef struct liblockdep_pthread_rwlock liblockdep_pthread_rwlock_t;
+प्रकार काष्ठा liblockdep_pthपढ़ो_rwlock liblockdep_pthपढ़ो_rwlock_t;
 
-#define LIBLOCKDEP_PTHREAD_RWLOCK_INITIALIZER(rwl)			\
-		(struct liblockdep_pthread_rwlock) {			\
+#घोषणा LIBLOCKDEP_PTHREAD_RWLOCK_INITIALIZER(rwl)			\
+		(काष्ठा liblockdep_pthपढ़ो_rwlock) अणु			\
 	.rwlock = PTHREAD_RWLOCK_INITIALIZER,				\
 	.dep_map = STATIC_LOCKDEP_MAP_INIT(#rwl, &((&(rwl))->dep_map)),	\
-}
+पूर्ण
 
-static inline int __rwlock_init(liblockdep_pthread_rwlock_t *lock,
-				const char *name,
-				struct lock_class_key *key,
-				const pthread_rwlockattr_t *attr)
-{
+अटल अंतरभूत पूर्णांक __rwlock_init(liblockdep_pthपढ़ो_rwlock_t *lock,
+				स्थिर अक्षर *name,
+				काष्ठा lock_class_key *key,
+				स्थिर pthपढ़ो_rwlockattr_t *attr)
+अणु
 	lockdep_init_map(&lock->dep_map, name, key, 0);
 
-	return pthread_rwlock_init(&lock->rwlock, attr);
-}
+	वापस pthपढ़ो_rwlock_init(&lock->rwlock, attr);
+पूर्ण
 
-#define liblockdep_pthread_rwlock_init(lock, attr)		\
-({							\
-	static struct lock_class_key __key;		\
+#घोषणा liblockdep_pthपढ़ो_rwlock_init(lock, attr)		\
+(अणु							\
+	अटल काष्ठा lock_class_key __key;		\
 							\
 	__rwlock_init((lock), #lock, &__key, (attr));	\
-})
+पूर्ण)
 
-static inline int liblockdep_pthread_rwlock_rdlock(liblockdep_pthread_rwlock_t *lock)
-{
-	lock_acquire(&lock->dep_map, 0, 0, 2, 1, NULL, (unsigned long)_RET_IP_);
-	return pthread_rwlock_rdlock(&lock->rwlock);
+अटल अंतरभूत पूर्णांक liblockdep_pthपढ़ो_rwlock_rdlock(liblockdep_pthपढ़ो_rwlock_t *lock)
+अणु
+	lock_acquire(&lock->dep_map, 0, 0, 2, 1, शून्य, (अचिन्हित दीर्घ)_RET_IP_);
+	वापस pthपढ़ो_rwlock_rdlock(&lock->rwlock);
 
-}
+पूर्ण
 
-static inline int liblockdep_pthread_rwlock_unlock(liblockdep_pthread_rwlock_t *lock)
-{
-	lock_release(&lock->dep_map, (unsigned long)_RET_IP_);
-	return pthread_rwlock_unlock(&lock->rwlock);
-}
+अटल अंतरभूत पूर्णांक liblockdep_pthपढ़ो_rwlock_unlock(liblockdep_pthपढ़ो_rwlock_t *lock)
+अणु
+	lock_release(&lock->dep_map, (अचिन्हित दीर्घ)_RET_IP_);
+	वापस pthपढ़ो_rwlock_unlock(&lock->rwlock);
+पूर्ण
 
-static inline int liblockdep_pthread_rwlock_wrlock(liblockdep_pthread_rwlock_t *lock)
-{
-	lock_acquire(&lock->dep_map, 0, 0, 0, 1, NULL, (unsigned long)_RET_IP_);
-	return pthread_rwlock_wrlock(&lock->rwlock);
-}
+अटल अंतरभूत पूर्णांक liblockdep_pthपढ़ो_rwlock_wrlock(liblockdep_pthपढ़ो_rwlock_t *lock)
+अणु
+	lock_acquire(&lock->dep_map, 0, 0, 0, 1, शून्य, (अचिन्हित दीर्घ)_RET_IP_);
+	वापस pthपढ़ो_rwlock_wrlock(&lock->rwlock);
+पूर्ण
 
-static inline int liblockdep_pthread_rwlock_tryrdlock(liblockdep_pthread_rwlock_t *lock)
-{
-	lock_acquire(&lock->dep_map, 0, 1, 2, 1, NULL, (unsigned long)_RET_IP_);
-	return pthread_rwlock_tryrdlock(&lock->rwlock) == 0 ? 1 : 0;
-}
+अटल अंतरभूत पूर्णांक liblockdep_pthपढ़ो_rwlock_tryrdlock(liblockdep_pthपढ़ो_rwlock_t *lock)
+अणु
+	lock_acquire(&lock->dep_map, 0, 1, 2, 1, शून्य, (अचिन्हित दीर्घ)_RET_IP_);
+	वापस pthपढ़ो_rwlock_tryrdlock(&lock->rwlock) == 0 ? 1 : 0;
+पूर्ण
 
-static inline int liblockdep_pthread_rwlock_trywrlock(liblockdep_pthread_rwlock_t *lock)
-{
-	lock_acquire(&lock->dep_map, 0, 1, 0, 1, NULL, (unsigned long)_RET_IP_);
-	return pthread_rwlock_trywrlock(&lock->rwlock) == 0 ? 1 : 0;
-}
+अटल अंतरभूत पूर्णांक liblockdep_pthपढ़ो_rwlock_trywrlock(liblockdep_pthपढ़ो_rwlock_t *lock)
+अणु
+	lock_acquire(&lock->dep_map, 0, 1, 0, 1, शून्य, (अचिन्हित दीर्घ)_RET_IP_);
+	वापस pthपढ़ो_rwlock_trywrlock(&lock->rwlock) == 0 ? 1 : 0;
+पूर्ण
 
-static inline int liblockdep_rwlock_destroy(liblockdep_pthread_rwlock_t *lock)
-{
-	return pthread_rwlock_destroy(&lock->rwlock);
-}
+अटल अंतरभूत पूर्णांक liblockdep_rwlock_destroy(liblockdep_pthपढ़ो_rwlock_t *lock)
+अणु
+	वापस pthपढ़ो_rwlock_destroy(&lock->rwlock);
+पूर्ण
 
-#ifdef __USE_LIBLOCKDEP
+#अगर_घोषित __USE_LIBLOCKDEP
 
-#define pthread_rwlock_t		liblockdep_pthread_rwlock_t
-#define pthread_rwlock_init		liblockdep_pthread_rwlock_init
-#define pthread_rwlock_rdlock		liblockdep_pthread_rwlock_rdlock
-#define pthread_rwlock_unlock		liblockdep_pthread_rwlock_unlock
-#define pthread_rwlock_wrlock		liblockdep_pthread_rwlock_wrlock
-#define pthread_rwlock_tryrdlock	liblockdep_pthread_rwlock_tryrdlock
-#define pthread_rwlock_trywrlock	liblockdep_pthread_rwlock_trywrlock
-#define pthread_rwlock_destroy		liblockdep_rwlock_destroy
+#घोषणा pthपढ़ो_rwlock_t		liblockdep_pthपढ़ो_rwlock_t
+#घोषणा pthपढ़ो_rwlock_init		liblockdep_pthपढ़ो_rwlock_init
+#घोषणा pthपढ़ो_rwlock_rdlock		liblockdep_pthपढ़ो_rwlock_rdlock
+#घोषणा pthपढ़ो_rwlock_unlock		liblockdep_pthपढ़ो_rwlock_unlock
+#घोषणा pthपढ़ो_rwlock_wrlock		liblockdep_pthपढ़ो_rwlock_wrlock
+#घोषणा pthपढ़ो_rwlock_tryrdlock	liblockdep_pthपढ़ो_rwlock_tryrdlock
+#घोषणा pthपढ़ो_rwlock_trywrlock	liblockdep_pthपढ़ो_rwlock_trywrlock
+#घोषणा pthपढ़ो_rwlock_destroy		liblockdep_rwlock_destroy
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

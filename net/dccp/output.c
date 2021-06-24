@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  net/dccp/output.c
  *
  *  An implementation of the DCCP protocol
- *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+ *  Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
  */
 
-#include <linux/dccp.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/dccp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <net/inet_sock.h>
-#include <net/sock.h>
+#समावेश <net/inet_sock.h>
+#समावेश <net/sock.h>
 
-#include "ackvec.h"
-#include "ccid.h"
-#include "dccp.h"
+#समावेश "ackvec.h"
+#समावेश "ccid.h"
+#समावेश "dccp.h"
 
-static inline void dccp_event_ack_sent(struct sock *sk)
-{
-	inet_csk_clear_xmit_timer(sk, ICSK_TIME_DACK);
-}
+अटल अंतरभूत व्योम dccp_event_ack_sent(काष्ठा sock *sk)
+अणु
+	inet_csk_clear_xmit_समयr(sk, ICSK_TIME_DACK);
+पूर्ण
 
-/* enqueue @skb on sk_send_head for retransmission, return clone to send now */
-static struct sk_buff *dccp_skb_entail(struct sock *sk, struct sk_buff *skb)
-{
+/* enqueue @skb on sk_send_head क्रम retransmission, वापस clone to send now */
+अटल काष्ठा sk_buff *dccp_skb_entail(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	skb_set_owner_w(skb, sk);
 	WARN_ON(sk->sk_send_head);
 	sk->sk_send_head = skb;
-	return skb_clone(sk->sk_send_head, gfp_any());
-}
+	वापस skb_clone(sk->sk_send_head, gfp_any());
+पूर्ण
 
 /*
  * All SKB's seen here are completely headerless. It is our
- * job to build the DCCP header, and pass the packet down to
- * IP so it can do the same plus pass the packet off to the
+ * job to build the DCCP header, and pass the packet करोwn to
+ * IP so it can करो the same plus pass the packet off to the
  * device.
  */
-static int dccp_transmit_skb(struct sock *sk, struct sk_buff *skb)
-{
-	if (likely(skb != NULL)) {
-		struct inet_sock *inet = inet_sk(sk);
-		const struct inet_connection_sock *icsk = inet_csk(sk);
-		struct dccp_sock *dp = dccp_sk(sk);
-		struct dccp_skb_cb *dcb = DCCP_SKB_CB(skb);
-		struct dccp_hdr *dh;
+अटल पूर्णांक dccp_transmit_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	अगर (likely(skb != शून्य)) अणु
+		काष्ठा inet_sock *inet = inet_sk(sk);
+		स्थिर काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+		काष्ठा dccp_sock *dp = dccp_sk(sk);
+		काष्ठा dccp_skb_cb *dcb = DCCP_SKB_CB(skb);
+		काष्ठा dccp_hdr *dh;
 		/* XXX For now we're using only 48 bits sequence numbers */
-		const u32 dccp_header_size = sizeof(*dh) +
-					     sizeof(struct dccp_hdr_ext) +
+		स्थिर u32 dccp_header_size = माप(*dh) +
+					     माप(काष्ठा dccp_hdr_ext) +
 					  dccp_packet_hdr_len(dcb->dccpd_type);
-		int err, set_ack = 1;
+		पूर्णांक err, set_ack = 1;
 		u64 ackno = dp->dccps_gsr;
 		/*
-		 * Increment GSS here already in case the option code needs it.
-		 * Update GSS for real only if option processing below succeeds.
+		 * Increment GSS here alपढ़ोy in हाल the option code needs it.
+		 * Update GSS क्रम real only अगर option processing below succeeds.
 		 */
 		dcb->dccpd_seq = ADD48(dp->dccps_gss, 1);
 
-		switch (dcb->dccpd_type) {
-		case DCCP_PKT_DATA:
+		चयन (dcb->dccpd_type) अणु
+		हाल DCCP_PKT_DATA:
 			set_ack = 0;
 			fallthrough;
-		case DCCP_PKT_DATAACK:
-		case DCCP_PKT_RESET:
-			break;
+		हाल DCCP_PKT_DATAACK:
+		हाल DCCP_PKT_RESET:
+			अवरोध;
 
-		case DCCP_PKT_REQUEST:
+		हाल DCCP_PKT_REQUEST:
 			set_ack = 0;
 			/* Use ISS on the first (non-retransmitted) Request. */
-			if (icsk->icsk_retransmits == 0)
+			अगर (icsk->icsk_retransmits == 0)
 				dcb->dccpd_seq = dp->dccps_iss;
 			fallthrough;
 
-		case DCCP_PKT_SYNC:
-		case DCCP_PKT_SYNCACK:
+		हाल DCCP_PKT_SYNC:
+		हाल DCCP_PKT_SYNCACK:
 			ackno = dcb->dccpd_ack_seq;
 			fallthrough;
-		default:
+		शेष:
 			/*
-			 * Set owner/destructor: some skbs are allocated via
+			 * Set owner/deकाष्ठाor: some skbs are allocated via
 			 * alloc_skb (e.g. when retransmission may happen).
 			 * Only Data, DataAck, and Reset packets should come
 			 * through here with skb->sk set.
 			 */
 			WARN_ON(skb->sk);
 			skb_set_owner_w(skb, sk);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (dccp_insert_options(sk, skb)) {
-			kfree_skb(skb);
-			return -EPROTO;
-		}
+		अगर (dccp_insert_options(sk, skb)) अणु
+			kमुक्त_skb(skb);
+			वापस -EPROTO;
+		पूर्ण
 
 
 		/* Build DCCP header and checksum it. */
@@ -101,7 +102,7 @@ static int dccp_transmit_skb(struct sock *sk, struct sk_buff *skb)
 		dh->dccph_type	= dcb->dccpd_type;
 		dh->dccph_sport	= inet->inet_sport;
 		dh->dccph_dport	= inet->inet_dport;
-		dh->dccph_doff	= (dccp_header_size + dcb->dccpd_opt_len) / 4;
+		dh->dccph_करोff	= (dccp_header_size + dcb->dccpd_opt_len) / 4;
 		dh->dccph_ccval	= dcb->dccpd_ccval;
 		dh->dccph_cscov = dp->dccps_pcslen;
 		/* XXX For now we're using only 48 bits sequence numbers */
@@ -109,78 +110,78 @@ static int dccp_transmit_skb(struct sock *sk, struct sk_buff *skb)
 
 		dccp_update_gss(sk, dcb->dccpd_seq);
 		dccp_hdr_set_seq(dh, dp->dccps_gss);
-		if (set_ack)
+		अगर (set_ack)
 			dccp_hdr_set_ack(dccp_hdr_ack_bits(skb), ackno);
 
-		switch (dcb->dccpd_type) {
-		case DCCP_PKT_REQUEST:
+		चयन (dcb->dccpd_type) अणु
+		हाल DCCP_PKT_REQUEST:
 			dccp_hdr_request(skb)->dccph_req_service =
 							dp->dccps_service;
 			/*
-			 * Limit Ack window to ISS <= P.ackno <= GSS, so that
+			 * Limit Ack winकरोw to ISS <= P.ackno <= GSS, so that
 			 * only Responses to Requests we sent are considered.
 			 */
 			dp->dccps_awl = dp->dccps_iss;
-			break;
-		case DCCP_PKT_RESET:
+			अवरोध;
+		हाल DCCP_PKT_RESET:
 			dccp_hdr_reset(skb)->dccph_reset_code =
 							dcb->dccpd_reset_code;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		icsk->icsk_af_ops->send_check(sk, skb);
 
-		if (set_ack)
+		अगर (set_ack)
 			dccp_event_ack_sent(sk);
 
 		DCCP_INC_STATS(DCCP_MIB_OUTSEGS);
 
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
-		return net_xmit_eval(err);
-	}
-	return -ENOBUFS;
-}
+		वापस net_xmit_eval(err);
+	पूर्ण
+	वापस -ENOBUFS;
+पूर्ण
 
 /**
- * dccp_determine_ccmps  -  Find out about CCID-specific packet-size limits
+ * dccp_determine_ccmps  -  Find out about CCID-specअगरic packet-size limits
  * @dp: socket to find packet size limits of
  *
- * We only consider the HC-sender CCID for setting the CCMPS (RFC 4340, 14.),
+ * We only consider the HC-sender CCID क्रम setting the CCMPS (RFC 4340, 14.),
  * since the RX CCID is restricted to feedback packets (Acks), which are small
  * in comparison with the data traffic. A value of 0 means "no current CCMPS".
  */
-static u32 dccp_determine_ccmps(const struct dccp_sock *dp)
-{
-	const struct ccid *tx_ccid = dp->dccps_hc_tx_ccid;
+अटल u32 dccp_determine_ccmps(स्थिर काष्ठा dccp_sock *dp)
+अणु
+	स्थिर काष्ठा ccid *tx_ccid = dp->dccps_hc_tx_ccid;
 
-	if (tx_ccid == NULL || tx_ccid->ccid_ops == NULL)
-		return 0;
-	return tx_ccid->ccid_ops->ccid_ccmps;
-}
+	अगर (tx_ccid == शून्य || tx_ccid->ccid_ops == शून्य)
+		वापस 0;
+	वापस tx_ccid->ccid_ops->ccid_ccmps;
+पूर्ण
 
-unsigned int dccp_sync_mss(struct sock *sk, u32 pmtu)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
-	struct dccp_sock *dp = dccp_sk(sk);
+अचिन्हित पूर्णांक dccp_sync_mss(काष्ठा sock *sk, u32 pmtu)
+अणु
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
 	u32 ccmps = dccp_determine_ccmps(dp);
 	u32 cur_mps = ccmps ? min(pmtu, ccmps) : pmtu;
 
-	/* Account for header lengths and IPv4/v6 option overhead */
+	/* Account क्रम header lengths and IPv4/v6 option overhead */
 	cur_mps -= (icsk->icsk_af_ops->net_header_len + icsk->icsk_ext_hdr_len +
-		    sizeof(struct dccp_hdr) + sizeof(struct dccp_hdr_ext));
+		    माप(काष्ठा dccp_hdr) + माप(काष्ठा dccp_hdr_ext));
 
 	/*
-	 * Leave enough headroom for common DCCP header options.
+	 * Leave enough headroom क्रम common DCCP header options.
 	 * This only considers options which may appear on DCCP-Data packets, as
-	 * per table 3 in RFC 4340, 5.8. When running out of space for other
+	 * per table 3 in RFC 4340, 5.8. When running out of space क्रम other
 	 * options (eg. Ack Vector which can take up to 255 bytes), it is better
-	 * to schedule a separate Ack. Thus we leave headroom for the following:
-	 *  - 1 byte for Slow Receiver (11.6)
-	 *  - 6 bytes for Timestamp (13.1)
-	 *  - 10 bytes for Timestamp Echo (13.3)
-	 *  - 8 bytes for NDP count (7.7, when activated)
-	 *  - 6 bytes for Data Checksum (9.3)
-	 *  - %DCCPAV_MIN_OPTLEN bytes for Ack Vector size (11.4, when enabled)
+	 * to schedule a separate Ack. Thus we leave headroom क्रम the following:
+	 *  - 1 byte क्रम Slow Receiver (11.6)
+	 *  - 6 bytes क्रम Timestamp (13.1)
+	 *  - 10 bytes क्रम Timestamp Echo (13.3)
+	 *  - 8 bytes क्रम NDP count (7.7, when activated)
+	 *  - 6 bytes क्रम Data Checksum (9.3)
+	 *  - %DCCPAV_MIN_OPTLEN bytes क्रम Ack Vector size (11.4, when enabled)
 	 */
 	cur_mps -= roundup(1 + 6 + 10 + dp->dccps_send_ndp_count * 8 + 6 +
 			   (dp->dccps_hc_rx_ackvec ? DCCPAV_MIN_OPTLEN : 0), 4);
@@ -189,71 +190,71 @@ unsigned int dccp_sync_mss(struct sock *sk, u32 pmtu)
 	icsk->icsk_pmtu_cookie = pmtu;
 	dp->dccps_mss_cache = cur_mps;
 
-	return cur_mps;
-}
+	वापस cur_mps;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(dccp_sync_mss);
 
-void dccp_write_space(struct sock *sk)
-{
-	struct socket_wq *wq;
+व्योम dccp_ग_लिखो_space(काष्ठा sock *sk)
+अणु
+	काष्ठा socket_wq *wq;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	wq = rcu_dereference(sk->sk_wq);
-	if (skwq_has_sleeper(wq))
-		wake_up_interruptible(&wq->wait);
-	/* Should agree with poll, otherwise some programs break */
-	if (sock_writeable(sk))
+	अगर (skwq_has_sleeper(wq))
+		wake_up_पूर्णांकerruptible(&wq->रुको);
+	/* Should agree with poll, otherwise some programs अवरोध */
+	अगर (sock_ग_लिखोable(sk))
 		sk_wake_async(sk, SOCK_WAKE_SPACE, POLL_OUT);
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
- * dccp_wait_for_ccid  -  Await CCID send permission
- * @sk:    socket to wait for
- * @delay: timeout in jiffies
+ * dccp_रुको_क्रम_ccid  -  Aरुको CCID send permission
+ * @sk:    socket to रुको क्रम
+ * @delay: समयout in jअगरfies
  *
- * This is used by CCIDs which need to delay the send time in process context.
+ * This is used by CCIDs which need to delay the send समय in process context.
  */
-static int dccp_wait_for_ccid(struct sock *sk, unsigned long delay)
-{
-	DEFINE_WAIT(wait);
-	long remaining;
+अटल पूर्णांक dccp_रुको_क्रम_ccid(काष्ठा sock *sk, अचिन्हित दीर्घ delay)
+अणु
+	DEFINE_WAIT(रुको);
+	दीर्घ reमुख्यing;
 
-	prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
-	sk->sk_write_pending++;
+	prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
+	sk->sk_ग_लिखो_pending++;
 	release_sock(sk);
 
-	remaining = schedule_timeout(delay);
+	reमुख्यing = schedule_समयout(delay);
 
 	lock_sock(sk);
-	sk->sk_write_pending--;
-	finish_wait(sk_sleep(sk), &wait);
+	sk->sk_ग_लिखो_pending--;
+	finish_रुको(sk_sleep(sk), &रुको);
 
-	if (signal_pending(current) || sk->sk_err)
-		return -1;
-	return remaining;
-}
+	अगर (संकेत_pending(current) || sk->sk_err)
+		वापस -1;
+	वापस reमुख्यing;
+पूर्ण
 
 /**
  * dccp_xmit_packet  -  Send data packet under control of CCID
  * @sk: socket to send data packet on
  *
- * Transmits next-queued payload and informs CCID to account for the packet.
+ * Transmits next-queued payload and inक्रमms CCID to account क्रम the packet.
  */
-static void dccp_xmit_packet(struct sock *sk)
-{
-	int err, len;
-	struct dccp_sock *dp = dccp_sk(sk);
-	struct sk_buff *skb = dccp_qpolicy_pop(sk);
+अटल व्योम dccp_xmit_packet(काष्ठा sock *sk)
+अणु
+	पूर्णांक err, len;
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
+	काष्ठा sk_buff *skb = dccp_qpolicy_pop(sk);
 
-	if (unlikely(skb == NULL))
-		return;
+	अगर (unlikely(skb == शून्य))
+		वापस;
 	len = skb->len;
 
-	if (sk->sk_state == DCCP_PARTOPEN) {
-		const u32 cur_mps = dp->dccps_mss_cache - DCCP_FEATNEG_OVERHEAD;
+	अगर (sk->sk_state == DCCP_PARTOPEN) अणु
+		स्थिर u32 cur_mps = dp->dccps_mss_cache - DCCP_FEATNEG_OVERHEAD;
 		/*
 		 * See 8.1.5 - Handshake Completion.
 		 *
@@ -261,28 +262,28 @@ static void dccp_xmit_packet(struct sock *sk)
 		 * entered OPEN. During the initial feature negotiation, the MPS
 		 * is smaller than usual, reduced by the Change/Confirm options.
 		 */
-		if (!list_empty(&dp->dccps_featneg) && len > cur_mps) {
+		अगर (!list_empty(&dp->dccps_featneg) && len > cur_mps) अणु
 			DCCP_WARN("Payload too large (%d) for featneg.\n", len);
 			dccp_send_ack(sk);
 			dccp_feat_list_purge(&dp->dccps_featneg);
-		}
+		पूर्ण
 
 		inet_csk_schedule_ack(sk);
-		inet_csk_reset_xmit_timer(sk, ICSK_TIME_DACK,
+		inet_csk_reset_xmit_समयr(sk, ICSK_TIME_DACK,
 					      inet_csk(sk)->icsk_rto,
 					      DCCP_RTO_MAX);
 		DCCP_SKB_CB(skb)->dccpd_type = DCCP_PKT_DATAACK;
-	} else if (dccp_ack_pending(sk)) {
+	पूर्ण अन्यथा अगर (dccp_ack_pending(sk)) अणु
 		DCCP_SKB_CB(skb)->dccpd_type = DCCP_PKT_DATAACK;
-	} else {
+	पूर्ण अन्यथा अणु
 		DCCP_SKB_CB(skb)->dccpd_type = DCCP_PKT_DATA;
-	}
+	पूर्ण
 
 	err = dccp_transmit_skb(sk, skb);
-	if (err)
+	अगर (err)
 		dccp_pr_debug("transmit_skb() returned err=%d\n", err);
 	/*
-	 * Register this one as sent even if an error occurred. To the remote
+	 * Register this one as sent even अगर an error occurred. To the remote
 	 * end a local packet drop is indistinguishable from network loss, i.e.
 	 * any local drop will eventually be reported via receiver feedback.
 	 */
@@ -291,153 +292,153 @@ static void dccp_xmit_packet(struct sock *sk)
 	/*
 	 * If the CCID needs to transfer additional header options out-of-band
 	 * (e.g. Ack Vectors or feature-negotiation options), it activates this
-	 * flag to schedule a Sync. The Sync will automatically incorporate all
+	 * flag to schedule a Sync. The Sync will स्वतःmatically incorporate all
 	 * currently pending header options, thus clearing the backlog.
 	 */
-	if (dp->dccps_sync_scheduled)
+	अगर (dp->dccps_sync_scheduled)
 		dccp_send_sync(sk, dp->dccps_gsr, DCCP_PKT_SYNC);
-}
+पूर्ण
 
 /**
- * dccp_flush_write_queue  -  Drain queue at end of connection
+ * dccp_flush_ग_लिखो_queue  -  Drain queue at end of connection
  * @sk: socket to be drained
- * @time_budget: time allowed to drain the queue
+ * @समय_budget: समय allowed to drain the queue
  *
- * Since dccp_sendmsg queues packets without waiting for them to be sent, it may
+ * Since dccp_sendmsg queues packets without रुकोing क्रम them to be sent, it may
  * happen that the TX queue is not empty at the end of a connection. We give the
- * HC-sender CCID a grace period of up to @time_budget jiffies. If this function
- * returns with a non-empty write queue, it will be purged later.
+ * HC-sender CCID a grace period of up to @समय_budget jअगरfies. If this function
+ * वापसs with a non-empty ग_लिखो queue, it will be purged later.
  */
-void dccp_flush_write_queue(struct sock *sk, long *time_budget)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
-	struct sk_buff *skb;
-	long delay, rc;
+व्योम dccp_flush_ग_लिखो_queue(काष्ठा sock *sk, दीर्घ *समय_budget)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
+	काष्ठा sk_buff *skb;
+	दीर्घ delay, rc;
 
-	while (*time_budget > 0 && (skb = skb_peek(&sk->sk_write_queue))) {
+	जबतक (*समय_budget > 0 && (skb = skb_peek(&sk->sk_ग_लिखो_queue))) अणु
 		rc = ccid_hc_tx_send_packet(dp->dccps_hc_tx_ccid, sk, skb);
 
-		switch (ccid_packet_dequeue_eval(rc)) {
-		case CCID_PACKET_WILL_DEQUEUE_LATER:
+		चयन (ccid_packet_dequeue_eval(rc)) अणु
+		हाल CCID_PACKET_WILL_DEQUEUE_LATER:
 			/*
 			 * If the CCID determines when to send, the next sending
-			 * time is unknown or the CCID may not even send again
+			 * समय is unknown or the CCID may not even send again
 			 * (e.g. remote host crashes or lost Ack packets).
 			 */
 			DCCP_WARN("CCID did not manage to send all packets\n");
-			return;
-		case CCID_PACKET_DELAY:
-			delay = msecs_to_jiffies(rc);
-			if (delay > *time_budget)
-				return;
-			rc = dccp_wait_for_ccid(sk, delay);
-			if (rc < 0)
-				return;
-			*time_budget -= (delay - rc);
-			/* check again if we can send now */
-			break;
-		case CCID_PACKET_SEND_AT_ONCE:
+			वापस;
+		हाल CCID_PACKET_DELAY:
+			delay = msecs_to_jअगरfies(rc);
+			अगर (delay > *समय_budget)
+				वापस;
+			rc = dccp_रुको_क्रम_ccid(sk, delay);
+			अगर (rc < 0)
+				वापस;
+			*समय_budget -= (delay - rc);
+			/* check again अगर we can send now */
+			अवरोध;
+		हाल CCID_PACKET_SEND_AT_ONCE:
 			dccp_xmit_packet(sk);
-			break;
-		case CCID_PACKET_ERR:
-			skb_dequeue(&sk->sk_write_queue);
-			kfree_skb(skb);
+			अवरोध;
+		हाल CCID_PACKET_ERR:
+			skb_dequeue(&sk->sk_ग_लिखो_queue);
+			kमुक्त_skb(skb);
 			dccp_pr_debug("packet discarded due to err=%ld\n", rc);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void dccp_write_xmit(struct sock *sk)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
-	struct sk_buff *skb;
+व्योम dccp_ग_लिखो_xmit(काष्ठा sock *sk)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
+	काष्ठा sk_buff *skb;
 
-	while ((skb = dccp_qpolicy_top(sk))) {
-		int rc = ccid_hc_tx_send_packet(dp->dccps_hc_tx_ccid, sk, skb);
+	जबतक ((skb = dccp_qpolicy_top(sk))) अणु
+		पूर्णांक rc = ccid_hc_tx_send_packet(dp->dccps_hc_tx_ccid, sk, skb);
 
-		switch (ccid_packet_dequeue_eval(rc)) {
-		case CCID_PACKET_WILL_DEQUEUE_LATER:
-			return;
-		case CCID_PACKET_DELAY:
-			sk_reset_timer(sk, &dp->dccps_xmit_timer,
-				       jiffies + msecs_to_jiffies(rc));
-			return;
-		case CCID_PACKET_SEND_AT_ONCE:
+		चयन (ccid_packet_dequeue_eval(rc)) अणु
+		हाल CCID_PACKET_WILL_DEQUEUE_LATER:
+			वापस;
+		हाल CCID_PACKET_DELAY:
+			sk_reset_समयr(sk, &dp->dccps_xmit_समयr,
+				       jअगरfies + msecs_to_jअगरfies(rc));
+			वापस;
+		हाल CCID_PACKET_SEND_AT_ONCE:
 			dccp_xmit_packet(sk);
-			break;
-		case CCID_PACKET_ERR:
+			अवरोध;
+		हाल CCID_PACKET_ERR:
 			dccp_qpolicy_drop(sk, skb);
 			dccp_pr_debug("packet discarded due to err=%d\n", rc);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * dccp_retransmit_skb  -  Retransmit Request, Close, or CloseReq packets
- * @sk: socket to perform retransmit on
+ * @sk: socket to perक्रमm retransmit on
  *
  * There are only four retransmittable packet types in DCCP:
  * - Request  in client-REQUEST  state (sec. 8.1.1),
  * - CloseReq in server-CLOSEREQ state (sec. 8.3),
  * - Close    in   node-CLOSING  state (sec. 8.3),
- * - Acks in client-PARTOPEN state (sec. 8.1.5, handled by dccp_delack_timer()).
+ * - Acks in client-PARTOPEN state (sec. 8.1.5, handled by dccp_delack_समयr()).
  * This function expects sk->sk_send_head to contain the original skb.
  */
-int dccp_retransmit_skb(struct sock *sk)
-{
-	WARN_ON(sk->sk_send_head == NULL);
+पूर्णांक dccp_retransmit_skb(काष्ठा sock *sk)
+अणु
+	WARN_ON(sk->sk_send_head == शून्य);
 
-	if (inet_csk(sk)->icsk_af_ops->rebuild_header(sk) != 0)
-		return -EHOSTUNREACH; /* Routing failure or similar. */
+	अगर (inet_csk(sk)->icsk_af_ops->rebuild_header(sk) != 0)
+		वापस -EHOSTUNREACH; /* Routing failure or similar. */
 
 	/* this count is used to distinguish original and retransmitted skb */
 	inet_csk(sk)->icsk_retransmits++;
 
-	return dccp_transmit_skb(sk, skb_clone(sk->sk_send_head, GFP_ATOMIC));
-}
+	वापस dccp_transmit_skb(sk, skb_clone(sk->sk_send_head, GFP_ATOMIC));
+पूर्ण
 
-struct sk_buff *dccp_make_response(const struct sock *sk, struct dst_entry *dst,
-				   struct request_sock *req)
-{
-	struct dccp_hdr *dh;
-	struct dccp_request_sock *dreq;
-	const u32 dccp_header_size = sizeof(struct dccp_hdr) +
-				     sizeof(struct dccp_hdr_ext) +
-				     sizeof(struct dccp_hdr_response);
-	struct sk_buff *skb;
+काष्ठा sk_buff *dccp_make_response(स्थिर काष्ठा sock *sk, काष्ठा dst_entry *dst,
+				   काष्ठा request_sock *req)
+अणु
+	काष्ठा dccp_hdr *dh;
+	काष्ठा dccp_request_sock *dreq;
+	स्थिर u32 dccp_header_size = माप(काष्ठा dccp_hdr) +
+				     माप(काष्ठा dccp_hdr_ext) +
+				     माप(काष्ठा dccp_hdr_response);
+	काष्ठा sk_buff *skb;
 
-	/* sk is marked const to clearly express we dont hold socket lock.
-	 * sock_wmalloc() will atomically change sk->sk_wmem_alloc,
-	 * it is safe to promote sk to non const.
+	/* sk is marked स्थिर to clearly express we करोnt hold socket lock.
+	 * sock_wदो_स्मृति() will atomically change sk->sk_wmem_alloc,
+	 * it is safe to promote sk to non स्थिर.
 	 */
-	skb = sock_wmalloc((struct sock *)sk, MAX_DCCP_HEADER, 1,
+	skb = sock_wदो_स्मृति((काष्ठा sock *)sk, MAX_DCCP_HEADER, 1,
 			   GFP_ATOMIC);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	skb_reserve(skb, MAX_DCCP_HEADER);
 
 	skb_dst_set(skb, dst_clone(dst));
 
 	dreq = dccp_rsk(req);
-	if (inet_rsk(req)->acked)	/* increase GSS upon retransmission */
+	अगर (inet_rsk(req)->acked)	/* increase GSS upon retransmission */
 		dccp_inc_seqno(&dreq->dreq_gss);
 	DCCP_SKB_CB(skb)->dccpd_type = DCCP_PKT_RESPONSE;
 	DCCP_SKB_CB(skb)->dccpd_seq  = dreq->dreq_gss;
 
 	/* Resolve feature dependencies resulting from choice of CCID */
-	if (dccp_feat_server_ccid_dependencies(dreq))
-		goto response_failed;
+	अगर (dccp_feat_server_ccid_dependencies(dreq))
+		जाओ response_failed;
 
-	if (dccp_insert_options_rsk(dreq, skb))
-		goto response_failed;
+	अगर (dccp_insert_options_rsk(dreq, skb))
+		जाओ response_failed;
 
 	/* Build and checksum header */
 	dh = dccp_zeroed_hdr(skb, dccp_header_size);
 
 	dh->dccph_sport	= htons(inet_rsk(req)->ir_num);
 	dh->dccph_dport	= inet_rsk(req)->ir_rmt_port;
-	dh->dccph_doff	= (dccp_header_size +
+	dh->dccph_करोff	= (dccp_header_size +
 			   DCCP_SKB_CB(skb)->dccpd_opt_len) / 4;
 	dh->dccph_type	= DCCP_PKT_RESPONSE;
 	dh->dccph_x	= 1;
@@ -447,31 +448,31 @@ struct sk_buff *dccp_make_response(const struct sock *sk, struct dst_entry *dst,
 
 	dccp_csum_outgoing(skb);
 
-	/* We use `acked' to remember that a Response was already sent. */
+	/* We use `acked' to remember that a Response was alपढ़ोy sent. */
 	inet_rsk(req)->acked = 1;
 	DCCP_INC_STATS(DCCP_MIB_OUTSEGS);
-	return skb;
+	वापस skb;
 response_failed:
-	kfree_skb(skb);
-	return NULL;
-}
+	kमुक्त_skb(skb);
+	वापस शून्य;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(dccp_make_response);
 
 /* answer offending packet in @rcv_skb with Reset from control socket @ctl */
-struct sk_buff *dccp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
-{
-	struct dccp_hdr *rxdh = dccp_hdr(rcv_skb), *dh;
-	struct dccp_skb_cb *dcb = DCCP_SKB_CB(rcv_skb);
-	const u32 dccp_hdr_reset_len = sizeof(struct dccp_hdr) +
-				       sizeof(struct dccp_hdr_ext) +
-				       sizeof(struct dccp_hdr_reset);
-	struct dccp_hdr_reset *dhr;
-	struct sk_buff *skb;
+काष्ठा sk_buff *dccp_ctl_make_reset(काष्ठा sock *sk, काष्ठा sk_buff *rcv_skb)
+अणु
+	काष्ठा dccp_hdr *rxdh = dccp_hdr(rcv_skb), *dh;
+	काष्ठा dccp_skb_cb *dcb = DCCP_SKB_CB(rcv_skb);
+	स्थिर u32 dccp_hdr_reset_len = माप(काष्ठा dccp_hdr) +
+				       माप(काष्ठा dccp_hdr_ext) +
+				       माप(काष्ठा dccp_hdr_reset);
+	काष्ठा dccp_hdr_reset *dhr;
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
-	if (skb == NULL)
-		return NULL;
+	अगर (skb == शून्य)
+		वापस शून्य;
 
 	skb_reserve(skb, sk->sk_prot->max_header);
 
@@ -480,88 +481,88 @@ struct sk_buff *dccp_ctl_make_reset(struct sock *sk, struct sk_buff *rcv_skb)
 	dh->dccph_type	= DCCP_PKT_RESET;
 	dh->dccph_sport	= rxdh->dccph_dport;
 	dh->dccph_dport	= rxdh->dccph_sport;
-	dh->dccph_doff	= dccp_hdr_reset_len / 4;
+	dh->dccph_करोff	= dccp_hdr_reset_len / 4;
 	dh->dccph_x	= 1;
 
 	dhr = dccp_hdr_reset(skb);
 	dhr->dccph_reset_code = dcb->dccpd_reset_code;
 
-	switch (dcb->dccpd_reset_code) {
-	case DCCP_RESET_CODE_PACKET_ERROR:
+	चयन (dcb->dccpd_reset_code) अणु
+	हाल DCCP_RESET_CODE_PACKET_ERROR:
 		dhr->dccph_reset_data[0] = rxdh->dccph_type;
-		break;
-	case DCCP_RESET_CODE_OPTION_ERROR:
-	case DCCP_RESET_CODE_MANDATORY_ERROR:
-		memcpy(dhr->dccph_reset_data, dcb->dccpd_reset_data, 3);
-		break;
-	}
+		अवरोध;
+	हाल DCCP_RESET_CODE_OPTION_ERROR:
+	हाल DCCP_RESET_CODE_MANDATORY_ERROR:
+		स_नकल(dhr->dccph_reset_data, dcb->dccpd_reset_data, 3);
+		अवरोध;
+	पूर्ण
 	/*
 	 * From RFC 4340, 8.3.1:
 	 *   If P.ackno exists, set R.seqno := P.ackno + 1.
 	 *   Else set R.seqno := 0.
 	 */
-	if (dcb->dccpd_ack_seq != DCCP_PKT_WITHOUT_ACK_SEQ)
+	अगर (dcb->dccpd_ack_seq != DCCP_PKT_WITHOUT_ACK_SEQ)
 		dccp_hdr_set_seq(dh, ADD48(dcb->dccpd_ack_seq, 1));
 	dccp_hdr_set_ack(dccp_hdr_ack_bits(skb), dcb->dccpd_seq);
 
 	dccp_csum_outgoing(skb);
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(dccp_ctl_make_reset);
 
-/* send Reset on established socket, to close or abort the connection */
-int dccp_send_reset(struct sock *sk, enum dccp_reset_codes code)
-{
-	struct sk_buff *skb;
+/* send Reset on established socket, to बंद or पात the connection */
+पूर्णांक dccp_send_reset(काष्ठा sock *sk, क्रमागत dccp_reset_codes code)
+अणु
+	काष्ठा sk_buff *skb;
 	/*
-	 * FIXME: what if rebuild_header fails?
-	 * Should we be doing a rebuild_header here?
+	 * FIXME: what अगर rebuild_header fails?
+	 * Should we be करोing a rebuild_header here?
 	 */
-	int err = inet_csk(sk)->icsk_af_ops->rebuild_header(sk);
+	पूर्णांक err = inet_csk(sk)->icsk_af_ops->rebuild_header(sk);
 
-	if (err != 0)
-		return err;
+	अगर (err != 0)
+		वापस err;
 
-	skb = sock_wmalloc(sk, sk->sk_prot->max_header, 1, GFP_ATOMIC);
-	if (skb == NULL)
-		return -ENOBUFS;
+	skb = sock_wदो_स्मृति(sk, sk->sk_prot->max_header, 1, GFP_ATOMIC);
+	अगर (skb == शून्य)
+		वापस -ENOBUFS;
 
-	/* Reserve space for headers and prepare control bits. */
+	/* Reserve space क्रम headers and prepare control bits. */
 	skb_reserve(skb, sk->sk_prot->max_header);
 	DCCP_SKB_CB(skb)->dccpd_type	   = DCCP_PKT_RESET;
 	DCCP_SKB_CB(skb)->dccpd_reset_code = code;
 
-	return dccp_transmit_skb(sk, skb);
-}
+	वापस dccp_transmit_skb(sk, skb);
+पूर्ण
 
 /*
- * Do all connect socket setups that can be done AF independent.
+ * Do all connect socket setups that can be करोne AF independent.
  */
-int dccp_connect(struct sock *sk)
-{
-	struct sk_buff *skb;
-	struct dccp_sock *dp = dccp_sk(sk);
-	struct dst_entry *dst = __sk_dst_get(sk);
-	struct inet_connection_sock *icsk = inet_csk(sk);
+पूर्णांक dccp_connect(काष्ठा sock *sk)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
+	काष्ठा dst_entry *dst = __sk_dst_get(sk);
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
 
 	sk->sk_err = 0;
 	sock_reset_flag(sk, SOCK_DONE);
 
 	dccp_sync_mss(sk, dst_mtu(dst));
 
-	/* do not connect if feature negotiation setup fails */
-	if (dccp_feat_finalise_settings(dccp_sk(sk)))
-		return -EPROTO;
+	/* करो not connect अगर feature negotiation setup fails */
+	अगर (dccp_feat_finalise_settings(dccp_sk(sk)))
+		वापस -EPROTO;
 
 	/* Initialise GAR as per 8.5; AWL/AWH are set in dccp_transmit_skb() */
 	dp->dccps_gar = dp->dccps_iss;
 
 	skb = alloc_skb(sk->sk_prot->max_header, sk->sk_allocation);
-	if (unlikely(skb == NULL))
-		return -ENOBUFS;
+	अगर (unlikely(skb == शून्य))
+		वापस -ENOBUFS;
 
-	/* Reserve space for headers. */
+	/* Reserve space क्रम headers. */
 	skb_reserve(skb, sk->sk_prot->max_header);
 
 	DCCP_SKB_CB(skb)->dccpd_type = DCCP_PKT_REQUEST;
@@ -569,141 +570,141 @@ int dccp_connect(struct sock *sk)
 	dccp_transmit_skb(sk, dccp_skb_entail(sk, skb));
 	DCCP_INC_STATS(DCCP_MIB_ACTIVEOPENS);
 
-	/* Timer for repeating the REQUEST until an answer. */
+	/* Timer क्रम repeating the REQUEST until an answer. */
 	icsk->icsk_retransmits = 0;
-	inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
+	inet_csk_reset_xmit_समयr(sk, ICSK_TIME_RETRANS,
 				  icsk->icsk_rto, DCCP_RTO_MAX);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(dccp_connect);
 
-void dccp_send_ack(struct sock *sk)
-{
+व्योम dccp_send_ack(काष्ठा sock *sk)
+अणु
 	/* If we have been reset, we may not send again. */
-	if (sk->sk_state != DCCP_CLOSED) {
-		struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
+	अगर (sk->sk_state != DCCP_CLOSED) अणु
+		काष्ठा sk_buff *skb = alloc_skb(sk->sk_prot->max_header,
 						GFP_ATOMIC);
 
-		if (skb == NULL) {
+		अगर (skb == शून्य) अणु
 			inet_csk_schedule_ack(sk);
 			inet_csk(sk)->icsk_ack.ato = TCP_ATO_MIN;
-			inet_csk_reset_xmit_timer(sk, ICSK_TIME_DACK,
+			inet_csk_reset_xmit_समयr(sk, ICSK_TIME_DACK,
 						  TCP_DELACK_MAX,
 						  DCCP_RTO_MAX);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		/* Reserve space for headers */
+		/* Reserve space क्रम headers */
 		skb_reserve(skb, sk->sk_prot->max_header);
 		DCCP_SKB_CB(skb)->dccpd_type = DCCP_PKT_ACK;
 		dccp_transmit_skb(sk, skb);
-	}
-}
+	पूर्ण
+पूर्ण
 
 EXPORT_SYMBOL_GPL(dccp_send_ack);
 
-#if 0
+#अगर 0
 /* FIXME: Is this still necessary (11.3) - currently nowhere used by DCCP. */
-void dccp_send_delayed_ack(struct sock *sk)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
+व्योम dccp_send_delayed_ack(काष्ठा sock *sk)
+अणु
+	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
 	/*
-	 * FIXME: tune this timer. elapsed time fixes the skew, so no problem
-	 * with using 2s, and active senders also piggyback the ACK into a
-	 * DATAACK packet, so this is really for quiescent senders.
+	 * FIXME: tune this समयr. elapsed समय fixes the skew, so no problem
+	 * with using 2s, and active senders also piggyback the ACK पूर्णांकo a
+	 * DATAACK packet, so this is really क्रम quiescent senders.
 	 */
-	unsigned long timeout = jiffies + 2 * HZ;
+	अचिन्हित दीर्घ समयout = jअगरfies + 2 * HZ;
 
-	/* Use new timeout only if there wasn't a older one earlier. */
-	if (icsk->icsk_ack.pending & ICSK_ACK_TIMER) {
-		/* If delack timer was blocked or is about to expire,
+	/* Use new समयout only अगर there wasn't a older one earlier. */
+	अगर (icsk->icsk_ack.pending & ICSK_ACK_TIMER) अणु
+		/* If delack समयr was blocked or is about to expire,
 		 * send ACK now.
 		 *
 		 * FIXME: check the "about to expire" part
 		 */
-		if (icsk->icsk_ack.blocked) {
+		अगर (icsk->icsk_ack.blocked) अणु
 			dccp_send_ack(sk);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (!time_before(timeout, icsk->icsk_ack.timeout))
-			timeout = icsk->icsk_ack.timeout;
-	}
+		अगर (!समय_beक्रमe(समयout, icsk->icsk_ack.समयout))
+			समयout = icsk->icsk_ack.समयout;
+	पूर्ण
 	icsk->icsk_ack.pending |= ICSK_ACK_SCHED | ICSK_ACK_TIMER;
-	icsk->icsk_ack.timeout = timeout;
-	sk_reset_timer(sk, &icsk->icsk_delack_timer, timeout);
-}
-#endif
+	icsk->icsk_ack.समयout = समयout;
+	sk_reset_समयr(sk, &icsk->icsk_delack_समयr, समयout);
+पूर्ण
+#पूर्ण_अगर
 
-void dccp_send_sync(struct sock *sk, const u64 ackno,
-		    const enum dccp_pkt_type pkt_type)
-{
+व्योम dccp_send_sync(काष्ठा sock *sk, स्थिर u64 ackno,
+		    स्थिर क्रमागत dccp_pkt_type pkt_type)
+अणु
 	/*
-	 * We are not putting this on the write queue, so
+	 * We are not putting this on the ग_लिखो queue, so
 	 * dccp_transmit_skb() will set the ownership to this
 	 * sock.
 	 */
-	struct sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
+	काष्ठा sk_buff *skb = alloc_skb(sk->sk_prot->max_header, GFP_ATOMIC);
 
-	if (skb == NULL) {
+	अगर (skb == शून्य) अणु
 		/* FIXME: how to make sure the sync is sent? */
 		DCCP_CRIT("could not send %s", dccp_packet_name(pkt_type));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Reserve space for headers and prepare control bits. */
+	/* Reserve space क्रम headers and prepare control bits. */
 	skb_reserve(skb, sk->sk_prot->max_header);
 	DCCP_SKB_CB(skb)->dccpd_type = pkt_type;
 	DCCP_SKB_CB(skb)->dccpd_ack_seq = ackno;
 
 	/*
-	 * Clear the flag in case the Sync was scheduled for out-of-band data,
-	 * such as carrying a long Ack Vector.
+	 * Clear the flag in हाल the Sync was scheduled क्रम out-of-band data,
+	 * such as carrying a दीर्घ Ack Vector.
 	 */
 	dccp_sk(sk)->dccps_sync_scheduled = 0;
 
 	dccp_transmit_skb(sk, skb);
-}
+पूर्ण
 
 EXPORT_SYMBOL_GPL(dccp_send_sync);
 
 /*
- * Send a DCCP_PKT_CLOSE/CLOSEREQ. The caller locks the socket for us. This
+ * Send a DCCP_PKT_CLOSE/CLOSEREQ. The caller locks the socket क्रम us. This
  * cannot be allowed to fail queueing a DCCP_PKT_CLOSE/CLOSEREQ frame under
  * any circumstances.
  */
-void dccp_send_close(struct sock *sk, const int active)
-{
-	struct dccp_sock *dp = dccp_sk(sk);
-	struct sk_buff *skb;
-	const gfp_t prio = active ? GFP_KERNEL : GFP_ATOMIC;
+व्योम dccp_send_बंद(काष्ठा sock *sk, स्थिर पूर्णांक active)
+अणु
+	काष्ठा dccp_sock *dp = dccp_sk(sk);
+	काष्ठा sk_buff *skb;
+	स्थिर gfp_t prio = active ? GFP_KERNEL : GFP_ATOMIC;
 
 	skb = alloc_skb(sk->sk_prot->max_header, prio);
-	if (skb == NULL)
-		return;
+	अगर (skb == शून्य)
+		वापस;
 
-	/* Reserve space for headers and prepare control bits. */
+	/* Reserve space क्रम headers and prepare control bits. */
 	skb_reserve(skb, sk->sk_prot->max_header);
-	if (dp->dccps_role == DCCP_ROLE_SERVER && !dp->dccps_server_timewait)
+	अगर (dp->dccps_role == DCCP_ROLE_SERVER && !dp->dccps_server_समयरुको)
 		DCCP_SKB_CB(skb)->dccpd_type = DCCP_PKT_CLOSEREQ;
-	else
+	अन्यथा
 		DCCP_SKB_CB(skb)->dccpd_type = DCCP_PKT_CLOSE;
 
-	if (active) {
+	अगर (active) अणु
 		skb = dccp_skb_entail(sk, skb);
 		/*
-		 * Retransmission timer for active-close: RFC 4340, 8.3 requires
+		 * Retransmission समयr क्रम active-बंद: RFC 4340, 8.3 requires
 		 * to retransmit the Close/CloseReq until the CLOSING/CLOSEREQ
-		 * state can be left. The initial timeout is 2 RTTs.
-		 * Since RTT measurement is done by the CCIDs, there is no easy
+		 * state can be left. The initial समयout is 2 RTTs.
+		 * Since RTT measurement is करोne by the CCIDs, there is no easy
 		 * way to get an RTT sample. The fallback RTT from RFC 4340, 3.4
-		 * is too low (200ms); we use a high value to avoid unnecessary
+		 * is too low (200ms); we use a high value to aव्योम unnecessary
 		 * retransmissions when the link RTT is > 0.2 seconds.
-		 * FIXME: Let main module sample RTTs and use that instead.
+		 * FIXME: Let मुख्य module sample RTTs and use that instead.
 		 */
-		inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
+		inet_csk_reset_xmit_समयr(sk, ICSK_TIME_RETRANS,
 					  DCCP_TIMEOUT_INIT, DCCP_RTO_MAX);
-	}
+	पूर्ण
 	dccp_transmit_skb(sk, skb);
-}
+पूर्ण

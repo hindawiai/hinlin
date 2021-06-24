@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PROCFS_FD_H__
-#define __PROCFS_FD_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PROCFS_FD_H__
+#घोषणा __PROCFS_FD_H__
 
-#include <linux/fs.h>
+#समावेश <linux/fs.h>
 
-extern const struct file_operations proc_fd_operations;
-extern const struct inode_operations proc_fd_inode_operations;
+बाह्य स्थिर काष्ठा file_operations proc_fd_operations;
+बाह्य स्थिर काष्ठा inode_operations proc_fd_inode_operations;
 
-extern const struct file_operations proc_fdinfo_operations;
-extern const struct inode_operations proc_fdinfo_inode_operations;
+बाह्य स्थिर काष्ठा file_operations proc_fdinfo_operations;
+बाह्य स्थिर काष्ठा inode_operations proc_fdinfo_inode_operations;
 
-extern int proc_fd_permission(struct user_namespace *mnt_userns,
-			      struct inode *inode, int mask);
+बाह्य पूर्णांक proc_fd_permission(काष्ठा user_namespace *mnt_userns,
+			      काष्ठा inode *inode, पूर्णांक mask);
 
-static inline unsigned int proc_fd(struct inode *inode)
-{
-	return PROC_I(inode)->fd;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक proc_fd(काष्ठा inode *inode)
+अणु
+	वापस PROC_I(inode)->fd;
+पूर्ण
 
-#endif /* __PROCFS_FD_H__ */
+#पूर्ण_अगर /* __PROCFS_FD_H__ */

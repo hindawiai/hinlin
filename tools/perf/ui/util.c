@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "util.h"
-#include "../util/debug.h"
-#include <stdio.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "util.h"
+#समावेश "../util/debug.h"
+#समावेश <मानकपन.स>
 
 /*
  * Default error logging functions
  */
-static int perf_stdio__error(const char *format, va_list args)
-{
-	fprintf(stderr, "Error:\n");
-	vfprintf(stderr, format, args);
-	return 0;
-}
+अटल पूर्णांक perf_stdio__error(स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
+	ख_लिखो(मानक_त्रुटि, "Error:\n");
+	भख_लिखो(मानक_त्रुटि, क्रमmat, args);
+	वापस 0;
+पूर्ण
 
-static int perf_stdio__warning(const char *format, va_list args)
-{
-	fprintf(stderr, "Warning:\n");
-	vfprintf(stderr, format, args);
-	return 0;
-}
+अटल पूर्णांक perf_stdio__warning(स्थिर अक्षर *क्रमmat, बहु_सूची args)
+अणु
+	ख_लिखो(मानक_त्रुटि, "Warning:\n");
+	भख_लिखो(मानक_त्रुटि, क्रमmat, args);
+	वापस 0;
+पूर्ण
 
-static struct perf_error_ops default_eops =
-{
+अटल काष्ठा perf_error_ops शेष_eops =
+अणु
 	.error		= perf_stdio__error,
 	.warning	= perf_stdio__warning,
-};
+पूर्ण;
 
-static struct perf_error_ops *perf_eops = &default_eops;
+अटल काष्ठा perf_error_ops *perf_eops = &शेष_eops;
 
 
-int ui__error(const char *format, ...)
-{
-	int ret;
-	va_list args;
+पूर्णांक ui__error(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	पूर्णांक ret;
+	बहु_सूची args;
 
-	va_start(args, format);
-	ret = perf_eops->error(format, args);
-	va_end(args);
+	बहु_शुरू(args, क्रमmat);
+	ret = perf_eops->error(क्रमmat, args);
+	बहु_पूर्ण(args);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ui__warning(const char *format, ...)
-{
-	int ret;
-	va_list args;
+पूर्णांक ui__warning(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	पूर्णांक ret;
+	बहु_सूची args;
 
-	va_start(args, format);
-	ret = perf_eops->warning(format, args);
-	va_end(args);
+	बहु_शुरू(args, क्रमmat);
+	ret = perf_eops->warning(क्रमmat, args);
+	बहु_पूर्ण(args);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * perf_error__register - Register error logging functions
- * @eops: The pointer to error logging function struct
+ * perf_error__रेजिस्टर - Register error logging functions
+ * @eops: The poपूर्णांकer to error logging function काष्ठा
  *
- * Register UI-specific error logging functions. Before calling this,
- * other logging functions should be unregistered, if any.
+ * Register UI-specअगरic error logging functions. Beक्रमe calling this,
+ * other logging functions should be unरेजिस्टरed, अगर any.
  */
-int perf_error__register(struct perf_error_ops *eops)
-{
-	if (perf_eops != &default_eops)
-		return -1;
+पूर्णांक perf_error__रेजिस्टर(काष्ठा perf_error_ops *eops)
+अणु
+	अगर (perf_eops != &शेष_eops)
+		वापस -1;
 
 	perf_eops = eops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * perf_error__unregister - Unregister error logging functions
- * @eops: The pointer to error logging function struct
+ * perf_error__unरेजिस्टर - Unरेजिस्टर error logging functions
+ * @eops: The poपूर्णांकer to error logging function काष्ठा
  *
- * Unregister already registered error logging functions.
+ * Unरेजिस्टर alपढ़ोy रेजिस्टरed error logging functions.
  */
-int perf_error__unregister(struct perf_error_ops *eops)
-{
-	if (perf_eops != eops)
-		return -1;
+पूर्णांक perf_error__unरेजिस्टर(काष्ठा perf_error_ops *eops)
+अणु
+	अगर (perf_eops != eops)
+		वापस -1;
 
-	perf_eops = &default_eops;
-	return 0;
-}
+	perf_eops = &शेष_eops;
+	वापस 0;
+पूर्ण

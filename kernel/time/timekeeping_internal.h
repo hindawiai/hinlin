@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _TIMEKEEPING_INTERNAL_H
-#define _TIMEKEEPING_INTERNAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _TIMEKEEPING_INTERNAL_H
+#घोषणा _TIMEKEEPING_INTERNAL_H
 
-#include <linux/clocksource.h>
-#include <linux/spinlock.h>
-#include <linux/time.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/समय.स>
 
 /*
- * timekeeping debug functions
+ * समयkeeping debug functions
  */
-#ifdef CONFIG_DEBUG_FS
-extern void tk_debug_account_sleep_time(const struct timespec64 *t);
-#else
-#define tk_debug_account_sleep_time(x)
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+बाह्य व्योम tk_debug_account_sleep_समय(स्थिर काष्ठा बारpec64 *t);
+#अन्यथा
+#घोषणा tk_debug_account_sleep_समय(x)
+#पूर्ण_अगर
 
-#ifdef CONFIG_CLOCKSOURCE_VALIDATE_LAST_CYCLE
-static inline u64 clocksource_delta(u64 now, u64 last, u64 mask)
-{
+#अगर_घोषित CONFIG_CLOCKSOURCE_VALIDATE_LAST_CYCLE
+अटल अंतरभूत u64 घड़ीsource_delta(u64 now, u64 last, u64 mask)
+अणु
 	u64 ret = (now - last) & mask;
 
 	/*
-	 * Prevent time going backwards by checking the MSB of mask in
-	 * the result. If set, return 0.
+	 * Prevent समय going backwards by checking the MSB of mask in
+	 * the result. If set, वापस 0.
 	 */
-	return ret & ~(mask >> 1) ? 0 : ret;
-}
-#else
-static inline u64 clocksource_delta(u64 now, u64 last, u64 mask)
-{
-	return (now - last) & mask;
-}
-#endif
+	वापस ret & ~(mask >> 1) ? 0 : ret;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत u64 घड़ीsource_delta(u64 now, u64 last, u64 mask)
+अणु
+	वापस (now - last) & mask;
+पूर्ण
+#पूर्ण_अगर
 
-/* Semi public for serialization of non timekeeper VDSO updates. */
-extern raw_spinlock_t timekeeper_lock;
+/* Semi खुला क्रम serialization of non समयkeeper VDSO updates. */
+बाह्य raw_spinlock_t समयkeeper_lock;
 
-#endif /* _TIMEKEEPING_INTERNAL_H */
+#पूर्ण_अगर /* _TIMEKEEPING_INTERNAL_H */

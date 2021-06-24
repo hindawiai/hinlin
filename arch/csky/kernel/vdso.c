@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/binfmts.h>
-#include <linux/elf.h>
-#include <linux/err.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
 
-#include <asm/page.h>
-#ifdef GENERIC_TIME_VSYSCALL
-#include <vdso/datapage.h>
-#else
-#include <asm/vdso.h>
-#endif
+#समावेश <यंत्र/page.h>
+#अगर_घोषित GENERIC_TIME_VSYSCALL
+#समावेश <vdso/datapage.h>
+#अन्यथा
+#समावेश <यंत्र/vdso.h>
+#पूर्ण_अगर
 
-extern char vdso_start[], vdso_end[];
+बाह्य अक्षर vdso_start[], vdso_end[];
 
-static unsigned int vdso_pages;
-static struct page **vdso_pagelist;
+अटल अचिन्हित पूर्णांक vdso_pages;
+अटल काष्ठा page **vdso_pagelist;
 
 /*
  * The vDSO data page.
  */
-static union {
-	struct vdso_data	data;
+अटल जोड़ अणु
+	काष्ठा vdso_data	data;
 	u8			page[PAGE_SIZE];
-} vdso_data_store __page_aligned_data;
-struct vdso_data *vdso_data = &vdso_data_store.data;
+पूर्ण vdso_data_store __page_aligned_data;
+काष्ठा vdso_data *vdso_data = &vdso_data_store.data;
 
-static int __init vdso_init(void)
-{
-	unsigned int i;
+अटल पूर्णांक __init vdso_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	vdso_pages = (vdso_end - vdso_start) >> PAGE_SHIFT;
 	vdso_pagelist =
-		kcalloc(vdso_pages + 1, sizeof(struct page *), GFP_KERNEL);
-	if (unlikely(vdso_pagelist == NULL)) {
+		kसुस्मृति(vdso_pages + 1, माप(काष्ठा page *), GFP_KERNEL);
+	अगर (unlikely(vdso_pagelist == शून्य)) अणु
 		pr_err("vdso: pagelist allocation failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < vdso_pages; i++) {
-		struct page *pg;
+	क्रम (i = 0; i < vdso_pages; i++) अणु
+		काष्ठा page *pg;
 
 		pg = virt_to_page(vdso_start + (i << PAGE_SHIFT));
 		vdso_pagelist[i] = pg;
-	}
+	पूर्ण
 	vdso_pagelist[i] = virt_to_page(vdso_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(vdso_init);
 
-int arch_setup_additional_pages(struct linux_binprm *bprm,
-	int uses_interp)
-{
-	struct mm_struct *mm = current->mm;
-	unsigned long vdso_base, vdso_len;
-	int ret;
+पूर्णांक arch_setup_additional_pages(काष्ठा linux_binprm *bprm,
+	पूर्णांक uses_पूर्णांकerp)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	अचिन्हित दीर्घ vdso_base, vdso_len;
+	पूर्णांक ret;
 
 	vdso_len = (vdso_pages + 1) << PAGE_SHIFT;
 
-	mmap_write_lock(mm);
-	vdso_base = get_unmapped_area(NULL, 0, vdso_len, 0, 0);
-	if (IS_ERR_VALUE(vdso_base)) {
+	mmap_ग_लिखो_lock(mm);
+	vdso_base = get_unmapped_area(शून्य, 0, vdso_len, 0, 0);
+	अगर (IS_ERR_VALUE(vdso_base)) अणु
 		ret = vdso_base;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	/*
-	 * Put vDSO base into mm struct. We need to do this before calling
+	 * Put vDSO base पूर्णांकo mm काष्ठा. We need to करो this beक्रमe calling
 	 * install_special_mapping or the perf counter mmap tracking code
 	 * will fail to recognise it as a vDSO (since arch_vma_name fails).
 	 */
-	mm->context.vdso = (void *)vdso_base;
+	mm->context.vdso = (व्योम *)vdso_base;
 
 	ret =
 	   install_special_mapping(mm, vdso_base, vdso_pages << PAGE_SHIFT,
 		(VM_READ | VM_EXEC | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC),
 		vdso_pagelist);
 
-	if (unlikely(ret)) {
-		mm->context.vdso = NULL;
-		goto end;
-	}
+	अगर (unlikely(ret)) अणु
+		mm->context.vdso = शून्य;
+		जाओ end;
+	पूर्ण
 
 	vdso_base += (vdso_pages << PAGE_SHIFT);
 	ret = install_special_mapping(mm, vdso_base, PAGE_SIZE,
 		(VM_READ | VM_MAYREAD), &vdso_pagelist[vdso_pages]);
 
-	if (unlikely(ret))
-		mm->context.vdso = NULL;
+	अगर (unlikely(ret))
+		mm->context.vdso = शून्य;
 end:
-	mmap_write_unlock(mm);
-	return ret;
-}
+	mmap_ग_लिखो_unlock(mm);
+	वापस ret;
+पूर्ण
 
-const char *arch_vma_name(struct vm_area_struct *vma)
-{
-	if (vma->vm_mm && (vma->vm_start == (long)vma->vm_mm->context.vdso))
-		return "[vdso]";
-	if (vma->vm_mm && (vma->vm_start ==
-			   (long)vma->vm_mm->context.vdso + PAGE_SIZE))
-		return "[vdso_data]";
-	return NULL;
-}
+स्थिर अक्षर *arch_vma_name(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अगर (vma->vm_mm && (vma->vm_start == (दीर्घ)vma->vm_mm->context.vdso))
+		वापस "[vdso]";
+	अगर (vma->vm_mm && (vma->vm_start ==
+			   (दीर्घ)vma->vm_mm->context.vdso + PAGE_SIZE))
+		वापस "[vdso_data]";
+	वापस शून्य;
+पूर्ण

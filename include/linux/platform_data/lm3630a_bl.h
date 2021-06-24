@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
-* Simple driver for Texas Instruments LM3630A LED Flash driver chip
+* Simple driver क्रम Texas Instruments LM3630A LED Flash driver chip
 * Copyright (C) 2012 Texas Instruments
 */
 
-#ifndef __LINUX_LM3630A_H
-#define __LINUX_LM3630A_H
+#अगर_अघोषित __LINUX_LM3630A_H
+#घोषणा __LINUX_LM3630A_H
 
-#define LM3630A_NAME "lm3630a_bl"
+#घोषणा LM3630A_NAME "lm3630a_bl"
 
-enum lm3630a_pwm_ctrl {
+क्रमागत lm3630a_pwm_ctrl अणु
 	LM3630A_PWM_DISABLE = 0x00,
 	LM3630A_PWM_BANK_A,
 	LM3630A_PWM_BANK_B,
@@ -17,22 +18,22 @@ enum lm3630a_pwm_ctrl {
 	LM3630A_PWM_BANK_A_ACT_LOW = 0x05,
 	LM3630A_PWM_BANK_B_ACT_LOW,
 	LM3630A_PWM_BANK_ALL_ACT_LOW,
-};
+पूर्ण;
 
-enum lm3630a_leda_ctrl {
+क्रमागत lm3630a_leda_ctrl अणु
 	LM3630A_LEDA_DISABLE = 0x00,
 	LM3630A_LEDA_ENABLE = 0x04,
 	LM3630A_LEDA_ENABLE_LINEAR = 0x14,
-};
+पूर्ण;
 
-enum lm3630a_ledb_ctrl {
+क्रमागत lm3630a_ledb_ctrl अणु
 	LM3630A_LEDB_DISABLE = 0x00,
 	LM3630A_LEDB_ON_A = 0x01,
 	LM3630A_LEDB_ENABLE = 0x02,
 	LM3630A_LEDB_ENABLE_LINEAR = 0x0A,
-};
+पूर्ण;
 
-#define LM3630A_MAX_BRIGHTNESS 255
+#घोषणा LM3630A_MAX_BRIGHTNESS 255
 /*
  *@leda_label    : optional led a label.
  *@leda_init_brt : led a init brightness. 4~255
@@ -45,21 +46,21 @@ enum lm3630a_ledb_ctrl {
  *@pwm_period    : pwm period
  *@pwm_ctrl      : pwm disable, bank a or b, active high or low
  */
-struct lm3630a_platform_data {
+काष्ठा lm3630a_platक्रमm_data अणु
 
 	/* led a config.  */
-	const char *leda_label;
-	int leda_init_brt;
-	int leda_max_brt;
-	enum lm3630a_leda_ctrl leda_ctrl;
+	स्थिर अक्षर *leda_label;
+	पूर्णांक leda_init_brt;
+	पूर्णांक leda_max_brt;
+	क्रमागत lm3630a_leda_ctrl leda_ctrl;
 	/* led b config. */
-	const char *ledb_label;
-	int ledb_init_brt;
-	int ledb_max_brt;
-	enum lm3630a_ledb_ctrl ledb_ctrl;
+	स्थिर अक्षर *ledb_label;
+	पूर्णांक ledb_init_brt;
+	पूर्णांक ledb_max_brt;
+	क्रमागत lm3630a_ledb_ctrl ledb_ctrl;
 	/* pwm config. */
-	unsigned int pwm_period;
-	enum lm3630a_pwm_ctrl pwm_ctrl;
-};
+	अचिन्हित पूर्णांक pwm_period;
+	क्रमागत lm3630a_pwm_ctrl pwm_ctrl;
+पूर्ण;
 
-#endif /* __LINUX_LM3630A_H */
+#पूर्ण_अगर /* __LINUX_LM3630A_H */

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * PCM3008 ALSA SoC Layer
  *
@@ -6,14 +7,14 @@
  * Copyright (C) 2008 Lyrtech inc
  */
 
-#ifndef __LINUX_SND_SOC_PCM3008_H
-#define __LINUX_SND_SOC_PCM3008_H
+#अगर_अघोषित __LINUX_SND_SOC_PCM3008_H
+#घोषणा __LINUX_SND_SOC_PCM3008_H
 
-struct pcm3008_setup_data {
-	unsigned dem0_pin;
-	unsigned dem1_pin;
-	unsigned pdad_pin;
-	unsigned pdda_pin;
-};
+काष्ठा pcm3008_setup_data अणु
+	अचिन्हित dem0_pin;
+	अचिन्हित dem1_pin;
+	अचिन्हित pdad_pin;
+	अचिन्हित pdda_pin;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

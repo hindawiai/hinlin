@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * adcxx.c
  *
@@ -7,12 +8,12 @@
  * Copyright (c) 2008 Marc Pignat <marc.pignat@hevs.ch>
  *
  * The adcxx4s communicates with a host processor via an SPI/Microwire Bus
- * interface. This driver supports the whole family of devices with name
+ * पूर्णांकerface. This driver supports the whole family of devices with name
  * ADC<bb><c>S<sss>, where
  * * bb is the resolution in number of bits (8, 10, 12)
  * * c is the number of channels (1, 2, 4, 8)
- * * sss is the maximum conversion speed (021 for 200 kSPS, 051 for 500 kSPS
- *   and 101 for 1 MSPS)
+ * * sss is the maximum conversion speed (021 क्रम 200 kSPS, 051 क्रम 500 kSPS
+ *   and 101 क्रम 1 MSPS)
  *
  * Complete datasheets are available at National's website here:
  * http://www.national.com/ds/DC/ADC<bb><c>S<sss>.pdf
@@ -21,118 +22,118 @@
  * unavailable bits are 0 :)
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/sysfs.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/mutex.h>
-#include <linux/mod_devicetable.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/spi/spi.h>
 
-#define DRVNAME		"adcxx"
+#घोषणा DRVNAME		"adcxx"
 
-struct adcxx {
-	struct device *hwmon_dev;
-	struct mutex lock;
+काष्ठा adcxx अणु
+	काष्ठा device *hwmon_dev;
+	काष्ठा mutex lock;
 	u32 channels;
 	u32 reference; /* in millivolts */
-};
+पूर्ण;
 
 /* sysfs hook function */
-static ssize_t adcxx_show(struct device *dev,
-			  struct device_attribute *devattr, char *buf)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	struct adcxx *adc = spi_get_drvdata(spi);
+अटल sमाप_प्रकार adcxx_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	काष्ठा adcxx *adc = spi_get_drvdata(spi);
 	u8 tx_buf[2];
 	u8 rx_buf[2];
-	int status;
+	पूर्णांक status;
 	u32 value;
 
-	if (mutex_lock_interruptible(&adc->lock))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&adc->lock))
+		वापस -ERESTARTSYS;
 
-	if (adc->channels == 1) {
-		status = spi_read(spi, rx_buf, sizeof(rx_buf));
-	} else {
-		tx_buf[0] = attr->index << 3; /* other bits are don't care */
-		status = spi_write_then_read(spi, tx_buf, sizeof(tx_buf),
-						rx_buf, sizeof(rx_buf));
-	}
-	if (status < 0) {
+	अगर (adc->channels == 1) अणु
+		status = spi_पढ़ो(spi, rx_buf, माप(rx_buf));
+	पूर्ण अन्यथा अणु
+		tx_buf[0] = attr->index << 3; /* other bits are करोn't care */
+		status = spi_ग_लिखो_then_पढ़ो(spi, tx_buf, माप(tx_buf),
+						rx_buf, माप(rx_buf));
+	पूर्ण
+	अगर (status < 0) अणु
 		dev_warn(dev, "SPI synch. transfer failed with status %d\n",
 				status);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	value = (rx_buf[0] << 8) + rx_buf[1];
 	dev_dbg(dev, "raw value = 0x%x\n", value);
 
 	value = value * adc->reference >> 12;
-	status = sprintf(buf, "%d\n", value);
+	status = प्र_लिखो(buf, "%d\n", value);
 out:
 	mutex_unlock(&adc->lock);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static ssize_t adcxx_min_show(struct device *dev,
-			      struct device_attribute *devattr, char *buf)
-{
-	/* The minimum reference is 0 for this chip family */
-	return sprintf(buf, "0\n");
-}
+अटल sमाप_प्रकार adcxx_min_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	/* The minimum reference is 0 क्रम this chip family */
+	वापस प्र_लिखो(buf, "0\n");
+पूर्ण
 
-static ssize_t adcxx_max_show(struct device *dev,
-			      struct device_attribute *devattr, char *buf)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct adcxx *adc = spi_get_drvdata(spi);
+अटल sमाप_प्रकार adcxx_max_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा adcxx *adc = spi_get_drvdata(spi);
 	u32 reference;
 
-	if (mutex_lock_interruptible(&adc->lock))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&adc->lock))
+		वापस -ERESTARTSYS;
 
 	reference = adc->reference;
 
 	mutex_unlock(&adc->lock);
 
-	return sprintf(buf, "%d\n", reference);
-}
+	वापस प्र_लिखो(buf, "%d\n", reference);
+पूर्ण
 
-static ssize_t adcxx_max_store(struct device *dev,
-			       struct device_attribute *devattr,
-			       const char *buf, size_t count)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	struct adcxx *adc = spi_get_drvdata(spi);
-	unsigned long value;
+अटल sमाप_प्रकार adcxx_max_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *devattr,
+			       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	काष्ठा adcxx *adc = spi_get_drvdata(spi);
+	अचिन्हित दीर्घ value;
 
-	if (kstrtoul(buf, 10, &value))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 10, &value))
+		वापस -EINVAL;
 
-	if (mutex_lock_interruptible(&adc->lock))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&adc->lock))
+		वापस -ERESTARTSYS;
 
 	adc->reference = value;
 
 	mutex_unlock(&adc->lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t adcxx_name_show(struct device *dev,
-			       struct device_attribute *devattr, char *buf)
-{
-	return sprintf(buf, "%s\n", to_spi_device(dev)->modalias);
-}
+अटल sमाप_प्रकार adcxx_name_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", to_spi_device(dev)->modalias);
+पूर्ण
 
-static struct sensor_device_attribute ad_input[] = {
+अटल काष्ठा sensor_device_attribute ad_input[] = अणु
 	SENSOR_ATTR_RO(name, adcxx_name, 0),
 	SENSOR_ATTR_RO(in_min, adcxx_min, 0),
 	SENSOR_ATTR_RW(in_max, adcxx_max, 0),
@@ -144,22 +145,22 @@ static struct sensor_device_attribute ad_input[] = {
 	SENSOR_ATTR_RO(in5_input, adcxx, 5),
 	SENSOR_ATTR_RO(in6_input, adcxx, 6),
 	SENSOR_ATTR_RO(in7_input, adcxx, 7),
-};
+पूर्ण;
 
 /*----------------------------------------------------------------------*/
 
-static int adcxx_probe(struct spi_device *spi)
-{
-	int channels = spi_get_device_id(spi)->driver_data;
-	struct adcxx *adc;
-	int status;
-	int i;
+अटल पूर्णांक adcxx_probe(काष्ठा spi_device *spi)
+अणु
+	पूर्णांक channels = spi_get_device_id(spi)->driver_data;
+	काष्ठा adcxx *adc;
+	पूर्णांक status;
+	पूर्णांक i;
 
-	adc = devm_kzalloc(&spi->dev, sizeof(*adc), GFP_KERNEL);
-	if (!adc)
-		return -ENOMEM;
+	adc = devm_kzalloc(&spi->dev, माप(*adc), GFP_KERNEL);
+	अगर (!adc)
+		वापस -ENOMEM;
 
-	/* set a default value for the reference */
+	/* set a शेष value क्रम the reference */
 	adc->reference = 3300;
 	adc->channels = channels;
 	mutex_init(&adc->lock);
@@ -168,64 +169,64 @@ static int adcxx_probe(struct spi_device *spi)
 
 	spi_set_drvdata(spi, adc);
 
-	for (i = 0; i < 3 + adc->channels; i++) {
+	क्रम (i = 0; i < 3 + adc->channels; i++) अणु
 		status = device_create_file(&spi->dev, &ad_input[i].dev_attr);
-		if (status) {
+		अगर (status) अणु
 			dev_err(&spi->dev, "device_create_file failed.\n");
-			goto out_err;
-		}
-	}
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	adc->hwmon_dev = hwmon_device_register(&spi->dev);
-	if (IS_ERR(adc->hwmon_dev)) {
+	adc->hwmon_dev = hwmon_device_रेजिस्टर(&spi->dev);
+	अगर (IS_ERR(adc->hwmon_dev)) अणु
 		dev_err(&spi->dev, "hwmon_device_register failed.\n");
 		status = PTR_ERR(adc->hwmon_dev);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	mutex_unlock(&adc->lock);
-	return 0;
+	वापस 0;
 
 out_err:
-	for (i--; i >= 0; i--)
-		device_remove_file(&spi->dev, &ad_input[i].dev_attr);
+	क्रम (i--; i >= 0; i--)
+		device_हटाओ_file(&spi->dev, &ad_input[i].dev_attr);
 
 	mutex_unlock(&adc->lock);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int adcxx_remove(struct spi_device *spi)
-{
-	struct adcxx *adc = spi_get_drvdata(spi);
-	int i;
+अटल पूर्णांक adcxx_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा adcxx *adc = spi_get_drvdata(spi);
+	पूर्णांक i;
 
 	mutex_lock(&adc->lock);
-	hwmon_device_unregister(adc->hwmon_dev);
-	for (i = 0; i < 3 + adc->channels; i++)
-		device_remove_file(&spi->dev, &ad_input[i].dev_attr);
+	hwmon_device_unरेजिस्टर(adc->hwmon_dev);
+	क्रम (i = 0; i < 3 + adc->channels; i++)
+		device_हटाओ_file(&spi->dev, &ad_input[i].dev_attr);
 
 	mutex_unlock(&adc->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id adcxx_ids[] = {
-	{ "adcxx1s", 1 },
-	{ "adcxx2s", 2 },
-	{ "adcxx4s", 4 },
-	{ "adcxx8s", 8 },
-	{ },
-};
+अटल स्थिर काष्ठा spi_device_id adcxx_ids[] = अणु
+	अणु "adcxx1s", 1 पूर्ण,
+	अणु "adcxx2s", 2 पूर्ण,
+	अणु "adcxx4s", 4 पूर्ण,
+	अणु "adcxx8s", 8 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, adcxx_ids);
 
-static struct spi_driver adcxx_driver = {
-	.driver = {
+अटल काष्ठा spi_driver adcxx_driver = अणु
+	.driver = अणु
 		.name	= "adcxx",
-	},
+	पूर्ण,
 	.id_table = adcxx_ids,
 	.probe	= adcxx_probe,
-	.remove	= adcxx_remove,
-};
+	.हटाओ	= adcxx_हटाओ,
+पूर्ण;
 
 module_spi_driver(adcxx_driver);
 

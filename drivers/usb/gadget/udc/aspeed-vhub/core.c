@@ -1,178 +1,179 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * aspeed-vhub -- Driver for Aspeed SoC "vHub" USB gadget
+ * aspeed-vhub -- Driver क्रम Aspeed SoC "vHub" USB gadget
  *
  * core.c - Top level support
  *
  * Copyright 2017 IBM Corporation
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/list.h>
-#include <linux/interrupt.h>
-#include <linux/proc_fs.h>
-#include <linux/prefetch.h>
-#include <linux/clk.h>
-#include <linux/usb/gadget.h>
-#include <linux/of.h>
-#include <linux/of_gpio.h>
-#include <linux/regmap.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/list.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/dma-mapping.h>
 
-#include "vhub.h"
+#समावेश "vhub.h"
 
-void ast_vhub_done(struct ast_vhub_ep *ep, struct ast_vhub_req *req,
-		   int status)
-{
-	bool internal = req->internal;
-	struct ast_vhub *vhub = ep->vhub;
+व्योम ast_vhub_करोne(काष्ठा ast_vhub_ep *ep, काष्ठा ast_vhub_req *req,
+		   पूर्णांक status)
+अणु
+	bool पूर्णांकernal = req->पूर्णांकernal;
+	काष्ठा ast_vhub *vhub = ep->vhub;
 
 	EPVDBG(ep, "completing request @%p, status %d\n", req, status);
 
 	list_del_init(&req->queue);
 
-	if (req->req.status == -EINPROGRESS)
+	अगर (req->req.status == -EINPROGRESS)
 		req->req.status = status;
 
-	if (req->req.dma) {
-		if (!WARN_ON(!ep->dev))
+	अगर (req->req.dma) अणु
+		अगर (!WARN_ON(!ep->dev))
 			usb_gadget_unmap_request_by_dev(&vhub->pdev->dev,
 						 &req->req, ep->epn.is_in);
 		req->req.dma = 0;
-	}
+	पूर्ण
 
 	/*
-	 * If this isn't an internal EP0 request, call the core
+	 * If this isn't an पूर्णांकernal EP0 request, call the core
 	 * to call the gadget completion.
 	 */
-	if (!internal) {
+	अगर (!पूर्णांकernal) अणु
 		spin_unlock(&ep->vhub->lock);
 		usb_gadget_giveback_request(&ep->ep, &req->req);
 		spin_lock(&ep->vhub->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ast_vhub_nuke(struct ast_vhub_ep *ep, int status)
-{
-	struct ast_vhub_req *req;
-	int count = 0;
+व्योम ast_vhub_nuke(काष्ठा ast_vhub_ep *ep, पूर्णांक status)
+अणु
+	काष्ठा ast_vhub_req *req;
+	पूर्णांक count = 0;
 
-	/* Beware, lock will be dropped & req-acquired by done() */
-	while (!list_empty(&ep->queue)) {
-		req = list_first_entry(&ep->queue, struct ast_vhub_req, queue);
-		ast_vhub_done(ep, req, status);
+	/* Beware, lock will be dropped & req-acquired by करोne() */
+	जबतक (!list_empty(&ep->queue)) अणु
+		req = list_first_entry(&ep->queue, काष्ठा ast_vhub_req, queue);
+		ast_vhub_करोne(ep, req, status);
 		count++;
-	}
-	if (count)
+	पूर्ण
+	अगर (count)
 		EPDBG(ep, "Nuked %d request(s)\n", count);
-}
+पूर्ण
 
-struct usb_request *ast_vhub_alloc_request(struct usb_ep *u_ep,
+काष्ठा usb_request *ast_vhub_alloc_request(काष्ठा usb_ep *u_ep,
 					   gfp_t gfp_flags)
-{
-	struct ast_vhub_req *req;
+अणु
+	काष्ठा ast_vhub_req *req;
 
-	req = kzalloc(sizeof(*req), gfp_flags);
-	if (!req)
-		return NULL;
-	return &req->req;
-}
+	req = kzalloc(माप(*req), gfp_flags);
+	अगर (!req)
+		वापस शून्य;
+	वापस &req->req;
+पूर्ण
 
-void ast_vhub_free_request(struct usb_ep *u_ep, struct usb_request *u_req)
-{
-	struct ast_vhub_req *req = to_ast_req(u_req);
+व्योम ast_vhub_मुक्त_request(काष्ठा usb_ep *u_ep, काष्ठा usb_request *u_req)
+अणु
+	काष्ठा ast_vhub_req *req = to_ast_req(u_req);
 
-	kfree(req);
-}
+	kमुक्त(req);
+पूर्ण
 
-static irqreturn_t ast_vhub_irq(int irq, void *data)
-{
-	struct ast_vhub *vhub = data;
-	irqreturn_t iret = IRQ_NONE;
+अटल irqवापस_t ast_vhub_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ast_vhub *vhub = data;
+	irqवापस_t iret = IRQ_NONE;
 	u32 i, istat;
 
-	/* Stale interrupt while tearing down */
-	if (!vhub->ep0_bufs)
-		return IRQ_NONE;
+	/* Stale पूर्णांकerrupt जबतक tearing करोwn */
+	अगर (!vhub->ep0_bufs)
+		वापस IRQ_NONE;
 
 	spin_lock(&vhub->lock);
 
-	/* Read and ACK interrupts */
-	istat = readl(vhub->regs + AST_VHUB_ISR);
-	if (!istat)
-		goto bail;
-	writel(istat, vhub->regs + AST_VHUB_ISR);
+	/* Read and ACK पूर्णांकerrupts */
+	istat = पढ़ोl(vhub->regs + AST_VHUB_ISR);
+	अगर (!istat)
+		जाओ bail;
+	ग_लिखोl(istat, vhub->regs + AST_VHUB_ISR);
 	iret = IRQ_HANDLED;
 
 	UDCVDBG(vhub, "irq status=%08x, ep_acks=%08x ep_nacks=%08x\n",
 	       istat,
-	       readl(vhub->regs + AST_VHUB_EP_ACK_ISR),
-	       readl(vhub->regs + AST_VHUB_EP_NACK_ISR));
+	       पढ़ोl(vhub->regs + AST_VHUB_EP_ACK_ISR),
+	       पढ़ोl(vhub->regs + AST_VHUB_EP_NACK_ISR));
 
 	/* Handle generic EPs first */
-	if (istat & VHUB_IRQ_EP_POOL_ACK_STALL) {
-		u32 ep_acks = readl(vhub->regs + AST_VHUB_EP_ACK_ISR);
-		writel(ep_acks, vhub->regs + AST_VHUB_EP_ACK_ISR);
+	अगर (istat & VHUB_IRQ_EP_POOL_ACK_STALL) अणु
+		u32 ep_acks = पढ़ोl(vhub->regs + AST_VHUB_EP_ACK_ISR);
+		ग_लिखोl(ep_acks, vhub->regs + AST_VHUB_EP_ACK_ISR);
 
-		for (i = 0; ep_acks && i < vhub->max_epns; i++) {
+		क्रम (i = 0; ep_acks && i < vhub->max_epns; i++) अणु
 			u32 mask = VHUB_EP_IRQ(i);
-			if (ep_acks & mask) {
+			अगर (ep_acks & mask) अणु
 				ast_vhub_epn_ack_irq(&vhub->epns[i]);
 				ep_acks &= ~mask;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Handle device interrupts */
-	if (istat & vhub->port_irq_mask) {
-		for (i = 0; i < vhub->max_ports; i++) {
-			if (istat & VHUB_DEV_IRQ(i))
+	/* Handle device पूर्णांकerrupts */
+	अगर (istat & vhub->port_irq_mask) अणु
+		क्रम (i = 0; i < vhub->max_ports; i++) अणु
+			अगर (istat & VHUB_DEV_IRQ(i))
 				ast_vhub_dev_irq(&vhub->ports[i].dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Handle top-level vHub EP0 interrupts */
-	if (istat & (VHUB_IRQ_HUB_EP0_OUT_ACK_STALL |
+	/* Handle top-level vHub EP0 पूर्णांकerrupts */
+	अगर (istat & (VHUB_IRQ_HUB_EP0_OUT_ACK_STALL |
 		     VHUB_IRQ_HUB_EP0_IN_ACK_STALL |
-		     VHUB_IRQ_HUB_EP0_SETUP)) {
-		if (istat & VHUB_IRQ_HUB_EP0_IN_ACK_STALL)
+		     VHUB_IRQ_HUB_EP0_SETUP)) अणु
+		अगर (istat & VHUB_IRQ_HUB_EP0_IN_ACK_STALL)
 			ast_vhub_ep0_handle_ack(&vhub->ep0, true);
-		if (istat & VHUB_IRQ_HUB_EP0_OUT_ACK_STALL)
+		अगर (istat & VHUB_IRQ_HUB_EP0_OUT_ACK_STALL)
 			ast_vhub_ep0_handle_ack(&vhub->ep0, false);
-		if (istat & VHUB_IRQ_HUB_EP0_SETUP)
+		अगर (istat & VHUB_IRQ_HUB_EP0_SETUP)
 			ast_vhub_ep0_handle_setup(&vhub->ep0);
-	}
+	पूर्ण
 
 	/* Various top level bus events */
-	if (istat & (VHUB_IRQ_BUS_RESUME |
+	अगर (istat & (VHUB_IRQ_BUS_RESUME |
 		     VHUB_IRQ_BUS_SUSPEND |
-		     VHUB_IRQ_BUS_RESET)) {
-		if (istat & VHUB_IRQ_BUS_RESUME)
+		     VHUB_IRQ_BUS_RESET)) अणु
+		अगर (istat & VHUB_IRQ_BUS_RESUME)
 			ast_vhub_hub_resume(vhub);
-		if (istat & VHUB_IRQ_BUS_SUSPEND)
+		अगर (istat & VHUB_IRQ_BUS_SUSPEND)
 			ast_vhub_hub_suspend(vhub);
-		if (istat & VHUB_IRQ_BUS_RESET)
+		अगर (istat & VHUB_IRQ_BUS_RESET)
 			ast_vhub_hub_reset(vhub);
-	}
+	पूर्ण
 
  bail:
 	spin_unlock(&vhub->lock);
-	return iret;
-}
+	वापस iret;
+पूर्ण
 
-void ast_vhub_init_hw(struct ast_vhub *vhub)
-{
+व्योम ast_vhub_init_hw(काष्ठा ast_vhub *vhub)
+अणु
 	u32 ctrl, port_mask, epn_mask;
 
 	UDCDBG(vhub,"(Re)Starting HW ...\n");
@@ -182,11 +183,11 @@ void ast_vhub_init_hw(struct ast_vhub *vhub)
 		VHUB_CTRL_PHY_RESET_DIS;
 
        /*
-	* We do *NOT* set the VHUB_CTRL_CLK_STOP_SUSPEND bit
-	* to stop the logic clock during suspend because
-	* it causes the registers to become inaccessible and
+	* We करो *NOT* set the VHUB_CTRL_CLK_STOP_SUSPEND bit
+	* to stop the logic घड़ी during suspend because
+	* it causes the रेजिस्टरs to become inaccessible and
 	* we haven't yet figured out a good wayt to bring the
-	* controller back into life to issue a wakeup.
+	* controller back पूर्णांकo lअगरe to issue a wakeup.
 	*/
 
 	/*
@@ -194,62 +195,62 @@ void ast_vhub_init_hw(struct ast_vhub *vhub)
 	 * recommendation
 	 *
 	 * VHUB_CTRL_ISO_RSP_CTRL: When set tells the HW to respond
-	 * with 0 bytes data packet to ISO IN endpoints when no data
+	 * with 0 bytes data packet to ISO IN endpoपूर्णांकs when no data
 	 * is available.
 	 *
 	 * VHUB_CTRL_SPLIT_IN: This makes a SOF complete a split IN
 	 * transaction.
 	 */
 	ctrl |= VHUB_CTRL_ISO_RSP_CTRL | VHUB_CTRL_SPLIT_IN;
-	writel(ctrl, vhub->regs + AST_VHUB_CTRL);
+	ग_लिखोl(ctrl, vhub->regs + AST_VHUB_CTRL);
 	udelay(1);
 
 	/* Set descriptor ring size */
-	if (AST_VHUB_DESCS_COUNT == 256) {
+	अगर (AST_VHUB_DESCS_COUNT == 256) अणु
 		ctrl |= VHUB_CTRL_LONG_DESC;
-		writel(ctrl, vhub->regs + AST_VHUB_CTRL);
-	} else {
+		ग_लिखोl(ctrl, vhub->regs + AST_VHUB_CTRL);
+	पूर्ण अन्यथा अणु
 		BUILD_BUG_ON(AST_VHUB_DESCS_COUNT != 32);
-	}
+	पूर्ण
 
 	/* Reset all devices */
 	port_mask = GENMASK(vhub->max_ports, 1);
-	writel(VHUB_SW_RESET_ROOT_HUB |
+	ग_लिखोl(VHUB_SW_RESET_ROOT_HUB |
 	       VHUB_SW_RESET_DMA_CONTROLLER |
 	       VHUB_SW_RESET_EP_POOL |
 	       port_mask, vhub->regs + AST_VHUB_SW_RESET);
 	udelay(1);
-	writel(0, vhub->regs + AST_VHUB_SW_RESET);
+	ग_लिखोl(0, vhub->regs + AST_VHUB_SW_RESET);
 
-	/* Disable and cleanup EP ACK/NACK interrupts */
+	/* Disable and cleanup EP ACK/NACK पूर्णांकerrupts */
 	epn_mask = GENMASK(vhub->max_epns - 1, 0);
-	writel(0, vhub->regs + AST_VHUB_EP_ACK_IER);
-	writel(0, vhub->regs + AST_VHUB_EP_NACK_IER);
-	writel(epn_mask, vhub->regs + AST_VHUB_EP_ACK_ISR);
-	writel(epn_mask, vhub->regs + AST_VHUB_EP_NACK_ISR);
+	ग_लिखोl(0, vhub->regs + AST_VHUB_EP_ACK_IER);
+	ग_लिखोl(0, vhub->regs + AST_VHUB_EP_NACK_IER);
+	ग_लिखोl(epn_mask, vhub->regs + AST_VHUB_EP_ACK_ISR);
+	ग_लिखोl(epn_mask, vhub->regs + AST_VHUB_EP_NACK_ISR);
 
-	/* Default settings for EP0, enable HW hub EP1 */
-	writel(0, vhub->regs + AST_VHUB_EP0_CTRL);
-	writel(VHUB_EP1_CTRL_RESET_TOGGLE |
+	/* Default settings क्रम EP0, enable HW hub EP1 */
+	ग_लिखोl(0, vhub->regs + AST_VHUB_EP0_CTRL);
+	ग_लिखोl(VHUB_EP1_CTRL_RESET_TOGGLE |
 	       VHUB_EP1_CTRL_ENABLE,
 	       vhub->regs + AST_VHUB_EP1_CTRL);
-	writel(0, vhub->regs + AST_VHUB_EP1_STS_CHG);
+	ग_लिखोl(0, vhub->regs + AST_VHUB_EP1_STS_CHG);
 
 	/* Configure EP0 DMA buffer */
-	writel(vhub->ep0.buf_dma, vhub->regs + AST_VHUB_EP0_DATA);
+	ग_लिखोl(vhub->ep0.buf_dma, vhub->regs + AST_VHUB_EP0_DATA);
 
 	/* Clear address */
-	writel(0, vhub->regs + AST_VHUB_CONF);
+	ग_लिखोl(0, vhub->regs + AST_VHUB_CONF);
 
 	/* Pullup hub (activate on host) */
-	if (vhub->force_usb1)
+	अगर (vhub->क्रमce_usb1)
 		ctrl |= VHUB_CTRL_FULL_SPEED_ONLY;
 
 	ctrl |= VHUB_CTRL_UPSTREAM_CONNECT;
-	writel(ctrl, vhub->regs + AST_VHUB_CTRL);
+	ग_लिखोl(ctrl, vhub->regs + AST_VHUB_CTRL);
 
-	/* Enable some interrupts */
-	writel(VHUB_IRQ_HUB_EP0_IN_ACK_STALL |
+	/* Enable some पूर्णांकerrupts */
+	ग_लिखोl(VHUB_IRQ_HUB_EP0_IN_ACK_STALL |
 	       VHUB_IRQ_HUB_EP0_OUT_ACK_STALL |
 	       VHUB_IRQ_HUB_EP0_SETUP |
 	       VHUB_IRQ_EP_POOL_ACK_STALL |
@@ -257,193 +258,193 @@ void ast_vhub_init_hw(struct ast_vhub *vhub)
 	       VHUB_IRQ_BUS_SUSPEND |
 	       VHUB_IRQ_BUS_RESET,
 	       vhub->regs + AST_VHUB_IER);
-}
+पूर्ण
 
-static int ast_vhub_remove(struct platform_device *pdev)
-{
-	struct ast_vhub *vhub = platform_get_drvdata(pdev);
-	unsigned long flags;
-	int i;
+अटल पूर्णांक ast_vhub_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ast_vhub *vhub = platक्रमm_get_drvdata(pdev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	if (!vhub || !vhub->regs)
-		return 0;
+	अगर (!vhub || !vhub->regs)
+		वापस 0;
 
 	/* Remove devices */
-	for (i = 0; i < vhub->max_ports; i++)
+	क्रम (i = 0; i < vhub->max_ports; i++)
 		ast_vhub_del_dev(&vhub->ports[i].dev);
 
 	spin_lock_irqsave(&vhub->lock, flags);
 
-	/* Mask & ack all interrupts  */
-	writel(0, vhub->regs + AST_VHUB_IER);
-	writel(VHUB_IRQ_ACK_ALL, vhub->regs + AST_VHUB_ISR);
+	/* Mask & ack all पूर्णांकerrupts  */
+	ग_लिखोl(0, vhub->regs + AST_VHUB_IER);
+	ग_लिखोl(VHUB_IRQ_ACK_ALL, vhub->regs + AST_VHUB_ISR);
 
 	/* Pull device, leave PHY enabled */
-	writel(VHUB_CTRL_PHY_CLK |
+	ग_लिखोl(VHUB_CTRL_PHY_CLK |
 	       VHUB_CTRL_PHY_RESET_DIS,
 	       vhub->regs + AST_VHUB_CTRL);
 
-	if (vhub->clk)
+	अगर (vhub->clk)
 		clk_disable_unprepare(vhub->clk);
 
 	spin_unlock_irqrestore(&vhub->lock, flags);
 
-	if (vhub->ep0_bufs)
-		dma_free_coherent(&pdev->dev,
+	अगर (vhub->ep0_bufs)
+		dma_मुक्त_coherent(&pdev->dev,
 				  AST_VHUB_EP0_MAX_PACKET *
 				  (vhub->max_ports + 1),
 				  vhub->ep0_bufs,
 				  vhub->ep0_bufs_dma);
-	vhub->ep0_bufs = NULL;
+	vhub->ep0_bufs = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ast_vhub_probe(struct platform_device *pdev)
-{
-	enum usb_device_speed max_speed;
-	struct ast_vhub *vhub;
-	struct resource *res;
-	int i, rc = 0;
-	const struct device_node *np = pdev->dev.of_node;
+अटल पूर्णांक ast_vhub_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	क्रमागत usb_device_speed max_speed;
+	काष्ठा ast_vhub *vhub;
+	काष्ठा resource *res;
+	पूर्णांक i, rc = 0;
+	स्थिर काष्ठा device_node *np = pdev->dev.of_node;
 
-	vhub = devm_kzalloc(&pdev->dev, sizeof(*vhub), GFP_KERNEL);
-	if (!vhub)
-		return -ENOMEM;
+	vhub = devm_kzalloc(&pdev->dev, माप(*vhub), GFP_KERNEL);
+	अगर (!vhub)
+		वापस -ENOMEM;
 
-	rc = of_property_read_u32(np, "aspeed,vhub-downstream-ports",
+	rc = of_property_पढ़ो_u32(np, "aspeed,vhub-downstream-ports",
 				  &vhub->max_ports);
-	if (rc < 0)
+	अगर (rc < 0)
 		vhub->max_ports = AST_VHUB_NUM_PORTS;
 
-	vhub->ports = devm_kcalloc(&pdev->dev, vhub->max_ports,
-				   sizeof(*vhub->ports), GFP_KERNEL);
-	if (!vhub->ports)
-		return -ENOMEM;
+	vhub->ports = devm_kसुस्मृति(&pdev->dev, vhub->max_ports,
+				   माप(*vhub->ports), GFP_KERNEL);
+	अगर (!vhub->ports)
+		वापस -ENOMEM;
 
-	rc = of_property_read_u32(np, "aspeed,vhub-generic-endpoints",
+	rc = of_property_पढ़ो_u32(np, "aspeed,vhub-generic-endpoints",
 				  &vhub->max_epns);
-	if (rc < 0)
+	अगर (rc < 0)
 		vhub->max_epns = AST_VHUB_NUM_GEN_EPs;
 
-	vhub->epns = devm_kcalloc(&pdev->dev, vhub->max_epns,
-				  sizeof(*vhub->epns), GFP_KERNEL);
-	if (!vhub->epns)
-		return -ENOMEM;
+	vhub->epns = devm_kसुस्मृति(&pdev->dev, vhub->max_epns,
+				  माप(*vhub->epns), GFP_KERNEL);
+	अगर (!vhub->epns)
+		वापस -ENOMEM;
 
 	spin_lock_init(&vhub->lock);
 	vhub->pdev = pdev;
 	vhub->port_irq_mask = GENMASK(VHUB_IRQ_DEV1_BIT + vhub->max_ports - 1,
 				      VHUB_IRQ_DEV1_BIT);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	vhub->regs = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(vhub->regs)) {
+	अगर (IS_ERR(vhub->regs)) अणु
 		dev_err(&pdev->dev, "Failed to map resources\n");
-		return PTR_ERR(vhub->regs);
-	}
+		वापस PTR_ERR(vhub->regs);
+	पूर्ण
 	UDCDBG(vhub, "vHub@%pR mapped @%p\n", res, vhub->regs);
 
-	platform_set_drvdata(pdev, vhub);
+	platक्रमm_set_drvdata(pdev, vhub);
 
-	vhub->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(vhub->clk)) {
+	vhub->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(vhub->clk)) अणु
 		rc = PTR_ERR(vhub->clk);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	rc = clk_prepare_enable(vhub->clk);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "Error couldn't enable clock (%d)\n", rc);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* Check if we need to limit the HW to USB1 */
+	/* Check अगर we need to limit the HW to USB1 */
 	max_speed = usb_get_maximum_speed(&pdev->dev);
-	if (max_speed != USB_SPEED_UNKNOWN && max_speed < USB_SPEED_HIGH)
-		vhub->force_usb1 = true;
+	अगर (max_speed != USB_SPEED_UNKNOWN && max_speed < USB_SPEED_HIGH)
+		vhub->क्रमce_usb1 = true;
 
-	/* Mask & ack all interrupts before installing the handler */
-	writel(0, vhub->regs + AST_VHUB_IER);
-	writel(VHUB_IRQ_ACK_ALL, vhub->regs + AST_VHUB_ISR);
+	/* Mask & ack all पूर्णांकerrupts beक्रमe installing the handler */
+	ग_लिखोl(0, vhub->regs + AST_VHUB_IER);
+	ग_लिखोl(VHUB_IRQ_ACK_ALL, vhub->regs + AST_VHUB_ISR);
 
-	/* Find interrupt and install handler */
-	vhub->irq = platform_get_irq(pdev, 0);
-	if (vhub->irq < 0) {
+	/* Find पूर्णांकerrupt and install handler */
+	vhub->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (vhub->irq < 0) अणु
 		rc = vhub->irq;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	rc = devm_request_irq(&pdev->dev, vhub->irq, ast_vhub_irq, 0,
 			      KBUILD_MODNAME, vhub);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "Failed to request interrupt\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
-	 * Allocate DMA buffers for all EP0s in one chunk,
-	 * one per port and one for the vHub itself
+	 * Allocate DMA buffers क्रम all EP0s in one chunk,
+	 * one per port and one क्रम the vHub itself
 	 */
 	vhub->ep0_bufs = dma_alloc_coherent(&pdev->dev,
 					    AST_VHUB_EP0_MAX_PACKET *
 					    (vhub->max_ports + 1),
 					    &vhub->ep0_bufs_dma, GFP_KERNEL);
-	if (!vhub->ep0_bufs) {
+	अगर (!vhub->ep0_bufs) अणु
 		dev_err(&pdev->dev, "Failed to allocate EP0 DMA buffers\n");
 		rc = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	UDCVDBG(vhub, "EP0 DMA buffers @%p (DMA 0x%08x)\n",
 		vhub->ep0_bufs, (u32)vhub->ep0_bufs_dma);
 
 	/* Init vHub EP0 */
-	ast_vhub_init_ep0(vhub, &vhub->ep0, NULL);
+	ast_vhub_init_ep0(vhub, &vhub->ep0, शून्य);
 
 	/* Init devices */
-	for (i = 0; i < vhub->max_ports && rc == 0; i++)
+	क्रम (i = 0; i < vhub->max_ports && rc == 0; i++)
 		rc = ast_vhub_init_dev(vhub, i);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
 	/* Init hub emulation */
 	rc = ast_vhub_init_hub(vhub);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
 	/* Initialize HW */
 	ast_vhub_init_hw(vhub);
 
 	dev_info(&pdev->dev, "Initialized virtual hub in USB%d mode\n",
-		 vhub->force_usb1 ? 1 : 2);
+		 vhub->क्रमce_usb1 ? 1 : 2);
 
-	return 0;
+	वापस 0;
  err:
-	ast_vhub_remove(pdev);
-	return rc;
-}
+	ast_vhub_हटाओ(pdev);
+	वापस rc;
+पूर्ण
 
-static const struct of_device_id ast_vhub_dt_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id ast_vhub_dt_ids[] = अणु
+	अणु
 		.compatible = "aspeed,ast2400-usb-vhub",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "aspeed,ast2500-usb-vhub",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "aspeed,ast2600-usb-vhub",
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ast_vhub_dt_ids);
 
-static struct platform_driver ast_vhub_driver = {
+अटल काष्ठा platक्रमm_driver ast_vhub_driver = अणु
 	.probe		= ast_vhub_probe,
-	.remove		= ast_vhub_remove,
-	.driver		= {
+	.हटाओ		= ast_vhub_हटाओ,
+	.driver		= अणु
 		.name	= KBUILD_MODNAME,
 		.of_match_table	= ast_vhub_dt_ids,
-	},
-};
-module_platform_driver(ast_vhub_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(ast_vhub_driver);
 
 MODULE_DESCRIPTION("Aspeed vHub udc driver");
 MODULE_AUTHOR("Benjamin Herrenschmidt <benh@kernel.crashing.org>");

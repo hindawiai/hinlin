@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2009 - 2018 Intel Corporation. */
 
-/* ethtool support for igbvf */
+/* ethtool support क्रम igbvf */
 
-#include <linux/netdevice.h>
-#include <linux/ethtool.h>
-#include <linux/pci.h>
-#include <linux/vmalloc.h>
-#include <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/delay.h>
 
-#include "igbvf.h"
-#include <linux/if_vlan.h>
+#समावेश "igbvf.h"
+#समावेश <linux/अगर_vlan.h>
 
-struct igbvf_stats {
-	char stat_string[ETH_GSTRING_LEN];
-	int sizeof_stat;
-	int stat_offset;
-	int base_stat_offset;
-};
+काष्ठा igbvf_stats अणु
+	अक्षर stat_string[ETH_GSTRING_LEN];
+	पूर्णांक माप_stat;
+	पूर्णांक stat_offset;
+	पूर्णांक base_stat_offset;
+पूर्ण;
 
-#define IGBVF_STAT(current, base) \
-		sizeof(((struct igbvf_adapter *)0)->current), \
-		offsetof(struct igbvf_adapter, current), \
-		offsetof(struct igbvf_adapter, base)
+#घोषणा IGBVF_STAT(current, base) \
+		माप(((काष्ठा igbvf_adapter *)0)->current), \
+		दुरत्व(काष्ठा igbvf_adapter, current), \
+		दुरत्व(काष्ठा igbvf_adapter, base)
 
-static const struct igbvf_stats igbvf_gstrings_stats[] = {
-	{ "rx_packets", IGBVF_STAT(stats.gprc, stats.base_gprc) },
-	{ "tx_packets", IGBVF_STAT(stats.gptc, stats.base_gptc) },
-	{ "rx_bytes", IGBVF_STAT(stats.gorc, stats.base_gorc) },
-	{ "tx_bytes", IGBVF_STAT(stats.gotc, stats.base_gotc) },
-	{ "multicast", IGBVF_STAT(stats.mprc, stats.base_mprc) },
-	{ "lbrx_bytes", IGBVF_STAT(stats.gorlbc, stats.base_gorlbc) },
-	{ "lbrx_packets", IGBVF_STAT(stats.gprlbc, stats.base_gprlbc) },
-	{ "tx_restart_queue", IGBVF_STAT(restart_queue, zero_base) },
-	{ "rx_long_byte_count", IGBVF_STAT(stats.gorc, stats.base_gorc) },
-	{ "rx_csum_offload_good", IGBVF_STAT(hw_csum_good, zero_base) },
-	{ "rx_csum_offload_errors", IGBVF_STAT(hw_csum_err, zero_base) },
-	{ "rx_header_split", IGBVF_STAT(rx_hdr_split, zero_base) },
-	{ "alloc_rx_buff_failed", IGBVF_STAT(alloc_rx_buff_failed, zero_base) },
-};
+अटल स्थिर काष्ठा igbvf_stats igbvf_gstrings_stats[] = अणु
+	अणु "rx_packets", IGBVF_STAT(stats.gprc, stats.base_gprc) पूर्ण,
+	अणु "tx_packets", IGBVF_STAT(stats.gptc, stats.base_gptc) पूर्ण,
+	अणु "rx_bytes", IGBVF_STAT(stats.gorc, stats.base_gorc) पूर्ण,
+	अणु "tx_bytes", IGBVF_STAT(stats.gotc, stats.base_gotc) पूर्ण,
+	अणु "multicast", IGBVF_STAT(stats.mprc, stats.base_mprc) पूर्ण,
+	अणु "lbrx_bytes", IGBVF_STAT(stats.gorlbc, stats.base_gorlbc) पूर्ण,
+	अणु "lbrx_packets", IGBVF_STAT(stats.gprlbc, stats.base_gprlbc) पूर्ण,
+	अणु "tx_restart_queue", IGBVF_STAT(restart_queue, zero_base) पूर्ण,
+	अणु "rx_long_byte_count", IGBVF_STAT(stats.gorc, stats.base_gorc) पूर्ण,
+	अणु "rx_csum_offload_good", IGBVF_STAT(hw_csum_good, zero_base) पूर्ण,
+	अणु "rx_csum_offload_errors", IGBVF_STAT(hw_csum_err, zero_base) पूर्ण,
+	अणु "rx_header_split", IGBVF_STAT(rx_hdr_split, zero_base) पूर्ण,
+	अणु "alloc_rx_buff_failed", IGBVF_STAT(alloc_rx_buff_failed, zero_base) पूर्ण,
+पूर्ण;
 
-#define IGBVF_GLOBAL_STATS_LEN ARRAY_SIZE(igbvf_gstrings_stats)
+#घोषणा IGBVF_GLOBAL_STATS_LEN ARRAY_SIZE(igbvf_gstrings_stats)
 
-static const char igbvf_gstrings_test[][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर igbvf_gstrings_test[][ETH_GSTRING_LEN] = अणु
 	"Link test   (on/offline)"
-};
+पूर्ण;
 
-#define IGBVF_TEST_LEN ARRAY_SIZE(igbvf_gstrings_test)
+#घोषणा IGBVF_TEST_LEN ARRAY_SIZE(igbvf_gstrings_test)
 
-static int igbvf_get_link_ksettings(struct net_device *netdev,
-				    struct ethtool_link_ksettings *cmd)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
-	struct e1000_hw *hw = &adapter->hw;
+अटल पूर्णांक igbvf_get_link_ksettings(काष्ठा net_device *netdev,
+				    काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा e1000_hw *hw = &adapter->hw;
 	u32 status;
 
 	ethtool_link_ksettings_zero_link_mode(cmd, supported);
@@ -63,73 +64,73 @@ static int igbvf_get_link_ksettings(struct net_device *netdev,
 	cmd->base.port = -1;
 
 	status = er32(STATUS);
-	if (status & E1000_STATUS_LU) {
-		if (status & E1000_STATUS_SPEED_1000)
+	अगर (status & E1000_STATUS_LU) अणु
+		अगर (status & E1000_STATUS_SPEED_1000)
 			cmd->base.speed = SPEED_1000;
-		else if (status & E1000_STATUS_SPEED_100)
+		अन्यथा अगर (status & E1000_STATUS_SPEED_100)
 			cmd->base.speed = SPEED_100;
-		else
+		अन्यथा
 			cmd->base.speed = SPEED_10;
 
-		if (status & E1000_STATUS_FD)
+		अगर (status & E1000_STATUS_FD)
 			cmd->base.duplex = DUPLEX_FULL;
-		else
+		अन्यथा
 			cmd->base.duplex = DUPLEX_HALF;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd->base.speed = SPEED_UNKNOWN;
 		cmd->base.duplex = DUPLEX_UNKNOWN;
-	}
+	पूर्ण
 
-	cmd->base.autoneg = AUTONEG_DISABLE;
+	cmd->base.स्वतःneg = AUTONEG_DISABLE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igbvf_set_link_ksettings(struct net_device *netdev,
-				    const struct ethtool_link_ksettings *cmd)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक igbvf_set_link_ksettings(काष्ठा net_device *netdev,
+				    स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static void igbvf_get_pauseparam(struct net_device *netdev,
-				 struct ethtool_pauseparam *pause)
-{
-}
+अटल व्योम igbvf_get_छोड़ोparam(काष्ठा net_device *netdev,
+				 काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+पूर्ण
 
-static int igbvf_set_pauseparam(struct net_device *netdev,
-				struct ethtool_pauseparam *pause)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक igbvf_set_छोड़ोparam(काष्ठा net_device *netdev,
+				काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static u32 igbvf_get_msglevel(struct net_device *netdev)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
+अटल u32 igbvf_get_msglevel(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
 
-	return adapter->msg_enable;
-}
+	वापस adapter->msg_enable;
+पूर्ण
 
-static void igbvf_set_msglevel(struct net_device *netdev, u32 data)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igbvf_set_msglevel(काष्ठा net_device *netdev, u32 data)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
 
 	adapter->msg_enable = data;
-}
+पूर्ण
 
-static int igbvf_get_regs_len(struct net_device *netdev)
-{
-#define IGBVF_REGS_LEN 8
-	return IGBVF_REGS_LEN * sizeof(u32);
-}
+अटल पूर्णांक igbvf_get_regs_len(काष्ठा net_device *netdev)
+अणु
+#घोषणा IGBVF_REGS_LEN 8
+	वापस IGBVF_REGS_LEN * माप(u32);
+पूर्ण
 
-static void igbvf_get_regs(struct net_device *netdev,
-			   struct ethtool_regs *regs, void *p)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
-	struct e1000_hw *hw = &adapter->hw;
+अटल व्योम igbvf_get_regs(काष्ठा net_device *netdev,
+			   काष्ठा ethtool_regs *regs, व्योम *p)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा e1000_hw *hw = &adapter->hw;
 	u32 *regs_buff = p;
 
-	memset(p, 0, IGBVF_REGS_LEN * sizeof(u32));
+	स_रखो(p, 0, IGBVF_REGS_LEN * माप(u32));
 
 	regs->version = (1u << 24) |
 			(adapter->pdev->revision << 16) |
@@ -145,58 +146,58 @@ static void igbvf_get_regs(struct net_device *netdev,
 	regs_buff[5] = er32(TDLEN(0));
 	regs_buff[6] = er32(TDH(0));
 	regs_buff[7] = er32(TDT(0));
-}
+पूर्ण
 
-static int igbvf_get_eeprom_len(struct net_device *netdev)
-{
-	return 0;
-}
+अटल पूर्णांक igbvf_get_eeprom_len(काष्ठा net_device *netdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int igbvf_get_eeprom(struct net_device *netdev,
-			    struct ethtool_eeprom *eeprom, u8 *bytes)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक igbvf_get_eeprom(काष्ठा net_device *netdev,
+			    काष्ठा ethtool_eeprom *eeprom, u8 *bytes)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int igbvf_set_eeprom(struct net_device *netdev,
-			    struct ethtool_eeprom *eeprom, u8 *bytes)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक igbvf_set_eeprom(काष्ठा net_device *netdev,
+			    काष्ठा ethtool_eeprom *eeprom, u8 *bytes)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static void igbvf_get_drvinfo(struct net_device *netdev,
-			      struct ethtool_drvinfo *drvinfo)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igbvf_get_drvinfo(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
 
-	strlcpy(drvinfo->driver,  igbvf_driver_name, sizeof(drvinfo->driver));
+	strlcpy(drvinfo->driver,  igbvf_driver_name, माप(drvinfo->driver));
 	strlcpy(drvinfo->bus_info, pci_name(adapter->pdev),
-		sizeof(drvinfo->bus_info));
-}
+		माप(drvinfo->bus_info));
+पूर्ण
 
-static void igbvf_get_ringparam(struct net_device *netdev,
-				struct ethtool_ringparam *ring)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
-	struct igbvf_ring *tx_ring = adapter->tx_ring;
-	struct igbvf_ring *rx_ring = adapter->rx_ring;
+अटल व्योम igbvf_get_ringparam(काष्ठा net_device *netdev,
+				काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igbvf_ring *tx_ring = adapter->tx_ring;
+	काष्ठा igbvf_ring *rx_ring = adapter->rx_ring;
 
 	ring->rx_max_pending = IGBVF_MAX_RXD;
 	ring->tx_max_pending = IGBVF_MAX_TXD;
 	ring->rx_pending = rx_ring->count;
 	ring->tx_pending = tx_ring->count;
-}
+पूर्ण
 
-static int igbvf_set_ringparam(struct net_device *netdev,
-			       struct ethtool_ringparam *ring)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
-	struct igbvf_ring *temp_ring;
-	int err = 0;
+अटल पूर्णांक igbvf_set_ringparam(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igbvf_ring *temp_ring;
+	पूर्णांक err = 0;
 	u32 new_rx_count, new_tx_count;
 
-	if ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
-		return -EINVAL;
+	अगर ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
+		वापस -EINVAL;
 
 	new_rx_count = max_t(u32, ring->rx_pending, IGBVF_MIN_RXD);
 	new_rx_count = min_t(u32, new_rx_count, IGBVF_MAX_RXD);
@@ -206,222 +207,222 @@ static int igbvf_set_ringparam(struct net_device *netdev,
 	new_tx_count = min_t(u32, new_tx_count, IGBVF_MAX_TXD);
 	new_tx_count = ALIGN(new_tx_count, REQ_TX_DESCRIPTOR_MULTIPLE);
 
-	if ((new_tx_count == adapter->tx_ring->count) &&
-	    (new_rx_count == adapter->rx_ring->count)) {
-		/* nothing to do */
-		return 0;
-	}
+	अगर ((new_tx_count == adapter->tx_ring->count) &&
+	    (new_rx_count == adapter->rx_ring->count)) अणु
+		/* nothing to करो */
+		वापस 0;
+	पूर्ण
 
-	while (test_and_set_bit(__IGBVF_RESETTING, &adapter->state))
+	जबतक (test_and_set_bit(__IGBVF_RESETTING, &adapter->state))
 		usleep_range(1000, 2000);
 
-	if (!netif_running(adapter->netdev)) {
+	अगर (!netअगर_running(adapter->netdev)) अणु
 		adapter->tx_ring->count = new_tx_count;
 		adapter->rx_ring->count = new_rx_count;
-		goto clear_reset;
-	}
+		जाओ clear_reset;
+	पूर्ण
 
-	temp_ring = vmalloc(sizeof(struct igbvf_ring));
-	if (!temp_ring) {
+	temp_ring = vदो_स्मृति(माप(काष्ठा igbvf_ring));
+	अगर (!temp_ring) अणु
 		err = -ENOMEM;
-		goto clear_reset;
-	}
+		जाओ clear_reset;
+	पूर्ण
 
-	igbvf_down(adapter);
+	igbvf_करोwn(adapter);
 
-	/* We can't just free everything and then setup again,
-	 * because the ISRs in MSI-X mode get passed pointers
-	 * to the Tx and Rx ring structs.
+	/* We can't just मुक्त everything and then setup again,
+	 * because the ISRs in MSI-X mode get passed poपूर्णांकers
+	 * to the Tx and Rx ring काष्ठाs.
 	 */
-	if (new_tx_count != adapter->tx_ring->count) {
-		memcpy(temp_ring, adapter->tx_ring, sizeof(struct igbvf_ring));
+	अगर (new_tx_count != adapter->tx_ring->count) अणु
+		स_नकल(temp_ring, adapter->tx_ring, माप(काष्ठा igbvf_ring));
 
 		temp_ring->count = new_tx_count;
 		err = igbvf_setup_tx_resources(adapter, temp_ring);
-		if (err)
-			goto err_setup;
+		अगर (err)
+			जाओ err_setup;
 
-		igbvf_free_tx_resources(adapter->tx_ring);
+		igbvf_मुक्त_tx_resources(adapter->tx_ring);
 
-		memcpy(adapter->tx_ring, temp_ring, sizeof(struct igbvf_ring));
-	}
+		स_नकल(adapter->tx_ring, temp_ring, माप(काष्ठा igbvf_ring));
+	पूर्ण
 
-	if (new_rx_count != adapter->rx_ring->count) {
-		memcpy(temp_ring, adapter->rx_ring, sizeof(struct igbvf_ring));
+	अगर (new_rx_count != adapter->rx_ring->count) अणु
+		स_नकल(temp_ring, adapter->rx_ring, माप(काष्ठा igbvf_ring));
 
 		temp_ring->count = new_rx_count;
 		err = igbvf_setup_rx_resources(adapter, temp_ring);
-		if (err)
-			goto err_setup;
+		अगर (err)
+			जाओ err_setup;
 
-		igbvf_free_rx_resources(adapter->rx_ring);
+		igbvf_मुक्त_rx_resources(adapter->rx_ring);
 
-		memcpy(adapter->rx_ring, temp_ring, sizeof(struct igbvf_ring));
-	}
+		स_नकल(adapter->rx_ring, temp_ring, माप(काष्ठा igbvf_ring));
+	पूर्ण
 err_setup:
 	igbvf_up(adapter);
-	vfree(temp_ring);
+	vमुक्त(temp_ring);
 clear_reset:
 	clear_bit(__IGBVF_RESETTING, &adapter->state);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igbvf_link_test(struct igbvf_adapter *adapter, u64 *data)
-{
-	struct e1000_hw *hw = &adapter->hw;
+अटल पूर्णांक igbvf_link_test(काष्ठा igbvf_adapter *adapter, u64 *data)
+अणु
+	काष्ठा e1000_hw *hw = &adapter->hw;
 	*data = 0;
 
 	spin_lock_bh(&hw->mbx_lock);
 
-	hw->mac.ops.check_for_link(hw);
+	hw->mac.ops.check_क्रम_link(hw);
 
 	spin_unlock_bh(&hw->mbx_lock);
 
-	if (!(er32(STATUS) & E1000_STATUS_LU))
+	अगर (!(er32(STATUS) & E1000_STATUS_LU))
 		*data = 1;
 
-	return *data;
-}
+	वापस *data;
+पूर्ण
 
-static void igbvf_diag_test(struct net_device *netdev,
-			    struct ethtool_test *eth_test, u64 *data)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igbvf_diag_test(काष्ठा net_device *netdev,
+			    काष्ठा ethtool_test *eth_test, u64 *data)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
 
 	set_bit(__IGBVF_TESTING, &adapter->state);
 
-	/* Link test performed before hardware reset so autoneg doesn't
-	 * interfere with test result
+	/* Link test perक्रमmed beक्रमe hardware reset so स्वतःneg करोesn't
+	 * पूर्णांकerfere with test result
 	 */
-	if (igbvf_link_test(adapter, &data[0]))
+	अगर (igbvf_link_test(adapter, &data[0]))
 		eth_test->flags |= ETH_TEST_FL_FAILED;
 
 	clear_bit(__IGBVF_TESTING, &adapter->state);
-	msleep_interruptible(4 * 1000);
-}
+	msleep_पूर्णांकerruptible(4 * 1000);
+पूर्ण
 
-static void igbvf_get_wol(struct net_device *netdev,
-			  struct ethtool_wolinfo *wol)
-{
+अटल व्योम igbvf_get_wol(काष्ठा net_device *netdev,
+			  काष्ठा ethtool_wolinfo *wol)
+अणु
 	wol->supported = 0;
 	wol->wolopts = 0;
-}
+पूर्ण
 
-static int igbvf_set_wol(struct net_device *netdev,
-			 struct ethtool_wolinfo *wol)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक igbvf_set_wol(काष्ठा net_device *netdev,
+			 काष्ठा ethtool_wolinfo *wol)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int igbvf_get_coalesce(struct net_device *netdev,
-			      struct ethtool_coalesce *ec)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igbvf_get_coalesce(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
 
-	if (adapter->requested_itr <= 3)
+	अगर (adapter->requested_itr <= 3)
 		ec->rx_coalesce_usecs = adapter->requested_itr;
-	else
+	अन्यथा
 		ec->rx_coalesce_usecs = adapter->current_itr >> 2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igbvf_set_coalesce(struct net_device *netdev,
-			      struct ethtool_coalesce *ec)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
-	struct e1000_hw *hw = &adapter->hw;
+अटल पूर्णांक igbvf_set_coalesce(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा e1000_hw *hw = &adapter->hw;
 
-	if ((ec->rx_coalesce_usecs >= IGBVF_MIN_ITR_USECS) &&
-	    (ec->rx_coalesce_usecs <= IGBVF_MAX_ITR_USECS)) {
+	अगर ((ec->rx_coalesce_usecs >= IGBVF_MIN_ITR_USECS) &&
+	    (ec->rx_coalesce_usecs <= IGBVF_MAX_ITR_USECS)) अणु
 		adapter->current_itr = ec->rx_coalesce_usecs << 2;
 		adapter->requested_itr = 1000000000 /
 					(adapter->current_itr * 256);
-	} else if ((ec->rx_coalesce_usecs == 3) ||
-		   (ec->rx_coalesce_usecs == 2)) {
+	पूर्ण अन्यथा अगर ((ec->rx_coalesce_usecs == 3) ||
+		   (ec->rx_coalesce_usecs == 2)) अणु
 		adapter->current_itr = IGBVF_START_ITR;
 		adapter->requested_itr = ec->rx_coalesce_usecs;
-	} else if (ec->rx_coalesce_usecs == 0) {
-		/* The user's desire is to turn off interrupt throttling
-		 * altogether, but due to HW limitations, we can't do that.
+	पूर्ण अन्यथा अगर (ec->rx_coalesce_usecs == 0) अणु
+		/* The user's desire is to turn off पूर्णांकerrupt throttling
+		 * altogether, but due to HW limitations, we can't करो that.
 		 * Instead we set a very small value in EITR, which would
-		 * allow ~967k interrupts per second, but allow the adapter's
-		 * internal clocking to still function properly.
+		 * allow ~967k पूर्णांकerrupts per second, but allow the adapter's
+		 * पूर्णांकernal घड़ीing to still function properly.
 		 */
 		adapter->current_itr = 4;
 		adapter->requested_itr = 1000000000 /
 					(adapter->current_itr * 256);
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	writel(adapter->current_itr,
-	       hw->hw_addr + adapter->rx_ring->itr_register);
+	ग_लिखोl(adapter->current_itr,
+	       hw->hw_addr + adapter->rx_ring->itr_रेजिस्टर);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igbvf_nway_reset(struct net_device *netdev)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igbvf_nway_reset(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
 
-	if (netif_running(netdev))
+	अगर (netअगर_running(netdev))
 		igbvf_reinit_locked(adapter);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void igbvf_get_ethtool_stats(struct net_device *netdev,
-				    struct ethtool_stats *stats,
+अटल व्योम igbvf_get_ethtool_stats(काष्ठा net_device *netdev,
+				    काष्ठा ethtool_stats *stats,
 				    u64 *data)
-{
-	struct igbvf_adapter *adapter = netdev_priv(netdev);
-	int i;
+अणु
+	काष्ठा igbvf_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक i;
 
 	igbvf_update_stats(adapter);
-	for (i = 0; i < IGBVF_GLOBAL_STATS_LEN; i++) {
-		char *p = (char *)adapter +
+	क्रम (i = 0; i < IGBVF_GLOBAL_STATS_LEN; i++) अणु
+		अक्षर *p = (अक्षर *)adapter +
 			  igbvf_gstrings_stats[i].stat_offset;
-		char *b = (char *)adapter +
+		अक्षर *b = (अक्षर *)adapter +
 			  igbvf_gstrings_stats[i].base_stat_offset;
-		data[i] = ((igbvf_gstrings_stats[i].sizeof_stat ==
-			    sizeof(u64)) ? (*(u64 *)p - *(u64 *)b) :
+		data[i] = ((igbvf_gstrings_stats[i].माप_stat ==
+			    माप(u64)) ? (*(u64 *)p - *(u64 *)b) :
 			    (*(u32 *)p - *(u32 *)b));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int igbvf_get_sset_count(struct net_device *dev, int stringset)
-{
-	switch (stringset) {
-	case ETH_SS_TEST:
-		return IGBVF_TEST_LEN;
-	case ETH_SS_STATS:
-		return IGBVF_GLOBAL_STATS_LEN;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक igbvf_get_sset_count(काष्ठा net_device *dev, पूर्णांक stringset)
+अणु
+	चयन (stringset) अणु
+	हाल ETH_SS_TEST:
+		वापस IGBVF_TEST_LEN;
+	हाल ETH_SS_STATS:
+		वापस IGBVF_GLOBAL_STATS_LEN;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void igbvf_get_strings(struct net_device *netdev, u32 stringset,
+अटल व्योम igbvf_get_strings(काष्ठा net_device *netdev, u32 stringset,
 			      u8 *data)
-{
+अणु
 	u8 *p = data;
-	int i;
+	पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_TEST:
-		memcpy(data, *igbvf_gstrings_test, sizeof(igbvf_gstrings_test));
-		break;
-	case ETH_SS_STATS:
-		for (i = 0; i < IGBVF_GLOBAL_STATS_LEN; i++) {
-			memcpy(p, igbvf_gstrings_stats[i].stat_string,
+	चयन (stringset) अणु
+	हाल ETH_SS_TEST:
+		स_नकल(data, *igbvf_gstrings_test, माप(igbvf_gstrings_test));
+		अवरोध;
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < IGBVF_GLOBAL_STATS_LEN; i++) अणु
+			स_नकल(p, igbvf_gstrings_stats[i].stat_string,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const struct ethtool_ops igbvf_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops igbvf_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_RX_USECS,
 	.get_drvinfo		= igbvf_get_drvinfo,
 	.get_regs_len		= igbvf_get_regs_len,
@@ -437,8 +438,8 @@ static const struct ethtool_ops igbvf_ethtool_ops = {
 	.set_eeprom		= igbvf_set_eeprom,
 	.get_ringparam		= igbvf_get_ringparam,
 	.set_ringparam		= igbvf_set_ringparam,
-	.get_pauseparam		= igbvf_get_pauseparam,
-	.set_pauseparam		= igbvf_set_pauseparam,
+	.get_छोड़ोparam		= igbvf_get_छोड़ोparam,
+	.set_छोड़ोparam		= igbvf_set_छोड़ोparam,
 	.self_test		= igbvf_diag_test,
 	.get_sset_count		= igbvf_get_sset_count,
 	.get_strings		= igbvf_get_strings,
@@ -447,9 +448,9 @@ static const struct ethtool_ops igbvf_ethtool_ops = {
 	.set_coalesce		= igbvf_set_coalesce,
 	.get_link_ksettings	= igbvf_get_link_ksettings,
 	.set_link_ksettings	= igbvf_set_link_ksettings,
-};
+पूर्ण;
 
-void igbvf_set_ethtool_ops(struct net_device *netdev)
-{
+व्योम igbvf_set_ethtool_ops(काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = &igbvf_ethtool_ops;
-}
+पूर्ण

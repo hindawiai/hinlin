@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __VDSO_CLOCKSOURCE_H
-#define __VDSO_CLOCKSOURCE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __VDSO_CLOCKSOURCE_H
+#घोषणा __VDSO_CLOCKSOURCE_H
 
-#include <vdso/limits.h>
+#समावेश <vdso/सीमा.स>
 
-#ifdef CONFIG_GENERIC_GETTIMEOFDAY
-#include <asm/vdso/clocksource.h>
-#endif /* CONFIG_GENERIC_GETTIMEOFDAY */
+#अगर_घोषित CONFIG_GENERIC_GETTIMखातापूर्णDAY
+#समावेश <यंत्र/vdso/घड़ीsource.h>
+#पूर्ण_अगर /* CONFIG_GENERIC_GETTIMखातापूर्णDAY */
 
-enum vdso_clock_mode {
+क्रमागत vdso_घड़ी_mode अणु
 	VDSO_CLOCKMODE_NONE,
-#ifdef CONFIG_GENERIC_GETTIMEOFDAY
+#अगर_घोषित CONFIG_GENERIC_GETTIMखातापूर्णDAY
 	VDSO_ARCH_CLOCKMODES,
-#endif
+#पूर्ण_अगर
 	VDSO_CLOCKMODE_MAX,
 
-	/* Indicator for time namespace VDSO */
-	VDSO_CLOCKMODE_TIMENS = INT_MAX
-};
+	/* Indicator क्रम समय namespace VDSO */
+	VDSO_CLOCKMODE_TIMENS = पूर्णांक_उच्च
+पूर्ण;
 
-#endif /* __VDSO_CLOCKSOURCE_H */
+#पूर्ण_अगर /* __VDSO_CLOCKSOURCE_H */

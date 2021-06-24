@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,164 +21,164 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <linux/kconfig.h>
+#समावेश <linux/kconfig.h>
 
-#if IS_REACHABLE(CONFIG_AMD_IOMMU_V2)
+#अगर IS_REACHABLE(CONFIG_AMD_IOMMU_V2)
 
-#include <linux/printk.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include <linux/amd-iommu.h>
-#include "kfd_priv.h"
-#include "kfd_dbgmgr.h"
-#include "kfd_topology.h"
-#include "kfd_iommu.h"
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/amd-iommu.h>
+#समावेश "kfd_priv.h"
+#समावेश "kfd_dbgmgr.h"
+#समावेश "kfd_topology.h"
+#समावेश "kfd_iommu.h"
 
-static const u32 required_iommu_flags = AMD_IOMMU_DEVICE_FLAG_ATS_SUP |
+अटल स्थिर u32 required_iommu_flags = AMD_IOMMU_DEVICE_FLAG_ATS_SUP |
 					AMD_IOMMU_DEVICE_FLAG_PRI_SUP |
 					AMD_IOMMU_DEVICE_FLAG_PASID_SUP;
 
-/** kfd_iommu_check_device - Check whether IOMMU is available for device
+/** kfd_iommu_check_device - Check whether IOMMU is available क्रम device
  */
-int kfd_iommu_check_device(struct kfd_dev *kfd)
-{
-	struct amd_iommu_device_info iommu_info;
-	int err;
+पूर्णांक kfd_iommu_check_device(काष्ठा kfd_dev *kfd)
+अणु
+	काष्ठा amd_iommu_device_info iommu_info;
+	पूर्णांक err;
 
-	if (!kfd->use_iommu_v2)
-		return -ENODEV;
+	अगर (!kfd->use_iommu_v2)
+		वापस -ENODEV;
 
 	iommu_info.flags = 0;
 	err = amd_iommu_device_info(kfd->pdev, &iommu_info);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if ((iommu_info.flags & required_iommu_flags) != required_iommu_flags)
-		return -ENODEV;
+	अगर ((iommu_info.flags & required_iommu_flags) != required_iommu_flags)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/** kfd_iommu_device_init - Initialize IOMMU for device
+/** kfd_iommu_device_init - Initialize IOMMU क्रम device
  */
-int kfd_iommu_device_init(struct kfd_dev *kfd)
-{
-	struct amd_iommu_device_info iommu_info;
-	unsigned int pasid_limit;
-	int err;
+पूर्णांक kfd_iommu_device_init(काष्ठा kfd_dev *kfd)
+अणु
+	काष्ठा amd_iommu_device_info iommu_info;
+	अचिन्हित पूर्णांक pasid_limit;
+	पूर्णांक err;
 
-	if (!kfd->use_iommu_v2)
-		return 0;
+	अगर (!kfd->use_iommu_v2)
+		वापस 0;
 
 	iommu_info.flags = 0;
 	err = amd_iommu_device_info(kfd->pdev, &iommu_info);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(kfd_device,
 			"error getting iommu info. is the iommu enabled?\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if ((iommu_info.flags & required_iommu_flags) != required_iommu_flags) {
+	अगर ((iommu_info.flags & required_iommu_flags) != required_iommu_flags) अणु
 		dev_err(kfd_device,
 			"error required iommu flags ats %i, pri %i, pasid %i\n",
 		       (iommu_info.flags & AMD_IOMMU_DEVICE_FLAG_ATS_SUP) != 0,
 		       (iommu_info.flags & AMD_IOMMU_DEVICE_FLAG_PRI_SUP) != 0,
 		       (iommu_info.flags & AMD_IOMMU_DEVICE_FLAG_PASID_SUP)
 									!= 0);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	pasid_limit = min_t(unsigned int,
-			(unsigned int)(1 << kfd->device_info->max_pasid_bits),
+	pasid_limit = min_t(अचिन्हित पूर्णांक,
+			(अचिन्हित पूर्णांक)(1 << kfd->device_info->max_pasid_bits),
 			iommu_info.max_pasids);
 
-	if (!kfd_set_pasid_limit(pasid_limit)) {
+	अगर (!kfd_set_pasid_limit(pasid_limit)) अणु
 		dev_err(kfd_device, "error setting pasid limit\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /** kfd_iommu_bind_process_to_device - Have the IOMMU bind a process
  *
  * Binds the given process to the given device using its PASID. This
- * enables IOMMUv2 address translation for the process on the device.
+ * enables IOMMUv2 address translation क्रम the process on the device.
  *
  * This function assumes that the process mutex is held.
  */
-int kfd_iommu_bind_process_to_device(struct kfd_process_device *pdd)
-{
-	struct kfd_dev *dev = pdd->dev;
-	struct kfd_process *p = pdd->process;
-	int err;
+पूर्णांक kfd_iommu_bind_process_to_device(काष्ठा kfd_process_device *pdd)
+अणु
+	काष्ठा kfd_dev *dev = pdd->dev;
+	काष्ठा kfd_process *p = pdd->process;
+	पूर्णांक err;
 
-	if (!dev->use_iommu_v2 || pdd->bound == PDD_BOUND)
-		return 0;
+	अगर (!dev->use_iommu_v2 || pdd->bound == PDD_BOUND)
+		वापस 0;
 
-	if (unlikely(pdd->bound == PDD_BOUND_SUSPENDED)) {
+	अगर (unlikely(pdd->bound == PDD_BOUND_SUSPENDED)) अणु
 		pr_err("Binding PDD_BOUND_SUSPENDED pdd is unexpected!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	err = amd_iommu_bind_pasid(dev->pdev, p->pasid, p->lead_thread);
-	if (!err)
+	err = amd_iommu_bind_pasid(dev->pdev, p->pasid, p->lead_thपढ़ो);
+	अगर (!err)
 		pdd->bound = PDD_BOUND;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /** kfd_iommu_unbind_process - Unbind process from all devices
  *
- * This removes all IOMMU device bindings of the process. To be used
- * before process termination.
+ * This हटाओs all IOMMU device bindings of the process. To be used
+ * beक्रमe process termination.
  */
-void kfd_iommu_unbind_process(struct kfd_process *p)
-{
-	int i;
+व्योम kfd_iommu_unbind_process(काष्ठा kfd_process *p)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < p->n_pdds; i++)
-		if (p->pdds[i]->bound == PDD_BOUND)
+	क्रम (i = 0; i < p->n_pdds; i++)
+		अगर (p->pdds[i]->bound == PDD_BOUND)
 			amd_iommu_unbind_pasid(p->pdds[i]->dev->pdev, p->pasid);
-}
+पूर्ण
 
-/* Callback for process shutdown invoked by the IOMMU driver */
-static void iommu_pasid_shutdown_callback(struct pci_dev *pdev, u32 pasid)
-{
-	struct kfd_dev *dev = kfd_device_by_pci_dev(pdev);
-	struct kfd_process *p;
-	struct kfd_process_device *pdd;
+/* Callback क्रम process shutकरोwn invoked by the IOMMU driver */
+अटल व्योम iommu_pasid_shutकरोwn_callback(काष्ठा pci_dev *pdev, u32 pasid)
+अणु
+	काष्ठा kfd_dev *dev = kfd_device_by_pci_dev(pdev);
+	काष्ठा kfd_process *p;
+	काष्ठा kfd_process_device *pdd;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
 	/*
-	 * Look for the process that matches the pasid. If there is no such
-	 * process, we either released it in amdkfd's own notifier, or there
-	 * is a bug. Unfortunately, there is no way to tell...
+	 * Look क्रम the process that matches the pasid. If there is no such
+	 * process, we either released it in amdkfd's own notअगरier, or there
+	 * is a bug. Unक्रमtunately, there is no way to tell...
 	 */
 	p = kfd_lookup_process_by_pasid(pasid);
-	if (!p)
-		return;
+	अगर (!p)
+		वापस;
 
 	pr_debug("Unbinding process 0x%x from IOMMU\n", pasid);
 
 	mutex_lock(kfd_get_dbgmgr_mutex());
 
-	if (dev->dbgmgr && dev->dbgmgr->pasid == p->pasid) {
-		if (!kfd_dbgmgr_unregister(dev->dbgmgr, p)) {
+	अगर (dev->dbgmgr && dev->dbgmgr->pasid == p->pasid) अणु
+		अगर (!kfd_dbgmgr_unरेजिस्टर(dev->dbgmgr, p)) अणु
 			kfd_dbgmgr_destroy(dev->dbgmgr);
-			dev->dbgmgr = NULL;
-		}
-	}
+			dev->dbgmgr = शून्य;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(kfd_get_dbgmgr_mutex());
 
 	mutex_lock(&p->mutex);
 
 	pdd = kfd_get_process_device_data(dev, p);
-	if (pdd)
+	अगर (pdd)
 		/* For GPU relying on IOMMU, we need to dequeue here
 		 * when PASID is still bound.
 		 */
@@ -186,13 +187,13 @@ static void iommu_pasid_shutdown_callback(struct pci_dev *pdev, u32 pasid)
 	mutex_unlock(&p->mutex);
 
 	kfd_unref_process(p);
-}
+पूर्ण
 
 /* This function called by IOMMU driver on PPR failure */
-static int iommu_invalid_ppr_cb(struct pci_dev *pdev, u32 pasid,
-				unsigned long address, u16 flags)
-{
-	struct kfd_dev *dev;
+अटल पूर्णांक iommu_invalid_ppr_cb(काष्ठा pci_dev *pdev, u32 pasid,
+				अचिन्हित दीर्घ address, u16 flags)
+अणु
+	काष्ठा kfd_dev *dev;
 
 	dev_warn_ratelimited(kfd_device,
 			"Invalid PPR device %x:%x.%x pasid 0x%x address 0x%lX flags 0x%X",
@@ -204,156 +205,156 @@ static int iommu_invalid_ppr_cb(struct pci_dev *pdev, u32 pasid,
 			flags);
 
 	dev = kfd_device_by_pci_dev(pdev);
-	if (!WARN_ON(!dev))
-		kfd_signal_iommu_event(dev, pasid, address,
+	अगर (!WARN_ON(!dev))
+		kfd_संकेत_iommu_event(dev, pasid, address,
 			flags & PPR_FAULT_WRITE, flags & PPR_FAULT_EXEC);
 
-	return AMD_IOMMU_INV_PRI_RSP_INVALID;
-}
+	वापस AMD_IOMMU_INV_PRI_RSP_INVALID;
+पूर्ण
 
 /*
- * Bind processes do the device that have been temporarily unbound
+ * Bind processes करो the device that have been temporarily unbound
  * (PDD_BOUND_SUSPENDED) in kfd_unbind_processes_from_device.
  */
-static int kfd_bind_processes_to_device(struct kfd_dev *kfd)
-{
-	struct kfd_process_device *pdd;
-	struct kfd_process *p;
-	unsigned int temp;
-	int err = 0;
+अटल पूर्णांक kfd_bind_processes_to_device(काष्ठा kfd_dev *kfd)
+अणु
+	काष्ठा kfd_process_device *pdd;
+	काष्ठा kfd_process *p;
+	अचिन्हित पूर्णांक temp;
+	पूर्णांक err = 0;
 
-	int idx = srcu_read_lock(&kfd_processes_srcu);
+	पूर्णांक idx = srcu_पढ़ो_lock(&kfd_processes_srcu);
 
-	hash_for_each_rcu(kfd_processes_table, temp, p, kfd_processes) {
+	hash_क्रम_each_rcu(kfd_processes_table, temp, p, kfd_processes) अणु
 		mutex_lock(&p->mutex);
 		pdd = kfd_get_process_device_data(kfd, p);
 
-		if (WARN_ON(!pdd) || pdd->bound != PDD_BOUND_SUSPENDED) {
+		अगर (WARN_ON(!pdd) || pdd->bound != PDD_BOUND_SUSPENDED) अणु
 			mutex_unlock(&p->mutex);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		err = amd_iommu_bind_pasid(kfd->pdev, p->pasid,
-				p->lead_thread);
-		if (err < 0) {
+				p->lead_thपढ़ो);
+		अगर (err < 0) अणु
 			pr_err("Unexpected pasid 0x%x binding failure\n",
 					p->pasid);
 			mutex_unlock(&p->mutex);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		pdd->bound = PDD_BOUND;
 		mutex_unlock(&p->mutex);
-	}
+	पूर्ण
 
-	srcu_read_unlock(&kfd_processes_srcu, idx);
+	srcu_पढ़ो_unlock(&kfd_processes_srcu, idx);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Mark currently bound processes as PDD_BOUND_SUSPENDED. These
  * processes will be restored to PDD_BOUND state in
  * kfd_bind_processes_to_device.
  */
-static void kfd_unbind_processes_from_device(struct kfd_dev *kfd)
-{
-	struct kfd_process_device *pdd;
-	struct kfd_process *p;
-	unsigned int temp;
+अटल व्योम kfd_unbind_processes_from_device(काष्ठा kfd_dev *kfd)
+अणु
+	काष्ठा kfd_process_device *pdd;
+	काष्ठा kfd_process *p;
+	अचिन्हित पूर्णांक temp;
 
-	int idx = srcu_read_lock(&kfd_processes_srcu);
+	पूर्णांक idx = srcu_पढ़ो_lock(&kfd_processes_srcu);
 
-	hash_for_each_rcu(kfd_processes_table, temp, p, kfd_processes) {
+	hash_क्रम_each_rcu(kfd_processes_table, temp, p, kfd_processes) अणु
 		mutex_lock(&p->mutex);
 		pdd = kfd_get_process_device_data(kfd, p);
 
-		if (WARN_ON(!pdd)) {
+		अगर (WARN_ON(!pdd)) अणु
 			mutex_unlock(&p->mutex);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (pdd->bound == PDD_BOUND)
+		अगर (pdd->bound == PDD_BOUND)
 			pdd->bound = PDD_BOUND_SUSPENDED;
 		mutex_unlock(&p->mutex);
-	}
+	पूर्ण
 
-	srcu_read_unlock(&kfd_processes_srcu, idx);
-}
+	srcu_पढ़ो_unlock(&kfd_processes_srcu, idx);
+पूर्ण
 
-/** kfd_iommu_suspend - Prepare IOMMU for suspend
+/** kfd_iommu_suspend - Prepare IOMMU क्रम suspend
  *
- * This unbinds processes from the device and disables the IOMMU for
+ * This unbinds processes from the device and disables the IOMMU क्रम
  * the device.
  */
-void kfd_iommu_suspend(struct kfd_dev *kfd)
-{
-	if (!kfd->use_iommu_v2)
-		return;
+व्योम kfd_iommu_suspend(काष्ठा kfd_dev *kfd)
+अणु
+	अगर (!kfd->use_iommu_v2)
+		वापस;
 
 	kfd_unbind_processes_from_device(kfd);
 
-	amd_iommu_set_invalidate_ctx_cb(kfd->pdev, NULL);
-	amd_iommu_set_invalid_ppr_cb(kfd->pdev, NULL);
-	amd_iommu_free_device(kfd->pdev);
-}
+	amd_iommu_set_invalidate_ctx_cb(kfd->pdev, शून्य);
+	amd_iommu_set_invalid_ppr_cb(kfd->pdev, शून्य);
+	amd_iommu_मुक्त_device(kfd->pdev);
+पूर्ण
 
 /** kfd_iommu_resume - Restore IOMMU after resume
  *
- * This reinitializes the IOMMU for the device and re-binds previously
+ * This reinitializes the IOMMU क्रम the device and re-binds previously
  * suspended processes to the device.
  */
-int kfd_iommu_resume(struct kfd_dev *kfd)
-{
-	unsigned int pasid_limit;
-	int err;
+पूर्णांक kfd_iommu_resume(काष्ठा kfd_dev *kfd)
+अणु
+	अचिन्हित पूर्णांक pasid_limit;
+	पूर्णांक err;
 
-	if (!kfd->use_iommu_v2)
-		return 0;
+	अगर (!kfd->use_iommu_v2)
+		वापस 0;
 
 	pasid_limit = kfd_get_pasid_limit();
 
 	err = amd_iommu_init_device(kfd->pdev, pasid_limit);
-	if (err)
-		return -ENXIO;
+	अगर (err)
+		वापस -ENXIO;
 
 	amd_iommu_set_invalidate_ctx_cb(kfd->pdev,
-					iommu_pasid_shutdown_callback);
+					iommu_pasid_shutकरोwn_callback);
 	amd_iommu_set_invalid_ppr_cb(kfd->pdev,
 				     iommu_invalid_ppr_cb);
 
 	err = kfd_bind_processes_to_device(kfd);
-	if (err) {
-		amd_iommu_set_invalidate_ctx_cb(kfd->pdev, NULL);
-		amd_iommu_set_invalid_ppr_cb(kfd->pdev, NULL);
-		amd_iommu_free_device(kfd->pdev);
-		return err;
-	}
+	अगर (err) अणु
+		amd_iommu_set_invalidate_ctx_cb(kfd->pdev, शून्य);
+		amd_iommu_set_invalid_ppr_cb(kfd->pdev, शून्य);
+		amd_iommu_मुक्त_device(kfd->pdev);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/** kfd_iommu_add_perf_counters - Add IOMMU performance counters to topology
+/** kfd_iommu_add_perf_counters - Add IOMMU perक्रमmance counters to topology
  */
-int kfd_iommu_add_perf_counters(struct kfd_topology_device *kdev)
-{
-	struct kfd_perf_properties *props;
+पूर्णांक kfd_iommu_add_perf_counters(काष्ठा kfd_topology_device *kdev)
+अणु
+	काष्ठा kfd_perf_properties *props;
 
-	if (!(kdev->node_props.capability & HSA_CAP_ATS_PRESENT))
-		return 0;
+	अगर (!(kdev->node_props.capability & HSA_CAP_ATS_PRESENT))
+		वापस 0;
 
-	if (!amd_iommu_pc_supported())
-		return 0;
+	अगर (!amd_iommu_pc_supported())
+		वापस 0;
 
-	props = kfd_alloc_struct(props);
-	if (!props)
-		return -ENOMEM;
-	strcpy(props->block_name, "iommu");
+	props = kfd_alloc_काष्ठा(props);
+	अगर (!props)
+		वापस -ENOMEM;
+	म_नकल(props->block_name, "iommu");
 	props->max_concurrent = amd_iommu_pc_get_max_banks(0) *
 		amd_iommu_pc_get_max_counters(0); /* assume one iommu */
 	list_add_tail(&props->list, &kdev->perf_props);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

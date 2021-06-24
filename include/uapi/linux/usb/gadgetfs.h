@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Filesystem based user-mode API to USB Gadget controller hardware
+ * Fileप्रणाली based user-mode API to USB Gadget controller hardware
  *
- * Other than ep0 operations, most things are done by read() and write()
- * on endpoint files found in one directory.  They are configured by
- * writing descriptors, and then may be used for normal stream style
- * i/o requests.  When ep0 is configured, the device can enumerate;
- * when it's closed, the device disconnects from usb.  Operations on
+ * Other than ep0 operations, most things are करोne by पढ़ो() and ग_लिखो()
+ * on endpoपूर्णांक files found in one directory.  They are configured by
+ * writing descriptors, and then may be used क्रम normal stream style
+ * i/o requests.  When ep0 is configured, the device can क्रमागतerate;
+ * when it's बंदd, the device disconnects from usb.  Operations on
  * ep0 require ioctl() operations.
  *
  * Configuration and device descriptors get written to /dev/gadget/$CHIP,
- * which may then be used to read usb_gadgetfs_event structs.  The driver
- * may activate endpoints as it handles SET_CONFIGURATION setup events,
- * or earlier; writing endpoint descriptors to /dev/gadget/$ENDPOINT
- * then performing data transfers by reading or writing.
+ * which may then be used to पढ़ो usb_gadgetfs_event काष्ठाs.  The driver
+ * may activate endpoपूर्णांकs as it handles SET_CONFIGURATION setup events,
+ * or earlier; writing endpoपूर्णांक descriptors to /dev/gadget/$ENDPOINT
+ * then perक्रमming data transfers by पढ़ोing or writing.
  */
 
-#ifndef __LINUX_USB_GADGETFS_H
-#define __LINUX_USB_GADGETFS_H
+#अगर_अघोषित __LINUX_USB_GADGETFS_H
+#घोषणा __LINUX_USB_GADGETFS_H
 
-#include <linux/types.h>
-#include <linux/ioctl.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ioctl.h>
 
-#include <linux/usb/ch9.h>
+#समावेश <linux/usb/ch9.h>
 
 /*
  * Events are delivered on the ep0 file descriptor, when the user mode driver
- * reads from this file descriptor after writing the descriptors.  Don't
+ * पढ़ोs from this file descriptor after writing the descriptors.  Don't
  * stop polling this descriptor.
  */
 
-enum usb_gadgetfs_event_type {
+क्रमागत usb_gadgetfs_event_type अणु
 	GADGETFS_NOP = 0,
 
 	GADGETFS_CONNECT,
@@ -38,52 +39,52 @@ enum usb_gadgetfs_event_type {
 	GADGETFS_SETUP,
 	GADGETFS_SUSPEND,
 	/* and likely more ! */
-};
+पूर्ण;
 
-/* NOTE:  this structure must stay the same size and layout on
+/* NOTE:  this काष्ठाure must stay the same size and layout on
  * both 32-bit and 64-bit kernels.
  */
-struct usb_gadgetfs_event {
-	union {
+काष्ठा usb_gadgetfs_event अणु
+	जोड़ अणु
 		/* NOP, DISCONNECT, SUSPEND: nothing
 		 * ... some hardware can't report disconnection
 		 */
 
 		/* CONNECT: just the speed */
-		enum usb_device_speed	speed;
+		क्रमागत usb_device_speed	speed;
 
 		/* SETUP: packet; DATA phase i/o precedes next event
-		 *(setup.bmRequestType & USB_DIR_IN) flags direction
+		 *(setup.bmRequestType & USB_सूची_IN) flags direction
 		 * ... includes SET_CONFIGURATION, SET_INTERFACE
 		 */
-		struct usb_ctrlrequest	setup;
-	} u;
-	enum usb_gadgetfs_event_type	type;
-};
+		काष्ठा usb_ctrlrequest	setup;
+	पूर्ण u;
+	क्रमागत usb_gadgetfs_event_type	type;
+पूर्ण;
 
 
-/* The 'g' code is also used by printer gadget ioctl requests.
+/* The 'g' code is also used by prपूर्णांकer gadget ioctl requests.
  * Don't add any colliding codes to either driver, and keep
- * them in unique ranges (size 0x20 for now).
+ * them in unique ranges (size 0x20 क्रम now).
  */
 
-/* endpoint ioctls */
+/* endpoपूर्णांक ioctls */
 
 /* IN transfers may be reported to the gadget driver as complete
- *	when the fifo is loaded, before the host reads the data;
+ *	when the fअगरo is loaded, beक्रमe the host पढ़ोs the data;
  * OUT transfers may be reported to the host's "client" driver as
- *	complete when they're sitting in the FIFO unread.
- * THIS returns how many bytes are "unclaimed" in the endpoint fifo
- * (needed for precise fault handling, when the hardware allows it)
+ *	complete when they're sitting in the FIFO unपढ़ो.
+ * THIS वापसs how many bytes are "unclaimed" in the endpoपूर्णांक fअगरo
+ * (needed क्रम precise fault handling, when the hardware allows it)
  */
-#define	GADGETFS_FIFO_STATUS	_IO('g', 1)
+#घोषणा	GADGETFS_FIFO_STATUS	_IO('g', 1)
 
-/* discards any unclaimed data in the fifo. */
-#define	GADGETFS_FIFO_FLUSH	_IO('g', 2)
+/* discards any unclaimed data in the fअगरo. */
+#घोषणा	GADGETFS_FIFO_FLUSH	_IO('g', 2)
 
-/* resets endpoint halt+toggle; used to implement set_interface.
+/* resets endpoपूर्णांक halt+toggle; used to implement set_पूर्णांकerface.
  * some hardware (like pxa2xx) can't support this.
  */
-#define	GADGETFS_CLEAR_HALT	_IO('g', 3)
+#घोषणा	GADGETFS_CLEAR_HALT	_IO('g', 3)
 
-#endif /* __LINUX_USB_GADGETFS_H */
+#पूर्ण_अगर /* __LINUX_USB_GADGETFS_H */

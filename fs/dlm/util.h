@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /******************************************************************************
 *******************************************************************************
 **
@@ -8,13 +9,13 @@
 *******************************************************************************
 ******************************************************************************/
 
-#ifndef __UTIL_DOT_H__
-#define __UTIL_DOT_H__
+#अगर_अघोषित __UTIL_DOT_H__
+#घोषणा __UTIL_DOT_H__
 
-void dlm_message_out(struct dlm_message *ms);
-void dlm_message_in(struct dlm_message *ms);
-void dlm_rcom_out(struct dlm_rcom *rc);
-void dlm_rcom_in(struct dlm_rcom *rc);
+व्योम dlm_message_out(काष्ठा dlm_message *ms);
+व्योम dlm_message_in(काष्ठा dlm_message *ms);
+व्योम dlm_rcom_out(काष्ठा dlm_rcom *rc);
+व्योम dlm_rcom_in(काष्ठा dlm_rcom *rc);
 
-#endif
+#पूर्ण_अगर
 

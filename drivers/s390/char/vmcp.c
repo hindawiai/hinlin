@@ -1,276 +1,277 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright IBM Corp. 2004, 2010
- * Interface implementation for communication with the z/VM control program
+ * Interface implementation क्रम communication with the z/VM control program
  *
  * Author(s): Christian Borntraeger <borntraeger@de.ibm.com>
  *
  * z/VMs CP offers the possibility to issue commands via the diagnose code 8
- * this driver implements a character device that issues these commands and
- * returns the answer of CP.
+ * this driver implements a अक्षरacter device that issues these commands and
+ * वापसs the answer of CP.
  *
- * The idea of this driver is based on cpint from Neale Ferguson and #CP in CMS
+ * The idea of this driver is based on cpपूर्णांक from Neale Ferguson and #CP in CMS
  */
 
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/compat.h>
-#include <linux/kernel.h>
-#include <linux/miscdevice.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/export.h>
-#include <linux/mutex.h>
-#include <linux/cma.h>
-#include <linux/mm.h>
-#include <asm/cpcmd.h>
-#include <asm/debug.h>
-#include <asm/vmcp.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/cma.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/cpcmd.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/vmcp.h>
 
-struct vmcp_session {
-	char *response;
-	unsigned int bufsize;
-	unsigned int cma_alloc : 1;
-	int resp_size;
-	int resp_code;
-	struct mutex mutex;
-};
+काष्ठा vmcp_session अणु
+	अक्षर *response;
+	अचिन्हित पूर्णांक bufsize;
+	अचिन्हित पूर्णांक cma_alloc : 1;
+	पूर्णांक resp_size;
+	पूर्णांक resp_code;
+	काष्ठा mutex mutex;
+पूर्ण;
 
-static debug_info_t *vmcp_debug;
+अटल debug_info_t *vmcp_debug;
 
-static unsigned long vmcp_cma_size __initdata = CONFIG_VMCP_CMA_SIZE * 1024 * 1024;
-static struct cma *vmcp_cma;
+अटल अचिन्हित दीर्घ vmcp_cma_size __initdata = CONFIG_VMCP_CMA_SIZE * 1024 * 1024;
+अटल काष्ठा cma *vmcp_cma;
 
-static int __init early_parse_vmcp_cma(char *p)
-{
-	if (!p)
-		return 1;
-	vmcp_cma_size = ALIGN(memparse(p, NULL), PAGE_SIZE);
-	return 0;
-}
+अटल पूर्णांक __init early_parse_vmcp_cma(अक्षर *p)
+अणु
+	अगर (!p)
+		वापस 1;
+	vmcp_cma_size = ALIGN(memparse(p, शून्य), PAGE_SIZE);
+	वापस 0;
+पूर्ण
 early_param("vmcp_cma", early_parse_vmcp_cma);
 
-void __init vmcp_cma_reserve(void)
-{
-	if (!MACHINE_IS_VM)
-		return;
+व्योम __init vmcp_cma_reserve(व्योम)
+अणु
+	अगर (!MACHINE_IS_VM)
+		वापस;
 	cma_declare_contiguous(0, vmcp_cma_size, 0, 0, 0, false, "vmcp", &vmcp_cma);
-}
+पूर्ण
 
-static void vmcp_response_alloc(struct vmcp_session *session)
-{
-	struct page *page = NULL;
-	int nr_pages, order;
+अटल व्योम vmcp_response_alloc(काष्ठा vmcp_session *session)
+अणु
+	काष्ठा page *page = शून्य;
+	पूर्णांक nr_pages, order;
 
 	order = get_order(session->bufsize);
 	nr_pages = ALIGN(session->bufsize, PAGE_SIZE) >> PAGE_SHIFT;
 	/*
 	 * For anything below order 3 allocations rely on the buddy
 	 * allocator. If such low-order allocations can't be handled
-	 * anymore the system won't work anyway.
+	 * anymore the प्रणाली won't work anyway.
 	 */
-	if (order > 2)
+	अगर (order > 2)
 		page = cma_alloc(vmcp_cma, nr_pages, 0, false);
-	if (page) {
-		session->response = (char *)page_to_phys(page);
+	अगर (page) अणु
+		session->response = (अक्षर *)page_to_phys(page);
 		session->cma_alloc = 1;
-		return;
-	}
-	session->response = (char *)__get_free_pages(GFP_KERNEL | __GFP_RETRY_MAYFAIL, order);
-}
+		वापस;
+	पूर्ण
+	session->response = (अक्षर *)__get_मुक्त_pages(GFP_KERNEL | __GFP_RETRY_MAYFAIL, order);
+पूर्ण
 
-static void vmcp_response_free(struct vmcp_session *session)
-{
-	int nr_pages, order;
-	struct page *page;
+अटल व्योम vmcp_response_मुक्त(काष्ठा vmcp_session *session)
+अणु
+	पूर्णांक nr_pages, order;
+	काष्ठा page *page;
 
-	if (!session->response)
-		return;
+	अगर (!session->response)
+		वापस;
 	order = get_order(session->bufsize);
 	nr_pages = ALIGN(session->bufsize, PAGE_SIZE) >> PAGE_SHIFT;
-	if (session->cma_alloc) {
-		page = phys_to_page((unsigned long)session->response);
+	अगर (session->cma_alloc) अणु
+		page = phys_to_page((अचिन्हित दीर्घ)session->response);
 		cma_release(vmcp_cma, page, nr_pages);
 		session->cma_alloc = 0;
-	} else {
-		free_pages((unsigned long)session->response, order);
-	}
-	session->response = NULL;
-}
+	पूर्ण अन्यथा अणु
+		मुक्त_pages((अचिन्हित दीर्घ)session->response, order);
+	पूर्ण
+	session->response = शून्य;
+पूर्ण
 
-static int vmcp_open(struct inode *inode, struct file *file)
-{
-	struct vmcp_session *session;
+अटल पूर्णांक vmcp_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा vmcp_session *session;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	session = kmalloc(sizeof(*session), GFP_KERNEL);
-	if (!session)
-		return -ENOMEM;
+	session = kदो_स्मृति(माप(*session), GFP_KERNEL);
+	अगर (!session)
+		वापस -ENOMEM;
 
 	session->bufsize = PAGE_SIZE;
-	session->response = NULL;
+	session->response = शून्य;
 	session->resp_size = 0;
 	mutex_init(&session->mutex);
-	file->private_data = session;
-	return nonseekable_open(inode, file);
-}
+	file->निजी_data = session;
+	वापस nonseekable_खोलो(inode, file);
+पूर्ण
 
-static int vmcp_release(struct inode *inode, struct file *file)
-{
-	struct vmcp_session *session;
+अटल पूर्णांक vmcp_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा vmcp_session *session;
 
-	session = file->private_data;
-	file->private_data = NULL;
-	vmcp_response_free(session);
-	kfree(session);
-	return 0;
-}
+	session = file->निजी_data;
+	file->निजी_data = शून्य;
+	vmcp_response_मुक्त(session);
+	kमुक्त(session);
+	वापस 0;
+पूर्ण
 
-static ssize_t
-vmcp_read(struct file *file, char __user *buff, size_t count, loff_t *ppos)
-{
-	ssize_t ret;
-	size_t size;
-	struct vmcp_session *session;
+अटल sमाप_प्रकार
+vmcp_पढ़ो(काष्ठा file *file, अक्षर __user *buff, माप_प्रकार count, loff_t *ppos)
+अणु
+	sमाप_प्रकार ret;
+	माप_प्रकार size;
+	काष्ठा vmcp_session *session;
 
-	session = file->private_data;
-	if (mutex_lock_interruptible(&session->mutex))
-		return -ERESTARTSYS;
-	if (!session->response) {
+	session = file->निजी_data;
+	अगर (mutex_lock_पूर्णांकerruptible(&session->mutex))
+		वापस -ERESTARTSYS;
+	अगर (!session->response) अणु
 		mutex_unlock(&session->mutex);
-		return 0;
-	}
-	size = min_t(size_t, session->resp_size, session->bufsize);
-	ret = simple_read_from_buffer(buff, count, ppos,
+		वापस 0;
+	पूर्ण
+	size = min_t(माप_प्रकार, session->resp_size, session->bufsize);
+	ret = simple_पढ़ो_from_buffer(buff, count, ppos,
 					session->response, size);
 
 	mutex_unlock(&session->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-vmcp_write(struct file *file, const char __user *buff, size_t count,
+अटल sमाप_प्रकार
+vmcp_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buff, माप_प्रकार count,
 	   loff_t *ppos)
-{
-	char *cmd;
-	struct vmcp_session *session;
+अणु
+	अक्षर *cmd;
+	काष्ठा vmcp_session *session;
 
-	if (count > 240)
-		return -EINVAL;
+	अगर (count > 240)
+		वापस -EINVAL;
 	cmd = memdup_user_nul(buff, count);
-	if (IS_ERR(cmd))
-		return PTR_ERR(cmd);
-	session = file->private_data;
-	if (mutex_lock_interruptible(&session->mutex)) {
-		kfree(cmd);
-		return -ERESTARTSYS;
-	}
-	if (!session->response)
+	अगर (IS_ERR(cmd))
+		वापस PTR_ERR(cmd);
+	session = file->निजी_data;
+	अगर (mutex_lock_पूर्णांकerruptible(&session->mutex)) अणु
+		kमुक्त(cmd);
+		वापस -ERESTARTSYS;
+	पूर्ण
+	अगर (!session->response)
 		vmcp_response_alloc(session);
-	if (!session->response) {
+	अगर (!session->response) अणु
 		mutex_unlock(&session->mutex);
-		kfree(cmd);
-		return -ENOMEM;
-	}
+		kमुक्त(cmd);
+		वापस -ENOMEM;
+	पूर्ण
 	debug_text_event(vmcp_debug, 1, cmd);
 	session->resp_size = cpcmd(cmd, session->response, session->bufsize,
 				   &session->resp_code);
 	mutex_unlock(&session->mutex);
-	kfree(cmd);
-	*ppos = 0;		/* reset the file pointer after a command */
-	return count;
-}
+	kमुक्त(cmd);
+	*ppos = 0;		/* reset the file poपूर्णांकer after a command */
+	वापस count;
+पूर्ण
 
 
 /*
  * These ioctls are available, as the semantics of the diagnose 8 call
- * does not fit very well into a Linux call. Diagnose X'08' is described in
+ * करोes not fit very well पूर्णांकo a Linux call. Diagnose X'08' is described in
  * CP Programming Services SC24-6084-00
  *
- * VMCP_GETCODE: gives the CP return code back to user space
- * VMCP_SETBUF: sets the response buffer for the next write call. diagnose 8
+ * VMCP_GETCODE: gives the CP वापस code back to user space
+ * VMCP_SETBUF: sets the response buffer क्रम the next ग_लिखो call. diagnose 8
  * expects adjacent pages in real storage and to make matters worse, we
- * dont know the size of the response. Therefore we default to PAGESIZE and
- * let userspace to change the response size, if userspace expects a bigger
+ * करोnt know the size of the response. Thereक्रमe we शेष to PAGESIZE and
+ * let userspace to change the response size, अगर userspace expects a bigger
  * response
  */
-static long vmcp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct vmcp_session *session;
-	int ret = -ENOTTY;
-	int __user *argp;
+अटल दीर्घ vmcp_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा vmcp_session *session;
+	पूर्णांक ret = -ENOTTY;
+	पूर्णांक __user *argp;
 
-	session = file->private_data;
-	if (is_compat_task())
+	session = file->निजी_data;
+	अगर (is_compat_task())
 		argp = compat_ptr(arg);
-	else
-		argp = (int __user *)arg;
-	if (mutex_lock_interruptible(&session->mutex))
-		return -ERESTARTSYS;
-	switch (cmd) {
-	case VMCP_GETCODE:
+	अन्यथा
+		argp = (पूर्णांक __user *)arg;
+	अगर (mutex_lock_पूर्णांकerruptible(&session->mutex))
+		वापस -ERESTARTSYS;
+	चयन (cmd) अणु
+	हाल VMCP_GETCODE:
 		ret = put_user(session->resp_code, argp);
-		break;
-	case VMCP_SETBUF:
-		vmcp_response_free(session);
+		अवरोध;
+	हाल VMCP_SETBUF:
+		vmcp_response_मुक्त(session);
 		ret = get_user(session->bufsize, argp);
-		if (ret)
+		अगर (ret)
 			session->bufsize = PAGE_SIZE;
-		if (!session->bufsize || get_order(session->bufsize) > 8) {
+		अगर (!session->bufsize || get_order(session->bufsize) > 8) अणु
 			session->bufsize = PAGE_SIZE;
 			ret = -EINVAL;
-		}
-		break;
-	case VMCP_GETSIZE:
+		पूर्ण
+		अवरोध;
+	हाल VMCP_GETSIZE:
 		ret = put_user(session->resp_size, argp);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&session->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations vmcp_fops = {
+अटल स्थिर काष्ठा file_operations vmcp_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= vmcp_open,
+	.खोलो		= vmcp_खोलो,
 	.release	= vmcp_release,
-	.read		= vmcp_read,
-	.write		= vmcp_write,
+	.पढ़ो		= vmcp_पढ़ो,
+	.ग_लिखो		= vmcp_ग_लिखो,
 	.unlocked_ioctl	= vmcp_ioctl,
 	.compat_ioctl	= vmcp_ioctl,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static struct miscdevice vmcp_dev = {
+अटल काष्ठा miscdevice vmcp_dev = अणु
 	.name	= "vmcp",
 	.minor	= MISC_DYNAMIC_MINOR,
 	.fops	= &vmcp_fops,
-};
+पूर्ण;
 
-static int __init vmcp_init(void)
-{
-	int ret;
+अटल पूर्णांक __init vmcp_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!MACHINE_IS_VM)
-		return 0;
+	अगर (!MACHINE_IS_VM)
+		वापस 0;
 
-	vmcp_debug = debug_register("vmcp", 1, 1, 240);
-	if (!vmcp_debug)
-		return -ENOMEM;
+	vmcp_debug = debug_रेजिस्टर("vmcp", 1, 1, 240);
+	अगर (!vmcp_debug)
+		वापस -ENOMEM;
 
-	ret = debug_register_view(vmcp_debug, &debug_hex_ascii_view);
-	if (ret) {
-		debug_unregister(vmcp_debug);
-		return ret;
-	}
+	ret = debug_रेजिस्टर_view(vmcp_debug, &debug_hex_ascii_view);
+	अगर (ret) अणु
+		debug_unरेजिस्टर(vmcp_debug);
+		वापस ret;
+	पूर्ण
 
-	ret = misc_register(&vmcp_dev);
-	if (ret)
-		debug_unregister(vmcp_debug);
-	return ret;
-}
+	ret = misc_रेजिस्टर(&vmcp_dev);
+	अगर (ret)
+		debug_unरेजिस्टर(vmcp_debug);
+	वापस ret;
+पूर्ण
 device_initcall(vmcp_init);

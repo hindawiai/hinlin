@@ -1,235 +1,236 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * ACRN HSM irqfd: use eventfd objects to inject virtual interrupts
+ * ACRN HSM irqfd: use eventfd objects to inject भव पूर्णांकerrupts
  *
  * Copyright (C) 2020 Intel Corporation. All rights reserved.
  *
  * Authors:
- *	Shuo Liu <shuo.a.liu@intel.com>
- *	Yakui Zhao <yakui.zhao@intel.com>
+ *	Shuo Liu <shuo.a.liu@पूर्णांकel.com>
+ *	Yakui Zhao <yakui.zhao@पूर्णांकel.com>
  */
 
-#include <linux/eventfd.h>
-#include <linux/file.h>
-#include <linux/poll.h>
-#include <linux/slab.h>
+#समावेश <linux/eventfd.h>
+#समावेश <linux/file.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/slab.h>
 
-#include "acrn_drv.h"
+#समावेश "acrn_drv.h"
 
-static LIST_HEAD(acrn_irqfd_clients);
-static DEFINE_MUTEX(acrn_irqfds_mutex);
+अटल LIST_HEAD(acrn_irqfd_clients);
+अटल DEFINE_MUTEX(acrn_irqfds_mutex);
 
 /**
- * struct hsm_irqfd - Properties of HSM irqfd
- * @vm:		Associated VM pointer
- * @wait:	Entry of wait-queue
- * @shutdown:	Async shutdown work
+ * काष्ठा hsm_irqfd - Properties of HSM irqfd
+ * @vm:		Associated VM poपूर्णांकer
+ * @रुको:	Entry of रुको-queue
+ * @shutकरोwn:	Async shutकरोwn work
  * @eventfd:	Associated eventfd
  * @list:	Entry within &acrn_vm.irqfds of irqfds of a VM
- * @pt:		Structure for select/poll on the associated eventfd
+ * @pt:		Structure क्रम select/poll on the associated eventfd
  * @msi:	MSI data
  */
-struct hsm_irqfd {
-	struct acrn_vm		*vm;
-	wait_queue_entry_t	wait;
-	struct work_struct	shutdown;
-	struct eventfd_ctx	*eventfd;
-	struct list_head	list;
+काष्ठा hsm_irqfd अणु
+	काष्ठा acrn_vm		*vm;
+	रुको_queue_entry_t	रुको;
+	काष्ठा work_काष्ठा	shutकरोwn;
+	काष्ठा eventfd_ctx	*eventfd;
+	काष्ठा list_head	list;
 	poll_table		pt;
-	struct acrn_msi_entry	msi;
-};
+	काष्ठा acrn_msi_entry	msi;
+पूर्ण;
 
-static void acrn_irqfd_inject(struct hsm_irqfd *irqfd)
-{
-	struct acrn_vm *vm = irqfd->vm;
+अटल व्योम acrn_irqfd_inject(काष्ठा hsm_irqfd *irqfd)
+अणु
+	काष्ठा acrn_vm *vm = irqfd->vm;
 
 	acrn_msi_inject(vm, irqfd->msi.msi_addr,
 			irqfd->msi.msi_data);
-}
+पूर्ण
 
-static void hsm_irqfd_shutdown(struct hsm_irqfd *irqfd)
-{
+अटल व्योम hsm_irqfd_shutकरोwn(काष्ठा hsm_irqfd *irqfd)
+अणु
 	u64 cnt;
 
-	lockdep_assert_held(&irqfd->vm->irqfds_lock);
+	lockdep_निश्चित_held(&irqfd->vm->irqfds_lock);
 
-	/* remove from wait queue */
+	/* हटाओ from रुको queue */
 	list_del_init(&irqfd->list);
-	eventfd_ctx_remove_wait_queue(irqfd->eventfd, &irqfd->wait, &cnt);
+	eventfd_ctx_हटाओ_रुको_queue(irqfd->eventfd, &irqfd->रुको, &cnt);
 	eventfd_ctx_put(irqfd->eventfd);
-	kfree(irqfd);
-}
+	kमुक्त(irqfd);
+पूर्ण
 
-static void hsm_irqfd_shutdown_work(struct work_struct *work)
-{
-	struct hsm_irqfd *irqfd;
-	struct acrn_vm *vm;
+अटल व्योम hsm_irqfd_shutकरोwn_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hsm_irqfd *irqfd;
+	काष्ठा acrn_vm *vm;
 
-	irqfd = container_of(work, struct hsm_irqfd, shutdown);
+	irqfd = container_of(work, काष्ठा hsm_irqfd, shutकरोwn);
 	vm = irqfd->vm;
 	mutex_lock(&vm->irqfds_lock);
-	if (!list_empty(&irqfd->list))
-		hsm_irqfd_shutdown(irqfd);
+	अगर (!list_empty(&irqfd->list))
+		hsm_irqfd_shutकरोwn(irqfd);
 	mutex_unlock(&vm->irqfds_lock);
-}
+पूर्ण
 
-/* Called with wqh->lock held and interrupts disabled */
-static int hsm_irqfd_wakeup(wait_queue_entry_t *wait, unsigned int mode,
-			    int sync, void *key)
-{
-	unsigned long poll_bits = (unsigned long)key;
-	struct hsm_irqfd *irqfd;
-	struct acrn_vm *vm;
+/* Called with wqh->lock held and पूर्णांकerrupts disabled */
+अटल पूर्णांक hsm_irqfd_wakeup(रुको_queue_entry_t *रुको, अचिन्हित पूर्णांक mode,
+			    पूर्णांक sync, व्योम *key)
+अणु
+	अचिन्हित दीर्घ poll_bits = (अचिन्हित दीर्घ)key;
+	काष्ठा hsm_irqfd *irqfd;
+	काष्ठा acrn_vm *vm;
 
-	irqfd = container_of(wait, struct hsm_irqfd, wait);
+	irqfd = container_of(रुको, काष्ठा hsm_irqfd, रुको);
 	vm = irqfd->vm;
-	if (poll_bits & POLLIN)
-		/* An event has been signaled, inject an interrupt */
+	अगर (poll_bits & POLLIN)
+		/* An event has been संकेतed, inject an पूर्णांकerrupt */
 		acrn_irqfd_inject(irqfd);
 
-	if (poll_bits & POLLHUP)
-		/* Do shutdown work in thread to hold wqh->lock */
-		queue_work(vm->irqfd_wq, &irqfd->shutdown);
+	अगर (poll_bits & POLLHUP)
+		/* Do shutकरोwn work in thपढ़ो to hold wqh->lock */
+		queue_work(vm->irqfd_wq, &irqfd->shutकरोwn);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hsm_irqfd_poll_func(struct file *file, wait_queue_head_t *wqh,
+अटल व्योम hsm_irqfd_poll_func(काष्ठा file *file, रुको_queue_head_t *wqh,
 				poll_table *pt)
-{
-	struct hsm_irqfd *irqfd;
+अणु
+	काष्ठा hsm_irqfd *irqfd;
 
-	irqfd = container_of(pt, struct hsm_irqfd, pt);
-	add_wait_queue(wqh, &irqfd->wait);
-}
+	irqfd = container_of(pt, काष्ठा hsm_irqfd, pt);
+	add_रुको_queue(wqh, &irqfd->रुको);
+पूर्ण
 
 /*
  * Assign an eventfd to a VM and create a HSM irqfd associated with the
- * eventfd. The properties of the HSM irqfd are built from a &struct
+ * eventfd. The properties of the HSM irqfd are built from a &काष्ठा
  * acrn_irqfd.
  */
-static int acrn_irqfd_assign(struct acrn_vm *vm, struct acrn_irqfd *args)
-{
-	struct eventfd_ctx *eventfd = NULL;
-	struct hsm_irqfd *irqfd, *tmp;
+अटल पूर्णांक acrn_irqfd_assign(काष्ठा acrn_vm *vm, काष्ठा acrn_irqfd *args)
+अणु
+	काष्ठा eventfd_ctx *eventfd = शून्य;
+	काष्ठा hsm_irqfd *irqfd, *पंचांगp;
 	__poll_t events;
-	struct fd f;
-	int ret = 0;
+	काष्ठा fd f;
+	पूर्णांक ret = 0;
 
-	irqfd = kzalloc(sizeof(*irqfd), GFP_KERNEL);
-	if (!irqfd)
-		return -ENOMEM;
+	irqfd = kzalloc(माप(*irqfd), GFP_KERNEL);
+	अगर (!irqfd)
+		वापस -ENOMEM;
 
 	irqfd->vm = vm;
-	memcpy(&irqfd->msi, &args->msi, sizeof(args->msi));
+	स_नकल(&irqfd->msi, &args->msi, माप(args->msi));
 	INIT_LIST_HEAD(&irqfd->list);
-	INIT_WORK(&irqfd->shutdown, hsm_irqfd_shutdown_work);
+	INIT_WORK(&irqfd->shutकरोwn, hsm_irqfd_shutकरोwn_work);
 
 	f = fdget(args->fd);
-	if (!f.file) {
+	अगर (!f.file) अणु
 		ret = -EBADF;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	eventfd = eventfd_ctx_fileget(f.file);
-	if (IS_ERR(eventfd)) {
+	अगर (IS_ERR(eventfd)) अणु
 		ret = PTR_ERR(eventfd);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	irqfd->eventfd = eventfd;
 
 	/*
-	 * Install custom wake-up handling to be notified whenever underlying
-	 * eventfd is signaled.
+	 * Install custom wake-up handling to be notअगरied whenever underlying
+	 * eventfd is संकेतed.
 	 */
-	init_waitqueue_func_entry(&irqfd->wait, hsm_irqfd_wakeup);
+	init_रुकोqueue_func_entry(&irqfd->रुको, hsm_irqfd_wakeup);
 	init_poll_funcptr(&irqfd->pt, hsm_irqfd_poll_func);
 
 	mutex_lock(&vm->irqfds_lock);
-	list_for_each_entry(tmp, &vm->irqfds, list) {
-		if (irqfd->eventfd != tmp->eventfd)
-			continue;
+	list_क्रम_each_entry(पंचांगp, &vm->irqfds, list) अणु
+		अगर (irqfd->eventfd != पंचांगp->eventfd)
+			जारी;
 		ret = -EBUSY;
 		mutex_unlock(&vm->irqfds_lock);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	list_add_tail(&irqfd->list, &vm->irqfds);
 	mutex_unlock(&vm->irqfds_lock);
 
 	/* Check the pending event in this stage */
 	events = vfs_poll(f.file, &irqfd->pt);
 
-	if (events & EPOLLIN)
+	अगर (events & EPOLLIN)
 		acrn_irqfd_inject(irqfd);
 
 	fdput(f);
-	return 0;
+	वापस 0;
 fail:
-	if (eventfd && !IS_ERR(eventfd))
+	अगर (eventfd && !IS_ERR(eventfd))
 		eventfd_ctx_put(eventfd);
 
 	fdput(f);
 out:
-	kfree(irqfd);
-	return ret;
-}
+	kमुक्त(irqfd);
+	वापस ret;
+पूर्ण
 
-static int acrn_irqfd_deassign(struct acrn_vm *vm,
-			       struct acrn_irqfd *args)
-{
-	struct hsm_irqfd *irqfd, *tmp;
-	struct eventfd_ctx *eventfd;
+अटल पूर्णांक acrn_irqfd_deassign(काष्ठा acrn_vm *vm,
+			       काष्ठा acrn_irqfd *args)
+अणु
+	काष्ठा hsm_irqfd *irqfd, *पंचांगp;
+	काष्ठा eventfd_ctx *eventfd;
 
 	eventfd = eventfd_ctx_fdget(args->fd);
-	if (IS_ERR(eventfd))
-		return PTR_ERR(eventfd);
+	अगर (IS_ERR(eventfd))
+		वापस PTR_ERR(eventfd);
 
 	mutex_lock(&vm->irqfds_lock);
-	list_for_each_entry_safe(irqfd, tmp, &vm->irqfds, list) {
-		if (irqfd->eventfd == eventfd) {
-			hsm_irqfd_shutdown(irqfd);
-			break;
-		}
-	}
+	list_क्रम_each_entry_safe(irqfd, पंचांगp, &vm->irqfds, list) अणु
+		अगर (irqfd->eventfd == eventfd) अणु
+			hsm_irqfd_shutकरोwn(irqfd);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&vm->irqfds_lock);
 	eventfd_ctx_put(eventfd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int acrn_irqfd_config(struct acrn_vm *vm, struct acrn_irqfd *args)
-{
-	int ret;
+पूर्णांक acrn_irqfd_config(काष्ठा acrn_vm *vm, काष्ठा acrn_irqfd *args)
+अणु
+	पूर्णांक ret;
 
-	if (args->flags & ACRN_IRQFD_FLAG_DEASSIGN)
+	अगर (args->flags & ACRN_IRQFD_FLAG_DEASSIGN)
 		ret = acrn_irqfd_deassign(vm, args);
-	else
+	अन्यथा
 		ret = acrn_irqfd_assign(vm, args);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int acrn_irqfd_init(struct acrn_vm *vm)
-{
+पूर्णांक acrn_irqfd_init(काष्ठा acrn_vm *vm)
+अणु
 	INIT_LIST_HEAD(&vm->irqfds);
 	mutex_init(&vm->irqfds_lock);
 	vm->irqfd_wq = alloc_workqueue("acrn_irqfd-%u", 0, 0, vm->vmid);
-	if (!vm->irqfd_wq)
-		return -ENOMEM;
+	अगर (!vm->irqfd_wq)
+		वापस -ENOMEM;
 
 	dev_dbg(acrn_dev.this_device, "VM %u irqfd init.\n", vm->vmid);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void acrn_irqfd_deinit(struct acrn_vm *vm)
-{
-	struct hsm_irqfd *irqfd, *next;
+व्योम acrn_irqfd_deinit(काष्ठा acrn_vm *vm)
+अणु
+	काष्ठा hsm_irqfd *irqfd, *next;
 
 	dev_dbg(acrn_dev.this_device, "VM %u irqfd deinit.\n", vm->vmid);
 	destroy_workqueue(vm->irqfd_wq);
 	mutex_lock(&vm->irqfds_lock);
-	list_for_each_entry_safe(irqfd, next, &vm->irqfds, list)
-		hsm_irqfd_shutdown(irqfd);
+	list_क्रम_each_entry_safe(irqfd, next, &vm->irqfds, list)
+		hsm_irqfd_shutकरोwn(irqfd);
 	mutex_unlock(&vm->irqfds_lock);
-}
+पूर्ण

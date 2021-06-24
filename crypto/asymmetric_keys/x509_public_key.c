@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Instantiate a public key crypto key from an X.509 Certificate
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Instantiate a खुला key crypto key from an X.509 Certअगरicate
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define pr_fmt(fmt) "X.509: "fmt
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <keys/asymmetric-subtype.h>
-#include <keys/asymmetric-parser.h>
-#include <keys/system_keyring.h>
-#include <crypto/hash.h>
-#include "asymmetric_keys.h"
-#include "x509_parser.h"
+#घोषणा pr_fmt(fmt) "X.509: "fmt
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <keys/asymmetric-subtype.h>
+#समावेश <keys/asymmetric-parser.h>
+#समावेश <keys/प्रणाली_keyring.h>
+#समावेश <crypto/hash.h>
+#समावेश "asymmetric_keys.h"
+#समावेश "x509_parser.h"
 
 /*
- * Set up the signature parameters in an X.509 certificate.  This involves
- * digesting the signed data and extracting the signature.
+ * Set up the signature parameters in an X.509 certअगरicate.  This involves
+ * digesting the चिन्हित data and extracting the signature.
  */
-int x509_get_sig_params(struct x509_certificate *cert)
-{
-	struct public_key_signature *sig = cert->sig;
-	struct crypto_shash *tfm;
-	struct shash_desc *desc;
-	size_t desc_size;
-	int ret;
+पूर्णांक x509_get_sig_params(काष्ठा x509_certअगरicate *cert)
+अणु
+	काष्ठा खुला_key_signature *sig = cert->sig;
+	काष्ठा crypto_shash *tfm;
+	काष्ठा shash_desc *desc;
+	माप_प्रकार desc_size;
+	पूर्णांक ret;
 
 	pr_devel("==>%s()\n", __func__);
 
 	sig->data = cert->tbs;
 	sig->data_size = cert->tbs_size;
 
-	if (!cert->pub->pkey_algo)
+	अगर (!cert->pub->pkey_algo)
 		cert->unsupported_key = true;
 
-	if (!sig->pkey_algo)
+	अगर (!sig->pkey_algo)
 		cert->unsupported_sig = true;
 
-	/* We check the hash if we can - even if we can't then verify it */
-	if (!sig->hash_algo) {
+	/* We check the hash अगर we can - even अगर we can't then verअगरy it */
+	अगर (!sig->hash_algo) अणु
 		cert->unsupported_sig = true;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	sig->s = kmemdup(cert->raw_sig, cert->raw_sig_size, GFP_KERNEL);
-	if (!sig->s)
-		return -ENOMEM;
+	अगर (!sig->s)
+		वापस -ENOMEM;
 
 	sig->s_size = cert->raw_sig_size;
 
@@ -55,220 +56,220 @@ int x509_get_sig_params(struct x509_certificate *cert)
 	 * big the hash operational data will be.
 	 */
 	tfm = crypto_alloc_shash(sig->hash_algo, 0, 0);
-	if (IS_ERR(tfm)) {
-		if (PTR_ERR(tfm) == -ENOENT) {
+	अगर (IS_ERR(tfm)) अणु
+		अगर (PTR_ERR(tfm) == -ENOENT) अणु
 			cert->unsupported_sig = true;
-			return 0;
-		}
-		return PTR_ERR(tfm);
-	}
+			वापस 0;
+		पूर्ण
+		वापस PTR_ERR(tfm);
+	पूर्ण
 
-	desc_size = crypto_shash_descsize(tfm) + sizeof(*desc);
+	desc_size = crypto_shash_descsize(tfm) + माप(*desc);
 	sig->digest_size = crypto_shash_digestsize(tfm);
 
 	ret = -ENOMEM;
-	sig->digest = kmalloc(sig->digest_size, GFP_KERNEL);
-	if (!sig->digest)
-		goto error;
+	sig->digest = kदो_स्मृति(sig->digest_size, GFP_KERNEL);
+	अगर (!sig->digest)
+		जाओ error;
 
 	desc = kzalloc(desc_size, GFP_KERNEL);
-	if (!desc)
-		goto error;
+	अगर (!desc)
+		जाओ error;
 
 	desc->tfm = tfm;
 
 	ret = crypto_shash_digest(desc, cert->tbs, cert->tbs_size, sig->digest);
-	if (ret < 0)
-		goto error_2;
+	अगर (ret < 0)
+		जाओ error_2;
 
 	ret = is_hash_blacklisted(sig->digest, sig->digest_size, "tbs");
-	if (ret == -EKEYREJECTED) {
+	अगर (ret == -EKEYREJECTED) अणु
 		pr_err("Cert %*phN is blacklisted\n",
 		       sig->digest_size, sig->digest);
 		cert->blacklisted = true;
 		ret = 0;
-	}
+	पूर्ण
 
 error_2:
-	kfree(desc);
+	kमुक्त(desc);
 error:
-	crypto_free_shash(tfm);
+	crypto_मुक्त_shash(tfm);
 	pr_devel("<==%s() = %d\n", __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Check for self-signedness in an X.509 cert and if found, check the signature
- * immediately if we can.
+ * Check क्रम self-चिन्हितness in an X.509 cert and अगर found, check the signature
+ * immediately अगर we can.
  */
-int x509_check_for_self_signed(struct x509_certificate *cert)
-{
-	int ret = 0;
+पूर्णांक x509_check_क्रम_self_चिन्हित(काष्ठा x509_certअगरicate *cert)
+अणु
+	पूर्णांक ret = 0;
 
 	pr_devel("==>%s()\n", __func__);
 
-	if (cert->raw_subject_size != cert->raw_issuer_size ||
-	    memcmp(cert->raw_subject, cert->raw_issuer,
+	अगर (cert->raw_subject_size != cert->raw_issuer_size ||
+	    स_भेद(cert->raw_subject, cert->raw_issuer,
 		   cert->raw_issuer_size) != 0)
-		goto not_self_signed;
+		जाओ not_self_चिन्हित;
 
-	if (cert->sig->auth_ids[0] || cert->sig->auth_ids[1]) {
+	अगर (cert->sig->auth_ids[0] || cert->sig->auth_ids[1]) अणु
 		/* If the AKID is present it may have one or two parts.  If
 		 * both are supplied, both must match.
 		 */
 		bool a = asymmetric_key_id_same(cert->skid, cert->sig->auth_ids[1]);
 		bool b = asymmetric_key_id_same(cert->id, cert->sig->auth_ids[0]);
 
-		if (!a && !b)
-			goto not_self_signed;
+		अगर (!a && !b)
+			जाओ not_self_चिन्हित;
 
 		ret = -EKEYREJECTED;
-		if (((a && !b) || (b && !a)) &&
+		अगर (((a && !b) || (b && !a)) &&
 		    cert->sig->auth_ids[0] && cert->sig->auth_ids[1])
-			goto out;
-	}
+			जाओ out;
+	पूर्ण
 
 	ret = -EKEYREJECTED;
-	if (strcmp(cert->pub->pkey_algo, cert->sig->pkey_algo) != 0 &&
-	    (strncmp(cert->pub->pkey_algo, "ecdsa-", 6) != 0 ||
-	     strcmp(cert->sig->pkey_algo, "ecdsa") != 0))
-		goto out;
+	अगर (म_भेद(cert->pub->pkey_algo, cert->sig->pkey_algo) != 0 &&
+	    (म_भेदन(cert->pub->pkey_algo, "ecdsa-", 6) != 0 ||
+	     म_भेद(cert->sig->pkey_algo, "ecdsa") != 0))
+		जाओ out;
 
-	ret = public_key_verify_signature(cert->pub, cert->sig);
-	if (ret < 0) {
-		if (ret == -ENOPKG) {
+	ret = खुला_key_verअगरy_signature(cert->pub, cert->sig);
+	अगर (ret < 0) अणु
+		अगर (ret == -ENOPKG) अणु
 			cert->unsupported_sig = true;
 			ret = 0;
-		}
-		goto out;
-	}
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
 	pr_devel("Cert Self-signature verified");
-	cert->self_signed = true;
+	cert->self_चिन्हित = true;
 
 out:
 	pr_devel("<==%s() = %d\n", __func__, ret);
-	return ret;
+	वापस ret;
 
-not_self_signed:
+not_self_चिन्हित:
 	pr_devel("<==%s() = 0 [not]\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Attempt to parse a data blob for a key as an X509 certificate.
+ * Attempt to parse a data blob क्रम a key as an X509 certअगरicate.
  */
-static int x509_key_preparse(struct key_preparsed_payload *prep)
-{
-	struct asymmetric_key_ids *kids;
-	struct x509_certificate *cert;
-	const char *q;
-	size_t srlen, sulen;
-	char *desc = NULL, *p;
-	int ret;
+अटल पूर्णांक x509_key_preparse(काष्ठा key_preparsed_payload *prep)
+अणु
+	काष्ठा asymmetric_key_ids *kids;
+	काष्ठा x509_certअगरicate *cert;
+	स्थिर अक्षर *q;
+	माप_प्रकार srlen, sulen;
+	अक्षर *desc = शून्य, *p;
+	पूर्णांक ret;
 
 	cert = x509_cert_parse(prep->data, prep->datalen);
-	if (IS_ERR(cert))
-		return PTR_ERR(cert);
+	अगर (IS_ERR(cert))
+		वापस PTR_ERR(cert);
 
 	pr_devel("Cert Issuer: %s\n", cert->issuer);
 	pr_devel("Cert Subject: %s\n", cert->subject);
 
-	if (cert->unsupported_key) {
+	अगर (cert->unsupported_key) अणु
 		ret = -ENOPKG;
-		goto error_free_cert;
-	}
+		जाओ error_मुक्त_cert;
+	पूर्ण
 
 	pr_devel("Cert Key Algo: %s\n", cert->pub->pkey_algo);
 	pr_devel("Cert Valid period: %lld-%lld\n", cert->valid_from, cert->valid_to);
 
 	cert->pub->id_type = "X509";
 
-	if (cert->unsupported_sig) {
-		public_key_signature_free(cert->sig);
-		cert->sig = NULL;
-	} else {
+	अगर (cert->unsupported_sig) अणु
+		खुला_key_signature_मुक्त(cert->sig);
+		cert->sig = शून्य;
+	पूर्ण अन्यथा अणु
 		pr_devel("Cert Signature: %s + %s\n",
 			 cert->sig->pkey_algo, cert->sig->hash_algo);
-	}
+	पूर्ण
 
 	/* Don't permit addition of blacklisted keys */
 	ret = -EKEYREJECTED;
-	if (cert->blacklisted)
-		goto error_free_cert;
+	अगर (cert->blacklisted)
+		जाओ error_मुक्त_cert;
 
 	/* Propose a description */
-	sulen = strlen(cert->subject);
-	if (cert->raw_skid) {
+	sulen = म_माप(cert->subject);
+	अगर (cert->raw_skid) अणु
 		srlen = cert->raw_skid_size;
 		q = cert->raw_skid;
-	} else {
+	पूर्ण अन्यथा अणु
 		srlen = cert->raw_serial_size;
 		q = cert->raw_serial;
-	}
+	पूर्ण
 
 	ret = -ENOMEM;
-	desc = kmalloc(sulen + 2 + srlen * 2 + 1, GFP_KERNEL);
-	if (!desc)
-		goto error_free_cert;
-	p = memcpy(desc, cert->subject, sulen);
+	desc = kदो_स्मृति(sulen + 2 + srlen * 2 + 1, GFP_KERNEL);
+	अगर (!desc)
+		जाओ error_मुक्त_cert;
+	p = स_नकल(desc, cert->subject, sulen);
 	p += sulen;
 	*p++ = ':';
 	*p++ = ' ';
 	p = bin2hex(p, q, srlen);
 	*p = 0;
 
-	kids = kmalloc(sizeof(struct asymmetric_key_ids), GFP_KERNEL);
-	if (!kids)
-		goto error_free_desc;
+	kids = kदो_स्मृति(माप(काष्ठा asymmetric_key_ids), GFP_KERNEL);
+	अगर (!kids)
+		जाओ error_मुक्त_desc;
 	kids->id[0] = cert->id;
 	kids->id[1] = cert->skid;
 
 	/* We're pinning the module by being linked against it */
-	__module_get(public_key_subtype.owner);
-	prep->payload.data[asym_subtype] = &public_key_subtype;
+	__module_get(खुला_key_subtype.owner);
+	prep->payload.data[asym_subtype] = &खुला_key_subtype;
 	prep->payload.data[asym_key_ids] = kids;
 	prep->payload.data[asym_crypto] = cert->pub;
 	prep->payload.data[asym_auth] = cert->sig;
 	prep->description = desc;
 	prep->quotalen = 100;
 
-	/* We've finished with the certificate */
-	cert->pub = NULL;
-	cert->id = NULL;
-	cert->skid = NULL;
-	cert->sig = NULL;
-	desc = NULL;
+	/* We've finished with the certअगरicate */
+	cert->pub = शून्य;
+	cert->id = शून्य;
+	cert->skid = शून्य;
+	cert->sig = शून्य;
+	desc = शून्य;
 	ret = 0;
 
-error_free_desc:
-	kfree(desc);
-error_free_cert:
-	x509_free_certificate(cert);
-	return ret;
-}
+error_मुक्त_desc:
+	kमुक्त(desc);
+error_मुक्त_cert:
+	x509_मुक्त_certअगरicate(cert);
+	वापस ret;
+पूर्ण
 
-static struct asymmetric_key_parser x509_key_parser = {
+अटल काष्ठा asymmetric_key_parser x509_key_parser = अणु
 	.owner	= THIS_MODULE,
 	.name	= "x509",
 	.parse	= x509_key_preparse,
-};
+पूर्ण;
 
 /*
  * Module stuff
  */
-static int __init x509_key_init(void)
-{
-	return register_asymmetric_key_parser(&x509_key_parser);
-}
+अटल पूर्णांक __init x509_key_init(व्योम)
+अणु
+	वापस रेजिस्टर_asymmetric_key_parser(&x509_key_parser);
+पूर्ण
 
-static void __exit x509_key_exit(void)
-{
-	unregister_asymmetric_key_parser(&x509_key_parser);
-}
+अटल व्योम __निकास x509_key_निकास(व्योम)
+अणु
+	unरेजिस्टर_asymmetric_key_parser(&x509_key_parser);
+पूर्ण
 
 module_init(x509_key_init);
-module_exit(x509_key_exit);
+module_निकास(x509_key_निकास);
 
 MODULE_DESCRIPTION("X.509 certificate parser");
 MODULE_AUTHOR("Red Hat, Inc.");

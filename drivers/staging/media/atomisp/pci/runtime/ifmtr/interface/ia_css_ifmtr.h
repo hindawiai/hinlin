@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2010 - 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __IA_CSS_IFMTR_H__
-#define __IA_CSS_IFMTR_H__
+#अगर_अघोषित __IA_CSS_IFMTR_H__
+#घोषणा __IA_CSS_IFMTR_H__
 
-#include <type_support.h>
-#include <ia_css_stream_public.h>
-#include <ia_css_binary.h>
+#समावेश <type_support.h>
+#समावेश <ia_css_stream_खुला.h>
+#समावेश <ia_css_binary.h>
 
-extern bool ifmtr_set_if_blocking_mode_reset;
+बाह्य bool अगरmtr_set_अगर_blocking_mode_reset;
 
-unsigned int ia_css_ifmtr_lines_needed_for_bayer_order(
-    const struct ia_css_stream_config *config);
+अचिन्हित पूर्णांक ia_css_अगरmtr_lines_needed_क्रम_bayer_order(
+    स्थिर काष्ठा ia_css_stream_config *config);
 
-unsigned int ia_css_ifmtr_columns_needed_for_bayer_order(
-    const struct ia_css_stream_config *config);
+अचिन्हित पूर्णांक ia_css_अगरmtr_columns_needed_क्रम_bayer_order(
+    स्थिर काष्ठा ia_css_stream_config *config);
 
-int ia_css_ifmtr_configure(struct ia_css_stream_config *config,
-				       struct ia_css_binary *binary);
+पूर्णांक ia_css_अगरmtr_configure(काष्ठा ia_css_stream_config *config,
+				       काष्ठा ia_css_binary *binary);
 
-#endif /* __IA_CSS_IFMTR_H__ */
+#पूर्ण_अगर /* __IA_CSS_IFMTR_H__ */

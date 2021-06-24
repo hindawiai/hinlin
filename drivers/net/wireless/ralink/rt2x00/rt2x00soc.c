@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 	Copyright (C) 2004 - 2009 Ivo van Doorn <IvDoorn@gmail.com>
-	Copyright (C) 2004 - 2009 Felix Fietkau <nbd@openwrt.org>
+	Copyright (C) 2004 - 2009 Felix Fietkau <nbd@खोलोwrt.org>
 	<http://rt2x00.serialmonkey.com>
 
  */
@@ -11,141 +12,141 @@
 	Abstract: rt2x00 generic soc device routines.
  */
 
-#include <linux/bug.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "rt2x00.h"
-#include "rt2x00soc.h"
+#समावेश "rt2x00.h"
+#समावेश "rt2x00soc.h"
 
-static void rt2x00soc_free_reg(struct rt2x00_dev *rt2x00dev)
-{
-	kfree(rt2x00dev->rf);
-	rt2x00dev->rf = NULL;
+अटल व्योम rt2x00soc_मुक्त_reg(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	kमुक्त(rt2x00dev->rf);
+	rt2x00dev->rf = शून्य;
 
-	kfree(rt2x00dev->eeprom);
-	rt2x00dev->eeprom = NULL;
+	kमुक्त(rt2x00dev->eeprom);
+	rt2x00dev->eeprom = शून्य;
 
 	iounmap(rt2x00dev->csr.base);
-}
+पूर्ण
 
-static int rt2x00soc_alloc_reg(struct rt2x00_dev *rt2x00dev)
-{
-	struct platform_device *pdev = to_platform_device(rt2x00dev->dev);
-	struct resource *res;
+अटल पूर्णांक rt2x00soc_alloc_reg(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(rt2x00dev->dev);
+	काष्ठा resource *res;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENODEV;
 
 	rt2x00dev->csr.base = ioremap(res->start, resource_size(res));
-	if (!rt2x00dev->csr.base)
-		return -ENOMEM;
+	अगर (!rt2x00dev->csr.base)
+		वापस -ENOMEM;
 
 	rt2x00dev->eeprom = kzalloc(rt2x00dev->ops->eeprom_size, GFP_KERNEL);
-	if (!rt2x00dev->eeprom)
-		goto exit;
+	अगर (!rt2x00dev->eeprom)
+		जाओ निकास;
 
 	rt2x00dev->rf = kzalloc(rt2x00dev->ops->rf_size, GFP_KERNEL);
-	if (!rt2x00dev->rf)
-		goto exit;
+	अगर (!rt2x00dev->rf)
+		जाओ निकास;
 
-	return 0;
+	वापस 0;
 
-exit:
+निकास:
 	rt2x00_probe_err("Failed to allocate registers\n");
-	rt2x00soc_free_reg(rt2x00dev);
+	rt2x00soc_मुक्त_reg(rt2x00dev);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-int rt2x00soc_probe(struct platform_device *pdev, const struct rt2x00_ops *ops)
-{
-	struct ieee80211_hw *hw;
-	struct rt2x00_dev *rt2x00dev;
-	int retval;
+पूर्णांक rt2x00soc_probe(काष्ठा platक्रमm_device *pdev, स्थिर काष्ठा rt2x00_ops *ops)
+अणु
+	काष्ठा ieee80211_hw *hw;
+	काष्ठा rt2x00_dev *rt2x00dev;
+	पूर्णांक retval;
 
-	hw = ieee80211_alloc_hw(sizeof(struct rt2x00_dev), ops->hw);
-	if (!hw) {
+	hw = ieee80211_alloc_hw(माप(काष्ठा rt2x00_dev), ops->hw);
+	अगर (!hw) अणु
 		rt2x00_probe_err("Failed to allocate hardware\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	platform_set_drvdata(pdev, hw);
+	platक्रमm_set_drvdata(pdev, hw);
 
 	rt2x00dev = hw->priv;
 	rt2x00dev->dev = &pdev->dev;
 	rt2x00dev->ops = ops;
 	rt2x00dev->hw = hw;
-	rt2x00dev->irq = platform_get_irq(pdev, 0);
+	rt2x00dev->irq = platक्रमm_get_irq(pdev, 0);
 	rt2x00dev->name = pdev->dev.driver->name;
 
-	rt2x00dev->clk = clk_get(&pdev->dev, NULL);
-	if (IS_ERR(rt2x00dev->clk))
-		rt2x00dev->clk = NULL;
+	rt2x00dev->clk = clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(rt2x00dev->clk))
+		rt2x00dev->clk = शून्य;
 
-	rt2x00_set_chip_intf(rt2x00dev, RT2X00_CHIP_INTF_SOC);
+	rt2x00_set_chip_पूर्णांकf(rt2x00dev, RT2X00_CHIP_INTF_SOC);
 
 	retval = rt2x00soc_alloc_reg(rt2x00dev);
-	if (retval)
-		goto exit_free_device;
+	अगर (retval)
+		जाओ निकास_मुक्त_device;
 
 	retval = rt2x00lib_probe_dev(rt2x00dev);
-	if (retval)
-		goto exit_free_reg;
+	अगर (retval)
+		जाओ निकास_मुक्त_reg;
 
-	return 0;
+	वापस 0;
 
-exit_free_reg:
-	rt2x00soc_free_reg(rt2x00dev);
+निकास_मुक्त_reg:
+	rt2x00soc_मुक्त_reg(rt2x00dev);
 
-exit_free_device:
-	ieee80211_free_hw(hw);
+निकास_मुक्त_device:
+	ieee80211_मुक्त_hw(hw);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00soc_probe);
 
-int rt2x00soc_remove(struct platform_device *pdev)
-{
-	struct ieee80211_hw *hw = platform_get_drvdata(pdev);
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+पूर्णांक rt2x00soc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ieee80211_hw *hw = platक्रमm_get_drvdata(pdev);
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 
 	/*
 	 * Free all allocated data.
 	 */
-	rt2x00lib_remove_dev(rt2x00dev);
-	rt2x00soc_free_reg(rt2x00dev);
-	ieee80211_free_hw(hw);
+	rt2x00lib_हटाओ_dev(rt2x00dev);
+	rt2x00soc_मुक्त_reg(rt2x00dev);
+	ieee80211_मुक्त_hw(hw);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(rt2x00soc_remove);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(rt2x00soc_हटाओ);
 
-#ifdef CONFIG_PM
-int rt2x00soc_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	struct ieee80211_hw *hw = platform_get_drvdata(pdev);
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+#अगर_घोषित CONFIG_PM
+पूर्णांक rt2x00soc_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
+अणु
+	काष्ठा ieee80211_hw *hw = platक्रमm_get_drvdata(pdev);
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 
-	return rt2x00lib_suspend(rt2x00dev);
-}
+	वापस rt2x00lib_suspend(rt2x00dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00soc_suspend);
 
-int rt2x00soc_resume(struct platform_device *pdev)
-{
-	struct ieee80211_hw *hw = platform_get_drvdata(pdev);
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+पूर्णांक rt2x00soc_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ieee80211_hw *hw = platक्रमm_get_drvdata(pdev);
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 
-	return rt2x00lib_resume(rt2x00dev);
-}
+	वापस rt2x00lib_resume(rt2x00dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00soc_resume);
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
 /*
- * rt2x00soc module information.
+ * rt2x00soc module inक्रमmation.
  */
 MODULE_AUTHOR(DRV_PROJECT);
 MODULE_VERSION(DRV_VERSION);

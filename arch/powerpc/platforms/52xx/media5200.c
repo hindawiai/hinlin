@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Support for 'media5200-platform' compatible boards.
+ * Support क्रम 'media5200-platform' compatible boards.
  *
  * Copyright (C) 2008 Secret Lab Technologies Ltd.
  *
  * Description:
- * This code implements support for the Freescape Media5200 platform
+ * This code implements support क्रम the Freescape Media5200 platक्रमm
  * (built around the MPC5200 SoC).
  *
- * Notable characteristic of the Media5200 is the presence of an FPGA
- * that has all external IRQ lines routed through it.  This file implements
- * a cascaded interrupt controller driver which attaches itself to the
- * Virtual IRQ subsystem after the primary mpc5200 interrupt controller
+ * Notable अक्षरacteristic of the Media5200 is the presence of an FPGA
+ * that has all बाह्यal IRQ lines routed through it.  This file implements
+ * a cascaded पूर्णांकerrupt controller driver which attaches itself to the
+ * Virtual IRQ subप्रणाली after the primary mpc5200 पूर्णांकerrupt controller
  * is initialized.
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <asm/time.h>
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <asm/mpc52xx.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/mpc52xx.h>
 
-static const struct of_device_id mpc5200_gpio_ids[] __initconst = {
-	{ .compatible = "fsl,mpc5200-gpio", },
-	{ .compatible = "mpc5200-gpio", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id mpc5200_gpio_ids[] __initस्थिर = अणु
+	अणु .compatible = "fsl,mpc5200-gpio", पूर्ण,
+	अणु .compatible = "mpc5200-gpio", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-/* FPGA register set */
-#define MEDIA5200_IRQ_ENABLE (0x40c)
-#define MEDIA5200_IRQ_STATUS (0x410)
-#define MEDIA5200_NUM_IRQS   (6)
-#define MEDIA5200_IRQ_SHIFT  (32 - MEDIA5200_NUM_IRQS)
+/* FPGA रेजिस्टर set */
+#घोषणा MEDIA5200_IRQ_ENABLE (0x40c)
+#घोषणा MEDIA5200_IRQ_STATUS (0x410)
+#घोषणा MEDIA5200_NUM_IRQS   (6)
+#घोषणा MEDIA5200_IRQ_SHIFT  (32 - MEDIA5200_NUM_IRQS)
 
-struct media5200_irq {
-	void __iomem *regs;
+काष्ठा media5200_irq अणु
+	व्योम __iomem *regs;
 	spinlock_t lock;
-	struct irq_domain *irqhost;
-};
-struct media5200_irq media5200_irq;
+	काष्ठा irq_करोमुख्य *irqhost;
+पूर्ण;
+काष्ठा media5200_irq media5200_irq;
 
-static void media5200_irq_unmask(struct irq_data *d)
-{
-	unsigned long flags;
+अटल व्योम media5200_irq_unmask(काष्ठा irq_data *d)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	spin_lock_irqsave(&media5200_irq.lock, flags);
@@ -54,11 +55,11 @@ static void media5200_irq_unmask(struct irq_data *d)
 	val |= 1 << (MEDIA5200_IRQ_SHIFT + irqd_to_hwirq(d));
 	out_be32(media5200_irq.regs + MEDIA5200_IRQ_ENABLE, val);
 	spin_unlock_irqrestore(&media5200_irq.lock, flags);
-}
+पूर्ण
 
-static void media5200_irq_mask(struct irq_data *d)
-{
-	unsigned long flags;
+अटल व्योम media5200_irq_mask(काष्ठा irq_data *d)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	spin_lock_irqsave(&media5200_irq.lock, flags);
@@ -66,19 +67,19 @@ static void media5200_irq_mask(struct irq_data *d)
 	val &= ~(1 << (MEDIA5200_IRQ_SHIFT + irqd_to_hwirq(d)));
 	out_be32(media5200_irq.regs + MEDIA5200_IRQ_ENABLE, val);
 	spin_unlock_irqrestore(&media5200_irq.lock, flags);
-}
+पूर्ण
 
-static struct irq_chip media5200_irq_chip = {
+अटल काष्ठा irq_chip media5200_irq_chip = अणु
 	.name = "Media5200 FPGA",
 	.irq_unmask = media5200_irq_unmask,
 	.irq_mask = media5200_irq_mask,
 	.irq_mask_ack = media5200_irq_mask,
-};
+पूर्ण;
 
-static void media5200_irq_cascade(struct irq_desc *desc)
-{
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	int sub_virq, val;
+अटल व्योम media5200_irq_cascade(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	पूर्णांक sub_virq, val;
 	u32 status, enable;
 
 	/* Mask off the cascaded IRQ */
@@ -86,81 +87,81 @@ static void media5200_irq_cascade(struct irq_desc *desc)
 	chip->irq_mask(&desc->irq_data);
 	raw_spin_unlock(&desc->lock);
 
-	/* Ask the FPGA for IRQ status.  If 'val' is 0, then no irqs
+	/* Ask the FPGA क्रम IRQ status.  If 'val' is 0, then no irqs
 	 * are pending.  'ffs()' is 1 based */
 	status = in_be32(media5200_irq.regs + MEDIA5200_IRQ_ENABLE);
 	enable = in_be32(media5200_irq.regs + MEDIA5200_IRQ_STATUS);
 	val = ffs((status & enable) >> MEDIA5200_IRQ_SHIFT);
-	if (val) {
+	अगर (val) अणु
 		sub_virq = irq_linear_revmap(media5200_irq.irqhost, val - 1);
 		/* pr_debug("%s: virq=%i s=%.8x e=%.8x hwirq=%i subvirq=%i\n",
 		 *          __func__, virq, status, enable, val - 1, sub_virq);
 		 */
 		generic_handle_irq(sub_virq);
-	}
+	पूर्ण
 
-	/* Processing done; can reenable the cascade now */
+	/* Processing करोne; can reenable the cascade now */
 	raw_spin_lock(&desc->lock);
 	chip->irq_ack(&desc->irq_data);
-	if (!irqd_irq_disabled(&desc->irq_data))
+	अगर (!irqd_irq_disabled(&desc->irq_data))
 		chip->irq_unmask(&desc->irq_data);
 	raw_spin_unlock(&desc->lock);
-}
+पूर्ण
 
-static int media5200_irq_map(struct irq_domain *h, unsigned int virq,
+अटल पूर्णांक media5200_irq_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
 			     irq_hw_number_t hw)
-{
-	pr_debug("%s: h=%p, virq=%i, hwirq=%i\n", __func__, h, virq, (int)hw);
+अणु
+	pr_debug("%s: h=%p, virq=%i, hwirq=%i\n", __func__, h, virq, (पूर्णांक)hw);
 	irq_set_chip_data(virq, &media5200_irq);
 	irq_set_chip_and_handler(virq, &media5200_irq_chip, handle_level_irq);
 	irq_set_status_flags(virq, IRQ_LEVEL);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int media5200_irq_xlate(struct irq_domain *h, struct device_node *ct,
-				 const u32 *intspec, unsigned int intsize,
+अटल पूर्णांक media5200_irq_xlate(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *ct,
+				 स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
 				 irq_hw_number_t *out_hwirq,
-				 unsigned int *out_flags)
-{
-	if (intsize != 2)
-		return -1;
+				 अचिन्हित पूर्णांक *out_flags)
+अणु
+	अगर (पूर्णांकsize != 2)
+		वापस -1;
 
-	pr_debug("%s: bank=%i, number=%i\n", __func__, intspec[0], intspec[1]);
-	*out_hwirq = intspec[1];
+	pr_debug("%s: bank=%i, number=%i\n", __func__, पूर्णांकspec[0], पूर्णांकspec[1]);
+	*out_hwirq = पूर्णांकspec[1];
 	*out_flags = IRQ_TYPE_NONE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops media5200_irq_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops media5200_irq_ops = अणु
 	.map = media5200_irq_map,
 	.xlate = media5200_irq_xlate,
-};
+पूर्ण;
 
 /*
  * Setup Media5200 IRQ mapping
  */
-static void __init media5200_init_irq(void)
-{
-	struct device_node *fpga_np;
-	int cascade_virq;
+अटल व्योम __init media5200_init_irq(व्योम)
+अणु
+	काष्ठा device_node *fpga_np;
+	पूर्णांक cascade_virq;
 
-	/* First setup the regular MPC5200 interrupt controller */
+	/* First setup the regular MPC5200 पूर्णांकerrupt controller */
 	mpc52xx_init_irq();
 
 	/* Now find the FPGA IRQ */
-	fpga_np = of_find_compatible_node(NULL, NULL, "fsl,media5200-fpga");
-	if (!fpga_np)
-		goto out;
+	fpga_np = of_find_compatible_node(शून्य, शून्य, "fsl,media5200-fpga");
+	अगर (!fpga_np)
+		जाओ out;
 	pr_debug("%s: found fpga node: %pOF\n", __func__, fpga_np);
 
 	media5200_irq.regs = of_iomap(fpga_np, 0);
-	if (!media5200_irq.regs)
-		goto out;
+	अगर (!media5200_irq.regs)
+		जाओ out;
 	pr_debug("%s: mapped to %p\n", __func__, media5200_irq.regs);
 
 	cascade_virq = irq_of_parse_and_map(fpga_np, 0);
-	if (!cascade_virq)
-		goto out;
+	अगर (!cascade_virq)
+		जाओ out;
 	pr_debug("%s: cascaded on virq=%i\n", __func__, cascade_virq);
 
 	/* Disable all FPGA IRQs */
@@ -168,48 +169,48 @@ static void __init media5200_init_irq(void)
 
 	spin_lock_init(&media5200_irq.lock);
 
-	media5200_irq.irqhost = irq_domain_add_linear(fpga_np,
+	media5200_irq.irqhost = irq_करोमुख्य_add_linear(fpga_np,
 			MEDIA5200_NUM_IRQS, &media5200_irq_ops, &media5200_irq);
-	if (!media5200_irq.irqhost)
-		goto out;
+	अगर (!media5200_irq.irqhost)
+		जाओ out;
 	pr_debug("%s: allocated irqhost\n", __func__);
 
 	irq_set_handler_data(cascade_virq, &media5200_irq);
 	irq_set_chained_handler(cascade_virq, media5200_irq_cascade);
 
-	return;
+	वापस;
 
  out:
 	pr_err("Could not find Media5200 FPGA; PCI interrupts will not work\n");
-}
+पूर्ण
 
 /*
  * Setup the architecture
  */
-static void __init media5200_setup_arch(void)
-{
+अटल व्योम __init media5200_setup_arch(व्योम)
+अणु
 
-	struct device_node *np;
-	struct mpc52xx_gpio __iomem *gpio;
+	काष्ठा device_node *np;
+	काष्ठा mpc52xx_gpio __iomem *gpio;
 	u32 port_config;
 
-	if (ppc_md.progress)
+	अगर (ppc_md.progress)
 		ppc_md.progress("media5200_setup_arch()", 0);
 
-	/* Map important registers from the internal memory map */
+	/* Map important रेजिस्टरs from the पूर्णांकernal memory map */
 	mpc52xx_map_common_devices();
 
 	/* Some mpc5200 & mpc5200b related configuration */
 	mpc5200_setup_xlb_arbiter();
 
-	np = of_find_matching_node(NULL, mpc5200_gpio_ids);
+	np = of_find_matching_node(शून्य, mpc5200_gpio_ids);
 	gpio = of_iomap(np, 0);
 	of_node_put(np);
-	if (!gpio) {
-		printk(KERN_ERR "%s() failed. expect abnormal behavior\n",
+	अगर (!gpio) अणु
+		prपूर्णांकk(KERN_ERR "%s() failed. expect abnormal behavior\n",
 		       __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Set port config */
 	port_config = in_be32(&gpio->port_config);
@@ -222,30 +223,30 @@ static void __init media5200_setup_arch(void)
 	/* Unmap zone */
 	iounmap(gpio);
 
-}
+पूर्ण
 
 /* list of the supported boards */
-static const char * const board[] __initconst = {
+अटल स्थिर अक्षर * स्थिर board[] __initस्थिर = अणु
 	"fsl,media5200",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /*
  * Called very early, MMU is off, device-tree isn't unflattened
  */
-static int __init media5200_probe(void)
-{
-	return of_device_compatible_match(of_root, board);
-}
+अटल पूर्णांक __init media5200_probe(व्योम)
+अणु
+	वापस of_device_compatible_match(of_root, board);
+पूर्ण
 
-define_machine(media5200_platform) {
+define_machine(media5200_platक्रमm) अणु
 	.name		= "media5200-platform",
 	.probe		= media5200_probe,
 	.setup_arch	= media5200_setup_arch,
 	.discover_phbs	= mpc52xx_setup_pci,
-	.init		= mpc52xx_declare_of_platform_devices,
+	.init		= mpc52xx_declare_of_platक्रमm_devices,
 	.init_IRQ	= media5200_init_irq,
 	.get_irq	= mpc52xx_get_irq,
 	.restart	= mpc52xx_restart,
 	.calibrate_decr	= generic_calibrate_decr,
-};
+पूर्ण;

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,83 +24,83 @@
  *
  */
 
-#include "dmub/dmub_srv_stat.h"
-#include "dmub/inc/dmub_cmd.h"
+#समावेश "dmub/dmub_srv_stat.h"
+#समावेश "dmub/inc/dmub_cmd.h"
 
 /**
  * DOC: DMUB_SRV STAT Interface
  *
- * These interfaces are called without acquiring DAL and DC locks.
- * Hence, there is limitations on whese interfaces can access. Only
- * variables exclusively defined for these interfaces can be modified.
+ * These पूर्णांकerfaces are called without acquiring DAL and DC locks.
+ * Hence, there is limitations on whese पूर्णांकerfaces can access. Only
+ * variables exclusively defined क्रम these पूर्णांकerfaces can be modअगरied.
  */
 
 /**
  *****************************************************************************
- *  Function: dmub_srv_stat_get_notification
+ *  Function: dmub_srv_stat_get_notअगरication
  *
  *  @brief
- *		Retrieves a dmub outbox notification, set up dmub notification
- *		structure with message information. Also a pending bit if queue
- *		is having more notifications
+ *		Retrieves a dmub outbox notअगरication, set up dmub notअगरication
+ *		काष्ठाure with message inक्रमmation. Also a pending bit अगर queue
+ *		is having more notअगरications
  *
- *  @param [in] dmub: dmub srv structure
- *  @param [out] pnotify: dmub notification structure to be filled up
+ *  @param [in] dmub: dmub srv काष्ठाure
+ *  @param [out] pnotअगरy: dmub notअगरication काष्ठाure to be filled up
  *
- *  @return
+ *  @वापस
  *     dmub_status
  *****************************************************************************
  */
-enum dmub_status dmub_srv_stat_get_notification(struct dmub_srv *dmub,
-						struct dmub_notification *notify)
-{
+क्रमागत dmub_status dmub_srv_stat_get_notअगरication(काष्ठा dmub_srv *dmub,
+						काष्ठा dmub_notअगरication *notअगरy)
+अणु
 	/**
 	 * This function is called without dal and dc locks, so
-	 * we shall not modify any dmub variables, only dmub->outbox1_rb
+	 * we shall not modअगरy any dmub variables, only dmub->outbox1_rb
 	 * is exempted as it is exclusively accessed by this function
 	 */
-	union dmub_rb_out_cmd cmd = {0};
+	जोड़ dmub_rb_out_cmd cmd = अणु0पूर्ण;
 
-	if (!dmub->hw_init) {
-		notify->type = DMUB_NOTIFICATION_NO_DATA;
-		notify->pending_notification = false;
-		return DMUB_STATUS_INVALID;
-	}
+	अगर (!dmub->hw_init) अणु
+		notअगरy->type = DMUB_NOTIFICATION_NO_DATA;
+		notअगरy->pending_notअगरication = false;
+		वापस DMUB_STATUS_INVALID;
+	पूर्ण
 
-	/* Get write pointer which is updated by dmub */
+	/* Get ग_लिखो poपूर्णांकer which is updated by dmub */
 	dmub->outbox1_rb.wrpt = dmub->hw_funcs.get_outbox1_wptr(dmub);
 
-	if (!dmub_rb_out_front(&dmub->outbox1_rb, &cmd)) {
-		notify->type = DMUB_NOTIFICATION_NO_DATA;
-		notify->pending_notification = false;
-		return DMUB_STATUS_OK;
-	}
+	अगर (!dmub_rb_out_front(&dmub->outbox1_rb, &cmd)) अणु
+		notअगरy->type = DMUB_NOTIFICATION_NO_DATA;
+		notअगरy->pending_notअगरication = false;
+		वापस DMUB_STATUS_OK;
+	पूर्ण
 
-	switch (cmd.cmd_common.header.type) {
-	case DMUB_OUT_CMD__DP_AUX_REPLY:
-		notify->type = DMUB_NOTIFICATION_AUX_REPLY;
-		notify->link_index = cmd.dp_aux_reply.control.instance;
-		notify->result = cmd.dp_aux_reply.control.result;
-		dmub_memcpy((void *)&notify->aux_reply,
-			(void *)&cmd.dp_aux_reply.reply_data, sizeof(struct aux_reply_data));
-		break;
-	default:
-		notify->type = DMUB_NOTIFICATION_NO_DATA;
-		break;
-	}
+	चयन (cmd.cmd_common.header.type) अणु
+	हाल DMUB_OUT_CMD__DP_AUX_REPLY:
+		notअगरy->type = DMUB_NOTIFICATION_AUX_REPLY;
+		notअगरy->link_index = cmd.dp_aux_reply.control.instance;
+		notअगरy->result = cmd.dp_aux_reply.control.result;
+		dmub_स_नकल((व्योम *)&notअगरy->aux_reply,
+			(व्योम *)&cmd.dp_aux_reply.reply_data, माप(काष्ठा aux_reply_data));
+		अवरोध;
+	शेष:
+		notअगरy->type = DMUB_NOTIFICATION_NO_DATA;
+		अवरोध;
+	पूर्ण
 
-	/* Pop outbox1 ringbuffer and update read pointer */
+	/* Pop outbox1 ringbuffer and update पढ़ो poपूर्णांकer */
 	dmub_rb_pop_front(&dmub->outbox1_rb);
 	dmub->hw_funcs.set_outbox1_rptr(dmub, dmub->outbox1_rb.rptr);
 
 	/**
-	 * Notify dc whether dmub has a pending outbox message,
-	 * this is to avoid one more call to dmub_srv_stat_get_notification
+	 * Notअगरy dc whether dmub has a pending outbox message,
+	 * this is to aव्योम one more call to dmub_srv_stat_get_notअगरication
 	 */
-	if (dmub_rb_empty(&dmub->outbox1_rb))
-		notify->pending_notification = false;
-	else
-		notify->pending_notification = true;
+	अगर (dmub_rb_empty(&dmub->outbox1_rb))
+		notअगरy->pending_notअगरication = false;
+	अन्यथा
+		notअगरy->pending_notअगरication = true;
 
-	return DMUB_STATUS_OK;
-}
+	वापस DMUB_STATUS_OK;
+पूर्ण

@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
-#include "mt7915.h"
-#include "../dma.h"
-#include "mac.h"
+#समावेश "mt7915.h"
+#समावेश "../dma.h"
+#समावेश "mac.h"
 
-int mt7915_init_tx_queues(struct mt7915_phy *phy, int idx, int n_desc)
-{
-	int i, err;
+पूर्णांक mt7915_init_tx_queues(काष्ठा mt7915_phy *phy, पूर्णांक idx, पूर्णांक n_desc)
+अणु
+	पूर्णांक i, err;
 
 	err = mt76_init_tx_queue(phy->mt76, 0, idx, n_desc, MT_TX_RING_BASE);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	for (i = 0; i <= MT_TXQ_PSD; i++)
+	क्रम (i = 0; i <= MT_TXQ_PSD; i++)
 		phy->mt76->q_tx[i] = phy->mt76->q_tx[0];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mt7915_queue_rx_skb(struct mt76_dev *mdev, enum mt76_rxq_id q,
-			 struct sk_buff *skb)
-{
-	struct mt7915_dev *dev = container_of(mdev, struct mt7915_dev, mt76);
+व्योम mt7915_queue_rx_skb(काष्ठा mt76_dev *mdev, क्रमागत mt76_rxq_id q,
+			 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mt7915_dev *dev = container_of(mdev, काष्ठा mt7915_dev, mt76);
 	__le32 *rxd = (__le32 *)skb->data;
-	enum rx_pkt_type type;
+	क्रमागत rx_pkt_type type;
 
 	type = FIELD_GET(MT_RXD0_PKT_TYPE, le32_to_cpu(rxd[0]));
 
-	switch (type) {
-	case PKT_TYPE_TXRX_NOTIFY:
-		mt7915_mac_tx_free(dev, skb);
-		break;
-	case PKT_TYPE_RX_EVENT:
+	चयन (type) अणु
+	हाल PKT_TYPE_TXRX_NOTIFY:
+		mt7915_mac_tx_मुक्त(dev, skb);
+		अवरोध;
+	हाल PKT_TYPE_RX_EVENT:
 		mt7915_mcu_rx_event(dev, skb);
-		break;
-#ifdef CONFIG_NL80211_TESTMODE
-	case PKT_TYPE_TXRXV:
+		अवरोध;
+#अगर_घोषित CONFIG_NL80211_TESTMODE
+	हाल PKT_TYPE_TXRXV:
 		mt7915_mac_fill_rx_vector(dev, skb);
-		break;
-#endif
-	case PKT_TYPE_NORMAL:
-		if (!mt7915_mac_fill_rx(dev, skb)) {
+		अवरोध;
+#पूर्ण_अगर
+	हाल PKT_TYPE_NORMAL:
+		अगर (!mt7915_mac_fill_rx(dev, skb)) अणु
 			mt76_rx(&dev->mt76, q, skb);
-			return;
-		}
+			वापस;
+		पूर्ण
 		fallthrough;
-	default:
-		dev_kfree_skb(skb);
-		break;
-	}
-}
+	शेष:
+		dev_kमुक्त_skb(skb);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-mt7915_tx_cleanup(struct mt7915_dev *dev)
-{
+अटल व्योम
+mt7915_tx_cleanup(काष्ठा mt7915_dev *dev)
+अणु
 	mt76_queue_tx_cleanup(dev, dev->mt76.q_mcu[MT_MCUQ_WM], false);
 	mt76_queue_tx_cleanup(dev, dev->mt76.q_mcu[MT_MCUQ_WA], false);
-}
+पूर्ण
 
-static int mt7915_poll_tx(struct napi_struct *napi, int budget)
-{
-	struct mt7915_dev *dev;
+अटल पूर्णांक mt7915_poll_tx(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा mt7915_dev *dev;
 
-	dev = container_of(napi, struct mt7915_dev, mt76.tx_napi);
+	dev = container_of(napi, काष्ठा mt7915_dev, mt76.tx_napi);
 
 	mt7915_tx_cleanup(dev);
 
-	if (napi_complete_done(napi, 0))
+	अगर (napi_complete_करोne(napi, 0))
 		mt7915_irq_enable(dev, MT_INT_TX_DONE_MCU);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __mt7915_dma_prefetch(struct mt7915_dev *dev, u32 ofs)
-{
-#define PREFETCH(base, depth)	((base) << 16 | (depth))
+अटल व्योम __mt7915_dma_prefetch(काष्ठा mt7915_dev *dev, u32 ofs)
+अणु
+#घोषणा PREFETCH(base, depth)	((base) << 16 | (depth))
 
 	mt76_wr(dev, MT_WFDMA0_RX_RING0_EXT_CTRL + ofs, PREFETCH(0x0, 0x4));
 	mt76_wr(dev, MT_WFDMA0_RX_RING1_EXT_CTRL + ofs, PREFETCH(0x40, 0x4));
@@ -101,26 +102,26 @@ static void __mt7915_dma_prefetch(struct mt7915_dev *dev, u32 ofs)
 	mt76_wr(dev, MT_WFDMA1_RX_RING1_EXT_CTRL + ofs, PREFETCH(0x400, 0x4));
 	mt76_wr(dev, MT_WFDMA1_RX_RING2_EXT_CTRL + ofs, PREFETCH(0x440, 0x4));
 	mt76_wr(dev, MT_WFDMA1_RX_RING3_EXT_CTRL + ofs, PREFETCH(0x480, 0x0));
-}
+पूर्ण
 
-void mt7915_dma_prefetch(struct mt7915_dev *dev)
-{
+व्योम mt7915_dma_prefetch(काष्ठा mt7915_dev *dev)
+अणु
 	__mt7915_dma_prefetch(dev, 0);
-	if (dev->hif2)
+	अगर (dev->hअगर2)
 		__mt7915_dma_prefetch(dev, MT_WFDMA1_PCIE1_BASE - MT_WFDMA1_BASE);
-}
+पूर्ण
 
-int mt7915_dma_init(struct mt7915_dev *dev)
-{
+पूर्णांक mt7915_dma_init(काष्ठा mt7915_dev *dev)
+अणु
 	/* Increase buffer size to receive large VHT/HE MPDUs */
-	int rx_buf_size = MT_RX_BUF_SIZE * 2;
-	u32 hif1_ofs = 0;
-	int ret;
+	पूर्णांक rx_buf_size = MT_RX_BUF_SIZE * 2;
+	u32 hअगर1_ofs = 0;
+	पूर्णांक ret;
 
 	mt76_dma_attach(&dev->mt76);
 
-	if (dev->hif2)
-		hif1_ofs = MT_WFDMA1_PCIE1_BASE - MT_WFDMA1_BASE;
+	अगर (dev->hअगर2)
+		hअगर1_ofs = MT_WFDMA1_PCIE1_BASE - MT_WFDMA1_BASE;
 
 	/* configure global setting */
 	mt76_set(dev, MT_WFDMA1_GLO_CFG,
@@ -131,21 +132,21 @@ int mt7915_dma_init(struct mt7915_dev *dev)
 	mt76_wr(dev, MT_WFDMA0_RST_DTX_PTR, ~0);
 	mt76_wr(dev, MT_WFDMA1_RST_DTX_PTR, ~0);
 
-	/* configure delay interrupt */
+	/* configure delay पूर्णांकerrupt */
 	mt76_wr(dev, MT_WFDMA0_PRI_DLY_INT_CFG0, 0);
 	mt76_wr(dev, MT_WFDMA1_PRI_DLY_INT_CFG0, 0);
 
-	if (dev->hif2) {
-		mt76_set(dev, MT_WFDMA1_GLO_CFG + hif1_ofs,
+	अगर (dev->hअगर2) अणु
+		mt76_set(dev, MT_WFDMA1_GLO_CFG + hअगर1_ofs,
 			 MT_WFDMA1_GLO_CFG_OMIT_TX_INFO |
 			 MT_WFDMA1_GLO_CFG_OMIT_RX_INFO);
 
-		mt76_wr(dev, MT_WFDMA0_RST_DTX_PTR + hif1_ofs, ~0);
-		mt76_wr(dev, MT_WFDMA1_RST_DTX_PTR + hif1_ofs, ~0);
+		mt76_wr(dev, MT_WFDMA0_RST_DTX_PTR + hअगर1_ofs, ~0);
+		mt76_wr(dev, MT_WFDMA1_RST_DTX_PTR + hअगर1_ofs, ~0);
 
-		mt76_wr(dev, MT_WFDMA0_PRI_DLY_INT_CFG0 + hif1_ofs, 0);
-		mt76_wr(dev, MT_WFDMA1_PRI_DLY_INT_CFG0 + hif1_ofs, 0);
-	}
+		mt76_wr(dev, MT_WFDMA0_PRI_DLY_INT_CFG0 + hअगर1_ofs, 0);
+		mt76_wr(dev, MT_WFDMA1_PRI_DLY_INT_CFG0 + hअगर1_ofs, 0);
+	पूर्ण
 
 	/* configure perfetch settings */
 	mt7915_dma_prefetch(dev);
@@ -153,75 +154,75 @@ int mt7915_dma_init(struct mt7915_dev *dev)
 	/* init tx queue */
 	ret = mt7915_init_tx_queues(&dev->phy, MT7915_TXQ_BAND0,
 				    MT7915_TX_RING_SIZE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* command to WM */
 	ret = mt76_init_mcu_queue(&dev->mt76, MT_MCUQ_WM, MT7915_TXQ_MCU_WM,
 				  MT7915_TX_MCU_RING_SIZE, MT_TX_RING_BASE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* command to WA */
 	ret = mt76_init_mcu_queue(&dev->mt76, MT_MCUQ_WA, MT7915_TXQ_MCU_WA,
 				  MT7915_TX_MCU_RING_SIZE, MT_TX_RING_BASE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* firmware download */
+	/* firmware करोwnload */
 	ret = mt76_init_mcu_queue(&dev->mt76, MT_MCUQ_FWDL, MT7915_TXQ_FWDL,
 				  MT7915_TX_FWDL_RING_SIZE, MT_TX_RING_BASE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* event from WM */
 	ret = mt76_queue_alloc(dev, &dev->mt76.q_rx[MT_RXQ_MCU],
 			       MT7915_RXQ_MCU_WM, MT7915_RX_MCU_RING_SIZE,
 			       rx_buf_size, MT_RX_EVENT_RING_BASE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* event from WA */
 	ret = mt76_queue_alloc(dev, &dev->mt76.q_rx[MT_RXQ_MCU_WA],
 			       MT7915_RXQ_MCU_WA, MT7915_RX_MCU_RING_SIZE,
 			       rx_buf_size, MT_RX_EVENT_RING_BASE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* rx data queue */
 	ret = mt76_queue_alloc(dev, &dev->mt76.q_rx[MT_RXQ_MAIN],
 			       MT7915_RXQ_BAND0, MT7915_RX_RING_SIZE,
 			       rx_buf_size, MT_RX_DATA_RING_BASE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (dev->dbdc_support) {
+	अगर (dev->dbdc_support) अणु
 		ret = mt76_queue_alloc(dev, &dev->mt76.q_rx[MT_RXQ_EXT],
 				       MT7915_RXQ_BAND1, MT7915_RX_RING_SIZE,
 				       rx_buf_size,
-				       MT_RX_DATA_RING_BASE + hif1_ofs);
-		if (ret)
-			return ret;
+				       MT_RX_DATA_RING_BASE + hअगर1_ofs);
+		अगर (ret)
+			वापस ret;
 
 		/* event from WA */
 		ret = mt76_queue_alloc(dev, &dev->mt76.q_rx[MT_RXQ_EXT_WA],
 				       MT7915_RXQ_MCU_WA_EXT,
 				       MT7915_RX_MCU_RING_SIZE,
 				       rx_buf_size,
-				       MT_RX_EVENT_RING_BASE + hif1_ofs);
-		if (ret)
-			return ret;
-	}
+				       MT_RX_EVENT_RING_BASE + hअगर1_ofs);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = mt76_init_queues(dev, mt76_dma_rx_poll);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	netif_tx_napi_add(&dev->mt76.tx_napi_dev, &dev->mt76.tx_napi,
+	netअगर_tx_napi_add(&dev->mt76.tx_napi_dev, &dev->mt76.tx_napi,
 			  mt7915_poll_tx, NAPI_POLL_WEIGHT);
 	napi_enable(&dev->mt76.tx_napi);
 
-	/* hif wait WFDMA idle */
+	/* hअगर रुको WFDMA idle */
 	mt76_set(dev, MT_WFDMA0_BUSY_ENA,
 		 MT_WFDMA0_BUSY_ENA_TX_FIFO0 |
 		 MT_WFDMA0_BUSY_ENA_TX_FIFO1 |
@@ -251,26 +252,26 @@ int mt7915_dma_init(struct mt7915_dev *dev)
 	mt76_set(dev, MT_WFDMA1_GLO_CFG,
 		 MT_WFDMA1_GLO_CFG_TX_DMA_EN | MT_WFDMA1_GLO_CFG_RX_DMA_EN);
 
-	if (dev->hif2) {
-		mt76_set(dev, MT_WFDMA0_GLO_CFG + hif1_ofs,
+	अगर (dev->hअगर2) अणु
+		mt76_set(dev, MT_WFDMA0_GLO_CFG + hअगर1_ofs,
 			 (MT_WFDMA0_GLO_CFG_TX_DMA_EN |
 			  MT_WFDMA0_GLO_CFG_RX_DMA_EN));
-		mt76_set(dev, MT_WFDMA1_GLO_CFG + hif1_ofs,
+		mt76_set(dev, MT_WFDMA1_GLO_CFG + hअगर1_ofs,
 			 (MT_WFDMA1_GLO_CFG_TX_DMA_EN |
 			  MT_WFDMA1_GLO_CFG_RX_DMA_EN));
 		mt76_set(dev, MT_WFDMA_HOST_CONFIG,
 			 MT_WFDMA_HOST_CONFIG_PDMA_BAND);
-	}
+	पूर्ण
 
-	/* enable interrupts for TX/RX rings */
+	/* enable पूर्णांकerrupts क्रम TX/RX rings */
 	mt7915_irq_enable(dev, MT_INT_RX_DONE_ALL | MT_INT_TX_DONE_MCU |
 			  MT_INT_MCU_CMD);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mt7915_dma_cleanup(struct mt7915_dev *dev)
-{
+व्योम mt7915_dma_cleanup(काष्ठा mt7915_dev *dev)
+अणु
 	/* disable */
 	mt76_clear(dev, MT_WFDMA0_GLO_CFG,
 		   MT_WFDMA0_GLO_CFG_TX_DMA_EN |
@@ -297,4 +298,4 @@ void mt7915_dma_cleanup(struct mt7915_dev *dev)
 		 MT_WFDMA0_RST_LOGIC_RST);
 
 	mt76_dma_cleanup(&dev->mt76);
-}
+पूर्ण

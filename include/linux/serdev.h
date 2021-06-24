@@ -1,330 +1,331 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2016-2017 Linaro Ltd., Rob Herring <robh@kernel.org>
  */
-#ifndef _LINUX_SERDEV_H
-#define _LINUX_SERDEV_H
+#अगर_अघोषित _LINUX_SERDEV_H
+#घोषणा _LINUX_SERDEV_H
 
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/termios.h>
-#include <linux/delay.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/termios.h>
+#समावेश <linux/delay.h>
 
-struct serdev_controller;
-struct serdev_device;
+काष्ठा serdev_controller;
+काष्ठा serdev_device;
 
 /*
- * serdev device structures
+ * serdev device काष्ठाures
  */
 
 /**
- * struct serdev_device_ops - Callback operations for a serdev device
+ * काष्ठा serdev_device_ops - Callback operations क्रम a serdev device
  * @receive_buf:	Function called with data received from device;
- *			returns number of bytes accepted; may sleep.
- * @write_wakeup:	Function called when ready to transmit more data; must
+ *			वापसs number of bytes accepted; may sleep.
+ * @ग_लिखो_wakeup:	Function called when पढ़ोy to transmit more data; must
  *			not sleep.
  */
-struct serdev_device_ops {
-	int (*receive_buf)(struct serdev_device *, const unsigned char *, size_t);
-	void (*write_wakeup)(struct serdev_device *);
-};
+काष्ठा serdev_device_ops अणु
+	पूर्णांक (*receive_buf)(काष्ठा serdev_device *, स्थिर अचिन्हित अक्षर *, माप_प्रकार);
+	व्योम (*ग_लिखो_wakeup)(काष्ठा serdev_device *);
+पूर्ण;
 
 /**
- * struct serdev_device - Basic representation of an serdev device
+ * काष्ठा serdev_device - Basic representation of an serdev device
  * @dev:	Driver model representation of the device.
  * @nr:		Device number on serdev bus.
  * @ctrl:	serdev controller managing this device.
  * @ops:	Device operations.
- * @write_comp	Completion used by serdev_device_write() internally
- * @write_lock	Lock to serialize access when writing data
+ * @ग_लिखो_comp	Completion used by serdev_device_ग_लिखो() पूर्णांकernally
+ * @ग_लिखो_lock	Lock to serialize access when writing data
  */
-struct serdev_device {
-	struct device dev;
-	int nr;
-	struct serdev_controller *ctrl;
-	const struct serdev_device_ops *ops;
-	struct completion write_comp;
-	struct mutex write_lock;
-};
+काष्ठा serdev_device अणु
+	काष्ठा device dev;
+	पूर्णांक nr;
+	काष्ठा serdev_controller *ctrl;
+	स्थिर काष्ठा serdev_device_ops *ops;
+	काष्ठा completion ग_लिखो_comp;
+	काष्ठा mutex ग_लिखो_lock;
+पूर्ण;
 
-static inline struct serdev_device *to_serdev_device(struct device *d)
-{
-	return container_of(d, struct serdev_device, dev);
-}
+अटल अंतरभूत काष्ठा serdev_device *to_serdev_device(काष्ठा device *d)
+अणु
+	वापस container_of(d, काष्ठा serdev_device, dev);
+पूर्ण
 
 /**
- * struct serdev_device_driver - serdev slave device driver
+ * काष्ठा serdev_device_driver - serdev slave device driver
  * @driver:	serdev device drivers should initialize name field of this
- *		structure.
+ *		काष्ठाure.
  * @probe:	binds this driver to a serdev device.
- * @remove:	unbinds this driver from the serdev device.
+ * @हटाओ:	unbinds this driver from the serdev device.
  */
-struct serdev_device_driver {
-	struct device_driver driver;
-	int	(*probe)(struct serdev_device *);
-	void	(*remove)(struct serdev_device *);
-};
+काष्ठा serdev_device_driver अणु
+	काष्ठा device_driver driver;
+	पूर्णांक	(*probe)(काष्ठा serdev_device *);
+	व्योम	(*हटाओ)(काष्ठा serdev_device *);
+पूर्ण;
 
-static inline struct serdev_device_driver *to_serdev_device_driver(struct device_driver *d)
-{
-	return container_of(d, struct serdev_device_driver, driver);
-}
+अटल अंतरभूत काष्ठा serdev_device_driver *to_serdev_device_driver(काष्ठा device_driver *d)
+अणु
+	वापस container_of(d, काष्ठा serdev_device_driver, driver);
+पूर्ण
 
-enum serdev_parity {
+क्रमागत serdev_parity अणु
 	SERDEV_PARITY_NONE,
 	SERDEV_PARITY_EVEN,
 	SERDEV_PARITY_ODD,
-};
+पूर्ण;
 
 /*
- * serdev controller structures
+ * serdev controller काष्ठाures
  */
-struct serdev_controller_ops {
-	int (*write_buf)(struct serdev_controller *, const unsigned char *, size_t);
-	void (*write_flush)(struct serdev_controller *);
-	int (*write_room)(struct serdev_controller *);
-	int (*open)(struct serdev_controller *);
-	void (*close)(struct serdev_controller *);
-	void (*set_flow_control)(struct serdev_controller *, bool);
-	int (*set_parity)(struct serdev_controller *, enum serdev_parity);
-	unsigned int (*set_baudrate)(struct serdev_controller *, unsigned int);
-	void (*wait_until_sent)(struct serdev_controller *, long);
-	int (*get_tiocm)(struct serdev_controller *);
-	int (*set_tiocm)(struct serdev_controller *, unsigned int, unsigned int);
-};
+काष्ठा serdev_controller_ops अणु
+	पूर्णांक (*ग_लिखो_buf)(काष्ठा serdev_controller *, स्थिर अचिन्हित अक्षर *, माप_प्रकार);
+	व्योम (*ग_लिखो_flush)(काष्ठा serdev_controller *);
+	पूर्णांक (*ग_लिखो_room)(काष्ठा serdev_controller *);
+	पूर्णांक (*खोलो)(काष्ठा serdev_controller *);
+	व्योम (*बंद)(काष्ठा serdev_controller *);
+	व्योम (*set_flow_control)(काष्ठा serdev_controller *, bool);
+	पूर्णांक (*set_parity)(काष्ठा serdev_controller *, क्रमागत serdev_parity);
+	अचिन्हित पूर्णांक (*set_baudrate)(काष्ठा serdev_controller *, अचिन्हित पूर्णांक);
+	व्योम (*रुको_until_sent)(काष्ठा serdev_controller *, दीर्घ);
+	पूर्णांक (*get_tiocm)(काष्ठा serdev_controller *);
+	पूर्णांक (*set_tiocm)(काष्ठा serdev_controller *, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+पूर्ण;
 
 /**
- * struct serdev_controller - interface to the serdev controller
+ * काष्ठा serdev_controller - पूर्णांकerface to the serdev controller
  * @dev:	Driver model representation of the device.
- * @nr:		number identifier for this controller/bus.
- * @serdev:	Pointer to slave device for this controller.
+ * @nr:		number identअगरier क्रम this controller/bus.
+ * @serdev:	Poपूर्णांकer to slave device क्रम this controller.
  * @ops:	Controller operations.
  */
-struct serdev_controller {
-	struct device		dev;
-	unsigned int		nr;
-	struct serdev_device	*serdev;
-	const struct serdev_controller_ops *ops;
-};
+काष्ठा serdev_controller अणु
+	काष्ठा device		dev;
+	अचिन्हित पूर्णांक		nr;
+	काष्ठा serdev_device	*serdev;
+	स्थिर काष्ठा serdev_controller_ops *ops;
+पूर्ण;
 
-static inline struct serdev_controller *to_serdev_controller(struct device *d)
-{
-	return container_of(d, struct serdev_controller, dev);
-}
+अटल अंतरभूत काष्ठा serdev_controller *to_serdev_controller(काष्ठा device *d)
+अणु
+	वापस container_of(d, काष्ठा serdev_controller, dev);
+पूर्ण
 
-static inline void *serdev_device_get_drvdata(const struct serdev_device *serdev)
-{
-	return dev_get_drvdata(&serdev->dev);
-}
+अटल अंतरभूत व्योम *serdev_device_get_drvdata(स्थिर काष्ठा serdev_device *serdev)
+अणु
+	वापस dev_get_drvdata(&serdev->dev);
+पूर्ण
 
-static inline void serdev_device_set_drvdata(struct serdev_device *serdev, void *data)
-{
+अटल अंतरभूत व्योम serdev_device_set_drvdata(काष्ठा serdev_device *serdev, व्योम *data)
+अणु
 	dev_set_drvdata(&serdev->dev, data);
-}
+पूर्ण
 
 /**
  * serdev_device_put() - decrement serdev device refcount
  * @serdev	serdev device.
  */
-static inline void serdev_device_put(struct serdev_device *serdev)
-{
-	if (serdev)
+अटल अंतरभूत व्योम serdev_device_put(काष्ठा serdev_device *serdev)
+अणु
+	अगर (serdev)
 		put_device(&serdev->dev);
-}
+पूर्ण
 
-static inline void serdev_device_set_client_ops(struct serdev_device *serdev,
-					      const struct serdev_device_ops *ops)
-{
+अटल अंतरभूत व्योम serdev_device_set_client_ops(काष्ठा serdev_device *serdev,
+					      स्थिर काष्ठा serdev_device_ops *ops)
+अणु
 	serdev->ops = ops;
-}
+पूर्ण
 
-static inline
-void *serdev_controller_get_drvdata(const struct serdev_controller *ctrl)
-{
-	return ctrl ? dev_get_drvdata(&ctrl->dev) : NULL;
-}
+अटल अंतरभूत
+व्योम *serdev_controller_get_drvdata(स्थिर काष्ठा serdev_controller *ctrl)
+अणु
+	वापस ctrl ? dev_get_drvdata(&ctrl->dev) : शून्य;
+पूर्ण
 
-static inline void serdev_controller_set_drvdata(struct serdev_controller *ctrl,
-					       void *data)
-{
+अटल अंतरभूत व्योम serdev_controller_set_drvdata(काष्ठा serdev_controller *ctrl,
+					       व्योम *data)
+अणु
 	dev_set_drvdata(&ctrl->dev, data);
-}
+पूर्ण
 
 /**
  * serdev_controller_put() - decrement controller refcount
  * @ctrl	serdev controller.
  */
-static inline void serdev_controller_put(struct serdev_controller *ctrl)
-{
-	if (ctrl)
+अटल अंतरभूत व्योम serdev_controller_put(काष्ठा serdev_controller *ctrl)
+अणु
+	अगर (ctrl)
 		put_device(&ctrl->dev);
-}
+पूर्ण
 
-struct serdev_device *serdev_device_alloc(struct serdev_controller *);
-int serdev_device_add(struct serdev_device *);
-void serdev_device_remove(struct serdev_device *);
+काष्ठा serdev_device *serdev_device_alloc(काष्ठा serdev_controller *);
+पूर्णांक serdev_device_add(काष्ठा serdev_device *);
+व्योम serdev_device_हटाओ(काष्ठा serdev_device *);
 
-struct serdev_controller *serdev_controller_alloc(struct device *, size_t);
-int serdev_controller_add(struct serdev_controller *);
-void serdev_controller_remove(struct serdev_controller *);
+काष्ठा serdev_controller *serdev_controller_alloc(काष्ठा device *, माप_प्रकार);
+पूर्णांक serdev_controller_add(काष्ठा serdev_controller *);
+व्योम serdev_controller_हटाओ(काष्ठा serdev_controller *);
 
-static inline void serdev_controller_write_wakeup(struct serdev_controller *ctrl)
-{
-	struct serdev_device *serdev = ctrl->serdev;
+अटल अंतरभूत व्योम serdev_controller_ग_लिखो_wakeup(काष्ठा serdev_controller *ctrl)
+अणु
+	काष्ठा serdev_device *serdev = ctrl->serdev;
 
-	if (!serdev || !serdev->ops->write_wakeup)
-		return;
+	अगर (!serdev || !serdev->ops->ग_लिखो_wakeup)
+		वापस;
 
-	serdev->ops->write_wakeup(serdev);
-}
+	serdev->ops->ग_लिखो_wakeup(serdev);
+पूर्ण
 
-static inline int serdev_controller_receive_buf(struct serdev_controller *ctrl,
-					      const unsigned char *data,
-					      size_t count)
-{
-	struct serdev_device *serdev = ctrl->serdev;
+अटल अंतरभूत पूर्णांक serdev_controller_receive_buf(काष्ठा serdev_controller *ctrl,
+					      स्थिर अचिन्हित अक्षर *data,
+					      माप_प्रकार count)
+अणु
+	काष्ठा serdev_device *serdev = ctrl->serdev;
 
-	if (!serdev || !serdev->ops->receive_buf)
-		return 0;
+	अगर (!serdev || !serdev->ops->receive_buf)
+		वापस 0;
 
-	return serdev->ops->receive_buf(serdev, data, count);
-}
+	वापस serdev->ops->receive_buf(serdev, data, count);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_SERIAL_DEV_BUS)
+#अगर IS_ENABLED(CONFIG_SERIAL_DEV_BUS)
 
-int serdev_device_open(struct serdev_device *);
-void serdev_device_close(struct serdev_device *);
-int devm_serdev_device_open(struct device *, struct serdev_device *);
-unsigned int serdev_device_set_baudrate(struct serdev_device *, unsigned int);
-void serdev_device_set_flow_control(struct serdev_device *, bool);
-int serdev_device_write_buf(struct serdev_device *, const unsigned char *, size_t);
-void serdev_device_wait_until_sent(struct serdev_device *, long);
-int serdev_device_get_tiocm(struct serdev_device *);
-int serdev_device_set_tiocm(struct serdev_device *, int, int);
-void serdev_device_write_wakeup(struct serdev_device *);
-int serdev_device_write(struct serdev_device *, const unsigned char *, size_t, long);
-void serdev_device_write_flush(struct serdev_device *);
-int serdev_device_write_room(struct serdev_device *);
+पूर्णांक serdev_device_खोलो(काष्ठा serdev_device *);
+व्योम serdev_device_बंद(काष्ठा serdev_device *);
+पूर्णांक devm_serdev_device_खोलो(काष्ठा device *, काष्ठा serdev_device *);
+अचिन्हित पूर्णांक serdev_device_set_baudrate(काष्ठा serdev_device *, अचिन्हित पूर्णांक);
+व्योम serdev_device_set_flow_control(काष्ठा serdev_device *, bool);
+पूर्णांक serdev_device_ग_लिखो_buf(काष्ठा serdev_device *, स्थिर अचिन्हित अक्षर *, माप_प्रकार);
+व्योम serdev_device_रुको_until_sent(काष्ठा serdev_device *, दीर्घ);
+पूर्णांक serdev_device_get_tiocm(काष्ठा serdev_device *);
+पूर्णांक serdev_device_set_tiocm(काष्ठा serdev_device *, पूर्णांक, पूर्णांक);
+व्योम serdev_device_ग_लिखो_wakeup(काष्ठा serdev_device *);
+पूर्णांक serdev_device_ग_लिखो(काष्ठा serdev_device *, स्थिर अचिन्हित अक्षर *, माप_प्रकार, दीर्घ);
+व्योम serdev_device_ग_लिखो_flush(काष्ठा serdev_device *);
+पूर्णांक serdev_device_ग_लिखो_room(काष्ठा serdev_device *);
 
 /*
  * serdev device driver functions
  */
-int __serdev_device_driver_register(struct serdev_device_driver *, struct module *);
-#define serdev_device_driver_register(sdrv) \
-	__serdev_device_driver_register(sdrv, THIS_MODULE)
+पूर्णांक __serdev_device_driver_रेजिस्टर(काष्ठा serdev_device_driver *, काष्ठा module *);
+#घोषणा serdev_device_driver_रेजिस्टर(sdrv) \
+	__serdev_device_driver_रेजिस्टर(sdrv, THIS_MODULE)
 
 /**
- * serdev_device_driver_unregister() - unregister an serdev client driver
- * @sdrv:	the driver to unregister
+ * serdev_device_driver_unरेजिस्टर() - unरेजिस्टर an serdev client driver
+ * @sdrv:	the driver to unरेजिस्टर
  */
-static inline void serdev_device_driver_unregister(struct serdev_device_driver *sdrv)
-{
-	if (sdrv)
-		driver_unregister(&sdrv->driver);
-}
+अटल अंतरभूत व्योम serdev_device_driver_unरेजिस्टर(काष्ठा serdev_device_driver *sdrv)
+अणु
+	अगर (sdrv)
+		driver_unरेजिस्टर(&sdrv->driver);
+पूर्ण
 
-#define module_serdev_device_driver(__serdev_device_driver) \
-	module_driver(__serdev_device_driver, serdev_device_driver_register, \
-			serdev_device_driver_unregister)
+#घोषणा module_serdev_device_driver(__serdev_device_driver) \
+	module_driver(__serdev_device_driver, serdev_device_driver_रेजिस्टर, \
+			serdev_device_driver_unरेजिस्टर)
 
-#else
+#अन्यथा
 
-static inline int serdev_device_open(struct serdev_device *sdev)
-{
-	return -ENODEV;
-}
-static inline void serdev_device_close(struct serdev_device *sdev) {}
-static inline unsigned int serdev_device_set_baudrate(struct serdev_device *sdev, unsigned int baudrate)
-{
-	return 0;
-}
-static inline void serdev_device_set_flow_control(struct serdev_device *sdev, bool enable) {}
-static inline int serdev_device_write_buf(struct serdev_device *serdev,
-					  const unsigned char *buf,
-					  size_t count)
-{
-	return -ENODEV;
-}
-static inline void serdev_device_wait_until_sent(struct serdev_device *sdev, long timeout) {}
-static inline int serdev_device_get_tiocm(struct serdev_device *serdev)
-{
-	return -ENOTSUPP;
-}
-static inline int serdev_device_set_tiocm(struct serdev_device *serdev, int set, int clear)
-{
-	return -ENOTSUPP;
-}
-static inline int serdev_device_write(struct serdev_device *sdev, const unsigned char *buf,
-				      size_t count, unsigned long timeout)
-{
-	return -ENODEV;
-}
-static inline void serdev_device_write_flush(struct serdev_device *sdev) {}
-static inline int serdev_device_write_room(struct serdev_device *sdev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक serdev_device_खोलो(काष्ठा serdev_device *sdev)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल अंतरभूत व्योम serdev_device_बंद(काष्ठा serdev_device *sdev) अणुपूर्ण
+अटल अंतरभूत अचिन्हित पूर्णांक serdev_device_set_baudrate(काष्ठा serdev_device *sdev, अचिन्हित पूर्णांक baudrate)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम serdev_device_set_flow_control(काष्ठा serdev_device *sdev, bool enable) अणुपूर्ण
+अटल अंतरभूत पूर्णांक serdev_device_ग_लिखो_buf(काष्ठा serdev_device *serdev,
+					  स्थिर अचिन्हित अक्षर *buf,
+					  माप_प्रकार count)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल अंतरभूत व्योम serdev_device_रुको_until_sent(काष्ठा serdev_device *sdev, दीर्घ समयout) अणुपूर्ण
+अटल अंतरभूत पूर्णांक serdev_device_get_tiocm(काष्ठा serdev_device *serdev)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
+अटल अंतरभूत पूर्णांक serdev_device_set_tiocm(काष्ठा serdev_device *serdev, पूर्णांक set, पूर्णांक clear)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
+अटल अंतरभूत पूर्णांक serdev_device_ग_लिखो(काष्ठा serdev_device *sdev, स्थिर अचिन्हित अक्षर *buf,
+				      माप_प्रकार count, अचिन्हित दीर्घ समयout)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल अंतरभूत व्योम serdev_device_ग_लिखो_flush(काष्ठा serdev_device *sdev) अणुपूर्ण
+अटल अंतरभूत पूर्णांक serdev_device_ग_लिखो_room(काष्ठा serdev_device *sdev)
+अणु
+	वापस 0;
+पूर्ण
 
-#define serdev_device_driver_register(x)
-#define serdev_device_driver_unregister(x)
+#घोषणा serdev_device_driver_रेजिस्टर(x)
+#घोषणा serdev_device_driver_unरेजिस्टर(x)
 
-#endif /* CONFIG_SERIAL_DEV_BUS */
+#पूर्ण_अगर /* CONFIG_SERIAL_DEV_BUS */
 
-static inline bool serdev_device_get_cts(struct serdev_device *serdev)
-{
-	int status = serdev_device_get_tiocm(serdev);
-	return !!(status & TIOCM_CTS);
-}
+अटल अंतरभूत bool serdev_device_get_cts(काष्ठा serdev_device *serdev)
+अणु
+	पूर्णांक status = serdev_device_get_tiocm(serdev);
+	वापस !!(status & TIOCM_CTS);
+पूर्ण
 
-static inline int serdev_device_wait_for_cts(struct serdev_device *serdev, bool state, int timeout_ms)
-{
-	unsigned long timeout;
-	bool signal;
+अटल अंतरभूत पूर्णांक serdev_device_रुको_क्रम_cts(काष्ठा serdev_device *serdev, bool state, पूर्णांक समयout_ms)
+अणु
+	अचिन्हित दीर्घ समयout;
+	bool संकेत;
 
-	timeout = jiffies + msecs_to_jiffies(timeout_ms);
-	while (time_is_after_jiffies(timeout)) {
-		signal = serdev_device_get_cts(serdev);
-		if (signal == state)
-			return 0;
+	समयout = jअगरfies + msecs_to_jअगरfies(समयout_ms);
+	जबतक (समय_is_after_jअगरfies(समयout)) अणु
+		संकेत = serdev_device_get_cts(serdev);
+		अगर (संकेत == state)
+			वापस 0;
 		usleep_range(1000, 2000);
-	}
+	पूर्ण
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static inline int serdev_device_set_rts(struct serdev_device *serdev, bool enable)
-{
-	if (enable)
-		return serdev_device_set_tiocm(serdev, TIOCM_RTS, 0);
-	else
-		return serdev_device_set_tiocm(serdev, 0, TIOCM_RTS);
-}
+अटल अंतरभूत पूर्णांक serdev_device_set_rts(काष्ठा serdev_device *serdev, bool enable)
+अणु
+	अगर (enable)
+		वापस serdev_device_set_tiocm(serdev, TIOCM_RTS, 0);
+	अन्यथा
+		वापस serdev_device_set_tiocm(serdev, 0, TIOCM_RTS);
+पूर्ण
 
-int serdev_device_set_parity(struct serdev_device *serdev,
-			     enum serdev_parity parity);
+पूर्णांक serdev_device_set_parity(काष्ठा serdev_device *serdev,
+			     क्रमागत serdev_parity parity);
 
 /*
- * serdev hooks into TTY core
+ * serdev hooks पूर्णांकo TTY core
  */
-struct tty_port;
-struct tty_driver;
+काष्ठा tty_port;
+काष्ठा tty_driver;
 
-#ifdef CONFIG_SERIAL_DEV_CTRL_TTYPORT
-struct device *serdev_tty_port_register(struct tty_port *port,
-					struct device *parent,
-					struct tty_driver *drv, int idx);
-int serdev_tty_port_unregister(struct tty_port *port);
-#else
-static inline struct device *serdev_tty_port_register(struct tty_port *port,
-					   struct device *parent,
-					   struct tty_driver *drv, int idx)
-{
-	return ERR_PTR(-ENODEV);
-}
-static inline int serdev_tty_port_unregister(struct tty_port *port)
-{
-	return -ENODEV;
-}
-#endif /* CONFIG_SERIAL_DEV_CTRL_TTYPORT */
+#अगर_घोषित CONFIG_SERIAL_DEV_CTRL_TTYPORT
+काष्ठा device *serdev_tty_port_रेजिस्टर(काष्ठा tty_port *port,
+					काष्ठा device *parent,
+					काष्ठा tty_driver *drv, पूर्णांक idx);
+पूर्णांक serdev_tty_port_unरेजिस्टर(काष्ठा tty_port *port);
+#अन्यथा
+अटल अंतरभूत काष्ठा device *serdev_tty_port_रेजिस्टर(काष्ठा tty_port *port,
+					   काष्ठा device *parent,
+					   काष्ठा tty_driver *drv, पूर्णांक idx)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
+अटल अंतरभूत पूर्णांक serdev_tty_port_unरेजिस्टर(काष्ठा tty_port *port)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SERIAL_DEV_CTRL_TTYPORT */
 
-#endif /*_LINUX_SERDEV_H */
+#पूर्ण_अगर /*_LINUX_SERDEV_H */

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  linux/drivers/pinctrl/pinctrl-lantiq.h
  *  based on linux/drivers/pinctrl/pinctrl-pxa3xx.h
@@ -6,103 +7,103 @@
  *  Copyright (C) 2012 John Crispin <john@phrozen.org>
  */
 
-#ifndef __PINCTRL_LANTIQ_H
-#define __PINCTRL_LANTIQ_H
+#अगर_अघोषित __PINCTRL_LANTIQ_H
+#घोषणा __PINCTRL_LANTIQ_H
 
-#include <linux/clkdev.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/pinctrl/machine.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/pinctrl/machine.h>
 
-#include "core.h"
+#समावेश "core.h"
 
-#define ARRAY_AND_SIZE(x)	(x), ARRAY_SIZE(x)
+#घोषणा ARRAY_AND_SIZE(x)	(x), ARRAY_SIZE(x)
 
-#define LTQ_MAX_MUX		4
-#define MFPR_FUNC_MASK		0x3
+#घोषणा LTQ_MAX_MUX		4
+#घोषणा MFPR_FUNC_MASK		0x3
 
-#define LTQ_PINCONF_PACK(param, arg)		((param) << 16 | (arg))
-#define LTQ_PINCONF_UNPACK_PARAM(conf)		((conf) >> 16)
-#define LTQ_PINCONF_UNPACK_ARG(conf)		((conf) & 0xffff)
+#घोषणा LTQ_PINCONF_PACK(param, arg)		((param) << 16 | (arg))
+#घोषणा LTQ_PINCONF_UNPACK_PARAM(conf)		((conf) >> 16)
+#घोषणा LTQ_PINCONF_UNPACK_ARG(conf)		((conf) & 0xffff)
 
-enum ltq_pinconf_param {
+क्रमागत ltq_pinconf_param अणु
 	LTQ_PINCONF_PARAM_PULL,
 	LTQ_PINCONF_PARAM_OPEN_DRAIN,
 	LTQ_PINCONF_PARAM_DRIVE_CURRENT,
 	LTQ_PINCONF_PARAM_SLEW_RATE,
 	LTQ_PINCONF_PARAM_OUTPUT,
-};
+पूर्ण;
 
-struct ltq_cfg_param {
-	const char *property;
-	enum ltq_pinconf_param param;
-};
+काष्ठा ltq_cfg_param अणु
+	स्थिर अक्षर *property;
+	क्रमागत ltq_pinconf_param param;
+पूर्ण;
 
-struct ltq_mfp_pin {
-	const char *name;
-	const unsigned int pin;
-	const unsigned short func[LTQ_MAX_MUX];
-};
+काष्ठा ltq_mfp_pin अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित पूर्णांक pin;
+	स्थिर अचिन्हित लघु func[LTQ_MAX_MUX];
+पूर्ण;
 
-struct ltq_pin_group {
-	const char *name;
-	const unsigned mux;
-	const unsigned *pins;
-	const unsigned npins;
-};
+काष्ठा ltq_pin_group अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित mux;
+	स्थिर अचिन्हित *pins;
+	स्थिर अचिन्हित npins;
+पूर्ण;
 
-struct ltq_pmx_func {
-	const char *name;
-	const char * const *groups;
-	const unsigned num_groups;
-};
+काष्ठा ltq_pmx_func अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *groups;
+	स्थिर अचिन्हित num_groups;
+पूर्ण;
 
-struct ltq_pinmux_info {
-	struct device *dev;
-	struct pinctrl_dev *pctrl;
+काष्ठा ltq_pinmux_info अणु
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctrl;
 
 	/* we need to manage up to 5 pad controllers */
-	void __iomem *membase[5];
+	व्योम __iomem *membase[5];
 
-	/* the descriptor for the subsystem */
-	struct pinctrl_desc *desc;
+	/* the descriptor क्रम the subप्रणाली */
+	काष्ठा pinctrl_desc *desc;
 
-	/* we expose our pads to the subsystem */
-	struct pinctrl_pin_desc *pads;
+	/* we expose our pads to the subप्रणाली */
+	काष्ठा pinctrl_pin_desc *pads;
 
 	/* the number of pads. this varies between socs */
-	unsigned int num_pads;
+	अचिन्हित पूर्णांक num_pads;
 
-	/* these are our multifunction pins */
-	const struct ltq_mfp_pin *mfp;
-	unsigned int num_mfp;
+	/* these are our multअगरunction pins */
+	स्थिर काष्ठा ltq_mfp_pin *mfp;
+	अचिन्हित पूर्णांक num_mfp;
 
-	/* a number of multifunction pins can be grouped together */
-	const struct ltq_pin_group *grps;
-	unsigned int num_grps;
+	/* a number of multअगरunction pins can be grouped together */
+	स्थिर काष्ठा ltq_pin_group *grps;
+	अचिन्हित पूर्णांक num_grps;
 
 	/* a mapping between function string and id */
-	const struct ltq_pmx_func *funcs;
-	unsigned int num_funcs;
+	स्थिर काष्ठा ltq_pmx_func *funcs;
+	अचिन्हित पूर्णांक num_funcs;
 
-	/* the pinconf options that we are able to read from the DT */
-	const struct ltq_cfg_param *params;
-	unsigned int num_params;
+	/* the pinconf options that we are able to पढ़ो from the DT */
+	स्थिर काष्ठा ltq_cfg_param *params;
+	अचिन्हित पूर्णांक num_params;
 
 	/* the pad controller can have a irq mapping  */
-	const unsigned *exin;
-	unsigned int num_exin;
+	स्थिर अचिन्हित *exin;
+	अचिन्हित पूर्णांक num_exin;
 
-	/* we need 5 clocks max */
-	struct clk *clk[5];
+	/* we need 5 घड़ीs max */
+	काष्ठा clk *clk[5];
 
-	/* soc specific callback used to apply muxing */
-	int (*apply_mux)(struct pinctrl_dev *pctrldev, int pin, int mux);
-};
+	/* soc specअगरic callback used to apply muxing */
+	पूर्णांक (*apply_mux)(काष्ठा pinctrl_dev *pctrldev, पूर्णांक pin, पूर्णांक mux);
+पूर्ण;
 
-enum ltq_pin {
+क्रमागत ltq_pin अणु
 	GPIO0 = 0,
 	GPIO1,
 	GPIO2,
@@ -193,9 +194,9 @@ enum ltq_pin {
 	GPIO86,
 	GPIO87,
 	GPIO88,
-};
+पूर्ण;
 
-extern int ltq_pinctrl_register(struct platform_device *pdev,
-				   struct ltq_pinmux_info *info);
-extern int ltq_pinctrl_unregister(struct platform_device *pdev);
-#endif	/* __PINCTRL_LANTIQ_H */
+बाह्य पूर्णांक ltq_pinctrl_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
+				   काष्ठा ltq_pinmux_info *info);
+बाह्य पूर्णांक ltq_pinctrl_unरेजिस्टर(काष्ठा platक्रमm_device *pdev);
+#पूर्ण_अगर	/* __PINCTRL_LANTIQ_H */

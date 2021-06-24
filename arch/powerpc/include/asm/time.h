@@ -1,111 +1,112 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Common time prototypes and such for all ppc machines.
+ * Common समय prototypes and such क्रम all ppc machines.
  *
  * Written by Cort Dougan (cort@cs.nmt.edu) to merge
- * Paul Mackerras' version and mine for PReP and Pmac.
+ * Paul Mackerras' version and mine क्रम PReP and Pmac.
  */
 
-#ifndef __POWERPC_TIME_H
-#define __POWERPC_TIME_H
+#अगर_अघोषित __POWERPC_TIME_H
+#घोषणा __POWERPC_TIME_H
 
-#ifdef __KERNEL__
-#include <linux/types.h>
-#include <linux/percpu.h>
+#अगर_घोषित __KERNEL__
+#समावेश <linux/types.h>
+#समावेश <linux/percpu.h>
 
-#include <asm/processor.h>
-#include <asm/cpu_has_feature.h>
-#include <asm/vdso/timebase.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/cpu_has_feature.h>
+#समावेश <यंत्र/vdso/समयbase.h>
 
-/* time.c */
-extern unsigned long tb_ticks_per_jiffy;
-extern unsigned long tb_ticks_per_usec;
-extern unsigned long tb_ticks_per_sec;
-extern struct clock_event_device decrementer_clockevent;
+/* समय.c */
+बाह्य अचिन्हित दीर्घ tb_ticks_per_jअगरfy;
+बाह्य अचिन्हित दीर्घ tb_ticks_per_usec;
+बाह्य अचिन्हित दीर्घ tb_ticks_per_sec;
+बाह्य काष्ठा घड़ी_event_device decrementer_घड़ीevent;
 
 
-extern void generic_calibrate_decr(void);
+बाह्य व्योम generic_calibrate_decr(व्योम);
 
-/* Some sane defaults: 125 MHz timebase, 1GHz processor */
-extern unsigned long ppc_proc_freq;
-#define DEFAULT_PROC_FREQ	(DEFAULT_TB_FREQ * 8)
-extern unsigned long ppc_tb_freq;
-#define DEFAULT_TB_FREQ		125000000UL
+/* Some sane शेषs: 125 MHz समयbase, 1GHz processor */
+बाह्य अचिन्हित दीर्घ ppc_proc_freq;
+#घोषणा DEFAULT_PROC_FREQ	(DEFAULT_TB_FREQ * 8)
+बाह्य अचिन्हित दीर्घ ppc_tb_freq;
+#घोषणा DEFAULT_TB_FREQ		125000000UL
 
-extern bool tb_invalid;
+बाह्य bool tb_invalid;
 
-struct div_result {
+काष्ठा भाग_result अणु
 	u64 result_high;
 	u64 result_low;
-};
+पूर्ण;
 
-static inline u64 get_vtb(void)
-{
-	if (cpu_has_feature(CPU_FTR_ARCH_207S))
-		return mfspr(SPRN_VTB);
+अटल अंतरभूत u64 get_vtb(व्योम)
+अणु
+	अगर (cpu_has_feature(CPU_FTR_ARCH_207S))
+		वापस mfspr(SPRN_VTB);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Accessor functions for the decrementer register.
- * The 4xx doesn't even have a decrementer.  I tried to use the
- * generic timer interrupt code, which seems OK, with the 4xx PIT
- * in auto-reload mode.  The problem is PIT stops counting when it
+/* Accessor functions क्रम the decrementer रेजिस्टर.
+ * The 4xx करोesn't even have a decrementer.  I tried to use the
+ * generic समयr पूर्णांकerrupt code, which seems OK, with the 4xx PIT
+ * in स्वतः-reload mode.  The problem is PIT stops counting when it
  * hits zero.  If it would wrap, we could use it just like a decrementer.
  */
-static inline u64 get_dec(void)
-{
-	if (IS_ENABLED(CONFIG_40x))
-		return mfspr(SPRN_PIT);
+अटल अंतरभूत u64 get_dec(व्योम)
+अणु
+	अगर (IS_ENABLED(CONFIG_40x))
+		वापस mfspr(SPRN_PIT);
 
-	return mfspr(SPRN_DEC);
-}
+	वापस mfspr(SPRN_DEC);
+पूर्ण
 
 /*
- * Note: Book E and 4xx processors differ from other PowerPC processors
- * in when the decrementer generates its interrupt: on the 1 to 0
- * transition for Book E/4xx, but on the 0 to -1 transition for others.
+ * Note: Book E and 4xx processors dअगरfer from other PowerPC processors
+ * in when the decrementer generates its पूर्णांकerrupt: on the 1 to 0
+ * transition क्रम Book E/4xx, but on the 0 to -1 transition क्रम others.
  */
-static inline void set_dec(u64 val)
-{
-	if (IS_ENABLED(CONFIG_40x))
+अटल अंतरभूत व्योम set_dec(u64 val)
+अणु
+	अगर (IS_ENABLED(CONFIG_40x))
 		mtspr(SPRN_PIT, (u32)val);
-	else if (IS_ENABLED(CONFIG_BOOKE))
+	अन्यथा अगर (IS_ENABLED(CONFIG_BOOKE))
 		mtspr(SPRN_DEC, val);
-	else
+	अन्यथा
 		mtspr(SPRN_DEC, val - 1);
-}
+पूर्ण
 
-static inline unsigned long tb_ticks_since(unsigned long tstamp)
-{
-	return mftb() - tstamp;
-}
+अटल अंतरभूत अचिन्हित दीर्घ tb_ticks_since(अचिन्हित दीर्घ tstamp)
+अणु
+	वापस mftb() - tstamp;
+पूर्ण
 
-#define mulhwu(x,y) \
-({unsigned z; asm ("mulhwu %0,%1,%2" : "=r" (z) : "r" (x), "r" (y)); z;})
+#घोषणा mulhwu(x,y) \
+(अणुअचिन्हित z; यंत्र ("mulhwu %0,%1,%2" : "=r" (z) : "r" (x), "r" (y)); z;पूर्ण)
 
-#ifdef CONFIG_PPC64
-#define mulhdu(x,y) \
-({unsigned long z; asm ("mulhdu %0,%1,%2" : "=r" (z) : "r" (x), "r" (y)); z;})
-#else
-extern u64 mulhdu(u64, u64);
-#endif
+#अगर_घोषित CONFIG_PPC64
+#घोषणा mulhdu(x,y) \
+(अणुअचिन्हित दीर्घ z; यंत्र ("mulhdu %0,%1,%2" : "=r" (z) : "r" (x), "r" (y)); z;पूर्ण)
+#अन्यथा
+बाह्य u64 mulhdu(u64, u64);
+#पूर्ण_अगर
 
-extern void div128_by_32(u64 dividend_high, u64 dividend_low,
-			 unsigned divisor, struct div_result *dr);
+बाह्य व्योम भाग128_by_32(u64 भागidend_high, u64 भागidend_low,
+			 अचिन्हित भागisor, काष्ठा भाग_result *dr);
 
-extern void secondary_cpu_time_init(void);
-extern void __init time_init(void);
+बाह्य व्योम secondary_cpu_समय_init(व्योम);
+बाह्य व्योम __init समय_init(व्योम);
 
 DECLARE_PER_CPU(u64, decrementers_next_tb);
 
-/* Convert timebase ticks to nanoseconds */
-unsigned long long tb_to_ns(unsigned long long tb_ticks);
+/* Convert समयbase ticks to nanoseconds */
+अचिन्हित दीर्घ दीर्घ tb_to_ns(अचिन्हित दीर्घ दीर्घ tb_ticks);
 
-void timer_broadcast_interrupt(void);
+व्योम समयr_broadcast_पूर्णांकerrupt(व्योम);
 
 /* SPLPAR */
-void accumulate_stolen_time(void);
+व्योम accumulate_stolen_समय(व्योम);
 
-#endif /* __KERNEL__ */
-#endif /* __POWERPC_TIME_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* __POWERPC_TIME_H */

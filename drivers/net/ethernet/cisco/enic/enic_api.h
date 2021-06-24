@@ -1,7 +1,8 @@
+<शैली गुरु>
 /**
  * Copyright 2013 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -16,15 +17,15 @@
  *
  */
 
-#ifndef __ENIC_API_H__
-#define __ENIC_API_H__
+#अगर_अघोषित __ENIC_API_H__
+#घोषणा __ENIC_API_H__
 
-#include <linux/netdevice.h>
+#समावेश <linux/netdevice.h>
 
-#include "vnic_dev.h"
-#include "vnic_devcmd.h"
+#समावेश "vnic_dev.h"
+#समावेश "vnic_devcmd.h"
 
-int enic_api_devcmd_proxy_by_index(struct net_device *netdev, int vf,
-	enum vnic_devcmd_cmd cmd, u64 *a0, u64 *a1, int wait);
+पूर्णांक enic_api_devcmd_proxy_by_index(काष्ठा net_device *netdev, पूर्णांक vf,
+	क्रमागत vnic_devcmd_cmd cmd, u64 *a0, u64 *a1, पूर्णांक रुको);
 
-#endif
+#पूर्ण_अगर

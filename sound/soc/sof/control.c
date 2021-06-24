@@ -1,421 +1,422 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // This file is provided under a dual BSD/GPLv2 license.  When using or
-// redistributing this file, you may do so under either license.
+// redistributing this file, you may करो so under either license.
 //
 // Copyright(c) 2018 Intel Corporation. All rights reserved.
 //
-// Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
+// Author: Liam Girdwood <liam.r.girdwood@linux.पूर्णांकel.com>
 //
 
 /* Mixer Controls */
 
-#include <linux/pm_runtime.h>
-#include <linux/leds.h>
-#include "sof-priv.h"
-#include "sof-audio.h"
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/leds.h>
+#समावेश "sof-priv.h"
+#समावेश "sof-audio.h"
 
-static void update_mute_led(struct snd_sof_control *scontrol,
-			    struct snd_kcontrol *kcontrol,
-			    struct snd_ctl_elem_value *ucontrol)
-{
-	int temp = 0;
-	int mask;
-	int i;
+अटल व्योम update_mute_led(काष्ठा snd_sof_control *scontrol,
+			    काष्ठा snd_kcontrol *kcontrol,
+			    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	पूर्णांक temp = 0;
+	पूर्णांक mask;
+	पूर्णांक i;
 
 	mask = 1U << snd_ctl_get_ioffidx(kcontrol, &ucontrol->id);
 
-	for (i = 0; i < scontrol->num_channels; i++) {
-		if (ucontrol->value.integer.value[i]) {
+	क्रम (i = 0; i < scontrol->num_channels; i++) अणु
+		अगर (ucontrol->value.पूर्णांकeger.value[i]) अणु
 			temp |= mask;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (temp == scontrol->led_ctl.led_value)
-		return;
+	अगर (temp == scontrol->led_ctl.led_value)
+		वापस;
 
 	scontrol->led_ctl.led_value = temp;
 
-#if IS_REACHABLE(CONFIG_LEDS_TRIGGER_AUDIO)
-	if (!scontrol->led_ctl.direction)
+#अगर IS_REACHABLE(CONFIG_LEDS_TRIGGER_AUDIO)
+	अगर (!scontrol->led_ctl.direction)
 		ledtrig_audio_set(LED_AUDIO_MUTE, temp ? LED_OFF : LED_ON);
-	else
+	अन्यथा
 		ledtrig_audio_set(LED_AUDIO_MICMUTE, temp ? LED_OFF : LED_ON);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline u32 mixer_to_ipc(unsigned int value, u32 *volume_map, int size)
-{
-	if (value >= size)
-		return volume_map[size - 1];
+अटल अंतरभूत u32 mixer_to_ipc(अचिन्हित पूर्णांक value, u32 *volume_map, पूर्णांक size)
+अणु
+	अगर (value >= size)
+		वापस volume_map[size - 1];
 
-	return volume_map[value];
-}
+	वापस volume_map[value];
+पूर्ण
 
-static inline u32 ipc_to_mixer(u32 value, u32 *volume_map, int size)
-{
-	int i;
+अटल अंतरभूत u32 ipc_to_mixer(u32 value, u32 *volume_map, पूर्णांक size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < size; i++) {
-		if (volume_map[i] >= value)
-			return i;
-	}
+	क्रम (i = 0; i < size; i++) अणु
+		अगर (volume_map[i] >= value)
+			वापस i;
+	पूर्ण
 
-	return i - 1;
-}
+	वापस i - 1;
+पूर्ण
 
-int snd_sof_volume_get(struct snd_kcontrol *kcontrol,
-		       struct snd_ctl_elem_value *ucontrol)
-{
-	struct soc_mixer_control *sm =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = sm->dobj.private;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	unsigned int i, channels = scontrol->num_channels;
+पूर्णांक snd_sof_volume_get(काष्ठा snd_kcontrol *kcontrol,
+		       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा soc_mixer_control *sm =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = sm->करोbj.निजी;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	अचिन्हित पूर्णांक i, channels = scontrol->num_channels;
 
-	/* read back each channel */
-	for (i = 0; i < channels; i++)
-		ucontrol->value.integer.value[i] =
+	/* पढ़ो back each channel */
+	क्रम (i = 0; i < channels; i++)
+		ucontrol->value.पूर्णांकeger.value[i] =
 			ipc_to_mixer(cdata->chanv[i].value,
 				     scontrol->volume_table, sm->max + 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_sof_volume_put(struct snd_kcontrol *kcontrol,
-		       struct snd_ctl_elem_value *ucontrol)
-{
-	struct soc_mixer_control *sm =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = sm->dobj.private;
-	struct snd_soc_component *scomp = scontrol->scomp;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	unsigned int i, channels = scontrol->num_channels;
+पूर्णांक snd_sof_volume_put(काष्ठा snd_kcontrol *kcontrol,
+		       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा soc_mixer_control *sm =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = sm->करोbj.निजी;
+	काष्ठा snd_soc_component *scomp = scontrol->scomp;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	अचिन्हित पूर्णांक i, channels = scontrol->num_channels;
 	bool change = false;
 	u32 value;
 
 	/* update each channel */
-	for (i = 0; i < channels; i++) {
-		value = mixer_to_ipc(ucontrol->value.integer.value[i],
+	क्रम (i = 0; i < channels; i++) अणु
+		value = mixer_to_ipc(ucontrol->value.पूर्णांकeger.value[i],
 				     scontrol->volume_table, sm->max + 1);
 		change = change || (value != cdata->chanv[i].value);
 		cdata->chanv[i].channel = i;
 		cdata->chanv[i].value = value;
-	}
+	पूर्ण
 
-	/* notify DSP of mixer updates */
-	if (pm_runtime_active(scomp->dev))
+	/* notअगरy DSP of mixer updates */
+	अगर (pm_runसमय_active(scomp->dev))
 		snd_sof_ipc_set_get_comp_data(scontrol,
 					      SOF_IPC_COMP_SET_VALUE,
 					      SOF_CTRL_TYPE_VALUE_CHAN_GET,
 					      SOF_CTRL_CMD_VOLUME,
 					      true);
-	return change;
-}
+	वापस change;
+पूर्ण
 
-int snd_sof_volume_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
-{
-	struct soc_mixer_control *sm = (struct soc_mixer_control *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = sm->dobj.private;
-	unsigned int channels = scontrol->num_channels;
-	int platform_max;
+पूर्णांक snd_sof_volume_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	काष्ठा soc_mixer_control *sm = (काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = sm->करोbj.निजी;
+	अचिन्हित पूर्णांक channels = scontrol->num_channels;
+	पूर्णांक platक्रमm_max;
 
-	if (!sm->platform_max)
-		sm->platform_max = sm->max;
-	platform_max = sm->platform_max;
+	अगर (!sm->platक्रमm_max)
+		sm->platक्रमm_max = sm->max;
+	platक्रमm_max = sm->platक्रमm_max;
 
-	if (platform_max == 1 && !strstr(kcontrol->id.name, " Volume"))
+	अगर (platक्रमm_max == 1 && !म_माला(kcontrol->id.name, " Volume"))
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
-	else
+	अन्यथा
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 
 	uinfo->count = channels;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = platform_max - sm->min;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = platक्रमm_max - sm->min;
+	वापस 0;
+पूर्ण
 
-int snd_sof_switch_get(struct snd_kcontrol *kcontrol,
-		       struct snd_ctl_elem_value *ucontrol)
-{
-	struct soc_mixer_control *sm =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = sm->dobj.private;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	unsigned int i, channels = scontrol->num_channels;
+पूर्णांक snd_sof_चयन_get(काष्ठा snd_kcontrol *kcontrol,
+		       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा soc_mixer_control *sm =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = sm->करोbj.निजी;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	अचिन्हित पूर्णांक i, channels = scontrol->num_channels;
 
-	/* read back each channel */
-	for (i = 0; i < channels; i++)
-		ucontrol->value.integer.value[i] = cdata->chanv[i].value;
+	/* पढ़ो back each channel */
+	क्रम (i = 0; i < channels; i++)
+		ucontrol->value.पूर्णांकeger.value[i] = cdata->chanv[i].value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_sof_switch_put(struct snd_kcontrol *kcontrol,
-		       struct snd_ctl_elem_value *ucontrol)
-{
-	struct soc_mixer_control *sm =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = sm->dobj.private;
-	struct snd_soc_component *scomp = scontrol->scomp;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	unsigned int i, channels = scontrol->num_channels;
+पूर्णांक snd_sof_चयन_put(काष्ठा snd_kcontrol *kcontrol,
+		       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा soc_mixer_control *sm =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = sm->करोbj.निजी;
+	काष्ठा snd_soc_component *scomp = scontrol->scomp;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	अचिन्हित पूर्णांक i, channels = scontrol->num_channels;
 	bool change = false;
 	u32 value;
 
 	/* update each channel */
-	for (i = 0; i < channels; i++) {
-		value = ucontrol->value.integer.value[i];
+	क्रम (i = 0; i < channels; i++) अणु
+		value = ucontrol->value.पूर्णांकeger.value[i];
 		change = change || (value != cdata->chanv[i].value);
 		cdata->chanv[i].channel = i;
 		cdata->chanv[i].value = value;
-	}
+	पूर्ण
 
-	if (scontrol->led_ctl.use_led)
+	अगर (scontrol->led_ctl.use_led)
 		update_mute_led(scontrol, kcontrol, ucontrol);
 
-	/* notify DSP of mixer updates */
-	if (pm_runtime_active(scomp->dev))
+	/* notअगरy DSP of mixer updates */
+	अगर (pm_runसमय_active(scomp->dev))
 		snd_sof_ipc_set_get_comp_data(scontrol,
 					      SOF_IPC_COMP_SET_VALUE,
 					      SOF_CTRL_TYPE_VALUE_CHAN_GET,
 					      SOF_CTRL_CMD_SWITCH,
 					      true);
 
-	return change;
-}
+	वापस change;
+पूर्ण
 
-int snd_sof_enum_get(struct snd_kcontrol *kcontrol,
-		     struct snd_ctl_elem_value *ucontrol)
-{
-	struct soc_enum *se =
-		(struct soc_enum *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = se->dobj.private;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	unsigned int i, channels = scontrol->num_channels;
+पूर्णांक snd_sof_क्रमागत_get(काष्ठा snd_kcontrol *kcontrol,
+		     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा soc_क्रमागत *se =
+		(काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = se->करोbj.निजी;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	अचिन्हित पूर्णांक i, channels = scontrol->num_channels;
 
-	/* read back each channel */
-	for (i = 0; i < channels; i++)
-		ucontrol->value.enumerated.item[i] = cdata->chanv[i].value;
+	/* पढ़ो back each channel */
+	क्रम (i = 0; i < channels; i++)
+		ucontrol->value.क्रमागतerated.item[i] = cdata->chanv[i].value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_sof_enum_put(struct snd_kcontrol *kcontrol,
-		     struct snd_ctl_elem_value *ucontrol)
-{
-	struct soc_enum *se =
-		(struct soc_enum *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = se->dobj.private;
-	struct snd_soc_component *scomp = scontrol->scomp;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	unsigned int i, channels = scontrol->num_channels;
+पूर्णांक snd_sof_क्रमागत_put(काष्ठा snd_kcontrol *kcontrol,
+		     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा soc_क्रमागत *se =
+		(काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = se->करोbj.निजी;
+	काष्ठा snd_soc_component *scomp = scontrol->scomp;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	अचिन्हित पूर्णांक i, channels = scontrol->num_channels;
 	bool change = false;
 	u32 value;
 
 	/* update each channel */
-	for (i = 0; i < channels; i++) {
-		value = ucontrol->value.enumerated.item[i];
+	क्रम (i = 0; i < channels; i++) अणु
+		value = ucontrol->value.क्रमागतerated.item[i];
 		change = change || (value != cdata->chanv[i].value);
 		cdata->chanv[i].channel = i;
 		cdata->chanv[i].value = value;
-	}
+	पूर्ण
 
-	/* notify DSP of enum updates */
-	if (pm_runtime_active(scomp->dev))
+	/* notअगरy DSP of क्रमागत updates */
+	अगर (pm_runसमय_active(scomp->dev))
 		snd_sof_ipc_set_get_comp_data(scontrol,
 					      SOF_IPC_COMP_SET_VALUE,
 					      SOF_CTRL_TYPE_VALUE_CHAN_GET,
 					      SOF_CTRL_CMD_ENUM,
 					      true);
 
-	return change;
-}
+	वापस change;
+पूर्ण
 
-int snd_sof_bytes_get(struct snd_kcontrol *kcontrol,
-		      struct snd_ctl_elem_value *ucontrol)
-{
-	struct soc_bytes_ext *be =
-		(struct soc_bytes_ext *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = be->dobj.private;
-	struct snd_soc_component *scomp = scontrol->scomp;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	struct sof_abi_hdr *data = cdata->data;
-	size_t size;
+पूर्णांक snd_sof_bytes_get(काष्ठा snd_kcontrol *kcontrol,
+		      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा soc_bytes_ext *be =
+		(काष्ठा soc_bytes_ext *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = be->करोbj.निजी;
+	काष्ठा snd_soc_component *scomp = scontrol->scomp;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	काष्ठा sof_abi_hdr *data = cdata->data;
+	माप_प्रकार size;
 
-	if (be->max > sizeof(ucontrol->value.bytes.data)) {
+	अगर (be->max > माप(ucontrol->value.bytes.data)) अणु
 		dev_err_ratelimited(scomp->dev,
 				    "error: data max %d exceeds ucontrol data array size\n",
 				    be->max);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* be->max has been verified to be >= sizeof(struct sof_abi_hdr) */
-	if (data->size > be->max - sizeof(*data)) {
+	/* be->max has been verअगरied to be >= माप(काष्ठा sof_abi_hdr) */
+	अगर (data->size > be->max - माप(*data)) अणु
 		dev_err_ratelimited(scomp->dev,
 				    "error: %u bytes of control data is invalid, max is %zu\n",
-				    data->size, be->max - sizeof(*data));
-		return -EINVAL;
-	}
+				    data->size, be->max - माप(*data));
+		वापस -EINVAL;
+	पूर्ण
 
-	size = data->size + sizeof(*data);
+	size = data->size + माप(*data);
 
 	/* copy back to kcontrol */
-	memcpy(ucontrol->value.bytes.data, data, size);
+	स_नकल(ucontrol->value.bytes.data, data, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_sof_bytes_put(struct snd_kcontrol *kcontrol,
-		      struct snd_ctl_elem_value *ucontrol)
-{
-	struct soc_bytes_ext *be =
-		(struct soc_bytes_ext *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = be->dobj.private;
-	struct snd_soc_component *scomp = scontrol->scomp;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	struct sof_abi_hdr *data = cdata->data;
-	size_t size;
+पूर्णांक snd_sof_bytes_put(काष्ठा snd_kcontrol *kcontrol,
+		      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा soc_bytes_ext *be =
+		(काष्ठा soc_bytes_ext *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = be->करोbj.निजी;
+	काष्ठा snd_soc_component *scomp = scontrol->scomp;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	काष्ठा sof_abi_hdr *data = cdata->data;
+	माप_प्रकार size;
 
-	if (be->max > sizeof(ucontrol->value.bytes.data)) {
+	अगर (be->max > माप(ucontrol->value.bytes.data)) अणु
 		dev_err_ratelimited(scomp->dev,
 				    "error: data max %d exceeds ucontrol data array size\n",
 				    be->max);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* be->max has been verified to be >= sizeof(struct sof_abi_hdr) */
-	if (data->size > be->max - sizeof(*data)) {
+	/* be->max has been verअगरied to be >= माप(काष्ठा sof_abi_hdr) */
+	अगर (data->size > be->max - माप(*data)) अणु
 		dev_err_ratelimited(scomp->dev,
 				    "error: data size too big %u bytes max is %zu\n",
-				    data->size, be->max - sizeof(*data));
-		return -EINVAL;
-	}
+				    data->size, be->max - माप(*data));
+		वापस -EINVAL;
+	पूर्ण
 
-	size = data->size + sizeof(*data);
+	size = data->size + माप(*data);
 
 	/* copy from kcontrol */
-	memcpy(data, ucontrol->value.bytes.data, size);
+	स_नकल(data, ucontrol->value.bytes.data, size);
 
-	/* notify DSP of byte control updates */
-	if (pm_runtime_active(scomp->dev))
+	/* notअगरy DSP of byte control updates */
+	अगर (pm_runसमय_active(scomp->dev))
 		snd_sof_ipc_set_get_comp_data(scontrol,
 					      SOF_IPC_COMP_SET_DATA,
 					      SOF_CTRL_TYPE_DATA_SET,
 					      scontrol->cmd,
 					      true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_sof_bytes_ext_put(struct snd_kcontrol *kcontrol,
-			  const unsigned int __user *binary_data,
-			  unsigned int size)
-{
-	struct soc_bytes_ext *be =
-		(struct soc_bytes_ext *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = be->dobj.private;
-	struct snd_soc_component *scomp = scontrol->scomp;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	struct snd_ctl_tlv header;
-	const struct snd_ctl_tlv __user *tlvd =
-		(const struct snd_ctl_tlv __user *)binary_data;
+पूर्णांक snd_sof_bytes_ext_put(काष्ठा snd_kcontrol *kcontrol,
+			  स्थिर अचिन्हित पूर्णांक __user *binary_data,
+			  अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा soc_bytes_ext *be =
+		(काष्ठा soc_bytes_ext *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = be->करोbj.निजी;
+	काष्ठा snd_soc_component *scomp = scontrol->scomp;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	काष्ठा snd_ctl_tlv header;
+	स्थिर काष्ठा snd_ctl_tlv __user *tlvd =
+		(स्थिर काष्ठा snd_ctl_tlv __user *)binary_data;
 
 	/* make sure we have at least a header */
-	if (size < sizeof(struct snd_ctl_tlv))
-		return -EINVAL;
+	अगर (size < माप(काष्ठा snd_ctl_tlv))
+		वापस -EINVAL;
 
 	/*
 	 * The beginning of bytes data contains a header from where
 	 * the length (as bytes) is needed to know the correct copy
 	 * length of data from tlvd->tlv.
 	 */
-	if (copy_from_user(&header, tlvd, sizeof(struct snd_ctl_tlv)))
-		return -EFAULT;
+	अगर (copy_from_user(&header, tlvd, माप(काष्ठा snd_ctl_tlv)))
+		वापस -EFAULT;
 
 	/* make sure TLV info is consistent */
-	if (header.length + sizeof(struct snd_ctl_tlv) > size) {
+	अगर (header.length + माप(काष्ठा snd_ctl_tlv) > size) अणु
 		dev_err_ratelimited(scomp->dev, "error: inconsistent TLV, data %d + header %zu > %d\n",
-				    header.length, sizeof(struct snd_ctl_tlv), size);
-		return -EINVAL;
-	}
+				    header.length, माप(काष्ठा snd_ctl_tlv), size);
+		वापस -EINVAL;
+	पूर्ण
 
 	/* be->max is coming from topology */
-	if (header.length > be->max) {
+	अगर (header.length > be->max) अणु
 		dev_err_ratelimited(scomp->dev, "error: Bytes data size %d exceeds max %d.\n",
 				    header.length, be->max);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Check that header id matches the command */
-	if (header.numid != scontrol->cmd) {
+	अगर (header.numid != scontrol->cmd) अणु
 		dev_err_ratelimited(scomp->dev,
 				    "error: incorrect numid %d\n",
 				    header.numid);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (copy_from_user(cdata->data, tlvd->tlv, header.length))
-		return -EFAULT;
+	अगर (copy_from_user(cdata->data, tlvd->tlv, header.length))
+		वापस -EFAULT;
 
-	if (cdata->data->magic != SOF_ABI_MAGIC) {
+	अगर (cdata->data->magic != SOF_ABI_MAGIC) अणु
 		dev_err_ratelimited(scomp->dev,
 				    "error: Wrong ABI magic 0x%08x.\n",
 				    cdata->data->magic);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION, cdata->data->abi)) {
+	अगर (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION, cdata->data->abi)) अणु
 		dev_err_ratelimited(scomp->dev, "error: Incompatible ABI version 0x%08x.\n",
 				    cdata->data->abi);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* be->max has been verified to be >= sizeof(struct sof_abi_hdr) */
-	if (cdata->data->size > be->max - sizeof(struct sof_abi_hdr)) {
+	/* be->max has been verअगरied to be >= माप(काष्ठा sof_abi_hdr) */
+	अगर (cdata->data->size > be->max - माप(काष्ठा sof_abi_hdr)) अणु
 		dev_err_ratelimited(scomp->dev, "error: Mismatch in ABI data size (truncated?).\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* notify DSP of byte control updates */
-	if (pm_runtime_active(scomp->dev))
+	/* notअगरy DSP of byte control updates */
+	अगर (pm_runसमय_active(scomp->dev))
 		snd_sof_ipc_set_get_comp_data(scontrol,
 					      SOF_IPC_COMP_SET_DATA,
 					      SOF_CTRL_TYPE_DATA_SET,
 					      scontrol->cmd,
 					      true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_sof_bytes_ext_volatile_get(struct snd_kcontrol *kcontrol, unsigned int __user *binary_data,
-				   unsigned int size)
-{
-	struct soc_bytes_ext *be = (struct soc_bytes_ext *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = be->dobj.private;
-	struct snd_soc_component *scomp = scontrol->scomp;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	struct snd_ctl_tlv header;
-	struct snd_ctl_tlv __user *tlvd = (struct snd_ctl_tlv __user *)binary_data;
-	size_t data_size;
-	int ret;
-	int err;
+पूर्णांक snd_sof_bytes_ext_अस्थिर_get(काष्ठा snd_kcontrol *kcontrol, अचिन्हित पूर्णांक __user *binary_data,
+				   अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा soc_bytes_ext *be = (काष्ठा soc_bytes_ext *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = be->करोbj.निजी;
+	काष्ठा snd_soc_component *scomp = scontrol->scomp;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	काष्ठा snd_ctl_tlv header;
+	काष्ठा snd_ctl_tlv __user *tlvd = (काष्ठा snd_ctl_tlv __user *)binary_data;
+	माप_प्रकार data_size;
+	पूर्णांक ret;
+	पूर्णांक err;
 
 	/*
 	 * Decrement the limit by ext bytes header size to
 	 * ensure the user space buffer is not exceeded.
 	 */
-	if (size < sizeof(struct snd_ctl_tlv))
-		return -ENOSPC;
-	size -= sizeof(struct snd_ctl_tlv);
+	अगर (size < माप(काष्ठा snd_ctl_tlv))
+		वापस -ENOSPC;
+	size -= माप(काष्ठा snd_ctl_tlv);
 
-	ret = pm_runtime_get_sync(scomp->dev);
-	if (ret < 0 && ret != -EACCES) {
+	ret = pm_runसमय_get_sync(scomp->dev);
+	अगर (ret < 0 && ret != -EACCES) अणु
 		dev_err_ratelimited(scomp->dev, "error: bytes_ext get failed to resume %d\n", ret);
-		pm_runtime_put_noidle(scomp->dev);
-		return ret;
-	}
+		pm_runसमय_put_noidle(scomp->dev);
+		वापस ret;
+	पूर्ण
 
 	/* set the ABI header values */
 	cdata->data->magic = SOF_ABI_MAGIC;
@@ -423,91 +424,91 @@ int snd_sof_bytes_ext_volatile_get(struct snd_kcontrol *kcontrol, unsigned int _
 	/* get all the component data from DSP */
 	ret = snd_sof_ipc_set_get_comp_data(scontrol, SOF_IPC_COMP_GET_DATA, SOF_CTRL_TYPE_DATA_GET,
 					    scontrol->cmd, false);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	/* check data size doesn't exceed max coming from topology */
-	if (cdata->data->size > be->max - sizeof(struct sof_abi_hdr)) {
+	/* check data size करोesn't exceed max coming from topology */
+	अगर (cdata->data->size > be->max - माप(काष्ठा sof_abi_hdr)) अणु
 		dev_err_ratelimited(scomp->dev, "error: user data size %d exceeds max size %zu.\n",
 				    cdata->data->size,
-				    be->max - sizeof(struct sof_abi_hdr));
+				    be->max - माप(काष्ठा sof_abi_hdr));
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	data_size = cdata->data->size + sizeof(struct sof_abi_hdr);
+	data_size = cdata->data->size + माप(काष्ठा sof_abi_hdr);
 
-	/* make sure we don't exceed size provided by user space for data */
-	if (data_size > size) {
+	/* make sure we करोn't exceed size provided by user space क्रम data */
+	अगर (data_size > size) अणु
 		ret = -ENOSPC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	header.numid = scontrol->cmd;
 	header.length = data_size;
-	if (copy_to_user(tlvd, &header, sizeof(struct snd_ctl_tlv))) {
+	अगर (copy_to_user(tlvd, &header, माप(काष्ठा snd_ctl_tlv))) अणु
 		ret = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (copy_to_user(tlvd->tlv, cdata->data, data_size))
+	अगर (copy_to_user(tlvd->tlv, cdata->data, data_size))
 		ret = -EFAULT;
 out:
-	pm_runtime_mark_last_busy(scomp->dev);
-	err = pm_runtime_put_autosuspend(scomp->dev);
-	if (err < 0)
+	pm_runसमय_mark_last_busy(scomp->dev);
+	err = pm_runसमय_put_स्वतःsuspend(scomp->dev);
+	अगर (err < 0)
 		dev_err_ratelimited(scomp->dev, "error: bytes_ext get failed to idle %d\n", err);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int snd_sof_bytes_ext_get(struct snd_kcontrol *kcontrol,
-			  unsigned int __user *binary_data,
-			  unsigned int size)
-{
-	struct soc_bytes_ext *be =
-		(struct soc_bytes_ext *)kcontrol->private_value;
-	struct snd_sof_control *scontrol = be->dobj.private;
-	struct snd_soc_component *scomp = scontrol->scomp;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	struct snd_ctl_tlv header;
-	struct snd_ctl_tlv __user *tlvd =
-		(struct snd_ctl_tlv __user *)binary_data;
-	size_t data_size;
+पूर्णांक snd_sof_bytes_ext_get(काष्ठा snd_kcontrol *kcontrol,
+			  अचिन्हित पूर्णांक __user *binary_data,
+			  अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा soc_bytes_ext *be =
+		(काष्ठा soc_bytes_ext *)kcontrol->निजी_value;
+	काष्ठा snd_sof_control *scontrol = be->करोbj.निजी;
+	काष्ठा snd_soc_component *scomp = scontrol->scomp;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	काष्ठा snd_ctl_tlv header;
+	काष्ठा snd_ctl_tlv __user *tlvd =
+		(काष्ठा snd_ctl_tlv __user *)binary_data;
+	माप_प्रकार data_size;
 
 	/*
 	 * Decrement the limit by ext bytes header size to
 	 * ensure the user space buffer is not exceeded.
 	 */
-	if (size < sizeof(struct snd_ctl_tlv))
-		return -ENOSPC;
-	size -= sizeof(struct snd_ctl_tlv);
+	अगर (size < माप(काष्ठा snd_ctl_tlv))
+		वापस -ENOSPC;
+	size -= माप(काष्ठा snd_ctl_tlv);
 
 	/* set the ABI header values */
 	cdata->data->magic = SOF_ABI_MAGIC;
 	cdata->data->abi = SOF_ABI_VERSION;
 
-	/* check data size doesn't exceed max coming from topology */
-	if (cdata->data->size > be->max - sizeof(struct sof_abi_hdr)) {
+	/* check data size करोesn't exceed max coming from topology */
+	अगर (cdata->data->size > be->max - माप(काष्ठा sof_abi_hdr)) अणु
 		dev_err_ratelimited(scomp->dev, "error: user data size %d exceeds max size %zu.\n",
 				    cdata->data->size,
-				    be->max - sizeof(struct sof_abi_hdr));
-		return -EINVAL;
-	}
+				    be->max - माप(काष्ठा sof_abi_hdr));
+		वापस -EINVAL;
+	पूर्ण
 
-	data_size = cdata->data->size + sizeof(struct sof_abi_hdr);
+	data_size = cdata->data->size + माप(काष्ठा sof_abi_hdr);
 
-	/* make sure we don't exceed size provided by user space for data */
-	if (data_size > size)
-		return -ENOSPC;
+	/* make sure we करोn't exceed size provided by user space क्रम data */
+	अगर (data_size > size)
+		वापस -ENOSPC;
 
 	header.numid = scontrol->cmd;
 	header.length = data_size;
-	if (copy_to_user(tlvd, &header, sizeof(struct snd_ctl_tlv)))
-		return -EFAULT;
+	अगर (copy_to_user(tlvd, &header, माप(काष्ठा snd_ctl_tlv)))
+		वापस -EFAULT;
 
-	if (copy_to_user(tlvd->tlv, cdata->data, data_size))
-		return -EFAULT;
+	अगर (copy_to_user(tlvd->tlv, cdata->data, data_size))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

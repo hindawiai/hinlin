@@ -1,54 +1,55 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SHcompact irqflags support
  *
  * Copyright (C) 2006 - 2009 Paul Mundt
  */
-#include <linux/irqflags.h>
-#include <linux/module.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/module.h>
 
-void notrace arch_local_irq_restore(unsigned long flags)
-{
-	unsigned long __dummy0, __dummy1;
+व्योम notrace arch_local_irq_restore(अचिन्हित दीर्घ flags)
+अणु
+	अचिन्हित दीर्घ __dummy0, __dummy1;
 
-	if (flags == ARCH_IRQ_DISABLED) {
-		__asm__ __volatile__ (
+	अगर (flags == ARCH_IRQ_DISABLED) अणु
+		__यंत्र__ __अस्थिर__ (
 			"stc	sr, %0\n\t"
 			"or	#0xf0, %0\n\t"
 			"ldc	%0, sr\n\t"
 			: "=&z" (__dummy0)
-			: /* no inputs */
+			: /* no inमाला_दो */
 			: "memory"
 		);
-	} else {
-		__asm__ __volatile__ (
+	पूर्ण अन्यथा अणु
+		__यंत्र__ __अस्थिर__ (
 			"stc	sr, %0\n\t"
 			"and	%1, %0\n\t"
-#ifdef CONFIG_CPU_HAS_SR_RB
+#अगर_घोषित CONFIG_CPU_HAS_SR_RB
 			"stc	r6_bank, %1\n\t"
 			"or	%1, %0\n\t"
-#endif
+#पूर्ण_अगर
 			"ldc	%0, sr\n\t"
 			: "=&r" (__dummy0), "=r" (__dummy1)
 			: "1" (~ARCH_IRQ_DISABLED)
 			: "memory"
 		);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(arch_local_irq_restore);
 
-unsigned long notrace arch_local_save_flags(void)
-{
-	unsigned long flags;
+अचिन्हित दीर्घ notrace arch_local_save_flags(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"stc	sr, %0\n\t"
 		"and	#0xf0, %0\n\t"
 		: "=&z" (flags)
-		: /* no inputs */
+		: /* no inमाला_दो */
 		: "memory"
 	);
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 EXPORT_SYMBOL(arch_local_save_flags);

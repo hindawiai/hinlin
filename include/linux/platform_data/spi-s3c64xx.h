@@ -1,68 +1,69 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
 /*
  * Copyright (C) 2009 Samsung Electronics Ltd.
  *	Jaswinder Singh <jassi.brar@samsung.com>
  */
 
-#ifndef __SPI_S3C64XX_H
-#define __SPI_S3C64XX_H
+#अगर_अघोषित __SPI_S3C64XX_H
+#घोषणा __SPI_S3C64XX_H
 
-#include <linux/dmaengine.h>
+#समावेश <linux/dmaengine.h>
 
-struct platform_device;
+काष्ठा platक्रमm_device;
 
 /**
- * struct s3c64xx_spi_csinfo - ChipSelect description
- * @fb_delay: Slave specific feedback delay.
- *            Refer to FB_CLK_SEL register definition in SPI chapter.
+ * काष्ठा s3c64xx_spi_csinfo - ChipSelect description
+ * @fb_delay: Slave specअगरic feedback delay.
+ *            Refer to FB_CLK_SEL रेजिस्टर definition in SPI chapter.
  * @line: Custom 'identity' of the CS line.
  *
- * This is per SPI-Slave Chipselect information.
+ * This is per SPI-Slave Chipselect inक्रमmation.
  * Allocate and initialize one in machine init code and make the
- * spi_board_info.controller_data point to it.
+ * spi_board_info.controller_data poपूर्णांक to it.
  */
-struct s3c64xx_spi_csinfo {
+काष्ठा s3c64xx_spi_csinfo अणु
 	u8 fb_delay;
-	unsigned line;
-};
+	अचिन्हित line;
+पूर्ण;
 
 /**
- * struct s3c64xx_spi_info - SPI Controller defining structure
- * @src_clk_nr: Clock source index for the CLK_CFG[SPI_CLKSEL] field.
+ * काष्ठा s3c64xx_spi_info - SPI Controller defining काष्ठाure
+ * @src_clk_nr: Clock source index क्रम the CLK_CFG[SPI_CLKSEL] field.
  * @num_cs: Number of CS this controller emulates.
- * @cfg_gpio: Configure pins for this SPI controller.
+ * @cfg_gpio: Configure pins क्रम this SPI controller.
  */
-struct s3c64xx_spi_info {
-	int src_clk_nr;
-	int num_cs;
+काष्ठा s3c64xx_spi_info अणु
+	पूर्णांक src_clk_nr;
+	पूर्णांक num_cs;
 	bool no_cs;
-	int (*cfg_gpio)(void);
-};
+	पूर्णांक (*cfg_gpio)(व्योम);
+पूर्ण;
 
 /**
  * s3c64xx_spi_set_platdata - SPI Controller configure callback by the board
  *				initialization code.
- * @cfg_gpio: Pointer to gpio setup function.
- * @src_clk_nr: Clock the SPI controller is to use to generate SPI clocks.
+ * @cfg_gpio: Poपूर्णांकer to gpio setup function.
+ * @src_clk_nr: Clock the SPI controller is to use to generate SPI घड़ीs.
  * @num_cs: Number of elements in the 'cs' array.
  *
- * Call this from machine init code for each SPI Controller that
+ * Call this from machine init code क्रम each SPI Controller that
  * has some chips attached to it.
  */
-extern void s3c64xx_spi0_set_platdata(int (*cfg_gpio)(void), int src_clk_nr,
-						int num_cs);
-extern void s3c64xx_spi1_set_platdata(int (*cfg_gpio)(void), int src_clk_nr,
-						int num_cs);
-extern void s3c64xx_spi2_set_platdata(int (*cfg_gpio)(void), int src_clk_nr,
-						int num_cs);
+बाह्य व्योम s3c64xx_spi0_set_platdata(पूर्णांक (*cfg_gpio)(व्योम), पूर्णांक src_clk_nr,
+						पूर्णांक num_cs);
+बाह्य व्योम s3c64xx_spi1_set_platdata(पूर्णांक (*cfg_gpio)(व्योम), पूर्णांक src_clk_nr,
+						पूर्णांक num_cs);
+बाह्य व्योम s3c64xx_spi2_set_platdata(पूर्णांक (*cfg_gpio)(व्योम), पूर्णांक src_clk_nr,
+						पूर्णांक num_cs);
 
 /* defined by architecture to configure gpio */
-extern int s3c64xx_spi0_cfg_gpio(void);
-extern int s3c64xx_spi1_cfg_gpio(void);
-extern int s3c64xx_spi2_cfg_gpio(void);
+बाह्य पूर्णांक s3c64xx_spi0_cfg_gpio(व्योम);
+बाह्य पूर्णांक s3c64xx_spi1_cfg_gpio(व्योम);
+बाह्य पूर्णांक s3c64xx_spi2_cfg_gpio(व्योम);
 
-extern struct s3c64xx_spi_info s3c64xx_spi0_pdata;
-extern struct s3c64xx_spi_info s3c64xx_spi1_pdata;
-extern struct s3c64xx_spi_info s3c64xx_spi2_pdata;
-#endif /*__SPI_S3C64XX_H */
+बाह्य काष्ठा s3c64xx_spi_info s3c64xx_spi0_pdata;
+बाह्य काष्ठा s3c64xx_spi_info s3c64xx_spi1_pdata;
+बाह्य काष्ठा s3c64xx_spi_info s3c64xx_spi2_pdata;
+#पूर्ण_अगर /*__SPI_S3C64XX_H */

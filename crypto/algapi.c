@@ -1,205 +1,206 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Cryptographic API for algorithms (i.e., low-level API).
+ * Cryptographic API क्रम algorithms (i.e., low-level API).
  *
- * Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2006 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#include <crypto/algapi.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/fips.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/rtnetlink.h>
-#include <linux/slab.h>
-#include <linux/string.h>
+#समावेश <crypto/algapi.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fips.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static LIST_HEAD(crypto_template_list);
+अटल LIST_HEAD(crypto_ढाँचा_list);
 
-static inline void crypto_check_module_sig(struct module *mod)
-{
-	if (fips_enabled && mod && !module_sig_ok(mod))
+अटल अंतरभूत व्योम crypto_check_module_sig(काष्ठा module *mod)
+अणु
+	अगर (fips_enabled && mod && !module_sig_ok(mod))
 		panic("Module %s signature verification failed in FIPS mode\n",
 		      module_name(mod));
-}
+पूर्ण
 
-static int crypto_check_alg(struct crypto_alg *alg)
-{
+अटल पूर्णांक crypto_check_alg(काष्ठा crypto_alg *alg)
+अणु
 	crypto_check_module_sig(alg->cra_module);
 
-	if (!alg->cra_name[0] || !alg->cra_driver_name[0])
-		return -EINVAL;
+	अगर (!alg->cra_name[0] || !alg->cra_driver_name[0])
+		वापस -EINVAL;
 
-	if (alg->cra_alignmask & (alg->cra_alignmask + 1))
-		return -EINVAL;
+	अगर (alg->cra_alignmask & (alg->cra_alignmask + 1))
+		वापस -EINVAL;
 
-	/* General maximums for all algs. */
-	if (alg->cra_alignmask > MAX_ALGAPI_ALIGNMASK)
-		return -EINVAL;
+	/* General maximums क्रम all algs. */
+	अगर (alg->cra_alignmask > MAX_ALGAPI_ALIGNMASK)
+		वापस -EINVAL;
 
-	if (alg->cra_blocksize > MAX_ALGAPI_BLOCKSIZE)
-		return -EINVAL;
+	अगर (alg->cra_blocksize > MAX_ALGAPI_BLOCKSIZE)
+		वापस -EINVAL;
 
-	/* Lower maximums for specific alg types. */
-	if (!alg->cra_type && (alg->cra_flags & CRYPTO_ALG_TYPE_MASK) ==
-			       CRYPTO_ALG_TYPE_CIPHER) {
-		if (alg->cra_alignmask > MAX_CIPHER_ALIGNMASK)
-			return -EINVAL;
+	/* Lower maximums क्रम specअगरic alg types. */
+	अगर (!alg->cra_type && (alg->cra_flags & CRYPTO_ALG_TYPE_MASK) ==
+			       CRYPTO_ALG_TYPE_CIPHER) अणु
+		अगर (alg->cra_alignmask > MAX_CIPHER_ALIGNMASK)
+			वापस -EINVAL;
 
-		if (alg->cra_blocksize > MAX_CIPHER_BLOCKSIZE)
-			return -EINVAL;
-	}
+		अगर (alg->cra_blocksize > MAX_CIPHER_BLOCKSIZE)
+			वापस -EINVAL;
+	पूर्ण
 
-	if (alg->cra_priority < 0)
-		return -EINVAL;
+	अगर (alg->cra_priority < 0)
+		वापस -EINVAL;
 
 	refcount_set(&alg->cra_refcnt, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void crypto_free_instance(struct crypto_instance *inst)
-{
-	inst->alg.cra_type->free(inst);
-}
+अटल व्योम crypto_मुक्त_instance(काष्ठा crypto_instance *inst)
+अणु
+	inst->alg.cra_type->मुक्त(inst);
+पूर्ण
 
-static void crypto_destroy_instance(struct crypto_alg *alg)
-{
-	struct crypto_instance *inst = (void *)alg;
-	struct crypto_template *tmpl = inst->tmpl;
+अटल व्योम crypto_destroy_instance(काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा crypto_instance *inst = (व्योम *)alg;
+	काष्ठा crypto_ढाँचा *पंचांगpl = inst->पंचांगpl;
 
-	crypto_free_instance(inst);
-	crypto_tmpl_put(tmpl);
-}
+	crypto_मुक्त_instance(inst);
+	crypto_पंचांगpl_put(पंचांगpl);
+पूर्ण
 
 /*
  * This function adds a spawn to the list secondary_spawns which
- * will be used at the end of crypto_remove_spawns to unregister
+ * will be used at the end of crypto_हटाओ_spawns to unरेजिस्टर
  * instances, unless the spawn happens to be one that is depended
- * on by the new algorithm (nalg in crypto_remove_spawns).
+ * on by the new algorithm (nalg in crypto_हटाओ_spawns).
  *
- * This function is also responsible for resurrecting any algorithms
+ * This function is also responsible क्रम resurrecting any algorithms
  * in the dependency chain of nalg by unsetting n->dead.
  */
-static struct list_head *crypto_more_spawns(struct crypto_alg *alg,
-					    struct list_head *stack,
-					    struct list_head *top,
-					    struct list_head *secondary_spawns)
-{
-	struct crypto_spawn *spawn, *n;
+अटल काष्ठा list_head *crypto_more_spawns(काष्ठा crypto_alg *alg,
+					    काष्ठा list_head *stack,
+					    काष्ठा list_head *top,
+					    काष्ठा list_head *secondary_spawns)
+अणु
+	काष्ठा crypto_spawn *spawn, *n;
 
-	spawn = list_first_entry_or_null(stack, struct crypto_spawn, list);
-	if (!spawn)
-		return NULL;
+	spawn = list_first_entry_or_null(stack, काष्ठा crypto_spawn, list);
+	अगर (!spawn)
+		वापस शून्य;
 
 	n = list_prev_entry(spawn, list);
 	list_move(&spawn->list, secondary_spawns);
 
-	if (list_is_last(&n->list, stack))
-		return top;
+	अगर (list_is_last(&n->list, stack))
+		वापस top;
 
 	n = list_next_entry(n, list);
-	if (!spawn->dead)
+	अगर (!spawn->dead)
 		n->dead = false;
 
-	return &n->inst->alg.cra_users;
-}
+	वापस &n->inst->alg.cra_users;
+पूर्ण
 
-static void crypto_remove_instance(struct crypto_instance *inst,
-				   struct list_head *list)
-{
-	struct crypto_template *tmpl = inst->tmpl;
+अटल व्योम crypto_हटाओ_instance(काष्ठा crypto_instance *inst,
+				   काष्ठा list_head *list)
+अणु
+	काष्ठा crypto_ढाँचा *पंचांगpl = inst->पंचांगpl;
 
-	if (crypto_is_dead(&inst->alg))
-		return;
+	अगर (crypto_is_dead(&inst->alg))
+		वापस;
 
 	inst->alg.cra_flags |= CRYPTO_ALG_DEAD;
 
-	if (!tmpl || !crypto_tmpl_get(tmpl))
-		return;
+	अगर (!पंचांगpl || !crypto_पंचांगpl_get(पंचांगpl))
+		वापस;
 
 	list_move(&inst->alg.cra_list, list);
 	hlist_del(&inst->list);
 	inst->alg.cra_destroy = crypto_destroy_instance;
 
 	BUG_ON(!list_empty(&inst->alg.cra_users));
-}
+पूर्ण
 
 /*
- * Given an algorithm alg, remove all algorithms that depend on it
+ * Given an algorithm alg, हटाओ all algorithms that depend on it
  * through spawns.  If nalg is not null, then exempt any algorithms
  * that is depended on by nalg.  This is useful when nalg itself
  * depends on alg.
  */
-void crypto_remove_spawns(struct crypto_alg *alg, struct list_head *list,
-			  struct crypto_alg *nalg)
-{
+व्योम crypto_हटाओ_spawns(काष्ठा crypto_alg *alg, काष्ठा list_head *list,
+			  काष्ठा crypto_alg *nalg)
+अणु
 	u32 new_type = (nalg ?: alg)->cra_flags;
-	struct crypto_spawn *spawn, *n;
+	काष्ठा crypto_spawn *spawn, *n;
 	LIST_HEAD(secondary_spawns);
-	struct list_head *spawns;
+	काष्ठा list_head *spawns;
 	LIST_HEAD(stack);
 	LIST_HEAD(top);
 
 	spawns = &alg->cra_users;
-	list_for_each_entry_safe(spawn, n, spawns, list) {
-		if ((spawn->alg->cra_flags ^ new_type) & spawn->mask)
-			continue;
+	list_क्रम_each_entry_safe(spawn, n, spawns, list) अणु
+		अगर ((spawn->alg->cra_flags ^ new_type) & spawn->mask)
+			जारी;
 
 		list_move(&spawn->list, &top);
-	}
+	पूर्ण
 
 	/*
-	 * Perform a depth-first walk starting from alg through
+	 * Perक्रमm a depth-first walk starting from alg through
 	 * the cra_users tree.  The list stack records the path
 	 * from alg to the current spawn.
 	 */
 	spawns = &top;
-	do {
-		while (!list_empty(spawns)) {
-			struct crypto_instance *inst;
+	करो अणु
+		जबतक (!list_empty(spawns)) अणु
+			काष्ठा crypto_instance *inst;
 
-			spawn = list_first_entry(spawns, struct crypto_spawn,
+			spawn = list_first_entry(spawns, काष्ठा crypto_spawn,
 						 list);
 			inst = spawn->inst;
 
 			list_move(&spawn->list, &stack);
-			spawn->dead = !spawn->registered || &inst->alg != nalg;
+			spawn->dead = !spawn->रेजिस्टरed || &inst->alg != nalg;
 
-			if (!spawn->registered)
-				break;
+			अगर (!spawn->रेजिस्टरed)
+				अवरोध;
 
 			BUG_ON(&inst->alg == alg);
 
-			if (&inst->alg == nalg)
-				break;
+			अगर (&inst->alg == nalg)
+				अवरोध;
 
 			spawns = &inst->alg.cra_users;
 
 			/*
-			 * Even if spawn->registered is true, the
-			 * instance itself may still be unregistered.
+			 * Even अगर spawn->रेजिस्टरed is true, the
+			 * instance itself may still be unरेजिस्टरed.
 			 * This is because it may have failed during
-			 * registration.  Therefore we still need to
+			 * registration.  Thereक्रमe we still need to
 			 * make the following test.
 			 *
-			 * We may encounter an unregistered instance here, since
+			 * We may encounter an unरेजिस्टरed instance here, since
 			 * an instance's spawns are set up prior to the instance
-			 * being registered.  An unregistered instance will have
-			 * NULL ->cra_users.next, since ->cra_users isn't
+			 * being रेजिस्टरed.  An unरेजिस्टरed instance will have
+			 * शून्य ->cra_users.next, since ->cra_users isn't
 			 * properly initialized until registration.  But an
-			 * unregistered instance cannot have any users, so treat
+			 * unरेजिस्टरed instance cannot have any users, so treat
 			 * it the same as ->cra_users being empty.
 			 */
-			if (spawns->next == NULL)
-				break;
-		}
-	} while ((spawns = crypto_more_spawns(alg, &stack, &top,
+			अगर (spawns->next == शून्य)
+				अवरोध;
+		पूर्ण
+	पूर्ण जबतक ((spawns = crypto_more_spawns(alg, &stack, &top,
 					      &secondary_spawns)));
 
 	/*
@@ -207,23 +208,23 @@ void crypto_remove_spawns(struct crypto_alg *alg, struct list_head *list,
 	 * complete the resurrection of the others by moving them
 	 * back to the cra_users list.
 	 */
-	list_for_each_entry_safe(spawn, n, &secondary_spawns, list) {
-		if (!spawn->dead)
+	list_क्रम_each_entry_safe(spawn, n, &secondary_spawns, list) अणु
+		अगर (!spawn->dead)
 			list_move(&spawn->list, &spawn->alg->cra_users);
-		else if (spawn->registered)
-			crypto_remove_instance(spawn->inst, list);
-	}
-}
-EXPORT_SYMBOL_GPL(crypto_remove_spawns);
+		अन्यथा अगर (spawn->रेजिस्टरed)
+			crypto_हटाओ_instance(spawn->inst, list);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_हटाओ_spawns);
 
-static struct crypto_larval *__crypto_register_alg(struct crypto_alg *alg)
-{
-	struct crypto_alg *q;
-	struct crypto_larval *larval;
-	int ret = -EAGAIN;
+अटल काष्ठा crypto_larval *__crypto_रेजिस्टर_alg(काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा crypto_alg *q;
+	काष्ठा crypto_larval *larval;
+	पूर्णांक ret = -EAGAIN;
 
-	if (crypto_is_dead(alg))
-		goto err;
+	अगर (crypto_is_dead(alg))
+		जाओ err;
 
 	INIT_LIST_HEAD(&alg->cra_users);
 
@@ -232,36 +233,36 @@ static struct crypto_larval *__crypto_register_alg(struct crypto_alg *alg)
 
 	ret = -EEXIST;
 
-	list_for_each_entry(q, &crypto_alg_list, cra_list) {
-		if (q == alg)
-			goto err;
+	list_क्रम_each_entry(q, &crypto_alg_list, cra_list) अणु
+		अगर (q == alg)
+			जाओ err;
 
-		if (crypto_is_moribund(q))
-			continue;
+		अगर (crypto_is_moribund(q))
+			जारी;
 
-		if (crypto_is_larval(q)) {
-			if (!strcmp(alg->cra_driver_name, q->cra_driver_name))
-				goto err;
-			continue;
-		}
+		अगर (crypto_is_larval(q)) अणु
+			अगर (!म_भेद(alg->cra_driver_name, q->cra_driver_name))
+				जाओ err;
+			जारी;
+		पूर्ण
 
-		if (!strcmp(q->cra_driver_name, alg->cra_name) ||
-		    !strcmp(q->cra_name, alg->cra_driver_name))
-			goto err;
-	}
+		अगर (!म_भेद(q->cra_driver_name, alg->cra_name) ||
+		    !म_भेद(q->cra_name, alg->cra_driver_name))
+			जाओ err;
+	पूर्ण
 
 	larval = crypto_larval_alloc(alg->cra_name,
 				     alg->cra_flags | CRYPTO_ALG_TESTED, 0);
-	if (IS_ERR(larval))
-		goto out;
+	अगर (IS_ERR(larval))
+		जाओ out;
 
 	ret = -ENOENT;
 	larval->adult = crypto_mod_get(alg);
-	if (!larval->adult)
-		goto free_larval;
+	अगर (!larval->adult)
+		जाओ मुक्त_larval;
 
 	refcount_set(&larval->alg.cra_refcnt, 1);
-	memcpy(larval->alg.cra_driver_name, alg->cra_driver_name,
+	स_नकल(larval->alg.cra_driver_name, alg->cra_driver_name,
 	       CRYPTO_MAX_ALG_NAME);
 	larval->alg.cra_priority = alg->cra_priority;
 
@@ -271,420 +272,420 @@ static struct crypto_larval *__crypto_register_alg(struct crypto_alg *alg)
 	crypto_stats_init(alg);
 
 out:
-	return larval;
+	वापस larval;
 
-free_larval:
-	kfree(larval);
+मुक्त_larval:
+	kमुक्त(larval);
 err:
 	larval = ERR_PTR(ret);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-void crypto_alg_tested(const char *name, int err)
-{
-	struct crypto_larval *test;
-	struct crypto_alg *alg;
-	struct crypto_alg *q;
+व्योम crypto_alg_tested(स्थिर अक्षर *name, पूर्णांक err)
+अणु
+	काष्ठा crypto_larval *test;
+	काष्ठा crypto_alg *alg;
+	काष्ठा crypto_alg *q;
 	LIST_HEAD(list);
 	bool best;
 
-	down_write(&crypto_alg_sem);
-	list_for_each_entry(q, &crypto_alg_list, cra_list) {
-		if (crypto_is_moribund(q) || !crypto_is_larval(q))
-			continue;
+	करोwn_ग_लिखो(&crypto_alg_sem);
+	list_क्रम_each_entry(q, &crypto_alg_list, cra_list) अणु
+		अगर (crypto_is_moribund(q) || !crypto_is_larval(q))
+			जारी;
 
-		test = (struct crypto_larval *)q;
+		test = (काष्ठा crypto_larval *)q;
 
-		if (!strcmp(q->cra_driver_name, name))
-			goto found;
-	}
+		अगर (!म_भेद(q->cra_driver_name, name))
+			जाओ found;
+	पूर्ण
 
 	pr_err("alg: Unexpected test result for %s: %d\n", name, err);
-	goto unlock;
+	जाओ unlock;
 
 found:
 	q->cra_flags |= CRYPTO_ALG_DEAD;
 	alg = test->adult;
-	if (err || list_empty(&alg->cra_list))
-		goto complete;
+	अगर (err || list_empty(&alg->cra_list))
+		जाओ complete;
 
 	alg->cra_flags |= CRYPTO_ALG_TESTED;
 
-	/* Only satisfy larval waiters if we are the best. */
+	/* Only satisfy larval रुकोers अगर we are the best. */
 	best = true;
-	list_for_each_entry(q, &crypto_alg_list, cra_list) {
-		if (crypto_is_moribund(q) || !crypto_is_larval(q))
-			continue;
+	list_क्रम_each_entry(q, &crypto_alg_list, cra_list) अणु
+		अगर (crypto_is_moribund(q) || !crypto_is_larval(q))
+			जारी;
 
-		if (strcmp(alg->cra_name, q->cra_name))
-			continue;
+		अगर (म_भेद(alg->cra_name, q->cra_name))
+			जारी;
 
-		if (q->cra_priority > alg->cra_priority) {
+		अगर (q->cra_priority > alg->cra_priority) अणु
 			best = false;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(q, &crypto_alg_list, cra_list) {
-		if (q == alg)
-			continue;
+	list_क्रम_each_entry(q, &crypto_alg_list, cra_list) अणु
+		अगर (q == alg)
+			जारी;
 
-		if (crypto_is_moribund(q))
-			continue;
+		अगर (crypto_is_moribund(q))
+			जारी;
 
-		if (crypto_is_larval(q)) {
-			struct crypto_larval *larval = (void *)q;
+		अगर (crypto_is_larval(q)) अणु
+			काष्ठा crypto_larval *larval = (व्योम *)q;
 
 			/*
-			 * Check to see if either our generic name or
-			 * specific name can satisfy the name requested
+			 * Check to see अगर either our generic name or
+			 * specअगरic name can satisfy the name requested
 			 * by the larval entry q.
 			 */
-			if (strcmp(alg->cra_name, q->cra_name) &&
-			    strcmp(alg->cra_driver_name, q->cra_name))
-				continue;
+			अगर (म_भेद(alg->cra_name, q->cra_name) &&
+			    म_भेद(alg->cra_driver_name, q->cra_name))
+				जारी;
 
-			if (larval->adult)
-				continue;
-			if ((q->cra_flags ^ alg->cra_flags) & larval->mask)
-				continue;
+			अगर (larval->adult)
+				जारी;
+			अगर ((q->cra_flags ^ alg->cra_flags) & larval->mask)
+				जारी;
 
-			if (best && crypto_mod_get(alg))
+			अगर (best && crypto_mod_get(alg))
 				larval->adult = alg;
-			else
+			अन्यथा
 				larval->adult = ERR_PTR(-EAGAIN);
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (strcmp(alg->cra_name, q->cra_name))
-			continue;
+		अगर (म_भेद(alg->cra_name, q->cra_name))
+			जारी;
 
-		if (strcmp(alg->cra_driver_name, q->cra_driver_name) &&
+		अगर (म_भेद(alg->cra_driver_name, q->cra_driver_name) &&
 		    q->cra_priority > alg->cra_priority)
-			continue;
+			जारी;
 
-		crypto_remove_spawns(q, &list, alg);
-	}
+		crypto_हटाओ_spawns(q, &list, alg);
+	पूर्ण
 
 complete:
 	complete_all(&test->completion);
 
 unlock:
-	up_write(&crypto_alg_sem);
+	up_ग_लिखो(&crypto_alg_sem);
 
-	crypto_remove_final(&list);
-}
+	crypto_हटाओ_final(&list);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_alg_tested);
 
-void crypto_remove_final(struct list_head *list)
-{
-	struct crypto_alg *alg;
-	struct crypto_alg *n;
+व्योम crypto_हटाओ_final(काष्ठा list_head *list)
+अणु
+	काष्ठा crypto_alg *alg;
+	काष्ठा crypto_alg *n;
 
-	list_for_each_entry_safe(alg, n, list, cra_list) {
+	list_क्रम_each_entry_safe(alg, n, list, cra_list) अणु
 		list_del_init(&alg->cra_list);
 		crypto_alg_put(alg);
-	}
-}
-EXPORT_SYMBOL_GPL(crypto_remove_final);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_हटाओ_final);
 
-static void crypto_wait_for_test(struct crypto_larval *larval)
-{
-	int err;
+अटल व्योम crypto_रुको_क्रम_test(काष्ठा crypto_larval *larval)
+अणु
+	पूर्णांक err;
 
-	err = crypto_probing_notify(CRYPTO_MSG_ALG_REGISTER, larval->adult);
-	if (err != NOTIFY_STOP) {
-		if (WARN_ON(err != NOTIFY_DONE))
-			goto out;
+	err = crypto_probing_notअगरy(CRYPTO_MSG_ALG_REGISTER, larval->adult);
+	अगर (err != NOTIFY_STOP) अणु
+		अगर (WARN_ON(err != NOTIFY_DONE))
+			जाओ out;
 		crypto_alg_tested(larval->alg.cra_driver_name, 0);
-	}
+	पूर्ण
 
-	err = wait_for_completion_killable(&larval->completion);
+	err = रुको_क्रम_completion_समाप्तable(&larval->completion);
 	WARN_ON(err);
-	if (!err)
-		crypto_notify(CRYPTO_MSG_ALG_LOADED, larval);
+	अगर (!err)
+		crypto_notअगरy(CRYPTO_MSG_ALG_LOADED, larval);
 
 out:
-	crypto_larval_kill(&larval->alg);
-}
+	crypto_larval_समाप्त(&larval->alg);
+पूर्ण
 
-int crypto_register_alg(struct crypto_alg *alg)
-{
-	struct crypto_larval *larval;
-	int err;
+पूर्णांक crypto_रेजिस्टर_alg(काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा crypto_larval *larval;
+	पूर्णांक err;
 
 	alg->cra_flags &= ~CRYPTO_ALG_DEAD;
 	err = crypto_check_alg(alg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	down_write(&crypto_alg_sem);
-	larval = __crypto_register_alg(alg);
-	up_write(&crypto_alg_sem);
+	करोwn_ग_लिखो(&crypto_alg_sem);
+	larval = __crypto_रेजिस्टर_alg(alg);
+	up_ग_लिखो(&crypto_alg_sem);
 
-	if (IS_ERR(larval))
-		return PTR_ERR(larval);
+	अगर (IS_ERR(larval))
+		वापस PTR_ERR(larval);
 
-	crypto_wait_for_test(larval);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(crypto_register_alg);
+	crypto_रुको_क्रम_test(larval);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_alg);
 
-static int crypto_remove_alg(struct crypto_alg *alg, struct list_head *list)
-{
-	if (unlikely(list_empty(&alg->cra_list)))
-		return -ENOENT;
+अटल पूर्णांक crypto_हटाओ_alg(काष्ठा crypto_alg *alg, काष्ठा list_head *list)
+अणु
+	अगर (unlikely(list_empty(&alg->cra_list)))
+		वापस -ENOENT;
 
 	alg->cra_flags |= CRYPTO_ALG_DEAD;
 
 	list_del_init(&alg->cra_list);
-	crypto_remove_spawns(alg, list, NULL);
+	crypto_हटाओ_spawns(alg, list, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void crypto_unregister_alg(struct crypto_alg *alg)
-{
-	int ret;
+व्योम crypto_unरेजिस्टर_alg(काष्ठा crypto_alg *alg)
+अणु
+	पूर्णांक ret;
 	LIST_HEAD(list);
 
-	down_write(&crypto_alg_sem);
-	ret = crypto_remove_alg(alg, &list);
-	up_write(&crypto_alg_sem);
+	करोwn_ग_लिखो(&crypto_alg_sem);
+	ret = crypto_हटाओ_alg(alg, &list);
+	up_ग_लिखो(&crypto_alg_sem);
 
-	if (WARN(ret, "Algorithm %s is not registered", alg->cra_driver_name))
-		return;
+	अगर (WARN(ret, "Algorithm %s is not registered", alg->cra_driver_name))
+		वापस;
 
-	BUG_ON(refcount_read(&alg->cra_refcnt) != 1);
-	if (alg->cra_destroy)
+	BUG_ON(refcount_पढ़ो(&alg->cra_refcnt) != 1);
+	अगर (alg->cra_destroy)
 		alg->cra_destroy(alg);
 
-	crypto_remove_final(&list);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_alg);
+	crypto_हटाओ_final(&list);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_alg);
 
-int crypto_register_algs(struct crypto_alg *algs, int count)
-{
-	int i, ret;
+पूर्णांक crypto_रेजिस्टर_algs(काष्ठा crypto_alg *algs, पूर्णांक count)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < count; i++) {
-		ret = crypto_register_alg(&algs[i]);
-		if (ret)
-			goto err;
-	}
+	क्रम (i = 0; i < count; i++) अणु
+		ret = crypto_रेजिस्टर_alg(&algs[i]);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	for (--i; i >= 0; --i)
-		crypto_unregister_alg(&algs[i]);
+	क्रम (--i; i >= 0; --i)
+		crypto_unरेजिस्टर_alg(&algs[i]);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(crypto_register_algs);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_algs);
 
-void crypto_unregister_algs(struct crypto_alg *algs, int count)
-{
-	int i;
+व्योम crypto_unरेजिस्टर_algs(काष्ठा crypto_alg *algs, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++)
-		crypto_unregister_alg(&algs[i]);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_algs);
+	क्रम (i = 0; i < count; i++)
+		crypto_unरेजिस्टर_alg(&algs[i]);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_algs);
 
-int crypto_register_template(struct crypto_template *tmpl)
-{
-	struct crypto_template *q;
-	int err = -EEXIST;
+पूर्णांक crypto_रेजिस्टर_ढाँचा(काष्ठा crypto_ढाँचा *पंचांगpl)
+अणु
+	काष्ठा crypto_ढाँचा *q;
+	पूर्णांक err = -EEXIST;
 
-	down_write(&crypto_alg_sem);
+	करोwn_ग_लिखो(&crypto_alg_sem);
 
-	crypto_check_module_sig(tmpl->module);
+	crypto_check_module_sig(पंचांगpl->module);
 
-	list_for_each_entry(q, &crypto_template_list, list) {
-		if (q == tmpl)
-			goto out;
-	}
+	list_क्रम_each_entry(q, &crypto_ढाँचा_list, list) अणु
+		अगर (q == पंचांगpl)
+			जाओ out;
+	पूर्ण
 
-	list_add(&tmpl->list, &crypto_template_list);
+	list_add(&पंचांगpl->list, &crypto_ढाँचा_list);
 	err = 0;
 out:
-	up_write(&crypto_alg_sem);
-	return err;
-}
-EXPORT_SYMBOL_GPL(crypto_register_template);
+	up_ग_लिखो(&crypto_alg_sem);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_ढाँचा);
 
-int crypto_register_templates(struct crypto_template *tmpls, int count)
-{
-	int i, err;
+पूर्णांक crypto_रेजिस्टर_ढाँचाs(काष्ठा crypto_ढाँचा *पंचांगpls, पूर्णांक count)
+अणु
+	पूर्णांक i, err;
 
-	for (i = 0; i < count; i++) {
-		err = crypto_register_template(&tmpls[i]);
-		if (err)
-			goto out;
-	}
-	return 0;
+	क्रम (i = 0; i < count; i++) अणु
+		err = crypto_रेजिस्टर_ढाँचा(&पंचांगpls[i]);
+		अगर (err)
+			जाओ out;
+	पूर्ण
+	वापस 0;
 
 out:
-	for (--i; i >= 0; --i)
-		crypto_unregister_template(&tmpls[i]);
-	return err;
-}
-EXPORT_SYMBOL_GPL(crypto_register_templates);
+	क्रम (--i; i >= 0; --i)
+		crypto_unरेजिस्टर_ढाँचा(&पंचांगpls[i]);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_ढाँचाs);
 
-void crypto_unregister_template(struct crypto_template *tmpl)
-{
-	struct crypto_instance *inst;
-	struct hlist_node *n;
-	struct hlist_head *list;
+व्योम crypto_unरेजिस्टर_ढाँचा(काष्ठा crypto_ढाँचा *पंचांगpl)
+अणु
+	काष्ठा crypto_instance *inst;
+	काष्ठा hlist_node *n;
+	काष्ठा hlist_head *list;
 	LIST_HEAD(users);
 
-	down_write(&crypto_alg_sem);
+	करोwn_ग_लिखो(&crypto_alg_sem);
 
-	BUG_ON(list_empty(&tmpl->list));
-	list_del_init(&tmpl->list);
+	BUG_ON(list_empty(&पंचांगpl->list));
+	list_del_init(&पंचांगpl->list);
 
-	list = &tmpl->instances;
-	hlist_for_each_entry(inst, list, list) {
-		int err = crypto_remove_alg(&inst->alg, &users);
+	list = &पंचांगpl->instances;
+	hlist_क्रम_each_entry(inst, list, list) अणु
+		पूर्णांक err = crypto_हटाओ_alg(&inst->alg, &users);
 
 		BUG_ON(err);
-	}
+	पूर्ण
 
-	up_write(&crypto_alg_sem);
+	up_ग_लिखो(&crypto_alg_sem);
 
-	hlist_for_each_entry_safe(inst, n, list, list) {
-		BUG_ON(refcount_read(&inst->alg.cra_refcnt) != 1);
-		crypto_free_instance(inst);
-	}
-	crypto_remove_final(&users);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_template);
+	hlist_क्रम_each_entry_safe(inst, n, list, list) अणु
+		BUG_ON(refcount_पढ़ो(&inst->alg.cra_refcnt) != 1);
+		crypto_मुक्त_instance(inst);
+	पूर्ण
+	crypto_हटाओ_final(&users);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_ढाँचा);
 
-void crypto_unregister_templates(struct crypto_template *tmpls, int count)
-{
-	int i;
+व्योम crypto_unरेजिस्टर_ढाँचाs(काष्ठा crypto_ढाँचा *पंचांगpls, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = count - 1; i >= 0; --i)
-		crypto_unregister_template(&tmpls[i]);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_templates);
+	क्रम (i = count - 1; i >= 0; --i)
+		crypto_unरेजिस्टर_ढाँचा(&पंचांगpls[i]);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_ढाँचाs);
 
-static struct crypto_template *__crypto_lookup_template(const char *name)
-{
-	struct crypto_template *q, *tmpl = NULL;
+अटल काष्ठा crypto_ढाँचा *__crypto_lookup_ढाँचा(स्थिर अक्षर *name)
+अणु
+	काष्ठा crypto_ढाँचा *q, *पंचांगpl = शून्य;
 
-	down_read(&crypto_alg_sem);
-	list_for_each_entry(q, &crypto_template_list, list) {
-		if (strcmp(q->name, name))
-			continue;
-		if (unlikely(!crypto_tmpl_get(q)))
-			continue;
+	करोwn_पढ़ो(&crypto_alg_sem);
+	list_क्रम_each_entry(q, &crypto_ढाँचा_list, list) अणु
+		अगर (म_भेद(q->name, name))
+			जारी;
+		अगर (unlikely(!crypto_पंचांगpl_get(q)))
+			जारी;
 
-		tmpl = q;
-		break;
-	}
-	up_read(&crypto_alg_sem);
+		पंचांगpl = q;
+		अवरोध;
+	पूर्ण
+	up_पढ़ो(&crypto_alg_sem);
 
-	return tmpl;
-}
+	वापस पंचांगpl;
+पूर्ण
 
-struct crypto_template *crypto_lookup_template(const char *name)
-{
-	return try_then_request_module(__crypto_lookup_template(name),
+काष्ठा crypto_ढाँचा *crypto_lookup_ढाँचा(स्थिर अक्षर *name)
+अणु
+	वापस try_then_request_module(__crypto_lookup_ढाँचा(name),
 				       "crypto-%s", name);
-}
-EXPORT_SYMBOL_GPL(crypto_lookup_template);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_lookup_ढाँचा);
 
-int crypto_register_instance(struct crypto_template *tmpl,
-			     struct crypto_instance *inst)
-{
-	struct crypto_larval *larval;
-	struct crypto_spawn *spawn;
-	int err;
+पूर्णांक crypto_रेजिस्टर_instance(काष्ठा crypto_ढाँचा *पंचांगpl,
+			     काष्ठा crypto_instance *inst)
+अणु
+	काष्ठा crypto_larval *larval;
+	काष्ठा crypto_spawn *spawn;
+	पूर्णांक err;
 
 	err = crypto_check_alg(&inst->alg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	inst->alg.cra_module = tmpl->module;
+	inst->alg.cra_module = पंचांगpl->module;
 	inst->alg.cra_flags |= CRYPTO_ALG_INSTANCE;
 
-	down_write(&crypto_alg_sem);
+	करोwn_ग_लिखो(&crypto_alg_sem);
 
 	larval = ERR_PTR(-EAGAIN);
-	for (spawn = inst->spawns; spawn;) {
-		struct crypto_spawn *next;
+	क्रम (spawn = inst->spawns; spawn;) अणु
+		काष्ठा crypto_spawn *next;
 
-		if (spawn->dead)
-			goto unlock;
+		अगर (spawn->dead)
+			जाओ unlock;
 
 		next = spawn->next;
 		spawn->inst = inst;
-		spawn->registered = true;
+		spawn->रेजिस्टरed = true;
 
 		crypto_mod_put(spawn->alg);
 
 		spawn = next;
-	}
+	पूर्ण
 
-	larval = __crypto_register_alg(&inst->alg);
-	if (IS_ERR(larval))
-		goto unlock;
+	larval = __crypto_रेजिस्टर_alg(&inst->alg);
+	अगर (IS_ERR(larval))
+		जाओ unlock;
 
-	hlist_add_head(&inst->list, &tmpl->instances);
-	inst->tmpl = tmpl;
+	hlist_add_head(&inst->list, &पंचांगpl->instances);
+	inst->पंचांगpl = पंचांगpl;
 
 unlock:
-	up_write(&crypto_alg_sem);
+	up_ग_लिखो(&crypto_alg_sem);
 
 	err = PTR_ERR(larval);
-	if (IS_ERR(larval))
-		goto err;
+	अगर (IS_ERR(larval))
+		जाओ err;
 
-	crypto_wait_for_test(larval);
+	crypto_रुको_क्रम_test(larval);
 	err = 0;
 
 err:
-	return err;
-}
-EXPORT_SYMBOL_GPL(crypto_register_instance);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_instance);
 
-void crypto_unregister_instance(struct crypto_instance *inst)
-{
+व्योम crypto_unरेजिस्टर_instance(काष्ठा crypto_instance *inst)
+अणु
 	LIST_HEAD(list);
 
-	down_write(&crypto_alg_sem);
+	करोwn_ग_लिखो(&crypto_alg_sem);
 
-	crypto_remove_spawns(&inst->alg, &list, NULL);
-	crypto_remove_instance(inst, &list);
+	crypto_हटाओ_spawns(&inst->alg, &list, शून्य);
+	crypto_हटाओ_instance(inst, &list);
 
-	up_write(&crypto_alg_sem);
+	up_ग_लिखो(&crypto_alg_sem);
 
-	crypto_remove_final(&list);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_instance);
+	crypto_हटाओ_final(&list);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_instance);
 
-int crypto_grab_spawn(struct crypto_spawn *spawn, struct crypto_instance *inst,
-		      const char *name, u32 type, u32 mask)
-{
-	struct crypto_alg *alg;
-	int err = -EAGAIN;
+पूर्णांक crypto_grab_spawn(काष्ठा crypto_spawn *spawn, काष्ठा crypto_instance *inst,
+		      स्थिर अक्षर *name, u32 type, u32 mask)
+अणु
+	काष्ठा crypto_alg *alg;
+	पूर्णांक err = -EAGAIN;
 
-	if (WARN_ON_ONCE(inst == NULL))
-		return -EINVAL;
+	अगर (WARN_ON_ONCE(inst == शून्य))
+		वापस -EINVAL;
 
 	/* Allow the result of crypto_attr_alg_name() to be passed directly */
-	if (IS_ERR(name))
-		return PTR_ERR(name);
+	अगर (IS_ERR(name))
+		वापस PTR_ERR(name);
 
 	alg = crypto_find_alg(name, spawn->frontend, type, mask);
-	if (IS_ERR(alg))
-		return PTR_ERR(alg);
+	अगर (IS_ERR(alg))
+		वापस PTR_ERR(alg);
 
-	down_write(&crypto_alg_sem);
-	if (!crypto_is_moribund(alg)) {
+	करोwn_ग_लिखो(&crypto_alg_sem);
+	अगर (!crypto_is_moribund(alg)) अणु
 		list_add(&spawn->list, &alg->cra_users);
 		spawn->alg = alg;
 		spawn->mask = mask;
@@ -693,312 +694,312 @@ int crypto_grab_spawn(struct crypto_spawn *spawn, struct crypto_instance *inst,
 		inst->alg.cra_flags |=
 			(alg->cra_flags & CRYPTO_ALG_INHERITED_FLAGS);
 		err = 0;
-	}
-	up_write(&crypto_alg_sem);
-	if (err)
+	पूर्ण
+	up_ग_लिखो(&crypto_alg_sem);
+	अगर (err)
 		crypto_mod_put(alg);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_grab_spawn);
 
-void crypto_drop_spawn(struct crypto_spawn *spawn)
-{
-	if (!spawn->alg) /* not yet initialized? */
-		return;
+व्योम crypto_drop_spawn(काष्ठा crypto_spawn *spawn)
+अणु
+	अगर (!spawn->alg) /* not yet initialized? */
+		वापस;
 
-	down_write(&crypto_alg_sem);
-	if (!spawn->dead)
+	करोwn_ग_लिखो(&crypto_alg_sem);
+	अगर (!spawn->dead)
 		list_del(&spawn->list);
-	up_write(&crypto_alg_sem);
+	up_ग_लिखो(&crypto_alg_sem);
 
-	if (!spawn->registered)
+	अगर (!spawn->रेजिस्टरed)
 		crypto_mod_put(spawn->alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_drop_spawn);
 
-static struct crypto_alg *crypto_spawn_alg(struct crypto_spawn *spawn)
-{
-	struct crypto_alg *alg = ERR_PTR(-EAGAIN);
-	struct crypto_alg *target;
+अटल काष्ठा crypto_alg *crypto_spawn_alg(काष्ठा crypto_spawn *spawn)
+अणु
+	काष्ठा crypto_alg *alg = ERR_PTR(-EAGAIN);
+	काष्ठा crypto_alg *target;
 	bool shoot = false;
 
-	down_read(&crypto_alg_sem);
-	if (!spawn->dead) {
+	करोwn_पढ़ो(&crypto_alg_sem);
+	अगर (!spawn->dead) अणु
 		alg = spawn->alg;
-		if (!crypto_mod_get(alg)) {
+		अगर (!crypto_mod_get(alg)) अणु
 			target = crypto_alg_get(alg);
 			shoot = true;
 			alg = ERR_PTR(-EAGAIN);
-		}
-	}
-	up_read(&crypto_alg_sem);
+		पूर्ण
+	पूर्ण
+	up_पढ़ो(&crypto_alg_sem);
 
-	if (shoot) {
+	अगर (shoot) अणु
 		crypto_shoot_alg(target);
 		crypto_alg_put(target);
-	}
+	पूर्ण
 
-	return alg;
-}
+	वापस alg;
+पूर्ण
 
-struct crypto_tfm *crypto_spawn_tfm(struct crypto_spawn *spawn, u32 type,
+काष्ठा crypto_tfm *crypto_spawn_tfm(काष्ठा crypto_spawn *spawn, u32 type,
 				    u32 mask)
-{
-	struct crypto_alg *alg;
-	struct crypto_tfm *tfm;
+अणु
+	काष्ठा crypto_alg *alg;
+	काष्ठा crypto_tfm *tfm;
 
 	alg = crypto_spawn_alg(spawn);
-	if (IS_ERR(alg))
-		return ERR_CAST(alg);
+	अगर (IS_ERR(alg))
+		वापस ERR_CAST(alg);
 
 	tfm = ERR_PTR(-EINVAL);
-	if (unlikely((alg->cra_flags ^ type) & mask))
-		goto out_put_alg;
+	अगर (unlikely((alg->cra_flags ^ type) & mask))
+		जाओ out_put_alg;
 
 	tfm = __crypto_alloc_tfm(alg, type, mask);
-	if (IS_ERR(tfm))
-		goto out_put_alg;
+	अगर (IS_ERR(tfm))
+		जाओ out_put_alg;
 
-	return tfm;
+	वापस tfm;
 
 out_put_alg:
 	crypto_mod_put(alg);
-	return tfm;
-}
+	वापस tfm;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_spawn_tfm);
 
-void *crypto_spawn_tfm2(struct crypto_spawn *spawn)
-{
-	struct crypto_alg *alg;
-	struct crypto_tfm *tfm;
+व्योम *crypto_spawn_tfm2(काष्ठा crypto_spawn *spawn)
+अणु
+	काष्ठा crypto_alg *alg;
+	काष्ठा crypto_tfm *tfm;
 
 	alg = crypto_spawn_alg(spawn);
-	if (IS_ERR(alg))
-		return ERR_CAST(alg);
+	अगर (IS_ERR(alg))
+		वापस ERR_CAST(alg);
 
 	tfm = crypto_create_tfm(alg, spawn->frontend);
-	if (IS_ERR(tfm))
-		goto out_put_alg;
+	अगर (IS_ERR(tfm))
+		जाओ out_put_alg;
 
-	return tfm;
+	वापस tfm;
 
 out_put_alg:
 	crypto_mod_put(alg);
-	return tfm;
-}
+	वापस tfm;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_spawn_tfm2);
 
-int crypto_register_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&crypto_chain, nb);
-}
-EXPORT_SYMBOL_GPL(crypto_register_notifier);
+पूर्णांक crypto_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&crypto_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_notअगरier);
 
-int crypto_unregister_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&crypto_chain, nb);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_notifier);
+पूर्णांक crypto_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&crypto_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_notअगरier);
 
-struct crypto_attr_type *crypto_get_attr_type(struct rtattr **tb)
-{
-	struct rtattr *rta = tb[0];
-	struct crypto_attr_type *algt;
+काष्ठा crypto_attr_type *crypto_get_attr_type(काष्ठा rtattr **tb)
+अणु
+	काष्ठा rtattr *rta = tb[0];
+	काष्ठा crypto_attr_type *algt;
 
-	if (!rta)
-		return ERR_PTR(-ENOENT);
-	if (RTA_PAYLOAD(rta) < sizeof(*algt))
-		return ERR_PTR(-EINVAL);
-	if (rta->rta_type != CRYPTOA_TYPE)
-		return ERR_PTR(-EINVAL);
+	अगर (!rta)
+		वापस ERR_PTR(-ENOENT);
+	अगर (RTA_PAYLOAD(rta) < माप(*algt))
+		वापस ERR_PTR(-EINVAL);
+	अगर (rta->rta_type != CRYPTOA_TYPE)
+		वापस ERR_PTR(-EINVAL);
 
 	algt = RTA_DATA(rta);
 
-	return algt;
-}
+	वापस algt;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_get_attr_type);
 
 /**
  * crypto_check_attr_type() - check algorithm type and compute inherited mask
- * @tb: the template parameters
- * @type: the algorithm type the template would be instantiated as
+ * @tb: the ढाँचा parameters
+ * @type: the algorithm type the ढाँचा would be instantiated as
  * @mask_ret: (output) the mask that should be passed to crypto_grab_*()
  *	      to restrict the flags of any inner algorithms
  *
  * Validate that the algorithm type the user requested is compatible with the
- * one the template would actually be instantiated as.  E.g., if the user is
- * doing crypto_alloc_shash("cbc(aes)", ...), this would return an error because
- * the "cbc" template creates an "skcipher" algorithm, not an "shash" algorithm.
+ * one the ढाँचा would actually be instantiated as.  E.g., अगर the user is
+ * करोing crypto_alloc_shash("cbc(aes)", ...), this would वापस an error because
+ * the "cbc" ढाँचा creates an "skcipher" algorithm, not an "shash" algorithm.
  *
  * Also compute the mask to use to restrict the flags of any inner algorithms.
  *
- * Return: 0 on success; -errno on failure
+ * Return: 0 on success; -त्रुटि_सं on failure
  */
-int crypto_check_attr_type(struct rtattr **tb, u32 type, u32 *mask_ret)
-{
-	struct crypto_attr_type *algt;
+पूर्णांक crypto_check_attr_type(काष्ठा rtattr **tb, u32 type, u32 *mask_ret)
+अणु
+	काष्ठा crypto_attr_type *algt;
 
 	algt = crypto_get_attr_type(tb);
-	if (IS_ERR(algt))
-		return PTR_ERR(algt);
+	अगर (IS_ERR(algt))
+		वापस PTR_ERR(algt);
 
-	if ((algt->type ^ type) & algt->mask)
-		return -EINVAL;
+	अगर ((algt->type ^ type) & algt->mask)
+		वापस -EINVAL;
 
 	*mask_ret = crypto_algt_inherited_mask(algt);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_check_attr_type);
 
-const char *crypto_attr_alg_name(struct rtattr *rta)
-{
-	struct crypto_attr_alg *alga;
+स्थिर अक्षर *crypto_attr_alg_name(काष्ठा rtattr *rta)
+अणु
+	काष्ठा crypto_attr_alg *alga;
 
-	if (!rta)
-		return ERR_PTR(-ENOENT);
-	if (RTA_PAYLOAD(rta) < sizeof(*alga))
-		return ERR_PTR(-EINVAL);
-	if (rta->rta_type != CRYPTOA_ALG)
-		return ERR_PTR(-EINVAL);
+	अगर (!rta)
+		वापस ERR_PTR(-ENOENT);
+	अगर (RTA_PAYLOAD(rta) < माप(*alga))
+		वापस ERR_PTR(-EINVAL);
+	अगर (rta->rta_type != CRYPTOA_ALG)
+		वापस ERR_PTR(-EINVAL);
 
 	alga = RTA_DATA(rta);
 	alga->name[CRYPTO_MAX_ALG_NAME - 1] = 0;
 
-	return alga->name;
-}
+	वापस alga->name;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_attr_alg_name);
 
-int crypto_attr_u32(struct rtattr *rta, u32 *num)
-{
-	struct crypto_attr_u32 *nu32;
+पूर्णांक crypto_attr_u32(काष्ठा rtattr *rta, u32 *num)
+अणु
+	काष्ठा crypto_attr_u32 *nu32;
 
-	if (!rta)
-		return -ENOENT;
-	if (RTA_PAYLOAD(rta) < sizeof(*nu32))
-		return -EINVAL;
-	if (rta->rta_type != CRYPTOA_U32)
-		return -EINVAL;
+	अगर (!rta)
+		वापस -ENOENT;
+	अगर (RTA_PAYLOAD(rta) < माप(*nu32))
+		वापस -EINVAL;
+	अगर (rta->rta_type != CRYPTOA_U32)
+		वापस -EINVAL;
 
 	nu32 = RTA_DATA(rta);
 	*num = nu32->num;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_attr_u32);
 
-int crypto_inst_setname(struct crypto_instance *inst, const char *name,
-			struct crypto_alg *alg)
-{
-	if (snprintf(inst->alg.cra_name, CRYPTO_MAX_ALG_NAME, "%s(%s)", name,
+पूर्णांक crypto_inst_setname(काष्ठा crypto_instance *inst, स्थिर अक्षर *name,
+			काष्ठा crypto_alg *alg)
+अणु
+	अगर (snम_लिखो(inst->alg.cra_name, CRYPTO_MAX_ALG_NAME, "%s(%s)", name,
 		     alg->cra_name) >= CRYPTO_MAX_ALG_NAME)
-		return -ENAMETOOLONG;
+		वापस -ENAMETOOLONG;
 
-	if (snprintf(inst->alg.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s(%s)",
+	अगर (snम_लिखो(inst->alg.cra_driver_name, CRYPTO_MAX_ALG_NAME, "%s(%s)",
 		     name, alg->cra_driver_name) >= CRYPTO_MAX_ALG_NAME)
-		return -ENAMETOOLONG;
+		वापस -ENAMETOOLONG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_inst_setname);
 
-void crypto_init_queue(struct crypto_queue *queue, unsigned int max_qlen)
-{
+व्योम crypto_init_queue(काष्ठा crypto_queue *queue, अचिन्हित पूर्णांक max_qlen)
+अणु
 	INIT_LIST_HEAD(&queue->list);
 	queue->backlog = &queue->list;
 	queue->qlen = 0;
 	queue->max_qlen = max_qlen;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_init_queue);
 
-int crypto_enqueue_request(struct crypto_queue *queue,
-			   struct crypto_async_request *request)
-{
-	int err = -EINPROGRESS;
+पूर्णांक crypto_enqueue_request(काष्ठा crypto_queue *queue,
+			   काष्ठा crypto_async_request *request)
+अणु
+	पूर्णांक err = -EINPROGRESS;
 
-	if (unlikely(queue->qlen >= queue->max_qlen)) {
-		if (!(request->flags & CRYPTO_TFM_REQ_MAY_BACKLOG)) {
+	अगर (unlikely(queue->qlen >= queue->max_qlen)) अणु
+		अगर (!(request->flags & CRYPTO_TFM_REQ_MAY_BACKLOG)) अणु
 			err = -ENOSPC;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		err = -EBUSY;
-		if (queue->backlog == &queue->list)
+		अगर (queue->backlog == &queue->list)
 			queue->backlog = &request->list;
-	}
+	पूर्ण
 
 	queue->qlen++;
 	list_add_tail(&request->list, &queue->list);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_enqueue_request);
 
-void crypto_enqueue_request_head(struct crypto_queue *queue,
-				 struct crypto_async_request *request)
-{
+व्योम crypto_enqueue_request_head(काष्ठा crypto_queue *queue,
+				 काष्ठा crypto_async_request *request)
+अणु
 	queue->qlen++;
 	list_add(&request->list, &queue->list);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_enqueue_request_head);
 
-struct crypto_async_request *crypto_dequeue_request(struct crypto_queue *queue)
-{
-	struct list_head *request;
+काष्ठा crypto_async_request *crypto_dequeue_request(काष्ठा crypto_queue *queue)
+अणु
+	काष्ठा list_head *request;
 
-	if (unlikely(!queue->qlen))
-		return NULL;
+	अगर (unlikely(!queue->qlen))
+		वापस शून्य;
 
 	queue->qlen--;
 
-	if (queue->backlog != &queue->list)
+	अगर (queue->backlog != &queue->list)
 		queue->backlog = queue->backlog->next;
 
 	request = queue->list.next;
 	list_del(request);
 
-	return list_entry(request, struct crypto_async_request, list);
-}
+	वापस list_entry(request, काष्ठा crypto_async_request, list);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_dequeue_request);
 
-static inline void crypto_inc_byte(u8 *a, unsigned int size)
-{
+अटल अंतरभूत व्योम crypto_inc_byte(u8 *a, अचिन्हित पूर्णांक size)
+अणु
 	u8 *b = (a + size);
 	u8 c;
 
-	for (; size; size--) {
+	क्रम (; size; size--) अणु
 		c = *--b + 1;
 		*b = c;
-		if (c)
-			break;
-	}
-}
+		अगर (c)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-void crypto_inc(u8 *a, unsigned int size)
-{
+व्योम crypto_inc(u8 *a, अचिन्हित पूर्णांक size)
+अणु
 	__be32 *b = (__be32 *)(a + size);
 	u32 c;
 
-	if (IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) ||
-	    IS_ALIGNED((unsigned long)b, __alignof__(*b)))
-		for (; size >= 4; size -= 4) {
+	अगर (IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) ||
+	    IS_ALIGNED((अचिन्हित दीर्घ)b, __alignof__(*b)))
+		क्रम (; size >= 4; size -= 4) अणु
 			c = be32_to_cpu(*--b) + 1;
 			*b = cpu_to_be32(c);
-			if (likely(c))
-				return;
-		}
+			अगर (likely(c))
+				वापस;
+		पूर्ण
 
 	crypto_inc_byte(a, size);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_inc);
 
-void __crypto_xor(u8 *dst, const u8 *src1, const u8 *src2, unsigned int len)
-{
-	int relalign = 0;
+व्योम __crypto_xor(u8 *dst, स्थिर u8 *src1, स्थिर u8 *src2, अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक relalign = 0;
 
-	if (!IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS)) {
-		int size = sizeof(unsigned long);
-		int d = (((unsigned long)dst ^ (unsigned long)src1) |
-			 ((unsigned long)dst ^ (unsigned long)src2)) &
+	अगर (!IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS)) अणु
+		पूर्णांक size = माप(अचिन्हित दीर्घ);
+		पूर्णांक d = (((अचिन्हित दीर्घ)dst ^ (अचिन्हित दीर्घ)src1) |
+			 ((अचिन्हित दीर्घ)dst ^ (अचिन्हित दीर्घ)src2)) &
 			(size - 1);
 
 		relalign = d ? 1 << __ffs(d) : size;
@@ -1007,291 +1008,291 @@ void __crypto_xor(u8 *dst, const u8 *src1, const u8 *src2, unsigned int len)
 		 * If we care about alignment, process as many bytes as
 		 * needed to advance dst and src to values whose alignments
 		 * equal their relative alignment. This will allow us to
-		 * process the remainder of the input using optimal strides.
+		 * process the reमुख्यder of the input using optimal strides.
 		 */
-		while (((unsigned long)dst & (relalign - 1)) && len > 0) {
+		जबतक (((अचिन्हित दीर्घ)dst & (relalign - 1)) && len > 0) अणु
 			*dst++ = *src1++ ^ *src2++;
 			len--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	while (IS_ENABLED(CONFIG_64BIT) && len >= 8 && !(relalign & 7)) {
+	जबतक (IS_ENABLED(CONFIG_64BIT) && len >= 8 && !(relalign & 7)) अणु
 		*(u64 *)dst = *(u64 *)src1 ^  *(u64 *)src2;
 		dst += 8;
 		src1 += 8;
 		src2 += 8;
 		len -= 8;
-	}
+	पूर्ण
 
-	while (len >= 4 && !(relalign & 3)) {
+	जबतक (len >= 4 && !(relalign & 3)) अणु
 		*(u32 *)dst = *(u32 *)src1 ^ *(u32 *)src2;
 		dst += 4;
 		src1 += 4;
 		src2 += 4;
 		len -= 4;
-	}
+	पूर्ण
 
-	while (len >= 2 && !(relalign & 1)) {
+	जबतक (len >= 2 && !(relalign & 1)) अणु
 		*(u16 *)dst = *(u16 *)src1 ^ *(u16 *)src2;
 		dst += 2;
 		src1 += 2;
 		src2 += 2;
 		len -= 2;
-	}
+	पूर्ण
 
-	while (len--)
+	जबतक (len--)
 		*dst++ = *src1++ ^ *src2++;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__crypto_xor);
 
-unsigned int crypto_alg_extsize(struct crypto_alg *alg)
-{
-	return alg->cra_ctxsize +
+अचिन्हित पूर्णांक crypto_alg_extsize(काष्ठा crypto_alg *alg)
+अणु
+	वापस alg->cra_ctxsize +
 	       (alg->cra_alignmask & ~(crypto_tfm_ctx_alignment() - 1));
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_alg_extsize);
 
-int crypto_type_has_alg(const char *name, const struct crypto_type *frontend,
+पूर्णांक crypto_type_has_alg(स्थिर अक्षर *name, स्थिर काष्ठा crypto_type *frontend,
 			u32 type, u32 mask)
-{
-	int ret = 0;
-	struct crypto_alg *alg = crypto_find_alg(name, frontend, type, mask);
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा crypto_alg *alg = crypto_find_alg(name, frontend, type, mask);
 
-	if (!IS_ERR(alg)) {
+	अगर (!IS_ERR(alg)) अणु
 		crypto_mod_put(alg);
 		ret = 1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_type_has_alg);
 
-#ifdef CONFIG_CRYPTO_STATS
-void crypto_stats_init(struct crypto_alg *alg)
-{
-	memset(&alg->stats, 0, sizeof(alg->stats));
-}
+#अगर_घोषित CONFIG_CRYPTO_STATS
+व्योम crypto_stats_init(काष्ठा crypto_alg *alg)
+अणु
+	स_रखो(&alg->stats, 0, माप(alg->stats));
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_init);
 
-void crypto_stats_get(struct crypto_alg *alg)
-{
+व्योम crypto_stats_get(काष्ठा crypto_alg *alg)
+अणु
 	crypto_alg_get(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_get);
 
-void crypto_stats_aead_encrypt(unsigned int cryptlen, struct crypto_alg *alg,
-			       int ret)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY) {
+व्योम crypto_stats_aead_encrypt(अचिन्हित पूर्णांक cryptlen, काष्ठा crypto_alg *alg,
+			       पूर्णांक ret)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY) अणु
 		atomic64_inc(&alg->stats.aead.err_cnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&alg->stats.aead.encrypt_cnt);
 		atomic64_add(cryptlen, &alg->stats.aead.encrypt_tlen);
-	}
+	पूर्ण
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_aead_encrypt);
 
-void crypto_stats_aead_decrypt(unsigned int cryptlen, struct crypto_alg *alg,
-			       int ret)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY) {
+व्योम crypto_stats_aead_decrypt(अचिन्हित पूर्णांक cryptlen, काष्ठा crypto_alg *alg,
+			       पूर्णांक ret)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY) अणु
 		atomic64_inc(&alg->stats.aead.err_cnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&alg->stats.aead.decrypt_cnt);
 		atomic64_add(cryptlen, &alg->stats.aead.decrypt_tlen);
-	}
+	पूर्ण
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_aead_decrypt);
 
-void crypto_stats_akcipher_encrypt(unsigned int src_len, int ret,
-				   struct crypto_alg *alg)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY) {
+व्योम crypto_stats_akcipher_encrypt(अचिन्हित पूर्णांक src_len, पूर्णांक ret,
+				   काष्ठा crypto_alg *alg)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY) अणु
 		atomic64_inc(&alg->stats.akcipher.err_cnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&alg->stats.akcipher.encrypt_cnt);
 		atomic64_add(src_len, &alg->stats.akcipher.encrypt_tlen);
-	}
+	पूर्ण
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_akcipher_encrypt);
 
-void crypto_stats_akcipher_decrypt(unsigned int src_len, int ret,
-				   struct crypto_alg *alg)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY) {
+व्योम crypto_stats_akcipher_decrypt(अचिन्हित पूर्णांक src_len, पूर्णांक ret,
+				   काष्ठा crypto_alg *alg)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY) अणु
 		atomic64_inc(&alg->stats.akcipher.err_cnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&alg->stats.akcipher.decrypt_cnt);
 		atomic64_add(src_len, &alg->stats.akcipher.decrypt_tlen);
-	}
+	पूर्ण
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_akcipher_decrypt);
 
-void crypto_stats_akcipher_sign(int ret, struct crypto_alg *alg)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY)
+व्योम crypto_stats_akcipher_sign(पूर्णांक ret, काष्ठा crypto_alg *alg)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY)
 		atomic64_inc(&alg->stats.akcipher.err_cnt);
-	else
+	अन्यथा
 		atomic64_inc(&alg->stats.akcipher.sign_cnt);
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_akcipher_sign);
 
-void crypto_stats_akcipher_verify(int ret, struct crypto_alg *alg)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY)
+व्योम crypto_stats_akcipher_verअगरy(पूर्णांक ret, काष्ठा crypto_alg *alg)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY)
 		atomic64_inc(&alg->stats.akcipher.err_cnt);
-	else
-		atomic64_inc(&alg->stats.akcipher.verify_cnt);
+	अन्यथा
+		atomic64_inc(&alg->stats.akcipher.verअगरy_cnt);
 	crypto_alg_put(alg);
-}
-EXPORT_SYMBOL_GPL(crypto_stats_akcipher_verify);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_stats_akcipher_verअगरy);
 
-void crypto_stats_compress(unsigned int slen, int ret, struct crypto_alg *alg)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY) {
+व्योम crypto_stats_compress(अचिन्हित पूर्णांक slen, पूर्णांक ret, काष्ठा crypto_alg *alg)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY) अणु
 		atomic64_inc(&alg->stats.compress.err_cnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&alg->stats.compress.compress_cnt);
 		atomic64_add(slen, &alg->stats.compress.compress_tlen);
-	}
+	पूर्ण
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_compress);
 
-void crypto_stats_decompress(unsigned int slen, int ret, struct crypto_alg *alg)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY) {
+व्योम crypto_stats_decompress(अचिन्हित पूर्णांक slen, पूर्णांक ret, काष्ठा crypto_alg *alg)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY) अणु
 		atomic64_inc(&alg->stats.compress.err_cnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&alg->stats.compress.decompress_cnt);
 		atomic64_add(slen, &alg->stats.compress.decompress_tlen);
-	}
+	पूर्ण
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_decompress);
 
-void crypto_stats_ahash_update(unsigned int nbytes, int ret,
-			       struct crypto_alg *alg)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY)
+व्योम crypto_stats_ahash_update(अचिन्हित पूर्णांक nbytes, पूर्णांक ret,
+			       काष्ठा crypto_alg *alg)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY)
 		atomic64_inc(&alg->stats.hash.err_cnt);
-	else
+	अन्यथा
 		atomic64_add(nbytes, &alg->stats.hash.hash_tlen);
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_ahash_update);
 
-void crypto_stats_ahash_final(unsigned int nbytes, int ret,
-			      struct crypto_alg *alg)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY) {
+व्योम crypto_stats_ahash_final(अचिन्हित पूर्णांक nbytes, पूर्णांक ret,
+			      काष्ठा crypto_alg *alg)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY) अणु
 		atomic64_inc(&alg->stats.hash.err_cnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&alg->stats.hash.hash_cnt);
 		atomic64_add(nbytes, &alg->stats.hash.hash_tlen);
-	}
+	पूर्ण
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_ahash_final);
 
-void crypto_stats_kpp_set_secret(struct crypto_alg *alg, int ret)
-{
-	if (ret)
+व्योम crypto_stats_kpp_set_secret(काष्ठा crypto_alg *alg, पूर्णांक ret)
+अणु
+	अगर (ret)
 		atomic64_inc(&alg->stats.kpp.err_cnt);
-	else
+	अन्यथा
 		atomic64_inc(&alg->stats.kpp.setsecret_cnt);
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_kpp_set_secret);
 
-void crypto_stats_kpp_generate_public_key(struct crypto_alg *alg, int ret)
-{
-	if (ret)
+व्योम crypto_stats_kpp_generate_खुला_key(काष्ठा crypto_alg *alg, पूर्णांक ret)
+अणु
+	अगर (ret)
 		atomic64_inc(&alg->stats.kpp.err_cnt);
-	else
-		atomic64_inc(&alg->stats.kpp.generate_public_key_cnt);
+	अन्यथा
+		atomic64_inc(&alg->stats.kpp.generate_खुला_key_cnt);
 	crypto_alg_put(alg);
-}
-EXPORT_SYMBOL_GPL(crypto_stats_kpp_generate_public_key);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_stats_kpp_generate_खुला_key);
 
-void crypto_stats_kpp_compute_shared_secret(struct crypto_alg *alg, int ret)
-{
-	if (ret)
+व्योम crypto_stats_kpp_compute_shared_secret(काष्ठा crypto_alg *alg, पूर्णांक ret)
+अणु
+	अगर (ret)
 		atomic64_inc(&alg->stats.kpp.err_cnt);
-	else
+	अन्यथा
 		atomic64_inc(&alg->stats.kpp.compute_shared_secret_cnt);
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_kpp_compute_shared_secret);
 
-void crypto_stats_rng_seed(struct crypto_alg *alg, int ret)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY)
+व्योम crypto_stats_rng_seed(काष्ठा crypto_alg *alg, पूर्णांक ret)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY)
 		atomic64_inc(&alg->stats.rng.err_cnt);
-	else
+	अन्यथा
 		atomic64_inc(&alg->stats.rng.seed_cnt);
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_rng_seed);
 
-void crypto_stats_rng_generate(struct crypto_alg *alg, unsigned int dlen,
-			       int ret)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY) {
+व्योम crypto_stats_rng_generate(काष्ठा crypto_alg *alg, अचिन्हित पूर्णांक dlen,
+			       पूर्णांक ret)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY) अणु
 		atomic64_inc(&alg->stats.rng.err_cnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&alg->stats.rng.generate_cnt);
 		atomic64_add(dlen, &alg->stats.rng.generate_tlen);
-	}
+	पूर्ण
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_rng_generate);
 
-void crypto_stats_skcipher_encrypt(unsigned int cryptlen, int ret,
-				   struct crypto_alg *alg)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY) {
+व्योम crypto_stats_skcipher_encrypt(अचिन्हित पूर्णांक cryptlen, पूर्णांक ret,
+				   काष्ठा crypto_alg *alg)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY) अणु
 		atomic64_inc(&alg->stats.cipher.err_cnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&alg->stats.cipher.encrypt_cnt);
 		atomic64_add(cryptlen, &alg->stats.cipher.encrypt_tlen);
-	}
+	पूर्ण
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_skcipher_encrypt);
 
-void crypto_stats_skcipher_decrypt(unsigned int cryptlen, int ret,
-				   struct crypto_alg *alg)
-{
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY) {
+व्योम crypto_stats_skcipher_decrypt(अचिन्हित पूर्णांक cryptlen, पूर्णांक ret,
+				   काष्ठा crypto_alg *alg)
+अणु
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY) अणु
 		atomic64_inc(&alg->stats.cipher.err_cnt);
-	} else {
+	पूर्ण अन्यथा अणु
 		atomic64_inc(&alg->stats.cipher.decrypt_cnt);
 		atomic64_add(cryptlen, &alg->stats.cipher.decrypt_tlen);
-	}
+	पूर्ण
 	crypto_alg_put(alg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_stats_skcipher_decrypt);
-#endif
+#पूर्ण_अगर
 
-static int __init crypto_algapi_init(void)
-{
+अटल पूर्णांक __init crypto_algapi_init(व्योम)
+अणु
 	crypto_init_proc();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit crypto_algapi_exit(void)
-{
-	crypto_exit_proc();
-}
+अटल व्योम __निकास crypto_algapi_निकास(व्योम)
+अणु
+	crypto_निकास_proc();
+पूर्ण
 
 module_init(crypto_algapi_init);
-module_exit(crypto_algapi_exit);
+module_निकास(crypto_algapi_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Cryptographic algorithms API");

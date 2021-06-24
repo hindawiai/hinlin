@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bug.h>
-#include <linux/kernel.h>
-#include <asm/opcodes.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/opcodes.h>
 
-static unsigned long
-__arm_gen_branch_thumb2(unsigned long pc, unsigned long addr, bool link)
-{
-	unsigned long s, j1, j2, i1, i2, imm10, imm11;
-	unsigned long first, second;
-	long offset;
+अटल अचिन्हित दीर्घ
+__arm_gen_branch_thumb2(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ addr, bool link)
+अणु
+	अचिन्हित दीर्घ s, j1, j2, i1, i2, imm10, imm11;
+	अचिन्हित दीर्घ first, second;
+	दीर्घ offset;
 
-	offset = (long)addr - (long)(pc + 4);
-	if (offset < -16777216 || offset > 16777214) {
+	offset = (दीर्घ)addr - (दीर्घ)(pc + 4);
+	अगर (offset < -16777216 || offset > 16777214) अणु
 		WARN_ON_ONCE(1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	s	= (offset >> 24) & 0x1;
 	i1	= (offset >> 23) & 0x1;
@@ -27,37 +28,37 @@ __arm_gen_branch_thumb2(unsigned long pc, unsigned long addr, bool link)
 
 	first = 0xf000 | (s << 10) | imm10;
 	second = 0x9000 | (j1 << 13) | (j2 << 11) | imm11;
-	if (link)
+	अगर (link)
 		second |= 1 << 14;
 
-	return __opcode_thumb32_compose(first, second);
-}
+	वापस __opcode_thumb32_compose(first, second);
+पूर्ण
 
-static unsigned long
-__arm_gen_branch_arm(unsigned long pc, unsigned long addr, bool link)
-{
-	unsigned long opcode = 0xea000000;
-	long offset;
+अटल अचिन्हित दीर्घ
+__arm_gen_branch_arm(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ addr, bool link)
+अणु
+	अचिन्हित दीर्घ opcode = 0xea000000;
+	दीर्घ offset;
 
-	if (link)
+	अगर (link)
 		opcode |= 1 << 24;
 
-	offset = (long)addr - (long)(pc + 8);
-	if (unlikely(offset < -33554432 || offset > 33554428)) {
+	offset = (दीर्घ)addr - (दीर्घ)(pc + 8);
+	अगर (unlikely(offset < -33554432 || offset > 33554428)) अणु
 		WARN_ON_ONCE(1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	offset = (offset >> 2) & 0x00ffffff;
 
-	return opcode | offset;
-}
+	वापस opcode | offset;
+पूर्ण
 
-unsigned long
-__arm_gen_branch(unsigned long pc, unsigned long addr, bool link)
-{
-	if (IS_ENABLED(CONFIG_THUMB2_KERNEL))
-		return __arm_gen_branch_thumb2(pc, addr, link);
-	else
-		return __arm_gen_branch_arm(pc, addr, link);
-}
+अचिन्हित दीर्घ
+__arm_gen_branch(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ addr, bool link)
+अणु
+	अगर (IS_ENABLED(CONFIG_THUMB2_KERNEL))
+		वापस __arm_gen_branch_thumb2(pc, addr, link);
+	अन्यथा
+		वापस __arm_gen_branch_arm(pc, addr, link);
+पूर्ण

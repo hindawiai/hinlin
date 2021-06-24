@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_IRQ_WORK_H
-#define _ASM_POWERPC_IRQ_WORK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_IRQ_WORK_H
+#घोषणा _ASM_POWERPC_IRQ_WORK_H
 
-static inline bool arch_irq_work_has_interrupt(void)
-{
-	return true;
-}
-extern void arch_irq_work_raise(void);
+अटल अंतरभूत bool arch_irq_work_has_पूर्णांकerrupt(व्योम)
+अणु
+	वापस true;
+पूर्ण
+बाह्य व्योम arch_irq_work_उठाओ(व्योम);
 
-#endif /* _ASM_POWERPC_IRQ_WORK_H */
+#पूर्ण_अगर /* _ASM_POWERPC_IRQ_WORK_H */

@@ -1,155 +1,156 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
 /*
  * Microsemi MIPS SoC reset driver
  *
  * License: Dual MIT/GPL
  * Copyright (c) 2017 Microsemi Corporation
  */
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/notifier.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/regmap.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/regmap.h>
 
-struct reset_props {
-	const char *syscon;
+काष्ठा reset_props अणु
+	स्थिर अक्षर *syscon;
 	u32 protect_reg;
 	u32 vcore_protect;
-	u32 if_si_owner_bit;
-};
+	u32 अगर_si_owner_bit;
+पूर्ण;
 
-struct ocelot_reset_context {
-	void __iomem *base;
-	struct regmap *cpu_ctrl;
-	const struct reset_props *props;
-	struct notifier_block restart_handler;
-};
+काष्ठा ocelot_reset_context अणु
+	व्योम __iomem *base;
+	काष्ठा regmap *cpu_ctrl;
+	स्थिर काष्ठा reset_props *props;
+	काष्ठा notअगरier_block restart_handler;
+पूर्ण;
 
-#define BIT_OFF_INVALID				32
+#घोषणा BIT_OFF_INVALID				32
 
-#define SOFT_CHIP_RST BIT(0)
+#घोषणा SOFT_CHIP_RST BIT(0)
 
-#define ICPU_CFG_CPU_SYSTEM_CTRL_GENERAL_CTRL	0x24
-#define IF_SI_OWNER_MASK			GENMASK(1, 0)
-#define IF_SI_OWNER_SISL			0
-#define IF_SI_OWNER_SIBM			1
-#define IF_SI_OWNER_SIMC			2
+#घोषणा ICPU_CFG_CPU_SYSTEM_CTRL_GENERAL_CTRL	0x24
+#घोषणा IF_SI_OWNER_MASK			GENMASK(1, 0)
+#घोषणा IF_SI_OWNER_SISL			0
+#घोषणा IF_SI_OWNER_SIBM			1
+#घोषणा IF_SI_OWNER_SIMC			2
 
-static int ocelot_restart_handle(struct notifier_block *this,
-				 unsigned long mode, void *cmd)
-{
-	struct ocelot_reset_context *ctx = container_of(this, struct
+अटल पूर्णांक ocelot_restart_handle(काष्ठा notअगरier_block *this,
+				 अचिन्हित दीर्घ mode, व्योम *cmd)
+अणु
+	काष्ठा ocelot_reset_context *ctx = container_of(this, काष्ठा
 							ocelot_reset_context,
 							restart_handler);
-	u32 if_si_owner_bit = ctx->props->if_si_owner_bit;
+	u32 अगर_si_owner_bit = ctx->props->अगर_si_owner_bit;
 
-	/* Make sure the core is not protected from reset */
+	/* Make sure the core is not रक्षित from reset */
 	regmap_update_bits(ctx->cpu_ctrl, ctx->props->protect_reg,
 			   ctx->props->vcore_protect, 0);
 
 	/* Make the SI back to boot mode */
-	if (if_si_owner_bit != BIT_OFF_INVALID)
+	अगर (अगर_si_owner_bit != BIT_OFF_INVALID)
 		regmap_update_bits(ctx->cpu_ctrl,
 				   ICPU_CFG_CPU_SYSTEM_CTRL_GENERAL_CTRL,
-				   IF_SI_OWNER_MASK << if_si_owner_bit,
-				   IF_SI_OWNER_SIBM << if_si_owner_bit);
+				   IF_SI_OWNER_MASK << अगर_si_owner_bit,
+				   IF_SI_OWNER_SIBM << अगर_si_owner_bit);
 
 	pr_emerg("Resetting SoC\n");
 
-	writel(SOFT_CHIP_RST, ctx->base);
+	ग_लिखोl(SOFT_CHIP_RST, ctx->base);
 
 	pr_emerg("Unable to restart system\n");
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int ocelot_reset_probe(struct platform_device *pdev)
-{
-	struct ocelot_reset_context *ctx;
-	struct resource *res;
+अटल पूर्णांक ocelot_reset_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ocelot_reset_context *ctx;
+	काष्ठा resource *res;
 
-	struct device *dev = &pdev->dev;
-	int err;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक err;
 
-	ctx = devm_kzalloc(&pdev->dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = devm_kzalloc(&pdev->dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	ctx->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(ctx->base))
-		return PTR_ERR(ctx->base);
+	अगर (IS_ERR(ctx->base))
+		वापस PTR_ERR(ctx->base);
 
 	ctx->props = device_get_match_data(dev);
 
 	ctx->cpu_ctrl = syscon_regmap_lookup_by_compatible(ctx->props->syscon);
-	if (IS_ERR(ctx->cpu_ctrl)) {
+	अगर (IS_ERR(ctx->cpu_ctrl)) अणु
 		dev_err(dev, "No syscon map: %s\n", ctx->props->syscon);
-		return PTR_ERR(ctx->cpu_ctrl);
-	}
+		वापस PTR_ERR(ctx->cpu_ctrl);
+	पूर्ण
 
-	ctx->restart_handler.notifier_call = ocelot_restart_handle;
+	ctx->restart_handler.notअगरier_call = ocelot_restart_handle;
 	ctx->restart_handler.priority = 192;
-	err = register_restart_handler(&ctx->restart_handler);
-	if (err)
+	err = रेजिस्टर_restart_handler(&ctx->restart_handler);
+	अगर (err)
 		dev_err(dev, "can't register restart notifier (err=%d)\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct reset_props reset_props_jaguar2 = {
+अटल स्थिर काष्ठा reset_props reset_props_jaguar2 = अणु
 	.syscon		 = "mscc,ocelot-cpu-syscon",
 	.protect_reg     = 0x20,
 	.vcore_protect   = BIT(2),
-	.if_si_owner_bit = 6,
-};
+	.अगर_si_owner_bit = 6,
+पूर्ण;
 
-static const struct reset_props reset_props_luton = {
+अटल स्थिर काष्ठा reset_props reset_props_luton = अणु
 	.syscon		 = "mscc,ocelot-cpu-syscon",
 	.protect_reg     = 0x20,
 	.vcore_protect   = BIT(2),
-	.if_si_owner_bit = BIT_OFF_INVALID, /* n/a */
-};
+	.अगर_si_owner_bit = BIT_OFF_INVALID, /* n/a */
+पूर्ण;
 
-static const struct reset_props reset_props_ocelot = {
+अटल स्थिर काष्ठा reset_props reset_props_ocelot = अणु
 	.syscon		 = "mscc,ocelot-cpu-syscon",
 	.protect_reg     = 0x20,
 	.vcore_protect   = BIT(2),
-	.if_si_owner_bit = 4,
-};
+	.अगर_si_owner_bit = 4,
+पूर्ण;
 
-static const struct reset_props reset_props_sparx5 = {
+अटल स्थिर काष्ठा reset_props reset_props_sparx5 = अणु
 	.syscon		 = "microchip,sparx5-cpu-syscon",
 	.protect_reg     = 0x84,
 	.vcore_protect   = BIT(10),
-	.if_si_owner_bit = 6,
-};
+	.अगर_si_owner_bit = 6,
+पूर्ण;
 
-static const struct of_device_id ocelot_reset_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id ocelot_reset_of_match[] = अणु
+	अणु
 		.compatible = "mscc,jaguar2-chip-reset",
 		.data = &reset_props_jaguar2
-	}, {
+	पूर्ण, अणु
 		.compatible = "mscc,luton-chip-reset",
 		.data = &reset_props_luton
-	}, {
+	पूर्ण, अणु
 		.compatible = "mscc,ocelot-chip-reset",
 		.data = &reset_props_ocelot
-	}, {
+	पूर्ण, अणु
 		.compatible = "microchip,sparx5-chip-reset",
 		.data = &reset_props_sparx5
-	},
-	{ /*sentinel*/ }
-};
+	पूर्ण,
+	अणु /*sentinel*/ पूर्ण
+पूर्ण;
 
-static struct platform_driver ocelot_reset_driver = {
+अटल काष्ठा platक्रमm_driver ocelot_reset_driver = अणु
 	.probe = ocelot_reset_probe,
-	.driver = {
+	.driver = अणु
 		.name = "ocelot-chip-reset",
 		.of_match_table = ocelot_reset_of_match,
-	},
-};
-builtin_platform_driver(ocelot_reset_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(ocelot_reset_driver);

@@ -1,126 +1,127 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
- * LCD driver for HP Jornada 700 series (710/720/728)
+ * LCD driver क्रम HP Jornada 700 series (710/720/728)
  * Copyright (C) 2006-2009 Kristoffer Ericson <kristoffer.ericson@gmail.com>
  */
 
-#include <linux/device.h>
-#include <linux/fb.h>
-#include <linux/kernel.h>
-#include <linux/lcd.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/lcd.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
 
-#include <mach/jornada720.h>
-#include <mach/hardware.h>
+#समावेश <mach/jornada720.h>
+#समावेश <mach/hardware.h>
 
-#include <video/s1d13xxxfb.h>
+#समावेश <video/s1d13xxxfb.h>
 
-#define LCD_MAX_CONTRAST	0xff
-#define LCD_DEF_CONTRAST	0x80
+#घोषणा LCD_MAX_CONTRAST	0xff
+#घोषणा LCD_DEF_CONTRAST	0x80
 
-static int jornada_lcd_get_power(struct lcd_device *ld)
-{
-	return PPSR & PPC_LDD2 ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
-}
+अटल पूर्णांक jornada_lcd_get_घातer(काष्ठा lcd_device *ld)
+अणु
+	वापस PPSR & PPC_LDD2 ? FB_BLANK_UNBLANK : FB_BLANK_POWERDOWN;
+पूर्ण
 
-static int jornada_lcd_get_contrast(struct lcd_device *ld)
-{
-	int ret;
+अटल पूर्णांक jornada_lcd_get_contrast(काष्ठा lcd_device *ld)
+अणु
+	पूर्णांक ret;
 
-	if (jornada_lcd_get_power(ld) != FB_BLANK_UNBLANK)
-		return 0;
+	अगर (jornada_lcd_get_घातer(ld) != FB_BLANK_UNBLANK)
+		वापस 0;
 
 	jornada_ssp_start();
 
-	if (jornada_ssp_byte(GETCONTRAST) == TXDUMMY) {
+	अगर (jornada_ssp_byte(GETCONTRAST) == TXDUMMY) अणु
 		ret = jornada_ssp_byte(TXDUMMY);
-		goto success;
-	}
+		जाओ success;
+	पूर्ण
 
 	dev_err(&ld->dev, "failed to set contrast\n");
 	ret = -ETIMEDOUT;
 
 success:
 	jornada_ssp_end();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int jornada_lcd_set_contrast(struct lcd_device *ld, int value)
-{
-	int ret = 0;
+अटल पूर्णांक jornada_lcd_set_contrast(काष्ठा lcd_device *ld, पूर्णांक value)
+अणु
+	पूर्णांक ret = 0;
 
 	jornada_ssp_start();
 
 	/* start by sending our set contrast cmd to mcu */
-	if (jornada_ssp_byte(SETCONTRAST) == TXDUMMY) {
-		/* if successful push the new value */
-		if (jornada_ssp_byte(value) == TXDUMMY)
-			goto success;
-	}
+	अगर (jornada_ssp_byte(SETCONTRAST) == TXDUMMY) अणु
+		/* अगर successful push the new value */
+		अगर (jornada_ssp_byte(value) == TXDUMMY)
+			जाओ success;
+	पूर्ण
 
 	dev_err(&ld->dev, "failed to set contrast\n");
 	ret = -ETIMEDOUT;
 
 success:
 	jornada_ssp_end();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int jornada_lcd_set_power(struct lcd_device *ld, int power)
-{
-	if (power != FB_BLANK_UNBLANK) {
+अटल पूर्णांक jornada_lcd_set_घातer(काष्ठा lcd_device *ld, पूर्णांक घातer)
+अणु
+	अगर (घातer != FB_BLANK_UNBLANK) अणु
 		PPSR &= ~PPC_LDD2;
 		PPDR |= PPC_LDD2;
-	} else {
+	पूर्ण अन्यथा अणु
 		PPSR |= PPC_LDD2;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct lcd_ops jornada_lcd_props = {
+अटल काष्ठा lcd_ops jornada_lcd_props = अणु
 	.get_contrast = jornada_lcd_get_contrast,
 	.set_contrast = jornada_lcd_set_contrast,
-	.get_power = jornada_lcd_get_power,
-	.set_power = jornada_lcd_set_power,
-};
+	.get_घातer = jornada_lcd_get_घातer,
+	.set_घातer = jornada_lcd_set_घातer,
+पूर्ण;
 
-static int jornada_lcd_probe(struct platform_device *pdev)
-{
-	struct lcd_device *lcd_device;
-	int ret;
+अटल पूर्णांक jornada_lcd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lcd_device *lcd_device;
+	पूर्णांक ret;
 
-	lcd_device = devm_lcd_device_register(&pdev->dev, S1D_DEVICENAME,
-					&pdev->dev, NULL, &jornada_lcd_props);
+	lcd_device = devm_lcd_device_रेजिस्टर(&pdev->dev, S1D_DEVICENAME,
+					&pdev->dev, शून्य, &jornada_lcd_props);
 
-	if (IS_ERR(lcd_device)) {
+	अगर (IS_ERR(lcd_device)) अणु
 		ret = PTR_ERR(lcd_device);
 		dev_err(&pdev->dev, "failed to register device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, lcd_device);
+	platक्रमm_set_drvdata(pdev, lcd_device);
 
-	/* lets set our default values */
+	/* lets set our शेष values */
 	jornada_lcd_set_contrast(lcd_device, LCD_DEF_CONTRAST);
-	jornada_lcd_set_power(lcd_device, FB_BLANK_UNBLANK);
-	/* give it some time to startup */
+	jornada_lcd_set_घातer(lcd_device, FB_BLANK_UNBLANK);
+	/* give it some समय to startup */
 	msleep(100);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver jornada_lcd_driver = {
+अटल काष्ठा platक्रमm_driver jornada_lcd_driver = अणु
 	.probe	= jornada_lcd_probe,
-	.driver	= {
+	.driver	= अणु
 		.name	= "jornada_lcd",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(jornada_lcd_driver);
+module_platक्रमm_driver(jornada_lcd_driver);
 
 MODULE_AUTHOR("Kristoffer Ericson <kristoffer.ericson@gmail.com>");
 MODULE_DESCRIPTION("HP Jornada 710/720/728 LCD driver");

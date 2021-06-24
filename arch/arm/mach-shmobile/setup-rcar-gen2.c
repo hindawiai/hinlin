@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * R-Car Generation 2 support
  *
@@ -7,220 +8,220 @@
  * Copyright (C) 2014  Ulrich Hecht
  */
 
-#include <linux/clocksource.h>
-#include <linux/device.h>
-#include <linux/dma-map-ops.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/memblock.h>
-#include <linux/of.h>
-#include <linux/of_clk.h>
-#include <linux/of_fdt.h>
-#include <linux/of_platform.h>
-#include <linux/psci.h>
-#include <asm/mach/arch.h>
-#include <asm/secure_cntvoff.h>
-#include "common.h"
-#include "rcar-gen2.h"
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_clk.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/psci.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/secure_cntvoff.h>
+#समावेश "common.h"
+#समावेश "rcar-gen2.h"
 
-static const struct of_device_id cpg_matches[] __initconst = {
-	{ .compatible = "renesas,r8a7742-cpg-mssr", .data = "extal" },
-	{ .compatible = "renesas,r8a7743-cpg-mssr", .data = "extal" },
-	{ .compatible = "renesas,r8a7744-cpg-mssr", .data = "extal" },
-	{ .compatible = "renesas,r8a7790-cpg-mssr", .data = "extal" },
-	{ .compatible = "renesas,r8a7791-cpg-mssr", .data = "extal" },
-	{ .compatible = "renesas,r8a7793-cpg-mssr", .data = "extal" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id cpg_matches[] __initस्थिर = अणु
+	अणु .compatible = "renesas,r8a7742-cpg-mssr", .data = "extal" पूर्ण,
+	अणु .compatible = "renesas,r8a7743-cpg-mssr", .data = "extal" पूर्ण,
+	अणु .compatible = "renesas,r8a7744-cpg-mssr", .data = "extal" पूर्ण,
+	अणु .compatible = "renesas,r8a7790-cpg-mssr", .data = "extal" पूर्ण,
+	अणु .compatible = "renesas,r8a7791-cpg-mssr", .data = "extal" पूर्ण,
+	अणु .compatible = "renesas,r8a7793-cpg-mssr", .data = "extal" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static unsigned int __init get_extal_freq(void)
-{
-	const struct of_device_id *match;
-	struct device_node *cpg, *extal;
+अटल अचिन्हित पूर्णांक __init get_extal_freq(व्योम)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device_node *cpg, *extal;
 	u32 freq = 20000000;
-	int idx = 0;
+	पूर्णांक idx = 0;
 
-	cpg = of_find_matching_node_and_match(NULL, cpg_matches, &match);
-	if (!cpg)
-		return freq;
+	cpg = of_find_matching_node_and_match(शून्य, cpg_matches, &match);
+	अगर (!cpg)
+		वापस freq;
 
-	if (match->data)
+	अगर (match->data)
 		idx = of_property_match_string(cpg, "clock-names", match->data);
 	extal = of_parse_phandle(cpg, "clocks", idx);
 	of_node_put(cpg);
-	if (!extal)
-		return freq;
+	अगर (!extal)
+		वापस freq;
 
-	of_property_read_u32(extal, "clock-frequency", &freq);
+	of_property_पढ़ो_u32(extal, "clock-frequency", &freq);
 	of_node_put(extal);
-	return freq;
-}
+	वापस freq;
+पूर्ण
 
-#define CNTCR 0
-#define CNTFID0 0x20
+#घोषणा CNTCR 0
+#घोषणा CNTFID0 0x20
 
-static void __init rcar_gen2_timer_init(void)
-{
+अटल व्योम __init rcar_gen2_समयr_init(व्योम)
+अणु
 	bool need_update = true;
-	void __iomem *base;
+	व्योम __iomem *base;
 	u32 freq;
 
 	/*
 	 * If PSCI is available then most likely we are running on PSCI-enabled
-	 * U-Boot which, we assume, has already taken care of resetting CNTVOFF
-	 * and updating counter module before switching to non-secure mode
-	 * and we don't need to.
+	 * U-Boot which, we assume, has alपढ़ोy taken care of resetting CNTVOFF
+	 * and updating counter module beक्रमe चयनing to non-secure mode
+	 * and we करोn't need to.
 	 */
-#ifdef CONFIG_ARM_PSCI_FW
-	if (psci_ops.cpu_on)
+#अगर_घोषित CONFIG_ARM_PSCI_FW
+	अगर (psci_ops.cpu_on)
 		need_update = false;
-#endif
+#पूर्ण_अगर
 
-	if (need_update == false)
-		goto skip_update;
+	अगर (need_update == false)
+		जाओ skip_update;
 
 	secure_cntvoff_init();
 
-	if (of_machine_is_compatible("renesas,r8a7745") ||
+	अगर (of_machine_is_compatible("renesas,r8a7745") ||
 	    of_machine_is_compatible("renesas,r8a77470") ||
 	    of_machine_is_compatible("renesas,r8a7792") ||
-	    of_machine_is_compatible("renesas,r8a7794")) {
+	    of_machine_is_compatible("renesas,r8a7794")) अणु
 		freq = 260000000 / 8;	/* ZS / 8 */
-	} else {
-		/* At Linux boot time the r8a7790 arch timer comes up
+	पूर्ण अन्यथा अणु
+		/* At Linux boot समय the r8a7790 arch समयr comes up
 		 * with the counter disabled. Moreover, it may also report
 		 * a potentially incorrect fixed 13 MHz frequency. To be
-		 * correct these registers need to be updated to use the
+		 * correct these रेजिस्टरs need to be updated to use the
 		 * frequency EXTAL / 2.
 		 */
 		freq = get_extal_freq() / 2;
-	}
+	पूर्ण
 
 	/* Remap "armgcnt address map" space */
 	base = ioremap(0xe6080000, PAGE_SIZE);
 
 	/*
-	 * Update the timer if it is either not running, or is not at the
-	 * right frequency. The timer is only configurable in secure mode
-	 * so this avoids an abort if the loader started the timer and
+	 * Update the समयr अगर it is either not running, or is not at the
+	 * right frequency. The समयr is only configurable in secure mode
+	 * so this aव्योमs an पात अगर the loader started the समयr and
 	 * entered the kernel in non-secure mode.
 	 */
 
-	if ((ioread32(base + CNTCR) & 1) == 0 ||
-	    ioread32(base + CNTFID0) != freq) {
-		/* Update registers with correct frequency */
-		iowrite32(freq, base + CNTFID0);
-		asm volatile("mcr p15, 0, %0, c14, c0, 0" : : "r" (freq));
+	अगर ((ioपढ़ो32(base + CNTCR) & 1) == 0 ||
+	    ioपढ़ो32(base + CNTFID0) != freq) अणु
+		/* Update रेजिस्टरs with correct frequency */
+		ioग_लिखो32(freq, base + CNTFID0);
+		यंत्र अस्थिर("mcr p15, 0, %0, c14, c0, 0" : : "r" (freq));
 
-		/* make sure arch timer is started by setting bit 0 of CNTCR */
-		iowrite32(1, base + CNTCR);
-	}
+		/* make sure arch समयr is started by setting bit 0 of CNTCR */
+		ioग_लिखो32(1, base + CNTCR);
+	पूर्ण
 
 	iounmap(base);
 
 skip_update:
-	of_clk_init(NULL);
-	timer_probe();
-}
+	of_clk_init(शून्य);
+	समयr_probe();
+पूर्ण
 
-struct memory_reserve_config {
+काष्ठा memory_reserve_config अणु
 	u64 reserved;
 	u64 base, size;
-};
+पूर्ण;
 
-static int __init rcar_gen2_scan_mem(unsigned long node, const char *uname,
-				     int depth, void *data)
-{
-	const char *type = of_get_flat_dt_prop(node, "device_type", NULL);
-	const __be32 *reg, *endp;
-	int l;
-	struct memory_reserve_config *mrc = data;
+अटल पूर्णांक __init rcar_gen2_scan_mem(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
+				     पूर्णांक depth, व्योम *data)
+अणु
+	स्थिर अक्षर *type = of_get_flat_dt_prop(node, "device_type", शून्य);
+	स्थिर __be32 *reg, *endp;
+	पूर्णांक l;
+	काष्ठा memory_reserve_config *mrc = data;
 	u64 lpae_start = 1ULL << 32;
 
 	/* We are scanning "memory" nodes only */
-	if (type == NULL || strcmp(type, "memory"))
-		return 0;
+	अगर (type == शून्य || म_भेद(type, "memory"))
+		वापस 0;
 
 	reg = of_get_flat_dt_prop(node, "linux,usable-memory", &l);
-	if (reg == NULL)
+	अगर (reg == शून्य)
 		reg = of_get_flat_dt_prop(node, "reg", &l);
-	if (reg == NULL)
-		return 0;
+	अगर (reg == शून्य)
+		वापस 0;
 
-	endp = reg + (l / sizeof(__be32));
-	while ((endp - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
+	endp = reg + (l / माप(__be32));
+	जबतक ((endp - reg) >= (dt_root_addr_cells + dt_root_size_cells)) अणु
 		u64 base, size;
 
 		base = dt_mem_next_cell(dt_root_addr_cells, &reg);
 		size = dt_mem_next_cell(dt_root_size_cells, &reg);
 
-		if (base >= lpae_start)
-			continue;
+		अगर (base >= lpae_start)
+			जारी;
 
-		if ((base + size) >= lpae_start)
+		अगर ((base + size) >= lpae_start)
 			size = lpae_start - base;
 
-		if (size < mrc->reserved)
-			continue;
+		अगर (size < mrc->reserved)
+			जारी;
 
-		if (base < mrc->base)
-			continue;
+		अगर (base < mrc->base)
+			जारी;
 
 		/* keep the area at top near the 32-bit legacy limit */
 		mrc->base = base + size - mrc->reserved;
 		mrc->size = mrc->reserved;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init rcar_gen2_reserve(void)
-{
-	struct memory_reserve_config mrc;
+अटल व्योम __init rcar_gen2_reserve(व्योम)
+अणु
+	काष्ठा memory_reserve_config mrc;
 
 	/* reserve 256 MiB at the top of the physical legacy 32-bit space */
-	memset(&mrc, 0, sizeof(mrc));
+	स_रखो(&mrc, 0, माप(mrc));
 	mrc.reserved = SZ_256M;
 
 	of_scan_flat_dt(rcar_gen2_scan_mem, &mrc);
-#ifdef CONFIG_DMA_CMA
-	if (mrc.size && memblock_is_region_memory(mrc.base, mrc.size)) {
-		static struct cma *rcar_gen2_dma_contiguous;
+#अगर_घोषित CONFIG_DMA_CMA
+	अगर (mrc.size && memblock_is_region_memory(mrc.base, mrc.size)) अणु
+		अटल काष्ठा cma *rcar_gen2_dma_contiguous;
 
 		dma_contiguous_reserve_area(mrc.size, mrc.base, 0,
 					    &rcar_gen2_dma_contiguous, true);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static const char * const rcar_gen2_boards_compat_dt[] __initconst = {
+अटल स्थिर अक्षर * स्थिर rcar_gen2_boards_compat_dt[] __initस्थिर = अणु
 	"renesas,r8a7790",
 	"renesas,r8a7791",
 	"renesas,r8a7792",
 	"renesas,r8a7793",
 	"renesas,r8a7794",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(RCAR_GEN2_DT, "Generic R-Car Gen2 (Flattened Device Tree)")
 	.init_late	= shmobile_init_late,
-	.init_time	= rcar_gen2_timer_init,
+	.init_समय	= rcar_gen2_समयr_init,
 	.reserve	= rcar_gen2_reserve,
 	.dt_compat	= rcar_gen2_boards_compat_dt,
 MACHINE_END
 
-static const char * const rz_g1_boards_compat_dt[] __initconst = {
+अटल स्थिर अक्षर * स्थिर rz_g1_boards_compat_dt[] __initस्थिर = अणु
 	"renesas,r8a7742",
 	"renesas,r8a7743",
 	"renesas,r8a7744",
 	"renesas,r8a7745",
 	"renesas,r8a77470",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(RZ_G1_DT, "Generic RZ/G1 (Flattened Device Tree)")
 	.init_late	= shmobile_init_late,
-	.init_time	= rcar_gen2_timer_init,
+	.init_समय	= rcar_gen2_समयr_init,
 	.reserve	= rcar_gen2_reserve,
 	.dt_compat	= rz_g1_boards_compat_dt,
 MACHINE_END

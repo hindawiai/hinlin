@@ -1,178 +1,179 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  thermal_core.h
  *
  *  Copyright (C) 2012  Intel Corp
- *  Author: Durgadoss R <durgadoss.r@intel.com>
+ *  Author: Durgaकरोss R <durgaकरोss.r@पूर्णांकel.com>
  */
 
-#ifndef __THERMAL_CORE_H__
-#define __THERMAL_CORE_H__
+#अगर_अघोषित __THERMAL_CORE_H__
+#घोषणा __THERMAL_CORE_H__
 
-#include <linux/device.h>
-#include <linux/thermal.h>
+#समावेश <linux/device.h>
+#समावेश <linux/thermal.h>
 
-#include "thermal_netlink.h"
+#समावेश "thermal_netlink.h"
 
 /* Default Thermal Governor */
-#if defined(CONFIG_THERMAL_DEFAULT_GOV_STEP_WISE)
-#define DEFAULT_THERMAL_GOVERNOR       "step_wise"
-#elif defined(CONFIG_THERMAL_DEFAULT_GOV_FAIR_SHARE)
-#define DEFAULT_THERMAL_GOVERNOR       "fair_share"
-#elif defined(CONFIG_THERMAL_DEFAULT_GOV_USER_SPACE)
-#define DEFAULT_THERMAL_GOVERNOR       "user_space"
-#elif defined(CONFIG_THERMAL_DEFAULT_GOV_POWER_ALLOCATOR)
-#define DEFAULT_THERMAL_GOVERNOR       "power_allocator"
-#endif
+#अगर defined(CONFIG_THERMAL_DEFAULT_GOV_STEP_WISE)
+#घोषणा DEFAULT_THERMAL_GOVERNOR       "step_wise"
+#या_अगर defined(CONFIG_THERMAL_DEFAULT_GOV_FAIR_SHARE)
+#घोषणा DEFAULT_THERMAL_GOVERNOR       "fair_share"
+#या_अगर defined(CONFIG_THERMAL_DEFAULT_GOV_USER_SPACE)
+#घोषणा DEFAULT_THERMAL_GOVERNOR       "user_space"
+#या_अगर defined(CONFIG_THERMAL_DEFAULT_GOV_POWER_ALLOCATOR)
+#घोषणा DEFAULT_THERMAL_GOVERNOR       "power_allocator"
+#पूर्ण_अगर
 
 /* Initial state of a cooling device during binding */
-#define THERMAL_NO_TARGET -1UL
+#घोषणा THERMAL_NO_TARGET -1UL
 
 /* Init section thermal table */
-extern struct thermal_governor *__governor_thermal_table[];
-extern struct thermal_governor *__governor_thermal_table_end[];
+बाह्य काष्ठा thermal_governor *__governor_thermal_table[];
+बाह्य काष्ठा thermal_governor *__governor_thermal_table_end[];
 
-#define THERMAL_TABLE_ENTRY(table, name)			\
-	static typeof(name) *__thermal_table_entry_##name	\
+#घोषणा THERMAL_TABLE_ENTRY(table, name)			\
+	अटल typeof(name) *__thermal_table_entry_##name	\
 	__used __section("__" #table "_thermal_table") = &name
 
-#define THERMAL_GOVERNOR_DECLARE(name)	THERMAL_TABLE_ENTRY(governor, name)
+#घोषणा THERMAL_GOVERNOR_DECLARE(name)	THERMAL_TABLE_ENTRY(governor, name)
 
-#define for_each_governor_table(__governor)		\
-	for (__governor = __governor_thermal_table;	\
+#घोषणा क्रम_each_governor_table(__governor)		\
+	क्रम (__governor = __governor_thermal_table;	\
 	     __governor < __governor_thermal_table_end;	\
 	     __governor++)
 
-int for_each_thermal_zone(int (*cb)(struct thermal_zone_device *, void *),
-			  void *);
+पूर्णांक क्रम_each_thermal_zone(पूर्णांक (*cb)(काष्ठा thermal_zone_device *, व्योम *),
+			  व्योम *);
 
-int for_each_thermal_cooling_device(int (*cb)(struct thermal_cooling_device *,
-					      void *), void *);
+पूर्णांक क्रम_each_thermal_cooling_device(पूर्णांक (*cb)(काष्ठा thermal_cooling_device *,
+					      व्योम *), व्योम *);
 
-int for_each_thermal_governor(int (*cb)(struct thermal_governor *, void *),
-			      void *thermal_governor);
+पूर्णांक क्रम_each_thermal_governor(पूर्णांक (*cb)(काष्ठा thermal_governor *, व्योम *),
+			      व्योम *thermal_governor);
 
-struct thermal_zone_device *thermal_zone_get_by_id(int id);
+काष्ठा thermal_zone_device *thermal_zone_get_by_id(पूर्णांक id);
 
-struct thermal_attr {
-	struct device_attribute attr;
-	char name[THERMAL_NAME_LENGTH];
-};
+काष्ठा thermal_attr अणु
+	काष्ठा device_attribute attr;
+	अक्षर name[THERMAL_NAME_LENGTH];
+पूर्ण;
 
-static inline bool cdev_is_power_actor(struct thermal_cooling_device *cdev)
-{
-	return cdev->ops->get_requested_power && cdev->ops->state2power &&
-		cdev->ops->power2state;
-}
+अटल अंतरभूत bool cdev_is_घातer_actor(काष्ठा thermal_cooling_device *cdev)
+अणु
+	वापस cdev->ops->get_requested_घातer && cdev->ops->state2घातer &&
+		cdev->ops->घातer2state;
+पूर्ण
 
-void thermal_cdev_update(struct thermal_cooling_device *);
-void __thermal_cdev_update(struct thermal_cooling_device *cdev);
+व्योम thermal_cdev_update(काष्ठा thermal_cooling_device *);
+व्योम __thermal_cdev_update(काष्ठा thermal_cooling_device *cdev);
 
 /**
- * struct thermal_trip - representation of a point in temperature domain
- * @np: pointer to struct device_node that this trip point was created from
+ * काष्ठा thermal_trip - representation of a poपूर्णांक in temperature करोमुख्य
+ * @np: poपूर्णांकer to काष्ठा device_node that this trip poपूर्णांक was created from
  * @temperature: temperature value in miliCelsius
  * @hysteresis: relative hysteresis in miliCelsius
- * @type: trip point type
+ * @type: trip poपूर्णांक type
  */
-struct thermal_trip {
-	struct device_node *np;
-	int temperature;
-	int hysteresis;
-	enum thermal_trip_type type;
-};
+काष्ठा thermal_trip अणु
+	काष्ठा device_node *np;
+	पूर्णांक temperature;
+	पूर्णांक hysteresis;
+	क्रमागत thermal_trip_type type;
+पूर्ण;
 
-int get_tz_trend(struct thermal_zone_device *tz, int trip);
+पूर्णांक get_tz_trend(काष्ठा thermal_zone_device *tz, पूर्णांक trip);
 
-struct thermal_instance *
-get_thermal_instance(struct thermal_zone_device *tz,
-		     struct thermal_cooling_device *cdev,
-		     int trip);
+काष्ठा thermal_instance *
+get_thermal_instance(काष्ठा thermal_zone_device *tz,
+		     काष्ठा thermal_cooling_device *cdev,
+		     पूर्णांक trip);
 
 /*
- * This structure is used to describe the behavior of
- * a certain cooling device on a certain trip point
+ * This काष्ठाure is used to describe the behavior of
+ * a certain cooling device on a certain trip poपूर्णांक
  * in a certain thermal zone
  */
-struct thermal_instance {
-	int id;
-	char name[THERMAL_NAME_LENGTH];
-	struct thermal_zone_device *tz;
-	struct thermal_cooling_device *cdev;
-	int trip;
+काष्ठा thermal_instance अणु
+	पूर्णांक id;
+	अक्षर name[THERMAL_NAME_LENGTH];
+	काष्ठा thermal_zone_device *tz;
+	काष्ठा thermal_cooling_device *cdev;
+	पूर्णांक trip;
 	bool initialized;
-	unsigned long upper;	/* Highest cooling state for this trip point */
-	unsigned long lower;	/* Lowest cooling state for this trip point */
-	unsigned long target;	/* expected cooling state */
-	char attr_name[THERMAL_NAME_LENGTH];
-	struct device_attribute attr;
-	char weight_attr_name[THERMAL_NAME_LENGTH];
-	struct device_attribute weight_attr;
-	struct list_head tz_node; /* node in tz->thermal_instances */
-	struct list_head cdev_node; /* node in cdev->thermal_instances */
-	unsigned int weight; /* The weight of the cooling device */
-};
+	अचिन्हित दीर्घ upper;	/* Highest cooling state क्रम this trip poपूर्णांक */
+	अचिन्हित दीर्घ lower;	/* Lowest cooling state क्रम this trip poपूर्णांक */
+	अचिन्हित दीर्घ target;	/* expected cooling state */
+	अक्षर attr_name[THERMAL_NAME_LENGTH];
+	काष्ठा device_attribute attr;
+	अक्षर weight_attr_name[THERMAL_NAME_LENGTH];
+	काष्ठा device_attribute weight_attr;
+	काष्ठा list_head tz_node; /* node in tz->thermal_instances */
+	काष्ठा list_head cdev_node; /* node in cdev->thermal_instances */
+	अचिन्हित पूर्णांक weight; /* The weight of the cooling device */
+पूर्ण;
 
-#define to_thermal_zone(_dev) \
-	container_of(_dev, struct thermal_zone_device, device)
+#घोषणा to_thermal_zone(_dev) \
+	container_of(_dev, काष्ठा thermal_zone_device, device)
 
-#define to_cooling_device(_dev)	\
-	container_of(_dev, struct thermal_cooling_device, device)
+#घोषणा to_cooling_device(_dev)	\
+	container_of(_dev, काष्ठा thermal_cooling_device, device)
 
-int thermal_register_governor(struct thermal_governor *);
-void thermal_unregister_governor(struct thermal_governor *);
-int thermal_zone_device_set_policy(struct thermal_zone_device *, char *);
-int thermal_build_list_of_policies(char *buf);
+पूर्णांक thermal_रेजिस्टर_governor(काष्ठा thermal_governor *);
+व्योम thermal_unरेजिस्टर_governor(काष्ठा thermal_governor *);
+पूर्णांक thermal_zone_device_set_policy(काष्ठा thermal_zone_device *, अक्षर *);
+पूर्णांक thermal_build_list_of_policies(अक्षर *buf);
 
 /* Helpers */
-void thermal_zone_set_trips(struct thermal_zone_device *tz);
-void thermal_set_delay_jiffies(unsigned long *delay_jiffies, int delay_ms);
+व्योम thermal_zone_set_trips(काष्ठा thermal_zone_device *tz);
+व्योम thermal_set_delay_jअगरfies(अचिन्हित दीर्घ *delay_jअगरfies, पूर्णांक delay_ms);
 
 /* sysfs I/F */
-int thermal_zone_create_device_groups(struct thermal_zone_device *, int);
-void thermal_zone_destroy_device_groups(struct thermal_zone_device *);
-void thermal_cooling_device_setup_sysfs(struct thermal_cooling_device *);
-void thermal_cooling_device_destroy_sysfs(struct thermal_cooling_device *cdev);
-/* used only at binding time */
-ssize_t trip_point_show(struct device *, struct device_attribute *, char *);
-ssize_t weight_show(struct device *, struct device_attribute *, char *);
-ssize_t weight_store(struct device *, struct device_attribute *, const char *,
-		     size_t);
+पूर्णांक thermal_zone_create_device_groups(काष्ठा thermal_zone_device *, पूर्णांक);
+व्योम thermal_zone_destroy_device_groups(काष्ठा thermal_zone_device *);
+व्योम thermal_cooling_device_setup_sysfs(काष्ठा thermal_cooling_device *);
+व्योम thermal_cooling_device_destroy_sysfs(काष्ठा thermal_cooling_device *cdev);
+/* used only at binding समय */
+sमाप_प्रकार trip_poपूर्णांक_show(काष्ठा device *, काष्ठा device_attribute *, अक्षर *);
+sमाप_प्रकार weight_show(काष्ठा device *, काष्ठा device_attribute *, अक्षर *);
+sमाप_प्रकार weight_store(काष्ठा device *, काष्ठा device_attribute *, स्थिर अक्षर *,
+		     माप_प्रकार);
 
-#ifdef CONFIG_THERMAL_STATISTICS
-void thermal_cooling_device_stats_update(struct thermal_cooling_device *cdev,
-					 unsigned long new_state);
-#else
-static inline void
-thermal_cooling_device_stats_update(struct thermal_cooling_device *cdev,
-				    unsigned long new_state) {}
-#endif /* CONFIG_THERMAL_STATISTICS */
+#अगर_घोषित CONFIG_THERMAL_STATISTICS
+व्योम thermal_cooling_device_stats_update(काष्ठा thermal_cooling_device *cdev,
+					 अचिन्हित दीर्घ new_state);
+#अन्यथा
+अटल अंतरभूत व्योम
+thermal_cooling_device_stats_update(काष्ठा thermal_cooling_device *cdev,
+				    अचिन्हित दीर्घ new_state) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_THERMAL_STATISTICS */
 
 /* device tree support */
-#ifdef CONFIG_THERMAL_OF
-int of_parse_thermal_zones(void);
-int of_thermal_get_ntrips(struct thermal_zone_device *);
-bool of_thermal_is_trip_valid(struct thermal_zone_device *, int);
-const struct thermal_trip *
-of_thermal_get_trip_points(struct thermal_zone_device *);
-#else
-static inline int of_parse_thermal_zones(void) { return 0; }
-static inline int of_thermal_get_ntrips(struct thermal_zone_device *tz)
-{
-	return 0;
-}
-static inline bool of_thermal_is_trip_valid(struct thermal_zone_device *tz,
-					    int trip)
-{
-	return false;
-}
-static inline const struct thermal_trip *
-of_thermal_get_trip_points(struct thermal_zone_device *tz)
-{
-	return NULL;
-}
-#endif
+#अगर_घोषित CONFIG_THERMAL_OF
+पूर्णांक of_parse_thermal_zones(व्योम);
+पूर्णांक of_thermal_get_ntrips(काष्ठा thermal_zone_device *);
+bool of_thermal_is_trip_valid(काष्ठा thermal_zone_device *, पूर्णांक);
+स्थिर काष्ठा thermal_trip *
+of_thermal_get_trip_poपूर्णांकs(काष्ठा thermal_zone_device *);
+#अन्यथा
+अटल अंतरभूत पूर्णांक of_parse_thermal_zones(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक of_thermal_get_ntrips(काष्ठा thermal_zone_device *tz)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत bool of_thermal_is_trip_valid(काष्ठा thermal_zone_device *tz,
+					    पूर्णांक trip)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत स्थिर काष्ठा thermal_trip *
+of_thermal_get_trip_poपूर्णांकs(काष्ठा thermal_zone_device *tz)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-int thermal_zone_device_is_enabled(struct thermal_zone_device *tz);
+पूर्णांक thermal_zone_device_is_enabled(काष्ठा thermal_zone_device *tz);
 
-#endif /* __THERMAL_CORE_H__ */
+#पूर्ण_अगर /* __THERMAL_CORE_H__ */

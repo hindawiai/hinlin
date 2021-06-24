@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Mantis PCI bridge driver
 
@@ -6,66 +7,66 @@
 
 */
 
-#ifndef __MANTIS_LINK_H
-#define __MANTIS_LINK_H
+#अगर_अघोषित __MANTIS_LINK_H
+#घोषणा __MANTIS_LINK_H
 
-#include <linux/mutex.h>
-#include <linux/workqueue.h>
-#include <media/dvb_ca_en50221.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/workqueue.h>
+#समावेश <media/dvb_ca_en50221.h>
 
-enum mantis_sbuf_status {
+क्रमागत mantis_sbuf_status अणु
 	MANTIS_SBUF_DATA_AVAIL		= 1,
 	MANTIS_SBUF_DATA_EMPTY		= 2,
 	MANTIS_SBUF_DATA_OVFLW		= 3
-};
+पूर्ण;
 
-struct mantis_slot {
-	u32				timeout;
+काष्ठा mantis_slot अणु
+	u32				समयout;
 	u32				slave_cfg;
 	u32				bar;
-};
+पूर्ण;
 
 /* Physical layer */
-enum mantis_slot_state {
+क्रमागत mantis_slot_state अणु
 	MODULE_INSERTED			= 3,
 	MODULE_XTRACTED			= 4
-};
+पूर्ण;
 
-struct mantis_ca {
-	struct mantis_slot		slot[4];
+काष्ठा mantis_ca अणु
+	काष्ठा mantis_slot		slot[4];
 
-	struct work_struct		hif_evm_work;
+	काष्ठा work_काष्ठा		hअगर_evm_work;
 
-	u32				hif_event;
-	wait_queue_head_t		hif_opdone_wq;
-	wait_queue_head_t		hif_brrdyw_wq;
-	wait_queue_head_t		hif_data_wq;
-	wait_queue_head_t		hif_write_wq; /* HIF Write op */
+	u32				hअगर_event;
+	रुको_queue_head_t		hअगर_opकरोne_wq;
+	रुको_queue_head_t		hअगर_brrdyw_wq;
+	रुको_queue_head_t		hअगर_data_wq;
+	रुको_queue_head_t		hअगर_ग_लिखो_wq; /* HIF Write op */
 
-	enum mantis_sbuf_status		sbuf_status;
+	क्रमागत mantis_sbuf_status		sbuf_status;
 
-	enum mantis_slot_state		slot_state;
+	क्रमागत mantis_slot_state		slot_state;
 
-	void				*ca_priv;
+	व्योम				*ca_priv;
 
-	struct dvb_ca_en50221		en50221;
-	struct mutex			ca_lock;
-};
+	काष्ठा dvb_ca_en50221		en50221;
+	काष्ठा mutex			ca_lock;
+पूर्ण;
 
 /* CA */
-extern void mantis_event_cam_plugin(struct mantis_ca *ca);
-extern void mantis_event_cam_unplug(struct mantis_ca *ca);
-extern int mantis_pcmcia_init(struct mantis_ca *ca);
-extern void mantis_pcmcia_exit(struct mantis_ca *ca);
-extern int mantis_evmgr_init(struct mantis_ca *ca);
-extern void mantis_evmgr_exit(struct mantis_ca *ca);
+बाह्य व्योम mantis_event_cam_plugin(काष्ठा mantis_ca *ca);
+बाह्य व्योम mantis_event_cam_unplug(काष्ठा mantis_ca *ca);
+बाह्य पूर्णांक mantis_pcmcia_init(काष्ठा mantis_ca *ca);
+बाह्य व्योम mantis_pcmcia_निकास(काष्ठा mantis_ca *ca);
+बाह्य पूर्णांक mantis_evmgr_init(काष्ठा mantis_ca *ca);
+बाह्य व्योम mantis_evmgr_निकास(काष्ठा mantis_ca *ca);
 
 /* HIF */
-extern int mantis_hif_init(struct mantis_ca *ca);
-extern void mantis_hif_exit(struct mantis_ca *ca);
-extern int mantis_hif_read_mem(struct mantis_ca *ca, u32 addr);
-extern int mantis_hif_write_mem(struct mantis_ca *ca, u32 addr, u8 data);
-extern int mantis_hif_read_iom(struct mantis_ca *ca, u32 addr);
-extern int mantis_hif_write_iom(struct mantis_ca *ca, u32 addr, u8 data);
+बाह्य पूर्णांक mantis_hअगर_init(काष्ठा mantis_ca *ca);
+बाह्य व्योम mantis_hअगर_निकास(काष्ठा mantis_ca *ca);
+बाह्य पूर्णांक mantis_hअगर_पढ़ो_mem(काष्ठा mantis_ca *ca, u32 addr);
+बाह्य पूर्णांक mantis_hअगर_ग_लिखो_mem(काष्ठा mantis_ca *ca, u32 addr, u8 data);
+बाह्य पूर्णांक mantis_hअगर_पढ़ो_iom(काष्ठा mantis_ca *ca, u32 addr);
+बाह्य पूर्णांक mantis_hअगर_ग_लिखो_iom(काष्ठा mantis_ca *ca, u32 addr, u8 data);
 
-#endif /* __MANTIS_LINK_H */
+#पूर्ण_अगर /* __MANTIS_LINK_H */

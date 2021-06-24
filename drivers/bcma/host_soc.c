@@ -1,278 +1,279 @@
+<शैली गुरु>
 /*
- * Broadcom specific AMBA
+ * Broadcom specअगरic AMBA
  * System on Chip (SoC) Host
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
-#include "bcma_private.h"
-#include "scan.h"
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/bcma/bcma.h>
-#include <linux/bcma/bcma_soc.h>
+#समावेश "bcma_private.h"
+#समावेश "scan.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/bcma/bcma.h>
+#समावेश <linux/bcma/bcma_soc.h>
 
-static u8 bcma_host_soc_read8(struct bcma_device *core, u16 offset)
-{
-	return readb(core->io_addr + offset);
-}
+अटल u8 bcma_host_soc_पढ़ो8(काष्ठा bcma_device *core, u16 offset)
+अणु
+	वापस पढ़ोb(core->io_addr + offset);
+पूर्ण
 
-static u16 bcma_host_soc_read16(struct bcma_device *core, u16 offset)
-{
-	return readw(core->io_addr + offset);
-}
+अटल u16 bcma_host_soc_पढ़ो16(काष्ठा bcma_device *core, u16 offset)
+अणु
+	वापस पढ़ोw(core->io_addr + offset);
+पूर्ण
 
-static u32 bcma_host_soc_read32(struct bcma_device *core, u16 offset)
-{
-	return readl(core->io_addr + offset);
-}
+अटल u32 bcma_host_soc_पढ़ो32(काष्ठा bcma_device *core, u16 offset)
+अणु
+	वापस पढ़ोl(core->io_addr + offset);
+पूर्ण
 
-static void bcma_host_soc_write8(struct bcma_device *core, u16 offset,
+अटल व्योम bcma_host_soc_ग_लिखो8(काष्ठा bcma_device *core, u16 offset,
 				 u8 value)
-{
-	writeb(value, core->io_addr + offset);
-}
+अणु
+	ग_लिखोb(value, core->io_addr + offset);
+पूर्ण
 
-static void bcma_host_soc_write16(struct bcma_device *core, u16 offset,
+अटल व्योम bcma_host_soc_ग_लिखो16(काष्ठा bcma_device *core, u16 offset,
 				 u16 value)
-{
-	writew(value, core->io_addr + offset);
-}
+अणु
+	ग_लिखोw(value, core->io_addr + offset);
+पूर्ण
 
-static void bcma_host_soc_write32(struct bcma_device *core, u16 offset,
+अटल व्योम bcma_host_soc_ग_लिखो32(काष्ठा bcma_device *core, u16 offset,
 				 u32 value)
-{
-	writel(value, core->io_addr + offset);
-}
+अणु
+	ग_लिखोl(value, core->io_addr + offset);
+पूर्ण
 
-#ifdef CONFIG_BCMA_BLOCKIO
-static void bcma_host_soc_block_read(struct bcma_device *core, void *buffer,
-				     size_t count, u16 offset, u8 reg_width)
-{
-	void __iomem *addr = core->io_addr + offset;
+#अगर_घोषित CONFIG_BCMA_BLOCKIO
+अटल व्योम bcma_host_soc_block_पढ़ो(काष्ठा bcma_device *core, व्योम *buffer,
+				     माप_प्रकार count, u16 offset, u8 reg_width)
+अणु
+	व्योम __iomem *addr = core->io_addr + offset;
 
-	switch (reg_width) {
-	case sizeof(u8): {
+	चयन (reg_width) अणु
+	हाल माप(u8): अणु
 		u8 *buf = buffer;
 
-		while (count) {
-			*buf = __raw_readb(addr);
+		जबतक (count) अणु
+			*buf = __raw_पढ़ोb(addr);
 			buf++;
 			count--;
-		}
-		break;
-	}
-	case sizeof(u16): {
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल माप(u16): अणु
 		__le16 *buf = buffer;
 
 		WARN_ON(count & 1);
-		while (count) {
-			*buf = (__force __le16)__raw_readw(addr);
+		जबतक (count) अणु
+			*buf = (__क्रमce __le16)__raw_पढ़ोw(addr);
 			buf++;
 			count -= 2;
-		}
-		break;
-	}
-	case sizeof(u32): {
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल माप(u32): अणु
 		__le32 *buf = buffer;
 
 		WARN_ON(count & 3);
-		while (count) {
-			*buf = (__force __le32)__raw_readl(addr);
+		जबतक (count) अणु
+			*buf = (__क्रमce __le32)__raw_पढ़ोl(addr);
 			buf++;
 			count -= 4;
-		}
-		break;
-	}
-	default:
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	शेष:
 		WARN_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bcma_host_soc_block_write(struct bcma_device *core,
-				      const void *buffer,
-				      size_t count, u16 offset, u8 reg_width)
-{
-	void __iomem *addr = core->io_addr + offset;
+अटल व्योम bcma_host_soc_block_ग_लिखो(काष्ठा bcma_device *core,
+				      स्थिर व्योम *buffer,
+				      माप_प्रकार count, u16 offset, u8 reg_width)
+अणु
+	व्योम __iomem *addr = core->io_addr + offset;
 
-	switch (reg_width) {
-	case sizeof(u8): {
-		const u8 *buf = buffer;
+	चयन (reg_width) अणु
+	हाल माप(u8): अणु
+		स्थिर u8 *buf = buffer;
 
-		while (count) {
-			__raw_writeb(*buf, addr);
+		जबतक (count) अणु
+			__raw_ग_लिखोb(*buf, addr);
 			buf++;
 			count--;
-		}
-		break;
-	}
-	case sizeof(u16): {
-		const __le16 *buf = buffer;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल माप(u16): अणु
+		स्थिर __le16 *buf = buffer;
 
 		WARN_ON(count & 1);
-		while (count) {
-			__raw_writew((__force u16)(*buf), addr);
+		जबतक (count) अणु
+			__raw_ग_लिखोw((__क्रमce u16)(*buf), addr);
 			buf++;
 			count -= 2;
-		}
-		break;
-	}
-	case sizeof(u32): {
-		const __le32 *buf = buffer;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल माप(u32): अणु
+		स्थिर __le32 *buf = buffer;
 
 		WARN_ON(count & 3);
-		while (count) {
-			__raw_writel((__force u32)(*buf), addr);
+		जबतक (count) अणु
+			__raw_ग_लिखोl((__क्रमce u32)(*buf), addr);
 			buf++;
 			count -= 4;
-		}
-		break;
-	}
-	default:
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	शेष:
 		WARN_ON(1);
-	}
-}
-#endif /* CONFIG_BCMA_BLOCKIO */
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_BCMA_BLOCKIO */
 
-static u32 bcma_host_soc_aread32(struct bcma_device *core, u16 offset)
-{
-	if (WARN_ONCE(!core->io_wrap, "Accessed core has no wrapper/agent\n"))
-		return ~0;
-	return readl(core->io_wrap + offset);
-}
+अटल u32 bcma_host_soc_aपढ़ो32(काष्ठा bcma_device *core, u16 offset)
+अणु
+	अगर (WARN_ONCE(!core->io_wrap, "Accessed core has no wrapper/agent\n"))
+		वापस ~0;
+	वापस पढ़ोl(core->io_wrap + offset);
+पूर्ण
 
-static void bcma_host_soc_awrite32(struct bcma_device *core, u16 offset,
+अटल व्योम bcma_host_soc_aग_लिखो32(काष्ठा bcma_device *core, u16 offset,
 				  u32 value)
-{
-	if (WARN_ONCE(!core->io_wrap, "Accessed core has no wrapper/agent\n"))
-		return;
-	writel(value, core->io_wrap + offset);
-}
+अणु
+	अगर (WARN_ONCE(!core->io_wrap, "Accessed core has no wrapper/agent\n"))
+		वापस;
+	ग_लिखोl(value, core->io_wrap + offset);
+पूर्ण
 
-static const struct bcma_host_ops bcma_host_soc_ops = {
-	.read8		= bcma_host_soc_read8,
-	.read16		= bcma_host_soc_read16,
-	.read32		= bcma_host_soc_read32,
-	.write8		= bcma_host_soc_write8,
-	.write16	= bcma_host_soc_write16,
-	.write32	= bcma_host_soc_write32,
-#ifdef CONFIG_BCMA_BLOCKIO
-	.block_read	= bcma_host_soc_block_read,
-	.block_write	= bcma_host_soc_block_write,
-#endif
-	.aread32	= bcma_host_soc_aread32,
-	.awrite32	= bcma_host_soc_awrite32,
-};
+अटल स्थिर काष्ठा bcma_host_ops bcma_host_soc_ops = अणु
+	.पढ़ो8		= bcma_host_soc_पढ़ो8,
+	.पढ़ो16		= bcma_host_soc_पढ़ो16,
+	.पढ़ो32		= bcma_host_soc_पढ़ो32,
+	.ग_लिखो8		= bcma_host_soc_ग_लिखो8,
+	.ग_लिखो16	= bcma_host_soc_ग_लिखो16,
+	.ग_लिखो32	= bcma_host_soc_ग_लिखो32,
+#अगर_घोषित CONFIG_BCMA_BLOCKIO
+	.block_पढ़ो	= bcma_host_soc_block_पढ़ो,
+	.block_ग_लिखो	= bcma_host_soc_block_ग_लिखो,
+#पूर्ण_अगर
+	.aपढ़ो32	= bcma_host_soc_aपढ़ो32,
+	.aग_लिखो32	= bcma_host_soc_aग_लिखो32,
+पूर्ण;
 
-int __init bcma_host_soc_register(struct bcma_soc *soc)
-{
-	struct bcma_bus *bus = &soc->bus;
+पूर्णांक __init bcma_host_soc_रेजिस्टर(काष्ठा bcma_soc *soc)
+अणु
+	काष्ठा bcma_bus *bus = &soc->bus;
 
-	/* iomap only first core. We have to read some register on this core
+	/* iomap only first core. We have to पढ़ो some रेजिस्टर on this core
 	 * to scan the bus.
 	 */
 	bus->mmio = ioremap(BCMA_ADDR_BASE, BCMA_CORE_SIZE * 1);
-	if (!bus->mmio)
-		return -ENOMEM;
+	अगर (!bus->mmio)
+		वापस -ENOMEM;
 
-	/* Host specific */
+	/* Host specअगरic */
 	bus->hosttype = BCMA_HOSTTYPE_SOC;
 	bus->ops = &bcma_host_soc_ops;
 
-	/* Initialize struct, detect chip */
+	/* Initialize काष्ठा, detect chip */
 	bcma_init_bus(bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init bcma_host_soc_init(struct bcma_soc *soc)
-{
-	struct bcma_bus *bus = &soc->bus;
-	int err;
+पूर्णांक __init bcma_host_soc_init(काष्ठा bcma_soc *soc)
+अणु
+	काष्ठा bcma_bus *bus = &soc->bus;
+	पूर्णांक err;
 
 	/* Scan bus and initialize it */
-	err = bcma_bus_early_register(bus);
-	if (err)
+	err = bcma_bus_early_रेजिस्टर(bus);
+	अगर (err)
 		iounmap(bus->mmio);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_OF
-static int bcma_host_soc_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct bcma_bus *bus;
-	int err;
+#अगर_घोषित CONFIG_OF
+अटल पूर्णांक bcma_host_soc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा bcma_bus *bus;
+	पूर्णांक err;
 
 	/* Alloc */
-	bus = devm_kzalloc(dev, sizeof(*bus), GFP_KERNEL);
-	if (!bus)
-		return -ENOMEM;
+	bus = devm_kzalloc(dev, माप(*bus), GFP_KERNEL);
+	अगर (!bus)
+		वापस -ENOMEM;
 
 	bus->dev = dev;
 
 	/* Map MMIO */
 	bus->mmio = of_iomap(np, 0);
-	if (!bus->mmio)
-		return -ENOMEM;
+	अगर (!bus->mmio)
+		वापस -ENOMEM;
 
-	/* Host specific */
+	/* Host specअगरic */
 	bus->hosttype = BCMA_HOSTTYPE_SOC;
 	bus->ops = &bcma_host_soc_ops;
 
-	/* Initialize struct, detect chip */
+	/* Initialize काष्ठा, detect chip */
 	bcma_init_bus(bus);
 
 	/* Register */
-	err = bcma_bus_register(bus);
-	if (err)
-		goto err_unmap_mmio;
+	err = bcma_bus_रेजिस्टर(bus);
+	अगर (err)
+		जाओ err_unmap_mmio;
 
-	platform_set_drvdata(pdev, bus);
+	platक्रमm_set_drvdata(pdev, bus);
 
-	return err;
+	वापस err;
 
 err_unmap_mmio:
 	iounmap(bus->mmio);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bcma_host_soc_remove(struct platform_device *pdev)
-{
-	struct bcma_bus *bus = platform_get_drvdata(pdev);
+अटल पूर्णांक bcma_host_soc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcma_bus *bus = platक्रमm_get_drvdata(pdev);
 
-	bcma_bus_unregister(bus);
+	bcma_bus_unरेजिस्टर(bus);
 	iounmap(bus->mmio);
-	platform_set_drvdata(pdev, NULL);
+	platक्रमm_set_drvdata(pdev, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id bcma_host_soc_of_match[] = {
-	{ .compatible = "brcm,bus-axi", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id bcma_host_soc_of_match[] = अणु
+	अणु .compatible = "brcm,bus-axi", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bcma_host_soc_of_match);
 
-static struct platform_driver bcma_host_soc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver bcma_host_soc_driver = अणु
+	.driver = अणु
 		.name = "bcma-host-soc",
 		.of_match_table = bcma_host_soc_of_match,
-	},
+	पूर्ण,
 	.probe		= bcma_host_soc_probe,
-	.remove		= bcma_host_soc_remove,
-};
+	.हटाओ		= bcma_host_soc_हटाओ,
+पूर्ण;
 
-int __init bcma_host_soc_register_driver(void)
-{
-	return platform_driver_register(&bcma_host_soc_driver);
-}
+पूर्णांक __init bcma_host_soc_रेजिस्टर_driver(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&bcma_host_soc_driver);
+पूर्ण
 
-void __exit bcma_host_soc_unregister_driver(void)
-{
-	platform_driver_unregister(&bcma_host_soc_driver);
-}
-#endif /* CONFIG_OF */
+व्योम __निकास bcma_host_soc_unरेजिस्टर_driver(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&bcma_host_soc_driver);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF */

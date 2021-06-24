@@ -1,142 +1,143 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  sst_dsp.c - Intel SST Driver for audio engine
+ *  sst_dsp.c - Intel SST Driver क्रम audio engine
  *
  *  Copyright (C) 2008-14	Intel Corp
- *  Authors:	Vinod Koul <vinod.koul@intel.com>
- *		Harsha Priya <priya.harsha@intel.com>
- *		Dharageswari R <dharageswari.r@intel.com>
- *		KP Jeeja <jeeja.kp@intel.com>
+ *  Authors:	Vinod Koul <vinod.koul@पूर्णांकel.com>
+ *		Harsha Priya <priya.harsha@पूर्णांकel.com>
+ *		Dharageswari R <dharageswari.r@पूर्णांकel.com>
+ *		KP Jeeja <jeeja.kp@पूर्णांकel.com>
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
- *  This file contains all dsp controlling functions like firmware download,
+ *  This file contains all dsp controlling functions like firmware करोwnload,
  * setting/resetting dsp cores, etc
  */
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/fs.h>
-#include <linux/sched.h>
-#include <linux/firmware.h>
-#include <linux/dmaengine.h>
-#include <linux/pm_runtime.h>
-#include <linux/pm_qos.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/soc.h>
-#include <sound/compress_driver.h>
-#include <asm/platform_sst_audio.h>
-#include "../sst-mfld-platform.h"
-#include "sst.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/pm_qos.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/compress_driver.h>
+#समावेश <यंत्र/platक्रमm_sst_audपन.स>
+#समावेश "../sst-mfld-platform.h"
+#समावेश "sst.h"
 
-void memcpy32_toio(void __iomem *dst, const void *src, int count)
-{
-	/* __iowrite32_copy uses 32-bit count values so divide by 4 for
+व्योम स_नकल32_toio(व्योम __iomem *dst, स्थिर व्योम *src, पूर्णांक count)
+अणु
+	/* __ioग_लिखो32_copy uses 32-bit count values so भागide by 4 क्रम
 	 * right count in words
 	 */
-	__iowrite32_copy(dst, src, count / 4);
-}
+	__ioग_लिखो32_copy(dst, src, count / 4);
+पूर्ण
 
-void memcpy32_fromio(void *dst, const void __iomem *src, int count)
-{
-	/* __ioread32_copy uses 32-bit count values so divide by 4 for
+व्योम स_नकल32_fromio(व्योम *dst, स्थिर व्योम __iomem *src, पूर्णांक count)
+अणु
+	/* __ioपढ़ो32_copy uses 32-bit count values so भागide by 4 क्रम
 	 * right count in words
 	 */
-	__ioread32_copy(dst, src, count / 4);
-}
+	__ioपढ़ो32_copy(dst, src, count / 4);
+पूर्ण
 
 /**
- * intel_sst_reset_dsp_mrfld - Resetting SST DSP
- * @sst_drv_ctx: intel_sst_drv context pointer
+ * पूर्णांकel_sst_reset_dsp_mrfld - Resetting SST DSP
+ * @sst_drv_ctx: पूर्णांकel_sst_drv context poपूर्णांकer
  *
- * This resets DSP in case of MRFLD platfroms
+ * This resets DSP in हाल of MRFLD platfroms
  */
-int intel_sst_reset_dsp_mrfld(struct intel_sst_drv *sst_drv_ctx)
-{
-	union config_status_reg_mrfld csr;
+पूर्णांक पूर्णांकel_sst_reset_dsp_mrfld(काष्ठा पूर्णांकel_sst_drv *sst_drv_ctx)
+अणु
+	जोड़ config_status_reg_mrfld csr;
 
 	dev_dbg(sst_drv_ctx->dev, "sst: Resetting the DSP in mrfld\n");
-	csr.full = sst_shim_read64(sst_drv_ctx->shim, SST_CSR);
+	csr.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_CSR);
 
 	dev_dbg(sst_drv_ctx->dev, "value:0x%llx\n", csr.full);
 
 	csr.full |= 0x7;
-	sst_shim_write64(sst_drv_ctx->shim, SST_CSR, csr.full);
-	csr.full = sst_shim_read64(sst_drv_ctx->shim, SST_CSR);
+	sst_shim_ग_लिखो64(sst_drv_ctx->shim, SST_CSR, csr.full);
+	csr.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_CSR);
 
 	dev_dbg(sst_drv_ctx->dev, "value:0x%llx\n", csr.full);
 
 	csr.full &= ~(0x1);
-	sst_shim_write64(sst_drv_ctx->shim, SST_CSR, csr.full);
+	sst_shim_ग_लिखो64(sst_drv_ctx->shim, SST_CSR, csr.full);
 
-	csr.full = sst_shim_read64(sst_drv_ctx->shim, SST_CSR);
+	csr.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_CSR);
 	dev_dbg(sst_drv_ctx->dev, "value:0x%llx\n", csr.full);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sst_start_mrfld - Start the SST DSP processor
- * @sst_drv_ctx: intel_sst_drv context pointer
+ * @sst_drv_ctx: पूर्णांकel_sst_drv context poपूर्णांकer
  *
  * This starts the DSP in MERRIFIELD platfroms
  */
-int sst_start_mrfld(struct intel_sst_drv *sst_drv_ctx)
-{
-	union config_status_reg_mrfld csr;
+पूर्णांक sst_start_mrfld(काष्ठा पूर्णांकel_sst_drv *sst_drv_ctx)
+अणु
+	जोड़ config_status_reg_mrfld csr;
 
 	dev_dbg(sst_drv_ctx->dev, "sst: Starting the DSP in mrfld LALALALA\n");
-	csr.full = sst_shim_read64(sst_drv_ctx->shim, SST_CSR);
+	csr.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_CSR);
 	dev_dbg(sst_drv_ctx->dev, "value:0x%llx\n", csr.full);
 
 	csr.full |= 0x7;
-	sst_shim_write64(sst_drv_ctx->shim, SST_CSR, csr.full);
+	sst_shim_ग_लिखो64(sst_drv_ctx->shim, SST_CSR, csr.full);
 
-	csr.full = sst_shim_read64(sst_drv_ctx->shim, SST_CSR);
+	csr.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_CSR);
 	dev_dbg(sst_drv_ctx->dev, "value:0x%llx\n", csr.full);
 
 	csr.part.xt_snoop = 1;
 	csr.full &= ~(0x5);
-	sst_shim_write64(sst_drv_ctx->shim, SST_CSR, csr.full);
+	sst_shim_ग_लिखो64(sst_drv_ctx->shim, SST_CSR, csr.full);
 
-	csr.full = sst_shim_read64(sst_drv_ctx->shim, SST_CSR);
+	csr.full = sst_shim_पढ़ो64(sst_drv_ctx->shim, SST_CSR);
 	dev_dbg(sst_drv_ctx->dev, "sst: Starting the DSP_merrifield:%llx\n",
 			csr.full);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sst_validate_fw_image(struct intel_sst_drv *ctx, unsigned long size,
-		struct fw_module_header **module, u32 *num_modules)
-{
-	struct sst_fw_header *header;
-	const void *sst_fw_in_mem = ctx->fw_in_mem;
+अटल पूर्णांक sst_validate_fw_image(काष्ठा पूर्णांकel_sst_drv *ctx, अचिन्हित दीर्घ size,
+		काष्ठा fw_module_header **module, u32 *num_modules)
+अणु
+	काष्ठा sst_fw_header *header;
+	स्थिर व्योम *sst_fw_in_mem = ctx->fw_in_mem;
 
 	dev_dbg(ctx->dev, "Enter\n");
 
-	/* Read the header information from the data pointer */
-	header = (struct sst_fw_header *)sst_fw_in_mem;
+	/* Read the header inक्रमmation from the data poपूर्णांकer */
+	header = (काष्ठा sst_fw_header *)sst_fw_in_mem;
 	dev_dbg(ctx->dev,
 		"header sign=%s size=%x modules=%x fmt=%x size=%zx\n",
 		header->signature, header->file_size, header->modules,
-		header->file_format, sizeof(*header));
+		header->file_क्रमmat, माप(*header));
 
-	/* verify FW */
-	if ((strncmp(header->signature, SST_FW_SIGN, 4) != 0) ||
-		(size != header->file_size + sizeof(*header))) {
+	/* verअगरy FW */
+	अगर ((म_भेदन(header->signature, SST_FW_SIGN, 4) != 0) ||
+		(size != header->file_size + माप(*header))) अणु
 		/* Invalid FW signature */
 		dev_err(ctx->dev, "InvalidFW sign/filesize mismatch\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	*num_modules = header->modules;
-	*module = (void *)sst_fw_in_mem + sizeof(*header);
+	*module = (व्योम *)sst_fw_in_mem + माप(*header);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * sst_fill_memcpy_list - Fill the memcpy list
+ * sst_fill_स_नकल_list - Fill the स_नकल list
  *
- * @memcpy_list: List to be filled
+ * @स_नकल_list: List to be filled
  * @destn: Destination addr to be filled in the list
  * @src: Source addr to be filled in the list
  * @size: Size to be filled in the list
@@ -144,194 +145,194 @@ static int sst_validate_fw_image(struct intel_sst_drv *ctx, unsigned long size,
  * Adds the node to the list after required fields
  * are populated in the node
  */
-static int sst_fill_memcpy_list(struct list_head *memcpy_list,
-			void *destn, const void *src, u32 size, bool is_io)
-{
-	struct sst_memcpy_list *listnode;
+अटल पूर्णांक sst_fill_स_नकल_list(काष्ठा list_head *स_नकल_list,
+			व्योम *destn, स्थिर व्योम *src, u32 size, bool is_io)
+अणु
+	काष्ठा sst_स_नकल_list *listnode;
 
-	listnode = kzalloc(sizeof(*listnode), GFP_KERNEL);
-	if (listnode == NULL)
-		return -ENOMEM;
+	listnode = kzalloc(माप(*listnode), GFP_KERNEL);
+	अगर (listnode == शून्य)
+		वापस -ENOMEM;
 	listnode->dstn = destn;
 	listnode->src = src;
 	listnode->size = size;
 	listnode->is_io = is_io;
-	list_add_tail(&listnode->memcpylist, memcpy_list);
+	list_add_tail(&listnode->स_नकलlist, स_नकल_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sst_parse_module_memcpy - Parse audio FW modules and populate the memcpy list
+ * sst_parse_module_स_नकल - Parse audio FW modules and populate the स_नकल list
  *
  * @sst_drv_ctx		: driver context
  * @module		: FW module header
- * @memcpy_list	: Pointer to the list to be populated
- * Create the memcpy list as the number of block to be copied
- * returns error or 0 if module sizes are proper
+ * @स_नकल_list	: Poपूर्णांकer to the list to be populated
+ * Create the स_नकल list as the number of block to be copied
+ * वापसs error or 0 अगर module sizes are proper
  */
-static int sst_parse_module_memcpy(struct intel_sst_drv *sst_drv_ctx,
-		struct fw_module_header *module, struct list_head *memcpy_list)
-{
-	struct fw_block_info *block;
+अटल पूर्णांक sst_parse_module_स_नकल(काष्ठा पूर्णांकel_sst_drv *sst_drv_ctx,
+		काष्ठा fw_module_header *module, काष्ठा list_head *स_नकल_list)
+अणु
+	काष्ठा fw_block_info *block;
 	u32 count;
-	int ret_val = 0;
-	void __iomem *ram_iomem;
+	पूर्णांक ret_val = 0;
+	व्योम __iomem *ram_iomem;
 
 	dev_dbg(sst_drv_ctx->dev, "module sign %s size %x blocks %x type %x\n",
 			module->signature, module->mod_size,
 			module->blocks, module->type);
-	dev_dbg(sst_drv_ctx->dev, "module entrypoint 0x%x\n", module->entry_point);
+	dev_dbg(sst_drv_ctx->dev, "module entrypoint 0x%x\n", module->entry_poपूर्णांक);
 
-	block = (void *)module + sizeof(*module);
+	block = (व्योम *)module + माप(*module);
 
-	for (count = 0; count < module->blocks; count++) {
-		if (block->size <= 0) {
+	क्रम (count = 0; count < module->blocks; count++) अणु
+		अगर (block->size <= 0) अणु
 			dev_err(sst_drv_ctx->dev, "block size invalid\n");
-			return -EINVAL;
-		}
-		switch (block->type) {
-		case SST_IRAM:
+			वापस -EINVAL;
+		पूर्ण
+		चयन (block->type) अणु
+		हाल SST_IRAM:
 			ram_iomem = sst_drv_ctx->iram;
-			break;
-		case SST_DRAM:
+			अवरोध;
+		हाल SST_DRAM:
 			ram_iomem = sst_drv_ctx->dram;
-			break;
-		case SST_DDR:
+			अवरोध;
+		हाल SST_DDR:
 			ram_iomem = sst_drv_ctx->ddr;
-			break;
-		case SST_CUSTOM_INFO:
-			block = (void *)block + sizeof(*block) + block->size;
-			continue;
-		default:
+			अवरोध;
+		हाल SST_CUSTOM_INFO:
+			block = (व्योम *)block + माप(*block) + block->size;
+			जारी;
+		शेष:
 			dev_err(sst_drv_ctx->dev, "wrong ram type0x%x in block0x%x\n",
 					block->type, count);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		ret_val = sst_fill_memcpy_list(memcpy_list,
+		ret_val = sst_fill_स_नकल_list(स_नकल_list,
 				ram_iomem + block->ram_offset,
-				(void *)block + sizeof(*block), block->size, 1);
-		if (ret_val)
-			return ret_val;
+				(व्योम *)block + माप(*block), block->size, 1);
+		अगर (ret_val)
+			वापस ret_val;
 
-		block = (void *)block + sizeof(*block) + block->size;
-	}
-	return 0;
-}
+		block = (व्योम *)block + माप(*block) + block->size;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * sst_parse_fw_memcpy - parse the firmware image & populate the list for memcpy
+ * sst_parse_fw_स_नकल - parse the firmware image & populate the list क्रम स_नकल
  *
- * @ctx			: pointer to drv context
+ * @ctx			: poपूर्णांकer to drv context
  * @size		: size of the firmware
- * @fw_list		: pointer to list_head to be populated
+ * @fw_list		: poपूर्णांकer to list_head to be populated
  * This function parses the FW image and saves the parsed image in the list
- * for memcpy
+ * क्रम स_नकल
  */
-static int sst_parse_fw_memcpy(struct intel_sst_drv *ctx, unsigned long size,
-				struct list_head *fw_list)
-{
-	struct fw_module_header *module;
+अटल पूर्णांक sst_parse_fw_स_नकल(काष्ठा पूर्णांकel_sst_drv *ctx, अचिन्हित दीर्घ size,
+				काष्ठा list_head *fw_list)
+अणु
+	काष्ठा fw_module_header *module;
 	u32 count, num_modules;
-	int ret_val;
+	पूर्णांक ret_val;
 
 	ret_val = sst_validate_fw_image(ctx, size, &module, &num_modules);
-	if (ret_val)
-		return ret_val;
+	अगर (ret_val)
+		वापस ret_val;
 
-	for (count = 0; count < num_modules; count++) {
-		ret_val = sst_parse_module_memcpy(ctx, module, fw_list);
-		if (ret_val)
-			return ret_val;
-		module = (void *)module + sizeof(*module) + module->mod_size;
-	}
+	क्रम (count = 0; count < num_modules; count++) अणु
+		ret_val = sst_parse_module_स_नकल(ctx, module, fw_list);
+		अगर (ret_val)
+			वापस ret_val;
+		module = (व्योम *)module + माप(*module) + module->mod_size;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sst_do_memcpy - function initiates the memcpy
+ * sst_करो_स_नकल - function initiates the स_नकल
  *
- * @memcpy_list: Pter to memcpy list on which the memcpy needs to be initiated
+ * @स_नकल_list: Pter to स_नकल list on which the स_नकल needs to be initiated
  *
- * Triggers the memcpy
+ * Triggers the स_नकल
  */
-static void sst_do_memcpy(struct list_head *memcpy_list)
-{
-	struct sst_memcpy_list *listnode;
+अटल व्योम sst_करो_स_नकल(काष्ठा list_head *स_नकल_list)
+अणु
+	काष्ठा sst_स_नकल_list *listnode;
 
-	list_for_each_entry(listnode, memcpy_list, memcpylist) {
-		if (listnode->is_io)
-			memcpy32_toio((void __iomem *)listnode->dstn,
+	list_क्रम_each_entry(listnode, स_नकल_list, स_नकलlist) अणु
+		अगर (listnode->is_io)
+			स_नकल32_toio((व्योम __iomem *)listnode->dstn,
 					listnode->src, listnode->size);
-		else
-			memcpy(listnode->dstn, listnode->src, listnode->size);
-	}
-}
+		अन्यथा
+			स_नकल(listnode->dstn, listnode->src, listnode->size);
+	पूर्ण
+पूर्ण
 
-void sst_memcpy_free_resources(struct intel_sst_drv *sst_drv_ctx)
-{
-	struct sst_memcpy_list *listnode, *tmplistnode;
+व्योम sst_स_नकल_मुक्त_resources(काष्ठा पूर्णांकel_sst_drv *sst_drv_ctx)
+अणु
+	काष्ठा sst_स_नकल_list *listnode, *पंचांगplistnode;
 
 	/* Free the list */
-	list_for_each_entry_safe(listnode, tmplistnode,
-				 &sst_drv_ctx->memcpy_list, memcpylist) {
-		list_del(&listnode->memcpylist);
-		kfree(listnode);
-	}
-}
+	list_क्रम_each_entry_safe(listnode, पंचांगplistnode,
+				 &sst_drv_ctx->स_नकल_list, स_नकलlist) अणु
+		list_del(&listnode->स_नकलlist);
+		kमुक्त(listnode);
+	पूर्ण
+पूर्ण
 
-static int sst_cache_and_parse_fw(struct intel_sst_drv *sst,
-		const struct firmware *fw)
-{
-	int retval = 0;
+अटल पूर्णांक sst_cache_and_parse_fw(काष्ठा पूर्णांकel_sst_drv *sst,
+		स्थिर काष्ठा firmware *fw)
+अणु
+	पूर्णांक retval = 0;
 
 	sst->fw_in_mem = kzalloc(fw->size, GFP_KERNEL);
-	if (!sst->fw_in_mem) {
+	अगर (!sst->fw_in_mem) अणु
 		retval = -ENOMEM;
-		goto end_release;
-	}
+		जाओ end_release;
+	पूर्ण
 	dev_dbg(sst->dev, "copied fw to %p", sst->fw_in_mem);
-	dev_dbg(sst->dev, "phys: %lx", (unsigned long)virt_to_phys(sst->fw_in_mem));
-	memcpy(sst->fw_in_mem, fw->data, fw->size);
-	retval = sst_parse_fw_memcpy(sst, fw->size, &sst->memcpy_list);
-	if (retval) {
+	dev_dbg(sst->dev, "phys: %lx", (अचिन्हित दीर्घ)virt_to_phys(sst->fw_in_mem));
+	स_नकल(sst->fw_in_mem, fw->data, fw->size);
+	retval = sst_parse_fw_स_नकल(sst, fw->size, &sst->स_नकल_list);
+	अगर (retval) अणु
 		dev_err(sst->dev, "Failed to parse fw\n");
-		kfree(sst->fw_in_mem);
-		sst->fw_in_mem = NULL;
-	}
+		kमुक्त(sst->fw_in_mem);
+		sst->fw_in_mem = शून्य;
+	पूर्ण
 
 end_release:
 	release_firmware(fw);
-	return retval;
+	वापस retval;
 
-}
+पूर्ण
 
-void sst_firmware_load_cb(const struct firmware *fw, void *context)
-{
-	struct intel_sst_drv *ctx = context;
+व्योम sst_firmware_load_cb(स्थिर काष्ठा firmware *fw, व्योम *context)
+अणु
+	काष्ठा पूर्णांकel_sst_drv *ctx = context;
 
 	dev_dbg(ctx->dev, "Enter\n");
 
-	if (fw == NULL) {
+	अगर (fw == शून्य) अणु
 		dev_err(ctx->dev, "request fw failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&ctx->sst_lock);
 
-	if (ctx->sst_state != SST_RESET ||
-			ctx->fw_in_mem != NULL) {
+	अगर (ctx->sst_state != SST_RESET ||
+			ctx->fw_in_mem != शून्य) अणु
 		release_firmware(fw);
 		mutex_unlock(&ctx->sst_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev_dbg(ctx->dev, "Request Fw completed\n");
 	sst_cache_and_parse_fw(ctx, fw);
 	mutex_unlock(&ctx->sst_lock);
-}
+पूर्ण
 
 /*
  * sst_request_fw - requests audio fw from kernel and saves a copy
@@ -339,77 +340,77 @@ void sst_firmware_load_cb(const struct firmware *fw, void *context)
  * This function requests the SST FW from the kernel, parses it and
  * saves a copy in the driver context
  */
-static int sst_request_fw(struct intel_sst_drv *sst)
-{
-	int retval = 0;
-	const struct firmware *fw;
+अटल पूर्णांक sst_request_fw(काष्ठा पूर्णांकel_sst_drv *sst)
+अणु
+	पूर्णांक retval = 0;
+	स्थिर काष्ठा firmware *fw;
 
 	retval = request_firmware(&fw, sst->firmware_name, sst->dev);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(sst->dev, "request fw failed %d\n", retval);
-		return retval;
-	}
-	if (fw == NULL) {
+		वापस retval;
+	पूर्ण
+	अगर (fw == शून्य) अणु
 		dev_err(sst->dev, "fw is returning as null\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	mutex_lock(&sst->sst_lock);
 	retval = sst_cache_and_parse_fw(sst, fw);
 	mutex_unlock(&sst->sst_lock);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
  * Writing the DDR physical base to DCCM offset
  * so that FW can use it to setup TLB
  */
-static void sst_dccm_config_write(void __iomem *dram_base,
-		unsigned int ddr_base)
-{
-	void __iomem *addr;
+अटल व्योम sst_dccm_config_ग_लिखो(व्योम __iomem *dram_base,
+		अचिन्हित पूर्णांक ddr_base)
+अणु
+	व्योम __iomem *addr;
 	u32 bss_reset = 0;
 
-	addr = (void __iomem *)(dram_base + MRFLD_FW_DDR_BASE_OFFSET);
-	memcpy32_toio(addr, (void *)&ddr_base, sizeof(u32));
+	addr = (व्योम __iomem *)(dram_base + MRFLD_FW_DDR_BASE_OFFSET);
+	स_नकल32_toio(addr, (व्योम *)&ddr_base, माप(u32));
 	bss_reset |= (1 << MRFLD_FW_BSS_RESET_BIT);
-	addr = (void __iomem *)(dram_base + MRFLD_FW_FEATURE_BASE_OFFSET);
-	memcpy32_toio(addr, &bss_reset, sizeof(u32));
+	addr = (व्योम __iomem *)(dram_base + MRFLD_FW_FEATURE_BASE_OFFSET);
+	स_नकल32_toio(addr, &bss_reset, माप(u32));
 
-}
+पूर्ण
 
-void sst_post_download_mrfld(struct intel_sst_drv *ctx)
-{
-	sst_dccm_config_write(ctx->dram, ctx->ddr_base);
+व्योम sst_post_करोwnload_mrfld(काष्ठा पूर्णांकel_sst_drv *ctx)
+अणु
+	sst_dccm_config_ग_लिखो(ctx->dram, ctx->ddr_base);
 	dev_dbg(ctx->dev, "config written to DCCM\n");
-}
+पूर्ण
 
 /**
- * sst_load_fw - function to load FW into DSP
- * @sst_drv_ctx: intel_sst_drv context pointer
+ * sst_load_fw - function to load FW पूर्णांकo DSP
+ * @sst_drv_ctx: पूर्णांकel_sst_drv context poपूर्णांकer
  *
- * Transfers the FW to DSP using dma/memcpy
+ * Transfers the FW to DSP using dma/स_नकल
  */
-int sst_load_fw(struct intel_sst_drv *sst_drv_ctx)
-{
-	int ret_val = 0;
-	struct sst_block *block;
+पूर्णांक sst_load_fw(काष्ठा पूर्णांकel_sst_drv *sst_drv_ctx)
+अणु
+	पूर्णांक ret_val = 0;
+	काष्ठा sst_block *block;
 
 	dev_dbg(sst_drv_ctx->dev, "sst_load_fw\n");
 
-	if (sst_drv_ctx->sst_state !=  SST_RESET)
-		return -EAGAIN;
+	अगर (sst_drv_ctx->sst_state !=  SST_RESET)
+		वापस -EAGAIN;
 
-	if (!sst_drv_ctx->fw_in_mem) {
+	अगर (!sst_drv_ctx->fw_in_mem) अणु
 		dev_dbg(sst_drv_ctx->dev, "sst: FW not in memory retry to download\n");
 		ret_val = sst_request_fw(sst_drv_ctx);
-		if (ret_val)
-			return ret_val;
-	}
+		अगर (ret_val)
+			वापस ret_val;
+	पूर्ण
 
 	block = sst_create_block(sst_drv_ctx, 0, FW_DWNL_ID);
-	if (block == NULL)
-		return -ENOMEM;
+	अगर (block == शून्य)
+		वापस -ENOMEM;
 
 	/* Prevent C-states beyond C6 */
 	cpu_latency_qos_update_request(sst_drv_ctx->qos, 0);
@@ -417,38 +418,38 @@ int sst_load_fw(struct intel_sst_drv *sst_drv_ctx)
 	sst_drv_ctx->sst_state = SST_FW_LOADING;
 
 	ret_val = sst_drv_ctx->ops->reset(sst_drv_ctx);
-	if (ret_val)
-		goto restore;
+	अगर (ret_val)
+		जाओ restore;
 
-	sst_do_memcpy(&sst_drv_ctx->memcpy_list);
+	sst_करो_स_नकल(&sst_drv_ctx->स_नकल_list);
 
-	/* Write the DRAM/DCCM config before enabling FW */
-	if (sst_drv_ctx->ops->post_download)
-		sst_drv_ctx->ops->post_download(sst_drv_ctx);
+	/* Write the DRAM/DCCM config beक्रमe enabling FW */
+	अगर (sst_drv_ctx->ops->post_करोwnload)
+		sst_drv_ctx->ops->post_करोwnload(sst_drv_ctx);
 
 	/* bring sst out of reset */
 	ret_val = sst_drv_ctx->ops->start(sst_drv_ctx);
-	if (ret_val)
-		goto restore;
+	अगर (ret_val)
+		जाओ restore;
 
-	ret_val = sst_wait_timeout(sst_drv_ctx, block);
-	if (ret_val) {
+	ret_val = sst_रुको_समयout(sst_drv_ctx, block);
+	अगर (ret_val) अणु
 		dev_err(sst_drv_ctx->dev, "fw download failed %d\n" , ret_val);
-		/* FW download failed due to timeout */
+		/* FW करोwnload failed due to समयout */
 		ret_val = -EBUSY;
 
-	}
+	पूर्ण
 
 
 restore:
 	/* Re-enable Deeper C-states beyond C6 */
 	cpu_latency_qos_update_request(sst_drv_ctx->qos, PM_QOS_DEFAULT_VALUE);
-	sst_free_block(sst_drv_ctx, block);
+	sst_मुक्त_block(sst_drv_ctx, block);
 	dev_dbg(sst_drv_ctx->dev, "fw load successful!!!\n");
 
-	if (sst_drv_ctx->ops->restore_dsp_context)
+	अगर (sst_drv_ctx->ops->restore_dsp_context)
 		sst_drv_ctx->ops->restore_dsp_context();
 	sst_drv_ctx->sst_state = SST_FW_RUNNING;
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 

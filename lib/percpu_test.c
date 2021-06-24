@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/module.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/module.h>
 
 /* validate @native and @pcp counter values match @expected */
-#define CHECK(native, pcp, expected)                                    \
-	do {                                                            \
+#घोषणा CHECK(native, pcp, expected)                                    \
+	करो अणु                                                            \
 		WARN((native) != (expected),                            \
 		     "raw %ld (0x%lx) != expected %lld (0x%llx)",	\
 		     (native), (native),				\
-		     (long long)(expected), (long long)(expected));	\
-		WARN(__this_cpu_read(pcp) != (expected),                \
+		     (दीर्घ दीर्घ)(expected), (दीर्घ दीर्घ)(expected));	\
+		WARN(__this_cpu_पढ़ो(pcp) != (expected),                \
 		     "pcp %ld (0x%lx) != expected %lld (0x%llx)",	\
-		     __this_cpu_read(pcp), __this_cpu_read(pcp),	\
-		     (long long)(expected), (long long)(expected));	\
-	} while (0)
+		     __this_cpu_पढ़ो(pcp), __this_cpu_पढ़ो(pcp),	\
+		     (दीर्घ दीर्घ)(expected), (दीर्घ दीर्घ)(expected));	\
+	पूर्ण जबतक (0)
 
-static DEFINE_PER_CPU(long, long_counter);
-static DEFINE_PER_CPU(unsigned long, ulong_counter);
+अटल DEFINE_PER_CPU(दीर्घ, दीर्घ_counter);
+अटल DEFINE_PER_CPU(अचिन्हित दीर्घ, uदीर्घ_counter);
 
-static int __init percpu_test_init(void)
-{
+अटल पूर्णांक __init percpu_test_init(व्योम)
+अणु
 	/*
-	 * volatile prevents compiler from optimizing it uses, otherwise the
-	 * +ul_one/-ul_one below would replace with inc/dec instructions.
+	 * अस्थिर prevents compiler from optimizing it uses, otherwise the
+	 * +ul_one/-ul_one below would replace with inc/dec inकाष्ठाions.
 	 */
-	volatile unsigned int ui_one = 1;
-	long l = 0;
-	unsigned long ul = 0;
+	अस्थिर अचिन्हित पूर्णांक ui_one = 1;
+	दीर्घ l = 0;
+	अचिन्हित दीर्घ ul = 0;
 
 	pr_info("percpu test start\n");
 
 	preempt_disable();
 
 	l += -1;
-	__this_cpu_add(long_counter, -1);
-	CHECK(l, long_counter, -1);
+	__this_cpu_add(दीर्घ_counter, -1);
+	CHECK(l, दीर्घ_counter, -1);
 
 	l += 1;
-	__this_cpu_add(long_counter, 1);
-	CHECK(l, long_counter, 0);
+	__this_cpu_add(दीर्घ_counter, 1);
+	CHECK(l, दीर्घ_counter, 0);
 
 	ul = 0;
-	__this_cpu_write(ulong_counter, 0);
+	__this_cpu_ग_लिखो(uदीर्घ_counter, 0);
 
 	ul += 1UL;
-	__this_cpu_add(ulong_counter, 1UL);
-	CHECK(ul, ulong_counter, 1);
+	__this_cpu_add(uदीर्घ_counter, 1UL);
+	CHECK(ul, uदीर्घ_counter, 1);
 
 	ul += -1UL;
-	__this_cpu_add(ulong_counter, -1UL);
-	CHECK(ul, ulong_counter, 0);
+	__this_cpu_add(uदीर्घ_counter, -1UL);
+	CHECK(ul, uदीर्घ_counter, 0);
 
-	ul += -(unsigned long)1;
-	__this_cpu_add(ulong_counter, -(unsigned long)1);
-	CHECK(ul, ulong_counter, -1);
+	ul += -(अचिन्हित दीर्घ)1;
+	__this_cpu_add(uदीर्घ_counter, -(अचिन्हित दीर्घ)1);
+	CHECK(ul, uदीर्घ_counter, -1);
 
 	ul = 0;
-	__this_cpu_write(ulong_counter, 0);
+	__this_cpu_ग_लिखो(uदीर्घ_counter, 0);
 
 	ul -= 1;
-	__this_cpu_dec(ulong_counter);
-	CHECK(ul, ulong_counter, -1);
-	CHECK(ul, ulong_counter, ULONG_MAX);
+	__this_cpu_dec(uदीर्घ_counter);
+	CHECK(ul, uदीर्घ_counter, -1);
+	CHECK(ul, uदीर्घ_counter, अच_दीर्घ_उच्च);
 
 	l += -ui_one;
-	__this_cpu_add(long_counter, -ui_one);
-	CHECK(l, long_counter, 0xffffffff);
+	__this_cpu_add(दीर्घ_counter, -ui_one);
+	CHECK(l, दीर्घ_counter, 0xffffffff);
 
 	l += ui_one;
-	__this_cpu_add(long_counter, ui_one);
-	CHECK(l, long_counter, (long)0x100000000LL);
+	__this_cpu_add(दीर्घ_counter, ui_one);
+	CHECK(l, दीर्घ_counter, (दीर्घ)0x100000000LL);
 
 
 	l = 0;
-	__this_cpu_write(long_counter, 0);
+	__this_cpu_ग_लिखो(दीर्घ_counter, 0);
 
 	l -= ui_one;
-	__this_cpu_sub(long_counter, ui_one);
-	CHECK(l, long_counter, -1);
+	__this_cpu_sub(दीर्घ_counter, ui_one);
+	CHECK(l, दीर्घ_counter, -1);
 
 	l = 0;
-	__this_cpu_write(long_counter, 0);
+	__this_cpu_ग_लिखो(दीर्घ_counter, 0);
 
 	l += ui_one;
-	__this_cpu_add(long_counter, ui_one);
-	CHECK(l, long_counter, 1);
+	__this_cpu_add(दीर्घ_counter, ui_one);
+	CHECK(l, दीर्घ_counter, 1);
 
 	l += -ui_one;
-	__this_cpu_add(long_counter, -ui_one);
-	CHECK(l, long_counter, (long)0x100000000LL);
+	__this_cpu_add(दीर्घ_counter, -ui_one);
+	CHECK(l, दीर्घ_counter, (दीर्घ)0x100000000LL);
 
 	l = 0;
-	__this_cpu_write(long_counter, 0);
+	__this_cpu_ग_लिखो(दीर्घ_counter, 0);
 
 	l -= ui_one;
-	this_cpu_sub(long_counter, ui_one);
-	CHECK(l, long_counter, -1);
-	CHECK(l, long_counter, ULONG_MAX);
+	this_cpu_sub(दीर्घ_counter, ui_one);
+	CHECK(l, दीर्घ_counter, -1);
+	CHECK(l, दीर्घ_counter, अच_दीर्घ_उच्च);
 
 	ul = 0;
-	__this_cpu_write(ulong_counter, 0);
+	__this_cpu_ग_लिखो(uदीर्घ_counter, 0);
 
 	ul += ui_one;
-	__this_cpu_add(ulong_counter, ui_one);
-	CHECK(ul, ulong_counter, 1);
+	__this_cpu_add(uदीर्घ_counter, ui_one);
+	CHECK(ul, uदीर्घ_counter, 1);
 
 	ul = 0;
-	__this_cpu_write(ulong_counter, 0);
+	__this_cpu_ग_लिखो(uदीर्घ_counter, 0);
 
 	ul -= ui_one;
-	__this_cpu_sub(ulong_counter, ui_one);
-	CHECK(ul, ulong_counter, -1);
-	CHECK(ul, ulong_counter, ULONG_MAX);
+	__this_cpu_sub(uदीर्घ_counter, ui_one);
+	CHECK(ul, uदीर्घ_counter, -1);
+	CHECK(ul, uदीर्घ_counter, अच_दीर्घ_उच्च);
 
 	ul = 3;
-	__this_cpu_write(ulong_counter, 3);
+	__this_cpu_ग_लिखो(uदीर्घ_counter, 3);
 
-	ul = this_cpu_sub_return(ulong_counter, ui_one);
-	CHECK(ul, ulong_counter, 2);
+	ul = this_cpu_sub_वापस(uदीर्घ_counter, ui_one);
+	CHECK(ul, uदीर्घ_counter, 2);
 
-	ul = __this_cpu_sub_return(ulong_counter, ui_one);
-	CHECK(ul, ulong_counter, 1);
+	ul = __this_cpu_sub_वापस(uदीर्घ_counter, ui_one);
+	CHECK(ul, uदीर्घ_counter, 1);
 
 	preempt_enable();
 
 	pr_info("percpu test done\n");
-	return -EAGAIN;  /* Fail will directly unload the module */
-}
+	वापस -EAGAIN;  /* Fail will directly unload the module */
+पूर्ण
 
-static void __exit percpu_test_exit(void)
-{
-}
+अटल व्योम __निकास percpu_test_निकास(व्योम)
+अणु
+पूर्ण
 
 module_init(percpu_test_init)
-module_exit(percpu_test_exit)
+module_निकास(percpu_test_निकास)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Greg Thelen");

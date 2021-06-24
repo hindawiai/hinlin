@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _M68K_BUG_H
-#define _M68K_BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _M68K_BUG_H
+#घोषणा _M68K_BUG_H
 
-#ifdef CONFIG_MMU
-#ifdef CONFIG_BUG
-#ifdef CONFIG_DEBUG_BUGVERBOSE
-#ifndef CONFIG_SUN3
-#define BUG() do { \
-	pr_crit("kernel BUG at %s:%d!\n", __FILE__, __LINE__); \
-	barrier_before_unreachable(); \
+#अगर_घोषित CONFIG_MMU
+#अगर_घोषित CONFIG_BUG
+#अगर_घोषित CONFIG_DEBUG_BUGVERBOSE
+#अगर_अघोषित CONFIG_SUN3
+#घोषणा BUG() करो अणु \
+	pr_crit("kernel BUG at %s:%d!\n", __खाता__, __LINE__); \
+	barrier_beक्रमe_unreachable(); \
 	__builtin_trap(); \
-} while (0)
-#else
-#define BUG() do { \
-	pr_crit("kernel BUG at %s:%d!\n", __FILE__, __LINE__); \
-	barrier_before_unreachable(); \
+पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा BUG() करो अणु \
+	pr_crit("kernel BUG at %s:%d!\n", __खाता__, __LINE__); \
+	barrier_beक्रमe_unreachable(); \
 	panic("BUG!"); \
-} while (0)
-#endif
-#else
-#define BUG() do { \
-	barrier_before_unreachable(); \
+पूर्ण जबतक (0)
+#पूर्ण_अगर
+#अन्यथा
+#घोषणा BUG() करो अणु \
+	barrier_beक्रमe_unreachable(); \
 	__builtin_trap(); \
-} while (0)
-#endif
+पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#define HAVE_ARCH_BUG
-#endif
-#endif /* CONFIG_MMU */
+#घोषणा HAVE_ARCH_BUG
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_MMU */
 
-#include <asm-generic/bug.h>
+#समावेश <यंत्र-generic/bug.h>
 
-#endif
+#पूर्ण_अगर

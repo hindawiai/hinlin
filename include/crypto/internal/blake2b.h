@@ -1,115 +1,116 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /*
- * Helper functions for BLAKE2b implementations.
+ * Helper functions क्रम BLAKE2b implementations.
  * Keep this in sync with the corresponding BLAKE2s header.
  */
 
-#ifndef _CRYPTO_INTERNAL_BLAKE2B_H
-#define _CRYPTO_INTERNAL_BLAKE2B_H
+#अगर_अघोषित _CRYPTO_INTERNAL_BLAKE2B_H
+#घोषणा _CRYPTO_INTERNAL_BLAKE2B_H
 
-#include <crypto/blake2b.h>
-#include <crypto/internal/hash.h>
-#include <linux/string.h>
+#समावेश <crypto/blake2b.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/माला.स>
 
-void blake2b_compress_generic(struct blake2b_state *state,
-			      const u8 *block, size_t nblocks, u32 inc);
+व्योम blake2b_compress_generic(काष्ठा blake2b_state *state,
+			      स्थिर u8 *block, माप_प्रकार nblocks, u32 inc);
 
-static inline void blake2b_set_lastblock(struct blake2b_state *state)
-{
+अटल अंतरभूत व्योम blake2b_set_lastblock(काष्ठा blake2b_state *state)
+अणु
 	state->f[0] = -1;
-}
+पूर्ण
 
-typedef void (*blake2b_compress_t)(struct blake2b_state *state,
-				   const u8 *block, size_t nblocks, u32 inc);
+प्रकार व्योम (*blake2b_compress_t)(काष्ठा blake2b_state *state,
+				   स्थिर u8 *block, माप_प्रकार nblocks, u32 inc);
 
-static inline void __blake2b_update(struct blake2b_state *state,
-				    const u8 *in, size_t inlen,
+अटल अंतरभूत व्योम __blake2b_update(काष्ठा blake2b_state *state,
+				    स्थिर u8 *in, माप_प्रकार inlen,
 				    blake2b_compress_t compress)
-{
-	const size_t fill = BLAKE2B_BLOCK_SIZE - state->buflen;
+अणु
+	स्थिर माप_प्रकार fill = BLAKE2B_BLOCK_SIZE - state->buflen;
 
-	if (unlikely(!inlen))
-		return;
-	if (inlen > fill) {
-		memcpy(state->buf + state->buflen, in, fill);
+	अगर (unlikely(!inlen))
+		वापस;
+	अगर (inlen > fill) अणु
+		स_नकल(state->buf + state->buflen, in, fill);
 		(*compress)(state, state->buf, 1, BLAKE2B_BLOCK_SIZE);
 		state->buflen = 0;
 		in += fill;
 		inlen -= fill;
-	}
-	if (inlen > BLAKE2B_BLOCK_SIZE) {
-		const size_t nblocks = DIV_ROUND_UP(inlen, BLAKE2B_BLOCK_SIZE);
+	पूर्ण
+	अगर (inlen > BLAKE2B_BLOCK_SIZE) अणु
+		स्थिर माप_प्रकार nblocks = DIV_ROUND_UP(inlen, BLAKE2B_BLOCK_SIZE);
 		/* Hash one less (full) block than strictly possible */
 		(*compress)(state, in, nblocks - 1, BLAKE2B_BLOCK_SIZE);
 		in += BLAKE2B_BLOCK_SIZE * (nblocks - 1);
 		inlen -= BLAKE2B_BLOCK_SIZE * (nblocks - 1);
-	}
-	memcpy(state->buf + state->buflen, in, inlen);
+	पूर्ण
+	स_नकल(state->buf + state->buflen, in, inlen);
 	state->buflen += inlen;
-}
+पूर्ण
 
-static inline void __blake2b_final(struct blake2b_state *state, u8 *out,
+अटल अंतरभूत व्योम __blake2b_final(काष्ठा blake2b_state *state, u8 *out,
 				   blake2b_compress_t compress)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
 	blake2b_set_lastblock(state);
-	memset(state->buf + state->buflen, 0,
+	स_रखो(state->buf + state->buflen, 0,
 	       BLAKE2B_BLOCK_SIZE - state->buflen); /* Padding */
 	(*compress)(state, state->buf, 1, state->buflen);
-	for (i = 0; i < ARRAY_SIZE(state->h); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(state->h); i++)
 		__cpu_to_le64s(&state->h[i]);
-	memcpy(out, state->h, state->outlen);
-}
+	स_नकल(out, state->h, state->outlen);
+पूर्ण
 
-/* Helper functions for shash implementations of BLAKE2b */
+/* Helper functions क्रम shash implementations of BLAKE2b */
 
-struct blake2b_tfm_ctx {
+काष्ठा blake2b_tfm_ctx अणु
 	u8 key[BLAKE2B_KEY_SIZE];
-	unsigned int keylen;
-};
+	अचिन्हित पूर्णांक keylen;
+पूर्ण;
 
-static inline int crypto_blake2b_setkey(struct crypto_shash *tfm,
-					const u8 *key, unsigned int keylen)
-{
-	struct blake2b_tfm_ctx *tctx = crypto_shash_ctx(tfm);
+अटल अंतरभूत पूर्णांक crypto_blake2b_setkey(काष्ठा crypto_shash *tfm,
+					स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा blake2b_tfm_ctx *tctx = crypto_shash_ctx(tfm);
 
-	if (keylen == 0 || keylen > BLAKE2B_KEY_SIZE)
-		return -EINVAL;
+	अगर (keylen == 0 || keylen > BLAKE2B_KEY_SIZE)
+		वापस -EINVAL;
 
-	memcpy(tctx->key, key, keylen);
+	स_नकल(tctx->key, key, keylen);
 	tctx->keylen = keylen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int crypto_blake2b_init(struct shash_desc *desc)
-{
-	const struct blake2b_tfm_ctx *tctx = crypto_shash_ctx(desc->tfm);
-	struct blake2b_state *state = shash_desc_ctx(desc);
-	unsigned int outlen = crypto_shash_digestsize(desc->tfm);
+अटल अंतरभूत पूर्णांक crypto_blake2b_init(काष्ठा shash_desc *desc)
+अणु
+	स्थिर काष्ठा blake2b_tfm_ctx *tctx = crypto_shash_ctx(desc->tfm);
+	काष्ठा blake2b_state *state = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक outlen = crypto_shash_digestsize(desc->tfm);
 
 	__blake2b_init(state, outlen, tctx->key, tctx->keylen);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int crypto_blake2b_update(struct shash_desc *desc,
-					const u8 *in, unsigned int inlen,
+अटल अंतरभूत पूर्णांक crypto_blake2b_update(काष्ठा shash_desc *desc,
+					स्थिर u8 *in, अचिन्हित पूर्णांक inlen,
 					blake2b_compress_t compress)
-{
-	struct blake2b_state *state = shash_desc_ctx(desc);
+अणु
+	काष्ठा blake2b_state *state = shash_desc_ctx(desc);
 
 	__blake2b_update(state, in, inlen, compress);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int crypto_blake2b_final(struct shash_desc *desc, u8 *out,
+अटल अंतरभूत पूर्णांक crypto_blake2b_final(काष्ठा shash_desc *desc, u8 *out,
 				       blake2b_compress_t compress)
-{
-	struct blake2b_state *state = shash_desc_ctx(desc);
+अणु
+	काष्ठा blake2b_state *state = shash_desc_ctx(desc);
 
 	__blake2b_final(state, out, compress);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* _CRYPTO_INTERNAL_BLAKE2B_H */
+#पूर्ण_अगर /* _CRYPTO_INTERNAL_BLAKE2B_H */

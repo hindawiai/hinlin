@@ -1,42 +1,43 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2003 Keith M Wesolowski
  * Copyright (C) 2005 Ilya A. Volynets (Total Knowledge)
  */
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/memblock.h>
-#include <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/mm.h>
 
-#include <asm/ip32/crime.h>
-#include <asm/bootinfo.h>
-#include <asm/page.h>
+#समावेश <यंत्र/ip32/crime.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/page.h>
 
-extern void crime_init(void);
+बाह्य व्योम crime_init(व्योम);
 
-void __init prom_meminit(void)
-{
+व्योम __init prom_meminit(व्योम)
+अणु
 	u64 base, size;
-	int bank;
+	पूर्णांक bank;
 
 	crime_init();
 
-	for (bank=0; bank < CRIME_MAXBANKS; bank++) {
+	क्रम (bank=0; bank < CRIME_MAXBANKS; bank++) अणु
 		u64 bankctl = crime->bank_ctrl[bank];
 		base = (bankctl & CRIME_MEM_BANK_CONTROL_ADDR) << 25;
-		if (bank != 0 && base == 0)
-			continue;
+		अगर (bank != 0 && base == 0)
+			जारी;
 		size = (bankctl & CRIME_MEM_BANK_CONTROL_SDRAM_SIZE) ? 128 : 32;
 		size <<= 20;
-		if (base + size > (256 << 20))
+		अगर (base + size > (256 << 20))
 			base += CRIME_HI_MEM_BASE;
 
-		printk("CRIME MC: bank %u base 0x%016Lx size %LuMiB\n",
+		prपूर्णांकk("CRIME MC: bank %u base 0x%016Lx size %LuMiB\n",
 			bank, base, size >> 20);
 		memblock_add(base, size);
-	}
-}
+	पूर्ण
+पूर्ण

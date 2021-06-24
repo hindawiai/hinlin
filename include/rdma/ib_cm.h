@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2004, 2005 Intel Corporation.  All rights reserved.
  * Copyright (c) 2004 Topspin Corporation.  All rights reserved.
  * Copyright (c) 2004 Voltaire Corporation.  All rights reserved.
- * Copyright (c) 2005 Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2005 Sun Microप्रणालीs, Inc. All rights reserved.
  * Copyright (c) 2019, Mellanox Technologies inc.  All rights reserved.
  */
 
-#ifndef IB_CM_H
-#define IB_CM_H
+#अगर_अघोषित IB_CM_H
+#घोषणा IB_CM_H
 
-#include <rdma/ib_mad.h>
-#include <rdma/ib_sa.h>
-#include <rdma/rdma_cm.h>
+#समावेश <rdma/ib_mad.h>
+#समावेश <rdma/ib_sa.h>
+#समावेश <rdma/rdma_cm.h>
 
-enum ib_cm_state {
+क्रमागत ib_cm_state अणु
 	IB_CM_IDLE,
 	IB_CM_LISTEN,
 	IB_CM_REQ_SENT,
@@ -31,18 +32,18 @@ enum ib_cm_state {
 	IB_CM_TIMEWAIT,
 	IB_CM_SIDR_REQ_SENT,
 	IB_CM_SIDR_REQ_RCVD
-};
+पूर्ण;
 
-enum ib_cm_lap_state {
+क्रमागत ib_cm_lap_state अणु
 	IB_CM_LAP_UNINIT,
 	IB_CM_LAP_IDLE,
 	IB_CM_LAP_SENT,
 	IB_CM_LAP_RCVD,
 	IB_CM_MRA_LAP_SENT,
 	IB_CM_MRA_LAP_RCVD,
-};
+पूर्ण;
 
-enum ib_cm_event_type {
+क्रमागत ib_cm_event_type अणु
 	IB_CM_REQ_ERROR,
 	IB_CM_REQ_RECEIVED,
 	IB_CM_REP_ERROR,
@@ -61,9 +62,9 @@ enum ib_cm_event_type {
 	IB_CM_SIDR_REQ_ERROR,
 	IB_CM_SIDR_REQ_RECEIVED,
 	IB_CM_SIDR_REP_RECEIVED
-};
+पूर्ण;
 
-enum ib_cm_data_size {
+क्रमागत ib_cm_data_size अणु
 	IB_CM_REQ_PRIVATE_DATA_SIZE	 = 92,
 	IB_CM_MRA_PRIVATE_DATA_SIZE	 = 222,
 	IB_CM_REJ_PRIVATE_DATA_SIZE	 = 148,
@@ -78,61 +79,61 @@ enum ib_cm_data_size {
 	IB_CM_SIDR_REQ_PRIVATE_DATA_SIZE = 216,
 	IB_CM_SIDR_REP_PRIVATE_DATA_SIZE = 136,
 	IB_CM_SIDR_REP_INFO_LENGTH	 = 72,
-};
+पूर्ण;
 
-struct ib_cm_id;
+काष्ठा ib_cm_id;
 
-struct ib_cm_req_event_param {
-	struct ib_cm_id		*listen_id;
+काष्ठा ib_cm_req_event_param अणु
+	काष्ठा ib_cm_id		*listen_id;
 
 	/* P_Key that was used by the GMP's BTH header */
 	u16			bth_pkey;
 
 	u8			port;
 
-	struct sa_path_rec	*primary_path;
-	struct sa_path_rec	*alternate_path;
+	काष्ठा sa_path_rec	*primary_path;
+	काष्ठा sa_path_rec	*alternate_path;
 
 	/*
 	 * SGID attribute of the primary path. Currently only
-	 * useful for RoCE. Alternate path GID attributes
+	 * useful क्रम RoCE. Alternate path GID attributes
 	 * are not yet supported.
 	 */
-	const struct ib_gid_attr *ppath_sgid_attr;
+	स्थिर काष्ठा ib_gid_attr *ppath_sgid_attr;
 
 	__be64			remote_ca_guid;
 	u32			remote_qkey;
 	u32			remote_qpn;
-	enum ib_qp_type		qp_type;
+	क्रमागत ib_qp_type		qp_type;
 
 	u32			starting_psn;
 	u8			responder_resources;
 	u8			initiator_depth;
-	unsigned int		local_cm_response_timeout:5;
-	unsigned int		flow_control:1;
-	unsigned int		remote_cm_response_timeout:5;
-	unsigned int		retry_count:3;
-	unsigned int		rnr_retry_count:3;
-	unsigned int		srq:1;
-	struct rdma_ucm_ece	ece;
-};
+	अचिन्हित पूर्णांक		local_cm_response_समयout:5;
+	अचिन्हित पूर्णांक		flow_control:1;
+	अचिन्हित पूर्णांक		remote_cm_response_समयout:5;
+	अचिन्हित पूर्णांक		retry_count:3;
+	अचिन्हित पूर्णांक		rnr_retry_count:3;
+	अचिन्हित पूर्णांक		srq:1;
+	काष्ठा rdma_ucm_ece	ece;
+पूर्ण;
 
-struct ib_cm_rep_event_param {
+काष्ठा ib_cm_rep_event_param अणु
 	__be64			remote_ca_guid;
 	u32			remote_qkey;
 	u32			remote_qpn;
 	u32			starting_psn;
 	u8			responder_resources;
 	u8			initiator_depth;
-	unsigned int		target_ack_delay:5;
-	unsigned int		failover_accepted:2;
-	unsigned int		flow_control:1;
-	unsigned int		rnr_retry_count:3;
-	unsigned int		srq:1;
-	struct rdma_ucm_ece	ece;
-};
+	अचिन्हित पूर्णांक		target_ack_delay:5;
+	अचिन्हित पूर्णांक		failover_accepted:2;
+	अचिन्हित पूर्णांक		flow_control:1;
+	अचिन्हित पूर्णांक		rnr_retry_count:3;
+	अचिन्हित पूर्णांक		srq:1;
+	काष्ठा rdma_ucm_ece	ece;
+पूर्ण;
 
-enum ib_cm_rej_reason {
+क्रमागत ib_cm_rej_reason अणु
 	IB_CM_REJ_NO_QP				= 1,
 	IB_CM_REJ_NO_EEC			= 2,
 	IB_CM_REJ_NO_RESOURCES			= 3,
@@ -156,8 +157,8 @@ enum ib_cm_rej_reason {
 	IB_CM_REJ_INVALID_ALT_TRAFFIC_CLASS	= 21,
 	IB_CM_REJ_INVALID_ALT_HOP_LIMIT		= 22,
 	IB_CM_REJ_INVALID_ALT_PACKET_RATE	= 23,
-	IB_CM_REJ_PORT_CM_REDIRECT		= 24,
-	IB_CM_REJ_PORT_REDIRECT			= 25,
+	IB_CM_REJ_PORT_CM_REसूचीECT		= 24,
+	IB_CM_REJ_PORT_REसूचीECT			= 25,
 	IB_CM_REJ_INVALID_MTU			= 26,
 	IB_CM_REJ_INSUFFICIENT_RESP_RESOURCES	= 27,
 	IB_CM_REJ_CONSUMER_DEFINED		= 28,
@@ -167,28 +168,28 @@ enum ib_cm_rej_reason {
 	IB_CM_REJ_INVALID_FLOW_LABEL		= 32,
 	IB_CM_REJ_INVALID_ALT_FLOW_LABEL	= 33,
 	IB_CM_REJ_VENDOR_OPTION_NOT_SUPPORTED	= 35,
-};
+पूर्ण;
 
-struct ib_cm_rej_event_param {
-	enum ib_cm_rej_reason	reason;
-	void			*ari;
+काष्ठा ib_cm_rej_event_param अणु
+	क्रमागत ib_cm_rej_reason	reason;
+	व्योम			*ari;
 	u8			ari_length;
-};
+पूर्ण;
 
-struct ib_cm_mra_event_param {
-	u8	service_timeout;
-};
+काष्ठा ib_cm_mra_event_param अणु
+	u8	service_समयout;
+पूर्ण;
 
-struct ib_cm_lap_event_param {
-	struct sa_path_rec	*alternate_path;
-};
+काष्ठा ib_cm_lap_event_param अणु
+	काष्ठा sa_path_rec	*alternate_path;
+पूर्ण;
 
-enum ib_cm_apr_status {
+क्रमागत ib_cm_apr_status अणु
 	IB_CM_APR_SUCCESS,
 	IB_CM_APR_INVALID_COMM_ID,
 	IB_CM_APR_UNSUPPORTED,
 	IB_CM_APR_REJECT,
-	IB_CM_APR_REDIRECT,
+	IB_CM_APR_REसूचीECT,
 	IB_CM_APR_IS_CURRENT,
 	IB_CM_APR_INVALID_QPN_EECN,
 	IB_CM_APR_INVALID_LID,
@@ -198,375 +199,375 @@ enum ib_cm_apr_status {
 	IB_CM_APR_INVALID_HOP_LIMIT,
 	IB_CM_APR_INVALID_PACKET_RATE,
 	IB_CM_APR_INVALID_SL
-};
+पूर्ण;
 
-struct ib_cm_apr_event_param {
-	enum ib_cm_apr_status	ap_status;
-	void			*apr_info;
+काष्ठा ib_cm_apr_event_param अणु
+	क्रमागत ib_cm_apr_status	ap_status;
+	व्योम			*apr_info;
 	u8			info_len;
-};
+पूर्ण;
 
-struct ib_cm_sidr_req_event_param {
-	struct ib_cm_id		*listen_id;
+काष्ठा ib_cm_sidr_req_event_param अणु
+	काष्ठा ib_cm_id		*listen_id;
 	__be64			service_id;
 
 	/*
 	 * SGID attribute of the request. Currently only
-	 * useful for RoCE.
+	 * useful क्रम RoCE.
 	 */
-	const struct ib_gid_attr *sgid_attr;
+	स्थिर काष्ठा ib_gid_attr *sgid_attr;
 	/* P_Key that was used by the GMP's BTH header */
 	u16			bth_pkey;
 	u8			port;
 	u16			pkey;
-};
+पूर्ण;
 
-enum ib_cm_sidr_status {
+क्रमागत ib_cm_sidr_status अणु
 	IB_SIDR_SUCCESS,
 	IB_SIDR_UNSUPPORTED,
 	IB_SIDR_REJECT,
 	IB_SIDR_NO_QP,
-	IB_SIDR_REDIRECT,
+	IB_SIDR_REसूचीECT,
 	IB_SIDR_UNSUPPORTED_VERSION
-};
+पूर्ण;
 
-struct ib_cm_sidr_rep_event_param {
-	enum ib_cm_sidr_status	status;
+काष्ठा ib_cm_sidr_rep_event_param अणु
+	क्रमागत ib_cm_sidr_status	status;
 	u32			qkey;
 	u32			qpn;
-	void			*info;
-	const struct ib_gid_attr *sgid_attr;
+	व्योम			*info;
+	स्थिर काष्ठा ib_gid_attr *sgid_attr;
 	u8			info_len;
-};
+पूर्ण;
 
-struct ib_cm_event {
-	enum ib_cm_event_type	event;
-	union {
-		struct ib_cm_req_event_param	req_rcvd;
-		struct ib_cm_rep_event_param	rep_rcvd;
-		/* No data for RTU received events. */
-		struct ib_cm_rej_event_param	rej_rcvd;
-		struct ib_cm_mra_event_param	mra_rcvd;
-		struct ib_cm_lap_event_param	lap_rcvd;
-		struct ib_cm_apr_event_param	apr_rcvd;
-		/* No data for DREQ/DREP received events. */
-		struct ib_cm_sidr_req_event_param sidr_req_rcvd;
-		struct ib_cm_sidr_rep_event_param sidr_rep_rcvd;
-		enum ib_wc_status		send_status;
-	} param;
+काष्ठा ib_cm_event अणु
+	क्रमागत ib_cm_event_type	event;
+	जोड़ अणु
+		काष्ठा ib_cm_req_event_param	req_rcvd;
+		काष्ठा ib_cm_rep_event_param	rep_rcvd;
+		/* No data क्रम RTU received events. */
+		काष्ठा ib_cm_rej_event_param	rej_rcvd;
+		काष्ठा ib_cm_mra_event_param	mra_rcvd;
+		काष्ठा ib_cm_lap_event_param	lap_rcvd;
+		काष्ठा ib_cm_apr_event_param	apr_rcvd;
+		/* No data क्रम DREQ/DREP received events. */
+		काष्ठा ib_cm_sidr_req_event_param sidr_req_rcvd;
+		काष्ठा ib_cm_sidr_rep_event_param sidr_rep_rcvd;
+		क्रमागत ib_wc_status		send_status;
+	पूर्ण param;
 
-	void			*private_data;
-};
+	व्योम			*निजी_data;
+पूर्ण;
 
-#define CM_REQ_ATTR_ID		cpu_to_be16(0x0010)
-#define CM_MRA_ATTR_ID		cpu_to_be16(0x0011)
-#define CM_REJ_ATTR_ID		cpu_to_be16(0x0012)
-#define CM_REP_ATTR_ID		cpu_to_be16(0x0013)
-#define CM_RTU_ATTR_ID		cpu_to_be16(0x0014)
-#define CM_DREQ_ATTR_ID		cpu_to_be16(0x0015)
-#define CM_DREP_ATTR_ID		cpu_to_be16(0x0016)
-#define CM_SIDR_REQ_ATTR_ID	cpu_to_be16(0x0017)
-#define CM_SIDR_REP_ATTR_ID	cpu_to_be16(0x0018)
-#define CM_LAP_ATTR_ID		cpu_to_be16(0x0019)
-#define CM_APR_ATTR_ID		cpu_to_be16(0x001A)
+#घोषणा CM_REQ_ATTR_ID		cpu_to_be16(0x0010)
+#घोषणा CM_MRA_ATTR_ID		cpu_to_be16(0x0011)
+#घोषणा CM_REJ_ATTR_ID		cpu_to_be16(0x0012)
+#घोषणा CM_REP_ATTR_ID		cpu_to_be16(0x0013)
+#घोषणा CM_RTU_ATTR_ID		cpu_to_be16(0x0014)
+#घोषणा CM_DREQ_ATTR_ID		cpu_to_be16(0x0015)
+#घोषणा CM_DREP_ATTR_ID		cpu_to_be16(0x0016)
+#घोषणा CM_SIDR_REQ_ATTR_ID	cpu_to_be16(0x0017)
+#घोषणा CM_SIDR_REP_ATTR_ID	cpu_to_be16(0x0018)
+#घोषणा CM_LAP_ATTR_ID		cpu_to_be16(0x0019)
+#घोषणा CM_APR_ATTR_ID		cpu_to_be16(0x001A)
 
 /**
  * ib_cm_handler - User-defined callback to process communication events.
- * @cm_id: Communication identifier associated with the reported event.
- * @event: Information about the communication event.
+ * @cm_id: Communication identअगरier associated with the reported event.
+ * @event: Inक्रमmation about the communication event.
  *
  * IB_CM_REQ_RECEIVED and IB_CM_SIDR_REQ_RECEIVED communication events
  * generated as a result of listen requests result in the allocation of a
- * new @cm_id.  The new @cm_id is returned to the user through this callback.
- * Clients are responsible for destroying the new @cm_id.  For peer-to-peer
- * IB_CM_REQ_RECEIVED and all other events, the returned @cm_id corresponds
- * to a user's existing communication identifier.
+ * new @cm_id.  The new @cm_id is वापसed to the user through this callback.
+ * Clients are responsible क्रम destroying the new @cm_id.  For peer-to-peer
+ * IB_CM_REQ_RECEIVED and all other events, the वापसed @cm_id corresponds
+ * to a user's existing communication identअगरier.
  *
- * Users may not call ib_destroy_cm_id while in the context of this callback;
- * however, returning a non-zero value instructs the communication manager to
+ * Users may not call ib_destroy_cm_id जबतक in the context of this callback;
+ * however, वापसing a non-zero value inकाष्ठाs the communication manager to
  * destroy the @cm_id after the callback completes.
  */
-typedef int (*ib_cm_handler)(struct ib_cm_id *cm_id,
-			     const struct ib_cm_event *event);
+प्रकार पूर्णांक (*ib_cm_handler)(काष्ठा ib_cm_id *cm_id,
+			     स्थिर काष्ठा ib_cm_event *event);
 
-struct ib_cm_id {
+काष्ठा ib_cm_id अणु
 	ib_cm_handler		cm_handler;
-	void			*context;
-	struct ib_device	*device;
+	व्योम			*context;
+	काष्ठा ib_device	*device;
 	__be64			service_id;
 	__be64			service_mask;
-	enum ib_cm_state	state;		/* internal CM/debug use */
-	enum ib_cm_lap_state	lap_state;	/* internal CM/debug use */
+	क्रमागत ib_cm_state	state;		/* पूर्णांकernal CM/debug use */
+	क्रमागत ib_cm_lap_state	lap_state;	/* पूर्णांकernal CM/debug use */
 	__be32			local_id;
 	__be32			remote_id;
 	u32			remote_cm_qpn;  /* 1 unless redirected */
-};
+पूर्ण;
 
 /**
- * ib_create_cm_id - Allocate a communication identifier.
+ * ib_create_cm_id - Allocate a communication identअगरier.
  * @device: Device associated with the cm_id.  All related communication will
- * be associated with the specified device.
- * @cm_handler: Callback invoked to notify the user of CM events.
- * @context: User specified context associated with the communication
- *   identifier.
+ * be associated with the specअगरied device.
+ * @cm_handler: Callback invoked to notअगरy the user of CM events.
+ * @context: User specअगरied context associated with the communication
+ *   identअगरier.
  *
- * Communication identifiers are used to track connection states, service
+ * Communication identअगरiers are used to track connection states, service
  * ID resolution requests, and listen requests.
  */
-struct ib_cm_id *ib_create_cm_id(struct ib_device *device,
+काष्ठा ib_cm_id *ib_create_cm_id(काष्ठा ib_device *device,
 				 ib_cm_handler cm_handler,
-				 void *context);
+				 व्योम *context);
 
 /**
- * ib_destroy_cm_id - Destroy a connection identifier.
- * @cm_id: Connection identifier to destroy.
+ * ib_destroy_cm_id - Destroy a connection identअगरier.
+ * @cm_id: Connection identअगरier to destroy.
  *
- * This call blocks until the connection identifier is destroyed.
+ * This call blocks until the connection identअगरier is destroyed.
  */
-void ib_destroy_cm_id(struct ib_cm_id *cm_id);
+व्योम ib_destroy_cm_id(काष्ठा ib_cm_id *cm_id);
 
-#define IB_SERVICE_ID_AGN_MASK	cpu_to_be64(0xFF00000000000000ULL)
-#define IB_CM_ASSIGN_SERVICE_ID	cpu_to_be64(0x0200000000000000ULL)
-#define IB_CMA_SERVICE_ID	cpu_to_be64(0x0000000001000000ULL)
-#define IB_CMA_SERVICE_ID_MASK	cpu_to_be64(0xFFFFFFFFFF000000ULL)
-#define IB_SDP_SERVICE_ID	cpu_to_be64(0x0000000000010000ULL)
-#define IB_SDP_SERVICE_ID_MASK	cpu_to_be64(0xFFFFFFFFFFFF0000ULL)
+#घोषणा IB_SERVICE_ID_AGN_MASK	cpu_to_be64(0xFF00000000000000ULL)
+#घोषणा IB_CM_ASSIGN_SERVICE_ID	cpu_to_be64(0x0200000000000000ULL)
+#घोषणा IB_CMA_SERVICE_ID	cpu_to_be64(0x0000000001000000ULL)
+#घोषणा IB_CMA_SERVICE_ID_MASK	cpu_to_be64(0xFFFFFFFFFF000000ULL)
+#घोषणा IB_SDP_SERVICE_ID	cpu_to_be64(0x0000000000010000ULL)
+#घोषणा IB_SDP_SERVICE_ID_MASK	cpu_to_be64(0xFFFFFFFFFFFF0000ULL)
 
 /**
- * ib_cm_listen - Initiates listening on the specified service ID for
+ * ib_cm_listen - Initiates listening on the specअगरied service ID क्रम
  *   connection and service ID resolution requests.
- * @cm_id: Connection identifier associated with the listen request.
- * @service_id: Service identifier matched against incoming connection
- *   and service ID resolution requests.  The service ID should be specified
+ * @cm_id: Connection identअगरier associated with the listen request.
+ * @service_id: Service identअगरier matched against incoming connection
+ *   and service ID resolution requests.  The service ID should be specअगरied
  *   network-byte order.  If set to IB_CM_ASSIGN_SERVICE_ID, the CM will
  *   assign a service ID to the caller.
  * @service_mask: Mask applied to service ID used to listen across a
  *   range of service IDs.  If set to 0, the service ID is matched
- *   exactly.  This parameter is ignored if %service_id is set to
+ *   exactly.  This parameter is ignored अगर %service_id is set to
  *   IB_CM_ASSIGN_SERVICE_ID.
  */
-int ib_cm_listen(struct ib_cm_id *cm_id, __be64 service_id,
+पूर्णांक ib_cm_listen(काष्ठा ib_cm_id *cm_id, __be64 service_id,
 		 __be64 service_mask);
 
-struct ib_cm_id *ib_cm_insert_listen(struct ib_device *device,
+काष्ठा ib_cm_id *ib_cm_insert_listen(काष्ठा ib_device *device,
 				     ib_cm_handler cm_handler,
 				     __be64 service_id);
 
-struct ib_cm_req_param {
-	struct sa_path_rec	*primary_path;
-	struct sa_path_rec	*alternate_path;
-	const struct ib_gid_attr *ppath_sgid_attr;
+काष्ठा ib_cm_req_param अणु
+	काष्ठा sa_path_rec	*primary_path;
+	काष्ठा sa_path_rec	*alternate_path;
+	स्थिर काष्ठा ib_gid_attr *ppath_sgid_attr;
 	__be64			service_id;
 	u32			qp_num;
-	enum ib_qp_type		qp_type;
+	क्रमागत ib_qp_type		qp_type;
 	u32			starting_psn;
-	const void		*private_data;
-	u8			private_data_len;
+	स्थिर व्योम		*निजी_data;
+	u8			निजी_data_len;
 	u8			responder_resources;
 	u8			initiator_depth;
-	u8			remote_cm_response_timeout;
+	u8			remote_cm_response_समयout;
 	u8			flow_control;
-	u8			local_cm_response_timeout;
+	u8			local_cm_response_समयout;
 	u8			retry_count;
 	u8			rnr_retry_count;
 	u8			max_cm_retries;
 	u8			srq;
-	struct rdma_ucm_ece	ece;
-};
+	काष्ठा rdma_ucm_ece	ece;
+पूर्ण;
 
 /**
  * ib_send_cm_req - Sends a connection request to the remote node.
- * @cm_id: Connection identifier that will be associated with the
+ * @cm_id: Connection identअगरier that will be associated with the
  *   connection request.
- * @param: Connection request information needed to establish the
+ * @param: Connection request inक्रमmation needed to establish the
  *   connection.
  */
-int ib_send_cm_req(struct ib_cm_id *cm_id,
-		   struct ib_cm_req_param *param);
+पूर्णांक ib_send_cm_req(काष्ठा ib_cm_id *cm_id,
+		   काष्ठा ib_cm_req_param *param);
 
-struct ib_cm_rep_param {
+काष्ठा ib_cm_rep_param अणु
 	u32		qp_num;
 	u32		starting_psn;
-	const void	*private_data;
-	u8		private_data_len;
+	स्थिर व्योम	*निजी_data;
+	u8		निजी_data_len;
 	u8		responder_resources;
 	u8		initiator_depth;
 	u8		failover_accepted;
 	u8		flow_control;
 	u8		rnr_retry_count;
 	u8		srq;
-	struct rdma_ucm_ece ece;
-};
+	काष्ठा rdma_ucm_ece ece;
+पूर्ण;
 
 /**
  * ib_send_cm_rep - Sends a connection reply in response to a connection
  *   request.
- * @cm_id: Connection identifier that will be associated with the
+ * @cm_id: Connection identअगरier that will be associated with the
  *   connection request.
- * @param: Connection reply information needed to establish the
+ * @param: Connection reply inक्रमmation needed to establish the
  *   connection.
  */
-int ib_send_cm_rep(struct ib_cm_id *cm_id,
-		   struct ib_cm_rep_param *param);
+पूर्णांक ib_send_cm_rep(काष्ठा ib_cm_id *cm_id,
+		   काष्ठा ib_cm_rep_param *param);
 
 /**
- * ib_send_cm_rtu - Sends a connection ready to use message in response
+ * ib_send_cm_rtu - Sends a connection पढ़ोy to use message in response
  *   to a connection reply message.
- * @cm_id: Connection identifier associated with the connection request.
- * @private_data: Optional user-defined private data sent with the
- *   ready to use message.
- * @private_data_len: Size of the private data buffer, in bytes.
+ * @cm_id: Connection identअगरier associated with the connection request.
+ * @निजी_data: Optional user-defined निजी data sent with the
+ *   पढ़ोy to use message.
+ * @निजी_data_len: Size of the निजी data buffer, in bytes.
  */
-int ib_send_cm_rtu(struct ib_cm_id *cm_id,
-		   const void *private_data,
-		   u8 private_data_len);
+पूर्णांक ib_send_cm_rtu(काष्ठा ib_cm_id *cm_id,
+		   स्थिर व्योम *निजी_data,
+		   u8 निजी_data_len);
 
 /**
- * ib_send_cm_dreq - Sends a disconnection request for an existing
+ * ib_send_cm_dreq - Sends a disconnection request क्रम an existing
  *   connection.
- * @cm_id: Connection identifier associated with the connection being
+ * @cm_id: Connection identअगरier associated with the connection being
  *   released.
- * @private_data: Optional user-defined private data sent with the
+ * @निजी_data: Optional user-defined निजी data sent with the
  *   disconnection request message.
- * @private_data_len: Size of the private data buffer, in bytes.
+ * @निजी_data_len: Size of the निजी data buffer, in bytes.
  */
-int ib_send_cm_dreq(struct ib_cm_id *cm_id,
-		    const void *private_data,
-		    u8 private_data_len);
+पूर्णांक ib_send_cm_dreq(काष्ठा ib_cm_id *cm_id,
+		    स्थिर व्योम *निजी_data,
+		    u8 निजी_data_len);
 
 /**
  * ib_send_cm_drep - Sends a disconnection reply to a disconnection request.
- * @cm_id: Connection identifier associated with the connection being
+ * @cm_id: Connection identअगरier associated with the connection being
  *   released.
- * @private_data: Optional user-defined private data sent with the
+ * @निजी_data: Optional user-defined निजी data sent with the
  *   disconnection reply message.
- * @private_data_len: Size of the private data buffer, in bytes.
+ * @निजी_data_len: Size of the निजी data buffer, in bytes.
  *
  * If the cm_id is in the correct state, the CM will transition the connection
- * to the timewait state, even if an error occurs sending the DREP message.
+ * to the समयरुको state, even अगर an error occurs sending the DREP message.
  */
-int ib_send_cm_drep(struct ib_cm_id *cm_id,
-		    const void *private_data,
-		    u8 private_data_len);
+पूर्णांक ib_send_cm_drep(काष्ठा ib_cm_id *cm_id,
+		    स्थिर व्योम *निजी_data,
+		    u8 निजी_data_len);
 
 /**
- * ib_cm_notify - Notifies the CM of an event reported to the consumer.
- * @cm_id: Connection identifier to transition to established.
+ * ib_cm_notअगरy - Notअगरies the CM of an event reported to the consumer.
+ * @cm_id: Connection identअगरier to transition to established.
  * @event: Type of event.
  *
- * This routine should be invoked by users to notify the CM of relevant
+ * This routine should be invoked by users to notअगरy the CM of relevant
  * communication events.  Events that should be reported to the CM and
  * when to report them are:
  *
  * IB_EVENT_COMM_EST - Used when a message is received on a connected
- *    QP before an RTU has been received.
- * IB_EVENT_PATH_MIG - Notifies the CM that the connection has failed over
+ *    QP beक्रमe an RTU has been received.
+ * IB_EVENT_PATH_MIG - Notअगरies the CM that the connection has failed over
  *   to the alternate path.
  */
-int ib_cm_notify(struct ib_cm_id *cm_id, enum ib_event_type event);
+पूर्णांक ib_cm_notअगरy(काष्ठा ib_cm_id *cm_id, क्रमागत ib_event_type event);
 
 /**
  * ib_send_cm_rej - Sends a connection rejection message to the
  *   remote node.
- * @cm_id: Connection identifier associated with the connection being
+ * @cm_id: Connection identअगरier associated with the connection being
  *   rejected.
- * @reason: Reason for the connection request rejection.
- * @ari: Optional additional rejection information.
- * @ari_length: Size of the additional rejection information, in bytes.
- * @private_data: Optional user-defined private data sent with the
+ * @reason: Reason क्रम the connection request rejection.
+ * @ari: Optional additional rejection inक्रमmation.
+ * @ari_length: Size of the additional rejection inक्रमmation, in bytes.
+ * @निजी_data: Optional user-defined निजी data sent with the
  *   rejection message.
- * @private_data_len: Size of the private data buffer, in bytes.
+ * @निजी_data_len: Size of the निजी data buffer, in bytes.
  */
-int ib_send_cm_rej(struct ib_cm_id *cm_id,
-		   enum ib_cm_rej_reason reason,
-		   void *ari,
+पूर्णांक ib_send_cm_rej(काष्ठा ib_cm_id *cm_id,
+		   क्रमागत ib_cm_rej_reason reason,
+		   व्योम *ari,
 		   u8 ari_length,
-		   const void *private_data,
-		   u8 private_data_len);
+		   स्थिर व्योम *निजी_data,
+		   u8 निजी_data_len);
 
-#define IB_CM_MRA_FLAG_DELAY 0x80  /* Send MRA only after a duplicate msg */
+#घोषणा IB_CM_MRA_FLAG_DELAY 0x80  /* Send MRA only after a duplicate msg */
 
 /**
  * ib_send_cm_mra - Sends a message receipt acknowledgement to a connection
  *   message.
- * @cm_id: Connection identifier associated with the connection message.
- * @service_timeout: The lower 5-bits specify the maximum time required for
+ * @cm_id: Connection identअगरier associated with the connection message.
+ * @service_समयout: The lower 5-bits specअगरy the maximum समय required क्रम
  *   the sender to reply to the connection message.  The upper 3-bits
- *   specify additional control flags.
- * @private_data: Optional user-defined private data sent with the
+ *   specअगरy additional control flags.
+ * @निजी_data: Optional user-defined निजी data sent with the
  *   message receipt acknowledgement.
- * @private_data_len: Size of the private data buffer, in bytes.
+ * @निजी_data_len: Size of the निजी data buffer, in bytes.
  */
-int ib_send_cm_mra(struct ib_cm_id *cm_id,
-		   u8 service_timeout,
-		   const void *private_data,
-		   u8 private_data_len);
+पूर्णांक ib_send_cm_mra(काष्ठा ib_cm_id *cm_id,
+		   u8 service_समयout,
+		   स्थिर व्योम *निजी_data,
+		   u8 निजी_data_len);
 
 /**
- * ib_cm_init_qp_attr - Initializes the QP attributes for use in transitioning
- *   to a specified QP state.
- * @cm_id: Communication identifier associated with the QP attributes to
+ * ib_cm_init_qp_attr - Initializes the QP attributes क्रम use in transitioning
+ *   to a specअगरied QP state.
+ * @cm_id: Communication identअगरier associated with the QP attributes to
  *   initialize.
- * @qp_attr: On input, specifies the desired QP state.  On output, the
+ * @qp_attr: On input, specअगरies the desired QP state.  On output, the
  *   mandatory and desired optional attributes will be set in order to
- *   modify the QP to the specified state.
+ *   modअगरy the QP to the specअगरied state.
  * @qp_attr_mask: The QP attribute mask that may be used to transition the
- *   QP to the specified state.
+ *   QP to the specअगरied state.
  *
  * Users must set the @qp_attr->qp_state to the desired QP state.  This call
- * will set all required attributes for the given transition, along with
- * known optional attributes.  Users may override the attributes returned from
- * this call before calling ib_modify_qp.
+ * will set all required attributes क्रम the given transition, aदीर्घ with
+ * known optional attributes.  Users may override the attributes वापसed from
+ * this call beक्रमe calling ib_modअगरy_qp.
  */
-int ib_cm_init_qp_attr(struct ib_cm_id *cm_id,
-		       struct ib_qp_attr *qp_attr,
-		       int *qp_attr_mask);
+पूर्णांक ib_cm_init_qp_attr(काष्ठा ib_cm_id *cm_id,
+		       काष्ठा ib_qp_attr *qp_attr,
+		       पूर्णांक *qp_attr_mask);
 
-struct ib_cm_sidr_req_param {
-	struct sa_path_rec	*path;
-	const struct ib_gid_attr *sgid_attr;
+काष्ठा ib_cm_sidr_req_param अणु
+	काष्ठा sa_path_rec	*path;
+	स्थिर काष्ठा ib_gid_attr *sgid_attr;
 	__be64			service_id;
-	unsigned long		timeout_ms;
-	const void		*private_data;
-	u8			private_data_len;
+	अचिन्हित दीर्घ		समयout_ms;
+	स्थिर व्योम		*निजी_data;
+	u8			निजी_data_len;
 	u8			max_cm_retries;
-};
+पूर्ण;
 
 /**
  * ib_send_cm_sidr_req - Sends a service ID resolution request to the
  *   remote node.
- * @cm_id: Communication identifier that will be associated with the
+ * @cm_id: Communication identअगरier that will be associated with the
  *   service ID resolution request.
- * @param: Service ID resolution request information.
+ * @param: Service ID resolution request inक्रमmation.
  */
-int ib_send_cm_sidr_req(struct ib_cm_id *cm_id,
-			struct ib_cm_sidr_req_param *param);
+पूर्णांक ib_send_cm_sidr_req(काष्ठा ib_cm_id *cm_id,
+			काष्ठा ib_cm_sidr_req_param *param);
 
-struct ib_cm_sidr_rep_param {
+काष्ठा ib_cm_sidr_rep_param अणु
 	u32			qp_num;
 	u32			qkey;
-	enum ib_cm_sidr_status	status;
-	const void		*info;
+	क्रमागत ib_cm_sidr_status	status;
+	स्थिर व्योम		*info;
 	u8			info_length;
-	const void		*private_data;
-	u8			private_data_len;
-	struct rdma_ucm_ece	ece;
-};
+	स्थिर व्योम		*निजी_data;
+	u8			निजी_data_len;
+	काष्ठा rdma_ucm_ece	ece;
+पूर्ण;
 
 /**
  * ib_send_cm_sidr_rep - Sends a service ID resolution reply to the
  *   remote node.
- * @cm_id: Communication identifier associated with the received service ID
+ * @cm_id: Communication identअगरier associated with the received service ID
  *   resolution request.
- * @param: Service ID resolution reply information.
+ * @param: Service ID resolution reply inक्रमmation.
  */
-int ib_send_cm_sidr_rep(struct ib_cm_id *cm_id,
-			struct ib_cm_sidr_rep_param *param);
+पूर्णांक ib_send_cm_sidr_rep(काष्ठा ib_cm_id *cm_id,
+			काष्ठा ib_cm_sidr_rep_param *param);
 
 /**
- * ibcm_reject_msg - return a pointer to a reject message string.
- * @reason: Value returned in the REJECT event status field.
+ * ibcm_reject_msg - वापस a poपूर्णांकer to a reject message string.
+ * @reason: Value वापसed in the REJECT event status field.
  */
-const char *__attribute_const__ ibcm_reject_msg(int reason);
+स्थिर अक्षर *__attribute_स्थिर__ ibcm_reject_msg(पूर्णांक reason);
 
-#endif /* IB_CM_H */
+#पूर्ण_अगर /* IB_CM_H */

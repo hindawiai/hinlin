@@ -1,334 +1,335 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/clkdev.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/clk/tegra.h>
-#include <linux/reset-controller.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/clk/tegra.h>
+#समावेश <linux/reset-controller.h>
 
-#include <soc/tegra/fuse.h>
+#समावेश <soc/tegra/fuse.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
 /* Global data of Tegra CPU CAR ops */
-static struct tegra_cpu_car_ops dummy_car_ops;
-struct tegra_cpu_car_ops *tegra_cpu_car_ops = &dummy_car_ops;
+अटल काष्ठा tegra_cpu_car_ops dummy_car_ops;
+काष्ठा tegra_cpu_car_ops *tegra_cpu_car_ops = &dummy_car_ops;
 
-int *periph_clk_enb_refcnt;
-static int periph_banks;
-static u32 *periph_state_ctx;
-static struct clk **clks;
-static int clk_num;
-static struct clk_onecell_data clk_data;
+पूर्णांक *periph_clk_enb_refcnt;
+अटल पूर्णांक periph_banks;
+अटल u32 *periph_state_ctx;
+अटल काष्ठा clk **clks;
+अटल पूर्णांक clk_num;
+अटल काष्ठा clk_onecell_data clk_data;
 
-/* Handlers for SoC-specific reset lines */
-static int (*special_reset_assert)(unsigned long);
-static int (*special_reset_deassert)(unsigned long);
-static unsigned int num_special_reset;
+/* Handlers क्रम SoC-specअगरic reset lines */
+अटल पूर्णांक (*special_reset_निश्चित)(अचिन्हित दीर्घ);
+अटल पूर्णांक (*special_reset_deनिश्चित)(अचिन्हित दीर्घ);
+अटल अचिन्हित पूर्णांक num_special_reset;
 
-static const struct tegra_clk_periph_regs periph_regs[] = {
-	[0] = {
+अटल स्थिर काष्ठा tegra_clk_periph_regs periph_regs[] = अणु
+	[0] = अणु
 		.enb_reg = CLK_OUT_ENB_L,
 		.enb_set_reg = CLK_OUT_ENB_SET_L,
 		.enb_clr_reg = CLK_OUT_ENB_CLR_L,
 		.rst_reg = RST_DEVICES_L,
 		.rst_set_reg = RST_DEVICES_SET_L,
 		.rst_clr_reg = RST_DEVICES_CLR_L,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.enb_reg = CLK_OUT_ENB_H,
 		.enb_set_reg = CLK_OUT_ENB_SET_H,
 		.enb_clr_reg = CLK_OUT_ENB_CLR_H,
 		.rst_reg = RST_DEVICES_H,
 		.rst_set_reg = RST_DEVICES_SET_H,
 		.rst_clr_reg = RST_DEVICES_CLR_H,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.enb_reg = CLK_OUT_ENB_U,
 		.enb_set_reg = CLK_OUT_ENB_SET_U,
 		.enb_clr_reg = CLK_OUT_ENB_CLR_U,
 		.rst_reg = RST_DEVICES_U,
 		.rst_set_reg = RST_DEVICES_SET_U,
 		.rst_clr_reg = RST_DEVICES_CLR_U,
-	},
-	[3] = {
+	पूर्ण,
+	[3] = अणु
 		.enb_reg = CLK_OUT_ENB_V,
 		.enb_set_reg = CLK_OUT_ENB_SET_V,
 		.enb_clr_reg = CLK_OUT_ENB_CLR_V,
 		.rst_reg = RST_DEVICES_V,
 		.rst_set_reg = RST_DEVICES_SET_V,
 		.rst_clr_reg = RST_DEVICES_CLR_V,
-	},
-	[4] = {
+	पूर्ण,
+	[4] = अणु
 		.enb_reg = CLK_OUT_ENB_W,
 		.enb_set_reg = CLK_OUT_ENB_SET_W,
 		.enb_clr_reg = CLK_OUT_ENB_CLR_W,
 		.rst_reg = RST_DEVICES_W,
 		.rst_set_reg = RST_DEVICES_SET_W,
 		.rst_clr_reg = RST_DEVICES_CLR_W,
-	},
-	[5] = {
+	पूर्ण,
+	[5] = अणु
 		.enb_reg = CLK_OUT_ENB_X,
 		.enb_set_reg = CLK_OUT_ENB_SET_X,
 		.enb_clr_reg = CLK_OUT_ENB_CLR_X,
 		.rst_reg = RST_DEVICES_X,
 		.rst_set_reg = RST_DEVICES_SET_X,
 		.rst_clr_reg = RST_DEVICES_CLR_X,
-	},
-	[6] = {
+	पूर्ण,
+	[6] = अणु
 		.enb_reg = CLK_OUT_ENB_Y,
 		.enb_set_reg = CLK_OUT_ENB_SET_Y,
 		.enb_clr_reg = CLK_OUT_ENB_CLR_Y,
 		.rst_reg = RST_DEVICES_Y,
 		.rst_set_reg = RST_DEVICES_SET_Y,
 		.rst_clr_reg = RST_DEVICES_CLR_Y,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void __iomem *clk_base;
+अटल व्योम __iomem *clk_base;
 
-static int tegra_clk_rst_assert(struct reset_controller_dev *rcdev,
-		unsigned long id)
-{
+अटल पूर्णांक tegra_clk_rst_निश्चित(काष्ठा reset_controller_dev *rcdev,
+		अचिन्हित दीर्घ id)
+अणु
 	/*
-	 * If peripheral is on the APB bus then we must read the APB bus to
-	 * flush the write operation in apb bus. This will avoid peripheral
-	 * access after disabling clock. Since the reset driver has no
-	 * knowledge of which reset IDs represent which devices, simply do
-	 * this all the time.
+	 * If peripheral is on the APB bus then we must पढ़ो the APB bus to
+	 * flush the ग_लिखो operation in apb bus. This will aव्योम peripheral
+	 * access after disabling घड़ी. Since the reset driver has no
+	 * knowledge of which reset IDs represent which devices, simply करो
+	 * this all the समय.
 	 */
-	tegra_read_chipid();
+	tegra_पढ़ो_chipid();
 
-	if (id < periph_banks * 32) {
-		writel_relaxed(BIT(id % 32),
+	अगर (id < periph_banks * 32) अणु
+		ग_लिखोl_relaxed(BIT(id % 32),
 			       clk_base + periph_regs[id / 32].rst_set_reg);
-		return 0;
-	} else if (id < periph_banks * 32 + num_special_reset) {
-		return special_reset_assert(id);
-	}
+		वापस 0;
+	पूर्ण अन्यथा अगर (id < periph_banks * 32 + num_special_reset) अणु
+		वापस special_reset_निश्चित(id);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int tegra_clk_rst_deassert(struct reset_controller_dev *rcdev,
-		unsigned long id)
-{
-	if (id < periph_banks * 32) {
-		writel_relaxed(BIT(id % 32),
+अटल पूर्णांक tegra_clk_rst_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
+		अचिन्हित दीर्घ id)
+अणु
+	अगर (id < periph_banks * 32) अणु
+		ग_लिखोl_relaxed(BIT(id % 32),
 			       clk_base + periph_regs[id / 32].rst_clr_reg);
-		return 0;
-	} else if (id < periph_banks * 32 + num_special_reset) {
-		return special_reset_deassert(id);
-	}
+		वापस 0;
+	पूर्ण अन्यथा अगर (id < periph_banks * 32 + num_special_reset) अणु
+		वापस special_reset_deनिश्चित(id);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int tegra_clk_rst_reset(struct reset_controller_dev *rcdev,
-		unsigned long id)
-{
-	int err;
+अटल पूर्णांक tegra_clk_rst_reset(काष्ठा reset_controller_dev *rcdev,
+		अचिन्हित दीर्घ id)
+अणु
+	पूर्णांक err;
 
-	err = tegra_clk_rst_assert(rcdev, id);
-	if (err)
-		return err;
+	err = tegra_clk_rst_निश्चित(rcdev, id);
+	अगर (err)
+		वापस err;
 
 	udelay(1);
 
-	return tegra_clk_rst_deassert(rcdev, id);
-}
+	वापस tegra_clk_rst_deनिश्चित(rcdev, id);
+पूर्ण
 
-const struct tegra_clk_periph_regs *get_reg_bank(int clkid)
-{
-	int reg_bank = clkid / 32;
+स्थिर काष्ठा tegra_clk_periph_regs *get_reg_bank(पूर्णांक clkid)
+अणु
+	पूर्णांक reg_bank = clkid / 32;
 
-	if (reg_bank < periph_banks)
-		return &periph_regs[reg_bank];
-	else {
+	अगर (reg_bank < periph_banks)
+		वापस &periph_regs[reg_bank];
+	अन्यथा अणु
 		WARN_ON(1);
-		return NULL;
-	}
-}
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-void tegra_clk_set_pllp_out_cpu(bool enable)
-{
+व्योम tegra_clk_set_pllp_out_cpu(bool enable)
+अणु
 	u32 val;
 
-	val = readl_relaxed(clk_base + CLK_OUT_ENB_Y);
-	if (enable)
+	val = पढ़ोl_relaxed(clk_base + CLK_OUT_ENB_Y);
+	अगर (enable)
 		val |= CLK_ENB_PLLP_OUT_CPU;
-	else
+	अन्यथा
 		val &= ~CLK_ENB_PLLP_OUT_CPU;
 
-	writel_relaxed(val, clk_base + CLK_OUT_ENB_Y);
-}
+	ग_लिखोl_relaxed(val, clk_base + CLK_OUT_ENB_Y);
+पूर्ण
 
-void tegra_clk_periph_suspend(void)
-{
-	unsigned int i, idx;
-
-	idx = 0;
-	for (i = 0; i < periph_banks; i++, idx++)
-		periph_state_ctx[idx] =
-			readl_relaxed(clk_base + periph_regs[i].enb_reg);
-
-	for (i = 0; i < periph_banks; i++, idx++)
-		periph_state_ctx[idx] =
-			readl_relaxed(clk_base + periph_regs[i].rst_reg);
-}
-
-void tegra_clk_periph_resume(void)
-{
-	unsigned int i, idx;
+व्योम tegra_clk_periph_suspend(व्योम)
+अणु
+	अचिन्हित पूर्णांक i, idx;
 
 	idx = 0;
-	for (i = 0; i < periph_banks; i++, idx++)
-		writel_relaxed(periph_state_ctx[idx],
+	क्रम (i = 0; i < periph_banks; i++, idx++)
+		periph_state_ctx[idx] =
+			पढ़ोl_relaxed(clk_base + periph_regs[i].enb_reg);
+
+	क्रम (i = 0; i < periph_banks; i++, idx++)
+		periph_state_ctx[idx] =
+			पढ़ोl_relaxed(clk_base + periph_regs[i].rst_reg);
+पूर्ण
+
+व्योम tegra_clk_periph_resume(व्योम)
+अणु
+	अचिन्हित पूर्णांक i, idx;
+
+	idx = 0;
+	क्रम (i = 0; i < periph_banks; i++, idx++)
+		ग_लिखोl_relaxed(periph_state_ctx[idx],
 			       clk_base + periph_regs[i].enb_reg);
 	/*
 	 * All non-boot peripherals will be in reset state on resume.
-	 * Wait for 5us of reset propagation delay before de-asserting
+	 * Wait क्रम 5us of reset propagation delay beक्रमe de-निश्चितing
 	 * the peripherals based on the saved context.
 	 */
 	fence_udelay(5, clk_base);
 
-	for (i = 0; i < periph_banks; i++, idx++)
-		writel_relaxed(periph_state_ctx[idx],
+	क्रम (i = 0; i < periph_banks; i++, idx++)
+		ग_लिखोl_relaxed(periph_state_ctx[idx],
 			       clk_base + periph_regs[i].rst_reg);
 
 	fence_udelay(2, clk_base);
-}
+पूर्ण
 
-static int tegra_clk_periph_ctx_init(int banks)
-{
-	periph_state_ctx = kcalloc(2 * banks, sizeof(*periph_state_ctx),
+अटल पूर्णांक tegra_clk_periph_ctx_init(पूर्णांक banks)
+अणु
+	periph_state_ctx = kसुस्मृति(2 * banks, माप(*periph_state_ctx),
 				   GFP_KERNEL);
-	if (!periph_state_ctx)
-		return -ENOMEM;
+	अगर (!periph_state_ctx)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct clk ** __init tegra_clk_init(void __iomem *regs, int num, int banks)
-{
+काष्ठा clk ** __init tegra_clk_init(व्योम __iomem *regs, पूर्णांक num, पूर्णांक banks)
+अणु
 	clk_base = regs;
 
-	if (WARN_ON(banks > ARRAY_SIZE(periph_regs)))
-		return NULL;
+	अगर (WARN_ON(banks > ARRAY_SIZE(periph_regs)))
+		वापस शून्य;
 
-	periph_clk_enb_refcnt = kcalloc(32 * banks,
-					sizeof(*periph_clk_enb_refcnt),
+	periph_clk_enb_refcnt = kसुस्मृति(32 * banks,
+					माप(*periph_clk_enb_refcnt),
 					GFP_KERNEL);
-	if (!periph_clk_enb_refcnt)
-		return NULL;
+	अगर (!periph_clk_enb_refcnt)
+		वापस शून्य;
 
 	periph_banks = banks;
 
-	clks = kcalloc(num, sizeof(struct clk *), GFP_KERNEL);
-	if (!clks) {
-		kfree(periph_clk_enb_refcnt);
-		return NULL;
-	}
+	clks = kसुस्मृति(num, माप(काष्ठा clk *), GFP_KERNEL);
+	अगर (!clks) अणु
+		kमुक्त(periph_clk_enb_refcnt);
+		वापस शून्य;
+	पूर्ण
 
 	clk_num = num;
 
-	if (IS_ENABLED(CONFIG_PM_SLEEP)) {
-		if (tegra_clk_periph_ctx_init(banks)) {
-			kfree(periph_clk_enb_refcnt);
-			kfree(clks);
-			return NULL;
-		}
-	}
+	अगर (IS_ENABLED(CONFIG_PM_SLEEP)) अणु
+		अगर (tegra_clk_periph_ctx_init(banks)) अणु
+			kमुक्त(periph_clk_enb_refcnt);
+			kमुक्त(clks);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return clks;
-}
+	वापस clks;
+पूर्ण
 
-void __init tegra_init_dup_clks(struct tegra_clk_duplicate *dup_list,
-				struct clk *clks[], int clk_max)
-{
-	struct clk *clk;
+व्योम __init tegra_init_dup_clks(काष्ठा tegra_clk_duplicate *dup_list,
+				काष्ठा clk *clks[], पूर्णांक clk_max)
+अणु
+	काष्ठा clk *clk;
 
-	for (; dup_list->clk_id < clk_max; dup_list++) {
+	क्रम (; dup_list->clk_id < clk_max; dup_list++) अणु
 		clk = clks[dup_list->clk_id];
 		dup_list->lookup.clk = clk;
 		clkdev_add(&dup_list->lookup);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init tegra_init_from_table(struct tegra_clk_init_table *tbl,
-				  struct clk *clks[], int clk_max)
-{
-	struct clk *clk;
+व्योम __init tegra_init_from_table(काष्ठा tegra_clk_init_table *tbl,
+				  काष्ठा clk *clks[], पूर्णांक clk_max)
+अणु
+	काष्ठा clk *clk;
 
-	for (; tbl->clk_id < clk_max; tbl++) {
+	क्रम (; tbl->clk_id < clk_max; tbl++) अणु
 		clk = clks[tbl->clk_id];
-		if (IS_ERR_OR_NULL(clk)) {
+		अगर (IS_ERR_OR_शून्य(clk)) अणु
 			pr_err("%s: invalid entry %ld in clks array for id %d\n",
 			       __func__, PTR_ERR(clk), tbl->clk_id);
 			WARN_ON(1);
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (tbl->parent_id < clk_max) {
-			struct clk *parent = clks[tbl->parent_id];
-			if (clk_set_parent(clk, parent)) {
+		अगर (tbl->parent_id < clk_max) अणु
+			काष्ठा clk *parent = clks[tbl->parent_id];
+			अगर (clk_set_parent(clk, parent)) अणु
 				pr_err("%s: Failed to set parent %s of %s\n",
 				       __func__, __clk_get_name(parent),
 				       __clk_get_name(clk));
 				WARN_ON(1);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (tbl->rate)
-			if (clk_set_rate(clk, tbl->rate)) {
+		अगर (tbl->rate)
+			अगर (clk_set_rate(clk, tbl->rate)) अणु
 				pr_err("%s: Failed to set rate %lu of %s\n",
 				       __func__, tbl->rate,
 				       __clk_get_name(clk));
 				WARN_ON(1);
-			}
+			पूर्ण
 
-		if (tbl->state)
-			if (clk_prepare_enable(clk)) {
+		अगर (tbl->state)
+			अगर (clk_prepare_enable(clk)) अणु
 				pr_err("%s: Failed to enable %s\n", __func__,
 				       __clk_get_name(clk));
 				WARN_ON(1);
-			}
-	}
-}
+			पूर्ण
+	पूर्ण
+पूर्ण
 
-static const struct reset_control_ops rst_ops = {
-	.assert = tegra_clk_rst_assert,
-	.deassert = tegra_clk_rst_deassert,
+अटल स्थिर काष्ठा reset_control_ops rst_ops = अणु
+	.निश्चित = tegra_clk_rst_निश्चित,
+	.deनिश्चित = tegra_clk_rst_deनिश्चित,
 	.reset = tegra_clk_rst_reset,
-};
+पूर्ण;
 
-static struct reset_controller_dev rst_ctlr = {
+अटल काष्ठा reset_controller_dev rst_ctlr = अणु
 	.ops = &rst_ops,
 	.owner = THIS_MODULE,
 	.of_reset_n_cells = 1,
-};
+पूर्ण;
 
-void __init tegra_add_of_provider(struct device_node *np,
-				  void *clk_src_onecell_get)
-{
-	int i;
+व्योम __init tegra_add_of_provider(काष्ठा device_node *np,
+				  व्योम *clk_src_onecell_get)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < clk_num; i++) {
-		if (IS_ERR(clks[i])) {
+	क्रम (i = 0; i < clk_num; i++) अणु
+		अगर (IS_ERR(clks[i])) अणु
 			pr_err
 			    ("Tegra clk %d: register failed with %ld\n",
 			     i, PTR_ERR(clks[i]));
-		}
-		if (!clks[i])
+		पूर्ण
+		अगर (!clks[i])
 			clks[i] = ERR_PTR(-EINVAL);
-	}
+	पूर्ण
 
 	clk_data.clks = clks;
 	clk_data.clk_num = clk_num;
@@ -336,51 +337,51 @@ void __init tegra_add_of_provider(struct device_node *np,
 
 	rst_ctlr.of_node = np;
 	rst_ctlr.nr_resets = periph_banks * 32 + num_special_reset;
-	reset_controller_register(&rst_ctlr);
-}
+	reset_controller_रेजिस्टर(&rst_ctlr);
+पूर्ण
 
-void __init tegra_init_special_resets(unsigned int num,
-				      int (*assert)(unsigned long),
-				      int (*deassert)(unsigned long))
-{
+व्योम __init tegra_init_special_resets(अचिन्हित पूर्णांक num,
+				      पूर्णांक (*निश्चित)(अचिन्हित दीर्घ),
+				      पूर्णांक (*deनिश्चित)(अचिन्हित दीर्घ))
+अणु
 	num_special_reset = num;
-	special_reset_assert = assert;
-	special_reset_deassert = deassert;
-}
+	special_reset_निश्चित = निश्चित;
+	special_reset_deनिश्चित = deनिश्चित;
+पूर्ण
 
-void __init tegra_register_devclks(struct tegra_devclk *dev_clks, int num)
-{
-	int i;
+व्योम __init tegra_रेजिस्टर_devclks(काष्ठा tegra_devclk *dev_clks, पूर्णांक num)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num; i++, dev_clks++)
-		clk_register_clkdev(clks[dev_clks->dt_id], dev_clks->con_id,
+	क्रम (i = 0; i < num; i++, dev_clks++)
+		clk_रेजिस्टर_clkdev(clks[dev_clks->dt_id], dev_clks->con_id,
 				dev_clks->dev_id);
 
-	for (i = 0; i < clk_num; i++) {
-		if (!IS_ERR_OR_NULL(clks[i]))
-			clk_register_clkdev(clks[i], __clk_get_name(clks[i]),
+	क्रम (i = 0; i < clk_num; i++) अणु
+		अगर (!IS_ERR_OR_शून्य(clks[i]))
+			clk_रेजिस्टर_clkdev(clks[i], __clk_get_name(clks[i]),
 				"tegra-clk-debug");
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct clk ** __init tegra_lookup_dt_id(int clk_id,
-					struct tegra_clk *tegra_clk)
-{
-	if (tegra_clk[clk_id].present)
-		return &clks[tegra_clk[clk_id].dt_id];
-	else
-		return NULL;
-}
+काष्ठा clk ** __init tegra_lookup_dt_id(पूर्णांक clk_id,
+					काष्ठा tegra_clk *tegra_clk)
+अणु
+	अगर (tegra_clk[clk_id].present)
+		वापस &clks[tegra_clk[clk_id].dt_id];
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
 tegra_clk_apply_init_table_func tegra_clk_apply_init_table;
 
-static int __init tegra_clocks_apply_init_table(void)
-{
-	if (!tegra_clk_apply_init_table)
-		return 0;
+अटल पूर्णांक __init tegra_घड़ीs_apply_init_table(व्योम)
+अणु
+	अगर (!tegra_clk_apply_init_table)
+		वापस 0;
 
 	tegra_clk_apply_init_table();
 
-	return 0;
-}
-arch_initcall(tegra_clocks_apply_init_table);
+	वापस 0;
+पूर्ण
+arch_initcall(tegra_घड़ीs_apply_init_table);

@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2012 Red Hat.  All rights reserved.
  */
 
-#ifndef BTRFS_RCU_STRING_H
-#define BTRFS_RCU_STRING_H
+#अगर_अघोषित BTRFS_RCU_STRING_H
+#घोषणा BTRFS_RCU_STRING_H
 
-struct rcu_string {
-	struct rcu_head rcu;
-	char str[];
-};
+काष्ठा rcu_string अणु
+	काष्ठा rcu_head rcu;
+	अक्षर str[];
+पूर्ण;
 
-static inline struct rcu_string *rcu_string_strdup(const char *src, gfp_t mask)
-{
-	size_t len = strlen(src) + 1;
-	struct rcu_string *ret = kzalloc(sizeof(struct rcu_string) +
-					 (len * sizeof(char)), mask);
-	if (!ret)
-		return ret;
-	strncpy(ret->str, src, len);
-	return ret;
-}
+अटल अंतरभूत काष्ठा rcu_string *rcu_string_strdup(स्थिर अक्षर *src, gfp_t mask)
+अणु
+	माप_प्रकार len = म_माप(src) + 1;
+	काष्ठा rcu_string *ret = kzalloc(माप(काष्ठा rcu_string) +
+					 (len * माप(अक्षर)), mask);
+	अगर (!ret)
+		वापस ret;
+	म_नकलन(ret->str, src, len);
+	वापस ret;
+पूर्ण
 
-static inline void rcu_string_free(struct rcu_string *str)
-{
-	if (str)
-		kfree_rcu(str, rcu);
-}
+अटल अंतरभूत व्योम rcu_string_मुक्त(काष्ठा rcu_string *str)
+अणु
+	अगर (str)
+		kमुक्त_rcu(str, rcu);
+पूर्ण
 
-#define printk_in_rcu(fmt, ...) do {	\
-	rcu_read_lock();		\
-	printk(fmt, __VA_ARGS__);	\
-	rcu_read_unlock();		\
-} while (0)
+#घोषणा prपूर्णांकk_in_rcu(fmt, ...) करो अणु	\
+	rcu_पढ़ो_lock();		\
+	prपूर्णांकk(fmt, __VA_ARGS__);	\
+	rcu_पढ़ो_unlock();		\
+पूर्ण जबतक (0)
 
-#define printk_ratelimited_in_rcu(fmt, ...) do {	\
-	rcu_read_lock();				\
-	printk_ratelimited(fmt, __VA_ARGS__);		\
-	rcu_read_unlock();				\
-} while (0)
+#घोषणा prपूर्णांकk_ratelimited_in_rcu(fmt, ...) करो अणु	\
+	rcu_पढ़ो_lock();				\
+	prपूर्णांकk_ratelimited(fmt, __VA_ARGS__);		\
+	rcu_पढ़ो_unlock();				\
+पूर्ण जबतक (0)
 
-#define rcu_str_deref(rcu_str) ({				\
-	struct rcu_string *__str = rcu_dereference(rcu_str);	\
+#घोषणा rcu_str_deref(rcu_str) (अणु				\
+	काष्ठा rcu_string *__str = rcu_dereference(rcu_str);	\
 	__str->str;						\
-})
+पूर्ण)
 
-#endif
+#पूर्ण_अगर

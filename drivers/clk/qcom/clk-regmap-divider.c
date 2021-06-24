@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/bitops.h>
-#include <linux/regmap.h>
-#include <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/export.h>
 
-#include "clk-regmap-divider.h"
+#समावेश "clk-regmap-divider.h"
 
-static inline struct clk_regmap_div *to_clk_regmap_div(struct clk_hw *hw)
-{
-	return container_of(to_clk_regmap(hw), struct clk_regmap_div, clkr);
-}
+अटल अंतरभूत काष्ठा clk_regmap_भाग *to_clk_regmap_भाग(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(to_clk_regmap(hw), काष्ठा clk_regmap_भाग, clkr);
+पूर्ण
 
-static long div_round_ro_rate(struct clk_hw *hw, unsigned long rate,
-			      unsigned long *prate)
-{
-	struct clk_regmap_div *divider = to_clk_regmap_div(hw);
-	struct clk_regmap *clkr = &divider->clkr;
+अटल दीर्घ भाग_round_ro_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			      अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा clk_regmap_भाग *भागider = to_clk_regmap_भाग(hw);
+	काष्ठा clk_regmap *clkr = &भागider->clkr;
 	u32 val;
 
-	regmap_read(clkr->regmap, divider->reg, &val);
-	val >>= divider->shift;
-	val &= BIT(divider->width) - 1;
+	regmap_पढ़ो(clkr->regmap, भागider->reg, &val);
+	val >>= भागider->shअगरt;
+	val &= BIT(भागider->width) - 1;
 
-	return divider_ro_round_rate(hw, rate, prate, NULL, divider->width,
+	वापस भागider_ro_round_rate(hw, rate, prate, शून्य, भागider->width,
 				     CLK_DIVIDER_ROUND_CLOSEST, val);
-}
+पूर्ण
 
-static long div_round_rate(struct clk_hw *hw, unsigned long rate,
-			   unsigned long *prate)
-{
-	struct clk_regmap_div *divider = to_clk_regmap_div(hw);
+अटल दीर्घ भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			   अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा clk_regmap_भाग *भागider = to_clk_regmap_भाग(hw);
 
-	return divider_round_rate(hw, rate, prate, NULL, divider->width,
+	वापस भागider_round_rate(hw, rate, prate, शून्य, भागider->width,
 				  CLK_DIVIDER_ROUND_CLOSEST);
-}
+पूर्ण
 
-static int div_set_rate(struct clk_hw *hw, unsigned long rate,
-			unsigned long parent_rate)
-{
-	struct clk_regmap_div *divider = to_clk_regmap_div(hw);
-	struct clk_regmap *clkr = &divider->clkr;
-	u32 div;
+अटल पूर्णांक भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_regmap_भाग *भागider = to_clk_regmap_भाग(hw);
+	काष्ठा clk_regmap *clkr = &भागider->clkr;
+	u32 भाग;
 
-	div = divider_get_val(rate, parent_rate, NULL, divider->width,
+	भाग = भागider_get_val(rate, parent_rate, शून्य, भागider->width,
 			      CLK_DIVIDER_ROUND_CLOSEST);
 
-	return regmap_update_bits(clkr->regmap, divider->reg,
-				  (BIT(divider->width) - 1) << divider->shift,
-				  div << divider->shift);
-}
+	वापस regmap_update_bits(clkr->regmap, भागider->reg,
+				  (BIT(भागider->width) - 1) << भागider->shअगरt,
+				  भाग << भागider->shअगरt);
+पूर्ण
 
-static unsigned long div_recalc_rate(struct clk_hw *hw,
-				     unsigned long parent_rate)
-{
-	struct clk_regmap_div *divider = to_clk_regmap_div(hw);
-	struct clk_regmap *clkr = &divider->clkr;
-	u32 div;
+अटल अचिन्हित दीर्घ भाग_recalc_rate(काष्ठा clk_hw *hw,
+				     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_regmap_भाग *भागider = to_clk_regmap_भाग(hw);
+	काष्ठा clk_regmap *clkr = &भागider->clkr;
+	u32 भाग;
 
-	regmap_read(clkr->regmap, divider->reg, &div);
-	div >>= divider->shift;
-	div &= BIT(divider->width) - 1;
+	regmap_पढ़ो(clkr->regmap, भागider->reg, &भाग);
+	भाग >>= भागider->shअगरt;
+	भाग &= BIT(भागider->width) - 1;
 
-	return divider_recalc_rate(hw, parent_rate, div, NULL,
-				   CLK_DIVIDER_ROUND_CLOSEST, divider->width);
-}
+	वापस भागider_recalc_rate(hw, parent_rate, भाग, शून्य,
+				   CLK_DIVIDER_ROUND_CLOSEST, भागider->width);
+पूर्ण
 
-const struct clk_ops clk_regmap_div_ops = {
-	.round_rate = div_round_rate,
-	.set_rate = div_set_rate,
-	.recalc_rate = div_recalc_rate,
-};
-EXPORT_SYMBOL_GPL(clk_regmap_div_ops);
+स्थिर काष्ठा clk_ops clk_regmap_भाग_ops = अणु
+	.round_rate = भाग_round_rate,
+	.set_rate = भाग_set_rate,
+	.recalc_rate = भाग_recalc_rate,
+पूर्ण;
+EXPORT_SYMBOL_GPL(clk_regmap_भाग_ops);
 
-const struct clk_ops clk_regmap_div_ro_ops = {
-	.round_rate = div_round_ro_rate,
-	.recalc_rate = div_recalc_rate,
-};
-EXPORT_SYMBOL_GPL(clk_regmap_div_ro_ops);
+स्थिर काष्ठा clk_ops clk_regmap_भाग_ro_ops = अणु
+	.round_rate = भाग_round_ro_rate,
+	.recalc_rate = भाग_recalc_rate,
+पूर्ण;
+EXPORT_SYMBOL_GPL(clk_regmap_भाग_ro_ops);

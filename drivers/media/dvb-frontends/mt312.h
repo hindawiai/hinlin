@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
-    Driver for Zarlink MT312 Satellite Channel Decoder
+    Driver क्रम Zarlink MT312 Satellite Channel Decoder
 
     Copyright (C) 2003 Andreas Oberritter <obi@linuxtv.org>
 
 
     References:
-    http://products.zarlink.com/product_profiles/MT312.htm
-    http://products.zarlink.com/product_profiles/SL1935.htm
+    http://products.zarlink.com/product_profiles/MT312.hपंचांग
+    http://products.zarlink.com/product_profiles/SL1935.hपंचांग
 */
 
-#ifndef MT312_H
-#define MT312_H
+#अगर_अघोषित MT312_H
+#घोषणा MT312_H
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-struct mt312_config {
+काष्ठा mt312_config अणु
 	/* the demodulator's i2c address */
 	u8 demod_address;
 
 	/* inverted voltage setting */
-	unsigned int voltage_inverted:1;
-};
+	अचिन्हित पूर्णांक voltage_inverted:1;
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_MT312)
-struct dvb_frontend *mt312_attach(const struct mt312_config *config,
-					struct i2c_adapter *i2c);
-#else
-static inline struct dvb_frontend *mt312_attach(
-	const struct mt312_config *config, struct i2c_adapter *i2c)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif /* CONFIG_DVB_MT312 */
+#अगर IS_REACHABLE(CONFIG_DVB_MT312)
+काष्ठा dvb_frontend *mt312_attach(स्थिर काष्ठा mt312_config *config,
+					काष्ठा i2c_adapter *i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *mt312_attach(
+	स्थिर काष्ठा mt312_config *config, काष्ठा i2c_adapter *i2c)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DVB_MT312 */
 
-#endif /* MT312_H */
+#पूर्ण_अगर /* MT312_H */

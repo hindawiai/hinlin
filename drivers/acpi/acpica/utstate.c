@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: utstate - state object support procedures
  *
  ******************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
 
-#define _COMPONENT          ACPI_UTILITIES
+#घोषणा _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utstate")
 
 /*******************************************************************************
@@ -23,18 +24,18 @@ ACPI_MODULE_NAME("utstate")
  * DESCRIPTION: Push a state object onto a state stack
  *
  ******************************************************************************/
-void
-acpi_ut_push_generic_state(union acpi_generic_state **list_head,
-			   union acpi_generic_state *state)
-{
+व्योम
+acpi_ut_push_generic_state(जोड़ acpi_generic_state **list_head,
+			   जोड़ acpi_generic_state *state)
+अणु
 	ACPI_FUNCTION_ENTRY();
 
 	/* Push the state object onto the front of the list (stack) */
 
 	state->common.next = *list_head;
 	*list_head = state;
-	return;
-}
+	वापस;
+पूर्ण
 
 /*******************************************************************************
  *
@@ -48,25 +49,25 @@ acpi_ut_push_generic_state(union acpi_generic_state **list_head,
  *
  ******************************************************************************/
 
-union acpi_generic_state *acpi_ut_pop_generic_state(union acpi_generic_state
+जोड़ acpi_generic_state *acpi_ut_pop_generic_state(जोड़ acpi_generic_state
 						    **list_head)
-{
-	union acpi_generic_state *state;
+अणु
+	जोड़ acpi_generic_state *state;
 
 	ACPI_FUNCTION_ENTRY();
 
 	/* Remove the state object at the head of the list (stack) */
 
 	state = *list_head;
-	if (state) {
+	अगर (state) अणु
 
 		/* Update the list head */
 
 		*list_head = state->common.next;
-	}
+	पूर्ण
 
-	return (state);
-}
+	वापस (state);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -74,76 +75,76 @@ union acpi_generic_state *acpi_ut_pop_generic_state(union acpi_generic_state
  *
  * PARAMETERS:  None
  *
- * RETURN:      The new state object. NULL on failure.
+ * RETURN:      The new state object. शून्य on failure.
  *
  * DESCRIPTION: Create a generic state object. Attempt to obtain one from
  *              the global state cache;  If none available, create a new one.
  *
  ******************************************************************************/
 
-union acpi_generic_state *acpi_ut_create_generic_state(void)
-{
-	union acpi_generic_state *state;
+जोड़ acpi_generic_state *acpi_ut_create_generic_state(व्योम)
+अणु
+	जोड़ acpi_generic_state *state;
 
 	ACPI_FUNCTION_ENTRY();
 
 	state = acpi_os_acquire_object(acpi_gbl_state_cache);
-	if (state) {
+	अगर (state) अणु
 
 		/* Initialize */
 		state->common.descriptor_type = ACPI_DESC_TYPE_STATE;
-	}
+	पूर्ण
 
-	return (state);
-}
+	वापस (state);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_create_thread_state
+ * FUNCTION:    acpi_ut_create_thपढ़ो_state
  *
  * PARAMETERS:  None
  *
- * RETURN:      New Thread State. NULL on failure
+ * RETURN:      New Thपढ़ो State. शून्य on failure
  *
  * DESCRIPTION: Create a "Thread State" - a flavor of the generic state used
- *              to track per-thread info during method execution
+ *              to track per-thपढ़ो info during method execution
  *
  ******************************************************************************/
 
-struct acpi_thread_state *acpi_ut_create_thread_state(void)
-{
-	union acpi_generic_state *state;
+काष्ठा acpi_thपढ़ो_state *acpi_ut_create_thपढ़ो_state(व्योम)
+अणु
+	जोड़ acpi_generic_state *state;
 
 	ACPI_FUNCTION_ENTRY();
 
 	/* Create the generic state object */
 
 	state = acpi_ut_create_generic_state();
-	if (!state) {
-		return (NULL);
-	}
+	अगर (!state) अणु
+		वापस (शून्य);
+	पूर्ण
 
-	/* Init fields specific to the update struct */
+	/* Init fields specअगरic to the update काष्ठा */
 
 	state->common.descriptor_type = ACPI_DESC_TYPE_STATE_THREAD;
-	state->thread.thread_id = acpi_os_get_thread_id();
+	state->thपढ़ो.thपढ़ो_id = acpi_os_get_thपढ़ो_id();
 
-	/* Check for invalid thread ID - zero is very bad, it will break things */
+	/* Check क्रम invalid thपढ़ो ID - zero is very bad, it will अवरोध things */
 
-	if (!state->thread.thread_id) {
+	अगर (!state->thपढ़ो.thपढ़ो_id) अणु
 		ACPI_ERROR((AE_INFO, "Invalid zero ID from AcpiOsGetThreadId"));
-		state->thread.thread_id = (acpi_thread_id) 1;
-	}
+		state->thपढ़ो.thपढ़ो_id = (acpi_thपढ़ो_id) 1;
+	पूर्ण
 
-	return ((struct acpi_thread_state *)state);
-}
+	वापस ((काष्ठा acpi_thपढ़ो_state *)state);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_create_update_state
  *
  * PARAMETERS:  object          - Initial Object to be installed in the state
- *              action          - Update action to be performed
+ *              action          - Update action to be perक्रमmed
  *
  * RETURN:      New state object, null on failure
  *
@@ -153,34 +154,34 @@ struct acpi_thread_state *acpi_ut_create_thread_state(void)
  *
  ******************************************************************************/
 
-union acpi_generic_state *acpi_ut_create_update_state(union acpi_operand_object
+जोड़ acpi_generic_state *acpi_ut_create_update_state(जोड़ acpi_opeअक्रम_object
 						      *object, u16 action)
-{
-	union acpi_generic_state *state;
+अणु
+	जोड़ acpi_generic_state *state;
 
 	ACPI_FUNCTION_ENTRY();
 
 	/* Create the generic state object */
 
 	state = acpi_ut_create_generic_state();
-	if (!state) {
-		return (NULL);
-	}
+	अगर (!state) अणु
+		वापस (शून्य);
+	पूर्ण
 
-	/* Init fields specific to the update struct */
+	/* Init fields specअगरic to the update काष्ठा */
 
 	state->common.descriptor_type = ACPI_DESC_TYPE_STATE_UPDATE;
 	state->update.object = object;
 	state->update.value = action;
-	return (state);
-}
+	वापस (state);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_create_pkg_state
  *
  * PARAMETERS:  object          - Initial Object to be installed in the state
- *              action          - Update action to be performed
+ *              action          - Update action to be perक्रमmed
  *
  * RETURN:      New state object, null on failure
  *
@@ -188,31 +189,31 @@ union acpi_generic_state *acpi_ut_create_update_state(union acpi_operand_object
  *
  ******************************************************************************/
 
-union acpi_generic_state *acpi_ut_create_pkg_state(void *internal_object,
-						   void *external_object,
+जोड़ acpi_generic_state *acpi_ut_create_pkg_state(व्योम *पूर्णांकernal_object,
+						   व्योम *बाह्यal_object,
 						   u32 index)
-{
-	union acpi_generic_state *state;
+अणु
+	जोड़ acpi_generic_state *state;
 
 	ACPI_FUNCTION_ENTRY();
 
 	/* Create the generic state object */
 
 	state = acpi_ut_create_generic_state();
-	if (!state) {
-		return (NULL);
-	}
+	अगर (!state) अणु
+		वापस (शून्य);
+	पूर्ण
 
-	/* Init fields specific to the update struct */
+	/* Init fields specअगरic to the update काष्ठा */
 
 	state->common.descriptor_type = ACPI_DESC_TYPE_STATE_PACKAGE;
-	state->pkg.source_object = (union acpi_operand_object *)internal_object;
-	state->pkg.dest_object = external_object;
+	state->pkg.source_object = (जोड़ acpi_opeअक्रम_object *)पूर्णांकernal_object;
+	state->pkg.dest_object = बाह्यal_object;
 	state->pkg.index = index;
 	state->pkg.num_packages = 1;
 
-	return (state);
-}
+	वापस (state);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -223,30 +224,30 @@ union acpi_generic_state *acpi_ut_create_pkg_state(void *internal_object,
  * RETURN:      New state object, null on failure
  *
  * DESCRIPTION: Create a "Control State" - a flavor of the generic state used
- *              to support nested IF/WHILE constructs in the AML.
+ *              to support nested IF/WHILE स्थिरructs in the AML.
  *
  ******************************************************************************/
 
-union acpi_generic_state *acpi_ut_create_control_state(void)
-{
-	union acpi_generic_state *state;
+जोड़ acpi_generic_state *acpi_ut_create_control_state(व्योम)
+अणु
+	जोड़ acpi_generic_state *state;
 
 	ACPI_FUNCTION_ENTRY();
 
 	/* Create the generic state object */
 
 	state = acpi_ut_create_generic_state();
-	if (!state) {
-		return (NULL);
-	}
+	अगर (!state) अणु
+		वापस (शून्य);
+	पूर्ण
 
-	/* Init fields specific to the control struct */
+	/* Init fields specअगरic to the control काष्ठा */
 
 	state->common.descriptor_type = ACPI_DESC_TYPE_STATE_CONTROL;
 	state->common.state = ACPI_CONTROL_CONDITIONAL_EXECUTING;
 
-	return (state);
-}
+	वापस (state);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -256,20 +257,20 @@ union acpi_generic_state *acpi_ut_create_control_state(void)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Release a state object to the state cache. NULL state objects
+ * DESCRIPTION: Release a state object to the state cache. शून्य state objects
  *              are ignored.
  *
  ******************************************************************************/
 
-void acpi_ut_delete_generic_state(union acpi_generic_state *state)
-{
+व्योम acpi_ut_delete_generic_state(जोड़ acpi_generic_state *state)
+अणु
 	ACPI_FUNCTION_ENTRY();
 
 	/* Ignore null state */
 
-	if (state) {
-		(void)acpi_os_release_object(acpi_gbl_state_cache, state);
-	}
+	अगर (state) अणु
+		(व्योम)acpi_os_release_object(acpi_gbl_state_cache, state);
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण

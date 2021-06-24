@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  ALSA interface to cobalt PCM capture streams
+ *  ALSA पूर्णांकerface to cobalt PCM capture streams
  *
  *  Copyright 2014-2015 Cisco Systems, Inc. and/or its affiliates.
  *  All rights reserved.
  */
 
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/spinlock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/spinlock.h>
 
-#include <media/v4l2-device.h>
+#समावेश <media/v4l2-device.h>
 
-#include <sound/core.h>
-#include <sound/initval.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
 
-#include "cobalt-driver.h"
-#include "cobalt-alsa.h"
-#include "cobalt-alsa-pcm.h"
+#समावेश "cobalt-driver.h"
+#समावेश "cobalt-alsa.h"
+#समावेश "cobalt-alsa-pcm.h"
 
-static void snd_cobalt_card_free(struct snd_cobalt_card *cobsc)
-{
-	if (cobsc == NULL)
-		return;
+अटल व्योम snd_cobalt_card_मुक्त(काष्ठा snd_cobalt_card *cobsc)
+अणु
+	अगर (cobsc == शून्य)
+		वापस;
 
-	cobsc->s->alsa = NULL;
+	cobsc->s->alsa = शून्य;
 
-	kfree(cobsc);
-}
+	kमुक्त(cobsc);
+पूर्ण
 
-static void snd_cobalt_card_private_free(struct snd_card *sc)
-{
-	if (sc == NULL)
-		return;
-	snd_cobalt_card_free(sc->private_data);
-	sc->private_data = NULL;
-	sc->private_free = NULL;
-}
+अटल व्योम snd_cobalt_card_निजी_मुक्त(काष्ठा snd_card *sc)
+अणु
+	अगर (sc == शून्य)
+		वापस;
+	snd_cobalt_card_मुक्त(sc->निजी_data);
+	sc->निजी_data = शून्य;
+	sc->निजी_मुक्त = शून्य;
+पूर्ण
 
-static int snd_cobalt_card_create(struct cobalt_stream *s,
-				       struct snd_card *sc,
-				       struct snd_cobalt_card **cobsc)
-{
-	*cobsc = kzalloc(sizeof(struct snd_cobalt_card), GFP_KERNEL);
-	if (*cobsc == NULL)
-		return -ENOMEM;
+अटल पूर्णांक snd_cobalt_card_create(काष्ठा cobalt_stream *s,
+				       काष्ठा snd_card *sc,
+				       काष्ठा snd_cobalt_card **cobsc)
+अणु
+	*cobsc = kzalloc(माप(काष्ठा snd_cobalt_card), GFP_KERNEL);
+	अगर (*cobsc == शून्य)
+		वापस -ENOMEM;
 
 	(*cobsc)->s = s;
 	(*cobsc)->sc = sc;
 
-	sc->private_data = *cobsc;
-	sc->private_free = snd_cobalt_card_private_free;
+	sc->निजी_data = *cobsc;
+	sc->निजी_मुक्त = snd_cobalt_card_निजी_मुक्त;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cobalt_card_set_names(struct snd_cobalt_card *cobsc)
-{
-	struct cobalt_stream *s = cobsc->s;
-	struct cobalt *cobalt = s->cobalt;
-	struct snd_card *sc = cobsc->sc;
+अटल पूर्णांक snd_cobalt_card_set_names(काष्ठा snd_cobalt_card *cobsc)
+अणु
+	काष्ठा cobalt_stream *s = cobsc->s;
+	काष्ठा cobalt *cobalt = s->cobalt;
+	काष्ठा snd_card *sc = cobsc->sc;
 
 	/* sc->driver is used by alsa-lib's configurator: simple, unique */
-	strscpy(sc->driver, "cobalt", sizeof(sc->driver));
+	strscpy(sc->driver, "cobalt", माप(sc->driver));
 
-	/* sc->shortname is a symlink in /proc/asound: COBALT-M -> cardN */
-	snprintf(sc->shortname,  sizeof(sc->shortname), "cobalt-%d-%d",
+	/* sc->लघुname is a symlink in /proc/asound: COBALT-M -> cardN */
+	snम_लिखो(sc->लघुname,  माप(sc->लघुname), "cobalt-%d-%d",
 		 cobalt->instance, s->video_channel);
 
-	/* sc->longname is read from /proc/asound/cards */
-	snprintf(sc->longname, sizeof(sc->longname),
+	/* sc->दीर्घname is पढ़ो from /proc/asound/cards */
+	snम_लिखो(sc->दीर्घname, माप(sc->दीर्घname),
 		 "Cobalt %d HDMI %d",
 		 cobalt->instance, s->video_channel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cobalt_alsa_init(struct cobalt_stream *s)
-{
-	struct cobalt *cobalt = s->cobalt;
-	struct snd_card *sc = NULL;
-	struct snd_cobalt_card *cobsc;
-	int ret;
+पूर्णांक cobalt_alsa_init(काष्ठा cobalt_stream *s)
+अणु
+	काष्ठा cobalt *cobalt = s->cobalt;
+	काष्ठा snd_card *sc = शून्य;
+	काष्ठा snd_cobalt_card *cobsc;
+	पूर्णांक ret;
 
 	/* Numbrs steps from "Writing an ALSA Driver" by Takashi Iwai */
 
 	/* (1) Check and increment the device index */
-	/* This is a no-op for us.  We'll use the cobalt->instance */
+	/* This is a no-op क्रम us.  We'll use the cobalt->instance */
 
 	/* (2) Create a card instance */
 	ret = snd_card_new(&cobalt->pci_dev->dev, SNDRV_DEFAULT_IDX1,
 			   SNDRV_DEFAULT_STR1, THIS_MODULE, 0, &sc);
-	if (ret) {
+	अगर (ret) अणु
 		cobalt_err("snd_card_new() failed with err %d\n", ret);
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
-	/* (3) Create a main component */
+	/* (3) Create a मुख्य component */
 	ret = snd_cobalt_card_create(s, sc, &cobsc);
-	if (ret) {
+	अगर (ret) अणु
 		cobalt_err("snd_cobalt_card_create() failed with err %d\n",
 			   ret);
-		goto err_exit_free;
-	}
+		जाओ err_निकास_मुक्त;
+	पूर्ण
 
 	/* (4) Set the driver ID and name strings */
 	snd_cobalt_card_set_names(cobsc);
 
 	ret = snd_cobalt_pcm_create(cobsc);
-	if (ret) {
+	अगर (ret) अणु
 		cobalt_err("snd_cobalt_pcm_create() failed with err %d\n",
 			   ret);
-		goto err_exit_free;
-	}
+		जाओ err_निकास_मुक्त;
+	पूर्ण
 	/* FIXME - proc files */
 
-	/* (7) Set the driver data and return 0 */
-	/* We do this out of normal order for PCI drivers to avoid races */
+	/* (7) Set the driver data and वापस 0 */
+	/* We करो this out of normal order क्रम PCI drivers to aव्योम races */
 	s->alsa = cobsc;
 
 	/* (6) Register the card instance */
-	ret = snd_card_register(sc);
-	if (ret) {
-		s->alsa = NULL;
+	ret = snd_card_रेजिस्टर(sc);
+	अगर (ret) अणु
+		s->alsa = शून्य;
 		cobalt_err("snd_card_register() failed with err %d\n", ret);
-		goto err_exit_free;
-	}
+		जाओ err_निकास_मुक्त;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_exit_free:
-	if (sc != NULL)
-		snd_card_free(sc);
-	kfree(cobsc);
-err_exit:
-	return ret;
-}
+err_निकास_मुक्त:
+	अगर (sc != शून्य)
+		snd_card_मुक्त(sc);
+	kमुक्त(cobsc);
+err_निकास:
+	वापस ret;
+पूर्ण
 
-void cobalt_alsa_exit(struct cobalt_stream *s)
-{
-	struct snd_cobalt_card *cobsc = s->alsa;
+व्योम cobalt_alsa_निकास(काष्ठा cobalt_stream *s)
+अणु
+	काष्ठा snd_cobalt_card *cobsc = s->alsa;
 
-	if (cobsc)
-		snd_card_free(cobsc->sc);
-	s->alsa = NULL;
-}
+	अगर (cobsc)
+		snd_card_मुक्त(cobsc->sc);
+	s->alsa = शून्य;
+पूर्ण

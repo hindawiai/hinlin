@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include "netlink.h"
-#include "common.h"
-#include "bitset.h"
+#समावेश "netlink.h"
+#समावेश "common.h"
+#समावेश "bitset.h"
 
-struct debug_req_info {
-	struct ethnl_req_info		base;
-};
+काष्ठा debug_req_info अणु
+	काष्ठा ethnl_req_info		base;
+पूर्ण;
 
-struct debug_reply_data {
-	struct ethnl_reply_data		base;
+काष्ठा debug_reply_data अणु
+	काष्ठा ethnl_reply_data		base;
 	u32				msg_mask;
-};
+पूर्ण;
 
-#define DEBUG_REPDATA(__reply_base) \
-	container_of(__reply_base, struct debug_reply_data, base)
+#घोषणा DEBUG_REPDATA(__reply_base) \
+	container_of(__reply_base, काष्ठा debug_reply_data, base)
 
-const struct nla_policy ethnl_debug_get_policy[] = {
+स्थिर काष्ठा nla_policy ethnl_debug_get_policy[] = अणु
 	[ETHTOOL_A_DEBUG_HEADER]	=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-};
+पूर्ण;
 
-static int debug_prepare_data(const struct ethnl_req_info *req_base,
-			      struct ethnl_reply_data *reply_base,
-			      struct genl_info *info)
-{
-	struct debug_reply_data *data = DEBUG_REPDATA(reply_base);
-	struct net_device *dev = reply_base->dev;
-	int ret;
+अटल पूर्णांक debug_prepare_data(स्थिर काष्ठा ethnl_req_info *req_base,
+			      काष्ठा ethnl_reply_data *reply_base,
+			      काष्ठा genl_info *info)
+अणु
+	काष्ठा debug_reply_data *data = DEBUG_REPDATA(reply_base);
+	काष्ठा net_device *dev = reply_base->dev;
+	पूर्णांक ret;
 
-	if (!dev->ethtool_ops->get_msglevel)
-		return -EOPNOTSUPP;
+	अगर (!dev->ethtool_ops->get_msglevel)
+		वापस -EOPNOTSUPP;
 
 	ret = ethnl_ops_begin(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	data->msg_mask = dev->ethtool_ops->get_msglevel(dev);
 	ethnl_ops_complete(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int debug_reply_size(const struct ethnl_req_info *req_base,
-			    const struct ethnl_reply_data *reply_base)
-{
-	const struct debug_reply_data *data = DEBUG_REPDATA(reply_base);
+अटल पूर्णांक debug_reply_size(स्थिर काष्ठा ethnl_req_info *req_base,
+			    स्थिर काष्ठा ethnl_reply_data *reply_base)
+अणु
+	स्थिर काष्ठा debug_reply_data *data = DEBUG_REPDATA(reply_base);
 	bool compact = req_base->flags & ETHTOOL_FLAG_COMPACT_BITSETS;
 
-	return ethnl_bitset32_size(&data->msg_mask, NULL, NETIF_MSG_CLASS_COUNT,
-				   netif_msg_class_names, compact);
-}
+	वापस ethnl_bitset32_size(&data->msg_mask, शून्य, NETIF_MSG_CLASS_COUNT,
+				   netअगर_msg_class_names, compact);
+पूर्ण
 
-static int debug_fill_reply(struct sk_buff *skb,
-			    const struct ethnl_req_info *req_base,
-			    const struct ethnl_reply_data *reply_base)
-{
-	const struct debug_reply_data *data = DEBUG_REPDATA(reply_base);
+अटल पूर्णांक debug_fill_reply(काष्ठा sk_buff *skb,
+			    स्थिर काष्ठा ethnl_req_info *req_base,
+			    स्थिर काष्ठा ethnl_reply_data *reply_base)
+अणु
+	स्थिर काष्ठा debug_reply_data *data = DEBUG_REPDATA(reply_base);
 	bool compact = req_base->flags & ETHTOOL_FLAG_COMPACT_BITSETS;
 
-	return ethnl_put_bitset32(skb, ETHTOOL_A_DEBUG_MSGMASK, &data->msg_mask,
-				  NULL, NETIF_MSG_CLASS_COUNT,
-				  netif_msg_class_names, compact);
-}
+	वापस ethnl_put_bitset32(skb, ETHTOOL_A_DEBUG_MSGMASK, &data->msg_mask,
+				  शून्य, NETIF_MSG_CLASS_COUNT,
+				  netअगर_msg_class_names, compact);
+पूर्ण
 
-const struct ethnl_request_ops ethnl_debug_request_ops = {
+स्थिर काष्ठा ethnl_request_ops ethnl_debug_request_ops = अणु
 	.request_cmd		= ETHTOOL_MSG_DEBUG_GET,
 	.reply_cmd		= ETHTOOL_MSG_DEBUG_GET_REPLY,
 	.hdr_attr		= ETHTOOL_A_DEBUG_HEADER,
-	.req_info_size		= sizeof(struct debug_req_info),
-	.reply_data_size	= sizeof(struct debug_reply_data),
+	.req_info_size		= माप(काष्ठा debug_req_info),
+	.reply_data_size	= माप(काष्ठा debug_reply_data),
 
 	.prepare_data		= debug_prepare_data,
 	.reply_size		= debug_reply_size,
 	.fill_reply		= debug_fill_reply,
-};
+पूर्ण;
 
 /* DEBUG_SET */
 
-const struct nla_policy ethnl_debug_set_policy[] = {
+स्थिर काष्ठा nla_policy ethnl_debug_set_policy[] = अणु
 	[ETHTOOL_A_DEBUG_HEADER]	=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-	[ETHTOOL_A_DEBUG_MSGMASK]	= { .type = NLA_NESTED },
-};
+	[ETHTOOL_A_DEBUG_MSGMASK]	= अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
-int ethnl_set_debug(struct sk_buff *skb, struct genl_info *info)
-{
-	struct ethnl_req_info req_info = {};
-	struct nlattr **tb = info->attrs;
-	struct net_device *dev;
+पूर्णांक ethnl_set_debug(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा ethnl_req_info req_info = अणुपूर्ण;
+	काष्ठा nlattr **tb = info->attrs;
+	काष्ठा net_device *dev;
 	bool mod = false;
 	u32 msg_mask;
-	int ret;
+	पूर्णांक ret;
 
 	ret = ethnl_parse_header_dev_get(&req_info,
 					 tb[ETHTOOL_A_DEBUG_HEADER],
 					 genl_info_net(info), info->extack,
 					 true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	dev = req_info.dev;
 	ret = -EOPNOTSUPP;
-	if (!dev->ethtool_ops->get_msglevel || !dev->ethtool_ops->set_msglevel)
-		goto out_dev;
+	अगर (!dev->ethtool_ops->get_msglevel || !dev->ethtool_ops->set_msglevel)
+		जाओ out_dev;
 
 	rtnl_lock();
 	ret = ethnl_ops_begin(dev);
-	if (ret < 0)
-		goto out_rtnl;
+	अगर (ret < 0)
+		जाओ out_rtnl;
 
 	msg_mask = dev->ethtool_ops->get_msglevel(dev);
 	ret = ethnl_update_bitset32(&msg_mask, NETIF_MSG_CLASS_COUNT,
 				    tb[ETHTOOL_A_DEBUG_MSGMASK],
-				    netif_msg_class_names, info->extack, &mod);
-	if (ret < 0 || !mod)
-		goto out_ops;
+				    netअगर_msg_class_names, info->extack, &mod);
+	अगर (ret < 0 || !mod)
+		जाओ out_ops;
 
 	dev->ethtool_ops->set_msglevel(dev, msg_mask);
-	ethtool_notify(dev, ETHTOOL_MSG_DEBUG_NTF, NULL);
+	ethtool_notअगरy(dev, ETHTOOL_MSG_DEBUG_NTF, शून्य);
 
 out_ops:
 	ethnl_ops_complete(dev);
@@ -124,5 +125,5 @@ out_rtnl:
 	rtnl_unlock();
 out_dev:
 	dev_put(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण

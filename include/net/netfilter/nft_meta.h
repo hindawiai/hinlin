@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NFT_META_H_
-#define _NFT_META_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NFT_META_H_
+#घोषणा _NFT_META_H_
 
-#include <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables.h>
 
-struct nft_meta {
-	enum nft_meta_keys	key:8;
-	union {
+काष्ठा nft_meta अणु
+	क्रमागत nft_meta_keys	key:8;
+	जोड़ अणु
 		u8		dreg;
 		u8		sreg;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-extern const struct nla_policy nft_meta_policy[];
+बाह्य स्थिर काष्ठा nla_policy nft_meta_policy[];
 
-int nft_meta_get_init(const struct nft_ctx *ctx,
-		      const struct nft_expr *expr,
-		      const struct nlattr * const tb[]);
+पूर्णांक nft_meta_get_init(स्थिर काष्ठा nft_ctx *ctx,
+		      स्थिर काष्ठा nft_expr *expr,
+		      स्थिर काष्ठा nlattr * स्थिर tb[]);
 
-int nft_meta_set_init(const struct nft_ctx *ctx,
-		      const struct nft_expr *expr,
-		      const struct nlattr * const tb[]);
+पूर्णांक nft_meta_set_init(स्थिर काष्ठा nft_ctx *ctx,
+		      स्थिर काष्ठा nft_expr *expr,
+		      स्थिर काष्ठा nlattr * स्थिर tb[]);
 
-int nft_meta_get_dump(struct sk_buff *skb,
-		      const struct nft_expr *expr);
+पूर्णांक nft_meta_get_dump(काष्ठा sk_buff *skb,
+		      स्थिर काष्ठा nft_expr *expr);
 
-int nft_meta_set_dump(struct sk_buff *skb,
-		      const struct nft_expr *expr);
+पूर्णांक nft_meta_set_dump(काष्ठा sk_buff *skb,
+		      स्थिर काष्ठा nft_expr *expr);
 
-void nft_meta_get_eval(const struct nft_expr *expr,
-		       struct nft_regs *regs,
-		       const struct nft_pktinfo *pkt);
+व्योम nft_meta_get_eval(स्थिर काष्ठा nft_expr *expr,
+		       काष्ठा nft_regs *regs,
+		       स्थिर काष्ठा nft_pktinfo *pkt);
 
-void nft_meta_set_eval(const struct nft_expr *expr,
-		       struct nft_regs *regs,
-		       const struct nft_pktinfo *pkt);
+व्योम nft_meta_set_eval(स्थिर काष्ठा nft_expr *expr,
+		       काष्ठा nft_regs *regs,
+		       स्थिर काष्ठा nft_pktinfo *pkt);
 
-void nft_meta_set_destroy(const struct nft_ctx *ctx,
-			  const struct nft_expr *expr);
+व्योम nft_meta_set_destroy(स्थिर काष्ठा nft_ctx *ctx,
+			  स्थिर काष्ठा nft_expr *expr);
 
-int nft_meta_set_validate(const struct nft_ctx *ctx,
-			  const struct nft_expr *expr,
-			  const struct nft_data **data);
+पूर्णांक nft_meta_set_validate(स्थिर काष्ठा nft_ctx *ctx,
+			  स्थिर काष्ठा nft_expr *expr,
+			  स्थिर काष्ठा nft_data **data);
 
-#endif
+#पूर्ण_अगर

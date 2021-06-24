@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE // needed for sched.h to get sched_[gs]etaffinity and CPU_(ZERO,SET)
-#include <sched.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <linux/perf_event.h>
-#include <linux/limits.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/prctl.h>
-#include <perf/cpumap.h>
-#include <perf/threadmap.h>
-#include <perf/evlist.h>
-#include <perf/evsel.h>
-#include <perf/mmap.h>
-#include <perf/event.h>
-#include <internal/tests.h>
-#include <api/fs/fs.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE // needed क्रम sched.h to get sched_[gs]etaffinity and CPU_(ZERO,SET)
+#समावेश <sched.h>
+#समावेश <मानकपन.स>
+#समावेश <मानकतर्क.स>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/सीमा.स>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <sys/prctl.h>
+#समावेश <perf/cpumap.h>
+#समावेश <perf/thपढ़ोmap.h>
+#समावेश <perf/evlist.h>
+#समावेश <perf/evsel.h>
+#समावेश <perf/mmap.h>
+#समावेश <perf/event.h>
+#समावेश <पूर्णांकernal/tests.h>
+#समावेश <api/fs/fs.h>
 
-static int libperf_print(enum libperf_print_level level,
-			 const char *fmt, va_list ap)
-{
-	return vfprintf(stderr, fmt, ap);
-}
+अटल पूर्णांक libperf_prपूर्णांक(क्रमागत libperf_prपूर्णांक_level level,
+			 स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
+	वापस भख_लिखो(मानक_त्रुटि, fmt, ap);
+पूर्ण
 
-static int test_stat_cpu(void)
-{
-	struct perf_cpu_map *cpus;
-	struct perf_evlist *evlist;
-	struct perf_evsel *evsel;
-	struct perf_event_attr attr1 = {
+अटल पूर्णांक test_stat_cpu(व्योम)
+अणु
+	काष्ठा perf_cpu_map *cpus;
+	काष्ठा perf_evlist *evlist;
+	काष्ठा perf_evsel *evsel;
+	काष्ठा perf_event_attr attr1 = अणु
 		.type	= PERF_TYPE_SOFTWARE,
 		.config	= PERF_COUNT_SW_CPU_CLOCK,
-	};
-	struct perf_event_attr attr2 = {
+	पूर्ण;
+	काष्ठा perf_event_attr attr2 = अणु
 		.type	= PERF_TYPE_SOFTWARE,
 		.config	= PERF_COUNT_SW_TASK_CLOCK,
-	};
-	int err, cpu, tmp;
+	पूर्ण;
+	पूर्णांक err, cpu, पंचांगp;
 
-	cpus = perf_cpu_map__new(NULL);
+	cpus = perf_cpu_map__new(शून्य);
 	__T("failed to create cpus", cpus);
 
 	evlist = perf_evlist__new();
@@ -56,49 +57,49 @@ static int test_stat_cpu(void)
 
 	perf_evlist__add(evlist, evsel);
 
-	perf_evlist__set_maps(evlist, cpus, NULL);
+	perf_evlist__set_maps(evlist, cpus, शून्य);
 
-	err = perf_evlist__open(evlist);
+	err = perf_evlist__खोलो(evlist);
 	__T("failed to open evsel", err == 0);
 
-	perf_evlist__for_each_evsel(evlist, evsel) {
+	perf_evlist__क्रम_each_evsel(evlist, evsel) अणु
 		cpus = perf_evsel__cpus(evsel);
 
-		perf_cpu_map__for_each_cpu(cpu, tmp, cpus) {
-			struct perf_counts_values counts = { .val = 0 };
+		perf_cpu_map__क्रम_each_cpu(cpu, पंचांगp, cpus) अणु
+			काष्ठा perf_counts_values counts = अणु .val = 0 पूर्ण;
 
-			perf_evsel__read(evsel, cpu, 0, &counts);
+			perf_evsel__पढ़ो(evsel, cpu, 0, &counts);
 			__T("failed to read value for evsel", counts.val != 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	perf_evlist__close(evlist);
+	perf_evlist__बंद(evlist);
 	perf_evlist__delete(evlist);
 
 	perf_cpu_map__put(cpus);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int test_stat_thread(void)
-{
-	struct perf_counts_values counts = { .val = 0 };
-	struct perf_thread_map *threads;
-	struct perf_evlist *evlist;
-	struct perf_evsel *evsel;
-	struct perf_event_attr attr1 = {
+अटल पूर्णांक test_stat_thपढ़ो(व्योम)
+अणु
+	काष्ठा perf_counts_values counts = अणु .val = 0 पूर्ण;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
+	काष्ठा perf_evlist *evlist;
+	काष्ठा perf_evsel *evsel;
+	काष्ठा perf_event_attr attr1 = अणु
 		.type	= PERF_TYPE_SOFTWARE,
 		.config	= PERF_COUNT_SW_CPU_CLOCK,
-	};
-	struct perf_event_attr attr2 = {
+	पूर्ण;
+	काष्ठा perf_event_attr attr2 = अणु
 		.type	= PERF_TYPE_SOFTWARE,
 		.config	= PERF_COUNT_SW_TASK_CLOCK,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
-	threads = perf_thread_map__new_dummy();
-	__T("failed to create threads", threads);
+	thपढ़ोs = perf_thपढ़ो_map__new_dummy();
+	__T("failed to create threads", thपढ़ोs);
 
-	perf_thread_map__set_pid(threads, 0, 0);
+	perf_thपढ़ो_map__set_pid(thपढ़ोs, 0, 0);
 
 	evlist = perf_evlist__new();
 	__T("failed to create evlist", evlist);
@@ -113,45 +114,45 @@ static int test_stat_thread(void)
 
 	perf_evlist__add(evlist, evsel);
 
-	perf_evlist__set_maps(evlist, NULL, threads);
+	perf_evlist__set_maps(evlist, शून्य, thपढ़ोs);
 
-	err = perf_evlist__open(evlist);
+	err = perf_evlist__खोलो(evlist);
 	__T("failed to open evsel", err == 0);
 
-	perf_evlist__for_each_evsel(evlist, evsel) {
-		perf_evsel__read(evsel, 0, 0, &counts);
+	perf_evlist__क्रम_each_evsel(evlist, evsel) अणु
+		perf_evsel__पढ़ो(evsel, 0, 0, &counts);
 		__T("failed to read value for evsel", counts.val != 0);
-	}
+	पूर्ण
 
-	perf_evlist__close(evlist);
+	perf_evlist__बंद(evlist);
 	perf_evlist__delete(evlist);
 
-	perf_thread_map__put(threads);
-	return 0;
-}
+	perf_thपढ़ो_map__put(thपढ़ोs);
+	वापस 0;
+पूर्ण
 
-static int test_stat_thread_enable(void)
-{
-	struct perf_counts_values counts = { .val = 0 };
-	struct perf_thread_map *threads;
-	struct perf_evlist *evlist;
-	struct perf_evsel *evsel;
-	struct perf_event_attr attr1 = {
+अटल पूर्णांक test_stat_thपढ़ो_enable(व्योम)
+अणु
+	काष्ठा perf_counts_values counts = अणु .val = 0 पूर्ण;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
+	काष्ठा perf_evlist *evlist;
+	काष्ठा perf_evsel *evsel;
+	काष्ठा perf_event_attr attr1 = अणु
 		.type	  = PERF_TYPE_SOFTWARE,
 		.config	  = PERF_COUNT_SW_CPU_CLOCK,
 		.disabled = 1,
-	};
-	struct perf_event_attr attr2 = {
+	पूर्ण;
+	काष्ठा perf_event_attr attr2 = अणु
 		.type	  = PERF_TYPE_SOFTWARE,
 		.config	  = PERF_COUNT_SW_TASK_CLOCK,
 		.disabled = 1,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
-	threads = perf_thread_map__new_dummy();
-	__T("failed to create threads", threads);
+	thपढ़ोs = perf_thपढ़ो_map__new_dummy();
+	__T("failed to create threads", thपढ़ोs);
 
-	perf_thread_map__set_pid(threads, 0, 0);
+	perf_thपढ़ो_map__set_pid(thपढ़ोs, 0, 0);
 
 	evlist = perf_evlist__new();
 	__T("failed to create evlist", evlist);
@@ -166,87 +167,87 @@ static int test_stat_thread_enable(void)
 
 	perf_evlist__add(evlist, evsel);
 
-	perf_evlist__set_maps(evlist, NULL, threads);
+	perf_evlist__set_maps(evlist, शून्य, thपढ़ोs);
 
-	err = perf_evlist__open(evlist);
+	err = perf_evlist__खोलो(evlist);
 	__T("failed to open evsel", err == 0);
 
-	perf_evlist__for_each_evsel(evlist, evsel) {
-		perf_evsel__read(evsel, 0, 0, &counts);
+	perf_evlist__क्रम_each_evsel(evlist, evsel) अणु
+		perf_evsel__पढ़ो(evsel, 0, 0, &counts);
 		__T("failed to read value for evsel", counts.val == 0);
-	}
+	पूर्ण
 
 	perf_evlist__enable(evlist);
 
-	perf_evlist__for_each_evsel(evlist, evsel) {
-		perf_evsel__read(evsel, 0, 0, &counts);
+	perf_evlist__क्रम_each_evsel(evlist, evsel) अणु
+		perf_evsel__पढ़ो(evsel, 0, 0, &counts);
 		__T("failed to read value for evsel", counts.val != 0);
-	}
+	पूर्ण
 
 	perf_evlist__disable(evlist);
 
-	perf_evlist__close(evlist);
+	perf_evlist__बंद(evlist);
 	perf_evlist__delete(evlist);
 
-	perf_thread_map__put(threads);
-	return 0;
-}
+	perf_thपढ़ो_map__put(thपढ़ोs);
+	वापस 0;
+पूर्ण
 
-static int test_mmap_thread(void)
-{
-	struct perf_evlist *evlist;
-	struct perf_evsel *evsel;
-	struct perf_mmap *map;
-	struct perf_cpu_map *cpus;
-	struct perf_thread_map *threads;
-	struct perf_event_attr attr = {
+अटल पूर्णांक test_mmap_thपढ़ो(व्योम)
+अणु
+	काष्ठा perf_evlist *evlist;
+	काष्ठा perf_evsel *evsel;
+	काष्ठा perf_mmap *map;
+	काष्ठा perf_cpu_map *cpus;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
+	काष्ठा perf_event_attr attr = अणु
 		.type             = PERF_TYPE_TRACEPOINT,
 		.sample_period    = 1,
 		.wakeup_watermark = 1,
 		.disabled         = 1,
-	};
-	char path[PATH_MAX];
-	int id, err, pid, go_pipe[2];
-	union perf_event *event;
-	int count = 0;
+	पूर्ण;
+	अक्षर path[PATH_MAX];
+	पूर्णांक id, err, pid, go_pipe[2];
+	जोड़ perf_event *event;
+	पूर्णांक count = 0;
 
-	snprintf(path, PATH_MAX, "%s/kernel/debug/tracing/events/syscalls/sys_enter_prctl/id",
-		 sysfs__mountpoint());
+	snम_लिखो(path, PATH_MAX, "%s/kernel/debug/tracing/events/syscalls/sys_enter_prctl/id",
+		 sysfs__mountpoपूर्णांक());
 
-	if (filename__read_int(path, &id)) {
+	अगर (filename__पढ़ो_पूर्णांक(path, &id)) अणु
 		tests_failed++;
-		fprintf(stderr, "error: failed to get tracepoint id: %s\n", path);
-		return -1;
-	}
+		ख_लिखो(मानक_त्रुटि, "error: failed to get tracepoint id: %s\n", path);
+		वापस -1;
+	पूर्ण
 
 	attr.config = id;
 
 	err = pipe(go_pipe);
 	__T("failed to create pipe", err == 0);
 
-	fflush(NULL);
+	ख_साफ(शून्य);
 
-	pid = fork();
-	if (!pid) {
-		int i;
-		char bf;
+	pid = विभाजन();
+	अगर (!pid) अणु
+		पूर्णांक i;
+		अक्षर bf;
 
-		read(go_pipe[0], &bf, 1);
+		पढ़ो(go_pipe[0], &bf, 1);
 
 		/* Generate 100 prctl calls. */
-		for (i = 0; i < 100; i++)
+		क्रम (i = 0; i < 100; i++)
 			prctl(0, 0, 0, 0, 0);
 
-		exit(0);
-	}
+		निकास(0);
+	पूर्ण
 
-	threads = perf_thread_map__new_dummy();
-	__T("failed to create threads", threads);
+	thपढ़ोs = perf_thपढ़ो_map__new_dummy();
+	__T("failed to create threads", thपढ़ोs);
 
 	cpus = perf_cpu_map__dummy_new();
 	__T("failed to create cpus", cpus);
 
-	perf_thread_map__set_pid(threads, 0, pid);
+	perf_thपढ़ो_map__set_pid(thपढ़ोs, 0, pid);
 
 	evlist = perf_evlist__new();
 	__T("failed to create evlist", evlist);
@@ -256,9 +257,9 @@ static int test_mmap_thread(void)
 
 	perf_evlist__add(evlist, evsel);
 
-	perf_evlist__set_maps(evlist, cpus, threads);
+	perf_evlist__set_maps(evlist, cpus, thपढ़ोs);
 
-	err = perf_evlist__open(evlist);
+	err = perf_evlist__खोलो(evlist);
 	__T("failed to open evlist", err == 0);
 
 	err = perf_evlist__mmap(evlist, 4);
@@ -266,31 +267,31 @@ static int test_mmap_thread(void)
 
 	perf_evlist__enable(evlist);
 
-	/* kick the child and wait for it to finish */
-	write(go_pipe[1], "A", 1);
-	waitpid(pid, NULL, 0);
+	/* kick the child and रुको क्रम it to finish */
+	ग_लिखो(go_pipe[1], "A", 1);
+	रुकोpid(pid, शून्य, 0);
 
 	/*
 	 * There's no need to call perf_evlist__disable,
 	 * monitored process is dead now.
 	 */
 
-	perf_evlist__for_each_mmap(evlist, map, false) {
-		if (perf_mmap__read_init(map) < 0)
-			continue;
+	perf_evlist__क्रम_each_mmap(evlist, map, false) अणु
+		अगर (perf_mmap__पढ़ो_init(map) < 0)
+			जारी;
 
-		while ((event = perf_mmap__read_event(map)) != NULL) {
+		जबतक ((event = perf_mmap__पढ़ो_event(map)) != शून्य) अणु
 			count++;
 			perf_mmap__consume(map);
-		}
+		पूर्ण
 
-		perf_mmap__read_done(map);
-	}
+		perf_mmap__पढ़ो_करोne(map);
+	पूर्ण
 
-	/* calls perf_evlist__munmap/perf_evlist__close */
+	/* calls perf_evlist__munmap/perf_evlist__बंद */
 	perf_evlist__delete(evlist);
 
-	perf_thread_map__put(threads);
+	perf_thपढ़ो_map__put(thपढ़ोs);
 	perf_cpu_map__put(cpus);
 
 	/*
@@ -299,38 +300,38 @@ static int test_mmap_thread(void)
 	 */
 	__T("failed count", count == 100);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int test_mmap_cpus(void)
-{
-	struct perf_evlist *evlist;
-	struct perf_evsel *evsel;
-	struct perf_mmap *map;
-	struct perf_cpu_map *cpus;
-	struct perf_event_attr attr = {
+अटल पूर्णांक test_mmap_cpus(व्योम)
+अणु
+	काष्ठा perf_evlist *evlist;
+	काष्ठा perf_evsel *evsel;
+	काष्ठा perf_mmap *map;
+	काष्ठा perf_cpu_map *cpus;
+	काष्ठा perf_event_attr attr = अणु
 		.type             = PERF_TYPE_TRACEPOINT,
 		.sample_period    = 1,
 		.wakeup_watermark = 1,
 		.disabled         = 1,
-	};
+	पूर्ण;
 	cpu_set_t saved_mask;
-	char path[PATH_MAX];
-	int id, err, cpu, tmp;
-	union perf_event *event;
-	int count = 0;
+	अक्षर path[PATH_MAX];
+	पूर्णांक id, err, cpu, पंचांगp;
+	जोड़ perf_event *event;
+	पूर्णांक count = 0;
 
-	snprintf(path, PATH_MAX, "%s/kernel/debug/tracing/events/syscalls/sys_enter_prctl/id",
-		 sysfs__mountpoint());
+	snम_लिखो(path, PATH_MAX, "%s/kernel/debug/tracing/events/syscalls/sys_enter_prctl/id",
+		 sysfs__mountpoपूर्णांक());
 
-	if (filename__read_int(path, &id)) {
-		fprintf(stderr, "error: failed to get tracepoint id: %s\n", path);
-		return -1;
-	}
+	अगर (filename__पढ़ो_पूर्णांक(path, &id)) अणु
+		ख_लिखो(मानक_त्रुटि, "error: failed to get tracepoint id: %s\n", path);
+		वापस -1;
+	पूर्ण
 
 	attr.config = id;
 
-	cpus = perf_cpu_map__new(NULL);
+	cpus = perf_cpu_map__new(शून्य);
 	__T("failed to create cpus", cpus);
 
 	evlist = perf_evlist__new();
@@ -341,9 +342,9 @@ static int test_mmap_cpus(void)
 
 	perf_evlist__add(evlist, evsel);
 
-	perf_evlist__set_maps(evlist, cpus, NULL);
+	perf_evlist__set_maps(evlist, cpus, शून्य);
 
-	err = perf_evlist__open(evlist);
+	err = perf_evlist__खोलो(evlist);
 	__T("failed to open evlist", err == 0);
 
 	err = perf_evlist__mmap(evlist, 4);
@@ -351,64 +352,64 @@ static int test_mmap_cpus(void)
 
 	perf_evlist__enable(evlist);
 
-	err = sched_getaffinity(0, sizeof(saved_mask), &saved_mask);
+	err = sched_getaffinity(0, माप(saved_mask), &saved_mask);
 	__T("sched_getaffinity failed", err == 0);
 
-	perf_cpu_map__for_each_cpu(cpu, tmp, cpus) {
+	perf_cpu_map__क्रम_each_cpu(cpu, पंचांगp, cpus) अणु
 		cpu_set_t mask;
 
 		CPU_ZERO(&mask);
 		CPU_SET(cpu, &mask);
 
-		err = sched_setaffinity(0, sizeof(mask), &mask);
+		err = sched_setaffinity(0, माप(mask), &mask);
 		__T("sched_setaffinity failed", err == 0);
 
 		prctl(0, 0, 0, 0, 0);
-	}
+	पूर्ण
 
-	err = sched_setaffinity(0, sizeof(saved_mask), &saved_mask);
+	err = sched_setaffinity(0, माप(saved_mask), &saved_mask);
 	__T("sched_setaffinity failed", err == 0);
 
 	perf_evlist__disable(evlist);
 
-	perf_evlist__for_each_mmap(evlist, map, false) {
-		if (perf_mmap__read_init(map) < 0)
-			continue;
+	perf_evlist__क्रम_each_mmap(evlist, map, false) अणु
+		अगर (perf_mmap__पढ़ो_init(map) < 0)
+			जारी;
 
-		while ((event = perf_mmap__read_event(map)) != NULL) {
+		जबतक ((event = perf_mmap__पढ़ो_event(map)) != शून्य) अणु
 			count++;
 			perf_mmap__consume(map);
-		}
+		पूर्ण
 
-		perf_mmap__read_done(map);
-	}
+		perf_mmap__पढ़ो_करोne(map);
+	पूर्ण
 
-	/* calls perf_evlist__munmap/perf_evlist__close */
+	/* calls perf_evlist__munmap/perf_evlist__बंद */
 	perf_evlist__delete(evlist);
 
 	/*
 	 * The generated prctl events should match the
-	 * number of cpus or be bigger (we are system-wide).
+	 * number of cpus or be bigger (we are प्रणाली-wide).
 	 */
 	__T("failed count", count >= perf_cpu_map__nr(cpus));
 
 	perf_cpu_map__put(cpus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(int argc, char **argv)
-{
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
 	__T_START;
 
-	libperf_init(libperf_print);
+	libperf_init(libperf_prपूर्णांक);
 
 	test_stat_cpu();
-	test_stat_thread();
-	test_stat_thread_enable();
-	test_mmap_thread();
+	test_stat_thपढ़ो();
+	test_stat_thपढ़ो_enable();
+	test_mmap_thपढ़ो();
 	test_mmap_cpus();
 
 	__T_END;
-	return tests_failed == 0 ? 0 : -1;
-}
+	वापस tests_failed == 0 ? 0 : -1;
+पूर्ण

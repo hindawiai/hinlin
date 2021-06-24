@@ -1,139 +1,140 @@
+<शैली गुरु>
 /*
  * ARAnyM block device driver
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/genhd.h>
-#include <linux/blkdev.h>
-#include <linux/hdreg.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/slab.h>
 
-#include <asm/natfeat.h>
+#समावेश <यंत्र/natfeat.h>
 
-static long nfhd_id;
+अटल दीर्घ nfhd_id;
 
-enum {
-	/* emulation entry points */
+क्रमागत अणु
+	/* emulation entry poपूर्णांकs */
 	NFHD_READ_WRITE = 10,
 	NFHD_GET_CAPACITY = 14,
 
 	/* skip ACSI devices */
 	NFHD_DEV_OFFSET = 8,
-};
+पूर्ण;
 
-static inline s32 nfhd_read_write(u32 major, u32 minor, u32 rwflag, u32 recno,
+अटल अंतरभूत s32 nfhd_पढ़ो_ग_लिखो(u32 major, u32 minor, u32 rwflag, u32 recno,
 				  u32 count, u32 buf)
-{
-	return nf_call(nfhd_id + NFHD_READ_WRITE, major, minor, rwflag, recno,
+अणु
+	वापस nf_call(nfhd_id + NFHD_READ_WRITE, major, minor, rwflag, recno,
 		       count, buf);
-}
+पूर्ण
 
-static inline s32 nfhd_get_capacity(u32 major, u32 minor, u32 *blocks,
+अटल अंतरभूत s32 nfhd_get_capacity(u32 major, u32 minor, u32 *blocks,
 				    u32 *blocksize)
-{
-	return nf_call(nfhd_id + NFHD_GET_CAPACITY, major, minor,
+अणु
+	वापस nf_call(nfhd_id + NFHD_GET_CAPACITY, major, minor,
 		       virt_to_phys(blocks), virt_to_phys(blocksize));
-}
+पूर्ण
 
-static LIST_HEAD(nfhd_list);
+अटल LIST_HEAD(nfhd_list);
 
-static int major_num;
-module_param(major_num, int, 0);
+अटल पूर्णांक major_num;
+module_param(major_num, पूर्णांक, 0);
 
-struct nfhd_device {
-	struct list_head list;
-	int id;
+काष्ठा nfhd_device अणु
+	काष्ठा list_head list;
+	पूर्णांक id;
 	u32 blocks, bsize;
-	int bshift;
-	struct request_queue *queue;
-	struct gendisk *disk;
-};
+	पूर्णांक bshअगरt;
+	काष्ठा request_queue *queue;
+	काष्ठा gendisk *disk;
+पूर्ण;
 
-static blk_qc_t nfhd_submit_bio(struct bio *bio)
-{
-	struct nfhd_device *dev = bio->bi_bdev->bd_disk->private_data;
-	struct bio_vec bvec;
-	struct bvec_iter iter;
-	int dir, len, shift;
+अटल blk_qc_t nfhd_submit_bio(काष्ठा bio *bio)
+अणु
+	काष्ठा nfhd_device *dev = bio->bi_bdev->bd_disk->निजी_data;
+	काष्ठा bio_vec bvec;
+	काष्ठा bvec_iter iter;
+	पूर्णांक dir, len, shअगरt;
 	sector_t sec = bio->bi_iter.bi_sector;
 
 	dir = bio_data_dir(bio);
-	shift = dev->bshift;
-	bio_for_each_segment(bvec, bio, iter) {
+	shअगरt = dev->bshअगरt;
+	bio_क्रम_each_segment(bvec, bio, iter) अणु
 		len = bvec.bv_len;
 		len >>= 9;
-		nfhd_read_write(dev->id, 0, dir, sec >> shift, len >> shift,
+		nfhd_पढ़ो_ग_लिखो(dev->id, 0, dir, sec >> shअगरt, len >> shअगरt,
 				page_to_phys(bvec.bv_page) + bvec.bv_offset);
 		sec += len;
-	}
+	पूर्ण
 	bio_endio(bio);
-	return BLK_QC_T_NONE;
-}
+	वापस BLK_QC_T_NONE;
+पूर्ण
 
-static int nfhd_getgeo(struct block_device *bdev, struct hd_geometry *geo)
-{
-	struct nfhd_device *dev = bdev->bd_disk->private_data;
+अटल पूर्णांक nfhd_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
+अणु
+	काष्ठा nfhd_device *dev = bdev->bd_disk->निजी_data;
 
-	geo->cylinders = dev->blocks >> (6 - dev->bshift);
+	geo->cylinders = dev->blocks >> (6 - dev->bshअगरt);
 	geo->heads = 4;
 	geo->sectors = 16;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct block_device_operations nfhd_ops = {
+अटल स्थिर काष्ठा block_device_operations nfhd_ops = अणु
 	.owner	= THIS_MODULE,
 	.submit_bio = nfhd_submit_bio,
 	.getgeo	= nfhd_getgeo,
-};
+पूर्ण;
 
-static int __init nfhd_init_one(int id, u32 blocks, u32 bsize)
-{
-	struct nfhd_device *dev;
-	int dev_id = id - NFHD_DEV_OFFSET;
+अटल पूर्णांक __init nfhd_init_one(पूर्णांक id, u32 blocks, u32 bsize)
+अणु
+	काष्ठा nfhd_device *dev;
+	पूर्णांक dev_id = id - NFHD_DEV_OFFSET;
 
 	pr_info("nfhd%u: found device with %u blocks (%u bytes)\n", dev_id,
 		blocks, bsize);
 
-	if (bsize < 512 || (bsize & (bsize - 1))) {
+	अगर (bsize < 512 || (bsize & (bsize - 1))) अणु
 		pr_warn("nfhd%u: invalid block size\n", dev_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dev = kmalloc(sizeof(struct nfhd_device), GFP_KERNEL);
-	if (!dev)
-		goto out;
+	dev = kदो_स्मृति(माप(काष्ठा nfhd_device), GFP_KERNEL);
+	अगर (!dev)
+		जाओ out;
 
 	dev->id = id;
 	dev->blocks = blocks;
 	dev->bsize = bsize;
-	dev->bshift = ffs(bsize) - 10;
+	dev->bshअगरt = ffs(bsize) - 10;
 
 	dev->queue = blk_alloc_queue(NUMA_NO_NODE);
-	if (dev->queue == NULL)
-		goto free_dev;
+	अगर (dev->queue == शून्य)
+		जाओ मुक्त_dev;
 
 	blk_queue_logical_block_size(dev->queue, bsize);
 
 	dev->disk = alloc_disk(16);
-	if (!dev->disk)
-		goto free_queue;
+	अगर (!dev->disk)
+		जाओ मुक्त_queue;
 
 	dev->disk->major = major_num;
 	dev->disk->first_minor = dev_id * 16;
 	dev->disk->fops = &nfhd_ops;
-	dev->disk->private_data = dev;
-	sprintf(dev->disk->disk_name, "nfhd%u", dev_id);
+	dev->disk->निजी_data = dev;
+	प्र_लिखो(dev->disk->disk_name, "nfhd%u", dev_id);
 	set_capacity(dev->disk, (sector_t)blocks * (bsize / 512));
 	dev->disk->queue = dev->queue;
 
@@ -141,59 +142,59 @@ static int __init nfhd_init_one(int id, u32 blocks, u32 bsize)
 
 	list_add_tail(&dev->list, &nfhd_list);
 
-	return 0;
+	वापस 0;
 
-free_queue:
+मुक्त_queue:
 	blk_cleanup_queue(dev->queue);
-free_dev:
-	kfree(dev);
+मुक्त_dev:
+	kमुक्त(dev);
 out:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int __init nfhd_init(void)
-{
+अटल पूर्णांक __init nfhd_init(व्योम)
+अणु
 	u32 blocks, bsize;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	nfhd_id = nf_get_id("XHDI");
-	if (!nfhd_id)
-		return -ENODEV;
+	अगर (!nfhd_id)
+		वापस -ENODEV;
 
-	ret = register_blkdev(major_num, "nfhd");
-	if (ret < 0) {
+	ret = रेजिस्टर_blkdev(major_num, "nfhd");
+	अगर (ret < 0) अणु
 		pr_warn("nfhd: unable to get major number\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!major_num)
+	अगर (!major_num)
 		major_num = ret;
 
-	for (i = NFHD_DEV_OFFSET; i < 24; i++) {
-		if (nfhd_get_capacity(i, 0, &blocks, &bsize))
-			continue;
+	क्रम (i = NFHD_DEV_OFFSET; i < 24; i++) अणु
+		अगर (nfhd_get_capacity(i, 0, &blocks, &bsize))
+			जारी;
 		nfhd_init_one(i, blocks, bsize);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit nfhd_exit(void)
-{
-	struct nfhd_device *dev, *next;
+अटल व्योम __निकास nfhd_निकास(व्योम)
+अणु
+	काष्ठा nfhd_device *dev, *next;
 
-	list_for_each_entry_safe(dev, next, &nfhd_list, list) {
+	list_क्रम_each_entry_safe(dev, next, &nfhd_list, list) अणु
 		list_del(&dev->list);
 		del_gendisk(dev->disk);
 		put_disk(dev->disk);
 		blk_cleanup_queue(dev->queue);
-		kfree(dev);
-	}
-	unregister_blkdev(major_num, "nfhd");
-}
+		kमुक्त(dev);
+	पूर्ण
+	unरेजिस्टर_blkdev(major_num, "nfhd");
+पूर्ण
 
 module_init(nfhd_init);
-module_exit(nfhd_exit);
+module_निकास(nfhd_निकास);
 
 MODULE_LICENSE("GPL");

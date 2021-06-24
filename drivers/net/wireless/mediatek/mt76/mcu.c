@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2019 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#include "mt76.h"
+#समावेश "mt76.h"
 
-struct sk_buff *
-mt76_mcu_msg_alloc(struct mt76_dev *dev, const void *data,
-		   int data_len)
-{
-	const struct mt76_mcu_ops *ops = dev->mcu_ops;
-	int length = ops->headroom + data_len + ops->tailroom;
-	struct sk_buff *skb;
+काष्ठा sk_buff *
+mt76_mcu_msg_alloc(काष्ठा mt76_dev *dev, स्थिर व्योम *data,
+		   पूर्णांक data_len)
+अणु
+	स्थिर काष्ठा mt76_mcu_ops *ops = dev->mcu_ops;
+	पूर्णांक length = ops->headroom + data_len + ops->tailroom;
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(length, GFP_KERNEL);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
-	memset(skb->head, 0, length);
+	स_रखो(skb->head, 0, length);
 	skb_reserve(skb, ops->headroom);
 
-	if (data && data_len)
+	अगर (data && data_len)
 		skb_put_data(skb, data, data_len);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_mcu_msg_alloc);
 
-struct sk_buff *mt76_mcu_get_response(struct mt76_dev *dev,
-				      unsigned long expires)
-{
-	unsigned long timeout;
+काष्ठा sk_buff *mt76_mcu_get_response(काष्ठा mt76_dev *dev,
+				      अचिन्हित दीर्घ expires)
+अणु
+	अचिन्हित दीर्घ समयout;
 
-	if (!time_is_after_jiffies(expires))
-		return NULL;
+	अगर (!समय_is_after_jअगरfies(expires))
+		वापस शून्य;
 
-	timeout = expires - jiffies;
-	wait_event_timeout(dev->mcu.wait,
+	समयout = expires - jअगरfies;
+	रुको_event_समयout(dev->mcu.रुको,
 			   (!skb_queue_empty(&dev->mcu.res_q) ||
 			    test_bit(MT76_MCU_RESET, &dev->phy.state)),
-			   timeout);
-	return skb_dequeue(&dev->mcu.res_q);
-}
+			   समयout);
+	वापस skb_dequeue(&dev->mcu.res_q);
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_mcu_get_response);
 
-void mt76_mcu_rx_event(struct mt76_dev *dev, struct sk_buff *skb)
-{
+व्योम mt76_mcu_rx_event(काष्ठा mt76_dev *dev, काष्ठा sk_buff *skb)
+अणु
 	skb_queue_tail(&dev->mcu.res_q, skb);
-	wake_up(&dev->mcu.wait);
-}
+	wake_up(&dev->mcu.रुको);
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_mcu_rx_event);
 
-int mt76_mcu_send_and_get_msg(struct mt76_dev *dev, int cmd, const void *data,
-			      int len, bool wait_resp, struct sk_buff **ret_skb)
-{
-	struct sk_buff *skb;
+पूर्णांक mt76_mcu_send_and_get_msg(काष्ठा mt76_dev *dev, पूर्णांक cmd, स्थिर व्योम *data,
+			      पूर्णांक len, bool रुको_resp, काष्ठा sk_buff **ret_skb)
+अणु
+	काष्ठा sk_buff *skb;
 
-	if (dev->mcu_ops->mcu_send_msg)
-		return dev->mcu_ops->mcu_send_msg(dev, cmd, data, len, wait_resp);
+	अगर (dev->mcu_ops->mcu_send_msg)
+		वापस dev->mcu_ops->mcu_send_msg(dev, cmd, data, len, रुको_resp);
 
 	skb = mt76_mcu_msg_alloc(dev, data, len);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	return mt76_mcu_skb_send_and_get_msg(dev, skb, cmd, wait_resp, ret_skb);
-}
+	वापस mt76_mcu_skb_send_and_get_msg(dev, skb, cmd, रुको_resp, ret_skb);
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_mcu_send_and_get_msg);
 
-int mt76_mcu_skb_send_and_get_msg(struct mt76_dev *dev, struct sk_buff *skb,
-				  int cmd, bool wait_resp,
-				  struct sk_buff **ret_skb)
-{
-	unsigned long expires;
-	int ret, seq;
+पूर्णांक mt76_mcu_skb_send_and_get_msg(काष्ठा mt76_dev *dev, काष्ठा sk_buff *skb,
+				  पूर्णांक cmd, bool रुको_resp,
+				  काष्ठा sk_buff **ret_skb)
+अणु
+	अचिन्हित दीर्घ expires;
+	पूर्णांक ret, seq;
 
-	if (ret_skb)
-		*ret_skb = NULL;
+	अगर (ret_skb)
+		*ret_skb = शून्य;
 
 	mutex_lock(&dev->mcu.mutex);
 
 	ret = dev->mcu_ops->mcu_skb_send_msg(dev, skb, cmd, &seq);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	if (!wait_resp) {
+	अगर (!रुको_resp) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	expires = jiffies + dev->mcu.timeout;
+	expires = jअगरfies + dev->mcu.समयout;
 
-	do {
+	करो अणु
 		skb = mt76_mcu_get_response(dev, expires);
 		ret = dev->mcu_ops->mcu_parse_response(dev, cmd, skb, seq);
-		if (!ret && ret_skb)
+		अगर (!ret && ret_skb)
 			*ret_skb = skb;
-		else
-			dev_kfree_skb(skb);
-	} while (ret == -EAGAIN);
+		अन्यथा
+			dev_kमुक्त_skb(skb);
+	पूर्ण जबतक (ret == -EAGAIN);
 
 out:
 	mutex_unlock(&dev->mcu.mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_mcu_skb_send_and_get_msg);
 
-int mt76_mcu_send_firmware(struct mt76_dev *dev, int cmd, const void *data,
-			   int len)
-{
-	int err, cur_len;
+पूर्णांक mt76_mcu_send_firmware(काष्ठा mt76_dev *dev, पूर्णांक cmd, स्थिर व्योम *data,
+			   पूर्णांक len)
+अणु
+	पूर्णांक err, cur_len;
 
-	while (len > 0) {
-		cur_len = min_t(int, 4096 - dev->mcu_ops->headroom, len);
+	जबतक (len > 0) अणु
+		cur_len = min_t(पूर्णांक, 4096 - dev->mcu_ops->headroom, len);
 
 		err = mt76_mcu_send_msg(dev, cmd, data, cur_len, false);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		data += cur_len;
 		len -= cur_len;
 
-		if (dev->queue_ops->tx_cleanup)
+		अगर (dev->queue_ops->tx_cleanup)
 			dev->queue_ops->tx_cleanup(dev,
 						   dev->q_mcu[MT_MCUQ_FWDL],
 						   false);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_mcu_send_firmware);

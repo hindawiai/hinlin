@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
 * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,128 +24,128 @@
  *
  */
 
-#ifndef __DC_HWSS_DCN20_H__
-#define __DC_HWSS_DCN20_H__
+#अगर_अघोषित __DC_HWSS_DCN20_H__
+#घोषणा __DC_HWSS_DCN20_H__
 
-#include "hw_sequencer_private.h"
+#समावेश "hw_sequencer_private.h"
 
 bool dcn20_set_blend_lut(
-	struct pipe_ctx *pipe_ctx, const struct dc_plane_state *plane_state);
+	काष्ठा pipe_ctx *pipe_ctx, स्थिर काष्ठा dc_plane_state *plane_state);
 bool dcn20_set_shaper_3dlut(
-	struct pipe_ctx *pipe_ctx, const struct dc_plane_state *plane_state);
-void dcn20_program_front_end_for_ctx(
-		struct dc *dc,
-		struct dc_state *context);
-void dcn20_post_unlock_program_front_end(
-		struct dc *dc,
-		struct dc_state *context);
-void dcn20_update_plane_addr(const struct dc *dc, struct pipe_ctx *pipe_ctx);
-void dcn20_update_mpcc(struct dc *dc, struct pipe_ctx *pipe_ctx);
-bool dcn20_set_input_transfer_func(struct dc *dc, struct pipe_ctx *pipe_ctx,
-			const struct dc_plane_state *plane_state);
-bool dcn20_set_output_transfer_func(struct dc *dc, struct pipe_ctx *pipe_ctx,
-			const struct dc_stream_state *stream);
-void dcn20_program_output_csc(struct dc *dc,
-		struct pipe_ctx *pipe_ctx,
-		enum dc_color_space colorspace,
-		uint16_t *matrix,
-		int opp_id);
-void dcn20_enable_stream(struct pipe_ctx *pipe_ctx);
-void dcn20_unblank_stream(struct pipe_ctx *pipe_ctx,
-		struct dc_link_settings *link_settings);
-void dcn20_disable_plane(struct dc *dc, struct pipe_ctx *pipe_ctx);
-void dcn20_blank_pixel_data(
-		struct dc *dc,
-		struct pipe_ctx *pipe_ctx,
+	काष्ठा pipe_ctx *pipe_ctx, स्थिर काष्ठा dc_plane_state *plane_state);
+व्योम dcn20_program_front_end_क्रम_ctx(
+		काष्ठा dc *dc,
+		काष्ठा dc_state *context);
+व्योम dcn20_post_unlock_program_front_end(
+		काष्ठा dc *dc,
+		काष्ठा dc_state *context);
+व्योम dcn20_update_plane_addr(स्थिर काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn20_update_mpcc(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx);
+bool dcn20_set_input_transfer_func(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx,
+			स्थिर काष्ठा dc_plane_state *plane_state);
+bool dcn20_set_output_transfer_func(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx,
+			स्थिर काष्ठा dc_stream_state *stream);
+व्योम dcn20_program_output_csc(काष्ठा dc *dc,
+		काष्ठा pipe_ctx *pipe_ctx,
+		क्रमागत dc_color_space colorspace,
+		uपूर्णांक16_t *matrix,
+		पूर्णांक opp_id);
+व्योम dcn20_enable_stream(काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn20_unblank_stream(काष्ठा pipe_ctx *pipe_ctx,
+		काष्ठा dc_link_settings *link_settings);
+व्योम dcn20_disable_plane(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn20_blank_pixel_data(
+		काष्ठा dc *dc,
+		काष्ठा pipe_ctx *pipe_ctx,
 		bool blank);
-void dcn20_pipe_control_lock(
-	struct dc *dc,
-	struct pipe_ctx *pipe,
+व्योम dcn20_pipe_control_lock(
+	काष्ठा dc *dc,
+	काष्ठा pipe_ctx *pipe,
 	bool lock);
-void dcn20_prepare_bandwidth(
-		struct dc *dc,
-		struct dc_state *context);
-void dcn20_optimize_bandwidth(
-		struct dc *dc,
-		struct dc_state *context);
+व्योम dcn20_prepare_bandwidth(
+		काष्ठा dc *dc,
+		काष्ठा dc_state *context);
+व्योम dcn20_optimize_bandwidth(
+		काष्ठा dc *dc,
+		काष्ठा dc_state *context);
 bool dcn20_update_bandwidth(
-		struct dc *dc,
-		struct dc_state *context);
-void dcn20_reset_hw_ctx_wrap(
-		struct dc *dc,
-		struct dc_state *context);
-enum dc_status dcn20_enable_stream_timing(
-		struct pipe_ctx *pipe_ctx,
-		struct dc_state *context,
-		struct dc *dc);
-void dcn20_disable_stream_gating(struct dc *dc, struct pipe_ctx *pipe_ctx);
-void dcn20_enable_stream_gating(struct dc *dc, struct pipe_ctx *pipe_ctx);
-void dcn20_setup_vupdate_interrupt(struct dc *dc, struct pipe_ctx *pipe_ctx);
-void dcn20_init_blank(
-		struct dc *dc,
-		struct timing_generator *tg);
-void dcn20_disable_vga(
-	struct dce_hwseq *hws);
-void dcn20_plane_atomic_disable(struct dc *dc, struct pipe_ctx *pipe_ctx);
-void dcn20_enable_power_gating_plane(
-	struct dce_hwseq *hws,
+		काष्ठा dc *dc,
+		काष्ठा dc_state *context);
+व्योम dcn20_reset_hw_ctx_wrap(
+		काष्ठा dc *dc,
+		काष्ठा dc_state *context);
+क्रमागत dc_status dcn20_enable_stream_timing(
+		काष्ठा pipe_ctx *pipe_ctx,
+		काष्ठा dc_state *context,
+		काष्ठा dc *dc);
+व्योम dcn20_disable_stream_gating(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn20_enable_stream_gating(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn20_setup_vupdate_पूर्णांकerrupt(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn20_init_blank(
+		काष्ठा dc *dc,
+		काष्ठा timing_generator *tg);
+व्योम dcn20_disable_vga(
+	काष्ठा dce_hwseq *hws);
+व्योम dcn20_plane_atomic_disable(काष्ठा dc *dc, काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn20_enable_घातer_gating_plane(
+	काष्ठा dce_hwseq *hws,
 	bool enable);
-void dcn20_dpp_pg_control(
-		struct dce_hwseq *hws,
-		unsigned int dpp_inst,
-		bool power_on);
-void dcn20_hubp_pg_control(
-		struct dce_hwseq *hws,
-		unsigned int hubp_inst,
-		bool power_on);
-void dcn20_program_triple_buffer(
-	const struct dc *dc,
-	struct pipe_ctx *pipe_ctx,
+व्योम dcn20_dpp_pg_control(
+		काष्ठा dce_hwseq *hws,
+		अचिन्हित पूर्णांक dpp_inst,
+		bool घातer_on);
+व्योम dcn20_hubp_pg_control(
+		काष्ठा dce_hwseq *hws,
+		अचिन्हित पूर्णांक hubp_inst,
+		bool घातer_on);
+व्योम dcn20_program_triple_buffer(
+	स्थिर काष्ठा dc *dc,
+	काष्ठा pipe_ctx *pipe_ctx,
 	bool enable_triple_buffer);
-void dcn20_enable_writeback(
-		struct dc *dc,
-		struct dc_writeback_info *wb_info,
-		struct dc_state *context);
-void dcn20_disable_writeback(
-		struct dc *dc,
-		unsigned int dwb_pipe_inst);
-void dcn20_update_odm(struct dc *dc, struct dc_state *context, struct pipe_ctx *pipe_ctx);
-bool dcn20_dmdata_status_done(struct pipe_ctx *pipe_ctx);
-void dcn20_program_dmdata_engine(struct pipe_ctx *pipe_ctx);
-void dcn20_set_dmdata_attributes(struct pipe_ctx *pipe_ctx);
-void dcn20_init_vm_ctx(
-		struct dce_hwseq *hws,
-		struct dc *dc,
-		struct dc_virtual_addr_space_config *va_config,
-		int vmid);
-void dcn20_set_flip_control_gsl(
-		struct pipe_ctx *pipe_ctx,
+व्योम dcn20_enable_ग_लिखोback(
+		काष्ठा dc *dc,
+		काष्ठा dc_ग_लिखोback_info *wb_info,
+		काष्ठा dc_state *context);
+व्योम dcn20_disable_ग_लिखोback(
+		काष्ठा dc *dc,
+		अचिन्हित पूर्णांक dwb_pipe_inst);
+व्योम dcn20_update_odm(काष्ठा dc *dc, काष्ठा dc_state *context, काष्ठा pipe_ctx *pipe_ctx);
+bool dcn20_dmdata_status_करोne(काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn20_program_dmdata_engine(काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn20_set_dmdata_attributes(काष्ठा pipe_ctx *pipe_ctx);
+व्योम dcn20_init_vm_ctx(
+		काष्ठा dce_hwseq *hws,
+		काष्ठा dc *dc,
+		काष्ठा dc_भव_addr_space_config *va_config,
+		पूर्णांक vmid);
+व्योम dcn20_set_flip_control_gsl(
+		काष्ठा pipe_ctx *pipe_ctx,
 		bool flip_immediate);
-void dcn20_dsc_pg_control(
-		struct dce_hwseq *hws,
-		unsigned int dsc_inst,
-		bool power_on);
-void dcn20_fpga_init_hw(struct dc *dc);
-bool dcn20_wait_for_blank_complete(
-		struct output_pixel_processor *opp);
-void dcn20_dccg_init(struct dce_hwseq *hws);
-int dcn20_init_sys_ctx(struct dce_hwseq *hws,
-		struct dc *dc,
-		struct dc_phy_addr_space_config *pa_config);
+व्योम dcn20_dsc_pg_control(
+		काष्ठा dce_hwseq *hws,
+		अचिन्हित पूर्णांक dsc_inst,
+		bool घातer_on);
+व्योम dcn20_fpga_init_hw(काष्ठा dc *dc);
+bool dcn20_रुको_क्रम_blank_complete(
+		काष्ठा output_pixel_processor *opp);
+व्योम dcn20_dccg_init(काष्ठा dce_hwseq *hws);
+पूर्णांक dcn20_init_sys_ctx(काष्ठा dce_hwseq *hws,
+		काष्ठा dc *dc,
+		काष्ठा dc_phy_addr_space_config *pa_config);
 
-#ifndef TRIM_FSFT
-bool dcn20_optimize_timing_for_fsft(struct dc *dc,
-		struct dc_crtc_timing *timing,
-		unsigned int max_input_rate_in_khz);
-#endif
+#अगर_अघोषित TRIM_FSFT
+bool dcn20_optimize_timing_क्रम_fsft(काष्ठा dc *dc,
+		काष्ठा dc_crtc_timing *timing,
+		अचिन्हित पूर्णांक max_input_rate_in_khz);
+#पूर्ण_अगर
 
-void dcn20_set_disp_pattern_generator(const struct dc *dc,
-		struct pipe_ctx *pipe_ctx,
-		enum controller_dp_test_pattern test_pattern,
-		enum controller_dp_color_space color_space,
-		enum dc_color_depth color_depth,
-		const struct tg_color *solid_color,
-		int width, int height, int offset);
+व्योम dcn20_set_disp_pattern_generator(स्थिर काष्ठा dc *dc,
+		काष्ठा pipe_ctx *pipe_ctx,
+		क्रमागत controller_dp_test_pattern test_pattern,
+		क्रमागत controller_dp_color_space color_space,
+		क्रमागत dc_color_depth color_depth,
+		स्थिर काष्ठा tg_color *solid_color,
+		पूर्णांक width, पूर्णांक height, पूर्णांक offset);
 
-#endif /* __DC_HWSS_DCN20_H__ */
+#पूर्ण_अगर /* __DC_HWSS_DCN20_H__ */
 

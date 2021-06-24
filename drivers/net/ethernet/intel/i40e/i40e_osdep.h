@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
-#ifndef _I40E_OSDEP_H_
-#define _I40E_OSDEP_H_
+#अगर_अघोषित _I40E_OSDEP_H_
+#घोषणा _I40E_OSDEP_H_
 
-#include <linux/types.h>
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include <linux/tcp.h>
-#include <linux/pci.h>
-#include <linux/highuid.h>
+#समावेश <linux/types.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/highuid.h>
 
-/* get readq/writeq support for 32 bit kernels, use the low-first version */
-#include <linux/io-64-nonatomic-lo-hi.h>
+/* get पढ़ोq/ग_लिखोq support क्रम 32 bit kernels, use the low-first version */
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
 
 /* File to be the magic between shared code and
  * actual OS primitives
  */
 
-#define hw_dbg(hw, S, A...)							\
-do {										\
-	dev_dbg(&((struct i40e_pf *)hw->back)->pdev->dev, S, ##A);		\
-} while (0)
+#घोषणा hw_dbg(hw, S, A...)							\
+करो अणु										\
+	dev_dbg(&((काष्ठा i40e_pf *)hw->back)->pdev->dev, S, ##A);		\
+पूर्ण जबतक (0)
 
-#define wr32(a, reg, value)	writel((value), ((a)->hw_addr + (reg)))
-#define rd32(a, reg)		readl((a)->hw_addr + (reg))
+#घोषणा wr32(a, reg, value)	ग_लिखोl((value), ((a)->hw_addr + (reg)))
+#घोषणा rd32(a, reg)		पढ़ोl((a)->hw_addr + (reg))
 
-#define rd64(a, reg)		readq((a)->hw_addr + (reg))
-#define i40e_flush(a)		readl((a)->hw_addr + I40E_GLGEN_STAT)
+#घोषणा rd64(a, reg)		पढ़ोq((a)->hw_addr + (reg))
+#घोषणा i40e_flush(a)		पढ़ोl((a)->hw_addr + I40E_GLGEN_STAT)
 
 /* memory allocation tracking */
-struct i40e_dma_mem {
-	void *va;
+काष्ठा i40e_dma_mem अणु
+	व्योम *va;
 	dma_addr_t pa;
 	u32 size;
-};
+पूर्ण;
 
-#define i40e_allocate_dma_mem(h, m, unused, s, a) \
+#घोषणा i40e_allocate_dma_mem(h, m, unused, s, a) \
 			i40e_allocate_dma_mem_d(h, m, s, a)
-#define i40e_free_dma_mem(h, m) i40e_free_dma_mem_d(h, m)
+#घोषणा i40e_मुक्त_dma_mem(h, m) i40e_मुक्त_dma_mem_d(h, m)
 
-struct i40e_virt_mem {
-	void *va;
+काष्ठा i40e_virt_mem अणु
+	व्योम *va;
 	u32 size;
-};
+पूर्ण;
 
-#define i40e_allocate_virt_mem(h, m, s) i40e_allocate_virt_mem_d(h, m, s)
-#define i40e_free_virt_mem(h, m) i40e_free_virt_mem_d(h, m)
+#घोषणा i40e_allocate_virt_mem(h, m, s) i40e_allocate_virt_mem_d(h, m, s)
+#घोषणा i40e_मुक्त_virt_mem(h, m) i40e_मुक्त_virt_mem_d(h, m)
 
-#define i40e_debug(h, m, s, ...)				\
-do {								\
-	if (((m) & (h)->debug_mask))				\
+#घोषणा i40e_debug(h, m, s, ...)				\
+करो अणु								\
+	अगर (((m) & (h)->debug_mask))				\
 		pr_info("i40e %02x:%02x.%x " s,			\
 			(h)->bus.bus_id, (h)->bus.device,	\
 			(h)->bus.func, ##__VA_ARGS__);		\
-} while (0)
+पूर्ण जबतक (0)
 
-typedef enum i40e_status_code i40e_status;
-#endif /* _I40E_OSDEP_H_ */
+प्रकार क्रमागत i40e_status_code i40e_status;
+#पूर्ण_अगर /* _I40E_OSDEP_H_ */

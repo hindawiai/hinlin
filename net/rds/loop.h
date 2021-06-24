@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _RDS_LOOP_H
-#define _RDS_LOOP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _RDS_LOOP_H
+#घोषणा _RDS_LOOP_H
 
 /* loop.c */
-extern struct rds_transport rds_loop_transport;
+बाह्य काष्ठा rds_transport rds_loop_transport;
 
-int rds_loop_net_init(void);
-void rds_loop_net_exit(void);
-void rds_loop_exit(void);
+पूर्णांक rds_loop_net_init(व्योम);
+व्योम rds_loop_net_निकास(व्योम);
+व्योम rds_loop_निकास(व्योम);
 
-#endif
+#पूर्ण_अगर

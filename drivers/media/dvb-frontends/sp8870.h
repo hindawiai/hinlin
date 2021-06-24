@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
-    Driver for Spase SP8870 demodulator
+    Driver क्रम Spase SP8870 demodulator
 
     Copyright (C) 1999 Juergen Peitz
 
 
 */
 
-#ifndef SP8870_H
-#define SP8870_H
+#अगर_अघोषित SP8870_H
+#घोषणा SP8870_H
 
-#include <linux/dvb/frontend.h>
-#include <linux/firmware.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/firmware.h>
 
-struct sp8870_config
-{
+काष्ठा sp8870_config
+अणु
 	/* the demodulator's i2c address */
 	u8 demod_address;
 
-	/* request firmware for device */
-	int (*request_firmware)(struct dvb_frontend* fe, const struct firmware **fw, char* name);
-};
+	/* request firmware क्रम device */
+	पूर्णांक (*request_firmware)(काष्ठा dvb_frontend* fe, स्थिर काष्ठा firmware **fw, अक्षर* name);
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_SP8870)
-extern struct dvb_frontend* sp8870_attach(const struct sp8870_config* config,
-					  struct i2c_adapter* i2c);
-#else
-static inline struct dvb_frontend* sp8870_attach(const struct sp8870_config* config,
-					  struct i2c_adapter* i2c)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif // CONFIG_DVB_SP8870
+#अगर IS_REACHABLE(CONFIG_DVB_SP8870)
+बाह्य काष्ठा dvb_frontend* sp8870_attach(स्थिर काष्ठा sp8870_config* config,
+					  काष्ठा i2c_adapter* i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend* sp8870_attach(स्थिर काष्ठा sp8870_config* config,
+					  काष्ठा i2c_adapter* i2c)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर // CONFIG_DVB_SP8870
 
-#endif // SP8870_H
+#पूर्ण_अगर // SP8870_H

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  linux/fs/hfs/mdb.c
  *
@@ -5,151 +6,151 @@
  * (C) 2003 Ardis Technologies <roman@ardistech.com>
  * This file may be distributed under the terms of the GNU General Public License.
  *
- * This file contains functions for reading/writing the MDB.
+ * This file contains functions क्रम पढ़ोing/writing the MDB.
  */
 
-#include <linux/cdrom.h>
-#include <linux/genhd.h>
-#include <linux/nls.h>
-#include <linux/slab.h>
+#समावेश <linux/cdrom.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/nls.h>
+#समावेश <linux/slab.h>
 
-#include "hfs_fs.h"
-#include "btree.h"
+#समावेश "hfs_fs.h"
+#समावेश "btree.h"
 
 /*================ File-local data types ================*/
 
 /*
  * The HFS Master Directory Block (MDB).
  *
- * Also known as the Volume Information Block (VIB), this structure is
+ * Also known as the Volume Inक्रमmation Block (VIB), this काष्ठाure is
  * the HFS equivalent of a superblock.
  *
- * Reference: _Inside Macintosh: Files_ pages 2-59 through 2-62
+ * Reference: _Inside Macपूर्णांकosh: Files_ pages 2-59 through 2-62
  *
- * modified for HFS Extended
+ * modअगरied क्रम HFS Extended
  */
 
-static int hfs_get_last_session(struct super_block *sb,
+अटल पूर्णांक hfs_get_last_session(काष्ठा super_block *sb,
 				sector_t *start, sector_t *size)
-{
-	struct cdrom_device_info *cdi = disk_to_cdi(sb->s_bdev->bd_disk);
+अणु
+	काष्ठा cdrom_device_info *cdi = disk_to_cdi(sb->s_bdev->bd_disk);
 
-	/* default values */
+	/* शेष values */
 	*start = 0;
-	*size = i_size_read(sb->s_bdev->bd_inode) >> 9;
+	*size = i_size_पढ़ो(sb->s_bdev->bd_inode) >> 9;
 
-	if (HFS_SB(sb)->session >= 0) {
-		struct cdrom_tocentry te;
+	अगर (HFS_SB(sb)->session >= 0) अणु
+		काष्ठा cdrom_tocentry te;
 	
-		if (!cdi)
-			return -EINVAL;
+		अगर (!cdi)
+			वापस -EINVAL;
 
 		te.cdte_track = HFS_SB(sb)->session;
-		te.cdte_format = CDROM_LBA;
-		if (cdrom_read_tocentry(cdi, &te) ||
-		    (te.cdte_ctrl & CDROM_DATA_TRACK) != 4) {
+		te.cdte_क्रमmat = CDROM_LBA;
+		अगर (cdrom_पढ़ो_tocentry(cdi, &te) ||
+		    (te.cdte_ctrl & CDROM_DATA_TRACK) != 4) अणु
 			pr_err("invalid session number or type of track\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		*start = (sector_t)te.cdte_addr.lba << 2;
-	} else if (cdi) {
-		struct cdrom_multisession ms_info;
+	पूर्ण अन्यथा अगर (cdi) अणु
+		काष्ठा cdrom_multisession ms_info;
 
-		ms_info.addr_format = CDROM_LBA;
-		if (cdrom_multisession(cdi, &ms_info) == 0 && ms_info.xa_flag)
+		ms_info.addr_क्रमmat = CDROM_LBA;
+		अगर (cdrom_multisession(cdi, &ms_info) == 0 && ms_info.xa_flag)
 			*start = (sector_t)ms_info.addr.lba << 2;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * hfs_mdb_get()
  *
- * Build the in-core MDB for a filesystem, including
- * the B-trees and the volume bitmap.
+ * Build the in-core MDB क्रम a fileप्रणाली, including
+ * the B-trees and the volume biपंचांगap.
  */
-int hfs_mdb_get(struct super_block *sb)
-{
-	struct buffer_head *bh;
-	struct hfs_mdb *mdb, *mdb2;
-	unsigned int block;
-	char *ptr;
-	int off2, len, size, sect;
+पूर्णांक hfs_mdb_get(काष्ठा super_block *sb)
+अणु
+	काष्ठा buffer_head *bh;
+	काष्ठा hfs_mdb *mdb, *mdb2;
+	अचिन्हित पूर्णांक block;
+	अक्षर *ptr;
+	पूर्णांक off2, len, size, sect;
 	sector_t part_start, part_size;
 	loff_t off;
 	__be16 attrib;
 
 	/* set the device driver to 512-byte blocks */
 	size = sb_min_blocksize(sb, HFS_SECTOR_SIZE);
-	if (!size)
-		return -EINVAL;
+	अगर (!size)
+		वापस -EINVAL;
 
-	if (hfs_get_last_session(sb, &part_start, &part_size))
-		return -EINVAL;
-	while (1) {
-		/* See if this is an HFS filesystem */
-		bh = sb_bread512(sb, part_start + HFS_MDB_BLK, mdb);
-		if (!bh)
-			goto out;
+	अगर (hfs_get_last_session(sb, &part_start, &part_size))
+		वापस -EINVAL;
+	जबतक (1) अणु
+		/* See अगर this is an HFS fileप्रणाली */
+		bh = sb_bपढ़ो512(sb, part_start + HFS_MDB_BLK, mdb);
+		अगर (!bh)
+			जाओ out;
 
-		if (mdb->drSigWord == cpu_to_be16(HFS_SUPER_MAGIC))
-			break;
-		brelse(bh);
+		अगर (mdb->drSigWord == cpu_to_be16(HFS_SUPER_MAGIC))
+			अवरोध;
+		brअन्यथा(bh);
 
-		/* check for a partition block
-		 * (should do this only for cdrom/loop though)
+		/* check क्रम a partition block
+		 * (should करो this only क्रम cdrom/loop though)
 		 */
-		if (hfs_part_find(sb, &part_start, &part_size))
-			goto out;
-	}
+		अगर (hfs_part_find(sb, &part_start, &part_size))
+			जाओ out;
+	पूर्ण
 
 	HFS_SB(sb)->alloc_blksz = size = be32_to_cpu(mdb->drAlBlkSiz);
-	if (!size || (size & (HFS_SECTOR_SIZE - 1))) {
+	अगर (!size || (size & (HFS_SECTOR_SIZE - 1))) अणु
 		pr_err("bad allocation block size %d\n", size);
-		goto out_bh;
-	}
+		जाओ out_bh;
+	पूर्ण
 
 	size = min(HFS_SB(sb)->alloc_blksz, (u32)PAGE_SIZE);
 	/* size must be a multiple of 512 */
-	while (size & (size - 1))
+	जबतक (size & (size - 1))
 		size -= HFS_SECTOR_SIZE;
 	sect = be16_to_cpu(mdb->drAlBlSt) + part_start;
 	/* align block size to first sector */
-	while (sect & ((size - 1) >> HFS_SECTOR_SIZE_BITS))
+	जबतक (sect & ((size - 1) >> HFS_SECTOR_SIZE_BITS))
 		size >>= 1;
 	/* align block size to weird alloc size */
-	while (HFS_SB(sb)->alloc_blksz & (size - 1))
+	जबतक (HFS_SB(sb)->alloc_blksz & (size - 1))
 		size >>= 1;
-	brelse(bh);
-	if (!sb_set_blocksize(sb, size)) {
+	brअन्यथा(bh);
+	अगर (!sb_set_blocksize(sb, size)) अणु
 		pr_err("unable to set blocksize to %u\n", size);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	bh = sb_bread512(sb, part_start + HFS_MDB_BLK, mdb);
-	if (!bh)
-		goto out;
-	if (mdb->drSigWord != cpu_to_be16(HFS_SUPER_MAGIC))
-		goto out_bh;
+	bh = sb_bपढ़ो512(sb, part_start + HFS_MDB_BLK, mdb);
+	अगर (!bh)
+		जाओ out;
+	अगर (mdb->drSigWord != cpu_to_be16(HFS_SUPER_MAGIC))
+		जाओ out_bh;
 
 	HFS_SB(sb)->mdb_bh = bh;
 	HFS_SB(sb)->mdb = mdb;
 
-	/* These parameters are read from the MDB, and never written */
+	/* These parameters are पढ़ो from the MDB, and never written */
 	HFS_SB(sb)->part_start = part_start;
 	HFS_SB(sb)->fs_ablocks = be16_to_cpu(mdb->drNmAlBlks);
-	HFS_SB(sb)->fs_div = HFS_SB(sb)->alloc_blksz >> sb->s_blocksize_bits;
+	HFS_SB(sb)->fs_भाग = HFS_SB(sb)->alloc_blksz >> sb->s_blocksize_bits;
 	HFS_SB(sb)->clumpablks = be32_to_cpu(mdb->drClpSiz) /
 				 HFS_SB(sb)->alloc_blksz;
-	if (!HFS_SB(sb)->clumpablks)
+	अगर (!HFS_SB(sb)->clumpablks)
 		HFS_SB(sb)->clumpablks = 1;
 	HFS_SB(sb)->fs_start = (be16_to_cpu(mdb->drAlBlSt) + part_start) >>
 			       (sb->s_blocksize_bits - HFS_SECTOR_SIZE_BITS);
 
-	/* These parameters are read from and written to the MDB */
-	HFS_SB(sb)->free_ablocks = be16_to_cpu(mdb->drFreeBks);
+	/* These parameters are पढ़ो from and written to the MDB */
+	HFS_SB(sb)->मुक्त_ablocks = be16_to_cpu(mdb->drFreeBks);
 	HFS_SB(sb)->next_id = be32_to_cpu(mdb->drNxtCNID);
 	HFS_SB(sb)->root_files = be16_to_cpu(mdb->drNmFls);
 	HFS_SB(sb)->root_dirs = be16_to_cpu(mdb->drNmRtDirs);
@@ -158,215 +159,215 @@ int hfs_mdb_get(struct super_block *sb)
 
 	/* TRY to get the alternate (backup) MDB. */
 	sect = part_start + part_size - 2;
-	bh = sb_bread512(sb, sect, mdb2);
-	if (bh) {
-		if (mdb2->drSigWord == cpu_to_be16(HFS_SUPER_MAGIC)) {
+	bh = sb_bपढ़ो512(sb, sect, mdb2);
+	अगर (bh) अणु
+		अगर (mdb2->drSigWord == cpu_to_be16(HFS_SUPER_MAGIC)) अणु
 			HFS_SB(sb)->alt_mdb_bh = bh;
 			HFS_SB(sb)->alt_mdb = mdb2;
-		} else
-			brelse(bh);
-	}
+		पूर्ण अन्यथा
+			brअन्यथा(bh);
+	पूर्ण
 
-	if (!HFS_SB(sb)->alt_mdb) {
+	अगर (!HFS_SB(sb)->alt_mdb) अणु
 		pr_warn("unable to locate alternate MDB\n");
 		pr_warn("continuing without an alternate MDB\n");
-	}
+	पूर्ण
 
-	HFS_SB(sb)->bitmap = kmalloc(8192, GFP_KERNEL);
-	if (!HFS_SB(sb)->bitmap)
-		goto out;
+	HFS_SB(sb)->biपंचांगap = kदो_स्मृति(8192, GFP_KERNEL);
+	अगर (!HFS_SB(sb)->biपंचांगap)
+		जाओ out;
 
-	/* read in the bitmap */
+	/* पढ़ो in the biपंचांगap */
 	block = be16_to_cpu(mdb->drVBMSt) + part_start;
 	off = (loff_t)block << HFS_SECTOR_SIZE_BITS;
 	size = (HFS_SB(sb)->fs_ablocks + 8) / 8;
-	ptr = (u8 *)HFS_SB(sb)->bitmap;
-	while (size) {
-		bh = sb_bread(sb, off >> sb->s_blocksize_bits);
-		if (!bh) {
+	ptr = (u8 *)HFS_SB(sb)->biपंचांगap;
+	जबतक (size) अणु
+		bh = sb_bपढ़ो(sb, off >> sb->s_blocksize_bits);
+		अगर (!bh) अणु
 			pr_err("unable to read volume bitmap\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		off2 = off & (sb->s_blocksize - 1);
-		len = min((int)sb->s_blocksize - off2, size);
-		memcpy(ptr, bh->b_data + off2, len);
-		brelse(bh);
+		len = min((पूर्णांक)sb->s_blocksize - off2, size);
+		स_नकल(ptr, bh->b_data + off2, len);
+		brअन्यथा(bh);
 		ptr += len;
 		off += len;
 		size -= len;
-	}
+	पूर्ण
 
-	HFS_SB(sb)->ext_tree = hfs_btree_open(sb, HFS_EXT_CNID, hfs_ext_keycmp);
-	if (!HFS_SB(sb)->ext_tree) {
+	HFS_SB(sb)->ext_tree = hfs_btree_खोलो(sb, HFS_EXT_CNID, hfs_ext_keycmp);
+	अगर (!HFS_SB(sb)->ext_tree) अणु
 		pr_err("unable to open extent tree\n");
-		goto out;
-	}
-	HFS_SB(sb)->cat_tree = hfs_btree_open(sb, HFS_CAT_CNID, hfs_cat_keycmp);
-	if (!HFS_SB(sb)->cat_tree) {
+		जाओ out;
+	पूर्ण
+	HFS_SB(sb)->cat_tree = hfs_btree_खोलो(sb, HFS_CAT_CNID, hfs_cat_keycmp);
+	अगर (!HFS_SB(sb)->cat_tree) अणु
 		pr_err("unable to open catalog tree\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	attrib = mdb->drAtrb;
-	if (!(attrib & cpu_to_be16(HFS_SB_ATTRIB_UNMNT))) {
+	अगर (!(attrib & cpu_to_be16(HFS_SB_ATTRIB_UNMNT))) अणु
 		pr_warn("filesystem was not cleanly unmounted, running fsck.hfs is recommended.  mounting read-only.\n");
 		sb->s_flags |= SB_RDONLY;
-	}
-	if ((attrib & cpu_to_be16(HFS_SB_ATTRIB_SLOCK))) {
+	पूर्ण
+	अगर ((attrib & cpu_to_be16(HFS_SB_ATTRIB_SLOCK))) अणु
 		pr_warn("filesystem is marked locked, mounting read-only.\n");
 		sb->s_flags |= SB_RDONLY;
-	}
-	if (!sb_rdonly(sb)) {
-		/* Mark the volume uncleanly unmounted in case we crash */
+	पूर्ण
+	अगर (!sb_rकरोnly(sb)) अणु
+		/* Mark the volume uncleanly unmounted in हाल we crash */
 		attrib &= cpu_to_be16(~HFS_SB_ATTRIB_UNMNT);
 		attrib |= cpu_to_be16(HFS_SB_ATTRIB_INCNSTNT);
 		mdb->drAtrb = attrib;
 		be32_add_cpu(&mdb->drWrCnt, 1);
-		mdb->drLsMod = hfs_mtime();
+		mdb->drLsMod = hfs_mसमय();
 
 		mark_buffer_dirty(HFS_SB(sb)->mdb_bh);
 		sync_dirty_buffer(HFS_SB(sb)->mdb_bh);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_bh:
-	brelse(bh);
+	brअन्यथा(bh);
 out:
 	hfs_mdb_put(sb);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /*
  * hfs_mdb_commit()
  *
  * Description:
  *   This updates the MDB on disk.
- *   It does not check, if the superblock has been modified, or
- *   if the filesystem has been mounted read-only. It is mainly
+ *   It करोes not check, अगर the superblock has been modअगरied, or
+ *   अगर the fileप्रणाली has been mounted पढ़ो-only. It is मुख्यly
  *   called by hfs_sync_fs() and flush_mdb().
  * Input Variable(s):
- *   struct hfs_mdb *mdb: Pointer to the hfs MDB
- *   int backup;
+ *   काष्ठा hfs_mdb *mdb: Poपूर्णांकer to the hfs MDB
+ *   पूर्णांक backup;
  * Output Variable(s):
  *   NONE
  * Returns:
- *   void
+ *   व्योम
  * Preconditions:
- *   'mdb' points to a "valid" (struct hfs_mdb).
+ *   'mdb' poपूर्णांकs to a "valid" (काष्ठा hfs_mdb).
  * Postconditions:
  *   The HFS MDB and on disk will be updated, by copying the possibly
- *   modified fields from the in memory MDB (in native byte order) to
+ *   modअगरied fields from the in memory MDB (in native byte order) to
  *   the disk block buffer.
  *   If 'backup' is non-zero then the alternate MDB is also written
- *   and the function doesn't return until it is actually on disk.
+ *   and the function करोesn't वापस until it is actually on disk.
  */
-void hfs_mdb_commit(struct super_block *sb)
-{
-	struct hfs_mdb *mdb = HFS_SB(sb)->mdb;
+व्योम hfs_mdb_commit(काष्ठा super_block *sb)
+अणु
+	काष्ठा hfs_mdb *mdb = HFS_SB(sb)->mdb;
 
-	if (sb_rdonly(sb))
-		return;
+	अगर (sb_rकरोnly(sb))
+		वापस;
 
 	lock_buffer(HFS_SB(sb)->mdb_bh);
-	if (test_and_clear_bit(HFS_FLG_MDB_DIRTY, &HFS_SB(sb)->flags)) {
-		/* These parameters may have been modified, so write them back */
-		mdb->drLsMod = hfs_mtime();
-		mdb->drFreeBks = cpu_to_be16(HFS_SB(sb)->free_ablocks);
+	अगर (test_and_clear_bit(HFS_FLG_MDB_सूचीTY, &HFS_SB(sb)->flags)) अणु
+		/* These parameters may have been modअगरied, so ग_लिखो them back */
+		mdb->drLsMod = hfs_mसमय();
+		mdb->drFreeBks = cpu_to_be16(HFS_SB(sb)->मुक्त_ablocks);
 		mdb->drNxtCNID = cpu_to_be32(HFS_SB(sb)->next_id);
 		mdb->drNmFls = cpu_to_be16(HFS_SB(sb)->root_files);
 		mdb->drNmRtDirs = cpu_to_be16(HFS_SB(sb)->root_dirs);
 		mdb->drFilCnt = cpu_to_be32(HFS_SB(sb)->file_count);
 		mdb->drDirCnt = cpu_to_be32(HFS_SB(sb)->folder_count);
 
-		/* write MDB to disk */
+		/* ग_लिखो MDB to disk */
 		mark_buffer_dirty(HFS_SB(sb)->mdb_bh);
-	}
+	पूर्ण
 
-	/* write the backup MDB, not returning until it is written.
-	 * we only do this when either the catalog or extents overflow
+	/* ग_लिखो the backup MDB, not वापसing until it is written.
+	 * we only करो this when either the catalog or extents overflow
 	 * files grow. */
-	if (test_and_clear_bit(HFS_FLG_ALT_MDB_DIRTY, &HFS_SB(sb)->flags) &&
-	    HFS_SB(sb)->alt_mdb) {
-		hfs_inode_write_fork(HFS_SB(sb)->ext_tree->inode, mdb->drXTExtRec,
-				     &mdb->drXTFlSize, NULL);
-		hfs_inode_write_fork(HFS_SB(sb)->cat_tree->inode, mdb->drCTExtRec,
-				     &mdb->drCTFlSize, NULL);
+	अगर (test_and_clear_bit(HFS_FLG_ALT_MDB_सूचीTY, &HFS_SB(sb)->flags) &&
+	    HFS_SB(sb)->alt_mdb) अणु
+		hfs_inode_ग_लिखो_विभाजन(HFS_SB(sb)->ext_tree->inode, mdb->drXTExtRec,
+				     &mdb->drXTFlSize, शून्य);
+		hfs_inode_ग_लिखो_विभाजन(HFS_SB(sb)->cat_tree->inode, mdb->drCTExtRec,
+				     &mdb->drCTFlSize, शून्य);
 
 		lock_buffer(HFS_SB(sb)->alt_mdb_bh);
-		memcpy(HFS_SB(sb)->alt_mdb, HFS_SB(sb)->mdb, HFS_SECTOR_SIZE);
+		स_नकल(HFS_SB(sb)->alt_mdb, HFS_SB(sb)->mdb, HFS_SECTOR_SIZE);
 		HFS_SB(sb)->alt_mdb->drAtrb |= cpu_to_be16(HFS_SB_ATTRIB_UNMNT);
 		HFS_SB(sb)->alt_mdb->drAtrb &= cpu_to_be16(~HFS_SB_ATTRIB_INCNSTNT);
 		unlock_buffer(HFS_SB(sb)->alt_mdb_bh);
 
 		mark_buffer_dirty(HFS_SB(sb)->alt_mdb_bh);
 		sync_dirty_buffer(HFS_SB(sb)->alt_mdb_bh);
-	}
+	पूर्ण
 
-	if (test_and_clear_bit(HFS_FLG_BITMAP_DIRTY, &HFS_SB(sb)->flags)) {
-		struct buffer_head *bh;
+	अगर (test_and_clear_bit(HFS_FLG_BITMAP_सूचीTY, &HFS_SB(sb)->flags)) अणु
+		काष्ठा buffer_head *bh;
 		sector_t block;
-		char *ptr;
-		int off, size, len;
+		अक्षर *ptr;
+		पूर्णांक off, size, len;
 
 		block = be16_to_cpu(HFS_SB(sb)->mdb->drVBMSt) + HFS_SB(sb)->part_start;
 		off = (block << HFS_SECTOR_SIZE_BITS) & (sb->s_blocksize - 1);
 		block >>= sb->s_blocksize_bits - HFS_SECTOR_SIZE_BITS;
 		size = (HFS_SB(sb)->fs_ablocks + 7) / 8;
-		ptr = (u8 *)HFS_SB(sb)->bitmap;
-		while (size) {
-			bh = sb_bread(sb, block);
-			if (!bh) {
+		ptr = (u8 *)HFS_SB(sb)->biपंचांगap;
+		जबतक (size) अणु
+			bh = sb_bपढ़ो(sb, block);
+			अगर (!bh) अणु
 				pr_err("unable to read volume bitmap\n");
-				break;
-			}
-			len = min((int)sb->s_blocksize - off, size);
+				अवरोध;
+			पूर्ण
+			len = min((पूर्णांक)sb->s_blocksize - off, size);
 
 			lock_buffer(bh);
-			memcpy(bh->b_data + off, ptr, len);
+			स_नकल(bh->b_data + off, ptr, len);
 			unlock_buffer(bh);
 
 			mark_buffer_dirty(bh);
-			brelse(bh);
+			brअन्यथा(bh);
 			block++;
 			off = 0;
 			ptr += len;
 			size -= len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	unlock_buffer(HFS_SB(sb)->mdb_bh);
-}
+पूर्ण
 
-void hfs_mdb_close(struct super_block *sb)
-{
+व्योम hfs_mdb_बंद(काष्ठा super_block *sb)
+अणु
 	/* update volume attributes */
-	if (sb_rdonly(sb))
-		return;
+	अगर (sb_rकरोnly(sb))
+		वापस;
 	HFS_SB(sb)->mdb->drAtrb |= cpu_to_be16(HFS_SB_ATTRIB_UNMNT);
 	HFS_SB(sb)->mdb->drAtrb &= cpu_to_be16(~HFS_SB_ATTRIB_INCNSTNT);
 	mark_buffer_dirty(HFS_SB(sb)->mdb_bh);
-}
+पूर्ण
 
 /*
  * hfs_mdb_put()
  *
  * Release the resources associated with the in-core MDB.  */
-void hfs_mdb_put(struct super_block *sb)
-{
-	if (!HFS_SB(sb))
-		return;
-	/* free the B-trees */
-	hfs_btree_close(HFS_SB(sb)->ext_tree);
-	hfs_btree_close(HFS_SB(sb)->cat_tree);
+व्योम hfs_mdb_put(काष्ठा super_block *sb)
+अणु
+	अगर (!HFS_SB(sb))
+		वापस;
+	/* मुक्त the B-trees */
+	hfs_btree_बंद(HFS_SB(sb)->ext_tree);
+	hfs_btree_बंद(HFS_SB(sb)->cat_tree);
 
-	/* free the buffers holding the primary and alternate MDBs */
-	brelse(HFS_SB(sb)->mdb_bh);
-	brelse(HFS_SB(sb)->alt_mdb_bh);
+	/* मुक्त the buffers holding the primary and alternate MDBs */
+	brअन्यथा(HFS_SB(sb)->mdb_bh);
+	brअन्यथा(HFS_SB(sb)->alt_mdb_bh);
 
 	unload_nls(HFS_SB(sb)->nls_io);
 	unload_nls(HFS_SB(sb)->nls_disk);
 
-	kfree(HFS_SB(sb)->bitmap);
-	kfree(HFS_SB(sb));
-	sb->s_fs_info = NULL;
-}
+	kमुक्त(HFS_SB(sb)->biपंचांगap);
+	kमुक्त(HFS_SB(sb));
+	sb->s_fs_info = शून्य;
+पूर्ण

@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  PowerPC version
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  *
- *  Modifications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
+ *  Modअगरications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
  *  and Cort Dougan (PReP) (cort@cs.nmt.edu)
  *    Copyright (C) 1996 Paul Mackerras
  *
@@ -11,135 +12,135 @@
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  *
  *  Dave Engebretsen <engebret@us.ibm.com>
- *      Rework for PPC64 port.
+ *      Rework क्रम PPC64 port.
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/string.h>
-#include <linux/pgtable.h>
-#include <asm/pgalloc.h>
-#include <asm/kup.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/kup.h>
 
 phys_addr_t memstart_addr __ro_after_init = (phys_addr_t)~0ull;
 EXPORT_SYMBOL_GPL(memstart_addr);
 phys_addr_t kernstart_addr __ro_after_init;
 EXPORT_SYMBOL_GPL(kernstart_addr);
-unsigned long kernstart_virt_addr __ro_after_init = KERNELBASE;
+अचिन्हित दीर्घ kernstart_virt_addr __ro_after_init = KERNELBASE;
 EXPORT_SYMBOL_GPL(kernstart_virt_addr);
 
 bool disable_kuep = !IS_ENABLED(CONFIG_PPC_KUEP);
 bool disable_kuap = !IS_ENABLED(CONFIG_PPC_KUAP);
 
-static int __init parse_nosmep(char *p)
-{
+अटल पूर्णांक __init parse_nosmep(अक्षर *p)
+अणु
 	disable_kuep = true;
 	pr_warn("Disabling Kernel Userspace Execution Prevention\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("nosmep", parse_nosmep);
 
-static int __init parse_nosmap(char *p)
-{
+अटल पूर्णांक __init parse_nosmap(अक्षर *p)
+अणु
 	disable_kuap = true;
 	pr_warn("Disabling Kernel Userspace Access Protection\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("nosmap", parse_nosmap);
 
-#define CTOR(shift) static void ctor_##shift(void *addr) \
-{							\
-	memset(addr, 0, sizeof(void *) << (shift));	\
-}
+#घोषणा CTOR(shअगरt) अटल व्योम ctor_##shअगरt(व्योम *addr) \
+अणु							\
+	स_रखो(addr, 0, माप(व्योम *) << (shअगरt));	\
+पूर्ण
 
 CTOR(0); CTOR(1); CTOR(2); CTOR(3); CTOR(4); CTOR(5); CTOR(6); CTOR(7);
 CTOR(8); CTOR(9); CTOR(10); CTOR(11); CTOR(12); CTOR(13); CTOR(14); CTOR(15);
 
-static inline void (*ctor(int shift))(void *)
-{
+अटल अंतरभूत व्योम (*ctor(पूर्णांक shअगरt))(व्योम *)
+अणु
 	BUILD_BUG_ON(MAX_PGTABLE_INDEX_SIZE != 15);
 
-	switch (shift) {
-	case 0: return ctor_0;
-	case 1: return ctor_1;
-	case 2: return ctor_2;
-	case 3: return ctor_3;
-	case 4: return ctor_4;
-	case 5: return ctor_5;
-	case 6: return ctor_6;
-	case 7: return ctor_7;
-	case 8: return ctor_8;
-	case 9: return ctor_9;
-	case 10: return ctor_10;
-	case 11: return ctor_11;
-	case 12: return ctor_12;
-	case 13: return ctor_13;
-	case 14: return ctor_14;
-	case 15: return ctor_15;
-	}
-	return NULL;
-}
+	चयन (shअगरt) अणु
+	हाल 0: वापस ctor_0;
+	हाल 1: वापस ctor_1;
+	हाल 2: वापस ctor_2;
+	हाल 3: वापस ctor_3;
+	हाल 4: वापस ctor_4;
+	हाल 5: वापस ctor_5;
+	हाल 6: वापस ctor_6;
+	हाल 7: वापस ctor_7;
+	हाल 8: वापस ctor_8;
+	हाल 9: वापस ctor_9;
+	हाल 10: वापस ctor_10;
+	हाल 11: वापस ctor_11;
+	हाल 12: वापस ctor_12;
+	हाल 13: वापस ctor_13;
+	हाल 14: वापस ctor_14;
+	हाल 15: वापस ctor_15;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct kmem_cache *pgtable_cache[MAX_PGTABLE_INDEX_SIZE + 1];
+काष्ठा kmem_cache *pgtable_cache[MAX_PGTABLE_INDEX_SIZE + 1];
 EXPORT_SYMBOL_GPL(pgtable_cache);	/* used by kvm_hv module */
 
 /*
- * Create a kmem_cache() for pagetables.  This is not used for PTE
- * pages - they're linked to struct page, come from the normal free
- * pages pool and have a different entry size (see real_pte_t) to
- * everything else.  Caches created by this function are used for all
- * the higher level pagetables, and for hugepage pagetables.
+ * Create a kmem_cache() क्रम pagetables.  This is not used क्रम PTE
+ * pages - they're linked to काष्ठा page, come from the normal मुक्त
+ * pages pool and have a dअगरferent entry size (see real_pte_t) to
+ * everything अन्यथा.  Caches created by this function are used क्रम all
+ * the higher level pagetables, and क्रम hugepage pagetables.
  */
-void pgtable_cache_add(unsigned int shift)
-{
-	char *name;
-	unsigned long table_size = sizeof(void *) << shift;
-	unsigned long align = table_size;
+व्योम pgtable_cache_add(अचिन्हित पूर्णांक shअगरt)
+अणु
+	अक्षर *name;
+	अचिन्हित दीर्घ table_size = माप(व्योम *) << shअगरt;
+	अचिन्हित दीर्घ align = table_size;
 
-	/* When batching pgtable pointers for RCU freeing, we store
+	/* When batching pgtable poपूर्णांकers क्रम RCU मुक्तing, we store
 	 * the index size in the low bits.  Table alignment must be
 	 * big enough to fit it.
 	 *
-	 * Likewise, hugeapge pagetable pointers contain a (different)
-	 * shift value in the low bits.  All tables must be aligned so
+	 * Likewise, hugeapge pagetable poपूर्णांकers contain a (dअगरferent)
+	 * shअगरt value in the low bits.  All tables must be aligned so
 	 * as to leave enough 0 bits in the address to contain it. */
-	unsigned long minalign = max(MAX_PGTABLE_INDEX_SIZE + 1,
+	अचिन्हित दीर्घ minalign = max(MAX_PGTABLE_INDEX_SIZE + 1,
 				     HUGEPD_SHIFT_MASK + 1);
-	struct kmem_cache *new;
+	काष्ठा kmem_cache *new;
 
-	/* It would be nice if this was a BUILD_BUG_ON(), but at the
-	 * moment, gcc doesn't seem to recognize is_power_of_2 as a
-	 * constant expression, so so much for that. */
-	BUG_ON(!is_power_of_2(minalign));
-	BUG_ON(shift > MAX_PGTABLE_INDEX_SIZE);
+	/* It would be nice अगर this was a BUILD_BUG_ON(), but at the
+	 * moment, gcc करोesn't seem to recognize is_घातer_of_2 as a
+	 * स्थिरant expression, so so much क्रम that. */
+	BUG_ON(!is_घातer_of_2(minalign));
+	BUG_ON(shअगरt > MAX_PGTABLE_INDEX_SIZE);
 
-	if (PGT_CACHE(shift))
-		return; /* Already have a cache of this size */
+	अगर (PGT_CACHE(shअगरt))
+		वापस; /* Alपढ़ोy have a cache of this size */
 
-	align = max_t(unsigned long, align, minalign);
-	name = kasprintf(GFP_KERNEL, "pgtable-2^%d", shift);
-	new = kmem_cache_create(name, table_size, align, 0, ctor(shift));
-	if (!new)
-		panic("Could not allocate pgtable cache for order %d", shift);
+	align = max_t(अचिन्हित दीर्घ, align, minalign);
+	name = kaप्र_लिखो(GFP_KERNEL, "pgtable-2^%d", shअगरt);
+	new = kmem_cache_create(name, table_size, align, 0, ctor(shअगरt));
+	अगर (!new)
+		panic("Could not allocate pgtable cache for order %d", shअगरt);
 
-	kfree(name);
-	pgtable_cache[shift] = new;
+	kमुक्त(name);
+	pgtable_cache[shअगरt] = new;
 
-	pr_debug("Allocated pgtable cache for order %d\n", shift);
-}
+	pr_debug("Allocated pgtable cache for order %d\n", shअगरt);
+पूर्ण
 EXPORT_SYMBOL_GPL(pgtable_cache_add);	/* used by kvm_hv module */
 
-void pgtable_cache_init(void)
-{
+व्योम pgtable_cache_init(व्योम)
+अणु
 	pgtable_cache_add(PGD_INDEX_SIZE);
 
-	if (PMD_CACHE_INDEX)
+	अगर (PMD_CACHE_INDEX)
 		pgtable_cache_add(PMD_CACHE_INDEX);
 	/*
 	 * In all current configs, when the PUD index exists it's the
 	 * same size as either the pgd or pmd index except with THP enabled
 	 * on book3s 64
 	 */
-	if (PUD_CACHE_INDEX)
+	अगर (PUD_CACHE_INDEX)
 		pgtable_cache_add(PUD_CACHE_INDEX);
-}
+पूर्ण

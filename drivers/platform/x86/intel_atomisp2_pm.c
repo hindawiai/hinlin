@@ -1,140 +1,141 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Dummy driver for Intel's Image Signal Processor found on Bay Trail
+ * Dummy driver क्रम Intel's Image Signal Processor found on Bay Trail
  * and Cherry Trail devices. The sole purpose of this driver is to allow
  * the ISP to be put in D3.
  *
  * Copyright (C) 2018 Hans de Goede <hdegoede@redhat.com>
  *
- * Based on various non upstream patches for ISP support:
+ * Based on various non upstream patches क्रम ISP support:
  * Copyright (C) 2010-2017 Intel Corporation. All rights reserved.
  * Copyright (c) 2010 Silicon Hive www.siliconhive.com.
  */
 
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/pci.h>
-#include <linux/pm_runtime.h>
-#include <asm/iosf_mbi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <यंत्र/iosf_mbi.h>
 
 /* PCI configuration regs */
-#define PCI_INTERRUPT_CTRL		0x9c
+#घोषणा PCI_INTERRUPT_CTRL		0x9c
 
-#define PCI_CSI_CONTROL			0xe8
-#define PCI_CSI_CONTROL_PORTS_OFF_MASK	0x7
+#घोषणा PCI_CSI_CONTROL			0xe8
+#घोषणा PCI_CSI_CONTROL_PORTS_OFF_MASK	0x7
 
 /* IOSF BT_MBI_UNIT_PMC regs */
-#define ISPSSPM0			0x39
-#define ISPSSPM0_ISPSSC_OFFSET		0
-#define ISPSSPM0_ISPSSC_MASK		0x00000003
-#define ISPSSPM0_ISPSSS_OFFSET		24
-#define ISPSSPM0_ISPSSS_MASK		0x03000000
-#define ISPSSPM0_IUNIT_POWER_ON		0x0
-#define ISPSSPM0_IUNIT_POWER_OFF	0x3
+#घोषणा ISPSSPM0			0x39
+#घोषणा ISPSSPM0_ISPSSC_OFFSET		0
+#घोषणा ISPSSPM0_ISPSSC_MASK		0x00000003
+#घोषणा ISPSSPM0_ISPSSS_OFFSET		24
+#घोषणा ISPSSPM0_ISPSSS_MASK		0x03000000
+#घोषणा ISPSSPM0_IUNIT_POWER_ON		0x0
+#घोषणा ISPSSPM0_IUNIT_POWER_OFF	0x3
 
-static int isp_set_power(struct pci_dev *dev, bool enable)
-{
-	unsigned long timeout;
+अटल पूर्णांक isp_set_घातer(काष्ठा pci_dev *dev, bool enable)
+अणु
+	अचिन्हित दीर्घ समयout;
 	u32 val = enable ? ISPSSPM0_IUNIT_POWER_ON : ISPSSPM0_IUNIT_POWER_OFF;
 
-	/* Write to ISPSSPM0 bit[1:0] to power on/off the IUNIT */
-	iosf_mbi_modify(BT_MBI_UNIT_PMC, MBI_REG_READ, ISPSSPM0,
+	/* Write to ISPSSPM0 bit[1:0] to घातer on/off the IUNIT */
+	iosf_mbi_modअगरy(BT_MBI_UNIT_PMC, MBI_REG_READ, ISPSSPM0,
 			val, ISPSSPM0_ISPSSC_MASK);
 
 	/*
-	 * There should be no IUNIT access while power-down is
+	 * There should be no IUNIT access जबतक घातer-करोwn is
 	 * in progress. HW sighting: 4567865.
-	 * Wait up to 50 ms for the IUNIT to shut down.
-	 * And we do the same for power on.
+	 * Wait up to 50 ms क्रम the IUNIT to shut करोwn.
+	 * And we करो the same क्रम घातer on.
 	 */
-	timeout = jiffies + msecs_to_jiffies(50);
-	do {
-		u32 tmp;
+	समयout = jअगरfies + msecs_to_jअगरfies(50);
+	करो अणु
+		u32 पंचांगp;
 
 		/* Wait until ISPSSPM0 bit[25:24] shows the right value */
-		iosf_mbi_read(BT_MBI_UNIT_PMC, MBI_REG_READ, ISPSSPM0, &tmp);
-		tmp = (tmp & ISPSSPM0_ISPSSS_MASK) >> ISPSSPM0_ISPSSS_OFFSET;
-		if (tmp == val)
-			return 0;
+		iosf_mbi_पढ़ो(BT_MBI_UNIT_PMC, MBI_REG_READ, ISPSSPM0, &पंचांगp);
+		पंचांगp = (पंचांगp & ISPSSPM0_ISPSSS_MASK) >> ISPSSPM0_ISPSSS_OFFSET;
+		अगर (पंचांगp == val)
+			वापस 0;
 
 		usleep_range(1000, 2000);
-	} while (time_before(jiffies, timeout));
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
 
 	dev_err(&dev->dev, "IUNIT power-%s timeout.\n", enable ? "on" : "off");
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int isp_probe(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	pm_runtime_allow(&dev->dev);
-	pm_runtime_put_sync_suspend(&dev->dev);
+अटल पूर्णांक isp_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	pm_runसमय_allow(&dev->dev);
+	pm_runसमय_put_sync_suspend(&dev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void isp_remove(struct pci_dev *dev)
-{
-	pm_runtime_get_sync(&dev->dev);
-	pm_runtime_forbid(&dev->dev);
-}
+अटल व्योम isp_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	pm_runसमय_get_sync(&dev->dev);
+	pm_runसमय_क्रमbid(&dev->dev);
+पूर्ण
 
-static int isp_pci_suspend(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
+अटल पूर्णांक isp_pci_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
 	u32 val;
 
-	pci_write_config_dword(pdev, PCI_INTERRUPT_CTRL, 0);
+	pci_ग_लिखो_config_dword(pdev, PCI_INTERRUPT_CTRL, 0);
 
 	/*
-	 * MRFLD IUNIT DPHY is located in an always-power-on island
-	 * MRFLD HW design need all CSI ports are disabled before
-	 * powering down the IUNIT.
+	 * MRFLD IUNIT DPHY is located in an always-घातer-on island
+	 * MRFLD HW design need all CSI ports are disabled beक्रमe
+	 * घातering करोwn the IUNIT.
 	 */
-	pci_read_config_dword(pdev, PCI_CSI_CONTROL, &val);
+	pci_पढ़ो_config_dword(pdev, PCI_CSI_CONTROL, &val);
 	val |= PCI_CSI_CONTROL_PORTS_OFF_MASK;
-	pci_write_config_dword(pdev, PCI_CSI_CONTROL, val);
+	pci_ग_लिखो_config_dword(pdev, PCI_CSI_CONTROL, val);
 
 	/*
-	 * We lose config space access when punit power gates
-	 * the ISP. Can't use pci_set_power_state() because
-	 * pmcsr won't actually change when we write to it.
+	 * We lose config space access when punit घातer gates
+	 * the ISP. Can't use pci_set_घातer_state() because
+	 * pmcsr won't actually change when we ग_लिखो to it.
 	 */
 	pci_save_state(pdev);
 	pdev->current_state = PCI_D3cold;
-	isp_set_power(pdev, false);
+	isp_set_घातer(pdev, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp_pci_resume(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
+अटल पूर्णांक isp_pci_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
 
-	isp_set_power(pdev, true);
+	isp_set_घातer(pdev, true);
 	pdev->current_state = PCI_D0;
 	pci_restore_state(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static UNIVERSAL_DEV_PM_OPS(isp_pm_ops, isp_pci_suspend,
-			    isp_pci_resume, NULL);
+अटल UNIVERSAL_DEV_PM_OPS(isp_pm_ops, isp_pci_suspend,
+			    isp_pci_resume, शून्य);
 
-static const struct pci_device_id isp_id_table[] = {
-	{ PCI_VDEVICE(INTEL, 0x0f38), },
-	{ PCI_VDEVICE(INTEL, 0x22b8), },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id isp_id_table[] = अणु
+	अणु PCI_VDEVICE(INTEL, 0x0f38), पूर्ण,
+	अणु PCI_VDEVICE(INTEL, 0x22b8), पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, isp_id_table);
 
-static struct pci_driver isp_pci_driver = {
+अटल काष्ठा pci_driver isp_pci_driver = अणु
 	.name = "intel_atomisp2_pm",
 	.id_table = isp_id_table,
 	.probe = isp_probe,
-	.remove = isp_remove,
+	.हटाओ = isp_हटाओ,
 	.driver.pm = &isp_pm_ops,
-};
+पूर्ण;
 
 module_pci_driver(isp_pci_driver);
 

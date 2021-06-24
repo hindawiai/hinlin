@@ -1,1 +1,2 @@
-#include <uapi/asm/reg.h>
+<शैली गुरु>
+#समावेश <uapi/यंत्र/reg.h>

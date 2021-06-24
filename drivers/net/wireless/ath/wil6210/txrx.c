@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2012-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/etherdevice.h>
-#include <net/ieee80211_radiotap.h>
-#include <linux/if_arp.h>
-#include <linux/moduleparam.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/if_vlan.h>
-#include <net/ipv6.h>
-#include <linux/prefetch.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <net/ieee80211_radiotap.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/ipv6.h>
+#समावेश <linux/prefetch.h>
 
-#include "wil6210.h"
-#include "wmi.h"
-#include "txrx.h"
-#include "trace.h"
-#include "txrx_edma.h"
+#समावेश "wil6210.h"
+#समावेश "wmi.h"
+#समावेश "txrx.h"
+#समावेश "trace.h"
+#समावेश "txrx_edma.h"
 
 bool rx_align_2;
 module_param(rx_align_2, bool, 0444);
@@ -28,126 +29,126 @@ bool rx_large_buf;
 module_param(rx_large_buf, bool, 0444);
 MODULE_PARM_DESC(rx_large_buf, " allocate 8KB RX buffers, default - no");
 
-/* Drop Tx packets in case Tx ring is full */
-bool drop_if_ring_full;
+/* Drop Tx packets in हाल Tx ring is full */
+bool drop_अगर_ring_full;
 
-static inline uint wil_rx_snaplen(void)
-{
-	return rx_align_2 ? 6 : 0;
-}
+अटल अंतरभूत uपूर्णांक wil_rx_snaplen(व्योम)
+अणु
+	वापस rx_align_2 ? 6 : 0;
+पूर्ण
 
-/* wil_ring_wmark_low - low watermark for available descriptor space */
-static inline int wil_ring_wmark_low(struct wil_ring *ring)
-{
-	return ring->size / 8;
-}
+/* wil_ring_wmark_low - low watermark क्रम available descriptor space */
+अटल अंतरभूत पूर्णांक wil_ring_wmark_low(काष्ठा wil_ring *ring)
+अणु
+	वापस ring->size / 8;
+पूर्ण
 
-/* wil_ring_wmark_high - high watermark for available descriptor space */
-static inline int wil_ring_wmark_high(struct wil_ring *ring)
-{
-	return ring->size / 4;
-}
+/* wil_ring_wmark_high - high watermark क्रम available descriptor space */
+अटल अंतरभूत पूर्णांक wil_ring_wmark_high(काष्ठा wil_ring *ring)
+अणु
+	वापस ring->size / 4;
+पूर्ण
 
-/* returns true if num avail descriptors is lower than wmark_low */
-static inline int wil_ring_avail_low(struct wil_ring *ring)
-{
-	return wil_ring_avail_tx(ring) < wil_ring_wmark_low(ring);
-}
+/* वापसs true अगर num avail descriptors is lower than wmark_low */
+अटल अंतरभूत पूर्णांक wil_ring_avail_low(काष्ठा wil_ring *ring)
+अणु
+	वापस wil_ring_avail_tx(ring) < wil_ring_wmark_low(ring);
+पूर्ण
 
-/* returns true if num avail descriptors is higher than wmark_high */
-static inline int wil_ring_avail_high(struct wil_ring *ring)
-{
-	return wil_ring_avail_tx(ring) > wil_ring_wmark_high(ring);
-}
+/* वापसs true अगर num avail descriptors is higher than wmark_high */
+अटल अंतरभूत पूर्णांक wil_ring_avail_high(काष्ठा wil_ring *ring)
+अणु
+	वापस wil_ring_avail_tx(ring) > wil_ring_wmark_high(ring);
+पूर्ण
 
-/* returns true when all tx vrings are empty */
-bool wil_is_tx_idle(struct wil6210_priv *wil)
-{
-	int i;
-	unsigned long data_comp_to;
-	int min_ring_id = wil_get_min_tx_ring_id(wil);
+/* वापसs true when all tx vrings are empty */
+bool wil_is_tx_idle(काष्ठा wil6210_priv *wil)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ data_comp_to;
+	पूर्णांक min_ring_id = wil_get_min_tx_ring_id(wil);
 
-	for (i = min_ring_id; i < WIL6210_MAX_TX_RINGS; i++) {
-		struct wil_ring *vring = &wil->ring_tx[i];
-		int vring_index = vring - wil->ring_tx;
-		struct wil_ring_tx_data *txdata =
+	क्रम (i = min_ring_id; i < WIL6210_MAX_TX_RINGS; i++) अणु
+		काष्ठा wil_ring *vring = &wil->ring_tx[i];
+		पूर्णांक vring_index = vring - wil->ring_tx;
+		काष्ठा wil_ring_tx_data *txdata =
 			&wil->ring_tx_data[vring_index];
 
 		spin_lock(&txdata->lock);
 
-		if (!vring->va || !txdata->enabled) {
+		अगर (!vring->va || !txdata->enabled) अणु
 			spin_unlock(&txdata->lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		data_comp_to = jiffies + msecs_to_jiffies(
+		data_comp_to = jअगरfies + msecs_to_jअगरfies(
 					WIL_DATA_COMPLETION_TO_MS);
-		if (test_bit(wil_status_napi_en, wil->status)) {
-			while (!wil_ring_is_empty(vring)) {
-				if (time_after(jiffies, data_comp_to)) {
+		अगर (test_bit(wil_status_napi_en, wil->status)) अणु
+			जबतक (!wil_ring_is_empty(vring)) अणु
+				अगर (समय_after(jअगरfies, data_comp_to)) अणु
 					wil_dbg_pm(wil,
 						   "TO waiting for idle tx\n");
 					spin_unlock(&txdata->lock);
-					return false;
-				}
+					वापस false;
+				पूर्ण
 				wil_dbg_ratelimited(wil,
 						    "tx vring is not empty -> NAPI\n");
 				spin_unlock(&txdata->lock);
 				napi_synchronize(&wil->napi_tx);
 				msleep(20);
 				spin_lock(&txdata->lock);
-				if (!vring->va || !txdata->enabled)
-					break;
-			}
-		}
+				अगर (!vring->va || !txdata->enabled)
+					अवरोध;
+			पूर्ण
+		पूर्ण
 
 		spin_unlock(&txdata->lock);
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int wil_vring_alloc(struct wil6210_priv *wil, struct wil_ring *vring)
-{
-	struct device *dev = wil_to_dev(wil);
-	size_t sz = vring->size * sizeof(vring->va[0]);
-	uint i;
+अटल पूर्णांक wil_vring_alloc(काष्ठा wil6210_priv *wil, काष्ठा wil_ring *vring)
+अणु
+	काष्ठा device *dev = wil_to_dev(wil);
+	माप_प्रकार sz = vring->size * माप(vring->va[0]);
+	uपूर्णांक i;
 
 	wil_dbg_misc(wil, "vring_alloc:\n");
 
-	BUILD_BUG_ON(sizeof(vring->va[0]) != 32);
+	BUILD_BUG_ON(माप(vring->va[0]) != 32);
 
 	vring->swhead = 0;
 	vring->swtail = 0;
-	vring->ctx = kcalloc(vring->size, sizeof(vring->ctx[0]), GFP_KERNEL);
-	if (!vring->ctx) {
-		vring->va = NULL;
-		return -ENOMEM;
-	}
+	vring->ctx = kसुस्मृति(vring->size, माप(vring->ctx[0]), GFP_KERNEL);
+	अगर (!vring->ctx) अणु
+		vring->va = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* vring->va should be aligned on its size rounded up to power of 2
+	/* vring->va should be aligned on its size rounded up to घातer of 2
 	 * This is granted by the dma_alloc_coherent.
 	 *
 	 * HW has limitation that all vrings addresses must share the same
 	 * upper 16 msb bits part of 48 bits address. To workaround that,
-	 * if we are using more than 32 bit addresses switch to 32 bit
-	 * allocation before allocating vring memory.
+	 * अगर we are using more than 32 bit addresses चयन to 32 bit
+	 * allocation beक्रमe allocating vring memory.
 	 *
-	 * There's no check for the return value of dma_set_mask_and_coherent,
-	 * since we assume if we were able to set the mask during
-	 * initialization in this system it will not fail if we set it again
+	 * There's no check क्रम the वापस value of dma_set_mask_and_coherent,
+	 * since we assume अगर we were able to set the mask during
+	 * initialization in this प्रणाली it will not fail अगर we set it again
 	 */
-	if (wil->dma_addr_size > 32)
+	अगर (wil->dma_addr_size > 32)
 		dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
 
 	vring->va = dma_alloc_coherent(dev, sz, &vring->pa, GFP_KERNEL);
-	if (!vring->va) {
-		kfree(vring->ctx);
-		vring->ctx = NULL;
-		return -ENOMEM;
-	}
+	अगर (!vring->va) अणु
+		kमुक्त(vring->ctx);
+		vring->ctx = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (wil->dma_addr_size > 32)
+	अगर (wil->dma_addr_size > 32)
 		dma_set_mask_and_coherent(dev,
 					  DMA_BIT_MASK(wil->dma_addr_size));
 
@@ -155,82 +156,82 @@ static int wil_vring_alloc(struct wil6210_priv *wil, struct wil_ring *vring)
 	 * For Tx and Rx, ownership bit is at the same location, thus
 	 * we can use any
 	 */
-	for (i = 0; i < vring->size; i++) {
-		volatile struct vring_tx_desc *_d =
+	क्रम (i = 0; i < vring->size; i++) अणु
+		अस्थिर काष्ठा vring_tx_desc *_d =
 			&vring->va[i].tx.legacy;
 
 		_d->dma.status = TX_DMA_STATUS_DU;
-	}
+	पूर्ण
 
 	wil_dbg_misc(wil, "vring[%d] 0x%p:%pad 0x%p\n", vring->size,
 		     vring->va, &vring->pa, vring->ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wil_txdesc_unmap(struct device *dev, union wil_tx_desc *desc,
-			     struct wil_ctx *ctx)
-{
-	struct vring_tx_desc *d = &desc->legacy;
+अटल व्योम wil_txdesc_unmap(काष्ठा device *dev, जोड़ wil_tx_desc *desc,
+			     काष्ठा wil_ctx *ctx)
+अणु
+	काष्ठा vring_tx_desc *d = &desc->legacy;
 	dma_addr_t pa = wil_desc_addr(&d->dma.addr);
 	u16 dmalen = le16_to_cpu(d->dma.length);
 
-	switch (ctx->mapped_as) {
-	case wil_mapped_as_single:
+	चयन (ctx->mapped_as) अणु
+	हाल wil_mapped_as_single:
 		dma_unmap_single(dev, pa, dmalen, DMA_TO_DEVICE);
-		break;
-	case wil_mapped_as_page:
+		अवरोध;
+	हाल wil_mapped_as_page:
 		dma_unmap_page(dev, pa, dmalen, DMA_TO_DEVICE);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void wil_vring_free(struct wil6210_priv *wil, struct wil_ring *vring)
-{
-	struct device *dev = wil_to_dev(wil);
-	size_t sz = vring->size * sizeof(vring->va[0]);
+अटल व्योम wil_vring_मुक्त(काष्ठा wil6210_priv *wil, काष्ठा wil_ring *vring)
+अणु
+	काष्ठा device *dev = wil_to_dev(wil);
+	माप_प्रकार sz = vring->size * माप(vring->va[0]);
 
-	lockdep_assert_held(&wil->mutex);
-	if (!vring->is_rx) {
-		int vring_index = vring - wil->ring_tx;
+	lockdep_निश्चित_held(&wil->mutex);
+	अगर (!vring->is_rx) अणु
+		पूर्णांक vring_index = vring - wil->ring_tx;
 
 		wil_dbg_misc(wil, "free Tx vring %d [%d] 0x%p:%pad 0x%p\n",
 			     vring_index, vring->size, vring->va,
 			     &vring->pa, vring->ctx);
-	} else {
+	पूर्ण अन्यथा अणु
 		wil_dbg_misc(wil, "free Rx vring [%d] 0x%p:%pad 0x%p\n",
 			     vring->size, vring->va,
 			     &vring->pa, vring->ctx);
-	}
+	पूर्ण
 
-	while (!wil_ring_is_empty(vring)) {
+	जबतक (!wil_ring_is_empty(vring)) अणु
 		dma_addr_t pa;
 		u16 dmalen;
-		struct wil_ctx *ctx;
+		काष्ठा wil_ctx *ctx;
 
-		if (!vring->is_rx) {
-			struct vring_tx_desc dd, *d = &dd;
-			volatile struct vring_tx_desc *_d =
+		अगर (!vring->is_rx) अणु
+			काष्ठा vring_tx_desc dd, *d = &dd;
+			अस्थिर काष्ठा vring_tx_desc *_d =
 					&vring->va[vring->swtail].tx.legacy;
 
 			ctx = &vring->ctx[vring->swtail];
-			if (!ctx) {
+			अगर (!ctx) अणु
 				wil_dbg_txrx(wil,
 					     "ctx(%d) was already completed\n",
 					     vring->swtail);
 				vring->swtail = wil_ring_next_tail(vring);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			*d = *_d;
-			wil_txdesc_unmap(dev, (union wil_tx_desc *)d, ctx);
-			if (ctx->skb)
-				dev_kfree_skb_any(ctx->skb);
+			wil_txdesc_unmap(dev, (जोड़ wil_tx_desc *)d, ctx);
+			अगर (ctx->skb)
+				dev_kमुक्त_skb_any(ctx->skb);
 			vring->swtail = wil_ring_next_tail(vring);
-		} else { /* rx */
-			struct vring_rx_desc dd, *d = &dd;
-			volatile struct vring_rx_desc *_d =
+		पूर्ण अन्यथा अणु /* rx */
+			काष्ठा vring_rx_desc dd, *d = &dd;
+			अस्थिर काष्ठा vring_rx_desc *_d =
 				&vring->va[vring->swhead].rx.legacy;
 
 			ctx = &vring->ctx[vring->swhead];
@@ -238,75 +239,75 @@ static void wil_vring_free(struct wil6210_priv *wil, struct wil_ring *vring)
 			pa = wil_desc_addr(&d->dma.addr);
 			dmalen = le16_to_cpu(d->dma.length);
 			dma_unmap_single(dev, pa, dmalen, DMA_FROM_DEVICE);
-			kfree_skb(ctx->skb);
+			kमुक्त_skb(ctx->skb);
 			wil_ring_advance_head(vring, 1);
-		}
-	}
-	dma_free_coherent(dev, sz, (void *)vring->va, vring->pa);
-	kfree(vring->ctx);
+		पूर्ण
+	पूर्ण
+	dma_मुक्त_coherent(dev, sz, (व्योम *)vring->va, vring->pa);
+	kमुक्त(vring->ctx);
 	vring->pa = 0;
-	vring->va = NULL;
-	vring->ctx = NULL;
-}
+	vring->va = शून्य;
+	vring->ctx = शून्य;
+पूर्ण
 
-/* Allocate one skb for Rx VRING
+/* Allocate one skb क्रम Rx VRING
  *
  * Safe to call from IRQ
  */
-static int wil_vring_alloc_skb(struct wil6210_priv *wil, struct wil_ring *vring,
-			       u32 i, int headroom)
-{
-	struct device *dev = wil_to_dev(wil);
-	unsigned int sz = wil->rx_buf_len + ETH_HLEN + wil_rx_snaplen();
-	struct vring_rx_desc dd, *d = &dd;
-	volatile struct vring_rx_desc *_d = &vring->va[i].rx.legacy;
+अटल पूर्णांक wil_vring_alloc_skb(काष्ठा wil6210_priv *wil, काष्ठा wil_ring *vring,
+			       u32 i, पूर्णांक headroom)
+अणु
+	काष्ठा device *dev = wil_to_dev(wil);
+	अचिन्हित पूर्णांक sz = wil->rx_buf_len + ETH_HLEN + wil_rx_snaplen();
+	काष्ठा vring_rx_desc dd, *d = &dd;
+	अस्थिर काष्ठा vring_rx_desc *_d = &vring->va[i].rx.legacy;
 	dma_addr_t pa;
-	struct sk_buff *skb = dev_alloc_skb(sz + headroom);
+	काष्ठा sk_buff *skb = dev_alloc_skb(sz + headroom);
 
-	if (unlikely(!skb))
-		return -ENOMEM;
+	अगर (unlikely(!skb))
+		वापस -ENOMEM;
 
 	skb_reserve(skb, headroom);
 	skb_put(skb, sz);
 
 	/**
-	 * Make sure that the network stack calculates checksum for packets
+	 * Make sure that the network stack calculates checksum क्रम packets
 	 * which failed the HW checksum calculation
 	 */
 	skb->ip_summed = CHECKSUM_NONE;
 
 	pa = dma_map_single(dev, skb->data, skb->len, DMA_FROM_DEVICE);
-	if (unlikely(dma_mapping_error(dev, pa))) {
-		kfree_skb(skb);
-		return -ENOMEM;
-	}
+	अगर (unlikely(dma_mapping_error(dev, pa))) अणु
+		kमुक्त_skb(skb);
+		वापस -ENOMEM;
+	पूर्ण
 
 	d->dma.d0 = RX_DMA_D0_CMD_DMA_RT | RX_DMA_D0_CMD_DMA_IT;
 	wil_desc_addr_set(&d->dma.addr, pa);
-	/* ip_length don't care */
-	/* b11 don't care */
-	/* error don't care */
-	d->dma.status = 0; /* BIT(0) should be 0 for HW_OWNED */
+	/* ip_length करोn't care */
+	/* b11 करोn't care */
+	/* error करोn't care */
+	d->dma.status = 0; /* BIT(0) should be 0 क्रम HW_OWNED */
 	d->dma.length = cpu_to_le16(sz);
 	*_d = *d;
 	vring->ctx[i].skb = skb;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Adds radiotap header
  *
  * Any error indicated as "Bad FCS"
  *
- * Vendor data for 04:ce:14-1 (Wilocity-1) consists of:
+ * Venकरोr data क्रम 04:ce:14-1 (Wilocity-1) consists of:
  *  - Rx descriptor: 32 bytes
  *  - Phy info
  */
-static void wil_rx_add_radiotap_header(struct wil6210_priv *wil,
-				       struct sk_buff *skb)
-{
-	struct wil6210_rtap {
-		struct ieee80211_radiotap_header rthdr;
+अटल व्योम wil_rx_add_radiotap_header(काष्ठा wil6210_priv *wil,
+				       काष्ठा sk_buff *skb)
+अणु
+	काष्ठा wil6210_rtap अणु
+		काष्ठा ieee80211_radiotap_header rthdr;
 		/* fields should be in the order of bits in rthdr.it_present */
 		/* flags */
 		u8 flags;
@@ -317,27 +318,27 @@ static void wil_rx_add_radiotap_header(struct wil6210_priv *wil,
 		u8 mcs_present;
 		u8 mcs_flags;
 		u8 mcs_index;
-	} __packed;
-	struct vring_rx_desc *d = wil_skb_rxdesc(skb);
-	struct wil6210_rtap *rtap;
-	int rtap_len = sizeof(struct wil6210_rtap);
-	struct ieee80211_channel *ch = wil->monitor_chandef.chan;
+	पूर्ण __packed;
+	काष्ठा vring_rx_desc *d = wil_skb_rxdesc(skb);
+	काष्ठा wil6210_rtap *rtap;
+	पूर्णांक rtap_len = माप(काष्ठा wil6210_rtap);
+	काष्ठा ieee80211_channel *ch = wil->monitor_chandef.chan;
 
-	if (skb_headroom(skb) < rtap_len &&
-	    pskb_expand_head(skb, rtap_len, 0, GFP_ATOMIC)) {
+	अगर (skb_headroom(skb) < rtap_len &&
+	    pskb_expand_head(skb, rtap_len, 0, GFP_ATOMIC)) अणु
 		wil_err(wil, "Unable to expand headroom to %d\n", rtap_len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rtap = skb_push(skb, rtap_len);
-	memset(rtap, 0, rtap_len);
+	स_रखो(rtap, 0, rtap_len);
 
 	rtap->rthdr.it_version = PKTHDR_RADIOTAP_VERSION;
 	rtap->rthdr.it_len = cpu_to_le16(rtap_len);
 	rtap->rthdr.it_present = cpu_to_le32((1 << IEEE80211_RADIOTAP_FLAGS) |
 			(1 << IEEE80211_RADIOTAP_CHANNEL) |
 			(1 << IEEE80211_RADIOTAP_MCS));
-	if (d->dma.status & RX_DMA_STATUS_ERROR)
+	अगर (d->dma.status & RX_DMA_STATUS_ERROR)
 		rtap->flags |= IEEE80211_RADIOTAP_F_BADFCS;
 
 	rtap->chnl_freq = cpu_to_le16(ch ? ch->center_freq : 58320);
@@ -346,89 +347,89 @@ static void wil_rx_add_radiotap_header(struct wil6210_priv *wil,
 	rtap->mcs_present = IEEE80211_RADIOTAP_MCS_HAVE_MCS;
 	rtap->mcs_flags = 0;
 	rtap->mcs_index = wil_rxdesc_mcs(d);
-}
+पूर्ण
 
-static bool wil_is_rx_idle(struct wil6210_priv *wil)
-{
-	struct vring_rx_desc *_d;
-	struct wil_ring *ring = &wil->ring_rx;
+अटल bool wil_is_rx_idle(काष्ठा wil6210_priv *wil)
+अणु
+	काष्ठा vring_rx_desc *_d;
+	काष्ठा wil_ring *ring = &wil->ring_rx;
 
-	_d = (struct vring_rx_desc *)&ring->va[ring->swhead].rx.legacy;
-	if (_d->dma.status & RX_DMA_STATUS_DU)
-		return false;
+	_d = (काष्ठा vring_rx_desc *)&ring->va[ring->swhead].rx.legacy;
+	अगर (_d->dma.status & RX_DMA_STATUS_DU)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int wil_rx_get_cid_by_skb(struct wil6210_priv *wil, struct sk_buff *skb)
-{
-	struct vring_rx_desc *d = wil_skb_rxdesc(skb);
-	int mid = wil_rxdesc_mid(d);
-	struct wil6210_vif *vif = wil->vifs[mid];
+अटल पूर्णांक wil_rx_get_cid_by_skb(काष्ठा wil6210_priv *wil, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा vring_rx_desc *d = wil_skb_rxdesc(skb);
+	पूर्णांक mid = wil_rxdesc_mid(d);
+	काष्ठा wil6210_vअगर *vअगर = wil->vअगरs[mid];
 	/* cid from DMA descriptor is limited to 3 bits.
-	 * In case of cid>=8, the value would be cid modulo 8 and we need to
+	 * In हाल of cid>=8, the value would be cid modulo 8 and we need to
 	 * find real cid by locating the transmitter (ta) inside sta array
 	 */
-	int cid = wil_rxdesc_cid(d);
-	unsigned int snaplen = wil_rx_snaplen();
-	struct ieee80211_hdr_3addr *hdr;
-	int i;
-	unsigned char *ta;
+	पूर्णांक cid = wil_rxdesc_cid(d);
+	अचिन्हित पूर्णांक snaplen = wil_rx_snaplen();
+	काष्ठा ieee80211_hdr_3addr *hdr;
+	पूर्णांक i;
+	अचिन्हित अक्षर *ta;
 	u8 ftype;
 
 	/* in monitor mode there are no connections */
-	if (vif->wdev.iftype == NL80211_IFTYPE_MONITOR)
-		return cid;
+	अगर (vअगर->wdev.अगरtype == NL80211_IFTYPE_MONITOR)
+		वापस cid;
 
 	ftype = wil_rxdesc_ftype(d) << 2;
-	if (likely(ftype == IEEE80211_FTYPE_DATA)) {
-		if (unlikely(skb->len < ETH_HLEN + snaplen)) {
+	अगर (likely(ftype == IEEE80211_FTYPE_DATA)) अणु
+		अगर (unlikely(skb->len < ETH_HLEN + snaplen)) अणु
 			wil_err_ratelimited(wil,
 					    "Short data frame, len = %d\n",
 					    skb->len);
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 		ta = wil_skb_get_sa(skb);
-	} else {
-		if (unlikely(skb->len < sizeof(struct ieee80211_hdr_3addr))) {
+	पूर्ण अन्यथा अणु
+		अगर (unlikely(skb->len < माप(काष्ठा ieee80211_hdr_3addr))) अणु
 			wil_err_ratelimited(wil, "Short frame, len = %d\n",
 					    skb->len);
-			return -ENOENT;
-		}
-		hdr = (void *)skb->data;
+			वापस -ENOENT;
+		पूर्ण
+		hdr = (व्योम *)skb->data;
 		ta = hdr->addr2;
-	}
+	पूर्ण
 
-	if (wil->max_assoc_sta <= WIL6210_RX_DESC_MAX_CID)
-		return cid;
+	अगर (wil->max_assoc_sta <= WIL6210_RX_DESC_MAX_CID)
+		वापस cid;
 
-	/* assuming no concurrency between AP interfaces and STA interfaces.
-	 * multista is used only in P2P_GO or AP mode. In other modes return
+	/* assuming no concurrency between AP पूर्णांकerfaces and STA पूर्णांकerfaces.
+	 * multista is used only in P2P_GO or AP mode. In other modes वापस
 	 * cid from the rx descriptor
 	 */
-	if (vif->wdev.iftype != NL80211_IFTYPE_P2P_GO &&
-	    vif->wdev.iftype != NL80211_IFTYPE_AP)
-		return cid;
+	अगर (vअगर->wdev.अगरtype != NL80211_IFTYPE_P2P_GO &&
+	    vअगर->wdev.अगरtype != NL80211_IFTYPE_AP)
+		वापस cid;
 
 	/* For Rx packets cid from rx descriptor is limited to 3 bits (0..7),
 	 * to find the real cid, compare transmitter address with the stored
 	 * stations mac address in the driver sta array
 	 */
-	for (i = cid; i < wil->max_assoc_sta; i += WIL6210_RX_DESC_MAX_CID) {
-		if (wil->sta[i].status != wil_sta_unused &&
-		    ether_addr_equal(wil->sta[i].addr, ta)) {
+	क्रम (i = cid; i < wil->max_assoc_sta; i += WIL6210_RX_DESC_MAX_CID) अणु
+		अगर (wil->sta[i].status != wil_sta_unused &&
+		    ether_addr_equal(wil->sta[i].addr, ta)) अणु
 			cid = i;
-			break;
-		}
-	}
-	if (i >= wil->max_assoc_sta) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (i >= wil->max_assoc_sta) अणु
 		wil_err_ratelimited(wil, "Could not find cid for frame with transmit addr = %pM, iftype = %d, frametype = %d, len = %d\n",
-				    ta, vif->wdev.iftype, ftype, skb->len);
+				    ta, vअगर->wdev.अगरtype, ftype, skb->len);
 		cid = -ENOENT;
-	}
+	पूर्ण
 
-	return cid;
-}
+	वापस cid;
+पूर्ण
 
 /* reap 1 frame from @swhead
  *
@@ -436,44 +437,44 @@ static int wil_rx_get_cid_by_skb(struct wil6210_priv *wil, struct sk_buff *skb)
  *
  * Safe to call from IRQ
  */
-static struct sk_buff *wil_vring_reap_rx(struct wil6210_priv *wil,
-					 struct wil_ring *vring)
-{
-	struct device *dev = wil_to_dev(wil);
-	struct wil6210_vif *vif;
-	struct net_device *ndev;
-	volatile struct vring_rx_desc *_d;
-	struct vring_rx_desc *d;
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *wil_vring_reap_rx(काष्ठा wil6210_priv *wil,
+					 काष्ठा wil_ring *vring)
+अणु
+	काष्ठा device *dev = wil_to_dev(wil);
+	काष्ठा wil6210_vअगर *vअगर;
+	काष्ठा net_device *ndev;
+	अस्थिर काष्ठा vring_rx_desc *_d;
+	काष्ठा vring_rx_desc *d;
+	काष्ठा sk_buff *skb;
 	dma_addr_t pa;
-	unsigned int snaplen = wil_rx_snaplen();
-	unsigned int sz = wil->rx_buf_len + ETH_HLEN + snaplen;
+	अचिन्हित पूर्णांक snaplen = wil_rx_snaplen();
+	अचिन्हित पूर्णांक sz = wil->rx_buf_len + ETH_HLEN + snaplen;
 	u16 dmalen;
 	u8 ftype;
-	int cid, mid;
-	int i;
-	struct wil_net_stats *stats;
+	पूर्णांक cid, mid;
+	पूर्णांक i;
+	काष्ठा wil_net_stats *stats;
 
-	BUILD_BUG_ON(sizeof(struct skb_rx_info) > sizeof(skb->cb));
+	BUILD_BUG_ON(माप(काष्ठा skb_rx_info) > माप(skb->cb));
 
 again:
-	if (unlikely(wil_ring_is_empty(vring)))
-		return NULL;
+	अगर (unlikely(wil_ring_is_empty(vring)))
+		वापस शून्य;
 
-	i = (int)vring->swhead;
+	i = (पूर्णांक)vring->swhead;
 	_d = &vring->va[i].rx.legacy;
-	if (unlikely(!(_d->dma.status & RX_DMA_STATUS_DU))) {
-		/* it is not error, we just reached end of Rx done area */
-		return NULL;
-	}
+	अगर (unlikely(!(_d->dma.status & RX_DMA_STATUS_DU))) अणु
+		/* it is not error, we just reached end of Rx करोne area */
+		वापस शून्य;
+	पूर्ण
 
 	skb = vring->ctx[i].skb;
-	vring->ctx[i].skb = NULL;
+	vring->ctx[i].skb = शून्य;
 	wil_ring_advance_head(vring, 1);
-	if (!skb) {
+	अगर (!skb) अणु
 		wil_err(wil, "No Rx skb at [%d]\n", i);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 	d = wil_skb_rxdesc(skb);
 	*d = *_d;
 	pa = wil_desc_addr(&d->dma.addr);
@@ -484,24 +485,24 @@ again:
 	trace_wil6210_rx(i, d);
 	wil_dbg_txrx(wil, "Rx[%3d] : %d bytes\n", i, dmalen);
 	wil_hex_dump_txrx("RxD ", DUMP_PREFIX_NONE, 32, 4,
-			  (const void *)d, sizeof(*d), false);
+			  (स्थिर व्योम *)d, माप(*d), false);
 
 	mid = wil_rxdesc_mid(d);
-	vif = wil->vifs[mid];
+	vअगर = wil->vअगरs[mid];
 
-	if (unlikely(!vif)) {
+	अगर (unlikely(!vअगर)) अणु
 		wil_dbg_txrx(wil, "skipped RX descriptor with invalid mid %d",
 			     mid);
-		kfree_skb(skb);
-		goto again;
-	}
-	ndev = vif_to_ndev(vif);
-	if (unlikely(dmalen > sz)) {
+		kमुक्त_skb(skb);
+		जाओ again;
+	पूर्ण
+	ndev = vअगर_to_ndev(vअगर);
+	अगर (unlikely(dmalen > sz)) अणु
 		wil_err_ratelimited(wil, "Rx size too large: %d bytes!\n",
 				    dmalen);
-		kfree_skb(skb);
-		goto again;
-	}
+		kमुक्त_skb(skb);
+		जाओ again;
+	पूर्ण
 	skb_trim(skb, dmalen);
 
 	prefetch(skb->data);
@@ -510,434 +511,434 @@ again:
 			  skb->data, skb_headlen(skb), false);
 
 	cid = wil_rx_get_cid_by_skb(wil, skb);
-	if (cid == -ENOENT) {
-		kfree_skb(skb);
-		goto again;
-	}
+	अगर (cid == -ENOENT) अणु
+		kमुक्त_skb(skb);
+		जाओ again;
+	पूर्ण
 	wil_skb_set_cid(skb, (u8)cid);
 	stats = &wil->sta[cid].stats;
 
 	stats->last_mcs_rx = wil_rxdesc_mcs(d);
-	if (stats->last_mcs_rx < ARRAY_SIZE(stats->rx_per_mcs))
+	अगर (stats->last_mcs_rx < ARRAY_SIZE(stats->rx_per_mcs))
 		stats->rx_per_mcs[stats->last_mcs_rx]++;
 
-	/* use radiotap header only if required */
-	if (ndev->type == ARPHRD_IEEE80211_RADIOTAP)
+	/* use radiotap header only अगर required */
+	अगर (ndev->type == ARPHRD_IEEE80211_RADIOTAP)
 		wil_rx_add_radiotap_header(wil, skb);
 
-	/* no extra checks if in sniffer mode */
-	if (ndev->type != ARPHRD_ETHER)
-		return skb;
+	/* no extra checks अगर in snअगरfer mode */
+	अगर (ndev->type != ARPHRD_ETHER)
+		वापस skb;
 	/* Non-data frames may be delivered through Rx DMA channel (ex: BAR)
 	 * Driver should recognize it by frame type, that is found
 	 * in Rx descriptor. If type is not data, it is 802.11 frame as is
 	 */
 	ftype = wil_rxdesc_ftype(d) << 2;
-	if (unlikely(ftype != IEEE80211_FTYPE_DATA)) {
+	अगर (unlikely(ftype != IEEE80211_FTYPE_DATA)) अणु
 		u8 fc1 = wil_rxdesc_fc1(d);
-		int tid = wil_rxdesc_tid(d);
+		पूर्णांक tid = wil_rxdesc_tid(d);
 		u16 seq = wil_rxdesc_seq(d);
 
 		wil_dbg_txrx(wil,
 			     "Non-data frame FC[7:0] 0x%02x MID %d CID %d TID %d Seq 0x%03x\n",
 			     fc1, mid, cid, tid, seq);
 		stats->rx_non_data_frame++;
-		if (wil_is_back_req(fc1)) {
+		अगर (wil_is_back_req(fc1)) अणु
 			wil_dbg_txrx(wil,
 				     "BAR: MID %d CID %d TID %d Seq 0x%03x\n",
 				     mid, cid, tid, seq);
-			wil_rx_bar(wil, vif, cid, tid, seq);
-		} else {
-			/* print again all info. One can enable only this
-			 * without overhead for printing every Rx frame
+			wil_rx_bar(wil, vअगर, cid, tid, seq);
+		पूर्ण अन्यथा अणु
+			/* prपूर्णांक again all info. One can enable only this
+			 * without overhead क्रम prपूर्णांकing every Rx frame
 			 */
 			wil_dbg_txrx(wil,
 				     "Unhandled non-data frame FC[7:0] 0x%02x MID %d CID %d TID %d Seq 0x%03x\n",
 				     fc1, mid, cid, tid, seq);
 			wil_hex_dump_txrx("RxD ", DUMP_PREFIX_NONE, 32, 4,
-					  (const void *)d, sizeof(*d), false);
+					  (स्थिर व्योम *)d, माप(*d), false);
 			wil_hex_dump_txrx("Rx ", DUMP_PREFIX_OFFSET, 16, 1,
 					  skb->data, skb_headlen(skb), false);
-		}
-		kfree_skb(skb);
-		goto again;
-	}
+		पूर्ण
+		kमुक्त_skb(skb);
+		जाओ again;
+	पूर्ण
 
 	/* L4 IDENT is on when HW calculated checksum, check status
-	 * and in case of error drop the packet
-	 * higher stack layers will handle retransmission (if required)
+	 * and in हाल of error drop the packet
+	 * higher stack layers will handle retransmission (अगर required)
 	 */
-	if (likely(d->dma.status & RX_DMA_STATUS_L4I)) {
-		/* L4 protocol identified, csum calculated */
-		if (likely((d->dma.error & RX_DMA_ERROR_L4_ERR) == 0))
+	अगर (likely(d->dma.status & RX_DMA_STATUS_L4I)) अणु
+		/* L4 protocol identअगरied, csum calculated */
+		अगर (likely((d->dma.error & RX_DMA_ERROR_L4_ERR) == 0))
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 		/* If HW reports bad checksum, let IP stack re-check it
-		 * For example, HW don't understand Microsoft IP stack that
-		 * mis-calculates TCP checksum - if it should be 0x0,
-		 * it writes 0xffff in violation of RFC 1624
+		 * For example, HW करोn't understand Microsoft IP stack that
+		 * mis-calculates TCP checksum - अगर it should be 0x0,
+		 * it ग_लिखोs 0xffff in violation of RFC 1624
 		 */
-		else
+		अन्यथा
 			stats->rx_csum_err++;
-	}
+	पूर्ण
 
-	if (snaplen) {
+	अगर (snaplen) अणु
 		/* Packet layout
 		 * +-------+-------+---------+------------+------+
 		 * | SA(6) | DA(6) | SNAP(6) | ETHTYPE(2) | DATA |
 		 * +-------+-------+---------+------------+------+
-		 * Need to remove SNAP, shifting SA and DA forward
+		 * Need to हटाओ SNAP, shअगरting SA and DA क्रमward
 		 */
-		memmove(skb->data + snaplen, skb->data, 2 * ETH_ALEN);
+		स_हटाओ(skb->data + snaplen, skb->data, 2 * ETH_ALEN);
 		skb_pull(skb, snaplen);
-	}
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /* allocate and fill up to @count buffers in rx ring
  * buffers posted at @swtail
- * Note: we have a single RX queue for servicing all VIFs, but we
- * allocate skbs with headroom according to main interface only. This
- * means it will not work with monitor interface together with other VIFs.
- * Currently we only support monitor interface on its own without other VIFs,
+ * Note: we have a single RX queue क्रम servicing all VIFs, but we
+ * allocate skbs with headroom according to मुख्य पूर्णांकerface only. This
+ * means it will not work with monitor पूर्णांकerface together with other VIFs.
+ * Currently we only support monitor पूर्णांकerface on its own without other VIFs,
  * and we will need to fix this code once we add support.
  */
-static int wil_rx_refill(struct wil6210_priv *wil, int count)
-{
-	struct net_device *ndev = wil->main_ndev;
-	struct wil_ring *v = &wil->ring_rx;
+अटल पूर्णांक wil_rx_refill(काष्ठा wil6210_priv *wil, पूर्णांक count)
+अणु
+	काष्ठा net_device *ndev = wil->मुख्य_ndev;
+	काष्ठा wil_ring *v = &wil->ring_rx;
 	u32 next_tail;
-	int rc = 0;
-	int headroom = ndev->type == ARPHRD_IEEE80211_RADIOTAP ?
+	पूर्णांक rc = 0;
+	पूर्णांक headroom = ndev->type == ARPHRD_IEEE80211_RADIOTAP ?
 			WIL6210_RTAP_SIZE : 0;
 
-	for (; next_tail = wil_ring_next_tail(v),
+	क्रम (; next_tail = wil_ring_next_tail(v),
 	     (next_tail != v->swhead) && (count-- > 0);
-	     v->swtail = next_tail) {
+	     v->swtail = next_tail) अणु
 		rc = wil_vring_alloc_skb(wil, v, v->swtail, headroom);
-		if (unlikely(rc)) {
+		अगर (unlikely(rc)) अणु
 			wil_err_ratelimited(wil, "Error %d in rx refill[%d]\n",
 					    rc, v->swtail);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* make sure all writes to descriptors (shared memory) are done before
+	/* make sure all ग_लिखोs to descriptors (shared memory) are करोne beक्रमe
 	 * committing them to HW
 	 */
 	wmb();
 
 	wil_w(wil, v->hwtail, v->swtail);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * reverse_memcmp - Compare two areas of memory, in reverse order
+ * reverse_स_भेद - Compare two areas of memory, in reverse order
  * @cs: One area of memory
  * @ct: Another area of memory
  * @count: The size of the area.
  *
- * Cut'n'paste from original memcmp (see lib/string.c)
- * with minimal modifications
+ * Cut'n'paste from original स_भेद (see lib/string.c)
+ * with minimal modअगरications
  */
-int reverse_memcmp(const void *cs, const void *ct, size_t count)
-{
-	const unsigned char *su1, *su2;
-	int res = 0;
+पूर्णांक reverse_स_भेद(स्थिर व्योम *cs, स्थिर व्योम *ct, माप_प्रकार count)
+अणु
+	स्थिर अचिन्हित अक्षर *su1, *su2;
+	पूर्णांक res = 0;
 
-	for (su1 = cs + count - 1, su2 = ct + count - 1; count > 0;
-	     --su1, --su2, count--) {
+	क्रम (su1 = cs + count - 1, su2 = ct + count - 1; count > 0;
+	     --su1, --su2, count--) अणु
 		res = *su1 - *su2;
-		if (res)
-			break;
-	}
-	return res;
-}
+		अगर (res)
+			अवरोध;
+	पूर्ण
+	वापस res;
+पूर्ण
 
-static int wil_rx_crypto_check(struct wil6210_priv *wil, struct sk_buff *skb)
-{
-	struct vring_rx_desc *d = wil_skb_rxdesc(skb);
-	int cid = wil_skb_get_cid(skb);
-	int tid = wil_rxdesc_tid(d);
-	int key_id = wil_rxdesc_key_id(d);
-	int mc = wil_rxdesc_mcast(d);
-	struct wil_sta_info *s = &wil->sta[cid];
-	struct wil_tid_crypto_rx *c = mc ? &s->group_crypto_rx :
+अटल पूर्णांक wil_rx_crypto_check(काष्ठा wil6210_priv *wil, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा vring_rx_desc *d = wil_skb_rxdesc(skb);
+	पूर्णांक cid = wil_skb_get_cid(skb);
+	पूर्णांक tid = wil_rxdesc_tid(d);
+	पूर्णांक key_id = wil_rxdesc_key_id(d);
+	पूर्णांक mc = wil_rxdesc_mcast(d);
+	काष्ठा wil_sta_info *s = &wil->sta[cid];
+	काष्ठा wil_tid_crypto_rx *c = mc ? &s->group_crypto_rx :
 				      &s->tid_crypto_rx[tid];
-	struct wil_tid_crypto_rx_single *cc = &c->key_id[key_id];
-	const u8 *pn = (u8 *)&d->mac.pn_15_0;
+	काष्ठा wil_tid_crypto_rx_single *cc = &c->key_id[key_id];
+	स्थिर u8 *pn = (u8 *)&d->mac.pn_15_0;
 
-	if (!cc->key_set) {
+	अगर (!cc->key_set) अणु
 		wil_err_ratelimited(wil,
 				    "Key missing. CID %d TID %d MCast %d KEY_ID %d\n",
 				    cid, tid, mc, key_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (reverse_memcmp(pn, cc->pn, IEEE80211_GCMP_PN_LEN) <= 0) {
+	अगर (reverse_स_भेद(pn, cc->pn, IEEE80211_GCMP_PN_LEN) <= 0) अणु
 		wil_err_ratelimited(wil,
 				    "Replay attack. CID %d TID %d MCast %d KEY_ID %d PN %6phN last %6phN\n",
 				    cid, tid, mc, key_id, pn, cc->pn);
-		return -EINVAL;
-	}
-	memcpy(cc->pn, pn, IEEE80211_GCMP_PN_LEN);
+		वापस -EINVAL;
+	पूर्ण
+	स_नकल(cc->pn, pn, IEEE80211_GCMP_PN_LEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wil_rx_error_check(struct wil6210_priv *wil, struct sk_buff *skb,
-			      struct wil_net_stats *stats)
-{
-	struct vring_rx_desc *d = wil_skb_rxdesc(skb);
+अटल पूर्णांक wil_rx_error_check(काष्ठा wil6210_priv *wil, काष्ठा sk_buff *skb,
+			      काष्ठा wil_net_stats *stats)
+अणु
+	काष्ठा vring_rx_desc *d = wil_skb_rxdesc(skb);
 
-	if ((d->dma.status & RX_DMA_STATUS_ERROR) &&
-	    (d->dma.error & RX_DMA_ERROR_MIC)) {
+	अगर ((d->dma.status & RX_DMA_STATUS_ERROR) &&
+	    (d->dma.error & RX_DMA_ERROR_MIC)) अणु
 		stats->rx_mic_error++;
 		wil_dbg_txrx(wil, "MIC error, dropping packet\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wil_get_netif_rx_params(struct sk_buff *skb, int *cid,
-				    int *security)
-{
-	struct vring_rx_desc *d = wil_skb_rxdesc(skb);
+अटल व्योम wil_get_netअगर_rx_params(काष्ठा sk_buff *skb, पूर्णांक *cid,
+				    पूर्णांक *security)
+अणु
+	काष्ठा vring_rx_desc *d = wil_skb_rxdesc(skb);
 
 	*cid = wil_skb_get_cid(skb);
 	*security = wil_rxdesc_security(d);
-}
+पूर्ण
 
 /*
- * Check if skb is ptk eapol key message
+ * Check अगर skb is ptk eapol key message
  *
- * returns a pointer to the start of the eapol key structure, NULL
- * if frame is not PTK eapol key
+ * वापसs a poपूर्णांकer to the start of the eapol key काष्ठाure, शून्य
+ * अगर frame is not PTK eapol key
  */
-static struct wil_eapol_key *wil_is_ptk_eapol_key(struct wil6210_priv *wil,
-						  struct sk_buff *skb)
-{
+अटल काष्ठा wil_eapol_key *wil_is_ptk_eapol_key(काष्ठा wil6210_priv *wil,
+						  काष्ठा sk_buff *skb)
+अणु
 	u8 *buf;
-	const struct wil_1x_hdr *hdr;
-	struct wil_eapol_key *key;
+	स्थिर काष्ठा wil_1x_hdr *hdr;
+	काष्ठा wil_eapol_key *key;
 	u16 key_info;
-	int len = skb->len;
+	पूर्णांक len = skb->len;
 
-	if (!skb_mac_header_was_set(skb)) {
+	अगर (!skb_mac_header_was_set(skb)) अणु
 		wil_err(wil, "mac header was not set\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	len -= skb_mac_offset(skb);
 
-	if (len < sizeof(struct ethhdr) + sizeof(struct wil_1x_hdr) +
-	    sizeof(struct wil_eapol_key))
-		return NULL;
+	अगर (len < माप(काष्ठा ethhdr) + माप(काष्ठा wil_1x_hdr) +
+	    माप(काष्ठा wil_eapol_key))
+		वापस शून्य;
 
-	buf = skb_mac_header(skb) + sizeof(struct ethhdr);
+	buf = skb_mac_header(skb) + माप(काष्ठा ethhdr);
 
-	hdr = (const struct wil_1x_hdr *)buf;
-	if (hdr->type != WIL_1X_TYPE_EAPOL_KEY)
-		return NULL;
+	hdr = (स्थिर काष्ठा wil_1x_hdr *)buf;
+	अगर (hdr->type != WIL_1X_TYPE_EAPOL_KEY)
+		वापस शून्य;
 
-	key = (struct wil_eapol_key *)(buf + sizeof(struct wil_1x_hdr));
-	if (key->type != WIL_EAPOL_KEY_TYPE_WPA &&
+	key = (काष्ठा wil_eapol_key *)(buf + माप(काष्ठा wil_1x_hdr));
+	अगर (key->type != WIL_EAPOL_KEY_TYPE_WPA &&
 	    key->type != WIL_EAPOL_KEY_TYPE_RSN)
-		return NULL;
+		वापस शून्य;
 
 	key_info = be16_to_cpu(key->key_info);
-	if (!(key_info & WIL_KEY_INFO_KEY_TYPE)) /* check if pairwise */
-		return NULL;
+	अगर (!(key_info & WIL_KEY_INFO_KEY_TYPE)) /* check अगर pairwise */
+		वापस शून्य;
 
-	return key;
-}
+	वापस key;
+पूर्ण
 
-static bool wil_skb_is_eap_3(struct wil6210_priv *wil, struct sk_buff *skb)
-{
-	struct wil_eapol_key *key;
+अटल bool wil_skb_is_eap_3(काष्ठा wil6210_priv *wil, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा wil_eapol_key *key;
 	u16 key_info;
 
 	key = wil_is_ptk_eapol_key(wil, skb);
-	if (!key)
-		return false;
+	अगर (!key)
+		वापस false;
 
 	key_info = be16_to_cpu(key->key_info);
-	if (key_info & (WIL_KEY_INFO_MIC |
-			WIL_KEY_INFO_ENCR_KEY_DATA)) {
+	अगर (key_info & (WIL_KEY_INFO_MIC |
+			WIL_KEY_INFO_ENCR_KEY_DATA)) अणु
 		/* 3/4 of 4-Way Handshake */
 		wil_dbg_misc(wil, "EAPOL key message 3\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 	/* 1/4 of 4-Way Handshake */
 	wil_dbg_misc(wil, "EAPOL key message 1\n");
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool wil_skb_is_eap_4(struct wil6210_priv *wil, struct sk_buff *skb)
-{
-	struct wil_eapol_key *key;
+अटल bool wil_skb_is_eap_4(काष्ठा wil6210_priv *wil, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा wil_eapol_key *key;
 	u32 *nonce, i;
 
 	key = wil_is_ptk_eapol_key(wil, skb);
-	if (!key)
-		return false;
+	अगर (!key)
+		वापस false;
 
 	nonce = (u32 *)key->key_nonce;
-	for (i = 0; i < WIL_EAP_NONCE_LEN / sizeof(u32); i++, nonce++) {
-		if (*nonce != 0) {
+	क्रम (i = 0; i < WIL_EAP_NONCE_LEN / माप(u32); i++, nonce++) अणु
+		अगर (*nonce != 0) अणु
 			/* message 2/4 */
 			wil_dbg_misc(wil, "EAPOL key message 2\n");
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 	wil_dbg_misc(wil, "EAPOL key message 4\n");
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void wil_enable_tx_key_worker(struct work_struct *work)
-{
-	struct wil6210_vif *vif = container_of(work,
-			struct wil6210_vif, enable_tx_key_worker);
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	int rc, cid;
+व्योम wil_enable_tx_key_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wil6210_vअगर *vअगर = container_of(work,
+			काष्ठा wil6210_vअगर, enable_tx_key_worker);
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	पूर्णांक rc, cid;
 
 	rtnl_lock();
-	if (vif->ptk_rekey_state != WIL_REKEY_WAIT_M4_SENT) {
+	अगर (vअगर->ptk_rekey_state != WIL_REKEY_WAIT_M4_SENT) अणु
 		wil_dbg_misc(wil, "Invalid rekey state = %d\n",
-			     vif->ptk_rekey_state);
+			     vअगर->ptk_rekey_state);
 		rtnl_unlock();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	cid =  wil_find_cid_by_idx(wil, vif->mid, 0);
-	if (!wil_cid_valid(wil, cid)) {
+	cid =  wil_find_cid_by_idx(wil, vअगर->mid, 0);
+	अगर (!wil_cid_valid(wil, cid)) अणु
 		wil_err(wil, "Invalid cid = %d\n", cid);
 		rtnl_unlock();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	wil_dbg_misc(wil, "Apply PTK key after eapol was sent out\n");
-	rc = wmi_add_cipher_key(vif, 0, wil->sta[cid].addr, 0, NULL,
+	rc = wmi_add_cipher_key(vअगर, 0, wil->sta[cid].addr, 0, शून्य,
 				WMI_KEY_USE_APPLY_PTK);
 
-	vif->ptk_rekey_state = WIL_REKEY_IDLE;
+	vअगर->ptk_rekey_state = WIL_REKEY_IDLE;
 	rtnl_unlock();
 
-	if (rc)
+	अगर (rc)
 		wil_err(wil, "Apply PTK key failed %d\n", rc);
-}
+पूर्ण
 
-void wil_tx_complete_handle_eapol(struct wil6210_vif *vif, struct sk_buff *skb)
-{
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	struct wireless_dev *wdev = vif_to_wdev(vif);
+व्योम wil_tx_complete_handle_eapol(काष्ठा wil6210_vअगर *vअगर, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	काष्ठा wireless_dev *wdev = vअगर_to_wdev(vअगर);
 	bool q = false;
 
-	if (wdev->iftype != NL80211_IFTYPE_STATION ||
+	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION ||
 	    !test_bit(WMI_FW_CAPABILITY_SPLIT_REKEY, wil->fw_capabilities))
-		return;
+		वापस;
 
-	/* check if skb is an EAP message 4/4 */
-	if (!wil_skb_is_eap_4(wil, skb))
-		return;
+	/* check अगर skb is an EAP message 4/4 */
+	अगर (!wil_skb_is_eap_4(wil, skb))
+		वापस;
 
 	spin_lock_bh(&wil->eap_lock);
-	switch (vif->ptk_rekey_state) {
-	case WIL_REKEY_IDLE:
+	चयन (vअगर->ptk_rekey_state) अणु
+	हाल WIL_REKEY_IDLE:
 		/* ignore idle state, can happen due to M4 retransmission */
-		break;
-	case WIL_REKEY_M3_RECEIVED:
-		vif->ptk_rekey_state = WIL_REKEY_IDLE;
-		break;
-	case WIL_REKEY_WAIT_M4_SENT:
+		अवरोध;
+	हाल WIL_REKEY_M3_RECEIVED:
+		vअगर->ptk_rekey_state = WIL_REKEY_IDLE;
+		अवरोध;
+	हाल WIL_REKEY_WAIT_M4_SENT:
 		q = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		wil_err(wil, "Unknown rekey state = %d",
-			vif->ptk_rekey_state);
-	}
+			vअगर->ptk_rekey_state);
+	पूर्ण
 	spin_unlock_bh(&wil->eap_lock);
 
-	if (q) {
-		q = queue_work(wil->wmi_wq, &vif->enable_tx_key_worker);
+	अगर (q) अणु
+		q = queue_work(wil->wmi_wq, &vअगर->enable_tx_key_worker);
 		wil_dbg_misc(wil, "queue_work of enable_tx_key_worker -> %d\n",
 			     q);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void wil_rx_handle_eapol(struct wil6210_vif *vif, struct sk_buff *skb)
-{
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	struct wireless_dev *wdev = vif_to_wdev(vif);
+अटल व्योम wil_rx_handle_eapol(काष्ठा wil6210_vअगर *vअगर, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	काष्ठा wireless_dev *wdev = vअगर_to_wdev(vअगर);
 
-	if (wdev->iftype != NL80211_IFTYPE_STATION ||
+	अगर (wdev->अगरtype != NL80211_IFTYPE_STATION ||
 	    !test_bit(WMI_FW_CAPABILITY_SPLIT_REKEY, wil->fw_capabilities))
-		return;
+		वापस;
 
-	/* check if skb is a EAP message 3/4 */
-	if (!wil_skb_is_eap_3(wil, skb))
-		return;
+	/* check अगर skb is a EAP message 3/4 */
+	अगर (!wil_skb_is_eap_3(wil, skb))
+		वापस;
 
-	if (vif->ptk_rekey_state == WIL_REKEY_IDLE)
-		vif->ptk_rekey_state = WIL_REKEY_M3_RECEIVED;
-}
+	अगर (vअगर->ptk_rekey_state == WIL_REKEY_IDLE)
+		vअगर->ptk_rekey_state = WIL_REKEY_M3_RECEIVED;
+पूर्ण
 
 /*
- * Pass Rx packet to the netif. Update statistics.
+ * Pass Rx packet to the netअगर. Update statistics.
  * Called in softirq context (NAPI poll).
  */
-void wil_netif_rx(struct sk_buff *skb, struct net_device *ndev, int cid,
-		  struct wil_net_stats *stats, bool gro)
-{
-	struct wil6210_vif *vif = ndev_to_vif(ndev);
-	struct wil6210_priv *wil = ndev_to_wil(ndev);
-	struct wireless_dev *wdev = vif_to_wdev(vif);
-	unsigned int len = skb->len;
+व्योम wil_netअगर_rx(काष्ठा sk_buff *skb, काष्ठा net_device *ndev, पूर्णांक cid,
+		  काष्ठा wil_net_stats *stats, bool gro)
+अणु
+	काष्ठा wil6210_vअगर *vअगर = ndev_to_vअगर(ndev);
+	काष्ठा wil6210_priv *wil = ndev_to_wil(ndev);
+	काष्ठा wireless_dev *wdev = vअगर_to_wdev(vअगर);
+	अचिन्हित पूर्णांक len = skb->len;
 	u8 *sa, *da = wil_skb_get_da(skb);
-	/* here looking for DA, not A1, thus Rxdesc's 'mcast' indication
+	/* here looking क्रम DA, not A1, thus Rxdesc's 'mcast' indication
 	 * is not suitable, need to look at data
 	 */
-	int mcast = is_multicast_ether_addr(da);
-	struct sk_buff *xmit_skb = NULL;
+	पूर्णांक mcast = is_multicast_ether_addr(da);
+	काष्ठा sk_buff *xmit_skb = शून्य;
 
-	if (wdev->iftype == NL80211_IFTYPE_STATION) {
+	अगर (wdev->अगरtype == NL80211_IFTYPE_STATION) अणु
 		sa = wil_skb_get_sa(skb);
-		if (mcast && ether_addr_equal(sa, ndev->dev_addr)) {
+		अगर (mcast && ether_addr_equal(sa, ndev->dev_addr)) अणु
 			/* mcast packet looped back to us */
-			dev_kfree_skb(skb);
+			dev_kमुक्त_skb(skb);
 			ndev->stats.rx_dropped++;
 			stats->rx_dropped++;
 			wil_dbg_txrx(wil, "Rx drop %d bytes\n", len);
-			return;
-		}
-	} else if (wdev->iftype == NL80211_IFTYPE_AP && !vif->ap_isolate) {
-		if (mcast) {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अगर (wdev->अगरtype == NL80211_IFTYPE_AP && !vअगर->ap_isolate) अणु
+		अगर (mcast) अणु
 			/* send multicast frames both to higher layers in
 			 * local net stack and back to the wireless medium
 			 */
 			xmit_skb = skb_copy(skb, GFP_ATOMIC);
-		} else {
-			int xmit_cid = wil_find_cid(wil, vif->mid, da);
+		पूर्ण अन्यथा अणु
+			पूर्णांक xmit_cid = wil_find_cid(wil, vअगर->mid, da);
 
-			if (xmit_cid >= 0) {
+			अगर (xmit_cid >= 0) अणु
 				/* The destination station is associated to
 				 * this AP (in this VLAN), so send the frame
-				 * directly to it and do not pass it to local
+				 * directly to it and करो not pass it to local
 				 * net stack.
 				 */
 				xmit_skb = skb;
-				skb = NULL;
-			}
-		}
-	}
-	if (xmit_skb) {
+				skb = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (xmit_skb) अणु
 		/* Send to wireless media and increase priority by 256 to
-		 * keep the received priority instead of reclassifying
-		 * the frame (see cfg80211_classify8021d).
+		 * keep the received priority instead of reclassअगरying
+		 * the frame (see cfg80211_classअगरy8021d).
 		 */
 		xmit_skb->dev = ndev;
 		xmit_skb->priority += 256;
@@ -946,695 +947,695 @@ void wil_netif_rx(struct sk_buff *skb, struct net_device *ndev, int cid,
 		skb_reset_mac_header(xmit_skb);
 		wil_dbg_txrx(wil, "Rx -> Tx %d bytes\n", len);
 		dev_queue_xmit(xmit_skb);
-	}
+	पूर्ण
 
-	if (skb) { /* deliver to local stack */
+	अगर (skb) अणु /* deliver to local stack */
 		skb->protocol = eth_type_trans(skb, ndev);
 		skb->dev = ndev;
 
-		if (skb->protocol == cpu_to_be16(ETH_P_PAE))
-			wil_rx_handle_eapol(vif, skb);
+		अगर (skb->protocol == cpu_to_be16(ETH_P_PAE))
+			wil_rx_handle_eapol(vअगर, skb);
 
-		if (gro)
+		अगर (gro)
 			napi_gro_receive(&wil->napi_rx, skb);
-		else
-			netif_rx_ni(skb);
-	}
+		अन्यथा
+			netअगर_rx_ni(skb);
+	पूर्ण
 	ndev->stats.rx_packets++;
 	stats->rx_packets++;
 	ndev->stats.rx_bytes += len;
 	stats->rx_bytes += len;
-	if (mcast)
+	अगर (mcast)
 		ndev->stats.multicast++;
-}
+पूर्ण
 
-void wil_netif_rx_any(struct sk_buff *skb, struct net_device *ndev)
-{
-	int cid, security;
-	struct wil6210_priv *wil = ndev_to_wil(ndev);
-	struct wil_net_stats *stats;
+व्योम wil_netअगर_rx_any(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
+अणु
+	पूर्णांक cid, security;
+	काष्ठा wil6210_priv *wil = ndev_to_wil(ndev);
+	काष्ठा wil_net_stats *stats;
 
-	wil->txrx_ops.get_netif_rx_params(skb, &cid, &security);
+	wil->txrx_ops.get_netअगर_rx_params(skb, &cid, &security);
 
 	stats = &wil->sta[cid].stats;
 
 	skb_orphan(skb);
 
-	if (security && (wil->txrx_ops.rx_crypto_check(wil, skb) != 0)) {
+	अगर (security && (wil->txrx_ops.rx_crypto_check(wil, skb) != 0)) अणु
 		wil_dbg_txrx(wil, "Rx drop %d bytes\n", skb->len);
-		dev_kfree_skb(skb);
+		dev_kमुक्त_skb(skb);
 		ndev->stats.rx_dropped++;
 		stats->rx_replay++;
 		stats->rx_dropped++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* check errors reported by HW and update statistics */
-	if (unlikely(wil->txrx_ops.rx_error_check(wil, skb, stats))) {
-		dev_kfree_skb(skb);
-		return;
-	}
+	अगर (unlikely(wil->txrx_ops.rx_error_check(wil, skb, stats))) अणु
+		dev_kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-	wil_netif_rx(skb, ndev, cid, stats, true);
-}
+	wil_netअगर_rx(skb, ndev, cid, stats, true);
+पूर्ण
 
 /* Proceed all completed skb's from Rx VRING
  *
- * Safe to call from NAPI poll, i.e. softirq with interrupts enabled
+ * Safe to call from NAPI poll, i.e. softirq with पूर्णांकerrupts enabled
  */
-void wil_rx_handle(struct wil6210_priv *wil, int *quota)
-{
-	struct net_device *ndev = wil->main_ndev;
-	struct wireless_dev *wdev = ndev->ieee80211_ptr;
-	struct wil_ring *v = &wil->ring_rx;
-	struct sk_buff *skb;
+व्योम wil_rx_handle(काष्ठा wil6210_priv *wil, पूर्णांक *quota)
+अणु
+	काष्ठा net_device *ndev = wil->मुख्य_ndev;
+	काष्ठा wireless_dev *wdev = ndev->ieee80211_ptr;
+	काष्ठा wil_ring *v = &wil->ring_rx;
+	काष्ठा sk_buff *skb;
 
-	if (unlikely(!v->va)) {
+	अगर (unlikely(!v->va)) अणु
 		wil_err(wil, "Rx IRQ while Rx not yet initialized\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	wil_dbg_txrx(wil, "rx_handle\n");
-	while ((*quota > 0) && (NULL != (skb = wil_vring_reap_rx(wil, v)))) {
+	जबतक ((*quota > 0) && (शून्य != (skb = wil_vring_reap_rx(wil, v)))) अणु
 		(*quota)--;
 
-		/* monitor is currently supported on main interface only */
-		if (wdev->iftype == NL80211_IFTYPE_MONITOR) {
+		/* monitor is currently supported on मुख्य पूर्णांकerface only */
+		अगर (wdev->अगरtype == NL80211_IFTYPE_MONITOR) अणु
 			skb->dev = ndev;
 			skb_reset_mac_header(skb);
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 			skb->pkt_type = PACKET_OTHERHOST;
 			skb->protocol = htons(ETH_P_802_2);
-			wil_netif_rx_any(skb, ndev);
-		} else {
+			wil_netअगर_rx_any(skb, ndev);
+		पूर्ण अन्यथा अणु
 			wil_rx_reorder(wil, skb);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	wil_rx_refill(wil, v->size);
-}
+पूर्ण
 
-static void wil_rx_buf_len_init(struct wil6210_priv *wil)
-{
+अटल व्योम wil_rx_buf_len_init(काष्ठा wil6210_priv *wil)
+अणु
 	wil->rx_buf_len = rx_large_buf ?
 		WIL_MAX_ETH_MTU : TXRX_BUF_LEN_DEFAULT - WIL_MAX_MPDU_OVERHEAD;
-	if (mtu_max > wil->rx_buf_len) {
-		/* do not allow RX buffers to be smaller than mtu_max, for
+	अगर (mtu_max > wil->rx_buf_len) अणु
+		/* करो not allow RX buffers to be smaller than mtu_max, क्रम
 		 * backward compatibility (mtu_max parameter was also used
 		 * to support receiving large packets)
 		 */
 		wil_info(wil, "Override RX buffer to mtu_max(%d)\n", mtu_max);
 		wil->rx_buf_len = mtu_max;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int wil_rx_init(struct wil6210_priv *wil, uint order)
-{
-	struct wil_ring *vring = &wil->ring_rx;
-	int rc;
+अटल पूर्णांक wil_rx_init(काष्ठा wil6210_priv *wil, uपूर्णांक order)
+अणु
+	काष्ठा wil_ring *vring = &wil->ring_rx;
+	पूर्णांक rc;
 
 	wil_dbg_misc(wil, "rx_init\n");
 
-	if (vring->va) {
+	अगर (vring->va) अणु
 		wil_err(wil, "Rx ring already allocated\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	wil_rx_buf_len_init(wil);
 
 	vring->size = 1 << order;
 	vring->is_rx = true;
 	rc = wil_vring_alloc(wil, vring);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = wmi_rx_chain_add(wil, vring);
-	if (rc)
-		goto err_free;
+	अगर (rc)
+		जाओ err_मुक्त;
 
 	rc = wil_rx_refill(wil, vring->size);
-	if (rc)
-		goto err_free;
+	अगर (rc)
+		जाओ err_मुक्त;
 
-	return 0;
- err_free:
-	wil_vring_free(wil, vring);
+	वापस 0;
+ err_मुक्त:
+	wil_vring_मुक्त(wil, vring);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void wil_rx_fini(struct wil6210_priv *wil)
-{
-	struct wil_ring *vring = &wil->ring_rx;
+अटल व्योम wil_rx_fini(काष्ठा wil6210_priv *wil)
+अणु
+	काष्ठा wil_ring *vring = &wil->ring_rx;
 
 	wil_dbg_misc(wil, "rx_fini\n");
 
-	if (vring->va)
-		wil_vring_free(wil, vring);
-}
+	अगर (vring->va)
+		wil_vring_मुक्त(wil, vring);
+पूर्ण
 
-static int wil_tx_desc_map(union wil_tx_desc *desc, dma_addr_t pa,
-			   u32 len, int vring_index)
-{
-	struct vring_tx_desc *d = &desc->legacy;
+अटल पूर्णांक wil_tx_desc_map(जोड़ wil_tx_desc *desc, dma_addr_t pa,
+			   u32 len, पूर्णांक vring_index)
+अणु
+	काष्ठा vring_tx_desc *d = &desc->legacy;
 
 	wil_desc_addr_set(&d->dma.addr, pa);
 	d->dma.ip_length = 0;
 	/* 0..6: mac_length; 7:ip_version 0-IP6 1-IP4*/
 	d->dma.b11 = 0/*14 | BIT(7)*/;
 	d->dma.error = 0;
-	d->dma.status = 0; /* BIT(0) should be 0 for HW_OWNED */
+	d->dma.status = 0; /* BIT(0) should be 0 क्रम HW_OWNED */
 	d->dma.length = cpu_to_le16((u16)len);
 	d->dma.d0 = (vring_index << DMA_CFG_DESC_TX_0_QID_POS);
 	d->mac.d[0] = 0;
 	d->mac.d[1] = 0;
 	d->mac.d[2] = 0;
 	d->mac.ucode_cmd = 0;
-	/* translation type:  0 - bypass; 1 - 802.3; 2 - native wifi */
+	/* translation type:  0 - bypass; 1 - 802.3; 2 - native wअगरi */
 	d->mac.d[2] = BIT(MAC_CFG_DESC_TX_2_SNAP_HDR_INSERTION_EN_POS) |
 		      (1 << MAC_CFG_DESC_TX_2_L2_TRANSLATION_TYPE_POS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void wil_tx_data_init(struct wil_ring_tx_data *txdata)
-{
+व्योम wil_tx_data_init(काष्ठा wil_ring_tx_data *txdata)
+अणु
 	spin_lock_bh(&txdata->lock);
-	txdata->dot1x_open = false;
+	txdata->करोt1x_खोलो = false;
 	txdata->enabled = 0;
 	txdata->idle = 0;
 	txdata->last_idle = 0;
 	txdata->begin = 0;
 	txdata->agg_wsize = 0;
-	txdata->agg_timeout = 0;
+	txdata->agg_समयout = 0;
 	txdata->agg_amsdu = 0;
 	txdata->addba_in_progress = false;
 	txdata->mid = U8_MAX;
 	spin_unlock_bh(&txdata->lock);
-}
+पूर्ण
 
-static int wil_vring_init_tx(struct wil6210_vif *vif, int id, int size,
-			     int cid, int tid)
-{
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	int rc;
-	struct wmi_vring_cfg_cmd cmd = {
+अटल पूर्णांक wil_vring_init_tx(काष्ठा wil6210_vअगर *vअगर, पूर्णांक id, पूर्णांक size,
+			     पूर्णांक cid, पूर्णांक tid)
+अणु
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	पूर्णांक rc;
+	काष्ठा wmi_vring_cfg_cmd cmd = अणु
 		.action = cpu_to_le32(WMI_VRING_CMD_ADD),
-		.vring_cfg = {
-			.tx_sw_ring = {
+		.vring_cfg = अणु
+			.tx_sw_ring = अणु
 				.max_mpdu_size =
 					cpu_to_le16(wil_mtu2macbuf(mtu_max)),
 				.ring_size = cpu_to_le16(size),
-			},
+			पूर्ण,
 			.ringid = id,
 			.encap_trans_type = WMI_VRING_ENC_TYPE_802_3,
 			.mac_ctrl = 0,
 			.to_resolution = 0,
 			.agg_max_wsize = 0,
-			.schd_params = {
+			.schd_params = अणु
 				.priority = cpu_to_le16(0),
-				.timeslot_us = cpu_to_le16(0xfff),
-			},
-		},
-	};
-	struct {
-		struct wmi_cmd_hdr wmi;
-		struct wmi_vring_cfg_done_event cmd;
-	} __packed reply = {
-		.cmd = {.status = WMI_FW_STATUS_FAILURE},
-	};
-	struct wil_ring *vring = &wil->ring_tx[id];
-	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[id];
+				.बारlot_us = cpu_to_le16(0xfff),
+			पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	काष्ठा अणु
+		काष्ठा wmi_cmd_hdr wmi;
+		काष्ठा wmi_vring_cfg_करोne_event cmd;
+	पूर्ण __packed reply = अणु
+		.cmd = अणु.status = WMI_FW_STATUS_FAILUREपूर्ण,
+	पूर्ण;
+	काष्ठा wil_ring *vring = &wil->ring_tx[id];
+	काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[id];
 
-	if (cid >= WIL6210_RX_DESC_MAX_CID) {
+	अगर (cid >= WIL6210_RX_DESC_MAX_CID) अणु
 		cmd.vring_cfg.cidxtid = CIDXTID_EXTENDED_CID_TID;
 		cmd.vring_cfg.cid = cid;
 		cmd.vring_cfg.tid = tid;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd.vring_cfg.cidxtid = mk_cidxtid(cid, tid);
-	}
+	पूर्ण
 
 	wil_dbg_misc(wil, "vring_init_tx: max_mpdu_size %d\n",
 		     cmd.vring_cfg.tx_sw_ring.max_mpdu_size);
-	lockdep_assert_held(&wil->mutex);
+	lockdep_निश्चित_held(&wil->mutex);
 
-	if (vring->va) {
+	अगर (vring->va) अणु
 		wil_err(wil, "Tx ring [%d] already allocated\n", id);
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	wil_tx_data_init(txdata);
 	vring->is_rx = false;
 	vring->size = size;
 	rc = wil_vring_alloc(wil, vring);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	wil->ring2cid_tid[id][0] = cid;
 	wil->ring2cid_tid[id][1] = tid;
 
 	cmd.vring_cfg.tx_sw_ring.ring_mem_base = cpu_to_le64(vring->pa);
 
-	if (!vif->privacy)
-		txdata->dot1x_open = true;
-	rc = wmi_call(wil, WMI_VRING_CFG_CMDID, vif->mid, &cmd, sizeof(cmd),
-		      WMI_VRING_CFG_DONE_EVENTID, &reply, sizeof(reply),
+	अगर (!vअगर->privacy)
+		txdata->करोt1x_खोलो = true;
+	rc = wmi_call(wil, WMI_VRING_CFG_CMDID, vअगर->mid, &cmd, माप(cmd),
+		      WMI_VRING_CFG_DONE_EVENTID, &reply, माप(reply),
 		      WIL_WMI_CALL_GENERAL_TO_MS);
-	if (rc)
-		goto out_free;
+	अगर (rc)
+		जाओ out_मुक्त;
 
-	if (reply.cmd.status != WMI_FW_STATUS_SUCCESS) {
+	अगर (reply.cmd.status != WMI_FW_STATUS_SUCCESS) अणु
 		wil_err(wil, "Tx config failed, status 0x%02x\n",
 			reply.cmd.status);
 		rc = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	spin_lock_bh(&txdata->lock);
 	vring->hwtail = le32_to_cpu(reply.cmd.tx_vring_tail_ptr);
-	txdata->mid = vif->mid;
+	txdata->mid = vअगर->mid;
 	txdata->enabled = 1;
 	spin_unlock_bh(&txdata->lock);
 
-	if (txdata->dot1x_open && (agg_wsize >= 0))
+	अगर (txdata->करोt1x_खोलो && (agg_wsize >= 0))
 		wil_addba_tx_request(wil, id, agg_wsize);
 
-	return 0;
- out_free:
+	वापस 0;
+ out_मुक्त:
 	spin_lock_bh(&txdata->lock);
-	txdata->dot1x_open = false;
+	txdata->करोt1x_खोलो = false;
 	txdata->enabled = 0;
 	spin_unlock_bh(&txdata->lock);
-	wil_vring_free(wil, vring);
+	wil_vring_मुक्त(wil, vring);
 	wil->ring2cid_tid[id][0] = wil->max_assoc_sta;
 	wil->ring2cid_tid[id][1] = 0;
 
  out:
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int wil_tx_vring_modify(struct wil6210_vif *vif, int ring_id, int cid,
-			       int tid)
-{
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	int rc;
-	struct wmi_vring_cfg_cmd cmd = {
+अटल पूर्णांक wil_tx_vring_modअगरy(काष्ठा wil6210_vअगर *vअगर, पूर्णांक ring_id, पूर्णांक cid,
+			       पूर्णांक tid)
+अणु
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	पूर्णांक rc;
+	काष्ठा wmi_vring_cfg_cmd cmd = अणु
 		.action = cpu_to_le32(WMI_VRING_CMD_MODIFY),
-		.vring_cfg = {
-			.tx_sw_ring = {
+		.vring_cfg = अणु
+			.tx_sw_ring = अणु
 				.max_mpdu_size =
 					cpu_to_le16(wil_mtu2macbuf(mtu_max)),
 				.ring_size = 0,
-			},
+			पूर्ण,
 			.ringid = ring_id,
 			.cidxtid = mk_cidxtid(cid, tid),
 			.encap_trans_type = WMI_VRING_ENC_TYPE_802_3,
 			.mac_ctrl = 0,
 			.to_resolution = 0,
 			.agg_max_wsize = 0,
-			.schd_params = {
+			.schd_params = अणु
 				.priority = cpu_to_le16(0),
-				.timeslot_us = cpu_to_le16(0xfff),
-			},
-		},
-	};
-	struct {
-		struct wmi_cmd_hdr wmi;
-		struct wmi_vring_cfg_done_event cmd;
-	} __packed reply = {
-		.cmd = {.status = WMI_FW_STATUS_FAILURE},
-	};
-	struct wil_ring *vring = &wil->ring_tx[ring_id];
-	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_id];
+				.बारlot_us = cpu_to_le16(0xfff),
+			पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	काष्ठा अणु
+		काष्ठा wmi_cmd_hdr wmi;
+		काष्ठा wmi_vring_cfg_करोne_event cmd;
+	पूर्ण __packed reply = अणु
+		.cmd = अणु.status = WMI_FW_STATUS_FAILUREपूर्ण,
+	पूर्ण;
+	काष्ठा wil_ring *vring = &wil->ring_tx[ring_id];
+	काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_id];
 
 	wil_dbg_misc(wil, "vring_modify: ring %d cid %d tid %d\n", ring_id,
 		     cid, tid);
-	lockdep_assert_held(&wil->mutex);
+	lockdep_निश्चित_held(&wil->mutex);
 
-	if (!vring->va) {
+	अगर (!vring->va) अणु
 		wil_err(wil, "Tx ring [%d] not allocated\n", ring_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (wil->ring2cid_tid[ring_id][0] != cid ||
-	    wil->ring2cid_tid[ring_id][1] != tid) {
+	अगर (wil->ring2cid_tid[ring_id][0] != cid ||
+	    wil->ring2cid_tid[ring_id][1] != tid) अणु
 		wil_err(wil, "ring info does not match cid=%u tid=%u\n",
 			wil->ring2cid_tid[ring_id][0],
 			wil->ring2cid_tid[ring_id][1]);
-	}
+	पूर्ण
 
 	cmd.vring_cfg.tx_sw_ring.ring_mem_base = cpu_to_le64(vring->pa);
 
-	rc = wmi_call(wil, WMI_VRING_CFG_CMDID, vif->mid, &cmd, sizeof(cmd),
-		      WMI_VRING_CFG_DONE_EVENTID, &reply, sizeof(reply),
+	rc = wmi_call(wil, WMI_VRING_CFG_CMDID, vअगर->mid, &cmd, माप(cmd),
+		      WMI_VRING_CFG_DONE_EVENTID, &reply, माप(reply),
 		      WIL_WMI_CALL_GENERAL_TO_MS);
-	if (rc)
-		goto fail;
+	अगर (rc)
+		जाओ fail;
 
-	if (reply.cmd.status != WMI_FW_STATUS_SUCCESS) {
+	अगर (reply.cmd.status != WMI_FW_STATUS_SUCCESS) अणु
 		wil_err(wil, "Tx modify failed, status 0x%02x\n",
 			reply.cmd.status);
 		rc = -EINVAL;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	/* set BA aggregation window size to 0 to force a new BA with the
+	/* set BA aggregation winकरोw size to 0 to क्रमce a new BA with the
 	 * new AP
 	 */
 	txdata->agg_wsize = 0;
-	if (txdata->dot1x_open && agg_wsize >= 0)
+	अगर (txdata->करोt1x_खोलो && agg_wsize >= 0)
 		wil_addba_tx_request(wil, ring_id, agg_wsize);
 
-	return 0;
+	वापस 0;
 fail:
 	spin_lock_bh(&txdata->lock);
-	txdata->dot1x_open = false;
+	txdata->करोt1x_खोलो = false;
 	txdata->enabled = 0;
 	spin_unlock_bh(&txdata->lock);
 	wil->ring2cid_tid[ring_id][0] = wil->max_assoc_sta;
 	wil->ring2cid_tid[ring_id][1] = 0;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int wil_vring_init_bcast(struct wil6210_vif *vif, int id, int size)
-{
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	int rc;
-	struct wmi_bcast_vring_cfg_cmd cmd = {
+पूर्णांक wil_vring_init_bcast(काष्ठा wil6210_vअगर *vअगर, पूर्णांक id, पूर्णांक size)
+अणु
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	पूर्णांक rc;
+	काष्ठा wmi_bcast_vring_cfg_cmd cmd = अणु
 		.action = cpu_to_le32(WMI_VRING_CMD_ADD),
-		.vring_cfg = {
-			.tx_sw_ring = {
+		.vring_cfg = अणु
+			.tx_sw_ring = अणु
 				.max_mpdu_size =
 					cpu_to_le16(wil_mtu2macbuf(mtu_max)),
 				.ring_size = cpu_to_le16(size),
-			},
+			पूर्ण,
 			.ringid = id,
 			.encap_trans_type = WMI_VRING_ENC_TYPE_802_3,
-		},
-	};
-	struct {
-		struct wmi_cmd_hdr wmi;
-		struct wmi_vring_cfg_done_event cmd;
-	} __packed reply = {
-		.cmd = {.status = WMI_FW_STATUS_FAILURE},
-	};
-	struct wil_ring *vring = &wil->ring_tx[id];
-	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[id];
+		पूर्ण,
+	पूर्ण;
+	काष्ठा अणु
+		काष्ठा wmi_cmd_hdr wmi;
+		काष्ठा wmi_vring_cfg_करोne_event cmd;
+	पूर्ण __packed reply = अणु
+		.cmd = अणु.status = WMI_FW_STATUS_FAILUREपूर्ण,
+	पूर्ण;
+	काष्ठा wil_ring *vring = &wil->ring_tx[id];
+	काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[id];
 
 	wil_dbg_misc(wil, "vring_init_bcast: max_mpdu_size %d\n",
 		     cmd.vring_cfg.tx_sw_ring.max_mpdu_size);
-	lockdep_assert_held(&wil->mutex);
+	lockdep_निश्चित_held(&wil->mutex);
 
-	if (vring->va) {
+	अगर (vring->va) अणु
 		wil_err(wil, "Tx ring [%d] already allocated\n", id);
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	wil_tx_data_init(txdata);
 	vring->is_rx = false;
 	vring->size = size;
 	rc = wil_vring_alloc(wil, vring);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	wil->ring2cid_tid[id][0] = wil->max_assoc_sta; /* CID */
 	wil->ring2cid_tid[id][1] = 0; /* TID */
 
 	cmd.vring_cfg.tx_sw_ring.ring_mem_base = cpu_to_le64(vring->pa);
 
-	if (!vif->privacy)
-		txdata->dot1x_open = true;
-	rc = wmi_call(wil, WMI_BCAST_VRING_CFG_CMDID, vif->mid,
-		      &cmd, sizeof(cmd),
-		      WMI_VRING_CFG_DONE_EVENTID, &reply, sizeof(reply),
+	अगर (!vअगर->privacy)
+		txdata->करोt1x_खोलो = true;
+	rc = wmi_call(wil, WMI_BCAST_VRING_CFG_CMDID, vअगर->mid,
+		      &cmd, माप(cmd),
+		      WMI_VRING_CFG_DONE_EVENTID, &reply, माप(reply),
 		      WIL_WMI_CALL_GENERAL_TO_MS);
-	if (rc)
-		goto out_free;
+	अगर (rc)
+		जाओ out_मुक्त;
 
-	if (reply.cmd.status != WMI_FW_STATUS_SUCCESS) {
+	अगर (reply.cmd.status != WMI_FW_STATUS_SUCCESS) अणु
 		wil_err(wil, "Tx config failed, status 0x%02x\n",
 			reply.cmd.status);
 		rc = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	spin_lock_bh(&txdata->lock);
 	vring->hwtail = le32_to_cpu(reply.cmd.tx_vring_tail_ptr);
-	txdata->mid = vif->mid;
+	txdata->mid = vअगर->mid;
 	txdata->enabled = 1;
 	spin_unlock_bh(&txdata->lock);
 
-	return 0;
- out_free:
+	वापस 0;
+ out_मुक्त:
 	spin_lock_bh(&txdata->lock);
 	txdata->enabled = 0;
-	txdata->dot1x_open = false;
+	txdata->करोt1x_खोलो = false;
 	spin_unlock_bh(&txdata->lock);
-	wil_vring_free(wil, vring);
+	wil_vring_मुक्त(wil, vring);
  out:
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct wil_ring *wil_find_tx_ucast(struct wil6210_priv *wil,
-					  struct wil6210_vif *vif,
-					  struct sk_buff *skb)
-{
-	int i, cid;
-	const u8 *da = wil_skb_get_da(skb);
-	int min_ring_id = wil_get_min_tx_ring_id(wil);
+अटल काष्ठा wil_ring *wil_find_tx_ucast(काष्ठा wil6210_priv *wil,
+					  काष्ठा wil6210_vअगर *vअगर,
+					  काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक i, cid;
+	स्थिर u8 *da = wil_skb_get_da(skb);
+	पूर्णांक min_ring_id = wil_get_min_tx_ring_id(wil);
 
-	cid = wil_find_cid(wil, vif->mid, da);
+	cid = wil_find_cid(wil, vअगर->mid, da);
 
-	if (cid < 0 || cid >= wil->max_assoc_sta)
-		return NULL;
+	अगर (cid < 0 || cid >= wil->max_assoc_sta)
+		वापस शून्य;
 
-	/* TODO: fix for multiple TID */
-	for (i = min_ring_id; i < ARRAY_SIZE(wil->ring2cid_tid); i++) {
-		if (!wil->ring_tx_data[i].dot1x_open &&
+	/* TODO: fix क्रम multiple TID */
+	क्रम (i = min_ring_id; i < ARRAY_SIZE(wil->ring2cid_tid); i++) अणु
+		अगर (!wil->ring_tx_data[i].करोt1x_खोलो &&
 		    skb->protocol != cpu_to_be16(ETH_P_PAE))
-			continue;
-		if (wil->ring2cid_tid[i][0] == cid) {
-			struct wil_ring *v = &wil->ring_tx[i];
-			struct wil_ring_tx_data *txdata = &wil->ring_tx_data[i];
+			जारी;
+		अगर (wil->ring2cid_tid[i][0] == cid) अणु
+			काष्ठा wil_ring *v = &wil->ring_tx[i];
+			काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[i];
 
 			wil_dbg_txrx(wil, "find_tx_ucast: (%pM) -> [%d]\n",
 				     da, i);
-			if (v->va && txdata->enabled) {
-				return v;
-			} else {
+			अगर (v->va && txdata->enabled) अणु
+				वापस v;
+			पूर्ण अन्यथा अणु
 				wil_dbg_txrx(wil,
 					     "find_tx_ucast: vring[%d] not valid\n",
 					     i);
-				return NULL;
-			}
-		}
-	}
+				वापस शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int wil_tx_ring(struct wil6210_priv *wil, struct wil6210_vif *vif,
-		       struct wil_ring *ring, struct sk_buff *skb);
+अटल पूर्णांक wil_tx_ring(काष्ठा wil6210_priv *wil, काष्ठा wil6210_vअगर *vअगर,
+		       काष्ठा wil_ring *ring, काष्ठा sk_buff *skb);
 
-static struct wil_ring *wil_find_tx_ring_sta(struct wil6210_priv *wil,
-					     struct wil6210_vif *vif,
-					     struct sk_buff *skb)
-{
-	struct wil_ring *ring;
-	int i;
+अटल काष्ठा wil_ring *wil_find_tx_ring_sta(काष्ठा wil6210_priv *wil,
+					     काष्ठा wil6210_vअगर *vअगर,
+					     काष्ठा sk_buff *skb)
+अणु
+	काष्ठा wil_ring *ring;
+	पूर्णांक i;
 	u8 cid;
-	struct wil_ring_tx_data  *txdata;
-	int min_ring_id = wil_get_min_tx_ring_id(wil);
+	काष्ठा wil_ring_tx_data  *txdata;
+	पूर्णांक min_ring_id = wil_get_min_tx_ring_id(wil);
 
 	/* In the STA mode, it is expected to have only 1 VRING
-	 * for the AP we connected to.
-	 * find 1-st vring eligible for this skb and use it.
+	 * क्रम the AP we connected to.
+	 * find 1-st vring eligible क्रम this skb and use it.
 	 */
-	for (i = min_ring_id; i < WIL6210_MAX_TX_RINGS; i++) {
+	क्रम (i = min_ring_id; i < WIL6210_MAX_TX_RINGS; i++) अणु
 		ring = &wil->ring_tx[i];
 		txdata = &wil->ring_tx_data[i];
-		if (!ring->va || !txdata->enabled || txdata->mid != vif->mid)
-			continue;
+		अगर (!ring->va || !txdata->enabled || txdata->mid != vअगर->mid)
+			जारी;
 
 		cid = wil->ring2cid_tid[i][0];
-		if (cid >= wil->max_assoc_sta) /* skip BCAST */
-			continue;
+		अगर (cid >= wil->max_assoc_sta) /* skip BCAST */
+			जारी;
 
-		if (!wil->ring_tx_data[i].dot1x_open &&
+		अगर (!wil->ring_tx_data[i].करोt1x_खोलो &&
 		    skb->protocol != cpu_to_be16(ETH_P_PAE))
-			continue;
+			जारी;
 
 		wil_dbg_txrx(wil, "Tx -> ring %d\n", i);
 
-		return ring;
-	}
+		वापस ring;
+	पूर्ण
 
 	wil_dbg_txrx(wil, "Tx while no rings active?\n");
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* Use one of 2 strategies:
  *
  * 1. New (real broadcast):
  *    use dedicated broadcast vring
- * 2. Old (pseudo-DMS):
- *    Find 1-st vring and return it;
+ * 2. Old (pseuकरो-DMS):
+ *    Find 1-st vring and वापस it;
  *    duplicate skb and send it to other active vrings;
- *    in all cases override dest address to unicast peer's address
+ *    in all हालs override dest address to unicast peer's address
  * Use old strategy when new is not supported yet:
- *  - for PBSS
+ *  - क्रम PBSS
  */
-static struct wil_ring *wil_find_tx_bcast_1(struct wil6210_priv *wil,
-					    struct wil6210_vif *vif,
-					    struct sk_buff *skb)
-{
-	struct wil_ring *v;
-	struct wil_ring_tx_data *txdata;
-	int i = vif->bcast_ring;
+अटल काष्ठा wil_ring *wil_find_tx_bcast_1(काष्ठा wil6210_priv *wil,
+					    काष्ठा wil6210_vअगर *vअगर,
+					    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा wil_ring *v;
+	काष्ठा wil_ring_tx_data *txdata;
+	पूर्णांक i = vअगर->bcast_ring;
 
-	if (i < 0)
-		return NULL;
+	अगर (i < 0)
+		वापस शून्य;
 	v = &wil->ring_tx[i];
 	txdata = &wil->ring_tx_data[i];
-	if (!v->va || !txdata->enabled)
-		return NULL;
-	if (!wil->ring_tx_data[i].dot1x_open &&
+	अगर (!v->va || !txdata->enabled)
+		वापस शून्य;
+	अगर (!wil->ring_tx_data[i].करोt1x_खोलो &&
 	    skb->protocol != cpu_to_be16(ETH_P_PAE))
-		return NULL;
+		वापस शून्य;
 
-	return v;
-}
+	वापस v;
+पूर्ण
 
-/* apply multicast to unicast only for ARP and IP packets
- * (see NL80211_CMD_SET_MULTICAST_TO_UNICAST for more info)
+/* apply multicast to unicast only क्रम ARP and IP packets
+ * (see NL80211_CMD_SET_MULTICAST_TO_UNICAST क्रम more info)
  */
-static bool wil_check_multicast_to_unicast(struct wil6210_priv *wil,
-					   struct sk_buff *skb)
-{
-	const struct ethhdr *eth = (void *)skb->data;
-	const struct vlan_ethhdr *ethvlan = (void *)skb->data;
+अटल bool wil_check_multicast_to_unicast(काष्ठा wil6210_priv *wil,
+					   काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा ethhdr *eth = (व्योम *)skb->data;
+	स्थिर काष्ठा vlan_ethhdr *ethvlan = (व्योम *)skb->data;
 	__be16 ethertype;
 
-	if (!wil->multicast_to_unicast)
-		return false;
+	अगर (!wil->multicast_to_unicast)
+		वापस false;
 
-	/* multicast to unicast conversion only for some payload */
+	/* multicast to unicast conversion only क्रम some payload */
 	ethertype = eth->h_proto;
-	if (ethertype == htons(ETH_P_8021Q) && skb->len >= VLAN_ETH_HLEN)
+	अगर (ethertype == htons(ETH_P_8021Q) && skb->len >= VLAN_ETH_HLEN)
 		ethertype = ethvlan->h_vlan_encapsulated_proto;
-	switch (ethertype) {
-	case htons(ETH_P_ARP):
-	case htons(ETH_P_IP):
-	case htons(ETH_P_IPV6):
-		break;
-	default:
-		return false;
-	}
+	चयन (ethertype) अणु
+	हाल htons(ETH_P_ARP):
+	हाल htons(ETH_P_IP):
+	हाल htons(ETH_P_IPV6):
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void wil_set_da_for_vring(struct wil6210_priv *wil,
-				 struct sk_buff *skb, int vring_index)
-{
+अटल व्योम wil_set_da_क्रम_vring(काष्ठा wil6210_priv *wil,
+				 काष्ठा sk_buff *skb, पूर्णांक vring_index)
+अणु
 	u8 *da = wil_skb_get_da(skb);
-	int cid = wil->ring2cid_tid[vring_index][0];
+	पूर्णांक cid = wil->ring2cid_tid[vring_index][0];
 
 	ether_addr_copy(da, wil->sta[cid].addr);
-}
+पूर्ण
 
-static struct wil_ring *wil_find_tx_bcast_2(struct wil6210_priv *wil,
-					    struct wil6210_vif *vif,
-					    struct sk_buff *skb)
-{
-	struct wil_ring *v, *v2;
-	struct sk_buff *skb2;
-	int i;
+अटल काष्ठा wil_ring *wil_find_tx_bcast_2(काष्ठा wil6210_priv *wil,
+					    काष्ठा wil6210_vअगर *vअगर,
+					    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा wil_ring *v, *v2;
+	काष्ठा sk_buff *skb2;
+	पूर्णांक i;
 	u8 cid;
-	const u8 *src = wil_skb_get_sa(skb);
-	struct wil_ring_tx_data *txdata, *txdata2;
-	int min_ring_id = wil_get_min_tx_ring_id(wil);
+	स्थिर u8 *src = wil_skb_get_sa(skb);
+	काष्ठा wil_ring_tx_data *txdata, *txdata2;
+	पूर्णांक min_ring_id = wil_get_min_tx_ring_id(wil);
 
-	/* find 1-st vring eligible for data */
-	for (i = min_ring_id; i < WIL6210_MAX_TX_RINGS; i++) {
+	/* find 1-st vring eligible क्रम data */
+	क्रम (i = min_ring_id; i < WIL6210_MAX_TX_RINGS; i++) अणु
 		v = &wil->ring_tx[i];
 		txdata = &wil->ring_tx_data[i];
-		if (!v->va || !txdata->enabled || txdata->mid != vif->mid)
-			continue;
+		अगर (!v->va || !txdata->enabled || txdata->mid != vअगर->mid)
+			जारी;
 
 		cid = wil->ring2cid_tid[i][0];
-		if (cid >= wil->max_assoc_sta) /* skip BCAST */
-			continue;
-		if (!wil->ring_tx_data[i].dot1x_open &&
+		अगर (cid >= wil->max_assoc_sta) /* skip BCAST */
+			जारी;
+		अगर (!wil->ring_tx_data[i].करोt1x_खोलो &&
 		    skb->protocol != cpu_to_be16(ETH_P_PAE))
-			continue;
+			जारी;
 
-		/* don't Tx back to source when re-routing Rx->Tx at the AP */
-		if (0 == memcmp(wil->sta[cid].addr, src, ETH_ALEN))
-			continue;
+		/* करोn't Tx back to source when re-routing Rx->Tx at the AP */
+		अगर (0 == स_भेद(wil->sta[cid].addr, src, ETH_ALEN))
+			जारी;
 
-		goto found;
-	}
+		जाओ found;
+	पूर्ण
 
 	wil_dbg_txrx(wil, "Tx while no vrings active?\n");
 
-	return NULL;
+	वापस शून्य;
 
 found:
 	wil_dbg_txrx(wil, "BCAST -> ring %d\n", i);
-	wil_set_da_for_vring(wil, skb, i);
+	wil_set_da_क्रम_vring(wil, skb, i);
 
-	/* find other active vrings and duplicate skb for each */
-	for (i++; i < WIL6210_MAX_TX_RINGS; i++) {
+	/* find other active vrings and duplicate skb क्रम each */
+	क्रम (i++; i < WIL6210_MAX_TX_RINGS; i++) अणु
 		v2 = &wil->ring_tx[i];
 		txdata2 = &wil->ring_tx_data[i];
-		if (!v2->va || txdata2->mid != vif->mid)
-			continue;
+		अगर (!v2->va || txdata2->mid != vअगर->mid)
+			जारी;
 		cid = wil->ring2cid_tid[i][0];
-		if (cid >= wil->max_assoc_sta) /* skip BCAST */
-			continue;
-		if (!wil->ring_tx_data[i].dot1x_open &&
+		अगर (cid >= wil->max_assoc_sta) /* skip BCAST */
+			जारी;
+		अगर (!wil->ring_tx_data[i].करोt1x_खोलो &&
 		    skb->protocol != cpu_to_be16(ETH_P_PAE))
-			continue;
+			जारी;
 
-		if (0 == memcmp(wil->sta[cid].addr, src, ETH_ALEN))
-			continue;
+		अगर (0 == स_भेद(wil->sta[cid].addr, src, ETH_ALEN))
+			जारी;
 
 		skb2 = skb_copy(skb, GFP_ATOMIC);
-		if (skb2) {
+		अगर (skb2) अणु
 			wil_dbg_txrx(wil, "BCAST DUP -> ring %d\n", i);
-			wil_set_da_for_vring(wil, skb2, i);
-			wil_tx_ring(wil, vif, v2, skb2);
+			wil_set_da_क्रम_vring(wil, skb2, i);
+			wil_tx_ring(wil, vअगर, v2, skb2);
 			/* successful call to wil_tx_ring takes skb2 ref */
-			dev_kfree_skb_any(skb2);
-		} else {
+			dev_kमुक्त_skb_any(skb2);
+		पूर्ण अन्यथा अणु
 			wil_err(wil, "skb_copy failed\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return v;
-}
+	वापस v;
+पूर्ण
 
-static inline
-void wil_tx_desc_set_nr_frags(struct vring_tx_desc *d, int nr_frags)
-{
+अटल अंतरभूत
+व्योम wil_tx_desc_set_nr_frags(काष्ठा vring_tx_desc *d, पूर्णांक nr_frags)
+अणु
 	d->mac.d[2] |= (nr_frags << MAC_CFG_DESC_TX_2_NUM_OF_DESCRIPTORS_POS);
-}
+पूर्ण
 
-/* Sets the descriptor @d up for csum and/or TSO offloading. The corresponding
+/* Sets the descriptor @d up क्रम csum and/or TSO offloading. The corresponding
  * @skb is used to obtain the protocol and headers length.
- * @tso_desc_type is a descriptor type for TSO: 0 - a header, 1 - first data,
+ * @tso_desc_type is a descriptor type क्रम TSO: 0 - a header, 1 - first data,
  * 2 - middle, 3 - last descriptor.
  */
 
-static void wil_tx_desc_offload_setup_tso(struct vring_tx_desc *d,
-					  struct sk_buff *skb,
-					  int tso_desc_type, bool is_ipv4,
-					  int tcp_hdr_len, int skb_net_hdr_len)
-{
+अटल व्योम wil_tx_desc_offload_setup_tso(काष्ठा vring_tx_desc *d,
+					  काष्ठा sk_buff *skb,
+					  पूर्णांक tso_desc_type, bool is_ipv4,
+					  पूर्णांक tcp_hdr_len, पूर्णांक skb_net_hdr_len)
+अणु
 	d->dma.b11 = ETH_HLEN; /* MAC header length */
 	d->dma.b11 |= is_ipv4 << DMA_CFG_DESC_TX_OFFLOAD_CFG_L3T_IPV4_POS;
 
@@ -1650,169 +1651,169 @@ static void wil_tx_desc_offload_setup_tso(struct vring_tx_desc *d,
 	d->dma.ip_length = skb_net_hdr_len;
 	/* Enable TCP/UDP checksum */
 	d->dma.d0 |= BIT(DMA_CFG_DESC_TX_0_TCP_UDP_CHECKSUM_EN_POS);
-	/* Calculate pseudo-header */
+	/* Calculate pseuकरो-header */
 	d->dma.d0 |= BIT(DMA_CFG_DESC_TX_0_PSEUDO_HEADER_CALC_EN_POS);
-}
+पूर्ण
 
-/* Sets the descriptor @d up for csum. The corresponding
+/* Sets the descriptor @d up क्रम csum. The corresponding
  * @skb is used to obtain the protocol and headers length.
  * Returns the protocol: 0 - not TCP, 1 - TCPv4, 2 - TCPv6.
- * Note, if d==NULL, the function only returns the protocol result.
+ * Note, अगर d==शून्य, the function only वापसs the protocol result.
  *
  * It is very similar to previous wil_tx_desc_offload_setup_tso. This
  * is "if unrolling" to optimize the critical path.
  */
 
-static int wil_tx_desc_offload_setup(struct vring_tx_desc *d,
-				     struct sk_buff *skb){
-	int protocol;
+अटल पूर्णांक wil_tx_desc_offload_setup(काष्ठा vring_tx_desc *d,
+				     काष्ठा sk_buff *skb)अणु
+	पूर्णांक protocol;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL)
-		return 0;
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
+		वापस 0;
 
 	d->dma.b11 = ETH_HLEN; /* MAC header length */
 
-	switch (skb->protocol) {
-	case cpu_to_be16(ETH_P_IP):
+	चयन (skb->protocol) अणु
+	हाल cpu_to_be16(ETH_P_IP):
 		protocol = ip_hdr(skb)->protocol;
 		d->dma.b11 |= BIT(DMA_CFG_DESC_TX_OFFLOAD_CFG_L3T_IPV4_POS);
-		break;
-	case cpu_to_be16(ETH_P_IPV6):
+		अवरोध;
+	हाल cpu_to_be16(ETH_P_IPV6):
 		protocol = ipv6_hdr(skb)->nexthdr;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (protocol) {
-	case IPPROTO_TCP:
+	चयन (protocol) अणु
+	हाल IPPROTO_TCP:
 		d->dma.d0 |= (2 << DMA_CFG_DESC_TX_0_L4_TYPE_POS);
 		/* L4 header len: TCP header length */
 		d->dma.d0 |=
 		(tcp_hdrlen(skb) & DMA_CFG_DESC_TX_0_L4_LENGTH_MSK);
-		break;
-	case IPPROTO_UDP:
+		अवरोध;
+	हाल IPPROTO_UDP:
 		/* L4 header len: UDP header length */
 		d->dma.d0 |=
-		(sizeof(struct udphdr) & DMA_CFG_DESC_TX_0_L4_LENGTH_MSK);
-		break;
-	default:
-		return -EINVAL;
-	}
+		(माप(काष्ठा udphdr) & DMA_CFG_DESC_TX_0_L4_LENGTH_MSK);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	d->dma.ip_length = skb_network_header_len(skb);
 	/* Enable TCP/UDP checksum */
 	d->dma.d0 |= BIT(DMA_CFG_DESC_TX_0_TCP_UDP_CHECKSUM_EN_POS);
-	/* Calculate pseudo-header */
+	/* Calculate pseuकरो-header */
 	d->dma.d0 |= BIT(DMA_CFG_DESC_TX_0_PSEUDO_HEADER_CALC_EN_POS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void wil_tx_last_desc(struct vring_tx_desc *d)
-{
+अटल अंतरभूत व्योम wil_tx_last_desc(काष्ठा vring_tx_desc *d)
+अणु
 	d->dma.d0 |= BIT(DMA_CFG_DESC_TX_0_CMD_EOP_POS) |
 	      BIT(DMA_CFG_DESC_TX_0_CMD_MARK_WB_POS) |
 	      BIT(DMA_CFG_DESC_TX_0_CMD_DMA_IT_POS);
-}
+पूर्ण
 
-static inline void wil_set_tx_desc_last_tso(volatile struct vring_tx_desc *d)
-{
+अटल अंतरभूत व्योम wil_set_tx_desc_last_tso(अस्थिर काष्ठा vring_tx_desc *d)
+अणु
 	d->dma.d0 |= wil_tso_type_lst <<
 		  DMA_CFG_DESC_TX_0_SEGMENT_BUF_DETAILS_POS;
-}
+पूर्ण
 
-static int __wil_tx_vring_tso(struct wil6210_priv *wil, struct wil6210_vif *vif,
-			      struct wil_ring *vring, struct sk_buff *skb)
-{
-	struct device *dev = wil_to_dev(wil);
+अटल पूर्णांक __wil_tx_vring_tso(काष्ठा wil6210_priv *wil, काष्ठा wil6210_vअगर *vअगर,
+			      काष्ठा wil_ring *vring, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा device *dev = wil_to_dev(wil);
 
-	/* point to descriptors in shared memory */
-	volatile struct vring_tx_desc *_desc = NULL, *_hdr_desc,
-				      *_first_desc = NULL;
+	/* poपूर्णांक to descriptors in shared memory */
+	अस्थिर काष्ठा vring_tx_desc *_desc = शून्य, *_hdr_desc,
+				      *_first_desc = शून्य;
 
-	/* pointers to shadow descriptors */
-	struct vring_tx_desc desc_mem, hdr_desc_mem, first_desc_mem,
+	/* poपूर्णांकers to shaकरोw descriptors */
+	काष्ठा vring_tx_desc desc_mem, hdr_desc_mem, first_desc_mem,
 			     *d = &hdr_desc_mem, *hdr_desc = &hdr_desc_mem,
 			     *first_desc = &first_desc_mem;
 
-	/* pointer to shadow descriptors' context */
-	struct wil_ctx *hdr_ctx, *first_ctx = NULL;
+	/* poपूर्णांकer to shaकरोw descriptors' context */
+	काष्ठा wil_ctx *hdr_ctx, *first_ctx = शून्य;
 
-	int descs_used = 0; /* total number of used descriptors */
-	int sg_desc_cnt = 0; /* number of descriptors for current mss*/
+	पूर्णांक descs_used = 0; /* total number of used descriptors */
+	पूर्णांक sg_desc_cnt = 0; /* number of descriptors क्रम current mss*/
 
 	u32 swhead = vring->swhead;
-	int used, avail = wil_ring_avail_tx(vring);
-	int nr_frags = skb_shinfo(skb)->nr_frags;
-	int min_desc_required = nr_frags + 1;
-	int mss = skb_shinfo(skb)->gso_size;	/* payload size w/o headers */
-	int f, len, hdrlen, headlen;
-	int vring_index = vring - wil->ring_tx;
-	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[vring_index];
-	uint i = swhead;
+	पूर्णांक used, avail = wil_ring_avail_tx(vring);
+	पूर्णांक nr_frags = skb_shinfo(skb)->nr_frags;
+	पूर्णांक min_desc_required = nr_frags + 1;
+	पूर्णांक mss = skb_shinfo(skb)->gso_size;	/* payload size w/o headers */
+	पूर्णांक f, len, hdrlen, headlen;
+	पूर्णांक vring_index = vring - wil->ring_tx;
+	काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[vring_index];
+	uपूर्णांक i = swhead;
 	dma_addr_t pa;
-	const skb_frag_t *frag = NULL;
-	int rem_data = mss;
-	int lenmss;
-	int hdr_compensation_need = true;
-	int desc_tso_type = wil_tso_type_first;
+	स्थिर skb_frag_t *frag = शून्य;
+	पूर्णांक rem_data = mss;
+	पूर्णांक lenmss;
+	पूर्णांक hdr_compensation_need = true;
+	पूर्णांक desc_tso_type = wil_tso_type_first;
 	bool is_ipv4;
-	int tcp_hdr_len;
-	int skb_net_hdr_len;
-	int gso_type;
-	int rc = -EINVAL;
+	पूर्णांक tcp_hdr_len;
+	पूर्णांक skb_net_hdr_len;
+	पूर्णांक gso_type;
+	पूर्णांक rc = -EINVAL;
 
 	wil_dbg_txrx(wil, "tx_vring_tso: %d bytes to vring %d\n", skb->len,
 		     vring_index);
 
-	if (unlikely(!txdata->enabled))
-		return -EINVAL;
+	अगर (unlikely(!txdata->enabled))
+		वापस -EINVAL;
 
 	/* A typical page 4K is 3-4 payloads, we assume each fragment
 	 * is a full payload, that's how min_desc_required has been
 	 * calculated. In real we might need more or less descriptors,
 	 * this is the initial check only.
 	 */
-	if (unlikely(avail < min_desc_required)) {
+	अगर (unlikely(avail < min_desc_required)) अणु
 		wil_err_ratelimited(wil,
 				    "TSO: Tx ring[%2d] full. No space for %d fragments\n",
 				    vring_index, min_desc_required);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Header Length = MAC header len + IP header len + TCP header len*/
 	hdrlen = ETH_HLEN +
-		(int)skb_network_header_len(skb) +
+		(पूर्णांक)skb_network_header_len(skb) +
 		tcp_hdrlen(skb);
 
 	gso_type = skb_shinfo(skb)->gso_type & (SKB_GSO_TCPV6 | SKB_GSO_TCPV4);
-	switch (gso_type) {
-	case SKB_GSO_TCPV4:
+	चयन (gso_type) अणु
+	हाल SKB_GSO_TCPV4:
 		/* TCP v4, zero out the IP length and IPv4 checksum fields
-		 * as required by the offloading doc
+		 * as required by the offloading करोc
 		 */
 		ip_hdr(skb)->tot_len = 0;
 		ip_hdr(skb)->check = 0;
 		is_ipv4 = true;
-		break;
-	case SKB_GSO_TCPV6:
+		अवरोध;
+	हाल SKB_GSO_TCPV6:
 		/* TCP v6, zero out the payload length */
 		ipv6_hdr(skb)->payload_len = 0;
 		is_ipv4 = false;
-		break;
-	default:
-		/* other than TCPv4 or TCPv6 types are not supported for TSO.
-		 * It is also illegal for both to be set simultaneously
+		अवरोध;
+	शेष:
+		/* other than TCPv4 or TCPv6 types are not supported क्रम TSO.
+		 * It is also illegal क्रम both to be set simultaneously
 		 */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL)
-		return -EINVAL;
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
+		वापस -EINVAL;
 
-	/* tcp header length and skb network header length are fixed for all
-	 * packet's descriptors - read then once here
+	/* tcp header length and skb network header length are fixed क्रम all
+	 * packet's descriptors - पढ़ो then once here
 	 */
 	tcp_hdr_len = tcp_hdrlen(skb);
 	skb_net_hdr_len = skb_network_header_len(skb);
@@ -1820,12 +1821,12 @@ static int __wil_tx_vring_tso(struct wil6210_priv *wil, struct wil6210_vif *vif,
 	_hdr_desc = &vring->va[i].tx.legacy;
 
 	pa = dma_map_single(dev, skb->data, hdrlen, DMA_TO_DEVICE);
-	if (unlikely(dma_mapping_error(dev, pa))) {
+	अगर (unlikely(dma_mapping_error(dev, pa))) अणु
 		wil_err(wil, "TSO: Skb head DMA map error\n");
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
-	wil->txrx_ops.tx_desc_map((union wil_tx_desc *)hdr_desc, pa,
+	wil->txrx_ops.tx_desc_map((जोड़ wil_tx_desc *)hdr_desc, pa,
 				  hdrlen, vring_index);
 	wil_tx_desc_offload_setup_tso(hdr_desc, skb, wil_tso_type_hdr, is_ipv4,
 				      tcp_hdr_len, skb_net_hdr_len);
@@ -1837,38 +1838,38 @@ static int __wil_tx_vring_tso(struct wil6210_priv *wil, struct wil6210_vif *vif,
 	descs_used++;
 	headlen = skb_headlen(skb) - hdrlen;
 
-	for (f = headlen ? -1 : 0; f < nr_frags; f++)  {
-		if (headlen) {
+	क्रम (f = headlen ? -1 : 0; f < nr_frags; f++)  अणु
+		अगर (headlen) अणु
 			len = headlen;
 			wil_dbg_txrx(wil, "TSO: process skb head, len %u\n",
 				     len);
-		} else {
+		पूर्ण अन्यथा अणु
 			frag = &skb_shinfo(skb)->frags[f];
 			len = skb_frag_size(frag);
 			wil_dbg_txrx(wil, "TSO: frag[%d]: len %u\n", f, len);
-		}
+		पूर्ण
 
-		while (len) {
+		जबतक (len) अणु
 			wil_dbg_txrx(wil,
 				     "TSO: len %d, rem_data %d, descs_used %d\n",
 				     len, rem_data, descs_used);
 
-			if (descs_used == avail)  {
+			अगर (descs_used == avail)  अणु
 				wil_err_ratelimited(wil, "TSO: ring overflow\n");
 				rc = -ENOMEM;
-				goto mem_error;
-			}
+				जाओ mem_error;
+			पूर्ण
 
-			lenmss = min_t(int, rem_data, len);
+			lenmss = min_t(पूर्णांक, rem_data, len);
 			i = (swhead + descs_used) % vring->size;
 			wil_dbg_txrx(wil, "TSO: lenmss %d, i %d\n", lenmss, i);
 
-			if (!headlen) {
+			अगर (!headlen) अणु
 				pa = skb_frag_dma_map(dev, frag,
 						      skb_frag_size(frag) - len,
 						      lenmss, DMA_TO_DEVICE);
 				vring->ctx[i].mapped_as = wil_mapped_as_page;
-			} else {
+			पूर्ण अन्यथा अणु
 				pa = dma_map_single(dev,
 						    skb->data +
 						    skb_headlen(skb) - headlen,
@@ -1876,24 +1877,24 @@ static int __wil_tx_vring_tso(struct wil6210_priv *wil, struct wil6210_vif *vif,
 						    DMA_TO_DEVICE);
 				vring->ctx[i].mapped_as = wil_mapped_as_single;
 				headlen -= lenmss;
-			}
+			पूर्ण
 
-			if (unlikely(dma_mapping_error(dev, pa))) {
+			अगर (unlikely(dma_mapping_error(dev, pa))) अणु
 				wil_err(wil, "TSO: DMA map page error\n");
-				goto mem_error;
-			}
+				जाओ mem_error;
+			पूर्ण
 
 			_desc = &vring->va[i].tx.legacy;
 
-			if (!_first_desc) {
+			अगर (!_first_desc) अणु
 				_first_desc = _desc;
 				first_ctx = &vring->ctx[i];
 				d = first_desc;
-			} else {
+			पूर्ण अन्यथा अणु
 				d = &desc_mem;
-			}
+			पूर्ण
 
-			wil->txrx_ops.tx_desc_map((union wil_tx_desc *)d,
+			wil->txrx_ops.tx_desc_map((जोड़ wil_tx_desc *)d,
 						  pa, lenmss, vring_index);
 			wil_tx_desc_offload_setup_tso(d, skb, desc_tso_type,
 						      is_ipv4, tcp_hdr_len,
@@ -1903,7 +1904,7 @@ static int __wil_tx_vring_tso(struct wil6210_priv *wil, struct wil6210_vif *vif,
 			desc_tso_type = wil_tso_type_mid;
 
 			descs_used++;  /* desc used so far */
-			sg_desc_cnt++; /* desc used for this segment */
+			sg_desc_cnt++; /* desc used क्रम this segment */
 			len -= lenmss;
 			rem_data -= lenmss;
 
@@ -1911,10 +1912,10 @@ static int __wil_tx_vring_tso(struct wil6210_priv *wil, struct wil6210_vif *vif,
 				     "TSO: len %d, rem_data %d, descs_used %d, sg_desc_cnt %d,\n",
 				     len, rem_data, descs_used, sg_desc_cnt);
 
-			/* Close the segment if reached mss size or last frag*/
-			if (rem_data == 0 || (f == nr_frags - 1 && len == 0)) {
-				if (hdr_compensation_need) {
-					/* first segment include hdr desc for
+			/* Close the segment अगर reached mss size or last frag*/
+			अगर (rem_data == 0 || (f == nr_frags - 1 && len == 0)) अणु
+				अगर (hdr_compensation_need) अणु
+					/* first segment include hdr desc क्रम
 					 * release
 					 */
 					hdr_ctx->nr_frags = sg_desc_cnt;
@@ -1922,42 +1923,42 @@ static int __wil_tx_vring_tso(struct wil6210_priv *wil, struct wil6210_vif *vif,
 								 sg_desc_cnt +
 								 1);
 					hdr_compensation_need = false;
-				} else {
+				पूर्ण अन्यथा अणु
 					wil_tx_desc_set_nr_frags(first_desc,
 								 sg_desc_cnt);
-				}
+				पूर्ण
 				first_ctx->nr_frags = sg_desc_cnt - 1;
 
 				wil_tx_last_desc(d);
 
 				/* first descriptor may also be the last
-				 * for this mss - make sure not to copy
+				 * क्रम this mss - make sure not to copy
 				 * it twice
 				 */
-				if (first_desc != d)
+				अगर (first_desc != d)
 					*_first_desc = *first_desc;
 
 				/*last descriptor will be copied at the end
 				 * of this TS processing
 				 */
-				if (f < nr_frags - 1 || len > 0)
+				अगर (f < nr_frags - 1 || len > 0)
 					*_desc = *d;
 
 				rem_data = mss;
-				_first_desc = NULL;
+				_first_desc = शून्य;
 				sg_desc_cnt = 0;
-			} else if (first_desc != d) /* update mid descriptor */
+			पूर्ण अन्यथा अगर (first_desc != d) /* update mid descriptor */
 					*_desc = *d;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!_desc)
-		goto mem_error;
+	अगर (!_desc)
+		जाओ mem_error;
 
 	/* first descriptor may also be the last.
-	 * in this case d pointer is invalid
+	 * in this हाल d poपूर्णांकer is invalid
 	 */
-	if (_first_desc == _desc)
+	अगर (_first_desc == _desc)
 		d = first_desc;
 
 	/* Last data descriptor */
@@ -1969,24 +1970,24 @@ static int __wil_tx_vring_tso(struct wil6210_priv *wil, struct wil6210_vif *vif,
 	*_hdr_desc = *hdr_desc;
 
 	/* hold reference to skb
-	 * to prevent skb release before accounting
-	 * in case of immediate "tx done"
+	 * to prevent skb release beक्रमe accounting
+	 * in हाल of immediate "tx done"
 	 */
 	vring->ctx[i].skb = skb_get(skb);
 
-	/* performance monitoring */
+	/* perक्रमmance monitoring */
 	used = wil_ring_used_tx(vring);
-	if (wil_val_in_range(wil->ring_idle_trsh,
-			     used, used + descs_used)) {
+	अगर (wil_val_in_range(wil->ring_idle_trsh,
+			     used, used + descs_used)) अणु
 		txdata->idle += get_cycles() - txdata->last_idle;
 		wil_dbg_txrx(wil,  "Ring[%2d] not idle %d -> %d\n",
 			     vring_index, used, used + descs_used);
-	}
+	पूर्ण
 
-	/* Make sure to advance the head only after descriptor update is done.
-	 * This will prevent a race condition where the completion thread
+	/* Make sure to advance the head only after descriptor update is करोne.
+	 * This will prevent a race condition where the completion thपढ़ो
 	 * will see the DU bit set from previous run and will handle the
-	 * skb before it was completed.
+	 * skb beक्रमe it was completed.
 	 */
 	wmb();
 
@@ -1994,67 +1995,67 @@ static int __wil_tx_vring_tso(struct wil6210_priv *wil, struct wil6210_vif *vif,
 	wil_ring_advance_head(vring, descs_used);
 	wil_dbg_txrx(wil, "TSO: Tx swhead %d -> %d\n", swhead, vring->swhead);
 
-	/* make sure all writes to descriptors (shared memory) are done before
+	/* make sure all ग_लिखोs to descriptors (shared memory) are करोne beक्रमe
 	 * committing them to HW
 	 */
 	wmb();
 
-	if (wil->tx_latency)
-		*(ktime_t *)&skb->cb = ktime_get();
-	else
-		memset(skb->cb, 0, sizeof(ktime_t));
+	अगर (wil->tx_latency)
+		*(kसमय_प्रकार *)&skb->cb = kसमय_get();
+	अन्यथा
+		स_रखो(skb->cb, 0, माप(kसमय_प्रकार));
 
 	wil_w(wil, vring->hwtail, vring->swhead);
-	return 0;
+	वापस 0;
 
 mem_error:
-	while (descs_used > 0) {
-		struct wil_ctx *ctx;
+	जबतक (descs_used > 0) अणु
+		काष्ठा wil_ctx *ctx;
 
 		i = (swhead + descs_used - 1) % vring->size;
-		d = (struct vring_tx_desc *)&vring->va[i].tx.legacy;
+		d = (काष्ठा vring_tx_desc *)&vring->va[i].tx.legacy;
 		_desc = &vring->va[i].tx.legacy;
 		*d = *_desc;
 		_desc->dma.status = TX_DMA_STATUS_DU;
 		ctx = &vring->ctx[i];
-		wil_txdesc_unmap(dev, (union wil_tx_desc *)d, ctx);
-		memset(ctx, 0, sizeof(*ctx));
+		wil_txdesc_unmap(dev, (जोड़ wil_tx_desc *)d, ctx);
+		स_रखो(ctx, 0, माप(*ctx));
 		descs_used--;
-	}
-err_exit:
-	return rc;
-}
+	पूर्ण
+err_निकास:
+	वापस rc;
+पूर्ण
 
-static int __wil_tx_ring(struct wil6210_priv *wil, struct wil6210_vif *vif,
-			 struct wil_ring *ring, struct sk_buff *skb)
-{
-	struct device *dev = wil_to_dev(wil);
-	struct vring_tx_desc dd, *d = &dd;
-	volatile struct vring_tx_desc *_d;
+अटल पूर्णांक __wil_tx_ring(काष्ठा wil6210_priv *wil, काष्ठा wil6210_vअगर *vअगर,
+			 काष्ठा wil_ring *ring, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा device *dev = wil_to_dev(wil);
+	काष्ठा vring_tx_desc dd, *d = &dd;
+	अस्थिर काष्ठा vring_tx_desc *_d;
 	u32 swhead = ring->swhead;
-	int avail = wil_ring_avail_tx(ring);
-	int nr_frags = skb_shinfo(skb)->nr_frags;
-	uint f = 0;
-	int ring_index = ring - wil->ring_tx;
-	struct wil_ring_tx_data  *txdata = &wil->ring_tx_data[ring_index];
-	uint i = swhead;
+	पूर्णांक avail = wil_ring_avail_tx(ring);
+	पूर्णांक nr_frags = skb_shinfo(skb)->nr_frags;
+	uपूर्णांक f = 0;
+	पूर्णांक ring_index = ring - wil->ring_tx;
+	काष्ठा wil_ring_tx_data  *txdata = &wil->ring_tx_data[ring_index];
+	uपूर्णांक i = swhead;
 	dma_addr_t pa;
-	int used;
-	bool mcast = (ring_index == vif->bcast_ring);
-	uint len = skb_headlen(skb);
+	पूर्णांक used;
+	bool mcast = (ring_index == vअगर->bcast_ring);
+	uपूर्णांक len = skb_headlen(skb);
 
 	wil_dbg_txrx(wil, "tx_ring: %d bytes to ring %d, nr_frags %d\n",
 		     skb->len, ring_index, nr_frags);
 
-	if (unlikely(!txdata->enabled))
-		return -EINVAL;
+	अगर (unlikely(!txdata->enabled))
+		वापस -EINVAL;
 
-	if (unlikely(avail < 1 + nr_frags)) {
+	अगर (unlikely(avail < 1 + nr_frags)) अणु
 		wil_err_ratelimited(wil,
 				    "Tx ring[%2d] full. No space for %d fragments\n",
 				    ring_index, 1 + nr_frags);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	_d = &ring->va[i].tx.legacy;
 
 	pa = dma_map_single(dev, skb->data, skb_headlen(skb), DMA_TO_DEVICE);
@@ -2064,82 +2065,82 @@ static int __wil_tx_ring(struct wil6210_priv *wil, struct wil6210_vif *vif,
 	wil_hex_dump_txrx("Tx ", DUMP_PREFIX_OFFSET, 16, 1,
 			  skb->data, skb_headlen(skb), false);
 
-	if (unlikely(dma_mapping_error(dev, pa)))
-		return -EINVAL;
+	अगर (unlikely(dma_mapping_error(dev, pa)))
+		वापस -EINVAL;
 	ring->ctx[i].mapped_as = wil_mapped_as_single;
 	/* 1-st segment */
-	wil->txrx_ops.tx_desc_map((union wil_tx_desc *)d, pa, len,
+	wil->txrx_ops.tx_desc_map((जोड़ wil_tx_desc *)d, pa, len,
 				   ring_index);
-	if (unlikely(mcast)) {
+	अगर (unlikely(mcast)) अणु
 		d->mac.d[0] |= BIT(MAC_CFG_DESC_TX_0_MCS_EN_POS); /* MCS 0 */
-		if (unlikely(len > WIL_BCAST_MCS0_LIMIT)) /* set MCS 1 */
+		अगर (unlikely(len > WIL_BCAST_MCS0_LIMIT)) /* set MCS 1 */
 			d->mac.d[0] |= (1 << MAC_CFG_DESC_TX_0_MCS_INDEX_POS);
-	}
+	पूर्ण
 	/* Process TCP/UDP checksum offloading */
-	if (unlikely(wil_tx_desc_offload_setup(d, skb))) {
+	अगर (unlikely(wil_tx_desc_offload_setup(d, skb))) अणु
 		wil_err(wil, "Tx[%2d] Failed to set cksum, drop packet\n",
 			ring_index);
-		goto dma_error;
-	}
+		जाओ dma_error;
+	पूर्ण
 
 	ring->ctx[i].nr_frags = nr_frags;
 	wil_tx_desc_set_nr_frags(d, nr_frags + 1);
 
 	/* middle segments */
-	for (; f < nr_frags; f++) {
-		const skb_frag_t *frag = &skb_shinfo(skb)->frags[f];
-		int len = skb_frag_size(frag);
+	क्रम (; f < nr_frags; f++) अणु
+		स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[f];
+		पूर्णांक len = skb_frag_size(frag);
 
 		*_d = *d;
 		wil_dbg_txrx(wil, "Tx[%2d] desc[%4d]\n", ring_index, i);
 		wil_hex_dump_txrx("TxD ", DUMP_PREFIX_NONE, 32, 4,
-				  (const void *)d, sizeof(*d), false);
+				  (स्थिर व्योम *)d, माप(*d), false);
 		i = (swhead + f + 1) % ring->size;
 		_d = &ring->va[i].tx.legacy;
 		pa = skb_frag_dma_map(dev, frag, 0, skb_frag_size(frag),
 				      DMA_TO_DEVICE);
-		if (unlikely(dma_mapping_error(dev, pa))) {
+		अगर (unlikely(dma_mapping_error(dev, pa))) अणु
 			wil_err(wil, "Tx[%2d] failed to map fragment\n",
 				ring_index);
-			goto dma_error;
-		}
+			जाओ dma_error;
+		पूर्ण
 		ring->ctx[i].mapped_as = wil_mapped_as_page;
-		wil->txrx_ops.tx_desc_map((union wil_tx_desc *)d,
+		wil->txrx_ops.tx_desc_map((जोड़ wil_tx_desc *)d,
 					   pa, len, ring_index);
-		/* no need to check return code -
-		 * if it succeeded for 1-st descriptor,
+		/* no need to check वापस code -
+		 * अगर it succeeded क्रम 1-st descriptor,
 		 * it will succeed here too
 		 */
 		wil_tx_desc_offload_setup(d, skb);
-	}
-	/* for the last seg only */
+	पूर्ण
+	/* क्रम the last seg only */
 	d->dma.d0 |= BIT(DMA_CFG_DESC_TX_0_CMD_EOP_POS);
 	d->dma.d0 |= BIT(DMA_CFG_DESC_TX_0_CMD_MARK_WB_POS);
 	d->dma.d0 |= BIT(DMA_CFG_DESC_TX_0_CMD_DMA_IT_POS);
 	*_d = *d;
 	wil_dbg_txrx(wil, "Tx[%2d] desc[%4d]\n", ring_index, i);
 	wil_hex_dump_txrx("TxD ", DUMP_PREFIX_NONE, 32, 4,
-			  (const void *)d, sizeof(*d), false);
+			  (स्थिर व्योम *)d, माप(*d), false);
 
 	/* hold reference to skb
-	 * to prevent skb release before accounting
-	 * in case of immediate "tx done"
+	 * to prevent skb release beक्रमe accounting
+	 * in हाल of immediate "tx done"
 	 */
 	ring->ctx[i].skb = skb_get(skb);
 
-	/* performance monitoring */
+	/* perक्रमmance monitoring */
 	used = wil_ring_used_tx(ring);
-	if (wil_val_in_range(wil->ring_idle_trsh,
-			     used, used + nr_frags + 1)) {
+	अगर (wil_val_in_range(wil->ring_idle_trsh,
+			     used, used + nr_frags + 1)) अणु
 		txdata->idle += get_cycles() - txdata->last_idle;
 		wil_dbg_txrx(wil,  "Ring[%2d] not idle %d -> %d\n",
 			     ring_index, used, used + nr_frags + 1);
-	}
+	पूर्ण
 
-	/* Make sure to advance the head only after descriptor update is done.
-	 * This will prevent a race condition where the completion thread
+	/* Make sure to advance the head only after descriptor update is करोne.
+	 * This will prevent a race condition where the completion thपढ़ो
 	 * will see the DU bit set from previous run and will handle the
-	 * skb before it was completed.
+	 * skb beक्रमe it was completed.
 	 */
 	wmb();
 
@@ -2149,24 +2150,24 @@ static int __wil_tx_ring(struct wil6210_priv *wil, struct wil6210_vif *vif,
 		     ring->swhead);
 	trace_wil6210_tx(ring_index, swhead, skb->len, nr_frags);
 
-	/* make sure all writes to descriptors (shared memory) are done before
+	/* make sure all ग_लिखोs to descriptors (shared memory) are करोne beक्रमe
 	 * committing them to HW
 	 */
 	wmb();
 
-	if (wil->tx_latency)
-		*(ktime_t *)&skb->cb = ktime_get();
-	else
-		memset(skb->cb, 0, sizeof(ktime_t));
+	अगर (wil->tx_latency)
+		*(kसमय_प्रकार *)&skb->cb = kसमय_get();
+	अन्यथा
+		स_रखो(skb->cb, 0, माप(kसमय_प्रकार));
 
 	wil_w(wil, ring->hwtail, ring->swhead);
 
-	return 0;
+	वापस 0;
  dma_error:
 	/* unmap what we have mapped */
-	nr_frags = f + 1; /* frags mapped + one for skb head */
-	for (f = 0; f < nr_frags; f++) {
-		struct wil_ctx *ctx;
+	nr_frags = f + 1; /* frags mapped + one क्रम skb head */
+	क्रम (f = 0; f < nr_frags; f++) अणु
+		काष्ठा wil_ctx *ctx;
 
 		i = (swhead + f) % ring->size;
 		ctx = &ring->ctx[i];
@@ -2174,242 +2175,242 @@ static int __wil_tx_ring(struct wil6210_priv *wil, struct wil6210_vif *vif,
 		*d = *_d;
 		_d->dma.status = TX_DMA_STATUS_DU;
 		wil->txrx_ops.tx_desc_unmap(dev,
-					    (union wil_tx_desc *)d,
+					    (जोड़ wil_tx_desc *)d,
 					    ctx);
 
-		memset(ctx, 0, sizeof(*ctx));
-	}
+		स_रखो(ctx, 0, माप(*ctx));
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int wil_tx_ring(struct wil6210_priv *wil, struct wil6210_vif *vif,
-		       struct wil_ring *ring, struct sk_buff *skb)
-{
-	int ring_index = ring - wil->ring_tx;
-	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_index];
-	int rc;
+अटल पूर्णांक wil_tx_ring(काष्ठा wil6210_priv *wil, काष्ठा wil6210_vअगर *vअगर,
+		       काष्ठा wil_ring *ring, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ring_index = ring - wil->ring_tx;
+	काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[ring_index];
+	पूर्णांक rc;
 
 	spin_lock(&txdata->lock);
 
-	if (test_bit(wil_status_suspending, wil->status) ||
+	अगर (test_bit(wil_status_suspending, wil->status) ||
 	    test_bit(wil_status_suspended, wil->status) ||
-	    test_bit(wil_status_resuming, wil->status)) {
+	    test_bit(wil_status_resuming, wil->status)) अणु
 		wil_dbg_txrx(wil,
 			     "suspend/resume in progress. drop packet\n");
 		spin_unlock(&txdata->lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rc = (skb_is_gso(skb) ? wil->txrx_ops.tx_ring_tso : __wil_tx_ring)
-	     (wil, vif, ring, skb);
+	     (wil, vअगर, ring, skb);
 
 	spin_unlock(&txdata->lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* Check status of tx vrings and stop/wake net queues if needed
- * It will start/stop net queues of a specific VIF net_device.
+/* Check status of tx vrings and stop/wake net queues अगर needed
+ * It will start/stop net queues of a specअगरic VIF net_device.
  *
- * This function does one of two checks:
- * In case check_stop is true, will check if net queues need to be stopped. If
- * the conditions for stopping are met, netif_tx_stop_all_queues() is called.
- * In case check_stop is false, will check if net queues need to be waked. If
- * the conditions for waking are met, netif_tx_wake_all_queues() is called.
- * vring is the vring which is currently being modified by either adding
- * descriptors (tx) into it or removing descriptors (tx complete) from it. Can
+ * This function करोes one of two checks:
+ * In हाल check_stop is true, will check अगर net queues need to be stopped. If
+ * the conditions क्रम stopping are met, netअगर_tx_stop_all_queues() is called.
+ * In हाल check_stop is false, will check अगर net queues need to be waked. If
+ * the conditions क्रम waking are met, netअगर_tx_wake_all_queues() is called.
+ * vring is the vring which is currently being modअगरied by either adding
+ * descriptors (tx) पूर्णांकo it or removing descriptors (tx complete) from it. Can
  * be null when irrelevant (e.g. connect/disconnect events).
  *
- * The implementation is to stop net queues if modified vring has low
- * descriptor availability. Wake if all vrings are not in low descriptor
- * availability and modified vring has high descriptor availability.
+ * The implementation is to stop net queues अगर modअगरied vring has low
+ * descriptor availability. Wake अगर all vrings are not in low descriptor
+ * availability and modअगरied vring has high descriptor availability.
  */
-static inline void __wil_update_net_queues(struct wil6210_priv *wil,
-					   struct wil6210_vif *vif,
-					   struct wil_ring *ring,
+अटल अंतरभूत व्योम __wil_update_net_queues(काष्ठा wil6210_priv *wil,
+					   काष्ठा wil6210_vअगर *vअगर,
+					   काष्ठा wil_ring *ring,
 					   bool check_stop)
-{
-	int i;
-	int min_ring_id = wil_get_min_tx_ring_id(wil);
+अणु
+	पूर्णांक i;
+	पूर्णांक min_ring_id = wil_get_min_tx_ring_id(wil);
 
-	if (unlikely(!vif))
-		return;
+	अगर (unlikely(!vअगर))
+		वापस;
 
-	if (ring)
+	अगर (ring)
 		wil_dbg_txrx(wil, "vring %d, mid %d, check_stop=%d, stopped=%d",
-			     (int)(ring - wil->ring_tx), vif->mid, check_stop,
-			     vif->net_queue_stopped);
-	else
+			     (पूर्णांक)(ring - wil->ring_tx), vअगर->mid, check_stop,
+			     vअगर->net_queue_stopped);
+	अन्यथा
 		wil_dbg_txrx(wil, "check_stop=%d, mid=%d, stopped=%d",
-			     check_stop, vif->mid, vif->net_queue_stopped);
+			     check_stop, vअगर->mid, vअगर->net_queue_stopped);
 
-	if (ring && drop_if_ring_full)
+	अगर (ring && drop_अगर_ring_full)
 		/* no need to stop/wake net queues */
-		return;
+		वापस;
 
-	if (check_stop == vif->net_queue_stopped)
-		/* net queues already in desired state */
-		return;
+	अगर (check_stop == vअगर->net_queue_stopped)
+		/* net queues alपढ़ोy in desired state */
+		वापस;
 
-	if (check_stop) {
-		if (!ring || unlikely(wil_ring_avail_low(ring))) {
+	अगर (check_stop) अणु
+		अगर (!ring || unlikely(wil_ring_avail_low(ring))) अणु
 			/* not enough room in the vring */
-			netif_tx_stop_all_queues(vif_to_ndev(vif));
-			vif->net_queue_stopped = true;
+			netअगर_tx_stop_all_queues(vअगर_to_ndev(vअगर));
+			vअगर->net_queue_stopped = true;
 			wil_dbg_txrx(wil, "netif_tx_stop called\n");
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	/* Do not wake the queues in suspend flow */
-	if (test_bit(wil_status_suspending, wil->status) ||
+	अगर (test_bit(wil_status_suspending, wil->status) ||
 	    test_bit(wil_status_suspended, wil->status))
-		return;
+		वापस;
 
 	/* check wake */
-	for (i = min_ring_id; i < WIL6210_MAX_TX_RINGS; i++) {
-		struct wil_ring *cur_ring = &wil->ring_tx[i];
-		struct wil_ring_tx_data  *txdata = &wil->ring_tx_data[i];
+	क्रम (i = min_ring_id; i < WIL6210_MAX_TX_RINGS; i++) अणु
+		काष्ठा wil_ring *cur_ring = &wil->ring_tx[i];
+		काष्ठा wil_ring_tx_data  *txdata = &wil->ring_tx_data[i];
 
-		if (txdata->mid != vif->mid || !cur_ring->va ||
+		अगर (txdata->mid != vअगर->mid || !cur_ring->va ||
 		    !txdata->enabled || cur_ring == ring)
-			continue;
+			जारी;
 
-		if (wil_ring_avail_low(cur_ring)) {
+		अगर (wil_ring_avail_low(cur_ring)) अणु
 			wil_dbg_txrx(wil, "ring %d full, can't wake\n",
-				     (int)(cur_ring - wil->ring_tx));
-			return;
-		}
-	}
+				     (पूर्णांक)(cur_ring - wil->ring_tx));
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (!ring || wil_ring_avail_high(ring)) {
+	अगर (!ring || wil_ring_avail_high(ring)) अणु
 		/* enough room in the ring */
 		wil_dbg_txrx(wil, "calling netif_tx_wake\n");
-		netif_tx_wake_all_queues(vif_to_ndev(vif));
-		vif->net_queue_stopped = false;
-	}
-}
+		netअगर_tx_wake_all_queues(vअगर_to_ndev(vअगर));
+		vअगर->net_queue_stopped = false;
+	पूर्ण
+पूर्ण
 
-void wil_update_net_queues(struct wil6210_priv *wil, struct wil6210_vif *vif,
-			   struct wil_ring *ring, bool check_stop)
-{
+व्योम wil_update_net_queues(काष्ठा wil6210_priv *wil, काष्ठा wil6210_vअगर *vअगर,
+			   काष्ठा wil_ring *ring, bool check_stop)
+अणु
 	spin_lock(&wil->net_queue_lock);
-	__wil_update_net_queues(wil, vif, ring, check_stop);
+	__wil_update_net_queues(wil, vअगर, ring, check_stop);
 	spin_unlock(&wil->net_queue_lock);
-}
+पूर्ण
 
-void wil_update_net_queues_bh(struct wil6210_priv *wil, struct wil6210_vif *vif,
-			      struct wil_ring *ring, bool check_stop)
-{
+व्योम wil_update_net_queues_bh(काष्ठा wil6210_priv *wil, काष्ठा wil6210_vअगर *vअगर,
+			      काष्ठा wil_ring *ring, bool check_stop)
+अणु
 	spin_lock_bh(&wil->net_queue_lock);
-	__wil_update_net_queues(wil, vif, ring, check_stop);
+	__wil_update_net_queues(wil, vअगर, ring, check_stop);
 	spin_unlock_bh(&wil->net_queue_lock);
-}
+पूर्ण
 
-netdev_tx_t wil_start_xmit(struct sk_buff *skb, struct net_device *ndev)
-{
-	struct wil6210_vif *vif = ndev_to_vif(ndev);
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	const u8 *da = wil_skb_get_da(skb);
+netdev_tx_t wil_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
+अणु
+	काष्ठा wil6210_vअगर *vअगर = ndev_to_vअगर(ndev);
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	स्थिर u8 *da = wil_skb_get_da(skb);
 	bool bcast = is_multicast_ether_addr(da);
-	struct wil_ring *ring;
-	static bool pr_once_fw;
-	int rc;
+	काष्ठा wil_ring *ring;
+	अटल bool pr_once_fw;
+	पूर्णांक rc;
 
 	wil_dbg_txrx(wil, "start_xmit\n");
-	if (unlikely(!test_bit(wil_status_fwready, wil->status))) {
-		if (!pr_once_fw) {
+	अगर (unlikely(!test_bit(wil_status_fwपढ़ोy, wil->status))) अणु
+		अगर (!pr_once_fw) अणु
 			wil_err(wil, "FW not ready\n");
 			pr_once_fw = true;
-		}
-		goto drop;
-	}
-	if (unlikely(!test_bit(wil_vif_fwconnected, vif->status))) {
+		पूर्ण
+		जाओ drop;
+	पूर्ण
+	अगर (unlikely(!test_bit(wil_vअगर_fwconnected, vअगर->status))) अणु
 		wil_dbg_ratelimited(wil,
 				    "VIF not connected, packet dropped\n");
-		goto drop;
-	}
-	if (unlikely(vif->wdev.iftype == NL80211_IFTYPE_MONITOR)) {
+		जाओ drop;
+	पूर्ण
+	अगर (unlikely(vअगर->wdev.अगरtype == NL80211_IFTYPE_MONITOR)) अणु
 		wil_err(wil, "Xmit in monitor mode not supported\n");
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 	pr_once_fw = false;
 
 	/* find vring */
-	if (vif->wdev.iftype == NL80211_IFTYPE_STATION && !vif->pbss) {
+	अगर (vअगर->wdev.अगरtype == NL80211_IFTYPE_STATION && !vअगर->pbss) अणु
 		/* in STA mode (ESS), all to same VRING (to AP) */
-		ring = wil_find_tx_ring_sta(wil, vif, skb);
-	} else if (bcast) {
-		if (vif->pbss || wil_check_multicast_to_unicast(wil, skb))
+		ring = wil_find_tx_ring_sta(wil, vअगर, skb);
+	पूर्ण अन्यथा अगर (bcast) अणु
+		अगर (vअगर->pbss || wil_check_multicast_to_unicast(wil, skb))
 			/* in pbss, no bcast VRING - duplicate skb in
 			 * all stations VRINGs
 			 */
-			ring = wil_find_tx_bcast_2(wil, vif, skb);
-		else if (vif->wdev.iftype == NL80211_IFTYPE_AP)
+			ring = wil_find_tx_bcast_2(wil, vअगर, skb);
+		अन्यथा अगर (vअगर->wdev.अगरtype == NL80211_IFTYPE_AP)
 			/* AP has a dedicated bcast VRING */
-			ring = wil_find_tx_bcast_1(wil, vif, skb);
-		else
+			ring = wil_find_tx_bcast_1(wil, vअगर, skb);
+		अन्यथा
 			/* unexpected combination, fallback to duplicating
 			 * the skb in all stations VRINGs
 			 */
-			ring = wil_find_tx_bcast_2(wil, vif, skb);
-	} else {
-		/* unicast, find specific VRING by dest. address */
-		ring = wil_find_tx_ucast(wil, vif, skb);
-	}
-	if (unlikely(!ring)) {
+			ring = wil_find_tx_bcast_2(wil, vअगर, skb);
+	पूर्ण अन्यथा अणु
+		/* unicast, find specअगरic VRING by dest. address */
+		ring = wil_find_tx_ucast(wil, vअगर, skb);
+	पूर्ण
+	अगर (unlikely(!ring)) अणु
 		wil_dbg_txrx(wil, "No Tx RING found for %pM\n", da);
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 	/* set up vring entry */
-	rc = wil_tx_ring(wil, vif, ring, skb);
+	rc = wil_tx_ring(wil, vअगर, ring, skb);
 
-	switch (rc) {
-	case 0:
+	चयन (rc) अणु
+	हाल 0:
 		/* shall we stop net queues? */
-		wil_update_net_queues_bh(wil, vif, ring, true);
+		wil_update_net_queues_bh(wil, vअगर, ring, true);
 		/* statistics will be updated on the tx_complete */
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	case -ENOMEM:
-		if (drop_if_ring_full)
-			goto drop;
-		return NETDEV_TX_BUSY;
-	default:
-		break; /* goto drop; */
-	}
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	हाल -ENOMEM:
+		अगर (drop_अगर_ring_full)
+			जाओ drop;
+		वापस NETDEV_TX_BUSY;
+	शेष:
+		अवरोध; /* जाओ drop; */
+	पूर्ण
  drop:
 	ndev->stats.tx_dropped++;
-	dev_kfree_skb_any(skb);
+	dev_kमुक्त_skb_any(skb);
 
-	return NET_XMIT_DROP;
-}
+	वापस NET_XMIT_DROP;
+पूर्ण
 
-void wil_tx_latency_calc(struct wil6210_priv *wil, struct sk_buff *skb,
-			 struct wil_sta_info *sta)
-{
-	int skb_time_us;
-	int bin;
+व्योम wil_tx_latency_calc(काष्ठा wil6210_priv *wil, काष्ठा sk_buff *skb,
+			 काष्ठा wil_sta_info *sta)
+अणु
+	पूर्णांक skb_समय_us;
+	पूर्णांक bin;
 
-	if (!wil->tx_latency)
-		return;
+	अगर (!wil->tx_latency)
+		वापस;
 
-	if (ktime_to_ms(*(ktime_t *)&skb->cb) == 0)
-		return;
+	अगर (kसमय_प्रकारo_ms(*(kसमय_प्रकार *)&skb->cb) == 0)
+		वापस;
 
-	skb_time_us = ktime_us_delta(ktime_get(), *(ktime_t *)&skb->cb);
-	bin = skb_time_us / wil->tx_latency_res;
-	bin = min_t(int, bin, WIL_NUM_LATENCY_BINS - 1);
+	skb_समय_us = kसमय_us_delta(kसमय_get(), *(kसमय_प्रकार *)&skb->cb);
+	bin = skb_समय_us / wil->tx_latency_res;
+	bin = min_t(पूर्णांक, bin, WIL_NUM_LATENCY_BINS - 1);
 
-	wil_dbg_txrx(wil, "skb time %dus => bin %d\n", skb_time_us, bin);
+	wil_dbg_txrx(wil, "skb time %dus => bin %d\n", skb_समय_us, bin);
 	sta->tx_latency_bins[bin]++;
-	sta->stats.tx_latency_total_us += skb_time_us;
-	if (skb_time_us < sta->stats.tx_latency_min_us)
-		sta->stats.tx_latency_min_us = skb_time_us;
-	if (skb_time_us > sta->stats.tx_latency_max_us)
-		sta->stats.tx_latency_max_us = skb_time_us;
-}
+	sta->stats.tx_latency_total_us += skb_समय_us;
+	अगर (skb_समय_us < sta->stats.tx_latency_min_us)
+		sta->stats.tx_latency_min_us = skb_समय_us;
+	अगर (skb_समय_us > sta->stats.tx_latency_max_us)
+		sta->stats.tx_latency_max_us = skb_समय_us;
+पूर्ण
 
 /* Clean up transmitted skb's from the Tx VRING
  *
@@ -2417,56 +2418,56 @@ void wil_tx_latency_calc(struct wil6210_priv *wil, struct sk_buff *skb,
  *
  * Safe to call from IRQ
  */
-int wil_tx_complete(struct wil6210_vif *vif, int ringid)
-{
-	struct wil6210_priv *wil = vif_to_wil(vif);
-	struct net_device *ndev = vif_to_ndev(vif);
-	struct device *dev = wil_to_dev(wil);
-	struct wil_ring *vring = &wil->ring_tx[ringid];
-	struct wil_ring_tx_data *txdata = &wil->ring_tx_data[ringid];
-	int done = 0;
-	int cid = wil->ring2cid_tid[ringid][0];
-	struct wil_net_stats *stats = NULL;
-	volatile struct vring_tx_desc *_d;
-	int used_before_complete;
-	int used_new;
+पूर्णांक wil_tx_complete(काष्ठा wil6210_vअगर *vअगर, पूर्णांक ringid)
+अणु
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
+	काष्ठा net_device *ndev = vअगर_to_ndev(vअगर);
+	काष्ठा device *dev = wil_to_dev(wil);
+	काष्ठा wil_ring *vring = &wil->ring_tx[ringid];
+	काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[ringid];
+	पूर्णांक करोne = 0;
+	पूर्णांक cid = wil->ring2cid_tid[ringid][0];
+	काष्ठा wil_net_stats *stats = शून्य;
+	अस्थिर काष्ठा vring_tx_desc *_d;
+	पूर्णांक used_beक्रमe_complete;
+	पूर्णांक used_new;
 
-	if (unlikely(!vring->va)) {
+	अगर (unlikely(!vring->va)) अणु
 		wil_err(wil, "Tx irq[%d]: vring not initialized\n", ringid);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (unlikely(!txdata->enabled)) {
+	अगर (unlikely(!txdata->enabled)) अणु
 		wil_info(wil, "Tx irq[%d]: vring disabled\n", ringid);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	wil_dbg_txrx(wil, "tx_complete: (%d)\n", ringid);
 
-	used_before_complete = wil_ring_used_tx(vring);
+	used_beक्रमe_complete = wil_ring_used_tx(vring);
 
-	if (cid < wil->max_assoc_sta)
+	अगर (cid < wil->max_assoc_sta)
 		stats = &wil->sta[cid].stats;
 
-	while (!wil_ring_is_empty(vring)) {
-		int new_swtail;
-		struct wil_ctx *ctx = &vring->ctx[vring->swtail];
-		/* For the fragmented skb, HW will set DU bit only for the
-		 * last fragment. look for it.
+	जबतक (!wil_ring_is_empty(vring)) अणु
+		पूर्णांक new_swtail;
+		काष्ठा wil_ctx *ctx = &vring->ctx[vring->swtail];
+		/* For the fragmented skb, HW will set DU bit only क्रम the
+		 * last fragment. look क्रम it.
 		 * In TSO the first DU will include hdr desc
 		 */
-		int lf = (vring->swtail + ctx->nr_frags) % vring->size;
+		पूर्णांक lf = (vring->swtail + ctx->nr_frags) % vring->size;
 		/* TODO: check we are not past head */
 
 		_d = &vring->va[lf].tx.legacy;
-		if (unlikely(!(_d->dma.status & TX_DMA_STATUS_DU)))
-			break;
+		अगर (unlikely(!(_d->dma.status & TX_DMA_STATUS_DU)))
+			अवरोध;
 
 		new_swtail = (lf + 1) % vring->size;
-		while (vring->swtail != new_swtail) {
-			struct vring_tx_desc dd, *d = &dd;
+		जबतक (vring->swtail != new_swtail) अणु
+			काष्ठा vring_tx_desc dd, *d = &dd;
 			u16 dmalen;
-			struct sk_buff *skb;
+			काष्ठा sk_buff *skb;
 
 			ctx = &vring->ctx[vring->swtail];
 			skb = ctx->skb;
@@ -2475,45 +2476,45 @@ int wil_tx_complete(struct wil6210_vif *vif, int ringid)
 			*d = *_d;
 
 			dmalen = le16_to_cpu(d->dma.length);
-			trace_wil6210_tx_done(ringid, vring->swtail, dmalen,
+			trace_wil6210_tx_करोne(ringid, vring->swtail, dmalen,
 					      d->dma.error);
 			wil_dbg_txrx(wil,
 				     "TxC[%2d][%3d] : %d bytes, status 0x%02x err 0x%02x\n",
 				     ringid, vring->swtail, dmalen,
 				     d->dma.status, d->dma.error);
 			wil_hex_dump_txrx("TxCD ", DUMP_PREFIX_NONE, 32, 4,
-					  (const void *)d, sizeof(*d), false);
+					  (स्थिर व्योम *)d, माप(*d), false);
 
 			wil->txrx_ops.tx_desc_unmap(dev,
-						    (union wil_tx_desc *)d,
+						    (जोड़ wil_tx_desc *)d,
 						    ctx);
 
-			if (skb) {
-				if (likely(d->dma.error == 0)) {
+			अगर (skb) अणु
+				अगर (likely(d->dma.error == 0)) अणु
 					ndev->stats.tx_packets++;
 					ndev->stats.tx_bytes += skb->len;
-					if (stats) {
+					अगर (stats) अणु
 						stats->tx_packets++;
 						stats->tx_bytes += skb->len;
 
 						wil_tx_latency_calc(wil, skb,
 							&wil->sta[cid]);
-					}
-				} else {
+					पूर्ण
+				पूर्ण अन्यथा अणु
 					ndev->stats.tx_errors++;
-					if (stats)
+					अगर (stats)
 						stats->tx_errors++;
-				}
+				पूर्ण
 
-				if (skb->protocol == cpu_to_be16(ETH_P_PAE))
-					wil_tx_complete_handle_eapol(vif, skb);
+				अगर (skb->protocol == cpu_to_be16(ETH_P_PAE))
+					wil_tx_complete_handle_eapol(vअगर, skb);
 
 				wil_consume_skb(skb, d->dma.error == 0);
-			}
-			memset(ctx, 0, sizeof(*ctx));
-			/* Make sure the ctx is zeroed before updating the tail
-			 * to prevent a case where wil_tx_ring will see
-			 * this descriptor as used and handle it before ctx zero
+			पूर्ण
+			स_रखो(ctx, 0, माप(*ctx));
+			/* Make sure the ctx is zeroed beक्रमe updating the tail
+			 * to prevent a हाल where wil_tx_ring will see
+			 * this descriptor as used and handle it beक्रमe ctx zero
 			 * is completed.
 			 */
 			wmb();
@@ -2523,38 +2524,38 @@ int wil_tx_complete(struct wil6210_vif *vif, int ringid)
 			 * - rest of descriptor will be initialized on Tx.
 			 */
 			vring->swtail = wil_ring_next_tail(vring);
-			done++;
-		}
-	}
+			करोne++;
+		पूर्ण
+	पूर्ण
 
-	/* performance monitoring */
+	/* perक्रमmance monitoring */
 	used_new = wil_ring_used_tx(vring);
-	if (wil_val_in_range(wil->ring_idle_trsh,
-			     used_new, used_before_complete)) {
+	अगर (wil_val_in_range(wil->ring_idle_trsh,
+			     used_new, used_beक्रमe_complete)) अणु
 		wil_dbg_txrx(wil, "Ring[%2d] idle %d -> %d\n",
-			     ringid, used_before_complete, used_new);
+			     ringid, used_beक्रमe_complete, used_new);
 		txdata->last_idle = get_cycles();
-	}
+	पूर्ण
 
 	/* shall we wake net queues? */
-	if (done)
-		wil_update_net_queues(wil, vif, vring, false);
+	अगर (करोne)
+		wil_update_net_queues(wil, vअगर, vring, false);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-static inline int wil_tx_init(struct wil6210_priv *wil)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक wil_tx_init(काष्ठा wil6210_priv *wil)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void wil_tx_fini(struct wil6210_priv *wil) {}
+अटल अंतरभूत व्योम wil_tx_fini(काष्ठा wil6210_priv *wil) अणुपूर्ण
 
-static void wil_get_reorder_params(struct wil6210_priv *wil,
-				   struct sk_buff *skb, int *tid, int *cid,
-				   int *mid, u16 *seq, int *mcast, int *retry)
-{
-	struct vring_rx_desc *d = wil_skb_rxdesc(skb);
+अटल व्योम wil_get_reorder_params(काष्ठा wil6210_priv *wil,
+				   काष्ठा sk_buff *skb, पूर्णांक *tid, पूर्णांक *cid,
+				   पूर्णांक *mid, u16 *seq, पूर्णांक *mcast, पूर्णांक *retry)
+अणु
+	काष्ठा vring_rx_desc *d = wil_skb_rxdesc(skb);
 
 	*tid = wil_rxdesc_tid(d);
 	*cid = wil_skb_get_cid(skb);
@@ -2562,30 +2563,30 @@ static void wil_get_reorder_params(struct wil6210_priv *wil,
 	*seq = wil_rxdesc_seq(d);
 	*mcast = wil_rxdesc_mcast(d);
 	*retry = wil_rxdesc_retry(d);
-}
+पूर्ण
 
-void wil_init_txrx_ops_legacy_dma(struct wil6210_priv *wil)
-{
-	wil->txrx_ops.configure_interrupt_moderation =
-		wil_configure_interrupt_moderation;
+व्योम wil_init_txrx_ops_legacy_dma(काष्ठा wil6210_priv *wil)
+अणु
+	wil->txrx_ops.configure_पूर्णांकerrupt_moderation =
+		wil_configure_पूर्णांकerrupt_moderation;
 	/* TX ops */
 	wil->txrx_ops.tx_desc_map = wil_tx_desc_map;
 	wil->txrx_ops.tx_desc_unmap = wil_txdesc_unmap;
 	wil->txrx_ops.tx_ring_tso =  __wil_tx_vring_tso;
 	wil->txrx_ops.ring_init_tx = wil_vring_init_tx;
-	wil->txrx_ops.ring_fini_tx = wil_vring_free;
+	wil->txrx_ops.ring_fini_tx = wil_vring_मुक्त;
 	wil->txrx_ops.ring_init_bcast = wil_vring_init_bcast;
 	wil->txrx_ops.tx_init = wil_tx_init;
 	wil->txrx_ops.tx_fini = wil_tx_fini;
-	wil->txrx_ops.tx_ring_modify = wil_tx_vring_modify;
+	wil->txrx_ops.tx_ring_modअगरy = wil_tx_vring_modअगरy;
 	/* RX ops */
 	wil->txrx_ops.rx_init = wil_rx_init;
 	wil->txrx_ops.wmi_addba_rx_resp = wmi_addba_rx_resp;
 	wil->txrx_ops.get_reorder_params = wil_get_reorder_params;
-	wil->txrx_ops.get_netif_rx_params =
-		wil_get_netif_rx_params;
+	wil->txrx_ops.get_netअगर_rx_params =
+		wil_get_netअगर_rx_params;
 	wil->txrx_ops.rx_crypto_check = wil_rx_crypto_check;
 	wil->txrx_ops.rx_error_check = wil_rx_error_check;
 	wil->txrx_ops.is_rx_idle = wil_is_rx_idle;
 	wil->txrx_ops.rx_fini = wil_rx_fini;
-}
+पूर्ण

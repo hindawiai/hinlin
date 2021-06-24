@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#include <rdma/rdma_netlink.h>
-#include <net/addrconf.h>
-#include "rxe.h"
-#include "rxe_loc.h"
+#समावेश <rdma/rdma_netlink.h>
+#समावेश <net/addrconf.h>
+#समावेश "rxe.h"
+#समावेश "rxe_loc.h"
 
 MODULE_AUTHOR("Bob Pearson, Frank Zago, John Groves, Kamal Heib");
 MODULE_DESCRIPTION("Soft RDMA transport");
@@ -15,12 +16,12 @@ MODULE_LICENSE("Dual BSD/GPL");
 
 bool rxe_initialized;
 
-/* free resources for a rxe device all objects created for this device must
+/* मुक्त resources क्रम a rxe device all objects created क्रम this device must
  * have been destroyed
  */
-void rxe_dealloc(struct ib_device *ib_dev)
-{
-	struct rxe_dev *rxe = container_of(ib_dev, struct rxe_dev, ib_dev);
+व्योम rxe_dealloc(काष्ठा ib_device *ib_dev)
+अणु
+	काष्ठा rxe_dev *rxe = container_of(ib_dev, काष्ठा rxe_dev, ib_dev);
 
 	rxe_pool_cleanup(&rxe->uc_pool);
 	rxe_pool_cleanup(&rxe->pd_pool);
@@ -33,16 +34,16 @@ void rxe_dealloc(struct ib_device *ib_dev)
 	rxe_pool_cleanup(&rxe->mc_grp_pool);
 	rxe_pool_cleanup(&rxe->mc_elem_pool);
 
-	if (rxe->tfm)
-		crypto_free_shash(rxe->tfm);
-}
+	अगर (rxe->tfm)
+		crypto_मुक्त_shash(rxe->tfm);
+पूर्ण
 
 /* initialize rxe device parameters */
-static void rxe_init_device_param(struct rxe_dev *rxe)
-{
-	rxe->max_inline_data			= RXE_MAX_INLINE_DATA;
+अटल व्योम rxe_init_device_param(काष्ठा rxe_dev *rxe)
+अणु
+	rxe->max_अंतरभूत_data			= RXE_MAX_INLINE_DATA;
 
-	rxe->attr.vendor_id			= RXE_VENDOR_ID;
+	rxe->attr.venकरोr_id			= RXE_VENDOR_ID;
 	rxe->attr.max_mr_size			= RXE_MAX_MR_SIZE;
 	rxe->attr.page_size_cap			= RXE_PAGE_SIZE_CAP;
 	rxe->attr.max_qp			= RXE_MAX_QP;
@@ -69,15 +70,15 @@ static void rxe_init_device_param(struct rxe_dev *rxe)
 	rxe->attr.max_fast_reg_page_list_len	= RXE_MAX_FMR_PAGE_LIST_LEN;
 	rxe->attr.max_pkeys			= RXE_MAX_PKEYS;
 	rxe->attr.local_ca_ack_delay		= RXE_LOCAL_CA_ACK_DELAY;
-	addrconf_addr_eui48((unsigned char *)&rxe->attr.sys_image_guid,
+	addrconf_addr_eui48((अचिन्हित अक्षर *)&rxe->attr.sys_image_guid,
 			rxe->ndev->dev_addr);
 
 	rxe->max_ucontext			= RXE_MAX_UCONTEXT;
-}
+पूर्ण
 
 /* initialize port attributes */
-static void rxe_init_port_param(struct rxe_port *port)
-{
+अटल व्योम rxe_init_port_param(काष्ठा rxe_port *port)
+अणु
 	port->attr.state		= IB_PORT_DOWN;
 	port->attr.max_mtu		= IB_MTU_4096;
 	port->attr.active_mtu		= IB_MTU_256;
@@ -92,84 +93,84 @@ static void rxe_init_port_param(struct rxe_port *port)
 	port->attr.lmc			= RXE_PORT_LMC;
 	port->attr.max_vl_num		= RXE_PORT_MAX_VL_NUM;
 	port->attr.sm_sl		= RXE_PORT_SM_SL;
-	port->attr.subnet_timeout	= RXE_PORT_SUBNET_TIMEOUT;
+	port->attr.subnet_समयout	= RXE_PORT_SUBNET_TIMEOUT;
 	port->attr.init_type_reply	= RXE_PORT_INIT_TYPE_REPLY;
 	port->attr.active_width		= RXE_PORT_ACTIVE_WIDTH;
 	port->attr.active_speed		= RXE_PORT_ACTIVE_SPEED;
 	port->attr.phys_state		= RXE_PORT_PHYS_STATE;
-	port->mtu_cap			= ib_mtu_enum_to_int(IB_MTU_256);
+	port->mtu_cap			= ib_mtu_क्रमागत_to_पूर्णांक(IB_MTU_256);
 	port->subnet_prefix		= cpu_to_be64(RXE_PORT_SUBNET_PREFIX);
-}
+पूर्ण
 
 /* initialize port state, note IB convention that HCA ports are always
  * numbered from 1
  */
-static void rxe_init_ports(struct rxe_dev *rxe)
-{
-	struct rxe_port *port = &rxe->port;
+अटल व्योम rxe_init_ports(काष्ठा rxe_dev *rxe)
+अणु
+	काष्ठा rxe_port *port = &rxe->port;
 
 	rxe_init_port_param(port);
-	addrconf_addr_eui48((unsigned char *)&port->port_guid,
+	addrconf_addr_eui48((अचिन्हित अक्षर *)&port->port_guid,
 			    rxe->ndev->dev_addr);
 	spin_lock_init(&port->port_lock);
-}
+पूर्ण
 
 /* init pools of managed objects */
-static int rxe_init_pools(struct rxe_dev *rxe)
-{
-	int err;
+अटल पूर्णांक rxe_init_pools(काष्ठा rxe_dev *rxe)
+अणु
+	पूर्णांक err;
 
 	err = rxe_pool_init(rxe, &rxe->uc_pool, RXE_TYPE_UC,
 			    rxe->max_ucontext);
-	if (err)
-		goto err1;
+	अगर (err)
+		जाओ err1;
 
 	err = rxe_pool_init(rxe, &rxe->pd_pool, RXE_TYPE_PD,
 			    rxe->attr.max_pd);
-	if (err)
-		goto err2;
+	अगर (err)
+		जाओ err2;
 
 	err = rxe_pool_init(rxe, &rxe->ah_pool, RXE_TYPE_AH,
 			    rxe->attr.max_ah);
-	if (err)
-		goto err3;
+	अगर (err)
+		जाओ err3;
 
 	err = rxe_pool_init(rxe, &rxe->srq_pool, RXE_TYPE_SRQ,
 			    rxe->attr.max_srq);
-	if (err)
-		goto err4;
+	अगर (err)
+		जाओ err4;
 
 	err = rxe_pool_init(rxe, &rxe->qp_pool, RXE_TYPE_QP,
 			    rxe->attr.max_qp);
-	if (err)
-		goto err5;
+	अगर (err)
+		जाओ err5;
 
 	err = rxe_pool_init(rxe, &rxe->cq_pool, RXE_TYPE_CQ,
 			    rxe->attr.max_cq);
-	if (err)
-		goto err6;
+	अगर (err)
+		जाओ err6;
 
 	err = rxe_pool_init(rxe, &rxe->mr_pool, RXE_TYPE_MR,
 			    rxe->attr.max_mr);
-	if (err)
-		goto err7;
+	अगर (err)
+		जाओ err7;
 
 	err = rxe_pool_init(rxe, &rxe->mw_pool, RXE_TYPE_MW,
 			    rxe->attr.max_mw);
-	if (err)
-		goto err8;
+	अगर (err)
+		जाओ err8;
 
 	err = rxe_pool_init(rxe, &rxe->mc_grp_pool, RXE_TYPE_MC_GRP,
 			    rxe->attr.max_mcast_grp);
-	if (err)
-		goto err9;
+	अगर (err)
+		जाओ err9;
 
 	err = rxe_pool_init(rxe, &rxe->mc_elem_pool, RXE_TYPE_MC_ELEM,
 			    rxe->attr.max_total_mcast_qp_attach);
-	if (err)
-		goto err10;
+	अगर (err)
+		जाओ err10;
 
-	return 0;
+	वापस 0;
 
 err10:
 	rxe_pool_cleanup(&rxe->mc_grp_pool);
@@ -190,22 +191,22 @@ err3:
 err2:
 	rxe_pool_cleanup(&rxe->uc_pool);
 err1:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* initialize rxe device state */
-static int rxe_init(struct rxe_dev *rxe)
-{
-	int err;
+अटल पूर्णांक rxe_init(काष्ठा rxe_dev *rxe)
+अणु
+	पूर्णांक err;
 
-	/* init default device parameters */
+	/* init शेष device parameters */
 	rxe_init_device_param(rxe);
 
 	rxe_init_ports(rxe);
 
 	err = rxe_init_pools(rxe);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* init pending mmap list */
 	spin_lock_init(&rxe->mmap_offset_lock);
@@ -214,97 +215,97 @@ static int rxe_init(struct rxe_dev *rxe)
 
 	mutex_init(&rxe->usdev_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rxe_set_mtu(struct rxe_dev *rxe, unsigned int ndev_mtu)
-{
-	struct rxe_port *port = &rxe->port;
-	enum ib_mtu mtu;
+व्योम rxe_set_mtu(काष्ठा rxe_dev *rxe, अचिन्हित पूर्णांक ndev_mtu)
+अणु
+	काष्ठा rxe_port *port = &rxe->port;
+	क्रमागत ib_mtu mtu;
 
-	mtu = eth_mtu_int_to_enum(ndev_mtu);
+	mtu = eth_mtu_पूर्णांक_to_क्रमागत(ndev_mtu);
 
 	/* Make sure that new MTU in range */
-	mtu = mtu ? min_t(enum ib_mtu, mtu, IB_MTU_4096) : IB_MTU_256;
+	mtu = mtu ? min_t(क्रमागत ib_mtu, mtu, IB_MTU_4096) : IB_MTU_256;
 
 	port->attr.active_mtu = mtu;
-	port->mtu_cap = ib_mtu_enum_to_int(mtu);
-}
+	port->mtu_cap = ib_mtu_क्रमागत_to_पूर्णांक(mtu);
+पूर्ण
 
-/* called by ifc layer to create new rxe device.
- * The caller should allocate memory for rxe by calling ib_alloc_device.
+/* called by अगरc layer to create new rxe device.
+ * The caller should allocate memory क्रम rxe by calling ib_alloc_device.
  */
-int rxe_add(struct rxe_dev *rxe, unsigned int mtu, const char *ibdev_name)
-{
-	int err;
+पूर्णांक rxe_add(काष्ठा rxe_dev *rxe, अचिन्हित पूर्णांक mtu, स्थिर अक्षर *ibdev_name)
+अणु
+	पूर्णांक err;
 
 	err = rxe_init(rxe);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	rxe_set_mtu(rxe, mtu);
 
-	return rxe_register_device(rxe, ibdev_name);
-}
+	वापस rxe_रेजिस्टर_device(rxe, ibdev_name);
+पूर्ण
 
-static int rxe_newlink(const char *ibdev_name, struct net_device *ndev)
-{
-	struct rxe_dev *exists;
-	int err = 0;
+अटल पूर्णांक rxe_newlink(स्थिर अक्षर *ibdev_name, काष्ठा net_device *ndev)
+अणु
+	काष्ठा rxe_dev *exists;
+	पूर्णांक err = 0;
 
-	if (is_vlan_dev(ndev)) {
+	अगर (is_vlan_dev(ndev)) अणु
 		pr_err("rxe creation allowed on top of a real device only\n");
 		err = -EPERM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	exists = rxe_get_dev_from_net(ndev);
-	if (exists) {
+	अगर (exists) अणु
 		ib_device_put(&exists->ib_dev);
 		pr_err("already configured on %s\n", ndev->name);
 		err = -EEXIST;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	err = rxe_net_add(ibdev_name, ndev);
-	if (err) {
+	अगर (err) अणु
 		pr_err("failed to add %s\n", ndev->name);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct rdma_link_ops rxe_link_ops = {
+अटल काष्ठा rdma_link_ops rxe_link_ops = अणु
 	.type = "rxe",
 	.newlink = rxe_newlink,
-};
+पूर्ण;
 
-static int __init rxe_module_init(void)
-{
-	int err;
+अटल पूर्णांक __init rxe_module_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = rxe_net_init();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	rdma_link_register(&rxe_link_ops);
+	rdma_link_रेजिस्टर(&rxe_link_ops);
 	rxe_initialized = true;
 	pr_info("loaded\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit rxe_module_exit(void)
-{
-	rdma_link_unregister(&rxe_link_ops);
-	ib_unregister_driver(RDMA_DRIVER_RXE);
-	rxe_net_exit();
+अटल व्योम __निकास rxe_module_निकास(व्योम)
+अणु
+	rdma_link_unरेजिस्टर(&rxe_link_ops);
+	ib_unरेजिस्टर_driver(RDMA_DRIVER_RXE);
+	rxe_net_निकास();
 
 	rxe_initialized = false;
 	pr_info("unloaded\n");
-}
+पूर्ण
 
 late_initcall(rxe_module_init);
-module_exit(rxe_module_exit);
+module_निकास(rxe_module_निकास);
 
 MODULE_ALIAS_RDMA_LINK("rxe");

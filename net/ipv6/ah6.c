@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C)2002 USAGI/WIDE Project
  *
@@ -11,45 +12,45 @@
  *	This file is derived from net/ipv4/ah.c.
  */
 
-#define pr_fmt(fmt) "IPv6: " fmt
+#घोषणा pr_fmt(fmt) "IPv6: " fmt
 
-#include <crypto/algapi.h>
-#include <crypto/hash.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <net/ip.h>
-#include <net/ah.h>
-#include <linux/crypto.h>
-#include <linux/pfkeyv2.h>
-#include <linux/string.h>
-#include <linux/scatterlist.h>
-#include <net/ip6_route.h>
-#include <net/icmp.h>
-#include <net/ipv6.h>
-#include <net/protocol.h>
-#include <net/xfrm.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/hash.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <net/ip.h>
+#समावेश <net/ah.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/pfkeyv2.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/scatterlist.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/icmp.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/protocol.h>
+#समावेश <net/xfrm.h>
 
-#define IPV6HDR_BASELEN 8
+#घोषणा IPV6HDR_BASELEN 8
 
-struct tmp_ext {
-#if IS_ENABLED(CONFIG_IPV6_MIP6)
-		struct in6_addr saddr;
-#endif
-		struct in6_addr daddr;
-		char hdrs[];
-};
+काष्ठा पंचांगp_ext अणु
+#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
+		काष्ठा in6_addr saddr;
+#पूर्ण_अगर
+		काष्ठा in6_addr daddr;
+		अक्षर hdrs[];
+पूर्ण;
 
-struct ah_skb_cb {
-	struct xfrm_skb_cb xfrm;
-	void *tmp;
-};
+काष्ठा ah_skb_cb अणु
+	काष्ठा xfrm_skb_cb xfrm;
+	व्योम *पंचांगp;
+पूर्ण;
 
-#define AH_SKB_CB(__skb) ((struct ah_skb_cb *)&((__skb)->cb[0]))
+#घोषणा AH_SKB_CB(__skb) ((काष्ठा ah_skb_cb *)&((__skb)->cb[0]))
 
-static void *ah_alloc_tmp(struct crypto_ahash *ahash, int nfrags,
-			  unsigned int size)
-{
-	unsigned int len;
+अटल व्योम *ah_alloc_पंचांगp(काष्ठा crypto_ahash *ahash, पूर्णांक nfrags,
+			  अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक len;
 
 	len = size + crypto_ahash_digestsize(ahash) +
 	      (crypto_ahash_alignmask(ahash) &
@@ -57,150 +58,150 @@ static void *ah_alloc_tmp(struct crypto_ahash *ahash, int nfrags,
 
 	len = ALIGN(len, crypto_tfm_ctx_alignment());
 
-	len += sizeof(struct ahash_request) + crypto_ahash_reqsize(ahash);
-	len = ALIGN(len, __alignof__(struct scatterlist));
+	len += माप(काष्ठा ahash_request) + crypto_ahash_reqsize(ahash);
+	len = ALIGN(len, __alignof__(काष्ठा scatterlist));
 
-	len += sizeof(struct scatterlist) * nfrags;
+	len += माप(काष्ठा scatterlist) * nfrags;
 
-	return kmalloc(len, GFP_ATOMIC);
-}
+	वापस kदो_स्मृति(len, GFP_ATOMIC);
+पूर्ण
 
-static inline struct tmp_ext *ah_tmp_ext(void *base)
-{
-	return base + IPV6HDR_BASELEN;
-}
+अटल अंतरभूत काष्ठा पंचांगp_ext *ah_पंचांगp_ext(व्योम *base)
+अणु
+	वापस base + IPV6HDR_BASELEN;
+पूर्ण
 
-static inline u8 *ah_tmp_auth(u8 *tmp, unsigned int offset)
-{
-	return tmp + offset;
-}
+अटल अंतरभूत u8 *ah_पंचांगp_auth(u8 *पंचांगp, अचिन्हित पूर्णांक offset)
+अणु
+	वापस पंचांगp + offset;
+पूर्ण
 
-static inline u8 *ah_tmp_icv(struct crypto_ahash *ahash, void *tmp,
-			     unsigned int offset)
-{
-	return PTR_ALIGN((u8 *)tmp + offset, crypto_ahash_alignmask(ahash) + 1);
-}
+अटल अंतरभूत u8 *ah_पंचांगp_icv(काष्ठा crypto_ahash *ahash, व्योम *पंचांगp,
+			     अचिन्हित पूर्णांक offset)
+अणु
+	वापस PTR_ALIGN((u8 *)पंचांगp + offset, crypto_ahash_alignmask(ahash) + 1);
+पूर्ण
 
-static inline struct ahash_request *ah_tmp_req(struct crypto_ahash *ahash,
+अटल अंतरभूत काष्ठा ahash_request *ah_पंचांगp_req(काष्ठा crypto_ahash *ahash,
 					       u8 *icv)
-{
-	struct ahash_request *req;
+अणु
+	काष्ठा ahash_request *req;
 
-	req = (void *)PTR_ALIGN(icv + crypto_ahash_digestsize(ahash),
+	req = (व्योम *)PTR_ALIGN(icv + crypto_ahash_digestsize(ahash),
 				crypto_tfm_ctx_alignment());
 
 	ahash_request_set_tfm(req, ahash);
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
-static inline struct scatterlist *ah_req_sg(struct crypto_ahash *ahash,
-					     struct ahash_request *req)
-{
-	return (void *)ALIGN((unsigned long)(req + 1) +
+अटल अंतरभूत काष्ठा scatterlist *ah_req_sg(काष्ठा crypto_ahash *ahash,
+					     काष्ठा ahash_request *req)
+अणु
+	वापस (व्योम *)ALIGN((अचिन्हित दीर्घ)(req + 1) +
 			     crypto_ahash_reqsize(ahash),
-			     __alignof__(struct scatterlist));
-}
+			     __alignof__(काष्ठा scatterlist));
+पूर्ण
 
-static bool zero_out_mutable_opts(struct ipv6_opt_hdr *opthdr)
-{
+अटल bool zero_out_mutable_opts(काष्ठा ipv6_opt_hdr *opthdr)
+अणु
 	u8 *opt = (u8 *)opthdr;
-	int len = ipv6_optlen(opthdr);
-	int off = 0;
-	int optlen = 0;
+	पूर्णांक len = ipv6_optlen(opthdr);
+	पूर्णांक off = 0;
+	पूर्णांक optlen = 0;
 
 	off += 2;
 	len -= 2;
 
-	while (len > 0) {
+	जबतक (len > 0) अणु
 
-		switch (opt[off]) {
+		चयन (opt[off]) अणु
 
-		case IPV6_TLV_PAD1:
+		हाल IPV6_TLV_PAD1:
 			optlen = 1;
-			break;
-		default:
-			if (len < 2)
-				goto bad;
+			अवरोध;
+		शेष:
+			अगर (len < 2)
+				जाओ bad;
 			optlen = opt[off+1]+2;
-			if (len < optlen)
-				goto bad;
-			if (opt[off] & 0x20)
-				memset(&opt[off+2], 0, opt[off+1]);
-			break;
-		}
+			अगर (len < optlen)
+				जाओ bad;
+			अगर (opt[off] & 0x20)
+				स_रखो(&opt[off+2], 0, opt[off+1]);
+			अवरोध;
+		पूर्ण
 
 		off += optlen;
 		len -= optlen;
-	}
-	if (len == 0)
-		return true;
+	पूर्ण
+	अगर (len == 0)
+		वापस true;
 
 bad:
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6_MIP6)
+#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
 /**
  *	ipv6_rearrange_destopt - rearrange IPv6 destination options header
  *	@iph: IPv6 header
  *	@destopt: destionation options header
  */
-static void ipv6_rearrange_destopt(struct ipv6hdr *iph, struct ipv6_opt_hdr *destopt)
-{
+अटल व्योम ipv6_rearrange_destopt(काष्ठा ipv6hdr *iph, काष्ठा ipv6_opt_hdr *destopt)
+अणु
 	u8 *opt = (u8 *)destopt;
-	int len = ipv6_optlen(destopt);
-	int off = 0;
-	int optlen = 0;
+	पूर्णांक len = ipv6_optlen(destopt);
+	पूर्णांक off = 0;
+	पूर्णांक optlen = 0;
 
 	off += 2;
 	len -= 2;
 
-	while (len > 0) {
+	जबतक (len > 0) अणु
 
-		switch (opt[off]) {
+		चयन (opt[off]) अणु
 
-		case IPV6_TLV_PAD1:
+		हाल IPV6_TLV_PAD1:
 			optlen = 1;
-			break;
-		default:
-			if (len < 2)
-				goto bad;
+			अवरोध;
+		शेष:
+			अगर (len < 2)
+				जाओ bad;
 			optlen = opt[off+1]+2;
-			if (len < optlen)
-				goto bad;
+			अगर (len < optlen)
+				जाओ bad;
 
 			/* Rearrange the source address in @iph and the
-			 * addresses in home address option for final source.
-			 * See 11.3.2 of RFC 3775 for details.
+			 * addresses in home address option क्रम final source.
+			 * See 11.3.2 of RFC 3775 क्रम details.
 			 */
-			if (opt[off] == IPV6_TLV_HAO) {
-				struct in6_addr final_addr;
-				struct ipv6_destopt_hao *hao;
+			अगर (opt[off] == IPV6_TLV_HAO) अणु
+				काष्ठा in6_addr final_addr;
+				काष्ठा ipv6_destopt_hao *hao;
 
-				hao = (struct ipv6_destopt_hao *)&opt[off];
-				if (hao->length != sizeof(hao->addr)) {
+				hao = (काष्ठा ipv6_destopt_hao *)&opt[off];
+				अगर (hao->length != माप(hao->addr)) अणु
 					net_warn_ratelimited("destopt hao: invalid header length: %u\n",
 							     hao->length);
-					goto bad;
-				}
+					जाओ bad;
+				पूर्ण
 				final_addr = hao->addr;
 				hao->addr = iph->saddr;
 				iph->saddr = final_addr;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		off += optlen;
 		len -= optlen;
-	}
-	/* Note: ok if len == 0 */
+	पूर्ण
+	/* Note: ok अगर len == 0 */
 bad:
-	return;
-}
-#else
-static void ipv6_rearrange_destopt(struct ipv6hdr *iph, struct ipv6_opt_hdr *destopt) {}
-#endif
+	वापस;
+पूर्ण
+#अन्यथा
+अटल व्योम ipv6_rearrange_destopt(काष्ठा ipv6hdr *iph, काष्ठा ipv6_opt_hdr *destopt) अणुपूर्ण
+#पूर्ण_अगर
 
 /**
  *	ipv6_rearrange_rthdr - rearrange IPv6 routing header
@@ -209,21 +210,21 @@ static void ipv6_rearrange_destopt(struct ipv6hdr *iph, struct ipv6_opt_hdr *des
  *
  *	Rearrange the destination address in @iph and the addresses in @rthdr
  *	so that they appear in the order they will at the final destination.
- *	See Appendix A2 of RFC 2402 for details.
+ *	See Appendix A2 of RFC 2402 क्रम details.
  */
-static void ipv6_rearrange_rthdr(struct ipv6hdr *iph, struct ipv6_rt_hdr *rthdr)
-{
-	int segments, segments_left;
-	struct in6_addr *addrs;
-	struct in6_addr final_addr;
+अटल व्योम ipv6_rearrange_rthdr(काष्ठा ipv6hdr *iph, काष्ठा ipv6_rt_hdr *rthdr)
+अणु
+	पूर्णांक segments, segments_left;
+	काष्ठा in6_addr *addrs;
+	काष्ठा in6_addr final_addr;
 
 	segments_left = rthdr->segments_left;
-	if (segments_left == 0)
-		return;
+	अगर (segments_left == 0)
+		वापस;
 	rthdr->segments_left = 0;
 
-	/* The value of rthdr->hdrlen has been verified either by the system
-	 * call if it is locally generated, or by ipv6_rthdr_rcv() for incoming
+	/* The value of rthdr->hdrlen has been verअगरied either by the प्रणाली
+	 * call अगर it is locally generated, or by ipv6_rthdr_rcv() क्रम incoming
 	 * packets.  So we can assume that it is even and that segments is
 	 * greater than or equal to segments_left.
 	 *
@@ -231,150 +232,150 @@ static void ipv6_rearrange_rthdr(struct ipv6hdr *iph, struct ipv6_rt_hdr *rthdr)
 	 */
 	segments = rthdr->hdrlen >> 1;
 
-	addrs = ((struct rt0_hdr *)rthdr)->addr;
+	addrs = ((काष्ठा rt0_hdr *)rthdr)->addr;
 	final_addr = addrs[segments - 1];
 
 	addrs += segments - segments_left;
-	memmove(addrs + 1, addrs, (segments_left - 1) * sizeof(*addrs));
+	स_हटाओ(addrs + 1, addrs, (segments_left - 1) * माप(*addrs));
 
 	addrs[0] = iph->daddr;
 	iph->daddr = final_addr;
-}
+पूर्ण
 
-static int ipv6_clear_mutable_options(struct ipv6hdr *iph, int len, int dir)
-{
-	union {
-		struct ipv6hdr *iph;
-		struct ipv6_opt_hdr *opth;
-		struct ipv6_rt_hdr *rth;
-		char *raw;
-	} exthdr = { .iph = iph };
-	char *end = exthdr.raw + len;
-	int nexthdr = iph->nexthdr;
+अटल पूर्णांक ipv6_clear_mutable_options(काष्ठा ipv6hdr *iph, पूर्णांक len, पूर्णांक dir)
+अणु
+	जोड़ अणु
+		काष्ठा ipv6hdr *iph;
+		काष्ठा ipv6_opt_hdr *opth;
+		काष्ठा ipv6_rt_hdr *rth;
+		अक्षर *raw;
+	पूर्ण exthdr = अणु .iph = iph पूर्ण;
+	अक्षर *end = exthdr.raw + len;
+	पूर्णांक nexthdr = iph->nexthdr;
 
 	exthdr.iph++;
 
-	while (exthdr.raw < end) {
-		switch (nexthdr) {
-		case NEXTHDR_DEST:
-			if (dir == XFRM_POLICY_OUT)
+	जबतक (exthdr.raw < end) अणु
+		चयन (nexthdr) अणु
+		हाल NEXTHDR_DEST:
+			अगर (dir == XFRM_POLICY_OUT)
 				ipv6_rearrange_destopt(iph, exthdr.opth);
 			fallthrough;
-		case NEXTHDR_HOP:
-			if (!zero_out_mutable_opts(exthdr.opth)) {
+		हाल NEXTHDR_HOP:
+			अगर (!zero_out_mutable_opts(exthdr.opth)) अणु
 				net_dbg_ratelimited("overrun %sopts\n",
 						    nexthdr == NEXTHDR_HOP ?
 						    "hop" : "dest");
-				return -EINVAL;
-			}
-			break;
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
 
-		case NEXTHDR_ROUTING:
+		हाल NEXTHDR_ROUTING:
 			ipv6_rearrange_rthdr(iph, exthdr.rth);
-			break;
+			अवरोध;
 
-		default:
-			return 0;
-		}
+		शेष:
+			वापस 0;
+		पूर्ण
 
 		nexthdr = exthdr.opth->nexthdr;
 		exthdr.raw += ipv6_optlen(exthdr.opth);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ah6_output_done(struct crypto_async_request *base, int err)
-{
-	int extlen;
+अटल व्योम ah6_output_करोne(काष्ठा crypto_async_request *base, पूर्णांक err)
+अणु
+	पूर्णांक extlen;
 	u8 *iph_base;
 	u8 *icv;
-	struct sk_buff *skb = base->data;
-	struct xfrm_state *x = skb_dst(skb)->xfrm;
-	struct ah_data *ahp = x->data;
-	struct ipv6hdr *top_iph = ipv6_hdr(skb);
-	struct ip_auth_hdr *ah = ip_auth_hdr(skb);
-	struct tmp_ext *iph_ext;
+	काष्ठा sk_buff *skb = base->data;
+	काष्ठा xfrm_state *x = skb_dst(skb)->xfrm;
+	काष्ठा ah_data *ahp = x->data;
+	काष्ठा ipv6hdr *top_iph = ipv6_hdr(skb);
+	काष्ठा ip_auth_hdr *ah = ip_auth_hdr(skb);
+	काष्ठा पंचांगp_ext *iph_ext;
 
-	extlen = skb_network_header_len(skb) - sizeof(struct ipv6hdr);
-	if (extlen)
-		extlen += sizeof(*iph_ext);
+	extlen = skb_network_header_len(skb) - माप(काष्ठा ipv6hdr);
+	अगर (extlen)
+		extlen += माप(*iph_ext);
 
-	iph_base = AH_SKB_CB(skb)->tmp;
-	iph_ext = ah_tmp_ext(iph_base);
-	icv = ah_tmp_icv(ahp->ahash, iph_ext, extlen);
+	iph_base = AH_SKB_CB(skb)->पंचांगp;
+	iph_ext = ah_पंचांगp_ext(iph_base);
+	icv = ah_पंचांगp_icv(ahp->ahash, iph_ext, extlen);
 
-	memcpy(ah->auth_data, icv, ahp->icv_trunc_len);
-	memcpy(top_iph, iph_base, IPV6HDR_BASELEN);
+	स_नकल(ah->auth_data, icv, ahp->icv_trunc_len);
+	स_नकल(top_iph, iph_base, IPV6HDR_BASELEN);
 
-	if (extlen) {
-#if IS_ENABLED(CONFIG_IPV6_MIP6)
-		memcpy(&top_iph->saddr, iph_ext, extlen);
-#else
-		memcpy(&top_iph->daddr, iph_ext, extlen);
-#endif
-	}
+	अगर (extlen) अणु
+#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
+		स_नकल(&top_iph->saddr, iph_ext, extlen);
+#अन्यथा
+		स_नकल(&top_iph->daddr, iph_ext, extlen);
+#पूर्ण_अगर
+	पूर्ण
 
-	kfree(AH_SKB_CB(skb)->tmp);
+	kमुक्त(AH_SKB_CB(skb)->पंचांगp);
 	xfrm_output_resume(skb->sk, skb, err);
-}
+पूर्ण
 
-static int ah6_output(struct xfrm_state *x, struct sk_buff *skb)
-{
-	int err;
-	int nfrags;
-	int extlen;
+अटल पूर्णांक ah6_output(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err;
+	पूर्णांक nfrags;
+	पूर्णांक extlen;
 	u8 *iph_base;
 	u8 *icv;
 	u8 nexthdr;
-	struct sk_buff *trailer;
-	struct crypto_ahash *ahash;
-	struct ahash_request *req;
-	struct scatterlist *sg;
-	struct ipv6hdr *top_iph;
-	struct ip_auth_hdr *ah;
-	struct ah_data *ahp;
-	struct tmp_ext *iph_ext;
-	int seqhi_len = 0;
+	काष्ठा sk_buff *trailer;
+	काष्ठा crypto_ahash *ahash;
+	काष्ठा ahash_request *req;
+	काष्ठा scatterlist *sg;
+	काष्ठा ipv6hdr *top_iph;
+	काष्ठा ip_auth_hdr *ah;
+	काष्ठा ah_data *ahp;
+	काष्ठा पंचांगp_ext *iph_ext;
+	पूर्णांक seqhi_len = 0;
 	__be32 *seqhi;
-	int sglists = 0;
-	struct scatterlist *seqhisg;
+	पूर्णांक sglists = 0;
+	काष्ठा scatterlist *seqhisg;
 
 	ahp = x->data;
 	ahash = ahp->ahash;
 
 	err = skb_cow_data(skb, 0, &trailer);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 	nfrags = err;
 
 	skb_push(skb, -skb_network_offset(skb));
-	extlen = skb_network_header_len(skb) - sizeof(struct ipv6hdr);
-	if (extlen)
-		extlen += sizeof(*iph_ext);
+	extlen = skb_network_header_len(skb) - माप(काष्ठा ipv6hdr);
+	अगर (extlen)
+		extlen += माप(*iph_ext);
 
-	if (x->props.flags & XFRM_STATE_ESN) {
+	अगर (x->props.flags & XFRM_STATE_ESN) अणु
 		sglists = 1;
-		seqhi_len = sizeof(*seqhi);
-	}
+		seqhi_len = माप(*seqhi);
+	पूर्ण
 	err = -ENOMEM;
-	iph_base = ah_alloc_tmp(ahash, nfrags + sglists, IPV6HDR_BASELEN +
+	iph_base = ah_alloc_पंचांगp(ahash, nfrags + sglists, IPV6HDR_BASELEN +
 				extlen + seqhi_len);
-	if (!iph_base)
-		goto out;
+	अगर (!iph_base)
+		जाओ out;
 
-	iph_ext = ah_tmp_ext(iph_base);
-	seqhi = (__be32 *)((char *)iph_ext + extlen);
-	icv = ah_tmp_icv(ahash, seqhi, seqhi_len);
-	req = ah_tmp_req(ahash, icv);
+	iph_ext = ah_पंचांगp_ext(iph_base);
+	seqhi = (__be32 *)((अक्षर *)iph_ext + extlen);
+	icv = ah_पंचांगp_icv(ahash, seqhi, seqhi_len);
+	req = ah_पंचांगp_req(ahash, icv);
 	sg = ah_req_sg(ahash, req);
 	seqhisg = sg + nfrags;
 
 	ah = ip_auth_hdr(skb);
-	memset(ah->auth_data, 0, ahp->icv_trunc_len);
+	स_रखो(ah->auth_data, 0, ahp->icv_trunc_len);
 
 	top_iph = ipv6_hdr(skb);
-	top_iph->payload_len = htons(skb->len - sizeof(*top_iph));
+	top_iph->payload_len = htons(skb->len - माप(*top_iph));
 
 	nexthdr = *skb_mac_header(skb);
 	*skb_mac_header(skb) = IPPROTO_AH;
@@ -382,21 +383,21 @@ static int ah6_output(struct xfrm_state *x, struct sk_buff *skb)
 	/* When there are no extension headers, we only need to save the first
 	 * 8 bytes of the base IP header.
 	 */
-	memcpy(iph_base, top_iph, IPV6HDR_BASELEN);
+	स_नकल(iph_base, top_iph, IPV6HDR_BASELEN);
 
-	if (extlen) {
-#if IS_ENABLED(CONFIG_IPV6_MIP6)
-		memcpy(iph_ext, &top_iph->saddr, extlen);
-#else
-		memcpy(iph_ext, &top_iph->daddr, extlen);
-#endif
+	अगर (extlen) अणु
+#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
+		स_नकल(iph_ext, &top_iph->saddr, extlen);
+#अन्यथा
+		स_नकल(iph_ext, &top_iph->daddr, extlen);
+#पूर्ण_अगर
 		err = ipv6_clear_mutable_options(top_iph,
-						 extlen - sizeof(*iph_ext) +
-						 sizeof(*top_iph),
+						 extlen - माप(*iph_ext) +
+						 माप(*top_iph),
 						 XFRM_POLICY_OUT);
-		if (err)
-			goto out_free;
-	}
+		अगर (err)
+			जाओ out_मुक्त;
+	पूर्ण
 
 	ah->nexthdr = nexthdr;
 
@@ -406,7 +407,7 @@ static int ah6_output(struct xfrm_state *x, struct sk_buff *skb)
 	top_iph->flow_lbl[2] = 0;
 	top_iph->hop_limit   = 0;
 
-	ah->hdrlen  = (XFRM_ALIGN8(sizeof(*ah) + ahp->icv_trunc_len) >> 2) - 2;
+	ah->hdrlen  = (XFRM_ALIGN8(माप(*ah) + ahp->icv_trunc_len) >> 2) - 2;
 
 	ah->reserved = 0;
 	ah->spi = x->id.spi;
@@ -414,183 +415,183 @@ static int ah6_output(struct xfrm_state *x, struct sk_buff *skb)
 
 	sg_init_table(sg, nfrags + sglists);
 	err = skb_to_sgvec_nomark(skb, sg, 0, skb->len);
-	if (unlikely(err < 0))
-		goto out_free;
+	अगर (unlikely(err < 0))
+		जाओ out_मुक्त;
 
-	if (x->props.flags & XFRM_STATE_ESN) {
+	अगर (x->props.flags & XFRM_STATE_ESN) अणु
 		/* Attach seqhi sg right after packet payload */
 		*seqhi = htonl(XFRM_SKB_CB(skb)->seq.output.hi);
 		sg_set_buf(seqhisg, seqhi, seqhi_len);
-	}
+	पूर्ण
 	ahash_request_set_crypt(req, sg, icv, skb->len + seqhi_len);
-	ahash_request_set_callback(req, 0, ah6_output_done, skb);
+	ahash_request_set_callback(req, 0, ah6_output_करोne, skb);
 
-	AH_SKB_CB(skb)->tmp = iph_base;
+	AH_SKB_CB(skb)->पंचांगp = iph_base;
 
 	err = crypto_ahash_digest(req);
-	if (err) {
-		if (err == -EINPROGRESS)
-			goto out;
+	अगर (err) अणु
+		अगर (err == -EINPROGRESS)
+			जाओ out;
 
-		if (err == -ENOSPC)
+		अगर (err == -ENOSPC)
 			err = NET_XMIT_DROP;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	memcpy(ah->auth_data, icv, ahp->icv_trunc_len);
-	memcpy(top_iph, iph_base, IPV6HDR_BASELEN);
+	स_नकल(ah->auth_data, icv, ahp->icv_trunc_len);
+	स_नकल(top_iph, iph_base, IPV6HDR_BASELEN);
 
-	if (extlen) {
-#if IS_ENABLED(CONFIG_IPV6_MIP6)
-		memcpy(&top_iph->saddr, iph_ext, extlen);
-#else
-		memcpy(&top_iph->daddr, iph_ext, extlen);
-#endif
-	}
+	अगर (extlen) अणु
+#अगर IS_ENABLED(CONFIG_IPV6_MIP6)
+		स_नकल(&top_iph->saddr, iph_ext, extlen);
+#अन्यथा
+		स_नकल(&top_iph->daddr, iph_ext, extlen);
+#पूर्ण_अगर
+	पूर्ण
 
-out_free:
-	kfree(iph_base);
+out_मुक्त:
+	kमुक्त(iph_base);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ah6_input_done(struct crypto_async_request *base, int err)
-{
+अटल व्योम ah6_input_करोne(काष्ठा crypto_async_request *base, पूर्णांक err)
+अणु
 	u8 *auth_data;
 	u8 *icv;
 	u8 *work_iph;
-	struct sk_buff *skb = base->data;
-	struct xfrm_state *x = xfrm_input_state(skb);
-	struct ah_data *ahp = x->data;
-	struct ip_auth_hdr *ah = ip_auth_hdr(skb);
-	int hdr_len = skb_network_header_len(skb);
-	int ah_hlen = ipv6_authlen(ah);
+	काष्ठा sk_buff *skb = base->data;
+	काष्ठा xfrm_state *x = xfrm_input_state(skb);
+	काष्ठा ah_data *ahp = x->data;
+	काष्ठा ip_auth_hdr *ah = ip_auth_hdr(skb);
+	पूर्णांक hdr_len = skb_network_header_len(skb);
+	पूर्णांक ah_hlen = ipv6_authlen(ah);
 
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	work_iph = AH_SKB_CB(skb)->tmp;
-	auth_data = ah_tmp_auth(work_iph, hdr_len);
-	icv = ah_tmp_icv(ahp->ahash, auth_data, ahp->icv_trunc_len);
+	work_iph = AH_SKB_CB(skb)->पंचांगp;
+	auth_data = ah_पंचांगp_auth(work_iph, hdr_len);
+	icv = ah_पंचांगp_icv(ahp->ahash, auth_data, ahp->icv_trunc_len);
 
 	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -EBADMSG : 0;
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = ah->nexthdr;
 
 	skb->network_header += ah_hlen;
-	memcpy(skb_network_header(skb), work_iph, hdr_len);
+	स_नकल(skb_network_header(skb), work_iph, hdr_len);
 	__skb_pull(skb, ah_hlen + hdr_len);
-	if (x->props.mode == XFRM_MODE_TUNNEL)
+	अगर (x->props.mode == XFRM_MODE_TUNNEL)
 		skb_reset_transport_header(skb);
-	else
+	अन्यथा
 		skb_set_transport_header(skb, -hdr_len);
 out:
-	kfree(AH_SKB_CB(skb)->tmp);
+	kमुक्त(AH_SKB_CB(skb)->पंचांगp);
 	xfrm_input_resume(skb, err);
-}
+पूर्ण
 
 
 
-static int ah6_input(struct xfrm_state *x, struct sk_buff *skb)
-{
+अटल पूर्णांक ah6_input(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
 	/*
-	 * Before process AH
+	 * Beक्रमe process AH
 	 * [IPv6][Ext1][Ext2][AH][Dest][Payload]
 	 * |<-------------->| hdr_len
 	 *
 	 * To erase AH:
 	 * Keeping copy of cleared headers. After AH processing,
-	 * Moving the pointer of skb->network_header by using skb_pull as long
-	 * as AH header length. Then copy back the copy as long as hdr_len
-	 * If destination header following AH exists, copy it into after [Ext2].
+	 * Moving the poपूर्णांकer of skb->network_header by using skb_pull as दीर्घ
+	 * as AH header length. Then copy back the copy as दीर्घ as hdr_len
+	 * If destination header following AH exists, copy it पूर्णांकo after [Ext2].
 	 *
 	 * |<>|[IPv6][Ext1][Ext2][Dest][Payload]
-	 * There is offset of AH before IPv6 header after the process.
+	 * There is offset of AH beक्रमe IPv6 header after the process.
 	 */
 
 	u8 *auth_data;
 	u8 *icv;
 	u8 *work_iph;
-	struct sk_buff *trailer;
-	struct crypto_ahash *ahash;
-	struct ahash_request *req;
-	struct scatterlist *sg;
-	struct ip_auth_hdr *ah;
-	struct ipv6hdr *ip6h;
-	struct ah_data *ahp;
+	काष्ठा sk_buff *trailer;
+	काष्ठा crypto_ahash *ahash;
+	काष्ठा ahash_request *req;
+	काष्ठा scatterlist *sg;
+	काष्ठा ip_auth_hdr *ah;
+	काष्ठा ipv6hdr *ip6h;
+	काष्ठा ah_data *ahp;
 	u16 hdr_len;
 	u16 ah_hlen;
-	int nexthdr;
-	int nfrags;
-	int err = -ENOMEM;
-	int seqhi_len = 0;
+	पूर्णांक nexthdr;
+	पूर्णांक nfrags;
+	पूर्णांक err = -ENOMEM;
+	पूर्णांक seqhi_len = 0;
 	__be32 *seqhi;
-	int sglists = 0;
-	struct scatterlist *seqhisg;
+	पूर्णांक sglists = 0;
+	काष्ठा scatterlist *seqhisg;
 
-	if (!pskb_may_pull(skb, sizeof(struct ip_auth_hdr)))
-		goto out;
+	अगर (!pskb_may_pull(skb, माप(काष्ठा ip_auth_hdr)))
+		जाओ out;
 
-	/* We are going to _remove_ AH header to keep sockets happy,
+	/* We are going to _हटाओ_ AH header to keep sockets happy,
 	 * so... Later this can change. */
-	if (skb_unclone(skb, GFP_ATOMIC))
-		goto out;
+	अगर (skb_unclone(skb, GFP_ATOMIC))
+		जाओ out;
 
 	skb->ip_summed = CHECKSUM_NONE;
 
 	hdr_len = skb_network_header_len(skb);
-	ah = (struct ip_auth_hdr *)skb->data;
+	ah = (काष्ठा ip_auth_hdr *)skb->data;
 	ahp = x->data;
 	ahash = ahp->ahash;
 
 	nexthdr = ah->nexthdr;
 	ah_hlen = ipv6_authlen(ah);
 
-	if (ah_hlen != XFRM_ALIGN8(sizeof(*ah) + ahp->icv_full_len) &&
-	    ah_hlen != XFRM_ALIGN8(sizeof(*ah) + ahp->icv_trunc_len))
-		goto out;
+	अगर (ah_hlen != XFRM_ALIGN8(माप(*ah) + ahp->icv_full_len) &&
+	    ah_hlen != XFRM_ALIGN8(माप(*ah) + ahp->icv_trunc_len))
+		जाओ out;
 
-	if (!pskb_may_pull(skb, ah_hlen))
-		goto out;
+	अगर (!pskb_may_pull(skb, ah_hlen))
+		जाओ out;
 
 	err = skb_cow_data(skb, 0, &trailer);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 	nfrags = err;
 
-	ah = (struct ip_auth_hdr *)skb->data;
+	ah = (काष्ठा ip_auth_hdr *)skb->data;
 	ip6h = ipv6_hdr(skb);
 
 	skb_push(skb, hdr_len);
 
-	if (x->props.flags & XFRM_STATE_ESN) {
+	अगर (x->props.flags & XFRM_STATE_ESN) अणु
 		sglists = 1;
-		seqhi_len = sizeof(*seqhi);
-	}
+		seqhi_len = माप(*seqhi);
+	पूर्ण
 
-	work_iph = ah_alloc_tmp(ahash, nfrags + sglists, hdr_len +
+	work_iph = ah_alloc_पंचांगp(ahash, nfrags + sglists, hdr_len +
 				ahp->icv_trunc_len + seqhi_len);
-	if (!work_iph) {
+	अगर (!work_iph) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	auth_data = ah_tmp_auth((u8 *)work_iph, hdr_len);
+	auth_data = ah_पंचांगp_auth((u8 *)work_iph, hdr_len);
 	seqhi = (__be32 *)(auth_data + ahp->icv_trunc_len);
-	icv = ah_tmp_icv(ahash, seqhi, seqhi_len);
-	req = ah_tmp_req(ahash, icv);
+	icv = ah_पंचांगp_icv(ahash, seqhi, seqhi_len);
+	req = ah_पंचांगp_req(ahash, icv);
 	sg = ah_req_sg(ahash, req);
 	seqhisg = sg + nfrags;
 
-	memcpy(work_iph, ip6h, hdr_len);
-	memcpy(auth_data, ah->auth_data, ahp->icv_trunc_len);
-	memset(ah->auth_data, 0, ahp->icv_trunc_len);
+	स_नकल(work_iph, ip6h, hdr_len);
+	स_नकल(auth_data, ah->auth_data, ahp->icv_trunc_len);
+	स_रखो(ah->auth_data, 0, ahp->icv_trunc_len);
 
 	err = ipv6_clear_mutable_options(ip6h, hdr_len, XFRM_POLICY_IN);
-	if (err)
-		goto out_free;
+	अगर (err)
+		जाओ out_मुक्त;
 
 	ip6h->priority    = 0;
 	ip6h->flow_lbl[0] = 0;
@@ -600,206 +601,206 @@ static int ah6_input(struct xfrm_state *x, struct sk_buff *skb)
 
 	sg_init_table(sg, nfrags + sglists);
 	err = skb_to_sgvec_nomark(skb, sg, 0, skb->len);
-	if (unlikely(err < 0))
-		goto out_free;
+	अगर (unlikely(err < 0))
+		जाओ out_मुक्त;
 
-	if (x->props.flags & XFRM_STATE_ESN) {
+	अगर (x->props.flags & XFRM_STATE_ESN) अणु
 		/* Attach seqhi sg right after packet payload */
 		*seqhi = XFRM_SKB_CB(skb)->seq.input.hi;
 		sg_set_buf(seqhisg, seqhi, seqhi_len);
-	}
+	पूर्ण
 
 	ahash_request_set_crypt(req, sg, icv, skb->len + seqhi_len);
-	ahash_request_set_callback(req, 0, ah6_input_done, skb);
+	ahash_request_set_callback(req, 0, ah6_input_करोne, skb);
 
-	AH_SKB_CB(skb)->tmp = work_iph;
+	AH_SKB_CB(skb)->पंचांगp = work_iph;
 
 	err = crypto_ahash_digest(req);
-	if (err) {
-		if (err == -EINPROGRESS)
-			goto out;
+	अगर (err) अणु
+		अगर (err == -EINPROGRESS)
+			जाओ out;
 
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -EBADMSG : 0;
-	if (err)
-		goto out_free;
+	अगर (err)
+		जाओ out_मुक्त;
 
 	skb->network_header += ah_hlen;
-	memcpy(skb_network_header(skb), work_iph, hdr_len);
+	स_नकल(skb_network_header(skb), work_iph, hdr_len);
 	__skb_pull(skb, ah_hlen + hdr_len);
 
-	if (x->props.mode == XFRM_MODE_TUNNEL)
+	अगर (x->props.mode == XFRM_MODE_TUNNEL)
 		skb_reset_transport_header(skb);
-	else
+	अन्यथा
 		skb_set_transport_header(skb, -hdr_len);
 
 	err = nexthdr;
 
-out_free:
-	kfree(work_iph);
+out_मुक्त:
+	kमुक्त(work_iph);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ah6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
-		   u8 type, u8 code, int offset, __be32 info)
-{
-	struct net *net = dev_net(skb->dev);
-	struct ipv6hdr *iph = (struct ipv6hdr *)skb->data;
-	struct ip_auth_hdr *ah = (struct ip_auth_hdr *)(skb->data+offset);
-	struct xfrm_state *x;
+अटल पूर्णांक ah6_err(काष्ठा sk_buff *skb, काष्ठा inet6_skb_parm *opt,
+		   u8 type, u8 code, पूर्णांक offset, __be32 info)
+अणु
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा ipv6hdr *iph = (काष्ठा ipv6hdr *)skb->data;
+	काष्ठा ip_auth_hdr *ah = (काष्ठा ip_auth_hdr *)(skb->data+offset);
+	काष्ठा xfrm_state *x;
 
-	if (type != ICMPV6_PKT_TOOBIG &&
-	    type != NDISC_REDIRECT)
-		return 0;
+	अगर (type != ICMPV6_PKT_TOOBIG &&
+	    type != NDISC_REसूचीECT)
+		वापस 0;
 
 	x = xfrm_state_lookup(net, skb->mark, (xfrm_address_t *)&iph->daddr, ah->spi, IPPROTO_AH, AF_INET6);
-	if (!x)
-		return 0;
+	अगर (!x)
+		वापस 0;
 
-	if (type == NDISC_REDIRECT)
-		ip6_redirect(skb, net, skb->dev->ifindex, 0,
-			     sock_net_uid(net, NULL));
-	else
-		ip6_update_pmtu(skb, net, info, 0, 0, sock_net_uid(net, NULL));
+	अगर (type == NDISC_REसूचीECT)
+		ip6_redirect(skb, net, skb->dev->अगरindex, 0,
+			     sock_net_uid(net, शून्य));
+	अन्यथा
+		ip6_update_pmtu(skb, net, info, 0, 0, sock_net_uid(net, शून्य));
 	xfrm_state_put(x);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ah6_init_state(struct xfrm_state *x)
-{
-	struct ah_data *ahp = NULL;
-	struct xfrm_algo_desc *aalg_desc;
-	struct crypto_ahash *ahash;
+अटल पूर्णांक ah6_init_state(काष्ठा xfrm_state *x)
+अणु
+	काष्ठा ah_data *ahp = शून्य;
+	काष्ठा xfrm_algo_desc *aalg_desc;
+	काष्ठा crypto_ahash *ahash;
 
-	if (!x->aalg)
-		goto error;
+	अगर (!x->aalg)
+		जाओ error;
 
-	if (x->encap)
-		goto error;
+	अगर (x->encap)
+		जाओ error;
 
-	ahp = kzalloc(sizeof(*ahp), GFP_KERNEL);
-	if (!ahp)
-		return -ENOMEM;
+	ahp = kzalloc(माप(*ahp), GFP_KERNEL);
+	अगर (!ahp)
+		वापस -ENOMEM;
 
 	ahash = crypto_alloc_ahash(x->aalg->alg_name, 0, 0);
-	if (IS_ERR(ahash))
-		goto error;
+	अगर (IS_ERR(ahash))
+		जाओ error;
 
 	ahp->ahash = ahash;
-	if (crypto_ahash_setkey(ahash, x->aalg->alg_key,
+	अगर (crypto_ahash_setkey(ahash, x->aalg->alg_key,
 			       (x->aalg->alg_key_len + 7) / 8))
-		goto error;
+		जाओ error;
 
 	/*
-	 * Lookup the algorithm description maintained by xfrm_algo,
-	 * verify crypto transform properties, and store information
-	 * we need for AH processing.  This lookup cannot fail here
+	 * Lookup the algorithm description मुख्यtained by xfrm_algo,
+	 * verअगरy crypto transक्रमm properties, and store inक्रमmation
+	 * we need क्रम AH processing.  This lookup cannot fail here
 	 * after a successful crypto_alloc_hash().
 	 */
 	aalg_desc = xfrm_aalg_get_byname(x->aalg->alg_name, 0);
 	BUG_ON(!aalg_desc);
 
-	if (aalg_desc->uinfo.auth.icv_fullbits/8 !=
-	    crypto_ahash_digestsize(ahash)) {
+	अगर (aalg_desc->uinfo.auth.icv_fullbits/8 !=
+	    crypto_ahash_digestsize(ahash)) अणु
 		pr_info("AH: %s digestsize %u != %u\n",
 			x->aalg->alg_name, crypto_ahash_digestsize(ahash),
 			aalg_desc->uinfo.auth.icv_fullbits/8);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ahp->icv_full_len = aalg_desc->uinfo.auth.icv_fullbits/8;
 	ahp->icv_trunc_len = x->aalg->alg_trunc_len/8;
 
-	x->props.header_len = XFRM_ALIGN8(sizeof(struct ip_auth_hdr) +
+	x->props.header_len = XFRM_ALIGN8(माप(काष्ठा ip_auth_hdr) +
 					  ahp->icv_trunc_len);
-	switch (x->props.mode) {
-	case XFRM_MODE_BEET:
-	case XFRM_MODE_TRANSPORT:
-		break;
-	case XFRM_MODE_TUNNEL:
-		x->props.header_len += sizeof(struct ipv6hdr);
-		break;
-	default:
-		goto error;
-	}
+	चयन (x->props.mode) अणु
+	हाल XFRM_MODE_BEET:
+	हाल XFRM_MODE_TRANSPORT:
+		अवरोध;
+	हाल XFRM_MODE_TUNNEL:
+		x->props.header_len += माप(काष्ठा ipv6hdr);
+		अवरोध;
+	शेष:
+		जाओ error;
+	पूर्ण
 	x->data = ahp;
 
-	return 0;
+	वापस 0;
 
 error:
-	if (ahp) {
-		crypto_free_ahash(ahp->ahash);
-		kfree(ahp);
-	}
-	return -EINVAL;
-}
+	अगर (ahp) अणु
+		crypto_मुक्त_ahash(ahp->ahash);
+		kमुक्त(ahp);
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static void ah6_destroy(struct xfrm_state *x)
-{
-	struct ah_data *ahp = x->data;
+अटल व्योम ah6_destroy(काष्ठा xfrm_state *x)
+अणु
+	काष्ठा ah_data *ahp = x->data;
 
-	if (!ahp)
-		return;
+	अगर (!ahp)
+		वापस;
 
-	crypto_free_ahash(ahp->ahash);
-	kfree(ahp);
-}
+	crypto_मुक्त_ahash(ahp->ahash);
+	kमुक्त(ahp);
+पूर्ण
 
-static int ah6_rcv_cb(struct sk_buff *skb, int err)
-{
-	return 0;
-}
+अटल पूर्णांक ah6_rcv_cb(काष्ठा sk_buff *skb, पूर्णांक err)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct xfrm_type ah6_type = {
+अटल स्थिर काष्ठा xfrm_type ah6_type = अणु
 	.description	= "AH6",
 	.owner		= THIS_MODULE,
 	.proto		= IPPROTO_AH,
 	.flags		= XFRM_TYPE_REPLAY_PROT,
 	.init_state	= ah6_init_state,
-	.destructor	= ah6_destroy,
+	.deकाष्ठाor	= ah6_destroy,
 	.input		= ah6_input,
 	.output		= ah6_output,
 	.hdr_offset	= xfrm6_find_1stfragopt,
-};
+पूर्ण;
 
-static struct xfrm6_protocol ah6_protocol = {
+अटल काष्ठा xfrm6_protocol ah6_protocol = अणु
 	.handler	=	xfrm6_rcv,
 	.input_handler	=	xfrm_input,
 	.cb_handler	=	ah6_rcv_cb,
 	.err_handler	=	ah6_err,
 	.priority	=	0,
-};
+पूर्ण;
 
-static int __init ah6_init(void)
-{
-	if (xfrm_register_type(&ah6_type, AF_INET6) < 0) {
+अटल पूर्णांक __init ah6_init(व्योम)
+अणु
+	अगर (xfrm_रेजिस्टर_type(&ah6_type, AF_INET6) < 0) अणु
 		pr_info("%s: can't add xfrm type\n", __func__);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (xfrm6_protocol_register(&ah6_protocol, IPPROTO_AH) < 0) {
+	अगर (xfrm6_protocol_रेजिस्टर(&ah6_protocol, IPPROTO_AH) < 0) अणु
 		pr_info("%s: can't add protocol\n", __func__);
-		xfrm_unregister_type(&ah6_type, AF_INET6);
-		return -EAGAIN;
-	}
+		xfrm_unरेजिस्टर_type(&ah6_type, AF_INET6);
+		वापस -EAGAIN;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit ah6_fini(void)
-{
-	if (xfrm6_protocol_deregister(&ah6_protocol, IPPROTO_AH) < 0)
+अटल व्योम __निकास ah6_fini(व्योम)
+अणु
+	अगर (xfrm6_protocol_deरेजिस्टर(&ah6_protocol, IPPROTO_AH) < 0)
 		pr_info("%s: can't remove protocol\n", __func__);
 
-	xfrm_unregister_type(&ah6_type, AF_INET6);
-}
+	xfrm_unरेजिस्टर_type(&ah6_type, AF_INET6);
+पूर्ण
 
 module_init(ah6_init);
-module_exit(ah6_fini);
+module_निकास(ah6_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_XFRM_TYPE(AF_INET6, XFRM_PROTO_AH);

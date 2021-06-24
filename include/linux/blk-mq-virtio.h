@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_BLK_MQ_VIRTIO_H
-#define _LINUX_BLK_MQ_VIRTIO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_BLK_MQ_VIRTIO_H
+#घोषणा _LINUX_BLK_MQ_VIRTIO_H
 
-struct blk_mq_queue_map;
-struct virtio_device;
+काष्ठा blk_mq_queue_map;
+काष्ठा virtio_device;
 
-int blk_mq_virtio_map_queues(struct blk_mq_queue_map *qmap,
-		struct virtio_device *vdev, int first_vec);
+पूर्णांक blk_mq_virtio_map_queues(काष्ठा blk_mq_queue_map *qmap,
+		काष्ठा virtio_device *vdev, पूर्णांक first_vec);
 
-#endif /* _LINUX_BLK_MQ_VIRTIO_H */
+#पूर्ण_अगर /* _LINUX_BLK_MQ_VIRTIO_H */

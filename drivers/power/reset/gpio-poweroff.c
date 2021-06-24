@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Toggles a GPIO pin to power down a device
+ * Toggles a GPIO pin to घातer करोwn a device
  *
  * Jamie Lentin <jm@lentin.co.uk>
  * Andrew Lunn <andrew@lunn.ch>
  *
  * Copyright (C) 2012 Jamie Lentin
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/gpio/consumer.h>
-#include <linux/of_platform.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/module.h>
 
-#define DEFAULT_TIMEOUT_MS 3000
+#घोषणा DEFAULT_TIMEOUT_MS 3000
 /*
  * Hold configuration here, cannot be more than one instance of the driver
- * since pm_power_off itself is global.
+ * since pm_घातer_off itself is global.
  */
-static struct gpio_desc *reset_gpio;
-static u32 timeout = DEFAULT_TIMEOUT_MS;
-static u32 active_delay = 100;
-static u32 inactive_delay = 100;
+अटल काष्ठा gpio_desc *reset_gpio;
+अटल u32 समयout = DEFAULT_TIMEOUT_MS;
+अटल u32 active_delay = 100;
+अटल u32 inactive_delay = 100;
 
-static void gpio_poweroff_do_poweroff(void)
-{
+अटल व्योम gpio_घातeroff_करो_घातeroff(व्योम)
+अणु
 	BUG_ON(!reset_gpio);
 
 	/* drive it active, also inactive->active edge */
@@ -40,67 +41,67 @@ static void gpio_poweroff_do_poweroff(void)
 	/* drive it active, also inactive->active edge */
 	gpiod_set_value_cansleep(reset_gpio, 1);
 
-	/* give it some time */
-	mdelay(timeout);
+	/* give it some समय */
+	mdelay(समयout);
 
 	WARN_ON(1);
-}
+पूर्ण
 
-static int gpio_poweroff_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक gpio_घातeroff_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	bool input = false;
-	enum gpiod_flags flags;
+	क्रमागत gpiod_flags flags;
 
-	/* If a pm_power_off function has already been added, leave it alone */
-	if (pm_power_off != NULL) {
+	/* If a pm_घातer_off function has alपढ़ोy been added, leave it alone */
+	अगर (pm_घातer_off != शून्य) अणु
 		dev_err(&pdev->dev,
 			"%s: pm_power_off function already registered\n",
 		       __func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	input = device_property_read_bool(&pdev->dev, "input");
-	if (input)
+	input = device_property_पढ़ो_bool(&pdev->dev, "input");
+	अगर (input)
 		flags = GPIOD_IN;
-	else
+	अन्यथा
 		flags = GPIOD_OUT_LOW;
 
-	device_property_read_u32(&pdev->dev, "active-delay-ms", &active_delay);
-	device_property_read_u32(&pdev->dev, "inactive-delay-ms",
+	device_property_पढ़ो_u32(&pdev->dev, "active-delay-ms", &active_delay);
+	device_property_पढ़ो_u32(&pdev->dev, "inactive-delay-ms",
 				 &inactive_delay);
-	device_property_read_u32(&pdev->dev, "timeout-ms", &timeout);
+	device_property_पढ़ो_u32(&pdev->dev, "timeout-ms", &समयout);
 
-	reset_gpio = devm_gpiod_get(&pdev->dev, NULL, flags);
-	if (IS_ERR(reset_gpio))
-		return PTR_ERR(reset_gpio);
+	reset_gpio = devm_gpiod_get(&pdev->dev, शून्य, flags);
+	अगर (IS_ERR(reset_gpio))
+		वापस PTR_ERR(reset_gpio);
 
-	pm_power_off = &gpio_poweroff_do_poweroff;
-	return 0;
-}
+	pm_घातer_off = &gpio_घातeroff_करो_घातeroff;
+	वापस 0;
+पूर्ण
 
-static int gpio_poweroff_remove(struct platform_device *pdev)
-{
-	if (pm_power_off == &gpio_poweroff_do_poweroff)
-		pm_power_off = NULL;
+अटल पूर्णांक gpio_घातeroff_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (pm_घातer_off == &gpio_घातeroff_करो_घातeroff)
+		pm_घातer_off = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id of_gpio_poweroff_match[] = {
-	{ .compatible = "gpio-poweroff", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_gpio_घातeroff_match[] = अणु
+	अणु .compatible = "gpio-poweroff", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver gpio_poweroff_driver = {
-	.probe = gpio_poweroff_probe,
-	.remove = gpio_poweroff_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver gpio_घातeroff_driver = अणु
+	.probe = gpio_घातeroff_probe,
+	.हटाओ = gpio_घातeroff_हटाओ,
+	.driver = अणु
 		.name = "poweroff-gpio",
-		.of_match_table = of_gpio_poweroff_match,
-	},
-};
+		.of_match_table = of_gpio_घातeroff_match,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(gpio_poweroff_driver);
+module_platक्रमm_driver(gpio_घातeroff_driver);
 
 MODULE_AUTHOR("Jamie Lentin <jm@lentin.co.uk>");
 MODULE_DESCRIPTION("GPIO poweroff driver");

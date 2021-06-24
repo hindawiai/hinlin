@@ -1,89 +1,90 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  PS3 virtual uart
+ *  PS3 भव uart
  *
  *  Copyright (C) 2006 Sony Computer Entertainment Inc.
  *  Copyright 2006 Sony Corp.
  */
 
-#if !defined(_PS3_VUART_H)
-#define _PS3_VUART_H
+#अगर !defined(_PS3_VUART_H)
+#घोषणा _PS3_VUART_H
 
-#include <asm/ps3.h>
+#समावेश <यंत्र/ps3.h>
 
-struct ps3_vuart_stats {
-	unsigned long bytes_written;
-	unsigned long bytes_read;
-	unsigned long tx_interrupts;
-	unsigned long rx_interrupts;
-	unsigned long disconnect_interrupts;
-};
+काष्ठा ps3_vuart_stats अणु
+	अचिन्हित दीर्घ bytes_written;
+	अचिन्हित दीर्घ bytes_पढ़ो;
+	अचिन्हित दीर्घ tx_पूर्णांकerrupts;
+	अचिन्हित दीर्घ rx_पूर्णांकerrupts;
+	अचिन्हित दीर्घ disconnect_पूर्णांकerrupts;
+पूर्ण;
 
-struct ps3_vuart_work {
-	struct work_struct work;
-	unsigned long trigger;
-	struct ps3_system_bus_device *dev; /* to convert work to device */
-};
+काष्ठा ps3_vuart_work अणु
+	काष्ठा work_काष्ठा work;
+	अचिन्हित दीर्घ trigger;
+	काष्ठा ps3_प्रणाली_bus_device *dev; /* to convert work to device */
+पूर्ण;
 
 /**
- * struct ps3_vuart_port_driver - a driver for a device on a vuart port
+ * काष्ठा ps3_vuart_port_driver - a driver क्रम a device on a vuart port
  */
 
-struct ps3_vuart_port_driver {
-	struct ps3_system_bus_driver core;
-	int (*probe)(struct ps3_system_bus_device *);
-	int (*remove)(struct ps3_system_bus_device *);
-	void (*shutdown)(struct ps3_system_bus_device *);
-	void (*work)(struct ps3_system_bus_device *);
-	/* int (*tx_event)(struct ps3_system_bus_device *dev); */
-	/* int (*rx_event)(struct ps3_system_bus_device *dev); */
-	/* int (*disconnect_event)(struct ps3_system_bus_device *dev); */
-	/* int (*suspend)(struct ps3_system_bus_device *, pm_message_t); */
-	/* int (*resume)(struct ps3_system_bus_device *); */
-};
+काष्ठा ps3_vuart_port_driver अणु
+	काष्ठा ps3_प्रणाली_bus_driver core;
+	पूर्णांक (*probe)(काष्ठा ps3_प्रणाली_bus_device *);
+	पूर्णांक (*हटाओ)(काष्ठा ps3_प्रणाली_bus_device *);
+	व्योम (*shutकरोwn)(काष्ठा ps3_प्रणाली_bus_device *);
+	व्योम (*work)(काष्ठा ps3_प्रणाली_bus_device *);
+	/* पूर्णांक (*tx_event)(काष्ठा ps3_प्रणाली_bus_device *dev); */
+	/* पूर्णांक (*rx_event)(काष्ठा ps3_प्रणाली_bus_device *dev); */
+	/* पूर्णांक (*disconnect_event)(काष्ठा ps3_प्रणाली_bus_device *dev); */
+	/* पूर्णांक (*suspend)(काष्ठा ps3_प्रणाली_bus_device *, pm_message_t); */
+	/* पूर्णांक (*resume)(काष्ठा ps3_प्रणाली_bus_device *); */
+पूर्ण;
 
-int ps3_vuart_port_driver_register(struct ps3_vuart_port_driver *drv);
-void ps3_vuart_port_driver_unregister(struct ps3_vuart_port_driver *drv);
+पूर्णांक ps3_vuart_port_driver_रेजिस्टर(काष्ठा ps3_vuart_port_driver *drv);
+व्योम ps3_vuart_port_driver_unरेजिस्टर(काष्ठा ps3_vuart_port_driver *drv);
 
-static inline struct ps3_vuart_port_driver *
-	ps3_system_bus_dev_to_vuart_drv(struct ps3_system_bus_device *_dev)
-{
-	struct ps3_system_bus_driver *sbd =
-		ps3_system_bus_dev_to_system_bus_drv(_dev);
+अटल अंतरभूत काष्ठा ps3_vuart_port_driver *
+	ps3_प्रणाली_bus_dev_to_vuart_drv(काष्ठा ps3_प्रणाली_bus_device *_dev)
+अणु
+	काष्ठा ps3_प्रणाली_bus_driver *sbd =
+		ps3_प्रणाली_bus_dev_to_प्रणाली_bus_drv(_dev);
 	BUG_ON(!sbd);
-	return container_of(sbd, struct ps3_vuart_port_driver, core);
-}
-static inline struct ps3_system_bus_device *ps3_vuart_work_to_system_bus_dev(
-	struct work_struct *_work)
-{
-	struct ps3_vuart_work *vw = container_of(_work, struct ps3_vuart_work,
+	वापस container_of(sbd, काष्ठा ps3_vuart_port_driver, core);
+पूर्ण
+अटल अंतरभूत काष्ठा ps3_प्रणाली_bus_device *ps3_vuart_work_to_प्रणाली_bus_dev(
+	काष्ठा work_काष्ठा *_work)
+अणु
+	काष्ठा ps3_vuart_work *vw = container_of(_work, काष्ठा ps3_vuart_work,
 		work);
-	return vw->dev;
-}
+	वापस vw->dev;
+पूर्ण
 
-int ps3_vuart_write(struct ps3_system_bus_device *dev, const void *buf,
-	unsigned int bytes);
-int ps3_vuart_read(struct ps3_system_bus_device *dev, void *buf,
-	unsigned int bytes);
-int ps3_vuart_read_async(struct ps3_system_bus_device *dev, unsigned int bytes);
-void ps3_vuart_cancel_async(struct ps3_system_bus_device *dev);
-void ps3_vuart_clear_rx_bytes(struct ps3_system_bus_device *dev,
-	unsigned int bytes);
+पूर्णांक ps3_vuart_ग_लिखो(काष्ठा ps3_प्रणाली_bus_device *dev, स्थिर व्योम *buf,
+	अचिन्हित पूर्णांक bytes);
+पूर्णांक ps3_vuart_पढ़ो(काष्ठा ps3_प्रणाली_bus_device *dev, व्योम *buf,
+	अचिन्हित पूर्णांक bytes);
+पूर्णांक ps3_vuart_पढ़ो_async(काष्ठा ps3_प्रणाली_bus_device *dev, अचिन्हित पूर्णांक bytes);
+व्योम ps3_vuart_cancel_async(काष्ठा ps3_प्रणाली_bus_device *dev);
+व्योम ps3_vuart_clear_rx_bytes(काष्ठा ps3_प्रणाली_bus_device *dev,
+	अचिन्हित पूर्णांक bytes);
 
-struct vuart_triggers {
-	unsigned long rx;
-	unsigned long tx;
-};
+काष्ठा vuart_triggers अणु
+	अचिन्हित दीर्घ rx;
+	अचिन्हित दीर्घ tx;
+पूर्ण;
 
-int ps3_vuart_get_triggers(struct ps3_system_bus_device *dev,
-	struct vuart_triggers *trig);
-int ps3_vuart_set_triggers(struct ps3_system_bus_device *dev, unsigned int tx,
-	unsigned int rx);
-int ps3_vuart_enable_interrupt_tx(struct ps3_system_bus_device *dev);
-int ps3_vuart_disable_interrupt_tx(struct ps3_system_bus_device *dev);
-int ps3_vuart_enable_interrupt_rx(struct ps3_system_bus_device *dev);
-int ps3_vuart_disable_interrupt_rx(struct ps3_system_bus_device *dev);
-int ps3_vuart_enable_interrupt_disconnect(struct ps3_system_bus_device *dev);
-int ps3_vuart_disable_interrupt_disconnect(struct ps3_system_bus_device *dev);
+पूर्णांक ps3_vuart_get_triggers(काष्ठा ps3_प्रणाली_bus_device *dev,
+	काष्ठा vuart_triggers *trig);
+पूर्णांक ps3_vuart_set_triggers(काष्ठा ps3_प्रणाली_bus_device *dev, अचिन्हित पूर्णांक tx,
+	अचिन्हित पूर्णांक rx);
+पूर्णांक ps3_vuart_enable_पूर्णांकerrupt_tx(काष्ठा ps3_प्रणाली_bus_device *dev);
+पूर्णांक ps3_vuart_disable_पूर्णांकerrupt_tx(काष्ठा ps3_प्रणाली_bus_device *dev);
+पूर्णांक ps3_vuart_enable_पूर्णांकerrupt_rx(काष्ठा ps3_प्रणाली_bus_device *dev);
+पूर्णांक ps3_vuart_disable_पूर्णांकerrupt_rx(काष्ठा ps3_प्रणाली_bus_device *dev);
+पूर्णांक ps3_vuart_enable_पूर्णांकerrupt_disconnect(काष्ठा ps3_प्रणाली_bus_device *dev);
+पूर्णांक ps3_vuart_disable_पूर्णांकerrupt_disconnect(काष्ठा ps3_प्रणाली_bus_device *dev);
 
-#endif
+#पूर्ण_अगर

@@ -1,120 +1,121 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _DPU_HW_VBIF_H
-#define _DPU_HW_VBIF_H
+#अगर_अघोषित _DPU_HW_VBIF_H
+#घोषणा _DPU_HW_VBIF_H
 
-#include "dpu_hw_catalog.h"
-#include "dpu_hw_mdss.h"
-#include "dpu_hw_util.h"
+#समावेश "dpu_hw_catalog.h"
+#समावेश "dpu_hw_mdss.h"
+#समावेश "dpu_hw_util.h"
 
-struct dpu_hw_vbif;
+काष्ठा dpu_hw_vbअगर;
 
 /**
- * struct dpu_hw_vbif_ops : Interface to the VBIF hardware driver functions
- *  Assumption is these functions will be called after clocks are enabled
+ * काष्ठा dpu_hw_vbअगर_ops : Interface to the VBIF hardware driver functions
+ *  Assumption is these functions will be called after घड़ीs are enabled
  */
-struct dpu_hw_vbif_ops {
+काष्ठा dpu_hw_vbअगर_ops अणु
 	/**
 	 * set_limit_conf - set transaction limit config
-	 * @vbif: vbif context driver
-	 * @xin_id: client interface identifier
-	 * @rd: true for read limit; false for write limit
+	 * @vbअगर: vbअगर context driver
+	 * @xin_id: client पूर्णांकerface identअगरier
+	 * @rd: true क्रम पढ़ो limit; false क्रम ग_लिखो limit
 	 * @limit: outstanding transaction limit
 	 */
-	void (*set_limit_conf)(struct dpu_hw_vbif *vbif,
+	व्योम (*set_limit_conf)(काष्ठा dpu_hw_vbअगर *vbअगर,
 			u32 xin_id, bool rd, u32 limit);
 
 	/**
 	 * get_limit_conf - get transaction limit config
-	 * @vbif: vbif context driver
-	 * @xin_id: client interface identifier
-	 * @rd: true for read limit; false for write limit
-	 * @return: outstanding transaction limit
+	 * @vbअगर: vbअगर context driver
+	 * @xin_id: client पूर्णांकerface identअगरier
+	 * @rd: true क्रम पढ़ो limit; false क्रम ग_लिखो limit
+	 * @वापस: outstanding transaction limit
 	 */
-	u32 (*get_limit_conf)(struct dpu_hw_vbif *vbif,
+	u32 (*get_limit_conf)(काष्ठा dpu_hw_vbअगर *vbअगर,
 			u32 xin_id, bool rd);
 
 	/**
 	 * set_halt_ctrl - set halt control
-	 * @vbif: vbif context driver
-	 * @xin_id: client interface identifier
+	 * @vbअगर: vbअगर context driver
+	 * @xin_id: client पूर्णांकerface identअगरier
 	 * @enable: halt control enable
 	 */
-	void (*set_halt_ctrl)(struct dpu_hw_vbif *vbif,
+	व्योम (*set_halt_ctrl)(काष्ठा dpu_hw_vbअगर *vbअगर,
 			u32 xin_id, bool enable);
 
 	/**
 	 * get_halt_ctrl - get halt control
-	 * @vbif: vbif context driver
-	 * @xin_id: client interface identifier
-	 * @return: halt control enable
+	 * @vbअगर: vbअगर context driver
+	 * @xin_id: client पूर्णांकerface identअगरier
+	 * @वापस: halt control enable
 	 */
-	bool (*get_halt_ctrl)(struct dpu_hw_vbif *vbif,
+	bool (*get_halt_ctrl)(काष्ठा dpu_hw_vbअगर *vbअगर,
 			u32 xin_id);
 
 	/**
 	 * set_qos_remap - set QoS priority remap
-	 * @vbif: vbif context driver
-	 * @xin_id: client interface identifier
+	 * @vbअगर: vbअगर context driver
+	 * @xin_id: client पूर्णांकerface identअगरier
 	 * @level: priority level
 	 * @remap_level: remapped level
 	 */
-	void (*set_qos_remap)(struct dpu_hw_vbif *vbif,
+	व्योम (*set_qos_remap)(काष्ठा dpu_hw_vbअगर *vbअगर,
 			u32 xin_id, u32 level, u32 remap_level);
 
 	/**
 	 * set_mem_type - set memory type
-	 * @vbif: vbif context driver
-	 * @xin_id: client interface identifier
+	 * @vbअगर: vbअगर context driver
+	 * @xin_id: client पूर्णांकerface identअगरier
 	 * @value: memory type value
 	 */
-	void (*set_mem_type)(struct dpu_hw_vbif *vbif,
+	व्योम (*set_mem_type)(काष्ठा dpu_hw_vbअगर *vbअगर,
 			u32 xin_id, u32 value);
 
 	/**
-	 * clear_errors - clear any vbif errors
+	 * clear_errors - clear any vbअगर errors
 	 *	This function clears any detected pending/source errors
-	 *	on the VBIF interface, and optionally returns the detected
+	 *	on the VBIF पूर्णांकerface, and optionally वापसs the detected
 	 *	error mask(s).
-	 * @vbif: vbif context driver
-	 * @pnd_errors: pointer to pending error reporting variable
-	 * @src_errors: pointer to source error reporting variable
+	 * @vbअगर: vbअगर context driver
+	 * @pnd_errors: poपूर्णांकer to pending error reporting variable
+	 * @src_errors: poपूर्णांकer to source error reporting variable
 	 */
-	void (*clear_errors)(struct dpu_hw_vbif *vbif,
+	व्योम (*clear_errors)(काष्ठा dpu_hw_vbअगर *vbअगर,
 		u32 *pnd_errors, u32 *src_errors);
 
 	/**
-	 * set_write_gather_en - set write_gather enable
-	 * @vbif: vbif context driver
-	 * @xin_id: client interface identifier
+	 * set_ग_लिखो_gather_en - set ग_लिखो_gather enable
+	 * @vbअगर: vbअगर context driver
+	 * @xin_id: client पूर्णांकerface identअगरier
 	 */
-	void (*set_write_gather_en)(struct dpu_hw_vbif *vbif, u32 xin_id);
-};
+	व्योम (*set_ग_लिखो_gather_en)(काष्ठा dpu_hw_vbअगर *vbअगर, u32 xin_id);
+पूर्ण;
 
-struct dpu_hw_vbif {
+काष्ठा dpu_hw_vbअगर अणु
 	/* base */
-	struct dpu_hw_blk_reg_map hw;
+	काष्ठा dpu_hw_blk_reg_map hw;
 
-	/* vbif */
-	enum dpu_vbif idx;
-	const struct dpu_vbif_cfg *cap;
+	/* vbअगर */
+	क्रमागत dpu_vbअगर idx;
+	स्थिर काष्ठा dpu_vbअगर_cfg *cap;
 
 	/* ops */
-	struct dpu_hw_vbif_ops ops;
-};
+	काष्ठा dpu_hw_vbअगर_ops ops;
+पूर्ण;
 
 /**
- * dpu_hw_vbif_init - initializes the vbif driver for the passed interface idx
- * @idx:  Interface index for which driver object is required
- * @addr: Mapped register io address of MDSS
- * @m:    Pointer to mdss catalog data
+ * dpu_hw_vbअगर_init - initializes the vbअगर driver क्रम the passed पूर्णांकerface idx
+ * @idx:  Interface index क्रम which driver object is required
+ * @addr: Mapped रेजिस्टर io address of MDSS
+ * @m:    Poपूर्णांकer to mdss catalog data
  */
-struct dpu_hw_vbif *dpu_hw_vbif_init(enum dpu_vbif idx,
-		void __iomem *addr,
-		const struct dpu_mdss_cfg *m);
+काष्ठा dpu_hw_vbअगर *dpu_hw_vbअगर_init(क्रमागत dpu_vbअगर idx,
+		व्योम __iomem *addr,
+		स्थिर काष्ठा dpu_mdss_cfg *m);
 
-void dpu_hw_vbif_destroy(struct dpu_hw_vbif *vbif);
+व्योम dpu_hw_vbअगर_destroy(काष्ठा dpu_hw_vbअगर *vbअगर);
 
-#endif /*_DPU_HW_VBIF_H */
+#पूर्ण_अगर /*_DPU_HW_VBIF_H */

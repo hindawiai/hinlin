@@ -1,140 +1,141 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ctype.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#undef CONFIG_KASAN
-#undef CONFIG_KASAN_GENERIC
-#include "../lib/string.c"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#अघोषित CONFIG_KASAN
+#अघोषित CONFIG_KASAN_GENERIC
+#समावेश "../lib/string.c"
 
-int strncmp(const char *cs, const char *ct, size_t count)
-{
-	unsigned char c1, c2;
+पूर्णांक म_भेदन(स्थिर अक्षर *cs, स्थिर अक्षर *ct, माप_प्रकार count)
+अणु
+	अचिन्हित अक्षर c1, c2;
 
-	while (count) {
+	जबतक (count) अणु
 		c1 = *cs++;
 		c2 = *ct++;
-		if (c1 != c2)
-			return c1 < c2 ? -1 : 1;
-		if (!c1)
-			break;
+		अगर (c1 != c2)
+			वापस c1 < c2 ? -1 : 1;
+		अगर (!c1)
+			अवरोध;
 		count--;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-char *skip_spaces(const char *str)
-{
-	while (isspace(*str))
+अक्षर *skip_spaces(स्थिर अक्षर *str)
+अणु
+	जबतक (है_खाली(*str))
 		++str;
-	return (char *)str;
-}
+	वापस (अक्षर *)str;
+पूर्ण
 
-char *strim(char *s)
-{
-	size_t size;
-	char *end;
+अक्षर *strim(अक्षर *s)
+अणु
+	माप_प्रकार size;
+	अक्षर *end;
 
-	size = strlen(s);
-	if (!size)
-		return s;
+	size = म_माप(s);
+	अगर (!size)
+		वापस s;
 
 	end = s + size - 1;
-	while (end >= s && isspace(*end))
+	जबतक (end >= s && है_खाली(*end))
 		end--;
 	*(end + 1) = '\0';
 
-	return skip_spaces(s);
-}
+	वापस skip_spaces(s);
+पूर्ण
 
-/* Works only for digits and letters, but small and fast */
-#define TOLOWER(x) ((x) | 0x20)
+/* Works only क्रम digits and letters, but small and fast */
+#घोषणा TOLOWER(x) ((x) | 0x20)
 
-static unsigned int simple_guess_base(const char *cp)
-{
-	if (cp[0] == '0') {
-		if (TOLOWER(cp[1]) == 'x' && isxdigit(cp[2]))
-			return 16;
-		else
-			return 8;
-	} else {
-		return 10;
-	}
-}
+अटल अचिन्हित पूर्णांक simple_guess_base(स्थिर अक्षर *cp)
+अणु
+	अगर (cp[0] == '0') अणु
+		अगर (TOLOWER(cp[1]) == 'x' && है_षष्ठादशक(cp[2]))
+			वापस 16;
+		अन्यथा
+			वापस 8;
+	पूर्ण अन्यथा अणु
+		वापस 10;
+	पूर्ण
+पूर्ण
 
 /**
- * simple_strtoull - convert a string to an unsigned long long
+ * simple_म_से_अदीर्घl - convert a string to an अचिन्हित दीर्घ दीर्घ
  * @cp: The start of the string
- * @endp: A pointer to the end of the parsed string will be placed here
+ * @endp: A poपूर्णांकer to the end of the parsed string will be placed here
  * @base: The number base to use
  */
 
-unsigned long long simple_strtoull(const char *cp, char **endp,
-				   unsigned int base)
-{
-	unsigned long long result = 0;
+अचिन्हित दीर्घ दीर्घ simple_म_से_अदीर्घl(स्थिर अक्षर *cp, अक्षर **endp,
+				   अचिन्हित पूर्णांक base)
+अणु
+	अचिन्हित दीर्घ दीर्घ result = 0;
 
-	if (!base)
+	अगर (!base)
 		base = simple_guess_base(cp);
 
-	if (base == 16 && cp[0] == '0' && TOLOWER(cp[1]) == 'x')
+	अगर (base == 16 && cp[0] == '0' && TOLOWER(cp[1]) == 'x')
 		cp += 2;
 
-	while (isxdigit(*cp)) {
-		unsigned int value;
+	जबतक (है_षष्ठादशक(*cp)) अणु
+		अचिन्हित पूर्णांक value;
 
-		value = isdigit(*cp) ? *cp - '0' : TOLOWER(*cp) - 'a' + 10;
-		if (value >= base)
-			break;
+		value = है_अंक(*cp) ? *cp - '0' : TOLOWER(*cp) - 'a' + 10;
+		अगर (value >= base)
+			अवरोध;
 		result = result * base + value;
 		cp++;
-	}
-	if (endp)
-		*endp = (char *)cp;
+	पूर्ण
+	अगर (endp)
+		*endp = (अक्षर *)cp;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-long simple_strtol(const char *cp, char **endp, unsigned int base)
-{
-	if (*cp == '-')
-		return -simple_strtoull(cp + 1, endp, base);
+दीर्घ simple_म_से_दीर्घ(स्थिर अक्षर *cp, अक्षर **endp, अचिन्हित पूर्णांक base)
+अणु
+	अगर (*cp == '-')
+		वापस -simple_म_से_अदीर्घl(cp + 1, endp, base);
 
-	return simple_strtoull(cp, endp, base);
-}
+	वापस simple_म_से_अदीर्घl(cp, endp, base);
+पूर्ण
 
-int kstrtobool(const char *s, bool *res)
-{
-	if (!s)
-		return -EINVAL;
+पूर्णांक kstrtobool(स्थिर अक्षर *s, bool *res)
+अणु
+	अगर (!s)
+		वापस -EINVAL;
 
-	switch (s[0]) {
-	case 'y':
-	case 'Y':
-	case '1':
+	चयन (s[0]) अणु
+	हाल 'y':
+	हाल 'Y':
+	हाल '1':
 		*res = true;
-		return 0;
-	case 'n':
-	case 'N':
-	case '0':
+		वापस 0;
+	हाल 'n':
+	हाल 'N':
+	हाल '0':
 		*res = false;
-		return 0;
-	case 'o':
-	case 'O':
-		switch (s[1]) {
-		case 'n':
-		case 'N':
+		वापस 0;
+	हाल 'o':
+	हाल 'O':
+		चयन (s[1]) अणु
+		हाल 'n':
+		हाल 'N':
 			*res = true;
-			return 0;
-		case 'f':
-		case 'F':
+			वापस 0;
+		हाल 'f':
+		हाल 'F':
 			*res = false;
-			return 0;
-		default:
-			break;
-		}
-	default:
-		break;
-	}
+			वापस 0;
+		शेष:
+			अवरोध;
+		पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण

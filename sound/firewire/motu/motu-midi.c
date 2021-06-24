@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * motu-midi.h - a part of driver for MOTU FireWire series
+ * motu-midi.h - a part of driver क्रम MOTU FireWire series
  *
  * Copyright (c) 2015-2017 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
-#include "motu.h"
+#समावेश "motu.h"
 
-static int midi_open(struct snd_rawmidi_substream *substream)
-{
-	struct snd_motu *motu = substream->rmidi->private_data;
-	int err;
+अटल पूर्णांक midi_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->rmidi->निजी_data;
+	पूर्णांक err;
 
 	err = snd_motu_stream_lock_try(motu);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	mutex_lock(&motu->mutex);
 
 	err = snd_motu_stream_reserve_duplex(motu, 0, 0, 0);
-	if (err >= 0) {
+	अगर (err >= 0) अणु
 		++motu->substreams_counter;
 		err = snd_motu_stream_start_duplex(motu);
-		if (err < 0)
+		अगर (err < 0)
 			--motu->substreams_counter;
-	}
+	पूर्ण
 
 	mutex_unlock(&motu->mutex);
 
-	if (err < 0)
+	अगर (err < 0)
 		snd_motu_stream_lock_release(motu);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int midi_close(struct snd_rawmidi_substream *substream)
-{
-	struct snd_motu *motu = substream->rmidi->private_data;
+अटल पूर्णांक midi_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->rmidi->निजी_data;
 
 	mutex_lock(&motu->mutex);
 
@@ -45,78 +46,78 @@ static int midi_close(struct snd_rawmidi_substream *substream)
 	mutex_unlock(&motu->mutex);
 
 	snd_motu_stream_lock_release(motu);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void midi_capture_trigger(struct snd_rawmidi_substream *substrm, int up)
-{
-	struct snd_motu *motu = substrm->rmidi->private_data;
-	unsigned long flags;
-
-	spin_lock_irqsave(&motu->lock, flags);
-
-	if (up)
-		amdtp_motu_midi_trigger(&motu->tx_stream, substrm->number,
-					substrm);
-	else
-		amdtp_motu_midi_trigger(&motu->tx_stream, substrm->number,
-					NULL);
-
-	spin_unlock_irqrestore(&motu->lock, flags);
-}
-
-static void midi_playback_trigger(struct snd_rawmidi_substream *substrm, int up)
-{
-	struct snd_motu *motu = substrm->rmidi->private_data;
-	unsigned long flags;
+अटल व्योम midi_capture_trigger(काष्ठा snd_rawmidi_substream *substrm, पूर्णांक up)
+अणु
+	काष्ठा snd_motu *motu = substrm->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&motu->lock, flags);
 
-	if (up)
-		amdtp_motu_midi_trigger(&motu->rx_stream, substrm->number,
+	अगर (up)
+		amdtp_motu_midi_trigger(&motu->tx_stream, substrm->number,
 					substrm);
-	else
-		amdtp_motu_midi_trigger(&motu->rx_stream, substrm->number,
-					NULL);
+	अन्यथा
+		amdtp_motu_midi_trigger(&motu->tx_stream, substrm->number,
+					शून्य);
 
 	spin_unlock_irqrestore(&motu->lock, flags);
-}
+पूर्ण
 
-static void set_midi_substream_names(struct snd_motu *motu,
-				     struct snd_rawmidi_str *str)
-{
-	struct snd_rawmidi_substream *subs;
+अटल व्योम midi_playback_trigger(काष्ठा snd_rawmidi_substream *substrm, पूर्णांक up)
+अणु
+	काष्ठा snd_motu *motu = substrm->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
-	list_for_each_entry(subs, &str->substreams, list) {
-		snprintf(subs->name, sizeof(subs->name),
-			 "%s MIDI %d", motu->card->shortname, subs->number + 1);
-	}
-}
+	spin_lock_irqsave(&motu->lock, flags);
 
-int snd_motu_create_midi_devices(struct snd_motu *motu)
-{
-	static const struct snd_rawmidi_ops capture_ops = {
-		.open		= midi_open,
-		.close		= midi_close,
+	अगर (up)
+		amdtp_motu_midi_trigger(&motu->rx_stream, substrm->number,
+					substrm);
+	अन्यथा
+		amdtp_motu_midi_trigger(&motu->rx_stream, substrm->number,
+					शून्य);
+
+	spin_unlock_irqrestore(&motu->lock, flags);
+पूर्ण
+
+अटल व्योम set_midi_substream_names(काष्ठा snd_motu *motu,
+				     काष्ठा snd_rawmidi_str *str)
+अणु
+	काष्ठा snd_rawmidi_substream *subs;
+
+	list_क्रम_each_entry(subs, &str->substreams, list) अणु
+		snम_लिखो(subs->name, माप(subs->name),
+			 "%s MIDI %d", motu->card->लघुname, subs->number + 1);
+	पूर्ण
+पूर्ण
+
+पूर्णांक snd_motu_create_midi_devices(काष्ठा snd_motu *motu)
+अणु
+	अटल स्थिर काष्ठा snd_rawmidi_ops capture_ops = अणु
+		.खोलो		= midi_खोलो,
+		.बंद		= midi_बंद,
 		.trigger	= midi_capture_trigger,
-	};
-	static const struct snd_rawmidi_ops playback_ops = {
-		.open		= midi_open,
-		.close		= midi_close,
+	पूर्ण;
+	अटल स्थिर काष्ठा snd_rawmidi_ops playback_ops = अणु
+		.खोलो		= midi_खोलो,
+		.बंद		= midi_बंद,
 		.trigger	= midi_playback_trigger,
-	};
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_str *str;
-	int err;
+	पूर्ण;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_str *str;
+	पूर्णांक err;
 
 	/* create midi ports */
 	err = snd_rawmidi_new(motu->card, motu->card->driver, 0, 1, 1, &rmidi);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	snprintf(rmidi->name, sizeof(rmidi->name),
-		 "%s MIDI", motu->card->shortname);
-	rmidi->private_data = motu;
+	snम_लिखो(rmidi->name, माप(rmidi->name),
+		 "%s MIDI", motu->card->लघुname);
+	rmidi->निजी_data = motu;
 
 	rmidi->info_flags |= SNDRV_RAWMIDI_INFO_INPUT |
 			     SNDRV_RAWMIDI_INFO_OUTPUT |
@@ -132,5 +133,5 @@ int snd_motu_create_midi_devices(struct snd_motu *motu)
 	str = &rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT];
 	set_midi_substream_names(motu, str);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

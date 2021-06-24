@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Copyright 2016-2019 HabanaLabs, Ltd.
+ * Copyright 2016-2019 HabanaLअसल, Ltd.
  * All Rights Reserved.
  */
 
-#include <uapi/misc/habanalabs.h>
-#include "habanalabs.h"
+#समावेश <uapi/misc/habanaद_असल.h>
+#समावेश "habanalabs.h"
 
-#include <linux/uaccess.h>
-#include <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
 
-#define HL_CS_FLAGS_TYPE_MASK	(HL_CS_FLAGS_SIGNAL | HL_CS_FLAGS_WAIT | \
+#घोषणा HL_CS_FLAGS_TYPE_MASK	(HL_CS_FLAGS_SIGNAL | HL_CS_FLAGS_WAIT | \
 				HL_CS_FLAGS_COLLECTIVE_WAIT)
 
 /**
- * enum hl_cs_wait_status - cs wait status
+ * क्रमागत hl_cs_रुको_status - cs रुको status
  * @CS_WAIT_STATUS_BUSY: cs was not completed yet
  * @CS_WAIT_STATUS_COMPLETED: cs completed
- * @CS_WAIT_STATUS_GONE: cs completed but fence is already gone
+ * @CS_WAIT_STATUS_GONE: cs completed but fence is alपढ़ोy gone
  */
-enum hl_cs_wait_status {
+क्रमागत hl_cs_रुको_status अणु
 	CS_WAIT_STATUS_BUSY,
 	CS_WAIT_STATUS_COMPLETED,
 	CS_WAIT_STATUS_GONE
-};
+पूर्ण;
 
-static void job_wq_completion(struct work_struct *work);
-static int _hl_cs_wait_ioctl(struct hl_device *hdev, struct hl_ctx *ctx,
-				u64 timeout_us, u64 seq,
-				enum hl_cs_wait_status *status, s64 *timestamp);
-static void cs_do_release(struct kref *ref);
+अटल व्योम job_wq_completion(काष्ठा work_काष्ठा *work);
+अटल पूर्णांक _hl_cs_रुको_ioctl(काष्ठा hl_device *hdev, काष्ठा hl_ctx *ctx,
+				u64 समयout_us, u64 seq,
+				क्रमागत hl_cs_रुको_status *status, s64 *बारtamp);
+अटल व्योम cs_करो_release(काष्ठा kref *ref);
 
-static void hl_sob_reset(struct kref *ref)
-{
-	struct hl_hw_sob *hw_sob = container_of(ref, struct hl_hw_sob,
+अटल व्योम hl_sob_reset(काष्ठा kref *ref)
+अणु
+	काष्ठा hl_hw_sob *hw_sob = container_of(ref, काष्ठा hl_hw_sob,
 							kref);
-	struct hl_device *hdev = hw_sob->hdev;
+	काष्ठा hl_device *hdev = hw_sob->hdev;
 
 	hdev->asic_funcs->reset_sob(hdev, hw_sob);
-}
+पूर्ण
 
-void hl_sob_reset_error(struct kref *ref)
-{
-	struct hl_hw_sob *hw_sob = container_of(ref, struct hl_hw_sob,
+व्योम hl_sob_reset_error(काष्ठा kref *ref)
+अणु
+	काष्ठा hl_hw_sob *hw_sob = container_of(ref, काष्ठा hl_hw_sob,
 							kref);
-	struct hl_device *hdev = hw_sob->hdev;
+	काष्ठा hl_device *hdev = hw_sob->hdev;
 
 	dev_crit(hdev->dev,
 		"SOB release shouldn't be called here, q_idx: %d, sob_id: %d\n",
 		hw_sob->q_idx, hw_sob->sob_id);
-}
+पूर्ण
 
 /**
  * hl_gen_sob_mask() - Generates a sob mask to be used in a monitor arm packet
@@ -58,81 +59,81 @@ void hl_sob_reset_error(struct kref *ref)
  * @sob_mask: sob user mask, each bit represents a sob offset from sob base
  * @mask: generated mask
  *
- * Return: 0 if given parameters are valid
+ * Return: 0 अगर given parameters are valid
  */
-int hl_gen_sob_mask(u16 sob_base, u8 sob_mask, u8 *mask)
-{
-	int i;
+पूर्णांक hl_gen_sob_mask(u16 sob_base, u8 sob_mask, u8 *mask)
+अणु
+	पूर्णांक i;
 
-	if (sob_mask == 0)
-		return -EINVAL;
+	अगर (sob_mask == 0)
+		वापस -EINVAL;
 
-	if (sob_mask == 0x1) {
+	अगर (sob_mask == 0x1) अणु
 		*mask = ~(1 << (sob_base & 0x7));
-	} else {
-		/* find msb in order to verify sob range is valid */
-		for (i = BITS_PER_BYTE - 1 ; i >= 0 ; i--)
-			if (BIT(i) & sob_mask)
-				break;
+	पूर्ण अन्यथा अणु
+		/* find msb in order to verअगरy sob range is valid */
+		क्रम (i = BITS_PER_BYTE - 1 ; i >= 0 ; i--)
+			अगर (BIT(i) & sob_mask)
+				अवरोध;
 
-		if (i > (HL_MAX_SOBS_PER_MONITOR - (sob_base & 0x7) - 1))
-			return -EINVAL;
+		अगर (i > (HL_MAX_SOBS_PER_MONITOR - (sob_base & 0x7) - 1))
+			वापस -EINVAL;
 
 		*mask = ~sob_mask;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sob_reset_work(struct work_struct *work)
-{
-	struct hl_cs_compl *hl_cs_cmpl =
-		container_of(work, struct hl_cs_compl, sob_reset_work);
-	struct hl_device *hdev = hl_cs_cmpl->hdev;
+अटल व्योम sob_reset_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hl_cs_compl *hl_cs_cmpl =
+		container_of(work, काष्ठा hl_cs_compl, sob_reset_work);
+	काष्ठा hl_device *hdev = hl_cs_cmpl->hdev;
 
 	/*
-	 * A signal CS can get completion while the corresponding wait
-	 * for signal CS is on its way to the PQ. The wait for signal CS
-	 * will get stuck if the signal CS incremented the SOB to its
-	 * max value and there are no pending (submitted) waits on this
+	 * A संकेत CS can get completion जबतक the corresponding रुको
+	 * क्रम संकेत CS is on its way to the PQ. The रुको क्रम संकेत CS
+	 * will get stuck अगर the संकेत CS incremented the SOB to its
+	 * max value and there are no pending (submitted) रुकोs on this
 	 * SOB.
-	 * We do the following to void this situation:
-	 * 1. The wait for signal CS must get a ref for the signal CS as
-	 *    soon as possible in cs_ioctl_signal_wait() and put it
-	 *    before being submitted to the PQ but after it incremented
-	 *    the SOB refcnt in init_signal_wait_cs().
-	 * 2. Signal/Wait for signal CS will decrement the SOB refcnt
+	 * We करो the following to व्योम this situation:
+	 * 1. The रुको क्रम संकेत CS must get a ref क्रम the संकेत CS as
+	 *    soon as possible in cs_ioctl_संकेत_रुको() and put it
+	 *    beक्रमe being submitted to the PQ but after it incremented
+	 *    the SOB refcnt in init_संकेत_रुको_cs().
+	 * 2. Signal/Wait क्रम संकेत CS will decrement the SOB refcnt
 	 *    here.
-	 * These two measures guarantee that the wait for signal CS will
-	 * reset the SOB upon completion rather than the signal CS and
-	 * hence the above scenario is avoided.
+	 * These two measures guarantee that the रुको क्रम संकेत CS will
+	 * reset the SOB upon completion rather than the संकेत CS and
+	 * hence the above scenario is aव्योमed.
 	 */
 	kref_put(&hl_cs_cmpl->hw_sob->kref, hl_sob_reset);
 
-	if (hl_cs_cmpl->type == CS_TYPE_COLLECTIVE_WAIT)
+	अगर (hl_cs_cmpl->type == CS_TYPE_COLLECTIVE_WAIT)
 		hdev->asic_funcs->reset_sob_group(hdev,
 				hl_cs_cmpl->sob_group);
 
-	kfree(hl_cs_cmpl);
-}
+	kमुक्त(hl_cs_cmpl);
+पूर्ण
 
-static void hl_fence_release(struct kref *kref)
-{
-	struct hl_fence *fence =
-		container_of(kref, struct hl_fence, refcount);
-	struct hl_cs_compl *hl_cs_cmpl =
-		container_of(fence, struct hl_cs_compl, base_fence);
-	struct hl_device *hdev = hl_cs_cmpl->hdev;
+अटल व्योम hl_fence_release(काष्ठा kref *kref)
+अणु
+	काष्ठा hl_fence *fence =
+		container_of(kref, काष्ठा hl_fence, refcount);
+	काष्ठा hl_cs_compl *hl_cs_cmpl =
+		container_of(fence, काष्ठा hl_cs_compl, base_fence);
+	काष्ठा hl_device *hdev = hl_cs_cmpl->hdev;
 
-	/* EBUSY means the CS was never submitted and hence we don't have
+	/* EBUSY means the CS was never submitted and hence we करोn't have
 	 * an attached hw_sob object that we should handle here
 	 */
-	if (fence->error == -EBUSY)
-		goto free;
+	अगर (fence->error == -EBUSY)
+		जाओ मुक्त;
 
-	if ((hl_cs_cmpl->type == CS_TYPE_SIGNAL) ||
+	अगर ((hl_cs_cmpl->type == CS_TYPE_SIGNAL) ||
 		(hl_cs_cmpl->type == CS_TYPE_WAIT) ||
-		(hl_cs_cmpl->type == CS_TYPE_COLLECTIVE_WAIT)) {
+		(hl_cs_cmpl->type == CS_TYPE_COLLECTIVE_WAIT)) अणु
 
 		dev_dbg(hdev->dev,
 			"CS 0x%llx type %d finished, sob_id: %d, sob_val: 0x%x\n",
@@ -143,111 +144,111 @@ static void hl_fence_release(struct kref *kref)
 
 		queue_work(hdev->sob_reset_wq, &hl_cs_cmpl->sob_reset_work);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-free:
-	kfree(hl_cs_cmpl);
-}
+मुक्त:
+	kमुक्त(hl_cs_cmpl);
+पूर्ण
 
-void hl_fence_put(struct hl_fence *fence)
-{
-	if (fence)
+व्योम hl_fence_put(काष्ठा hl_fence *fence)
+अणु
+	अगर (fence)
 		kref_put(&fence->refcount, hl_fence_release);
-}
+पूर्ण
 
-void hl_fence_get(struct hl_fence *fence)
-{
-	if (fence)
+व्योम hl_fence_get(काष्ठा hl_fence *fence)
+अणु
+	अगर (fence)
 		kref_get(&fence->refcount);
-}
+पूर्ण
 
-static void hl_fence_init(struct hl_fence *fence, u64 sequence)
-{
+अटल व्योम hl_fence_init(काष्ठा hl_fence *fence, u64 sequence)
+अणु
 	kref_init(&fence->refcount);
 	fence->cs_sequence = sequence;
 	fence->error = 0;
-	fence->timestamp = ktime_set(0, 0);
+	fence->बारtamp = kसमय_set(0, 0);
 	init_completion(&fence->completion);
-}
+पूर्ण
 
-void cs_get(struct hl_cs *cs)
-{
+व्योम cs_get(काष्ठा hl_cs *cs)
+अणु
 	kref_get(&cs->refcount);
-}
+पूर्ण
 
-static int cs_get_unless_zero(struct hl_cs *cs)
-{
-	return kref_get_unless_zero(&cs->refcount);
-}
+अटल पूर्णांक cs_get_unless_zero(काष्ठा hl_cs *cs)
+अणु
+	वापस kref_get_unless_zero(&cs->refcount);
+पूर्ण
 
-static void cs_put(struct hl_cs *cs)
-{
-	kref_put(&cs->refcount, cs_do_release);
-}
+अटल व्योम cs_put(काष्ठा hl_cs *cs)
+अणु
+	kref_put(&cs->refcount, cs_करो_release);
+पूर्ण
 
-static void cs_job_do_release(struct kref *ref)
-{
-	struct hl_cs_job *job = container_of(ref, struct hl_cs_job, refcount);
+अटल व्योम cs_job_करो_release(काष्ठा kref *ref)
+अणु
+	काष्ठा hl_cs_job *job = container_of(ref, काष्ठा hl_cs_job, refcount);
 
-	kfree(job);
-}
+	kमुक्त(job);
+पूर्ण
 
-static void cs_job_put(struct hl_cs_job *job)
-{
-	kref_put(&job->refcount, cs_job_do_release);
-}
+अटल व्योम cs_job_put(काष्ठा hl_cs_job *job)
+अणु
+	kref_put(&job->refcount, cs_job_करो_release);
+पूर्ण
 
-bool cs_needs_completion(struct hl_cs *cs)
-{
-	/* In case this is a staged CS, only the last CS in sequence should
+bool cs_needs_completion(काष्ठा hl_cs *cs)
+अणु
+	/* In हाल this is a staged CS, only the last CS in sequence should
 	 * get a completion, any non staged CS will always get a completion
 	 */
-	if (cs->staged_cs && !cs->staged_last)
-		return false;
+	अगर (cs->staged_cs && !cs->staged_last)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool cs_needs_timeout(struct hl_cs *cs)
-{
-	/* In case this is a staged CS, only the first CS in sequence should
-	 * get a timeout, any non staged CS will always get a timeout
+bool cs_needs_समयout(काष्ठा hl_cs *cs)
+अणु
+	/* In हाल this is a staged CS, only the first CS in sequence should
+	 * get a समयout, any non staged CS will always get a समयout
 	 */
-	if (cs->staged_cs && !cs->staged_first)
-		return false;
+	अगर (cs->staged_cs && !cs->staged_first)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool is_cb_patched(struct hl_device *hdev, struct hl_cs_job *job)
-{
+अटल bool is_cb_patched(काष्ठा hl_device *hdev, काष्ठा hl_cs_job *job)
+अणु
 	/*
-	 * Patched CB is created for external queues jobs, and for H/W queues
-	 * jobs if the user CB was allocated by driver and MMU is disabled.
+	 * Patched CB is created क्रम बाह्यal queues jobs, and क्रम H/W queues
+	 * jobs अगर the user CB was allocated by driver and MMU is disabled.
 	 */
-	return (job->queue_type == QUEUE_TYPE_EXT ||
+	वापस (job->queue_type == QUEUE_TYPE_EXT ||
 			(job->queue_type == QUEUE_TYPE_HW &&
 					job->is_kernel_allocated_cb &&
 					!hdev->mmu_enable));
-}
+पूर्ण
 
 /*
  * cs_parser - parse the user command submission
  *
- * @hpriv	: pointer to the private data of the fd
- * @job        : pointer to the job that holds the command submission info
+ * @hpriv	: poपूर्णांकer to the निजी data of the fd
+ * @job        : poपूर्णांकer to the job that holds the command submission info
  *
  * The function parses the command submission of the user. It calls the
- * ASIC specific parser, which returns a list of memory blocks to send
- * to the device as different command buffers
+ * ASIC specअगरic parser, which वापसs a list of memory blocks to send
+ * to the device as dअगरferent command buffers
  *
  */
-static int cs_parser(struct hl_fpriv *hpriv, struct hl_cs_job *job)
-{
-	struct hl_device *hdev = hpriv->hdev;
-	struct hl_cs_parser parser;
-	int rc;
+अटल पूर्णांक cs_parser(काष्ठा hl_fpriv *hpriv, काष्ठा hl_cs_job *job)
+अणु
+	काष्ठा hl_device *hdev = hpriv->hdev;
+	काष्ठा hl_cs_parser parser;
+	पूर्णांक rc;
 
 	parser.ctx_id = job->cs->ctx->asid;
 	parser.cs_sequence = job->cs->sequence;
@@ -255,429 +256,429 @@ static int cs_parser(struct hl_fpriv *hpriv, struct hl_cs_job *job)
 
 	parser.hw_queue_id = job->hw_queue_id;
 	parser.job_userptr_list = &job->userptr_list;
-	parser.patched_cb = NULL;
+	parser.patched_cb = शून्य;
 	parser.user_cb = job->user_cb;
 	parser.user_cb_size = job->user_cb_size;
 	parser.queue_type = job->queue_type;
 	parser.is_kernel_allocated_cb = job->is_kernel_allocated_cb;
-	job->patched_cb = NULL;
+	job->patched_cb = शून्य;
 	parser.completion = cs_needs_completion(job->cs);
 
 	rc = hdev->asic_funcs->cs_parser(hdev, &parser);
 
-	if (is_cb_patched(hdev, job)) {
-		if (!rc) {
+	अगर (is_cb_patched(hdev, job)) अणु
+		अगर (!rc) अणु
 			job->patched_cb = parser.patched_cb;
 			job->job_cb_size = parser.patched_cb_size;
 			job->contains_dma_pkt = parser.contains_dma_pkt;
 			atomic_inc(&job->patched_cb->cs_cnt);
-		}
+		पूर्ण
 
 		/*
-		 * Whether the parsing worked or not, we don't need the
-		 * original CB anymore because it was already parsed and
-		 * won't be accessed again for this CS
+		 * Whether the parsing worked or not, we करोn't need the
+		 * original CB anymore because it was alपढ़ोy parsed and
+		 * won't be accessed again क्रम this CS
 		 */
 		atomic_dec(&job->user_cb->cs_cnt);
 		hl_cb_put(job->user_cb);
-		job->user_cb = NULL;
-	} else if (!rc) {
+		job->user_cb = शून्य;
+	पूर्ण अन्यथा अगर (!rc) अणु
 		job->job_cb_size = job->user_cb_size;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void complete_job(struct hl_device *hdev, struct hl_cs_job *job)
-{
-	struct hl_cs *cs = job->cs;
+अटल व्योम complete_job(काष्ठा hl_device *hdev, काष्ठा hl_cs_job *job)
+अणु
+	काष्ठा hl_cs *cs = job->cs;
 
-	if (is_cb_patched(hdev, job)) {
+	अगर (is_cb_patched(hdev, job)) अणु
 		hl_userptr_delete_list(hdev, &job->userptr_list);
 
 		/*
 		 * We might arrive here from rollback and patched CB wasn't
-		 * created, so we need to check it's not NULL
+		 * created, so we need to check it's not शून्य
 		 */
-		if (job->patched_cb) {
+		अगर (job->patched_cb) अणु
 			atomic_dec(&job->patched_cb->cs_cnt);
 			hl_cb_put(job->patched_cb);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* For H/W queue jobs, if a user CB was allocated by driver and MMU is
+	/* For H/W queue jobs, अगर a user CB was allocated by driver and MMU is
 	 * enabled, the user CB isn't released in cs_parser() and thus should be
 	 * released here.
-	 * This is also true for INT queues jobs which were allocated by driver
+	 * This is also true क्रम INT queues jobs which were allocated by driver
 	 */
-	if (job->is_kernel_allocated_cb &&
+	अगर (job->is_kernel_allocated_cb &&
 		((job->queue_type == QUEUE_TYPE_HW && hdev->mmu_enable) ||
-				job->queue_type == QUEUE_TYPE_INT)) {
+				job->queue_type == QUEUE_TYPE_INT)) अणु
 		atomic_dec(&job->user_cb->cs_cnt);
 		hl_cb_put(job->user_cb);
-	}
+	पूर्ण
 
 	/*
-	 * This is the only place where there can be multiple threads
-	 * modifying the list at the same time
+	 * This is the only place where there can be multiple thपढ़ोs
+	 * modअगरying the list at the same समय
 	 */
 	spin_lock(&cs->job_lock);
 	list_del(&job->cs_node);
 	spin_unlock(&cs->job_lock);
 
-	hl_debugfs_remove_job(hdev, job);
+	hl_debugfs_हटाओ_job(hdev, job);
 
-	/* We decrement reference only for a CS that gets completion
-	 * because the reference was incremented only for this kind of CS
-	 * right before it was scheduled.
+	/* We decrement reference only क्रम a CS that माला_लो completion
+	 * because the reference was incremented only क्रम this kind of CS
+	 * right beक्रमe it was scheduled.
 	 *
 	 * In staged submission, only the last CS marked as 'staged_last'
-	 * gets completion, hence its release function will be called from here.
-	 * As for all the rest CS's in the staged submission which do not get
+	 * माला_लो completion, hence its release function will be called from here.
+	 * As क्रम all the rest CS's in the staged submission which करो not get
 	 * completion, their CS reference will be decremented by the
 	 * 'staged_last' CS during the CS release flow.
 	 * All relevant PQ CI counters will be incremented during the CS release
 	 * flow by calling 'hl_hw_queue_update_ci'.
 	 */
-	if (cs_needs_completion(cs) &&
+	अगर (cs_needs_completion(cs) &&
 		(job->queue_type == QUEUE_TYPE_EXT ||
 			job->queue_type == QUEUE_TYPE_HW))
 		cs_put(cs);
 
 	cs_job_put(job);
-}
+पूर्ण
 
 /*
  * hl_staged_cs_find_first - locate the first CS in this staged submission
  *
- * @hdev: pointer to device structure
+ * @hdev: poपूर्णांकer to device काष्ठाure
  * @cs_seq: staged submission sequence number
  *
  * @note: This function must be called under 'hdev->cs_mirror_lock'
  *
- * Find and return a CS pointer with the given sequence
+ * Find and वापस a CS poपूर्णांकer with the given sequence
  */
-struct hl_cs *hl_staged_cs_find_first(struct hl_device *hdev, u64 cs_seq)
-{
-	struct hl_cs *cs;
+काष्ठा hl_cs *hl_staged_cs_find_first(काष्ठा hl_device *hdev, u64 cs_seq)
+अणु
+	काष्ठा hl_cs *cs;
 
-	list_for_each_entry_reverse(cs, &hdev->cs_mirror_list, mirror_node)
-		if (cs->staged_cs && cs->staged_first &&
+	list_क्रम_each_entry_reverse(cs, &hdev->cs_mirror_list, mirror_node)
+		अगर (cs->staged_cs && cs->staged_first &&
 				cs->sequence == cs_seq)
-			return cs;
+			वापस cs;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * is_staged_cs_last_exists - returns true if the last CS in sequence exists
+ * is_staged_cs_last_exists - वापसs true अगर the last CS in sequence exists
  *
- * @hdev: pointer to device structure
+ * @hdev: poपूर्णांकer to device काष्ठाure
  * @cs: staged submission member
  *
  */
-bool is_staged_cs_last_exists(struct hl_device *hdev, struct hl_cs *cs)
-{
-	struct hl_cs *last_entry;
+bool is_staged_cs_last_exists(काष्ठा hl_device *hdev, काष्ठा hl_cs *cs)
+अणु
+	काष्ठा hl_cs *last_entry;
 
-	last_entry = list_last_entry(&cs->staged_cs_node, struct hl_cs,
+	last_entry = list_last_entry(&cs->staged_cs_node, काष्ठा hl_cs,
 								staged_cs_node);
 
-	if (last_entry->staged_last)
-		return true;
+	अगर (last_entry->staged_last)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * staged_cs_get - get CS reference if this CS is a part of a staged CS
+ * staged_cs_get - get CS reference अगर this CS is a part of a staged CS
  *
- * @hdev: pointer to device structure
+ * @hdev: poपूर्णांकer to device काष्ठाure
  * @cs: current CS
  * @cs_seq: staged submission sequence number
  *
- * Increment CS reference for every CS in this staged submission except for
+ * Increment CS reference क्रम every CS in this staged submission except क्रम
  * the CS which get completion.
  */
-static void staged_cs_get(struct hl_device *hdev, struct hl_cs *cs)
-{
+अटल व्योम staged_cs_get(काष्ठा hl_device *hdev, काष्ठा hl_cs *cs)
+अणु
 	/* Only the last CS in this staged submission will get a completion.
-	 * We must increment the reference for all other CS's in this
+	 * We must increment the reference क्रम all other CS's in this
 	 * staged submission.
 	 * Once we get a completion we will release the whole staged submission.
 	 */
-	if (!cs->staged_last)
+	अगर (!cs->staged_last)
 		cs_get(cs);
-}
+पूर्ण
 
 /*
- * staged_cs_put - put a CS in case it is part of staged submission
+ * staged_cs_put - put a CS in हाल it is part of staged submission
  *
- * @hdev: pointer to device structure
+ * @hdev: poपूर्णांकer to device काष्ठाure
  * @cs: CS to put
  *
- * This function decrements a CS reference (for a non completion CS)
+ * This function decrements a CS reference (क्रम a non completion CS)
  */
-static void staged_cs_put(struct hl_device *hdev, struct hl_cs *cs)
-{
+अटल व्योम staged_cs_put(काष्ठा hl_device *hdev, काष्ठा hl_cs *cs)
+अणु
 	/* We release all CS's in a staged submission except the last
 	 * CS which we have never incremented its reference.
 	 */
-	if (!cs_needs_completion(cs))
+	अगर (!cs_needs_completion(cs))
 		cs_put(cs);
-}
+पूर्ण
 
-static void cs_handle_tdr(struct hl_device *hdev, struct hl_cs *cs)
-{
+अटल व्योम cs_handle_tdr(काष्ठा hl_device *hdev, काष्ठा hl_cs *cs)
+अणु
 	bool next_entry_found = false;
-	struct hl_cs *next;
+	काष्ठा hl_cs *next;
 
-	if (!cs_needs_timeout(cs))
-		return;
+	अगर (!cs_needs_समयout(cs))
+		वापस;
 
 	spin_lock(&hdev->cs_mirror_lock);
 
-	/* We need to handle tdr only once for the complete staged submission.
+	/* We need to handle tdr only once क्रम the complete staged submission.
 	 * Hence, we choose the CS that reaches this function first which is
 	 * the CS marked as 'staged_last'.
 	 */
-	if (cs->staged_cs && cs->staged_last)
+	अगर (cs->staged_cs && cs->staged_last)
 		cs = hl_staged_cs_find_first(hdev, cs->staged_sequence);
 
 	spin_unlock(&hdev->cs_mirror_lock);
 
-	/* Don't cancel TDR in case this CS was timedout because we might be
+	/* Don't cancel TDR in हाल this CS was समयकरोut because we might be
 	 * running from the TDR context
 	 */
-	if (cs && (cs->timedout ||
-			hdev->timeout_jiffies == MAX_SCHEDULE_TIMEOUT))
-		return;
+	अगर (cs && (cs->समयकरोut ||
+			hdev->समयout_jअगरfies == MAX_SCHEDULE_TIMEOUT))
+		वापस;
 
-	if (cs && cs->tdr_active)
+	अगर (cs && cs->tdr_active)
 		cancel_delayed_work_sync(&cs->work_tdr);
 
 	spin_lock(&hdev->cs_mirror_lock);
 
-	/* queue TDR for next CS */
-	list_for_each_entry(next, &hdev->cs_mirror_list, mirror_node)
-		if (cs_needs_timeout(next)) {
+	/* queue TDR क्रम next CS */
+	list_क्रम_each_entry(next, &hdev->cs_mirror_list, mirror_node)
+		अगर (cs_needs_समयout(next)) अणु
 			next_entry_found = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	if (next_entry_found && !next->tdr_active) {
+	अगर (next_entry_found && !next->tdr_active) अणु
 		next->tdr_active = true;
-		schedule_delayed_work(&next->work_tdr, next->timeout_jiffies);
-	}
+		schedule_delayed_work(&next->work_tdr, next->समयout_jअगरfies);
+	पूर्ण
 
 	spin_unlock(&hdev->cs_mirror_lock);
-}
+पूर्ण
 
-static void cs_do_release(struct kref *ref)
-{
-	struct hl_cs *cs = container_of(ref, struct hl_cs, refcount);
-	struct hl_device *hdev = cs->ctx->hdev;
-	struct hl_cs_job *job, *tmp;
+अटल व्योम cs_करो_release(काष्ठा kref *ref)
+अणु
+	काष्ठा hl_cs *cs = container_of(ref, काष्ठा hl_cs, refcount);
+	काष्ठा hl_device *hdev = cs->ctx->hdev;
+	काष्ठा hl_cs_job *job, *पंचांगp;
 
 	cs->completed = true;
 
 	/*
-	 * Although if we reached here it means that all external jobs have
+	 * Although अगर we reached here it means that all बाह्यal jobs have
 	 * finished, because each one of them took refcnt to CS, we still
-	 * need to go over the internal jobs and complete them. Otherwise, we
+	 * need to go over the पूर्णांकernal jobs and complete them. Otherwise, we
 	 * will have leaked memory and what's worse, the CS object (and
-	 * potentially the CTX object) could be released, while the JOB
-	 * still holds a pointer to them (but no reference).
+	 * potentially the CTX object) could be released, जबतक the JOB
+	 * still holds a poपूर्णांकer to them (but no reference).
 	 */
-	list_for_each_entry_safe(job, tmp, &cs->job_list, cs_node)
+	list_क्रम_each_entry_safe(job, पंचांगp, &cs->job_list, cs_node)
 		complete_job(hdev, job);
 
-	if (!cs->submitted) {
-		/* In case the wait for signal CS was submitted, the put occurs
-		 * in init_signal_wait_cs() or collective_wait_init_cs()
-		 * right before hanging on the PQ.
+	अगर (!cs->submitted) अणु
+		/* In हाल the रुको क्रम संकेत CS was submitted, the put occurs
+		 * in init_संकेत_रुको_cs() or collective_रुको_init_cs()
+		 * right beक्रमe hanging on the PQ.
 		 */
-		if (cs->type == CS_TYPE_WAIT ||
+		अगर (cs->type == CS_TYPE_WAIT ||
 				cs->type == CS_TYPE_COLLECTIVE_WAIT)
-			hl_fence_put(cs->signal_fence);
+			hl_fence_put(cs->संकेत_fence);
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Need to update CI for all queue jobs that does not get completion */
+	/* Need to update CI क्रम all queue jobs that करोes not get completion */
 	hl_hw_queue_update_ci(cs);
 
-	/* remove CS from CS mirror list */
+	/* हटाओ CS from CS mirror list */
 	spin_lock(&hdev->cs_mirror_lock);
 	list_del_init(&cs->mirror_node);
 	spin_unlock(&hdev->cs_mirror_lock);
 
 	cs_handle_tdr(hdev, cs);
 
-	if (cs->staged_cs) {
-		/* the completion CS decrements reference for the entire
+	अगर (cs->staged_cs) अणु
+		/* the completion CS decrements reference क्रम the entire
 		 * staged submission
 		 */
-		if (cs->staged_last) {
-			struct hl_cs *staged_cs, *tmp;
+		अगर (cs->staged_last) अणु
+			काष्ठा hl_cs *staged_cs, *पंचांगp;
 
-			list_for_each_entry_safe(staged_cs, tmp,
+			list_क्रम_each_entry_safe(staged_cs, पंचांगp,
 					&cs->staged_cs_node, staged_cs_node)
 				staged_cs_put(hdev, staged_cs);
-		}
+		पूर्ण
 
 		/* A staged CS will be a member in the list only after it
 		 * was submitted. We used 'cs_mirror_lock' when inserting
 		 * it to list so we will use it again when removing it
 		 */
-		if (cs->submitted) {
+		अगर (cs->submitted) अणु
 			spin_lock(&hdev->cs_mirror_lock);
 			list_del(&cs->staged_cs_node);
 			spin_unlock(&hdev->cs_mirror_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	/* Must be called before hl_ctx_put because inside we use ctx to get
+	/* Must be called beक्रमe hl_ctx_put because inside we use ctx to get
 	 * the device
 	 */
-	hl_debugfs_remove_cs(cs);
+	hl_debugfs_हटाओ_cs(cs);
 
 	hl_ctx_put(cs->ctx);
 
-	/* We need to mark an error for not submitted because in that case
-	 * the hl fence release flow is different. Mainly, we don't need
-	 * to handle hw_sob for signal/wait
+	/* We need to mark an error क्रम not submitted because in that हाल
+	 * the hl fence release flow is dअगरferent. Mainly, we करोn't need
+	 * to handle hw_sob क्रम संकेत/रुको
 	 */
-	if (cs->timedout)
+	अगर (cs->समयकरोut)
 		cs->fence->error = -ETIMEDOUT;
-	else if (cs->aborted)
+	अन्यथा अगर (cs->पातed)
 		cs->fence->error = -EIO;
-	else if (!cs->submitted)
+	अन्यथा अगर (!cs->submitted)
 		cs->fence->error = -EBUSY;
 
-	if (cs->timestamp)
-		cs->fence->timestamp = ktime_get();
+	अगर (cs->बारtamp)
+		cs->fence->बारtamp = kसमय_get();
 	complete_all(&cs->fence->completion);
 	hl_fence_put(cs->fence);
 
-	kfree(cs->jobs_in_queue_cnt);
-	kfree(cs);
-}
+	kमुक्त(cs->jobs_in_queue_cnt);
+	kमुक्त(cs);
+पूर्ण
 
-static void cs_timedout(struct work_struct *work)
-{
-	struct hl_device *hdev;
-	int rc;
-	struct hl_cs *cs = container_of(work, struct hl_cs,
+अटल व्योम cs_समयकरोut(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hl_device *hdev;
+	पूर्णांक rc;
+	काष्ठा hl_cs *cs = container_of(work, काष्ठा hl_cs,
 						 work_tdr.work);
 	rc = cs_get_unless_zero(cs);
-	if (!rc)
-		return;
+	अगर (!rc)
+		वापस;
 
-	if ((!cs->submitted) || (cs->completed)) {
+	अगर ((!cs->submitted) || (cs->completed)) अणु
 		cs_put(cs);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Mark the CS is timed out so we won't try to cancel its TDR */
-	cs->timedout = true;
+	/* Mark the CS is समयd out so we won't try to cancel its TDR */
+	cs->समयकरोut = true;
 
 	hdev = cs->ctx->hdev;
 
-	switch (cs->type) {
-	case CS_TYPE_SIGNAL:
+	चयन (cs->type) अणु
+	हाल CS_TYPE_SIGNAL:
 		dev_err(hdev->dev,
 			"Signal command submission %llu has not finished in time!\n",
 			cs->sequence);
-		break;
+		अवरोध;
 
-	case CS_TYPE_WAIT:
+	हाल CS_TYPE_WAIT:
 		dev_err(hdev->dev,
 			"Wait command submission %llu has not finished in time!\n",
 			cs->sequence);
-		break;
+		अवरोध;
 
-	case CS_TYPE_COLLECTIVE_WAIT:
+	हाल CS_TYPE_COLLECTIVE_WAIT:
 		dev_err(hdev->dev,
 			"Collective Wait command submission %llu has not finished in time!\n",
 			cs->sequence);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(hdev->dev,
 			"Command submission %llu has not finished in time!\n",
 			cs->sequence);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cs_put(cs);
 
-	if (hdev->reset_on_lockup)
+	अगर (hdev->reset_on_lockup)
 		hl_device_reset(hdev, 0);
-	else
+	अन्यथा
 		hdev->needs_reset = true;
-}
+पूर्ण
 
-static int allocate_cs(struct hl_device *hdev, struct hl_ctx *ctx,
-			enum hl_cs_type cs_type, u64 user_sequence,
-			struct hl_cs **cs_new, u32 flags, u32 timeout)
-{
-	struct hl_cs_counters_atomic *cntr;
-	struct hl_fence *other = NULL;
-	struct hl_cs_compl *cs_cmpl;
-	struct hl_cs *cs;
-	int rc;
+अटल पूर्णांक allocate_cs(काष्ठा hl_device *hdev, काष्ठा hl_ctx *ctx,
+			क्रमागत hl_cs_type cs_type, u64 user_sequence,
+			काष्ठा hl_cs **cs_new, u32 flags, u32 समयout)
+अणु
+	काष्ठा hl_cs_counters_atomic *cntr;
+	काष्ठा hl_fence *other = शून्य;
+	काष्ठा hl_cs_compl *cs_cmpl;
+	काष्ठा hl_cs *cs;
+	पूर्णांक rc;
 
 	cntr = &hdev->aggregated_cs_counters;
 
-	cs = kzalloc(sizeof(*cs), GFP_ATOMIC);
-	if (!cs)
-		cs = kzalloc(sizeof(*cs), GFP_KERNEL);
+	cs = kzalloc(माप(*cs), GFP_ATOMIC);
+	अगर (!cs)
+		cs = kzalloc(माप(*cs), GFP_KERNEL);
 
-	if (!cs) {
+	अगर (!cs) अणु
 		atomic64_inc(&ctx->cs_counters.out_of_mem_drop_cnt);
 		atomic64_inc(&cntr->out_of_mem_drop_cnt);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* increment refcnt for context */
+	/* increment refcnt क्रम context */
 	hl_ctx_get(hdev, ctx);
 
 	cs->ctx = ctx;
 	cs->submitted = false;
 	cs->completed = false;
 	cs->type = cs_type;
-	cs->timestamp = !!(flags & HL_CS_FLAGS_TIMESTAMP);
-	cs->timeout_jiffies = timeout;
+	cs->बारtamp = !!(flags & HL_CS_FLAGS_TIMESTAMP);
+	cs->समयout_jअगरfies = समयout;
 	INIT_LIST_HEAD(&cs->job_list);
-	INIT_DELAYED_WORK(&cs->work_tdr, cs_timedout);
+	INIT_DELAYED_WORK(&cs->work_tdr, cs_समयकरोut);
 	kref_init(&cs->refcount);
 	spin_lock_init(&cs->job_lock);
 
-	cs_cmpl = kmalloc(sizeof(*cs_cmpl), GFP_ATOMIC);
-	if (!cs_cmpl)
-		cs_cmpl = kmalloc(sizeof(*cs_cmpl), GFP_KERNEL);
+	cs_cmpl = kदो_स्मृति(माप(*cs_cmpl), GFP_ATOMIC);
+	अगर (!cs_cmpl)
+		cs_cmpl = kदो_स्मृति(माप(*cs_cmpl), GFP_KERNEL);
 
-	if (!cs_cmpl) {
+	अगर (!cs_cmpl) अणु
 		atomic64_inc(&ctx->cs_counters.out_of_mem_drop_cnt);
 		atomic64_inc(&cntr->out_of_mem_drop_cnt);
 		rc = -ENOMEM;
-		goto free_cs;
-	}
+		जाओ मुक्त_cs;
+	पूर्ण
 
-	cs->jobs_in_queue_cnt = kcalloc(hdev->asic_prop.max_queues,
-			sizeof(*cs->jobs_in_queue_cnt), GFP_ATOMIC);
-	if (!cs->jobs_in_queue_cnt)
-		cs->jobs_in_queue_cnt = kcalloc(hdev->asic_prop.max_queues,
-				sizeof(*cs->jobs_in_queue_cnt), GFP_KERNEL);
+	cs->jobs_in_queue_cnt = kसुस्मृति(hdev->asic_prop.max_queues,
+			माप(*cs->jobs_in_queue_cnt), GFP_ATOMIC);
+	अगर (!cs->jobs_in_queue_cnt)
+		cs->jobs_in_queue_cnt = kसुस्मृति(hdev->asic_prop.max_queues,
+				माप(*cs->jobs_in_queue_cnt), GFP_KERNEL);
 
-	if (!cs->jobs_in_queue_cnt) {
+	अगर (!cs->jobs_in_queue_cnt) अणु
 		atomic64_inc(&ctx->cs_counters.out_of_mem_drop_cnt);
 		atomic64_inc(&cntr->out_of_mem_drop_cnt);
 		rc = -ENOMEM;
-		goto free_cs_cmpl;
-	}
+		जाओ मुक्त_cs_cmpl;
+	पूर्ण
 
 	cs_cmpl->hdev = hdev;
 	cs_cmpl->type = cs->type;
@@ -691,15 +692,15 @@ static int allocate_cs(struct hl_device *hdev, struct hl_ctx *ctx,
 	other = ctx->cs_pending[cs_cmpl->cs_seq &
 				(hdev->asic_prop.max_pending_cs - 1)];
 
-	if (other && !completion_done(&other->completion)) {
+	अगर (other && !completion_करोne(&other->completion)) अणु
 		/* If the following statement is true, it means we have reached
-		 * a point in which only part of the staged submission was
-		 * submitted and we don't have enough room in the 'cs_pending'
-		 * array for the rest of the submission.
+		 * a poपूर्णांक in which only part of the staged submission was
+		 * submitted and we करोn't have enough room in the 'cs_pending'
+		 * array क्रम the rest of the submission.
 		 * This causes a deadlock because this CS will never be
-		 * completed as it depends on future CS's for completion.
+		 * completed as it depends on future CS's क्रम completion.
 		 */
-		if (other->cs_sequence == user_sequence)
+		अगर (other->cs_sequence == user_sequence)
 			dev_crit_ratelimited(hdev->dev,
 				"Staged CS %llu deadlock due to lack of resources",
 				user_sequence);
@@ -709,8 +710,8 @@ static int allocate_cs(struct hl_device *hdev, struct hl_ctx *ctx,
 		atomic64_inc(&ctx->cs_counters.max_cs_in_flight_drop_cnt);
 		atomic64_inc(&cntr->max_cs_in_flight_drop_cnt);
 		rc = -EAGAIN;
-		goto free_fence;
-	}
+		जाओ मुक्त_fence;
+	पूर्ण
 
 	/* init hl_fence */
 	hl_fence_init(&cs_cmpl->base_fence, cs_cmpl->cs_seq);
@@ -730,454 +731,454 @@ static int allocate_cs(struct hl_device *hdev, struct hl_ctx *ctx,
 
 	*cs_new = cs;
 
-	return 0;
+	वापस 0;
 
-free_fence:
+मुक्त_fence:
 	spin_unlock(&ctx->cs_lock);
-	kfree(cs->jobs_in_queue_cnt);
-free_cs_cmpl:
-	kfree(cs_cmpl);
-free_cs:
-	kfree(cs);
+	kमुक्त(cs->jobs_in_queue_cnt);
+मुक्त_cs_cmpl:
+	kमुक्त(cs_cmpl);
+मुक्त_cs:
+	kमुक्त(cs);
 	hl_ctx_put(ctx);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void cs_rollback(struct hl_device *hdev, struct hl_cs *cs)
-{
-	struct hl_cs_job *job, *tmp;
+अटल व्योम cs_rollback(काष्ठा hl_device *hdev, काष्ठा hl_cs *cs)
+अणु
+	काष्ठा hl_cs_job *job, *पंचांगp;
 
 	staged_cs_put(hdev, cs);
 
-	list_for_each_entry_safe(job, tmp, &cs->job_list, cs_node)
+	list_क्रम_each_entry_safe(job, पंचांगp, &cs->job_list, cs_node)
 		complete_job(hdev, job);
-}
+पूर्ण
 
-void hl_cs_rollback_all(struct hl_device *hdev)
-{
-	int i;
-	struct hl_cs *cs, *tmp;
+व्योम hl_cs_rollback_all(काष्ठा hl_device *hdev)
+अणु
+	पूर्णांक i;
+	काष्ठा hl_cs *cs, *पंचांगp;
 
 	flush_workqueue(hdev->sob_reset_wq);
 
-	/* flush all completions before iterating over the CS mirror list in
-	 * order to avoid a race with the release functions
+	/* flush all completions beक्रमe iterating over the CS mirror list in
+	 * order to aव्योम a race with the release functions
 	 */
-	for (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++)
+	क्रम (i = 0 ; i < hdev->asic_prop.completion_queues_count ; i++)
 		flush_workqueue(hdev->cq_wq[i]);
 
-	/* Make sure we don't have leftovers in the CS mirror list */
-	list_for_each_entry_safe(cs, tmp, &hdev->cs_mirror_list, mirror_node) {
+	/* Make sure we करोn't have leftovers in the CS mirror list */
+	list_क्रम_each_entry_safe(cs, पंचांगp, &hdev->cs_mirror_list, mirror_node) अणु
 		cs_get(cs);
-		cs->aborted = true;
+		cs->पातed = true;
 		dev_warn_ratelimited(hdev->dev, "Killing CS %d.%llu\n",
 				cs->ctx->asid, cs->sequence);
 		cs_rollback(hdev, cs);
 		cs_put(cs);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hl_pending_cb_list_flush(struct hl_ctx *ctx)
-{
-	struct hl_pending_cb *pending_cb, *tmp;
+व्योम hl_pending_cb_list_flush(काष्ठा hl_ctx *ctx)
+अणु
+	काष्ठा hl_pending_cb *pending_cb, *पंचांगp;
 
-	list_for_each_entry_safe(pending_cb, tmp,
-			&ctx->pending_cb_list, cb_node) {
+	list_क्रम_each_entry_safe(pending_cb, पंचांगp,
+			&ctx->pending_cb_list, cb_node) अणु
 		list_del(&pending_cb->cb_node);
 		hl_cb_put(pending_cb->cb);
-		kfree(pending_cb);
-	}
-}
+		kमुक्त(pending_cb);
+	पूर्ण
+पूर्ण
 
-static void
-wake_pending_user_interrupt_threads(struct hl_user_interrupt *interrupt)
-{
-	struct hl_user_pending_interrupt *pend;
+अटल व्योम
+wake_pending_user_पूर्णांकerrupt_thपढ़ोs(काष्ठा hl_user_पूर्णांकerrupt *पूर्णांकerrupt)
+अणु
+	काष्ठा hl_user_pending_पूर्णांकerrupt *pend;
 
-	spin_lock(&interrupt->wait_list_lock);
-	list_for_each_entry(pend, &interrupt->wait_list_head, wait_list_node) {
+	spin_lock(&पूर्णांकerrupt->रुको_list_lock);
+	list_क्रम_each_entry(pend, &पूर्णांकerrupt->रुको_list_head, रुको_list_node) अणु
 		pend->fence.error = -EIO;
 		complete_all(&pend->fence.completion);
-	}
-	spin_unlock(&interrupt->wait_list_lock);
-}
+	पूर्ण
+	spin_unlock(&पूर्णांकerrupt->रुको_list_lock);
+पूर्ण
 
-void hl_release_pending_user_interrupts(struct hl_device *hdev)
-{
-	struct asic_fixed_properties *prop = &hdev->asic_prop;
-	struct hl_user_interrupt *interrupt;
-	int i;
+व्योम hl_release_pending_user_पूर्णांकerrupts(काष्ठा hl_device *hdev)
+अणु
+	काष्ठा asic_fixed_properties *prop = &hdev->asic_prop;
+	काष्ठा hl_user_पूर्णांकerrupt *पूर्णांकerrupt;
+	पूर्णांक i;
 
-	if (!prop->user_interrupt_count)
-		return;
+	अगर (!prop->user_पूर्णांकerrupt_count)
+		वापस;
 
-	/* We iterate through the user interrupt requests and waking up all
-	 * user threads waiting for interrupt completion. We iterate the
-	 * list under a lock, this is why all user threads, once awake,
-	 * will wait on the same lock and will release the waiting object upon
+	/* We iterate through the user पूर्णांकerrupt requests and waking up all
+	 * user thपढ़ोs रुकोing क्रम पूर्णांकerrupt completion. We iterate the
+	 * list under a lock, this is why all user thपढ़ोs, once awake,
+	 * will रुको on the same lock and will release the रुकोing object upon
 	 * unlock.
 	 */
 
-	for (i = 0 ; i < prop->user_interrupt_count ; i++) {
-		interrupt = &hdev->user_interrupt[i];
-		wake_pending_user_interrupt_threads(interrupt);
-	}
+	क्रम (i = 0 ; i < prop->user_पूर्णांकerrupt_count ; i++) अणु
+		पूर्णांकerrupt = &hdev->user_पूर्णांकerrupt[i];
+		wake_pending_user_पूर्णांकerrupt_thपढ़ोs(पूर्णांकerrupt);
+	पूर्ण
 
-	interrupt = &hdev->common_user_interrupt;
-	wake_pending_user_interrupt_threads(interrupt);
-}
+	पूर्णांकerrupt = &hdev->common_user_पूर्णांकerrupt;
+	wake_pending_user_पूर्णांकerrupt_thपढ़ोs(पूर्णांकerrupt);
+पूर्ण
 
-static void job_wq_completion(struct work_struct *work)
-{
-	struct hl_cs_job *job = container_of(work, struct hl_cs_job,
+अटल व्योम job_wq_completion(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hl_cs_job *job = container_of(work, काष्ठा hl_cs_job,
 						finish_work);
-	struct hl_cs *cs = job->cs;
-	struct hl_device *hdev = cs->ctx->hdev;
+	काष्ठा hl_cs *cs = job->cs;
+	काष्ठा hl_device *hdev = cs->ctx->hdev;
 
-	/* job is no longer needed */
+	/* job is no दीर्घer needed */
 	complete_job(hdev, job);
-}
+पूर्ण
 
-static int validate_queue_index(struct hl_device *hdev,
-				struct hl_cs_chunk *chunk,
-				enum hl_queue_type *queue_type,
+अटल पूर्णांक validate_queue_index(काष्ठा hl_device *hdev,
+				काष्ठा hl_cs_chunk *chunk,
+				क्रमागत hl_queue_type *queue_type,
 				bool *is_kernel_allocated_cb)
-{
-	struct asic_fixed_properties *asic = &hdev->asic_prop;
-	struct hw_queue_properties *hw_queue_prop;
+अणु
+	काष्ठा asic_fixed_properties *asic = &hdev->asic_prop;
+	काष्ठा hw_queue_properties *hw_queue_prop;
 
 	/* This must be checked here to prevent out-of-bounds access to
 	 * hw_queues_props array
 	 */
-	if (chunk->queue_index >= asic->max_queues) {
+	अगर (chunk->queue_index >= asic->max_queues) अणु
 		dev_err(hdev->dev, "Queue index %d is invalid\n",
 			chunk->queue_index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	hw_queue_prop = &asic->hw_queues_props[chunk->queue_index];
 
-	if (hw_queue_prop->type == QUEUE_TYPE_NA) {
+	अगर (hw_queue_prop->type == QUEUE_TYPE_NA) अणु
 		dev_err(hdev->dev, "Queue index %d is invalid\n",
 			chunk->queue_index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hw_queue_prop->driver_only) {
+	अगर (hw_queue_prop->driver_only) अणु
 		dev_err(hdev->dev,
 			"Queue index %d is restricted for the kernel driver\n",
 			chunk->queue_index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* When hw queue type isn't QUEUE_TYPE_HW,
 	 * USER_ALLOC_CB flag shall be referred as "don't care".
 	 */
-	if (hw_queue_prop->type == QUEUE_TYPE_HW) {
-		if (chunk->cs_chunk_flags & HL_CS_CHUNK_FLAGS_USER_ALLOC_CB) {
-			if (!(hw_queue_prop->cb_alloc_flags & CB_ALLOC_USER)) {
+	अगर (hw_queue_prop->type == QUEUE_TYPE_HW) अणु
+		अगर (chunk->cs_chunk_flags & HL_CS_CHUNK_FLAGS_USER_ALLOC_CB) अणु
+			अगर (!(hw_queue_prop->cb_alloc_flags & CB_ALLOC_USER)) अणु
 				dev_err(hdev->dev,
 					"Queue index %d doesn't support user CB\n",
 					chunk->queue_index);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			*is_kernel_allocated_cb = false;
-		} else {
-			if (!(hw_queue_prop->cb_alloc_flags &
-					CB_ALLOC_KERNEL)) {
+		पूर्ण अन्यथा अणु
+			अगर (!(hw_queue_prop->cb_alloc_flags &
+					CB_ALLOC_KERNEL)) अणु
 				dev_err(hdev->dev,
 					"Queue index %d doesn't support kernel CB\n",
 					chunk->queue_index);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			*is_kernel_allocated_cb = true;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		*is_kernel_allocated_cb = !!(hw_queue_prop->cb_alloc_flags
 						& CB_ALLOC_KERNEL);
-	}
+	पूर्ण
 
 	*queue_type = hw_queue_prop->type;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct hl_cb *get_cb_from_cs_chunk(struct hl_device *hdev,
-					struct hl_cb_mgr *cb_mgr,
-					struct hl_cs_chunk *chunk)
-{
-	struct hl_cb *cb;
+अटल काष्ठा hl_cb *get_cb_from_cs_chunk(काष्ठा hl_device *hdev,
+					काष्ठा hl_cb_mgr *cb_mgr,
+					काष्ठा hl_cs_chunk *chunk)
+अणु
+	काष्ठा hl_cb *cb;
 	u32 cb_handle;
 
 	cb_handle = (u32) (chunk->cb_handle >> PAGE_SHIFT);
 
 	cb = hl_cb_get(hdev, cb_mgr, cb_handle);
-	if (!cb) {
+	अगर (!cb) अणु
 		dev_err(hdev->dev, "CB handle 0x%x invalid\n", cb_handle);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if ((chunk->cb_size < 8) || (chunk->cb_size > cb->size)) {
+	अगर ((chunk->cb_size < 8) || (chunk->cb_size > cb->size)) अणु
 		dev_err(hdev->dev, "CB size %u invalid\n", chunk->cb_size);
-		goto release_cb;
-	}
+		जाओ release_cb;
+	पूर्ण
 
 	atomic_inc(&cb->cs_cnt);
 
-	return cb;
+	वापस cb;
 
 release_cb:
 	hl_cb_put(cb);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct hl_cs_job *hl_cs_allocate_job(struct hl_device *hdev,
-		enum hl_queue_type queue_type, bool is_kernel_allocated_cb)
-{
-	struct hl_cs_job *job;
+काष्ठा hl_cs_job *hl_cs_allocate_job(काष्ठा hl_device *hdev,
+		क्रमागत hl_queue_type queue_type, bool is_kernel_allocated_cb)
+अणु
+	काष्ठा hl_cs_job *job;
 
-	job = kzalloc(sizeof(*job), GFP_ATOMIC);
-	if (!job)
-		job = kzalloc(sizeof(*job), GFP_KERNEL);
+	job = kzalloc(माप(*job), GFP_ATOMIC);
+	अगर (!job)
+		job = kzalloc(माप(*job), GFP_KERNEL);
 
-	if (!job)
-		return NULL;
+	अगर (!job)
+		वापस शून्य;
 
 	kref_init(&job->refcount);
 	job->queue_type = queue_type;
 	job->is_kernel_allocated_cb = is_kernel_allocated_cb;
 
-	if (is_cb_patched(hdev, job))
+	अगर (is_cb_patched(hdev, job))
 		INIT_LIST_HEAD(&job->userptr_list);
 
-	if (job->queue_type == QUEUE_TYPE_EXT)
+	अगर (job->queue_type == QUEUE_TYPE_EXT)
 		INIT_WORK(&job->finish_work, job_wq_completion);
 
-	return job;
-}
+	वापस job;
+पूर्ण
 
-static enum hl_cs_type hl_cs_get_cs_type(u32 cs_type_flags)
-{
-	if (cs_type_flags & HL_CS_FLAGS_SIGNAL)
-		return CS_TYPE_SIGNAL;
-	else if (cs_type_flags & HL_CS_FLAGS_WAIT)
-		return CS_TYPE_WAIT;
-	else if (cs_type_flags & HL_CS_FLAGS_COLLECTIVE_WAIT)
-		return CS_TYPE_COLLECTIVE_WAIT;
-	else
-		return CS_TYPE_DEFAULT;
-}
+अटल क्रमागत hl_cs_type hl_cs_get_cs_type(u32 cs_type_flags)
+अणु
+	अगर (cs_type_flags & HL_CS_FLAGS_SIGNAL)
+		वापस CS_TYPE_SIGNAL;
+	अन्यथा अगर (cs_type_flags & HL_CS_FLAGS_WAIT)
+		वापस CS_TYPE_WAIT;
+	अन्यथा अगर (cs_type_flags & HL_CS_FLAGS_COLLECTIVE_WAIT)
+		वापस CS_TYPE_COLLECTIVE_WAIT;
+	अन्यथा
+		वापस CS_TYPE_DEFAULT;
+पूर्ण
 
-static int hl_cs_sanity_checks(struct hl_fpriv *hpriv, union hl_cs_args *args)
-{
-	struct hl_device *hdev = hpriv->hdev;
-	struct hl_ctx *ctx = hpriv->ctx;
+अटल पूर्णांक hl_cs_sanity_checks(काष्ठा hl_fpriv *hpriv, जोड़ hl_cs_args *args)
+अणु
+	काष्ठा hl_device *hdev = hpriv->hdev;
+	काष्ठा hl_ctx *ctx = hpriv->ctx;
 	u32 cs_type_flags, num_chunks;
-	enum hl_device_status status;
-	enum hl_cs_type cs_type;
+	क्रमागत hl_device_status status;
+	क्रमागत hl_cs_type cs_type;
 
-	if (!hl_device_operational(hdev, &status)) {
+	अगर (!hl_device_operational(hdev, &status)) अणु
 		dev_warn_ratelimited(hdev->dev,
 			"Device is %s. Can't submit new CS\n",
 			hdev->status[status]);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if ((args->in.cs_flags & HL_CS_FLAGS_STAGED_SUBMISSION) &&
-			!hdev->supports_staged_submission) {
+	अगर ((args->in.cs_flags & HL_CS_FLAGS_STAGED_SUBMISSION) &&
+			!hdev->supports_staged_submission) अणु
 		dev_err(hdev->dev, "staged submission not supported");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	cs_type_flags = args->in.cs_flags & HL_CS_FLAGS_TYPE_MASK;
 
-	if (unlikely(cs_type_flags && !is_power_of_2(cs_type_flags))) {
+	अगर (unlikely(cs_type_flags && !is_घातer_of_2(cs_type_flags))) अणु
 		dev_err(hdev->dev,
 			"CS type flags are mutually exclusive, context %d\n",
 			ctx->asid);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	cs_type = hl_cs_get_cs_type(cs_type_flags);
 	num_chunks = args->in.num_chunks_execute;
 
-	if (unlikely((cs_type != CS_TYPE_DEFAULT) &&
-					!hdev->supports_sync_stream)) {
+	अगर (unlikely((cs_type != CS_TYPE_DEFAULT) &&
+					!hdev->supports_sync_stream)) अणु
 		dev_err(hdev->dev, "Sync stream CS is not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cs_type == CS_TYPE_DEFAULT) {
-		if (!num_chunks) {
+	अगर (cs_type == CS_TYPE_DEFAULT) अणु
+		अगर (!num_chunks) अणु
 			dev_err(hdev->dev,
 				"Got execute CS with 0 chunks, context %d\n",
 				ctx->asid);
-			return -EINVAL;
-		}
-	} else if (num_chunks != 1) {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अगर (num_chunks != 1) अणु
 		dev_err(hdev->dev,
 			"Sync stream CS mandates one chunk only, context %d\n",
 			ctx->asid);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hl_cs_copy_chunk_array(struct hl_device *hdev,
-					struct hl_cs_chunk **cs_chunk_array,
-					void __user *chunks, u32 num_chunks,
-					struct hl_ctx *ctx)
-{
-	u32 size_to_copy;
+अटल पूर्णांक hl_cs_copy_chunk_array(काष्ठा hl_device *hdev,
+					काष्ठा hl_cs_chunk **cs_chunk_array,
+					व्योम __user *chunks, u32 num_chunks,
+					काष्ठा hl_ctx *ctx)
+अणु
+	u32 माप_प्रकारo_copy;
 
-	if (num_chunks > HL_MAX_JOBS_PER_CS) {
+	अगर (num_chunks > HL_MAX_JOBS_PER_CS) अणु
 		atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 		atomic64_inc(&hdev->aggregated_cs_counters.validation_drop_cnt);
 		dev_err(hdev->dev,
 			"Number of chunks can NOT be larger than %d\n",
 			HL_MAX_JOBS_PER_CS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	*cs_chunk_array = kmalloc_array(num_chunks, sizeof(**cs_chunk_array),
+	*cs_chunk_array = kदो_स्मृति_array(num_chunks, माप(**cs_chunk_array),
 					GFP_ATOMIC);
-	if (!*cs_chunk_array)
-		*cs_chunk_array = kmalloc_array(num_chunks,
-					sizeof(**cs_chunk_array), GFP_KERNEL);
-	if (!*cs_chunk_array) {
+	अगर (!*cs_chunk_array)
+		*cs_chunk_array = kदो_स्मृति_array(num_chunks,
+					माप(**cs_chunk_array), GFP_KERNEL);
+	अगर (!*cs_chunk_array) अणु
 		atomic64_inc(&ctx->cs_counters.out_of_mem_drop_cnt);
 		atomic64_inc(&hdev->aggregated_cs_counters.out_of_mem_drop_cnt);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	size_to_copy = num_chunks * sizeof(struct hl_cs_chunk);
-	if (copy_from_user(*cs_chunk_array, chunks, size_to_copy)) {
+	माप_प्रकारo_copy = num_chunks * माप(काष्ठा hl_cs_chunk);
+	अगर (copy_from_user(*cs_chunk_array, chunks, माप_प्रकारo_copy)) अणु
 		atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 		atomic64_inc(&hdev->aggregated_cs_counters.validation_drop_cnt);
 		dev_err(hdev->dev, "Failed to copy cs chunk array from user\n");
-		kfree(*cs_chunk_array);
-		return -EFAULT;
-	}
+		kमुक्त(*cs_chunk_array);
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs_staged_submission(struct hl_device *hdev, struct hl_cs *cs,
+अटल पूर्णांक cs_staged_submission(काष्ठा hl_device *hdev, काष्ठा hl_cs *cs,
 				u64 sequence, u32 flags)
-{
-	if (!(flags & HL_CS_FLAGS_STAGED_SUBMISSION))
-		return 0;
+अणु
+	अगर (!(flags & HL_CS_FLAGS_STAGED_SUBMISSION))
+		वापस 0;
 
 	cs->staged_last = !!(flags & HL_CS_FLAGS_STAGED_SUBMISSION_LAST);
 	cs->staged_first = !!(flags & HL_CS_FLAGS_STAGED_SUBMISSION_FIRST);
 
-	if (cs->staged_first) {
+	अगर (cs->staged_first) अणु
 		/* Staged CS sequence is the first CS sequence */
 		INIT_LIST_HEAD(&cs->staged_cs_node);
 		cs->staged_sequence = cs->sequence;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* User sequence will be validated in 'hl_hw_queue_schedule_cs'
 		 * under the cs_mirror_lock
 		 */
 		cs->staged_sequence = sequence;
-	}
+	पूर्ण
 
-	/* Increment CS reference if needed */
+	/* Increment CS reference अगर needed */
 	staged_cs_get(hdev, cs);
 
 	cs->staged_cs = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs_ioctl_default(struct hl_fpriv *hpriv, void __user *chunks,
+अटल पूर्णांक cs_ioctl_शेष(काष्ठा hl_fpriv *hpriv, व्योम __user *chunks,
 				u32 num_chunks, u64 *cs_seq, u32 flags,
-				u32 timeout)
-{
-	bool staged_mid, int_queues_only = true;
-	struct hl_device *hdev = hpriv->hdev;
-	struct hl_cs_chunk *cs_chunk_array;
-	struct hl_cs_counters_atomic *cntr;
-	struct hl_ctx *ctx = hpriv->ctx;
-	struct hl_cs_job *job;
-	struct hl_cs *cs;
-	struct hl_cb *cb;
+				u32 समयout)
+अणु
+	bool staged_mid, पूर्णांक_queues_only = true;
+	काष्ठा hl_device *hdev = hpriv->hdev;
+	काष्ठा hl_cs_chunk *cs_chunk_array;
+	काष्ठा hl_cs_counters_atomic *cntr;
+	काष्ठा hl_ctx *ctx = hpriv->ctx;
+	काष्ठा hl_cs_job *job;
+	काष्ठा hl_cs *cs;
+	काष्ठा hl_cb *cb;
 	u64 user_sequence;
-	int rc, i;
+	पूर्णांक rc, i;
 
 	cntr = &hdev->aggregated_cs_counters;
 	user_sequence = *cs_seq;
-	*cs_seq = ULLONG_MAX;
+	*cs_seq = ULदीर्घ_उच्च;
 
 	rc = hl_cs_copy_chunk_array(hdev, &cs_chunk_array, chunks, num_chunks,
 			hpriv->ctx);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	if ((flags & HL_CS_FLAGS_STAGED_SUBMISSION) &&
+	अगर ((flags & HL_CS_FLAGS_STAGED_SUBMISSION) &&
 			!(flags & HL_CS_FLAGS_STAGED_SUBMISSION_FIRST))
 		staged_mid = true;
-	else
+	अन्यथा
 		staged_mid = false;
 
 	rc = allocate_cs(hdev, hpriv->ctx, CS_TYPE_DEFAULT,
-			staged_mid ? user_sequence : ULLONG_MAX, &cs, flags,
-			timeout);
-	if (rc)
-		goto free_cs_chunk_array;
+			staged_mid ? user_sequence : ULदीर्घ_उच्च, &cs, flags,
+			समयout);
+	अगर (rc)
+		जाओ मुक्त_cs_chunk_array;
 
 	*cs_seq = cs->sequence;
 
 	hl_debugfs_add_cs(cs);
 
 	rc = cs_staged_submission(hdev, cs, user_sequence, flags);
-	if (rc)
-		goto free_cs_object;
+	अगर (rc)
+		जाओ मुक्त_cs_object;
 
-	/* Validate ALL the CS chunks before submitting the CS */
-	for (i = 0 ; i < num_chunks ; i++) {
-		struct hl_cs_chunk *chunk = &cs_chunk_array[i];
-		enum hl_queue_type queue_type;
+	/* Validate ALL the CS chunks beक्रमe submitting the CS */
+	क्रम (i = 0 ; i < num_chunks ; i++) अणु
+		काष्ठा hl_cs_chunk *chunk = &cs_chunk_array[i];
+		क्रमागत hl_queue_type queue_type;
 		bool is_kernel_allocated_cb;
 
 		rc = validate_queue_index(hdev, chunk, &queue_type,
 						&is_kernel_allocated_cb);
-		if (rc) {
+		अगर (rc) अणु
 			atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 			atomic64_inc(&cntr->validation_drop_cnt);
-			goto free_cs_object;
-		}
+			जाओ मुक्त_cs_object;
+		पूर्ण
 
-		if (is_kernel_allocated_cb) {
+		अगर (is_kernel_allocated_cb) अणु
 			cb = get_cb_from_cs_chunk(hdev, &hpriv->cb_mgr, chunk);
-			if (!cb) {
+			अगर (!cb) अणु
 				atomic64_inc(
 					&ctx->cs_counters.validation_drop_cnt);
 				atomic64_inc(&cntr->validation_drop_cnt);
 				rc = -EINVAL;
-				goto free_cs_object;
-			}
-		} else {
-			cb = (struct hl_cb *) (uintptr_t) chunk->cb_handle;
-		}
+				जाओ मुक्त_cs_object;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			cb = (काष्ठा hl_cb *) (uपूर्णांकptr_t) chunk->cb_handle;
+		पूर्ण
 
-		if (queue_type == QUEUE_TYPE_EXT || queue_type == QUEUE_TYPE_HW)
-			int_queues_only = false;
+		अगर (queue_type == QUEUE_TYPE_EXT || queue_type == QUEUE_TYPE_HW)
+			पूर्णांक_queues_only = false;
 
 		job = hl_cs_allocate_job(hdev, queue_type,
 						is_kernel_allocated_cb);
-		if (!job) {
+		अगर (!job) अणु
 			atomic64_inc(&ctx->cs_counters.out_of_mem_drop_cnt);
 			atomic64_inc(&cntr->out_of_mem_drop_cnt);
 			dev_err(hdev->dev, "Failed to allocate a new job\n");
 			rc = -ENOMEM;
-			if (is_kernel_allocated_cb)
-				goto release_cb;
+			अगर (is_kernel_allocated_cb)
+				जाओ release_cb;
 
-			goto free_cs_object;
-		}
+			जाओ मुक्त_cs_object;
+		पूर्ण
 
 		job->id = i + 1;
 		job->cs = cs;
@@ -1191,11 +1192,11 @@ static int cs_ioctl_default(struct hl_fpriv *hpriv, void __user *chunks,
 
 		/*
 		 * Increment CS reference. When CS reference is 0, CS is
-		 * done and can be signaled to user and free all its resources
-		 * Only increment for JOB on external or H/W queues, because
-		 * only for those JOBs we get completion
+		 * करोne and can be संकेतed to user and मुक्त all its resources
+		 * Only increment क्रम JOB on बाह्यal or H/W queues, because
+		 * only क्रम those JOBs we get completion
 		 */
-		if (cs_needs_completion(cs) &&
+		अगर (cs_needs_completion(cs) &&
 			(job->queue_type == QUEUE_TYPE_EXT ||
 				job->queue_type == QUEUE_TYPE_HW))
 			cs_get(cs);
@@ -1203,74 +1204,74 @@ static int cs_ioctl_default(struct hl_fpriv *hpriv, void __user *chunks,
 		hl_debugfs_add_job(hdev, job);
 
 		rc = cs_parser(hpriv, job);
-		if (rc) {
+		अगर (rc) अणु
 			atomic64_inc(&ctx->cs_counters.parsing_drop_cnt);
 			atomic64_inc(&cntr->parsing_drop_cnt);
 			dev_err(hdev->dev,
 				"Failed to parse JOB %d.%llu.%d, err %d, rejecting the CS\n",
 				cs->ctx->asid, cs->sequence, job->id, rc);
-			goto free_cs_object;
-		}
-	}
+			जाओ मुक्त_cs_object;
+		पूर्ण
+	पूर्ण
 
-	/* We allow a CS with any queue type combination as long as it does
+	/* We allow a CS with any queue type combination as दीर्घ as it करोes
 	 * not get a completion
 	 */
-	if (int_queues_only && cs_needs_completion(cs)) {
+	अगर (पूर्णांक_queues_only && cs_needs_completion(cs)) अणु
 		atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 		atomic64_inc(&cntr->validation_drop_cnt);
 		dev_err(hdev->dev,
 			"Reject CS %d.%llu since it contains only internal queues jobs and needs completion\n",
 			cs->ctx->asid, cs->sequence);
 		rc = -EINVAL;
-		goto free_cs_object;
-	}
+		जाओ मुक्त_cs_object;
+	पूर्ण
 
 	rc = hl_hw_queue_schedule_cs(cs);
-	if (rc) {
-		if (rc != -EAGAIN)
+	अगर (rc) अणु
+		अगर (rc != -EAGAIN)
 			dev_err(hdev->dev,
 				"Failed to submit CS %d.%llu to H/W queues, error %d\n",
 				cs->ctx->asid, cs->sequence, rc);
-		goto free_cs_object;
-	}
+		जाओ मुक्त_cs_object;
+	पूर्ण
 
 	rc = HL_CS_STATUS_SUCCESS;
-	goto put_cs;
+	जाओ put_cs;
 
 release_cb:
 	atomic_dec(&cb->cs_cnt);
 	hl_cb_put(cb);
-free_cs_object:
+मुक्त_cs_object:
 	cs_rollback(hdev, cs);
-	*cs_seq = ULLONG_MAX;
-	/* The path below is both for good and erroneous exits */
+	*cs_seq = ULदीर्घ_उच्च;
+	/* The path below is both क्रम good and erroneous निकासs */
 put_cs:
 	/* We finished with the CS in this function, so put the ref */
 	cs_put(cs);
-free_cs_chunk_array:
-	kfree(cs_chunk_array);
+मुक्त_cs_chunk_array:
+	kमुक्त(cs_chunk_array);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pending_cb_create_job(struct hl_device *hdev, struct hl_ctx *ctx,
-		struct hl_cs *cs, struct hl_cb *cb, u32 size, u32 hw_queue_id)
-{
-	struct hw_queue_properties *hw_queue_prop;
-	struct hl_cs_counters_atomic *cntr;
-	struct hl_cs_job *job;
+अटल पूर्णांक pending_cb_create_job(काष्ठा hl_device *hdev, काष्ठा hl_ctx *ctx,
+		काष्ठा hl_cs *cs, काष्ठा hl_cb *cb, u32 size, u32 hw_queue_id)
+अणु
+	काष्ठा hw_queue_properties *hw_queue_prop;
+	काष्ठा hl_cs_counters_atomic *cntr;
+	काष्ठा hl_cs_job *job;
 
 	hw_queue_prop = &hdev->asic_prop.hw_queues_props[hw_queue_id];
 	cntr = &hdev->aggregated_cs_counters;
 
 	job = hl_cs_allocate_job(hdev, hw_queue_prop->type, true);
-	if (!job) {
+	अगर (!job) अणु
 		atomic64_inc(&ctx->cs_counters.out_of_mem_drop_cnt);
 		atomic64_inc(&cntr->out_of_mem_drop_cnt);
 		dev_err(hdev->dev, "Failed to allocate a new job\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	job->id = 0;
 	job->cs = cs;
@@ -1281,7 +1282,7 @@ static int pending_cb_create_job(struct hl_device *hdev, struct hl_ctx *ctx,
 	job->patched_cb = job->user_cb;
 	job->job_cb_size = job->user_cb_size;
 
-	/* increment refcount as for external queues we get completion */
+	/* increment refcount as क्रम बाह्यal queues we get completion */
 	cs_get(cs);
 
 	cs->jobs_in_queue_cnt[job->hw_queue_id]++;
@@ -1290,281 +1291,281 @@ static int pending_cb_create_job(struct hl_device *hdev, struct hl_ctx *ctx,
 
 	hl_debugfs_add_job(hdev, job);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hl_submit_pending_cb(struct hl_fpriv *hpriv)
-{
-	struct hl_device *hdev = hpriv->hdev;
-	struct hl_ctx *ctx = hpriv->ctx;
-	struct hl_pending_cb *pending_cb, *tmp;
-	struct list_head local_cb_list;
-	struct hl_cs *cs;
-	struct hl_cb *cb;
+अटल पूर्णांक hl_submit_pending_cb(काष्ठा hl_fpriv *hpriv)
+अणु
+	काष्ठा hl_device *hdev = hpriv->hdev;
+	काष्ठा hl_ctx *ctx = hpriv->ctx;
+	काष्ठा hl_pending_cb *pending_cb, *पंचांगp;
+	काष्ठा list_head local_cb_list;
+	काष्ठा hl_cs *cs;
+	काष्ठा hl_cb *cb;
 	u32 hw_queue_id;
 	u32 cb_size;
-	int process_list, rc = 0;
+	पूर्णांक process_list, rc = 0;
 
-	if (list_empty(&ctx->pending_cb_list))
-		return 0;
+	अगर (list_empty(&ctx->pending_cb_list))
+		वापस 0;
 
-	process_list = atomic_cmpxchg(&ctx->thread_pending_cb_token, 1, 0);
+	process_list = atomic_cmpxchg(&ctx->thपढ़ो_pending_cb_token, 1, 0);
 
-	/* Only a single thread is allowed to process the list */
-	if (!process_list)
-		return 0;
+	/* Only a single thपढ़ो is allowed to process the list */
+	अगर (!process_list)
+		वापस 0;
 
-	if (list_empty(&ctx->pending_cb_list))
-		goto free_pending_cb_token;
+	अगर (list_empty(&ctx->pending_cb_list))
+		जाओ मुक्त_pending_cb_token;
 
 	/* move all list elements to a local list */
 	INIT_LIST_HEAD(&local_cb_list);
 	spin_lock(&ctx->pending_cb_lock);
-	list_for_each_entry_safe(pending_cb, tmp, &ctx->pending_cb_list,
+	list_क्रम_each_entry_safe(pending_cb, पंचांगp, &ctx->pending_cb_list,
 								cb_node)
 		list_move_tail(&pending_cb->cb_node, &local_cb_list);
 	spin_unlock(&ctx->pending_cb_lock);
 
-	rc = allocate_cs(hdev, ctx, CS_TYPE_DEFAULT, ULLONG_MAX, &cs, 0,
-				hdev->timeout_jiffies);
-	if (rc)
-		goto add_list_elements;
+	rc = allocate_cs(hdev, ctx, CS_TYPE_DEFAULT, ULदीर्घ_उच्च, &cs, 0,
+				hdev->समयout_jअगरfies);
+	अगर (rc)
+		जाओ add_list_elements;
 
 	hl_debugfs_add_cs(cs);
 
 	/* Iterate through pending cb list, create jobs and add to CS */
-	list_for_each_entry(pending_cb, &local_cb_list, cb_node) {
+	list_क्रम_each_entry(pending_cb, &local_cb_list, cb_node) अणु
 		cb = pending_cb->cb;
 		cb_size = pending_cb->cb_size;
 		hw_queue_id = pending_cb->hw_queue_id;
 
 		rc = pending_cb_create_job(hdev, ctx, cs, cb, cb_size,
 								hw_queue_id);
-		if (rc)
-			goto free_cs_object;
-	}
+		अगर (rc)
+			जाओ मुक्त_cs_object;
+	पूर्ण
 
 	rc = hl_hw_queue_schedule_cs(cs);
-	if (rc) {
-		if (rc != -EAGAIN)
+	अगर (rc) अणु
+		अगर (rc != -EAGAIN)
 			dev_err(hdev->dev,
 				"Failed to submit CS %d.%llu (%d)\n",
 				ctx->asid, cs->sequence, rc);
-		goto free_cs_object;
-	}
+		जाओ मुक्त_cs_object;
+	पूर्ण
 
 	/* pending cb was scheduled successfully */
-	list_for_each_entry_safe(pending_cb, tmp, &local_cb_list, cb_node) {
+	list_क्रम_each_entry_safe(pending_cb, पंचांगp, &local_cb_list, cb_node) अणु
 		list_del(&pending_cb->cb_node);
-		kfree(pending_cb);
-	}
+		kमुक्त(pending_cb);
+	पूर्ण
 
 	cs_put(cs);
 
-	goto free_pending_cb_token;
+	जाओ मुक्त_pending_cb_token;
 
-free_cs_object:
+मुक्त_cs_object:
 	cs_rollback(hdev, cs);
 	cs_put(cs);
 add_list_elements:
 	spin_lock(&ctx->pending_cb_lock);
-	list_for_each_entry_safe_reverse(pending_cb, tmp, &local_cb_list,
+	list_क्रम_each_entry_safe_reverse(pending_cb, पंचांगp, &local_cb_list,
 								cb_node)
 		list_move(&pending_cb->cb_node, &ctx->pending_cb_list);
 	spin_unlock(&ctx->pending_cb_lock);
-free_pending_cb_token:
-	atomic_set(&ctx->thread_pending_cb_token, 1);
+मुक्त_pending_cb_token:
+	atomic_set(&ctx->thपढ़ो_pending_cb_token, 1);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int hl_cs_ctx_switch(struct hl_fpriv *hpriv, union hl_cs_args *args,
+अटल पूर्णांक hl_cs_ctx_चयन(काष्ठा hl_fpriv *hpriv, जोड़ hl_cs_args *args,
 				u64 *cs_seq)
-{
-	struct hl_device *hdev = hpriv->hdev;
-	struct hl_ctx *ctx = hpriv->ctx;
+अणु
+	काष्ठा hl_device *hdev = hpriv->hdev;
+	काष्ठा hl_ctx *ctx = hpriv->ctx;
 	bool need_soft_reset = false;
-	int rc = 0, do_ctx_switch;
-	void __user *chunks;
-	u32 num_chunks, tmp;
-	int ret;
+	पूर्णांक rc = 0, करो_ctx_चयन;
+	व्योम __user *chunks;
+	u32 num_chunks, पंचांगp;
+	पूर्णांक ret;
 
-	do_ctx_switch = atomic_cmpxchg(&ctx->thread_ctx_switch_token, 1, 0);
+	करो_ctx_चयन = atomic_cmpxchg(&ctx->thपढ़ो_ctx_चयन_token, 1, 0);
 
-	if (do_ctx_switch || (args->in.cs_flags & HL_CS_FLAGS_FORCE_RESTORE)) {
+	अगर (करो_ctx_चयन || (args->in.cs_flags & HL_CS_FLAGS_FORCE_RESTORE)) अणु
 		mutex_lock(&hpriv->restore_phase_mutex);
 
-		if (do_ctx_switch) {
-			rc = hdev->asic_funcs->context_switch(hdev, ctx->asid);
-			if (rc) {
+		अगर (करो_ctx_चयन) अणु
+			rc = hdev->asic_funcs->context_चयन(hdev, ctx->asid);
+			अगर (rc) अणु
 				dev_err_ratelimited(hdev->dev,
 					"Failed to switch to context %d, rejecting CS! %d\n",
 					ctx->asid, rc);
 				/*
-				 * If we timedout, or if the device is not IDLE
-				 * while we want to do context-switch (-EBUSY),
+				 * If we समयकरोut, or अगर the device is not IDLE
+				 * जबतक we want to करो context-चयन (-EBUSY),
 				 * we need to soft-reset because QMAN is
 				 * probably stuck. However, we can't call to
 				 * reset here directly because of deadlock, so
-				 * need to do it at the very end of this
+				 * need to करो it at the very end of this
 				 * function
 				 */
-				if ((rc == -ETIMEDOUT) || (rc == -EBUSY))
+				अगर ((rc == -ETIMEDOUT) || (rc == -EBUSY))
 					need_soft_reset = true;
 				mutex_unlock(&hpriv->restore_phase_mutex);
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		hdev->asic_funcs->restore_phase_topology(hdev);
 
-		chunks = (void __user *) (uintptr_t) args->in.chunks_restore;
+		chunks = (व्योम __user *) (uपूर्णांकptr_t) args->in.chunks_restore;
 		num_chunks = args->in.num_chunks_restore;
 
-		if (!num_chunks) {
+		अगर (!num_chunks) अणु
 			dev_dbg(hdev->dev,
 				"Need to run restore phase but restore CS is empty\n");
 			rc = 0;
-		} else {
-			rc = cs_ioctl_default(hpriv, chunks, num_chunks,
-					cs_seq, 0, hdev->timeout_jiffies);
-		}
+		पूर्ण अन्यथा अणु
+			rc = cs_ioctl_शेष(hpriv, chunks, num_chunks,
+					cs_seq, 0, hdev->समयout_jअगरfies);
+		पूर्ण
 
 		mutex_unlock(&hpriv->restore_phase_mutex);
 
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(hdev->dev,
 				"Failed to submit restore CS for context %d (%d)\n",
 				ctx->asid, rc);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* Need to wait for restore completion before execution phase */
-		if (num_chunks) {
-			enum hl_cs_wait_status status;
-wait_again:
-			ret = _hl_cs_wait_ioctl(hdev, ctx,
-					jiffies_to_usecs(hdev->timeout_jiffies),
-					*cs_seq, &status, NULL);
-			if (ret) {
-				if (ret == -ERESTARTSYS) {
+		/* Need to रुको क्रम restore completion beक्रमe execution phase */
+		अगर (num_chunks) अणु
+			क्रमागत hl_cs_रुको_status status;
+रुको_again:
+			ret = _hl_cs_रुको_ioctl(hdev, ctx,
+					jअगरfies_to_usecs(hdev->समयout_jअगरfies),
+					*cs_seq, &status, शून्य);
+			अगर (ret) अणु
+				अगर (ret == -ERESTARTSYS) अणु
 					usleep_range(100, 200);
-					goto wait_again;
-				}
+					जाओ रुको_again;
+				पूर्ण
 
 				dev_err(hdev->dev,
 					"Restore CS for context %d failed to complete %d\n",
 					ctx->asid, ret);
 				rc = -ENOEXEC;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		ctx->thread_ctx_switch_wait_token = 1;
+		ctx->thपढ़ो_ctx_चयन_रुको_token = 1;
 
-	} else if (!ctx->thread_ctx_switch_wait_token) {
-		rc = hl_poll_timeout_memory(hdev,
-			&ctx->thread_ctx_switch_wait_token, tmp, (tmp == 1),
-			100, jiffies_to_usecs(hdev->timeout_jiffies), false);
+	पूर्ण अन्यथा अगर (!ctx->thपढ़ो_ctx_चयन_रुको_token) अणु
+		rc = hl_poll_समयout_memory(hdev,
+			&ctx->thपढ़ो_ctx_चयन_रुको_token, पंचांगp, (पंचांगp == 1),
+			100, jअगरfies_to_usecs(hdev->समयout_jअगरfies), false);
 
-		if (rc == -ETIMEDOUT) {
+		अगर (rc == -ETIMEDOUT) अणु
 			dev_err(hdev->dev,
-				"context switch phase timeout (%d)\n", tmp);
-			goto out;
-		}
-	}
+				"context switch phase timeout (%d)\n", पंचांगp);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	if ((rc == -ETIMEDOUT || rc == -EBUSY) && (need_soft_reset))
+	अगर ((rc == -ETIMEDOUT || rc == -EBUSY) && (need_soft_reset))
 		hl_device_reset(hdev, 0);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cs_ioctl_extract_signal_seq(struct hl_device *hdev,
-		struct hl_cs_chunk *chunk, u64 *signal_seq, struct hl_ctx *ctx)
-{
-	u64 *signal_seq_arr = NULL;
-	u32 size_to_copy, signal_seq_arr_len;
-	int rc = 0;
+अटल पूर्णांक cs_ioctl_extract_संकेत_seq(काष्ठा hl_device *hdev,
+		काष्ठा hl_cs_chunk *chunk, u64 *संकेत_seq, काष्ठा hl_ctx *ctx)
+अणु
+	u64 *संकेत_seq_arr = शून्य;
+	u32 माप_प्रकारo_copy, संकेत_seq_arr_len;
+	पूर्णांक rc = 0;
 
-	signal_seq_arr_len = chunk->num_signal_seq_arr;
+	संकेत_seq_arr_len = chunk->num_संकेत_seq_arr;
 
-	/* currently only one signal seq is supported */
-	if (signal_seq_arr_len != 1) {
+	/* currently only one संकेत seq is supported */
+	अगर (संकेत_seq_arr_len != 1) अणु
 		atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 		atomic64_inc(&hdev->aggregated_cs_counters.validation_drop_cnt);
 		dev_err(hdev->dev,
 			"Wait for signal CS supports only one signal CS seq\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	signal_seq_arr = kmalloc_array(signal_seq_arr_len,
-					sizeof(*signal_seq_arr),
+	संकेत_seq_arr = kदो_स्मृति_array(संकेत_seq_arr_len,
+					माप(*संकेत_seq_arr),
 					GFP_ATOMIC);
-	if (!signal_seq_arr)
-		signal_seq_arr = kmalloc_array(signal_seq_arr_len,
-					sizeof(*signal_seq_arr),
+	अगर (!संकेत_seq_arr)
+		संकेत_seq_arr = kदो_स्मृति_array(संकेत_seq_arr_len,
+					माप(*संकेत_seq_arr),
 					GFP_KERNEL);
-	if (!signal_seq_arr) {
+	अगर (!संकेत_seq_arr) अणु
 		atomic64_inc(&ctx->cs_counters.out_of_mem_drop_cnt);
 		atomic64_inc(&hdev->aggregated_cs_counters.out_of_mem_drop_cnt);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	size_to_copy = chunk->num_signal_seq_arr * sizeof(*signal_seq_arr);
-	if (copy_from_user(signal_seq_arr,
-				u64_to_user_ptr(chunk->signal_seq_arr),
-				size_to_copy)) {
+	माप_प्रकारo_copy = chunk->num_संकेत_seq_arr * माप(*संकेत_seq_arr);
+	अगर (copy_from_user(संकेत_seq_arr,
+				u64_to_user_ptr(chunk->संकेत_seq_arr),
+				माप_प्रकारo_copy)) अणु
 		atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 		atomic64_inc(&hdev->aggregated_cs_counters.validation_drop_cnt);
 		dev_err(hdev->dev,
 			"Failed to copy signal seq array from user\n");
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* currently it is guaranteed to have only one signal seq */
-	*signal_seq = signal_seq_arr[0];
+	/* currently it is guaranteed to have only one संकेत seq */
+	*संकेत_seq = संकेत_seq_arr[0];
 
 out:
-	kfree(signal_seq_arr);
+	kमुक्त(संकेत_seq_arr);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cs_ioctl_signal_wait_create_jobs(struct hl_device *hdev,
-		struct hl_ctx *ctx, struct hl_cs *cs, enum hl_queue_type q_type,
+अटल पूर्णांक cs_ioctl_संकेत_रुको_create_jobs(काष्ठा hl_device *hdev,
+		काष्ठा hl_ctx *ctx, काष्ठा hl_cs *cs, क्रमागत hl_queue_type q_type,
 		u32 q_idx)
-{
-	struct hl_cs_counters_atomic *cntr;
-	struct hl_cs_job *job;
-	struct hl_cb *cb;
+अणु
+	काष्ठा hl_cs_counters_atomic *cntr;
+	काष्ठा hl_cs_job *job;
+	काष्ठा hl_cb *cb;
 	u32 cb_size;
 
 	cntr = &hdev->aggregated_cs_counters;
 
 	job = hl_cs_allocate_job(hdev, q_type, true);
-	if (!job) {
+	अगर (!job) अणु
 		atomic64_inc(&ctx->cs_counters.out_of_mem_drop_cnt);
 		atomic64_inc(&cntr->out_of_mem_drop_cnt);
 		dev_err(hdev->dev, "Failed to allocate a new job\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (cs->type == CS_TYPE_WAIT)
-		cb_size = hdev->asic_funcs->get_wait_cb_size(hdev);
-	else
-		cb_size = hdev->asic_funcs->get_signal_cb_size(hdev);
+	अगर (cs->type == CS_TYPE_WAIT)
+		cb_size = hdev->asic_funcs->get_रुको_cb_size(hdev);
+	अन्यथा
+		cb_size = hdev->asic_funcs->get_संकेत_cb_size(hdev);
 
 	cb = hl_cb_kernel_create(hdev, cb_size,
 				q_type == QUEUE_TYPE_HW && hdev->mmu_enable);
-	if (!cb) {
+	अगर (!cb) अणु
 		atomic64_inc(&ctx->cs_counters.out_of_mem_drop_cnt);
 		atomic64_inc(&cntr->out_of_mem_drop_cnt);
-		kfree(job);
-		return -EFAULT;
-	}
+		kमुक्त(job);
+		वापस -EFAULT;
+	पूर्ण
 
 	job->id = 0;
 	job->cs = cs;
@@ -1575,7 +1576,7 @@ static int cs_ioctl_signal_wait_create_jobs(struct hl_device *hdev,
 
 	/*
 	 * No need in parsing, user CB is the patched CB.
-	 * We call hl_cb_destroy() out of two reasons - we don't need the CB in
+	 * We call hl_cb_destroy() out of two reasons - we करोn't need the CB in
 	 * the CB idr anymore and to decrement its refcount as it was
 	 * incremented inside hl_cb_kernel_create().
 	 */
@@ -1583,7 +1584,7 @@ static int cs_ioctl_signal_wait_create_jobs(struct hl_device *hdev,
 	job->job_cb_size = job->user_cb_size;
 	hl_cb_destroy(hdev, &hdev->kernel_cb_mgr, cb->id << PAGE_SHIFT);
 
-	/* increment refcount as for external queues we get completion */
+	/* increment refcount as क्रम बाह्यal queues we get completion */
 	cs_get(cs);
 
 	cs->jobs_in_queue_cnt[job->hw_queue_id]++;
@@ -1592,520 +1593,520 @@ static int cs_ioctl_signal_wait_create_jobs(struct hl_device *hdev,
 
 	hl_debugfs_add_job(hdev, job);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs_ioctl_signal_wait(struct hl_fpriv *hpriv, enum hl_cs_type cs_type,
-				void __user *chunks, u32 num_chunks,
-				u64 *cs_seq, u32 flags, u32 timeout)
-{
-	struct hl_cs_chunk *cs_chunk_array, *chunk;
-	struct hw_queue_properties *hw_queue_prop;
-	struct hl_device *hdev = hpriv->hdev;
-	struct hl_cs_compl *sig_waitcs_cmpl;
+अटल पूर्णांक cs_ioctl_संकेत_रुको(काष्ठा hl_fpriv *hpriv, क्रमागत hl_cs_type cs_type,
+				व्योम __user *chunks, u32 num_chunks,
+				u64 *cs_seq, u32 flags, u32 समयout)
+अणु
+	काष्ठा hl_cs_chunk *cs_chunk_array, *chunk;
+	काष्ठा hw_queue_properties *hw_queue_prop;
+	काष्ठा hl_device *hdev = hpriv->hdev;
+	काष्ठा hl_cs_compl *sig_रुकोcs_cmpl;
 	u32 q_idx, collective_engine_id = 0;
-	struct hl_cs_counters_atomic *cntr;
-	struct hl_fence *sig_fence = NULL;
-	struct hl_ctx *ctx = hpriv->ctx;
-	enum hl_queue_type q_type;
-	struct hl_cs *cs;
-	u64 signal_seq;
-	int rc;
+	काष्ठा hl_cs_counters_atomic *cntr;
+	काष्ठा hl_fence *sig_fence = शून्य;
+	काष्ठा hl_ctx *ctx = hpriv->ctx;
+	क्रमागत hl_queue_type q_type;
+	काष्ठा hl_cs *cs;
+	u64 संकेत_seq;
+	पूर्णांक rc;
 
 	cntr = &hdev->aggregated_cs_counters;
-	*cs_seq = ULLONG_MAX;
+	*cs_seq = ULदीर्घ_उच्च;
 
 	rc = hl_cs_copy_chunk_array(hdev, &cs_chunk_array, chunks, num_chunks,
 			ctx);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	/* currently it is guaranteed to have only one chunk */
 	chunk = &cs_chunk_array[0];
 
-	if (chunk->queue_index >= hdev->asic_prop.max_queues) {
+	अगर (chunk->queue_index >= hdev->asic_prop.max_queues) अणु
 		atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 		atomic64_inc(&cntr->validation_drop_cnt);
 		dev_err(hdev->dev, "Queue index %d is invalid\n",
 			chunk->queue_index);
 		rc = -EINVAL;
-		goto free_cs_chunk_array;
-	}
+		जाओ मुक्त_cs_chunk_array;
+	पूर्ण
 
 	q_idx = chunk->queue_index;
 	hw_queue_prop = &hdev->asic_prop.hw_queues_props[q_idx];
 	q_type = hw_queue_prop->type;
 
-	if (!hw_queue_prop->supports_sync_stream) {
+	अगर (!hw_queue_prop->supports_sync_stream) अणु
 		atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 		atomic64_inc(&cntr->validation_drop_cnt);
 		dev_err(hdev->dev,
 			"Queue index %d does not support sync stream operations\n",
 			q_idx);
 		rc = -EINVAL;
-		goto free_cs_chunk_array;
-	}
+		जाओ मुक्त_cs_chunk_array;
+	पूर्ण
 
-	if (cs_type == CS_TYPE_COLLECTIVE_WAIT) {
-		if (!(hw_queue_prop->collective_mode == HL_COLLECTIVE_MASTER)) {
+	अगर (cs_type == CS_TYPE_COLLECTIVE_WAIT) अणु
+		अगर (!(hw_queue_prop->collective_mode == HL_COLLECTIVE_MASTER)) अणु
 			atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 			atomic64_inc(&cntr->validation_drop_cnt);
 			dev_err(hdev->dev,
 				"Queue index %d is invalid\n", q_idx);
 			rc = -EINVAL;
-			goto free_cs_chunk_array;
-		}
+			जाओ मुक्त_cs_chunk_array;
+		पूर्ण
 
 		collective_engine_id = chunk->collective_engine_id;
-	}
+	पूर्ण
 
-	if (cs_type == CS_TYPE_WAIT || cs_type == CS_TYPE_COLLECTIVE_WAIT) {
-		rc = cs_ioctl_extract_signal_seq(hdev, chunk, &signal_seq, ctx);
-		if (rc)
-			goto free_cs_chunk_array;
+	अगर (cs_type == CS_TYPE_WAIT || cs_type == CS_TYPE_COLLECTIVE_WAIT) अणु
+		rc = cs_ioctl_extract_संकेत_seq(hdev, chunk, &संकेत_seq, ctx);
+		अगर (rc)
+			जाओ मुक्त_cs_chunk_array;
 
-		sig_fence = hl_ctx_get_fence(ctx, signal_seq);
-		if (IS_ERR(sig_fence)) {
+		sig_fence = hl_ctx_get_fence(ctx, संकेत_seq);
+		अगर (IS_ERR(sig_fence)) अणु
 			atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 			atomic64_inc(&cntr->validation_drop_cnt);
 			dev_err(hdev->dev,
 				"Failed to get signal CS with seq 0x%llx\n",
-				signal_seq);
+				संकेत_seq);
 			rc = PTR_ERR(sig_fence);
-			goto free_cs_chunk_array;
-		}
+			जाओ मुक्त_cs_chunk_array;
+		पूर्ण
 
-		if (!sig_fence) {
-			/* signal CS already finished */
+		अगर (!sig_fence) अणु
+			/* संकेत CS alपढ़ोy finished */
 			rc = 0;
-			goto free_cs_chunk_array;
-		}
+			जाओ मुक्त_cs_chunk_array;
+		पूर्ण
 
-		sig_waitcs_cmpl =
-			container_of(sig_fence, struct hl_cs_compl, base_fence);
+		sig_रुकोcs_cmpl =
+			container_of(sig_fence, काष्ठा hl_cs_compl, base_fence);
 
-		if (sig_waitcs_cmpl->type != CS_TYPE_SIGNAL) {
+		अगर (sig_रुकोcs_cmpl->type != CS_TYPE_SIGNAL) अणु
 			atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 			atomic64_inc(&cntr->validation_drop_cnt);
 			dev_err(hdev->dev,
 				"CS seq 0x%llx is not of a signal CS\n",
-				signal_seq);
+				संकेत_seq);
 			hl_fence_put(sig_fence);
 			rc = -EINVAL;
-			goto free_cs_chunk_array;
-		}
+			जाओ मुक्त_cs_chunk_array;
+		पूर्ण
 
-		if (completion_done(&sig_fence->completion)) {
-			/* signal CS already finished */
+		अगर (completion_करोne(&sig_fence->completion)) अणु
+			/* संकेत CS alपढ़ोy finished */
 			hl_fence_put(sig_fence);
 			rc = 0;
-			goto free_cs_chunk_array;
-		}
-	}
+			जाओ मुक्त_cs_chunk_array;
+		पूर्ण
+	पूर्ण
 
-	rc = allocate_cs(hdev, ctx, cs_type, ULLONG_MAX, &cs, flags, timeout);
-	if (rc) {
-		if (cs_type == CS_TYPE_WAIT ||
+	rc = allocate_cs(hdev, ctx, cs_type, ULदीर्घ_उच्च, &cs, flags, समयout);
+	अगर (rc) अणु
+		अगर (cs_type == CS_TYPE_WAIT ||
 			cs_type == CS_TYPE_COLLECTIVE_WAIT)
 			hl_fence_put(sig_fence);
-		goto free_cs_chunk_array;
-	}
+		जाओ मुक्त_cs_chunk_array;
+	पूर्ण
 
 	/*
-	 * Save the signal CS fence for later initialization right before
-	 * hanging the wait CS on the queue.
+	 * Save the संकेत CS fence क्रम later initialization right beक्रमe
+	 * hanging the रुको CS on the queue.
 	 */
-	if (cs_type == CS_TYPE_WAIT || cs_type == CS_TYPE_COLLECTIVE_WAIT)
-		cs->signal_fence = sig_fence;
+	अगर (cs_type == CS_TYPE_WAIT || cs_type == CS_TYPE_COLLECTIVE_WAIT)
+		cs->संकेत_fence = sig_fence;
 
 	hl_debugfs_add_cs(cs);
 
 	*cs_seq = cs->sequence;
 
-	if (cs_type == CS_TYPE_WAIT || cs_type == CS_TYPE_SIGNAL)
-		rc = cs_ioctl_signal_wait_create_jobs(hdev, ctx, cs, q_type,
+	अगर (cs_type == CS_TYPE_WAIT || cs_type == CS_TYPE_SIGNAL)
+		rc = cs_ioctl_संकेत_रुको_create_jobs(hdev, ctx, cs, q_type,
 				q_idx);
-	else if (cs_type == CS_TYPE_COLLECTIVE_WAIT)
-		rc = hdev->asic_funcs->collective_wait_create_jobs(hdev, ctx,
+	अन्यथा अगर (cs_type == CS_TYPE_COLLECTIVE_WAIT)
+		rc = hdev->asic_funcs->collective_रुको_create_jobs(hdev, ctx,
 				cs, q_idx, collective_engine_id);
-	else {
+	अन्यथा अणु
 		atomic64_inc(&ctx->cs_counters.validation_drop_cnt);
 		atomic64_inc(&cntr->validation_drop_cnt);
 		rc = -EINVAL;
-	}
+	पूर्ण
 
-	if (rc)
-		goto free_cs_object;
+	अगर (rc)
+		जाओ मुक्त_cs_object;
 
 	rc = hl_hw_queue_schedule_cs(cs);
-	if (rc) {
-		if (rc != -EAGAIN)
+	अगर (rc) अणु
+		अगर (rc != -EAGAIN)
 			dev_err(hdev->dev,
 				"Failed to submit CS %d.%llu to H/W queues, error %d\n",
 				ctx->asid, cs->sequence, rc);
-		goto free_cs_object;
-	}
+		जाओ मुक्त_cs_object;
+	पूर्ण
 
 	rc = HL_CS_STATUS_SUCCESS;
-	goto put_cs;
+	जाओ put_cs;
 
-free_cs_object:
+मुक्त_cs_object:
 	cs_rollback(hdev, cs);
-	*cs_seq = ULLONG_MAX;
-	/* The path below is both for good and erroneous exits */
+	*cs_seq = ULदीर्घ_उच्च;
+	/* The path below is both क्रम good and erroneous निकासs */
 put_cs:
 	/* We finished with the CS in this function, so put the ref */
 	cs_put(cs);
-free_cs_chunk_array:
-	kfree(cs_chunk_array);
+मुक्त_cs_chunk_array:
+	kमुक्त(cs_chunk_array);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int hl_cs_ioctl(struct hl_fpriv *hpriv, void *data)
-{
-	union hl_cs_args *args = data;
-	enum hl_cs_type cs_type;
-	u64 cs_seq = ULONG_MAX;
-	void __user *chunks;
-	u32 num_chunks, flags, timeout;
-	int rc;
+पूर्णांक hl_cs_ioctl(काष्ठा hl_fpriv *hpriv, व्योम *data)
+अणु
+	जोड़ hl_cs_args *args = data;
+	क्रमागत hl_cs_type cs_type;
+	u64 cs_seq = अच_दीर्घ_उच्च;
+	व्योम __user *chunks;
+	u32 num_chunks, flags, समयout;
+	पूर्णांक rc;
 
 	rc = hl_cs_sanity_checks(hpriv, args);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	rc = hl_cs_ctx_switch(hpriv, args, &cs_seq);
-	if (rc)
-		goto out;
+	rc = hl_cs_ctx_चयन(hpriv, args, &cs_seq);
+	अगर (rc)
+		जाओ out;
 
 	rc = hl_submit_pending_cb(hpriv);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	cs_type = hl_cs_get_cs_type(args->in.cs_flags &
 					~HL_CS_FLAGS_FORCE_RESTORE);
-	chunks = (void __user *) (uintptr_t) args->in.chunks_execute;
+	chunks = (व्योम __user *) (uपूर्णांकptr_t) args->in.chunks_execute;
 	num_chunks = args->in.num_chunks_execute;
 	flags = args->in.cs_flags;
 
-	/* In case this is a staged CS, user should supply the CS sequence */
-	if ((flags & HL_CS_FLAGS_STAGED_SUBMISSION) &&
+	/* In हाल this is a staged CS, user should supply the CS sequence */
+	अगर ((flags & HL_CS_FLAGS_STAGED_SUBMISSION) &&
 			!(flags & HL_CS_FLAGS_STAGED_SUBMISSION_FIRST))
 		cs_seq = args->in.seq;
 
-	timeout = flags & HL_CS_FLAGS_CUSTOM_TIMEOUT
-			? msecs_to_jiffies(args->in.timeout * 1000)
-			: hpriv->hdev->timeout_jiffies;
+	समयout = flags & HL_CS_FLAGS_CUSTOM_TIMEOUT
+			? msecs_to_jअगरfies(args->in.समयout * 1000)
+			: hpriv->hdev->समयout_jअगरfies;
 
-	switch (cs_type) {
-	case CS_TYPE_SIGNAL:
-	case CS_TYPE_WAIT:
-	case CS_TYPE_COLLECTIVE_WAIT:
-		rc = cs_ioctl_signal_wait(hpriv, cs_type, chunks, num_chunks,
-					&cs_seq, args->in.cs_flags, timeout);
-		break;
-	default:
-		rc = cs_ioctl_default(hpriv, chunks, num_chunks, &cs_seq,
-						args->in.cs_flags, timeout);
-		break;
-	}
+	चयन (cs_type) अणु
+	हाल CS_TYPE_SIGNAL:
+	हाल CS_TYPE_WAIT:
+	हाल CS_TYPE_COLLECTIVE_WAIT:
+		rc = cs_ioctl_संकेत_रुको(hpriv, cs_type, chunks, num_chunks,
+					&cs_seq, args->in.cs_flags, समयout);
+		अवरोध;
+	शेष:
+		rc = cs_ioctl_शेष(hpriv, chunks, num_chunks, &cs_seq,
+						args->in.cs_flags, समयout);
+		अवरोध;
+	पूर्ण
 
 out:
-	if (rc != -EAGAIN) {
-		memset(args, 0, sizeof(*args));
+	अगर (rc != -EAGAIN) अणु
+		स_रखो(args, 0, माप(*args));
 		args->out.status = rc;
 		args->out.seq = cs_seq;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int _hl_cs_wait_ioctl(struct hl_device *hdev, struct hl_ctx *ctx,
-				u64 timeout_us, u64 seq,
-				enum hl_cs_wait_status *status, s64 *timestamp)
-{
-	struct hl_fence *fence;
-	unsigned long timeout;
-	int rc = 0;
-	long completion_rc;
+अटल पूर्णांक _hl_cs_रुको_ioctl(काष्ठा hl_device *hdev, काष्ठा hl_ctx *ctx,
+				u64 समयout_us, u64 seq,
+				क्रमागत hl_cs_रुको_status *status, s64 *बारtamp)
+अणु
+	काष्ठा hl_fence *fence;
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक rc = 0;
+	दीर्घ completion_rc;
 
-	if (timestamp)
-		*timestamp = 0;
+	अगर (बारtamp)
+		*बारtamp = 0;
 
-	if (timeout_us == MAX_SCHEDULE_TIMEOUT)
-		timeout = timeout_us;
-	else
-		timeout = usecs_to_jiffies(timeout_us);
+	अगर (समयout_us == MAX_SCHEDULE_TIMEOUT)
+		समयout = समयout_us;
+	अन्यथा
+		समयout = usecs_to_jअगरfies(समयout_us);
 
 	hl_ctx_get(hdev, ctx);
 
 	fence = hl_ctx_get_fence(ctx, seq);
-	if (IS_ERR(fence)) {
+	अगर (IS_ERR(fence)) अणु
 		rc = PTR_ERR(fence);
-		if (rc == -EINVAL)
+		अगर (rc == -EINVAL)
 			dev_notice_ratelimited(hdev->dev,
 				"Can't wait on CS %llu because current CS is at seq %llu\n",
 				seq, ctx->cs_sequence);
-	} else if (fence) {
-		if (!timeout_us)
-			completion_rc = completion_done(&fence->completion);
-		else
+	पूर्ण अन्यथा अगर (fence) अणु
+		अगर (!समयout_us)
+			completion_rc = completion_करोne(&fence->completion);
+		अन्यथा
 			completion_rc =
-				wait_for_completion_interruptible_timeout(
-					&fence->completion, timeout);
+				रुको_क्रम_completion_पूर्णांकerruptible_समयout(
+					&fence->completion, समयout);
 
-		if (completion_rc > 0) {
+		अगर (completion_rc > 0) अणु
 			*status = CS_WAIT_STATUS_COMPLETED;
-			if (timestamp)
-				*timestamp = ktime_to_ns(fence->timestamp);
-		} else {
+			अगर (बारtamp)
+				*बारtamp = kसमय_प्रकारo_ns(fence->बारtamp);
+		पूर्ण अन्यथा अणु
 			*status = CS_WAIT_STATUS_BUSY;
-		}
+		पूर्ण
 
-		if (fence->error == -ETIMEDOUT)
+		अगर (fence->error == -ETIMEDOUT)
 			rc = -ETIMEDOUT;
-		else if (fence->error == -EIO)
+		अन्यथा अगर (fence->error == -EIO)
 			rc = -EIO;
 
 		hl_fence_put(fence);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(hdev->dev,
 			"Can't wait on seq %llu because current CS is at seq %llu (Fence is gone)\n",
 			seq, ctx->cs_sequence);
 		*status = CS_WAIT_STATUS_GONE;
-	}
+	पूर्ण
 
 	hl_ctx_put(ctx);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int hl_cs_wait_ioctl(struct hl_fpriv *hpriv, void *data)
-{
-	struct hl_device *hdev = hpriv->hdev;
-	union hl_wait_cs_args *args = data;
-	enum hl_cs_wait_status status;
+अटल पूर्णांक hl_cs_रुको_ioctl(काष्ठा hl_fpriv *hpriv, व्योम *data)
+अणु
+	काष्ठा hl_device *hdev = hpriv->hdev;
+	जोड़ hl_रुको_cs_args *args = data;
+	क्रमागत hl_cs_रुको_status status;
 	u64 seq = args->in.seq;
-	s64 timestamp;
-	int rc;
+	s64 बारtamp;
+	पूर्णांक rc;
 
-	rc = _hl_cs_wait_ioctl(hdev, hpriv->ctx, args->in.timeout_us, seq,
-				&status, &timestamp);
+	rc = _hl_cs_रुको_ioctl(hdev, hpriv->ctx, args->in.समयout_us, seq,
+				&status, &बारtamp);
 
-	memset(args, 0, sizeof(*args));
+	स_रखो(args, 0, माप(*args));
 
-	if (rc) {
-		if (rc == -ERESTARTSYS) {
+	अगर (rc) अणु
+		अगर (rc == -ERESTARTSYS) अणु
 			dev_err_ratelimited(hdev->dev,
 				"user process got signal while waiting for CS handle %llu\n",
 				seq);
 			args->out.status = HL_WAIT_CS_STATUS_INTERRUPTED;
 			rc = -EINTR;
-		} else if (rc == -ETIMEDOUT) {
+		पूर्ण अन्यथा अगर (rc == -ETIMEDOUT) अणु
 			dev_err_ratelimited(hdev->dev,
 				"CS %llu has timed-out while user process is waiting for it\n",
 				seq);
 			args->out.status = HL_WAIT_CS_STATUS_TIMEDOUT;
-		} else if (rc == -EIO) {
+		पूर्ण अन्यथा अगर (rc == -EIO) अणु
 			dev_err_ratelimited(hdev->dev,
 				"CS %llu has been aborted while user process is waiting for it\n",
 				seq);
 			args->out.status = HL_WAIT_CS_STATUS_ABORTED;
-		}
-		return rc;
-	}
+		पूर्ण
+		वापस rc;
+	पूर्ण
 
-	if (timestamp) {
+	अगर (बारtamp) अणु
 		args->out.flags |= HL_WAIT_CS_STATUS_FLAG_TIMESTAMP_VLD;
-		args->out.timestamp_nsec = timestamp;
-	}
+		args->out.बारtamp_nsec = बारtamp;
+	पूर्ण
 
-	switch (status) {
-	case CS_WAIT_STATUS_GONE:
+	चयन (status) अणु
+	हाल CS_WAIT_STATUS_GONE:
 		args->out.flags |= HL_WAIT_CS_STATUS_FLAG_GONE;
 		fallthrough;
-	case CS_WAIT_STATUS_COMPLETED:
+	हाल CS_WAIT_STATUS_COMPLETED:
 		args->out.status = HL_WAIT_CS_STATUS_COMPLETED;
-		break;
-	case CS_WAIT_STATUS_BUSY:
-	default:
+		अवरोध;
+	हाल CS_WAIT_STATUS_BUSY:
+	शेष:
 		args->out.status = HL_WAIT_CS_STATUS_BUSY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _hl_interrupt_wait_ioctl(struct hl_device *hdev, struct hl_ctx *ctx,
-				u32 timeout_us, u64 user_address,
-				u32 target_value, u16 interrupt_offset,
-				enum hl_cs_wait_status *status)
-{
-	struct hl_user_pending_interrupt *pend;
-	struct hl_user_interrupt *interrupt;
-	unsigned long timeout;
-	long completion_rc;
+अटल पूर्णांक _hl_पूर्णांकerrupt_रुको_ioctl(काष्ठा hl_device *hdev, काष्ठा hl_ctx *ctx,
+				u32 समयout_us, u64 user_address,
+				u32 target_value, u16 पूर्णांकerrupt_offset,
+				क्रमागत hl_cs_रुको_status *status)
+अणु
+	काष्ठा hl_user_pending_पूर्णांकerrupt *pend;
+	काष्ठा hl_user_पूर्णांकerrupt *पूर्णांकerrupt;
+	अचिन्हित दीर्घ समयout;
+	दीर्घ completion_rc;
 	u32 completion_value;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	if (timeout_us == U32_MAX)
-		timeout = timeout_us;
-	else
-		timeout = usecs_to_jiffies(timeout_us);
+	अगर (समयout_us == U32_MAX)
+		समयout = समयout_us;
+	अन्यथा
+		समयout = usecs_to_jअगरfies(समयout_us);
 
 	hl_ctx_get(hdev, ctx);
 
-	pend = kmalloc(sizeof(*pend), GFP_KERNEL);
-	if (!pend) {
+	pend = kदो_स्मृति(माप(*pend), GFP_KERNEL);
+	अगर (!pend) अणु
 		hl_ctx_put(ctx);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	hl_fence_init(&pend->fence, ULONG_MAX);
+	hl_fence_init(&pend->fence, अच_दीर्घ_उच्च);
 
-	if (interrupt_offset == HL_COMMON_USER_INTERRUPT_ID)
-		interrupt = &hdev->common_user_interrupt;
-	else
-		interrupt = &hdev->user_interrupt[interrupt_offset];
+	अगर (पूर्णांकerrupt_offset == HL_COMMON_USER_INTERRUPT_ID)
+		पूर्णांकerrupt = &hdev->common_user_पूर्णांकerrupt;
+	अन्यथा
+		पूर्णांकerrupt = &hdev->user_पूर्णांकerrupt[पूर्णांकerrupt_offset];
 
-	spin_lock(&interrupt->wait_list_lock);
-	if (!hl_device_operational(hdev, NULL)) {
+	spin_lock(&पूर्णांकerrupt->रुको_list_lock);
+	अगर (!hl_device_operational(hdev, शून्य)) अणु
 		rc = -EPERM;
-		goto unlock_and_free_fence;
-	}
+		जाओ unlock_and_मुक्त_fence;
+	पूर्ण
 
-	if (copy_from_user(&completion_value, u64_to_user_ptr(user_address), 4)) {
+	अगर (copy_from_user(&completion_value, u64_to_user_ptr(user_address), 4)) अणु
 		dev_err(hdev->dev,
 			"Failed to copy completion value from user\n");
 		rc = -EFAULT;
-		goto unlock_and_free_fence;
-	}
+		जाओ unlock_and_मुक्त_fence;
+	पूर्ण
 
-	if (completion_value >= target_value)
+	अगर (completion_value >= target_value)
 		*status = CS_WAIT_STATUS_COMPLETED;
-	else
+	अन्यथा
 		*status = CS_WAIT_STATUS_BUSY;
 
-	if (!timeout_us || (*status == CS_WAIT_STATUS_COMPLETED))
-		goto unlock_and_free_fence;
+	अगर (!समयout_us || (*status == CS_WAIT_STATUS_COMPLETED))
+		जाओ unlock_and_मुक्त_fence;
 
-	/* Add pending user interrupt to relevant list for the interrupt
+	/* Add pending user पूर्णांकerrupt to relevant list क्रम the पूर्णांकerrupt
 	 * handler to monitor
 	 */
-	list_add_tail(&pend->wait_list_node, &interrupt->wait_list_head);
-	spin_unlock(&interrupt->wait_list_lock);
+	list_add_tail(&pend->रुको_list_node, &पूर्णांकerrupt->रुको_list_head);
+	spin_unlock(&पूर्णांकerrupt->रुको_list_lock);
 
-wait_again:
-	/* Wait for interrupt handler to signal completion */
+रुको_again:
+	/* Wait क्रम पूर्णांकerrupt handler to संकेत completion */
 	completion_rc =
-		wait_for_completion_interruptible_timeout(
-				&pend->fence.completion, timeout);
+		रुको_क्रम_completion_पूर्णांकerruptible_समयout(
+				&pend->fence.completion, समयout);
 
-	/* If timeout did not expire we need to perform the comparison.
-	 * If comparison fails, keep waiting until timeout expires
+	/* If समयout did not expire we need to perक्रमm the comparison.
+	 * If comparison fails, keep रुकोing until समयout expires
 	 */
-	if (completion_rc > 0) {
-		if (copy_from_user(&completion_value,
-				u64_to_user_ptr(user_address), 4)) {
+	अगर (completion_rc > 0) अणु
+		अगर (copy_from_user(&completion_value,
+				u64_to_user_ptr(user_address), 4)) अणु
 			dev_err(hdev->dev,
 				"Failed to copy completion value from user\n");
 			rc = -EFAULT;
-			goto remove_pending_user_interrupt;
-		}
+			जाओ हटाओ_pending_user_पूर्णांकerrupt;
+		पूर्ण
 
-		if (completion_value >= target_value) {
+		अगर (completion_value >= target_value) अणु
 			*status = CS_WAIT_STATUS_COMPLETED;
-		} else {
-			timeout = completion_rc;
-			goto wait_again;
-		}
-	} else {
+		पूर्ण अन्यथा अणु
+			समयout = completion_rc;
+			जाओ रुको_again;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		*status = CS_WAIT_STATUS_BUSY;
-	}
+	पूर्ण
 
-remove_pending_user_interrupt:
-	spin_lock(&interrupt->wait_list_lock);
-	list_del(&pend->wait_list_node);
+हटाओ_pending_user_पूर्णांकerrupt:
+	spin_lock(&पूर्णांकerrupt->रुको_list_lock);
+	list_del(&pend->रुको_list_node);
 
-unlock_and_free_fence:
-	spin_unlock(&interrupt->wait_list_lock);
-	kfree(pend);
+unlock_and_मुक्त_fence:
+	spin_unlock(&पूर्णांकerrupt->रुको_list_lock);
+	kमुक्त(pend);
 	hl_ctx_put(ctx);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int hl_interrupt_wait_ioctl(struct hl_fpriv *hpriv, void *data)
-{
-	u16 interrupt_id, interrupt_offset, first_interrupt, last_interrupt;
-	struct hl_device *hdev = hpriv->hdev;
-	struct asic_fixed_properties *prop;
-	union hl_wait_cs_args *args = data;
-	enum hl_cs_wait_status status;
-	int rc;
+अटल पूर्णांक hl_पूर्णांकerrupt_रुको_ioctl(काष्ठा hl_fpriv *hpriv, व्योम *data)
+अणु
+	u16 पूर्णांकerrupt_id, पूर्णांकerrupt_offset, first_पूर्णांकerrupt, last_पूर्णांकerrupt;
+	काष्ठा hl_device *hdev = hpriv->hdev;
+	काष्ठा asic_fixed_properties *prop;
+	जोड़ hl_रुको_cs_args *args = data;
+	क्रमागत hl_cs_रुको_status status;
+	पूर्णांक rc;
 
 	prop = &hdev->asic_prop;
 
-	if (!prop->user_interrupt_count) {
+	अगर (!prop->user_पूर्णांकerrupt_count) अणु
 		dev_err(hdev->dev, "no user interrupts allowed");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	interrupt_id =
+	पूर्णांकerrupt_id =
 		FIELD_GET(HL_WAIT_CS_FLAGS_INTERRUPT_MASK, args->in.flags);
 
-	first_interrupt = prop->first_available_user_msix_interrupt;
-	last_interrupt = prop->first_available_user_msix_interrupt +
-						prop->user_interrupt_count - 1;
+	first_पूर्णांकerrupt = prop->first_available_user_msix_पूर्णांकerrupt;
+	last_पूर्णांकerrupt = prop->first_available_user_msix_पूर्णांकerrupt +
+						prop->user_पूर्णांकerrupt_count - 1;
 
-	if ((interrupt_id < first_interrupt || interrupt_id > last_interrupt) &&
-			interrupt_id != HL_COMMON_USER_INTERRUPT_ID) {
-		dev_err(hdev->dev, "invalid user interrupt %u", interrupt_id);
-		return -EINVAL;
-	}
+	अगर ((पूर्णांकerrupt_id < first_पूर्णांकerrupt || पूर्णांकerrupt_id > last_पूर्णांकerrupt) &&
+			पूर्णांकerrupt_id != HL_COMMON_USER_INTERRUPT_ID) अणु
+		dev_err(hdev->dev, "invalid user interrupt %u", पूर्णांकerrupt_id);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (interrupt_id == HL_COMMON_USER_INTERRUPT_ID)
-		interrupt_offset = HL_COMMON_USER_INTERRUPT_ID;
-	else
-		interrupt_offset = interrupt_id - first_interrupt;
+	अगर (पूर्णांकerrupt_id == HL_COMMON_USER_INTERRUPT_ID)
+		पूर्णांकerrupt_offset = HL_COMMON_USER_INTERRUPT_ID;
+	अन्यथा
+		पूर्णांकerrupt_offset = पूर्णांकerrupt_id - first_पूर्णांकerrupt;
 
-	rc = _hl_interrupt_wait_ioctl(hdev, hpriv->ctx,
-				args->in.interrupt_timeout_us, args->in.addr,
-				args->in.target, interrupt_offset, &status);
+	rc = _hl_पूर्णांकerrupt_रुको_ioctl(hdev, hpriv->ctx,
+				args->in.पूर्णांकerrupt_समयout_us, args->in.addr,
+				args->in.target, पूर्णांकerrupt_offset, &status);
 
-	memset(args, 0, sizeof(*args));
+	स_रखो(args, 0, माप(*args));
 
-	if (rc) {
+	अगर (rc) अणु
 		dev_err_ratelimited(hdev->dev,
 			"interrupt_wait_ioctl failed (%d)\n", rc);
 
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	switch (status) {
-	case CS_WAIT_STATUS_COMPLETED:
+	चयन (status) अणु
+	हाल CS_WAIT_STATUS_COMPLETED:
 		args->out.status = HL_WAIT_CS_STATUS_COMPLETED;
-		break;
-	case CS_WAIT_STATUS_BUSY:
-	default:
+		अवरोध;
+	हाल CS_WAIT_STATUS_BUSY:
+	शेष:
 		args->out.status = HL_WAIT_CS_STATUS_BUSY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hl_wait_ioctl(struct hl_fpriv *hpriv, void *data)
-{
-	union hl_wait_cs_args *args = data;
+पूर्णांक hl_रुको_ioctl(काष्ठा hl_fpriv *hpriv, व्योम *data)
+अणु
+	जोड़ hl_रुको_cs_args *args = data;
 	u32 flags = args->in.flags;
-	int rc;
+	पूर्णांक rc;
 
-	if (flags & HL_WAIT_CS_FLAGS_INTERRUPT)
-		rc = hl_interrupt_wait_ioctl(hpriv, data);
-	else
-		rc = hl_cs_wait_ioctl(hpriv, data);
+	अगर (flags & HL_WAIT_CS_FLAGS_INTERRUPT)
+		rc = hl_पूर्णांकerrupt_रुको_ioctl(hpriv, data);
+	अन्यथा
+		rc = hl_cs_रुको_ioctl(hpriv, data);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण

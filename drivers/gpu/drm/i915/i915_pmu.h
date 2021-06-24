@@ -1,165 +1,166 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2017-2018 Intel Corporation
+ * Copyright तऊ 2017-2018 Intel Corporation
  */
 
-#ifndef __I915_PMU_H__
-#define __I915_PMU_H__
+#अगर_अघोषित __I915_PMU_H__
+#घोषणा __I915_PMU_H__
 
-#include <linux/hrtimer.h>
-#include <linux/perf_event.h>
-#include <linux/spinlock_types.h>
-#include <uapi/drm/i915_drm.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/spinlock_types.h>
+#समावेश <uapi/drm/i915_drm.h>
 
-struct drm_i915_private;
+काष्ठा drm_i915_निजी;
 
 /**
  * Non-engine events that we need to track enabled-disabled transition and
  * current state.
  */
-enum i915_pmu_tracked_events {
+क्रमागत i915_pmu_tracked_events अणु
 	__I915_PMU_ACTUAL_FREQUENCY_ENABLED = 0,
 	__I915_PMU_REQUESTED_FREQUENCY_ENABLED,
 	__I915_PMU_RC6_RESIDENCY_ENABLED,
 	__I915_PMU_TRACKED_EVENT_COUNT, /* count marker */
-};
+पूर्ण;
 
 /**
- * Slots used from the sampling timer (non-engine events) with some extras for
+ * Slots used from the sampling समयr (non-engine events) with some extras क्रम
  * convenience.
  */
-enum {
+क्रमागत अणु
 	__I915_SAMPLE_FREQ_ACT = 0,
 	__I915_SAMPLE_FREQ_REQ,
 	__I915_SAMPLE_RC6,
 	__I915_SAMPLE_RC6_LAST_REPORTED,
 	__I915_NUM_PMU_SAMPLERS
-};
+पूर्ण;
 
 /**
- * How many different events we track in the global PMU mask.
+ * How many dअगरferent events we track in the global PMU mask.
  *
  * It is also used to know to needed number of event reference counters.
  */
-#define I915_PMU_MASK_BITS \
+#घोषणा I915_PMU_MASK_BITS \
 	(I915_ENGINE_SAMPLE_COUNT + __I915_PMU_TRACKED_EVENT_COUNT)
 
-#define I915_ENGINE_SAMPLE_COUNT (I915_SAMPLE_SEMA + 1)
+#घोषणा I915_ENGINE_SAMPLE_COUNT (I915_SAMPLE_SEMA + 1)
 
-struct i915_pmu_sample {
+काष्ठा i915_pmu_sample अणु
 	u64 cur;
-};
+पूर्ण;
 
-struct i915_pmu {
+काष्ठा i915_pmu अणु
 	/**
-	 * @cpuhp: Struct used for CPU hotplug handling.
+	 * @cpuhp: Struct used क्रम CPU hotplug handling.
 	 */
-	struct {
-		struct hlist_node node;
-		unsigned int cpu;
-	} cpuhp;
+	काष्ठा अणु
+		काष्ठा hlist_node node;
+		अचिन्हित पूर्णांक cpu;
+	पूर्ण cpuhp;
 	/**
 	 * @base: PMU base.
 	 */
-	struct pmu base;
+	काष्ठा pmu base;
 	/**
-	 * @closed: i915 is unregistering.
+	 * @बंदd: i915 is unरेजिस्टरing.
 	 */
-	bool closed;
+	bool बंदd;
 	/**
-	 * @name: Name as registered with perf core.
+	 * @name: Name as रेजिस्टरed with perf core.
 	 */
-	const char *name;
+	स्थिर अक्षर *name;
 	/**
 	 * @lock: Lock protecting enable mask and ref count handling.
 	 */
 	spinlock_t lock;
 	/**
-	 * @timer: Timer for internal i915 PMU sampling.
+	 * @समयr: Timer क्रम पूर्णांकernal i915 PMU sampling.
 	 */
-	struct hrtimer timer;
+	काष्ठा hrसमयr समयr;
 	/**
-	 * @enable: Bitmask of specific enabled events.
+	 * @enable: Biपंचांगask of specअगरic enabled events.
 	 *
-	 * For some events we need to track their state and do some internal
+	 * For some events we need to track their state and करो some पूर्णांकernal
 	 * house keeping.
 	 *
-	 * Each engine event sampler type and event listed in enum
-	 * i915_pmu_tracked_events gets a bit in this field.
+	 * Each engine event sampler type and event listed in क्रमागत
+	 * i915_pmu_tracked_events माला_लो a bit in this field.
 	 *
-	 * Low bits are engine samplers and other events continue from there.
+	 * Low bits are engine samplers and other events जारी from there.
 	 */
 	u32 enable;
 
 	/**
-	 * @timer_last:
+	 * @समयr_last:
 	 *
-	 * Timestmap of the previous timer invocation.
+	 * Timesपंचांगap of the previous समयr invocation.
 	 */
-	ktime_t timer_last;
+	kसमय_प्रकार समयr_last;
 
 	/**
-	 * @enable_count: Reference counts for the enabled events.
+	 * @enable_count: Reference counts क्रम the enabled events.
 	 *
 	 * Array indices are mapped in the same way as bits in the @enable field
 	 * and they are used to control sampling on/off when multiple clients
 	 * are using the PMU API.
 	 */
-	unsigned int enable_count[I915_PMU_MASK_BITS];
+	अचिन्हित पूर्णांक enable_count[I915_PMU_MASK_BITS];
 	/**
-	 * @timer_enabled: Should the internal sampling timer be running.
+	 * @समयr_enabled: Should the पूर्णांकernal sampling समयr be running.
 	 */
-	bool timer_enabled;
+	bool समयr_enabled;
 	/**
-	 * @sample: Current and previous (raw) counters for sampling events.
+	 * @sample: Current and previous (raw) counters क्रम sampling events.
 	 *
-	 * These counters are updated from the i915 PMU sampling timer.
+	 * These counters are updated from the i915 PMU sampling समयr.
 	 *
-	 * Only global counters are held here, while the per-engine ones are in
-	 * struct intel_engine_cs.
+	 * Only global counters are held here, जबतक the per-engine ones are in
+	 * काष्ठा पूर्णांकel_engine_cs.
 	 */
-	struct i915_pmu_sample sample[__I915_NUM_PMU_SAMPLERS];
+	काष्ठा i915_pmu_sample sample[__I915_NUM_PMU_SAMPLERS];
 	/**
-	 * @sleep_last: Last time GT parked for RC6 estimation.
+	 * @sleep_last: Last समय GT parked क्रम RC6 estimation.
 	 */
-	ktime_t sleep_last;
+	kसमय_प्रकार sleep_last;
 	/**
-	 * @irq_count: Number of interrupts
+	 * @irq_count: Number of पूर्णांकerrupts
 	 *
-	 * Intentionally unsigned long to avoid atomics or heuristics on 32bit.
-	 * 4e9 interrupts are a lot and postprocessing can really deal with an
+	 * Intentionally अचिन्हित दीर्घ to aव्योम atomics or heuristics on 32bit.
+	 * 4e9 पूर्णांकerrupts are a lot and postprocessing can really deal with an
 	 * occasional wraparound easily. It's 32bit after all.
 	 */
-	unsigned long irq_count;
+	अचिन्हित दीर्घ irq_count;
 	/**
 	 * @events_attr_group: Device events attribute group.
 	 */
-	struct attribute_group events_attr_group;
+	काष्ठा attribute_group events_attr_group;
 	/**
 	 * @i915_attr: Memory block holding device attributes.
 	 */
-	void *i915_attr;
+	व्योम *i915_attr;
 	/**
 	 * @pmu_attr: Memory block holding device attributes.
 	 */
-	void *pmu_attr;
-};
+	व्योम *pmu_attr;
+पूर्ण;
 
-#ifdef CONFIG_PERF_EVENTS
-void i915_pmu_init(void);
-void i915_pmu_exit(void);
-void i915_pmu_register(struct drm_i915_private *i915);
-void i915_pmu_unregister(struct drm_i915_private *i915);
-void i915_pmu_gt_parked(struct drm_i915_private *i915);
-void i915_pmu_gt_unparked(struct drm_i915_private *i915);
-#else
-static inline void i915_pmu_init(void) {}
-static inline void i915_pmu_exit(void) {}
-static inline void i915_pmu_register(struct drm_i915_private *i915) {}
-static inline void i915_pmu_unregister(struct drm_i915_private *i915) {}
-static inline void i915_pmu_gt_parked(struct drm_i915_private *i915) {}
-static inline void i915_pmu_gt_unparked(struct drm_i915_private *i915) {}
-#endif
+#अगर_घोषित CONFIG_PERF_EVENTS
+व्योम i915_pmu_init(व्योम);
+व्योम i915_pmu_निकास(व्योम);
+व्योम i915_pmu_रेजिस्टर(काष्ठा drm_i915_निजी *i915);
+व्योम i915_pmu_unरेजिस्टर(काष्ठा drm_i915_निजी *i915);
+व्योम i915_pmu_gt_parked(काष्ठा drm_i915_निजी *i915);
+व्योम i915_pmu_gt_unparked(काष्ठा drm_i915_निजी *i915);
+#अन्यथा
+अटल अंतरभूत व्योम i915_pmu_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम i915_pmu_निकास(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम i915_pmu_रेजिस्टर(काष्ठा drm_i915_निजी *i915) अणुपूर्ण
+अटल अंतरभूत व्योम i915_pmu_unरेजिस्टर(काष्ठा drm_i915_निजी *i915) अणुपूर्ण
+अटल अंतरभूत व्योम i915_pmu_gt_parked(काष्ठा drm_i915_निजी *i915) अणुपूर्ण
+अटल अंतरभूत व्योम i915_pmu_gt_unparked(काष्ठा drm_i915_निजी *i915) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

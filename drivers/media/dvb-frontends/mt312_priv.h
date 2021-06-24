@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
-    Driver for Zarlink MT312 QPSK Frontend
+    Driver क्रम Zarlink MT312 QPSK Frontend
 
     Copyright (C) 2003 Andreas Oberritter <obi@linuxtv.org>
 
 
 */
 
-#ifndef _DVB_FRONTENDS_MT312_PRIV
-#define _DVB_FRONTENDS_MT312_PRIV
+#अगर_अघोषित _DVB_FRONTENDS_MT312_PRIV
+#घोषणा _DVB_FRONTENDS_MT312_PRIV
 
-enum mt312_reg_addr {
+क्रमागत mt312_reg_addr अणु
 	QPSK_INT_H = 0,
 	QPSK_INT_M = 1,
 	QPSK_INT_L = 2,
@@ -141,12 +142,12 @@ enum mt312_reg_addr {
 	TEST_MODE = 125,
 	ID = 126,
 	CONFIG = 127
-};
+पूर्ण;
 
-enum mt312_model_id {
+क्रमागत mt312_model_id अणु
 	ID_VP310 = 1,
 	ID_MT312 = 3,
 	ID_ZL10313 = 5,
-};
+पूर्ण;
 
-#endif				/* DVB_FRONTENDS_MT312_PRIV */
+#पूर्ण_अगर				/* DVB_FRONTENDS_MT312_PRIV */

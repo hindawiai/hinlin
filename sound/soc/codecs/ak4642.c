@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // ak4642.c  --  AK4642/AK4643 ALSA Soc Audio driver
 //
 // Copyright (C) 2009 Renesas Solutions Corp.
 // Kuninori Morimoto <morimoto.kuninori@renesas.com>
 //
-// Based on wm8731.c by Richard Purdie
-// Based on ak4535.c by Richard Purdie
+// Based on wm8731.c by Riअक्षरd Purdie
+// Based on ak4535.c by Riअक्षरd Purdie
 // Based on wm8753.c by Liam Girdwood
 
 /* ** CAUTION **
@@ -19,131 +20,131 @@
  * AK4648 is tested.
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/of_device.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <sound/soc.h>
-#include <sound/initval.h>
-#include <sound/tlv.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/tlv.h>
 
-#define PW_MGMT1	0x00
-#define PW_MGMT2	0x01
-#define SG_SL1		0x02
-#define SG_SL2		0x03
-#define MD_CTL1		0x04
-#define MD_CTL2		0x05
-#define TIMER		0x06
-#define ALC_CTL1	0x07
-#define ALC_CTL2	0x08
-#define L_IVC		0x09
-#define L_DVC		0x0a
-#define ALC_CTL3	0x0b
-#define R_IVC		0x0c
-#define R_DVC		0x0d
-#define MD_CTL3		0x0e
-#define MD_CTL4		0x0f
-#define PW_MGMT3	0x10
-#define DF_S		0x11
-#define FIL3_0		0x12
-#define FIL3_1		0x13
-#define FIL3_2		0x14
-#define FIL3_3		0x15
-#define EQ_0		0x16
-#define EQ_1		0x17
-#define EQ_2		0x18
-#define EQ_3		0x19
-#define EQ_4		0x1a
-#define EQ_5		0x1b
-#define FIL1_0		0x1c
-#define FIL1_1		0x1d
-#define FIL1_2		0x1e
-#define FIL1_3		0x1f	/* The maximum valid register for ak4642 */
-#define PW_MGMT4	0x20
-#define MD_CTL5		0x21
-#define LO_MS		0x22
-#define HP_MS		0x23
-#define SPK_MS		0x24	/* The maximum valid register for ak4643 */
-#define EQ_FBEQAB	0x25
-#define EQ_FBEQCD	0x26
-#define EQ_FBEQE	0x27	/* The maximum valid register for ak4648 */
+#घोषणा PW_MGMT1	0x00
+#घोषणा PW_MGMT2	0x01
+#घोषणा SG_SL1		0x02
+#घोषणा SG_SL2		0x03
+#घोषणा MD_CTL1		0x04
+#घोषणा MD_CTL2		0x05
+#घोषणा TIMER		0x06
+#घोषणा ALC_CTL1	0x07
+#घोषणा ALC_CTL2	0x08
+#घोषणा L_IVC		0x09
+#घोषणा L_DVC		0x0a
+#घोषणा ALC_CTL3	0x0b
+#घोषणा R_IVC		0x0c
+#घोषणा R_DVC		0x0d
+#घोषणा MD_CTL3		0x0e
+#घोषणा MD_CTL4		0x0f
+#घोषणा PW_MGMT3	0x10
+#घोषणा DF_S		0x11
+#घोषणा FIL3_0		0x12
+#घोषणा FIL3_1		0x13
+#घोषणा FIL3_2		0x14
+#घोषणा FIL3_3		0x15
+#घोषणा EQ_0		0x16
+#घोषणा EQ_1		0x17
+#घोषणा EQ_2		0x18
+#घोषणा EQ_3		0x19
+#घोषणा EQ_4		0x1a
+#घोषणा EQ_5		0x1b
+#घोषणा FIL1_0		0x1c
+#घोषणा FIL1_1		0x1d
+#घोषणा FIL1_2		0x1e
+#घोषणा FIL1_3		0x1f	/* The maximum valid रेजिस्टर क्रम ak4642 */
+#घोषणा PW_MGMT4	0x20
+#घोषणा MD_CTL5		0x21
+#घोषणा LO_MS		0x22
+#घोषणा HP_MS		0x23
+#घोषणा SPK_MS		0x24	/* The maximum valid रेजिस्टर क्रम ak4643 */
+#घोषणा EQ_FBEQAB	0x25
+#घोषणा EQ_FBEQCD	0x26
+#घोषणा EQ_FBEQE	0x27	/* The maximum valid रेजिस्टर क्रम ak4648 */
 
 /* PW_MGMT1*/
-#define PMVCM		(1 << 6) /* VCOM Power Management */
-#define PMMIN		(1 << 5) /* MIN Input Power Management */
-#define PMDAC		(1 << 2) /* DAC Power Management */
-#define PMADL		(1 << 0) /* MIC Amp Lch and ADC Lch Power Management */
+#घोषणा PMVCM		(1 << 6) /* VCOM Power Management */
+#घोषणा PMMIN		(1 << 5) /* MIN Input Power Management */
+#घोषणा PMDAC		(1 << 2) /* DAC Power Management */
+#घोषणा PMADL		(1 << 0) /* MIC Amp Lch and ADC Lch Power Management */
 
 /* PW_MGMT2 */
-#define HPMTN		(1 << 6)
-#define PMHPL		(1 << 5)
-#define PMHPR		(1 << 4)
-#define MS		(1 << 3) /* master/slave select */
-#define MCKO		(1 << 1)
-#define PMPLL		(1 << 0)
+#घोषणा HPMTN		(1 << 6)
+#घोषणा PMHPL		(1 << 5)
+#घोषणा PMHPR		(1 << 4)
+#घोषणा MS		(1 << 3) /* master/slave select */
+#घोषणा MCKO		(1 << 1)
+#घोषणा PMPLL		(1 << 0)
 
-#define PMHP_MASK	(PMHPL | PMHPR)
-#define PMHP		PMHP_MASK
+#घोषणा PMHP_MASK	(PMHPL | PMHPR)
+#घोषणा PMHP		PMHP_MASK
 
 /* PW_MGMT3 */
-#define PMADR		(1 << 0) /* MIC L / ADC R Power Management */
+#घोषणा PMADR		(1 << 0) /* MIC L / ADC R Power Management */
 
 /* SG_SL1 */
-#define MINS		(1 << 6) /* Switch from MIN to Speaker */
-#define DACL		(1 << 4) /* Switch from DAC to Stereo or Receiver */
-#define PMMP		(1 << 2) /* MPWR pin Power Management */
-#define MGAIN0		(1 << 0) /* MIC amp gain*/
+#घोषणा MINS		(1 << 6) /* Switch from MIN to Speaker */
+#घोषणा DACL		(1 << 4) /* Switch from DAC to Stereo or Receiver */
+#घोषणा PMMP		(1 << 2) /* MPWR pin Power Management */
+#घोषणा MGAIN0		(1 << 0) /* MIC amp gain*/
 
 /* SG_SL2 */
-#define LOPS		(1 << 6) /* Stero Line-out Power Save Mode */
+#घोषणा LOPS		(1 << 6) /* Stero Line-out Power Save Mode */
 
 /* TIMER */
-#define ZTM(param)	((param & 0x3) << 4) /* ALC Zero Crossing TimeOut */
-#define WTM(param)	(((param & 0x4) << 4) | ((param & 0x3) << 2))
+#घोषणा ZTM(param)	((param & 0x3) << 4) /* ALC Zero Crossing TimeOut */
+#घोषणा WTM(param)	(((param & 0x4) << 4) | ((param & 0x3) << 2))
 
 /* ALC_CTL1 */
-#define ALC		(1 << 5) /* ALC Enable */
-#define LMTH0		(1 << 0) /* ALC Limiter / Recovery Level */
+#घोषणा ALC		(1 << 5) /* ALC Enable */
+#घोषणा LMTH0		(1 << 0) /* ALC Limiter / Recovery Level */
 
 /* MD_CTL1 */
-#define PLL3		(1 << 7)
-#define PLL2		(1 << 6)
-#define PLL1		(1 << 5)
-#define PLL0		(1 << 4)
-#define PLL_MASK	(PLL3 | PLL2 | PLL1 | PLL0)
+#घोषणा PLL3		(1 << 7)
+#घोषणा PLL2		(1 << 6)
+#घोषणा PLL1		(1 << 5)
+#घोषणा PLL0		(1 << 4)
+#घोषणा PLL_MASK	(PLL3 | PLL2 | PLL1 | PLL0)
 
-#define BCKO_MASK	(1 << 3)
-#define BCKO_64		BCKO_MASK
+#घोषणा BCKO_MASK	(1 << 3)
+#घोषणा BCKO_64		BCKO_MASK
 
-#define DIF_MASK	(3 << 0)
-#define DSP		(0 << 0)
-#define RIGHT_J		(1 << 0)
-#define LEFT_J		(2 << 0)
-#define I2S		(3 << 0)
+#घोषणा DIF_MASK	(3 << 0)
+#घोषणा DSP		(0 << 0)
+#घोषणा RIGHT_J		(1 << 0)
+#घोषणा LEFT_J		(2 << 0)
+#घोषणा I2S		(3 << 0)
 
 /* MD_CTL2 */
-#define FSs(val)	(((val & 0x7) << 0) | ((val & 0x8) << 2))
-#define PSs(val)	((val & 0x3) << 6)
+#घोषणा FSs(val)	(((val & 0x7) << 0) | ((val & 0x8) << 2))
+#घोषणा PSs(val)	((val & 0x3) << 6)
 
 /* MD_CTL3 */
-#define BST1		(1 << 3)
+#घोषणा BST1		(1 << 3)
 
 /* MD_CTL4 */
-#define DACH		(1 << 0)
+#घोषणा DACH		(1 << 0)
 
-struct ak4642_drvdata {
-	const struct regmap_config *regmap_config;
-	int extended_frequencies;
-};
+काष्ठा ak4642_drvdata अणु
+	स्थिर काष्ठा regmap_config *regmap_config;
+	पूर्णांक extended_frequencies;
+पूर्ण;
 
-struct ak4642_priv {
-	const struct ak4642_drvdata *drvdata;
-	struct clk *mcko;
-};
+काष्ठा ak4642_priv अणु
+	स्थिर काष्ठा ak4642_drvdata *drvdata;
+	काष्ठा clk *mcko;
+पूर्ण;
 
 /*
  * Playback Volume (table 39)
@@ -153,59 +154,59 @@ struct ak4642_priv {
  * min : 0xFE : -115.0 dB
  * mute: 0xFF
  */
-static const DECLARE_TLV_DB_SCALE(out_tlv, -11550, 50, 1);
+अटल स्थिर DECLARE_TLV_DB_SCALE(out_tlv, -11550, 50, 1);
 
-static const struct snd_kcontrol_new ak4642_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new ak4642_snd_controls[] = अणु
 
 	SOC_DOUBLE_R_TLV("Digital Playback Volume", L_DVC, R_DVC,
 			 0, 0xFF, 1, out_tlv),
 	SOC_SINGLE("ALC Capture Switch", ALC_CTL1, 5, 1, 0),
 	SOC_SINGLE("ALC Capture ZC Switch", ALC_CTL1, 4, 1, 1),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new ak4642_headphone_control =
+अटल स्थिर काष्ठा snd_kcontrol_new ak4642_headphone_control =
 	SOC_DAPM_SINGLE("Switch", PW_MGMT2, 6, 1, 0);
 
-static const struct snd_kcontrol_new ak4642_lout_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new ak4642_lout_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("DACL", SG_SL1, 4, 1, 0),
-};
+पूर्ण;
 
 /* event handlers */
-static int ak4642_lout_event(struct snd_soc_dapm_widget *w,
-			     struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+अटल पूर्णांक ak4642_lout_event(काष्ठा snd_soc_dapm_widget *w,
+			     काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
 
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMD:
-	case SND_SOC_DAPM_PRE_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_PRE_PMD:
+	हाल SND_SOC_DAPM_PRE_PMU:
 		/* Power save mode ON */
 		snd_soc_component_update_bits(component, SG_SL2, LOPS, LOPS);
-		break;
-	case SND_SOC_DAPM_POST_PMU:
-	case SND_SOC_DAPM_POST_PMD:
+		अवरोध;
+	हाल SND_SOC_DAPM_POST_PMU:
+	हाल SND_SOC_DAPM_POST_PMD:
 		/* Power save mode OFF */
 		msleep(300);
 		snd_soc_component_update_bits(component, SG_SL2, LOPS, 0);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dapm_widget ak4642_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget ak4642_dapm_widमाला_लो[] = अणु
 
-	/* Outputs */
+	/* Outमाला_दो */
 	SND_SOC_DAPM_OUTPUT("HPOUTL"),
 	SND_SOC_DAPM_OUTPUT("HPOUTR"),
 	SND_SOC_DAPM_OUTPUT("LINEOUT"),
 
-	SND_SOC_DAPM_PGA("HPL Out", PW_MGMT2, 5, 0, NULL, 0),
-	SND_SOC_DAPM_PGA("HPR Out", PW_MGMT2, 4, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("HPL Out", PW_MGMT2, 5, 0, शून्य, 0),
+	SND_SOC_DAPM_PGA("HPR Out", PW_MGMT2, 4, 0, शून्य, 0),
 	SND_SOC_DAPM_SWITCH("Headphone Enable", SND_SOC_NOPM, 0, 0,
 			    &ak4642_headphone_control),
 
-	SND_SOC_DAPM_PGA("DACH", MD_CTL4, 0, 0, NULL, 0),
+	SND_SOC_DAPM_PGA("DACH", MD_CTL4, 0, 0, शून्य, 0),
 
 	SND_SOC_DAPM_MIXER_E("LINEOUT Mixer", PW_MGMT1, 3, 0,
 			   &ak4642_lout_mixer_controls[0],
@@ -215,221 +216,221 @@ static const struct snd_soc_dapm_widget ak4642_dapm_widgets[] = {
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
 
 	/* DAC */
-	SND_SOC_DAPM_DAC("DAC", NULL, PW_MGMT1, 2, 0),
-};
+	SND_SOC_DAPM_DAC("DAC", शून्य, PW_MGMT1, 2, 0),
+पूर्ण;
 
-static const struct snd_soc_dapm_route ak4642_intercon[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route ak4642_पूर्णांकercon[] = अणु
 
-	/* Outputs */
-	{"HPOUTL", NULL, "HPL Out"},
-	{"HPOUTR", NULL, "HPR Out"},
-	{"LINEOUT", NULL, "LINEOUT Mixer"},
+	/* Outमाला_दो */
+	अणु"HPOUTL", शून्य, "HPL Out"पूर्ण,
+	अणु"HPOUTR", शून्य, "HPR Out"पूर्ण,
+	अणु"LINEOUT", शून्य, "LINEOUT Mixer"पूर्ण,
 
-	{"HPL Out", NULL, "Headphone Enable"},
-	{"HPR Out", NULL, "Headphone Enable"},
+	अणु"HPL Out", शून्य, "Headphone Enable"पूर्ण,
+	अणु"HPR Out", शून्य, "Headphone Enable"पूर्ण,
 
-	{"Headphone Enable", "Switch", "DACH"},
+	अणु"Headphone Enable", "Switch", "DACH"पूर्ण,
 
-	{"DACH", NULL, "DAC"},
+	अणु"DACH", शून्य, "DAC"पूर्ण,
 
-	{"LINEOUT Mixer", "DACL", "DAC"},
+	अणु"LINEOUT Mixer", "DACL", "DAC"पूर्ण,
 
-	{ "DAC", NULL, "Playback" },
-};
+	अणु "DAC", शून्य, "Playback" पूर्ण,
+पूर्ण;
 
 /*
- * ak4642 register cache
+ * ak4642 रेजिस्टर cache
  */
-static const struct reg_default ak4643_reg[] = {
-	{  0, 0x00 }, {  1, 0x00 }, {  2, 0x01 }, {  3, 0x00 },
-	{  4, 0x02 }, {  5, 0x00 }, {  6, 0x00 }, {  7, 0x00 },
-	{  8, 0xe1 }, {  9, 0xe1 }, { 10, 0x18 }, { 11, 0x00 },
-	{ 12, 0xe1 }, { 13, 0x18 }, { 14, 0x11 }, { 15, 0x08 },
-	{ 16, 0x00 }, { 17, 0x00 }, { 18, 0x00 }, { 19, 0x00 },
-	{ 20, 0x00 }, { 21, 0x00 }, { 22, 0x00 }, { 23, 0x00 },
-	{ 24, 0x00 }, { 25, 0x00 }, { 26, 0x00 }, { 27, 0x00 },
-	{ 28, 0x00 }, { 29, 0x00 }, { 30, 0x00 }, { 31, 0x00 },
-	{ 32, 0x00 }, { 33, 0x00 }, { 34, 0x00 }, { 35, 0x00 },
-	{ 36, 0x00 },
-};
+अटल स्थिर काष्ठा reg_शेष ak4643_reg[] = अणु
+	अणु  0, 0x00 पूर्ण, अणु  1, 0x00 पूर्ण, अणु  2, 0x01 पूर्ण, अणु  3, 0x00 पूर्ण,
+	अणु  4, 0x02 पूर्ण, अणु  5, 0x00 पूर्ण, अणु  6, 0x00 पूर्ण, अणु  7, 0x00 पूर्ण,
+	अणु  8, 0xe1 पूर्ण, अणु  9, 0xe1 पूर्ण, अणु 10, 0x18 पूर्ण, अणु 11, 0x00 पूर्ण,
+	अणु 12, 0xe1 पूर्ण, अणु 13, 0x18 पूर्ण, अणु 14, 0x11 पूर्ण, अणु 15, 0x08 पूर्ण,
+	अणु 16, 0x00 पूर्ण, अणु 17, 0x00 पूर्ण, अणु 18, 0x00 पूर्ण, अणु 19, 0x00 पूर्ण,
+	अणु 20, 0x00 पूर्ण, अणु 21, 0x00 पूर्ण, अणु 22, 0x00 पूर्ण, अणु 23, 0x00 पूर्ण,
+	अणु 24, 0x00 पूर्ण, अणु 25, 0x00 पूर्ण, अणु 26, 0x00 पूर्ण, अणु 27, 0x00 पूर्ण,
+	अणु 28, 0x00 पूर्ण, अणु 29, 0x00 पूर्ण, अणु 30, 0x00 पूर्ण, अणु 31, 0x00 पूर्ण,
+	अणु 32, 0x00 पूर्ण, अणु 33, 0x00 पूर्ण, अणु 34, 0x00 पूर्ण, अणु 35, 0x00 पूर्ण,
+	अणु 36, 0x00 पूर्ण,
+पूर्ण;
 
-/* The default settings for 0x0 ~ 0x1f registers are the same for ak4642
-   and ak4643. So we reuse the ak4643 reg_default for ak4642.
-   The valid registers for ak4642 are 0x0 ~ 0x1f which is a subset of ak4643,
-   so define NUM_AK4642_REG_DEFAULTS for ak4642.
+/* The शेष settings क्रम 0x0 ~ 0x1f रेजिस्टरs are the same क्रम ak4642
+   and ak4643. So we reuse the ak4643 reg_शेष क्रम ak4642.
+   The valid रेजिस्टरs क्रम ak4642 are 0x0 ~ 0x1f which is a subset of ak4643,
+   so define NUM_AK4642_REG_DEFAULTS क्रम ak4642.
 */
-#define ak4642_reg ak4643_reg
-#define NUM_AK4642_REG_DEFAULTS	(FIL1_3 + 1)
+#घोषणा ak4642_reg ak4643_reg
+#घोषणा NUM_AK4642_REG_DEFAULTS	(FIL1_3 + 1)
 
-static const struct reg_default ak4648_reg[] = {
-	{  0, 0x00 }, {  1, 0x00 }, {  2, 0x01 }, {  3, 0x00 },
-	{  4, 0x02 }, {  5, 0x00 }, {  6, 0x00 }, {  7, 0x00 },
-	{  8, 0xe1 }, {  9, 0xe1 }, { 10, 0x18 }, { 11, 0x00 },
-	{ 12, 0xe1 }, { 13, 0x18 }, { 14, 0x11 }, { 15, 0xb8 },
-	{ 16, 0x00 }, { 17, 0x00 }, { 18, 0x00 }, { 19, 0x00 },
-	{ 20, 0x00 }, { 21, 0x00 }, { 22, 0x00 }, { 23, 0x00 },
-	{ 24, 0x00 }, { 25, 0x00 }, { 26, 0x00 }, { 27, 0x00 },
-	{ 28, 0x00 }, { 29, 0x00 }, { 30, 0x00 }, { 31, 0x00 },
-	{ 32, 0x00 }, { 33, 0x00 }, { 34, 0x00 }, { 35, 0x00 },
-	{ 36, 0x00 }, { 37, 0x88 }, { 38, 0x88 }, { 39, 0x08 },
-};
+अटल स्थिर काष्ठा reg_शेष ak4648_reg[] = अणु
+	अणु  0, 0x00 पूर्ण, अणु  1, 0x00 पूर्ण, अणु  2, 0x01 पूर्ण, अणु  3, 0x00 पूर्ण,
+	अणु  4, 0x02 पूर्ण, अणु  5, 0x00 पूर्ण, अणु  6, 0x00 पूर्ण, अणु  7, 0x00 पूर्ण,
+	अणु  8, 0xe1 पूर्ण, अणु  9, 0xe1 पूर्ण, अणु 10, 0x18 पूर्ण, अणु 11, 0x00 पूर्ण,
+	अणु 12, 0xe1 पूर्ण, अणु 13, 0x18 पूर्ण, अणु 14, 0x11 पूर्ण, अणु 15, 0xb8 पूर्ण,
+	अणु 16, 0x00 पूर्ण, अणु 17, 0x00 पूर्ण, अणु 18, 0x00 पूर्ण, अणु 19, 0x00 पूर्ण,
+	अणु 20, 0x00 पूर्ण, अणु 21, 0x00 पूर्ण, अणु 22, 0x00 पूर्ण, अणु 23, 0x00 पूर्ण,
+	अणु 24, 0x00 पूर्ण, अणु 25, 0x00 पूर्ण, अणु 26, 0x00 पूर्ण, अणु 27, 0x00 पूर्ण,
+	अणु 28, 0x00 पूर्ण, अणु 29, 0x00 पूर्ण, अणु 30, 0x00 पूर्ण, अणु 31, 0x00 पूर्ण,
+	अणु 32, 0x00 पूर्ण, अणु 33, 0x00 पूर्ण, अणु 34, 0x00 पूर्ण, अणु 35, 0x00 पूर्ण,
+	अणु 36, 0x00 पूर्ण, अणु 37, 0x88 पूर्ण, अणु 38, 0x88 पूर्ण, अणु 39, 0x08 पूर्ण,
+पूर्ण;
 
-static int ak4642_dai_startup(struct snd_pcm_substream *substream,
-			      struct snd_soc_dai *dai)
-{
-	int is_play = substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
-	struct snd_soc_component *component = dai->component;
+अटल पूर्णांक ak4642_dai_startup(काष्ठा snd_pcm_substream *substream,
+			      काष्ठा snd_soc_dai *dai)
+अणु
+	पूर्णांक is_play = substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
+	काष्ठा snd_soc_component *component = dai->component;
 
-	if (is_play) {
+	अगर (is_play) अणु
 		/*
 		 * start headphone output
 		 *
 		 * PLL, Master Mode
-		 * Audio I/F Format :MSB justified (ADC & DAC)
+		 * Audio I/F Format :MSB justअगरied (ADC & DAC)
 		 * Bass Boost Level : Middle
 		 *
 		 * This operation came from example code of
 		 * "ASAHI KASEI AK4642" (japanese) manual p97.
 		 */
-		snd_soc_component_write(component, L_IVC, 0x91); /* volume */
-		snd_soc_component_write(component, R_IVC, 0x91); /* volume */
-	} else {
+		snd_soc_component_ग_लिखो(component, L_IVC, 0x91); /* volume */
+		snd_soc_component_ग_लिखो(component, R_IVC, 0x91); /* volume */
+	पूर्ण अन्यथा अणु
 		/*
 		 * start stereo input
 		 *
 		 * PLL Master Mode
-		 * Audio I/F Format:MSB justified (ADC & DAC)
+		 * Audio I/F Format:MSB justअगरied (ADC & DAC)
 		 * Pre MIC AMP:+20dB
 		 * MIC Power On
 		 * ALC setting:Refer to Table 35
-		 * ALC bit=“1”
+		 * ALC bit=ै 1ै 
 		 *
 		 * This operation came from example code of
 		 * "ASAHI KASEI AK4642" (japanese) manual p94.
 		 */
 		snd_soc_component_update_bits(component, SG_SL1, PMMP | MGAIN0, PMMP | MGAIN0);
-		snd_soc_component_write(component, TIMER, ZTM(0x3) | WTM(0x3));
-		snd_soc_component_write(component, ALC_CTL1, ALC | LMTH0);
+		snd_soc_component_ग_लिखो(component, TIMER, ZTM(0x3) | WTM(0x3));
+		snd_soc_component_ग_लिखो(component, ALC_CTL1, ALC | LMTH0);
 		snd_soc_component_update_bits(component, PW_MGMT1, PMADL, PMADL);
 		snd_soc_component_update_bits(component, PW_MGMT3, PMADR, PMADR);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ak4642_dai_shutdown(struct snd_pcm_substream *substream,
-			       struct snd_soc_dai *dai)
-{
-	int is_play = substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
-	struct snd_soc_component *component = dai->component;
+अटल व्योम ak4642_dai_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+			       काष्ठा snd_soc_dai *dai)
+अणु
+	पूर्णांक is_play = substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
+	काष्ठा snd_soc_component *component = dai->component;
 
-	if (is_play) {
-	} else {
+	अगर (is_play) अणु
+	पूर्ण अन्यथा अणु
 		/* stop stereo input */
 		snd_soc_component_update_bits(component, PW_MGMT1, PMADL, 0);
 		snd_soc_component_update_bits(component, PW_MGMT3, PMADR, 0);
 		snd_soc_component_update_bits(component, ALC_CTL1, ALC, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ak4642_dai_set_sysclk(struct snd_soc_dai *codec_dai,
-	int clk_id, unsigned int freq, int dir)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct ak4642_priv *priv = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक ak4642_dai_set_sysclk(काष्ठा snd_soc_dai *codec_dai,
+	पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा ak4642_priv *priv = snd_soc_component_get_drvdata(component);
 	u8 pll;
-	int extended_freq = 0;
+	पूर्णांक extended_freq = 0;
 
-	switch (freq) {
-	case 11289600:
+	चयन (freq) अणु
+	हाल 11289600:
 		pll = PLL2;
-		break;
-	case 12288000:
+		अवरोध;
+	हाल 12288000:
 		pll = PLL2 | PLL0;
-		break;
-	case 12000000:
+		अवरोध;
+	हाल 12000000:
 		pll = PLL2 | PLL1;
-		break;
-	case 24000000:
+		अवरोध;
+	हाल 24000000:
 		pll = PLL2 | PLL1 | PLL0;
-		break;
-	case 13500000:
+		अवरोध;
+	हाल 13500000:
 		pll = PLL3 | PLL2;
-		break;
-	case 27000000:
+		अवरोध;
+	हाल 27000000:
 		pll = PLL3 | PLL2 | PLL0;
-		break;
-	case 19200000:
+		अवरोध;
+	हाल 19200000:
 		pll = PLL3;
 		extended_freq = 1;
-		break;
-	case 13000000:
+		अवरोध;
+	हाल 13000000:
 		pll = PLL3 | PLL2 | PLL1;
 		extended_freq = 1;
-		break;
-	case 26000000:
+		अवरोध;
+	हाल 26000000:
 		pll = PLL3 | PLL2 | PLL1 | PLL0;
 		extended_freq = 1;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (extended_freq && !priv->drvdata->extended_frequencies)
-		return -EINVAL;
+	अगर (extended_freq && !priv->drvdata->extended_frequencies)
+		वापस -EINVAL;
 
 	snd_soc_component_update_bits(component, MD_CTL1, PLL_MASK, pll);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4642_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct snd_soc_component *component = dai->component;
+अटल पूर्णांक ak4642_dai_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
 	u8 data;
 	u8 bcko;
 
 	data = MCKO | PMPLL; /* use MCKO */
 	bcko = 0;
 
-	/* set master/slave audio interface */
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
+	/* set master/slave audio पूर्णांकerface */
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
 		data |= MS;
 		bcko = BCKO_64;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	snd_soc_component_update_bits(component, PW_MGMT2, MS | MCKO | PMPLL, data);
 	snd_soc_component_update_bits(component, MD_CTL1, BCKO_MASK, bcko);
 
-	/* format type */
+	/* क्रमmat type */
 	data = 0;
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_LEFT_J:
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		data = LEFT_J;
-		break;
-	case SND_SOC_DAIFMT_I2S:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_I2S:
 		data = I2S;
-		break;
+		अवरोध;
 	/* FIXME
 	 * Please add RIGHT_J / DSP support here
 	 */
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	snd_soc_component_update_bits(component, MD_CTL1, DIF_MASK, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4642_set_mcko(struct snd_soc_component *component,
+अटल पूर्णांक ak4642_set_mcko(काष्ठा snd_soc_component *component,
 			   u32 frequency)
-{
-	static const u32 fs_list[] = {
+अणु
+	अटल स्थिर u32 fs_list[] = अणु
 		[0] = 8000,
 		[1] = 12000,
 		[2] = 16000,
@@ -442,226 +443,226 @@ static int ak4642_set_mcko(struct snd_soc_component *component,
 		[11] = 48000,
 		[14] = 29400,
 		[15] = 44100,
-	};
-	static const u32 ps_list[] = {
+	पूर्ण;
+	अटल स्थिर u32 ps_list[] = अणु
 		[0] = 256,
 		[1] = 128,
 		[2] = 64,
 		[3] = 32
-	};
-	int ps, fs;
+	पूर्ण;
+	पूर्णांक ps, fs;
 
-	for (ps = 0; ps < ARRAY_SIZE(ps_list); ps++) {
-		for (fs = 0; fs < ARRAY_SIZE(fs_list); fs++) {
-			if (frequency == ps_list[ps] * fs_list[fs]) {
-				snd_soc_component_write(component, MD_CTL2,
+	क्रम (ps = 0; ps < ARRAY_SIZE(ps_list); ps++) अणु
+		क्रम (fs = 0; fs < ARRAY_SIZE(fs_list); fs++) अणु
+			अगर (frequency == ps_list[ps] * fs_list[fs]) अणु
+				snd_soc_component_ग_लिखो(component, MD_CTL2,
 					      PSs(ps) | FSs(fs));
-				return 0;
-			}
-		}
-	}
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4642_dai_hw_params(struct snd_pcm_substream *substream,
-				struct snd_pcm_hw_params *params,
-				struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct ak4642_priv *priv = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक ak4642_dai_hw_params(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_pcm_hw_params *params,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा ak4642_priv *priv = snd_soc_component_get_drvdata(component);
 	u32 rate = clk_get_rate(priv->mcko);
 
-	if (!rate)
+	अगर (!rate)
 		rate = params_rate(params) * 256;
 
-	return ak4642_set_mcko(component, rate);
-}
+	वापस ak4642_set_mcko(component, rate);
+पूर्ण
 
-static int ak4642_set_bias_level(struct snd_soc_component *component,
-				 enum snd_soc_bias_level level)
-{
-	switch (level) {
-	case SND_SOC_BIAS_OFF:
-		snd_soc_component_write(component, PW_MGMT1, 0x00);
-		break;
-	default:
+अटल पूर्णांक ak4642_set_bias_level(काष्ठा snd_soc_component *component,
+				 क्रमागत snd_soc_bias_level level)
+अणु
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_OFF:
+		snd_soc_component_ग_लिखो(component, PW_MGMT1, 0x00);
+		अवरोध;
+	शेष:
 		snd_soc_component_update_bits(component, PW_MGMT1, PMVCM, PMVCM);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops ak4642_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops ak4642_dai_ops = अणु
 	.startup	= ak4642_dai_startup,
-	.shutdown	= ak4642_dai_shutdown,
+	.shutकरोwn	= ak4642_dai_shutकरोwn,
 	.set_sysclk	= ak4642_dai_set_sysclk,
 	.set_fmt	= ak4642_dai_set_fmt,
 	.hw_params	= ak4642_dai_hw_params,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver ak4642_dai = {
+अटल काष्ठा snd_soc_dai_driver ak4642_dai = अणु
 	.name = "ak4642-hifi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_48000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE },
-	.capture = {
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE पूर्ण,
+	.capture = अणु
 		.stream_name = "Capture",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_48000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE },
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE पूर्ण,
 	.ops = &ak4642_dai_ops,
 	.symmetric_rate = 1,
-};
+पूर्ण;
 
-static int ak4642_suspend(struct snd_soc_component *component)
-{
-	struct regmap *regmap = dev_get_regmap(component->dev, NULL);
+अटल पूर्णांक ak4642_suspend(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा regmap *regmap = dev_get_regmap(component->dev, शून्य);
 
 	regcache_cache_only(regmap, true);
 	regcache_mark_dirty(regmap);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4642_resume(struct snd_soc_component *component)
-{
-	struct regmap *regmap = dev_get_regmap(component->dev, NULL);
+अटल पूर्णांक ak4642_resume(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा regmap *regmap = dev_get_regmap(component->dev, शून्य);
 
 	regcache_cache_only(regmap, false);
 	regcache_sync(regmap);
-	return 0;
-}
-static int ak4642_probe(struct snd_soc_component *component)
-{
-	struct ak4642_priv *priv = snd_soc_component_get_drvdata(component);
+	वापस 0;
+पूर्ण
+अटल पूर्णांक ak4642_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ak4642_priv *priv = snd_soc_component_get_drvdata(component);
 
-	if (priv->mcko)
+	अगर (priv->mcko)
 		ak4642_set_mcko(component, clk_get_rate(priv->mcko));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver soc_component_dev_ak4642 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_ak4642 = अणु
 	.probe			= ak4642_probe,
 	.suspend		= ak4642_suspend,
 	.resume			= ak4642_resume,
 	.set_bias_level		= ak4642_set_bias_level,
 	.controls		= ak4642_snd_controls,
 	.num_controls		= ARRAY_SIZE(ak4642_snd_controls),
-	.dapm_widgets		= ak4642_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(ak4642_dapm_widgets),
-	.dapm_routes		= ak4642_intercon,
-	.num_dapm_routes	= ARRAY_SIZE(ak4642_intercon),
+	.dapm_widमाला_लो		= ak4642_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(ak4642_dapm_widमाला_लो),
+	.dapm_routes		= ak4642_पूर्णांकercon,
+	.num_dapm_routes	= ARRAY_SIZE(ak4642_पूर्णांकercon),
 	.idle_bias_on		= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static const struct regmap_config ak4642_regmap = {
+अटल स्थिर काष्ठा regmap_config ak4642_regmap = अणु
 	.reg_bits		= 8,
 	.val_bits		= 8,
-	.max_register		= FIL1_3,
-	.reg_defaults		= ak4642_reg,
-	.num_reg_defaults	= NUM_AK4642_REG_DEFAULTS,
+	.max_रेजिस्टर		= FIL1_3,
+	.reg_शेषs		= ak4642_reg,
+	.num_reg_शेषs	= NUM_AK4642_REG_DEFAULTS,
 	.cache_type		= REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static const struct regmap_config ak4643_regmap = {
+अटल स्थिर काष्ठा regmap_config ak4643_regmap = अणु
 	.reg_bits		= 8,
 	.val_bits		= 8,
-	.max_register		= SPK_MS,
-	.reg_defaults		= ak4643_reg,
-	.num_reg_defaults	= ARRAY_SIZE(ak4643_reg),
+	.max_रेजिस्टर		= SPK_MS,
+	.reg_शेषs		= ak4643_reg,
+	.num_reg_शेषs	= ARRAY_SIZE(ak4643_reg),
 	.cache_type		= REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static const struct regmap_config ak4648_regmap = {
+अटल स्थिर काष्ठा regmap_config ak4648_regmap = अणु
 	.reg_bits		= 8,
 	.val_bits		= 8,
-	.max_register		= EQ_FBEQE,
-	.reg_defaults		= ak4648_reg,
-	.num_reg_defaults	= ARRAY_SIZE(ak4648_reg),
+	.max_रेजिस्टर		= EQ_FBEQE,
+	.reg_शेषs		= ak4648_reg,
+	.num_reg_शेषs	= ARRAY_SIZE(ak4648_reg),
 	.cache_type		= REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static const struct ak4642_drvdata ak4642_drvdata = {
+अटल स्थिर काष्ठा ak4642_drvdata ak4642_drvdata = अणु
 	.regmap_config = &ak4642_regmap,
-};
+पूर्ण;
 
-static const struct ak4642_drvdata ak4643_drvdata = {
+अटल स्थिर काष्ठा ak4642_drvdata ak4643_drvdata = अणु
 	.regmap_config = &ak4643_regmap,
-};
+पूर्ण;
 
-static const struct ak4642_drvdata ak4648_drvdata = {
+अटल स्थिर काष्ठा ak4642_drvdata ak4648_drvdata = अणु
 	.regmap_config = &ak4648_regmap,
 	.extended_frequencies = 1,
-};
+पूर्ण;
 
-#ifdef CONFIG_COMMON_CLK
-static struct clk *ak4642_of_parse_mcko(struct device *dev)
-{
-	struct device_node *np = dev->of_node;
-	struct clk *clk;
-	const char *clk_name = np->name;
-	const char *parent_clk_name = NULL;
+#अगर_घोषित CONFIG_COMMON_CLK
+अटल काष्ठा clk *ak4642_of_parse_mcko(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा clk *clk;
+	स्थिर अक्षर *clk_name = np->name;
+	स्थिर अक्षर *parent_clk_name = शून्य;
 	u32 rate;
 
-	if (of_property_read_u32(np, "clock-frequency", &rate))
-		return NULL;
+	अगर (of_property_पढ़ो_u32(np, "clock-frequency", &rate))
+		वापस शून्य;
 
-	if (of_property_read_bool(np, "clocks"))
+	अगर (of_property_पढ़ो_bool(np, "clocks"))
 		parent_clk_name = of_clk_get_parent_name(np, 0);
 
-	of_property_read_string(np, "clock-output-names", &clk_name);
+	of_property_पढ़ो_string(np, "clock-output-names", &clk_name);
 
-	clk = clk_register_fixed_rate(dev, clk_name, parent_clk_name, 0, rate);
-	if (!IS_ERR(clk))
+	clk = clk_रेजिस्टर_fixed_rate(dev, clk_name, parent_clk_name, 0, rate);
+	अगर (!IS_ERR(clk))
 		of_clk_add_provider(np, of_clk_src_simple_get, clk);
 
-	return clk;
-}
-#else
-#define ak4642_of_parse_mcko(d) 0
-#endif
+	वापस clk;
+पूर्ण
+#अन्यथा
+#घोषणा ak4642_of_parse_mcko(d) 0
+#पूर्ण_अगर
 
-static const struct of_device_id ak4642_of_match[];
-static int ak4642_i2c_probe(struct i2c_client *i2c,
-			    const struct i2c_device_id *id)
-{
-	struct device *dev = &i2c->dev;
-	struct device_node *np = dev->of_node;
-	const struct ak4642_drvdata *drvdata = NULL;
-	struct regmap *regmap;
-	struct ak4642_priv *priv;
-	struct clk *mcko = NULL;
+अटल स्थिर काष्ठा of_device_id ak4642_of_match[];
+अटल पूर्णांक ak4642_i2c_probe(काष्ठा i2c_client *i2c,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &i2c->dev;
+	काष्ठा device_node *np = dev->of_node;
+	स्थिर काष्ठा ak4642_drvdata *drvdata = शून्य;
+	काष्ठा regmap *regmap;
+	काष्ठा ak4642_priv *priv;
+	काष्ठा clk *mcko = शून्य;
 
-	if (np) {
-		const struct of_device_id *of_id;
+	अगर (np) अणु
+		स्थिर काष्ठा of_device_id *of_id;
 
 		mcko = ak4642_of_parse_mcko(dev);
-		if (IS_ERR(mcko))
-			mcko = NULL;
+		अगर (IS_ERR(mcko))
+			mcko = शून्य;
 
 		of_id = of_match_device(ak4642_of_match, dev);
-		if (of_id)
+		अगर (of_id)
 			drvdata = of_id->data;
-	} else {
-		drvdata = (const struct ak4642_drvdata *)id->driver_data;
-	}
+	पूर्ण अन्यथा अणु
+		drvdata = (स्थिर काष्ठा ak4642_drvdata *)id->driver_data;
+	पूर्ण
 
-	if (!drvdata) {
+	अगर (!drvdata) अणु
 		dev_err(dev, "Unknown device type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->drvdata = drvdata;
 	priv->mcko = mcko;
@@ -669,37 +670,37 @@ static int ak4642_i2c_probe(struct i2c_client *i2c,
 	i2c_set_clientdata(i2c, priv);
 
 	regmap = devm_regmap_init_i2c(i2c, drvdata->regmap_config);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	return devm_snd_soc_register_component(dev,
+	वापस devm_snd_soc_रेजिस्टर_component(dev,
 				&soc_component_dev_ak4642, &ak4642_dai, 1);
-}
+पूर्ण
 
-static const struct of_device_id ak4642_of_match[] = {
-	{ .compatible = "asahi-kasei,ak4642",	.data = &ak4642_drvdata},
-	{ .compatible = "asahi-kasei,ak4643",	.data = &ak4643_drvdata},
-	{ .compatible = "asahi-kasei,ak4648",	.data = &ak4648_drvdata},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ak4642_of_match[] = अणु
+	अणु .compatible = "asahi-kasei,ak4642",	.data = &ak4642_drvdataपूर्ण,
+	अणु .compatible = "asahi-kasei,ak4643",	.data = &ak4643_drvdataपूर्ण,
+	अणु .compatible = "asahi-kasei,ak4648",	.data = &ak4648_drvdataपूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ak4642_of_match);
 
-static const struct i2c_device_id ak4642_i2c_id[] = {
-	{ "ak4642", (kernel_ulong_t)&ak4642_drvdata },
-	{ "ak4643", (kernel_ulong_t)&ak4643_drvdata },
-	{ "ak4648", (kernel_ulong_t)&ak4648_drvdata },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id ak4642_i2c_id[] = अणु
+	अणु "ak4642", (kernel_uदीर्घ_t)&ak4642_drvdata पूर्ण,
+	अणु "ak4643", (kernel_uदीर्घ_t)&ak4643_drvdata पूर्ण,
+	अणु "ak4648", (kernel_uदीर्घ_t)&ak4648_drvdata पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ak4642_i2c_id);
 
-static struct i2c_driver ak4642_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ak4642_i2c_driver = अणु
+	.driver = अणु
 		.name = "ak4642-codec",
 		.of_match_table = ak4642_of_match,
-	},
+	पूर्ण,
 	.probe		= ak4642_i2c_probe,
 	.id_table	= ak4642_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(ak4642_i2c_driver);
 

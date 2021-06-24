@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,28 +23,28 @@
  * Authors: Lyude Paul
  */
 
-#ifndef __GK104_THERM_H__
-#define __GK104_THERM_H__
-#define gk104_therm(p) (container_of((p), struct gk104_therm, base))
+#अगर_अघोषित __GK104_THERM_H__
+#घोषणा __GK104_THERM_H__
+#घोषणा gk104_therm(p) (container_of((p), काष्ठा gk104_therm, base))
 
-#include <subdev/therm.h>
-#include "priv.h"
-#include "gf100.h"
+#समावेश <subdev/therm.h>
+#समावेश "priv.h"
+#समावेश "gf100.h"
 
-struct gk104_clkgate_engine_info {
-	enum nvkm_subdev_type type;
-	int inst;
+काष्ठा gk104_clkgate_engine_info अणु
+	क्रमागत nvkm_subdev_type type;
+	पूर्णांक inst;
 	u8 offset;
-};
+पूर्ण;
 
-struct gk104_therm {
-	struct nvkm_therm base;
+काष्ठा gk104_therm अणु
+	काष्ठा nvkm_therm base;
 
-	const struct gk104_clkgate_engine_info *clkgate_order;
-	const struct gf100_idle_filter *idle_filter;
-};
+	स्थिर काष्ठा gk104_clkgate_engine_info *clkgate_order;
+	स्थिर काष्ठा gf100_idle_filter *idle_filter;
+पूर्ण;
 
-extern const struct gk104_clkgate_engine_info gk104_clkgate_engine_info[];
-extern const struct gf100_idle_filter gk104_idle_filter;
+बाह्य स्थिर काष्ठा gk104_clkgate_engine_info gk104_clkgate_engine_info[];
+बाह्य स्थिर काष्ठा gf100_idle_filter gk104_idle_filter;
 
-#endif
+#पूर्ण_अगर

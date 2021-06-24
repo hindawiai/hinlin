@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_S390_SERIAL_H
-#define _ASM_S390_SERIAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_S390_SERIAL_H
+#घोषणा _ASM_S390_SERIAL_H
 
-#define BASE_BAUD 0
+#घोषणा BASE_BAUD 0
 
-#endif /* _ASM_S390_SERIAL_H */
+#पूर्ण_अगर /* _ASM_S390_SERIAL_H */

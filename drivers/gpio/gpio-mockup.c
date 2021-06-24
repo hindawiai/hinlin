@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * GPIO Testing Device Driver
  *
@@ -7,312 +8,312 @@
  * Copyright (C) 2017 Bartosz Golaszewski <brgl@bgdev.pl>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/debugfs.h>
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irq_sim.h>
-#include <linux/irqdomain.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
-#include <linux/slab.h>
-#include <linux/string_helpers.h>
-#include <linux/uaccess.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irq_sim.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/string_helpers.h>
+#समावेश <linux/uaccess.h>
 
-#include "gpiolib.h"
+#समावेश "gpiolib.h"
 
-#define GPIO_MOCKUP_MAX_GC	10
+#घोषणा GPIO_MOCKUP_MAX_GC	10
 /*
  * We're storing two values per chip: the GPIO base and the number
  * of GPIO lines.
  */
-#define GPIO_MOCKUP_MAX_RANGES	(GPIO_MOCKUP_MAX_GC * 2)
+#घोषणा GPIO_MOCKUP_MAX_RANGES	(GPIO_MOCKUP_MAX_GC * 2)
 /* Maximum of four properties + the sentinel. */
-#define GPIO_MOCKUP_MAX_PROP	5
+#घोषणा GPIO_MOCKUP_MAX_PROP	5
 
 /*
- * struct gpio_pin_status - structure describing a GPIO status
+ * काष्ठा gpio_pin_status - काष्ठाure describing a GPIO status
  * @dir:       Configures direction of gpio as "in" or "out"
  * @value:     Configures status of the gpio as 0(low) or 1(high)
  */
-struct gpio_mockup_line_status {
-	int dir;
-	int value;
-	int pull;
-};
+काष्ठा gpio_mockup_line_status अणु
+	पूर्णांक dir;
+	पूर्णांक value;
+	पूर्णांक pull;
+पूर्ण;
 
-struct gpio_mockup_chip {
-	struct gpio_chip gc;
-	struct gpio_mockup_line_status *lines;
-	struct irq_domain *irq_sim_domain;
-	struct dentry *dbg_dir;
-	struct mutex lock;
-};
+काष्ठा gpio_mockup_chip अणु
+	काष्ठा gpio_chip gc;
+	काष्ठा gpio_mockup_line_status *lines;
+	काष्ठा irq_करोमुख्य *irq_sim_करोमुख्य;
+	काष्ठा dentry *dbg_dir;
+	काष्ठा mutex lock;
+पूर्ण;
 
-struct gpio_mockup_dbgfs_private {
-	struct gpio_mockup_chip *chip;
-	struct gpio_desc *desc;
-	unsigned int offset;
-};
+काष्ठा gpio_mockup_dbgfs_निजी अणु
+	काष्ठा gpio_mockup_chip *chip;
+	काष्ठा gpio_desc *desc;
+	अचिन्हित पूर्णांक offset;
+पूर्ण;
 
-static int gpio_mockup_ranges[GPIO_MOCKUP_MAX_RANGES];
-static int gpio_mockup_num_ranges;
-module_param_array(gpio_mockup_ranges, int, &gpio_mockup_num_ranges, 0400);
+अटल पूर्णांक gpio_mockup_ranges[GPIO_MOCKUP_MAX_RANGES];
+अटल पूर्णांक gpio_mockup_num_ranges;
+module_param_array(gpio_mockup_ranges, पूर्णांक, &gpio_mockup_num_ranges, 0400);
 
-static bool gpio_mockup_named_lines;
+अटल bool gpio_mockup_named_lines;
 module_param_named(gpio_mockup_named_lines,
 		   gpio_mockup_named_lines, bool, 0400);
 
-static struct dentry *gpio_mockup_dbg_dir;
+अटल काष्ठा dentry *gpio_mockup_dbg_dir;
 
-static int gpio_mockup_range_base(unsigned int index)
-{
-	return gpio_mockup_ranges[index * 2];
-}
+अटल पूर्णांक gpio_mockup_range_base(अचिन्हित पूर्णांक index)
+अणु
+	वापस gpio_mockup_ranges[index * 2];
+पूर्ण
 
-static int gpio_mockup_range_ngpio(unsigned int index)
-{
-	return gpio_mockup_ranges[index * 2 + 1];
-}
+अटल पूर्णांक gpio_mockup_range_ngpio(अचिन्हित पूर्णांक index)
+अणु
+	वापस gpio_mockup_ranges[index * 2 + 1];
+पूर्ण
 
-static int __gpio_mockup_get(struct gpio_mockup_chip *chip,
-			     unsigned int offset)
-{
-	return chip->lines[offset].value;
-}
+अटल पूर्णांक __gpio_mockup_get(काष्ठा gpio_mockup_chip *chip,
+			     अचिन्हित पूर्णांक offset)
+अणु
+	वापस chip->lines[offset].value;
+पूर्ण
 
-static int gpio_mockup_get(struct gpio_chip *gc, unsigned int offset)
-{
-	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
-	int val;
+अटल पूर्णांक gpio_mockup_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gpio_mockup_chip *chip = gpiochip_get_data(gc);
+	पूर्णांक val;
 
 	mutex_lock(&chip->lock);
 	val = __gpio_mockup_get(chip, offset);
 	mutex_unlock(&chip->lock);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int gpio_mockup_get_multiple(struct gpio_chip *gc,
-				    unsigned long *mask, unsigned long *bits)
-{
-	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
-	unsigned int bit, val;
+अटल पूर्णांक gpio_mockup_get_multiple(काष्ठा gpio_chip *gc,
+				    अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा gpio_mockup_chip *chip = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक bit, val;
 
 	mutex_lock(&chip->lock);
-	for_each_set_bit(bit, mask, gc->ngpio) {
+	क्रम_each_set_bit(bit, mask, gc->ngpio) अणु
 		val = __gpio_mockup_get(chip, bit);
 		__assign_bit(bit, bits, val);
-	}
+	पूर्ण
 	mutex_unlock(&chip->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __gpio_mockup_set(struct gpio_mockup_chip *chip,
-			      unsigned int offset, int value)
-{
+अटल व्योम __gpio_mockup_set(काष्ठा gpio_mockup_chip *chip,
+			      अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
 	chip->lines[offset].value = !!value;
-}
+पूर्ण
 
-static void gpio_mockup_set(struct gpio_chip *gc,
-			   unsigned int offset, int value)
-{
-	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
+अटल व्योम gpio_mockup_set(काष्ठा gpio_chip *gc,
+			   अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा gpio_mockup_chip *chip = gpiochip_get_data(gc);
 
 	mutex_lock(&chip->lock);
 	__gpio_mockup_set(chip, offset, value);
 	mutex_unlock(&chip->lock);
-}
+पूर्ण
 
-static void gpio_mockup_set_multiple(struct gpio_chip *gc,
-				     unsigned long *mask, unsigned long *bits)
-{
-	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
-	unsigned int bit;
+अटल व्योम gpio_mockup_set_multiple(काष्ठा gpio_chip *gc,
+				     अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा gpio_mockup_chip *chip = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक bit;
 
 	mutex_lock(&chip->lock);
-	for_each_set_bit(bit, mask, gc->ngpio)
+	क्रम_each_set_bit(bit, mask, gc->ngpio)
 		__gpio_mockup_set(chip, bit, test_bit(bit, bits));
 	mutex_unlock(&chip->lock);
-}
+पूर्ण
 
-static int gpio_mockup_apply_pull(struct gpio_mockup_chip *chip,
-				  unsigned int offset, int value)
-{
-	int curr, irq, irq_type, ret = 0;
-	struct gpio_desc *desc;
-	struct gpio_chip *gc;
+अटल पूर्णांक gpio_mockup_apply_pull(काष्ठा gpio_mockup_chip *chip,
+				  अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	पूर्णांक curr, irq, irq_type, ret = 0;
+	काष्ठा gpio_desc *desc;
+	काष्ठा gpio_chip *gc;
 
 	gc = &chip->gc;
 	desc = &gc->gpiodev->descs[offset];
 
 	mutex_lock(&chip->lock);
 
-	if (test_bit(FLAG_REQUESTED, &desc->flags) &&
-	    !test_bit(FLAG_IS_OUT, &desc->flags)) {
+	अगर (test_bit(FLAG_REQUESTED, &desc->flags) &&
+	    !test_bit(FLAG_IS_OUT, &desc->flags)) अणु
 		curr = __gpio_mockup_get(chip, offset);
-		if (curr == value)
-			goto out;
+		अगर (curr == value)
+			जाओ out;
 
-		irq = irq_find_mapping(chip->irq_sim_domain, offset);
-		if (!irq)
+		irq = irq_find_mapping(chip->irq_sim_करोमुख्य, offset);
+		अगर (!irq)
 			/*
 			 * This is fine - it just means, nobody is listening
-			 * for interrupts on this line, otherwise
+			 * क्रम पूर्णांकerrupts on this line, otherwise
 			 * irq_create_mapping() would have been called from
 			 * the to_irq() callback.
 			 */
-			goto set_value;
+			जाओ set_value;
 
 		irq_type = irq_get_trigger_type(irq);
 
-		if ((value == 1 && (irq_type & IRQ_TYPE_EDGE_RISING)) ||
-		    (value == 0 && (irq_type & IRQ_TYPE_EDGE_FALLING))) {
+		अगर ((value == 1 && (irq_type & IRQ_TYPE_EDGE_RISING)) ||
+		    (value == 0 && (irq_type & IRQ_TYPE_EDGE_FALLING))) अणु
 			ret = irq_set_irqchip_state(irq, IRQCHIP_STATE_PENDING,
 						    true);
-			if (ret)
-				goto out;
-		}
-	}
+			अगर (ret)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 set_value:
 	/* Change the value unless we're actively driving the line. */
-	if (!test_bit(FLAG_REQUESTED, &desc->flags) ||
+	अगर (!test_bit(FLAG_REQUESTED, &desc->flags) ||
 	    !test_bit(FLAG_IS_OUT, &desc->flags))
 		__gpio_mockup_set(chip, offset, value);
 
 out:
 	chip->lines[offset].pull = value;
 	mutex_unlock(&chip->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gpio_mockup_set_config(struct gpio_chip *gc,
-				  unsigned int offset, unsigned long config)
-{
-	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
+अटल पूर्णांक gpio_mockup_set_config(काष्ठा gpio_chip *gc,
+				  अचिन्हित पूर्णांक offset, अचिन्हित दीर्घ config)
+अणु
+	काष्ठा gpio_mockup_chip *chip = gpiochip_get_data(gc);
 
-	switch (pinconf_to_config_param(config)) {
-	case PIN_CONFIG_BIAS_PULL_UP:
-		return gpio_mockup_apply_pull(chip, offset, 1);
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		return gpio_mockup_apply_pull(chip, offset, 0);
-	default:
-		break;
-	}
-	return -ENOTSUPP;
-}
+	चयन (pinconf_to_config_param(config)) अणु
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		वापस gpio_mockup_apply_pull(chip, offset, 1);
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		वापस gpio_mockup_apply_pull(chip, offset, 0);
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int gpio_mockup_dirout(struct gpio_chip *gc,
-			      unsigned int offset, int value)
-{
-	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
+अटल पूर्णांक gpio_mockup_dirout(काष्ठा gpio_chip *gc,
+			      अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा gpio_mockup_chip *chip = gpiochip_get_data(gc);
 
 	mutex_lock(&chip->lock);
-	chip->lines[offset].dir = GPIO_LINE_DIRECTION_OUT;
+	chip->lines[offset].dir = GPIO_LINE_सूचीECTION_OUT;
 	__gpio_mockup_set(chip, offset, value);
 	mutex_unlock(&chip->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpio_mockup_dirin(struct gpio_chip *gc, unsigned int offset)
-{
-	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
+अटल पूर्णांक gpio_mockup_dirin(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gpio_mockup_chip *chip = gpiochip_get_data(gc);
 
 	mutex_lock(&chip->lock);
-	chip->lines[offset].dir = GPIO_LINE_DIRECTION_IN;
+	chip->lines[offset].dir = GPIO_LINE_सूचीECTION_IN;
 	mutex_unlock(&chip->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpio_mockup_get_direction(struct gpio_chip *gc, unsigned int offset)
-{
-	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
-	int direction;
+अटल पूर्णांक gpio_mockup_get_direction(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gpio_mockup_chip *chip = gpiochip_get_data(gc);
+	पूर्णांक direction;
 
 	mutex_lock(&chip->lock);
 	direction = chip->lines[offset].dir;
 	mutex_unlock(&chip->lock);
 
-	return direction;
-}
+	वापस direction;
+पूर्ण
 
-static int gpio_mockup_to_irq(struct gpio_chip *gc, unsigned int offset)
-{
-	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
+अटल पूर्णांक gpio_mockup_to_irq(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gpio_mockup_chip *chip = gpiochip_get_data(gc);
 
-	return irq_create_mapping(chip->irq_sim_domain, offset);
-}
+	वापस irq_create_mapping(chip->irq_sim_करोमुख्य, offset);
+पूर्ण
 
-static void gpio_mockup_free(struct gpio_chip *gc, unsigned int offset)
-{
-	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
+अटल व्योम gpio_mockup_मुक्त(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gpio_mockup_chip *chip = gpiochip_get_data(gc);
 
 	__gpio_mockup_set(chip, offset, chip->lines[offset].pull);
-}
+पूर्ण
 
-static ssize_t gpio_mockup_debugfs_read(struct file *file,
-					char __user *usr_buf,
-					size_t size, loff_t *ppos)
-{
-	struct gpio_mockup_dbgfs_private *priv;
-	struct gpio_mockup_chip *chip;
-	struct seq_file *sfile;
-	struct gpio_chip *gc;
-	int val, cnt;
-	char buf[3];
+अटल sमाप_प्रकार gpio_mockup_debugfs_पढ़ो(काष्ठा file *file,
+					अक्षर __user *usr_buf,
+					माप_प्रकार size, loff_t *ppos)
+अणु
+	काष्ठा gpio_mockup_dbgfs_निजी *priv;
+	काष्ठा gpio_mockup_chip *chip;
+	काष्ठा seq_file *sfile;
+	काष्ठा gpio_chip *gc;
+	पूर्णांक val, cnt;
+	अक्षर buf[3];
 
-	if (*ppos != 0)
-		return 0;
+	अगर (*ppos != 0)
+		वापस 0;
 
-	sfile = file->private_data;
-	priv = sfile->private;
+	sfile = file->निजी_data;
+	priv = sfile->निजी;
 	chip = priv->chip;
 	gc = &chip->gc;
 
 	val = gpio_mockup_get(gc, priv->offset);
-	cnt = snprintf(buf, sizeof(buf), "%d\n", val);
+	cnt = snम_लिखो(buf, माप(buf), "%d\n", val);
 
-	return simple_read_from_buffer(usr_buf, size, ppos, buf, cnt);
-}
+	वापस simple_पढ़ो_from_buffer(usr_buf, size, ppos, buf, cnt);
+पूर्ण
 
-static ssize_t gpio_mockup_debugfs_write(struct file *file,
-					 const char __user *usr_buf,
-					 size_t size, loff_t *ppos)
-{
-	struct gpio_mockup_dbgfs_private *priv;
-	int rv, val;
-	struct seq_file *sfile;
+अटल sमाप_प्रकार gpio_mockup_debugfs_ग_लिखो(काष्ठा file *file,
+					 स्थिर अक्षर __user *usr_buf,
+					 माप_प्रकार size, loff_t *ppos)
+अणु
+	काष्ठा gpio_mockup_dbgfs_निजी *priv;
+	पूर्णांक rv, val;
+	काष्ठा seq_file *sfile;
 
-	if (*ppos != 0)
-		return -EINVAL;
+	अगर (*ppos != 0)
+		वापस -EINVAL;
 
-	rv = kstrtoint_from_user(usr_buf, size, 0, &val);
-	if (rv)
-		return rv;
-	if (val != 0 && val != 1)
-		return -EINVAL;
+	rv = kstrtoपूर्णांक_from_user(usr_buf, size, 0, &val);
+	अगर (rv)
+		वापस rv;
+	अगर (val != 0 && val != 1)
+		वापस -EINVAL;
 
-	sfile = file->private_data;
-	priv = sfile->private;
+	sfile = file->निजी_data;
+	priv = sfile->निजी;
 	rv = gpio_mockup_apply_pull(priv->chip, priv->offset, val);
-	if (rv)
-		return rv;
+	अगर (rv)
+		वापस rv;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int gpio_mockup_debugfs_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, NULL, inode->i_private);
-}
+अटल पूर्णांक gpio_mockup_debugfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, शून्य, inode->i_निजी);
+पूर्ण
 
 /*
  * Each mockup chip is represented by a directory named after the chip's device
@@ -320,52 +321,52 @@ static int gpio_mockup_debugfs_open(struct inode *inode, struct file *file)
  * a file using the line's offset as the name under the chip's directory.
  *
  * Reading from the line's file yields the current *value*, writing to the
- * line's file changes the current *pull*. Default pull for mockup lines is
- * down.
+ * line's file changes the current *pull*. Default pull क्रम mockup lines is
+ * करोwn.
  *
  * Examples:
- * - when a line pulled down is requested in output mode and driven high, its
- *   value will return to 0 once it's released
+ * - when a line pulled करोwn is requested in output mode and driven high, its
+ *   value will वापस to 0 once it's released
  * - when the line is requested in output mode and driven high, writing 0 to
- *   the corresponding debugfs file will change the pull to down but the
+ *   the corresponding debugfs file will change the pull to करोwn but the
  *   reported value will still be 1 until the line is released
  * - line requested in input mode always reports the same value as its pull
  *   configuration
- * - when the line is requested in input mode and monitored for events, writing
- *   the same value to the debugfs file will be a noop, while writing the
- *   opposite value will generate a dummy interrupt with an appropriate edge
+ * - when the line is requested in input mode and monitored क्रम events, writing
+ *   the same value to the debugfs file will be a noop, जबतक writing the
+ *   opposite value will generate a dummy पूर्णांकerrupt with an appropriate edge
  */
-static const struct file_operations gpio_mockup_debugfs_ops = {
+अटल स्थिर काष्ठा file_operations gpio_mockup_debugfs_ops = अणु
 	.owner = THIS_MODULE,
-	.open = gpio_mockup_debugfs_open,
-	.read = gpio_mockup_debugfs_read,
-	.write = gpio_mockup_debugfs_write,
+	.खोलो = gpio_mockup_debugfs_खोलो,
+	.पढ़ो = gpio_mockup_debugfs_पढ़ो,
+	.ग_लिखो = gpio_mockup_debugfs_ग_लिखो,
 	.llseek = no_llseek,
 	.release = single_release,
-};
+पूर्ण;
 
-static void gpio_mockup_debugfs_setup(struct device *dev,
-				      struct gpio_mockup_chip *chip)
-{
-	struct gpio_mockup_dbgfs_private *priv;
-	struct gpio_chip *gc;
-	const char *devname;
-	char *name;
-	int i;
+अटल व्योम gpio_mockup_debugfs_setup(काष्ठा device *dev,
+				      काष्ठा gpio_mockup_chip *chip)
+अणु
+	काष्ठा gpio_mockup_dbgfs_निजी *priv;
+	काष्ठा gpio_chip *gc;
+	स्थिर अक्षर *devname;
+	अक्षर *name;
+	पूर्णांक i;
 
 	gc = &chip->gc;
 	devname = dev_name(&gc->gpiodev->dev);
 
 	chip->dbg_dir = debugfs_create_dir(devname, gpio_mockup_dbg_dir);
 
-	for (i = 0; i < gc->ngpio; i++) {
-		name = devm_kasprintf(dev, GFP_KERNEL, "%d", i);
-		if (!name)
-			return;
+	क्रम (i = 0; i < gc->ngpio; i++) अणु
+		name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%d", i);
+		अगर (!name)
+			वापस;
 
-		priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-		if (!priv)
-			return;
+		priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+		अगर (!priv)
+			वापस;
 
 		priv->chip = chip;
 		priv->offset = i;
@@ -373,48 +374,48 @@ static void gpio_mockup_debugfs_setup(struct device *dev,
 
 		debugfs_create_file(name, 0200, chip->dbg_dir, priv,
 				    &gpio_mockup_debugfs_ops);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gpio_mockup_dispose_mappings(void *data)
-{
-	struct gpio_mockup_chip *chip = data;
-	struct gpio_chip *gc = &chip->gc;
-	int i, irq;
+अटल व्योम gpio_mockup_dispose_mappings(व्योम *data)
+अणु
+	काष्ठा gpio_mockup_chip *chip = data;
+	काष्ठा gpio_chip *gc = &chip->gc;
+	पूर्णांक i, irq;
 
-	for (i = 0; i < gc->ngpio; i++) {
-		irq = irq_find_mapping(chip->irq_sim_domain, i);
-		if (irq)
+	क्रम (i = 0; i < gc->ngpio; i++) अणु
+		irq = irq_find_mapping(chip->irq_sim_करोमुख्य, i);
+		अगर (irq)
 			irq_dispose_mapping(irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int gpio_mockup_probe(struct platform_device *pdev)
-{
-	struct gpio_mockup_chip *chip;
-	struct gpio_chip *gc;
-	struct device *dev;
-	const char *name;
-	int rv, base, i;
+अटल पूर्णांक gpio_mockup_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gpio_mockup_chip *chip;
+	काष्ठा gpio_chip *gc;
+	काष्ठा device *dev;
+	स्थिर अक्षर *name;
+	पूर्णांक rv, base, i;
 	u16 ngpio;
 
 	dev = &pdev->dev;
 
-	rv = device_property_read_u32(dev, "gpio-base", &base);
-	if (rv)
+	rv = device_property_पढ़ो_u32(dev, "gpio-base", &base);
+	अगर (rv)
 		base = -1;
 
-	rv = device_property_read_u16(dev, "nr-gpios", &ngpio);
-	if (rv)
-		return rv;
+	rv = device_property_पढ़ो_u16(dev, "nr-gpios", &ngpio);
+	अगर (rv)
+		वापस rv;
 
-	rv = device_property_read_string(dev, "chip-label", &name);
-	if (rv)
+	rv = device_property_पढ़ो_string(dev, "chip-label", &name);
+	अगर (rv)
 		name = dev_name(dev);
 
-	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(dev, माप(*chip), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
 	mutex_init(&chip->lock);
 
@@ -433,135 +434,135 @@ static int gpio_mockup_probe(struct platform_device *pdev)
 	gc->get_direction = gpio_mockup_get_direction;
 	gc->set_config = gpio_mockup_set_config;
 	gc->to_irq = gpio_mockup_to_irq;
-	gc->free = gpio_mockup_free;
+	gc->मुक्त = gpio_mockup_मुक्त;
 
-	chip->lines = devm_kcalloc(dev, gc->ngpio,
-				   sizeof(*chip->lines), GFP_KERNEL);
-	if (!chip->lines)
-		return -ENOMEM;
+	chip->lines = devm_kसुस्मृति(dev, gc->ngpio,
+				   माप(*chip->lines), GFP_KERNEL);
+	अगर (!chip->lines)
+		वापस -ENOMEM;
 
-	for (i = 0; i < gc->ngpio; i++)
-		chip->lines[i].dir = GPIO_LINE_DIRECTION_IN;
+	क्रम (i = 0; i < gc->ngpio; i++)
+		chip->lines[i].dir = GPIO_LINE_सूचीECTION_IN;
 
-	chip->irq_sim_domain = devm_irq_domain_create_sim(dev, NULL,
+	chip->irq_sim_करोमुख्य = devm_irq_करोमुख्य_create_sim(dev, शून्य,
 							  gc->ngpio);
-	if (IS_ERR(chip->irq_sim_domain))
-		return PTR_ERR(chip->irq_sim_domain);
+	अगर (IS_ERR(chip->irq_sim_करोमुख्य))
+		वापस PTR_ERR(chip->irq_sim_करोमुख्य);
 
 	rv = devm_add_action_or_reset(dev, gpio_mockup_dispose_mappings, chip);
-	if (rv)
-		return rv;
+	अगर (rv)
+		वापस rv;
 
 	rv = devm_gpiochip_add_data(dev, &chip->gc, chip);
-	if (rv)
-		return rv;
+	अगर (rv)
+		वापस rv;
 
 	gpio_mockup_debugfs_setup(dev, chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id gpio_mockup_of_match[] = {
-	{ .compatible = "gpio-mockup", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id gpio_mockup_of_match[] = अणु
+	अणु .compatible = "gpio-mockup", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, gpio_mockup_of_match);
 
-static struct platform_driver gpio_mockup_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver gpio_mockup_driver = अणु
+	.driver = अणु
 		.name = "gpio-mockup",
 		.of_match_table = gpio_mockup_of_match,
-	},
+	पूर्ण,
 	.probe = gpio_mockup_probe,
-};
+पूर्ण;
 
-static struct platform_device *gpio_mockup_pdevs[GPIO_MOCKUP_MAX_GC];
+अटल काष्ठा platक्रमm_device *gpio_mockup_pdevs[GPIO_MOCKUP_MAX_GC];
 
-static void gpio_mockup_unregister_pdevs(void)
-{
-	int i;
+अटल व्योम gpio_mockup_unरेजिस्टर_pdevs(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < GPIO_MOCKUP_MAX_GC; i++)
-		platform_device_unregister(gpio_mockup_pdevs[i]);
-}
+	क्रम (i = 0; i < GPIO_MOCKUP_MAX_GC; i++)
+		platक्रमm_device_unरेजिस्टर(gpio_mockup_pdevs[i]);
+पूर्ण
 
-static __init char **gpio_mockup_make_line_names(const char *label,
-						 unsigned int num_lines)
-{
-	unsigned int i;
-	char **names;
+अटल __init अक्षर **gpio_mockup_make_line_names(स्थिर अक्षर *label,
+						 अचिन्हित पूर्णांक num_lines)
+अणु
+	अचिन्हित पूर्णांक i;
+	अक्षर **names;
 
-	names = kcalloc(num_lines + 1, sizeof(char *), GFP_KERNEL);
-	if (!names)
-		return NULL;
+	names = kसुस्मृति(num_lines + 1, माप(अक्षर *), GFP_KERNEL);
+	अगर (!names)
+		वापस शून्य;
 
-	for (i = 0; i < num_lines; i++) {
-		names[i] = kasprintf(GFP_KERNEL, "%s-%u", label, i);
-		if (!names[i]) {
-			kfree_strarray(names, i);
-			return NULL;
-		}
-	}
+	क्रम (i = 0; i < num_lines; i++) अणु
+		names[i] = kaप्र_लिखो(GFP_KERNEL, "%s-%u", label, i);
+		अगर (!names[i]) अणु
+			kमुक्त_strarray(names, i);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return names;
-}
+	वापस names;
+पूर्ण
 
-static int __init gpio_mockup_register_chip(int idx)
-{
-	struct property_entry properties[GPIO_MOCKUP_MAX_PROP];
-	struct platform_device_info pdevinfo;
-	struct platform_device *pdev;
-	char **line_names = NULL;
-	char chip_label[32];
-	int prop = 0, base;
+अटल पूर्णांक __init gpio_mockup_रेजिस्टर_chip(पूर्णांक idx)
+अणु
+	काष्ठा property_entry properties[GPIO_MOCKUP_MAX_PROP];
+	काष्ठा platक्रमm_device_info pdevinfo;
+	काष्ठा platक्रमm_device *pdev;
+	अक्षर **line_names = शून्य;
+	अक्षर chip_label[32];
+	पूर्णांक prop = 0, base;
 	u16 ngpio;
 
-	memset(properties, 0, sizeof(properties));
-	memset(&pdevinfo, 0, sizeof(pdevinfo));
+	स_रखो(properties, 0, माप(properties));
+	स_रखो(&pdevinfo, 0, माप(pdevinfo));
 
-	snprintf(chip_label, sizeof(chip_label), "gpio-mockup-%c", idx + 'A');
+	snम_लिखो(chip_label, माप(chip_label), "gpio-mockup-%c", idx + 'A');
 	properties[prop++] = PROPERTY_ENTRY_STRING("chip-label", chip_label);
 
 	base = gpio_mockup_range_base(idx);
-	if (base >= 0)
+	अगर (base >= 0)
 		properties[prop++] = PROPERTY_ENTRY_U32("gpio-base", base);
 
 	ngpio = base < 0 ? gpio_mockup_range_ngpio(idx)
 			 : gpio_mockup_range_ngpio(idx) - base;
 	properties[prop++] = PROPERTY_ENTRY_U16("nr-gpios", ngpio);
 
-	if (gpio_mockup_named_lines) {
+	अगर (gpio_mockup_named_lines) अणु
 		line_names = gpio_mockup_make_line_names(chip_label, ngpio);
-		if (!line_names)
-			return -ENOMEM;
+		अगर (!line_names)
+			वापस -ENOMEM;
 
 		properties[prop++] = PROPERTY_ENTRY_STRING_ARRAY_LEN(
 					"gpio-line-names", line_names, ngpio);
-	}
+	पूर्ण
 
 	pdevinfo.name = "gpio-mockup";
 	pdevinfo.id = idx;
 	pdevinfo.properties = properties;
 
-	pdev = platform_device_register_full(&pdevinfo);
-	kfree_strarray(line_names, ngpio);
-	if (IS_ERR(pdev)) {
+	pdev = platक्रमm_device_रेजिस्टर_full(&pdevinfo);
+	kमुक्त_strarray(line_names, ngpio);
+	अगर (IS_ERR(pdev)) अणु
 		pr_err("error registering device");
-		return PTR_ERR(pdev);
-	}
+		वापस PTR_ERR(pdev);
+	पूर्ण
 
 	gpio_mockup_pdevs[idx] = pdev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init gpio_mockup_init(void)
-{
-	int i, num_chips, err;
+अटल पूर्णांक __init gpio_mockup_init(व्योम)
+अणु
+	पूर्णांक i, num_chips, err;
 
-	if ((gpio_mockup_num_ranges % 2) ||
+	अगर ((gpio_mockup_num_ranges % 2) ||
 	    (gpio_mockup_num_ranges > GPIO_MOCKUP_MAX_RANGES))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Each chip is described by two values. */
 	num_chips = gpio_mockup_num_ranges / 2;
@@ -570,42 +571,42 @@ static int __init gpio_mockup_init(void)
 	 * The second value in the <base GPIO - number of GPIOS> pair must
 	 * always be greater than 0.
 	 */
-	for (i = 0; i < num_chips; i++) {
-		if (gpio_mockup_range_ngpio(i) < 0)
-			return -EINVAL;
-	}
+	क्रम (i = 0; i < num_chips; i++) अणु
+		अगर (gpio_mockup_range_ngpio(i) < 0)
+			वापस -EINVAL;
+	पूर्ण
 
-	gpio_mockup_dbg_dir = debugfs_create_dir("gpio-mockup", NULL);
+	gpio_mockup_dbg_dir = debugfs_create_dir("gpio-mockup", शून्य);
 
-	err = platform_driver_register(&gpio_mockup_driver);
-	if (err) {
+	err = platक्रमm_driver_रेजिस्टर(&gpio_mockup_driver);
+	अगर (err) अणु
 		pr_err("error registering platform driver\n");
-		debugfs_remove_recursive(gpio_mockup_dbg_dir);
-		return err;
-	}
+		debugfs_हटाओ_recursive(gpio_mockup_dbg_dir);
+		वापस err;
+	पूर्ण
 
-	for (i = 0; i < num_chips; i++) {
-		err = gpio_mockup_register_chip(i);
-		if (err) {
-			platform_driver_unregister(&gpio_mockup_driver);
-			gpio_mockup_unregister_pdevs();
-			debugfs_remove_recursive(gpio_mockup_dbg_dir);
-			return err;
-		}
-	}
+	क्रम (i = 0; i < num_chips; i++) अणु
+		err = gpio_mockup_रेजिस्टर_chip(i);
+		अगर (err) अणु
+			platक्रमm_driver_unरेजिस्टर(&gpio_mockup_driver);
+			gpio_mockup_unरेजिस्टर_pdevs();
+			debugfs_हटाओ_recursive(gpio_mockup_dbg_dir);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit gpio_mockup_exit(void)
-{
-	debugfs_remove_recursive(gpio_mockup_dbg_dir);
-	platform_driver_unregister(&gpio_mockup_driver);
-	gpio_mockup_unregister_pdevs();
-}
+अटल व्योम __निकास gpio_mockup_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(gpio_mockup_dbg_dir);
+	platक्रमm_driver_unरेजिस्टर(&gpio_mockup_driver);
+	gpio_mockup_unरेजिस्टर_pdevs();
+पूर्ण
 
 module_init(gpio_mockup_init);
-module_exit(gpio_mockup_exit);
+module_निकास(gpio_mockup_निकास);
 
 MODULE_AUTHOR("Kamlakant Patel <kamlakant.patel@broadcom.com>");
 MODULE_AUTHOR("Bamvor Jian Zhang <bamv2005@gmail.com>");

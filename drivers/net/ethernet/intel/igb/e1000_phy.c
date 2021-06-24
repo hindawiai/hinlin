@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2007 - 2018 Intel Corporation. */
 
-#include <linux/if_ether.h>
-#include <linux/delay.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/delay.h>
 
-#include "e1000_mac.h"
-#include "e1000_phy.h"
+#समावेश "e1000_mac.h"
+#समावेश "e1000_phy.h"
 
-static s32  igb_phy_setup_autoneg(struct e1000_hw *hw);
-static void igb_phy_force_speed_duplex_setup(struct e1000_hw *hw,
+अटल s32  igb_phy_setup_स्वतःneg(काष्ठा e1000_hw *hw);
+अटल व्योम igb_phy_क्रमce_speed_duplex_setup(काष्ठा e1000_hw *hw,
 					     u16 *phy_ctrl);
-static s32  igb_wait_autoneg(struct e1000_hw *hw);
-static s32  igb_set_master_slave_mode(struct e1000_hw *hw);
+अटल s32  igb_रुको_स्वतःneg(काष्ठा e1000_hw *hw);
+अटल s32  igb_set_master_slave_mode(काष्ठा e1000_hw *hw);
 
 /* Cable length tables */
-static const u16 e1000_m88_cable_length_table[] = {
-	0, 50, 80, 110, 140, 140, E1000_CABLE_LENGTH_UNDEFINED };
+अटल स्थिर u16 e1000_m88_cable_length_table[] = अणु
+	0, 50, 80, 110, 140, 140, E1000_CABLE_LENGTH_UNDEFINED पूर्ण;
 
-static const u16 e1000_igp_2_cable_length_table[] = {
+अटल स्थिर u16 e1000_igp_2_cable_length_table[] = अणु
 	0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 8, 11, 13, 16, 18, 21,
 	0, 0, 0, 3, 6, 10, 13, 16, 19, 23, 26, 29, 32, 35, 38, 41,
 	6, 10, 14, 18, 22, 26, 30, 33, 37, 41, 44, 48, 51, 54, 58, 61,
@@ -25,105 +26,105 @@ static const u16 e1000_igp_2_cable_length_table[] = {
 	40, 45, 51, 56, 61, 66, 70, 75, 79, 83, 87, 91, 94, 98, 101, 104,
 	60, 66, 72, 77, 82, 87, 92, 96, 100, 104, 108, 111, 114, 117, 119, 121,
 	83, 89, 95, 100, 105, 109, 113, 116, 119, 122, 124,
-	104, 109, 114, 118, 121, 124};
+	104, 109, 114, 118, 121, 124पूर्ण;
 
 /**
- *  igb_check_reset_block - Check if PHY reset is blocked
- *  @hw: pointer to the HW structure
+ *  igb_check_reset_block - Check अगर PHY reset is blocked
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Read the PHY management control register and check whether a PHY reset
- *  is blocked.  If a reset is not blocked return 0, otherwise
- *  return E1000_BLK_PHY_RESET (12).
+ *  Read the PHY management control रेजिस्टर and check whether a PHY reset
+ *  is blocked.  If a reset is not blocked वापस 0, otherwise
+ *  वापस E1000_BLK_PHY_RESET (12).
  **/
-s32 igb_check_reset_block(struct e1000_hw *hw)
-{
+s32 igb_check_reset_block(काष्ठा e1000_hw *hw)
+अणु
 	u32 manc;
 
 	manc = rd32(E1000_MANC);
 
-	return (manc & E1000_MANC_BLK_PHY_RST_ON_IDE) ? E1000_BLK_PHY_RESET : 0;
-}
+	वापस (manc & E1000_MANC_BLK_PHY_RST_ON_IDE) ? E1000_BLK_PHY_RESET : 0;
+पूर्ण
 
 /**
  *  igb_get_phy_id - Retrieve the PHY ID and revision
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Reads the PHY registers and stores the PHY ID and possibly the PHY
- *  revision in the hardware structure.
+ *  Reads the PHY रेजिस्टरs and stores the PHY ID and possibly the PHY
+ *  revision in the hardware काष्ठाure.
  **/
-s32 igb_get_phy_id(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_get_phy_id(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val = 0;
 	u16 phy_id;
 
 	/* ensure PHY page selection to fix misconfigured i210 */
-	if ((hw->mac.type == e1000_i210) || (hw->mac.type == e1000_i211))
-		phy->ops.write_reg(hw, I347AT4_PAGE_SELECT, 0);
+	अगर ((hw->mac.type == e1000_i210) || (hw->mac.type == e1000_i211))
+		phy->ops.ग_लिखो_reg(hw, I347AT4_PAGE_SELECT, 0);
 
-	ret_val = phy->ops.read_reg(hw, PHY_ID1, &phy_id);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, PHY_ID1, &phy_id);
+	अगर (ret_val)
+		जाओ out;
 
 	phy->id = (u32)(phy_id << 16);
 	udelay(20);
-	ret_val = phy->ops.read_reg(hw, PHY_ID2, &phy_id);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, PHY_ID2, &phy_id);
+	अगर (ret_val)
+		जाओ out;
 
 	phy->id |= (u32)(phy_id & PHY_REVISION_MASK);
 	phy->revision = (u32)(phy_id & ~PHY_REVISION_MASK);
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
  *  igb_phy_reset_dsp - Reset PHY DSP
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Reset the digital signal processor.
+ *  Reset the digital संकेत processor.
  **/
-static s32 igb_phy_reset_dsp(struct e1000_hw *hw)
-{
+अटल s32 igb_phy_reset_dsp(काष्ठा e1000_hw *hw)
+अणु
 	s32 ret_val = 0;
 
-	if (!(hw->phy.ops.write_reg))
-		goto out;
+	अगर (!(hw->phy.ops.ग_लिखो_reg))
+		जाओ out;
 
-	ret_val = hw->phy.ops.write_reg(hw, M88E1000_PHY_GEN_CONTROL, 0xC1);
-	if (ret_val)
-		goto out;
+	ret_val = hw->phy.ops.ग_लिखो_reg(hw, M88E1000_PHY_GEN_CONTROL, 0xC1);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = hw->phy.ops.write_reg(hw, M88E1000_PHY_GEN_CONTROL, 0);
+	ret_val = hw->phy.ops.ग_लिखो_reg(hw, M88E1000_PHY_GEN_CONTROL, 0);
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_read_phy_reg_mdic - Read MDI control register
- *  @hw: pointer to the HW structure
- *  @offset: register offset to be read
- *  @data: pointer to the read data
+ *  igb_पढ़ो_phy_reg_mdic - Read MDI control रेजिस्टर
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @offset: रेजिस्टर offset to be पढ़ो
+ *  @data: poपूर्णांकer to the पढ़ो data
  *
- *  Reads the MDI control register in the PHY at offset and stores the
- *  information read to data.
+ *  Reads the MDI control रेजिस्टर in the PHY at offset and stores the
+ *  inक्रमmation पढ़ो to data.
  **/
-s32 igb_read_phy_reg_mdic(struct e1000_hw *hw, u32 offset, u16 *data)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_पढ़ो_phy_reg_mdic(काष्ठा e1000_hw *hw, u32 offset, u16 *data)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	u32 i, mdic = 0;
 	s32 ret_val = 0;
 
-	if (offset > MAX_PHY_REG_ADDRESS) {
+	अगर (offset > MAX_PHY_REG_ADDRESS) अणु
 		hw_dbg("PHY Address %d is out of range\n", offset);
 		ret_val = -E1000_ERR_PARAM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Set up Op-code, Phy Address, and register offset in the MDI
-	 * Control register.  The MAC will take care of interfacing with the
+	/* Set up Op-code, Phy Address, and रेजिस्टर offset in the MDI
+	 * Control रेजिस्टर.  The MAC will take care of पूर्णांकerfacing with the
 	 * PHY to retrieve the desired data.
 	 */
 	mdic = ((offset << E1000_MDIC_REG_SHIFT) |
@@ -132,54 +133,54 @@ s32 igb_read_phy_reg_mdic(struct e1000_hw *hw, u32 offset, u16 *data)
 
 	wr32(E1000_MDIC, mdic);
 
-	/* Poll the ready bit to see if the MDI read completed
-	 * Increasing the time out as testing showed failures with
-	 * the lower time out
+	/* Poll the पढ़ोy bit to see अगर the MDI पढ़ो completed
+	 * Increasing the समय out as testing showed failures with
+	 * the lower समय out
 	 */
-	for (i = 0; i < (E1000_GEN_POLL_TIMEOUT * 3); i++) {
+	क्रम (i = 0; i < (E1000_GEN_POLL_TIMEOUT * 3); i++) अणु
 		udelay(50);
 		mdic = rd32(E1000_MDIC);
-		if (mdic & E1000_MDIC_READY)
-			break;
-	}
-	if (!(mdic & E1000_MDIC_READY)) {
+		अगर (mdic & E1000_MDIC_READY)
+			अवरोध;
+	पूर्ण
+	अगर (!(mdic & E1000_MDIC_READY)) अणु
 		hw_dbg("MDI Read did not complete\n");
 		ret_val = -E1000_ERR_PHY;
-		goto out;
-	}
-	if (mdic & E1000_MDIC_ERROR) {
+		जाओ out;
+	पूर्ण
+	अगर (mdic & E1000_MDIC_ERROR) अणु
 		hw_dbg("MDI Error\n");
 		ret_val = -E1000_ERR_PHY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	*data = (u16) mdic;
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_write_phy_reg_mdic - Write MDI control register
- *  @hw: pointer to the HW structure
- *  @offset: register offset to write to
- *  @data: data to write to register at offset
+ *  igb_ग_लिखो_phy_reg_mdic - Write MDI control रेजिस्टर
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @offset: रेजिस्टर offset to ग_लिखो to
+ *  @data: data to ग_लिखो to रेजिस्टर at offset
  *
- *  Writes data to MDI control register in the PHY at offset.
+ *  Writes data to MDI control रेजिस्टर in the PHY at offset.
  **/
-s32 igb_write_phy_reg_mdic(struct e1000_hw *hw, u32 offset, u16 data)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_ग_लिखो_phy_reg_mdic(काष्ठा e1000_hw *hw, u32 offset, u16 data)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	u32 i, mdic = 0;
 	s32 ret_val = 0;
 
-	if (offset > MAX_PHY_REG_ADDRESS) {
+	अगर (offset > MAX_PHY_REG_ADDRESS) अणु
 		hw_dbg("PHY Address %d is out of range\n", offset);
 		ret_val = -E1000_ERR_PARAM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Set up Op-code, Phy Address, and register offset in the MDI
-	 * Control register.  The MAC will take care of interfacing with the
+	/* Set up Op-code, Phy Address, and रेजिस्टर offset in the MDI
+	 * Control रेजिस्टर.  The MAC will take care of पूर्णांकerfacing with the
 	 * PHY to retrieve the desired data.
 	 */
 	mdic = (((u32)data) |
@@ -189,47 +190,47 @@ s32 igb_write_phy_reg_mdic(struct e1000_hw *hw, u32 offset, u16 data)
 
 	wr32(E1000_MDIC, mdic);
 
-	/* Poll the ready bit to see if the MDI read completed
-	 * Increasing the time out as testing showed failures with
-	 * the lower time out
+	/* Poll the पढ़ोy bit to see अगर the MDI पढ़ो completed
+	 * Increasing the समय out as testing showed failures with
+	 * the lower समय out
 	 */
-	for (i = 0; i < (E1000_GEN_POLL_TIMEOUT * 3); i++) {
+	क्रम (i = 0; i < (E1000_GEN_POLL_TIMEOUT * 3); i++) अणु
 		udelay(50);
 		mdic = rd32(E1000_MDIC);
-		if (mdic & E1000_MDIC_READY)
-			break;
-	}
-	if (!(mdic & E1000_MDIC_READY)) {
+		अगर (mdic & E1000_MDIC_READY)
+			अवरोध;
+	पूर्ण
+	अगर (!(mdic & E1000_MDIC_READY)) अणु
 		hw_dbg("MDI Write did not complete\n");
 		ret_val = -E1000_ERR_PHY;
-		goto out;
-	}
-	if (mdic & E1000_MDIC_ERROR) {
+		जाओ out;
+	पूर्ण
+	अगर (mdic & E1000_MDIC_ERROR) अणु
 		hw_dbg("MDI Error\n");
 		ret_val = -E1000_ERR_PHY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_read_phy_reg_i2c - Read PHY register using i2c
- *  @hw: pointer to the HW structure
- *  @offset: register offset to be read
- *  @data: pointer to the read data
+ *  igb_पढ़ो_phy_reg_i2c - Read PHY रेजिस्टर using i2c
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @offset: रेजिस्टर offset to be पढ़ो
+ *  @data: poपूर्णांकer to the पढ़ो data
  *
- *  Reads the PHY register at offset using the i2c interface and stores the
- *  retrieved information in data.
+ *  Reads the PHY रेजिस्टर at offset using the i2c पूर्णांकerface and stores the
+ *  retrieved inक्रमmation in data.
  **/
-s32 igb_read_phy_reg_i2c(struct e1000_hw *hw, u32 offset, u16 *data)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_पढ़ो_phy_reg_i2c(काष्ठा e1000_hw *hw, u32 offset, u16 *data)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	u32 i, i2ccmd = 0;
 
-	/* Set up Op-code, Phy Address, and register address in the I2CCMD
-	 * register.  The MAC will take care of interfacing with the
+	/* Set up Op-code, Phy Address, and रेजिस्टर address in the I2CCMD
+	 * रेजिस्टर.  The MAC will take care of पूर्णांकerfacing with the
 	 * PHY to retrieve the desired data.
 	 */
 	i2ccmd = ((offset << E1000_I2CCMD_REG_ADDR_SHIFT) |
@@ -238,54 +239,54 @@ s32 igb_read_phy_reg_i2c(struct e1000_hw *hw, u32 offset, u16 *data)
 
 	wr32(E1000_I2CCMD, i2ccmd);
 
-	/* Poll the ready bit to see if the I2C read completed */
-	for (i = 0; i < E1000_I2CCMD_PHY_TIMEOUT; i++) {
+	/* Poll the पढ़ोy bit to see अगर the I2C पढ़ो completed */
+	क्रम (i = 0; i < E1000_I2CCMD_PHY_TIMEOUT; i++) अणु
 		udelay(50);
 		i2ccmd = rd32(E1000_I2CCMD);
-		if (i2ccmd & E1000_I2CCMD_READY)
-			break;
-	}
-	if (!(i2ccmd & E1000_I2CCMD_READY)) {
+		अगर (i2ccmd & E1000_I2CCMD_READY)
+			अवरोध;
+	पूर्ण
+	अगर (!(i2ccmd & E1000_I2CCMD_READY)) अणु
 		hw_dbg("I2CCMD Read did not complete\n");
-		return -E1000_ERR_PHY;
-	}
-	if (i2ccmd & E1000_I2CCMD_ERROR) {
+		वापस -E1000_ERR_PHY;
+	पूर्ण
+	अगर (i2ccmd & E1000_I2CCMD_ERROR) अणु
 		hw_dbg("I2CCMD Error bit set\n");
-		return -E1000_ERR_PHY;
-	}
+		वापस -E1000_ERR_PHY;
+	पूर्ण
 
 	/* Need to byte-swap the 16-bit value. */
 	*data = ((i2ccmd >> 8) & 0x00FF) | ((i2ccmd << 8) & 0xFF00);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *  igb_write_phy_reg_i2c - Write PHY register using i2c
- *  @hw: pointer to the HW structure
- *  @offset: register offset to write to
- *  @data: data to write at register offset
+ *  igb_ग_लिखो_phy_reg_i2c - Write PHY रेजिस्टर using i2c
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @offset: रेजिस्टर offset to ग_लिखो to
+ *  @data: data to ग_लिखो at रेजिस्टर offset
  *
- *  Writes the data to PHY register at the offset using the i2c interface.
+ *  Writes the data to PHY रेजिस्टर at the offset using the i2c पूर्णांकerface.
  **/
-s32 igb_write_phy_reg_i2c(struct e1000_hw *hw, u32 offset, u16 data)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_ग_लिखो_phy_reg_i2c(काष्ठा e1000_hw *hw, u32 offset, u16 data)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	u32 i, i2ccmd = 0;
 	u16 phy_data_swapped;
 
 	/* Prevent overwriting SFP I2C EEPROM which is at A0 address.*/
-	if ((hw->phy.addr == 0) || (hw->phy.addr > 7)) {
+	अगर ((hw->phy.addr == 0) || (hw->phy.addr > 7)) अणु
 		hw_dbg("PHY I2C Address %d is out of range.\n",
 			  hw->phy.addr);
-		return -E1000_ERR_CONFIG;
-	}
+		वापस -E1000_ERR_CONFIG;
+	पूर्ण
 
-	/* Swap the data bytes for the I2C interface */
+	/* Swap the data bytes क्रम the I2C पूर्णांकerface */
 	phy_data_swapped = ((data >> 8) & 0x00FF) | ((data << 8) & 0xFF00);
 
-	/* Set up Op-code, Phy Address, and register address in the I2CCMD
-	 * register.  The MAC will take care of interfacing with the
+	/* Set up Op-code, Phy Address, and रेजिस्टर address in the I2CCMD
+	 * रेजिस्टर.  The MAC will take care of पूर्णांकerfacing with the
 	 * PHY to retrieve the desired data.
 	 */
 	i2ccmd = ((offset << E1000_I2CCMD_REG_ADDR_SHIFT) |
@@ -295,51 +296,51 @@ s32 igb_write_phy_reg_i2c(struct e1000_hw *hw, u32 offset, u16 data)
 
 	wr32(E1000_I2CCMD, i2ccmd);
 
-	/* Poll the ready bit to see if the I2C read completed */
-	for (i = 0; i < E1000_I2CCMD_PHY_TIMEOUT; i++) {
+	/* Poll the पढ़ोy bit to see अगर the I2C पढ़ो completed */
+	क्रम (i = 0; i < E1000_I2CCMD_PHY_TIMEOUT; i++) अणु
 		udelay(50);
 		i2ccmd = rd32(E1000_I2CCMD);
-		if (i2ccmd & E1000_I2CCMD_READY)
-			break;
-	}
-	if (!(i2ccmd & E1000_I2CCMD_READY)) {
+		अगर (i2ccmd & E1000_I2CCMD_READY)
+			अवरोध;
+	पूर्ण
+	अगर (!(i2ccmd & E1000_I2CCMD_READY)) अणु
 		hw_dbg("I2CCMD Write did not complete\n");
-		return -E1000_ERR_PHY;
-	}
-	if (i2ccmd & E1000_I2CCMD_ERROR) {
+		वापस -E1000_ERR_PHY;
+	पूर्ण
+	अगर (i2ccmd & E1000_I2CCMD_ERROR) अणु
 		hw_dbg("I2CCMD Error bit set\n");
-		return -E1000_ERR_PHY;
-	}
+		वापस -E1000_ERR_PHY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *  igb_read_sfp_data_byte - Reads SFP module data.
- *  @hw: pointer to the HW structure
- *  @offset: byte location offset to be read
- *  @data: read data buffer pointer
+ *  igb_पढ़ो_sfp_data_byte - Reads SFP module data.
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @offset: byte location offset to be पढ़ो
+ *  @data: पढ़ो data buffer poपूर्णांकer
  *
  *  Reads one byte from SFP module data stored
  *  in SFP resided EEPROM memory or SFP diagnostic area.
  *  Function should be called with
- *  E1000_I2CCMD_SFP_DATA_ADDR(<byte offset>) for SFP module database access
- *  E1000_I2CCMD_SFP_DIAG_ADDR(<byte offset>) for SFP diagnostics parameters
+ *  E1000_I2CCMD_SFP_DATA_ADDR(<byte offset>) क्रम SFP module database access
+ *  E1000_I2CCMD_SFP_DIAG_ADDR(<byte offset>) क्रम SFP diagnostics parameters
  *  access
  **/
-s32 igb_read_sfp_data_byte(struct e1000_hw *hw, u16 offset, u8 *data)
-{
+s32 igb_पढ़ो_sfp_data_byte(काष्ठा e1000_hw *hw, u16 offset, u8 *data)
+अणु
 	u32 i = 0;
 	u32 i2ccmd = 0;
 	u32 data_local = 0;
 
-	if (offset > E1000_I2CCMD_SFP_DIAG_ADDR(255)) {
+	अगर (offset > E1000_I2CCMD_SFP_DIAG_ADDR(255)) अणु
 		hw_dbg("I2CCMD command address exceeds upper limit\n");
-		return -E1000_ERR_PHY;
-	}
+		वापस -E1000_ERR_PHY;
+	पूर्ण
 
 	/* Set up Op-code, EEPROM Address,in the I2CCMD
-	 * register. The MAC will take care of interfacing with the
+	 * रेजिस्टर. The MAC will take care of पूर्णांकerfacing with the
 	 * EEPROM to retrieve the desired data.
 	 */
 	i2ccmd = ((offset << E1000_I2CCMD_REG_ADDR_SHIFT) |
@@ -347,680 +348,680 @@ s32 igb_read_sfp_data_byte(struct e1000_hw *hw, u16 offset, u8 *data)
 
 	wr32(E1000_I2CCMD, i2ccmd);
 
-	/* Poll the ready bit to see if the I2C read completed */
-	for (i = 0; i < E1000_I2CCMD_PHY_TIMEOUT; i++) {
+	/* Poll the पढ़ोy bit to see अगर the I2C पढ़ो completed */
+	क्रम (i = 0; i < E1000_I2CCMD_PHY_TIMEOUT; i++) अणु
 		udelay(50);
 		data_local = rd32(E1000_I2CCMD);
-		if (data_local & E1000_I2CCMD_READY)
-			break;
-	}
-	if (!(data_local & E1000_I2CCMD_READY)) {
+		अगर (data_local & E1000_I2CCMD_READY)
+			अवरोध;
+	पूर्ण
+	अगर (!(data_local & E1000_I2CCMD_READY)) अणु
 		hw_dbg("I2CCMD Read did not complete\n");
-		return -E1000_ERR_PHY;
-	}
-	if (data_local & E1000_I2CCMD_ERROR) {
+		वापस -E1000_ERR_PHY;
+	पूर्ण
+	अगर (data_local & E1000_I2CCMD_ERROR) अणु
 		hw_dbg("I2CCMD Error bit set\n");
-		return -E1000_ERR_PHY;
-	}
+		वापस -E1000_ERR_PHY;
+	पूर्ण
 	*data = (u8) data_local & 0xFF;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *  igb_read_phy_reg_igp - Read igp PHY register
- *  @hw: pointer to the HW structure
- *  @offset: register offset to be read
- *  @data: pointer to the read data
+ *  igb_पढ़ो_phy_reg_igp - Read igp PHY रेजिस्टर
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @offset: रेजिस्टर offset to be पढ़ो
+ *  @data: poपूर्णांकer to the पढ़ो data
  *
- *  Acquires semaphore, if necessary, then reads the PHY register at offset
- *  and storing the retrieved information in data.  Release any acquired
- *  semaphores before exiting.
+ *  Acquires semaphore, अगर necessary, then पढ़ोs the PHY रेजिस्टर at offset
+ *  and storing the retrieved inक्रमmation in data.  Release any acquired
+ *  semaphores beक्रमe निकासing.
  **/
-s32 igb_read_phy_reg_igp(struct e1000_hw *hw, u32 offset, u16 *data)
-{
+s32 igb_पढ़ो_phy_reg_igp(काष्ठा e1000_hw *hw, u32 offset, u16 *data)
+अणु
 	s32 ret_val = 0;
 
-	if (!(hw->phy.ops.acquire))
-		goto out;
+	अगर (!(hw->phy.ops.acquire))
+		जाओ out;
 
 	ret_val = hw->phy.ops.acquire(hw);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
-	if (offset > MAX_PHY_MULTI_PAGE_REG) {
-		ret_val = igb_write_phy_reg_mdic(hw,
+	अगर (offset > MAX_PHY_MULTI_PAGE_REG) अणु
+		ret_val = igb_ग_लिखो_phy_reg_mdic(hw,
 						 IGP01E1000_PHY_PAGE_SELECT,
 						 (u16)offset);
-		if (ret_val) {
+		अगर (ret_val) अणु
 			hw->phy.ops.release(hw);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	ret_val = igb_read_phy_reg_mdic(hw, MAX_PHY_REG_ADDRESS & offset,
+	ret_val = igb_पढ़ो_phy_reg_mdic(hw, MAX_PHY_REG_ADDRESS & offset,
 					data);
 
 	hw->phy.ops.release(hw);
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_write_phy_reg_igp - Write igp PHY register
- *  @hw: pointer to the HW structure
- *  @offset: register offset to write to
- *  @data: data to write at register offset
+ *  igb_ग_लिखो_phy_reg_igp - Write igp PHY रेजिस्टर
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @offset: रेजिस्टर offset to ग_लिखो to
+ *  @data: data to ग_लिखो at रेजिस्टर offset
  *
- *  Acquires semaphore, if necessary, then writes the data to PHY register
- *  at the offset.  Release any acquired semaphores before exiting.
+ *  Acquires semaphore, अगर necessary, then ग_लिखोs the data to PHY रेजिस्टर
+ *  at the offset.  Release any acquired semaphores beक्रमe निकासing.
  **/
-s32 igb_write_phy_reg_igp(struct e1000_hw *hw, u32 offset, u16 data)
-{
+s32 igb_ग_लिखो_phy_reg_igp(काष्ठा e1000_hw *hw, u32 offset, u16 data)
+अणु
 	s32 ret_val = 0;
 
-	if (!(hw->phy.ops.acquire))
-		goto out;
+	अगर (!(hw->phy.ops.acquire))
+		जाओ out;
 
 	ret_val = hw->phy.ops.acquire(hw);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
-	if (offset > MAX_PHY_MULTI_PAGE_REG) {
-		ret_val = igb_write_phy_reg_mdic(hw,
+	अगर (offset > MAX_PHY_MULTI_PAGE_REG) अणु
+		ret_val = igb_ग_लिखो_phy_reg_mdic(hw,
 						 IGP01E1000_PHY_PAGE_SELECT,
 						 (u16)offset);
-		if (ret_val) {
+		अगर (ret_val) अणु
 			hw->phy.ops.release(hw);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	ret_val = igb_write_phy_reg_mdic(hw, MAX_PHY_REG_ADDRESS & offset,
+	ret_val = igb_ग_लिखो_phy_reg_mdic(hw, MAX_PHY_REG_ADDRESS & offset,
 					 data);
 
 	hw->phy.ops.release(hw);
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_copper_link_setup_82580 - Setup 82580 PHY for copper link
- *  @hw: pointer to the HW structure
+ *  igb_copper_link_setup_82580 - Setup 82580 PHY क्रम copper link
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Sets up Carrier-sense on Transmit and downshift values.
+ *  Sets up Carrier-sense on Transmit and करोwnshअगरt values.
  **/
-s32 igb_copper_link_setup_82580(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_copper_link_setup_82580(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 phy_data;
 
-	if (phy->reset_disable) {
+	अगर (phy->reset_disable) अणु
 		ret_val = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (phy->type == e1000_phy_82580) {
+	अगर (phy->type == e1000_phy_82580) अणु
 		ret_val = hw->phy.ops.reset(hw);
-		if (ret_val) {
+		अगर (ret_val) अणु
 			hw_dbg("Error resetting the PHY.\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	/* Enable CRS on TX. This must be set for half-duplex operation. */
-	ret_val = phy->ops.read_reg(hw, I82580_CFG_REG, &phy_data);
-	if (ret_val)
-		goto out;
+	/* Enable CRS on TX. This must be set क्रम half-duplex operation. */
+	ret_val = phy->ops.पढ़ो_reg(hw, I82580_CFG_REG, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	phy_data |= I82580_CFG_ASSERT_CRS_ON_TX;
 
-	/* Enable downshift */
+	/* Enable करोwnshअगरt */
 	phy_data |= I82580_CFG_ENABLE_DOWNSHIFT;
 
-	ret_val = phy->ops.write_reg(hw, I82580_CFG_REG, phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, I82580_CFG_REG, phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Set MDI/MDIX mode */
-	ret_val = phy->ops.read_reg(hw, I82580_PHY_CTRL_2, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, I82580_PHY_CTRL_2, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 	phy_data &= ~I82580_PHY_CTRL2_MDIX_CFG_MASK;
 	/* Options:
-	 *   0 - Auto (default)
+	 *   0 - Auto (शेष)
 	 *   1 - MDI mode
 	 *   2 - MDI-X mode
 	 */
-	switch (hw->phy.mdix) {
-	case 1:
-		break;
-	case 2:
+	चयन (hw->phy.mdix) अणु
+	हाल 1:
+		अवरोध;
+	हाल 2:
 		phy_data |= I82580_PHY_CTRL2_MANUAL_MDIX;
-		break;
-	case 0:
-	default:
+		अवरोध;
+	हाल 0:
+	शेष:
 		phy_data |= I82580_PHY_CTRL2_AUTO_MDI_MDIX;
-		break;
-	}
-	ret_val = hw->phy.ops.write_reg(hw, I82580_PHY_CTRL_2, phy_data);
+		अवरोध;
+	पूर्ण
+	ret_val = hw->phy.ops.ग_लिखो_reg(hw, I82580_PHY_CTRL_2, phy_data);
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_copper_link_setup_m88 - Setup m88 PHY's for copper link
- *  @hw: pointer to the HW structure
+ *  igb_copper_link_setup_m88 - Setup m88 PHY's क्रम copper link
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Sets up MDI/MDI-X and polarity for m88 PHY's.  If necessary, transmit clock
- *  and downshift values are set also.
+ *  Sets up MDI/MDI-X and polarity क्रम m88 PHY's.  If necessary, transmit घड़ी
+ *  and करोwnshअगरt values are set also.
  **/
-s32 igb_copper_link_setup_m88(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_copper_link_setup_m88(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 phy_data;
 
-	if (phy->reset_disable) {
+	अगर (phy->reset_disable) अणु
 		ret_val = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Enable CRS on TX. This must be set for half-duplex operation. */
-	ret_val = phy->ops.read_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
-	if (ret_val)
-		goto out;
+	/* Enable CRS on TX. This must be set क्रम half-duplex operation. */
+	ret_val = phy->ops.पढ़ो_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
 
 	/* Options:
-	 *   MDI/MDI-X = 0 (default)
-	 *   0 - Auto for all speeds
+	 *   MDI/MDI-X = 0 (शेष)
+	 *   0 - Auto क्रम all speeds
 	 *   1 - MDI mode
 	 *   2 - MDI-X mode
-	 *   3 - Auto for 1000Base-T only (MDI-X for 10/100Base-T modes)
+	 *   3 - Auto क्रम 1000Base-T only (MDI-X क्रम 10/100Base-T modes)
 	 */
 	phy_data &= ~M88E1000_PSCR_AUTO_X_MODE;
 
-	switch (phy->mdix) {
-	case 1:
+	चयन (phy->mdix) अणु
+	हाल 1:
 		phy_data |= M88E1000_PSCR_MDI_MANUAL_MODE;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		phy_data |= M88E1000_PSCR_MDIX_MANUAL_MODE;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		phy_data |= M88E1000_PSCR_AUTO_X_1000T;
-		break;
-	case 0:
-	default:
+		अवरोध;
+	हाल 0:
+	शेष:
 		phy_data |= M88E1000_PSCR_AUTO_X_MODE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Options:
-	 *   disable_polarity_correction = 0 (default)
-	 *       Automatic Correction for Reversed Cable Polarity
+	 *   disable_polarity_correction = 0 (शेष)
+	 *       Automatic Correction क्रम Reversed Cable Polarity
 	 *   0 - Disabled
 	 *   1 - Enabled
 	 */
 	phy_data &= ~M88E1000_PSCR_POLARITY_REVERSAL;
-	if (phy->disable_polarity_correction == 1)
+	अगर (phy->disable_polarity_correction == 1)
 		phy_data |= M88E1000_PSCR_POLARITY_REVERSAL;
 
-	ret_val = phy->ops.write_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
+	अगर (ret_val)
+		जाओ out;
 
-	if (phy->revision < E1000_REVISION_4) {
-		/* Force TX_CLK in the Extended PHY Specific Control Register
-		 * to 25MHz clock.
+	अगर (phy->revision < E1000_REVISION_4) अणु
+		/* Force TX_CLK in the Extended PHY Specअगरic Control Register
+		 * to 25MHz घड़ी.
 		 */
-		ret_val = phy->ops.read_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL,
+		ret_val = phy->ops.पढ़ो_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL,
 					    &phy_data);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
 		phy_data |= M88E1000_EPSCR_TX_CLK_25;
 
-		if ((phy->revision == E1000_REVISION_2) &&
-		    (phy->id == M88E1111_I_PHY_ID)) {
-			/* 82573L PHY - set the downshift counter to 5x. */
+		अगर ((phy->revision == E1000_REVISION_2) &&
+		    (phy->id == M88E1111_I_PHY_ID)) अणु
+			/* 82573L PHY - set the करोwnshअगरt counter to 5x. */
 			phy_data &= ~M88EC018_EPSCR_DOWNSHIFT_COUNTER_MASK;
 			phy_data |= M88EC018_EPSCR_DOWNSHIFT_COUNTER_5X;
-		} else {
-			/* Configure Master and Slave downshift values */
+		पूर्ण अन्यथा अणु
+			/* Configure Master and Slave करोwnshअगरt values */
 			phy_data &= ~(M88E1000_EPSCR_MASTER_DOWNSHIFT_MASK |
 				      M88E1000_EPSCR_SLAVE_DOWNSHIFT_MASK);
 			phy_data |= (M88E1000_EPSCR_MASTER_DOWNSHIFT_1X |
 				     M88E1000_EPSCR_SLAVE_DOWNSHIFT_1X);
-		}
-		ret_val = phy->ops.write_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL,
+		पूर्ण
+		ret_val = phy->ops.ग_लिखो_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL,
 					     phy_data);
-		if (ret_val)
-			goto out;
-	}
+		अगर (ret_val)
+			जाओ out;
+	पूर्ण
 
 	/* Commit the changes. */
 	ret_val = igb_phy_sw_reset(hw);
-	if (ret_val) {
+	अगर (ret_val) अणु
 		hw_dbg("Error committing the PHY changes\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_copper_link_setup_m88_gen2 - Setup m88 PHY's for copper link
- *  @hw: pointer to the HW structure
+ *  igb_copper_link_setup_m88_gen2 - Setup m88 PHY's क्रम copper link
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Sets up MDI/MDI-X and polarity for i347-AT4, m88e1322 and m88e1112 PHY's.
- *  Also enables and sets the downshift parameters.
+ *  Sets up MDI/MDI-X and polarity क्रम i347-AT4, m88e1322 and m88e1112 PHY's.
+ *  Also enables and sets the करोwnshअगरt parameters.
  **/
-s32 igb_copper_link_setup_m88_gen2(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_copper_link_setup_m88_gen2(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 phy_data;
 
-	if (phy->reset_disable)
-		return 0;
+	अगर (phy->reset_disable)
+		वापस 0;
 
-	/* Enable CRS on Tx. This must be set for half-duplex operation. */
-	ret_val = phy->ops.read_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
-	if (ret_val)
-		return ret_val;
+	/* Enable CRS on Tx. This must be set क्रम half-duplex operation. */
+	ret_val = phy->ops.पढ़ो_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
+	अगर (ret_val)
+		वापस ret_val;
 
 	/* Options:
-	 *   MDI/MDI-X = 0 (default)
-	 *   0 - Auto for all speeds
+	 *   MDI/MDI-X = 0 (शेष)
+	 *   0 - Auto क्रम all speeds
 	 *   1 - MDI mode
 	 *   2 - MDI-X mode
-	 *   3 - Auto for 1000Base-T only (MDI-X for 10/100Base-T modes)
+	 *   3 - Auto क्रम 1000Base-T only (MDI-X क्रम 10/100Base-T modes)
 	 */
 	phy_data &= ~M88E1000_PSCR_AUTO_X_MODE;
 
-	switch (phy->mdix) {
-	case 1:
+	चयन (phy->mdix) अणु
+	हाल 1:
 		phy_data |= M88E1000_PSCR_MDI_MANUAL_MODE;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		phy_data |= M88E1000_PSCR_MDIX_MANUAL_MODE;
-		break;
-	case 3:
-		/* M88E1112 does not support this mode) */
-		if (phy->id != M88E1112_E_PHY_ID) {
+		अवरोध;
+	हाल 3:
+		/* M88E1112 करोes not support this mode) */
+		अगर (phy->id != M88E1112_E_PHY_ID) अणु
 			phy_data |= M88E1000_PSCR_AUTO_X_1000T;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case 0:
-	default:
+	हाल 0:
+	शेष:
 		phy_data |= M88E1000_PSCR_AUTO_X_MODE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Options:
-	 *   disable_polarity_correction = 0 (default)
-	 *       Automatic Correction for Reversed Cable Polarity
+	 *   disable_polarity_correction = 0 (शेष)
+	 *       Automatic Correction क्रम Reversed Cable Polarity
 	 *   0 - Disabled
 	 *   1 - Enabled
 	 */
 	phy_data &= ~M88E1000_PSCR_POLARITY_REVERSAL;
-	if (phy->disable_polarity_correction == 1)
+	अगर (phy->disable_polarity_correction == 1)
 		phy_data |= M88E1000_PSCR_POLARITY_REVERSAL;
 
-	/* Enable downshift and setting it to X6 */
-	if (phy->id == M88E1543_E_PHY_ID) {
+	/* Enable करोwnshअगरt and setting it to X6 */
+	अगर (phy->id == M88E1543_E_PHY_ID) अणु
 		phy_data &= ~I347AT4_PSCR_DOWNSHIFT_ENABLE;
 		ret_val =
-		    phy->ops.write_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
-		if (ret_val)
-			return ret_val;
+		    phy->ops.ग_लिखो_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
+		अगर (ret_val)
+			वापस ret_val;
 
 		ret_val = igb_phy_sw_reset(hw);
-		if (ret_val) {
+		अगर (ret_val) अणु
 			hw_dbg("Error committing the PHY changes\n");
-			return ret_val;
-		}
-	}
+			वापस ret_val;
+		पूर्ण
+	पूर्ण
 
 	phy_data &= ~I347AT4_PSCR_DOWNSHIFT_MASK;
 	phy_data |= I347AT4_PSCR_DOWNSHIFT_6X;
 	phy_data |= I347AT4_PSCR_DOWNSHIFT_ENABLE;
 
-	ret_val = phy->ops.write_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
-	if (ret_val)
-		return ret_val;
+	ret_val = phy->ops.ग_लिखो_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
+	अगर (ret_val)
+		वापस ret_val;
 
 	/* Commit the changes. */
 	ret_val = igb_phy_sw_reset(hw);
-	if (ret_val) {
+	अगर (ret_val) अणु
 		hw_dbg("Error committing the PHY changes\n");
-		return ret_val;
-	}
+		वापस ret_val;
+	पूर्ण
 	ret_val = igb_set_master_slave_mode(hw);
-	if (ret_val)
-		return ret_val;
+	अगर (ret_val)
+		वापस ret_val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *  igb_copper_link_setup_igp - Setup igp PHY's for copper link
- *  @hw: pointer to the HW structure
+ *  igb_copper_link_setup_igp - Setup igp PHY's क्रम copper link
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Sets up LPLU, MDI/MDI-X, polarity, Smartspeed and Master/Slave config for
+ *  Sets up LPLU, MDI/MDI-X, polarity, Smartspeed and Master/Slave config क्रम
  *  igp PHY's.
  **/
-s32 igb_copper_link_setup_igp(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_copper_link_setup_igp(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 data;
 
-	if (phy->reset_disable) {
+	अगर (phy->reset_disable) अणु
 		ret_val = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret_val = phy->ops.reset(hw);
-	if (ret_val) {
+	अगर (ret_val) अणु
 		hw_dbg("Error resetting the PHY.\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Wait 100ms for MAC to configure PHY from NVM settings, to avoid
-	 * timeout issues when LFS is enabled.
+	/* Wait 100ms क्रम MAC to configure PHY from NVM settings, to aव्योम
+	 * समयout issues when LFS is enabled.
 	 */
 	msleep(100);
 
-	/* The NVM settings will configure LPLU in D3 for
+	/* The NVM settings will configure LPLU in D3 क्रम
 	 * non-IGP1 PHYs.
 	 */
-	if (phy->type == e1000_phy_igp) {
+	अगर (phy->type == e1000_phy_igp) अणु
 		/* disable lplu d3 during driver init */
-		if (phy->ops.set_d3_lplu_state)
+		अगर (phy->ops.set_d3_lplu_state)
 			ret_val = phy->ops.set_d3_lplu_state(hw, false);
-		if (ret_val) {
+		अगर (ret_val) अणु
 			hw_dbg("Error Disabling LPLU D3\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* disable lplu d0 during driver init */
 	ret_val = phy->ops.set_d0_lplu_state(hw, false);
-	if (ret_val) {
+	अगर (ret_val) अणु
 		hw_dbg("Error Disabling LPLU D0\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/* Configure mdi-mdix settings */
-	ret_val = phy->ops.read_reg(hw, IGP01E1000_PHY_PORT_CTRL, &data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, IGP01E1000_PHY_PORT_CTRL, &data);
+	अगर (ret_val)
+		जाओ out;
 
 	data &= ~IGP01E1000_PSCR_AUTO_MDIX;
 
-	switch (phy->mdix) {
-	case 1:
+	चयन (phy->mdix) अणु
+	हाल 1:
 		data &= ~IGP01E1000_PSCR_FORCE_MDI_MDIX;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		data |= IGP01E1000_PSCR_FORCE_MDI_MDIX;
-		break;
-	case 0:
-	default:
+		अवरोध;
+	हाल 0:
+	शेष:
 		data |= IGP01E1000_PSCR_AUTO_MDIX;
-		break;
-	}
-	ret_val = phy->ops.write_reg(hw, IGP01E1000_PHY_PORT_CTRL, data);
-	if (ret_val)
-		goto out;
+		अवरोध;
+	पूर्ण
+	ret_val = phy->ops.ग_लिखो_reg(hw, IGP01E1000_PHY_PORT_CTRL, data);
+	अगर (ret_val)
+		जाओ out;
 
-	/* set auto-master slave resolution settings */
-	if (hw->mac.autoneg) {
-		/* when autonegotiation advertisement is only 1000Mbps then we
+	/* set स्वतः-master slave resolution settings */
+	अगर (hw->mac.स्वतःneg) अणु
+		/* when स्वतःnegotiation advertisement is only 1000Mbps then we
 		 * should disable SmartSpeed and enable Auto MasterSlave
-		 * resolution as hardware default.
+		 * resolution as hardware शेष.
 		 */
-		if (phy->autoneg_advertised == ADVERTISE_1000_FULL) {
+		अगर (phy->स्वतःneg_advertised == ADVERTISE_1000_FULL) अणु
 			/* Disable SmartSpeed */
-			ret_val = phy->ops.read_reg(hw,
+			ret_val = phy->ops.पढ़ो_reg(hw,
 						    IGP01E1000_PHY_PORT_CONFIG,
 						    &data);
-			if (ret_val)
-				goto out;
+			अगर (ret_val)
+				जाओ out;
 
 			data &= ~IGP01E1000_PSCFR_SMART_SPEED;
-			ret_val = phy->ops.write_reg(hw,
+			ret_val = phy->ops.ग_लिखो_reg(hw,
 						     IGP01E1000_PHY_PORT_CONFIG,
 						     data);
-			if (ret_val)
-				goto out;
+			अगर (ret_val)
+				जाओ out;
 
-			/* Set auto Master/Slave resolution process */
-			ret_val = phy->ops.read_reg(hw, PHY_1000T_CTRL, &data);
-			if (ret_val)
-				goto out;
+			/* Set स्वतः Master/Slave resolution process */
+			ret_val = phy->ops.पढ़ो_reg(hw, PHY_1000T_CTRL, &data);
+			अगर (ret_val)
+				जाओ out;
 
 			data &= ~CR_1000T_MS_ENABLE;
-			ret_val = phy->ops.write_reg(hw, PHY_1000T_CTRL, data);
-			if (ret_val)
-				goto out;
-		}
+			ret_val = phy->ops.ग_लिखो_reg(hw, PHY_1000T_CTRL, data);
+			अगर (ret_val)
+				जाओ out;
+		पूर्ण
 
-		ret_val = phy->ops.read_reg(hw, PHY_1000T_CTRL, &data);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.पढ़ो_reg(hw, PHY_1000T_CTRL, &data);
+		अगर (ret_val)
+			जाओ out;
 
-		/* load defaults for future use */
+		/* load शेषs क्रम future use */
 		phy->original_ms_type = (data & CR_1000T_MS_ENABLE) ?
 			((data & CR_1000T_MS_VALUE) ?
-			e1000_ms_force_master :
-			e1000_ms_force_slave) :
-			e1000_ms_auto;
+			e1000_ms_क्रमce_master :
+			e1000_ms_क्रमce_slave) :
+			e1000_ms_स्वतः;
 
-		switch (phy->ms_type) {
-		case e1000_ms_force_master:
+		चयन (phy->ms_type) अणु
+		हाल e1000_ms_क्रमce_master:
 			data |= (CR_1000T_MS_ENABLE | CR_1000T_MS_VALUE);
-			break;
-		case e1000_ms_force_slave:
+			अवरोध;
+		हाल e1000_ms_क्रमce_slave:
 			data |= CR_1000T_MS_ENABLE;
 			data &= ~(CR_1000T_MS_VALUE);
-			break;
-		case e1000_ms_auto:
+			अवरोध;
+		हाल e1000_ms_स्वतः:
 			data &= ~CR_1000T_MS_ENABLE;
-			break;
-		default:
-			break;
-		}
-		ret_val = phy->ops.write_reg(hw, PHY_1000T_CTRL, data);
-		if (ret_val)
-			goto out;
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		ret_val = phy->ops.ग_लिखो_reg(hw, PHY_1000T_CTRL, data);
+		अगर (ret_val)
+			जाओ out;
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_copper_link_autoneg - Setup/Enable autoneg for copper link
- *  @hw: pointer to the HW structure
+ *  igb_copper_link_स्वतःneg - Setup/Enable स्वतःneg क्रम copper link
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Performs initial bounds checking on autoneg advertisement parameter, then
- *  configure to advertise the full capability.  Setup the PHY to autoneg
+ *  Perक्रमms initial bounds checking on स्वतःneg advertisement parameter, then
+ *  configure to advertise the full capability.  Setup the PHY to स्वतःneg
  *  and restart the negotiation process between the link partner.  If
- *  autoneg_wait_to_complete, then wait for autoneg to complete before exiting.
+ *  स्वतःneg_रुको_to_complete, then रुको क्रम स्वतःneg to complete beक्रमe निकासing.
  **/
-static s32 igb_copper_link_autoneg(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+अटल s32 igb_copper_link_स्वतःneg(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 phy_ctrl;
 
-	/* Perform some bounds checking on the autoneg advertisement
+	/* Perक्रमm some bounds checking on the स्वतःneg advertisement
 	 * parameter.
 	 */
-	phy->autoneg_advertised &= phy->autoneg_mask;
+	phy->स्वतःneg_advertised &= phy->स्वतःneg_mask;
 
-	/* If autoneg_advertised is zero, we assume it was not defaulted
+	/* If स्वतःneg_advertised is zero, we assume it was not शेषed
 	 * by the calling code so we set to advertise full capability.
 	 */
-	if (phy->autoneg_advertised == 0)
-		phy->autoneg_advertised = phy->autoneg_mask;
+	अगर (phy->स्वतःneg_advertised == 0)
+		phy->स्वतःneg_advertised = phy->स्वतःneg_mask;
 
 	hw_dbg("Reconfiguring auto-neg advertisement params\n");
-	ret_val = igb_phy_setup_autoneg(hw);
-	if (ret_val) {
+	ret_val = igb_phy_setup_स्वतःneg(hw);
+	अगर (ret_val) अणु
 		hw_dbg("Error Setting up Auto-Negotiation\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	hw_dbg("Restarting Auto-Neg\n");
 
-	/* Restart auto-negotiation by setting the Auto Neg Enable bit and
-	 * the Auto Neg Restart bit in the PHY control register.
+	/* Restart स्वतः-negotiation by setting the Auto Neg Enable bit and
+	 * the Auto Neg Restart bit in the PHY control रेजिस्टर.
 	 */
-	ret_val = phy->ops.read_reg(hw, PHY_CONTROL, &phy_ctrl);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, PHY_CONTROL, &phy_ctrl);
+	अगर (ret_val)
+		जाओ out;
 
 	phy_ctrl |= (MII_CR_AUTO_NEG_EN | MII_CR_RESTART_AUTO_NEG);
-	ret_val = phy->ops.write_reg(hw, PHY_CONTROL, phy_ctrl);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, PHY_CONTROL, phy_ctrl);
+	अगर (ret_val)
+		जाओ out;
 
-	/* Does the user want to wait for Auto-Neg to complete here, or
-	 * check at a later time (for example, callback routine).
+	/* Does the user want to रुको क्रम Auto-Neg to complete here, or
+	 * check at a later समय (क्रम example, callback routine).
 	 */
-	if (phy->autoneg_wait_to_complete) {
-		ret_val = igb_wait_autoneg(hw);
-		if (ret_val) {
+	अगर (phy->स्वतःneg_रुको_to_complete) अणु
+		ret_val = igb_रुको_स्वतःneg(hw);
+		अगर (ret_val) अणु
 			hw_dbg("Error while waiting for autoneg to complete\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	hw->mac.get_link_status = true;
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_phy_setup_autoneg - Configure PHY for auto-negotiation
- *  @hw: pointer to the HW structure
+ *  igb_phy_setup_स्वतःneg - Configure PHY क्रम स्वतः-negotiation
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Reads the MII auto-neg advertisement register and/or the 1000T control
- *  register and if the PHY is already setup for auto-negotiation, then
- *  return successful.  Otherwise, setup advertisement and flow control to
- *  the appropriate values for the wanted auto-negotiation.
+ *  Reads the MII स्वतः-neg advertisement रेजिस्टर and/or the 1000T control
+ *  रेजिस्टर and अगर the PHY is alपढ़ोy setup क्रम स्वतः-negotiation, then
+ *  वापस successful.  Otherwise, setup advertisement and flow control to
+ *  the appropriate values क्रम the wanted स्वतः-negotiation.
  **/
-static s32 igb_phy_setup_autoneg(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+अटल s32 igb_phy_setup_स्वतःneg(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
-	u16 mii_autoneg_adv_reg;
+	u16 mii_स्वतःneg_adv_reg;
 	u16 mii_1000t_ctrl_reg = 0;
 
-	phy->autoneg_advertised &= phy->autoneg_mask;
+	phy->स्वतःneg_advertised &= phy->स्वतःneg_mask;
 
 	/* Read the MII Auto-Neg Advertisement Register (Address 4). */
-	ret_val = phy->ops.read_reg(hw, PHY_AUTONEG_ADV, &mii_autoneg_adv_reg);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, PHY_AUTONEG_ADV, &mii_स्वतःneg_adv_reg);
+	अगर (ret_val)
+		जाओ out;
 
-	if (phy->autoneg_mask & ADVERTISE_1000_FULL) {
+	अगर (phy->स्वतःneg_mask & ADVERTISE_1000_FULL) अणु
 		/* Read the MII 1000Base-T Control Register (Address 9). */
-		ret_val = phy->ops.read_reg(hw, PHY_1000T_CTRL,
+		ret_val = phy->ops.पढ़ो_reg(hw, PHY_1000T_CTRL,
 					    &mii_1000t_ctrl_reg);
-		if (ret_val)
-			goto out;
-	}
+		अगर (ret_val)
+			जाओ out;
+	पूर्ण
 
-	/* Need to parse both autoneg_advertised and fc and set up
-	 * the appropriate PHY registers.  First we will parse for
-	 * autoneg_advertised software override.  Since we can advertise
+	/* Need to parse both स्वतःneg_advertised and fc and set up
+	 * the appropriate PHY रेजिस्टरs.  First we will parse क्रम
+	 * स्वतःneg_advertised software override.  Since we can advertise
 	 * a plethora of combinations, we need to check each bit
-	 * individually.
+	 * inभागidually.
 	 */
 
 	/* First we clear all the 10/100 mb speed bits in the Auto-Neg
 	 * Advertisement Register (Address 4) and the 1000 mb speed bits in
 	 * the  1000Base-T Control Register (Address 9).
 	 */
-	mii_autoneg_adv_reg &= ~(NWAY_AR_100TX_FD_CAPS |
+	mii_स्वतःneg_adv_reg &= ~(NWAY_AR_100TX_FD_CAPS |
 				 NWAY_AR_100TX_HD_CAPS |
 				 NWAY_AR_10T_FD_CAPS   |
 				 NWAY_AR_10T_HD_CAPS);
 	mii_1000t_ctrl_reg &= ~(CR_1000T_HD_CAPS | CR_1000T_FD_CAPS);
 
-	hw_dbg("autoneg_advertised %x\n", phy->autoneg_advertised);
+	hw_dbg("autoneg_advertised %x\n", phy->स्वतःneg_advertised);
 
 	/* Do we want to advertise 10 Mb Half Duplex? */
-	if (phy->autoneg_advertised & ADVERTISE_10_HALF) {
+	अगर (phy->स्वतःneg_advertised & ADVERTISE_10_HALF) अणु
 		hw_dbg("Advertise 10mb Half duplex\n");
-		mii_autoneg_adv_reg |= NWAY_AR_10T_HD_CAPS;
-	}
+		mii_स्वतःneg_adv_reg |= NWAY_AR_10T_HD_CAPS;
+	पूर्ण
 
 	/* Do we want to advertise 10 Mb Full Duplex? */
-	if (phy->autoneg_advertised & ADVERTISE_10_FULL) {
+	अगर (phy->स्वतःneg_advertised & ADVERTISE_10_FULL) अणु
 		hw_dbg("Advertise 10mb Full duplex\n");
-		mii_autoneg_adv_reg |= NWAY_AR_10T_FD_CAPS;
-	}
+		mii_स्वतःneg_adv_reg |= NWAY_AR_10T_FD_CAPS;
+	पूर्ण
 
 	/* Do we want to advertise 100 Mb Half Duplex? */
-	if (phy->autoneg_advertised & ADVERTISE_100_HALF) {
+	अगर (phy->स्वतःneg_advertised & ADVERTISE_100_HALF) अणु
 		hw_dbg("Advertise 100mb Half duplex\n");
-		mii_autoneg_adv_reg |= NWAY_AR_100TX_HD_CAPS;
-	}
+		mii_स्वतःneg_adv_reg |= NWAY_AR_100TX_HD_CAPS;
+	पूर्ण
 
 	/* Do we want to advertise 100 Mb Full Duplex? */
-	if (phy->autoneg_advertised & ADVERTISE_100_FULL) {
+	अगर (phy->स्वतःneg_advertised & ADVERTISE_100_FULL) अणु
 		hw_dbg("Advertise 100mb Full duplex\n");
-		mii_autoneg_adv_reg |= NWAY_AR_100TX_FD_CAPS;
-	}
+		mii_स्वतःneg_adv_reg |= NWAY_AR_100TX_FD_CAPS;
+	पूर्ण
 
-	/* We do not allow the Phy to advertise 1000 Mb Half Duplex */
-	if (phy->autoneg_advertised & ADVERTISE_1000_HALF)
+	/* We करो not allow the Phy to advertise 1000 Mb Half Duplex */
+	अगर (phy->स्वतःneg_advertised & ADVERTISE_1000_HALF)
 		hw_dbg("Advertise 1000mb Half duplex request denied!\n");
 
 	/* Do we want to advertise 1000 Mb Full Duplex? */
-	if (phy->autoneg_advertised & ADVERTISE_1000_FULL) {
+	अगर (phy->स्वतःneg_advertised & ADVERTISE_1000_FULL) अणु
 		hw_dbg("Advertise 1000mb Full duplex\n");
 		mii_1000t_ctrl_reg |= CR_1000T_FD_CAPS;
-	}
+	पूर्ण
 
-	/* Check for a software override of the flow control settings, and
-	 * setup the PHY advertisement registers accordingly.  If
-	 * auto-negotiation is enabled, then software will have to set the
+	/* Check क्रम a software override of the flow control settings, and
+	 * setup the PHY advertisement रेजिस्टरs accordingly.  If
+	 * स्वतः-negotiation is enabled, then software will have to set the
 	 * "PAUSE" bits to the correct value in the Auto-Negotiation
-	 * Advertisement Register (PHY_AUTONEG_ADV) and re-start auto-
+	 * Advertisement Register (PHY_AUTONEG_ADV) and re-start स्वतः-
 	 * negotiation.
 	 *
 	 * The possible values of the "fc" parameter are:
 	 *      0:  Flow control is completely disabled
-	 *      1:  Rx flow control is enabled (we can receive pause frames
-	 *          but not send pause frames).
-	 *      2:  Tx flow control is enabled (we can send pause frames
-	 *          but we do not support receiving pause frames).
+	 *      1:  Rx flow control is enabled (we can receive छोड़ो frames
+	 *          but not send छोड़ो frames).
+	 *      2:  Tx flow control is enabled (we can send छोड़ो frames
+	 *          but we करो not support receiving छोड़ो frames).
 	 *      3:  Both Rx and TX flow control (symmetric) are enabled.
 	 *  other:  No software override.  The flow control configuration
 	 *          in the EEPROM is used.
 	 */
-	switch (hw->fc.current_mode) {
-	case e1000_fc_none:
+	चयन (hw->fc.current_mode) अणु
+	हाल e1000_fc_none:
 		/* Flow control (RX & TX) is completely disabled by a
 		 * software over-ride.
 		 */
-		mii_autoneg_adv_reg &= ~(NWAY_AR_ASM_DIR | NWAY_AR_PAUSE);
-		break;
-	case e1000_fc_rx_pause:
+		mii_स्वतःneg_adv_reg &= ~(NWAY_AR_ASM_सूची | NWAY_AR_PAUSE);
+		अवरोध;
+	हाल e1000_fc_rx_छोड़ो:
 		/* RX Flow control is enabled, and TX Flow control is
 		 * disabled, by a software over-ride.
 		 *
@@ -1030,312 +1031,312 @@ static s32 igb_phy_setup_autoneg(struct e1000_hw *hw)
 		 * (in e1000_config_fc_after_link_up) we will disable the
 		 * hw's ability to send PAUSE frames.
 		 */
-		mii_autoneg_adv_reg |= (NWAY_AR_ASM_DIR | NWAY_AR_PAUSE);
-		break;
-	case e1000_fc_tx_pause:
+		mii_स्वतःneg_adv_reg |= (NWAY_AR_ASM_सूची | NWAY_AR_PAUSE);
+		अवरोध;
+	हाल e1000_fc_tx_छोड़ो:
 		/* TX Flow control is enabled, and RX Flow control is
 		 * disabled, by a software over-ride.
 		 */
-		mii_autoneg_adv_reg |= NWAY_AR_ASM_DIR;
-		mii_autoneg_adv_reg &= ~NWAY_AR_PAUSE;
-		break;
-	case e1000_fc_full:
+		mii_स्वतःneg_adv_reg |= NWAY_AR_ASM_सूची;
+		mii_स्वतःneg_adv_reg &= ~NWAY_AR_PAUSE;
+		अवरोध;
+	हाल e1000_fc_full:
 		/* Flow control (both RX and TX) is enabled by a software
 		 * over-ride.
 		 */
-		mii_autoneg_adv_reg |= (NWAY_AR_ASM_DIR | NWAY_AR_PAUSE);
-		break;
-	default:
+		mii_स्वतःneg_adv_reg |= (NWAY_AR_ASM_सूची | NWAY_AR_PAUSE);
+		अवरोध;
+	शेष:
 		hw_dbg("Flow control param set incorrectly\n");
 		ret_val = -E1000_ERR_CONFIG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret_val = phy->ops.write_reg(hw, PHY_AUTONEG_ADV, mii_autoneg_adv_reg);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, PHY_AUTONEG_ADV, mii_स्वतःneg_adv_reg);
+	अगर (ret_val)
+		जाओ out;
 
-	hw_dbg("Auto-Neg Advertising %x\n", mii_autoneg_adv_reg);
+	hw_dbg("Auto-Neg Advertising %x\n", mii_स्वतःneg_adv_reg);
 
-	if (phy->autoneg_mask & ADVERTISE_1000_FULL) {
-		ret_val = phy->ops.write_reg(hw,
+	अगर (phy->स्वतःneg_mask & ADVERTISE_1000_FULL) अणु
+		ret_val = phy->ops.ग_लिखो_reg(hw,
 					     PHY_1000T_CTRL,
 					     mii_1000t_ctrl_reg);
-		if (ret_val)
-			goto out;
-	}
+		अगर (ret_val)
+			जाओ out;
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
  *  igb_setup_copper_link - Configure copper link settings
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Calls the appropriate function to configure the link for auto-neg or forced
- *  speed and duplex.  Then we check for link, once link is established calls
+ *  Calls the appropriate function to configure the link क्रम स्वतः-neg or क्रमced
+ *  speed and duplex.  Then we check क्रम link, once link is established calls
  *  to configure collision distance and flow control are called.  If link is
- *  not established, we return -E1000_ERR_PHY (-2).
+ *  not established, we वापस -E1000_ERR_PHY (-2).
  **/
-s32 igb_setup_copper_link(struct e1000_hw *hw)
-{
+s32 igb_setup_copper_link(काष्ठा e1000_hw *hw)
+अणु
 	s32 ret_val;
 	bool link;
 
-	if (hw->mac.autoneg) {
-		/* Setup autoneg and flow control advertisement and perform
-		 * autonegotiation.
+	अगर (hw->mac.स्वतःneg) अणु
+		/* Setup स्वतःneg and flow control advertisement and perक्रमm
+		 * स्वतःnegotiation.
 		 */
-		ret_val = igb_copper_link_autoneg(hw);
-		if (ret_val)
-			goto out;
-	} else {
+		ret_val = igb_copper_link_स्वतःneg(hw);
+		अगर (ret_val)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		/* PHY will be set to 10H, 10F, 100H or 100F
 		 * depending on user settings.
 		 */
 		hw_dbg("Forcing Speed and Duplex\n");
-		ret_val = hw->phy.ops.force_speed_duplex(hw);
-		if (ret_val) {
+		ret_val = hw->phy.ops.क्रमce_speed_duplex(hw);
+		अगर (ret_val) अणु
 			hw_dbg("Error Forcing Speed and Duplex\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	/* Check link status. Wait up to 100 microseconds for link to become
+	/* Check link status. Wait up to 100 microseconds क्रम link to become
 	 * valid.
 	 */
 	ret_val = igb_phy_has_link(hw, COPPER_LINK_UP_LIMIT, 10, &link);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
-	if (link) {
+	अगर (link) अणु
 		hw_dbg("Valid link established!!!\n");
 		igb_config_collision_dist(hw);
 		ret_val = igb_config_fc_after_link_up(hw);
-	} else {
+	पूर्ण अन्यथा अणु
 		hw_dbg("Unable to establish link!!!\n");
-	}
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_phy_force_speed_duplex_igp - Force speed/duplex for igp PHY
- *  @hw: pointer to the HW structure
+ *  igb_phy_क्रमce_speed_duplex_igp - Force speed/duplex क्रम igp PHY
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Calls the PHY setup function to force speed and duplex.  Clears the
- *  auto-crossover to force MDI manually.  Waits for link and returns
- *  successful if link up is successful, else -E1000_ERR_PHY (-2).
+ *  Calls the PHY setup function to क्रमce speed and duplex.  Clears the
+ *  स्वतः-crossover to क्रमce MDI manually.  Waits क्रम link and वापसs
+ *  successful अगर link up is successful, अन्यथा -E1000_ERR_PHY (-2).
  **/
-s32 igb_phy_force_speed_duplex_igp(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_phy_क्रमce_speed_duplex_igp(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 phy_data;
 	bool link;
 
-	ret_val = phy->ops.read_reg(hw, PHY_CONTROL, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, PHY_CONTROL, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
-	igb_phy_force_speed_duplex_setup(hw, &phy_data);
+	igb_phy_क्रमce_speed_duplex_setup(hw, &phy_data);
 
-	ret_val = phy->ops.write_reg(hw, PHY_CONTROL, phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, PHY_CONTROL, phy_data);
+	अगर (ret_val)
+		जाओ out;
 
-	/* Clear Auto-Crossover to force MDI manually.  IGP requires MDI
-	 * forced whenever speed and duplex are forced.
+	/* Clear Auto-Crossover to क्रमce MDI manually.  IGP requires MDI
+	 * क्रमced whenever speed and duplex are क्रमced.
 	 */
-	ret_val = phy->ops.read_reg(hw, IGP01E1000_PHY_PORT_CTRL, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, IGP01E1000_PHY_PORT_CTRL, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	phy_data &= ~IGP01E1000_PSCR_AUTO_MDIX;
 	phy_data &= ~IGP01E1000_PSCR_FORCE_MDI_MDIX;
 
-	ret_val = phy->ops.write_reg(hw, IGP01E1000_PHY_PORT_CTRL, phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, IGP01E1000_PHY_PORT_CTRL, phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	hw_dbg("IGP PSCR: %X\n", phy_data);
 
 	udelay(1);
 
-	if (phy->autoneg_wait_to_complete) {
+	अगर (phy->स्वतःneg_रुको_to_complete) अणु
 		hw_dbg("Waiting for forced speed/duplex link on IGP phy.\n");
 
 		ret_val = igb_phy_has_link(hw, PHY_FORCE_LIMIT, 10000, &link);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
-		if (!link)
+		अगर (!link)
 			hw_dbg("Link taking longer than expected.\n");
 
 		/* Try once more */
 		ret_val = igb_phy_has_link(hw, PHY_FORCE_LIMIT, 10000, &link);
-		if (ret_val)
-			goto out;
-	}
+		अगर (ret_val)
+			जाओ out;
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_phy_force_speed_duplex_m88 - Force speed/duplex for m88 PHY
- *  @hw: pointer to the HW structure
+ *  igb_phy_क्रमce_speed_duplex_m88 - Force speed/duplex क्रम m88 PHY
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Calls the PHY setup function to force speed and duplex.  Clears the
- *  auto-crossover to force MDI manually.  Resets the PHY to commit the
- *  changes.  If time expires while waiting for link up, we reset the DSP.
+ *  Calls the PHY setup function to क्रमce speed and duplex.  Clears the
+ *  स्वतः-crossover to क्रमce MDI manually.  Resets the PHY to commit the
+ *  changes.  If समय expires जबतक रुकोing क्रम link up, we reset the DSP.
  *  After reset, TX_CLK and CRS on TX must be set.  Return successful upon
- *  successful completion, else return corresponding error code.
+ *  successful completion, अन्यथा वापस corresponding error code.
  **/
-s32 igb_phy_force_speed_duplex_m88(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_phy_क्रमce_speed_duplex_m88(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 phy_data;
 	bool link;
 
-	/* I210 and I211 devices support Auto-Crossover in forced operation. */
-	if (phy->type != e1000_phy_i210) {
-		/* Clear Auto-Crossover to force MDI manually.  M88E1000
-		 * requires MDI forced whenever speed and duplex are forced.
+	/* I210 and I211 devices support Auto-Crossover in क्रमced operation. */
+	अगर (phy->type != e1000_phy_i210) अणु
+		/* Clear Auto-Crossover to क्रमce MDI manually.  M88E1000
+		 * requires MDI क्रमced whenever speed and duplex are क्रमced.
 		 */
-		ret_val = phy->ops.read_reg(hw, M88E1000_PHY_SPEC_CTRL,
+		ret_val = phy->ops.पढ़ो_reg(hw, M88E1000_PHY_SPEC_CTRL,
 					    &phy_data);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
 		phy_data &= ~M88E1000_PSCR_AUTO_X_MODE;
-		ret_val = phy->ops.write_reg(hw, M88E1000_PHY_SPEC_CTRL,
+		ret_val = phy->ops.ग_लिखो_reg(hw, M88E1000_PHY_SPEC_CTRL,
 					     phy_data);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
 		hw_dbg("M88E1000 PSCR: %X\n", phy_data);
-	}
+	पूर्ण
 
-	ret_val = phy->ops.read_reg(hw, PHY_CONTROL, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, PHY_CONTROL, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
-	igb_phy_force_speed_duplex_setup(hw, &phy_data);
+	igb_phy_क्रमce_speed_duplex_setup(hw, &phy_data);
 
-	ret_val = phy->ops.write_reg(hw, PHY_CONTROL, phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, PHY_CONTROL, phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Reset the phy to commit changes. */
 	ret_val = igb_phy_sw_reset(hw);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
-	if (phy->autoneg_wait_to_complete) {
+	अगर (phy->स्वतःneg_रुको_to_complete) अणु
 		hw_dbg("Waiting for forced speed/duplex link on M88 phy.\n");
 
 		ret_val = igb_phy_has_link(hw, PHY_FORCE_LIMIT, 100000, &link);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
-		if (!link) {
+		अगर (!link) अणु
 			bool reset_dsp = true;
 
-			switch (hw->phy.id) {
-			case I347AT4_E_PHY_ID:
-			case M88E1112_E_PHY_ID:
-			case M88E1543_E_PHY_ID:
-			case M88E1512_E_PHY_ID:
-			case I210_I_PHY_ID:
+			चयन (hw->phy.id) अणु
+			हाल I347AT4_E_PHY_ID:
+			हाल M88E1112_E_PHY_ID:
+			हाल M88E1543_E_PHY_ID:
+			हाल M88E1512_E_PHY_ID:
+			हाल I210_I_PHY_ID:
 				reset_dsp = false;
-				break;
-			default:
-				if (hw->phy.type != e1000_phy_m88)
+				अवरोध;
+			शेष:
+				अगर (hw->phy.type != e1000_phy_m88)
 					reset_dsp = false;
-				break;
-			}
-			if (!reset_dsp) {
+				अवरोध;
+			पूर्ण
+			अगर (!reset_dsp) अणु
 				hw_dbg("Link taking longer than expected.\n");
-			} else {
+			पूर्ण अन्यथा अणु
 				/* We didn't get link.
 				 * Reset the DSP and cross our fingers.
 				 */
-				ret_val = phy->ops.write_reg(hw,
+				ret_val = phy->ops.ग_लिखो_reg(hw,
 						M88E1000_PHY_PAGE_SELECT,
 						0x001d);
-				if (ret_val)
-					goto out;
+				अगर (ret_val)
+					जाओ out;
 				ret_val = igb_phy_reset_dsp(hw);
-				if (ret_val)
-					goto out;
-			}
-		}
+				अगर (ret_val)
+					जाओ out;
+			पूर्ण
+		पूर्ण
 
 		/* Try once more */
 		ret_val = igb_phy_has_link(hw, PHY_FORCE_LIMIT,
 					   100000, &link);
-		if (ret_val)
-			goto out;
-	}
+		अगर (ret_val)
+			जाओ out;
+	पूर्ण
 
-	if (hw->phy.type != e1000_phy_m88 ||
+	अगर (hw->phy.type != e1000_phy_m88 ||
 	    hw->phy.id == I347AT4_E_PHY_ID ||
 	    hw->phy.id == M88E1112_E_PHY_ID ||
 	    hw->phy.id == M88E1543_E_PHY_ID ||
 	    hw->phy.id == M88E1512_E_PHY_ID ||
 	    hw->phy.id == I210_I_PHY_ID)
-		goto out;
+		जाओ out;
 
-	ret_val = phy->ops.read_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
-	/* Resetting the phy means we need to re-force TX_CLK in the
-	 * Extended PHY Specific Control Register to 25MHz clock from
+	/* Resetting the phy means we need to re-क्रमce TX_CLK in the
+	 * Extended PHY Specअगरic Control Register to 25MHz घड़ी from
 	 * the reset value of 2.5MHz.
 	 */
 	phy_data |= M88E1000_EPSCR_TX_CLK_25;
-	ret_val = phy->ops.write_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, M88E1000_EXT_PHY_SPEC_CTRL, phy_data);
+	अगर (ret_val)
+		जाओ out;
 
-	/* In addition, we must re-enable CRS on Tx for both half and full
+	/* In addition, we must re-enable CRS on Tx क्रम both half and full
 	 * duplex.
 	 */
-	ret_val = phy->ops.read_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
-	ret_val = phy->ops.write_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
+	ret_val = phy->ops.ग_लिखो_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_phy_force_speed_duplex_setup - Configure forced PHY speed/duplex
- *  @hw: pointer to the HW structure
- *  @phy_ctrl: pointer to current value of PHY_CONTROL
+ *  igb_phy_क्रमce_speed_duplex_setup - Configure क्रमced PHY speed/duplex
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @phy_ctrl: poपूर्णांकer to current value of PHY_CONTROL
  *
- *  Forces speed and duplex on the PHY by doing the following: disable flow
- *  control, force speed/duplex on the MAC, disable auto speed detection,
- *  disable auto-negotiation, configure duplex, configure speed, configure
- *  the collision distance, write configuration to CTRL register.  The
- *  caller must write to the PHY_CONTROL register for these settings to
+ *  Forces speed and duplex on the PHY by करोing the following: disable flow
+ *  control, क्रमce speed/duplex on the MAC, disable स्वतः speed detection,
+ *  disable स्वतः-negotiation, configure duplex, configure speed, configure
+ *  the collision distance, ग_लिखो configuration to CTRL रेजिस्टर.  The
+ *  caller must ग_लिखो to the PHY_CONTROL रेजिस्टर क्रम these settings to
  *  take affect.
  **/
-static void igb_phy_force_speed_duplex_setup(struct e1000_hw *hw,
+अटल व्योम igb_phy_क्रमce_speed_duplex_setup(काष्ठा e1000_hw *hw,
 					     u16 *phy_ctrl)
-{
-	struct e1000_mac_info *mac = &hw->mac;
+अणु
+	काष्ठा e1000_mac_info *mac = &hw->mac;
 	u32 ctrl;
 
-	/* Turn off flow control when forcing speed/duplex */
+	/* Turn off flow control when क्रमcing speed/duplex */
 	hw->fc.current_mode = e1000_fc_none;
 
 	/* Force speed/duplex on the mac */
@@ -1346,323 +1347,323 @@ static void igb_phy_force_speed_duplex_setup(struct e1000_hw *hw,
 	/* Disable Auto Speed Detection */
 	ctrl &= ~E1000_CTRL_ASDE;
 
-	/* Disable autoneg on the phy */
+	/* Disable स्वतःneg on the phy */
 	*phy_ctrl &= ~MII_CR_AUTO_NEG_EN;
 
 	/* Forcing Full or Half Duplex? */
-	if (mac->forced_speed_duplex & E1000_ALL_HALF_DUPLEX) {
+	अगर (mac->क्रमced_speed_duplex & E1000_ALL_HALF_DUPLEX) अणु
 		ctrl &= ~E1000_CTRL_FD;
 		*phy_ctrl &= ~MII_CR_FULL_DUPLEX;
 		hw_dbg("Half Duplex\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		ctrl |= E1000_CTRL_FD;
 		*phy_ctrl |= MII_CR_FULL_DUPLEX;
 		hw_dbg("Full Duplex\n");
-	}
+	पूर्ण
 
 	/* Forcing 10mb or 100mb? */
-	if (mac->forced_speed_duplex & E1000_ALL_100_SPEED) {
+	अगर (mac->क्रमced_speed_duplex & E1000_ALL_100_SPEED) अणु
 		ctrl |= E1000_CTRL_SPD_100;
 		*phy_ctrl |= MII_CR_SPEED_100;
 		*phy_ctrl &= ~(MII_CR_SPEED_1000 | MII_CR_SPEED_10);
 		hw_dbg("Forcing 100mb\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		ctrl &= ~(E1000_CTRL_SPD_1000 | E1000_CTRL_SPD_100);
 		*phy_ctrl |= MII_CR_SPEED_10;
 		*phy_ctrl &= ~(MII_CR_SPEED_1000 | MII_CR_SPEED_100);
 		hw_dbg("Forcing 10mb\n");
-	}
+	पूर्ण
 
 	igb_config_collision_dist(hw);
 
 	wr32(E1000_CTRL, ctrl);
-}
+पूर्ण
 
 /**
- *  igb_set_d3_lplu_state - Sets low power link up state for D3
- *  @hw: pointer to the HW structure
+ *  igb_set_d3_lplu_state - Sets low घातer link up state क्रम D3
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *  @active: boolean used to enable/disable lplu
  *
- *  Success returns 0, Failure returns 1
+ *  Success वापसs 0, Failure वापसs 1
  *
- *  The low power link up (lplu) state is set to the power management level D3
- *  and SmartSpeed is disabled when active is true, else clear lplu for D3
+ *  The low घातer link up (lplu) state is set to the घातer management level D3
+ *  and SmartSpeed is disabled when active is true, अन्यथा clear lplu क्रम D3
  *  and enable Smartspeed.  LPLU and Smartspeed are mutually exclusive.  LPLU
- *  is used during Dx states where the power conservation is most important.
- *  During driver activity, SmartSpeed should be enabled so performance is
- *  maintained.
+ *  is used during Dx states where the घातer conservation is most important.
+ *  During driver activity, SmartSpeed should be enabled so perक्रमmance is
+ *  मुख्यtained.
  **/
-s32 igb_set_d3_lplu_state(struct e1000_hw *hw, bool active)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_set_d3_lplu_state(काष्ठा e1000_hw *hw, bool active)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val = 0;
 	u16 data;
 
-	if (!(hw->phy.ops.read_reg))
-		goto out;
+	अगर (!(hw->phy.ops.पढ़ो_reg))
+		जाओ out;
 
-	ret_val = phy->ops.read_reg(hw, IGP02E1000_PHY_POWER_MGMT, &data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, IGP02E1000_PHY_POWER_MGMT, &data);
+	अगर (ret_val)
+		जाओ out;
 
-	if (!active) {
+	अगर (!active) अणु
 		data &= ~IGP02E1000_PM_D3_LPLU;
-		ret_val = phy->ops.write_reg(hw, IGP02E1000_PHY_POWER_MGMT,
+		ret_val = phy->ops.ग_लिखो_reg(hw, IGP02E1000_PHY_POWER_MGMT,
 					     data);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 		/* LPLU and SmartSpeed are mutually exclusive.  LPLU is used
-		 * during Dx states where the power conservation is most
+		 * during Dx states where the घातer conservation is most
 		 * important.  During driver activity we should enable
-		 * SmartSpeed, so performance is maintained.
+		 * SmartSpeed, so perक्रमmance is मुख्यtained.
 		 */
-		if (phy->smart_speed == e1000_smart_speed_on) {
-			ret_val = phy->ops.read_reg(hw,
+		अगर (phy->smart_speed == e1000_smart_speed_on) अणु
+			ret_val = phy->ops.पढ़ो_reg(hw,
 						    IGP01E1000_PHY_PORT_CONFIG,
 						    &data);
-			if (ret_val)
-				goto out;
+			अगर (ret_val)
+				जाओ out;
 
 			data |= IGP01E1000_PSCFR_SMART_SPEED;
-			ret_val = phy->ops.write_reg(hw,
+			ret_val = phy->ops.ग_लिखो_reg(hw,
 						     IGP01E1000_PHY_PORT_CONFIG,
 						     data);
-			if (ret_val)
-				goto out;
-		} else if (phy->smart_speed == e1000_smart_speed_off) {
-			ret_val = phy->ops.read_reg(hw,
+			अगर (ret_val)
+				जाओ out;
+		पूर्ण अन्यथा अगर (phy->smart_speed == e1000_smart_speed_off) अणु
+			ret_val = phy->ops.पढ़ो_reg(hw,
 						     IGP01E1000_PHY_PORT_CONFIG,
 						     &data);
-			if (ret_val)
-				goto out;
+			अगर (ret_val)
+				जाओ out;
 
 			data &= ~IGP01E1000_PSCFR_SMART_SPEED;
-			ret_val = phy->ops.write_reg(hw,
+			ret_val = phy->ops.ग_लिखो_reg(hw,
 						     IGP01E1000_PHY_PORT_CONFIG,
 						     data);
-			if (ret_val)
-				goto out;
-		}
-	} else if ((phy->autoneg_advertised == E1000_ALL_SPEED_DUPLEX) ||
-		   (phy->autoneg_advertised == E1000_ALL_NOT_GIG) ||
-		   (phy->autoneg_advertised == E1000_ALL_10_SPEED)) {
+			अगर (ret_val)
+				जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अगर ((phy->स्वतःneg_advertised == E1000_ALL_SPEED_DUPLEX) ||
+		   (phy->स्वतःneg_advertised == E1000_ALL_NOT_GIG) ||
+		   (phy->स्वतःneg_advertised == E1000_ALL_10_SPEED)) अणु
 		data |= IGP02E1000_PM_D3_LPLU;
-		ret_val = phy->ops.write_reg(hw, IGP02E1000_PHY_POWER_MGMT,
+		ret_val = phy->ops.ग_लिखो_reg(hw, IGP02E1000_PHY_POWER_MGMT,
 					      data);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
 		/* When LPLU is enabled, we should disable SmartSpeed */
-		ret_val = phy->ops.read_reg(hw, IGP01E1000_PHY_PORT_CONFIG,
+		ret_val = phy->ops.पढ़ो_reg(hw, IGP01E1000_PHY_PORT_CONFIG,
 					    &data);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
 		data &= ~IGP01E1000_PSCFR_SMART_SPEED;
-		ret_val = phy->ops.write_reg(hw, IGP01E1000_PHY_PORT_CONFIG,
+		ret_val = phy->ops.ग_लिखो_reg(hw, IGP01E1000_PHY_PORT_CONFIG,
 					     data);
-	}
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_check_downshift - Checks whether a downshift in speed occurred
- *  @hw: pointer to the HW structure
+ *  igb_check_करोwnshअगरt - Checks whether a करोwnshअगरt in speed occurred
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Success returns 0, Failure returns 1
+ *  Success वापसs 0, Failure वापसs 1
  *
- *  A downshift is detected by querying the PHY link health.
+ *  A करोwnshअगरt is detected by querying the PHY link health.
  **/
-s32 igb_check_downshift(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_check_करोwnshअगरt(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 phy_data, offset, mask;
 
-	switch (phy->type) {
-	case e1000_phy_i210:
-	case e1000_phy_m88:
-	case e1000_phy_gg82563:
+	चयन (phy->type) अणु
+	हाल e1000_phy_i210:
+	हाल e1000_phy_m88:
+	हाल e1000_phy_gg82563:
 		offset	= M88E1000_PHY_SPEC_STATUS;
 		mask	= M88E1000_PSSR_DOWNSHIFT;
-		break;
-	case e1000_phy_igp_2:
-	case e1000_phy_igp:
-	case e1000_phy_igp_3:
+		अवरोध;
+	हाल e1000_phy_igp_2:
+	हाल e1000_phy_igp:
+	हाल e1000_phy_igp_3:
 		offset	= IGP01E1000_PHY_LINK_HEALTH;
 		mask	= IGP01E1000_PLHR_SS_DOWNGRADE;
-		break;
-	default:
-		/* speed downshift not supported */
-		phy->speed_downgraded = false;
+		अवरोध;
+	शेष:
+		/* speed करोwnshअगरt not supported */
+		phy->speed_करोwngraded = false;
 		ret_val = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret_val = phy->ops.read_reg(hw, offset, &phy_data);
+	ret_val = phy->ops.पढ़ो_reg(hw, offset, &phy_data);
 
-	if (!ret_val)
-		phy->speed_downgraded = (phy_data & mask) ? true : false;
+	अगर (!ret_val)
+		phy->speed_करोwngraded = (phy_data & mask) ? true : false;
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
  *  igb_check_polarity_m88 - Checks the polarity.
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Success returns 0, Failure returns -E1000_ERR_PHY (-2)
+ *  Success वापसs 0, Failure वापसs -E1000_ERR_PHY (-2)
  *
- *  Polarity is determined based on the PHY specific status register.
+ *  Polarity is determined based on the PHY specअगरic status रेजिस्टर.
  **/
-s32 igb_check_polarity_m88(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_check_polarity_m88(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 data;
 
-	ret_val = phy->ops.read_reg(hw, M88E1000_PHY_SPEC_STATUS, &data);
+	ret_val = phy->ops.पढ़ो_reg(hw, M88E1000_PHY_SPEC_STATUS, &data);
 
-	if (!ret_val)
+	अगर (!ret_val)
 		phy->cable_polarity = (data & M88E1000_PSSR_REV_POLARITY)
 				      ? e1000_rev_polarity_reversed
 				      : e1000_rev_polarity_normal;
 
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
  *  igb_check_polarity_igp - Checks the polarity.
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Success returns 0, Failure returns -E1000_ERR_PHY (-2)
+ *  Success वापसs 0, Failure वापसs -E1000_ERR_PHY (-2)
  *
- *  Polarity is determined based on the PHY port status register, and the
+ *  Polarity is determined based on the PHY port status रेजिस्टर, and the
  *  current speed (since there is no polarity at 100Mbps).
  **/
-static s32 igb_check_polarity_igp(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+अटल s32 igb_check_polarity_igp(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 data, offset, mask;
 
 	/* Polarity is determined based on the speed of
 	 * our connection.
 	 */
-	ret_val = phy->ops.read_reg(hw, IGP01E1000_PHY_PORT_STATUS, &data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, IGP01E1000_PHY_PORT_STATUS, &data);
+	अगर (ret_val)
+		जाओ out;
 
-	if ((data & IGP01E1000_PSSR_SPEED_MASK) ==
-	    IGP01E1000_PSSR_SPEED_1000MBPS) {
+	अगर ((data & IGP01E1000_PSSR_SPEED_MASK) ==
+	    IGP01E1000_PSSR_SPEED_1000MBPS) अणु
 		offset	= IGP01E1000_PHY_PCS_INIT_REG;
 		mask	= IGP01E1000_PHY_POLARITY_MASK;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* This really only applies to 10Mbps since
-		 * there is no polarity for 100Mbps (always 0).
+		 * there is no polarity क्रम 100Mbps (always 0).
 		 */
 		offset	= IGP01E1000_PHY_PORT_STATUS;
 		mask	= IGP01E1000_PSSR_POLARITY_REVERSED;
-	}
+	पूर्ण
 
-	ret_val = phy->ops.read_reg(hw, offset, &data);
+	ret_val = phy->ops.पढ़ो_reg(hw, offset, &data);
 
-	if (!ret_val)
+	अगर (!ret_val)
 		phy->cable_polarity = (data & mask)
 				      ? e1000_rev_polarity_reversed
 				      : e1000_rev_polarity_normal;
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_wait_autoneg - Wait for auto-neg completion
- *  @hw: pointer to the HW structure
+ *  igb_रुको_स्वतःneg - Wait क्रम स्वतः-neg completion
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Waits for auto-negotiation to complete or for the auto-negotiation time
+ *  Waits क्रम स्वतः-negotiation to complete or क्रम the स्वतः-negotiation समय
  *  limit to expire, which ever happens first.
  **/
-static s32 igb_wait_autoneg(struct e1000_hw *hw)
-{
+अटल s32 igb_रुको_स्वतःneg(काष्ठा e1000_hw *hw)
+अणु
 	s32 ret_val = 0;
 	u16 i, phy_status;
 
-	/* Break after autoneg completes or PHY_AUTO_NEG_LIMIT expires. */
-	for (i = PHY_AUTO_NEG_LIMIT; i > 0; i--) {
-		ret_val = hw->phy.ops.read_reg(hw, PHY_STATUS, &phy_status);
-		if (ret_val)
-			break;
-		ret_val = hw->phy.ops.read_reg(hw, PHY_STATUS, &phy_status);
-		if (ret_val)
-			break;
-		if (phy_status & MII_SR_AUTONEG_COMPLETE)
-			break;
+	/* Break after स्वतःneg completes or PHY_AUTO_NEG_LIMIT expires. */
+	क्रम (i = PHY_AUTO_NEG_LIMIT; i > 0; i--) अणु
+		ret_val = hw->phy.ops.पढ़ो_reg(hw, PHY_STATUS, &phy_status);
+		अगर (ret_val)
+			अवरोध;
+		ret_val = hw->phy.ops.पढ़ो_reg(hw, PHY_STATUS, &phy_status);
+		अगर (ret_val)
+			अवरोध;
+		अगर (phy_status & MII_SR_AUTONEG_COMPLETE)
+			अवरोध;
 		msleep(100);
-	}
+	पूर्ण
 
-	/* PHY_AUTO_NEG_TIME expiration doesn't guarantee auto-negotiation
+	/* PHY_AUTO_NEG_TIME expiration करोesn't guarantee स्वतः-negotiation
 	 * has completed.
 	 */
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_phy_has_link - Polls PHY for link
- *  @hw: pointer to the HW structure
- *  @iterations: number of times to poll for link
- *  @usec_interval: delay between polling attempts
- *  @success: pointer to whether polling was successful or not
+ *  igb_phy_has_link - Polls PHY क्रम link
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @iterations: number of बार to poll क्रम link
+ *  @usec_पूर्णांकerval: delay between polling attempts
+ *  @success: poपूर्णांकer to whether polling was successful or not
  *
- *  Polls the PHY status register for link, 'iterations' number of times.
+ *  Polls the PHY status रेजिस्टर क्रम link, 'iterations' number of बार.
  **/
-s32 igb_phy_has_link(struct e1000_hw *hw, u32 iterations,
-		     u32 usec_interval, bool *success)
-{
+s32 igb_phy_has_link(काष्ठा e1000_hw *hw, u32 iterations,
+		     u32 usec_पूर्णांकerval, bool *success)
+अणु
 	s32 ret_val = 0;
 	u16 i, phy_status;
 
-	for (i = 0; i < iterations; i++) {
-		/* Some PHYs require the PHY_STATUS register to be read
-		 * twice due to the link bit being sticky.  No harm doing
+	क्रम (i = 0; i < iterations; i++) अणु
+		/* Some PHYs require the PHY_STATUS रेजिस्टर to be पढ़ो
+		 * twice due to the link bit being sticky.  No harm करोing
 		 * it across the board.
 		 */
-		ret_val = hw->phy.ops.read_reg(hw, PHY_STATUS, &phy_status);
-		if (ret_val && usec_interval > 0) {
-			/* If the first read fails, another entity may have
-			 * ownership of the resources, wait and try again to
-			 * see if they have relinquished the resources yet.
+		ret_val = hw->phy.ops.पढ़ो_reg(hw, PHY_STATUS, &phy_status);
+		अगर (ret_val && usec_पूर्णांकerval > 0) अणु
+			/* If the first पढ़ो fails, another entity may have
+			 * ownership of the resources, रुको and try again to
+			 * see अगर they have relinquished the resources yet.
 			 */
-			if (usec_interval >= 1000)
-				mdelay(usec_interval/1000);
-			else
-				udelay(usec_interval);
-		}
-		ret_val = hw->phy.ops.read_reg(hw, PHY_STATUS, &phy_status);
-		if (ret_val)
-			break;
-		if (phy_status & MII_SR_LINK_STATUS)
-			break;
-		if (usec_interval >= 1000)
-			mdelay(usec_interval/1000);
-		else
-			udelay(usec_interval);
-	}
+			अगर (usec_पूर्णांकerval >= 1000)
+				mdelay(usec_पूर्णांकerval/1000);
+			अन्यथा
+				udelay(usec_पूर्णांकerval);
+		पूर्ण
+		ret_val = hw->phy.ops.पढ़ो_reg(hw, PHY_STATUS, &phy_status);
+		अगर (ret_val)
+			अवरोध;
+		अगर (phy_status & MII_SR_LINK_STATUS)
+			अवरोध;
+		अगर (usec_पूर्णांकerval >= 1000)
+			mdelay(usec_पूर्णांकerval/1000);
+		अन्यथा
+			udelay(usec_पूर्णांकerval);
+	पूर्ण
 
 	*success = (i < iterations) ? true : false;
 
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_get_cable_length_m88 - Determine cable length for m88 PHY
- *  @hw: pointer to the HW structure
+ *  igb_get_cable_length_m88 - Determine cable length क्रम m88 PHY
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Reads the PHY specific status register to retrieve the cable length
- *  information.  The cable length is determined by averaging the minimum and
+ *  Reads the PHY specअगरic status रेजिस्टर to retrieve the cable length
+ *  inक्रमmation.  The cable length is determined by averaging the minimum and
  *  maximum values to get the "average" cable length.  The m88 PHY has four
  *  possible cable length values, which are:
  *	Register Value		Cable Length
@@ -1672,22 +1673,22 @@ s32 igb_phy_has_link(struct e1000_hw *hw, u32 iterations,
  *	3			110 - 140 meters
  *	4			> 140 meters
  **/
-s32 igb_get_cable_length_m88(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_get_cable_length_m88(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 phy_data, index;
 
-	ret_val = phy->ops.read_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	index = (phy_data & M88E1000_PSSR_CABLE_LENGTH) >>
 		M88E1000_PSSR_CABLE_LENGTH_SHIFT;
-	if (index >= ARRAY_SIZE(e1000_m88_cable_length_table) - 1) {
+	अगर (index >= ARRAY_SIZE(e1000_m88_cable_length_table) - 1) अणु
 		ret_val = -E1000_ERR_PHY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	phy->min_cable_length = e1000_m88_cable_length_table[index];
 	phy->max_cable_length = e1000_m88_cable_length_table[index + 1];
@@ -1695,44 +1696,44 @@ s32 igb_get_cable_length_m88(struct e1000_hw *hw)
 	phy->cable_length = (phy->min_cable_length + phy->max_cable_length) / 2;
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
-s32 igb_get_cable_length_m88_gen2(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_get_cable_length_m88_gen2(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
-	u16 phy_data, phy_data2, index, default_page, is_cm;
-	int len_tot = 0;
+	u16 phy_data, phy_data2, index, शेष_page, is_cm;
+	पूर्णांक len_tot = 0;
 	u16 len_min;
 	u16 len_max;
 
-	switch (hw->phy.id) {
-	case M88E1543_E_PHY_ID:
-	case M88E1512_E_PHY_ID:
-	case I347AT4_E_PHY_ID:
-	case I210_I_PHY_ID:
+	चयन (hw->phy.id) अणु
+	हाल M88E1543_E_PHY_ID:
+	हाल M88E1512_E_PHY_ID:
+	हाल I347AT4_E_PHY_ID:
+	हाल I210_I_PHY_ID:
 		/* Remember the original page select and set it to 7 */
-		ret_val = phy->ops.read_reg(hw, I347AT4_PAGE_SELECT,
-					    &default_page);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.पढ़ो_reg(hw, I347AT4_PAGE_SELECT,
+					    &शेष_page);
+		अगर (ret_val)
+			जाओ out;
 
-		ret_val = phy->ops.write_reg(hw, I347AT4_PAGE_SELECT, 0x07);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.ग_लिखो_reg(hw, I347AT4_PAGE_SELECT, 0x07);
+		अगर (ret_val)
+			जाओ out;
 
-		/* Check if the unit of cable length is meters or cm */
-		ret_val = phy->ops.read_reg(hw, I347AT4_PCDC, &phy_data2);
-		if (ret_val)
-			goto out;
+		/* Check अगर the unit of cable length is meters or cm */
+		ret_val = phy->ops.पढ़ो_reg(hw, I347AT4_PCDC, &phy_data2);
+		अगर (ret_val)
+			जाओ out;
 
 		is_cm = !(phy_data2 & I347AT4_PCDC_CABLE_LENGTH_UNIT);
 
 		/* Get cable length from Pair 0 length Regs */
-		ret_val = phy->ops.read_reg(hw, I347AT4_PCDL0, &phy_data);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.पढ़ो_reg(hw, I347AT4_PCDL0, &phy_data);
+		अगर (ret_val)
+			जाओ out;
 
 		phy->pair_length[0] = phy_data / (is_cm ? 100 : 1);
 		len_tot = phy->pair_length[0];
@@ -1740,9 +1741,9 @@ s32 igb_get_cable_length_m88_gen2(struct e1000_hw *hw)
 		len_max = phy->pair_length[0];
 
 		/* Get cable length from Pair 1 length Regs */
-		ret_val = phy->ops.read_reg(hw, I347AT4_PCDL1, &phy_data);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.पढ़ो_reg(hw, I347AT4_PCDL1, &phy_data);
+		अगर (ret_val)
+			जाओ out;
 
 		phy->pair_length[1] = phy_data / (is_cm ? 100 : 1);
 		len_tot += phy->pair_length[1];
@@ -1750,9 +1751,9 @@ s32 igb_get_cable_length_m88_gen2(struct e1000_hw *hw)
 		len_max = max(len_max, phy->pair_length[1]);
 
 		/* Get cable length from Pair 2 length Regs */
-		ret_val = phy->ops.read_reg(hw, I347AT4_PCDL2, &phy_data);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.पढ़ो_reg(hw, I347AT4_PCDL2, &phy_data);
+		अगर (ret_val)
+			जाओ out;
 
 		phy->pair_length[2] = phy_data / (is_cm ? 100 : 1);
 		len_tot += phy->pair_length[2];
@@ -1760,48 +1761,48 @@ s32 igb_get_cable_length_m88_gen2(struct e1000_hw *hw)
 		len_max = max(len_max, phy->pair_length[2]);
 
 		/* Get cable length from Pair 3 length Regs */
-		ret_val = phy->ops.read_reg(hw, I347AT4_PCDL3, &phy_data);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.पढ़ो_reg(hw, I347AT4_PCDL3, &phy_data);
+		अगर (ret_val)
+			जाओ out;
 
 		phy->pair_length[3] = phy_data / (is_cm ? 100 : 1);
 		len_tot += phy->pair_length[3];
 		len_min = min(len_min, phy->pair_length[3]);
 		len_max = max(len_max, phy->pair_length[3]);
 
-		/* Populate the phy structure with cable length in meters */
+		/* Populate the phy काष्ठाure with cable length in meters */
 		phy->min_cable_length = len_min;
 		phy->max_cable_length = len_max;
 		phy->cable_length = len_tot / 4;
 
 		/* Reset the page selec to its original value */
-		ret_val = phy->ops.write_reg(hw, I347AT4_PAGE_SELECT,
-					     default_page);
-		if (ret_val)
-			goto out;
-		break;
-	case M88E1112_E_PHY_ID:
+		ret_val = phy->ops.ग_लिखो_reg(hw, I347AT4_PAGE_SELECT,
+					     शेष_page);
+		अगर (ret_val)
+			जाओ out;
+		अवरोध;
+	हाल M88E1112_E_PHY_ID:
 		/* Remember the original page select and set it to 5 */
-		ret_val = phy->ops.read_reg(hw, I347AT4_PAGE_SELECT,
-					    &default_page);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.पढ़ो_reg(hw, I347AT4_PAGE_SELECT,
+					    &शेष_page);
+		अगर (ret_val)
+			जाओ out;
 
-		ret_val = phy->ops.write_reg(hw, I347AT4_PAGE_SELECT, 0x05);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.ग_लिखो_reg(hw, I347AT4_PAGE_SELECT, 0x05);
+		अगर (ret_val)
+			जाओ out;
 
-		ret_val = phy->ops.read_reg(hw, M88E1112_VCT_DSP_DISTANCE,
+		ret_val = phy->ops.पढ़ो_reg(hw, M88E1112_VCT_DSP_DISTANCE,
 					    &phy_data);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
 		index = (phy_data & M88E1000_PSSR_CABLE_LENGTH) >>
 			M88E1000_PSSR_CABLE_LENGTH_SHIFT;
-		if (index >= ARRAY_SIZE(e1000_m88_cable_length_table) - 1) {
+		अगर (index >= ARRAY_SIZE(e1000_m88_cable_length_table) - 1) अणु
 			ret_val = -E1000_ERR_PHY;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		phy->min_cable_length = e1000_m88_cable_length_table[index];
 		phy->max_cable_length = e1000_m88_cable_length_table[index + 1];
@@ -1810,77 +1811,77 @@ s32 igb_get_cable_length_m88_gen2(struct e1000_hw *hw)
 				     phy->max_cable_length) / 2;
 
 		/* Reset the page select to its original value */
-		ret_val = phy->ops.write_reg(hw, I347AT4_PAGE_SELECT,
-					     default_page);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.ग_लिखो_reg(hw, I347AT4_PAGE_SELECT,
+					     शेष_page);
+		अगर (ret_val)
+			जाओ out;
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret_val = -E1000_ERR_PHY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_get_cable_length_igp_2 - Determine cable length for igp2 PHY
- *  @hw: pointer to the HW structure
+ *  igb_get_cable_length_igp_2 - Determine cable length क्रम igp2 PHY
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  The automatic gain control (agc) normalizes the amplitude of the
- *  received signal, adjusting for the attenuation produced by the
- *  cable.  By reading the AGC registers, which represent the
+ *  The स्वतःmatic gain control (agc) normalizes the amplitude of the
+ *  received संकेत, adjusting क्रम the attenuation produced by the
+ *  cable.  By पढ़ोing the AGC रेजिस्टरs, which represent the
  *  combination of coarse and fine gain value, the value can be put
- *  into a lookup table to obtain the approximate cable length
- *  for each channel.
+ *  पूर्णांकo a lookup table to obtain the approximate cable length
+ *  क्रम each channel.
  **/
-s32 igb_get_cable_length_igp_2(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_get_cable_length_igp_2(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val = 0;
 	u16 phy_data, i, agc_value = 0;
 	u16 cur_agc_index, max_agc_index = 0;
 	u16 min_agc_index = ARRAY_SIZE(e1000_igp_2_cable_length_table) - 1;
-	static const u16 agc_reg_array[IGP02E1000_PHY_CHANNEL_NUM] = {
+	अटल स्थिर u16 agc_reg_array[IGP02E1000_PHY_CHANNEL_NUM] = अणु
 		IGP02E1000_PHY_AGC_A,
 		IGP02E1000_PHY_AGC_B,
 		IGP02E1000_PHY_AGC_C,
 		IGP02E1000_PHY_AGC_D
-	};
+	पूर्ण;
 
-	/* Read the AGC registers for all channels */
-	for (i = 0; i < IGP02E1000_PHY_CHANNEL_NUM; i++) {
-		ret_val = phy->ops.read_reg(hw, agc_reg_array[i], &phy_data);
-		if (ret_val)
-			goto out;
+	/* Read the AGC रेजिस्टरs क्रम all channels */
+	क्रम (i = 0; i < IGP02E1000_PHY_CHANNEL_NUM; i++) अणु
+		ret_val = phy->ops.पढ़ो_reg(hw, agc_reg_array[i], &phy_data);
+		अगर (ret_val)
+			जाओ out;
 
 		/* Getting bits 15:9, which represent the combination of
 		 * coarse and fine gain values.  The result is a number
-		 * that can be put into the lookup table to obtain the
+		 * that can be put पूर्णांकo the lookup table to obtain the
 		 * approximate cable length.
 		 */
 		cur_agc_index = (phy_data >> IGP02E1000_AGC_LENGTH_SHIFT) &
 				IGP02E1000_AGC_LENGTH_MASK;
 
 		/* Array index bound check. */
-		if ((cur_agc_index >= ARRAY_SIZE(e1000_igp_2_cable_length_table)) ||
-		    (cur_agc_index == 0)) {
+		अगर ((cur_agc_index >= ARRAY_SIZE(e1000_igp_2_cable_length_table)) ||
+		    (cur_agc_index == 0)) अणु
 			ret_val = -E1000_ERR_PHY;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* Remove min & max AGC values from calculation. */
-		if (e1000_igp_2_cable_length_table[min_agc_index] >
+		अगर (e1000_igp_2_cable_length_table[min_agc_index] >
 		    e1000_igp_2_cable_length_table[cur_agc_index])
 			min_agc_index = cur_agc_index;
-		if (e1000_igp_2_cable_length_table[max_agc_index] <
+		अगर (e1000_igp_2_cable_length_table[max_agc_index] <
 		    e1000_igp_2_cable_length_table[cur_agc_index])
 			max_agc_index = cur_agc_index;
 
 		agc_value += e1000_igp_2_cable_length_table[cur_agc_index];
-	}
+	पूर्ण
 
 	agc_value -= (e1000_igp_2_cable_length_table[min_agc_index] +
 		      e1000_igp_2_cable_length_table[max_agc_index]);
@@ -1894,67 +1895,67 @@ s32 igb_get_cable_length_igp_2(struct e1000_hw *hw)
 	phy->cable_length = (phy->min_cable_length + phy->max_cable_length) / 2;
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_get_phy_info_m88 - Retrieve PHY information
- *  @hw: pointer to the HW structure
+ *  igb_get_phy_info_m88 - Retrieve PHY inक्रमmation
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Valid for only copper links.  Read the PHY status register (sticky read)
- *  to verify that link is up.  Read the PHY special control register to
+ *  Valid क्रम only copper links.  Read the PHY status रेजिस्टर (sticky पढ़ो)
+ *  to verअगरy that link is up.  Read the PHY special control रेजिस्टर to
  *  determine the polarity and 10base-T extended distance.  Read the PHY
- *  special status register to determine MDI/MDIx and current speed.  If
+ *  special status रेजिस्टर to determine MDI/MDIx and current speed.  If
  *  speed is 1000, then determine cable length, local and remote receiver.
  **/
-s32 igb_get_phy_info_m88(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_get_phy_info_m88(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32  ret_val;
 	u16 phy_data;
 	bool link;
 
-	if (phy->media_type != e1000_media_type_copper) {
+	अगर (phy->media_type != e1000_media_type_copper) अणु
 		hw_dbg("Phy info is only valid for copper media\n");
 		ret_val = -E1000_ERR_CONFIG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret_val = igb_phy_has_link(hw, 1, 0, &link);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
-	if (!link) {
+	अगर (!link) अणु
 		hw_dbg("Phy info is only valid if link is up\n");
 		ret_val = -E1000_ERR_CONFIG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret_val = phy->ops.read_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	phy->polarity_correction = (phy_data & M88E1000_PSCR_POLARITY_REVERSAL)
 				   ? true : false;
 
 	ret_val = igb_check_polarity_m88(hw);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.read_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	phy->is_mdix = (phy_data & M88E1000_PSSR_MDIX) ? true : false;
 
-	if ((phy_data & M88E1000_PSSR_SPEED) == M88E1000_PSSR_1000MBS) {
+	अगर ((phy_data & M88E1000_PSSR_SPEED) == M88E1000_PSSR_1000MBS) अणु
 		ret_val = phy->ops.get_cable_length(hw);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
-		ret_val = phy->ops.read_reg(hw, PHY_1000T_STATUS, &phy_data);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.पढ़ो_reg(hw, PHY_1000T_STATUS, &phy_data);
+		अगर (ret_val)
+			जाओ out;
 
 		phy->local_rx = (phy_data & SR_1000T_LOCAL_RX_STATUS)
 				? e1000_1000t_rx_status_ok
@@ -1963,64 +1964,64 @@ s32 igb_get_phy_info_m88(struct e1000_hw *hw)
 		phy->remote_rx = (phy_data & SR_1000T_REMOTE_RX_STATUS)
 				 ? e1000_1000t_rx_status_ok
 				 : e1000_1000t_rx_status_not_ok;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Set values to "undefined" */
 		phy->cable_length = E1000_CABLE_LENGTH_UNDEFINED;
 		phy->local_rx = e1000_1000t_rx_status_undefined;
 		phy->remote_rx = e1000_1000t_rx_status_undefined;
-	}
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_get_phy_info_igp - Retrieve igp PHY information
- *  @hw: pointer to the HW structure
+ *  igb_get_phy_info_igp - Retrieve igp PHY inक्रमmation
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Read PHY status to determine if link is up.  If link is up, then
+ *  Read PHY status to determine अगर link is up.  If link is up, then
  *  set/determine 10base-T extended distance and polarity correction.  Read
  *  PHY port status to determine MDI/MDIx and speed.  Based on the speed,
  *  determine on the cable length, local and remote receiver.
  **/
-s32 igb_get_phy_info_igp(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_get_phy_info_igp(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 data;
 	bool link;
 
 	ret_val = igb_phy_has_link(hw, 1, 0, &link);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
-	if (!link) {
+	अगर (!link) अणु
 		hw_dbg("Phy info is only valid if link is up\n");
 		ret_val = -E1000_ERR_CONFIG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	phy->polarity_correction = true;
 
 	ret_val = igb_check_polarity_igp(hw);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.read_reg(hw, IGP01E1000_PHY_PORT_STATUS, &data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, IGP01E1000_PHY_PORT_STATUS, &data);
+	अगर (ret_val)
+		जाओ out;
 
 	phy->is_mdix = (data & IGP01E1000_PSSR_MDIX) ? true : false;
 
-	if ((data & IGP01E1000_PSSR_SPEED_MASK) ==
-	    IGP01E1000_PSSR_SPEED_1000MBPS) {
+	अगर ((data & IGP01E1000_PSSR_SPEED_MASK) ==
+	    IGP01E1000_PSSR_SPEED_1000MBPS) अणु
 		ret_val = phy->ops.get_cable_length(hw);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
-		ret_val = phy->ops.read_reg(hw, PHY_1000T_STATUS, &data);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.पढ़ो_reg(hw, PHY_1000T_STATUS, &data);
+		अगर (ret_val)
+			जाओ out;
 
 		phy->local_rx = (data & SR_1000T_LOCAL_RX_STATUS)
 				? e1000_1000t_rx_status_ok
@@ -2029,70 +2030,70 @@ s32 igb_get_phy_info_igp(struct e1000_hw *hw)
 		phy->remote_rx = (data & SR_1000T_REMOTE_RX_STATUS)
 				 ? e1000_1000t_rx_status_ok
 				 : e1000_1000t_rx_status_not_ok;
-	} else {
+	पूर्ण अन्यथा अणु
 		phy->cable_length = E1000_CABLE_LENGTH_UNDEFINED;
 		phy->local_rx = e1000_1000t_rx_status_undefined;
 		phy->remote_rx = e1000_1000t_rx_status_undefined;
-	}
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
  *  igb_phy_sw_reset - PHY software reset
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Does a software reset of the PHY by reading the PHY control register and
- *  setting/write the control register reset bit to the PHY.
+ *  Does a software reset of the PHY by पढ़ोing the PHY control रेजिस्टर and
+ *  setting/ग_लिखो the control रेजिस्टर reset bit to the PHY.
  **/
-s32 igb_phy_sw_reset(struct e1000_hw *hw)
-{
+s32 igb_phy_sw_reset(काष्ठा e1000_hw *hw)
+अणु
 	s32 ret_val = 0;
 	u16 phy_ctrl;
 
-	if (!(hw->phy.ops.read_reg))
-		goto out;
+	अगर (!(hw->phy.ops.पढ़ो_reg))
+		जाओ out;
 
-	ret_val = hw->phy.ops.read_reg(hw, PHY_CONTROL, &phy_ctrl);
-	if (ret_val)
-		goto out;
+	ret_val = hw->phy.ops.पढ़ो_reg(hw, PHY_CONTROL, &phy_ctrl);
+	अगर (ret_val)
+		जाओ out;
 
 	phy_ctrl |= MII_CR_RESET;
-	ret_val = hw->phy.ops.write_reg(hw, PHY_CONTROL, phy_ctrl);
-	if (ret_val)
-		goto out;
+	ret_val = hw->phy.ops.ग_लिखो_reg(hw, PHY_CONTROL, phy_ctrl);
+	अगर (ret_val)
+		जाओ out;
 
 	udelay(1);
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
  *  igb_phy_hw_reset - PHY hardware reset
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Verify the reset block is not blocking us from resetting.  Acquire
- *  semaphore (if necessary) and read/set/write the device control reset
- *  bit in the PHY.  Wait the appropriate delay time for the device to
- *  reset and release the semaphore (if necessary).
+ *  Verअगरy the reset block is not blocking us from resetting.  Acquire
+ *  semaphore (अगर necessary) and पढ़ो/set/ग_लिखो the device control reset
+ *  bit in the PHY.  Wait the appropriate delay समय क्रम the device to
+ *  reset and release the semaphore (अगर necessary).
  **/
-s32 igb_phy_hw_reset(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_phy_hw_reset(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32  ret_val;
 	u32 ctrl;
 
 	ret_val = igb_check_reset_block(hw);
-	if (ret_val) {
+	अगर (ret_val) अणु
 		ret_val = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret_val = phy->ops.acquire(hw);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
 	ctrl = rd32(E1000_CTRL);
 	wr32(E1000_CTRL, ctrl | E1000_CTRL_PHY_RST);
@@ -2107,442 +2108,442 @@ s32 igb_phy_hw_reset(struct e1000_hw *hw)
 
 	phy->ops.release(hw);
 
-	ret_val = phy->ops.get_cfg_done(hw);
+	ret_val = phy->ops.get_cfg_करोne(hw);
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
  *  igb_phy_init_script_igp3 - Inits the IGP3 PHY
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
  *  Initializes a Intel Gigabit PHY3 when an EEPROM is not present.
  **/
-s32 igb_phy_init_script_igp3(struct e1000_hw *hw)
-{
+s32 igb_phy_init_script_igp3(काष्ठा e1000_hw *hw)
+अणु
 	hw_dbg("Running IGP 3 PHY init script\n");
 
 	/* PHY init IGP 3 */
 	/* Enable rise/fall, 10-mode work in class-A */
-	hw->phy.ops.write_reg(hw, 0x2F5B, 0x9018);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x2F5B, 0x9018);
 	/* Remove all caps from Replica path filter */
-	hw->phy.ops.write_reg(hw, 0x2F52, 0x0000);
-	/* Bias trimming for ADC, AFE and Driver (Default) */
-	hw->phy.ops.write_reg(hw, 0x2FB1, 0x8B24);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x2F52, 0x0000);
+	/* Bias trimming क्रम ADC, AFE and Driver (Default) */
+	hw->phy.ops.ग_लिखो_reg(hw, 0x2FB1, 0x8B24);
 	/* Increase Hybrid poly bias */
-	hw->phy.ops.write_reg(hw, 0x2FB2, 0xF8F0);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x2FB2, 0xF8F0);
 	/* Add 4% to TX amplitude in Giga mode */
-	hw->phy.ops.write_reg(hw, 0x2010, 0x10B0);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x2010, 0x10B0);
 	/* Disable trimming (TTT) */
-	hw->phy.ops.write_reg(hw, 0x2011, 0x0000);
-	/* Poly DC correction to 94.6% + 2% for all channels */
-	hw->phy.ops.write_reg(hw, 0x20DD, 0x249A);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x2011, 0x0000);
+	/* Poly DC correction to 94.6% + 2% क्रम all channels */
+	hw->phy.ops.ग_लिखो_reg(hw, 0x20DD, 0x249A);
 	/* ABS DC correction to 95.9% */
-	hw->phy.ops.write_reg(hw, 0x20DE, 0x00D3);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x20DE, 0x00D3);
 	/* BG temp curve trim */
-	hw->phy.ops.write_reg(hw, 0x28B4, 0x04CE);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x28B4, 0x04CE);
 	/* Increasing ADC OPAMP stage 1 currents to max */
-	hw->phy.ops.write_reg(hw, 0x2F70, 0x29E4);
-	/* Force 1000 ( required for enabling PHY regs configuration) */
-	hw->phy.ops.write_reg(hw, 0x0000, 0x0140);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x2F70, 0x29E4);
+	/* Force 1000 ( required क्रम enabling PHY regs configuration) */
+	hw->phy.ops.ग_लिखो_reg(hw, 0x0000, 0x0140);
 	/* Set upd_freq to 6 */
-	hw->phy.ops.write_reg(hw, 0x1F30, 0x1606);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F30, 0x1606);
 	/* Disable NPDFE */
-	hw->phy.ops.write_reg(hw, 0x1F31, 0xB814);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F31, 0xB814);
 	/* Disable adaptive fixed FFE (Default) */
-	hw->phy.ops.write_reg(hw, 0x1F35, 0x002A);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F35, 0x002A);
 	/* Enable FFE hysteresis */
-	hw->phy.ops.write_reg(hw, 0x1F3E, 0x0067);
-	/* Fixed FFE for short cable lengths */
-	hw->phy.ops.write_reg(hw, 0x1F54, 0x0065);
-	/* Fixed FFE for medium cable lengths */
-	hw->phy.ops.write_reg(hw, 0x1F55, 0x002A);
-	/* Fixed FFE for long cable lengths */
-	hw->phy.ops.write_reg(hw, 0x1F56, 0x002A);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F3E, 0x0067);
+	/* Fixed FFE क्रम लघु cable lengths */
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F54, 0x0065);
+	/* Fixed FFE क्रम medium cable lengths */
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F55, 0x002A);
+	/* Fixed FFE क्रम दीर्घ cable lengths */
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F56, 0x002A);
 	/* Enable Adaptive Clip Threshold */
-	hw->phy.ops.write_reg(hw, 0x1F72, 0x3FB0);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F72, 0x3FB0);
 	/* AHT reset limit to 1 */
-	hw->phy.ops.write_reg(hw, 0x1F76, 0xC0FF);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F76, 0xC0FF);
 	/* Set AHT master delay to 127 msec */
-	hw->phy.ops.write_reg(hw, 0x1F77, 0x1DEC);
-	/* Set scan bits for AHT */
-	hw->phy.ops.write_reg(hw, 0x1F78, 0xF9EF);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F77, 0x1DEC);
+	/* Set scan bits क्रम AHT */
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F78, 0xF9EF);
 	/* Set AHT Preset bits */
-	hw->phy.ops.write_reg(hw, 0x1F79, 0x0210);
-	/* Change integ_factor of channel A to 3 */
-	hw->phy.ops.write_reg(hw, 0x1895, 0x0003);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1F79, 0x0210);
+	/* Change पूर्णांकeg_factor of channel A to 3 */
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1895, 0x0003);
 	/* Change prop_factor of channels BCD to 8 */
-	hw->phy.ops.write_reg(hw, 0x1796, 0x0008);
-	/* Change cg_icount + enable integbp for channels BCD */
-	hw->phy.ops.write_reg(hw, 0x1798, 0xD008);
-	/* Change cg_icount + enable integbp + change prop_factor_master
-	 * to 8 for channel A
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1796, 0x0008);
+	/* Change cg_icount + enable पूर्णांकegbp क्रम channels BCD */
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1798, 0xD008);
+	/* Change cg_icount + enable पूर्णांकegbp + change prop_factor_master
+	 * to 8 क्रम channel A
 	 */
-	hw->phy.ops.write_reg(hw, 0x1898, 0xD918);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x1898, 0xD918);
 	/* Disable AHT in Slave mode on channel A */
-	hw->phy.ops.write_reg(hw, 0x187A, 0x0800);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x187A, 0x0800);
 	/* Enable LPLU and disable AN to 1000 in non-D0a states,
 	 * Enable SPD+B2B
 	 */
-	hw->phy.ops.write_reg(hw, 0x0019, 0x008D);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x0019, 0x008D);
 	/* Enable restart AN on an1000_dis change */
-	hw->phy.ops.write_reg(hw, 0x001B, 0x2080);
-	/* Enable wh_fifo read clock in 10/100 modes */
-	hw->phy.ops.write_reg(hw, 0x0014, 0x0045);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x001B, 0x2080);
+	/* Enable wh_fअगरo पढ़ो घड़ी in 10/100 modes */
+	hw->phy.ops.ग_लिखो_reg(hw, 0x0014, 0x0045);
 	/* Restart AN, Speed selection is 1000 */
-	hw->phy.ops.write_reg(hw, 0x0000, 0x1340);
+	hw->phy.ops.ग_लिखो_reg(hw, 0x0000, 0x1340);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *  igb_initialize_M88E1512_phy - Initialize M88E1512 PHY
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
  *  Initialize Marvel 1512 to work correctly with Avoton.
  **/
-s32 igb_initialize_M88E1512_phy(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_initialize_M88E1512_phy(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val = 0;
 
 	/* Switch to PHY page 0xFF. */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x00FF);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x00FF);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_2, 0x214B);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_2, 0x214B);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2144);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2144);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_2, 0x0C28);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_2, 0x0C28);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2146);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2146);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_2, 0xB233);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_2, 0xB233);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_1, 0x214D);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_1, 0x214D);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_2, 0xCC0C);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_2, 0xCC0C);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2159);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2159);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Switch to PHY page 0xFB. */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x00FB);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x00FB);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_3, 0x000D);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_3, 0x000D);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Switch to PHY page 0x12. */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x12);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x12);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Change mode to SGMII-to-Copper */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_MODE, 0x8001);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_MODE, 0x8001);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Return the PHY to page 0. */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1543_PAGE_ADDR, 0);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1543_PAGE_ADDR, 0);
+	अगर (ret_val)
+		जाओ out;
 
 	ret_val = igb_phy_sw_reset(hw);
-	if (ret_val) {
+	अगर (ret_val) अणु
 		hw_dbg("Error committing the PHY changes\n");
-		return ret_val;
-	}
+		वापस ret_val;
+	पूर्ण
 
 	/* msec_delay(1000); */
 	usleep_range(1000, 2000);
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
  *  igb_initialize_M88E1543_phy - Initialize M88E1512 PHY
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
  *  Initialize Marvell 1543 to work correctly with Avoton.
  **/
-s32 igb_initialize_M88E1543_phy(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_initialize_M88E1543_phy(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val = 0;
 
 	/* Switch to PHY page 0xFF. */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x00FF);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x00FF);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_2, 0x214B);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_2, 0x214B);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2144);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2144);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_2, 0x0C28);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_2, 0x0C28);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2146);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2146);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_2, 0xB233);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_2, 0xB233);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_1, 0x214D);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_1, 0x214D);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_2, 0xDC0C);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_2, 0xDC0C);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2159);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_1, 0x2159);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Switch to PHY page 0xFB. */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x00FB);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x00FB);
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_CFG_REG_3, 0x0C0D);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_CFG_REG_3, 0x0C0D);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Switch to PHY page 0x12. */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x12);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x12);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Change mode to SGMII-to-Copper */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1512_MODE, 0x8001);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1512_MODE, 0x8001);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Switch to PHY page 1. */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x1);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1543_PAGE_ADDR, 0x1);
+	अगर (ret_val)
+		जाओ out;
 
-	/* Change mode to 1000BASE-X/SGMII and autoneg enable */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1543_FIBER_CTRL, 0x9140);
-	if (ret_val)
-		goto out;
+	/* Change mode to 1000BASE-X/SGMII and स्वतःneg enable */
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1543_FIBER_CTRL, 0x9140);
+	अगर (ret_val)
+		जाओ out;
 
 	/* Return the PHY to page 0. */
-	ret_val = phy->ops.write_reg(hw, E1000_M88E1543_PAGE_ADDR, 0);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, E1000_M88E1543_PAGE_ADDR, 0);
+	अगर (ret_val)
+		जाओ out;
 
 	ret_val = igb_phy_sw_reset(hw);
-	if (ret_val) {
+	अगर (ret_val) अणु
 		hw_dbg("Error committing the PHY changes\n");
-		return ret_val;
-	}
+		वापस ret_val;
+	पूर्ण
 
 	/* msec_delay(1000); */
 	usleep_range(1000, 2000);
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- * igb_power_up_phy_copper - Restore copper link in case of PHY power down
- * @hw: pointer to the HW structure
+ * igb_घातer_up_phy_copper - Restore copper link in हाल of PHY घातer करोwn
+ * @hw: poपूर्णांकer to the HW काष्ठाure
  *
- * In the case of a PHY power down to save power, or to turn off link during a
+ * In the हाल of a PHY घातer करोwn to save घातer, or to turn off link during a
  * driver unload, restore the link to previous settings.
  **/
-void igb_power_up_phy_copper(struct e1000_hw *hw)
-{
+व्योम igb_घातer_up_phy_copper(काष्ठा e1000_hw *hw)
+अणु
 	u16 mii_reg = 0;
 
-	/* The PHY will retain its settings across a power down/up cycle */
-	hw->phy.ops.read_reg(hw, PHY_CONTROL, &mii_reg);
+	/* The PHY will retain its settings across a घातer करोwn/up cycle */
+	hw->phy.ops.पढ़ो_reg(hw, PHY_CONTROL, &mii_reg);
 	mii_reg &= ~MII_CR_POWER_DOWN;
-	hw->phy.ops.write_reg(hw, PHY_CONTROL, mii_reg);
-}
+	hw->phy.ops.ग_लिखो_reg(hw, PHY_CONTROL, mii_reg);
+पूर्ण
 
 /**
- * igb_power_down_phy_copper - Power down copper PHY
- * @hw: pointer to the HW structure
+ * igb_घातer_करोwn_phy_copper - Power करोwn copper PHY
+ * @hw: poपूर्णांकer to the HW काष्ठाure
  *
- * Power down PHY to save power when interface is down and wake on lan
+ * Power करोwn PHY to save घातer when पूर्णांकerface is करोwn and wake on lan
  * is not enabled.
  **/
-void igb_power_down_phy_copper(struct e1000_hw *hw)
-{
+व्योम igb_घातer_करोwn_phy_copper(काष्ठा e1000_hw *hw)
+अणु
 	u16 mii_reg = 0;
 
-	/* The PHY will retain its settings across a power down/up cycle */
-	hw->phy.ops.read_reg(hw, PHY_CONTROL, &mii_reg);
+	/* The PHY will retain its settings across a घातer करोwn/up cycle */
+	hw->phy.ops.पढ़ो_reg(hw, PHY_CONTROL, &mii_reg);
 	mii_reg |= MII_CR_POWER_DOWN;
-	hw->phy.ops.write_reg(hw, PHY_CONTROL, mii_reg);
+	hw->phy.ops.ग_लिखो_reg(hw, PHY_CONTROL, mii_reg);
 	usleep_range(1000, 2000);
-}
+पूर्ण
 
 /**
  *  igb_check_polarity_82580 - Checks the polarity.
- *  @hw: pointer to the HW structure
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Success returns 0, Failure returns -E1000_ERR_PHY (-2)
+ *  Success वापसs 0, Failure वापसs -E1000_ERR_PHY (-2)
  *
- *  Polarity is determined based on the PHY specific status register.
+ *  Polarity is determined based on the PHY specअगरic status रेजिस्टर.
  **/
-static s32 igb_check_polarity_82580(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+अटल s32 igb_check_polarity_82580(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 data;
 
 
-	ret_val = phy->ops.read_reg(hw, I82580_PHY_STATUS_2, &data);
+	ret_val = phy->ops.पढ़ो_reg(hw, I82580_PHY_STATUS_2, &data);
 
-	if (!ret_val)
+	अगर (!ret_val)
 		phy->cable_polarity = (data & I82580_PHY_STATUS2_REV_POLARITY)
 				      ? e1000_rev_polarity_reversed
 				      : e1000_rev_polarity_normal;
 
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_phy_force_speed_duplex_82580 - Force speed/duplex for I82580 PHY
- *  @hw: pointer to the HW structure
+ *  igb_phy_क्रमce_speed_duplex_82580 - Force speed/duplex क्रम I82580 PHY
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Calls the PHY setup function to force speed and duplex.  Clears the
- *  auto-crossover to force MDI manually.  Waits for link and returns
- *  successful if link up is successful, else -E1000_ERR_PHY (-2).
+ *  Calls the PHY setup function to क्रमce speed and duplex.  Clears the
+ *  स्वतः-crossover to क्रमce MDI manually.  Waits क्रम link and वापसs
+ *  successful अगर link up is successful, अन्यथा -E1000_ERR_PHY (-2).
  **/
-s32 igb_phy_force_speed_duplex_82580(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_phy_क्रमce_speed_duplex_82580(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 phy_data;
 	bool link;
 
-	ret_val = phy->ops.read_reg(hw, PHY_CONTROL, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, PHY_CONTROL, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
-	igb_phy_force_speed_duplex_setup(hw, &phy_data);
+	igb_phy_क्रमce_speed_duplex_setup(hw, &phy_data);
 
-	ret_val = phy->ops.write_reg(hw, PHY_CONTROL, phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, PHY_CONTROL, phy_data);
+	अगर (ret_val)
+		जाओ out;
 
-	/* Clear Auto-Crossover to force MDI manually.  82580 requires MDI
-	 * forced whenever speed and duplex are forced.
+	/* Clear Auto-Crossover to क्रमce MDI manually.  82580 requires MDI
+	 * क्रमced whenever speed and duplex are क्रमced.
 	 */
-	ret_val = phy->ops.read_reg(hw, I82580_PHY_CTRL_2, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, I82580_PHY_CTRL_2, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	phy_data &= ~I82580_PHY_CTRL2_MDIX_CFG_MASK;
 
-	ret_val = phy->ops.write_reg(hw, I82580_PHY_CTRL_2, phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.ग_लिखो_reg(hw, I82580_PHY_CTRL_2, phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	hw_dbg("I82580_PHY_CTRL_2: %X\n", phy_data);
 
 	udelay(1);
 
-	if (phy->autoneg_wait_to_complete) {
+	अगर (phy->स्वतःneg_रुको_to_complete) अणु
 		hw_dbg("Waiting for forced speed/duplex link on 82580 phy\n");
 
 		ret_val = igb_phy_has_link(hw, PHY_FORCE_LIMIT, 100000, &link);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
-		if (!link)
+		अगर (!link)
 			hw_dbg("Link taking longer than expected.\n");
 
 		/* Try once more */
 		ret_val = igb_phy_has_link(hw, PHY_FORCE_LIMIT, 100000, &link);
-		if (ret_val)
-			goto out;
-	}
+		अगर (ret_val)
+			जाओ out;
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_get_phy_info_82580 - Retrieve I82580 PHY information
- *  @hw: pointer to the HW structure
+ *  igb_get_phy_info_82580 - Retrieve I82580 PHY inक्रमmation
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- *  Read PHY status to determine if link is up.  If link is up, then
+ *  Read PHY status to determine अगर link is up.  If link is up, then
  *  set/determine 10base-T extended distance and polarity correction.  Read
  *  PHY port status to determine MDI/MDIx and speed.  Based on the speed,
  *  determine on the cable length, local and remote receiver.
  **/
-s32 igb_get_phy_info_82580(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_get_phy_info_82580(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 data;
 	bool link;
 
 	ret_val = igb_phy_has_link(hw, 1, 0, &link);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
-	if (!link) {
+	अगर (!link) अणु
 		hw_dbg("Phy info is only valid if link is up\n");
 		ret_val = -E1000_ERR_CONFIG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	phy->polarity_correction = true;
 
 	ret_val = igb_check_polarity_82580(hw);
-	if (ret_val)
-		goto out;
+	अगर (ret_val)
+		जाओ out;
 
-	ret_val = phy->ops.read_reg(hw, I82580_PHY_STATUS_2, &data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, I82580_PHY_STATUS_2, &data);
+	अगर (ret_val)
+		जाओ out;
 
 	phy->is_mdix = (data & I82580_PHY_STATUS2_MDIX) ? true : false;
 
-	if ((data & I82580_PHY_STATUS2_SPEED_MASK) ==
-	    I82580_PHY_STATUS2_SPEED_1000MBPS) {
+	अगर ((data & I82580_PHY_STATUS2_SPEED_MASK) ==
+	    I82580_PHY_STATUS2_SPEED_1000MBPS) अणु
 		ret_val = hw->phy.ops.get_cable_length(hw);
-		if (ret_val)
-			goto out;
+		अगर (ret_val)
+			जाओ out;
 
-		ret_val = phy->ops.read_reg(hw, PHY_1000T_STATUS, &data);
-		if (ret_val)
-			goto out;
+		ret_val = phy->ops.पढ़ो_reg(hw, PHY_1000T_STATUS, &data);
+		अगर (ret_val)
+			जाओ out;
 
 		phy->local_rx = (data & SR_1000T_LOCAL_RX_STATUS)
 				? e1000_1000t_rx_status_ok
@@ -2551,81 +2552,81 @@ s32 igb_get_phy_info_82580(struct e1000_hw *hw)
 		phy->remote_rx = (data & SR_1000T_REMOTE_RX_STATUS)
 				 ? e1000_1000t_rx_status_ok
 				 : e1000_1000t_rx_status_not_ok;
-	} else {
+	पूर्ण अन्यथा अणु
 		phy->cable_length = E1000_CABLE_LENGTH_UNDEFINED;
 		phy->local_rx = e1000_1000t_rx_status_undefined;
 		phy->remote_rx = e1000_1000t_rx_status_undefined;
-	}
+	पूर्ण
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_get_cable_length_82580 - Determine cable length for 82580 PHY
- *  @hw: pointer to the HW structure
+ *  igb_get_cable_length_82580 - Determine cable length क्रम 82580 PHY
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
- * Reads the diagnostic status register and verifies result is valid before
+ * Reads the diagnostic status रेजिस्टर and verअगरies result is valid beक्रमe
  * placing it in the phy_cable_length field.
  **/
-s32 igb_get_cable_length_82580(struct e1000_hw *hw)
-{
-	struct e1000_phy_info *phy = &hw->phy;
+s32 igb_get_cable_length_82580(काष्ठा e1000_hw *hw)
+अणु
+	काष्ठा e1000_phy_info *phy = &hw->phy;
 	s32 ret_val;
 	u16 phy_data, length;
 
-	ret_val = phy->ops.read_reg(hw, I82580_PHY_DIAG_STATUS, &phy_data);
-	if (ret_val)
-		goto out;
+	ret_val = phy->ops.पढ़ो_reg(hw, I82580_PHY_DIAG_STATUS, &phy_data);
+	अगर (ret_val)
+		जाओ out;
 
 	length = (phy_data & I82580_DSTATUS_CABLE_LENGTH) >>
 		 I82580_DSTATUS_CABLE_LENGTH_SHIFT;
 
-	if (length == E1000_CABLE_LENGTH_UNDEFINED)
+	अगर (length == E1000_CABLE_LENGTH_UNDEFINED)
 		ret_val = -E1000_ERR_PHY;
 
 	phy->cable_length = length;
 
 out:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
 /**
- *  igb_set_master_slave_mode - Setup PHY for Master/slave mode
- *  @hw: pointer to the HW structure
+ *  igb_set_master_slave_mode - Setup PHY क्रम Master/slave mode
+ *  @hw: poपूर्णांकer to the HW काष्ठाure
  *
  *  Sets up Master/slave mode
  **/
-static s32 igb_set_master_slave_mode(struct e1000_hw *hw)
-{
+अटल s32 igb_set_master_slave_mode(काष्ठा e1000_hw *hw)
+अणु
 	s32 ret_val;
 	u16 phy_data;
 
 	/* Resolve Master/Slave mode */
-	ret_val = hw->phy.ops.read_reg(hw, PHY_1000T_CTRL, &phy_data);
-	if (ret_val)
-		return ret_val;
+	ret_val = hw->phy.ops.पढ़ो_reg(hw, PHY_1000T_CTRL, &phy_data);
+	अगर (ret_val)
+		वापस ret_val;
 
-	/* load defaults for future use */
+	/* load शेषs क्रम future use */
 	hw->phy.original_ms_type = (phy_data & CR_1000T_MS_ENABLE) ?
 				   ((phy_data & CR_1000T_MS_VALUE) ?
-				    e1000_ms_force_master :
-				    e1000_ms_force_slave) : e1000_ms_auto;
+				    e1000_ms_क्रमce_master :
+				    e1000_ms_क्रमce_slave) : e1000_ms_स्वतः;
 
-	switch (hw->phy.ms_type) {
-	case e1000_ms_force_master:
+	चयन (hw->phy.ms_type) अणु
+	हाल e1000_ms_क्रमce_master:
 		phy_data |= (CR_1000T_MS_ENABLE | CR_1000T_MS_VALUE);
-		break;
-	case e1000_ms_force_slave:
+		अवरोध;
+	हाल e1000_ms_क्रमce_slave:
 		phy_data |= CR_1000T_MS_ENABLE;
 		phy_data &= ~(CR_1000T_MS_VALUE);
-		break;
-	case e1000_ms_auto:
+		अवरोध;
+	हाल e1000_ms_स्वतः:
 		phy_data &= ~CR_1000T_MS_ENABLE;
 		fallthrough;
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return hw->phy.ops.write_reg(hw, PHY_1000T_CTRL, phy_data);
-}
+	वापस hw->phy.ops.ग_लिखो_reg(hw, PHY_1000T_CTRL, phy_data);
+पूर्ण

@@ -1,182 +1,183 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include "netlink.h"
-#include "common.h"
-#include <linux/phy.h>
+#समावेश "netlink.h"
+#समावेश "common.h"
+#समावेश <linux/phy.h>
 
-struct linkstate_req_info {
-	struct ethnl_req_info		base;
-};
+काष्ठा linkstate_req_info अणु
+	काष्ठा ethnl_req_info		base;
+पूर्ण;
 
-struct linkstate_reply_data {
-	struct ethnl_reply_data			base;
-	int					link;
-	int					sqi;
-	int					sqi_max;
+काष्ठा linkstate_reply_data अणु
+	काष्ठा ethnl_reply_data			base;
+	पूर्णांक					link;
+	पूर्णांक					sqi;
+	पूर्णांक					sqi_max;
 	bool					link_ext_state_provided;
-	struct ethtool_link_ext_state_info	ethtool_link_ext_state_info;
-};
+	काष्ठा ethtool_link_ext_state_info	ethtool_link_ext_state_info;
+पूर्ण;
 
-#define LINKSTATE_REPDATA(__reply_base) \
-	container_of(__reply_base, struct linkstate_reply_data, base)
+#घोषणा LINKSTATE_REPDATA(__reply_base) \
+	container_of(__reply_base, काष्ठा linkstate_reply_data, base)
 
-const struct nla_policy ethnl_linkstate_get_policy[] = {
+स्थिर काष्ठा nla_policy ethnl_linkstate_get_policy[] = अणु
 	[ETHTOOL_A_LINKSTATE_HEADER]		=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-};
+पूर्ण;
 
-static int linkstate_get_sqi(struct net_device *dev)
-{
-	struct phy_device *phydev = dev->phydev;
-	int ret;
+अटल पूर्णांक linkstate_get_sqi(काष्ठा net_device *dev)
+अणु
+	काष्ठा phy_device *phydev = dev->phydev;
+	पूर्णांक ret;
 
-	if (!phydev)
-		return -EOPNOTSUPP;
+	अगर (!phydev)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&phydev->lock);
-	if (!phydev->drv || !phydev->drv->get_sqi)
+	अगर (!phydev->drv || !phydev->drv->get_sqi)
 		ret = -EOPNOTSUPP;
-	else
+	अन्यथा
 		ret = phydev->drv->get_sqi(phydev);
 	mutex_unlock(&phydev->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int linkstate_get_sqi_max(struct net_device *dev)
-{
-	struct phy_device *phydev = dev->phydev;
-	int ret;
+अटल पूर्णांक linkstate_get_sqi_max(काष्ठा net_device *dev)
+अणु
+	काष्ठा phy_device *phydev = dev->phydev;
+	पूर्णांक ret;
 
-	if (!phydev)
-		return -EOPNOTSUPP;
+	अगर (!phydev)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&phydev->lock);
-	if (!phydev->drv || !phydev->drv->get_sqi_max)
+	अगर (!phydev->drv || !phydev->drv->get_sqi_max)
 		ret = -EOPNOTSUPP;
-	else
+	अन्यथा
 		ret = phydev->drv->get_sqi_max(phydev);
 	mutex_unlock(&phydev->lock);
 
-	return ret;
-};
+	वापस ret;
+पूर्ण;
 
-static int linkstate_get_link_ext_state(struct net_device *dev,
-					struct linkstate_reply_data *data)
-{
-	int err;
+अटल पूर्णांक linkstate_get_link_ext_state(काष्ठा net_device *dev,
+					काष्ठा linkstate_reply_data *data)
+अणु
+	पूर्णांक err;
 
-	if (!dev->ethtool_ops->get_link_ext_state)
-		return -EOPNOTSUPP;
+	अगर (!dev->ethtool_ops->get_link_ext_state)
+		वापस -EOPNOTSUPP;
 
 	err = dev->ethtool_ops->get_link_ext_state(dev, &data->ethtool_link_ext_state_info);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	data->link_ext_state_provided = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int linkstate_prepare_data(const struct ethnl_req_info *req_base,
-				  struct ethnl_reply_data *reply_base,
-				  struct genl_info *info)
-{
-	struct linkstate_reply_data *data = LINKSTATE_REPDATA(reply_base);
-	struct net_device *dev = reply_base->dev;
-	int ret;
+अटल पूर्णांक linkstate_prepare_data(स्थिर काष्ठा ethnl_req_info *req_base,
+				  काष्ठा ethnl_reply_data *reply_base,
+				  काष्ठा genl_info *info)
+अणु
+	काष्ठा linkstate_reply_data *data = LINKSTATE_REPDATA(reply_base);
+	काष्ठा net_device *dev = reply_base->dev;
+	पूर्णांक ret;
 
 	ret = ethnl_ops_begin(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	data->link = __ethtool_get_link(dev);
 
 	ret = linkstate_get_sqi(dev);
-	if (ret < 0 && ret != -EOPNOTSUPP)
-		goto out;
+	अगर (ret < 0 && ret != -EOPNOTSUPP)
+		जाओ out;
 	data->sqi = ret;
 
 	ret = linkstate_get_sqi_max(dev);
-	if (ret < 0 && ret != -EOPNOTSUPP)
-		goto out;
+	अगर (ret < 0 && ret != -EOPNOTSUPP)
+		जाओ out;
 	data->sqi_max = ret;
 
-	if (dev->flags & IFF_UP) {
+	अगर (dev->flags & IFF_UP) अणु
 		ret = linkstate_get_link_ext_state(dev, data);
-		if (ret < 0 && ret != -EOPNOTSUPP && ret != -ENODATA)
-			goto out;
-	}
+		अगर (ret < 0 && ret != -EOPNOTSUPP && ret != -ENODATA)
+			जाओ out;
+	पूर्ण
 
 	ret = 0;
 out:
 	ethnl_ops_complete(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int linkstate_reply_size(const struct ethnl_req_info *req_base,
-				const struct ethnl_reply_data *reply_base)
-{
-	struct linkstate_reply_data *data = LINKSTATE_REPDATA(reply_base);
-	int len;
+अटल पूर्णांक linkstate_reply_size(स्थिर काष्ठा ethnl_req_info *req_base,
+				स्थिर काष्ठा ethnl_reply_data *reply_base)
+अणु
+	काष्ठा linkstate_reply_data *data = LINKSTATE_REPDATA(reply_base);
+	पूर्णांक len;
 
-	len = nla_total_size(sizeof(u8)) /* LINKSTATE_LINK */
+	len = nla_total_size(माप(u8)) /* LINKSTATE_LINK */
 		+ 0;
 
-	if (data->sqi != -EOPNOTSUPP)
-		len += nla_total_size(sizeof(u32));
+	अगर (data->sqi != -EOPNOTSUPP)
+		len += nla_total_size(माप(u32));
 
-	if (data->sqi_max != -EOPNOTSUPP)
-		len += nla_total_size(sizeof(u32));
+	अगर (data->sqi_max != -EOPNOTSUPP)
+		len += nla_total_size(माप(u32));
 
-	if (data->link_ext_state_provided)
-		len += nla_total_size(sizeof(u8)); /* LINKSTATE_EXT_STATE */
+	अगर (data->link_ext_state_provided)
+		len += nla_total_size(माप(u8)); /* LINKSTATE_EXT_STATE */
 
-	if (data->ethtool_link_ext_state_info.__link_ext_substate)
-		len += nla_total_size(sizeof(u8)); /* LINKSTATE_EXT_SUBSTATE */
+	अगर (data->ethtool_link_ext_state_info.__link_ext_substate)
+		len += nla_total_size(माप(u8)); /* LINKSTATE_EXT_SUBSTATE */
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int linkstate_fill_reply(struct sk_buff *skb,
-				const struct ethnl_req_info *req_base,
-				const struct ethnl_reply_data *reply_base)
-{
-	struct linkstate_reply_data *data = LINKSTATE_REPDATA(reply_base);
+अटल पूर्णांक linkstate_fill_reply(काष्ठा sk_buff *skb,
+				स्थिर काष्ठा ethnl_req_info *req_base,
+				स्थिर काष्ठा ethnl_reply_data *reply_base)
+अणु
+	काष्ठा linkstate_reply_data *data = LINKSTATE_REPDATA(reply_base);
 
-	if (data->link >= 0 &&
+	अगर (data->link >= 0 &&
 	    nla_put_u8(skb, ETHTOOL_A_LINKSTATE_LINK, !!data->link))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	if (data->sqi != -EOPNOTSUPP &&
+	अगर (data->sqi != -EOPNOTSUPP &&
 	    nla_put_u32(skb, ETHTOOL_A_LINKSTATE_SQI, data->sqi))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	if (data->sqi_max != -EOPNOTSUPP &&
+	अगर (data->sqi_max != -EOPNOTSUPP &&
 	    nla_put_u32(skb, ETHTOOL_A_LINKSTATE_SQI_MAX, data->sqi_max))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	if (data->link_ext_state_provided) {
-		if (nla_put_u8(skb, ETHTOOL_A_LINKSTATE_EXT_STATE,
+	अगर (data->link_ext_state_provided) अणु
+		अगर (nla_put_u8(skb, ETHTOOL_A_LINKSTATE_EXT_STATE,
 			       data->ethtool_link_ext_state_info.link_ext_state))
-			return -EMSGSIZE;
+			वापस -EMSGSIZE;
 
-		if (data->ethtool_link_ext_state_info.__link_ext_substate &&
+		अगर (data->ethtool_link_ext_state_info.__link_ext_substate &&
 		    nla_put_u8(skb, ETHTOOL_A_LINKSTATE_EXT_SUBSTATE,
 			       data->ethtool_link_ext_state_info.__link_ext_substate))
-			return -EMSGSIZE;
-	}
+			वापस -EMSGSIZE;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct ethnl_request_ops ethnl_linkstate_request_ops = {
+स्थिर काष्ठा ethnl_request_ops ethnl_linkstate_request_ops = अणु
 	.request_cmd		= ETHTOOL_MSG_LINKSTATE_GET,
 	.reply_cmd		= ETHTOOL_MSG_LINKSTATE_GET_REPLY,
 	.hdr_attr		= ETHTOOL_A_LINKSTATE_HEADER,
-	.req_info_size		= sizeof(struct linkstate_req_info),
-	.reply_data_size	= sizeof(struct linkstate_reply_data),
+	.req_info_size		= माप(काष्ठा linkstate_req_info),
+	.reply_data_size	= माप(काष्ठा linkstate_reply_data),
 
 	.prepare_data		= linkstate_prepare_data,
 	.reply_size		= linkstate_reply_size,
 	.fill_reply		= linkstate_fill_reply,
-};
+पूर्ण;

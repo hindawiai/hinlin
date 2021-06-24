@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
  * linux/fs/befs/btree.c
  *
  * Copyright (C) 2001-2002 Will Dyson <will_dyson@pobox.com>
  *
- * Licensed under the GNU GPL. See the file COPYING for details.
+ * Licensed under the GNU GPL. See the file COPYING क्रम details.
  *
  * 2002-02-05: Sergey S. Kostyliov added binary search within
  * 		btree nodes.
@@ -11,33 +12,33 @@
  * Many thanks to:
  *
  * Dominic Giampaolo, author of "Practical File System
- * Design with the Be File System", for such a helpful book.
+ * Design with the Be File System", क्रम such a helpful book.
  *
  * Marcus J. Ranum, author of the b+tree package in
  * comp.sources.misc volume 10. This code is not copied from that
  * work, but it is partially based on it.
  *
- * Makoto Kato, author of the original BeFS for linux filesystem
+ * Makoto Kato, author of the original BeFS क्रम linux fileप्रणाली
  * driver.
  */
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/buffer_head.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/buffer_head.h>
 
-#include "befs.h"
-#include "btree.h"
-#include "datastream.h"
+#समावेश "befs.h"
+#समावेश "btree.h"
+#समावेश "datastream.h"
 
 /*
  * The btree functions in this file are built on top of the
- * datastream.c interface, which is in turn built on top of the
- * io.c interface.
+ * datastream.c पूर्णांकerface, which is in turn built on top of the
+ * io.c पूर्णांकerface.
  */
 
-/* Befs B+tree structure:
+/* Befs B+tree काष्ठाure:
  *
  * The first thing in the tree is the tree superblock. It tells you
  * all kinds of useful things about the tree, like where the rootnode
@@ -45,106 +46,106 @@
  * of BeOS).
  *
  * The rest of the tree consists of a series of nodes. Nodes contain a header
- * (struct befs_btree_nodehead), the packed key data, an array of shorts
- * containing the ending offsets for each of the keys, and an array of
- * befs_off_t values. In interior nodes, the keys are the ending keys for
- * the childnode they point to, and the values are offsets into the
+ * (काष्ठा befs_btree_nodehead), the packed key data, an array of लघुs
+ * containing the ending offsets क्रम each of the keys, and an array of
+ * befs_off_t values. In पूर्णांकerior nodes, the keys are the ending keys क्रम
+ * the childnode they poपूर्णांक to, and the values are offsets पूर्णांकo the
  * datastream containing the tree.
  */
 
 /* Note:
  *
  * The book states 2 confusing things about befs b+trees. First,
- * it states that the overflow field of node headers is used by internal nodes
- * to point to another node that "effectively continues this one". Here is what
- * I believe that means. Each key in internal nodes points to another node that
+ * it states that the overflow field of node headers is used by पूर्णांकernal nodes
+ * to poपूर्णांक to another node that "effectively continues this one". Here is what
+ * I believe that means. Each key in पूर्णांकernal nodes poपूर्णांकs to another node that
  * contains key values less than itself. Inspection reveals that the last key
- * in the internal node is not the last key in the index. Keys that are
- * greater than the last key in the internal node go into the overflow node.
- * I imagine there is a performance reason for this.
+ * in the पूर्णांकernal node is not the last key in the index. Keys that are
+ * greater than the last key in the पूर्णांकernal node go पूर्णांकo the overflow node.
+ * I imagine there is a perक्रमmance reason क्रम this.
  *
  * Second, it states that the header of a btree node is sufficient to
- * distinguish internal nodes from leaf nodes. Without saying exactly how.
- * After figuring out the first, it becomes obvious that internal nodes have
- * overflow nodes and leafnodes do not.
+ * distinguish पूर्णांकernal nodes from leaf nodes. Without saying exactly how.
+ * After figuring out the first, it becomes obvious that पूर्णांकernal nodes have
+ * overflow nodes and leafnodes करो not.
  */
 
 /*
- * Currently, this code is only good for directory B+trees.
- * In order to be used for other BFS indexes, it needs to be extended to handle
- * duplicate keys and non-string keytypes (int32, int64, float, double).
+ * Currently, this code is only good क्रम directory B+trees.
+ * In order to be used क्रम other BFS indexes, it needs to be extended to handle
+ * duplicate keys and non-string keytypes (पूर्णांक32, पूर्णांक64, भग्न, द्विगुन).
  */
 
 /*
- * In memory structure of each btree node
+ * In memory काष्ठाure of each btree node
  */
-struct befs_btree_node {
+काष्ठा befs_btree_node अणु
 	befs_host_btree_nodehead head;	/* head of node converted to cpu byteorder */
-	struct buffer_head *bh;
+	काष्ठा buffer_head *bh;
 	befs_btree_nodehead *od_node;	/* on disk node */
-};
+पूर्ण;
 
-/* local constants */
-static const befs_off_t BEFS_BT_INVAL = 0xffffffffffffffffULL;
+/* local स्थिरants */
+अटल स्थिर befs_off_t BEFS_BT_INVAL = 0xffffffffffffffffULL;
 
 /* local functions */
-static int befs_btree_seekleaf(struct super_block *sb, const befs_data_stream *ds,
+अटल पूर्णांक befs_btree_seekleaf(काष्ठा super_block *sb, स्थिर befs_data_stream *ds,
 			       befs_btree_super * bt_super,
-			       struct befs_btree_node *this_node,
+			       काष्ठा befs_btree_node *this_node,
 			       befs_off_t * node_off);
 
-static int befs_bt_read_super(struct super_block *sb, const befs_data_stream *ds,
+अटल पूर्णांक befs_bt_पढ़ो_super(काष्ठा super_block *sb, स्थिर befs_data_stream *ds,
 			      befs_btree_super * sup);
 
-static int befs_bt_read_node(struct super_block *sb, const befs_data_stream *ds,
-			     struct befs_btree_node *node,
+अटल पूर्णांक befs_bt_पढ़ो_node(काष्ठा super_block *sb, स्थिर befs_data_stream *ds,
+			     काष्ठा befs_btree_node *node,
 			     befs_off_t node_off);
 
-static int befs_leafnode(struct befs_btree_node *node);
+अटल पूर्णांक befs_leafnode(काष्ठा befs_btree_node *node);
 
-static fs16 *befs_bt_keylen_index(struct befs_btree_node *node);
+अटल fs16 *befs_bt_keylen_index(काष्ठा befs_btree_node *node);
 
-static fs64 *befs_bt_valarray(struct befs_btree_node *node);
+अटल fs64 *befs_bt_valarray(काष्ठा befs_btree_node *node);
 
-static char *befs_bt_keydata(struct befs_btree_node *node);
+अटल अक्षर *befs_bt_keydata(काष्ठा befs_btree_node *node);
 
-static int befs_find_key(struct super_block *sb,
-			 struct befs_btree_node *node,
-			 const char *findkey, befs_off_t * value);
+अटल पूर्णांक befs_find_key(काष्ठा super_block *sb,
+			 काष्ठा befs_btree_node *node,
+			 स्थिर अक्षर *findkey, befs_off_t * value);
 
-static char *befs_bt_get_key(struct super_block *sb,
-			     struct befs_btree_node *node,
-			     int index, u16 * keylen);
+अटल अक्षर *befs_bt_get_key(काष्ठा super_block *sb,
+			     काष्ठा befs_btree_node *node,
+			     पूर्णांक index, u16 * keylen);
 
-static int befs_compare_strings(const void *key1, int keylen1,
-				const void *key2, int keylen2);
+अटल पूर्णांक befs_compare_strings(स्थिर व्योम *key1, पूर्णांक keylen1,
+				स्थिर व्योम *key2, पूर्णांक keylen2);
 
 /**
- * befs_bt_read_super() - read in btree superblock convert to cpu byteorder
- * @sb:        Filesystem superblock
- * @ds:        Datastream to read from
+ * befs_bt_पढ़ो_super() - पढ़ो in btree superblock convert to cpu byteorder
+ * @sb:        Fileप्रणाली superblock
+ * @ds:        Datastream to पढ़ो from
  * @sup:       Buffer in which to place the btree superblock
  *
- * Calls befs_read_datastream to read in the btree superblock and
- * makes sure it is in cpu byteorder, byteswapping if necessary.
- * Return: BEFS_OK on success and if *@sup contains the btree superblock in cpu
- * byte order. Otherwise return BEFS_ERR on error.
+ * Calls befs_पढ़ो_datastream to पढ़ो in the btree superblock and
+ * makes sure it is in cpu byteorder, byteswapping अगर necessary.
+ * Return: BEFS_OK on success and अगर *@sup contains the btree superblock in cpu
+ * byte order. Otherwise वापस BEFS_ERR on error.
  */
-static int
-befs_bt_read_super(struct super_block *sb, const befs_data_stream *ds,
+अटल पूर्णांक
+befs_bt_पढ़ो_super(काष्ठा super_block *sb, स्थिर befs_data_stream *ds,
 		   befs_btree_super * sup)
-{
-	struct buffer_head *bh;
+अणु
+	काष्ठा buffer_head *bh;
 	befs_disk_btree_super *od_sup;
 
 	befs_debug(sb, "---> %s", __func__);
 
-	bh = befs_read_datastream(sb, ds, 0, NULL);
+	bh = befs_पढ़ो_datastream(sb, ds, 0, शून्य);
 
-	if (!bh) {
+	अगर (!bh) अणु
 		befs_error(sb, "Couldn't read index header.");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	od_sup = (befs_disk_btree_super *) bh->b_data;
 	befs_dump_index_entry(sb, od_sup);
 
@@ -154,60 +155,60 @@ befs_bt_read_super(struct super_block *sb, const befs_data_stream *ds,
 	sup->data_type = fs32_to_cpu(sb, od_sup->data_type);
 	sup->root_node_ptr = fs64_to_cpu(sb, od_sup->root_node_ptr);
 
-	brelse(bh);
-	if (sup->magic != BEFS_BTREE_MAGIC) {
+	brअन्यथा(bh);
+	अगर (sup->magic != BEFS_BTREE_MAGIC) अणु
 		befs_error(sb, "Index header has bad magic.");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	befs_debug(sb, "<--- %s", __func__);
-	return BEFS_OK;
+	वापस BEFS_OK;
 
       error:
 	befs_debug(sb, "<--- %s ERROR", __func__);
-	return BEFS_ERR;
-}
+	वापस BEFS_ERR;
+पूर्ण
 
 /**
- * befs_bt_read_node - read in btree node and convert to cpu byteorder
- * @sb: Filesystem superblock
- * @ds: Datastream to read from
+ * befs_bt_पढ़ो_node - पढ़ो in btree node and convert to cpu byteorder
+ * @sb: Fileप्रणाली superblock
+ * @ds: Datastream to पढ़ो from
  * @node: Buffer in which to place the btree node
  * @node_off: Starting offset (in bytes) of the node in @ds
  *
- * Calls befs_read_datastream to read in the indicated btree node and
- * makes sure its header fields are in cpu byteorder, byteswapping if
+ * Calls befs_पढ़ो_datastream to पढ़ो in the indicated btree node and
+ * makes sure its header fields are in cpu byteorder, byteswapping अगर
  * necessary.
- * Note: node->bh must be NULL when this function is called the first time.
- * Don't forget brelse(node->bh) after last call.
+ * Note: node->bh must be शून्य when this function is called the first समय.
+ * Don't क्रमget brअन्यथा(node->bh) after last call.
  *
- * On success, returns BEFS_OK and *@node contains the btree node that
+ * On success, वापसs BEFS_OK and *@node contains the btree node that
  * starts at @node_off, with the node->head fields in cpu byte order.
  *
- * On failure, BEFS_ERR is returned.
+ * On failure, BEFS_ERR is वापसed.
  */
 
-static int
-befs_bt_read_node(struct super_block *sb, const befs_data_stream *ds,
-		  struct befs_btree_node *node, befs_off_t node_off)
-{
-	uint off = 0;
+अटल पूर्णांक
+befs_bt_पढ़ो_node(काष्ठा super_block *sb, स्थिर befs_data_stream *ds,
+		  काष्ठा befs_btree_node *node, befs_off_t node_off)
+अणु
+	uपूर्णांक off = 0;
 
 	befs_debug(sb, "---> %s", __func__);
 
-	if (node->bh)
-		brelse(node->bh);
+	अगर (node->bh)
+		brअन्यथा(node->bh);
 
-	node->bh = befs_read_datastream(sb, ds, node_off, &off);
-	if (!node->bh) {
+	node->bh = befs_पढ़ो_datastream(sb, ds, node_off, &off);
+	अगर (!node->bh) अणु
 		befs_error(sb, "%s failed to read "
 			   "node at %llu", __func__, node_off);
 		befs_debug(sb, "<--- %s ERROR", __func__);
 
-		return BEFS_ERR;
-	}
+		वापस BEFS_ERR;
+	पूर्ण
 	node->od_node =
-	    (befs_btree_nodehead *) ((void *) node->bh->b_data + off);
+	    (befs_btree_nodehead *) ((व्योम *) node->bh->b_data + off);
 
 	befs_dump_index_node(sb, node->od_node);
 
@@ -220,143 +221,143 @@ befs_bt_read_node(struct super_block *sb, const befs_data_stream *ds,
 	    fs16_to_cpu(sb, node->od_node->all_key_length);
 
 	befs_debug(sb, "<--- %s", __func__);
-	return BEFS_OK;
-}
+	वापस BEFS_OK;
+पूर्ण
 
 /**
  * befs_btree_find - Find a key in a befs B+tree
- * @sb: Filesystem superblock
+ * @sb: Fileप्रणाली superblock
  * @ds: Datastream containing btree
  * @key: Key string to lookup in btree
  * @value: Value stored with @key
  *
- * On success, returns BEFS_OK and sets *@value to the value stored
+ * On success, वापसs BEFS_OK and sets *@value to the value stored
  * with @key (usually the disk block number of an inode).
  *
- * On failure, returns BEFS_ERR or BEFS_BT_NOT_FOUND.
+ * On failure, वापसs BEFS_ERR or BEFS_BT_NOT_FOUND.
  *
  * Algorithm:
  *   Read the superblock and rootnode of the b+tree.
- *   Drill down through the interior nodes using befs_find_key().
+ *   Drill करोwn through the पूर्णांकerior nodes using befs_find_key().
  *   Once at the correct leaf node, use befs_find_key() again to get the
  *   actual value stored with the key.
  */
-int
-befs_btree_find(struct super_block *sb, const befs_data_stream *ds,
-		const char *key, befs_off_t * value)
-{
-	struct befs_btree_node *this_node;
+पूर्णांक
+befs_btree_find(काष्ठा super_block *sb, स्थिर befs_data_stream *ds,
+		स्थिर अक्षर *key, befs_off_t * value)
+अणु
+	काष्ठा befs_btree_node *this_node;
 	befs_btree_super bt_super;
 	befs_off_t node_off;
-	int res;
+	पूर्णांक res;
 
 	befs_debug(sb, "---> %s Key: %s", __func__, key);
 
-	if (befs_bt_read_super(sb, ds, &bt_super) != BEFS_OK) {
+	अगर (befs_bt_पढ़ो_super(sb, ds, &bt_super) != BEFS_OK) अणु
 		befs_error(sb,
 			   "befs_btree_find() failed to read index superblock");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	this_node = kmalloc(sizeof(struct befs_btree_node),
+	this_node = kदो_स्मृति(माप(काष्ठा befs_btree_node),
 						GFP_NOFS);
-	if (!this_node) {
+	अगर (!this_node) अणु
 		befs_error(sb, "befs_btree_find() failed to allocate %zu "
-			   "bytes of memory", sizeof(struct befs_btree_node));
-		goto error;
-	}
+			   "bytes of memory", माप(काष्ठा befs_btree_node));
+		जाओ error;
+	पूर्ण
 
-	this_node->bh = NULL;
+	this_node->bh = शून्य;
 
-	/* read in root node */
+	/* पढ़ो in root node */
 	node_off = bt_super.root_node_ptr;
-	if (befs_bt_read_node(sb, ds, this_node, node_off) != BEFS_OK) {
+	अगर (befs_bt_पढ़ो_node(sb, ds, this_node, node_off) != BEFS_OK) अणु
 		befs_error(sb, "befs_btree_find() failed to read "
 			   "node at %llu", node_off);
-		goto error_alloc;
-	}
+		जाओ error_alloc;
+	पूर्ण
 
-	while (!befs_leafnode(this_node)) {
+	जबतक (!befs_leafnode(this_node)) अणु
 		res = befs_find_key(sb, this_node, key, &node_off);
-		/* if no key set, try the overflow node */
-		if (res == BEFS_BT_OVERFLOW)
+		/* अगर no key set, try the overflow node */
+		अगर (res == BEFS_BT_OVERFLOW)
 			node_off = this_node->head.overflow;
-		if (befs_bt_read_node(sb, ds, this_node, node_off) != BEFS_OK) {
+		अगर (befs_bt_पढ़ो_node(sb, ds, this_node, node_off) != BEFS_OK) अणु
 			befs_error(sb, "befs_btree_find() failed to read "
 				   "node at %llu", node_off);
-			goto error_alloc;
-		}
-	}
+			जाओ error_alloc;
+		पूर्ण
+	पूर्ण
 
-	/* at a leaf node now, check if it is correct */
+	/* at a leaf node now, check अगर it is correct */
 	res = befs_find_key(sb, this_node, key, value);
 
-	brelse(this_node->bh);
-	kfree(this_node);
+	brअन्यथा(this_node->bh);
+	kमुक्त(this_node);
 
-	if (res != BEFS_BT_MATCH) {
+	अगर (res != BEFS_BT_MATCH) अणु
 		befs_error(sb, "<--- %s Key %s not found", __func__, key);
 		befs_debug(sb, "<--- %s ERROR", __func__);
 		*value = 0;
-		return BEFS_BT_NOT_FOUND;
-	}
+		वापस BEFS_BT_NOT_FOUND;
+	पूर्ण
 	befs_debug(sb, "<--- %s Found key %s, value %llu", __func__,
 		   key, *value);
-	return BEFS_OK;
+	वापस BEFS_OK;
 
       error_alloc:
-	kfree(this_node);
+	kमुक्त(this_node);
       error:
 	*value = 0;
 	befs_debug(sb, "<--- %s ERROR", __func__);
-	return BEFS_ERR;
-}
+	वापस BEFS_ERR;
+पूर्ण
 
 /**
- * befs_find_key - Search for a key within a node
- * @sb: Filesystem superblock
+ * befs_find_key - Search क्रम a key within a node
+ * @sb: Fileप्रणाली superblock
  * @node: Node to find the key within
- * @findkey: Keystring to search for
+ * @findkey: Keystring to search क्रम
  * @value: If key is found, the value stored with the key is put here
  *
- * Finds exact match if one exists, and returns BEFS_BT_MATCH.
- * If there is no match and node's value array is too small for key, return
+ * Finds exact match अगर one exists, and वापसs BEFS_BT_MATCH.
+ * If there is no match and node's value array is too small क्रम key, वापस
  * BEFS_BT_OVERFLOW.
- * If no match and node should countain this key, return BEFS_BT_NOT_FOUND.
+ * If no match and node should countain this key, वापस BEFS_BT_NOT_FOUND.
  *
  * Uses binary search instead of a linear.
  */
-static int
-befs_find_key(struct super_block *sb, struct befs_btree_node *node,
-	      const char *findkey, befs_off_t * value)
-{
-	int first, last, mid;
-	int eq;
+अटल पूर्णांक
+befs_find_key(काष्ठा super_block *sb, काष्ठा befs_btree_node *node,
+	      स्थिर अक्षर *findkey, befs_off_t * value)
+अणु
+	पूर्णांक first, last, mid;
+	पूर्णांक eq;
 	u16 keylen;
-	int findkey_len;
-	char *thiskey;
+	पूर्णांक findkey_len;
+	अक्षर *thiskey;
 	fs64 *valarray;
 
 	befs_debug(sb, "---> %s %s", __func__, findkey);
 
-	findkey_len = strlen(findkey);
+	findkey_len = म_माप(findkey);
 
-	/* if node can not contain key, just skip this node */
+	/* अगर node can not contain key, just skip this node */
 	last = node->head.all_key_count - 1;
 	thiskey = befs_bt_get_key(sb, node, last, &keylen);
 
 	eq = befs_compare_strings(thiskey, keylen, findkey, findkey_len);
-	if (eq < 0) {
+	अगर (eq < 0) अणु
 		befs_debug(sb, "<--- node can't contain %s", findkey);
-		return BEFS_BT_OVERFLOW;
-	}
+		वापस BEFS_BT_OVERFLOW;
+	पूर्ण
 
 	valarray = befs_bt_valarray(node);
 
 	/* simple binary search */
 	first = 0;
 	mid = 0;
-	while (last >= first) {
+	जबतक (last >= first) अणु
 		mid = (last + first) / 2;
 		befs_debug(sb, "first: %d, last: %d, mid: %d", first, last,
 			   mid);
@@ -364,141 +365,141 @@ befs_find_key(struct super_block *sb, struct befs_btree_node *node,
 		eq = befs_compare_strings(thiskey, keylen, findkey,
 					  findkey_len);
 
-		if (eq == 0) {
+		अगर (eq == 0) अणु
 			befs_debug(sb, "<--- %s found %s at %d",
 				   __func__, thiskey, mid);
 
 			*value = fs64_to_cpu(sb, valarray[mid]);
-			return BEFS_BT_MATCH;
-		}
-		if (eq > 0)
+			वापस BEFS_BT_MATCH;
+		पूर्ण
+		अगर (eq > 0)
 			last = mid - 1;
-		else
+		अन्यथा
 			first = mid + 1;
-	}
+	पूर्ण
 
-	/* return an existing value so caller can arrive to a leaf node */
-	if (eq < 0)
+	/* वापस an existing value so caller can arrive to a leaf node */
+	अगर (eq < 0)
 		*value = fs64_to_cpu(sb, valarray[mid + 1]);
-	else
+	अन्यथा
 		*value = fs64_to_cpu(sb, valarray[mid]);
 	befs_error(sb, "<--- %s %s not found", __func__, findkey);
 	befs_debug(sb, "<--- %s ERROR", __func__);
-	return BEFS_BT_NOT_FOUND;
-}
+	वापस BEFS_BT_NOT_FOUND;
+पूर्ण
 
 /**
- * befs_btree_read - Traverse leafnodes of a btree
- * @sb: Filesystem superblock
+ * befs_btree_पढ़ो - Traverse leafnodes of a btree
+ * @sb: Fileप्रणाली superblock
  * @ds: Datastream containing btree
- * @key_no: Key number (alphabetical order) of key to read
- * @bufsize: Size of the buffer to return key in
- * @keybuf: Pointer to a buffer to put the key in
- * @keysize: Length of the returned key
- * @value: Value stored with the returned key
+ * @key_no: Key number (alphabetical order) of key to पढ़ो
+ * @bufsize: Size of the buffer to वापस key in
+ * @keybuf: Poपूर्णांकer to a buffer to put the key in
+ * @keysize: Length of the वापसed key
+ * @value: Value stored with the वापसed key
  *
  * Here's how it works: Key_no is the index of the key/value pair to
- * return in keybuf/value.
+ * वापस in keybuf/value.
  * Bufsize is the size of keybuf (BEFS_NAME_LEN+1 is a good size). Keysize is
- * the number of characters in the key (just a convenience).
+ * the number of अक्षरacters in the key (just a convenience).
  *
  * Algorithm:
- *   Get the first leafnode of the tree. See if the requested key is in that
+ *   Get the first leafnode of the tree. See अगर the requested key is in that
  *   node. If not, follow the node->right link to the next leafnode. Repeat
  *   until the (key_no)th key is found or the tree is out of keys.
  */
-int
-befs_btree_read(struct super_block *sb, const befs_data_stream *ds,
-		loff_t key_no, size_t bufsize, char *keybuf, size_t * keysize,
+पूर्णांक
+befs_btree_पढ़ो(काष्ठा super_block *sb, स्थिर befs_data_stream *ds,
+		loff_t key_no, माप_प्रकार bufsize, अक्षर *keybuf, माप_प्रकार * keysize,
 		befs_off_t * value)
-{
-	struct befs_btree_node *this_node;
+अणु
+	काष्ठा befs_btree_node *this_node;
 	befs_btree_super bt_super;
 	befs_off_t node_off;
-	int cur_key;
+	पूर्णांक cur_key;
 	fs64 *valarray;
-	char *keystart;
+	अक्षर *keystart;
 	u16 keylen;
-	int res;
+	पूर्णांक res;
 
-	uint key_sum = 0;
+	uपूर्णांक key_sum = 0;
 
 	befs_debug(sb, "---> %s", __func__);
 
-	if (befs_bt_read_super(sb, ds, &bt_super) != BEFS_OK) {
+	अगर (befs_bt_पढ़ो_super(sb, ds, &bt_super) != BEFS_OK) अणु
 		befs_error(sb,
 			   "befs_btree_read() failed to read index superblock");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	this_node = kmalloc(sizeof(struct befs_btree_node), GFP_NOFS);
-	if (this_node == NULL) {
+	this_node = kदो_स्मृति(माप(काष्ठा befs_btree_node), GFP_NOFS);
+	अगर (this_node == शून्य) अणु
 		befs_error(sb, "befs_btree_read() failed to allocate %zu "
-			   "bytes of memory", sizeof(struct befs_btree_node));
-		goto error;
-	}
+			   "bytes of memory", माप(काष्ठा befs_btree_node));
+		जाओ error;
+	पूर्ण
 
 	node_off = bt_super.root_node_ptr;
-	this_node->bh = NULL;
+	this_node->bh = शून्य;
 
-	/* seeks down to first leafnode, reads it into this_node */
+	/* seeks करोwn to first leafnode, पढ़ोs it पूर्णांकo this_node */
 	res = befs_btree_seekleaf(sb, ds, &bt_super, this_node, &node_off);
-	if (res == BEFS_BT_EMPTY) {
-		brelse(this_node->bh);
-		kfree(this_node);
+	अगर (res == BEFS_BT_EMPTY) अणु
+		brअन्यथा(this_node->bh);
+		kमुक्त(this_node);
 		*value = 0;
 		*keysize = 0;
 		befs_debug(sb, "<--- %s Tree is EMPTY", __func__);
-		return BEFS_BT_EMPTY;
-	} else if (res == BEFS_ERR) {
-		goto error_alloc;
-	}
+		वापस BEFS_BT_EMPTY;
+	पूर्ण अन्यथा अगर (res == BEFS_ERR) अणु
+		जाओ error_alloc;
+	पूर्ण
 
 	/* find the leaf node containing the key_no key */
 
-	while (key_sum + this_node->head.all_key_count <= key_no) {
+	जबतक (key_sum + this_node->head.all_key_count <= key_no) अणु
 
 		/* no more nodes to look in: key_no is too large */
-		if (this_node->head.right == BEFS_BT_INVAL) {
+		अगर (this_node->head.right == BEFS_BT_INVAL) अणु
 			*keysize = 0;
 			*value = 0;
 			befs_debug(sb,
 				   "<--- %s END of keys at %llu", __func__,
-				   (unsigned long long)
+				   (अचिन्हित दीर्घ दीर्घ)
 				   key_sum + this_node->head.all_key_count);
-			brelse(this_node->bh);
-			kfree(this_node);
-			return BEFS_BT_END;
-		}
+			brअन्यथा(this_node->bh);
+			kमुक्त(this_node);
+			वापस BEFS_BT_END;
+		पूर्ण
 
 		key_sum += this_node->head.all_key_count;
 		node_off = this_node->head.right;
 
-		if (befs_bt_read_node(sb, ds, this_node, node_off) != BEFS_OK) {
+		अगर (befs_bt_पढ़ो_node(sb, ds, this_node, node_off) != BEFS_OK) अणु
 			befs_error(sb, "%s failed to read node at %llu",
-				  __func__, (unsigned long long)node_off);
-			goto error_alloc;
-		}
-	}
+				  __func__, (अचिन्हित दीर्घ दीर्घ)node_off);
+			जाओ error_alloc;
+		पूर्ण
+	पूर्ण
 
-	/* how many keys into this_node is key_no */
+	/* how many keys पूर्णांकo this_node is key_no */
 	cur_key = key_no - key_sum;
 
-	/* get pointers to datastructures within the node body */
+	/* get poपूर्णांकers to dataकाष्ठाures within the node body */
 	valarray = befs_bt_valarray(this_node);
 
 	keystart = befs_bt_get_key(sb, this_node, cur_key, &keylen);
 
 	befs_debug(sb, "Read [%llu,%d]: keysize %d",
-		   (long long unsigned int)node_off, (int)cur_key,
-		   (int)keylen);
+		   (दीर्घ दीर्घ अचिन्हित पूर्णांक)node_off, (पूर्णांक)cur_key,
+		   (पूर्णांक)keylen);
 
-	if (bufsize < keylen + 1) {
+	अगर (bufsize < keylen + 1) अणु
 		befs_error(sb, "%s keybuf too small (%zu) "
 			   "for key of size %d", __func__, bufsize, keylen);
-		brelse(this_node->bh);
-		goto error_alloc;
-	}
+		brअन्यथा(this_node->bh);
+		जाओ error_alloc;
+	पूर्ण
 
 	strlcpy(keybuf, keystart, keylen + 1);
 	*value = fs64_to_cpu(sb, valarray[cur_key]);
@@ -507,278 +508,278 @@ befs_btree_read(struct super_block *sb, const befs_data_stream *ds,
 	befs_debug(sb, "Read [%llu,%d]: Key \"%.*s\", Value %llu", node_off,
 		   cur_key, keylen, keybuf, *value);
 
-	brelse(this_node->bh);
-	kfree(this_node);
+	brअन्यथा(this_node->bh);
+	kमुक्त(this_node);
 
 	befs_debug(sb, "<--- %s", __func__);
 
-	return BEFS_OK;
+	वापस BEFS_OK;
 
       error_alloc:
-	kfree(this_node);
+	kमुक्त(this_node);
 
       error:
 	*keysize = 0;
 	*value = 0;
 	befs_debug(sb, "<--- %s ERROR", __func__);
-	return BEFS_ERR;
-}
+	वापस BEFS_ERR;
+पूर्ण
 
 /**
  * befs_btree_seekleaf - Find the first leafnode in the btree
- * @sb: Filesystem superblock
+ * @sb: Fileप्रणाली superblock
  * @ds: Datastream containing btree
- * @bt_super: Pointer to the superblock of the btree
- * @this_node: Buffer to return the leafnode in
- * @node_off: Pointer to offset of current node within datastream. Modified
+ * @bt_super: Poपूर्णांकer to the superblock of the btree
+ * @this_node: Buffer to वापस the leafnode in
+ * @node_off: Poपूर्णांकer to offset of current node within datastream. Modअगरied
  * 		by the function.
  *
- * Helper function for btree traverse. Moves the current position to the
+ * Helper function क्रम btree traverse. Moves the current position to the
  * start of the first leaf node.
  *
- * Also checks for an empty tree. If there are no keys, returns BEFS_BT_EMPTY.
+ * Also checks क्रम an empty tree. If there are no keys, वापसs BEFS_BT_EMPTY.
  */
-static int
-befs_btree_seekleaf(struct super_block *sb, const befs_data_stream *ds,
+अटल पूर्णांक
+befs_btree_seekleaf(काष्ठा super_block *sb, स्थिर befs_data_stream *ds,
 		    befs_btree_super *bt_super,
-		    struct befs_btree_node *this_node,
+		    काष्ठा befs_btree_node *this_node,
 		    befs_off_t * node_off)
-{
+अणु
 
 	befs_debug(sb, "---> %s", __func__);
 
-	if (befs_bt_read_node(sb, ds, this_node, *node_off) != BEFS_OK) {
+	अगर (befs_bt_पढ़ो_node(sb, ds, this_node, *node_off) != BEFS_OK) अणु
 		befs_error(sb, "%s failed to read "
 			   "node at %llu", __func__, *node_off);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	befs_debug(sb, "Seekleaf to root node %llu", *node_off);
 
-	if (this_node->head.all_key_count == 0 && befs_leafnode(this_node)) {
+	अगर (this_node->head.all_key_count == 0 && befs_leafnode(this_node)) अणु
 		befs_debug(sb, "<--- %s Tree is EMPTY", __func__);
-		return BEFS_BT_EMPTY;
-	}
+		वापस BEFS_BT_EMPTY;
+	पूर्ण
 
-	while (!befs_leafnode(this_node)) {
+	जबतक (!befs_leafnode(this_node)) अणु
 
-		if (this_node->head.all_key_count == 0) {
+		अगर (this_node->head.all_key_count == 0) अणु
 			befs_debug(sb, "%s encountered "
 				   "an empty interior node: %llu. Using Overflow "
 				   "node: %llu", __func__, *node_off,
 				   this_node->head.overflow);
 			*node_off = this_node->head.overflow;
-		} else {
+		पूर्ण अन्यथा अणु
 			fs64 *valarray = befs_bt_valarray(this_node);
 			*node_off = fs64_to_cpu(sb, valarray[0]);
-		}
-		if (befs_bt_read_node(sb, ds, this_node, *node_off) != BEFS_OK) {
+		पूर्ण
+		अगर (befs_bt_पढ़ो_node(sb, ds, this_node, *node_off) != BEFS_OK) अणु
 			befs_error(sb, "%s failed to read "
 				   "node at %llu", __func__, *node_off);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		befs_debug(sb, "Seekleaf to child node %llu", *node_off);
-	}
+	पूर्ण
 	befs_debug(sb, "Node %llu is a leaf node", *node_off);
 
-	return BEFS_OK;
+	वापस BEFS_OK;
 
       error:
 	befs_debug(sb, "<--- %s ERROR", __func__);
-	return BEFS_ERR;
-}
+	वापस BEFS_ERR;
+पूर्ण
 
 /**
- * befs_leafnode - Determine if the btree node is a leaf node or an
- * interior node
- * @node: Pointer to node structure to test
+ * befs_leafnode - Determine अगर the btree node is a leaf node or an
+ * पूर्णांकerior node
+ * @node: Poपूर्णांकer to node काष्ठाure to test
  *
- * Return 1 if leaf, 0 if interior
+ * Return 1 अगर leaf, 0 अगर पूर्णांकerior
  */
-static int
-befs_leafnode(struct befs_btree_node *node)
-{
-	/* all interior nodes (and only interior nodes) have an overflow node */
-	if (node->head.overflow == BEFS_BT_INVAL)
-		return 1;
-	else
-		return 0;
-}
+अटल पूर्णांक
+befs_leafnode(काष्ठा befs_btree_node *node)
+अणु
+	/* all पूर्णांकerior nodes (and only पूर्णांकerior nodes) have an overflow node */
+	अगर (node->head.overflow == BEFS_BT_INVAL)
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 /**
  * befs_bt_keylen_index - Finds start of keylen index in a node
- * @node: Pointer to the node structure to find the keylen index within
+ * @node: Poपूर्णांकer to the node काष्ठाure to find the keylen index within
  *
- * Returns a pointer to the start of the key length index array
+ * Returns a poपूर्णांकer to the start of the key length index array
  * of the B+tree node *@node
  *
  * "The length of all the keys in the node is added to the size of the
  * header and then rounded up to a multiple of four to get the beginning
- * of the key length index" (p.88, practical filesystem design).
+ * of the key length index" (p.88, practical fileप्रणाली design).
  *
- * Except that rounding up to 8 works, and rounding up to 4 doesn't.
+ * Except that rounding up to 8 works, and rounding up to 4 करोesn't.
  */
-static fs16 *
-befs_bt_keylen_index(struct befs_btree_node *node)
-{
-	const int keylen_align = 8;
-	unsigned long int off =
-	    (sizeof (befs_btree_nodehead) + node->head.all_key_length);
-	ulong tmp = off % keylen_align;
+अटल fs16 *
+befs_bt_keylen_index(काष्ठा befs_btree_node *node)
+अणु
+	स्थिर पूर्णांक keylen_align = 8;
+	अचिन्हित दीर्घ पूर्णांक off =
+	    (माप (befs_btree_nodehead) + node->head.all_key_length);
+	uदीर्घ पंचांगp = off % keylen_align;
 
-	if (tmp)
-		off += keylen_align - tmp;
+	अगर (पंचांगp)
+		off += keylen_align - पंचांगp;
 
-	return (fs16 *) ((void *) node->od_node + off);
-}
+	वापस (fs16 *) ((व्योम *) node->od_node + off);
+पूर्ण
 
 /**
  * befs_bt_valarray - Finds the start of value array in a node
- * @node: Pointer to the node structure to find the value array within
+ * @node: Poपूर्णांकer to the node काष्ठाure to find the value array within
  *
- * Returns a pointer to the start of the value array
- * of the node pointed to by the node header
+ * Returns a poपूर्णांकer to the start of the value array
+ * of the node poपूर्णांकed to by the node header
  */
-static fs64 *
-befs_bt_valarray(struct befs_btree_node *node)
-{
-	void *keylen_index_start = (void *) befs_bt_keylen_index(node);
-	size_t keylen_index_size = node->head.all_key_count * sizeof (fs16);
+अटल fs64 *
+befs_bt_valarray(काष्ठा befs_btree_node *node)
+अणु
+	व्योम *keylen_index_start = (व्योम *) befs_bt_keylen_index(node);
+	माप_प्रकार keylen_index_size = node->head.all_key_count * माप (fs16);
 
-	return (fs64 *) (keylen_index_start + keylen_index_size);
-}
+	वापस (fs64 *) (keylen_index_start + keylen_index_size);
+पूर्ण
 
 /**
  * befs_bt_keydata - Finds start of keydata array in a node
- * @node: Pointer to the node structure to find the keydata array within
+ * @node: Poपूर्णांकer to the node काष्ठाure to find the keydata array within
  *
- * Returns a pointer to the start of the keydata array
- * of the node pointed to by the node header
+ * Returns a poपूर्णांकer to the start of the keydata array
+ * of the node poपूर्णांकed to by the node header
  */
-static char *
-befs_bt_keydata(struct befs_btree_node *node)
-{
-	return (char *) ((void *) node->od_node + sizeof (befs_btree_nodehead));
-}
+अटल अक्षर *
+befs_bt_keydata(काष्ठा befs_btree_node *node)
+अणु
+	वापस (अक्षर *) ((व्योम *) node->od_node + माप (befs_btree_nodehead));
+पूर्ण
 
 /**
- * befs_bt_get_key - returns a pointer to the start of a key
- * @sb: filesystem superblock
- * @node: node in which to look for the key
+ * befs_bt_get_key - वापसs a poपूर्णांकer to the start of a key
+ * @sb: fileप्रणाली superblock
+ * @node: node in which to look क्रम the key
  * @index: the index of the key to get
- * @keylen: modified to be the length of the key at @index
+ * @keylen: modअगरied to be the length of the key at @index
  *
- * Returns a valid pointer into @node on success.
- * Returns NULL on failure (bad input) and sets *@keylen = 0
+ * Returns a valid poपूर्णांकer पूर्णांकo @node on success.
+ * Returns शून्य on failure (bad input) and sets *@keylen = 0
  */
-static char *
-befs_bt_get_key(struct super_block *sb, struct befs_btree_node *node,
-		int index, u16 * keylen)
-{
-	int prev_key_end;
-	char *keystart;
+अटल अक्षर *
+befs_bt_get_key(काष्ठा super_block *sb, काष्ठा befs_btree_node *node,
+		पूर्णांक index, u16 * keylen)
+अणु
+	पूर्णांक prev_key_end;
+	अक्षर *keystart;
 	fs16 *keylen_index;
 
-	if (index < 0 || index > node->head.all_key_count) {
+	अगर (index < 0 || index > node->head.all_key_count) अणु
 		*keylen = 0;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	keystart = befs_bt_keydata(node);
 	keylen_index = befs_bt_keylen_index(node);
 
-	if (index == 0)
+	अगर (index == 0)
 		prev_key_end = 0;
-	else
+	अन्यथा
 		prev_key_end = fs16_to_cpu(sb, keylen_index[index - 1]);
 
 	*keylen = fs16_to_cpu(sb, keylen_index[index]) - prev_key_end;
 
-	return keystart + prev_key_end;
-}
+	वापस keystart + prev_key_end;
+पूर्ण
 
 /**
  * befs_compare_strings - compare two strings
- * @key1: pointer to the first key to be compared
+ * @key1: poपूर्णांकer to the first key to be compared
  * @keylen1: length in bytes of key1
- * @key2: pointer to the second key to be compared
+ * @key2: poपूर्णांकer to the second key to be compared
  * @keylen2: length in bytes of key2
  *
- * Returns 0 if @key1 and @key2 are equal.
- * Returns >0 if @key1 is greater.
- * Returns <0 if @key2 is greater.
+ * Returns 0 अगर @key1 and @key2 are equal.
+ * Returns >0 अगर @key1 is greater.
+ * Returns <0 अगर @key2 is greater.
  */
-static int
-befs_compare_strings(const void *key1, int keylen1,
-		     const void *key2, int keylen2)
-{
-	int len = min_t(int, keylen1, keylen2);
-	int result = strncmp(key1, key2, len);
-	if (result == 0)
+अटल पूर्णांक
+befs_compare_strings(स्थिर व्योम *key1, पूर्णांक keylen1,
+		     स्थिर व्योम *key2, पूर्णांक keylen2)
+अणु
+	पूर्णांक len = min_t(पूर्णांक, keylen1, keylen2);
+	पूर्णांक result = म_भेदन(key1, key2, len);
+	अगर (result == 0)
 		result = keylen1 - keylen2;
-	return result;
-}
+	वापस result;
+पूर्ण
 
-/* These will be used for non-string keyed btrees */
-#if 0
-static int
-btree_compare_int32(cont void *key1, int keylen1, const void *key2, int keylen2)
-{
-	return *(int32_t *) key1 - *(int32_t *) key2;
-}
+/* These will be used क्रम non-string keyed btrees */
+#अगर 0
+अटल पूर्णांक
+btree_compare_पूर्णांक32(cont व्योम *key1, पूर्णांक keylen1, स्थिर व्योम *key2, पूर्णांक keylen2)
+अणु
+	वापस *(पूर्णांक32_t *) key1 - *(पूर्णांक32_t *) key2;
+पूर्ण
 
-static int
-btree_compare_uint32(cont void *key1, int keylen1,
-		     const void *key2, int keylen2)
-{
-	if (*(u_int32_t *) key1 == *(u_int32_t *) key2)
-		return 0;
-	else if (*(u_int32_t *) key1 > *(u_int32_t *) key2)
-		return 1;
+अटल पूर्णांक
+btree_compare_uपूर्णांक32(cont व्योम *key1, पूर्णांक keylen1,
+		     स्थिर व्योम *key2, पूर्णांक keylen2)
+अणु
+	अगर (*(u_पूर्णांक32_t *) key1 == *(u_पूर्णांक32_t *) key2)
+		वापस 0;
+	अन्यथा अगर (*(u_पूर्णांक32_t *) key1 > *(u_पूर्णांक32_t *) key2)
+		वापस 1;
 
-	return -1;
-}
-static int
-btree_compare_int64(cont void *key1, int keylen1, const void *key2, int keylen2)
-{
-	if (*(int64_t *) key1 == *(int64_t *) key2)
-		return 0;
-	else if (*(int64_t *) key1 > *(int64_t *) key2)
-		return 1;
+	वापस -1;
+पूर्ण
+अटल पूर्णांक
+btree_compare_पूर्णांक64(cont व्योम *key1, पूर्णांक keylen1, स्थिर व्योम *key2, पूर्णांक keylen2)
+अणु
+	अगर (*(पूर्णांक64_t *) key1 == *(पूर्णांक64_t *) key2)
+		वापस 0;
+	अन्यथा अगर (*(पूर्णांक64_t *) key1 > *(पूर्णांक64_t *) key2)
+		वापस 1;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int
-btree_compare_uint64(cont void *key1, int keylen1,
-		     const void *key2, int keylen2)
-{
-	if (*(u_int64_t *) key1 == *(u_int64_t *) key2)
-		return 0;
-	else if (*(u_int64_t *) key1 > *(u_int64_t *) key2)
-		return 1;
+अटल पूर्णांक
+btree_compare_uपूर्णांक64(cont व्योम *key1, पूर्णांक keylen1,
+		     स्थिर व्योम *key2, पूर्णांक keylen2)
+अणु
+	अगर (*(u_पूर्णांक64_t *) key1 == *(u_पूर्णांक64_t *) key2)
+		वापस 0;
+	अन्यथा अगर (*(u_पूर्णांक64_t *) key1 > *(u_पूर्णांक64_t *) key2)
+		वापस 1;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int
-btree_compare_float(cont void *key1, int keylen1, const void *key2, int keylen2)
-{
-	float result = *(float *) key1 - *(float *) key2;
-	if (result == 0.0f)
-		return 0;
+अटल पूर्णांक
+btree_compare_भग्न(cont व्योम *key1, पूर्णांक keylen1, स्थिर व्योम *key2, पूर्णांक keylen2)
+अणु
+	भग्न result = *(भग्न *) key1 - *(भग्न *) key2;
+	अगर (result == 0.0f)
+		वापस 0;
 
-	return (result < 0.0f) ? -1 : 1;
-}
+	वापस (result < 0.0f) ? -1 : 1;
+पूर्ण
 
-static int
-btree_compare_double(cont void *key1, int keylen1,
-		     const void *key2, int keylen2)
-{
-	double result = *(double *) key1 - *(double *) key2;
-	if (result == 0.0)
-		return 0;
+अटल पूर्णांक
+btree_compare_द्विगुन(cont व्योम *key1, पूर्णांक keylen1,
+		     स्थिर व्योम *key2, पूर्णांक keylen2)
+अणु
+	द्विगुन result = *(द्विगुन *) key1 - *(द्विगुन *) key2;
+	अगर (result == 0.0)
+		वापस 0;
 
-	return (result < 0.0) ? -1 : 1;
-}
-#endif				//0
+	वापस (result < 0.0) ? -1 : 1;
+पूर्ण
+#पूर्ण_अगर				//0

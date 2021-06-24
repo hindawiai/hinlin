@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  linux/drivers/mmc/sdio.c
  *
  *  Copyright 2006-2007 Pierre Ossman
  */
 
-#include <linux/err.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/err.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <linux/mmc/host.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/mmc.h>
-#include <linux/mmc/sdio.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/mmc/sdio_ids.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/mmc.h>
+#समावेश <linux/mmc/sdपन.स>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/mmc/sdio_ids.h>
 
-#include "core.h"
-#include "card.h"
-#include "host.h"
-#include "bus.h"
-#include "quirks.h"
-#include "sd.h"
-#include "sdio_bus.h"
-#include "mmc_ops.h"
-#include "sd_ops.h"
-#include "sdio_ops.h"
-#include "sdio_cis.h"
+#समावेश "core.h"
+#समावेश "card.h"
+#समावेश "host.h"
+#समावेश "bus.h"
+#समावेश "quirks.h"
+#समावेश "sd.h"
+#समावेश "sdio_bus.h"
+#समावेश "mmc_ops.h"
+#समावेश "sd_ops.h"
+#समावेश "sdio_ops.h"
+#समावेश "sdio_cis.h"
 
-MMC_DEV_ATTR(vendor, "0x%04x\n", card->cis.vendor);
+MMC_DEV_ATTR(venकरोr, "0x%04x\n", card->cis.venकरोr);
 MMC_DEV_ATTR(device, "0x%04x\n", card->cis.device);
 MMC_DEV_ATTR(revision, "%u.%u\n", card->major_rev, card->minor_rev);
 MMC_DEV_ATTR(ocr, "0x%08x\n", card->ocr);
 MMC_DEV_ATTR(rca, "0x%04x\n", card->rca);
 
-#define sdio_info_attr(num)									\
-static ssize_t info##num##_show(struct device *dev, struct device_attribute *attr, char *buf)	\
-{												\
-	struct mmc_card *card = mmc_dev_to_card(dev);						\
+#घोषणा sdio_info_attr(num)									\
+अटल sमाप_प्रकार info##num##_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु												\
+	काष्ठा mmc_card *card = mmc_dev_to_card(dev);						\
 												\
-	if (num > card->num_info)								\
-		return -ENODATA;								\
-	if (!card->info[num-1][0])								\
-		return 0;									\
-	return sprintf(buf, "%s\n", card->info[num-1]);						\
-}												\
-static DEVICE_ATTR_RO(info##num)
+	अगर (num > card->num_info)								\
+		वापस -ENODATA;								\
+	अगर (!card->info[num-1][0])								\
+		वापस 0;									\
+	वापस प्र_लिखो(buf, "%s\n", card->info[num-1]);						\
+पूर्ण												\
+अटल DEVICE_ATTR_RO(info##num)
 
 sdio_info_attr(1);
 sdio_info_attr(2);
 sdio_info_attr(3);
 sdio_info_attr(4);
 
-static struct attribute *sdio_std_attrs[] = {
-	&dev_attr_vendor.attr,
+अटल काष्ठा attribute *sdio_std_attrs[] = अणु
+	&dev_attr_venकरोr.attr,
 	&dev_attr_device.attr,
 	&dev_attr_revision.attr,
 	&dev_attr_info1.attr,
@@ -61,204 +62,204 @@ static struct attribute *sdio_std_attrs[] = {
 	&dev_attr_info4.attr,
 	&dev_attr_ocr.attr,
 	&dev_attr_rca.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(sdio_std);
 
-static struct device_type sdio_type = {
+अटल काष्ठा device_type sdio_type = अणु
 	.groups = sdio_std_groups,
-};
+पूर्ण;
 
-static int sdio_read_fbr(struct sdio_func *func)
-{
-	int ret;
-	unsigned char data;
+अटल पूर्णांक sdio_पढ़ो_fbr(काष्ठा sdio_func *func)
+अणु
+	पूर्णांक ret;
+	अचिन्हित अक्षर data;
 
-	if (mmc_card_nonstd_func_interface(func->card)) {
+	अगर (mmc_card_nonstd_func_पूर्णांकerface(func->card)) अणु
 		func->class = SDIO_CLASS_NONE;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = mmc_io_rw_direct(func->card, 0, 0,
 		SDIO_FBR_BASE(func->num) + SDIO_FBR_STD_IF, 0, &data);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	data &= 0x0f;
 
-	if (data == 0x0f) {
+	अगर (data == 0x0f) अणु
 		ret = mmc_io_rw_direct(func->card, 0, 0,
 			SDIO_FBR_BASE(func->num) + SDIO_FBR_STD_IF_EXT, 0, &data);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	func->class = data;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sdio_init_func(struct mmc_card *card, unsigned int fn)
-{
-	int ret;
-	struct sdio_func *func;
+अटल पूर्णांक sdio_init_func(काष्ठा mmc_card *card, अचिन्हित पूर्णांक fn)
+अणु
+	पूर्णांक ret;
+	काष्ठा sdio_func *func;
 
-	if (WARN_ON(fn > SDIO_MAX_FUNCS))
-		return -EINVAL;
+	अगर (WARN_ON(fn > SDIO_MAX_FUNCS))
+		वापस -EINVAL;
 
 	func = sdio_alloc_func(card);
-	if (IS_ERR(func))
-		return PTR_ERR(func);
+	अगर (IS_ERR(func))
+		वापस PTR_ERR(func);
 
 	func->num = fn;
 
-	if (!(card->quirks & MMC_QUIRK_NONSTD_SDIO)) {
-		ret = sdio_read_fbr(func);
-		if (ret)
-			goto fail;
+	अगर (!(card->quirks & MMC_QUIRK_NONSTD_SDIO)) अणु
+		ret = sdio_पढ़ो_fbr(func);
+		अगर (ret)
+			जाओ fail;
 
-		ret = sdio_read_func_cis(func);
-		if (ret)
-			goto fail;
-	} else {
-		func->vendor = func->card->cis.vendor;
+		ret = sdio_पढ़ो_func_cis(func);
+		अगर (ret)
+			जाओ fail;
+	पूर्ण अन्यथा अणु
+		func->venकरोr = func->card->cis.venकरोr;
 		func->device = func->card->cis.device;
 		func->max_blksize = func->card->cis.blksize;
-	}
+	पूर्ण
 
 	card->sdio_func[fn - 1] = func;
 
-	return 0;
+	वापस 0;
 
 fail:
 	/*
-	 * It is okay to remove the function here even though we hold
-	 * the host lock as we haven't registered the device yet.
+	 * It is okay to हटाओ the function here even though we hold
+	 * the host lock as we haven't रेजिस्टरed the device yet.
 	 */
-	sdio_remove_func(func);
-	return ret;
-}
+	sdio_हटाओ_func(func);
+	वापस ret;
+पूर्ण
 
-static int sdio_read_cccr(struct mmc_card *card, u32 ocr)
-{
-	int ret;
-	int cccr_vsn;
-	int uhs = ocr & R4_18V_PRESENT;
-	unsigned char data;
-	unsigned char speed;
+अटल पूर्णांक sdio_पढ़ो_cccr(काष्ठा mmc_card *card, u32 ocr)
+अणु
+	पूर्णांक ret;
+	पूर्णांक cccr_vsn;
+	पूर्णांक uhs = ocr & R4_18V_PRESENT;
+	अचिन्हित अक्षर data;
+	अचिन्हित अक्षर speed;
 
 	ret = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_CCCR, 0, &data);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	cccr_vsn = data & 0x0f;
 
-	if (cccr_vsn > SDIO_CCCR_REV_3_00) {
+	अगर (cccr_vsn > SDIO_CCCR_REV_3_00) अणु
 		pr_err("%s: unrecognised CCCR structure version %d\n",
 			mmc_hostname(card->host), cccr_vsn);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	card->cccr.sdio_vsn = (data & 0xf0) >> 4;
 
 	ret = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_CAPS, 0, &data);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (data & SDIO_CCCR_CAP_SMB)
+	अगर (data & SDIO_CCCR_CAP_SMB)
 		card->cccr.multi_block = 1;
-	if (data & SDIO_CCCR_CAP_LSC)
+	अगर (data & SDIO_CCCR_CAP_LSC)
 		card->cccr.low_speed = 1;
-	if (data & SDIO_CCCR_CAP_4BLS)
+	अगर (data & SDIO_CCCR_CAP_4BLS)
 		card->cccr.wide_bus = 1;
 
-	if (cccr_vsn >= SDIO_CCCR_REV_1_10) {
+	अगर (cccr_vsn >= SDIO_CCCR_REV_1_10) अणु
 		ret = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_POWER, 0, &data);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
-		if (data & SDIO_POWER_SMPC)
-			card->cccr.high_power = 1;
-	}
+		अगर (data & SDIO_POWER_SMPC)
+			card->cccr.high_घातer = 1;
+	पूर्ण
 
-	if (cccr_vsn >= SDIO_CCCR_REV_1_20) {
+	अगर (cccr_vsn >= SDIO_CCCR_REV_1_20) अणु
 		ret = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_SPEED, 0, &speed);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		card->scr.sda_spec3 = 0;
 		card->sw_caps.sd3_bus_mode = 0;
 		card->sw_caps.sd3_drv_type = 0;
-		if (cccr_vsn >= SDIO_CCCR_REV_3_00 && uhs) {
+		अगर (cccr_vsn >= SDIO_CCCR_REV_3_00 && uhs) अणु
 			card->scr.sda_spec3 = 1;
 			ret = mmc_io_rw_direct(card, 0, 0,
 				SDIO_CCCR_UHS, 0, &data);
-			if (ret)
-				goto out;
+			अगर (ret)
+				जाओ out;
 
-			if (mmc_host_uhs(card->host)) {
-				if (data & SDIO_UHS_DDR50)
+			अगर (mmc_host_uhs(card->host)) अणु
+				अगर (data & SDIO_UHS_DDR50)
 					card->sw_caps.sd3_bus_mode
 						|= SD_MODE_UHS_DDR50 | SD_MODE_UHS_SDR50
 							| SD_MODE_UHS_SDR25 | SD_MODE_UHS_SDR12;
 
-				if (data & SDIO_UHS_SDR50)
+				अगर (data & SDIO_UHS_SDR50)
 					card->sw_caps.sd3_bus_mode
 						|= SD_MODE_UHS_SDR50 | SD_MODE_UHS_SDR25
 							| SD_MODE_UHS_SDR12;
 
-				if (data & SDIO_UHS_SDR104)
+				अगर (data & SDIO_UHS_SDR104)
 					card->sw_caps.sd3_bus_mode
 						|= SD_MODE_UHS_SDR104 | SD_MODE_UHS_SDR50
 							| SD_MODE_UHS_SDR25 | SD_MODE_UHS_SDR12;
-			}
+			पूर्ण
 
 			ret = mmc_io_rw_direct(card, 0, 0,
 				SDIO_CCCR_DRIVE_STRENGTH, 0, &data);
-			if (ret)
-				goto out;
+			अगर (ret)
+				जाओ out;
 
-			if (data & SDIO_DRIVE_SDTA)
+			अगर (data & SDIO_DRIVE_SDTA)
 				card->sw_caps.sd3_drv_type |= SD_DRIVER_TYPE_A;
-			if (data & SDIO_DRIVE_SDTC)
+			अगर (data & SDIO_DRIVE_SDTC)
 				card->sw_caps.sd3_drv_type |= SD_DRIVER_TYPE_C;
-			if (data & SDIO_DRIVE_SDTD)
+			अगर (data & SDIO_DRIVE_SDTD)
 				card->sw_caps.sd3_drv_type |= SD_DRIVER_TYPE_D;
-		}
+		पूर्ण
 
-		/* if no uhs mode ensure we check for high speed */
-		if (!card->sw_caps.sd3_bus_mode) {
-			if (speed & SDIO_SPEED_SHS) {
+		/* अगर no uhs mode ensure we check क्रम high speed */
+		अगर (!card->sw_caps.sd3_bus_mode) अणु
+			अगर (speed & SDIO_SPEED_SHS) अणु
 				card->cccr.high_speed = 1;
 				card->sw_caps.hs_max_dtr = 50000000;
-			} else {
+			पूर्ण अन्यथा अणु
 				card->cccr.high_speed = 0;
 				card->sw_caps.hs_max_dtr = 25000000;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sdio_enable_wide(struct mmc_card *card)
-{
-	int ret;
+अटल पूर्णांक sdio_enable_wide(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक ret;
 	u8 ctrl;
 
-	if (!(card->host->caps & MMC_CAP_4_BIT_DATA))
-		return 0;
+	अगर (!(card->host->caps & MMC_CAP_4_BIT_DATA))
+		वापस 0;
 
-	if (card->cccr.low_speed && !card->cccr.wide_bus)
-		return 0;
+	अगर (card->cccr.low_speed && !card->cccr.wide_bus)
+		वापस 0;
 
 	ret = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_IF, 0, &ctrl);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if ((ctrl & SDIO_BUS_WIDTH_MASK) == SDIO_BUS_WIDTH_RESERVED)
+	अगर ((ctrl & SDIO_BUS_WIDTH_MASK) == SDIO_BUS_WIDTH_RESERVED)
 		pr_warn("%s: SDIO_CCCR_IF is invalid: 0x%02x\n",
 			mmc_hostname(card->host), ctrl);
 
@@ -266,207 +267,207 @@ static int sdio_enable_wide(struct mmc_card *card)
 	ctrl &= ~SDIO_BUS_WIDTH_MASK;
 	ctrl |= SDIO_BUS_WIDTH_4BIT;
 
-	ret = mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_IF, ctrl, NULL);
-	if (ret)
-		return ret;
+	ret = mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_IF, ctrl, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * If desired, disconnect the pull-up resistor on CD/DAT[3] (pin 1)
  * of the card. This may be required on certain setups of boards,
- * controllers and embedded sdio device which do not need the card's
- * pull-up. As a result, card detection is disabled and power is saved.
+ * controllers and embedded sdio device which करो not need the card's
+ * pull-up. As a result, card detection is disabled and घातer is saved.
  */
-static int sdio_disable_cd(struct mmc_card *card)
-{
-	int ret;
+अटल पूर्णांक sdio_disable_cd(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक ret;
 	u8 ctrl;
 
-	if (!mmc_card_disable_cd(card))
-		return 0;
+	अगर (!mmc_card_disable_cd(card))
+		वापस 0;
 
 	ret = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_IF, 0, &ctrl);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ctrl |= SDIO_BUS_CD_DISABLE;
 
-	return mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_IF, ctrl, NULL);
-}
+	वापस mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_IF, ctrl, शून्य);
+पूर्ण
 
 /*
- * Devices that remain active during a system suspend are
- * put back into 1-bit mode.
+ * Devices that reमुख्य active during a प्रणाली suspend are
+ * put back पूर्णांकo 1-bit mode.
  */
-static int sdio_disable_wide(struct mmc_card *card)
-{
-	int ret;
+अटल पूर्णांक sdio_disable_wide(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक ret;
 	u8 ctrl;
 
-	if (!(card->host->caps & MMC_CAP_4_BIT_DATA))
-		return 0;
+	अगर (!(card->host->caps & MMC_CAP_4_BIT_DATA))
+		वापस 0;
 
-	if (card->cccr.low_speed && !card->cccr.wide_bus)
-		return 0;
+	अगर (card->cccr.low_speed && !card->cccr.wide_bus)
+		वापस 0;
 
 	ret = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_IF, 0, &ctrl);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!(ctrl & SDIO_BUS_WIDTH_4BIT))
-		return 0;
+	अगर (!(ctrl & SDIO_BUS_WIDTH_4BIT))
+		वापस 0;
 
 	ctrl &= ~SDIO_BUS_WIDTH_4BIT;
 	ctrl |= SDIO_BUS_ASYNC_INT;
 
-	ret = mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_IF, ctrl, NULL);
-	if (ret)
-		return ret;
+	ret = mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_IF, ctrl, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	mmc_set_bus_width(card->host, MMC_BUS_WIDTH_1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdio_disable_4bit_bus(struct mmc_card *card)
-{
-	int err;
+अटल पूर्णांक sdio_disable_4bit_bus(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक err;
 
-	if (card->type == MMC_TYPE_SDIO)
-		goto out;
+	अगर (card->type == MMC_TYPE_SDIO)
+		जाओ out;
 
-	if (!(card->host->caps & MMC_CAP_4_BIT_DATA))
-		return 0;
+	अगर (!(card->host->caps & MMC_CAP_4_BIT_DATA))
+		वापस 0;
 
-	if (!(card->scr.bus_widths & SD_SCR_BUS_WIDTH_4))
-		return 0;
+	अगर (!(card->scr.bus_widths & SD_SCR_BUS_WIDTH_4))
+		वापस 0;
 
 	err = mmc_app_set_bus_width(card, MMC_BUS_WIDTH_1);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 out:
-	return sdio_disable_wide(card);
-}
+	वापस sdio_disable_wide(card);
+पूर्ण
 
 
-static int sdio_enable_4bit_bus(struct mmc_card *card)
-{
-	int err;
+अटल पूर्णांक sdio_enable_4bit_bus(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक err;
 
 	err = sdio_enable_wide(card);
-	if (err <= 0)
-		return err;
-	if (card->type == MMC_TYPE_SDIO)
-		goto out;
+	अगर (err <= 0)
+		वापस err;
+	अगर (card->type == MMC_TYPE_SDIO)
+		जाओ out;
 
-	if (card->scr.bus_widths & SD_SCR_BUS_WIDTH_4) {
+	अगर (card->scr.bus_widths & SD_SCR_BUS_WIDTH_4) अणु
 		err = mmc_app_set_bus_width(card, MMC_BUS_WIDTH_4);
-		if (err) {
+		अगर (err) अणु
 			sdio_disable_wide(card);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 out:
 	mmc_set_bus_width(card->host, MMC_BUS_WIDTH_4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * Test if the card supports high-speed mode and, if so, switch to it.
+ * Test अगर the card supports high-speed mode and, अगर so, चयन to it.
  */
-static int mmc_sdio_switch_hs(struct mmc_card *card, int enable)
-{
-	int ret;
+अटल पूर्णांक mmc_sdio_चयन_hs(काष्ठा mmc_card *card, पूर्णांक enable)
+अणु
+	पूर्णांक ret;
 	u8 speed;
 
-	if (!(card->host->caps & MMC_CAP_SD_HIGHSPEED))
-		return 0;
+	अगर (!(card->host->caps & MMC_CAP_SD_HIGHSPEED))
+		वापस 0;
 
-	if (!card->cccr.high_speed)
-		return 0;
+	अगर (!card->cccr.high_speed)
+		वापस 0;
 
 	ret = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_SPEED, 0, &speed);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (enable)
+	अगर (enable)
 		speed |= SDIO_SPEED_EHS;
-	else
+	अन्यथा
 		speed &= ~SDIO_SPEED_EHS;
 
-	ret = mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_SPEED, speed, NULL);
-	if (ret)
-		return ret;
+	ret = mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_SPEED, speed, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Enable SDIO/combo card's high-speed mode. Return 0/1 if [not]supported.
+ * Enable SDIO/combo card's high-speed mode. Return 0/1 अगर [not]supported.
  */
-static int sdio_enable_hs(struct mmc_card *card)
-{
-	int ret;
+अटल पूर्णांक sdio_enable_hs(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक ret;
 
-	ret = mmc_sdio_switch_hs(card, true);
-	if (ret <= 0 || card->type == MMC_TYPE_SDIO)
-		return ret;
+	ret = mmc_sdio_चयन_hs(card, true);
+	अगर (ret <= 0 || card->type == MMC_TYPE_SDIO)
+		वापस ret;
 
-	ret = mmc_sd_switch_hs(card);
-	if (ret <= 0)
-		mmc_sdio_switch_hs(card, false);
+	ret = mmc_sd_चयन_hs(card);
+	अगर (ret <= 0)
+		mmc_sdio_चयन_hs(card, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned mmc_sdio_get_max_clock(struct mmc_card *card)
-{
-	unsigned max_dtr;
+अटल अचिन्हित mmc_sdio_get_max_घड़ी(काष्ठा mmc_card *card)
+अणु
+	अचिन्हित max_dtr;
 
-	if (mmc_card_hs(card)) {
+	अगर (mmc_card_hs(card)) अणु
 		/*
-		 * The SDIO specification doesn't mention how
-		 * the CIS transfer speed register relates to
+		 * The SDIO specअगरication करोesn't mention how
+		 * the CIS transfer speed रेजिस्टर relates to
 		 * high-speed, but it seems that 50 MHz is
 		 * mandatory.
 		 */
 		max_dtr = 50000000;
-	} else {
+	पूर्ण अन्यथा अणु
 		max_dtr = card->cis.max_dtr;
-	}
+	पूर्ण
 
-	if (card->type == MMC_TYPE_SD_COMBO)
-		max_dtr = min(max_dtr, mmc_sd_get_max_clock(card));
+	अगर (card->type == MMC_TYPE_SD_COMBO)
+		max_dtr = min(max_dtr, mmc_sd_get_max_घड़ी(card));
 
-	return max_dtr;
-}
+	वापस max_dtr;
+पूर्ण
 
-static unsigned char host_drive_to_sdio_drive(int host_strength)
-{
-	switch (host_strength) {
-	case MMC_SET_DRIVER_TYPE_A:
-		return SDIO_DTSx_SET_TYPE_A;
-	case MMC_SET_DRIVER_TYPE_B:
-		return SDIO_DTSx_SET_TYPE_B;
-	case MMC_SET_DRIVER_TYPE_C:
-		return SDIO_DTSx_SET_TYPE_C;
-	case MMC_SET_DRIVER_TYPE_D:
-		return SDIO_DTSx_SET_TYPE_D;
-	default:
-		return SDIO_DTSx_SET_TYPE_B;
-	}
-}
+अटल अचिन्हित अक्षर host_drive_to_sdio_drive(पूर्णांक host_strength)
+अणु
+	चयन (host_strength) अणु
+	हाल MMC_SET_DRIVER_TYPE_A:
+		वापस SDIO_DTSx_SET_TYPE_A;
+	हाल MMC_SET_DRIVER_TYPE_B:
+		वापस SDIO_DTSx_SET_TYPE_B;
+	हाल MMC_SET_DRIVER_TYPE_C:
+		वापस SDIO_DTSx_SET_TYPE_C;
+	हाल MMC_SET_DRIVER_TYPE_D:
+		वापस SDIO_DTSx_SET_TYPE_D;
+	शेष:
+		वापस SDIO_DTSx_SET_TYPE_B;
+	पूर्ण
+पूर्ण
 
-static void sdio_select_driver_type(struct mmc_card *card)
-{
-	int card_drv_type, drive_strength, drv_type;
-	unsigned char card_strength;
-	int err;
+अटल व्योम sdio_select_driver_type(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक card_drv_type, drive_strength, drv_type;
+	अचिन्हित अक्षर card_strength;
+	पूर्णांक err;
 
 	card->drive_strength = 0;
 
@@ -476,554 +477,554 @@ static void sdio_select_driver_type(struct mmc_card *card)
 						   card->sw_caps.uhs_max_dtr,
 						   card_drv_type, &drv_type);
 
-	if (drive_strength) {
-		/* if error just use default for drive strength B */
+	अगर (drive_strength) अणु
+		/* अगर error just use शेष क्रम drive strength B */
 		err = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_DRIVE_STRENGTH, 0,
 				       &card_strength);
-		if (err)
-			return;
+		अगर (err)
+			वापस;
 
 		card_strength &= ~(SDIO_DRIVE_DTSx_MASK<<SDIO_DRIVE_DTSx_SHIFT);
 		card_strength |= host_drive_to_sdio_drive(drive_strength);
 
-		/* if error default to drive strength B */
+		/* अगर error शेष to drive strength B */
 		err = mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_DRIVE_STRENGTH,
-				       card_strength, NULL);
-		if (err)
-			return;
+				       card_strength, शून्य);
+		अगर (err)
+			वापस;
 		card->drive_strength = drive_strength;
-	}
+	पूर्ण
 
-	if (drv_type)
+	अगर (drv_type)
 		mmc_set_driver_type(card->host, drv_type);
-}
+पूर्ण
 
 
-static int sdio_set_bus_speed_mode(struct mmc_card *card)
-{
-	unsigned int bus_speed, timing;
-	int err;
-	unsigned char speed;
-	unsigned int max_rate;
+अटल पूर्णांक sdio_set_bus_speed_mode(काष्ठा mmc_card *card)
+अणु
+	अचिन्हित पूर्णांक bus_speed, timing;
+	पूर्णांक err;
+	अचिन्हित अक्षर speed;
+	अचिन्हित पूर्णांक max_rate;
 
 	/*
-	 * If the host doesn't support any of the UHS-I modes, fallback on
-	 * default speed.
+	 * If the host करोesn't support any of the UHS-I modes, fallback on
+	 * शेष speed.
 	 */
-	if (!mmc_host_uhs(card->host))
-		return 0;
+	अगर (!mmc_host_uhs(card->host))
+		वापस 0;
 
 	bus_speed = SDIO_SPEED_SDR12;
 	timing = MMC_TIMING_UHS_SDR12;
-	if ((card->host->caps & MMC_CAP_UHS_SDR104) &&
-	    (card->sw_caps.sd3_bus_mode & SD_MODE_UHS_SDR104)) {
+	अगर ((card->host->caps & MMC_CAP_UHS_SDR104) &&
+	    (card->sw_caps.sd3_bus_mode & SD_MODE_UHS_SDR104)) अणु
 			bus_speed = SDIO_SPEED_SDR104;
 			timing = MMC_TIMING_UHS_SDR104;
 			card->sw_caps.uhs_max_dtr = UHS_SDR104_MAX_DTR;
 			card->sd_bus_speed = UHS_SDR104_BUS_SPEED;
-	} else if ((card->host->caps & MMC_CAP_UHS_DDR50) &&
-		   (card->sw_caps.sd3_bus_mode & SD_MODE_UHS_DDR50)) {
+	पूर्ण अन्यथा अगर ((card->host->caps & MMC_CAP_UHS_DDR50) &&
+		   (card->sw_caps.sd3_bus_mode & SD_MODE_UHS_DDR50)) अणु
 			bus_speed = SDIO_SPEED_DDR50;
 			timing = MMC_TIMING_UHS_DDR50;
 			card->sw_caps.uhs_max_dtr = UHS_DDR50_MAX_DTR;
 			card->sd_bus_speed = UHS_DDR50_BUS_SPEED;
-	} else if ((card->host->caps & (MMC_CAP_UHS_SDR104 |
+	पूर्ण अन्यथा अगर ((card->host->caps & (MMC_CAP_UHS_SDR104 |
 		    MMC_CAP_UHS_SDR50)) && (card->sw_caps.sd3_bus_mode &
-		    SD_MODE_UHS_SDR50)) {
+		    SD_MODE_UHS_SDR50)) अणु
 			bus_speed = SDIO_SPEED_SDR50;
 			timing = MMC_TIMING_UHS_SDR50;
 			card->sw_caps.uhs_max_dtr = UHS_SDR50_MAX_DTR;
 			card->sd_bus_speed = UHS_SDR50_BUS_SPEED;
-	} else if ((card->host->caps & (MMC_CAP_UHS_SDR104 |
+	पूर्ण अन्यथा अगर ((card->host->caps & (MMC_CAP_UHS_SDR104 |
 		    MMC_CAP_UHS_SDR50 | MMC_CAP_UHS_SDR25)) &&
-		   (card->sw_caps.sd3_bus_mode & SD_MODE_UHS_SDR25)) {
+		   (card->sw_caps.sd3_bus_mode & SD_MODE_UHS_SDR25)) अणु
 			bus_speed = SDIO_SPEED_SDR25;
 			timing = MMC_TIMING_UHS_SDR25;
 			card->sw_caps.uhs_max_dtr = UHS_SDR25_MAX_DTR;
 			card->sd_bus_speed = UHS_SDR25_BUS_SPEED;
-	} else if ((card->host->caps & (MMC_CAP_UHS_SDR104 |
+	पूर्ण अन्यथा अगर ((card->host->caps & (MMC_CAP_UHS_SDR104 |
 		    MMC_CAP_UHS_SDR50 | MMC_CAP_UHS_SDR25 |
 		    MMC_CAP_UHS_SDR12)) && (card->sw_caps.sd3_bus_mode &
-		    SD_MODE_UHS_SDR12)) {
+		    SD_MODE_UHS_SDR12)) अणु
 			bus_speed = SDIO_SPEED_SDR12;
 			timing = MMC_TIMING_UHS_SDR12;
 			card->sw_caps.uhs_max_dtr = UHS_SDR12_MAX_DTR;
 			card->sd_bus_speed = UHS_SDR12_BUS_SPEED;
-	}
+	पूर्ण
 
 	err = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_SPEED, 0, &speed);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	speed &= ~SDIO_SPEED_BSS_MASK;
 	speed |= bus_speed;
-	err = mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_SPEED, speed, NULL);
-	if (err)
-		return err;
+	err = mmc_io_rw_direct(card, 1, 0, SDIO_CCCR_SPEED, speed, शून्य);
+	अगर (err)
+		वापस err;
 
 	max_rate = min_not_zero(card->quirk_max_rate,
 				card->sw_caps.uhs_max_dtr);
 
 	mmc_set_timing(card->host, timing);
-	mmc_set_clock(card->host, max_rate);
+	mmc_set_घड़ी(card->host, max_rate);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * UHS-I specific initialization procedure
+ * UHS-I specअगरic initialization procedure
  */
-static int mmc_sdio_init_uhs_card(struct mmc_card *card)
-{
-	int err;
+अटल पूर्णांक mmc_sdio_init_uhs_card(काष्ठा mmc_card *card)
+अणु
+	पूर्णांक err;
 
-	if (!card->scr.sda_spec3)
-		return 0;
+	अगर (!card->scr.sda_spec3)
+		वापस 0;
 
 	/* Switch to wider bus */
 	err = sdio_enable_4bit_bus(card);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	/* Set the driver strength for the card */
+	/* Set the driver strength क्रम the card */
 	sdio_select_driver_type(card);
 
 	/* Set bus speed mode of the card */
 	err = sdio_set_bus_speed_mode(card);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	/*
-	 * SPI mode doesn't define CMD19 and tuning is only valid for SDR50 and
-	 * SDR104 mode SD-cards. Note that tuning is mandatory for SDR104.
+	 * SPI mode करोesn't define CMD19 and tuning is only valid क्रम SDR50 and
+	 * SDR104 mode SD-cards. Note that tuning is mandatory क्रम SDR104.
 	 */
-	if (!mmc_host_is_spi(card->host) &&
+	अगर (!mmc_host_is_spi(card->host) &&
 	    ((card->host->ios.timing == MMC_TIMING_UHS_SDR50) ||
 	      (card->host->ios.timing == MMC_TIMING_UHS_SDR104)))
 		err = mmc_execute_tuning(card);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_sdio_pre_init(struct mmc_host *host, u32 ocr,
-			     struct mmc_card *card)
-{
-	if (card)
-		mmc_remove_card(card);
+अटल पूर्णांक mmc_sdio_pre_init(काष्ठा mmc_host *host, u32 ocr,
+			     काष्ठा mmc_card *card)
+अणु
+	अगर (card)
+		mmc_हटाओ_card(card);
 
 	/*
-	 * Reset the card by performing the same steps that are taken by
+	 * Reset the card by perक्रमming the same steps that are taken by
 	 * mmc_rescan_try_freq() and mmc_attach_sdio() during a "normal" probe.
 	 *
-	 * sdio_reset() is technically not needed. Having just powered up the
-	 * hardware, it should already be in reset state. However, some
-	 * platforms (such as SD8686 on OLPC) do not instantly cut power,
-	 * meaning that a reset is required when restoring power soon after
-	 * powering off. It is harmless in other cases.
+	 * sdio_reset() is technically not needed. Having just घातered up the
+	 * hardware, it should alपढ़ोy be in reset state. However, some
+	 * platक्रमms (such as SD8686 on OLPC) करो not instantly cut घातer,
+	 * meaning that a reset is required when restoring घातer soon after
+	 * घातering off. It is harmless in other हालs.
 	 *
 	 * The CMD5 reset (mmc_send_io_op_cond()), according to the SDIO spec,
-	 * is not necessary for non-removable cards. However, it is required
-	 * for OLPC SD8686 (which expects a [CMD5,5,3,7] init sequence), and
+	 * is not necessary क्रम non-removable cards. However, it is required
+	 * क्रम OLPC SD8686 (which expects a [CMD5,5,3,7] init sequence), and
 	 * harmless in other situations.
 	 *
 	 */
 
 	sdio_reset(host);
 	mmc_go_idle(host);
-	mmc_send_if_cond(host, ocr);
-	return mmc_send_io_op_cond(host, 0, NULL);
-}
+	mmc_send_अगर_cond(host, ocr);
+	वापस mmc_send_io_op_cond(host, 0, शून्य);
+पूर्ण
 
 /*
  * Handle the detection and initialisation of a card.
  *
- * In the case of a resume, "oldcard" will contain the card
+ * In the हाल of a resume, "oldcard" will contain the card
  * we're trying to reinitialise.
  */
-static int mmc_sdio_init_card(struct mmc_host *host, u32 ocr,
-			      struct mmc_card *oldcard)
-{
-	struct mmc_card *card;
-	int err;
-	int retries = 10;
+अटल पूर्णांक mmc_sdio_init_card(काष्ठा mmc_host *host, u32 ocr,
+			      काष्ठा mmc_card *oldcard)
+अणु
+	काष्ठा mmc_card *card;
+	पूर्णांक err;
+	पूर्णांक retries = 10;
 	u32 rocr = 0;
 	u32 ocr_card = ocr;
 
 	WARN_ON(!host->claimed);
 
-	/* to query card if 1.8V signalling is supported */
-	if (mmc_host_uhs(host))
+	/* to query card अगर 1.8V संकेतling is supported */
+	अगर (mmc_host_uhs(host))
 		ocr |= R4_18V_PRESENT;
 
 try_again:
-	if (!retries) {
+	अगर (!retries) अणु
 		pr_warn("%s: Skipping voltage switch\n", mmc_hostname(host));
 		ocr &= ~R4_18V_PRESENT;
-	}
+	पूर्ण
 
 	/*
-	 * Inform the card of the voltage
+	 * Inक्रमm the card of the voltage
 	 */
 	err = mmc_send_io_op_cond(host, ocr, &rocr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/*
 	 * For SPI, enable CRC as appropriate.
 	 */
-	if (mmc_host_is_spi(host)) {
+	अगर (mmc_host_is_spi(host)) अणु
 		err = mmc_spi_set_crc(host, use_spi_crc);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	/*
-	 * Allocate card structure.
+	 * Allocate card काष्ठाure.
 	 */
 	card = mmc_alloc_card(host, &sdio_type);
-	if (IS_ERR(card))
-		return PTR_ERR(card);
+	अगर (IS_ERR(card))
+		वापस PTR_ERR(card);
 
-	if ((rocr & R4_MEMORY_PRESENT) &&
-	    mmc_sd_get_cid(host, ocr & rocr, card->raw_cid, NULL) == 0) {
+	अगर ((rocr & R4_MEMORY_PRESENT) &&
+	    mmc_sd_get_cid(host, ocr & rocr, card->raw_cid, शून्य) == 0) अणु
 		card->type = MMC_TYPE_SD_COMBO;
 
-		if (oldcard && (oldcard->type != MMC_TYPE_SD_COMBO ||
-		    memcmp(card->raw_cid, oldcard->raw_cid, sizeof(card->raw_cid)) != 0)) {
+		अगर (oldcard && (oldcard->type != MMC_TYPE_SD_COMBO ||
+		    स_भेद(card->raw_cid, oldcard->raw_cid, माप(card->raw_cid)) != 0)) अणु
 			err = -ENOENT;
-			goto mismatch;
-		}
-	} else {
+			जाओ mismatch;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		card->type = MMC_TYPE_SDIO;
 
-		if (oldcard && oldcard->type != MMC_TYPE_SDIO) {
+		अगर (oldcard && oldcard->type != MMC_TYPE_SDIO) अणु
 			err = -ENOENT;
-			goto mismatch;
-		}
-	}
+			जाओ mismatch;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Call the optional HC's init_card function to handle quirks.
 	 */
-	if (host->ops->init_card)
+	अगर (host->ops->init_card)
 		host->ops->init_card(host, card);
 
 	/*
 	 * If the host and card support UHS-I mode request the card
-	 * to switch to 1.8V signaling level.  No 1.8v signalling if
-	 * UHS mode is not enabled to maintain compatibility and some
-	 * systems that claim 1.8v signalling in fact do not support
-	 * it. Per SDIO spec v3, section 3.1.2, if the voltage is already
+	 * to चयन to 1.8V संकेतing level.  No 1.8v संकेतling अगर
+	 * UHS mode is not enabled to मुख्यtain compatibility and some
+	 * प्रणालीs that claim 1.8v संकेतling in fact करो not support
+	 * it. Per SDIO spec v3, section 3.1.2, अगर the voltage is alपढ़ोy
 	 * 1.8v, the card sets S18A to 0 in the R4 response. So it will
 	 * fails to check rocr & R4_18V_PRESENT,  but we still need to
-	 * try to init uhs card. sdio_read_cccr will take over this task
+	 * try to init uhs card. sdio_पढ़ो_cccr will take over this task
 	 * to make sure which speed mode should work.
 	 */
-	if (rocr & ocr & R4_18V_PRESENT) {
+	अगर (rocr & ocr & R4_18V_PRESENT) अणु
 		err = mmc_set_uhs_voltage(host, ocr_card);
-		if (err == -EAGAIN) {
+		अगर (err == -EAGAIN) अणु
 			mmc_sdio_pre_init(host, ocr_card, card);
 			retries--;
-			goto try_again;
-		} else if (err) {
+			जाओ try_again;
+		पूर्ण अन्यथा अगर (err) अणु
 			ocr &= ~R4_18V_PRESENT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * For native busses:  set card RCA and quit open drain mode.
+	 * For native busses:  set card RCA and quit खोलो drain mode.
 	 */
-	if (!mmc_host_is_spi(host)) {
+	अगर (!mmc_host_is_spi(host)) अणु
 		err = mmc_send_relative_addr(host, &card->rca);
-		if (err)
-			goto remove;
+		अगर (err)
+			जाओ हटाओ;
 
 		/*
 		 * Update oldcard with the new RCA received from the SDIO
 		 * device -- we're doing this so that it's updated in the
-		 * "card" struct when oldcard overwrites that later.
+		 * "card" काष्ठा when oldcard overग_लिखोs that later.
 		 */
-		if (oldcard)
+		अगर (oldcard)
 			oldcard->rca = card->rca;
-	}
+	पूर्ण
 
 	/*
-	 * Read CSD, before selecting the card
+	 * Read CSD, beक्रमe selecting the card
 	 */
-	if (!oldcard && card->type == MMC_TYPE_SD_COMBO) {
+	अगर (!oldcard && card->type == MMC_TYPE_SD_COMBO) अणु
 		err = mmc_sd_get_csd(card);
-		if (err)
-			goto remove;
+		अगर (err)
+			जाओ हटाओ;
 
 		mmc_decode_cid(card);
-	}
+	पूर्ण
 
 	/*
 	 * Select card, as all following commands rely on that.
 	 */
-	if (!mmc_host_is_spi(host)) {
+	अगर (!mmc_host_is_spi(host)) अणु
 		err = mmc_select_card(card);
-		if (err)
-			goto remove;
-	}
+		अगर (err)
+			जाओ हटाओ;
+	पूर्ण
 
-	if (card->quirks & MMC_QUIRK_NONSTD_SDIO) {
+	अगर (card->quirks & MMC_QUIRK_NONSTD_SDIO) अणु
 		/*
-		 * This is non-standard SDIO device, meaning it doesn't
-		 * have any CIA (Common I/O area) registers present.
+		 * This is non-standard SDIO device, meaning it करोesn't
+		 * have any CIA (Common I/O area) रेजिस्टरs present.
 		 * It's host's responsibility to fill cccr and cis
-		 * structures in init_card().
+		 * काष्ठाures in init_card().
 		 */
-		mmc_set_clock(host, card->cis.max_dtr);
+		mmc_set_घड़ी(host, card->cis.max_dtr);
 
-		if (card->cccr.high_speed) {
+		अगर (card->cccr.high_speed) अणु
 			mmc_set_timing(card->host, MMC_TIMING_SD_HS);
-		}
+		पूर्ण
 
-		if (oldcard)
-			mmc_remove_card(card);
-		else
+		अगर (oldcard)
+			mmc_हटाओ_card(card);
+		अन्यथा
 			host->card = card;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * Read the common registers. Note that we should try to
+	 * Read the common रेजिस्टरs. Note that we should try to
 	 * validate whether UHS would work or not.
 	 */
-	err = sdio_read_cccr(card, ocr);
-	if (err) {
+	err = sdio_पढ़ो_cccr(card, ocr);
+	अगर (err) अणु
 		mmc_sdio_pre_init(host, ocr_card, card);
-		if (ocr & R4_18V_PRESENT) {
+		अगर (ocr & R4_18V_PRESENT) अणु
 			/* Retry init sequence, but without R4_18V_PRESENT. */
 			retries = 0;
-			goto try_again;
-		}
-		return err;
-	}
+			जाओ try_again;
+		पूर्ण
+		वापस err;
+	पूर्ण
 
 	/*
 	 * Read the common CIS tuples.
 	 */
-	err = sdio_read_common_cis(card);
-	if (err)
-		goto remove;
+	err = sdio_पढ़ो_common_cis(card);
+	अगर (err)
+		जाओ हटाओ;
 
-	if (oldcard) {
-		if (card->cis.vendor == oldcard->cis.vendor &&
-		    card->cis.device == oldcard->cis.device) {
-			mmc_remove_card(card);
+	अगर (oldcard) अणु
+		अगर (card->cis.venकरोr == oldcard->cis.venकरोr &&
+		    card->cis.device == oldcard->cis.device) अणु
+			mmc_हटाओ_card(card);
 			card = oldcard;
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -ENOENT;
-			goto mismatch;
-		}
-	}
+			जाओ mismatch;
+		पूर्ण
+	पूर्ण
 	card->ocr = ocr_card;
 	mmc_fixup_device(card, sdio_fixup_methods);
 
-	if (card->type == MMC_TYPE_SD_COMBO) {
-		err = mmc_sd_setup_card(host, card, oldcard != NULL);
-		/* handle as SDIO-only card if memory init failed */
-		if (err) {
+	अगर (card->type == MMC_TYPE_SD_COMBO) अणु
+		err = mmc_sd_setup_card(host, card, oldcard != शून्य);
+		/* handle as SDIO-only card अगर memory init failed */
+		अगर (err) अणु
 			mmc_go_idle(host);
-			if (mmc_host_is_spi(host))
+			अगर (mmc_host_is_spi(host))
 				/* should not fail, as it worked previously */
 				mmc_spi_set_crc(host, use_spi_crc);
 			card->type = MMC_TYPE_SDIO;
-		} else
+		पूर्ण अन्यथा
 			card->dev.type = &sd_type;
-	}
+	पूर्ण
 
 	/*
 	 * If needed, disconnect card detection pull-up resistor.
 	 */
 	err = sdio_disable_cd(card);
-	if (err)
-		goto remove;
+	अगर (err)
+		जाओ हटाओ;
 
-	/* Initialization sequence for UHS-I cards */
-	/* Only if card supports 1.8v and UHS signaling */
-	if ((ocr & R4_18V_PRESENT) && card->sw_caps.sd3_bus_mode) {
+	/* Initialization sequence क्रम UHS-I cards */
+	/* Only अगर card supports 1.8v and UHS संकेतing */
+	अगर ((ocr & R4_18V_PRESENT) && card->sw_caps.sd3_bus_mode) अणु
 		err = mmc_sdio_init_uhs_card(card);
-		if (err)
-			goto remove;
-	} else {
+		अगर (err)
+			जाओ हटाओ;
+	पूर्ण अन्यथा अणु
 		/*
-		 * Switch to high-speed (if supported).
+		 * Switch to high-speed (अगर supported).
 		 */
 		err = sdio_enable_hs(card);
-		if (err > 0)
+		अगर (err > 0)
 			mmc_set_timing(card->host, MMC_TIMING_SD_HS);
-		else if (err)
-			goto remove;
+		अन्यथा अगर (err)
+			जाओ हटाओ;
 
 		/*
 		 * Change to the card's maximum speed.
 		 */
-		mmc_set_clock(host, mmc_sdio_get_max_clock(card));
+		mmc_set_घड़ी(host, mmc_sdio_get_max_घड़ी(card));
 
 		/*
-		 * Switch to wider bus (if supported).
+		 * Switch to wider bus (अगर supported).
 		 */
 		err = sdio_enable_4bit_bus(card);
-		if (err)
-			goto remove;
-	}
+		अगर (err)
+			जाओ हटाओ;
+	पूर्ण
 
-	if (host->caps2 & MMC_CAP2_AVOID_3_3V &&
-	    host->ios.signal_voltage == MMC_SIGNAL_VOLTAGE_330) {
+	अगर (host->caps2 & MMC_CAP2_AVOID_3_3V &&
+	    host->ios.संकेत_voltage == MMC_SIGNAL_VOLTAGE_330) अणु
 		pr_err("%s: Host failed to negotiate down from 3.3V\n",
 			mmc_hostname(host));
 		err = -EINVAL;
-		goto remove;
-	}
+		जाओ हटाओ;
+	पूर्ण
 
 	host->card = card;
-	return 0;
+	वापस 0;
 
 mismatch:
 	pr_debug("%s: Perhaps the card was replaced\n", mmc_hostname(host));
-remove:
-	if (oldcard != card)
-		mmc_remove_card(card);
-	return err;
-}
+हटाओ:
+	अगर (oldcard != card)
+		mmc_हटाओ_card(card);
+	वापस err;
+पूर्ण
 
-static int mmc_sdio_reinit_card(struct mmc_host *host)
-{
-	int ret;
+अटल पूर्णांक mmc_sdio_reinit_card(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक ret;
 
-	ret = mmc_sdio_pre_init(host, host->card->ocr, NULL);
-	if (ret)
-		return ret;
+	ret = mmc_sdio_pre_init(host, host->card->ocr, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	return mmc_sdio_init_card(host, host->card->ocr, host->card);
-}
+	वापस mmc_sdio_init_card(host, host->card->ocr, host->card);
+पूर्ण
 
 /*
- * Host is being removed. Free up the current card.
+ * Host is being हटाओd. Free up the current card.
  */
-static void mmc_sdio_remove(struct mmc_host *host)
-{
-	int i;
+अटल व्योम mmc_sdio_हटाओ(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक i;
 
-	for (i = 0;i < host->card->sdio_funcs;i++) {
-		if (host->card->sdio_func[i]) {
-			sdio_remove_func(host->card->sdio_func[i]);
-			host->card->sdio_func[i] = NULL;
-		}
-	}
+	क्रम (i = 0;i < host->card->sdio_funcs;i++) अणु
+		अगर (host->card->sdio_func[i]) अणु
+			sdio_हटाओ_func(host->card->sdio_func[i]);
+			host->card->sdio_func[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	mmc_remove_card(host->card);
-	host->card = NULL;
-}
+	mmc_हटाओ_card(host->card);
+	host->card = शून्य;
+पूर्ण
 
 /*
  * Card detection - card is alive.
  */
-static int mmc_sdio_alive(struct mmc_host *host)
-{
-	return mmc_select_card(host->card);
-}
+अटल पूर्णांक mmc_sdio_alive(काष्ठा mmc_host *host)
+अणु
+	वापस mmc_select_card(host->card);
+पूर्ण
 
 /*
  * Card detection callback from host.
  */
-static void mmc_sdio_detect(struct mmc_host *host)
-{
-	int err;
+अटल व्योम mmc_sdio_detect(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err;
 
-	/* Make sure card is powered before detecting it */
-	if (host->caps & MMC_CAP_POWER_OFF_CARD) {
-		err = pm_runtime_get_sync(&host->card->dev);
-		if (err < 0) {
-			pm_runtime_put_noidle(&host->card->dev);
-			goto out;
-		}
-	}
+	/* Make sure card is घातered beक्रमe detecting it */
+	अगर (host->caps & MMC_CAP_POWER_OFF_CARD) अणु
+		err = pm_runसमय_get_sync(&host->card->dev);
+		अगर (err < 0) अणु
+			pm_runसमय_put_noidle(&host->card->dev);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	mmc_claim_host(host);
 
 	/*
-	 * Just check if our card has been removed.
+	 * Just check अगर our card has been हटाओd.
 	 */
-	err = _mmc_detect_card_removed(host);
+	err = _mmc_detect_card_हटाओd(host);
 
 	mmc_release_host(host);
 
 	/*
-	 * Tell PM core it's OK to power off the card now.
+	 * Tell PM core it's OK to घातer off the card now.
 	 *
 	 * The _sync variant is used in order to ensure that the card
-	 * is left powered off in case an error occurred, and the card
-	 * is going to be removed.
+	 * is left घातered off in हाल an error occurred, and the card
+	 * is going to be हटाओd.
 	 *
-	 * Since there is no specific reason to believe a new user
-	 * is about to show up at this point, the _sync variant is
+	 * Since there is no specअगरic reason to believe a new user
+	 * is about to show up at this poपूर्णांक, the _sync variant is
 	 * desirable anyway.
 	 */
-	if (host->caps & MMC_CAP_POWER_OFF_CARD)
-		pm_runtime_put_sync(&host->card->dev);
+	अगर (host->caps & MMC_CAP_POWER_OFF_CARD)
+		pm_runसमय_put_sync(&host->card->dev);
 
 out:
-	if (err) {
-		mmc_sdio_remove(host);
+	अगर (err) अणु
+		mmc_sdio_हटाओ(host);
 
 		mmc_claim_host(host);
 		mmc_detach_bus(host);
-		mmc_power_off(host);
+		mmc_घातer_off(host);
 		mmc_release_host(host);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * SDIO pre_suspend.  We need to suspend all functions separately.
- * Therefore all registered functions must have drivers with suspend
- * and resume methods.  Failing that we simply remove the whole card.
+ * Thereक्रमe all रेजिस्टरed functions must have drivers with suspend
+ * and resume methods.  Failing that we simply हटाओ the whole card.
  */
-static int mmc_sdio_pre_suspend(struct mmc_host *host)
-{
-	int i;
+अटल पूर्णांक mmc_sdio_pre_suspend(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < host->card->sdio_funcs; i++) {
-		struct sdio_func *func = host->card->sdio_func[i];
-		if (func && sdio_func_present(func) && func->dev.driver) {
-			const struct dev_pm_ops *pmops = func->dev.driver->pm;
-			if (!pmops || !pmops->suspend || !pmops->resume)
-				/* force removal of entire card in that case */
-				goto remove;
-		}
-	}
+	क्रम (i = 0; i < host->card->sdio_funcs; i++) अणु
+		काष्ठा sdio_func *func = host->card->sdio_func[i];
+		अगर (func && sdio_func_present(func) && func->dev.driver) अणु
+			स्थिर काष्ठा dev_pm_ops *pmops = func->dev.driver->pm;
+			अगर (!pmops || !pmops->suspend || !pmops->resume)
+				/* क्रमce removal of entire card in that हाल */
+				जाओ हटाओ;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-remove:
-	if (!mmc_card_is_removable(host)) {
+हटाओ:
+	अगर (!mmc_card_is_removable(host)) अणु
 		dev_warn(mmc_dev(host),
 			 "missing suspend/resume ops for non-removable SDIO card\n");
 		/* Don't remove a non-removable card - we can't re-detect it. */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Remove the SDIO card and let it be re-detected later on. */
-	mmc_sdio_remove(host);
+	mmc_sdio_हटाओ(host);
 	mmc_claim_host(host);
 	mmc_detach_bus(host);
-	mmc_power_off(host);
+	mmc_घातer_off(host);
 	mmc_release_host(host);
 	host->pm_flags = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * SDIO suspend.  Suspend all functions separately.
  */
-static int mmc_sdio_suspend(struct mmc_host *host)
-{
-	WARN_ON(host->sdio_irqs && !mmc_card_keep_power(host));
+अटल पूर्णांक mmc_sdio_suspend(काष्ठा mmc_host *host)
+अणु
+	WARN_ON(host->sdio_irqs && !mmc_card_keep_घातer(host));
 
 	/* Prevent processing of SDIO IRQs in suspended state. */
 	mmc_card_set_suspended(host->card);
@@ -1031,170 +1032,170 @@ static int mmc_sdio_suspend(struct mmc_host *host)
 
 	mmc_claim_host(host);
 
-	if (mmc_card_keep_power(host) && mmc_card_wake_sdio_irq(host))
+	अगर (mmc_card_keep_घातer(host) && mmc_card_wake_sdio_irq(host))
 		sdio_disable_4bit_bus(host->card);
 
-	if (!mmc_card_keep_power(host)) {
-		mmc_power_off(host);
-	} else if (host->retune_period) {
-		mmc_retune_timer_stop(host);
+	अगर (!mmc_card_keep_घातer(host)) अणु
+		mmc_घातer_off(host);
+	पूर्ण अन्यथा अगर (host->retune_period) अणु
+		mmc_retune_समयr_stop(host);
 		mmc_retune_needed(host);
-	}
+	पूर्ण
 
 	mmc_release_host(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mmc_sdio_resume(struct mmc_host *host)
-{
-	int err = 0;
+अटल पूर्णांक mmc_sdio_resume(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err = 0;
 
 	/* Basic card reinitialization. */
 	mmc_claim_host(host);
 
 	/*
-	 * Restore power and reinitialize the card when needed. Note that a
+	 * Restore घातer and reinitialize the card when needed. Note that a
 	 * removable card is checked from a detect work later on in the resume
 	 * process.
 	 */
-	if (!mmc_card_keep_power(host)) {
-		mmc_power_up(host, host->card->ocr);
+	अगर (!mmc_card_keep_घातer(host)) अणु
+		mmc_घातer_up(host, host->card->ocr);
 		/*
-		 * Tell runtime PM core we just powered up the card,
-		 * since it still believes the card is powered off.
-		 * Note that currently runtime PM is only enabled
-		 * for SDIO cards that are MMC_CAP_POWER_OFF_CARD
+		 * Tell runसमय PM core we just घातered up the card,
+		 * since it still believes the card is घातered off.
+		 * Note that currently runसमय PM is only enabled
+		 * क्रम SDIO cards that are MMC_CAP_POWER_OFF_CARD
 		 */
-		if (host->caps & MMC_CAP_POWER_OFF_CARD) {
-			pm_runtime_disable(&host->card->dev);
-			pm_runtime_set_active(&host->card->dev);
-			pm_runtime_enable(&host->card->dev);
-		}
+		अगर (host->caps & MMC_CAP_POWER_OFF_CARD) अणु
+			pm_runसमय_disable(&host->card->dev);
+			pm_runसमय_set_active(&host->card->dev);
+			pm_runसमय_enable(&host->card->dev);
+		पूर्ण
 		err = mmc_sdio_reinit_card(host);
-	} else if (mmc_card_wake_sdio_irq(host)) {
-		/* We may have switched to 1-bit mode during suspend */
+	पूर्ण अन्यथा अगर (mmc_card_wake_sdio_irq(host)) अणु
+		/* We may have चयनed to 1-bit mode during suspend */
 		err = sdio_enable_4bit_bus(host->card);
-	}
+	पूर्ण
 
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	/* Allow SDIO IRQs to be processed again. */
 	mmc_card_clr_suspended(host->card);
 
-	if (host->sdio_irqs) {
-		if (!(host->caps2 & MMC_CAP2_SDIO_IRQ_NOTHREAD))
-			wake_up_process(host->sdio_irq_thread);
-		else if (host->caps & MMC_CAP_SDIO_IRQ)
-			queue_delayed_work(system_wq, &host->sdio_irq_work, 0);
-	}
+	अगर (host->sdio_irqs) अणु
+		अगर (!(host->caps2 & MMC_CAP2_SDIO_IRQ_NOTHREAD))
+			wake_up_process(host->sdio_irq_thपढ़ो);
+		अन्यथा अगर (host->caps & MMC_CAP_SDIO_IRQ)
+			queue_delayed_work(प्रणाली_wq, &host->sdio_irq_work, 0);
+	पूर्ण
 
 out:
 	mmc_release_host(host);
 
 	host->pm_flags &= ~MMC_PM_KEEP_POWER;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mmc_sdio_runtime_suspend(struct mmc_host *host)
-{
-	/* No references to the card, cut the power to it. */
+अटल पूर्णांक mmc_sdio_runसमय_suspend(काष्ठा mmc_host *host)
+अणु
+	/* No references to the card, cut the घातer to it. */
 	mmc_claim_host(host);
-	mmc_power_off(host);
+	mmc_घातer_off(host);
 	mmc_release_host(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mmc_sdio_runtime_resume(struct mmc_host *host)
-{
-	int ret;
+अटल पूर्णांक mmc_sdio_runसमय_resume(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक ret;
 
-	/* Restore power and re-initialize. */
+	/* Restore घातer and re-initialize. */
 	mmc_claim_host(host);
-	mmc_power_up(host, host->card->ocr);
+	mmc_घातer_up(host, host->card->ocr);
 	ret = mmc_sdio_reinit_card(host);
 	mmc_release_host(host);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * SDIO HW reset
  *
- * Returns 0 if the HW reset was executed synchronously, returns 1 if the HW
- * reset was asynchronously scheduled, else a negative error code.
+ * Returns 0 अगर the HW reset was executed synchronously, वापसs 1 अगर the HW
+ * reset was asynchronously scheduled, अन्यथा a negative error code.
  */
-static int mmc_sdio_hw_reset(struct mmc_host *host)
-{
-	struct mmc_card *card = host->card;
+अटल पूर्णांक mmc_sdio_hw_reset(काष्ठा mmc_host *host)
+अणु
+	काष्ठा mmc_card *card = host->card;
 
 	/*
-	 * In case the card is shared among multiple func drivers, reset the
-	 * card through a rescan work. In this way it will be removed and
-	 * re-detected, thus all func drivers becomes informed about it.
+	 * In हाल the card is shared among multiple func drivers, reset the
+	 * card through a rescan work. In this way it will be हटाओd and
+	 * re-detected, thus all func drivers becomes inक्रमmed about it.
 	 */
-	if (atomic_read(&card->sdio_funcs_probed) > 1) {
-		if (mmc_card_removed(card))
-			return 1;
+	अगर (atomic_पढ़ो(&card->sdio_funcs_probed) > 1) अणु
+		अगर (mmc_card_हटाओd(card))
+			वापस 1;
 		host->rescan_entered = 0;
-		mmc_card_set_removed(card);
+		mmc_card_set_हटाओd(card);
 		_mmc_detect_change(host, 0, false);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/*
 	 * A single func driver has been probed, then let's skip the heavy
 	 * hotplug dance above and execute the reset immediately.
 	 */
-	mmc_power_cycle(host, card->ocr);
-	return mmc_sdio_reinit_card(host);
-}
+	mmc_घातer_cycle(host, card->ocr);
+	वापस mmc_sdio_reinit_card(host);
+पूर्ण
 
-static int mmc_sdio_sw_reset(struct mmc_host *host)
-{
-	mmc_set_clock(host, host->f_init);
+अटल पूर्णांक mmc_sdio_sw_reset(काष्ठा mmc_host *host)
+अणु
+	mmc_set_घड़ी(host, host->f_init);
 	sdio_reset(host);
 	mmc_go_idle(host);
 
 	mmc_set_initial_state(host);
-	mmc_set_initial_signal_voltage(host);
+	mmc_set_initial_संकेत_voltage(host);
 
-	return mmc_sdio_reinit_card(host);
-}
+	वापस mmc_sdio_reinit_card(host);
+पूर्ण
 
-static const struct mmc_bus_ops mmc_sdio_ops = {
-	.remove = mmc_sdio_remove,
+अटल स्थिर काष्ठा mmc_bus_ops mmc_sdio_ops = अणु
+	.हटाओ = mmc_sdio_हटाओ,
 	.detect = mmc_sdio_detect,
 	.pre_suspend = mmc_sdio_pre_suspend,
 	.suspend = mmc_sdio_suspend,
 	.resume = mmc_sdio_resume,
-	.runtime_suspend = mmc_sdio_runtime_suspend,
-	.runtime_resume = mmc_sdio_runtime_resume,
+	.runसमय_suspend = mmc_sdio_runसमय_suspend,
+	.runसमय_resume = mmc_sdio_runसमय_resume,
 	.alive = mmc_sdio_alive,
 	.hw_reset = mmc_sdio_hw_reset,
 	.sw_reset = mmc_sdio_sw_reset,
-};
+पूर्ण;
 
 
 /*
- * Starting point for SDIO card init.
+ * Starting poपूर्णांक क्रम SDIO card init.
  */
-int mmc_attach_sdio(struct mmc_host *host)
-{
-	int err, i, funcs;
+पूर्णांक mmc_attach_sdio(काष्ठा mmc_host *host)
+अणु
+	पूर्णांक err, i, funcs;
 	u32 ocr, rocr;
-	struct mmc_card *card;
+	काष्ठा mmc_card *card;
 
 	WARN_ON(!host->claimed);
 
 	err = mmc_send_io_op_cond(host, 0, &ocr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mmc_attach_bus(host, &mmc_sdio_ops);
-	if (host->ocr_avail_sdio)
+	अगर (host->ocr_avail_sdio)
 		host->ocr_avail = host->ocr_avail_sdio;
 
 
@@ -1203,42 +1204,42 @@ int mmc_attach_sdio(struct mmc_host *host)
 	/*
 	 * Can we support the voltage(s) of the card(s)?
 	 */
-	if (!rocr) {
+	अगर (!rocr) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
 	 * Detect and init the card.
 	 */
-	err = mmc_sdio_init_card(host, rocr, NULL);
-	if (err)
-		goto err;
+	err = mmc_sdio_init_card(host, rocr, शून्य);
+	अगर (err)
+		जाओ err;
 
 	card = host->card;
 
 	/*
-	 * Enable runtime PM only if supported by host+card+board
+	 * Enable runसमय PM only अगर supported by host+card+board
 	 */
-	if (host->caps & MMC_CAP_POWER_OFF_CARD) {
+	अगर (host->caps & MMC_CAP_POWER_OFF_CARD) अणु
 		/*
-		 * Do not allow runtime suspend until after SDIO function
+		 * Do not allow runसमय suspend until after SDIO function
 		 * devices are added.
 		 */
-		pm_runtime_get_noresume(&card->dev);
+		pm_runसमय_get_noresume(&card->dev);
 
 		/*
-		 * Let runtime PM core know our card is active
+		 * Let runसमय PM core know our card is active
 		 */
-		err = pm_runtime_set_active(&card->dev);
-		if (err)
-			goto remove;
+		err = pm_runसमय_set_active(&card->dev);
+		अगर (err)
+			जाओ हटाओ;
 
 		/*
-		 * Enable runtime PM for this card
+		 * Enable runसमय PM क्रम this card
 		 */
-		pm_runtime_enable(&card->dev);
-	}
+		pm_runसमय_enable(&card->dev);
+	पूर्ण
 
 	/*
 	 * The number of functions on the card is encoded inside
@@ -1248,54 +1249,54 @@ int mmc_attach_sdio(struct mmc_host *host)
 	card->sdio_funcs = 0;
 
 	/*
-	 * Initialize (but don't add) all present functions.
+	 * Initialize (but करोn't add) all present functions.
 	 */
-	for (i = 0; i < funcs; i++, card->sdio_funcs++) {
+	क्रम (i = 0; i < funcs; i++, card->sdio_funcs++) अणु
 		err = sdio_init_func(host->card, i + 1);
-		if (err)
-			goto remove;
+		अगर (err)
+			जाओ हटाओ;
 
 		/*
-		 * Enable Runtime PM for this func (if supported)
+		 * Enable Runसमय PM क्रम this func (अगर supported)
 		 */
-		if (host->caps & MMC_CAP_POWER_OFF_CARD)
-			pm_runtime_enable(&card->sdio_func[i]->dev);
-	}
+		अगर (host->caps & MMC_CAP_POWER_OFF_CARD)
+			pm_runसमय_enable(&card->sdio_func[i]->dev);
+	पूर्ण
 
 	/*
 	 * First add the card to the driver model...
 	 */
 	mmc_release_host(host);
 	err = mmc_add_card(host->card);
-	if (err)
-		goto remove_added;
+	अगर (err)
+		जाओ हटाओ_added;
 
 	/*
 	 * ...then the SDIO functions.
 	 */
-	for (i = 0;i < funcs;i++) {
+	क्रम (i = 0;i < funcs;i++) अणु
 		err = sdio_add_func(host->card->sdio_func[i]);
-		if (err)
-			goto remove_added;
-	}
+		अगर (err)
+			जाओ हटाओ_added;
+	पूर्ण
 
-	if (host->caps & MMC_CAP_POWER_OFF_CARD)
-		pm_runtime_put(&card->dev);
+	अगर (host->caps & MMC_CAP_POWER_OFF_CARD)
+		pm_runसमय_put(&card->dev);
 
 	mmc_claim_host(host);
-	return 0;
+	वापस 0;
 
 
-remove:
+हटाओ:
 	mmc_release_host(host);
-remove_added:
+हटाओ_added:
 	/*
 	 * The devices are being deleted so it is not necessary to disable
-	 * runtime PM. Similarly we also don't pm_runtime_put() the SDIO card
-	 * because it needs to be active to remove any function devices that
-	 * were probed, and after that it gets deleted.
+	 * runसमय PM. Similarly we also करोn't pm_runसमय_put() the SDIO card
+	 * because it needs to be active to हटाओ any function devices that
+	 * were probed, and after that it माला_लो deleted.
 	 */
-	mmc_sdio_remove(host);
+	mmc_sdio_हटाओ(host);
 	mmc_claim_host(host);
 err:
 	mmc_detach_bus(host);
@@ -1303,6 +1304,6 @@ err:
 	pr_err("%s: error %d whilst initialising SDIO card\n",
 		mmc_hostname(host), err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 

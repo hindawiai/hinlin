@@ -1,140 +1,141 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Windfarm PowerMac thermal control.  MAX6690 sensor.
  *
  * Copyright (C) 2005 Paul Mackerras, IBM Corp. <paulus@samba.org>
  */
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <asm/prom.h>
-#include <asm/pmac_low_i2c.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/pmac_low_i2c.h>
 
-#include "windfarm.h"
+#समावेश "windfarm.h"
 
-#define VERSION "1.0"
+#घोषणा VERSION "1.0"
 
-/* This currently only exports the external temperature sensor,
+/* This currently only exports the बाह्यal temperature sensor,
    since that's all the control loops need. */
 
-/* Some MAX6690 register numbers */
-#define MAX6690_INTERNAL_TEMP	0
-#define MAX6690_EXTERNAL_TEMP	1
+/* Some MAX6690 रेजिस्टर numbers */
+#घोषणा MAX6690_INTERNAL_TEMP	0
+#घोषणा MAX6690_EXTERNAL_TEMP	1
 
-struct wf_6690_sensor {
-	struct i2c_client	*i2c;
-	struct wf_sensor	sens;
-};
+काष्ठा wf_6690_sensor अणु
+	काष्ठा i2c_client	*i2c;
+	काष्ठा wf_sensor	sens;
+पूर्ण;
 
-#define wf_to_6690(x)	container_of((x), struct wf_6690_sensor, sens)
+#घोषणा wf_to_6690(x)	container_of((x), काष्ठा wf_6690_sensor, sens)
 
-static int wf_max6690_get(struct wf_sensor *sr, s32 *value)
-{
-	struct wf_6690_sensor *max = wf_to_6690(sr);
+अटल पूर्णांक wf_max6690_get(काष्ठा wf_sensor *sr, s32 *value)
+अणु
+	काष्ठा wf_6690_sensor *max = wf_to_6690(sr);
 	s32 data;
 
-	if (max->i2c == NULL)
-		return -ENODEV;
+	अगर (max->i2c == शून्य)
+		वापस -ENODEV;
 
-	/* chip gets initialized by firmware */
-	data = i2c_smbus_read_byte_data(max->i2c, MAX6690_EXTERNAL_TEMP);
-	if (data < 0)
-		return data;
+	/* chip माला_लो initialized by firmware */
+	data = i2c_smbus_पढ़ो_byte_data(max->i2c, MAX6690_EXTERNAL_TEMP);
+	अगर (data < 0)
+		वापस data;
 	*value = data << 16;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wf_max6690_release(struct wf_sensor *sr)
-{
-	struct wf_6690_sensor *max = wf_to_6690(sr);
+अटल व्योम wf_max6690_release(काष्ठा wf_sensor *sr)
+अणु
+	काष्ठा wf_6690_sensor *max = wf_to_6690(sr);
 
-	kfree(max);
-}
+	kमुक्त(max);
+पूर्ण
 
-static const struct wf_sensor_ops wf_max6690_ops = {
+अटल स्थिर काष्ठा wf_sensor_ops wf_max6690_ops = अणु
 	.get_value	= wf_max6690_get,
 	.release	= wf_max6690_release,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int wf_max6690_probe(struct i2c_client *client,
-			    const struct i2c_device_id *id)
-{
-	const char *name, *loc;
-	struct wf_6690_sensor *max;
-	int rc;
+अटल पूर्णांक wf_max6690_probe(काष्ठा i2c_client *client,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	स्थिर अक्षर *name, *loc;
+	काष्ठा wf_6690_sensor *max;
+	पूर्णांक rc;
 
-	loc = of_get_property(client->dev.of_node, "hwsensor-location", NULL);
-	if (!loc) {
+	loc = of_get_property(client->dev.of_node, "hwsensor-location", शून्य);
+	अगर (!loc) अणु
 		dev_warn(&client->dev, "Missing hwsensor-location property!\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/*
-	 * We only expose the external temperature register for
-	 * now as this is all we need for our control loops
+	 * We only expose the बाह्यal temperature रेजिस्टर क्रम
+	 * now as this is all we need क्रम our control loops
 	 */
-	if (!strcmp(loc, "BACKSIDE") || !strcmp(loc, "SYS CTRLR AMBIENT"))
+	अगर (!म_भेद(loc, "BACKSIDE") || !म_भेद(loc, "SYS CTRLR AMBIENT"))
 		name = "backside-temp";
-	else if (!strcmp(loc, "NB Ambient"))
+	अन्यथा अगर (!म_भेद(loc, "NB Ambient"))
 		name = "north-bridge-temp";
-	else if (!strcmp(loc, "GPU Ambient"))
+	अन्यथा अगर (!म_भेद(loc, "GPU Ambient"))
 		name = "gpu-temp";
-	else
-		return -ENXIO;
+	अन्यथा
+		वापस -ENXIO;
 
-	max = kzalloc(sizeof(struct wf_6690_sensor), GFP_KERNEL);
-	if (max == NULL) {
-		printk(KERN_ERR "windfarm: Couldn't create MAX6690 sensor: "
+	max = kzalloc(माप(काष्ठा wf_6690_sensor), GFP_KERNEL);
+	अगर (max == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "windfarm: Couldn't create MAX6690 sensor: "
 		       "no memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	max->i2c = client;
 	max->sens.name = name;
 	max->sens.ops = &wf_max6690_ops;
 	i2c_set_clientdata(client, max);
 
-	rc = wf_register_sensor(&max->sens);
-	if (rc)
-		kfree(max);
-	return rc;
-}
+	rc = wf_रेजिस्टर_sensor(&max->sens);
+	अगर (rc)
+		kमुक्त(max);
+	वापस rc;
+पूर्ण
 
-static int wf_max6690_remove(struct i2c_client *client)
-{
-	struct wf_6690_sensor *max = i2c_get_clientdata(client);
+अटल पूर्णांक wf_max6690_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा wf_6690_sensor *max = i2c_get_clientdata(client);
 
-	max->i2c = NULL;
-	wf_unregister_sensor(&max->sens);
+	max->i2c = शून्य;
+	wf_unरेजिस्टर_sensor(&max->sens);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id wf_max6690_id[] = {
-	{ "MAC,max6690", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id wf_max6690_id[] = अणु
+	अणु "MAC,max6690", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, wf_max6690_id);
 
-static const struct of_device_id wf_max6690_of_id[] = {
-	{ .compatible = "max6690", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id wf_max6690_of_id[] = अणु
+	अणु .compatible = "max6690", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, wf_max6690_of_id);
 
-static struct i2c_driver wf_max6690_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver wf_max6690_driver = अणु
+	.driver = अणु
 		.name		= "wf_max6690",
 		.of_match_table = wf_max6690_of_id,
-	},
+	पूर्ण,
 	.probe		= wf_max6690_probe,
-	.remove		= wf_max6690_remove,
+	.हटाओ		= wf_max6690_हटाओ,
 	.id_table	= wf_max6690_id,
-};
+पूर्ण;
 
 module_i2c_driver(wf_max6690_driver);
 

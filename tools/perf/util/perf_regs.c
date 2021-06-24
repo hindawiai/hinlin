@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include "perf_regs.h"
-#include "event.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश "perf_regs.h"
+#समावेश "event.h"
 
-int __weak arch_sdt_arg_parse_op(char *old_op __maybe_unused,
-				 char **new_op __maybe_unused)
-{
-	return SDT_ARG_SKIP;
-}
+पूर्णांक __weak arch_sdt_arg_parse_op(अक्षर *old_op __maybe_unused,
+				 अक्षर **new_op __maybe_unused)
+अणु
+	वापस SDT_ARG_SKIP;
+पूर्ण
 
-uint64_t __weak arch__intr_reg_mask(void)
-{
-	return PERF_REGS_MASK;
-}
+uपूर्णांक64_t __weak arch__पूर्णांकr_reg_mask(व्योम)
+अणु
+	वापस PERF_REGS_MASK;
+पूर्ण
 
-uint64_t __weak arch__user_reg_mask(void)
-{
-	return PERF_REGS_MASK;
-}
+uपूर्णांक64_t __weak arch__user_reg_mask(व्योम)
+अणु
+	वापस PERF_REGS_MASK;
+पूर्ण
 
-#ifdef HAVE_PERF_REGS_SUPPORT
-int perf_reg_value(u64 *valp, struct regs_dump *regs, int id)
-{
-	int i, idx = 0;
+#अगर_घोषित HAVE_PERF_REGS_SUPPORT
+पूर्णांक perf_reg_value(u64 *valp, काष्ठा regs_dump *regs, पूर्णांक id)
+अणु
+	पूर्णांक i, idx = 0;
 	u64 mask = regs->mask;
 
-	if (regs->cache_mask & (1ULL << id))
-		goto out;
+	अगर (regs->cache_mask & (1ULL << id))
+		जाओ out;
 
-	if (!(mask & (1ULL << id)))
-		return -EINVAL;
+	अगर (!(mask & (1ULL << id)))
+		वापस -EINVAL;
 
-	for (i = 0; i < id; i++) {
-		if (mask & (1ULL << i))
+	क्रम (i = 0; i < id; i++) अणु
+		अगर (mask & (1ULL << i))
 			idx++;
-	}
+	पूर्ण
 
 	regs->cache_mask |= (1ULL << id);
 	regs->cache_regs[id] = regs->regs[idx];
 
 out:
 	*valp = regs->cache_regs[id];
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर

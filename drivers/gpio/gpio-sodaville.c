@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  GPIO interface for Intel Sodaville SoCs.
+ *  GPIO पूर्णांकerface क्रम Intel Sodaville SoCs.
  *
  *  Copyright (c) 2010, 2011 Intel Corporation
  *
  *  Author: Hans J. Koch <hjk@linutronix.de>
  */
 
-#include <linux/errno.h>
-#include <linux/gpio/driver.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/of_irq.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define DRV_NAME		"sdv_gpio"
-#define SDV_NUM_PUB_GPIOS	12
-#define PCI_DEVICE_ID_SDV_GPIO	0x2e67
-#define GPIO_BAR		0
+#घोषणा DRV_NAME		"sdv_gpio"
+#घोषणा SDV_NUM_PUB_GPIOS	12
+#घोषणा PCI_DEVICE_ID_SDV_GPIO	0x2e67
+#घोषणा GPIO_BAR		0
 
-#define GPOUTR		0x00
-#define GPOER		0x04
-#define GPINR		0x08
+#घोषणा GPOUTR		0x00
+#घोषणा GPOER		0x04
+#घोषणा GPINR		0x08
 
-#define GPSTR		0x0c
-#define GPIT1R0		0x10
-#define GPIO_INT	0x14
-#define GPIT1R1		0x18
+#घोषणा GPSTR		0x0c
+#घोषणा GPIT1R0		0x10
+#घोषणा GPIO_INT	0x14
+#घोषणा GPIT1R1		0x18
 
-#define GPMUXCTL	0x1c
+#घोषणा GPMUXCTL	0x1c
 
-struct sdv_gpio_chip_data {
-	int irq_base;
-	void __iomem *gpio_pub_base;
-	struct irq_domain *id;
-	struct irq_chip_generic *gc;
-	struct gpio_chip chip;
-};
+काष्ठा sdv_gpio_chip_data अणु
+	पूर्णांक irq_base;
+	व्योम __iomem *gpio_pub_base;
+	काष्ठा irq_करोमुख्य *id;
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा gpio_chip chip;
+पूर्ण;
 
-static int sdv_gpio_pub_set_type(struct irq_data *d, unsigned int type)
-{
-	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	struct sdv_gpio_chip_data *sd = gc->private;
-	void __iomem *type_reg;
+अटल पूर्णांक sdv_gpio_pub_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा sdv_gpio_chip_data *sd = gc->निजी;
+	व्योम __iomem *type_reg;
 	u32 reg;
 
-	if (d->hwirq < 8)
+	अगर (d->hwirq < 8)
 		type_reg = sd->gpio_pub_base + GPIT1R0;
-	else
+	अन्यथा
 		type_reg = sd->gpio_pub_base + GPIT1R1;
 
-	reg = readl(type_reg);
+	reg = पढ़ोl(type_reg);
 
-	switch (type) {
-	case IRQ_TYPE_LEVEL_HIGH:
+	चयन (type) अणु
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		reg &= ~BIT(4 * (d->hwirq % 8));
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_LOW:
+	हाल IRQ_TYPE_LEVEL_LOW:
 		reg |= BIT(4 * (d->hwirq % 8));
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	writel(reg, type_reg);
-	return 0;
-}
+	ग_लिखोl(reg, type_reg);
+	वापस 0;
+पूर्ण
 
-static irqreturn_t sdv_gpio_pub_irq_handler(int irq, void *data)
-{
-	struct sdv_gpio_chip_data *sd = data;
-	unsigned long irq_stat = readl(sd->gpio_pub_base + GPSTR);
-	int irq_bit;
+अटल irqवापस_t sdv_gpio_pub_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा sdv_gpio_chip_data *sd = data;
+	अचिन्हित दीर्घ irq_stat = पढ़ोl(sd->gpio_pub_base + GPSTR);
+	पूर्णांक irq_bit;
 
-	irq_stat &= readl(sd->gpio_pub_base + GPIO_INT);
-	if (!irq_stat)
-		return IRQ_NONE;
+	irq_stat &= पढ़ोl(sd->gpio_pub_base + GPIO_INT);
+	अगर (!irq_stat)
+		वापस IRQ_NONE;
 
-	for_each_set_bit(irq_bit, &irq_stat, 32)
+	क्रम_each_set_bit(irq_bit, &irq_stat, 32)
 		generic_handle_irq(irq_find_mapping(sd->id, irq_bit));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int sdv_xlate(struct irq_domain *h, struct device_node *node,
-		const u32 *intspec, u32 intsize, irq_hw_number_t *out_hwirq,
+अटल पूर्णांक sdv_xlate(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *node,
+		स्थिर u32 *पूर्णांकspec, u32 पूर्णांकsize, irq_hw_number_t *out_hwirq,
 		u32 *out_type)
-{
+अणु
 	u32 line, type;
 
-	if (node != irq_domain_get_of_node(h))
-		return -EINVAL;
+	अगर (node != irq_करोमुख्य_get_of_node(h))
+		वापस -EINVAL;
 
-	if (intsize < 2)
-		return -EINVAL;
+	अगर (पूर्णांकsize < 2)
+		वापस -EINVAL;
 
-	line = *intspec;
+	line = *पूर्णांकspec;
 	*out_hwirq = line;
 
-	intspec++;
-	type = *intspec;
+	पूर्णांकspec++;
+	type = *पूर्णांकspec;
 
-	switch (type) {
-	case IRQ_TYPE_LEVEL_LOW:
-	case IRQ_TYPE_LEVEL_HIGH:
+	चयन (type) अणु
+	हाल IRQ_TYPE_LEVEL_LOW:
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		*out_type = type;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops irq_domain_sdv_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops irq_करोमुख्य_sdv_ops = अणु
 	.xlate = sdv_xlate,
-};
+पूर्ण;
 
-static int sdv_register_irqsupport(struct sdv_gpio_chip_data *sd,
-		struct pci_dev *pdev)
-{
-	struct irq_chip_type *ct;
-	int ret;
+अटल पूर्णांक sdv_रेजिस्टर_irqsupport(काष्ठा sdv_gpio_chip_data *sd,
+		काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा irq_chip_type *ct;
+	पूर्णांक ret;
 
 	sd->irq_base = devm_irq_alloc_descs(&pdev->dev, -1, 0,
 					    SDV_NUM_PUB_GPIOS, -1);
-	if (sd->irq_base < 0)
-		return sd->irq_base;
+	अगर (sd->irq_base < 0)
+		वापस sd->irq_base;
 
-	/* mask + ACK all interrupt sources */
-	writel(0, sd->gpio_pub_base + GPIO_INT);
-	writel((1 << 11) - 1, sd->gpio_pub_base + GPSTR);
+	/* mask + ACK all पूर्णांकerrupt sources */
+	ग_लिखोl(0, sd->gpio_pub_base + GPIO_INT);
+	ग_लिखोl((1 << 11) - 1, sd->gpio_pub_base + GPSTR);
 
 	ret = devm_request_irq(&pdev->dev, pdev->irq,
 			       sdv_gpio_pub_irq_handler, IRQF_SHARED,
 			       "sdv_gpio", sd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * This gpio irq controller latches level irqs. Testing shows that if
-	 * we unmask & ACK the IRQ before the source of the interrupt is gone
-	 * then the interrupt is active again.
+	 * This gpio irq controller latches level irqs. Testing shows that अगर
+	 * we unmask & ACK the IRQ beक्रमe the source of the पूर्णांकerrupt is gone
+	 * then the पूर्णांकerrupt is active again.
 	 */
 	sd->gc = devm_irq_alloc_generic_chip(&pdev->dev, "sdv-gpio", 1,
 					     sd->irq_base,
 					     sd->gpio_pub_base,
 					     handle_fasteoi_irq);
-	if (!sd->gc)
-		return -ENOMEM;
+	अगर (!sd->gc)
+		वापस -ENOMEM;
 
-	sd->gc->private = sd;
+	sd->gc->निजी = sd;
 	ct = sd->gc->chip_types;
 	ct->type = IRQ_TYPE_LEVEL_HIGH | IRQ_TYPE_LEVEL_LOW;
 	ct->regs.eoi = GPSTR;
@@ -169,77 +170,77 @@ static int sdv_register_irqsupport(struct sdv_gpio_chip_data *sd,
 			IRQ_GC_INIT_MASK_CACHE, IRQ_NOREQUEST,
 			IRQ_LEVEL | IRQ_NOPROBE);
 
-	sd->id = irq_domain_add_legacy(pdev->dev.of_node, SDV_NUM_PUB_GPIOS,
-				sd->irq_base, 0, &irq_domain_sdv_ops, sd);
-	if (!sd->id)
-		return -ENODEV;
+	sd->id = irq_करोमुख्य_add_legacy(pdev->dev.of_node, SDV_NUM_PUB_GPIOS,
+				sd->irq_base, 0, &irq_करोमुख्य_sdv_ops, sd);
+	अगर (!sd->id)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdv_gpio_probe(struct pci_dev *pdev,
-					const struct pci_device_id *pci_id)
-{
-	struct sdv_gpio_chip_data *sd;
-	int ret;
+अटल पूर्णांक sdv_gpio_probe(काष्ठा pci_dev *pdev,
+					स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	काष्ठा sdv_gpio_chip_data *sd;
+	पूर्णांक ret;
 	u32 mux_val;
 
-	sd = devm_kzalloc(&pdev->dev, sizeof(*sd), GFP_KERNEL);
-	if (!sd)
-		return -ENOMEM;
+	sd = devm_kzalloc(&pdev->dev, माप(*sd), GFP_KERNEL);
+	अगर (!sd)
+		वापस -ENOMEM;
 
 	ret = pcim_enable_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "can't enable device.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = pcim_iomap_regions(pdev, 1 << GPIO_BAR, DRV_NAME);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "can't alloc PCI BAR #%d\n", GPIO_BAR);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sd->gpio_pub_base = pcim_iomap_table(pdev)[GPIO_BAR];
 
-	ret = of_property_read_u32(pdev->dev.of_node, "intel,muxctl", &mux_val);
-	if (!ret)
-		writel(mux_val, sd->gpio_pub_base + GPMUXCTL);
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node, "intel,muxctl", &mux_val);
+	अगर (!ret)
+		ग_लिखोl(mux_val, sd->gpio_pub_base + GPMUXCTL);
 
 	ret = bgpio_init(&sd->chip, &pdev->dev, 4,
 			sd->gpio_pub_base + GPINR, sd->gpio_pub_base + GPOUTR,
-			NULL, sd->gpio_pub_base + GPOER, NULL, 0);
-	if (ret)
-		return ret;
+			शून्य, sd->gpio_pub_base + GPOER, शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
 	sd->chip.ngpio = SDV_NUM_PUB_GPIOS;
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &sd->chip, sd);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "gpiochip_add() failed.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = sdv_register_irqsupport(sd, pdev);
-	if (ret)
-		return ret;
+	ret = sdv_रेजिस्टर_irqsupport(sd, pdev);
+	अगर (ret)
+		वापस ret;
 
 	pci_set_drvdata(pdev, sd);
 	dev_info(&pdev->dev, "Sodaville GPIO driver registered.\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pci_device_id sdv_gpio_pci_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_SDV_GPIO) },
-	{ 0, },
-};
+अटल स्थिर काष्ठा pci_device_id sdv_gpio_pci_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_SDV_GPIO) पूर्ण,
+	अणु 0, पूर्ण,
+पूर्ण;
 
-static struct pci_driver sdv_gpio_driver = {
-	.driver = {
+अटल काष्ठा pci_driver sdv_gpio_driver = अणु
+	.driver = अणु
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.name = DRV_NAME,
 	.id_table = sdv_gpio_pci_ids,
 	.probe = sdv_gpio_probe,
-};
+पूर्ण;
 builtin_pci_driver(sdv_gpio_driver);

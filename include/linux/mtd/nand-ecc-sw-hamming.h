@@ -1,89 +1,90 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  Copyright (C) 2000-2010 Steven J. Hill <sjhill@realitydiluted.com>
  *			    David Woodhouse <dwmw2@infradead.org>
  *			    Thomas Gleixner <tglx@linutronix.de>
  *
- * This file is the header for the NAND Hamming ECC implementation.
+ * This file is the header क्रम the न_अंकD Hamming ECC implementation.
  */
 
-#ifndef __MTD_NAND_ECC_SW_HAMMING_H__
-#define __MTD_NAND_ECC_SW_HAMMING_H__
+#अगर_अघोषित __MTD_न_अंकD_ECC_SW_HAMMING_H__
+#घोषणा __MTD_न_अंकD_ECC_SW_HAMMING_H__
 
-#include <linux/mtd/nand.h>
+#समावेश <linux/mtd/nand.h>
 
 /**
- * struct nand_ecc_sw_hamming_conf - private software Hamming ECC engine structure
+ * काष्ठा nand_ecc_sw_hamming_conf - निजी software Hamming ECC engine काष्ठाure
  * @req_ctx: Save request context and tweak the original request to fit the
  *           engine needs
  * @code_size: Number of bytes needed to store a code (one code per step)
  * @calc_buf: Buffer to use when calculating ECC bytes
- * @code_buf: Buffer to use when reading (raw) ECC bytes from the chip
+ * @code_buf: Buffer to use when पढ़ोing (raw) ECC bytes from the chip
  * @sm_order: Smart Media special ordering
  */
-struct nand_ecc_sw_hamming_conf {
-	struct nand_ecc_req_tweak_ctx req_ctx;
-	unsigned int code_size;
+काष्ठा nand_ecc_sw_hamming_conf अणु
+	काष्ठा nand_ecc_req_tweak_ctx req_ctx;
+	अचिन्हित पूर्णांक code_size;
 	u8 *calc_buf;
 	u8 *code_buf;
-	unsigned int sm_order;
-};
+	अचिन्हित पूर्णांक sm_order;
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_HAMMING)
+#अगर IS_ENABLED(CONFIG_MTD_न_अंकD_ECC_SW_HAMMING)
 
-int nand_ecc_sw_hamming_init_ctx(struct nand_device *nand);
-void nand_ecc_sw_hamming_cleanup_ctx(struct nand_device *nand);
-int ecc_sw_hamming_calculate(const unsigned char *buf, unsigned int step_size,
-			     unsigned char *code, bool sm_order);
-int nand_ecc_sw_hamming_calculate(struct nand_device *nand,
-				  const unsigned char *buf,
-				  unsigned char *code);
-int ecc_sw_hamming_correct(unsigned char *buf, unsigned char *read_ecc,
-			   unsigned char *calc_ecc, unsigned int step_size,
+पूर्णांक nand_ecc_sw_hamming_init_ctx(काष्ठा nand_device *nand);
+व्योम nand_ecc_sw_hamming_cleanup_ctx(काष्ठा nand_device *nand);
+पूर्णांक ecc_sw_hamming_calculate(स्थिर अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक step_size,
+			     अचिन्हित अक्षर *code, bool sm_order);
+पूर्णांक nand_ecc_sw_hamming_calculate(काष्ठा nand_device *nand,
+				  स्थिर अचिन्हित अक्षर *buf,
+				  अचिन्हित अक्षर *code);
+पूर्णांक ecc_sw_hamming_correct(अचिन्हित अक्षर *buf, अचिन्हित अक्षर *पढ़ो_ecc,
+			   अचिन्हित अक्षर *calc_ecc, अचिन्हित पूर्णांक step_size,
 			   bool sm_order);
-int nand_ecc_sw_hamming_correct(struct nand_device *nand, unsigned char *buf,
-				unsigned char *read_ecc,
-				unsigned char *calc_ecc);
+पूर्णांक nand_ecc_sw_hamming_correct(काष्ठा nand_device *nand, अचिन्हित अक्षर *buf,
+				अचिन्हित अक्षर *पढ़ो_ecc,
+				अचिन्हित अक्षर *calc_ecc);
 
-#else /* !CONFIG_MTD_NAND_ECC_SW_HAMMING */
+#अन्यथा /* !CONFIG_MTD_न_अंकD_ECC_SW_HAMMING */
 
-static inline int nand_ecc_sw_hamming_init_ctx(struct nand_device *nand)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत पूर्णांक nand_ecc_sw_hamming_init_ctx(काष्ठा nand_device *nand)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline void nand_ecc_sw_hamming_cleanup_ctx(struct nand_device *nand) {}
+अटल अंतरभूत व्योम nand_ecc_sw_hamming_cleanup_ctx(काष्ठा nand_device *nand) अणुपूर्ण
 
-static inline int ecc_sw_hamming_calculate(const unsigned char *buf,
-					   unsigned int step_size,
-					   unsigned char *code, bool sm_order)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत पूर्णांक ecc_sw_hamming_calculate(स्थिर अचिन्हित अक्षर *buf,
+					   अचिन्हित पूर्णांक step_size,
+					   अचिन्हित अक्षर *code, bool sm_order)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline int nand_ecc_sw_hamming_calculate(struct nand_device *nand,
-						const unsigned char *buf,
-						unsigned char *code)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत पूर्णांक nand_ecc_sw_hamming_calculate(काष्ठा nand_device *nand,
+						स्थिर अचिन्हित अक्षर *buf,
+						अचिन्हित अक्षर *code)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline int ecc_sw_hamming_correct(unsigned char *buf,
-					 unsigned char *read_ecc,
-					 unsigned char *calc_ecc,
-					 unsigned int step_size, bool sm_order)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत पूर्णांक ecc_sw_hamming_correct(अचिन्हित अक्षर *buf,
+					 अचिन्हित अक्षर *पढ़ो_ecc,
+					 अचिन्हित अक्षर *calc_ecc,
+					 अचिन्हित पूर्णांक step_size, bool sm_order)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline int nand_ecc_sw_hamming_correct(struct nand_device *nand,
-					      unsigned char *buf,
-					      unsigned char *read_ecc,
-					      unsigned char *calc_ecc)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत पूर्णांक nand_ecc_sw_hamming_correct(काष्ठा nand_device *nand,
+					      अचिन्हित अक्षर *buf,
+					      अचिन्हित अक्षर *पढ़ो_ecc,
+					      अचिन्हित अक्षर *calc_ecc)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-#endif /* CONFIG_MTD_NAND_ECC_SW_HAMMING */
+#पूर्ण_अगर /* CONFIG_MTD_न_अंकD_ECC_SW_HAMMING */
 
-#endif /* __MTD_NAND_ECC_SW_HAMMING_H__ */
+#पूर्ण_अगर /* __MTD_न_अंकD_ECC_SW_HAMMING_H__ */

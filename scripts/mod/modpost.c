@@ -1,3 +1,4 @@
+<शैली गुरु>
 /* Postprocess module symbol versions
  *
  * Copyright 2003       Kai Germaschewski
@@ -11,489 +12,489 @@
  * Usage: modpost vmlinux module1.o module2.o ...
  */
 
-#define _GNU_SOURCE
-#include <elf.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <limits.h>
-#include <errno.h>
-#include "modpost.h"
-#include "../../include/linux/license.h"
+#घोषणा _GNU_SOURCE
+#समावेश <elf.h>
+#समावेश <मानकपन.स>
+#समावेश <प्रकार.स>
+#समावेश <माला.स>
+#समावेश <सीमा.स>
+#समावेश <त्रुटिसं.स>
+#समावेश "modpost.h"
+#समावेश "../../include/linux/license.h"
 
 /* Are we using CONFIG_MODVERSIONS? */
-static int modversions = 0;
+अटल पूर्णांक modversions = 0;
 /* Is CONFIG_MODULE_SRCVERSION_ALL set? */
-static int all_versions = 0;
-/* If we are modposting external module set to 1 */
-static int external_module = 0;
+अटल पूर्णांक all_versions = 0;
+/* If we are modposting बाह्यal module set to 1 */
+अटल पूर्णांक बाह्यal_module = 0;
 /* Only warn about unresolved symbols */
-static int warn_unresolved = 0;
+अटल पूर्णांक warn_unresolved = 0;
 /* How a symbol is exported */
-static int sec_mismatch_count = 0;
-static int sec_mismatch_warn_only = true;
+अटल पूर्णांक sec_mismatch_count = 0;
+अटल पूर्णांक sec_mismatch_warn_only = true;
 /* ignore missing files */
-static int ignore_missing_files;
+अटल पूर्णांक ignore_missing_files;
 /* If set to 1, only warn (instead of error) about missing ns imports */
-static int allow_missing_ns_imports;
+अटल पूर्णांक allow_missing_ns_imports;
 
-static bool error_occurred;
+अटल bool error_occurred;
 
 /*
  * Cut off the warnings when there are too many. This typically occurs when
  * vmlinux is missing. ('make modules' without building vmlinux.)
  */
-#define MAX_UNRESOLVED_REPORTS	10
-static unsigned int nr_unresolved;
+#घोषणा MAX_UNRESOLVED_REPORTS	10
+अटल अचिन्हित पूर्णांक nr_unresolved;
 
-enum export {
+क्रमागत export अणु
 	export_plain,
 	export_gpl,
 	export_unknown
-};
+पूर्ण;
 
 /* In kernel, this size is defined in linux/module.h;
- * here we use Elf_Addr instead of long for covering cross-compile
+ * here we use Elf_Addr instead of दीर्घ क्रम covering cross-compile
  */
 
-#define MODULE_NAME_LEN (64 - sizeof(Elf_Addr))
+#घोषणा MODULE_NAME_LEN (64 - माप(Elf_Addr))
 
-void __attribute__((format(printf, 2, 3)))
-modpost_log(enum loglevel loglevel, const char *fmt, ...)
-{
-	va_list arglist;
+व्योम __attribute__((क्रमmat(म_लिखो, 2, 3)))
+modpost_log(क्रमागत loglevel loglevel, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची arglist;
 
-	switch (loglevel) {
-	case LOG_WARN:
-		fprintf(stderr, "WARNING: ");
-		break;
-	case LOG_ERROR:
-		fprintf(stderr, "ERROR: ");
-		break;
-	case LOG_FATAL:
-		fprintf(stderr, "FATAL: ");
-		break;
-	default: /* invalid loglevel, ignore */
-		break;
-	}
+	चयन (loglevel) अणु
+	हाल LOG_WARN:
+		ख_लिखो(मानक_त्रुटि, "WARNING: ");
+		अवरोध;
+	हाल LOG_ERROR:
+		ख_लिखो(मानक_त्रुटि, "ERROR: ");
+		अवरोध;
+	हाल LOG_FATAL:
+		ख_लिखो(मानक_त्रुटि, "FATAL: ");
+		अवरोध;
+	शेष: /* invalid loglevel, ignore */
+		अवरोध;
+	पूर्ण
 
-	fprintf(stderr, "modpost: ");
+	ख_लिखो(मानक_त्रुटि, "modpost: ");
 
-	va_start(arglist, fmt);
-	vfprintf(stderr, fmt, arglist);
-	va_end(arglist);
+	बहु_शुरू(arglist, fmt);
+	भख_लिखो(मानक_त्रुटि, fmt, arglist);
+	बहु_पूर्ण(arglist);
 
-	if (loglevel == LOG_FATAL)
-		exit(1);
-	if (loglevel == LOG_ERROR)
+	अगर (loglevel == LOG_FATAL)
+		निकास(1);
+	अगर (loglevel == LOG_ERROR)
 		error_occurred = true;
-}
+पूर्ण
 
-void *do_nofail(void *ptr, const char *expr)
-{
-	if (!ptr)
+व्योम *करो_nofail(व्योम *ptr, स्थिर अक्षर *expr)
+अणु
+	अगर (!ptr)
 		fatal("Memory allocation failure: %s.\n", expr);
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-char *read_text_file(const char *filename)
-{
-	struct stat st;
-	size_t nbytes;
-	int fd;
-	char *buf;
+अक्षर *पढ़ो_text_file(स्थिर अक्षर *filename)
+अणु
+	काष्ठा stat st;
+	माप_प्रकार nbytes;
+	पूर्णांक fd;
+	अक्षर *buf;
 
-	fd = open(filename, O_RDONLY);
-	if (fd < 0) {
-		perror(filename);
-		exit(1);
-	}
+	fd = खोलो(filename, O_RDONLY);
+	अगर (fd < 0) अणु
+		लिखो_त्रुटि(filename);
+		निकास(1);
+	पूर्ण
 
-	if (fstat(fd, &st) < 0) {
-		perror(filename);
-		exit(1);
-	}
+	अगर (ख_स्थिति(fd, &st) < 0) अणु
+		लिखो_त्रुटि(filename);
+		निकास(1);
+	पूर्ण
 
-	buf = NOFAIL(malloc(st.st_size + 1));
+	buf = NOFAIL(दो_स्मृति(st.st_size + 1));
 
 	nbytes = st.st_size;
 
-	while (nbytes) {
-		ssize_t bytes_read;
+	जबतक (nbytes) अणु
+		sमाप_प्रकार bytes_पढ़ो;
 
-		bytes_read = read(fd, buf, nbytes);
-		if (bytes_read < 0) {
-			perror(filename);
-			exit(1);
-		}
+		bytes_पढ़ो = पढ़ो(fd, buf, nbytes);
+		अगर (bytes_पढ़ो < 0) अणु
+			लिखो_त्रुटि(filename);
+			निकास(1);
+		पूर्ण
 
-		nbytes -= bytes_read;
-	}
+		nbytes -= bytes_पढ़ो;
+	पूर्ण
 	buf[st.st_size] = '\0';
 
-	close(fd);
+	बंद(fd);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-char *get_line(char **stringp)
-{
-	char *orig = *stringp, *next;
+अक्षर *get_line(अक्षर **stringp)
+अणु
+	अक्षर *orig = *stringp, *next;
 
-	/* do not return the unwanted extra line at EOF */
-	if (!orig || *orig == '\0')
-		return NULL;
+	/* करो not वापस the unwanted extra line at खातापूर्ण */
+	अगर (!orig || *orig == '\0')
+		वापस शून्य;
 
-	/* don't use strsep here, it is not available everywhere */
-	next = strchr(orig, '\n');
-	if (next)
+	/* करोn't use strsep here, it is not available everywhere */
+	next = म_अक्षर(orig, '\n');
+	अगर (next)
 		*next++ = '\0';
 
 	*stringp = next;
 
-	return orig;
-}
+	वापस orig;
+पूर्ण
 
 /* A list of all modules we processed */
-static struct module *modules;
+अटल काष्ठा module *modules;
 
-static struct module *find_module(const char *modname)
-{
-	struct module *mod;
+अटल काष्ठा module *find_module(स्थिर अक्षर *modname)
+अणु
+	काष्ठा module *mod;
 
-	for (mod = modules; mod; mod = mod->next)
-		if (strcmp(mod->name, modname) == 0)
-			break;
-	return mod;
-}
+	क्रम (mod = modules; mod; mod = mod->next)
+		अगर (म_भेद(mod->name, modname) == 0)
+			अवरोध;
+	वापस mod;
+पूर्ण
 
-static struct module *new_module(const char *modname)
-{
-	struct module *mod;
+अटल काष्ठा module *new_module(स्थिर अक्षर *modname)
+अणु
+	काष्ठा module *mod;
 
-	mod = NOFAIL(malloc(sizeof(*mod) + strlen(modname) + 1));
-	memset(mod, 0, sizeof(*mod));
+	mod = NOFAIL(दो_स्मृति(माप(*mod) + म_माप(modname) + 1));
+	स_रखो(mod, 0, माप(*mod));
 
 	/* add to list */
-	strcpy(mod->name, modname);
-	mod->is_vmlinux = (strcmp(modname, "vmlinux") == 0);
+	म_नकल(mod->name, modname);
+	mod->is_vmlinux = (म_भेद(modname, "vmlinux") == 0);
 	mod->gpl_compatible = -1;
 	mod->next = modules;
 	modules = mod;
 
-	return mod;
-}
+	वापस mod;
+पूर्ण
 
 /* A hash of all exported symbols,
- * struct symbol is also used for lists of unresolved symbols */
+ * काष्ठा symbol is also used क्रम lists of unresolved symbols */
 
-#define SYMBOL_HASH_SIZE 1024
+#घोषणा SYMBOL_HASH_SIZE 1024
 
-struct symbol {
-	struct symbol *next;
-	struct module *module;
-	unsigned int crc;
-	int crc_valid;
-	char *namespace;
-	unsigned int weak:1;
-	unsigned int is_static:1;  /* 1 if symbol is not global */
-	enum export  export;       /* Type of export */
-	char name[];
-};
+काष्ठा symbol अणु
+	काष्ठा symbol *next;
+	काष्ठा module *module;
+	अचिन्हित पूर्णांक crc;
+	पूर्णांक crc_valid;
+	अक्षर *namespace;
+	अचिन्हित पूर्णांक weak:1;
+	अचिन्हित पूर्णांक is_अटल:1;  /* 1 अगर symbol is not global */
+	क्रमागत export  export;       /* Type of export */
+	अक्षर name[];
+पूर्ण;
 
-static struct symbol *symbolhash[SYMBOL_HASH_SIZE];
+अटल काष्ठा symbol *symbolhash[SYMBOL_HASH_SIZE];
 
 /* This is based on the hash algorithm from gdbm, via tdb */
-static inline unsigned int tdb_hash(const char *name)
-{
-	unsigned value;	/* Used to compute the hash value.  */
-	unsigned   i;	/* Used to cycle through random values. */
+अटल अंतरभूत अचिन्हित पूर्णांक tdb_hash(स्थिर अक्षर *name)
+अणु
+	अचिन्हित value;	/* Used to compute the hash value.  */
+	अचिन्हित   i;	/* Used to cycle through अक्रमom values. */
 
 	/* Set the initial value from the key size. */
-	for (value = 0x238F13AF * strlen(name), i = 0; name[i]; i++)
-		value = (value + (((unsigned char *)name)[i] << (i*5 % 24)));
+	क्रम (value = 0x238F13AF * म_माप(name), i = 0; name[i]; i++)
+		value = (value + (((अचिन्हित अक्षर *)name)[i] << (i*5 % 24)));
 
-	return (1103515243 * value + 12345);
-}
+	वापस (1103515243 * value + 12345);
+पूर्ण
 
 /**
- * Allocate a new symbols for use in the hash of exported symbols or
+ * Allocate a new symbols क्रम use in the hash of exported symbols or
  * the list of unresolved symbols per module
  **/
-static struct symbol *alloc_symbol(const char *name, unsigned int weak,
-				   struct symbol *next)
-{
-	struct symbol *s = NOFAIL(malloc(sizeof(*s) + strlen(name) + 1));
+अटल काष्ठा symbol *alloc_symbol(स्थिर अक्षर *name, अचिन्हित पूर्णांक weak,
+				   काष्ठा symbol *next)
+अणु
+	काष्ठा symbol *s = NOFAIL(दो_स्मृति(माप(*s) + म_माप(name) + 1));
 
-	memset(s, 0, sizeof(*s));
-	strcpy(s->name, name);
+	स_रखो(s, 0, माप(*s));
+	म_नकल(s->name, name);
 	s->weak = weak;
 	s->next = next;
-	s->is_static = 1;
-	return s;
-}
+	s->is_अटल = 1;
+	वापस s;
+पूर्ण
 
 /* For the hash of exported symbols */
-static struct symbol *new_symbol(const char *name, struct module *module,
-				 enum export export)
-{
-	unsigned int hash;
+अटल काष्ठा symbol *new_symbol(स्थिर अक्षर *name, काष्ठा module *module,
+				 क्रमागत export export)
+अणु
+	अचिन्हित पूर्णांक hash;
 
 	hash = tdb_hash(name) % SYMBOL_HASH_SIZE;
 	symbolhash[hash] = alloc_symbol(name, 0, symbolhash[hash]);
 
-	return symbolhash[hash];
-}
+	वापस symbolhash[hash];
+पूर्ण
 
-static struct symbol *find_symbol(const char *name)
-{
-	struct symbol *s;
+अटल काष्ठा symbol *find_symbol(स्थिर अक्षर *name)
+अणु
+	काष्ठा symbol *s;
 
 	/* For our purposes, .foo matches foo.  PPC64 needs this. */
-	if (name[0] == '.')
+	अगर (name[0] == '.')
 		name++;
 
-	for (s = symbolhash[tdb_hash(name) % SYMBOL_HASH_SIZE]; s; s = s->next) {
-		if (strcmp(s->name, name) == 0)
-			return s;
-	}
-	return NULL;
-}
+	क्रम (s = symbolhash[tdb_hash(name) % SYMBOL_HASH_SIZE]; s; s = s->next) अणु
+		अगर (म_भेद(s->name, name) == 0)
+			वापस s;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static bool contains_namespace(struct namespace_list *list,
-			       const char *namespace)
-{
-	for (; list; list = list->next)
-		if (!strcmp(list->namespace, namespace))
-			return true;
+अटल bool contains_namespace(काष्ठा namespace_list *list,
+			       स्थिर अक्षर *namespace)
+अणु
+	क्रम (; list; list = list->next)
+		अगर (!म_भेद(list->namespace, namespace))
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void add_namespace(struct namespace_list **list, const char *namespace)
-{
-	struct namespace_list *ns_entry;
+अटल व्योम add_namespace(काष्ठा namespace_list **list, स्थिर अक्षर *namespace)
+अणु
+	काष्ठा namespace_list *ns_entry;
 
-	if (!contains_namespace(*list, namespace)) {
-		ns_entry = NOFAIL(malloc(sizeof(struct namespace_list) +
-					 strlen(namespace) + 1));
-		strcpy(ns_entry->namespace, namespace);
+	अगर (!contains_namespace(*list, namespace)) अणु
+		ns_entry = NOFAIL(दो_स्मृति(माप(काष्ठा namespace_list) +
+					 म_माप(namespace) + 1));
+		म_नकल(ns_entry->namespace, namespace);
 		ns_entry->next = *list;
 		*list = ns_entry;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool module_imports_namespace(struct module *module,
-				     const char *namespace)
-{
-	return contains_namespace(module->imported_namespaces, namespace);
-}
+अटल bool module_imports_namespace(काष्ठा module *module,
+				     स्थिर अक्षर *namespace)
+अणु
+	वापस contains_namespace(module->imported_namespaces, namespace);
+पूर्ण
 
-static const struct {
-	const char *str;
-	enum export export;
-} export_list[] = {
-	{ .str = "EXPORT_SYMBOL",            .export = export_plain },
-	{ .str = "EXPORT_SYMBOL_GPL",        .export = export_gpl },
-	{ .str = "(unknown)",                .export = export_unknown },
-};
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *str;
+	क्रमागत export export;
+पूर्ण export_list[] = अणु
+	अणु .str = "EXPORT_SYMBOL",            .export = export_plain पूर्ण,
+	अणु .str = "EXPORT_SYMBOL_GPL",        .export = export_gpl पूर्ण,
+	अणु .str = "(unknown)",                .export = export_unknown पूर्ण,
+पूर्ण;
 
 
-static const char *export_str(enum export ex)
-{
-	return export_list[ex].str;
-}
+अटल स्थिर अक्षर *export_str(क्रमागत export ex)
+अणु
+	वापस export_list[ex].str;
+पूर्ण
 
-static enum export export_no(const char *s)
-{
-	int i;
+अटल क्रमागत export export_no(स्थिर अक्षर *s)
+अणु
+	पूर्णांक i;
 
-	if (!s)
-		return export_unknown;
-	for (i = 0; export_list[i].export != export_unknown; i++) {
-		if (strcmp(export_list[i].str, s) == 0)
-			return export_list[i].export;
-	}
-	return export_unknown;
-}
+	अगर (!s)
+		वापस export_unknown;
+	क्रम (i = 0; export_list[i].export != export_unknown; i++) अणु
+		अगर (म_भेद(export_list[i].str, s) == 0)
+			वापस export_list[i].export;
+	पूर्ण
+	वापस export_unknown;
+पूर्ण
 
-static void *sym_get_data_by_offset(const struct elf_info *info,
-				    unsigned int secindex, unsigned long offset)
-{
+अटल व्योम *sym_get_data_by_offset(स्थिर काष्ठा elf_info *info,
+				    अचिन्हित पूर्णांक secindex, अचिन्हित दीर्घ offset)
+अणु
 	Elf_Shdr *sechdr = &info->sechdrs[secindex];
 
-	if (info->hdr->e_type != ET_REL)
+	अगर (info->hdr->e_type != ET_REL)
 		offset -= sechdr->sh_addr;
 
-	return (void *)info->hdr + sechdr->sh_offset + offset;
-}
+	वापस (व्योम *)info->hdr + sechdr->sh_offset + offset;
+पूर्ण
 
-static void *sym_get_data(const struct elf_info *info, const Elf_Sym *sym)
-{
-	return sym_get_data_by_offset(info, get_secindex(info, sym),
+अटल व्योम *sym_get_data(स्थिर काष्ठा elf_info *info, स्थिर Elf_Sym *sym)
+अणु
+	वापस sym_get_data_by_offset(info, get_secindex(info, sym),
 				      sym->st_value);
-}
+पूर्ण
 
-static const char *sech_name(const struct elf_info *info, Elf_Shdr *sechdr)
-{
-	return sym_get_data_by_offset(info, info->secindex_strings,
+अटल स्थिर अक्षर *sech_name(स्थिर काष्ठा elf_info *info, Elf_Shdr *sechdr)
+अणु
+	वापस sym_get_data_by_offset(info, info->secindex_strings,
 				      sechdr->sh_name);
-}
+पूर्ण
 
-static const char *sec_name(const struct elf_info *info, int secindex)
-{
-	return sech_name(info, &info->sechdrs[secindex]);
-}
+अटल स्थिर अक्षर *sec_name(स्थिर काष्ठा elf_info *info, पूर्णांक secindex)
+अणु
+	वापस sech_name(info, &info->sechdrs[secindex]);
+पूर्ण
 
-#define strstarts(str, prefix) (strncmp(str, prefix, strlen(prefix)) == 0)
+#घोषणा strstarts(str, prefix) (म_भेदन(str, prefix, म_माप(prefix)) == 0)
 
-static enum export export_from_secname(struct elf_info *elf, unsigned int sec)
-{
-	const char *secname = sec_name(elf, sec);
+अटल क्रमागत export export_from_secname(काष्ठा elf_info *elf, अचिन्हित पूर्णांक sec)
+अणु
+	स्थिर अक्षर *secname = sec_name(elf, sec);
 
-	if (strstarts(secname, "___ksymtab+"))
-		return export_plain;
-	else if (strstarts(secname, "___ksymtab_gpl+"))
-		return export_gpl;
-	else
-		return export_unknown;
-}
+	अगर (strstarts(secname, "___ksymtab+"))
+		वापस export_plain;
+	अन्यथा अगर (strstarts(secname, "___ksymtab_gpl+"))
+		वापस export_gpl;
+	अन्यथा
+		वापस export_unknown;
+पूर्ण
 
-static enum export export_from_sec(struct elf_info *elf, unsigned int sec)
-{
-	if (sec == elf->export_sec)
-		return export_plain;
-	else if (sec == elf->export_gpl_sec)
-		return export_gpl;
-	else
-		return export_unknown;
-}
+अटल क्रमागत export export_from_sec(काष्ठा elf_info *elf, अचिन्हित पूर्णांक sec)
+अणु
+	अगर (sec == elf->export_sec)
+		वापस export_plain;
+	अन्यथा अगर (sec == elf->export_gpl_sec)
+		वापस export_gpl;
+	अन्यथा
+		वापस export_unknown;
+पूर्ण
 
-static const char *namespace_from_kstrtabns(const struct elf_info *info,
-					    const Elf_Sym *sym)
-{
-	const char *value = sym_get_data(info, sym);
-	return value[0] ? value : NULL;
-}
+अटल स्थिर अक्षर *namespace_from_kstrtabns(स्थिर काष्ठा elf_info *info,
+					    स्थिर Elf_Sym *sym)
+अणु
+	स्थिर अक्षर *value = sym_get_data(info, sym);
+	वापस value[0] ? value : शून्य;
+पूर्ण
 
-static void sym_update_namespace(const char *symname, const char *namespace)
-{
-	struct symbol *s = find_symbol(symname);
+अटल व्योम sym_update_namespace(स्थिर अक्षर *symname, स्थिर अक्षर *namespace)
+अणु
+	काष्ठा symbol *s = find_symbol(symname);
 
 	/*
 	 * That symbol should have been created earlier and thus this is
-	 * actually an assertion.
+	 * actually an निश्चितion.
 	 */
-	if (!s) {
+	अगर (!s) अणु
 		error("Could not update namespace(%s) for symbol %s\n",
 		      namespace, symname);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	free(s->namespace);
+	मुक्त(s->namespace);
 	s->namespace =
-		namespace && namespace[0] ? NOFAIL(strdup(namespace)) : NULL;
-}
+		namespace && namespace[0] ? NOFAIL(strdup(namespace)) : शून्य;
+पूर्ण
 
 /**
- * Add an exported symbol - it may have already been added without a
- * CRC, in this case just update the CRC
+ * Add an exported symbol - it may have alपढ़ोy been added without a
+ * CRC, in this हाल just update the CRC
  **/
-static struct symbol *sym_add_exported(const char *name, struct module *mod,
-				       enum export export)
-{
-	struct symbol *s = find_symbol(name);
+अटल काष्ठा symbol *sym_add_exported(स्थिर अक्षर *name, काष्ठा module *mod,
+				       क्रमागत export export)
+अणु
+	काष्ठा symbol *s = find_symbol(name);
 
-	if (!s) {
+	अगर (!s) अणु
 		s = new_symbol(name, mod, export);
-	} else if (!external_module || s->module->is_vmlinux ||
-		   s->module == mod) {
+	पूर्ण अन्यथा अगर (!बाह्यal_module || s->module->is_vmlinux ||
+		   s->module == mod) अणु
 		warn("%s: '%s' exported twice. Previous export was in %s%s\n",
 		     mod->name, name, s->module->name,
 		     s->module->is_vmlinux ? "" : ".ko");
-		return s;
-	}
+		वापस s;
+	पूर्ण
 
 	s->module = mod;
 	s->export    = export;
-	return s;
-}
+	वापस s;
+पूर्ण
 
-static void sym_set_crc(const char *name, unsigned int crc)
-{
-	struct symbol *s = find_symbol(name);
+अटल व्योम sym_set_crc(स्थिर अक्षर *name, अचिन्हित पूर्णांक crc)
+अणु
+	काष्ठा symbol *s = find_symbol(name);
 
 	/*
-	 * Ignore stand-alone __crc_*, which might be auto-generated symbols
+	 * Ignore stand-alone __crc_*, which might be स्वतः-generated symbols
 	 * such as __*_veneer in ARM ELF.
 	 */
-	if (!s)
-		return;
+	अगर (!s)
+		वापस;
 
 	s->crc = crc;
 	s->crc_valid = 1;
-}
+पूर्ण
 
-static void *grab_file(const char *filename, size_t *size)
-{
-	struct stat st;
-	void *map = MAP_FAILED;
-	int fd;
+अटल व्योम *grab_file(स्थिर अक्षर *filename, माप_प्रकार *size)
+अणु
+	काष्ठा stat st;
+	व्योम *map = MAP_FAILED;
+	पूर्णांक fd;
 
-	fd = open(filename, O_RDONLY);
-	if (fd < 0)
-		return NULL;
-	if (fstat(fd, &st))
-		goto failed;
+	fd = खोलो(filename, O_RDONLY);
+	अगर (fd < 0)
+		वापस शून्य;
+	अगर (ख_स्थिति(fd, &st))
+		जाओ failed;
 
 	*size = st.st_size;
-	map = mmap(NULL, *size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+	map = mmap(शून्य, *size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
 
 failed:
-	close(fd);
-	if (map == MAP_FAILED)
-		return NULL;
-	return map;
-}
+	बंद(fd);
+	अगर (map == MAP_FAILED)
+		वापस शून्य;
+	वापस map;
+पूर्ण
 
-static void release_file(void *file, size_t size)
-{
+अटल व्योम release_file(व्योम *file, माप_प्रकार size)
+अणु
 	munmap(file, size);
-}
+पूर्ण
 
-static int parse_elf(struct elf_info *info, const char *filename)
-{
-	unsigned int i;
+अटल पूर्णांक parse_elf(काष्ठा elf_info *info, स्थिर अक्षर *filename)
+अणु
+	अचिन्हित पूर्णांक i;
 	Elf_Ehdr *hdr;
 	Elf_Shdr *sechdrs;
 	Elf_Sym  *sym;
-	const char *secstrings;
-	unsigned int symtab_idx = ~0U, symtab_shndx_idx = ~0U;
+	स्थिर अक्षर *secstrings;
+	अचिन्हित पूर्णांक symtab_idx = ~0U, symtab_shndx_idx = ~0U;
 
 	hdr = grab_file(filename, &info->size);
-	if (!hdr) {
-		if (ignore_missing_files) {
-			fprintf(stderr, "%s: %s (ignored)\n", filename,
-				strerror(errno));
-			return 0;
-		}
-		perror(filename);
-		exit(1);
-	}
+	अगर (!hdr) अणु
+		अगर (ignore_missing_files) अणु
+			ख_लिखो(मानक_त्रुटि, "%s: %s (ignored)\n", filename,
+				म_त्रुटि(त्रुटि_सं));
+			वापस 0;
+		पूर्ण
+		लिखो_त्रुटि(filename);
+		निकास(1);
+	पूर्ण
 	info->hdr = hdr;
-	if (info->size < sizeof(*hdr)) {
+	अगर (info->size < माप(*hdr)) अणु
 		/* file too small, assume this is an empty .o file */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/* Is this a valid ELF file? */
-	if ((hdr->e_ident[EI_MAG0] != ELFMAG0) ||
+	अगर ((hdr->e_ident[EI_MAG0] != ELFMAG0) ||
 	    (hdr->e_ident[EI_MAG1] != ELFMAG1) ||
 	    (hdr->e_ident[EI_MAG2] != ELFMAG2) ||
-	    (hdr->e_ident[EI_MAG3] != ELFMAG3)) {
+	    (hdr->e_ident[EI_MAG3] != ELFMAG3)) अणु
 		/* Not an ELF file - silently ignore it */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/* Fix endianness in ELF header */
 	hdr->e_type      = TO_NATIVE(hdr->e_type);
 	hdr->e_machine   = TO_NATIVE(hdr->e_machine);
@@ -508,35 +509,35 @@ static int parse_elf(struct elf_info *info, const char *filename)
 	hdr->e_shentsize = TO_NATIVE(hdr->e_shentsize);
 	hdr->e_shnum     = TO_NATIVE(hdr->e_shnum);
 	hdr->e_shstrndx  = TO_NATIVE(hdr->e_shstrndx);
-	sechdrs = (void *)hdr + hdr->e_shoff;
+	sechdrs = (व्योम *)hdr + hdr->e_shoff;
 	info->sechdrs = sechdrs;
 
-	/* Check if file offset is correct */
-	if (hdr->e_shoff > info->size) {
+	/* Check अगर file offset is correct */
+	अगर (hdr->e_shoff > info->size) अणु
 		fatal("section header offset=%lu in file '%s' is bigger than filesize=%zu\n",
-		      (unsigned long)hdr->e_shoff, filename, info->size);
-		return 0;
-	}
+		      (अचिन्हित दीर्घ)hdr->e_shoff, filename, info->size);
+		वापस 0;
+	पूर्ण
 
-	if (hdr->e_shnum == SHN_UNDEF) {
+	अगर (hdr->e_shnum == SHN_UNDEF) अणु
 		/*
 		 * There are more than 64k sections,
-		 * read count from .sh_size.
+		 * पढ़ो count from .sh_size.
 		 */
 		info->num_sections = TO_NATIVE(sechdrs[0].sh_size);
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 		info->num_sections = hdr->e_shnum;
-	}
-	if (hdr->e_shstrndx == SHN_XINDEX) {
+	पूर्ण
+	अगर (hdr->e_shstrndx == SHN_XINDEX) अणु
 		info->secindex_strings = TO_NATIVE(sechdrs[0].sh_link);
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 		info->secindex_strings = hdr->e_shstrndx;
-	}
+	पूर्ण
 
 	/* Fix endianness in section headers */
-	for (i = 0; i < info->num_sections; i++) {
+	क्रम (i = 0; i < info->num_sections; i++) अणु
 		sechdrs[i].sh_name      = TO_NATIVE(sechdrs[i].sh_name);
 		sechdrs[i].sh_type      = TO_NATIVE(sechdrs[i].sh_type);
 		sechdrs[i].sh_flags     = TO_NATIVE(sechdrs[i].sh_flags);
@@ -547,269 +548,269 @@ static int parse_elf(struct elf_info *info, const char *filename)
 		sechdrs[i].sh_info      = TO_NATIVE(sechdrs[i].sh_info);
 		sechdrs[i].sh_addralign = TO_NATIVE(sechdrs[i].sh_addralign);
 		sechdrs[i].sh_entsize   = TO_NATIVE(sechdrs[i].sh_entsize);
-	}
+	पूर्ण
 	/* Find symbol table. */
-	secstrings = (void *)hdr + sechdrs[info->secindex_strings].sh_offset;
-	for (i = 1; i < info->num_sections; i++) {
-		const char *secname;
-		int nobits = sechdrs[i].sh_type == SHT_NOBITS;
+	secstrings = (व्योम *)hdr + sechdrs[info->secindex_strings].sh_offset;
+	क्रम (i = 1; i < info->num_sections; i++) अणु
+		स्थिर अक्षर *secname;
+		पूर्णांक nobits = sechdrs[i].sh_type == SHT_NOBITS;
 
-		if (!nobits && sechdrs[i].sh_offset > info->size) {
+		अगर (!nobits && sechdrs[i].sh_offset > info->size) अणु
 			fatal("%s is truncated. sechdrs[i].sh_offset=%lu > "
 			      "sizeof(*hrd)=%zu\n", filename,
-			      (unsigned long)sechdrs[i].sh_offset,
-			      sizeof(*hdr));
-			return 0;
-		}
+			      (अचिन्हित दीर्घ)sechdrs[i].sh_offset,
+			      माप(*hdr));
+			वापस 0;
+		पूर्ण
 		secname = secstrings + sechdrs[i].sh_name;
-		if (strcmp(secname, ".modinfo") == 0) {
-			if (nobits)
+		अगर (म_भेद(secname, ".modinfo") == 0) अणु
+			अगर (nobits)
 				fatal("%s has NOBITS .modinfo\n", filename);
-			info->modinfo = (void *)hdr + sechdrs[i].sh_offset;
+			info->modinfo = (व्योम *)hdr + sechdrs[i].sh_offset;
 			info->modinfo_len = sechdrs[i].sh_size;
-		} else if (strcmp(secname, "__ksymtab") == 0)
+		पूर्ण अन्यथा अगर (म_भेद(secname, "__ksymtab") == 0)
 			info->export_sec = i;
-		else if (strcmp(secname, "__ksymtab_gpl") == 0)
+		अन्यथा अगर (म_भेद(secname, "__ksymtab_gpl") == 0)
 			info->export_gpl_sec = i;
 
-		if (sechdrs[i].sh_type == SHT_SYMTAB) {
-			unsigned int sh_link_idx;
+		अगर (sechdrs[i].sh_type == SHT_SYMTAB) अणु
+			अचिन्हित पूर्णांक sh_link_idx;
 			symtab_idx = i;
-			info->symtab_start = (void *)hdr +
+			info->symtab_start = (व्योम *)hdr +
 			    sechdrs[i].sh_offset;
-			info->symtab_stop  = (void *)hdr +
+			info->symtab_stop  = (व्योम *)hdr +
 			    sechdrs[i].sh_offset + sechdrs[i].sh_size;
 			sh_link_idx = sechdrs[i].sh_link;
-			info->strtab       = (void *)hdr +
+			info->strtab       = (व्योम *)hdr +
 			    sechdrs[sh_link_idx].sh_offset;
-		}
+		पूर्ण
 
 		/* 32bit section no. table? ("more than 64k sections") */
-		if (sechdrs[i].sh_type == SHT_SYMTAB_SHNDX) {
+		अगर (sechdrs[i].sh_type == SHT_SYMTAB_SHNDX) अणु
 			symtab_shndx_idx = i;
-			info->symtab_shndx_start = (void *)hdr +
+			info->symtab_shndx_start = (व्योम *)hdr +
 			    sechdrs[i].sh_offset;
-			info->symtab_shndx_stop  = (void *)hdr +
+			info->symtab_shndx_stop  = (व्योम *)hdr +
 			    sechdrs[i].sh_offset + sechdrs[i].sh_size;
-		}
-	}
-	if (!info->symtab_start)
+		पूर्ण
+	पूर्ण
+	अगर (!info->symtab_start)
 		fatal("%s has no symtab?\n", filename);
 
 	/* Fix endianness in symbols */
-	for (sym = info->symtab_start; sym < info->symtab_stop; sym++) {
+	क्रम (sym = info->symtab_start; sym < info->symtab_stop; sym++) अणु
 		sym->st_shndx = TO_NATIVE(sym->st_shndx);
 		sym->st_name  = TO_NATIVE(sym->st_name);
 		sym->st_value = TO_NATIVE(sym->st_value);
 		sym->st_size  = TO_NATIVE(sym->st_size);
-	}
+	पूर्ण
 
-	if (symtab_shndx_idx != ~0U) {
+	अगर (symtab_shndx_idx != ~0U) अणु
 		Elf32_Word *p;
-		if (symtab_idx != sechdrs[symtab_shndx_idx].sh_link)
+		अगर (symtab_idx != sechdrs[symtab_shndx_idx].sh_link)
 			fatal("%s: SYMTAB_SHNDX has bad sh_link: %u!=%u\n",
 			      filename, sechdrs[symtab_shndx_idx].sh_link,
 			      symtab_idx);
 		/* Fix endianness */
-		for (p = info->symtab_shndx_start; p < info->symtab_shndx_stop;
+		क्रम (p = info->symtab_shndx_start; p < info->symtab_shndx_stop;
 		     p++)
 			*p = TO_NATIVE(*p);
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void parse_elf_finish(struct elf_info *info)
-{
+अटल व्योम parse_elf_finish(काष्ठा elf_info *info)
+अणु
 	release_file(info->hdr, info->size);
-}
+पूर्ण
 
-static int ignore_undef_symbol(struct elf_info *info, const char *symname)
-{
-	/* ignore __this_module, it will be resolved shortly */
-	if (strcmp(symname, "__this_module") == 0)
-		return 1;
+अटल पूर्णांक ignore_undef_symbol(काष्ठा elf_info *info, स्थिर अक्षर *symname)
+अणु
+	/* ignore __this_module, it will be resolved लघुly */
+	अगर (म_भेद(symname, "__this_module") == 0)
+		वापस 1;
 	/* ignore global offset table */
-	if (strcmp(symname, "_GLOBAL_OFFSET_TABLE_") == 0)
-		return 1;
-	if (info->hdr->e_machine == EM_PPC)
-		/* Special register function linked on all modules during final link of .ko */
-		if (strstarts(symname, "_restgpr_") ||
+	अगर (म_भेद(symname, "_GLOBAL_OFFSET_TABLE_") == 0)
+		वापस 1;
+	अगर (info->hdr->e_machine == EM_PPC)
+		/* Special रेजिस्टर function linked on all modules during final link of .ko */
+		अगर (strstarts(symname, "_restgpr_") ||
 		    strstarts(symname, "_savegpr_") ||
 		    strstarts(symname, "_rest32gpr_") ||
 		    strstarts(symname, "_save32gpr_") ||
 		    strstarts(symname, "_restvr_") ||
 		    strstarts(symname, "_savevr_"))
-			return 1;
-	if (info->hdr->e_machine == EM_PPC64)
-		/* Special register function linked on all modules during final link of .ko */
-		if (strstarts(symname, "_restgpr0_") ||
+			वापस 1;
+	अगर (info->hdr->e_machine == EM_PPC64)
+		/* Special रेजिस्टर function linked on all modules during final link of .ko */
+		अगर (strstarts(symname, "_restgpr0_") ||
 		    strstarts(symname, "_savegpr0_") ||
 		    strstarts(symname, "_restvr_") ||
 		    strstarts(symname, "_savevr_") ||
-		    strcmp(symname, ".TOC.") == 0)
-			return 1;
+		    म_भेद(symname, ".TOC.") == 0)
+			वापस 1;
 	/* Do not ignore this symbol */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void handle_modversion(const struct module *mod,
-			      const struct elf_info *info,
-			      const Elf_Sym *sym, const char *symname)
-{
-	unsigned int crc;
+अटल व्योम handle_modversion(स्थिर काष्ठा module *mod,
+			      स्थिर काष्ठा elf_info *info,
+			      स्थिर Elf_Sym *sym, स्थिर अक्षर *symname)
+अणु
+	अचिन्हित पूर्णांक crc;
 
-	if (sym->st_shndx == SHN_UNDEF) {
+	अगर (sym->st_shndx == SHN_UNDEF) अणु
 		warn("EXPORT symbol \"%s\" [%s%s] version generation failed, symbol will not be versioned.\n",
 		     symname, mod->name, mod->is_vmlinux ? "" : ".ko");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sym->st_shndx == SHN_ABS) {
+	अगर (sym->st_shndx == SHN_ABS) अणु
 		crc = sym->st_value;
-	} else {
-		unsigned int *crcp;
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक *crcp;
 
-		/* symbol points to the CRC in the ELF object */
+		/* symbol poपूर्णांकs to the CRC in the ELF object */
 		crcp = sym_get_data(info, sym);
 		crc = TO_NATIVE(*crcp);
-	}
+	पूर्ण
 	sym_set_crc(symname, crc);
-}
+पूर्ण
 
-static void handle_symbol(struct module *mod, struct elf_info *info,
-			  const Elf_Sym *sym, const char *symname)
-{
-	enum export export;
-	const char *name;
+अटल व्योम handle_symbol(काष्ठा module *mod, काष्ठा elf_info *info,
+			  स्थिर Elf_Sym *sym, स्थिर अक्षर *symname)
+अणु
+	क्रमागत export export;
+	स्थिर अक्षर *name;
 
-	if (strstarts(symname, "__ksymtab"))
+	अगर (strstarts(symname, "__ksymtab"))
 		export = export_from_secname(info, get_secindex(info, sym));
-	else
+	अन्यथा
 		export = export_from_sec(info, get_secindex(info, sym));
 
-	switch (sym->st_shndx) {
-	case SHN_COMMON:
-		if (strstarts(symname, "__gnu_lto_")) {
-			/* Should warn here, but modpost runs before the linker */
-		} else
+	चयन (sym->st_shndx) अणु
+	हाल SHN_COMMON:
+		अगर (strstarts(symname, "__gnu_lto_")) अणु
+			/* Should warn here, but modpost runs beक्रमe the linker */
+		पूर्ण अन्यथा
 			warn("\"%s\" [%s] is COMMON symbol\n", symname, mod->name);
-		break;
-	case SHN_UNDEF:
+		अवरोध;
+	हाल SHN_UNDEF:
 		/* undefined symbol */
-		if (ELF_ST_BIND(sym->st_info) != STB_GLOBAL &&
+		अगर (ELF_ST_BIND(sym->st_info) != STB_GLOBAL &&
 		    ELF_ST_BIND(sym->st_info) != STB_WEAK)
-			break;
-		if (ignore_undef_symbol(info, symname))
-			break;
-		if (info->hdr->e_machine == EM_SPARC ||
-		    info->hdr->e_machine == EM_SPARCV9) {
-			/* Ignore register directives. */
-			if (ELF_ST_TYPE(sym->st_info) == STT_SPARC_REGISTER)
-				break;
-			if (symname[0] == '.') {
-				char *munged = NOFAIL(strdup(symname));
+			अवरोध;
+		अगर (ignore_undef_symbol(info, symname))
+			अवरोध;
+		अगर (info->hdr->e_machine == EM_SPARC ||
+		    info->hdr->e_machine == EM_SPARCV9) अणु
+			/* Ignore रेजिस्टर directives. */
+			अगर (ELF_ST_TYPE(sym->st_info) == STT_SPARC_REGISTER)
+				अवरोध;
+			अगर (symname[0] == '.') अणु
+				अक्षर *munged = NOFAIL(strdup(symname));
 				munged[0] = '_';
-				munged[1] = toupper(munged[1]);
+				munged[1] = बड़े(munged[1]);
 				symname = munged;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		mod->unres = alloc_symbol(symname,
 					  ELF_ST_BIND(sym->st_info) == STB_WEAK,
 					  mod->unres);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* All exported symbols */
-		if (strstarts(symname, "__ksymtab_")) {
-			name = symname + strlen("__ksymtab_");
+		अगर (strstarts(symname, "__ksymtab_")) अणु
+			name = symname + म_माप("__ksymtab_");
 			sym_add_exported(name, mod, export);
-		}
-		if (strcmp(symname, "init_module") == 0)
+		पूर्ण
+		अगर (म_भेद(symname, "init_module") == 0)
 			mod->has_init = 1;
-		if (strcmp(symname, "cleanup_module") == 0)
+		अगर (म_भेद(symname, "cleanup_module") == 0)
 			mod->has_cleanup = 1;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * Parse tag=value strings from .modinfo section
  **/
-static char *next_string(char *string, unsigned long *secsize)
-{
-	/* Skip non-zero chars */
-	while (string[0]) {
+अटल अक्षर *next_string(अक्षर *string, अचिन्हित दीर्घ *secsize)
+अणु
+	/* Skip non-zero अक्षरs */
+	जबतक (string[0]) अणु
 		string++;
-		if ((*secsize)-- <= 1)
-			return NULL;
-	}
+		अगर ((*secsize)-- <= 1)
+			वापस शून्य;
+	पूर्ण
 
 	/* Skip any zero padding. */
-	while (!string[0]) {
+	जबतक (!string[0]) अणु
 		string++;
-		if ((*secsize)-- <= 1)
-			return NULL;
-	}
-	return string;
-}
+		अगर ((*secsize)-- <= 1)
+			वापस शून्य;
+	पूर्ण
+	वापस string;
+पूर्ण
 
-static char *get_next_modinfo(struct elf_info *info, const char *tag,
-			      char *prev)
-{
-	char *p;
-	unsigned int taglen = strlen(tag);
-	char *modinfo = info->modinfo;
-	unsigned long size = info->modinfo_len;
+अटल अक्षर *get_next_modinfo(काष्ठा elf_info *info, स्थिर अक्षर *tag,
+			      अक्षर *prev)
+अणु
+	अक्षर *p;
+	अचिन्हित पूर्णांक taglen = म_माप(tag);
+	अक्षर *modinfo = info->modinfo;
+	अचिन्हित दीर्घ size = info->modinfo_len;
 
-	if (prev) {
+	अगर (prev) अणु
 		size -= prev - modinfo;
 		modinfo = next_string(prev, &size);
-	}
+	पूर्ण
 
-	for (p = modinfo; p; p = next_string(p, &size)) {
-		if (strncmp(p, tag, taglen) == 0 && p[taglen] == '=')
-			return p + taglen + 1;
-	}
-	return NULL;
-}
+	क्रम (p = modinfo; p; p = next_string(p, &size)) अणु
+		अगर (म_भेदन(p, tag, taglen) == 0 && p[taglen] == '=')
+			वापस p + taglen + 1;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static char *get_modinfo(struct elf_info *info, const char *tag)
+अटल अक्षर *get_modinfo(काष्ठा elf_info *info, स्थिर अक्षर *tag)
 
-{
-	return get_next_modinfo(info, tag, NULL);
-}
+अणु
+	वापस get_next_modinfo(info, tag, शून्य);
+पूर्ण
 
 /**
- * Test if string s ends in string sub
- * return 0 if match
+ * Test अगर string s ends in string sub
+ * वापस 0 अगर match
  **/
-static int strrcmp(const char *s, const char *sub)
-{
-	int slen, sublen;
+अटल पूर्णांक strrcmp(स्थिर अक्षर *s, स्थिर अक्षर *sub)
+अणु
+	पूर्णांक slen, sublen;
 
-	if (!s || !sub)
-		return 1;
+	अगर (!s || !sub)
+		वापस 1;
 
-	slen = strlen(s);
-	sublen = strlen(sub);
+	slen = म_माप(s);
+	sublen = म_माप(sub);
 
-	if ((slen == 0) || (sublen == 0))
-		return 1;
+	अगर ((slen == 0) || (sublen == 0))
+		वापस 1;
 
-	if (sublen > slen)
-		return 1;
+	अगर (sublen > slen)
+		वापस 1;
 
-	return memcmp(s + slen - sublen, sub, sublen);
-}
+	वापस स_भेद(s + slen - sublen, sub, sublen);
+पूर्ण
 
-static const char *sym_name(struct elf_info *elf, Elf_Sym *sym)
-{
-	if (sym)
-		return elf->strtab + sym->st_name;
-	else
-		return "(unknown)";
-}
+अटल स्थिर अक्षर *sym_name(काष्ठा elf_info *elf, Elf_Sym *sym)
+अणु
+	अगर (sym)
+		वापस elf->strtab + sym->st_name;
+	अन्यथा
+		वापस "(unknown)";
+पूर्ण
 
 /* The pattern is an array of simple patterns.
  * "foo" will match an exact string equal to "foo"
@@ -817,50 +818,50 @@ static const char *sym_name(struct elf_info *elf, Elf_Sym *sym)
  * "foo*" will match a string that begins with "foo"
  * "*foo*" will match a string that contains "foo"
  */
-static int match(const char *sym, const char * const pat[])
-{
-	const char *p;
-	while (*pat) {
+अटल पूर्णांक match(स्थिर अक्षर *sym, स्थिर अक्षर * स्थिर pat[])
+अणु
+	स्थिर अक्षर *p;
+	जबतक (*pat) अणु
 		p = *pat++;
-		const char *endp = p + strlen(p) - 1;
+		स्थिर अक्षर *endp = p + म_माप(p) - 1;
 
 		/* "*foo*" */
-		if (*p == '*' && *endp == '*') {
-			char *bare = NOFAIL(strndup(p + 1, strlen(p) - 2));
-			char *here = strstr(sym, bare);
+		अगर (*p == '*' && *endp == '*') अणु
+			अक्षर *bare = NOFAIL(strndup(p + 1, म_माप(p) - 2));
+			अक्षर *here = म_माला(sym, bare);
 
-			free(bare);
-			if (here != NULL)
-				return 1;
-		}
+			मुक्त(bare);
+			अगर (here != शून्य)
+				वापस 1;
+		पूर्ण
 		/* "*foo" */
-		else if (*p == '*') {
-			if (strrcmp(sym, p + 1) == 0)
-				return 1;
-		}
+		अन्यथा अगर (*p == '*') अणु
+			अगर (strrcmp(sym, p + 1) == 0)
+				वापस 1;
+		पूर्ण
 		/* "foo*" */
-		else if (*endp == '*') {
-			if (strncmp(sym, p, strlen(p) - 1) == 0)
-				return 1;
-		}
+		अन्यथा अगर (*endp == '*') अणु
+			अगर (म_भेदन(sym, p, म_माप(p) - 1) == 0)
+				वापस 1;
+		पूर्ण
 		/* no wildcards */
-		else {
-			if (strcmp(p, sym) == 0)
-				return 1;
-		}
-	}
+		अन्यथा अणु
+			अगर (म_भेद(p, sym) == 0)
+				वापस 1;
+		पूर्ण
+	पूर्ण
 	/* no match */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* sections that we do not want to do full section mismatch check on */
-static const char *const section_white_list[] =
-{
+/* sections that we करो not want to करो full section mismatch check on */
+अटल स्थिर अक्षर *स्थिर section_white_list[] =
+अणु
 	".comment*",
 	".debug*",
 	".cranges",		/* sh64 */
 	".zdebug*",		/* Compressed debug sections. */
-	".GCC.command.line",	/* record-gcc-switches */
+	".GCC.command.line",	/* record-gcc-चयनes */
 	".mdebug*",        /* alpha, score, mips etc. */
 	".pdr",            /* alpha, score, mips etc. */
 	".stab*",
@@ -875,105 +876,105 @@ static const char *const section_white_list[] =
 	".fmt_slot*",			/* EZchip */
 	".gnu.lto*",
 	".discard.*",
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /*
  * This is used to find sections missing the SHF_ALLOC flag.
- * The cause of this is often a section specified in assembler
+ * The cause of this is often a section specअगरied in assembler
  * without "ax" / "aw".
  */
-static void check_section(const char *modname, struct elf_info *elf,
+अटल व्योम check_section(स्थिर अक्षर *modname, काष्ठा elf_info *elf,
 			  Elf_Shdr *sechdr)
-{
-	const char *sec = sech_name(elf, sechdr);
+अणु
+	स्थिर अक्षर *sec = sech_name(elf, sechdr);
 
-	if (sechdr->sh_type == SHT_PROGBITS &&
+	अगर (sechdr->sh_type == SHT_PROGBITS &&
 	    !(sechdr->sh_flags & SHF_ALLOC) &&
-	    !match(sec, section_white_list)) {
+	    !match(sec, section_white_list)) अणु
 		warn("%s (%s): unexpected non-allocatable section.\n"
 		     "Did you forget to use \"ax\"/\"aw\" in a .S file?\n"
 		     "Note that for example <linux/init.h> contains\n"
 		     "section definitions for use in .S files.\n\n",
 		     modname, sec);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 
-#define ALL_INIT_DATA_SECTIONS \
+#घोषणा ALL_INIT_DATA_SECTIONS \
 	".init.setup", ".init.rodata", ".meminit.rodata", \
 	".init.data", ".meminit.data"
-#define ALL_EXIT_DATA_SECTIONS \
+#घोषणा ALL_EXIT_DATA_SECTIONS \
 	".exit.data", ".memexit.data"
 
-#define ALL_INIT_TEXT_SECTIONS \
+#घोषणा ALL_INIT_TEXT_SECTIONS \
 	".init.text", ".meminit.text"
-#define ALL_EXIT_TEXT_SECTIONS \
+#घोषणा ALL_EXIT_TEXT_SECTIONS \
 	".exit.text", ".memexit.text"
 
-#define ALL_PCI_INIT_SECTIONS	\
+#घोषणा ALL_PCI_INIT_SECTIONS	\
 	".pci_fixup_early", ".pci_fixup_header", ".pci_fixup_final", \
 	".pci_fixup_enable", ".pci_fixup_resume", \
 	".pci_fixup_resume_early", ".pci_fixup_suspend"
 
-#define ALL_XXXINIT_SECTIONS MEM_INIT_SECTIONS
-#define ALL_XXXEXIT_SECTIONS MEM_EXIT_SECTIONS
+#घोषणा ALL_XXXINIT_SECTIONS MEM_INIT_SECTIONS
+#घोषणा ALL_XXXEXIT_SECTIONS MEM_EXIT_SECTIONS
 
-#define ALL_INIT_SECTIONS INIT_SECTIONS, ALL_XXXINIT_SECTIONS
-#define ALL_EXIT_SECTIONS EXIT_SECTIONS, ALL_XXXEXIT_SECTIONS
+#घोषणा ALL_INIT_SECTIONS INIT_SECTIONS, ALL_XXXINIT_SECTIONS
+#घोषणा ALL_EXIT_SECTIONS EXIT_SECTIONS, ALL_XXXEXIT_SECTIONS
 
-#define DATA_SECTIONS ".data", ".data.rel"
-#define TEXT_SECTIONS ".text", ".text.unlikely", ".sched.text", \
+#घोषणा DATA_SECTIONS ".data", ".data.rel"
+#घोषणा TEXT_SECTIONS ".text", ".text.unlikely", ".sched.text", \
 		".kprobes.text", ".cpuidle.text", ".noinstr.text"
-#define OTHER_TEXT_SECTIONS ".ref.text", ".head.text", ".spinlock.text", \
+#घोषणा OTHER_TEXT_SECTIONS ".ref.text", ".head.text", ".spinlock.text", \
 		".fixup", ".entry.text", ".exception.text", ".text.*", \
 		".coldtext"
 
-#define INIT_SECTIONS      ".init.*"
-#define MEM_INIT_SECTIONS  ".meminit.*"
+#घोषणा INIT_SECTIONS      ".init.*"
+#घोषणा MEM_INIT_SECTIONS  ".meminit.*"
 
-#define EXIT_SECTIONS      ".exit.*"
-#define MEM_EXIT_SECTIONS  ".memexit.*"
+#घोषणा EXIT_SECTIONS      ".exit.*"
+#घोषणा MEM_EXIT_SECTIONS  ".memexit.*"
 
-#define ALL_TEXT_SECTIONS  ALL_INIT_TEXT_SECTIONS, ALL_EXIT_TEXT_SECTIONS, \
+#घोषणा ALL_TEXT_SECTIONS  ALL_INIT_TEXT_SECTIONS, ALL_EXIT_TEXT_SECTIONS, \
 		TEXT_SECTIONS, OTHER_TEXT_SECTIONS
 
 /* init data sections */
-static const char *const init_data_sections[] =
-	{ ALL_INIT_DATA_SECTIONS, NULL };
+अटल स्थिर अक्षर *स्थिर init_data_sections[] =
+	अणु ALL_INIT_DATA_SECTIONS, शून्य पूर्ण;
 
 /* all init sections */
-static const char *const init_sections[] = { ALL_INIT_SECTIONS, NULL };
+अटल स्थिर अक्षर *स्थिर init_sections[] = अणु ALL_INIT_SECTIONS, शून्य पूर्ण;
 
-/* All init and exit sections (code + data) */
-static const char *const init_exit_sections[] =
-	{ALL_INIT_SECTIONS, ALL_EXIT_SECTIONS, NULL };
+/* All init and निकास sections (code + data) */
+अटल स्थिर अक्षर *स्थिर init_निकास_sections[] =
+	अणुALL_INIT_SECTIONS, ALL_EXIT_SECTIONS, शून्य पूर्ण;
 
 /* all text sections */
-static const char *const text_sections[] = { ALL_TEXT_SECTIONS, NULL };
+अटल स्थिर अक्षर *स्थिर text_sections[] = अणु ALL_TEXT_SECTIONS, शून्य पूर्ण;
 
 /* data section */
-static const char *const data_sections[] = { DATA_SECTIONS, NULL };
+अटल स्थिर अक्षर *स्थिर data_sections[] = अणु DATA_SECTIONS, शून्य पूर्ण;
 
 
-/* symbols in .data that may refer to init/exit sections */
-#define DEFAULT_SYMBOL_WHITE_LIST					\
+/* symbols in .data that may refer to init/निकास sections */
+#घोषणा DEFAULT_SYMBOL_WHITE_LIST					\
 	"*driver",							\
-	"*_template", /* scsi uses *_template a lot */			\
-	"*_timer",    /* arm uses ops structures named _timer a lot */	\
+	"*_template", /* scsi uses *_ढाँचा a lot */			\
+	"*_timer",    /* arm uses ops काष्ठाures named _समयr a lot */	\
 	"*_sht",      /* scsi also used *_sht to some extent */		\
 	"*_ops",							\
 	"*_probe",							\
 	"*_probe_one",							\
 	"*_console"
 
-static const char *const head_sections[] = { ".head.text*", NULL };
-static const char *const linker_symbols[] =
-	{ "__init_begin", "_sinittext", "_einittext", NULL };
-static const char *const optim_symbols[] = { "*.constprop.*", NULL };
+अटल स्थिर अक्षर *स्थिर head_sections[] = अणु ".head.text*", शून्य पूर्ण;
+अटल स्थिर अक्षर *स्थिर linker_symbols[] =
+	अणु "__init_begin", "_sinittext", "_einittext", शून्य पूर्ण;
+अटल स्थिर अक्षर *स्थिर optim_symbols[] = अणु "*.constprop.*", शून्य पूर्ण;
 
-enum mismatch {
+क्रमागत mismatch अणु
 	TEXT_TO_ANY_INIT,
 	DATA_TO_ANY_INIT,
 	TEXT_TO_ANY_EXIT,
@@ -984,15 +985,15 @@ enum mismatch {
 	ANY_EXIT_TO_ANY_INIT,
 	EXPORT_TO_INIT_EXIT,
 	EXTABLE_TO_NON_TEXT,
-};
+पूर्ण;
 
 /**
- * Describe how to match sections on different criteria:
+ * Describe how to match sections on dअगरferent criteria:
  *
  * @fromsec: Array of sections to be matched.
  *
  * @bad_tosec: Relocations applied to a section in @fromsec to a section in
- * this array is forbidden (black-list).  Can be empty.
+ * this array is क्रमbidden (black-list).  Can be empty.
  *
  * @good_tosec: Relocations applied to a section in @fromsec must be
  * targeting sections in this array (white-list).  Can be empty.
@@ -1000,146 +1001,146 @@ enum mismatch {
  * @mismatch: Type of mismatch.
  *
  * @symbol_white_list: Do not match a relocation to a symbol in this list
- * even if it is targeting a section in @bad_to_sec.
+ * even अगर it is targeting a section in @bad_to_sec.
  *
- * @handler: Specific handler to call when a match is found.  If NULL,
- * default_mismatch_handler() will be called.
+ * @handler: Specअगरic handler to call when a match is found.  If शून्य,
+ * शेष_mismatch_handler() will be called.
  *
  */
-struct sectioncheck {
-	const char *fromsec[20];
-	const char *bad_tosec[20];
-	const char *good_tosec[20];
-	enum mismatch mismatch;
-	const char *symbol_white_list[20];
-	void (*handler)(const char *modname, struct elf_info *elf,
-			const struct sectioncheck* const mismatch,
-			Elf_Rela *r, Elf_Sym *sym, const char *fromsec);
+काष्ठा sectioncheck अणु
+	स्थिर अक्षर *fromsec[20];
+	स्थिर अक्षर *bad_tosec[20];
+	स्थिर अक्षर *good_tosec[20];
+	क्रमागत mismatch mismatch;
+	स्थिर अक्षर *symbol_white_list[20];
+	व्योम (*handler)(स्थिर अक्षर *modname, काष्ठा elf_info *elf,
+			स्थिर काष्ठा sectioncheck* स्थिर mismatch,
+			Elf_Rela *r, Elf_Sym *sym, स्थिर अक्षर *fromsec);
 
-};
+पूर्ण;
 
-static void extable_mismatch_handler(const char *modname, struct elf_info *elf,
-				     const struct sectioncheck* const mismatch,
+अटल व्योम extable_mismatch_handler(स्थिर अक्षर *modname, काष्ठा elf_info *elf,
+				     स्थिर काष्ठा sectioncheck* स्थिर mismatch,
 				     Elf_Rela *r, Elf_Sym *sym,
-				     const char *fromsec);
+				     स्थिर अक्षर *fromsec);
 
-static const struct sectioncheck sectioncheck[] = {
-/* Do not reference init/exit code/data from
+अटल स्थिर काष्ठा sectioncheck sectioncheck[] = अणु
+/* Do not reference init/निकास code/data from
  * normal code and data
  */
-{
-	.fromsec = { TEXT_SECTIONS, NULL },
-	.bad_tosec = { ALL_INIT_SECTIONS, NULL },
+अणु
+	.fromsec = अणु TEXT_SECTIONS, शून्य पूर्ण,
+	.bad_tosec = अणु ALL_INIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = TEXT_TO_ANY_INIT,
-	.symbol_white_list = { DEFAULT_SYMBOL_WHITE_LIST, NULL },
-},
-{
-	.fromsec = { DATA_SECTIONS, NULL },
-	.bad_tosec = { ALL_XXXINIT_SECTIONS, NULL },
+	.symbol_white_list = अणु DEFAULT_SYMBOL_WHITE_LIST, शून्य पूर्ण,
+पूर्ण,
+अणु
+	.fromsec = अणु DATA_SECTIONS, शून्य पूर्ण,
+	.bad_tosec = अणु ALL_XXXINIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = DATA_TO_ANY_INIT,
-	.symbol_white_list = { DEFAULT_SYMBOL_WHITE_LIST, NULL },
-},
-{
-	.fromsec = { DATA_SECTIONS, NULL },
-	.bad_tosec = { INIT_SECTIONS, NULL },
+	.symbol_white_list = अणु DEFAULT_SYMBOL_WHITE_LIST, शून्य पूर्ण,
+पूर्ण,
+अणु
+	.fromsec = अणु DATA_SECTIONS, शून्य पूर्ण,
+	.bad_tosec = अणु INIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = DATA_TO_ANY_INIT,
-	.symbol_white_list = {
+	.symbol_white_list = अणु
 		"*_template", "*_timer", "*_sht", "*_ops",
-		"*_probe", "*_probe_one", "*_console", NULL
-	},
-},
-{
-	.fromsec = { TEXT_SECTIONS, NULL },
-	.bad_tosec = { ALL_EXIT_SECTIONS, NULL },
+		"*_probe", "*_probe_one", "*_console", शून्य
+	पूर्ण,
+पूर्ण,
+अणु
+	.fromsec = अणु TEXT_SECTIONS, शून्य पूर्ण,
+	.bad_tosec = अणु ALL_EXIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = TEXT_TO_ANY_EXIT,
-	.symbol_white_list = { DEFAULT_SYMBOL_WHITE_LIST, NULL },
-},
-{
-	.fromsec = { DATA_SECTIONS, NULL },
-	.bad_tosec = { ALL_EXIT_SECTIONS, NULL },
+	.symbol_white_list = अणु DEFAULT_SYMBOL_WHITE_LIST, शून्य पूर्ण,
+पूर्ण,
+अणु
+	.fromsec = अणु DATA_SECTIONS, शून्य पूर्ण,
+	.bad_tosec = अणु ALL_EXIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = DATA_TO_ANY_EXIT,
-	.symbol_white_list = { DEFAULT_SYMBOL_WHITE_LIST, NULL },
-},
+	.symbol_white_list = अणु DEFAULT_SYMBOL_WHITE_LIST, शून्य पूर्ण,
+पूर्ण,
 /* Do not reference init code/data from meminit code/data */
-{
-	.fromsec = { ALL_XXXINIT_SECTIONS, NULL },
-	.bad_tosec = { INIT_SECTIONS, NULL },
+अणु
+	.fromsec = अणु ALL_XXXINIT_SECTIONS, शून्य पूर्ण,
+	.bad_tosec = अणु INIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = XXXINIT_TO_SOME_INIT,
-	.symbol_white_list = { DEFAULT_SYMBOL_WHITE_LIST, NULL },
-},
-/* Do not reference exit code/data from memexit code/data */
-{
-	.fromsec = { ALL_XXXEXIT_SECTIONS, NULL },
-	.bad_tosec = { EXIT_SECTIONS, NULL },
+	.symbol_white_list = अणु DEFAULT_SYMBOL_WHITE_LIST, शून्य पूर्ण,
+पूर्ण,
+/* Do not reference निकास code/data from memनिकास code/data */
+अणु
+	.fromsec = अणु ALL_XXXEXIT_SECTIONS, शून्य पूर्ण,
+	.bad_tosec = अणु EXIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = XXXEXIT_TO_SOME_EXIT,
-	.symbol_white_list = { DEFAULT_SYMBOL_WHITE_LIST, NULL },
-},
-/* Do not use exit code/data from init code */
-{
-	.fromsec = { ALL_INIT_SECTIONS, NULL },
-	.bad_tosec = { ALL_EXIT_SECTIONS, NULL },
+	.symbol_white_list = अणु DEFAULT_SYMBOL_WHITE_LIST, शून्य पूर्ण,
+पूर्ण,
+/* Do not use निकास code/data from init code */
+अणु
+	.fromsec = अणु ALL_INIT_SECTIONS, शून्य पूर्ण,
+	.bad_tosec = अणु ALL_EXIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = ANY_INIT_TO_ANY_EXIT,
-	.symbol_white_list = { DEFAULT_SYMBOL_WHITE_LIST, NULL },
-},
-/* Do not use init code/data from exit code */
-{
-	.fromsec = { ALL_EXIT_SECTIONS, NULL },
-	.bad_tosec = { ALL_INIT_SECTIONS, NULL },
+	.symbol_white_list = अणु DEFAULT_SYMBOL_WHITE_LIST, शून्य पूर्ण,
+पूर्ण,
+/* Do not use init code/data from निकास code */
+अणु
+	.fromsec = अणु ALL_EXIT_SECTIONS, शून्य पूर्ण,
+	.bad_tosec = अणु ALL_INIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = ANY_EXIT_TO_ANY_INIT,
-	.symbol_white_list = { DEFAULT_SYMBOL_WHITE_LIST, NULL },
-},
-{
-	.fromsec = { ALL_PCI_INIT_SECTIONS, NULL },
-	.bad_tosec = { INIT_SECTIONS, NULL },
+	.symbol_white_list = अणु DEFAULT_SYMBOL_WHITE_LIST, शून्य पूर्ण,
+पूर्ण,
+अणु
+	.fromsec = अणु ALL_PCI_INIT_SECTIONS, शून्य पूर्ण,
+	.bad_tosec = अणु INIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = ANY_INIT_TO_ANY_EXIT,
-	.symbol_white_list = { NULL },
-},
-/* Do not export init/exit functions or data */
-{
-	.fromsec = { "__ksymtab*", NULL },
-	.bad_tosec = { INIT_SECTIONS, EXIT_SECTIONS, NULL },
+	.symbol_white_list = अणु शून्य पूर्ण,
+पूर्ण,
+/* Do not export init/निकास functions or data */
+अणु
+	.fromsec = अणु "__ksymtab*", शून्य पूर्ण,
+	.bad_tosec = अणु INIT_SECTIONS, EXIT_SECTIONS, शून्य पूर्ण,
 	.mismatch = EXPORT_TO_INIT_EXIT,
-	.symbol_white_list = { DEFAULT_SYMBOL_WHITE_LIST, NULL },
-},
-{
-	.fromsec = { "__ex_table", NULL },
+	.symbol_white_list = अणु DEFAULT_SYMBOL_WHITE_LIST, शून्य पूर्ण,
+पूर्ण,
+अणु
+	.fromsec = अणु "__ex_table", शून्य पूर्ण,
 	/* If you're adding any new black-listed sections in here, consider
-	 * adding a special 'printer' for them in scripts/check_extable.
+	 * adding a special 'printer' क्रम them in scripts/check_extable.
 	 */
-	.bad_tosec = { ".altinstr_replacement", NULL },
-	.good_tosec = {ALL_TEXT_SECTIONS , NULL},
+	.bad_tosec = अणु ".altinstr_replacement", शून्य पूर्ण,
+	.good_tosec = अणुALL_TEXT_SECTIONS , शून्यपूर्ण,
 	.mismatch = EXTABLE_TO_NON_TEXT,
 	.handler = extable_mismatch_handler,
-}
-};
+पूर्ण
+पूर्ण;
 
-static const struct sectioncheck *section_mismatch(
-		const char *fromsec, const char *tosec)
-{
-	int i;
-	int elems = sizeof(sectioncheck) / sizeof(struct sectioncheck);
-	const struct sectioncheck *check = &sectioncheck[0];
+अटल स्थिर काष्ठा sectioncheck *section_mismatch(
+		स्थिर अक्षर *fromsec, स्थिर अक्षर *tosec)
+अणु
+	पूर्णांक i;
+	पूर्णांक elems = माप(sectioncheck) / माप(काष्ठा sectioncheck);
+	स्थिर काष्ठा sectioncheck *check = &sectioncheck[0];
 
 	/*
 	 * The target section could be the SHT_NUL section when we're
 	 * handling relocations to un-resolved symbols, trying to match it
-	 * doesn't make much sense and causes build failures on parisc
+	 * करोesn't make much sense and causes build failures on parisc
 	 * architectures.
 	 */
-	if (*tosec == '\0')
-		return NULL;
+	अगर (*tosec == '\0')
+		वापस शून्य;
 
-	for (i = 0; i < elems; i++) {
-		if (match(fromsec, check->fromsec)) {
-			if (check->bad_tosec[0] && match(tosec, check->bad_tosec))
-				return check;
-			if (check->good_tosec[0] && !match(tosec, check->good_tosec))
-				return check;
-		}
+	क्रम (i = 0; i < elems; i++) अणु
+		अगर (match(fromsec, check->fromsec)) अणु
+			अगर (check->bad_tosec[0] && match(tosec, check->bad_tosec))
+				वापस check;
+			अगर (check->good_tosec[0] && !match(tosec, check->good_tosec))
+				वापस check;
+		पूर्ण
 		check++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  * Whitelist to allow certain references to pass with no warning.
@@ -1149,291 +1150,291 @@ static const struct sectioncheck *section_mismatch(
  *   then this is legal despite the warning generated.
  *   We cannot see value of permissions here, so just ignore
  *   this pattern.
- *   The pattern is identified by:
+ *   The pattern is identअगरied by:
  *   tosec   = .init.data
  *   fromsec = .data*
  *   atsym   =__param*
  *
  * Pattern 1a:
- *   module_param_call() ops can refer to __init set function if permissions=0
- *   The pattern is identified by:
+ *   module_param_call() ops can refer to __init set function अगर permissions=0
+ *   The pattern is identअगरied by:
  *   tosec   = .init.text
  *   fromsec = .data*
  *   atsym   = __param_ops_*
  *
  * Pattern 2:
  *   Many drivers utilise a *driver container with references to
- *   add, remove, probe functions etc.
- *   the pattern is identified by:
- *   tosec   = init or exit section
+ *   add, हटाओ, probe functions etc.
+ *   the pattern is identअगरied by:
+ *   tosec   = init or निकास section
  *   fromsec = data section
- *   atsym = *driver, *_template, *_sht, *_ops, *_probe,
- *           *probe_one, *_console, *_timer
+ *   atsym = *driver, *_ढाँचा, *_sht, *_ops, *_probe,
+ *           *probe_one, *_console, *_समयr
  *
  * Pattern 3:
  *   Whitelist all references from .head.text to any init section
  *
  * Pattern 4:
- *   Some symbols belong to init section but still it is ok to reference
- *   these from non-init sections as these symbols don't have any memory
- *   allocated for them and symbol address and value are same. So even
- *   if init section is freed, its ok to reference those symbols.
+ *   Some symbols beदीर्घ to init section but still it is ok to reference
+ *   these from non-init sections as these symbols करोn't have any memory
+ *   allocated क्रम them and symbol address and value are same. So even
+ *   अगर init section is मुक्तd, its ok to reference those symbols.
  *   For ex. symbols marking the init section boundaries.
- *   This pattern is identified by
+ *   This pattern is identअगरied by
  *   refsymname = __init_begin, _sinittext, _einittext
  *
  * Pattern 5:
- *   GCC may optimize static inlines when fed constant arg(s) resulting
+ *   GCC may optimize अटल अंतरभूतs when fed स्थिरant arg(s) resulting
  *   in functions like cpumask_empty() -- generating an associated symbol
- *   cpumask_empty.constprop.3 that appears in the audit.  If the const that
+ *   cpumask_empty.स्थिरprop.3 that appears in the audit.  If the स्थिर that
  *   is passed in comes from __init, like say nmi_ipi_mask, we get a
  *   meaningless section warning.  May need to add isra symbols too...
- *   This pattern is identified by
+ *   This pattern is identअगरied by
  *   tosec   = init section
  *   fromsec = text section
- *   refsymname = *.constprop.*
+ *   refsymname = *.स्थिरprop.*
  *
  * Pattern 6:
- *   Hide section mismatch warnings for ELF local symbols.  The goal
+ *   Hide section mismatch warnings क्रम ELF local symbols.  The goal
  *   is to eliminate false positive modpost warnings caused by
  *   compiler-generated ELF local symbol names such as ".LANCHOR1".
  *   Autogenerated symbol names bypass modpost's "Pattern 2"
  *   whitelisting, which relies on pattern-matching against symbol
- *   names to work.  (One situation where gcc can autogenerate ELF
+ *   names to work.  (One situation where gcc can स्वतःgenerate ELF
  *   local symbols is when "-fsection-anchors" is used.)
  **/
-static int secref_whitelist(const struct sectioncheck *mismatch,
-			    const char *fromsec, const char *fromsym,
-			    const char *tosec, const char *tosym)
-{
-	/* Check for pattern 1 */
-	if (match(tosec, init_data_sections) &&
+अटल पूर्णांक secref_whitelist(स्थिर काष्ठा sectioncheck *mismatch,
+			    स्थिर अक्षर *fromsec, स्थिर अक्षर *fromsym,
+			    स्थिर अक्षर *tosec, स्थिर अक्षर *tosym)
+अणु
+	/* Check क्रम pattern 1 */
+	अगर (match(tosec, init_data_sections) &&
 	    match(fromsec, data_sections) &&
 	    strstarts(fromsym, "__param"))
-		return 0;
+		वापस 0;
 
-	/* Check for pattern 1a */
-	if (strcmp(tosec, ".init.text") == 0 &&
+	/* Check क्रम pattern 1a */
+	अगर (म_भेद(tosec, ".init.text") == 0 &&
 	    match(fromsec, data_sections) &&
 	    strstarts(fromsym, "__param_ops_"))
-		return 0;
+		वापस 0;
 
-	/* Check for pattern 2 */
-	if (match(tosec, init_exit_sections) &&
+	/* Check क्रम pattern 2 */
+	अगर (match(tosec, init_निकास_sections) &&
 	    match(fromsec, data_sections) &&
 	    match(fromsym, mismatch->symbol_white_list))
-		return 0;
+		वापस 0;
 
-	/* Check for pattern 3 */
-	if (match(fromsec, head_sections) &&
+	/* Check क्रम pattern 3 */
+	अगर (match(fromsec, head_sections) &&
 	    match(tosec, init_sections))
-		return 0;
+		वापस 0;
 
-	/* Check for pattern 4 */
-	if (match(tosym, linker_symbols))
-		return 0;
+	/* Check क्रम pattern 4 */
+	अगर (match(tosym, linker_symbols))
+		वापस 0;
 
-	/* Check for pattern 5 */
-	if (match(fromsec, text_sections) &&
+	/* Check क्रम pattern 5 */
+	अगर (match(fromsec, text_sections) &&
 	    match(tosec, init_sections) &&
 	    match(fromsym, optim_symbols))
-		return 0;
+		वापस 0;
 
-	/* Check for pattern 6 */
-	if (strstarts(fromsym, ".L"))
-		return 0;
+	/* Check क्रम pattern 6 */
+	अगर (strstarts(fromsym, ".L"))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int is_arm_mapping_symbol(const char *str)
-{
-	return str[0] == '$' && strchr("axtd", str[1])
+अटल अंतरभूत पूर्णांक is_arm_mapping_symbol(स्थिर अक्षर *str)
+अणु
+	वापस str[0] == '$' && म_अक्षर("axtd", str[1])
 	       && (str[2] == '\0' || str[2] == '.');
-}
+पूर्ण
 
 /*
  * If there's no name there, ignore it; likewise, ignore it if it's
  * one of the magic symbols emitted used by current ARM tools.
  *
- * Otherwise if find_symbols_between() returns those symbols, they'll
+ * Otherwise अगर find_symbols_between() वापसs those symbols, they'll
  * fail the whitelist tests and cause lots of false alarms ... fixable
- * only by merging __exit and __init sections into __text, bloating
- * the kernel (which is especially evil on embedded platforms).
+ * only by merging __निकास and __init sections पूर्णांकo __text, bloating
+ * the kernel (which is especially evil on embedded platक्रमms).
  */
-static inline int is_valid_name(struct elf_info *elf, Elf_Sym *sym)
-{
-	const char *name = elf->strtab + sym->st_name;
+अटल अंतरभूत पूर्णांक is_valid_name(काष्ठा elf_info *elf, Elf_Sym *sym)
+अणु
+	स्थिर अक्षर *name = elf->strtab + sym->st_name;
 
-	if (!name || !strlen(name))
-		return 0;
-	return !is_arm_mapping_symbol(name);
-}
+	अगर (!name || !म_माप(name))
+		वापस 0;
+	वापस !is_arm_mapping_symbol(name);
+पूर्ण
 
 /**
  * Find symbol based on relocation record info.
- * In some cases the symbol supplied is a valid symbol so
- * return refsym. If st_name != 0 we assume this is a valid symbol.
- * In other cases the symbol needs to be looked up in the symbol table
+ * In some हालs the symbol supplied is a valid symbol so
+ * वापस refsym. If st_name != 0 we assume this is a valid symbol.
+ * In other हालs the symbol needs to be looked up in the symbol table
  * based on section and address.
  *  **/
-static Elf_Sym *find_elf_symbol(struct elf_info *elf, Elf64_Sword addr,
+अटल Elf_Sym *find_elf_symbol(काष्ठा elf_info *elf, Elf64_Sword addr,
 				Elf_Sym *relsym)
-{
+अणु
 	Elf_Sym *sym;
-	Elf_Sym *near = NULL;
+	Elf_Sym *near = शून्य;
 	Elf64_Sword distance = 20;
 	Elf64_Sword d;
-	unsigned int relsym_secindex;
+	अचिन्हित पूर्णांक relsym_secindex;
 
-	if (relsym->st_name != 0)
-		return relsym;
+	अगर (relsym->st_name != 0)
+		वापस relsym;
 
 	relsym_secindex = get_secindex(elf, relsym);
-	for (sym = elf->symtab_start; sym < elf->symtab_stop; sym++) {
-		if (get_secindex(elf, sym) != relsym_secindex)
-			continue;
-		if (ELF_ST_TYPE(sym->st_info) == STT_SECTION)
-			continue;
-		if (!is_valid_name(elf, sym))
-			continue;
-		if (sym->st_value == addr)
-			return sym;
+	क्रम (sym = elf->symtab_start; sym < elf->symtab_stop; sym++) अणु
+		अगर (get_secindex(elf, sym) != relsym_secindex)
+			जारी;
+		अगर (ELF_ST_TYPE(sym->st_info) == STT_SECTION)
+			जारी;
+		अगर (!is_valid_name(elf, sym))
+			जारी;
+		अगर (sym->st_value == addr)
+			वापस sym;
 		/* Find a symbol nearby - addr are maybe negative */
 		d = sym->st_value - addr;
-		if (d < 0)
+		अगर (d < 0)
 			d = addr - sym->st_value;
-		if (d < distance) {
+		अगर (d < distance) अणु
 			distance = d;
 			near = sym;
-		}
-	}
-	/* We need a close match */
-	if (distance < 20)
-		return near;
-	else
-		return NULL;
-}
+		पूर्ण
+	पूर्ण
+	/* We need a बंद match */
+	अगर (distance < 20)
+		वापस near;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
 /*
- * Find symbols before or equal addr and after addr - in the section sec.
+ * Find symbols beक्रमe or equal addr and after addr - in the section sec.
  * If we find two symbols with equal offset prefer one with a valid name.
- * The ELF format may have a better way to detect what type of symbol
- * it is, but this works for now.
+ * The ELF क्रमmat may have a better way to detect what type of symbol
+ * it is, but this works क्रम now.
  **/
-static Elf_Sym *find_elf_symbol2(struct elf_info *elf, Elf_Addr addr,
-				 const char *sec)
-{
+अटल Elf_Sym *find_elf_symbol2(काष्ठा elf_info *elf, Elf_Addr addr,
+				 स्थिर अक्षर *sec)
+अणु
 	Elf_Sym *sym;
-	Elf_Sym *near = NULL;
+	Elf_Sym *near = शून्य;
 	Elf_Addr distance = ~0;
 
-	for (sym = elf->symtab_start; sym < elf->symtab_stop; sym++) {
-		const char *symsec;
+	क्रम (sym = elf->symtab_start; sym < elf->symtab_stop; sym++) अणु
+		स्थिर अक्षर *symsec;
 
-		if (is_shndx_special(sym->st_shndx))
-			continue;
+		अगर (is_shndx_special(sym->st_shndx))
+			जारी;
 		symsec = sec_name(elf, get_secindex(elf, sym));
-		if (strcmp(symsec, sec) != 0)
-			continue;
-		if (!is_valid_name(elf, sym))
-			continue;
-		if (sym->st_value <= addr) {
-			if ((addr - sym->st_value) < distance) {
+		अगर (म_भेद(symsec, sec) != 0)
+			जारी;
+		अगर (!is_valid_name(elf, sym))
+			जारी;
+		अगर (sym->st_value <= addr) अणु
+			अगर ((addr - sym->st_value) < distance) अणु
 				distance = addr - sym->st_value;
 				near = sym;
-			} else if ((addr - sym->st_value) == distance) {
+			पूर्ण अन्यथा अगर ((addr - sym->st_value) == distance) अणु
 				near = sym;
-			}
-		}
-	}
-	return near;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस near;
+पूर्ण
 
 /*
  * Convert a section name to the function/data attribute
  * .init.text => __init
- * .memexitconst => __memconst
+ * .memनिकासस्थिर => __memस्थिर
  * etc.
  *
- * The memory of returned value has been allocated on a heap. The user of this
- * method should free it after usage.
+ * The memory of वापसed value has been allocated on a heap. The user of this
+ * method should मुक्त it after usage.
 */
-static char *sec2annotation(const char *s)
-{
-	if (match(s, init_exit_sections)) {
-		char *p = NOFAIL(malloc(20));
-		char *r = p;
+अटल अक्षर *sec2annotation(स्थिर अक्षर *s)
+अणु
+	अगर (match(s, init_निकास_sections)) अणु
+		अक्षर *p = NOFAIL(दो_स्मृति(20));
+		अक्षर *r = p;
 
 		*p++ = '_';
 		*p++ = '_';
-		if (*s == '.')
+		अगर (*s == '.')
 			s++;
-		while (*s && *s != '.')
+		जबतक (*s && *s != '.')
 			*p++ = *s++;
 		*p = '\0';
-		if (*s == '.')
+		अगर (*s == '.')
 			s++;
-		if (strstr(s, "rodata") != NULL)
-			strcat(p, "const ");
-		else if (strstr(s, "data") != NULL)
-			strcat(p, "data ");
-		else
-			strcat(p, " ");
-		return r;
-	} else {
-		return NOFAIL(strdup(""));
-	}
-}
+		अगर (म_माला(s, "rodata") != शून्य)
+			म_जोड़ो(p, "const ");
+		अन्यथा अगर (म_माला(s, "data") != शून्य)
+			म_जोड़ो(p, "data ");
+		अन्यथा
+			म_जोड़ो(p, " ");
+		वापस r;
+	पूर्ण अन्यथा अणु
+		वापस NOFAIL(strdup(""));
+	पूर्ण
+पूर्ण
 
-static int is_function(Elf_Sym *sym)
-{
-	if (sym)
-		return ELF_ST_TYPE(sym->st_info) == STT_FUNC;
-	else
-		return -1;
-}
+अटल पूर्णांक is_function(Elf_Sym *sym)
+अणु
+	अगर (sym)
+		वापस ELF_ST_TYPE(sym->st_info) == STT_FUNC;
+	अन्यथा
+		वापस -1;
+पूर्ण
 
-static void print_section_list(const char * const list[20])
-{
-	const char *const *s = list;
+अटल व्योम prपूर्णांक_section_list(स्थिर अक्षर * स्थिर list[20])
+अणु
+	स्थिर अक्षर *स्थिर *s = list;
 
-	while (*s) {
-		fprintf(stderr, "%s", *s);
+	जबतक (*s) अणु
+		ख_लिखो(मानक_त्रुटि, "%s", *s);
 		s++;
-		if (*s)
-			fprintf(stderr, ", ");
-	}
-	fprintf(stderr, "\n");
-}
+		अगर (*s)
+			ख_लिखो(मानक_त्रुटि, ", ");
+	पूर्ण
+	ख_लिखो(मानक_त्रुटि, "\n");
+पूर्ण
 
-static inline void get_pretty_name(int is_func, const char** name, const char** name_p)
-{
-	switch (is_func) {
-	case 0:	*name = "variable"; *name_p = ""; break;
-	case 1:	*name = "function"; *name_p = "()"; break;
-	default: *name = "(unknown reference)"; *name_p = ""; break;
-	}
-}
+अटल अंतरभूत व्योम get_pretty_name(पूर्णांक is_func, स्थिर अक्षर** name, स्थिर अक्षर** name_p)
+अणु
+	चयन (is_func) अणु
+	हाल 0:	*name = "variable"; *name_p = ""; अवरोध;
+	हाल 1:	*name = "function"; *name_p = "()"; अवरोध;
+	शेष: *name = "(unknown reference)"; *name_p = ""; अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * Print a warning about a section mismatch.
+ * Prपूर्णांक a warning about a section mismatch.
  * Try to find symbols near it so user can find it.
- * Check whitelist before warning - it may be a false positive.
+ * Check whitelist beक्रमe warning - it may be a false positive.
  */
-static void report_sec_mismatch(const char *modname,
-				const struct sectioncheck *mismatch,
-				const char *fromsec,
-				unsigned long long fromaddr,
-				const char *fromsym,
-				int from_is_func,
-				const char *tosec, const char *tosym,
-				int to_is_func)
-{
-	const char *from, *from_p;
-	const char *to, *to_p;
-	char *prl_from;
-	char *prl_to;
+अटल व्योम report_sec_mismatch(स्थिर अक्षर *modname,
+				स्थिर काष्ठा sectioncheck *mismatch,
+				स्थिर अक्षर *fromsec,
+				अचिन्हित दीर्घ दीर्घ fromaddr,
+				स्थिर अक्षर *fromsym,
+				पूर्णांक from_is_func,
+				स्थिर अक्षर *tosec, स्थिर अक्षर *tosym,
+				पूर्णांक to_is_func)
+अणु
+	स्थिर अक्षर *from, *from_p;
+	स्थिर अक्षर *to, *to_p;
+	अक्षर *prl_from;
+	अक्षर *prl_to;
 
 	sec_mismatch_count++;
 
@@ -1445,11 +1446,11 @@ static void report_sec_mismatch(const char *modname,
 	     modname, fromsec, fromaddr, from, fromsym, from_p, to, tosec,
 	     tosym, to_p);
 
-	switch (mismatch->mismatch) {
-	case TEXT_TO_ANY_INIT:
+	चयन (mismatch->mismatch) अणु
+	हाल TEXT_TO_ANY_INIT:
 		prl_from = sec2annotation(fromsec);
 		prl_to = sec2annotation(tosec);
-		fprintf(stderr,
+		ख_लिखो(मानक_त्रुटि,
 		"The function %s%s() references\n"
 		"the %s %s%s%s.\n"
 		"This is often because %s lacks a %s\n"
@@ -1457,49 +1458,49 @@ static void report_sec_mismatch(const char *modname,
 		prl_from, fromsym,
 		to, prl_to, tosym, to_p,
 		fromsym, prl_to, tosym);
-		free(prl_from);
-		free(prl_to);
-		break;
-	case DATA_TO_ANY_INIT: {
+		मुक्त(prl_from);
+		मुक्त(prl_to);
+		अवरोध;
+	हाल DATA_TO_ANY_INIT: अणु
 		prl_to = sec2annotation(tosec);
-		fprintf(stderr,
+		ख_लिखो(मानक_त्रुटि,
 		"The variable %s references\n"
 		"the %s %s%s%s\n"
 		"If the reference is valid then annotate the\n"
 		"variable with __init* or __refdata (see linux/init.h) "
 		"or name the variable:\n",
 		fromsym, to, prl_to, tosym, to_p);
-		print_section_list(mismatch->symbol_white_list);
-		free(prl_to);
-		break;
-	}
-	case TEXT_TO_ANY_EXIT:
+		prपूर्णांक_section_list(mismatch->symbol_white_list);
+		मुक्त(prl_to);
+		अवरोध;
+	पूर्ण
+	हाल TEXT_TO_ANY_EXIT:
 		prl_to = sec2annotation(tosec);
-		fprintf(stderr,
+		ख_लिखो(मानक_त्रुटि,
 		"The function %s() references a %s in an exit section.\n"
 		"Often the %s %s%s has valid usage outside the exit section\n"
 		"and the fix is to remove the %sannotation of %s.\n",
 		fromsym, to, to, tosym, to_p, prl_to, tosym);
-		free(prl_to);
-		break;
-	case DATA_TO_ANY_EXIT: {
+		मुक्त(prl_to);
+		अवरोध;
+	हाल DATA_TO_ANY_EXIT: अणु
 		prl_to = sec2annotation(tosec);
-		fprintf(stderr,
+		ख_लिखो(मानक_त्रुटि,
 		"The variable %s references\n"
 		"the %s %s%s%s\n"
 		"If the reference is valid then annotate the\n"
 		"variable with __exit* (see linux/init.h) or "
 		"name the variable:\n",
 		fromsym, to, prl_to, tosym, to_p);
-		print_section_list(mismatch->symbol_white_list);
-		free(prl_to);
-		break;
-	}
-	case XXXINIT_TO_SOME_INIT:
-	case XXXEXIT_TO_SOME_EXIT:
+		prपूर्णांक_section_list(mismatch->symbol_white_list);
+		मुक्त(prl_to);
+		अवरोध;
+	पूर्ण
+	हाल XXXINIT_TO_SOME_INIT:
+	हाल XXXEXIT_TO_SOME_EXIT:
 		prl_from = sec2annotation(fromsec);
 		prl_to = sec2annotation(tosec);
-		fprintf(stderr,
+		ख_लिखो(मानक_त्रुटि,
 		"The %s %s%s%s references\n"
 		"a %s %s%s%s.\n"
 		"If %s is only used by %s then\n"
@@ -1507,13 +1508,13 @@ static void report_sec_mismatch(const char *modname,
 		from, prl_from, fromsym, from_p,
 		to, prl_to, tosym, to_p,
 		tosym, fromsym, tosym);
-		free(prl_from);
-		free(prl_to);
-		break;
-	case ANY_INIT_TO_ANY_EXIT:
+		मुक्त(prl_from);
+		मुक्त(prl_to);
+		अवरोध;
+	हाल ANY_INIT_TO_ANY_EXIT:
 		prl_from = sec2annotation(fromsec);
 		prl_to = sec2annotation(tosec);
-		fprintf(stderr,
+		ख_लिखो(मानक_त्रुटि,
 		"The %s %s%s%s references\n"
 		"a %s %s%s%s.\n"
 		"This is often seen when error handling "
@@ -1524,13 +1525,13 @@ static void report_sec_mismatch(const char *modname,
 		from, prl_from, fromsym, from_p,
 		to, prl_to, tosym, to_p,
 		prl_to, tosym, to_p);
-		free(prl_from);
-		free(prl_to);
-		break;
-	case ANY_EXIT_TO_ANY_INIT:
+		मुक्त(prl_from);
+		मुक्त(prl_to);
+		अवरोध;
+	हाल ANY_EXIT_TO_ANY_INIT:
 		prl_from = sec2annotation(fromsec);
 		prl_to = sec2annotation(tosec);
-		fprintf(stderr,
+		ख_लिखो(मानक_त्रुटि,
 		"The %s %s%s%s references\n"
 		"a %s %s%s%s.\n"
 		"This is often seen when error handling "
@@ -1541,114 +1542,114 @@ static void report_sec_mismatch(const char *modname,
 		from, prl_from, fromsym, from_p,
 		to, prl_to, tosym, to_p,
 		prl_to, tosym, to_p);
-		free(prl_from);
-		free(prl_to);
-		break;
-	case EXPORT_TO_INIT_EXIT:
+		मुक्त(prl_from);
+		मुक्त(prl_to);
+		अवरोध;
+	हाल EXPORT_TO_INIT_EXIT:
 		prl_to = sec2annotation(tosec);
-		fprintf(stderr,
+		ख_लिखो(मानक_त्रुटि,
 		"The symbol %s is exported and annotated %s\n"
 		"Fix this by removing the %sannotation of %s "
 		"or drop the export.\n",
 		tosym, prl_to, prl_to, tosym);
-		free(prl_to);
-		break;
-	case EXTABLE_TO_NON_TEXT:
+		मुक्त(prl_to);
+		अवरोध;
+	हाल EXTABLE_TO_NON_TEXT:
 		fatal("There's a special handler for this mismatch type, "
 		      "we should never get here.");
-		break;
-	}
-	fprintf(stderr, "\n");
-}
+		अवरोध;
+	पूर्ण
+	ख_लिखो(मानक_त्रुटि, "\n");
+पूर्ण
 
-static void default_mismatch_handler(const char *modname, struct elf_info *elf,
-				     const struct sectioncheck* const mismatch,
-				     Elf_Rela *r, Elf_Sym *sym, const char *fromsec)
-{
-	const char *tosec;
+अटल व्योम शेष_mismatch_handler(स्थिर अक्षर *modname, काष्ठा elf_info *elf,
+				     स्थिर काष्ठा sectioncheck* स्थिर mismatch,
+				     Elf_Rela *r, Elf_Sym *sym, स्थिर अक्षर *fromsec)
+अणु
+	स्थिर अक्षर *tosec;
 	Elf_Sym *to;
 	Elf_Sym *from;
-	const char *tosym;
-	const char *fromsym;
+	स्थिर अक्षर *tosym;
+	स्थिर अक्षर *fromsym;
 
 	from = find_elf_symbol2(elf, r->r_offset, fromsec);
 	fromsym = sym_name(elf, from);
 
-	if (strstarts(fromsym, "reference___initcall"))
-		return;
+	अगर (strstarts(fromsym, "reference___initcall"))
+		वापस;
 
 	tosec = sec_name(elf, get_secindex(elf, sym));
 	to = find_elf_symbol(elf, r->r_addend, sym);
 	tosym = sym_name(elf, to);
 
 	/* check whitelist - we may ignore it */
-	if (secref_whitelist(mismatch,
-			     fromsec, fromsym, tosec, tosym)) {
+	अगर (secref_whitelist(mismatch,
+			     fromsec, fromsym, tosec, tosym)) अणु
 		report_sec_mismatch(modname, mismatch,
 				    fromsec, r->r_offset, fromsym,
 				    is_function(from), tosec, tosym,
 				    is_function(to));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int is_executable_section(struct elf_info* elf, unsigned int section_index)
-{
-	if (section_index > elf->num_sections)
+अटल पूर्णांक is_executable_section(काष्ठा elf_info* elf, अचिन्हित पूर्णांक section_index)
+अणु
+	अगर (section_index > elf->num_sections)
 		fatal("section_index is outside elf->num_sections!\n");
 
-	return ((elf->sechdrs[section_index].sh_flags & SHF_EXECINSTR) == SHF_EXECINSTR);
-}
+	वापस ((elf->sechdrs[section_index].sh_flags & SHF_EXECINSTR) == SHF_EXECINSTR);
+पूर्ण
 
 /*
  * We rely on a gross hack in section_rel[a]() calling find_extable_entry_size()
- * to know the sizeof(struct exception_table_entry) for the target architecture.
+ * to know the माप(काष्ठा exception_table_entry) क्रम the target architecture.
  */
-static unsigned int extable_entry_size = 0;
-static void find_extable_entry_size(const char* const sec, const Elf_Rela* r)
-{
+अटल अचिन्हित पूर्णांक extable_entry_size = 0;
+अटल व्योम find_extable_entry_size(स्थिर अक्षर* स्थिर sec, स्थिर Elf_Rela* r)
+अणु
 	/*
 	 * If we're currently checking the second relocation within __ex_table,
-	 * that relocation offset tells us the offsetof(struct
-	 * exception_table_entry, fixup) which is equal to sizeof(struct
-	 * exception_table_entry) divided by two.  We use that to our advantage
+	 * that relocation offset tells us the दुरत्व(काष्ठा
+	 * exception_table_entry, fixup) which is equal to माप(काष्ठा
+	 * exception_table_entry) भागided by two.  We use that to our advantage
 	 * since there's no portable way to get that size as every architecture
-	 * seems to go with different sized types.  Not pretty but better than
-	 * hard-coding the size for every architecture..
+	 * seems to go with dअगरferent sized types.  Not pretty but better than
+	 * hard-coding the size क्रम every architecture..
 	 */
-	if (!extable_entry_size)
+	अगर (!extable_entry_size)
 		extable_entry_size = r->r_offset * 2;
-}
+पूर्ण
 
-static inline bool is_extable_fault_address(Elf_Rela *r)
-{
+अटल अंतरभूत bool is_extable_fault_address(Elf_Rela *r)
+अणु
 	/*
 	 * extable_entry_size is only discovered after we've handled the
-	 * _second_ relocation in __ex_table, so only abort when we're not
+	 * _second_ relocation in __ex_table, so only पात when we're not
 	 * handling the first reloc and extable_entry_size is zero.
 	 */
-	if (r->r_offset && extable_entry_size == 0)
+	अगर (r->r_offset && extable_entry_size == 0)
 		fatal("extable_entry size hasn't been discovered!\n");
 
-	return ((r->r_offset == 0) ||
+	वापस ((r->r_offset == 0) ||
 		(r->r_offset % extable_entry_size == 0));
-}
+पूर्ण
 
-#define is_second_extable_reloc(Start, Cur, Sec)			\
-	(((Cur) == (Start) + 1) && (strcmp("__ex_table", (Sec)) == 0))
+#घोषणा is_second_extable_reloc(Start, Cur, Sec)			\
+	(((Cur) == (Start) + 1) && (म_भेद("__ex_table", (Sec)) == 0))
 
-static void report_extable_warnings(const char* modname, struct elf_info* elf,
-				    const struct sectioncheck* const mismatch,
+अटल व्योम report_extable_warnings(स्थिर अक्षर* modname, काष्ठा elf_info* elf,
+				    स्थिर काष्ठा sectioncheck* स्थिर mismatch,
 				    Elf_Rela* r, Elf_Sym* sym,
-				    const char* fromsec, const char* tosec)
-{
+				    स्थिर अक्षर* fromsec, स्थिर अक्षर* tosec)
+अणु
 	Elf_Sym* fromsym = find_elf_symbol2(elf, r->r_offset, fromsec);
-	const char* fromsym_name = sym_name(elf, fromsym);
+	स्थिर अक्षर* fromsym_name = sym_name(elf, fromsym);
 	Elf_Sym* tosym = find_elf_symbol(elf, r->r_addend, sym);
-	const char* tosym_name = sym_name(elf, tosym);
-	const char* from_pretty_name;
-	const char* from_pretty_name_p;
-	const char* to_pretty_name;
-	const char* to_pretty_name_p;
+	स्थिर अक्षर* tosym_name = sym_name(elf, tosym);
+	स्थिर अक्षर* from_pretty_name;
+	स्थिर अक्षर* from_pretty_name_p;
+	स्थिर अक्षर* to_pretty_name;
+	स्थिर अक्षर* to_pretty_name_p;
 
 	get_pretty_name(is_function(fromsym),
 			&from_pretty_name, &from_pretty_name_p);
@@ -1657,13 +1658,13 @@ static void report_extable_warnings(const char* modname, struct elf_info* elf,
 
 	warn("%s(%s+0x%lx): Section mismatch in reference"
 	     " from the %s %s%s to the %s %s:%s%s\n",
-	     modname, fromsec, (long)r->r_offset, from_pretty_name,
+	     modname, fromsec, (दीर्घ)r->r_offset, from_pretty_name,
 	     fromsym_name, from_pretty_name_p,
 	     to_pretty_name, tosec, tosym_name, to_pretty_name_p);
 
-	if (!match(tosec, mismatch->bad_tosec) &&
+	अगर (!match(tosec, mismatch->bad_tosec) &&
 	    is_executable_section(elf, get_secindex(elf, sym)))
-		fprintf(stderr,
+		ख_लिखो(मानक_त्रुटि,
 			"The relocation at %s+0x%lx references\n"
 			"section \"%s\" which is not in the list of\n"
 			"authorized sections.  If you're adding a new section\n"
@@ -1671,889 +1672,889 @@ static void report_extable_warnings(const char* modname, struct elf_info* elf,
 			"list of authorized sections to jump to on fault.\n"
 			"This can be achieved by adding \"%s\" to \n"
 			"OTHER_TEXT_SECTIONS in scripts/mod/modpost.c.\n",
-			fromsec, (long)r->r_offset, tosec, tosec, tosec);
-}
+			fromsec, (दीर्घ)r->r_offset, tosec, tosec, tosec);
+पूर्ण
 
-static void extable_mismatch_handler(const char* modname, struct elf_info *elf,
-				     const struct sectioncheck* const mismatch,
+अटल व्योम extable_mismatch_handler(स्थिर अक्षर* modname, काष्ठा elf_info *elf,
+				     स्थिर काष्ठा sectioncheck* स्थिर mismatch,
 				     Elf_Rela* r, Elf_Sym* sym,
-				     const char *fromsec)
-{
-	const char* tosec = sec_name(elf, get_secindex(elf, sym));
+				     स्थिर अक्षर *fromsec)
+अणु
+	स्थिर अक्षर* tosec = sec_name(elf, get_secindex(elf, sym));
 
 	sec_mismatch_count++;
 
 	report_extable_warnings(modname, elf, mismatch, r, sym, fromsec, tosec);
 
-	if (match(tosec, mismatch->bad_tosec))
+	अगर (match(tosec, mismatch->bad_tosec))
 		fatal("The relocation at %s+0x%lx references\n"
 		      "section \"%s\" which is black-listed.\n"
 		      "Something is seriously wrong and should be fixed.\n"
 		      "You might get more information about where this is\n"
 		      "coming from by using scripts/check_extable.sh %s\n",
-		      fromsec, (long)r->r_offset, tosec, modname);
-	else if (!is_executable_section(elf, get_secindex(elf, sym))) {
-		if (is_extable_fault_address(r))
+		      fromsec, (दीर्घ)r->r_offset, tosec, modname);
+	अन्यथा अगर (!is_executable_section(elf, get_secindex(elf, sym))) अणु
+		अगर (is_extable_fault_address(r))
 			fatal("The relocation at %s+0x%lx references\n"
 			      "section \"%s\" which is not executable, IOW\n"
 			      "it is not possible for the kernel to fault\n"
 			      "at that address.  Something is seriously wrong\n"
 			      "and should be fixed.\n",
-			      fromsec, (long)r->r_offset, tosec);
-		else
+			      fromsec, (दीर्घ)r->r_offset, tosec);
+		अन्यथा
 			fatal("The relocation at %s+0x%lx references\n"
 			      "section \"%s\" which is not executable, IOW\n"
 			      "the kernel will fault if it ever tries to\n"
 			      "jump to it.  Something is seriously wrong\n"
 			      "and should be fixed.\n",
-			      fromsec, (long)r->r_offset, tosec);
-	}
-}
+			      fromsec, (दीर्घ)r->r_offset, tosec);
+	पूर्ण
+पूर्ण
 
-static void check_section_mismatch(const char *modname, struct elf_info *elf,
-				   Elf_Rela *r, Elf_Sym *sym, const char *fromsec)
-{
-	const char *tosec = sec_name(elf, get_secindex(elf, sym));
-	const struct sectioncheck *mismatch = section_mismatch(fromsec, tosec);
+अटल व्योम check_section_mismatch(स्थिर अक्षर *modname, काष्ठा elf_info *elf,
+				   Elf_Rela *r, Elf_Sym *sym, स्थिर अक्षर *fromsec)
+अणु
+	स्थिर अक्षर *tosec = sec_name(elf, get_secindex(elf, sym));
+	स्थिर काष्ठा sectioncheck *mismatch = section_mismatch(fromsec, tosec);
 
-	if (mismatch) {
-		if (mismatch->handler)
+	अगर (mismatch) अणु
+		अगर (mismatch->handler)
 			mismatch->handler(modname, elf,  mismatch,
 					  r, sym, fromsec);
-		else
-			default_mismatch_handler(modname, elf, mismatch,
+		अन्यथा
+			शेष_mismatch_handler(modname, elf, mismatch,
 						 r, sym, fromsec);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int *reloc_location(struct elf_info *elf,
+अटल अचिन्हित पूर्णांक *reloc_location(काष्ठा elf_info *elf,
 				    Elf_Shdr *sechdr, Elf_Rela *r)
-{
-	return sym_get_data_by_offset(elf, sechdr->sh_info, r->r_offset);
-}
+अणु
+	वापस sym_get_data_by_offset(elf, sechdr->sh_info, r->r_offset);
+पूर्ण
 
-static int addend_386_rel(struct elf_info *elf, Elf_Shdr *sechdr, Elf_Rela *r)
-{
-	unsigned int r_typ = ELF_R_TYPE(r->r_info);
-	unsigned int *location = reloc_location(elf, sechdr, r);
+अटल पूर्णांक addend_386_rel(काष्ठा elf_info *elf, Elf_Shdr *sechdr, Elf_Rela *r)
+अणु
+	अचिन्हित पूर्णांक r_typ = ELF_R_TYPE(r->r_info);
+	अचिन्हित पूर्णांक *location = reloc_location(elf, sechdr, r);
 
-	switch (r_typ) {
-	case R_386_32:
+	चयन (r_typ) अणु
+	हाल R_386_32:
 		r->r_addend = TO_NATIVE(*location);
-		break;
-	case R_386_PC32:
+		अवरोध;
+	हाल R_386_PC32:
 		r->r_addend = TO_NATIVE(*location) + 4;
 		/* For CONFIG_RELOCATABLE=y */
-		if (elf->hdr->e_type == ET_EXEC)
+		अगर (elf->hdr->e_type == ET_EXEC)
 			r->r_addend += r->r_offset;
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifndef R_ARM_CALL
-#define R_ARM_CALL	28
-#endif
-#ifndef R_ARM_JUMP24
-#define R_ARM_JUMP24	29
-#endif
+#अगर_अघोषित R_ARM_CALL
+#घोषणा R_ARM_CALL	28
+#पूर्ण_अगर
+#अगर_अघोषित R_ARM_JUMP24
+#घोषणा R_ARM_JUMP24	29
+#पूर्ण_अगर
 
-#ifndef	R_ARM_THM_CALL
-#define	R_ARM_THM_CALL		10
-#endif
-#ifndef	R_ARM_THM_JUMP24
-#define	R_ARM_THM_JUMP24	30
-#endif
-#ifndef	R_ARM_THM_JUMP19
-#define	R_ARM_THM_JUMP19	51
-#endif
+#अगर_अघोषित	R_ARM_THM_CALL
+#घोषणा	R_ARM_THM_CALL		10
+#पूर्ण_अगर
+#अगर_अघोषित	R_ARM_THM_JUMP24
+#घोषणा	R_ARM_THM_JUMP24	30
+#पूर्ण_अगर
+#अगर_अघोषित	R_ARM_THM_JUMP19
+#घोषणा	R_ARM_THM_JUMP19	51
+#पूर्ण_अगर
 
-static int addend_arm_rel(struct elf_info *elf, Elf_Shdr *sechdr, Elf_Rela *r)
-{
-	unsigned int r_typ = ELF_R_TYPE(r->r_info);
+अटल पूर्णांक addend_arm_rel(काष्ठा elf_info *elf, Elf_Shdr *sechdr, Elf_Rela *r)
+अणु
+	अचिन्हित पूर्णांक r_typ = ELF_R_TYPE(r->r_info);
 
-	switch (r_typ) {
-	case R_ARM_ABS32:
+	चयन (r_typ) अणु
+	हाल R_ARM_ABS32:
 		/* From ARM ABI: (S + A) | T */
-		r->r_addend = (int)(long)
+		r->r_addend = (पूर्णांक)(दीर्घ)
 			      (elf->symtab_start + ELF_R_SYM(r->r_info));
-		break;
-	case R_ARM_PC24:
-	case R_ARM_CALL:
-	case R_ARM_JUMP24:
-	case R_ARM_THM_CALL:
-	case R_ARM_THM_JUMP24:
-	case R_ARM_THM_JUMP19:
+		अवरोध;
+	हाल R_ARM_PC24:
+	हाल R_ARM_CALL:
+	हाल R_ARM_JUMP24:
+	हाल R_ARM_THM_CALL:
+	हाल R_ARM_THM_JUMP24:
+	हाल R_ARM_THM_JUMP19:
 		/* From ARM ABI: ((S + A) | T) - P */
-		r->r_addend = (int)(long)(elf->hdr +
+		r->r_addend = (पूर्णांक)(दीर्घ)(elf->hdr +
 			      sechdr->sh_offset +
 			      (r->r_offset - sechdr->sh_addr));
-		break;
-	default:
-		return 1;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int addend_mips_rel(struct elf_info *elf, Elf_Shdr *sechdr, Elf_Rela *r)
-{
-	unsigned int r_typ = ELF_R_TYPE(r->r_info);
-	unsigned int *location = reloc_location(elf, sechdr, r);
-	unsigned int inst;
+अटल पूर्णांक addend_mips_rel(काष्ठा elf_info *elf, Elf_Shdr *sechdr, Elf_Rela *r)
+अणु
+	अचिन्हित पूर्णांक r_typ = ELF_R_TYPE(r->r_info);
+	अचिन्हित पूर्णांक *location = reloc_location(elf, sechdr, r);
+	अचिन्हित पूर्णांक inst;
 
-	if (r_typ == R_MIPS_HI16)
-		return 1;	/* skip this */
+	अगर (r_typ == R_MIPS_HI16)
+		वापस 1;	/* skip this */
 	inst = TO_NATIVE(*location);
-	switch (r_typ) {
-	case R_MIPS_LO16:
+	चयन (r_typ) अणु
+	हाल R_MIPS_LO16:
 		r->r_addend = inst & 0xffff;
-		break;
-	case R_MIPS_26:
+		अवरोध;
+	हाल R_MIPS_26:
 		r->r_addend = (inst & 0x03ffffff) << 2;
-		break;
-	case R_MIPS_32:
+		अवरोध;
+	हाल R_MIPS_32:
 		r->r_addend = inst;
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void section_rela(const char *modname, struct elf_info *elf,
+अटल व्योम section_rela(स्थिर अक्षर *modname, काष्ठा elf_info *elf,
 			 Elf_Shdr *sechdr)
-{
+अणु
 	Elf_Sym  *sym;
 	Elf_Rela *rela;
 	Elf_Rela r;
-	unsigned int r_sym;
-	const char *fromsec;
+	अचिन्हित पूर्णांक r_sym;
+	स्थिर अक्षर *fromsec;
 
-	Elf_Rela *start = (void *)elf->hdr + sechdr->sh_offset;
-	Elf_Rela *stop  = (void *)start + sechdr->sh_size;
+	Elf_Rela *start = (व्योम *)elf->hdr + sechdr->sh_offset;
+	Elf_Rela *stop  = (व्योम *)start + sechdr->sh_size;
 
 	fromsec = sech_name(elf, sechdr);
-	fromsec += strlen(".rela");
-	/* if from section (name) is know good then skip it */
-	if (match(fromsec, section_white_list))
-		return;
+	fromsec += म_माप(".rela");
+	/* अगर from section (name) is know good then skip it */
+	अगर (match(fromsec, section_white_list))
+		वापस;
 
-	for (rela = start; rela < stop; rela++) {
+	क्रम (rela = start; rela < stop; rela++) अणु
 		r.r_offset = TO_NATIVE(rela->r_offset);
-#if KERNEL_ELFCLASS == ELFCLASS64
-		if (elf->hdr->e_machine == EM_MIPS) {
-			unsigned int r_typ;
+#अगर KERNEL_ELFCLASS == ELFCLASS64
+		अगर (elf->hdr->e_machine == EM_MIPS) अणु
+			अचिन्हित पूर्णांक r_typ;
 			r_sym = ELF64_MIPS_R_SYM(rela->r_info);
 			r_sym = TO_NATIVE(r_sym);
 			r_typ = ELF64_MIPS_R_TYPE(rela->r_info);
 			r.r_info = ELF64_R_INFO(r_sym, r_typ);
-		} else {
+		पूर्ण अन्यथा अणु
 			r.r_info = TO_NATIVE(rela->r_info);
 			r_sym = ELF_R_SYM(r.r_info);
-		}
-#else
+		पूर्ण
+#अन्यथा
 		r.r_info = TO_NATIVE(rela->r_info);
 		r_sym = ELF_R_SYM(r.r_info);
-#endif
+#पूर्ण_अगर
 		r.r_addend = TO_NATIVE(rela->r_addend);
 		sym = elf->symtab_start + r_sym;
 		/* Skip special sections */
-		if (is_shndx_special(sym->st_shndx))
-			continue;
-		if (is_second_extable_reloc(start, rela, fromsec))
+		अगर (is_shndx_special(sym->st_shndx))
+			जारी;
+		अगर (is_second_extable_reloc(start, rela, fromsec))
 			find_extable_entry_size(fromsec, &r);
 		check_section_mismatch(modname, elf, &r, sym, fromsec);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void section_rel(const char *modname, struct elf_info *elf,
+अटल व्योम section_rel(स्थिर अक्षर *modname, काष्ठा elf_info *elf,
 			Elf_Shdr *sechdr)
-{
+अणु
 	Elf_Sym *sym;
 	Elf_Rel *rel;
 	Elf_Rela r;
-	unsigned int r_sym;
-	const char *fromsec;
+	अचिन्हित पूर्णांक r_sym;
+	स्थिर अक्षर *fromsec;
 
-	Elf_Rel *start = (void *)elf->hdr + sechdr->sh_offset;
-	Elf_Rel *stop  = (void *)start + sechdr->sh_size;
+	Elf_Rel *start = (व्योम *)elf->hdr + sechdr->sh_offset;
+	Elf_Rel *stop  = (व्योम *)start + sechdr->sh_size;
 
 	fromsec = sech_name(elf, sechdr);
-	fromsec += strlen(".rel");
-	/* if from section (name) is know good then skip it */
-	if (match(fromsec, section_white_list))
-		return;
+	fromsec += म_माप(".rel");
+	/* अगर from section (name) is know good then skip it */
+	अगर (match(fromsec, section_white_list))
+		वापस;
 
-	for (rel = start; rel < stop; rel++) {
+	क्रम (rel = start; rel < stop; rel++) अणु
 		r.r_offset = TO_NATIVE(rel->r_offset);
-#if KERNEL_ELFCLASS == ELFCLASS64
-		if (elf->hdr->e_machine == EM_MIPS) {
-			unsigned int r_typ;
+#अगर KERNEL_ELFCLASS == ELFCLASS64
+		अगर (elf->hdr->e_machine == EM_MIPS) अणु
+			अचिन्हित पूर्णांक r_typ;
 			r_sym = ELF64_MIPS_R_SYM(rel->r_info);
 			r_sym = TO_NATIVE(r_sym);
 			r_typ = ELF64_MIPS_R_TYPE(rel->r_info);
 			r.r_info = ELF64_R_INFO(r_sym, r_typ);
-		} else {
+		पूर्ण अन्यथा अणु
 			r.r_info = TO_NATIVE(rel->r_info);
 			r_sym = ELF_R_SYM(r.r_info);
-		}
-#else
+		पूर्ण
+#अन्यथा
 		r.r_info = TO_NATIVE(rel->r_info);
 		r_sym = ELF_R_SYM(r.r_info);
-#endif
+#पूर्ण_अगर
 		r.r_addend = 0;
-		switch (elf->hdr->e_machine) {
-		case EM_386:
-			if (addend_386_rel(elf, sechdr, &r))
-				continue;
-			break;
-		case EM_ARM:
-			if (addend_arm_rel(elf, sechdr, &r))
-				continue;
-			break;
-		case EM_MIPS:
-			if (addend_mips_rel(elf, sechdr, &r))
-				continue;
-			break;
-		}
+		चयन (elf->hdr->e_machine) अणु
+		हाल EM_386:
+			अगर (addend_386_rel(elf, sechdr, &r))
+				जारी;
+			अवरोध;
+		हाल EM_ARM:
+			अगर (addend_arm_rel(elf, sechdr, &r))
+				जारी;
+			अवरोध;
+		हाल EM_MIPS:
+			अगर (addend_mips_rel(elf, sechdr, &r))
+				जारी;
+			अवरोध;
+		पूर्ण
 		sym = elf->symtab_start + r_sym;
 		/* Skip special sections */
-		if (is_shndx_special(sym->st_shndx))
-			continue;
-		if (is_second_extable_reloc(start, rel, fromsec))
+		अगर (is_shndx_special(sym->st_shndx))
+			जारी;
+		अगर (is_second_extable_reloc(start, rel, fromsec))
 			find_extable_entry_size(fromsec, &r);
 		check_section_mismatch(modname, elf, &r, sym, fromsec);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * A module includes a number of sections that are discarded
  * either when loaded or when used as built-in.
  * For loaded modules all functions marked __init and all data
  * marked __initdata will be discarded when the module has been initialized.
- * Likewise for modules used built-in the sections marked __exit
- * are discarded because __exit marked function are supposed to be called
- * only when a module is unloaded which never happens for built-in modules.
+ * Likewise क्रम modules used built-in the sections marked __निकास
+ * are discarded because __निकास marked function are supposed to be called
+ * only when a module is unloaded which never happens क्रम built-in modules.
  * The check_sec_ref() function traverses all relocation records
  * to find all references to a section that reference a section that will
  * be discarded and warns about it.
  **/
-static void check_sec_ref(struct module *mod, const char *modname,
-			  struct elf_info *elf)
-{
-	int i;
+अटल व्योम check_sec_ref(काष्ठा module *mod, स्थिर अक्षर *modname,
+			  काष्ठा elf_info *elf)
+अणु
+	पूर्णांक i;
 	Elf_Shdr *sechdrs = elf->sechdrs;
 
 	/* Walk through all sections */
-	for (i = 0; i < elf->num_sections; i++) {
+	क्रम (i = 0; i < elf->num_sections; i++) अणु
 		check_section(modname, elf, &elf->sechdrs[i]);
 		/* We want to process only relocation sections and not .init */
-		if (sechdrs[i].sh_type == SHT_RELA)
+		अगर (sechdrs[i].sh_type == SHT_RELA)
 			section_rela(modname, elf, &elf->sechdrs[i]);
-		else if (sechdrs[i].sh_type == SHT_REL)
+		अन्यथा अगर (sechdrs[i].sh_type == SHT_REL)
 			section_rel(modname, elf, &elf->sechdrs[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static char *remove_dot(char *s)
-{
-	size_t n = strcspn(s, ".");
+अटल अक्षर *हटाओ_करोt(अक्षर *s)
+अणु
+	माप_प्रकार n = म_खोज(s, ".");
 
-	if (n && s[n]) {
-		size_t m = strspn(s + n + 1, "0123456789");
-		if (m && (s[n + m] == '.' || s[n + m] == 0))
+	अगर (n && s[n]) अणु
+		माप_प्रकार m = म_अखोज(s + n + 1, "0123456789");
+		अगर (m && (s[n + m] == '.' || s[n + m] == 0))
 			s[n] = 0;
 
 		/* strip trailing .lto */
-		if (strends(s, ".lto"))
-			s[strlen(s) - 4] = '\0';
-	}
-	return s;
-}
+		अगर (strends(s, ".lto"))
+			s[म_माप(s) - 4] = '\0';
+	पूर्ण
+	वापस s;
+पूर्ण
 
-static void read_symbols(const char *modname)
-{
-	const char *symname;
-	char *version;
-	char *license;
-	char *namespace;
-	struct module *mod;
-	struct elf_info info = { };
+अटल व्योम पढ़ो_symbols(स्थिर अक्षर *modname)
+अणु
+	स्थिर अक्षर *symname;
+	अक्षर *version;
+	अक्षर *license;
+	अक्षर *namespace;
+	काष्ठा module *mod;
+	काष्ठा elf_info info = अणु पूर्ण;
 	Elf_Sym *sym;
 
-	if (!parse_elf(&info, modname))
-		return;
+	अगर (!parse_elf(&info, modname))
+		वापस;
 
-	{
-		char *tmp;
+	अणु
+		अक्षर *पंचांगp;
 
 		/* strip trailing .o */
-		tmp = NOFAIL(strdup(modname));
-		tmp[strlen(tmp) - 2] = '\0';
+		पंचांगp = NOFAIL(strdup(modname));
+		पंचांगp[म_माप(पंचांगp) - 2] = '\0';
 		/* strip trailing .lto */
-		if (strends(tmp, ".lto"))
-			tmp[strlen(tmp) - 4] = '\0';
-		mod = new_module(tmp);
-		free(tmp);
-	}
+		अगर (strends(पंचांगp, ".lto"))
+			पंचांगp[म_माप(पंचांगp) - 4] = '\0';
+		mod = new_module(पंचांगp);
+		मुक्त(पंचांगp);
+	पूर्ण
 
-	if (!mod->is_vmlinux) {
+	अगर (!mod->is_vmlinux) अणु
 		license = get_modinfo(&info, "license");
-		if (!license)
+		अगर (!license)
 			error("missing MODULE_LICENSE() in %s\n", modname);
-		while (license) {
-			if (license_is_gpl_compatible(license))
+		जबतक (license) अणु
+			अगर (license_is_gpl_compatible(license))
 				mod->gpl_compatible = 1;
-			else {
+			अन्यथा अणु
 				mod->gpl_compatible = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			license = get_next_modinfo(&info, "license", license);
-		}
+		पूर्ण
 
 		namespace = get_modinfo(&info, "import_ns");
-		while (namespace) {
+		जबतक (namespace) अणु
 			add_namespace(&mod->imported_namespaces, namespace);
 			namespace = get_next_modinfo(&info, "import_ns",
 						     namespace);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (sym = info.symtab_start; sym < info.symtab_stop; sym++) {
-		symname = remove_dot(info.strtab + sym->st_name);
+	क्रम (sym = info.symtab_start; sym < info.symtab_stop; sym++) अणु
+		symname = हटाओ_करोt(info.strtab + sym->st_name);
 
 		handle_symbol(mod, &info, sym, symname);
 		handle_moddevtable(mod, &info, sym, symname);
-	}
+	पूर्ण
 
-	for (sym = info.symtab_start; sym < info.symtab_stop; sym++) {
-		symname = remove_dot(info.strtab + sym->st_name);
+	क्रम (sym = info.symtab_start; sym < info.symtab_stop; sym++) अणु
+		symname = हटाओ_करोt(info.strtab + sym->st_name);
 
 		/* Apply symbol namespaces from __kstrtabns_<symbol> entries. */
-		if (strstarts(symname, "__kstrtabns_"))
-			sym_update_namespace(symname + strlen("__kstrtabns_"),
+		अगर (strstarts(symname, "__kstrtabns_"))
+			sym_update_namespace(symname + म_माप("__kstrtabns_"),
 					     namespace_from_kstrtabns(&info,
 								      sym));
 
-		if (strstarts(symname, "__crc_"))
+		अगर (strstarts(symname, "__crc_"))
 			handle_modversion(mod, &info, sym,
-					  symname + strlen("__crc_"));
-	}
+					  symname + म_माप("__crc_"));
+	पूर्ण
 
-	// check for static EXPORT_SYMBOL_* functions && global vars
-	for (sym = info.symtab_start; sym < info.symtab_stop; sym++) {
-		unsigned char bind = ELF_ST_BIND(sym->st_info);
+	// check क्रम अटल EXPORT_SYMBOL_* functions && global vars
+	क्रम (sym = info.symtab_start; sym < info.symtab_stop; sym++) अणु
+		अचिन्हित अक्षर bind = ELF_ST_BIND(sym->st_info);
 
-		if (bind == STB_GLOBAL || bind == STB_WEAK) {
-			struct symbol *s =
-				find_symbol(remove_dot(info.strtab +
+		अगर (bind == STB_GLOBAL || bind == STB_WEAK) अणु
+			काष्ठा symbol *s =
+				find_symbol(हटाओ_करोt(info.strtab +
 						       sym->st_name));
 
-			if (s)
-				s->is_static = 0;
-		}
-	}
+			अगर (s)
+				s->is_अटल = 0;
+		पूर्ण
+	पूर्ण
 
 	check_sec_ref(mod, modname, &info);
 
-	if (!mod->is_vmlinux) {
+	अगर (!mod->is_vmlinux) अणु
 		version = get_modinfo(&info, "version");
-		if (version || all_versions)
+		अगर (version || all_versions)
 			get_src_version(modname, mod->srcversion,
-					sizeof(mod->srcversion) - 1);
-	}
+					माप(mod->srcversion) - 1);
+	पूर्ण
 
 	parse_elf_finish(&info);
 
-	/* Our trick to get versioning for module struct etc. - it's
+	/* Our trick to get versioning क्रम module काष्ठा etc. - it's
 	 * never passed as an argument to an exported function, so
-	 * the automatic versioning doesn't pick it up, but it's really
+	 * the स्वतःmatic versioning करोesn't pick it up, but it's really
 	 * important anyhow */
-	if (modversions)
+	अगर (modversions)
 		mod->unres = alloc_symbol("module_layout", 0, mod->unres);
-}
+पूर्ण
 
-static void read_symbols_from_files(const char *filename)
-{
-	FILE *in = stdin;
-	char fname[PATH_MAX];
+अटल व्योम पढ़ो_symbols_from_files(स्थिर अक्षर *filename)
+अणु
+	खाता *in = मानक_निवेश;
+	अक्षर fname[PATH_MAX];
 
-	if (strcmp(filename, "-") != 0) {
-		in = fopen(filename, "r");
-		if (!in)
+	अगर (म_भेद(filename, "-") != 0) अणु
+		in = ख_खोलो(filename, "r");
+		अगर (!in)
 			fatal("Can't open filenames file %s: %m", filename);
-	}
+	पूर्ण
 
-	while (fgets(fname, PATH_MAX, in) != NULL) {
-		if (strends(fname, "\n"))
-			fname[strlen(fname)-1] = '\0';
-		read_symbols(fname);
-	}
+	जबतक (ख_माला_लो(fname, PATH_MAX, in) != शून्य) अणु
+		अगर (strends(fname, "\n"))
+			fname[म_माप(fname)-1] = '\0';
+		पढ़ो_symbols(fname);
+	पूर्ण
 
-	if (in != stdin)
-		fclose(in);
-}
+	अगर (in != मानक_निवेश)
+		ख_बंद(in);
+पूर्ण
 
-#define SZ 500
+#घोषणा SZ 500
 
-/* We first write the generated file into memory using the
+/* We first ग_लिखो the generated file पूर्णांकo memory using the
  * following helper, then compare to the file on disk and
- * only update the later if anything changed */
+ * only update the later अगर anything changed */
 
-void __attribute__((format(printf, 2, 3))) buf_printf(struct buffer *buf,
-						      const char *fmt, ...)
-{
-	char tmp[SZ];
-	int len;
-	va_list ap;
+व्योम __attribute__((क्रमmat(म_लिखो, 2, 3))) buf_म_लिखो(काष्ठा buffer *buf,
+						      स्थिर अक्षर *fmt, ...)
+अणु
+	अक्षर पंचांगp[SZ];
+	पूर्णांक len;
+	बहु_सूची ap;
 
-	va_start(ap, fmt);
-	len = vsnprintf(tmp, SZ, fmt, ap);
-	buf_write(buf, tmp, len);
-	va_end(ap);
-}
+	बहु_शुरू(ap, fmt);
+	len = vsnम_लिखो(पंचांगp, SZ, fmt, ap);
+	buf_ग_लिखो(buf, पंचांगp, len);
+	बहु_पूर्ण(ap);
+पूर्ण
 
-void buf_write(struct buffer *buf, const char *s, int len)
-{
-	if (buf->size - buf->pos < len) {
+व्योम buf_ग_लिखो(काष्ठा buffer *buf, स्थिर अक्षर *s, पूर्णांक len)
+अणु
+	अगर (buf->size - buf->pos < len) अणु
 		buf->size += len + SZ;
-		buf->p = NOFAIL(realloc(buf->p, buf->size));
-	}
-	strncpy(buf->p + buf->pos, s, len);
+		buf->p = NOFAIL(पुनः_स्मृति(buf->p, buf->size));
+	पूर्ण
+	म_नकलन(buf->p + buf->pos, s, len);
 	buf->pos += len;
-}
+पूर्ण
 
-static void check_for_gpl_usage(enum export exp, const char *m, const char *s)
-{
-	switch (exp) {
-	case export_gpl:
+अटल व्योम check_क्रम_gpl_usage(क्रमागत export exp, स्थिर अक्षर *m, स्थिर अक्षर *s)
+अणु
+	चयन (exp) अणु
+	हाल export_gpl:
 		error("GPL-incompatible module %s.ko uses GPL-only symbol '%s'\n",
 		      m, s);
-		break;
-	case export_plain:
-	case export_unknown:
+		अवरोध;
+	हाल export_plain:
+	हाल export_unknown:
 		/* ignore */
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void check_exports(struct module *mod)
-{
-	struct symbol *s, *exp;
+अटल व्योम check_exports(काष्ठा module *mod)
+अणु
+	काष्ठा symbol *s, *exp;
 
-	for (s = mod->unres; s; s = s->next) {
-		const char *basename;
+	क्रम (s = mod->unres; s; s = s->next) अणु
+		स्थिर अक्षर *basename;
 		exp = find_symbol(s->name);
-		if (!exp || exp->module == mod) {
-			if (!s->weak && nr_unresolved++ < MAX_UNRESOLVED_REPORTS)
+		अगर (!exp || exp->module == mod) अणु
+			अगर (!s->weak && nr_unresolved++ < MAX_UNRESOLVED_REPORTS)
 				modpost_log(warn_unresolved ? LOG_WARN : LOG_ERROR,
 					    "\"%s\" [%s.ko] undefined!\n",
 					    s->name, mod->name);
-			continue;
-		}
-		basename = strrchr(mod->name, '/');
-		if (basename)
+			जारी;
+		पूर्ण
+		basename = म_खोजप(mod->name, '/');
+		अगर (basename)
 			basename++;
-		else
+		अन्यथा
 			basename = mod->name;
 
-		if (exp->namespace &&
-		    !module_imports_namespace(mod, exp->namespace)) {
+		अगर (exp->namespace &&
+		    !module_imports_namespace(mod, exp->namespace)) अणु
 			modpost_log(allow_missing_ns_imports ? LOG_WARN : LOG_ERROR,
 				    "module %s uses symbol %s from namespace %s, but does not import it.\n",
 				    basename, exp->name, exp->namespace);
 			add_namespace(&mod->missing_namespaces, exp->namespace);
-		}
+		पूर्ण
 
-		if (!mod->gpl_compatible)
-			check_for_gpl_usage(exp->export, basename, exp->name);
-	}
-}
+		अगर (!mod->gpl_compatible)
+			check_क्रम_gpl_usage(exp->export, basename, exp->name);
+	पूर्ण
+पूर्ण
 
-static void check_modname_len(struct module *mod)
-{
-	const char *mod_name;
+अटल व्योम check_modname_len(काष्ठा module *mod)
+अणु
+	स्थिर अक्षर *mod_name;
 
-	mod_name = strrchr(mod->name, '/');
-	if (mod_name == NULL)
+	mod_name = म_खोजप(mod->name, '/');
+	अगर (mod_name == शून्य)
 		mod_name = mod->name;
-	else
+	अन्यथा
 		mod_name++;
-	if (strlen(mod_name) >= MODULE_NAME_LEN)
+	अगर (म_माप(mod_name) >= MODULE_NAME_LEN)
 		error("module name is too long [%s.ko]\n", mod->name);
-}
+पूर्ण
 
 /**
- * Header for the generated file
+ * Header क्रम the generated file
  **/
-static void add_header(struct buffer *b, struct module *mod)
-{
-	buf_printf(b, "#include <linux/module.h>\n");
+अटल व्योम add_header(काष्ठा buffer *b, काष्ठा module *mod)
+अणु
+	buf_म_लिखो(b, "#include <linux/module.h>\n");
 	/*
 	 * Include build-salt.h after module.h in order to
 	 * inherit the definitions.
 	 */
-	buf_printf(b, "#define INCLUDE_VERMAGIC\n");
-	buf_printf(b, "#include <linux/build-salt.h>\n");
-	buf_printf(b, "#include <linux/elfnote-lto.h>\n");
-	buf_printf(b, "#include <linux/vermagic.h>\n");
-	buf_printf(b, "#include <linux/compiler.h>\n");
-	buf_printf(b, "\n");
-	buf_printf(b, "BUILD_SALT;\n");
-	buf_printf(b, "BUILD_LTO_INFO;\n");
-	buf_printf(b, "\n");
-	buf_printf(b, "MODULE_INFO(vermagic, VERMAGIC_STRING);\n");
-	buf_printf(b, "MODULE_INFO(name, KBUILD_MODNAME);\n");
-	buf_printf(b, "\n");
-	buf_printf(b, "__visible struct module __this_module\n");
-	buf_printf(b, "__section(\".gnu.linkonce.this_module\") = {\n");
-	buf_printf(b, "\t.name = KBUILD_MODNAME,\n");
-	if (mod->has_init)
-		buf_printf(b, "\t.init = init_module,\n");
-	if (mod->has_cleanup)
-		buf_printf(b, "#ifdef CONFIG_MODULE_UNLOAD\n"
+	buf_म_लिखो(b, "#define INCLUDE_VERMAGIC\n");
+	buf_म_लिखो(b, "#include <linux/build-salt.h>\n");
+	buf_म_लिखो(b, "#include <linux/elfnote-lto.h>\n");
+	buf_म_लिखो(b, "#include <linux/vermagic.h>\n");
+	buf_म_लिखो(b, "#include <linux/compiler.h>\n");
+	buf_म_लिखो(b, "\n");
+	buf_म_लिखो(b, "BUILD_SALT;\n");
+	buf_म_लिखो(b, "BUILD_LTO_INFO;\n");
+	buf_म_लिखो(b, "\n");
+	buf_म_लिखो(b, "MODULE_INFO(vermagic, VERMAGIC_STRING);\n");
+	buf_म_लिखो(b, "MODULE_INFO(name, KBUILD_MODNAME);\n");
+	buf_म_लिखो(b, "\n");
+	buf_म_लिखो(b, "__visible struct module __this_module\n");
+	buf_म_लिखो(b, "__section(\".gnu.linkonce.this_module\") = {\n");
+	buf_म_लिखो(b, "\t.name = KBUILD_MODNAME,\n");
+	अगर (mod->has_init)
+		buf_म_लिखो(b, "\t.init = init_module,\n");
+	अगर (mod->has_cleanup)
+		buf_म_लिखो(b, "#ifdef CONFIG_MODULE_UNLOAD\n"
 			      "\t.exit = cleanup_module,\n"
 			      "#endif\n");
-	buf_printf(b, "\t.arch = MODULE_ARCH_INIT,\n");
-	buf_printf(b, "};\n");
-}
+	buf_म_लिखो(b, "\t.arch = MODULE_ARCH_INIT,\n");
+	buf_म_लिखो(b, "};\n");
+पूर्ण
 
-static void add_intree_flag(struct buffer *b, int is_intree)
-{
-	if (is_intree)
-		buf_printf(b, "\nMODULE_INFO(intree, \"Y\");\n");
-}
+अटल व्योम add_पूर्णांकree_flag(काष्ठा buffer *b, पूर्णांक is_पूर्णांकree)
+अणु
+	अगर (is_पूर्णांकree)
+		buf_म_लिखो(b, "\nMODULE_INFO(intree, \"Y\");\n");
+पूर्ण
 
-/* Cannot check for assembler */
-static void add_retpoline(struct buffer *b)
-{
-	buf_printf(b, "\n#ifdef CONFIG_RETPOLINE\n");
-	buf_printf(b, "MODULE_INFO(retpoline, \"Y\");\n");
-	buf_printf(b, "#endif\n");
-}
+/* Cannot check क्रम assembler */
+अटल व्योम add_retpoline(काष्ठा buffer *b)
+अणु
+	buf_म_लिखो(b, "\n#ifdef CONFIG_RETPOLINE\n");
+	buf_म_लिखो(b, "MODULE_INFO(retpoline, \"Y\");\n");
+	buf_म_लिखो(b, "#endif\n");
+पूर्ण
 
-static void add_staging_flag(struct buffer *b, const char *name)
-{
-	if (strstarts(name, "drivers/staging"))
-		buf_printf(b, "\nMODULE_INFO(staging, \"Y\");\n");
-}
+अटल व्योम add_staging_flag(काष्ठा buffer *b, स्थिर अक्षर *name)
+अणु
+	अगर (strstarts(name, "drivers/staging"))
+		buf_म_लिखो(b, "\nMODULE_INFO(staging, \"Y\");\n");
+पूर्ण
 
 /**
- * Record CRCs for unresolved symbols
+ * Record CRCs क्रम unresolved symbols
  **/
-static void add_versions(struct buffer *b, struct module *mod)
-{
-	struct symbol *s, *exp;
+अटल व्योम add_versions(काष्ठा buffer *b, काष्ठा module *mod)
+अणु
+	काष्ठा symbol *s, *exp;
 
-	for (s = mod->unres; s; s = s->next) {
+	क्रम (s = mod->unres; s; s = s->next) अणु
 		exp = find_symbol(s->name);
-		if (!exp || exp->module == mod)
-			continue;
+		अगर (!exp || exp->module == mod)
+			जारी;
 		s->module = exp->module;
 		s->crc_valid = exp->crc_valid;
 		s->crc = exp->crc;
-	}
+	पूर्ण
 
-	if (!modversions)
-		return;
+	अगर (!modversions)
+		वापस;
 
-	buf_printf(b, "\n");
-	buf_printf(b, "static const struct modversion_info ____versions[]\n");
-	buf_printf(b, "__used __section(\"__versions\") = {\n");
+	buf_म_लिखो(b, "\n");
+	buf_म_लिखो(b, "static const struct modversion_info ____versions[]\n");
+	buf_म_लिखो(b, "__used __section(\"__versions\") = {\n");
 
-	for (s = mod->unres; s; s = s->next) {
-		if (!s->module)
-			continue;
-		if (!s->crc_valid) {
+	क्रम (s = mod->unres; s; s = s->next) अणु
+		अगर (!s->module)
+			जारी;
+		अगर (!s->crc_valid) अणु
 			warn("\"%s\" [%s.ko] has no CRC!\n",
 				s->name, mod->name);
-			continue;
-		}
-		if (strlen(s->name) >= MODULE_NAME_LEN) {
+			जारी;
+		पूर्ण
+		अगर (म_माप(s->name) >= MODULE_NAME_LEN) अणु
 			error("too long symbol \"%s\" [%s.ko]\n",
 			      s->name, mod->name);
-			break;
-		}
-		buf_printf(b, "\t{ %#8x, \"%s\" },\n",
+			अवरोध;
+		पूर्ण
+		buf_म_लिखो(b, "\t{ %#8x, \"%s\" },\n",
 			   s->crc, s->name);
-	}
+	पूर्ण
 
-	buf_printf(b, "};\n");
-}
+	buf_म_लिखो(b, "};\n");
+पूर्ण
 
-static void add_depends(struct buffer *b, struct module *mod)
-{
-	struct symbol *s;
-	int first = 1;
+अटल व्योम add_depends(काष्ठा buffer *b, काष्ठा module *mod)
+अणु
+	काष्ठा symbol *s;
+	पूर्णांक first = 1;
 
 	/* Clear ->seen flag of modules that own symbols needed by this. */
-	for (s = mod->unres; s; s = s->next)
-		if (s->module)
+	क्रम (s = mod->unres; s; s = s->next)
+		अगर (s->module)
 			s->module->seen = s->module->is_vmlinux;
 
-	buf_printf(b, "\n");
-	buf_printf(b, "MODULE_INFO(depends, \"");
-	for (s = mod->unres; s; s = s->next) {
-		const char *p;
-		if (!s->module)
-			continue;
+	buf_म_लिखो(b, "\n");
+	buf_म_लिखो(b, "MODULE_INFO(depends, \"");
+	क्रम (s = mod->unres; s; s = s->next) अणु
+		स्थिर अक्षर *p;
+		अगर (!s->module)
+			जारी;
 
-		if (s->module->seen)
-			continue;
+		अगर (s->module->seen)
+			जारी;
 
 		s->module->seen = 1;
-		p = strrchr(s->module->name, '/');
-		if (p)
+		p = म_खोजप(s->module->name, '/');
+		अगर (p)
 			p++;
-		else
+		अन्यथा
 			p = s->module->name;
-		buf_printf(b, "%s%s", first ? "" : ",", p);
+		buf_म_लिखो(b, "%s%s", first ? "" : ",", p);
 		first = 0;
-	}
-	buf_printf(b, "\");\n");
-}
+	पूर्ण
+	buf_म_लिखो(b, "\");\n");
+पूर्ण
 
-static void add_srcversion(struct buffer *b, struct module *mod)
-{
-	if (mod->srcversion[0]) {
-		buf_printf(b, "\n");
-		buf_printf(b, "MODULE_INFO(srcversion, \"%s\");\n",
+अटल व्योम add_srcversion(काष्ठा buffer *b, काष्ठा module *mod)
+अणु
+	अगर (mod->srcversion[0]) अणु
+		buf_म_लिखो(b, "\n");
+		buf_म_लिखो(b, "MODULE_INFO(srcversion, \"%s\");\n",
 			   mod->srcversion);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void write_buf(struct buffer *b, const char *fname)
-{
-	FILE *file;
+अटल व्योम ग_लिखो_buf(काष्ठा buffer *b, स्थिर अक्षर *fname)
+अणु
+	खाता *file;
 
-	file = fopen(fname, "w");
-	if (!file) {
-		perror(fname);
-		exit(1);
-	}
-	if (fwrite(b->p, 1, b->pos, file) != b->pos) {
-		perror(fname);
-		exit(1);
-	}
-	if (fclose(file) != 0) {
-		perror(fname);
-		exit(1);
-	}
-}
+	file = ख_खोलो(fname, "w");
+	अगर (!file) अणु
+		लिखो_त्रुटि(fname);
+		निकास(1);
+	पूर्ण
+	अगर (ख_डालो(b->p, 1, b->pos, file) != b->pos) अणु
+		लिखो_त्रुटि(fname);
+		निकास(1);
+	पूर्ण
+	अगर (ख_बंद(file) != 0) अणु
+		लिखो_त्रुटि(fname);
+		निकास(1);
+	पूर्ण
+पूर्ण
 
-static void write_if_changed(struct buffer *b, const char *fname)
-{
-	char *tmp;
-	FILE *file;
-	struct stat st;
+अटल व्योम ग_लिखो_अगर_changed(काष्ठा buffer *b, स्थिर अक्षर *fname)
+अणु
+	अक्षर *पंचांगp;
+	खाता *file;
+	काष्ठा stat st;
 
-	file = fopen(fname, "r");
-	if (!file)
-		goto write;
+	file = ख_खोलो(fname, "r");
+	अगर (!file)
+		जाओ ग_लिखो;
 
-	if (fstat(fileno(file), &st) < 0)
-		goto close_write;
+	अगर (ख_स्थिति(fileno(file), &st) < 0)
+		जाओ बंद_ग_लिखो;
 
-	if (st.st_size != b->pos)
-		goto close_write;
+	अगर (st.st_size != b->pos)
+		जाओ बंद_ग_लिखो;
 
-	tmp = NOFAIL(malloc(b->pos));
-	if (fread(tmp, 1, b->pos, file) != b->pos)
-		goto free_write;
+	पंचांगp = NOFAIL(दो_स्मृति(b->pos));
+	अगर (ख_पढ़ो(पंचांगp, 1, b->pos, file) != b->pos)
+		जाओ मुक्त_ग_लिखो;
 
-	if (memcmp(tmp, b->p, b->pos) != 0)
-		goto free_write;
+	अगर (स_भेद(पंचांगp, b->p, b->pos) != 0)
+		जाओ मुक्त_ग_लिखो;
 
-	free(tmp);
-	fclose(file);
-	return;
+	मुक्त(पंचांगp);
+	ख_बंद(file);
+	वापस;
 
- free_write:
-	free(tmp);
- close_write:
-	fclose(file);
- write:
-	write_buf(b, fname);
-}
+ मुक्त_ग_लिखो:
+	मुक्त(पंचांगp);
+ बंद_ग_लिखो:
+	ख_बंद(file);
+ ग_लिखो:
+	ग_लिखो_buf(b, fname);
+पूर्ण
 
-/* parse Module.symvers file. line format:
+/* parse Module.symvers file. line क्रमmat:
  * 0x12345678<tab>symbol<tab>module<tab>export<tab>namespace
  **/
-static void read_dump(const char *fname)
-{
-	char *buf, *pos, *line;
+अटल व्योम पढ़ो_dump(स्थिर अक्षर *fname)
+अणु
+	अक्षर *buf, *pos, *line;
 
-	buf = read_text_file(fname);
-	if (!buf)
+	buf = पढ़ो_text_file(fname);
+	अगर (!buf)
 		/* No symbol versions, silently ignore */
-		return;
+		वापस;
 
 	pos = buf;
 
-	while ((line = get_line(&pos))) {
-		char *symname, *namespace, *modname, *d, *export;
-		unsigned int crc;
-		struct module *mod;
-		struct symbol *s;
+	जबतक ((line = get_line(&pos))) अणु
+		अक्षर *symname, *namespace, *modname, *d, *export;
+		अचिन्हित पूर्णांक crc;
+		काष्ठा module *mod;
+		काष्ठा symbol *s;
 
-		if (!(symname = strchr(line, '\t')))
-			goto fail;
+		अगर (!(symname = म_अक्षर(line, '\t')))
+			जाओ fail;
 		*symname++ = '\0';
-		if (!(modname = strchr(symname, '\t')))
-			goto fail;
+		अगर (!(modname = म_अक्षर(symname, '\t')))
+			जाओ fail;
 		*modname++ = '\0';
-		if (!(export = strchr(modname, '\t')))
-			goto fail;
+		अगर (!(export = म_अक्षर(modname, '\t')))
+			जाओ fail;
 		*export++ = '\0';
-		if (!(namespace = strchr(export, '\t')))
-			goto fail;
+		अगर (!(namespace = म_अक्षर(export, '\t')))
+			जाओ fail;
 		*namespace++ = '\0';
 
-		crc = strtoul(line, &d, 16);
-		if (*symname == '\0' || *modname == '\0' || *d != '\0')
-			goto fail;
+		crc = म_से_अदीर्घ(line, &d, 16);
+		अगर (*symname == '\0' || *modname == '\0' || *d != '\0')
+			जाओ fail;
 		mod = find_module(modname);
-		if (!mod) {
+		अगर (!mod) अणु
 			mod = new_module(modname);
 			mod->from_dump = 1;
-		}
+		पूर्ण
 		s = sym_add_exported(symname, mod, export_no(export));
-		s->is_static = 0;
+		s->is_अटल = 0;
 		sym_set_crc(symname, crc);
 		sym_update_namespace(symname, namespace);
-	}
-	free(buf);
-	return;
+	पूर्ण
+	मुक्त(buf);
+	वापस;
 fail:
-	free(buf);
+	मुक्त(buf);
 	fatal("parse error in symbol dump file\n");
-}
+पूर्ण
 
-static void write_dump(const char *fname)
-{
-	struct buffer buf = { };
-	struct symbol *symbol;
-	const char *namespace;
-	int n;
+अटल व्योम ग_लिखो_dump(स्थिर अक्षर *fname)
+अणु
+	काष्ठा buffer buf = अणु पूर्ण;
+	काष्ठा symbol *symbol;
+	स्थिर अक्षर *namespace;
+	पूर्णांक n;
 
-	for (n = 0; n < SYMBOL_HASH_SIZE ; n++) {
+	क्रम (n = 0; n < SYMBOL_HASH_SIZE ; n++) अणु
 		symbol = symbolhash[n];
-		while (symbol) {
-			if (!symbol->module->from_dump) {
+		जबतक (symbol) अणु
+			अगर (!symbol->module->from_dump) अणु
 				namespace = symbol->namespace;
-				buf_printf(&buf, "0x%08x\t%s\t%s\t%s\t%s\n",
+				buf_म_लिखो(&buf, "0x%08x\t%s\t%s\t%s\t%s\n",
 					   symbol->crc, symbol->name,
 					   symbol->module->name,
 					   export_str(symbol->export),
 					   namespace ? namespace : "");
-			}
+			पूर्ण
 			symbol = symbol->next;
-		}
-	}
-	write_buf(&buf, fname);
-	free(buf.p);
-}
+		पूर्ण
+	पूर्ण
+	ग_लिखो_buf(&buf, fname);
+	मुक्त(buf.p);
+पूर्ण
 
-static void write_namespace_deps_files(const char *fname)
-{
-	struct module *mod;
-	struct namespace_list *ns;
-	struct buffer ns_deps_buf = {};
+अटल व्योम ग_लिखो_namespace_deps_files(स्थिर अक्षर *fname)
+अणु
+	काष्ठा module *mod;
+	काष्ठा namespace_list *ns;
+	काष्ठा buffer ns_deps_buf = अणुपूर्ण;
 
-	for (mod = modules; mod; mod = mod->next) {
+	क्रम (mod = modules; mod; mod = mod->next) अणु
 
-		if (mod->from_dump || !mod->missing_namespaces)
-			continue;
+		अगर (mod->from_dump || !mod->missing_namespaces)
+			जारी;
 
-		buf_printf(&ns_deps_buf, "%s.ko:", mod->name);
+		buf_म_लिखो(&ns_deps_buf, "%s.ko:", mod->name);
 
-		for (ns = mod->missing_namespaces; ns; ns = ns->next)
-			buf_printf(&ns_deps_buf, " %s", ns->namespace);
+		क्रम (ns = mod->missing_namespaces; ns; ns = ns->next)
+			buf_म_लिखो(&ns_deps_buf, " %s", ns->namespace);
 
-		buf_printf(&ns_deps_buf, "\n");
-	}
+		buf_म_लिखो(&ns_deps_buf, "\n");
+	पूर्ण
 
-	write_if_changed(&ns_deps_buf, fname);
-	free(ns_deps_buf.p);
-}
+	ग_लिखो_अगर_changed(&ns_deps_buf, fname);
+	मुक्त(ns_deps_buf.p);
+पूर्ण
 
-struct dump_list {
-	struct dump_list *next;
-	const char *file;
-};
+काष्ठा dump_list अणु
+	काष्ठा dump_list *next;
+	स्थिर अक्षर *file;
+पूर्ण;
 
-int main(int argc, char **argv)
-{
-	struct module *mod;
-	struct buffer buf = { };
-	char *missing_namespace_deps = NULL;
-	char *dump_write = NULL, *files_source = NULL;
-	int opt;
-	int n;
-	struct dump_list *dump_read_start = NULL;
-	struct dump_list **dump_read_iter = &dump_read_start;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा module *mod;
+	काष्ठा buffer buf = अणु पूर्ण;
+	अक्षर *missing_namespace_deps = शून्य;
+	अक्षर *dump_ग_लिखो = शून्य, *files_source = शून्य;
+	पूर्णांक opt;
+	पूर्णांक n;
+	काष्ठा dump_list *dump_पढ़ो_start = शून्य;
+	काष्ठा dump_list **dump_पढ़ो_iter = &dump_पढ़ो_start;
 
-	while ((opt = getopt(argc, argv, "ei:mnT:o:awENd:")) != -1) {
-		switch (opt) {
-		case 'e':
-			external_module = 1;
-			break;
-		case 'i':
-			*dump_read_iter =
-				NOFAIL(calloc(1, sizeof(**dump_read_iter)));
-			(*dump_read_iter)->file = optarg;
-			dump_read_iter = &(*dump_read_iter)->next;
-			break;
-		case 'm':
+	जबतक ((opt = getopt(argc, argv, "ei:mnT:o:awENd:")) != -1) अणु
+		चयन (opt) अणु
+		हाल 'e':
+			बाह्यal_module = 1;
+			अवरोध;
+		हाल 'i':
+			*dump_पढ़ो_iter =
+				NOFAIL(सुस्मृति(1, माप(**dump_पढ़ो_iter)));
+			(*dump_पढ़ो_iter)->file = optarg;
+			dump_पढ़ो_iter = &(*dump_पढ़ो_iter)->next;
+			अवरोध;
+		हाल 'm':
 			modversions = 1;
-			break;
-		case 'n':
+			अवरोध;
+		हाल 'n':
 			ignore_missing_files = 1;
-			break;
-		case 'o':
-			dump_write = optarg;
-			break;
-		case 'a':
+			अवरोध;
+		हाल 'o':
+			dump_ग_लिखो = optarg;
+			अवरोध;
+		हाल 'a':
 			all_versions = 1;
-			break;
-		case 'T':
+			अवरोध;
+		हाल 'T':
 			files_source = optarg;
-			break;
-		case 'w':
+			अवरोध;
+		हाल 'w':
 			warn_unresolved = 1;
-			break;
-		case 'E':
+			अवरोध;
+		हाल 'E':
 			sec_mismatch_warn_only = false;
-			break;
-		case 'N':
+			अवरोध;
+		हाल 'N':
 			allow_missing_ns_imports = 1;
-			break;
-		case 'd':
+			अवरोध;
+		हाल 'd':
 			missing_namespace_deps = optarg;
-			break;
-		default:
-			exit(1);
-		}
-	}
+			अवरोध;
+		शेष:
+			निकास(1);
+		पूर्ण
+	पूर्ण
 
-	while (dump_read_start) {
-		struct dump_list *tmp;
+	जबतक (dump_पढ़ो_start) अणु
+		काष्ठा dump_list *पंचांगp;
 
-		read_dump(dump_read_start->file);
-		tmp = dump_read_start->next;
-		free(dump_read_start);
-		dump_read_start = tmp;
-	}
+		पढ़ो_dump(dump_पढ़ो_start->file);
+		पंचांगp = dump_पढ़ो_start->next;
+		मुक्त(dump_पढ़ो_start);
+		dump_पढ़ो_start = पंचांगp;
+	पूर्ण
 
-	while (optind < argc)
-		read_symbols(argv[optind++]);
+	जबतक (optind < argc)
+		पढ़ो_symbols(argv[optind++]);
 
-	if (files_source)
-		read_symbols_from_files(files_source);
+	अगर (files_source)
+		पढ़ो_symbols_from_files(files_source);
 
-	for (mod = modules; mod; mod = mod->next) {
-		char fname[PATH_MAX];
+	क्रम (mod = modules; mod; mod = mod->next) अणु
+		अक्षर fname[PATH_MAX];
 
-		if (mod->is_vmlinux || mod->from_dump)
-			continue;
+		अगर (mod->is_vmlinux || mod->from_dump)
+			जारी;
 
 		buf.pos = 0;
 
@@ -2561,7 +2562,7 @@ int main(int argc, char **argv)
 		check_exports(mod);
 
 		add_header(&buf, mod);
-		add_intree_flag(&buf, !external_module);
+		add_पूर्णांकree_flag(&buf, !बाह्यal_module);
 		add_retpoline(&buf);
 		add_staging_flag(&buf, mod->name);
 		add_versions(&buf, mod);
@@ -2569,34 +2570,34 @@ int main(int argc, char **argv)
 		add_moddevtable(&buf, mod);
 		add_srcversion(&buf, mod);
 
-		sprintf(fname, "%s.mod.c", mod->name);
-		write_if_changed(&buf, fname);
-	}
+		प्र_लिखो(fname, "%s.mod.c", mod->name);
+		ग_लिखो_अगर_changed(&buf, fname);
+	पूर्ण
 
-	if (missing_namespace_deps)
-		write_namespace_deps_files(missing_namespace_deps);
+	अगर (missing_namespace_deps)
+		ग_लिखो_namespace_deps_files(missing_namespace_deps);
 
-	if (dump_write)
-		write_dump(dump_write);
-	if (sec_mismatch_count && !sec_mismatch_warn_only)
+	अगर (dump_ग_लिखो)
+		ग_लिखो_dump(dump_ग_लिखो);
+	अगर (sec_mismatch_count && !sec_mismatch_warn_only)
 		error("Section mismatches detected.\n"
 		      "Set CONFIG_SECTION_MISMATCH_WARN_ONLY=y to allow them.\n");
-	for (n = 0; n < SYMBOL_HASH_SIZE; n++) {
-		struct symbol *s;
+	क्रम (n = 0; n < SYMBOL_HASH_SIZE; n++) अणु
+		काष्ठा symbol *s;
 
-		for (s = symbolhash[n]; s; s = s->next) {
-			if (s->is_static)
+		क्रम (s = symbolhash[n]; s; s = s->next) अणु
+			अगर (s->is_अटल)
 				error("\"%s\" [%s] is a static %s\n",
 				      s->name, s->module->name,
 				      export_str(s->export));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (nr_unresolved > MAX_UNRESOLVED_REPORTS)
+	अगर (nr_unresolved > MAX_UNRESOLVED_REPORTS)
 		warn("suppressed %u unresolved symbol warnings because there were too many)\n",
 		     nr_unresolved - MAX_UNRESOLVED_REPORTS);
 
-	free(buf.p);
+	मुक्त(buf.p);
 
-	return error_occurred ? 1 : 0;
-}
+	वापस error_occurred ? 1 : 0;
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,18 +24,18 @@
  *
  */
 
-#ifndef __DC_HUBP_DCN30_H__
-#define __DC_HUBP_DCN30_H__
+#अगर_अघोषित __DC_HUBP_DCN30_H__
+#घोषणा __DC_HUBP_DCN30_H__
 
-#include "dcn20/dcn20_hubp.h"
-#include "dcn21/dcn21_hubp.h"
+#समावेश "dcn20/dcn20_hubp.h"
+#समावेश "dcn21/dcn21_hubp.h"
 
-#define HUBP_REG_LIST_DCN30(id)\
+#घोषणा HUBP_REG_LIST_DCN30(id)\
 	HUBP_REG_LIST_DCN21(id),\
 	SRI(DCN_DMDATA_VM_CNTL, HUBPREQ, id)
 
 
-#define HUBP_MASK_SH_LIST_DCN30_BASE(mask_sh)\
+#घोषणा HUBP_MASK_SH_LIST_DCN30_BASE(mask_sh)\
 	HUBP_MASK_SH_LIST_DCN21_COMMON(mask_sh),\
 	HUBP_SF(HUBP0_DCSURF_SURFACE_CONFIG, ALPHA_PLANE_EN, mask_sh),\
 	HUBP_SF(HUBPREQ0_DCN_DMDATA_VM_CNTL, REFCYC_PER_VM_DMDATA, mask_sh),\
@@ -47,7 +48,7 @@
 	HUBP_SF(HUBP0_DCSURF_ADDR_CONFIG, NUM_PKRS, mask_sh)
 
 
-#define HUBP_MASK_SH_LIST_DCN30(mask_sh)\
+#घोषणा HUBP_MASK_SH_LIST_DCN30(mask_sh)\
 	HUBP_SF(HUBPREQ0_DCN_DMDATA_VM_CNTL, REFCYC_PER_VM_DMDATA, mask_sh),\
 	HUBP_SF(HUBPREQ0_DCN_DMDATA_VM_CNTL, DMDATA_VM_FAULT_STATUS, mask_sh),\
 	HUBP_SF(HUBPREQ0_DCN_DMDATA_VM_CNTL, DMDATA_VM_FAULT_STATUS_CLEAR, mask_sh),\
@@ -245,53 +246,53 @@
 	HUBP_SF(HUBPREQ0_VBLANK_PARAMETERS_6, REFCYC_PER_VM_REQ_VBLANK, mask_sh),\
 	HUBP_SF(HUBP0_DCHUBP_REQ_SIZE_CONFIG, VM_GROUP_SIZE, mask_sh)
 
-bool hubp3_construct(
-		struct dcn20_hubp *hubp2,
-		struct dc_context *ctx,
-		uint32_t inst,
-		const struct dcn_hubp2_registers *hubp_regs,
-		const struct dcn_hubp2_shift *hubp_shift,
-		const struct dcn_hubp2_mask *hubp_mask);
+bool hubp3_स्थिरruct(
+		काष्ठा dcn20_hubp *hubp2,
+		काष्ठा dc_context *ctx,
+		uपूर्णांक32_t inst,
+		स्थिर काष्ठा dcn_hubp2_रेजिस्टरs *hubp_regs,
+		स्थिर काष्ठा dcn_hubp2_shअगरt *hubp_shअगरt,
+		स्थिर काष्ठा dcn_hubp2_mask *hubp_mask);
 
-void hubp3_set_vm_system_aperture_settings(struct hubp *hubp,
-	struct vm_system_aperture_param *apt);
+व्योम hubp3_set_vm_प्रणाली_aperture_settings(काष्ठा hubp *hubp,
+	काष्ठा vm_प्रणाली_aperture_param *apt);
 
 bool hubp3_program_surface_flip_and_addr(
-	struct hubp *hubp,
-	const struct dc_plane_address *address,
+	काष्ठा hubp *hubp,
+	स्थिर काष्ठा dc_plane_address *address,
 	bool flip_immediate);
 
-void hubp3_program_surface_config(
-	struct hubp *hubp,
-	enum surface_pixel_format format,
-	union dc_tiling_info *tiling_info,
-	struct plane_size *plane_size,
-	enum dc_rotation_angle rotation,
-	struct dc_plane_dcc_param *dcc,
+व्योम hubp3_program_surface_config(
+	काष्ठा hubp *hubp,
+	क्रमागत surface_pixel_क्रमmat क्रमmat,
+	जोड़ dc_tiling_info *tiling_info,
+	काष्ठा plane_size *plane_size,
+	क्रमागत dc_rotation_angle rotation,
+	काष्ठा dc_plane_dcc_param *dcc,
 	bool horizontal_mirror,
-	unsigned int compat_level);
+	अचिन्हित पूर्णांक compat_level);
 
-void hubp3_setup(
-		struct hubp *hubp,
-		struct _vcs_dpi_display_dlg_regs_st *dlg_attr,
-		struct _vcs_dpi_display_ttu_regs_st *ttu_attr,
-		struct _vcs_dpi_display_rq_regs_st *rq_regs,
-		struct _vcs_dpi_display_pipe_dest_params_st *pipe_dest);
+व्योम hubp3_setup(
+		काष्ठा hubp *hubp,
+		काष्ठा _vcs_dpi_display_dlg_regs_st *dlg_attr,
+		काष्ठा _vcs_dpi_display_ttu_regs_st *ttu_attr,
+		काष्ठा _vcs_dpi_display_rq_regs_st *rq_regs,
+		काष्ठा _vcs_dpi_display_pipe_dest_params_st *pipe_dest);
 
-void hubp3_dcc_control(struct hubp *hubp, bool enable,
-		enum hubp_ind_block_size blk_size);
+व्योम hubp3_dcc_control(काष्ठा hubp *hubp, bool enable,
+		क्रमागत hubp_ind_block_size blk_size);
 
-void hubp3_dcc_control_sienna_cichlid(struct hubp *hubp,
-		struct dc_plane_dcc_param *dcc);
+व्योम hubp3_dcc_control_sienna_cichlid(काष्ठा hubp *hubp,
+		काष्ठा dc_plane_dcc_param *dcc);
 
-void hubp3_dmdata_set_attributes(
-		struct hubp *hubp,
-		const struct dc_dmdata_attributes *attr);
+व्योम hubp3_dmdata_set_attributes(
+		काष्ठा hubp *hubp,
+		स्थिर काष्ठा dc_dmdata_attributes *attr);
 
-void hubp3_read_state(struct hubp *hubp);
+व्योम hubp3_पढ़ो_state(काष्ठा hubp *hubp);
 
-void hubp3_init(struct hubp *hubp);
+व्योम hubp3_init(काष्ठा hubp *hubp);
 
-#endif /* __DC_HUBP_DCN30_H__ */
+#पूर्ण_अगर /* __DC_HUBP_DCN30_H__ */
 
 

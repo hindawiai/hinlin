@@ -1,261 +1,262 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Intel(R) Trace Hub data structures
+ * Intel(R) Trace Hub data काष्ठाures
  *
  * Copyright (C) 2014-2015 Intel Corporation.
  */
 
-#ifndef __INTEL_TH_H__
-#define __INTEL_TH_H__
+#अगर_अघोषित __INTEL_TH_H__
+#घोषणा __INTEL_TH_H__
 
-#include <linux/irqreturn.h>
+#समावेश <linux/irqवापस.h>
 
-/* intel_th_device device types */
-enum {
+/* पूर्णांकel_th_device device types */
+क्रमागत अणु
 	/* Devices that generate trace data */
 	INTEL_TH_SOURCE = 0,
 	/* Output ports (MSC, PTI) */
 	INTEL_TH_OUTPUT,
 	/* Switch, the Global Trace Hub (GTH) */
 	INTEL_TH_SWITCH,
-};
+पूर्ण;
 
-struct intel_th_device;
+काष्ठा पूर्णांकel_th_device;
 
 /**
- * struct intel_th_output - descriptor INTEL_TH_OUTPUT type devices
- * @port:	output port number, assigned by the switch
- * @type:	GTH_{MSU,CTP,PTI}
+ * काष्ठा पूर्णांकel_th_output - descriptor INTEL_TH_OUTPUT type devices
+ * @port:	output port number, asचिन्हित by the चयन
+ * @type:	GTH_अणुMSU,CTP,PTIपूर्ण
  * @scratchpad:	scratchpad bits to flag when this output is enabled
- * @multiblock:	true for multiblock output configuration
+ * @multiblock:	true क्रम multiblock output configuration
  * @active:	true when this output is enabled
- * @wait_empty:	wait for device pipeline to be empty
+ * @रुको_empty:	रुको क्रम device pipeline to be empty
  *
- * Output port descriptor, used by switch driver to tell which output
+ * Output port descriptor, used by चयन driver to tell which output
  * port this output device corresponds to. Filled in at output device's
- * probe time by switch::assign(). Passed from output device driver to
- * switch related code to enable/disable its port.
+ * probe समय by चयन::assign(). Passed from output device driver to
+ * चयन related code to enable/disable its port.
  */
-struct intel_th_output {
-	int		port;
-	unsigned int	type;
-	unsigned int	scratchpad;
+काष्ठा पूर्णांकel_th_output अणु
+	पूर्णांक		port;
+	अचिन्हित पूर्णांक	type;
+	अचिन्हित पूर्णांक	scratchpad;
 	bool		multiblock;
 	bool		active;
-};
+पूर्ण;
 
 /**
- * struct intel_th_drvdata - describes hardware capabilities and quirks
- * @tscu_enable:	device needs SW to enable time stamping unit
+ * काष्ठा पूर्णांकel_th_drvdata - describes hardware capabilities and quirks
+ * @tscu_enable:	device needs SW to enable समय stamping unit
  * @multi_is_broken:	device has multiblock mode is broken
- * @has_mintctl:	device has interrupt control (MINTCTL) register
+ * @has_mपूर्णांकctl:	device has पूर्णांकerrupt control (MINTCTL) रेजिस्टर
  * @host_mode_only:	device can only operate in 'host debugger' mode
  */
-struct intel_th_drvdata {
-	unsigned int	tscu_enable        : 1,
+काष्ठा पूर्णांकel_th_drvdata अणु
+	अचिन्हित पूर्णांक	tscu_enable        : 1,
 			multi_is_broken    : 1,
-			has_mintctl        : 1,
+			has_mपूर्णांकctl        : 1,
 			host_mode_only     : 1;
-};
+पूर्ण;
 
-#define INTEL_TH_CAP(_th, _cap) ((_th)->drvdata ? (_th)->drvdata->_cap : 0)
+#घोषणा INTEL_TH_CAP(_th, _cap) ((_th)->drvdata ? (_th)->drvdata->_cap : 0)
 
 /**
- * struct intel_th_device - device on the intel_th bus
+ * काष्ठा पूर्णांकel_th_device - device on the पूर्णांकel_th bus
  * @dev:		device
  * @drvdata:		hardware capabilities/quirks
  * @resource:		array of resources available to this device
  * @num_resources:	number of resources in @resource array
- * @type:		INTEL_TH_{SOURCE,OUTPUT,SWITCH}
+ * @type:		INTEL_TH_अणुSOURCE,OUTPUT,SWITCHपूर्ण
  * @id:			device instance or -1
- * @host_mode:		Intel TH is controlled by an external debug host
- * @output:		output descriptor for INTEL_TH_OUTPUT devices
+ * @host_mode:		Intel TH is controlled by an बाह्यal debug host
+ * @output:		output descriptor क्रम INTEL_TH_OUTPUT devices
  * @name:		device name to match the driver
  */
-struct intel_th_device {
-	struct device		dev;
-	const struct intel_th_drvdata *drvdata;
-	struct resource		*resource;
-	unsigned int		num_resources;
-	unsigned int		type;
-	int			id;
+काष्ठा पूर्णांकel_th_device अणु
+	काष्ठा device		dev;
+	स्थिर काष्ठा पूर्णांकel_th_drvdata *drvdata;
+	काष्ठा resource		*resource;
+	अचिन्हित पूर्णांक		num_resources;
+	अचिन्हित पूर्णांक		type;
+	पूर्णांक			id;
 
-	/* INTEL_TH_SWITCH specific */
+	/* INTEL_TH_SWITCH specअगरic */
 	bool			host_mode;
 
-	/* INTEL_TH_OUTPUT specific */
-	struct intel_th_output	output;
+	/* INTEL_TH_OUTPUT specअगरic */
+	काष्ठा पूर्णांकel_th_output	output;
 
-	char		name[];
-};
+	अक्षर		name[];
+पूर्ण;
 
-#define to_intel_th_device(_d)				\
-	container_of((_d), struct intel_th_device, dev)
+#घोषणा to_पूर्णांकel_th_device(_d)				\
+	container_of((_d), काष्ठा पूर्णांकel_th_device, dev)
 
 /**
- * intel_th_device_get_resource() - obtain @num'th resource of type @type
- * @thdev:	the device to search the resource for
+ * पूर्णांकel_th_device_get_resource() - obtain @num'th resource of type @type
+ * @thdev:	the device to search the resource क्रम
  * @type:	resource type
  * @num:	number of the resource
  */
-static inline struct resource *
-intel_th_device_get_resource(struct intel_th_device *thdev, unsigned int type,
-			     unsigned int num)
-{
-	int i;
+अटल अंतरभूत काष्ठा resource *
+पूर्णांकel_th_device_get_resource(काष्ठा पूर्णांकel_th_device *thdev, अचिन्हित पूर्णांक type,
+			     अचिन्हित पूर्णांक num)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < thdev->num_resources; i++)
-		if (resource_type(&thdev->resource[i]) == type && !num--)
-			return &thdev->resource[i];
+	क्रम (i = 0; i < thdev->num_resources; i++)
+		अगर (resource_type(&thdev->resource[i]) == type && !num--)
+			वापस &thdev->resource[i];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * GTH, output ports configuration
  */
-enum {
+क्रमागत अणु
 	GTH_NONE = 0,
 	GTH_MSU,	/* memory/usb */
 	GTH_CTP,	/* Common Trace Port */
 	GTH_LPP,	/* Low Power Path */
 	GTH_PTI,	/* MIPI-PTI */
-};
+पूर्ण;
 
 /**
- * intel_th_output_assigned() - if an output device is assigned to a switch port
+ * पूर्णांकel_th_output_asचिन्हित() - अगर an output device is asचिन्हित to a चयन port
  * @thdev:	the output device
  *
- * Return:	true if the device is INTEL_TH_OUTPUT *and* is assigned a port
+ * Return:	true अगर the device is INTEL_TH_OUTPUT *and* is asचिन्हित a port
  */
-static inline bool
-intel_th_output_assigned(struct intel_th_device *thdev)
-{
-	return thdev->type == INTEL_TH_OUTPUT &&
+अटल अंतरभूत bool
+पूर्णांकel_th_output_asचिन्हित(काष्ठा पूर्णांकel_th_device *thdev)
+अणु
+	वापस thdev->type == INTEL_TH_OUTPUT &&
 		(thdev->output.port >= 0 ||
 		 thdev->output.type == GTH_NONE);
-}
+पूर्ण
 
 /**
- * struct intel_th_driver - driver for an intel_th_device device
+ * काष्ठा पूर्णांकel_th_driver - driver क्रम an पूर्णांकel_th_device device
  * @driver:	generic driver
  * @probe:	probe method
- * @remove:	remove method
- * @assign:	match a given output type device against available outputs
+ * @हटाओ:	हटाओ method
+ * @assign:	match a given output type device against available outमाला_दो
  * @unassign:	deassociate an output type device from an output port
- * @enable:	enable tracing for a given output device
- * @disable:	disable tracing for a given output device
- * @irq:	interrupt callback
+ * @enable:	enable tracing क्रम a given output device
+ * @disable:	disable tracing क्रम a given output device
+ * @irq:	पूर्णांकerrupt callback
  * @activate:	enable tracing on the output's side
  * @deactivate:	disable tracing on the output's side
- * @fops:	file operations for device nodes
+ * @fops:	file operations क्रम device nodes
  * @attr_group:	attributes provided by the driver
  *
- * Callbacks @probe and @remove are required for all device types.
+ * Callbacks @probe and @हटाओ are required क्रम all device types.
  * Switch device driver needs to fill in @assign, @enable and @disable
  * callbacks.
  */
-struct intel_th_driver {
-	struct device_driver	driver;
-	int			(*probe)(struct intel_th_device *thdev);
-	void			(*remove)(struct intel_th_device *thdev);
-	/* switch (GTH) ops */
-	int			(*assign)(struct intel_th_device *thdev,
-					  struct intel_th_device *othdev);
-	void			(*unassign)(struct intel_th_device *thdev,
-					    struct intel_th_device *othdev);
-	void			(*enable)(struct intel_th_device *thdev,
-					  struct intel_th_output *output);
-	void			(*trig_switch)(struct intel_th_device *thdev,
-					       struct intel_th_output *output);
-	void			(*disable)(struct intel_th_device *thdev,
-					   struct intel_th_output *output);
+काष्ठा पूर्णांकel_th_driver अणु
+	काष्ठा device_driver	driver;
+	पूर्णांक			(*probe)(काष्ठा पूर्णांकel_th_device *thdev);
+	व्योम			(*हटाओ)(काष्ठा पूर्णांकel_th_device *thdev);
+	/* चयन (GTH) ops */
+	पूर्णांक			(*assign)(काष्ठा पूर्णांकel_th_device *thdev,
+					  काष्ठा पूर्णांकel_th_device *othdev);
+	व्योम			(*unassign)(काष्ठा पूर्णांकel_th_device *thdev,
+					    काष्ठा पूर्णांकel_th_device *othdev);
+	व्योम			(*enable)(काष्ठा पूर्णांकel_th_device *thdev,
+					  काष्ठा पूर्णांकel_th_output *output);
+	व्योम			(*trig_चयन)(काष्ठा पूर्णांकel_th_device *thdev,
+					       काष्ठा पूर्णांकel_th_output *output);
+	व्योम			(*disable)(काष्ठा पूर्णांकel_th_device *thdev,
+					   काष्ठा पूर्णांकel_th_output *output);
 	/* output ops */
-	irqreturn_t		(*irq)(struct intel_th_device *thdev);
-	void			(*wait_empty)(struct intel_th_device *thdev);
-	int			(*activate)(struct intel_th_device *thdev);
-	void			(*deactivate)(struct intel_th_device *thdev);
-	/* file_operations for those who want a device node */
-	const struct file_operations *fops;
+	irqवापस_t		(*irq)(काष्ठा पूर्णांकel_th_device *thdev);
+	व्योम			(*रुको_empty)(काष्ठा पूर्णांकel_th_device *thdev);
+	पूर्णांक			(*activate)(काष्ठा पूर्णांकel_th_device *thdev);
+	व्योम			(*deactivate)(काष्ठा पूर्णांकel_th_device *thdev);
+	/* file_operations क्रम those who want a device node */
+	स्थिर काष्ठा file_operations *fops;
 	/* optional attributes */
-	const struct attribute_group *attr_group;
+	स्थिर काष्ठा attribute_group *attr_group;
 
 	/* source ops */
-	int			(*set_output)(struct intel_th_device *thdev,
-					      unsigned int master);
-};
+	पूर्णांक			(*set_output)(काष्ठा पूर्णांकel_th_device *thdev,
+					      अचिन्हित पूर्णांक master);
+पूर्ण;
 
-#define to_intel_th_driver(_d)					\
-	container_of((_d), struct intel_th_driver, driver)
+#घोषणा to_पूर्णांकel_th_driver(_d)					\
+	container_of((_d), काष्ठा पूर्णांकel_th_driver, driver)
 
-#define to_intel_th_driver_or_null(_d)		\
-	((_d) ? to_intel_th_driver(_d) : NULL)
+#घोषणा to_पूर्णांकel_th_driver_or_null(_d)		\
+	((_d) ? to_पूर्णांकel_th_driver(_d) : शून्य)
 
 /*
- * Subdevice tree structure is as follows:
- * + struct intel_th device (pci; dev_{get,set}_drvdata()
- *   + struct intel_th_device INTEL_TH_SWITCH (GTH)
- *     + struct intel_th_device INTEL_TH_OUTPUT (MSU, PTI)
- *   + struct intel_th_device INTEL_TH_SOURCE (STH)
+ * Subdevice tree काष्ठाure is as follows:
+ * + काष्ठा पूर्णांकel_th device (pci; dev_अणुget,setपूर्ण_drvdata()
+ *   + काष्ठा पूर्णांकel_th_device INTEL_TH_SWITCH (GTH)
+ *     + काष्ठा पूर्णांकel_th_device INTEL_TH_OUTPUT (MSU, PTI)
+ *   + काष्ठा पूर्णांकel_th_device INTEL_TH_SOURCE (STH)
  *
  * In other words, INTEL_TH_OUTPUT devices are children of INTEL_TH_SWITCH;
- * INTEL_TH_SWITCH and INTEL_TH_SOURCE are children of the intel_th device.
+ * INTEL_TH_SWITCH and INTEL_TH_SOURCE are children of the पूर्णांकel_th device.
  */
-static inline struct intel_th_device *
-to_intel_th_parent(struct intel_th_device *thdev)
-{
-	struct device *parent = thdev->dev.parent;
+अटल अंतरभूत काष्ठा पूर्णांकel_th_device *
+to_पूर्णांकel_th_parent(काष्ठा पूर्णांकel_th_device *thdev)
+अणु
+	काष्ठा device *parent = thdev->dev.parent;
 
-	if (!parent)
-		return NULL;
+	अगर (!parent)
+		वापस शून्य;
 
-	return to_intel_th_device(parent);
-}
+	वापस to_पूर्णांकel_th_device(parent);
+पूर्ण
 
-static inline struct intel_th *to_intel_th(struct intel_th_device *thdev)
-{
-	if (thdev->type == INTEL_TH_OUTPUT)
-		thdev = to_intel_th_parent(thdev);
+अटल अंतरभूत काष्ठा पूर्णांकel_th *to_पूर्णांकel_th(काष्ठा पूर्णांकel_th_device *thdev)
+अणु
+	अगर (thdev->type == INTEL_TH_OUTPUT)
+		thdev = to_पूर्णांकel_th_parent(thdev);
 
-	if (WARN_ON_ONCE(!thdev || thdev->type == INTEL_TH_OUTPUT))
-		return NULL;
+	अगर (WARN_ON_ONCE(!thdev || thdev->type == INTEL_TH_OUTPUT))
+		वापस शून्य;
 
-	return dev_get_drvdata(thdev->dev.parent);
-}
+	वापस dev_get_drvdata(thdev->dev.parent);
+पूर्ण
 
-struct intel_th *
-intel_th_alloc(struct device *dev, const struct intel_th_drvdata *drvdata,
-	       struct resource *devres, unsigned int ndevres);
-void intel_th_free(struct intel_th *th);
+काष्ठा पूर्णांकel_th *
+पूर्णांकel_th_alloc(काष्ठा device *dev, स्थिर काष्ठा पूर्णांकel_th_drvdata *drvdata,
+	       काष्ठा resource *devres, अचिन्हित पूर्णांक ndevres);
+व्योम पूर्णांकel_th_मुक्त(काष्ठा पूर्णांकel_th *th);
 
-int intel_th_driver_register(struct intel_th_driver *thdrv);
-void intel_th_driver_unregister(struct intel_th_driver *thdrv);
+पूर्णांक पूर्णांकel_th_driver_रेजिस्टर(काष्ठा पूर्णांकel_th_driver *thdrv);
+व्योम पूर्णांकel_th_driver_unरेजिस्टर(काष्ठा पूर्णांकel_th_driver *thdrv);
 
-int intel_th_trace_enable(struct intel_th_device *thdev);
-int intel_th_trace_switch(struct intel_th_device *thdev);
-int intel_th_trace_disable(struct intel_th_device *thdev);
-int intel_th_set_output(struct intel_th_device *thdev,
-			unsigned int master);
-int intel_th_output_enable(struct intel_th *th, unsigned int otype);
+पूर्णांक पूर्णांकel_th_trace_enable(काष्ठा पूर्णांकel_th_device *thdev);
+पूर्णांक पूर्णांकel_th_trace_चयन(काष्ठा पूर्णांकel_th_device *thdev);
+पूर्णांक पूर्णांकel_th_trace_disable(काष्ठा पूर्णांकel_th_device *thdev);
+पूर्णांक पूर्णांकel_th_set_output(काष्ठा पूर्णांकel_th_device *thdev,
+			अचिन्हित पूर्णांक master);
+पूर्णांक पूर्णांकel_th_output_enable(काष्ठा पूर्णांकel_th *th, अचिन्हित पूर्णांक otype);
 
-enum th_mmio_idx {
+क्रमागत th_mmio_idx अणु
 	TH_MMIO_CONFIG = 0,
 	TH_MMIO_SW = 1,
 	TH_MMIO_RTIT = 2,
 	TH_MMIO_END,
-};
+पूर्ण;
 
-#define TH_POSSIBLE_OUTPUTS	8
-/* Total number of possible subdevices: outputs + GTH + STH */
-#define TH_SUBDEVICE_MAX	(TH_POSSIBLE_OUTPUTS + 2)
-#define TH_CONFIGURABLE_MASTERS 256
-#define TH_MSC_MAX		2
+#घोषणा TH_POSSIBLE_OUTPUTS	8
+/* Total number of possible subdevices: outमाला_दो + GTH + STH */
+#घोषणा TH_SUBDEVICE_MAX	(TH_POSSIBLE_OUTPUTS + 2)
+#घोषणा TH_CONFIGURABLE_MASTERS 256
+#घोषणा TH_MSC_MAX		2
 
 /* Maximum IRQ vectors */
-#define TH_NVEC_MAX		8
+#घोषणा TH_NVEC_MAX		8
 
 /**
- * struct intel_th - Intel TH controller
+ * काष्ठा पूर्णांकel_th - Intel TH controller
  * @dev:	driver core's device
  * @thdev:	subdevices
  * @hub:	"switch" subdevice (GTH)
@@ -264,49 +265,49 @@ enum th_mmio_idx {
  * @num_resources:	number of resources in the @resource array
  * @irq:	irq number
  * @num_irqs:	number of IRQs is use
- * @id:		this Intel TH controller's device ID in the system
- * @major:	device node major for output devices
+ * @id:		this Intel TH controller's device ID in the प्रणाली
+ * @major:	device node major क्रम output devices
  */
-struct intel_th {
-	struct device		*dev;
+काष्ठा पूर्णांकel_th अणु
+	काष्ठा device		*dev;
 
-	struct intel_th_device	*thdev[TH_SUBDEVICE_MAX];
-	struct intel_th_device	*hub;
-	const struct intel_th_drvdata	*drvdata;
+	काष्ठा पूर्णांकel_th_device	*thdev[TH_SUBDEVICE_MAX];
+	काष्ठा पूर्णांकel_th_device	*hub;
+	स्थिर काष्ठा पूर्णांकel_th_drvdata	*drvdata;
 
-	struct resource		resource[TH_MMIO_END];
-	int			(*activate)(struct intel_th *);
-	void			(*deactivate)(struct intel_th *);
-	unsigned int		num_thdevs;
-	unsigned int		num_resources;
-	int			irq;
-	int			num_irqs;
+	काष्ठा resource		resource[TH_MMIO_END];
+	पूर्णांक			(*activate)(काष्ठा पूर्णांकel_th *);
+	व्योम			(*deactivate)(काष्ठा पूर्णांकel_th *);
+	अचिन्हित पूर्णांक		num_thdevs;
+	अचिन्हित पूर्णांक		num_resources;
+	पूर्णांक			irq;
+	पूर्णांक			num_irqs;
 
-	int			id;
-	int			major;
-#ifdef CONFIG_MODULES
-	struct work_struct	request_module_work;
-#endif /* CONFIG_MODULES */
-#ifdef CONFIG_INTEL_TH_DEBUG
-	struct dentry		*dbg;
-#endif
-};
+	पूर्णांक			id;
+	पूर्णांक			major;
+#अगर_घोषित CONFIG_MODULES
+	काष्ठा work_काष्ठा	request_module_work;
+#पूर्ण_अगर /* CONFIG_MODULES */
+#अगर_घोषित CONFIG_INTEL_TH_DEBUG
+	काष्ठा dentry		*dbg;
+#पूर्ण_अगर
+पूर्ण;
 
-static inline struct intel_th_device *
-to_intel_th_hub(struct intel_th_device *thdev)
-{
-	if (thdev->type == INTEL_TH_SWITCH)
-		return thdev;
-	else if (thdev->type == INTEL_TH_OUTPUT)
-		return to_intel_th_parent(thdev);
+अटल अंतरभूत काष्ठा पूर्णांकel_th_device *
+to_पूर्णांकel_th_hub(काष्ठा पूर्णांकel_th_device *thdev)
+अणु
+	अगर (thdev->type == INTEL_TH_SWITCH)
+		वापस thdev;
+	अन्यथा अगर (thdev->type == INTEL_TH_OUTPUT)
+		वापस to_पूर्णांकel_th_parent(thdev);
 
-	return to_intel_th(thdev)->hub;
-}
+	वापस to_पूर्णांकel_th(thdev)->hub;
+पूर्ण
 
 /*
- * Register windows
+ * Register winकरोws
  */
-enum {
+क्रमागत अणु
 	/* Global Trace Hub (GTH) */
 	REG_GTH_OFFSET		= 0x0000,
 	REG_GTH_LENGTH		= 0x2000,
@@ -330,20 +331,20 @@ enum {
 	BUF_MSU_OFFSET		= 0x80000,
 	BUF_MSU_LENGTH		= 0x20000,
 
-	/* PTI output == same window as GTH */
+	/* PTI output == same winकरोw as GTH */
 	REG_PTI_OFFSET		= REG_GTH_OFFSET,
 	REG_PTI_LENGTH		= REG_GTH_LENGTH,
 
-	/* DCI Handler (DCIH) == some window as MSU */
+	/* DCI Handler (DCIH) == some winकरोw as MSU */
 	REG_DCIH_OFFSET		= REG_MSU_OFFSET,
 	REG_DCIH_LENGTH		= REG_MSU_LENGTH,
-};
+पूर्ण;
 
 /*
- * Scratchpad bits: tell firmware and external debuggers
+ * Scratchpad bits: tell firmware and बाह्यal debuggers
  * what we are up to.
  */
-enum {
+क्रमागत अणु
 	/* Memory is the primary destination */
 	SCRPD_MEM_IS_PRIM_DEST		= BIT(0),
 	/* XHCI DbC is the primary destination */
@@ -356,16 +357,16 @@ enum {
 	SCRPD_PTI_IS_ALT_DEST		= BIT(4),
 	/* BSSB is the alternate destination */
 	SCRPD_BSSB_IS_ALT_DEST		= BIT(5),
-	/* DeepSx exit occurred */
+	/* DeepSx निकास occurred */
 	SCRPD_DEEPSX_EXIT		= BIT(6),
-	/* S4 exit occurred */
+	/* S4 निकास occurred */
 	SCRPD_S4_EXIT			= BIT(7),
-	/* S5 exit occurred */
+	/* S5 निकास occurred */
 	SCRPD_S5_EXIT			= BIT(8),
 	/* MSU controller 0/1 is enabled */
 	SCRPD_MSC0_IS_ENABLED		= BIT(9),
 	SCRPD_MSC1_IS_ENABLED		= BIT(10),
-	/* Sx exit occurred */
+	/* Sx निकास occurred */
 	SCRPD_SX_EXIT			= BIT(11),
 	/* Trigger Unit is enabled */
 	SCRPD_TRIGGER_IS_ENABLED	= BIT(12),
@@ -376,6 +377,6 @@ enum {
 	SCRPD_VER_IS_ENABLED		= BIT(17),
 	/* External debugger is using Intel TH */
 	SCRPD_DEBUGGER_IN_USE		= BIT(24),
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

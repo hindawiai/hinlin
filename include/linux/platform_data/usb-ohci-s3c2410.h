@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* arch/arm/plat-samsung/include/plat/usb-control.h
  *
  * Copyright (c) 2004 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
  *
- * S3C - USB host port information
+ * S3C - USB host port inक्रमmation
 */
 
-#ifndef __ASM_ARCH_USBCONTROL_H
-#define __ASM_ARCH_USBCONTROL_H
+#अगर_अघोषित __ASM_ARCH_USBCONTROL_H
+#घोषणा __ASM_ARCH_USBCONTROL_H
 
-#define S3C_HCDFLG_USED	(1)
+#घोषणा S3C_HCDFLG_USED	(1)
 
-struct s3c2410_hcd_port {
-	unsigned char	flags;
-	unsigned char	power;
-	unsigned char	oc_status;
-	unsigned char	oc_changed;
-};
+काष्ठा s3c2410_hcd_port अणु
+	अचिन्हित अक्षर	flags;
+	अचिन्हित अक्षर	घातer;
+	अचिन्हित अक्षर	oc_status;
+	अचिन्हित अक्षर	oc_changed;
+पूर्ण;
 
-struct s3c2410_hcd_info {
-	struct usb_hcd		*hcd;
-	struct s3c2410_hcd_port	port[2];
+काष्ठा s3c2410_hcd_info अणु
+	काष्ठा usb_hcd		*hcd;
+	काष्ठा s3c2410_hcd_port	port[2];
 
-	void		(*power_control)(int port, int to);
-	void		(*enable_oc)(struct s3c2410_hcd_info *, int on);
-	void		(*report_oc)(struct s3c2410_hcd_info *, int ports);
-};
+	व्योम		(*घातer_control)(पूर्णांक port, पूर्णांक to);
+	व्योम		(*enable_oc)(काष्ठा s3c2410_hcd_info *, पूर्णांक on);
+	व्योम		(*report_oc)(काष्ठा s3c2410_hcd_info *, पूर्णांक ports);
+पूर्ण;
 
-static inline void s3c2410_usb_report_oc(struct s3c2410_hcd_info *info, int ports)
-{
-	if (info->report_oc != NULL) {
+अटल अंतरभूत व्योम s3c2410_usb_report_oc(काष्ठा s3c2410_hcd_info *info, पूर्णांक ports)
+अणु
+	अगर (info->report_oc != शून्य) अणु
 		(info->report_oc)(info, ports);
-	}
-}
+	पूर्ण
+पूर्ण
 
-extern void s3c_ohci_set_platdata(struct s3c2410_hcd_info *info);
+बाह्य व्योम s3c_ohci_set_platdata(काष्ठा s3c2410_hcd_info *info);
 
-#endif /*__ASM_ARCH_USBCONTROL_H */
+#पूर्ण_अगर /*__ASM_ARCH_USBCONTROL_H */

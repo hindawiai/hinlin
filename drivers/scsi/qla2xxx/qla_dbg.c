@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * QLogic Fibre Channel HBA Driver
  * Copyright (c)  2003-2014 QLogic Corporation
  */
 
 /*
- * Table for showing the current message id in use for particular level
- * Change this table for addition of log/debug messages.
+ * Table क्रम showing the current message id in use क्रम particular level
+ * Change this table क्रम addition of log/debug messages.
  * ----------------------------------------------------------------------
  * |             Level            |   Last Value Used  |     Holes	|
  * ----------------------------------------------------------------------
@@ -22,7 +23,7 @@
  * |                              |                    | 0x302d,0x3033  |
  * |                              |                    | 0x3036,0x3038  |
  * |                              |                    | 0x303a		|
- * | DPC Thread                   |       0x4023       | 0x4002,0x4013  |
+ * | DPC Thपढ़ो                   |       0x4023       | 0x4002,0x4013  |
  * | Async Events                 |       0x509c       |                |
  * | Timer Routines               |       0x6012       |                |
  * | User Space Interactions      |       0x70e3       | 0x7018,0x702e  |
@@ -41,7 +42,7 @@
  * |                              |                    | 0x8039,0x803c  |
  * | AER/EEH                      |       0x9011       |		|
  * | Virtual Port                 |       0xa007       |		|
- * | ISP82XX Specific             |       0xb157       | 0xb002,0xb024  |
+ * | ISP82XX Specअगरic             |       0xb157       | 0xb002,0xb024  |
  * |                              |                    | 0xb09e,0xb0ae  |
  * |				  |		       | 0xb0c3,0xb0c6  |
  * |                              |                    | 0xb0e0-0xb0ef  |
@@ -63,65 +64,65 @@
  * ----------------------------------------------------------------------
  */
 
-#include "qla_def.h"
+#समावेश "qla_def.h"
 
-#include <linux/delay.h>
-#define CREATE_TRACE_POINTS
-#include <trace/events/qla.h>
+#समावेश <linux/delay.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/qla.h>
 
-static uint32_t ql_dbg_offset = 0x800;
+अटल uपूर्णांक32_t ql_dbg_offset = 0x800;
 
-static inline void
-qla2xxx_prep_dump(struct qla_hw_data *ha, struct qla2xxx_fw_dump *fw_dump)
-{
+अटल अंतरभूत व्योम
+qla2xxx_prep_dump(काष्ठा qla_hw_data *ha, काष्ठा qla2xxx_fw_dump *fw_dump)
+अणु
 	fw_dump->fw_major_version = htonl(ha->fw_major_version);
 	fw_dump->fw_minor_version = htonl(ha->fw_minor_version);
 	fw_dump->fw_subminor_version = htonl(ha->fw_subminor_version);
 	fw_dump->fw_attributes = htonl(ha->fw_attributes);
 
-	fw_dump->vendor = htonl(ha->pdev->vendor);
+	fw_dump->venकरोr = htonl(ha->pdev->venकरोr);
 	fw_dump->device = htonl(ha->pdev->device);
-	fw_dump->subsystem_vendor = htonl(ha->pdev->subsystem_vendor);
-	fw_dump->subsystem_device = htonl(ha->pdev->subsystem_device);
-}
+	fw_dump->subप्रणाली_venकरोr = htonl(ha->pdev->subप्रणाली_venकरोr);
+	fw_dump->subप्रणाली_device = htonl(ha->pdev->subप्रणाली_device);
+पूर्ण
 
-static inline void *
-qla2xxx_copy_queues(struct qla_hw_data *ha, void *ptr)
-{
-	struct req_que *req = ha->req_q_map[0];
-	struct rsp_que *rsp = ha->rsp_q_map[0];
+अटल अंतरभूत व्योम *
+qla2xxx_copy_queues(काष्ठा qla_hw_data *ha, व्योम *ptr)
+अणु
+	काष्ठा req_que *req = ha->req_q_map[0];
+	काष्ठा rsp_que *rsp = ha->rsp_q_map[0];
 	/* Request queue. */
-	memcpy(ptr, req->ring, req->length *
-	    sizeof(request_t));
+	स_नकल(ptr, req->ring, req->length *
+	    माप(request_t));
 
 	/* Response queue. */
-	ptr += req->length * sizeof(request_t);
-	memcpy(ptr, rsp->ring, rsp->length  *
-	    sizeof(response_t));
+	ptr += req->length * माप(request_t);
+	स_नकल(ptr, rsp->ring, rsp->length  *
+	    माप(response_t));
 
-	return ptr + (rsp->length * sizeof(response_t));
-}
+	वापस ptr + (rsp->length * माप(response_t));
+पूर्ण
 
-int
-qla27xx_dump_mpi_ram(struct qla_hw_data *ha, uint32_t addr, uint32_t *ram,
-	uint32_t ram_dwords, void **nxt)
-{
-	struct device_reg_24xx __iomem *reg = &ha->iobase->isp24;
+पूर्णांक
+qla27xx_dump_mpi_ram(काष्ठा qla_hw_data *ha, uपूर्णांक32_t addr, uपूर्णांक32_t *ram,
+	uपूर्णांक32_t ram_dwords, व्योम **nxt)
+अणु
+	काष्ठा device_reg_24xx __iomem *reg = &ha->iobase->isp24;
 	dma_addr_t dump_dma = ha->gid_list_dma;
-	uint32_t *chunk = (uint32_t *)ha->gid_list;
-	uint32_t dwords = qla2x00_gid_list_size(ha) / 4;
-	uint32_t stat;
-	ulong i, j, timer = 6000000;
-	int rval = QLA_FUNCTION_FAILED;
+	uपूर्णांक32_t *chunk = (uपूर्णांक32_t *)ha->gid_list;
+	uपूर्णांक32_t dwords = qla2x00_gid_list_size(ha) / 4;
+	uपूर्णांक32_t stat;
+	uदीर्घ i, j, समयr = 6000000;
+	पूर्णांक rval = QLA_FUNCTION_FAILED;
 	scsi_qla_host_t *vha = pci_get_drvdata(ha->pdev);
 
 	clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags);
 
-	if (qla_pci_disconnected(vha, reg))
-		return rval;
+	अगर (qla_pci_disconnected(vha, reg))
+		वापस rval;
 
-	for (i = 0; i < ram_dwords; i += dwords, addr += dwords) {
-		if (i + dwords > ram_dwords)
+	क्रम (i = 0; i < ram_dwords; i += dwords, addr += dwords) अणु
+		अगर (i + dwords > ram_dwords)
 			dwords = ram_dwords - i;
 
 		wrt_reg_word(&reg->mailbox0, MBC_LOAD_DUMP_MPI_RAM);
@@ -139,76 +140,76 @@ qla27xx_dump_mpi_ram(struct qla_hw_data *ha, uint32_t addr, uint32_t *ram,
 		wrt_reg_word(&reg->mailbox9, 0);
 		wrt_reg_dword(&reg->hccr, HCCRX_SET_HOST_INT);
 
-		ha->flags.mbox_int = 0;
-		while (timer--) {
+		ha->flags.mbox_पूर्णांक = 0;
+		जबतक (समयr--) अणु
 			udelay(5);
 
-			if (qla_pci_disconnected(vha, reg))
-				return rval;
+			अगर (qla_pci_disconnected(vha, reg))
+				वापस rval;
 
 			stat = rd_reg_dword(&reg->host_status);
-			/* Check for pending interrupts. */
-			if (!(stat & HSRX_RISC_INT))
-				continue;
+			/* Check क्रम pending पूर्णांकerrupts. */
+			अगर (!(stat & HSRX_RISC_INT))
+				जारी;
 
 			stat &= 0xff;
-			if (stat != 0x1 && stat != 0x2 &&
-			    stat != 0x10 && stat != 0x11) {
+			अगर (stat != 0x1 && stat != 0x2 &&
+			    stat != 0x10 && stat != 0x11) अणु
 
-				/* Clear this intr; it wasn't a mailbox intr */
+				/* Clear this पूर्णांकr; it wasn't a mailbox पूर्णांकr */
 				wrt_reg_dword(&reg->hccr, HCCRX_CLR_RISC_INT);
 				rd_reg_dword(&reg->hccr);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			set_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags);
 			rval = rd_reg_word(&reg->mailbox0) & MBS_MASK;
 			wrt_reg_dword(&reg->hccr, HCCRX_CLR_RISC_INT);
 			rd_reg_dword(&reg->hccr);
-			break;
-		}
-		ha->flags.mbox_int = 1;
+			अवरोध;
+		पूर्ण
+		ha->flags.mbox_पूर्णांक = 1;
 		*nxt = ram + i;
 
-		if (!test_and_clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags)) {
-			/* no interrupt, timed out*/
-			return rval;
-		}
-		if (rval) {
+		अगर (!test_and_clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags)) अणु
+			/* no पूर्णांकerrupt, समयd out*/
+			वापस rval;
+		पूर्ण
+		अगर (rval) अणु
 			/* error completion status */
-			return rval;
-		}
-		for (j = 0; j < dwords; j++) {
+			वापस rval;
+		पूर्ण
+		क्रम (j = 0; j < dwords; j++) अणु
 			ram[i + j] =
 			    (IS_QLA27XX(ha) || IS_QLA28XX(ha)) ?
 			    chunk[j] : swab32(chunk[j]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*nxt = ram + i;
-	return QLA_SUCCESS;
-}
+	वापस QLA_SUCCESS;
+पूर्ण
 
-int
-qla24xx_dump_ram(struct qla_hw_data *ha, uint32_t addr, __be32 *ram,
-		 uint32_t ram_dwords, void **nxt)
-{
-	int rval = QLA_FUNCTION_FAILED;
-	struct device_reg_24xx __iomem *reg = &ha->iobase->isp24;
+पूर्णांक
+qla24xx_dump_ram(काष्ठा qla_hw_data *ha, uपूर्णांक32_t addr, __be32 *ram,
+		 uपूर्णांक32_t ram_dwords, व्योम **nxt)
+अणु
+	पूर्णांक rval = QLA_FUNCTION_FAILED;
+	काष्ठा device_reg_24xx __iomem *reg = &ha->iobase->isp24;
 	dma_addr_t dump_dma = ha->gid_list_dma;
-	uint32_t *chunk = (uint32_t *)ha->gid_list;
-	uint32_t dwords = qla2x00_gid_list_size(ha) / 4;
-	uint32_t stat;
-	ulong i, j, timer = 6000000;
+	uपूर्णांक32_t *chunk = (uपूर्णांक32_t *)ha->gid_list;
+	uपूर्णांक32_t dwords = qla2x00_gid_list_size(ha) / 4;
+	uपूर्णांक32_t stat;
+	uदीर्घ i, j, समयr = 6000000;
 	scsi_qla_host_t *vha = pci_get_drvdata(ha->pdev);
 
 	clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags);
 
-	if (qla_pci_disconnected(vha, reg))
-		return rval;
+	अगर (qla_pci_disconnected(vha, reg))
+		वापस rval;
 
-	for (i = 0; i < ram_dwords; i += dwords, addr += dwords) {
-		if (i + dwords > ram_dwords)
+	क्रम (i = 0; i < ram_dwords; i += dwords, addr += dwords) अणु
+		अगर (i + dwords > ram_dwords)
 			dwords = ram_dwords - i;
 
 		wrt_reg_word(&reg->mailbox0, MBC_DUMP_RISC_RAM_EXTENDED);
@@ -225,166 +226,166 @@ qla24xx_dump_ram(struct qla_hw_data *ha, uint32_t addr, __be32 *ram,
 		wrt_reg_word(&reg->mailbox5, LSW(dwords));
 		wrt_reg_dword(&reg->hccr, HCCRX_SET_HOST_INT);
 
-		ha->flags.mbox_int = 0;
-		while (timer--) {
+		ha->flags.mbox_पूर्णांक = 0;
+		जबतक (समयr--) अणु
 			udelay(5);
-			if (qla_pci_disconnected(vha, reg))
-				return rval;
+			अगर (qla_pci_disconnected(vha, reg))
+				वापस rval;
 
 			stat = rd_reg_dword(&reg->host_status);
-			/* Check for pending interrupts. */
-			if (!(stat & HSRX_RISC_INT))
-				continue;
+			/* Check क्रम pending पूर्णांकerrupts. */
+			अगर (!(stat & HSRX_RISC_INT))
+				जारी;
 
 			stat &= 0xff;
-			if (stat != 0x1 && stat != 0x2 &&
-			    stat != 0x10 && stat != 0x11) {
+			अगर (stat != 0x1 && stat != 0x2 &&
+			    stat != 0x10 && stat != 0x11) अणु
 				wrt_reg_dword(&reg->hccr, HCCRX_CLR_RISC_INT);
 				rd_reg_dword(&reg->hccr);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			set_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags);
 			rval = rd_reg_word(&reg->mailbox0) & MBS_MASK;
 			wrt_reg_dword(&reg->hccr, HCCRX_CLR_RISC_INT);
 			rd_reg_dword(&reg->hccr);
-			break;
-		}
-		ha->flags.mbox_int = 1;
+			अवरोध;
+		पूर्ण
+		ha->flags.mbox_पूर्णांक = 1;
 		*nxt = ram + i;
 
-		if (!test_and_clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags)) {
-			/* no interrupt, timed out*/
-			return rval;
-		}
-		if (rval) {
+		अगर (!test_and_clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags)) अणु
+			/* no पूर्णांकerrupt, समयd out*/
+			वापस rval;
+		पूर्ण
+		अगर (rval) अणु
 			/* error completion status */
-			return rval;
-		}
-		for (j = 0; j < dwords; j++) {
-			ram[i + j] = (__force __be32)
+			वापस rval;
+		पूर्ण
+		क्रम (j = 0; j < dwords; j++) अणु
+			ram[i + j] = (__क्रमce __be32)
 				((IS_QLA27XX(ha) || IS_QLA28XX(ha)) ?
 				 chunk[j] : swab32(chunk[j]));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*nxt = ram + i;
-	return QLA_SUCCESS;
-}
+	वापस QLA_SUCCESS;
+पूर्ण
 
-static int
-qla24xx_dump_memory(struct qla_hw_data *ha, __be32 *code_ram,
-		    uint32_t cram_size, void **nxt)
-{
-	int rval;
+अटल पूर्णांक
+qla24xx_dump_memory(काष्ठा qla_hw_data *ha, __be32 *code_ram,
+		    uपूर्णांक32_t cram_size, व्योम **nxt)
+अणु
+	पूर्णांक rval;
 
 	/* Code RAM. */
 	rval = qla24xx_dump_ram(ha, 0x20000, code_ram, cram_size / 4, nxt);
-	if (rval != QLA_SUCCESS)
-		return rval;
+	अगर (rval != QLA_SUCCESS)
+		वापस rval;
 
 	set_bit(RISC_SRAM_DUMP_CMPL, &ha->fw_dump_cap_flags);
 
 	/* External Memory. */
 	rval = qla24xx_dump_ram(ha, 0x100000, *nxt,
 	    ha->fw_memory_size - 0x100000 + 1, nxt);
-	if (rval == QLA_SUCCESS)
+	अगर (rval == QLA_SUCCESS)
 		set_bit(RISC_EXT_MEM_DUMP_CMPL, &ha->fw_dump_cap_flags);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static __be32 *
-qla24xx_read_window(struct device_reg_24xx __iomem *reg, uint32_t iobase,
-		    uint32_t count, __be32 *buf)
-{
+अटल __be32 *
+qla24xx_पढ़ो_winकरोw(काष्ठा device_reg_24xx __iomem *reg, uपूर्णांक32_t iobase,
+		    uपूर्णांक32_t count, __be32 *buf)
+अणु
 	__le32 __iomem *dmp_reg;
 
 	wrt_reg_dword(&reg->iobase_addr, iobase);
-	dmp_reg = &reg->iobase_window;
-	for ( ; count--; dmp_reg++)
+	dmp_reg = &reg->iobase_winकरोw;
+	क्रम ( ; count--; dmp_reg++)
 		*buf++ = htonl(rd_reg_dword(dmp_reg));
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-void
-qla24xx_pause_risc(struct device_reg_24xx __iomem *reg, struct qla_hw_data *ha)
-{
+व्योम
+qla24xx_छोड़ो_risc(काष्ठा device_reg_24xx __iomem *reg, काष्ठा qla_hw_data *ha)
+अणु
 	wrt_reg_dword(&reg->hccr, HCCRX_SET_RISC_PAUSE);
 
-	/* 100 usec delay is sufficient enough for hardware to pause RISC */
+	/* 100 usec delay is sufficient enough क्रम hardware to छोड़ो RISC */
 	udelay(100);
-	if (rd_reg_dword(&reg->host_status) & HSRX_RISC_PAUSED)
+	अगर (rd_reg_dword(&reg->host_status) & HSRX_RISC_PAUSED)
 		set_bit(RISC_PAUSE_CMPL, &ha->fw_dump_cap_flags);
-}
+पूर्ण
 
-int
-qla24xx_soft_reset(struct qla_hw_data *ha)
-{
-	int rval = QLA_SUCCESS;
-	uint32_t cnt;
-	uint16_t wd;
-	struct device_reg_24xx __iomem *reg = &ha->iobase->isp24;
+पूर्णांक
+qla24xx_soft_reset(काष्ठा qla_hw_data *ha)
+अणु
+	पूर्णांक rval = QLA_SUCCESS;
+	uपूर्णांक32_t cnt;
+	uपूर्णांक16_t wd;
+	काष्ठा device_reg_24xx __iomem *reg = &ha->iobase->isp24;
 
 	/*
-	 * Reset RISC. The delay is dependent on system architecture.
-	 * Driver can proceed with the reset sequence after waiting
-	 * for a timeout period.
+	 * Reset RISC. The delay is dependent on प्रणाली architecture.
+	 * Driver can proceed with the reset sequence after रुकोing
+	 * क्रम a समयout period.
 	 */
 	wrt_reg_dword(&reg->ctrl_status, CSRX_DMA_SHUTDOWN|MWB_4096_BYTES);
-	for (cnt = 0; cnt < 30000; cnt++) {
-		if ((rd_reg_dword(&reg->ctrl_status) & CSRX_DMA_ACTIVE) == 0)
-			break;
+	क्रम (cnt = 0; cnt < 30000; cnt++) अणु
+		अगर ((rd_reg_dword(&reg->ctrl_status) & CSRX_DMA_ACTIVE) == 0)
+			अवरोध;
 
 		udelay(10);
-	}
-	if (!(rd_reg_dword(&reg->ctrl_status) & CSRX_DMA_ACTIVE))
+	पूर्ण
+	अगर (!(rd_reg_dword(&reg->ctrl_status) & CSRX_DMA_ACTIVE))
 		set_bit(DMA_SHUTDOWN_CMPL, &ha->fw_dump_cap_flags);
 
 	wrt_reg_dword(&reg->ctrl_status,
 	    CSRX_ISP_SOFT_RESET|CSRX_DMA_SHUTDOWN|MWB_4096_BYTES);
-	pci_read_config_word(ha->pdev, PCI_COMMAND, &wd);
+	pci_पढ़ो_config_word(ha->pdev, PCI_COMMAND, &wd);
 
 	udelay(100);
 
-	/* Wait for soft-reset to complete. */
-	for (cnt = 0; cnt < 30000; cnt++) {
-		if ((rd_reg_dword(&reg->ctrl_status) &
+	/* Wait क्रम soft-reset to complete. */
+	क्रम (cnt = 0; cnt < 30000; cnt++) अणु
+		अगर ((rd_reg_dword(&reg->ctrl_status) &
 		    CSRX_ISP_SOFT_RESET) == 0)
-			break;
+			अवरोध;
 
 		udelay(10);
-	}
-	if (!(rd_reg_dword(&reg->ctrl_status) & CSRX_ISP_SOFT_RESET))
+	पूर्ण
+	अगर (!(rd_reg_dword(&reg->ctrl_status) & CSRX_ISP_SOFT_RESET))
 		set_bit(ISP_RESET_CMPL, &ha->fw_dump_cap_flags);
 
 	wrt_reg_dword(&reg->hccr, HCCRX_CLR_RISC_RESET);
 	rd_reg_dword(&reg->hccr);             /* PCI Posting. */
 
-	for (cnt = 10000; rd_reg_word(&reg->mailbox0) != 0 &&
-	    rval == QLA_SUCCESS; cnt--) {
-		if (cnt)
+	क्रम (cnt = 10000; rd_reg_word(&reg->mailbox0) != 0 &&
+	    rval == QLA_SUCCESS; cnt--) अणु
+		अगर (cnt)
 			udelay(10);
-		else
+		अन्यथा
 			rval = QLA_FUNCTION_TIMEOUT;
-	}
-	if (rval == QLA_SUCCESS)
+	पूर्ण
+	अगर (rval == QLA_SUCCESS)
 		set_bit(RISC_RDY_AFT_RESET, &ha->fw_dump_cap_flags);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int
-qla2xxx_dump_ram(struct qla_hw_data *ha, uint32_t addr, __be16 *ram,
-    uint32_t ram_words, void **nxt)
-{
-	int rval;
-	uint32_t cnt, stat, timer, words, idx;
-	uint16_t mb0;
-	struct device_reg_2xxx __iomem *reg = &ha->iobase->isp;
+अटल पूर्णांक
+qla2xxx_dump_ram(काष्ठा qla_hw_data *ha, uपूर्णांक32_t addr, __be16 *ram,
+    uपूर्णांक32_t ram_words, व्योम **nxt)
+अणु
+	पूर्णांक rval;
+	uपूर्णांक32_t cnt, stat, समयr, words, idx;
+	uपूर्णांक16_t mb0;
+	काष्ठा device_reg_2xxx __iomem *reg = &ha->iobase->isp;
 	dma_addr_t dump_dma = ha->gid_list_dma;
-	__le16 *dump = (__force __le16 *)ha->gid_list;
+	__le16 *dump = (__क्रमce __le16 *)ha->gid_list;
 
 	rval = QLA_SUCCESS;
 	mb0 = 0;
@@ -393,9 +394,9 @@ qla2xxx_dump_ram(struct qla_hw_data *ha, uint32_t addr, __be16 *ram,
 	clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags);
 
 	words = qla2x00_gid_list_size(ha) / 2;
-	for (cnt = 0; cnt < ram_words && rval == QLA_SUCCESS;
-	    cnt += words, addr += words) {
-		if (cnt + words > ram_words)
+	क्रम (cnt = 0; cnt < ram_words && rval == QLA_SUCCESS;
+	    cnt += words, addr += words) अणु
+		अगर (cnt + words > ram_words)
 			words = ram_words - cnt;
 
 		WRT_MAILBOX_REG(ha, reg, 1, LSW(addr));
@@ -409,25 +410,25 @@ qla2xxx_dump_ram(struct qla_hw_data *ha, uint32_t addr, __be16 *ram,
 		WRT_MAILBOX_REG(ha, reg, 4, words);
 		wrt_reg_word(&reg->hccr, HCCR_SET_HOST_INT);
 
-		for (timer = 6000000; timer; timer--) {
-			/* Check for pending interrupts. */
+		क्रम (समयr = 6000000; समयr; समयr--) अणु
+			/* Check क्रम pending पूर्णांकerrupts. */
 			stat = rd_reg_dword(&reg->u.isp2300.host_status);
-			if (stat & HSR_RISC_INT) {
+			अगर (stat & HSR_RISC_INT) अणु
 				stat &= 0xff;
 
-				if (stat == 0x1 || stat == 0x2) {
+				अगर (stat == 0x1 || stat == 0x2) अणु
 					set_bit(MBX_INTERRUPT,
 					    &ha->mbx_cmd_flags);
 
 					mb0 = RD_MAILBOX_REG(ha, reg, 0);
 
-					/* Release mailbox registers. */
+					/* Release mailbox रेजिस्टरs. */
 					wrt_reg_word(&reg->semaphore, 0);
 					wrt_reg_word(&reg->hccr,
 					    HCCR_CLR_RISC_INT);
 					rd_reg_word(&reg->hccr);
-					break;
-				} else if (stat == 0x10 || stat == 0x11) {
+					अवरोध;
+				पूर्ण अन्यथा अगर (stat == 0x10 || stat == 0x11) अणु
 					set_bit(MBX_INTERRUPT,
 					    &ha->mbx_cmd_flags);
 
@@ -436,261 +437,261 @@ qla2xxx_dump_ram(struct qla_hw_data *ha, uint32_t addr, __be16 *ram,
 					wrt_reg_word(&reg->hccr,
 					    HCCR_CLR_RISC_INT);
 					rd_reg_word(&reg->hccr);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
-				/* clear this intr; it wasn't a mailbox intr */
+				/* clear this पूर्णांकr; it wasn't a mailbox पूर्णांकr */
 				wrt_reg_word(&reg->hccr, HCCR_CLR_RISC_INT);
 				rd_reg_word(&reg->hccr);
-			}
+			पूर्ण
 			udelay(5);
-		}
+		पूर्ण
 
-		if (test_and_clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags)) {
+		अगर (test_and_clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags)) अणु
 			rval = mb0 & MBS_MASK;
-			for (idx = 0; idx < words; idx++)
+			क्रम (idx = 0; idx < words; idx++)
 				ram[cnt + idx] =
 					cpu_to_be16(le16_to_cpu(dump[idx]));
-		} else {
+		पूर्ण अन्यथा अणु
 			rval = QLA_FUNCTION_FAILED;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	*nxt = rval == QLA_SUCCESS ? &ram[cnt] : NULL;
-	return rval;
-}
+	*nxt = rval == QLA_SUCCESS ? &ram[cnt] : शून्य;
+	वापस rval;
+पूर्ण
 
-static inline void
-qla2xxx_read_window(struct device_reg_2xxx __iomem *reg, uint32_t count,
+अटल अंतरभूत व्योम
+qla2xxx_पढ़ो_winकरोw(काष्ठा device_reg_2xxx __iomem *reg, uपूर्णांक32_t count,
 		    __be16 *buf)
-{
+अणु
 	__le16 __iomem *dmp_reg = &reg->u.isp2300.fb_cmd;
 
-	for ( ; count--; dmp_reg++)
+	क्रम ( ; count--; dmp_reg++)
 		*buf++ = htons(rd_reg_word(dmp_reg));
-}
+पूर्ण
 
-static inline void *
-qla24xx_copy_eft(struct qla_hw_data *ha, void *ptr)
-{
-	if (!ha->eft)
-		return ptr;
+अटल अंतरभूत व्योम *
+qla24xx_copy_eft(काष्ठा qla_hw_data *ha, व्योम *ptr)
+अणु
+	अगर (!ha->eft)
+		वापस ptr;
 
-	memcpy(ptr, ha->eft, ntohl(ha->fw_dump->eft_size));
-	return ptr + ntohl(ha->fw_dump->eft_size);
-}
+	स_नकल(ptr, ha->eft, ntohl(ha->fw_dump->eft_size));
+	वापस ptr + ntohl(ha->fw_dump->eft_size);
+पूर्ण
 
-static inline void *
-qla25xx_copy_fce(struct qla_hw_data *ha, void *ptr, __be32 **last_chain)
-{
-	uint32_t cnt;
+अटल अंतरभूत व्योम *
+qla25xx_copy_fce(काष्ठा qla_hw_data *ha, व्योम *ptr, __be32 **last_chain)
+अणु
+	uपूर्णांक32_t cnt;
 	__be32 *iter_reg;
-	struct qla2xxx_fce_chain *fcec = ptr;
+	काष्ठा qla2xxx_fce_chain *fcec = ptr;
 
-	if (!ha->fce)
-		return ptr;
+	अगर (!ha->fce)
+		वापस ptr;
 
 	*last_chain = &fcec->type;
 	fcec->type = htonl(DUMP_CHAIN_FCE);
-	fcec->chain_size = htonl(sizeof(struct qla2xxx_fce_chain) +
+	fcec->chain_size = htonl(माप(काष्ठा qla2xxx_fce_chain) +
 	    fce_calc_size(ha->fce_bufs));
 	fcec->size = htonl(fce_calc_size(ha->fce_bufs));
 	fcec->addr_l = htonl(LSD(ha->fce_dma));
 	fcec->addr_h = htonl(MSD(ha->fce_dma));
 
 	iter_reg = fcec->eregs;
-	for (cnt = 0; cnt < 8; cnt++)
+	क्रम (cnt = 0; cnt < 8; cnt++)
 		*iter_reg++ = htonl(ha->fce_mb[cnt]);
 
-	memcpy(iter_reg, ha->fce, ntohl(fcec->size));
+	स_नकल(iter_reg, ha->fce, ntohl(fcec->size));
 
-	return (char *)iter_reg + ntohl(fcec->size);
-}
+	वापस (अक्षर *)iter_reg + ntohl(fcec->size);
+पूर्ण
 
-static inline void *
-qla25xx_copy_exlogin(struct qla_hw_data *ha, void *ptr, __be32 **last_chain)
-{
-	struct qla2xxx_offld_chain *c = ptr;
+अटल अंतरभूत व्योम *
+qla25xx_copy_exlogin(काष्ठा qla_hw_data *ha, व्योम *ptr, __be32 **last_chain)
+अणु
+	काष्ठा qla2xxx_offld_chain *c = ptr;
 
-	if (!ha->exlogin_buf)
-		return ptr;
+	अगर (!ha->exlogin_buf)
+		वापस ptr;
 
 	*last_chain = &c->type;
 
 	c->type = cpu_to_be32(DUMP_CHAIN_EXLOGIN);
-	c->chain_size = cpu_to_be32(sizeof(struct qla2xxx_offld_chain) +
+	c->chain_size = cpu_to_be32(माप(काष्ठा qla2xxx_offld_chain) +
 	    ha->exlogin_size);
 	c->size = cpu_to_be32(ha->exlogin_size);
 	c->addr = cpu_to_be64(ha->exlogin_buf_dma);
 
-	ptr += sizeof(struct qla2xxx_offld_chain);
-	memcpy(ptr, ha->exlogin_buf, ha->exlogin_size);
+	ptr += माप(काष्ठा qla2xxx_offld_chain);
+	स_नकल(ptr, ha->exlogin_buf, ha->exlogin_size);
 
-	return (char *)ptr + be32_to_cpu(c->size);
-}
+	वापस (अक्षर *)ptr + be32_to_cpu(c->size);
+पूर्ण
 
-static inline void *
-qla81xx_copy_exchoffld(struct qla_hw_data *ha, void *ptr, __be32 **last_chain)
-{
-	struct qla2xxx_offld_chain *c = ptr;
+अटल अंतरभूत व्योम *
+qla81xx_copy_exchoffld(काष्ठा qla_hw_data *ha, व्योम *ptr, __be32 **last_chain)
+अणु
+	काष्ठा qla2xxx_offld_chain *c = ptr;
 
-	if (!ha->exchoffld_buf)
-		return ptr;
+	अगर (!ha->exchoffld_buf)
+		वापस ptr;
 
 	*last_chain = &c->type;
 
 	c->type = cpu_to_be32(DUMP_CHAIN_EXCHG);
-	c->chain_size = cpu_to_be32(sizeof(struct qla2xxx_offld_chain) +
+	c->chain_size = cpu_to_be32(माप(काष्ठा qla2xxx_offld_chain) +
 	    ha->exchoffld_size);
 	c->size = cpu_to_be32(ha->exchoffld_size);
 	c->addr = cpu_to_be64(ha->exchoffld_buf_dma);
 
-	ptr += sizeof(struct qla2xxx_offld_chain);
-	memcpy(ptr, ha->exchoffld_buf, ha->exchoffld_size);
+	ptr += माप(काष्ठा qla2xxx_offld_chain);
+	स_नकल(ptr, ha->exchoffld_buf, ha->exchoffld_size);
 
-	return (char *)ptr + be32_to_cpu(c->size);
-}
+	वापस (अक्षर *)ptr + be32_to_cpu(c->size);
+पूर्ण
 
-static inline void *
-qla2xxx_copy_atioqueues(struct qla_hw_data *ha, void *ptr,
+अटल अंतरभूत व्योम *
+qla2xxx_copy_atioqueues(काष्ठा qla_hw_data *ha, व्योम *ptr,
 			__be32 **last_chain)
-{
-	struct qla2xxx_mqueue_chain *q;
-	struct qla2xxx_mqueue_header *qh;
-	uint32_t num_queues;
-	int que;
-	struct {
-		int length;
-		void *ring;
-	} aq, *aqp;
+अणु
+	काष्ठा qla2xxx_mqueue_chain *q;
+	काष्ठा qla2xxx_mqueue_header *qh;
+	uपूर्णांक32_t num_queues;
+	पूर्णांक que;
+	काष्ठा अणु
+		पूर्णांक length;
+		व्योम *ring;
+	पूर्ण aq, *aqp;
 
-	if (!ha->tgt.atio_ring)
-		return ptr;
+	अगर (!ha->tgt.atio_ring)
+		वापस ptr;
 
 	num_queues = 1;
 	aqp = &aq;
 	aqp->length = ha->tgt.atio_q_length;
 	aqp->ring = ha->tgt.atio_ring;
 
-	for (que = 0; que < num_queues; que++) {
+	क्रम (que = 0; que < num_queues; que++) अणु
 		/* aqp = ha->atio_q_map[que]; */
 		q = ptr;
 		*last_chain = &q->type;
 		q->type = htonl(DUMP_CHAIN_QUEUE);
 		q->chain_size = htonl(
-		    sizeof(struct qla2xxx_mqueue_chain) +
-		    sizeof(struct qla2xxx_mqueue_header) +
-		    (aqp->length * sizeof(request_t)));
-		ptr += sizeof(struct qla2xxx_mqueue_chain);
+		    माप(काष्ठा qla2xxx_mqueue_chain) +
+		    माप(काष्ठा qla2xxx_mqueue_header) +
+		    (aqp->length * माप(request_t)));
+		ptr += माप(काष्ठा qla2xxx_mqueue_chain);
 
 		/* Add header. */
 		qh = ptr;
 		qh->queue = htonl(TYPE_ATIO_QUEUE);
 		qh->number = htonl(que);
-		qh->size = htonl(aqp->length * sizeof(request_t));
-		ptr += sizeof(struct qla2xxx_mqueue_header);
+		qh->size = htonl(aqp->length * माप(request_t));
+		ptr += माप(काष्ठा qla2xxx_mqueue_header);
 
 		/* Add data. */
-		memcpy(ptr, aqp->ring, aqp->length * sizeof(request_t));
+		स_नकल(ptr, aqp->ring, aqp->length * माप(request_t));
 
-		ptr += aqp->length * sizeof(request_t);
-	}
+		ptr += aqp->length * माप(request_t);
+	पूर्ण
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static inline void *
-qla25xx_copy_mqueues(struct qla_hw_data *ha, void *ptr, __be32 **last_chain)
-{
-	struct qla2xxx_mqueue_chain *q;
-	struct qla2xxx_mqueue_header *qh;
-	struct req_que *req;
-	struct rsp_que *rsp;
-	int que;
+अटल अंतरभूत व्योम *
+qla25xx_copy_mqueues(काष्ठा qla_hw_data *ha, व्योम *ptr, __be32 **last_chain)
+अणु
+	काष्ठा qla2xxx_mqueue_chain *q;
+	काष्ठा qla2xxx_mqueue_header *qh;
+	काष्ठा req_que *req;
+	काष्ठा rsp_que *rsp;
+	पूर्णांक que;
 
-	if (!ha->mqenable)
-		return ptr;
+	अगर (!ha->mqenable)
+		वापस ptr;
 
 	/* Request queues */
-	for (que = 1; que < ha->max_req_queues; que++) {
+	क्रम (que = 1; que < ha->max_req_queues; que++) अणु
 		req = ha->req_q_map[que];
-		if (!req)
-			break;
+		अगर (!req)
+			अवरोध;
 
 		/* Add chain. */
 		q = ptr;
 		*last_chain = &q->type;
 		q->type = htonl(DUMP_CHAIN_QUEUE);
 		q->chain_size = htonl(
-		    sizeof(struct qla2xxx_mqueue_chain) +
-		    sizeof(struct qla2xxx_mqueue_header) +
-		    (req->length * sizeof(request_t)));
-		ptr += sizeof(struct qla2xxx_mqueue_chain);
+		    माप(काष्ठा qla2xxx_mqueue_chain) +
+		    माप(काष्ठा qla2xxx_mqueue_header) +
+		    (req->length * माप(request_t)));
+		ptr += माप(काष्ठा qla2xxx_mqueue_chain);
 
 		/* Add header. */
 		qh = ptr;
 		qh->queue = htonl(TYPE_REQUEST_QUEUE);
 		qh->number = htonl(que);
-		qh->size = htonl(req->length * sizeof(request_t));
-		ptr += sizeof(struct qla2xxx_mqueue_header);
+		qh->size = htonl(req->length * माप(request_t));
+		ptr += माप(काष्ठा qla2xxx_mqueue_header);
 
 		/* Add data. */
-		memcpy(ptr, req->ring, req->length * sizeof(request_t));
-		ptr += req->length * sizeof(request_t);
-	}
+		स_नकल(ptr, req->ring, req->length * माप(request_t));
+		ptr += req->length * माप(request_t);
+	पूर्ण
 
 	/* Response queues */
-	for (que = 1; que < ha->max_rsp_queues; que++) {
+	क्रम (que = 1; que < ha->max_rsp_queues; que++) अणु
 		rsp = ha->rsp_q_map[que];
-		if (!rsp)
-			break;
+		अगर (!rsp)
+			अवरोध;
 
 		/* Add chain. */
 		q = ptr;
 		*last_chain = &q->type;
 		q->type = htonl(DUMP_CHAIN_QUEUE);
 		q->chain_size = htonl(
-		    sizeof(struct qla2xxx_mqueue_chain) +
-		    sizeof(struct qla2xxx_mqueue_header) +
-		    (rsp->length * sizeof(response_t)));
-		ptr += sizeof(struct qla2xxx_mqueue_chain);
+		    माप(काष्ठा qla2xxx_mqueue_chain) +
+		    माप(काष्ठा qla2xxx_mqueue_header) +
+		    (rsp->length * माप(response_t)));
+		ptr += माप(काष्ठा qla2xxx_mqueue_chain);
 
 		/* Add header. */
 		qh = ptr;
 		qh->queue = htonl(TYPE_RESPONSE_QUEUE);
 		qh->number = htonl(que);
-		qh->size = htonl(rsp->length * sizeof(response_t));
-		ptr += sizeof(struct qla2xxx_mqueue_header);
+		qh->size = htonl(rsp->length * माप(response_t));
+		ptr += माप(काष्ठा qla2xxx_mqueue_header);
 
 		/* Add data. */
-		memcpy(ptr, rsp->ring, rsp->length * sizeof(response_t));
-		ptr += rsp->length * sizeof(response_t);
-	}
+		स_नकल(ptr, rsp->ring, rsp->length * माप(response_t));
+		ptr += rsp->length * माप(response_t);
+	पूर्ण
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static inline void *
-qla25xx_copy_mq(struct qla_hw_data *ha, void *ptr, __be32 **last_chain)
-{
-	uint32_t cnt, que_idx;
-	uint8_t que_cnt;
-	struct qla2xxx_mq_chain *mq = ptr;
+अटल अंतरभूत व्योम *
+qla25xx_copy_mq(काष्ठा qla_hw_data *ha, व्योम *ptr, __be32 **last_chain)
+अणु
+	uपूर्णांक32_t cnt, que_idx;
+	uपूर्णांक8_t que_cnt;
+	काष्ठा qla2xxx_mq_chain *mq = ptr;
 	device_reg_t *reg;
 
-	if (!ha->mqenable || IS_QLA83XX(ha) || IS_QLA27XX(ha) ||
+	अगर (!ha->mqenable || IS_QLA83XX(ha) || IS_QLA27XX(ha) ||
 	    IS_QLA28XX(ha))
-		return ptr;
+		वापस ptr;
 
 	mq = ptr;
 	*last_chain = &mq->type;
 	mq->type = htonl(DUMP_CHAIN_MQ);
-	mq->chain_size = htonl(sizeof(struct qla2xxx_mq_chain));
+	mq->chain_size = htonl(माप(काष्ठा qla2xxx_mq_chain));
 
 	que_cnt = ha->max_req_queues > ha->max_rsp_queues ?
 		ha->max_req_queues : ha->max_rsp_queues;
 	mq->count = htonl(que_cnt);
-	for (cnt = 0; cnt < que_cnt; cnt++) {
+	क्रम (cnt = 0; cnt < que_cnt; cnt++) अणु
 		reg = ISP_QUE_REG(ha, cnt);
 		que_idx = cnt * 4;
 		mq->qregs[que_idx] =
@@ -701,70 +702,70 @@ qla25xx_copy_mq(struct qla_hw_data *ha, void *ptr, __be32 **last_chain)
 		    htonl(rd_reg_dword(&reg->isp25mq.rsp_q_in));
 		mq->qregs[que_idx+3] =
 		    htonl(rd_reg_dword(&reg->isp25mq.rsp_q_out));
-	}
+	पूर्ण
 
-	return ptr + sizeof(struct qla2xxx_mq_chain);
-}
+	वापस ptr + माप(काष्ठा qla2xxx_mq_chain);
+पूर्ण
 
-void
-qla2xxx_dump_post_process(scsi_qla_host_t *vha, int rval)
-{
-	struct qla_hw_data *ha = vha->hw;
+व्योम
+qla2xxx_dump_post_process(scsi_qla_host_t *vha, पूर्णांक rval)
+अणु
+	काष्ठा qla_hw_data *ha = vha->hw;
 
-	if (rval != QLA_SUCCESS) {
+	अगर (rval != QLA_SUCCESS) अणु
 		ql_log(ql_log_warn, vha, 0xd000,
 		    "Failed to dump firmware (%x), dump status flags (0x%lx).\n",
 		    rval, ha->fw_dump_cap_flags);
 		ha->fw_dumped = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		ql_log(ql_log_info, vha, 0xd001,
 		    "Firmware dump saved to temp buffer (%ld/%p), dump status flags (0x%lx).\n",
 		    vha->host_no, ha->fw_dump, ha->fw_dump_cap_flags);
 		ha->fw_dumped = true;
 		qla2x00_post_uevent_work(vha, QLA_UEVENT_CODE_FW_DUMP);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void qla2xxx_dump_fw(scsi_qla_host_t *vha)
-{
-	unsigned long flags;
+व्योम qla2xxx_dump_fw(scsi_qla_host_t *vha)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vha->hw->hardware_lock, flags);
 	vha->hw->isp_ops->fw_dump(vha);
 	spin_unlock_irqrestore(&vha->hw->hardware_lock, flags);
-}
+पूर्ण
 
 /**
  * qla2300_fw_dump() - Dumps binary data from the 2300 firmware.
  * @vha: HA context
  */
-void
+व्योम
 qla2300_fw_dump(scsi_qla_host_t *vha)
-{
-	int		rval;
-	uint32_t	cnt;
-	struct qla_hw_data *ha = vha->hw;
-	struct device_reg_2xxx __iomem *reg = &ha->iobase->isp;
+अणु
+	पूर्णांक		rval;
+	uपूर्णांक32_t	cnt;
+	काष्ठा qla_hw_data *ha = vha->hw;
+	काष्ठा device_reg_2xxx __iomem *reg = &ha->iobase->isp;
 	__le16 __iomem *dmp_reg;
-	struct qla2300_fw_dump	*fw;
-	void		*nxt;
-	struct scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
+	काष्ठा qla2300_fw_dump	*fw;
+	व्योम		*nxt;
+	काष्ठा scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
 
-	lockdep_assert_held(&ha->hardware_lock);
+	lockdep_निश्चित_held(&ha->hardware_lock);
 
-	if (!ha->fw_dump) {
+	अगर (!ha->fw_dump) अणु
 		ql_log(ql_log_warn, vha, 0xd002,
 		    "No buffer available for dump.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ha->fw_dumped) {
+	अगर (ha->fw_dumped) अणु
 		ql_log(ql_log_warn, vha, 0xd003,
 		    "Firmware has been previously dumped (%p) "
 		    "-- ignoring request.\n",
 		    ha->fw_dump);
-		return;
-	}
+		वापस;
+	पूर्ण
 	fw = &ha->fw_dump->isp.isp23;
 	qla2xxx_prep_dump(ha, ha->fw_dump);
 
@@ -773,154 +774,154 @@ qla2300_fw_dump(scsi_qla_host_t *vha)
 
 	/* Pause RISC. */
 	wrt_reg_word(&reg->hccr, HCCR_PAUSE_RISC);
-	if (IS_QLA2300(ha)) {
-		for (cnt = 30000;
+	अगर (IS_QLA2300(ha)) अणु
+		क्रम (cnt = 30000;
 		    (rd_reg_word(&reg->hccr) & HCCR_RISC_PAUSE) == 0 &&
-			rval == QLA_SUCCESS; cnt--) {
-			if (cnt)
+			rval == QLA_SUCCESS; cnt--) अणु
+			अगर (cnt)
 				udelay(100);
-			else
+			अन्यथा
 				rval = QLA_FUNCTION_TIMEOUT;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rd_reg_word(&reg->hccr);		/* PCI Posting. */
 		udelay(10);
-	}
+	पूर्ण
 
-	if (rval == QLA_SUCCESS) {
+	अगर (rval == QLA_SUCCESS) अणु
 		dmp_reg = &reg->flash_address;
-		for (cnt = 0; cnt < ARRAY_SIZE(fw->pbiu_reg); cnt++, dmp_reg++)
+		क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->pbiu_reg); cnt++, dmp_reg++)
 			fw->pbiu_reg[cnt] = htons(rd_reg_word(dmp_reg));
 
 		dmp_reg = &reg->u.isp2300.req_q_in;
-		for (cnt = 0; cnt < ARRAY_SIZE(fw->risc_host_reg);
+		क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->risc_host_reg);
 		    cnt++, dmp_reg++)
 			fw->risc_host_reg[cnt] = htons(rd_reg_word(dmp_reg));
 
 		dmp_reg = &reg->u.isp2300.mailbox0;
-		for (cnt = 0; cnt < ARRAY_SIZE(fw->mailbox_reg);
+		क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->mailbox_reg);
 		    cnt++, dmp_reg++)
 			fw->mailbox_reg[cnt] = htons(rd_reg_word(dmp_reg));
 
 		wrt_reg_word(&reg->ctrl_status, 0x40);
-		qla2xxx_read_window(reg, 32, fw->resp_dma_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 32, fw->resp_dma_reg);
 
 		wrt_reg_word(&reg->ctrl_status, 0x50);
-		qla2xxx_read_window(reg, 48, fw->dma_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 48, fw->dma_reg);
 
 		wrt_reg_word(&reg->ctrl_status, 0x00);
 		dmp_reg = &reg->risc_hw;
-		for (cnt = 0; cnt < ARRAY_SIZE(fw->risc_hdw_reg);
+		क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->risc_hdw_reg);
 		    cnt++, dmp_reg++)
 			fw->risc_hdw_reg[cnt] = htons(rd_reg_word(dmp_reg));
 
 		wrt_reg_word(&reg->pcr, 0x2000);
-		qla2xxx_read_window(reg, 16, fw->risc_gp0_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp0_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2200);
-		qla2xxx_read_window(reg, 16, fw->risc_gp1_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp1_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2400);
-		qla2xxx_read_window(reg, 16, fw->risc_gp2_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp2_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2600);
-		qla2xxx_read_window(reg, 16, fw->risc_gp3_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp3_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2800);
-		qla2xxx_read_window(reg, 16, fw->risc_gp4_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp4_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2A00);
-		qla2xxx_read_window(reg, 16, fw->risc_gp5_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp5_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2C00);
-		qla2xxx_read_window(reg, 16, fw->risc_gp6_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp6_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2E00);
-		qla2xxx_read_window(reg, 16, fw->risc_gp7_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp7_reg);
 
 		wrt_reg_word(&reg->ctrl_status, 0x10);
-		qla2xxx_read_window(reg, 64, fw->frame_buf_hdw_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 64, fw->frame_buf_hdw_reg);
 
 		wrt_reg_word(&reg->ctrl_status, 0x20);
-		qla2xxx_read_window(reg, 64, fw->fpm_b0_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 64, fw->fpm_b0_reg);
 
 		wrt_reg_word(&reg->ctrl_status, 0x30);
-		qla2xxx_read_window(reg, 64, fw->fpm_b1_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 64, fw->fpm_b1_reg);
 
 		/* Reset RISC. */
 		wrt_reg_word(&reg->ctrl_status, CSR_ISP_SOFT_RESET);
-		for (cnt = 0; cnt < 30000; cnt++) {
-			if ((rd_reg_word(&reg->ctrl_status) &
+		क्रम (cnt = 0; cnt < 30000; cnt++) अणु
+			अगर ((rd_reg_word(&reg->ctrl_status) &
 			    CSR_ISP_SOFT_RESET) == 0)
-				break;
+				अवरोध;
 
 			udelay(10);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!IS_QLA2300(ha)) {
-		for (cnt = 30000; RD_MAILBOX_REG(ha, reg, 0) != 0 &&
-		    rval == QLA_SUCCESS; cnt--) {
-			if (cnt)
+	अगर (!IS_QLA2300(ha)) अणु
+		क्रम (cnt = 30000; RD_MAILBOX_REG(ha, reg, 0) != 0 &&
+		    rval == QLA_SUCCESS; cnt--) अणु
+			अगर (cnt)
 				udelay(100);
-			else
+			अन्यथा
 				rval = QLA_FUNCTION_TIMEOUT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Get RISC SRAM. */
-	if (rval == QLA_SUCCESS)
+	अगर (rval == QLA_SUCCESS)
 		rval = qla2xxx_dump_ram(ha, 0x800, fw->risc_ram,
 					ARRAY_SIZE(fw->risc_ram), &nxt);
 
 	/* Get stack SRAM. */
-	if (rval == QLA_SUCCESS)
+	अगर (rval == QLA_SUCCESS)
 		rval = qla2xxx_dump_ram(ha, 0x10000, fw->stack_ram,
 					ARRAY_SIZE(fw->stack_ram), &nxt);
 
 	/* Get data SRAM. */
-	if (rval == QLA_SUCCESS)
+	अगर (rval == QLA_SUCCESS)
 		rval = qla2xxx_dump_ram(ha, 0x11000, fw->data_ram,
 		    ha->fw_memory_size - 0x11000 + 1, &nxt);
 
-	if (rval == QLA_SUCCESS)
+	अगर (rval == QLA_SUCCESS)
 		qla2xxx_copy_queues(ha, nxt);
 
 	qla2xxx_dump_post_process(base_vha, rval);
-}
+पूर्ण
 
 /**
  * qla2100_fw_dump() - Dumps binary data from the 2100/2200 firmware.
  * @vha: HA context
  */
-void
+व्योम
 qla2100_fw_dump(scsi_qla_host_t *vha)
-{
-	int		rval;
-	uint32_t	cnt, timer;
-	uint16_t	risc_address = 0;
-	uint16_t	mb0 = 0, mb2 = 0;
-	struct qla_hw_data *ha = vha->hw;
-	struct device_reg_2xxx __iomem *reg = &ha->iobase->isp;
+अणु
+	पूर्णांक		rval;
+	uपूर्णांक32_t	cnt, समयr;
+	uपूर्णांक16_t	risc_address = 0;
+	uपूर्णांक16_t	mb0 = 0, mb2 = 0;
+	काष्ठा qla_hw_data *ha = vha->hw;
+	काष्ठा device_reg_2xxx __iomem *reg = &ha->iobase->isp;
 	__le16 __iomem *dmp_reg;
-	struct qla2100_fw_dump	*fw;
-	struct scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
+	काष्ठा qla2100_fw_dump	*fw;
+	काष्ठा scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
 
-	lockdep_assert_held(&ha->hardware_lock);
+	lockdep_निश्चित_held(&ha->hardware_lock);
 
-	if (!ha->fw_dump) {
+	अगर (!ha->fw_dump) अणु
 		ql_log(ql_log_warn, vha, 0xd004,
 		    "No buffer available for dump.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ha->fw_dumped) {
+	अगर (ha->fw_dumped) अणु
 		ql_log(ql_log_warn, vha, 0xd005,
 		    "Firmware has been previously dumped (%p) "
 		    "-- ignoring request.\n",
 		    ha->fw_dump);
-		return;
-	}
+		वापस;
+	पूर्ण
 	fw = &ha->fw_dump->isp.isp21;
 	qla2xxx_prep_dump(ha, ha->fw_dump);
 
@@ -929,121 +930,121 @@ qla2100_fw_dump(scsi_qla_host_t *vha)
 
 	/* Pause RISC. */
 	wrt_reg_word(&reg->hccr, HCCR_PAUSE_RISC);
-	for (cnt = 30000; (rd_reg_word(&reg->hccr) & HCCR_RISC_PAUSE) == 0 &&
-	    rval == QLA_SUCCESS; cnt--) {
-		if (cnt)
+	क्रम (cnt = 30000; (rd_reg_word(&reg->hccr) & HCCR_RISC_PAUSE) == 0 &&
+	    rval == QLA_SUCCESS; cnt--) अणु
+		अगर (cnt)
 			udelay(100);
-		else
+		अन्यथा
 			rval = QLA_FUNCTION_TIMEOUT;
-	}
-	if (rval == QLA_SUCCESS) {
+	पूर्ण
+	अगर (rval == QLA_SUCCESS) अणु
 		dmp_reg = &reg->flash_address;
-		for (cnt = 0; cnt < ARRAY_SIZE(fw->pbiu_reg); cnt++, dmp_reg++)
+		क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->pbiu_reg); cnt++, dmp_reg++)
 			fw->pbiu_reg[cnt] = htons(rd_reg_word(dmp_reg));
 
 		dmp_reg = &reg->u.isp2100.mailbox0;
-		for (cnt = 0; cnt < ha->mbx_count; cnt++, dmp_reg++) {
-			if (cnt == 8)
+		क्रम (cnt = 0; cnt < ha->mbx_count; cnt++, dmp_reg++) अणु
+			अगर (cnt == 8)
 				dmp_reg = &reg->u_end.isp2200.mailbox8;
 
 			fw->mailbox_reg[cnt] = htons(rd_reg_word(dmp_reg));
-		}
+		पूर्ण
 
 		dmp_reg = &reg->u.isp2100.unused_2[0];
-		for (cnt = 0; cnt < ARRAY_SIZE(fw->dma_reg); cnt++, dmp_reg++)
+		क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->dma_reg); cnt++, dmp_reg++)
 			fw->dma_reg[cnt] = htons(rd_reg_word(dmp_reg));
 
 		wrt_reg_word(&reg->ctrl_status, 0x00);
 		dmp_reg = &reg->risc_hw;
-		for (cnt = 0; cnt < ARRAY_SIZE(fw->risc_hdw_reg); cnt++, dmp_reg++)
+		क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->risc_hdw_reg); cnt++, dmp_reg++)
 			fw->risc_hdw_reg[cnt] = htons(rd_reg_word(dmp_reg));
 
 		wrt_reg_word(&reg->pcr, 0x2000);
-		qla2xxx_read_window(reg, 16, fw->risc_gp0_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp0_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2100);
-		qla2xxx_read_window(reg, 16, fw->risc_gp1_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp1_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2200);
-		qla2xxx_read_window(reg, 16, fw->risc_gp2_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp2_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2300);
-		qla2xxx_read_window(reg, 16, fw->risc_gp3_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp3_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2400);
-		qla2xxx_read_window(reg, 16, fw->risc_gp4_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp4_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2500);
-		qla2xxx_read_window(reg, 16, fw->risc_gp5_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp5_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2600);
-		qla2xxx_read_window(reg, 16, fw->risc_gp6_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp6_reg);
 
 		wrt_reg_word(&reg->pcr, 0x2700);
-		qla2xxx_read_window(reg, 16, fw->risc_gp7_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->risc_gp7_reg);
 
 		wrt_reg_word(&reg->ctrl_status, 0x10);
-		qla2xxx_read_window(reg, 16, fw->frame_buf_hdw_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 16, fw->frame_buf_hdw_reg);
 
 		wrt_reg_word(&reg->ctrl_status, 0x20);
-		qla2xxx_read_window(reg, 64, fw->fpm_b0_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 64, fw->fpm_b0_reg);
 
 		wrt_reg_word(&reg->ctrl_status, 0x30);
-		qla2xxx_read_window(reg, 64, fw->fpm_b1_reg);
+		qla2xxx_पढ़ो_winकरोw(reg, 64, fw->fpm_b1_reg);
 
 		/* Reset the ISP. */
 		wrt_reg_word(&reg->ctrl_status, CSR_ISP_SOFT_RESET);
-	}
+	पूर्ण
 
-	for (cnt = 30000; RD_MAILBOX_REG(ha, reg, 0) != 0 &&
-	    rval == QLA_SUCCESS; cnt--) {
-		if (cnt)
+	क्रम (cnt = 30000; RD_MAILBOX_REG(ha, reg, 0) != 0 &&
+	    rval == QLA_SUCCESS; cnt--) अणु
+		अगर (cnt)
 			udelay(100);
-		else
+		अन्यथा
 			rval = QLA_FUNCTION_TIMEOUT;
-	}
+	पूर्ण
 
 	/* Pause RISC. */
-	if (rval == QLA_SUCCESS && (IS_QLA2200(ha) || (IS_QLA2100(ha) &&
-	    (rd_reg_word(&reg->mctr) & (BIT_1 | BIT_0)) != 0))) {
+	अगर (rval == QLA_SUCCESS && (IS_QLA2200(ha) || (IS_QLA2100(ha) &&
+	    (rd_reg_word(&reg->mctr) & (BIT_1 | BIT_0)) != 0))) अणु
 
 		wrt_reg_word(&reg->hccr, HCCR_PAUSE_RISC);
-		for (cnt = 30000;
+		क्रम (cnt = 30000;
 		    (rd_reg_word(&reg->hccr) & HCCR_RISC_PAUSE) == 0 &&
-		    rval == QLA_SUCCESS; cnt--) {
-			if (cnt)
+		    rval == QLA_SUCCESS; cnt--) अणु
+			अगर (cnt)
 				udelay(100);
-			else
+			अन्यथा
 				rval = QLA_FUNCTION_TIMEOUT;
-		}
-		if (rval == QLA_SUCCESS) {
+		पूर्ण
+		अगर (rval == QLA_SUCCESS) अणु
 			/* Set memory configuration and timing. */
-			if (IS_QLA2100(ha))
+			अगर (IS_QLA2100(ha))
 				wrt_reg_word(&reg->mctr, 0xf1);
-			else
+			अन्यथा
 				wrt_reg_word(&reg->mctr, 0xf2);
 			rd_reg_word(&reg->mctr);	/* PCI Posting. */
 
 			/* Release RISC. */
 			wrt_reg_word(&reg->hccr, HCCR_RELEASE_RISC);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rval == QLA_SUCCESS) {
+	अगर (rval == QLA_SUCCESS) अणु
 		/* Get RISC SRAM. */
 		risc_address = 0x1000;
  		WRT_MAILBOX_REG(ha, reg, 0, MBC_READ_RAM_WORD);
 		clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags);
-	}
-	for (cnt = 0; cnt < ARRAY_SIZE(fw->risc_ram) && rval == QLA_SUCCESS;
-	    cnt++, risc_address++) {
+	पूर्ण
+	क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->risc_ram) && rval == QLA_SUCCESS;
+	    cnt++, risc_address++) अणु
  		WRT_MAILBOX_REG(ha, reg, 1, risc_address);
 		wrt_reg_word(&reg->hccr, HCCR_SET_HOST_INT);
 
-		for (timer = 6000000; timer != 0; timer--) {
-			/* Check for pending interrupts. */
-			if (rd_reg_word(&reg->istatus) & ISR_RISC_INT) {
-				if (rd_reg_word(&reg->semaphore) & BIT_0) {
+		क्रम (समयr = 6000000; समयr != 0; समयr--) अणु
+			/* Check क्रम pending पूर्णांकerrupts. */
+			अगर (rd_reg_word(&reg->istatus) & ISR_RISC_INT) अणु
+				अगर (rd_reg_word(&reg->semaphore) & BIT_0) अणु
 					set_bit(MBX_INTERRUPT,
 					    &ha->mbx_cmd_flags);
 
@@ -1054,64 +1055,64 @@ qla2100_fw_dump(scsi_qla_host_t *vha)
 					wrt_reg_word(&reg->hccr,
 					    HCCR_CLR_RISC_INT);
 					rd_reg_word(&reg->hccr);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				wrt_reg_word(&reg->hccr, HCCR_CLR_RISC_INT);
 				rd_reg_word(&reg->hccr);
-			}
+			पूर्ण
 			udelay(5);
-		}
+		पूर्ण
 
-		if (test_and_clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags)) {
+		अगर (test_and_clear_bit(MBX_INTERRUPT, &ha->mbx_cmd_flags)) अणु
 			rval = mb0 & MBS_MASK;
 			fw->risc_ram[cnt] = htons(mb2);
-		} else {
+		पूर्ण अन्यथा अणु
 			rval = QLA_FUNCTION_FAILED;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rval == QLA_SUCCESS)
+	अगर (rval == QLA_SUCCESS)
 		qla2xxx_copy_queues(ha, &fw->queue_dump[0]);
 
 	qla2xxx_dump_post_process(base_vha, rval);
-}
+पूर्ण
 
-void
+व्योम
 qla24xx_fw_dump(scsi_qla_host_t *vha)
-{
-	int		rval;
-	uint32_t	cnt;
-	struct qla_hw_data *ha = vha->hw;
-	struct device_reg_24xx __iomem *reg = &ha->iobase->isp24;
+अणु
+	पूर्णांक		rval;
+	uपूर्णांक32_t	cnt;
+	काष्ठा qla_hw_data *ha = vha->hw;
+	काष्ठा device_reg_24xx __iomem *reg = &ha->iobase->isp24;
 	__le32 __iomem *dmp_reg;
 	__be32		*iter_reg;
 	__le16 __iomem *mbx_reg;
-	struct qla24xx_fw_dump *fw;
-	void		*nxt;
-	void		*nxt_chain;
-	__be32		*last_chain = NULL;
-	struct scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
+	काष्ठा qla24xx_fw_dump *fw;
+	व्योम		*nxt;
+	व्योम		*nxt_chain;
+	__be32		*last_chain = शून्य;
+	काष्ठा scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
 
-	lockdep_assert_held(&ha->hardware_lock);
+	lockdep_निश्चित_held(&ha->hardware_lock);
 
-	if (IS_P3P_TYPE(ha))
-		return;
+	अगर (IS_P3P_TYPE(ha))
+		वापस;
 
 	ha->fw_dump_cap_flags = 0;
 
-	if (!ha->fw_dump) {
+	अगर (!ha->fw_dump) अणु
 		ql_log(ql_log_warn, vha, 0xd006,
 		    "No buffer available for dump.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ha->fw_dumped) {
+	अगर (ha->fw_dumped) अणु
 		ql_log(ql_log_warn, vha, 0xd007,
 		    "Firmware has been previously dumped (%p) "
 		    "-- ignoring request.\n",
 		    ha->fw_dump);
-		return;
-	}
+		वापस;
+	पूर्ण
 	QLA_FW_STOPPED(ha);
 	fw = &ha->fw_dump->isp.isp24;
 	qla2xxx_prep_dump(ha, ha->fw_dump);
@@ -1119,241 +1120,241 @@ qla24xx_fw_dump(scsi_qla_host_t *vha)
 	fw->host_status = htonl(rd_reg_dword(&reg->host_status));
 
 	/*
-	 * Pause RISC. No need to track timeout, as resetting the chip
-	 * is the right approach incase of pause timeout
+	 * Pause RISC. No need to track समयout, as resetting the chip
+	 * is the right approach inहाल of छोड़ो समयout
 	 */
-	qla24xx_pause_risc(reg, ha);
+	qla24xx_छोड़ो_risc(reg, ha);
 
-	/* Host interface registers. */
+	/* Host पूर्णांकerface रेजिस्टरs. */
 	dmp_reg = &reg->flash_addr;
-	for (cnt = 0; cnt < ARRAY_SIZE(fw->host_reg); cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->host_reg); cnt++, dmp_reg++)
 		fw->host_reg[cnt] = htonl(rd_reg_dword(dmp_reg));
 
-	/* Disable interrupts. */
+	/* Disable पूर्णांकerrupts. */
 	wrt_reg_dword(&reg->ictrl, 0);
 	rd_reg_dword(&reg->ictrl);
 
-	/* Shadow registers. */
+	/* Shaकरोw रेजिस्टरs. */
 	wrt_reg_dword(&reg->iobase_addr, 0x0F70);
 	rd_reg_dword(&reg->iobase_addr);
 	wrt_reg_dword(&reg->iobase_select, 0xB0000000);
-	fw->shadow_reg[0] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[0] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0100000);
-	fw->shadow_reg[1] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[1] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0200000);
-	fw->shadow_reg[2] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[2] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0300000);
-	fw->shadow_reg[3] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[3] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0400000);
-	fw->shadow_reg[4] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[4] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0500000);
-	fw->shadow_reg[5] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[5] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0600000);
-	fw->shadow_reg[6] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[6] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
-	/* Mailbox registers. */
+	/* Mailbox रेजिस्टरs. */
 	mbx_reg = &reg->mailbox0;
-	for (cnt = 0; cnt < ARRAY_SIZE(fw->mailbox_reg); cnt++, mbx_reg++)
+	क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->mailbox_reg); cnt++, mbx_reg++)
 		fw->mailbox_reg[cnt] = htons(rd_reg_word(mbx_reg));
 
-	/* Transfer sequence registers. */
+	/* Transfer sequence रेजिस्टरs. */
 	iter_reg = fw->xseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xBF00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF60, 16, iter_reg);
-	qla24xx_read_window(reg, 0xBF70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBF70, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xBFE0, 16, fw->xseq_0_reg);
-	qla24xx_read_window(reg, 0xBFF0, 16, fw->xseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBFE0, 16, fw->xseq_0_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBFF0, 16, fw->xseq_1_reg);
 
-	/* Receive sequence registers. */
+	/* Receive sequence रेजिस्टरs. */
 	iter_reg = fw->rseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xFF00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF60, 16, iter_reg);
-	qla24xx_read_window(reg, 0xFF70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFF70, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xFFD0, 16, fw->rseq_0_reg);
-	qla24xx_read_window(reg, 0xFFE0, 16, fw->rseq_1_reg);
-	qla24xx_read_window(reg, 0xFFF0, 16, fw->rseq_2_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFD0, 16, fw->rseq_0_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFE0, 16, fw->rseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFF0, 16, fw->rseq_2_reg);
 
-	/* Command DMA registers. */
-	qla24xx_read_window(reg, 0x7100, 16, fw->cmd_dma_reg);
+	/* Command DMA रेजिस्टरs. */
+	qla24xx_पढ़ो_winकरोw(reg, 0x7100, 16, fw->cmd_dma_reg);
 
 	/* Queues. */
 	iter_reg = fw->req0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7200, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7200, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
 	iter_reg = fw->resp0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7300, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7300, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
 	iter_reg = fw->req1_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7400, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7400, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
-	/* Transmit DMA registers. */
+	/* Transmit DMA रेजिस्टरs. */
 	iter_reg = fw->xmt0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7600, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7610, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7600, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7610, 16, iter_reg);
 
 	iter_reg = fw->xmt1_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7620, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7630, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7620, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7630, 16, iter_reg);
 
 	iter_reg = fw->xmt2_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7640, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7650, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7640, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7650, 16, iter_reg);
 
 	iter_reg = fw->xmt3_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7660, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7670, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7660, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7670, 16, iter_reg);
 
 	iter_reg = fw->xmt4_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7680, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7690, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7680, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7690, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0x76A0, 16, fw->xmt_data_dma_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x76A0, 16, fw->xmt_data_dma_reg);
 
-	/* Receive DMA registers. */
+	/* Receive DMA रेजिस्टरs. */
 	iter_reg = fw->rcvt0_data_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7700, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7710, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7700, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7710, 16, iter_reg);
 
 	iter_reg = fw->rcvt1_data_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7720, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7730, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7720, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7730, 16, iter_reg);
 
-	/* RISC registers. */
+	/* RISC रेजिस्टरs. */
 	iter_reg = fw->risc_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0x0F00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F60, 16, iter_reg);
-	qla24xx_read_window(reg, 0x0F70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x0F70, 16, iter_reg);
 
-	/* Local memory controller registers. */
+	/* Local memory controller रेजिस्टरs. */
 	iter_reg = fw->lmc_reg;
-	iter_reg = qla24xx_read_window(reg, 0x3000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3050, 16, iter_reg);
-	qla24xx_read_window(reg, 0x3060, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3050, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x3060, 16, iter_reg);
 
-	/* Fibre Protocol Module registers. */
+	/* Fibre Protocol Module रेजिस्टरs. */
 	iter_reg = fw->fpm_hdw_reg;
-	iter_reg = qla24xx_read_window(reg, 0x4000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4050, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4060, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4070, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4080, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4090, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x40A0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x40B0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4050, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4060, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4080, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4090, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x40A0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x40B0, 16, iter_reg);
 
-	/* Frame Buffer registers. */
+	/* Frame Buffer रेजिस्टरs. */
 	iter_reg = fw->fb_hdw_reg;
-	iter_reg = qla24xx_read_window(reg, 0x6000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6100, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6130, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6150, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6170, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6190, 16, iter_reg);
-	qla24xx_read_window(reg, 0x61B0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6100, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6130, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6150, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6170, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6190, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x61B0, 16, iter_reg);
 
 	rval = qla24xx_soft_reset(ha);
-	if (rval != QLA_SUCCESS)
-		goto qla24xx_fw_dump_failed_0;
+	अगर (rval != QLA_SUCCESS)
+		जाओ qla24xx_fw_dump_failed_0;
 
-	rval = qla24xx_dump_memory(ha, fw->code_ram, sizeof(fw->code_ram),
+	rval = qla24xx_dump_memory(ha, fw->code_ram, माप(fw->code_ram),
 	    &nxt);
-	if (rval != QLA_SUCCESS)
-		goto qla24xx_fw_dump_failed_0;
+	अगर (rval != QLA_SUCCESS)
+		जाओ qla24xx_fw_dump_failed_0;
 
 	nxt = qla2xxx_copy_queues(ha, nxt);
 
 	qla24xx_copy_eft(ha, nxt);
 
-	nxt_chain = (void *)ha->fw_dump + ha->chain_offset;
+	nxt_chain = (व्योम *)ha->fw_dump + ha->chain_offset;
 	nxt_chain = qla2xxx_copy_atioqueues(ha, nxt_chain, &last_chain);
-	if (last_chain) {
+	अगर (last_chain) अणु
 		ha->fw_dump->version |= htonl(DUMP_CHAIN_VARIANT);
 		*last_chain |= htonl(DUMP_CHAIN_LAST);
-	}
+	पूर्ण
 
 	/* Adjust valid length. */
-	ha->fw_dump_len = (nxt_chain - (void *)ha->fw_dump);
+	ha->fw_dump_len = (nxt_chain - (व्योम *)ha->fw_dump);
 
 qla24xx_fw_dump_failed_0:
 	qla2xxx_dump_post_process(base_vha, rval);
-}
+पूर्ण
 
-void
+व्योम
 qla25xx_fw_dump(scsi_qla_host_t *vha)
-{
-	int		rval;
-	uint32_t	cnt;
-	struct qla_hw_data *ha = vha->hw;
-	struct device_reg_24xx __iomem *reg = &ha->iobase->isp24;
+अणु
+	पूर्णांक		rval;
+	uपूर्णांक32_t	cnt;
+	काष्ठा qla_hw_data *ha = vha->hw;
+	काष्ठा device_reg_24xx __iomem *reg = &ha->iobase->isp24;
 	__le32 __iomem *dmp_reg;
 	__be32		*iter_reg;
 	__le16 __iomem *mbx_reg;
-	struct qla25xx_fw_dump *fw;
-	void		*nxt, *nxt_chain;
-	__be32		*last_chain = NULL;
-	struct scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
+	काष्ठा qla25xx_fw_dump *fw;
+	व्योम		*nxt, *nxt_chain;
+	__be32		*last_chain = शून्य;
+	काष्ठा scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
 
-	lockdep_assert_held(&ha->hardware_lock);
+	lockdep_निश्चित_held(&ha->hardware_lock);
 
 	ha->fw_dump_cap_flags = 0;
 
-	if (!ha->fw_dump) {
+	अगर (!ha->fw_dump) अणु
 		ql_log(ql_log_warn, vha, 0xd008,
 		    "No buffer available for dump.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ha->fw_dumped) {
+	अगर (ha->fw_dumped) अणु
 		ql_log(ql_log_warn, vha, 0xd009,
 		    "Firmware has been previously dumped (%p) "
 		    "-- ignoring request.\n",
 		    ha->fw_dump);
-		return;
-	}
+		वापस;
+	पूर्ण
 	QLA_FW_STOPPED(ha);
 	fw = &ha->fw_dump->isp.isp25;
 	qla2xxx_prep_dump(ha, ha->fw_dump);
@@ -1362,257 +1363,257 @@ qla25xx_fw_dump(scsi_qla_host_t *vha)
 	fw->host_status = htonl(rd_reg_dword(&reg->host_status));
 
 	/*
-	 * Pause RISC. No need to track timeout, as resetting the chip
-	 * is the right approach incase of pause timeout
+	 * Pause RISC. No need to track समयout, as resetting the chip
+	 * is the right approach inहाल of छोड़ो समयout
 	 */
-	qla24xx_pause_risc(reg, ha);
+	qla24xx_छोड़ो_risc(reg, ha);
 
-	/* Host/Risc registers. */
+	/* Host/Risc रेजिस्टरs. */
 	iter_reg = fw->host_risc_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7000, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7000, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7010, 16, iter_reg);
 
-	/* PCIe registers. */
+	/* PCIe रेजिस्टरs. */
 	wrt_reg_dword(&reg->iobase_addr, 0x7C00);
 	rd_reg_dword(&reg->iobase_addr);
-	wrt_reg_dword(&reg->iobase_window, 0x01);
+	wrt_reg_dword(&reg->iobase_winकरोw, 0x01);
 	dmp_reg = &reg->iobase_c4;
 	fw->pcie_regs[0] = htonl(rd_reg_dword(dmp_reg));
 	dmp_reg++;
 	fw->pcie_regs[1] = htonl(rd_reg_dword(dmp_reg));
 	dmp_reg++;
 	fw->pcie_regs[2] = htonl(rd_reg_dword(dmp_reg));
-	fw->pcie_regs[3] = htonl(rd_reg_dword(&reg->iobase_window));
+	fw->pcie_regs[3] = htonl(rd_reg_dword(&reg->iobase_winकरोw));
 
-	wrt_reg_dword(&reg->iobase_window, 0x00);
-	rd_reg_dword(&reg->iobase_window);
+	wrt_reg_dword(&reg->iobase_winकरोw, 0x00);
+	rd_reg_dword(&reg->iobase_winकरोw);
 
-	/* Host interface registers. */
+	/* Host पूर्णांकerface रेजिस्टरs. */
 	dmp_reg = &reg->flash_addr;
-	for (cnt = 0; cnt < ARRAY_SIZE(fw->host_reg); cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->host_reg); cnt++, dmp_reg++)
 		fw->host_reg[cnt] = htonl(rd_reg_dword(dmp_reg));
 
-	/* Disable interrupts. */
+	/* Disable पूर्णांकerrupts. */
 	wrt_reg_dword(&reg->ictrl, 0);
 	rd_reg_dword(&reg->ictrl);
 
-	/* Shadow registers. */
+	/* Shaकरोw रेजिस्टरs. */
 	wrt_reg_dword(&reg->iobase_addr, 0x0F70);
 	rd_reg_dword(&reg->iobase_addr);
 	wrt_reg_dword(&reg->iobase_select, 0xB0000000);
-	fw->shadow_reg[0] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[0] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0100000);
-	fw->shadow_reg[1] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[1] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0200000);
-	fw->shadow_reg[2] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[2] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0300000);
-	fw->shadow_reg[3] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[3] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0400000);
-	fw->shadow_reg[4] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[4] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0500000);
-	fw->shadow_reg[5] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[5] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0600000);
-	fw->shadow_reg[6] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[6] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0700000);
-	fw->shadow_reg[7] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[7] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0800000);
-	fw->shadow_reg[8] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[8] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0900000);
-	fw->shadow_reg[9] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[9] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0A00000);
-	fw->shadow_reg[10] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[10] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
-	/* RISC I/O register. */
+	/* RISC I/O रेजिस्टर. */
 	wrt_reg_dword(&reg->iobase_addr, 0x0010);
-	fw->risc_io_reg = htonl(rd_reg_dword(&reg->iobase_window));
+	fw->risc_io_reg = htonl(rd_reg_dword(&reg->iobase_winकरोw));
 
-	/* Mailbox registers. */
+	/* Mailbox रेजिस्टरs. */
 	mbx_reg = &reg->mailbox0;
-	for (cnt = 0; cnt < ARRAY_SIZE(fw->mailbox_reg); cnt++, mbx_reg++)
+	क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->mailbox_reg); cnt++, mbx_reg++)
 		fw->mailbox_reg[cnt] = htons(rd_reg_word(mbx_reg));
 
-	/* Transfer sequence registers. */
+	/* Transfer sequence रेजिस्टरs. */
 	iter_reg = fw->xseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xBF00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF60, 16, iter_reg);
-	qla24xx_read_window(reg, 0xBF70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBF70, 16, iter_reg);
 
 	iter_reg = fw->xseq_0_reg;
-	iter_reg = qla24xx_read_window(reg, 0xBFC0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBFD0, 16, iter_reg);
-	qla24xx_read_window(reg, 0xBFE0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBFC0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBFD0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBFE0, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xBFF0, 16, fw->xseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBFF0, 16, fw->xseq_1_reg);
 
-	/* Receive sequence registers. */
+	/* Receive sequence रेजिस्टरs. */
 	iter_reg = fw->rseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xFF00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF60, 16, iter_reg);
-	qla24xx_read_window(reg, 0xFF70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFF70, 16, iter_reg);
 
 	iter_reg = fw->rseq_0_reg;
-	iter_reg = qla24xx_read_window(reg, 0xFFC0, 16, iter_reg);
-	qla24xx_read_window(reg, 0xFFD0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFFC0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFD0, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xFFE0, 16, fw->rseq_1_reg);
-	qla24xx_read_window(reg, 0xFFF0, 16, fw->rseq_2_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFE0, 16, fw->rseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFF0, 16, fw->rseq_2_reg);
 
-	/* Auxiliary sequence registers. */
+	/* Auxiliary sequence रेजिस्टरs. */
 	iter_reg = fw->aseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xB000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB050, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB060, 16, iter_reg);
-	qla24xx_read_window(reg, 0xB070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB050, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB060, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB070, 16, iter_reg);
 
 	iter_reg = fw->aseq_0_reg;
-	iter_reg = qla24xx_read_window(reg, 0xB0C0, 16, iter_reg);
-	qla24xx_read_window(reg, 0xB0D0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB0C0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB0D0, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xB0E0, 16, fw->aseq_1_reg);
-	qla24xx_read_window(reg, 0xB0F0, 16, fw->aseq_2_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB0E0, 16, fw->aseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB0F0, 16, fw->aseq_2_reg);
 
-	/* Command DMA registers. */
-	qla24xx_read_window(reg, 0x7100, 16, fw->cmd_dma_reg);
+	/* Command DMA रेजिस्टरs. */
+	qla24xx_पढ़ो_winकरोw(reg, 0x7100, 16, fw->cmd_dma_reg);
 
 	/* Queues. */
 	iter_reg = fw->req0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7200, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7200, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
 	iter_reg = fw->resp0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7300, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7300, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
 	iter_reg = fw->req1_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7400, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7400, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
-	/* Transmit DMA registers. */
+	/* Transmit DMA रेजिस्टरs. */
 	iter_reg = fw->xmt0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7600, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7610, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7600, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7610, 16, iter_reg);
 
 	iter_reg = fw->xmt1_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7620, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7630, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7620, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7630, 16, iter_reg);
 
 	iter_reg = fw->xmt2_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7640, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7650, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7640, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7650, 16, iter_reg);
 
 	iter_reg = fw->xmt3_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7660, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7670, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7660, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7670, 16, iter_reg);
 
 	iter_reg = fw->xmt4_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7680, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7690, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7680, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7690, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0x76A0, 16, fw->xmt_data_dma_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x76A0, 16, fw->xmt_data_dma_reg);
 
-	/* Receive DMA registers. */
+	/* Receive DMA रेजिस्टरs. */
 	iter_reg = fw->rcvt0_data_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7700, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7710, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7700, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7710, 16, iter_reg);
 
 	iter_reg = fw->rcvt1_data_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7720, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7730, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7720, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7730, 16, iter_reg);
 
-	/* RISC registers. */
+	/* RISC रेजिस्टरs. */
 	iter_reg = fw->risc_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0x0F00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F60, 16, iter_reg);
-	qla24xx_read_window(reg, 0x0F70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x0F70, 16, iter_reg);
 
-	/* Local memory controller registers. */
+	/* Local memory controller रेजिस्टरs. */
 	iter_reg = fw->lmc_reg;
-	iter_reg = qla24xx_read_window(reg, 0x3000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3050, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3060, 16, iter_reg);
-	qla24xx_read_window(reg, 0x3070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3050, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3060, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x3070, 16, iter_reg);
 
-	/* Fibre Protocol Module registers. */
+	/* Fibre Protocol Module रेजिस्टरs. */
 	iter_reg = fw->fpm_hdw_reg;
-	iter_reg = qla24xx_read_window(reg, 0x4000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4050, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4060, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4070, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4080, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4090, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x40A0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x40B0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4050, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4060, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4080, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4090, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x40A0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x40B0, 16, iter_reg);
 
-	/* Frame Buffer registers. */
+	/* Frame Buffer रेजिस्टरs. */
 	iter_reg = fw->fb_hdw_reg;
-	iter_reg = qla24xx_read_window(reg, 0x6000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6100, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6130, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6150, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6170, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6190, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x61B0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x6F00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6100, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6130, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6150, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6170, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6190, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x61B0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x6F00, 16, iter_reg);
 
-	/* Multi queue registers */
-	nxt_chain = qla25xx_copy_mq(ha, (void *)ha->fw_dump + ha->chain_offset,
+	/* Multi queue रेजिस्टरs */
+	nxt_chain = qla25xx_copy_mq(ha, (व्योम *)ha->fw_dump + ha->chain_offset,
 	    &last_chain);
 
 	rval = qla24xx_soft_reset(ha);
-	if (rval != QLA_SUCCESS)
-		goto qla25xx_fw_dump_failed_0;
+	अगर (rval != QLA_SUCCESS)
+		जाओ qla25xx_fw_dump_failed_0;
 
-	rval = qla24xx_dump_memory(ha, fw->code_ram, sizeof(fw->code_ram),
+	rval = qla24xx_dump_memory(ha, fw->code_ram, माप(fw->code_ram),
 	    &nxt);
-	if (rval != QLA_SUCCESS)
-		goto qla25xx_fw_dump_failed_0;
+	अगर (rval != QLA_SUCCESS)
+		जाओ qla25xx_fw_dump_failed_0;
 
 	nxt = qla2xxx_copy_queues(ha, nxt);
 
@@ -1623,310 +1624,310 @@ qla25xx_fw_dump(scsi_qla_host_t *vha)
 	nxt_chain = qla25xx_copy_mqueues(ha, nxt_chain, &last_chain);
 	nxt_chain = qla2xxx_copy_atioqueues(ha, nxt_chain, &last_chain);
 	nxt_chain = qla25xx_copy_exlogin(ha, nxt_chain, &last_chain);
-	if (last_chain) {
+	अगर (last_chain) अणु
 		ha->fw_dump->version |= htonl(DUMP_CHAIN_VARIANT);
 		*last_chain |= htonl(DUMP_CHAIN_LAST);
-	}
+	पूर्ण
 
 	/* Adjust valid length. */
-	ha->fw_dump_len = (nxt_chain - (void *)ha->fw_dump);
+	ha->fw_dump_len = (nxt_chain - (व्योम *)ha->fw_dump);
 
 qla25xx_fw_dump_failed_0:
 	qla2xxx_dump_post_process(base_vha, rval);
-}
+पूर्ण
 
-void
+व्योम
 qla81xx_fw_dump(scsi_qla_host_t *vha)
-{
-	int		rval;
-	uint32_t	cnt;
-	struct qla_hw_data *ha = vha->hw;
-	struct device_reg_24xx __iomem *reg = &ha->iobase->isp24;
+अणु
+	पूर्णांक		rval;
+	uपूर्णांक32_t	cnt;
+	काष्ठा qla_hw_data *ha = vha->hw;
+	काष्ठा device_reg_24xx __iomem *reg = &ha->iobase->isp24;
 	__le32 __iomem *dmp_reg;
 	__be32		*iter_reg;
 	__le16 __iomem *mbx_reg;
-	struct qla81xx_fw_dump *fw;
-	void		*nxt, *nxt_chain;
-	__be32		*last_chain = NULL;
-	struct scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
+	काष्ठा qla81xx_fw_dump *fw;
+	व्योम		*nxt, *nxt_chain;
+	__be32		*last_chain = शून्य;
+	काष्ठा scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
 
-	lockdep_assert_held(&ha->hardware_lock);
+	lockdep_निश्चित_held(&ha->hardware_lock);
 
 	ha->fw_dump_cap_flags = 0;
 
-	if (!ha->fw_dump) {
+	अगर (!ha->fw_dump) अणु
 		ql_log(ql_log_warn, vha, 0xd00a,
 		    "No buffer available for dump.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ha->fw_dumped) {
+	अगर (ha->fw_dumped) अणु
 		ql_log(ql_log_warn, vha, 0xd00b,
 		    "Firmware has been previously dumped (%p) "
 		    "-- ignoring request.\n",
 		    ha->fw_dump);
-		return;
-	}
+		वापस;
+	पूर्ण
 	fw = &ha->fw_dump->isp.isp81;
 	qla2xxx_prep_dump(ha, ha->fw_dump);
 
 	fw->host_status = htonl(rd_reg_dword(&reg->host_status));
 
 	/*
-	 * Pause RISC. No need to track timeout, as resetting the chip
-	 * is the right approach incase of pause timeout
+	 * Pause RISC. No need to track समयout, as resetting the chip
+	 * is the right approach inहाल of छोड़ो समयout
 	 */
-	qla24xx_pause_risc(reg, ha);
+	qla24xx_छोड़ो_risc(reg, ha);
 
-	/* Host/Risc registers. */
+	/* Host/Risc रेजिस्टरs. */
 	iter_reg = fw->host_risc_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7000, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7000, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7010, 16, iter_reg);
 
-	/* PCIe registers. */
+	/* PCIe रेजिस्टरs. */
 	wrt_reg_dword(&reg->iobase_addr, 0x7C00);
 	rd_reg_dword(&reg->iobase_addr);
-	wrt_reg_dword(&reg->iobase_window, 0x01);
+	wrt_reg_dword(&reg->iobase_winकरोw, 0x01);
 	dmp_reg = &reg->iobase_c4;
 	fw->pcie_regs[0] = htonl(rd_reg_dword(dmp_reg));
 	dmp_reg++;
 	fw->pcie_regs[1] = htonl(rd_reg_dword(dmp_reg));
 	dmp_reg++;
 	fw->pcie_regs[2] = htonl(rd_reg_dword(dmp_reg));
-	fw->pcie_regs[3] = htonl(rd_reg_dword(&reg->iobase_window));
+	fw->pcie_regs[3] = htonl(rd_reg_dword(&reg->iobase_winकरोw));
 
-	wrt_reg_dword(&reg->iobase_window, 0x00);
-	rd_reg_dword(&reg->iobase_window);
+	wrt_reg_dword(&reg->iobase_winकरोw, 0x00);
+	rd_reg_dword(&reg->iobase_winकरोw);
 
-	/* Host interface registers. */
+	/* Host पूर्णांकerface रेजिस्टरs. */
 	dmp_reg = &reg->flash_addr;
-	for (cnt = 0; cnt < ARRAY_SIZE(fw->host_reg); cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->host_reg); cnt++, dmp_reg++)
 		fw->host_reg[cnt] = htonl(rd_reg_dword(dmp_reg));
 
-	/* Disable interrupts. */
+	/* Disable पूर्णांकerrupts. */
 	wrt_reg_dword(&reg->ictrl, 0);
 	rd_reg_dword(&reg->ictrl);
 
-	/* Shadow registers. */
+	/* Shaकरोw रेजिस्टरs. */
 	wrt_reg_dword(&reg->iobase_addr, 0x0F70);
 	rd_reg_dword(&reg->iobase_addr);
 	wrt_reg_dword(&reg->iobase_select, 0xB0000000);
-	fw->shadow_reg[0] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[0] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0100000);
-	fw->shadow_reg[1] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[1] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0200000);
-	fw->shadow_reg[2] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[2] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0300000);
-	fw->shadow_reg[3] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[3] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0400000);
-	fw->shadow_reg[4] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[4] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0500000);
-	fw->shadow_reg[5] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[5] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0600000);
-	fw->shadow_reg[6] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[6] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0700000);
-	fw->shadow_reg[7] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[7] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0800000);
-	fw->shadow_reg[8] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[8] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0900000);
-	fw->shadow_reg[9] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[9] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0A00000);
-	fw->shadow_reg[10] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[10] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
-	/* RISC I/O register. */
+	/* RISC I/O रेजिस्टर. */
 	wrt_reg_dword(&reg->iobase_addr, 0x0010);
-	fw->risc_io_reg = htonl(rd_reg_dword(&reg->iobase_window));
+	fw->risc_io_reg = htonl(rd_reg_dword(&reg->iobase_winकरोw));
 
-	/* Mailbox registers. */
+	/* Mailbox रेजिस्टरs. */
 	mbx_reg = &reg->mailbox0;
-	for (cnt = 0; cnt < ARRAY_SIZE(fw->mailbox_reg); cnt++, mbx_reg++)
+	क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->mailbox_reg); cnt++, mbx_reg++)
 		fw->mailbox_reg[cnt] = htons(rd_reg_word(mbx_reg));
 
-	/* Transfer sequence registers. */
+	/* Transfer sequence रेजिस्टरs. */
 	iter_reg = fw->xseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xBF00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF60, 16, iter_reg);
-	qla24xx_read_window(reg, 0xBF70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBF70, 16, iter_reg);
 
 	iter_reg = fw->xseq_0_reg;
-	iter_reg = qla24xx_read_window(reg, 0xBFC0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBFD0, 16, iter_reg);
-	qla24xx_read_window(reg, 0xBFE0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBFC0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBFD0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBFE0, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xBFF0, 16, fw->xseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBFF0, 16, fw->xseq_1_reg);
 
-	/* Receive sequence registers. */
+	/* Receive sequence रेजिस्टरs. */
 	iter_reg = fw->rseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xFF00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF60, 16, iter_reg);
-	qla24xx_read_window(reg, 0xFF70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFF70, 16, iter_reg);
 
 	iter_reg = fw->rseq_0_reg;
-	iter_reg = qla24xx_read_window(reg, 0xFFC0, 16, iter_reg);
-	qla24xx_read_window(reg, 0xFFD0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFFC0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFD0, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xFFE0, 16, fw->rseq_1_reg);
-	qla24xx_read_window(reg, 0xFFF0, 16, fw->rseq_2_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFE0, 16, fw->rseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFF0, 16, fw->rseq_2_reg);
 
-	/* Auxiliary sequence registers. */
+	/* Auxiliary sequence रेजिस्टरs. */
 	iter_reg = fw->aseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xB000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB050, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB060, 16, iter_reg);
-	qla24xx_read_window(reg, 0xB070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB050, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB060, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB070, 16, iter_reg);
 
 	iter_reg = fw->aseq_0_reg;
-	iter_reg = qla24xx_read_window(reg, 0xB0C0, 16, iter_reg);
-	qla24xx_read_window(reg, 0xB0D0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB0C0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB0D0, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xB0E0, 16, fw->aseq_1_reg);
-	qla24xx_read_window(reg, 0xB0F0, 16, fw->aseq_2_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB0E0, 16, fw->aseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB0F0, 16, fw->aseq_2_reg);
 
-	/* Command DMA registers. */
-	qla24xx_read_window(reg, 0x7100, 16, fw->cmd_dma_reg);
+	/* Command DMA रेजिस्टरs. */
+	qla24xx_पढ़ो_winकरोw(reg, 0x7100, 16, fw->cmd_dma_reg);
 
 	/* Queues. */
 	iter_reg = fw->req0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7200, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7200, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
 	iter_reg = fw->resp0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7300, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7300, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
 	iter_reg = fw->req1_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7400, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7400, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
-	/* Transmit DMA registers. */
+	/* Transmit DMA रेजिस्टरs. */
 	iter_reg = fw->xmt0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7600, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7610, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7600, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7610, 16, iter_reg);
 
 	iter_reg = fw->xmt1_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7620, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7630, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7620, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7630, 16, iter_reg);
 
 	iter_reg = fw->xmt2_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7640, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7650, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7640, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7650, 16, iter_reg);
 
 	iter_reg = fw->xmt3_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7660, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7670, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7660, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7670, 16, iter_reg);
 
 	iter_reg = fw->xmt4_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7680, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7690, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7680, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7690, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0x76A0, 16, fw->xmt_data_dma_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x76A0, 16, fw->xmt_data_dma_reg);
 
-	/* Receive DMA registers. */
+	/* Receive DMA रेजिस्टरs. */
 	iter_reg = fw->rcvt0_data_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7700, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7710, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7700, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7710, 16, iter_reg);
 
 	iter_reg = fw->rcvt1_data_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7720, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7730, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7720, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7730, 16, iter_reg);
 
-	/* RISC registers. */
+	/* RISC रेजिस्टरs. */
 	iter_reg = fw->risc_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0x0F00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F60, 16, iter_reg);
-	qla24xx_read_window(reg, 0x0F70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x0F70, 16, iter_reg);
 
-	/* Local memory controller registers. */
+	/* Local memory controller रेजिस्टरs. */
 	iter_reg = fw->lmc_reg;
-	iter_reg = qla24xx_read_window(reg, 0x3000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3050, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3060, 16, iter_reg);
-	qla24xx_read_window(reg, 0x3070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3050, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3060, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x3070, 16, iter_reg);
 
-	/* Fibre Protocol Module registers. */
+	/* Fibre Protocol Module रेजिस्टरs. */
 	iter_reg = fw->fpm_hdw_reg;
-	iter_reg = qla24xx_read_window(reg, 0x4000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4050, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4060, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4070, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4080, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4090, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x40A0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x40B0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x40C0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x40D0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4050, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4060, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4080, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4090, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x40A0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x40B0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x40C0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x40D0, 16, iter_reg);
 
-	/* Frame Buffer registers. */
+	/* Frame Buffer रेजिस्टरs. */
 	iter_reg = fw->fb_hdw_reg;
-	iter_reg = qla24xx_read_window(reg, 0x6000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6100, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6130, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6150, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6170, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6190, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x61B0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x61C0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x6F00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6100, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6130, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6150, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6170, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6190, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x61B0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x61C0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x6F00, 16, iter_reg);
 
-	/* Multi queue registers */
-	nxt_chain = qla25xx_copy_mq(ha, (void *)ha->fw_dump + ha->chain_offset,
+	/* Multi queue रेजिस्टरs */
+	nxt_chain = qla25xx_copy_mq(ha, (व्योम *)ha->fw_dump + ha->chain_offset,
 	    &last_chain);
 
 	rval = qla24xx_soft_reset(ha);
-	if (rval != QLA_SUCCESS)
-		goto qla81xx_fw_dump_failed_0;
+	अगर (rval != QLA_SUCCESS)
+		जाओ qla81xx_fw_dump_failed_0;
 
-	rval = qla24xx_dump_memory(ha, fw->code_ram, sizeof(fw->code_ram),
+	rval = qla24xx_dump_memory(ha, fw->code_ram, माप(fw->code_ram),
 	    &nxt);
-	if (rval != QLA_SUCCESS)
-		goto qla81xx_fw_dump_failed_0;
+	अगर (rval != QLA_SUCCESS)
+		जाओ qla81xx_fw_dump_failed_0;
 
 	nxt = qla2xxx_copy_queues(ha, nxt);
 
@@ -1938,49 +1939,49 @@ qla81xx_fw_dump(scsi_qla_host_t *vha)
 	nxt_chain = qla2xxx_copy_atioqueues(ha, nxt_chain, &last_chain);
 	nxt_chain = qla25xx_copy_exlogin(ha, nxt_chain, &last_chain);
 	nxt_chain = qla81xx_copy_exchoffld(ha, nxt_chain, &last_chain);
-	if (last_chain) {
+	अगर (last_chain) अणु
 		ha->fw_dump->version |= htonl(DUMP_CHAIN_VARIANT);
 		*last_chain |= htonl(DUMP_CHAIN_LAST);
-	}
+	पूर्ण
 
 	/* Adjust valid length. */
-	ha->fw_dump_len = (nxt_chain - (void *)ha->fw_dump);
+	ha->fw_dump_len = (nxt_chain - (व्योम *)ha->fw_dump);
 
 qla81xx_fw_dump_failed_0:
 	qla2xxx_dump_post_process(base_vha, rval);
-}
+पूर्ण
 
-void
+व्योम
 qla83xx_fw_dump(scsi_qla_host_t *vha)
-{
-	int		rval;
-	uint32_t	cnt;
-	struct qla_hw_data *ha = vha->hw;
-	struct device_reg_24xx __iomem *reg = &ha->iobase->isp24;
+अणु
+	पूर्णांक		rval;
+	uपूर्णांक32_t	cnt;
+	काष्ठा qla_hw_data *ha = vha->hw;
+	काष्ठा device_reg_24xx __iomem *reg = &ha->iobase->isp24;
 	__le32 __iomem *dmp_reg;
 	__be32		*iter_reg;
 	__le16 __iomem *mbx_reg;
-	struct qla83xx_fw_dump *fw;
-	void		*nxt, *nxt_chain;
-	__be32		*last_chain = NULL;
-	struct scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
+	काष्ठा qla83xx_fw_dump *fw;
+	व्योम		*nxt, *nxt_chain;
+	__be32		*last_chain = शून्य;
+	काष्ठा scsi_qla_host *base_vha = pci_get_drvdata(ha->pdev);
 
-	lockdep_assert_held(&ha->hardware_lock);
+	lockdep_निश्चित_held(&ha->hardware_lock);
 
 	ha->fw_dump_cap_flags = 0;
 
-	if (!ha->fw_dump) {
+	अगर (!ha->fw_dump) अणु
 		ql_log(ql_log_warn, vha, 0xd00c,
 		    "No buffer available for dump!!!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ha->fw_dumped) {
+	अगर (ha->fw_dumped) अणु
 		ql_log(ql_log_warn, vha, 0xd00d,
 		    "Firmware has been previously dumped (%p) -- ignoring "
 		    "request...\n", ha->fw_dump);
-		return;
-	}
+		वापस;
+	पूर्ण
 	QLA_FW_STOPPED(ha);
 	fw = &ha->fw_dump->isp.isp83;
 	qla2xxx_prep_dump(ha, ha->fw_dump);
@@ -1988,13 +1989,13 @@ qla83xx_fw_dump(scsi_qla_host_t *vha)
 	fw->host_status = htonl(rd_reg_dword(&reg->host_status));
 
 	/*
-	 * Pause RISC. No need to track timeout, as resetting the chip
-	 * is the right approach incase of pause timeout
+	 * Pause RISC. No need to track समयout, as resetting the chip
+	 * is the right approach inहाल of छोड़ो समयout
 	 */
-	qla24xx_pause_risc(reg, ha);
+	qla24xx_छोड़ो_risc(reg, ha);
 
 	wrt_reg_dword(&reg->iobase_addr, 0x6000);
-	dmp_reg = &reg->iobase_window;
+	dmp_reg = &reg->iobase_winकरोw;
 	rd_reg_dword(dmp_reg);
 	wrt_reg_dword(dmp_reg, 0);
 
@@ -2010,389 +2011,389 @@ qla83xx_fw_dump(scsi_qla_host_t *vha)
 	/* select PCR and disable ecc checking and correction */
 	wrt_reg_dword(&reg->iobase_addr, 0x0F70);
 	rd_reg_dword(&reg->iobase_addr);
-	wrt_reg_dword(&reg->iobase_select, 0x60000000);	/* write to F0h = PCR */
+	wrt_reg_dword(&reg->iobase_select, 0x60000000);	/* ग_लिखो to F0h = PCR */
 
-	/* Host/Risc registers. */
+	/* Host/Risc रेजिस्टरs. */
 	iter_reg = fw->host_risc_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x7010, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7010, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7040, 16, iter_reg);
 
-	/* PCIe registers. */
+	/* PCIe रेजिस्टरs. */
 	wrt_reg_dword(&reg->iobase_addr, 0x7C00);
 	rd_reg_dword(&reg->iobase_addr);
-	wrt_reg_dword(&reg->iobase_window, 0x01);
+	wrt_reg_dword(&reg->iobase_winकरोw, 0x01);
 	dmp_reg = &reg->iobase_c4;
 	fw->pcie_regs[0] = htonl(rd_reg_dword(dmp_reg));
 	dmp_reg++;
 	fw->pcie_regs[1] = htonl(rd_reg_dword(dmp_reg));
 	dmp_reg++;
 	fw->pcie_regs[2] = htonl(rd_reg_dword(dmp_reg));
-	fw->pcie_regs[3] = htonl(rd_reg_dword(&reg->iobase_window));
+	fw->pcie_regs[3] = htonl(rd_reg_dword(&reg->iobase_winकरोw));
 
-	wrt_reg_dword(&reg->iobase_window, 0x00);
-	rd_reg_dword(&reg->iobase_window);
+	wrt_reg_dword(&reg->iobase_winकरोw, 0x00);
+	rd_reg_dword(&reg->iobase_winकरोw);
 
-	/* Host interface registers. */
+	/* Host पूर्णांकerface रेजिस्टरs. */
 	dmp_reg = &reg->flash_addr;
-	for (cnt = 0; cnt < ARRAY_SIZE(fw->host_reg); cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->host_reg); cnt++, dmp_reg++)
 		fw->host_reg[cnt] = htonl(rd_reg_dword(dmp_reg));
 
-	/* Disable interrupts. */
+	/* Disable पूर्णांकerrupts. */
 	wrt_reg_dword(&reg->ictrl, 0);
 	rd_reg_dword(&reg->ictrl);
 
-	/* Shadow registers. */
+	/* Shaकरोw रेजिस्टरs. */
 	wrt_reg_dword(&reg->iobase_addr, 0x0F70);
 	rd_reg_dword(&reg->iobase_addr);
 	wrt_reg_dword(&reg->iobase_select, 0xB0000000);
-	fw->shadow_reg[0] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[0] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0100000);
-	fw->shadow_reg[1] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[1] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0200000);
-	fw->shadow_reg[2] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[2] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0300000);
-	fw->shadow_reg[3] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[3] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0400000);
-	fw->shadow_reg[4] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[4] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0500000);
-	fw->shadow_reg[5] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[5] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0600000);
-	fw->shadow_reg[6] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[6] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0700000);
-	fw->shadow_reg[7] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[7] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0800000);
-	fw->shadow_reg[8] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[8] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0900000);
-	fw->shadow_reg[9] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[9] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
 	wrt_reg_dword(&reg->iobase_select, 0xB0A00000);
-	fw->shadow_reg[10] = htonl(rd_reg_dword(&reg->iobase_sdata));
+	fw->shaकरोw_reg[10] = htonl(rd_reg_dword(&reg->iobase_sdata));
 
-	/* RISC I/O register. */
+	/* RISC I/O रेजिस्टर. */
 	wrt_reg_dword(&reg->iobase_addr, 0x0010);
-	fw->risc_io_reg = htonl(rd_reg_dword(&reg->iobase_window));
+	fw->risc_io_reg = htonl(rd_reg_dword(&reg->iobase_winकरोw));
 
-	/* Mailbox registers. */
+	/* Mailbox रेजिस्टरs. */
 	mbx_reg = &reg->mailbox0;
-	for (cnt = 0; cnt < ARRAY_SIZE(fw->mailbox_reg); cnt++, mbx_reg++)
+	क्रम (cnt = 0; cnt < ARRAY_SIZE(fw->mailbox_reg); cnt++, mbx_reg++)
 		fw->mailbox_reg[cnt] = htons(rd_reg_word(mbx_reg));
 
-	/* Transfer sequence registers. */
+	/* Transfer sequence रेजिस्टरs. */
 	iter_reg = fw->xseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xBE00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBE10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBE20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBE30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBE40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBE50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBE60, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBE70, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBF60, 16, iter_reg);
-	qla24xx_read_window(reg, 0xBF70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBE00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBE10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBE20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBE30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBE40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBE50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBE60, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBE70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBF60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBF70, 16, iter_reg);
 
 	iter_reg = fw->xseq_0_reg;
-	iter_reg = qla24xx_read_window(reg, 0xBFC0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xBFD0, 16, iter_reg);
-	qla24xx_read_window(reg, 0xBFE0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBFC0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xBFD0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBFE0, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xBFF0, 16, fw->xseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBFF0, 16, fw->xseq_1_reg);
 
-	qla24xx_read_window(reg, 0xBEF0, 16, fw->xseq_2_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xBEF0, 16, fw->xseq_2_reg);
 
-	/* Receive sequence registers. */
+	/* Receive sequence रेजिस्टरs. */
 	iter_reg = fw->rseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xFE00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFE10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFE20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFE30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFE40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFE50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFE60, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFE70, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xFF60, 16, iter_reg);
-	qla24xx_read_window(reg, 0xFF70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFE00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFE10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFE20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFE30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFE40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFE50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFE60, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFE70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFF60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFF70, 16, iter_reg);
 
 	iter_reg = fw->rseq_0_reg;
-	iter_reg = qla24xx_read_window(reg, 0xFFC0, 16, iter_reg);
-	qla24xx_read_window(reg, 0xFFD0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xFFC0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFD0, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xFFE0, 16, fw->rseq_1_reg);
-	qla24xx_read_window(reg, 0xFFF0, 16, fw->rseq_2_reg);
-	qla24xx_read_window(reg, 0xFEF0, 16, fw->rseq_3_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFE0, 16, fw->rseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFFF0, 16, fw->rseq_2_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xFEF0, 16, fw->rseq_3_reg);
 
-	/* Auxiliary sequence registers. */
+	/* Auxiliary sequence रेजिस्टरs. */
 	iter_reg = fw->aseq_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0xB000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB050, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB060, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB070, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB100, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB110, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB120, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB130, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB140, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB150, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0xB160, 16, iter_reg);
-	qla24xx_read_window(reg, 0xB170, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB050, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB060, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB100, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB110, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB120, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB130, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB140, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB150, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB160, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB170, 16, iter_reg);
 
 	iter_reg = fw->aseq_0_reg;
-	iter_reg = qla24xx_read_window(reg, 0xB0C0, 16, iter_reg);
-	qla24xx_read_window(reg, 0xB0D0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0xB0C0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB0D0, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0xB0E0, 16, fw->aseq_1_reg);
-	qla24xx_read_window(reg, 0xB0F0, 16, fw->aseq_2_reg);
-	qla24xx_read_window(reg, 0xB1F0, 16, fw->aseq_3_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB0E0, 16, fw->aseq_1_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB0F0, 16, fw->aseq_2_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0xB1F0, 16, fw->aseq_3_reg);
 
-	/* Command DMA registers. */
+	/* Command DMA रेजिस्टरs. */
 	iter_reg = fw->cmd_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7100, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x7120, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x7130, 16, iter_reg);
-	qla24xx_read_window(reg, 0x71F0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7100, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7120, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7130, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x71F0, 16, iter_reg);
 
 	/* Queues. */
 	iter_reg = fw->req0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7200, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7200, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
 	iter_reg = fw->resp0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7300, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7300, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
 	iter_reg = fw->req1_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7400, 8, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7400, 8, iter_reg);
 	dmp_reg = &reg->iobase_q;
-	for (cnt = 0; cnt < 7; cnt++, dmp_reg++)
+	क्रम (cnt = 0; cnt < 7; cnt++, dmp_reg++)
 		*iter_reg++ = htonl(rd_reg_dword(dmp_reg));
 
-	/* Transmit DMA registers. */
+	/* Transmit DMA रेजिस्टरs. */
 	iter_reg = fw->xmt0_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7600, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7610, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7600, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7610, 16, iter_reg);
 
 	iter_reg = fw->xmt1_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7620, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7630, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7620, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7630, 16, iter_reg);
 
 	iter_reg = fw->xmt2_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7640, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7650, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7640, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7650, 16, iter_reg);
 
 	iter_reg = fw->xmt3_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7660, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7670, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7660, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7670, 16, iter_reg);
 
 	iter_reg = fw->xmt4_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7680, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7690, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7680, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7690, 16, iter_reg);
 
-	qla24xx_read_window(reg, 0x76A0, 16, fw->xmt_data_dma_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x76A0, 16, fw->xmt_data_dma_reg);
 
-	/* Receive DMA registers. */
+	/* Receive DMA रेजिस्टरs. */
 	iter_reg = fw->rcvt0_data_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7700, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7710, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7700, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7710, 16, iter_reg);
 
 	iter_reg = fw->rcvt1_data_dma_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7720, 16, iter_reg);
-	qla24xx_read_window(reg, 0x7730, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7720, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x7730, 16, iter_reg);
 
-	/* RISC registers. */
+	/* RISC रेजिस्टरs. */
 	iter_reg = fw->risc_gp_reg;
-	iter_reg = qla24xx_read_window(reg, 0x0F00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x0F60, 16, iter_reg);
-	qla24xx_read_window(reg, 0x0F70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x0F60, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x0F70, 16, iter_reg);
 
-	/* Local memory controller registers. */
+	/* Local memory controller रेजिस्टरs. */
 	iter_reg = fw->lmc_reg;
-	iter_reg = qla24xx_read_window(reg, 0x3000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3050, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x3060, 16, iter_reg);
-	qla24xx_read_window(reg, 0x3070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3050, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x3060, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x3070, 16, iter_reg);
 
-	/* Fibre Protocol Module registers. */
+	/* Fibre Protocol Module रेजिस्टरs. */
 	iter_reg = fw->fpm_hdw_reg;
-	iter_reg = qla24xx_read_window(reg, 0x4000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4050, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4060, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4070, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4080, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x4090, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x40A0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x40B0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x40C0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x40D0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x40E0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x40F0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4050, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4060, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4080, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x4090, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x40A0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x40B0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x40C0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x40D0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x40E0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x40F0, 16, iter_reg);
 
-	/* RQ0 Array registers. */
+	/* RQ0 Array रेजिस्टरs. */
 	iter_reg = fw->rq0_array_reg;
-	iter_reg = qla24xx_read_window(reg, 0x5C00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5C10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5C20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5C30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5C40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5C50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5C60, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5C70, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5C80, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5C90, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5CA0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5CB0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5CC0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5CD0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5CE0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x5CF0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5C00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5C10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5C20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5C30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5C40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5C50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5C60, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5C70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5C80, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5C90, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5CA0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5CB0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5CC0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5CD0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5CE0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x5CF0, 16, iter_reg);
 
-	/* RQ1 Array registers. */
+	/* RQ1 Array रेजिस्टरs. */
 	iter_reg = fw->rq1_array_reg;
-	iter_reg = qla24xx_read_window(reg, 0x5D00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5D10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5D20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5D30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5D40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5D50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5D60, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5D70, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5D80, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5D90, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5DA0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5DB0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5DC0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5DD0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5DE0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x5DF0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5D00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5D10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5D20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5D30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5D40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5D50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5D60, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5D70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5D80, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5D90, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5DA0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5DB0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5DC0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5DD0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5DE0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x5DF0, 16, iter_reg);
 
-	/* RP0 Array registers. */
+	/* RP0 Array रेजिस्टरs. */
 	iter_reg = fw->rp0_array_reg;
-	iter_reg = qla24xx_read_window(reg, 0x5E00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5E10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5E20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5E30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5E40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5E50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5E60, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5E70, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5E80, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5E90, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5EA0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5EB0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5EC0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5ED0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5EE0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x5EF0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5E00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5E10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5E20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5E30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5E40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5E50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5E60, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5E70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5E80, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5E90, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5EA0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5EB0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5EC0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5ED0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5EE0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x5EF0, 16, iter_reg);
 
-	/* RP1 Array registers. */
+	/* RP1 Array रेजिस्टरs. */
 	iter_reg = fw->rp1_array_reg;
-	iter_reg = qla24xx_read_window(reg, 0x5F00, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5F10, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5F20, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5F30, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5F40, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5F50, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5F60, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5F70, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5F80, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5F90, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5FA0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5FB0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5FC0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5FD0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x5FE0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x5FF0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5F00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5F10, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5F20, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5F30, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5F40, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5F50, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5F60, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5F70, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5F80, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5F90, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5FA0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5FB0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5FC0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5FD0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x5FE0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x5FF0, 16, iter_reg);
 
 	iter_reg = fw->at0_array_reg;
-	iter_reg = qla24xx_read_window(reg, 0x7080, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x7090, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x70A0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x70B0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x70C0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x70D0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x70E0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x70F0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7080, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x7090, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x70A0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x70B0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x70C0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x70D0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x70E0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x70F0, 16, iter_reg);
 
-	/* I/O Queue Control registers. */
-	qla24xx_read_window(reg, 0x7800, 16, fw->queue_control_reg);
+	/* I/O Queue Control रेजिस्टरs. */
+	qla24xx_पढ़ो_winकरोw(reg, 0x7800, 16, fw->queue_control_reg);
 
-	/* Frame Buffer registers. */
+	/* Frame Buffer रेजिस्टरs. */
 	iter_reg = fw->fb_hdw_reg;
-	iter_reg = qla24xx_read_window(reg, 0x6000, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6010, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6020, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6030, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6040, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6060, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6070, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6100, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6130, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6150, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6170, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6190, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x61B0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x61C0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6530, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6540, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6550, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6560, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6570, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6580, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x6590, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x65A0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x65B0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x65C0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x65D0, 16, iter_reg);
-	iter_reg = qla24xx_read_window(reg, 0x65E0, 16, iter_reg);
-	qla24xx_read_window(reg, 0x6F00, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6000, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6010, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6020, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6030, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6040, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6060, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6070, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6100, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6130, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6150, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6170, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6190, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x61B0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x61C0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6530, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6540, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6550, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6560, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6570, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6580, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x6590, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x65A0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x65B0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x65C0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x65D0, 16, iter_reg);
+	iter_reg = qla24xx_पढ़ो_winकरोw(reg, 0x65E0, 16, iter_reg);
+	qla24xx_पढ़ो_winकरोw(reg, 0x6F00, 16, iter_reg);
 
-	/* Multi queue registers */
-	nxt_chain = qla25xx_copy_mq(ha, (void *)ha->fw_dump + ha->chain_offset,
+	/* Multi queue रेजिस्टरs */
+	nxt_chain = qla25xx_copy_mq(ha, (व्योम *)ha->fw_dump + ha->chain_offset,
 	    &last_chain);
 
 	rval = qla24xx_soft_reset(ha);
-	if (rval != QLA_SUCCESS) {
+	अगर (rval != QLA_SUCCESS) अणु
 		ql_log(ql_log_warn, vha, 0xd00e,
 		    "SOFT RESET FAILED, forcing continuation of dump!!!\n");
 		rval = QLA_SUCCESS;
@@ -2408,25 +2409,25 @@ qla83xx_fw_dump(scsi_qla_host_t *vha)
 		wrt_reg_dword(&reg->hccr, HCCRX_CLR_RISC_RESET);
 		rd_reg_dword(&reg->hccr);
 
-		for (cnt = 30000; cnt && (rd_reg_word(&reg->mailbox0)); cnt--)
+		क्रम (cnt = 30000; cnt && (rd_reg_word(&reg->mailbox0)); cnt--)
 			udelay(5);
 
-		if (!cnt) {
+		अगर (!cnt) अणु
 			nxt = fw->code_ram;
-			nxt += sizeof(fw->code_ram);
+			nxt += माप(fw->code_ram);
 			nxt += (ha->fw_memory_size - 0x100000 + 1);
-			goto copy_queue;
-		} else {
+			जाओ copy_queue;
+		पूर्ण अन्यथा अणु
 			set_bit(RISC_RDY_AFT_RESET, &ha->fw_dump_cap_flags);
 			ql_log(ql_log_warn, vha, 0xd010,
 			    "bigger hammer success?\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	rval = qla24xx_dump_memory(ha, fw->code_ram, sizeof(fw->code_ram),
+	rval = qla24xx_dump_memory(ha, fw->code_ram, माप(fw->code_ram),
 	    &nxt);
-	if (rval != QLA_SUCCESS)
-		goto qla83xx_fw_dump_failed_0;
+	अगर (rval != QLA_SUCCESS)
+		जाओ qla83xx_fw_dump_failed_0;
 
 copy_queue:
 	nxt = qla2xxx_copy_queues(ha, nxt);
@@ -2439,339 +2440,339 @@ copy_queue:
 	nxt_chain = qla2xxx_copy_atioqueues(ha, nxt_chain, &last_chain);
 	nxt_chain = qla25xx_copy_exlogin(ha, nxt_chain, &last_chain);
 	nxt_chain = qla81xx_copy_exchoffld(ha, nxt_chain, &last_chain);
-	if (last_chain) {
+	अगर (last_chain) अणु
 		ha->fw_dump->version |= htonl(DUMP_CHAIN_VARIANT);
 		*last_chain |= htonl(DUMP_CHAIN_LAST);
-	}
+	पूर्ण
 
 	/* Adjust valid length. */
-	ha->fw_dump_len = (nxt_chain - (void *)ha->fw_dump);
+	ha->fw_dump_len = (nxt_chain - (व्योम *)ha->fw_dump);
 
 qla83xx_fw_dump_failed_0:
 	qla2xxx_dump_post_process(base_vha, rval);
-}
+पूर्ण
 
 /****************************************************************************/
 /*                         Driver Debug Functions.                          */
 /****************************************************************************/
 
-/* Write the debug message prefix into @pbuf. */
-static void ql_dbg_prefix(char *pbuf, int pbuf_size,
-			  const scsi_qla_host_t *vha, uint msg_id)
-{
-	if (vha) {
-		const struct pci_dev *pdev = vha->hw->pdev;
+/* Write the debug message prefix पूर्णांकo @pbuf. */
+अटल व्योम ql_dbg_prefix(अक्षर *pbuf, पूर्णांक pbuf_size,
+			  स्थिर scsi_qla_host_t *vha, uपूर्णांक msg_id)
+अणु
+	अगर (vha) अणु
+		स्थिर काष्ठा pci_dev *pdev = vha->hw->pdev;
 
 		/* <module-name> [<dev-name>]-<msg-id>:<host>: */
-		snprintf(pbuf, pbuf_size, "%s [%s]-%04x:%lu: ", QL_MSGHDR,
+		snम_लिखो(pbuf, pbuf_size, "%s [%s]-%04x:%lu: ", QL_MSGHDR,
 			 dev_name(&(pdev->dev)), msg_id, vha->host_no);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* <module-name> [<dev-name>]-<msg-id>: : */
-		snprintf(pbuf, pbuf_size, "%s [%s]-%04x: : ", QL_MSGHDR,
+		snम_लिखो(pbuf, pbuf_size, "%s [%s]-%04x: : ", QL_MSGHDR,
 			 "0000:00:00.0", msg_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * This function is for formatting and logging debug information.
- * It is to be used when vha is available. It formats the message
+ * This function is क्रम क्रमmatting and logging debug inक्रमmation.
+ * It is to be used when vha is available. It क्रमmats the message
  * and logs it to the messages file.
  * parameters:
- * level: The level of the debug messages to be printed.
+ * level: The level of the debug messages to be prपूर्णांकed.
  *        If ql2xextended_error_logging value is correctly set,
  *        this message will appear in the messages file.
- * vha:   Pointer to the scsi_qla_host_t.
- * id:    This is a unique identifier for the level. It identifies the
+ * vha:   Poपूर्णांकer to the scsi_qla_host_t.
+ * id:    This is a unique identअगरier क्रम the level. It identअगरies the
  *        part of the code from where the message originated.
  * msg:   The message to be displayed.
  */
-void
-ql_dbg(uint level, scsi_qla_host_t *vha, uint id, const char *fmt, ...)
-{
-	va_list va;
-	struct va_format vaf;
-	char pbuf[64];
+व्योम
+ql_dbg(uपूर्णांक level, scsi_qla_host_t *vha, uपूर्णांक id, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
+	काष्ठा va_क्रमmat vaf;
+	अक्षर pbuf[64];
 
-	va_start(va, fmt);
+	बहु_शुरू(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
 	ql_dbg_prefix(pbuf, ARRAY_SIZE(pbuf), vha, id);
 
-	if (!ql_mask_match(level))
+	अगर (!ql_mask_match(level))
 		trace_ql_dbg_log(pbuf, &vaf);
-	else
+	अन्यथा
 		pr_warn("%s%pV", pbuf, &vaf);
 
-	va_end(va);
+	बहु_पूर्ण(va);
 
-}
+पूर्ण
 
 /*
- * This function is for formatting and logging debug information.
+ * This function is क्रम क्रमmatting and logging debug inक्रमmation.
  * It is to be used when vha is not available and pci is available,
- * i.e., before host allocation. It formats the message and logs it
+ * i.e., beक्रमe host allocation. It क्रमmats the message and logs it
  * to the messages file.
  * parameters:
- * level: The level of the debug messages to be printed.
+ * level: The level of the debug messages to be prपूर्णांकed.
  *        If ql2xextended_error_logging value is correctly set,
  *        this message will appear in the messages file.
- * pdev:  Pointer to the struct pci_dev.
- * id:    This is a unique id for the level. It identifies the part
+ * pdev:  Poपूर्णांकer to the काष्ठा pci_dev.
+ * id:    This is a unique id क्रम the level. It identअगरies the part
  *        of the code from where the message originated.
  * msg:   The message to be displayed.
  */
-void
-ql_dbg_pci(uint level, struct pci_dev *pdev, uint id, const char *fmt, ...)
-{
-	va_list va;
-	struct va_format vaf;
-	char pbuf[128];
+व्योम
+ql_dbg_pci(uपूर्णांक level, काष्ठा pci_dev *pdev, uपूर्णांक id, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
+	काष्ठा va_क्रमmat vaf;
+	अक्षर pbuf[128];
 
-	if (pdev == NULL)
-		return;
-	if (!ql_mask_match(level))
-		return;
+	अगर (pdev == शून्य)
+		वापस;
+	अगर (!ql_mask_match(level))
+		वापस;
 
-	va_start(va, fmt);
+	बहु_शुरू(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	ql_dbg_prefix(pbuf, ARRAY_SIZE(pbuf), NULL, id + ql_dbg_offset);
+	ql_dbg_prefix(pbuf, ARRAY_SIZE(pbuf), शून्य, id + ql_dbg_offset);
 	pr_warn("%s%pV", pbuf, &vaf);
 
-	va_end(va);
-}
+	बहु_पूर्ण(va);
+पूर्ण
 
 /*
- * This function is for formatting and logging log messages.
- * It is to be used when vha is available. It formats the message
+ * This function is क्रम क्रमmatting and logging log messages.
+ * It is to be used when vha is available. It क्रमmats the message
  * and logs it to the messages file. All the messages will be logged
  * irrespective of value of ql2xextended_error_logging.
  * parameters:
- * level: The level of the log messages to be printed in the
+ * level: The level of the log messages to be prपूर्णांकed in the
  *        messages file.
- * vha:   Pointer to the scsi_qla_host_t
- * id:    This is a unique id for the level. It identifies the
+ * vha:   Poपूर्णांकer to the scsi_qla_host_t
+ * id:    This is a unique id क्रम the level. It identअगरies the
  *        part of the code from where the message originated.
  * msg:   The message to be displayed.
  */
-void
-ql_log(uint level, scsi_qla_host_t *vha, uint id, const char *fmt, ...)
-{
-	va_list va;
-	struct va_format vaf;
-	char pbuf[128];
+व्योम
+ql_log(uपूर्णांक level, scsi_qla_host_t *vha, uपूर्णांक id, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
+	काष्ठा va_क्रमmat vaf;
+	अक्षर pbuf[128];
 
-	if (level > ql_errlev)
-		return;
+	अगर (level > ql_errlev)
+		वापस;
 
 	ql_dbg_prefix(pbuf, ARRAY_SIZE(pbuf), vha, id);
 
-	va_start(va, fmt);
+	बहु_शुरू(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	switch (level) {
-	case ql_log_fatal: /* FATAL LOG */
+	चयन (level) अणु
+	हाल ql_log_fatal: /* FATAL LOG */
 		pr_crit("%s%pV", pbuf, &vaf);
-		break;
-	case ql_log_warn:
+		अवरोध;
+	हाल ql_log_warn:
 		pr_err("%s%pV", pbuf, &vaf);
-		break;
-	case ql_log_info:
+		अवरोध;
+	हाल ql_log_info:
 		pr_warn("%s%pV", pbuf, &vaf);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_info("%s%pV", pbuf, &vaf);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	va_end(va);
-}
+	बहु_पूर्ण(va);
+पूर्ण
 
 /*
- * This function is for formatting and logging log messages.
+ * This function is क्रम क्रमmatting and logging log messages.
  * It is to be used when vha is not available and pci is available,
- * i.e., before host allocation. It formats the message and logs
+ * i.e., beक्रमe host allocation. It क्रमmats the message and logs
  * it to the messages file. All the messages are logged irrespective
  * of the value of ql2xextended_error_logging.
  * parameters:
- * level: The level of the log messages to be printed in the
+ * level: The level of the log messages to be prपूर्णांकed in the
  *        messages file.
- * pdev:  Pointer to the struct pci_dev.
- * id:    This is a unique id for the level. It identifies the
+ * pdev:  Poपूर्णांकer to the काष्ठा pci_dev.
+ * id:    This is a unique id क्रम the level. It identअगरies the
  *        part of the code from where the message originated.
  * msg:   The message to be displayed.
  */
-void
-ql_log_pci(uint level, struct pci_dev *pdev, uint id, const char *fmt, ...)
-{
-	va_list va;
-	struct va_format vaf;
-	char pbuf[128];
+व्योम
+ql_log_pci(uपूर्णांक level, काष्ठा pci_dev *pdev, uपूर्णांक id, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
+	काष्ठा va_क्रमmat vaf;
+	अक्षर pbuf[128];
 
-	if (pdev == NULL)
-		return;
-	if (level > ql_errlev)
-		return;
+	अगर (pdev == शून्य)
+		वापस;
+	अगर (level > ql_errlev)
+		वापस;
 
-	ql_dbg_prefix(pbuf, ARRAY_SIZE(pbuf), NULL, id);
+	ql_dbg_prefix(pbuf, ARRAY_SIZE(pbuf), शून्य, id);
 
-	va_start(va, fmt);
+	बहु_शुरू(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	switch (level) {
-	case ql_log_fatal: /* FATAL LOG */
+	चयन (level) अणु
+	हाल ql_log_fatal: /* FATAL LOG */
 		pr_crit("%s%pV", pbuf, &vaf);
-		break;
-	case ql_log_warn:
+		अवरोध;
+	हाल ql_log_warn:
 		pr_err("%s%pV", pbuf, &vaf);
-		break;
-	case ql_log_info:
+		अवरोध;
+	हाल ql_log_info:
 		pr_warn("%s%pV", pbuf, &vaf);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_info("%s%pV", pbuf, &vaf);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	va_end(va);
-}
+	बहु_पूर्ण(va);
+पूर्ण
 
-void
-ql_dump_regs(uint level, scsi_qla_host_t *vha, uint id)
-{
-	int i;
-	struct qla_hw_data *ha = vha->hw;
-	struct device_reg_2xxx __iomem *reg = &ha->iobase->isp;
-	struct device_reg_24xx __iomem *reg24 = &ha->iobase->isp24;
-	struct device_reg_82xx __iomem *reg82 = &ha->iobase->isp82;
+व्योम
+ql_dump_regs(uपूर्णांक level, scsi_qla_host_t *vha, uपूर्णांक id)
+अणु
+	पूर्णांक i;
+	काष्ठा qla_hw_data *ha = vha->hw;
+	काष्ठा device_reg_2xxx __iomem *reg = &ha->iobase->isp;
+	काष्ठा device_reg_24xx __iomem *reg24 = &ha->iobase->isp24;
+	काष्ठा device_reg_82xx __iomem *reg82 = &ha->iobase->isp82;
 	__le16 __iomem *mbx_reg;
 
-	if (!ql_mask_match(level))
-		return;
+	अगर (!ql_mask_match(level))
+		वापस;
 
-	if (IS_P3P_TYPE(ha))
+	अगर (IS_P3P_TYPE(ha))
 		mbx_reg = &reg82->mailbox_in[0];
-	else if (IS_FWI2_CAPABLE(ha))
+	अन्यथा अगर (IS_FWI2_CAPABLE(ha))
 		mbx_reg = &reg24->mailbox0;
-	else
+	अन्यथा
 		mbx_reg = MAILBOX_REG(ha, reg, 0);
 
 	ql_dbg(level, vha, id, "Mailbox registers:\n");
-	for (i = 0; i < 6; i++, mbx_reg++)
+	क्रम (i = 0; i < 6; i++, mbx_reg++)
 		ql_dbg(level, vha, id,
 		    "mbox[%d] %#04x\n", i, rd_reg_word(mbx_reg));
-}
+पूर्ण
 
-void
-ql_dump_buffer(uint level, scsi_qla_host_t *vha, uint id, const void *buf,
-	       uint size)
-{
-	uint cnt;
+व्योम
+ql_dump_buffer(uपूर्णांक level, scsi_qla_host_t *vha, uपूर्णांक id, स्थिर व्योम *buf,
+	       uपूर्णांक size)
+अणु
+	uपूर्णांक cnt;
 
-	if (!ql_mask_match(level))
-		return;
+	अगर (!ql_mask_match(level))
+		वापस;
 
 	ql_dbg(level, vha, id,
 	    "%-+5d  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F\n", size);
 	ql_dbg(level, vha, id,
 	    "----- -----------------------------------------------\n");
-	for (cnt = 0; cnt < size; cnt += 16) {
+	क्रम (cnt = 0; cnt < size; cnt += 16) अणु
 		ql_dbg(level, vha, id, "%04x: ", cnt);
-		print_hex_dump(KERN_CONT, "", DUMP_PREFIX_NONE, 16, 1,
+		prपूर्णांक_hex_dump(KERN_CONT, "", DUMP_PREFIX_NONE, 16, 1,
 			       buf + cnt, min(16U, size - cnt), false);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * This function is for formatting and logging log messages.
- * It is to be used when vha is available. It formats the message
+ * This function is क्रम क्रमmatting and logging log messages.
+ * It is to be used when vha is available. It क्रमmats the message
  * and logs it to the messages file. All the messages will be logged
  * irrespective of value of ql2xextended_error_logging.
  * parameters:
- * level: The level of the log messages to be printed in the
+ * level: The level of the log messages to be prपूर्णांकed in the
  *        messages file.
- * vha:   Pointer to the scsi_qla_host_t
- * id:    This is a unique id for the level. It identifies the
+ * vha:   Poपूर्णांकer to the scsi_qla_host_t
+ * id:    This is a unique id क्रम the level. It identअगरies the
  *        part of the code from where the message originated.
  * msg:   The message to be displayed.
  */
-void
-ql_log_qp(uint32_t level, struct qla_qpair *qpair, int32_t id,
-    const char *fmt, ...)
-{
-	va_list va;
-	struct va_format vaf;
-	char pbuf[128];
+व्योम
+ql_log_qp(uपूर्णांक32_t level, काष्ठा qla_qpair *qpair, पूर्णांक32_t id,
+    स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
+	काष्ठा va_क्रमmat vaf;
+	अक्षर pbuf[128];
 
-	if (level > ql_errlev)
-		return;
+	अगर (level > ql_errlev)
+		वापस;
 
-	ql_dbg_prefix(pbuf, ARRAY_SIZE(pbuf), qpair ? qpair->vha : NULL, id);
+	ql_dbg_prefix(pbuf, ARRAY_SIZE(pbuf), qpair ? qpair->vha : शून्य, id);
 
-	va_start(va, fmt);
+	बहु_शुरू(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	switch (level) {
-	case ql_log_fatal: /* FATAL LOG */
+	चयन (level) अणु
+	हाल ql_log_fatal: /* FATAL LOG */
 		pr_crit("%s%pV", pbuf, &vaf);
-		break;
-	case ql_log_warn:
+		अवरोध;
+	हाल ql_log_warn:
 		pr_err("%s%pV", pbuf, &vaf);
-		break;
-	case ql_log_info:
+		अवरोध;
+	हाल ql_log_info:
 		pr_warn("%s%pV", pbuf, &vaf);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_info("%s%pV", pbuf, &vaf);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	va_end(va);
-}
+	बहु_पूर्ण(va);
+पूर्ण
 
 /*
- * This function is for formatting and logging debug information.
- * It is to be used when vha is available. It formats the message
+ * This function is क्रम क्रमmatting and logging debug inक्रमmation.
+ * It is to be used when vha is available. It क्रमmats the message
  * and logs it to the messages file.
  * parameters:
- * level: The level of the debug messages to be printed.
+ * level: The level of the debug messages to be prपूर्णांकed.
  *        If ql2xextended_error_logging value is correctly set,
  *        this message will appear in the messages file.
- * vha:   Pointer to the scsi_qla_host_t.
- * id:    This is a unique identifier for the level. It identifies the
+ * vha:   Poपूर्णांकer to the scsi_qla_host_t.
+ * id:    This is a unique identअगरier क्रम the level. It identअगरies the
  *        part of the code from where the message originated.
  * msg:   The message to be displayed.
  */
-void
-ql_dbg_qp(uint32_t level, struct qla_qpair *qpair, int32_t id,
-    const char *fmt, ...)
-{
-	va_list va;
-	struct va_format vaf;
-	char pbuf[128];
+व्योम
+ql_dbg_qp(uपूर्णांक32_t level, काष्ठा qla_qpair *qpair, पूर्णांक32_t id,
+    स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची va;
+	काष्ठा va_क्रमmat vaf;
+	अक्षर pbuf[128];
 
-	if (!ql_mask_match(level))
-		return;
+	अगर (!ql_mask_match(level))
+		वापस;
 
-	va_start(va, fmt);
+	बहु_शुरू(va, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &va;
 
-	ql_dbg_prefix(pbuf, ARRAY_SIZE(pbuf), qpair ? qpair->vha : NULL,
+	ql_dbg_prefix(pbuf, ARRAY_SIZE(pbuf), qpair ? qpair->vha : शून्य,
 		      id + ql_dbg_offset);
 	pr_warn("%s%pV", pbuf, &vaf);
 
-	va_end(va);
+	बहु_पूर्ण(va);
 
-}
+पूर्ण

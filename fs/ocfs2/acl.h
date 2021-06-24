@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * acl.h
  *
  * Copyright (C) 2004, 2008 Oracle.  All rights reserved.
  */
 
-#ifndef OCFS2_ACL_H
-#define OCFS2_ACL_H
+#अगर_अघोषित OCFS2_ACL_H
+#घोषणा OCFS2_ACL_H
 
-#include <linux/posix_acl_xattr.h>
+#समावेश <linux/posix_acl_xattr.h>
 
-struct ocfs2_acl_entry {
+काष्ठा ocfs2_acl_entry अणु
 	__le16 e_tag;
 	__le16 e_perm;
 	__le32 e_id;
-};
+पूर्ण;
 
-struct posix_acl *ocfs2_iop_get_acl(struct inode *inode, int type);
-int ocfs2_iop_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
-		      struct posix_acl *acl, int type);
-extern int ocfs2_acl_chmod(struct inode *, struct buffer_head *);
-extern int ocfs2_init_acl(handle_t *, struct inode *, struct inode *,
-			  struct buffer_head *, struct buffer_head *,
-			  struct ocfs2_alloc_context *,
-			  struct ocfs2_alloc_context *);
+काष्ठा posix_acl *ocfs2_iop_get_acl(काष्ठा inode *inode, पूर्णांक type);
+पूर्णांक ocfs2_iop_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		      काष्ठा posix_acl *acl, पूर्णांक type);
+बाह्य पूर्णांक ocfs2_acl_chmod(काष्ठा inode *, काष्ठा buffer_head *);
+बाह्य पूर्णांक ocfs2_init_acl(handle_t *, काष्ठा inode *, काष्ठा inode *,
+			  काष्ठा buffer_head *, काष्ठा buffer_head *,
+			  काष्ठा ocfs2_alloc_context *,
+			  काष्ठा ocfs2_alloc_context *);
 
-#endif /* OCFS2_ACL_H */
+#पूर्ण_अगर /* OCFS2_ACL_H */

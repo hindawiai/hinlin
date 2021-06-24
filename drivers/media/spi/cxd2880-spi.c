@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * cxd2880-spi.c
  * Sony CXD2880 DVB-T2/T tuner + demodulator driver
@@ -7,67 +8,67 @@
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
-#include <linux/spi/spi.h>
-#include <linux/regulator/consumer.h>
-#include <linux/ktime.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/kसमय.स>
 
-#include <media/dvb_demux.h>
-#include <media/dmxdev.h>
-#include <media/dvb_frontend.h>
-#include "cxd2880.h"
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dmxdev.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश "cxd2880.h"
 
-#define CXD2880_MAX_FILTER_SIZE 32
-#define BURST_WRITE_MAX 128
-#define MAX_TRANS_PKT 300
+#घोषणा CXD2880_MAX_FILTER_SIZE 32
+#घोषणा BURST_WRITE_MAX 128
+#घोषणा MAX_TRANS_PKT 300
 
-struct cxd2880_ts_buf_info {
-	u8 read_ready:1;
+काष्ठा cxd2880_ts_buf_info अणु
+	u8 पढ़ो_पढ़ोy:1;
 	u8 almost_full:1;
 	u8 almost_empty:1;
 	u8 overflow:1;
 	u8 underflow:1;
 	u16 pkt_num;
-};
+पूर्ण;
 
-struct cxd2880_pid_config {
+काष्ठा cxd2880_pid_config अणु
 	u8 is_enable;
 	u16 pid;
-};
+पूर्ण;
 
-struct cxd2880_pid_filter_config {
+काष्ठा cxd2880_pid_filter_config अणु
 	u8 is_negative;
-	struct cxd2880_pid_config pid_config[CXD2880_MAX_FILTER_SIZE];
-};
+	काष्ठा cxd2880_pid_config pid_config[CXD2880_MAX_FILTER_SIZE];
+पूर्ण;
 
-struct cxd2880_dvb_spi {
-	struct dvb_frontend dvb_fe;
-	struct dvb_adapter adapter;
-	struct dvb_demux demux;
-	struct dmxdev dmxdev;
-	struct dmx_frontend dmx_fe;
-	struct task_struct *cxd2880_ts_read_thread;
-	struct spi_device *spi;
-	struct mutex spi_mutex; /* For SPI access exclusive control */
-	int feed_count;
-	int all_pid_feed_count;
-	struct regulator *vcc_supply;
+काष्ठा cxd2880_dvb_spi अणु
+	काष्ठा dvb_frontend dvb_fe;
+	काष्ठा dvb_adapter adapter;
+	काष्ठा dvb_demux demux;
+	काष्ठा dmxdev dmxdev;
+	काष्ठा dmx_frontend dmx_fe;
+	काष्ठा task_काष्ठा *cxd2880_ts_पढ़ो_thपढ़ो;
+	काष्ठा spi_device *spi;
+	काष्ठा mutex spi_mutex; /* For SPI access exclusive control */
+	पूर्णांक feed_count;
+	पूर्णांक all_pid_feed_count;
+	काष्ठा regulator *vcc_supply;
 	u8 *ts_buf;
-	struct cxd2880_pid_filter_config filter_config;
-};
+	काष्ठा cxd2880_pid_filter_config filter_config;
+पूर्ण;
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-static int cxd2880_write_spi(struct spi_device *spi, u8 *data, u32 size)
-{
-	struct spi_message msg;
-	struct spi_transfer tx = {};
+अटल पूर्णांक cxd2880_ग_लिखो_spi(काष्ठा spi_device *spi, u8 *data, u32 size)
+अणु
+	काष्ठा spi_message msg;
+	काष्ठा spi_transfer tx = अणुपूर्ण;
 
-	if (!spi || !data) {
+	अगर (!spi || !data) अणु
 		pr_err("invalid arg\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	tx.tx_buf = data;
 	tx.len = size;
@@ -75,62 +76,62 @@ static int cxd2880_write_spi(struct spi_device *spi, u8 *data, u32 size)
 	spi_message_init(&msg);
 	spi_message_add_tail(&tx, &msg);
 
-	return spi_sync(spi, &msg);
-}
+	वापस spi_sync(spi, &msg);
+पूर्ण
 
-static int cxd2880_write_reg(struct spi_device *spi,
-			     u8 sub_address, const u8 *data, u32 size)
-{
+अटल पूर्णांक cxd2880_ग_लिखो_reg(काष्ठा spi_device *spi,
+			     u8 sub_address, स्थिर u8 *data, u32 size)
+अणु
 	u8 send_data[BURST_WRITE_MAX + 4];
-	const u8 *write_data_top = NULL;
-	int ret = 0;
+	स्थिर u8 *ग_लिखो_data_top = शून्य;
+	पूर्णांक ret = 0;
 
-	if (!spi || !data) {
+	अगर (!spi || !data) अणु
 		pr_err("invalid arg\n");
-		return -EINVAL;
-	}
-	if (size > BURST_WRITE_MAX || size > U8_MAX) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (size > BURST_WRITE_MAX || size > U8_MAX) अणु
 		pr_err("data size > WRITE_MAX\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sub_address + size > 0x100) {
+	अगर (sub_address + size > 0x100) अणु
 		pr_err("out of range\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	send_data[0] = 0x0e;
-	write_data_top = data;
+	ग_लिखो_data_top = data;
 
 	send_data[1] = sub_address;
 	send_data[2] = (u8)size;
 
-	memcpy(&send_data[3], write_data_top, send_data[2]);
+	स_नकल(&send_data[3], ग_लिखो_data_top, send_data[2]);
 
-	ret = cxd2880_write_spi(spi, send_data, send_data[2] + 3);
-	if (ret)
+	ret = cxd2880_ग_लिखो_spi(spi, send_data, send_data[2] + 3);
+	अगर (ret)
 		pr_err("write spi failed %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxd2880_spi_read_ts(struct spi_device *spi,
-			       u8 *read_data,
+अटल पूर्णांक cxd2880_spi_पढ़ो_ts(काष्ठा spi_device *spi,
+			       u8 *पढ़ो_data,
 			       u32 packet_num)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u8 data[3];
-	struct spi_message message;
-	struct spi_transfer transfer[2] = {};
+	काष्ठा spi_message message;
+	काष्ठा spi_transfer transfer[2] = अणुपूर्ण;
 
-	if (!spi || !read_data || !packet_num) {
+	अगर (!spi || !पढ़ो_data || !packet_num) अणु
 		pr_err("invalid arg\n");
-		return -EINVAL;
-	}
-	if (packet_num > 0xffff) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (packet_num > 0xffff) अणु
 		pr_err("packet num > 0xffff\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	data[0] = 0x10;
 	data[1] = packet_num >> 8;
@@ -142,396 +143,396 @@ static int cxd2880_spi_read_ts(struct spi_device *spi,
 	transfer[0].tx_buf = data;
 	spi_message_add_tail(&transfer[0], &message);
 	transfer[1].len = packet_num * 188;
-	transfer[1].rx_buf = read_data;
+	transfer[1].rx_buf = पढ़ो_data;
 	spi_message_add_tail(&transfer[1], &message);
 
 	ret = spi_sync(spi, &message);
-	if (ret)
+	अगर (ret)
 		pr_err("spi_write_then_read failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxd2880_spi_read_ts_buffer_info(struct spi_device *spi,
-					   struct cxd2880_ts_buf_info *info)
-{
+अटल पूर्णांक cxd2880_spi_पढ़ो_ts_buffer_info(काष्ठा spi_device *spi,
+					   काष्ठा cxd2880_ts_buf_info *info)
+अणु
 	u8 send_data = 0x20;
 	u8 recv_data[2];
-	int ret;
+	पूर्णांक ret;
 
-	if (!spi || !info) {
+	अगर (!spi || !info) अणु
 		pr_err("invalid arg\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = spi_write_then_read(spi, &send_data, 1,
-				  recv_data, sizeof(recv_data));
-	if (ret)
+	ret = spi_ग_लिखो_then_पढ़ो(spi, &send_data, 1,
+				  recv_data, माप(recv_data));
+	अगर (ret)
 		pr_err("spi_write_then_read failed\n");
 
-	info->read_ready = (recv_data[0] & 0x80) ? 1 : 0;
+	info->पढ़ो_पढ़ोy = (recv_data[0] & 0x80) ? 1 : 0;
 	info->almost_full = (recv_data[0] & 0x40) ? 1 : 0;
 	info->almost_empty = (recv_data[0] & 0x20) ? 1 : 0;
 	info->overflow = (recv_data[0] & 0x10) ? 1 : 0;
 	info->underflow = (recv_data[0] & 0x08) ? 1 : 0;
 	info->pkt_num = ((recv_data[0] & 0x07) << 8) | recv_data[1];
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxd2880_spi_clear_ts_buffer(struct spi_device *spi)
-{
+अटल पूर्णांक cxd2880_spi_clear_ts_buffer(काष्ठा spi_device *spi)
+अणु
 	u8 data = 0x03;
-	int ret;
+	पूर्णांक ret;
 
-	ret = cxd2880_write_spi(spi, &data, 1);
+	ret = cxd2880_ग_लिखो_spi(spi, &data, 1);
 
-	if (ret)
+	अगर (ret)
 		pr_err("write spi failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxd2880_set_pid_filter(struct spi_device *spi,
-				  struct cxd2880_pid_filter_config *cfg)
-{
+अटल पूर्णांक cxd2880_set_pid_filter(काष्ठा spi_device *spi,
+				  काष्ठा cxd2880_pid_filter_config *cfg)
+अणु
 	u8 data[65];
-	int i;
+	पूर्णांक i;
 	u16 pid = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!spi) {
+	अगर (!spi) अणु
 		pr_err("invalid arg\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	data[0] = 0x00;
-	ret = cxd2880_write_reg(spi, 0x00, &data[0], 1);
-	if (ret)
-		return ret;
-	if (!cfg) {
+	ret = cxd2880_ग_लिखो_reg(spi, 0x00, &data[0], 1);
+	अगर (ret)
+		वापस ret;
+	अगर (!cfg) अणु
 		data[0] = 0x02;
-		ret = cxd2880_write_reg(spi, 0x50, &data[0], 1);
-	} else {
+		ret = cxd2880_ग_लिखो_reg(spi, 0x50, &data[0], 1);
+	पूर्ण अन्यथा अणु
 		data[0] = cfg->is_negative ? 0x01 : 0x00;
 
-		for (i = 0; i < CXD2880_MAX_FILTER_SIZE; i++) {
+		क्रम (i = 0; i < CXD2880_MAX_FILTER_SIZE; i++) अणु
 			pid = cfg->pid_config[i].pid;
-			if (cfg->pid_config[i].is_enable) {
+			अगर (cfg->pid_config[i].is_enable) अणु
 				data[1 + (i * 2)] = (pid >> 8) | 0x20;
 				data[2 + (i * 2)] = pid & 0xff;
-			} else {
+			पूर्ण अन्यथा अणु
 				data[1 + (i * 2)] = 0x00;
 				data[2 + (i * 2)] = 0x00;
-			}
-		}
-		ret = cxd2880_write_reg(spi, 0x50, data, 65);
-	}
+			पूर्ण
+		पूर्ण
+		ret = cxd2880_ग_लिखो_reg(spi, 0x50, data, 65);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxd2880_update_pid_filter(struct cxd2880_dvb_spi *dvb_spi,
-				     struct cxd2880_pid_filter_config *cfg,
+अटल पूर्णांक cxd2880_update_pid_filter(काष्ठा cxd2880_dvb_spi *dvb_spi,
+				     काष्ठा cxd2880_pid_filter_config *cfg,
 				     bool is_all_pid_filter)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	if (!dvb_spi || !cfg) {
+	अगर (!dvb_spi || !cfg) अणु
 		pr_err("invalid arg.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&dvb_spi->spi_mutex);
-	if (is_all_pid_filter) {
-		struct cxd2880_pid_filter_config tmpcfg;
+	अगर (is_all_pid_filter) अणु
+		काष्ठा cxd2880_pid_filter_config पंचांगpcfg;
 
-		memset(&tmpcfg, 0, sizeof(tmpcfg));
-		tmpcfg.is_negative = 1;
-		tmpcfg.pid_config[0].is_enable = 1;
-		tmpcfg.pid_config[0].pid = 0x1fff;
+		स_रखो(&पंचांगpcfg, 0, माप(पंचांगpcfg));
+		पंचांगpcfg.is_negative = 1;
+		पंचांगpcfg.pid_config[0].is_enable = 1;
+		पंचांगpcfg.pid_config[0].pid = 0x1fff;
 
-		ret = cxd2880_set_pid_filter(dvb_spi->spi, &tmpcfg);
-	} else {
+		ret = cxd2880_set_pid_filter(dvb_spi->spi, &पंचांगpcfg);
+	पूर्ण अन्यथा अणु
 		ret = cxd2880_set_pid_filter(dvb_spi->spi, cfg);
-	}
+	पूर्ण
 	mutex_unlock(&dvb_spi->spi_mutex);
 
-	if (ret)
+	अगर (ret)
 		pr_err("set_pid_filter failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxd2880_ts_read(void *arg)
-{
-	struct cxd2880_dvb_spi *dvb_spi = NULL;
-	struct cxd2880_ts_buf_info info;
-	ktime_t start;
+अटल पूर्णांक cxd2880_ts_पढ़ो(व्योम *arg)
+अणु
+	काष्ठा cxd2880_dvb_spi *dvb_spi = शून्य;
+	काष्ठा cxd2880_ts_buf_info info;
+	kसमय_प्रकार start;
 	u32 i;
-	int ret;
+	पूर्णांक ret;
 
 	dvb_spi = arg;
-	if (!dvb_spi) {
+	अगर (!dvb_spi) अणु
 		pr_err("invalid arg\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = cxd2880_spi_clear_ts_buffer(dvb_spi->spi);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("set_clear_ts_buffer failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	start = ktime_get();
-	while (!kthread_should_stop()) {
-		ret = cxd2880_spi_read_ts_buffer_info(dvb_spi->spi,
+	start = kसमय_get();
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		ret = cxd2880_spi_पढ़ो_ts_buffer_info(dvb_spi->spi,
 						      &info);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("spi_read_ts_buffer_info error\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (info.pkt_num > MAX_TRANS_PKT) {
-			for (i = 0; i < info.pkt_num / MAX_TRANS_PKT; i++) {
-				cxd2880_spi_read_ts(dvb_spi->spi,
+		अगर (info.pkt_num > MAX_TRANS_PKT) अणु
+			क्रम (i = 0; i < info.pkt_num / MAX_TRANS_PKT; i++) अणु
+				cxd2880_spi_पढ़ो_ts(dvb_spi->spi,
 						    dvb_spi->ts_buf,
 						    MAX_TRANS_PKT);
 				dvb_dmx_swfilter(&dvb_spi->demux,
 						 dvb_spi->ts_buf,
 						 MAX_TRANS_PKT * 188);
-			}
-			start = ktime_get();
-		} else if ((info.pkt_num > 0) &&
-			   (ktime_to_ms(ktime_sub(ktime_get(), start)) >= 500)) {
-			cxd2880_spi_read_ts(dvb_spi->spi,
+			पूर्ण
+			start = kसमय_get();
+		पूर्ण अन्यथा अगर ((info.pkt_num > 0) &&
+			   (kसमय_प्रकारo_ms(kसमय_sub(kसमय_get(), start)) >= 500)) अणु
+			cxd2880_spi_पढ़ो_ts(dvb_spi->spi,
 					    dvb_spi->ts_buf,
 					    info.pkt_num);
 			dvb_dmx_swfilter(&dvb_spi->demux,
 					 dvb_spi->ts_buf,
 					 info.pkt_num * 188);
-			start = ktime_get();
-		} else {
+			start = kसमय_get();
+		पूर्ण अन्यथा अणु
 			usleep_range(10000, 11000);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cxd2880_start_feed(struct dvb_demux_feed *feed)
-{
-	int ret = 0;
-	int i = 0;
-	struct dvb_demux *demux = NULL;
-	struct cxd2880_dvb_spi *dvb_spi = NULL;
+अटल पूर्णांक cxd2880_start_feed(काष्ठा dvb_demux_feed *feed)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक i = 0;
+	काष्ठा dvb_demux *demux = शून्य;
+	काष्ठा cxd2880_dvb_spi *dvb_spi = शून्य;
 
-	if (!feed) {
+	अगर (!feed) अणु
 		pr_err("invalid arg\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	demux = feed->demux;
-	if (!demux) {
+	अगर (!demux) अणु
 		pr_err("feed->demux is NULL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dvb_spi = demux->priv;
 
-	if (dvb_spi->feed_count == CXD2880_MAX_FILTER_SIZE) {
+	अगर (dvb_spi->feed_count == CXD2880_MAX_FILTER_SIZE) अणु
 		pr_err("Exceeded maximum PID count (32).");
 		pr_err("Selected PID cannot be enabled.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (feed->pid == 0x2000) {
-		if (dvb_spi->all_pid_feed_count == 0) {
+	अगर (feed->pid == 0x2000) अणु
+		अगर (dvb_spi->all_pid_feed_count == 0) अणु
 			ret = cxd2880_update_pid_filter(dvb_spi,
 							&dvb_spi->filter_config,
 							true);
-			if (ret) {
+			अगर (ret) अणु
 				pr_err("update pid filter failed\n");
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 		dvb_spi->all_pid_feed_count++;
 
 		pr_debug("all PID feed (count = %d)\n",
 			 dvb_spi->all_pid_feed_count);
-	} else {
-		struct cxd2880_pid_filter_config cfgtmp;
+	पूर्ण अन्यथा अणु
+		काष्ठा cxd2880_pid_filter_config cfgपंचांगp;
 
-		cfgtmp = dvb_spi->filter_config;
+		cfgपंचांगp = dvb_spi->filter_config;
 
-		for (i = 0; i < CXD2880_MAX_FILTER_SIZE; i++) {
-			if (cfgtmp.pid_config[i].is_enable == 0) {
-				cfgtmp.pid_config[i].is_enable = 1;
-				cfgtmp.pid_config[i].pid = feed->pid;
+		क्रम (i = 0; i < CXD2880_MAX_FILTER_SIZE; i++) अणु
+			अगर (cfgपंचांगp.pid_config[i].is_enable == 0) अणु
+				cfgपंचांगp.pid_config[i].is_enable = 1;
+				cfgपंचांगp.pid_config[i].pid = feed->pid;
 				pr_debug("store PID %d to #%d\n",
 					 feed->pid, i);
-				break;
-			}
-		}
-		if (i == CXD2880_MAX_FILTER_SIZE) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i == CXD2880_MAX_FILTER_SIZE) अणु
 			pr_err("PID filter is full.\n");
-			return -EINVAL;
-		}
-		if (!dvb_spi->all_pid_feed_count)
+			वापस -EINVAL;
+		पूर्ण
+		अगर (!dvb_spi->all_pid_feed_count)
 			ret = cxd2880_update_pid_filter(dvb_spi,
-							&cfgtmp,
+							&cfgपंचांगp,
 							false);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		dvb_spi->filter_config = cfgtmp;
-	}
+		dvb_spi->filter_config = cfgपंचांगp;
+	पूर्ण
 
-	if (dvb_spi->feed_count == 0) {
+	अगर (dvb_spi->feed_count == 0) अणु
 		dvb_spi->ts_buf =
-			kmalloc(MAX_TRANS_PKT * 188,
+			kदो_स्मृति(MAX_TRANS_PKT * 188,
 				GFP_KERNEL | GFP_DMA);
-		if (!dvb_spi->ts_buf) {
+		अगर (!dvb_spi->ts_buf) अणु
 			pr_err("ts buffer allocate failed\n");
-			memset(&dvb_spi->filter_config, 0,
-			       sizeof(dvb_spi->filter_config));
+			स_रखो(&dvb_spi->filter_config, 0,
+			       माप(dvb_spi->filter_config));
 			dvb_spi->all_pid_feed_count = 0;
-			return -ENOMEM;
-		}
-		dvb_spi->cxd2880_ts_read_thread = kthread_run(cxd2880_ts_read,
+			वापस -ENOMEM;
+		पूर्ण
+		dvb_spi->cxd2880_ts_पढ़ो_thपढ़ो = kthपढ़ो_run(cxd2880_ts_पढ़ो,
 							      dvb_spi,
 							      "cxd2880_ts_read");
-		if (IS_ERR(dvb_spi->cxd2880_ts_read_thread)) {
+		अगर (IS_ERR(dvb_spi->cxd2880_ts_पढ़ो_thपढ़ो)) अणु
 			pr_err("kthread_run failed/\n");
-			kfree(dvb_spi->ts_buf);
-			dvb_spi->ts_buf = NULL;
-			memset(&dvb_spi->filter_config, 0,
-			       sizeof(dvb_spi->filter_config));
+			kमुक्त(dvb_spi->ts_buf);
+			dvb_spi->ts_buf = शून्य;
+			स_रखो(&dvb_spi->filter_config, 0,
+			       माप(dvb_spi->filter_config));
 			dvb_spi->all_pid_feed_count = 0;
-			return PTR_ERR(dvb_spi->cxd2880_ts_read_thread);
-		}
-	}
+			वापस PTR_ERR(dvb_spi->cxd2880_ts_पढ़ो_thपढ़ो);
+		पूर्ण
+	पूर्ण
 
 	dvb_spi->feed_count++;
 
 	pr_debug("start feed (count %d)\n", dvb_spi->feed_count);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cxd2880_stop_feed(struct dvb_demux_feed *feed)
-{
-	int i = 0;
-	int ret;
-	struct dvb_demux *demux = NULL;
-	struct cxd2880_dvb_spi *dvb_spi = NULL;
+अटल पूर्णांक cxd2880_stop_feed(काष्ठा dvb_demux_feed *feed)
+अणु
+	पूर्णांक i = 0;
+	पूर्णांक ret;
+	काष्ठा dvb_demux *demux = शून्य;
+	काष्ठा cxd2880_dvb_spi *dvb_spi = शून्य;
 
-	if (!feed) {
+	अगर (!feed) अणु
 		pr_err("invalid arg\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	demux = feed->demux;
-	if (!demux) {
+	अगर (!demux) अणु
 		pr_err("feed->demux is NULL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dvb_spi = demux->priv;
 
-	if (!dvb_spi->feed_count) {
+	अगर (!dvb_spi->feed_count) अणु
 		pr_err("no feed is started\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (feed->pid == 0x2000) {
+	अगर (feed->pid == 0x2000) अणु
 		/*
-		 * Special PID case.
+		 * Special PID हाल.
 		 * Number of 0x2000 feed request was stored
 		 * in dvb_spi->all_pid_feed_count.
 		 */
-		if (dvb_spi->all_pid_feed_count <= 0) {
+		अगर (dvb_spi->all_pid_feed_count <= 0) अणु
 			pr_err("PID %d not found.\n", feed->pid);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		dvb_spi->all_pid_feed_count--;
-	} else {
-		struct cxd2880_pid_filter_config cfgtmp;
+	पूर्ण अन्यथा अणु
+		काष्ठा cxd2880_pid_filter_config cfgपंचांगp;
 
-		cfgtmp = dvb_spi->filter_config;
+		cfgपंचांगp = dvb_spi->filter_config;
 
-		for (i = 0; i < CXD2880_MAX_FILTER_SIZE; i++) {
-			if (feed->pid == cfgtmp.pid_config[i].pid &&
-			    cfgtmp.pid_config[i].is_enable != 0) {
-				cfgtmp.pid_config[i].is_enable = 0;
-				cfgtmp.pid_config[i].pid = 0;
+		क्रम (i = 0; i < CXD2880_MAX_FILTER_SIZE; i++) अणु
+			अगर (feed->pid == cfgपंचांगp.pid_config[i].pid &&
+			    cfgपंचांगp.pid_config[i].is_enable != 0) अणु
+				cfgपंचांगp.pid_config[i].is_enable = 0;
+				cfgपंचांगp.pid_config[i].pid = 0;
 				pr_debug("removed PID %d from #%d\n",
 					 feed->pid, i);
-				break;
-			}
-		}
-		dvb_spi->filter_config = cfgtmp;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		dvb_spi->filter_config = cfgपंचांगp;
 
-		if (i == CXD2880_MAX_FILTER_SIZE) {
+		अगर (i == CXD2880_MAX_FILTER_SIZE) अणु
 			pr_err("PID %d not found\n", feed->pid);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	ret = cxd2880_update_pid_filter(dvb_spi,
 					&dvb_spi->filter_config,
 					dvb_spi->all_pid_feed_count > 0);
 	dvb_spi->feed_count--;
 
-	if (dvb_spi->feed_count == 0) {
-		int ret_stop = 0;
+	अगर (dvb_spi->feed_count == 0) अणु
+		पूर्णांक ret_stop = 0;
 
-		ret_stop = kthread_stop(dvb_spi->cxd2880_ts_read_thread);
-		if (ret_stop) {
+		ret_stop = kthपढ़ो_stop(dvb_spi->cxd2880_ts_पढ़ो_thपढ़ो);
+		अगर (ret_stop) अणु
 			pr_err("'kthread_stop failed. (%d)\n", ret_stop);
 			ret = ret_stop;
-		}
-		kfree(dvb_spi->ts_buf);
-		dvb_spi->ts_buf = NULL;
-	}
+		पूर्ण
+		kमुक्त(dvb_spi->ts_buf);
+		dvb_spi->ts_buf = शून्य;
+	पूर्ण
 
 	pr_debug("stop feed ok.(count %d)\n", dvb_spi->feed_count);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id cxd2880_spi_of_match[] = {
-	{ .compatible = "sony,cxd2880" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id cxd2880_spi_of_match[] = अणु
+	अणु .compatible = "sony,cxd2880" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, cxd2880_spi_of_match);
 
-static int
-cxd2880_spi_probe(struct spi_device *spi)
-{
-	int ret;
-	struct cxd2880_dvb_spi *dvb_spi = NULL;
-	struct cxd2880_config config;
+अटल पूर्णांक
+cxd2880_spi_probe(काष्ठा spi_device *spi)
+अणु
+	पूर्णांक ret;
+	काष्ठा cxd2880_dvb_spi *dvb_spi = शून्य;
+	काष्ठा cxd2880_config config;
 
-	if (!spi) {
+	अगर (!spi) अणु
 		pr_err("invalid arg.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dvb_spi = kzalloc(sizeof(struct cxd2880_dvb_spi), GFP_KERNEL);
-	if (!dvb_spi)
-		return -ENOMEM;
+	dvb_spi = kzalloc(माप(काष्ठा cxd2880_dvb_spi), GFP_KERNEL);
+	अगर (!dvb_spi)
+		वापस -ENOMEM;
 
 	dvb_spi->vcc_supply = devm_regulator_get_optional(&spi->dev, "vcc");
-	if (IS_ERR(dvb_spi->vcc_supply)) {
-		if (PTR_ERR(dvb_spi->vcc_supply) == -EPROBE_DEFER) {
+	अगर (IS_ERR(dvb_spi->vcc_supply)) अणु
+		अगर (PTR_ERR(dvb_spi->vcc_supply) == -EPROBE_DEFER) अणु
 			ret = -EPROBE_DEFER;
-			goto fail_adapter;
-		}
-		dvb_spi->vcc_supply = NULL;
-	} else {
+			जाओ fail_adapter;
+		पूर्ण
+		dvb_spi->vcc_supply = शून्य;
+	पूर्ण अन्यथा अणु
 		ret = regulator_enable(dvb_spi->vcc_supply);
-		if (ret)
-			goto fail_adapter;
-	}
+		अगर (ret)
+			जाओ fail_adapter;
+	पूर्ण
 
 	dvb_spi->spi = spi;
 	mutex_init(&dvb_spi->spi_mutex);
@@ -539,28 +540,28 @@ cxd2880_spi_probe(struct spi_device *spi)
 	config.spi = spi;
 	config.spi_mutex = &dvb_spi->spi_mutex;
 
-	ret = dvb_register_adapter(&dvb_spi->adapter,
+	ret = dvb_रेजिस्टर_adapter(&dvb_spi->adapter,
 				   "CXD2880",
 				   THIS_MODULE,
 				   &spi->dev,
 				   adapter_nr);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("dvb_register_adapter() failed\n");
-		goto fail_adapter;
-	}
+		जाओ fail_adapter;
+	पूर्ण
 
-	if (!dvb_attach(cxd2880_attach, &dvb_spi->dvb_fe, &config)) {
+	अगर (!dvb_attach(cxd2880_attach, &dvb_spi->dvb_fe, &config)) अणु
 		pr_err("cxd2880_attach failed\n");
 		ret = -ENODEV;
-		goto fail_attach;
-	}
+		जाओ fail_attach;
+	पूर्ण
 
-	ret = dvb_register_frontend(&dvb_spi->adapter,
+	ret = dvb_रेजिस्टर_frontend(&dvb_spi->adapter,
 				    &dvb_spi->dvb_fe);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("dvb_register_frontend() failed\n");
-		goto fail_frontend;
-	}
+		जाओ fail_frontend;
+	पूर्ण
 
 	dvb_spi->demux.dmx.capabilities = DMX_TS_FILTERING;
 	dvb_spi->demux.priv = dvb_spi;
@@ -570,106 +571,106 @@ cxd2880_spi_probe(struct spi_device *spi)
 	dvb_spi->demux.stop_feed = cxd2880_stop_feed;
 
 	ret = dvb_dmx_init(&dvb_spi->demux);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("dvb_dmx_init() failed\n");
-		goto fail_dmx;
-	}
+		जाओ fail_dmx;
+	पूर्ण
 
 	dvb_spi->dmxdev.filternum = CXD2880_MAX_FILTER_SIZE;
 	dvb_spi->dmxdev.demux = &dvb_spi->demux.dmx;
 	dvb_spi->dmxdev.capabilities = 0;
 	ret = dvb_dmxdev_init(&dvb_spi->dmxdev,
 			      &dvb_spi->adapter);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("dvb_dmxdev_init() failed\n");
-		goto fail_dmxdev;
-	}
+		जाओ fail_dmxdev;
+	पूर्ण
 
 	dvb_spi->dmx_fe.source = DMX_FRONTEND_0;
 	ret = dvb_spi->demux.dmx.add_frontend(&dvb_spi->demux.dmx,
 					      &dvb_spi->dmx_fe);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("add_frontend() failed\n");
-		goto fail_dmx_fe;
-	}
+		जाओ fail_dmx_fe;
+	पूर्ण
 
 	ret = dvb_spi->demux.dmx.connect_frontend(&dvb_spi->demux.dmx,
 						  &dvb_spi->dmx_fe);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("dvb_register_frontend() failed\n");
-		goto fail_fe_conn;
-	}
+		जाओ fail_fe_conn;
+	पूर्ण
 
 	pr_info("Sony CXD2880 has successfully attached.\n");
 
-	return 0;
+	वापस 0;
 
 fail_fe_conn:
-	dvb_spi->demux.dmx.remove_frontend(&dvb_spi->demux.dmx,
+	dvb_spi->demux.dmx.हटाओ_frontend(&dvb_spi->demux.dmx,
 					   &dvb_spi->dmx_fe);
 fail_dmx_fe:
 	dvb_dmxdev_release(&dvb_spi->dmxdev);
 fail_dmxdev:
 	dvb_dmx_release(&dvb_spi->demux);
 fail_dmx:
-	dvb_unregister_frontend(&dvb_spi->dvb_fe);
+	dvb_unरेजिस्टर_frontend(&dvb_spi->dvb_fe);
 fail_frontend:
 	dvb_frontend_detach(&dvb_spi->dvb_fe);
 fail_attach:
-	dvb_unregister_adapter(&dvb_spi->adapter);
+	dvb_unरेजिस्टर_adapter(&dvb_spi->adapter);
 fail_adapter:
-	kfree(dvb_spi);
-	return ret;
-}
+	kमुक्त(dvb_spi);
+	वापस ret;
+पूर्ण
 
-static int
-cxd2880_spi_remove(struct spi_device *spi)
-{
-	struct cxd2880_dvb_spi *dvb_spi;
+अटल पूर्णांक
+cxd2880_spi_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा cxd2880_dvb_spi *dvb_spi;
 
-	if (!spi) {
+	अगर (!spi) अणु
 		pr_err("invalid arg\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dvb_spi = spi_get_drvdata(spi);
 
-	if (!dvb_spi) {
+	अगर (!dvb_spi) अणु
 		pr_err("failed\n");
-		return -EINVAL;
-	}
-	dvb_spi->demux.dmx.remove_frontend(&dvb_spi->demux.dmx,
+		वापस -EINVAL;
+	पूर्ण
+	dvb_spi->demux.dmx.हटाओ_frontend(&dvb_spi->demux.dmx,
 					   &dvb_spi->dmx_fe);
 	dvb_dmxdev_release(&dvb_spi->dmxdev);
 	dvb_dmx_release(&dvb_spi->demux);
-	dvb_unregister_frontend(&dvb_spi->dvb_fe);
+	dvb_unरेजिस्टर_frontend(&dvb_spi->dvb_fe);
 	dvb_frontend_detach(&dvb_spi->dvb_fe);
-	dvb_unregister_adapter(&dvb_spi->adapter);
+	dvb_unरेजिस्टर_adapter(&dvb_spi->adapter);
 
-	if (dvb_spi->vcc_supply)
+	अगर (dvb_spi->vcc_supply)
 		regulator_disable(dvb_spi->vcc_supply);
 
-	kfree(dvb_spi);
+	kमुक्त(dvb_spi);
 	pr_info("cxd2880_spi remove ok.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id cxd2880_spi_id[] = {
-	{ "cxd2880", 0 },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा spi_device_id cxd2880_spi_id[] = अणु
+	अणु "cxd2880", 0 पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, cxd2880_spi_id);
 
-static struct spi_driver cxd2880_spi_driver = {
-	.driver	= {
+अटल काष्ठा spi_driver cxd2880_spi_driver = अणु
+	.driver	= अणु
 		.name	= "cxd2880",
 		.of_match_table = cxd2880_spi_of_match,
-	},
+	पूर्ण,
 	.id_table = cxd2880_spi_id,
 	.probe    = cxd2880_spi_probe,
-	.remove   = cxd2880_spi_remove,
-};
+	.हटाओ   = cxd2880_spi_हटाओ,
+पूर्ण;
 module_spi_driver(cxd2880_spi_driver);
 
 MODULE_DESCRIPTION("Sony CXD2880 DVB-T2/T tuner + demod driver SPI adapter");

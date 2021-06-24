@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_DELAY_H
-#define _LINUX_DELAY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_DELAY_H
+#घोषणा _LINUX_DELAY_H
 
 /*
  * Copyright (C) 1993 Linus Torvalds
  *
  * Delay routines, using a pre-computed "loops_per_jiffy" value.
  *
- * Please note that ndelay(), udelay() and mdelay() may return early for
+ * Please note that ndelay(), udelay() and mdelay() may वापस early क्रम
  * several reasons:
- *  1. computed loops_per_jiffy too low (due to the time taken to
- *     execute the timer interrupt.)
- *  2. cache behaviour affecting the time it takes to execute the
+ *  1. computed loops_per_jअगरfy too low (due to the समय taken to
+ *     execute the समयr पूर्णांकerrupt.)
+ *  2. cache behaviour affecting the समय it takes to execute the
  *     loop function.
- *  3. CPU clock rate changes.
+ *  3. CPU घड़ी rate changes.
  *
- * Please see this thread:
- *   https://lists.openwall.net/linux-kernel/2011/01/09/56
+ * Please see this thपढ़ो:
+ *   https://lists.खोलोwall.net/linux-kernel/2011/01/09/56
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-extern unsigned long loops_per_jiffy;
+बाह्य अचिन्हित दीर्घ loops_per_jअगरfy;
 
-#include <asm/delay.h>
+#समावेश <यंत्र/delay.h>
 
 /*
- * Using udelay() for intervals greater than a few milliseconds can
- * risk overflow for high loops_per_jiffy (high bogomips) machines. The
+ * Using udelay() क्रम पूर्णांकervals greater than a few milliseconds can
+ * risk overflow क्रम high loops_per_jअगरfy (high bogomips) machines. The
  * mdelay() provides a wrapper to prevent this.  For delays greater
  * than MAX_UDELAY_MS milliseconds, the wrapper is used.  Architecture
- * specific values can be defined in asm-???/delay.h as an override.
+ * specअगरic values can be defined in यंत्र-???/delay.h as an override.
  * The 2nd mdelay() definition ensures GCC will optimize away the 
- * while loop for the common cases where n <= MAX_UDELAY_MS  --  Paul G.
+ * जबतक loop क्रम the common हालs where n <= MAX_UDELAY_MS  --  Paul G.
  */
 
-#ifndef MAX_UDELAY_MS
-#define MAX_UDELAY_MS	5
-#endif
+#अगर_अघोषित MAX_UDELAY_MS
+#घोषणा MAX_UDELAY_MS	5
+#पूर्ण_अगर
 
-#ifndef mdelay
-#define mdelay(n) (\
-	(__builtin_constant_p(n) && (n)<=MAX_UDELAY_MS) ? udelay((n)*1000) : \
-	({unsigned long __ms=(n); while (__ms--) udelay(1000);}))
-#endif
+#अगर_अघोषित mdelay
+#घोषणा mdelay(n) (\
+	(__builtin_स्थिरant_p(n) && (n)<=MAX_UDELAY_MS) ? udelay((n)*1000) : \
+	(अणुअचिन्हित दीर्घ __ms=(n); जबतक (__ms--) udelay(1000);पूर्ण))
+#पूर्ण_अगर
 
-#ifndef ndelay
-static inline void ndelay(unsigned long x)
-{
+#अगर_अघोषित ndelay
+अटल अंतरभूत व्योम ndelay(अचिन्हित दीर्घ x)
+अणु
 	udelay(DIV_ROUND_UP(x, 1000));
-}
-#define ndelay(x) ndelay(x)
-#endif
+पूर्ण
+#घोषणा ndelay(x) ndelay(x)
+#पूर्ण_अगर
 
-extern unsigned long lpj_fine;
-void calibrate_delay(void);
-void __attribute__((weak)) calibration_delay_done(void);
-void msleep(unsigned int msecs);
-unsigned long msleep_interruptible(unsigned int msecs);
-void usleep_range(unsigned long min, unsigned long max);
+बाह्य अचिन्हित दीर्घ lpj_fine;
+व्योम calibrate_delay(व्योम);
+व्योम __attribute__((weak)) calibration_delay_करोne(व्योम);
+व्योम msleep(अचिन्हित पूर्णांक msecs);
+अचिन्हित दीर्घ msleep_पूर्णांकerruptible(अचिन्हित पूर्णांक msecs);
+व्योम usleep_range(अचिन्हित दीर्घ min, अचिन्हित दीर्घ max);
 
-static inline void ssleep(unsigned int seconds)
-{
+अटल अंतरभूत व्योम ssleep(अचिन्हित पूर्णांक seconds)
+अणु
 	msleep(seconds * 1000);
-}
+पूर्ण
 
-/* see Documentation/timers/timers-howto.rst for the thresholds */
-static inline void fsleep(unsigned long usecs)
-{
-	if (usecs <= 10)
+/* see Documentation/समयrs/समयrs-howto.rst क्रम the thresholds */
+अटल अंतरभूत व्योम fsleep(अचिन्हित दीर्घ usecs)
+अणु
+	अगर (usecs <= 10)
 		udelay(usecs);
-	else if (usecs <= 20000)
+	अन्यथा अगर (usecs <= 20000)
 		usleep_range(usecs, 2 * usecs);
-	else
+	अन्यथा
 		msleep(DIV_ROUND_UP(usecs, 1000));
-}
+पूर्ण
 
-#endif /* defined(_LINUX_DELAY_H) */
+#पूर्ण_अगर /* defined(_LINUX_DELAY_H) */

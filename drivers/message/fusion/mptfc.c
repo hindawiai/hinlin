@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  linux/drivers/message/fusion/mptfc.c
  *      For use with LSI PCI chip/adapter(s)
@@ -9,29 +10,29 @@
  */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
-    This program is free software; you can redistribute it and/or modify
+    This program is मुक्त software; you can redistribute it and/or modअगरy
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; version 2 of the License.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU General Public License क्रम more details.
 
     NO WARRANTY
     THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
     CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
     LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
     MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
-    solely responsible for determining the appropriateness of using and
+    solely responsible क्रम determining the appropriateness of using and
     distributing the Program and assumes all risks associated with its
     exercise of rights under this Agreement, including but not limited to
     the risks and costs of program errors, damage to or loss of data,
-    programs or equipment, and unavailability or interruption of operations.
+    programs or equipment, and unavailability or पूर्णांकerruption of operations.
 
     DISCLAIMER OF LIABILITY
     NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
-    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
     DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
     TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -39,37 +40,37 @@
     HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
 
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
+    aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/kdev_t.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>	/* for mdelay */
-#include <linux/interrupt.h>
-#include <linux/reboot.h>	/* notifier code */
-#include <linux/workqueue.h>
-#include <linux/sort.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>	/* क्रम mdelay */
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/reboot.h>	/* notअगरier code */
+#समावेश <linux/workqueue.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/slab.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_tcq.h>
-#include <scsi/scsi_transport_fc.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <scsi/scsi_transport_fc.h>
 
-#include "mptbase.h"
-#include "mptscsih.h"
+#समावेश "mptbase.h"
+#समावेश "mptscsih.h"
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-#define my_NAME		"Fusion MPT FC Host driver"
-#define my_VERSION	MPT_LINUX_VERSION_COMMON
-#define MYNAM		"mptfc"
+#घोषणा my_NAME		"Fusion MPT FC Host driver"
+#घोषणा my_VERSION	MPT_LINUX_VERSION_COMMON
+#घोषणा MYNAM		"mptfc"
 
 MODULE_AUTHOR(MODULEAUTHOR);
 MODULE_DESCRIPTION(my_NAME);
@@ -77,35 +78,35 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION(my_VERSION);
 
 /* Command line args */
-#define MPTFC_DEV_LOSS_TMO (60)
-static int mptfc_dev_loss_tmo = MPTFC_DEV_LOSS_TMO;	/* reasonable default */
-module_param(mptfc_dev_loss_tmo, int, 0);
-MODULE_PARM_DESC(mptfc_dev_loss_tmo, " Initial time the driver programs the "
+#घोषणा MPTFC_DEV_LOSS_TMO (60)
+अटल पूर्णांक mptfc_dev_loss_पंचांगo = MPTFC_DEV_LOSS_TMO;	/* reasonable शेष */
+module_param(mptfc_dev_loss_पंचांगo, पूर्णांक, 0);
+MODULE_PARM_DESC(mptfc_dev_loss_पंचांगo, " Initial time the driver programs the "
     				     " transport to wait for an rport to "
 				     " return following a device loss event."
 				     "  Default=60.");
 
 /* scsi-mid layer global parmeter is max_report_luns, which is 511 */
-#define MPTFC_MAX_LUN (16895)
-static int max_lun = MPTFC_MAX_LUN;
-module_param(max_lun, int, 0);
+#घोषणा MPTFC_MAX_LUN (16895)
+अटल पूर्णांक max_lun = MPTFC_MAX_LUN;
+module_param(max_lun, पूर्णांक, 0);
 MODULE_PARM_DESC(max_lun, " max lun, default=16895 ");
 
-static u8	mptfcDoneCtx = MPT_MAX_PROTOCOL_DRIVERS;
-static u8	mptfcTaskCtx = MPT_MAX_PROTOCOL_DRIVERS;
-static u8	mptfcInternalCtx = MPT_MAX_PROTOCOL_DRIVERS;
+अटल u8	mptfcDoneCtx = MPT_MAX_PROTOCOL_DRIVERS;
+अटल u8	mptfcTaskCtx = MPT_MAX_PROTOCOL_DRIVERS;
+अटल u8	mptfcInternalCtx = MPT_MAX_PROTOCOL_DRIVERS;
 
-static int mptfc_target_alloc(struct scsi_target *starget);
-static int mptfc_slave_alloc(struct scsi_device *sdev);
-static int mptfc_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *SCpnt);
-static void mptfc_target_destroy(struct scsi_target *starget);
-static void mptfc_set_rport_loss_tmo(struct fc_rport *rport, uint32_t timeout);
-static void mptfc_remove(struct pci_dev *pdev);
-static int mptfc_abort(struct scsi_cmnd *SCpnt);
-static int mptfc_dev_reset(struct scsi_cmnd *SCpnt);
-static int mptfc_bus_reset(struct scsi_cmnd *SCpnt);
+अटल पूर्णांक mptfc_target_alloc(काष्ठा scsi_target *starget);
+अटल पूर्णांक mptfc_slave_alloc(काष्ठा scsi_device *sdev);
+अटल पूर्णांक mptfc_qcmd(काष्ठा Scsi_Host *shost, काष्ठा scsi_cmnd *SCpnt);
+अटल व्योम mptfc_target_destroy(काष्ठा scsi_target *starget);
+अटल व्योम mptfc_set_rport_loss_पंचांगo(काष्ठा fc_rport *rport, uपूर्णांक32_t समयout);
+अटल व्योम mptfc_हटाओ(काष्ठा pci_dev *pdev);
+अटल पूर्णांक mptfc_पात(काष्ठा scsi_cmnd *SCpnt);
+अटल पूर्णांक mptfc_dev_reset(काष्ठा scsi_cmnd *SCpnt);
+अटल पूर्णांक mptfc_bus_reset(काष्ठा scsi_cmnd *SCpnt);
 
-static struct scsi_host_template mptfc_driver_template = {
+अटल काष्ठा scsi_host_ढाँचा mptfc_driver_ढाँचा = अणु
 	.module				= THIS_MODULE,
 	.proc_name			= "mptfc",
 	.show_info			= mptscsih_show_info,
@@ -118,8 +119,8 @@ static struct scsi_host_template mptfc_driver_template = {
 	.target_destroy			= mptfc_target_destroy,
 	.slave_destroy			= mptscsih_slave_destroy,
 	.change_queue_depth 		= mptscsih_change_queue_depth,
-	.eh_timed_out			= fc_eh_timed_out,
-	.eh_abort_handler		= mptfc_abort,
+	.eh_समयd_out			= fc_eh_समयd_out,
+	.eh_पात_handler		= mptfc_पात,
 	.eh_device_reset_handler	= mptfc_dev_reset,
 	.eh_bus_reset_handler		= mptfc_bus_reset,
 	.eh_host_reset_handler		= mptscsih_host_reset,
@@ -130,38 +131,38 @@ static struct scsi_host_template mptfc_driver_template = {
 	.max_sectors			= 8192,
 	.cmd_per_lun			= 7,
 	.shost_attrs			= mptscsih_host_attrs,
-};
+पूर्ण;
 
 /****************************************************************************
  * Supported hardware
  */
 
-static struct pci_device_id mptfc_pci_table[] = {
-	{ PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC909,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC919,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC929,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC919X,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC929X,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC939X,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC949X,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC949E,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{ PCI_VENDOR_ID_BROCADE, MPI_MANUFACTPAGE_DEVICEID_FC949E,
-		PCI_ANY_ID, PCI_ANY_ID },
-	{0}	/* Terminating entry */
-};
+अटल काष्ठा pci_device_id mptfc_pci_table[] = अणु
+	अणु PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC909,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC919,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC929,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC919X,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC929X,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC939X,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC949X,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_LSI_LOGIC, MPI_MANUFACTPAGE_DEVICEID_FC949E,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु PCI_VENDOR_ID_BROCADE, MPI_MANUFACTPAGE_DEVICEID_FC949E,
+		PCI_ANY_ID, PCI_ANY_ID पूर्ण,
+	अणु0पूर्ण	/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, mptfc_pci_table);
 
-static struct scsi_transport_template *mptfc_transport_template = NULL;
+अटल काष्ठा scsi_transport_ढाँचा *mptfc_transport_ढाँचा = शून्य;
 
-static struct fc_function_template mptfc_transport_functions = {
+अटल काष्ठा fc_function_ढाँचा mptfc_transport_functions = अणु
 	.dd_fcrport_size = 8,
 	.show_host_node_name = 1,
 	.show_host_port_name = 1,
@@ -171,8 +172,8 @@ static struct fc_function_template mptfc_transport_functions = {
 	.show_starget_node_name = 1,
 	.show_starget_port_name = 1,
 	.show_starget_port_id = 1,
-	.set_rport_dev_loss_tmo = mptfc_set_rport_loss_tmo,
-	.show_rport_dev_loss_tmo = 1,
+	.set_rport_dev_loss_पंचांगo = mptfc_set_rport_loss_पंचांगo,
+	.show_rport_dev_loss_पंचांगo = 1,
 	.show_host_supported_speeds = 1,
 	.show_host_maxframe_size = 1,
 	.show_host_speed = 1,
@@ -180,138 +181,138 @@ static struct fc_function_template mptfc_transport_functions = {
 	.show_host_port_type = 1,
 	.show_host_port_state = 1,
 	.show_host_symbolic_name = 1,
-};
+पूर्ण;
 
-static int
-mptfc_block_error_handler(struct scsi_cmnd *SCpnt,
-			  int (*func)(struct scsi_cmnd *SCpnt),
-			  const char *caller)
-{
+अटल पूर्णांक
+mptfc_block_error_handler(काष्ठा scsi_cmnd *SCpnt,
+			  पूर्णांक (*func)(काष्ठा scsi_cmnd *SCpnt),
+			  स्थिर अक्षर *caller)
+अणु
 	MPT_SCSI_HOST		*hd;
-	struct scsi_device	*sdev = SCpnt->device;
-	struct Scsi_Host	*shost = sdev->host;
-	struct fc_rport		*rport = starget_to_rport(scsi_target(sdev));
-	unsigned long		flags;
-	int			ready;
+	काष्ठा scsi_device	*sdev = SCpnt->device;
+	काष्ठा Scsi_Host	*shost = sdev->host;
+	काष्ठा fc_rport		*rport = starget_to_rport(scsi_target(sdev));
+	अचिन्हित दीर्घ		flags;
+	पूर्णांक			पढ़ोy;
 	MPT_ADAPTER 		*ioc;
-	int			loops = 40;	/* seconds */
+	पूर्णांक			loops = 40;	/* seconds */
 
 	hd = shost_priv(SCpnt->device->host);
 	ioc = hd->ioc;
 	spin_lock_irqsave(shost->host_lock, flags);
-	while ((ready = fc_remote_port_chkready(rport) >> 16) == DID_IMM_RETRY
-	 || (loops > 0 && ioc->active == 0)) {
+	जबतक ((पढ़ोy = fc_remote_port_chkपढ़ोy(rport) >> 16) == DID_IMM_RETRY
+	 || (loops > 0 && ioc->active == 0)) अणु
 		spin_unlock_irqrestore(shost->host_lock, flags);
-		dfcprintk (ioc, printk(MYIOC_s_DEBUG_FMT
+		dfcprपूर्णांकk (ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 			"mptfc_block_error_handler.%d: %d:%llu, port status is "
 			"%x, active flag %d, deferring %s recovery.\n",
 			ioc->name, ioc->sh->host_no,
 			SCpnt->device->id, SCpnt->device->lun,
-			ready, ioc->active, caller));
+			पढ़ोy, ioc->active, caller));
 		msleep(1000);
 		spin_lock_irqsave(shost->host_lock, flags);
 		loops --;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(shost->host_lock, flags);
 
-	if (ready == DID_NO_CONNECT || !SCpnt->device->hostdata
-	 || ioc->active == 0) {
-		dfcprintk (ioc, printk(MYIOC_s_DEBUG_FMT
+	अगर (पढ़ोy == DID_NO_CONNECT || !SCpnt->device->hostdata
+	 || ioc->active == 0) अणु
+		dfcprपूर्णांकk (ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 			"%s.%d: %d:%llu, failing recovery, "
 			"port state %x, active %d, vdevice %p.\n", caller,
 			ioc->name, ioc->sh->host_no,
-			SCpnt->device->id, SCpnt->device->lun, ready,
+			SCpnt->device->id, SCpnt->device->lun, पढ़ोy,
 			ioc->active, SCpnt->device->hostdata));
-		return FAILED;
-	}
-	dfcprintk (ioc, printk(MYIOC_s_DEBUG_FMT
+		वापस FAILED;
+	पूर्ण
+	dfcprपूर्णांकk (ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 		"%s.%d: %d:%llu, executing recovery.\n", caller,
 		ioc->name, ioc->sh->host_no,
 		SCpnt->device->id, SCpnt->device->lun));
-	return (*func)(SCpnt);
-}
+	वापस (*func)(SCpnt);
+पूर्ण
 
-static int
-mptfc_abort(struct scsi_cmnd *SCpnt)
-{
-	return
-	    mptfc_block_error_handler(SCpnt, mptscsih_abort, __func__);
-}
+अटल पूर्णांक
+mptfc_पात(काष्ठा scsi_cmnd *SCpnt)
+अणु
+	वापस
+	    mptfc_block_error_handler(SCpnt, mptscsih_पात, __func__);
+पूर्ण
 
-static int
-mptfc_dev_reset(struct scsi_cmnd *SCpnt)
-{
-	return
+अटल पूर्णांक
+mptfc_dev_reset(काष्ठा scsi_cmnd *SCpnt)
+अणु
+	वापस
 	    mptfc_block_error_handler(SCpnt, mptscsih_dev_reset, __func__);
-}
+पूर्ण
 
-static int
-mptfc_bus_reset(struct scsi_cmnd *SCpnt)
-{
-	return
+अटल पूर्णांक
+mptfc_bus_reset(काष्ठा scsi_cmnd *SCpnt)
+अणु
+	वापस
 	    mptfc_block_error_handler(SCpnt, mptscsih_bus_reset, __func__);
-}
+पूर्ण
 
-static void
-mptfc_set_rport_loss_tmo(struct fc_rport *rport, uint32_t timeout)
-{
-	if (timeout > 0)
-		rport->dev_loss_tmo = timeout;
-	else
-		rport->dev_loss_tmo = mptfc_dev_loss_tmo;
-}
+अटल व्योम
+mptfc_set_rport_loss_पंचांगo(काष्ठा fc_rport *rport, uपूर्णांक32_t समयout)
+अणु
+	अगर (समयout > 0)
+		rport->dev_loss_पंचांगo = समयout;
+	अन्यथा
+		rport->dev_loss_पंचांगo = mptfc_dev_loss_पंचांगo;
+पूर्ण
 
-static int
-mptfc_FcDevPage0_cmp_func(const void *a, const void *b)
-{
+अटल पूर्णांक
+mptfc_FcDevPage0_cmp_func(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
 	FCDevicePage0_t **aa = (FCDevicePage0_t **)a;
 	FCDevicePage0_t **bb = (FCDevicePage0_t **)b;
 
-	if ((*aa)->CurrentBus == (*bb)->CurrentBus) {
-		if ((*aa)->CurrentTargetID == (*bb)->CurrentTargetID)
-			return 0;
-		if ((*aa)->CurrentTargetID < (*bb)->CurrentTargetID)
-			return -1;
-		return 1;
-	}
-	if ((*aa)->CurrentBus < (*bb)->CurrentBus)
-		return -1;
-	return 1;
-}
+	अगर ((*aa)->CurrentBus == (*bb)->CurrentBus) अणु
+		अगर ((*aa)->CurrentTargetID == (*bb)->CurrentTargetID)
+			वापस 0;
+		अगर ((*aa)->CurrentTargetID < (*bb)->CurrentTargetID)
+			वापस -1;
+		वापस 1;
+	पूर्ण
+	अगर ((*aa)->CurrentBus < (*bb)->CurrentBus)
+		वापस -1;
+	वापस 1;
+पूर्ण
 
-static int
-mptfc_GetFcDevPage0(MPT_ADAPTER *ioc, int ioc_port,
-	void(*func)(MPT_ADAPTER *ioc,int channel, FCDevicePage0_t *arg))
-{
+अटल पूर्णांक
+mptfc_GetFcDevPage0(MPT_ADAPTER *ioc, पूर्णांक ioc_port,
+	व्योम(*func)(MPT_ADAPTER *ioc,पूर्णांक channel, FCDevicePage0_t *arg))
+अणु
 	ConfigPageHeader_t	 hdr;
 	CONFIGPARMS		 cfg;
 	FCDevicePage0_t		*ppage0_alloc, *fc;
 	dma_addr_t		 page0_dma;
-	int			 data_sz;
-	int			 ii;
+	पूर्णांक			 data_sz;
+	पूर्णांक			 ii;
 
-	FCDevicePage0_t		*p0_array=NULL, *p_p0;
-	FCDevicePage0_t		**pp0_array=NULL, **p_pp0;
+	FCDevicePage0_t		*p0_array=शून्य, *p_p0;
+	FCDevicePage0_t		**pp0_array=शून्य, **p_pp0;
 
-	int			 rc = -ENOMEM;
+	पूर्णांक			 rc = -ENOMEM;
 	U32			 port_id = 0xffffff;
-	int			 num_targ = 0;
-	int			 max_bus = ioc->facts.MaxBuses;
-	int			 max_targ;
+	पूर्णांक			 num_targ = 0;
+	पूर्णांक			 max_bus = ioc->facts.MaxBuses;
+	पूर्णांक			 max_targ;
 
 	max_targ = (ioc->facts.MaxDevices == 0) ? 256 : ioc->facts.MaxDevices;
 
-	data_sz = sizeof(FCDevicePage0_t) * max_bus * max_targ;
+	data_sz = माप(FCDevicePage0_t) * max_bus * max_targ;
 	p_p0 = p0_array =  kzalloc(data_sz, GFP_KERNEL);
-	if (!p0_array)
-		goto out;
+	अगर (!p0_array)
+		जाओ out;
 
-	data_sz = sizeof(FCDevicePage0_t *) * max_bus * max_targ;
+	data_sz = माप(FCDevicePage0_t *) * max_bus * max_targ;
 	p_pp0 = pp0_array = kzalloc(data_sz, GFP_KERNEL);
-	if (!pp0_array)
-		goto out;
+	अगर (!pp0_array)
+		जाओ out;
 
-	do {
+	करो अणु
 		/* Get FC Device Page 0 header */
 		hdr.PageVersion = 0;
 		hdr.PageLength = 0;
@@ -322,27 +323,27 @@ mptfc_GetFcDevPage0(MPT_ADAPTER *ioc, int ioc_port,
 		cfg.action = MPI_CONFIG_ACTION_PAGE_HEADER;
 		cfg.dir = 0;
 		cfg.pageAddr = port_id;
-		cfg.timeout = 0;
+		cfg.समयout = 0;
 
-		if ((rc = mpt_config(ioc, &cfg)) != 0)
-			break;
+		अगर ((rc = mpt_config(ioc, &cfg)) != 0)
+			अवरोध;
 
-		if (hdr.PageLength <= 0)
-			break;
+		अगर (hdr.PageLength <= 0)
+			अवरोध;
 
 		data_sz = hdr.PageLength * 4;
 		ppage0_alloc = pci_alloc_consistent(ioc->pcidev, data_sz,
 		    					&page0_dma);
 		rc = -ENOMEM;
-		if (!ppage0_alloc)
-			break;
+		अगर (!ppage0_alloc)
+			अवरोध;
 
 		cfg.physAddr = page0_dma;
 		cfg.action = MPI_CONFIG_ACTION_PAGE_READ_CURRENT;
 
-		if ((rc = mpt_config(ioc, &cfg)) == 0) {
-			ppage0_alloc->PortIdentifier =
-				le32_to_cpu(ppage0_alloc->PortIdentifier);
+		अगर ((rc = mpt_config(ioc, &cfg)) == 0) अणु
+			ppage0_alloc->PortIdentअगरier =
+				le32_to_cpu(ppage0_alloc->PortIdentअगरier);
 
 			ppage0_alloc->WWNN.Low =
 				le32_to_cpu(ppage0_alloc->WWNN.Low);
@@ -362,201 +363,201 @@ mptfc_GetFcDevPage0(MPT_ADAPTER *ioc, int ioc_port,
 			ppage0_alloc->MaxRxFrameSize =
 				le16_to_cpu(ppage0_alloc->MaxRxFrameSize);
 
-			port_id = ppage0_alloc->PortIdentifier;
+			port_id = ppage0_alloc->PortIdentअगरier;
 			num_targ++;
 			*p_p0 = *ppage0_alloc;	/* save data */
 			*p_pp0++ = p_p0++;	/* save addr */
-		}
-		pci_free_consistent(ioc->pcidev, data_sz,
+		पूर्ण
+		pci_मुक्त_consistent(ioc->pcidev, data_sz,
 		    			(u8 *) ppage0_alloc, page0_dma);
-		if (rc != 0)
-			break;
+		अगर (rc != 0)
+			अवरोध;
 
-	} while (port_id <= 0xff0000);
+	पूर्ण जबतक (port_id <= 0xff0000);
 
-	if (num_targ) {
+	अगर (num_targ) अणु
 		/* sort array */
-		if (num_targ > 1)
-			sort (pp0_array, num_targ, sizeof(FCDevicePage0_t *),
-				mptfc_FcDevPage0_cmp_func, NULL);
-		/* call caller's func for each targ */
-		for (ii = 0; ii < num_targ;  ii++) {
+		अगर (num_targ > 1)
+			sort (pp0_array, num_targ, माप(FCDevicePage0_t *),
+				mptfc_FcDevPage0_cmp_func, शून्य);
+		/* call caller's func क्रम each targ */
+		क्रम (ii = 0; ii < num_targ;  ii++) अणु
 			fc = *(pp0_array+ii);
 			func(ioc, ioc_port, fc);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
  out:
-	kfree(pp0_array);
-	kfree(p0_array);
-	return rc;
-}
+	kमुक्त(pp0_array);
+	kमुक्त(p0_array);
+	वापस rc;
+पूर्ण
 
-static int
-mptfc_generate_rport_ids(FCDevicePage0_t *pg0, struct fc_rport_identifiers *rid)
-{
+अटल पूर्णांक
+mptfc_generate_rport_ids(FCDevicePage0_t *pg0, काष्ठा fc_rport_identअगरiers *rid)
+अणु
 	/* not currently usable */
-	if (pg0->Flags & (MPI_FC_DEVICE_PAGE0_FLAGS_PLOGI_INVALID |
+	अगर (pg0->Flags & (MPI_FC_DEVICE_PAGE0_FLAGS_PLOGI_INVALID |
 			  MPI_FC_DEVICE_PAGE0_FLAGS_PRLI_INVALID))
-		return -1;
+		वापस -1;
 
-	if (!(pg0->Flags & MPI_FC_DEVICE_PAGE0_FLAGS_TARGETID_BUS_VALID))
-		return -1;
+	अगर (!(pg0->Flags & MPI_FC_DEVICE_PAGE0_FLAGS_TARGETID_BUS_VALID))
+		वापस -1;
 
-	if (!(pg0->Protocol & MPI_FC_DEVICE_PAGE0_PROT_FCP_TARGET))
-		return -1;
+	अगर (!(pg0->Protocol & MPI_FC_DEVICE_PAGE0_PROT_FCP_TARGET))
+		वापस -1;
 
 	/*
-	 * board data structure already normalized to platform endianness
-	 * shifted to avoid unaligned access on 64 bit architecture
+	 * board data काष्ठाure alपढ़ोy normalized to platक्रमm endianness
+	 * shअगरted to aव्योम unaligned access on 64 bit architecture
 	 */
 	rid->node_name = ((u64)pg0->WWNN.High) << 32 | (u64)pg0->WWNN.Low;
 	rid->port_name = ((u64)pg0->WWPN.High) << 32 | (u64)pg0->WWPN.Low;
-	rid->port_id =   pg0->PortIdentifier;
+	rid->port_id =   pg0->PortIdentअगरier;
 	rid->roles = FC_RPORT_ROLE_UNKNOWN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mptfc_register_dev(MPT_ADAPTER *ioc, int channel, FCDevicePage0_t *pg0)
-{
-	struct fc_rport_identifiers rport_ids;
-	struct fc_rport		*rport;
-	struct mptfc_rport_info	*ri;
-	int			new_ri = 1;
+अटल व्योम
+mptfc_रेजिस्टर_dev(MPT_ADAPTER *ioc, पूर्णांक channel, FCDevicePage0_t *pg0)
+अणु
+	काष्ठा fc_rport_identअगरiers rport_ids;
+	काष्ठा fc_rport		*rport;
+	काष्ठा mptfc_rport_info	*ri;
+	पूर्णांक			new_ri = 1;
 	u64			pn, nn;
 	VirtTarget		*vtarget;
 	u32			roles = FC_RPORT_ROLE_UNKNOWN;
 
-	if (mptfc_generate_rport_ids(pg0, &rport_ids) < 0)
-		return;
+	अगर (mptfc_generate_rport_ids(pg0, &rport_ids) < 0)
+		वापस;
 
 	roles |= FC_RPORT_ROLE_FCP_TARGET;
-	if (pg0->Protocol & MPI_FC_DEVICE_PAGE0_PROT_FCP_INITIATOR)
+	अगर (pg0->Protocol & MPI_FC_DEVICE_PAGE0_PROT_FCP_INITIATOR)
 		roles |= FC_RPORT_ROLE_FCP_INITIATOR;
 
-	/* scan list looking for a match */
-	list_for_each_entry(ri, &ioc->fc_rports, list) {
+	/* scan list looking क्रम a match */
+	list_क्रम_each_entry(ri, &ioc->fc_rports, list) अणु
 		pn = (u64)ri->pg0.WWPN.High << 32 | (u64)ri->pg0.WWPN.Low;
-		if (pn == rport_ids.port_name) {	/* match */
+		अगर (pn == rport_ids.port_name) अणु	/* match */
 			list_move_tail(&ri->list, &ioc->fc_rports);
 			new_ri = 0;
-			break;
-		}
-	}
-	if (new_ri) {	/* allocate one */
-		ri = kzalloc(sizeof(struct mptfc_rport_info), GFP_KERNEL);
-		if (!ri)
-			return;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (new_ri) अणु	/* allocate one */
+		ri = kzalloc(माप(काष्ठा mptfc_rport_info), GFP_KERNEL);
+		अगर (!ri)
+			वापस;
 		list_add_tail(&ri->list, &ioc->fc_rports);
-	}
+	पूर्ण
 
 	ri->pg0 = *pg0;	/* add/update pg0 data */
 	ri->flags &= ~MPT_RPORT_INFO_FLAGS_MISSING;
 
 	/* MPT_RPORT_INFO_FLAGS_REGISTERED - rport not previously deleted */
-	if (!(ri->flags & MPT_RPORT_INFO_FLAGS_REGISTERED)) {
+	अगर (!(ri->flags & MPT_RPORT_INFO_FLAGS_REGISTERED)) अणु
 		ri->flags |= MPT_RPORT_INFO_FLAGS_REGISTERED;
 		rport = fc_remote_port_add(ioc->sh, channel, &rport_ids);
-		if (rport) {
+		अगर (rport) अणु
 			ri->rport = rport;
-			if (new_ri) /* may have been reset by user */
-				rport->dev_loss_tmo = mptfc_dev_loss_tmo;
+			अगर (new_ri) /* may have been reset by user */
+				rport->dev_loss_पंचांगo = mptfc_dev_loss_पंचांगo;
 			/*
-			 * if already mapped, remap here.  If not mapped,
+			 * अगर alपढ़ोy mapped, remap here.  If not mapped,
 			 * target_alloc will allocate vtarget and map,
 			 * slave_alloc will fill in vdevice from vtarget.
 			 */
-			if (ri->starget) {
+			अगर (ri->starget) अणु
 				vtarget = ri->starget->hostdata;
-				if (vtarget) {
+				अगर (vtarget) अणु
 					vtarget->id = pg0->CurrentTargetID;
 					vtarget->channel = pg0->CurrentBus;
 					vtarget->deleted = 0;
-				}
-			}
-			*((struct mptfc_rport_info **)rport->dd_data) = ri;
+				पूर्ण
+			पूर्ण
+			*((काष्ठा mptfc_rport_info **)rport->dd_data) = ri;
 			/* scan will be scheduled once rport becomes a target */
 			fc_remote_port_rolechg(rport,roles);
 
 			pn = (u64)ri->pg0.WWPN.High << 32 | (u64)ri->pg0.WWPN.Low;
 			nn = (u64)ri->pg0.WWNN.High << 32 | (u64)ri->pg0.WWNN.Low;
-			dfcprintk (ioc, printk(MYIOC_s_DEBUG_FMT
+			dfcprपूर्णांकk (ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 				"mptfc_reg_dev.%d: %x, %llx / %llx, tid %d, "
 				"rport tid %d, tmo %d\n",
 					ioc->name,
 					ioc->sh->host_no,
-					pg0->PortIdentifier,
-					(unsigned long long)nn,
-					(unsigned long long)pn,
+					pg0->PortIdentअगरier,
+					(अचिन्हित दीर्घ दीर्घ)nn,
+					(अचिन्हित दीर्घ दीर्घ)pn,
 					pg0->CurrentTargetID,
 					ri->rport->scsi_target_id,
-					ri->rport->dev_loss_tmo));
-		} else {
+					ri->rport->dev_loss_पंचांगo));
+		पूर्ण अन्यथा अणु
 			list_del(&ri->list);
-			kfree(ri);
-			ri = NULL;
-		}
-	}
-}
+			kमुक्त(ri);
+			ri = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- *	OS entry point to allow for host driver to free allocated memory
- *	Called if no device present or device being unloaded
+ *	OS entry poपूर्णांक to allow क्रम host driver to मुक्त allocated memory
+ *	Called अगर no device present or device being unloaded
  */
-static void
-mptfc_target_destroy(struct scsi_target *starget)
-{
-	struct fc_rport		*rport;
-	struct mptfc_rport_info *ri;
+अटल व्योम
+mptfc_target_destroy(काष्ठा scsi_target *starget)
+अणु
+	काष्ठा fc_rport		*rport;
+	काष्ठा mptfc_rport_info *ri;
 
 	rport = starget_to_rport(starget);
-	if (rport) {
-		ri = *((struct mptfc_rport_info **)rport->dd_data);
-		if (ri)	/* better be! */
-			ri->starget = NULL;
-	}
-	kfree(starget->hostdata);
-	starget->hostdata = NULL;
-}
+	अगर (rport) अणु
+		ri = *((काष्ठा mptfc_rport_info **)rport->dd_data);
+		अगर (ri)	/* better be! */
+			ri->starget = शून्य;
+	पूर्ण
+	kमुक्त(starget->hostdata);
+	starget->hostdata = शून्य;
+पूर्ण
 
 /*
- *	OS entry point to allow host driver to alloc memory
- *	for each scsi target. Called once per device the bus scan.
- *	Return non-zero if allocation fails.
+ *	OS entry poपूर्णांक to allow host driver to alloc memory
+ *	क्रम each scsi target. Called once per device the bus scan.
+ *	Return non-zero अगर allocation fails.
  */
-static int
-mptfc_target_alloc(struct scsi_target *starget)
-{
+अटल पूर्णांक
+mptfc_target_alloc(काष्ठा scsi_target *starget)
+अणु
 	VirtTarget		*vtarget;
-	struct fc_rport		*rport;
-	struct mptfc_rport_info *ri;
-	int			rc;
+	काष्ठा fc_rport		*rport;
+	काष्ठा mptfc_rport_info *ri;
+	पूर्णांक			rc;
 
-	vtarget = kzalloc(sizeof(VirtTarget), GFP_KERNEL);
-	if (!vtarget)
-		return -ENOMEM;
+	vtarget = kzalloc(माप(VirtTarget), GFP_KERNEL);
+	अगर (!vtarget)
+		वापस -ENOMEM;
 	starget->hostdata = vtarget;
 
 	rc = -ENODEV;
 	rport = starget_to_rport(starget);
-	if (rport) {
-		ri = *((struct mptfc_rport_info **)rport->dd_data);
-		if (ri) {	/* better be! */
+	अगर (rport) अणु
+		ri = *((काष्ठा mptfc_rport_info **)rport->dd_data);
+		अगर (ri) अणु	/* better be! */
 			vtarget->id = ri->pg0.CurrentTargetID;
 			vtarget->channel = ri->pg0.CurrentBus;
 			ri->starget = starget;
 			rc = 0;
-		}
-	}
-	if (rc != 0) {
-		kfree(vtarget);
-		starget->hostdata = NULL;
-	}
+		पूर्ण
+	पूर्ण
+	अगर (rc != 0) अणु
+		kमुक्त(vtarget);
+		starget->hostdata = शून्य;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 /*
  *	mptfc_dump_lun_info
  *	@ioc
@@ -564,69 +565,69 @@ mptfc_target_alloc(struct scsi_target *starget)
  *	@sdev
  *
  */
-static void
-mptfc_dump_lun_info(MPT_ADAPTER *ioc, struct fc_rport *rport, struct scsi_device *sdev,
+अटल व्योम
+mptfc_dump_lun_info(MPT_ADAPTER *ioc, काष्ठा fc_rport *rport, काष्ठा scsi_device *sdev,
 		VirtTarget *vtarget)
-{
+अणु
 	u64 nn, pn;
-	struct mptfc_rport_info *ri;
+	काष्ठा mptfc_rport_info *ri;
 
-	ri = *((struct mptfc_rport_info **)rport->dd_data);
+	ri = *((काष्ठा mptfc_rport_info **)rport->dd_data);
 	pn = (u64)ri->pg0.WWPN.High << 32 | (u64)ri->pg0.WWPN.Low;
 	nn = (u64)ri->pg0.WWNN.High << 32 | (u64)ri->pg0.WWNN.Low;
-	dfcprintk (ioc, printk(MYIOC_s_DEBUG_FMT
+	dfcprपूर्णांकk (ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 		"mptfc_slv_alloc.%d: num_luns %d, sdev.id %d, "
 		"CurrentTargetID %d, %x %llx %llx\n",
 		ioc->name,
 		sdev->host->host_no,
 		vtarget->num_luns,
 		sdev->id, ri->pg0.CurrentTargetID,
-		ri->pg0.PortIdentifier,
-		(unsigned long long)pn,
-		(unsigned long long)nn));
-}
+		ri->pg0.PortIdentअगरier,
+		(अचिन्हित दीर्घ दीर्घ)pn,
+		(अचिन्हित दीर्घ दीर्घ)nn));
+पूर्ण
 
 
 /*
- *	OS entry point to allow host driver to alloc memory
- *	for each scsi device. Called once per device the bus scan.
- *	Return non-zero if allocation fails.
+ *	OS entry poपूर्णांक to allow host driver to alloc memory
+ *	क्रम each scsi device. Called once per device the bus scan.
+ *	Return non-zero अगर allocation fails.
  *	Init memory once per LUN.
  */
-static int
-mptfc_slave_alloc(struct scsi_device *sdev)
-{
+अटल पूर्णांक
+mptfc_slave_alloc(काष्ठा scsi_device *sdev)
+अणु
 	MPT_SCSI_HOST		*hd;
 	VirtTarget		*vtarget;
 	VirtDevice		*vdevice;
-	struct scsi_target	*starget;
-	struct fc_rport		*rport;
+	काष्ठा scsi_target	*starget;
+	काष्ठा fc_rport		*rport;
 	MPT_ADAPTER 		*ioc;
 
 	starget = scsi_target(sdev);
 	rport = starget_to_rport(starget);
 
-	if (!rport || fc_remote_port_chkready(rport))
-		return -ENXIO;
+	अगर (!rport || fc_remote_port_chkपढ़ोy(rport))
+		वापस -ENXIO;
 
 	hd = shost_priv(sdev->host);
 	ioc = hd->ioc;
 
-	vdevice = kzalloc(sizeof(VirtDevice), GFP_KERNEL);
-	if (!vdevice) {
-		printk(MYIOC_s_ERR_FMT "slave_alloc kmalloc(%zd) FAILED!\n",
-				ioc->name, sizeof(VirtDevice));
-		return -ENOMEM;
-	}
+	vdevice = kzalloc(माप(VirtDevice), GFP_KERNEL);
+	अगर (!vdevice) अणु
+		prपूर्णांकk(MYIOC_s_ERR_FMT "slave_alloc kmalloc(%zd) FAILED!\n",
+				ioc->name, माप(VirtDevice));
+		वापस -ENOMEM;
+	पूर्ण
 
 
 	sdev->hostdata = vdevice;
 	vtarget = starget->hostdata;
 
-	if (vtarget->num_luns == 0) {
+	अगर (vtarget->num_luns == 0) अणु
 		vtarget->ioc_id = ioc->id;
 		vtarget->tflags = MPT_TARGET_FLAGS_Q_YES;
-	}
+	पूर्ण
 
 	vdevice->vtarget = vtarget;
 	vdevice->lun = sdev->lun;
@@ -636,63 +637,63 @@ mptfc_slave_alloc(struct scsi_device *sdev)
 
 	mptfc_dump_lun_info(ioc, rport, sdev, vtarget);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mptfc_qcmd(struct Scsi_Host *shost, struct scsi_cmnd *SCpnt)
-{
-	struct mptfc_rport_info	*ri;
-	struct fc_rport	*rport = starget_to_rport(scsi_target(SCpnt->device));
-	int		err;
+अटल पूर्णांक
+mptfc_qcmd(काष्ठा Scsi_Host *shost, काष्ठा scsi_cmnd *SCpnt)
+अणु
+	काष्ठा mptfc_rport_info	*ri;
+	काष्ठा fc_rport	*rport = starget_to_rport(scsi_target(SCpnt->device));
+	पूर्णांक		err;
 	VirtDevice	*vdevice = SCpnt->device->hostdata;
 
-	if (!vdevice || !vdevice->vtarget) {
+	अगर (!vdevice || !vdevice->vtarget) अणु
 		SCpnt->result = DID_NO_CONNECT << 16;
-		SCpnt->scsi_done(SCpnt);
-		return 0;
-	}
+		SCpnt->scsi_करोne(SCpnt);
+		वापस 0;
+	पूर्ण
 
-	err = fc_remote_port_chkready(rport);
-	if (unlikely(err)) {
+	err = fc_remote_port_chkपढ़ोy(rport);
+	अगर (unlikely(err)) अणु
 		SCpnt->result = err;
-		SCpnt->scsi_done(SCpnt);
-		return 0;
-	}
+		SCpnt->scsi_करोne(SCpnt);
+		वापस 0;
+	पूर्ण
 
 	/* dd_data is null until finished adding target */
-	ri = *((struct mptfc_rport_info **)rport->dd_data);
-	if (unlikely(!ri)) {
+	ri = *((काष्ठा mptfc_rport_info **)rport->dd_data);
+	अगर (unlikely(!ri)) अणु
 		SCpnt->result = DID_IMM_RETRY << 16;
-		SCpnt->scsi_done(SCpnt);
-		return 0;
-	}
+		SCpnt->scsi_करोne(SCpnt);
+		वापस 0;
+	पूर्ण
 
-	return mptscsih_qcmd(SCpnt);
-}
+	वापस mptscsih_qcmd(SCpnt);
+पूर्ण
 
 /*
  *	mptfc_display_port_link_speed - displaying link speed
- *	@ioc: Pointer to MPT_ADAPTER structure
+ *	@ioc: Poपूर्णांकer to MPT_ADAPTER काष्ठाure
  *	@portnum: IOC Port number
  *	@pp0dest: port page0 data payload
  *
  */
-static void
-mptfc_display_port_link_speed(MPT_ADAPTER *ioc, int portnum, FCPortPage0_t *pp0dest)
-{
+अटल व्योम
+mptfc_display_port_link_speed(MPT_ADAPTER *ioc, पूर्णांक portnum, FCPortPage0_t *pp0dest)
+अणु
 	u8	old_speed, new_speed, state;
-	char	*old, *new;
+	अक्षर	*old, *new;
 
-	if (portnum >= 2)
-		return;
+	अगर (portnum >= 2)
+		वापस;
 
 	old_speed = ioc->fc_link_speed[portnum];
 	new_speed = pp0dest->CurrentSpeed;
 	state = pp0dest->PortState;
 
-	if (state != MPI_FCPORTPAGE0_PORTSTATE_OFFLINE &&
-	    new_speed != MPI_FCPORTPAGE0_CURRENT_SPEED_UNKNOWN) {
+	अगर (state != MPI_FCPORTPAGE0_PORTSTATE_OFFLINE &&
+	    new_speed != MPI_FCPORTPAGE0_CURRENT_SPEED_UNKNOWN) अणु
 
 		old = old_speed == MPI_FCPORTPAGE0_CURRENT_SPEED_1GBIT ? "1 Gbps" :
 		       old_speed == MPI_FCPORTPAGE0_CURRENT_SPEED_2GBIT ? "2 Gbps" :
@@ -702,46 +703,46 @@ mptfc_display_port_link_speed(MPT_ADAPTER *ioc, int portnum, FCPortPage0_t *pp0d
 		       new_speed == MPI_FCPORTPAGE0_CURRENT_SPEED_2GBIT ? "2 Gbps" :
 			new_speed == MPI_FCPORTPAGE0_CURRENT_SPEED_4GBIT ? "4 Gbps" :
 			 "Unknown";
-		if (old_speed == 0)
-			printk(MYIOC_s_NOTE_FMT
+		अगर (old_speed == 0)
+			prपूर्णांकk(MYIOC_s_NOTE_FMT
 				"FC Link Established, Speed = %s\n",
 				ioc->name, new);
-		else if (old_speed != new_speed)
-			printk(MYIOC_s_WARN_FMT
+		अन्यथा अगर (old_speed != new_speed)
+			prपूर्णांकk(MYIOC_s_WARN_FMT
 				"FC Link Speed Change, Old Speed = %s, New Speed = %s\n",
 				ioc->name, old, new);
 
 		ioc->fc_link_speed[portnum] = new_speed;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	mptfc_GetFcPortPage0 - Fetch FCPort config Page0.
- *	@ioc: Pointer to MPT_ADAPTER structure
+ *	@ioc: Poपूर्णांकer to MPT_ADAPTER काष्ठाure
  *	@portnum: IOC Port number
  *
- *	Return: 0 for success
- *	-ENOMEM if no memory available
- *		-EPERM if not allowed due to ISR context
- *		-EAGAIN if no msg frames currently available
- *		-EFAULT for non-successful reply or no reply (timeout)
+ *	Return: 0 क्रम success
+ *	-ENOMEM अगर no memory available
+ *		-EPERM अगर not allowed due to ISR context
+ *		-EAGAIN अगर no msg frames currently available
+ *		-EFAULT क्रम non-successful reply or no reply (समयout)
  *		-EINVAL portnum arg out of range (hardwired to two elements)
  */
-static int
-mptfc_GetFcPortPage0(MPT_ADAPTER *ioc, int portnum)
-{
+अटल पूर्णांक
+mptfc_GetFcPortPage0(MPT_ADAPTER *ioc, पूर्णांक portnum)
+अणु
 	ConfigPageHeader_t	 hdr;
 	CONFIGPARMS		 cfg;
 	FCPortPage0_t		*ppage0_alloc;
 	FCPortPage0_t		*pp0dest;
 	dma_addr_t		 page0_dma;
-	int			 data_sz;
-	int			 copy_sz;
-	int			 rc;
-	int			 count = 400;
+	पूर्णांक			 data_sz;
+	पूर्णांक			 copy_sz;
+	पूर्णांक			 rc;
+	पूर्णांक			 count = 400;
 
-	if (portnum > 1)
-		return -EINVAL;
+	अगर (portnum > 1)
+		वापस -EINVAL;
 
 	/* Get FCPort Page 0 header */
 	hdr.PageVersion = 0;
@@ -753,36 +754,36 @@ mptfc_GetFcPortPage0(MPT_ADAPTER *ioc, int portnum)
 	cfg.action = MPI_CONFIG_ACTION_PAGE_HEADER;
 	cfg.dir = 0;
 	cfg.pageAddr = portnum;
-	cfg.timeout = 0;
+	cfg.समयout = 0;
 
-	if ((rc = mpt_config(ioc, &cfg)) != 0)
-		return rc;
+	अगर ((rc = mpt_config(ioc, &cfg)) != 0)
+		वापस rc;
 
-	if (hdr.PageLength == 0)
-		return 0;
+	अगर (hdr.PageLength == 0)
+		वापस 0;
 
 	data_sz = hdr.PageLength * 4;
 	rc = -ENOMEM;
 	ppage0_alloc = pci_alloc_consistent(ioc->pcidev, data_sz, &page0_dma);
-	if (ppage0_alloc) {
+	अगर (ppage0_alloc) अणु
 
  try_again:
-		memset((u8 *)ppage0_alloc, 0, data_sz);
+		स_रखो((u8 *)ppage0_alloc, 0, data_sz);
 		cfg.physAddr = page0_dma;
 		cfg.action = MPI_CONFIG_ACTION_PAGE_READ_CURRENT;
 
-		if ((rc = mpt_config(ioc, &cfg)) == 0) {
+		अगर ((rc = mpt_config(ioc, &cfg)) == 0) अणु
 			/* save the data */
 			pp0dest = &ioc->fc_port_page0[portnum];
-			copy_sz = min_t(int, sizeof(FCPortPage0_t), data_sz);
-			memcpy(pp0dest, ppage0_alloc, copy_sz);
+			copy_sz = min_t(पूर्णांक, माप(FCPortPage0_t), data_sz);
+			स_नकल(pp0dest, ppage0_alloc, copy_sz);
 
 			/*
-			 *	Normalize endianness of structure data,
+			 *	Normalize endianness of काष्ठाure data,
 			 *	by byte-swapping all > 1 byte fields!
 			 */
 			pp0dest->Flags = le32_to_cpu(pp0dest->Flags);
-			pp0dest->PortIdentifier = le32_to_cpu(pp0dest->PortIdentifier);
+			pp0dest->PortIdentअगरier = le32_to_cpu(pp0dest->PortIdentअगरier);
 			pp0dest->WWNN.Low = le32_to_cpu(pp0dest->WWNN.Low);
 			pp0dest->WWNN.High = le32_to_cpu(pp0dest->WWNN.High);
 			pp0dest->WWPN.Low = le32_to_cpu(pp0dest->WWPN.Low);
@@ -799,42 +800,42 @@ mptfc_GetFcPortPage0(MPT_ADAPTER *ioc, int portnum)
 			pp0dest->MaxInitiators = le32_to_cpu(pp0dest->MaxInitiators);
 
 			/*
-			 * if still doing discovery,
-			 * hang loose a while until finished
+			 * अगर still करोing discovery,
+			 * hang loose a जबतक until finished
 			 */
-			if ((pp0dest->PortState == MPI_FCPORTPAGE0_PORTSTATE_UNKNOWN) ||
+			अगर ((pp0dest->PortState == MPI_FCPORTPAGE0_PORTSTATE_UNKNOWN) ||
 			    (pp0dest->PortState == MPI_FCPORTPAGE0_PORTSTATE_ONLINE &&
 			     (pp0dest->Flags & MPI_FCPORTPAGE0_FLAGS_ATTACH_TYPE_MASK)
-			      == MPI_FCPORTPAGE0_FLAGS_ATTACH_NO_INIT)) {
-				if (count-- > 0) {
+			      == MPI_FCPORTPAGE0_FLAGS_ATTACH_NO_INIT)) अणु
+				अगर (count-- > 0) अणु
 					msleep(100);
-					goto try_again;
-				}
-				printk(MYIOC_s_INFO_FMT "Firmware discovery not"
+					जाओ try_again;
+				पूर्ण
+				prपूर्णांकk(MYIOC_s_INFO_FMT "Firmware discovery not"
 							" complete.\n",
 						ioc->name);
-			}
+			पूर्ण
 			mptfc_display_port_link_speed(ioc, portnum, pp0dest);
-		}
+		पूर्ण
 
-		pci_free_consistent(ioc->pcidev, data_sz, (u8 *) ppage0_alloc, page0_dma);
-	}
+		pci_मुक्त_consistent(ioc->pcidev, data_sz, (u8 *) ppage0_alloc, page0_dma);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-mptfc_WriteFcPortPage1(MPT_ADAPTER *ioc, int portnum)
-{
+अटल पूर्णांक
+mptfc_WriteFcPortPage1(MPT_ADAPTER *ioc, पूर्णांक portnum)
+अणु
 	ConfigPageHeader_t	 hdr;
 	CONFIGPARMS		 cfg;
-	int			 rc;
+	पूर्णांक			 rc;
 
-	if (portnum > 1)
-		return -EINVAL;
+	अगर (portnum > 1)
+		वापस -EINVAL;
 
-	if (!(ioc->fc_data.fc_port_page1[portnum].data))
-		return -EINVAL;
+	अगर (!(ioc->fc_data.fc_port_page1[portnum].data))
+		वापस -EINVAL;
 
 	/* get fcport page 1 header */
 	hdr.PageVersion = 0;
@@ -846,16 +847,16 @@ mptfc_WriteFcPortPage1(MPT_ADAPTER *ioc, int portnum)
 	cfg.action = MPI_CONFIG_ACTION_PAGE_HEADER;
 	cfg.dir = 0;
 	cfg.pageAddr = portnum;
-	cfg.timeout = 0;
+	cfg.समयout = 0;
 
-	if ((rc = mpt_config(ioc, &cfg)) != 0)
-		return rc;
+	अगर ((rc = mpt_config(ioc, &cfg)) != 0)
+		वापस rc;
 
-	if (hdr.PageLength == 0)
-		return -ENODEV;
+	अगर (hdr.PageLength == 0)
+		वापस -ENODEV;
 
-	if (hdr.PageLength*4 != ioc->fc_data.fc_port_page1[portnum].pg_sz)
-		return -EINVAL;
+	अगर (hdr.PageLength*4 != ioc->fc_data.fc_port_page1[portnum].pg_sz)
+		वापस -EINVAL;
 
 	cfg.physAddr = ioc->fc_data.fc_port_page1[portnum].dma;
 	cfg.action = MPI_CONFIG_ACTION_PAGE_WRITE_CURRENT;
@@ -863,21 +864,21 @@ mptfc_WriteFcPortPage1(MPT_ADAPTER *ioc, int portnum)
 
 	rc = mpt_config(ioc, &cfg);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-mptfc_GetFcPortPage1(MPT_ADAPTER *ioc, int portnum)
-{
+अटल पूर्णांक
+mptfc_GetFcPortPage1(MPT_ADAPTER *ioc, पूर्णांक portnum)
+अणु
 	ConfigPageHeader_t	 hdr;
 	CONFIGPARMS		 cfg;
 	FCPortPage1_t		*page1_alloc;
 	dma_addr_t		 page1_dma;
-	int			 data_sz;
-	int			 rc;
+	पूर्णांक			 data_sz;
+	पूर्णांक			 rc;
 
-	if (portnum > 1)
-		return -EINVAL;
+	अगर (portnum > 1)
+		वापस -EINVAL;
 
 	/* get fcport page 1 header */
 	hdr.PageVersion = 0;
@@ -889,106 +890,106 @@ mptfc_GetFcPortPage1(MPT_ADAPTER *ioc, int portnum)
 	cfg.action = MPI_CONFIG_ACTION_PAGE_HEADER;
 	cfg.dir = 0;
 	cfg.pageAddr = portnum;
-	cfg.timeout = 0;
+	cfg.समयout = 0;
 
-	if ((rc = mpt_config(ioc, &cfg)) != 0)
-		return rc;
+	अगर ((rc = mpt_config(ioc, &cfg)) != 0)
+		वापस rc;
 
-	if (hdr.PageLength == 0)
-		return -ENODEV;
+	अगर (hdr.PageLength == 0)
+		वापस -ENODEV;
 
 start_over:
 
-	if (ioc->fc_data.fc_port_page1[portnum].data == NULL) {
+	अगर (ioc->fc_data.fc_port_page1[portnum].data == शून्य) अणु
 		data_sz = hdr.PageLength * 4;
-		if (data_sz < sizeof(FCPortPage1_t))
-			data_sz = sizeof(FCPortPage1_t);
+		अगर (data_sz < माप(FCPortPage1_t))
+			data_sz = माप(FCPortPage1_t);
 
 		page1_alloc = pci_alloc_consistent(ioc->pcidev,
 						data_sz,
 						&page1_dma);
-		if (!page1_alloc)
-			return -ENOMEM;
-	}
-	else {
+		अगर (!page1_alloc)
+			वापस -ENOMEM;
+	पूर्ण
+	अन्यथा अणु
 		page1_alloc = ioc->fc_data.fc_port_page1[portnum].data;
 		page1_dma = ioc->fc_data.fc_port_page1[portnum].dma;
 		data_sz = ioc->fc_data.fc_port_page1[portnum].pg_sz;
-		if (hdr.PageLength * 4 > data_sz) {
-			ioc->fc_data.fc_port_page1[portnum].data = NULL;
-			pci_free_consistent(ioc->pcidev, data_sz, (u8 *)
+		अगर (hdr.PageLength * 4 > data_sz) अणु
+			ioc->fc_data.fc_port_page1[portnum].data = शून्य;
+			pci_मुक्त_consistent(ioc->pcidev, data_sz, (u8 *)
 				page1_alloc, page1_dma);
-			goto start_over;
-		}
-	}
+			जाओ start_over;
+		पूर्ण
+	पूर्ण
 
 	cfg.physAddr = page1_dma;
 	cfg.action = MPI_CONFIG_ACTION_PAGE_READ_CURRENT;
 
-	if ((rc = mpt_config(ioc, &cfg)) == 0) {
+	अगर ((rc = mpt_config(ioc, &cfg)) == 0) अणु
 		ioc->fc_data.fc_port_page1[portnum].data = page1_alloc;
 		ioc->fc_data.fc_port_page1[portnum].pg_sz = data_sz;
 		ioc->fc_data.fc_port_page1[portnum].dma = page1_dma;
-	}
-	else {
-		ioc->fc_data.fc_port_page1[portnum].data = NULL;
-		pci_free_consistent(ioc->pcidev, data_sz, (u8 *)
+	पूर्ण
+	अन्यथा अणु
+		ioc->fc_data.fc_port_page1[portnum].data = शून्य;
+		pci_मुक्त_consistent(ioc->pcidev, data_sz, (u8 *)
 			page1_alloc, page1_dma);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void
-mptfc_SetFcPortPage1_defaults(MPT_ADAPTER *ioc)
-{
-	int		ii;
+अटल व्योम
+mptfc_SetFcPortPage1_शेषs(MPT_ADAPTER *ioc)
+अणु
+	पूर्णांक		ii;
 	FCPortPage1_t	*pp1;
 
-	#define MPTFC_FW_DEVICE_TIMEOUT	(1)
-	#define MPTFC_FW_IO_PEND_TIMEOUT (1)
-	#define ON_FLAGS  (MPI_FCPORTPAGE1_FLAGS_IMMEDIATE_ERROR_REPLY)
-	#define OFF_FLAGS (MPI_FCPORTPAGE1_FLAGS_VERBOSE_RESCAN_EVENTS)
+	#घोषणा MPTFC_FW_DEVICE_TIMEOUT	(1)
+	#घोषणा MPTFC_FW_IO_PEND_TIMEOUT (1)
+	#घोषणा ON_FLAGS  (MPI_FCPORTPAGE1_FLAGS_IMMEDIATE_ERROR_REPLY)
+	#घोषणा OFF_FLAGS (MPI_FCPORTPAGE1_FLAGS_VERBOSE_RESCAN_EVENTS)
 
-	for (ii=0; ii<ioc->facts.NumberOfPorts; ii++) {
-		if (mptfc_GetFcPortPage1(ioc, ii) != 0)
-			continue;
+	क्रम (ii=0; ii<ioc->facts.NumberOfPorts; ii++) अणु
+		अगर (mptfc_GetFcPortPage1(ioc, ii) != 0)
+			जारी;
 		pp1 = ioc->fc_data.fc_port_page1[ii].data;
-		if ((pp1->InitiatorDeviceTimeout == MPTFC_FW_DEVICE_TIMEOUT)
+		अगर ((pp1->InitiatorDeviceTimeout == MPTFC_FW_DEVICE_TIMEOUT)
 		 && (pp1->InitiatorIoPendTimeout == MPTFC_FW_IO_PEND_TIMEOUT)
 		 && ((pp1->Flags & ON_FLAGS) == ON_FLAGS)
 		 && ((pp1->Flags & OFF_FLAGS) == 0))
-			continue;
+			जारी;
 		pp1->InitiatorDeviceTimeout = MPTFC_FW_DEVICE_TIMEOUT;
 		pp1->InitiatorIoPendTimeout = MPTFC_FW_IO_PEND_TIMEOUT;
 		pp1->Flags &= ~OFF_FLAGS;
 		pp1->Flags |= ON_FLAGS;
 		mptfc_WriteFcPortPage1(ioc, ii);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void
-mptfc_init_host_attr(MPT_ADAPTER *ioc,int portnum)
-{
-	unsigned	class = 0;
-	unsigned	cos = 0;
-	unsigned	speed;
-	unsigned	port_type;
-	unsigned	port_state;
+अटल व्योम
+mptfc_init_host_attr(MPT_ADAPTER *ioc,पूर्णांक portnum)
+अणु
+	अचिन्हित	class = 0;
+	अचिन्हित	cos = 0;
+	अचिन्हित	speed;
+	अचिन्हित	port_type;
+	अचिन्हित	port_state;
 	FCPortPage0_t	*pp0;
-	struct Scsi_Host *sh;
-	char		*sn;
+	काष्ठा Scsi_Host *sh;
+	अक्षर		*sn;
 
-	/* don't know what to do as only one scsi (fc) host was allocated */
-	if (portnum != 0)
-		return;
+	/* करोn't know what to करो as only one scsi (fc) host was allocated */
+	अगर (portnum != 0)
+		वापस;
 
 	pp0 = &ioc->fc_port_page0[portnum];
 	sh = ioc->sh;
 
 	sn = fc_host_symbolic_name(sh);
-	snprintf(sn, FC_SYMBOLIC_NAME_SIZE, "%s %s%08xh",
+	snम_लिखो(sn, FC_SYMBOLIC_NAME_SIZE, "%s %s%08xh",
 	    ioc->prod_name,
 	    MPT_FW_REV_MAGIC_ID_STRING,
 	    ioc->facts.FWVersion.Word);
@@ -1003,55 +1004,55 @@ mptfc_init_host_attr(MPT_ADAPTER *ioc,int portnum)
 	fc_host_port_name(sh) =
 	    	(u64)pp0->WWPN.High << 32 | (u64)pp0->WWPN.Low;
 
-	fc_host_port_id(sh) = pp0->PortIdentifier;
+	fc_host_port_id(sh) = pp0->PortIdentअगरier;
 
 	class = pp0->SupportedServiceClass;
-	if (class & MPI_FCPORTPAGE0_SUPPORT_CLASS_1)
+	अगर (class & MPI_FCPORTPAGE0_SUPPORT_CLASS_1)
 		cos |= FC_COS_CLASS1;
-	if (class & MPI_FCPORTPAGE0_SUPPORT_CLASS_2)
+	अगर (class & MPI_FCPORTPAGE0_SUPPORT_CLASS_2)
 		cos |= FC_COS_CLASS2;
-	if (class & MPI_FCPORTPAGE0_SUPPORT_CLASS_3)
+	अगर (class & MPI_FCPORTPAGE0_SUPPORT_CLASS_3)
 		cos |= FC_COS_CLASS3;
 	fc_host_supported_classes(sh) = cos;
 
-	if (pp0->CurrentSpeed == MPI_FCPORTPAGE0_CURRENT_SPEED_1GBIT)
+	अगर (pp0->CurrentSpeed == MPI_FCPORTPAGE0_CURRENT_SPEED_1GBIT)
 		speed = FC_PORTSPEED_1GBIT;
-	else if (pp0->CurrentSpeed == MPI_FCPORTPAGE0_CURRENT_SPEED_2GBIT)
+	अन्यथा अगर (pp0->CurrentSpeed == MPI_FCPORTPAGE0_CURRENT_SPEED_2GBIT)
 		speed = FC_PORTSPEED_2GBIT;
-	else if (pp0->CurrentSpeed == MPI_FCPORTPAGE0_CURRENT_SPEED_4GBIT)
+	अन्यथा अगर (pp0->CurrentSpeed == MPI_FCPORTPAGE0_CURRENT_SPEED_4GBIT)
 		speed = FC_PORTSPEED_4GBIT;
-	else if (pp0->CurrentSpeed == MPI_FCPORTPAGE0_CURRENT_SPEED_10GBIT)
+	अन्यथा अगर (pp0->CurrentSpeed == MPI_FCPORTPAGE0_CURRENT_SPEED_10GBIT)
 		speed = FC_PORTSPEED_10GBIT;
-	else
+	अन्यथा
 		speed = FC_PORTSPEED_UNKNOWN;
 	fc_host_speed(sh) = speed;
 
 	speed = 0;
-	if (pp0->SupportedSpeeds & MPI_FCPORTPAGE0_SUPPORT_1GBIT_SPEED)
+	अगर (pp0->SupportedSpeeds & MPI_FCPORTPAGE0_SUPPORT_1GBIT_SPEED)
 		speed |= FC_PORTSPEED_1GBIT;
-	if (pp0->SupportedSpeeds & MPI_FCPORTPAGE0_SUPPORT_2GBIT_SPEED)
+	अगर (pp0->SupportedSpeeds & MPI_FCPORTPAGE0_SUPPORT_2GBIT_SPEED)
 		speed |= FC_PORTSPEED_2GBIT;
-	if (pp0->SupportedSpeeds & MPI_FCPORTPAGE0_SUPPORT_4GBIT_SPEED)
+	अगर (pp0->SupportedSpeeds & MPI_FCPORTPAGE0_SUPPORT_4GBIT_SPEED)
 		speed |= FC_PORTSPEED_4GBIT;
-	if (pp0->SupportedSpeeds & MPI_FCPORTPAGE0_SUPPORT_10GBIT_SPEED)
+	अगर (pp0->SupportedSpeeds & MPI_FCPORTPAGE0_SUPPORT_10GBIT_SPEED)
 		speed |= FC_PORTSPEED_10GBIT;
 	fc_host_supported_speeds(sh) = speed;
 
 	port_state = FC_PORTSTATE_UNKNOWN;
-	if (pp0->PortState == MPI_FCPORTPAGE0_PORTSTATE_ONLINE)
+	अगर (pp0->PortState == MPI_FCPORTPAGE0_PORTSTATE_ONLINE)
 		port_state = FC_PORTSTATE_ONLINE;
-	else if (pp0->PortState == MPI_FCPORTPAGE0_PORTSTATE_OFFLINE)
+	अन्यथा अगर (pp0->PortState == MPI_FCPORTPAGE0_PORTSTATE_OFFLINE)
 		port_state = FC_PORTSTATE_LINKDOWN;
 	fc_host_port_state(sh) = port_state;
 
 	port_type = FC_PORTTYPE_UNKNOWN;
-	if (pp0->Flags & MPI_FCPORTPAGE0_FLAGS_ATTACH_POINT_TO_POINT)
+	अगर (pp0->Flags & MPI_FCPORTPAGE0_FLAGS_ATTACH_POINT_TO_POINT)
 		port_type = FC_PORTTYPE_PTP;
-	else if (pp0->Flags & MPI_FCPORTPAGE0_FLAGS_ATTACH_PRIVATE_LOOP)
+	अन्यथा अगर (pp0->Flags & MPI_FCPORTPAGE0_FLAGS_ATTACH_PRIVATE_LOOP)
 		port_type = FC_PORTTYPE_LPORT;
-	else if (pp0->Flags & MPI_FCPORTPAGE0_FLAGS_ATTACH_PUBLIC_LOOP)
+	अन्यथा अगर (pp0->Flags & MPI_FCPORTPAGE0_FLAGS_ATTACH_PUBLIC_LOOP)
 		port_type = FC_PORTTYPE_NLPORT;
-	else if (pp0->Flags & MPI_FCPORTPAGE0_FLAGS_ATTACH_FABRIC_DIRECT)
+	अन्यथा अगर (pp0->Flags & MPI_FCPORTPAGE0_FLAGS_ATTACH_FABRIC_सूचीECT)
 		port_type = FC_PORTTYPE_NPORT;
 	fc_host_port_type(sh) = port_type;
 
@@ -1060,173 +1061,173 @@ mptfc_init_host_attr(MPT_ADAPTER *ioc,int portnum)
 		(u64) pp0->FabricWWNN.High << 32 | (u64) pp0->FabricWWPN.Low :
 		(u64)pp0->WWNN.High << 32 | (u64)pp0->WWNN.Low;
 
-}
+पूर्ण
 
-static void
-mptfc_link_status_change(struct work_struct *work)
-{
+अटल व्योम
+mptfc_link_status_change(काष्ठा work_काष्ठा *work)
+अणु
 	MPT_ADAPTER             *ioc =
 		container_of(work, MPT_ADAPTER, fc_rescan_work);
-	int ii;
+	पूर्णांक ii;
 
-	for (ii=0; ii < ioc->facts.NumberOfPorts; ii++)
-		(void) mptfc_GetFcPortPage0(ioc, ii);
+	क्रम (ii=0; ii < ioc->facts.NumberOfPorts; ii++)
+		(व्योम) mptfc_GetFcPortPage0(ioc, ii);
 
-}
+पूर्ण
 
-static void
-mptfc_setup_reset(struct work_struct *work)
-{
+अटल व्योम
+mptfc_setup_reset(काष्ठा work_काष्ठा *work)
+अणु
 	MPT_ADAPTER		*ioc =
 		container_of(work, MPT_ADAPTER, fc_setup_reset_work);
 	u64			pn;
-	struct mptfc_rport_info *ri;
-	struct scsi_target      *starget;
+	काष्ठा mptfc_rport_info *ri;
+	काष्ठा scsi_target      *starget;
 	VirtTarget              *vtarget;
 
 	/* reset about to happen, delete (block) all rports */
-	list_for_each_entry(ri, &ioc->fc_rports, list) {
-		if (ri->flags & MPT_RPORT_INFO_FLAGS_REGISTERED) {
+	list_क्रम_each_entry(ri, &ioc->fc_rports, list) अणु
+		अगर (ri->flags & MPT_RPORT_INFO_FLAGS_REGISTERED) अणु
 			ri->flags &= ~MPT_RPORT_INFO_FLAGS_REGISTERED;
 			fc_remote_port_delete(ri->rport);	/* won't sleep */
-			ri->rport = NULL;
+			ri->rport = शून्य;
 			starget = ri->starget;
-			if (starget) {
+			अगर (starget) अणु
 				vtarget = starget->hostdata;
-				if (vtarget)
+				अगर (vtarget)
 					vtarget->deleted = 1;
-			}
+			पूर्ण
 
 			pn = (u64)ri->pg0.WWPN.High << 32 |
 			     (u64)ri->pg0.WWPN.Low;
-			dfcprintk (ioc, printk(MYIOC_s_DEBUG_FMT
+			dfcprपूर्णांकk (ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 				"mptfc_setup_reset.%d: %llx deleted\n",
 				ioc->name,
 				ioc->sh->host_no,
-				(unsigned long long)pn));
-		}
-	}
-}
+				(अचिन्हित दीर्घ दीर्घ)pn));
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void
-mptfc_rescan_devices(struct work_struct *work)
-{
+अटल व्योम
+mptfc_rescan_devices(काष्ठा work_काष्ठा *work)
+अणु
 	MPT_ADAPTER		*ioc =
 		container_of(work, MPT_ADAPTER, fc_rescan_work);
-	int			ii;
+	पूर्णांक			ii;
 	u64			pn;
-	struct mptfc_rport_info *ri;
-	struct scsi_target      *starget;
+	काष्ठा mptfc_rport_info *ri;
+	काष्ठा scsi_target      *starget;
 	VirtTarget              *vtarget;
 
 	/* start by tagging all ports as missing */
-	list_for_each_entry(ri, &ioc->fc_rports, list) {
-		if (ri->flags & MPT_RPORT_INFO_FLAGS_REGISTERED) {
+	list_क्रम_each_entry(ri, &ioc->fc_rports, list) अणु
+		अगर (ri->flags & MPT_RPORT_INFO_FLAGS_REGISTERED) अणु
 			ri->flags |= MPT_RPORT_INFO_FLAGS_MISSING;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * now rescan devices known to adapter,
-	 * will reregister existing rports
+	 * will reरेजिस्टर existing rports
 	 */
-	for (ii=0; ii < ioc->facts.NumberOfPorts; ii++) {
-		(void) mptfc_GetFcPortPage0(ioc, ii);
+	क्रम (ii=0; ii < ioc->facts.NumberOfPorts; ii++) अणु
+		(व्योम) mptfc_GetFcPortPage0(ioc, ii);
 		mptfc_init_host_attr(ioc, ii);	/* refresh */
-		mptfc_GetFcDevPage0(ioc, ii, mptfc_register_dev);
-	}
+		mptfc_GetFcDevPage0(ioc, ii, mptfc_रेजिस्टर_dev);
+	पूर्ण
 
 	/* delete devices still missing */
-	list_for_each_entry(ri, &ioc->fc_rports, list) {
-		/* if newly missing, delete it */
-		if (ri->flags & MPT_RPORT_INFO_FLAGS_MISSING) {
+	list_क्रम_each_entry(ri, &ioc->fc_rports, list) अणु
+		/* अगर newly missing, delete it */
+		अगर (ri->flags & MPT_RPORT_INFO_FLAGS_MISSING) अणु
 
 			ri->flags &= ~(MPT_RPORT_INFO_FLAGS_REGISTERED|
 				       MPT_RPORT_INFO_FLAGS_MISSING);
 			fc_remote_port_delete(ri->rport);	/* won't sleep */
-			ri->rport = NULL;
+			ri->rport = शून्य;
 			starget = ri->starget;
-			if (starget) {
+			अगर (starget) अणु
 				vtarget = starget->hostdata;
-				if (vtarget)
+				अगर (vtarget)
 					vtarget->deleted = 1;
-			}
+			पूर्ण
 
 			pn = (u64)ri->pg0.WWPN.High << 32 |
 			     (u64)ri->pg0.WWPN.Low;
-			dfcprintk (ioc, printk(MYIOC_s_DEBUG_FMT
+			dfcprपूर्णांकk (ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 				"mptfc_rescan.%d: %llx deleted\n",
 				ioc->name,
 				ioc->sh->host_no,
-				(unsigned long long)pn));
-		}
-	}
-}
+				(अचिन्हित दीर्घ दीर्घ)pn));
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int
-mptfc_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	struct Scsi_Host	*sh;
+अटल पूर्णांक
+mptfc_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा Scsi_Host	*sh;
 	MPT_SCSI_HOST		*hd;
 	MPT_ADAPTER 		*ioc;
-	unsigned long		 flags;
-	int			 ii;
-	int			 numSGE = 0;
-	int			 scale;
-	int			 ioc_cap;
-	int			error=0;
-	int			r;
+	अचिन्हित दीर्घ		 flags;
+	पूर्णांक			 ii;
+	पूर्णांक			 numSGE = 0;
+	पूर्णांक			 scale;
+	पूर्णांक			 ioc_cap;
+	पूर्णांक			error=0;
+	पूर्णांक			r;
 
-	if ((r = mpt_attach(pdev,id)) != 0)
-		return r;
+	अगर ((r = mpt_attach(pdev,id)) != 0)
+		वापस r;
 
 	ioc = pci_get_drvdata(pdev);
 	ioc->DoneCtx = mptfcDoneCtx;
 	ioc->TaskCtx = mptfcTaskCtx;
 	ioc->InternalCtx = mptfcInternalCtx;
 
-	/*  Added sanity check on readiness of the MPT adapter.
+	/*  Added sanity check on पढ़ोiness of the MPT adapter.
 	 */
-	if (ioc->last_state != MPI_IOC_STATE_OPERATIONAL) {
-		printk(MYIOC_s_WARN_FMT
+	अगर (ioc->last_state != MPI_IOC_STATE_OPERATIONAL) अणु
+		prपूर्णांकk(MYIOC_s_WARN_FMT
 		  "Skipping because it's not operational!\n",
 		  ioc->name);
 		error = -ENODEV;
-		goto out_mptfc_probe;
-	}
+		जाओ out_mptfc_probe;
+	पूर्ण
 
-	if (!ioc->active) {
-		printk(MYIOC_s_WARN_FMT "Skipping because it's disabled!\n",
+	अगर (!ioc->active) अणु
+		prपूर्णांकk(MYIOC_s_WARN_FMT "Skipping because it's disabled!\n",
 		  ioc->name);
 		error = -ENODEV;
-		goto out_mptfc_probe;
-	}
+		जाओ out_mptfc_probe;
+	पूर्ण
 
 	/*  Sanity check - ensure at least 1 port is INITIATOR capable
 	 */
 	ioc_cap = 0;
-	for (ii=0; ii < ioc->facts.NumberOfPorts; ii++) {
-		if (ioc->pfacts[ii].ProtocolFlags &
+	क्रम (ii=0; ii < ioc->facts.NumberOfPorts; ii++) अणु
+		अगर (ioc->pfacts[ii].ProtocolFlags &
 		    MPI_PORTFACTS_PROTOCOL_INITIATOR)
 			ioc_cap ++;
-	}
+	पूर्ण
 
-	if (!ioc_cap) {
-		printk(MYIOC_s_WARN_FMT
+	अगर (!ioc_cap) अणु
+		prपूर्णांकk(MYIOC_s_WARN_FMT
 			"Skipping ioc=%p because SCSI Initiator mode is NOT enabled!\n",
 			ioc->name, ioc);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	sh = scsi_host_alloc(&mptfc_driver_template, sizeof(MPT_SCSI_HOST));
+	sh = scsi_host_alloc(&mptfc_driver_ढाँचा, माप(MPT_SCSI_HOST));
 
-	if (!sh) {
-		printk(MYIOC_s_WARN_FMT
+	अगर (!sh) अणु
+		prपूर्णांकk(MYIOC_s_WARN_FMT
 			"Unable to register controller with SCSI subsystem\n",
 			ioc->name);
 		error = -1;
-		goto out_mptfc_probe;
-        }
+		जाओ out_mptfc_probe;
+        पूर्ण
 
 	spin_lock_init(&ioc->fc_rescan_work_lock);
 	INIT_WORK(&ioc->fc_rescan_work, mptfc_rescan_devices);
@@ -1235,7 +1236,7 @@ mptfc_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	spin_lock_irqsave(&ioc->FreeQlock, flags);
 
-	/* Attach the SCSI Host to the IOC structure
+	/* Attach the SCSI Host to the IOC काष्ठाure
 	 */
 	ioc->sh = sh;
 
@@ -1253,33 +1254,33 @@ mptfc_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	 */
 	sh->unique_id = ioc->id;
 
-	/* Verify that we won't exceed the maximum
+	/* Verअगरy that we won't exceed the maximum
 	 * number of chain buffers
-	 * We can optimize:  ZZ = req_sz/sizeof(SGE)
+	 * We can optimize:  ZZ = req_sz/माप(SGE)
 	 * For 32bit SGE's:
 	 *  numSGE = 1 + (ZZ-1)*(maxChain -1) + ZZ
-	 *               + (req_sz - 64)/sizeof(SGE)
-	 * A slightly different algorithm is required for
+	 *               + (req_sz - 64)/माप(SGE)
+	 * A slightly dअगरferent algorithm is required क्रम
 	 * 64bit SGEs.
 	 */
 	scale = ioc->req_sz/ioc->SGE_size;
-	if (ioc->sg_addr_size == sizeof(u64)) {
+	अगर (ioc->sg_addr_size == माप(u64)) अणु
 		numSGE = (scale - 1) *
 		  (ioc->facts.MaxChainDepth-1) + scale +
 		  (ioc->req_sz - 60) / ioc->SGE_size;
-	} else {
+	पूर्ण अन्यथा अणु
 		numSGE = 1 + (scale - 1) *
 		  (ioc->facts.MaxChainDepth-1) + scale +
 		  (ioc->req_sz - 64) / ioc->SGE_size;
-	}
+	पूर्ण
 
-	if (numSGE < sh->sg_tablesize) {
+	अगर (numSGE < sh->sg_tablesize) अणु
 		/* Reset this value */
-		dprintk(ioc, printk(MYIOC_s_DEBUG_FMT
+		dprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 		  "Resetting sg_tablesize to %d from %d\n",
 		  ioc->name, numSGE, sh->sg_tablesize));
 		sh->sg_tablesize = numSGE;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&ioc->FreeQlock, flags);
 
@@ -1289,263 +1290,263 @@ mptfc_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	/* SCSI needs scsi_cmnd lookup table!
 	 * (with size equal to req_depth*PtrSz!)
 	 */
-	ioc->ScsiLookup = kcalloc(ioc->req_depth, sizeof(void *), GFP_KERNEL);
-	if (!ioc->ScsiLookup) {
+	ioc->ScsiLookup = kसुस्मृति(ioc->req_depth, माप(व्योम *), GFP_KERNEL);
+	अगर (!ioc->ScsiLookup) अणु
 		error = -ENOMEM;
-		goto out_mptfc_probe;
-	}
+		जाओ out_mptfc_probe;
+	पूर्ण
 	spin_lock_init(&ioc->scsi_lookup_lock);
 
-	dprintk(ioc, printk(MYIOC_s_DEBUG_FMT "ScsiLookup @ %p\n",
+	dprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT "ScsiLookup @ %p\n",
 		 ioc->name, ioc->ScsiLookup));
 
 	hd->last_queue_full = 0;
 
-	sh->transportt = mptfc_transport_template;
+	sh->transportt = mptfc_transport_ढाँचा;
 	error = scsi_add_host (sh, &ioc->pcidev->dev);
-	if(error) {
-		dprintk(ioc, printk(MYIOC_s_ERR_FMT
+	अगर(error) अणु
+		dprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_ERR_FMT
 		  "scsi_add_host failed\n", ioc->name));
-		goto out_mptfc_probe;
-	}
+		जाओ out_mptfc_probe;
+	पूर्ण
 
 	/* initialize workqueue */
 
-	snprintf(ioc->fc_rescan_work_q_name, sizeof(ioc->fc_rescan_work_q_name),
+	snम_लिखो(ioc->fc_rescan_work_q_name, माप(ioc->fc_rescan_work_q_name),
 		 "mptfc_wq_%d", sh->host_no);
 	ioc->fc_rescan_work_q =
 		alloc_ordered_workqueue(ioc->fc_rescan_work_q_name,
 					WQ_MEM_RECLAIM);
-	if (!ioc->fc_rescan_work_q) {
+	अगर (!ioc->fc_rescan_work_q) अणु
 		error = -ENOMEM;
-		goto out_mptfc_host;
-	}
+		जाओ out_mptfc_host;
+	पूर्ण
 
 	/*
 	 *  Pre-fetch FC port WWN and stuff...
 	 *  (FCPortPage0_t stuff)
 	 */
-	for (ii=0; ii < ioc->facts.NumberOfPorts; ii++) {
-		(void) mptfc_GetFcPortPage0(ioc, ii);
-	}
-	mptfc_SetFcPortPage1_defaults(ioc);
+	क्रम (ii=0; ii < ioc->facts.NumberOfPorts; ii++) अणु
+		(व्योम) mptfc_GetFcPortPage0(ioc, ii);
+	पूर्ण
+	mptfc_SetFcPortPage1_शेषs(ioc);
 
 	/*
-	 * scan for rports -
-	 *	by doing it via the workqueue, some locking is eliminated
+	 * scan क्रम rports -
+	 *	by करोing it via the workqueue, some locking is eliminated
 	 */
 
 	queue_work(ioc->fc_rescan_work_q, &ioc->fc_rescan_work);
 	flush_workqueue(ioc->fc_rescan_work_q);
 
-	return 0;
+	वापस 0;
 
 out_mptfc_host:
-	scsi_remove_host(sh);
+	scsi_हटाओ_host(sh);
 
 out_mptfc_probe:
 
-	mptscsih_remove(pdev);
-	return error;
-}
+	mptscsih_हटाओ(pdev);
+	वापस error;
+पूर्ण
 
-static struct pci_driver mptfc_driver = {
+अटल काष्ठा pci_driver mptfc_driver = अणु
 	.name		= "mptfc",
 	.id_table	= mptfc_pci_table,
 	.probe		= mptfc_probe,
-	.remove		= mptfc_remove,
-	.shutdown	= mptscsih_shutdown,
-#ifdef CONFIG_PM
+	.हटाओ		= mptfc_हटाओ,
+	.shutकरोwn	= mptscsih_shutकरोwn,
+#अगर_घोषित CONFIG_PM
 	.suspend	= mptscsih_suspend,
 	.resume		= mptscsih_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int
-mptfc_event_process(MPT_ADAPTER *ioc, EventNotificationReply_t *pEvReply)
-{
+अटल पूर्णांक
+mptfc_event_process(MPT_ADAPTER *ioc, EventNotअगरicationReply_t *pEvReply)
+अणु
 	MPT_SCSI_HOST *hd;
 	u8 event = le32_to_cpu(pEvReply->Event) & 0xFF;
-	unsigned long flags;
-	int rc=1;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc=1;
 
-	if (ioc->bus_type != FC)
-		return 0;
+	अगर (ioc->bus_type != FC)
+		वापस 0;
 
-	devtverboseprintk(ioc, printk(MYIOC_s_DEBUG_FMT "MPT event (=%02Xh) routed to SCSI host driver!\n",
+	devtverboseprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT "MPT event (=%02Xh) routed to SCSI host driver!\n",
 			ioc->name, event));
 
-	if (ioc->sh == NULL ||
-		((hd = shost_priv(ioc->sh)) == NULL))
-		return 1;
+	अगर (ioc->sh == शून्य ||
+		((hd = shost_priv(ioc->sh)) == शून्य))
+		वापस 1;
 
-	switch (event) {
-	case MPI_EVENT_RESCAN:
+	चयन (event) अणु
+	हाल MPI_EVENT_RESCAN:
 		spin_lock_irqsave(&ioc->fc_rescan_work_lock, flags);
-		if (ioc->fc_rescan_work_q) {
+		अगर (ioc->fc_rescan_work_q) अणु
 			queue_work(ioc->fc_rescan_work_q,
 				   &ioc->fc_rescan_work);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&ioc->fc_rescan_work_lock, flags);
-		break;
-	case MPI_EVENT_LINK_STATUS_CHANGE:
+		अवरोध;
+	हाल MPI_EVENT_LINK_STATUS_CHANGE:
 		spin_lock_irqsave(&ioc->fc_rescan_work_lock, flags);
-		if (ioc->fc_rescan_work_q) {
+		अगर (ioc->fc_rescan_work_q) अणु
 			queue_work(ioc->fc_rescan_work_q,
 				   &ioc->fc_lsc_work);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&ioc->fc_rescan_work_lock, flags);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = mptscsih_event_process(ioc,pEvReply);
-		break;
-	}
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int
-mptfc_ioc_reset(MPT_ADAPTER *ioc, int reset_phase)
-{
-	int		rc;
-	unsigned long	flags;
+अटल पूर्णांक
+mptfc_ioc_reset(MPT_ADAPTER *ioc, पूर्णांक reset_phase)
+अणु
+	पूर्णांक		rc;
+	अचिन्हित दीर्घ	flags;
 
 	rc = mptscsih_ioc_reset(ioc,reset_phase);
-	if ((ioc->bus_type != FC) || (!rc))
-		return rc;
+	अगर ((ioc->bus_type != FC) || (!rc))
+		वापस rc;
 
 
-	dtmprintk(ioc, printk(MYIOC_s_DEBUG_FMT
+	dपंचांगprपूर्णांकk(ioc, prपूर्णांकk(MYIOC_s_DEBUG_FMT
 		": IOC %s_reset routed to FC host driver!\n",ioc->name,
 		reset_phase==MPT_IOC_SETUP_RESET ? "setup" : (
 		reset_phase==MPT_IOC_PRE_RESET ? "pre" : "post")));
 
-	if (reset_phase == MPT_IOC_SETUP_RESET) {
+	अगर (reset_phase == MPT_IOC_SETUP_RESET) अणु
 		spin_lock_irqsave(&ioc->fc_rescan_work_lock, flags);
-		if (ioc->fc_rescan_work_q) {
+		अगर (ioc->fc_rescan_work_q) अणु
 			queue_work(ioc->fc_rescan_work_q,
 				   &ioc->fc_setup_reset_work);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&ioc->fc_rescan_work_lock, flags);
-	}
+	पूर्ण
 
-	else if (reset_phase == MPT_IOC_PRE_RESET) {
-	}
+	अन्यथा अगर (reset_phase == MPT_IOC_PRE_RESET) अणु
+	पूर्ण
 
-	else {	/* MPT_IOC_POST_RESET */
-		mptfc_SetFcPortPage1_defaults(ioc);
+	अन्यथा अणु	/* MPT_IOC_POST_RESET */
+		mptfc_SetFcPortPage1_शेषs(ioc);
 		spin_lock_irqsave(&ioc->fc_rescan_work_lock, flags);
-		if (ioc->fc_rescan_work_q) {
+		अगर (ioc->fc_rescan_work_q) अणु
 			queue_work(ioc->fc_rescan_work_q,
 				   &ioc->fc_rescan_work);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&ioc->fc_rescan_work_lock, flags);
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /**
  *	mptfc_init - Register MPT adapter(s) as SCSI host(s) with SCSI mid-layer.
  *
- *	Returns 0 for success, non-zero for failure.
+ *	Returns 0 क्रम success, non-zero क्रम failure.
  */
-static int __init
-mptfc_init(void)
-{
-	int error;
+अटल पूर्णांक __init
+mptfc_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	show_mptmod_ver(my_NAME, my_VERSION);
+	show_mpपंचांगod_ver(my_NAME, my_VERSION);
 
 	/* sanity check module parameters */
-	if (mptfc_dev_loss_tmo <= 0)
-		mptfc_dev_loss_tmo = MPTFC_DEV_LOSS_TMO;
+	अगर (mptfc_dev_loss_पंचांगo <= 0)
+		mptfc_dev_loss_पंचांगo = MPTFC_DEV_LOSS_TMO;
 
-	mptfc_transport_template =
+	mptfc_transport_ढाँचा =
 		fc_attach_transport(&mptfc_transport_functions);
 
-	if (!mptfc_transport_template)
-		return -ENODEV;
+	अगर (!mptfc_transport_ढाँचा)
+		वापस -ENODEV;
 
-	mptfcDoneCtx = mpt_register(mptscsih_io_done, MPTFC_DRIVER,
+	mptfcDoneCtx = mpt_रेजिस्टर(mptscsih_io_करोne, MPTFC_DRIVER,
 	    "mptscsih_scandv_complete");
-	mptfcTaskCtx = mpt_register(mptscsih_taskmgmt_complete, MPTFC_DRIVER,
+	mptfcTaskCtx = mpt_रेजिस्टर(mptscsih_taskmgmt_complete, MPTFC_DRIVER,
 	    "mptscsih_scandv_complete");
-	mptfcInternalCtx = mpt_register(mptscsih_scandv_complete, MPTFC_DRIVER,
+	mptfcInternalCtx = mpt_रेजिस्टर(mptscsih_scandv_complete, MPTFC_DRIVER,
 	    "mptscsih_scandv_complete");
 
-	mpt_event_register(mptfcDoneCtx, mptfc_event_process);
-	mpt_reset_register(mptfcDoneCtx, mptfc_ioc_reset);
+	mpt_event_रेजिस्टर(mptfcDoneCtx, mptfc_event_process);
+	mpt_reset_रेजिस्टर(mptfcDoneCtx, mptfc_ioc_reset);
 
-	error = pci_register_driver(&mptfc_driver);
-	if (error)
-		fc_release_transport(mptfc_transport_template);
+	error = pci_रेजिस्टर_driver(&mptfc_driver);
+	अगर (error)
+		fc_release_transport(mptfc_transport_ढाँचा);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /**
- *	mptfc_remove - Remove fc infrastructure for devices
- *	@pdev: Pointer to pci_dev structure
+ *	mptfc_हटाओ - Remove fc infraकाष्ठाure क्रम devices
+ *	@pdev: Poपूर्णांकer to pci_dev काष्ठाure
  *
  */
-static void mptfc_remove(struct pci_dev *pdev)
-{
+अटल व्योम mptfc_हटाओ(काष्ठा pci_dev *pdev)
+अणु
 	MPT_ADAPTER		*ioc = pci_get_drvdata(pdev);
-	struct mptfc_rport_info	*p, *n;
-	struct workqueue_struct *work_q;
-	unsigned long		flags;
-	int			ii;
+	काष्ठा mptfc_rport_info	*p, *n;
+	काष्ठा workqueue_काष्ठा *work_q;
+	अचिन्हित दीर्घ		flags;
+	पूर्णांक			ii;
 
 	/* destroy workqueue */
-	if ((work_q=ioc->fc_rescan_work_q)) {
+	अगर ((work_q=ioc->fc_rescan_work_q)) अणु
 		spin_lock_irqsave(&ioc->fc_rescan_work_lock, flags);
-		ioc->fc_rescan_work_q = NULL;
+		ioc->fc_rescan_work_q = शून्य;
 		spin_unlock_irqrestore(&ioc->fc_rescan_work_lock, flags);
 		destroy_workqueue(work_q);
-	}
+	पूर्ण
 
-	fc_remove_host(ioc->sh);
+	fc_हटाओ_host(ioc->sh);
 
-	list_for_each_entry_safe(p, n, &ioc->fc_rports, list) {
+	list_क्रम_each_entry_safe(p, n, &ioc->fc_rports, list) अणु
 		list_del(&p->list);
-		kfree(p);
-	}
+		kमुक्त(p);
+	पूर्ण
 
-	for (ii=0; ii<ioc->facts.NumberOfPorts; ii++) {
-		if (ioc->fc_data.fc_port_page1[ii].data) {
-			pci_free_consistent(ioc->pcidev,
+	क्रम (ii=0; ii<ioc->facts.NumberOfPorts; ii++) अणु
+		अगर (ioc->fc_data.fc_port_page1[ii].data) अणु
+			pci_मुक्त_consistent(ioc->pcidev,
 				ioc->fc_data.fc_port_page1[ii].pg_sz,
 				(u8 *) ioc->fc_data.fc_port_page1[ii].data,
 				ioc->fc_data.fc_port_page1[ii].dma);
-			ioc->fc_data.fc_port_page1[ii].data = NULL;
-		}
-	}
+			ioc->fc_data.fc_port_page1[ii].data = शून्य;
+		पूर्ण
+	पूर्ण
 
-	scsi_remove_host(ioc->sh);
+	scsi_हटाओ_host(ioc->sh);
 
-	mptscsih_remove(pdev);
-}
+	mptscsih_हटाओ(pdev);
+पूर्ण
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /**
- *	mptfc_exit - Unregisters MPT adapter(s)
+ *	mptfc_निकास - Unरेजिस्टरs MPT adapter(s)
  *
  */
-static void __exit
-mptfc_exit(void)
-{
-	pci_unregister_driver(&mptfc_driver);
-	fc_release_transport(mptfc_transport_template);
+अटल व्योम __निकास
+mptfc_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&mptfc_driver);
+	fc_release_transport(mptfc_transport_ढाँचा);
 
-	mpt_reset_deregister(mptfcDoneCtx);
-	mpt_event_deregister(mptfcDoneCtx);
+	mpt_reset_deरेजिस्टर(mptfcDoneCtx);
+	mpt_event_deरेजिस्टर(mptfcDoneCtx);
 
-	mpt_deregister(mptfcInternalCtx);
-	mpt_deregister(mptfcTaskCtx);
-	mpt_deregister(mptfcDoneCtx);
-}
+	mpt_deरेजिस्टर(mptfcInternalCtx);
+	mpt_deरेजिस्टर(mptfcTaskCtx);
+	mpt_deरेजिस्टर(mptfcDoneCtx);
+पूर्ण
 
 module_init(mptfc_init);
-module_exit(mptfc_exit);
+module_निकास(mptfc_निकास);

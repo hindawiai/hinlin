@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#define _RTW_PWRCTRL_C_
+#घोषणा _RTW_PWRCTRL_C_
 
-#include <osdep_service.h>
-#include <drv_types.h>
-#include <osdep_intf.h>
-#include <usb_ops_linux.h>
-#include <linux/usb.h>
+#समावेश <osdep_service.h>
+#समावेश <drv_types.h>
+#समावेश <osdep_पूर्णांकf.h>
+#समावेश <usb_ops_linux.h>
+#समावेश <linux/usb.h>
 
-static int rtw_hw_suspend(struct adapter *padapter)
-{
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
-	struct net_device *pnetdev = padapter->pnetdev;
+अटल पूर्णांक rtw_hw_suspend(काष्ठा adapter *padapter)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+	काष्ठा net_device *pnetdev = padapter->pnetdev;
 
-	if ((!padapter->bup) || (padapter->bDriverStopped) ||
-	    (padapter->bSurpriseRemoved)) {
+	अगर ((!padapter->bup) || (padapter->bDriverStopped) ||
+	    (padapter->bSurpriseRemoved)) अणु
 		DBG_88E("padapter->bup=%d bDriverStopped=%d bSurpriseRemoved = %d\n",
 			padapter->bup, padapter->bDriverStopped,
 			padapter->bSurpriseRemoved);
-		goto error_exit;
-	}
+		जाओ error_निकास;
+	पूर्ण
 
-	/* system suspend */
+	/* प्रणाली suspend */
 	LeaveAllPowerSaveMode(padapter);
 
 	DBG_88E("==> %s\n", __func__);
 	mutex_lock(&pwrpriv->mutex_lock);
 	pwrpriv->bips_processing = true;
 	/* s1. */
-	if (pnetdev) {
-		netif_carrier_off(pnetdev);
-		netif_tx_stop_all_queues(pnetdev);
-	}
+	अगर (pnetdev) अणु
+		netअगर_carrier_off(pnetdev);
+		netअगर_tx_stop_all_queues(pnetdev);
+	पूर्ण
 
 	/* s2. */
 	rtw_disassoc_cmd(padapter, 500, false);
 
 	/* s2-2.  indicate disconnect to os */
-	{
-		struct	mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	अणु
+		काष्ठा	mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-		if (check_fwstate(pmlmepriv, _FW_LINKED)) {
+		अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
 			_clr_fwstate_(pmlmepriv, _FW_LINKED);
 
 			led_control_8188eu(padapter, LED_CTL_NO_LINK);
 
 			rtw_os_indicate_disconnect(padapter);
 
-			/* donnot enqueue cmd */
+			/* करोnnot enqueue cmd */
 			rtw_lps_ctrl_wk_cmd(padapter, LPS_CTRL_DISCONNECT, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* s2-3. */
-	rtw_free_assoc_resources(padapter);
+	rtw_मुक्त_assoc_resources(padapter);
 
 	/* s2-4. */
-	rtw_free_network_queue(padapter, true);
+	rtw_मुक्त_network_queue(padapter, true);
 	rtw_ips_dev_unload(padapter);
 	pwrpriv->rf_pwrstate = rf_off;
 	pwrpriv->bips_processing = false;
 
 	mutex_unlock(&pwrpriv->mutex_lock);
 
-	return 0;
+	वापस 0;
 
-error_exit:
+error_निकास:
 	DBG_88E("%s, failed\n", __func__);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int rtw_hw_resume(struct adapter *padapter)
-{
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
-	struct net_device *pnetdev = padapter->pnetdev;
+अटल पूर्णांक rtw_hw_resume(काष्ठा adapter *padapter)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+	काष्ठा net_device *pnetdev = padapter->pnetdev;
 
-	/* system resume */
+	/* प्रणाली resume */
 	DBG_88E("==> %s\n", __func__);
 	mutex_lock(&pwrpriv->mutex_lock);
 	pwrpriv->bips_processing = true;
 	rtw_reset_drv_sw(padapter);
 
-	if (ips_netdrv_open(netdev_priv(pnetdev)) != _SUCCESS) {
+	अगर (ips_netdrv_खोलो(netdev_priv(pnetdev)) != _SUCCESS) अणु
 		mutex_unlock(&pwrpriv->mutex_lock);
-		goto error_exit;
-	}
+		जाओ error_निकास;
+	पूर्ण
 
-	netif_device_attach(pnetdev);
-	netif_carrier_on(pnetdev);
+	netअगर_device_attach(pnetdev);
+	netअगर_carrier_on(pnetdev);
 
-	if (!netif_queue_stopped(pnetdev))
-		netif_start_queue(pnetdev);
-	else
-		netif_wake_queue(pnetdev);
+	अगर (!netअगर_queue_stopped(pnetdev))
+		netअगर_start_queue(pnetdev);
+	अन्यथा
+		netअगर_wake_queue(pnetdev);
 
 	pwrpriv->bkeepfwalive = false;
 	pwrpriv->brfoffbyhw = false;
@@ -105,27 +106,27 @@ static int rtw_hw_resume(struct adapter *padapter)
 
 	mutex_unlock(&pwrpriv->mutex_lock);
 
-	return 0;
-error_exit:
+	वापस 0;
+error_निकास:
 	DBG_88E("%s, Open net dev failed\n", __func__);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-void ips_enter(struct adapter *padapter)
-{
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
-	struct xmit_priv *pxmit_priv = &padapter->xmitpriv;
+व्योम ips_enter(काष्ठा adapter *padapter)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+	काष्ठा xmit_priv *pxmit_priv = &padapter->xmitpriv;
 
-	if (padapter->registrypriv.mp_mode == 1)
-		return;
+	अगर (padapter->registrypriv.mp_mode == 1)
+		वापस;
 
-	if (pxmit_priv->free_xmitbuf_cnt != NR_XMITBUFF ||
-	    pxmit_priv->free_xmit_extbuf_cnt != NR_XMIT_EXTBUFF) {
+	अगर (pxmit_priv->मुक्त_xmitbuf_cnt != NR_XMITBUFF ||
+	    pxmit_priv->मुक्त_xmit_extbuf_cnt != NR_XMIT_EXTBUFF) अणु
 		DBG_88E_LEVEL(_drv_info_, "There are some pkts to transmit\n");
 		DBG_88E_LEVEL(_drv_info_, "free_xmitbuf_cnt: %d, free_xmit_extbuf_cnt: %d\n",
-			      pxmit_priv->free_xmitbuf_cnt, pxmit_priv->free_xmit_extbuf_cnt);
-		return;
-	}
+			      pxmit_priv->मुक्त_xmitbuf_cnt, pxmit_priv->मुक्त_xmit_extbuf_cnt);
+		वापस;
+	पूर्ण
 
 	mutex_lock(&pwrpriv->mutex_lock);
 
@@ -136,185 +137,185 @@ void ips_enter(struct adapter *padapter)
 
 	pwrpriv->ips_enter_cnts++;
 	DBG_88E("==>%s:%d\n", __func__, pwrpriv->ips_enter_cnts);
-	if (rf_off == pwrpriv->change_rfpwrstate) {
-		pwrpriv->bpower_saving = true;
+	अगर (rf_off == pwrpriv->change_rfpwrstate) अणु
+		pwrpriv->bघातer_saving = true;
 		DBG_88E_LEVEL(_drv_info_, "nolinked power save enter\n");
 
-		if (pwrpriv->ips_mode == IPS_LEVEL_2)
+		अगर (pwrpriv->ips_mode == IPS_LEVEL_2)
 			pwrpriv->bkeepfwalive = true;
 
-		rtw_ips_pwr_down(padapter);
+		rtw_ips_pwr_करोwn(padapter);
 		pwrpriv->rf_pwrstate = rf_off;
-	}
+	पूर्ण
 	pwrpriv->bips_processing = false;
 
 	mutex_unlock(&pwrpriv->mutex_lock);
-}
+पूर्ण
 
-int ips_leave(struct adapter *padapter)
-{
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
-	struct security_priv *psecuritypriv = &padapter->securitypriv;
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	int result = _SUCCESS;
-	int keyid;
+पूर्णांक ips_leave(काष्ठा adapter *padapter)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	पूर्णांक result = _SUCCESS;
+	पूर्णांक keyid;
 
 	mutex_lock(&pwrpriv->mutex_lock);
 
-	if ((pwrpriv->rf_pwrstate == rf_off) && (!pwrpriv->bips_processing)) {
+	अगर ((pwrpriv->rf_pwrstate == rf_off) && (!pwrpriv->bips_processing)) अणु
 		pwrpriv->bips_processing = true;
 		pwrpriv->change_rfpwrstate = rf_on;
 		pwrpriv->ips_leave_cnts++;
 		DBG_88E("==>%s:%d\n", __func__, pwrpriv->ips_leave_cnts);
 
 		result = rtw_ips_pwr_up(padapter);
-		if (result == _SUCCESS)
+		अगर (result == _SUCCESS)
 			pwrpriv->rf_pwrstate = rf_on;
 
 		DBG_88E_LEVEL(_drv_info_, "nolinked power save leave\n");
 
-		if ((psecuritypriv->dot11PrivacyAlgrthm == _WEP40_) || (psecuritypriv->dot11PrivacyAlgrthm == _WEP104_)) {
+		अगर ((psecuritypriv->करोt11PrivacyAlgrthm == _WEP40_) || (psecuritypriv->करोt11PrivacyAlgrthm == _WEP104_)) अणु
 			DBG_88E("==>%s, channel(%d), processing(%x)\n", __func__, padapter->mlmeextpriv.cur_channel, pwrpriv->bips_processing);
 			set_channel_bwmode(padapter, padapter->mlmeextpriv.cur_channel, HAL_PRIME_CHNL_OFFSET_DONT_CARE, HT_CHANNEL_WIDTH_20);
-			for (keyid = 0; keyid < 4; keyid++) {
-				if (pmlmepriv->key_mask & BIT(keyid)) {
-					if (keyid == psecuritypriv->dot11PrivacyKeyIndex)
+			क्रम (keyid = 0; keyid < 4; keyid++) अणु
+				अगर (pmlmepriv->key_mask & BIT(keyid)) अणु
+					अगर (keyid == psecuritypriv->करोt11PrivacyKeyIndex)
 						result = rtw_set_key(padapter, psecuritypriv, keyid, 1);
-					else
+					अन्यथा
 						result = rtw_set_key(padapter, psecuritypriv, keyid, 0);
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		DBG_88E("==> %s.....LED(0x%08x)...\n", __func__, usb_read32(padapter, 0x4c));
+		DBG_88E("==> %s.....LED(0x%08x)...\n", __func__, usb_पढ़ो32(padapter, 0x4c));
 		pwrpriv->bips_processing = false;
 
 		pwrpriv->bkeepfwalive = false;
-		pwrpriv->bpower_saving = false;
-	}
+		pwrpriv->bघातer_saving = false;
+	पूर्ण
 
 	mutex_unlock(&pwrpriv->mutex_lock);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static bool rtw_pwr_unassociated_idle(struct adapter *adapter)
-{
-	struct mlme_priv *pmlmepriv = &adapter->mlmepriv;
+अटल bool rtw_pwr_unassociated_idle(काष्ठा adapter *adapter)
+अणु
+	काष्ठा mlme_priv *pmlmepriv = &adapter->mlmepriv;
 
-	if (time_after_eq(adapter->pwrctrlpriv.ips_deny_time, jiffies))
-		return false;
+	अगर (समय_after_eq(adapter->pwrctrlpriv.ips_deny_समय, jअगरfies))
+		वापस false;
 
-	if (check_fwstate(pmlmepriv, WIFI_ASOC_STATE | WIFI_SITE_MONITOR) ||
+	अगर (check_fwstate(pmlmepriv, WIFI_ASOC_STATE | WIFI_SITE_MONITOR) ||
 	    check_fwstate(pmlmepriv, WIFI_UNDER_LINKING | WIFI_UNDER_WPS) ||
 	    check_fwstate(pmlmepriv, WIFI_AP_STATE) ||
 	    check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE | WIFI_ADHOC_STATE))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void rtw_ps_processor(struct adapter *padapter)
-{
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	enum rt_rf_power_state rfpwrstate;
+व्योम rtw_ps_processor(काष्ठा adapter *padapter)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	क्रमागत rt_rf_घातer_state rfpwrstate;
 
 	pwrpriv->ps_processing = true;
 
-	if (pwrpriv->bips_processing)
-		goto exit;
+	अगर (pwrpriv->bips_processing)
+		जाओ निकास;
 
-	if (padapter->pwrctrlpriv.bHWPwrPindetect) {
+	अगर (padapter->pwrctrlpriv.bHWPwrPindetect) अणु
 		rfpwrstate = RfOnOffDetect(padapter);
 		DBG_88E("@@@@- #2  %s==> rfstate:%s\n", __func__, (rfpwrstate == rf_on) ? "rf_on" : "rf_off");
 
-		if (rfpwrstate != pwrpriv->rf_pwrstate) {
-			if (rfpwrstate == rf_off) {
+		अगर (rfpwrstate != pwrpriv->rf_pwrstate) अणु
+			अगर (rfpwrstate == rf_off) अणु
 				pwrpriv->change_rfpwrstate = rf_off;
 				pwrpriv->brfoffbyhw = true;
 				rtw_hw_suspend(padapter);
-			} else {
+			पूर्ण अन्यथा अणु
 				pwrpriv->change_rfpwrstate = rf_on;
 				rtw_hw_resume(padapter);
-			}
+			पूर्ण
 			DBG_88E("current rf_pwrstate(%s)\n", (pwrpriv->rf_pwrstate == rf_off) ? "rf_off" : "rf_on");
-		}
+		पूर्ण
 		pwrpriv->pwr_state_check_cnts++;
-	}
+	पूर्ण
 
-	if (pwrpriv->ips_mode_req == IPS_NONE)
-		goto exit;
+	अगर (pwrpriv->ips_mode_req == IPS_NONE)
+		जाओ निकास;
 
-	if (!rtw_pwr_unassociated_idle(padapter))
-		goto exit;
+	अगर (!rtw_pwr_unassociated_idle(padapter))
+		जाओ निकास;
 
-	if ((pwrpriv->rf_pwrstate == rf_on) && ((pwrpriv->pwr_state_check_cnts % 4) == 0)) {
+	अगर ((pwrpriv->rf_pwrstate == rf_on) && ((pwrpriv->pwr_state_check_cnts % 4) == 0)) अणु
 		DBG_88E("==>%s .fw_state(%x)\n", __func__, get_fwstate(pmlmepriv));
 		pwrpriv->change_rfpwrstate = rf_off;
 
 		ips_enter(padapter);
-	}
-exit:
-	rtw_set_pwr_state_check_timer(&padapter->pwrctrlpriv);
+	पूर्ण
+निकास:
+	rtw_set_pwr_state_check_समयr(&padapter->pwrctrlpriv);
 	pwrpriv->ps_processing = false;
-}
+पूर्ण
 
-static void pwr_state_check_handler(struct timer_list *t)
-{
-	struct adapter *padapter =
-		from_timer(padapter, t,
-			   pwrctrlpriv.pwr_state_check_timer);
+अटल व्योम pwr_state_check_handler(काष्ठा समयr_list *t)
+अणु
+	काष्ठा adapter *padapter =
+		from_समयr(padapter, t,
+			   pwrctrlpriv.pwr_state_check_समयr);
 
 	rtw_ps_cmd(padapter);
-}
+पूर्ण
 
 /*
  *
  * Parameters
  *	padapter
- *	pslv			power state level, only could be PS_STATE_S0 ~ PS_STATE_S4
+ *	pslv			घातer state level, only could be PS_STATE_S0 ~ PS_STATE_S4
  *
  */
-void rtw_set_rpwm(struct adapter *padapter, u8 pslv)
-{
+व्योम rtw_set_rpwm(काष्ठा adapter *padapter, u8 pslv)
+अणु
 	u8 rpwm;
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
 
 	pslv = PS_STATE(pslv);
 
-	if (pwrpriv->btcoex_rfon) {
-		if (pslv < PS_STATE_S4)
+	अगर (pwrpriv->btcoex_rfon) अणु
+		अगर (pslv < PS_STATE_S4)
 			pslv = PS_STATE_S3;
-	}
+	पूर्ण
 
-	if (pwrpriv->rpwm == pslv) {
+	अगर (pwrpriv->rpwm == pslv) अणु
 		RT_TRACE(_module_rtl871x_pwrctrl_c_, _drv_err_,
 			 ("%s: Already set rpwm[0x%02X], new=0x%02X!\n", __func__, pwrpriv->rpwm, pslv));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if ((padapter->bSurpriseRemoved) ||
-	    (!padapter->hw_init_completed)) {
+	अगर ((padapter->bSurpriseRemoved) ||
+	    (!padapter->hw_init_completed)) अणु
 		RT_TRACE(_module_rtl871x_pwrctrl_c_, _drv_err_,
 			 ("%s: SurpriseRemoved(%d) hw_init_completed(%d)\n",
 			 __func__, padapter->bSurpriseRemoved, padapter->hw_init_completed));
 
 		pwrpriv->cpwm = PS_STATE_S4;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (padapter->bDriverStopped) {
+	अगर (padapter->bDriverStopped) अणु
 		RT_TRACE(_module_rtl871x_pwrctrl_c_, _drv_err_,
 			 ("%s: change power state(0x%02X) when DriverStopped\n", __func__, pslv));
 
-		if (pslv < PS_STATE_S2) {
+		अगर (pslv < PS_STATE_S2) अणु
 			RT_TRACE(_module_rtl871x_pwrctrl_c_, _drv_err_,
 				 ("%s: Reject to enter PS_STATE(0x%02X) lower than S2 when DriverStopped!!\n", __func__, pslv));
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	rpwm = pslv | pwrpriv->tog;
 	RT_TRACE(_module_rtl871x_pwrctrl_c_, _drv_notice_,
@@ -326,61 +327,61 @@ void rtw_set_rpwm(struct adapter *padapter, u8 pslv)
 
 	pwrpriv->tog += 0x80;
 	pwrpriv->cpwm = pslv;
-}
+पूर्ण
 
-static u8 PS_RDY_CHECK(struct adapter *padapter)
-{
-	unsigned long curr_time, delta_time;
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+अटल u8 PS_RDY_CHECK(काष्ठा adapter *padapter)
+अणु
+	अचिन्हित दीर्घ curr_समय, delta_समय;
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-	curr_time = jiffies;
-	delta_time = curr_time - pwrpriv->DelayLPSLastTimeStamp;
+	curr_समय = jअगरfies;
+	delta_समय = curr_समय - pwrpriv->DelayLPSLastTimeStamp;
 
-	if (delta_time < LPS_DELAY_TIME)
-		return false;
+	अगर (delta_समय < LPS_DELAY_TIME)
+		वापस false;
 
-	if ((!check_fwstate(pmlmepriv, _FW_LINKED)) ||
+	अगर ((!check_fwstate(pmlmepriv, _FW_LINKED)) ||
 	    (check_fwstate(pmlmepriv, _FW_UNDER_SURVEY)) ||
 	    (check_fwstate(pmlmepriv, WIFI_AP_STATE)) ||
 	    (check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE)) ||
 	    (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE)))
-		return false;
-	if (pwrpriv->bInSuspend)
-		return false;
-	if (padapter->securitypriv.dot11AuthAlgrthm == dot11AuthAlgrthm_8021X &&
-	    !padapter->securitypriv.binstallGrpkey) {
+		वापस false;
+	अगर (pwrpriv->bInSuspend)
+		वापस false;
+	अगर (padapter->securitypriv.करोt11AuthAlgrthm == करोt11AuthAlgrthm_8021X &&
+	    !padapter->securitypriv.binstallGrpkey) अणु
 		DBG_88E("Group handshake still in progress !!!\n");
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-void rtw_set_ps_mode(struct adapter *padapter, u8 ps_mode, u8 smart_ps, u8 bcn_ant_mode)
-{
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+व्योम rtw_set_ps_mode(काष्ठा adapter *padapter, u8 ps_mode, u8 smart_ps, u8 bcn_ant_mode)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
 
 	RT_TRACE(_module_rtl871x_pwrctrl_c_, _drv_notice_,
 		 ("%s: PowerMode=%d Smart_PS=%d\n",
 		  __func__, ps_mode, smart_ps));
 
-	if (ps_mode > PM_Card_Disable) {
+	अगर (ps_mode > PM_Card_Disable) अणु
 		RT_TRACE(_module_rtl871x_pwrctrl_c_, _drv_err_, ("ps_mode:%d error\n", ps_mode));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (pwrpriv->pwr_mode == ps_mode) {
-		if (ps_mode == PS_MODE_ACTIVE)
-			return;
+	अगर (pwrpriv->pwr_mode == ps_mode) अणु
+		अगर (ps_mode == PS_MODE_ACTIVE)
+			वापस;
 
-		if ((pwrpriv->smart_ps == smart_ps) &&
+		अगर ((pwrpriv->smart_ps == smart_ps) &&
 		    (pwrpriv->bcn_ant_mode == bcn_ant_mode))
-			return;
-	}
+			वापस;
+	पूर्ण
 
-	/* if (pwrpriv->pwr_mode == PS_MODE_ACTIVE) */
-	if (ps_mode == PS_MODE_ACTIVE) {
-		if (PS_RDY_CHECK(padapter)) {
+	/* अगर (pwrpriv->pwr_mode == PS_MODE_ACTIVE) */
+	अगर (ps_mode == PS_MODE_ACTIVE) अणु
+		अगर (PS_RDY_CHECK(padapter)) अणु
 			DBG_88E("%s: Enter 802.11 power save\n", __func__);
 			pwrpriv->bFwCurrentInPSMode = true;
 			pwrpriv->pwr_mode = ps_mode;
@@ -388,9 +389,9 @@ void rtw_set_ps_mode(struct adapter *padapter, u8 ps_mode, u8 smart_ps, u8 bcn_a
 			pwrpriv->bcn_ant_mode = bcn_ant_mode;
 			rtw_hal_set_hwreg(padapter, HW_VAR_H2C_FW_PWRMODE, (u8 *)(&ps_mode));
 			rtw_set_rpwm(padapter, PS_STATE_S2);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Return:
@@ -398,96 +399,96 @@ void rtw_set_ps_mode(struct adapter *padapter, u8 ps_mode, u8 smart_ps, u8 bcn_a
  *	-1:	Timeout
  *	-2:	Other error
  */
-s32 LPS_RF_ON_check(struct adapter *padapter, u32 delay_ms)
-{
-	unsigned long start_time;
+s32 LPS_RF_ON_check(काष्ठा adapter *padapter, u32 delay_ms)
+अणु
+	अचिन्हित दीर्घ start_समय;
 	u8 bAwake = false;
 	s32 err = 0;
 
-	start_time = jiffies;
-	while (1) {
+	start_समय = jअगरfies;
+	जबतक (1) अणु
 		rtw_hal_get_hwreg(padapter, HW_VAR_FWLPS_RF_ON, &bAwake);
-		if (bAwake)
-			break;
+		अगर (bAwake)
+			अवरोध;
 
-		if (padapter->bSurpriseRemoved) {
+		अगर (padapter->bSurpriseRemoved) अणु
 			err = -2;
 			DBG_88E("%s: device surprise removed!!\n", __func__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (jiffies_to_msecs(jiffies - start_time) > delay_ms) {
+		अगर (jअगरfies_to_msecs(jअगरfies - start_समय) > delay_ms) अणु
 			err = -1;
 			DBG_88E("%s: Wait for FW LPS leave more than %u ms!!!\n", __func__, delay_ms);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		msleep(1);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*  */
 /*	Description: */
-/*		Enter the leisure power save mode. */
+/*		Enter the leisure घातer save mode. */
 /*  */
-void LPS_Enter(struct adapter *padapter)
-{
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+व्योम LPS_Enter(काष्ठा adapter *padapter)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
 
-	if (!PS_RDY_CHECK(padapter))
-		return;
+	अगर (!PS_RDY_CHECK(padapter))
+		वापस;
 
-	if (pwrpriv->bLeisurePs) {
-		/*  Idle for a while if we connect to AP a while ago. */
-		if (pwrpriv->LpsIdleCount >= 2) { /*   4 Sec */
-			if (pwrpriv->pwr_mode == PS_MODE_ACTIVE) {
-				pwrpriv->bpower_saving = true;
+	अगर (pwrpriv->bLeisurePs) अणु
+		/*  Idle क्रम a जबतक अगर we connect to AP a जबतक ago. */
+		अगर (pwrpriv->LpsIdleCount >= 2) अणु /*   4 Sec */
+			अगर (pwrpriv->pwr_mode == PS_MODE_ACTIVE) अणु
+				pwrpriv->bघातer_saving = true;
 				DBG_88E("%s smart_ps:%d\n", __func__, pwrpriv->smart_ps);
 				/* For Tenda W311R IOT issue */
-				rtw_set_ps_mode(padapter, pwrpriv->power_mgnt, pwrpriv->smart_ps, 0);
-			}
-		} else {
+				rtw_set_ps_mode(padapter, pwrpriv->घातer_mgnt, pwrpriv->smart_ps, 0);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			pwrpriv->LpsIdleCount++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define LPS_LEAVE_TIMEOUT_MS 100
+#घोषणा LPS_LEAVE_TIMEOUT_MS 100
 
 /*	Description: */
-/*		Leave the leisure power save mode. */
-void LPS_Leave(struct adapter *padapter)
-{
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+/*		Leave the leisure घातer save mode. */
+व्योम LPS_Leave(काष्ठा adapter *padapter)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
 
-	if (pwrpriv->bLeisurePs) {
-		if (pwrpriv->pwr_mode != PS_MODE_ACTIVE) {
+	अगर (pwrpriv->bLeisurePs) अणु
+		अगर (pwrpriv->pwr_mode != PS_MODE_ACTIVE) अणु
 			rtw_set_ps_mode(padapter, PS_MODE_ACTIVE, 0, 0);
 
-			if (pwrpriv->pwr_mode == PS_MODE_ACTIVE)
+			अगर (pwrpriv->pwr_mode == PS_MODE_ACTIVE)
 				LPS_RF_ON_check(padapter, LPS_LEAVE_TIMEOUT_MS);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	pwrpriv->bpower_saving = false;
-}
+	pwrpriv->bघातer_saving = false;
+पूर्ण
 
 /*  */
-/*  Description: Leave all power save mode: LPS, FwLPS, IPS if needed. */
+/*  Description: Leave all घातer save mode: LPS, FwLPS, IPS अगर needed. */
 /*  Move code to function by tynli. 2010.03.26. */
 /*  */
-void LeaveAllPowerSaveMode(struct adapter *Adapter)
-{
-	struct mlme_priv *pmlmepriv = &Adapter->mlmepriv;
+व्योम LeaveAllPowerSaveMode(काष्ठा adapter *Adapter)
+अणु
+	काष्ठा mlme_priv *pmlmepriv = &Adapter->mlmepriv;
 
-	if (check_fwstate(pmlmepriv, _FW_LINKED))
+	अगर (check_fwstate(pmlmepriv, _FW_LINKED))
 		rtw_lps_ctrl_wk_cmd(Adapter, LPS_CTRL_LEAVE, 0);
-}
+पूर्ण
 
-void rtw_init_pwrctrl_priv(struct adapter *padapter)
-{
-	struct pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
+व्योम rtw_init_pwrctrl_priv(काष्ठा adapter *padapter)
+अणु
+	काष्ठा pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
 
 	mutex_init(&pwrctrlpriv->mutex_lock);
 	pwrctrlpriv->rf_pwrstate = rf_on;
@@ -498,18 +499,18 @@ void rtw_init_pwrctrl_priv(struct adapter *padapter)
 	pwrctrlpriv->ips_mode = padapter->registrypriv.ips_mode;
 	pwrctrlpriv->ips_mode_req = padapter->registrypriv.ips_mode;
 
-	pwrctrlpriv->pwr_state_check_interval = RTW_PWR_STATE_CHK_INTERVAL;
+	pwrctrlpriv->pwr_state_check_पूर्णांकerval = RTW_PWR_STATE_CHK_INTERVAL;
 	pwrctrlpriv->pwr_state_check_cnts = 0;
 	pwrctrlpriv->bInternalAutoSuspend = false;
 	pwrctrlpriv->bInSuspend = false;
 	pwrctrlpriv->bkeepfwalive = false;
 
 	pwrctrlpriv->LpsIdleCount = 0;
-	if (padapter->registrypriv.mp_mode == 1)
-		pwrctrlpriv->power_mgnt = PS_MODE_ACTIVE;
-	else
-		pwrctrlpriv->power_mgnt = padapter->registrypriv.power_mgnt;/*  PS_MODE_MIN; */
-	pwrctrlpriv->bLeisurePs = (pwrctrlpriv->power_mgnt != PS_MODE_ACTIVE);
+	अगर (padapter->registrypriv.mp_mode == 1)
+		pwrctrlpriv->घातer_mgnt = PS_MODE_ACTIVE;
+	अन्यथा
+		pwrctrlpriv->घातer_mgnt = padapter->registrypriv.घातer_mgnt;/*  PS_MODE_MIN; */
+	pwrctrlpriv->bLeisurePs = (pwrctrlpriv->घातer_mgnt != PS_MODE_ACTIVE);
 
 	pwrctrlpriv->bFwCurrentInPSMode = false;
 
@@ -524,122 +525,122 @@ void rtw_init_pwrctrl_priv(struct adapter *padapter)
 
 	pwrctrlpriv->btcoex_rfon = false;
 
-	timer_setup(&pwrctrlpriv->pwr_state_check_timer,
+	समयr_setup(&pwrctrlpriv->pwr_state_check_समयr,
 		    pwr_state_check_handler, 0);
-}
+पूर्ण
 
 /*
- * rtw_pwr_wakeup - Wake the NIC up from: 1)IPS. 2)USB autosuspend
- * @adapter: pointer to struct adapter structure
- * @ips_deffer_ms: the ms will prevent from falling into IPS after wakeup
+ * rtw_pwr_wakeup - Wake the NIC up from: 1)IPS. 2)USB स्वतःsuspend
+ * @adapter: poपूर्णांकer to काष्ठा adapter काष्ठाure
+ * @ips_deffer_ms: the ms will prevent from falling पूर्णांकo IPS after wakeup
  * Return _SUCCESS or _FAIL
  */
 
-int _rtw_pwr_wakeup(struct adapter *padapter, u32 ips_deffer_ms, const char *caller)
-{
-	struct pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	unsigned long expires;
-	unsigned long start;
-	int ret = _SUCCESS;
+पूर्णांक _rtw_pwr_wakeup(काष्ठा adapter *padapter, u32 ips_deffer_ms, स्थिर अक्षर *caller)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = &padapter->pwrctrlpriv;
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	अचिन्हित दीर्घ expires;
+	अचिन्हित दीर्घ start;
+	पूर्णांक ret = _SUCCESS;
 
-	expires = jiffies + msecs_to_jiffies(ips_deffer_ms);
-	if (time_before(pwrpriv->ips_deny_time, expires))
-		pwrpriv->ips_deny_time = jiffies + msecs_to_jiffies(ips_deffer_ms);
+	expires = jअगरfies + msecs_to_jअगरfies(ips_deffer_ms);
+	अगर (समय_beक्रमe(pwrpriv->ips_deny_समय, expires))
+		pwrpriv->ips_deny_समय = jअगरfies + msecs_to_jअगरfies(ips_deffer_ms);
 
-	start = jiffies;
-	if (pwrpriv->ps_processing) {
+	start = jअगरfies;
+	अगर (pwrpriv->ps_processing) अणु
 		DBG_88E("%s wait ps_processing...\n", __func__);
-		while (pwrpriv->ps_processing &&
-		       jiffies_to_msecs(jiffies - start) <= 3000)
+		जबतक (pwrpriv->ps_processing &&
+		       jअगरfies_to_msecs(jअगरfies - start) <= 3000)
 			udelay(1500);
-		if (pwrpriv->ps_processing)
+		अगर (pwrpriv->ps_processing)
 			DBG_88E("%s wait ps_processing timeout\n", __func__);
-		else
+		अन्यथा
 			DBG_88E("%s wait ps_processing done\n", __func__);
-	}
+	पूर्ण
 
 	/* System suspend is not allowed to wakeup */
-	if ((!pwrpriv->bInternalAutoSuspend) && (pwrpriv->bInSuspend)) {
+	अगर ((!pwrpriv->bInternalAutoSuspend) && (pwrpriv->bInSuspend)) अणु
 		ret = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* block??? */
-	if ((pwrpriv->bInternalAutoSuspend)  && (padapter->net_closed)) {
+	अगर ((pwrpriv->bInternalAutoSuspend)  && (padapter->net_बंदd)) अणु
 		ret = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* I think this should be check in IPS, LPS, autosuspend functions... */
-	if (check_fwstate(pmlmepriv, _FW_LINKED)) {
+	/* I think this should be check in IPS, LPS, स्वतःsuspend functions... */
+	अगर (check_fwstate(pmlmepriv, _FW_LINKED)) अणु
 		ret = _SUCCESS;
-		goto exit;
-	}
-	if (rf_off == pwrpriv->rf_pwrstate) {
+		जाओ निकास;
+	पूर्ण
+	अगर (rf_off == pwrpriv->rf_pwrstate) अणु
 		DBG_88E("%s call ips_leave....\n", __func__);
-		if (ips_leave(padapter) ==  _FAIL) {
+		अगर (ips_leave(padapter) ==  _FAIL) अणु
 			DBG_88E("======> ips_leave fail.............\n");
 			ret = _FAIL;
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
 	/* TODO: the following checking need to be merged... */
-	if (padapter->bDriverStopped || !padapter->bup ||
-	    !padapter->hw_init_completed) {
+	अगर (padapter->bDriverStopped || !padapter->bup ||
+	    !padapter->hw_init_completed) अणु
 		DBG_88E("%s: bDriverStopped=%d, bup=%d, hw_init_completed =%u\n"
 			, caller
 			, padapter->bDriverStopped
 			, padapter->bup
 			, padapter->hw_init_completed);
 		ret = false;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-exit:
-	expires = jiffies + msecs_to_jiffies(ips_deffer_ms);
-	if (time_before(pwrpriv->ips_deny_time, expires))
-		pwrpriv->ips_deny_time = jiffies + msecs_to_jiffies(ips_deffer_ms);
-	return ret;
-}
+निकास:
+	expires = jअगरfies + msecs_to_jअगरfies(ips_deffer_ms);
+	अगर (समय_beक्रमe(pwrpriv->ips_deny_समय, expires))
+		pwrpriv->ips_deny_समय = jअगरfies + msecs_to_jअगरfies(ips_deffer_ms);
+	वापस ret;
+पूर्ण
 
-int rtw_pm_set_lps(struct adapter *padapter, u8 mode)
-{
-	int ret = 0;
-	struct pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
+पूर्णांक rtw_pm_set_lps(काष्ठा adapter *padapter, u8 mode)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
 
-	if (mode < PS_MODE_NUM) {
-		if (pwrctrlpriv->power_mgnt != mode) {
-			if (mode == PS_MODE_ACTIVE)
+	अगर (mode < PS_MODE_NUM) अणु
+		अगर (pwrctrlpriv->घातer_mgnt != mode) अणु
+			अगर (mode == PS_MODE_ACTIVE)
 				LeaveAllPowerSaveMode(padapter);
-			else
+			अन्यथा
 				pwrctrlpriv->LpsIdleCount = 2;
-			pwrctrlpriv->power_mgnt = mode;
-			pwrctrlpriv->bLeisurePs = (pwrctrlpriv->power_mgnt != PS_MODE_ACTIVE);
-		}
-	} else {
+			pwrctrlpriv->घातer_mgnt = mode;
+			pwrctrlpriv->bLeisurePs = (pwrctrlpriv->घातer_mgnt != PS_MODE_ACTIVE);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int rtw_pm_set_ips(struct adapter *padapter, u8 mode)
-{
-	struct pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
+पूर्णांक rtw_pm_set_ips(काष्ठा adapter *padapter, u8 mode)
+अणु
+	काष्ठा pwrctrl_priv *pwrctrlpriv = &padapter->pwrctrlpriv;
 
-	if (mode == IPS_NORMAL || mode == IPS_LEVEL_2) {
+	अगर (mode == IPS_NORMAL || mode == IPS_LEVEL_2) अणु
 		rtw_ips_mode_req(pwrctrlpriv, mode);
 		DBG_88E("%s %s\n", __func__, mode == IPS_NORMAL ? "IPS_NORMAL" : "IPS_LEVEL_2");
-		return 0;
-	} else if (mode == IPS_NONE) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (mode == IPS_NONE) अणु
 		rtw_ips_mode_req(pwrctrlpriv, mode);
 		DBG_88E("%s %s\n", __func__, "IPS_NONE");
-		if ((padapter->bSurpriseRemoved == 0) && (rtw_pwr_wakeup(padapter) == _FAIL))
-			return -EFAULT;
-	} else {
-		return -EINVAL;
-	}
-	return 0;
-}
+		अगर ((padapter->bSurpriseRemoved == 0) && (rtw_pwr_wakeup(padapter) == _FAIL))
+			वापस -EFAULT;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण

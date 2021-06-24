@@ -1,228 +1,229 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
  * RNG operations.
  *
  * Copyright (c) 2008 Neil Horman <nhorman@tuxdriver.com>
- * Copyright (c) 2015 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2015 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#include <linux/atomic.h>
-#include <crypto/internal/rng.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/random.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/cryptouser.h>
-#include <linux/compiler.h>
-#include <net/netlink.h>
+#समावेश <linux/atomic.h>
+#समावेश <crypto/पूर्णांकernal/rng.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/cryptouser.h>
+#समावेश <linux/compiler.h>
+#समावेश <net/netlink.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static DEFINE_MUTEX(crypto_default_rng_lock);
-struct crypto_rng *crypto_default_rng;
-EXPORT_SYMBOL_GPL(crypto_default_rng);
-static int crypto_default_rng_refcnt;
+अटल DEFINE_MUTEX(crypto_शेष_rng_lock);
+काष्ठा crypto_rng *crypto_शेष_rng;
+EXPORT_SYMBOL_GPL(crypto_शेष_rng);
+अटल पूर्णांक crypto_शेष_rng_refcnt;
 
-int crypto_rng_reset(struct crypto_rng *tfm, const u8 *seed, unsigned int slen)
-{
-	struct crypto_alg *alg = tfm->base.__crt_alg;
-	u8 *buf = NULL;
-	int err;
+पूर्णांक crypto_rng_reset(काष्ठा crypto_rng *tfm, स्थिर u8 *seed, अचिन्हित पूर्णांक slen)
+अणु
+	काष्ठा crypto_alg *alg = tfm->base.__crt_alg;
+	u8 *buf = शून्य;
+	पूर्णांक err;
 
-	if (!seed && slen) {
-		buf = kmalloc(slen, GFP_KERNEL);
-		if (!buf)
-			return -ENOMEM;
+	अगर (!seed && slen) अणु
+		buf = kदो_स्मृति(slen, GFP_KERNEL);
+		अगर (!buf)
+			वापस -ENOMEM;
 
-		err = get_random_bytes_wait(buf, slen);
-		if (err)
-			goto out;
+		err = get_अक्रमom_bytes_रुको(buf, slen);
+		अगर (err)
+			जाओ out;
 		seed = buf;
-	}
+	पूर्ण
 
 	crypto_stats_get(alg);
 	err = crypto_rng_alg(tfm)->seed(tfm, seed, slen);
 	crypto_stats_rng_seed(alg, err);
 out:
-	kfree_sensitive(buf);
-	return err;
-}
+	kमुक्त_sensitive(buf);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_rng_reset);
 
-static int crypto_rng_init_tfm(struct crypto_tfm *tfm)
-{
-	return 0;
-}
+अटल पूर्णांक crypto_rng_init_tfm(काष्ठा crypto_tfm *tfm)
+अणु
+	वापस 0;
+पूर्ण
 
-static unsigned int seedsize(struct crypto_alg *alg)
-{
-	struct rng_alg *ralg = container_of(alg, struct rng_alg, base);
+अटल अचिन्हित पूर्णांक seedsize(काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा rng_alg *ralg = container_of(alg, काष्ठा rng_alg, base);
 
-	return ralg->seedsize;
-}
+	वापस ralg->seedsize;
+पूर्ण
 
-#ifdef CONFIG_NET
-static int crypto_rng_report(struct sk_buff *skb, struct crypto_alg *alg)
-{
-	struct crypto_report_rng rrng;
+#अगर_घोषित CONFIG_NET
+अटल पूर्णांक crypto_rng_report(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा crypto_report_rng rrng;
 
-	memset(&rrng, 0, sizeof(rrng));
+	स_रखो(&rrng, 0, माप(rrng));
 
-	strscpy(rrng.type, "rng", sizeof(rrng.type));
+	strscpy(rrng.type, "rng", माप(rrng.type));
 
 	rrng.seedsize = seedsize(alg);
 
-	return nla_put(skb, CRYPTOCFGA_REPORT_RNG, sizeof(rrng), &rrng);
-}
-#else
-static int crypto_rng_report(struct sk_buff *skb, struct crypto_alg *alg)
-{
-	return -ENOSYS;
-}
-#endif
+	वापस nla_put(skb, CRYPTOCFGA_REPORT_RNG, माप(rrng), &rrng);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक crypto_rng_report(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर
 
-static void crypto_rng_show(struct seq_file *m, struct crypto_alg *alg)
+अटल व्योम crypto_rng_show(काष्ठा seq_file *m, काष्ठा crypto_alg *alg)
 	__maybe_unused;
-static void crypto_rng_show(struct seq_file *m, struct crypto_alg *alg)
-{
-	seq_printf(m, "type         : rng\n");
-	seq_printf(m, "seedsize     : %u\n", seedsize(alg));
-}
+अटल व्योम crypto_rng_show(काष्ठा seq_file *m, काष्ठा crypto_alg *alg)
+अणु
+	seq_म_लिखो(m, "type         : rng\n");
+	seq_म_लिखो(m, "seedsize     : %u\n", seedsize(alg));
+पूर्ण
 
-static const struct crypto_type crypto_rng_type = {
+अटल स्थिर काष्ठा crypto_type crypto_rng_type = अणु
 	.extsize = crypto_alg_extsize,
 	.init_tfm = crypto_rng_init_tfm,
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 	.show = crypto_rng_show,
-#endif
+#पूर्ण_अगर
 	.report = crypto_rng_report,
 	.maskclear = ~CRYPTO_ALG_TYPE_MASK,
 	.maskset = CRYPTO_ALG_TYPE_MASK,
 	.type = CRYPTO_ALG_TYPE_RNG,
-	.tfmsize = offsetof(struct crypto_rng, base),
-};
+	.tfmsize = दुरत्व(काष्ठा crypto_rng, base),
+पूर्ण;
 
-struct crypto_rng *crypto_alloc_rng(const char *alg_name, u32 type, u32 mask)
-{
-	return crypto_alloc_tfm(alg_name, &crypto_rng_type, type, mask);
-}
+काष्ठा crypto_rng *crypto_alloc_rng(स्थिर अक्षर *alg_name, u32 type, u32 mask)
+अणु
+	वापस crypto_alloc_tfm(alg_name, &crypto_rng_type, type, mask);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_alloc_rng);
 
-int crypto_get_default_rng(void)
-{
-	struct crypto_rng *rng;
-	int err;
+पूर्णांक crypto_get_शेष_rng(व्योम)
+अणु
+	काष्ठा crypto_rng *rng;
+	पूर्णांक err;
 
-	mutex_lock(&crypto_default_rng_lock);
-	if (!crypto_default_rng) {
+	mutex_lock(&crypto_शेष_rng_lock);
+	अगर (!crypto_शेष_rng) अणु
 		rng = crypto_alloc_rng("stdrng", 0, 0);
 		err = PTR_ERR(rng);
-		if (IS_ERR(rng))
-			goto unlock;
+		अगर (IS_ERR(rng))
+			जाओ unlock;
 
-		err = crypto_rng_reset(rng, NULL, crypto_rng_seedsize(rng));
-		if (err) {
-			crypto_free_rng(rng);
-			goto unlock;
-		}
+		err = crypto_rng_reset(rng, शून्य, crypto_rng_seedsize(rng));
+		अगर (err) अणु
+			crypto_मुक्त_rng(rng);
+			जाओ unlock;
+		पूर्ण
 
-		crypto_default_rng = rng;
-	}
+		crypto_शेष_rng = rng;
+	पूर्ण
 
-	crypto_default_rng_refcnt++;
+	crypto_शेष_rng_refcnt++;
 	err = 0;
 
 unlock:
-	mutex_unlock(&crypto_default_rng_lock);
+	mutex_unlock(&crypto_शेष_rng_lock);
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(crypto_get_default_rng);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_get_शेष_rng);
 
-void crypto_put_default_rng(void)
-{
-	mutex_lock(&crypto_default_rng_lock);
-	crypto_default_rng_refcnt--;
-	mutex_unlock(&crypto_default_rng_lock);
-}
-EXPORT_SYMBOL_GPL(crypto_put_default_rng);
+व्योम crypto_put_शेष_rng(व्योम)
+अणु
+	mutex_lock(&crypto_शेष_rng_lock);
+	crypto_शेष_rng_refcnt--;
+	mutex_unlock(&crypto_शेष_rng_lock);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_put_शेष_rng);
 
-#if defined(CONFIG_CRYPTO_RNG) || defined(CONFIG_CRYPTO_RNG_MODULE)
-int crypto_del_default_rng(void)
-{
-	int err = -EBUSY;
+#अगर defined(CONFIG_CRYPTO_RNG) || defined(CONFIG_CRYPTO_RNG_MODULE)
+पूर्णांक crypto_del_शेष_rng(व्योम)
+अणु
+	पूर्णांक err = -EBUSY;
 
-	mutex_lock(&crypto_default_rng_lock);
-	if (crypto_default_rng_refcnt)
-		goto out;
+	mutex_lock(&crypto_शेष_rng_lock);
+	अगर (crypto_शेष_rng_refcnt)
+		जाओ out;
 
-	crypto_free_rng(crypto_default_rng);
-	crypto_default_rng = NULL;
+	crypto_मुक्त_rng(crypto_शेष_rng);
+	crypto_शेष_rng = शून्य;
 
 	err = 0;
 
 out:
-	mutex_unlock(&crypto_default_rng_lock);
+	mutex_unlock(&crypto_शेष_rng_lock);
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(crypto_del_default_rng);
-#endif
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_del_शेष_rng);
+#पूर्ण_अगर
 
-int crypto_register_rng(struct rng_alg *alg)
-{
-	struct crypto_alg *base = &alg->base;
+पूर्णांक crypto_रेजिस्टर_rng(काष्ठा rng_alg *alg)
+अणु
+	काष्ठा crypto_alg *base = &alg->base;
 
-	if (alg->seedsize > PAGE_SIZE / 8)
-		return -EINVAL;
+	अगर (alg->seedsize > PAGE_SIZE / 8)
+		वापस -EINVAL;
 
 	base->cra_type = &crypto_rng_type;
 	base->cra_flags &= ~CRYPTO_ALG_TYPE_MASK;
 	base->cra_flags |= CRYPTO_ALG_TYPE_RNG;
 
-	return crypto_register_alg(base);
-}
-EXPORT_SYMBOL_GPL(crypto_register_rng);
+	वापस crypto_रेजिस्टर_alg(base);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_rng);
 
-void crypto_unregister_rng(struct rng_alg *alg)
-{
-	crypto_unregister_alg(&alg->base);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_rng);
+व्योम crypto_unरेजिस्टर_rng(काष्ठा rng_alg *alg)
+अणु
+	crypto_unरेजिस्टर_alg(&alg->base);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_rng);
 
-int crypto_register_rngs(struct rng_alg *algs, int count)
-{
-	int i, ret;
+पूर्णांक crypto_रेजिस्टर_rngs(काष्ठा rng_alg *algs, पूर्णांक count)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < count; i++) {
-		ret = crypto_register_rng(algs + i);
-		if (ret)
-			goto err;
-	}
+	क्रम (i = 0; i < count; i++) अणु
+		ret = crypto_रेजिस्टर_rng(algs + i);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	for (--i; i >= 0; --i)
-		crypto_unregister_rng(algs + i);
+	क्रम (--i; i >= 0; --i)
+		crypto_unरेजिस्टर_rng(algs + i);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(crypto_register_rngs);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_rngs);
 
-void crypto_unregister_rngs(struct rng_alg *algs, int count)
-{
-	int i;
+व्योम crypto_unरेजिस्टर_rngs(काष्ठा rng_alg *algs, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = count - 1; i >= 0; --i)
-		crypto_unregister_rng(algs + i);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_rngs);
+	क्रम (i = count - 1; i >= 0; --i)
+		crypto_unरेजिस्टर_rng(algs + i);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_rngs);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Random Number Generator");

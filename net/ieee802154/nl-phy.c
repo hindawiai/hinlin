@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Netlink interface for IEEE 802.15.4 stack
+ * Netlink पूर्णांकerface क्रम IEEE 802.15.4 stack
  *
  * Copyright 2007, 2008 Siemens AG
  *
@@ -10,121 +11,121 @@
  * Maxim Osipov <maxim.osipov@siemens.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/if_arp.h>
-#include <net/netlink.h>
-#include <net/genetlink.h>
-#include <net/cfg802154.h>
-#include <net/af_ieee802154.h>
-#include <net/ieee802154_netdev.h>
-#include <net/rtnetlink.h> /* for rtnl_{un,}lock */
-#include <linux/nl802154.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <net/netlink.h>
+#समावेश <net/genetlink.h>
+#समावेश <net/cfg802154.h>
+#समावेश <net/af_ieee802154.h>
+#समावेश <net/ieee802154_netdev.h>
+#समावेश <net/rtnetlink.h> /* क्रम rtnl_अणुun,पूर्णlock */
+#समावेश <linux/nl802154.h>
 
-#include "ieee802154.h"
-#include "rdev-ops.h"
-#include "core.h"
+#समावेश "ieee802154.h"
+#समावेश "rdev-ops.h"
+#समावेश "core.h"
 
-static int ieee802154_nl_fill_phy(struct sk_buff *msg, u32 portid,
-				  u32 seq, int flags, struct wpan_phy *phy)
-{
-	void *hdr;
-	int i, pages = 0;
-	uint32_t *buf = kcalloc(32, sizeof(uint32_t), GFP_KERNEL);
+अटल पूर्णांक ieee802154_nl_fill_phy(काष्ठा sk_buff *msg, u32 portid,
+				  u32 seq, पूर्णांक flags, काष्ठा wpan_phy *phy)
+अणु
+	व्योम *hdr;
+	पूर्णांक i, pages = 0;
+	uपूर्णांक32_t *buf = kसुस्मृति(32, माप(uपूर्णांक32_t), GFP_KERNEL);
 
 	pr_debug("%s\n", __func__);
 
-	if (!buf)
-		return -EMSGSIZE;
+	अगर (!buf)
+		वापस -EMSGSIZE;
 
 	hdr = genlmsg_put(msg, 0, seq, &nl802154_family, flags,
 			  IEEE802154_LIST_PHY);
-	if (!hdr)
-		goto out;
+	अगर (!hdr)
+		जाओ out;
 
 	rtnl_lock();
-	if (nla_put_string(msg, IEEE802154_ATTR_PHY_NAME, wpan_phy_name(phy)) ||
+	अगर (nla_put_string(msg, IEEE802154_ATTR_PHY_NAME, wpan_phy_name(phy)) ||
 	    nla_put_u8(msg, IEEE802154_ATTR_PAGE, phy->current_page) ||
 	    nla_put_u8(msg, IEEE802154_ATTR_CHANNEL, phy->current_channel))
-		goto nla_put_failure;
-	for (i = 0; i < 32; i++) {
-		if (phy->supported.channels[i])
+		जाओ nla_put_failure;
+	क्रम (i = 0; i < 32; i++) अणु
+		अगर (phy->supported.channels[i])
 			buf[pages++] = phy->supported.channels[i] | (i << 27);
-	}
-	if (pages &&
+	पूर्ण
+	अगर (pages &&
 	    nla_put(msg, IEEE802154_ATTR_CHANNEL_PAGE_LIST,
-		    pages * sizeof(uint32_t), buf))
-		goto nla_put_failure;
+		    pages * माप(uपूर्णांक32_t), buf))
+		जाओ nla_put_failure;
 	rtnl_unlock();
-	kfree(buf);
+	kमुक्त(buf);
 	genlmsg_end(msg, hdr);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	rtnl_unlock();
 	genlmsg_cancel(msg, hdr);
 out:
-	kfree(buf);
-	return -EMSGSIZE;
-}
+	kमुक्त(buf);
+	वापस -EMSGSIZE;
+पूर्ण
 
-int ieee802154_list_phy(struct sk_buff *skb, struct genl_info *info)
-{
-	/* Request for interface name, index, type, IEEE address,
-	 * PAN Id, short address
+पूर्णांक ieee802154_list_phy(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	/* Request क्रम पूर्णांकerface name, index, type, IEEE address,
+	 * PAN Id, लघु address
 	 */
-	struct sk_buff *msg;
-	struct wpan_phy *phy;
-	const char *name;
-	int rc = -ENOBUFS;
+	काष्ठा sk_buff *msg;
+	काष्ठा wpan_phy *phy;
+	स्थिर अक्षर *name;
+	पूर्णांक rc = -ENOBUFS;
 
 	pr_debug("%s\n", __func__);
 
-	if (!info->attrs[IEEE802154_ATTR_PHY_NAME])
-		return -EINVAL;
+	अगर (!info->attrs[IEEE802154_ATTR_PHY_NAME])
+		वापस -EINVAL;
 
 	name = nla_data(info->attrs[IEEE802154_ATTR_PHY_NAME]);
-	if (name[nla_len(info->attrs[IEEE802154_ATTR_PHY_NAME]) - 1] != '\0')
-		return -EINVAL; /* phy name should be null-terminated */
+	अगर (name[nla_len(info->attrs[IEEE802154_ATTR_PHY_NAME]) - 1] != '\0')
+		वापस -EINVAL; /* phy name should be null-terminated */
 
 	phy = wpan_phy_find(name);
-	if (!phy)
-		return -ENODEV;
+	अगर (!phy)
+		वापस -ENODEV;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		goto out_dev;
+	अगर (!msg)
+		जाओ out_dev;
 
 	rc = ieee802154_nl_fill_phy(msg, info->snd_portid, info->snd_seq,
 				    0, phy);
-	if (rc < 0)
-		goto out_free;
+	अगर (rc < 0)
+		जाओ out_मुक्त;
 
 	wpan_phy_put(phy);
 
-	return genlmsg_reply(msg, info);
-out_free:
-	nlmsg_free(msg);
+	वापस genlmsg_reply(msg, info);
+out_मुक्त:
+	nlmsg_मुक्त(msg);
 out_dev:
 	wpan_phy_put(phy);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-struct dump_phy_data {
-	struct sk_buff *skb;
-	struct netlink_callback *cb;
-	int idx, s_idx;
-};
+काष्ठा dump_phy_data अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा netlink_callback *cb;
+	पूर्णांक idx, s_idx;
+पूर्ण;
 
-static int ieee802154_dump_phy_iter(struct wpan_phy *phy, void *_data)
-{
-	int rc;
-	struct dump_phy_data *data = _data;
+अटल पूर्णांक ieee802154_dump_phy_iter(काष्ठा wpan_phy *phy, व्योम *_data)
+अणु
+	पूर्णांक rc;
+	काष्ठा dump_phy_data *data = _data;
 
 	pr_debug("%s\n", __func__);
 
-	if (data->idx++ < data->s_idx)
-		return 0;
+	अगर (data->idx++ < data->s_idx)
+		वापस 0;
 
 	rc = ieee802154_nl_fill_phy(data->skb,
 				    NETLINK_CB(data->cb->skb).portid,
@@ -132,216 +133,216 @@ static int ieee802154_dump_phy_iter(struct wpan_phy *phy, void *_data)
 				    NLM_F_MULTI,
 				    phy);
 
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		data->idx--;
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ieee802154_dump_phy(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct dump_phy_data data = {
+पूर्णांक ieee802154_dump_phy(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा dump_phy_data data = अणु
 		.cb = cb,
 		.skb = skb,
 		.s_idx = cb->args[0],
 		.idx = 0,
-	};
+	पूर्ण;
 
 	pr_debug("%s\n", __func__);
 
-	wpan_phy_for_each(ieee802154_dump_phy_iter, &data);
+	wpan_phy_क्रम_each(ieee802154_dump_phy_iter, &data);
 
 	cb->args[0] = data.idx;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-int ieee802154_add_iface(struct sk_buff *skb, struct genl_info *info)
-{
-	struct sk_buff *msg;
-	struct wpan_phy *phy;
-	const char *name;
-	const char *devname;
-	int rc = -ENOBUFS;
-	struct net_device *dev;
-	int type = __IEEE802154_DEV_INVALID;
-	unsigned char name_assign_type;
+पूर्णांक ieee802154_add_अगरace(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा sk_buff *msg;
+	काष्ठा wpan_phy *phy;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *devname;
+	पूर्णांक rc = -ENOBUFS;
+	काष्ठा net_device *dev;
+	पूर्णांक type = __IEEE802154_DEV_INVALID;
+	अचिन्हित अक्षर name_assign_type;
 
 	pr_debug("%s\n", __func__);
 
-	if (!info->attrs[IEEE802154_ATTR_PHY_NAME])
-		return -EINVAL;
+	अगर (!info->attrs[IEEE802154_ATTR_PHY_NAME])
+		वापस -EINVAL;
 
 	name = nla_data(info->attrs[IEEE802154_ATTR_PHY_NAME]);
-	if (name[nla_len(info->attrs[IEEE802154_ATTR_PHY_NAME]) - 1] != '\0')
-		return -EINVAL; /* phy name should be null-terminated */
+	अगर (name[nla_len(info->attrs[IEEE802154_ATTR_PHY_NAME]) - 1] != '\0')
+		वापस -EINVAL; /* phy name should be null-terminated */
 
-	if (info->attrs[IEEE802154_ATTR_DEV_NAME]) {
+	अगर (info->attrs[IEEE802154_ATTR_DEV_NAME]) अणु
 		devname = nla_data(info->attrs[IEEE802154_ATTR_DEV_NAME]);
-		if (devname[nla_len(info->attrs[IEEE802154_ATTR_DEV_NAME]) - 1]
+		अगर (devname[nla_len(info->attrs[IEEE802154_ATTR_DEV_NAME]) - 1]
 				!= '\0')
-			return -EINVAL; /* phy name should be null-terminated */
+			वापस -EINVAL; /* phy name should be null-terminated */
 		name_assign_type = NET_NAME_USER;
-	} else  {
+	पूर्ण अन्यथा  अणु
 		devname = "wpan%d";
 		name_assign_type = NET_NAME_ENUM;
-	}
+	पूर्ण
 
-	if (strlen(devname) >= IFNAMSIZ)
-		return -ENAMETOOLONG;
+	अगर (म_माप(devname) >= IFNAMSIZ)
+		वापस -ENAMETOOLONG;
 
 	phy = wpan_phy_find(name);
-	if (!phy)
-		return -ENODEV;
+	अगर (!phy)
+		वापस -ENODEV;
 
 	msg = ieee802154_nl_new_reply(info, 0, IEEE802154_ADD_IFACE);
-	if (!msg)
-		goto out_dev;
+	अगर (!msg)
+		जाओ out_dev;
 
-	if (info->attrs[IEEE802154_ATTR_HW_ADDR] &&
+	अगर (info->attrs[IEEE802154_ATTR_HW_ADDR] &&
 	    nla_len(info->attrs[IEEE802154_ATTR_HW_ADDR]) !=
-			IEEE802154_ADDR_LEN) {
+			IEEE802154_ADDR_LEN) अणु
 		rc = -EINVAL;
-		goto nla_put_failure;
-	}
+		जाओ nla_put_failure;
+	पूर्ण
 
-	if (info->attrs[IEEE802154_ATTR_DEV_TYPE]) {
+	अगर (info->attrs[IEEE802154_ATTR_DEV_TYPE]) अणु
 		type = nla_get_u8(info->attrs[IEEE802154_ATTR_DEV_TYPE]);
-		if (type >= __IEEE802154_DEV_MAX) {
+		अगर (type >= __IEEE802154_DEV_MAX) अणु
 			rc = -EINVAL;
-			goto nla_put_failure;
-		}
-	}
+			जाओ nla_put_failure;
+		पूर्ण
+	पूर्ण
 
-	dev = rdev_add_virtual_intf_deprecated(wpan_phy_to_rdev(phy), devname,
+	dev = rdev_add_भव_पूर्णांकf_deprecated(wpan_phy_to_rdev(phy), devname,
 					       name_assign_type, type);
-	if (IS_ERR(dev)) {
+	अगर (IS_ERR(dev)) अणु
 		rc = PTR_ERR(dev);
-		goto nla_put_failure;
-	}
+		जाओ nla_put_failure;
+	पूर्ण
 	dev_hold(dev);
 
-	if (info->attrs[IEEE802154_ATTR_HW_ADDR]) {
-		struct sockaddr addr;
+	अगर (info->attrs[IEEE802154_ATTR_HW_ADDR]) अणु
+		काष्ठा sockaddr addr;
 
 		addr.sa_family = ARPHRD_IEEE802154;
-		nla_memcpy(&addr.sa_data, info->attrs[IEEE802154_ATTR_HW_ADDR],
+		nla_स_नकल(&addr.sa_data, info->attrs[IEEE802154_ATTR_HW_ADDR],
 			   IEEE802154_ADDR_LEN);
 
 		/* strangely enough, some callbacks (inetdev_event) from
 		 * dev_set_mac_address require RTNL_LOCK
 		 */
 		rtnl_lock();
-		rc = dev_set_mac_address(dev, &addr, NULL);
+		rc = dev_set_mac_address(dev, &addr, शून्य);
 		rtnl_unlock();
-		if (rc)
-			goto dev_unregister;
-	}
+		अगर (rc)
+			जाओ dev_unरेजिस्टर;
+	पूर्ण
 
-	if (nla_put_string(msg, IEEE802154_ATTR_PHY_NAME, wpan_phy_name(phy)) ||
-	    nla_put_string(msg, IEEE802154_ATTR_DEV_NAME, dev->name)) {
+	अगर (nla_put_string(msg, IEEE802154_ATTR_PHY_NAME, wpan_phy_name(phy)) ||
+	    nla_put_string(msg, IEEE802154_ATTR_DEV_NAME, dev->name)) अणु
 		rc = -EMSGSIZE;
-		goto nla_put_failure;
-	}
+		जाओ nla_put_failure;
+	पूर्ण
 	dev_put(dev);
 
 	wpan_phy_put(phy);
 
-	return ieee802154_nl_reply(msg, info);
+	वापस ieee802154_nl_reply(msg, info);
 
-dev_unregister:
-	rtnl_lock(); /* del_iface must be called with RTNL lock */
-	rdev_del_virtual_intf_deprecated(wpan_phy_to_rdev(phy), dev);
+dev_unरेजिस्टर:
+	rtnl_lock(); /* del_अगरace must be called with RTNL lock */
+	rdev_del_भव_पूर्णांकf_deprecated(wpan_phy_to_rdev(phy), dev);
 	dev_put(dev);
 	rtnl_unlock();
 nla_put_failure:
-	nlmsg_free(msg);
+	nlmsg_मुक्त(msg);
 out_dev:
 	wpan_phy_put(phy);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int ieee802154_del_iface(struct sk_buff *skb, struct genl_info *info)
-{
-	struct sk_buff *msg;
-	struct wpan_phy *phy;
-	const char *name;
-	int rc;
-	struct net_device *dev;
+पूर्णांक ieee802154_del_अगरace(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा sk_buff *msg;
+	काष्ठा wpan_phy *phy;
+	स्थिर अक्षर *name;
+	पूर्णांक rc;
+	काष्ठा net_device *dev;
 
 	pr_debug("%s\n", __func__);
 
-	if (!info->attrs[IEEE802154_ATTR_DEV_NAME])
-		return -EINVAL;
+	अगर (!info->attrs[IEEE802154_ATTR_DEV_NAME])
+		वापस -EINVAL;
 
 	name = nla_data(info->attrs[IEEE802154_ATTR_DEV_NAME]);
-	if (name[nla_len(info->attrs[IEEE802154_ATTR_DEV_NAME]) - 1] != '\0')
-		return -EINVAL; /* name should be null-terminated */
+	अगर (name[nla_len(info->attrs[IEEE802154_ATTR_DEV_NAME]) - 1] != '\0')
+		वापस -EINVAL; /* name should be null-terminated */
 
 	rc = -ENODEV;
 	dev = dev_get_by_name(genl_info_net(info), name);
-	if (!dev)
-		return rc;
-	if (dev->type != ARPHRD_IEEE802154)
-		goto out;
+	अगर (!dev)
+		वापस rc;
+	अगर (dev->type != ARPHRD_IEEE802154)
+		जाओ out;
 
 	phy = dev->ieee802154_ptr->wpan_phy;
 	BUG_ON(!phy);
 	get_device(&phy->dev);
 
 	rc = -EINVAL;
-	/* phy name is optional, but should be checked if it's given */
-	if (info->attrs[IEEE802154_ATTR_PHY_NAME]) {
-		struct wpan_phy *phy2;
+	/* phy name is optional, but should be checked अगर it's given */
+	अगर (info->attrs[IEEE802154_ATTR_PHY_NAME]) अणु
+		काष्ठा wpan_phy *phy2;
 
-		const char *pname =
+		स्थिर अक्षर *pname =
 			nla_data(info->attrs[IEEE802154_ATTR_PHY_NAME]);
-		if (pname[nla_len(info->attrs[IEEE802154_ATTR_PHY_NAME]) - 1]
+		अगर (pname[nla_len(info->attrs[IEEE802154_ATTR_PHY_NAME]) - 1]
 				!= '\0')
 			/* name should be null-terminated */
-			goto out_dev;
+			जाओ out_dev;
 
 		phy2 = wpan_phy_find(pname);
-		if (!phy2)
-			goto out_dev;
+		अगर (!phy2)
+			जाओ out_dev;
 
-		if (phy != phy2) {
+		अगर (phy != phy2) अणु
 			wpan_phy_put(phy2);
-			goto out_dev;
-		}
-	}
+			जाओ out_dev;
+		पूर्ण
+	पूर्ण
 
 	rc = -ENOBUFS;
 
 	msg = ieee802154_nl_new_reply(info, 0, IEEE802154_DEL_IFACE);
-	if (!msg)
-		goto out_dev;
+	अगर (!msg)
+		जाओ out_dev;
 
 	rtnl_lock();
-	rdev_del_virtual_intf_deprecated(wpan_phy_to_rdev(phy), dev);
+	rdev_del_भव_पूर्णांकf_deprecated(wpan_phy_to_rdev(phy), dev);
 
-	/* We don't have device anymore */
+	/* We करोn't have device anymore */
 	dev_put(dev);
-	dev = NULL;
+	dev = शून्य;
 
 	rtnl_unlock();
 
-	if (nla_put_string(msg, IEEE802154_ATTR_PHY_NAME, wpan_phy_name(phy)) ||
+	अगर (nla_put_string(msg, IEEE802154_ATTR_PHY_NAME, wpan_phy_name(phy)) ||
 	    nla_put_string(msg, IEEE802154_ATTR_DEV_NAME, name))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 	wpan_phy_put(phy);
 
-	return ieee802154_nl_reply(msg, info);
+	वापस ieee802154_nl_reply(msg, info);
 
 nla_put_failure:
-	nlmsg_free(msg);
+	nlmsg_मुक्त(msg);
 out_dev:
 	wpan_phy_put(phy);
 out:
-	if (dev)
+	अगर (dev)
 		dev_put(dev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण

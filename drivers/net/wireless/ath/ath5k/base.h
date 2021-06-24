@@ -1,20 +1,21 @@
+<शैली गुरु>
 /*-
  * Copyright (c) 2002-2007 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer,
- *    without modification.
- * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    without modअगरication.
+ * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
  *    similar to the "NO WARRANTY" disclaimer below ("Disclaimer") and any
  *    redistribution must be conditioned upon including a substantially
- *    similar Disclaimer requirement for further binary redistribution.
+ *    similar Disclaimer requirement क्रम further binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    of any contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -36,86 +37,86 @@
  */
 
 /*
- * Definitions for the Atheros Wireless LAN controller driver.
+ * Definitions क्रम the Atheros Wireless LAN controller driver.
  */
-#ifndef _DEV_ATH5K_BASE_H
-#define _DEV_ATH5K_BASE_H
+#अगर_अघोषित _DEV_ATH5K_BASE_H
+#घोषणा _DEV_ATH5K_BASE_H
 
-struct ieee80211_vif;
-struct ieee80211_hw;
-struct ath5k_hw;
-struct ath5k_txq;
-struct ieee80211_channel;
-struct ath_bus_ops;
-struct ieee80211_tx_control;
-enum nl80211_iftype;
+काष्ठा ieee80211_vअगर;
+काष्ठा ieee80211_hw;
+काष्ठा ath5k_hw;
+काष्ठा ath5k_txq;
+काष्ठा ieee80211_channel;
+काष्ठा ath_bus_ops;
+काष्ठा ieee80211_tx_control;
+क्रमागत nl80211_अगरtype;
 
-enum ath5k_srev_type {
+क्रमागत ath5k_srev_type अणु
 	AR5K_VERSION_MAC,
 	AR5K_VERSION_RAD,
-};
+पूर्ण;
 
-struct ath5k_srev_name {
-	const char		*sr_name;
-	enum ath5k_srev_type	sr_type;
-	u_int			sr_val;
-};
+काष्ठा ath5k_srev_name अणु
+	स्थिर अक्षर		*sr_name;
+	क्रमागत ath5k_srev_type	sr_type;
+	u_पूर्णांक			sr_val;
+पूर्ण;
 
-struct ath5k_buf {
-	struct list_head		list;
-	struct ath5k_desc		*desc;		/* virtual addr of desc */
+काष्ठा ath5k_buf अणु
+	काष्ठा list_head		list;
+	काष्ठा ath5k_desc		*desc;		/* भव addr of desc */
 	dma_addr_t			daddr;		/* physical addr of desc */
-	struct sk_buff			*skb;		/* skbuff for buf */
+	काष्ठा sk_buff			*skb;		/* skbuff क्रम buf */
 	dma_addr_t			skbaddr;	/* physical addr of skb data */
-	struct ieee80211_tx_rate	rates[4];	/* number of multi-rate stages */
-};
+	काष्ठा ieee80211_tx_rate	rates[4];	/* number of multi-rate stages */
+पूर्ण;
 
-struct ath5k_vif {
+काष्ठा ath5k_vअगर अणु
 	bool			assoc; /* are we associated or not */
-	enum nl80211_iftype	opmode;
-	int			bslot;
-	struct ath5k_buf	*bbuf; /* beacon buffer */
-};
+	क्रमागत nl80211_अगरtype	opmode;
+	पूर्णांक			bslot;
+	काष्ठा ath5k_buf	*bbuf; /* beacon buffer */
+पूर्ण;
 
-struct ath5k_vif_iter_data {
-	const u8	*hw_macaddr;
+काष्ठा ath5k_vअगर_iter_data अणु
+	स्थिर u8	*hw_macaddr;
 	u8		mask[ETH_ALEN];
 	u8		active_mac[ETH_ALEN]; /* first active MAC */
 	bool		need_set_hw_addr;
 	bool		found_active;
 	bool		any_assoc;
-	enum nl80211_iftype opmode;
-	int n_stas;
-};
+	क्रमागत nl80211_अगरtype opmode;
+	पूर्णांक n_stas;
+पूर्ण;
 
-void ath5k_vif_iter(void *data, u8 *mac, struct ieee80211_vif *vif);
-bool ath5k_any_vif_assoc(struct ath5k_hw *ah);
+व्योम ath5k_vअगर_iter(व्योम *data, u8 *mac, काष्ठा ieee80211_vअगर *vअगर);
+bool ath5k_any_vअगर_assoc(काष्ठा ath5k_hw *ah);
 
-int ath5k_start(struct ieee80211_hw *hw);
-void ath5k_stop(struct ieee80211_hw *hw);
+पूर्णांक ath5k_start(काष्ठा ieee80211_hw *hw);
+व्योम ath5k_stop(काष्ठा ieee80211_hw *hw);
 
-void ath5k_beacon_update_timers(struct ath5k_hw *ah, u64 bc_tsf);
-int ath5k_beacon_update(struct ieee80211_hw *hw, struct ieee80211_vif *vif);
-void ath5k_beacon_config(struct ath5k_hw *ah);
-void ath5k_set_beacon_filter(struct ieee80211_hw *hw, bool enable);
+व्योम ath5k_beacon_update_समयrs(काष्ठा ath5k_hw *ah, u64 bc_tsf);
+पूर्णांक ath5k_beacon_update(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर);
+व्योम ath5k_beacon_config(काष्ठा ath5k_hw *ah);
+व्योम ath5k_set_beacon_filter(काष्ठा ieee80211_hw *hw, bool enable);
 
-void ath5k_update_bssid_mask_and_opmode(struct ath5k_hw *ah,
-					struct ieee80211_vif *vif);
-int ath5k_chan_set(struct ath5k_hw *ah, struct cfg80211_chan_def *chandef);
-void ath5k_txbuf_free_skb(struct ath5k_hw *ah, struct ath5k_buf *bf);
-void ath5k_rxbuf_free_skb(struct ath5k_hw *ah, struct ath5k_buf *bf);
-void ath5k_tx_queue(struct ieee80211_hw *hw, struct sk_buff *skb,
-		    struct ath5k_txq *txq, struct ieee80211_tx_control *control);
+व्योम ath5k_update_bssid_mask_and_opmode(काष्ठा ath5k_hw *ah,
+					काष्ठा ieee80211_vअगर *vअगर);
+पूर्णांक ath5k_chan_set(काष्ठा ath5k_hw *ah, काष्ठा cfg80211_chan_def *chandef);
+व्योम ath5k_txbuf_मुक्त_skb(काष्ठा ath5k_hw *ah, काष्ठा ath5k_buf *bf);
+व्योम ath5k_rxbuf_मुक्त_skb(काष्ठा ath5k_hw *ah, काष्ठा ath5k_buf *bf);
+व्योम ath5k_tx_queue(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *skb,
+		    काष्ठा ath5k_txq *txq, काष्ठा ieee80211_tx_control *control);
 
-const char *ath5k_chip_name(enum ath5k_srev_type type, u_int16_t val);
+स्थिर अक्षर *ath5k_chip_name(क्रमागत ath5k_srev_type type, u_पूर्णांक16_t val);
 
-int ath5k_init_ah(struct ath5k_hw *ah, const struct ath_bus_ops *bus_ops);
-void ath5k_deinit_ah(struct ath5k_hw *ah);
+पूर्णांक ath5k_init_ah(काष्ठा ath5k_hw *ah, स्थिर काष्ठा ath_bus_ops *bus_ops);
+व्योम ath5k_deinit_ah(काष्ठा ath5k_hw *ah);
 
 /* Check whether BSSID mask is supported */
-#define ath5k_hw_hasbssidmask(_ah) (ah->ah_version == AR5K_AR5212)
+#घोषणा ath5k_hw_hasbssidmask(_ah) (ah->ah_version == AR5K_AR5212)
 
-/* Check whether virtual EOL is supported */
-#define ath5k_hw_hasveol(_ah) (ah->ah_version != AR5K_AR5210)
+/* Check whether भव EOL is supported */
+#घोषणा ath5k_hw_hasveol(_ah) (ah->ah_version != AR5K_AR5210)
 
-#endif	/* _DEV_ATH5K_BASE_H */
+#पूर्ण_अगर	/* _DEV_ATH5K_BASE_H */

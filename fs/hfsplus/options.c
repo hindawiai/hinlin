@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/hfsplus/options.c
  *
@@ -9,47 +10,47 @@
  * Option parsing
  */
 
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/parser.h>
-#include <linux/nls.h>
-#include <linux/mount.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include "hfsplus_fs.h"
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/parser.h>
+#समावेश <linux/nls.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश "hfsplus_fs.h"
 
-enum {
+क्रमागत अणु
 	opt_creator, opt_type,
 	opt_umask, opt_uid, opt_gid,
 	opt_part, opt_session, opt_nls,
 	opt_nodecompose, opt_decompose,
 	opt_barrier, opt_nobarrier,
-	opt_force, opt_err
-};
+	opt_क्रमce, opt_err
+पूर्ण;
 
-static const match_table_t tokens = {
-	{ opt_creator, "creator=%s" },
-	{ opt_type, "type=%s" },
-	{ opt_umask, "umask=%o" },
-	{ opt_uid, "uid=%u" },
-	{ opt_gid, "gid=%u" },
-	{ opt_part, "part=%u" },
-	{ opt_session, "session=%u" },
-	{ opt_nls, "nls=%s" },
-	{ opt_decompose, "decompose" },
-	{ opt_nodecompose, "nodecompose" },
-	{ opt_barrier, "barrier" },
-	{ opt_nobarrier, "nobarrier" },
-	{ opt_force, "force" },
-	{ opt_err, NULL }
-};
+अटल स्थिर match_table_t tokens = अणु
+	अणु opt_creator, "creator=%s" पूर्ण,
+	अणु opt_type, "type=%s" पूर्ण,
+	अणु opt_umask, "umask=%o" पूर्ण,
+	अणु opt_uid, "uid=%u" पूर्ण,
+	अणु opt_gid, "gid=%u" पूर्ण,
+	अणु opt_part, "part=%u" पूर्ण,
+	अणु opt_session, "session=%u" पूर्ण,
+	अणु opt_nls, "nls=%s" पूर्ण,
+	अणु opt_decompose, "decompose" पूर्ण,
+	अणु opt_nodecompose, "nodecompose" पूर्ण,
+	अणु opt_barrier, "barrier" पूर्ण,
+	अणु opt_nobarrier, "nobarrier" पूर्ण,
+	अणु opt_क्रमce, "force" पूर्ण,
+	अणु opt_err, शून्य पूर्ण
+पूर्ण;
 
-/* Initialize an options object to reasonable defaults */
-void hfsplus_fill_defaults(struct hfsplus_sb_info *opts)
-{
-	if (!opts)
-		return;
+/* Initialize an options object to reasonable शेषs */
+व्योम hfsplus_fill_शेषs(काष्ठा hfsplus_sb_info *opts)
+अणु
+	अगर (!opts)
+		वापस;
 
 	opts->creator = HFSPLUS_DEF_CR_TYPE;
 	opts->type = HFSPLUS_DEF_CR_TYPE;
@@ -58,182 +59,182 @@ void hfsplus_fill_defaults(struct hfsplus_sb_info *opts)
 	opts->gid = current_gid();
 	opts->part = -1;
 	opts->session = -1;
-}
+पूर्ण
 
-/* convert a "four byte character" to a 32 bit int with error checks */
-static inline int match_fourchar(substring_t *arg, u32 *result)
-{
-	if (arg->to - arg->from != 4)
-		return -EINVAL;
-	memcpy(result, arg->from, 4);
-	return 0;
-}
+/* convert a "four byte character" to a 32 bit पूर्णांक with error checks */
+अटल अंतरभूत पूर्णांक match_fourअक्षर(substring_t *arg, u32 *result)
+अणु
+	अगर (arg->to - arg->from != 4)
+		वापस -EINVAL;
+	स_नकल(result, arg->from, 4);
+	वापस 0;
+पूर्ण
 
-int hfsplus_parse_options_remount(char *input, int *force)
-{
-	char *p;
+पूर्णांक hfsplus_parse_options_remount(अक्षर *input, पूर्णांक *क्रमce)
+अणु
+	अक्षर *p;
 	substring_t args[MAX_OPT_ARGS];
-	int token;
+	पूर्णांक token;
 
-	if (!input)
-		return 1;
+	अगर (!input)
+		वापस 1;
 
-	while ((p = strsep(&input, ",")) != NULL) {
-		if (!*p)
-			continue;
+	जबतक ((p = strsep(&input, ",")) != शून्य) अणु
+		अगर (!*p)
+			जारी;
 
 		token = match_token(p, tokens, args);
-		switch (token) {
-		case opt_force:
-			*force = 1;
-			break;
-		default:
-			break;
-		}
-	}
+		चयन (token) अणु
+		हाल opt_क्रमce:
+			*क्रमce = 1;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* Parse options from mount. Returns 0 on failure */
 /* input is the options passed to mount() as a string */
-int hfsplus_parse_options(char *input, struct hfsplus_sb_info *sbi)
-{
-	char *p;
+पूर्णांक hfsplus_parse_options(अक्षर *input, काष्ठा hfsplus_sb_info *sbi)
+अणु
+	अक्षर *p;
 	substring_t args[MAX_OPT_ARGS];
-	int tmp, token;
+	पूर्णांक पंचांगp, token;
 
-	if (!input)
-		goto done;
+	अगर (!input)
+		जाओ करोne;
 
-	while ((p = strsep(&input, ",")) != NULL) {
-		if (!*p)
-			continue;
+	जबतक ((p = strsep(&input, ",")) != शून्य) अणु
+		अगर (!*p)
+			जारी;
 
 		token = match_token(p, tokens, args);
-		switch (token) {
-		case opt_creator:
-			if (match_fourchar(&args[0], &sbi->creator)) {
+		चयन (token) अणु
+		हाल opt_creator:
+			अगर (match_fourअक्षर(&args[0], &sbi->creator)) अणु
 				pr_err("creator requires a 4 character value\n");
-				return 0;
-			}
-			break;
-		case opt_type:
-			if (match_fourchar(&args[0], &sbi->type)) {
+				वापस 0;
+			पूर्ण
+			अवरोध;
+		हाल opt_type:
+			अगर (match_fourअक्षर(&args[0], &sbi->type)) अणु
 				pr_err("type requires a 4 character value\n");
-				return 0;
-			}
-			break;
-		case opt_umask:
-			if (match_octal(&args[0], &tmp)) {
+				वापस 0;
+			पूर्ण
+			अवरोध;
+		हाल opt_umask:
+			अगर (match_octal(&args[0], &पंचांगp)) अणु
 				pr_err("umask requires a value\n");
-				return 0;
-			}
-			sbi->umask = (umode_t)tmp;
-			break;
-		case opt_uid:
-			if (match_int(&args[0], &tmp)) {
+				वापस 0;
+			पूर्ण
+			sbi->umask = (umode_t)पंचांगp;
+			अवरोध;
+		हाल opt_uid:
+			अगर (match_पूर्णांक(&args[0], &पंचांगp)) अणु
 				pr_err("uid requires an argument\n");
-				return 0;
-			}
-			sbi->uid = make_kuid(current_user_ns(), (uid_t)tmp);
-			if (!uid_valid(sbi->uid)) {
+				वापस 0;
+			पूर्ण
+			sbi->uid = make_kuid(current_user_ns(), (uid_t)पंचांगp);
+			अगर (!uid_valid(sbi->uid)) अणु
 				pr_err("invalid uid specified\n");
-				return 0;
-			}
-			break;
-		case opt_gid:
-			if (match_int(&args[0], &tmp)) {
+				वापस 0;
+			पूर्ण
+			अवरोध;
+		हाल opt_gid:
+			अगर (match_पूर्णांक(&args[0], &पंचांगp)) अणु
 				pr_err("gid requires an argument\n");
-				return 0;
-			}
-			sbi->gid = make_kgid(current_user_ns(), (gid_t)tmp);
-			if (!gid_valid(sbi->gid)) {
+				वापस 0;
+			पूर्ण
+			sbi->gid = make_kgid(current_user_ns(), (gid_t)पंचांगp);
+			अगर (!gid_valid(sbi->gid)) अणु
 				pr_err("invalid gid specified\n");
-				return 0;
-			}
-			break;
-		case opt_part:
-			if (match_int(&args[0], &sbi->part)) {
+				वापस 0;
+			पूर्ण
+			अवरोध;
+		हाल opt_part:
+			अगर (match_पूर्णांक(&args[0], &sbi->part)) अणु
 				pr_err("part requires an argument\n");
-				return 0;
-			}
-			break;
-		case opt_session:
-			if (match_int(&args[0], &sbi->session)) {
+				वापस 0;
+			पूर्ण
+			अवरोध;
+		हाल opt_session:
+			अगर (match_पूर्णांक(&args[0], &sbi->session)) अणु
 				pr_err("session requires an argument\n");
-				return 0;
-			}
-			break;
-		case opt_nls:
-			if (sbi->nls) {
+				वापस 0;
+			पूर्ण
+			अवरोध;
+		हाल opt_nls:
+			अगर (sbi->nls) अणु
 				pr_err("unable to change nls mapping\n");
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 			p = match_strdup(&args[0]);
-			if (p)
+			अगर (p)
 				sbi->nls = load_nls(p);
-			if (!sbi->nls) {
+			अगर (!sbi->nls) अणु
 				pr_err("unable to load nls mapping \"%s\"\n",
 				       p);
-				kfree(p);
-				return 0;
-			}
-			kfree(p);
-			break;
-		case opt_decompose:
+				kमुक्त(p);
+				वापस 0;
+			पूर्ण
+			kमुक्त(p);
+			अवरोध;
+		हाल opt_decompose:
 			clear_bit(HFSPLUS_SB_NODECOMPOSE, &sbi->flags);
-			break;
-		case opt_nodecompose:
+			अवरोध;
+		हाल opt_nodecompose:
 			set_bit(HFSPLUS_SB_NODECOMPOSE, &sbi->flags);
-			break;
-		case opt_barrier:
+			अवरोध;
+		हाल opt_barrier:
 			clear_bit(HFSPLUS_SB_NOBARRIER, &sbi->flags);
-			break;
-		case opt_nobarrier:
+			अवरोध;
+		हाल opt_nobarrier:
 			set_bit(HFSPLUS_SB_NOBARRIER, &sbi->flags);
-			break;
-		case opt_force:
+			अवरोध;
+		हाल opt_क्रमce:
 			set_bit(HFSPLUS_SB_FORCE, &sbi->flags);
-			break;
-		default:
-			return 0;
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-done:
-	if (!sbi->nls) {
-		/* try utf8 first, as this is the old default behaviour */
+करोne:
+	अगर (!sbi->nls) अणु
+		/* try utf8 first, as this is the old शेष behaviour */
 		sbi->nls = load_nls("utf8");
-		if (!sbi->nls)
-			sbi->nls = load_nls_default();
-		if (!sbi->nls)
-			return 0;
-	}
+		अगर (!sbi->nls)
+			sbi->nls = load_nls_शेष();
+		अगर (!sbi->nls)
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int hfsplus_show_options(struct seq_file *seq, struct dentry *root)
-{
-	struct hfsplus_sb_info *sbi = HFSPLUS_SB(root->d_sb);
+पूर्णांक hfsplus_show_options(काष्ठा seq_file *seq, काष्ठा dentry *root)
+अणु
+	काष्ठा hfsplus_sb_info *sbi = HFSPLUS_SB(root->d_sb);
 
-	if (sbi->creator != HFSPLUS_DEF_CR_TYPE)
-		seq_show_option_n(seq, "creator", (char *)&sbi->creator, 4);
-	if (sbi->type != HFSPLUS_DEF_CR_TYPE)
-		seq_show_option_n(seq, "type", (char *)&sbi->type, 4);
-	seq_printf(seq, ",umask=%o,uid=%u,gid=%u", sbi->umask,
+	अगर (sbi->creator != HFSPLUS_DEF_CR_TYPE)
+		seq_show_option_n(seq, "creator", (अक्षर *)&sbi->creator, 4);
+	अगर (sbi->type != HFSPLUS_DEF_CR_TYPE)
+		seq_show_option_n(seq, "type", (अक्षर *)&sbi->type, 4);
+	seq_म_लिखो(seq, ",umask=%o,uid=%u,gid=%u", sbi->umask,
 			from_kuid_munged(&init_user_ns, sbi->uid),
 			from_kgid_munged(&init_user_ns, sbi->gid));
-	if (sbi->part >= 0)
-		seq_printf(seq, ",part=%u", sbi->part);
-	if (sbi->session >= 0)
-		seq_printf(seq, ",session=%u", sbi->session);
-	if (sbi->nls)
-		seq_printf(seq, ",nls=%s", sbi->nls->charset);
-	if (test_bit(HFSPLUS_SB_NODECOMPOSE, &sbi->flags))
-		seq_puts(seq, ",nodecompose");
-	if (test_bit(HFSPLUS_SB_NOBARRIER, &sbi->flags))
-		seq_puts(seq, ",nobarrier");
-	return 0;
-}
+	अगर (sbi->part >= 0)
+		seq_म_लिखो(seq, ",part=%u", sbi->part);
+	अगर (sbi->session >= 0)
+		seq_म_लिखो(seq, ",session=%u", sbi->session);
+	अगर (sbi->nls)
+		seq_म_लिखो(seq, ",nls=%s", sbi->nls->अक्षरset);
+	अगर (test_bit(HFSPLUS_SB_NODECOMPOSE, &sbi->flags))
+		seq_माला_दो(seq, ",nodecompose");
+	अगर (test_bit(HFSPLUS_SB_NOBARRIER, &sbi->flags))
+		seq_माला_दो(seq, ",nobarrier");
+	वापस 0;
+पूर्ण

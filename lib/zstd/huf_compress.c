@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
  * Huffman encoder, part of New Generation Entropy library
  * Copyright (C) 2013-2016, Yann Collet.
  *
- * BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
+ * BSD 2-Clause License (http://www.खोलोsource.org/licenses/bsd-license.php)
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are
  * met:
  *
  *   * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
+ *   * Redistributions in binary क्रमm must reproduce the above
  * copyright notice, this list of conditions and the following disclaimer
- * in the documentation and/or other materials provided with the
+ * in the करोcumentation and/or other materials provided with the
  * distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -27,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This program is free software; you can redistribute it and/or modify it under
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it under
  * the terms of the GNU General Public License version 2 as published by the
  * Free Software Foundation. This program is dual-licensed; you may select
  * either version 2 of the GNU General Public License ("GPL") or BSD license
@@ -40,50 +41,50 @@
 /* **************************************************************
 *  Includes
 ****************************************************************/
-#include "bitstream.h"
-#include "fse.h" /* header compression */
-#include "huf.h"
-#include <linux/kernel.h>
-#include <linux/string.h> /* memcpy, memset */
+#समावेश "bitstream.h"
+#समावेश "fse.h" /* header compression */
+#समावेश "huf.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स> /* स_नकल, स_रखो */
 
 /* **************************************************************
 *  Error Management
 ****************************************************************/
-#define HUF_STATIC_ASSERT(c)                                   \
-	{                                                      \
-		enum { HUF_static_assert = 1 / (int)(!!(c)) }; \
-	} /* use only *after* variable declarations */
-#define CHECK_V_F(e, f)     \
-	size_t const e = f; \
-	if (ERR_isError(e)) \
-	return f
-#define CHECK_F(f)                        \
-	{                                 \
+#घोषणा HUF_STATIC_ASSERT(c)                                   \
+	अणु                                                      \
+		क्रमागत अणु HUF_अटल_निश्चित = 1 / (पूर्णांक)(!!(c)) पूर्ण; \
+	पूर्ण /* use only *after* variable declarations */
+#घोषणा CHECK_V_F(e, f)     \
+	माप_प्रकार स्थिर e = f; \
+	अगर (ERR_isError(e)) \
+	वापस f
+#घोषणा CHECK_F(f)                        \
+	अणु                                 \
 		CHECK_V_F(_var_err__, f); \
-	}
+	पूर्ण
 
 /* **************************************************************
 *  Utils
 ****************************************************************/
-unsigned HUF_optimalTableLog(unsigned maxTableLog, size_t srcSize, unsigned maxSymbolValue)
-{
-	return FSE_optimalTableLog_internal(maxTableLog, srcSize, maxSymbolValue, 1);
-}
+अचिन्हित HUF_optimalTableLog(अचिन्हित maxTableLog, माप_प्रकार srcSize, अचिन्हित maxSymbolValue)
+अणु
+	वापस FSE_optimalTableLog_पूर्णांकernal(maxTableLog, srcSize, maxSymbolValue, 1);
+पूर्ण
 
 /* *******************************************************
 *  HUF : Huffman block compression
 *********************************************************/
 /* HUF_compressWeights() :
  * Same as FSE_compress(), but dedicated to huff0's weights compression.
- * The use case needs much less stack memory.
+ * The use हाल needs much less stack memory.
  * Note : all elements within weightTable are supposed to be <= HUF_TABLELOG_MAX.
  */
-#define MAX_FSE_TABLELOG_FOR_HUFF_HEADER 6
-size_t HUF_compressWeights_wksp(void *dst, size_t dstSize, const void *weightTable, size_t wtSize, void *workspace, size_t workspaceSize)
-{
-	BYTE *const ostart = (BYTE *)dst;
+#घोषणा MAX_FSE_TABLELOG_FOR_HUFF_HEADER 6
+माप_प्रकार HUF_compressWeights_wksp(व्योम *dst, माप_प्रकार dstSize, स्थिर व्योम *weightTable, माप_प्रकार wtSize, व्योम *workspace, माप_प्रकार workspaceSize)
+अणु
+	BYTE *स्थिर ostart = (BYTE *)dst;
 	BYTE *op = ostart;
-	BYTE *const oend = ostart + dstSize;
+	BYTE *स्थिर oend = ostart + dstSize;
 
 	U32 maxSymbolValue = HUF_TABLELOG_MAX;
 	U32 tableLog = MAX_FSE_TABLELOG_FOR_HUFF_HEADER;
@@ -91,356 +92,356 @@ size_t HUF_compressWeights_wksp(void *dst, size_t dstSize, const void *weightTab
 	FSE_CTable *CTable;
 	U32 *count;
 	S16 *norm;
-	size_t spaceUsed32 = 0;
+	माप_प्रकार spaceUsed32 = 0;
 
-	HUF_STATIC_ASSERT(sizeof(FSE_CTable) == sizeof(U32));
+	HUF_STATIC_ASSERT(माप(FSE_CTable) == माप(U32));
 
 	CTable = (FSE_CTable *)((U32 *)workspace + spaceUsed32);
 	spaceUsed32 += FSE_CTABLE_SIZE_U32(MAX_FSE_TABLELOG_FOR_HUFF_HEADER, HUF_TABLELOG_MAX);
 	count = (U32 *)workspace + spaceUsed32;
 	spaceUsed32 += HUF_TABLELOG_MAX + 1;
 	norm = (S16 *)((U32 *)workspace + spaceUsed32);
-	spaceUsed32 += ALIGN(sizeof(S16) * (HUF_TABLELOG_MAX + 1), sizeof(U32)) >> 2;
+	spaceUsed32 += ALIGN(माप(S16) * (HUF_TABLELOG_MAX + 1), माप(U32)) >> 2;
 
-	if ((spaceUsed32 << 2) > workspaceSize)
-		return ERROR(tableLog_tooLarge);
+	अगर ((spaceUsed32 << 2) > workspaceSize)
+		वापस ERROR(tableLog_tooLarge);
 	workspace = (U32 *)workspace + spaceUsed32;
 	workspaceSize -= (spaceUsed32 << 2);
 
 	/* init conditions */
-	if (wtSize <= 1)
-		return 0; /* Not compressible */
+	अगर (wtSize <= 1)
+		वापस 0; /* Not compressible */
 
 	/* Scan input and build symbol stats */
-	{
+	अणु
 		CHECK_V_F(maxCount, FSE_count_simple(count, &maxSymbolValue, weightTable, wtSize));
-		if (maxCount == wtSize)
-			return 1; /* only a single symbol in src : rle */
-		if (maxCount == 1)
-			return 0; /* each symbol present maximum once => not compressible */
-	}
+		अगर (maxCount == wtSize)
+			वापस 1; /* only a single symbol in src : rle */
+		अगर (maxCount == 1)
+			वापस 0; /* each symbol present maximum once => not compressible */
+	पूर्ण
 
 	tableLog = FSE_optimalTableLog(tableLog, wtSize, maxSymbolValue);
 	CHECK_F(FSE_normalizeCount(norm, tableLog, count, wtSize, maxSymbolValue));
 
 	/* Write table description header */
-	{
-		CHECK_V_F(hSize, FSE_writeNCount(op, oend - op, norm, maxSymbolValue, tableLog));
+	अणु
+		CHECK_V_F(hSize, FSE_ग_लिखोNCount(op, oend - op, norm, maxSymbolValue, tableLog));
 		op += hSize;
-	}
+	पूर्ण
 
 	/* Compress */
 	CHECK_F(FSE_buildCTable_wksp(CTable, norm, maxSymbolValue, tableLog, workspace, workspaceSize));
-	{
+	अणु
 		CHECK_V_F(cSize, FSE_compress_usingCTable(op, oend - op, weightTable, wtSize, CTable));
-		if (cSize == 0)
-			return 0; /* not enough space for compressed data */
+		अगर (cSize == 0)
+			वापस 0; /* not enough space क्रम compressed data */
 		op += cSize;
-	}
+	पूर्ण
 
-	return op - ostart;
-}
+	वापस op - ostart;
+पूर्ण
 
-struct HUF_CElt_s {
+काष्ठा HUF_CElt_s अणु
 	U16 val;
 	BYTE nbBits;
-}; /* typedef'd to HUF_CElt within "huf.h" */
+पूर्ण; /* प्रकार'd to HUF_CElt within "huf.h" */
 
-/*! HUF_writeCTable_wksp() :
+/*! HUF_ग_लिखोCTable_wksp() :
 	`CTable` : Huffman tree to save, using huf representation.
-	@return : size of saved CTable */
-size_t HUF_writeCTable_wksp(void *dst, size_t maxDstSize, const HUF_CElt *CTable, U32 maxSymbolValue, U32 huffLog, void *workspace, size_t workspaceSize)
-{
+	@वापस : size of saved CTable */
+माप_प्रकार HUF_ग_लिखोCTable_wksp(व्योम *dst, माप_प्रकार maxDstSize, स्थिर HUF_CElt *CTable, U32 maxSymbolValue, U32 huffLog, व्योम *workspace, माप_प्रकार workspaceSize)
+अणु
 	BYTE *op = (BYTE *)dst;
 	U32 n;
 
 	BYTE *bitsToWeight;
 	BYTE *huffWeight;
-	size_t spaceUsed32 = 0;
+	माप_प्रकार spaceUsed32 = 0;
 
 	bitsToWeight = (BYTE *)((U32 *)workspace + spaceUsed32);
-	spaceUsed32 += ALIGN(HUF_TABLELOG_MAX + 1, sizeof(U32)) >> 2;
+	spaceUsed32 += ALIGN(HUF_TABLELOG_MAX + 1, माप(U32)) >> 2;
 	huffWeight = (BYTE *)((U32 *)workspace + spaceUsed32);
-	spaceUsed32 += ALIGN(HUF_SYMBOLVALUE_MAX, sizeof(U32)) >> 2;
+	spaceUsed32 += ALIGN(HUF_SYMBOLVALUE_MAX, माप(U32)) >> 2;
 
-	if ((spaceUsed32 << 2) > workspaceSize)
-		return ERROR(tableLog_tooLarge);
+	अगर ((spaceUsed32 << 2) > workspaceSize)
+		वापस ERROR(tableLog_tooLarge);
 	workspace = (U32 *)workspace + spaceUsed32;
 	workspaceSize -= (spaceUsed32 << 2);
 
 	/* check conditions */
-	if (maxSymbolValue > HUF_SYMBOLVALUE_MAX)
-		return ERROR(maxSymbolValue_tooLarge);
+	अगर (maxSymbolValue > HUF_SYMBOLVALUE_MAX)
+		वापस ERROR(maxSymbolValue_tooLarge);
 
 	/* convert to weight */
 	bitsToWeight[0] = 0;
-	for (n = 1; n < huffLog + 1; n++)
+	क्रम (n = 1; n < huffLog + 1; n++)
 		bitsToWeight[n] = (BYTE)(huffLog + 1 - n);
-	for (n = 0; n < maxSymbolValue; n++)
+	क्रम (n = 0; n < maxSymbolValue; n++)
 		huffWeight[n] = bitsToWeight[CTable[n].nbBits];
 
 	/* attempt weights compression by FSE */
-	{
+	अणु
 		CHECK_V_F(hSize, HUF_compressWeights_wksp(op + 1, maxDstSize - 1, huffWeight, maxSymbolValue, workspace, workspaceSize));
-		if ((hSize > 1) & (hSize < maxSymbolValue / 2)) { /* FSE compressed */
+		अगर ((hSize > 1) & (hSize < maxSymbolValue / 2)) अणु /* FSE compressed */
 			op[0] = (BYTE)hSize;
-			return hSize + 1;
-		}
-	}
+			वापस hSize + 1;
+		पूर्ण
+	पूर्ण
 
-	/* write raw values as 4-bits (max : 15) */
-	if (maxSymbolValue > (256 - 128))
-		return ERROR(GENERIC); /* should not happen : likely means source cannot be compressed */
-	if (((maxSymbolValue + 1) / 2) + 1 > maxDstSize)
-		return ERROR(dstSize_tooSmall); /* not enough space within dst buffer */
-	op[0] = (BYTE)(128 /*special case*/ + (maxSymbolValue - 1));
-	huffWeight[maxSymbolValue] = 0; /* to be sure it doesn't cause msan issue in final combination */
-	for (n = 0; n < maxSymbolValue; n += 2)
+	/* ग_लिखो raw values as 4-bits (max : 15) */
+	अगर (maxSymbolValue > (256 - 128))
+		वापस ERROR(GENERIC); /* should not happen : likely means source cannot be compressed */
+	अगर (((maxSymbolValue + 1) / 2) + 1 > maxDstSize)
+		वापस ERROR(dstSize_tooSmall); /* not enough space within dst buffer */
+	op[0] = (BYTE)(128 /*special हाल*/ + (maxSymbolValue - 1));
+	huffWeight[maxSymbolValue] = 0; /* to be sure it करोesn't cause msan issue in final combination */
+	क्रम (n = 0; n < maxSymbolValue; n += 2)
 		op[(n / 2) + 1] = (BYTE)((huffWeight[n] << 4) + huffWeight[n + 1]);
-	return ((maxSymbolValue + 1) / 2) + 1;
-}
+	वापस ((maxSymbolValue + 1) / 2) + 1;
+पूर्ण
 
-size_t HUF_readCTable_wksp(HUF_CElt *CTable, U32 maxSymbolValue, const void *src, size_t srcSize, void *workspace, size_t workspaceSize)
-{
+माप_प्रकार HUF_पढ़ोCTable_wksp(HUF_CElt *CTable, U32 maxSymbolValue, स्थिर व्योम *src, माप_प्रकार srcSize, व्योम *workspace, माप_प्रकार workspaceSize)
+अणु
 	U32 *rankVal;
 	BYTE *huffWeight;
 	U32 tableLog = 0;
 	U32 nbSymbols = 0;
-	size_t readSize;
-	size_t spaceUsed32 = 0;
+	माप_प्रकार पढ़ोSize;
+	माप_प्रकार spaceUsed32 = 0;
 
 	rankVal = (U32 *)workspace + spaceUsed32;
 	spaceUsed32 += HUF_TABLELOG_ABSOLUTEMAX + 1;
 	huffWeight = (BYTE *)((U32 *)workspace + spaceUsed32);
-	spaceUsed32 += ALIGN(HUF_SYMBOLVALUE_MAX + 1, sizeof(U32)) >> 2;
+	spaceUsed32 += ALIGN(HUF_SYMBOLVALUE_MAX + 1, माप(U32)) >> 2;
 
-	if ((spaceUsed32 << 2) > workspaceSize)
-		return ERROR(tableLog_tooLarge);
+	अगर ((spaceUsed32 << 2) > workspaceSize)
+		वापस ERROR(tableLog_tooLarge);
 	workspace = (U32 *)workspace + spaceUsed32;
 	workspaceSize -= (spaceUsed32 << 2);
 
 	/* get symbol weights */
-	readSize = HUF_readStats_wksp(huffWeight, HUF_SYMBOLVALUE_MAX + 1, rankVal, &nbSymbols, &tableLog, src, srcSize, workspace, workspaceSize);
-	if (ERR_isError(readSize))
-		return readSize;
+	पढ़ोSize = HUF_पढ़ोStats_wksp(huffWeight, HUF_SYMBOLVALUE_MAX + 1, rankVal, &nbSymbols, &tableLog, src, srcSize, workspace, workspaceSize);
+	अगर (ERR_isError(पढ़ोSize))
+		वापस पढ़ोSize;
 
 	/* check result */
-	if (tableLog > HUF_TABLELOG_MAX)
-		return ERROR(tableLog_tooLarge);
-	if (nbSymbols > maxSymbolValue + 1)
-		return ERROR(maxSymbolValue_tooSmall);
+	अगर (tableLog > HUF_TABLELOG_MAX)
+		वापस ERROR(tableLog_tooLarge);
+	अगर (nbSymbols > maxSymbolValue + 1)
+		वापस ERROR(maxSymbolValue_tooSmall);
 
 	/* Prepare base value per rank */
-	{
+	अणु
 		U32 n, nextRankStart = 0;
-		for (n = 1; n <= tableLog; n++) {
+		क्रम (n = 1; n <= tableLog; n++) अणु
 			U32 curr = nextRankStart;
 			nextRankStart += (rankVal[n] << (n - 1));
 			rankVal[n] = curr;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* fill nbBits */
-	{
+	अणु
 		U32 n;
-		for (n = 0; n < nbSymbols; n++) {
-			const U32 w = huffWeight[n];
+		क्रम (n = 0; n < nbSymbols; n++) अणु
+			स्थिर U32 w = huffWeight[n];
 			CTable[n].nbBits = (BYTE)(tableLog + 1 - w);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* fill val */
-	{
-		U16 nbPerRank[HUF_TABLELOG_MAX + 2] = {0}; /* support w=0=>n=tableLog+1 */
-		U16 valPerRank[HUF_TABLELOG_MAX + 2] = {0};
-		{
+	अणु
+		U16 nbPerRank[HUF_TABLELOG_MAX + 2] = अणु0पूर्ण; /* support w=0=>n=tableLog+1 */
+		U16 valPerRank[HUF_TABLELOG_MAX + 2] = अणु0पूर्ण;
+		अणु
 			U32 n;
-			for (n = 0; n < nbSymbols; n++)
+			क्रम (n = 0; n < nbSymbols; n++)
 				nbPerRank[CTable[n].nbBits]++;
-		}
+		पूर्ण
 		/* determine stating value per rank */
-		valPerRank[tableLog + 1] = 0; /* for w==0 */
-		{
+		valPerRank[tableLog + 1] = 0; /* क्रम w==0 */
+		अणु
 			U16 min = 0;
 			U32 n;
-			for (n = tableLog; n > 0; n--) { /* start at n=tablelog <-> w=1 */
+			क्रम (n = tableLog; n > 0; n--) अणु /* start at n=tablelog <-> w=1 */
 				valPerRank[n] = min;     /* get starting value within each rank */
 				min += nbPerRank[n];
 				min >>= 1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		/* assign value within rank, symbol order */
-		{
+		अणु
 			U32 n;
-			for (n = 0; n <= maxSymbolValue; n++)
+			क्रम (n = 0; n <= maxSymbolValue; n++)
 				CTable[n].val = valPerRank[CTable[n].nbBits]++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return readSize;
-}
+	वापस पढ़ोSize;
+पूर्ण
 
-typedef struct nodeElt_s {
+प्रकार काष्ठा nodeElt_s अणु
 	U32 count;
 	U16 parent;
 	BYTE byte;
 	BYTE nbBits;
-} nodeElt;
+पूर्ण nodeElt;
 
-static U32 HUF_setMaxHeight(nodeElt *huffNode, U32 lastNonNull, U32 maxNbBits)
-{
-	const U32 largestBits = huffNode[lastNonNull].nbBits;
-	if (largestBits <= maxNbBits)
-		return largestBits; /* early exit : no elt > maxNbBits */
+अटल U32 HUF_setMaxHeight(nodeElt *huffNode, U32 lastNonNull, U32 maxNbBits)
+अणु
+	स्थिर U32 largestBits = huffNode[lastNonNull].nbBits;
+	अगर (largestBits <= maxNbBits)
+		वापस largestBits; /* early निकास : no elt > maxNbBits */
 
 	/* there are several too large elements (at least >= 2) */
-	{
-		int totalCost = 0;
-		const U32 baseCost = 1 << (largestBits - maxNbBits);
+	अणु
+		पूर्णांक totalCost = 0;
+		स्थिर U32 baseCost = 1 << (largestBits - maxNbBits);
 		U32 n = lastNonNull;
 
-		while (huffNode[n].nbBits > maxNbBits) {
+		जबतक (huffNode[n].nbBits > maxNbBits) अणु
 			totalCost += baseCost - (1 << (largestBits - huffNode[n].nbBits));
 			huffNode[n].nbBits = (BYTE)maxNbBits;
 			n--;
-		} /* n stops at huffNode[n].nbBits <= maxNbBits */
-		while (huffNode[n].nbBits == maxNbBits)
+		पूर्ण /* n stops at huffNode[n].nbBits <= maxNbBits */
+		जबतक (huffNode[n].nbBits == maxNbBits)
 			n--; /* n end at index of smallest symbol using < maxNbBits */
 
 		/* renorm totalCost */
 		totalCost >>= (largestBits - maxNbBits); /* note : totalCost is necessarily a multiple of baseCost */
 
 		/* repay normalized cost */
-		{
-			U32 const noSymbol = 0xF0F0F0F0;
+		अणु
+			U32 स्थिर noSymbol = 0xF0F0F0F0;
 			U32 rankLast[HUF_TABLELOG_MAX + 2];
-			int pos;
+			पूर्णांक pos;
 
 			/* Get pos of last (smallest) symbol per rank */
-			memset(rankLast, 0xF0, sizeof(rankLast));
-			{
+			स_रखो(rankLast, 0xF0, माप(rankLast));
+			अणु
 				U32 currNbBits = maxNbBits;
-				for (pos = n; pos >= 0; pos--) {
-					if (huffNode[pos].nbBits >= currNbBits)
-						continue;
+				क्रम (pos = n; pos >= 0; pos--) अणु
+					अगर (huffNode[pos].nbBits >= currNbBits)
+						जारी;
 					currNbBits = huffNode[pos].nbBits; /* < maxNbBits */
 					rankLast[maxNbBits - currNbBits] = pos;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			while (totalCost > 0) {
+			जबतक (totalCost > 0) अणु
 				U32 nBitsToDecrease = BIT_highbit32(totalCost) + 1;
-				for (; nBitsToDecrease > 1; nBitsToDecrease--) {
+				क्रम (; nBitsToDecrease > 1; nBitsToDecrease--) अणु
 					U32 highPos = rankLast[nBitsToDecrease];
 					U32 lowPos = rankLast[nBitsToDecrease - 1];
-					if (highPos == noSymbol)
-						continue;
-					if (lowPos == noSymbol)
-						break;
-					{
-						U32 const highTotal = huffNode[highPos].count;
-						U32 const lowTotal = 2 * huffNode[lowPos].count;
-						if (highTotal <= lowTotal)
-							break;
-					}
-				}
-				/* only triggered when no more rank 1 symbol left => find closest one (note : there is necessarily at least one !) */
+					अगर (highPos == noSymbol)
+						जारी;
+					अगर (lowPos == noSymbol)
+						अवरोध;
+					अणु
+						U32 स्थिर highTotal = huffNode[highPos].count;
+						U32 स्थिर lowTotal = 2 * huffNode[lowPos].count;
+						अगर (highTotal <= lowTotal)
+							अवरोध;
+					पूर्ण
+				पूर्ण
+				/* only triggered when no more rank 1 symbol left => find बंदst one (note : there is necessarily at least one !) */
 				/* HUF_MAX_TABLELOG test just to please gcc 5+; but it should not be necessary */
-				while ((nBitsToDecrease <= HUF_TABLELOG_MAX) && (rankLast[nBitsToDecrease] == noSymbol))
+				जबतक ((nBitsToDecrease <= HUF_TABLELOG_MAX) && (rankLast[nBitsToDecrease] == noSymbol))
 					nBitsToDecrease++;
 				totalCost -= 1 << (nBitsToDecrease - 1);
-				if (rankLast[nBitsToDecrease - 1] == noSymbol)
-					rankLast[nBitsToDecrease - 1] = rankLast[nBitsToDecrease]; /* this rank is no longer empty */
+				अगर (rankLast[nBitsToDecrease - 1] == noSymbol)
+					rankLast[nBitsToDecrease - 1] = rankLast[nBitsToDecrease]; /* this rank is no दीर्घer empty */
 				huffNode[rankLast[nBitsToDecrease]].nbBits++;
-				if (rankLast[nBitsToDecrease] == 0) /* special case, reached largest symbol */
+				अगर (rankLast[nBitsToDecrease] == 0) /* special हाल, reached largest symbol */
 					rankLast[nBitsToDecrease] = noSymbol;
-				else {
+				अन्यथा अणु
 					rankLast[nBitsToDecrease]--;
-					if (huffNode[rankLast[nBitsToDecrease]].nbBits != maxNbBits - nBitsToDecrease)
+					अगर (huffNode[rankLast[nBitsToDecrease]].nbBits != maxNbBits - nBitsToDecrease)
 						rankLast[nBitsToDecrease] = noSymbol; /* this rank is now empty */
-				}
-			} /* while (totalCost > 0) */
+				पूर्ण
+			पूर्ण /* जबतक (totalCost > 0) */
 
-			while (totalCost < 0) {		       /* Sometimes, cost correction overshoot */
-				if (rankLast[1] == noSymbol) { /* special case : no rank 1 symbol (using maxNbBits-1); let's create one from largest rank 0
+			जबतक (totalCost < 0) अणु		       /* Someबार, cost correction overshoot */
+				अगर (rankLast[1] == noSymbol) अणु /* special हाल : no rank 1 symbol (using maxNbBits-1); let's create one from largest rank 0
 								  (using maxNbBits) */
-					while (huffNode[n].nbBits == maxNbBits)
+					जबतक (huffNode[n].nbBits == maxNbBits)
 						n--;
 					huffNode[n + 1].nbBits--;
 					rankLast[1] = n + 1;
 					totalCost++;
-					continue;
-				}
+					जारी;
+				पूर्ण
 				huffNode[rankLast[1] + 1].nbBits--;
 				rankLast[1]++;
 				totalCost++;
-			}
-		}
-	} /* there are several too large elements (at least >= 2) */
+			पूर्ण
+		पूर्ण
+	पूर्ण /* there are several too large elements (at least >= 2) */
 
-	return maxNbBits;
-}
+	वापस maxNbBits;
+पूर्ण
 
-typedef struct {
+प्रकार काष्ठा अणु
 	U32 base;
 	U32 curr;
-} rankPos;
+पूर्ण rankPos;
 
-static void HUF_sort(nodeElt *huffNode, const U32 *count, U32 maxSymbolValue)
-{
+अटल व्योम HUF_sort(nodeElt *huffNode, स्थिर U32 *count, U32 maxSymbolValue)
+अणु
 	rankPos rank[32];
 	U32 n;
 
-	memset(rank, 0, sizeof(rank));
-	for (n = 0; n <= maxSymbolValue; n++) {
+	स_रखो(rank, 0, माप(rank));
+	क्रम (n = 0; n <= maxSymbolValue; n++) अणु
 		U32 r = BIT_highbit32(count[n] + 1);
 		rank[r].base++;
-	}
-	for (n = 30; n > 0; n--)
+	पूर्ण
+	क्रम (n = 30; n > 0; n--)
 		rank[n - 1].base += rank[n].base;
-	for (n = 0; n < 32; n++)
+	क्रम (n = 0; n < 32; n++)
 		rank[n].curr = rank[n].base;
-	for (n = 0; n <= maxSymbolValue; n++) {
-		U32 const c = count[n];
-		U32 const r = BIT_highbit32(c + 1) + 1;
+	क्रम (n = 0; n <= maxSymbolValue; n++) अणु
+		U32 स्थिर c = count[n];
+		U32 स्थिर r = BIT_highbit32(c + 1) + 1;
 		U32 pos = rank[r].curr++;
-		while ((pos > rank[r].base) && (c > huffNode[pos - 1].count))
+		जबतक ((pos > rank[r].base) && (c > huffNode[pos - 1].count))
 			huffNode[pos] = huffNode[pos - 1], pos--;
 		huffNode[pos].count = c;
 		huffNode[pos].byte = (BYTE)n;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /** HUF_buildCTable_wksp() :
- *  Same as HUF_buildCTable(), but using externally allocated scratch buffer.
- *  `workSpace` must be aligned on 4-bytes boundaries, and be at least as large as a table of 1024 unsigned.
+ *  Same as HUF_buildCTable(), but using बाह्यally allocated scratch buffer.
+ *  `workSpace` must be aligned on 4-bytes boundaries, and be at least as large as a table of 1024 अचिन्हित.
  */
-#define STARTNODE (HUF_SYMBOLVALUE_MAX + 1)
-typedef nodeElt huffNodeTable[2 * HUF_SYMBOLVALUE_MAX + 1 + 1];
-size_t HUF_buildCTable_wksp(HUF_CElt *tree, const U32 *count, U32 maxSymbolValue, U32 maxNbBits, void *workSpace, size_t wkspSize)
-{
-	nodeElt *const huffNode0 = (nodeElt *)workSpace;
-	nodeElt *const huffNode = huffNode0 + 1;
+#घोषणा STARTNODE (HUF_SYMBOLVALUE_MAX + 1)
+प्रकार nodeElt huffNodeTable[2 * HUF_SYMBOLVALUE_MAX + 1 + 1];
+माप_प्रकार HUF_buildCTable_wksp(HUF_CElt *tree, स्थिर U32 *count, U32 maxSymbolValue, U32 maxNbBits, व्योम *workSpace, माप_प्रकार wkspSize)
+अणु
+	nodeElt *स्थिर huffNode0 = (nodeElt *)workSpace;
+	nodeElt *स्थिर huffNode = huffNode0 + 1;
 	U32 n, nonNullRank;
-	int lowS, lowN;
+	पूर्णांक lowS, lowN;
 	U16 nodeNb = STARTNODE;
 	U32 nodeRoot;
 
 	/* safety checks */
-	if (wkspSize < sizeof(huffNodeTable))
-		return ERROR(GENERIC); /* workSpace is not large enough */
-	if (maxNbBits == 0)
+	अगर (wkspSize < माप(huffNodeTable))
+		वापस ERROR(GENERIC); /* workSpace is not large enough */
+	अगर (maxNbBits == 0)
 		maxNbBits = HUF_TABLELOG_DEFAULT;
-	if (maxSymbolValue > HUF_SYMBOLVALUE_MAX)
-		return ERROR(GENERIC);
-	memset(huffNode0, 0, sizeof(huffNodeTable));
+	अगर (maxSymbolValue > HUF_SYMBOLVALUE_MAX)
+		वापस ERROR(GENERIC);
+	स_रखो(huffNode0, 0, माप(huffNodeTable));
 
 	/* sort, decreasing order */
 	HUF_sort(huffNode, count, maxSymbolValue);
 
-	/* init for parents */
+	/* init क्रम parents */
 	nonNullRank = maxSymbolValue;
-	while (huffNode[nonNullRank].count == 0)
+	जबतक (huffNode[nonNullRank].count == 0)
 		nonNullRank--;
 	lowS = nonNullRank;
 	nodeRoot = nodeNb + lowS - 1;
@@ -449,123 +450,123 @@ size_t HUF_buildCTable_wksp(HUF_CElt *tree, const U32 *count, U32 maxSymbolValue
 	huffNode[lowS].parent = huffNode[lowS - 1].parent = nodeNb;
 	nodeNb++;
 	lowS -= 2;
-	for (n = nodeNb; n <= nodeRoot; n++)
+	क्रम (n = nodeNb; n <= nodeRoot; n++)
 		huffNode[n].count = (U32)(1U << 30);
 	huffNode0[0].count = (U32)(1U << 31); /* fake entry, strong barrier */
 
 	/* create parents */
-	while (nodeNb <= nodeRoot) {
+	जबतक (nodeNb <= nodeRoot) अणु
 		U32 n1 = (huffNode[lowS].count < huffNode[lowN].count) ? lowS-- : lowN++;
 		U32 n2 = (huffNode[lowS].count < huffNode[lowN].count) ? lowS-- : lowN++;
 		huffNode[nodeNb].count = huffNode[n1].count + huffNode[n2].count;
 		huffNode[n1].parent = huffNode[n2].parent = nodeNb;
 		nodeNb++;
-	}
+	पूर्ण
 
 	/* distribute weights (unlimited tree height) */
 	huffNode[nodeRoot].nbBits = 0;
-	for (n = nodeRoot - 1; n >= STARTNODE; n--)
+	क्रम (n = nodeRoot - 1; n >= STARTNODE; n--)
 		huffNode[n].nbBits = huffNode[huffNode[n].parent].nbBits + 1;
-	for (n = 0; n <= nonNullRank; n++)
+	क्रम (n = 0; n <= nonNullRank; n++)
 		huffNode[n].nbBits = huffNode[huffNode[n].parent].nbBits + 1;
 
-	/* enforce maxTableLog */
+	/* enक्रमce maxTableLog */
 	maxNbBits = HUF_setMaxHeight(huffNode, nonNullRank, maxNbBits);
 
-	/* fill result into tree (val, nbBits) */
-	{
-		U16 nbPerRank[HUF_TABLELOG_MAX + 1] = {0};
-		U16 valPerRank[HUF_TABLELOG_MAX + 1] = {0};
-		if (maxNbBits > HUF_TABLELOG_MAX)
-			return ERROR(GENERIC); /* check fit into table */
-		for (n = 0; n <= nonNullRank; n++)
+	/* fill result पूर्णांकo tree (val, nbBits) */
+	अणु
+		U16 nbPerRank[HUF_TABLELOG_MAX + 1] = अणु0पूर्ण;
+		U16 valPerRank[HUF_TABLELOG_MAX + 1] = अणु0पूर्ण;
+		अगर (maxNbBits > HUF_TABLELOG_MAX)
+			वापस ERROR(GENERIC); /* check fit पूर्णांकo table */
+		क्रम (n = 0; n <= nonNullRank; n++)
 			nbPerRank[huffNode[n].nbBits]++;
 		/* determine stating value per rank */
-		{
+		अणु
 			U16 min = 0;
-			for (n = maxNbBits; n > 0; n--) {
+			क्रम (n = maxNbBits; n > 0; n--) अणु
 				valPerRank[n] = min; /* get starting value within each rank */
 				min += nbPerRank[n];
 				min >>= 1;
-			}
-		}
-		for (n = 0; n <= maxSymbolValue; n++)
+			पूर्ण
+		पूर्ण
+		क्रम (n = 0; n <= maxSymbolValue; n++)
 			tree[huffNode[n].byte].nbBits = huffNode[n].nbBits; /* push nbBits per symbol, symbol order */
-		for (n = 0; n <= maxSymbolValue; n++)
+		क्रम (n = 0; n <= maxSymbolValue; n++)
 			tree[n].val = valPerRank[tree[n].nbBits]++; /* assign value within rank, symbol order */
-	}
+	पूर्ण
 
-	return maxNbBits;
-}
+	वापस maxNbBits;
+पूर्ण
 
-static size_t HUF_estimateCompressedSize(HUF_CElt *CTable, const unsigned *count, unsigned maxSymbolValue)
-{
-	size_t nbBits = 0;
-	int s;
-	for (s = 0; s <= (int)maxSymbolValue; ++s) {
+अटल माप_प्रकार HUF_estimateCompressedSize(HUF_CElt *CTable, स्थिर अचिन्हित *count, अचिन्हित maxSymbolValue)
+अणु
+	माप_प्रकार nbBits = 0;
+	पूर्णांक s;
+	क्रम (s = 0; s <= (पूर्णांक)maxSymbolValue; ++s) अणु
 		nbBits += CTable[s].nbBits * count[s];
-	}
-	return nbBits >> 3;
-}
+	पूर्ण
+	वापस nbBits >> 3;
+पूर्ण
 
-static int HUF_validateCTable(const HUF_CElt *CTable, const unsigned *count, unsigned maxSymbolValue)
-{
-	int bad = 0;
-	int s;
-	for (s = 0; s <= (int)maxSymbolValue; ++s) {
+अटल पूर्णांक HUF_validateCTable(स्थिर HUF_CElt *CTable, स्थिर अचिन्हित *count, अचिन्हित maxSymbolValue)
+अणु
+	पूर्णांक bad = 0;
+	पूर्णांक s;
+	क्रम (s = 0; s <= (पूर्णांक)maxSymbolValue; ++s) अणु
 		bad |= (count[s] != 0) & (CTable[s].nbBits == 0);
-	}
-	return !bad;
-}
+	पूर्ण
+	वापस !bad;
+पूर्ण
 
-static void HUF_encodeSymbol(BIT_CStream_t *bitCPtr, U32 symbol, const HUF_CElt *CTable)
-{
+अटल व्योम HUF_encodeSymbol(BIT_CStream_t *bitCPtr, U32 symbol, स्थिर HUF_CElt *CTable)
+अणु
 	BIT_addBitsFast(bitCPtr, CTable[symbol].val, CTable[symbol].nbBits);
-}
+पूर्ण
 
-size_t HUF_compressBound(size_t size) { return HUF_COMPRESSBOUND(size); }
+माप_प्रकार HUF_compressBound(माप_प्रकार size) अणु वापस HUF_COMPRESSBOUND(size); पूर्ण
 
-#define HUF_FLUSHBITS(s)  BIT_flushBits(s)
+#घोषणा HUF_FLUSHBITS(s)  BIT_flushBits(s)
 
-#define HUF_FLUSHBITS_1(stream)                                            \
-	if (sizeof((stream)->bitContainer) * 8 < HUF_TABLELOG_MAX * 2 + 7) \
+#घोषणा HUF_FLUSHBITS_1(stream)                                            \
+	अगर (माप((stream)->bitContainer) * 8 < HUF_TABLELOG_MAX * 2 + 7) \
 	HUF_FLUSHBITS(stream)
 
-#define HUF_FLUSHBITS_2(stream)                                            \
-	if (sizeof((stream)->bitContainer) * 8 < HUF_TABLELOG_MAX * 4 + 7) \
+#घोषणा HUF_FLUSHBITS_2(stream)                                            \
+	अगर (माप((stream)->bitContainer) * 8 < HUF_TABLELOG_MAX * 4 + 7) \
 	HUF_FLUSHBITS(stream)
 
-size_t HUF_compress1X_usingCTable(void *dst, size_t dstSize, const void *src, size_t srcSize, const HUF_CElt *CTable)
-{
-	const BYTE *ip = (const BYTE *)src;
-	BYTE *const ostart = (BYTE *)dst;
-	BYTE *const oend = ostart + dstSize;
+माप_प्रकार HUF_compress1X_usingCTable(व्योम *dst, माप_प्रकार dstSize, स्थिर व्योम *src, माप_प्रकार srcSize, स्थिर HUF_CElt *CTable)
+अणु
+	स्थिर BYTE *ip = (स्थिर BYTE *)src;
+	BYTE *स्थिर ostart = (BYTE *)dst;
+	BYTE *स्थिर oend = ostart + dstSize;
 	BYTE *op = ostart;
-	size_t n;
+	माप_प्रकार n;
 	BIT_CStream_t bitC;
 
 	/* init */
-	if (dstSize < 8)
-		return 0; /* not enough space to compress */
-	{
-		size_t const initErr = BIT_initCStream(&bitC, op, oend - op);
-		if (HUF_isError(initErr))
-			return 0;
-	}
+	अगर (dstSize < 8)
+		वापस 0; /* not enough space to compress */
+	अणु
+		माप_प्रकार स्थिर initErr = BIT_initCStream(&bitC, op, oend - op);
+		अगर (HUF_isError(initErr))
+			वापस 0;
+	पूर्ण
 
 	n = srcSize & ~3; /* join to mod 4 */
-	switch (srcSize & 3) {
-	case 3: HUF_encodeSymbol(&bitC, ip[n + 2], CTable); HUF_FLUSHBITS_2(&bitC);
+	चयन (srcSize & 3) अणु
+	हाल 3: HUF_encodeSymbol(&bitC, ip[n + 2], CTable); HUF_FLUSHBITS_2(&bitC);
 		fallthrough;
-	case 2: HUF_encodeSymbol(&bitC, ip[n + 1], CTable); HUF_FLUSHBITS_1(&bitC);
+	हाल 2: HUF_encodeSymbol(&bitC, ip[n + 1], CTable); HUF_FLUSHBITS_1(&bitC);
 		fallthrough;
-	case 1: HUF_encodeSymbol(&bitC, ip[n + 0], CTable); HUF_FLUSHBITS(&bitC);
+	हाल 1: HUF_encodeSymbol(&bitC, ip[n + 0], CTable); HUF_FLUSHBITS(&bitC);
 		fallthrough;
-	case 0:
-	default:;
-	}
+	हाल 0:
+	शेष:;
+	पूर्ण
 
-	for (; n > 0; n -= 4) { /* note : n&3==0 at this stage */
+	क्रम (; n > 0; n -= 4) अणु /* note : n&3==0 at this stage */
 		HUF_encodeSymbol(&bitC, ip[n - 1], CTable);
 		HUF_FLUSHBITS_1(&bitC);
 		HUF_encodeSymbol(&bitC, ip[n - 2], CTable);
@@ -574,109 +575,109 @@ size_t HUF_compress1X_usingCTable(void *dst, size_t dstSize, const void *src, si
 		HUF_FLUSHBITS_1(&bitC);
 		HUF_encodeSymbol(&bitC, ip[n - 4], CTable);
 		HUF_FLUSHBITS(&bitC);
-	}
+	पूर्ण
 
-	return BIT_closeCStream(&bitC);
-}
+	वापस BIT_बंदCStream(&bitC);
+पूर्ण
 
-size_t HUF_compress4X_usingCTable(void *dst, size_t dstSize, const void *src, size_t srcSize, const HUF_CElt *CTable)
-{
-	size_t const segmentSize = (srcSize + 3) / 4; /* first 3 segments */
-	const BYTE *ip = (const BYTE *)src;
-	const BYTE *const iend = ip + srcSize;
-	BYTE *const ostart = (BYTE *)dst;
-	BYTE *const oend = ostart + dstSize;
+माप_प्रकार HUF_compress4X_usingCTable(व्योम *dst, माप_प्रकार dstSize, स्थिर व्योम *src, माप_प्रकार srcSize, स्थिर HUF_CElt *CTable)
+अणु
+	माप_प्रकार स्थिर segmentSize = (srcSize + 3) / 4; /* first 3 segments */
+	स्थिर BYTE *ip = (स्थिर BYTE *)src;
+	स्थिर BYTE *स्थिर iend = ip + srcSize;
+	BYTE *स्थिर ostart = (BYTE *)dst;
+	BYTE *स्थिर oend = ostart + dstSize;
 	BYTE *op = ostart;
 
-	if (dstSize < 6 + 1 + 1 + 1 + 8)
-		return 0; /* minimum space to compress successfully */
-	if (srcSize < 12)
-		return 0; /* no saving possible : too small input */
+	अगर (dstSize < 6 + 1 + 1 + 1 + 8)
+		वापस 0; /* minimum space to compress successfully */
+	अगर (srcSize < 12)
+		वापस 0; /* no saving possible : too small input */
 	op += 6;	  /* jumpTable */
 
-	{
+	अणु
 		CHECK_V_F(cSize, HUF_compress1X_usingCTable(op, oend - op, ip, segmentSize, CTable));
-		if (cSize == 0)
-			return 0;
-		ZSTD_writeLE16(ostart, (U16)cSize);
+		अगर (cSize == 0)
+			वापस 0;
+		ZSTD_ग_लिखोLE16(ostart, (U16)cSize);
 		op += cSize;
-	}
+	पूर्ण
 
 	ip += segmentSize;
-	{
+	अणु
 		CHECK_V_F(cSize, HUF_compress1X_usingCTable(op, oend - op, ip, segmentSize, CTable));
-		if (cSize == 0)
-			return 0;
-		ZSTD_writeLE16(ostart + 2, (U16)cSize);
+		अगर (cSize == 0)
+			वापस 0;
+		ZSTD_ग_लिखोLE16(ostart + 2, (U16)cSize);
 		op += cSize;
-	}
+	पूर्ण
 
 	ip += segmentSize;
-	{
+	अणु
 		CHECK_V_F(cSize, HUF_compress1X_usingCTable(op, oend - op, ip, segmentSize, CTable));
-		if (cSize == 0)
-			return 0;
-		ZSTD_writeLE16(ostart + 4, (U16)cSize);
+		अगर (cSize == 0)
+			वापस 0;
+		ZSTD_ग_लिखोLE16(ostart + 4, (U16)cSize);
 		op += cSize;
-	}
+	पूर्ण
 
 	ip += segmentSize;
-	{
+	अणु
 		CHECK_V_F(cSize, HUF_compress1X_usingCTable(op, oend - op, ip, iend - ip, CTable));
-		if (cSize == 0)
-			return 0;
+		अगर (cSize == 0)
+			वापस 0;
 		op += cSize;
-	}
+	पूर्ण
 
-	return op - ostart;
-}
+	वापस op - ostart;
+पूर्ण
 
-static size_t HUF_compressCTable_internal(BYTE *const ostart, BYTE *op, BYTE *const oend, const void *src, size_t srcSize, unsigned singleStream,
-					  const HUF_CElt *CTable)
-{
-	size_t const cSize =
+अटल माप_प्रकार HUF_compressCTable_पूर्णांकernal(BYTE *स्थिर ostart, BYTE *op, BYTE *स्थिर oend, स्थिर व्योम *src, माप_प्रकार srcSize, अचिन्हित singleStream,
+					  स्थिर HUF_CElt *CTable)
+अणु
+	माप_प्रकार स्थिर cSize =
 	    singleStream ? HUF_compress1X_usingCTable(op, oend - op, src, srcSize, CTable) : HUF_compress4X_usingCTable(op, oend - op, src, srcSize, CTable);
-	if (HUF_isError(cSize)) {
-		return cSize;
-	}
-	if (cSize == 0) {
-		return 0;
-	} /* uncompressible */
+	अगर (HUF_isError(cSize)) अणु
+		वापस cSize;
+	पूर्ण
+	अगर (cSize == 0) अणु
+		वापस 0;
+	पूर्ण /* uncompressible */
 	op += cSize;
 	/* check compressibility */
-	if ((size_t)(op - ostart) >= srcSize - 1) {
-		return 0;
-	}
-	return op - ostart;
-}
+	अगर ((माप_प्रकार)(op - ostart) >= srcSize - 1) अणु
+		वापस 0;
+	पूर्ण
+	वापस op - ostart;
+पूर्ण
 
-/* `workSpace` must a table of at least 1024 unsigned */
-static size_t HUF_compress_internal(void *dst, size_t dstSize, const void *src, size_t srcSize, unsigned maxSymbolValue, unsigned huffLog,
-				    unsigned singleStream, void *workSpace, size_t wkspSize, HUF_CElt *oldHufTable, HUF_repeat *repeat, int preferRepeat)
-{
-	BYTE *const ostart = (BYTE *)dst;
-	BYTE *const oend = ostart + dstSize;
+/* `workSpace` must a table of at least 1024 अचिन्हित */
+अटल माप_प्रकार HUF_compress_पूर्णांकernal(व्योम *dst, माप_प्रकार dstSize, स्थिर व्योम *src, माप_प्रकार srcSize, अचिन्हित maxSymbolValue, अचिन्हित huffLog,
+				    अचिन्हित singleStream, व्योम *workSpace, माप_प्रकार wkspSize, HUF_CElt *oldHufTable, HUF_repeat *repeat, पूर्णांक preferRepeat)
+अणु
+	BYTE *स्थिर ostart = (BYTE *)dst;
+	BYTE *स्थिर oend = ostart + dstSize;
 	BYTE *op = ostart;
 
 	U32 *count;
-	size_t const countSize = sizeof(U32) * (HUF_SYMBOLVALUE_MAX + 1);
+	माप_प्रकार स्थिर countSize = माप(U32) * (HUF_SYMBOLVALUE_MAX + 1);
 	HUF_CElt *CTable;
-	size_t const CTableSize = sizeof(HUF_CElt) * (HUF_SYMBOLVALUE_MAX + 1);
+	माप_प्रकार स्थिर CTableSize = माप(HUF_CElt) * (HUF_SYMBOLVALUE_MAX + 1);
 
 	/* checks & inits */
-	if (wkspSize < sizeof(huffNodeTable) + countSize + CTableSize)
-		return ERROR(GENERIC);
-	if (!srcSize)
-		return 0; /* Uncompressed (note : 1 means rle, so first byte must be correct) */
-	if (!dstSize)
-		return 0; /* cannot fit within dst budget */
-	if (srcSize > HUF_BLOCKSIZE_MAX)
-		return ERROR(srcSize_wrong); /* curr block size limit */
-	if (huffLog > HUF_TABLELOG_MAX)
-		return ERROR(tableLog_tooLarge);
-	if (!maxSymbolValue)
+	अगर (wkspSize < माप(huffNodeTable) + countSize + CTableSize)
+		वापस ERROR(GENERIC);
+	अगर (!srcSize)
+		वापस 0; /* Uncompressed (note : 1 means rle, so first byte must be correct) */
+	अगर (!dstSize)
+		वापस 0; /* cannot fit within dst budget */
+	अगर (srcSize > HUF_BLOCKSIZE_MAX)
+		वापस ERROR(srcSize_wrong); /* curr block size limit */
+	अगर (huffLog > HUF_TABLELOG_MAX)
+		वापस ERROR(tableLog_tooLarge);
+	अगर (!maxSymbolValue)
 		maxSymbolValue = HUF_SYMBOLVALUE_MAX;
-	if (!huffLog)
+	अगर (!huffLog)
 		huffLog = HUF_TABLELOG_DEFAULT;
 
 	count = (U32 *)workSpace;
@@ -686,88 +687,88 @@ static size_t HUF_compress_internal(void *dst, size_t dstSize, const void *src, 
 	workSpace = (BYTE *)workSpace + CTableSize;
 	wkspSize -= CTableSize;
 
-	/* Heuristic : If we don't need to check the validity of the old table use the old table for small inputs */
-	if (preferRepeat && repeat && *repeat == HUF_repeat_valid) {
-		return HUF_compressCTable_internal(ostart, op, oend, src, srcSize, singleStream, oldHufTable);
-	}
+	/* Heuristic : If we करोn't need to check the validity of the old table use the old table क्रम small inमाला_दो */
+	अगर (preferRepeat && repeat && *repeat == HUF_repeat_valid) अणु
+		वापस HUF_compressCTable_पूर्णांकernal(ostart, op, oend, src, srcSize, singleStream, oldHufTable);
+	पूर्ण
 
 	/* Scan input and build symbol stats */
-	{
-		CHECK_V_F(largest, FSE_count_wksp(count, &maxSymbolValue, (const BYTE *)src, srcSize, (U32 *)workSpace));
-		if (largest == srcSize) {
-			*ostart = ((const BYTE *)src)[0];
-			return 1;
-		} /* single symbol, rle */
-		if (largest <= (srcSize >> 7) + 1)
-			return 0; /* Fast heuristic : not compressible enough */
-	}
+	अणु
+		CHECK_V_F(largest, FSE_count_wksp(count, &maxSymbolValue, (स्थिर BYTE *)src, srcSize, (U32 *)workSpace));
+		अगर (largest == srcSize) अणु
+			*ostart = ((स्थिर BYTE *)src)[0];
+			वापस 1;
+		पूर्ण /* single symbol, rle */
+		अगर (largest <= (srcSize >> 7) + 1)
+			वापस 0; /* Fast heuristic : not compressible enough */
+	पूर्ण
 
 	/* Check validity of previous table */
-	if (repeat && *repeat == HUF_repeat_check && !HUF_validateCTable(oldHufTable, count, maxSymbolValue)) {
+	अगर (repeat && *repeat == HUF_repeat_check && !HUF_validateCTable(oldHufTable, count, maxSymbolValue)) अणु
 		*repeat = HUF_repeat_none;
-	}
-	/* Heuristic : use existing table for small inputs */
-	if (preferRepeat && repeat && *repeat != HUF_repeat_none) {
-		return HUF_compressCTable_internal(ostart, op, oend, src, srcSize, singleStream, oldHufTable);
-	}
+	पूर्ण
+	/* Heuristic : use existing table क्रम small inमाला_दो */
+	अगर (preferRepeat && repeat && *repeat != HUF_repeat_none) अणु
+		वापस HUF_compressCTable_पूर्णांकernal(ostart, op, oend, src, srcSize, singleStream, oldHufTable);
+	पूर्ण
 
 	/* Build Huffman Tree */
 	huffLog = HUF_optimalTableLog(huffLog, srcSize, maxSymbolValue);
-	{
+	अणु
 		CHECK_V_F(maxBits, HUF_buildCTable_wksp(CTable, count, maxSymbolValue, huffLog, workSpace, wkspSize));
 		huffLog = (U32)maxBits;
-		/* Zero the unused symbols so we can check it for validity */
-		memset(CTable + maxSymbolValue + 1, 0, CTableSize - (maxSymbolValue + 1) * sizeof(HUF_CElt));
-	}
+		/* Zero the unused symbols so we can check it क्रम validity */
+		स_रखो(CTable + maxSymbolValue + 1, 0, CTableSize - (maxSymbolValue + 1) * माप(HUF_CElt));
+	पूर्ण
 
 	/* Write table description header */
-	{
-		CHECK_V_F(hSize, HUF_writeCTable_wksp(op, dstSize, CTable, maxSymbolValue, huffLog, workSpace, wkspSize));
-		/* Check if using the previous table will be beneficial */
-		if (repeat && *repeat != HUF_repeat_none) {
-			size_t const oldSize = HUF_estimateCompressedSize(oldHufTable, count, maxSymbolValue);
-			size_t const newSize = HUF_estimateCompressedSize(CTable, count, maxSymbolValue);
-			if (oldSize <= hSize + newSize || hSize + 12 >= srcSize) {
-				return HUF_compressCTable_internal(ostart, op, oend, src, srcSize, singleStream, oldHufTable);
-			}
-		}
+	अणु
+		CHECK_V_F(hSize, HUF_ग_लिखोCTable_wksp(op, dstSize, CTable, maxSymbolValue, huffLog, workSpace, wkspSize));
+		/* Check अगर using the previous table will be beneficial */
+		अगर (repeat && *repeat != HUF_repeat_none) अणु
+			माप_प्रकार स्थिर oldSize = HUF_estimateCompressedSize(oldHufTable, count, maxSymbolValue);
+			माप_प्रकार स्थिर newSize = HUF_estimateCompressedSize(CTable, count, maxSymbolValue);
+			अगर (oldSize <= hSize + newSize || hSize + 12 >= srcSize) अणु
+				वापस HUF_compressCTable_पूर्णांकernal(ostart, op, oend, src, srcSize, singleStream, oldHufTable);
+			पूर्ण
+		पूर्ण
 		/* Use the new table */
-		if (hSize + 12ul >= srcSize) {
-			return 0;
-		}
+		अगर (hSize + 12ul >= srcSize) अणु
+			वापस 0;
+		पूर्ण
 		op += hSize;
-		if (repeat) {
+		अगर (repeat) अणु
 			*repeat = HUF_repeat_none;
-		}
-		if (oldHufTable) {
-			memcpy(oldHufTable, CTable, CTableSize);
-		} /* Save the new table */
-	}
-	return HUF_compressCTable_internal(ostart, op, oend, src, srcSize, singleStream, CTable);
-}
+		पूर्ण
+		अगर (oldHufTable) अणु
+			स_नकल(oldHufTable, CTable, CTableSize);
+		पूर्ण /* Save the new table */
+	पूर्ण
+	वापस HUF_compressCTable_पूर्णांकernal(ostart, op, oend, src, srcSize, singleStream, CTable);
+पूर्ण
 
-size_t HUF_compress1X_wksp(void *dst, size_t dstSize, const void *src, size_t srcSize, unsigned maxSymbolValue, unsigned huffLog, void *workSpace,
-			   size_t wkspSize)
-{
-	return HUF_compress_internal(dst, dstSize, src, srcSize, maxSymbolValue, huffLog, 1 /* single stream */, workSpace, wkspSize, NULL, NULL, 0);
-}
+माप_प्रकार HUF_compress1X_wksp(व्योम *dst, माप_प्रकार dstSize, स्थिर व्योम *src, माप_प्रकार srcSize, अचिन्हित maxSymbolValue, अचिन्हित huffLog, व्योम *workSpace,
+			   माप_प्रकार wkspSize)
+अणु
+	वापस HUF_compress_पूर्णांकernal(dst, dstSize, src, srcSize, maxSymbolValue, huffLog, 1 /* single stream */, workSpace, wkspSize, शून्य, शून्य, 0);
+पूर्ण
 
-size_t HUF_compress1X_repeat(void *dst, size_t dstSize, const void *src, size_t srcSize, unsigned maxSymbolValue, unsigned huffLog, void *workSpace,
-			     size_t wkspSize, HUF_CElt *hufTable, HUF_repeat *repeat, int preferRepeat)
-{
-	return HUF_compress_internal(dst, dstSize, src, srcSize, maxSymbolValue, huffLog, 1 /* single stream */, workSpace, wkspSize, hufTable, repeat,
+माप_प्रकार HUF_compress1X_repeat(व्योम *dst, माप_प्रकार dstSize, स्थिर व्योम *src, माप_प्रकार srcSize, अचिन्हित maxSymbolValue, अचिन्हित huffLog, व्योम *workSpace,
+			     माप_प्रकार wkspSize, HUF_CElt *hufTable, HUF_repeat *repeat, पूर्णांक preferRepeat)
+अणु
+	वापस HUF_compress_पूर्णांकernal(dst, dstSize, src, srcSize, maxSymbolValue, huffLog, 1 /* single stream */, workSpace, wkspSize, hufTable, repeat,
 				     preferRepeat);
-}
+पूर्ण
 
-size_t HUF_compress4X_wksp(void *dst, size_t dstSize, const void *src, size_t srcSize, unsigned maxSymbolValue, unsigned huffLog, void *workSpace,
-			   size_t wkspSize)
-{
-	return HUF_compress_internal(dst, dstSize, src, srcSize, maxSymbolValue, huffLog, 0 /* 4 streams */, workSpace, wkspSize, NULL, NULL, 0);
-}
+माप_प्रकार HUF_compress4X_wksp(व्योम *dst, माप_प्रकार dstSize, स्थिर व्योम *src, माप_प्रकार srcSize, अचिन्हित maxSymbolValue, अचिन्हित huffLog, व्योम *workSpace,
+			   माप_प्रकार wkspSize)
+अणु
+	वापस HUF_compress_पूर्णांकernal(dst, dstSize, src, srcSize, maxSymbolValue, huffLog, 0 /* 4 streams */, workSpace, wkspSize, शून्य, शून्य, 0);
+पूर्ण
 
-size_t HUF_compress4X_repeat(void *dst, size_t dstSize, const void *src, size_t srcSize, unsigned maxSymbolValue, unsigned huffLog, void *workSpace,
-			     size_t wkspSize, HUF_CElt *hufTable, HUF_repeat *repeat, int preferRepeat)
-{
-	return HUF_compress_internal(dst, dstSize, src, srcSize, maxSymbolValue, huffLog, 0 /* 4 streams */, workSpace, wkspSize, hufTable, repeat,
+माप_प्रकार HUF_compress4X_repeat(व्योम *dst, माप_प्रकार dstSize, स्थिर व्योम *src, माप_प्रकार srcSize, अचिन्हित maxSymbolValue, अचिन्हित huffLog, व्योम *workSpace,
+			     माप_प्रकार wkspSize, HUF_CElt *hufTable, HUF_repeat *repeat, पूर्णांक preferRepeat)
+अणु
+	वापस HUF_compress_पूर्णांकernal(dst, dstSize, src, srcSize, maxSymbolValue, huffLog, 0 /* 4 streams */, workSpace, wkspSize, hufTable, repeat,
 				     preferRepeat);
-}
+पूर्ण

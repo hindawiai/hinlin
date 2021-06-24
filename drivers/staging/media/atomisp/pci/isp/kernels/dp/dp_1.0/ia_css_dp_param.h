@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __IA_CSS_DP_PARAM_H
-#define __IA_CSS_DP_PARAM_H
+#अगर_अघोषित __IA_CSS_DP_PARAM_H
+#घोषणा __IA_CSS_DP_PARAM_H
 
-#include "type_support.h"
-#include "bnr/bnr_1.0/ia_css_bnr_param.h"
+#समावेश "type_support.h"
+#समावेश "bnr/bnr_1.0/ia_css_bnr_param.h"
 
 /* DP (Defect Pixel Correction) */
-struct sh_css_isp_dp_params {
+काष्ठा sh_css_isp_dp_params अणु
 	s32 threshold_single;
 	s32 threshold_2adjacent;
 	s32 gain;
@@ -32,6 +33,6 @@ struct sh_css_isp_dp_params {
 	s32 coef_gr_bb;
 	s32 coef_gb_bb;
 	s32 coef_gb_rr;
-};
+पूर्ण;
 
-#endif /* __IA_CSS_DP_PARAM_H */
+#पूर्ण_अगर /* __IA_CSS_DP_PARAM_H */

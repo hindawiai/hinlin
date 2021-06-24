@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Alpha IO and memory functions.
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/module.h>
-#include <asm/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/पन.स>
 
-/* Out-of-line versions of the i/o routines that redirect into the 
-   platform-specific version.  Note that "platform-specific" may mean
+/* Out-of-line versions of the i/o routines that redirect पूर्णांकo the 
+   platक्रमm-specअगरic version.  Note that "platform-specific" may mean
    "generic", which bumps through the machine vector.  */
 
-unsigned int
-ioread8(const void __iomem *addr)
-{
-	unsigned int ret;
+अचिन्हित पूर्णांक
+ioपढ़ो8(स्थिर व्योम __iomem *addr)
+अणु
+	अचिन्हित पूर्णांक ret;
 	mb();
-	ret = IO_CONCAT(__IO_PREFIX,ioread8)(addr);
+	ret = IO_CONCAT(__IO_PREFIX,ioपढ़ो8)(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-unsigned int ioread16(const void __iomem *addr)
-{
-	unsigned int ret;
+अचिन्हित पूर्णांक ioपढ़ो16(स्थिर व्योम __iomem *addr)
+अणु
+	अचिन्हित पूर्णांक ret;
 	mb();
-	ret = IO_CONCAT(__IO_PREFIX,ioread16)(addr);
+	ret = IO_CONCAT(__IO_PREFIX,ioपढ़ो16)(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-unsigned int ioread32(const void __iomem *addr)
-{
-	unsigned int ret;
+अचिन्हित पूर्णांक ioपढ़ो32(स्थिर व्योम __iomem *addr)
+अणु
+	अचिन्हित पूर्णांक ret;
 	mb();
-	ret = IO_CONCAT(__IO_PREFIX,ioread32)(addr);
+	ret = IO_CONCAT(__IO_PREFIX,ioपढ़ो32)(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void iowrite8(u8 b, void __iomem *addr)
-{
+व्योम ioग_लिखो8(u8 b, व्योम __iomem *addr)
+अणु
 	mb();
-	IO_CONCAT(__IO_PREFIX,iowrite8)(b, addr);
-}
+	IO_CONCAT(__IO_PREFIX,ioग_लिखो8)(b, addr);
+पूर्ण
 
-void iowrite16(u16 b, void __iomem *addr)
-{
+व्योम ioग_लिखो16(u16 b, व्योम __iomem *addr)
+अणु
 	mb();
-	IO_CONCAT(__IO_PREFIX,iowrite16)(b, addr);
-}
+	IO_CONCAT(__IO_PREFIX,ioग_लिखो16)(b, addr);
+पूर्ण
 
-void iowrite32(u32 b, void __iomem *addr)
-{
+व्योम ioग_लिखो32(u32 b, व्योम __iomem *addr)
+अणु
 	mb();
-	IO_CONCAT(__IO_PREFIX,iowrite32)(b, addr);
-}
+	IO_CONCAT(__IO_PREFIX,ioग_लिखो32)(b, addr);
+पूर्ण
 
-EXPORT_SYMBOL(ioread8);
-EXPORT_SYMBOL(ioread16);
-EXPORT_SYMBOL(ioread32);
-EXPORT_SYMBOL(iowrite8);
-EXPORT_SYMBOL(iowrite16);
-EXPORT_SYMBOL(iowrite32);
+EXPORT_SYMBOL(ioपढ़ो8);
+EXPORT_SYMBOL(ioपढ़ो16);
+EXPORT_SYMBOL(ioपढ़ो32);
+EXPORT_SYMBOL(ioग_लिखो8);
+EXPORT_SYMBOL(ioग_लिखो16);
+EXPORT_SYMBOL(ioग_लिखो32);
 
-u8 inb(unsigned long port)
-{
-	return ioread8(ioport_map(port, 1));
-}
+u8 inb(अचिन्हित दीर्घ port)
+अणु
+	वापस ioपढ़ो8(ioport_map(port, 1));
+पूर्ण
 
-u16 inw(unsigned long port)
-{
-	return ioread16(ioport_map(port, 2));
-}
+u16 inw(अचिन्हित दीर्घ port)
+अणु
+	वापस ioपढ़ो16(ioport_map(port, 2));
+पूर्ण
 
-u32 inl(unsigned long port)
-{
-	return ioread32(ioport_map(port, 4));
-}
+u32 inl(अचिन्हित दीर्घ port)
+अणु
+	वापस ioपढ़ो32(ioport_map(port, 4));
+पूर्ण
 
-void outb(u8 b, unsigned long port)
-{
-	iowrite8(b, ioport_map(port, 1));
-}
+व्योम outb(u8 b, अचिन्हित दीर्घ port)
+अणु
+	ioग_लिखो8(b, ioport_map(port, 1));
+पूर्ण
 
-void outw(u16 b, unsigned long port)
-{
-	iowrite16(b, ioport_map(port, 2));
-}
+व्योम outw(u16 b, अचिन्हित दीर्घ port)
+अणु
+	ioग_लिखो16(b, ioport_map(port, 2));
+पूर्ण
 
-void outl(u32 b, unsigned long port)
-{
-	iowrite32(b, ioport_map(port, 4));
-}
+व्योम outl(u32 b, अचिन्हित दीर्घ port)
+अणु
+	ioग_लिखो32(b, ioport_map(port, 4));
+पूर्ण
 
 EXPORT_SYMBOL(inb);
 EXPORT_SYMBOL(inw);
@@ -103,360 +104,360 @@ EXPORT_SYMBOL(outb);
 EXPORT_SYMBOL(outw);
 EXPORT_SYMBOL(outl);
 
-u8 __raw_readb(const volatile void __iomem *addr)
-{
-	return IO_CONCAT(__IO_PREFIX,readb)(addr);
-}
+u8 __raw_पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,पढ़ोb)(addr);
+पूर्ण
 
-u16 __raw_readw(const volatile void __iomem *addr)
-{
-	return IO_CONCAT(__IO_PREFIX,readw)(addr);
-}
+u16 __raw_पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,पढ़ोw)(addr);
+पूर्ण
 
-u32 __raw_readl(const volatile void __iomem *addr)
-{
-	return IO_CONCAT(__IO_PREFIX,readl)(addr);
-}
+u32 __raw_पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,पढ़ोl)(addr);
+पूर्ण
 
-u64 __raw_readq(const volatile void __iomem *addr)
-{
-	return IO_CONCAT(__IO_PREFIX,readq)(addr);
-}
+u64 __raw_पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,पढ़ोq)(addr);
+पूर्ण
 
-void __raw_writeb(u8 b, volatile void __iomem *addr)
-{
-	IO_CONCAT(__IO_PREFIX,writeb)(b, addr);
-}
+व्योम __raw_ग_लिखोb(u8 b, अस्थिर व्योम __iomem *addr)
+अणु
+	IO_CONCAT(__IO_PREFIX,ग_लिखोb)(b, addr);
+पूर्ण
 
-void __raw_writew(u16 b, volatile void __iomem *addr)
-{
-	IO_CONCAT(__IO_PREFIX,writew)(b, addr);
-}
+व्योम __raw_ग_लिखोw(u16 b, अस्थिर व्योम __iomem *addr)
+अणु
+	IO_CONCAT(__IO_PREFIX,ग_लिखोw)(b, addr);
+पूर्ण
 
-void __raw_writel(u32 b, volatile void __iomem *addr)
-{
-	IO_CONCAT(__IO_PREFIX,writel)(b, addr);
-}
+व्योम __raw_ग_लिखोl(u32 b, अस्थिर व्योम __iomem *addr)
+अणु
+	IO_CONCAT(__IO_PREFIX,ग_लिखोl)(b, addr);
+पूर्ण
 
-void __raw_writeq(u64 b, volatile void __iomem *addr)
-{
-	IO_CONCAT(__IO_PREFIX,writeq)(b, addr);
-}
+व्योम __raw_ग_लिखोq(u64 b, अस्थिर व्योम __iomem *addr)
+अणु
+	IO_CONCAT(__IO_PREFIX,ग_लिखोq)(b, addr);
+पूर्ण
 
-EXPORT_SYMBOL(__raw_readb); 
-EXPORT_SYMBOL(__raw_readw); 
-EXPORT_SYMBOL(__raw_readl); 
-EXPORT_SYMBOL(__raw_readq); 
-EXPORT_SYMBOL(__raw_writeb); 
-EXPORT_SYMBOL(__raw_writew); 
-EXPORT_SYMBOL(__raw_writel); 
-EXPORT_SYMBOL(__raw_writeq); 
+EXPORT_SYMBOL(__raw_पढ़ोb); 
+EXPORT_SYMBOL(__raw_पढ़ोw); 
+EXPORT_SYMBOL(__raw_पढ़ोl); 
+EXPORT_SYMBOL(__raw_पढ़ोq); 
+EXPORT_SYMBOL(__raw_ग_लिखोb); 
+EXPORT_SYMBOL(__raw_ग_लिखोw); 
+EXPORT_SYMBOL(__raw_ग_लिखोl); 
+EXPORT_SYMBOL(__raw_ग_लिखोq); 
 
-u8 readb(const volatile void __iomem *addr)
-{
+u8 पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u8 ret;
 	mb();
-	ret = __raw_readb(addr);
+	ret = __raw_पढ़ोb(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-u16 readw(const volatile void __iomem *addr)
-{
+u16 पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u16 ret;
 	mb();
-	ret = __raw_readw(addr);
+	ret = __raw_पढ़ोw(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-u32 readl(const volatile void __iomem *addr)
-{
+u32 पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u32 ret;
 	mb();
-	ret = __raw_readl(addr);
+	ret = __raw_पढ़ोl(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-u64 readq(const volatile void __iomem *addr)
-{
+u64 पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u64 ret;
 	mb();
-	ret = __raw_readq(addr);
+	ret = __raw_पढ़ोq(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void writeb(u8 b, volatile void __iomem *addr)
-{
+व्योम ग_लिखोb(u8 b, अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	__raw_writeb(b, addr);
-}
+	__raw_ग_लिखोb(b, addr);
+पूर्ण
 
-void writew(u16 b, volatile void __iomem *addr)
-{
+व्योम ग_लिखोw(u16 b, अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	__raw_writew(b, addr);
-}
+	__raw_ग_लिखोw(b, addr);
+पूर्ण
 
-void writel(u32 b, volatile void __iomem *addr)
-{
+व्योम ग_लिखोl(u32 b, अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	__raw_writel(b, addr);
-}
+	__raw_ग_लिखोl(b, addr);
+पूर्ण
 
-void writeq(u64 b, volatile void __iomem *addr)
-{
+व्योम ग_लिखोq(u64 b, अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	__raw_writeq(b, addr);
-}
+	__raw_ग_लिखोq(b, addr);
+पूर्ण
 
-EXPORT_SYMBOL(readb);
-EXPORT_SYMBOL(readw);
-EXPORT_SYMBOL(readl);
-EXPORT_SYMBOL(readq);
-EXPORT_SYMBOL(writeb);
-EXPORT_SYMBOL(writew);
-EXPORT_SYMBOL(writel);
-EXPORT_SYMBOL(writeq);
+EXPORT_SYMBOL(पढ़ोb);
+EXPORT_SYMBOL(पढ़ोw);
+EXPORT_SYMBOL(पढ़ोl);
+EXPORT_SYMBOL(पढ़ोq);
+EXPORT_SYMBOL(ग_लिखोb);
+EXPORT_SYMBOL(ग_लिखोw);
+EXPORT_SYMBOL(ग_लिखोl);
+EXPORT_SYMBOL(ग_लिखोq);
 
 /*
- * The _relaxed functions must be ordered w.r.t. each other, but they don't
+ * The _relaxed functions must be ordered w.r.t. each other, but they करोn't
  * have to be ordered w.r.t. other memory accesses.
  */
-u8 readb_relaxed(const volatile void __iomem *addr)
-{
+u8 पढ़ोb_relaxed(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	return __raw_readb(addr);
-}
+	वापस __raw_पढ़ोb(addr);
+पूर्ण
 
-u16 readw_relaxed(const volatile void __iomem *addr)
-{
+u16 पढ़ोw_relaxed(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	return __raw_readw(addr);
-}
+	वापस __raw_पढ़ोw(addr);
+पूर्ण
 
-u32 readl_relaxed(const volatile void __iomem *addr)
-{
+u32 पढ़ोl_relaxed(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	return __raw_readl(addr);
-}
+	वापस __raw_पढ़ोl(addr);
+पूर्ण
 
-u64 readq_relaxed(const volatile void __iomem *addr)
-{
+u64 पढ़ोq_relaxed(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	return __raw_readq(addr);
-}
+	वापस __raw_पढ़ोq(addr);
+पूर्ण
 
-EXPORT_SYMBOL(readb_relaxed);
-EXPORT_SYMBOL(readw_relaxed);
-EXPORT_SYMBOL(readl_relaxed);
-EXPORT_SYMBOL(readq_relaxed);
+EXPORT_SYMBOL(पढ़ोb_relaxed);
+EXPORT_SYMBOL(पढ़ोw_relaxed);
+EXPORT_SYMBOL(पढ़ोl_relaxed);
+EXPORT_SYMBOL(पढ़ोq_relaxed);
 
 /*
- * Read COUNT 8-bit bytes from port PORT into memory starting at SRC.
+ * Read COUNT 8-bit bytes from port PORT पूर्णांकo memory starting at SRC.
  */
-void ioread8_rep(const void __iomem *port, void *dst, unsigned long count)
-{
-	while ((unsigned long)dst & 0x3) {
-		if (!count)
-			return;
+व्योम ioपढ़ो8_rep(स्थिर व्योम __iomem *port, व्योम *dst, अचिन्हित दीर्घ count)
+अणु
+	जबतक ((अचिन्हित दीर्घ)dst & 0x3) अणु
+		अगर (!count)
+			वापस;
 		count--;
-		*(unsigned char *)dst = ioread8(port);
+		*(अचिन्हित अक्षर *)dst = ioपढ़ो8(port);
 		dst += 1;
-	}
+	पूर्ण
 
-	while (count >= 4) {
-		unsigned int w;
+	जबतक (count >= 4) अणु
+		अचिन्हित पूर्णांक w;
 		count -= 4;
-		w = ioread8(port);
-		w |= ioread8(port) << 8;
-		w |= ioread8(port) << 16;
-		w |= ioread8(port) << 24;
-		*(unsigned int *)dst = w;
+		w = ioपढ़ो8(port);
+		w |= ioपढ़ो8(port) << 8;
+		w |= ioपढ़ो8(port) << 16;
+		w |= ioपढ़ो8(port) << 24;
+		*(अचिन्हित पूर्णांक *)dst = w;
 		dst += 4;
-	}
+	पूर्ण
 
-	while (count) {
+	जबतक (count) अणु
 		--count;
-		*(unsigned char *)dst = ioread8(port);
+		*(अचिन्हित अक्षर *)dst = ioपढ़ो8(port);
 		dst += 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void insb(unsigned long port, void *dst, unsigned long count)
-{
-	ioread8_rep(ioport_map(port, 1), dst, count);
-}
+व्योम insb(अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count)
+अणु
+	ioपढ़ो8_rep(ioport_map(port, 1), dst, count);
+पूर्ण
 
-EXPORT_SYMBOL(ioread8_rep);
+EXPORT_SYMBOL(ioपढ़ो8_rep);
 EXPORT_SYMBOL(insb);
 
 /*
- * Read COUNT 16-bit words from port PORT into memory starting at
- * SRC.  SRC must be at least short aligned.  This is used by the
- * IDE driver to read disk sectors.  Performance is important, but
- * the interfaces seems to be slow: just using the inlined version
- * of the inw() breaks things.
+ * Read COUNT 16-bit words from port PORT पूर्णांकo memory starting at
+ * SRC.  SRC must be at least लघु aligned.  This is used by the
+ * IDE driver to पढ़ो disk sectors.  Perक्रमmance is important, but
+ * the पूर्णांकerfaces seems to be slow: just using the अंतरभूतd version
+ * of the inw() अवरोधs things.
  */
-void ioread16_rep(const void __iomem *port, void *dst, unsigned long count)
-{
-	if (unlikely((unsigned long)dst & 0x3)) {
-		if (!count)
-			return;
-		BUG_ON((unsigned long)dst & 0x1);
+व्योम ioपढ़ो16_rep(स्थिर व्योम __iomem *port, व्योम *dst, अचिन्हित दीर्घ count)
+अणु
+	अगर (unlikely((अचिन्हित दीर्घ)dst & 0x3)) अणु
+		अगर (!count)
+			वापस;
+		BUG_ON((अचिन्हित दीर्घ)dst & 0x1);
 		count--;
-		*(unsigned short *)dst = ioread16(port);
+		*(अचिन्हित लघु *)dst = ioपढ़ो16(port);
 		dst += 2;
-	}
+	पूर्ण
 
-	while (count >= 2) {
-		unsigned int w;
+	जबतक (count >= 2) अणु
+		अचिन्हित पूर्णांक w;
 		count -= 2;
-		w = ioread16(port);
-		w |= ioread16(port) << 16;
-		*(unsigned int *)dst = w;
+		w = ioपढ़ो16(port);
+		w |= ioपढ़ो16(port) << 16;
+		*(अचिन्हित पूर्णांक *)dst = w;
 		dst += 4;
-	}
+	पूर्ण
 
-	if (count) {
-		*(unsigned short*)dst = ioread16(port);
-	}
-}
+	अगर (count) अणु
+		*(अचिन्हित लघु*)dst = ioपढ़ो16(port);
+	पूर्ण
+पूर्ण
 
-void insw(unsigned long port, void *dst, unsigned long count)
-{
-	ioread16_rep(ioport_map(port, 2), dst, count);
-}
+व्योम insw(अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count)
+अणु
+	ioपढ़ो16_rep(ioport_map(port, 2), dst, count);
+पूर्ण
 
-EXPORT_SYMBOL(ioread16_rep);
+EXPORT_SYMBOL(ioपढ़ो16_rep);
 EXPORT_SYMBOL(insw);
 
 
 /*
- * Read COUNT 32-bit words from port PORT into memory starting at
- * SRC. Now works with any alignment in SRC. Performance is important,
- * but the interfaces seems to be slow: just using the inlined version
- * of the inl() breaks things.
+ * Read COUNT 32-bit words from port PORT पूर्णांकo memory starting at
+ * SRC. Now works with any alignment in SRC. Perक्रमmance is important,
+ * but the पूर्णांकerfaces seems to be slow: just using the अंतरभूतd version
+ * of the inl() अवरोधs things.
  */
-void ioread32_rep(const void __iomem *port, void *dst, unsigned long count)
-{
-	if (unlikely((unsigned long)dst & 0x3)) {
-		while (count--) {
-			struct S { int x __attribute__((packed)); };
-			((struct S *)dst)->x = ioread32(port);
+व्योम ioपढ़ो32_rep(स्थिर व्योम __iomem *port, व्योम *dst, अचिन्हित दीर्घ count)
+अणु
+	अगर (unlikely((अचिन्हित दीर्घ)dst & 0x3)) अणु
+		जबतक (count--) अणु
+			काष्ठा S अणु पूर्णांक x __attribute__((packed)); पूर्ण;
+			((काष्ठा S *)dst)->x = ioपढ़ो32(port);
 			dst += 4;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Buffer 32-bit aligned.  */
-		while (count--) {
-			*(unsigned int *)dst = ioread32(port);
+		जबतक (count--) अणु
+			*(अचिन्हित पूर्णांक *)dst = ioपढ़ो32(port);
 			dst += 4;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void insl(unsigned long port, void *dst, unsigned long count)
-{
-	ioread32_rep(ioport_map(port, 4), dst, count);
-}
+व्योम insl(अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count)
+अणु
+	ioपढ़ो32_rep(ioport_map(port, 4), dst, count);
+पूर्ण
 
-EXPORT_SYMBOL(ioread32_rep);
+EXPORT_SYMBOL(ioपढ़ो32_rep);
 EXPORT_SYMBOL(insl);
 
 
 /*
  * Like insb but in the opposite direction.
- * Don't worry as much about doing aligned memory transfers:
- * doing byte reads the "slow" way isn't nearly as slow as
- * doing byte writes the slow way (no r-m-w cycle).
+ * Don't worry as much about करोing aligned memory transfers:
+ * करोing byte पढ़ोs the "slow" way isn't nearly as slow as
+ * करोing byte ग_लिखोs the slow way (no r-m-w cycle).
  */
-void iowrite8_rep(void __iomem *port, const void *xsrc, unsigned long count)
-{
-	const unsigned char *src = xsrc;
-	while (count--)
-		iowrite8(*src++, port);
-}
+व्योम ioग_लिखो8_rep(व्योम __iomem *port, स्थिर व्योम *xsrc, अचिन्हित दीर्घ count)
+अणु
+	स्थिर अचिन्हित अक्षर *src = xsrc;
+	जबतक (count--)
+		ioग_लिखो8(*src++, port);
+पूर्ण
 
-void outsb(unsigned long port, const void *src, unsigned long count)
-{
-	iowrite8_rep(ioport_map(port, 1), src, count);
-}
+व्योम outsb(अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count)
+अणु
+	ioग_लिखो8_rep(ioport_map(port, 1), src, count);
+पूर्ण
 
-EXPORT_SYMBOL(iowrite8_rep);
+EXPORT_SYMBOL(ioग_लिखो8_rep);
 EXPORT_SYMBOL(outsb);
 
 
 /*
  * Like insw but in the opposite direction.  This is used by the IDE
- * driver to write disk sectors.  Performance is important, but the
- * interfaces seems to be slow: just using the inlined version of the
- * outw() breaks things.
+ * driver to ग_लिखो disk sectors.  Perक्रमmance is important, but the
+ * पूर्णांकerfaces seems to be slow: just using the अंतरभूतd version of the
+ * outw() अवरोधs things.
  */
-void iowrite16_rep(void __iomem *port, const void *src, unsigned long count)
-{
-	if (unlikely((unsigned long)src & 0x3)) {
-		if (!count)
-			return;
-		BUG_ON((unsigned long)src & 0x1);
-		iowrite16(*(unsigned short *)src, port);
+व्योम ioग_लिखो16_rep(व्योम __iomem *port, स्थिर व्योम *src, अचिन्हित दीर्घ count)
+अणु
+	अगर (unlikely((अचिन्हित दीर्घ)src & 0x3)) अणु
+		अगर (!count)
+			वापस;
+		BUG_ON((अचिन्हित दीर्घ)src & 0x1);
+		ioग_लिखो16(*(अचिन्हित लघु *)src, port);
 		src += 2;
 		--count;
-	}
+	पूर्ण
 
-	while (count >= 2) {
-		unsigned int w;
+	जबतक (count >= 2) अणु
+		अचिन्हित पूर्णांक w;
 		count -= 2;
-		w = *(unsigned int *)src;
+		w = *(अचिन्हित पूर्णांक *)src;
 		src += 4;
-		iowrite16(w >>  0, port);
-		iowrite16(w >> 16, port);
-	}
+		ioग_लिखो16(w >>  0, port);
+		ioग_लिखो16(w >> 16, port);
+	पूर्ण
 
-	if (count) {
-		iowrite16(*(unsigned short *)src, port);
-	}
-}
+	अगर (count) अणु
+		ioग_लिखो16(*(अचिन्हित लघु *)src, port);
+	पूर्ण
+पूर्ण
 
-void outsw(unsigned long port, const void *src, unsigned long count)
-{
-	iowrite16_rep(ioport_map(port, 2), src, count);
-}
+व्योम outsw(अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count)
+अणु
+	ioग_लिखो16_rep(ioport_map(port, 2), src, count);
+पूर्ण
 
-EXPORT_SYMBOL(iowrite16_rep);
+EXPORT_SYMBOL(ioग_लिखो16_rep);
 EXPORT_SYMBOL(outsw);
 
 
 /*
  * Like insl but in the opposite direction.  This is used by the IDE
- * driver to write disk sectors.  Works with any alignment in SRC.
- * Performance is important, but the interfaces seems to be slow:
- * just using the inlined version of the outl() breaks things.
+ * driver to ग_लिखो disk sectors.  Works with any alignment in SRC.
+ * Perक्रमmance is important, but the पूर्णांकerfaces seems to be slow:
+ * just using the अंतरभूतd version of the outl() अवरोधs things.
  */
-void iowrite32_rep(void __iomem *port, const void *src, unsigned long count)
-{
-	if (unlikely((unsigned long)src & 0x3)) {
-		while (count--) {
-			struct S { int x __attribute__((packed)); };
-			iowrite32(((struct S *)src)->x, port);
+व्योम ioग_लिखो32_rep(व्योम __iomem *port, स्थिर व्योम *src, अचिन्हित दीर्घ count)
+अणु
+	अगर (unlikely((अचिन्हित दीर्घ)src & 0x3)) अणु
+		जबतक (count--) अणु
+			काष्ठा S अणु पूर्णांक x __attribute__((packed)); पूर्ण;
+			ioग_लिखो32(((काष्ठा S *)src)->x, port);
 			src += 4;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Buffer 32-bit aligned.  */
-		while (count--) {
-			iowrite32(*(unsigned int *)src, port);
+		जबतक (count--) अणु
+			ioग_लिखो32(*(अचिन्हित पूर्णांक *)src, port);
 			src += 4;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void outsl(unsigned long port, const void *src, unsigned long count)
-{
-	iowrite32_rep(ioport_map(port, 4), src, count);
-}
+व्योम outsl(अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count)
+अणु
+	ioग_लिखो32_rep(ioport_map(port, 4), src, count);
+पूर्ण
 
-EXPORT_SYMBOL(iowrite32_rep);
+EXPORT_SYMBOL(ioग_लिखो32_rep);
 EXPORT_SYMBOL(outsl);
 
 
@@ -464,214 +465,214 @@ EXPORT_SYMBOL(outsl);
  * Copy data from IO memory space to "real" memory space.
  * This needs to be optimized.
  */
-void memcpy_fromio(void *to, const volatile void __iomem *from, long count)
-{
-	/* Optimize co-aligned transfers.  Everything else gets handled
-	   a byte at a time. */
+व्योम स_नकल_fromio(व्योम *to, स्थिर अस्थिर व्योम __iomem *from, दीर्घ count)
+अणु
+	/* Optimize co-aligned transfers.  Everything अन्यथा माला_लो handled
+	   a byte at a समय. */
 
-	if (count >= 8 && ((u64)to & 7) == ((u64)from & 7)) {
+	अगर (count >= 8 && ((u64)to & 7) == ((u64)from & 7)) अणु
 		count -= 8;
-		do {
-			*(u64 *)to = __raw_readq(from);
+		करो अणु
+			*(u64 *)to = __raw_पढ़ोq(from);
 			count -= 8;
 			to += 8;
 			from += 8;
-		} while (count >= 0);
+		पूर्ण जबतक (count >= 0);
 		count += 8;
-	}
+	पूर्ण
 
-	if (count >= 4 && ((u64)to & 3) == ((u64)from & 3)) {
+	अगर (count >= 4 && ((u64)to & 3) == ((u64)from & 3)) अणु
 		count -= 4;
-		do {
-			*(u32 *)to = __raw_readl(from);
+		करो अणु
+			*(u32 *)to = __raw_पढ़ोl(from);
 			count -= 4;
 			to += 4;
 			from += 4;
-		} while (count >= 0);
+		पूर्ण जबतक (count >= 0);
 		count += 4;
-	}
+	पूर्ण
 
-	if (count >= 2 && ((u64)to & 1) == ((u64)from & 1)) {
+	अगर (count >= 2 && ((u64)to & 1) == ((u64)from & 1)) अणु
 		count -= 2;
-		do {
-			*(u16 *)to = __raw_readw(from);
+		करो अणु
+			*(u16 *)to = __raw_पढ़ोw(from);
 			count -= 2;
 			to += 2;
 			from += 2;
-		} while (count >= 0);
+		पूर्ण जबतक (count >= 0);
 		count += 2;
-	}
+	पूर्ण
 
-	while (count > 0) {
-		*(u8 *) to = __raw_readb(from);
+	जबतक (count > 0) अणु
+		*(u8 *) to = __raw_पढ़ोb(from);
 		count--;
 		to++;
 		from++;
-	}
+	पूर्ण
 	mb();
-}
+पूर्ण
 
-EXPORT_SYMBOL(memcpy_fromio);
+EXPORT_SYMBOL(स_नकल_fromio);
 
 
 /*
  * Copy data from "real" memory space to IO memory space.
  * This needs to be optimized.
  */
-void memcpy_toio(volatile void __iomem *to, const void *from, long count)
-{
-	/* Optimize co-aligned transfers.  Everything else gets handled
-	   a byte at a time. */
+व्योम स_नकल_toio(अस्थिर व्योम __iomem *to, स्थिर व्योम *from, दीर्घ count)
+अणु
+	/* Optimize co-aligned transfers.  Everything अन्यथा माला_लो handled
+	   a byte at a समय. */
 	/* FIXME -- align FROM.  */
 
-	if (count >= 8 && ((u64)to & 7) == ((u64)from & 7)) {
+	अगर (count >= 8 && ((u64)to & 7) == ((u64)from & 7)) अणु
 		count -= 8;
-		do {
-			__raw_writeq(*(const u64 *)from, to);
+		करो अणु
+			__raw_ग_लिखोq(*(स्थिर u64 *)from, to);
 			count -= 8;
 			to += 8;
 			from += 8;
-		} while (count >= 0);
+		पूर्ण जबतक (count >= 0);
 		count += 8;
-	}
+	पूर्ण
 
-	if (count >= 4 && ((u64)to & 3) == ((u64)from & 3)) {
+	अगर (count >= 4 && ((u64)to & 3) == ((u64)from & 3)) अणु
 		count -= 4;
-		do {
-			__raw_writel(*(const u32 *)from, to);
+		करो अणु
+			__raw_ग_लिखोl(*(स्थिर u32 *)from, to);
 			count -= 4;
 			to += 4;
 			from += 4;
-		} while (count >= 0);
+		पूर्ण जबतक (count >= 0);
 		count += 4;
-	}
+	पूर्ण
 
-	if (count >= 2 && ((u64)to & 1) == ((u64)from & 1)) {
+	अगर (count >= 2 && ((u64)to & 1) == ((u64)from & 1)) अणु
 		count -= 2;
-		do {
-			__raw_writew(*(const u16 *)from, to);
+		करो अणु
+			__raw_ग_लिखोw(*(स्थिर u16 *)from, to);
 			count -= 2;
 			to += 2;
 			from += 2;
-		} while (count >= 0);
+		पूर्ण जबतक (count >= 0);
 		count += 2;
-	}
+	पूर्ण
 
-	while (count > 0) {
-		__raw_writeb(*(const u8 *) from, to);
+	जबतक (count > 0) अणु
+		__raw_ग_लिखोb(*(स्थिर u8 *) from, to);
 		count--;
 		to++;
 		from++;
-	}
+	पूर्ण
 	mb();
-}
+पूर्ण
 
-EXPORT_SYMBOL(memcpy_toio);
+EXPORT_SYMBOL(स_नकल_toio);
 
 
 /*
  * "memset" on IO memory space.
  */
-void _memset_c_io(volatile void __iomem *to, unsigned long c, long count)
-{
+व्योम _स_रखो_c_io(अस्थिर व्योम __iomem *to, अचिन्हित दीर्घ c, दीर्घ count)
+अणु
 	/* Handle any initial odd byte */
-	if (count > 0 && ((u64)to & 1)) {
-		__raw_writeb(c, to);
+	अगर (count > 0 && ((u64)to & 1)) अणु
+		__raw_ग_लिखोb(c, to);
 		to++;
 		count--;
-	}
+	पूर्ण
 
 	/* Handle any initial odd halfword */
-	if (count >= 2 && ((u64)to & 2)) {
-		__raw_writew(c, to);
+	अगर (count >= 2 && ((u64)to & 2)) अणु
+		__raw_ग_लिखोw(c, to);
 		to += 2;
 		count -= 2;
-	}
+	पूर्ण
 
 	/* Handle any initial odd word */
-	if (count >= 4 && ((u64)to & 4)) {
-		__raw_writel(c, to);
+	अगर (count >= 4 && ((u64)to & 4)) अणु
+		__raw_ग_लिखोl(c, to);
 		to += 4;
 		count -= 4;
-	}
+	पूर्ण
 
 	/* Handle all full-sized quadwords: we're aligned
 	   (or have a small count) */
 	count -= 8;
-	if (count >= 0) {
-		do {
-			__raw_writeq(c, to);
+	अगर (count >= 0) अणु
+		करो अणु
+			__raw_ग_लिखोq(c, to);
 			to += 8;
 			count -= 8;
-		} while (count >= 0);
-	}
+		पूर्ण जबतक (count >= 0);
+	पूर्ण
 	count += 8;
 
-	/* The tail is word-aligned if we still have count >= 4 */
-	if (count >= 4) {
-		__raw_writel(c, to);
+	/* The tail is word-aligned अगर we still have count >= 4 */
+	अगर (count >= 4) अणु
+		__raw_ग_लिखोl(c, to);
 		to += 4;
 		count -= 4;
-	}
+	पूर्ण
 
-	/* The tail is half-word aligned if we have count >= 2 */
-	if (count >= 2) {
-		__raw_writew(c, to);
+	/* The tail is half-word aligned अगर we have count >= 2 */
+	अगर (count >= 2) अणु
+		__raw_ग_लिखोw(c, to);
 		to += 2;
 		count -= 2;
-	}
+	पूर्ण
 
 	/* And finally, one last byte.. */
-	if (count) {
-		__raw_writeb(c, to);
-	}
+	अगर (count) अणु
+		__raw_ग_लिखोb(c, to);
+	पूर्ण
 	mb();
-}
+पूर्ण
 
-EXPORT_SYMBOL(_memset_c_io);
+EXPORT_SYMBOL(_स_रखो_c_io);
 
-/* A version of memcpy used by the vga console routines to move data around
-   arbitrarily between screen and main memory.  */
+/* A version of स_नकल used by the vga console routines to move data around
+   arbitrarily between screen and मुख्य memory.  */
 
-void
-scr_memcpyw(u16 *d, const u16 *s, unsigned int count)
-{
-	const u16 __iomem *ios = (const u16 __iomem *) s;
+व्योम
+scr_स_नकलw(u16 *d, स्थिर u16 *s, अचिन्हित पूर्णांक count)
+अणु
+	स्थिर u16 __iomem *ios = (स्थिर u16 __iomem *) s;
 	u16 __iomem *iod = (u16 __iomem *) d;
-	int s_isio = __is_ioaddr(s);
-	int d_isio = __is_ioaddr(d);
+	पूर्णांक s_isio = __is_ioaddr(s);
+	पूर्णांक d_isio = __is_ioaddr(d);
 
-	if (s_isio) {
-		if (d_isio) {
+	अगर (s_isio) अणु
+		अगर (d_isio) अणु
 			/* FIXME: Should handle unaligned ops and
 			   operation widening.  */
 
 			count /= 2;
-			while (count--) {
-				u16 tmp = __raw_readw(ios++);
-				__raw_writew(tmp, iod++);
-			}
-		}
-		else
-			memcpy_fromio(d, ios, count);
-	} else {
-		if (d_isio)
-			memcpy_toio(iod, s, count);
-		else
-			memcpy(d, s, count);
-	}
-}
+			जबतक (count--) अणु
+				u16 पंचांगp = __raw_पढ़ोw(ios++);
+				__raw_ग_लिखोw(पंचांगp, iod++);
+			पूर्ण
+		पूर्ण
+		अन्यथा
+			स_नकल_fromio(d, ios, count);
+	पूर्ण अन्यथा अणु
+		अगर (d_isio)
+			स_नकल_toio(iod, s, count);
+		अन्यथा
+			स_नकल(d, s, count);
+	पूर्ण
+पूर्ण
 
-EXPORT_SYMBOL(scr_memcpyw);
+EXPORT_SYMBOL(scr_स_नकलw);
 
-void __iomem *ioport_map(unsigned long port, unsigned int size)
-{
-	return IO_CONCAT(__IO_PREFIX,ioportmap) (port);
-}
+व्योम __iomem *ioport_map(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक size)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,ioporपंचांगap) (port);
+पूर्ण
 
-void ioport_unmap(void __iomem *addr)
-{
-}
+व्योम ioport_unmap(व्योम __iomem *addr)
+अणु
+पूर्ण
 
 EXPORT_SYMBOL(ioport_map);
 EXPORT_SYMBOL(ioport_unmap);

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Linux ARCnet driver - "RIM I" (entirely mem-mapped) cards
  *
@@ -6,7 +7,7 @@
  * Derived from skeleton.c by Donald Becker.
  *
  * Special thanks to Contemporary Controls, Inc. (www.ccontrols.com)
- *  for sponsoring the further development of this driver.
+ *  क्रम sponsoring the further development of this driver.
  *
  * **********************
  *
@@ -16,7 +17,7 @@
  * Copyright 1993 United States Government as represented by the
  * Director, National Security Agency.  This software may only be used
  * and distributed according to the terms of the GNU General Public License as
- * modified by SRC, incorporated herein by reference.
+ * modअगरied by SRC, incorporated herein by reference.
  *
  * **********************
  *
@@ -25,161 +26,161 @@
  * **********************
  */
 
-#define pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/memblock.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
 
-#include "arcdevice.h"
-#include "com9026.h"
+#समावेश "arcdevice.h"
+#समावेश "com9026.h"
 
 /* Internal function declarations */
 
-static int arcrimi_probe(struct net_device *dev);
-static int arcrimi_found(struct net_device *dev);
-static void arcrimi_command(struct net_device *dev, int command);
-static int arcrimi_status(struct net_device *dev);
-static void arcrimi_setmask(struct net_device *dev, int mask);
-static int arcrimi_reset(struct net_device *dev, int really_reset);
-static void arcrimi_copy_to_card(struct net_device *dev, int bufnum, int offset,
-				 void *buf, int count);
-static void arcrimi_copy_from_card(struct net_device *dev, int bufnum,
-				   int offset, void *buf, int count);
+अटल पूर्णांक arcrimi_probe(काष्ठा net_device *dev);
+अटल पूर्णांक arcrimi_found(काष्ठा net_device *dev);
+अटल व्योम arcrimi_command(काष्ठा net_device *dev, पूर्णांक command);
+अटल पूर्णांक arcrimi_status(काष्ठा net_device *dev);
+अटल व्योम arcrimi_seपंचांगask(काष्ठा net_device *dev, पूर्णांक mask);
+अटल पूर्णांक arcrimi_reset(काष्ठा net_device *dev, पूर्णांक really_reset);
+अटल व्योम arcrimi_copy_to_card(काष्ठा net_device *dev, पूर्णांक bufnum, पूर्णांक offset,
+				 व्योम *buf, पूर्णांक count);
+अटल व्योम arcrimi_copy_from_card(काष्ठा net_device *dev, पूर्णांक bufnum,
+				   पूर्णांक offset, व्योम *buf, पूर्णांक count);
 
-/* Handy defines for ARCnet specific stuff */
+/* Handy defines क्रम ARCnet specअगरic stuff */
 
 /* Amount of I/O memory used by the card */
-#define BUFFER_SIZE	(512)
-#define MIRROR_SIZE	(BUFFER_SIZE * 4)
+#घोषणा BUFFER_SIZE	(512)
+#घोषणा MIRROR_SIZE	(BUFFER_SIZE * 4)
 
-/* We cannot probe for a RIM I card; one reason is I don't know how to reset
- * them.  In fact, we can't even get their node ID automatically.  So, we
- * need to be passed a specific shmem address, IRQ, and node ID.
+/* We cannot probe क्रम a RIM I card; one reason is I करोn't know how to reset
+ * them.  In fact, we can't even get their node ID स्वतःmatically.  So, we
+ * need to be passed a specअगरic shmem address, IRQ, and node ID.
  */
-static int __init arcrimi_probe(struct net_device *dev)
-{
-	if (BUGLVL(D_NORMAL)) {
+अटल पूर्णांक __init arcrimi_probe(काष्ठा net_device *dev)
+अणु
+	अगर (BUGLVL(D_NORMAL)) अणु
 		pr_info("%s\n", "RIM I (entirely mem-mapped) support");
 		pr_info("E-mail me if you actually test the RIM I driver, please!\n");
 		pr_info("Given: node %02Xh, shmem %lXh, irq %d\n",
 			dev->dev_addr[0], dev->mem_start, dev->irq);
-	}
+	पूर्ण
 
-	if (dev->mem_start <= 0 || dev->irq <= 0) {
-		if (BUGLVL(D_NORMAL))
+	अगर (dev->mem_start <= 0 || dev->irq <= 0) अणु
+		अगर (BUGLVL(D_NORMAL))
 			pr_err("No autoprobe for RIM I; you must specify the shmem and irq!\n");
-		return -ENODEV;
-	}
-	if (dev->dev_addr[0] == 0) {
-		if (BUGLVL(D_NORMAL))
+		वापस -ENODEV;
+	पूर्ण
+	अगर (dev->dev_addr[0] == 0) अणु
+		अगर (BUGLVL(D_NORMAL))
 			pr_err("You need to specify your card's station ID!\n");
-		return -ENODEV;
-	}
-	/* Grab the memory region at mem_start for MIRROR_SIZE bytes.
+		वापस -ENODEV;
+	पूर्ण
+	/* Grab the memory region at mem_start क्रम MIRROR_SIZE bytes.
 	 * Later in arcrimi_found() the real size will be determined
 	 * and this reserve will be released and the correct size
 	 * will be taken.
 	 */
-	if (!request_mem_region(dev->mem_start, MIRROR_SIZE, "arcnet (90xx)")) {
-		if (BUGLVL(D_NORMAL))
+	अगर (!request_mem_region(dev->mem_start, MIRROR_SIZE, "arcnet (90xx)")) अणु
+		अगर (BUGLVL(D_NORMAL))
 			pr_notice("Card memory already allocated\n");
-		return -ENODEV;
-	}
-	return arcrimi_found(dev);
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस arcrimi_found(dev);
+पूर्ण
 
-static int check_mirror(unsigned long addr, size_t size)
-{
-	void __iomem *p;
-	int res = -1;
+अटल पूर्णांक check_mirror(अचिन्हित दीर्घ addr, माप_प्रकार size)
+अणु
+	व्योम __iomem *p;
+	पूर्णांक res = -1;
 
-	if (!request_mem_region(addr, size, "arcnet (90xx)"))
-		return -1;
+	अगर (!request_mem_region(addr, size, "arcnet (90xx)"))
+		वापस -1;
 
 	p = ioremap(addr, size);
-	if (p) {
-		if (arcnet_readb(p, COM9026_REG_R_STATUS) == TESTvalue)
+	अगर (p) अणु
+		अगर (arcnet_पढ़ोb(p, COM9026_REG_R_STATUS) == TESTvalue)
 			res = 1;
-		else
+		अन्यथा
 			res = 0;
 		iounmap(p);
-	}
+	पूर्ण
 
 	release_mem_region(addr, size);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-/* Set up the struct net_device associated with this card.
+/* Set up the काष्ठा net_device associated with this card.
  * Called after probing succeeds.
  */
-static int __init arcrimi_found(struct net_device *dev)
-{
-	struct arcnet_local *lp;
-	unsigned long first_mirror, last_mirror, shmem;
-	void __iomem *p;
-	int mirror_size;
-	int err;
+अटल पूर्णांक __init arcrimi_found(काष्ठा net_device *dev)
+अणु
+	काष्ठा arcnet_local *lp;
+	अचिन्हित दीर्घ first_mirror, last_mirror, shmem;
+	व्योम __iomem *p;
+	पूर्णांक mirror_size;
+	पूर्णांक err;
 
 	p = ioremap(dev->mem_start, MIRROR_SIZE);
-	if (!p) {
+	अगर (!p) अणु
 		release_mem_region(dev->mem_start, MIRROR_SIZE);
-		arc_printk(D_NORMAL, dev, "Can't ioremap\n");
-		return -ENODEV;
-	}
+		arc_prपूर्णांकk(D_NORMAL, dev, "Can't ioremap\n");
+		वापस -ENODEV;
+	पूर्ण
 
 	/* reserve the irq */
-	if (request_irq(dev->irq, arcnet_interrupt, 0, "arcnet (RIM I)", dev)) {
+	अगर (request_irq(dev->irq, arcnet_पूर्णांकerrupt, 0, "arcnet (RIM I)", dev)) अणु
 		iounmap(p);
 		release_mem_region(dev->mem_start, MIRROR_SIZE);
-		arc_printk(D_NORMAL, dev, "Can't get IRQ %d!\n", dev->irq);
-		return -ENODEV;
-	}
+		arc_prपूर्णांकk(D_NORMAL, dev, "Can't get IRQ %d!\n", dev->irq);
+		वापस -ENODEV;
+	पूर्ण
 
 	shmem = dev->mem_start;
-	arcnet_writeb(TESTvalue, p, COM9026_REG_W_INTMASK);
-	arcnet_writeb(TESTvalue, p, COM9026_REG_W_COMMAND);
+	arcnet_ग_लिखोb(TESTvalue, p, COM9026_REG_W_INTMASK);
+	arcnet_ग_लिखोb(TESTvalue, p, COM9026_REG_W_COMMAND);
 					/* actually the station/node ID */
 
-	/* find the real shared memory start/end points, including mirrors */
+	/* find the real shared memory start/end poपूर्णांकs, including mirrors */
 
 	/* guess the actual size of one "memory mirror" - the number of
 	 * bytes between copies of the shared memory.  On most cards, it's
 	 * 2k (or there are no mirrors at all) but on some, it's 4k.
 	 */
 	mirror_size = MIRROR_SIZE;
-	if (arcnet_readb(p, COM9026_REG_R_STATUS) == TESTvalue &&
+	अगर (arcnet_पढ़ोb(p, COM9026_REG_R_STATUS) == TESTvalue &&
 	    check_mirror(shmem - MIRROR_SIZE, MIRROR_SIZE) == 0 &&
 	    check_mirror(shmem - 2 * MIRROR_SIZE, MIRROR_SIZE) == 1)
 		mirror_size = 2 * MIRROR_SIZE;
 
 	first_mirror = shmem - mirror_size;
-	while (check_mirror(first_mirror, mirror_size) == 1)
+	जबतक (check_mirror(first_mirror, mirror_size) == 1)
 		first_mirror -= mirror_size;
 	first_mirror += mirror_size;
 
 	last_mirror = shmem + mirror_size;
-	while (check_mirror(last_mirror, mirror_size) == 1)
+	जबतक (check_mirror(last_mirror, mirror_size) == 1)
 		last_mirror += mirror_size;
 	last_mirror -= mirror_size;
 
 	dev->mem_start = first_mirror;
 	dev->mem_end = last_mirror + MIRROR_SIZE - 1;
 
-	/* initialize the rest of the device structure. */
+	/* initialize the rest of the device काष्ठाure. */
 
 	lp = netdev_priv(dev);
 	lp->card_name = "RIM I";
 	lp->hw.command = arcrimi_command;
 	lp->hw.status = arcrimi_status;
-	lp->hw.intmask = arcrimi_setmask;
+	lp->hw.पूर्णांकmask = arcrimi_seपंचांगask;
 	lp->hw.reset = arcrimi_reset;
 	lp->hw.owner = THIS_MODULE;
 	lp->hw.copy_to_card = arcrimi_copy_to_card;
@@ -192,193 +193,193 @@ static int __init arcrimi_found(struct net_device *dev)
 	 */
 	iounmap(p);
 	release_mem_region(shmem, MIRROR_SIZE);
-	if (!request_mem_region(dev->mem_start,
+	अगर (!request_mem_region(dev->mem_start,
 				dev->mem_end - dev->mem_start + 1,
-				"arcnet (90xx)")) {
-		arc_printk(D_NORMAL, dev, "Card memory already allocated\n");
-		goto err_free_irq;
-	}
+				"arcnet (90xx)")) अणु
+		arc_prपूर्णांकk(D_NORMAL, dev, "Card memory already allocated\n");
+		जाओ err_मुक्त_irq;
+	पूर्ण
 
 	lp->mem_start = ioremap(dev->mem_start,
 				dev->mem_end - dev->mem_start + 1);
-	if (!lp->mem_start) {
-		arc_printk(D_NORMAL, dev, "Can't remap device memory!\n");
-		goto err_release_mem;
-	}
+	अगर (!lp->mem_start) अणु
+		arc_prपूर्णांकk(D_NORMAL, dev, "Can't remap device memory!\n");
+		जाओ err_release_mem;
+	पूर्ण
 
 	/* get and check the station ID from offset 1 in shmem */
-	dev->dev_addr[0] = arcnet_readb(lp->mem_start, COM9026_REG_R_STATION);
+	dev->dev_addr[0] = arcnet_पढ़ोb(lp->mem_start, COM9026_REG_R_STATION);
 
-	arc_printk(D_NORMAL, dev, "ARCnet RIM I: station %02Xh found at IRQ %d, ShMem %lXh (%ld*%d bytes)\n",
+	arc_prपूर्णांकk(D_NORMAL, dev, "ARCnet RIM I: station %02Xh found at IRQ %d, ShMem %lXh (%ld*%d bytes)\n",
 		   dev->dev_addr[0],
 		   dev->irq, dev->mem_start,
 		   (dev->mem_end - dev->mem_start + 1) / mirror_size,
 		   mirror_size);
 
-	err = register_netdev(dev);
-	if (err)
-		goto err_unmap;
+	err = रेजिस्टर_netdev(dev);
+	अगर (err)
+		जाओ err_unmap;
 
-	return 0;
+	वापस 0;
 
 err_unmap:
 	iounmap(lp->mem_start);
 err_release_mem:
 	release_mem_region(dev->mem_start, dev->mem_end - dev->mem_start + 1);
-err_free_irq:
-	free_irq(dev->irq, dev);
-	return -EIO;
-}
+err_मुक्त_irq:
+	मुक्त_irq(dev->irq, dev);
+	वापस -EIO;
+पूर्ण
 
-/* Do a hardware reset on the card, and set up necessary registers.
+/* Do a hardware reset on the card, and set up necessary रेजिस्टरs.
  *
  * This should be called as little as possible, because it disrupts the
- * token on the network (causes a RECON) and requires a significant delay.
+ * token on the network (causes a RECON) and requires a signअगरicant delay.
  *
- * However, it does make sure the card is in a defined state.
+ * However, it करोes make sure the card is in a defined state.
  */
-static int arcrimi_reset(struct net_device *dev, int really_reset)
-{
-	struct arcnet_local *lp = netdev_priv(dev);
-	void __iomem *ioaddr = lp->mem_start + 0x800;
+अटल पूर्णांक arcrimi_reset(काष्ठा net_device *dev, पूर्णांक really_reset)
+अणु
+	काष्ठा arcnet_local *lp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = lp->mem_start + 0x800;
 
-	arc_printk(D_INIT, dev, "Resetting %s (status=%02Xh)\n",
-		   dev->name, arcnet_readb(ioaddr, COM9026_REG_R_STATUS));
+	arc_prपूर्णांकk(D_INIT, dev, "Resetting %s (status=%02Xh)\n",
+		   dev->name, arcnet_पढ़ोb(ioaddr, COM9026_REG_R_STATUS));
 
-	if (really_reset) {
-		arcnet_writeb(TESTvalue, ioaddr, -0x800);	/* fake reset */
-		return 0;
-	}
+	अगर (really_reset) अणु
+		arcnet_ग_लिखोb(TESTvalue, ioaddr, -0x800);	/* fake reset */
+		वापस 0;
+	पूर्ण
 	/* clear flags & end reset */
-	arcnet_writeb(CFLAGScmd | RESETclear, ioaddr, COM9026_REG_W_COMMAND);
-	arcnet_writeb(CFLAGScmd | CONFIGclear, ioaddr, COM9026_REG_W_COMMAND);
+	arcnet_ग_लिखोb(CFLAGScmd | RESETclear, ioaddr, COM9026_REG_W_COMMAND);
+	arcnet_ग_लिखोb(CFLAGScmd | CONFIGclear, ioaddr, COM9026_REG_W_COMMAND);
 
 	/* enable extended (512-byte) packets */
-	arcnet_writeb(CONFIGcmd | EXTconf, ioaddr, COM9026_REG_W_COMMAND);
+	arcnet_ग_लिखोb(CONFIGcmd | EXTconf, ioaddr, COM9026_REG_W_COMMAND);
 
-	/* done!  return success. */
-	return 0;
-}
+	/* करोne!  वापस success. */
+	वापस 0;
+पूर्ण
 
-static void arcrimi_setmask(struct net_device *dev, int mask)
-{
-	struct arcnet_local *lp = netdev_priv(dev);
-	void __iomem *ioaddr = lp->mem_start + 0x800;
+अटल व्योम arcrimi_seपंचांगask(काष्ठा net_device *dev, पूर्णांक mask)
+अणु
+	काष्ठा arcnet_local *lp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = lp->mem_start + 0x800;
 
-	arcnet_writeb(mask, ioaddr, COM9026_REG_W_INTMASK);
-}
+	arcnet_ग_लिखोb(mask, ioaddr, COM9026_REG_W_INTMASK);
+पूर्ण
 
-static int arcrimi_status(struct net_device *dev)
-{
-	struct arcnet_local *lp = netdev_priv(dev);
-	void __iomem *ioaddr = lp->mem_start + 0x800;
+अटल पूर्णांक arcrimi_status(काष्ठा net_device *dev)
+अणु
+	काष्ठा arcnet_local *lp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = lp->mem_start + 0x800;
 
-	return arcnet_readb(ioaddr, COM9026_REG_R_STATUS);
-}
+	वापस arcnet_पढ़ोb(ioaddr, COM9026_REG_R_STATUS);
+पूर्ण
 
-static void arcrimi_command(struct net_device *dev, int cmd)
-{
-	struct arcnet_local *lp = netdev_priv(dev);
-	void __iomem *ioaddr = lp->mem_start + 0x800;
+अटल व्योम arcrimi_command(काष्ठा net_device *dev, पूर्णांक cmd)
+अणु
+	काष्ठा arcnet_local *lp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = lp->mem_start + 0x800;
 
-	arcnet_writeb(cmd, ioaddr, COM9026_REG_W_COMMAND);
-}
+	arcnet_ग_लिखोb(cmd, ioaddr, COM9026_REG_W_COMMAND);
+पूर्ण
 
-static void arcrimi_copy_to_card(struct net_device *dev, int bufnum, int offset,
-				 void *buf, int count)
-{
-	struct arcnet_local *lp = netdev_priv(dev);
-	void __iomem *memaddr = lp->mem_start + 0x800 + bufnum * 512 + offset;
+अटल व्योम arcrimi_copy_to_card(काष्ठा net_device *dev, पूर्णांक bufnum, पूर्णांक offset,
+				 व्योम *buf, पूर्णांक count)
+अणु
+	काष्ठा arcnet_local *lp = netdev_priv(dev);
+	व्योम __iomem *memaddr = lp->mem_start + 0x800 + bufnum * 512 + offset;
 
-	TIME(dev, "memcpy_toio", count, memcpy_toio(memaddr, buf, count));
-}
+	TIME(dev, "memcpy_toio", count, स_नकल_toio(memaddr, buf, count));
+पूर्ण
 
-static void arcrimi_copy_from_card(struct net_device *dev, int bufnum,
-				   int offset, void *buf, int count)
-{
-	struct arcnet_local *lp = netdev_priv(dev);
-	void __iomem *memaddr = lp->mem_start + 0x800 + bufnum * 512 + offset;
+अटल व्योम arcrimi_copy_from_card(काष्ठा net_device *dev, पूर्णांक bufnum,
+				   पूर्णांक offset, व्योम *buf, पूर्णांक count)
+अणु
+	काष्ठा arcnet_local *lp = netdev_priv(dev);
+	व्योम __iomem *memaddr = lp->mem_start + 0x800 + bufnum * 512 + offset;
 
-	TIME(dev, "memcpy_fromio", count, memcpy_fromio(buf, memaddr, count));
-}
+	TIME(dev, "memcpy_fromio", count, स_नकल_fromio(buf, memaddr, count));
+पूर्ण
 
-static int node;
-static int io;			/* use the insmod io= irq= node= options */
-static int irq;
-static char device[9];		/* use eg. device=arc1 to change name */
+अटल पूर्णांक node;
+अटल पूर्णांक io;			/* use the insmod io= irq= node= options */
+अटल पूर्णांक irq;
+अटल अक्षर device[9];		/* use eg. device=arc1 to change name */
 
-module_param(node, int, 0);
-module_param(io, int, 0);
-module_param(irq, int, 0);
-module_param_string(device, device, sizeof(device), 0);
+module_param(node, पूर्णांक, 0);
+module_param(io, पूर्णांक, 0);
+module_param(irq, पूर्णांक, 0);
+module_param_string(device, device, माप(device), 0);
 MODULE_LICENSE("GPL");
 
-static struct net_device *my_dev;
+अटल काष्ठा net_device *my_dev;
 
-static int __init arc_rimi_init(void)
-{
-	struct net_device *dev;
+अटल पूर्णांक __init arc_rimi_init(व्योम)
+अणु
+	काष्ठा net_device *dev;
 
 	dev = alloc_arcdev(device);
-	if (!dev)
-		return -ENOMEM;
+	अगर (!dev)
+		वापस -ENOMEM;
 
-	if (node && node != 0xff)
+	अगर (node && node != 0xff)
 		dev->dev_addr[0] = node;
 
 	dev->mem_start = io;
 	dev->irq = irq;
-	if (dev->irq == 2)
+	अगर (dev->irq == 2)
 		dev->irq = 9;
 
-	if (arcrimi_probe(dev)) {
-		free_arcdev(dev);
-		return -EIO;
-	}
+	अगर (arcrimi_probe(dev)) अणु
+		मुक्त_arcdev(dev);
+		वापस -EIO;
+	पूर्ण
 
 	my_dev = dev;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit arc_rimi_exit(void)
-{
-	struct net_device *dev = my_dev;
-	struct arcnet_local *lp = netdev_priv(dev);
+अटल व्योम __निकास arc_rimi_निकास(व्योम)
+अणु
+	काष्ठा net_device *dev = my_dev;
+	काष्ठा arcnet_local *lp = netdev_priv(dev);
 
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 	iounmap(lp->mem_start);
 	release_mem_region(dev->mem_start, dev->mem_end - dev->mem_start + 1);
-	free_irq(dev->irq, dev);
-	free_arcdev(dev);
-}
+	मुक्त_irq(dev->irq, dev);
+	मुक्त_arcdev(dev);
+पूर्ण
 
-#ifndef MODULE
-static int __init arcrimi_setup(char *s)
-{
-	int ints[8];
+#अगर_अघोषित MODULE
+अटल पूर्णांक __init arcrimi_setup(अक्षर *s)
+अणु
+	पूर्णांक पूर्णांकs[8];
 
-	s = get_options(s, 8, ints);
-	if (!ints[0])
-		return 1;
-	switch (ints[0]) {
-	default:		/* ERROR */
+	s = get_options(s, 8, पूर्णांकs);
+	अगर (!पूर्णांकs[0])
+		वापस 1;
+	चयन (पूर्णांकs[0]) अणु
+	शेष:		/* ERROR */
 		pr_err("Too many arguments\n");
 		fallthrough;
-	case 3:		/* Node ID */
-		node = ints[3];
+	हाल 3:		/* Node ID */
+		node = पूर्णांकs[3];
 		fallthrough;
-	case 2:		/* IRQ */
-		irq = ints[2];
+	हाल 2:		/* IRQ */
+		irq = पूर्णांकs[2];
 		fallthrough;
-	case 1:		/* IO address */
-		io = ints[1];
-	}
-	if (*s)
-		snprintf(device, sizeof(device), "%s", s);
-	return 1;
-}
+	हाल 1:		/* IO address */
+		io = पूर्णांकs[1];
+	पूर्ण
+	अगर (*s)
+		snम_लिखो(device, माप(device), "%s", s);
+	वापस 1;
+पूर्ण
 __setup("arcrimi=", arcrimi_setup);
-#endif				/* MODULE */
+#पूर्ण_अगर				/* MODULE */
 
 module_init(arc_rimi_init)
-module_exit(arc_rimi_exit)
+module_निकास(arc_rimi_निकास)

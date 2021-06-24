@@ -1,212 +1,213 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * ISP1362 HCD (Host Controller Driver) for USB.
+ * ISP1362 HCD (Host Controller Driver) क्रम USB.
  *
  * Copyright (C) 2005 Lothar Wassmann <LW@KARO-electronics.de>
  *
- * Derived from the SL811 HCD, rewritten for ISP116x.
+ * Derived from the SL811 HCD, rewritten क्रम ISP116x.
  * Copyright (C) 2005 Olav Kongas <ok@artecdesign.ee>
  *
  * Portions:
- * Copyright (C) 2004 Psion Teklogix (for NetBook PRO)
+ * Copyright (C) 2004 Psion Teklogix (क्रम NetBook PRO)
  * Copyright (C) 2004 David Brownell
  */
 
 /*
  * The ISP1362 chip requires a large delay (300ns and 462ns) between
- * accesses to the address and data register.
+ * accesses to the address and data रेजिस्टर.
  * The following timing options exist:
  *
- * 1. Configure your memory controller to add such delays if it can (the best)
- * 2. Implement platform-specific delay function possibly
+ * 1. Configure your memory controller to add such delays अगर it can (the best)
+ * 2. Implement platक्रमm-specअगरic delay function possibly
  *    combined with configuring the memory controller; see
- *    include/linux/usb_isp1362.h for more info.
+ *    include/linux/usb_isp1362.h क्रम more info.
  * 3. Use ndelay (easiest, poorest).
  *
  * Use the corresponding macros USE_PLATFORM_DELAY and USE_NDELAY in the
- * platform specific section of isp1362.h to select the appropriate variant.
+ * platक्रमm specअगरic section of isp1362.h to select the appropriate variant.
  *
- * Also note that according to the Philips "ISP1362 Errata" document
- * Rev 1.00 from 27 May data corruption may occur when the #WR signal
- * is reasserted (even with #CS deasserted) within 132ns after a
- * write cycle to any controller register. If the hardware doesn't
+ * Also note that according to the Philips "ISP1362 Errata" करोcument
+ * Rev 1.00 from 27 May data corruption may occur when the #WR संकेत
+ * is reनिश्चितed (even with #CS deनिश्चितed) within 132ns after a
+ * ग_लिखो cycle to any controller रेजिस्टर. If the hardware करोesn't
  * implement the recommended fix (gating the #WR with #CS) software
- * must ensure that no further write cycle (not necessarily to the chip!)
- * is issued by the CPU within this interval.
+ * must ensure that no further ग_लिखो cycle (not necessarily to the chip!)
+ * is issued by the CPU within this पूर्णांकerval.
 
  * For PXA25x this can be ensured by using VLIO with the maximum
- * recovery time (MSCx = 0x7f8c) with a memory clock of 99.53 MHz.
+ * recovery समय (MSCx = 0x7f8c) with a memory घड़ी of 99.53 MHz.
  */
 
-#undef ISP1362_DEBUG
+#अघोषित ISP1362_DEBUG
 
 /*
- * The PXA255 UDC apparently doesn't handle GET_STATUS, GET_CONFIG and
+ * The PXA255 UDC apparently करोesn't handle GET_STATUS, GET_CONFIG and
  * GET_INTERFACE requests correctly when the SETUP and DATA stages of the
  * requests are carried out in separate frames. This will delay any SETUP
  * packets until the start of the next frame so that this situation is
  * unlikely to occur (and makes usbtest happy running with a PXA255 target
  * device).
  */
-#undef BUGGY_PXA2XX_UDC_USBTEST
+#अघोषित BUGGY_PXA2XX_UDC_USBTEST
 
-#undef PTD_TRACE
-#undef URB_TRACE
-#undef VERBOSE
-#undef REGISTERS
+#अघोषित PTD_TRACE
+#अघोषित URB_TRACE
+#अघोषित VERBOSE
+#अघोषित REGISTERS
 
 /* This enables a memory test on the ISP1362 chip memory to make sure the
  * chip access timing is correct.
  */
-#undef CHIP_BUFFER_TEST
+#अघोषित CHIP_BUFFER_TEST
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/ioport.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/list.h>
-#include <linux/interrupt.h>
-#include <linux/usb.h>
-#include <linux/usb/isp1362.h>
-#include <linux/usb/hcd.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/io.h>
-#include <linux/bitmap.h>
-#include <linux/prefetch.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/list.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/isp1362.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
 
-#include <asm/irq.h>
-#include <asm/byteorder.h>
-#include <asm/unaligned.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/unaligned.h>
 
-static int dbg_level;
-#ifdef ISP1362_DEBUG
-module_param(dbg_level, int, 0644);
-#else
-module_param(dbg_level, int, 0);
-#endif
+अटल पूर्णांक dbg_level;
+#अगर_घोषित ISP1362_DEBUG
+module_param(dbg_level, पूर्णांक, 0644);
+#अन्यथा
+module_param(dbg_level, पूर्णांक, 0);
+#पूर्ण_अगर
 
-#include "../core/usb.h"
-#include "isp1362.h"
+#समावेश "../core/usb.h"
+#समावेश "isp1362.h"
 
 
-#define DRIVER_VERSION	"2005-04-04"
-#define DRIVER_DESC	"ISP1362 USB Host Controller Driver"
+#घोषणा DRIVER_VERSION	"2005-04-04"
+#घोषणा DRIVER_DESC	"ISP1362 USB Host Controller Driver"
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-static const char hcd_name[] = "isp1362-hcd";
+अटल स्थिर अक्षर hcd_name[] = "isp1362-hcd";
 
-static void isp1362_hc_stop(struct usb_hcd *hcd);
-static int isp1362_hc_start(struct usb_hcd *hcd);
+अटल व्योम isp1362_hc_stop(काष्ठा usb_hcd *hcd);
+अटल पूर्णांक isp1362_hc_start(काष्ठा usb_hcd *hcd);
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * When called from the interrupthandler only isp1362_hcd->irqenb is modified,
- * since the interrupt handler will write isp1362_hcd->irqenb to HCuPINT upon
+ * When called from the पूर्णांकerrupthandler only isp1362_hcd->irqenb is modअगरied,
+ * since the पूर्णांकerrupt handler will ग_लिखो isp1362_hcd->irqenb to HCuPINT upon
  * completion.
- * We don't need a 'disable' counterpart, since interrupts will be disabled
- * only by the interrupt handler.
+ * We करोn't need a 'disable' counterpart, since पूर्णांकerrupts will be disabled
+ * only by the पूर्णांकerrupt handler.
  */
-static inline void isp1362_enable_int(struct isp1362_hcd *isp1362_hcd, u16 mask)
-{
-	if ((isp1362_hcd->irqenb | mask) == isp1362_hcd->irqenb)
-		return;
-	if (mask & ~isp1362_hcd->irqenb)
-		isp1362_write_reg16(isp1362_hcd, HCuPINT, mask & ~isp1362_hcd->irqenb);
+अटल अंतरभूत व्योम isp1362_enable_पूर्णांक(काष्ठा isp1362_hcd *isp1362_hcd, u16 mask)
+अणु
+	अगर ((isp1362_hcd->irqenb | mask) == isp1362_hcd->irqenb)
+		वापस;
+	अगर (mask & ~isp1362_hcd->irqenb)
+		isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINT, mask & ~isp1362_hcd->irqenb);
 	isp1362_hcd->irqenb |= mask;
-	if (isp1362_hcd->irq_active)
-		return;
-	isp1362_write_reg16(isp1362_hcd, HCuPINTENB, isp1362_hcd->irqenb);
-}
+	अगर (isp1362_hcd->irq_active)
+		वापस;
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINTENB, isp1362_hcd->irqenb);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static inline struct isp1362_ep_queue *get_ptd_queue(struct isp1362_hcd *isp1362_hcd,
+अटल अंतरभूत काष्ठा isp1362_ep_queue *get_ptd_queue(काष्ठा isp1362_hcd *isp1362_hcd,
 						     u16 offset)
-{
-	struct isp1362_ep_queue *epq = NULL;
+अणु
+	काष्ठा isp1362_ep_queue *epq = शून्य;
 
-	if (offset < isp1362_hcd->istl_queue[1].buf_start)
+	अगर (offset < isp1362_hcd->istl_queue[1].buf_start)
 		epq = &isp1362_hcd->istl_queue[0];
-	else if (offset < isp1362_hcd->intl_queue.buf_start)
+	अन्यथा अगर (offset < isp1362_hcd->पूर्णांकl_queue.buf_start)
 		epq = &isp1362_hcd->istl_queue[1];
-	else if (offset < isp1362_hcd->atl_queue.buf_start)
-		epq = &isp1362_hcd->intl_queue;
-	else if (offset < isp1362_hcd->atl_queue.buf_start +
+	अन्यथा अगर (offset < isp1362_hcd->atl_queue.buf_start)
+		epq = &isp1362_hcd->पूर्णांकl_queue;
+	अन्यथा अगर (offset < isp1362_hcd->atl_queue.buf_start +
 		   isp1362_hcd->atl_queue.buf_size)
 		epq = &isp1362_hcd->atl_queue;
 
-	if (epq)
+	अगर (epq)
 		DBG(1, "%s: PTD $%04x is on %s queue\n", __func__, offset, epq->name);
-	else
+	अन्यथा
 		pr_warn("%s: invalid PTD $%04x\n", __func__, offset);
 
-	return epq;
-}
+	वापस epq;
+पूर्ण
 
-static inline int get_ptd_offset(struct isp1362_ep_queue *epq, u8 index)
-{
-	int offset;
+अटल अंतरभूत पूर्णांक get_ptd_offset(काष्ठा isp1362_ep_queue *epq, u8 index)
+अणु
+	पूर्णांक offset;
 
-	if (index * epq->blk_size > epq->buf_size) {
+	अगर (index * epq->blk_size > epq->buf_size) अणु
 		pr_warn("%s: Bad %s index %d(%d)\n",
 			__func__, epq->name, index,
 			epq->buf_size / epq->blk_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	offset = epq->buf_start + index * epq->blk_size;
 	DBG(3, "%s: %s PTD[%02x] # %04x\n", __func__, epq->name, index, offset);
 
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static inline u16 max_transfer_size(struct isp1362_ep_queue *epq, size_t size,
-				    int mps)
-{
-	u16 xfer_size = min_t(size_t, MAX_XFER_SIZE, size);
+अटल अंतरभूत u16 max_transfer_size(काष्ठा isp1362_ep_queue *epq, माप_प्रकार size,
+				    पूर्णांक mps)
+अणु
+	u16 xfer_size = min_t(माप_प्रकार, MAX_XFER_SIZE, size);
 
-	xfer_size = min_t(size_t, xfer_size, epq->buf_avail * epq->blk_size - PTD_HEADER_SIZE);
-	if (xfer_size < size && xfer_size % mps)
+	xfer_size = min_t(माप_प्रकार, xfer_size, epq->buf_avail * epq->blk_size - PTD_HEADER_SIZE);
+	अगर (xfer_size < size && xfer_size % mps)
 		xfer_size -= xfer_size % mps;
 
-	return xfer_size;
-}
+	वापस xfer_size;
+पूर्ण
 
-static int claim_ptd_buffers(struct isp1362_ep_queue *epq,
-			     struct isp1362_ep *ep, u16 len)
-{
-	int ptd_offset = -EINVAL;
-	int num_ptds = ((len + PTD_HEADER_SIZE - 1) / epq->blk_size) + 1;
-	int found;
+अटल पूर्णांक claim_ptd_buffers(काष्ठा isp1362_ep_queue *epq,
+			     काष्ठा isp1362_ep *ep, u16 len)
+अणु
+	पूर्णांक ptd_offset = -EINVAL;
+	पूर्णांक num_ptds = ((len + PTD_HEADER_SIZE - 1) / epq->blk_size) + 1;
+	पूर्णांक found;
 
 	BUG_ON(len > epq->buf_size);
 
-	if (!epq->buf_avail)
-		return -ENOMEM;
+	अगर (!epq->buf_avail)
+		वापस -ENOMEM;
 
-	if (ep->num_ptds)
+	अगर (ep->num_ptds)
 		pr_err("%s: %s len %d/%d num_ptds %d buf_map %08lx skip_map %08lx\n", __func__,
 		    epq->name, len, epq->blk_size, num_ptds, epq->buf_map, epq->skip_map);
 	BUG_ON(ep->num_ptds != 0);
 
-	found = bitmap_find_next_zero_area(&epq->buf_map, epq->buf_count, 0,
+	found = biपंचांगap_find_next_zero_area(&epq->buf_map, epq->buf_count, 0,
 						num_ptds, 0);
-	if (found >= epq->buf_count)
-		return -EOVERFLOW;
+	अगर (found >= epq->buf_count)
+		वापस -EOVERFLOW;
 
 	DBG(1, "%s: Found %d PTDs[%d] for %d/%d byte\n", __func__,
-	    num_ptds, found, len, (int)(epq->blk_size - PTD_HEADER_SIZE));
+	    num_ptds, found, len, (पूर्णांक)(epq->blk_size - PTD_HEADER_SIZE));
 	ptd_offset = get_ptd_offset(epq, found);
 	WARN_ON(ptd_offset < 0);
 	ep->ptd_offset = ptd_offset;
@@ -214,27 +215,27 @@ static int claim_ptd_buffers(struct isp1362_ep_queue *epq,
 	epq->buf_avail -= num_ptds;
 	BUG_ON(epq->buf_avail > epq->buf_count);
 	ep->ptd_index = found;
-	bitmap_set(&epq->buf_map, found, num_ptds);
+	biपंचांगap_set(&epq->buf_map, found, num_ptds);
 	DBG(1, "%s: Done %s PTD[%d] $%04x, avail %d count %d claimed %d %08lx:%08lx\n",
 	    __func__, epq->name, ep->ptd_index, ep->ptd_offset,
 	    epq->buf_avail, epq->buf_count, num_ptds, epq->buf_map, epq->skip_map);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static inline void release_ptd_buffers(struct isp1362_ep_queue *epq, struct isp1362_ep *ep)
-{
-	int last = ep->ptd_index + ep->num_ptds;
+अटल अंतरभूत व्योम release_ptd_buffers(काष्ठा isp1362_ep_queue *epq, काष्ठा isp1362_ep *ep)
+अणु
+	पूर्णांक last = ep->ptd_index + ep->num_ptds;
 
-	if (last > epq->buf_count)
+	अगर (last > epq->buf_count)
 		pr_err("%s: ep %p req %d len %d %s PTD[%d] $%04x num_ptds %d buf_count %d buf_avail %d buf_map %08lx skip_map %08lx\n",
 		    __func__, ep, ep->num_req, ep->length, epq->name, ep->ptd_index,
 		    ep->ptd_offset, ep->num_ptds, epq->buf_count, epq->buf_avail,
 		    epq->buf_map, epq->skip_map);
 	BUG_ON(last > epq->buf_count);
 
-	bitmap_clear(&epq->buf_map, ep->ptd_index, ep->num_ptds);
-	bitmap_set(&epq->skip_map, ep->ptd_index, ep->num_ptds);
+	biपंचांगap_clear(&epq->buf_map, ep->ptd_index, ep->num_ptds);
+	biपंचांगap_set(&epq->skip_map, ep->ptd_index, ep->num_ptds);
 	epq->buf_avail += ep->num_ptds;
 	epq->ptd_count--;
 
@@ -250,119 +251,119 @@ static inline void release_ptd_buffers(struct isp1362_ep_queue *epq, struct isp1
 	ep->num_ptds = 0;
 	ep->ptd_offset = -EINVAL;
 	ep->ptd_index = -EINVAL;
-}
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /*
   Set up PTD's.
 */
-static void prepare_ptd(struct isp1362_hcd *isp1362_hcd, struct urb *urb,
-			struct isp1362_ep *ep, struct isp1362_ep_queue *epq,
+अटल व्योम prepare_ptd(काष्ठा isp1362_hcd *isp1362_hcd, काष्ठा urb *urb,
+			काष्ठा isp1362_ep *ep, काष्ठा isp1362_ep_queue *epq,
 			u16 fno)
-{
-	struct ptd *ptd;
-	int toggle;
-	int dir;
+अणु
+	काष्ठा ptd *ptd;
+	पूर्णांक toggle;
+	पूर्णांक dir;
 	u16 len;
-	size_t buf_len = urb->transfer_buffer_length - urb->actual_length;
+	माप_प्रकार buf_len = urb->transfer_buffer_length - urb->actual_length;
 
 	DBG(3, "%s: %s ep %p\n", __func__, epq->name, ep);
 
 	ptd = &ep->ptd;
 
-	ep->data = (unsigned char *)urb->transfer_buffer + urb->actual_length;
+	ep->data = (अचिन्हित अक्षर *)urb->transfer_buffer + urb->actual_length;
 
-	switch (ep->nextpid) {
-	case USB_PID_IN:
+	चयन (ep->nextpid) अणु
+	हाल USB_PID_IN:
 		toggle = usb_gettoggle(urb->dev, ep->epnum, 0);
-		dir = PTD_DIR_IN;
-		if (usb_pipecontrol(urb->pipe)) {
-			len = min_t(size_t, ep->maxpacket, buf_len);
-		} else if (usb_pipeisoc(urb->pipe)) {
-			len = min_t(size_t, urb->iso_frame_desc[fno].length, MAX_XFER_SIZE);
+		dir = PTD_सूची_IN;
+		अगर (usb_pipecontrol(urb->pipe)) अणु
+			len = min_t(माप_प्रकार, ep->maxpacket, buf_len);
+		पूर्ण अन्यथा अगर (usb_pipeisoc(urb->pipe)) अणु
+			len = min_t(माप_प्रकार, urb->iso_frame_desc[fno].length, MAX_XFER_SIZE);
 			ep->data = urb->transfer_buffer + urb->iso_frame_desc[fno].offset;
-		} else
+		पूर्ण अन्यथा
 			len = max_transfer_size(epq, buf_len, ep->maxpacket);
 		DBG(1, "%s: IN    len %d/%d/%d from URB\n", __func__, len, ep->maxpacket,
-		    (int)buf_len);
-		break;
-	case USB_PID_OUT:
+		    (पूर्णांक)buf_len);
+		अवरोध;
+	हाल USB_PID_OUT:
 		toggle = usb_gettoggle(urb->dev, ep->epnum, 1);
-		dir = PTD_DIR_OUT;
-		if (usb_pipecontrol(urb->pipe))
-			len = min_t(size_t, ep->maxpacket, buf_len);
-		else if (usb_pipeisoc(urb->pipe))
-			len = min_t(size_t, urb->iso_frame_desc[0].length, MAX_XFER_SIZE);
-		else
+		dir = PTD_सूची_OUT;
+		अगर (usb_pipecontrol(urb->pipe))
+			len = min_t(माप_प्रकार, ep->maxpacket, buf_len);
+		अन्यथा अगर (usb_pipeisoc(urb->pipe))
+			len = min_t(माप_प्रकार, urb->iso_frame_desc[0].length, MAX_XFER_SIZE);
+		अन्यथा
 			len = max_transfer_size(epq, buf_len, ep->maxpacket);
-		if (len == 0)
+		अगर (len == 0)
 			pr_info("%s: Sending ZERO packet: %d\n", __func__,
 			     urb->transfer_flags & URB_ZERO_PACKET);
 		DBG(1, "%s: OUT   len %d/%d/%d from URB\n", __func__, len, ep->maxpacket,
-		    (int)buf_len);
-		break;
-	case USB_PID_SETUP:
+		    (पूर्णांक)buf_len);
+		अवरोध;
+	हाल USB_PID_SETUP:
 		toggle = 0;
-		dir = PTD_DIR_SETUP;
-		len = sizeof(struct usb_ctrlrequest);
+		dir = PTD_सूची_SETUP;
+		len = माप(काष्ठा usb_ctrlrequest);
 		DBG(1, "%s: SETUP len %d\n", __func__, len);
 		ep->data = urb->setup_packet;
-		break;
-	case USB_PID_ACK:
+		अवरोध;
+	हाल USB_PID_ACK:
 		toggle = 1;
 		len = 0;
 		dir = (urb->transfer_buffer_length && usb_pipein(urb->pipe)) ?
-			PTD_DIR_OUT : PTD_DIR_IN;
+			PTD_सूची_OUT : PTD_सूची_IN;
 		DBG(1, "%s: ACK   len %d\n", __func__, len);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		toggle = dir = len = 0;
 		pr_err("%s@%d: ep->nextpid %02x\n", __func__, __LINE__, ep->nextpid);
 		BUG_ON(1);
-	}
+	पूर्ण
 
 	ep->length = len;
-	if (!len)
-		ep->data = NULL;
+	अगर (!len)
+		ep->data = शून्य;
 
 	ptd->count = PTD_CC_MSK | PTD_ACTIVE_MSK | PTD_TOGGLE(toggle);
 	ptd->mps = PTD_MPS(ep->maxpacket) | PTD_SPD(urb->dev->speed == USB_SPEED_LOW) |
 		PTD_EP(ep->epnum);
-	ptd->len = PTD_LEN(len) | PTD_DIR(dir);
+	ptd->len = PTD_LEN(len) | PTD_सूची(dir);
 	ptd->faddr = PTD_FA(usb_pipedevice(urb->pipe));
 
-	if (usb_pipeint(urb->pipe)) {
+	अगर (usb_pipeपूर्णांक(urb->pipe)) अणु
 		ptd->faddr |= PTD_SF_INT(ep->branch);
-		ptd->faddr |= PTD_PR(ep->interval ? __ffs(ep->interval) : 0);
-	}
-	if (usb_pipeisoc(urb->pipe))
+		ptd->faddr |= PTD_PR(ep->पूर्णांकerval ? __ffs(ep->पूर्णांकerval) : 0);
+	पूर्ण
+	अगर (usb_pipeisoc(urb->pipe))
 		ptd->faddr |= PTD_SF_ISO(fno);
 
 	DBG(1, "%s: Finished\n", __func__);
-}
+पूर्ण
 
-static void isp1362_write_ptd(struct isp1362_hcd *isp1362_hcd, struct isp1362_ep *ep,
-			      struct isp1362_ep_queue *epq)
-{
-	struct ptd *ptd = &ep->ptd;
-	int len = PTD_GET_DIR(ptd) == PTD_DIR_IN ? 0 : ep->length;
+अटल व्योम isp1362_ग_लिखो_ptd(काष्ठा isp1362_hcd *isp1362_hcd, काष्ठा isp1362_ep *ep,
+			      काष्ठा isp1362_ep_queue *epq)
+अणु
+	काष्ठा ptd *ptd = &ep->ptd;
+	पूर्णांक len = PTD_GET_सूची(ptd) == PTD_सूची_IN ? 0 : ep->length;
 
 	prefetch(ptd);
-	isp1362_write_buffer(isp1362_hcd, ptd, ep->ptd_offset, PTD_HEADER_SIZE);
-	if (len)
-		isp1362_write_buffer(isp1362_hcd, ep->data,
+	isp1362_ग_लिखो_buffer(isp1362_hcd, ptd, ep->ptd_offset, PTD_HEADER_SIZE);
+	अगर (len)
+		isp1362_ग_लिखो_buffer(isp1362_hcd, ep->data,
 				     ep->ptd_offset + PTD_HEADER_SIZE, len);
 
 	dump_ptd(ptd);
 	dump_ptd_out_data(ptd, ep->data);
-}
+पूर्ण
 
-static void isp1362_read_ptd(struct isp1362_hcd *isp1362_hcd, struct isp1362_ep *ep,
-			     struct isp1362_ep_queue *epq)
-{
-	struct ptd *ptd = &ep->ptd;
-	int act_len;
+अटल व्योम isp1362_पढ़ो_ptd(काष्ठा isp1362_hcd *isp1362_hcd, काष्ठा isp1362_ep *ep,
+			     काष्ठा isp1362_ep_queue *epq)
+अणु
+	काष्ठा ptd *ptd = &ep->ptd;
+	पूर्णांक act_len;
 
 	WARN_ON(list_empty(&ep->active));
 	BUG_ON(ep->ptd_offset < 0);
@@ -371,35 +372,35 @@ static void isp1362_read_ptd(struct isp1362_hcd *isp1362_hcd, struct isp1362_ep 
 	DBG(1, "%s: ep %p removed from active list %p\n", __func__, ep, &epq->active);
 
 	prefetchw(ptd);
-	isp1362_read_buffer(isp1362_hcd, ptd, ep->ptd_offset, PTD_HEADER_SIZE);
+	isp1362_पढ़ो_buffer(isp1362_hcd, ptd, ep->ptd_offset, PTD_HEADER_SIZE);
 	dump_ptd(ptd);
 	act_len = PTD_GET_COUNT(ptd);
-	if (PTD_GET_DIR(ptd) != PTD_DIR_IN || act_len == 0)
-		return;
-	if (act_len > ep->length)
+	अगर (PTD_GET_सूची(ptd) != PTD_सूची_IN || act_len == 0)
+		वापस;
+	अगर (act_len > ep->length)
 		pr_err("%s: ep %p PTD $%04x act_len %d ep->length %d\n", __func__, ep,
 			 ep->ptd_offset, act_len, ep->length);
 	BUG_ON(act_len > ep->length);
 	/* Only transfer the amount of data that has actually been overwritten
-	 * in the chip buffer. We don't want any data that doesn't belong to the
+	 * in the chip buffer. We करोn't want any data that doesn't beदीर्घ to the
 	 * transfer to leak out of the chip to the callers transfer buffer!
 	 */
 	prefetchw(ep->data);
-	isp1362_read_buffer(isp1362_hcd, ep->data,
+	isp1362_पढ़ो_buffer(isp1362_hcd, ep->data,
 			    ep->ptd_offset + PTD_HEADER_SIZE, act_len);
 	dump_ptd_in_data(ptd, ep->data);
-}
+पूर्ण
 
 /*
  * INT PTDs will stay in the chip until data is available.
- * This function will remove a PTD from the chip when the URB is dequeued.
+ * This function will हटाओ a PTD from the chip when the URB is dequeued.
  * Must be called with the spinlock held and IRQs disabled
  */
-static void remove_ptd(struct isp1362_hcd *isp1362_hcd, struct isp1362_ep *ep)
+अटल व्योम हटाओ_ptd(काष्ठा isp1362_hcd *isp1362_hcd, काष्ठा isp1362_ep *ep)
 
-{
-	int index;
-	struct isp1362_ep_queue *epq;
+अणु
+	पूर्णांक index;
+	काष्ठा isp1362_ep_queue *epq;
 
 	DBG(1, "%s: ep %p PTD[%d] $%04x\n", __func__, ep, ep->ptd_index, ep->ptd_offset);
 	BUG_ON(ep->ptd_offset < 0);
@@ -407,58 +408,58 @@ static void remove_ptd(struct isp1362_hcd *isp1362_hcd, struct isp1362_ep *ep)
 	epq = get_ptd_queue(isp1362_hcd, ep->ptd_offset);
 	BUG_ON(!epq);
 
-	/* put ep in remove_list for cleanup */
-	WARN_ON(!list_empty(&ep->remove_list));
-	list_add_tail(&ep->remove_list, &isp1362_hcd->remove_list);
-	/* let SOF interrupt handle the cleanup */
-	isp1362_enable_int(isp1362_hcd, HCuPINT_SOF);
+	/* put ep in हटाओ_list क्रम cleanup */
+	WARN_ON(!list_empty(&ep->हटाओ_list));
+	list_add_tail(&ep->हटाओ_list, &isp1362_hcd->हटाओ_list);
+	/* let SOF पूर्णांकerrupt handle the cleanup */
+	isp1362_enable_पूर्णांक(isp1362_hcd, HCuPINT_SOF);
 
 	index = ep->ptd_index;
-	if (index < 0)
-		/* ISO queues don't have SKIP registers */
-		return;
+	अगर (index < 0)
+		/* ISO queues करोn't have SKIP रेजिस्टरs */
+		वापस;
 
 	DBG(1, "%s: Disabling PTD[%02x] $%04x %08lx|%08x\n", __func__,
 	    index, ep->ptd_offset, epq->skip_map, 1 << index);
 
 	/* prevent further processing of PTD (will be effective after next SOF) */
 	epq->skip_map |= 1 << index;
-	if (epq == &isp1362_hcd->atl_queue) {
+	अगर (epq == &isp1362_hcd->atl_queue) अणु
 		DBG(2, "%s: ATLSKIP = %08x -> %08lx\n", __func__,
-		    isp1362_read_reg32(isp1362_hcd, HCATLSKIP), epq->skip_map);
-		isp1362_write_reg32(isp1362_hcd, HCATLSKIP, epq->skip_map);
-		if (~epq->skip_map == 0)
+		    isp1362_पढ़ो_reg32(isp1362_hcd, HCATLSKIP), epq->skip_map);
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCATLSKIP, epq->skip_map);
+		अगर (~epq->skip_map == 0)
 			isp1362_clr_mask16(isp1362_hcd, HCBUFSTAT, HCBUFSTAT_ATL_ACTIVE);
-	} else if (epq == &isp1362_hcd->intl_queue) {
+	पूर्ण अन्यथा अगर (epq == &isp1362_hcd->पूर्णांकl_queue) अणु
 		DBG(2, "%s: INTLSKIP = %08x -> %08lx\n", __func__,
-		    isp1362_read_reg32(isp1362_hcd, HCINTLSKIP), epq->skip_map);
-		isp1362_write_reg32(isp1362_hcd, HCINTLSKIP, epq->skip_map);
-		if (~epq->skip_map == 0)
+		    isp1362_पढ़ो_reg32(isp1362_hcd, HCINTLSKIP), epq->skip_map);
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCINTLSKIP, epq->skip_map);
+		अगर (~epq->skip_map == 0)
 			isp1362_clr_mask16(isp1362_hcd, HCBUFSTAT, HCBUFSTAT_INTL_ACTIVE);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
-  Take done or failed requests out of schedule. Give back
+  Take करोne or failed requests out of schedule. Give back
   processed urbs.
 */
-static void finish_request(struct isp1362_hcd *isp1362_hcd, struct isp1362_ep *ep,
-			   struct urb *urb, int status)
+अटल व्योम finish_request(काष्ठा isp1362_hcd *isp1362_hcd, काष्ठा isp1362_ep *ep,
+			   काष्ठा urb *urb, पूर्णांक status)
      __releases(isp1362_hcd->lock)
      __acquires(isp1362_hcd->lock)
-{
-	urb->hcpriv = NULL;
+अणु
+	urb->hcpriv = शून्य;
 	ep->error_count = 0;
 
-	if (usb_pipecontrol(urb->pipe))
+	अगर (usb_pipecontrol(urb->pipe))
 		ep->nextpid = USB_PID_SETUP;
 
 	URB_DBG("%s: req %d FA %d ep%d%s %s: len %d/%d %s stat %d\n", __func__,
 		ep->num_req, usb_pipedevice(urb->pipe),
-		usb_pipeendpoint(urb->pipe),
+		usb_pipeendpoपूर्णांक(urb->pipe),
 		!usb_pipein(urb->pipe) ? "out" : "in",
 		usb_pipecontrol(urb->pipe) ? "ctrl" :
-			usb_pipeint(urb->pipe) ? "int" :
+			usb_pipeपूर्णांक(urb->pipe) ? "int" :
 			usb_pipebulk(urb->pipe) ? "bulk" :
 			"iso",
 		urb->actual_length, urb->transfer_buffer_length,
@@ -471,39 +472,39 @@ static void finish_request(struct isp1362_hcd *isp1362_hcd, struct isp1362_ep *e
 	usb_hcd_giveback_urb(isp1362_hcd_to_hcd(isp1362_hcd), urb, status);
 	spin_lock(&isp1362_hcd->lock);
 
-	/* take idle endpoints out of the schedule right away */
-	if (!list_empty(&ep->hep->urb_list))
-		return;
+	/* take idle endpoपूर्णांकs out of the schedule right away */
+	अगर (!list_empty(&ep->hep->urb_list))
+		वापस;
 
 	/* async deschedule */
-	if (!list_empty(&ep->schedule)) {
+	अगर (!list_empty(&ep->schedule)) अणु
 		list_del_init(&ep->schedule);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 
-	if (ep->interval) {
+	अगर (ep->पूर्णांकerval) अणु
 		/* periodic deschedule */
-		DBG(1, "deschedule qh%d/%p branch %d load %d bandwidth %d -> %d\n", ep->interval,
+		DBG(1, "deschedule qh%d/%p branch %d load %d bandwidth %d -> %d\n", ep->पूर्णांकerval,
 		    ep, ep->branch, ep->load,
 		    isp1362_hcd->load[ep->branch],
 		    isp1362_hcd->load[ep->branch] - ep->load);
 		isp1362_hcd->load[ep->branch] -= ep->load;
 		ep->branch = PERIODIC_SIZE;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Analyze transfer results, handle partial transfers and errors
 */
-static void postproc_ep(struct isp1362_hcd *isp1362_hcd, struct isp1362_ep *ep)
-{
-	struct urb *urb = get_urb(ep);
-	struct usb_device *udev;
-	struct ptd *ptd;
-	int short_ok;
+अटल व्योम postproc_ep(काष्ठा isp1362_hcd *isp1362_hcd, काष्ठा isp1362_ep *ep)
+अणु
+	काष्ठा urb *urb = get_urb(ep);
+	काष्ठा usb_device *udev;
+	काष्ठा ptd *ptd;
+	पूर्णांक लघु_ok;
 	u16 len;
-	int urbstat = -EINPROGRESS;
+	पूर्णांक urbstat = -EINPROGRESS;
 	u8 cc;
 
 	DBG(2, "%s: ep %p req %d\n", __func__, ep, ep->num_req);
@@ -511,503 +512,503 @@ static void postproc_ep(struct isp1362_hcd *isp1362_hcd, struct isp1362_ep *ep)
 	udev = urb->dev;
 	ptd = &ep->ptd;
 	cc = PTD_GET_CC(ptd);
-	if (cc == PTD_NOTACCESSED) {
+	अगर (cc == PTD_NOTACCESSED) अणु
 		pr_err("%s: req %d PTD %p Untouched by ISP1362\n", __func__,
 		    ep->num_req, ptd);
 		cc = PTD_DEVNOTRESP;
-	}
+	पूर्ण
 
-	short_ok = !(urb->transfer_flags & URB_SHORT_NOT_OK);
+	लघु_ok = !(urb->transfer_flags & URB_SHORT_NOT_OK);
 	len = urb->transfer_buffer_length - urb->actual_length;
 
 	/* Data underrun is special. For allowed underrun
-	   we clear the error and continue as normal. For
-	   forbidden underrun we finish the DATA stage
-	   immediately while for control transfer,
-	   we do a STATUS stage.
+	   we clear the error and जारी as normal. For
+	   क्रमbidden underrun we finish the DATA stage
+	   immediately जबतक क्रम control transfer,
+	   we करो a STATUS stage.
 	*/
-	if (cc == PTD_DATAUNDERRUN) {
-		if (short_ok) {
+	अगर (cc == PTD_DATAUNDERRUN) अणु
+		अगर (लघु_ok) अणु
 			DBG(1, "%s: req %d Allowed data underrun short_%sok %d/%d/%d byte\n",
-			    __func__, ep->num_req, short_ok ? "" : "not_",
+			    __func__, ep->num_req, लघु_ok ? "" : "not_",
 			    PTD_GET_COUNT(ptd), ep->maxpacket, len);
 			cc = PTD_CC_NOERROR;
 			urbstat = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			DBG(1, "%s: req %d Data Underrun %s nextpid %02x short_%sok %d/%d/%d byte\n",
 			    __func__, ep->num_req,
 			    usb_pipein(urb->pipe) ? "IN" : "OUT", ep->nextpid,
-			    short_ok ? "" : "not_",
+			    लघु_ok ? "" : "not_",
 			    PTD_GET_COUNT(ptd), ep->maxpacket, len);
-			/* save the data underrun error code for later and
+			/* save the data underrun error code क्रम later and
 			 * proceed with the status stage
 			 */
 			urb->actual_length += PTD_GET_COUNT(ptd);
-			if (usb_pipecontrol(urb->pipe)) {
+			अगर (usb_pipecontrol(urb->pipe)) अणु
 				ep->nextpid = USB_PID_ACK;
 				BUG_ON(urb->actual_length > urb->transfer_buffer_length);
 
-				if (urb->status == -EINPROGRESS)
+				अगर (urb->status == -EINPROGRESS)
 					urb->status = cc_to_error[PTD_DATAUNDERRUN];
-			} else {
+			पूर्ण अन्यथा अणु
 				usb_settoggle(udev, ep->epnum, ep->nextpid == USB_PID_OUT,
 					      PTD_GET_TOGGLE(ptd));
 				urbstat = cc_to_error[PTD_DATAUNDERRUN];
-			}
-			goto out;
-		}
-	}
+			पूर्ण
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (cc != PTD_CC_NOERROR) {
-		if (++ep->error_count >= 3 || cc == PTD_CC_STALL || cc == PTD_DATAOVERRUN) {
+	अगर (cc != PTD_CC_NOERROR) अणु
+		अगर (++ep->error_count >= 3 || cc == PTD_CC_STALL || cc == PTD_DATAOVERRUN) अणु
 			urbstat = cc_to_error[cc];
 			DBG(1, "%s: req %d nextpid %02x, status %d, error %d, error_count %d\n",
 			    __func__, ep->num_req, ep->nextpid, urbstat, cc,
 			    ep->error_count);
-		}
-		goto out;
-	}
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
-	switch (ep->nextpid) {
-	case USB_PID_OUT:
-		if (PTD_GET_COUNT(ptd) != ep->length)
+	चयन (ep->nextpid) अणु
+	हाल USB_PID_OUT:
+		अगर (PTD_GET_COUNT(ptd) != ep->length)
 			pr_err("%s: count=%d len=%d\n", __func__,
 			   PTD_GET_COUNT(ptd), ep->length);
 		BUG_ON(PTD_GET_COUNT(ptd) != ep->length);
 		urb->actual_length += ep->length;
 		BUG_ON(urb->actual_length > urb->transfer_buffer_length);
 		usb_settoggle(udev, ep->epnum, 1, PTD_GET_TOGGLE(ptd));
-		if (urb->actual_length == urb->transfer_buffer_length) {
+		अगर (urb->actual_length == urb->transfer_buffer_length) अणु
 			DBG(3, "%s: req %d xfer complete %d/%d status %d -> 0\n", __func__,
 			    ep->num_req, len, ep->maxpacket, urbstat);
-			if (usb_pipecontrol(urb->pipe)) {
+			अगर (usb_pipecontrol(urb->pipe)) अणु
 				DBG(3, "%s: req %d %s Wait for ACK\n", __func__,
 				    ep->num_req,
 				    usb_pipein(urb->pipe) ? "IN" : "OUT");
 				ep->nextpid = USB_PID_ACK;
-			} else {
-				if (len % ep->maxpacket ||
-				    !(urb->transfer_flags & URB_ZERO_PACKET)) {
+			पूर्ण अन्यथा अणु
+				अगर (len % ep->maxpacket ||
+				    !(urb->transfer_flags & URB_ZERO_PACKET)) अणु
 					urbstat = 0;
 					DBG(3, "%s: req %d URB %s status %d count %d/%d/%d\n",
 					    __func__, ep->num_req, usb_pipein(urb->pipe) ? "IN" : "OUT",
 					    urbstat, len, ep->maxpacket, urb->actual_length);
-				}
-			}
-		}
-		break;
-	case USB_PID_IN:
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल USB_PID_IN:
 		len = PTD_GET_COUNT(ptd);
 		BUG_ON(len > ep->length);
 		urb->actual_length += len;
 		BUG_ON(urb->actual_length > urb->transfer_buffer_length);
 		usb_settoggle(udev, ep->epnum, 0, PTD_GET_TOGGLE(ptd));
-		/* if transfer completed or (allowed) data underrun */
-		if ((urb->transfer_buffer_length == urb->actual_length) ||
-		    len % ep->maxpacket) {
+		/* अगर transfer completed or (allowed) data underrun */
+		अगर ((urb->transfer_buffer_length == urb->actual_length) ||
+		    len % ep->maxpacket) अणु
 			DBG(3, "%s: req %d xfer complete %d/%d status %d -> 0\n", __func__,
 			    ep->num_req, len, ep->maxpacket, urbstat);
-			if (usb_pipecontrol(urb->pipe)) {
+			अगर (usb_pipecontrol(urb->pipe)) अणु
 				DBG(3, "%s: req %d %s Wait for ACK\n", __func__,
 				    ep->num_req,
 				    usb_pipein(urb->pipe) ? "IN" : "OUT");
 				ep->nextpid = USB_PID_ACK;
-			} else {
+			पूर्ण अन्यथा अणु
 				urbstat = 0;
 				DBG(3, "%s: req %d URB %s status %d count %d/%d/%d\n",
 				    __func__, ep->num_req, usb_pipein(urb->pipe) ? "IN" : "OUT",
 				    urbstat, len, ep->maxpacket, urb->actual_length);
-			}
-		}
-		break;
-	case USB_PID_SETUP:
-		if (urb->transfer_buffer_length == urb->actual_length) {
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल USB_PID_SETUP:
+		अगर (urb->transfer_buffer_length == urb->actual_length) अणु
 			ep->nextpid = USB_PID_ACK;
-		} else if (usb_pipeout(urb->pipe)) {
+		पूर्ण अन्यथा अगर (usb_pipeout(urb->pipe)) अणु
 			usb_settoggle(udev, 0, 1, 1);
 			ep->nextpid = USB_PID_OUT;
-		} else {
+		पूर्ण अन्यथा अणु
 			usb_settoggle(udev, 0, 0, 1);
 			ep->nextpid = USB_PID_IN;
-		}
-		break;
-	case USB_PID_ACK:
+		पूर्ण
+		अवरोध;
+	हाल USB_PID_ACK:
 		DBG(3, "%s: req %d got ACK %d -> 0\n", __func__, ep->num_req,
 		    urbstat);
 		WARN_ON(urbstat != -EINPROGRESS);
 		urbstat = 0;
 		ep->nextpid = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG_ON(1);
-	}
+	पूर्ण
 
  out:
-	if (urbstat != -EINPROGRESS) {
+	अगर (urbstat != -EINPROGRESS) अणु
 		DBG(2, "%s: Finishing ep %p req %d urb %p status %d\n", __func__,
 		    ep, ep->num_req, urb, urbstat);
 		finish_request(isp1362_hcd, ep, urb, urbstat);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void finish_unlinks(struct isp1362_hcd *isp1362_hcd)
-{
-	struct isp1362_ep *ep;
-	struct isp1362_ep *tmp;
+अटल व्योम finish_unlinks(काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
+	काष्ठा isp1362_ep *ep;
+	काष्ठा isp1362_ep *पंचांगp;
 
-	list_for_each_entry_safe(ep, tmp, &isp1362_hcd->remove_list, remove_list) {
-		struct isp1362_ep_queue *epq =
+	list_क्रम_each_entry_safe(ep, पंचांगp, &isp1362_hcd->हटाओ_list, हटाओ_list) अणु
+		काष्ठा isp1362_ep_queue *epq =
 			get_ptd_queue(isp1362_hcd, ep->ptd_offset);
-		int index = ep->ptd_index;
+		पूर्णांक index = ep->ptd_index;
 
-		BUG_ON(epq == NULL);
-		if (index >= 0) {
+		BUG_ON(epq == शून्य);
+		अगर (index >= 0) अणु
 			DBG(1, "%s: remove PTD[%d] $%04x\n", __func__, index, ep->ptd_offset);
 			BUG_ON(ep->num_ptds == 0);
 			release_ptd_buffers(epq, ep);
-		}
-		if (!list_empty(&ep->hep->urb_list)) {
-			struct urb *urb = get_urb(ep);
+		पूर्ण
+		अगर (!list_empty(&ep->hep->urb_list)) अणु
+			काष्ठा urb *urb = get_urb(ep);
 
 			DBG(1, "%s: Finishing req %d ep %p from remove_list\n", __func__,
 			    ep->num_req, ep);
 			finish_request(isp1362_hcd, ep, urb, -ESHUTDOWN);
-		}
+		पूर्ण
 		WARN_ON(list_empty(&ep->active));
-		if (!list_empty(&ep->active)) {
+		अगर (!list_empty(&ep->active)) अणु
 			list_del_init(&ep->active);
 			DBG(1, "%s: ep %p removed from active list\n", __func__, ep);
-		}
-		list_del_init(&ep->remove_list);
+		पूर्ण
+		list_del_init(&ep->हटाओ_list);
 		DBG(1, "%s: ep %p removed from remove_list\n", __func__, ep);
-	}
+	पूर्ण
 	DBG(1, "%s: Done\n", __func__);
-}
+पूर्ण
 
-static inline void enable_atl_transfers(struct isp1362_hcd *isp1362_hcd, int count)
-{
-	if (count > 0) {
-		if (count < isp1362_hcd->atl_queue.ptd_count)
-			isp1362_write_reg16(isp1362_hcd, HCATLDTC, count);
-		isp1362_enable_int(isp1362_hcd, HCuPINT_ATL);
-		isp1362_write_reg32(isp1362_hcd, HCATLSKIP, isp1362_hcd->atl_queue.skip_map);
+अटल अंतरभूत व्योम enable_atl_transfers(काष्ठा isp1362_hcd *isp1362_hcd, पूर्णांक count)
+अणु
+	अगर (count > 0) अणु
+		अगर (count < isp1362_hcd->atl_queue.ptd_count)
+			isp1362_ग_लिखो_reg16(isp1362_hcd, HCATLDTC, count);
+		isp1362_enable_पूर्णांक(isp1362_hcd, HCuPINT_ATL);
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCATLSKIP, isp1362_hcd->atl_queue.skip_map);
 		isp1362_set_mask16(isp1362_hcd, HCBUFSTAT, HCBUFSTAT_ATL_ACTIVE);
-	} else
-		isp1362_enable_int(isp1362_hcd, HCuPINT_SOF);
-}
+	पूर्ण अन्यथा
+		isp1362_enable_पूर्णांक(isp1362_hcd, HCuPINT_SOF);
+पूर्ण
 
-static inline void enable_intl_transfers(struct isp1362_hcd *isp1362_hcd)
-{
-	isp1362_enable_int(isp1362_hcd, HCuPINT_INTL);
+अटल अंतरभूत व्योम enable_पूर्णांकl_transfers(काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
+	isp1362_enable_पूर्णांक(isp1362_hcd, HCuPINT_INTL);
 	isp1362_set_mask16(isp1362_hcd, HCBUFSTAT, HCBUFSTAT_INTL_ACTIVE);
-	isp1362_write_reg32(isp1362_hcd, HCINTLSKIP, isp1362_hcd->intl_queue.skip_map);
-}
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCINTLSKIP, isp1362_hcd->पूर्णांकl_queue.skip_map);
+पूर्ण
 
-static inline void enable_istl_transfers(struct isp1362_hcd *isp1362_hcd, int flip)
-{
-	isp1362_enable_int(isp1362_hcd, flip ? HCuPINT_ISTL1 : HCuPINT_ISTL0);
+अटल अंतरभूत व्योम enable_istl_transfers(काष्ठा isp1362_hcd *isp1362_hcd, पूर्णांक flip)
+अणु
+	isp1362_enable_पूर्णांक(isp1362_hcd, flip ? HCuPINT_ISTL1 : HCuPINT_ISTL0);
 	isp1362_set_mask16(isp1362_hcd, HCBUFSTAT, flip ?
 			   HCBUFSTAT_ISTL1_FULL : HCBUFSTAT_ISTL0_FULL);
-}
+पूर्ण
 
-static int submit_req(struct isp1362_hcd *isp1362_hcd, struct urb *urb,
-		      struct isp1362_ep *ep, struct isp1362_ep_queue *epq)
-{
-	int index;
+अटल पूर्णांक submit_req(काष्ठा isp1362_hcd *isp1362_hcd, काष्ठा urb *urb,
+		      काष्ठा isp1362_ep *ep, काष्ठा isp1362_ep_queue *epq)
+अणु
+	पूर्णांक index;
 
 	prepare_ptd(isp1362_hcd, urb, ep, epq, 0);
 	index = claim_ptd_buffers(epq, ep, ep->length);
-	if (index == -ENOMEM) {
+	अगर (index == -ENOMEM) अणु
 		DBG(1, "%s: req %d No free %s PTD available: %d, %08lx:%08lx\n", __func__,
 		    ep->num_req, epq->name, ep->num_ptds, epq->buf_map, epq->skip_map);
-		return index;
-	} else if (index == -EOVERFLOW) {
+		वापस index;
+	पूर्ण अन्यथा अगर (index == -EOVERFLOW) अणु
 		DBG(1, "%s: req %d Not enough space for %d byte %s PTD %d %08lx:%08lx\n",
 		    __func__, ep->num_req, ep->length, epq->name, ep->num_ptds,
 		    epq->buf_map, epq->skip_map);
-		return index;
-	} else
+		वापस index;
+	पूर्ण अन्यथा
 		BUG_ON(index < 0);
 	list_add_tail(&ep->active, &epq->active);
 	DBG(1, "%s: ep %p req %d len %d added to active list %p\n", __func__,
 	    ep, ep->num_req, ep->length, &epq->active);
 	DBG(1, "%s: Submitting %s PTD $%04x for ep %p req %d\n", __func__, epq->name,
 	    ep->ptd_offset, ep, ep->num_req);
-	isp1362_write_ptd(isp1362_hcd, ep, epq);
+	isp1362_ग_लिखो_ptd(isp1362_hcd, ep, epq);
 	__clear_bit(ep->ptd_index, &epq->skip_map);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void start_atl_transfers(struct isp1362_hcd *isp1362_hcd)
-{
-	int ptd_count = 0;
-	struct isp1362_ep_queue *epq = &isp1362_hcd->atl_queue;
-	struct isp1362_ep *ep;
-	int defer = 0;
+अटल व्योम start_atl_transfers(काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
+	पूर्णांक ptd_count = 0;
+	काष्ठा isp1362_ep_queue *epq = &isp1362_hcd->atl_queue;
+	काष्ठा isp1362_ep *ep;
+	पूर्णांक defer = 0;
 
-	if (atomic_read(&epq->finishing)) {
+	अगर (atomic_पढ़ो(&epq->finishing)) अणु
 		DBG(1, "%s: finish_transfers is active for %s\n", __func__, epq->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	list_for_each_entry(ep, &isp1362_hcd->async, schedule) {
-		struct urb *urb = get_urb(ep);
-		int ret;
+	list_क्रम_each_entry(ep, &isp1362_hcd->async, schedule) अणु
+		काष्ठा urb *urb = get_urb(ep);
+		पूर्णांक ret;
 
-		if (!list_empty(&ep->active)) {
+		अगर (!list_empty(&ep->active)) अणु
 			DBG(2, "%s: Skipping active %s ep %p\n", __func__, epq->name, ep);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		DBG(1, "%s: Processing %s ep %p req %d\n", __func__, epq->name,
 		    ep, ep->num_req);
 
 		ret = submit_req(isp1362_hcd, urb, ep, epq);
-		if (ret == -ENOMEM) {
+		अगर (ret == -ENOMEM) अणु
 			defer = 1;
-			break;
-		} else if (ret == -EOVERFLOW) {
+			अवरोध;
+		पूर्ण अन्यथा अगर (ret == -EOVERFLOW) अणु
 			defer = 1;
-			continue;
-		}
-#ifdef BUGGY_PXA2XX_UDC_USBTEST
+			जारी;
+		पूर्ण
+#अगर_घोषित BUGGY_PXA2XX_UDC_USBTEST
 		defer = ep->nextpid == USB_PID_SETUP;
-#endif
+#पूर्ण_अगर
 		ptd_count++;
-	}
+	पूर्ण
 
-	/* Avoid starving of endpoints */
-	if (isp1362_hcd->async.next != isp1362_hcd->async.prev) {
+	/* Aव्योम starving of endpoपूर्णांकs */
+	अगर (isp1362_hcd->async.next != isp1362_hcd->async.prev) अणु
 		DBG(2, "%s: Cycling ASYNC schedule %d\n", __func__, ptd_count);
 		list_move(&isp1362_hcd->async, isp1362_hcd->async.next);
-	}
-	if (ptd_count || defer)
+	पूर्ण
+	अगर (ptd_count || defer)
 		enable_atl_transfers(isp1362_hcd, defer ? 0 : ptd_count);
 
 	epq->ptd_count += ptd_count;
-	if (epq->ptd_count > epq->stat_maxptds) {
+	अगर (epq->ptd_count > epq->stat_maxptds) अणु
 		epq->stat_maxptds = epq->ptd_count;
 		DBG(0, "%s: max_ptds: %d\n", __func__, epq->stat_maxptds);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void start_intl_transfers(struct isp1362_hcd *isp1362_hcd)
-{
-	int ptd_count = 0;
-	struct isp1362_ep_queue *epq = &isp1362_hcd->intl_queue;
-	struct isp1362_ep *ep;
+अटल व्योम start_पूर्णांकl_transfers(काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
+	पूर्णांक ptd_count = 0;
+	काष्ठा isp1362_ep_queue *epq = &isp1362_hcd->पूर्णांकl_queue;
+	काष्ठा isp1362_ep *ep;
 
-	if (atomic_read(&epq->finishing)) {
+	अगर (atomic_पढ़ो(&epq->finishing)) अणु
 		DBG(1, "%s: finish_transfers is active for %s\n", __func__, epq->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	list_for_each_entry(ep, &isp1362_hcd->periodic, schedule) {
-		struct urb *urb = get_urb(ep);
-		int ret;
+	list_क्रम_each_entry(ep, &isp1362_hcd->periodic, schedule) अणु
+		काष्ठा urb *urb = get_urb(ep);
+		पूर्णांक ret;
 
-		if (!list_empty(&ep->active)) {
+		अगर (!list_empty(&ep->active)) अणु
 			DBG(1, "%s: Skipping active %s ep %p\n", __func__,
 			    epq->name, ep);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		DBG(1, "%s: Processing %s ep %p req %d\n", __func__,
 		    epq->name, ep, ep->num_req);
 		ret = submit_req(isp1362_hcd, urb, ep, epq);
-		if (ret == -ENOMEM)
-			break;
-		else if (ret == -EOVERFLOW)
-			continue;
+		अगर (ret == -ENOMEM)
+			अवरोध;
+		अन्यथा अगर (ret == -EOVERFLOW)
+			जारी;
 		ptd_count++;
-	}
+	पूर्ण
 
-	if (ptd_count) {
-		static int last_count;
+	अगर (ptd_count) अणु
+		अटल पूर्णांक last_count;
 
-		if (ptd_count != last_count) {
+		अगर (ptd_count != last_count) अणु
 			DBG(0, "%s: ptd_count: %d\n", __func__, ptd_count);
 			last_count = ptd_count;
-		}
-		enable_intl_transfers(isp1362_hcd);
-	}
+		पूर्ण
+		enable_पूर्णांकl_transfers(isp1362_hcd);
+	पूर्ण
 
 	epq->ptd_count += ptd_count;
-	if (epq->ptd_count > epq->stat_maxptds)
+	अगर (epq->ptd_count > epq->stat_maxptds)
 		epq->stat_maxptds = epq->ptd_count;
-}
+पूर्ण
 
-static inline int next_ptd(struct isp1362_ep_queue *epq, struct isp1362_ep *ep)
-{
+अटल अंतरभूत पूर्णांक next_ptd(काष्ठा isp1362_ep_queue *epq, काष्ठा isp1362_ep *ep)
+अणु
 	u16 ptd_offset = ep->ptd_offset;
-	int num_ptds = (ep->length + PTD_HEADER_SIZE + (epq->blk_size - 1)) / epq->blk_size;
+	पूर्णांक num_ptds = (ep->length + PTD_HEADER_SIZE + (epq->blk_size - 1)) / epq->blk_size;
 
 	DBG(2, "%s: PTD offset $%04x + %04x => %d * %04x -> $%04x\n", __func__, ptd_offset,
 	    ep->length, num_ptds, epq->blk_size, ptd_offset + num_ptds * epq->blk_size);
 
 	ptd_offset += num_ptds * epq->blk_size;
-	if (ptd_offset < epq->buf_start + epq->buf_size)
-		return ptd_offset;
-	else
-		return -ENOMEM;
-}
+	अगर (ptd_offset < epq->buf_start + epq->buf_size)
+		वापस ptd_offset;
+	अन्यथा
+		वापस -ENOMEM;
+पूर्ण
 
-static void start_iso_transfers(struct isp1362_hcd *isp1362_hcd)
-{
-	int ptd_count = 0;
-	int flip = isp1362_hcd->istl_flip;
-	struct isp1362_ep_queue *epq;
-	int ptd_offset;
-	struct isp1362_ep *ep;
-	struct isp1362_ep *tmp;
-	u16 fno = isp1362_read_reg32(isp1362_hcd, HCFMNUM);
+अटल व्योम start_iso_transfers(काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
+	पूर्णांक ptd_count = 0;
+	पूर्णांक flip = isp1362_hcd->istl_flip;
+	काष्ठा isp1362_ep_queue *epq;
+	पूर्णांक ptd_offset;
+	काष्ठा isp1362_ep *ep;
+	काष्ठा isp1362_ep *पंचांगp;
+	u16 fno = isp1362_पढ़ो_reg32(isp1362_hcd, HCFMNUM);
 
  fill2:
 	epq = &isp1362_hcd->istl_queue[flip];
-	if (atomic_read(&epq->finishing)) {
+	अगर (atomic_पढ़ो(&epq->finishing)) अणु
 		DBG(1, "%s: finish_transfers is active for %s\n", __func__, epq->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!list_empty(&epq->active))
-		return;
+	अगर (!list_empty(&epq->active))
+		वापस;
 
 	ptd_offset = epq->buf_start;
-	list_for_each_entry_safe(ep, tmp, &isp1362_hcd->isoc, schedule) {
-		struct urb *urb = get_urb(ep);
-		s16 diff = fno - (u16)urb->start_frame;
+	list_क्रम_each_entry_safe(ep, पंचांगp, &isp1362_hcd->isoc, schedule) अणु
+		काष्ठा urb *urb = get_urb(ep);
+		s16 dअगरf = fno - (u16)urb->start_frame;
 
 		DBG(1, "%s: Processing %s ep %p\n", __func__, epq->name, ep);
 
-		if (diff > urb->number_of_packets) {
-			/* time frame for this URB has elapsed */
+		अगर (dअगरf > urb->number_of_packets) अणु
+			/* समय frame क्रम this URB has elapsed */
 			finish_request(isp1362_hcd, ep, urb, -EOVERFLOW);
-			continue;
-		} else if (diff < -1) {
+			जारी;
+		पूर्ण अन्यथा अगर (dअगरf < -1) अणु
 			/* URB is not due in this frame or the next one.
-			 * Comparing with '-1' instead of '0' accounts for double
+			 * Comparing with '-1' instead of '0' accounts क्रम द्विगुन
 			 * buffering in the ISP1362 which enables us to queue the PTD
-			 * one frame ahead of time
+			 * one frame ahead of समय
 			 */
-		} else if (diff == -1) {
+		पूर्ण अन्यथा अगर (dअगरf == -1) अणु
 			/* submit PTD's that are due in the next frame */
 			prepare_ptd(isp1362_hcd, urb, ep, epq, fno);
-			if (ptd_offset + PTD_HEADER_SIZE + ep->length >
-			    epq->buf_start + epq->buf_size) {
+			अगर (ptd_offset + PTD_HEADER_SIZE + ep->length >
+			    epq->buf_start + epq->buf_size) अणु
 				pr_err("%s: Not enough ISO buffer space for %d byte PTD\n",
 				    __func__, ep->length);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			ep->ptd_offset = ptd_offset;
 			list_add_tail(&ep->active, &epq->active);
 
 			ptd_offset = next_ptd(epq, ep);
-			if (ptd_offset < 0) {
+			अगर (ptd_offset < 0) अणु
 				pr_warn("%s: req %d No more %s PTD buffers available\n",
 					__func__, ep->num_req, epq->name);
-				break;
-			}
-		}
-	}
-	list_for_each_entry(ep, &epq->active, active) {
-		if (epq->active.next == &ep->active)
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	list_क्रम_each_entry(ep, &epq->active, active) अणु
+		अगर (epq->active.next == &ep->active)
 			ep->ptd.mps |= PTD_LAST_MSK;
-		isp1362_write_ptd(isp1362_hcd, ep, epq);
+		isp1362_ग_लिखो_ptd(isp1362_hcd, ep, epq);
 		ptd_count++;
-	}
+	पूर्ण
 
-	if (ptd_count)
+	अगर (ptd_count)
 		enable_istl_transfers(isp1362_hcd, flip);
 
 	epq->ptd_count += ptd_count;
-	if (epq->ptd_count > epq->stat_maxptds)
+	अगर (epq->ptd_count > epq->stat_maxptds)
 		epq->stat_maxptds = epq->ptd_count;
 
 	/* check, whether the second ISTL buffer may also be filled */
-	if (!(isp1362_read_reg16(isp1362_hcd, HCBUFSTAT) &
-	      (flip ? HCBUFSTAT_ISTL0_FULL : HCBUFSTAT_ISTL1_FULL))) {
+	अगर (!(isp1362_पढ़ो_reg16(isp1362_hcd, HCBUFSTAT) &
+	      (flip ? HCBUFSTAT_ISTL0_FULL : HCBUFSTAT_ISTL1_FULL))) अणु
 		fno++;
 		ptd_count = 0;
 		flip = 1 - flip;
-		goto fill2;
-	}
-}
+		जाओ fill2;
+	पूर्ण
+पूर्ण
 
-static void finish_transfers(struct isp1362_hcd *isp1362_hcd, unsigned long done_map,
-			     struct isp1362_ep_queue *epq)
-{
-	struct isp1362_ep *ep;
-	struct isp1362_ep *tmp;
+अटल व्योम finish_transfers(काष्ठा isp1362_hcd *isp1362_hcd, अचिन्हित दीर्घ करोne_map,
+			     काष्ठा isp1362_ep_queue *epq)
+अणु
+	काष्ठा isp1362_ep *ep;
+	काष्ठा isp1362_ep *पंचांगp;
 
-	if (list_empty(&epq->active)) {
+	अगर (list_empty(&epq->active)) अणु
 		DBG(1, "%s: Nothing to do for %s queue\n", __func__, epq->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	DBG(1, "%s: Finishing %s transfers %08lx\n", __func__, epq->name, done_map);
+	DBG(1, "%s: Finishing %s transfers %08lx\n", __func__, epq->name, करोne_map);
 
 	atomic_inc(&epq->finishing);
-	list_for_each_entry_safe(ep, tmp, &epq->active, active) {
-		int index = ep->ptd_index;
+	list_क्रम_each_entry_safe(ep, पंचांगp, &epq->active, active) अणु
+		पूर्णांक index = ep->ptd_index;
 
 		DBG(1, "%s: Checking %s PTD[%02x] $%04x\n", __func__, epq->name,
 		    index, ep->ptd_offset);
 
 		BUG_ON(index < 0);
-		if (__test_and_clear_bit(index, &done_map)) {
-			isp1362_read_ptd(isp1362_hcd, ep, epq);
-			epq->free_ptd = index;
+		अगर (__test_and_clear_bit(index, &करोne_map)) अणु
+			isp1362_पढ़ो_ptd(isp1362_hcd, ep, epq);
+			epq->मुक्त_ptd = index;
 			BUG_ON(ep->num_ptds == 0);
 			release_ptd_buffers(epq, ep);
 
 			DBG(1, "%s: ep %p req %d removed from active list\n", __func__,
 			    ep, ep->num_req);
-			if (!list_empty(&ep->remove_list)) {
-				list_del_init(&ep->remove_list);
+			अगर (!list_empty(&ep->हटाओ_list)) अणु
+				list_del_init(&ep->हटाओ_list);
 				DBG(1, "%s: ep %p removed from remove list\n", __func__, ep);
-			}
+			पूर्ण
 			DBG(1, "%s: Postprocessing %s ep %p req %d\n", __func__, epq->name,
 			    ep, ep->num_req);
 			postproc_ep(isp1362_hcd, ep);
-		}
-		if (!done_map)
-			break;
-	}
-	if (done_map)
+		पूर्ण
+		अगर (!करोne_map)
+			अवरोध;
+	पूर्ण
+	अगर (करोne_map)
 		pr_warn("%s: done_map not clear: %08lx:%08lx\n",
-			__func__, done_map, epq->skip_map);
+			__func__, करोne_map, epq->skip_map);
 	atomic_dec(&epq->finishing);
-}
+पूर्ण
 
-static void finish_iso_transfers(struct isp1362_hcd *isp1362_hcd, struct isp1362_ep_queue *epq)
-{
-	struct isp1362_ep *ep;
-	struct isp1362_ep *tmp;
+अटल व्योम finish_iso_transfers(काष्ठा isp1362_hcd *isp1362_hcd, काष्ठा isp1362_ep_queue *epq)
+अणु
+	काष्ठा isp1362_ep *ep;
+	काष्ठा isp1362_ep *पंचांगp;
 
-	if (list_empty(&epq->active)) {
+	अगर (list_empty(&epq->active)) अणु
 		DBG(1, "%s: Nothing to do for %s queue\n", __func__, epq->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	DBG(1, "%s: Finishing %s transfers\n", __func__, epq->name);
 
 	atomic_inc(&epq->finishing);
-	list_for_each_entry_safe(ep, tmp, &epq->active, active) {
+	list_क्रम_each_entry_safe(ep, पंचांगp, &epq->active, active) अणु
 		DBG(1, "%s: Checking PTD $%04x\n", __func__, ep->ptd_offset);
 
-		isp1362_read_ptd(isp1362_hcd, ep, epq);
+		isp1362_पढ़ो_ptd(isp1362_hcd, ep, epq);
 		DBG(1, "%s: Postprocessing %s ep %p\n", __func__, epq->name, ep);
 		postproc_ep(isp1362_hcd, ep);
-	}
+	पूर्ण
 	WARN_ON(epq->blk_size != 0);
 	atomic_dec(&epq->finishing);
-}
+पूर्ण
 
-static irqreturn_t isp1362_irq(struct usb_hcd *hcd)
-{
-	int handled = 0;
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+अटल irqवापस_t isp1362_irq(काष्ठा usb_hcd *hcd)
+अणु
+	पूर्णांक handled = 0;
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
 	u16 irqstat;
 	u16 svc_mask;
 
@@ -1015,231 +1016,231 @@ static irqreturn_t isp1362_irq(struct usb_hcd *hcd)
 
 	BUG_ON(isp1362_hcd->irq_active++);
 
-	isp1362_write_reg16(isp1362_hcd, HCuPINTENB, 0);
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINTENB, 0);
 
-	irqstat = isp1362_read_reg16(isp1362_hcd, HCuPINT);
+	irqstat = isp1362_पढ़ो_reg16(isp1362_hcd, HCuPINT);
 	DBG(3, "%s: got IRQ %04x:%04x\n", __func__, irqstat, isp1362_hcd->irqenb);
 
-	/* only handle interrupts that are currently enabled */
+	/* only handle पूर्णांकerrupts that are currently enabled */
 	irqstat &= isp1362_hcd->irqenb;
-	isp1362_write_reg16(isp1362_hcd, HCuPINT, irqstat);
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINT, irqstat);
 	svc_mask = irqstat;
 
-	if (irqstat & HCuPINT_SOF) {
+	अगर (irqstat & HCuPINT_SOF) अणु
 		isp1362_hcd->irqenb &= ~HCuPINT_SOF;
 		isp1362_hcd->irq_stat[ISP1362_INT_SOF]++;
 		handled = 1;
 		svc_mask &= ~HCuPINT_SOF;
 		DBG(3, "%s: SOF\n", __func__);
-		isp1362_hcd->fmindex = isp1362_read_reg32(isp1362_hcd, HCFMNUM);
-		if (!list_empty(&isp1362_hcd->remove_list))
+		isp1362_hcd->fmindex = isp1362_पढ़ो_reg32(isp1362_hcd, HCFMNUM);
+		अगर (!list_empty(&isp1362_hcd->हटाओ_list))
 			finish_unlinks(isp1362_hcd);
-		if (!list_empty(&isp1362_hcd->async) && !(irqstat & HCuPINT_ATL)) {
-			if (list_empty(&isp1362_hcd->atl_queue.active)) {
+		अगर (!list_empty(&isp1362_hcd->async) && !(irqstat & HCuPINT_ATL)) अणु
+			अगर (list_empty(&isp1362_hcd->atl_queue.active)) अणु
 				start_atl_transfers(isp1362_hcd);
-			} else {
-				isp1362_enable_int(isp1362_hcd, HCuPINT_ATL);
-				isp1362_write_reg32(isp1362_hcd, HCATLSKIP,
+			पूर्ण अन्यथा अणु
+				isp1362_enable_पूर्णांक(isp1362_hcd, HCuPINT_ATL);
+				isp1362_ग_लिखो_reg32(isp1362_hcd, HCATLSKIP,
 						    isp1362_hcd->atl_queue.skip_map);
 				isp1362_set_mask16(isp1362_hcd, HCBUFSTAT, HCBUFSTAT_ATL_ACTIVE);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (irqstat & HCuPINT_ISTL0) {
+	अगर (irqstat & HCuPINT_ISTL0) अणु
 		isp1362_hcd->irq_stat[ISP1362_INT_ISTL0]++;
 		handled = 1;
 		svc_mask &= ~HCuPINT_ISTL0;
 		isp1362_clr_mask16(isp1362_hcd, HCBUFSTAT, HCBUFSTAT_ISTL0_FULL);
 		DBG(1, "%s: ISTL0\n", __func__);
-		WARN_ON((int)!!isp1362_hcd->istl_flip);
-		WARN_ON(isp1362_read_reg16(isp1362_hcd, HCBUFSTAT) &
+		WARN_ON((पूर्णांक)!!isp1362_hcd->istl_flip);
+		WARN_ON(isp1362_पढ़ो_reg16(isp1362_hcd, HCBUFSTAT) &
 			HCBUFSTAT_ISTL0_ACTIVE);
-		WARN_ON(!(isp1362_read_reg16(isp1362_hcd, HCBUFSTAT) &
+		WARN_ON(!(isp1362_पढ़ो_reg16(isp1362_hcd, HCBUFSTAT) &
 			HCBUFSTAT_ISTL0_DONE));
 		isp1362_hcd->irqenb &= ~HCuPINT_ISTL0;
-	}
+	पूर्ण
 
-	if (irqstat & HCuPINT_ISTL1) {
+	अगर (irqstat & HCuPINT_ISTL1) अणु
 		isp1362_hcd->irq_stat[ISP1362_INT_ISTL1]++;
 		handled = 1;
 		svc_mask &= ~HCuPINT_ISTL1;
 		isp1362_clr_mask16(isp1362_hcd, HCBUFSTAT, HCBUFSTAT_ISTL1_FULL);
 		DBG(1, "%s: ISTL1\n", __func__);
-		WARN_ON(!(int)isp1362_hcd->istl_flip);
-		WARN_ON(isp1362_read_reg16(isp1362_hcd, HCBUFSTAT) &
+		WARN_ON(!(पूर्णांक)isp1362_hcd->istl_flip);
+		WARN_ON(isp1362_पढ़ो_reg16(isp1362_hcd, HCBUFSTAT) &
 			HCBUFSTAT_ISTL1_ACTIVE);
-		WARN_ON(!(isp1362_read_reg16(isp1362_hcd, HCBUFSTAT) &
+		WARN_ON(!(isp1362_पढ़ो_reg16(isp1362_hcd, HCBUFSTAT) &
 			HCBUFSTAT_ISTL1_DONE));
 		isp1362_hcd->irqenb &= ~HCuPINT_ISTL1;
-	}
+	पूर्ण
 
-	if (irqstat & (HCuPINT_ISTL0 | HCuPINT_ISTL1)) {
+	अगर (irqstat & (HCuPINT_ISTL0 | HCuPINT_ISTL1)) अणु
 		WARN_ON((irqstat & (HCuPINT_ISTL0 | HCuPINT_ISTL1)) ==
 			(HCuPINT_ISTL0 | HCuPINT_ISTL1));
 		finish_iso_transfers(isp1362_hcd,
 				     &isp1362_hcd->istl_queue[isp1362_hcd->istl_flip]);
 		start_iso_transfers(isp1362_hcd);
 		isp1362_hcd->istl_flip = 1 - isp1362_hcd->istl_flip;
-	}
+	पूर्ण
 
-	if (irqstat & HCuPINT_INTL) {
-		u32 done_map = isp1362_read_reg32(isp1362_hcd, HCINTLDONE);
-		u32 skip_map = isp1362_read_reg32(isp1362_hcd, HCINTLSKIP);
+	अगर (irqstat & HCuPINT_INTL) अणु
+		u32 करोne_map = isp1362_पढ़ो_reg32(isp1362_hcd, HCINTLDONE);
+		u32 skip_map = isp1362_पढ़ो_reg32(isp1362_hcd, HCINTLSKIP);
 		isp1362_hcd->irq_stat[ISP1362_INT_INTL]++;
 
 		DBG(2, "%s: INTL\n", __func__);
 
 		svc_mask &= ~HCuPINT_INTL;
 
-		isp1362_write_reg32(isp1362_hcd, HCINTLSKIP, skip_map | done_map);
-		if (~(done_map | skip_map) == 0)
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCINTLSKIP, skip_map | करोne_map);
+		अगर (~(करोne_map | skip_map) == 0)
 			/* All PTDs are finished, disable INTL processing entirely */
 			isp1362_clr_mask16(isp1362_hcd, HCBUFSTAT, HCBUFSTAT_INTL_ACTIVE);
 
 		handled = 1;
-		WARN_ON(!done_map);
-		if (done_map) {
-			DBG(3, "%s: INTL done_map %08x\n", __func__, done_map);
-			finish_transfers(isp1362_hcd, done_map, &isp1362_hcd->intl_queue);
-			start_intl_transfers(isp1362_hcd);
-		}
-	}
+		WARN_ON(!करोne_map);
+		अगर (करोne_map) अणु
+			DBG(3, "%s: INTL done_map %08x\n", __func__, करोne_map);
+			finish_transfers(isp1362_hcd, करोne_map, &isp1362_hcd->पूर्णांकl_queue);
+			start_पूर्णांकl_transfers(isp1362_hcd);
+		पूर्ण
+	पूर्ण
 
-	if (irqstat & HCuPINT_ATL) {
-		u32 done_map = isp1362_read_reg32(isp1362_hcd, HCATLDONE);
-		u32 skip_map = isp1362_read_reg32(isp1362_hcd, HCATLSKIP);
+	अगर (irqstat & HCuPINT_ATL) अणु
+		u32 करोne_map = isp1362_पढ़ो_reg32(isp1362_hcd, HCATLDONE);
+		u32 skip_map = isp1362_पढ़ो_reg32(isp1362_hcd, HCATLSKIP);
 		isp1362_hcd->irq_stat[ISP1362_INT_ATL]++;
 
 		DBG(2, "%s: ATL\n", __func__);
 
 		svc_mask &= ~HCuPINT_ATL;
 
-		isp1362_write_reg32(isp1362_hcd, HCATLSKIP, skip_map | done_map);
-		if (~(done_map | skip_map) == 0)
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCATLSKIP, skip_map | करोne_map);
+		अगर (~(करोne_map | skip_map) == 0)
 			isp1362_clr_mask16(isp1362_hcd, HCBUFSTAT, HCBUFSTAT_ATL_ACTIVE);
-		if (done_map) {
-			DBG(3, "%s: ATL done_map %08x\n", __func__, done_map);
-			finish_transfers(isp1362_hcd, done_map, &isp1362_hcd->atl_queue);
+		अगर (करोne_map) अणु
+			DBG(3, "%s: ATL done_map %08x\n", __func__, करोne_map);
+			finish_transfers(isp1362_hcd, करोne_map, &isp1362_hcd->atl_queue);
 			start_atl_transfers(isp1362_hcd);
-		}
+		पूर्ण
 		handled = 1;
-	}
+	पूर्ण
 
-	if (irqstat & HCuPINT_OPR) {
-		u32 intstat = isp1362_read_reg32(isp1362_hcd, HCINTSTAT);
+	अगर (irqstat & HCuPINT_OPR) अणु
+		u32 पूर्णांकstat = isp1362_पढ़ो_reg32(isp1362_hcd, HCINTSTAT);
 		isp1362_hcd->irq_stat[ISP1362_INT_OPR]++;
 
 		svc_mask &= ~HCuPINT_OPR;
-		DBG(2, "%s: OPR %08x:%08x\n", __func__, intstat, isp1362_hcd->intenb);
-		intstat &= isp1362_hcd->intenb;
-		if (intstat & OHCI_INTR_UE) {
+		DBG(2, "%s: OPR %08x:%08x\n", __func__, पूर्णांकstat, isp1362_hcd->पूर्णांकenb);
+		पूर्णांकstat &= isp1362_hcd->पूर्णांकenb;
+		अगर (पूर्णांकstat & OHCI_INTR_UE) अणु
 			pr_err("Unrecoverable error\n");
-			/* FIXME: do here reset or cleanup or whatever */
-		}
-		if (intstat & OHCI_INTR_RHSC) {
-			isp1362_hcd->rhstatus = isp1362_read_reg32(isp1362_hcd, HCRHSTATUS);
-			isp1362_hcd->rhport[0] = isp1362_read_reg32(isp1362_hcd, HCRHPORT1);
-			isp1362_hcd->rhport[1] = isp1362_read_reg32(isp1362_hcd, HCRHPORT2);
-		}
-		if (intstat & OHCI_INTR_RD) {
+			/* FIXME: करो here reset or cleanup or whatever */
+		पूर्ण
+		अगर (पूर्णांकstat & OHCI_INTR_RHSC) अणु
+			isp1362_hcd->rhstatus = isp1362_पढ़ो_reg32(isp1362_hcd, HCRHSTATUS);
+			isp1362_hcd->rhport[0] = isp1362_पढ़ो_reg32(isp1362_hcd, HCRHPORT1);
+			isp1362_hcd->rhport[1] = isp1362_पढ़ो_reg32(isp1362_hcd, HCRHPORT2);
+		पूर्ण
+		अगर (पूर्णांकstat & OHCI_INTR_RD) अणु
 			pr_info("%s: RESUME DETECTED\n", __func__);
 			isp1362_show_reg(isp1362_hcd, HCCONTROL);
 			usb_hcd_resume_root_hub(hcd);
-		}
-		isp1362_write_reg32(isp1362_hcd, HCINTSTAT, intstat);
+		पूर्ण
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCINTSTAT, पूर्णांकstat);
 		irqstat &= ~HCuPINT_OPR;
 		handled = 1;
-	}
+	पूर्ण
 
-	if (irqstat & HCuPINT_SUSP) {
+	अगर (irqstat & HCuPINT_SUSP) अणु
 		isp1362_hcd->irq_stat[ISP1362_INT_SUSP]++;
 		handled = 1;
 		svc_mask &= ~HCuPINT_SUSP;
 
 		pr_info("%s: SUSPEND IRQ\n", __func__);
-	}
+	पूर्ण
 
-	if (irqstat & HCuPINT_CLKRDY) {
+	अगर (irqstat & HCuPINT_CLKRDY) अणु
 		isp1362_hcd->irq_stat[ISP1362_INT_CLKRDY]++;
 		handled = 1;
 		isp1362_hcd->irqenb &= ~HCuPINT_CLKRDY;
 		svc_mask &= ~HCuPINT_CLKRDY;
 		pr_info("%s: CLKRDY IRQ\n", __func__);
-	}
+	पूर्ण
 
-	if (svc_mask)
+	अगर (svc_mask)
 		pr_err("%s: Unserviced interrupt(s) %04x\n", __func__, svc_mask);
 
-	isp1362_write_reg16(isp1362_hcd, HCuPINTENB, isp1362_hcd->irqenb);
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINTENB, isp1362_hcd->irqenb);
 	isp1362_hcd->irq_active--;
 	spin_unlock(&isp1362_hcd->lock);
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-#define	MAX_PERIODIC_LOAD	900	/* out of 1000 usec */
-static int balance(struct isp1362_hcd *isp1362_hcd, u16 interval, u16 load)
-{
-	int i, branch = -ENOSPC;
+#घोषणा	MAX_PERIODIC_LOAD	900	/* out of 1000 usec */
+अटल पूर्णांक balance(काष्ठा isp1362_hcd *isp1362_hcd, u16 पूर्णांकerval, u16 load)
+अणु
+	पूर्णांक i, branch = -ENOSPC;
 
-	/* search for the least loaded schedule branch of that interval
+	/* search क्रम the least loaded schedule branch of that पूर्णांकerval
 	 * which has enough bandwidth left unreserved.
 	 */
-	for (i = 0; i < interval; i++) {
-		if (branch < 0 || isp1362_hcd->load[branch] > isp1362_hcd->load[i]) {
-			int j;
+	क्रम (i = 0; i < पूर्णांकerval; i++) अणु
+		अगर (branch < 0 || isp1362_hcd->load[branch] > isp1362_hcd->load[i]) अणु
+			पूर्णांक j;
 
-			for (j = i; j < PERIODIC_SIZE; j += interval) {
-				if ((isp1362_hcd->load[j] + load) > MAX_PERIODIC_LOAD) {
+			क्रम (j = i; j < PERIODIC_SIZE; j += पूर्णांकerval) अणु
+				अगर ((isp1362_hcd->load[j] + load) > MAX_PERIODIC_LOAD) अणु
 					pr_err("%s: new load %d load[%02x] %d max %d\n", __func__,
 					    load, j, isp1362_hcd->load[j], MAX_PERIODIC_LOAD);
-					break;
-				}
-			}
-			if (j < PERIODIC_SIZE)
-				continue;
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (j < PERIODIC_SIZE)
+				जारी;
 			branch = i;
-		}
-	}
-	return branch;
-}
+		पूर्ण
+	पूर्ण
+	वापस branch;
+पूर्ण
 
-/* NB! ALL the code above this point runs with isp1362_hcd->lock
+/* NB! ALL the code above this poपूर्णांक runs with isp1362_hcd->lock
    held, irqs off
 */
 
 /*-------------------------------------------------------------------------*/
 
-static int isp1362_urb_enqueue(struct usb_hcd *hcd,
-			       struct urb *urb,
+अटल पूर्णांक isp1362_urb_enqueue(काष्ठा usb_hcd *hcd,
+			       काष्ठा urb *urb,
 			       gfp_t mem_flags)
-{
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	struct usb_device *udev = urb->dev;
-	unsigned int pipe = urb->pipe;
-	int is_out = !usb_pipein(pipe);
-	int type = usb_pipetype(pipe);
-	int epnum = usb_pipeendpoint(pipe);
-	struct usb_host_endpoint *hep = urb->ep;
-	struct isp1362_ep *ep = NULL;
-	unsigned long flags;
-	int retval = 0;
+अणु
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	काष्ठा usb_device *udev = urb->dev;
+	अचिन्हित पूर्णांक pipe = urb->pipe;
+	पूर्णांक is_out = !usb_pipein(pipe);
+	पूर्णांक type = usb_pipetype(pipe);
+	पूर्णांक epnum = usb_pipeendpoपूर्णांक(pipe);
+	काष्ठा usb_host_endpoपूर्णांक *hep = urb->ep;
+	काष्ठा isp1362_ep *ep = शून्य;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक retval = 0;
 
 	DBG(3, "%s: urb %p\n", __func__, urb);
 
-	if (type == PIPE_ISOCHRONOUS) {
+	अगर (type == PIPE_ISOCHRONOUS) अणु
 		pr_err("Isochronous transfers not supported\n");
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
 	URB_DBG("%s: FA %d ep%d%s %s: len %d %s%s\n", __func__,
 		usb_pipedevice(pipe), epnum,
 		is_out ? "out" : "in",
 		usb_pipecontrol(pipe) ? "ctrl" :
-			usb_pipeint(pipe) ? "int" :
+			usb_pipeपूर्णांक(pipe) ? "int" :
 			usb_pipebulk(pipe) ? "bulk" :
 			"iso",
 		urb->transfer_buffer_length,
@@ -1247,35 +1248,35 @@ static int isp1362_urb_enqueue(struct usb_hcd *hcd,
 		!(urb->transfer_flags & URB_SHORT_NOT_OK) ?
 		"short_ok" : "");
 
-	/* avoid all allocations within spinlocks: request or endpoint */
-	if (!hep->hcpriv) {
-		ep = kzalloc(sizeof *ep, mem_flags);
-		if (!ep)
-			return -ENOMEM;
-	}
+	/* aव्योम all allocations within spinlocks: request or endpoपूर्णांक */
+	अगर (!hep->hcpriv) अणु
+		ep = kzalloc(माप *ep, mem_flags);
+		अगर (!ep)
+			वापस -ENOMEM;
+	पूर्ण
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
 
-	/* don't submit to a dead or disabled port */
-	if (!((isp1362_hcd->rhport[0] | isp1362_hcd->rhport[1]) &
+	/* करोn't submit to a dead or disabled port */
+	अगर (!((isp1362_hcd->rhport[0] | isp1362_hcd->rhport[1]) &
 	      USB_PORT_STAT_ENABLE) ||
-	    !HC_IS_RUNNING(hcd->state)) {
-		kfree(ep);
+	    !HC_IS_RUNNING(hcd->state)) अणु
+		kमुक्त(ep);
 		retval = -ENODEV;
-		goto fail_not_linked;
-	}
+		जाओ fail_not_linked;
+	पूर्ण
 
 	retval = usb_hcd_link_urb_to_ep(hcd, urb);
-	if (retval) {
-		kfree(ep);
-		goto fail_not_linked;
-	}
+	अगर (retval) अणु
+		kमुक्त(ep);
+		जाओ fail_not_linked;
+	पूर्ण
 
-	if (hep->hcpriv) {
+	अगर (hep->hcpriv) अणु
 		ep = hep->hcpriv;
-	} else {
+	पूर्ण अन्यथा अणु
 		INIT_LIST_HEAD(&ep->schedule);
 		INIT_LIST_HEAD(&ep->active);
-		INIT_LIST_HEAD(&ep->remove_list);
+		INIT_LIST_HEAD(&ep->हटाओ_list);
 		ep->udev = usb_get_dev(udev);
 		ep->hep = hep;
 		ep->epnum = epnum;
@@ -1284,258 +1285,258 @@ static int isp1362_urb_enqueue(struct usb_hcd *hcd,
 		ep->ptd_index = -EINVAL;
 		usb_settoggle(udev, epnum, is_out, 0);
 
-		if (type == PIPE_CONTROL)
+		अगर (type == PIPE_CONTROL)
 			ep->nextpid = USB_PID_SETUP;
-		else if (is_out)
+		अन्यथा अगर (is_out)
 			ep->nextpid = USB_PID_OUT;
-		else
+		अन्यथा
 			ep->nextpid = USB_PID_IN;
 
-		switch (type) {
-		case PIPE_ISOCHRONOUS:
-		case PIPE_INTERRUPT:
-			if (urb->interval > PERIODIC_SIZE)
-				urb->interval = PERIODIC_SIZE;
-			ep->interval = urb->interval;
+		चयन (type) अणु
+		हाल PIPE_ISOCHRONOUS:
+		हाल PIPE_INTERRUPT:
+			अगर (urb->पूर्णांकerval > PERIODIC_SIZE)
+				urb->पूर्णांकerval = PERIODIC_SIZE;
+			ep->पूर्णांकerval = urb->पूर्णांकerval;
 			ep->branch = PERIODIC_SIZE;
-			ep->load = usb_calc_bus_time(udev->speed, !is_out,
+			ep->load = usb_calc_bus_समय(udev->speed, !is_out,
 						     (type == PIPE_ISOCHRONOUS),
 						     usb_maxpacket(udev, pipe, is_out)) / 1000;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		hep->hcpriv = ep;
-	}
+	पूर्ण
 	ep->num_req = isp1362_hcd->req_serial++;
 
-	/* maybe put endpoint into schedule */
-	switch (type) {
-	case PIPE_CONTROL:
-	case PIPE_BULK:
-		if (list_empty(&ep->schedule)) {
+	/* maybe put endpoपूर्णांक पूर्णांकo schedule */
+	चयन (type) अणु
+	हाल PIPE_CONTROL:
+	हाल PIPE_BULK:
+		अगर (list_empty(&ep->schedule)) अणु
 			DBG(1, "%s: Adding ep %p req %d to async schedule\n",
 				__func__, ep, ep->num_req);
 			list_add_tail(&ep->schedule, &isp1362_hcd->async);
-		}
-		break;
-	case PIPE_ISOCHRONOUS:
-	case PIPE_INTERRUPT:
-		urb->interval = ep->interval;
+		पूर्ण
+		अवरोध;
+	हाल PIPE_ISOCHRONOUS:
+	हाल PIPE_INTERRUPT:
+		urb->पूर्णांकerval = ep->पूर्णांकerval;
 
-		/* urb submitted for already existing EP */
-		if (ep->branch < PERIODIC_SIZE)
-			break;
+		/* urb submitted क्रम alपढ़ोy existing EP */
+		अगर (ep->branch < PERIODIC_SIZE)
+			अवरोध;
 
-		retval = balance(isp1362_hcd, ep->interval, ep->load);
-		if (retval < 0) {
+		retval = balance(isp1362_hcd, ep->पूर्णांकerval, ep->load);
+		अगर (retval < 0) अणु
 			pr_err("%s: balance returned %d\n", __func__, retval);
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		ep->branch = retval;
 		retval = 0;
-		isp1362_hcd->fmindex = isp1362_read_reg32(isp1362_hcd, HCFMNUM);
+		isp1362_hcd->fmindex = isp1362_पढ़ो_reg32(isp1362_hcd, HCFMNUM);
 		DBG(1, "%s: Current frame %04x branch %02x start_frame %04x(%04x)\n",
 		    __func__, isp1362_hcd->fmindex, ep->branch,
 		    ((isp1362_hcd->fmindex + PERIODIC_SIZE - 1) &
 		     ~(PERIODIC_SIZE - 1)) + ep->branch,
 		    (isp1362_hcd->fmindex & (PERIODIC_SIZE - 1)) + ep->branch);
 
-		if (list_empty(&ep->schedule)) {
-			if (type == PIPE_ISOCHRONOUS) {
+		अगर (list_empty(&ep->schedule)) अणु
+			अगर (type == PIPE_ISOCHRONOUS) अणु
 				u16 frame = isp1362_hcd->fmindex;
 
-				frame += max_t(u16, 8, ep->interval);
-				frame &= ~(ep->interval - 1);
+				frame += max_t(u16, 8, ep->पूर्णांकerval);
+				frame &= ~(ep->पूर्णांकerval - 1);
 				frame |= ep->branch;
-				if (frame_before(frame, isp1362_hcd->fmindex))
-					frame += ep->interval;
+				अगर (frame_beक्रमe(frame, isp1362_hcd->fmindex))
+					frame += ep->पूर्णांकerval;
 				urb->start_frame = frame;
 
 				DBG(1, "%s: Adding ep %p to isoc schedule\n", __func__, ep);
 				list_add_tail(&ep->schedule, &isp1362_hcd->isoc);
-			} else {
+			पूर्ण अन्यथा अणु
 				DBG(1, "%s: Adding ep %p to periodic schedule\n", __func__, ep);
 				list_add_tail(&ep->schedule, &isp1362_hcd->periodic);
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			DBG(1, "%s: ep %p already scheduled\n", __func__, ep);
 
 		DBG(2, "%s: load %d bandwidth %d -> %d\n", __func__,
-		    ep->load / ep->interval, isp1362_hcd->load[ep->branch],
+		    ep->load / ep->पूर्णांकerval, isp1362_hcd->load[ep->branch],
 		    isp1362_hcd->load[ep->branch] + ep->load);
 		isp1362_hcd->load[ep->branch] += ep->load;
-	}
+	पूर्ण
 
 	urb->hcpriv = hep;
 	ALIGNSTAT(isp1362_hcd, urb->transfer_buffer);
 
-	switch (type) {
-	case PIPE_CONTROL:
-	case PIPE_BULK:
+	चयन (type) अणु
+	हाल PIPE_CONTROL:
+	हाल PIPE_BULK:
 		start_atl_transfers(isp1362_hcd);
-		break;
-	case PIPE_INTERRUPT:
-		start_intl_transfers(isp1362_hcd);
-		break;
-	case PIPE_ISOCHRONOUS:
+		अवरोध;
+	हाल PIPE_INTERRUPT:
+		start_पूर्णांकl_transfers(isp1362_hcd);
+		अवरोध;
+	हाल PIPE_ISOCHRONOUS:
 		start_iso_transfers(isp1362_hcd);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
  fail:
-	if (retval)
+	अगर (retval)
 		usb_hcd_unlink_urb_from_ep(hcd, urb);
 
 
  fail_not_linked:
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-	if (retval)
+	अगर (retval)
 		DBG(0, "%s: urb %p failed with %d\n", __func__, urb, retval);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int isp1362_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
-{
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	struct usb_host_endpoint *hep;
-	unsigned long flags;
-	struct isp1362_ep *ep;
-	int retval = 0;
+अटल पूर्णांक isp1362_urb_dequeue(काष्ठा usb_hcd *hcd, काष्ठा urb *urb, पूर्णांक status)
+अणु
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	काष्ठा usb_host_endpoपूर्णांक *hep;
+	अचिन्हित दीर्घ flags;
+	काष्ठा isp1362_ep *ep;
+	पूर्णांक retval = 0;
 
 	DBG(3, "%s: urb %p\n", __func__, urb);
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
 	retval = usb_hcd_check_unlink_urb(hcd, urb, status);
-	if (retval)
-		goto done;
+	अगर (retval)
+		जाओ करोne;
 
 	hep = urb->hcpriv;
 
-	if (!hep) {
+	अगर (!hep) अणु
 		spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-		return -EIDRM;
-	}
+		वापस -EIDRM;
+	पूर्ण
 
 	ep = hep->hcpriv;
-	if (ep) {
+	अगर (ep) अणु
 		/* In front of queue? */
-		if (ep->hep->urb_list.next == &urb->urb_list) {
-			if (!list_empty(&ep->active)) {
+		अगर (ep->hep->urb_list.next == &urb->urb_list) अणु
+			अगर (!list_empty(&ep->active)) अणु
 				DBG(1, "%s: urb %p ep %p req %d active PTD[%d] $%04x\n", __func__,
 				    urb, ep, ep->num_req, ep->ptd_index, ep->ptd_offset);
-				/* disable processing and queue PTD for removal */
-				remove_ptd(isp1362_hcd, ep);
-				urb = NULL;
-			}
-		}
-		if (urb) {
+				/* disable processing and queue PTD क्रम removal */
+				हटाओ_ptd(isp1362_hcd, ep);
+				urb = शून्य;
+			पूर्ण
+		पूर्ण
+		अगर (urb) अणु
 			DBG(1, "%s: Finishing ep %p req %d\n", __func__, ep,
 			    ep->num_req);
 			finish_request(isp1362_hcd, ep, urb, status);
-		} else
+		पूर्ण अन्यथा
 			DBG(1, "%s: urb %p active; wait4irq\n", __func__, urb);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_warn("%s: No EP in URB %p\n", __func__, urb);
 		retval = -EINVAL;
-	}
-done:
+	पूर्ण
+करोne:
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 
 	DBG(3, "%s: exit\n", __func__);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void isp1362_endpoint_disable(struct usb_hcd *hcd, struct usb_host_endpoint *hep)
-{
-	struct isp1362_ep *ep = hep->hcpriv;
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	unsigned long flags;
+अटल व्योम isp1362_endpoपूर्णांक_disable(काष्ठा usb_hcd *hcd, काष्ठा usb_host_endpoपूर्णांक *hep)
+अणु
+	काष्ठा isp1362_ep *ep = hep->hcpriv;
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	अचिन्हित दीर्घ flags;
 
 	DBG(1, "%s: ep %p\n", __func__, ep);
-	if (!ep)
-		return;
+	अगर (!ep)
+		वापस;
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
-	if (!list_empty(&hep->urb_list)) {
-		if (!list_empty(&ep->active) && list_empty(&ep->remove_list)) {
+	अगर (!list_empty(&hep->urb_list)) अणु
+		अगर (!list_empty(&ep->active) && list_empty(&ep->हटाओ_list)) अणु
 			DBG(1, "%s: Removing ep %p req %d PTD[%d] $%04x\n", __func__,
 			    ep, ep->num_req, ep->ptd_index, ep->ptd_offset);
-			remove_ptd(isp1362_hcd, ep);
+			हटाओ_ptd(isp1362_hcd, ep);
 			pr_info("%s: Waiting for Interrupt to clean up\n", __func__);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-	/* Wait for interrupt to clear out active list */
-	while (!list_empty(&ep->active))
+	/* Wait क्रम पूर्णांकerrupt to clear out active list */
+	जबतक (!list_empty(&ep->active))
 		msleep(1);
 
 	DBG(1, "%s: Freeing EP %p\n", __func__, ep);
 
 	usb_put_dev(ep->udev);
-	kfree(ep);
-	hep->hcpriv = NULL;
-}
+	kमुक्त(ep);
+	hep->hcpriv = शून्य;
+पूर्ण
 
-static int isp1362_get_frame(struct usb_hcd *hcd)
-{
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+अटल पूर्णांक isp1362_get_frame(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
 	u32 fmnum;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
-	fmnum = isp1362_read_reg32(isp1362_hcd, HCFMNUM);
+	fmnum = isp1362_पढ़ो_reg32(isp1362_hcd, HCFMNUM);
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 
-	return (int)fmnum;
-}
+	वापस (पूर्णांक)fmnum;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /* Adapted from ohci-hub.c */
-static int isp1362_hub_status_data(struct usb_hcd *hcd, char *buf)
-{
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	int ports, i, changed = 0;
-	unsigned long flags;
+अटल पूर्णांक isp1362_hub_status_data(काष्ठा usb_hcd *hcd, अक्षर *buf)
+अणु
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	पूर्णांक ports, i, changed = 0;
+	अचिन्हित दीर्घ flags;
 
-	if (!HC_IS_RUNNING(hcd->state))
-		return -ESHUTDOWN;
+	अगर (!HC_IS_RUNNING(hcd->state))
+		वापस -ESHUTDOWN;
 
-	/* Report no status change now, if we are scheduled to be
+	/* Report no status change now, अगर we are scheduled to be
 	   called later */
-	if (timer_pending(&hcd->rh_timer))
-		return 0;
+	अगर (समयr_pending(&hcd->rh_समयr))
+		वापस 0;
 
 	ports = isp1362_hcd->rhdesca & RH_A_NDP;
 	BUG_ON(ports > 2);
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
 	/* init status */
-	if (isp1362_hcd->rhstatus & (RH_HS_LPSC | RH_HS_OCIC))
+	अगर (isp1362_hcd->rhstatus & (RH_HS_LPSC | RH_HS_OCIC))
 		buf[0] = changed = 1;
-	else
+	अन्यथा
 		buf[0] = 0;
 
-	for (i = 0; i < ports; i++) {
+	क्रम (i = 0; i < ports; i++) अणु
 		u32 status = isp1362_hcd->rhport[i];
 
-		if (status & (RH_PS_CSC | RH_PS_PESC | RH_PS_PSSC |
-			      RH_PS_OCIC | RH_PS_PRSC)) {
+		अगर (status & (RH_PS_CSC | RH_PS_PESC | RH_PS_PSSC |
+			      RH_PS_OCIC | RH_PS_PRSC)) अणु
 			changed = 1;
 			buf[0] |= 1 << (i + 1);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!(status & RH_PS_CCS))
-			continue;
-	}
+		अगर (!(status & RH_PS_CCS))
+			जारी;
+	पूर्ण
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static void isp1362_hub_descriptor(struct isp1362_hcd *isp1362_hcd,
-				   struct usb_hub_descriptor *desc)
-{
+अटल व्योम isp1362_hub_descriptor(काष्ठा isp1362_hcd *isp1362_hcd,
+				   काष्ठा usb_hub_descriptor *desc)
+अणु
 	u32 reg = isp1362_hcd->rhdesca;
 
 	DBG(3, "%s: enter\n", __func__);
@@ -1544,7 +1545,7 @@ static void isp1362_hub_descriptor(struct isp1362_hcd *isp1362_hcd,
 	desc->bDescLength = 9;
 	desc->bHubContrCurrent = 0;
 	desc->bNbrPorts = reg & 0x3;
-	/* Power switching, device type, overcurrent. */
+	/* Power चयनing, device type, overcurrent. */
 	desc->wHubCharacteristics = cpu_to_le16((reg >> 8) &
 						(HUB_CHAR_LPSM |
 						 HUB_CHAR_COMPOUND |
@@ -1557,377 +1558,377 @@ static void isp1362_hub_descriptor(struct isp1362_hcd *isp1362_hcd,
 	desc->u.hs.DeviceRemovable[1] = ~0;
 
 	DBG(3, "%s: exit\n", __func__);
-}
+पूर्ण
 
 /* Adapted from ohci-hub.c */
-static int isp1362_hub_control(struct usb_hcd *hcd, u16 typeReq, u16 wValue,
-			       u16 wIndex, char *buf, u16 wLength)
-{
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	int retval = 0;
-	unsigned long flags;
-	unsigned long t1;
-	int ports = isp1362_hcd->rhdesca & RH_A_NDP;
-	u32 tmp = 0;
+अटल पूर्णांक isp1362_hub_control(काष्ठा usb_hcd *hcd, u16 typeReq, u16 wValue,
+			       u16 wIndex, अक्षर *buf, u16 wLength)
+अणु
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	पूर्णांक retval = 0;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ t1;
+	पूर्णांक ports = isp1362_hcd->rhdesca & RH_A_NDP;
+	u32 पंचांगp = 0;
 
-	switch (typeReq) {
-	case ClearHubFeature:
+	चयन (typeReq) अणु
+	हाल ClearHubFeature:
 		DBG(0, "ClearHubFeature: ");
-		switch (wValue) {
-		case C_HUB_OVER_CURRENT:
+		चयन (wValue) अणु
+		हाल C_HUB_OVER_CURRENT:
 			DBG(0, "C_HUB_OVER_CURRENT\n");
 			spin_lock_irqsave(&isp1362_hcd->lock, flags);
-			isp1362_write_reg32(isp1362_hcd, HCRHSTATUS, RH_HS_OCIC);
+			isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHSTATUS, RH_HS_OCIC);
 			spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-			break;
-		case C_HUB_LOCAL_POWER:
+			अवरोध;
+		हाल C_HUB_LOCAL_POWER:
 			DBG(0, "C_HUB_LOCAL_POWER\n");
-			break;
-		default:
-			goto error;
-		}
-		break;
-	case SetHubFeature:
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
+		अवरोध;
+	हाल SetHubFeature:
 		DBG(0, "SetHubFeature: ");
-		switch (wValue) {
-		case C_HUB_OVER_CURRENT:
-		case C_HUB_LOCAL_POWER:
+		चयन (wValue) अणु
+		हाल C_HUB_OVER_CURRENT:
+		हाल C_HUB_LOCAL_POWER:
 			DBG(0, "C_HUB_OVER_CURRENT or C_HUB_LOCAL_POWER\n");
-			break;
-		default:
-			goto error;
-		}
-		break;
-	case GetHubDescriptor:
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
+		अवरोध;
+	हाल GetHubDescriptor:
 		DBG(0, "GetHubDescriptor\n");
-		isp1362_hub_descriptor(isp1362_hcd, (struct usb_hub_descriptor *)buf);
-		break;
-	case GetHubStatus:
+		isp1362_hub_descriptor(isp1362_hcd, (काष्ठा usb_hub_descriptor *)buf);
+		अवरोध;
+	हाल GetHubStatus:
 		DBG(0, "GetHubStatus\n");
 		put_unaligned(cpu_to_le32(0), (__le32 *) buf);
-		break;
-	case GetPortStatus:
-#ifndef VERBOSE
+		अवरोध;
+	हाल GetPortStatus:
+#अगर_अघोषित VERBOSE
 		DBG(0, "GetPortStatus\n");
-#endif
-		if (!wIndex || wIndex > ports)
-			goto error;
-		tmp = isp1362_hcd->rhport[--wIndex];
-		put_unaligned(cpu_to_le32(tmp), (__le32 *) buf);
-		break;
-	case ClearPortFeature:
+#पूर्ण_अगर
+		अगर (!wIndex || wIndex > ports)
+			जाओ error;
+		पंचांगp = isp1362_hcd->rhport[--wIndex];
+		put_unaligned(cpu_to_le32(पंचांगp), (__le32 *) buf);
+		अवरोध;
+	हाल ClearPortFeature:
 		DBG(0, "ClearPortFeature: ");
-		if (!wIndex || wIndex > ports)
-			goto error;
+		अगर (!wIndex || wIndex > ports)
+			जाओ error;
 		wIndex--;
 
-		switch (wValue) {
-		case USB_PORT_FEAT_ENABLE:
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_ENABLE:
 			DBG(0, "USB_PORT_FEAT_ENABLE\n");
-			tmp = RH_PS_CCS;
-			break;
-		case USB_PORT_FEAT_C_ENABLE:
+			पंचांगp = RH_PS_CCS;
+			अवरोध;
+		हाल USB_PORT_FEAT_C_ENABLE:
 			DBG(0, "USB_PORT_FEAT_C_ENABLE\n");
-			tmp = RH_PS_PESC;
-			break;
-		case USB_PORT_FEAT_SUSPEND:
+			पंचांगp = RH_PS_PESC;
+			अवरोध;
+		हाल USB_PORT_FEAT_SUSPEND:
 			DBG(0, "USB_PORT_FEAT_SUSPEND\n");
-			tmp = RH_PS_POCI;
-			break;
-		case USB_PORT_FEAT_C_SUSPEND:
+			पंचांगp = RH_PS_POCI;
+			अवरोध;
+		हाल USB_PORT_FEAT_C_SUSPEND:
 			DBG(0, "USB_PORT_FEAT_C_SUSPEND\n");
-			tmp = RH_PS_PSSC;
-			break;
-		case USB_PORT_FEAT_POWER:
+			पंचांगp = RH_PS_PSSC;
+			अवरोध;
+		हाल USB_PORT_FEAT_POWER:
 			DBG(0, "USB_PORT_FEAT_POWER\n");
-			tmp = RH_PS_LSDA;
+			पंचांगp = RH_PS_LSDA;
 
-			break;
-		case USB_PORT_FEAT_C_CONNECTION:
+			अवरोध;
+		हाल USB_PORT_FEAT_C_CONNECTION:
 			DBG(0, "USB_PORT_FEAT_C_CONNECTION\n");
-			tmp = RH_PS_CSC;
-			break;
-		case USB_PORT_FEAT_C_OVER_CURRENT:
+			पंचांगp = RH_PS_CSC;
+			अवरोध;
+		हाल USB_PORT_FEAT_C_OVER_CURRENT:
 			DBG(0, "USB_PORT_FEAT_C_OVER_CURRENT\n");
-			tmp = RH_PS_OCIC;
-			break;
-		case USB_PORT_FEAT_C_RESET:
+			पंचांगp = RH_PS_OCIC;
+			अवरोध;
+		हाल USB_PORT_FEAT_C_RESET:
 			DBG(0, "USB_PORT_FEAT_C_RESET\n");
-			tmp = RH_PS_PRSC;
-			break;
-		default:
-			goto error;
-		}
+			पंचांगp = RH_PS_PRSC;
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
 
 		spin_lock_irqsave(&isp1362_hcd->lock, flags);
-		isp1362_write_reg32(isp1362_hcd, HCRHPORT1 + wIndex, tmp);
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHPORT1 + wIndex, पंचांगp);
 		isp1362_hcd->rhport[wIndex] =
-			isp1362_read_reg32(isp1362_hcd, HCRHPORT1 + wIndex);
+			isp1362_पढ़ो_reg32(isp1362_hcd, HCRHPORT1 + wIndex);
 		spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-		break;
-	case SetPortFeature:
+		अवरोध;
+	हाल SetPortFeature:
 		DBG(0, "SetPortFeature: ");
-		if (!wIndex || wIndex > ports)
-			goto error;
+		अगर (!wIndex || wIndex > ports)
+			जाओ error;
 		wIndex--;
-		switch (wValue) {
-		case USB_PORT_FEAT_SUSPEND:
+		चयन (wValue) अणु
+		हाल USB_PORT_FEAT_SUSPEND:
 			DBG(0, "USB_PORT_FEAT_SUSPEND\n");
 			spin_lock_irqsave(&isp1362_hcd->lock, flags);
-			isp1362_write_reg32(isp1362_hcd, HCRHPORT1 + wIndex, RH_PS_PSS);
+			isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHPORT1 + wIndex, RH_PS_PSS);
 			isp1362_hcd->rhport[wIndex] =
-				isp1362_read_reg32(isp1362_hcd, HCRHPORT1 + wIndex);
+				isp1362_पढ़ो_reg32(isp1362_hcd, HCRHPORT1 + wIndex);
 			spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-			break;
-		case USB_PORT_FEAT_POWER:
+			अवरोध;
+		हाल USB_PORT_FEAT_POWER:
 			DBG(0, "USB_PORT_FEAT_POWER\n");
 			spin_lock_irqsave(&isp1362_hcd->lock, flags);
-			isp1362_write_reg32(isp1362_hcd, HCRHPORT1 + wIndex, RH_PS_PPS);
+			isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHPORT1 + wIndex, RH_PS_PPS);
 			isp1362_hcd->rhport[wIndex] =
-				isp1362_read_reg32(isp1362_hcd, HCRHPORT1 + wIndex);
+				isp1362_पढ़ो_reg32(isp1362_hcd, HCRHPORT1 + wIndex);
 			spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-			break;
-		case USB_PORT_FEAT_RESET:
+			अवरोध;
+		हाल USB_PORT_FEAT_RESET:
 			DBG(0, "USB_PORT_FEAT_RESET\n");
 			spin_lock_irqsave(&isp1362_hcd->lock, flags);
 
-			t1 = jiffies + msecs_to_jiffies(USB_RESET_WIDTH);
-			while (time_before(jiffies, t1)) {
+			t1 = jअगरfies + msecs_to_jअगरfies(USB_RESET_WIDTH);
+			जबतक (समय_beक्रमe(jअगरfies, t1)) अणु
 				/* spin until any current reset finishes */
-				for (;;) {
-					tmp = isp1362_read_reg32(isp1362_hcd, HCRHPORT1 + wIndex);
-					if (!(tmp & RH_PS_PRS))
-						break;
+				क्रम (;;) अणु
+					पंचांगp = isp1362_पढ़ो_reg32(isp1362_hcd, HCRHPORT1 + wIndex);
+					अगर (!(पंचांगp & RH_PS_PRS))
+						अवरोध;
 					udelay(500);
-				}
-				if (!(tmp & RH_PS_CCS))
-					break;
+				पूर्ण
+				अगर (!(पंचांगp & RH_PS_CCS))
+					अवरोध;
 				/* Reset lasts 10ms (claims datasheet) */
-				isp1362_write_reg32(isp1362_hcd, HCRHPORT1 + wIndex, (RH_PS_PRS));
+				isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHPORT1 + wIndex, (RH_PS_PRS));
 
 				spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 				msleep(10);
 				spin_lock_irqsave(&isp1362_hcd->lock, flags);
-			}
+			पूर्ण
 
-			isp1362_hcd->rhport[wIndex] = isp1362_read_reg32(isp1362_hcd,
+			isp1362_hcd->rhport[wIndex] = isp1362_पढ़ो_reg32(isp1362_hcd,
 									 HCRHPORT1 + wIndex);
 			spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-			break;
-		default:
-			goto error;
-		}
-		break;
+			अवरोध;
+		शेष:
+			जाओ error;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
  error:
 		/* "protocol stall" on error */
 		DBG(0, "PROTOCOL STALL\n");
 		retval = -EPIPE;
-	}
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-#ifdef	CONFIG_PM
-static int isp1362_bus_suspend(struct usb_hcd *hcd)
-{
-	int status = 0;
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	unsigned long flags;
+#अगर_घोषित	CONFIG_PM
+अटल पूर्णांक isp1362_bus_suspend(काष्ठा usb_hcd *hcd)
+अणु
+	पूर्णांक status = 0;
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	अचिन्हित दीर्घ flags;
 
-	if (time_before(jiffies, isp1362_hcd->next_statechange))
+	अगर (समय_beक्रमe(jअगरfies, isp1362_hcd->next_statechange))
 		msleep(5);
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
 
-	isp1362_hcd->hc_control = isp1362_read_reg32(isp1362_hcd, HCCONTROL);
-	switch (isp1362_hcd->hc_control & OHCI_CTRL_HCFS) {
-	case OHCI_USB_RESUME:
+	isp1362_hcd->hc_control = isp1362_पढ़ो_reg32(isp1362_hcd, HCCONTROL);
+	चयन (isp1362_hcd->hc_control & OHCI_CTRL_HCFS) अणु
+	हाल OHCI_USB_RESUME:
 		DBG(0, "%s: resume/suspend?\n", __func__);
 		isp1362_hcd->hc_control &= ~OHCI_CTRL_HCFS;
 		isp1362_hcd->hc_control |= OHCI_USB_RESET;
-		isp1362_write_reg32(isp1362_hcd, HCCONTROL, isp1362_hcd->hc_control);
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCCONTROL, isp1362_hcd->hc_control);
 		fallthrough;
-	case OHCI_USB_RESET:
+	हाल OHCI_USB_RESET:
 		status = -EBUSY;
 		pr_warn("%s: needs reinit!\n", __func__);
-		goto done;
-	case OHCI_USB_SUSPEND:
+		जाओ करोne;
+	हाल OHCI_USB_SUSPEND:
 		pr_warn("%s: already suspended?\n", __func__);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	DBG(0, "%s: suspend root hub\n", __func__);
 
 	/* First stop any processing */
 	hcd->state = HC_STATE_QUIESCING;
-	if (!list_empty(&isp1362_hcd->atl_queue.active) ||
-	    !list_empty(&isp1362_hcd->intl_queue.active) ||
+	अगर (!list_empty(&isp1362_hcd->atl_queue.active) ||
+	    !list_empty(&isp1362_hcd->पूर्णांकl_queue.active) ||
 	    !list_empty(&isp1362_hcd->istl_queue[0] .active) ||
-	    !list_empty(&isp1362_hcd->istl_queue[1] .active)) {
-		int limit;
+	    !list_empty(&isp1362_hcd->istl_queue[1] .active)) अणु
+		पूर्णांक limit;
 
-		isp1362_write_reg32(isp1362_hcd, HCATLSKIP, ~0);
-		isp1362_write_reg32(isp1362_hcd, HCINTLSKIP, ~0);
-		isp1362_write_reg16(isp1362_hcd, HCBUFSTAT, 0);
-		isp1362_write_reg16(isp1362_hcd, HCuPINTENB, 0);
-		isp1362_write_reg32(isp1362_hcd, HCINTSTAT, OHCI_INTR_SF);
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCATLSKIP, ~0);
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCINTLSKIP, ~0);
+		isp1362_ग_लिखो_reg16(isp1362_hcd, HCBUFSTAT, 0);
+		isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINTENB, 0);
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCINTSTAT, OHCI_INTR_SF);
 
 		DBG(0, "%s: stopping schedules ...\n", __func__);
 		limit = 2000;
-		while (limit > 0) {
+		जबतक (limit > 0) अणु
 			udelay(250);
 			limit -= 250;
-			if (isp1362_read_reg32(isp1362_hcd, HCINTSTAT) & OHCI_INTR_SF)
-				break;
-		}
+			अगर (isp1362_पढ़ो_reg32(isp1362_hcd, HCINTSTAT) & OHCI_INTR_SF)
+				अवरोध;
+		पूर्ण
 		mdelay(7);
-		if (isp1362_read_reg16(isp1362_hcd, HCuPINT) & HCuPINT_ATL) {
-			u32 done_map = isp1362_read_reg32(isp1362_hcd, HCATLDONE);
-			finish_transfers(isp1362_hcd, done_map, &isp1362_hcd->atl_queue);
-		}
-		if (isp1362_read_reg16(isp1362_hcd, HCuPINT) & HCuPINT_INTL) {
-			u32 done_map = isp1362_read_reg32(isp1362_hcd, HCINTLDONE);
-			finish_transfers(isp1362_hcd, done_map, &isp1362_hcd->intl_queue);
-		}
-		if (isp1362_read_reg16(isp1362_hcd, HCuPINT) & HCuPINT_ISTL0)
+		अगर (isp1362_पढ़ो_reg16(isp1362_hcd, HCuPINT) & HCuPINT_ATL) अणु
+			u32 करोne_map = isp1362_पढ़ो_reg32(isp1362_hcd, HCATLDONE);
+			finish_transfers(isp1362_hcd, करोne_map, &isp1362_hcd->atl_queue);
+		पूर्ण
+		अगर (isp1362_पढ़ो_reg16(isp1362_hcd, HCuPINT) & HCuPINT_INTL) अणु
+			u32 करोne_map = isp1362_पढ़ो_reg32(isp1362_hcd, HCINTLDONE);
+			finish_transfers(isp1362_hcd, करोne_map, &isp1362_hcd->पूर्णांकl_queue);
+		पूर्ण
+		अगर (isp1362_पढ़ो_reg16(isp1362_hcd, HCuPINT) & HCuPINT_ISTL0)
 			finish_iso_transfers(isp1362_hcd, &isp1362_hcd->istl_queue[0]);
-		if (isp1362_read_reg16(isp1362_hcd, HCuPINT) & HCuPINT_ISTL1)
+		अगर (isp1362_पढ़ो_reg16(isp1362_hcd, HCuPINT) & HCuPINT_ISTL1)
 			finish_iso_transfers(isp1362_hcd, &isp1362_hcd->istl_queue[1]);
-	}
+	पूर्ण
 	DBG(0, "%s: HCINTSTAT: %08x\n", __func__,
-		    isp1362_read_reg32(isp1362_hcd, HCINTSTAT));
-	isp1362_write_reg32(isp1362_hcd, HCINTSTAT,
-			    isp1362_read_reg32(isp1362_hcd, HCINTSTAT));
+		    isp1362_पढ़ो_reg32(isp1362_hcd, HCINTSTAT));
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCINTSTAT,
+			    isp1362_पढ़ो_reg32(isp1362_hcd, HCINTSTAT));
 
 	/* Suspend hub */
 	isp1362_hcd->hc_control = OHCI_USB_SUSPEND;
 	isp1362_show_reg(isp1362_hcd, HCCONTROL);
-	isp1362_write_reg32(isp1362_hcd, HCCONTROL, isp1362_hcd->hc_control);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCCONTROL, isp1362_hcd->hc_control);
 	isp1362_show_reg(isp1362_hcd, HCCONTROL);
 
-#if 1
-	isp1362_hcd->hc_control = isp1362_read_reg32(isp1362_hcd, HCCONTROL);
-	if ((isp1362_hcd->hc_control & OHCI_CTRL_HCFS) != OHCI_USB_SUSPEND) {
+#अगर 1
+	isp1362_hcd->hc_control = isp1362_पढ़ो_reg32(isp1362_hcd, HCCONTROL);
+	अगर ((isp1362_hcd->hc_control & OHCI_CTRL_HCFS) != OHCI_USB_SUSPEND) अणु
 		pr_err("%s: controller won't suspend %08x\n", __func__,
 		    isp1362_hcd->hc_control);
 		status = -EBUSY;
-	} else
-#endif
-	{
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अणु
 		/* no resumes until devices finish suspending */
-		isp1362_hcd->next_statechange = jiffies + msecs_to_jiffies(5);
-	}
-done:
-	if (status == 0) {
+		isp1362_hcd->next_statechange = jअगरfies + msecs_to_jअगरfies(5);
+	पूर्ण
+करोne:
+	अगर (status == 0) अणु
 		hcd->state = HC_STATE_SUSPENDED;
 		DBG(0, "%s: HCD suspended: %08x\n", __func__,
-		    isp1362_read_reg32(isp1362_hcd, HCCONTROL));
-	}
+		    isp1362_पढ़ो_reg32(isp1362_hcd, HCCONTROL));
+	पूर्ण
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int isp1362_bus_resume(struct usb_hcd *hcd)
-{
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+अटल पूर्णांक isp1362_bus_resume(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
 	u32 port;
-	unsigned long flags;
-	int status = -EINPROGRESS;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक status = -EINPROGRESS;
 
-	if (time_before(jiffies, isp1362_hcd->next_statechange))
+	अगर (समय_beक्रमe(jअगरfies, isp1362_hcd->next_statechange))
 		msleep(5);
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
-	isp1362_hcd->hc_control = isp1362_read_reg32(isp1362_hcd, HCCONTROL);
+	isp1362_hcd->hc_control = isp1362_पढ़ो_reg32(isp1362_hcd, HCCONTROL);
 	pr_info("%s: HCCONTROL: %08x\n", __func__, isp1362_hcd->hc_control);
-	if (hcd->state == HC_STATE_RESUMING) {
+	अगर (hcd->state == HC_STATE_RESUMING) अणु
 		pr_warn("%s: duplicate resume\n", __func__);
 		status = 0;
-	} else
-		switch (isp1362_hcd->hc_control & OHCI_CTRL_HCFS) {
-		case OHCI_USB_SUSPEND:
+	पूर्ण अन्यथा
+		चयन (isp1362_hcd->hc_control & OHCI_CTRL_HCFS) अणु
+		हाल OHCI_USB_SUSPEND:
 			DBG(0, "%s: resume root hub\n", __func__);
 			isp1362_hcd->hc_control &= ~OHCI_CTRL_HCFS;
 			isp1362_hcd->hc_control |= OHCI_USB_RESUME;
-			isp1362_write_reg32(isp1362_hcd, HCCONTROL, isp1362_hcd->hc_control);
-			break;
-		case OHCI_USB_RESUME:
-			/* HCFS changes sometime after INTR_RD */
+			isp1362_ग_लिखो_reg32(isp1362_hcd, HCCONTROL, isp1362_hcd->hc_control);
+			अवरोध;
+		हाल OHCI_USB_RESUME:
+			/* HCFS changes someसमय after INTR_RD */
 			DBG(0, "%s: remote wakeup\n", __func__);
-			break;
-		case OHCI_USB_OPER:
+			अवरोध;
+		हाल OHCI_USB_OPER:
 			DBG(0, "%s: odd resume\n", __func__);
 			status = 0;
-			hcd->self.root_hub->dev.power.power_state = PMSG_ON;
-			break;
-		default:		/* RESET, we lost power */
+			hcd->self.root_hub->dev.घातer.घातer_state = PMSG_ON;
+			अवरोध;
+		शेष:		/* RESET, we lost घातer */
 			DBG(0, "%s: root hub hardware reset\n", __func__);
 			status = -EBUSY;
-		}
+		पूर्ण
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-	if (status == -EBUSY) {
+	अगर (status == -EBUSY) अणु
 		DBG(0, "%s: Restarting HC\n", __func__);
 		isp1362_hc_stop(hcd);
-		return isp1362_hc_start(hcd);
-	}
-	if (status != -EINPROGRESS)
-		return status;
+		वापस isp1362_hc_start(hcd);
+	पूर्ण
+	अगर (status != -EINPROGRESS)
+		वापस status;
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
-	port = isp1362_read_reg32(isp1362_hcd, HCRHDESCA) & RH_A_NDP;
-	while (port--) {
-		u32 stat = isp1362_read_reg32(isp1362_hcd, HCRHPORT1 + port);
+	port = isp1362_पढ़ो_reg32(isp1362_hcd, HCRHDESCA) & RH_A_NDP;
+	जबतक (port--) अणु
+		u32 stat = isp1362_पढ़ो_reg32(isp1362_hcd, HCRHPORT1 + port);
 
-		/* force global, not selective, resume */
-		if (!(stat & RH_PS_PSS)) {
+		/* क्रमce global, not selective, resume */
+		अगर (!(stat & RH_PS_PSS)) अणु
 			DBG(0, "%s: Not Resuming RH port %d\n", __func__, port);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		DBG(0, "%s: Resuming RH port %d\n", __func__, port);
-		isp1362_write_reg32(isp1362_hcd, HCRHPORT1 + port, RH_PS_POCI);
-	}
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHPORT1 + port, RH_PS_POCI);
+	पूर्ण
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 
-	/* Some controllers (lucent) need extra-long delays */
+	/* Some controllers (lucent) need extra-दीर्घ delays */
 	hcd->state = HC_STATE_RESUMING;
 	mdelay(20 /* usb 11.5.1.10 */ + 15);
 
 	isp1362_hcd->hc_control = OHCI_USB_OPER;
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
 	isp1362_show_reg(isp1362_hcd, HCCONTROL);
-	isp1362_write_reg32(isp1362_hcd, HCCONTROL, isp1362_hcd->hc_control);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCCONTROL, isp1362_hcd->hc_control);
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 	/* TRSMRCY */
 	msleep(10);
 
-	/* keep it alive for ~5x suspend + resume costs */
-	isp1362_hcd->next_statechange = jiffies + msecs_to_jiffies(250);
+	/* keep it alive क्रम ~5x suspend + resume costs */
+	isp1362_hcd->next_statechange = jअगरfies + msecs_to_jअगरfies(250);
 
-	hcd->self.root_hub->dev.power.power_state = PMSG_ON;
+	hcd->self.root_hub->dev.घातer.घातer_state = PMSG_ON;
 	hcd->state = HC_STATE_RUNNING;
-	return 0;
-}
-#else
-#define	isp1362_bus_suspend	NULL
-#define	isp1362_bus_resume	NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा	isp1362_bus_suspend	शून्य
+#घोषणा	isp1362_bus_resume	शून्य
+#पूर्ण_अगर
 
 /*-------------------------------------------------------------------------*/
 
-static void dump_irq(struct seq_file *s, char *label, u16 mask)
-{
-	seq_printf(s, "%-15s %04x%s%s%s%s%s%s\n", label, mask,
+अटल व्योम dump_irq(काष्ठा seq_file *s, अक्षर *label, u16 mask)
+अणु
+	seq_म_लिखो(s, "%-15s %04x%s%s%s%s%s%s\n", label, mask,
 		   mask & HCuPINT_CLKRDY ? " clkrdy" : "",
 		   mask & HCuPINT_SUSP ? " susp" : "",
 		   mask & HCuPINT_OPR ? " opr" : "",
 		   mask & HCuPINT_EOT ? " eot" : "",
 		   mask & HCuPINT_ATL ? " atl" : "",
 		   mask & HCuPINT_SOF ? " sof" : "");
-}
+पूर्ण
 
-static void dump_int(struct seq_file *s, char *label, u32 mask)
-{
-	seq_printf(s, "%-15s %08x%s%s%s%s%s%s%s\n", label, mask,
+अटल व्योम dump_पूर्णांक(काष्ठा seq_file *s, अक्षर *label, u32 mask)
+अणु
+	seq_म_लिखो(s, "%-15s %08x%s%s%s%s%s%s%s\n", label, mask,
 		   mask & OHCI_INTR_MIE ? " MIE" : "",
 		   mask & OHCI_INTR_RHSC ? " rhsc" : "",
 		   mask & OHCI_INTR_FNO ? " fno" : "",
@@ -1935,345 +1936,345 @@ static void dump_int(struct seq_file *s, char *label, u32 mask)
 		   mask & OHCI_INTR_RD ? " rd" : "",
 		   mask & OHCI_INTR_SF ? " sof" : "",
 		   mask & OHCI_INTR_SO ? " so" : "");
-}
+पूर्ण
 
-static void dump_ctrl(struct seq_file *s, char *label, u32 mask)
-{
-	seq_printf(s, "%-15s %08x%s%s%s\n", label, mask,
+अटल व्योम dump_ctrl(काष्ठा seq_file *s, अक्षर *label, u32 mask)
+अणु
+	seq_म_लिखो(s, "%-15s %08x%s%s%s\n", label, mask,
 		   mask & OHCI_CTRL_RWC ? " rwc" : "",
 		   mask & OHCI_CTRL_RWE ? " rwe" : "",
-		   ({
-			   char *hcfs;
-			   switch (mask & OHCI_CTRL_HCFS) {
-			   case OHCI_USB_OPER:
+		   (अणु
+			   अक्षर *hcfs;
+			   चयन (mask & OHCI_CTRL_HCFS) अणु
+			   हाल OHCI_USB_OPER:
 				   hcfs = " oper";
-				   break;
-			   case OHCI_USB_RESET:
+				   अवरोध;
+			   हाल OHCI_USB_RESET:
 				   hcfs = " reset";
-				   break;
-			   case OHCI_USB_RESUME:
+				   अवरोध;
+			   हाल OHCI_USB_RESUME:
 				   hcfs = " resume";
-				   break;
-			   case OHCI_USB_SUSPEND:
+				   अवरोध;
+			   हाल OHCI_USB_SUSPEND:
 				   hcfs = " suspend";
-				   break;
-			   default:
+				   अवरोध;
+			   शेष:
 				   hcfs = " ?";
-			   }
+			   पूर्ण
 			   hcfs;
-		   }));
-}
+		   पूर्ण));
+पूर्ण
 
-static void dump_regs(struct seq_file *s, struct isp1362_hcd *isp1362_hcd)
-{
-	seq_printf(s, "HCREVISION [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCREVISION),
-		   isp1362_read_reg32(isp1362_hcd, HCREVISION));
-	seq_printf(s, "HCCONTROL  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCCONTROL),
-		   isp1362_read_reg32(isp1362_hcd, HCCONTROL));
-	seq_printf(s, "HCCMDSTAT  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCCMDSTAT),
-		   isp1362_read_reg32(isp1362_hcd, HCCMDSTAT));
-	seq_printf(s, "HCINTSTAT  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCINTSTAT),
-		   isp1362_read_reg32(isp1362_hcd, HCINTSTAT));
-	seq_printf(s, "HCINTENB   [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCINTENB),
-		   isp1362_read_reg32(isp1362_hcd, HCINTENB));
-	seq_printf(s, "HCFMINTVL  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCFMINTVL),
-		   isp1362_read_reg32(isp1362_hcd, HCFMINTVL));
-	seq_printf(s, "HCFMREM    [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCFMREM),
-		   isp1362_read_reg32(isp1362_hcd, HCFMREM));
-	seq_printf(s, "HCFMNUM    [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCFMNUM),
-		   isp1362_read_reg32(isp1362_hcd, HCFMNUM));
-	seq_printf(s, "HCLSTHRESH [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCLSTHRESH),
-		   isp1362_read_reg32(isp1362_hcd, HCLSTHRESH));
-	seq_printf(s, "HCRHDESCA  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCRHDESCA),
-		   isp1362_read_reg32(isp1362_hcd, HCRHDESCA));
-	seq_printf(s, "HCRHDESCB  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCRHDESCB),
-		   isp1362_read_reg32(isp1362_hcd, HCRHDESCB));
-	seq_printf(s, "HCRHSTATUS [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCRHSTATUS),
-		   isp1362_read_reg32(isp1362_hcd, HCRHSTATUS));
-	seq_printf(s, "HCRHPORT1  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCRHPORT1),
-		   isp1362_read_reg32(isp1362_hcd, HCRHPORT1));
-	seq_printf(s, "HCRHPORT2  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCRHPORT2),
-		   isp1362_read_reg32(isp1362_hcd, HCRHPORT2));
-	seq_printf(s, "\n");
-	seq_printf(s, "HCHWCFG    [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCHWCFG),
-		   isp1362_read_reg16(isp1362_hcd, HCHWCFG));
-	seq_printf(s, "HCDMACFG   [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCDMACFG),
-		   isp1362_read_reg16(isp1362_hcd, HCDMACFG));
-	seq_printf(s, "HCXFERCTR  [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCXFERCTR),
-		   isp1362_read_reg16(isp1362_hcd, HCXFERCTR));
-	seq_printf(s, "HCuPINT    [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCuPINT),
-		   isp1362_read_reg16(isp1362_hcd, HCuPINT));
-	seq_printf(s, "HCuPINTENB [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCuPINTENB),
-		   isp1362_read_reg16(isp1362_hcd, HCuPINTENB));
-	seq_printf(s, "HCCHIPID   [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCCHIPID),
-		   isp1362_read_reg16(isp1362_hcd, HCCHIPID));
-	seq_printf(s, "HCSCRATCH  [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCSCRATCH),
-		   isp1362_read_reg16(isp1362_hcd, HCSCRATCH));
-	seq_printf(s, "HCBUFSTAT  [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCBUFSTAT),
-		   isp1362_read_reg16(isp1362_hcd, HCBUFSTAT));
-	seq_printf(s, "HCDIRADDR  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCDIRADDR),
-		   isp1362_read_reg32(isp1362_hcd, HCDIRADDR));
-#if 0
-	seq_printf(s, "HCDIRDATA  [%02x]     %04x\n", ISP1362_REG_NO(HCDIRDATA),
-		   isp1362_read_reg16(isp1362_hcd, HCDIRDATA));
-#endif
-	seq_printf(s, "HCISTLBUFSZ[%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCISTLBUFSZ),
-		   isp1362_read_reg16(isp1362_hcd, HCISTLBUFSZ));
-	seq_printf(s, "HCISTLRATE [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCISTLRATE),
-		   isp1362_read_reg16(isp1362_hcd, HCISTLRATE));
-	seq_printf(s, "\n");
-	seq_printf(s, "HCINTLBUFSZ[%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLBUFSZ),
-		   isp1362_read_reg16(isp1362_hcd, HCINTLBUFSZ));
-	seq_printf(s, "HCINTLBLKSZ[%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLBLKSZ),
-		   isp1362_read_reg16(isp1362_hcd, HCINTLBLKSZ));
-	seq_printf(s, "HCINTLDONE [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLDONE),
-		   isp1362_read_reg32(isp1362_hcd, HCINTLDONE));
-	seq_printf(s, "HCINTLSKIP [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLSKIP),
-		   isp1362_read_reg32(isp1362_hcd, HCINTLSKIP));
-	seq_printf(s, "HCINTLLAST [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLLAST),
-		   isp1362_read_reg32(isp1362_hcd, HCINTLLAST));
-	seq_printf(s, "HCINTLCURR [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLCURR),
-		   isp1362_read_reg16(isp1362_hcd, HCINTLCURR));
-	seq_printf(s, "\n");
-	seq_printf(s, "HCATLBUFSZ [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCATLBUFSZ),
-		   isp1362_read_reg16(isp1362_hcd, HCATLBUFSZ));
-	seq_printf(s, "HCATLBLKSZ [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCATLBLKSZ),
-		   isp1362_read_reg16(isp1362_hcd, HCATLBLKSZ));
-#if 0
-	seq_printf(s, "HCATLDONE  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCATLDONE),
-		   isp1362_read_reg32(isp1362_hcd, HCATLDONE));
-#endif
-	seq_printf(s, "HCATLSKIP  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCATLSKIP),
-		   isp1362_read_reg32(isp1362_hcd, HCATLSKIP));
-	seq_printf(s, "HCATLLAST  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCATLLAST),
-		   isp1362_read_reg32(isp1362_hcd, HCATLLAST));
-	seq_printf(s, "HCATLCURR  [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCATLCURR),
-		   isp1362_read_reg16(isp1362_hcd, HCATLCURR));
-	seq_printf(s, "\n");
-	seq_printf(s, "HCATLDTC   [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCATLDTC),
-		   isp1362_read_reg16(isp1362_hcd, HCATLDTC));
-	seq_printf(s, "HCATLDTCTO [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCATLDTCTO),
-		   isp1362_read_reg16(isp1362_hcd, HCATLDTCTO));
-}
+अटल व्योम dump_regs(काष्ठा seq_file *s, काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
+	seq_म_लिखो(s, "HCREVISION [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCREVISION),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCREVISION));
+	seq_म_लिखो(s, "HCCONTROL  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCCONTROL),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCCONTROL));
+	seq_म_लिखो(s, "HCCMDSTAT  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCCMDSTAT),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCCMDSTAT));
+	seq_म_लिखो(s, "HCINTSTAT  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCINTSTAT),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCINTSTAT));
+	seq_म_लिखो(s, "HCINTENB   [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCINTENB),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCINTENB));
+	seq_म_लिखो(s, "HCFMINTVL  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCFMINTVL),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCFMINTVL));
+	seq_म_लिखो(s, "HCFMREM    [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCFMREM),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCFMREM));
+	seq_म_लिखो(s, "HCFMNUM    [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCFMNUM),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCFMNUM));
+	seq_म_लिखो(s, "HCLSTHRESH [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCLSTHRESH),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCLSTHRESH));
+	seq_म_लिखो(s, "HCRHDESCA  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCRHDESCA),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCRHDESCA));
+	seq_म_लिखो(s, "HCRHDESCB  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCRHDESCB),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCRHDESCB));
+	seq_म_लिखो(s, "HCRHSTATUS [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCRHSTATUS),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCRHSTATUS));
+	seq_म_लिखो(s, "HCRHPORT1  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCRHPORT1),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCRHPORT1));
+	seq_म_लिखो(s, "HCRHPORT2  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCRHPORT2),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCRHPORT2));
+	seq_म_लिखो(s, "\n");
+	seq_म_लिखो(s, "HCHWCFG    [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCHWCFG),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCHWCFG));
+	seq_म_लिखो(s, "HCDMACFG   [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCDMACFG),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCDMACFG));
+	seq_म_लिखो(s, "HCXFERCTR  [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCXFERCTR),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCXFERCTR));
+	seq_म_लिखो(s, "HCuPINT    [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCuPINT),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCuPINT));
+	seq_म_लिखो(s, "HCuPINTENB [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCuPINTENB),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCuPINTENB));
+	seq_म_लिखो(s, "HCCHIPID   [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCCHIPID),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCCHIPID));
+	seq_म_लिखो(s, "HCSCRATCH  [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCSCRATCH),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCSCRATCH));
+	seq_म_लिखो(s, "HCBUFSTAT  [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCBUFSTAT),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCBUFSTAT));
+	seq_म_लिखो(s, "HCDIRADDR  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCसूचीADDR),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCसूचीADDR));
+#अगर 0
+	seq_म_लिखो(s, "HCDIRDATA  [%02x]     %04x\n", ISP1362_REG_NO(HCसूचीDATA),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCसूचीDATA));
+#पूर्ण_अगर
+	seq_म_लिखो(s, "HCISTLBUFSZ[%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCISTLBUFSZ),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCISTLBUFSZ));
+	seq_म_लिखो(s, "HCISTLRATE [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCISTLRATE),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCISTLRATE));
+	seq_म_लिखो(s, "\n");
+	seq_म_लिखो(s, "HCINTLBUFSZ[%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLBUFSZ),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCINTLBUFSZ));
+	seq_म_लिखो(s, "HCINTLBLKSZ[%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLBLKSZ),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCINTLBLKSZ));
+	seq_म_लिखो(s, "HCINTLDONE [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLDONE),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCINTLDONE));
+	seq_म_लिखो(s, "HCINTLSKIP [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLSKIP),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCINTLSKIP));
+	seq_म_लिखो(s, "HCINTLLAST [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLLAST),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCINTLLAST));
+	seq_म_लिखो(s, "HCINTLCURR [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCINTLCURR),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCINTLCURR));
+	seq_म_लिखो(s, "\n");
+	seq_म_लिखो(s, "HCATLBUFSZ [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCATLBUFSZ),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCATLBUFSZ));
+	seq_म_लिखो(s, "HCATLBLKSZ [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCATLBLKSZ),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCATLBLKSZ));
+#अगर 0
+	seq_म_लिखो(s, "HCATLDONE  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCATLDONE),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCATLDONE));
+#पूर्ण_अगर
+	seq_म_लिखो(s, "HCATLSKIP  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCATLSKIP),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCATLSKIP));
+	seq_म_लिखो(s, "HCATLLAST  [%02x] %08x\n", ISP1362_REG_NO(ISP1362_REG_HCATLLAST),
+		   isp1362_पढ़ो_reg32(isp1362_hcd, HCATLLAST));
+	seq_म_लिखो(s, "HCATLCURR  [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCATLCURR),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCATLCURR));
+	seq_म_लिखो(s, "\n");
+	seq_म_लिखो(s, "HCATLDTC   [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCATLDTC),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCATLDTC));
+	seq_म_लिखो(s, "HCATLDTCTO [%02x]     %04x\n", ISP1362_REG_NO(ISP1362_REG_HCATLDTCTO),
+		   isp1362_पढ़ो_reg16(isp1362_hcd, HCATLDTCTO));
+पूर्ण
 
-static int isp1362_show(struct seq_file *s, void *unused)
-{
-	struct isp1362_hcd *isp1362_hcd = s->private;
-	struct isp1362_ep *ep;
-	int i;
+अटल पूर्णांक isp1362_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा isp1362_hcd *isp1362_hcd = s->निजी;
+	काष्ठा isp1362_ep *ep;
+	पूर्णांक i;
 
-	seq_printf(s, "%s\n%s version %s\n",
+	seq_म_लिखो(s, "%s\n%s version %s\n",
 		   isp1362_hcd_to_hcd(isp1362_hcd)->product_desc, hcd_name, DRIVER_VERSION);
 
-	/* collect statistics to help estimate potential win for
+	/* collect statistics to help estimate potential win क्रम
 	 * DMA engines that care about alignment (PXA)
 	 */
-	seq_printf(s, "alignment:  16b/%ld 8b/%ld 4b/%ld 2b/%ld 1b/%ld\n",
+	seq_म_लिखो(s, "alignment:  16b/%ld 8b/%ld 4b/%ld 2b/%ld 1b/%ld\n",
 		   isp1362_hcd->stat16, isp1362_hcd->stat8, isp1362_hcd->stat4,
 		   isp1362_hcd->stat2, isp1362_hcd->stat1);
-	seq_printf(s, "max # ptds in ATL  fifo: %d\n", isp1362_hcd->atl_queue.stat_maxptds);
-	seq_printf(s, "max # ptds in INTL fifo: %d\n", isp1362_hcd->intl_queue.stat_maxptds);
-	seq_printf(s, "max # ptds in ISTL fifo: %d\n",
+	seq_म_लिखो(s, "max # ptds in ATL  fifo: %d\n", isp1362_hcd->atl_queue.stat_maxptds);
+	seq_म_लिखो(s, "max # ptds in INTL fifo: %d\n", isp1362_hcd->पूर्णांकl_queue.stat_maxptds);
+	seq_म_लिखो(s, "max # ptds in ISTL fifo: %d\n",
 		   max(isp1362_hcd->istl_queue[0] .stat_maxptds,
 		       isp1362_hcd->istl_queue[1] .stat_maxptds));
 
-	/* FIXME: don't show the following in suspended state */
+	/* FIXME: करोn't show the following in suspended state */
 	spin_lock_irq(&isp1362_hcd->lock);
 
-	dump_irq(s, "hc_irq_enable", isp1362_read_reg16(isp1362_hcd, HCuPINTENB));
-	dump_irq(s, "hc_irq_status", isp1362_read_reg16(isp1362_hcd, HCuPINT));
-	dump_int(s, "ohci_int_enable", isp1362_read_reg32(isp1362_hcd, HCINTENB));
-	dump_int(s, "ohci_int_status", isp1362_read_reg32(isp1362_hcd, HCINTSTAT));
-	dump_ctrl(s, "ohci_control", isp1362_read_reg32(isp1362_hcd, HCCONTROL));
+	dump_irq(s, "hc_irq_enable", isp1362_पढ़ो_reg16(isp1362_hcd, HCuPINTENB));
+	dump_irq(s, "hc_irq_status", isp1362_पढ़ो_reg16(isp1362_hcd, HCuPINT));
+	dump_पूर्णांक(s, "ohci_int_enable", isp1362_पढ़ो_reg32(isp1362_hcd, HCINTENB));
+	dump_पूर्णांक(s, "ohci_int_status", isp1362_पढ़ो_reg32(isp1362_hcd, HCINTSTAT));
+	dump_ctrl(s, "ohci_control", isp1362_पढ़ो_reg32(isp1362_hcd, HCCONTROL));
 
-	for (i = 0; i < NUM_ISP1362_IRQS; i++)
-		if (isp1362_hcd->irq_stat[i])
-			seq_printf(s, "%-15s: %d\n",
+	क्रम (i = 0; i < NUM_ISP1362_IRQS; i++)
+		अगर (isp1362_hcd->irq_stat[i])
+			seq_म_लिखो(s, "%-15s: %d\n",
 				   ISP1362_INT_NAME(i), isp1362_hcd->irq_stat[i]);
 
 	dump_regs(s, isp1362_hcd);
-	list_for_each_entry(ep, &isp1362_hcd->async, schedule) {
-		struct urb *urb;
+	list_क्रम_each_entry(ep, &isp1362_hcd->async, schedule) अणु
+		काष्ठा urb *urb;
 
-		seq_printf(s, "%p, ep%d%s, maxpacket %d:\n", ep, ep->epnum,
-			   ({
-				   char *s;
-				   switch (ep->nextpid) {
-				   case USB_PID_IN:
+		seq_म_लिखो(s, "%p, ep%d%s, maxpacket %d:\n", ep, ep->epnum,
+			   (अणु
+				   अक्षर *s;
+				   चयन (ep->nextpid) अणु
+				   हाल USB_PID_IN:
 					   s = "in";
-					   break;
-				   case USB_PID_OUT:
+					   अवरोध;
+				   हाल USB_PID_OUT:
 					   s = "out";
-					   break;
-				   case USB_PID_SETUP:
+					   अवरोध;
+				   हाल USB_PID_SETUP:
 					   s = "setup";
-					   break;
-				   case USB_PID_ACK:
+					   अवरोध;
+				   हाल USB_PID_ACK:
 					   s = "status";
-					   break;
-				   default:
+					   अवरोध;
+				   शेष:
 					   s = "?";
-					   break;
-				   }
-				   s;}), ep->maxpacket) ;
-		list_for_each_entry(urb, &ep->hep->urb_list, urb_list) {
-			seq_printf(s, "  urb%p, %d/%d\n", urb,
+					   अवरोध;
+				   पूर्ण
+				   s;पूर्ण), ep->maxpacket) ;
+		list_क्रम_each_entry(urb, &ep->hep->urb_list, urb_list) अणु
+			seq_म_लिखो(s, "  urb%p, %d/%d\n", urb,
 				   urb->actual_length,
 				   urb->transfer_buffer_length);
-		}
-	}
-	if (!list_empty(&isp1362_hcd->async))
-		seq_printf(s, "\n");
+		पूर्ण
+	पूर्ण
+	अगर (!list_empty(&isp1362_hcd->async))
+		seq_म_लिखो(s, "\n");
 	dump_ptd_queue(&isp1362_hcd->atl_queue);
 
-	seq_printf(s, "periodic size= %d\n", PERIODIC_SIZE);
+	seq_म_लिखो(s, "periodic size= %d\n", PERIODIC_SIZE);
 
-	list_for_each_entry(ep, &isp1362_hcd->periodic, schedule) {
-		seq_printf(s, "branch:%2d load:%3d PTD[%d] $%04x:\n", ep->branch,
+	list_क्रम_each_entry(ep, &isp1362_hcd->periodic, schedule) अणु
+		seq_म_लिखो(s, "branch:%2d load:%3d PTD[%d] $%04x:\n", ep->branch,
 			   isp1362_hcd->load[ep->branch], ep->ptd_index, ep->ptd_offset);
 
-		seq_printf(s, "   %d/%p (%sdev%d ep%d%s max %d)\n",
-			   ep->interval, ep,
+		seq_म_लिखो(s, "   %d/%p (%sdev%d ep%d%s max %d)\n",
+			   ep->पूर्णांकerval, ep,
 			   (ep->udev->speed == USB_SPEED_FULL) ? "" : "ls ",
 			   ep->udev->devnum, ep->epnum,
 			   (ep->epnum == 0) ? "" :
 			   ((ep->nextpid == USB_PID_IN) ?
 			    "in" : "out"), ep->maxpacket);
-	}
-	dump_ptd_queue(&isp1362_hcd->intl_queue);
+	पूर्ण
+	dump_ptd_queue(&isp1362_hcd->पूर्णांकl_queue);
 
-	seq_printf(s, "ISO:\n");
+	seq_म_लिखो(s, "ISO:\n");
 
-	list_for_each_entry(ep, &isp1362_hcd->isoc, schedule) {
-		seq_printf(s, "   %d/%p (%sdev%d ep%d%s max %d)\n",
-			   ep->interval, ep,
+	list_क्रम_each_entry(ep, &isp1362_hcd->isoc, schedule) अणु
+		seq_म_लिखो(s, "   %d/%p (%sdev%d ep%d%s max %d)\n",
+			   ep->पूर्णांकerval, ep,
 			   (ep->udev->speed == USB_SPEED_FULL) ? "" : "ls ",
 			   ep->udev->devnum, ep->epnum,
 			   (ep->epnum == 0) ? "" :
 			   ((ep->nextpid == USB_PID_IN) ?
 			    "in" : "out"), ep->maxpacket);
-	}
+	पूर्ण
 
 	spin_unlock_irq(&isp1362_hcd->lock);
-	seq_printf(s, "\n");
+	seq_म_लिखो(s, "\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(isp1362);
 
-/* expect just one isp1362_hcd per system */
-static void create_debug_file(struct isp1362_hcd *isp1362_hcd)
-{
+/* expect just one isp1362_hcd per प्रणाली */
+अटल व्योम create_debug_file(काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
 	debugfs_create_file("isp1362", S_IRUGO, usb_debug_root, isp1362_hcd,
 			    &isp1362_fops);
-}
+पूर्ण
 
-static void remove_debug_file(struct isp1362_hcd *isp1362_hcd)
-{
-	debugfs_remove(debugfs_lookup("isp1362", usb_debug_root));
-}
+अटल व्योम हटाओ_debug_file(काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
+	debugfs_हटाओ(debugfs_lookup("isp1362", usb_debug_root));
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static void __isp1362_sw_reset(struct isp1362_hcd *isp1362_hcd)
-{
-	int tmp = 20;
+अटल व्योम __isp1362_sw_reset(काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
+	पूर्णांक पंचांगp = 20;
 
-	isp1362_write_reg16(isp1362_hcd, HCSWRES, HCSWRES_MAGIC);
-	isp1362_write_reg32(isp1362_hcd, HCCMDSTAT, OHCI_HCR);
-	while (--tmp) {
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCSWRES, HCSWRES_MAGIC);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCCMDSTAT, OHCI_HCR);
+	जबतक (--पंचांगp) अणु
 		mdelay(1);
-		if (!(isp1362_read_reg32(isp1362_hcd, HCCMDSTAT) & OHCI_HCR))
-			break;
-	}
-	if (!tmp)
+		अगर (!(isp1362_पढ़ो_reg32(isp1362_hcd, HCCMDSTAT) & OHCI_HCR))
+			अवरोध;
+	पूर्ण
+	अगर (!पंचांगp)
 		pr_err("Software reset timeout\n");
-}
+पूर्ण
 
-static void isp1362_sw_reset(struct isp1362_hcd *isp1362_hcd)
-{
-	unsigned long flags;
+अटल व्योम isp1362_sw_reset(काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
 	__isp1362_sw_reset(isp1362_hcd);
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-}
+पूर्ण
 
-static int isp1362_mem_config(struct usb_hcd *hcd)
-{
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	unsigned long flags;
+अटल पूर्णांक isp1362_mem_config(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	अचिन्हित दीर्घ flags;
 	u32 total;
-	u16 istl_size = ISP1362_ISTL_BUFSIZE;
-	u16 intl_blksize = ISP1362_INTL_BLKSIZE + PTD_HEADER_SIZE;
-	u16 intl_size = ISP1362_INTL_BUFFERS * intl_blksize;
+	u16 istl_size = ISP1362_ISTL_बफ_मानE;
+	u16 पूर्णांकl_blksize = ISP1362_INTL_BLKSIZE + PTD_HEADER_SIZE;
+	u16 पूर्णांकl_size = ISP1362_INTL_BUFFERS * पूर्णांकl_blksize;
 	u16 atl_blksize = ISP1362_ATL_BLKSIZE + PTD_HEADER_SIZE;
-	u16 atl_buffers = (ISP1362_BUF_SIZE - (istl_size + intl_size)) / atl_blksize;
+	u16 atl_buffers = (ISP1362_BUF_SIZE - (istl_size + पूर्णांकl_size)) / atl_blksize;
 	u16 atl_size;
-	int i;
+	पूर्णांक i;
 
 	WARN_ON(istl_size & 3);
 	WARN_ON(atl_blksize & 3);
-	WARN_ON(intl_blksize & 3);
+	WARN_ON(पूर्णांकl_blksize & 3);
 	WARN_ON(atl_blksize < PTD_HEADER_SIZE);
-	WARN_ON(intl_blksize < PTD_HEADER_SIZE);
+	WARN_ON(पूर्णांकl_blksize < PTD_HEADER_SIZE);
 
-	BUG_ON((unsigned)ISP1362_INTL_BUFFERS > 32);
-	if (atl_buffers > 32)
+	BUG_ON((अचिन्हित)ISP1362_INTL_BUFFERS > 32);
+	अगर (atl_buffers > 32)
 		atl_buffers = 32;
 	atl_size = atl_buffers * atl_blksize;
-	total = atl_size + intl_size + istl_size;
+	total = atl_size + पूर्णांकl_size + istl_size;
 	dev_info(hcd->self.controller, "ISP1362 Memory usage:\n");
 	dev_info(hcd->self.controller, "  ISTL:    2 * %4d:     %4d @ $%04x:$%04x\n",
 		 istl_size / 2, istl_size, 0, istl_size / 2);
 	dev_info(hcd->self.controller, "  INTL: %4d * (%3zu+8):  %4d @ $%04x\n",
-		 ISP1362_INTL_BUFFERS, intl_blksize - PTD_HEADER_SIZE,
-		 intl_size, istl_size);
+		 ISP1362_INTL_BUFFERS, पूर्णांकl_blksize - PTD_HEADER_SIZE,
+		 पूर्णांकl_size, istl_size);
 	dev_info(hcd->self.controller, "  ATL : %4d * (%3zu+8):  %4d @ $%04x\n",
 		 atl_buffers, atl_blksize - PTD_HEADER_SIZE,
-		 atl_size, istl_size + intl_size);
+		 atl_size, istl_size + पूर्णांकl_size);
 	dev_info(hcd->self.controller, "  USED/FREE:   %4d      %4d\n", total,
 		 ISP1362_BUF_SIZE - total);
 
-	if (total > ISP1362_BUF_SIZE) {
+	अगर (total > ISP1362_BUF_SIZE) अणु
 		dev_err(hcd->self.controller, "%s: Memory requested: %d, available %d\n",
 			__func__, total, ISP1362_BUF_SIZE);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		isp1362_hcd->istl_queue[i].buf_start = i * istl_size / 2,
 		isp1362_hcd->istl_queue[i].buf_size = istl_size / 2;
 		isp1362_hcd->istl_queue[i].blk_size = 4;
 		INIT_LIST_HEAD(&isp1362_hcd->istl_queue[i].active);
-		snprintf(isp1362_hcd->istl_queue[i].name,
-			 sizeof(isp1362_hcd->istl_queue[i].name), "ISTL%d", i);
+		snम_लिखो(isp1362_hcd->istl_queue[i].name,
+			 माप(isp1362_hcd->istl_queue[i].name), "ISTL%d", i);
 		DBG(3, "%s: %5s buf $%04x %d\n", __func__,
 		     isp1362_hcd->istl_queue[i].name,
 		     isp1362_hcd->istl_queue[i].buf_start,
 		     isp1362_hcd->istl_queue[i].buf_size);
-	}
-	isp1362_write_reg16(isp1362_hcd, HCISTLBUFSZ, istl_size / 2);
+	पूर्ण
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCISTLBUFSZ, istl_size / 2);
 
-	isp1362_hcd->intl_queue.buf_start = istl_size;
-	isp1362_hcd->intl_queue.buf_size = intl_size;
-	isp1362_hcd->intl_queue.buf_count = ISP1362_INTL_BUFFERS;
-	isp1362_hcd->intl_queue.blk_size = intl_blksize;
-	isp1362_hcd->intl_queue.buf_avail = isp1362_hcd->intl_queue.buf_count;
-	isp1362_hcd->intl_queue.skip_map = ~0;
-	INIT_LIST_HEAD(&isp1362_hcd->intl_queue.active);
+	isp1362_hcd->पूर्णांकl_queue.buf_start = istl_size;
+	isp1362_hcd->पूर्णांकl_queue.buf_size = पूर्णांकl_size;
+	isp1362_hcd->पूर्णांकl_queue.buf_count = ISP1362_INTL_BUFFERS;
+	isp1362_hcd->पूर्णांकl_queue.blk_size = पूर्णांकl_blksize;
+	isp1362_hcd->पूर्णांकl_queue.buf_avail = isp1362_hcd->पूर्णांकl_queue.buf_count;
+	isp1362_hcd->पूर्णांकl_queue.skip_map = ~0;
+	INIT_LIST_HEAD(&isp1362_hcd->पूर्णांकl_queue.active);
 
-	isp1362_write_reg16(isp1362_hcd, HCINTLBUFSZ,
-			    isp1362_hcd->intl_queue.buf_size);
-	isp1362_write_reg16(isp1362_hcd, HCINTLBLKSZ,
-			    isp1362_hcd->intl_queue.blk_size - PTD_HEADER_SIZE);
-	isp1362_write_reg32(isp1362_hcd, HCINTLSKIP, ~0);
-	isp1362_write_reg32(isp1362_hcd, HCINTLLAST,
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCINTLBUFSZ,
+			    isp1362_hcd->पूर्णांकl_queue.buf_size);
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCINTLBLKSZ,
+			    isp1362_hcd->पूर्णांकl_queue.blk_size - PTD_HEADER_SIZE);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCINTLSKIP, ~0);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCINTLLAST,
 			    1 << (ISP1362_INTL_BUFFERS - 1));
 
-	isp1362_hcd->atl_queue.buf_start = istl_size + intl_size;
+	isp1362_hcd->atl_queue.buf_start = istl_size + पूर्णांकl_size;
 	isp1362_hcd->atl_queue.buf_size = atl_size;
 	isp1362_hcd->atl_queue.buf_count = atl_buffers;
 	isp1362_hcd->atl_queue.blk_size = atl_blksize;
@@ -2281,23 +2282,23 @@ static int isp1362_mem_config(struct usb_hcd *hcd)
 	isp1362_hcd->atl_queue.skip_map = ~0;
 	INIT_LIST_HEAD(&isp1362_hcd->atl_queue.active);
 
-	isp1362_write_reg16(isp1362_hcd, HCATLBUFSZ,
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCATLBUFSZ,
 			    isp1362_hcd->atl_queue.buf_size);
-	isp1362_write_reg16(isp1362_hcd, HCATLBLKSZ,
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCATLBLKSZ,
 			    isp1362_hcd->atl_queue.blk_size - PTD_HEADER_SIZE);
-	isp1362_write_reg32(isp1362_hcd, HCATLSKIP, ~0);
-	isp1362_write_reg32(isp1362_hcd, HCATLLAST,
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCATLSKIP, ~0);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCATLLAST,
 			    1 << (atl_buffers - 1));
 
-	snprintf(isp1362_hcd->atl_queue.name,
-		 sizeof(isp1362_hcd->atl_queue.name), "ATL");
-	snprintf(isp1362_hcd->intl_queue.name,
-		 sizeof(isp1362_hcd->intl_queue.name), "INTL");
+	snम_लिखो(isp1362_hcd->atl_queue.name,
+		 माप(isp1362_hcd->atl_queue.name), "ATL");
+	snम_लिखो(isp1362_hcd->पूर्णांकl_queue.name,
+		 माप(isp1362_hcd->पूर्णांकl_queue.name), "INTL");
 	DBG(3, "%s: %5s buf $%04x %2d * %4d = %4d\n", __func__,
-	     isp1362_hcd->intl_queue.name,
-	     isp1362_hcd->intl_queue.buf_start,
-	     ISP1362_INTL_BUFFERS, isp1362_hcd->intl_queue.blk_size,
-	     isp1362_hcd->intl_queue.buf_size);
+	     isp1362_hcd->पूर्णांकl_queue.name,
+	     isp1362_hcd->पूर्णांकl_queue.buf_start,
+	     ISP1362_INTL_BUFFERS, isp1362_hcd->पूर्णांकl_queue.blk_size,
+	     isp1362_hcd->पूर्णांकl_queue.buf_size);
 	DBG(3, "%s: %5s buf $%04x %2d * %4d = %4d\n", __func__,
 	     isp1362_hcd->atl_queue.name,
 	     isp1362_hcd->atl_queue.buf_start,
@@ -2306,254 +2307,254 @@ static int isp1362_mem_config(struct usb_hcd *hcd)
 
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp1362_hc_reset(struct usb_hcd *hcd)
-{
-	int ret = 0;
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	unsigned long t;
-	unsigned long timeout = 100;
-	unsigned long flags;
-	int clkrdy = 0;
+अटल पूर्णांक isp1362_hc_reset(काष्ठा usb_hcd *hcd)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	अचिन्हित दीर्घ t;
+	अचिन्हित दीर्घ समयout = 100;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक clkrdy = 0;
 
 	pr_debug("%s:\n", __func__);
 
-	if (isp1362_hcd->board && isp1362_hcd->board->reset) {
+	अगर (isp1362_hcd->board && isp1362_hcd->board->reset) अणु
 		isp1362_hcd->board->reset(hcd->self.controller, 1);
 		msleep(20);
-		if (isp1362_hcd->board->clock)
-			isp1362_hcd->board->clock(hcd->self.controller, 1);
+		अगर (isp1362_hcd->board->घड़ी)
+			isp1362_hcd->board->घड़ी(hcd->self.controller, 1);
 		isp1362_hcd->board->reset(hcd->self.controller, 0);
-	} else
+	पूर्ण अन्यथा
 		isp1362_sw_reset(isp1362_hcd);
 
-	/* chip has been reset. First we need to see a clock */
-	t = jiffies + msecs_to_jiffies(timeout);
-	while (!clkrdy && time_before_eq(jiffies, t)) {
+	/* chip has been reset. First we need to see a घड़ी */
+	t = jअगरfies + msecs_to_jअगरfies(समयout);
+	जबतक (!clkrdy && समय_beक्रमe_eq(jअगरfies, t)) अणु
 		spin_lock_irqsave(&isp1362_hcd->lock, flags);
-		clkrdy = isp1362_read_reg16(isp1362_hcd, HCuPINT) & HCuPINT_CLKRDY;
+		clkrdy = isp1362_पढ़ो_reg16(isp1362_hcd, HCuPINT) & HCuPINT_CLKRDY;
 		spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-		if (!clkrdy)
+		अगर (!clkrdy)
 			msleep(4);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
-	isp1362_write_reg16(isp1362_hcd, HCuPINT, HCuPINT_CLKRDY);
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINT, HCuPINT_CLKRDY);
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-	if (!clkrdy) {
-		pr_err("Clock not ready after %lums\n", timeout);
+	अगर (!clkrdy) अणु
+		pr_err("Clock not ready after %lums\n", समयout);
 		ret = -ENODEV;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void isp1362_hc_stop(struct usb_hcd *hcd)
-{
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	unsigned long flags;
-	u32 tmp;
+अटल व्योम isp1362_hc_stop(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	अचिन्हित दीर्घ flags;
+	u32 पंचांगp;
 
 	pr_debug("%s:\n", __func__);
 
-	del_timer_sync(&hcd->rh_timer);
+	del_समयr_sync(&hcd->rh_समयr);
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
 
-	isp1362_write_reg16(isp1362_hcd, HCuPINTENB, 0);
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINTENB, 0);
 
-	/* Switch off power for all ports */
-	tmp = isp1362_read_reg32(isp1362_hcd, HCRHDESCA);
-	tmp &= ~(RH_A_NPS | RH_A_PSM);
-	isp1362_write_reg32(isp1362_hcd, HCRHDESCA, tmp);
-	isp1362_write_reg32(isp1362_hcd, HCRHSTATUS, RH_HS_LPS);
+	/* Switch off घातer क्रम all ports */
+	पंचांगp = isp1362_पढ़ो_reg32(isp1362_hcd, HCRHDESCA);
+	पंचांगp &= ~(RH_A_NPS | RH_A_PSM);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHDESCA, पंचांगp);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHSTATUS, RH_HS_LPS);
 
 	/* Reset the chip */
-	if (isp1362_hcd->board && isp1362_hcd->board->reset)
+	अगर (isp1362_hcd->board && isp1362_hcd->board->reset)
 		isp1362_hcd->board->reset(hcd->self.controller, 1);
-	else
+	अन्यथा
 		__isp1362_sw_reset(isp1362_hcd);
 
-	if (isp1362_hcd->board && isp1362_hcd->board->clock)
-		isp1362_hcd->board->clock(hcd->self.controller, 0);
+	अगर (isp1362_hcd->board && isp1362_hcd->board->घड़ी)
+		isp1362_hcd->board->घड़ी(hcd->self.controller, 0);
 
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-}
+पूर्ण
 
-#ifdef CHIP_BUFFER_TEST
-static int isp1362_chip_test(struct isp1362_hcd *isp1362_hcd)
-{
-	int ret = 0;
+#अगर_घोषित CHIP_BUFFER_TEST
+अटल पूर्णांक isp1362_chip_test(काष्ठा isp1362_hcd *isp1362_hcd)
+अणु
+	पूर्णांक ret = 0;
 	u16 *ref;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	ref = kmalloc(2 * ISP1362_BUF_SIZE, GFP_KERNEL);
-	if (ref) {
-		int offset;
+	ref = kदो_स्मृति(2 * ISP1362_BUF_SIZE, GFP_KERNEL);
+	अगर (ref) अणु
+		पूर्णांक offset;
 		u16 *tst = &ref[ISP1362_BUF_SIZE / 2];
 
-		for (offset = 0; offset < ISP1362_BUF_SIZE / 2; offset++) {
+		क्रम (offset = 0; offset < ISP1362_BUF_SIZE / 2; offset++) अणु
 			ref[offset] = ~offset;
 			tst[offset] = offset;
-		}
+		पूर्ण
 
-		for (offset = 0; offset < 4; offset++) {
-			int j;
+		क्रम (offset = 0; offset < 4; offset++) अणु
+			पूर्णांक j;
 
-			for (j = 0; j < 8; j++) {
+			क्रम (j = 0; j < 8; j++) अणु
 				spin_lock_irqsave(&isp1362_hcd->lock, flags);
-				isp1362_write_buffer(isp1362_hcd, (u8 *)ref + offset, 0, j);
-				isp1362_read_buffer(isp1362_hcd, (u8 *)tst + offset, 0, j);
+				isp1362_ग_लिखो_buffer(isp1362_hcd, (u8 *)ref + offset, 0, j);
+				isp1362_पढ़ो_buffer(isp1362_hcd, (u8 *)tst + offset, 0, j);
 				spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 
-				if (memcmp(ref, tst, j)) {
+				अगर (स_भेद(ref, tst, j)) अणु
 					ret = -ENODEV;
 					pr_err("%s: memory check with %d byte offset %d failed\n",
 					    __func__, j, offset);
 					dump_data((u8 *)ref + offset, j);
 					dump_data((u8 *)tst + offset, j);
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		spin_lock_irqsave(&isp1362_hcd->lock, flags);
-		isp1362_write_buffer(isp1362_hcd, ref, 0, ISP1362_BUF_SIZE);
-		isp1362_read_buffer(isp1362_hcd, tst, 0, ISP1362_BUF_SIZE);
+		isp1362_ग_लिखो_buffer(isp1362_hcd, ref, 0, ISP1362_BUF_SIZE);
+		isp1362_पढ़ो_buffer(isp1362_hcd, tst, 0, ISP1362_BUF_SIZE);
 		spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 
-		if (memcmp(ref, tst, ISP1362_BUF_SIZE)) {
+		अगर (स_भेद(ref, tst, ISP1362_BUF_SIZE)) अणु
 			ret = -ENODEV;
 			pr_err("%s: memory check failed\n", __func__);
 			dump_data((u8 *)tst, ISP1362_BUF_SIZE / 2);
-		}
+		पूर्ण
 
-		for (offset = 0; offset < 256; offset++) {
-			int test_size = 0;
+		क्रम (offset = 0; offset < 256; offset++) अणु
+			पूर्णांक test_size = 0;
 
 			yield();
 
-			memset(tst, 0, ISP1362_BUF_SIZE);
+			स_रखो(tst, 0, ISP1362_BUF_SIZE);
 			spin_lock_irqsave(&isp1362_hcd->lock, flags);
-			isp1362_write_buffer(isp1362_hcd, tst, 0, ISP1362_BUF_SIZE);
-			isp1362_read_buffer(isp1362_hcd, tst, 0, ISP1362_BUF_SIZE);
+			isp1362_ग_लिखो_buffer(isp1362_hcd, tst, 0, ISP1362_BUF_SIZE);
+			isp1362_पढ़ो_buffer(isp1362_hcd, tst, 0, ISP1362_BUF_SIZE);
 			spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-			if (memcmp(tst, tst + (ISP1362_BUF_SIZE / (2 * sizeof(*tst))),
-				   ISP1362_BUF_SIZE / 2)) {
+			अगर (स_भेद(tst, tst + (ISP1362_BUF_SIZE / (2 * माप(*tst))),
+				   ISP1362_BUF_SIZE / 2)) अणु
 				pr_err("%s: Failed to clear buffer\n", __func__);
 				dump_data((u8 *)tst, ISP1362_BUF_SIZE);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			spin_lock_irqsave(&isp1362_hcd->lock, flags);
-			isp1362_write_buffer(isp1362_hcd, ref, offset * 2, PTD_HEADER_SIZE);
-			isp1362_write_buffer(isp1362_hcd, ref + PTD_HEADER_SIZE / sizeof(*ref),
+			isp1362_ग_लिखो_buffer(isp1362_hcd, ref, offset * 2, PTD_HEADER_SIZE);
+			isp1362_ग_लिखो_buffer(isp1362_hcd, ref + PTD_HEADER_SIZE / माप(*ref),
 					     offset * 2 + PTD_HEADER_SIZE, test_size);
-			isp1362_read_buffer(isp1362_hcd, tst, offset * 2,
+			isp1362_पढ़ो_buffer(isp1362_hcd, tst, offset * 2,
 					    PTD_HEADER_SIZE + test_size);
 			spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-			if (memcmp(ref, tst, PTD_HEADER_SIZE + test_size)) {
+			अगर (स_भेद(ref, tst, PTD_HEADER_SIZE + test_size)) अणु
 				dump_data(((u8 *)ref) + offset, PTD_HEADER_SIZE + test_size);
 				dump_data((u8 *)tst, PTD_HEADER_SIZE + test_size);
 				spin_lock_irqsave(&isp1362_hcd->lock, flags);
-				isp1362_read_buffer(isp1362_hcd, tst, offset * 2,
+				isp1362_पढ़ो_buffer(isp1362_hcd, tst, offset * 2,
 						    PTD_HEADER_SIZE + test_size);
 				spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-				if (memcmp(ref, tst, PTD_HEADER_SIZE + test_size)) {
+				अगर (स_भेद(ref, tst, PTD_HEADER_SIZE + test_size)) अणु
 					ret = -ENODEV;
 					pr_err("%s: memory check with offset %02x failed\n",
 					    __func__, offset);
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				pr_warn("%s: memory check with offset %02x ok after second read\n",
 					__func__, offset);
-			}
-		}
-		kfree(ref);
-	}
-	return ret;
-}
-#endif
+			पूर्ण
+		पूर्ण
+		kमुक्त(ref);
+	पूर्ण
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static int isp1362_hc_start(struct usb_hcd *hcd)
-{
-	int ret;
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	struct isp1362_platform_data *board = isp1362_hcd->board;
+अटल पूर्णांक isp1362_hc_start(काष्ठा usb_hcd *hcd)
+अणु
+	पूर्णांक ret;
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	काष्ठा isp1362_platक्रमm_data *board = isp1362_hcd->board;
 	u16 hwcfg;
 	u16 chipid;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	pr_debug("%s:\n", __func__);
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
-	chipid = isp1362_read_reg16(isp1362_hcd, HCCHIPID);
+	chipid = isp1362_पढ़ो_reg16(isp1362_hcd, HCCHIPID);
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 
-	if ((chipid & HCCHIPID_MASK) != HCCHIPID_MAGIC) {
+	अगर ((chipid & HCCHIPID_MASK) != HCCHIPID_MAGIC) अणु
 		pr_err("%s: Invalid chip ID %04x\n", __func__, chipid);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-#ifdef CHIP_BUFFER_TEST
+#अगर_घोषित CHIP_BUFFER_TEST
 	ret = isp1362_chip_test(isp1362_hcd);
-	if (ret)
-		return -ENODEV;
-#endif
+	अगर (ret)
+		वापस -ENODEV;
+#पूर्ण_अगर
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
-	/* clear interrupt status and disable all interrupt sources */
-	isp1362_write_reg16(isp1362_hcd, HCuPINT, 0xff);
-	isp1362_write_reg16(isp1362_hcd, HCuPINTENB, 0);
+	/* clear पूर्णांकerrupt status and disable all पूर्णांकerrupt sources */
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINT, 0xff);
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINTENB, 0);
 
 	/* HW conf */
 	hwcfg = HCHWCFG_INT_ENABLE | HCHWCFG_DBWIDTH(1);
-	if (board->sel15Kres)
+	अगर (board->sel15Kres)
 		hwcfg |= HCHWCFG_PULLDOWN_DS2 |
 			((MAX_ROOT_PORTS > 1) ? HCHWCFG_PULLDOWN_DS1 : 0);
-	if (board->clknotstop)
+	अगर (board->clknotstop)
 		hwcfg |= HCHWCFG_CLKNOTSTOP;
-	if (board->oc_enable)
+	अगर (board->oc_enable)
 		hwcfg |= HCHWCFG_ANALOG_OC;
-	if (board->int_act_high)
+	अगर (board->पूर्णांक_act_high)
 		hwcfg |= HCHWCFG_INT_POL;
-	if (board->int_edge_triggered)
+	अगर (board->पूर्णांक_edge_triggered)
 		hwcfg |= HCHWCFG_INT_TRIGGER;
-	if (board->dreq_act_high)
+	अगर (board->dreq_act_high)
 		hwcfg |= HCHWCFG_DREQ_POL;
-	if (board->dack_act_high)
+	अगर (board->dack_act_high)
 		hwcfg |= HCHWCFG_DACK_POL;
-	isp1362_write_reg16(isp1362_hcd, HCHWCFG, hwcfg);
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCHWCFG, hwcfg);
 	isp1362_show_reg(isp1362_hcd, HCHWCFG);
-	isp1362_write_reg16(isp1362_hcd, HCDMACFG, 0);
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCDMACFG, 0);
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 
 	ret = isp1362_mem_config(hcd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
 
 	/* Root hub conf */
 	isp1362_hcd->rhdesca = 0;
-	if (board->no_power_switching)
+	अगर (board->no_घातer_चयनing)
 		isp1362_hcd->rhdesca |= RH_A_NPS;
-	if (board->power_switching_mode)
+	अगर (board->घातer_चयनing_mode)
 		isp1362_hcd->rhdesca |= RH_A_PSM;
-	if (board->potpg)
+	अगर (board->potpg)
 		isp1362_hcd->rhdesca |= (board->potpg << 24) & RH_A_POTPGT;
-	else
+	अन्यथा
 		isp1362_hcd->rhdesca |= (25 << 24) & RH_A_POTPGT;
 
-	isp1362_write_reg32(isp1362_hcd, HCRHDESCA, isp1362_hcd->rhdesca & ~RH_A_OCPM);
-	isp1362_write_reg32(isp1362_hcd, HCRHDESCA, isp1362_hcd->rhdesca | RH_A_OCPM);
-	isp1362_hcd->rhdesca = isp1362_read_reg32(isp1362_hcd, HCRHDESCA);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHDESCA, isp1362_hcd->rhdesca & ~RH_A_OCPM);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHDESCA, isp1362_hcd->rhdesca | RH_A_OCPM);
+	isp1362_hcd->rhdesca = isp1362_पढ़ो_reg32(isp1362_hcd, HCRHDESCA);
 
 	isp1362_hcd->rhdescb = RH_B_PPCM;
-	isp1362_write_reg32(isp1362_hcd, HCRHDESCB, isp1362_hcd->rhdescb);
-	isp1362_hcd->rhdescb = isp1362_read_reg32(isp1362_hcd, HCRHDESCB);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHDESCB, isp1362_hcd->rhdescb);
+	isp1362_hcd->rhdescb = isp1362_पढ़ो_reg32(isp1362_hcd, HCRHDESCB);
 
-	isp1362_read_reg32(isp1362_hcd, HCFMINTVL);
-	isp1362_write_reg32(isp1362_hcd, HCFMINTVL, (FSMP(FI) << 16) | FI);
-	isp1362_write_reg32(isp1362_hcd, HCLSTHRESH, LSTHRESH);
+	isp1362_पढ़ो_reg32(isp1362_hcd, HCFMINTVL);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCFMINTVL, (FSMP(FI) << 16) | FI);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCLSTHRESH, LSTHRESH);
 
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 
@@ -2561,29 +2562,29 @@ static int isp1362_hc_start(struct usb_hcd *hcd)
 	hcd->state = HC_STATE_RUNNING;
 
 	spin_lock_irqsave(&isp1362_hcd->lock, flags);
-	/* Set up interrupts */
-	isp1362_hcd->intenb = OHCI_INTR_MIE | OHCI_INTR_RHSC | OHCI_INTR_UE;
-	isp1362_hcd->intenb |= OHCI_INTR_RD;
+	/* Set up पूर्णांकerrupts */
+	isp1362_hcd->पूर्णांकenb = OHCI_INTR_MIE | OHCI_INTR_RHSC | OHCI_INTR_UE;
+	isp1362_hcd->पूर्णांकenb |= OHCI_INTR_RD;
 	isp1362_hcd->irqenb = HCuPINT_OPR | HCuPINT_SUSP;
-	isp1362_write_reg32(isp1362_hcd, HCINTENB, isp1362_hcd->intenb);
-	isp1362_write_reg16(isp1362_hcd, HCuPINTENB, isp1362_hcd->irqenb);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCINTENB, isp1362_hcd->पूर्णांकenb);
+	isp1362_ग_लिखो_reg16(isp1362_hcd, HCuPINTENB, isp1362_hcd->irqenb);
 
 	/* Go operational */
-	isp1362_write_reg32(isp1362_hcd, HCCONTROL, isp1362_hcd->hc_control);
-	/* enable global power */
-	isp1362_write_reg32(isp1362_hcd, HCRHSTATUS, RH_HS_LPSC | RH_HS_DRWE);
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCCONTROL, isp1362_hcd->hc_control);
+	/* enable global घातer */
+	isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHSTATUS, RH_HS_LPSC | RH_HS_DRWE);
 
 	spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static const struct hc_driver isp1362_hc_driver = {
+अटल स्थिर काष्ठा hc_driver isp1362_hc_driver = अणु
 	.description =		hcd_name,
 	.product_desc =		"ISP1362 Host Controller",
-	.hcd_priv_size =	sizeof(struct isp1362_hcd),
+	.hcd_priv_size =	माप(काष्ठा isp1362_hcd),
 
 	.irq =			isp1362_irq,
 	.flags =		HCD_USB11 | HCD_MEMORY,
@@ -2594,7 +2595,7 @@ static const struct hc_driver isp1362_hc_driver = {
 
 	.urb_enqueue =		isp1362_urb_enqueue,
 	.urb_dequeue =		isp1362_urb_dequeue,
-	.endpoint_disable =	isp1362_endpoint_disable,
+	.endpoपूर्णांक_disable =	isp1362_endpoपूर्णांक_disable,
 
 	.get_frame_number =	isp1362_get_frame,
 
@@ -2602,171 +2603,171 @@ static const struct hc_driver isp1362_hc_driver = {
 	.hub_control =		isp1362_hub_control,
 	.bus_suspend =		isp1362_bus_suspend,
 	.bus_resume =		isp1362_bus_resume,
-};
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-static int isp1362_remove(struct platform_device *pdev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(pdev);
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+अटल पूर्णांक isp1362_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
 
-	remove_debug_file(isp1362_hcd);
+	हटाओ_debug_file(isp1362_hcd);
 	DBG(0, "%s: Removing HCD\n", __func__);
-	usb_remove_hcd(hcd);
+	usb_हटाओ_hcd(hcd);
 	DBG(0, "%s: put_hcd\n", __func__);
 	usb_put_hcd(hcd);
 	DBG(0, "%s: Done\n", __func__);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp1362_probe(struct platform_device *pdev)
-{
-	struct usb_hcd *hcd;
-	struct isp1362_hcd *isp1362_hcd;
-	struct resource *data, *irq_res;
-	void __iomem *addr_reg;
-	void __iomem *data_reg;
-	int irq;
-	int retval = 0;
-	unsigned int irq_flags = 0;
+अटल पूर्णांक isp1362_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_hcd *hcd;
+	काष्ठा isp1362_hcd *isp1362_hcd;
+	काष्ठा resource *data, *irq_res;
+	व्योम __iomem *addr_reg;
+	व्योम __iomem *data_reg;
+	पूर्णांक irq;
+	पूर्णांक retval = 0;
+	अचिन्हित पूर्णांक irq_flags = 0;
 
-	if (usb_disabled())
-		return -ENODEV;
+	अगर (usb_disabled())
+		वापस -ENODEV;
 
-	/* basic sanity checks first.  board-specific init logic should
+	/* basic sanity checks first.  board-specअगरic init logic should
 	 * have initialized this the three resources and probably board
-	 * specific platform_data.  we don't probe for IRQs, and do only
+	 * specअगरic platक्रमm_data.  we करोn't probe क्रम IRQs, and करो only
 	 * minimal sanity checking.
 	 */
-	if (pdev->num_resources < 3)
-		return -ENODEV;
+	अगर (pdev->num_resources < 3)
+		वापस -ENODEV;
 
-	irq_res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!irq_res)
-		return -ENODEV;
+	irq_res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (!irq_res)
+		वापस -ENODEV;
 
 	irq = irq_res->start;
 
-	addr_reg = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(addr_reg))
-		return PTR_ERR(addr_reg);
+	addr_reg = devm_platक्रमm_ioremap_resource(pdev, 1);
+	अगर (IS_ERR(addr_reg))
+		वापस PTR_ERR(addr_reg);
 
-	data = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	data = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	data_reg = devm_ioremap_resource(&pdev->dev, data);
-	if (IS_ERR(data_reg))
-		return PTR_ERR(data_reg);
+	अगर (IS_ERR(data_reg))
+		वापस PTR_ERR(data_reg);
 
 	/* allocate and initialize hcd */
 	hcd = usb_create_hcd(&isp1362_hc_driver, &pdev->dev, dev_name(&pdev->dev));
-	if (!hcd)
-		return -ENOMEM;
+	अगर (!hcd)
+		वापस -ENOMEM;
 
 	hcd->rsrc_start = data->start;
 	isp1362_hcd = hcd_to_isp1362_hcd(hcd);
 	isp1362_hcd->data_reg = data_reg;
 	isp1362_hcd->addr_reg = addr_reg;
 
-	isp1362_hcd->next_statechange = jiffies;
+	isp1362_hcd->next_statechange = jअगरfies;
 	spin_lock_init(&isp1362_hcd->lock);
 	INIT_LIST_HEAD(&isp1362_hcd->async);
 	INIT_LIST_HEAD(&isp1362_hcd->periodic);
 	INIT_LIST_HEAD(&isp1362_hcd->isoc);
-	INIT_LIST_HEAD(&isp1362_hcd->remove_list);
+	INIT_LIST_HEAD(&isp1362_hcd->हटाओ_list);
 	isp1362_hcd->board = dev_get_platdata(&pdev->dev);
-#if USE_PLATFORM_DELAY
-	if (!isp1362_hcd->board->delay) {
+#अगर USE_PLATFORM_DELAY
+	अगर (!isp1362_hcd->board->delay) अणु
 		dev_err(hcd->self.controller, "No platform delay function given\n");
 		retval = -ENODEV;
-		goto err;
-	}
-#endif
+		जाओ err;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (irq_res->flags & IORESOURCE_IRQ_HIGHEDGE)
+	अगर (irq_res->flags & IORESOURCE_IRQ_HIGHEDGE)
 		irq_flags |= IRQF_TRIGGER_RISING;
-	if (irq_res->flags & IORESOURCE_IRQ_LOWEDGE)
+	अगर (irq_res->flags & IORESOURCE_IRQ_LOWEDGE)
 		irq_flags |= IRQF_TRIGGER_FALLING;
-	if (irq_res->flags & IORESOURCE_IRQ_HIGHLEVEL)
+	अगर (irq_res->flags & IORESOURCE_IRQ_HIGHLEVEL)
 		irq_flags |= IRQF_TRIGGER_HIGH;
-	if (irq_res->flags & IORESOURCE_IRQ_LOWLEVEL)
+	अगर (irq_res->flags & IORESOURCE_IRQ_LOWLEVEL)
 		irq_flags |= IRQF_TRIGGER_LOW;
 
 	retval = usb_add_hcd(hcd, irq, irq_flags | IRQF_SHARED);
-	if (retval != 0)
-		goto err;
+	अगर (retval != 0)
+		जाओ err;
 	device_wakeup_enable(hcd->self.controller);
 
 	dev_info(&pdev->dev, "%s, irq %d\n", hcd->product_desc, irq);
 
 	create_debug_file(isp1362_hcd);
 
-	return 0;
+	वापस 0;
 
  err:
 	usb_put_hcd(hcd);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-#ifdef	CONFIG_PM
-static int isp1362_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(pdev);
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	unsigned long flags;
-	int retval = 0;
+#अगर_घोषित	CONFIG_PM
+अटल पूर्णांक isp1362_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक retval = 0;
 
 	DBG(0, "%s: Suspending device\n", __func__);
 
-	if (state.event == PM_EVENT_FREEZE) {
+	अगर (state.event == PM_EVENT_FREEZE) अणु
 		DBG(0, "%s: Suspending root hub\n", __func__);
 		retval = isp1362_bus_suspend(hcd);
-	} else {
+	पूर्ण अन्यथा अणु
 		DBG(0, "%s: Suspending RH ports\n", __func__);
 		spin_lock_irqsave(&isp1362_hcd->lock, flags);
-		isp1362_write_reg32(isp1362_hcd, HCRHSTATUS, RH_HS_LPS);
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHSTATUS, RH_HS_LPS);
 		spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-	}
-	if (retval == 0)
-		pdev->dev.power.power_state = state;
-	return retval;
-}
+	पूर्ण
+	अगर (retval == 0)
+		pdev->dev.घातer.घातer_state = state;
+	वापस retval;
+पूर्ण
 
-static int isp1362_resume(struct platform_device *pdev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(pdev);
-	struct isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
-	unsigned long flags;
+अटल पूर्णांक isp1362_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+	काष्ठा isp1362_hcd *isp1362_hcd = hcd_to_isp1362_hcd(hcd);
+	अचिन्हित दीर्घ flags;
 
 	DBG(0, "%s: Resuming\n", __func__);
 
-	if (pdev->dev.power.power_state.event == PM_EVENT_SUSPEND) {
+	अगर (pdev->dev.घातer.घातer_state.event == PM_EVENT_SUSPEND) अणु
 		DBG(0, "%s: Resume RH ports\n", __func__);
 		spin_lock_irqsave(&isp1362_hcd->lock, flags);
-		isp1362_write_reg32(isp1362_hcd, HCRHSTATUS, RH_HS_LPSC);
+		isp1362_ग_लिखो_reg32(isp1362_hcd, HCRHSTATUS, RH_HS_LPSC);
 		spin_unlock_irqrestore(&isp1362_hcd->lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	pdev->dev.power.power_state = PMSG_ON;
+	pdev->dev.घातer.घातer_state = PMSG_ON;
 
-	return isp1362_bus_resume(isp1362_hcd_to_hcd(isp1362_hcd));
-}
-#else
-#define	isp1362_suspend	NULL
-#define	isp1362_resume	NULL
-#endif
+	वापस isp1362_bus_resume(isp1362_hcd_to_hcd(isp1362_hcd));
+पूर्ण
+#अन्यथा
+#घोषणा	isp1362_suspend	शून्य
+#घोषणा	isp1362_resume	शून्य
+#पूर्ण_अगर
 
-static struct platform_driver isp1362_driver = {
+अटल काष्ठा platक्रमm_driver isp1362_driver = अणु
 	.probe = isp1362_probe,
-	.remove = isp1362_remove,
+	.हटाओ = isp1362_हटाओ,
 
 	.suspend = isp1362_suspend,
 	.resume = isp1362_resume,
-	.driver = {
+	.driver = अणु
 		.name = hcd_name,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(isp1362_driver);
+module_platक्रमm_driver(isp1362_driver);

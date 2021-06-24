@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Generic __div64_32 wrapper for __xdiv64_32.
+ * Generic __भाग64_32 wrapper क्रम __xभाग64_32.
  */
 
-#include <linux/types.h>
-#include <asm/div64.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/भाग64.h>
 
-extern uint64_t __xdiv64_32(u64 n, u32 d);
+बाह्य uपूर्णांक64_t __xभाग64_32(u64 n, u32 d);
 
-uint32_t __div64_32(u64 *xp, u32 y)
-{
-	uint32_t rem;
-	uint64_t q = __xdiv64_32(*xp, y);
+uपूर्णांक32_t __भाग64_32(u64 *xp, u32 y)
+अणु
+	uपूर्णांक32_t rem;
+	uपूर्णांक64_t q = __xभाग64_32(*xp, y);
 
 	rem = *xp - q * y;
 	*xp = q;
 
-	return rem;
-}
+	वापस rem;
+पूर्ण

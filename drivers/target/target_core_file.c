@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*******************************************************************************
  * Filename:  target_core_file.c
  *
- * This file contains the Storage Engine <-> FILEIO transport specific functions
+ * This file contains the Storage Engine <-> खाताIO transport specअगरic functions
  *
  * (c) Copyright 2005-2013 Datera, Inc.
  *
@@ -10,38 +11,38 @@
  *
  ******************************************************************************/
 
-#include <linux/string.h>
-#include <linux/parser.h>
-#include <linux/timer.h>
-#include <linux/blkdev.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/module.h>
-#include <linux/vmalloc.h>
-#include <linux/falloc.h>
-#include <linux/uio.h>
-#include <scsi/scsi_proto.h>
-#include <asm/unaligned.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/parser.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/module.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/fभाग.स>
+#समावेश <linux/uपन.स>
+#समावेश <scsi/scsi_proto.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <target/target_core_base.h>
-#include <target/target_core_backend.h>
+#समावेश <target/target_core_base.h>
+#समावेश <target/target_core_backend.h>
 
-#include "target_core_file.h"
+#समावेश "target_core_file.h"
 
-static inline struct fd_dev *FD_DEV(struct se_device *dev)
-{
-	return container_of(dev, struct fd_dev, dev);
-}
+अटल अंतरभूत काष्ठा fd_dev *FD_DEV(काष्ठा se_device *dev)
+अणु
+	वापस container_of(dev, काष्ठा fd_dev, dev);
+पूर्ण
 
-static int fd_attach_hba(struct se_hba *hba, u32 host_id)
-{
-	struct fd_host *fd_host;
+अटल पूर्णांक fd_attach_hba(काष्ठा se_hba *hba, u32 host_id)
+अणु
+	काष्ठा fd_host *fd_host;
 
-	fd_host = kzalloc(sizeof(struct fd_host), GFP_KERNEL);
-	if (!fd_host) {
+	fd_host = kzalloc(माप(काष्ठा fd_host), GFP_KERNEL);
+	अगर (!fd_host) अणु
 		pr_err("Unable to allocate memory for struct fd_host\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	fd_host->fd_host_id = host_id;
 
@@ -53,120 +54,120 @@ static int fd_attach_hba(struct se_hba *hba, u32 host_id)
 	pr_debug("CORE_HBA[%d] - Attached FILEIO HBA: %u to Generic\n",
 		hba->hba_id, fd_host->fd_host_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fd_detach_hba(struct se_hba *hba)
-{
-	struct fd_host *fd_host = hba->hba_ptr;
+अटल व्योम fd_detach_hba(काष्ठा se_hba *hba)
+अणु
+	काष्ठा fd_host *fd_host = hba->hba_ptr;
 
 	pr_debug("CORE_HBA[%d] - Detached FILEIO HBA: %u from Generic"
 		" Target Core\n", hba->hba_id, fd_host->fd_host_id);
 
-	kfree(fd_host);
-	hba->hba_ptr = NULL;
-}
+	kमुक्त(fd_host);
+	hba->hba_ptr = शून्य;
+पूर्ण
 
-static struct se_device *fd_alloc_device(struct se_hba *hba, const char *name)
-{
-	struct fd_dev *fd_dev;
-	struct fd_host *fd_host = hba->hba_ptr;
+अटल काष्ठा se_device *fd_alloc_device(काष्ठा se_hba *hba, स्थिर अक्षर *name)
+अणु
+	काष्ठा fd_dev *fd_dev;
+	काष्ठा fd_host *fd_host = hba->hba_ptr;
 
-	fd_dev = kzalloc(sizeof(struct fd_dev), GFP_KERNEL);
-	if (!fd_dev) {
+	fd_dev = kzalloc(माप(काष्ठा fd_dev), GFP_KERNEL);
+	अगर (!fd_dev) अणु
 		pr_err("Unable to allocate memory for struct fd_dev\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	fd_dev->fd_host = fd_host;
 
 	pr_debug("FILEIO: Allocated fd_dev for %p\n", name);
 
-	return &fd_dev->dev;
-}
+	वापस &fd_dev->dev;
+पूर्ण
 
-static int fd_configure_device(struct se_device *dev)
-{
-	struct fd_dev *fd_dev = FD_DEV(dev);
-	struct fd_host *fd_host = dev->se_hba->hba_ptr;
-	struct file *file;
-	struct inode *inode = NULL;
-	int flags, ret = -EINVAL;
+अटल पूर्णांक fd_configure_device(काष्ठा se_device *dev)
+अणु
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
+	काष्ठा fd_host *fd_host = dev->se_hba->hba_ptr;
+	काष्ठा file *file;
+	काष्ठा inode *inode = शून्य;
+	पूर्णांक flags, ret = -EINVAL;
 
-	if (!(fd_dev->fbd_flags & FBDF_HAS_PATH)) {
+	अगर (!(fd_dev->fbd_flags & FBDF_HAS_PATH)) अणु
 		pr_err("Missing fd_dev_name=\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Use O_DSYNC by default instead of O_SYNC to forgo syncing
-	 * of pure timestamp updates.
+	 * Use O_DSYNC by शेष instead of O_SYNC to क्रमgo syncing
+	 * of pure बारtamp updates.
 	 */
-	flags = O_RDWR | O_CREAT | O_LARGEFILE | O_DSYNC;
+	flags = O_RDWR | O_CREAT | O_LARGEखाता | O_DSYNC;
 
 	/*
-	 * Optionally allow fd_buffered_io=1 to be enabled for people
+	 * Optionally allow fd_buffered_io=1 to be enabled क्रम people
 	 * who want use the fs buffer cache as an WriteCache mechanism.
 	 *
 	 * This means that in event of a hard failure, there is a risk
-	 * of silent data-loss if the SCSI client has *not* performed a
-	 * forced unit access (FUA) write, or issued SYNCHRONIZE_CACHE
-	 * to write-out the entire device cache.
+	 * of silent data-loss अगर the SCSI client has *not* perक्रमmed a
+	 * क्रमced unit access (FUA) ग_लिखो, or issued SYNCHRONIZE_CACHE
+	 * to ग_लिखो-out the entire device cache.
 	 */
-	if (fd_dev->fbd_flags & FDBD_HAS_BUFFERED_IO_WCE) {
+	अगर (fd_dev->fbd_flags & FDBD_HAS_BUFFERED_IO_WCE) अणु
 		pr_debug("FILEIO: Disabling O_DSYNC, using buffered FILEIO\n");
 		flags &= ~O_DSYNC;
-	}
+	पूर्ण
 
-	file = filp_open(fd_dev->fd_dev_name, flags, 0600);
-	if (IS_ERR(file)) {
+	file = filp_खोलो(fd_dev->fd_dev_name, flags, 0600);
+	अगर (IS_ERR(file)) अणु
 		pr_err("filp_open(%s) failed\n", fd_dev->fd_dev_name);
 		ret = PTR_ERR(file);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	fd_dev->fd_file = file;
 	/*
-	 * If using a block backend with this struct file, we extract
-	 * fd_dev->fd_[block,dev]_size from struct block_device.
+	 * If using a block backend with this काष्ठा file, we extract
+	 * fd_dev->fd_[block,dev]_size from काष्ठा block_device.
 	 *
 	 * Otherwise, we use the passed fd_size= from configfs
 	 */
 	inode = file->f_mapping->host;
-	if (S_ISBLK(inode->i_mode)) {
-		struct request_queue *q = bdev_get_queue(I_BDEV(inode));
-		unsigned long long dev_size;
+	अगर (S_ISBLK(inode->i_mode)) अणु
+		काष्ठा request_queue *q = bdev_get_queue(I_BDEV(inode));
+		अचिन्हित दीर्घ दीर्घ dev_size;
 
 		fd_dev->fd_block_size = bdev_logical_block_size(I_BDEV(inode));
 		/*
-		 * Determine the number of bytes from i_size_read() minus
-		 * one (1) logical sector from underlying struct block_device
+		 * Determine the number of bytes from i_size_पढ़ो() minus
+		 * one (1) logical sector from underlying काष्ठा block_device
 		 */
-		dev_size = (i_size_read(file->f_mapping->host) -
+		dev_size = (i_size_पढ़ो(file->f_mapping->host) -
 				       fd_dev->fd_block_size);
 
 		pr_debug("FILEIO: Using size: %llu bytes from struct"
 			" block_device blocks: %llu logical_block_size: %d\n",
-			dev_size, div_u64(dev_size, fd_dev->fd_block_size),
+			dev_size, भाग_u64(dev_size, fd_dev->fd_block_size),
 			fd_dev->fd_block_size);
 
-		if (target_configure_unmap_from_queue(&dev->dev_attrib, q))
+		अगर (target_configure_unmap_from_queue(&dev->dev_attrib, q))
 			pr_debug("IFILE: BLOCK Discard support available,"
 				 " disabled by default\n");
 		/*
-		 * Enable write same emulation for IBLOCK and use 0xFFFF as
+		 * Enable ग_लिखो same emulation क्रम IBLOCK and use 0xFFFF as
 		 * the smaller WRITE_SAME(10) only has a two-byte block count.
 		 */
-		dev->dev_attrib.max_write_same_len = 0xFFFF;
+		dev->dev_attrib.max_ग_लिखो_same_len = 0xFFFF;
 
-		if (blk_queue_nonrot(q))
+		अगर (blk_queue_nonrot(q))
 			dev->dev_attrib.is_nonrot = 1;
-	} else {
-		if (!(fd_dev->fbd_flags & FBDF_HAS_SIZE)) {
+	पूर्ण अन्यथा अणु
+		अगर (!(fd_dev->fbd_flags & FBDF_HAS_SIZE)) अणु
 			pr_err("FILEIO: Missing fd_dev_size="
 				" parameter, and no backing struct"
 				" block_device\n");
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 
 		fd_dev->fd_block_size = FD_BLOCKSIZE;
 		/*
@@ -182,21 +183,21 @@ static int fd_configure_device(struct se_device *dev)
 
 		/*
 		 * Limit WRITE_SAME w/ UNMAP=0 emulation to 8k Number of LBAs (NoLB)
-		 * based upon struct iovec limit for vfs_writev()
+		 * based upon काष्ठा iovec limit क्रम vfs_ग_लिखोv()
 		 */
-		dev->dev_attrib.max_write_same_len = 0x1000;
-	}
+		dev->dev_attrib.max_ग_लिखो_same_len = 0x1000;
+	पूर्ण
 
 	dev->dev_attrib.hw_block_size = fd_dev->fd_block_size;
 	dev->dev_attrib.max_bytes_per_io = FD_MAX_BYTES;
 	dev->dev_attrib.hw_max_sectors = FD_MAX_BYTES / fd_dev->fd_block_size;
 	dev->dev_attrib.hw_queue_depth = FD_MAX_DEVICE_QUEUE_DEPTH;
 
-	if (fd_dev->fbd_flags & FDBD_HAS_BUFFERED_IO_WCE) {
+	अगर (fd_dev->fbd_flags & FDBD_HAS_BUFFERED_IO_WCE) अणु
 		pr_debug("FILEIO: Forcing setting of emulate_write_cache=1"
 			" with FDBD_HAS_BUFFERED_IO_WCE\n");
-		dev->dev_attrib.emulate_write_cache = 1;
-	}
+		dev->dev_attrib.emulate_ग_लिखो_cache = 1;
+	पूर्ण
 
 	fd_dev->fd_dev_id = fd_host->fd_host_dev_id_count++;
 	fd_dev->fd_queue_depth = dev->queue_depth;
@@ -205,714 +206,714 @@ static int fd_configure_device(struct se_device *dev)
 		" %llu total bytes\n", fd_host->fd_host_id, fd_dev->fd_dev_id,
 			fd_dev->fd_dev_name, fd_dev->fd_dev_size);
 
-	return 0;
+	वापस 0;
 fail:
-	if (fd_dev->fd_file) {
-		filp_close(fd_dev->fd_file, NULL);
-		fd_dev->fd_file = NULL;
-	}
-	return ret;
-}
+	अगर (fd_dev->fd_file) अणु
+		filp_बंद(fd_dev->fd_file, शून्य);
+		fd_dev->fd_file = शून्य;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void fd_dev_call_rcu(struct rcu_head *p)
-{
-	struct se_device *dev = container_of(p, struct se_device, rcu_head);
-	struct fd_dev *fd_dev = FD_DEV(dev);
+अटल व्योम fd_dev_call_rcu(काष्ठा rcu_head *p)
+अणु
+	काष्ठा se_device *dev = container_of(p, काष्ठा se_device, rcu_head);
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
 
-	kfree(fd_dev);
-}
+	kमुक्त(fd_dev);
+पूर्ण
 
-static void fd_free_device(struct se_device *dev)
-{
+अटल व्योम fd_मुक्त_device(काष्ठा se_device *dev)
+अणु
 	call_rcu(&dev->rcu_head, fd_dev_call_rcu);
-}
+पूर्ण
 
-static void fd_destroy_device(struct se_device *dev)
-{
-	struct fd_dev *fd_dev = FD_DEV(dev);
+अटल व्योम fd_destroy_device(काष्ठा se_device *dev)
+अणु
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
 
-	if (fd_dev->fd_file) {
-		filp_close(fd_dev->fd_file, NULL);
-		fd_dev->fd_file = NULL;
-	}
-}
+	अगर (fd_dev->fd_file) अणु
+		filp_बंद(fd_dev->fd_file, शून्य);
+		fd_dev->fd_file = शून्य;
+	पूर्ण
+पूर्ण
 
-struct target_core_file_cmd {
-	unsigned long	len;
-	struct se_cmd	*cmd;
-	struct kiocb	iocb;
-	struct bio_vec	bvecs[];
-};
+काष्ठा target_core_file_cmd अणु
+	अचिन्हित दीर्घ	len;
+	काष्ठा se_cmd	*cmd;
+	काष्ठा kiocb	iocb;
+	काष्ठा bio_vec	bvecs[];
+पूर्ण;
 
-static void cmd_rw_aio_complete(struct kiocb *iocb, long ret, long ret2)
-{
-	struct target_core_file_cmd *cmd;
+अटल व्योम cmd_rw_aio_complete(काष्ठा kiocb *iocb, दीर्घ ret, दीर्घ ret2)
+अणु
+	काष्ठा target_core_file_cmd *cmd;
 
-	cmd = container_of(iocb, struct target_core_file_cmd, iocb);
+	cmd = container_of(iocb, काष्ठा target_core_file_cmd, iocb);
 
-	if (ret != cmd->len)
+	अगर (ret != cmd->len)
 		target_complete_cmd(cmd->cmd, SAM_STAT_CHECK_CONDITION);
-	else
+	अन्यथा
 		target_complete_cmd(cmd->cmd, SAM_STAT_GOOD);
 
-	kfree(cmd);
-}
+	kमुक्त(cmd);
+पूर्ण
 
-static sense_reason_t
-fd_execute_rw_aio(struct se_cmd *cmd, struct scatterlist *sgl, u32 sgl_nents,
-	      enum dma_data_direction data_direction)
-{
-	int is_write = !(data_direction == DMA_FROM_DEVICE);
-	struct se_device *dev = cmd->se_dev;
-	struct fd_dev *fd_dev = FD_DEV(dev);
-	struct file *file = fd_dev->fd_file;
-	struct target_core_file_cmd *aio_cmd;
-	struct iov_iter iter;
-	struct scatterlist *sg;
-	ssize_t len = 0;
-	int ret = 0, i;
+अटल sense_reason_t
+fd_execute_rw_aio(काष्ठा se_cmd *cmd, काष्ठा scatterlist *sgl, u32 sgl_nents,
+	      क्रमागत dma_data_direction data_direction)
+अणु
+	पूर्णांक is_ग_लिखो = !(data_direction == DMA_FROM_DEVICE);
+	काष्ठा se_device *dev = cmd->se_dev;
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
+	काष्ठा file *file = fd_dev->fd_file;
+	काष्ठा target_core_file_cmd *aio_cmd;
+	काष्ठा iov_iter iter;
+	काष्ठा scatterlist *sg;
+	sमाप_प्रकार len = 0;
+	पूर्णांक ret = 0, i;
 
-	aio_cmd = kmalloc(struct_size(aio_cmd, bvecs, sgl_nents), GFP_KERNEL);
-	if (!aio_cmd)
-		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	aio_cmd = kदो_स्मृति(काष्ठा_size(aio_cmd, bvecs, sgl_nents), GFP_KERNEL);
+	अगर (!aio_cmd)
+		वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
 
-	for_each_sg(sgl, sg, sgl_nents, i) {
+	क्रम_each_sg(sgl, sg, sgl_nents, i) अणु
 		aio_cmd->bvecs[i].bv_page = sg_page(sg);
 		aio_cmd->bvecs[i].bv_len = sg->length;
 		aio_cmd->bvecs[i].bv_offset = sg->offset;
 
 		len += sg->length;
-	}
+	पूर्ण
 
-	iov_iter_bvec(&iter, is_write, aio_cmd->bvecs, sgl_nents, len);
+	iov_iter_bvec(&iter, is_ग_लिखो, aio_cmd->bvecs, sgl_nents, len);
 
 	aio_cmd->cmd = cmd;
 	aio_cmd->len = len;
 	aio_cmd->iocb.ki_pos = cmd->t_task_lba * dev->dev_attrib.block_size;
 	aio_cmd->iocb.ki_filp = file;
 	aio_cmd->iocb.ki_complete = cmd_rw_aio_complete;
-	aio_cmd->iocb.ki_flags = IOCB_DIRECT;
+	aio_cmd->iocb.ki_flags = IOCB_सूचीECT;
 
-	if (is_write && (cmd->se_cmd_flags & SCF_FUA))
+	अगर (is_ग_लिखो && (cmd->se_cmd_flags & SCF_FUA))
 		aio_cmd->iocb.ki_flags |= IOCB_DSYNC;
 
-	if (is_write)
-		ret = call_write_iter(file, &aio_cmd->iocb, &iter);
-	else
-		ret = call_read_iter(file, &aio_cmd->iocb, &iter);
+	अगर (is_ग_लिखो)
+		ret = call_ग_लिखो_iter(file, &aio_cmd->iocb, &iter);
+	अन्यथा
+		ret = call_पढ़ो_iter(file, &aio_cmd->iocb, &iter);
 
-	if (ret != -EIOCBQUEUED)
+	अगर (ret != -EIOCBQUEUED)
 		cmd_rw_aio_complete(&aio_cmd->iocb, ret, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fd_do_rw(struct se_cmd *cmd, struct file *fd,
-		    u32 block_size, struct scatterlist *sgl,
-		    u32 sgl_nents, u32 data_length, int is_write)
-{
-	struct scatterlist *sg;
-	struct iov_iter iter;
-	struct bio_vec *bvec;
-	ssize_t len = 0;
+अटल पूर्णांक fd_करो_rw(काष्ठा se_cmd *cmd, काष्ठा file *fd,
+		    u32 block_size, काष्ठा scatterlist *sgl,
+		    u32 sgl_nents, u32 data_length, पूर्णांक is_ग_लिखो)
+अणु
+	काष्ठा scatterlist *sg;
+	काष्ठा iov_iter iter;
+	काष्ठा bio_vec *bvec;
+	sमाप_प्रकार len = 0;
 	loff_t pos = (cmd->t_task_lba * block_size);
-	int ret = 0, i;
+	पूर्णांक ret = 0, i;
 
-	bvec = kcalloc(sgl_nents, sizeof(struct bio_vec), GFP_KERNEL);
-	if (!bvec) {
+	bvec = kसुस्मृति(sgl_nents, माप(काष्ठा bio_vec), GFP_KERNEL);
+	अगर (!bvec) अणु
 		pr_err("Unable to allocate fd_do_readv iov[]\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for_each_sg(sgl, sg, sgl_nents, i) {
+	क्रम_each_sg(sgl, sg, sgl_nents, i) अणु
 		bvec[i].bv_page = sg_page(sg);
 		bvec[i].bv_len = sg->length;
 		bvec[i].bv_offset = sg->offset;
 
 		len += sg->length;
-	}
+	पूर्ण
 
 	iov_iter_bvec(&iter, READ, bvec, sgl_nents, len);
-	if (is_write)
-		ret = vfs_iter_write(fd, &iter, &pos, 0);
-	else
-		ret = vfs_iter_read(fd, &iter, &pos, 0);
+	अगर (is_ग_लिखो)
+		ret = vfs_iter_ग_लिखो(fd, &iter, &pos, 0);
+	अन्यथा
+		ret = vfs_iter_पढ़ो(fd, &iter, &pos, 0);
 
-	if (is_write) {
-		if (ret < 0 || ret != data_length) {
+	अगर (is_ग_लिखो) अणु
+		अगर (ret < 0 || ret != data_length) अणु
 			pr_err("%s() write returned %d\n", __func__, ret);
-			if (ret >= 0)
+			अगर (ret >= 0)
 				ret = -EINVAL;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * Return zeros and GOOD status even if the READ did not return
-		 * the expected virt_size for struct file w/o a backing struct
+		 * Return zeros and GOOD status even अगर the READ did not वापस
+		 * the expected virt_size क्रम काष्ठा file w/o a backing काष्ठा
 		 * block_device.
 		 */
-		if (S_ISBLK(file_inode(fd)->i_mode)) {
-			if (ret < 0 || ret != data_length) {
+		अगर (S_ISBLK(file_inode(fd)->i_mode)) अणु
+			अगर (ret < 0 || ret != data_length) अणु
 				pr_err("%s() returned %d, expecting %u for "
 						"S_ISBLK\n", __func__, ret,
 						data_length);
-				if (ret >= 0)
+				अगर (ret >= 0)
 					ret = -EINVAL;
-			}
-		} else {
-			if (ret < 0) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (ret < 0) अणु
 				pr_err("%s() returned %d for non S_ISBLK\n",
 						__func__, ret);
-			} else if (ret != data_length) {
+			पूर्ण अन्यथा अगर (ret != data_length) अणु
 				/*
-				 * Short read case:
+				 * Short पढ़ो हाल:
 				 * Probably some one truncate file under us.
 				 * We must explicitly zero sg-pages to prevent
 				 * expose uninizialized pages to userspace.
 				 */
-				if (ret < data_length)
+				अगर (ret < data_length)
 					ret += iov_iter_zero(data_length - ret, &iter);
-				else
+				अन्यथा
 					ret = -EINVAL;
-			}
-		}
-	}
-	kfree(bvec);
-	return ret;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	kमुक्त(bvec);
+	वापस ret;
+पूर्ण
 
-static sense_reason_t
-fd_execute_sync_cache(struct se_cmd *cmd)
-{
-	struct se_device *dev = cmd->se_dev;
-	struct fd_dev *fd_dev = FD_DEV(dev);
-	int immed = (cmd->t_task_cdb[1] & 0x2);
+अटल sense_reason_t
+fd_execute_sync_cache(काष्ठा se_cmd *cmd)
+अणु
+	काष्ठा se_device *dev = cmd->se_dev;
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
+	पूर्णांक immed = (cmd->t_task_cdb[1] & 0x2);
 	loff_t start, end;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * If the Immediate bit is set, queue up the GOOD response
-	 * for this SYNCHRONIZE_CACHE op
+	 * क्रम this SYNCHRONIZE_CACHE op
 	 */
-	if (immed)
+	अगर (immed)
 		target_complete_cmd(cmd, SAM_STAT_GOOD);
 
 	/*
-	 * Determine if we will be flushing the entire device.
+	 * Determine अगर we will be flushing the entire device.
 	 */
-	if (cmd->t_task_lba == 0 && cmd->data_length == 0) {
+	अगर (cmd->t_task_lba == 0 && cmd->data_length == 0) अणु
 		start = 0;
-		end = LLONG_MAX;
-	} else {
+		end = Lदीर्घ_उच्च;
+	पूर्ण अन्यथा अणु
 		start = cmd->t_task_lba * dev->dev_attrib.block_size;
-		if (cmd->data_length)
+		अगर (cmd->data_length)
 			end = start + cmd->data_length - 1;
-		else
-			end = LLONG_MAX;
-	}
+		अन्यथा
+			end = Lदीर्घ_उच्च;
+	पूर्ण
 
 	ret = vfs_fsync_range(fd_dev->fd_file, start, end, 1);
-	if (ret != 0)
+	अगर (ret != 0)
 		pr_err("FILEIO: vfs_fsync_range() failed: %d\n", ret);
 
-	if (immed)
-		return 0;
+	अगर (immed)
+		वापस 0;
 
-	if (ret)
+	अगर (ret)
 		target_complete_cmd(cmd, SAM_STAT_CHECK_CONDITION);
-	else
+	अन्यथा
 		target_complete_cmd(cmd, SAM_STAT_GOOD);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static sense_reason_t
-fd_execute_write_same(struct se_cmd *cmd)
-{
-	struct se_device *se_dev = cmd->se_dev;
-	struct fd_dev *fd_dev = FD_DEV(se_dev);
+अटल sense_reason_t
+fd_execute_ग_लिखो_same(काष्ठा se_cmd *cmd)
+अणु
+	काष्ठा se_device *se_dev = cmd->se_dev;
+	काष्ठा fd_dev *fd_dev = FD_DEV(se_dev);
 	loff_t pos = cmd->t_task_lba * se_dev->dev_attrib.block_size;
-	sector_t nolb = sbc_get_write_same_sectors(cmd);
-	struct iov_iter iter;
-	struct bio_vec *bvec;
-	unsigned int len = 0, i;
-	ssize_t ret;
+	sector_t nolb = sbc_get_ग_लिखो_same_sectors(cmd);
+	काष्ठा iov_iter iter;
+	काष्ठा bio_vec *bvec;
+	अचिन्हित पूर्णांक len = 0, i;
+	sमाप_प्रकार ret;
 
-	if (!nolb) {
+	अगर (!nolb) अणु
 		target_complete_cmd(cmd, SAM_STAT_GOOD);
-		return 0;
-	}
-	if (cmd->prot_op) {
+		वापस 0;
+	पूर्ण
+	अगर (cmd->prot_op) अणु
 		pr_err("WRITE_SAME: Protection information with FILEIO"
 		       " backends not supported\n");
-		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-	}
+		वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	पूर्ण
 
-	if (cmd->t_data_nents > 1 ||
-	    cmd->t_data_sg[0].length != cmd->se_dev->dev_attrib.block_size) {
+	अगर (cmd->t_data_nents > 1 ||
+	    cmd->t_data_sg[0].length != cmd->se_dev->dev_attrib.block_size) अणु
 		pr_err("WRITE_SAME: Illegal SGL t_data_nents: %u length: %u"
 			" block_size: %u\n",
 			cmd->t_data_nents,
 			cmd->t_data_sg[0].length,
 			cmd->se_dev->dev_attrib.block_size);
-		return TCM_INVALID_CDB_FIELD;
-	}
+		वापस TCM_INVALID_CDB_FIELD;
+	पूर्ण
 
-	bvec = kcalloc(nolb, sizeof(struct bio_vec), GFP_KERNEL);
-	if (!bvec)
-		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	bvec = kसुस्मृति(nolb, माप(काष्ठा bio_vec), GFP_KERNEL);
+	अगर (!bvec)
+		वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
 
-	for (i = 0; i < nolb; i++) {
+	क्रम (i = 0; i < nolb; i++) अणु
 		bvec[i].bv_page = sg_page(&cmd->t_data_sg[0]);
 		bvec[i].bv_len = cmd->t_data_sg[0].length;
 		bvec[i].bv_offset = cmd->t_data_sg[0].offset;
 
 		len += se_dev->dev_attrib.block_size;
-	}
+	पूर्ण
 
 	iov_iter_bvec(&iter, READ, bvec, nolb, len);
-	ret = vfs_iter_write(fd_dev->fd_file, &iter, &pos, 0);
+	ret = vfs_iter_ग_लिखो(fd_dev->fd_file, &iter, &pos, 0);
 
-	kfree(bvec);
-	if (ret < 0 || ret != len) {
+	kमुक्त(bvec);
+	अगर (ret < 0 || ret != len) अणु
 		pr_err("vfs_iter_write() returned %zd for write same\n", ret);
-		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-	}
+		वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	पूर्ण
 
 	target_complete_cmd(cmd, SAM_STAT_GOOD);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-fd_do_prot_fill(struct se_device *se_dev, sector_t lba, sector_t nolb,
-		void *buf, size_t bufsize)
-{
-	struct fd_dev *fd_dev = FD_DEV(se_dev);
-	struct file *prot_fd = fd_dev->fd_prot_file;
+अटल पूर्णांक
+fd_करो_prot_fill(काष्ठा se_device *se_dev, sector_t lba, sector_t nolb,
+		व्योम *buf, माप_प्रकार bufsize)
+अणु
+	काष्ठा fd_dev *fd_dev = FD_DEV(se_dev);
+	काष्ठा file *prot_fd = fd_dev->fd_prot_file;
 	sector_t prot_length, prot;
 	loff_t pos = lba * se_dev->prot_length;
 
-	if (!prot_fd) {
+	अगर (!prot_fd) अणु
 		pr_err("Unable to locate fd_dev->fd_prot_file\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	prot_length = nolb * se_dev->prot_length;
 
-	memset(buf, 0xff, bufsize);
-	for (prot = 0; prot < prot_length;) {
+	स_रखो(buf, 0xff, bufsize);
+	क्रम (prot = 0; prot < prot_length;) अणु
 		sector_t len = min_t(sector_t, bufsize, prot_length - prot);
-		ssize_t ret = kernel_write(prot_fd, buf, len, &pos);
+		sमाप_प्रकार ret = kernel_ग_लिखो(prot_fd, buf, len, &pos);
 
-		if (ret != len) {
+		अगर (ret != len) अणु
 			pr_err("vfs_write to prot file failed: %zd\n", ret);
-			return ret < 0 ? ret : -ENODEV;
-		}
+			वापस ret < 0 ? ret : -ENODEV;
+		पूर्ण
 		prot += ret;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-fd_do_prot_unmap(struct se_cmd *cmd, sector_t lba, sector_t nolb)
-{
-	void *buf;
-	int rc;
+अटल पूर्णांक
+fd_करो_prot_unmap(काष्ठा se_cmd *cmd, sector_t lba, sector_t nolb)
+अणु
+	व्योम *buf;
+	पूर्णांक rc;
 
-	buf = (void *)__get_free_page(GFP_KERNEL);
-	if (!buf) {
+	buf = (व्योम *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!buf) अणु
 		pr_err("Unable to allocate FILEIO prot buf\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	rc = fd_do_prot_fill(cmd->se_dev, lba, nolb, buf, PAGE_SIZE);
+	rc = fd_करो_prot_fill(cmd->se_dev, lba, nolb, buf, PAGE_SIZE);
 
-	free_page((unsigned long)buf);
+	मुक्त_page((अचिन्हित दीर्घ)buf);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static sense_reason_t
-fd_execute_unmap(struct se_cmd *cmd, sector_t lba, sector_t nolb)
-{
-	struct file *file = FD_DEV(cmd->se_dev)->fd_file;
-	struct inode *inode = file->f_mapping->host;
-	int ret;
+अटल sense_reason_t
+fd_execute_unmap(काष्ठा se_cmd *cmd, sector_t lba, sector_t nolb)
+अणु
+	काष्ठा file *file = FD_DEV(cmd->se_dev)->fd_file;
+	काष्ठा inode *inode = file->f_mapping->host;
+	पूर्णांक ret;
 
-	if (!nolb) {
-		return 0;
-	}
+	अगर (!nolb) अणु
+		वापस 0;
+	पूर्ण
 
-	if (cmd->se_dev->dev_attrib.pi_prot_type) {
-		ret = fd_do_prot_unmap(cmd, lba, nolb);
-		if (ret)
-			return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-	}
+	अगर (cmd->se_dev->dev_attrib.pi_prot_type) अणु
+		ret = fd_करो_prot_unmap(cmd, lba, nolb);
+		अगर (ret)
+			वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	पूर्ण
 
-	if (S_ISBLK(inode->i_mode)) {
+	अगर (S_ISBLK(inode->i_mode)) अणु
 		/* The backend is block device, use discard */
-		struct block_device *bdev = I_BDEV(inode);
-		struct se_device *dev = cmd->se_dev;
+		काष्ठा block_device *bdev = I_BDEV(inode);
+		काष्ठा se_device *dev = cmd->se_dev;
 
 		ret = blkdev_issue_discard(bdev,
 					   target_to_linux_sector(dev, lba),
 					   target_to_linux_sector(dev,  nolb),
 					   GFP_KERNEL, 0);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_warn("FILEIO: blkdev_issue_discard() failed: %d\n",
 				ret);
-			return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-		}
-	} else {
+			वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* The backend is normal file, use fallocate */
-		struct se_device *se_dev = cmd->se_dev;
+		काष्ठा se_device *se_dev = cmd->se_dev;
 		loff_t pos = lba * se_dev->dev_attrib.block_size;
-		unsigned int len = nolb * se_dev->dev_attrib.block_size;
-		int mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
+		अचिन्हित पूर्णांक len = nolb * se_dev->dev_attrib.block_size;
+		पूर्णांक mode = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE;
 
-		if (!file->f_op->fallocate)
-			return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+		अगर (!file->f_op->fallocate)
+			वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
 
 		ret = file->f_op->fallocate(file, mode, pos, len);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_warn("FILEIO: fallocate() failed: %d\n", ret);
-			return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-		}
-	}
+			वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static sense_reason_t
-fd_execute_rw_buffered(struct se_cmd *cmd, struct scatterlist *sgl, u32 sgl_nents,
-	      enum dma_data_direction data_direction)
-{
-	struct se_device *dev = cmd->se_dev;
-	struct fd_dev *fd_dev = FD_DEV(dev);
-	struct file *file = fd_dev->fd_file;
-	struct file *pfile = fd_dev->fd_prot_file;
+अटल sense_reason_t
+fd_execute_rw_buffered(काष्ठा se_cmd *cmd, काष्ठा scatterlist *sgl, u32 sgl_nents,
+	      क्रमागत dma_data_direction data_direction)
+अणु
+	काष्ठा se_device *dev = cmd->se_dev;
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
+	काष्ठा file *file = fd_dev->fd_file;
+	काष्ठा file *pfile = fd_dev->fd_prot_file;
 	sense_reason_t rc;
-	int ret = 0;
+	पूर्णांक ret = 0;
 	/*
-	 * Call vectorized fileio functions to map struct scatterlist
-	 * physical memory addresses to struct iovec virtual memory.
+	 * Call vectorized fileio functions to map काष्ठा scatterlist
+	 * physical memory addresses to काष्ठा iovec भव memory.
 	 */
-	if (data_direction == DMA_FROM_DEVICE) {
-		if (cmd->prot_type && dev->dev_attrib.pi_prot_type) {
-			ret = fd_do_rw(cmd, pfile, dev->prot_length,
+	अगर (data_direction == DMA_FROM_DEVICE) अणु
+		अगर (cmd->prot_type && dev->dev_attrib.pi_prot_type) अणु
+			ret = fd_करो_rw(cmd, pfile, dev->prot_length,
 				       cmd->t_prot_sg, cmd->t_prot_nents,
 				       cmd->prot_length, 0);
-			if (ret < 0)
-				return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-		}
+			अगर (ret < 0)
+				वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+		पूर्ण
 
-		ret = fd_do_rw(cmd, file, dev->dev_attrib.block_size,
+		ret = fd_करो_rw(cmd, file, dev->dev_attrib.block_size,
 			       sgl, sgl_nents, cmd->data_length, 0);
 
-		if (ret > 0 && cmd->prot_type && dev->dev_attrib.pi_prot_type &&
-		    dev->dev_attrib.pi_prot_verify) {
+		अगर (ret > 0 && cmd->prot_type && dev->dev_attrib.pi_prot_type &&
+		    dev->dev_attrib.pi_prot_verअगरy) अणु
 			u32 sectors = cmd->data_length >>
 					ilog2(dev->dev_attrib.block_size);
 
-			rc = sbc_dif_verify(cmd, cmd->t_task_lba, sectors,
+			rc = sbc_dअगर_verअगरy(cmd, cmd->t_task_lba, sectors,
 					    0, cmd->t_prot_sg, 0);
-			if (rc)
-				return rc;
-		}
-	} else {
-		if (cmd->prot_type && dev->dev_attrib.pi_prot_type &&
-		    dev->dev_attrib.pi_prot_verify) {
+			अगर (rc)
+				वापस rc;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (cmd->prot_type && dev->dev_attrib.pi_prot_type &&
+		    dev->dev_attrib.pi_prot_verअगरy) अणु
 			u32 sectors = cmd->data_length >>
 					ilog2(dev->dev_attrib.block_size);
 
-			rc = sbc_dif_verify(cmd, cmd->t_task_lba, sectors,
+			rc = sbc_dअगर_verअगरy(cmd, cmd->t_task_lba, sectors,
 					    0, cmd->t_prot_sg, 0);
-			if (rc)
-				return rc;
-		}
+			अगर (rc)
+				वापस rc;
+		पूर्ण
 
-		ret = fd_do_rw(cmd, file, dev->dev_attrib.block_size,
+		ret = fd_करो_rw(cmd, file, dev->dev_attrib.block_size,
 			       sgl, sgl_nents, cmd->data_length, 1);
 		/*
-		 * Perform implicit vfs_fsync_range() for fd_do_writev() ops
-		 * for SCSI WRITEs with Forced Unit Access (FUA) set.
+		 * Perक्रमm implicit vfs_fsync_range() क्रम fd_करो_ग_लिखोv() ops
+		 * क्रम SCSI WRITEs with Forced Unit Access (FUA) set.
 		 * Allow this to happen independent of WCE=0 setting.
 		 */
-		if (ret > 0 && (cmd->se_cmd_flags & SCF_FUA)) {
+		अगर (ret > 0 && (cmd->se_cmd_flags & SCF_FUA)) अणु
 			loff_t start = cmd->t_task_lba *
 				dev->dev_attrib.block_size;
 			loff_t end;
 
-			if (cmd->data_length)
+			अगर (cmd->data_length)
 				end = start + cmd->data_length - 1;
-			else
-				end = LLONG_MAX;
+			अन्यथा
+				end = Lदीर्घ_उच्च;
 
 			vfs_fsync_range(fd_dev->fd_file, start, end, 1);
-		}
+		पूर्ण
 
-		if (ret > 0 && cmd->prot_type && dev->dev_attrib.pi_prot_type) {
-			ret = fd_do_rw(cmd, pfile, dev->prot_length,
+		अगर (ret > 0 && cmd->prot_type && dev->dev_attrib.pi_prot_type) अणु
+			ret = fd_करो_rw(cmd, pfile, dev->prot_length,
 				       cmd->t_prot_sg, cmd->t_prot_nents,
 				       cmd->prot_length, 1);
-			if (ret < 0)
-				return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-		}
-	}
+			अगर (ret < 0)
+				वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+		पूर्ण
+	पूर्ण
 
-	if (ret < 0)
-		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	अगर (ret < 0)
+		वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
 
 	target_complete_cmd(cmd, SAM_STAT_GOOD);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static sense_reason_t
-fd_execute_rw(struct se_cmd *cmd, struct scatterlist *sgl, u32 sgl_nents,
-	      enum dma_data_direction data_direction)
-{
-	struct se_device *dev = cmd->se_dev;
-	struct fd_dev *fd_dev = FD_DEV(dev);
+अटल sense_reason_t
+fd_execute_rw(काष्ठा se_cmd *cmd, काष्ठा scatterlist *sgl, u32 sgl_nents,
+	      क्रमागत dma_data_direction data_direction)
+अणु
+	काष्ठा se_device *dev = cmd->se_dev;
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
 
 	/*
 	 * We are currently limited by the number of iovecs (2048) per
-	 * single vfs_[writev,readv] call.
+	 * single vfs_[ग_लिखोv,पढ़ोv] call.
 	 */
-	if (cmd->data_length > FD_MAX_BYTES) {
+	अगर (cmd->data_length > FD_MAX_BYTES) अणु
 		pr_err("FILEIO: Not able to process I/O of %u bytes due to"
 		       "FD_MAX_BYTES: %u iovec count limitation\n",
 			cmd->data_length, FD_MAX_BYTES);
-		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-	}
+		वापस TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+	पूर्ण
 
-	if (fd_dev->fbd_flags & FDBD_HAS_ASYNC_IO)
-		return fd_execute_rw_aio(cmd, sgl, sgl_nents, data_direction);
-	return fd_execute_rw_buffered(cmd, sgl, sgl_nents, data_direction);
-}
+	अगर (fd_dev->fbd_flags & FDBD_HAS_ASYNC_IO)
+		वापस fd_execute_rw_aio(cmd, sgl, sgl_nents, data_direction);
+	वापस fd_execute_rw_buffered(cmd, sgl, sgl_nents, data_direction);
+पूर्ण
 
-enum {
+क्रमागत अणु
 	Opt_fd_dev_name, Opt_fd_dev_size, Opt_fd_buffered_io,
 	Opt_fd_async_io, Opt_err
-};
+पूर्ण;
 
-static match_table_t tokens = {
-	{Opt_fd_dev_name, "fd_dev_name=%s"},
-	{Opt_fd_dev_size, "fd_dev_size=%s"},
-	{Opt_fd_buffered_io, "fd_buffered_io=%d"},
-	{Opt_fd_async_io, "fd_async_io=%d"},
-	{Opt_err, NULL}
-};
+अटल match_table_t tokens = अणु
+	अणुOpt_fd_dev_name, "fd_dev_name=%s"पूर्ण,
+	अणुOpt_fd_dev_size, "fd_dev_size=%s"पूर्ण,
+	अणुOpt_fd_buffered_io, "fd_buffered_io=%d"पूर्ण,
+	अणुOpt_fd_async_io, "fd_async_io=%d"पूर्ण,
+	अणुOpt_err, शून्यपूर्ण
+पूर्ण;
 
-static ssize_t fd_set_configfs_dev_params(struct se_device *dev,
-		const char *page, ssize_t count)
-{
-	struct fd_dev *fd_dev = FD_DEV(dev);
-	char *orig, *ptr, *arg_p, *opts;
+अटल sमाप_प्रकार fd_set_configfs_dev_params(काष्ठा se_device *dev,
+		स्थिर अक्षर *page, sमाप_प्रकार count)
+अणु
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
+	अक्षर *orig, *ptr, *arg_p, *opts;
 	substring_t args[MAX_OPT_ARGS];
-	int ret = 0, arg, token;
+	पूर्णांक ret = 0, arg, token;
 
 	opts = kstrdup(page, GFP_KERNEL);
-	if (!opts)
-		return -ENOMEM;
+	अगर (!opts)
+		वापस -ENOMEM;
 
 	orig = opts;
 
-	while ((ptr = strsep(&opts, ",\n")) != NULL) {
-		if (!*ptr)
-			continue;
+	जबतक ((ptr = strsep(&opts, ",\n")) != शून्य) अणु
+		अगर (!*ptr)
+			जारी;
 
 		token = match_token(ptr, tokens, args);
-		switch (token) {
-		case Opt_fd_dev_name:
-			if (match_strlcpy(fd_dev->fd_dev_name, &args[0],
-				FD_MAX_DEV_NAME) == 0) {
+		चयन (token) अणु
+		हाल Opt_fd_dev_name:
+			अगर (match_strlcpy(fd_dev->fd_dev_name, &args[0],
+				FD_MAX_DEV_NAME) == 0) अणु
 				ret = -EINVAL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			pr_debug("FILEIO: Referencing Path: %s\n",
 					fd_dev->fd_dev_name);
 			fd_dev->fbd_flags |= FBDF_HAS_PATH;
-			break;
-		case Opt_fd_dev_size:
+			अवरोध;
+		हाल Opt_fd_dev_size:
 			arg_p = match_strdup(&args[0]);
-			if (!arg_p) {
+			अगर (!arg_p) अणु
 				ret = -ENOMEM;
-				break;
-			}
-			ret = kstrtoull(arg_p, 0, &fd_dev->fd_dev_size);
-			kfree(arg_p);
-			if (ret < 0) {
+				अवरोध;
+			पूर्ण
+			ret = kम_से_अदीर्घl(arg_p, 0, &fd_dev->fd_dev_size);
+			kमुक्त(arg_p);
+			अगर (ret < 0) अणु
 				pr_err("kstrtoull() failed for"
 						" fd_dev_size=\n");
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			pr_debug("FILEIO: Referencing Size: %llu"
 					" bytes\n", fd_dev->fd_dev_size);
 			fd_dev->fbd_flags |= FBDF_HAS_SIZE;
-			break;
-		case Opt_fd_buffered_io:
-			ret = match_int(args, &arg);
-			if (ret)
-				goto out;
-			if (arg != 1) {
+			अवरोध;
+		हाल Opt_fd_buffered_io:
+			ret = match_पूर्णांक(args, &arg);
+			अगर (ret)
+				जाओ out;
+			अगर (arg != 1) अणु
 				pr_err("bogus fd_buffered_io=%d value\n", arg);
 				ret = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			pr_debug("FILEIO: Using buffered I/O"
 				" operations for struct fd_dev\n");
 
 			fd_dev->fbd_flags |= FDBD_HAS_BUFFERED_IO_WCE;
-			break;
-		case Opt_fd_async_io:
-			ret = match_int(args, &arg);
-			if (ret)
-				goto out;
-			if (arg != 1) {
+			अवरोध;
+		हाल Opt_fd_async_io:
+			ret = match_पूर्णांक(args, &arg);
+			अगर (ret)
+				जाओ out;
+			अगर (arg != 1) अणु
 				pr_err("bogus fd_async_io=%d value\n", arg);
 				ret = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			pr_debug("FILEIO: Using async I/O"
 				" operations for struct fd_dev\n");
 
 			fd_dev->fbd_flags |= FDBD_HAS_ASYNC_IO;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
-	kfree(orig);
-	return (!ret) ? count : ret;
-}
+	kमुक्त(orig);
+	वापस (!ret) ? count : ret;
+पूर्ण
 
-static ssize_t fd_show_configfs_dev_params(struct se_device *dev, char *b)
-{
-	struct fd_dev *fd_dev = FD_DEV(dev);
-	ssize_t bl = 0;
+अटल sमाप_प्रकार fd_show_configfs_dev_params(काष्ठा se_device *dev, अक्षर *b)
+अणु
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
+	sमाप_प्रकार bl = 0;
 
-	bl = sprintf(b + bl, "TCM FILEIO ID: %u", fd_dev->fd_dev_id);
-	bl += sprintf(b + bl, "        File: %s  Size: %llu  Mode: %s Async: %d\n",
+	bl = प्र_लिखो(b + bl, "TCM FILEIO ID: %u", fd_dev->fd_dev_id);
+	bl += प्र_लिखो(b + bl, "        File: %s  Size: %llu  Mode: %s Async: %d\n",
 		fd_dev->fd_dev_name, fd_dev->fd_dev_size,
 		(fd_dev->fbd_flags & FDBD_HAS_BUFFERED_IO_WCE) ?
 		"Buffered-WCE" : "O_DSYNC",
 		!!(fd_dev->fbd_flags & FDBD_HAS_ASYNC_IO));
-	return bl;
-}
+	वापस bl;
+पूर्ण
 
-static sector_t fd_get_blocks(struct se_device *dev)
-{
-	struct fd_dev *fd_dev = FD_DEV(dev);
-	struct file *f = fd_dev->fd_file;
-	struct inode *i = f->f_mapping->host;
-	unsigned long long dev_size;
+अटल sector_t fd_get_blocks(काष्ठा se_device *dev)
+अणु
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
+	काष्ठा file *f = fd_dev->fd_file;
+	काष्ठा inode *i = f->f_mapping->host;
+	अचिन्हित दीर्घ दीर्घ dev_size;
 	/*
-	 * When using a file that references an underlying struct block_device,
+	 * When using a file that references an underlying काष्ठा block_device,
 	 * ensure dev_size is always based on the current inode size in order
 	 * to handle underlying block_device resize operations.
 	 */
-	if (S_ISBLK(i->i_mode))
-		dev_size = i_size_read(i);
-	else
+	अगर (S_ISBLK(i->i_mode))
+		dev_size = i_size_पढ़ो(i);
+	अन्यथा
 		dev_size = fd_dev->fd_dev_size;
 
-	return div_u64(dev_size - dev->dev_attrib.block_size,
+	वापस भाग_u64(dev_size - dev->dev_attrib.block_size,
 		       dev->dev_attrib.block_size);
-}
+पूर्ण
 
-static int fd_init_prot(struct se_device *dev)
-{
-	struct fd_dev *fd_dev = FD_DEV(dev);
-	struct file *prot_file, *file = fd_dev->fd_file;
-	struct inode *inode;
-	int ret, flags = O_RDWR | O_CREAT | O_LARGEFILE | O_DSYNC;
-	char buf[FD_MAX_DEV_PROT_NAME];
+अटल पूर्णांक fd_init_prot(काष्ठा se_device *dev)
+अणु
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
+	काष्ठा file *prot_file, *file = fd_dev->fd_file;
+	काष्ठा inode *inode;
+	पूर्णांक ret, flags = O_RDWR | O_CREAT | O_LARGEखाता | O_DSYNC;
+	अक्षर buf[FD_MAX_DEV_PROT_NAME];
 
-	if (!file) {
+	अगर (!file) अणु
 		pr_err("Unable to locate fd_dev->fd_file\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	inode = file->f_mapping->host;
-	if (S_ISBLK(inode->i_mode)) {
+	अगर (S_ISBLK(inode->i_mode)) अणु
 		pr_err("FILEIO Protection emulation only supported on"
 		       " !S_ISBLK\n");
-		return -ENOSYS;
-	}
+		वापस -ENOSYS;
+	पूर्ण
 
-	if (fd_dev->fbd_flags & FDBD_HAS_BUFFERED_IO_WCE)
+	अगर (fd_dev->fbd_flags & FDBD_HAS_BUFFERED_IO_WCE)
 		flags &= ~O_DSYNC;
 
-	snprintf(buf, FD_MAX_DEV_PROT_NAME, "%s.protection",
+	snम_लिखो(buf, FD_MAX_DEV_PROT_NAME, "%s.protection",
 		 fd_dev->fd_dev_name);
 
-	prot_file = filp_open(buf, flags, 0600);
-	if (IS_ERR(prot_file)) {
+	prot_file = filp_खोलो(buf, flags, 0600);
+	अगर (IS_ERR(prot_file)) अणु
 		pr_err("filp_open(%s) failed\n", buf);
 		ret = PTR_ERR(prot_file);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	fd_dev->fd_prot_file = prot_file;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fd_format_prot(struct se_device *dev)
-{
-	unsigned char *buf;
-	int unit_size = FDBD_FORMAT_UNIT_SIZE * dev->dev_attrib.block_size;
-	int ret;
+अटल पूर्णांक fd_क्रमmat_prot(काष्ठा se_device *dev)
+अणु
+	अचिन्हित अक्षर *buf;
+	पूर्णांक unit_size = FDBD_FORMAT_UNIT_SIZE * dev->dev_attrib.block_size;
+	पूर्णांक ret;
 
-	if (!dev->dev_attrib.pi_prot_type) {
+	अगर (!dev->dev_attrib.pi_prot_type) अणु
 		pr_err("Unable to format_prot while pi_prot_type == 0\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	buf = vzalloc(unit_size);
-	if (!buf) {
+	अगर (!buf) अणु
 		pr_err("Unable to allocate FILEIO prot buf\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pr_debug("Using FILEIO prot_length: %llu\n",
-		 (unsigned long long)(dev->transport->get_blocks(dev) + 1) *
+		 (अचिन्हित दीर्घ दीर्घ)(dev->transport->get_blocks(dev) + 1) *
 					dev->prot_length);
 
-	ret = fd_do_prot_fill(dev, 0, dev->transport->get_blocks(dev) + 1,
+	ret = fd_करो_prot_fill(dev, 0, dev->transport->get_blocks(dev) + 1,
 			      buf, unit_size);
-	vfree(buf);
-	return ret;
-}
+	vमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static void fd_free_prot(struct se_device *dev)
-{
-	struct fd_dev *fd_dev = FD_DEV(dev);
+अटल व्योम fd_मुक्त_prot(काष्ठा se_device *dev)
+अणु
+	काष्ठा fd_dev *fd_dev = FD_DEV(dev);
 
-	if (!fd_dev->fd_prot_file)
-		return;
+	अगर (!fd_dev->fd_prot_file)
+		वापस;
 
-	filp_close(fd_dev->fd_prot_file, NULL);
-	fd_dev->fd_prot_file = NULL;
-}
+	filp_बंद(fd_dev->fd_prot_file, शून्य);
+	fd_dev->fd_prot_file = शून्य;
+पूर्ण
 
-static struct sbc_ops fd_sbc_ops = {
+अटल काष्ठा sbc_ops fd_sbc_ops = अणु
 	.execute_rw		= fd_execute_rw,
 	.execute_sync_cache	= fd_execute_sync_cache,
-	.execute_write_same	= fd_execute_write_same,
+	.execute_ग_लिखो_same	= fd_execute_ग_लिखो_same,
 	.execute_unmap		= fd_execute_unmap,
-};
+पूर्ण;
 
-static sense_reason_t
-fd_parse_cdb(struct se_cmd *cmd)
-{
-	return sbc_parse_cdb(cmd, &fd_sbc_ops);
-}
+अटल sense_reason_t
+fd_parse_cdb(काष्ठा se_cmd *cmd)
+अणु
+	वापस sbc_parse_cdb(cmd, &fd_sbc_ops);
+पूर्ण
 
-static const struct target_backend_ops fileio_ops = {
+अटल स्थिर काष्ठा target_backend_ops fileio_ops = अणु
 	.name			= "fileio",
 	.inquiry_prod		= "FILEIO",
 	.inquiry_rev		= FD_VERSION,
@@ -922,31 +923,31 @@ static const struct target_backend_ops fileio_ops = {
 	.alloc_device		= fd_alloc_device,
 	.configure_device	= fd_configure_device,
 	.destroy_device		= fd_destroy_device,
-	.free_device		= fd_free_device,
+	.मुक्त_device		= fd_मुक्त_device,
 	.parse_cdb		= fd_parse_cdb,
 	.set_configfs_dev_params = fd_set_configfs_dev_params,
 	.show_configfs_dev_params = fd_show_configfs_dev_params,
 	.get_device_type	= sbc_get_device_type,
 	.get_blocks		= fd_get_blocks,
 	.init_prot		= fd_init_prot,
-	.format_prot		= fd_format_prot,
-	.free_prot		= fd_free_prot,
+	.क्रमmat_prot		= fd_क्रमmat_prot,
+	.मुक्त_prot		= fd_मुक्त_prot,
 	.tb_dev_attrib_attrs	= sbc_attrib_attrs,
-};
+पूर्ण;
 
-static int __init fileio_module_init(void)
-{
-	return transport_backend_register(&fileio_ops);
-}
+अटल पूर्णांक __init fileio_module_init(व्योम)
+अणु
+	वापस transport_backend_रेजिस्टर(&fileio_ops);
+पूर्ण
 
-static void __exit fileio_module_exit(void)
-{
-	target_backend_unregister(&fileio_ops);
-}
+अटल व्योम __निकास fileio_module_निकास(व्योम)
+अणु
+	target_backend_unरेजिस्टर(&fileio_ops);
+पूर्ण
 
 MODULE_DESCRIPTION("TCM FILEIO subsystem plugin");
 MODULE_AUTHOR("nab@Linux-iSCSI.org");
 MODULE_LICENSE("GPL");
 
 module_init(fileio_module_init);
-module_exit(fileio_module_exit);
+module_निकास(fileio_module_निकास);

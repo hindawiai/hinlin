@@ -1,135 +1,136 @@
+<शैली गुरु>
 /***************************************************************************/
 
 /*
- *  timers.c - Generic hardware timer support.
+ *  समयrs.c - Generic hardware समयr support.
  *
- *  Copyright (C) 1993 Hamish Macdonald
+ *  Copyright (C) 1993 Hamish Macकरोnald
  *  Copyright (C) 1999 D. Jeff Dionne
  *  Copyright (C) 2001 Georges Menie, Ken Desmet
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
 /***************************************************************************/
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/clocksource.h>
-#include <linux/rtc.h>
-#include <asm/setup.h>
-#include <asm/machdep.h>
-#include <asm/MC68VZ328.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/rtc.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/MC68VZ328.h>
 
 /***************************************************************************/
 
-#if defined(CONFIG_DRAGEN2)
-/* with a 33.16 MHz clock, this will give usec resolution to the time functions */
-#define CLOCK_SOURCE	TCTL_CLKSOURCE_SYSCLK
-#define CLOCK_PRE	7
-#define TICKS_PER_JIFFY	41450
+#अगर defined(CONFIG_DRAGEN2)
+/* with a 33.16 MHz घड़ी, this will give usec resolution to the समय functions */
+#घोषणा CLOCK_SOURCE	TCTL_CLKSOURCE_SYSCLK
+#घोषणा CLOCK_PRE	7
+#घोषणा TICKS_PER_JIFFY	41450
 
-#elif defined(CONFIG_XCOPILOT_BUGS)
+#या_अगर defined(CONFIG_XCOPILOT_BUGS)
 /*
  * The only thing I know is that CLK32 is not available on Xcopilot
  * I have little idea about what frequency SYSCLK has on Xcopilot.
- * The values for prescaler and compare registers were simply
+ * The values क्रम prescaler and compare रेजिस्टरs were simply
  * taken from the original source
  */
-#define CLOCK_SOURCE	TCTL_CLKSOURCE_SYSCLK
-#define CLOCK_PRE	2
-#define TICKS_PER_JIFFY	0xd7e4
+#घोषणा CLOCK_SOURCE	TCTL_CLKSOURCE_SYSCLK
+#घोषणा CLOCK_PRE	2
+#घोषणा TICKS_PER_JIFFY	0xd7e4
 
-#else
-/* default to using the 32Khz clock */
-#define CLOCK_SOURCE	TCTL_CLKSOURCE_32KHZ
-#define CLOCK_PRE	31
-#define TICKS_PER_JIFFY	10
-#endif
+#अन्यथा
+/* शेष to using the 32Khz घड़ी */
+#घोषणा CLOCK_SOURCE	TCTL_CLKSOURCE_32KHZ
+#घोषणा CLOCK_PRE	31
+#घोषणा TICKS_PER_JIFFY	10
+#पूर्ण_अगर
 
-static u32 m68328_tick_cnt;
+अटल u32 m68328_tick_cnt;
 
 /***************************************************************************/
 
-static irqreturn_t hw_tick(int irq, void *dummy)
-{
+अटल irqवापस_t hw_tick(पूर्णांक irq, व्योम *dummy)
+अणु
 	/* Reset Timer1 */
 	TSTAT &= 0;
 
 	m68328_tick_cnt += TICKS_PER_JIFFY;
-	legacy_timer_tick(1);
-	return IRQ_HANDLED;
-}
+	legacy_समयr_tick(1);
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /***************************************************************************/
 
-static u64 m68328_read_clk(struct clocksource *cs)
-{
-	unsigned long flags;
+अटल u64 m68328_पढ़ो_clk(काष्ठा घड़ीsource *cs)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 cycles;
 
 	local_irq_save(flags);
 	cycles = m68328_tick_cnt + TCN;
 	local_irq_restore(flags);
 
-	return cycles;
-}
+	वापस cycles;
+पूर्ण
 
 /***************************************************************************/
 
-static struct clocksource m68328_clk = {
+अटल काष्ठा घड़ीsource m68328_clk = अणु
 	.name	= "timer",
 	.rating	= 250,
-	.read	= m68328_read_clk,
+	.पढ़ो	= m68328_पढ़ो_clk,
 	.mask	= CLOCKSOURCE_MASK(32),
 	.flags	= CLOCK_SOURCE_IS_CONTINUOUS,
-};
+पूर्ण;
 
 /***************************************************************************/
 
-void hw_timer_init(void)
-{
-	int ret;
+व्योम hw_समयr_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	/* disable timer 1 */
+	/* disable समयr 1 */
 	TCTL = 0;
 
 	/* set ISR */
-	ret = request_irq(TMR_IRQ_NUM, hw_tick, IRQF_TIMER, "timer", NULL);
-	if (ret) {
+	ret = request_irq(TMR_IRQ_NUM, hw_tick, IRQF_TIMER, "timer", शून्य);
+	अगर (ret) अणु
 		pr_err("Failed to request irq %d (timer): %pe\n", TMR_IRQ_NUM,
 		       ERR_PTR(ret));
-	}
+	पूर्ण
 
-	/* Restart mode, Enable int, Set clock source */
+	/* Restart mode, Enable पूर्णांक, Set घड़ी source */
 	TCTL = TCTL_OM | TCTL_IRQEN | CLOCK_SOURCE;
 	TPRER = CLOCK_PRE;
 	TCMP = TICKS_PER_JIFFY;
 
-	/* Enable timer 1 */
+	/* Enable समयr 1 */
 	TCTL |= TCTL_TEN;
-	clocksource_register_hz(&m68328_clk, TICKS_PER_JIFFY*HZ);
-}
+	घड़ीsource_रेजिस्टर_hz(&m68328_clk, TICKS_PER_JIFFY*HZ);
+पूर्ण
 
 /***************************************************************************/
 
-int m68328_hwclk(int set, struct rtc_time *t)
-{
-	if (!set) {
-		long now = RTCTIME;
-		t->tm_year = 1;
-		t->tm_mon = 0;
-		t->tm_mday = 1;
-		t->tm_hour = (now >> 24) % 24;
-		t->tm_min = (now >> 16) % 60;
-		t->tm_sec = now % 60;
-	}
+पूर्णांक m68328_hwclk(पूर्णांक set, काष्ठा rtc_समय *t)
+अणु
+	अगर (!set) अणु
+		दीर्घ now = RTCTIME;
+		t->पंचांग_year = 1;
+		t->पंचांग_mon = 0;
+		t->पंचांग_mday = 1;
+		t->पंचांग_hour = (now >> 24) % 24;
+		t->पंचांग_min = (now >> 16) % 60;
+		t->पंचांग_sec = now % 60;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /***************************************************************************/

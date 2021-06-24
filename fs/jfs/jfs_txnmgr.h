@@ -1,160 +1,161 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2004
  */
-#ifndef _H_JFS_TXNMGR
-#define _H_JFS_TXNMGR
+#अगर_अघोषित _H_JFS_TXNMGR
+#घोषणा _H_JFS_TXNMGR
 
-#include "jfs_logmgr.h"
+#समावेश "jfs_logmgr.h"
 
 /*
  * Hide implementation of TxBlock and TxLock
  */
-#define tid_to_tblock(tid) (&TxBlock[tid])
+#घोषणा tid_to_tblock(tid) (&TxBlock[tid])
 
-#define lid_to_tlock(lid) (&TxLock[lid])
+#घोषणा lid_to_tlock(lid) (&TxLock[lid])
 
 /*
  *	transaction block
  */
-struct tblock {
+काष्ठा tblock अणु
 	/*
-	 * tblock and jbuf_t common area: struct logsyncblk
+	 * tblock and jbuf_t common area: काष्ठा logsyncblk
 	 *
-	 * the following 5 fields are the same as struct logsyncblk
-	 * which is common to tblock and jbuf to form logsynclist
+	 * the following 5 fields are the same as काष्ठा logsyncblk
+	 * which is common to tblock and jbuf to क्रमm logsynclist
 	 */
 	u16 xflag;		/* tx commit type */
 	u16 flag;		/* tx commit state */
-	lid_t dummy;		/* Must keep structures common */
+	lid_t dummy;		/* Must keep काष्ठाures common */
 	s32 lsn;		/* recovery lsn */
-	struct list_head synclist;	/* logsynclist link */
+	काष्ठा list_head synclist;	/* logsynclist link */
 
 	/* lock management */
-	struct super_block *sb;	/* super block */
+	काष्ठा super_block *sb;	/* super block */
 	lid_t next;		/* index of first tlock of tid */
 	lid_t last;		/* index of last tlock of tid */
-	wait_queue_head_t waitor;	/* tids waiting on this tid */
+	रुको_queue_head_t रुकोor;	/* tids रुकोing on this tid */
 
 	/* log management */
 	u32 logtid;		/* log transaction id */
 
 	/* commit management */
-	struct list_head cqueue;	/* commit queue list */
+	काष्ठा list_head cqueue;	/* commit queue list */
 	s32 clsn;		/* commit lsn */
-	struct lbuf *bp;
+	काष्ठा lbuf *bp;
 	s32 pn;			/* commit record log page number */
 	s32 eor;		/* commit record eor */
-	wait_queue_head_t gcwait;	/* group commit event list:
-					 * ready transactions wait on this
-					 * event for group commit completion.
+	रुको_queue_head_t gcरुको;	/* group commit event list:
+					 * पढ़ोy transactions रुको on this
+					 * event क्रम group commit completion.
 					 */
-	union {
-		struct inode *ip; /* inode being deleted */
-		pxd_t ixpxd;	/* pxd of inode extent for created inode */
-	} u;
+	जोड़ अणु
+		काष्ठा inode *ip; /* inode being deleted */
+		pxd_t ixpxd;	/* pxd of inode extent क्रम created inode */
+	पूर्ण u;
 	u32 ino;		/* inode number being created */
-};
+पूर्ण;
 
-extern struct tblock *TxBlock;	/* transaction block table */
+बाह्य काष्ठा tblock *TxBlock;	/* transaction block table */
 
 /* commit flags: tblk->xflag */
-#define	COMMIT_SYNC	0x0001	/* synchronous commit */
-#define	COMMIT_FORCE	0x0002	/* force pageout at end of commit */
-#define	COMMIT_FLUSH	0x0004	/* init flush at end of commit */
-#define COMMIT_MAP	0x00f0
-#define	COMMIT_PMAP	0x0010	/* update pmap */
-#define	COMMIT_WMAP	0x0020	/* update wmap */
-#define	COMMIT_PWMAP	0x0040	/* update pwmap */
-#define	COMMIT_FREE	0x0f00
-#define	COMMIT_DELETE	0x0100	/* inode delete */
-#define	COMMIT_TRUNCATE	0x0200	/* file truncation */
-#define	COMMIT_CREATE	0x0400	/* inode create */
-#define	COMMIT_LAZY	0x0800	/* lazy commit */
-#define COMMIT_PAGE	0x1000	/* Identifies element as metapage */
-#define COMMIT_INODE	0x2000	/* Identifies element as inode */
+#घोषणा	COMMIT_SYNC	0x0001	/* synchronous commit */
+#घोषणा	COMMIT_FORCE	0x0002	/* क्रमce pageout at end of commit */
+#घोषणा	COMMIT_FLUSH	0x0004	/* init flush at end of commit */
+#घोषणा COMMIT_MAP	0x00f0
+#घोषणा	COMMIT_PMAP	0x0010	/* update pmap */
+#घोषणा	COMMIT_WMAP	0x0020	/* update wmap */
+#घोषणा	COMMIT_PWMAP	0x0040	/* update pwmap */
+#घोषणा	COMMIT_FREE	0x0f00
+#घोषणा	COMMIT_DELETE	0x0100	/* inode delete */
+#घोषणा	COMMIT_TRUNCATE	0x0200	/* file truncation */
+#घोषणा	COMMIT_CREATE	0x0400	/* inode create */
+#घोषणा	COMMIT_LAZY	0x0800	/* lazy commit */
+#घोषणा COMMIT_PAGE	0x1000	/* Identअगरies element as metapage */
+#घोषणा COMMIT_INODE	0x2000	/* Identअगरies element as inode */
 
 /* group commit flags tblk->flag: see jfs_logmgr.h */
 
 /*
  *	transaction lock
  */
-struct tlock {
+काष्ठा tlock अणु
 	lid_t next;		/* 2: index next lockword on tid locklist
-				 *	    next lockword on freelist
+				 *	    next lockword on मुक्तlist
 				 */
 	tid_t tid;		/* 2: transaction id holding lock */
 
 	u16 flag;		/* 2: lock control */
 	u16 type;		/* 2: log type */
 
-	struct metapage *mp;	/* 4/8: object page buffer locked */
-	struct inode *ip;	/* 4/8: object */
+	काष्ठा metapage *mp;	/* 4/8: object page buffer locked */
+	काष्ठा inode *ip;	/* 4/8: object */
 	/* (16) */
 
 	s16 lock[24];		/* 48: overlay area */
-};				/* (64) */
+पूर्ण;				/* (64) */
 
-extern struct tlock *TxLock;	/* transaction lock table */
+बाह्य काष्ठा tlock *TxLock;	/* transaction lock table */
 
 /*
  * tlock flag
  */
 /* txLock state */
-#define tlckPAGELOCK		0x8000
-#define tlckINODELOCK		0x4000
-#define tlckLINELOCK		0x2000
-#define tlckINLINELOCK		0x1000
+#घोषणा tlckPAGELOCK		0x8000
+#घोषणा tlckINODELOCK		0x4000
+#घोषणा tlckLINELOCK		0x2000
+#घोषणा tlckINLINELOCK		0x1000
 /* lmLog state */
-#define tlckLOG			0x0800
+#घोषणा tlckLOG			0x0800
 /* updateMap state */
-#define	tlckUPDATEMAP		0x0080
-#define	tlckDIRECTORY		0x0040
-/* freeLock state */
-#define tlckFREELOCK		0x0008
-#define tlckWRITEPAGE		0x0004
-#define tlckFREEPAGE		0x0002
+#घोषणा	tlckUPDATEMAP		0x0080
+#घोषणा	tlckसूचीECTORY		0x0040
+/* मुक्तLock state */
+#घोषणा tlckFREELOCK		0x0008
+#घोषणा tlckWRITEPAGE		0x0004
+#घोषणा tlckFREEPAGE		0x0002
 
 /*
  * tlock type
  */
-#define	tlckTYPE		0xfe00
-#define	tlckINODE		0x8000
-#define	tlckXTREE		0x4000
-#define	tlckDTREE		0x2000
-#define	tlckMAP			0x1000
-#define	tlckEA			0x0800
-#define	tlckACL			0x0400
-#define	tlckDATA		0x0200
-#define	tlckBTROOT		0x0100
+#घोषणा	tlckTYPE		0xfe00
+#घोषणा	tlckINODE		0x8000
+#घोषणा	tlckXTREE		0x4000
+#घोषणा	tlckDTREE		0x2000
+#घोषणा	tlckMAP			0x1000
+#घोषणा	tlckEA			0x0800
+#घोषणा	tlckACL			0x0400
+#घोषणा	tlckDATA		0x0200
+#घोषणा	tlckBTROOT		0x0100
 
-#define	tlckOPERATION		0x00ff
-#define tlckGROW		0x0001	/* file grow */
-#define tlckREMOVE		0x0002	/* file delete */
-#define tlckTRUNCATE		0x0004	/* file truncate */
-#define tlckRELOCATE		0x0008	/* file/directory relocate */
-#define tlckENTRY		0x0001	/* directory insert/delete */
-#define tlckEXTEND		0x0002	/* directory extend in-line */
-#define tlckSPLIT		0x0010	/* splited page */
-#define tlckNEW			0x0020	/* new page from split */
-#define tlckFREE		0x0040	/* free page */
-#define tlckRELINK		0x0080	/* update sibling pointer */
+#घोषणा	tlckOPERATION		0x00ff
+#घोषणा tlckGROW		0x0001	/* file grow */
+#घोषणा tlckREMOVE		0x0002	/* file delete */
+#घोषणा tlckTRUNCATE		0x0004	/* file truncate */
+#घोषणा tlckRELOCATE		0x0008	/* file/directory relocate */
+#घोषणा tlckENTRY		0x0001	/* directory insert/delete */
+#घोषणा tlckEXTEND		0x0002	/* directory extend in-line */
+#घोषणा tlckSPLIT		0x0010	/* splited page */
+#घोषणा tlckNEW			0x0020	/* new page from split */
+#घोषणा tlckFREE		0x0040	/* मुक्त page */
+#घोषणा tlckRELINK		0x0080	/* update sibling poपूर्णांकer */
 
 /*
- *	linelock for lmLog()
+ *	linelock क्रम lmLog()
  *
  * note: linelock and its variations are overlaid
- * at tlock.lock: watch for alignment;
+ * at tlock.lock: watch क्रम alignment;
  */
-struct lv {
+काष्ठा lv अणु
 	u8 offset;		/* 1: */
 	u8 length;		/* 1: */
-};				/* (2) */
+पूर्ण;				/* (2) */
 
-#define	TLOCKSHORT	20
-#define	TLOCKLONG	28
+#घोषणा	TLOCKSHORT	20
+#घोषणा	TLOCKLONG	28
 
-struct linelock {
+काष्ठा linelock अणु
 	lid_t next;		/* 2: next linelock */
 
 	s8 maxcnt;		/* 1: */
@@ -165,12 +166,12 @@ struct linelock {
 	u8 l2linesize;		/* 1: log2 of linesize */
 	/* (8) */
 
-	struct lv lv[20];	/* 40: */
-};				/* (48) */
+	काष्ठा lv lv[20];	/* 40: */
+पूर्ण;				/* (48) */
 
-#define dt_lock	linelock
+#घोषणा dt_lock	linelock
 
-struct xtlock {
+काष्ठा xtlock अणु
 	lid_t next;		/* 2: */
 
 	s8 maxcnt;		/* 1: */
@@ -181,31 +182,31 @@ struct xtlock {
 	u8 l2linesize;		/* 1: log2 of linesize */
 				/* (8) */
 
-	struct lv header;	/* 2: */
-	struct lv lwm;		/* 2: low water mark */
-	struct lv hwm;		/* 2: high water mark */
-	struct lv twm;		/* 2: */
+	काष्ठा lv header;	/* 2: */
+	काष्ठा lv lwm;		/* 2: low water mark */
+	काष्ठा lv hwm;		/* 2: high water mark */
+	काष्ठा lv twm;		/* 2: */
 				/* (16) */
 
 	s32 pxdlock[8];		/* 32: */
-};				/* (48) */
+पूर्ण;				/* (48) */
 
 
 /*
- *	maplock for txUpdateMap()
+ *	maplock क्रम txUpdateMap()
  *
  * note: maplock and its variations are overlaid
- * at tlock.lock/linelock: watch for alignment;
+ * at tlock.lock/linelock: watch क्रम alignment;
  * N.B. next field may be set by linelock, and should not
- * be modified by maplock;
- * N.B. index of the first pxdlock specifies index of next
- * free maplock (i.e., number of maplock) in the tlock;
+ * be modअगरied by maplock;
+ * N.B. index of the first pxdlock specअगरies index of next
+ * मुक्त maplock (i.e., number of maplock) in the tlock;
  */
-struct maplock {
+काष्ठा maplock अणु
 	lid_t next;		/* 2: */
 
 	u8 maxcnt;		/* 2: */
-	u8 index;		/* 2: next free maplock index */
+	u8 index;		/* 2: next मुक्त maplock index */
 
 	u16 flag;		/* 2: */
 	u8 type;		/* 1: */
@@ -213,23 +214,23 @@ struct maplock {
 				/* (8) */
 
 	pxd_t pxd;		/* 8: */
-};				/* (16): */
+पूर्ण;				/* (16): */
 
 /* maplock flag */
-#define	mlckALLOC		0x00f0
-#define	mlckALLOCXADLIST	0x0080
-#define	mlckALLOCPXDLIST	0x0040
-#define	mlckALLOCXAD		0x0020
-#define	mlckALLOCPXD		0x0010
-#define	mlckFREE		0x000f
-#define	mlckFREEXADLIST		0x0008
-#define	mlckFREEPXDLIST		0x0004
-#define	mlckFREEXAD		0x0002
-#define	mlckFREEPXD		0x0001
+#घोषणा	mlckALLOC		0x00f0
+#घोषणा	mlckALLOCXADLIST	0x0080
+#घोषणा	mlckALLOCPXDLIST	0x0040
+#घोषणा	mlckALLOCXAD		0x0020
+#घोषणा	mlckALLOCPXD		0x0010
+#घोषणा	mlckFREE		0x000f
+#घोषणा	mlckFREEXADLIST		0x0008
+#घोषणा	mlckFREEPXDLIST		0x0004
+#घोषणा	mlckFREEXAD		0x0002
+#घोषणा	mlckFREEPXD		0x0001
 
-#define	pxd_lock	maplock
+#घोषणा	pxd_lock	maplock
 
-struct xdlistlock {
+काष्ठा xdlistlock अणु
 	lid_t next;		/* 2: */
 
 	u8 maxcnt;		/* 2: */
@@ -242,57 +243,57 @@ struct xdlistlock {
 
 	/*
 	 * We need xdlist to be 64 bits (8 bytes), regardless of
-	 * whether void * is 32 or 64 bits
+	 * whether व्योम * is 32 or 64 bits
 	 */
-	union {
-		void *_xdlist;	/* pxd/xad list */
+	जोड़ अणु
+		व्योम *_xdlist;	/* pxd/xad list */
 		s64 pad;	/* 8: Force 64-bit xdlist size */
-	} union64;
-};				/* (16): */
+	पूर्ण जोड़64;
+पूर्ण;				/* (16): */
 
-#define xdlist union64._xdlist
+#घोषणा xdlist जोड़64._xdlist
 
 /*
  *	commit
  *
  * parameter to the commit manager routines
  */
-struct commit {
+काष्ठा commit अणु
 	tid_t tid;		/* tid = index of tblock */
-	int flag;		/* flags */
-	struct jfs_log *log;	/* log */
-	struct super_block *sb;	/* superblock */
+	पूर्णांक flag;		/* flags */
+	काष्ठा jfs_log *log;	/* log */
+	काष्ठा super_block *sb;	/* superblock */
 
-	int nip;		/* number of entries in iplist */
-	struct inode **iplist;	/* list of pointers to inodes */
+	पूर्णांक nip;		/* number of entries in iplist */
+	काष्ठा inode **iplist;	/* list of poपूर्णांकers to inodes */
 
 	/* log record descriptor on 64-bit boundary */
-	struct lrd lrd;		/* : log record descriptor */
-};
+	काष्ठा lrd lrd;		/* : log record descriptor */
+पूर्ण;
 
 /*
- * external declarations
+ * बाह्यal declarations
  */
-extern int jfs_tlocks_low;
+बाह्य पूर्णांक jfs_tlocks_low;
 
-extern int txInit(void);
-extern void txExit(void);
-extern struct tlock *txLock(tid_t, struct inode *, struct metapage *, int);
-extern struct tlock *txMaplock(tid_t, struct inode *, int);
-extern int txCommit(tid_t, int, struct inode **, int);
-extern tid_t txBegin(struct super_block *, int);
-extern void txBeginAnon(struct super_block *);
-extern void txEnd(tid_t);
-extern void txAbort(tid_t, int);
-extern struct linelock *txLinelock(struct linelock *);
-extern void txFreeMap(struct inode *, struct maplock *, struct tblock *, int);
-extern void txEA(tid_t, struct inode *, dxd_t *, dxd_t *);
-extern void txFreelock(struct inode *);
-extern int lmLog(struct jfs_log *, struct tblock *, struct lrd *,
-		 struct tlock *);
-extern void txQuiesce(struct super_block *);
-extern void txResume(struct super_block *);
-extern void txLazyUnlock(struct tblock *);
-extern int jfs_lazycommit(void *);
-extern int jfs_sync(void *);
-#endif				/* _H_JFS_TXNMGR */
+बाह्य पूर्णांक txInit(व्योम);
+बाह्य व्योम txExit(व्योम);
+बाह्य काष्ठा tlock *txLock(tid_t, काष्ठा inode *, काष्ठा metapage *, पूर्णांक);
+बाह्य काष्ठा tlock *txMaplock(tid_t, काष्ठा inode *, पूर्णांक);
+बाह्य पूर्णांक txCommit(tid_t, पूर्णांक, काष्ठा inode **, पूर्णांक);
+बाह्य tid_t txBegin(काष्ठा super_block *, पूर्णांक);
+बाह्य व्योम txBeginAnon(काष्ठा super_block *);
+बाह्य व्योम txEnd(tid_t);
+बाह्य व्योम txAbort(tid_t, पूर्णांक);
+बाह्य काष्ठा linelock *txLinelock(काष्ठा linelock *);
+बाह्य व्योम txFreeMap(काष्ठा inode *, काष्ठा maplock *, काष्ठा tblock *, पूर्णांक);
+बाह्य व्योम txEA(tid_t, काष्ठा inode *, dxd_t *, dxd_t *);
+बाह्य व्योम txFreelock(काष्ठा inode *);
+बाह्य पूर्णांक lmLog(काष्ठा jfs_log *, काष्ठा tblock *, काष्ठा lrd *,
+		 काष्ठा tlock *);
+बाह्य व्योम txQuiesce(काष्ठा super_block *);
+बाह्य व्योम txResume(काष्ठा super_block *);
+बाह्य व्योम txLazyUnlock(काष्ठा tblock *);
+बाह्य पूर्णांक jfs_lazycommit(व्योम *);
+बाह्य पूर्णांक jfs_sync(व्योम *);
+#पूर्ण_अगर				/* _H_JFS_TXNMGR */

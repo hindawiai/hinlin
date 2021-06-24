@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
-#ifndef _ASM_POWERPC_SOCKET_H
-#define _ASM_POWERPC_SOCKET_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_POWERPC_SOCKET_H
+#घोषणा _ASM_POWERPC_SOCKET_H
 
 /*
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version
  * 2 of the License, or (at your option) any later version.
  */
 
-#define SO_RCVLOWAT	16
-#define SO_SNDLOWAT	17
-#define SO_RCVTIMEO_OLD	18
-#define SO_SNDTIMEO_OLD	19
-#define SO_PASSCRED	20
-#define SO_PEERCRED	21
+#घोषणा SO_RCVLOWAT	16
+#घोषणा SO_SNDLOWAT	17
+#घोषणा SO_RCVTIMEO_OLD	18
+#घोषणा SO_SNDTIMEO_OLD	19
+#घोषणा SO_PASSCRED	20
+#घोषणा SO_PEERCRED	21
 
-#include <asm-generic/socket.h>
+#समावेश <यंत्र-generic/socket.h>
 
-#endif	/* _ASM_POWERPC_SOCKET_H */
+#पूर्ण_अगर	/* _ASM_POWERPC_SOCKET_H */

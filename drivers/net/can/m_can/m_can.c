@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
-// CAN bus driver for Bosch M_CAN controller
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// CAN bus driver क्रम Bosch M_CAN controller
 // Copyright (C) 2014 Freescale Semiconductor, Inc.
-//      Dong Aisheng <b29396@freescale.com>
+//      Dong Aisheng <b29396@मुक्तscale.com>
 // Copyright (C) 2018-19 Texas Instruments Incorporated - http://www.ti.com/
 
 /* Bosch M_CAN user manual can be obtained from:
- * https://github.com/linux-can/can-doc/tree/master/m_can
+ * https://github.com/linux-can/can-करोc/tree/master/m_can
  */
 
-#include <linux/bitfield.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/iopoll.h>
-#include <linux/can/dev.h>
-#include <linux/pinctrl/consumer.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/can/dev.h>
+#समावेश <linux/pinctrl/consumer.h>
 
-#include "m_can.h"
+#समावेश "m_can.h"
 
-/* registers definition */
-enum m_can_reg {
+/* रेजिस्टरs definition */
+क्रमागत m_can_reg अणु
 	M_CAN_CREL	= 0x0,
 	M_CAN_ENDN	= 0x4,
 	M_CAN_CUST	= 0x8,
@@ -40,7 +41,7 @@ enum m_can_reg {
 	M_CAN_TOCV	= 0x2c,
 	M_CAN_ECR	= 0x40,
 	M_CAN_PSR	= 0x44,
-	/* TDCR Register only available for version >=3.1.x */
+	/* TDCR Register only available क्रम version >=3.1.x */
 	M_CAN_TDCR	= 0x48,
 	M_CAN_IR	= 0x50,
 	M_CAN_IE	= 0x54,
@@ -74,505 +75,505 @@ enum m_can_reg {
 	M_CAN_TXEFC	= 0xf0,
 	M_CAN_TXEFS	= 0xf4,
 	M_CAN_TXEFA	= 0xf8,
-};
+पूर्ण;
 
 /* napi related */
-#define M_CAN_NAPI_WEIGHT	64
+#घोषणा M_CAN_NAPI_WEIGHT	64
 
 /* message ram configuration data length */
-#define MRAM_CFG_LEN	8
+#घोषणा MRAM_CFG_LEN	8
 
 /* Core Release Register (CREL) */
-#define CREL_REL_SHIFT		28
-#define CREL_REL_MASK		(0xF << CREL_REL_SHIFT)
-#define CREL_STEP_SHIFT		24
-#define CREL_STEP_MASK		(0xF << CREL_STEP_SHIFT)
-#define CREL_SUBSTEP_SHIFT	20
-#define CREL_SUBSTEP_MASK	(0xF << CREL_SUBSTEP_SHIFT)
+#घोषणा CREL_REL_SHIFT		28
+#घोषणा CREL_REL_MASK		(0xF << CREL_REL_SHIFT)
+#घोषणा CREL_STEP_SHIFT		24
+#घोषणा CREL_STEP_MASK		(0xF << CREL_STEP_SHIFT)
+#घोषणा CREL_SUBSTEP_SHIFT	20
+#घोषणा CREL_SUBSTEP_MASK	(0xF << CREL_SUBSTEP_SHIFT)
 
 /* Data Bit Timing & Prescaler Register (DBTP) */
-#define DBTP_TDC		BIT(23)
-#define DBTP_DBRP_SHIFT		16
-#define DBTP_DBRP_MASK		(0x1f << DBTP_DBRP_SHIFT)
-#define DBTP_DTSEG1_SHIFT	8
-#define DBTP_DTSEG1_MASK	(0x1f << DBTP_DTSEG1_SHIFT)
-#define DBTP_DTSEG2_SHIFT	4
-#define DBTP_DTSEG2_MASK	(0xf << DBTP_DTSEG2_SHIFT)
-#define DBTP_DSJW_SHIFT		0
-#define DBTP_DSJW_MASK		(0xf << DBTP_DSJW_SHIFT)
+#घोषणा DBTP_TDC		BIT(23)
+#घोषणा DBTP_DBRP_SHIFT		16
+#घोषणा DBTP_DBRP_MASK		(0x1f << DBTP_DBRP_SHIFT)
+#घोषणा DBTP_DTSEG1_SHIFT	8
+#घोषणा DBTP_DTSEG1_MASK	(0x1f << DBTP_DTSEG1_SHIFT)
+#घोषणा DBTP_DTSEG2_SHIFT	4
+#घोषणा DBTP_DTSEG2_MASK	(0xf << DBTP_DTSEG2_SHIFT)
+#घोषणा DBTP_DSJW_SHIFT		0
+#घोषणा DBTP_DSJW_MASK		(0xf << DBTP_DSJW_SHIFT)
 
 /* Transmitter Delay Compensation Register (TDCR) */
-#define TDCR_TDCO_SHIFT		8
-#define TDCR_TDCO_MASK		(0x7F << TDCR_TDCO_SHIFT)
-#define TDCR_TDCF_SHIFT		0
-#define TDCR_TDCF_MASK		(0x7F << TDCR_TDCF_SHIFT)
+#घोषणा TDCR_TDCO_SHIFT		8
+#घोषणा TDCR_TDCO_MASK		(0x7F << TDCR_TDCO_SHIFT)
+#घोषणा TDCR_TDCF_SHIFT		0
+#घोषणा TDCR_TDCF_MASK		(0x7F << TDCR_TDCF_SHIFT)
 
 /* Test Register (TEST) */
-#define TEST_LBCK		BIT(4)
+#घोषणा TEST_LBCK		BIT(4)
 
 /* CC Control Register(CCCR) */
-#define CCCR_CMR_MASK		0x3
-#define CCCR_CMR_SHIFT		10
-#define CCCR_CMR_CANFD		0x1
-#define CCCR_CMR_CANFD_BRS	0x2
-#define CCCR_CMR_CAN		0x3
-#define CCCR_CME_MASK		0x3
-#define CCCR_CME_SHIFT		8
-#define CCCR_CME_CAN		0
-#define CCCR_CME_CANFD		0x1
-#define CCCR_CME_CANFD_BRS	0x2
-#define CCCR_TXP		BIT(14)
-#define CCCR_TEST		BIT(7)
-#define CCCR_DAR		BIT(6)
-#define CCCR_MON		BIT(5)
-#define CCCR_CSR		BIT(4)
-#define CCCR_CSA		BIT(3)
-#define CCCR_ASM		BIT(2)
-#define CCCR_CCE		BIT(1)
-#define CCCR_INIT		BIT(0)
-#define CCCR_CANFD		0x10
-/* for version >=3.1.x */
-#define CCCR_EFBI		BIT(13)
-#define CCCR_PXHD		BIT(12)
-#define CCCR_BRSE		BIT(9)
-#define CCCR_FDOE		BIT(8)
-/* only for version >=3.2.x */
-#define CCCR_NISO		BIT(15)
+#घोषणा CCCR_CMR_MASK		0x3
+#घोषणा CCCR_CMR_SHIFT		10
+#घोषणा CCCR_CMR_CANFD		0x1
+#घोषणा CCCR_CMR_CANFD_BRS	0x2
+#घोषणा CCCR_CMR_CAN		0x3
+#घोषणा CCCR_CME_MASK		0x3
+#घोषणा CCCR_CME_SHIFT		8
+#घोषणा CCCR_CME_CAN		0
+#घोषणा CCCR_CME_CANFD		0x1
+#घोषणा CCCR_CME_CANFD_BRS	0x2
+#घोषणा CCCR_TXP		BIT(14)
+#घोषणा CCCR_TEST		BIT(7)
+#घोषणा CCCR_DAR		BIT(6)
+#घोषणा CCCR_MON		BIT(5)
+#घोषणा CCCR_CSR		BIT(4)
+#घोषणा CCCR_CSA		BIT(3)
+#घोषणा CCCR_ASM		BIT(2)
+#घोषणा CCCR_CCE		BIT(1)
+#घोषणा CCCR_INIT		BIT(0)
+#घोषणा CCCR_CANFD		0x10
+/* क्रम version >=3.1.x */
+#घोषणा CCCR_EFBI		BIT(13)
+#घोषणा CCCR_PXHD		BIT(12)
+#घोषणा CCCR_BRSE		BIT(9)
+#घोषणा CCCR_FDOE		BIT(8)
+/* only क्रम version >=3.2.x */
+#घोषणा CCCR_NISO		BIT(15)
 
 /* Nominal Bit Timing & Prescaler Register (NBTP) */
-#define NBTP_NSJW_SHIFT		25
-#define NBTP_NSJW_MASK		(0x7f << NBTP_NSJW_SHIFT)
-#define NBTP_NBRP_SHIFT		16
-#define NBTP_NBRP_MASK		(0x1ff << NBTP_NBRP_SHIFT)
-#define NBTP_NTSEG1_SHIFT	8
-#define NBTP_NTSEG1_MASK	(0xff << NBTP_NTSEG1_SHIFT)
-#define NBTP_NTSEG2_SHIFT	0
-#define NBTP_NTSEG2_MASK	(0x7f << NBTP_NTSEG2_SHIFT)
+#घोषणा NBTP_NSJW_SHIFT		25
+#घोषणा NBTP_NSJW_MASK		(0x7f << NBTP_NSJW_SHIFT)
+#घोषणा NBTP_NBRP_SHIFT		16
+#घोषणा NBTP_NBRP_MASK		(0x1ff << NBTP_NBRP_SHIFT)
+#घोषणा NBTP_NTSEG1_SHIFT	8
+#घोषणा NBTP_NTSEG1_MASK	(0xff << NBTP_NTSEG1_SHIFT)
+#घोषणा NBTP_NTSEG2_SHIFT	0
+#घोषणा NBTP_NTSEG2_MASK	(0x7f << NBTP_NTSEG2_SHIFT)
 
 /* Timestamp Counter Configuration Register (TSCC) */
-#define TSCC_TCP_MASK		GENMASK(19, 16)
-#define TSCC_TSS_MASK		GENMASK(1, 0)
-#define TSCC_TSS_DISABLE	0x0
-#define TSCC_TSS_INTERNAL	0x1
-#define TSCC_TSS_EXTERNAL	0x2
+#घोषणा TSCC_TCP_MASK		GENMASK(19, 16)
+#घोषणा TSCC_TSS_MASK		GENMASK(1, 0)
+#घोषणा TSCC_TSS_DISABLE	0x0
+#घोषणा TSCC_TSS_INTERNAL	0x1
+#घोषणा TSCC_TSS_EXTERNAL	0x2
 
 /* Timestamp Counter Value Register (TSCV) */
-#define TSCV_TSC_MASK		GENMASK(15, 0)
+#घोषणा TSCV_TSC_MASK		GENMASK(15, 0)
 
 /* Error Counter Register(ECR) */
-#define ECR_RP			BIT(15)
-#define ECR_REC_SHIFT		8
-#define ECR_REC_MASK		(0x7f << ECR_REC_SHIFT)
-#define ECR_TEC_SHIFT		0
-#define ECR_TEC_MASK		0xff
+#घोषणा ECR_RP			BIT(15)
+#घोषणा ECR_REC_SHIFT		8
+#घोषणा ECR_REC_MASK		(0x7f << ECR_REC_SHIFT)
+#घोषणा ECR_TEC_SHIFT		0
+#घोषणा ECR_TEC_MASK		0xff
 
 /* Protocol Status Register(PSR) */
-#define PSR_BO		BIT(7)
-#define PSR_EW		BIT(6)
-#define PSR_EP		BIT(5)
-#define PSR_LEC_MASK	0x7
+#घोषणा PSR_BO		BIT(7)
+#घोषणा PSR_EW		BIT(6)
+#घोषणा PSR_EP		BIT(5)
+#घोषणा PSR_LEC_MASK	0x7
 
 /* Interrupt Register(IR) */
-#define IR_ALL_INT	0xffffffff
+#घोषणा IR_ALL_INT	0xffffffff
 
-/* Renamed bits for versions > 3.1.x */
-#define IR_ARA		BIT(29)
-#define IR_PED		BIT(28)
-#define IR_PEA		BIT(27)
+/* Renamed bits क्रम versions > 3.1.x */
+#घोषणा IR_ARA		BIT(29)
+#घोषणा IR_PED		BIT(28)
+#घोषणा IR_PEA		BIT(27)
 
-/* Bits for version 3.0.x */
-#define IR_STE		BIT(31)
-#define IR_FOE		BIT(30)
-#define IR_ACKE		BIT(29)
-#define IR_BE		BIT(28)
-#define IR_CRCE		BIT(27)
-#define IR_WDI		BIT(26)
-#define IR_BO		BIT(25)
-#define IR_EW		BIT(24)
-#define IR_EP		BIT(23)
-#define IR_ELO		BIT(22)
-#define IR_BEU		BIT(21)
-#define IR_BEC		BIT(20)
-#define IR_DRX		BIT(19)
-#define IR_TOO		BIT(18)
-#define IR_MRAF		BIT(17)
-#define IR_TSW		BIT(16)
-#define IR_TEFL		BIT(15)
-#define IR_TEFF		BIT(14)
-#define IR_TEFW		BIT(13)
-#define IR_TEFN		BIT(12)
-#define IR_TFE		BIT(11)
-#define IR_TCF		BIT(10)
-#define IR_TC		BIT(9)
-#define IR_HPM		BIT(8)
-#define IR_RF1L		BIT(7)
-#define IR_RF1F		BIT(6)
-#define IR_RF1W		BIT(5)
-#define IR_RF1N		BIT(4)
-#define IR_RF0L		BIT(3)
-#define IR_RF0F		BIT(2)
-#define IR_RF0W		BIT(1)
-#define IR_RF0N		BIT(0)
-#define IR_ERR_STATE	(IR_BO | IR_EW | IR_EP)
+/* Bits क्रम version 3.0.x */
+#घोषणा IR_STE		BIT(31)
+#घोषणा IR_FOE		BIT(30)
+#घोषणा IR_ACKE		BIT(29)
+#घोषणा IR_BE		BIT(28)
+#घोषणा IR_CRCE		BIT(27)
+#घोषणा IR_WDI		BIT(26)
+#घोषणा IR_BO		BIT(25)
+#घोषणा IR_EW		BIT(24)
+#घोषणा IR_EP		BIT(23)
+#घोषणा IR_ELO		BIT(22)
+#घोषणा IR_BEU		BIT(21)
+#घोषणा IR_BEC		BIT(20)
+#घोषणा IR_DRX		BIT(19)
+#घोषणा IR_TOO		BIT(18)
+#घोषणा IR_MRAF		BIT(17)
+#घोषणा IR_TSW		BIT(16)
+#घोषणा IR_TEFL		BIT(15)
+#घोषणा IR_TEFF		BIT(14)
+#घोषणा IR_TEFW		BIT(13)
+#घोषणा IR_TEFN		BIT(12)
+#घोषणा IR_TFE		BIT(11)
+#घोषणा IR_TCF		BIT(10)
+#घोषणा IR_TC		BIT(9)
+#घोषणा IR_HPM		BIT(8)
+#घोषणा IR_RF1L		BIT(7)
+#घोषणा IR_RF1F		BIT(6)
+#घोषणा IR_RF1W		BIT(5)
+#घोषणा IR_RF1N		BIT(4)
+#घोषणा IR_RF0L		BIT(3)
+#घोषणा IR_RF0F		BIT(2)
+#घोषणा IR_RF0W		BIT(1)
+#घोषणा IR_RF0N		BIT(0)
+#घोषणा IR_ERR_STATE	(IR_BO | IR_EW | IR_EP)
 
-/* Interrupts for version 3.0.x */
-#define IR_ERR_LEC_30X	(IR_STE	| IR_FOE | IR_ACKE | IR_BE | IR_CRCE)
-#define IR_ERR_BUS_30X	(IR_ERR_LEC_30X | IR_WDI | IR_ELO | IR_BEU | \
+/* Interrupts क्रम version 3.0.x */
+#घोषणा IR_ERR_LEC_30X	(IR_STE	| IR_FOE | IR_ACKE | IR_BE | IR_CRCE)
+#घोषणा IR_ERR_BUS_30X	(IR_ERR_LEC_30X | IR_WDI | IR_ELO | IR_BEU | \
 			 IR_BEC | IR_TOO | IR_MRAF | IR_TSW | IR_TEFL | \
 			 IR_RF1L | IR_RF0L)
-#define IR_ERR_ALL_30X	(IR_ERR_STATE | IR_ERR_BUS_30X)
-/* Interrupts for version >= 3.1.x */
-#define IR_ERR_LEC_31X	(IR_PED | IR_PEA)
-#define IR_ERR_BUS_31X      (IR_ERR_LEC_31X | IR_WDI | IR_ELO | IR_BEU | \
+#घोषणा IR_ERR_ALL_30X	(IR_ERR_STATE | IR_ERR_BUS_30X)
+/* Interrupts क्रम version >= 3.1.x */
+#घोषणा IR_ERR_LEC_31X	(IR_PED | IR_PEA)
+#घोषणा IR_ERR_BUS_31X      (IR_ERR_LEC_31X | IR_WDI | IR_ELO | IR_BEU | \
 			 IR_BEC | IR_TOO | IR_MRAF | IR_TSW | IR_TEFL | \
 			 IR_RF1L | IR_RF0L)
-#define IR_ERR_ALL_31X	(IR_ERR_STATE | IR_ERR_BUS_31X)
+#घोषणा IR_ERR_ALL_31X	(IR_ERR_STATE | IR_ERR_BUS_31X)
 
 /* Interrupt Line Select (ILS) */
-#define ILS_ALL_INT0	0x0
-#define ILS_ALL_INT1	0xFFFFFFFF
+#घोषणा ILS_ALL_INT0	0x0
+#घोषणा ILS_ALL_INT1	0xFFFFFFFF
 
 /* Interrupt Line Enable (ILE) */
-#define ILE_EINT1	BIT(1)
-#define ILE_EINT0	BIT(0)
+#घोषणा ILE_EINT1	BIT(1)
+#घोषणा ILE_EINT0	BIT(0)
 
 /* Rx FIFO 0/1 Configuration (RXF0C/RXF1C) */
-#define RXFC_FWM_SHIFT	24
-#define RXFC_FWM_MASK	(0x7f << RXFC_FWM_SHIFT)
-#define RXFC_FS_SHIFT	16
-#define RXFC_FS_MASK	(0x7f << RXFC_FS_SHIFT)
+#घोषणा RXFC_FWM_SHIFT	24
+#घोषणा RXFC_FWM_MASK	(0x7f << RXFC_FWM_SHIFT)
+#घोषणा RXFC_FS_SHIFT	16
+#घोषणा RXFC_FS_MASK	(0x7f << RXFC_FS_SHIFT)
 
 /* Rx FIFO 0/1 Status (RXF0S/RXF1S) */
-#define RXFS_RFL	BIT(25)
-#define RXFS_FF		BIT(24)
-#define RXFS_FPI_SHIFT	16
-#define RXFS_FPI_MASK	0x3f0000
-#define RXFS_FGI_SHIFT	8
-#define RXFS_FGI_MASK	0x3f00
-#define RXFS_FFL_MASK	0x7f
+#घोषणा RXFS_RFL	BIT(25)
+#घोषणा RXFS_FF		BIT(24)
+#घोषणा RXFS_FPI_SHIFT	16
+#घोषणा RXFS_FPI_MASK	0x3f0000
+#घोषणा RXFS_FGI_SHIFT	8
+#घोषणा RXFS_FGI_MASK	0x3f00
+#घोषणा RXFS_FFL_MASK	0x7f
 
 /* Rx Buffer / FIFO Element Size Configuration (RXESC) */
-#define M_CAN_RXESC_8BYTES	0x0
-#define M_CAN_RXESC_64BYTES	0x777
+#घोषणा M_CAN_RXESC_8BYTES	0x0
+#घोषणा M_CAN_RXESC_64BYTES	0x777
 
 /* Tx Buffer Configuration(TXBC) */
-#define TXBC_NDTB_SHIFT		16
-#define TXBC_NDTB_MASK		(0x3f << TXBC_NDTB_SHIFT)
-#define TXBC_TFQS_SHIFT		24
-#define TXBC_TFQS_MASK		(0x3f << TXBC_TFQS_SHIFT)
+#घोषणा TXBC_NDTB_SHIFT		16
+#घोषणा TXBC_NDTB_MASK		(0x3f << TXBC_NDTB_SHIFT)
+#घोषणा TXBC_TFQS_SHIFT		24
+#घोषणा TXBC_TFQS_MASK		(0x3f << TXBC_TFQS_SHIFT)
 
 /* Tx FIFO/Queue Status (TXFQS) */
-#define TXFQS_TFQF		BIT(21)
-#define TXFQS_TFQPI_SHIFT	16
-#define TXFQS_TFQPI_MASK	(0x1f << TXFQS_TFQPI_SHIFT)
-#define TXFQS_TFGI_SHIFT	8
-#define TXFQS_TFGI_MASK		(0x1f << TXFQS_TFGI_SHIFT)
-#define TXFQS_TFFL_SHIFT	0
-#define TXFQS_TFFL_MASK		(0x3f << TXFQS_TFFL_SHIFT)
+#घोषणा TXFQS_TFQF		BIT(21)
+#घोषणा TXFQS_TFQPI_SHIFT	16
+#घोषणा TXFQS_TFQPI_MASK	(0x1f << TXFQS_TFQPI_SHIFT)
+#घोषणा TXFQS_TFGI_SHIFT	8
+#घोषणा TXFQS_TFGI_MASK		(0x1f << TXFQS_TFGI_SHIFT)
+#घोषणा TXFQS_TFFL_SHIFT	0
+#घोषणा TXFQS_TFFL_MASK		(0x3f << TXFQS_TFFL_SHIFT)
 
 /* Tx Buffer Element Size Configuration(TXESC) */
-#define TXESC_TBDS_8BYTES	0x0
-#define TXESC_TBDS_64BYTES	0x7
+#घोषणा TXESC_TBDS_8BYTES	0x0
+#घोषणा TXESC_TBDS_64BYTES	0x7
 
 /* Tx Event FIFO Configuration (TXEFC) */
-#define TXEFC_EFS_SHIFT		16
-#define TXEFC_EFS_MASK		(0x3f << TXEFC_EFS_SHIFT)
+#घोषणा TXEFC_EFS_SHIFT		16
+#घोषणा TXEFC_EFS_MASK		(0x3f << TXEFC_EFS_SHIFT)
 
 /* Tx Event FIFO Status (TXEFS) */
-#define TXEFS_TEFL		BIT(25)
-#define TXEFS_EFF		BIT(24)
-#define TXEFS_EFGI_SHIFT	8
-#define	TXEFS_EFGI_MASK		(0x1f << TXEFS_EFGI_SHIFT)
-#define TXEFS_EFFL_SHIFT	0
-#define TXEFS_EFFL_MASK		(0x3f << TXEFS_EFFL_SHIFT)
+#घोषणा TXEFS_TEFL		BIT(25)
+#घोषणा TXEFS_EFF		BIT(24)
+#घोषणा TXEFS_EFGI_SHIFT	8
+#घोषणा	TXEFS_EFGI_MASK		(0x1f << TXEFS_EFGI_SHIFT)
+#घोषणा TXEFS_EFFL_SHIFT	0
+#घोषणा TXEFS_EFFL_MASK		(0x3f << TXEFS_EFFL_SHIFT)
 
 /* Tx Event FIFO Acknowledge (TXEFA) */
-#define TXEFA_EFAI_SHIFT	0
-#define TXEFA_EFAI_MASK		(0x1f << TXEFA_EFAI_SHIFT)
+#घोषणा TXEFA_EFAI_SHIFT	0
+#घोषणा TXEFA_EFAI_MASK		(0x1f << TXEFA_EFAI_SHIFT)
 
 /* Message RAM Configuration (in bytes) */
-#define SIDF_ELEMENT_SIZE	4
-#define XIDF_ELEMENT_SIZE	8
-#define RXF0_ELEMENT_SIZE	72
-#define RXF1_ELEMENT_SIZE	72
-#define RXB_ELEMENT_SIZE	72
-#define TXE_ELEMENT_SIZE	8
-#define TXB_ELEMENT_SIZE	72
+#घोषणा SIDF_ELEMENT_SIZE	4
+#घोषणा XIDF_ELEMENT_SIZE	8
+#घोषणा RXF0_ELEMENT_SIZE	72
+#घोषणा RXF1_ELEMENT_SIZE	72
+#घोषणा RXB_ELEMENT_SIZE	72
+#घोषणा TXE_ELEMENT_SIZE	8
+#घोषणा TXB_ELEMENT_SIZE	72
 
 /* Message RAM Elements */
-#define M_CAN_FIFO_ID		0x0
-#define M_CAN_FIFO_DLC		0x4
-#define M_CAN_FIFO_DATA(n)	(0x8 + ((n) << 2))
+#घोषणा M_CAN_FIFO_ID		0x0
+#घोषणा M_CAN_FIFO_DLC		0x4
+#घोषणा M_CAN_FIFO_DATA(n)	(0x8 + ((n) << 2))
 
 /* Rx Buffer Element */
 /* R0 */
-#define RX_BUF_ESI		BIT(31)
-#define RX_BUF_XTD		BIT(30)
-#define RX_BUF_RTR		BIT(29)
+#घोषणा RX_BUF_ESI		BIT(31)
+#घोषणा RX_BUF_XTD		BIT(30)
+#घोषणा RX_BUF_RTR		BIT(29)
 /* R1 */
-#define RX_BUF_ANMF		BIT(31)
-#define RX_BUF_FDF		BIT(21)
-#define RX_BUF_BRS		BIT(20)
-#define RX_BUF_RXTS_MASK	GENMASK(15, 0)
+#घोषणा RX_BUF_ANMF		BIT(31)
+#घोषणा RX_BUF_FDF		BIT(21)
+#घोषणा RX_BUF_BRS		BIT(20)
+#घोषणा RX_BUF_RXTS_MASK	GENMASK(15, 0)
 
 /* Tx Buffer Element */
 /* T0 */
-#define TX_BUF_ESI		BIT(31)
-#define TX_BUF_XTD		BIT(30)
-#define TX_BUF_RTR		BIT(29)
+#घोषणा TX_BUF_ESI		BIT(31)
+#घोषणा TX_BUF_XTD		BIT(30)
+#घोषणा TX_BUF_RTR		BIT(29)
 /* T1 */
-#define TX_BUF_EFC		BIT(23)
-#define TX_BUF_FDF		BIT(21)
-#define TX_BUF_BRS		BIT(20)
-#define TX_BUF_MM_SHIFT		24
-#define TX_BUF_MM_MASK		(0xff << TX_BUF_MM_SHIFT)
+#घोषणा TX_BUF_EFC		BIT(23)
+#घोषणा TX_BUF_FDF		BIT(21)
+#घोषणा TX_BUF_BRS		BIT(20)
+#घोषणा TX_BUF_MM_SHIFT		24
+#घोषणा TX_BUF_MM_MASK		(0xff << TX_BUF_MM_SHIFT)
 
 /* Tx event FIFO Element */
 /* E1 */
-#define TX_EVENT_MM_SHIFT	TX_BUF_MM_SHIFT
-#define TX_EVENT_MM_MASK	(0xff << TX_EVENT_MM_SHIFT)
-#define TX_EVENT_TXTS_MASK	GENMASK(15, 0)
+#घोषणा TX_EVENT_MM_SHIFT	TX_BUF_MM_SHIFT
+#घोषणा TX_EVENT_MM_MASK	(0xff << TX_EVENT_MM_SHIFT)
+#घोषणा TX_EVENT_TXTS_MASK	GENMASK(15, 0)
 
-static inline u32 m_can_read(struct m_can_classdev *cdev, enum m_can_reg reg)
-{
-	return cdev->ops->read_reg(cdev, reg);
-}
+अटल अंतरभूत u32 m_can_पढ़ो(काष्ठा m_can_classdev *cdev, क्रमागत m_can_reg reg)
+अणु
+	वापस cdev->ops->पढ़ो_reg(cdev, reg);
+पूर्ण
 
-static inline void m_can_write(struct m_can_classdev *cdev, enum m_can_reg reg,
+अटल अंतरभूत व्योम m_can_ग_लिखो(काष्ठा m_can_classdev *cdev, क्रमागत m_can_reg reg,
 			       u32 val)
-{
-	cdev->ops->write_reg(cdev, reg, val);
-}
+अणु
+	cdev->ops->ग_लिखो_reg(cdev, reg, val);
+पूर्ण
 
-static u32 m_can_fifo_read(struct m_can_classdev *cdev,
-			   u32 fgi, unsigned int offset)
-{
+अटल u32 m_can_fअगरo_पढ़ो(काष्ठा m_can_classdev *cdev,
+			   u32 fgi, अचिन्हित पूर्णांक offset)
+अणु
 	u32 addr_offset = cdev->mcfg[MRAM_RXF0].off + fgi * RXF0_ELEMENT_SIZE +
 		offset;
 
-	return cdev->ops->read_fifo(cdev, addr_offset);
-}
+	वापस cdev->ops->पढ़ो_fअगरo(cdev, addr_offset);
+पूर्ण
 
-static void m_can_fifo_write(struct m_can_classdev *cdev,
-			     u32 fpi, unsigned int offset, u32 val)
-{
+अटल व्योम m_can_fअगरo_ग_लिखो(काष्ठा m_can_classdev *cdev,
+			     u32 fpi, अचिन्हित पूर्णांक offset, u32 val)
+अणु
 	u32 addr_offset = cdev->mcfg[MRAM_TXB].off + fpi * TXB_ELEMENT_SIZE +
 		offset;
 
-	cdev->ops->write_fifo(cdev, addr_offset, val);
-}
+	cdev->ops->ग_लिखो_fअगरo(cdev, addr_offset, val);
+पूर्ण
 
-static inline void m_can_fifo_write_no_off(struct m_can_classdev *cdev,
+अटल अंतरभूत व्योम m_can_fअगरo_ग_लिखो_no_off(काष्ठा m_can_classdev *cdev,
 					   u32 fpi, u32 val)
-{
-	cdev->ops->write_fifo(cdev, fpi, val);
-}
+अणु
+	cdev->ops->ग_लिखो_fअगरo(cdev, fpi, val);
+पूर्ण
 
-static u32 m_can_txe_fifo_read(struct m_can_classdev *cdev, u32 fgi, u32 offset)
-{
+अटल u32 m_can_txe_fअगरo_पढ़ो(काष्ठा m_can_classdev *cdev, u32 fgi, u32 offset)
+अणु
 	u32 addr_offset = cdev->mcfg[MRAM_TXE].off + fgi * TXE_ELEMENT_SIZE +
 		offset;
 
-	return cdev->ops->read_fifo(cdev, addr_offset);
-}
+	वापस cdev->ops->पढ़ो_fअगरo(cdev, addr_offset);
+पूर्ण
 
-static inline bool m_can_tx_fifo_full(struct m_can_classdev *cdev)
-{
-	return !!(m_can_read(cdev, M_CAN_TXFQS) & TXFQS_TFQF);
-}
+अटल अंतरभूत bool m_can_tx_fअगरo_full(काष्ठा m_can_classdev *cdev)
+अणु
+	वापस !!(m_can_पढ़ो(cdev, M_CAN_TXFQS) & TXFQS_TFQF);
+पूर्ण
 
-static void m_can_config_endisable(struct m_can_classdev *cdev, bool enable)
-{
-	u32 cccr = m_can_read(cdev, M_CAN_CCCR);
-	u32 timeout = 10;
+अटल व्योम m_can_config_endisable(काष्ठा m_can_classdev *cdev, bool enable)
+अणु
+	u32 cccr = m_can_पढ़ो(cdev, M_CAN_CCCR);
+	u32 समयout = 10;
 	u32 val = 0;
 
-	/* Clear the Clock stop request if it was set */
-	if (cccr & CCCR_CSR)
+	/* Clear the Clock stop request अगर it was set */
+	अगर (cccr & CCCR_CSR)
 		cccr &= ~CCCR_CSR;
 
-	if (enable) {
+	अगर (enable) अणु
 		/* enable m_can configuration */
-		m_can_write(cdev, M_CAN_CCCR, cccr | CCCR_INIT);
+		m_can_ग_लिखो(cdev, M_CAN_CCCR, cccr | CCCR_INIT);
 		udelay(5);
-		/* CCCR.CCE can only be set/reset while CCCR.INIT = '1' */
-		m_can_write(cdev, M_CAN_CCCR, cccr | CCCR_INIT | CCCR_CCE);
-	} else {
-		m_can_write(cdev, M_CAN_CCCR, cccr & ~(CCCR_INIT | CCCR_CCE));
-	}
+		/* CCCR.CCE can only be set/reset जबतक CCCR.INIT = '1' */
+		m_can_ग_लिखो(cdev, M_CAN_CCCR, cccr | CCCR_INIT | CCCR_CCE);
+	पूर्ण अन्यथा अणु
+		m_can_ग_लिखो(cdev, M_CAN_CCCR, cccr & ~(CCCR_INIT | CCCR_CCE));
+	पूर्ण
 
-	/* there's a delay for module initialization */
-	if (enable)
+	/* there's a delay क्रम module initialization */
+	अगर (enable)
 		val = CCCR_INIT | CCCR_CCE;
 
-	while ((m_can_read(cdev, M_CAN_CCCR) & (CCCR_INIT | CCCR_CCE)) != val) {
-		if (timeout == 0) {
+	जबतक ((m_can_पढ़ो(cdev, M_CAN_CCCR) & (CCCR_INIT | CCCR_CCE)) != val) अणु
+		अगर (समयout == 0) अणु
 			netdev_warn(cdev->net, "Failed to init module\n");
-			return;
-		}
-		timeout--;
+			वापस;
+		पूर्ण
+		समयout--;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void m_can_enable_all_interrupts(struct m_can_classdev *cdev)
-{
-	/* Only interrupt line 0 is used in this driver */
-	m_can_write(cdev, M_CAN_ILE, ILE_EINT0);
-}
+अटल अंतरभूत व्योम m_can_enable_all_पूर्णांकerrupts(काष्ठा m_can_classdev *cdev)
+अणु
+	/* Only पूर्णांकerrupt line 0 is used in this driver */
+	m_can_ग_लिखो(cdev, M_CAN_ILE, ILE_EINT0);
+पूर्ण
 
-static inline void m_can_disable_all_interrupts(struct m_can_classdev *cdev)
-{
-	m_can_write(cdev, M_CAN_ILE, 0x0);
-}
+अटल अंतरभूत व्योम m_can_disable_all_पूर्णांकerrupts(काष्ठा m_can_classdev *cdev)
+अणु
+	m_can_ग_लिखो(cdev, M_CAN_ILE, 0x0);
+पूर्ण
 
-/* Retrieve internal timestamp counter from TSCV.TSC, and shift it to 32-bit
+/* Retrieve पूर्णांकernal बारtamp counter from TSCV.TSC, and shअगरt it to 32-bit
  * width.
  */
-static u32 m_can_get_timestamp(struct m_can_classdev *cdev)
-{
+अटल u32 m_can_get_बारtamp(काष्ठा m_can_classdev *cdev)
+अणु
 	u32 tscv;
 	u32 tsc;
 
-	tscv = m_can_read(cdev, M_CAN_TSCV);
+	tscv = m_can_पढ़ो(cdev, M_CAN_TSCV);
 	tsc = FIELD_GET(TSCV_TSC_MASK, tscv);
 
-	return (tsc << 16);
-}
+	वापस (tsc << 16);
+पूर्ण
 
-static void m_can_clean(struct net_device *net)
-{
-	struct m_can_classdev *cdev = netdev_priv(net);
+अटल व्योम m_can_clean(काष्ठा net_device *net)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(net);
 
-	if (cdev->tx_skb) {
-		int putidx = 0;
+	अगर (cdev->tx_skb) अणु
+		पूर्णांक putidx = 0;
 
 		net->stats.tx_errors++;
-		if (cdev->version > 30)
-			putidx = ((m_can_read(cdev, M_CAN_TXFQS) &
+		अगर (cdev->version > 30)
+			putidx = ((m_can_पढ़ो(cdev, M_CAN_TXFQS) &
 				   TXFQS_TFQPI_MASK) >> TXFQS_TFQPI_SHIFT);
 
-		can_free_echo_skb(cdev->net, putidx, NULL);
-		cdev->tx_skb = NULL;
-	}
-}
+		can_मुक्त_echo_skb(cdev->net, putidx, शून्य);
+		cdev->tx_skb = शून्य;
+	पूर्ण
+पूर्ण
 
 /* For peripherals, pass skb to rx-offload, which will push skb from
- * napi. For non-peripherals, RX is done in napi already, so push
- * directly. timestamp is used to ensure good skb ordering in
- * rx-offload and is ignored for non-peripherals.
+ * napi. For non-peripherals, RX is करोne in napi alपढ़ोy, so push
+ * directly. बारtamp is used to ensure good skb ordering in
+ * rx-offload and is ignored क्रम non-peripherals.
 */
-static void m_can_receive_skb(struct m_can_classdev *cdev,
-			      struct sk_buff *skb,
-			      u32 timestamp)
-{
-	if (cdev->is_peripheral) {
-		struct net_device_stats *stats = &cdev->net->stats;
-		int err;
+अटल व्योम m_can_receive_skb(काष्ठा m_can_classdev *cdev,
+			      काष्ठा sk_buff *skb,
+			      u32 बारtamp)
+अणु
+	अगर (cdev->is_peripheral) अणु
+		काष्ठा net_device_stats *stats = &cdev->net->stats;
+		पूर्णांक err;
 
 		err = can_rx_offload_queue_sorted(&cdev->offload, skb,
-						  timestamp);
-		if (err)
-			stats->rx_fifo_errors++;
-	} else {
-		netif_receive_skb(skb);
-	}
-}
+						  बारtamp);
+		अगर (err)
+			stats->rx_fअगरo_errors++;
+	पूर्ण अन्यथा अणु
+		netअगर_receive_skb(skb);
+	पूर्ण
+पूर्ण
 
-static void m_can_read_fifo(struct net_device *dev, u32 rxfs)
-{
-	struct net_device_stats *stats = &dev->stats;
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	struct canfd_frame *cf;
-	struct sk_buff *skb;
+अटल व्योम m_can_पढ़ो_fअगरo(काष्ठा net_device *dev, u32 rxfs)
+अणु
+	काष्ठा net_device_stats *stats = &dev->stats;
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	काष्ठा canfd_frame *cf;
+	काष्ठा sk_buff *skb;
 	u32 id, fgi, dlc;
-	u32 timestamp = 0;
-	int i;
+	u32 बारtamp = 0;
+	पूर्णांक i;
 
-	/* calculate the fifo get index for where to read data */
+	/* calculate the fअगरo get index क्रम where to पढ़ो data */
 	fgi = (rxfs & RXFS_FGI_MASK) >> RXFS_FGI_SHIFT;
-	dlc = m_can_fifo_read(cdev, fgi, M_CAN_FIFO_DLC);
-	if (dlc & RX_BUF_FDF)
+	dlc = m_can_fअगरo_पढ़ो(cdev, fgi, M_CAN_FIFO_DLC);
+	अगर (dlc & RX_BUF_FDF)
 		skb = alloc_canfd_skb(dev, &cf);
-	else
-		skb = alloc_can_skb(dev, (struct can_frame **)&cf);
-	if (!skb) {
+	अन्यथा
+		skb = alloc_can_skb(dev, (काष्ठा can_frame **)&cf);
+	अगर (!skb) अणु
 		stats->rx_dropped++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (dlc & RX_BUF_FDF)
+	अगर (dlc & RX_BUF_FDF)
 		cf->len = can_fd_dlc2len((dlc >> 16) & 0x0F);
-	else
+	अन्यथा
 		cf->len = can_cc_dlc2len((dlc >> 16) & 0x0F);
 
-	id = m_can_fifo_read(cdev, fgi, M_CAN_FIFO_ID);
-	if (id & RX_BUF_XTD)
+	id = m_can_fअगरo_पढ़ो(cdev, fgi, M_CAN_FIFO_ID);
+	अगर (id & RX_BUF_XTD)
 		cf->can_id = (id & CAN_EFF_MASK) | CAN_EFF_FLAG;
-	else
+	अन्यथा
 		cf->can_id = (id >> 18) & CAN_SFF_MASK;
 
-	if (id & RX_BUF_ESI) {
+	अगर (id & RX_BUF_ESI) अणु
 		cf->flags |= CANFD_ESI;
 		netdev_dbg(dev, "ESI Error\n");
-	}
+	पूर्ण
 
-	if (!(dlc & RX_BUF_FDF) && (id & RX_BUF_RTR)) {
+	अगर (!(dlc & RX_BUF_FDF) && (id & RX_BUF_RTR)) अणु
 		cf->can_id |= CAN_RTR_FLAG;
-	} else {
-		if (dlc & RX_BUF_BRS)
+	पूर्ण अन्यथा अणु
+		अगर (dlc & RX_BUF_BRS)
 			cf->flags |= CANFD_BRS;
 
-		for (i = 0; i < cf->len; i += 4)
+		क्रम (i = 0; i < cf->len; i += 4)
 			*(u32 *)(cf->data + i) =
-				m_can_fifo_read(cdev, fgi,
+				m_can_fअगरo_पढ़ो(cdev, fgi,
 						M_CAN_FIFO_DATA(i / 4));
-	}
+	पूर्ण
 
-	/* acknowledge rx fifo 0 */
-	m_can_write(cdev, M_CAN_RXF0A, fgi);
+	/* acknowledge rx fअगरo 0 */
+	m_can_ग_लिखो(cdev, M_CAN_RXF0A, fgi);
 
 	stats->rx_packets++;
 	stats->rx_bytes += cf->len;
 
-	timestamp = FIELD_GET(RX_BUF_RXTS_MASK, dlc);
+	बारtamp = FIELD_GET(RX_BUF_RXTS_MASK, dlc);
 
-	m_can_receive_skb(cdev, skb, timestamp);
-}
+	m_can_receive_skb(cdev, skb, बारtamp);
+पूर्ण
 
-static int m_can_do_rx_poll(struct net_device *dev, int quota)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
+अटल पूर्णांक m_can_करो_rx_poll(काष्ठा net_device *dev, पूर्णांक quota)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
 	u32 pkts = 0;
 	u32 rxfs;
 
-	rxfs = m_can_read(cdev, M_CAN_RXF0S);
-	if (!(rxfs & RXFS_FFL_MASK)) {
+	rxfs = m_can_पढ़ो(cdev, M_CAN_RXF0S);
+	अगर (!(rxfs & RXFS_FFL_MASK)) अणु
 		netdev_dbg(dev, "no messages in fifo0\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	while ((rxfs & RXFS_FFL_MASK) && (quota > 0)) {
-		m_can_read_fifo(dev, rxfs);
+	जबतक ((rxfs & RXFS_FFL_MASK) && (quota > 0)) अणु
+		m_can_पढ़ो_fअगरo(dev, rxfs);
 
 		quota--;
 		pkts++;
-		rxfs = m_can_read(cdev, M_CAN_RXF0S);
-	}
+		rxfs = m_can_पढ़ो(cdev, M_CAN_RXF0S);
+	पूर्ण
 
-	if (pkts)
+	अगर (pkts)
 		can_led_event(dev, CAN_LED_EVENT_RX);
 
-	return pkts;
-}
+	वापस pkts;
+पूर्ण
 
-static int m_can_handle_lost_msg(struct net_device *dev)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	struct net_device_stats *stats = &dev->stats;
-	struct sk_buff *skb;
-	struct can_frame *frame;
-	u32 timestamp = 0;
+अटल पूर्णांक m_can_handle_lost_msg(काष्ठा net_device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	काष्ठा net_device_stats *stats = &dev->stats;
+	काष्ठा sk_buff *skb;
+	काष्ठा can_frame *frame;
+	u32 बारtamp = 0;
 
 	netdev_err(dev, "msg lost in rxf0\n");
 
@@ -580,168 +581,168 @@ static int m_can_handle_lost_msg(struct net_device *dev)
 	stats->rx_over_errors++;
 
 	skb = alloc_can_err_skb(dev, &frame);
-	if (unlikely(!skb))
-		return 0;
+	अगर (unlikely(!skb))
+		वापस 0;
 
 	frame->can_id |= CAN_ERR_CRTL;
 	frame->data[1] = CAN_ERR_CRTL_RX_OVERFLOW;
 
-	if (cdev->is_peripheral)
-		timestamp = m_can_get_timestamp(cdev);
+	अगर (cdev->is_peripheral)
+		बारtamp = m_can_get_बारtamp(cdev);
 
-	m_can_receive_skb(cdev, skb, timestamp);
+	m_can_receive_skb(cdev, skb, बारtamp);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int m_can_handle_lec_err(struct net_device *dev,
-				enum m_can_lec_type lec_type)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	struct net_device_stats *stats = &dev->stats;
-	struct can_frame *cf;
-	struct sk_buff *skb;
-	u32 timestamp = 0;
+अटल पूर्णांक m_can_handle_lec_err(काष्ठा net_device *dev,
+				क्रमागत m_can_lec_type lec_type)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	काष्ठा net_device_stats *stats = &dev->stats;
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
+	u32 बारtamp = 0;
 
 	cdev->can.can_stats.bus_error++;
 	stats->rx_errors++;
 
 	/* propagate the error condition to the CAN stack */
 	skb = alloc_can_err_skb(dev, &cf);
-	if (unlikely(!skb))
-		return 0;
+	अगर (unlikely(!skb))
+		वापस 0;
 
-	/* check for 'last error code' which tells us the
+	/* check क्रम 'last error code' which tells us the
 	 * type of the last error to occur on the CAN bus
 	 */
 	cf->can_id |= CAN_ERR_PROT | CAN_ERR_BUSERROR;
 
-	switch (lec_type) {
-	case LEC_STUFF_ERROR:
+	चयन (lec_type) अणु
+	हाल LEC_STUFF_ERROR:
 		netdev_dbg(dev, "stuff error\n");
 		cf->data[2] |= CAN_ERR_PROT_STUFF;
-		break;
-	case LEC_FORM_ERROR:
+		अवरोध;
+	हाल LEC_FORM_ERROR:
 		netdev_dbg(dev, "form error\n");
 		cf->data[2] |= CAN_ERR_PROT_FORM;
-		break;
-	case LEC_ACK_ERROR:
+		अवरोध;
+	हाल LEC_ACK_ERROR:
 		netdev_dbg(dev, "ack error\n");
 		cf->data[3] = CAN_ERR_PROT_LOC_ACK;
-		break;
-	case LEC_BIT1_ERROR:
+		अवरोध;
+	हाल LEC_BIT1_ERROR:
 		netdev_dbg(dev, "bit1 error\n");
 		cf->data[2] |= CAN_ERR_PROT_BIT1;
-		break;
-	case LEC_BIT0_ERROR:
+		अवरोध;
+	हाल LEC_BIT0_ERROR:
 		netdev_dbg(dev, "bit0 error\n");
 		cf->data[2] |= CAN_ERR_PROT_BIT0;
-		break;
-	case LEC_CRC_ERROR:
+		अवरोध;
+	हाल LEC_CRC_ERROR:
 		netdev_dbg(dev, "CRC error\n");
 		cf->data[3] = CAN_ERR_PROT_LOC_CRC_SEQ;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	stats->rx_packets++;
 	stats->rx_bytes += cf->len;
 
-	if (cdev->is_peripheral)
-		timestamp = m_can_get_timestamp(cdev);
+	अगर (cdev->is_peripheral)
+		बारtamp = m_can_get_बारtamp(cdev);
 
-	m_can_receive_skb(cdev, skb, timestamp);
+	m_can_receive_skb(cdev, skb, बारtamp);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int __m_can_get_berr_counter(const struct net_device *dev,
-				    struct can_berr_counter *bec)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	unsigned int ecr;
+अटल पूर्णांक __m_can_get_berr_counter(स्थिर काष्ठा net_device *dev,
+				    काष्ठा can_berr_counter *bec)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	अचिन्हित पूर्णांक ecr;
 
-	ecr = m_can_read(cdev, M_CAN_ECR);
+	ecr = m_can_पढ़ो(cdev, M_CAN_ECR);
 	bec->rxerr = (ecr & ECR_REC_MASK) >> ECR_REC_SHIFT;
 	bec->txerr = (ecr & ECR_TEC_MASK) >> ECR_TEC_SHIFT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m_can_clk_start(struct m_can_classdev *cdev)
-{
-	if (cdev->pm_clock_support == 0)
-		return 0;
+अटल पूर्णांक m_can_clk_start(काष्ठा m_can_classdev *cdev)
+अणु
+	अगर (cdev->pm_घड़ी_support == 0)
+		वापस 0;
 
-	return pm_runtime_resume_and_get(cdev->dev);
-}
+	वापस pm_runसमय_resume_and_get(cdev->dev);
+पूर्ण
 
-static void m_can_clk_stop(struct m_can_classdev *cdev)
-{
-	if (cdev->pm_clock_support)
-		pm_runtime_put_sync(cdev->dev);
-}
+अटल व्योम m_can_clk_stop(काष्ठा m_can_classdev *cdev)
+अणु
+	अगर (cdev->pm_घड़ी_support)
+		pm_runसमय_put_sync(cdev->dev);
+पूर्ण
 
-static int m_can_get_berr_counter(const struct net_device *dev,
-				  struct can_berr_counter *bec)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	int err;
+अटल पूर्णांक m_can_get_berr_counter(स्थिर काष्ठा net_device *dev,
+				  काष्ठा can_berr_counter *bec)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	पूर्णांक err;
 
 	err = m_can_clk_start(cdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	__m_can_get_berr_counter(dev, bec);
 
 	m_can_clk_stop(cdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m_can_handle_state_change(struct net_device *dev,
-				     enum can_state new_state)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	struct net_device_stats *stats = &dev->stats;
-	struct can_frame *cf;
-	struct sk_buff *skb;
-	struct can_berr_counter bec;
-	unsigned int ecr;
-	u32 timestamp = 0;
+अटल पूर्णांक m_can_handle_state_change(काष्ठा net_device *dev,
+				     क्रमागत can_state new_state)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	काष्ठा net_device_stats *stats = &dev->stats;
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
+	काष्ठा can_berr_counter bec;
+	अचिन्हित पूर्णांक ecr;
+	u32 बारtamp = 0;
 
-	switch (new_state) {
-	case CAN_STATE_ERROR_WARNING:
+	चयन (new_state) अणु
+	हाल CAN_STATE_ERROR_WARNING:
 		/* error warning state */
 		cdev->can.can_stats.error_warning++;
 		cdev->can.state = CAN_STATE_ERROR_WARNING;
-		break;
-	case CAN_STATE_ERROR_PASSIVE:
+		अवरोध;
+	हाल CAN_STATE_ERROR_PASSIVE:
 		/* error passive state */
 		cdev->can.can_stats.error_passive++;
 		cdev->can.state = CAN_STATE_ERROR_PASSIVE;
-		break;
-	case CAN_STATE_BUS_OFF:
+		अवरोध;
+	हाल CAN_STATE_BUS_OFF:
 		/* bus-off state */
 		cdev->can.state = CAN_STATE_BUS_OFF;
-		m_can_disable_all_interrupts(cdev);
+		m_can_disable_all_पूर्णांकerrupts(cdev);
 		cdev->can.can_stats.bus_off++;
 		can_bus_off(dev);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* propagate the error condition to the CAN stack */
 	skb = alloc_can_err_skb(dev, &cf);
-	if (unlikely(!skb))
-		return 0;
+	अगर (unlikely(!skb))
+		वापस 0;
 
 	__m_can_get_berr_counter(dev, &bec);
 
-	switch (new_state) {
-	case CAN_STATE_ERROR_WARNING:
+	चयन (new_state) अणु
+	हाल CAN_STATE_ERROR_WARNING:
 		/* error warning state */
 		cf->can_id |= CAN_ERR_CRTL;
 		cf->data[1] = (bec.txerr > bec.rxerr) ?
@@ -749,98 +750,98 @@ static int m_can_handle_state_change(struct net_device *dev,
 			CAN_ERR_CRTL_RX_WARNING;
 		cf->data[6] = bec.txerr;
 		cf->data[7] = bec.rxerr;
-		break;
-	case CAN_STATE_ERROR_PASSIVE:
+		अवरोध;
+	हाल CAN_STATE_ERROR_PASSIVE:
 		/* error passive state */
 		cf->can_id |= CAN_ERR_CRTL;
-		ecr = m_can_read(cdev, M_CAN_ECR);
-		if (ecr & ECR_RP)
+		ecr = m_can_पढ़ो(cdev, M_CAN_ECR);
+		अगर (ecr & ECR_RP)
 			cf->data[1] |= CAN_ERR_CRTL_RX_PASSIVE;
-		if (bec.txerr > 127)
+		अगर (bec.txerr > 127)
 			cf->data[1] |= CAN_ERR_CRTL_TX_PASSIVE;
 		cf->data[6] = bec.txerr;
 		cf->data[7] = bec.rxerr;
-		break;
-	case CAN_STATE_BUS_OFF:
+		अवरोध;
+	हाल CAN_STATE_BUS_OFF:
 		/* bus-off state */
 		cf->can_id |= CAN_ERR_BUSOFF;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	stats->rx_packets++;
 	stats->rx_bytes += cf->len;
 
-	if (cdev->is_peripheral)
-		timestamp = m_can_get_timestamp(cdev);
+	अगर (cdev->is_peripheral)
+		बारtamp = m_can_get_बारtamp(cdev);
 
-	m_can_receive_skb(cdev, skb, timestamp);
+	m_can_receive_skb(cdev, skb, बारtamp);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int m_can_handle_state_errors(struct net_device *dev, u32 psr)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	int work_done = 0;
+अटल पूर्णांक m_can_handle_state_errors(काष्ठा net_device *dev, u32 psr)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	पूर्णांक work_करोne = 0;
 
-	if (psr & PSR_EW && cdev->can.state != CAN_STATE_ERROR_WARNING) {
+	अगर (psr & PSR_EW && cdev->can.state != CAN_STATE_ERROR_WARNING) अणु
 		netdev_dbg(dev, "entered error warning state\n");
-		work_done += m_can_handle_state_change(dev,
+		work_करोne += m_can_handle_state_change(dev,
 						       CAN_STATE_ERROR_WARNING);
-	}
+	पूर्ण
 
-	if (psr & PSR_EP && cdev->can.state != CAN_STATE_ERROR_PASSIVE) {
+	अगर (psr & PSR_EP && cdev->can.state != CAN_STATE_ERROR_PASSIVE) अणु
 		netdev_dbg(dev, "entered error passive state\n");
-		work_done += m_can_handle_state_change(dev,
+		work_करोne += m_can_handle_state_change(dev,
 						       CAN_STATE_ERROR_PASSIVE);
-	}
+	पूर्ण
 
-	if (psr & PSR_BO && cdev->can.state != CAN_STATE_BUS_OFF) {
+	अगर (psr & PSR_BO && cdev->can.state != CAN_STATE_BUS_OFF) अणु
 		netdev_dbg(dev, "entered error bus off state\n");
-		work_done += m_can_handle_state_change(dev,
+		work_करोne += m_can_handle_state_change(dev,
 						       CAN_STATE_BUS_OFF);
-	}
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static void m_can_handle_other_err(struct net_device *dev, u32 irqstatus)
-{
-	if (irqstatus & IR_WDI)
+अटल व्योम m_can_handle_other_err(काष्ठा net_device *dev, u32 irqstatus)
+अणु
+	अगर (irqstatus & IR_WDI)
 		netdev_err(dev, "Message RAM Watchdog event due to missing READY\n");
-	if (irqstatus & IR_ELO)
+	अगर (irqstatus & IR_ELO)
 		netdev_err(dev, "Error Logging Overflow\n");
-	if (irqstatus & IR_BEU)
+	अगर (irqstatus & IR_BEU)
 		netdev_err(dev, "Bit Error Uncorrected\n");
-	if (irqstatus & IR_BEC)
+	अगर (irqstatus & IR_BEC)
 		netdev_err(dev, "Bit Error Corrected\n");
-	if (irqstatus & IR_TOO)
+	अगर (irqstatus & IR_TOO)
 		netdev_err(dev, "Timeout reached\n");
-	if (irqstatus & IR_MRAF)
+	अगर (irqstatus & IR_MRAF)
 		netdev_err(dev, "Message RAM access failure occurred\n");
-}
+पूर्ण
 
-static inline bool is_lec_err(u32 psr)
-{
+अटल अंतरभूत bool is_lec_err(u32 psr)
+अणु
 	psr &= LEC_UNUSED;
 
-	return psr && (psr != LEC_UNUSED);
-}
+	वापस psr && (psr != LEC_UNUSED);
+पूर्ण
 
-static inline bool m_can_is_protocol_err(u32 irqstatus)
-{
-	return irqstatus & IR_ERR_LEC_31X;
-}
+अटल अंतरभूत bool m_can_is_protocol_err(u32 irqstatus)
+अणु
+	वापस irqstatus & IR_ERR_LEC_31X;
+पूर्ण
 
-static int m_can_handle_protocol_error(struct net_device *dev, u32 irqstatus)
-{
-	struct net_device_stats *stats = &dev->stats;
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	struct can_frame *cf;
-	struct sk_buff *skb;
-	u32 timestamp = 0;
+अटल पूर्णांक m_can_handle_protocol_error(काष्ठा net_device *dev, u32 irqstatus)
+अणु
+	काष्ठा net_device_stats *stats = &dev->stats;
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
+	u32 बारtamp = 0;
 
 	/* propagate the error condition to the CAN stack */
 	skb = alloc_can_err_skb(dev, &cf);
@@ -849,245 +850,245 @@ static int m_can_handle_protocol_error(struct net_device *dev, u32 irqstatus)
 	stats->tx_errors++;
 
 	/* update arbitration lost status */
-	if (cdev->version >= 31 && (irqstatus & IR_PEA)) {
+	अगर (cdev->version >= 31 && (irqstatus & IR_PEA)) अणु
 		netdev_dbg(dev, "Protocol error in Arbitration fail\n");
 		cdev->can.can_stats.arbitration_lost++;
-		if (skb) {
+		अगर (skb) अणु
 			cf->can_id |= CAN_ERR_LOSTARB;
 			cf->data[0] |= CAN_ERR_LOSTARB_UNSPEC;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(!skb)) {
+	अगर (unlikely(!skb)) अणु
 		netdev_dbg(dev, "allocation of skb failed\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (cdev->is_peripheral)
-		timestamp = m_can_get_timestamp(cdev);
+	अगर (cdev->is_peripheral)
+		बारtamp = m_can_get_बारtamp(cdev);
 
-	m_can_receive_skb(cdev, skb, timestamp);
+	m_can_receive_skb(cdev, skb, बारtamp);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int m_can_handle_bus_errors(struct net_device *dev, u32 irqstatus,
+अटल पूर्णांक m_can_handle_bus_errors(काष्ठा net_device *dev, u32 irqstatus,
 				   u32 psr)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	int work_done = 0;
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	पूर्णांक work_करोne = 0;
 
-	if (irqstatus & IR_RF0L)
-		work_done += m_can_handle_lost_msg(dev);
+	अगर (irqstatus & IR_RF0L)
+		work_करोne += m_can_handle_lost_msg(dev);
 
 	/* handle lec errors on the bus */
-	if ((cdev->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING) &&
+	अगर ((cdev->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING) &&
 	    is_lec_err(psr))
-		work_done += m_can_handle_lec_err(dev, psr & LEC_UNUSED);
+		work_करोne += m_can_handle_lec_err(dev, psr & LEC_UNUSED);
 
 	/* handle protocol errors in arbitration phase */
-	if ((cdev->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING) &&
+	अगर ((cdev->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING) &&
 	    m_can_is_protocol_err(irqstatus))
-		work_done += m_can_handle_protocol_error(dev, irqstatus);
+		work_करोne += m_can_handle_protocol_error(dev, irqstatus);
 
-	/* other unproccessed error interrupts */
+	/* other unproccessed error पूर्णांकerrupts */
 	m_can_handle_other_err(dev, irqstatus);
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static int m_can_rx_handler(struct net_device *dev, int quota)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	int work_done = 0;
+अटल पूर्णांक m_can_rx_handler(काष्ठा net_device *dev, पूर्णांक quota)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	पूर्णांक work_करोne = 0;
 	u32 irqstatus, psr;
 
-	irqstatus = cdev->irqstatus | m_can_read(cdev, M_CAN_IR);
-	if (!irqstatus)
-		goto end;
+	irqstatus = cdev->irqstatus | m_can_पढ़ो(cdev, M_CAN_IR);
+	अगर (!irqstatus)
+		जाओ end;
 
-	/* Errata workaround for issue "Needless activation of MRAF irq"
-	 * During frame reception while the MCAN is in Error Passive state
+	/* Errata workaround क्रम issue "Needless activation of MRAF irq"
+	 * During frame reception जबतक the MCAN is in Error Passive state
 	 * and the Receive Error Counter has the value MCAN_ECR.REC = 127,
 	 * it may happen that MCAN_IR.MRAF is set although there was no
 	 * Message RAM access failure.
-	 * If MCAN_IR.MRAF is enabled, an interrupt to the Host CPU is generated
-	 * The Message RAM Access Failure interrupt routine needs to check
-	 * whether MCAN_ECR.RP = ’1’ and MCAN_ECR.REC = 127.
-	 * In this case, reset MCAN_IR.MRAF. No further action is required.
+	 * If MCAN_IR.MRAF is enabled, an पूर्णांकerrupt to the Host CPU is generated
+	 * The Message RAM Access Failure पूर्णांकerrupt routine needs to check
+	 * whether MCAN_ECR.RP = ै 1ै  and MCAN_ECR.REC = 127.
+	 * In this हाल, reset MCAN_IR.MRAF. No further action is required.
 	 */
-	if (cdev->version <= 31 && irqstatus & IR_MRAF &&
-	    m_can_read(cdev, M_CAN_ECR) & ECR_RP) {
-		struct can_berr_counter bec;
+	अगर (cdev->version <= 31 && irqstatus & IR_MRAF &&
+	    m_can_पढ़ो(cdev, M_CAN_ECR) & ECR_RP) अणु
+		काष्ठा can_berr_counter bec;
 
 		__m_can_get_berr_counter(dev, &bec);
-		if (bec.rxerr == 127) {
-			m_can_write(cdev, M_CAN_IR, IR_MRAF);
+		अगर (bec.rxerr == 127) अणु
+			m_can_ग_लिखो(cdev, M_CAN_IR, IR_MRAF);
 			irqstatus &= ~IR_MRAF;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	psr = m_can_read(cdev, M_CAN_PSR);
+	psr = m_can_पढ़ो(cdev, M_CAN_PSR);
 
-	if (irqstatus & IR_ERR_STATE)
-		work_done += m_can_handle_state_errors(dev, psr);
+	अगर (irqstatus & IR_ERR_STATE)
+		work_करोne += m_can_handle_state_errors(dev, psr);
 
-	if (irqstatus & IR_ERR_BUS_30X)
-		work_done += m_can_handle_bus_errors(dev, irqstatus, psr);
+	अगर (irqstatus & IR_ERR_BUS_30X)
+		work_करोne += m_can_handle_bus_errors(dev, irqstatus, psr);
 
-	if (irqstatus & IR_RF0N)
-		work_done += m_can_do_rx_poll(dev, (quota - work_done));
+	अगर (irqstatus & IR_RF0N)
+		work_करोne += m_can_करो_rx_poll(dev, (quota - work_करोne));
 end:
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static int m_can_rx_peripheral(struct net_device *dev)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
+अटल पूर्णांक m_can_rx_peripheral(काष्ठा net_device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
 
 	m_can_rx_handler(dev, M_CAN_NAPI_WEIGHT);
 
-	m_can_enable_all_interrupts(cdev);
+	m_can_enable_all_पूर्णांकerrupts(cdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m_can_poll(struct napi_struct *napi, int quota)
-{
-	struct net_device *dev = napi->dev;
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	int work_done;
+अटल पूर्णांक m_can_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक quota)
+अणु
+	काष्ठा net_device *dev = napi->dev;
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	पूर्णांक work_करोne;
 
-	work_done = m_can_rx_handler(dev, quota);
-	if (work_done < quota) {
-		napi_complete_done(napi, work_done);
-		m_can_enable_all_interrupts(cdev);
-	}
+	work_करोne = m_can_rx_handler(dev, quota);
+	अगर (work_करोne < quota) अणु
+		napi_complete_करोne(napi, work_करोne);
+		m_can_enable_all_पूर्णांकerrupts(cdev);
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-/* Echo tx skb and update net stats. Peripherals use rx-offload for
- * echo. timestamp is used for peripherals to ensure correct ordering
- * by rx-offload, and is ignored for non-peripherals.
+/* Echo tx skb and update net stats. Peripherals use rx-offload क्रम
+ * echo. बारtamp is used क्रम peripherals to ensure correct ordering
+ * by rx-offload, and is ignored क्रम non-peripherals.
 */
-static void m_can_tx_update_stats(struct m_can_classdev *cdev,
-				  unsigned int msg_mark,
-				  u32 timestamp)
-{
-	struct net_device *dev = cdev->net;
-	struct net_device_stats *stats = &dev->stats;
+अटल व्योम m_can_tx_update_stats(काष्ठा m_can_classdev *cdev,
+				  अचिन्हित पूर्णांक msg_mark,
+				  u32 बारtamp)
+अणु
+	काष्ठा net_device *dev = cdev->net;
+	काष्ठा net_device_stats *stats = &dev->stats;
 
-	if (cdev->is_peripheral)
+	अगर (cdev->is_peripheral)
 		stats->tx_bytes +=
 			can_rx_offload_get_echo_skb(&cdev->offload,
 						    msg_mark,
-						    timestamp,
-						    NULL);
-	else
-		stats->tx_bytes += can_get_echo_skb(dev, msg_mark, NULL);
+						    बारtamp,
+						    शून्य);
+	अन्यथा
+		stats->tx_bytes += can_get_echo_skb(dev, msg_mark, शून्य);
 
 	stats->tx_packets++;
-}
+पूर्ण
 
-static void m_can_echo_tx_event(struct net_device *dev)
-{
+अटल व्योम m_can_echo_tx_event(काष्ठा net_device *dev)
+अणु
 	u32 txe_count = 0;
 	u32 m_can_txefs;
 	u32 fgi = 0;
-	int i = 0;
-	unsigned int msg_mark;
+	पूर्णांक i = 0;
+	अचिन्हित पूर्णांक msg_mark;
 
-	struct m_can_classdev *cdev = netdev_priv(dev);
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
 
-	/* read tx event fifo status */
-	m_can_txefs = m_can_read(cdev, M_CAN_TXEFS);
+	/* पढ़ो tx event fअगरo status */
+	m_can_txefs = m_can_पढ़ो(cdev, M_CAN_TXEFS);
 
-	/* Get Tx Event fifo element count */
+	/* Get Tx Event fअगरo element count */
 	txe_count = (m_can_txefs & TXEFS_EFFL_MASK) >> TXEFS_EFFL_SHIFT;
 
 	/* Get and process all sent elements */
-	for (i = 0; i < txe_count; i++) {
-		u32 txe, timestamp = 0;
+	क्रम (i = 0; i < txe_count; i++) अणु
+		u32 txe, बारtamp = 0;
 
 		/* retrieve get index */
-		fgi = (m_can_read(cdev, M_CAN_TXEFS) & TXEFS_EFGI_MASK) >>
+		fgi = (m_can_पढ़ो(cdev, M_CAN_TXEFS) & TXEFS_EFGI_MASK) >>
 			TXEFS_EFGI_SHIFT;
 
-		/* get message marker, timestamp */
-		txe = m_can_txe_fifo_read(cdev, fgi, 4);
+		/* get message marker, बारtamp */
+		txe = m_can_txe_fअगरo_पढ़ो(cdev, fgi, 4);
 		msg_mark = (txe & TX_EVENT_MM_MASK) >> TX_EVENT_MM_SHIFT;
-		timestamp = FIELD_GET(TX_EVENT_TXTS_MASK, txe);
+		बारtamp = FIELD_GET(TX_EVENT_TXTS_MASK, txe);
 
 		/* ack txe element */
-		m_can_write(cdev, M_CAN_TXEFA, (TXEFA_EFAI_MASK &
+		m_can_ग_लिखो(cdev, M_CAN_TXEFA, (TXEFA_EFAI_MASK &
 						(fgi << TXEFA_EFAI_SHIFT)));
 
 		/* update stats */
-		m_can_tx_update_stats(cdev, msg_mark, timestamp);
-	}
-}
+		m_can_tx_update_stats(cdev, msg_mark, बारtamp);
+	पूर्ण
+पूर्ण
 
-static irqreturn_t m_can_isr(int irq, void *dev_id)
-{
-	struct net_device *dev = (struct net_device *)dev_id;
-	struct m_can_classdev *cdev = netdev_priv(dev);
+अटल irqवापस_t m_can_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = (काष्ठा net_device *)dev_id;
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
 	u32 ir;
 
-	if (pm_runtime_suspended(cdev->dev))
-		return IRQ_NONE;
-	ir = m_can_read(cdev, M_CAN_IR);
-	if (!ir)
-		return IRQ_NONE;
+	अगर (pm_runसमय_suspended(cdev->dev))
+		वापस IRQ_NONE;
+	ir = m_can_पढ़ो(cdev, M_CAN_IR);
+	अगर (!ir)
+		वापस IRQ_NONE;
 
 	/* ACK all irqs */
-	if (ir & IR_ALL_INT)
-		m_can_write(cdev, M_CAN_IR, ir);
+	अगर (ir & IR_ALL_INT)
+		m_can_ग_लिखो(cdev, M_CAN_IR, ir);
 
-	if (cdev->ops->clear_interrupts)
-		cdev->ops->clear_interrupts(cdev);
+	अगर (cdev->ops->clear_पूर्णांकerrupts)
+		cdev->ops->clear_पूर्णांकerrupts(cdev);
 
-	/* schedule NAPI in case of
+	/* schedule NAPI in हाल of
 	 * - rx IRQ
 	 * - state change IRQ
 	 * - bus error IRQ and bus error reporting
 	 */
-	if ((ir & IR_RF0N) || (ir & IR_ERR_ALL_30X)) {
+	अगर ((ir & IR_RF0N) || (ir & IR_ERR_ALL_30X)) अणु
 		cdev->irqstatus = ir;
-		m_can_disable_all_interrupts(cdev);
-		if (!cdev->is_peripheral)
+		m_can_disable_all_पूर्णांकerrupts(cdev);
+		अगर (!cdev->is_peripheral)
 			napi_schedule(&cdev->napi);
-		else
+		अन्यथा
 			m_can_rx_peripheral(dev);
-	}
+	पूर्ण
 
-	if (cdev->version == 30) {
-		if (ir & IR_TC) {
+	अगर (cdev->version == 30) अणु
+		अगर (ir & IR_TC) अणु
 			/* Transmission Complete Interrupt*/
-			u32 timestamp = 0;
+			u32 बारtamp = 0;
 
-			if (cdev->is_peripheral)
-				timestamp = m_can_get_timestamp(cdev);
-			m_can_tx_update_stats(cdev, 0, timestamp);
+			अगर (cdev->is_peripheral)
+				बारtamp = m_can_get_बारtamp(cdev);
+			m_can_tx_update_stats(cdev, 0, बारtamp);
 
 			can_led_event(dev, CAN_LED_EVENT_TX);
-			netif_wake_queue(dev);
-		}
-	} else  {
-		if (ir & IR_TEFN) {
+			netअगर_wake_queue(dev);
+		पूर्ण
+	पूर्ण अन्यथा  अणु
+		अगर (ir & IR_TEFN) अणु
 			/* New TX FIFO Element arrived */
 			m_can_echo_tx_event(dev);
 			can_led_event(dev, CAN_LED_EVENT_TX);
-			if (netif_queue_stopped(dev) &&
-			    !m_can_tx_fifo_full(cdev))
-				netif_wake_queue(dev);
-		}
-	}
+			अगर (netअगर_queue_stopped(dev) &&
+			    !m_can_tx_fअगरo_full(cdev))
+				netअगर_wake_queue(dev);
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct can_bittiming_const m_can_bittiming_const_30X = {
+अटल स्थिर काष्ठा can_bittiming_स्थिर m_can_bittiming_स्थिर_30X = अणु
 	.name = KBUILD_MODNAME,
 	.tseg1_min = 2,		/* Time segment 1 = prop_seg + phase_seg1 */
 	.tseg1_max = 64,
@@ -1097,9 +1098,9 @@ static const struct can_bittiming_const m_can_bittiming_const_30X = {
 	.brp_min = 1,
 	.brp_max = 1024,
 	.brp_inc = 1,
-};
+पूर्ण;
 
-static const struct can_bittiming_const m_can_data_bittiming_const_30X = {
+अटल स्थिर काष्ठा can_bittiming_स्थिर m_can_data_bittiming_स्थिर_30X = अणु
 	.name = KBUILD_MODNAME,
 	.tseg1_min = 2,		/* Time segment 1 = prop_seg + phase_seg1 */
 	.tseg1_max = 16,
@@ -1109,9 +1110,9 @@ static const struct can_bittiming_const m_can_data_bittiming_const_30X = {
 	.brp_min = 1,
 	.brp_max = 32,
 	.brp_inc = 1,
-};
+पूर्ण;
 
-static const struct can_bittiming_const m_can_bittiming_const_31X = {
+अटल स्थिर काष्ठा can_bittiming_स्थिर m_can_bittiming_स्थिर_31X = अणु
 	.name = KBUILD_MODNAME,
 	.tseg1_min = 2,		/* Time segment 1 = prop_seg + phase_seg1 */
 	.tseg1_max = 256,
@@ -1121,9 +1122,9 @@ static const struct can_bittiming_const m_can_bittiming_const_31X = {
 	.brp_min = 1,
 	.brp_max = 512,
 	.brp_inc = 1,
-};
+पूर्ण;
 
-static const struct can_bittiming_const m_can_data_bittiming_const_31X = {
+अटल स्थिर काष्ठा can_bittiming_स्थिर m_can_data_bittiming_स्थिर_31X = अणु
 	.name = KBUILD_MODNAME,
 	.tseg1_min = 1,		/* Time segment 1 = prop_seg + phase_seg1 */
 	.tseg1_max = 32,
@@ -1133,13 +1134,13 @@ static const struct can_bittiming_const m_can_data_bittiming_const_31X = {
 	.brp_min = 1,
 	.brp_max = 32,
 	.brp_inc = 1,
-};
+पूर्ण;
 
-static int m_can_set_bittiming(struct net_device *dev)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	const struct can_bittiming *bt = &cdev->can.bittiming;
-	const struct can_bittiming *dbt = &cdev->can.data_bittiming;
+अटल पूर्णांक m_can_set_bittiming(काष्ठा net_device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	स्थिर काष्ठा can_bittiming *bt = &cdev->can.bittiming;
+	स्थिर काष्ठा can_bittiming *dbt = &cdev->can.data_bittiming;
 	u16 brp, sjw, tseg1, tseg2;
 	u32 reg_btp;
 
@@ -1149,298 +1150,298 @@ static int m_can_set_bittiming(struct net_device *dev)
 	tseg2 = bt->phase_seg2 - 1;
 	reg_btp = (brp << NBTP_NBRP_SHIFT) | (sjw << NBTP_NSJW_SHIFT) |
 		(tseg1 << NBTP_NTSEG1_SHIFT) | (tseg2 << NBTP_NTSEG2_SHIFT);
-	m_can_write(cdev, M_CAN_NBTP, reg_btp);
+	m_can_ग_लिखो(cdev, M_CAN_NBTP, reg_btp);
 
-	if (cdev->can.ctrlmode & CAN_CTRLMODE_FD) {
+	अगर (cdev->can.ctrlmode & CAN_CTRLMODE_FD) अणु
 		reg_btp = 0;
 		brp = dbt->brp - 1;
 		sjw = dbt->sjw - 1;
 		tseg1 = dbt->prop_seg + dbt->phase_seg1 - 1;
 		tseg2 = dbt->phase_seg2 - 1;
 
-		/* TDC is only needed for bitrates beyond 2.5 MBit/s.
+		/* TDC is only needed क्रम bitrates beyond 2.5 MBit/s.
 		 * This is mentioned in the "Bit Time Requirements for CAN FD"
 		 * paper presented at the International CAN Conference 2013
 		 */
-		if (dbt->bitrate > 2500000) {
+		अगर (dbt->bitrate > 2500000) अणु
 			u32 tdco, ssp;
 
-			/* Use the same value of secondary sampling point
-			 * as the data sampling point
+			/* Use the same value of secondary sampling poपूर्णांक
+			 * as the data sampling poपूर्णांक
 			 */
-			ssp = dbt->sample_point;
+			ssp = dbt->sample_poपूर्णांक;
 
 			/* Equation based on Bosch's M_CAN User Manual's
 			 * Transmitter Delay Compensation Section
 			 */
-			tdco = (cdev->can.clock.freq / 1000) *
+			tdco = (cdev->can.घड़ी.freq / 1000) *
 				ssp / dbt->bitrate;
 
 			/* Max valid TDCO value is 127 */
-			if (tdco > 127) {
+			अगर (tdco > 127) अणु
 				netdev_warn(dev, "TDCO value of %u is beyond maximum. Using maximum possible value\n",
 					    tdco);
 				tdco = 127;
-			}
+			पूर्ण
 
 			reg_btp |= DBTP_TDC;
-			m_can_write(cdev, M_CAN_TDCR,
+			m_can_ग_लिखो(cdev, M_CAN_TDCR,
 				    tdco << TDCR_TDCO_SHIFT);
-		}
+		पूर्ण
 
 		reg_btp |= (brp << DBTP_DBRP_SHIFT) |
 			(sjw << DBTP_DSJW_SHIFT) |
 			(tseg1 << DBTP_DTSEG1_SHIFT) |
 			(tseg2 << DBTP_DTSEG2_SHIFT);
 
-		m_can_write(cdev, M_CAN_DBTP, reg_btp);
-	}
+		m_can_ग_लिखो(cdev, M_CAN_DBTP, reg_btp);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Configure M_CAN chip:
- * - set rx buffer/fifo element size
- * - configure rx fifo
- * - accept non-matching frame into fifo 0
+ * - set rx buffer/fअगरo element size
+ * - configure rx fअगरo
+ * - accept non-matching frame पूर्णांकo fअगरo 0
  * - configure tx buffer
  *		- >= v3.1.x: TX FIFO is used
  * - configure mode
  * - setup bittiming
- * - configure timestamp generation
+ * - configure बारtamp generation
  */
-static void m_can_chip_config(struct net_device *dev)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
+अटल व्योम m_can_chip_config(काष्ठा net_device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
 	u32 cccr, test;
 
 	m_can_config_endisable(cdev, true);
 
 	/* RX Buffer/FIFO Element Size 64 bytes data field */
-	m_can_write(cdev, M_CAN_RXESC, M_CAN_RXESC_64BYTES);
+	m_can_ग_लिखो(cdev, M_CAN_RXESC, M_CAN_RXESC_64BYTES);
 
 	/* Accept Non-matching Frames Into FIFO 0 */
-	m_can_write(cdev, M_CAN_GFC, 0x0);
+	m_can_ग_लिखो(cdev, M_CAN_GFC, 0x0);
 
-	if (cdev->version == 30) {
+	अगर (cdev->version == 30) अणु
 		/* only support one Tx Buffer currently */
-		m_can_write(cdev, M_CAN_TXBC, (1 << TXBC_NDTB_SHIFT) |
+		m_can_ग_लिखो(cdev, M_CAN_TXBC, (1 << TXBC_NDTB_SHIFT) |
 			    cdev->mcfg[MRAM_TXB].off);
-	} else {
-		/* TX FIFO is used for newer IP Core versions */
-		m_can_write(cdev, M_CAN_TXBC,
+	पूर्ण अन्यथा अणु
+		/* TX FIFO is used क्रम newer IP Core versions */
+		m_can_ग_लिखो(cdev, M_CAN_TXBC,
 			    (cdev->mcfg[MRAM_TXB].num << TXBC_TFQS_SHIFT) |
 			    (cdev->mcfg[MRAM_TXB].off));
-	}
+	पूर्ण
 
 	/* support 64 bytes payload */
-	m_can_write(cdev, M_CAN_TXESC, TXESC_TBDS_64BYTES);
+	m_can_ग_लिखो(cdev, M_CAN_TXESC, TXESC_TBDS_64BYTES);
 
 	/* TX Event FIFO */
-	if (cdev->version == 30) {
-		m_can_write(cdev, M_CAN_TXEFC, (1 << TXEFC_EFS_SHIFT) |
+	अगर (cdev->version == 30) अणु
+		m_can_ग_लिखो(cdev, M_CAN_TXEFC, (1 << TXEFC_EFS_SHIFT) |
 			    cdev->mcfg[MRAM_TXE].off);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Full TX Event FIFO is used */
-		m_can_write(cdev, M_CAN_TXEFC,
+		m_can_ग_लिखो(cdev, M_CAN_TXEFC,
 			    ((cdev->mcfg[MRAM_TXE].num << TXEFC_EFS_SHIFT)
 			     & TXEFC_EFS_MASK) |
 			    cdev->mcfg[MRAM_TXE].off);
-	}
+	पूर्ण
 
-	/* rx fifo configuration, blocking mode, fifo size 1 */
-	m_can_write(cdev, M_CAN_RXF0C,
+	/* rx fअगरo configuration, blocking mode, fअगरo size 1 */
+	m_can_ग_लिखो(cdev, M_CAN_RXF0C,
 		    (cdev->mcfg[MRAM_RXF0].num << RXFC_FS_SHIFT) |
 		    cdev->mcfg[MRAM_RXF0].off);
 
-	m_can_write(cdev, M_CAN_RXF1C,
+	m_can_ग_लिखो(cdev, M_CAN_RXF1C,
 		    (cdev->mcfg[MRAM_RXF1].num << RXFC_FS_SHIFT) |
 		    cdev->mcfg[MRAM_RXF1].off);
 
-	cccr = m_can_read(cdev, M_CAN_CCCR);
-	test = m_can_read(cdev, M_CAN_TEST);
+	cccr = m_can_पढ़ो(cdev, M_CAN_CCCR);
+	test = m_can_पढ़ो(cdev, M_CAN_TEST);
 	test &= ~TEST_LBCK;
-	if (cdev->version == 30) {
+	अगर (cdev->version == 30) अणु
 		/* Version 3.0.x */
 
 		cccr &= ~(CCCR_TEST | CCCR_MON | CCCR_DAR |
 			  (CCCR_CMR_MASK << CCCR_CMR_SHIFT) |
 			  (CCCR_CME_MASK << CCCR_CME_SHIFT));
 
-		if (cdev->can.ctrlmode & CAN_CTRLMODE_FD)
+		अगर (cdev->can.ctrlmode & CAN_CTRLMODE_FD)
 			cccr |= CCCR_CME_CANFD_BRS << CCCR_CME_SHIFT;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Version 3.1.x or 3.2.x */
 		cccr &= ~(CCCR_TEST | CCCR_MON | CCCR_BRSE | CCCR_FDOE |
 			  CCCR_NISO | CCCR_DAR);
 
 		/* Only 3.2.x has NISO Bit implemented */
-		if (cdev->can.ctrlmode & CAN_CTRLMODE_FD_NON_ISO)
+		अगर (cdev->can.ctrlmode & CAN_CTRLMODE_FD_NON_ISO)
 			cccr |= CCCR_NISO;
 
-		if (cdev->can.ctrlmode & CAN_CTRLMODE_FD)
+		अगर (cdev->can.ctrlmode & CAN_CTRLMODE_FD)
 			cccr |= (CCCR_BRSE | CCCR_FDOE);
-	}
+	पूर्ण
 
 	/* Loopback Mode */
-	if (cdev->can.ctrlmode & CAN_CTRLMODE_LOOPBACK) {
+	अगर (cdev->can.ctrlmode & CAN_CTRLMODE_LOOPBACK) अणु
 		cccr |= CCCR_TEST | CCCR_MON;
 		test |= TEST_LBCK;
-	}
+	पूर्ण
 
 	/* Enable Monitoring (all versions) */
-	if (cdev->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
+	अगर (cdev->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
 		cccr |= CCCR_MON;
 
 	/* Disable Auto Retransmission (all versions) */
-	if (cdev->can.ctrlmode & CAN_CTRLMODE_ONE_SHOT)
+	अगर (cdev->can.ctrlmode & CAN_CTRLMODE_ONE_SHOT)
 		cccr |= CCCR_DAR;
 
 	/* Write config */
-	m_can_write(cdev, M_CAN_CCCR, cccr);
-	m_can_write(cdev, M_CAN_TEST, test);
+	m_can_ग_लिखो(cdev, M_CAN_CCCR, cccr);
+	m_can_ग_लिखो(cdev, M_CAN_TEST, test);
 
-	/* Enable interrupts */
-	m_can_write(cdev, M_CAN_IR, IR_ALL_INT);
-	if (!(cdev->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING))
-		if (cdev->version == 30)
-			m_can_write(cdev, M_CAN_IE, IR_ALL_INT &
+	/* Enable पूर्णांकerrupts */
+	m_can_ग_लिखो(cdev, M_CAN_IR, IR_ALL_INT);
+	अगर (!(cdev->can.ctrlmode & CAN_CTRLMODE_BERR_REPORTING))
+		अगर (cdev->version == 30)
+			m_can_ग_लिखो(cdev, M_CAN_IE, IR_ALL_INT &
 				    ~(IR_ERR_LEC_30X));
-		else
-			m_can_write(cdev, M_CAN_IE, IR_ALL_INT &
+		अन्यथा
+			m_can_ग_लिखो(cdev, M_CAN_IE, IR_ALL_INT &
 				    ~(IR_ERR_LEC_31X));
-	else
-		m_can_write(cdev, M_CAN_IE, IR_ALL_INT);
+	अन्यथा
+		m_can_ग_लिखो(cdev, M_CAN_IE, IR_ALL_INT);
 
-	/* route all interrupts to INT0 */
-	m_can_write(cdev, M_CAN_ILS, ILS_ALL_INT0);
+	/* route all पूर्णांकerrupts to INT0 */
+	m_can_ग_लिखो(cdev, M_CAN_ILS, ILS_ALL_INT0);
 
 	/* set bittiming params */
 	m_can_set_bittiming(dev);
 
-	/* enable internal timestamp generation, with a prescalar of 16. The
+	/* enable पूर्णांकernal बारtamp generation, with a prescalar of 16. The
 	 * prescalar is applied to the nominal bit timing */
-	m_can_write(cdev, M_CAN_TSCC, FIELD_PREP(TSCC_TCP_MASK, 0xf));
+	m_can_ग_लिखो(cdev, M_CAN_TSCC, FIELD_PREP(TSCC_TCP_MASK, 0xf));
 
 	m_can_config_endisable(cdev, false);
 
-	if (cdev->ops->init)
+	अगर (cdev->ops->init)
 		cdev->ops->init(cdev);
-}
+पूर्ण
 
-static void m_can_start(struct net_device *dev)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
+अटल व्योम m_can_start(काष्ठा net_device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
 
 	/* basic m_can configuration */
 	m_can_chip_config(dev);
 
 	cdev->can.state = CAN_STATE_ERROR_ACTIVE;
 
-	m_can_enable_all_interrupts(cdev);
-}
+	m_can_enable_all_पूर्णांकerrupts(cdev);
+पूर्ण
 
-static int m_can_set_mode(struct net_device *dev, enum can_mode mode)
-{
-	switch (mode) {
-	case CAN_MODE_START:
+अटल पूर्णांक m_can_set_mode(काष्ठा net_device *dev, क्रमागत can_mode mode)
+अणु
+	चयन (mode) अणु
+	हाल CAN_MODE_START:
 		m_can_clean(dev);
 		m_can_start(dev);
-		netif_wake_queue(dev);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		netअगर_wake_queue(dev);
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Checks core release number of M_CAN
- * returns 0 if an unsupported device is detected
- * else it returns the release and step coded as:
- * return value = 10 * <release> + 1 * <step>
+ * वापसs 0 अगर an unsupported device is detected
+ * अन्यथा it वापसs the release and step coded as:
+ * वापस value = 10 * <release> + 1 * <step>
  */
-static int m_can_check_core_release(struct m_can_classdev *cdev)
-{
+अटल पूर्णांक m_can_check_core_release(काष्ठा m_can_classdev *cdev)
+अणु
 	u32 crel_reg;
 	u8 rel;
 	u8 step;
-	int res;
+	पूर्णांक res;
 
-	/* Read Core Release Version and split into version number
+	/* Read Core Release Version and split पूर्णांकo version number
 	 * Example: Version 3.2.1 => rel = 3; step = 2; substep = 1;
 	 */
-	crel_reg = m_can_read(cdev, M_CAN_CREL);
+	crel_reg = m_can_पढ़ो(cdev, M_CAN_CREL);
 	rel = (u8)((crel_reg & CREL_REL_MASK) >> CREL_REL_SHIFT);
 	step = (u8)((crel_reg & CREL_STEP_MASK) >> CREL_STEP_SHIFT);
 
-	if (rel == 3) {
-		/* M_CAN v3.x.y: create return value */
+	अगर (rel == 3) अणु
+		/* M_CAN v3.x.y: create वापस value */
 		res = 30 + step;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Unsupported M_CAN version */
 		res = 0;
-	}
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /* Selectable Non ISO support only in version 3.2.x
- * This function checks if the bit is writable.
+ * This function checks अगर the bit is writable.
  */
-static bool m_can_niso_supported(struct m_can_classdev *cdev)
-{
+अटल bool m_can_niso_supported(काष्ठा m_can_classdev *cdev)
+अणु
 	u32 cccr_reg, cccr_poll = 0;
-	int niso_timeout = -ETIMEDOUT;
-	int i;
+	पूर्णांक niso_समयout = -ETIMEDOUT;
+	पूर्णांक i;
 
 	m_can_config_endisable(cdev, true);
-	cccr_reg = m_can_read(cdev, M_CAN_CCCR);
+	cccr_reg = m_can_पढ़ो(cdev, M_CAN_CCCR);
 	cccr_reg |= CCCR_NISO;
-	m_can_write(cdev, M_CAN_CCCR, cccr_reg);
+	m_can_ग_लिखो(cdev, M_CAN_CCCR, cccr_reg);
 
-	for (i = 0; i <= 10; i++) {
-		cccr_poll = m_can_read(cdev, M_CAN_CCCR);
-		if (cccr_poll == cccr_reg) {
-			niso_timeout = 0;
-			break;
-		}
+	क्रम (i = 0; i <= 10; i++) अणु
+		cccr_poll = m_can_पढ़ो(cdev, M_CAN_CCCR);
+		अगर (cccr_poll == cccr_reg) अणु
+			niso_समयout = 0;
+			अवरोध;
+		पूर्ण
 
 		usleep_range(1, 5);
-	}
+	पूर्ण
 
 	/* Clear NISO */
 	cccr_reg &= ~(CCCR_NISO);
-	m_can_write(cdev, M_CAN_CCCR, cccr_reg);
+	m_can_ग_लिखो(cdev, M_CAN_CCCR, cccr_reg);
 
 	m_can_config_endisable(cdev, false);
 
-	/* return false if time out (-ETIMEDOUT), else return true */
-	return !niso_timeout;
-}
+	/* वापस false अगर समय out (-ETIMEDOUT), अन्यथा वापस true */
+	वापस !niso_समयout;
+पूर्ण
 
-static int m_can_dev_setup(struct m_can_classdev *cdev)
-{
-	struct net_device *dev = cdev->net;
-	int m_can_version;
+अटल पूर्णांक m_can_dev_setup(काष्ठा m_can_classdev *cdev)
+अणु
+	काष्ठा net_device *dev = cdev->net;
+	पूर्णांक m_can_version;
 
 	m_can_version = m_can_check_core_release(cdev);
-	/* return if unsupported version */
-	if (!m_can_version) {
+	/* वापस अगर unsupported version */
+	अगर (!m_can_version) अणु
 		dev_err(cdev->dev, "Unsupported version number: %2d",
 			m_can_version);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!cdev->is_peripheral)
-		netif_napi_add(dev, &cdev->napi,
+	अगर (!cdev->is_peripheral)
+		netअगर_napi_add(dev, &cdev->napi,
 			       m_can_poll, M_CAN_NAPI_WEIGHT);
 
 	/* Shared properties of all M_CAN versions */
 	cdev->version = m_can_version;
-	cdev->can.do_set_mode = m_can_set_mode;
-	cdev->can.do_get_berr_counter = m_can_get_berr_counter;
+	cdev->can.करो_set_mode = m_can_set_mode;
+	cdev->can.करो_get_berr_counter = m_can_get_berr_counter;
 
 	/* Set M_CAN supported operations */
 	cdev->can.ctrlmode_supported = CAN_CTRLMODE_LOOPBACK |
@@ -1450,358 +1451,358 @@ static int m_can_dev_setup(struct m_can_classdev *cdev)
 		CAN_CTRLMODE_ONE_SHOT;
 
 	/* Set properties depending on M_CAN version */
-	switch (cdev->version) {
-	case 30:
+	चयन (cdev->version) अणु
+	हाल 30:
 		/* CAN_CTRLMODE_FD_NON_ISO is fixed with M_CAN IP v3.0.x */
-		can_set_static_ctrlmode(dev, CAN_CTRLMODE_FD_NON_ISO);
-		cdev->can.bittiming_const = cdev->bit_timing ?
-			cdev->bit_timing : &m_can_bittiming_const_30X;
+		can_set_अटल_ctrlmode(dev, CAN_CTRLMODE_FD_NON_ISO);
+		cdev->can.bittiming_स्थिर = cdev->bit_timing ?
+			cdev->bit_timing : &m_can_bittiming_स्थिर_30X;
 
-		cdev->can.data_bittiming_const = cdev->data_timing ?
+		cdev->can.data_bittiming_स्थिर = cdev->data_timing ?
 			cdev->data_timing :
-			&m_can_data_bittiming_const_30X;
-		break;
-	case 31:
+			&m_can_data_bittiming_स्थिर_30X;
+		अवरोध;
+	हाल 31:
 		/* CAN_CTRLMODE_FD_NON_ISO is fixed with M_CAN IP v3.1.x */
-		can_set_static_ctrlmode(dev, CAN_CTRLMODE_FD_NON_ISO);
-		cdev->can.bittiming_const = cdev->bit_timing ?
-			cdev->bit_timing : &m_can_bittiming_const_31X;
+		can_set_अटल_ctrlmode(dev, CAN_CTRLMODE_FD_NON_ISO);
+		cdev->can.bittiming_स्थिर = cdev->bit_timing ?
+			cdev->bit_timing : &m_can_bittiming_स्थिर_31X;
 
-		cdev->can.data_bittiming_const = cdev->data_timing ?
+		cdev->can.data_bittiming_स्थिर = cdev->data_timing ?
 			cdev->data_timing :
-			&m_can_data_bittiming_const_31X;
-		break;
-	case 32:
-	case 33:
+			&m_can_data_bittiming_स्थिर_31X;
+		अवरोध;
+	हाल 32:
+	हाल 33:
 		/* Support both MCAN version v3.2.x and v3.3.0 */
-		cdev->can.bittiming_const = cdev->bit_timing ?
-			cdev->bit_timing : &m_can_bittiming_const_31X;
+		cdev->can.bittiming_स्थिर = cdev->bit_timing ?
+			cdev->bit_timing : &m_can_bittiming_स्थिर_31X;
 
-		cdev->can.data_bittiming_const = cdev->data_timing ?
+		cdev->can.data_bittiming_स्थिर = cdev->data_timing ?
 			cdev->data_timing :
-			&m_can_data_bittiming_const_31X;
+			&m_can_data_bittiming_स्थिर_31X;
 
 		cdev->can.ctrlmode_supported |=
 			(m_can_niso_supported(cdev) ?
 			 CAN_CTRLMODE_FD_NON_ISO : 0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(cdev->dev, "Unsupported version number: %2d",
 			cdev->version);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cdev->ops->init)
+	अगर (cdev->ops->init)
 		cdev->ops->init(cdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void m_can_stop(struct net_device *dev)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
+अटल व्योम m_can_stop(काष्ठा net_device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
 
-	/* disable all interrupts */
-	m_can_disable_all_interrupts(cdev);
+	/* disable all पूर्णांकerrupts */
+	m_can_disable_all_पूर्णांकerrupts(cdev);
 
 	/* Set init mode to disengage from the network */
 	m_can_config_endisable(cdev, true);
 
 	/* set the state as STOPPED */
 	cdev->can.state = CAN_STATE_STOPPED;
-}
+पूर्ण
 
-static int m_can_close(struct net_device *dev)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
+अटल पूर्णांक m_can_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
-	if (!cdev->is_peripheral)
+	अगर (!cdev->is_peripheral)
 		napi_disable(&cdev->napi);
 
 	m_can_stop(dev);
 	m_can_clk_stop(cdev);
-	free_irq(dev->irq, dev);
+	मुक्त_irq(dev->irq, dev);
 
-	if (cdev->is_peripheral) {
-		cdev->tx_skb = NULL;
+	अगर (cdev->is_peripheral) अणु
+		cdev->tx_skb = शून्य;
 		destroy_workqueue(cdev->tx_wq);
-		cdev->tx_wq = NULL;
-	}
+		cdev->tx_wq = शून्य;
+	पूर्ण
 
-	if (cdev->is_peripheral)
+	अगर (cdev->is_peripheral)
 		can_rx_offload_disable(&cdev->offload);
 
-	close_candev(dev);
+	बंद_candev(dev);
 	can_led_event(dev, CAN_LED_EVENT_STOP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m_can_next_echo_skb_occupied(struct net_device *dev, int putidx)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	/*get wrap around for loopback skb index */
-	unsigned int wrap = cdev->can.echo_skb_max;
-	int next_idx;
+अटल पूर्णांक m_can_next_echo_skb_occupied(काष्ठा net_device *dev, पूर्णांक putidx)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	/*get wrap around क्रम loopback skb index */
+	अचिन्हित पूर्णांक wrap = cdev->can.echo_skb_max;
+	पूर्णांक next_idx;
 
 	/* calculate next index */
 	next_idx = (++putidx >= wrap ? 0 : putidx);
 
-	/* check if occupied */
-	return !!cdev->can.echo_skb[next_idx];
-}
+	/* check अगर occupied */
+	वापस !!cdev->can.echo_skb[next_idx];
+पूर्ण
 
-static netdev_tx_t m_can_tx_handler(struct m_can_classdev *cdev)
-{
-	struct canfd_frame *cf = (struct canfd_frame *)cdev->tx_skb->data;
-	struct net_device *dev = cdev->net;
-	struct sk_buff *skb = cdev->tx_skb;
+अटल netdev_tx_t m_can_tx_handler(काष्ठा m_can_classdev *cdev)
+अणु
+	काष्ठा canfd_frame *cf = (काष्ठा canfd_frame *)cdev->tx_skb->data;
+	काष्ठा net_device *dev = cdev->net;
+	काष्ठा sk_buff *skb = cdev->tx_skb;
 	u32 id, cccr, fdflags;
-	int i;
-	int putidx;
+	पूर्णांक i;
+	पूर्णांक putidx;
 
-	cdev->tx_skb = NULL;
+	cdev->tx_skb = शून्य;
 
-	/* Generate ID field for TX buffer Element */
+	/* Generate ID field क्रम TX buffer Element */
 	/* Common to all supported M_CAN versions */
-	if (cf->can_id & CAN_EFF_FLAG) {
+	अगर (cf->can_id & CAN_EFF_FLAG) अणु
 		id = cf->can_id & CAN_EFF_MASK;
 		id |= TX_BUF_XTD;
-	} else {
+	पूर्ण अन्यथा अणु
 		id = ((cf->can_id & CAN_SFF_MASK) << 18);
-	}
+	पूर्ण
 
-	if (cf->can_id & CAN_RTR_FLAG)
+	अगर (cf->can_id & CAN_RTR_FLAG)
 		id |= TX_BUF_RTR;
 
-	if (cdev->version == 30) {
-		netif_stop_queue(dev);
+	अगर (cdev->version == 30) अणु
+		netअगर_stop_queue(dev);
 
 		/* message ram configuration */
-		m_can_fifo_write(cdev, 0, M_CAN_FIFO_ID, id);
-		m_can_fifo_write(cdev, 0, M_CAN_FIFO_DLC,
+		m_can_fअगरo_ग_लिखो(cdev, 0, M_CAN_FIFO_ID, id);
+		m_can_fअगरo_ग_लिखो(cdev, 0, M_CAN_FIFO_DLC,
 				 can_fd_len2dlc(cf->len) << 16);
 
-		for (i = 0; i < cf->len; i += 4)
-			m_can_fifo_write(cdev, 0,
+		क्रम (i = 0; i < cf->len; i += 4)
+			m_can_fअगरo_ग_लिखो(cdev, 0,
 					 M_CAN_FIFO_DATA(i / 4),
 					 *(u32 *)(cf->data + i));
 
 		can_put_echo_skb(skb, dev, 0, 0);
 
-		if (cdev->can.ctrlmode & CAN_CTRLMODE_FD) {
-			cccr = m_can_read(cdev, M_CAN_CCCR);
+		अगर (cdev->can.ctrlmode & CAN_CTRLMODE_FD) अणु
+			cccr = m_can_पढ़ो(cdev, M_CAN_CCCR);
 			cccr &= ~(CCCR_CMR_MASK << CCCR_CMR_SHIFT);
-			if (can_is_canfd_skb(skb)) {
-				if (cf->flags & CANFD_BRS)
+			अगर (can_is_canfd_skb(skb)) अणु
+				अगर (cf->flags & CANFD_BRS)
 					cccr |= CCCR_CMR_CANFD_BRS <<
 						CCCR_CMR_SHIFT;
-				else
+				अन्यथा
 					cccr |= CCCR_CMR_CANFD <<
 						CCCR_CMR_SHIFT;
-			} else {
+			पूर्ण अन्यथा अणु
 				cccr |= CCCR_CMR_CAN << CCCR_CMR_SHIFT;
-			}
-			m_can_write(cdev, M_CAN_CCCR, cccr);
-		}
-		m_can_write(cdev, M_CAN_TXBTIE, 0x1);
-		m_can_write(cdev, M_CAN_TXBAR, 0x1);
-		/* End of xmit function for version 3.0.x */
-	} else {
-		/* Transmit routine for version >= v3.1.x */
+			पूर्ण
+			m_can_ग_लिखो(cdev, M_CAN_CCCR, cccr);
+		पूर्ण
+		m_can_ग_लिखो(cdev, M_CAN_TXBTIE, 0x1);
+		m_can_ग_लिखो(cdev, M_CAN_TXBAR, 0x1);
+		/* End of xmit function क्रम version 3.0.x */
+	पूर्ण अन्यथा अणु
+		/* Transmit routine क्रम version >= v3.1.x */
 
-		/* Check if FIFO full */
-		if (m_can_tx_fifo_full(cdev)) {
+		/* Check अगर FIFO full */
+		अगर (m_can_tx_fअगरo_full(cdev)) अणु
 			/* This shouldn't happen */
-			netif_stop_queue(dev);
+			netअगर_stop_queue(dev);
 			netdev_warn(dev,
 				    "TX queue active although FIFO is full.");
 
-			if (cdev->is_peripheral) {
-				kfree_skb(skb);
+			अगर (cdev->is_peripheral) अणु
+				kमुक्त_skb(skb);
 				dev->stats.tx_dropped++;
-				return NETDEV_TX_OK;
-			} else {
-				return NETDEV_TX_BUSY;
-			}
-		}
+				वापस NETDEV_TX_OK;
+			पूर्ण अन्यथा अणु
+				वापस NETDEV_TX_BUSY;
+			पूर्ण
+		पूर्ण
 
-		/* get put index for frame */
-		putidx = ((m_can_read(cdev, M_CAN_TXFQS) & TXFQS_TFQPI_MASK)
+		/* get put index क्रम frame */
+		putidx = ((m_can_पढ़ो(cdev, M_CAN_TXFQS) & TXFQS_TFQPI_MASK)
 			  >> TXFQS_TFQPI_SHIFT);
 		/* Write ID Field to FIFO Element */
-		m_can_fifo_write(cdev, putidx, M_CAN_FIFO_ID, id);
+		m_can_fअगरo_ग_लिखो(cdev, putidx, M_CAN_FIFO_ID, id);
 
 		/* get CAN FD configuration of frame */
 		fdflags = 0;
-		if (can_is_canfd_skb(skb)) {
+		अगर (can_is_canfd_skb(skb)) अणु
 			fdflags |= TX_BUF_FDF;
-			if (cf->flags & CANFD_BRS)
+			अगर (cf->flags & CANFD_BRS)
 				fdflags |= TX_BUF_BRS;
-		}
+		पूर्ण
 
-		/* Construct DLC Field. Also contains CAN-FD configuration
-		 * use put index of fifo as message marker
-		 * it is used in TX interrupt for
+		/* Conकाष्ठा DLC Field. Also contains CAN-FD configuration
+		 * use put index of fअगरo as message marker
+		 * it is used in TX पूर्णांकerrupt क्रम
 		 * sending the correct echo frame
 		 */
-		m_can_fifo_write(cdev, putidx, M_CAN_FIFO_DLC,
+		m_can_fअगरo_ग_लिखो(cdev, putidx, M_CAN_FIFO_DLC,
 				 ((putidx << TX_BUF_MM_SHIFT) &
 				  TX_BUF_MM_MASK) |
 				 (can_fd_len2dlc(cf->len) << 16) |
 				 fdflags | TX_BUF_EFC);
 
-		for (i = 0; i < cf->len; i += 4)
-			m_can_fifo_write(cdev, putidx, M_CAN_FIFO_DATA(i / 4),
+		क्रम (i = 0; i < cf->len; i += 4)
+			m_can_fअगरo_ग_लिखो(cdev, putidx, M_CAN_FIFO_DATA(i / 4),
 					 *(u32 *)(cf->data + i));
 
 		/* Push loopback echo.
-		 * Will be looped back on TX interrupt based on message marker
+		 * Will be looped back on TX पूर्णांकerrupt based on message marker
 		 */
 		can_put_echo_skb(skb, dev, putidx, 0);
 
 		/* Enable TX FIFO element to start transfer  */
-		m_can_write(cdev, M_CAN_TXBAR, (1 << putidx));
+		m_can_ग_लिखो(cdev, M_CAN_TXBAR, (1 << putidx));
 
-		/* stop network queue if fifo full */
-		if (m_can_tx_fifo_full(cdev) ||
+		/* stop network queue अगर fअगरo full */
+		अगर (m_can_tx_fअगरo_full(cdev) ||
 		    m_can_next_echo_skb_occupied(dev, putidx))
-			netif_stop_queue(dev);
-	}
+			netअगर_stop_queue(dev);
+	पूर्ण
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void m_can_tx_work_queue(struct work_struct *ws)
-{
-	struct m_can_classdev *cdev = container_of(ws, struct m_can_classdev,
+अटल व्योम m_can_tx_work_queue(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा m_can_classdev *cdev = container_of(ws, काष्ठा m_can_classdev,
 						   tx_work);
 
 	m_can_tx_handler(cdev);
-}
+पूर्ण
 
-static netdev_tx_t m_can_start_xmit(struct sk_buff *skb,
-				    struct net_device *dev)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
+अटल netdev_tx_t m_can_start_xmit(काष्ठा sk_buff *skb,
+				    काष्ठा net_device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
 
-	if (can_dropped_invalid_skb(dev, skb))
-		return NETDEV_TX_OK;
+	अगर (can_dropped_invalid_skb(dev, skb))
+		वापस NETDEV_TX_OK;
 
-	if (cdev->is_peripheral) {
-		if (cdev->tx_skb) {
+	अगर (cdev->is_peripheral) अणु
+		अगर (cdev->tx_skb) अणु
 			netdev_err(dev, "hard_xmit called while tx busy\n");
-			return NETDEV_TX_BUSY;
-		}
+			वापस NETDEV_TX_BUSY;
+		पूर्ण
 
-		if (cdev->can.state == CAN_STATE_BUS_OFF) {
+		अगर (cdev->can.state == CAN_STATE_BUS_OFF) अणु
 			m_can_clean(dev);
-		} else {
-			/* Need to stop the queue to avoid numerous requests
+		पूर्ण अन्यथा अणु
+			/* Need to stop the queue to aव्योम numerous requests
 			 * from being sent.  Suggested improvement is to create
 			 * a queueing mechanism that will queue the skbs and
 			 * process them in order.
 			 */
 			cdev->tx_skb = skb;
-			netif_stop_queue(cdev->net);
+			netअगर_stop_queue(cdev->net);
 			queue_work(cdev->tx_wq, &cdev->tx_work);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		cdev->tx_skb = skb;
-		return m_can_tx_handler(cdev);
-	}
+		वापस m_can_tx_handler(cdev);
+	पूर्ण
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int m_can_open(struct net_device *dev)
-{
-	struct m_can_classdev *cdev = netdev_priv(dev);
-	int err;
+अटल पूर्णांक m_can_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = netdev_priv(dev);
+	पूर्णांक err;
 
 	err = m_can_clk_start(cdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* open the can device */
-	err = open_candev(dev);
-	if (err) {
+	/* खोलो the can device */
+	err = खोलो_candev(dev);
+	अगर (err) अणु
 		netdev_err(dev, "failed to open can device\n");
-		goto exit_disable_clks;
-	}
+		जाओ निकास_disable_clks;
+	पूर्ण
 
-	if (cdev->is_peripheral)
+	अगर (cdev->is_peripheral)
 		can_rx_offload_enable(&cdev->offload);
 
-	/* register interrupt handler */
-	if (cdev->is_peripheral) {
-		cdev->tx_skb = NULL;
+	/* रेजिस्टर पूर्णांकerrupt handler */
+	अगर (cdev->is_peripheral) अणु
+		cdev->tx_skb = शून्य;
 		cdev->tx_wq = alloc_workqueue("mcan_wq",
 					      WQ_FREEZABLE | WQ_MEM_RECLAIM, 0);
-		if (!cdev->tx_wq) {
+		अगर (!cdev->tx_wq) अणु
 			err = -ENOMEM;
-			goto out_wq_fail;
-		}
+			जाओ out_wq_fail;
+		पूर्ण
 
 		INIT_WORK(&cdev->tx_work, m_can_tx_work_queue);
 
-		err = request_threaded_irq(dev->irq, NULL, m_can_isr,
+		err = request_thपढ़ोed_irq(dev->irq, शून्य, m_can_isr,
 					   IRQF_ONESHOT,
 					   dev->name, dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = request_irq(dev->irq, m_can_isr, IRQF_SHARED, dev->name,
 				  dev);
-	}
+	पूर्ण
 
-	if (err < 0) {
+	अगर (err < 0) अणु
 		netdev_err(dev, "failed to request interrupt\n");
-		goto exit_irq_fail;
-	}
+		जाओ निकास_irq_fail;
+	पूर्ण
 
 	/* start the m_can controller */
 	m_can_start(dev);
 
 	can_led_event(dev, CAN_LED_EVENT_OPEN);
 
-	if (!cdev->is_peripheral)
+	अगर (!cdev->is_peripheral)
 		napi_enable(&cdev->napi);
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	return 0;
+	वापस 0;
 
-exit_irq_fail:
-	if (cdev->is_peripheral)
+निकास_irq_fail:
+	अगर (cdev->is_peripheral)
 		destroy_workqueue(cdev->tx_wq);
 out_wq_fail:
-	if (cdev->is_peripheral)
+	अगर (cdev->is_peripheral)
 		can_rx_offload_disable(&cdev->offload);
-	close_candev(dev);
-exit_disable_clks:
+	बंद_candev(dev);
+निकास_disable_clks:
 	m_can_clk_stop(cdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct net_device_ops m_can_netdev_ops = {
-	.ndo_open = m_can_open,
-	.ndo_stop = m_can_close,
-	.ndo_start_xmit = m_can_start_xmit,
-	.ndo_change_mtu = can_change_mtu,
-};
+अटल स्थिर काष्ठा net_device_ops m_can_netdev_ops = अणु
+	.nकरो_खोलो = m_can_खोलो,
+	.nकरो_stop = m_can_बंद,
+	.nकरो_start_xmit = m_can_start_xmit,
+	.nकरो_change_mtu = can_change_mtu,
+पूर्ण;
 
-static int register_m_can_dev(struct net_device *dev)
-{
+अटल पूर्णांक रेजिस्टर_m_can_dev(काष्ठा net_device *dev)
+अणु
 	dev->flags |= IFF_ECHO;	/* we support local echo */
 	dev->netdev_ops = &m_can_netdev_ops;
 
-	return register_candev(dev);
-}
+	वापस रेजिस्टर_candev(dev);
+पूर्ण
 
-static void m_can_of_parse_mram(struct m_can_classdev *cdev,
-				const u32 *mram_config_vals)
-{
+अटल व्योम m_can_of_parse_mram(काष्ठा m_can_classdev *cdev,
+				स्थिर u32 *mram_config_vals)
+अणु
 	cdev->mcfg[MRAM_SIDF].off = mram_config_vals[0];
 	cdev->mcfg[MRAM_SIDF].num = mram_config_vals[1];
 	cdev->mcfg[MRAM_XIDF].off = cdev->mcfg[MRAM_SIDF].off +
@@ -1835,69 +1836,69 @@ static void m_can_of_parse_mram(struct m_can_classdev *cdev,
 		cdev->mcfg[MRAM_RXB].off, cdev->mcfg[MRAM_RXB].num,
 		cdev->mcfg[MRAM_TXE].off, cdev->mcfg[MRAM_TXE].num,
 		cdev->mcfg[MRAM_TXB].off, cdev->mcfg[MRAM_TXB].num);
-}
+पूर्ण
 
-void m_can_init_ram(struct m_can_classdev *cdev)
-{
-	int end, i, start;
+व्योम m_can_init_ram(काष्ठा m_can_classdev *cdev)
+अणु
+	पूर्णांक end, i, start;
 
-	/* initialize the entire Message RAM in use to avoid possible
-	 * ECC/parity checksum errors when reading an uninitialized buffer
+	/* initialize the entire Message RAM in use to aव्योम possible
+	 * ECC/parity checksum errors when पढ़ोing an uninitialized buffer
 	 */
 	start = cdev->mcfg[MRAM_SIDF].off;
 	end = cdev->mcfg[MRAM_TXB].off +
 		cdev->mcfg[MRAM_TXB].num * TXB_ELEMENT_SIZE;
 
-	for (i = start; i < end; i += 4)
-		m_can_fifo_write_no_off(cdev, i, 0x0);
-}
+	क्रम (i = start; i < end; i += 4)
+		m_can_fअगरo_ग_लिखो_no_off(cdev, i, 0x0);
+पूर्ण
 EXPORT_SYMBOL_GPL(m_can_init_ram);
 
-int m_can_class_get_clocks(struct m_can_classdev *cdev)
-{
-	int ret = 0;
+पूर्णांक m_can_class_get_घड़ीs(काष्ठा m_can_classdev *cdev)
+अणु
+	पूर्णांक ret = 0;
 
 	cdev->hclk = devm_clk_get(cdev->dev, "hclk");
 	cdev->cclk = devm_clk_get(cdev->dev, "cclk");
 
-	if (IS_ERR(cdev->cclk)) {
+	अगर (IS_ERR(cdev->cclk)) अणु
 		dev_err(cdev->dev, "no clock found\n");
 		ret = -ENODEV;
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(m_can_class_get_clocks);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(m_can_class_get_घड़ीs);
 
-struct m_can_classdev *m_can_class_allocate_dev(struct device *dev,
-						int sizeof_priv)
-{
-	struct m_can_classdev *class_dev = NULL;
+काष्ठा m_can_classdev *m_can_class_allocate_dev(काष्ठा device *dev,
+						पूर्णांक माप_priv)
+अणु
+	काष्ठा m_can_classdev *class_dev = शून्य;
 	u32 mram_config_vals[MRAM_CFG_LEN];
-	struct net_device *net_dev;
-	u32 tx_fifo_size;
-	int ret;
+	काष्ठा net_device *net_dev;
+	u32 tx_fअगरo_size;
+	पूर्णांक ret;
 
-	ret = fwnode_property_read_u32_array(dev_fwnode(dev),
+	ret = fwnode_property_पढ़ो_u32_array(dev_fwnode(dev),
 					     "bosch,mram-cfg",
 					     mram_config_vals,
-					     sizeof(mram_config_vals) / 4);
-	if (ret) {
+					     माप(mram_config_vals) / 4);
+	अगर (ret) अणु
 		dev_err(dev, "Could not get Message RAM configuration.");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Get TX FIFO size
-	 * Defines the total amount of echo buffers for loopback
+	 * Defines the total amount of echo buffers क्रम loopback
 	 */
-	tx_fifo_size = mram_config_vals[7];
+	tx_fअगरo_size = mram_config_vals[7];
 
 	/* allocate the m_can device */
-	net_dev = alloc_candev(sizeof_priv, tx_fifo_size);
-	if (!net_dev) {
+	net_dev = alloc_candev(माप_priv, tx_fअगरo_size);
+	अगर (!net_dev) अणु
 		dev_err(dev, "Failed to allocate CAN device");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	class_dev = netdev_priv(net_dev);
 	class_dev->net = net_dev;
@@ -1906,43 +1907,43 @@ struct m_can_classdev *m_can_class_allocate_dev(struct device *dev,
 
 	m_can_of_parse_mram(class_dev, mram_config_vals);
 out:
-	return class_dev;
-}
+	वापस class_dev;
+पूर्ण
 EXPORT_SYMBOL_GPL(m_can_class_allocate_dev);
 
-void m_can_class_free_dev(struct net_device *net)
-{
-	free_candev(net);
-}
-EXPORT_SYMBOL_GPL(m_can_class_free_dev);
+व्योम m_can_class_मुक्त_dev(काष्ठा net_device *net)
+अणु
+	मुक्त_candev(net);
+पूर्ण
+EXPORT_SYMBOL_GPL(m_can_class_मुक्त_dev);
 
-int m_can_class_register(struct m_can_classdev *cdev)
-{
-	int ret;
+पूर्णांक m_can_class_रेजिस्टर(काष्ठा m_can_classdev *cdev)
+अणु
+	पूर्णांक ret;
 
-	if (cdev->pm_clock_support) {
+	अगर (cdev->pm_घड़ी_support) अणु
 		ret = m_can_clk_start(cdev);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (cdev->is_peripheral) {
+	अगर (cdev->is_peripheral) अणु
 		ret = can_rx_offload_add_manual(cdev->net, &cdev->offload,
 						M_CAN_NAPI_WEIGHT);
-		if (ret)
-			goto clk_disable;
-	}
+		अगर (ret)
+			जाओ clk_disable;
+	पूर्ण
 
 	ret = m_can_dev_setup(cdev);
-	if (ret)
-		goto rx_offload_del;
+	अगर (ret)
+		जाओ rx_offload_del;
 
-	ret = register_m_can_dev(cdev->net);
-	if (ret) {
+	ret = रेजिस्टर_m_can_dev(cdev->net);
+	अगर (ret) अणु
 		dev_err(cdev->dev, "registering %s failed (err=%d)\n",
 			cdev->net->name, ret);
-		goto rx_offload_del;
-	}
+		जाओ rx_offload_del;
+	पूर्ण
 
 	devm_can_led_init(cdev->net);
 
@@ -1952,74 +1953,74 @@ int m_can_class_register(struct m_can_classdev *cdev)
 		 KBUILD_MODNAME, cdev->net->irq, cdev->version);
 
 	/* Probe finished
-	 * Stop clocks. They will be reactivated once the M_CAN device is opened
+	 * Stop घड़ीs. They will be reactivated once the M_CAN device is खोलोed
 	 */
 	m_can_clk_stop(cdev);
 
-	return 0;
+	वापस 0;
 
 rx_offload_del:
-	if (cdev->is_peripheral)
+	अगर (cdev->is_peripheral)
 		can_rx_offload_del(&cdev->offload);
 clk_disable:
 	m_can_clk_stop(cdev);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(m_can_class_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(m_can_class_रेजिस्टर);
 
-void m_can_class_unregister(struct m_can_classdev *cdev)
-{
-	if (cdev->is_peripheral)
+व्योम m_can_class_unरेजिस्टर(काष्ठा m_can_classdev *cdev)
+अणु
+	अगर (cdev->is_peripheral)
 		can_rx_offload_del(&cdev->offload);
-	unregister_candev(cdev->net);
-}
-EXPORT_SYMBOL_GPL(m_can_class_unregister);
+	unरेजिस्टर_candev(cdev->net);
+पूर्ण
+EXPORT_SYMBOL_GPL(m_can_class_unरेजिस्टर);
 
-int m_can_class_suspend(struct device *dev)
-{
-	struct m_can_classdev *cdev = dev_get_drvdata(dev);
-	struct net_device *ndev = cdev->net;
+पूर्णांक m_can_class_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = dev_get_drvdata(dev);
+	काष्ठा net_device *ndev = cdev->net;
 
-	if (netif_running(ndev)) {
-		netif_stop_queue(ndev);
-		netif_device_detach(ndev);
+	अगर (netअगर_running(ndev)) अणु
+		netअगर_stop_queue(ndev);
+		netअगर_device_detach(ndev);
 		m_can_stop(ndev);
 		m_can_clk_stop(cdev);
-	}
+	पूर्ण
 
 	pinctrl_pm_select_sleep_state(dev);
 
 	cdev->can.state = CAN_STATE_SLEEPING;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(m_can_class_suspend);
 
-int m_can_class_resume(struct device *dev)
-{
-	struct m_can_classdev *cdev = dev_get_drvdata(dev);
-	struct net_device *ndev = cdev->net;
+पूर्णांक m_can_class_resume(काष्ठा device *dev)
+अणु
+	काष्ठा m_can_classdev *cdev = dev_get_drvdata(dev);
+	काष्ठा net_device *ndev = cdev->net;
 
-	pinctrl_pm_select_default_state(dev);
+	pinctrl_pm_select_शेष_state(dev);
 
 	cdev->can.state = CAN_STATE_ERROR_ACTIVE;
 
-	if (netif_running(ndev)) {
-		int ret;
+	अगर (netअगर_running(ndev)) अणु
+		पूर्णांक ret;
 
 		ret = m_can_clk_start(cdev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		m_can_init_ram(cdev);
 		m_can_start(ndev);
-		netif_device_attach(ndev);
-		netif_start_queue(ndev);
-	}
+		netअगर_device_attach(ndev);
+		netअगर_start_queue(ndev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(m_can_class_resume);
 
 MODULE_AUTHOR("Dong Aisheng <b29396@freescale.com>");

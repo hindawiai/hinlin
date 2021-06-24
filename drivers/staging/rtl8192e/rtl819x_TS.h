@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Information: wlanfae <wlanfae@realtek.com>
+ * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
  */
-#ifndef _TSTYPE_H_
-#define _TSTYPE_H_
-#include "rtl819x_Qos.h"
-#define TS_ADDBA_DELAY		60
+#अगर_अघोषित _TSTYPE_H_
+#घोषणा _TSTYPE_H_
+#समावेश "rtl819x_Qos.h"
+#घोषणा TS_ADDBA_DELAY		60
 
-#define TOTAL_TS_NUM		16
-#define TCLAS_NUM		4
+#घोषणा TOTAL_TS_NUM		16
+#घोषणा TCLAS_NUM		4
 
-enum tr_select {
-	TX_DIR = 0,
-	RX_DIR = 1,
-};
+क्रमागत tr_select अणु
+	TX_सूची = 0,
+	RX_सूची = 1,
+पूर्ण;
 
-struct ts_common_info {
-	struct list_head		List;
-	struct timer_list		SetupTimer;
-	struct timer_list		InactTimer;
+काष्ठा ts_common_info अणु
+	काष्ठा list_head		List;
+	काष्ठा समयr_list		SetupTimer;
+	काष्ठा समयr_list		InactTimer;
 	u8				Addr[ETH_ALEN];
-	union tspec_body TSpec;
-	union qos_tclas TClass[TCLAS_NUM];
+	जोड़ tspec_body TSpec;
+	जोड़ qos_tclas TClass[TCLAS_NUM];
 	u8				TClasProc;
 	u8				TClasNum;
-};
+पूर्ण;
 
-struct tx_ts_record {
-	struct ts_common_info TsCommonInfo;
+काष्ठा tx_ts_record अणु
+	काष्ठा ts_common_info TsCommonInfo;
 	u16				TxCurSeq;
-	struct ba_record TxPendingBARecord;
-	struct ba_record TxAdmittedBARecord;
+	काष्ठा ba_record TxPendingBARecord;
+	काष्ठा ba_record TxAdmittedBARecord;
 	u8				bAddBaReqInProgress;
 	u8				bAddBaReqDelayed;
 	u8				bUsingBa;
 	u8				bDisable_AddBa;
-	struct timer_list		TsAddBaTimer;
+	काष्ठा समयr_list		TsAddBaTimer;
 	u8				num;
-};
+पूर्ण;
 
-struct rx_ts_record {
-	struct ts_common_info ts_common_info;
+काष्ठा rx_ts_record अणु
+	काष्ठा ts_common_info ts_common_info;
 	u16 rx_indicate_seq;
-	u16 rx_timeout_indicate_seq;
-	struct list_head rx_pending_pkt_list;
-	struct timer_list rx_pkt_pending_timer;
-	struct ba_record rx_admitted_ba_record;
+	u16 rx_समयout_indicate_seq;
+	काष्ठा list_head rx_pending_pkt_list;
+	काष्ठा समयr_list rx_pkt_pending_समयr;
+	काष्ठा ba_record rx_admitted_ba_record;
 	u16 rx_last_seq_num;
 	u8 rx_last_frag_num;
 	u8 num;
-};
+पूर्ण;
 
 
 
-#endif
+#पूर्ण_अगर

@@ -1,274 +1,275 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * net/sched/act_skbmod.c  skb data modifier
+ * net/sched/act_skbmod.c  skb data modअगरier
  *
  * Copyright (c) 2016 Jamal Hadi Salim <jhs@mojatatu.com>
 */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <net/netlink.h>
-#include <net/pkt_sched.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <net/netlink.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/pkt_cls.h>
 
-#include <linux/tc_act/tc_skbmod.h>
-#include <net/tc_act/tc_skbmod.h>
+#समावेश <linux/tc_act/tc_skbmod.h>
+#समावेश <net/tc_act/tc_skbmod.h>
 
-static unsigned int skbmod_net_id;
-static struct tc_action_ops act_skbmod_ops;
+अटल अचिन्हित पूर्णांक skbmod_net_id;
+अटल काष्ठा tc_action_ops act_skbmod_ops;
 
-#define MAX_EDIT_LEN ETH_HLEN
-static int tcf_skbmod_act(struct sk_buff *skb, const struct tc_action *a,
-			  struct tcf_result *res)
-{
-	struct tcf_skbmod *d = to_skbmod(a);
-	int action;
-	struct tcf_skbmod_params *p;
+#घोषणा MAX_EDIT_LEN ETH_HLEN
+अटल पूर्णांक tcf_skbmod_act(काष्ठा sk_buff *skb, स्थिर काष्ठा tc_action *a,
+			  काष्ठा tcf_result *res)
+अणु
+	काष्ठा tcf_skbmod *d = to_skbmod(a);
+	पूर्णांक action;
+	काष्ठा tcf_skbmod_params *p;
 	u64 flags;
-	int err;
+	पूर्णांक err;
 
-	tcf_lastuse_update(&d->tcf_tm);
+	tcf_lastuse_update(&d->tcf_पंचांग);
 	bstats_cpu_update(this_cpu_ptr(d->common.cpu_bstats), skb);
 
-	/* XXX: if you are going to edit more fields beyond ethernet header
+	/* XXX: अगर you are going to edit more fields beyond ethernet header
 	 * (example when you add IP header replacement or vlan swap)
 	 * then MAX_EDIT_LEN needs to change appropriately
 	*/
 	err = skb_ensure_writable(skb, MAX_EDIT_LEN);
-	if (unlikely(err)) /* best policy is to drop on the floor */
-		goto drop;
+	अगर (unlikely(err)) /* best policy is to drop on the न्यूनमान */
+		जाओ drop;
 
 	action = READ_ONCE(d->tcf_action);
-	if (unlikely(action == TC_ACT_SHOT))
-		goto drop;
+	अगर (unlikely(action == TC_ACT_SHOT))
+		जाओ drop;
 
 	p = rcu_dereference_bh(d->skbmod_p);
 	flags = p->flags;
-	if (flags & SKBMOD_F_DMAC)
+	अगर (flags & SKBMOD_F_DMAC)
 		ether_addr_copy(eth_hdr(skb)->h_dest, p->eth_dst);
-	if (flags & SKBMOD_F_SMAC)
+	अगर (flags & SKBMOD_F_SMAC)
 		ether_addr_copy(eth_hdr(skb)->h_source, p->eth_src);
-	if (flags & SKBMOD_F_ETYPE)
+	अगर (flags & SKBMOD_F_ETYPE)
 		eth_hdr(skb)->h_proto = p->eth_type;
 
-	if (flags & SKBMOD_F_SWAPMAC) {
-		u16 tmpaddr[ETH_ALEN / 2]; /* ether_addr_copy() requirement */
+	अगर (flags & SKBMOD_F_SWAPMAC) अणु
+		u16 पंचांगpaddr[ETH_ALEN / 2]; /* ether_addr_copy() requirement */
 		/*XXX: I am sure we can come up with more efficient swapping*/
-		ether_addr_copy((u8 *)tmpaddr, eth_hdr(skb)->h_dest);
+		ether_addr_copy((u8 *)पंचांगpaddr, eth_hdr(skb)->h_dest);
 		ether_addr_copy(eth_hdr(skb)->h_dest, eth_hdr(skb)->h_source);
-		ether_addr_copy(eth_hdr(skb)->h_source, (u8 *)tmpaddr);
-	}
+		ether_addr_copy(eth_hdr(skb)->h_source, (u8 *)पंचांगpaddr);
+	पूर्ण
 
-	return action;
+	वापस action;
 
 drop:
 	qstats_overlimit_inc(this_cpu_ptr(d->common.cpu_qstats));
-	return TC_ACT_SHOT;
-}
+	वापस TC_ACT_SHOT;
+पूर्ण
 
-static const struct nla_policy skbmod_policy[TCA_SKBMOD_MAX + 1] = {
-	[TCA_SKBMOD_PARMS]		= { .len = sizeof(struct tc_skbmod) },
-	[TCA_SKBMOD_DMAC]		= { .len = ETH_ALEN },
-	[TCA_SKBMOD_SMAC]		= { .len = ETH_ALEN },
-	[TCA_SKBMOD_ETYPE]		= { .type = NLA_U16 },
-};
+अटल स्थिर काष्ठा nla_policy skbmod_policy[TCA_SKBMOD_MAX + 1] = अणु
+	[TCA_SKBMOD_PARMS]		= अणु .len = माप(काष्ठा tc_skbmod) पूर्ण,
+	[TCA_SKBMOD_DMAC]		= अणु .len = ETH_ALEN पूर्ण,
+	[TCA_SKBMOD_SMAC]		= अणु .len = ETH_ALEN पूर्ण,
+	[TCA_SKBMOD_ETYPE]		= अणु .type = NLA_U16 पूर्ण,
+पूर्ण;
 
-static int tcf_skbmod_init(struct net *net, struct nlattr *nla,
-			   struct nlattr *est, struct tc_action **a,
-			   int ovr, int bind, bool rtnl_held,
-			   struct tcf_proto *tp, u32 flags,
-			   struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, skbmod_net_id);
-	struct nlattr *tb[TCA_SKBMOD_MAX + 1];
-	struct tcf_skbmod_params *p, *p_old;
-	struct tcf_chain *goto_ch = NULL;
-	struct tc_skbmod *parm;
+अटल पूर्णांक tcf_skbmod_init(काष्ठा net *net, काष्ठा nlattr *nla,
+			   काष्ठा nlattr *est, काष्ठा tc_action **a,
+			   पूर्णांक ovr, पूर्णांक bind, bool rtnl_held,
+			   काष्ठा tcf_proto *tp, u32 flags,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, skbmod_net_id);
+	काष्ठा nlattr *tb[TCA_SKBMOD_MAX + 1];
+	काष्ठा tcf_skbmod_params *p, *p_old;
+	काष्ठा tcf_chain *जाओ_ch = शून्य;
+	काष्ठा tc_skbmod *parm;
 	u32 lflags = 0, index;
-	struct tcf_skbmod *d;
+	काष्ठा tcf_skbmod *d;
 	bool exists = false;
-	u8 *daddr = NULL;
-	u8 *saddr = NULL;
+	u8 *daddr = शून्य;
+	u8 *saddr = शून्य;
 	u16 eth_type = 0;
-	int ret = 0, err;
+	पूर्णांक ret = 0, err;
 
-	if (!nla)
-		return -EINVAL;
+	अगर (!nla)
+		वापस -EINVAL;
 
 	err = nla_parse_nested_deprecated(tb, TCA_SKBMOD_MAX, nla,
-					  skbmod_policy, NULL);
-	if (err < 0)
-		return err;
+					  skbmod_policy, शून्य);
+	अगर (err < 0)
+		वापस err;
 
-	if (!tb[TCA_SKBMOD_PARMS])
-		return -EINVAL;
+	अगर (!tb[TCA_SKBMOD_PARMS])
+		वापस -EINVAL;
 
-	if (tb[TCA_SKBMOD_DMAC]) {
+	अगर (tb[TCA_SKBMOD_DMAC]) अणु
 		daddr = nla_data(tb[TCA_SKBMOD_DMAC]);
 		lflags |= SKBMOD_F_DMAC;
-	}
+	पूर्ण
 
-	if (tb[TCA_SKBMOD_SMAC]) {
+	अगर (tb[TCA_SKBMOD_SMAC]) अणु
 		saddr = nla_data(tb[TCA_SKBMOD_SMAC]);
 		lflags |= SKBMOD_F_SMAC;
-	}
+	पूर्ण
 
-	if (tb[TCA_SKBMOD_ETYPE]) {
+	अगर (tb[TCA_SKBMOD_ETYPE]) अणु
 		eth_type = nla_get_u16(tb[TCA_SKBMOD_ETYPE]);
 		lflags |= SKBMOD_F_ETYPE;
-	}
+	पूर्ण
 
 	parm = nla_data(tb[TCA_SKBMOD_PARMS]);
 	index = parm->index;
-	if (parm->flags & SKBMOD_F_SWAPMAC)
+	अगर (parm->flags & SKBMOD_F_SWAPMAC)
 		lflags = SKBMOD_F_SWAPMAC;
 
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	exists = err;
-	if (exists && bind)
-		return 0;
+	अगर (exists && bind)
+		वापस 0;
 
-	if (!lflags) {
-		if (exists)
+	अगर (!lflags) अणु
+		अगर (exists)
 			tcf_idr_release(*a, bind);
-		else
+		अन्यथा
 			tcf_idr_cleanup(tn, index);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!exists) {
+	अगर (!exists) अणु
 		ret = tcf_idr_create(tn, index, est, a,
 				     &act_skbmod_ops, bind, true, 0);
-		if (ret) {
+		अगर (ret) अणु
 			tcf_idr_cleanup(tn, index);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		ret = ACT_P_CREATED;
-	} else if (!ovr) {
+	पूर्ण अन्यथा अगर (!ovr) अणु
 		tcf_idr_release(*a, bind);
-		return -EEXIST;
-	}
-	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
-	if (err < 0)
-		goto release_idr;
+		वापस -EEXIST;
+	पूर्ण
+	err = tcf_action_check_ctrlact(parm->action, tp, &जाओ_ch, extack);
+	अगर (err < 0)
+		जाओ release_idr;
 
 	d = to_skbmod(*a);
 
-	p = kzalloc(sizeof(struct tcf_skbmod_params), GFP_KERNEL);
-	if (unlikely(!p)) {
+	p = kzalloc(माप(काष्ठा tcf_skbmod_params), GFP_KERNEL);
+	अगर (unlikely(!p)) अणु
 		err = -ENOMEM;
-		goto put_chain;
-	}
+		जाओ put_chain;
+	पूर्ण
 
 	p->flags = lflags;
 
-	if (ovr)
+	अगर (ovr)
 		spin_lock_bh(&d->tcf_lock);
-	/* Protected by tcf_lock if overwriting existing action. */
-	goto_ch = tcf_action_set_ctrlact(*a, parm->action, goto_ch);
-	p_old = rcu_dereference_protected(d->skbmod_p, 1);
+	/* Protected by tcf_lock अगर overwriting existing action. */
+	जाओ_ch = tcf_action_set_ctrlact(*a, parm->action, जाओ_ch);
+	p_old = rcu_dereference_रक्षित(d->skbmod_p, 1);
 
-	if (lflags & SKBMOD_F_DMAC)
+	अगर (lflags & SKBMOD_F_DMAC)
 		ether_addr_copy(p->eth_dst, daddr);
-	if (lflags & SKBMOD_F_SMAC)
+	अगर (lflags & SKBMOD_F_SMAC)
 		ether_addr_copy(p->eth_src, saddr);
-	if (lflags & SKBMOD_F_ETYPE)
+	अगर (lflags & SKBMOD_F_ETYPE)
 		p->eth_type = htons(eth_type);
 
-	rcu_assign_pointer(d->skbmod_p, p);
-	if (ovr)
+	rcu_assign_poपूर्णांकer(d->skbmod_p, p);
+	अगर (ovr)
 		spin_unlock_bh(&d->tcf_lock);
 
-	if (p_old)
-		kfree_rcu(p_old, rcu);
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
+	अगर (p_old)
+		kमुक्त_rcu(p_old, rcu);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
 
-	return ret;
+	वापस ret;
 put_chain:
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
 release_idr:
 	tcf_idr_release(*a, bind);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void tcf_skbmod_cleanup(struct tc_action *a)
-{
-	struct tcf_skbmod *d = to_skbmod(a);
-	struct tcf_skbmod_params  *p;
+अटल व्योम tcf_skbmod_cleanup(काष्ठा tc_action *a)
+अणु
+	काष्ठा tcf_skbmod *d = to_skbmod(a);
+	काष्ठा tcf_skbmod_params  *p;
 
-	p = rcu_dereference_protected(d->skbmod_p, 1);
-	if (p)
-		kfree_rcu(p, rcu);
-}
+	p = rcu_dereference_रक्षित(d->skbmod_p, 1);
+	अगर (p)
+		kमुक्त_rcu(p, rcu);
+पूर्ण
 
-static int tcf_skbmod_dump(struct sk_buff *skb, struct tc_action *a,
-			   int bind, int ref)
-{
-	struct tcf_skbmod *d = to_skbmod(a);
-	unsigned char *b = skb_tail_pointer(skb);
-	struct tcf_skbmod_params  *p;
-	struct tc_skbmod opt = {
+अटल पूर्णांक tcf_skbmod_dump(काष्ठा sk_buff *skb, काष्ठा tc_action *a,
+			   पूर्णांक bind, पूर्णांक ref)
+अणु
+	काष्ठा tcf_skbmod *d = to_skbmod(a);
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	काष्ठा tcf_skbmod_params  *p;
+	काष्ठा tc_skbmod opt = अणु
 		.index   = d->tcf_index,
-		.refcnt  = refcount_read(&d->tcf_refcnt) - ref,
-		.bindcnt = atomic_read(&d->tcf_bindcnt) - bind,
-	};
-	struct tcf_t t;
+		.refcnt  = refcount_पढ़ो(&d->tcf_refcnt) - ref,
+		.bindcnt = atomic_पढ़ो(&d->tcf_bindcnt) - bind,
+	पूर्ण;
+	काष्ठा tcf_t t;
 
 	spin_lock_bh(&d->tcf_lock);
 	opt.action = d->tcf_action;
-	p = rcu_dereference_protected(d->skbmod_p,
+	p = rcu_dereference_रक्षित(d->skbmod_p,
 				      lockdep_is_held(&d->tcf_lock));
 	opt.flags  = p->flags;
-	if (nla_put(skb, TCA_SKBMOD_PARMS, sizeof(opt), &opt))
-		goto nla_put_failure;
-	if ((p->flags & SKBMOD_F_DMAC) &&
+	अगर (nla_put(skb, TCA_SKBMOD_PARMS, माप(opt), &opt))
+		जाओ nla_put_failure;
+	अगर ((p->flags & SKBMOD_F_DMAC) &&
 	    nla_put(skb, TCA_SKBMOD_DMAC, ETH_ALEN, p->eth_dst))
-		goto nla_put_failure;
-	if ((p->flags & SKBMOD_F_SMAC) &&
+		जाओ nla_put_failure;
+	अगर ((p->flags & SKBMOD_F_SMAC) &&
 	    nla_put(skb, TCA_SKBMOD_SMAC, ETH_ALEN, p->eth_src))
-		goto nla_put_failure;
-	if ((p->flags & SKBMOD_F_ETYPE) &&
+		जाओ nla_put_failure;
+	अगर ((p->flags & SKBMOD_F_ETYPE) &&
 	    nla_put_u16(skb, TCA_SKBMOD_ETYPE, ntohs(p->eth_type)))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	tcf_tm_dump(&t, &d->tcf_tm);
-	if (nla_put_64bit(skb, TCA_SKBMOD_TM, sizeof(t), &t, TCA_SKBMOD_PAD))
-		goto nla_put_failure;
+	tcf_पंचांग_dump(&t, &d->tcf_पंचांग);
+	अगर (nla_put_64bit(skb, TCA_SKBMOD_TM, माप(t), &t, TCA_SKBMOD_PAD))
+		जाओ nla_put_failure;
 
 	spin_unlock_bh(&d->tcf_lock);
-	return skb->len;
+	वापस skb->len;
 nla_put_failure:
 	spin_unlock_bh(&d->tcf_lock);
 	nlmsg_trim(skb, b);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int tcf_skbmod_walker(struct net *net, struct sk_buff *skb,
-			     struct netlink_callback *cb, int type,
-			     const struct tc_action_ops *ops,
-			     struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, skbmod_net_id);
+अटल पूर्णांक tcf_skbmod_walker(काष्ठा net *net, काष्ठा sk_buff *skb,
+			     काष्ठा netlink_callback *cb, पूर्णांक type,
+			     स्थिर काष्ठा tc_action_ops *ops,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, skbmod_net_id);
 
-	return tcf_generic_walker(tn, skb, cb, type, ops, extack);
-}
+	वापस tcf_generic_walker(tn, skb, cb, type, ops, extack);
+पूर्ण
 
-static int tcf_skbmod_search(struct net *net, struct tc_action **a, u32 index)
-{
-	struct tc_action_net *tn = net_generic(net, skbmod_net_id);
+अटल पूर्णांक tcf_skbmod_search(काष्ठा net *net, काष्ठा tc_action **a, u32 index)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, skbmod_net_id);
 
-	return tcf_idr_search(tn, a, index);
-}
+	वापस tcf_idr_search(tn, a, index);
+पूर्ण
 
-static struct tc_action_ops act_skbmod_ops = {
+अटल काष्ठा tc_action_ops act_skbmod_ops = अणु
 	.kind		=	"skbmod",
 	.id		=	TCA_ACT_SKBMOD,
 	.owner		=	THIS_MODULE,
@@ -278,41 +279,41 @@ static struct tc_action_ops act_skbmod_ops = {
 	.cleanup	=	tcf_skbmod_cleanup,
 	.walk		=	tcf_skbmod_walker,
 	.lookup		=	tcf_skbmod_search,
-	.size		=	sizeof(struct tcf_skbmod),
-};
+	.size		=	माप(काष्ठा tcf_skbmod),
+पूर्ण;
 
-static __net_init int skbmod_init_net(struct net *net)
-{
-	struct tc_action_net *tn = net_generic(net, skbmod_net_id);
+अटल __net_init पूर्णांक skbmod_init_net(काष्ठा net *net)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, skbmod_net_id);
 
-	return tc_action_net_init(net, tn, &act_skbmod_ops);
-}
+	वापस tc_action_net_init(net, tn, &act_skbmod_ops);
+पूर्ण
 
-static void __net_exit skbmod_exit_net(struct list_head *net_list)
-{
-	tc_action_net_exit(net_list, skbmod_net_id);
-}
+अटल व्योम __net_निकास skbmod_निकास_net(काष्ठा list_head *net_list)
+अणु
+	tc_action_net_निकास(net_list, skbmod_net_id);
+पूर्ण
 
-static struct pernet_operations skbmod_net_ops = {
+अटल काष्ठा pernet_operations skbmod_net_ops = अणु
 	.init = skbmod_init_net,
-	.exit_batch = skbmod_exit_net,
+	.निकास_batch = skbmod_निकास_net,
 	.id   = &skbmod_net_id,
-	.size = sizeof(struct tc_action_net),
-};
+	.size = माप(काष्ठा tc_action_net),
+पूर्ण;
 
 MODULE_AUTHOR("Jamal Hadi Salim, <jhs@mojatatu.com>");
 MODULE_DESCRIPTION("SKB data mod-ing");
 MODULE_LICENSE("GPL");
 
-static int __init skbmod_init_module(void)
-{
-	return tcf_register_action(&act_skbmod_ops, &skbmod_net_ops);
-}
+अटल पूर्णांक __init skbmod_init_module(व्योम)
+अणु
+	वापस tcf_रेजिस्टर_action(&act_skbmod_ops, &skbmod_net_ops);
+पूर्ण
 
-static void __exit skbmod_cleanup_module(void)
-{
-	tcf_unregister_action(&act_skbmod_ops, &skbmod_net_ops);
-}
+अटल व्योम __निकास skbmod_cleanup_module(व्योम)
+अणु
+	tcf_unरेजिस्टर_action(&act_skbmod_ops, &skbmod_net_ops);
+पूर्ण
 
 module_init(skbmod_init_module);
-module_exit(skbmod_cleanup_module);
+module_निकास(skbmod_cleanup_module);

@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/regmap.h>
-#include <linux/mfd/syscon.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
 
-#include "cpsw.h"
+#समावेश "cpsw.h"
 
-#define CTRL_MAC_LO_REG(offset, id) ((offset) + 0x8 * (id))
-#define CTRL_MAC_HI_REG(offset, id) ((offset) + 0x8 * (id) + 0x4)
+#घोषणा CTRL_MAC_LO_REG(offset, id) ((offset) + 0x8 * (id))
+#घोषणा CTRL_MAC_HI_REG(offset, id) ((offset) + 0x8 * (id) + 0x4)
 
-static int davinci_emac_3517_get_macid(struct device *dev, u16 offset,
-				       int slave, u8 *mac_addr)
-{
+अटल पूर्णांक davinci_emac_3517_get_macid(काष्ठा device *dev, u16 offset,
+				       पूर्णांक slave, u8 *mac_addr)
+अणु
 	u32 macid_lsb;
 	u32 macid_msb;
-	struct regmap *syscon;
+	काष्ठा regmap *syscon;
 
 	syscon = syscon_regmap_lookup_by_phandle(dev->of_node, "syscon");
-	if (IS_ERR(syscon)) {
-		if (PTR_ERR(syscon) == -ENODEV)
-			return 0;
-		return PTR_ERR(syscon);
-	}
+	अगर (IS_ERR(syscon)) अणु
+		अगर (PTR_ERR(syscon) == -ENODEV)
+			वापस 0;
+		वापस PTR_ERR(syscon);
+	पूर्ण
 
-	regmap_read(syscon, CTRL_MAC_LO_REG(offset, slave), &macid_lsb);
-	regmap_read(syscon, CTRL_MAC_HI_REG(offset, slave), &macid_msb);
+	regmap_पढ़ो(syscon, CTRL_MAC_LO_REG(offset, slave), &macid_lsb);
+	regmap_पढ़ो(syscon, CTRL_MAC_HI_REG(offset, slave), &macid_msb);
 
 	mac_addr[0] = (macid_msb >> 16) & 0xff;
 	mac_addr[1] = (macid_msb >> 8)  & 0xff;
@@ -36,25 +37,25 @@ static int davinci_emac_3517_get_macid(struct device *dev, u16 offset,
 	mac_addr[4] = (macid_lsb >> 8)  & 0xff;
 	mac_addr[5] = macid_lsb & 0xff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cpsw_am33xx_cm_get_macid(struct device *dev, u16 offset, int slave,
+अटल पूर्णांक cpsw_am33xx_cm_get_macid(काष्ठा device *dev, u16 offset, पूर्णांक slave,
 				    u8 *mac_addr)
-{
+अणु
 	u32 macid_lo;
 	u32 macid_hi;
-	struct regmap *syscon;
+	काष्ठा regmap *syscon;
 
 	syscon = syscon_regmap_lookup_by_phandle(dev->of_node, "syscon");
-	if (IS_ERR(syscon)) {
-		if (PTR_ERR(syscon) == -ENODEV)
-			return 0;
-		return PTR_ERR(syscon);
-	}
+	अगर (IS_ERR(syscon)) अणु
+		अगर (PTR_ERR(syscon) == -ENODEV)
+			वापस 0;
+		वापस PTR_ERR(syscon);
+	पूर्ण
 
-	regmap_read(syscon, CTRL_MAC_LO_REG(offset, slave), &macid_lo);
-	regmap_read(syscon, CTRL_MAC_HI_REG(offset, slave), &macid_hi);
+	regmap_पढ़ो(syscon, CTRL_MAC_LO_REG(offset, slave), &macid_lo);
+	regmap_पढ़ो(syscon, CTRL_MAC_HI_REG(offset, slave), &macid_hi);
 
 	mac_addr[5] = (macid_lo >> 8) & 0xff;
 	mac_addr[4] = macid_lo & 0xff;
@@ -63,32 +64,32 @@ static int cpsw_am33xx_cm_get_macid(struct device *dev, u16 offset, int slave,
 	mac_addr[1] = (macid_hi >> 8) & 0xff;
 	mac_addr[0] = macid_hi & 0xff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ti_cm_get_macid(struct device *dev, int slave, u8 *mac_addr)
-{
-	if (of_machine_is_compatible("ti,dm8148"))
-		return cpsw_am33xx_cm_get_macid(dev, 0x630, slave, mac_addr);
+पूर्णांक ti_cm_get_macid(काष्ठा device *dev, पूर्णांक slave, u8 *mac_addr)
+अणु
+	अगर (of_machine_is_compatible("ti,dm8148"))
+		वापस cpsw_am33xx_cm_get_macid(dev, 0x630, slave, mac_addr);
 
-	if (of_machine_is_compatible("ti,am33xx"))
-		return cpsw_am33xx_cm_get_macid(dev, 0x630, slave, mac_addr);
+	अगर (of_machine_is_compatible("ti,am33xx"))
+		वापस cpsw_am33xx_cm_get_macid(dev, 0x630, slave, mac_addr);
 
-	if (of_device_is_compatible(dev->of_node, "ti,am3517-emac"))
-		return davinci_emac_3517_get_macid(dev, 0x110, slave, mac_addr);
+	अगर (of_device_is_compatible(dev->of_node, "ti,am3517-emac"))
+		वापस davinci_emac_3517_get_macid(dev, 0x110, slave, mac_addr);
 
-	if (of_device_is_compatible(dev->of_node, "ti,dm816-emac"))
-		return cpsw_am33xx_cm_get_macid(dev, 0x30, slave, mac_addr);
+	अगर (of_device_is_compatible(dev->of_node, "ti,dm816-emac"))
+		वापस cpsw_am33xx_cm_get_macid(dev, 0x30, slave, mac_addr);
 
-	if (of_machine_is_compatible("ti,am43"))
-		return cpsw_am33xx_cm_get_macid(dev, 0x630, slave, mac_addr);
+	अगर (of_machine_is_compatible("ti,am43"))
+		वापस cpsw_am33xx_cm_get_macid(dev, 0x630, slave, mac_addr);
 
-	if (of_machine_is_compatible("ti,dra7"))
-		return davinci_emac_3517_get_macid(dev, 0x514, slave, mac_addr);
+	अगर (of_machine_is_compatible("ti,dra7"))
+		वापस davinci_emac_3517_get_macid(dev, 0x514, slave, mac_addr);
 
 	dev_info(dev, "incompatible machine/device type for reading mac address\n");
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 EXPORT_SYMBOL_GPL(ti_cm_get_macid);
 
 MODULE_LICENSE("GPL");

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Created by: Jason Wessel <jason.wessel@windriver.com>
  *
@@ -8,52 +9,52 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/module.h>
-#include <linux/kdb.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kdb.h>
 
 /*
  * All kdb shell command call backs receive argc and argv, where
  * argv[0] is the command the end user typed
  */
-static int kdb_hello_cmd(int argc, const char **argv)
-{
-	if (argc > 1)
-		return KDB_ARGCOUNT;
+अटल पूर्णांक kdb_hello_cmd(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अगर (argc > 1)
+		वापस KDB_ARGCOUNT;
 
-	if (argc)
-		kdb_printf("Hello %s.\n", argv[1]);
-	else
-		kdb_printf("Hello world!\n");
+	अगर (argc)
+		kdb_म_लिखो("Hello %s.\n", argv[1]);
+	अन्यथा
+		kdb_म_लिखो("Hello world!\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int __init kdb_hello_cmd_init(void)
-{
+अटल पूर्णांक __init kdb_hello_cmd_init(व्योम)
+अणु
 	/*
-	 * Registration of a dynamically added kdb command is done with
-	 * kdb_register() with the arguments being:
+	 * Registration of a dynamically added kdb command is करोne with
+	 * kdb_रेजिस्टर() with the arguments being:
 	 *   1: The name of the shell command
 	 *   2: The function that processes the command
 	 *   3: Description of the usage of any arguments
 	 *   4: Descriptive text when you run help
-	 *   5: Number of characters to complete the command
+	 *   5: Number of अक्षरacters to complete the command
 	 *      0 == type the whole command
-	 *      1 == match both "g" and "go" for example
+	 *      1 == match both "g" and "go" क्रम example
 	 */
-	kdb_register("hello", kdb_hello_cmd, "[string]",
+	kdb_रेजिस्टर("hello", kdb_hello_cmd, "[string]",
 		     "Say Hello World or Hello [string]", 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit kdb_hello_cmd_exit(void)
-{
-	kdb_unregister("hello");
-}
+अटल व्योम __निकास kdb_hello_cmd_निकास(व्योम)
+अणु
+	kdb_unरेजिस्टर("hello");
+पूर्ण
 
 module_init(kdb_hello_cmd_init);
-module_exit(kdb_hello_cmd_exit);
+module_निकास(kdb_hello_cmd_निकास);
 
 MODULE_AUTHOR("WindRiver");
 MODULE_DESCRIPTION("KDB example to add a hello command");

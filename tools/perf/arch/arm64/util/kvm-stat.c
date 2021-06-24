@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include <memory.h>
-#include "../../../util/evsel.h"
-#include "../../../util/kvm-stat.h"
-#include "arm64_exception_types.h"
-#include "debug.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश <memory.h>
+#समावेश "../../../util/evsel.h"
+#समावेश "../../../util/kvm-stat.h"
+#समावेश "arm64_exception_types.h"
+#समावेश "debug.h"
 
-define_exit_reasons_table(arm64_exit_reasons, kvm_arm_exception_type);
-define_exit_reasons_table(arm64_trap_exit_reasons, kvm_arm_exception_class);
+define_निकास_reasons_table(arm64_निकास_reasons, kvm_arm_exception_type);
+define_निकास_reasons_table(arm64_trap_निकास_reasons, kvm_arm_exception_class);
 
-const char *kvm_trap_exit_reason = "esr_ec";
-const char *vcpu_id_str = "id";
-const int decode_str_len = 20;
-const char *kvm_exit_reason = "ret";
-const char *kvm_entry_trace = "kvm:kvm_entry";
-const char *kvm_exit_trace = "kvm:kvm_exit";
+स्थिर अक्षर *kvm_trap_निकास_reason = "esr_ec";
+स्थिर अक्षर *vcpu_id_str = "id";
+स्थिर पूर्णांक decode_str_len = 20;
+स्थिर अक्षर *kvm_निकास_reason = "ret";
+स्थिर अक्षर *kvm_entry_trace = "kvm:kvm_entry";
+स्थिर अक्षर *kvm_निकास_trace = "kvm:kvm_exit";
 
-const char *kvm_events_tp[] = {
+स्थिर अक्षर *kvm_events_tp[] = अणु
 	"kvm:kvm_entry",
 	"kvm:kvm_exit",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void event_get_key(struct evsel *evsel,
-			  struct perf_sample *sample,
-			  struct event_key *key)
-{
+अटल व्योम event_get_key(काष्ठा evsel *evsel,
+			  काष्ठा perf_sample *sample,
+			  काष्ठा event_key *key)
+अणु
 	key->info = 0;
-	key->key = evsel__intval(evsel, sample, kvm_exit_reason);
-	key->exit_reasons = arm64_exit_reasons;
+	key->key = evsel__पूर्णांकval(evsel, sample, kvm_निकास_reason);
+	key->निकास_reasons = arm64_निकास_reasons;
 
 	/*
 	 * TRAP exceptions carry exception class info in esr_ec field
-	 * and, hence, we need to use a different exit_reasons table to
+	 * and, hence, we need to use a dअगरferent निकास_reasons table to
 	 * properly decode event's est_ec.
 	 */
-	if (key->key == ARM_EXCEPTION_TRAP) {
-		key->key = evsel__intval(evsel, sample, kvm_trap_exit_reason);
-		key->exit_reasons = arm64_trap_exit_reasons;
-	}
-}
+	अगर (key->key == ARM_EXCEPTION_TRAP) अणु
+		key->key = evsel__पूर्णांकval(evsel, sample, kvm_trap_निकास_reason);
+		key->निकास_reasons = arm64_trap_निकास_reasons;
+	पूर्ण
+पूर्ण
 
-static bool event_begin(struct evsel *evsel,
-			struct perf_sample *sample __maybe_unused,
-			struct event_key *key __maybe_unused)
-{
-	return !strcmp(evsel->name, kvm_entry_trace);
-}
+अटल bool event_begin(काष्ठा evsel *evsel,
+			काष्ठा perf_sample *sample __maybe_unused,
+			काष्ठा event_key *key __maybe_unused)
+अणु
+	वापस !म_भेद(evsel->name, kvm_entry_trace);
+पूर्ण
 
-static bool event_end(struct evsel *evsel,
-		      struct perf_sample *sample,
-		      struct event_key *key)
-{
-	if (!strcmp(evsel->name, kvm_exit_trace)) {
+अटल bool event_end(काष्ठा evsel *evsel,
+		      काष्ठा perf_sample *sample,
+		      काष्ठा event_key *key)
+अणु
+	अगर (!म_भेद(evsel->name, kvm_निकास_trace)) अणु
 		event_get_key(evsel, sample, key);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static struct kvm_events_ops exit_events = {
+अटल काष्ठा kvm_events_ops निकास_events = अणु
 	.is_begin_event = event_begin,
 	.is_end_event	= event_end,
-	.decode_key	= exit_event_decode_key,
+	.decode_key	= निकास_event_decode_key,
 	.name		= "VM-EXIT"
-};
+पूर्ण;
 
-struct kvm_reg_events_ops kvm_reg_events_ops[] = {
-	{
+काष्ठा kvm_reg_events_ops kvm_reg_events_ops[] = अणु
+	अणु
 		.name	= "vmexit",
-		.ops	= &exit_events,
-	},
-	{ NULL, NULL },
-};
+		.ops	= &निकास_events,
+	पूर्ण,
+	अणु शून्य, शून्य पूर्ण,
+पूर्ण;
 
-const char * const kvm_skip_events[] = {
-	NULL,
-};
+स्थिर अक्षर * स्थिर kvm_skip_events[] = अणु
+	शून्य,
+पूर्ण;
 
-int cpu_isa_init(struct perf_kvm_stat *kvm, const char *cpuid __maybe_unused)
-{
-	kvm->exit_reasons_isa = "arm64";
-	return 0;
-}
+पूर्णांक cpu_isa_init(काष्ठा perf_kvm_stat *kvm, स्थिर अक्षर *cpuid __maybe_unused)
+अणु
+	kvm->निकास_reasons_isa = "arm64";
+	वापस 0;
+पूर्ण

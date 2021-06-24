@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Aic94xx SAS/SATA driver header file.
  *
@@ -8,69 +9,69 @@
  * $Id: //depot/aic94xx/aic94xx.h#31 $
  */
 
-#ifndef _AIC94XX_H_
-#define _AIC94XX_H_
+#अगर_अघोषित _AIC94XX_H_
+#घोषणा _AIC94XX_H_
 
-#include <linux/slab.h>
-#include <linux/ctype.h>
-#include <scsi/libsas.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <scsi/libsas.h>
 
-#define ASD_DRIVER_NAME		"aic94xx"
-#define ASD_DRIVER_DESCRIPTION	"Adaptec aic94xx SAS/SATA driver"
+#घोषणा ASD_DRIVER_NAME		"aic94xx"
+#घोषणा ASD_DRIVER_DESCRIPTION	"Adaptec aic94xx SAS/SATA driver"
 
-#define asd_printk(fmt, ...)	printk(KERN_NOTICE ASD_DRIVER_NAME ": " fmt, ## __VA_ARGS__)
+#घोषणा asd_prपूर्णांकk(fmt, ...)	prपूर्णांकk(KERN_NOTICE ASD_DRIVER_NAME ": " fmt, ## __VA_ARGS__)
 
-#ifdef ASD_ENTER_EXIT
-#define ENTER  printk(KERN_NOTICE "%s: ENTER %s\n", ASD_DRIVER_NAME, \
+#अगर_घोषित ASD_ENTER_EXIT
+#घोषणा ENTER  prपूर्णांकk(KERN_NOTICE "%s: ENTER %s\n", ASD_DRIVER_NAME, \
 		__func__)
-#define EXIT   printk(KERN_NOTICE "%s: --EXIT %s\n", ASD_DRIVER_NAME, \
+#घोषणा EXIT   prपूर्णांकk(KERN_NOTICE "%s: --EXIT %s\n", ASD_DRIVER_NAME, \
 		__func__)
-#else
-#define ENTER
-#define EXIT
-#endif
+#अन्यथा
+#घोषणा ENTER
+#घोषणा EXIT
+#पूर्ण_अगर
 
-#ifdef ASD_DEBUG
-#define ASD_DPRINTK asd_printk
-#else
-#define ASD_DPRINTK(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
-#endif
+#अगर_घोषित ASD_DEBUG
+#घोषणा ASD_DPRINTK asd_prपूर्णांकk
+#अन्यथा
+#घोषणा ASD_DPRINTK(fmt, ...) no_prपूर्णांकk(fmt, ##__VA_ARGS__)
+#पूर्ण_अगर
 
-/* 2*ITNL timeout + 1 second */
-#define AIC94XX_SCB_TIMEOUT  (5*HZ)
+/* 2*ITNL समयout + 1 second */
+#घोषणा AIC94XX_SCB_TIMEOUT  (5*HZ)
 
-extern struct kmem_cache *asd_dma_token_cache;
-extern struct kmem_cache *asd_ascb_cache;
+बाह्य काष्ठा kmem_cache *asd_dma_token_cache;
+बाह्य काष्ठा kmem_cache *asd_ascb_cache;
 
-struct asd_ha_struct;
-struct asd_ascb;
+काष्ठा asd_ha_काष्ठा;
+काष्ठा asd_ascb;
 
-int  asd_read_ocm(struct asd_ha_struct *asd_ha);
-int  asd_read_flash(struct asd_ha_struct *asd_ha);
+पूर्णांक  asd_पढ़ो_ocm(काष्ठा asd_ha_काष्ठा *asd_ha);
+पूर्णांक  asd_पढ़ो_flash(काष्ठा asd_ha_काष्ठा *asd_ha);
 
-int  asd_dev_found(struct domain_device *dev);
-void asd_dev_gone(struct domain_device *dev);
+पूर्णांक  asd_dev_found(काष्ठा करोमुख्य_device *dev);
+व्योम asd_dev_gone(काष्ठा करोमुख्य_device *dev);
 
-void asd_invalidate_edb(struct asd_ascb *ascb, int edb_id);
+व्योम asd_invalidate_edb(काष्ठा asd_ascb *ascb, पूर्णांक edb_id);
 
-int  asd_execute_task(struct sas_task *task, gfp_t gfp_flags);
+पूर्णांक  asd_execute_task(काष्ठा sas_task *task, gfp_t gfp_flags);
 
-void asd_set_dmamode(struct domain_device *dev);
+व्योम asd_set_dmamode(काष्ठा करोमुख्य_device *dev);
 
 /* ---------- TMFs ---------- */
-int  asd_abort_task(struct sas_task *);
-int  asd_abort_task_set(struct domain_device *, u8 *lun);
-int  asd_clear_aca(struct domain_device *, u8 *lun);
-int  asd_clear_task_set(struct domain_device *, u8 *lun);
-int  asd_lu_reset(struct domain_device *, u8 *lun);
-int  asd_I_T_nexus_reset(struct domain_device *dev);
-int  asd_query_task(struct sas_task *);
+पूर्णांक  asd_पात_task(काष्ठा sas_task *);
+पूर्णांक  asd_पात_task_set(काष्ठा करोमुख्य_device *, u8 *lun);
+पूर्णांक  asd_clear_aca(काष्ठा करोमुख्य_device *, u8 *lun);
+पूर्णांक  asd_clear_task_set(काष्ठा करोमुख्य_device *, u8 *lun);
+पूर्णांक  asd_lu_reset(काष्ठा करोमुख्य_device *, u8 *lun);
+पूर्णांक  asd_I_T_nexus_reset(काष्ठा करोमुख्य_device *dev);
+पूर्णांक  asd_query_task(काष्ठा sas_task *);
 
 /* ---------- Adapter and Port management ---------- */
-int  asd_clear_nexus_port(struct asd_sas_port *port);
-int  asd_clear_nexus_ha(struct sas_ha_struct *sas_ha);
+पूर्णांक  asd_clear_nexus_port(काष्ठा asd_sas_port *port);
+पूर्णांक  asd_clear_nexus_ha(काष्ठा sas_ha_काष्ठा *sas_ha);
 
 /* ---------- Phy Management ---------- */
-int  asd_control_phy(struct asd_sas_phy *phy, enum phy_func func, void *arg);
+पूर्णांक  asd_control_phy(काष्ठा asd_sas_phy *phy, क्रमागत phy_func func, व्योम *arg);
 
-#endif
+#पूर्ण_अगर

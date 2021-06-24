@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * linux/arch/arm64/include/asm/neon.h
+ * linux/arch/arm64/include/यंत्र/neon.h
  *
  * Copyright (C) 2013 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
-#ifndef __ASM_NEON_H
-#define __ASM_NEON_H
+#अगर_अघोषित __ASM_NEON_H
+#घोषणा __ASM_NEON_H
 
-#include <linux/types.h>
-#include <asm/fpsimd.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/fpsimd.h>
 
-#define cpu_has_neon()		system_supports_fpsimd()
+#घोषणा cpu_has_neon()		प्रणाली_supports_fpsimd()
 
-void kernel_neon_begin(void);
-void kernel_neon_end(void);
+व्योम kernel_neon_begin(व्योम);
+व्योम kernel_neon_end(व्योम);
 
-#endif /* ! __ASM_NEON_H */
+#पूर्ण_अगर /* ! __ASM_NEON_H */

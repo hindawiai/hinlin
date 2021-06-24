@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2018-2019 Synopsys, Inc. and/or its affiliates.
  * Synopsys DesignWare eDMA v0 core
@@ -6,14 +7,14 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
-#include <linux/bitfield.h>
+#समावेश <linux/bitfield.h>
 
-#include "dw-edma-core.h"
-#include "dw-edma-v0-core.h"
-#include "dw-edma-v0-regs.h"
-#include "dw-edma-v0-debugfs.h"
+#समावेश "dw-edma-core.h"
+#समावेश "dw-edma-v0-core.h"
+#समावेश "dw-edma-v0-regs.h"
+#समावेश "dw-edma-v0-debugfs.h"
 
-enum dw_edma_control {
+क्रमागत dw_edma_control अणु
 	DW_EDMA_V0_CB					= BIT(0),
 	DW_EDMA_V0_TCB					= BIT(1),
 	DW_EDMA_V0_LLP					= BIT(2),
@@ -21,300 +22,300 @@ enum dw_edma_control {
 	DW_EDMA_V0_RIE					= BIT(4),
 	DW_EDMA_V0_CCS					= BIT(8),
 	DW_EDMA_V0_LLE					= BIT(9),
-};
+पूर्ण;
 
-static inline struct dw_edma_v0_regs __iomem *__dw_regs(struct dw_edma *dw)
-{
-	return dw->rg_region.vaddr;
-}
+अटल अंतरभूत काष्ठा dw_edma_v0_regs __iomem *__dw_regs(काष्ठा dw_edma *dw)
+अणु
+	वापस dw->rg_region.vaddr;
+पूर्ण
 
-#define SET_32(dw, name, value)				\
-	writel(value, &(__dw_regs(dw)->name))
+#घोषणा SET_32(dw, name, value)				\
+	ग_लिखोl(value, &(__dw_regs(dw)->name))
 
-#define GET_32(dw, name)				\
-	readl(&(__dw_regs(dw)->name))
+#घोषणा GET_32(dw, name)				\
+	पढ़ोl(&(__dw_regs(dw)->name))
 
-#define SET_RW_32(dw, dir, name, value)			\
-	do {						\
-		if ((dir) == EDMA_DIR_WRITE)		\
+#घोषणा SET_RW_32(dw, dir, name, value)			\
+	करो अणु						\
+		अगर ((dir) == EDMA_सूची_WRITE)		\
 			SET_32(dw, wr_##name, value);	\
-		else					\
+		अन्यथा					\
 			SET_32(dw, rd_##name, value);	\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define GET_RW_32(dw, dir, name)			\
-	((dir) == EDMA_DIR_WRITE			\
+#घोषणा GET_RW_32(dw, dir, name)			\
+	((dir) == EDMA_सूची_WRITE			\
 	  ? GET_32(dw, wr_##name)			\
 	  : GET_32(dw, rd_##name))
 
-#define SET_BOTH_32(dw, name, value)			\
-	do {						\
+#घोषणा SET_BOTH_32(dw, name, value)			\
+	करो अणु						\
 		SET_32(dw, wr_##name, value);		\
 		SET_32(dw, rd_##name, value);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 
-#define SET_64(dw, name, value)				\
-	writeq(value, &(__dw_regs(dw)->name))
+#घोषणा SET_64(dw, name, value)				\
+	ग_लिखोq(value, &(__dw_regs(dw)->name))
 
-#define GET_64(dw, name)				\
-	readq(&(__dw_regs(dw)->name))
+#घोषणा GET_64(dw, name)				\
+	पढ़ोq(&(__dw_regs(dw)->name))
 
-#define SET_RW_64(dw, dir, name, value)			\
-	do {						\
-		if ((dir) == EDMA_DIR_WRITE)		\
+#घोषणा SET_RW_64(dw, dir, name, value)			\
+	करो अणु						\
+		अगर ((dir) == EDMA_सूची_WRITE)		\
 			SET_64(dw, wr_##name, value);	\
-		else					\
+		अन्यथा					\
 			SET_64(dw, rd_##name, value);	\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define GET_RW_64(dw, dir, name)			\
-	((dir) == EDMA_DIR_WRITE			\
+#घोषणा GET_RW_64(dw, dir, name)			\
+	((dir) == EDMA_सूची_WRITE			\
 	  ? GET_64(dw, wr_##name)			\
 	  : GET_64(dw, rd_##name))
 
-#define SET_BOTH_64(dw, name, value)			\
-	do {						\
+#घोषणा SET_BOTH_64(dw, name, value)			\
+	करो अणु						\
 		SET_64(dw, wr_##name, value);		\
 		SET_64(dw, rd_##name, value);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#endif /* CONFIG_64BIT */
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-#define SET_COMPAT(dw, name, value)			\
-	writel(value, &(__dw_regs(dw)->type.unroll.name))
+#घोषणा SET_COMPAT(dw, name, value)			\
+	ग_लिखोl(value, &(__dw_regs(dw)->type.unroll.name))
 
-#define SET_RW_COMPAT(dw, dir, name, value)		\
-	do {						\
-		if ((dir) == EDMA_DIR_WRITE)		\
+#घोषणा SET_RW_COMPAT(dw, dir, name, value)		\
+	करो अणु						\
+		अगर ((dir) == EDMA_सूची_WRITE)		\
 			SET_COMPAT(dw, wr_##name, value); \
-		else					\
+		अन्यथा					\
 			SET_COMPAT(dw, rd_##name, value); \
-	} while (0)
+	पूर्ण जबतक (0)
 
-static inline struct dw_edma_v0_ch_regs __iomem *
-__dw_ch_regs(struct dw_edma *dw, enum dw_edma_dir dir, u16 ch)
-{
-	if (dw->mf == EDMA_MF_EDMA_LEGACY)
-		return &(__dw_regs(dw)->type.legacy.ch);
+अटल अंतरभूत काष्ठा dw_edma_v0_ch_regs __iomem *
+__dw_ch_regs(काष्ठा dw_edma *dw, क्रमागत dw_edma_dir dir, u16 ch)
+अणु
+	अगर (dw->mf == EDMA_MF_EDMA_LEGACY)
+		वापस &(__dw_regs(dw)->type.legacy.ch);
 
-	if (dir == EDMA_DIR_WRITE)
-		return &__dw_regs(dw)->type.unroll.ch[ch].wr;
+	अगर (dir == EDMA_सूची_WRITE)
+		वापस &__dw_regs(dw)->type.unroll.ch[ch].wr;
 
-	return &__dw_regs(dw)->type.unroll.ch[ch].rd;
-}
+	वापस &__dw_regs(dw)->type.unroll.ch[ch].rd;
+पूर्ण
 
-static inline void writel_ch(struct dw_edma *dw, enum dw_edma_dir dir, u16 ch,
-			     u32 value, void __iomem *addr)
-{
-	if (dw->mf == EDMA_MF_EDMA_LEGACY) {
+अटल अंतरभूत व्योम ग_लिखोl_ch(काष्ठा dw_edma *dw, क्रमागत dw_edma_dir dir, u16 ch,
+			     u32 value, व्योम __iomem *addr)
+अणु
+	अगर (dw->mf == EDMA_MF_EDMA_LEGACY) अणु
 		u32 viewport_sel;
-		unsigned long flags;
+		अचिन्हित दीर्घ flags;
 
 		raw_spin_lock_irqsave(&dw->lock, flags);
 
 		viewport_sel = FIELD_PREP(EDMA_V0_VIEWPORT_MASK, ch);
-		if (dir == EDMA_DIR_READ)
+		अगर (dir == EDMA_सूची_READ)
 			viewport_sel |= BIT(31);
 
-		writel(viewport_sel,
+		ग_लिखोl(viewport_sel,
 		       &(__dw_regs(dw)->type.legacy.viewport_sel));
-		writel(value, addr);
+		ग_लिखोl(value, addr);
 
 		raw_spin_unlock_irqrestore(&dw->lock, flags);
-	} else {
-		writel(value, addr);
-	}
-}
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(value, addr);
+	पूर्ण
+पूर्ण
 
-static inline u32 readl_ch(struct dw_edma *dw, enum dw_edma_dir dir, u16 ch,
-			   const void __iomem *addr)
-{
+अटल अंतरभूत u32 पढ़ोl_ch(काष्ठा dw_edma *dw, क्रमागत dw_edma_dir dir, u16 ch,
+			   स्थिर व्योम __iomem *addr)
+अणु
 	u32 value;
 
-	if (dw->mf == EDMA_MF_EDMA_LEGACY) {
+	अगर (dw->mf == EDMA_MF_EDMA_LEGACY) अणु
 		u32 viewport_sel;
-		unsigned long flags;
+		अचिन्हित दीर्घ flags;
 
 		raw_spin_lock_irqsave(&dw->lock, flags);
 
 		viewport_sel = FIELD_PREP(EDMA_V0_VIEWPORT_MASK, ch);
-		if (dir == EDMA_DIR_READ)
+		अगर (dir == EDMA_सूची_READ)
 			viewport_sel |= BIT(31);
 
-		writel(viewport_sel,
+		ग_लिखोl(viewport_sel,
 		       &(__dw_regs(dw)->type.legacy.viewport_sel));
-		value = readl(addr);
+		value = पढ़ोl(addr);
 
 		raw_spin_unlock_irqrestore(&dw->lock, flags);
-	} else {
-		value = readl(addr);
-	}
+	पूर्ण अन्यथा अणु
+		value = पढ़ोl(addr);
+	पूर्ण
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-#define SET_CH_32(dw, dir, ch, name, value) \
-	writel_ch(dw, dir, ch, value, &(__dw_ch_regs(dw, dir, ch)->name))
+#घोषणा SET_CH_32(dw, dir, ch, name, value) \
+	ग_लिखोl_ch(dw, dir, ch, value, &(__dw_ch_regs(dw, dir, ch)->name))
 
-#define GET_CH_32(dw, dir, ch, name) \
-	readl_ch(dw, dir, ch, &(__dw_ch_regs(dw, dir, ch)->name))
+#घोषणा GET_CH_32(dw, dir, ch, name) \
+	पढ़ोl_ch(dw, dir, ch, &(__dw_ch_regs(dw, dir, ch)->name))
 
-#define SET_LL_32(ll, value) \
-	writel(value, ll)
+#घोषणा SET_LL_32(ll, value) \
+	ग_लिखोl(value, ll)
 
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 
-static inline void writeq_ch(struct dw_edma *dw, enum dw_edma_dir dir, u16 ch,
-			     u64 value, void __iomem *addr)
-{
-	if (dw->mf == EDMA_MF_EDMA_LEGACY) {
+अटल अंतरभूत व्योम ग_लिखोq_ch(काष्ठा dw_edma *dw, क्रमागत dw_edma_dir dir, u16 ch,
+			     u64 value, व्योम __iomem *addr)
+अणु
+	अगर (dw->mf == EDMA_MF_EDMA_LEGACY) अणु
 		u32 viewport_sel;
-		unsigned long flags;
+		अचिन्हित दीर्घ flags;
 
 		raw_spin_lock_irqsave(&dw->lock, flags);
 
 		viewport_sel = FIELD_PREP(EDMA_V0_VIEWPORT_MASK, ch);
-		if (dir == EDMA_DIR_READ)
+		अगर (dir == EDMA_सूची_READ)
 			viewport_sel |= BIT(31);
 
-		writel(viewport_sel,
+		ग_लिखोl(viewport_sel,
 		       &(__dw_regs(dw)->type.legacy.viewport_sel));
-		writeq(value, addr);
+		ग_लिखोq(value, addr);
 
 		raw_spin_unlock_irqrestore(&dw->lock, flags);
-	} else {
-		writeq(value, addr);
-	}
-}
+	पूर्ण अन्यथा अणु
+		ग_लिखोq(value, addr);
+	पूर्ण
+पूर्ण
 
-static inline u64 readq_ch(struct dw_edma *dw, enum dw_edma_dir dir, u16 ch,
-			   const void __iomem *addr)
-{
+अटल अंतरभूत u64 पढ़ोq_ch(काष्ठा dw_edma *dw, क्रमागत dw_edma_dir dir, u16 ch,
+			   स्थिर व्योम __iomem *addr)
+अणु
 	u32 value;
 
-	if (dw->mf == EDMA_MF_EDMA_LEGACY) {
+	अगर (dw->mf == EDMA_MF_EDMA_LEGACY) अणु
 		u32 viewport_sel;
-		unsigned long flags;
+		अचिन्हित दीर्घ flags;
 
 		raw_spin_lock_irqsave(&dw->lock, flags);
 
 		viewport_sel = FIELD_PREP(EDMA_V0_VIEWPORT_MASK, ch);
-		if (dir == EDMA_DIR_READ)
+		अगर (dir == EDMA_सूची_READ)
 			viewport_sel |= BIT(31);
 
-		writel(viewport_sel,
+		ग_लिखोl(viewport_sel,
 		       &(__dw_regs(dw)->type.legacy.viewport_sel));
-		value = readq(addr);
+		value = पढ़ोq(addr);
 
 		raw_spin_unlock_irqrestore(&dw->lock, flags);
-	} else {
-		value = readq(addr);
-	}
+	पूर्ण अन्यथा अणु
+		value = पढ़ोq(addr);
+	पूर्ण
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-#define SET_CH_64(dw, dir, ch, name, value) \
-	writeq_ch(dw, dir, ch, value, &(__dw_ch_regs(dw, dir, ch)->name))
+#घोषणा SET_CH_64(dw, dir, ch, name, value) \
+	ग_लिखोq_ch(dw, dir, ch, value, &(__dw_ch_regs(dw, dir, ch)->name))
 
-#define GET_CH_64(dw, dir, ch, name) \
-	readq_ch(dw, dir, ch, &(__dw_ch_regs(dw, dir, ch)->name))
+#घोषणा GET_CH_64(dw, dir, ch, name) \
+	पढ़ोq_ch(dw, dir, ch, &(__dw_ch_regs(dw, dir, ch)->name))
 
-#define SET_LL_64(ll, value) \
-	writeq(value, ll)
+#घोषणा SET_LL_64(ll, value) \
+	ग_लिखोq(value, ll)
 
-#endif /* CONFIG_64BIT */
+#पूर्ण_अगर /* CONFIG_64BIT */
 
 /* eDMA management callbacks */
-void dw_edma_v0_core_off(struct dw_edma *dw)
-{
-	SET_BOTH_32(dw, int_mask,
+व्योम dw_edma_v0_core_off(काष्ठा dw_edma *dw)
+अणु
+	SET_BOTH_32(dw, पूर्णांक_mask,
 		    EDMA_V0_DONE_INT_MASK | EDMA_V0_ABORT_INT_MASK);
-	SET_BOTH_32(dw, int_clear,
+	SET_BOTH_32(dw, पूर्णांक_clear,
 		    EDMA_V0_DONE_INT_MASK | EDMA_V0_ABORT_INT_MASK);
 	SET_BOTH_32(dw, engine_en, 0);
-}
+पूर्ण
 
-u16 dw_edma_v0_core_ch_count(struct dw_edma *dw, enum dw_edma_dir dir)
-{
+u16 dw_edma_v0_core_ch_count(काष्ठा dw_edma *dw, क्रमागत dw_edma_dir dir)
+अणु
 	u32 num_ch;
 
-	if (dir == EDMA_DIR_WRITE)
+	अगर (dir == EDMA_सूची_WRITE)
 		num_ch = FIELD_GET(EDMA_V0_WRITE_CH_COUNT_MASK,
 				   GET_32(dw, ctrl));
-	else
+	अन्यथा
 		num_ch = FIELD_GET(EDMA_V0_READ_CH_COUNT_MASK,
 				   GET_32(dw, ctrl));
 
-	if (num_ch > EDMA_V0_MAX_NR_CH)
+	अगर (num_ch > EDMA_V0_MAX_NR_CH)
 		num_ch = EDMA_V0_MAX_NR_CH;
 
-	return (u16)num_ch;
-}
+	वापस (u16)num_ch;
+पूर्ण
 
-enum dma_status dw_edma_v0_core_ch_status(struct dw_edma_chan *chan)
-{
-	struct dw_edma *dw = chan->chip->dw;
-	u32 tmp;
+क्रमागत dma_status dw_edma_v0_core_ch_status(काष्ठा dw_edma_chan *chan)
+अणु
+	काष्ठा dw_edma *dw = chan->chip->dw;
+	u32 पंचांगp;
 
-	tmp = FIELD_GET(EDMA_V0_CH_STATUS_MASK,
+	पंचांगp = FIELD_GET(EDMA_V0_CH_STATUS_MASK,
 			GET_CH_32(dw, chan->dir, chan->id, ch_control1));
 
-	if (tmp == 1)
-		return DMA_IN_PROGRESS;
-	else if (tmp == 3)
-		return DMA_COMPLETE;
-	else
-		return DMA_ERROR;
-}
+	अगर (पंचांगp == 1)
+		वापस DMA_IN_PROGRESS;
+	अन्यथा अगर (पंचांगp == 3)
+		वापस DMA_COMPLETE;
+	अन्यथा
+		वापस DMA_ERROR;
+पूर्ण
 
-void dw_edma_v0_core_clear_done_int(struct dw_edma_chan *chan)
-{
-	struct dw_edma *dw = chan->chip->dw;
+व्योम dw_edma_v0_core_clear_करोne_पूर्णांक(काष्ठा dw_edma_chan *chan)
+अणु
+	काष्ठा dw_edma *dw = chan->chip->dw;
 
-	SET_RW_32(dw, chan->dir, int_clear,
+	SET_RW_32(dw, chan->dir, पूर्णांक_clear,
 		  FIELD_PREP(EDMA_V0_DONE_INT_MASK, BIT(chan->id)));
-}
+पूर्ण
 
-void dw_edma_v0_core_clear_abort_int(struct dw_edma_chan *chan)
-{
-	struct dw_edma *dw = chan->chip->dw;
+व्योम dw_edma_v0_core_clear_पात_पूर्णांक(काष्ठा dw_edma_chan *chan)
+अणु
+	काष्ठा dw_edma *dw = chan->chip->dw;
 
-	SET_RW_32(dw, chan->dir, int_clear,
+	SET_RW_32(dw, chan->dir, पूर्णांक_clear,
 		  FIELD_PREP(EDMA_V0_ABORT_INT_MASK, BIT(chan->id)));
-}
+पूर्ण
 
-u32 dw_edma_v0_core_status_done_int(struct dw_edma *dw, enum dw_edma_dir dir)
-{
-	return FIELD_GET(EDMA_V0_DONE_INT_MASK,
-			 GET_RW_32(dw, dir, int_status));
-}
+u32 dw_edma_v0_core_status_करोne_पूर्णांक(काष्ठा dw_edma *dw, क्रमागत dw_edma_dir dir)
+अणु
+	वापस FIELD_GET(EDMA_V0_DONE_INT_MASK,
+			 GET_RW_32(dw, dir, पूर्णांक_status));
+पूर्ण
 
-u32 dw_edma_v0_core_status_abort_int(struct dw_edma *dw, enum dw_edma_dir dir)
-{
-	return FIELD_GET(EDMA_V0_ABORT_INT_MASK,
-			 GET_RW_32(dw, dir, int_status));
-}
+u32 dw_edma_v0_core_status_पात_पूर्णांक(काष्ठा dw_edma *dw, क्रमागत dw_edma_dir dir)
+अणु
+	वापस FIELD_GET(EDMA_V0_ABORT_INT_MASK,
+			 GET_RW_32(dw, dir, पूर्णांक_status));
+पूर्ण
 
-static void dw_edma_v0_core_write_chunk(struct dw_edma_chunk *chunk)
-{
-	struct dw_edma_burst *child;
-	struct dw_edma_v0_lli __iomem *lli;
-	struct dw_edma_v0_llp __iomem *llp;
+अटल व्योम dw_edma_v0_core_ग_लिखो_chunk(काष्ठा dw_edma_chunk *chunk)
+अणु
+	काष्ठा dw_edma_burst *child;
+	काष्ठा dw_edma_v0_lli __iomem *lli;
+	काष्ठा dw_edma_v0_llp __iomem *llp;
 	u32 control = 0, i = 0;
-	int j;
+	पूर्णांक j;
 
 	lli = chunk->ll_region.vaddr;
 
-	if (chunk->cb)
+	अगर (chunk->cb)
 		control = DW_EDMA_V0_CB;
 
 	j = chunk->bursts_alloc;
-	list_for_each_entry(child, &chunk->burst->list, list) {
+	list_क्रम_each_entry(child, &chunk->burst->list, list) अणु
 		j--;
-		if (!j)
+		अगर (!j)
 			control |= (DW_EDMA_V0_LIE | DW_EDMA_V0_RIE);
 
 		/* Channel control */
@@ -322,191 +323,191 @@ static void dw_edma_v0_core_write_chunk(struct dw_edma_chunk *chunk)
 		/* Transfer size */
 		SET_LL_32(&lli[i].transfer_size, child->sz);
 		/* SAR */
-		#ifdef CONFIG_64BIT
+		#अगर_घोषित CONFIG_64BIT
 			SET_LL_64(&lli[i].sar.reg, child->sar);
-		#else /* CONFIG_64BIT */
+		#अन्यथा /* CONFIG_64BIT */
 			SET_LL_32(&lli[i].sar.lsb, lower_32_bits(child->sar));
 			SET_LL_32(&lli[i].sar.msb, upper_32_bits(child->sar));
-		#endif /* CONFIG_64BIT */
+		#पूर्ण_अगर /* CONFIG_64BIT */
 		/* DAR */
-		#ifdef CONFIG_64BIT
+		#अगर_घोषित CONFIG_64BIT
 			SET_LL_64(&lli[i].dar.reg, child->dar);
-		#else /* CONFIG_64BIT */
+		#अन्यथा /* CONFIG_64BIT */
 			SET_LL_32(&lli[i].dar.lsb, lower_32_bits(child->dar));
 			SET_LL_32(&lli[i].dar.msb, upper_32_bits(child->dar));
-		#endif /* CONFIG_64BIT */
+		#पूर्ण_अगर /* CONFIG_64BIT */
 		i++;
-	}
+	पूर्ण
 
-	llp = (void __iomem *)&lli[i];
+	llp = (व्योम __iomem *)&lli[i];
 	control = DW_EDMA_V0_LLP | DW_EDMA_V0_TCB;
-	if (!chunk->cb)
+	अगर (!chunk->cb)
 		control |= DW_EDMA_V0_CB;
 
 	/* Channel control */
 	SET_LL_32(&llp->control, control);
 	/* Linked list */
-	#ifdef CONFIG_64BIT
+	#अगर_घोषित CONFIG_64BIT
 		SET_LL_64(&llp->llp.reg, chunk->ll_region.paddr);
-	#else /* CONFIG_64BIT */
+	#अन्यथा /* CONFIG_64BIT */
 		SET_LL_32(&llp->llp.lsb, lower_32_bits(chunk->ll_region.paddr));
 		SET_LL_32(&llp->llp.msb, upper_32_bits(chunk->ll_region.paddr));
-	#endif /* CONFIG_64BIT */
-}
+	#पूर्ण_अगर /* CONFIG_64BIT */
+पूर्ण
 
-void dw_edma_v0_core_start(struct dw_edma_chunk *chunk, bool first)
-{
-	struct dw_edma_chan *chan = chunk->chan;
-	struct dw_edma *dw = chan->chip->dw;
-	u32 tmp;
+व्योम dw_edma_v0_core_start(काष्ठा dw_edma_chunk *chunk, bool first)
+अणु
+	काष्ठा dw_edma_chan *chan = chunk->chan;
+	काष्ठा dw_edma *dw = chan->chip->dw;
+	u32 पंचांगp;
 
-	dw_edma_v0_core_write_chunk(chunk);
+	dw_edma_v0_core_ग_लिखो_chunk(chunk);
 
-	if (first) {
+	अगर (first) अणु
 		/* Enable engine */
 		SET_RW_32(dw, chan->dir, engine_en, BIT(0));
-		if (dw->mf == EDMA_MF_HDMA_COMPAT) {
-			switch (chan->id) {
-			case 0:
+		अगर (dw->mf == EDMA_MF_HDMA_COMPAT) अणु
+			चयन (chan->id) अणु
+			हाल 0:
 				SET_RW_COMPAT(dw, chan->dir, ch0_pwr_en,
 					      BIT(0));
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				SET_RW_COMPAT(dw, chan->dir, ch1_pwr_en,
 					      BIT(0));
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				SET_RW_COMPAT(dw, chan->dir, ch2_pwr_en,
 					      BIT(0));
-				break;
-			case 3:
+				अवरोध;
+			हाल 3:
 				SET_RW_COMPAT(dw, chan->dir, ch3_pwr_en,
 					      BIT(0));
-				break;
-			case 4:
+				अवरोध;
+			हाल 4:
 				SET_RW_COMPAT(dw, chan->dir, ch4_pwr_en,
 					      BIT(0));
-				break;
-			case 5:
+				अवरोध;
+			हाल 5:
 				SET_RW_COMPAT(dw, chan->dir, ch5_pwr_en,
 					      BIT(0));
-				break;
-			case 6:
+				अवरोध;
+			हाल 6:
 				SET_RW_COMPAT(dw, chan->dir, ch6_pwr_en,
 					      BIT(0));
-				break;
-			case 7:
+				अवरोध;
+			हाल 7:
 				SET_RW_COMPAT(dw, chan->dir, ch7_pwr_en,
 					      BIT(0));
-				break;
-			}
-		}
-		/* Interrupt unmask - done, abort */
-		tmp = GET_RW_32(dw, chan->dir, int_mask);
-		tmp &= ~FIELD_PREP(EDMA_V0_DONE_INT_MASK, BIT(chan->id));
-		tmp &= ~FIELD_PREP(EDMA_V0_ABORT_INT_MASK, BIT(chan->id));
-		SET_RW_32(dw, chan->dir, int_mask, tmp);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		/* Interrupt unmask - करोne, पात */
+		पंचांगp = GET_RW_32(dw, chan->dir, पूर्णांक_mask);
+		पंचांगp &= ~FIELD_PREP(EDMA_V0_DONE_INT_MASK, BIT(chan->id));
+		पंचांगp &= ~FIELD_PREP(EDMA_V0_ABORT_INT_MASK, BIT(chan->id));
+		SET_RW_32(dw, chan->dir, पूर्णांक_mask, पंचांगp);
 		/* Linked list error */
-		tmp = GET_RW_32(dw, chan->dir, linked_list_err_en);
-		tmp |= FIELD_PREP(EDMA_V0_LINKED_LIST_ERR_MASK, BIT(chan->id));
-		SET_RW_32(dw, chan->dir, linked_list_err_en, tmp);
+		पंचांगp = GET_RW_32(dw, chan->dir, linked_list_err_en);
+		पंचांगp |= FIELD_PREP(EDMA_V0_LINKED_LIST_ERR_MASK, BIT(chan->id));
+		SET_RW_32(dw, chan->dir, linked_list_err_en, पंचांगp);
 		/* Channel control */
 		SET_CH_32(dw, chan->dir, chan->id, ch_control1,
 			  (DW_EDMA_V0_CCS | DW_EDMA_V0_LLE));
 		/* Linked list */
-		#ifdef CONFIG_64BIT
+		#अगर_घोषित CONFIG_64BIT
 			SET_CH_64(dw, chan->dir, chan->id, llp.reg,
 				  chunk->ll_region.paddr);
-		#else /* CONFIG_64BIT */
+		#अन्यथा /* CONFIG_64BIT */
 			SET_CH_32(dw, chan->dir, chan->id, llp.lsb,
 				  lower_32_bits(chunk->ll_region.paddr));
 			SET_CH_32(dw, chan->dir, chan->id, llp.msb,
 				  upper_32_bits(chunk->ll_region.paddr));
-		#endif /* CONFIG_64BIT */
-	}
+		#पूर्ण_अगर /* CONFIG_64BIT */
+	पूर्ण
 	/* Doorbell */
-	SET_RW_32(dw, chan->dir, doorbell,
+	SET_RW_32(dw, chan->dir, करोorbell,
 		  FIELD_PREP(EDMA_V0_DOORBELL_CH_MASK, chan->id));
-}
+पूर्ण
 
-int dw_edma_v0_core_device_config(struct dw_edma_chan *chan)
-{
-	struct dw_edma *dw = chan->chip->dw;
-	u32 tmp = 0;
+पूर्णांक dw_edma_v0_core_device_config(काष्ठा dw_edma_chan *chan)
+अणु
+	काष्ठा dw_edma *dw = chan->chip->dw;
+	u32 पंचांगp = 0;
 
-	/* MSI done addr - low, high */
-	SET_RW_32(dw, chan->dir, done_imwr.lsb, chan->msi.address_lo);
-	SET_RW_32(dw, chan->dir, done_imwr.msb, chan->msi.address_hi);
-	/* MSI abort addr - low, high */
-	SET_RW_32(dw, chan->dir, abort_imwr.lsb, chan->msi.address_lo);
-	SET_RW_32(dw, chan->dir, abort_imwr.msb, chan->msi.address_hi);
+	/* MSI करोne addr - low, high */
+	SET_RW_32(dw, chan->dir, करोne_imwr.lsb, chan->msi.address_lo);
+	SET_RW_32(dw, chan->dir, करोne_imwr.msb, chan->msi.address_hi);
+	/* MSI पात addr - low, high */
+	SET_RW_32(dw, chan->dir, पात_imwr.lsb, chan->msi.address_lo);
+	SET_RW_32(dw, chan->dir, पात_imwr.msb, chan->msi.address_hi);
 	/* MSI data - low, high */
-	switch (chan->id) {
-	case 0:
-	case 1:
-		tmp = GET_RW_32(dw, chan->dir, ch01_imwr_data);
-		break;
+	चयन (chan->id) अणु
+	हाल 0:
+	हाल 1:
+		पंचांगp = GET_RW_32(dw, chan->dir, ch01_imwr_data);
+		अवरोध;
 
-	case 2:
-	case 3:
-		tmp = GET_RW_32(dw, chan->dir, ch23_imwr_data);
-		break;
+	हाल 2:
+	हाल 3:
+		पंचांगp = GET_RW_32(dw, chan->dir, ch23_imwr_data);
+		अवरोध;
 
-	case 4:
-	case 5:
-		tmp = GET_RW_32(dw, chan->dir, ch45_imwr_data);
-		break;
+	हाल 4:
+	हाल 5:
+		पंचांगp = GET_RW_32(dw, chan->dir, ch45_imwr_data);
+		अवरोध;
 
-	case 6:
-	case 7:
-		tmp = GET_RW_32(dw, chan->dir, ch67_imwr_data);
-		break;
-	}
+	हाल 6:
+	हाल 7:
+		पंचांगp = GET_RW_32(dw, chan->dir, ch67_imwr_data);
+		अवरोध;
+	पूर्ण
 
-	if (chan->id & BIT(0)) {
-		/* Channel odd {1, 3, 5, 7} */
-		tmp &= EDMA_V0_CH_EVEN_MSI_DATA_MASK;
-		tmp |= FIELD_PREP(EDMA_V0_CH_ODD_MSI_DATA_MASK,
+	अगर (chan->id & BIT(0)) अणु
+		/* Channel odd अणु1, 3, 5, 7पूर्ण */
+		पंचांगp &= EDMA_V0_CH_EVEN_MSI_DATA_MASK;
+		पंचांगp |= FIELD_PREP(EDMA_V0_CH_ODD_MSI_DATA_MASK,
 				  chan->msi.data);
-	} else {
-		/* Channel even {0, 2, 4, 6} */
-		tmp &= EDMA_V0_CH_ODD_MSI_DATA_MASK;
-		tmp |= FIELD_PREP(EDMA_V0_CH_EVEN_MSI_DATA_MASK,
+	पूर्ण अन्यथा अणु
+		/* Channel even अणु0, 2, 4, 6पूर्ण */
+		पंचांगp &= EDMA_V0_CH_ODD_MSI_DATA_MASK;
+		पंचांगp |= FIELD_PREP(EDMA_V0_CH_EVEN_MSI_DATA_MASK,
 				  chan->msi.data);
-	}
+	पूर्ण
 
-	switch (chan->id) {
-	case 0:
-	case 1:
-		SET_RW_32(dw, chan->dir, ch01_imwr_data, tmp);
-		break;
+	चयन (chan->id) अणु
+	हाल 0:
+	हाल 1:
+		SET_RW_32(dw, chan->dir, ch01_imwr_data, पंचांगp);
+		अवरोध;
 
-	case 2:
-	case 3:
-		SET_RW_32(dw, chan->dir, ch23_imwr_data, tmp);
-		break;
+	हाल 2:
+	हाल 3:
+		SET_RW_32(dw, chan->dir, ch23_imwr_data, पंचांगp);
+		अवरोध;
 
-	case 4:
-	case 5:
-		SET_RW_32(dw, chan->dir, ch45_imwr_data, tmp);
-		break;
+	हाल 4:
+	हाल 5:
+		SET_RW_32(dw, chan->dir, ch45_imwr_data, पंचांगp);
+		अवरोध;
 
-	case 6:
-	case 7:
-		SET_RW_32(dw, chan->dir, ch67_imwr_data, tmp);
-		break;
-	}
+	हाल 6:
+	हाल 7:
+		SET_RW_32(dw, chan->dir, ch67_imwr_data, पंचांगp);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* eDMA debugfs callbacks */
-void dw_edma_v0_core_debugfs_on(struct dw_edma_chip *chip)
-{
+व्योम dw_edma_v0_core_debugfs_on(काष्ठा dw_edma_chip *chip)
+अणु
 	dw_edma_v0_debugfs_on(chip);
-}
+पूर्ण
 
-void dw_edma_v0_core_debugfs_off(struct dw_edma_chip *chip)
-{
+व्योम dw_edma_v0_core_debugfs_off(काष्ठा dw_edma_chip *chip)
+अणु
 	dw_edma_v0_debugfs_off(chip);
-}
+पूर्ण

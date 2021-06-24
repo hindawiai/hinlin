@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
- * This file contains AppArmor /proc/<pid>/attr/ interface function definitions.
+ * This file contains AppArmor /proc/<pid>/attr/ पूर्णांकerface function definitions.
  *
  * Copyright (C) 1998-2008 Novell/SUSE
  * Copyright 2009-2010 Canonical Ltd.
  */
 
-#ifndef __AA_PROCATTR_H
-#define __AA_PROCATTR_H
+#अगर_अघोषित __AA_PROCATTR_H
+#घोषणा __AA_PROCATTR_H
 
-int aa_getprocattr(struct aa_label *label, char **string);
-int aa_setprocattr_changehat(char *args, size_t size, int flags);
+पूर्णांक aa_getprocattr(काष्ठा aa_label *label, अक्षर **string);
+पूर्णांक aa_setprocattr_changehat(अक्षर *args, माप_प्रकार size, पूर्णांक flags);
 
-#endif /* __AA_PROCATTR_H */
+#पूर्ण_अगर /* __AA_PROCATTR_H */

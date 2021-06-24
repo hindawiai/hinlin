@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * parse_vdso.c: Linux reference vDSO parser
  * Written by Andrew Lutomirski, 2011-2014.
@@ -5,73 +6,73 @@
  * This code is meant to be linked in to various programs that run on Linux.
  * As such, it is available with as few restrictions as possible.  This file
  * is licensed under the Creative Commons Zero License, version 1.0,
- * available at http://creativecommons.org/publicdomain/zero/1.0/legalcode
+ * available at http://creativecommons.org/खुलाकरोमुख्य/zero/1.0/legalcode
  *
- * The vDSO is a regular ELF DSO that the kernel maps into user space when
- * it starts a program.  It works equally well in statically and dynamically
+ * The vDSO is a regular ELF DSO that the kernel maps पूर्णांकo user space when
+ * it starts a program.  It works equally well in अटलally and dynamically
  * linked binaries.
  *
  * This code is tested on x86.  In principle it should work on any
  * architecture that has a vDSO.
  */
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-#include <limits.h>
-#include <elf.h>
+#समावेश <stdbool.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <माला.स>
+#समावेश <सीमा.स>
+#समावेश <elf.h>
 
-#include "parse_vdso.h"
+#समावेश "parse_vdso.h"
 
 /* And here's the code. */
-#ifndef ELF_BITS
-# if ULONG_MAX > 0xffffffffUL
+#अगर_अघोषित ELF_BITS
+# अगर अच_दीर्घ_उच्च > 0xffffffffUL
 #  define ELF_BITS 64
-# else
+# अन्यथा
 #  define ELF_BITS 32
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#define ELF_BITS_XFORM2(bits, x) Elf##bits##_##x
-#define ELF_BITS_XFORM(bits, x) ELF_BITS_XFORM2(bits, x)
-#define ELF(x) ELF_BITS_XFORM(ELF_BITS, x)
+#घोषणा ELF_BITS_XFORM2(bits, x) Elf##bits##_##x
+#घोषणा ELF_BITS_XFORM(bits, x) ELF_BITS_XFORM2(bits, x)
+#घोषणा ELF(x) ELF_BITS_XFORM(ELF_BITS, x)
 
-static struct vdso_info
-{
+अटल काष्ठा vdso_info
+अणु
 	bool valid;
 
-	/* Load information */
-	uintptr_t load_addr;
-	uintptr_t load_offset;  /* load_addr - recorded vaddr */
+	/* Load inक्रमmation */
+	uपूर्णांकptr_t load_addr;
+	uपूर्णांकptr_t load_offset;  /* load_addr - recorded vaddr */
 
 	/* Symbol table */
 	ELF(Sym) *symtab;
-	const char *symstrings;
+	स्थिर अक्षर *symstrings;
 	ELF(Word) *bucket, *chain;
 	ELF(Word) nbucket, nchain;
 
 	/* Version table */
 	ELF(Versym) *versym;
 	ELF(Verdef) *verdef;
-} vdso_info;
+पूर्ण vdso_info;
 
-/* Straight from the ELF specification. */
-static unsigned long elf_hash(const unsigned char *name)
-{
-	unsigned long h = 0, g;
-	while (*name)
-	{
+/* Straight from the ELF specअगरication. */
+अटल अचिन्हित दीर्घ elf_hash(स्थिर अचिन्हित अक्षर *name)
+अणु
+	अचिन्हित दीर्घ h = 0, g;
+	जबतक (*name)
+	अणु
 		h = (h << 4) + *name++;
-		if (g = h & 0xf0000000)
+		अगर (g = h & 0xf0000000)
 			h ^= g >> 24;
 		h &= ~g;
-	}
-	return h;
-}
+	पूर्ण
+	वापस h;
+पूर्ण
 
-void vdso_init_from_sysinfo_ehdr(uintptr_t base)
-{
-	size_t i;
+व्योम vdso_init_from_sysinfo_ehdr(uपूर्णांकptr_t base)
+अणु
+	माप_प्रकार i;
 	bool found_vaddr = false;
 
 	vdso_info.valid = false;
@@ -79,10 +80,10 @@ void vdso_init_from_sysinfo_ehdr(uintptr_t base)
 	vdso_info.load_addr = base;
 
 	ELF(Ehdr) *hdr = (ELF(Ehdr)*)base;
-	if (hdr->e_ident[EI_CLASS] !=
-	    (ELF_BITS == 32 ? ELFCLASS32 : ELFCLASS64)) {
-		return;  /* Wrong ELF class -- check ELF_BITS */
-	}
+	अगर (hdr->e_ident[EI_CLASS] !=
+	    (ELF_BITS == 32 ? ELFCLASS32 : ELFCLASS64)) अणु
+		वापस;  /* Wrong ELF class -- check ELF_BITS */
+	पूर्ण
 
 	ELF(Phdr) *pt = (ELF(Phdr)*)(vdso_info.load_addr + hdr->e_phoff);
 	ELF(Dyn) *dyn = 0;
@@ -91,20 +92,20 @@ void vdso_init_from_sysinfo_ehdr(uintptr_t base)
 	 * We need two things from the segment table: the load offset
 	 * and the dynamic table.
 	 */
-	for (i = 0; i < hdr->e_phnum; i++)
-	{
-		if (pt[i].p_type == PT_LOAD && !found_vaddr) {
+	क्रम (i = 0; i < hdr->e_phnum; i++)
+	अणु
+		अगर (pt[i].p_type == PT_LOAD && !found_vaddr) अणु
 			found_vaddr = true;
 			vdso_info.load_offset =	base
-				+ (uintptr_t)pt[i].p_offset
-				- (uintptr_t)pt[i].p_vaddr;
-		} else if (pt[i].p_type == PT_DYNAMIC) {
+				+ (uपूर्णांकptr_t)pt[i].p_offset
+				- (uपूर्णांकptr_t)pt[i].p_vaddr;
+		पूर्ण अन्यथा अगर (pt[i].p_type == PT_DYNAMIC) अणु
 			dyn = (ELF(Dyn)*)(base + pt[i].p_offset);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!found_vaddr || !dyn)
-		return;  /* Failed */
+	अगर (!found_vaddr || !dyn)
+		वापस;  /* Failed */
 
 	/*
 	 * Fish out the useful bits of the dynamic table.
@@ -114,39 +115,39 @@ void vdso_init_from_sysinfo_ehdr(uintptr_t base)
 	vdso_info.symtab = 0;
 	vdso_info.versym = 0;
 	vdso_info.verdef = 0;
-	for (i = 0; dyn[i].d_tag != DT_NULL; i++) {
-		switch (dyn[i].d_tag) {
-		case DT_STRTAB:
-			vdso_info.symstrings = (const char *)
-				((uintptr_t)dyn[i].d_un.d_ptr
+	क्रम (i = 0; dyn[i].d_tag != DT_शून्य; i++) अणु
+		चयन (dyn[i].d_tag) अणु
+		हाल DT_STRTAB:
+			vdso_info.symstrings = (स्थिर अक्षर *)
+				((uपूर्णांकptr_t)dyn[i].d_un.d_ptr
 				 + vdso_info.load_offset);
-			break;
-		case DT_SYMTAB:
+			अवरोध;
+		हाल DT_SYMTAB:
 			vdso_info.symtab = (ELF(Sym) *)
-				((uintptr_t)dyn[i].d_un.d_ptr
+				((uपूर्णांकptr_t)dyn[i].d_un.d_ptr
 				 + vdso_info.load_offset);
-			break;
-		case DT_HASH:
+			अवरोध;
+		हाल DT_HASH:
 			hash = (ELF(Word) *)
-				((uintptr_t)dyn[i].d_un.d_ptr
+				((uपूर्णांकptr_t)dyn[i].d_un.d_ptr
 				 + vdso_info.load_offset);
-			break;
-		case DT_VERSYM:
+			अवरोध;
+		हाल DT_VERSYM:
 			vdso_info.versym = (ELF(Versym) *)
-				((uintptr_t)dyn[i].d_un.d_ptr
+				((uपूर्णांकptr_t)dyn[i].d_un.d_ptr
 				 + vdso_info.load_offset);
-			break;
-		case DT_VERDEF:
+			अवरोध;
+		हाल DT_VERDEF:
 			vdso_info.verdef = (ELF(Verdef) *)
-				((uintptr_t)dyn[i].d_un.d_ptr
+				((uपूर्णांकptr_t)dyn[i].d_un.d_ptr
 				 + vdso_info.load_offset);
-			break;
-		}
-	}
-	if (!vdso_info.symstrings || !vdso_info.symtab || !hash)
-		return;  /* Failed */
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!vdso_info.symstrings || !vdso_info.symtab || !hash)
+		वापस;  /* Failed */
 
-	if (!vdso_info.verdef)
+	अगर (!vdso_info.verdef)
 		vdso_info.versym = 0;
 
 	/* Parse the hash table header. */
@@ -157,91 +158,91 @@ void vdso_init_from_sysinfo_ehdr(uintptr_t base)
 
 	/* That's all we need. */
 	vdso_info.valid = true;
-}
+पूर्ण
 
-static bool vdso_match_version(ELF(Versym) ver,
-			       const char *name, ELF(Word) hash)
-{
+अटल bool vdso_match_version(ELF(Versym) ver,
+			       स्थिर अक्षर *name, ELF(Word) hash)
+अणु
 	/*
-	 * This is a helper function to check if the version indexed by
+	 * This is a helper function to check अगर the version indexed by
 	 * ver matches name (which hashes to hash).
 	 *
-	 * The version definition table is a mess, and I don't know how
-	 * to do this in better than linear time without allocating memory
-	 * to build an index.  I also don't know why the table has
+	 * The version definition table is a mess, and I करोn't know how
+	 * to करो this in better than linear समय without allocating memory
+	 * to build an index.  I also करोn't know why the table has
 	 * variable size entries in the first place.
 	 *
-	 * For added fun, I can't find a comprehensible specification of how
+	 * For added fun, I can't find a comprehensible specअगरication of how
 	 * to parse all the weird flags in the table.
 	 *
-	 * So I just parse the whole table every time.
+	 * So I just parse the whole table every समय.
 	 */
 
 	/* First step: find the version definition */
 	ver &= 0x7fff;  /* Apparently bit 15 means "hidden" */
 	ELF(Verdef) *def = vdso_info.verdef;
-	while(true) {
-		if ((def->vd_flags & VER_FLG_BASE) == 0
+	जबतक(true) अणु
+		अगर ((def->vd_flags & VER_FLG_BASE) == 0
 		    && (def->vd_ndx & 0x7fff) == ver)
-			break;
+			अवरोध;
 
-		if (def->vd_next == 0)
-			return false;  /* No definition. */
+		अगर (def->vd_next == 0)
+			वापस false;  /* No definition. */
 
-		def = (ELF(Verdef) *)((char *)def + def->vd_next);
-	}
+		def = (ELF(Verdef) *)((अक्षर *)def + def->vd_next);
+	पूर्ण
 
 	/* Now figure out whether it matches. */
-	ELF(Verdaux) *aux = (ELF(Verdaux)*)((char *)def + def->vd_aux);
-	return def->vd_hash == hash
-		&& !strcmp(name, vdso_info.symstrings + aux->vda_name);
-}
+	ELF(Verdaux) *aux = (ELF(Verdaux)*)((अक्षर *)def + def->vd_aux);
+	वापस def->vd_hash == hash
+		&& !म_भेद(name, vdso_info.symstrings + aux->vda_name);
+पूर्ण
 
-void *vdso_sym(const char *version, const char *name)
-{
-	unsigned long ver_hash;
-	if (!vdso_info.valid)
-		return 0;
+व्योम *vdso_sym(स्थिर अक्षर *version, स्थिर अक्षर *name)
+अणु
+	अचिन्हित दीर्घ ver_hash;
+	अगर (!vdso_info.valid)
+		वापस 0;
 
 	ver_hash = elf_hash(version);
 	ELF(Word) chain = vdso_info.bucket[elf_hash(name) % vdso_info.nbucket];
 
-	for (; chain != STN_UNDEF; chain = vdso_info.chain[chain]) {
+	क्रम (; chain != STN_UNDEF; chain = vdso_info.chain[chain]) अणु
 		ELF(Sym) *sym = &vdso_info.symtab[chain];
 
-		/* Check for a defined global or weak function w/ right name. */
-		if (ELF64_ST_TYPE(sym->st_info) != STT_FUNC)
-			continue;
-		if (ELF64_ST_BIND(sym->st_info) != STB_GLOBAL &&
+		/* Check क्रम a defined global or weak function w/ right name. */
+		अगर (ELF64_ST_TYPE(sym->st_info) != STT_FUNC)
+			जारी;
+		अगर (ELF64_ST_BIND(sym->st_info) != STB_GLOBAL &&
 		    ELF64_ST_BIND(sym->st_info) != STB_WEAK)
-			continue;
-		if (sym->st_shndx == SHN_UNDEF)
-			continue;
-		if (strcmp(name, vdso_info.symstrings + sym->st_name))
-			continue;
+			जारी;
+		अगर (sym->st_shndx == SHN_UNDEF)
+			जारी;
+		अगर (म_भेद(name, vdso_info.symstrings + sym->st_name))
+			जारी;
 
 		/* Check symbol version. */
-		if (vdso_info.versym
+		अगर (vdso_info.versym
 		    && !vdso_match_version(vdso_info.versym[chain],
 					   version, ver_hash))
-			continue;
+			जारी;
 
-		return (void *)(vdso_info.load_offset + sym->st_value);
-	}
+		वापस (व्योम *)(vdso_info.load_offset + sym->st_value);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vdso_init_from_auxv(void *auxv)
-{
+व्योम vdso_init_from_auxv(व्योम *auxv)
+अणु
 	ELF(auxv_t) *elf_auxv = auxv;
-	for (int i = 0; elf_auxv[i].a_type != AT_NULL; i++)
-	{
-		if (elf_auxv[i].a_type == AT_SYSINFO_EHDR) {
+	क्रम (पूर्णांक i = 0; elf_auxv[i].a_type != AT_शून्य; i++)
+	अणु
+		अगर (elf_auxv[i].a_type == AT_SYSINFO_EHDR) अणु
 			vdso_init_from_sysinfo_ehdr(elf_auxv[i].a_un.a_val);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	vdso_info.valid = false;
-}
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,18 +21,18 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include "umc_v6_0.h"
-#include "amdgpu.h"
+#समावेश "umc_v6_0.h"
+#समावेश "amdgpu.h"
 
-static void umc_v6_0_init_registers(struct amdgpu_device *adev)
-{
-	unsigned i,j;
+अटल व्योम umc_v6_0_init_रेजिस्टरs(काष्ठा amdgpu_device *adev)
+अणु
+	अचिन्हित i,j;
 
-	for (i = 0; i < 4; i++)
-		for (j = 0; j < 4; j++)
+	क्रम (i = 0; i < 4; i++)
+		क्रम (j = 0; j < 4; j++)
 			WREG32((i*0x100000 + 0x5010c + j*0x2000)/4, 0x1002);
-}
+पूर्ण
 
-const struct amdgpu_umc_funcs umc_v6_0_funcs = {
-	.init_registers = umc_v6_0_init_registers,
-};
+स्थिर काष्ठा amdgpu_umc_funcs umc_v6_0_funcs = अणु
+	.init_रेजिस्टरs = umc_v6_0_init_रेजिस्टरs,
+पूर्ण;

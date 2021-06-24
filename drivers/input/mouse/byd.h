@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _BYD_H
-#define _BYD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _BYD_H
+#घोषणा _BYD_H
 
-int byd_detect(struct psmouse *psmouse, bool set_properties);
-int byd_init(struct psmouse *psmouse);
+पूर्णांक byd_detect(काष्ठा psmouse *psmouse, bool set_properties);
+पूर्णांक byd_init(काष्ठा psmouse *psmouse);
 
-#endif /* _BYD_H */
+#पूर्ण_अगर /* _BYD_H */

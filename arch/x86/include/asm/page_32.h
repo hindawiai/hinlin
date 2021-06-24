@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_PAGE_32_H
-#define _ASM_X86_PAGE_32_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_PAGE_32_H
+#घोषणा _ASM_X86_PAGE_32_H
 
-#include <asm/page_32_types.h>
+#समावेश <यंत्र/page_32_types.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#define __phys_addr_nodebug(x)	((x) - PAGE_OFFSET)
-#ifdef CONFIG_DEBUG_VIRTUAL
-extern unsigned long __phys_addr(unsigned long);
-#else
-#define __phys_addr(x)		__phys_addr_nodebug(x)
-#endif
-#define __phys_addr_symbol(x)	__phys_addr(x)
-#define __phys_reloc_hide(x)	RELOC_HIDE((x), 0)
+#घोषणा __phys_addr_nodebug(x)	((x) - PAGE_OFFSET)
+#अगर_घोषित CONFIG_DEBUG_VIRTUAL
+बाह्य अचिन्हित दीर्घ __phys_addr(अचिन्हित दीर्घ);
+#अन्यथा
+#घोषणा __phys_addr(x)		__phys_addr_nodebug(x)
+#पूर्ण_अगर
+#घोषणा __phys_addr_symbol(x)	__phys_addr(x)
+#घोषणा __phys_reloc_hide(x)	RELOC_HIDE((x), 0)
 
-#ifdef CONFIG_FLATMEM
-#define pfn_valid(pfn)		((pfn) < max_mapnr)
-#endif /* CONFIG_FLATMEM */
+#अगर_घोषित CONFIG_FLATMEM
+#घोषणा pfn_valid(pfn)		((pfn) < max_mapnr)
+#पूर्ण_अगर /* CONFIG_FLATMEM */
 
-#ifdef CONFIG_X86_USE_3DNOW
-#include <asm/mmx.h>
+#अगर_घोषित CONFIG_X86_USE_3DNOW
+#समावेश <यंत्र/mmx.h>
 
-static inline void clear_page(void *page)
-{
+अटल अंतरभूत व्योम clear_page(व्योम *page)
+अणु
 	mmx_clear_page(page);
-}
+पूर्ण
 
-static inline void copy_page(void *to, void *from)
-{
+अटल अंतरभूत व्योम copy_page(व्योम *to, व्योम *from)
+अणु
 	mmx_copy_page(to, from);
-}
-#else  /* !CONFIG_X86_USE_3DNOW */
-#include <linux/string.h>
+पूर्ण
+#अन्यथा  /* !CONFIG_X86_USE_3DNOW */
+#समावेश <linux/माला.स>
 
-static inline void clear_page(void *page)
-{
-	memset(page, 0, PAGE_SIZE);
-}
+अटल अंतरभूत व्योम clear_page(व्योम *page)
+अणु
+	स_रखो(page, 0, PAGE_SIZE);
+पूर्ण
 
-static inline void copy_page(void *to, void *from)
-{
-	memcpy(to, from, PAGE_SIZE);
-}
-#endif	/* CONFIG_X86_3DNOW */
-#endif	/* !__ASSEMBLY__ */
+अटल अंतरभूत व्योम copy_page(व्योम *to, व्योम *from)
+अणु
+	स_नकल(to, from, PAGE_SIZE);
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_X86_3DNOW */
+#पूर्ण_अगर	/* !__ASSEMBLY__ */
 
-#endif /* _ASM_X86_PAGE_32_H */
+#पूर्ण_अगर /* _ASM_X86_PAGE_32_H */

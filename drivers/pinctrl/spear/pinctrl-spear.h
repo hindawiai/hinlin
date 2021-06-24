@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Driver header file for the ST Microelectronics SPEAr pinmux
+ * Driver header file क्रम the ST Microelectronics SPEAr pinmux
  *
  * Copyright (C) 2012 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -9,129 +10,129 @@
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef __PINMUX_SPEAR_H__
-#define __PINMUX_SPEAR_H__
+#अगर_अघोषित __PINMUX_SPEAR_H__
+#घोषणा __PINMUX_SPEAR_H__
 
-#include <linux/gpio/driver.h>
-#include <linux/io.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/types.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/types.h>
 
-struct platform_device;
-struct device;
-struct spear_pmx;
+काष्ठा platक्रमm_device;
+काष्ठा device;
+काष्ठा spear_pmx;
 
 /**
- * struct spear_pmx_mode - SPEAr pmx mode
+ * काष्ठा spear_pmx_mode - SPEAr pmx mode
  * @name: name of pmx mode
  * @mode: mode id
- * @reg: register for configuring this mode
+ * @reg: रेजिस्टर क्रम configuring this mode
  * @mask: mask of this mode in reg
- * @val: val to be configured at reg after doing (val & mask)
+ * @val: val to be configured at reg after करोing (val & mask)
  */
-struct spear_pmx_mode {
-	const char *const name;
+काष्ठा spear_pmx_mode अणु
+	स्थिर अक्षर *स्थिर name;
 	u16 mode;
 	u16 reg;
 	u16 mask;
 	u32 val;
-};
+पूर्ण;
 
 /**
- * struct spear_muxreg - SPEAr mux reg configuration
- * @reg: register offset
+ * काष्ठा spear_muxreg - SPEAr mux reg configuration
+ * @reg: रेजिस्टर offset
  * @mask: mask bits
  * @val: val to be written on mask bits
  */
-struct spear_muxreg {
+काष्ठा spear_muxreg अणु
 	u16 reg;
 	u32 mask;
 	u32 val;
-};
+पूर्ण;
 
-struct spear_gpio_pingroup {
-	const unsigned *pins;
-	unsigned npins;
-	struct spear_muxreg *muxregs;
+काष्ठा spear_gpio_pingroup अणु
+	स्थिर अचिन्हित *pins;
+	अचिन्हित npins;
+	काष्ठा spear_muxreg *muxregs;
 	u8 nmuxregs;
-};
+पूर्ण;
 
 /* ste: set to enable */
-#define DEFINE_MUXREG(__pins, __muxreg, __mask, __ste)		\
-static struct spear_muxreg __pins##_muxregs[] = {		\
-	{							\
+#घोषणा DEFINE_MUXREG(__pins, __muxreg, __mask, __ste)		\
+अटल काष्ठा spear_muxreg __pins##_muxregs[] = अणु		\
+	अणु							\
 		.reg = __muxreg,				\
 		.mask = __mask,					\
 		.val = __ste ? __mask : 0,			\
-	},							\
-}
+	पूर्ण,							\
+पूर्ण
 
-#define DEFINE_2_MUXREG(__pins, __muxreg1, __muxreg2, __mask, __ste1, __ste2) \
-static struct spear_muxreg __pins##_muxregs[] = {		\
-	{							\
+#घोषणा DEFINE_2_MUXREG(__pins, __muxreg1, __muxreg2, __mask, __ste1, __ste2) \
+अटल काष्ठा spear_muxreg __pins##_muxregs[] = अणु		\
+	अणु							\
 		.reg = __muxreg1,				\
 		.mask = __mask,					\
 		.val = __ste1 ? __mask : 0,			\
-	}, {							\
+	पूर्ण, अणु							\
 		.reg = __muxreg2,				\
 		.mask = __mask,					\
 		.val = __ste2 ? __mask : 0,			\
-	},							\
-}
+	पूर्ण,							\
+पूर्ण
 
-#define GPIO_PINGROUP(__pins)					\
-	{							\
+#घोषणा GPIO_PINGROUP(__pins)					\
+	अणु							\
 		.pins = __pins,					\
 		.npins = ARRAY_SIZE(__pins),			\
 		.muxregs = __pins##_muxregs,			\
 		.nmuxregs = ARRAY_SIZE(__pins##_muxregs),	\
-	}
+	पूर्ण
 
 /**
- * struct spear_modemux - SPEAr mode mux configuration
+ * काष्ठा spear_modemux - SPEAr mode mux configuration
  * @modes: mode ids supported by this group of muxregs
- * @nmuxregs: number of muxreg configurations to be done for modes
- * @muxregs: array of muxreg configurations to be done for modes
+ * @nmuxregs: number of muxreg configurations to be करोne क्रम modes
+ * @muxregs: array of muxreg configurations to be करोne क्रम modes
  */
-struct spear_modemux {
+काष्ठा spear_modemux अणु
 	u16 modes;
 	u8 nmuxregs;
-	struct spear_muxreg *muxregs;
-};
+	काष्ठा spear_muxreg *muxregs;
+पूर्ण;
 
 /**
- * struct spear_pingroup - SPEAr pin group configurations
+ * काष्ठा spear_pingroup - SPEAr pin group configurations
  * @name: name of pin group
  * @pins: array containing pin numbers
  * @npins: size of pins array
- * @modemuxs: array of modemux configurations for this pin group
+ * @modemuxs: array of modemux configurations क्रम this pin group
  * @nmodemuxs: size of array modemuxs
  *
  * A representation of a group of pins in the SPEAr pin controller. Each group
  * allows some parameter or parameters to be configured.
  */
-struct spear_pingroup {
-	const char *name;
-	const unsigned *pins;
-	unsigned npins;
-	struct spear_modemux *modemuxs;
-	unsigned nmodemuxs;
-};
+काष्ठा spear_pingroup अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित *pins;
+	अचिन्हित npins;
+	काष्ठा spear_modemux *modemuxs;
+	अचिन्हित nmodemuxs;
+पूर्ण;
 
 /**
- * struct spear_function - SPEAr pinctrl mux function
+ * काष्ठा spear_function - SPEAr pinctrl mux function
  * @name: The name of the function, exported to pinctrl core.
  * @groups: An array of pin groups that may select this function.
  * @ngroups: The number of entries in @groups.
  */
-struct spear_function {
-	const char *name;
-	const char *const *groups;
-	unsigned ngroups;
-};
+काष्ठा spear_function अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *स्थिर *groups;
+	अचिन्हित ngroups;
+पूर्ण;
 
 /**
- * struct spear_pinctrl_machdata - SPEAr pin controller machine driver
+ * काष्ठा spear_pinctrl_machdata - SPEAr pin controller machine driver
  *	configuration
  * @pins: An array describing all pins the pin controller affects.
  *	All pins which are also GPIOs must be listed first within the *array,
@@ -149,56 +150,56 @@ struct spear_function {
  * @pmx_modes: array of modes supported by SoC
  * @npmx_modes: number of entries in pmx_modes.
  */
-struct spear_pinctrl_machdata {
-	const struct pinctrl_pin_desc *pins;
-	unsigned npins;
-	struct spear_function **functions;
-	unsigned nfunctions;
-	struct spear_pingroup **groups;
-	unsigned ngroups;
-	struct spear_gpio_pingroup *gpio_pingroups;
-	void (*gpio_request_endisable)(struct spear_pmx *pmx, int offset,
+काष्ठा spear_pinctrl_machdata अणु
+	स्थिर काष्ठा pinctrl_pin_desc *pins;
+	अचिन्हित npins;
+	काष्ठा spear_function **functions;
+	अचिन्हित nfunctions;
+	काष्ठा spear_pingroup **groups;
+	अचिन्हित ngroups;
+	काष्ठा spear_gpio_pingroup *gpio_pingroups;
+	व्योम (*gpio_request_endisable)(काष्ठा spear_pmx *pmx, पूर्णांक offset,
 			bool enable);
-	unsigned ngpio_pingroups;
+	अचिन्हित ngpio_pingroups;
 
 	bool modes_supported;
 	u16 mode;
-	struct spear_pmx_mode **pmx_modes;
-	unsigned npmx_modes;
-};
+	काष्ठा spear_pmx_mode **pmx_modes;
+	अचिन्हित npmx_modes;
+पूर्ण;
 
 /**
- * struct spear_pmx - SPEAr pinctrl mux
- * @dev: pointer to struct dev of platform_device registered
- * @pctl: pointer to struct pinctrl_dev
- * @machdata: pointer to SoC or machine specific structure
- * @vbase: virtual base address of pinmux controller
+ * काष्ठा spear_pmx - SPEAr pinctrl mux
+ * @dev: poपूर्णांकer to काष्ठा dev of platक्रमm_device रेजिस्टरed
+ * @pctl: poपूर्णांकer to काष्ठा pinctrl_dev
+ * @machdata: poपूर्णांकer to SoC or machine specअगरic काष्ठाure
+ * @vbase: भव base address of pinmux controller
  */
-struct spear_pmx {
-	struct device *dev;
-	struct pinctrl_dev *pctl;
-	struct spear_pinctrl_machdata *machdata;
-	void __iomem *vbase;
-};
+काष्ठा spear_pmx अणु
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctl;
+	काष्ठा spear_pinctrl_machdata *machdata;
+	व्योम __iomem *vbase;
+पूर्ण;
 
 /* exported routines */
-static inline u32 pmx_readl(struct spear_pmx *pmx, u32 reg)
-{
-	return readl_relaxed(pmx->vbase + reg);
-}
+अटल अंतरभूत u32 pmx_पढ़ोl(काष्ठा spear_pmx *pmx, u32 reg)
+अणु
+	वापस पढ़ोl_relaxed(pmx->vbase + reg);
+पूर्ण
 
-static inline void pmx_writel(struct spear_pmx *pmx, u32 val, u32 reg)
-{
-	writel_relaxed(val, pmx->vbase + reg);
-}
+अटल अंतरभूत व्योम pmx_ग_लिखोl(काष्ठा spear_pmx *pmx, u32 val, u32 reg)
+अणु
+	ग_लिखोl_relaxed(val, pmx->vbase + reg);
+पूर्ण
 
-void pmx_init_addr(struct spear_pinctrl_machdata *machdata, u16 reg);
-void pmx_init_gpio_pingroup_addr(struct spear_gpio_pingroup *gpio_pingroup,
-				 unsigned count, u16 reg);
-int spear_pinctrl_probe(struct platform_device *pdev,
-			struct spear_pinctrl_machdata *machdata);
+व्योम pmx_init_addr(काष्ठा spear_pinctrl_machdata *machdata, u16 reg);
+व्योम pmx_init_gpio_pingroup_addr(काष्ठा spear_gpio_pingroup *gpio_pingroup,
+				 अचिन्हित count, u16 reg);
+पूर्णांक spear_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
+			काष्ठा spear_pinctrl_machdata *machdata);
 
-#define SPEAR_PIN_0_TO_101		\
+#घोषणा SPEAR_PIN_0_TO_101		\
 	PINCTRL_PIN(0, "PLGPIO0"),	\
 	PINCTRL_PIN(1, "PLGPIO1"),	\
 	PINCTRL_PIN(2, "PLGPIO2"),	\
@@ -302,7 +303,7 @@ int spear_pinctrl_probe(struct platform_device *pdev,
 	PINCTRL_PIN(100, "PLGPIO100"),	\
 	PINCTRL_PIN(101, "PLGPIO101")
 
-#define SPEAR_PIN_102_TO_245		\
+#घोषणा SPEAR_PIN_102_TO_245		\
 	PINCTRL_PIN(102, "PLGPIO102"),	\
 	PINCTRL_PIN(103, "PLGPIO103"),	\
 	PINCTRL_PIN(104, "PLGPIO104"),	\
@@ -448,4 +449,4 @@ int spear_pinctrl_probe(struct platform_device *pdev,
 	PINCTRL_PIN(244, "PLGPIO244"),	\
 	PINCTRL_PIN(245, "PLGPIO245")
 
-#endif /* __PINMUX_SPEAR_H__ */
+#पूर्ण_अगर /* __PINMUX_SPEAR_H__ */

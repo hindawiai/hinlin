@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 Instituto Nokia de Tecnologia
  *
  * Authors:
- *    Aloisio Almeida Jr <aloisio.almeida@openbossa.org>
- *    Lauro Ramos Venancio <lauro.venancio@openbossa.org>
+ *    Aloisio Almeida Jr <aloisio.almeida@खोलोbossa.org>
+ *    Lauro Ramos Venancio <lauro.venancio@खोलोbossa.org>
  */
 
-#include <linux/nfc.h>
-#include <linux/module.h>
+#समावेश <linux/nfc.h>
+#समावेश <linux/module.h>
 
-#include "nfc.h"
+#समावेश "nfc.h"
 
-static DEFINE_RWLOCK(proto_tab_lock);
-static const struct nfc_protocol *proto_tab[NFC_SOCKPROTO_MAX];
+अटल DEFINE_RWLOCK(proto_tab_lock);
+अटल स्थिर काष्ठा nfc_protocol *proto_tab[NFC_SOCKPROTO_MAX];
 
-static int nfc_sock_create(struct net *net, struct socket *sock, int proto,
-			   int kern)
-{
-	int rc = -EPROTONOSUPPORT;
+अटल पूर्णांक nfc_sock_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक proto,
+			   पूर्णांक kern)
+अणु
+	पूर्णांक rc = -EPROTONOSUPPORT;
 
-	if (net != &init_net)
-		return -EAFNOSUPPORT;
+	अगर (net != &init_net)
+		वापस -EAFNOSUPPORT;
 
-	if (proto < 0 || proto >= NFC_SOCKPROTO_MAX)
-		return -EINVAL;
+	अगर (proto < 0 || proto >= NFC_SOCKPROTO_MAX)
+		वापस -EINVAL;
 
-	read_lock(&proto_tab_lock);
-	if (proto_tab[proto] &&	try_module_get(proto_tab[proto]->owner)) {
+	पढ़ो_lock(&proto_tab_lock);
+	अगर (proto_tab[proto] &&	try_module_get(proto_tab[proto]->owner)) अणु
 		rc = proto_tab[proto]->create(net, sock, proto_tab[proto], kern);
 		module_put(proto_tab[proto]->owner);
-	}
-	read_unlock(&proto_tab_lock);
+	पूर्ण
+	पढ़ो_unlock(&proto_tab_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct net_proto_family nfc_sock_family_ops = {
+अटल स्थिर काष्ठा net_proto_family nfc_sock_family_ops = अणु
 	.owner  = THIS_MODULE,
 	.family = PF_NFC,
 	.create = nfc_sock_create,
-};
+पूर्ण;
 
-int nfc_proto_register(const struct nfc_protocol *nfc_proto)
-{
-	int rc;
+पूर्णांक nfc_proto_रेजिस्टर(स्थिर काष्ठा nfc_protocol *nfc_proto)
+अणु
+	पूर्णांक rc;
 
-	if (nfc_proto->id < 0 || nfc_proto->id >= NFC_SOCKPROTO_MAX)
-		return -EINVAL;
+	अगर (nfc_proto->id < 0 || nfc_proto->id >= NFC_SOCKPROTO_MAX)
+		वापस -EINVAL;
 
-	rc = proto_register(nfc_proto->proto, 0);
-	if (rc)
-		return rc;
+	rc = proto_रेजिस्टर(nfc_proto->proto, 0);
+	अगर (rc)
+		वापस rc;
 
-	write_lock(&proto_tab_lock);
-	if (proto_tab[nfc_proto->id])
+	ग_लिखो_lock(&proto_tab_lock);
+	अगर (proto_tab[nfc_proto->id])
 		rc = -EBUSY;
-	else
+	अन्यथा
 		proto_tab[nfc_proto->id] = nfc_proto;
-	write_unlock(&proto_tab_lock);
+	ग_लिखो_unlock(&proto_tab_lock);
 
-	return rc;
-}
-EXPORT_SYMBOL(nfc_proto_register);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL(nfc_proto_रेजिस्टर);
 
-void nfc_proto_unregister(const struct nfc_protocol *nfc_proto)
-{
-	write_lock(&proto_tab_lock);
-	proto_tab[nfc_proto->id] = NULL;
-	write_unlock(&proto_tab_lock);
+व्योम nfc_proto_unरेजिस्टर(स्थिर काष्ठा nfc_protocol *nfc_proto)
+अणु
+	ग_लिखो_lock(&proto_tab_lock);
+	proto_tab[nfc_proto->id] = शून्य;
+	ग_लिखो_unlock(&proto_tab_lock);
 
-	proto_unregister(nfc_proto->proto);
-}
-EXPORT_SYMBOL(nfc_proto_unregister);
+	proto_unरेजिस्टर(nfc_proto->proto);
+पूर्ण
+EXPORT_SYMBOL(nfc_proto_unरेजिस्टर);
 
-int __init af_nfc_init(void)
-{
-	return sock_register(&nfc_sock_family_ops);
-}
+पूर्णांक __init af_nfc_init(व्योम)
+अणु
+	वापस sock_रेजिस्टर(&nfc_sock_family_ops);
+पूर्ण
 
-void af_nfc_exit(void)
-{
-	sock_unregister(PF_NFC);
-}
+व्योम af_nfc_निकास(व्योम)
+अणु
+	sock_unरेजिस्टर(PF_NFC);
+पूर्ण

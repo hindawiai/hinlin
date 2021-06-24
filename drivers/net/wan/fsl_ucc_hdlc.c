@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Freescale QUICC Engine HDLC Device Driver
  *
  * Copyright 2016 Freescale Semiconductor Inc.
  */
 
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/hdlc.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/stddef.h>
-#include <soc/fsl/qe/qe_tdm.h>
-#include <uapi/linux/if_arp.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/hdlc.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <soc/fsl/qe/qe_tdm.h>
+#समावेश <uapi/linux/अगर_arp.h>
 
-#include "fsl_ucc_hdlc.h"
+#समावेश "fsl_ucc_hdlc.h"
 
-#define DRV_DESC "Freescale QE UCC HDLC Driver"
-#define DRV_NAME "ucc_hdlc"
+#घोषणा DRV_DESC "Freescale QE UCC HDLC Driver"
+#घोषणा DRV_NAME "ucc_hdlc"
 
-#define TDM_PPPOHT_SLIC_MAXIN
-#define RX_BD_ERRORS (R_CD_S | R_OV_S | R_CR_S | R_AB_S | R_NO_S | R_LG_S)
+#घोषणा TDM_PPPOHT_SLIC_MAXIN
+#घोषणा RX_BD_ERRORS (R_CD_S | R_OV_S | R_CR_S | R_AB_S | R_NO_S | R_LG_S)
 
-static struct ucc_tdm_info utdm_primary_info = {
-	.uf_info = {
+अटल काष्ठा ucc_tdm_info utdm_primary_info = अणु
+	.uf_info = अणु
 		.tsa = 0,
 		.cdp = 0,
 		.cds = 1,
@@ -55,34 +56,34 @@ static struct ucc_tdm_info utdm_primary_info = {
 		.renc = UCC_FAST_RX_ENCODING_NRZ,
 		.tcrc = UCC_FAST_16_BIT_CRC,
 		.synl = UCC_FAST_SYNC_LEN_NOT_USED,
-	},
+	पूर्ण,
 
-	.si_info = {
-#ifdef TDM_PPPOHT_SLIC_MAXIN
+	.si_info = अणु
+#अगर_घोषित TDM_PPPOHT_SLIC_MAXIN
 		.simr_rfsd = 1,
 		.simr_tfsd = 2,
-#else
+#अन्यथा
 		.simr_rfsd = 0,
 		.simr_tfsd = 0,
-#endif
+#पूर्ण_अगर
 		.simr_crt = 0,
 		.simr_sl = 0,
 		.simr_ce = 1,
 		.simr_fe = 1,
 		.simr_gm = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct ucc_tdm_info utdm_info[UCC_MAX_NUM];
+अटल काष्ठा ucc_tdm_info utdm_info[UCC_MAX_NUM];
 
-static int uhdlc_init(struct ucc_hdlc_private *priv)
-{
-	struct ucc_tdm_info *ut_info;
-	struct ucc_fast_info *uf_info;
+अटल पूर्णांक uhdlc_init(काष्ठा ucc_hdlc_निजी *priv)
+अणु
+	काष्ठा ucc_tdm_info *ut_info;
+	काष्ठा ucc_fast_info *uf_info;
 	u32 cecr_subblock;
 	u16 bd_status;
-	int ret, i;
-	void *bd_buffer;
+	पूर्णांक ret, i;
+	व्योम *bd_buffer;
 	dma_addr_t bd_dma_addr;
 	s32 riptr;
 	s32 tiptr;
@@ -91,50 +92,50 @@ static int uhdlc_init(struct ucc_hdlc_private *priv)
 	ut_info = priv->ut_info;
 	uf_info = &ut_info->uf_info;
 
-	if (priv->tsa) {
+	अगर (priv->tsa) अणु
 		uf_info->tsa = 1;
 		uf_info->ctsp = 1;
 		uf_info->cds = 1;
 		uf_info->ctss = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		uf_info->cds = 0;
 		uf_info->ctsp = 0;
 		uf_info->ctss = 0;
-	}
+	पूर्ण
 
-	/* This sets HPM register in CMXUCR register which configures a
-	 * open drain connected HDLC bus
+	/* This sets HPM रेजिस्टर in CMXUCR रेजिस्टर which configures a
+	 * खोलो drain connected HDLC bus
 	 */
-	if (priv->hdlc_bus)
+	अगर (priv->hdlc_bus)
 		uf_info->brkpt_support = 1;
 
 	uf_info->uccm_mask = ((UCC_HDLC_UCCE_RXB | UCC_HDLC_UCCE_RXF |
 				UCC_HDLC_UCCE_TXB) << 16);
 
 	ret = ucc_fast_init(uf_info, &priv->uccf);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->dev, "Failed to init uccf.");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	priv->uf_regs = priv->uccf->uf_regs;
-	ucc_fast_disable(priv->uccf, COMM_DIR_RX | COMM_DIR_TX);
+	ucc_fast_disable(priv->uccf, COMM_सूची_RX | COMM_सूची_TX);
 
 	/* Loopback mode */
-	if (priv->loopback) {
+	अगर (priv->loopback) अणु
 		dev_info(priv->dev, "Loopback Mode\n");
-		/* use the same clock when work in loopback */
-		qe_setbrg(ut_info->uf_info.rx_clock, 20000000, 1);
+		/* use the same घड़ी when work in loopback */
+		qe_setbrg(ut_info->uf_info.rx_घड़ी, 20000000, 1);
 
-		gumr = ioread32be(&priv->uf_regs->gumr);
+		gumr = ioपढ़ो32be(&priv->uf_regs->gumr);
 		gumr |= (UCC_FAST_GUMR_LOOPBACK | UCC_FAST_GUMR_CDS |
 			 UCC_FAST_GUMR_TCI);
 		gumr &= ~(UCC_FAST_GUMR_CTSP | UCC_FAST_GUMR_RSYN);
-		iowrite32be(gumr, &priv->uf_regs->gumr);
-	}
+		ioग_लिखो32be(gumr, &priv->uf_regs->gumr);
+	पूर्ण
 
 	/* Initialize SI */
-	if (priv->tsa)
+	अगर (priv->tsa)
 		ucc_tdm_init(priv->utdm, priv->ut_info);
 
 	/* Write to QE CECR, UCCx channel to Stop Transmission */
@@ -143,79 +144,79 @@ static int uhdlc_init(struct ucc_hdlc_private *priv)
 			   QE_CR_PROTOCOL_UNSPECIFIED, 0);
 
 	/* Set UPSMR normal mode (need fixed)*/
-	iowrite32be(0, &priv->uf_regs->upsmr);
+	ioग_लिखो32be(0, &priv->uf_regs->upsmr);
 
 	/* hdlc_bus mode */
-	if (priv->hdlc_bus) {
+	अगर (priv->hdlc_bus) अणु
 		u32 upsmr;
 
 		dev_info(priv->dev, "HDLC bus Mode\n");
-		upsmr = ioread32be(&priv->uf_regs->upsmr);
+		upsmr = ioपढ़ो32be(&priv->uf_regs->upsmr);
 
-		/* bus mode and retransmit enable, with collision window
+		/* bus mode and retransmit enable, with collision winकरोw
 		 * set to 8 bytes
 		 */
 		upsmr |= UCC_HDLC_UPSMR_RTE | UCC_HDLC_UPSMR_BUS |
 				UCC_HDLC_UPSMR_CW8;
-		iowrite32be(upsmr, &priv->uf_regs->upsmr);
+		ioग_लिखो32be(upsmr, &priv->uf_regs->upsmr);
 
 		/* explicitly disable CDS & CTSP */
-		gumr = ioread32be(&priv->uf_regs->gumr);
+		gumr = ioपढ़ो32be(&priv->uf_regs->gumr);
 		gumr &= ~(UCC_FAST_GUMR_CDS | UCC_FAST_GUMR_CTSP);
-		/* set automatic sync to explicitly ignore CD signal */
+		/* set स्वतःmatic sync to explicitly ignore CD संकेत */
 		gumr |= UCC_FAST_GUMR_SYNL_AUTO;
-		iowrite32be(gumr, &priv->uf_regs->gumr);
-	}
+		ioग_लिखो32be(gumr, &priv->uf_regs->gumr);
+	पूर्ण
 
 	priv->rx_ring_size = RX_BD_RING_LEN;
 	priv->tx_ring_size = TX_BD_RING_LEN;
 	/* Alloc Rx BD */
 	priv->rx_bd_base = dma_alloc_coherent(priv->dev,
-			RX_BD_RING_LEN * sizeof(struct qe_bd),
+			RX_BD_RING_LEN * माप(काष्ठा qe_bd),
 			&priv->dma_rx_bd, GFP_KERNEL);
 
-	if (!priv->rx_bd_base) {
+	अगर (!priv->rx_bd_base) अणु
 		dev_err(priv->dev, "Cannot allocate MURAM memory for RxBDs\n");
 		ret = -ENOMEM;
-		goto free_uccf;
-	}
+		जाओ मुक्त_uccf;
+	पूर्ण
 
 	/* Alloc Tx BD */
 	priv->tx_bd_base = dma_alloc_coherent(priv->dev,
-			TX_BD_RING_LEN * sizeof(struct qe_bd),
+			TX_BD_RING_LEN * माप(काष्ठा qe_bd),
 			&priv->dma_tx_bd, GFP_KERNEL);
 
-	if (!priv->tx_bd_base) {
+	अगर (!priv->tx_bd_base) अणु
 		dev_err(priv->dev, "Cannot allocate MURAM memory for TxBDs\n");
 		ret = -ENOMEM;
-		goto free_rx_bd;
-	}
+		जाओ मुक्त_rx_bd;
+	पूर्ण
 
-	/* Alloc parameter ram for ucc hdlc */
-	priv->ucc_pram_offset = qe_muram_alloc(sizeof(struct ucc_hdlc_param),
+	/* Alloc parameter ram क्रम ucc hdlc */
+	priv->ucc_pram_offset = qe_muram_alloc(माप(काष्ठा ucc_hdlc_param),
 				ALIGNMENT_OF_UCC_HDLC_PRAM);
 
-	if (priv->ucc_pram_offset < 0) {
+	अगर (priv->ucc_pram_offset < 0) अणु
 		dev_err(priv->dev, "Can not allocate MURAM for hdlc parameter.\n");
 		ret = -ENOMEM;
-		goto free_tx_bd;
-	}
+		जाओ मुक्त_tx_bd;
+	पूर्ण
 
-	priv->rx_skbuff = kcalloc(priv->rx_ring_size,
-				  sizeof(*priv->rx_skbuff),
+	priv->rx_skbuff = kसुस्मृति(priv->rx_ring_size,
+				  माप(*priv->rx_skbuff),
 				  GFP_KERNEL);
-	if (!priv->rx_skbuff) {
+	अगर (!priv->rx_skbuff) अणु
 		ret = -ENOMEM;
-		goto free_ucc_pram;
-	}
+		जाओ मुक्त_ucc_pram;
+	पूर्ण
 
-	priv->tx_skbuff = kcalloc(priv->tx_ring_size,
-				  sizeof(*priv->tx_skbuff),
+	priv->tx_skbuff = kसुस्मृति(priv->tx_ring_size,
+				  माप(*priv->tx_skbuff),
 				  GFP_KERNEL);
-	if (!priv->tx_skbuff) {
+	अगर (!priv->tx_skbuff) अणु
 		ret = -ENOMEM;
-		goto free_rx_skbuff;
-	}
+		जाओ मुक्त_rx_skbuff;
+	पूर्ण
 
 	priv->skb_curtx = 0;
 	priv->skb_dirtytx = 0;
@@ -229,70 +230,70 @@ static int uhdlc_init(struct ucc_hdlc_private *priv)
 	ret = qe_issue_cmd(QE_ASSIGN_PAGE_TO_DEVICE, cecr_subblock,
 			   QE_CR_PROTOCOL_UNSPECIFIED, priv->ucc_pram_offset);
 
-	priv->ucc_pram = (struct ucc_hdlc_param __iomem *)
+	priv->ucc_pram = (काष्ठा ucc_hdlc_param __iomem *)
 					qe_muram_addr(priv->ucc_pram_offset);
 
 	/* Zero out parameter ram */
-	memset_io(priv->ucc_pram, 0, sizeof(struct ucc_hdlc_param));
+	स_रखो_io(priv->ucc_pram, 0, माप(काष्ठा ucc_hdlc_param));
 
 	/* Alloc riptr, tiptr */
 	riptr = qe_muram_alloc(32, 32);
-	if (riptr < 0) {
+	अगर (riptr < 0) अणु
 		dev_err(priv->dev, "Cannot allocate MURAM mem for Receive internal temp data pointer\n");
 		ret = -ENOMEM;
-		goto free_tx_skbuff;
-	}
+		जाओ मुक्त_tx_skbuff;
+	पूर्ण
 
 	tiptr = qe_muram_alloc(32, 32);
-	if (tiptr < 0) {
+	अगर (tiptr < 0) अणु
 		dev_err(priv->dev, "Cannot allocate MURAM mem for Transmit internal temp data pointer\n");
 		ret = -ENOMEM;
-		goto free_riptr;
-	}
-	if (riptr != (u16)riptr || tiptr != (u16)tiptr) {
+		जाओ मुक्त_riptr;
+	पूर्ण
+	अगर (riptr != (u16)riptr || tiptr != (u16)tiptr) अणु
 		dev_err(priv->dev, "MURAM allocation out of addressable range\n");
 		ret = -ENOMEM;
-		goto free_tiptr;
-	}
+		जाओ मुक्त_tiptr;
+	पूर्ण
 
 	/* Set RIPTR, TIPTR */
-	iowrite16be(riptr, &priv->ucc_pram->riptr);
-	iowrite16be(tiptr, &priv->ucc_pram->tiptr);
+	ioग_लिखो16be(riptr, &priv->ucc_pram->riptr);
+	ioग_लिखो16be(tiptr, &priv->ucc_pram->tiptr);
 
 	/* Set MRBLR */
-	iowrite16be(MAX_RX_BUF_LENGTH, &priv->ucc_pram->mrblr);
+	ioग_लिखो16be(MAX_RX_BUF_LENGTH, &priv->ucc_pram->mrblr);
 
 	/* Set RBASE, TBASE */
-	iowrite32be(priv->dma_rx_bd, &priv->ucc_pram->rbase);
-	iowrite32be(priv->dma_tx_bd, &priv->ucc_pram->tbase);
+	ioग_लिखो32be(priv->dma_rx_bd, &priv->ucc_pram->rbase);
+	ioग_लिखो32be(priv->dma_tx_bd, &priv->ucc_pram->tbase);
 
 	/* Set RSTATE, TSTATE */
-	iowrite32be(BMR_GBL | BMR_BIG_ENDIAN, &priv->ucc_pram->rstate);
-	iowrite32be(BMR_GBL | BMR_BIG_ENDIAN, &priv->ucc_pram->tstate);
+	ioग_लिखो32be(BMR_GBL | BMR_BIG_ENDIAN, &priv->ucc_pram->rstate);
+	ioग_लिखो32be(BMR_GBL | BMR_BIG_ENDIAN, &priv->ucc_pram->tstate);
 
-	/* Set C_MASK, C_PRES for 16bit CRC */
-	iowrite32be(CRC_16BIT_MASK, &priv->ucc_pram->c_mask);
-	iowrite32be(CRC_16BIT_PRES, &priv->ucc_pram->c_pres);
+	/* Set C_MASK, C_PRES क्रम 16bit CRC */
+	ioग_लिखो32be(CRC_16BIT_MASK, &priv->ucc_pram->c_mask);
+	ioग_लिखो32be(CRC_16BIT_PRES, &priv->ucc_pram->c_pres);
 
-	iowrite16be(MAX_FRAME_LENGTH, &priv->ucc_pram->mflr);
-	iowrite16be(DEFAULT_RFTHR, &priv->ucc_pram->rfthr);
-	iowrite16be(DEFAULT_RFTHR, &priv->ucc_pram->rfcnt);
-	iowrite16be(priv->hmask, &priv->ucc_pram->hmask);
-	iowrite16be(DEFAULT_HDLC_ADDR, &priv->ucc_pram->haddr1);
-	iowrite16be(DEFAULT_HDLC_ADDR, &priv->ucc_pram->haddr2);
-	iowrite16be(DEFAULT_HDLC_ADDR, &priv->ucc_pram->haddr3);
-	iowrite16be(DEFAULT_HDLC_ADDR, &priv->ucc_pram->haddr4);
+	ioग_लिखो16be(MAX_FRAME_LENGTH, &priv->ucc_pram->mflr);
+	ioग_लिखो16be(DEFAULT_RFTHR, &priv->ucc_pram->rfthr);
+	ioग_लिखो16be(DEFAULT_RFTHR, &priv->ucc_pram->rfcnt);
+	ioग_लिखो16be(priv->hmask, &priv->ucc_pram->hmask);
+	ioग_लिखो16be(DEFAULT_HDLC_ADDR, &priv->ucc_pram->haddr1);
+	ioग_लिखो16be(DEFAULT_HDLC_ADDR, &priv->ucc_pram->haddr2);
+	ioग_लिखो16be(DEFAULT_HDLC_ADDR, &priv->ucc_pram->haddr3);
+	ioग_लिखो16be(DEFAULT_HDLC_ADDR, &priv->ucc_pram->haddr4);
 
 	/* Get BD buffer */
 	bd_buffer = dma_alloc_coherent(priv->dev,
 				       (RX_BD_RING_LEN + TX_BD_RING_LEN) * MAX_RX_BUF_LENGTH,
 				       &bd_dma_addr, GFP_KERNEL);
 
-	if (!bd_buffer) {
+	अगर (!bd_buffer) अणु
 		dev_err(priv->dev, "Could not allocate buffer descriptors\n");
 		ret = -ENOMEM;
-		goto free_tiptr;
-	}
+		जाओ मुक्त_tiptr;
+	पूर्ण
 
 	priv->rx_buffer = bd_buffer;
 	priv->tx_buffer = bd_buffer + RX_BD_RING_LEN * MAX_RX_BUF_LENGTH;
@@ -300,71 +301,71 @@ static int uhdlc_init(struct ucc_hdlc_private *priv)
 	priv->dma_rx_addr = bd_dma_addr;
 	priv->dma_tx_addr = bd_dma_addr + RX_BD_RING_LEN * MAX_RX_BUF_LENGTH;
 
-	for (i = 0; i < RX_BD_RING_LEN; i++) {
-		if (i < (RX_BD_RING_LEN - 1))
+	क्रम (i = 0; i < RX_BD_RING_LEN; i++) अणु
+		अगर (i < (RX_BD_RING_LEN - 1))
 			bd_status = R_E_S | R_I_S;
-		else
+		अन्यथा
 			bd_status = R_E_S | R_I_S | R_W_S;
 
-		iowrite16be(bd_status, &priv->rx_bd_base[i].status);
-		iowrite32be(priv->dma_rx_addr + i * MAX_RX_BUF_LENGTH,
+		ioग_लिखो16be(bd_status, &priv->rx_bd_base[i].status);
+		ioग_लिखो32be(priv->dma_rx_addr + i * MAX_RX_BUF_LENGTH,
 			    &priv->rx_bd_base[i].buf);
-	}
+	पूर्ण
 
-	for (i = 0; i < TX_BD_RING_LEN; i++) {
-		if (i < (TX_BD_RING_LEN - 1))
+	क्रम (i = 0; i < TX_BD_RING_LEN; i++) अणु
+		अगर (i < (TX_BD_RING_LEN - 1))
 			bd_status =  T_I_S | T_TC_S;
-		else
+		अन्यथा
 			bd_status =  T_I_S | T_TC_S | T_W_S;
 
-		iowrite16be(bd_status, &priv->tx_bd_base[i].status);
-		iowrite32be(priv->dma_tx_addr + i * MAX_RX_BUF_LENGTH,
+		ioग_लिखो16be(bd_status, &priv->tx_bd_base[i].status);
+		ioग_लिखो32be(priv->dma_tx_addr + i * MAX_RX_BUF_LENGTH,
 			    &priv->tx_bd_base[i].buf);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_tiptr:
-	qe_muram_free(tiptr);
-free_riptr:
-	qe_muram_free(riptr);
-free_tx_skbuff:
-	kfree(priv->tx_skbuff);
-free_rx_skbuff:
-	kfree(priv->rx_skbuff);
-free_ucc_pram:
-	qe_muram_free(priv->ucc_pram_offset);
-free_tx_bd:
-	dma_free_coherent(priv->dev,
-			  TX_BD_RING_LEN * sizeof(struct qe_bd),
+मुक्त_tiptr:
+	qe_muram_मुक्त(tiptr);
+मुक्त_riptr:
+	qe_muram_मुक्त(riptr);
+मुक्त_tx_skbuff:
+	kमुक्त(priv->tx_skbuff);
+मुक्त_rx_skbuff:
+	kमुक्त(priv->rx_skbuff);
+मुक्त_ucc_pram:
+	qe_muram_मुक्त(priv->ucc_pram_offset);
+मुक्त_tx_bd:
+	dma_मुक्त_coherent(priv->dev,
+			  TX_BD_RING_LEN * माप(काष्ठा qe_bd),
 			  priv->tx_bd_base, priv->dma_tx_bd);
-free_rx_bd:
-	dma_free_coherent(priv->dev,
-			  RX_BD_RING_LEN * sizeof(struct qe_bd),
+मुक्त_rx_bd:
+	dma_मुक्त_coherent(priv->dev,
+			  RX_BD_RING_LEN * माप(काष्ठा qe_bd),
 			  priv->rx_bd_base, priv->dma_rx_bd);
-free_uccf:
-	ucc_fast_free(priv->uccf);
+मुक्त_uccf:
+	ucc_fast_मुक्त(priv->uccf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static netdev_tx_t ucc_hdlc_tx(struct sk_buff *skb, struct net_device *dev)
-{
+अटल netdev_tx_t ucc_hdlc_tx(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	struct ucc_hdlc_private *priv = (struct ucc_hdlc_private *)hdlc->priv;
-	struct qe_bd __iomem *bd;
+	काष्ठा ucc_hdlc_निजी *priv = (काष्ठा ucc_hdlc_निजी *)hdlc->priv;
+	काष्ठा qe_bd __iomem *bd;
 	u16 bd_status;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u16 *proto_head;
 
-	switch (dev->type) {
-	case ARPHRD_RAWHDLC:
-		if (skb_headroom(skb) < HDLC_HEAD_LEN) {
+	चयन (dev->type) अणु
+	हाल ARPHRD_RAWHDLC:
+		अगर (skb_headroom(skb) < HDLC_HEAD_LEN) अणु
 			dev->stats.tx_dropped++;
-			dev_kfree_skb(skb);
+			dev_kमुक्त_skb(skb);
 			netdev_err(dev, "No enough space for hdlc head\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		skb_push(skb, HDLC_HEAD_LEN);
 
@@ -372,72 +373,72 @@ static netdev_tx_t ucc_hdlc_tx(struct sk_buff *skb, struct net_device *dev)
 		*proto_head = htons(DEFAULT_HDLC_HEAD);
 
 		dev->stats.tx_bytes += skb->len;
-		break;
+		अवरोध;
 
-	case ARPHRD_PPP:
+	हाल ARPHRD_PPP:
 		proto_head = (u16 *)skb->data;
-		if (*proto_head != htons(DEFAULT_PPP_HEAD)) {
+		अगर (*proto_head != htons(DEFAULT_PPP_HEAD)) अणु
 			dev->stats.tx_dropped++;
-			dev_kfree_skb(skb);
+			dev_kमुक्त_skb(skb);
 			netdev_err(dev, "Wrong ppp header\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		dev->stats.tx_bytes += skb->len;
-		break;
+		अवरोध;
 
-	case ARPHRD_ETHER:
+	हाल ARPHRD_ETHER:
 		dev->stats.tx_bytes += skb->len;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev->stats.tx_dropped++;
-		dev_kfree_skb(skb);
-		return -ENOMEM;
-	}
+		dev_kमुक्त_skb(skb);
+		वापस -ENOMEM;
+	पूर्ण
 	netdev_sent_queue(dev, skb->len);
 	spin_lock_irqsave(&priv->lock, flags);
 
 	/* Start from the next BD that should be filled */
 	bd = priv->curtx_bd;
-	bd_status = ioread16be(&bd->status);
-	/* Save the skb pointer so we can free it later */
+	bd_status = ioपढ़ो16be(&bd->status);
+	/* Save the skb poपूर्णांकer so we can मुक्त it later */
 	priv->tx_skbuff[priv->skb_curtx] = skb;
 
-	/* Update the current skb pointer (wrapping if this was the last) */
+	/* Update the current skb poपूर्णांकer (wrapping अगर this was the last) */
 	priv->skb_curtx =
 	    (priv->skb_curtx + 1) & TX_RING_MOD_MASK(TX_BD_RING_LEN);
 
-	/* copy skb data to tx buffer for sdma processing */
-	memcpy(priv->tx_buffer + (be32_to_cpu(bd->buf) - priv->dma_tx_addr),
+	/* copy skb data to tx buffer क्रम sdma processing */
+	स_नकल(priv->tx_buffer + (be32_to_cpu(bd->buf) - priv->dma_tx_addr),
 	       skb->data, skb->len);
 
 	/* set bd status and length */
 	bd_status = (bd_status & T_W_S) | T_R_S | T_I_S | T_L_S | T_TC_S;
 
-	iowrite16be(skb->len, &bd->length);
-	iowrite16be(bd_status, &bd->status);
+	ioग_लिखो16be(skb->len, &bd->length);
+	ioग_लिखो16be(bd_status, &bd->status);
 
 	/* Move to next BD in the ring */
-	if (!(bd_status & T_W_S))
+	अगर (!(bd_status & T_W_S))
 		bd += 1;
-	else
+	अन्यथा
 		bd = priv->tx_bd_base;
 
-	if (bd == priv->dirty_tx) {
-		if (!netif_queue_stopped(dev))
-			netif_stop_queue(dev);
-	}
+	अगर (bd == priv->dirty_tx) अणु
+		अगर (!netअगर_queue_stopped(dev))
+			netअगर_stop_queue(dev);
+	पूर्ण
 
 	priv->curtx_bd = bd;
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int hdlc_tx_restart(struct ucc_hdlc_private *priv)
-{
+अटल पूर्णांक hdlc_tx_restart(काष्ठा ucc_hdlc_निजी *priv)
+अणु
 	u32 cecr_subblock;
 
 	cecr_subblock =
@@ -445,274 +446,274 @@ static int hdlc_tx_restart(struct ucc_hdlc_private *priv)
 
 	qe_issue_cmd(QE_RESTART_TX, cecr_subblock,
 		     QE_CR_PROTOCOL_UNSPECIFIED, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hdlc_tx_done(struct ucc_hdlc_private *priv)
-{
+अटल पूर्णांक hdlc_tx_करोne(काष्ठा ucc_hdlc_निजी *priv)
+अणु
 	/* Start from the next BD that should be filled */
-	struct net_device *dev = priv->ndev;
-	unsigned int bytes_sent = 0;
-	int howmany = 0;
-	struct qe_bd *bd;		/* BD pointer */
+	काष्ठा net_device *dev = priv->ndev;
+	अचिन्हित पूर्णांक bytes_sent = 0;
+	पूर्णांक howmany = 0;
+	काष्ठा qe_bd *bd;		/* BD poपूर्णांकer */
 	u16 bd_status;
-	int tx_restart = 0;
+	पूर्णांक tx_restart = 0;
 
 	bd = priv->dirty_tx;
-	bd_status = ioread16be(&bd->status);
+	bd_status = ioपढ़ो16be(&bd->status);
 
 	/* Normal processing. */
-	while ((bd_status & T_R_S) == 0) {
-		struct sk_buff *skb;
+	जबतक ((bd_status & T_R_S) == 0) अणु
+		काष्ठा sk_buff *skb;
 
-		if (bd_status & T_UN_S) { /* Underrun */
-			dev->stats.tx_fifo_errors++;
+		अगर (bd_status & T_UN_S) अणु /* Underrun */
+			dev->stats.tx_fअगरo_errors++;
 			tx_restart = 1;
-		}
-		if (bd_status & T_CT_S) { /* Carrier lost */
+		पूर्ण
+		अगर (bd_status & T_CT_S) अणु /* Carrier lost */
 			dev->stats.tx_carrier_errors++;
 			tx_restart = 1;
-		}
+		पूर्ण
 
-		/* BD contains already transmitted buffer.   */
+		/* BD contains alपढ़ोy transmitted buffer.   */
 		/* Handle the transmitted buffer and release */
 		/* the BD to be used with the current frame  */
 
 		skb = priv->tx_skbuff[priv->skb_dirtytx];
-		if (!skb)
-			break;
+		अगर (!skb)
+			अवरोध;
 		howmany++;
 		bytes_sent += skb->len;
 		dev->stats.tx_packets++;
-		memset(priv->tx_buffer +
+		स_रखो(priv->tx_buffer +
 		       (be32_to_cpu(bd->buf) - priv->dma_tx_addr),
 		       0, skb->len);
 		dev_consume_skb_irq(skb);
 
-		priv->tx_skbuff[priv->skb_dirtytx] = NULL;
+		priv->tx_skbuff[priv->skb_dirtytx] = शून्य;
 		priv->skb_dirtytx =
 		    (priv->skb_dirtytx +
 		     1) & TX_RING_MOD_MASK(TX_BD_RING_LEN);
 
-		/* We freed a buffer, so now we can restart transmission */
-		if (netif_queue_stopped(dev))
-			netif_wake_queue(dev);
+		/* We मुक्तd a buffer, so now we can restart transmission */
+		अगर (netअगर_queue_stopped(dev))
+			netअगर_wake_queue(dev);
 
-		/* Advance the confirmation BD pointer */
-		if (!(bd_status & T_W_S))
+		/* Advance the confirmation BD poपूर्णांकer */
+		अगर (!(bd_status & T_W_S))
 			bd += 1;
-		else
+		अन्यथा
 			bd = priv->tx_bd_base;
-		bd_status = ioread16be(&bd->status);
-	}
+		bd_status = ioपढ़ो16be(&bd->status);
+	पूर्ण
 	priv->dirty_tx = bd;
 
-	if (tx_restart)
+	अगर (tx_restart)
 		hdlc_tx_restart(priv);
 
 	netdev_completed_queue(dev, howmany, bytes_sent);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hdlc_rx_done(struct ucc_hdlc_private *priv, int rx_work_limit)
-{
-	struct net_device *dev = priv->ndev;
-	struct sk_buff *skb = NULL;
+अटल पूर्णांक hdlc_rx_करोne(काष्ठा ucc_hdlc_निजी *priv, पूर्णांक rx_work_limit)
+अणु
+	काष्ठा net_device *dev = priv->ndev;
+	काष्ठा sk_buff *skb = शून्य;
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	struct qe_bd *bd;
+	काष्ठा qe_bd *bd;
 	u16 bd_status;
 	u16 length, howmany = 0;
 	u8 *bdbuffer;
 
 	bd = priv->currx_bd;
-	bd_status = ioread16be(&bd->status);
+	bd_status = ioपढ़ो16be(&bd->status);
 
-	/* while there are received buffers and BD is full (~R_E) */
-	while (!((bd_status & (R_E_S)) || (--rx_work_limit < 0))) {
-		if (bd_status & (RX_BD_ERRORS)) {
+	/* जबतक there are received buffers and BD is full (~R_E) */
+	जबतक (!((bd_status & (R_E_S)) || (--rx_work_limit < 0))) अणु
+		अगर (bd_status & (RX_BD_ERRORS)) अणु
 			dev->stats.rx_errors++;
 
-			if (bd_status & R_CD_S)
+			अगर (bd_status & R_CD_S)
 				dev->stats.collisions++;
-			if (bd_status & R_OV_S)
-				dev->stats.rx_fifo_errors++;
-			if (bd_status & R_CR_S)
+			अगर (bd_status & R_OV_S)
+				dev->stats.rx_fअगरo_errors++;
+			अगर (bd_status & R_CR_S)
 				dev->stats.rx_crc_errors++;
-			if (bd_status & R_AB_S)
+			अगर (bd_status & R_AB_S)
 				dev->stats.rx_over_errors++;
-			if (bd_status & R_NO_S)
+			अगर (bd_status & R_NO_S)
 				dev->stats.rx_frame_errors++;
-			if (bd_status & R_LG_S)
+			अगर (bd_status & R_LG_S)
 				dev->stats.rx_length_errors++;
 
-			goto recycle;
-		}
+			जाओ recycle;
+		पूर्ण
 		bdbuffer = priv->rx_buffer +
 			(priv->currx_bdnum * MAX_RX_BUF_LENGTH);
-		length = ioread16be(&bd->length);
+		length = ioपढ़ो16be(&bd->length);
 
-		switch (dev->type) {
-		case ARPHRD_RAWHDLC:
+		चयन (dev->type) अणु
+		हाल ARPHRD_RAWHDLC:
 			bdbuffer += HDLC_HEAD_LEN;
 			length -= (HDLC_HEAD_LEN + HDLC_CRC_SIZE);
 
 			skb = dev_alloc_skb(length);
-			if (!skb) {
+			अगर (!skb) अणु
 				dev->stats.rx_dropped++;
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 
 			skb_put(skb, length);
 			skb->len = length;
 			skb->dev = dev;
-			memcpy(skb->data, bdbuffer, length);
-			break;
+			स_नकल(skb->data, bdbuffer, length);
+			अवरोध;
 
-		case ARPHRD_PPP:
-		case ARPHRD_ETHER:
+		हाल ARPHRD_PPP:
+		हाल ARPHRD_ETHER:
 			length -= HDLC_CRC_SIZE;
 
 			skb = dev_alloc_skb(length);
-			if (!skb) {
+			अगर (!skb) अणु
 				dev->stats.rx_dropped++;
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 
 			skb_put(skb, length);
 			skb->len = length;
 			skb->dev = dev;
-			memcpy(skb->data, bdbuffer, length);
-			break;
-		}
+			स_नकल(skb->data, bdbuffer, length);
+			अवरोध;
+		पूर्ण
 
 		dev->stats.rx_packets++;
 		dev->stats.rx_bytes += skb->len;
 		howmany++;
-		if (hdlc->proto)
+		अगर (hdlc->proto)
 			skb->protocol = hdlc_type_trans(skb, dev);
-		netif_receive_skb(skb);
+		netअगर_receive_skb(skb);
 
 recycle:
-		iowrite16be((bd_status & R_W_S) | R_E_S | R_I_S, &bd->status);
+		ioग_लिखो16be((bd_status & R_W_S) | R_E_S | R_I_S, &bd->status);
 
-		/* update to point at the next bd */
-		if (bd_status & R_W_S) {
+		/* update to poपूर्णांक at the next bd */
+		अगर (bd_status & R_W_S) अणु
 			priv->currx_bdnum = 0;
 			bd = priv->rx_bd_base;
-		} else {
-			if (priv->currx_bdnum < (RX_BD_RING_LEN - 1))
+		पूर्ण अन्यथा अणु
+			अगर (priv->currx_bdnum < (RX_BD_RING_LEN - 1))
 				priv->currx_bdnum += 1;
-			else
+			अन्यथा
 				priv->currx_bdnum = RX_BD_RING_LEN - 1;
 
 			bd += 1;
-		}
+		पूर्ण
 
-		bd_status = ioread16be(&bd->status);
-	}
+		bd_status = ioपढ़ो16be(&bd->status);
+	पूर्ण
 
 	priv->currx_bd = bd;
-	return howmany;
-}
+	वापस howmany;
+पूर्ण
 
-static int ucc_hdlc_poll(struct napi_struct *napi, int budget)
-{
-	struct ucc_hdlc_private *priv = container_of(napi,
-						     struct ucc_hdlc_private,
+अटल पूर्णांक ucc_hdlc_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा ucc_hdlc_निजी *priv = container_of(napi,
+						     काष्ठा ucc_hdlc_निजी,
 						     napi);
-	int howmany;
+	पूर्णांक howmany;
 
 	/* Tx event processing */
 	spin_lock(&priv->lock);
-	hdlc_tx_done(priv);
+	hdlc_tx_करोne(priv);
 	spin_unlock(&priv->lock);
 
 	howmany = 0;
-	howmany += hdlc_rx_done(priv, budget - howmany);
+	howmany += hdlc_rx_करोne(priv, budget - howmany);
 
-	if (howmany < budget) {
-		napi_complete_done(napi, howmany);
+	अगर (howmany < budget) अणु
+		napi_complete_करोne(napi, howmany);
 		qe_setbits_be32(priv->uccf->p_uccm,
 				(UCCE_HDLC_RX_EVENTS | UCCE_HDLC_TX_EVENTS) << 16);
-	}
+	पूर्ण
 
-	return howmany;
-}
+	वापस howmany;
+पूर्ण
 
-static irqreturn_t ucc_hdlc_irq_handler(int irq, void *dev_id)
-{
-	struct ucc_hdlc_private *priv = (struct ucc_hdlc_private *)dev_id;
-	struct net_device *dev = priv->ndev;
-	struct ucc_fast_private *uccf;
+अटल irqवापस_t ucc_hdlc_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा ucc_hdlc_निजी *priv = (काष्ठा ucc_hdlc_निजी *)dev_id;
+	काष्ठा net_device *dev = priv->ndev;
+	काष्ठा ucc_fast_निजी *uccf;
 	u32 ucce;
 	u32 uccm;
 
 	uccf = priv->uccf;
 
-	ucce = ioread32be(uccf->p_ucce);
-	uccm = ioread32be(uccf->p_uccm);
+	ucce = ioपढ़ो32be(uccf->p_ucce);
+	uccm = ioपढ़ो32be(uccf->p_uccm);
 	ucce &= uccm;
-	iowrite32be(ucce, uccf->p_ucce);
-	if (!ucce)
-		return IRQ_NONE;
+	ioग_लिखो32be(ucce, uccf->p_ucce);
+	अगर (!ucce)
+		वापस IRQ_NONE;
 
-	if ((ucce >> 16) & (UCCE_HDLC_RX_EVENTS | UCCE_HDLC_TX_EVENTS)) {
-		if (napi_schedule_prep(&priv->napi)) {
+	अगर ((ucce >> 16) & (UCCE_HDLC_RX_EVENTS | UCCE_HDLC_TX_EVENTS)) अणु
+		अगर (napi_schedule_prep(&priv->napi)) अणु
 			uccm &= ~((UCCE_HDLC_RX_EVENTS | UCCE_HDLC_TX_EVENTS)
 				  << 16);
-			iowrite32be(uccm, uccf->p_uccm);
+			ioग_लिखो32be(uccm, uccf->p_uccm);
 			__napi_schedule(&priv->napi);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Errors and other events */
-	if (ucce >> 16 & UCC_HDLC_UCCE_BSY)
+	अगर (ucce >> 16 & UCC_HDLC_UCCE_BSY)
 		dev->stats.rx_missed_errors++;
-	if (ucce >> 16 & UCC_HDLC_UCCE_TXE)
+	अगर (ucce >> 16 & UCC_HDLC_UCCE_TXE)
 		dev->stats.tx_errors++;
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int uhdlc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	const size_t size = sizeof(te1_settings);
+अटल पूर्णांक uhdlc_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	स्थिर माप_प्रकार size = माप(te1_settings);
 	te1_settings line;
-	struct ucc_hdlc_private *priv = netdev_priv(dev);
+	काष्ठा ucc_hdlc_निजी *priv = netdev_priv(dev);
 
-	if (cmd != SIOCWANDEV)
-		return hdlc_ioctl(dev, ifr, cmd);
+	अगर (cmd != SIOCWANDEV)
+		वापस hdlc_ioctl(dev, अगरr, cmd);
 
-	switch (ifr->ifr_settings.type) {
-	case IF_GET_IFACE:
-		ifr->ifr_settings.type = IF_IFACE_E1;
-		if (ifr->ifr_settings.size < size) {
-			ifr->ifr_settings.size = size; /* data size wanted */
-			return -ENOBUFS;
-		}
-		memset(&line, 0, sizeof(line));
-		line.clock_type = priv->clocking;
+	चयन (अगरr->अगरr_settings.type) अणु
+	हाल IF_GET_IFACE:
+		अगरr->अगरr_settings.type = IF_IFACE_E1;
+		अगर (अगरr->अगरr_settings.size < size) अणु
+			अगरr->अगरr_settings.size = size; /* data size wanted */
+			वापस -ENOBUFS;
+		पूर्ण
+		स_रखो(&line, 0, माप(line));
+		line.घड़ी_प्रकारype = priv->घड़ीing;
 
-		if (copy_to_user(ifr->ifr_settings.ifs_ifsu.sync, &line, size))
-			return -EFAULT;
-		return 0;
+		अगर (copy_to_user(अगरr->अगरr_settings.अगरs_अगरsu.sync, &line, size))
+			वापस -EFAULT;
+		वापस 0;
 
-	default:
-		return hdlc_ioctl(dev, ifr, cmd);
-	}
-}
+	शेष:
+		वापस hdlc_ioctl(dev, अगरr, cmd);
+	पूर्ण
+पूर्ण
 
-static int uhdlc_open(struct net_device *dev)
-{
+अटल पूर्णांक uhdlc_खोलो(काष्ठा net_device *dev)
+अणु
 	u32 cecr_subblock;
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	struct ucc_hdlc_private *priv = hdlc->priv;
-	struct ucc_tdm *utdm = priv->utdm;
+	काष्ठा ucc_hdlc_निजी *priv = hdlc->priv;
+	काष्ठा ucc_tdm *utdm = priv->utdm;
 
-	if (priv->hdlc_busy != 1) {
-		if (request_irq(priv->ut_info->uf_info.irq,
+	अगर (priv->hdlc_busy != 1) अणु
+		अगर (request_irq(priv->ut_info->uf_info.irq,
 				ucc_hdlc_irq_handler, 0, "hdlc", priv))
-			return -ENODEV;
+			वापस -ENODEV;
 
 		cecr_subblock = ucc_fast_get_qe_cr_subblock(
 					priv->ut_info->uf_info.ucc_num);
@@ -720,89 +721,89 @@ static int uhdlc_open(struct net_device *dev)
 		qe_issue_cmd(QE_INIT_TX_RX, cecr_subblock,
 			     QE_CR_PROTOCOL_UNSPECIFIED, 0);
 
-		ucc_fast_enable(priv->uccf, COMM_DIR_RX | COMM_DIR_TX);
+		ucc_fast_enable(priv->uccf, COMM_सूची_RX | COMM_सूची_TX);
 
 		/* Enable the TDM port */
-		if (priv->tsa)
+		अगर (priv->tsa)
 			utdm->si_regs->siglmr1_h |= (0x1 << utdm->tdm_port);
 
 		priv->hdlc_busy = 1;
-		netif_device_attach(priv->ndev);
+		netअगर_device_attach(priv->ndev);
 		napi_enable(&priv->napi);
 		netdev_reset_queue(dev);
-		netif_start_queue(dev);
-		hdlc_open(dev);
-	}
+		netअगर_start_queue(dev);
+		hdlc_खोलो(dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void uhdlc_memclean(struct ucc_hdlc_private *priv)
-{
-	qe_muram_free(ioread16be(&priv->ucc_pram->riptr));
-	qe_muram_free(ioread16be(&priv->ucc_pram->tiptr));
+अटल व्योम uhdlc_memclean(काष्ठा ucc_hdlc_निजी *priv)
+अणु
+	qe_muram_मुक्त(ioपढ़ो16be(&priv->ucc_pram->riptr));
+	qe_muram_मुक्त(ioपढ़ो16be(&priv->ucc_pram->tiptr));
 
-	if (priv->rx_bd_base) {
-		dma_free_coherent(priv->dev,
-				  RX_BD_RING_LEN * sizeof(struct qe_bd),
+	अगर (priv->rx_bd_base) अणु
+		dma_मुक्त_coherent(priv->dev,
+				  RX_BD_RING_LEN * माप(काष्ठा qe_bd),
 				  priv->rx_bd_base, priv->dma_rx_bd);
 
-		priv->rx_bd_base = NULL;
+		priv->rx_bd_base = शून्य;
 		priv->dma_rx_bd = 0;
-	}
+	पूर्ण
 
-	if (priv->tx_bd_base) {
-		dma_free_coherent(priv->dev,
-				  TX_BD_RING_LEN * sizeof(struct qe_bd),
+	अगर (priv->tx_bd_base) अणु
+		dma_मुक्त_coherent(priv->dev,
+				  TX_BD_RING_LEN * माप(काष्ठा qe_bd),
 				  priv->tx_bd_base, priv->dma_tx_bd);
 
-		priv->tx_bd_base = NULL;
+		priv->tx_bd_base = शून्य;
 		priv->dma_tx_bd = 0;
-	}
+	पूर्ण
 
-	if (priv->ucc_pram) {
-		qe_muram_free(priv->ucc_pram_offset);
-		priv->ucc_pram = NULL;
+	अगर (priv->ucc_pram) अणु
+		qe_muram_मुक्त(priv->ucc_pram_offset);
+		priv->ucc_pram = शून्य;
 		priv->ucc_pram_offset = 0;
-	 }
+	 पूर्ण
 
-	kfree(priv->rx_skbuff);
-	priv->rx_skbuff = NULL;
+	kमुक्त(priv->rx_skbuff);
+	priv->rx_skbuff = शून्य;
 
-	kfree(priv->tx_skbuff);
-	priv->tx_skbuff = NULL;
+	kमुक्त(priv->tx_skbuff);
+	priv->tx_skbuff = शून्य;
 
-	if (priv->uf_regs) {
+	अगर (priv->uf_regs) अणु
 		iounmap(priv->uf_regs);
-		priv->uf_regs = NULL;
-	}
+		priv->uf_regs = शून्य;
+	पूर्ण
 
-	if (priv->uccf) {
-		ucc_fast_free(priv->uccf);
-		priv->uccf = NULL;
-	}
+	अगर (priv->uccf) अणु
+		ucc_fast_मुक्त(priv->uccf);
+		priv->uccf = शून्य;
+	पूर्ण
 
-	if (priv->rx_buffer) {
-		dma_free_coherent(priv->dev,
+	अगर (priv->rx_buffer) अणु
+		dma_मुक्त_coherent(priv->dev,
 				  RX_BD_RING_LEN * MAX_RX_BUF_LENGTH,
 				  priv->rx_buffer, priv->dma_rx_addr);
-		priv->rx_buffer = NULL;
+		priv->rx_buffer = शून्य;
 		priv->dma_rx_addr = 0;
-	}
+	पूर्ण
 
-	if (priv->tx_buffer) {
-		dma_free_coherent(priv->dev,
+	अगर (priv->tx_buffer) अणु
+		dma_मुक्त_coherent(priv->dev,
 				  TX_BD_RING_LEN * MAX_RX_BUF_LENGTH,
 				  priv->tx_buffer, priv->dma_tx_addr);
-		priv->tx_buffer = NULL;
+		priv->tx_buffer = शून्य;
 		priv->dma_tx_addr = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int uhdlc_close(struct net_device *dev)
-{
-	struct ucc_hdlc_private *priv = dev_to_hdlc(dev)->priv;
-	struct ucc_tdm *utdm = priv->utdm;
+अटल पूर्णांक uhdlc_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा ucc_hdlc_निजी *priv = dev_to_hdlc(dev)->priv;
+	काष्ठा ucc_tdm *utdm = priv->utdm;
 	u32 cecr_subblock;
 
 	napi_disable(&priv->napi);
@@ -814,123 +815,123 @@ static int uhdlc_close(struct net_device *dev)
 	qe_issue_cmd(QE_CLOSE_RX_BD, cecr_subblock,
 		     (u8)QE_CR_PROTOCOL_UNSPECIFIED, 0);
 
-	if (priv->tsa)
+	अगर (priv->tsa)
 		utdm->si_regs->siglmr1_h &= ~(0x1 << utdm->tdm_port);
 
-	ucc_fast_disable(priv->uccf, COMM_DIR_RX | COMM_DIR_TX);
+	ucc_fast_disable(priv->uccf, COMM_सूची_RX | COMM_सूची_TX);
 
-	free_irq(priv->ut_info->uf_info.irq, priv);
-	netif_stop_queue(dev);
+	मुक्त_irq(priv->ut_info->uf_info.irq, priv);
+	netअगर_stop_queue(dev);
 	netdev_reset_queue(dev);
 	priv->hdlc_busy = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ucc_hdlc_attach(struct net_device *dev, unsigned short encoding,
-			   unsigned short parity)
-{
-	struct ucc_hdlc_private *priv = dev_to_hdlc(dev)->priv;
+अटल पूर्णांक ucc_hdlc_attach(काष्ठा net_device *dev, अचिन्हित लघु encoding,
+			   अचिन्हित लघु parity)
+अणु
+	काष्ठा ucc_hdlc_निजी *priv = dev_to_hdlc(dev)->priv;
 
-	if (encoding != ENCODING_NRZ &&
+	अगर (encoding != ENCODING_NRZ &&
 	    encoding != ENCODING_NRZI)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (parity != PARITY_NONE &&
+	अगर (parity != PARITY_NONE &&
 	    parity != PARITY_CRC32_PR1_CCITT &&
 	    parity != PARITY_CRC16_PR0_CCITT &&
 	    parity != PARITY_CRC16_PR1_CCITT)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	priv->encoding = encoding;
 	priv->parity = parity;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static void store_clk_config(struct ucc_hdlc_private *priv)
-{
-	struct qe_mux *qe_mux_reg = &qe_immr->qmx;
+#अगर_घोषित CONFIG_PM
+अटल व्योम store_clk_config(काष्ठा ucc_hdlc_निजी *priv)
+अणु
+	काष्ठा qe_mux *qe_mux_reg = &qe_immr->qmx;
 
 	/* store si clk */
-	priv->cmxsi1cr_h = ioread32be(&qe_mux_reg->cmxsi1cr_h);
-	priv->cmxsi1cr_l = ioread32be(&qe_mux_reg->cmxsi1cr_l);
+	priv->cmxsi1cr_h = ioपढ़ो32be(&qe_mux_reg->cmxsi1cr_h);
+	priv->cmxsi1cr_l = ioपढ़ो32be(&qe_mux_reg->cmxsi1cr_l);
 
 	/* store si sync */
-	priv->cmxsi1syr = ioread32be(&qe_mux_reg->cmxsi1syr);
+	priv->cmxsi1syr = ioपढ़ो32be(&qe_mux_reg->cmxsi1syr);
 
 	/* store ucc clk */
-	memcpy_fromio(priv->cmxucr, qe_mux_reg->cmxucr, 4 * sizeof(u32));
-}
+	स_नकल_fromio(priv->cmxucr, qe_mux_reg->cmxucr, 4 * माप(u32));
+पूर्ण
 
-static void resume_clk_config(struct ucc_hdlc_private *priv)
-{
-	struct qe_mux *qe_mux_reg = &qe_immr->qmx;
+अटल व्योम resume_clk_config(काष्ठा ucc_hdlc_निजी *priv)
+अणु
+	काष्ठा qe_mux *qe_mux_reg = &qe_immr->qmx;
 
-	memcpy_toio(qe_mux_reg->cmxucr, priv->cmxucr, 4 * sizeof(u32));
+	स_नकल_toio(qe_mux_reg->cmxucr, priv->cmxucr, 4 * माप(u32));
 
-	iowrite32be(priv->cmxsi1cr_h, &qe_mux_reg->cmxsi1cr_h);
-	iowrite32be(priv->cmxsi1cr_l, &qe_mux_reg->cmxsi1cr_l);
+	ioग_लिखो32be(priv->cmxsi1cr_h, &qe_mux_reg->cmxsi1cr_h);
+	ioग_लिखो32be(priv->cmxsi1cr_l, &qe_mux_reg->cmxsi1cr_l);
 
-	iowrite32be(priv->cmxsi1syr, &qe_mux_reg->cmxsi1syr);
-}
+	ioग_लिखो32be(priv->cmxsi1syr, &qe_mux_reg->cmxsi1syr);
+पूर्ण
 
-static int uhdlc_suspend(struct device *dev)
-{
-	struct ucc_hdlc_private *priv = dev_get_drvdata(dev);
-	struct ucc_fast __iomem *uf_regs;
+अटल पूर्णांक uhdlc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा ucc_hdlc_निजी *priv = dev_get_drvdata(dev);
+	काष्ठा ucc_fast __iomem *uf_regs;
 
-	if (!priv)
-		return -EINVAL;
+	अगर (!priv)
+		वापस -EINVAL;
 
-	if (!netif_running(priv->ndev))
-		return 0;
+	अगर (!netअगर_running(priv->ndev))
+		वापस 0;
 
-	netif_device_detach(priv->ndev);
+	netअगर_device_detach(priv->ndev);
 	napi_disable(&priv->napi);
 
 	uf_regs = priv->uf_regs;
 
 	/* backup gumr guemr*/
-	priv->gumr = ioread32be(&uf_regs->gumr);
-	priv->guemr = ioread8(&uf_regs->guemr);
+	priv->gumr = ioपढ़ो32be(&uf_regs->gumr);
+	priv->guemr = ioपढ़ो8(&uf_regs->guemr);
 
-	priv->ucc_pram_bak = kmalloc(sizeof(*priv->ucc_pram_bak),
+	priv->ucc_pram_bak = kदो_स्मृति(माप(*priv->ucc_pram_bak),
 					GFP_KERNEL);
-	if (!priv->ucc_pram_bak)
-		return -ENOMEM;
+	अगर (!priv->ucc_pram_bak)
+		वापस -ENOMEM;
 
 	/* backup HDLC parameter */
-	memcpy_fromio(priv->ucc_pram_bak, priv->ucc_pram,
-		      sizeof(struct ucc_hdlc_param));
+	स_नकल_fromio(priv->ucc_pram_bak, priv->ucc_pram,
+		      माप(काष्ठा ucc_hdlc_param));
 
 	/* store the clk configuration */
 	store_clk_config(priv);
 
-	/* save power */
-	ucc_fast_disable(priv->uccf, COMM_DIR_RX | COMM_DIR_TX);
+	/* save घातer */
+	ucc_fast_disable(priv->uccf, COMM_सूची_RX | COMM_सूची_TX);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uhdlc_resume(struct device *dev)
-{
-	struct ucc_hdlc_private *priv = dev_get_drvdata(dev);
-	struct ucc_tdm *utdm;
-	struct ucc_tdm_info *ut_info;
-	struct ucc_fast __iomem *uf_regs;
-	struct ucc_fast_private *uccf;
-	struct ucc_fast_info *uf_info;
-	int i;
+अटल पूर्णांक uhdlc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ucc_hdlc_निजी *priv = dev_get_drvdata(dev);
+	काष्ठा ucc_tdm *utdm;
+	काष्ठा ucc_tdm_info *ut_info;
+	काष्ठा ucc_fast __iomem *uf_regs;
+	काष्ठा ucc_fast_निजी *uccf;
+	काष्ठा ucc_fast_info *uf_info;
+	पूर्णांक i;
 	u32 cecr_subblock;
 	u16 bd_status;
 
-	if (!priv)
-		return -EINVAL;
+	अगर (!priv)
+		वापस -EINVAL;
 
-	if (!netif_running(priv->ndev))
-		return 0;
+	अगर (!netअगर_running(priv->ndev))
+		वापस 0;
 
 	utdm = priv->utdm;
 	ut_info = priv->ut_info;
@@ -939,30 +940,30 @@ static int uhdlc_resume(struct device *dev)
 	uccf = priv->uccf;
 
 	/* restore gumr guemr */
-	iowrite8(priv->guemr, &uf_regs->guemr);
-	iowrite32be(priv->gumr, &uf_regs->gumr);
+	ioग_लिखो8(priv->guemr, &uf_regs->guemr);
+	ioग_लिखो32be(priv->gumr, &uf_regs->gumr);
 
-	/* Set Virtual Fifo registers */
-	iowrite16be(uf_info->urfs, &uf_regs->urfs);
-	iowrite16be(uf_info->urfet, &uf_regs->urfet);
-	iowrite16be(uf_info->urfset, &uf_regs->urfset);
-	iowrite16be(uf_info->utfs, &uf_regs->utfs);
-	iowrite16be(uf_info->utfet, &uf_regs->utfet);
-	iowrite16be(uf_info->utftt, &uf_regs->utftt);
+	/* Set Virtual Fअगरo रेजिस्टरs */
+	ioग_लिखो16be(uf_info->urfs, &uf_regs->urfs);
+	ioग_लिखो16be(uf_info->urfet, &uf_regs->urfet);
+	ioग_लिखो16be(uf_info->urfset, &uf_regs->urfset);
+	ioग_लिखो16be(uf_info->utfs, &uf_regs->utfs);
+	ioग_लिखो16be(uf_info->utfet, &uf_regs->utfet);
+	ioग_लिखो16be(uf_info->utftt, &uf_regs->utftt);
 	/* utfb, urfb are offsets from MURAM base */
-	iowrite32be(uccf->ucc_fast_tx_virtual_fifo_base_offset, &uf_regs->utfb);
-	iowrite32be(uccf->ucc_fast_rx_virtual_fifo_base_offset, &uf_regs->urfb);
+	ioग_लिखो32be(uccf->ucc_fast_tx_भव_fअगरo_base_offset, &uf_regs->utfb);
+	ioग_लिखो32be(uccf->ucc_fast_rx_भव_fअगरo_base_offset, &uf_regs->urfb);
 
-	/* Rx Tx and sync clock routing */
+	/* Rx Tx and sync घड़ी routing */
 	resume_clk_config(priv);
 
-	iowrite32be(uf_info->uccm_mask, &uf_regs->uccm);
-	iowrite32be(0xffffffff, &uf_regs->ucce);
+	ioग_लिखो32be(uf_info->uccm_mask, &uf_regs->uccm);
+	ioग_लिखो32be(0xffffffff, &uf_regs->ucce);
 
-	ucc_fast_disable(priv->uccf, COMM_DIR_RX | COMM_DIR_TX);
+	ucc_fast_disable(priv->uccf, COMM_सूची_RX | COMM_सूची_TX);
 
 	/* rebuild SIRAM */
-	if (priv->tsa)
+	अगर (priv->tsa)
 		ucc_tdm_init(priv->utdm, priv->ut_info);
 
 	/* Write to QE CECR, UCCx channel to Stop Transmission */
@@ -971,332 +972,332 @@ static int uhdlc_resume(struct device *dev)
 		     (u8)QE_CR_PROTOCOL_UNSPECIFIED, 0);
 
 	/* Set UPSMR normal mode */
-	iowrite32be(0, &uf_regs->upsmr);
+	ioग_लिखो32be(0, &uf_regs->upsmr);
 
 	/* init parameter base */
 	cecr_subblock = ucc_fast_get_qe_cr_subblock(uf_info->ucc_num);
 	qe_issue_cmd(QE_ASSIGN_PAGE_TO_DEVICE, cecr_subblock,
 		     QE_CR_PROTOCOL_UNSPECIFIED, priv->ucc_pram_offset);
 
-	priv->ucc_pram = (struct ucc_hdlc_param __iomem *)
+	priv->ucc_pram = (काष्ठा ucc_hdlc_param __iomem *)
 				qe_muram_addr(priv->ucc_pram_offset);
 
 	/* restore ucc parameter */
-	memcpy_toio(priv->ucc_pram, priv->ucc_pram_bak,
-		    sizeof(struct ucc_hdlc_param));
-	kfree(priv->ucc_pram_bak);
+	स_नकल_toio(priv->ucc_pram, priv->ucc_pram_bak,
+		    माप(काष्ठा ucc_hdlc_param));
+	kमुक्त(priv->ucc_pram_bak);
 
 	/* rebuild BD entry */
-	for (i = 0; i < RX_BD_RING_LEN; i++) {
-		if (i < (RX_BD_RING_LEN - 1))
+	क्रम (i = 0; i < RX_BD_RING_LEN; i++) अणु
+		अगर (i < (RX_BD_RING_LEN - 1))
 			bd_status = R_E_S | R_I_S;
-		else
+		अन्यथा
 			bd_status = R_E_S | R_I_S | R_W_S;
 
-		iowrite16be(bd_status, &priv->rx_bd_base[i].status);
-		iowrite32be(priv->dma_rx_addr + i * MAX_RX_BUF_LENGTH,
+		ioग_लिखो16be(bd_status, &priv->rx_bd_base[i].status);
+		ioग_लिखो32be(priv->dma_rx_addr + i * MAX_RX_BUF_LENGTH,
 			    &priv->rx_bd_base[i].buf);
-	}
+	पूर्ण
 
-	for (i = 0; i < TX_BD_RING_LEN; i++) {
-		if (i < (TX_BD_RING_LEN - 1))
+	क्रम (i = 0; i < TX_BD_RING_LEN; i++) अणु
+		अगर (i < (TX_BD_RING_LEN - 1))
 			bd_status =  T_I_S | T_TC_S;
-		else
+		अन्यथा
 			bd_status =  T_I_S | T_TC_S | T_W_S;
 
-		iowrite16be(bd_status, &priv->tx_bd_base[i].status);
-		iowrite32be(priv->dma_tx_addr + i * MAX_RX_BUF_LENGTH,
+		ioग_लिखो16be(bd_status, &priv->tx_bd_base[i].status);
+		ioग_लिखो32be(priv->dma_tx_addr + i * MAX_RX_BUF_LENGTH,
 			    &priv->tx_bd_base[i].buf);
-	}
+	पूर्ण
 
-	/* if hdlc is busy enable TX and RX */
-	if (priv->hdlc_busy == 1) {
+	/* अगर hdlc is busy enable TX and RX */
+	अगर (priv->hdlc_busy == 1) अणु
 		cecr_subblock = ucc_fast_get_qe_cr_subblock(
 					priv->ut_info->uf_info.ucc_num);
 
 		qe_issue_cmd(QE_INIT_TX_RX, cecr_subblock,
 			     (u8)QE_CR_PROTOCOL_UNSPECIFIED, 0);
 
-		ucc_fast_enable(priv->uccf, COMM_DIR_RX | COMM_DIR_TX);
+		ucc_fast_enable(priv->uccf, COMM_सूची_RX | COMM_सूची_TX);
 
 		/* Enable the TDM port */
-		if (priv->tsa)
+		अगर (priv->tsa)
 			utdm->si_regs->siglmr1_h |= (0x1 << utdm->tdm_port);
-	}
+	पूर्ण
 
 	napi_enable(&priv->napi);
-	netif_device_attach(priv->ndev);
+	netअगर_device_attach(priv->ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops uhdlc_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops uhdlc_pm_ops = अणु
 	.suspend = uhdlc_suspend,
 	.resume = uhdlc_resume,
-	.freeze = uhdlc_suspend,
+	.मुक्तze = uhdlc_suspend,
 	.thaw = uhdlc_resume,
-};
+पूर्ण;
 
-#define HDLC_PM_OPS (&uhdlc_pm_ops)
+#घोषणा HDLC_PM_OPS (&uhdlc_pm_ops)
 
-#else
+#अन्यथा
 
-#define HDLC_PM_OPS NULL
+#घोषणा HDLC_PM_OPS शून्य
 
-#endif
-static void uhdlc_tx_timeout(struct net_device *ndev, unsigned int txqueue)
-{
+#पूर्ण_अगर
+अटल व्योम uhdlc_tx_समयout(काष्ठा net_device *ndev, अचिन्हित पूर्णांक txqueue)
+अणु
 	netdev_err(ndev, "%s\n", __func__);
-}
+पूर्ण
 
-static const struct net_device_ops uhdlc_ops = {
-	.ndo_open       = uhdlc_open,
-	.ndo_stop       = uhdlc_close,
-	.ndo_start_xmit = hdlc_start_xmit,
-	.ndo_do_ioctl   = uhdlc_ioctl,
-	.ndo_tx_timeout	= uhdlc_tx_timeout,
-};
+अटल स्थिर काष्ठा net_device_ops uhdlc_ops = अणु
+	.nकरो_खोलो       = uhdlc_खोलो,
+	.nकरो_stop       = uhdlc_बंद,
+	.nकरो_start_xmit = hdlc_start_xmit,
+	.nकरो_करो_ioctl   = uhdlc_ioctl,
+	.nकरो_tx_समयout	= uhdlc_tx_समयout,
+पूर्ण;
 
-static int hdlc_map_iomem(char *name, int init_flag, void __iomem **ptr)
-{
-	struct device_node *np;
-	struct platform_device *pdev;
-	struct resource *res;
-	static int siram_init_flag;
-	int ret = 0;
+अटल पूर्णांक hdlc_map_iomem(अक्षर *name, पूर्णांक init_flag, व्योम __iomem **ptr)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा resource *res;
+	अटल पूर्णांक siram_init_flag;
+	पूर्णांक ret = 0;
 
-	np = of_find_compatible_node(NULL, NULL, name);
-	if (!np)
-		return -EINVAL;
+	np = of_find_compatible_node(शून्य, शून्य, name);
+	अगर (!np)
+		वापस -EINVAL;
 
 	pdev = of_find_device_by_node(np);
-	if (!pdev) {
+	अगर (!pdev) अणु
 		pr_err("%pOFn: failed to lookup pdev\n", np);
 		of_node_put(np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	of_node_put(np);
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		ret = -EINVAL;
-		goto error_put_device;
-	}
+		जाओ error_put_device;
+	पूर्ण
 	*ptr = ioremap(res->start, resource_size(res));
-	if (!*ptr) {
+	अगर (!*ptr) अणु
 		ret = -ENOMEM;
-		goto error_put_device;
-	}
+		जाओ error_put_device;
+	पूर्ण
 
 	/* We've remapped the addresses, and we don't need the device any
 	 * more, so we should release it.
 	 */
 	put_device(&pdev->dev);
 
-	if (init_flag && siram_init_flag == 0) {
-		memset_io(*ptr, 0, resource_size(res));
+	अगर (init_flag && siram_init_flag == 0) अणु
+		स_रखो_io(*ptr, 0, resource_size(res));
 		siram_init_flag = 1;
-	}
-	return  0;
+	पूर्ण
+	वापस  0;
 
 error_put_device:
 	put_device(&pdev->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ucc_hdlc_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct ucc_hdlc_private *uhdlc_priv = NULL;
-	struct ucc_tdm_info *ut_info;
-	struct ucc_tdm *utdm = NULL;
-	struct resource res;
-	struct net_device *dev;
+अटल पूर्णांक ucc_hdlc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा ucc_hdlc_निजी *uhdlc_priv = शून्य;
+	काष्ठा ucc_tdm_info *ut_info;
+	काष्ठा ucc_tdm *utdm = शून्य;
+	काष्ठा resource res;
+	काष्ठा net_device *dev;
 	hdlc_device *hdlc;
-	int ucc_num;
-	const char *sprop;
-	int ret;
+	पूर्णांक ucc_num;
+	स्थिर अक्षर *sprop;
+	पूर्णांक ret;
 	u32 val;
 
-	ret = of_property_read_u32_index(np, "cell-index", 0, &val);
-	if (ret) {
+	ret = of_property_पढ़ो_u32_index(np, "cell-index", 0, &val);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Invalid ucc property\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ucc_num = val - 1;
-	if (ucc_num > (UCC_MAX_NUM - 1) || ucc_num < 0) {
+	अगर (ucc_num > (UCC_MAX_NUM - 1) || ucc_num < 0) अणु
 		dev_err(&pdev->dev, ": Invalid UCC num\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memcpy(&utdm_info[ucc_num], &utdm_primary_info,
-	       sizeof(utdm_primary_info));
+	स_नकल(&utdm_info[ucc_num], &utdm_primary_info,
+	       माप(utdm_primary_info));
 
 	ut_info = &utdm_info[ucc_num];
 	ut_info->uf_info.ucc_num = ucc_num;
 
-	sprop = of_get_property(np, "rx-clock-name", NULL);
-	if (sprop) {
-		ut_info->uf_info.rx_clock = qe_clock_source(sprop);
-		if ((ut_info->uf_info.rx_clock < QE_CLK_NONE) ||
-		    (ut_info->uf_info.rx_clock > QE_CLK24)) {
+	sprop = of_get_property(np, "rx-clock-name", शून्य);
+	अगर (sprop) अणु
+		ut_info->uf_info.rx_घड़ी = qe_घड़ी_source(sprop);
+		अगर ((ut_info->uf_info.rx_घड़ी < QE_CLK_NONE) ||
+		    (ut_info->uf_info.rx_घड़ी > QE_CLK24)) अणु
 			dev_err(&pdev->dev, "Invalid rx-clock-name property\n");
-			return -EINVAL;
-		}
-	} else {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(&pdev->dev, "Invalid rx-clock-name property\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	sprop = of_get_property(np, "tx-clock-name", NULL);
-	if (sprop) {
-		ut_info->uf_info.tx_clock = qe_clock_source(sprop);
-		if ((ut_info->uf_info.tx_clock < QE_CLK_NONE) ||
-		    (ut_info->uf_info.tx_clock > QE_CLK24)) {
+	sprop = of_get_property(np, "tx-clock-name", शून्य);
+	अगर (sprop) अणु
+		ut_info->uf_info.tx_घड़ी = qe_घड़ी_source(sprop);
+		अगर ((ut_info->uf_info.tx_घड़ी < QE_CLK_NONE) ||
+		    (ut_info->uf_info.tx_घड़ी > QE_CLK24)) अणु
 			dev_err(&pdev->dev, "Invalid tx-clock-name property\n");
-			return -EINVAL;
-		}
-	} else {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(&pdev->dev, "Invalid tx-clock-name property\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = of_address_to_resource(np, 0, &res);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	ut_info->uf_info.regs = res.start;
 	ut_info->uf_info.irq = irq_of_parse_and_map(np, 0);
 
-	uhdlc_priv = kzalloc(sizeof(*uhdlc_priv), GFP_KERNEL);
-	if (!uhdlc_priv) {
-		return -ENOMEM;
-	}
+	uhdlc_priv = kzalloc(माप(*uhdlc_priv), GFP_KERNEL);
+	अगर (!uhdlc_priv) अणु
+		वापस -ENOMEM;
+	पूर्ण
 
 	dev_set_drvdata(&pdev->dev, uhdlc_priv);
 	uhdlc_priv->dev = &pdev->dev;
 	uhdlc_priv->ut_info = ut_info;
 
-	if (of_get_property(np, "fsl,tdm-interface", NULL))
+	अगर (of_get_property(np, "fsl,tdm-interface", शून्य))
 		uhdlc_priv->tsa = 1;
 
-	if (of_get_property(np, "fsl,ucc-internal-loopback", NULL))
+	अगर (of_get_property(np, "fsl,ucc-internal-loopback", शून्य))
 		uhdlc_priv->loopback = 1;
 
-	if (of_get_property(np, "fsl,hdlc-bus", NULL))
+	अगर (of_get_property(np, "fsl,hdlc-bus", शून्य))
 		uhdlc_priv->hdlc_bus = 1;
 
-	if (uhdlc_priv->tsa == 1) {
-		utdm = kzalloc(sizeof(*utdm), GFP_KERNEL);
-		if (!utdm) {
+	अगर (uhdlc_priv->tsa == 1) अणु
+		utdm = kzalloc(माप(*utdm), GFP_KERNEL);
+		अगर (!utdm) अणु
 			ret = -ENOMEM;
 			dev_err(&pdev->dev, "No mem to alloc ucc tdm data\n");
-			goto free_uhdlc_priv;
-		}
+			जाओ मुक्त_uhdlc_priv;
+		पूर्ण
 		uhdlc_priv->utdm = utdm;
 		ret = ucc_of_parse_tdm(np, utdm, ut_info);
-		if (ret)
-			goto free_utdm;
+		अगर (ret)
+			जाओ मुक्त_utdm;
 
 		ret = hdlc_map_iomem("fsl,t1040-qe-si", 0,
-				     (void __iomem **)&utdm->si_regs);
-		if (ret)
-			goto free_utdm;
+				     (व्योम __iomem **)&utdm->si_regs);
+		अगर (ret)
+			जाओ मुक्त_utdm;
 		ret = hdlc_map_iomem("fsl,t1040-qe-siram", 1,
-				     (void __iomem **)&utdm->siram);
-		if (ret)
-			goto unmap_si_regs;
-	}
+				     (व्योम __iomem **)&utdm->siram);
+		अगर (ret)
+			जाओ unmap_si_regs;
+	पूर्ण
 
-	if (of_property_read_u16(np, "fsl,hmask", &uhdlc_priv->hmask))
+	अगर (of_property_पढ़ो_u16(np, "fsl,hmask", &uhdlc_priv->hmask))
 		uhdlc_priv->hmask = DEFAULT_ADDR_MASK;
 
 	ret = uhdlc_init(uhdlc_priv);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to init uhdlc\n");
-		goto undo_uhdlc_init;
-	}
+		जाओ unकरो_uhdlc_init;
+	पूर्ण
 
 	dev = alloc_hdlcdev(uhdlc_priv);
-	if (!dev) {
+	अगर (!dev) अणु
 		ret = -ENOMEM;
 		pr_err("ucc_hdlc: unable to allocate memory\n");
-		goto undo_uhdlc_init;
-	}
+		जाओ unकरो_uhdlc_init;
+	पूर्ण
 
 	uhdlc_priv->ndev = dev;
 	hdlc = dev_to_hdlc(dev);
 	dev->tx_queue_len = 16;
 	dev->netdev_ops = &uhdlc_ops;
-	dev->watchdog_timeo = 2 * HZ;
+	dev->watchकरोg_समयo = 2 * HZ;
 	hdlc->attach = ucc_hdlc_attach;
 	hdlc->xmit = ucc_hdlc_tx;
-	netif_napi_add(dev, &uhdlc_priv->napi, ucc_hdlc_poll, 32);
-	if (register_hdlc_device(dev)) {
+	netअगर_napi_add(dev, &uhdlc_priv->napi, ucc_hdlc_poll, 32);
+	अगर (रेजिस्टर_hdlc_device(dev)) अणु
 		ret = -ENOBUFS;
 		pr_err("ucc_hdlc: unable to register hdlc device\n");
-		goto free_dev;
-	}
+		जाओ मुक्त_dev;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_dev:
-	free_netdev(dev);
-undo_uhdlc_init:
+मुक्त_dev:
+	मुक्त_netdev(dev);
+unकरो_uhdlc_init:
 	iounmap(utdm->siram);
 unmap_si_regs:
 	iounmap(utdm->si_regs);
-free_utdm:
-	if (uhdlc_priv->tsa)
-		kfree(utdm);
-free_uhdlc_priv:
-	kfree(uhdlc_priv);
-	return ret;
-}
+मुक्त_utdm:
+	अगर (uhdlc_priv->tsa)
+		kमुक्त(utdm);
+मुक्त_uhdlc_priv:
+	kमुक्त(uhdlc_priv);
+	वापस ret;
+पूर्ण
 
-static int ucc_hdlc_remove(struct platform_device *pdev)
-{
-	struct ucc_hdlc_private *priv = dev_get_drvdata(&pdev->dev);
+अटल पूर्णांक ucc_hdlc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ucc_hdlc_निजी *priv = dev_get_drvdata(&pdev->dev);
 
 	uhdlc_memclean(priv);
 
-	if (priv->utdm->si_regs) {
+	अगर (priv->utdm->si_regs) अणु
 		iounmap(priv->utdm->si_regs);
-		priv->utdm->si_regs = NULL;
-	}
+		priv->utdm->si_regs = शून्य;
+	पूर्ण
 
-	if (priv->utdm->siram) {
+	अगर (priv->utdm->siram) अणु
 		iounmap(priv->utdm->siram);
-		priv->utdm->siram = NULL;
-	}
-	kfree(priv);
+		priv->utdm->siram = शून्य;
+	पूर्ण
+	kमुक्त(priv);
 
 	dev_info(&pdev->dev, "UCC based hdlc module removed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id fsl_ucc_hdlc_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id fsl_ucc_hdlc_of_match[] = अणु
+	अणु
 	.compatible = "fsl,ucc-hdlc",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, fsl_ucc_hdlc_of_match);
 
-static struct platform_driver ucc_hdlc_driver = {
+अटल काष्ठा platक्रमm_driver ucc_hdlc_driver = अणु
 	.probe	= ucc_hdlc_probe,
-	.remove	= ucc_hdlc_remove,
-	.driver	= {
+	.हटाओ	= ucc_hdlc_हटाओ,
+	.driver	= अणु
 		.name		= DRV_NAME,
 		.pm		= HDLC_PM_OPS,
 		.of_match_table	= fsl_ucc_hdlc_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ucc_hdlc_driver);
+module_platक्रमm_driver(ucc_hdlc_driver);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION(DRV_DESC);

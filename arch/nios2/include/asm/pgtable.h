@@ -1,38 +1,39 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2011 Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2009 Wind River Systems Inc
  *
- * Based on asm/pgtable-32.h from mips which is:
+ * Based on यंत्र/pgtable-32.h from mips which is:
  *
  * Copyright (C) 1994, 95, 96, 97, 98, 99, 2000, 2003 Ralf Baechle
  * Copyright (C) 1999, 2000, 2001 Silicon Graphics, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#ifndef _ASM_NIOS2_PGTABLE_H
-#define _ASM_NIOS2_PGTABLE_H
+#अगर_अघोषित _ASM_NIOS2_PGTABLE_H
+#घोषणा _ASM_NIOS2_PGTABLE_H
 
-#include <linux/io.h>
-#include <linux/bug.h>
-#include <asm/page.h>
-#include <asm/cacheflush.h>
-#include <asm/tlbflush.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/bug.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#include <asm/pgtable-bits.h>
-#include <asm-generic/pgtable-nopmd.h>
+#समावेश <यंत्र/pgtable-bits.h>
+#समावेश <यंत्र-generic/pgtable-nopmd.h>
 
-#define FIRST_USER_ADDRESS	0UL
+#घोषणा FIRST_USER_ADDRESS	0UL
 
-#define VMALLOC_START		CONFIG_NIOS2_KERNEL_MMU_REGION_BASE
-#define VMALLOC_END		(CONFIG_NIOS2_KERNEL_REGION_BASE - 1)
+#घोषणा VMALLOC_START		CONFIG_NIOS2_KERNEL_MMU_REGION_BASE
+#घोषणा VMALLOC_END		(CONFIG_NIOS2_KERNEL_REGION_BASE - 1)
 
-struct mm_struct;
+काष्ठा mm_काष्ठा;
 
 /* Helper macro */
-#define MKP(x, w, r) __pgprot(_PAGE_PRESENT | _PAGE_CACHED |		\
+#घोषणा MKP(x, w, r) __pgprot(_PAGE_PRESENT | _PAGE_CACHED |		\
 				((x) ? _PAGE_EXEC : 0) |		\
 				((r) ? _PAGE_READ : 0) |		\
 				((w) ? _PAGE_WRITE : 0))
@@ -41,215 +42,215 @@ struct mm_struct;
  * (to populate protection_map[])
  */
 
-/* Remove W bit on private pages for COW support */
-#define __P000	MKP(0, 0, 0)
-#define __P001	MKP(0, 0, 1)
-#define __P010	MKP(0, 0, 0)	/* COW */
-#define __P011	MKP(0, 0, 1)	/* COW */
-#define __P100	MKP(1, 0, 0)
-#define __P101	MKP(1, 0, 1)
-#define __P110	MKP(1, 0, 0)	/* COW */
-#define __P111	MKP(1, 0, 1)	/* COW */
+/* Remove W bit on निजी pages क्रम COW support */
+#घोषणा __P000	MKP(0, 0, 0)
+#घोषणा __P001	MKP(0, 0, 1)
+#घोषणा __P010	MKP(0, 0, 0)	/* COW */
+#घोषणा __P011	MKP(0, 0, 1)	/* COW */
+#घोषणा __P100	MKP(1, 0, 0)
+#घोषणा __P101	MKP(1, 0, 1)
+#घोषणा __P110	MKP(1, 0, 0)	/* COW */
+#घोषणा __P111	MKP(1, 0, 1)	/* COW */
 
 /* Shared pages can have exact HW mapping */
-#define __S000	MKP(0, 0, 0)
-#define __S001	MKP(0, 0, 1)
-#define __S010	MKP(0, 1, 0)
-#define __S011	MKP(0, 1, 1)
-#define __S100	MKP(1, 0, 0)
-#define __S101	MKP(1, 0, 1)
-#define __S110	MKP(1, 1, 0)
-#define __S111	MKP(1, 1, 1)
+#घोषणा __S000	MKP(0, 0, 0)
+#घोषणा __S001	MKP(0, 0, 1)
+#घोषणा __S010	MKP(0, 1, 0)
+#घोषणा __S011	MKP(0, 1, 1)
+#घोषणा __S100	MKP(1, 0, 0)
+#घोषणा __S101	MKP(1, 0, 1)
+#घोषणा __S110	MKP(1, 1, 0)
+#घोषणा __S111	MKP(1, 1, 1)
 
 /* Used all over the kernel */
-#define PAGE_KERNEL __pgprot(_PAGE_PRESENT | _PAGE_CACHED | _PAGE_READ | \
+#घोषणा PAGE_KERNEL __pgprot(_PAGE_PRESENT | _PAGE_CACHED | _PAGE_READ | \
 			     _PAGE_WRITE | _PAGE_EXEC | _PAGE_GLOBAL)
 
-#define PAGE_SHARED __pgprot(_PAGE_PRESENT | _PAGE_CACHED | _PAGE_READ | \
+#घोषणा PAGE_SHARED __pgprot(_PAGE_PRESENT | _PAGE_CACHED | _PAGE_READ | \
 			     _PAGE_WRITE | _PAGE_ACCESSED)
 
-#define PAGE_COPY MKP(0, 0, 1)
+#घोषणा PAGE_COPY MKP(0, 0, 1)
 
-#define PGD_ORDER	0
-#define PTE_ORDER	0
+#घोषणा PGD_ORDER	0
+#घोषणा PTE_ORDER	0
 
-#define PTRS_PER_PGD	((PAGE_SIZE << PGD_ORDER) / sizeof(pgd_t))
-#define PTRS_PER_PTE	((PAGE_SIZE << PTE_ORDER) / sizeof(pte_t))
+#घोषणा PTRS_PER_PGD	((PAGE_SIZE << PGD_ORDER) / माप(pgd_t))
+#घोषणा PTRS_PER_PTE	((PAGE_SIZE << PTE_ORDER) / माप(pte_t))
 
-#define USER_PTRS_PER_PGD	\
-	(CONFIG_NIOS2_KERNEL_MMU_REGION_BASE / PGDIR_SIZE)
+#घोषणा USER_PTRS_PER_PGD	\
+	(CONFIG_NIOS2_KERNEL_MMU_REGION_BASE / PGसूची_SIZE)
 
-#define PGDIR_SHIFT	22
-#define PGDIR_SIZE	(1UL << PGDIR_SHIFT)
-#define PGDIR_MASK	(~(PGDIR_SIZE-1))
+#घोषणा PGसूची_SHIFT	22
+#घोषणा PGसूची_SIZE	(1UL << PGसूची_SHIFT)
+#घोषणा PGसूची_MASK	(~(PGसूची_SIZE-1))
 
 /*
  * ZERO_PAGE is a global shared page that is always zero: used
- * for zero-mapped memory areas etc..
+ * क्रम zero-mapped memory areas etc..
  */
-extern unsigned long empty_zero_page[PAGE_SIZE / sizeof(unsigned long)];
-#define ZERO_PAGE(vaddr)	(virt_to_page(empty_zero_page))
+बाह्य अचिन्हित दीर्घ empty_zero_page[PAGE_SIZE / माप(अचिन्हित दीर्घ)];
+#घोषणा ZERO_PAGE(vaddr)	(virt_to_page(empty_zero_page))
 
-extern pgd_t swapper_pg_dir[PTRS_PER_PGD];
-extern pte_t invalid_pte_table[PAGE_SIZE/sizeof(pte_t)];
+बाह्य pgd_t swapper_pg_dir[PTRS_PER_PGD];
+बाह्य pte_t invalid_pte_table[PAGE_SIZE/माप(pte_t)];
 
 /*
- * (pmds are folded into puds so this doesn't get actually called,
- * but the define is needed for a generic inline function.)
+ * (pmds are folded पूर्णांकo puds so this करोesn't get actually called,
+ * but the define is needed क्रम a generic अंतरभूत function.)
  */
-static inline void set_pmd(pmd_t *pmdptr, pmd_t pmdval)
-{
+अटल अंतरभूत व्योम set_pmd(pmd_t *pmdptr, pmd_t pmdval)
+अणु
 	*pmdptr = pmdval;
-}
+पूर्ण
 
-static inline int pte_write(pte_t pte)		\
-	{ return pte_val(pte) & _PAGE_WRITE; }
-static inline int pte_dirty(pte_t pte)		\
-	{ return pte_val(pte) & _PAGE_DIRTY; }
-static inline int pte_young(pte_t pte)		\
-	{ return pte_val(pte) & _PAGE_ACCESSED; }
+अटल अंतरभूत पूर्णांक pte_ग_लिखो(pte_t pte)		\
+	अणु वापस pte_val(pte) & _PAGE_WRITE; पूर्ण
+अटल अंतरभूत पूर्णांक pte_dirty(pte_t pte)		\
+	अणु वापस pte_val(pte) & _PAGE_सूचीTY; पूर्ण
+अटल अंतरभूत पूर्णांक pte_young(pte_t pte)		\
+	अणु वापस pte_val(pte) & _PAGE_ACCESSED; पूर्ण
 
-#define pgprot_noncached pgprot_noncached
+#घोषणा pgprot_noncached pgprot_noncached
 
-static inline pgprot_t pgprot_noncached(pgprot_t _prot)
-{
-	unsigned long prot = pgprot_val(_prot);
+अटल अंतरभूत pgprot_t pgprot_noncached(pgprot_t _prot)
+अणु
+	अचिन्हित दीर्घ prot = pgprot_val(_prot);
 
 	prot &= ~_PAGE_CACHED;
 
-	return __pgprot(prot);
-}
+	वापस __pgprot(prot);
+पूर्ण
 
-static inline int pte_none(pte_t pte)
-{
-	return !(pte_val(pte) & ~(_PAGE_GLOBAL|0xf));
-}
+अटल अंतरभूत पूर्णांक pte_none(pte_t pte)
+अणु
+	वापस !(pte_val(pte) & ~(_PAGE_GLOBAL|0xf));
+पूर्ण
 
-static inline int pte_present(pte_t pte)	\
-	{ return pte_val(pte) & _PAGE_PRESENT; }
+अटल अंतरभूत पूर्णांक pte_present(pte_t pte)	\
+	अणु वापस pte_val(pte) & _PAGE_PRESENT; पूर्ण
 
 /*
- * The following only work if pte_present() is true.
- * Undefined behaviour if not..
+ * The following only work अगर pte_present() is true.
+ * Undefined behaviour अगर not..
  */
-static inline pte_t pte_wrprotect(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_wrprotect(pte_t pte)
+अणु
 	pte_val(pte) &= ~_PAGE_WRITE;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkclean(pte_t pte)
-{
-	pte_val(pte) &= ~_PAGE_DIRTY;
-	return pte;
-}
+अटल अंतरभूत pte_t pte_mkclean(pte_t pte)
+अणु
+	pte_val(pte) &= ~_PAGE_सूचीTY;
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkold(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_mkold(pte_t pte)
+अणु
 	pte_val(pte) &= ~_PAGE_ACCESSED;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkwrite(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_mkग_लिखो(pte_t pte)
+अणु
 	pte_val(pte) |= _PAGE_WRITE;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkdirty(pte_t pte)
-{
-	pte_val(pte) |= _PAGE_DIRTY;
-	return pte;
-}
+अटल अंतरभूत pte_t pte_सूची_गढ़ोty(pte_t pte)
+अणु
+	pte_val(pte) |= _PAGE_सूचीTY;
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_mkyoung(pte_t pte)
-{
+अटल अंतरभूत pte_t pte_mkyoung(pte_t pte)
+अणु
 	pte_val(pte) |= _PAGE_ACCESSED;
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
-{
-	const unsigned long mask = _PAGE_READ | _PAGE_WRITE | _PAGE_EXEC;
+अटल अंतरभूत pte_t pte_modअगरy(pte_t pte, pgprot_t newprot)
+अणु
+	स्थिर अचिन्हित दीर्घ mask = _PAGE_READ | _PAGE_WRITE | _PAGE_EXEC;
 
 	pte_val(pte) = (pte_val(pte) & ~mask) | (pgprot_val(newprot) & mask);
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static inline int pmd_present(pmd_t pmd)
-{
-	return (pmd_val(pmd) != (unsigned long) invalid_pte_table)
+अटल अंतरभूत पूर्णांक pmd_present(pmd_t pmd)
+अणु
+	वापस (pmd_val(pmd) != (अचिन्हित दीर्घ) invalid_pte_table)
 			&& (pmd_val(pmd) != 0UL);
-}
+पूर्ण
 
-static inline void pmd_clear(pmd_t *pmdp)
-{
-	pmd_val(*pmdp) = (unsigned long) invalid_pte_table;
-}
+अटल अंतरभूत व्योम pmd_clear(pmd_t *pmdp)
+अणु
+	pmd_val(*pmdp) = (अचिन्हित दीर्घ) invalid_pte_table;
+पूर्ण
 
-#define pte_pfn(pte)		(pte_val(pte) & 0xfffff)
-#define pfn_pte(pfn, prot)	(__pte(pfn | pgprot_val(prot)))
-#define pte_page(pte)		(pfn_to_page(pte_pfn(pte)))
+#घोषणा pte_pfn(pte)		(pte_val(pte) & 0xfffff)
+#घोषणा pfn_pte(pfn, prot)	(__pte(pfn | pgprot_val(prot)))
+#घोषणा pte_page(pte)		(pfn_to_page(pte_pfn(pte)))
 
 /*
- * Store a linux PTE into the linux page table.
+ * Store a linux PTE पूर्णांकo the linux page table.
  */
-static inline void set_pte(pte_t *ptep, pte_t pteval)
-{
+अटल अंतरभूत व्योम set_pte(pte_t *ptep, pte_t pteval)
+अणु
 	*ptep = pteval;
-}
+पूर्ण
 
-static inline void set_pte_at(struct mm_struct *mm, unsigned long addr,
+अटल अंतरभूत व्योम set_pte_at(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 			      pte_t *ptep, pte_t pteval)
-{
-	unsigned long paddr = (unsigned long)page_to_virt(pte_page(pteval));
+अणु
+	अचिन्हित दीर्घ paddr = (अचिन्हित दीर्घ)page_to_virt(pte_page(pteval));
 
 	flush_dcache_range(paddr, paddr + PAGE_SIZE);
 	set_pte(ptep, pteval);
-}
+पूर्ण
 
-static inline int pmd_none(pmd_t pmd)
-{
-	return (pmd_val(pmd) ==
-		(unsigned long) invalid_pte_table) || (pmd_val(pmd) == 0UL);
-}
+अटल अंतरभूत पूर्णांक pmd_none(pmd_t pmd)
+अणु
+	वापस (pmd_val(pmd) ==
+		(अचिन्हित दीर्घ) invalid_pte_table) || (pmd_val(pmd) == 0UL);
+पूर्ण
 
-#define pmd_bad(pmd)	(pmd_val(pmd) & ~PAGE_MASK)
+#घोषणा pmd_bad(pmd)	(pmd_val(pmd) & ~PAGE_MASK)
 
-static inline void pte_clear(struct mm_struct *mm,
-				unsigned long addr, pte_t *ptep)
-{
+अटल अंतरभूत व्योम pte_clear(काष्ठा mm_काष्ठा *mm,
+				अचिन्हित दीर्घ addr, pte_t *ptep)
+अणु
 	pte_t null;
 
 	pte_val(null) = (addr >> PAGE_SHIFT) & 0xf;
 
 	set_pte_at(mm, addr, ptep, null);
-}
+पूर्ण
 
 /*
  * Conversion functions: convert a page and protection to a page entry,
  * and a page entry and page directory to the page they refer to.
  */
-#define mk_pte(page, prot)	(pfn_pte(page_to_pfn(page), prot))
+#घोषणा mk_pte(page, prot)	(pfn_pte(page_to_pfn(page), prot))
 
 /*
  * Conversion functions: convert a page and protection to a page entry,
  * and a page entry and page directory to the page they refer to.
  */
-#define pmd_phys(pmd)		virt_to_phys((void *)pmd_val(pmd))
-#define pmd_page(pmd)		(pfn_to_page(pmd_phys(pmd) >> PAGE_SHIFT))
+#घोषणा pmd_phys(pmd)		virt_to_phys((व्योम *)pmd_val(pmd))
+#घोषणा pmd_page(pmd)		(pfn_to_page(pmd_phys(pmd) >> PAGE_SHIFT))
 
-static inline unsigned long pmd_page_vaddr(pmd_t pmd)
-{
-	return pmd_val(pmd);
-}
+अटल अंतरभूत अचिन्हित दीर्घ pmd_page_vaddr(pmd_t pmd)
+अणु
+	वापस pmd_val(pmd);
+पूर्ण
 
-#define pte_ERROR(e) \
+#घोषणा pte_ERROR(e) \
 	pr_err("%s:%d: bad pte %08lx.\n", \
-		__FILE__, __LINE__, pte_val(e))
-#define pgd_ERROR(e) \
+		__खाता__, __LINE__, pte_val(e))
+#घोषणा pgd_ERROR(e) \
 	pr_err("%s:%d: bad pgd %08lx.\n", \
-		__FILE__, __LINE__, pgd_val(e))
+		__खाता__, __LINE__, pgd_val(e))
 
 /*
  * Encode and decode a swap entry (must be !pte_none(pte) && !pte_present(pte):
@@ -262,19 +263,19 @@ static inline unsigned long pmd_page_vaddr(pmd_t pmd)
  * Note that the offset field is always non-zero, thus !pte_none(pte) is always
  * true.
  */
-#define __swp_type(swp)		(((swp).val >> 26) & 0x3)
-#define __swp_offset(swp)	((swp).val & 0xfffff)
-#define __swp_entry(type, off)	((swp_entry_t) { (((type) & 0x3) << 26) \
-						 | ((off) & 0xfffff) })
-#define __swp_entry_to_pte(swp)	((pte_t) { (swp).val })
-#define __pte_to_swp_entry(pte)	((swp_entry_t) { pte_val(pte) })
+#घोषणा __swp_type(swp)		(((swp).val >> 26) & 0x3)
+#घोषणा __swp_offset(swp)	((swp).val & 0xfffff)
+#घोषणा __swp_entry(type, off)	((swp_entry_t) अणु (((type) & 0x3) << 26) \
+						 | ((off) & 0xfffff) पूर्ण)
+#घोषणा __swp_entry_to_pte(swp)	((pte_t) अणु (swp).val पूर्ण)
+#घोषणा __pte_to_swp_entry(pte)	((swp_entry_t) अणु pte_val(pte) पूर्ण)
 
-#define kern_addr_valid(addr)		(1)
+#घोषणा kern_addr_valid(addr)		(1)
 
-extern void __init paging_init(void);
-extern void __init mmu_init(void);
+बाह्य व्योम __init paging_init(व्योम);
+बाह्य व्योम __init mmu_init(व्योम);
 
-extern void update_mmu_cache(struct vm_area_struct *vma,
-			     unsigned long address, pte_t *pte);
+बाह्य व्योम update_mmu_cache(काष्ठा vm_area_काष्ठा *vma,
+			     अचिन्हित दीर्घ address, pte_t *pte);
 
-#endif /* _ASM_NIOS2_PGTABLE_H */
+#पूर्ण_अगर /* _ASM_NIOS2_PGTABLE_H */

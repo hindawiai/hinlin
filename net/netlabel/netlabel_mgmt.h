@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * NetLabel Management Support
  *
- * This file defines the management functions for the NetLabel system.  The
- * NetLabel system manages static and dynamic label mappings for network
+ * This file defines the management functions क्रम the NetLabel प्रणाली.  The
+ * NetLabel प्रणाली manages अटल and dynamic label mappings क्रम network
  * protocols such as CIPSO and RIPSO.
  *
  * Author: Paul Moore <paul@paul-moore.com>
@@ -13,29 +14,29 @@
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2006
  */
 
-#ifndef _NETLABEL_MGMT_H
-#define _NETLABEL_MGMT_H
+#अगर_अघोषित _NETLABEL_MGMT_H
+#घोषणा _NETLABEL_MGMT_H
 
-#include <net/netlabel.h>
-#include <linux/atomic.h>
+#समावेश <net/netlabel.h>
+#समावेश <linux/atomic.h>
 
 /*
- * The following NetLabel payloads are supported by the management interface.
+ * The following NetLabel payloads are supported by the management पूर्णांकerface.
  *
  * o ADD:
- *   Sent by an application to add a domain mapping to the NetLabel system.
+ *   Sent by an application to add a करोमुख्य mapping to the NetLabel प्रणाली.
  *
  *   Required attributes:
  *
  *     NLBL_MGMT_A_DOMAIN
  *     NLBL_MGMT_A_PROTOCOL
  *
- *   If IPv4 is specified the following attributes are required:
+ *   If IPv4 is specअगरied the following attributes are required:
  *
  *     NLBL_MGMT_A_IPV4ADDR
  *     NLBL_MGMT_A_IPV4MASK
  *
- *   If IPv6 is specified the following attributes are required:
+ *   If IPv6 is specअगरied the following attributes are required:
  *
  *     NLBL_MGMT_A_IPV6ADDR
  *     NLBL_MGMT_A_IPV6MASK
@@ -50,8 +51,8 @@
  *     NLBL_MGMT_A_FAMILY
  *
  * o REMOVE:
- *   Sent by an application to remove a domain mapping from the NetLabel
- *   system.
+ *   Sent by an application to हटाओ a करोमुख्य mapping from the NetLabel
+ *   प्रणाली.
  *
  *   Required attributes:
  *
@@ -87,8 +88,8 @@
  *   attributes are required.
  *
  * o ADDDEF:
- *   Sent by an application to set the default domain mapping for the NetLabel
- *   system.
+ *   Sent by an application to set the शेष करोमुख्य mapping क्रम the NetLabel
+ *   प्रणाली.
  *
  *   Required attributes:
  *
@@ -104,8 +105,8 @@
  *     NLBL_MGMT_A_FAMILY
  *
  * o REMOVEDEF:
- *   Sent by an application to remove the default domain mapping from the
- *   NetLabel system, there is no payload.
+ *   Sent by an application to हटाओ the शेष करोमुख्य mapping from the
+ *   NetLabel प्रणाली, there is no payload.
  *
  * o LISTDEF:
  *   This message can be sent either from an application or by the kernel in
@@ -114,7 +115,7 @@
  *
  *     NLBL_MGMT_A_FAMILY
  *
- *   On success the kernel should send a response using the following format:
+ *   On success the kernel should send a response using the following क्रमmat:
  *
  *   If the IP address selectors are not used the following attributes are
  *   required:
@@ -157,7 +158,7 @@
  */
 
 /* NetLabel Management commands */
-enum {
+क्रमागत अणु
 	NLBL_MGMT_C_UNSPEC,
 	NLBL_MGMT_C_ADD,
 	NLBL_MGMT_C_REMOVE,
@@ -168,14 +169,14 @@ enum {
 	NLBL_MGMT_C_PROTOCOLS,
 	NLBL_MGMT_C_VERSION,
 	__NLBL_MGMT_C_MAX,
-};
+पूर्ण;
 
 /* NetLabel Management attributes */
-enum {
+क्रमागत अणु
 	NLBL_MGMT_A_UNSPEC,
 	NLBL_MGMT_A_DOMAIN,
 	/* (NLA_NUL_STRING)
-	 * the NULL terminated LSM domain string */
+	 * the शून्य terminated LSM करोमुख्य string */
 	NLBL_MGMT_A_PROTOCOL,
 	/* (NLA_U32)
 	 * the NetLabel protocol type (defined by NETLBL_NLTYPE_*) */
@@ -187,21 +188,21 @@ enum {
 	/* (NLA_U32)
 	 * the CIPSOv4 DOI value */
 	NLBL_MGMT_A_IPV6ADDR,
-	/* (NLA_BINARY, struct in6_addr)
+	/* (NLA_BINARY, काष्ठा in6_addr)
 	 * an IPv6 address */
 	NLBL_MGMT_A_IPV6MASK,
-	/* (NLA_BINARY, struct in6_addr)
+	/* (NLA_BINARY, काष्ठा in6_addr)
 	 * an IPv6 address mask */
 	NLBL_MGMT_A_IPV4ADDR,
-	/* (NLA_BINARY, struct in_addr)
+	/* (NLA_BINARY, काष्ठा in_addr)
 	 * an IPv4 address */
 	NLBL_MGMT_A_IPV4MASK,
-	/* (NLA_BINARY, struct in_addr)
+	/* (NLA_BINARY, काष्ठा in_addr)
 	 * and IPv4 address mask */
 	NLBL_MGMT_A_ADDRSELECTOR,
 	/* (NLA_NESTED)
 	 * an IP address selector, must contain an address, mask, and protocol
-	 * attribute plus any protocol specific attributes */
+	 * attribute plus any protocol specअगरic attributes */
 	NLBL_MGMT_A_SELECTORLIST,
 	/* (NLA_NESTED)
 	 * the selector list, there must be at least one
@@ -213,13 +214,13 @@ enum {
 	/* (NLA_U32)
 	 * the CALIPSO DOI value */
 	__NLBL_MGMT_A_MAX,
-};
-#define NLBL_MGMT_A_MAX (__NLBL_MGMT_A_MAX - 1)
+पूर्ण;
+#घोषणा NLBL_MGMT_A_MAX (__NLBL_MGMT_A_MAX - 1)
 
 /* NetLabel protocol functions */
-int netlbl_mgmt_genl_init(void);
+पूर्णांक netlbl_mgmt_genl_init(व्योम);
 
 /* NetLabel configured protocol reference counter */
-extern atomic_t netlabel_mgmt_protocount;
+बाह्य atomic_t netlabel_mgmt_protocount;
 
-#endif
+#पूर्ण_अगर

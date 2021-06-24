@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/of.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include "hnae.h"
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश "hnae.h"
 
-#define cls_to_ae_dev(dev) container_of(dev, struct hnae_ae_dev, cls_dev)
+#घोषणा cls_to_ae_dev(dev) container_of(dev, काष्ठा hnae_ae_dev, cls_dev)
 
-static struct class *hnae_class;
+अटल काष्ठा class *hnae_class;
 
-static void
-hnae_list_add(spinlock_t *lock, struct list_head *node, struct list_head *head)
-{
-	unsigned long flags;
+अटल व्योम
+hnae_list_add(spinlock_t *lock, काष्ठा list_head *node, काष्ठा list_head *head)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(lock, flags);
 	list_add_tail_rcu(node, head);
 	spin_unlock_irqrestore(lock, flags);
-}
+पूर्ण
 
-static void hnae_list_del(spinlock_t *lock, struct list_head *node)
-{
-	unsigned long flags;
+अटल व्योम hnae_list_del(spinlock_t *lock, काष्ठा list_head *node)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(lock, flags);
 	list_del_rcu(node);
 	spin_unlock_irqrestore(lock, flags);
-}
+पूर्ण
 
-static int hnae_alloc_buffer(struct hnae_ring *ring, struct hnae_desc_cb *cb)
-{
-	unsigned int order = hnae_page_order(ring);
-	struct page *p = dev_alloc_pages(order);
+अटल पूर्णांक hnae_alloc_buffer(काष्ठा hnae_ring *ring, काष्ठा hnae_desc_cb *cb)
+अणु
+	अचिन्हित पूर्णांक order = hnae_page_order(ring);
+	काष्ठा page *p = dev_alloc_pages(order);
 
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
 	cb->priv = p;
 	cb->page_offset = 0;
@@ -48,418 +49,418 @@ static int hnae_alloc_buffer(struct hnae_ring *ring, struct hnae_desc_cb *cb)
 	cb->length = hnae_page_size(ring);
 	cb->type = DESC_TYPE_PAGE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hnae_free_buffer(struct hnae_ring *ring, struct hnae_desc_cb *cb)
-{
-	if (unlikely(!cb->priv))
-		return;
+अटल व्योम hnae_मुक्त_buffer(काष्ठा hnae_ring *ring, काष्ठा hnae_desc_cb *cb)
+अणु
+	अगर (unlikely(!cb->priv))
+		वापस;
 
-	if (cb->type == DESC_TYPE_SKB)
-		dev_kfree_skb_any((struct sk_buff *)cb->priv);
-	else if (unlikely(is_rx_ring(ring)))
-		put_page((struct page *)cb->priv);
+	अगर (cb->type == DESC_TYPE_SKB)
+		dev_kमुक्त_skb_any((काष्ठा sk_buff *)cb->priv);
+	अन्यथा अगर (unlikely(is_rx_ring(ring)))
+		put_page((काष्ठा page *)cb->priv);
 
-	cb->priv = NULL;
-}
+	cb->priv = शून्य;
+पूर्ण
 
-static int hnae_map_buffer(struct hnae_ring *ring, struct hnae_desc_cb *cb)
-{
+अटल पूर्णांक hnae_map_buffer(काष्ठा hnae_ring *ring, काष्ठा hnae_desc_cb *cb)
+अणु
 	cb->dma = dma_map_page(ring_to_dev(ring), cb->priv, 0,
 			       cb->length, ring_to_dma_dir(ring));
 
-	if (dma_mapping_error(ring_to_dev(ring), cb->dma))
-		return -EIO;
+	अगर (dma_mapping_error(ring_to_dev(ring), cb->dma))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hnae_unmap_buffer(struct hnae_ring *ring, struct hnae_desc_cb *cb)
-{
-	if (cb->type == DESC_TYPE_SKB)
+अटल व्योम hnae_unmap_buffer(काष्ठा hnae_ring *ring, काष्ठा hnae_desc_cb *cb)
+अणु
+	अगर (cb->type == DESC_TYPE_SKB)
 		dma_unmap_single(ring_to_dev(ring), cb->dma, cb->length,
 				 ring_to_dma_dir(ring));
-	else if (cb->length)
+	अन्यथा अगर (cb->length)
 		dma_unmap_page(ring_to_dev(ring), cb->dma, cb->length,
 			       ring_to_dma_dir(ring));
-}
+पूर्ण
 
-static struct hnae_buf_ops hnae_bops = {
+अटल काष्ठा hnae_buf_ops hnae_bops = अणु
 	.alloc_buffer = hnae_alloc_buffer,
-	.free_buffer = hnae_free_buffer,
+	.मुक्त_buffer = hnae_मुक्त_buffer,
 	.map_buffer = hnae_map_buffer,
 	.unmap_buffer = hnae_unmap_buffer,
-};
+पूर्ण;
 
-static int __ae_match(struct device *dev, const void *data)
-{
-	struct hnae_ae_dev *hdev = cls_to_ae_dev(dev);
+अटल पूर्णांक __ae_match(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	काष्ठा hnae_ae_dev *hdev = cls_to_ae_dev(dev);
 
-	if (dev_of_node(hdev->dev))
-		return (data == &hdev->dev->of_node->fwnode);
-	else if (is_acpi_node(hdev->dev->fwnode))
-		return (data == hdev->dev->fwnode);
+	अगर (dev_of_node(hdev->dev))
+		वापस (data == &hdev->dev->of_node->fwnode);
+	अन्यथा अगर (is_acpi_node(hdev->dev->fwnode))
+		वापस (data == hdev->dev->fwnode);
 
 	dev_err(dev, "__ae_match cannot read cfg data from OF or acpi\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct hnae_ae_dev *find_ae(const struct fwnode_handle *fwnode)
-{
-	struct device *dev;
+अटल काष्ठा hnae_ae_dev *find_ae(स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा device *dev;
 
 	WARN_ON(!fwnode);
 
-	dev = class_find_device(hnae_class, NULL, fwnode, __ae_match);
+	dev = class_find_device(hnae_class, शून्य, fwnode, __ae_match);
 
-	return dev ? cls_to_ae_dev(dev) : NULL;
-}
+	वापस dev ? cls_to_ae_dev(dev) : शून्य;
+पूर्ण
 
-static void hnae_free_buffers(struct hnae_ring *ring)
-{
-	int i;
+अटल व्योम hnae_मुक्त_buffers(काष्ठा hnae_ring *ring)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ring->desc_num; i++)
-		hnae_free_buffer_detach(ring, i);
-}
+	क्रम (i = 0; i < ring->desc_num; i++)
+		hnae_मुक्त_buffer_detach(ring, i);
+पूर्ण
 
-/* Allocate memory for raw pkg, and map with dma */
-static int hnae_alloc_buffers(struct hnae_ring *ring)
-{
-	int i, j, ret;
+/* Allocate memory क्रम raw pkg, and map with dma */
+अटल पूर्णांक hnae_alloc_buffers(काष्ठा hnae_ring *ring)
+अणु
+	पूर्णांक i, j, ret;
 
-	for (i = 0; i < ring->desc_num; i++) {
+	क्रम (i = 0; i < ring->desc_num; i++) अणु
 		ret = hnae_alloc_buffer_attach(ring, i);
-		if (ret)
-			goto out_buffer_fail;
-	}
+		अगर (ret)
+			जाओ out_buffer_fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_buffer_fail:
-	for (j = i - 1; j >= 0; j--)
-		hnae_free_buffer_detach(ring, j);
-	return ret;
-}
+	क्रम (j = i - 1; j >= 0; j--)
+		hnae_मुक्त_buffer_detach(ring, j);
+	वापस ret;
+पूर्ण
 
-/* free desc along with its attached buffer */
-static void hnae_free_desc(struct hnae_ring *ring)
-{
+/* मुक्त desc aदीर्घ with its attached buffer */
+अटल व्योम hnae_मुक्त_desc(काष्ठा hnae_ring *ring)
+अणु
 	dma_unmap_single(ring_to_dev(ring), ring->desc_dma_addr,
-			 ring->desc_num * sizeof(ring->desc[0]),
+			 ring->desc_num * माप(ring->desc[0]),
 			 ring_to_dma_dir(ring));
 	ring->desc_dma_addr = 0;
-	kfree(ring->desc);
-	ring->desc = NULL;
-}
+	kमुक्त(ring->desc);
+	ring->desc = शून्य;
+पूर्ण
 
 /* alloc desc, without buffer attached */
-static int hnae_alloc_desc(struct hnae_ring *ring)
-{
-	int size = ring->desc_num * sizeof(ring->desc[0]);
+अटल पूर्णांक hnae_alloc_desc(काष्ठा hnae_ring *ring)
+अणु
+	पूर्णांक size = ring->desc_num * माप(ring->desc[0]);
 
 	ring->desc = kzalloc(size, GFP_KERNEL);
-	if (!ring->desc)
-		return -ENOMEM;
+	अगर (!ring->desc)
+		वापस -ENOMEM;
 
 	ring->desc_dma_addr = dma_map_single(ring_to_dev(ring),
 		ring->desc, size, ring_to_dma_dir(ring));
-	if (dma_mapping_error(ring_to_dev(ring), ring->desc_dma_addr)) {
+	अगर (dma_mapping_error(ring_to_dev(ring), ring->desc_dma_addr)) अणु
 		ring->desc_dma_addr = 0;
-		kfree(ring->desc);
-		ring->desc = NULL;
-		return -ENOMEM;
-	}
+		kमुक्त(ring->desc);
+		ring->desc = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* fini ring, also free the buffer for the ring */
-static void hnae_fini_ring(struct hnae_ring *ring)
-{
-	if (is_rx_ring(ring))
-		hnae_free_buffers(ring);
+/* fini ring, also मुक्त the buffer क्रम the ring */
+अटल व्योम hnae_fini_ring(काष्ठा hnae_ring *ring)
+अणु
+	अगर (is_rx_ring(ring))
+		hnae_मुक्त_buffers(ring);
 
-	hnae_free_desc(ring);
-	kfree(ring->desc_cb);
-	ring->desc_cb = NULL;
+	hnae_मुक्त_desc(ring);
+	kमुक्त(ring->desc_cb);
+	ring->desc_cb = शून्य;
 	ring->next_to_clean = 0;
 	ring->next_to_use = 0;
-}
+पूर्ण
 
-/* init ring, and with buffer for rx ring */
-static int
-hnae_init_ring(struct hnae_queue *q, struct hnae_ring *ring, int flags)
-{
-	int ret;
+/* init ring, and with buffer क्रम rx ring */
+अटल पूर्णांक
+hnae_init_ring(काष्ठा hnae_queue *q, काष्ठा hnae_ring *ring, पूर्णांक flags)
+अणु
+	पूर्णांक ret;
 
-	if (ring->desc_num <= 0 || ring->buf_size <= 0)
-		return -EINVAL;
+	अगर (ring->desc_num <= 0 || ring->buf_size <= 0)
+		वापस -EINVAL;
 
 	ring->q = q;
 	ring->flags = flags;
 	ring->coal_param = q->handle->coal_param;
-	assert(!ring->desc && !ring->desc_cb && !ring->desc_dma_addr);
+	निश्चित(!ring->desc && !ring->desc_cb && !ring->desc_dma_addr);
 
-	/* not matter for tx or rx ring, the ntc and ntc start from 0 */
-	assert(ring->next_to_use == 0);
-	assert(ring->next_to_clean == 0);
+	/* not matter क्रम tx or rx ring, the ntc and ntc start from 0 */
+	निश्चित(ring->next_to_use == 0);
+	निश्चित(ring->next_to_clean == 0);
 
-	ring->desc_cb = kcalloc(ring->desc_num, sizeof(ring->desc_cb[0]),
+	ring->desc_cb = kसुस्मृति(ring->desc_num, माप(ring->desc_cb[0]),
 			GFP_KERNEL);
-	if (!ring->desc_cb) {
+	अगर (!ring->desc_cb) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = hnae_alloc_desc(ring);
-	if (ret)
-		goto out_with_desc_cb;
+	अगर (ret)
+		जाओ out_with_desc_cb;
 
-	if (is_rx_ring(ring)) {
+	अगर (is_rx_ring(ring)) अणु
 		ret = hnae_alloc_buffers(ring);
-		if (ret)
-			goto out_with_desc;
-	}
+		अगर (ret)
+			जाओ out_with_desc;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_with_desc:
-	hnae_free_desc(ring);
+	hnae_मुक्त_desc(ring);
 out_with_desc_cb:
-	kfree(ring->desc_cb);
-	ring->desc_cb = NULL;
+	kमुक्त(ring->desc_cb);
+	ring->desc_cb = शून्य;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hnae_init_queue(struct hnae_handle *h, struct hnae_queue *q,
-			   struct hnae_ae_dev *dev)
-{
-	int ret;
+अटल पूर्णांक hnae_init_queue(काष्ठा hnae_handle *h, काष्ठा hnae_queue *q,
+			   काष्ठा hnae_ae_dev *dev)
+अणु
+	पूर्णांक ret;
 
 	q->dev = dev;
 	q->handle = h;
 
-	ret = hnae_init_ring(q, &q->tx_ring, q->tx_ring.flags | RINGF_DIR);
-	if (ret)
-		goto out;
+	ret = hnae_init_ring(q, &q->tx_ring, q->tx_ring.flags | RINGF_सूची);
+	अगर (ret)
+		जाओ out;
 
-	ret = hnae_init_ring(q, &q->rx_ring, q->rx_ring.flags & ~RINGF_DIR);
-	if (ret)
-		goto out_with_tx_ring;
+	ret = hnae_init_ring(q, &q->rx_ring, q->rx_ring.flags & ~RINGF_सूची);
+	अगर (ret)
+		जाओ out_with_tx_ring;
 
-	if (dev->ops->init_queue)
+	अगर (dev->ops->init_queue)
 		dev->ops->init_queue(q);
 
-	return 0;
+	वापस 0;
 
 out_with_tx_ring:
 	hnae_fini_ring(&q->tx_ring);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hnae_fini_queue(struct hnae_queue *q)
-{
-	if (q->dev->ops->fini_queue)
+अटल व्योम hnae_fini_queue(काष्ठा hnae_queue *q)
+अणु
+	अगर (q->dev->ops->fini_queue)
 		q->dev->ops->fini_queue(q);
 
 	hnae_fini_ring(&q->tx_ring);
 	hnae_fini_ring(&q->rx_ring);
-}
+पूर्ण
 
 /*
  * ae_chain - define ae chain head
  */
-static RAW_NOTIFIER_HEAD(ae_chain);
+अटल RAW_NOTIFIER_HEAD(ae_chain);
 
-int hnae_register_notifier(struct notifier_block *nb)
-{
-	return raw_notifier_chain_register(&ae_chain, nb);
-}
-EXPORT_SYMBOL(hnae_register_notifier);
+पूर्णांक hnae_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस raw_notअगरier_chain_रेजिस्टर(&ae_chain, nb);
+पूर्ण
+EXPORT_SYMBOL(hnae_रेजिस्टर_notअगरier);
 
-void hnae_unregister_notifier(struct notifier_block *nb)
-{
-	if (raw_notifier_chain_unregister(&ae_chain, nb))
-		dev_err(NULL, "notifier chain unregister fail\n");
-}
-EXPORT_SYMBOL(hnae_unregister_notifier);
+व्योम hnae_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	अगर (raw_notअगरier_chain_unरेजिस्टर(&ae_chain, nb))
+		dev_err(शून्य, "notifier chain unregister fail\n");
+पूर्ण
+EXPORT_SYMBOL(hnae_unरेजिस्टर_notअगरier);
 
-int hnae_reinit_handle(struct hnae_handle *handle)
-{
-	int i, j;
-	int ret;
+पूर्णांक hnae_reinit_handle(काष्ठा hnae_handle *handle)
+अणु
+	पूर्णांक i, j;
+	पूर्णांक ret;
 
-	for (i = 0; i < handle->q_num; i++) /* free ring*/
+	क्रम (i = 0; i < handle->q_num; i++) /* मुक्त ring*/
 		hnae_fini_queue(handle->qs[i]);
 
-	if (handle->dev->ops->reset)
+	अगर (handle->dev->ops->reset)
 		handle->dev->ops->reset(handle);
 
-	for (i = 0; i < handle->q_num; i++) {/* reinit ring*/
+	क्रम (i = 0; i < handle->q_num; i++) अणु/* reinit ring*/
 		ret = hnae_init_queue(handle, handle->qs[i], handle->dev);
-		if (ret)
-			goto out_when_init_queue;
-	}
-	return 0;
+		अगर (ret)
+			जाओ out_when_init_queue;
+	पूर्ण
+	वापस 0;
 out_when_init_queue:
-	for (j = i - 1; j >= 0; j--)
+	क्रम (j = i - 1; j >= 0; j--)
 		hnae_fini_queue(handle->qs[j]);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(hnae_reinit_handle);
 
 /* hnae_get_handle - get a handle from the AE
  * @owner_dev: the dev use this handle
  * @ae_id: the id of the ae to be used
- * @ae_opts: the options set for the handle
- * @bops: the callbacks for buffer management
+ * @ae_opts: the options set क्रम the handle
+ * @bops: the callbacks क्रम buffer management
  *
- * return handle ptr or ERR_PTR
+ * वापस handle ptr or ERR_PTR
  */
-struct hnae_handle *hnae_get_handle(struct device *owner_dev,
-				    const struct fwnode_handle	*fwnode,
+काष्ठा hnae_handle *hnae_get_handle(काष्ठा device *owner_dev,
+				    स्थिर काष्ठा fwnode_handle	*fwnode,
 				    u32 port_id,
-				    struct hnae_buf_ops *bops)
-{
-	struct hnae_ae_dev *dev;
-	struct hnae_handle *handle;
-	int i, j;
-	int ret;
+				    काष्ठा hnae_buf_ops *bops)
+अणु
+	काष्ठा hnae_ae_dev *dev;
+	काष्ठा hnae_handle *handle;
+	पूर्णांक i, j;
+	पूर्णांक ret;
 
 	dev = find_ae(fwnode);
-	if (!dev)
-		return ERR_PTR(-ENODEV);
+	अगर (!dev)
+		वापस ERR_PTR(-ENODEV);
 
 	handle = dev->ops->get_handle(dev, port_id);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		put_device(&dev->cls_dev);
-		return handle;
-	}
+		वापस handle;
+	पूर्ण
 
 	handle->dev = dev;
 	handle->owner_dev = owner_dev;
 	handle->bops = bops ? bops : &hnae_bops;
 	handle->eport_id = port_id;
 
-	for (i = 0; i < handle->q_num; i++) {
+	क्रम (i = 0; i < handle->q_num; i++) अणु
 		ret = hnae_init_queue(handle, handle->qs[i], dev);
-		if (ret)
-			goto out_when_init_queue;
-	}
+		अगर (ret)
+			जाओ out_when_init_queue;
+	पूर्ण
 
 	__module_get(dev->owner);
 
 	hnae_list_add(&dev->lock, &handle->node, &dev->handle_list);
 
-	return handle;
+	वापस handle;
 
 out_when_init_queue:
-	for (j = i - 1; j >= 0; j--)
+	क्रम (j = i - 1; j >= 0; j--)
 		hnae_fini_queue(handle->qs[j]);
 
 	put_device(&dev->cls_dev);
 
-	return ERR_PTR(-ENOMEM);
-}
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 EXPORT_SYMBOL(hnae_get_handle);
 
-void hnae_put_handle(struct hnae_handle *h)
-{
-	struct hnae_ae_dev *dev = h->dev;
-	int i;
+व्योम hnae_put_handle(काष्ठा hnae_handle *h)
+अणु
+	काष्ठा hnae_ae_dev *dev = h->dev;
+	पूर्णांक i;
 
-	for (i = 0; i < h->q_num; i++)
+	क्रम (i = 0; i < h->q_num; i++)
 		hnae_fini_queue(h->qs[i]);
 
-	if (h->dev->ops->reset)
+	अगर (h->dev->ops->reset)
 		h->dev->ops->reset(h);
 
 	hnae_list_del(&dev->lock, &h->node);
 
-	if (dev->ops->put_handle)
+	अगर (dev->ops->put_handle)
 		dev->ops->put_handle(h);
 
 	module_put(dev->owner);
 
 	put_device(&dev->cls_dev);
-}
+पूर्ण
 EXPORT_SYMBOL(hnae_put_handle);
 
-static void hnae_release(struct device *dev)
-{
-}
+अटल व्योम hnae_release(काष्ठा device *dev)
+अणु
+पूर्ण
 
 /**
- * hnae_ae_register - register a AE engine to hnae framework
+ * hnae_ae_रेजिस्टर - रेजिस्टर a AE engine to hnae framework
  * @hdev: the hnae ae engine device
  * @owner:  the module who provides this dev
  * NOTE: the duplicated name will not be checked
  */
-int hnae_ae_register(struct hnae_ae_dev *hdev, struct module *owner)
-{
-	static atomic_t id = ATOMIC_INIT(-1);
-	int ret;
+पूर्णांक hnae_ae_रेजिस्टर(काष्ठा hnae_ae_dev *hdev, काष्ठा module *owner)
+अणु
+	अटल atomic_t id = ATOMIC_INIT(-1);
+	पूर्णांक ret;
 
-	if (!hdev->dev)
-		return -ENODEV;
+	अगर (!hdev->dev)
+		वापस -ENODEV;
 
-	if (!hdev->ops || !hdev->ops->get_handle ||
+	अगर (!hdev->ops || !hdev->ops->get_handle ||
 	    !hdev->ops->toggle_ring_irq ||
 	    !hdev->ops->get_status || !hdev->ops->adjust_link)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	hdev->owner = owner;
-	hdev->id = (int)atomic_inc_return(&id);
+	hdev->id = (पूर्णांक)atomic_inc_वापस(&id);
 	hdev->cls_dev.parent = hdev->dev;
 	hdev->cls_dev.class = hnae_class;
 	hdev->cls_dev.release = hnae_release;
-	(void)dev_set_name(&hdev->cls_dev, "hnae%d", hdev->id);
-	ret = device_register(&hdev->cls_dev);
-	if (ret)
-		return ret;
+	(व्योम)dev_set_name(&hdev->cls_dev, "hnae%d", hdev->id);
+	ret = device_रेजिस्टर(&hdev->cls_dev);
+	अगर (ret)
+		वापस ret;
 
 	__module_get(THIS_MODULE);
 
 	INIT_LIST_HEAD(&hdev->handle_list);
 	spin_lock_init(&hdev->lock);
 
-	ret = raw_notifier_call_chain(&ae_chain, HNAE_AE_REGISTER, NULL);
-	if (ret)
+	ret = raw_notअगरier_call_chain(&ae_chain, HNAE_AE_REGISTER, शून्य);
+	अगर (ret)
 		dev_dbg(hdev->dev,
 			"has not notifier for AE: %s\n", hdev->name);
 
-	return 0;
-}
-EXPORT_SYMBOL(hnae_ae_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(hnae_ae_रेजिस्टर);
 
 /**
- * hnae_ae_unregister - unregisters a HNAE AE engine
- * @hdev: the device to unregister
+ * hnae_ae_unरेजिस्टर - unरेजिस्टरs a HNAE AE engine
+ * @hdev: the device to unरेजिस्टर
  */
-void hnae_ae_unregister(struct hnae_ae_dev *hdev)
-{
-	device_unregister(&hdev->cls_dev);
+व्योम hnae_ae_unरेजिस्टर(काष्ठा hnae_ae_dev *hdev)
+अणु
+	device_unरेजिस्टर(&hdev->cls_dev);
 	module_put(THIS_MODULE);
-}
-EXPORT_SYMBOL(hnae_ae_unregister);
+पूर्ण
+EXPORT_SYMBOL(hnae_ae_unरेजिस्टर);
 
-static int __init hnae_init(void)
-{
+अटल पूर्णांक __init hnae_init(व्योम)
+अणु
 	hnae_class = class_create(THIS_MODULE, "hnae");
-	return PTR_ERR_OR_ZERO(hnae_class);
-}
+	वापस PTR_ERR_OR_ZERO(hnae_class);
+पूर्ण
 
-static void __exit hnae_exit(void)
-{
+अटल व्योम __निकास hnae_निकास(व्योम)
+अणु
 	class_destroy(hnae_class);
-}
+पूर्ण
 
 subsys_initcall(hnae_init);
-module_exit(hnae_exit);
+module_निकास(hnae_निकास);
 
 MODULE_AUTHOR("Hisilicon, Inc.");
 MODULE_LICENSE("GPL");

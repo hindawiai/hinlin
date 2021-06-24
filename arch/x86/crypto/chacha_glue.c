@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * x64 SIMD accelerated ChaCha and XChaCha stream ciphers,
  * including ChaCha20 (RFC7539)
@@ -6,234 +7,234 @@
  * Copyright (C) 2015 Martin Willi
  */
 
-#include <crypto/algapi.h>
-#include <crypto/internal/chacha.h>
-#include <crypto/internal/simd.h>
-#include <crypto/internal/skcipher.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/sizes.h>
-#include <asm/simd.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/पूर्णांकernal/chacha.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sizes.h>
+#समावेश <यंत्र/simd.h>
 
-asmlinkage void chacha_block_xor_ssse3(u32 *state, u8 *dst, const u8 *src,
-				       unsigned int len, int nrounds);
-asmlinkage void chacha_4block_xor_ssse3(u32 *state, u8 *dst, const u8 *src,
-					unsigned int len, int nrounds);
-asmlinkage void hchacha_block_ssse3(const u32 *state, u32 *out, int nrounds);
+यंत्रlinkage व्योम chacha_block_xor_ssse3(u32 *state, u8 *dst, स्थिर u8 *src,
+				       अचिन्हित पूर्णांक len, पूर्णांक nrounds);
+यंत्रlinkage व्योम chacha_4block_xor_ssse3(u32 *state, u8 *dst, स्थिर u8 *src,
+					अचिन्हित पूर्णांक len, पूर्णांक nrounds);
+यंत्रlinkage व्योम hchacha_block_ssse3(स्थिर u32 *state, u32 *out, पूर्णांक nrounds);
 
-asmlinkage void chacha_2block_xor_avx2(u32 *state, u8 *dst, const u8 *src,
-				       unsigned int len, int nrounds);
-asmlinkage void chacha_4block_xor_avx2(u32 *state, u8 *dst, const u8 *src,
-				       unsigned int len, int nrounds);
-asmlinkage void chacha_8block_xor_avx2(u32 *state, u8 *dst, const u8 *src,
-				       unsigned int len, int nrounds);
+यंत्रlinkage व्योम chacha_2block_xor_avx2(u32 *state, u8 *dst, स्थिर u8 *src,
+				       अचिन्हित पूर्णांक len, पूर्णांक nrounds);
+यंत्रlinkage व्योम chacha_4block_xor_avx2(u32 *state, u8 *dst, स्थिर u8 *src,
+				       अचिन्हित पूर्णांक len, पूर्णांक nrounds);
+यंत्रlinkage व्योम chacha_8block_xor_avx2(u32 *state, u8 *dst, स्थिर u8 *src,
+				       अचिन्हित पूर्णांक len, पूर्णांक nrounds);
 
-asmlinkage void chacha_2block_xor_avx512vl(u32 *state, u8 *dst, const u8 *src,
-					   unsigned int len, int nrounds);
-asmlinkage void chacha_4block_xor_avx512vl(u32 *state, u8 *dst, const u8 *src,
-					   unsigned int len, int nrounds);
-asmlinkage void chacha_8block_xor_avx512vl(u32 *state, u8 *dst, const u8 *src,
-					   unsigned int len, int nrounds);
+यंत्रlinkage व्योम chacha_2block_xor_avx512vl(u32 *state, u8 *dst, स्थिर u8 *src,
+					   अचिन्हित पूर्णांक len, पूर्णांक nrounds);
+यंत्रlinkage व्योम chacha_4block_xor_avx512vl(u32 *state, u8 *dst, स्थिर u8 *src,
+					   अचिन्हित पूर्णांक len, पूर्णांक nrounds);
+यंत्रlinkage व्योम chacha_8block_xor_avx512vl(u32 *state, u8 *dst, स्थिर u8 *src,
+					   अचिन्हित पूर्णांक len, पूर्णांक nrounds);
 
-static __ro_after_init DEFINE_STATIC_KEY_FALSE(chacha_use_simd);
-static __ro_after_init DEFINE_STATIC_KEY_FALSE(chacha_use_avx2);
-static __ro_after_init DEFINE_STATIC_KEY_FALSE(chacha_use_avx512vl);
+अटल __ro_after_init DEFINE_STATIC_KEY_FALSE(chacha_use_simd);
+अटल __ro_after_init DEFINE_STATIC_KEY_FALSE(chacha_use_avx2);
+अटल __ro_after_init DEFINE_STATIC_KEY_FALSE(chacha_use_avx512vl);
 
-static unsigned int chacha_advance(unsigned int len, unsigned int maxblocks)
-{
+अटल अचिन्हित पूर्णांक chacha_advance(अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक maxblocks)
+अणु
 	len = min(len, maxblocks * CHACHA_BLOCK_SIZE);
-	return round_up(len, CHACHA_BLOCK_SIZE) / CHACHA_BLOCK_SIZE;
-}
+	वापस round_up(len, CHACHA_BLOCK_SIZE) / CHACHA_BLOCK_SIZE;
+पूर्ण
 
-static void chacha_dosimd(u32 *state, u8 *dst, const u8 *src,
-			  unsigned int bytes, int nrounds)
-{
-	if (IS_ENABLED(CONFIG_AS_AVX512) &&
-	    static_branch_likely(&chacha_use_avx512vl)) {
-		while (bytes >= CHACHA_BLOCK_SIZE * 8) {
+अटल व्योम chacha_करोsimd(u32 *state, u8 *dst, स्थिर u8 *src,
+			  अचिन्हित पूर्णांक bytes, पूर्णांक nrounds)
+अणु
+	अगर (IS_ENABLED(CONFIG_AS_AVX512) &&
+	    अटल_branch_likely(&chacha_use_avx512vl)) अणु
+		जबतक (bytes >= CHACHA_BLOCK_SIZE * 8) अणु
 			chacha_8block_xor_avx512vl(state, dst, src, bytes,
 						   nrounds);
 			bytes -= CHACHA_BLOCK_SIZE * 8;
 			src += CHACHA_BLOCK_SIZE * 8;
 			dst += CHACHA_BLOCK_SIZE * 8;
 			state[12] += 8;
-		}
-		if (bytes > CHACHA_BLOCK_SIZE * 4) {
+		पूर्ण
+		अगर (bytes > CHACHA_BLOCK_SIZE * 4) अणु
 			chacha_8block_xor_avx512vl(state, dst, src, bytes,
 						   nrounds);
 			state[12] += chacha_advance(bytes, 8);
-			return;
-		}
-		if (bytes > CHACHA_BLOCK_SIZE * 2) {
+			वापस;
+		पूर्ण
+		अगर (bytes > CHACHA_BLOCK_SIZE * 2) अणु
 			chacha_4block_xor_avx512vl(state, dst, src, bytes,
 						   nrounds);
 			state[12] += chacha_advance(bytes, 4);
-			return;
-		}
-		if (bytes) {
+			वापस;
+		पूर्ण
+		अगर (bytes) अणु
 			chacha_2block_xor_avx512vl(state, dst, src, bytes,
 						   nrounds);
 			state[12] += chacha_advance(bytes, 2);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (static_branch_likely(&chacha_use_avx2)) {
-		while (bytes >= CHACHA_BLOCK_SIZE * 8) {
+	अगर (अटल_branch_likely(&chacha_use_avx2)) अणु
+		जबतक (bytes >= CHACHA_BLOCK_SIZE * 8) अणु
 			chacha_8block_xor_avx2(state, dst, src, bytes, nrounds);
 			bytes -= CHACHA_BLOCK_SIZE * 8;
 			src += CHACHA_BLOCK_SIZE * 8;
 			dst += CHACHA_BLOCK_SIZE * 8;
 			state[12] += 8;
-		}
-		if (bytes > CHACHA_BLOCK_SIZE * 4) {
+		पूर्ण
+		अगर (bytes > CHACHA_BLOCK_SIZE * 4) अणु
 			chacha_8block_xor_avx2(state, dst, src, bytes, nrounds);
 			state[12] += chacha_advance(bytes, 8);
-			return;
-		}
-		if (bytes > CHACHA_BLOCK_SIZE * 2) {
+			वापस;
+		पूर्ण
+		अगर (bytes > CHACHA_BLOCK_SIZE * 2) अणु
 			chacha_4block_xor_avx2(state, dst, src, bytes, nrounds);
 			state[12] += chacha_advance(bytes, 4);
-			return;
-		}
-		if (bytes > CHACHA_BLOCK_SIZE) {
+			वापस;
+		पूर्ण
+		अगर (bytes > CHACHA_BLOCK_SIZE) अणु
 			chacha_2block_xor_avx2(state, dst, src, bytes, nrounds);
 			state[12] += chacha_advance(bytes, 2);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	while (bytes >= CHACHA_BLOCK_SIZE * 4) {
+	जबतक (bytes >= CHACHA_BLOCK_SIZE * 4) अणु
 		chacha_4block_xor_ssse3(state, dst, src, bytes, nrounds);
 		bytes -= CHACHA_BLOCK_SIZE * 4;
 		src += CHACHA_BLOCK_SIZE * 4;
 		dst += CHACHA_BLOCK_SIZE * 4;
 		state[12] += 4;
-	}
-	if (bytes > CHACHA_BLOCK_SIZE) {
+	पूर्ण
+	अगर (bytes > CHACHA_BLOCK_SIZE) अणु
 		chacha_4block_xor_ssse3(state, dst, src, bytes, nrounds);
 		state[12] += chacha_advance(bytes, 4);
-		return;
-	}
-	if (bytes) {
+		वापस;
+	पूर्ण
+	अगर (bytes) अणु
 		chacha_block_xor_ssse3(state, dst, src, bytes, nrounds);
 		state[12]++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hchacha_block_arch(const u32 *state, u32 *stream, int nrounds)
-{
-	if (!static_branch_likely(&chacha_use_simd) || !crypto_simd_usable()) {
+व्योम hchacha_block_arch(स्थिर u32 *state, u32 *stream, पूर्णांक nrounds)
+अणु
+	अगर (!अटल_branch_likely(&chacha_use_simd) || !crypto_simd_usable()) अणु
 		hchacha_block_generic(state, stream, nrounds);
-	} else {
+	पूर्ण अन्यथा अणु
 		kernel_fpu_begin();
 		hchacha_block_ssse3(state, stream, nrounds);
 		kernel_fpu_end();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(hchacha_block_arch);
 
-void chacha_init_arch(u32 *state, const u32 *key, const u8 *iv)
-{
+व्योम chacha_init_arch(u32 *state, स्थिर u32 *key, स्थिर u8 *iv)
+अणु
 	chacha_init_generic(state, key, iv);
-}
+पूर्ण
 EXPORT_SYMBOL(chacha_init_arch);
 
-void chacha_crypt_arch(u32 *state, u8 *dst, const u8 *src, unsigned int bytes,
-		       int nrounds)
-{
-	if (!static_branch_likely(&chacha_use_simd) || !crypto_simd_usable() ||
+व्योम chacha_crypt_arch(u32 *state, u8 *dst, स्थिर u8 *src, अचिन्हित पूर्णांक bytes,
+		       पूर्णांक nrounds)
+अणु
+	अगर (!अटल_branch_likely(&chacha_use_simd) || !crypto_simd_usable() ||
 	    bytes <= CHACHA_BLOCK_SIZE)
-		return chacha_crypt_generic(state, dst, src, bytes, nrounds);
+		वापस chacha_crypt_generic(state, dst, src, bytes, nrounds);
 
-	do {
-		unsigned int todo = min_t(unsigned int, bytes, SZ_4K);
+	करो अणु
+		अचिन्हित पूर्णांक toकरो = min_t(अचिन्हित पूर्णांक, bytes, SZ_4K);
 
 		kernel_fpu_begin();
-		chacha_dosimd(state, dst, src, todo, nrounds);
+		chacha_करोsimd(state, dst, src, toकरो, nrounds);
 		kernel_fpu_end();
 
-		bytes -= todo;
-		src += todo;
-		dst += todo;
-	} while (bytes);
-}
+		bytes -= toकरो;
+		src += toकरो;
+		dst += toकरो;
+	पूर्ण जबतक (bytes);
+पूर्ण
 EXPORT_SYMBOL(chacha_crypt_arch);
 
-static int chacha_simd_stream_xor(struct skcipher_request *req,
-				  const struct chacha_ctx *ctx, const u8 *iv)
-{
+अटल पूर्णांक chacha_simd_stream_xor(काष्ठा skcipher_request *req,
+				  स्थिर काष्ठा chacha_ctx *ctx, स्थिर u8 *iv)
+अणु
 	u32 state[CHACHA_STATE_WORDS] __aligned(8);
-	struct skcipher_walk walk;
-	int err;
+	काष्ठा skcipher_walk walk;
+	पूर्णांक err;
 
 	err = skcipher_walk_virt(&walk, req, false);
 
 	chacha_init_generic(state, ctx->key, iv);
 
-	while (walk.nbytes > 0) {
-		unsigned int nbytes = walk.nbytes;
+	जबतक (walk.nbytes > 0) अणु
+		अचिन्हित पूर्णांक nbytes = walk.nbytes;
 
-		if (nbytes < walk.total)
-			nbytes = round_down(nbytes, walk.stride);
+		अगर (nbytes < walk.total)
+			nbytes = round_करोwn(nbytes, walk.stride);
 
-		if (!static_branch_likely(&chacha_use_simd) ||
-		    !crypto_simd_usable()) {
+		अगर (!अटल_branch_likely(&chacha_use_simd) ||
+		    !crypto_simd_usable()) अणु
 			chacha_crypt_generic(state, walk.dst.virt.addr,
 					     walk.src.virt.addr, nbytes,
 					     ctx->nrounds);
-		} else {
+		पूर्ण अन्यथा अणु
 			kernel_fpu_begin();
-			chacha_dosimd(state, walk.dst.virt.addr,
+			chacha_करोsimd(state, walk.dst.virt.addr,
 				      walk.src.virt.addr, nbytes,
 				      ctx->nrounds);
 			kernel_fpu_end();
-		}
-		err = skcipher_walk_done(&walk, walk.nbytes - nbytes);
-	}
+		पूर्ण
+		err = skcipher_walk_करोne(&walk, walk.nbytes - nbytes);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int chacha_simd(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक chacha_simd(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
 
-	return chacha_simd_stream_xor(req, ctx, req->iv);
-}
+	वापस chacha_simd_stream_xor(req, ctx, req->iv);
+पूर्ण
 
-static int xchacha_simd(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक xchacha_simd(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा chacha_ctx *ctx = crypto_skcipher_ctx(tfm);
 	u32 state[CHACHA_STATE_WORDS] __aligned(8);
-	struct chacha_ctx subctx;
+	काष्ठा chacha_ctx subctx;
 	u8 real_iv[16];
 
 	chacha_init_generic(state, ctx->key, req->iv);
 
-	if (req->cryptlen > CHACHA_BLOCK_SIZE && crypto_simd_usable()) {
+	अगर (req->cryptlen > CHACHA_BLOCK_SIZE && crypto_simd_usable()) अणु
 		kernel_fpu_begin();
 		hchacha_block_ssse3(state, subctx.key, ctx->nrounds);
 		kernel_fpu_end();
-	} else {
+	पूर्ण अन्यथा अणु
 		hchacha_block_generic(state, subctx.key, ctx->nrounds);
-	}
+	पूर्ण
 	subctx.nrounds = ctx->nrounds;
 
-	memcpy(&real_iv[0], req->iv + 24, 8);
-	memcpy(&real_iv[8], req->iv + 16, 8);
-	return chacha_simd_stream_xor(req, &subctx, real_iv);
-}
+	स_नकल(&real_iv[0], req->iv + 24, 8);
+	स_नकल(&real_iv[8], req->iv + 16, 8);
+	वापस chacha_simd_stream_xor(req, &subctx, real_iv);
+पूर्ण
 
-static struct skcipher_alg algs[] = {
-	{
+अटल काष्ठा skcipher_alg algs[] = अणु
+	अणु
 		.base.cra_name		= "chacha20",
 		.base.cra_driver_name	= "chacha20-simd",
 		.base.cra_priority	= 300,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -243,12 +244,12 @@ static struct skcipher_alg algs[] = {
 		.setkey			= chacha20_setkey,
 		.encrypt		= chacha_simd,
 		.decrypt		= chacha_simd,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "xchacha20",
 		.base.cra_driver_name	= "xchacha20-simd",
 		.base.cra_priority	= 300,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -258,12 +259,12 @@ static struct skcipher_alg algs[] = {
 		.setkey			= chacha20_setkey,
 		.encrypt		= xchacha_simd,
 		.decrypt		= xchacha_simd,
-	}, {
+	पूर्ण, अणु
 		.base.cra_name		= "xchacha12",
 		.base.cra_driver_name	= "xchacha12-simd",
 		.base.cra_priority	= 300,
 		.base.cra_blocksize	= 1,
-		.base.cra_ctxsize	= sizeof(struct chacha_ctx),
+		.base.cra_ctxsize	= माप(काष्ठा chacha_ctx),
 		.base.cra_module	= THIS_MODULE,
 
 		.min_keysize		= CHACHA_KEY_SIZE,
@@ -273,38 +274,38 @@ static struct skcipher_alg algs[] = {
 		.setkey			= chacha12_setkey,
 		.encrypt		= xchacha_simd,
 		.decrypt		= xchacha_simd,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init chacha_simd_mod_init(void)
-{
-	if (!boot_cpu_has(X86_FEATURE_SSSE3))
-		return 0;
+अटल पूर्णांक __init chacha_simd_mod_init(व्योम)
+अणु
+	अगर (!boot_cpu_has(X86_FEATURE_SSSE3))
+		वापस 0;
 
-	static_branch_enable(&chacha_use_simd);
+	अटल_branch_enable(&chacha_use_simd);
 
-	if (boot_cpu_has(X86_FEATURE_AVX) &&
+	अगर (boot_cpu_has(X86_FEATURE_AVX) &&
 	    boot_cpu_has(X86_FEATURE_AVX2) &&
-	    cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM, NULL)) {
-		static_branch_enable(&chacha_use_avx2);
+	    cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM, शून्य)) अणु
+		अटल_branch_enable(&chacha_use_avx2);
 
-		if (IS_ENABLED(CONFIG_AS_AVX512) &&
+		अगर (IS_ENABLED(CONFIG_AS_AVX512) &&
 		    boot_cpu_has(X86_FEATURE_AVX512VL) &&
 		    boot_cpu_has(X86_FEATURE_AVX512BW)) /* kmovq */
-			static_branch_enable(&chacha_use_avx512vl);
-	}
-	return IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER) ?
-		crypto_register_skciphers(algs, ARRAY_SIZE(algs)) : 0;
-}
+			अटल_branch_enable(&chacha_use_avx512vl);
+	पूर्ण
+	वापस IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER) ?
+		crypto_रेजिस्टर_skciphers(algs, ARRAY_SIZE(algs)) : 0;
+पूर्ण
 
-static void __exit chacha_simd_mod_fini(void)
-{
-	if (IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER) && boot_cpu_has(X86_FEATURE_SSSE3))
-		crypto_unregister_skciphers(algs, ARRAY_SIZE(algs));
-}
+अटल व्योम __निकास chacha_simd_mod_fini(व्योम)
+अणु
+	अगर (IS_REACHABLE(CONFIG_CRYPTO_SKCIPHER) && boot_cpu_has(X86_FEATURE_SSSE3))
+		crypto_unरेजिस्टर_skciphers(algs, ARRAY_SIZE(algs));
+पूर्ण
 
 module_init(chacha_simd_mod_init);
-module_exit(chacha_simd_mod_fini);
+module_निकास(chacha_simd_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Martin Willi <martin@strongswan.org>");

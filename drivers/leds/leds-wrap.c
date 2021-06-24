@@ -1,128 +1,129 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * LEDs driver for PCEngines WRAP
+ * LEDs driver क्रम PCEngines WRAP
  *
  * Copyright (C) 2006 Kristian Kielhofner <kris@krisk.org>
  *
  * Based on leds-net48xx.c
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/leds.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/scx200_gpio.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/scx200_gpपन.स>
+#समावेश <linux/module.h>
 
-#define DRVNAME "wrap-led"
-#define WRAP_POWER_LED_GPIO	2
-#define WRAP_ERROR_LED_GPIO	3
-#define WRAP_EXTRA_LED_GPIO	18
+#घोषणा DRVNAME "wrap-led"
+#घोषणा WRAP_POWER_LED_GPIO	2
+#घोषणा WRAP_ERROR_LED_GPIO	3
+#घोषणा WRAP_EXTRA_LED_GPIO	18
 
-static struct platform_device *pdev;
+अटल काष्ठा platक्रमm_device *pdev;
 
-static void wrap_power_led_set(struct led_classdev *led_cdev,
-		enum led_brightness value)
-{
-	if (value)
+अटल व्योम wrap_घातer_led_set(काष्ठा led_classdev *led_cdev,
+		क्रमागत led_brightness value)
+अणु
+	अगर (value)
 		scx200_gpio_set_low(WRAP_POWER_LED_GPIO);
-	else
+	अन्यथा
 		scx200_gpio_set_high(WRAP_POWER_LED_GPIO);
-}
+पूर्ण
 
-static void wrap_error_led_set(struct led_classdev *led_cdev,
-		enum led_brightness value)
-{
-	if (value)
+अटल व्योम wrap_error_led_set(काष्ठा led_classdev *led_cdev,
+		क्रमागत led_brightness value)
+अणु
+	अगर (value)
 		scx200_gpio_set_low(WRAP_ERROR_LED_GPIO);
-	else
+	अन्यथा
 		scx200_gpio_set_high(WRAP_ERROR_LED_GPIO);
-}
+पूर्ण
 
-static void wrap_extra_led_set(struct led_classdev *led_cdev,
-		enum led_brightness value)
-{
-	if (value)
+अटल व्योम wrap_extra_led_set(काष्ठा led_classdev *led_cdev,
+		क्रमागत led_brightness value)
+अणु
+	अगर (value)
 		scx200_gpio_set_low(WRAP_EXTRA_LED_GPIO);
-	else
+	अन्यथा
 		scx200_gpio_set_high(WRAP_EXTRA_LED_GPIO);
-}
+पूर्ण
 
-static struct led_classdev wrap_power_led = {
+अटल काष्ठा led_classdev wrap_घातer_led = अणु
 	.name			= "wrap::power",
-	.brightness_set		= wrap_power_led_set,
-	.default_trigger	= "default-on",
+	.brightness_set		= wrap_घातer_led_set,
+	.शेष_trigger	= "default-on",
 	.flags			= LED_CORE_SUSPENDRESUME,
-};
+पूर्ण;
 
-static struct led_classdev wrap_error_led = {
+अटल काष्ठा led_classdev wrap_error_led = अणु
 	.name		= "wrap::error",
 	.brightness_set	= wrap_error_led_set,
 	.flags			= LED_CORE_SUSPENDRESUME,
-};
+पूर्ण;
 
-static struct led_classdev wrap_extra_led = {
+अटल काष्ठा led_classdev wrap_extra_led = अणु
 	.name           = "wrap::extra",
 	.brightness_set = wrap_extra_led_set,
 	.flags			= LED_CORE_SUSPENDRESUME,
-};
+पूर्ण;
 
-static int wrap_led_probe(struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक wrap_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 
-	ret = devm_led_classdev_register(&pdev->dev, &wrap_power_led);
-	if (ret < 0)
-		return ret;
+	ret = devm_led_classdev_रेजिस्टर(&pdev->dev, &wrap_घातer_led);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = devm_led_classdev_register(&pdev->dev, &wrap_error_led);
-	if (ret < 0)
-		return ret;
+	ret = devm_led_classdev_रेजिस्टर(&pdev->dev, &wrap_error_led);
+	अगर (ret < 0)
+		वापस ret;
 
-	return  devm_led_classdev_register(&pdev->dev, &wrap_extra_led);
-}
+	वापस  devm_led_classdev_रेजिस्टर(&pdev->dev, &wrap_extra_led);
+पूर्ण
 
-static struct platform_driver wrap_led_driver = {
+अटल काष्ठा platक्रमm_driver wrap_led_driver = अणु
 	.probe		= wrap_led_probe,
-	.driver		= {
+	.driver		= अणु
 		.name		= DRVNAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init wrap_led_init(void)
-{
-	int ret;
+अटल पूर्णांक __init wrap_led_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!scx200_gpio_present()) {
+	अगर (!scx200_gpio_present()) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = platform_driver_register(&wrap_led_driver);
-	if (ret < 0)
-		goto out;
+	ret = platक्रमm_driver_रेजिस्टर(&wrap_led_driver);
+	अगर (ret < 0)
+		जाओ out;
 
-	pdev = platform_device_register_simple(DRVNAME, -1, NULL, 0);
-	if (IS_ERR(pdev)) {
+	pdev = platक्रमm_device_रेजिस्टर_simple(DRVNAME, -1, शून्य, 0);
+	अगर (IS_ERR(pdev)) अणु
 		ret = PTR_ERR(pdev);
-		platform_driver_unregister(&wrap_led_driver);
-		goto out;
-	}
+		platक्रमm_driver_unरेजिस्टर(&wrap_led_driver);
+		जाओ out;
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit wrap_led_exit(void)
-{
-	platform_device_unregister(pdev);
-	platform_driver_unregister(&wrap_led_driver);
-}
+अटल व्योम __निकास wrap_led_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(pdev);
+	platक्रमm_driver_unरेजिस्टर(&wrap_led_driver);
+पूर्ण
 
 module_init(wrap_led_init);
-module_exit(wrap_led_exit);
+module_निकास(wrap_led_निकास);
 
 MODULE_AUTHOR("Kristian Kielhofner <kris@krisk.org>");
 MODULE_DESCRIPTION("PCEngines WRAP LED driver");

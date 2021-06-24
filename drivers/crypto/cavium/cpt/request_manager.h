@@ -1,98 +1,99 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 Cavium, Inc.
  */
 
-#ifndef __REQUEST_MANAGER_H
-#define __REQUEST_MANAGER_H
+#अगर_अघोषित __REQUEST_MANAGER_H
+#घोषणा __REQUEST_MANAGER_H
 
-#include "cpt_common.h"
+#समावेश "cpt_common.h"
 
-#define TIME_IN_RESET_COUNT  5
-#define COMPLETION_CODE_SIZE 8
-#define COMPLETION_CODE_INIT 0
-#define PENDING_THOLD  100
-#define MAX_SG_IN_CNT 12
-#define MAX_SG_OUT_CNT 13
-#define SG_LIST_HDR_SIZE  8
-#define MAX_BUF_CNT	16
+#घोषणा TIME_IN_RESET_COUNT  5
+#घोषणा COMPLETION_CODE_SIZE 8
+#घोषणा COMPLETION_CODE_INIT 0
+#घोषणा PENDING_THOLD  100
+#घोषणा MAX_SG_IN_CNT 12
+#घोषणा MAX_SG_OUT_CNT 13
+#घोषणा SG_LIST_HDR_SIZE  8
+#घोषणा MAX_BUF_CNT	16
 
-union ctrl_info {
+जोड़ ctrl_info अणु
 	u32 flags;
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u32 reserved0:26;
 		u32 grp:3; /* Group bits */
 		u32 dma_mode:2; /* DMA mode */
 		u32 se_req:1;/* To SE core */
-#else
+#अन्यथा
 		u32 se_req:1; /* To SE core */
 		u32 dma_mode:2; /* DMA mode */
 		u32 grp:3; /* Group bits */
 		u32 reserved0:26;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-union opcode_info {
+जोड़ opcode_info अणु
 	u16 flags;
-	struct {
+	काष्ठा अणु
 		u8 major;
 		u8 minor;
-	} s;
-};
+	पूर्ण s;
+पूर्ण;
 
-struct cptvf_request {
-	union opcode_info opcode;
+काष्ठा cptvf_request अणु
+	जोड़ opcode_info opcode;
 	u16 param1;
 	u16 param2;
 	u16 dlen;
-};
+पूर्ण;
 
-struct buf_ptr {
+काष्ठा buf_ptr अणु
 	u8 *vptr;
 	dma_addr_t dma_addr;
 	u16 size;
-};
+पूर्ण;
 
-struct cpt_request_info {
+काष्ठा cpt_request_info अणु
 	u8 incnt; /* Number of input buffers */
 	u8 outcnt; /* Number of output buffers */
 	u16 rlen; /* Output length */
-	union ctrl_info ctrl; /* User control information */
-	struct cptvf_request req; /* Request Information (Core specific) */
+	जोड़ ctrl_info ctrl; /* User control inक्रमmation */
+	काष्ठा cptvf_request req; /* Request Inक्रमmation (Core specअगरic) */
 
 	bool may_sleep;
 
-	struct buf_ptr in[MAX_BUF_CNT];
-	struct buf_ptr out[MAX_BUF_CNT];
+	काष्ठा buf_ptr in[MAX_BUF_CNT];
+	काष्ठा buf_ptr out[MAX_BUF_CNT];
 
-	void (*callback)(int, void *); /* Kernel ASYNC request callabck */
-	void *callback_arg; /* Kernel ASYNC request callabck arg */
-};
+	व्योम (*callback)(पूर्णांक, व्योम *); /* Kernel ASYNC request callabck */
+	व्योम *callback_arg; /* Kernel ASYNC request callabck arg */
+पूर्ण;
 
-struct sglist_component {
-	union {
+काष्ठा sglist_component अणु
+	जोड़ अणु
 		u64 len;
-		struct {
+		काष्ठा अणु
 			__be16 len0;
 			__be16 len1;
 			__be16 len2;
 			__be16 len3;
-		} s;
-	} u;
+		पूर्ण s;
+	पूर्ण u;
 	__be64 ptr0;
 	__be64 ptr1;
 	__be64 ptr2;
 	__be64 ptr3;
-};
+पूर्ण;
 
-struct cpt_info_buffer {
-	struct cpt_vf *cptvf;
-	unsigned long time_in;
-	u8 extra_time;
+काष्ठा cpt_info_buffer अणु
+	काष्ठा cpt_vf *cptvf;
+	अचिन्हित दीर्घ समय_in;
+	u8 extra_समय;
 
-	struct cpt_request_info *req;
+	काष्ठा cpt_request_info *req;
 	dma_addr_t dptr_baddr;
 	u32 dlen;
 	dma_addr_t rptr_baddr;
@@ -102,45 +103,45 @@ struct cpt_info_buffer {
 	u8 *gather_components;
 	u8 *scatter_components;
 
-	struct pending_entry *pentry;
-	volatile u64 *completion_addr;
-	volatile u64 *alternate_caddr;
-};
+	काष्ठा pending_entry *pentry;
+	अस्थिर u64 *completion_addr;
+	अस्थिर u64 *alternate_caddr;
+पूर्ण;
 
 /*
  * CPT_INST_S software command definitions
  * Words EI (0-3)
  */
-union vq_cmd_word0 {
+जोड़ vq_cmd_word0 अणु
 	u64 u64;
-	struct {
+	काष्ठा अणु
 		__be16 opcode;
 		__be16 param1;
 		__be16 param2;
 		__be16 dlen;
-	} s;
-};
+	पूर्ण s;
+पूर्ण;
 
-union vq_cmd_word3 {
+जोड़ vq_cmd_word3 अणु
 	u64 u64;
-	struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+	काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 		u64 grp:3;
 		u64 cptr:61;
-#else
+#अन्यथा
 		u64 cptr:61;
 		u64 grp:3;
-#endif
-	} s;
-};
+#पूर्ण_अगर
+	पूर्ण s;
+पूर्ण;
 
-struct cpt_vq_command {
-	union vq_cmd_word0 cmd;
+काष्ठा cpt_vq_command अणु
+	जोड़ vq_cmd_word0 cmd;
 	u64 dptr;
 	u64 rptr;
-	union vq_cmd_word3 cptr;
-};
+	जोड़ vq_cmd_word3 cptr;
+पूर्ण;
 
-void vq_post_process(struct cpt_vf *cptvf, u32 qno);
-int process_request(struct cpt_vf *cptvf, struct cpt_request_info *req);
-#endif /* __REQUEST_MANAGER_H */
+व्योम vq_post_process(काष्ठा cpt_vf *cptvf, u32 qno);
+पूर्णांक process_request(काष्ठा cpt_vf *cptvf, काष्ठा cpt_request_info *req);
+#पूर्ण_अगर /* __REQUEST_MANAGER_H */

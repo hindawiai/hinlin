@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __GF100_BAR_H__
-#define __GF100_BAR_H__
-#define gf100_bar(p) container_of((p), struct gf100_bar, base)
-#include "priv.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __GF100_BAR_H__
+#घोषणा __GF100_BAR_H__
+#घोषणा gf100_bar(p) container_of((p), काष्ठा gf100_bar, base)
+#समावेश "priv.h"
 
-struct gf100_barN {
-	struct nvkm_memory *inst;
-	struct nvkm_vmm *vmm;
-};
+काष्ठा gf100_barN अणु
+	काष्ठा nvkm_memory *inst;
+	काष्ठा nvkm_vmm *vmm;
+पूर्ण;
 
-struct gf100_bar {
-	struct nvkm_bar base;
+काष्ठा gf100_bar अणु
+	काष्ठा nvkm_bar base;
 	bool bar2_halve;
-	struct gf100_barN bar[2];
-};
+	काष्ठा gf100_barN bar[2];
+पूर्ण;
 
-int gf100_bar_new_(const struct nvkm_bar_func *, struct nvkm_device *, enum nvkm_subdev_type,
-		   int, struct nvkm_bar **);
-void *gf100_bar_dtor(struct nvkm_bar *);
-int gf100_bar_oneinit(struct nvkm_bar *);
-void gf100_bar_bar1_init(struct nvkm_bar *);
-void gf100_bar_bar1_wait(struct nvkm_bar *);
-struct nvkm_vmm *gf100_bar_bar1_vmm(struct nvkm_bar *);
-void gf100_bar_bar2_init(struct nvkm_bar *);
-struct nvkm_vmm *gf100_bar_bar2_vmm(struct nvkm_bar *);
-#endif
+पूर्णांक gf100_bar_new_(स्थिर काष्ठा nvkm_bar_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type,
+		   पूर्णांक, काष्ठा nvkm_bar **);
+व्योम *gf100_bar_dtor(काष्ठा nvkm_bar *);
+पूर्णांक gf100_bar_oneinit(काष्ठा nvkm_bar *);
+व्योम gf100_bar_bar1_init(काष्ठा nvkm_bar *);
+व्योम gf100_bar_bar1_रुको(काष्ठा nvkm_bar *);
+काष्ठा nvkm_vmm *gf100_bar_bar1_vmm(काष्ठा nvkm_bar *);
+व्योम gf100_bar_bar2_init(काष्ठा nvkm_bar *);
+काष्ठा nvkm_vmm *gf100_bar_bar2_vmm(काष्ठा nvkm_bar *);
+#पूर्ण_अगर

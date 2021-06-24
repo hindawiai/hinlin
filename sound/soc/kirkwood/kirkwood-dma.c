@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * kirkwood-dma.c
  *
@@ -6,24 +7,24 @@
  * (c) 2010 Arnaud Patard <arnaud.patard@rtp-net.org>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/mbus.h>
-#include <sound/soc.h>
-#include "kirkwood.h"
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/mbus.h>
+#समावेश <sound/soc.h>
+#समावेश "kirkwood.h"
 
-static struct kirkwood_dma_data *kirkwood_priv(struct snd_pcm_substream *subs)
-{
-	struct snd_soc_pcm_runtime *soc_runtime = subs->private_data;
-	return snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(soc_runtime, 0));
-}
+अटल काष्ठा kirkwood_dma_data *kirkwood_priv(काष्ठा snd_pcm_substream *subs)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *soc_runसमय = subs->निजी_data;
+	वापस snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(soc_runसमय, 0));
+पूर्ण
 
-static const struct snd_pcm_hardware kirkwood_dma_snd_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware kirkwood_dma_snd_hw = अणु
 	.info = SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_MMAP_VALID |
@@ -35,218 +36,218 @@ static const struct snd_pcm_hardware kirkwood_dma_snd_hw = {
 	.period_bytes_max	= KIRKWOOD_SND_MAX_PERIOD_BYTES,
 	.periods_min		= KIRKWOOD_SND_MIN_PERIODS,
 	.periods_max		= KIRKWOOD_SND_MAX_PERIODS,
-	.fifo_size		= 0,
-};
+	.fअगरo_size		= 0,
+पूर्ण;
 
-static irqreturn_t kirkwood_dma_irq(int irq, void *dev_id)
-{
-	struct kirkwood_dma_data *priv = dev_id;
-	unsigned long mask, status, cause;
+अटल irqवापस_t kirkwood_dma_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा kirkwood_dma_data *priv = dev_id;
+	अचिन्हित दीर्घ mask, status, cause;
 
-	mask = readl(priv->io + KIRKWOOD_INT_MASK);
-	status = readl(priv->io + KIRKWOOD_INT_CAUSE) & mask;
+	mask = पढ़ोl(priv->io + KIRKWOOD_INT_MASK);
+	status = पढ़ोl(priv->io + KIRKWOOD_INT_CAUSE) & mask;
 
-	cause = readl(priv->io + KIRKWOOD_ERR_CAUSE);
-	if (unlikely(cause)) {
-		printk(KERN_WARNING "%s: got err interrupt 0x%lx\n",
+	cause = पढ़ोl(priv->io + KIRKWOOD_ERR_CAUSE);
+	अगर (unlikely(cause)) अणु
+		prपूर्णांकk(KERN_WARNING "%s: got err interrupt 0x%lx\n",
 				__func__, cause);
-		writel(cause, priv->io + KIRKWOOD_ERR_CAUSE);
-	}
+		ग_लिखोl(cause, priv->io + KIRKWOOD_ERR_CAUSE);
+	पूर्ण
 
-	/* we've enabled only bytes interrupts ... */
-	if (status & ~(KIRKWOOD_INT_CAUSE_PLAY_BYTES | \
-			KIRKWOOD_INT_CAUSE_REC_BYTES)) {
-		printk(KERN_WARNING "%s: unexpected interrupt %lx\n",
+	/* we've enabled only bytes पूर्णांकerrupts ... */
+	अगर (status & ~(KIRKWOOD_INT_CAUSE_PLAY_BYTES | \
+			KIRKWOOD_INT_CAUSE_REC_BYTES)) अणु
+		prपूर्णांकk(KERN_WARNING "%s: unexpected interrupt %lx\n",
 			__func__, status);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	/* ack int */
-	writel(status, priv->io + KIRKWOOD_INT_CAUSE);
+	/* ack पूर्णांक */
+	ग_लिखोl(status, priv->io + KIRKWOOD_INT_CAUSE);
 
-	if (status & KIRKWOOD_INT_CAUSE_PLAY_BYTES)
+	अगर (status & KIRKWOOD_INT_CAUSE_PLAY_BYTES)
 		snd_pcm_period_elapsed(priv->substream_play);
 
-	if (status & KIRKWOOD_INT_CAUSE_REC_BYTES)
+	अगर (status & KIRKWOOD_INT_CAUSE_REC_BYTES)
 		snd_pcm_period_elapsed(priv->substream_rec);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void
-kirkwood_dma_conf_mbus_windows(void __iomem *base, int win,
-			       unsigned long dma,
-			       const struct mbus_dram_target_info *dram)
-{
-	int i;
+अटल व्योम
+kirkwood_dma_conf_mbus_winकरोws(व्योम __iomem *base, पूर्णांक win,
+			       अचिन्हित दीर्घ dma,
+			       स्थिर काष्ठा mbus_dram_target_info *dram)
+अणु
+	पूर्णांक i;
 
-	/* First disable and clear windows */
-	writel(0, base + KIRKWOOD_AUDIO_WIN_CTRL_REG(win));
-	writel(0, base + KIRKWOOD_AUDIO_WIN_BASE_REG(win));
+	/* First disable and clear winकरोws */
+	ग_लिखोl(0, base + KIRKWOOD_AUDIO_WIN_CTRL_REG(win));
+	ग_लिखोl(0, base + KIRKWOOD_AUDIO_WIN_BASE_REG(win));
 
-	/* try to find matching cs for current dma address */
-	for (i = 0; i < dram->num_cs; i++) {
-		const struct mbus_dram_window *cs = dram->cs + i;
-		if ((cs->base & 0xffff0000) < (dma & 0xffff0000)) {
-			writel(cs->base & 0xffff0000,
+	/* try to find matching cs क्रम current dma address */
+	क्रम (i = 0; i < dram->num_cs; i++) अणु
+		स्थिर काष्ठा mbus_dram_winकरोw *cs = dram->cs + i;
+		अगर ((cs->base & 0xffff0000) < (dma & 0xffff0000)) अणु
+			ग_लिखोl(cs->base & 0xffff0000,
 				base + KIRKWOOD_AUDIO_WIN_BASE_REG(win));
-			writel(((cs->size - 1) & 0xffff0000) |
+			ग_लिखोl(((cs->size - 1) & 0xffff0000) |
 				(cs->mbus_attr << 8) |
 				(dram->mbus_dram_target_id << 4) | 1,
 				base + KIRKWOOD_AUDIO_WIN_CTRL_REG(win));
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int kirkwood_dma_open(struct snd_soc_component *component,
-			     struct snd_pcm_substream *substream)
-{
-	int err;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct kirkwood_dma_data *priv = kirkwood_priv(substream);
-	const struct mbus_dram_target_info *dram;
-	unsigned long addr;
+अटल पूर्णांक kirkwood_dma_खोलो(काष्ठा snd_soc_component *component,
+			     काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक err;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा kirkwood_dma_data *priv = kirkwood_priv(substream);
+	स्थिर काष्ठा mbus_dram_target_info *dram;
+	अचिन्हित दीर्घ addr;
 
-	snd_soc_set_runtime_hwparams(substream, &kirkwood_dma_snd_hw);
+	snd_soc_set_runसमय_hwparams(substream, &kirkwood_dma_snd_hw);
 
-	/* Ensure that all constraints linked to dma burst are fulfilled */
-	err = snd_pcm_hw_constraint_minmax(runtime,
+	/* Ensure that all स्थिरraपूर्णांकs linked to dma burst are fulfilled */
+	err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय,
 			SNDRV_PCM_HW_PARAM_BUFFER_BYTES,
 			priv->burst * 2,
 			KIRKWOOD_AUDIO_BUF_MAX-1);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_pcm_hw_constraint_step(runtime, 0,
+	err = snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0,
 			SNDRV_PCM_HW_PARAM_BUFFER_BYTES,
 			priv->burst);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_pcm_hw_constraint_step(substream->runtime, 0,
+	err = snd_pcm_hw_स्थिरraपूर्णांक_step(substream->runसमय, 0,
 			 SNDRV_PCM_HW_PARAM_PERIOD_BYTES,
 			 priv->burst);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!priv->substream_play && !priv->substream_rec) {
+	अगर (!priv->substream_play && !priv->substream_rec) अणु
 		err = request_irq(priv->irq, kirkwood_dma_irq, IRQF_SHARED,
 				  "kirkwood-i2s", priv);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		/*
-		 * Enable Error interrupts. We're only ack'ing them but
-		 * it's useful for diagnostics
+		 * Enable Error पूर्णांकerrupts. We're only ack'ing them but
+		 * it's useful क्रम diagnostics
 		 */
-		writel((unsigned int)-1, priv->io + KIRKWOOD_ERR_MASK);
-	}
+		ग_लिखोl((अचिन्हित पूर्णांक)-1, priv->io + KIRKWOOD_ERR_MASK);
+	पूर्ण
 
 	dram = mv_mbus_dram_info();
 	addr = substream->dma_buffer.addr;
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		if (priv->substream_play)
-			return -EBUSY;
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		अगर (priv->substream_play)
+			वापस -EBUSY;
 		priv->substream_play = substream;
-		kirkwood_dma_conf_mbus_windows(priv->io,
+		kirkwood_dma_conf_mbus_winकरोws(priv->io,
 			KIRKWOOD_PLAYBACK_WIN, addr, dram);
-	} else {
-		if (priv->substream_rec)
-			return -EBUSY;
+	पूर्ण अन्यथा अणु
+		अगर (priv->substream_rec)
+			वापस -EBUSY;
 		priv->substream_rec = substream;
-		kirkwood_dma_conf_mbus_windows(priv->io,
+		kirkwood_dma_conf_mbus_winकरोws(priv->io,
 			KIRKWOOD_RECORD_WIN, addr, dram);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kirkwood_dma_close(struct snd_soc_component *component,
-			      struct snd_pcm_substream *substream)
-{
-	struct kirkwood_dma_data *priv = kirkwood_priv(substream);
+अटल पूर्णांक kirkwood_dma_बंद(काष्ठा snd_soc_component *component,
+			      काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा kirkwood_dma_data *priv = kirkwood_priv(substream);
 
-	if (!priv)
-		return 0;
+	अगर (!priv)
+		वापस 0;
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		priv->substream_play = NULL;
-	else
-		priv->substream_rec = NULL;
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		priv->substream_play = शून्य;
+	अन्यथा
+		priv->substream_rec = शून्य;
 
-	if (!priv->substream_play && !priv->substream_rec) {
-		writel(0, priv->io + KIRKWOOD_ERR_MASK);
-		free_irq(priv->irq, priv);
-	}
+	अगर (!priv->substream_play && !priv->substream_rec) अणु
+		ग_लिखोl(0, priv->io + KIRKWOOD_ERR_MASK);
+		मुक्त_irq(priv->irq, priv);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kirkwood_dma_prepare(struct snd_soc_component *component,
-				struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct kirkwood_dma_data *priv = kirkwood_priv(substream);
-	unsigned long size, count;
+अटल पूर्णांक kirkwood_dma_prepare(काष्ठा snd_soc_component *component,
+				काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा kirkwood_dma_data *priv = kirkwood_priv(substream);
+	अचिन्हित दीर्घ size, count;
 
 	/* compute buffer size in term of "words" as requested in specs */
-	size = frames_to_bytes(runtime, runtime->buffer_size);
+	size = frames_to_bytes(runसमय, runसमय->buffer_size);
 	size = (size>>2)-1;
 	count = snd_pcm_lib_period_bytes(substream);
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		writel(count, priv->io + KIRKWOOD_PLAY_BYTE_INT_COUNT);
-		writel(runtime->dma_addr, priv->io + KIRKWOOD_PLAY_BUF_ADDR);
-		writel(size, priv->io + KIRKWOOD_PLAY_BUF_SIZE);
-	} else {
-		writel(count, priv->io + KIRKWOOD_REC_BYTE_INT_COUNT);
-		writel(runtime->dma_addr, priv->io + KIRKWOOD_REC_BUF_ADDR);
-		writel(size, priv->io + KIRKWOOD_REC_BUF_SIZE);
-	}
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		ग_लिखोl(count, priv->io + KIRKWOOD_PLAY_BYTE_INT_COUNT);
+		ग_लिखोl(runसमय->dma_addr, priv->io + KIRKWOOD_PLAY_BUF_ADDR);
+		ग_लिखोl(size, priv->io + KIRKWOOD_PLAY_BUF_SIZE);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(count, priv->io + KIRKWOOD_REC_BYTE_INT_COUNT);
+		ग_लिखोl(runसमय->dma_addr, priv->io + KIRKWOOD_REC_BUF_ADDR);
+		ग_लिखोl(size, priv->io + KIRKWOOD_REC_BUF_SIZE);
+	पूर्ण
 
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static snd_pcm_uframes_t kirkwood_dma_pointer(
-	struct snd_soc_component *component,
-	struct snd_pcm_substream *substream)
-{
-	struct kirkwood_dma_data *priv = kirkwood_priv(substream);
+अटल snd_pcm_uframes_t kirkwood_dma_poपूर्णांकer(
+	काष्ठा snd_soc_component *component,
+	काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा kirkwood_dma_data *priv = kirkwood_priv(substream);
 	snd_pcm_uframes_t count;
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		count = bytes_to_frames(substream->runtime,
-			readl(priv->io + KIRKWOOD_PLAY_BYTE_COUNT));
-	else
-		count = bytes_to_frames(substream->runtime,
-			readl(priv->io + KIRKWOOD_REC_BYTE_COUNT));
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		count = bytes_to_frames(substream->runसमय,
+			पढ़ोl(priv->io + KIRKWOOD_PLAY_BYTE_COUNT));
+	अन्यथा
+		count = bytes_to_frames(substream->runसमय,
+			पढ़ोl(priv->io + KIRKWOOD_REC_BYTE_COUNT));
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int kirkwood_dma_new(struct snd_soc_component *component,
-			    struct snd_soc_pcm_runtime *rtd)
-{
-	size_t size = kirkwood_dma_snd_hw.buffer_bytes_max;
-	struct snd_card *card = rtd->card->snd_card;
-	int ret;
+अटल पूर्णांक kirkwood_dma_new(काष्ठा snd_soc_component *component,
+			    काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	माप_प्रकार size = kirkwood_dma_snd_hw.buffer_bytes_max;
+	काष्ठा snd_card *card = rtd->card->snd_card;
+	पूर्णांक ret;
 
 	ret = dma_coerce_mask_and_coherent(card->dev, DMA_BIT_MASK(32));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	snd_pcm_set_managed_buffer_all(rtd->pcm, SNDRV_DMA_TYPE_DEV,
 				       card->dev, size, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct snd_soc_component_driver kirkwood_soc_component = {
+स्थिर काष्ठा snd_soc_component_driver kirkwood_soc_component = अणु
 	.name		= DRV_NAME,
-	.open		= kirkwood_dma_open,
-	.close		= kirkwood_dma_close,
+	.खोलो		= kirkwood_dma_खोलो,
+	.बंद		= kirkwood_dma_बंद,
 	.prepare	= kirkwood_dma_prepare,
-	.pointer	= kirkwood_dma_pointer,
-	.pcm_construct	= kirkwood_dma_new,
-};
+	.poपूर्णांकer	= kirkwood_dma_poपूर्णांकer,
+	.pcm_स्थिरruct	= kirkwood_dma_new,
+पूर्ण;

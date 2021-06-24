@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright 2011-2012 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,108 +26,108 @@
  *
  **************************************************************************/
 
-#ifndef _VMWGFX_FENCE_H_
+#अगर_अघोषित _VMWGFX_FENCE_H_
 
-#include <linux/dma-fence.h>
-#include <linux/dma-fence-array.h>
+#समावेश <linux/dma-fence.h>
+#समावेश <linux/dma-fence-array.h>
 
-#define VMW_FENCE_WAIT_TIMEOUT (5*HZ)
+#घोषणा VMW_FENCE_WAIT_TIMEOUT (5*HZ)
 
-struct drm_device;
-struct drm_file;
-struct drm_pending_event;
+काष्ठा drm_device;
+काष्ठा drm_file;
+काष्ठा drm_pending_event;
 
-struct vmw_private;
-struct vmw_fence_manager;
+काष्ठा vmw_निजी;
+काष्ठा vmw_fence_manager;
 
 /**
  *
  *
  */
-enum vmw_action_type {
+क्रमागत vmw_action_type अणु
 	VMW_ACTION_EVENT = 0,
 	VMW_ACTION_MAX
-};
+पूर्ण;
 
-struct vmw_fence_action {
-	struct list_head head;
-	enum vmw_action_type type;
-	void (*seq_passed) (struct vmw_fence_action *action);
-	void (*cleanup) (struct vmw_fence_action *action);
-};
+काष्ठा vmw_fence_action अणु
+	काष्ठा list_head head;
+	क्रमागत vmw_action_type type;
+	व्योम (*seq_passed) (काष्ठा vmw_fence_action *action);
+	व्योम (*cleanup) (काष्ठा vmw_fence_action *action);
+पूर्ण;
 
-struct vmw_fence_obj {
-	struct dma_fence base;
+काष्ठा vmw_fence_obj अणु
+	काष्ठा dma_fence base;
 
-	struct list_head head;
-	struct list_head seq_passed_actions;
-	void (*destroy)(struct vmw_fence_obj *fence);
-};
+	काष्ठा list_head head;
+	काष्ठा list_head seq_passed_actions;
+	व्योम (*destroy)(काष्ठा vmw_fence_obj *fence);
+पूर्ण;
 
-extern struct vmw_fence_manager *
-vmw_fence_manager_init(struct vmw_private *dev_priv);
+बाह्य काष्ठा vmw_fence_manager *
+vmw_fence_manager_init(काष्ठा vmw_निजी *dev_priv);
 
-extern void vmw_fence_manager_takedown(struct vmw_fence_manager *fman);
+बाह्य व्योम vmw_fence_manager_takeकरोwn(काष्ठा vmw_fence_manager *fman);
 
-static inline void
-vmw_fence_obj_unreference(struct vmw_fence_obj **fence_p)
-{
-	struct vmw_fence_obj *fence = *fence_p;
+अटल अंतरभूत व्योम
+vmw_fence_obj_unreference(काष्ठा vmw_fence_obj **fence_p)
+अणु
+	काष्ठा vmw_fence_obj *fence = *fence_p;
 
-	*fence_p = NULL;
-	if (fence)
+	*fence_p = शून्य;
+	अगर (fence)
 		dma_fence_put(&fence->base);
-}
+पूर्ण
 
-static inline struct vmw_fence_obj *
-vmw_fence_obj_reference(struct vmw_fence_obj *fence)
-{
-	if (fence)
+अटल अंतरभूत काष्ठा vmw_fence_obj *
+vmw_fence_obj_reference(काष्ठा vmw_fence_obj *fence)
+अणु
+	अगर (fence)
 		dma_fence_get(&fence->base);
-	return fence;
-}
+	वापस fence;
+पूर्ण
 
-extern void vmw_fences_update(struct vmw_fence_manager *fman);
+बाह्य व्योम vmw_fences_update(काष्ठा vmw_fence_manager *fman);
 
-extern bool vmw_fence_obj_signaled(struct vmw_fence_obj *fence);
+बाह्य bool vmw_fence_obj_संकेतed(काष्ठा vmw_fence_obj *fence);
 
-extern int vmw_fence_obj_wait(struct vmw_fence_obj *fence,
+बाह्य पूर्णांक vmw_fence_obj_रुको(काष्ठा vmw_fence_obj *fence,
 			      bool lazy,
-			      bool interruptible, unsigned long timeout);
+			      bool पूर्णांकerruptible, अचिन्हित दीर्घ समयout);
 
-extern void vmw_fence_obj_flush(struct vmw_fence_obj *fence);
+बाह्य व्योम vmw_fence_obj_flush(काष्ठा vmw_fence_obj *fence);
 
-extern int vmw_fence_create(struct vmw_fence_manager *fman,
-			    uint32_t seqno,
-			    struct vmw_fence_obj **p_fence);
+बाह्य पूर्णांक vmw_fence_create(काष्ठा vmw_fence_manager *fman,
+			    uपूर्णांक32_t seqno,
+			    काष्ठा vmw_fence_obj **p_fence);
 
-extern int vmw_user_fence_create(struct drm_file *file_priv,
-				 struct vmw_fence_manager *fman,
-				 uint32_t sequence,
-				 struct vmw_fence_obj **p_fence,
-				 uint32_t *p_handle);
+बाह्य पूर्णांक vmw_user_fence_create(काष्ठा drm_file *file_priv,
+				 काष्ठा vmw_fence_manager *fman,
+				 uपूर्णांक32_t sequence,
+				 काष्ठा vmw_fence_obj **p_fence,
+				 uपूर्णांक32_t *p_handle);
 
-extern int vmw_wait_dma_fence(struct vmw_fence_manager *fman,
-			      struct dma_fence *fence);
+बाह्य पूर्णांक vmw_रुको_dma_fence(काष्ठा vmw_fence_manager *fman,
+			      काष्ठा dma_fence *fence);
 
-extern void vmw_fence_fifo_up(struct vmw_fence_manager *fman);
+बाह्य व्योम vmw_fence_fअगरo_up(काष्ठा vmw_fence_manager *fman);
 
-extern void vmw_fence_fifo_down(struct vmw_fence_manager *fman);
+बाह्य व्योम vmw_fence_fअगरo_करोwn(काष्ठा vmw_fence_manager *fman);
 
-extern int vmw_fence_obj_wait_ioctl(struct drm_device *dev, void *data,
-				    struct drm_file *file_priv);
+बाह्य पूर्णांक vmw_fence_obj_रुको_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				    काष्ठा drm_file *file_priv);
 
-extern int vmw_fence_obj_signaled_ioctl(struct drm_device *dev, void *data,
-					struct drm_file *file_priv);
+बाह्य पूर्णांक vmw_fence_obj_संकेतed_ioctl(काष्ठा drm_device *dev, व्योम *data,
+					काष्ठा drm_file *file_priv);
 
-extern int vmw_fence_obj_unref_ioctl(struct drm_device *dev, void *data,
-				     struct drm_file *file_priv);
-extern int vmw_fence_event_ioctl(struct drm_device *dev, void *data,
-				 struct drm_file *file_priv);
-extern int vmw_event_fence_action_queue(struct drm_file *filee_priv,
-					struct vmw_fence_obj *fence,
-					struct drm_pending_event *event,
-					uint32_t *tv_sec,
-					uint32_t *tv_usec,
-					bool interruptible);
-#endif /* _VMWGFX_FENCE_H_ */
+बाह्य पूर्णांक vmw_fence_obj_unref_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				     काष्ठा drm_file *file_priv);
+बाह्य पूर्णांक vmw_fence_event_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				 काष्ठा drm_file *file_priv);
+बाह्य पूर्णांक vmw_event_fence_action_queue(काष्ठा drm_file *filee_priv,
+					काष्ठा vmw_fence_obj *fence,
+					काष्ठा drm_pending_event *event,
+					uपूर्णांक32_t *tv_sec,
+					uपूर्णांक32_t *tv_usec,
+					bool पूर्णांकerruptible);
+#पूर्ण_अगर /* _VMWGFX_FENCE_H_ */

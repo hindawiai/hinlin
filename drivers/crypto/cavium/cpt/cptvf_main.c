@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Cavium, Inc.
  */
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
 
-#include "cptvf.h"
+#समावेश "cptvf.h"
 
-#define DRV_NAME	"thunder-cptvf"
-#define DRV_VERSION	"1.0"
+#घोषणा DRV_NAME	"thunder-cptvf"
+#घोषणा DRV_VERSION	"1.0"
 
-struct cptvf_wqe {
-	struct tasklet_struct twork;
-	void *cptvf;
+काष्ठा cptvf_wqe अणु
+	काष्ठा tasklet_काष्ठा twork;
+	व्योम *cptvf;
 	u32 qno;
-};
+पूर्ण;
 
-struct cptvf_wqe_info {
-	struct cptvf_wqe vq_wqe[CPT_NUM_QS_PER_VF];
-};
+काष्ठा cptvf_wqe_info अणु
+	काष्ठा cptvf_wqe vq_wqe[CPT_NUM_QS_PER_VF];
+पूर्ण;
 
-static void vq_work_handler(unsigned long data)
-{
-	struct cptvf_wqe_info *cwqe_info = (struct cptvf_wqe_info *)data;
-	struct cptvf_wqe *cwqe = &cwqe_info->vq_wqe[0];
+अटल व्योम vq_work_handler(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा cptvf_wqe_info *cwqe_info = (काष्ठा cptvf_wqe_info *)data;
+	काष्ठा cptvf_wqe *cwqe = &cwqe_info->vq_wqe[0];
 
 	vq_post_process(cwqe->cptvf, cwqe->qno);
-}
+पूर्ण
 
-static int init_worker_threads(struct cpt_vf *cptvf)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	struct cptvf_wqe_info *cwqe_info;
-	int i;
+अटल पूर्णांक init_worker_thपढ़ोs(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	काष्ठा cptvf_wqe_info *cwqe_info;
+	पूर्णांक i;
 
-	cwqe_info = kzalloc(sizeof(*cwqe_info), GFP_KERNEL);
-	if (!cwqe_info)
-		return -ENOMEM;
+	cwqe_info = kzalloc(माप(*cwqe_info), GFP_KERNEL);
+	अगर (!cwqe_info)
+		वापस -ENOMEM;
 
-	if (cptvf->nr_queues) {
+	अगर (cptvf->nr_queues) अणु
 		dev_info(&pdev->dev, "Creating VQ worker threads (%d)\n",
 			 cptvf->nr_queues);
-	}
+	पूर्ण
 
-	for (i = 0; i < cptvf->nr_queues; i++) {
+	क्रम (i = 0; i < cptvf->nr_queues; i++) अणु
 		tasklet_init(&cwqe_info->vq_wqe[i].twork, vq_work_handler,
 			     (u64)cwqe_info);
 		cwqe_info->vq_wqe[i].qno = i;
 		cwqe_info->vq_wqe[i].cptvf = cptvf;
-	}
+	पूर्ण
 
 	cptvf->wqe_info = cwqe_info;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cleanup_worker_threads(struct cpt_vf *cptvf)
-{
-	struct cptvf_wqe_info *cwqe_info;
-	struct pci_dev *pdev = cptvf->pdev;
-	int i;
+अटल व्योम cleanup_worker_thपढ़ोs(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा cptvf_wqe_info *cwqe_info;
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	पूर्णांक i;
 
-	cwqe_info = (struct cptvf_wqe_info *)cptvf->wqe_info;
-	if (!cwqe_info)
-		return;
+	cwqe_info = (काष्ठा cptvf_wqe_info *)cptvf->wqe_info;
+	अगर (!cwqe_info)
+		वापस;
 
-	if (cptvf->nr_queues) {
+	अगर (cptvf->nr_queues) अणु
 		dev_info(&pdev->dev, "Cleaning VQ worker threads (%u)\n",
 			 cptvf->nr_queues);
-	}
+	पूर्ण
 
-	for (i = 0; i < cptvf->nr_queues; i++)
-		tasklet_kill(&cwqe_info->vq_wqe[i].twork);
+	क्रम (i = 0; i < cptvf->nr_queues; i++)
+		tasklet_समाप्त(&cwqe_info->vq_wqe[i].twork);
 
-	kfree_sensitive(cwqe_info);
-	cptvf->wqe_info = NULL;
-}
+	kमुक्त_sensitive(cwqe_info);
+	cptvf->wqe_info = शून्य;
+पूर्ण
 
-static void free_pending_queues(struct pending_qinfo *pqinfo)
-{
-	int i;
-	struct pending_queue *queue;
+अटल व्योम मुक्त_pending_queues(काष्ठा pending_qinfo *pqinfo)
+अणु
+	पूर्णांक i;
+	काष्ठा pending_queue *queue;
 
-	for_each_pending_queue(pqinfo, queue, i) {
-		if (!queue->head)
-			continue;
+	क्रम_each_pending_queue(pqinfo, queue, i) अणु
+		अगर (!queue->head)
+			जारी;
 
-		/* free single queue */
-		kfree_sensitive((queue->head));
+		/* मुक्त single queue */
+		kमुक्त_sensitive((queue->head));
 
 		queue->front = 0;
 		queue->rear = 0;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pqinfo->qlen = 0;
 	pqinfo->nr_queues = 0;
-}
+पूर्ण
 
-static int alloc_pending_queues(struct pending_qinfo *pqinfo, u32 qlen,
+अटल पूर्णांक alloc_pending_queues(काष्ठा pending_qinfo *pqinfo, u32 qlen,
 				u32 nr_queues)
-{
+अणु
 	u32 i;
-	size_t size;
-	int ret;
-	struct pending_queue *queue = NULL;
+	माप_प्रकार size;
+	पूर्णांक ret;
+	काष्ठा pending_queue *queue = शून्य;
 
 	pqinfo->nr_queues = nr_queues;
 	pqinfo->qlen = qlen;
 
-	size = (qlen * sizeof(struct pending_entry));
+	size = (qlen * माप(काष्ठा pending_entry));
 
-	for_each_pending_queue(pqinfo, queue, i) {
+	क्रम_each_pending_queue(pqinfo, queue, i) अणु
 		queue->head = kzalloc((size), GFP_KERNEL);
-		if (!queue->head) {
+		अगर (!queue->head) अणु
 			ret = -ENOMEM;
-			goto pending_qfail;
-		}
+			जाओ pending_qfail;
+		पूर्ण
 
 		queue->front = 0;
 		queue->rear = 0;
@@ -126,110 +127,110 @@ static int alloc_pending_queues(struct pending_qinfo *pqinfo, u32 qlen,
 
 		/* init queue spin lock */
 		spin_lock_init(&queue->lock);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 pending_qfail:
-	free_pending_queues(pqinfo);
+	मुक्त_pending_queues(pqinfo);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int init_pending_queues(struct cpt_vf *cptvf, u32 qlen, u32 nr_queues)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	int ret;
+अटल पूर्णांक init_pending_queues(काष्ठा cpt_vf *cptvf, u32 qlen, u32 nr_queues)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	पूर्णांक ret;
 
-	if (!nr_queues)
-		return 0;
+	अगर (!nr_queues)
+		वापस 0;
 
 	ret = alloc_pending_queues(&cptvf->pqinfo, qlen, nr_queues);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to setup pending queues (%u)\n",
 			nr_queues);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cleanup_pending_queues(struct cpt_vf *cptvf)
-{
-	struct pci_dev *pdev = cptvf->pdev;
+अटल व्योम cleanup_pending_queues(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
 
-	if (!cptvf->nr_queues)
-		return;
+	अगर (!cptvf->nr_queues)
+		वापस;
 
 	dev_info(&pdev->dev, "Cleaning VQ pending queue (%u)\n",
 		 cptvf->nr_queues);
-	free_pending_queues(&cptvf->pqinfo);
-}
+	मुक्त_pending_queues(&cptvf->pqinfo);
+पूर्ण
 
-static void free_command_queues(struct cpt_vf *cptvf,
-				struct command_qinfo *cqinfo)
-{
-	int i;
-	struct command_queue *queue = NULL;
-	struct command_chunk *chunk = NULL;
-	struct pci_dev *pdev = cptvf->pdev;
-	struct hlist_node *node;
+अटल व्योम मुक्त_command_queues(काष्ठा cpt_vf *cptvf,
+				काष्ठा command_qinfo *cqinfo)
+अणु
+	पूर्णांक i;
+	काष्ठा command_queue *queue = शून्य;
+	काष्ठा command_chunk *chunk = शून्य;
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	काष्ठा hlist_node *node;
 
-	/* clean up for each queue */
-	for (i = 0; i < cptvf->nr_queues; i++) {
+	/* clean up क्रम each queue */
+	क्रम (i = 0; i < cptvf->nr_queues; i++) अणु
 		queue = &cqinfo->queue[i];
-		if (hlist_empty(&cqinfo->queue[i].chead))
-			continue;
+		अगर (hlist_empty(&cqinfo->queue[i].chead))
+			जारी;
 
-		hlist_for_each_entry_safe(chunk, node, &cqinfo->queue[i].chead,
-					  nextchunk) {
-			dma_free_coherent(&pdev->dev, chunk->size,
+		hlist_क्रम_each_entry_safe(chunk, node, &cqinfo->queue[i].chead,
+					  nextchunk) अणु
+			dma_मुक्त_coherent(&pdev->dev, chunk->size,
 					  chunk->head,
 					  chunk->dma_addr);
-			chunk->head = NULL;
+			chunk->head = शून्य;
 			chunk->dma_addr = 0;
 			hlist_del(&chunk->nextchunk);
-			kfree_sensitive(chunk);
-		}
+			kमुक्त_sensitive(chunk);
+		पूर्ण
 
 		queue->nchunks = 0;
 		queue->idx = 0;
-	}
+	पूर्ण
 
 	/* common cleanup */
 	cqinfo->cmd_size = 0;
-}
+पूर्ण
 
-static int alloc_command_queues(struct cpt_vf *cptvf,
-				struct command_qinfo *cqinfo, size_t cmd_size,
+अटल पूर्णांक alloc_command_queues(काष्ठा cpt_vf *cptvf,
+				काष्ठा command_qinfo *cqinfo, माप_प्रकार cmd_size,
 				u32 qlen)
-{
-	int i;
-	size_t q_size;
-	struct command_queue *queue = NULL;
-	struct pci_dev *pdev = cptvf->pdev;
+अणु
+	पूर्णांक i;
+	माप_प्रकार q_size;
+	काष्ठा command_queue *queue = शून्य;
+	काष्ठा pci_dev *pdev = cptvf->pdev;
 
 	/* common init */
 	cqinfo->cmd_size = cmd_size;
-	/* Qsize in dwords, needed for SADDR config, 1-next chunk pointer */
+	/* Qsize in dwords, needed क्रम SADDR config, 1-next chunk poपूर्णांकer */
 	cptvf->qsize = min(qlen, cqinfo->qchunksize) *
 			CPT_NEXT_CHUNK_PTR_SIZE + 1;
-	/* Qsize in bytes to create space for alignment */
+	/* Qsize in bytes to create space क्रम alignment */
 	q_size = qlen * cqinfo->cmd_size;
 
 	/* per queue initialization */
-	for (i = 0; i < cptvf->nr_queues; i++) {
-		size_t c_size = 0;
-		size_t rem_q_size = q_size;
-		struct command_chunk *curr = NULL, *first = NULL, *last = NULL;
+	क्रम (i = 0; i < cptvf->nr_queues; i++) अणु
+		माप_प्रकार c_size = 0;
+		माप_प्रकार rem_q_size = q_size;
+		काष्ठा command_chunk *curr = शून्य, *first = शून्य, *last = शून्य;
 		u32 qcsize_bytes = cqinfo->qchunksize * cqinfo->cmd_size;
 
 		queue = &cqinfo->queue[i];
 		INIT_HLIST_HEAD(&cqinfo->queue[i].chead);
-		do {
-			curr = kzalloc(sizeof(*curr), GFP_KERNEL);
-			if (!curr)
-				goto cmd_qfail;
+		करो अणु
+			curr = kzalloc(माप(*curr), GFP_KERNEL);
+			अगर (!curr)
+				जाओ cmd_qfail;
 
 			c_size = (rem_q_size > qcsize_bytes) ? qcsize_bytes :
 					rem_q_size;
@@ -237,30 +238,30 @@ static int alloc_command_queues(struct cpt_vf *cptvf,
 							c_size + CPT_NEXT_CHUNK_PTR_SIZE,
 							&curr->dma_addr,
 							GFP_KERNEL);
-			if (!curr->head) {
+			अगर (!curr->head) अणु
 				dev_err(&pdev->dev, "Command Q (%d) chunk (%d) allocation failed\n",
 					i, queue->nchunks);
-				kfree(curr);
-				goto cmd_qfail;
-			}
+				kमुक्त(curr);
+				जाओ cmd_qfail;
+			पूर्ण
 
 			curr->size = c_size;
-			if (queue->nchunks == 0) {
+			अगर (queue->nchunks == 0) अणु
 				hlist_add_head(&curr->nextchunk,
 					       &cqinfo->queue[i].chead);
 				first = curr;
-			} else {
+			पूर्ण अन्यथा अणु
 				hlist_add_behind(&curr->nextchunk,
 						 &last->nextchunk);
-			}
+			पूर्ण
 
 			queue->nchunks++;
 			rem_q_size -= c_size;
-			if (last)
+			अगर (last)
 				*((u64 *)(&last->head[last->size])) = (u64)curr->dma_addr;
 
 			last = curr;
-		} while (rem_q_size);
+		पूर्ण जबतक (rem_q_size);
 
 		/* Make the queue circular */
 		/* Tie back last chunk entry to head */
@@ -268,54 +269,54 @@ static int alloc_command_queues(struct cpt_vf *cptvf,
 		*((u64 *)(&last->head[last->size])) = (u64)curr->dma_addr;
 		queue->qhead = curr;
 		spin_lock_init(&queue->lock);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 cmd_qfail:
-	free_command_queues(cptvf, cqinfo);
-	return -ENOMEM;
-}
+	मुक्त_command_queues(cptvf, cqinfo);
+	वापस -ENOMEM;
+पूर्ण
 
-static int init_command_queues(struct cpt_vf *cptvf, u32 qlen)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	int ret;
+अटल पूर्णांक init_command_queues(काष्ठा cpt_vf *cptvf, u32 qlen)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	पूर्णांक ret;
 
 	/* setup AE command queues */
 	ret = alloc_command_queues(cptvf, &cptvf->cqinfo, CPT_INST_SIZE,
 				   qlen);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to allocate AE command queues (%u)\n",
 			cptvf->nr_queues);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cleanup_command_queues(struct cpt_vf *cptvf)
-{
-	struct pci_dev *pdev = cptvf->pdev;
+अटल व्योम cleanup_command_queues(काष्ठा cpt_vf *cptvf)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
 
-	if (!cptvf->nr_queues)
-		return;
+	अगर (!cptvf->nr_queues)
+		वापस;
 
 	dev_info(&pdev->dev, "Cleaning VQ command queue (%u)\n",
 		 cptvf->nr_queues);
-	free_command_queues(cptvf, &cptvf->cqinfo);
-}
+	मुक्त_command_queues(cptvf, &cptvf->cqinfo);
+पूर्ण
 
-static void cptvf_sw_cleanup(struct cpt_vf *cptvf)
-{
-	cleanup_worker_threads(cptvf);
+अटल व्योम cptvf_sw_cleanup(काष्ठा cpt_vf *cptvf)
+अणु
+	cleanup_worker_thपढ़ोs(cptvf);
 	cleanup_pending_queues(cptvf);
 	cleanup_command_queues(cptvf);
-}
+पूर्ण
 
-static int cptvf_sw_init(struct cpt_vf *cptvf, u32 qlen, u32 nr_queues)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	int ret = 0;
+अटल पूर्णांक cptvf_sw_init(काष्ठा cpt_vf *cptvf, u32 qlen, u32 nr_queues)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	पूर्णांक ret = 0;
 	u32 max_dev_queues = 0;
 
 	max_dev_queues = CPT_NUM_QS_PER_VF;
@@ -324,530 +325,530 @@ static int cptvf_sw_init(struct cpt_vf *cptvf, u32 qlen, u32 nr_queues)
 	cptvf->nr_queues = nr_queues;
 
 	ret = init_command_queues(cptvf, qlen);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to setup command queues (%u)\n",
 			nr_queues);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = init_pending_queues(cptvf, qlen, nr_queues);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to setup pending queues (%u)\n",
 			nr_queues);
-		goto setup_pqfail;
-	}
+		जाओ setup_pqfail;
+	पूर्ण
 
-	/* Create worker threads for BH processing */
-	ret = init_worker_threads(cptvf);
-	if (ret) {
+	/* Create worker thपढ़ोs क्रम BH processing */
+	ret = init_worker_thपढ़ोs(cptvf);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to setup worker threads\n");
-		goto init_work_fail;
-	}
+		जाओ init_work_fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 init_work_fail:
-	cleanup_worker_threads(cptvf);
+	cleanup_worker_thपढ़ोs(cptvf);
 	cleanup_pending_queues(cptvf);
 
 setup_pqfail:
 	cleanup_command_queues(cptvf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cptvf_free_irq_affinity(struct cpt_vf *cptvf, int vec)
-{
-	irq_set_affinity_hint(pci_irq_vector(cptvf->pdev, vec), NULL);
-	free_cpumask_var(cptvf->affinity_mask[vec]);
-}
+अटल व्योम cptvf_मुक्त_irq_affinity(काष्ठा cpt_vf *cptvf, पूर्णांक vec)
+अणु
+	irq_set_affinity_hपूर्णांक(pci_irq_vector(cptvf->pdev, vec), शून्य);
+	मुक्त_cpumask_var(cptvf->affinity_mask[vec]);
+पूर्ण
 
-static void cptvf_write_vq_ctl(struct cpt_vf *cptvf, bool val)
-{
-	union cptx_vqx_ctl vqx_ctl;
+अटल व्योम cptvf_ग_लिखो_vq_ctl(काष्ठा cpt_vf *cptvf, bool val)
+अणु
+	जोड़ cptx_vqx_ctl vqx_ctl;
 
-	vqx_ctl.u = cpt_read_csr64(cptvf->reg_base, CPTX_VQX_CTL(0, 0));
+	vqx_ctl.u = cpt_पढ़ो_csr64(cptvf->reg_base, CPTX_VQX_CTL(0, 0));
 	vqx_ctl.s.ena = val;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_CTL(0, 0), vqx_ctl.u);
-}
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_CTL(0, 0), vqx_ctl.u);
+पूर्ण
 
-void cptvf_write_vq_doorbell(struct cpt_vf *cptvf, u32 val)
-{
-	union cptx_vqx_doorbell vqx_dbell;
+व्योम cptvf_ग_लिखो_vq_करोorbell(काष्ठा cpt_vf *cptvf, u32 val)
+अणु
+	जोड़ cptx_vqx_करोorbell vqx_dbell;
 
-	vqx_dbell.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_dbell.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 				     CPTX_VQX_DOORBELL(0, 0));
-	vqx_dbell.s.dbell_cnt = val * 8; /* Num of Instructions * 8 words */
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_DOORBELL(0, 0),
+	vqx_dbell.s.dbell_cnt = val * 8; /* Num of Inकाष्ठाions * 8 words */
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_DOORBELL(0, 0),
 			vqx_dbell.u);
-}
+पूर्ण
 
-static void cptvf_write_vq_inprog(struct cpt_vf *cptvf, u8 val)
-{
-	union cptx_vqx_inprog vqx_inprg;
+अटल व्योम cptvf_ग_लिखो_vq_inprog(काष्ठा cpt_vf *cptvf, u8 val)
+अणु
+	जोड़ cptx_vqx_inprog vqx_inprg;
 
-	vqx_inprg.u = cpt_read_csr64(cptvf->reg_base, CPTX_VQX_INPROG(0, 0));
+	vqx_inprg.u = cpt_पढ़ो_csr64(cptvf->reg_base, CPTX_VQX_INPROG(0, 0));
 	vqx_inprg.s.inflight = val;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_INPROG(0, 0), vqx_inprg.u);
-}
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_INPROG(0, 0), vqx_inprg.u);
+पूर्ण
 
-static void cptvf_write_vq_done_numwait(struct cpt_vf *cptvf, u32 val)
-{
-	union cptx_vqx_done_wait vqx_dwait;
+अटल व्योम cptvf_ग_लिखो_vq_करोne_numरुको(काष्ठा cpt_vf *cptvf, u32 val)
+अणु
+	जोड़ cptx_vqx_करोne_रुको vqx_dरुको;
 
-	vqx_dwait.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_dरुको.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 				     CPTX_VQX_DONE_WAIT(0, 0));
-	vqx_dwait.s.num_wait = val;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_DONE_WAIT(0, 0),
-			vqx_dwait.u);
-}
+	vqx_dरुको.s.num_रुको = val;
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_DONE_WAIT(0, 0),
+			vqx_dरुको.u);
+पूर्ण
 
-static void cptvf_write_vq_done_timewait(struct cpt_vf *cptvf, u16 time)
-{
-	union cptx_vqx_done_wait vqx_dwait;
+अटल व्योम cptvf_ग_लिखो_vq_करोne_समयरुको(काष्ठा cpt_vf *cptvf, u16 समय)
+अणु
+	जोड़ cptx_vqx_करोne_रुको vqx_dरुको;
 
-	vqx_dwait.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_dरुको.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 				     CPTX_VQX_DONE_WAIT(0, 0));
-	vqx_dwait.s.time_wait = time;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_DONE_WAIT(0, 0),
-			vqx_dwait.u);
-}
+	vqx_dरुको.s.समय_रुको = समय;
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_DONE_WAIT(0, 0),
+			vqx_dरुको.u);
+पूर्ण
 
-static void cptvf_enable_swerr_interrupts(struct cpt_vf *cptvf)
-{
-	union cptx_vqx_misc_ena_w1s vqx_misc_ena;
+अटल व्योम cptvf_enable_swerr_पूर्णांकerrupts(काष्ठा cpt_vf *cptvf)
+अणु
+	जोड़ cptx_vqx_misc_ena_w1s vqx_misc_ena;
 
-	vqx_misc_ena.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_misc_ena.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 					CPTX_VQX_MISC_ENA_W1S(0, 0));
-	/* Set mbox(0) interupts for the requested vf */
+	/* Set mbox(0) पूर्णांकerupts क्रम the requested vf */
 	vqx_misc_ena.s.swerr = 1;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_MISC_ENA_W1S(0, 0),
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_MISC_ENA_W1S(0, 0),
 			vqx_misc_ena.u);
-}
+पूर्ण
 
-static void cptvf_enable_mbox_interrupts(struct cpt_vf *cptvf)
-{
-	union cptx_vqx_misc_ena_w1s vqx_misc_ena;
+अटल व्योम cptvf_enable_mbox_पूर्णांकerrupts(काष्ठा cpt_vf *cptvf)
+अणु
+	जोड़ cptx_vqx_misc_ena_w1s vqx_misc_ena;
 
-	vqx_misc_ena.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_misc_ena.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 					CPTX_VQX_MISC_ENA_W1S(0, 0));
-	/* Set mbox(0) interupts for the requested vf */
+	/* Set mbox(0) पूर्णांकerupts क्रम the requested vf */
 	vqx_misc_ena.s.mbox = 1;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_MISC_ENA_W1S(0, 0),
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_MISC_ENA_W1S(0, 0),
 			vqx_misc_ena.u);
-}
+पूर्ण
 
-static void cptvf_enable_done_interrupts(struct cpt_vf *cptvf)
-{
-	union cptx_vqx_done_ena_w1s vqx_done_ena;
+अटल व्योम cptvf_enable_करोne_पूर्णांकerrupts(काष्ठा cpt_vf *cptvf)
+अणु
+	जोड़ cptx_vqx_करोne_ena_w1s vqx_करोne_ena;
 
-	vqx_done_ena.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_करोne_ena.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 					CPTX_VQX_DONE_ENA_W1S(0, 0));
-	/* Set DONE interrupt for the requested vf */
-	vqx_done_ena.s.done = 1;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_DONE_ENA_W1S(0, 0),
-			vqx_done_ena.u);
-}
+	/* Set DONE पूर्णांकerrupt क्रम the requested vf */
+	vqx_करोne_ena.s.करोne = 1;
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_DONE_ENA_W1S(0, 0),
+			vqx_करोne_ena.u);
+पूर्ण
 
-static void cptvf_clear_dovf_intr(struct cpt_vf *cptvf)
-{
-	union cptx_vqx_misc_int vqx_misc_int;
+अटल व्योम cptvf_clear_करोvf_पूर्णांकr(काष्ठा cpt_vf *cptvf)
+अणु
+	जोड़ cptx_vqx_misc_पूर्णांक vqx_misc_पूर्णांक;
 
-	vqx_misc_int.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_misc_पूर्णांक.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 					CPTX_VQX_MISC_INT(0, 0));
-	/* W1C for the VF */
-	vqx_misc_int.s.dovf = 1;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_MISC_INT(0, 0),
-			vqx_misc_int.u);
-}
+	/* W1C क्रम the VF */
+	vqx_misc_पूर्णांक.s.करोvf = 1;
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_MISC_INT(0, 0),
+			vqx_misc_पूर्णांक.u);
+पूर्ण
 
-static void cptvf_clear_irde_intr(struct cpt_vf *cptvf)
-{
-	union cptx_vqx_misc_int vqx_misc_int;
+अटल व्योम cptvf_clear_irde_पूर्णांकr(काष्ठा cpt_vf *cptvf)
+अणु
+	जोड़ cptx_vqx_misc_पूर्णांक vqx_misc_पूर्णांक;
 
-	vqx_misc_int.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_misc_पूर्णांक.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 					CPTX_VQX_MISC_INT(0, 0));
-	/* W1C for the VF */
-	vqx_misc_int.s.irde = 1;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_MISC_INT(0, 0),
-			vqx_misc_int.u);
-}
+	/* W1C क्रम the VF */
+	vqx_misc_पूर्णांक.s.irde = 1;
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_MISC_INT(0, 0),
+			vqx_misc_पूर्णांक.u);
+पूर्ण
 
-static void cptvf_clear_nwrp_intr(struct cpt_vf *cptvf)
-{
-	union cptx_vqx_misc_int vqx_misc_int;
+अटल व्योम cptvf_clear_nwrp_पूर्णांकr(काष्ठा cpt_vf *cptvf)
+अणु
+	जोड़ cptx_vqx_misc_पूर्णांक vqx_misc_पूर्णांक;
 
-	vqx_misc_int.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_misc_पूर्णांक.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 					CPTX_VQX_MISC_INT(0, 0));
-	/* W1C for the VF */
-	vqx_misc_int.s.nwrp = 1;
-	cpt_write_csr64(cptvf->reg_base,
-			CPTX_VQX_MISC_INT(0, 0), vqx_misc_int.u);
-}
+	/* W1C क्रम the VF */
+	vqx_misc_पूर्णांक.s.nwrp = 1;
+	cpt_ग_लिखो_csr64(cptvf->reg_base,
+			CPTX_VQX_MISC_INT(0, 0), vqx_misc_पूर्णांक.u);
+पूर्ण
 
-static void cptvf_clear_mbox_intr(struct cpt_vf *cptvf)
-{
-	union cptx_vqx_misc_int vqx_misc_int;
+अटल व्योम cptvf_clear_mbox_पूर्णांकr(काष्ठा cpt_vf *cptvf)
+अणु
+	जोड़ cptx_vqx_misc_पूर्णांक vqx_misc_पूर्णांक;
 
-	vqx_misc_int.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_misc_पूर्णांक.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 					CPTX_VQX_MISC_INT(0, 0));
-	/* W1C for the VF */
-	vqx_misc_int.s.mbox = 1;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_MISC_INT(0, 0),
-			vqx_misc_int.u);
-}
+	/* W1C क्रम the VF */
+	vqx_misc_पूर्णांक.s.mbox = 1;
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_MISC_INT(0, 0),
+			vqx_misc_पूर्णांक.u);
+पूर्ण
 
-static void cptvf_clear_swerr_intr(struct cpt_vf *cptvf)
-{
-	union cptx_vqx_misc_int vqx_misc_int;
+अटल व्योम cptvf_clear_swerr_पूर्णांकr(काष्ठा cpt_vf *cptvf)
+अणु
+	जोड़ cptx_vqx_misc_पूर्णांक vqx_misc_पूर्णांक;
 
-	vqx_misc_int.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_misc_पूर्णांक.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 					CPTX_VQX_MISC_INT(0, 0));
-	/* W1C for the VF */
-	vqx_misc_int.s.swerr = 1;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_MISC_INT(0, 0),
-			vqx_misc_int.u);
-}
+	/* W1C क्रम the VF */
+	vqx_misc_पूर्णांक.s.swerr = 1;
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_MISC_INT(0, 0),
+			vqx_misc_पूर्णांक.u);
+पूर्ण
 
-static u64 cptvf_read_vf_misc_intr_status(struct cpt_vf *cptvf)
-{
-	return cpt_read_csr64(cptvf->reg_base, CPTX_VQX_MISC_INT(0, 0));
-}
+अटल u64 cptvf_पढ़ो_vf_misc_पूर्णांकr_status(काष्ठा cpt_vf *cptvf)
+अणु
+	वापस cpt_पढ़ो_csr64(cptvf->reg_base, CPTX_VQX_MISC_INT(0, 0));
+पूर्ण
 
-static irqreturn_t cptvf_misc_intr_handler(int irq, void *cptvf_irq)
-{
-	struct cpt_vf *cptvf = (struct cpt_vf *)cptvf_irq;
-	struct pci_dev *pdev = cptvf->pdev;
-	u64 intr;
+अटल irqवापस_t cptvf_misc_पूर्णांकr_handler(पूर्णांक irq, व्योम *cptvf_irq)
+अणु
+	काष्ठा cpt_vf *cptvf = (काष्ठा cpt_vf *)cptvf_irq;
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	u64 पूर्णांकr;
 
-	intr = cptvf_read_vf_misc_intr_status(cptvf);
-	/*Check for MISC interrupt types*/
-	if (likely(intr & CPT_VF_INTR_MBOX_MASK)) {
+	पूर्णांकr = cptvf_पढ़ो_vf_misc_पूर्णांकr_status(cptvf);
+	/*Check क्रम MISC पूर्णांकerrupt types*/
+	अगर (likely(पूर्णांकr & CPT_VF_INTR_MBOX_MASK)) अणु
 		dev_dbg(&pdev->dev, "Mailbox interrupt 0x%llx on CPT VF %d\n",
-			intr, cptvf->vfid);
-		cptvf_handle_mbox_intr(cptvf);
-		cptvf_clear_mbox_intr(cptvf);
-	} else if (unlikely(intr & CPT_VF_INTR_DOVF_MASK)) {
-		cptvf_clear_dovf_intr(cptvf);
-		/*Clear doorbell count*/
-		cptvf_write_vq_doorbell(cptvf, 0);
+			पूर्णांकr, cptvf->vfid);
+		cptvf_handle_mbox_पूर्णांकr(cptvf);
+		cptvf_clear_mbox_पूर्णांकr(cptvf);
+	पूर्ण अन्यथा अगर (unlikely(पूर्णांकr & CPT_VF_INTR_DOVF_MASK)) अणु
+		cptvf_clear_करोvf_पूर्णांकr(cptvf);
+		/*Clear करोorbell count*/
+		cptvf_ग_लिखो_vq_करोorbell(cptvf, 0);
 		dev_err(&pdev->dev, "Doorbell overflow error interrupt 0x%llx on CPT VF %d\n",
-			intr, cptvf->vfid);
-	} else if (unlikely(intr & CPT_VF_INTR_IRDE_MASK)) {
-		cptvf_clear_irde_intr(cptvf);
+			पूर्णांकr, cptvf->vfid);
+	पूर्ण अन्यथा अगर (unlikely(पूर्णांकr & CPT_VF_INTR_IRDE_MASK)) अणु
+		cptvf_clear_irde_पूर्णांकr(cptvf);
 		dev_err(&pdev->dev, "Instruction NCB read error interrupt 0x%llx on CPT VF %d\n",
-			intr, cptvf->vfid);
-	} else if (unlikely(intr & CPT_VF_INTR_NWRP_MASK)) {
-		cptvf_clear_nwrp_intr(cptvf);
+			पूर्णांकr, cptvf->vfid);
+	पूर्ण अन्यथा अगर (unlikely(पूर्णांकr & CPT_VF_INTR_NWRP_MASK)) अणु
+		cptvf_clear_nwrp_पूर्णांकr(cptvf);
 		dev_err(&pdev->dev, "NCB response write error interrupt 0x%llx on CPT VF %d\n",
-			intr, cptvf->vfid);
-	} else if (unlikely(intr & CPT_VF_INTR_SERR_MASK)) {
-		cptvf_clear_swerr_intr(cptvf);
+			पूर्णांकr, cptvf->vfid);
+	पूर्ण अन्यथा अगर (unlikely(पूर्णांकr & CPT_VF_INTR_SERR_MASK)) अणु
+		cptvf_clear_swerr_पूर्णांकr(cptvf);
 		dev_err(&pdev->dev, "Software error interrupt 0x%llx on CPT VF %d\n",
-			intr, cptvf->vfid);
-	} else {
+			पूर्णांकr, cptvf->vfid);
+	पूर्ण अन्यथा अणु
 		dev_err(&pdev->dev, "Unhandled interrupt in CPT VF %d\n",
 			cptvf->vfid);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static inline struct cptvf_wqe *get_cptvf_vq_wqe(struct cpt_vf *cptvf,
-						 int qno)
-{
-	struct cptvf_wqe_info *nwqe_info;
+अटल अंतरभूत काष्ठा cptvf_wqe *get_cptvf_vq_wqe(काष्ठा cpt_vf *cptvf,
+						 पूर्णांक qno)
+अणु
+	काष्ठा cptvf_wqe_info *nwqe_info;
 
-	if (unlikely(qno >= cptvf->nr_queues))
-		return NULL;
-	nwqe_info = (struct cptvf_wqe_info *)cptvf->wqe_info;
+	अगर (unlikely(qno >= cptvf->nr_queues))
+		वापस शून्य;
+	nwqe_info = (काष्ठा cptvf_wqe_info *)cptvf->wqe_info;
 
-	return &nwqe_info->vq_wqe[qno];
-}
+	वापस &nwqe_info->vq_wqe[qno];
+पूर्ण
 
-static inline u32 cptvf_read_vq_done_count(struct cpt_vf *cptvf)
-{
-	union cptx_vqx_done vqx_done;
+अटल अंतरभूत u32 cptvf_पढ़ो_vq_करोne_count(काष्ठा cpt_vf *cptvf)
+अणु
+	जोड़ cptx_vqx_करोne vqx_करोne;
 
-	vqx_done.u = cpt_read_csr64(cptvf->reg_base, CPTX_VQX_DONE(0, 0));
-	return vqx_done.s.done;
-}
+	vqx_करोne.u = cpt_पढ़ो_csr64(cptvf->reg_base, CPTX_VQX_DONE(0, 0));
+	वापस vqx_करोne.s.करोne;
+पूर्ण
 
-static inline void cptvf_write_vq_done_ack(struct cpt_vf *cptvf,
+अटल अंतरभूत व्योम cptvf_ग_लिखो_vq_करोne_ack(काष्ठा cpt_vf *cptvf,
 					   u32 ackcnt)
-{
-	union cptx_vqx_done_ack vqx_dack_cnt;
+अणु
+	जोड़ cptx_vqx_करोne_ack vqx_dack_cnt;
 
-	vqx_dack_cnt.u = cpt_read_csr64(cptvf->reg_base,
+	vqx_dack_cnt.u = cpt_पढ़ो_csr64(cptvf->reg_base,
 					CPTX_VQX_DONE_ACK(0, 0));
-	vqx_dack_cnt.s.done_ack = ackcnt;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_DONE_ACK(0, 0),
+	vqx_dack_cnt.s.करोne_ack = ackcnt;
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_DONE_ACK(0, 0),
 			vqx_dack_cnt.u);
-}
+पूर्ण
 
-static irqreturn_t cptvf_done_intr_handler(int irq, void *cptvf_irq)
-{
-	struct cpt_vf *cptvf = (struct cpt_vf *)cptvf_irq;
-	struct pci_dev *pdev = cptvf->pdev;
+अटल irqवापस_t cptvf_करोne_पूर्णांकr_handler(पूर्णांक irq, व्योम *cptvf_irq)
+अणु
+	काष्ठा cpt_vf *cptvf = (काष्ठा cpt_vf *)cptvf_irq;
+	काष्ठा pci_dev *pdev = cptvf->pdev;
 	/* Read the number of completions */
-	u32 intr = cptvf_read_vq_done_count(cptvf);
+	u32 पूर्णांकr = cptvf_पढ़ो_vq_करोne_count(cptvf);
 
-	if (intr) {
-		struct cptvf_wqe *wqe;
+	अगर (पूर्णांकr) अणु
+		काष्ठा cptvf_wqe *wqe;
 
 		/* Acknowledge the number of
-		 * scheduled completions for processing
+		 * scheduled completions क्रम processing
 		 */
-		cptvf_write_vq_done_ack(cptvf, intr);
+		cptvf_ग_लिखो_vq_करोne_ack(cptvf, पूर्णांकr);
 		wqe = get_cptvf_vq_wqe(cptvf, 0);
-		if (unlikely(!wqe)) {
+		अगर (unlikely(!wqe)) अणु
 			dev_err(&pdev->dev, "No work to schedule for VF (%d)",
 				cptvf->vfid);
-			return IRQ_NONE;
-		}
+			वापस IRQ_NONE;
+		पूर्ण
 		tasklet_hi_schedule(&wqe->twork);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void cptvf_set_irq_affinity(struct cpt_vf *cptvf, int vec)
-{
-	struct pci_dev *pdev = cptvf->pdev;
-	int cpu;
+अटल व्योम cptvf_set_irq_affinity(काष्ठा cpt_vf *cptvf, पूर्णांक vec)
+अणु
+	काष्ठा pci_dev *pdev = cptvf->pdev;
+	पूर्णांक cpu;
 
-	if (!zalloc_cpumask_var(&cptvf->affinity_mask[vec],
-				GFP_KERNEL)) {
+	अगर (!zalloc_cpumask_var(&cptvf->affinity_mask[vec],
+				GFP_KERNEL)) अणु
 		dev_err(&pdev->dev, "Allocation failed for affinity_mask for VF %d",
 			cptvf->vfid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cpu = cptvf->vfid % num_online_cpus();
-	cpumask_set_cpu(cpumask_local_spread(cpu, cptvf->node),
+	cpumask_set_cpu(cpumask_local_spपढ़ो(cpu, cptvf->node),
 			cptvf->affinity_mask[vec]);
-	irq_set_affinity_hint(pci_irq_vector(pdev, vec),
+	irq_set_affinity_hपूर्णांक(pci_irq_vector(pdev, vec),
 			cptvf->affinity_mask[vec]);
-}
+पूर्ण
 
-static void cptvf_write_vq_saddr(struct cpt_vf *cptvf, u64 val)
-{
-	union cptx_vqx_saddr vqx_saddr;
+अटल व्योम cptvf_ग_लिखो_vq_saddr(काष्ठा cpt_vf *cptvf, u64 val)
+अणु
+	जोड़ cptx_vqx_saddr vqx_saddr;
 
 	vqx_saddr.u = val;
-	cpt_write_csr64(cptvf->reg_base, CPTX_VQX_SADDR(0, 0), vqx_saddr.u);
-}
+	cpt_ग_लिखो_csr64(cptvf->reg_base, CPTX_VQX_SADDR(0, 0), vqx_saddr.u);
+पूर्ण
 
-static void cptvf_device_init(struct cpt_vf *cptvf)
-{
+अटल व्योम cptvf_device_init(काष्ठा cpt_vf *cptvf)
+अणु
 	u64 base_addr = 0;
 
 	/* Disable the VQ */
-	cptvf_write_vq_ctl(cptvf, 0);
-	/* Reset the doorbell */
-	cptvf_write_vq_doorbell(cptvf, 0);
+	cptvf_ग_लिखो_vq_ctl(cptvf, 0);
+	/* Reset the करोorbell */
+	cptvf_ग_लिखो_vq_करोorbell(cptvf, 0);
 	/* Clear inflight */
-	cptvf_write_vq_inprog(cptvf, 0);
+	cptvf_ग_लिखो_vq_inprog(cptvf, 0);
 	/* Write VQ SADDR */
-	/* TODO: for now only one queue, so hard coded */
+	/* TODO: क्रम now only one queue, so hard coded */
 	base_addr = (u64)(cptvf->cqinfo.queue[0].qhead->dma_addr);
-	cptvf_write_vq_saddr(cptvf, base_addr);
-	/* Configure timerhold / coalescence */
-	cptvf_write_vq_done_timewait(cptvf, CPT_TIMER_THOLD);
-	cptvf_write_vq_done_numwait(cptvf, 1);
+	cptvf_ग_लिखो_vq_saddr(cptvf, base_addr);
+	/* Configure समयrhold / coalescence */
+	cptvf_ग_लिखो_vq_करोne_समयरुको(cptvf, CPT_TIMER_THOLD);
+	cptvf_ग_लिखो_vq_करोne_numरुको(cptvf, 1);
 	/* Enable the VQ */
-	cptvf_write_vq_ctl(cptvf, 1);
-	/* Flag the VF ready */
+	cptvf_ग_लिखो_vq_ctl(cptvf, 1);
+	/* Flag the VF पढ़ोy */
 	cptvf->flags |= CPT_FLAG_DEVICE_READY;
-}
+पूर्ण
 
-static int cptvf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	struct device *dev = &pdev->dev;
-	struct cpt_vf *cptvf;
-	int    err;
+अटल पूर्णांक cptvf_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा cpt_vf *cptvf;
+	पूर्णांक    err;
 
-	cptvf = devm_kzalloc(dev, sizeof(*cptvf), GFP_KERNEL);
-	if (!cptvf)
-		return -ENOMEM;
+	cptvf = devm_kzalloc(dev, माप(*cptvf), GFP_KERNEL);
+	अगर (!cptvf)
+		वापस -ENOMEM;
 
 	pci_set_drvdata(pdev, cptvf);
 	cptvf->pdev = pdev;
 	err = pci_enable_device(pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Failed to enable PCI device\n");
-		pci_set_drvdata(pdev, NULL);
-		return err;
-	}
+		pci_set_drvdata(pdev, शून्य);
+		वापस err;
+	पूर्ण
 
 	err = pci_request_regions(pdev, DRV_NAME);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "PCI request regions failed 0x%x\n", err);
-		goto cptvf_err_disable_device;
-	}
+		जाओ cptvf_err_disable_device;
+	पूर्ण
 	/* Mark as VF driver */
 	cptvf->flags |= CPT_FLAG_VF_DRIVER;
 	err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(48));
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Unable to get usable 48-bit DMA configuration\n");
-		goto cptvf_err_release_regions;
-	}
+		जाओ cptvf_err_release_regions;
+	पूर्ण
 
-	/* MAP PF's configuration registers */
+	/* MAP PF's configuration रेजिस्टरs */
 	cptvf->reg_base = pcim_iomap(pdev, 0, 0);
-	if (!cptvf->reg_base) {
+	अगर (!cptvf->reg_base) अणु
 		dev_err(dev, "Cannot map config register space, aborting\n");
 		err = -ENOMEM;
-		goto cptvf_err_release_regions;
-	}
+		जाओ cptvf_err_release_regions;
+	पूर्ण
 
 	cptvf->node = dev_to_node(&pdev->dev);
 	err = pci_alloc_irq_vectors(pdev, CPT_VF_MSIX_VECTORS,
 			CPT_VF_MSIX_VECTORS, PCI_IRQ_MSIX);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "Request for #%d msix vectors failed\n",
 			CPT_VF_MSIX_VECTORS);
-		goto cptvf_err_release_regions;
-	}
+		जाओ cptvf_err_release_regions;
+	पूर्ण
 
 	err = request_irq(pci_irq_vector(pdev, CPT_VF_INT_VEC_E_MISC),
-			  cptvf_misc_intr_handler, 0, "CPT VF misc intr",
+			  cptvf_misc_पूर्णांकr_handler, 0, "CPT VF misc intr",
 			  cptvf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Request misc irq failed");
-		goto cptvf_free_vectors;
-	}
+		जाओ cptvf_मुक्त_vectors;
+	पूर्ण
 
-	/* Enable mailbox interrupt */
-	cptvf_enable_mbox_interrupts(cptvf);
-	cptvf_enable_swerr_interrupts(cptvf);
+	/* Enable mailbox पूर्णांकerrupt */
+	cptvf_enable_mbox_पूर्णांकerrupts(cptvf);
+	cptvf_enable_swerr_पूर्णांकerrupts(cptvf);
 
-	/* Check ready with PF */
-	/* Gets chip ID / device Id from PF if ready */
-	err = cptvf_check_pf_ready(cptvf);
-	if (err) {
+	/* Check पढ़ोy with PF */
+	/* Gets chip ID / device Id from PF अगर पढ़ोy */
+	err = cptvf_check_pf_पढ़ोy(cptvf);
+	अगर (err) अणु
 		dev_err(dev, "PF not responding to READY msg");
-		goto cptvf_free_misc_irq;
-	}
+		जाओ cptvf_मुक्त_misc_irq;
+	पूर्ण
 
 	/* CPT VF software resources initialization */
 	cptvf->cqinfo.qchunksize = CPT_CMD_QCHUNK_SIZE;
 	err = cptvf_sw_init(cptvf, CPT_CMD_QLEN, CPT_NUM_QS_PER_VF);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "cptvf_sw_init() failed");
-		goto cptvf_free_misc_irq;
-	}
+		जाओ cptvf_मुक्त_misc_irq;
+	पूर्ण
 	/* Convey VQ LEN to PF */
 	err = cptvf_send_vq_size_msg(cptvf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "PF not responding to QLEN msg");
-		goto cptvf_free_misc_irq;
-	}
+		जाओ cptvf_मुक्त_misc_irq;
+	पूर्ण
 
 	/* CPT VF device initialization */
 	cptvf_device_init(cptvf);
 	/* Send msg to PF to assign currnet Q to required group */
 	cptvf->vfgrp = 1;
 	err = cptvf_send_vf_to_grp_msg(cptvf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "PF not responding to VF_GRP msg");
-		goto cptvf_free_misc_irq;
-	}
+		जाओ cptvf_मुक्त_misc_irq;
+	पूर्ण
 
 	cptvf->priority = 1;
 	err = cptvf_send_vf_priority_msg(cptvf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "PF not responding to VF_PRIO msg");
-		goto cptvf_free_misc_irq;
-	}
+		जाओ cptvf_मुक्त_misc_irq;
+	पूर्ण
 
 	err = request_irq(pci_irq_vector(pdev, CPT_VF_INT_VEC_E_DONE),
-			  cptvf_done_intr_handler, 0, "CPT VF done intr",
+			  cptvf_करोne_पूर्णांकr_handler, 0, "CPT VF done intr",
 			  cptvf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Request done irq failed\n");
-		goto cptvf_free_misc_irq;
-	}
+		जाओ cptvf_मुक्त_misc_irq;
+	पूर्ण
 
-	/* Enable mailbox interrupt */
-	cptvf_enable_done_interrupts(cptvf);
+	/* Enable mailbox पूर्णांकerrupt */
+	cptvf_enable_करोne_पूर्णांकerrupts(cptvf);
 
 	/* Set irq affinity masks */
 	cptvf_set_irq_affinity(cptvf, CPT_VF_INT_VEC_E_MISC);
 	cptvf_set_irq_affinity(cptvf, CPT_VF_INT_VEC_E_DONE);
 
 	err = cptvf_send_vf_up(cptvf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "PF not responding to UP msg");
-		goto cptvf_free_irq_affinity;
-	}
+		जाओ cptvf_मुक्त_irq_affinity;
+	पूर्ण
 	err = cvm_crypto_init(cptvf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Algorithm register failed\n");
-		goto cptvf_free_irq_affinity;
-	}
-	return 0;
+		जाओ cptvf_मुक्त_irq_affinity;
+	पूर्ण
+	वापस 0;
 
-cptvf_free_irq_affinity:
-	cptvf_free_irq_affinity(cptvf, CPT_VF_INT_VEC_E_DONE);
-	cptvf_free_irq_affinity(cptvf, CPT_VF_INT_VEC_E_MISC);
-cptvf_free_misc_irq:
-	free_irq(pci_irq_vector(pdev, CPT_VF_INT_VEC_E_MISC), cptvf);
-cptvf_free_vectors:
-	pci_free_irq_vectors(cptvf->pdev);
+cptvf_मुक्त_irq_affinity:
+	cptvf_मुक्त_irq_affinity(cptvf, CPT_VF_INT_VEC_E_DONE);
+	cptvf_मुक्त_irq_affinity(cptvf, CPT_VF_INT_VEC_E_MISC);
+cptvf_मुक्त_misc_irq:
+	मुक्त_irq(pci_irq_vector(pdev, CPT_VF_INT_VEC_E_MISC), cptvf);
+cptvf_मुक्त_vectors:
+	pci_मुक्त_irq_vectors(cptvf->pdev);
 cptvf_err_release_regions:
 	pci_release_regions(pdev);
 cptvf_err_disable_device:
 	pci_disable_device(pdev);
-	pci_set_drvdata(pdev, NULL);
+	pci_set_drvdata(pdev, शून्य);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void cptvf_remove(struct pci_dev *pdev)
-{
-	struct cpt_vf *cptvf = pci_get_drvdata(pdev);
+अटल व्योम cptvf_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा cpt_vf *cptvf = pci_get_drvdata(pdev);
 
-	if (!cptvf) {
+	अगर (!cptvf) अणु
 		dev_err(&pdev->dev, "Invalid CPT-VF device\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Convey DOWN to PF */
-	if (cptvf_send_vf_down(cptvf)) {
+	अगर (cptvf_send_vf_करोwn(cptvf)) अणु
 		dev_err(&pdev->dev, "PF not responding to DOWN msg");
-	} else {
-		cptvf_free_irq_affinity(cptvf, CPT_VF_INT_VEC_E_DONE);
-		cptvf_free_irq_affinity(cptvf, CPT_VF_INT_VEC_E_MISC);
-		free_irq(pci_irq_vector(pdev, CPT_VF_INT_VEC_E_DONE), cptvf);
-		free_irq(pci_irq_vector(pdev, CPT_VF_INT_VEC_E_MISC), cptvf);
-		pci_free_irq_vectors(cptvf->pdev);
+	पूर्ण अन्यथा अणु
+		cptvf_मुक्त_irq_affinity(cptvf, CPT_VF_INT_VEC_E_DONE);
+		cptvf_मुक्त_irq_affinity(cptvf, CPT_VF_INT_VEC_E_MISC);
+		मुक्त_irq(pci_irq_vector(pdev, CPT_VF_INT_VEC_E_DONE), cptvf);
+		मुक्त_irq(pci_irq_vector(pdev, CPT_VF_INT_VEC_E_MISC), cptvf);
+		pci_मुक्त_irq_vectors(cptvf->pdev);
 		cptvf_sw_cleanup(cptvf);
-		pci_set_drvdata(pdev, NULL);
+		pci_set_drvdata(pdev, शून्य);
 		pci_release_regions(pdev);
 		pci_disable_device(pdev);
-		cvm_crypto_exit();
-	}
-}
+		cvm_crypto_निकास();
+	पूर्ण
+पूर्ण
 
-static void cptvf_shutdown(struct pci_dev *pdev)
-{
-	cptvf_remove(pdev);
-}
+अटल व्योम cptvf_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
+	cptvf_हटाओ(pdev);
+पूर्ण
 
 /* Supported devices */
-static const struct pci_device_id cptvf_id_table[] = {
-	{PCI_VDEVICE(CAVIUM, CPT_81XX_PCI_VF_DEVICE_ID), 0},
-	{ 0, }  /* end of table */
-};
+अटल स्थिर काष्ठा pci_device_id cptvf_id_table[] = अणु
+	अणुPCI_VDEVICE(CAVIUM, CPT_81XX_PCI_VF_DEVICE_ID), 0पूर्ण,
+	अणु 0, पूर्ण  /* end of table */
+पूर्ण;
 
-static struct pci_driver cptvf_pci_driver = {
+अटल काष्ठा pci_driver cptvf_pci_driver = अणु
 	.name = DRV_NAME,
 	.id_table = cptvf_id_table,
 	.probe = cptvf_probe,
-	.remove = cptvf_remove,
-	.shutdown = cptvf_shutdown,
-};
+	.हटाओ = cptvf_हटाओ,
+	.shutकरोwn = cptvf_shutकरोwn,
+पूर्ण;
 
 module_pci_driver(cptvf_pci_driver);
 

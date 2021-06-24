@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AMD Secure Processor driver
  *
@@ -9,18 +10,18 @@
  * Author: Brijesh Singh <brijesh.singh@amd.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/kthread.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <linux/spinlock_types.h>
-#include <linux/types.h>
-#include <linux/ccp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/spinlock_types.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ccp.h>
 
-#include "ccp-dev.h"
-#include "sp-dev.h"
+#समावेश "ccp-dev.h"
+#समावेश "sp-dev.h"
 
 MODULE_AUTHOR("Tom Lendacky <thomas.lendacky@amd.com>");
 MODULE_AUTHOR("Gary R Hook <gary.hook@amd.com>");
@@ -28,272 +29,272 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION("1.1.0");
 MODULE_DESCRIPTION("AMD Secure Processor driver");
 
-/* List of SPs, SP count, read-write access lock, and access functions
+/* List of SPs, SP count, पढ़ो-ग_लिखो access lock, and access functions
  *
- * Lock structure: get sp_unit_lock for reading whenever we need to
+ * Lock काष्ठाure: get sp_unit_lock क्रम पढ़ोing whenever we need to
  * examine the SP list.
  */
-static DEFINE_RWLOCK(sp_unit_lock);
-static LIST_HEAD(sp_units);
+अटल DEFINE_RWLOCK(sp_unit_lock);
+अटल LIST_HEAD(sp_units);
 
 /* Ever-increasing value to produce unique unit numbers */
-static atomic_t sp_ordinal;
+अटल atomic_t sp_ordinal;
 
-static void sp_add_device(struct sp_device *sp)
-{
-	unsigned long flags;
+अटल व्योम sp_add_device(काष्ठा sp_device *sp)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	write_lock_irqsave(&sp_unit_lock, flags);
+	ग_लिखो_lock_irqsave(&sp_unit_lock, flags);
 
 	list_add_tail(&sp->entry, &sp_units);
 
-	write_unlock_irqrestore(&sp_unit_lock, flags);
-}
+	ग_लिखो_unlock_irqrestore(&sp_unit_lock, flags);
+पूर्ण
 
-static void sp_del_device(struct sp_device *sp)
-{
-	unsigned long flags;
+अटल व्योम sp_del_device(काष्ठा sp_device *sp)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	write_lock_irqsave(&sp_unit_lock, flags);
+	ग_लिखो_lock_irqsave(&sp_unit_lock, flags);
 
 	list_del(&sp->entry);
 
-	write_unlock_irqrestore(&sp_unit_lock, flags);
-}
+	ग_लिखो_unlock_irqrestore(&sp_unit_lock, flags);
+पूर्ण
 
-static irqreturn_t sp_irq_handler(int irq, void *data)
-{
-	struct sp_device *sp = data;
+अटल irqवापस_t sp_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा sp_device *sp = data;
 
-	if (sp->ccp_irq_handler)
+	अगर (sp->ccp_irq_handler)
 		sp->ccp_irq_handler(irq, sp->ccp_irq_data);
 
-	if (sp->psp_irq_handler)
+	अगर (sp->psp_irq_handler)
 		sp->psp_irq_handler(irq, sp->psp_irq_data);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int sp_request_ccp_irq(struct sp_device *sp, irq_handler_t handler,
-		       const char *name, void *data)
-{
-	int ret;
+पूर्णांक sp_request_ccp_irq(काष्ठा sp_device *sp, irq_handler_t handler,
+		       स्थिर अक्षर *name, व्योम *data)
+अणु
+	पूर्णांक ret;
 
-	if ((sp->psp_irq == sp->ccp_irq) && sp->dev_vdata->psp_vdata) {
-		/* Need a common routine to manage all interrupts */
+	अगर ((sp->psp_irq == sp->ccp_irq) && sp->dev_vdata->psp_vdata) अणु
+		/* Need a common routine to manage all पूर्णांकerrupts */
 		sp->ccp_irq_data = data;
 		sp->ccp_irq_handler = handler;
 
-		if (!sp->irq_registered) {
+		अगर (!sp->irq_रेजिस्टरed) अणु
 			ret = request_irq(sp->ccp_irq, sp_irq_handler, 0,
 					  sp->name, sp);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			sp->irq_registered = true;
-		}
-	} else {
-		/* Each sub-device can manage it's own interrupt */
+			sp->irq_रेजिस्टरed = true;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Each sub-device can manage it's own पूर्णांकerrupt */
 		ret = request_irq(sp->ccp_irq, handler, 0, name, data);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sp_request_psp_irq(struct sp_device *sp, irq_handler_t handler,
-		       const char *name, void *data)
-{
-	int ret;
+पूर्णांक sp_request_psp_irq(काष्ठा sp_device *sp, irq_handler_t handler,
+		       स्थिर अक्षर *name, व्योम *data)
+अणु
+	पूर्णांक ret;
 
-	if ((sp->psp_irq == sp->ccp_irq) && sp->dev_vdata->ccp_vdata) {
-		/* Need a common routine to manage all interrupts */
+	अगर ((sp->psp_irq == sp->ccp_irq) && sp->dev_vdata->ccp_vdata) अणु
+		/* Need a common routine to manage all पूर्णांकerrupts */
 		sp->psp_irq_data = data;
 		sp->psp_irq_handler = handler;
 
-		if (!sp->irq_registered) {
+		अगर (!sp->irq_रेजिस्टरed) अणु
 			ret = request_irq(sp->psp_irq, sp_irq_handler, 0,
 					  sp->name, sp);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			sp->irq_registered = true;
-		}
-	} else {
-		/* Each sub-device can manage it's own interrupt */
+			sp->irq_रेजिस्टरed = true;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Each sub-device can manage it's own पूर्णांकerrupt */
 		ret = request_irq(sp->psp_irq, handler, 0, name, data);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void sp_free_ccp_irq(struct sp_device *sp, void *data)
-{
-	if ((sp->psp_irq == sp->ccp_irq) && sp->dev_vdata->psp_vdata) {
-		/* Using common routine to manage all interrupts */
-		if (!sp->psp_irq_handler) {
-			/* Nothing else using it, so free it */
-			free_irq(sp->ccp_irq, sp);
+व्योम sp_मुक्त_ccp_irq(काष्ठा sp_device *sp, व्योम *data)
+अणु
+	अगर ((sp->psp_irq == sp->ccp_irq) && sp->dev_vdata->psp_vdata) अणु
+		/* Using common routine to manage all पूर्णांकerrupts */
+		अगर (!sp->psp_irq_handler) अणु
+			/* Nothing अन्यथा using it, so मुक्त it */
+			मुक्त_irq(sp->ccp_irq, sp);
 
-			sp->irq_registered = false;
-		}
+			sp->irq_रेजिस्टरed = false;
+		पूर्ण
 
-		sp->ccp_irq_handler = NULL;
-		sp->ccp_irq_data = NULL;
-	} else {
-		/* Each sub-device can manage it's own interrupt */
-		free_irq(sp->ccp_irq, data);
-	}
-}
+		sp->ccp_irq_handler = शून्य;
+		sp->ccp_irq_data = शून्य;
+	पूर्ण अन्यथा अणु
+		/* Each sub-device can manage it's own पूर्णांकerrupt */
+		मुक्त_irq(sp->ccp_irq, data);
+	पूर्ण
+पूर्ण
 
-void sp_free_psp_irq(struct sp_device *sp, void *data)
-{
-	if ((sp->psp_irq == sp->ccp_irq) && sp->dev_vdata->ccp_vdata) {
-		/* Using common routine to manage all interrupts */
-		if (!sp->ccp_irq_handler) {
-			/* Nothing else using it, so free it */
-			free_irq(sp->psp_irq, sp);
+व्योम sp_मुक्त_psp_irq(काष्ठा sp_device *sp, व्योम *data)
+अणु
+	अगर ((sp->psp_irq == sp->ccp_irq) && sp->dev_vdata->ccp_vdata) अणु
+		/* Using common routine to manage all पूर्णांकerrupts */
+		अगर (!sp->ccp_irq_handler) अणु
+			/* Nothing अन्यथा using it, so मुक्त it */
+			मुक्त_irq(sp->psp_irq, sp);
 
-			sp->irq_registered = false;
-		}
+			sp->irq_रेजिस्टरed = false;
+		पूर्ण
 
-		sp->psp_irq_handler = NULL;
-		sp->psp_irq_data = NULL;
-	} else {
-		/* Each sub-device can manage it's own interrupt */
-		free_irq(sp->psp_irq, data);
-	}
-}
+		sp->psp_irq_handler = शून्य;
+		sp->psp_irq_data = शून्य;
+	पूर्ण अन्यथा अणु
+		/* Each sub-device can manage it's own पूर्णांकerrupt */
+		मुक्त_irq(sp->psp_irq, data);
+	पूर्ण
+पूर्ण
 
 /**
- * sp_alloc_struct - allocate and initialize the sp_device struct
+ * sp_alloc_काष्ठा - allocate and initialize the sp_device काष्ठा
  *
- * @dev: device struct of the SP
+ * @dev: device काष्ठा of the SP
  */
-struct sp_device *sp_alloc_struct(struct device *dev)
-{
-	struct sp_device *sp;
+काष्ठा sp_device *sp_alloc_काष्ठा(काष्ठा device *dev)
+अणु
+	काष्ठा sp_device *sp;
 
-	sp = devm_kzalloc(dev, sizeof(*sp), GFP_KERNEL);
-	if (!sp)
-		return NULL;
+	sp = devm_kzalloc(dev, माप(*sp), GFP_KERNEL);
+	अगर (!sp)
+		वापस शून्य;
 
 	sp->dev = dev;
-	sp->ord = atomic_inc_return(&sp_ordinal);
-	snprintf(sp->name, SP_MAX_NAME_LEN, "sp-%u", sp->ord);
+	sp->ord = atomic_inc_वापस(&sp_ordinal);
+	snम_लिखो(sp->name, SP_MAX_NAME_LEN, "sp-%u", sp->ord);
 
-	return sp;
-}
+	वापस sp;
+पूर्ण
 
-int sp_init(struct sp_device *sp)
-{
+पूर्णांक sp_init(काष्ठा sp_device *sp)
+अणु
 	sp_add_device(sp);
 
-	if (sp->dev_vdata->ccp_vdata)
+	अगर (sp->dev_vdata->ccp_vdata)
 		ccp_dev_init(sp);
 
-	if (sp->dev_vdata->psp_vdata)
+	अगर (sp->dev_vdata->psp_vdata)
 		psp_dev_init(sp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void sp_destroy(struct sp_device *sp)
-{
-	if (sp->dev_vdata->ccp_vdata)
+व्योम sp_destroy(काष्ठा sp_device *sp)
+अणु
+	अगर (sp->dev_vdata->ccp_vdata)
 		ccp_dev_destroy(sp);
 
-	if (sp->dev_vdata->psp_vdata)
+	अगर (sp->dev_vdata->psp_vdata)
 		psp_dev_destroy(sp);
 
 	sp_del_device(sp);
-}
+पूर्ण
 
-int sp_suspend(struct sp_device *sp)
-{
-	if (sp->dev_vdata->ccp_vdata) {
+पूर्णांक sp_suspend(काष्ठा sp_device *sp)
+अणु
+	अगर (sp->dev_vdata->ccp_vdata) अणु
 		ccp_dev_suspend(sp);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sp_resume(struct sp_device *sp)
-{
-	if (sp->dev_vdata->ccp_vdata) {
+पूर्णांक sp_resume(काष्ठा sp_device *sp)
+अणु
+	अगर (sp->dev_vdata->ccp_vdata) अणु
 		ccp_dev_resume(sp);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct sp_device *sp_get_psp_master_device(void)
-{
-	struct sp_device *i, *ret = NULL;
-	unsigned long flags;
+काष्ठा sp_device *sp_get_psp_master_device(व्योम)
+अणु
+	काष्ठा sp_device *i, *ret = शून्य;
+	अचिन्हित दीर्घ flags;
 
-	write_lock_irqsave(&sp_unit_lock, flags);
-	if (list_empty(&sp_units))
-		goto unlock;
+	ग_लिखो_lock_irqsave(&sp_unit_lock, flags);
+	अगर (list_empty(&sp_units))
+		जाओ unlock;
 
-	list_for_each_entry(i, &sp_units, entry) {
-		if (i->psp_data && i->get_psp_master_device) {
+	list_क्रम_each_entry(i, &sp_units, entry) अणु
+		अगर (i->psp_data && i->get_psp_master_device) अणु
 			ret = i->get_psp_master_device();
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 unlock:
-	write_unlock_irqrestore(&sp_unit_lock, flags);
-	return ret;
-}
+	ग_लिखो_unlock_irqrestore(&sp_unit_lock, flags);
+	वापस ret;
+पूर्ण
 
-static int __init sp_mod_init(void)
-{
-#ifdef CONFIG_X86
-	int ret;
+अटल पूर्णांक __init sp_mod_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_X86
+	पूर्णांक ret;
 
 	ret = sp_pci_init();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-#ifdef CONFIG_CRYPTO_DEV_SP_PSP
+#अगर_घोषित CONFIG_CRYPTO_DEV_SP_PSP
 	psp_pci_init();
-#endif
+#पूर्ण_अगर
 
-	return 0;
-#endif
+	वापस 0;
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARM64
-	int ret;
+#अगर_घोषित CONFIG_ARM64
+	पूर्णांक ret;
 
-	ret = sp_platform_init();
-	if (ret)
-		return ret;
+	ret = sp_platक्रमm_init();
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-#endif
+	वापस 0;
+#पूर्ण_अगर
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void __exit sp_mod_exit(void)
-{
-#ifdef CONFIG_X86
+अटल व्योम __निकास sp_mod_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_X86
 
-#ifdef CONFIG_CRYPTO_DEV_SP_PSP
-	psp_pci_exit();
-#endif
+#अगर_घोषित CONFIG_CRYPTO_DEV_SP_PSP
+	psp_pci_निकास();
+#पूर्ण_अगर
 
-	sp_pci_exit();
-#endif
+	sp_pci_निकास();
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARM64
-	sp_platform_exit();
-#endif
-}
+#अगर_घोषित CONFIG_ARM64
+	sp_platक्रमm_निकास();
+#पूर्ण_अगर
+पूर्ण
 
 module_init(sp_mod_init);
-module_exit(sp_mod_exit);
+module_निकास(sp_mod_निकास);

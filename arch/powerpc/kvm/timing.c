@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright IBM Corp. 2008
  *
- * Authors: Hollis Blanchard <hollisb@us.ibm.com>
+ * Authors: Hollis Blanअक्षरd <hollisb@us.ibm.com>
  *          Christian Ehrhardt <ehrhardt@linux.vnet.ibm.com>
  */
 
-#include <linux/kvm_host.h>
-#include <linux/fs.h>
-#include <linux/seq_file.h>
-#include <linux/debugfs.h>
-#include <linux/uaccess.h>
-#include <linux/module.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/module.h>
 
-#include <asm/time.h>
-#include <asm-generic/div64.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र-generic/भाग64.h>
 
-#include "timing.h"
+#समावेश "timing.h"
 
-void kvmppc_init_timing_stats(struct kvm_vcpu *vcpu)
-{
-	int i;
+व्योम kvmppc_init_timing_stats(काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक i;
 
-	/* Take a lock to avoid concurrent updates */
-	mutex_lock(&vcpu->arch.exit_timing_lock);
+	/* Take a lock to aव्योम concurrent updates */
+	mutex_lock(&vcpu->arch.निकास_timing_lock);
 
-	vcpu->arch.last_exit_type = 0xDEAD;
-	for (i = 0; i < __NUMBER_OF_KVM_EXIT_TYPES; i++) {
+	vcpu->arch.last_निकास_type = 0xDEAD;
+	क्रम (i = 0; i < __NUMBER_OF_KVM_EXIT_TYPES; i++) अणु
 		vcpu->arch.timing_count_type[i] = 0;
 		vcpu->arch.timing_max_duration[i] = 0;
 		vcpu->arch.timing_min_duration[i] = 0xFFFFFFFF;
 		vcpu->arch.timing_sum_duration[i] = 0;
 		vcpu->arch.timing_sum_quad_duration[i] = 0;
-	}
-	vcpu->arch.timing_last_exit = 0;
-	vcpu->arch.timing_exit.tv64 = 0;
+	पूर्ण
+	vcpu->arch.timing_last_निकास = 0;
+	vcpu->arch.timing_निकास.tv64 = 0;
 	vcpu->arch.timing_last_enter.tv64 = 0;
 
-	mutex_unlock(&vcpu->arch.exit_timing_lock);
-}
+	mutex_unlock(&vcpu->arch.निकास_timing_lock);
+पूर्ण
 
-static void add_exit_timing(struct kvm_vcpu *vcpu, u64 duration, int type)
-{
+अटल व्योम add_निकास_timing(काष्ठा kvm_vcpu *vcpu, u64 duration, पूर्णांक type)
+अणु
 	u64 old;
 
-	mutex_lock(&vcpu->arch.exit_timing_lock);
+	mutex_lock(&vcpu->arch.निकास_timing_lock);
 
 	vcpu->arch.timing_count_type[type]++;
 
 	/* sum */
 	old = vcpu->arch.timing_sum_duration[type];
 	vcpu->arch.timing_sum_duration[type] += duration;
-	if (unlikely(old > vcpu->arch.timing_sum_duration[type])) {
-		printk(KERN_ERR"%s - wrap adding sum of durations"
+	अगर (unlikely(old > vcpu->arch.timing_sum_duration[type])) अणु
+		prपूर्णांकk(KERN_ERR"%s - wrap adding sum of durations"
 			" old %lld new %lld type %d exit # of type %d\n",
 			__func__, old, vcpu->arch.timing_sum_duration[type],
 			type, vcpu->arch.timing_count_type[type]);
-	}
+	पूर्ण
 
 	/* square sum */
 	old = vcpu->arch.timing_sum_quad_duration[type];
 	vcpu->arch.timing_sum_quad_duration[type] += (duration*duration);
-	if (unlikely(old > vcpu->arch.timing_sum_quad_duration[type])) {
-		printk(KERN_ERR"%s - wrap adding sum of squared durations"
+	अगर (unlikely(old > vcpu->arch.timing_sum_quad_duration[type])) अणु
+		prपूर्णांकk(KERN_ERR"%s - wrap adding sum of squared durations"
 			" old %lld new %lld type %d exit # of type %d\n",
 			__func__, old,
 			vcpu->arch.timing_sum_quad_duration[type],
 			type, vcpu->arch.timing_count_type[type]);
-	}
+	पूर्ण
 
 	/* set min/max */
-	if (unlikely(duration < vcpu->arch.timing_min_duration[type]))
+	अगर (unlikely(duration < vcpu->arch.timing_min_duration[type]))
 		vcpu->arch.timing_min_duration[type] = duration;
-	if (unlikely(duration > vcpu->arch.timing_max_duration[type]))
+	अगर (unlikely(duration > vcpu->arch.timing_max_duration[type]))
 		vcpu->arch.timing_max_duration[type] = duration;
 
-	mutex_unlock(&vcpu->arch.exit_timing_lock);
-}
+	mutex_unlock(&vcpu->arch.निकास_timing_lock);
+पूर्ण
 
-void kvmppc_update_timing_stats(struct kvm_vcpu *vcpu)
-{
-	u64 exit = vcpu->arch.timing_last_exit;
+व्योम kvmppc_update_timing_stats(काष्ठा kvm_vcpu *vcpu)
+अणु
+	u64 निकास = vcpu->arch.timing_last_निकास;
 	u64 enter = vcpu->arch.timing_last_enter.tv64;
 
-	/* save exit time, used next exit when the reenter time is known */
-	vcpu->arch.timing_last_exit = vcpu->arch.timing_exit.tv64;
+	/* save निकास समय, used next निकास when the reenter समय is known */
+	vcpu->arch.timing_last_निकास = vcpu->arch.timing_निकास.tv64;
 
-	if (unlikely(vcpu->arch.last_exit_type == 0xDEAD || exit == 0))
-		return; /* skip incomplete cycle (e.g. after reset) */
+	अगर (unlikely(vcpu->arch.last_निकास_type == 0xDEAD || निकास == 0))
+		वापस; /* skip incomplete cycle (e.g. after reset) */
 
-	/* update statistics for average and standard deviation */
-	add_exit_timing(vcpu, (enter - exit), vcpu->arch.last_exit_type);
-	/* enter -> timing_last_exit is time spent in guest - log this too */
-	add_exit_timing(vcpu, (vcpu->arch.timing_last_exit - enter),
+	/* update statistics क्रम average and standard deviation */
+	add_निकास_timing(vcpu, (enter - निकास), vcpu->arch.last_निकास_type);
+	/* enter -> timing_last_निकास is समय spent in guest - log this too */
+	add_निकास_timing(vcpu, (vcpu->arch.timing_last_निकास - enter),
 			TIMEINGUEST);
-}
+पूर्ण
 
-static const char *kvm_exit_names[__NUMBER_OF_KVM_EXIT_TYPES] = {
+अटल स्थिर अक्षर *kvm_निकास_names[__NUMBER_OF_KVM_EXIT_TYPES] = अणु
 	[MMIO_EXITS] =              "MMIO",
 	[SIGNAL_EXITS] =            "SIGNAL",
 	[ITLB_REAL_MISS_EXITS] =    "ITLBREAL",
@@ -124,101 +125,101 @@ static const char *kvm_exit_names[__NUMBER_OF_KVM_EXIT_TYPES] = {
 	[FP_UNAVAIL] =              "FP_UNAVAIL",
 	[DEBUG_EXITS] =             "DEBUG",
 	[TIMEINGUEST] =             "TIMEINGUEST"
-};
+पूर्ण;
 
-static int kvmppc_exit_timing_show(struct seq_file *m, void *private)
-{
-	struct kvm_vcpu *vcpu = m->private;
-	int i;
+अटल पूर्णांक kvmppc_निकास_timing_show(काष्ठा seq_file *m, व्योम *निजी)
+अणु
+	काष्ठा kvm_vcpu *vcpu = m->निजी;
+	पूर्णांक i;
 	u64 min, max, sum, sum_quad;
 
-	seq_puts(m, "type	count	min	max	sum	sum_squared\n");
+	seq_माला_दो(m, "type	count	min	max	sum	sum_squared\n");
 
-	for (i = 0; i < __NUMBER_OF_KVM_EXIT_TYPES; i++) {
+	क्रम (i = 0; i < __NUMBER_OF_KVM_EXIT_TYPES; i++) अणु
 
 		min = vcpu->arch.timing_min_duration[i];
-		do_div(min, tb_ticks_per_usec);
+		करो_भाग(min, tb_ticks_per_usec);
 		max = vcpu->arch.timing_max_duration[i];
-		do_div(max, tb_ticks_per_usec);
+		करो_भाग(max, tb_ticks_per_usec);
 		sum = vcpu->arch.timing_sum_duration[i];
-		do_div(sum, tb_ticks_per_usec);
+		करो_भाग(sum, tb_ticks_per_usec);
 		sum_quad = vcpu->arch.timing_sum_quad_duration[i];
-		do_div(sum_quad, tb_ticks_per_usec);
+		करो_भाग(sum_quad, tb_ticks_per_usec);
 
-		seq_printf(m, "%12s	%10d	%10lld	%10lld	%20lld	%20lld\n",
-			kvm_exit_names[i],
+		seq_म_लिखो(m, "%12s	%10d	%10lld	%10lld	%20lld	%20lld\n",
+			kvm_निकास_names[i],
 			vcpu->arch.timing_count_type[i],
 			min,
 			max,
 			sum,
 			sum_quad);
 
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Write 'c' to clear the timing statistics. */
-static ssize_t kvmppc_exit_timing_write(struct file *file,
-				       const char __user *user_buf,
-				       size_t count, loff_t *ppos)
-{
-	int err = -EINVAL;
-	char c;
+अटल sमाप_प्रकार kvmppc_निकास_timing_ग_लिखो(काष्ठा file *file,
+				       स्थिर अक्षर __user *user_buf,
+				       माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक err = -EINVAL;
+	अक्षर c;
 
-	if (count > 1) {
-		goto done;
-	}
+	अगर (count > 1) अणु
+		जाओ करोne;
+	पूर्ण
 
-	if (get_user(c, user_buf)) {
+	अगर (get_user(c, user_buf)) अणु
 		err = -EFAULT;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (c == 'c') {
-		struct seq_file *seqf = file->private_data;
-		struct kvm_vcpu *vcpu = seqf->private;
-		/* Write does not affect our buffers previously generated with
+	अगर (c == 'c') अणु
+		काष्ठा seq_file *seqf = file->निजी_data;
+		काष्ठा kvm_vcpu *vcpu = seqf->निजी;
+		/* Write करोes not affect our buffers previously generated with
 		 * show. seq_file is locked here to prevent races of init with
 		 * a show call */
 		mutex_lock(&seqf->lock);
 		kvmppc_init_timing_stats(vcpu);
 		mutex_unlock(&seqf->lock);
 		err = count;
-	}
+	पूर्ण
 
-done:
-	return err;
-}
+करोne:
+	वापस err;
+पूर्ण
 
-static int kvmppc_exit_timing_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, kvmppc_exit_timing_show, inode->i_private);
-}
+अटल पूर्णांक kvmppc_निकास_timing_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, kvmppc_निकास_timing_show, inode->i_निजी);
+पूर्ण
 
-static const struct file_operations kvmppc_exit_timing_fops = {
+अटल स्थिर काष्ठा file_operations kvmppc_निकास_timing_fops = अणु
 	.owner   = THIS_MODULE,
-	.open    = kvmppc_exit_timing_open,
-	.read    = seq_read,
-	.write   = kvmppc_exit_timing_write,
+	.खोलो    = kvmppc_निकास_timing_खोलो,
+	.पढ़ो    = seq_पढ़ो,
+	.ग_लिखो   = kvmppc_निकास_timing_ग_लिखो,
 	.llseek  = seq_lseek,
 	.release = single_release,
-};
+पूर्ण;
 
-void kvmppc_create_vcpu_debugfs(struct kvm_vcpu *vcpu, unsigned int id)
-{
-	static char dbg_fname[50];
-	struct dentry *debugfs_file;
+व्योम kvmppc_create_vcpu_debugfs(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक id)
+अणु
+	अटल अक्षर dbg_fname[50];
+	काष्ठा dentry *debugfs_file;
 
-	snprintf(dbg_fname, sizeof(dbg_fname), "vm%u_vcpu%u_timing",
+	snम_लिखो(dbg_fname, माप(dbg_fname), "vm%u_vcpu%u_timing",
 		 current->pid, id);
 	debugfs_file = debugfs_create_file(dbg_fname, 0666, kvm_debugfs_dir,
-						vcpu, &kvmppc_exit_timing_fops);
+						vcpu, &kvmppc_निकास_timing_fops);
 
-	vcpu->arch.debugfs_exit_timing = debugfs_file;
-}
+	vcpu->arch.debugfs_निकास_timing = debugfs_file;
+पूर्ण
 
-void kvmppc_remove_vcpu_debugfs(struct kvm_vcpu *vcpu)
-{
-	debugfs_remove(vcpu->arch.debugfs_exit_timing);
-	vcpu->arch.debugfs_exit_timing = NULL;
-}
+व्योम kvmppc_हटाओ_vcpu_debugfs(काष्ठा kvm_vcpu *vcpu)
+अणु
+	debugfs_हटाओ(vcpu->arch.debugfs_निकास_timing);
+	vcpu->arch.debugfs_निकास_timing = शून्य;
+पूर्ण

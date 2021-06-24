@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * L2TP-over-IP socket for L2TPv3.
+ * L2TP-over-IP socket क्रम L2TPv3.
  *
  * Author: James Chapman <jchapman@katalix.com>
  */
-#ifndef _LINUX_L2TP_H_
-#define _LINUX_L2TP_H_
+#अगर_अघोषित _LINUX_L2TP_H_
+#घोषणा _LINUX_L2TP_H_
 
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <uapi/linux/l2tp.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
+#समावेश <uapi/linux/l2tp.h>
 
-#endif
+#पूर्ण_अगर

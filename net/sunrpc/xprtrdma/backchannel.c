@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2015-2020, Oracle and/or its affiliates.
  *
- * Support for reverse-direction RPCs on RPC/RDMA.
+ * Support क्रम reverse-direction RPCs on RPC/RDMA.
  */
 
-#include <linux/sunrpc/xprt.h>
-#include <linux/sunrpc/svc.h>
-#include <linux/sunrpc/svc_xprt.h>
-#include <linux/sunrpc/svc_rdma.h>
+#समावेश <linux/sunrpc/xprt.h>
+#समावेश <linux/sunrpc/svc.h>
+#समावेश <linux/sunrpc/svc_xprt.h>
+#समावेश <linux/sunrpc/svc_rdma.h>
 
-#include "xprt_rdma.h"
-#include <trace/events/rpcrdma.h>
+#समावेश "xprt_rdma.h"
+#समावेश <trace/events/rpcrdma.h>
 
-#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
 # define RPCDBG_FACILITY	RPCDBG_TRANS
-#endif
+#पूर्ण_अगर
 
-#undef RPCRDMA_BACKCHANNEL_DEBUG
+#अघोषित RPCRDMA_BACKCHANNEL_DEBUG
 
 /**
- * xprt_rdma_bc_setup - Pre-allocate resources for handling backchannel requests
+ * xprt_rdma_bc_setup - Pre-allocate resources क्रम handling backchannel requests
  * @xprt: transport associated with these backchannel resources
  * @reqs: number of concurrent incoming requests to expect
  *
- * Returns 0 on success; otherwise a negative errno
+ * Returns 0 on success; otherwise a negative त्रुटि_सं
  */
-int xprt_rdma_bc_setup(struct rpc_xprt *xprt, unsigned int reqs)
-{
-	struct rpcrdma_xprt *r_xprt = rpcx_to_rdmax(xprt);
+पूर्णांक xprt_rdma_bc_setup(काष्ठा rpc_xprt *xprt, अचिन्हित पूर्णांक reqs)
+अणु
+	काष्ठा rpcrdma_xprt *r_xprt = rpcx_to_rdmax(xprt);
 
 	r_xprt->rx_buf.rb_bc_srv_max_requests = RPCRDMA_BACKWARD_WRS >> 1;
 	trace_xprtrdma_cb_setup(r_xprt, reqs);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * xprt_rdma_bc_maxpayload - Return maximum backchannel message size
@@ -41,26 +42,26 @@ int xprt_rdma_bc_setup(struct rpc_xprt *xprt, unsigned int reqs)
  *
  * Returns maximum size, in bytes, of a backchannel message
  */
-size_t xprt_rdma_bc_maxpayload(struct rpc_xprt *xprt)
-{
-	struct rpcrdma_xprt *r_xprt = rpcx_to_rdmax(xprt);
-	struct rpcrdma_ep *ep = r_xprt->rx_ep;
-	size_t maxmsg;
+माप_प्रकार xprt_rdma_bc_maxpayload(काष्ठा rpc_xprt *xprt)
+अणु
+	काष्ठा rpcrdma_xprt *r_xprt = rpcx_to_rdmax(xprt);
+	काष्ठा rpcrdma_ep *ep = r_xprt->rx_ep;
+	माप_प्रकार maxmsg;
 
-	maxmsg = min_t(unsigned int, ep->re_inline_send, ep->re_inline_recv);
-	maxmsg = min_t(unsigned int, maxmsg, PAGE_SIZE);
-	return maxmsg - RPCRDMA_HDRLEN_MIN;
-}
+	maxmsg = min_t(अचिन्हित पूर्णांक, ep->re_अंतरभूत_send, ep->re_अंतरभूत_recv);
+	maxmsg = min_t(अचिन्हित पूर्णांक, maxmsg, PAGE_SIZE);
+	वापस maxmsg - RPCRDMA_HDRLEN_MIN;
+पूर्ण
 
-unsigned int xprt_rdma_bc_max_slots(struct rpc_xprt *xprt)
-{
-	return RPCRDMA_BACKWARD_WRS >> 1;
-}
+अचिन्हित पूर्णांक xprt_rdma_bc_max_slots(काष्ठा rpc_xprt *xprt)
+अणु
+	वापस RPCRDMA_BACKWARD_WRS >> 1;
+पूर्ण
 
-static int rpcrdma_bc_marshal_reply(struct rpc_rqst *rqst)
-{
-	struct rpcrdma_xprt *r_xprt = rpcx_to_rdmax(rqst->rq_xprt);
-	struct rpcrdma_req *req = rpcr_to_rdmar(rqst);
+अटल पूर्णांक rpcrdma_bc_marshal_reply(काष्ठा rpc_rqst *rqst)
+अणु
+	काष्ठा rpcrdma_xprt *r_xprt = rpcx_to_rdmax(rqst->rq_xprt);
+	काष्ठा rpcrdma_req *req = rpcr_to_rdmar(rqst);
 	__be32 *p;
 
 	rpcrdma_set_xdrlen(&req->rl_hdrbuf, 0);
@@ -68,8 +69,8 @@ static int rpcrdma_bc_marshal_reply(struct rpc_rqst *rqst)
 			rdmab_data(req->rl_rdmabuf), rqst);
 
 	p = xdr_reserve_space(&req->rl_stream, 28);
-	if (unlikely(!p))
-		return -EIO;
+	अगर (unlikely(!p))
+		वापस -EIO;
 	*p++ = rqst->rq_xid;
 	*p++ = rpcrdma_version;
 	*p++ = cpu_to_be32(r_xprt->rx_buf.rb_bc_srv_max_requests);
@@ -78,136 +79,136 @@ static int rpcrdma_bc_marshal_reply(struct rpc_rqst *rqst)
 	*p++ = xdr_zero;
 	*p = xdr_zero;
 
-	if (rpcrdma_prepare_send_sges(r_xprt, req, RPCRDMA_HDRLEN_MIN,
+	अगर (rpcrdma_prepare_send_sges(r_xprt, req, RPCRDMA_HDRLEN_MIN,
 				      &rqst->rq_snd_buf, rpcrdma_noch_pullup))
-		return -EIO;
+		वापस -EIO;
 
 	trace_xprtrdma_cb_reply(r_xprt, rqst);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * xprt_rdma_bc_send_reply - marshal and send a backchannel reply
  * @rqst: RPC rqst with a backchannel RPC reply in rq_snd_buf
  *
- * Caller holds the transport's write lock.
+ * Caller holds the transport's ग_लिखो lock.
  *
  * Returns:
- *	%0 if the RPC message has been sent
- *	%-ENOTCONN if the caller should reconnect and call again
- *	%-EIO if a permanent error occurred and the request was not
+ *	%0 अगर the RPC message has been sent
+ *	%-ENOTCONN अगर the caller should reconnect and call again
+ *	%-EIO अगर a permanent error occurred and the request was not
  *		sent. Do not try to send this message again.
  */
-int xprt_rdma_bc_send_reply(struct rpc_rqst *rqst)
-{
-	struct rpc_xprt *xprt = rqst->rq_xprt;
-	struct rpcrdma_xprt *r_xprt = rpcx_to_rdmax(xprt);
-	struct rpcrdma_req *req = rpcr_to_rdmar(rqst);
-	int rc;
+पूर्णांक xprt_rdma_bc_send_reply(काष्ठा rpc_rqst *rqst)
+अणु
+	काष्ठा rpc_xprt *xprt = rqst->rq_xprt;
+	काष्ठा rpcrdma_xprt *r_xprt = rpcx_to_rdmax(xprt);
+	काष्ठा rpcrdma_req *req = rpcr_to_rdmar(rqst);
+	पूर्णांक rc;
 
-	if (!xprt_connected(xprt))
-		return -ENOTCONN;
+	अगर (!xprt_connected(xprt))
+		वापस -ENOTCONN;
 
-	if (!xprt_request_get_cong(xprt, rqst))
-		return -EBADSLT;
+	अगर (!xprt_request_get_cong(xprt, rqst))
+		वापस -EBADSLT;
 
 	rc = rpcrdma_bc_marshal_reply(rqst);
-	if (rc < 0)
-		goto failed_marshal;
+	अगर (rc < 0)
+		जाओ failed_marshal;
 
-	if (rpcrdma_post_sends(r_xprt, req))
-		goto drop_connection;
-	return 0;
+	अगर (rpcrdma_post_sends(r_xprt, req))
+		जाओ drop_connection;
+	वापस 0;
 
 failed_marshal:
-	if (rc != -ENOTCONN)
-		return rc;
+	अगर (rc != -ENOTCONN)
+		वापस rc;
 drop_connection:
-	xprt_rdma_close(xprt);
-	return -ENOTCONN;
-}
+	xprt_rdma_बंद(xprt);
+	वापस -ENOTCONN;
+पूर्ण
 
 /**
- * xprt_rdma_bc_destroy - Release resources for handling backchannel requests
+ * xprt_rdma_bc_destroy - Release resources क्रम handling backchannel requests
  * @xprt: transport associated with these backchannel resources
  * @reqs: number of incoming requests to destroy; ignored
  */
-void xprt_rdma_bc_destroy(struct rpc_xprt *xprt, unsigned int reqs)
-{
-	struct rpc_rqst *rqst, *tmp;
+व्योम xprt_rdma_bc_destroy(काष्ठा rpc_xprt *xprt, अचिन्हित पूर्णांक reqs)
+अणु
+	काष्ठा rpc_rqst *rqst, *पंचांगp;
 
 	spin_lock(&xprt->bc_pa_lock);
-	list_for_each_entry_safe(rqst, tmp, &xprt->bc_pa_list, rq_bc_pa_list) {
+	list_क्रम_each_entry_safe(rqst, पंचांगp, &xprt->bc_pa_list, rq_bc_pa_list) अणु
 		list_del(&rqst->rq_bc_pa_list);
 		spin_unlock(&xprt->bc_pa_lock);
 
 		rpcrdma_req_destroy(rpcr_to_rdmar(rqst));
 
 		spin_lock(&xprt->bc_pa_lock);
-	}
+	पूर्ण
 	spin_unlock(&xprt->bc_pa_lock);
-}
+पूर्ण
 
 /**
- * xprt_rdma_bc_free_rqst - Release a backchannel rqst
+ * xprt_rdma_bc_मुक्त_rqst - Release a backchannel rqst
  * @rqst: request to release
  */
-void xprt_rdma_bc_free_rqst(struct rpc_rqst *rqst)
-{
-	struct rpcrdma_req *req = rpcr_to_rdmar(rqst);
-	struct rpcrdma_rep *rep = req->rl_reply;
-	struct rpc_xprt *xprt = rqst->rq_xprt;
-	struct rpcrdma_xprt *r_xprt = rpcx_to_rdmax(xprt);
+व्योम xprt_rdma_bc_मुक्त_rqst(काष्ठा rpc_rqst *rqst)
+अणु
+	काष्ठा rpcrdma_req *req = rpcr_to_rdmar(rqst);
+	काष्ठा rpcrdma_rep *rep = req->rl_reply;
+	काष्ठा rpc_xprt *xprt = rqst->rq_xprt;
+	काष्ठा rpcrdma_xprt *r_xprt = rpcx_to_rdmax(xprt);
 
 	rpcrdma_rep_put(&r_xprt->rx_buf, rep);
-	req->rl_reply = NULL;
+	req->rl_reply = शून्य;
 
 	spin_lock(&xprt->bc_pa_lock);
 	list_add_tail(&rqst->rq_bc_pa_list, &xprt->bc_pa_list);
 	spin_unlock(&xprt->bc_pa_lock);
 	xprt_put(xprt);
-}
+पूर्ण
 
-static struct rpc_rqst *rpcrdma_bc_rqst_get(struct rpcrdma_xprt *r_xprt)
-{
-	struct rpc_xprt *xprt = &r_xprt->rx_xprt;
-	struct rpcrdma_req *req;
-	struct rpc_rqst *rqst;
-	size_t size;
+अटल काष्ठा rpc_rqst *rpcrdma_bc_rqst_get(काष्ठा rpcrdma_xprt *r_xprt)
+अणु
+	काष्ठा rpc_xprt *xprt = &r_xprt->rx_xprt;
+	काष्ठा rpcrdma_req *req;
+	काष्ठा rpc_rqst *rqst;
+	माप_प्रकार size;
 
 	spin_lock(&xprt->bc_pa_lock);
-	rqst = list_first_entry_or_null(&xprt->bc_pa_list, struct rpc_rqst,
+	rqst = list_first_entry_or_null(&xprt->bc_pa_list, काष्ठा rpc_rqst,
 					rq_bc_pa_list);
-	if (!rqst)
-		goto create_req;
+	अगर (!rqst)
+		जाओ create_req;
 	list_del(&rqst->rq_bc_pa_list);
 	spin_unlock(&xprt->bc_pa_lock);
-	return rqst;
+	वापस rqst;
 
 create_req:
 	spin_unlock(&xprt->bc_pa_lock);
 
 	/* Set a limit to prevent a remote from overrunning our resources.
 	 */
-	if (xprt->bc_alloc_count >= RPCRDMA_BACKWARD_WRS)
-		return NULL;
+	अगर (xprt->bc_alloc_count >= RPCRDMA_BACKWARD_WRS)
+		वापस शून्य;
 
-	size = min_t(size_t, r_xprt->rx_ep->re_inline_recv, PAGE_SIZE);
+	size = min_t(माप_प्रकार, r_xprt->rx_ep->re_अंतरभूत_recv, PAGE_SIZE);
 	req = rpcrdma_req_create(r_xprt, size, GFP_KERNEL);
-	if (!req)
-		return NULL;
-	if (rpcrdma_req_setup(r_xprt, req)) {
+	अगर (!req)
+		वापस शून्य;
+	अगर (rpcrdma_req_setup(r_xprt, req)) अणु
 		rpcrdma_req_destroy(req);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	xprt->bc_alloc_count++;
 	rqst = &req->rl_slot;
 	rqst->rq_xprt = xprt;
 	__set_bit(RPC_BC_PA_IN_USE, &rqst->rq_bc_pa_state);
 	xdr_buf_init(&rqst->rq_snd_buf, rdmab_data(req->rl_sendbuf), size);
-	return rqst;
-}
+	वापस rqst;
+पूर्ण
 
 /**
  * rpcrdma_bc_receive_call - Handle a reverse-direction Call
@@ -216,71 +217,71 @@ create_req:
  *
  * Operational assumptions:
  *    o Backchannel credits are ignored, just as the NFS server
- *      forechannel currently does
+ *      क्रमechannel currently करोes
  *    o The ULP manages a replay cache (eg, NFSv4.1 sessions).
- *      No replay detection is done at the transport level
+ *      No replay detection is करोne at the transport level
  */
-void rpcrdma_bc_receive_call(struct rpcrdma_xprt *r_xprt,
-			     struct rpcrdma_rep *rep)
-{
-	struct rpc_xprt *xprt = &r_xprt->rx_xprt;
-	struct svc_serv *bc_serv;
-	struct rpcrdma_req *req;
-	struct rpc_rqst *rqst;
-	struct xdr_buf *buf;
-	size_t size;
+व्योम rpcrdma_bc_receive_call(काष्ठा rpcrdma_xprt *r_xprt,
+			     काष्ठा rpcrdma_rep *rep)
+अणु
+	काष्ठा rpc_xprt *xprt = &r_xprt->rx_xprt;
+	काष्ठा svc_serv *bc_serv;
+	काष्ठा rpcrdma_req *req;
+	काष्ठा rpc_rqst *rqst;
+	काष्ठा xdr_buf *buf;
+	माप_प्रकार size;
 	__be32 *p;
 
-	p = xdr_inline_decode(&rep->rr_stream, 0);
-	size = xdr_stream_remaining(&rep->rr_stream);
+	p = xdr_अंतरभूत_decode(&rep->rr_stream, 0);
+	size = xdr_stream_reमुख्यing(&rep->rr_stream);
 
-#ifdef RPCRDMA_BACKCHANNEL_DEBUG
+#अगर_घोषित RPCRDMA_BACKCHANNEL_DEBUG
 	pr_info("RPC:       %s: callback XID %08x, length=%u\n",
 		__func__, be32_to_cpup(p), size);
 	pr_info("RPC:       %s: %*ph\n", __func__, size, p);
-#endif
+#पूर्ण_अगर
 
 	rqst = rpcrdma_bc_rqst_get(r_xprt);
-	if (!rqst)
-		goto out_overflow;
+	अगर (!rqst)
+		जाओ out_overflow;
 
 	rqst->rq_reply_bytes_recvd = 0;
 	rqst->rq_xid = *p;
 
-	rqst->rq_private_buf.len = size;
+	rqst->rq_निजी_buf.len = size;
 
 	buf = &rqst->rq_rcv_buf;
-	memset(buf, 0, sizeof(*buf));
+	स_रखो(buf, 0, माप(*buf));
 	buf->head[0].iov_base = p;
 	buf->head[0].iov_len = size;
 	buf->len = size;
 
 	/* The receive buffer has to be hooked to the rpcrdma_req
-	 * so that it is not released while the req is pointing
+	 * so that it is not released जबतक the req is poपूर्णांकing
 	 * to its buffer, and so that it can be reposted after
-	 * the Upper Layer is done decoding it.
+	 * the Upper Layer is करोne decoding it.
 	 */
 	req = rpcr_to_rdmar(rqst);
 	req->rl_reply = rep;
 	trace_xprtrdma_cb_call(r_xprt, rqst);
 
-	/* Queue rqst for ULP's callback service */
+	/* Queue rqst क्रम ULP's callback service */
 	bc_serv = xprt->bc_serv;
 	xprt_get(xprt);
 	spin_lock(&bc_serv->sv_cb_lock);
 	list_add(&rqst->rq_bc_list, &bc_serv->sv_cb_list);
 	spin_unlock(&bc_serv->sv_cb_lock);
 
-	wake_up(&bc_serv->sv_cb_waitq);
+	wake_up(&bc_serv->sv_cb_रुकोq);
 
 	r_xprt->rx_stats.bcall_count++;
-	return;
+	वापस;
 
 out_overflow:
 	pr_warn("RPC/RDMA backchannel overflow\n");
-	xprt_force_disconnect(xprt);
-	/* This receive buffer gets reposted automatically
+	xprt_क्रमce_disconnect(xprt);
+	/* This receive buffer माला_लो reposted स्वतःmatically
 	 * when the connection is re-established.
 	 */
-	return;
-}
+	वापस;
+पूर्ण

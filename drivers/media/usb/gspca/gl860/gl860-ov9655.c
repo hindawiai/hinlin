@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Subdriver for the GL860 chip with the OV9655 sensor
- * Author Olivier LORIN, from logs done by Simon (Sur3) and Almighurt
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Subdriver क्रम the GL860 chip with the OV9655 sensor
+ * Author Olivier LORIN, from logs करोne by Simon (Sur3) and Almighurt
  * on dsd's weblog
  */
 
 /* Sensor : OV9655 */
 
-#include "gl860.h"
+#समावेश "gl860.h"
 
-static struct validx tbl_init_at_startup[] = {
-	{0x0000, 0x0000}, {0x0010, 0x0010}, {0x0008, 0x00c0}, {0x0001, 0x00c1},
-	{0x0001, 0x00c2}, {0x0020, 0x0006}, {0x006a, 0x000d},
+अटल काष्ठा validx tbl_init_at_startup[] = अणु
+	अणु0x0000, 0x0000पूर्ण, अणु0x0010, 0x0010पूर्ण, अणु0x0008, 0x00c0पूर्ण, अणु0x0001, 0x00c1पूर्ण,
+	अणु0x0001, 0x00c2पूर्ण, अणु0x0020, 0x0006पूर्ण, अणु0x006a, 0x000dपूर्ण,
 
-	{0x0040, 0x0000},
-};
+	अणु0x0040, 0x0000पूर्ण,
+पूर्ण;
 
-static struct validx tbl_commmon[] = {
-	{0x0041, 0x0000}, {0x006a, 0x0007}, {0x0063, 0x0006}, {0x006a, 0x000d},
-	{0x0000, 0x00c0}, {0x0010, 0x0010}, {0x0001, 0x00c1}, {0x0041, 0x00c2},
-	{0x0004, 0x00d8}, {0x0012, 0x0004}, {0x0000, 0x0058}, {0x0040, 0x0000},
-	{0x00f3, 0x0006}, {0x0058, 0x0000}, {0x0048, 0x0000}, {0x0061, 0x0000},
-};
+अटल काष्ठा validx tbl_commmon[] = अणु
+	अणु0x0041, 0x0000पूर्ण, अणु0x006a, 0x0007पूर्ण, अणु0x0063, 0x0006पूर्ण, अणु0x006a, 0x000dपूर्ण,
+	अणु0x0000, 0x00c0पूर्ण, अणु0x0010, 0x0010पूर्ण, अणु0x0001, 0x00c1पूर्ण, अणु0x0041, 0x00c2पूर्ण,
+	अणु0x0004, 0x00d8पूर्ण, अणु0x0012, 0x0004पूर्ण, अणु0x0000, 0x0058पूर्ण, अणु0x0040, 0x0000पूर्ण,
+	अणु0x00f3, 0x0006पूर्ण, अणु0x0058, 0x0000पूर्ण, अणु0x0048, 0x0000पूर्ण, अणु0x0061, 0x0000पूर्ण,
+पूर्ण;
 
-static s32 tbl_length[] = {12, 56, 52, 54, 56, 42, 32, 12};
+अटल s32 tbl_length[] = अणु12, 56, 52, 54, 56, 42, 32, 12पूर्ण;
 
-static u8 *tbl_640[] = {
+अटल u8 *tbl_640[] = अणु
 	"\x00\x40\x07\x6a\x06\xf3\x0d\x6a" "\x10\x10\xc1\x01"
 	,
 	"\x12\x80\x00\x00\x01\x98\x02\x80" "\x03\x12\x04\x03\x0b\x57\x0e\x61"
@@ -55,9 +56,9 @@ static u8 *tbl_640[] = {
 	"\xc3\x4e\xc6\x85\xc7\x81\xc9\xe0" "\xca\xe8\xcb\xf0\xcc\xd8\xcd\x93"
 	,
 	"\xd0\x01\xd1\x08\xd2\xe0\xd3\x01" "\xd4\x10\xd5\x80"
-};
+पूर्ण;
 
-static u8 *tbl_1280[] = {
+अटल u8 *tbl_1280[] = अणु
 	"\x00\x40\x07\x6a\x06\xf3\x0d\x6a" "\x10\x10\xc1\x01"
 	,
 	"\x12\x80\x00\x00\x01\x98\x02\x80" "\x03\x12\x04\x01\x0b\x57\x0e\x61"
@@ -88,59 +89,59 @@ static u8 *tbl_1280[] = {
 	"\xc3\x4e\xc6\x85\xc7\x81\xc9\xe0" "\xca\xe8\xcb\xf0\xcc\xd8\xcd\x93"
 	,
 	"\xd0\x21\xd1\x18\xd2\xe0\xd3\x01" "\xd4\x28\xd5\x00"
-};
+पूर्ण;
 
-static u8 c04[] = {0x04};
-static u8 dat_post1[] = "\x04\x00\x10\x20\xa1\x00\x00\x02";
-static u8 dat_post2[] = "\x10\x10\xc1\x02";
-static u8 dat_post3[] = "\x04\x00\x10\x7c\xa1\x00\x00\x04";
-static u8 dat_post4[] = "\x10\x02\xc1\x06";
-static u8 dat_post5[] = "\x04\x00\x10\x7b\xa1\x00\x00\x08";
-static u8 dat_post6[] = "\x10\x10\xc1\x05";
-static u8 dat_post7[] = "\x04\x00\x10\x7c\xa1\x00\x00\x08";
-static u8 dat_post8[] = "\x04\x00\x10\x7c\xa1\x00\x00\x09";
+अटल u8 c04[] = अणु0x04पूर्ण;
+अटल u8 dat_post1[] = "\x04\x00\x10\x20\xa1\x00\x00\x02";
+अटल u8 dat_post2[] = "\x10\x10\xc1\x02";
+अटल u8 dat_post3[] = "\x04\x00\x10\x7c\xa1\x00\x00\x04";
+अटल u8 dat_post4[] = "\x10\x02\xc1\x06";
+अटल u8 dat_post5[] = "\x04\x00\x10\x7b\xa1\x00\x00\x08";
+अटल u8 dat_post6[] = "\x10\x10\xc1\x05";
+अटल u8 dat_post7[] = "\x04\x00\x10\x7c\xa1\x00\x00\x08";
+अटल u8 dat_post8[] = "\x04\x00\x10\x7c\xa1\x00\x00\x09";
 
-static struct validx tbl_init_post_alt[] = {
-	{0x6032, 0x00ff}, {0x6032, 0x00ff}, {0x6032, 0x00ff}, {0x603c, 0x00ff},
-	{0x6003, 0x00ff}, {0x6032, 0x00ff}, {0x6032, 0x00ff}, {0x6001, 0x00ff},
-	{0x6000, 0x801e},
-	{0xffff, 0xffff},
-	{0x6004, 0x001e}, {0x6000, 0x801e},
-	{0xffff, 0xffff},
-	{0x6004, 0x001e}, {0x6012, 0x0003}, {0x6000, 0x801e},
-	{0xffff, 0xffff},
-	{0x6004, 0x001e}, {0x6000, 0x801e},
-	{0xffff, 0xffff},
-	{0x6004, 0x001e}, {0x6012, 0x0003},
-	{0xffff, 0xffff},
-	{0x6000, 0x801e},
-	{0xffff, 0xffff},
-	{0x6004, 0x001e}, {0x6000, 0x801e},
-	{0xffff, 0xffff},
-	{0x6004, 0x001e}, {0x6012, 0x0003}, {0x6000, 0x801e},
-	{0xffff, 0xffff},
-	{0x6004, 0x001e}, {0x6000, 0x801e},
-	{0xffff, 0xffff},
-	{0x6004, 0x001e}, {0x6012, 0x0003},
-	{0xffff, 0xffff},
-	{0x6000, 0x801e},
-	{0xffff, 0xffff},
-	{0x6004, 0x001e}, {0x6000, 0x801e},
-	{0xffff, 0xffff},
-	{0x6004, 0x001e}, {0x6012, 0x0003},
-};
+अटल काष्ठा validx tbl_init_post_alt[] = अणु
+	अणु0x6032, 0x00ffपूर्ण, अणु0x6032, 0x00ffपूर्ण, अणु0x6032, 0x00ffपूर्ण, अणु0x603c, 0x00ffपूर्ण,
+	अणु0x6003, 0x00ffपूर्ण, अणु0x6032, 0x00ffपूर्ण, अणु0x6032, 0x00ffपूर्ण, अणु0x6001, 0x00ffपूर्ण,
+	अणु0x6000, 0x801eपूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6004, 0x001eपूर्ण, अणु0x6000, 0x801eपूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6004, 0x001eपूर्ण, अणु0x6012, 0x0003पूर्ण, अणु0x6000, 0x801eपूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6004, 0x001eपूर्ण, अणु0x6000, 0x801eपूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6004, 0x001eपूर्ण, अणु0x6012, 0x0003पूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6000, 0x801eपूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6004, 0x001eपूर्ण, अणु0x6000, 0x801eपूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6004, 0x001eपूर्ण, अणु0x6012, 0x0003पूर्ण, अणु0x6000, 0x801eपूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6004, 0x001eपूर्ण, अणु0x6000, 0x801eपूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6004, 0x001eपूर्ण, अणु0x6012, 0x0003पूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6000, 0x801eपूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6004, 0x001eपूर्ण, अणु0x6000, 0x801eपूर्ण,
+	अणु0xffff, 0xffffपूर्ण,
+	अणु0x6004, 0x001eपूर्ण, अणु0x6012, 0x0003पूर्ण,
+पूर्ण;
 
-static int  ov9655_init_at_startup(struct gspca_dev *gspca_dev);
-static int  ov9655_configure_alt(struct gspca_dev *gspca_dev);
-static int  ov9655_init_pre_alt(struct gspca_dev *gspca_dev);
-static int  ov9655_init_post_alt(struct gspca_dev *gspca_dev);
-static void ov9655_post_unset_alt(struct gspca_dev *gspca_dev);
-static int  ov9655_camera_settings(struct gspca_dev *gspca_dev);
+अटल पूर्णांक  ov9655_init_at_startup(काष्ठा gspca_dev *gspca_dev);
+अटल पूर्णांक  ov9655_configure_alt(काष्ठा gspca_dev *gspca_dev);
+अटल पूर्णांक  ov9655_init_pre_alt(काष्ठा gspca_dev *gspca_dev);
+अटल पूर्णांक  ov9655_init_post_alt(काष्ठा gspca_dev *gspca_dev);
+अटल व्योम ov9655_post_unset_alt(काष्ठा gspca_dev *gspca_dev);
+अटल पूर्णांक  ov9655_camera_settings(काष्ठा gspca_dev *gspca_dev);
 /*==========================================================================*/
 
-void ov9655_init_settings(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+व्योम ov9655_init_settings(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
 	sd->vcur.backlight  =   0;
 	sd->vcur.brightness = 128;
@@ -168,23 +169,23 @@ void ov9655_init_settings(struct gspca_dev *gspca_dev)
 	sd->dev_configure_alt   = ov9655_configure_alt;
 	sd->dev_init_pre_alt    = ov9655_init_pre_alt;
 	sd->dev_post_unset_alt  = ov9655_post_unset_alt;
-}
+पूर्ण
 
 /*==========================================================================*/
 
-static int ov9655_init_at_startup(struct gspca_dev *gspca_dev)
-{
+अटल पूर्णांक ov9655_init_at_startup(काष्ठा gspca_dev *gspca_dev)
+अणु
 	fetch_validx(gspca_dev, tbl_init_at_startup,
 			ARRAY_SIZE(tbl_init_at_startup));
 	fetch_validx(gspca_dev, tbl_commmon, ARRAY_SIZE(tbl_commmon));
-/*	ctrl_out(gspca_dev, 0x40, 11, 0x0000, 0x0000, 0, NULL);*/
+/*	ctrl_out(gspca_dev, 0x40, 11, 0x0000, 0x0000, 0, शून्य);*/
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov9655_init_pre_alt(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक ov9655_init_pre_alt(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
 	sd->vold.brightness = -1;
 	sd->vold.hue = -1;
@@ -193,23 +194,23 @@ static int ov9655_init_pre_alt(struct gspca_dev *gspca_dev)
 
 	ov9655_init_post_alt(gspca_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov9655_init_post_alt(struct gspca_dev *gspca_dev)
-{
+अटल पूर्णांक ov9655_init_post_alt(काष्ठा gspca_dev *gspca_dev)
+अणु
 	s32 reso = gspca_dev->cam.cam_mode[(s32) gspca_dev->curr_mode].priv;
-	s32 n; /* reserved for FETCH functions */
+	s32 n; /* reserved क्रम FETCH functions */
 	s32 i;
 	u8 **tbl;
 
-	ctrl_out(gspca_dev, 0x40, 5, 0x0001, 0x0000, 0, NULL);
+	ctrl_out(gspca_dev, 0x40, 5, 0x0001, 0x0000, 0, शून्य);
 
 	tbl = (reso == IMAGE_640) ? tbl_640 : tbl_1280;
 
 	ctrl_out(gspca_dev, 0x40, 3, 0x0000, 0x0200,
 			tbl_length[0], tbl[0]);
-	for (i = 1; i < 7; i++)
+	क्रम (i = 1; i < 7; i++)
 		ctrl_out(gspca_dev, 0x40, 3, 0x6000, 0x0200,
 				tbl_length[i], tbl[i]);
 	ctrl_out(gspca_dev, 0x40, 3, 0x0000, 0x0200,
@@ -272,53 +273,53 @@ static int ov9655_init_post_alt(struct gspca_dev *gspca_dev)
 
 	ov9655_camera_settings(gspca_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ov9655_configure_alt(struct gspca_dev *gspca_dev)
-{
+अटल पूर्णांक ov9655_configure_alt(काष्ठा gspca_dev *gspca_dev)
+अणु
 	s32 reso = gspca_dev->cam.cam_mode[(s32) gspca_dev->curr_mode].priv;
 
-	switch (reso) {
-	case IMAGE_640:
+	चयन (reso) अणु
+	हाल IMAGE_640:
 		gspca_dev->alt = 1 + 1;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		gspca_dev->alt = 1 + 1;
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ov9655_camera_settings(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक ov9655_camera_settings(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
 	u8 dat_bright[] = "\x04\x00\x10\x7c\xa1\x00\x00\x70";
 
 	s32 bright = sd->vcur.brightness;
 	s32 hue    = sd->vcur.hue;
 
-	if (bright != sd->vold.brightness) {
+	अगर (bright != sd->vold.brightness) अणु
 		sd->vold.brightness = bright;
-		if (bright < 0 || bright > sd->vmax.brightness)
+		अगर (bright < 0 || bright > sd->vmax.brightness)
 			bright = 0;
 
 		dat_bright[3] = bright;
 		ctrl_out(gspca_dev, 0x40, 3, 0x6000, 0x0200, 8, dat_bright);
-	}
+	पूर्ण
 
-	if (hue != sd->vold.hue) {
+	अगर (hue != sd->vold.hue) अणु
 		sd->vold.hue = hue;
 		sd->swapRB = (hue != 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ov9655_post_unset_alt(struct gspca_dev *gspca_dev)
-{
-	ctrl_out(gspca_dev, 0x40, 5, 0x0000, 0x0000, 0, NULL);
-	ctrl_out(gspca_dev, 0x40, 1, 0x0061, 0x0000, 0, NULL);
-}
+अटल व्योम ov9655_post_unset_alt(काष्ठा gspca_dev *gspca_dev)
+अणु
+	ctrl_out(gspca_dev, 0x40, 5, 0x0000, 0x0000, 0, शून्य);
+	ctrl_out(gspca_dev, 0x40, 1, 0x0061, 0x0000, 0, शून्य);
+पूर्ण

@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_ARM_HYPERVISOR_H
-#define _ASM_ARM_HYPERVISOR_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_ARM_HYPERVISOR_H
+#घोषणा _ASM_ARM_HYPERVISOR_H
 
-#include <asm/xen/hypervisor.h>
+#समावेश <यंत्र/xen/hypervisor.h>
 
-void kvm_init_hyp_services(void);
+व्योम kvm_init_hyp_services(व्योम);
 bool kvm_arm_hyp_service_available(u32 func_id);
 
-#endif
+#पूर्ण_अगर

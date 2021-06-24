@@ -1,154 +1,155 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  arch/arm/include/asm/domain.h
+ *  arch/arm/include/यंत्र/करोमुख्य.h
  *
  *  Copyright (C) 1999 Russell King.
  */
-#ifndef __ASM_PROC_DOMAIN_H
-#define __ASM_PROC_DOMAIN_H
+#अगर_अघोषित __ASM_PROC_DOMAIN_H
+#घोषणा __ASM_PROC_DOMAIN_H
 
-#ifndef __ASSEMBLY__
-#include <asm/barrier.h>
-#include <asm/thread_info.h>
-#endif
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/thपढ़ो_info.h>
+#पूर्ण_अगर
 
 /*
- * Domain numbers
+ * Doमुख्य numbers
  *
- *  DOMAIN_IO     - domain 2 includes all IO only
- *  DOMAIN_USER   - domain 1 includes all user memory only
- *  DOMAIN_KERNEL - domain 0 includes all kernel memory only
+ *  DOMAIN_IO     - करोमुख्य 2 includes all IO only
+ *  DOMAIN_USER   - करोमुख्य 1 includes all user memory only
+ *  DOMAIN_KERNEL - करोमुख्य 0 includes all kernel memory only
  *
- * The domain numbering depends on whether we support 36 physical
- * address for I/O or not.  Addresses above the 32 bit boundary can
+ * The करोमुख्य numbering depends on whether we support 36 physical
+ * address क्रम I/O or not.  Addresses above the 32 bit boundary can
  * only be mapped using supersections and supersections can only
- * be set for domain 0.  We could just default to DOMAIN_IO as zero,
- * but there may be systems with supersection support and no 36-bit
- * addressing.  In such cases, we want to map system memory with
- * supersections to reduce TLB misses and footprint.
+ * be set क्रम करोमुख्य 0.  We could just शेष to DOMAIN_IO as zero,
+ * but there may be प्रणालीs with supersection support and no 36-bit
+ * addressing.  In such हालs, we want to map प्रणाली memory with
+ * supersections to reduce TLB misses and footprपूर्णांक.
  *
  * 36-bit addressing and supersections are only available on
  * CPUs based on ARMv6+ or the Intel XSC3 core.
  */
-#ifndef CONFIG_IO_36
-#define DOMAIN_KERNEL	0
-#define DOMAIN_USER	1
-#define DOMAIN_IO	2
-#else
-#define DOMAIN_KERNEL	2
-#define DOMAIN_USER	1
-#define DOMAIN_IO	0
-#endif
-#define DOMAIN_VECTORS	3
+#अगर_अघोषित CONFIG_IO_36
+#घोषणा DOMAIN_KERNEL	0
+#घोषणा DOMAIN_USER	1
+#घोषणा DOMAIN_IO	2
+#अन्यथा
+#घोषणा DOMAIN_KERNEL	2
+#घोषणा DOMAIN_USER	1
+#घोषणा DOMAIN_IO	0
+#पूर्ण_अगर
+#घोषणा DOMAIN_VECTORS	3
 
 /*
- * Domain types
+ * Doमुख्य types
  */
-#define DOMAIN_NOACCESS	0
-#define DOMAIN_CLIENT	1
-#ifdef CONFIG_CPU_USE_DOMAINS
-#define DOMAIN_MANAGER	3
-#else
-#define DOMAIN_MANAGER	1
-#endif
+#घोषणा DOMAIN_NOACCESS	0
+#घोषणा DOMAIN_CLIENT	1
+#अगर_घोषित CONFIG_CPU_USE_DOMAINS
+#घोषणा DOMAIN_MANAGER	3
+#अन्यथा
+#घोषणा DOMAIN_MANAGER	1
+#पूर्ण_अगर
 
-#define domain_mask(dom)	((3) << (2 * (dom)))
-#define domain_val(dom,type)	((type) << (2 * (dom)))
+#घोषणा करोमुख्य_mask(करोm)	((3) << (2 * (करोm)))
+#घोषणा करोमुख्य_val(करोm,type)	((type) << (2 * (करोm)))
 
-#ifdef CONFIG_CPU_SW_DOMAIN_PAN
-#define DACR_INIT \
-	(domain_val(DOMAIN_USER, DOMAIN_NOACCESS) | \
-	 domain_val(DOMAIN_KERNEL, DOMAIN_MANAGER) | \
-	 domain_val(DOMAIN_IO, DOMAIN_CLIENT) | \
-	 domain_val(DOMAIN_VECTORS, DOMAIN_CLIENT))
-#else
-#define DACR_INIT \
-	(domain_val(DOMAIN_USER, DOMAIN_CLIENT) | \
-	 domain_val(DOMAIN_KERNEL, DOMAIN_MANAGER) | \
-	 domain_val(DOMAIN_IO, DOMAIN_CLIENT) | \
-	 domain_val(DOMAIN_VECTORS, DOMAIN_CLIENT))
-#endif
+#अगर_घोषित CONFIG_CPU_SW_DOMAIN_PAN
+#घोषणा DACR_INIT \
+	(करोमुख्य_val(DOMAIN_USER, DOMAIN_NOACCESS) | \
+	 करोमुख्य_val(DOMAIN_KERNEL, DOMAIN_MANAGER) | \
+	 करोमुख्य_val(DOMAIN_IO, DOMAIN_CLIENT) | \
+	 करोमुख्य_val(DOMAIN_VECTORS, DOMAIN_CLIENT))
+#अन्यथा
+#घोषणा DACR_INIT \
+	(करोमुख्य_val(DOMAIN_USER, DOMAIN_CLIENT) | \
+	 करोमुख्य_val(DOMAIN_KERNEL, DOMAIN_MANAGER) | \
+	 करोमुख्य_val(DOMAIN_IO, DOMAIN_CLIENT) | \
+	 करोमुख्य_val(DOMAIN_VECTORS, DOMAIN_CLIENT))
+#पूर्ण_अगर
 
-#define __DACR_DEFAULT \
-	domain_val(DOMAIN_KERNEL, DOMAIN_CLIENT) | \
-	domain_val(DOMAIN_IO, DOMAIN_CLIENT) | \
-	domain_val(DOMAIN_VECTORS, DOMAIN_CLIENT)
+#घोषणा __DACR_DEFAULT \
+	करोमुख्य_val(DOMAIN_KERNEL, DOMAIN_CLIENT) | \
+	करोमुख्य_val(DOMAIN_IO, DOMAIN_CLIENT) | \
+	करोमुख्य_val(DOMAIN_VECTORS, DOMAIN_CLIENT)
 
-#define DACR_UACCESS_DISABLE	\
-	(__DACR_DEFAULT | domain_val(DOMAIN_USER, DOMAIN_NOACCESS))
-#define DACR_UACCESS_ENABLE	\
-	(__DACR_DEFAULT | domain_val(DOMAIN_USER, DOMAIN_CLIENT))
+#घोषणा DACR_UACCESS_DISABLE	\
+	(__DACR_DEFAULT | करोमुख्य_val(DOMAIN_USER, DOMAIN_NOACCESS))
+#घोषणा DACR_UACCESS_ENABLE	\
+	(__DACR_DEFAULT | करोमुख्य_val(DOMAIN_USER, DOMAIN_CLIENT))
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#ifdef CONFIG_CPU_CP15_MMU
-static __always_inline unsigned int get_domain(void)
-{
-	unsigned int domain;
+#अगर_घोषित CONFIG_CPU_CP15_MMU
+अटल __always_अंतरभूत अचिन्हित पूर्णांक get_करोमुख्य(व्योम)
+अणु
+	अचिन्हित पूर्णांक करोमुख्य;
 
-	asm(
+	यंत्र(
 	"mrc	p15, 0, %0, c3, c0	@ get domain"
-	 : "=r" (domain)
-	 : "m" (current_thread_info()->cpu_domain));
+	 : "=r" (करोमुख्य)
+	 : "m" (current_thपढ़ो_info()->cpu_करोमुख्य));
 
-	return domain;
-}
+	वापस करोमुख्य;
+पूर्ण
 
-static __always_inline void set_domain(unsigned int val)
-{
-	asm volatile(
+अटल __always_अंतरभूत व्योम set_करोमुख्य(अचिन्हित पूर्णांक val)
+अणु
+	यंत्र अस्थिर(
 	"mcr	p15, 0, %0, c3, c0	@ set domain"
 	  : : "r" (val) : "memory");
 	isb();
-}
-#else
-static __always_inline unsigned int get_domain(void)
-{
-	return 0;
-}
+पूर्ण
+#अन्यथा
+अटल __always_अंतरभूत अचिन्हित पूर्णांक get_करोमुख्य(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static __always_inline void set_domain(unsigned int val)
-{
-}
-#endif
+अटल __always_अंतरभूत व्योम set_करोमुख्य(अचिन्हित पूर्णांक val)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_USE_DOMAINS
-#define modify_domain(dom,type)					\
-	do {							\
-		unsigned int domain = get_domain();		\
-		domain &= ~domain_mask(dom);			\
-		domain = domain | domain_val(dom, type);	\
-		set_domain(domain);				\
-	} while (0)
+#अगर_घोषित CONFIG_CPU_USE_DOMAINS
+#घोषणा modअगरy_करोमुख्य(करोm,type)					\
+	करो अणु							\
+		अचिन्हित पूर्णांक करोमुख्य = get_करोमुख्य();		\
+		करोमुख्य &= ~करोमुख्य_mask(करोm);			\
+		करोमुख्य = करोमुख्य | करोमुख्य_val(करोm, type);	\
+		set_करोमुख्य(करोमुख्य);				\
+	पूर्ण जबतक (0)
 
-#else
-static inline void modify_domain(unsigned dom, unsigned type)	{ }
-#endif
-
-/*
- * Generate the T (user) versions of the LDR/STR and related
- * instructions (inline assembly)
- */
-#ifdef CONFIG_CPU_USE_DOMAINS
-#define TUSER(instr)		TUSERCOND(instr, )
-#define TUSERCOND(instr, cond)	#instr "t" #cond
-#else
-#define TUSER(instr)		TUSERCOND(instr, )
-#define TUSERCOND(instr, cond)	#instr #cond
-#endif
-
-#else /* __ASSEMBLY__ */
+#अन्यथा
+अटल अंतरभूत व्योम modअगरy_करोमुख्य(अचिन्हित करोm, अचिन्हित type)	अणु पूर्ण
+#पूर्ण_अगर
 
 /*
  * Generate the T (user) versions of the LDR/STR and related
- * instructions
+ * inकाष्ठाions (अंतरभूत assembly)
  */
-#ifdef CONFIG_CPU_USE_DOMAINS
-#define TUSER(instr)	instr ## t
-#else
-#define TUSER(instr)	instr
-#endif
+#अगर_घोषित CONFIG_CPU_USE_DOMAINS
+#घोषणा TUSER(instr)		TUSERCOND(instr, )
+#घोषणा TUSERCOND(instr, cond)	#instr "t" #cond
+#अन्यथा
+#घोषणा TUSER(instr)		TUSERCOND(instr, )
+#घोषणा TUSERCOND(instr, cond)	#instr #cond
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
+#अन्यथा /* __ASSEMBLY__ */
 
-#endif /* !__ASM_PROC_DOMAIN_H */
+/*
+ * Generate the T (user) versions of the LDR/STR and related
+ * inकाष्ठाions
+ */
+#अगर_घोषित CONFIG_CPU_USE_DOMAINS
+#घोषणा TUSER(instr)	instr ## t
+#अन्यथा
+#घोषणा TUSER(instr)	instr
+#पूर्ण_अगर
+
+#पूर्ण_अगर /* __ASSEMBLY__ */
+
+#पूर्ण_अगर /* !__ASM_PROC_DOMAIN_H */

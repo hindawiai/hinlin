@@ -1,1294 +1,1295 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * KVM/MIPS: Instruction/Exception emulation
+ * KVM/MIPS: Inकाष्ठाion/Exception emulation
  *
  * Copyright (C) 2012  MIPS Technologies, Inc.  All rights reserved.
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/ktime.h>
-#include <linux/kvm_host.h>
-#include <linux/vmalloc.h>
-#include <linux/fs.h>
-#include <linux/memblock.h>
-#include <linux/random.h>
-#include <asm/page.h>
-#include <asm/cacheflush.h>
-#include <asm/cacheops.h>
-#include <asm/cpu-info.h>
-#include <asm/mmu_context.h>
-#include <asm/tlbflush.h>
-#include <asm/inst.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cacheops.h>
+#समावेश <यंत्र/cpu-info.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/inst.h>
 
-#undef CONFIG_MIPS_MT
-#include <asm/r4kcache.h>
-#define CONFIG_MIPS_MT
+#अघोषित CONFIG_MIPS_MT
+#समावेश <यंत्र/r4kcache.h>
+#घोषणा CONFIG_MIPS_MT
 
-#include "interrupt.h"
+#समावेश "interrupt.h"
 
-#include "trace.h"
+#समावेश "trace.h"
 
 /*
- * Compute the return address and do emulate branch simulation, if required.
+ * Compute the वापस address and करो emulate branch simulation, अगर required.
  * This function should be called only in branch delay slot active.
  */
-static int kvm_compute_return_epc(struct kvm_vcpu *vcpu, unsigned long instpc,
-				  unsigned long *out)
-{
-	unsigned int dspcontrol;
-	union mips_instruction insn;
-	struct kvm_vcpu_arch *arch = &vcpu->arch;
-	long epc = instpc;
-	long nextpc;
-	int err;
+अटल पूर्णांक kvm_compute_वापस_epc(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ instpc,
+				  अचिन्हित दीर्घ *out)
+अणु
+	अचिन्हित पूर्णांक dspcontrol;
+	जोड़ mips_inकाष्ठाion insn;
+	काष्ठा kvm_vcpu_arch *arch = &vcpu->arch;
+	दीर्घ epc = instpc;
+	दीर्घ nextpc;
+	पूर्णांक err;
 
-	if (epc & 3) {
+	अगर (epc & 3) अणु
 		kvm_err("%s: unaligned epc\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Read the instruction */
+	/* Read the inकाष्ठाion */
 	err = kvm_get_badinstrp((u32 *)epc, vcpu, &insn.word);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	switch (insn.i_format.opcode) {
-		/* jr and jalr are in r_format format. */
-	case spec_op:
-		switch (insn.r_format.func) {
-		case jalr_op:
-			arch->gprs[insn.r_format.rd] = epc + 8;
+	चयन (insn.i_क्रमmat.opcode) अणु
+		/* jr and jalr are in r_क्रमmat क्रमmat. */
+	हाल spec_op:
+		चयन (insn.r_क्रमmat.func) अणु
+		हाल jalr_op:
+			arch->gprs[insn.r_क्रमmat.rd] = epc + 8;
 			fallthrough;
-		case jr_op:
-			nextpc = arch->gprs[insn.r_format.rs];
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
+		हाल jr_op:
+			nextpc = arch->gprs[insn.r_क्रमmat.rs];
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
 
 		/*
 		 * This group contains:
 		 * bltz_op, bgez_op, bltzl_op, bgezl_op,
 		 * bltzal_op, bgezal_op, bltzall_op, bgezall_op.
 		 */
-	case bcond_op:
-		switch (insn.i_format.rt) {
-		case bltz_op:
-		case bltzl_op:
-			if ((long)arch->gprs[insn.i_format.rs] < 0)
-				epc = epc + 4 + (insn.i_format.simmediate << 2);
-			else
+	हाल bcond_op:
+		चयन (insn.i_क्रमmat.rt) अणु
+		हाल bltz_op:
+		हाल bltzl_op:
+			अगर ((दीर्घ)arch->gprs[insn.i_क्रमmat.rs] < 0)
+				epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+			अन्यथा
 				epc += 8;
 			nextpc = epc;
-			break;
+			अवरोध;
 
-		case bgez_op:
-		case bgezl_op:
-			if ((long)arch->gprs[insn.i_format.rs] >= 0)
-				epc = epc + 4 + (insn.i_format.simmediate << 2);
-			else
+		हाल bgez_op:
+		हाल bgezl_op:
+			अगर ((दीर्घ)arch->gprs[insn.i_क्रमmat.rs] >= 0)
+				epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+			अन्यथा
 				epc += 8;
 			nextpc = epc;
-			break;
+			अवरोध;
 
-		case bltzal_op:
-		case bltzall_op:
+		हाल bltzal_op:
+		हाल bltzall_op:
 			arch->gprs[31] = epc + 8;
-			if ((long)arch->gprs[insn.i_format.rs] < 0)
-				epc = epc + 4 + (insn.i_format.simmediate << 2);
-			else
+			अगर ((दीर्घ)arch->gprs[insn.i_क्रमmat.rs] < 0)
+				epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+			अन्यथा
 				epc += 8;
 			nextpc = epc;
-			break;
+			अवरोध;
 
-		case bgezal_op:
-		case bgezall_op:
+		हाल bgezal_op:
+		हाल bgezall_op:
 			arch->gprs[31] = epc + 8;
-			if ((long)arch->gprs[insn.i_format.rs] >= 0)
-				epc = epc + 4 + (insn.i_format.simmediate << 2);
-			else
+			अगर ((दीर्घ)arch->gprs[insn.i_क्रमmat.rs] >= 0)
+				epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+			अन्यथा
 				epc += 8;
 			nextpc = epc;
-			break;
-		case bposge32_op:
-			if (!cpu_has_dsp) {
+			अवरोध;
+		हाल bposge32_op:
+			अगर (!cpu_has_dsp) अणु
 				kvm_err("%s: DSP branch but not DSP ASE\n",
 					__func__);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			dspcontrol = rddsp(0x01);
 
-			if (dspcontrol >= 32)
-				epc = epc + 4 + (insn.i_format.simmediate << 2);
-			else
+			अगर (dspcontrol >= 32)
+				epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+			अन्यथा
 				epc += 8;
 			nextpc = epc;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
 
-		/* These are unconditional and in j_format. */
-	case jal_op:
+		/* These are unconditional and in j_क्रमmat. */
+	हाल jal_op:
 		arch->gprs[31] = instpc + 8;
 		fallthrough;
-	case j_op:
+	हाल j_op:
 		epc += 4;
 		epc >>= 28;
 		epc <<= 28;
-		epc |= (insn.j_format.target << 2);
+		epc |= (insn.j_क्रमmat.target << 2);
 		nextpc = epc;
-		break;
+		अवरोध;
 
-		/* These are conditional and in i_format. */
-	case beq_op:
-	case beql_op:
-		if (arch->gprs[insn.i_format.rs] ==
-		    arch->gprs[insn.i_format.rt])
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-		else
+		/* These are conditional and in i_क्रमmat. */
+	हाल beq_op:
+	हाल beql_op:
+		अगर (arch->gprs[insn.i_क्रमmat.rs] ==
+		    arch->gprs[insn.i_क्रमmat.rt])
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+		अन्यथा
 			epc += 8;
 		nextpc = epc;
-		break;
+		अवरोध;
 
-	case bne_op:
-	case bnel_op:
-		if (arch->gprs[insn.i_format.rs] !=
-		    arch->gprs[insn.i_format.rt])
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-		else
+	हाल bne_op:
+	हाल bnel_op:
+		अगर (arch->gprs[insn.i_क्रमmat.rs] !=
+		    arch->gprs[insn.i_क्रमmat.rt])
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+		अन्यथा
 			epc += 8;
 		nextpc = epc;
-		break;
+		अवरोध;
 
-	case blez_op:	/* POP06 */
-#ifndef CONFIG_CPU_MIPSR6
-	case blezl_op:	/* removed in R6 */
-#endif
-		if (insn.i_format.rt != 0)
-			goto compact_branch;
-		if ((long)arch->gprs[insn.i_format.rs] <= 0)
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-		else
+	हाल blez_op:	/* POP06 */
+#अगर_अघोषित CONFIG_CPU_MIPSR6
+	हाल blezl_op:	/* हटाओd in R6 */
+#पूर्ण_अगर
+		अगर (insn.i_क्रमmat.rt != 0)
+			जाओ compact_branch;
+		अगर ((दीर्घ)arch->gprs[insn.i_क्रमmat.rs] <= 0)
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+		अन्यथा
 			epc += 8;
 		nextpc = epc;
-		break;
+		अवरोध;
 
-	case bgtz_op:	/* POP07 */
-#ifndef CONFIG_CPU_MIPSR6
-	case bgtzl_op:	/* removed in R6 */
-#endif
-		if (insn.i_format.rt != 0)
-			goto compact_branch;
-		if ((long)arch->gprs[insn.i_format.rs] > 0)
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-		else
+	हाल bgtz_op:	/* POP07 */
+#अगर_अघोषित CONFIG_CPU_MIPSR6
+	हाल bgtzl_op:	/* हटाओd in R6 */
+#पूर्ण_अगर
+		अगर (insn.i_क्रमmat.rt != 0)
+			जाओ compact_branch;
+		अगर ((दीर्घ)arch->gprs[insn.i_क्रमmat.rs] > 0)
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+		अन्यथा
 			epc += 8;
 		nextpc = epc;
-		break;
+		अवरोध;
 
-		/* And now the FPA/cp1 branch instructions. */
-	case cop1_op:
+		/* And now the FPA/cp1 branch inकाष्ठाions. */
+	हाल cop1_op:
 		kvm_err("%s: unsupported cop1_op\n", __func__);
-		return -EINVAL;
+		वापस -EINVAL;
 
-#ifdef CONFIG_CPU_MIPSR6
-	/* R6 added the following compact branches with forbidden slots */
-	case blezl_op:	/* POP26 */
-	case bgtzl_op:	/* POP27 */
+#अगर_घोषित CONFIG_CPU_MIPSR6
+	/* R6 added the following compact branches with क्रमbidden slots */
+	हाल blezl_op:	/* POP26 */
+	हाल bgtzl_op:	/* POP27 */
 		/* only rt == 0 isn't compact branch */
-		if (insn.i_format.rt != 0)
-			goto compact_branch;
-		return -EINVAL;
-	case pop10_op:
-	case pop30_op:
+		अगर (insn.i_क्रमmat.rt != 0)
+			जाओ compact_branch;
+		वापस -EINVAL;
+	हाल pop10_op:
+	हाल pop30_op:
 		/* only rs == rt == 0 is reserved, rest are compact branches */
-		if (insn.i_format.rs != 0 || insn.i_format.rt != 0)
-			goto compact_branch;
-		return -EINVAL;
-	case pop66_op:
-	case pop76_op:
+		अगर (insn.i_क्रमmat.rs != 0 || insn.i_क्रमmat.rt != 0)
+			जाओ compact_branch;
+		वापस -EINVAL;
+	हाल pop66_op:
+	हाल pop76_op:
 		/* only rs == 0 isn't compact branch */
-		if (insn.i_format.rs != 0)
-			goto compact_branch;
-		return -EINVAL;
+		अगर (insn.i_क्रमmat.rs != 0)
+			जाओ compact_branch;
+		वापस -EINVAL;
 compact_branch:
 		/*
-		 * If we've hit an exception on the forbidden slot, then
+		 * If we've hit an exception on the क्रमbidden slot, then
 		 * the branch must not have been taken.
 		 */
 		epc += 8;
 		nextpc = epc;
-		break;
-#else
+		अवरोध;
+#अन्यथा
 compact_branch:
-		/* Fall through - Compact branches not supported before R6 */
-#endif
-	default:
-		return -EINVAL;
-	}
+		/* Fall through - Compact branches not supported beक्रमe R6 */
+#पूर्ण_अगर
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	*out = nextpc;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-enum emulation_result update_pc(struct kvm_vcpu *vcpu, u32 cause)
-{
-	int err;
+क्रमागत emulation_result update_pc(काष्ठा kvm_vcpu *vcpu, u32 cause)
+अणु
+	पूर्णांक err;
 
-	if (cause & CAUSEF_BD) {
-		err = kvm_compute_return_epc(vcpu, vcpu->arch.pc,
+	अगर (cause & CAUSEF_BD) अणु
+		err = kvm_compute_वापस_epc(vcpu, vcpu->arch.pc,
 					     &vcpu->arch.pc);
-		if (err)
-			return EMULATE_FAIL;
-	} else {
+		अगर (err)
+			वापस EMULATE_FAIL;
+	पूर्ण अन्यथा अणु
 		vcpu->arch.pc += 4;
-	}
+	पूर्ण
 
 	kvm_debug("update_pc(): New PC: %#lx\n", vcpu->arch.pc);
 
-	return EMULATE_DONE;
-}
+	वापस EMULATE_DONE;
+पूर्ण
 
 /**
- * kvm_get_badinstr() - Get bad instruction encoding.
- * @opc:	Guest pointer to faulting instruction.
- * @vcpu:	KVM VCPU information.
+ * kvm_get_badinstr() - Get bad inकाष्ठाion encoding.
+ * @opc:	Guest poपूर्णांकer to faulting inकाष्ठाion.
+ * @vcpu:	KVM VCPU inक्रमmation.
  *
- * Gets the instruction encoding of the faulting instruction, using the saved
- * BadInstr register value if it exists, otherwise falling back to reading guest
+ * Gets the inकाष्ठाion encoding of the faulting inकाष्ठाion, using the saved
+ * BadInstr रेजिस्टर value अगर it exists, otherwise falling back to पढ़ोing guest
  * memory at @opc.
  *
- * Returns:	The instruction encoding of the faulting instruction.
+ * Returns:	The inकाष्ठाion encoding of the faulting inकाष्ठाion.
  */
-int kvm_get_badinstr(u32 *opc, struct kvm_vcpu *vcpu, u32 *out)
-{
-	if (cpu_has_badinstr) {
+पूर्णांक kvm_get_badinstr(u32 *opc, काष्ठा kvm_vcpu *vcpu, u32 *out)
+अणु
+	अगर (cpu_has_badinstr) अणु
 		*out = vcpu->arch.host_cp0_badinstr;
-		return 0;
-	} else {
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		WARN_ONCE(1, "CPU doesn't have BadInstr register\n");
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /**
- * kvm_get_badinstrp() - Get bad prior instruction encoding.
- * @opc:	Guest pointer to prior faulting instruction.
- * @vcpu:	KVM VCPU information.
+ * kvm_get_badinstrp() - Get bad prior inकाष्ठाion encoding.
+ * @opc:	Guest poपूर्णांकer to prior faulting inकाष्ठाion.
+ * @vcpu:	KVM VCPU inक्रमmation.
  *
- * Gets the instruction encoding of the prior faulting instruction (the branch
- * containing the delay slot which faulted), using the saved BadInstrP register
- * value if it exists, otherwise falling back to reading guest memory at @opc.
+ * Gets the inकाष्ठाion encoding of the prior faulting inकाष्ठाion (the branch
+ * containing the delay slot which faulted), using the saved BadInstrP रेजिस्टर
+ * value अगर it exists, otherwise falling back to पढ़ोing guest memory at @opc.
  *
- * Returns:	The instruction encoding of the prior faulting instruction.
+ * Returns:	The inकाष्ठाion encoding of the prior faulting inकाष्ठाion.
  */
-int kvm_get_badinstrp(u32 *opc, struct kvm_vcpu *vcpu, u32 *out)
-{
-	if (cpu_has_badinstrp) {
+पूर्णांक kvm_get_badinstrp(u32 *opc, काष्ठा kvm_vcpu *vcpu, u32 *out)
+अणु
+	अगर (cpu_has_badinstrp) अणु
 		*out = vcpu->arch.host_cp0_badinstrp;
-		return 0;
-	} else {
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		WARN_ONCE(1, "CPU doesn't have BadInstrp register\n");
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /**
- * kvm_mips_count_disabled() - Find whether the CP0_Count timer is disabled.
+ * kvm_mips_count_disabled() - Find whether the CP0_Count समयr is disabled.
  * @vcpu:	Virtual CPU.
  *
- * Returns:	1 if the CP0_Count timer is disabled by either the guest
+ * Returns:	1 अगर the CP0_Count समयr is disabled by either the guest
  *		CP0_Cause.DC bit or the count_ctl.DC bit.
- *		0 otherwise (in which case CP0_Count timer is running).
+ *		0 otherwise (in which हाल CP0_Count समयr is running).
  */
-int kvm_mips_count_disabled(struct kvm_vcpu *vcpu)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
+पूर्णांक kvm_mips_count_disabled(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
 
-	return	(vcpu->arch.count_ctl & KVM_REG_MIPS_COUNT_CTL_DC) ||
-		(kvm_read_c0_guest_cause(cop0) & CAUSEF_DC);
-}
+	वापस	(vcpu->arch.count_ctl & KVM_REG_MIPS_COUNT_CTL_DC) ||
+		(kvm_पढ़ो_c0_guest_cause(cop0) & CAUSEF_DC);
+पूर्ण
 
 /**
- * kvm_mips_ktime_to_count() - Scale ktime_t to a 32-bit count.
+ * kvm_mips_kसमय_प्रकारo_count() - Scale kसमय_प्रकार to a 32-bit count.
  *
  * Caches the dynamic nanosecond bias in vcpu->arch.count_dyn_bias.
  *
- * Assumes !kvm_mips_count_disabled(@vcpu) (guest CP0_Count timer is running).
+ * Assumes !kvm_mips_count_disabled(@vcpu) (guest CP0_Count समयr is running).
  */
-static u32 kvm_mips_ktime_to_count(struct kvm_vcpu *vcpu, ktime_t now)
-{
+अटल u32 kvm_mips_kसमय_प्रकारo_count(काष्ठा kvm_vcpu *vcpu, kसमय_प्रकार now)
+अणु
 	s64 now_ns, periods;
 	u64 delta;
 
-	now_ns = ktime_to_ns(now);
+	now_ns = kसमय_प्रकारo_ns(now);
 	delta = now_ns + vcpu->arch.count_dyn_bias;
 
-	if (delta >= vcpu->arch.count_period) {
+	अगर (delta >= vcpu->arch.count_period) अणु
 		/* If delta is out of safe range the bias needs adjusting */
-		periods = div64_s64(now_ns, vcpu->arch.count_period);
+		periods = भाग64_s64(now_ns, vcpu->arch.count_period);
 		vcpu->arch.count_dyn_bias = -periods * vcpu->arch.count_period;
 		/* Recalculate delta with new bias */
 		delta = now_ns + vcpu->arch.count_dyn_bias;
-	}
+	पूर्ण
 
 	/*
 	 * We've ensured that:
 	 *   delta < count_period
 	 *
-	 * Therefore the intermediate delta*count_hz will never overflow since
+	 * Thereक्रमe the पूर्णांकermediate delta*count_hz will never overflow since
 	 * at the boundary condition:
 	 *   delta = count_period
 	 *   delta = NSEC_PER_SEC * 2^32 / count_hz
 	 *   delta * count_hz = NSEC_PER_SEC * 2^32
 	 */
-	return div_u64(delta * vcpu->arch.count_hz, NSEC_PER_SEC);
-}
+	वापस भाग_u64(delta * vcpu->arch.count_hz, NSEC_PER_SEC);
+पूर्ण
 
 /**
- * kvm_mips_count_time() - Get effective current time.
+ * kvm_mips_count_समय() - Get effective current समय.
  * @vcpu:	Virtual CPU.
  *
- * Get effective monotonic ktime. This is usually a straightforward ktime_get(),
- * except when the master disable bit is set in count_ctl, in which case it is
- * count_resume, i.e. the time that the count was disabled.
+ * Get effective monotonic kसमय. This is usually a straightक्रमward kसमय_get(),
+ * except when the master disable bit is set in count_ctl, in which हाल it is
+ * count_resume, i.e. the समय that the count was disabled.
  *
- * Returns:	Effective monotonic ktime for CP0_Count.
+ * Returns:	Effective monotonic kसमय क्रम CP0_Count.
  */
-static inline ktime_t kvm_mips_count_time(struct kvm_vcpu *vcpu)
-{
-	if (unlikely(vcpu->arch.count_ctl & KVM_REG_MIPS_COUNT_CTL_DC))
-		return vcpu->arch.count_resume;
+अटल अंतरभूत kसमय_प्रकार kvm_mips_count_समय(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (unlikely(vcpu->arch.count_ctl & KVM_REG_MIPS_COUNT_CTL_DC))
+		वापस vcpu->arch.count_resume;
 
-	return ktime_get();
-}
+	वापस kसमय_get();
+पूर्ण
 
 /**
- * kvm_mips_read_count_running() - Read the current count value as if running.
+ * kvm_mips_पढ़ो_count_running() - Read the current count value as अगर running.
  * @vcpu:	Virtual CPU.
- * @now:	Kernel time to read CP0_Count at.
+ * @now:	Kernel समय to पढ़ो CP0_Count at.
  *
- * Returns the current guest CP0_Count register at time @now and handles if the
- * timer interrupt is pending and hasn't been handled yet.
+ * Returns the current guest CP0_Count रेजिस्टर at समय @now and handles अगर the
+ * समयr पूर्णांकerrupt is pending and hasn't been handled yet.
  *
- * Returns:	The current value of the guest CP0_Count register.
+ * Returns:	The current value of the guest CP0_Count रेजिस्टर.
  */
-static u32 kvm_mips_read_count_running(struct kvm_vcpu *vcpu, ktime_t now)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
-	ktime_t expires, threshold;
+अटल u32 kvm_mips_पढ़ो_count_running(काष्ठा kvm_vcpu *vcpu, kसमय_प्रकार now)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
+	kसमय_प्रकार expires, threshold;
 	u32 count, compare;
-	int running;
+	पूर्णांक running;
 
 	/* Calculate the biased and scaled guest CP0_Count */
-	count = vcpu->arch.count_bias + kvm_mips_ktime_to_count(vcpu, now);
-	compare = kvm_read_c0_guest_compare(cop0);
+	count = vcpu->arch.count_bias + kvm_mips_kसमय_प्रकारo_count(vcpu, now);
+	compare = kvm_पढ़ो_c0_guest_compare(cop0);
 
 	/*
-	 * Find whether CP0_Count has reached the closest timer interrupt. If
+	 * Find whether CP0_Count has reached the बंदst समयr पूर्णांकerrupt. If
 	 * not, we shouldn't inject it.
 	 */
-	if ((s32)(count - compare) < 0)
-		return count;
+	अगर ((s32)(count - compare) < 0)
+		वापस count;
 
 	/*
-	 * The CP0_Count we're going to return has already reached the closest
-	 * timer interrupt. Quickly check if it really is a new interrupt by
-	 * looking at whether the interval until the hrtimer expiry time is
-	 * less than 1/4 of the timer period.
+	 * The CP0_Count we're going to वापस has alपढ़ोy reached the बंदst
+	 * समयr पूर्णांकerrupt. Quickly check अगर it really is a new पूर्णांकerrupt by
+	 * looking at whether the पूर्णांकerval until the hrसमयr expiry समय is
+	 * less than 1/4 of the समयr period.
 	 */
-	expires = hrtimer_get_expires(&vcpu->arch.comparecount_timer);
-	threshold = ktime_add_ns(now, vcpu->arch.count_period / 4);
-	if (ktime_before(expires, threshold)) {
+	expires = hrसमयr_get_expires(&vcpu->arch.comparecount_समयr);
+	threshold = kसमय_add_ns(now, vcpu->arch.count_period / 4);
+	अगर (kसमय_beक्रमe(expires, threshold)) अणु
 		/*
-		 * Cancel it while we handle it so there's no chance of
-		 * interference with the timeout handler.
+		 * Cancel it जबतक we handle it so there's no chance of
+		 * पूर्णांकerference with the समयout handler.
 		 */
-		running = hrtimer_cancel(&vcpu->arch.comparecount_timer);
+		running = hrसमयr_cancel(&vcpu->arch.comparecount_समयr);
 
-		/* Nothing should be waiting on the timeout */
-		kvm_mips_callbacks->queue_timer_int(vcpu);
+		/* Nothing should be रुकोing on the समयout */
+		kvm_mips_callbacks->queue_समयr_पूर्णांक(vcpu);
 
 		/*
-		 * Restart the timer if it was running based on the expiry time
-		 * we read, so that we don't push it back 2 periods.
+		 * Restart the समयr अगर it was running based on the expiry समय
+		 * we पढ़ो, so that we करोn't push it back 2 periods.
 		 */
-		if (running) {
-			expires = ktime_add_ns(expires,
+		अगर (running) अणु
+			expires = kसमय_add_ns(expires,
 					       vcpu->arch.count_period);
-			hrtimer_start(&vcpu->arch.comparecount_timer, expires,
+			hrसमयr_start(&vcpu->arch.comparecount_समयr, expires,
 				      HRTIMER_MODE_ABS);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- * kvm_mips_read_count() - Read the current count value.
+ * kvm_mips_पढ़ो_count() - Read the current count value.
  * @vcpu:	Virtual CPU.
  *
- * Read the current guest CP0_Count value, taking into account whether the timer
+ * Read the current guest CP0_Count value, taking पूर्णांकo account whether the समयr
  * is stopped.
  *
  * Returns:	The current guest CP0_Count value.
  */
-u32 kvm_mips_read_count(struct kvm_vcpu *vcpu)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
+u32 kvm_mips_पढ़ो_count(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
 
-	/* If count disabled just read static copy of count */
-	if (kvm_mips_count_disabled(vcpu))
-		return kvm_read_c0_guest_count(cop0);
+	/* If count disabled just पढ़ो अटल copy of count */
+	अगर (kvm_mips_count_disabled(vcpu))
+		वापस kvm_पढ़ो_c0_guest_count(cop0);
 
-	return kvm_mips_read_count_running(vcpu, ktime_get());
-}
+	वापस kvm_mips_पढ़ो_count_running(vcpu, kसमय_get());
+पूर्ण
 
 /**
- * kvm_mips_freeze_hrtimer() - Safely stop the hrtimer.
+ * kvm_mips_मुक्तze_hrसमयr() - Safely stop the hrसमयr.
  * @vcpu:	Virtual CPU.
- * @count:	Output pointer for CP0_Count value at point of freeze.
+ * @count:	Output poपूर्णांकer क्रम CP0_Count value at poपूर्णांक of मुक्तze.
  *
- * Freeze the hrtimer safely and return both the ktime and the CP0_Count value
- * at the point it was frozen. It is guaranteed that any pending interrupts at
- * the point it was frozen are handled, and none after that point.
+ * Freeze the hrसमयr safely and वापस both the kसमय and the CP0_Count value
+ * at the poपूर्णांक it was frozen. It is guaranteed that any pending पूर्णांकerrupts at
+ * the poपूर्णांक it was frozen are handled, and none after that poपूर्णांक.
  *
- * This is useful where the time/CP0_Count is needed in the calculation of the
+ * This is useful where the समय/CP0_Count is needed in the calculation of the
  * new parameters.
  *
- * Assumes !kvm_mips_count_disabled(@vcpu) (guest CP0_Count timer is running).
+ * Assumes !kvm_mips_count_disabled(@vcpu) (guest CP0_Count समयr is running).
  *
- * Returns:	The ktime at the point of freeze.
+ * Returns:	The kसमय at the poपूर्णांक of मुक्तze.
  */
-ktime_t kvm_mips_freeze_hrtimer(struct kvm_vcpu *vcpu, u32 *count)
-{
-	ktime_t now;
+kसमय_प्रकार kvm_mips_मुक्तze_hrसमयr(काष्ठा kvm_vcpu *vcpu, u32 *count)
+अणु
+	kसमय_प्रकार now;
 
-	/* stop hrtimer before finding time */
-	hrtimer_cancel(&vcpu->arch.comparecount_timer);
-	now = ktime_get();
+	/* stop hrसमयr beक्रमe finding समय */
+	hrसमयr_cancel(&vcpu->arch.comparecount_समयr);
+	now = kसमय_get();
 
-	/* find count at this point and handle pending hrtimer */
-	*count = kvm_mips_read_count_running(vcpu, now);
+	/* find count at this poपूर्णांक and handle pending hrसमयr */
+	*count = kvm_mips_पढ़ो_count_running(vcpu, now);
 
-	return now;
-}
+	वापस now;
+पूर्ण
 
 /**
- * kvm_mips_resume_hrtimer() - Resume hrtimer, updating expiry.
+ * kvm_mips_resume_hrसमयr() - Resume hrसमयr, updating expiry.
  * @vcpu:	Virtual CPU.
- * @now:	ktime at point of resume.
- * @count:	CP0_Count at point of resume.
+ * @now:	kसमय at poपूर्णांक of resume.
+ * @count:	CP0_Count at poपूर्णांक of resume.
  *
- * Resumes the timer and updates the timer expiry based on @now and @count.
- * This can be used in conjunction with kvm_mips_freeze_timer() when timer
+ * Resumes the समयr and updates the समयr expiry based on @now and @count.
+ * This can be used in conjunction with kvm_mips_मुक्तze_समयr() when समयr
  * parameters need to be changed.
  *
- * It is guaranteed that a timer interrupt immediately after resume will be
- * handled, but not if CP_Compare is exactly at @count. That case is already
- * handled by kvm_mips_freeze_timer().
+ * It is guaranteed that a समयr पूर्णांकerrupt immediately after resume will be
+ * handled, but not अगर CP_Compare is exactly at @count. That हाल is alपढ़ोy
+ * handled by kvm_mips_मुक्तze_समयr().
  *
- * Assumes !kvm_mips_count_disabled(@vcpu) (guest CP0_Count timer is running).
+ * Assumes !kvm_mips_count_disabled(@vcpu) (guest CP0_Count समयr is running).
  */
-static void kvm_mips_resume_hrtimer(struct kvm_vcpu *vcpu,
-				    ktime_t now, u32 count)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
+अटल व्योम kvm_mips_resume_hrसमयr(काष्ठा kvm_vcpu *vcpu,
+				    kसमय_प्रकार now, u32 count)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
 	u32 compare;
 	u64 delta;
-	ktime_t expire;
+	kसमय_प्रकार expire;
 
-	/* Calculate timeout (wrap 0 to 2^32) */
-	compare = kvm_read_c0_guest_compare(cop0);
+	/* Calculate समयout (wrap 0 to 2^32) */
+	compare = kvm_पढ़ो_c0_guest_compare(cop0);
 	delta = (u64)(u32)(compare - count - 1) + 1;
-	delta = div_u64(delta * NSEC_PER_SEC, vcpu->arch.count_hz);
-	expire = ktime_add_ns(now, delta);
+	delta = भाग_u64(delta * NSEC_PER_SEC, vcpu->arch.count_hz);
+	expire = kसमय_add_ns(now, delta);
 
-	/* Update hrtimer to use new timeout */
-	hrtimer_cancel(&vcpu->arch.comparecount_timer);
-	hrtimer_start(&vcpu->arch.comparecount_timer, expire, HRTIMER_MODE_ABS);
-}
+	/* Update hrसमयr to use new समयout */
+	hrसमयr_cancel(&vcpu->arch.comparecount_समयr);
+	hrसमयr_start(&vcpu->arch.comparecount_समयr, expire, HRTIMER_MODE_ABS);
+पूर्ण
 
 /**
- * kvm_mips_restore_hrtimer() - Restore hrtimer after a gap, updating expiry.
+ * kvm_mips_restore_hrसमयr() - Restore hrसमयr after a gap, updating expiry.
  * @vcpu:	Virtual CPU.
- * @before:	Time before Count was saved, lower bound of drift calculation.
- * @count:	CP0_Count at point of restore.
- * @min_drift:	Minimum amount of drift permitted before correction.
+ * @beक्रमe:	Time beक्रमe Count was saved, lower bound of drअगरt calculation.
+ * @count:	CP0_Count at poपूर्णांक of restore.
+ * @min_drअगरt:	Minimum amount of drअगरt permitted beक्रमe correction.
  *		Must be <= 0.
  *
- * Restores the timer from a particular @count, accounting for drift. This can
- * be used in conjunction with kvm_mips_freeze_timer() when a hardware timer is
- * to be used for a period of time, but the exact ktime corresponding to the
+ * Restores the समयr from a particular @count, accounting क्रम drअगरt. This can
+ * be used in conjunction with kvm_mips_मुक्तze_समयr() when a hardware समयr is
+ * to be used क्रम a period of समय, but the exact kसमय corresponding to the
  * final Count that must be restored is not known.
  *
- * It is gauranteed that a timer interrupt immediately after restore will be
- * handled, but not if CP0_Compare is exactly at @count. That case should
- * already be handled when the hardware timer state is saved.
+ * It is gauranteed that a समयr पूर्णांकerrupt immediately after restore will be
+ * handled, but not अगर CP0_Compare is exactly at @count. That हाल should
+ * alपढ़ोy be handled when the hardware समयr state is saved.
  *
- * Assumes !kvm_mips_count_disabled(@vcpu) (guest CP0_Count timer is not
+ * Assumes !kvm_mips_count_disabled(@vcpu) (guest CP0_Count समयr is not
  * stopped).
  *
- * Returns:	Amount of correction to count_bias due to drift.
+ * Returns:	Amount of correction to count_bias due to drअगरt.
  */
-int kvm_mips_restore_hrtimer(struct kvm_vcpu *vcpu, ktime_t before,
-			     u32 count, int min_drift)
-{
-	ktime_t now, count_time;
-	u32 now_count, before_count;
+पूर्णांक kvm_mips_restore_hrसमयr(काष्ठा kvm_vcpu *vcpu, kसमय_प्रकार beक्रमe,
+			     u32 count, पूर्णांक min_drअगरt)
+अणु
+	kसमय_प्रकार now, count_समय;
+	u32 now_count, beक्रमe_count;
 	u64 delta;
-	int drift, ret = 0;
+	पूर्णांक drअगरt, ret = 0;
 
-	/* Calculate expected count at before */
-	before_count = vcpu->arch.count_bias +
-			kvm_mips_ktime_to_count(vcpu, before);
+	/* Calculate expected count at beक्रमe */
+	beक्रमe_count = vcpu->arch.count_bias +
+			kvm_mips_kसमय_प्रकारo_count(vcpu, beक्रमe);
 
 	/*
-	 * Detect significantly negative drift, where count is lower than
-	 * expected. Some negative drift is expected when hardware counter is
-	 * set after kvm_mips_freeze_timer(), and it is harmless to allow the
-	 * time to jump forwards a little, within reason. If the drift is too
-	 * significant, adjust the bias to avoid a big Guest.CP0_Count jump.
+	 * Detect signअगरicantly negative drअगरt, where count is lower than
+	 * expected. Some negative drअगरt is expected when hardware counter is
+	 * set after kvm_mips_मुक्तze_समयr(), and it is harmless to allow the
+	 * समय to jump क्रमwards a little, within reason. If the drअगरt is too
+	 * signअगरicant, adjust the bias to aव्योम a big Guest.CP0_Count jump.
 	 */
-	drift = count - before_count;
-	if (drift < min_drift) {
-		count_time = before;
-		vcpu->arch.count_bias += drift;
-		ret = drift;
-		goto resume;
-	}
+	drअगरt = count - beक्रमe_count;
+	अगर (drअगरt < min_drअगरt) अणु
+		count_समय = beक्रमe;
+		vcpu->arch.count_bias += drअगरt;
+		ret = drअगरt;
+		जाओ resume;
+	पूर्ण
 
 	/* Calculate expected count right now */
-	now = ktime_get();
-	now_count = vcpu->arch.count_bias + kvm_mips_ktime_to_count(vcpu, now);
+	now = kसमय_get();
+	now_count = vcpu->arch.count_bias + kvm_mips_kसमय_प्रकारo_count(vcpu, now);
 
 	/*
-	 * Detect positive drift, where count is higher than expected, and
-	 * adjust the bias to avoid guest time going backwards.
+	 * Detect positive drअगरt, where count is higher than expected, and
+	 * adjust the bias to aव्योम guest समय going backwards.
 	 */
-	drift = count - now_count;
-	if (drift > 0) {
-		count_time = now;
-		vcpu->arch.count_bias += drift;
-		ret = drift;
-		goto resume;
-	}
+	drअगरt = count - now_count;
+	अगर (drअगरt > 0) अणु
+		count_समय = now;
+		vcpu->arch.count_bias += drअगरt;
+		ret = drअगरt;
+		जाओ resume;
+	पूर्ण
 
-	/* Subtract nanosecond delta to find ktime when count was read */
+	/* Subtract nanosecond delta to find kसमय when count was पढ़ो */
 	delta = (u64)(u32)(now_count - count);
-	delta = div_u64(delta * NSEC_PER_SEC, vcpu->arch.count_hz);
-	count_time = ktime_sub_ns(now, delta);
+	delta = भाग_u64(delta * NSEC_PER_SEC, vcpu->arch.count_hz);
+	count_समय = kसमय_sub_ns(now, delta);
 
 resume:
-	/* Resume using the calculated ktime */
-	kvm_mips_resume_hrtimer(vcpu, count_time, count);
-	return ret;
-}
+	/* Resume using the calculated kसमय */
+	kvm_mips_resume_hrसमयr(vcpu, count_समय, count);
+	वापस ret;
+पूर्ण
 
 /**
- * kvm_mips_write_count() - Modify the count and update timer.
+ * kvm_mips_ग_लिखो_count() - Modअगरy the count and update समयr.
  * @vcpu:	Virtual CPU.
  * @count:	Guest CP0_Count value to set.
  *
- * Sets the CP0_Count value and updates the timer accordingly.
+ * Sets the CP0_Count value and updates the समयr accordingly.
  */
-void kvm_mips_write_count(struct kvm_vcpu *vcpu, u32 count)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
-	ktime_t now;
+व्योम kvm_mips_ग_लिखो_count(काष्ठा kvm_vcpu *vcpu, u32 count)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
+	kसमय_प्रकार now;
 
 	/* Calculate bias */
-	now = kvm_mips_count_time(vcpu);
-	vcpu->arch.count_bias = count - kvm_mips_ktime_to_count(vcpu, now);
+	now = kvm_mips_count_समय(vcpu);
+	vcpu->arch.count_bias = count - kvm_mips_kसमय_प्रकारo_count(vcpu, now);
 
-	if (kvm_mips_count_disabled(vcpu))
-		/* The timer's disabled, adjust the static count */
-		kvm_write_c0_guest_count(cop0, count);
-	else
-		/* Update timeout */
-		kvm_mips_resume_hrtimer(vcpu, now, count);
-}
+	अगर (kvm_mips_count_disabled(vcpu))
+		/* The समयr's disabled, adjust the अटल count */
+		kvm_ग_लिखो_c0_guest_count(cop0, count);
+	अन्यथा
+		/* Update समयout */
+		kvm_mips_resume_hrसमयr(vcpu, now, count);
+पूर्ण
 
 /**
- * kvm_mips_init_count() - Initialise timer.
+ * kvm_mips_init_count() - Initialise समयr.
  * @vcpu:	Virtual CPU.
- * @count_hz:	Frequency of timer.
+ * @count_hz:	Frequency of समयr.
  *
- * Initialise the timer to the specified frequency, zero it, and set it going if
+ * Initialise the समयr to the specअगरied frequency, zero it, and set it going अगर
  * it's enabled.
  */
-void kvm_mips_init_count(struct kvm_vcpu *vcpu, unsigned long count_hz)
-{
+व्योम kvm_mips_init_count(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ count_hz)
+अणु
 	vcpu->arch.count_hz = count_hz;
-	vcpu->arch.count_period = div_u64((u64)NSEC_PER_SEC << 32, count_hz);
+	vcpu->arch.count_period = भाग_u64((u64)NSEC_PER_SEC << 32, count_hz);
 	vcpu->arch.count_dyn_bias = 0;
 
 	/* Starting at 0 */
-	kvm_mips_write_count(vcpu, 0);
-}
+	kvm_mips_ग_लिखो_count(vcpu, 0);
+पूर्ण
 
 /**
- * kvm_mips_set_count_hz() - Update the frequency of the timer.
+ * kvm_mips_set_count_hz() - Update the frequency of the समयr.
  * @vcpu:	Virtual CPU.
- * @count_hz:	Frequency of CP0_Count timer in Hz.
+ * @count_hz:	Frequency of CP0_Count समयr in Hz.
  *
- * Change the frequency of the CP0_Count timer. This is done atomically so that
- * CP0_Count is continuous and no timer interrupt is lost.
+ * Change the frequency of the CP0_Count समयr. This is करोne atomically so that
+ * CP0_Count is continuous and no समयr पूर्णांकerrupt is lost.
  *
- * Returns:	-EINVAL if @count_hz is out of range.
+ * Returns:	-EINVAL अगर @count_hz is out of range.
  *		0 on success.
  */
-int kvm_mips_set_count_hz(struct kvm_vcpu *vcpu, s64 count_hz)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
-	int dc;
-	ktime_t now;
+पूर्णांक kvm_mips_set_count_hz(काष्ठा kvm_vcpu *vcpu, s64 count_hz)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
+	पूर्णांक dc;
+	kसमय_प्रकार now;
 	u32 count;
 
 	/* ensure the frequency is in a sensible range... */
-	if (count_hz <= 0 || count_hz > NSEC_PER_SEC)
-		return -EINVAL;
+	अगर (count_hz <= 0 || count_hz > NSEC_PER_SEC)
+		वापस -EINVAL;
 	/* ... and has actually changed */
-	if (vcpu->arch.count_hz == count_hz)
-		return 0;
+	अगर (vcpu->arch.count_hz == count_hz)
+		वापस 0;
 
-	/* Safely freeze timer so we can keep it continuous */
+	/* Safely मुक्तze समयr so we can keep it continuous */
 	dc = kvm_mips_count_disabled(vcpu);
-	if (dc) {
-		now = kvm_mips_count_time(vcpu);
-		count = kvm_read_c0_guest_count(cop0);
-	} else {
-		now = kvm_mips_freeze_hrtimer(vcpu, &count);
-	}
+	अगर (dc) अणु
+		now = kvm_mips_count_समय(vcpu);
+		count = kvm_पढ़ो_c0_guest_count(cop0);
+	पूर्ण अन्यथा अणु
+		now = kvm_mips_मुक्तze_hrसमयr(vcpu, &count);
+	पूर्ण
 
 	/* Update the frequency */
 	vcpu->arch.count_hz = count_hz;
-	vcpu->arch.count_period = div_u64((u64)NSEC_PER_SEC << 32, count_hz);
+	vcpu->arch.count_period = भाग_u64((u64)NSEC_PER_SEC << 32, count_hz);
 	vcpu->arch.count_dyn_bias = 0;
 
 	/* Calculate adjusted bias so dynamic count is unchanged */
-	vcpu->arch.count_bias = count - kvm_mips_ktime_to_count(vcpu, now);
+	vcpu->arch.count_bias = count - kvm_mips_kसमय_प्रकारo_count(vcpu, now);
 
-	/* Update and resume hrtimer */
-	if (!dc)
-		kvm_mips_resume_hrtimer(vcpu, now, count);
-	return 0;
-}
+	/* Update and resume hrसमयr */
+	अगर (!dc)
+		kvm_mips_resume_hrसमयr(vcpu, now, count);
+	वापस 0;
+पूर्ण
 
 /**
- * kvm_mips_write_compare() - Modify compare and update timer.
+ * kvm_mips_ग_लिखो_compare() - Modअगरy compare and update समयr.
  * @vcpu:	Virtual CPU.
  * @compare:	New CP0_Compare value.
- * @ack:	Whether to acknowledge timer interrupt.
+ * @ack:	Whether to acknowledge समयr पूर्णांकerrupt.
  *
- * Update CP0_Compare to a new value and update the timeout.
- * If @ack, atomically acknowledge any pending timer interrupt, otherwise ensure
- * any pending timer interrupt is preserved.
+ * Update CP0_Compare to a new value and update the समयout.
+ * If @ack, atomically acknowledge any pending समयr पूर्णांकerrupt, otherwise ensure
+ * any pending समयr पूर्णांकerrupt is preserved.
  */
-void kvm_mips_write_compare(struct kvm_vcpu *vcpu, u32 compare, bool ack)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
-	int dc;
-	u32 old_compare = kvm_read_c0_guest_compare(cop0);
+व्योम kvm_mips_ग_लिखो_compare(काष्ठा kvm_vcpu *vcpu, u32 compare, bool ack)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
+	पूर्णांक dc;
+	u32 old_compare = kvm_पढ़ो_c0_guest_compare(cop0);
 	s32 delta = compare - old_compare;
 	u32 cause;
-	ktime_t now = ktime_set(0, 0); /* silence bogus GCC warning */
+	kसमय_प्रकार now = kसमय_set(0, 0); /* silence bogus GCC warning */
 	u32 count;
 
-	/* if unchanged, must just be an ack */
-	if (old_compare == compare) {
-		if (!ack)
-			return;
-		kvm_mips_callbacks->dequeue_timer_int(vcpu);
-		kvm_write_c0_guest_compare(cop0, compare);
-		return;
-	}
+	/* अगर unchanged, must just be an ack */
+	अगर (old_compare == compare) अणु
+		अगर (!ack)
+			वापस;
+		kvm_mips_callbacks->dequeue_समयr_पूर्णांक(vcpu);
+		kvm_ग_लिखो_c0_guest_compare(cop0, compare);
+		वापस;
+	पूर्ण
 
 	/*
-	 * If guest CP0_Compare moves forward, CP0_GTOffset should be adjusted
+	 * If guest CP0_Compare moves क्रमward, CP0_GTOffset should be adjusted
 	 * too to prevent guest CP0_Count hitting guest CP0_Compare.
 	 *
 	 * The new GTOffset corresponds to the new value of CP0_Compare, and is
-	 * set prior to it being written into the guest context. We disable
+	 * set prior to it being written पूर्णांकo the guest context. We disable
 	 * preemption until the new value is written to prevent restore of a
 	 * GTOffset corresponding to the old CP0_Compare value.
 	 */
-	if (delta > 0) {
+	अगर (delta > 0) अणु
 		preempt_disable();
-		write_c0_gtoffset(compare - read_c0_count());
+		ग_लिखो_c0_gtoffset(compare - पढ़ो_c0_count());
 		back_to_back_c0_hazard();
-	}
+	पूर्ण
 
-	/* freeze_hrtimer() takes care of timer interrupts <= count */
+	/* मुक्तze_hrसमयr() takes care of समयr पूर्णांकerrupts <= count */
 	dc = kvm_mips_count_disabled(vcpu);
-	if (!dc)
-		now = kvm_mips_freeze_hrtimer(vcpu, &count);
+	अगर (!dc)
+		now = kvm_mips_मुक्तze_hrसमयr(vcpu, &count);
 
-	if (ack)
-		kvm_mips_callbacks->dequeue_timer_int(vcpu);
-	else
+	अगर (ack)
+		kvm_mips_callbacks->dequeue_समयr_पूर्णांक(vcpu);
+	अन्यथा
 		/*
 		 * With VZ, writing CP0_Compare acks (clears) CP0_Cause.TI, so
-		 * preserve guest CP0_Cause.TI if we don't want to ack it.
+		 * preserve guest CP0_Cause.TI अगर we करोn't want to ack it.
 		 */
-		cause = kvm_read_c0_guest_cause(cop0);
+		cause = kvm_पढ़ो_c0_guest_cause(cop0);
 
-	kvm_write_c0_guest_compare(cop0, compare);
+	kvm_ग_लिखो_c0_guest_compare(cop0, compare);
 
-	if (delta > 0)
+	अगर (delta > 0)
 		preempt_enable();
 
 	back_to_back_c0_hazard();
 
-	if (!ack && cause & CAUSEF_TI)
-		kvm_write_c0_guest_cause(cop0, cause);
+	अगर (!ack && cause & CAUSEF_TI)
+		kvm_ग_लिखो_c0_guest_cause(cop0, cause);
 
-	/* resume_hrtimer() takes care of timer interrupts > count */
-	if (!dc)
-		kvm_mips_resume_hrtimer(vcpu, now, count);
+	/* resume_hrसमयr() takes care of समयr पूर्णांकerrupts > count */
+	अगर (!dc)
+		kvm_mips_resume_hrसमयr(vcpu, now, count);
 
 	/*
 	 * If guest CP0_Compare is moving backward, we delay CP0_GTOffset change
 	 * until after the new CP0_Compare is written, otherwise new guest
 	 * CP0_Count could hit new guest CP0_Compare.
 	 */
-	if (delta <= 0)
-		write_c0_gtoffset(compare - read_c0_count());
-}
+	अगर (delta <= 0)
+		ग_लिखो_c0_gtoffset(compare - पढ़ो_c0_count());
+पूर्ण
 
 /**
  * kvm_mips_count_disable() - Disable count.
  * @vcpu:	Virtual CPU.
  *
- * Disable the CP0_Count timer. A timer interrupt on or before the final stop
- * time will be handled but not after.
+ * Disable the CP0_Count समयr. A समयr पूर्णांकerrupt on or beक्रमe the final stop
+ * समय will be handled but not after.
  *
  * Assumes CP0_Count was previously enabled but now Guest.CP0_Cause.DC or
  * count_ctl.DC has been set (count disabled).
  *
- * Returns:	The time that the timer was stopped.
+ * Returns:	The समय that the समयr was stopped.
  */
-static ktime_t kvm_mips_count_disable(struct kvm_vcpu *vcpu)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
+अटल kसमय_प्रकार kvm_mips_count_disable(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
 	u32 count;
-	ktime_t now;
+	kसमय_प्रकार now;
 
-	/* Stop hrtimer */
-	hrtimer_cancel(&vcpu->arch.comparecount_timer);
+	/* Stop hrसमयr */
+	hrसमयr_cancel(&vcpu->arch.comparecount_समयr);
 
-	/* Set the static count from the dynamic count, handling pending TI */
-	now = ktime_get();
-	count = kvm_mips_read_count_running(vcpu, now);
-	kvm_write_c0_guest_count(cop0, count);
+	/* Set the अटल count from the dynamic count, handling pending TI */
+	now = kसमय_get();
+	count = kvm_mips_पढ़ो_count_running(vcpu, now);
+	kvm_ग_लिखो_c0_guest_count(cop0, count);
 
-	return now;
-}
+	वापस now;
+पूर्ण
 
 /**
  * kvm_mips_count_disable_cause() - Disable count using CP0_Cause.DC.
  * @vcpu:	Virtual CPU.
  *
- * Disable the CP0_Count timer and set CP0_Cause.DC. A timer interrupt on or
- * before the final stop time will be handled if the timer isn't disabled by
+ * Disable the CP0_Count समयr and set CP0_Cause.DC. A समयr पूर्णांकerrupt on or
+ * beक्रमe the final stop समय will be handled अगर the समयr isn't disabled by
  * count_ctl.DC, but not after.
  *
  * Assumes CP0_Cause.DC is clear (count enabled).
  */
-void kvm_mips_count_disable_cause(struct kvm_vcpu *vcpu)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
+व्योम kvm_mips_count_disable_cause(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
 
 	kvm_set_c0_guest_cause(cop0, CAUSEF_DC);
-	if (!(vcpu->arch.count_ctl & KVM_REG_MIPS_COUNT_CTL_DC))
+	अगर (!(vcpu->arch.count_ctl & KVM_REG_MIPS_COUNT_CTL_DC))
 		kvm_mips_count_disable(vcpu);
-}
+पूर्ण
 
 /**
  * kvm_mips_count_enable_cause() - Enable count using CP0_Cause.DC.
  * @vcpu:	Virtual CPU.
  *
- * Enable the CP0_Count timer and clear CP0_Cause.DC. A timer interrupt after
- * the start time will be handled if the timer isn't disabled by count_ctl.DC,
- * potentially before even returning, so the caller should be careful with
- * ordering of CP0_Cause modifications so as not to lose it.
+ * Enable the CP0_Count समयr and clear CP0_Cause.DC. A समयr पूर्णांकerrupt after
+ * the start समय will be handled अगर the समयr isn't disabled by count_ctl.DC,
+ * potentially beक्रमe even वापसing, so the caller should be careful with
+ * ordering of CP0_Cause modअगरications so as not to lose it.
  *
  * Assumes CP0_Cause.DC is set (count disabled).
  */
-void kvm_mips_count_enable_cause(struct kvm_vcpu *vcpu)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
+व्योम kvm_mips_count_enable_cause(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
 	u32 count;
 
 	kvm_clear_c0_guest_cause(cop0, CAUSEF_DC);
 
 	/*
-	 * Set the dynamic count to match the static count.
-	 * This starts the hrtimer if count_ctl.DC allows it.
+	 * Set the dynamic count to match the अटल count.
+	 * This starts the hrसमयr अगर count_ctl.DC allows it.
 	 * Otherwise it conveniently updates the biases.
 	 */
-	count = kvm_read_c0_guest_count(cop0);
-	kvm_mips_write_count(vcpu, count);
-}
+	count = kvm_पढ़ो_c0_guest_count(cop0);
+	kvm_mips_ग_लिखो_count(vcpu, count);
+पूर्ण
 
 /**
- * kvm_mips_set_count_ctl() - Update the count control KVM register.
+ * kvm_mips_set_count_ctl() - Update the count control KVM रेजिस्टर.
  * @vcpu:	Virtual CPU.
- * @count_ctl:	Count control register new value.
+ * @count_ctl:	Count control रेजिस्टर new value.
  *
- * Set the count control KVM register. The timer is updated accordingly.
+ * Set the count control KVM रेजिस्टर. The समयr is updated accordingly.
  *
- * Returns:	-EINVAL if reserved bits are set.
+ * Returns:	-EINVAL अगर reserved bits are set.
  *		0 on success.
  */
-int kvm_mips_set_count_ctl(struct kvm_vcpu *vcpu, s64 count_ctl)
-{
-	struct mips_coproc *cop0 = vcpu->arch.cop0;
+पूर्णांक kvm_mips_set_count_ctl(काष्ठा kvm_vcpu *vcpu, s64 count_ctl)
+अणु
+	काष्ठा mips_coproc *cop0 = vcpu->arch.cop0;
 	s64 changed = count_ctl ^ vcpu->arch.count_ctl;
 	s64 delta;
-	ktime_t expire, now;
+	kसमय_प्रकार expire, now;
 	u32 count, compare;
 
 	/* Only allow defined bits to be changed */
-	if (changed & ~(s64)(KVM_REG_MIPS_COUNT_CTL_DC))
-		return -EINVAL;
+	अगर (changed & ~(s64)(KVM_REG_MIPS_COUNT_CTL_DC))
+		वापस -EINVAL;
 
 	/* Apply new value */
 	vcpu->arch.count_ctl = count_ctl;
 
 	/* Master CP0_Count disable */
-	if (changed & KVM_REG_MIPS_COUNT_CTL_DC) {
-		/* Is CP0_Cause.DC already disabling CP0_Count? */
-		if (kvm_read_c0_guest_cause(cop0) & CAUSEF_DC) {
-			if (count_ctl & KVM_REG_MIPS_COUNT_CTL_DC)
-				/* Just record the current time */
-				vcpu->arch.count_resume = ktime_get();
-		} else if (count_ctl & KVM_REG_MIPS_COUNT_CTL_DC) {
-			/* disable timer and record current time */
+	अगर (changed & KVM_REG_MIPS_COUNT_CTL_DC) अणु
+		/* Is CP0_Cause.DC alपढ़ोy disabling CP0_Count? */
+		अगर (kvm_पढ़ो_c0_guest_cause(cop0) & CAUSEF_DC) अणु
+			अगर (count_ctl & KVM_REG_MIPS_COUNT_CTL_DC)
+				/* Just record the current समय */
+				vcpu->arch.count_resume = kसमय_get();
+		पूर्ण अन्यथा अगर (count_ctl & KVM_REG_MIPS_COUNT_CTL_DC) अणु
+			/* disable समयr and record current समय */
 			vcpu->arch.count_resume = kvm_mips_count_disable(vcpu);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * Calculate timeout relative to static count at resume
-			 * time (wrap 0 to 2^32).
+			 * Calculate समयout relative to अटल count at resume
+			 * समय (wrap 0 to 2^32).
 			 */
-			count = kvm_read_c0_guest_count(cop0);
-			compare = kvm_read_c0_guest_compare(cop0);
+			count = kvm_पढ़ो_c0_guest_count(cop0);
+			compare = kvm_पढ़ो_c0_guest_compare(cop0);
 			delta = (u64)(u32)(compare - count - 1) + 1;
-			delta = div_u64(delta * NSEC_PER_SEC,
+			delta = भाग_u64(delta * NSEC_PER_SEC,
 					vcpu->arch.count_hz);
-			expire = ktime_add_ns(vcpu->arch.count_resume, delta);
+			expire = kसमय_add_ns(vcpu->arch.count_resume, delta);
 
-			/* Handle pending interrupt */
-			now = ktime_get();
-			if (ktime_compare(now, expire) >= 0)
-				/* Nothing should be waiting on the timeout */
-				kvm_mips_callbacks->queue_timer_int(vcpu);
+			/* Handle pending पूर्णांकerrupt */
+			now = kसमय_get();
+			अगर (kसमय_compare(now, expire) >= 0)
+				/* Nothing should be रुकोing on the समयout */
+				kvm_mips_callbacks->queue_समयr_पूर्णांक(vcpu);
 
-			/* Resume hrtimer without changing bias */
-			count = kvm_mips_read_count_running(vcpu, now);
-			kvm_mips_resume_hrtimer(vcpu, now, count);
-		}
-	}
+			/* Resume hrसमयr without changing bias */
+			count = kvm_mips_पढ़ो_count_running(vcpu, now);
+			kvm_mips_resume_hrसमयr(vcpu, now, count);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * kvm_mips_set_count_resume() - Update the count resume KVM register.
+ * kvm_mips_set_count_resume() - Update the count resume KVM रेजिस्टर.
  * @vcpu:		Virtual CPU.
- * @count_resume:	Count resume register new value.
+ * @count_resume:	Count resume रेजिस्टर new value.
  *
- * Set the count resume KVM register.
+ * Set the count resume KVM रेजिस्टर.
  *
- * Returns:	-EINVAL if out of valid range (0..now).
+ * Returns:	-EINVAL अगर out of valid range (0..now).
  *		0 on success.
  */
-int kvm_mips_set_count_resume(struct kvm_vcpu *vcpu, s64 count_resume)
-{
+पूर्णांक kvm_mips_set_count_resume(काष्ठा kvm_vcpu *vcpu, s64 count_resume)
+अणु
 	/*
-	 * It doesn't make sense for the resume time to be in the future, as it
-	 * would be possible for the next interrupt to be more than a full
+	 * It करोesn't make sense क्रम the resume समय to be in the future, as it
+	 * would be possible क्रम the next पूर्णांकerrupt to be more than a full
 	 * period in the future.
 	 */
-	if (count_resume < 0 || count_resume > ktime_to_ns(ktime_get()))
-		return -EINVAL;
+	अगर (count_resume < 0 || count_resume > kसमय_प्रकारo_ns(kसमय_get()))
+		वापस -EINVAL;
 
-	vcpu->arch.count_resume = ns_to_ktime(count_resume);
-	return 0;
-}
+	vcpu->arch.count_resume = ns_to_kसमय(count_resume);
+	वापस 0;
+पूर्ण
 
 /**
- * kvm_mips_count_timeout() - Push timer forward on timeout.
+ * kvm_mips_count_समयout() - Push समयr क्रमward on समयout.
  * @vcpu:	Virtual CPU.
  *
- * Handle an hrtimer event by push the hrtimer forward a period.
+ * Handle an hrसमयr event by push the hrसमयr क्रमward a period.
  *
- * Returns:	The hrtimer_restart value to return to the hrtimer subsystem.
+ * Returns:	The hrसमयr_restart value to वापस to the hrसमयr subप्रणाली.
  */
-enum hrtimer_restart kvm_mips_count_timeout(struct kvm_vcpu *vcpu)
-{
-	/* Add the Count period to the current expiry time */
-	hrtimer_add_expires_ns(&vcpu->arch.comparecount_timer,
+क्रमागत hrसमयr_restart kvm_mips_count_समयout(काष्ठा kvm_vcpu *vcpu)
+अणु
+	/* Add the Count period to the current expiry समय */
+	hrसमयr_add_expires_ns(&vcpu->arch.comparecount_समयr,
 			       vcpu->arch.count_period);
-	return HRTIMER_RESTART;
-}
+	वापस HRTIMER_RESTART;
+पूर्ण
 
-enum emulation_result kvm_mips_emul_wait(struct kvm_vcpu *vcpu)
-{
+क्रमागत emulation_result kvm_mips_emul_रुको(काष्ठा kvm_vcpu *vcpu)
+अणु
 	kvm_debug("[%#lx] !!!WAIT!!! (%#lx)\n", vcpu->arch.pc,
 		  vcpu->arch.pending_exceptions);
 
-	++vcpu->stat.wait_exits;
-	trace_kvm_exit(vcpu, KVM_TRACE_EXIT_WAIT);
-	if (!vcpu->arch.pending_exceptions) {
-		kvm_vz_lose_htimer(vcpu);
-		vcpu->arch.wait = 1;
+	++vcpu->stat.रुको_निकासs;
+	trace_kvm_निकास(vcpu, KVM_TRACE_EXIT_WAIT);
+	अगर (!vcpu->arch.pending_exceptions) अणु
+		kvm_vz_lose_hसमयr(vcpu);
+		vcpu->arch.रुको = 1;
 		kvm_vcpu_block(vcpu);
 
 		/*
 		 * We we are runnable, then definitely go off to user space to
-		 * check if any I/O interrupts are pending.
+		 * check अगर any I/O पूर्णांकerrupts are pending.
 		 */
-		if (kvm_check_request(KVM_REQ_UNHALT, vcpu)) {
+		अगर (kvm_check_request(KVM_REQ_UNHALT, vcpu)) अणु
 			kvm_clear_request(KVM_REQ_UNHALT, vcpu);
-			vcpu->run->exit_reason = KVM_EXIT_IRQ_WINDOW_OPEN;
-		}
-	}
+			vcpu->run->निकास_reason = KVM_EXIT_IRQ_WINDOW_OPEN;
+		पूर्ण
+	पूर्ण
 
-	return EMULATE_DONE;
-}
+	वापस EMULATE_DONE;
+पूर्ण
 
-enum emulation_result kvm_mips_emulate_store(union mips_instruction inst,
+क्रमागत emulation_result kvm_mips_emulate_store(जोड़ mips_inकाष्ठाion inst,
 					     u32 cause,
-					     struct kvm_vcpu *vcpu)
-{
-	int r;
-	enum emulation_result er;
+					     काष्ठा kvm_vcpu *vcpu)
+अणु
+	पूर्णांक r;
+	क्रमागत emulation_result er;
 	u32 rt;
-	struct kvm_run *run = vcpu->run;
-	void *data = run->mmio.data;
-	unsigned int imme;
-	unsigned long curr_pc;
+	काष्ठा kvm_run *run = vcpu->run;
+	व्योम *data = run->mmio.data;
+	अचिन्हित पूर्णांक imme;
+	अचिन्हित दीर्घ curr_pc;
 
 	/*
-	 * Update PC and hold onto current PC in case there is
+	 * Update PC and hold onto current PC in हाल there is
 	 * an error and we want to rollback the PC
 	 */
 	curr_pc = vcpu->arch.pc;
 	er = update_pc(vcpu, cause);
-	if (er == EMULATE_FAIL)
-		return er;
+	अगर (er == EMULATE_FAIL)
+		वापस er;
 
-	rt = inst.i_format.rt;
+	rt = inst.i_क्रमmat.rt;
 
 	run->mmio.phys_addr = kvm_mips_callbacks->gva_to_gpa(
 						vcpu->arch.host_cp0_badvaddr);
-	if (run->mmio.phys_addr == KVM_INVALID_ADDR)
-		goto out_fail;
+	अगर (run->mmio.phys_addr == KVM_INVALID_ADDR)
+		जाओ out_fail;
 
-	switch (inst.i_format.opcode) {
-#if defined(CONFIG_64BIT)
-	case sd_op:
+	चयन (inst.i_क्रमmat.opcode) अणु
+#अगर defined(CONFIG_64BIT)
+	हाल sd_op:
 		run->mmio.len = 8;
 		*(u64 *)data = vcpu->arch.gprs[rt];
 
 		kvm_debug("[%#lx] OP_SD: eaddr: %#lx, gpr: %#lx, data: %#llx\n",
 			  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 			  vcpu->arch.gprs[rt], *(u64 *)data);
-		break;
-#endif
+		अवरोध;
+#पूर्ण_अगर
 
-	case sw_op:
+	हाल sw_op:
 		run->mmio.len = 4;
 		*(u32 *)data = vcpu->arch.gprs[rt];
 
 		kvm_debug("[%#lx] OP_SW: eaddr: %#lx, gpr: %#lx, data: %#x\n",
 			  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 			  vcpu->arch.gprs[rt], *(u32 *)data);
-		break;
+		अवरोध;
 
-	case sh_op:
+	हाल sh_op:
 		run->mmio.len = 2;
 		*(u16 *)data = vcpu->arch.gprs[rt];
 
 		kvm_debug("[%#lx] OP_SH: eaddr: %#lx, gpr: %#lx, data: %#x\n",
 			  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 			  vcpu->arch.gprs[rt], *(u16 *)data);
-		break;
+		अवरोध;
 
-	case sb_op:
+	हाल sb_op:
 		run->mmio.len = 1;
 		*(u8 *)data = vcpu->arch.gprs[rt];
 
 		kvm_debug("[%#lx] OP_SB: eaddr: %#lx, gpr: %#lx, data: %#x\n",
 			  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 			  vcpu->arch.gprs[rt], *(u8 *)data);
-		break;
+		अवरोध;
 
-	case swl_op:
+	हाल swl_op:
 		run->mmio.phys_addr = kvm_mips_callbacks->gva_to_gpa(
 					vcpu->arch.host_cp0_badvaddr) & (~0x3);
 		run->mmio.len = 4;
 		imme = vcpu->arch.host_cp0_badvaddr & 0x3;
-		switch (imme) {
-		case 0:
+		चयन (imme) अणु
+		हाल 0:
 			*(u32 *)data = ((*(u32 *)data) & 0xffffff00) |
 					(vcpu->arch.gprs[rt] >> 24);
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			*(u32 *)data = ((*(u32 *)data) & 0xffff0000) |
 					(vcpu->arch.gprs[rt] >> 16);
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			*(u32 *)data = ((*(u32 *)data) & 0xff000000) |
 					(vcpu->arch.gprs[rt] >> 8);
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			*(u32 *)data = vcpu->arch.gprs[rt];
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		kvm_debug("[%#lx] OP_SWL: eaddr: %#lx, gpr: %#lx, data: %#x\n",
 			  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 			  vcpu->arch.gprs[rt], *(u32 *)data);
-		break;
+		अवरोध;
 
-	case swr_op:
+	हाल swr_op:
 		run->mmio.phys_addr = kvm_mips_callbacks->gva_to_gpa(
 					vcpu->arch.host_cp0_badvaddr) & (~0x3);
 		run->mmio.len = 4;
 		imme = vcpu->arch.host_cp0_badvaddr & 0x3;
-		switch (imme) {
-		case 0:
+		चयन (imme) अणु
+		हाल 0:
 			*(u32 *)data = vcpu->arch.gprs[rt];
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			*(u32 *)data = ((*(u32 *)data) & 0xff) |
 					(vcpu->arch.gprs[rt] << 8);
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			*(u32 *)data = ((*(u32 *)data) & 0xffff) |
 					(vcpu->arch.gprs[rt] << 16);
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			*(u32 *)data = ((*(u32 *)data) & 0xffffff) |
 					(vcpu->arch.gprs[rt] << 24);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		kvm_debug("[%#lx] OP_SWR: eaddr: %#lx, gpr: %#lx, data: %#x\n",
 			  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 			  vcpu->arch.gprs[rt], *(u32 *)data);
-		break;
+		अवरोध;
 
-#if defined(CONFIG_64BIT)
-	case sdl_op:
+#अगर defined(CONFIG_64BIT)
+	हाल sdl_op:
 		run->mmio.phys_addr = kvm_mips_callbacks->gva_to_gpa(
 					vcpu->arch.host_cp0_badvaddr) & (~0x7);
 
 		run->mmio.len = 8;
 		imme = vcpu->arch.host_cp0_badvaddr & 0x7;
-		switch (imme) {
-		case 0:
+		चयन (imme) अणु
+		हाल 0:
 			*(u64 *)data = ((*(u64 *)data) & 0xffffffffffffff00) |
 					((vcpu->arch.gprs[rt] >> 56) & 0xff);
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			*(u64 *)data = ((*(u64 *)data) & 0xffffffffffff0000) |
 					((vcpu->arch.gprs[rt] >> 48) & 0xffff);
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			*(u64 *)data = ((*(u64 *)data) & 0xffffffffff000000) |
 					((vcpu->arch.gprs[rt] >> 40) & 0xffffff);
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			*(u64 *)data = ((*(u64 *)data) & 0xffffffff00000000) |
 					((vcpu->arch.gprs[rt] >> 32) & 0xffffffff);
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			*(u64 *)data = ((*(u64 *)data) & 0xffffff0000000000) |
 					((vcpu->arch.gprs[rt] >> 24) & 0xffffffffff);
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			*(u64 *)data = ((*(u64 *)data) & 0xffff000000000000) |
 					((vcpu->arch.gprs[rt] >> 16) & 0xffffffffffff);
-			break;
-		case 6:
+			अवरोध;
+		हाल 6:
 			*(u64 *)data = ((*(u64 *)data) & 0xff00000000000000) |
 					((vcpu->arch.gprs[rt] >> 8) & 0xffffffffffffff);
-			break;
-		case 7:
+			अवरोध;
+		हाल 7:
 			*(u64 *)data = vcpu->arch.gprs[rt];
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		kvm_debug("[%#lx] OP_SDL: eaddr: %#lx, gpr: %#lx, data: %llx\n",
 			  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 			  vcpu->arch.gprs[rt], *(u64 *)data);
-		break;
+		अवरोध;
 
-	case sdr_op:
+	हाल sdr_op:
 		run->mmio.phys_addr = kvm_mips_callbacks->gva_to_gpa(
 					vcpu->arch.host_cp0_badvaddr) & (~0x7);
 
 		run->mmio.len = 8;
 		imme = vcpu->arch.host_cp0_badvaddr & 0x7;
-		switch (imme) {
-		case 0:
+		चयन (imme) अणु
+		हाल 0:
 			*(u64 *)data = vcpu->arch.gprs[rt];
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			*(u64 *)data = ((*(u64 *)data) & 0xff) |
 					(vcpu->arch.gprs[rt] << 8);
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			*(u64 *)data = ((*(u64 *)data) & 0xffff) |
 					(vcpu->arch.gprs[rt] << 16);
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			*(u64 *)data = ((*(u64 *)data) & 0xffffff) |
 					(vcpu->arch.gprs[rt] << 24);
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			*(u64 *)data = ((*(u64 *)data) & 0xffffffff) |
 					(vcpu->arch.gprs[rt] << 32);
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			*(u64 *)data = ((*(u64 *)data) & 0xffffffffff) |
 					(vcpu->arch.gprs[rt] << 40);
-			break;
-		case 6:
+			अवरोध;
+		हाल 6:
 			*(u64 *)data = ((*(u64 *)data) & 0xffffffffffff) |
 					(vcpu->arch.gprs[rt] << 48);
-			break;
-		case 7:
+			अवरोध;
+		हाल 7:
 			*(u64 *)data = ((*(u64 *)data) & 0xffffffffffffff) |
 					(vcpu->arch.gprs[rt] << 56);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		kvm_debug("[%#lx] OP_SDR: eaddr: %#lx, gpr: %#lx, data: %llx\n",
 			  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 			  vcpu->arch.gprs[rt], *(u64 *)data);
-		break;
-#endif
+		अवरोध;
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_LOONGSON64
-	case sdc2_op:
-		rt = inst.loongson3_lsdc2_format.rt;
-		switch (inst.loongson3_lsdc2_format.opcode1) {
+#अगर_घोषित CONFIG_CPU_LOONGSON64
+	हाल sdc2_op:
+		rt = inst.loongson3_lsdc2_क्रमmat.rt;
+		चयन (inst.loongson3_lsdc2_क्रमmat.opcode1) अणु
 		/*
-		 * Loongson-3 overridden sdc2 instructions.
-		 * opcode1              instruction
+		 * Loongson-3 overridden sdc2 inकाष्ठाions.
+		 * opcode1              inकाष्ठाion
 		 *   0x0          gssbx: store 1 bytes from GPR
 		 *   0x1          gsshx: store 2 bytes from GPR
 		 *   0x2          gsswx: store 4 bytes from GPR
 		 *   0x3          gssdx: store 8 bytes from GPR
 		 */
-		case 0x0:
+		हाल 0x0:
 			run->mmio.len = 1;
 			*(u8 *)data = vcpu->arch.gprs[rt];
 
 			kvm_debug("[%#lx] OP_GSSBX: eaddr: %#lx, gpr: %#lx, data: %#x\n",
 				  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 				  vcpu->arch.gprs[rt], *(u8 *)data);
-			break;
-		case 0x1:
+			अवरोध;
+		हाल 0x1:
 			run->mmio.len = 2;
 			*(u16 *)data = vcpu->arch.gprs[rt];
 
 			kvm_debug("[%#lx] OP_GSSSHX: eaddr: %#lx, gpr: %#lx, data: %#x\n",
 				  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 				  vcpu->arch.gprs[rt], *(u16 *)data);
-			break;
-		case 0x2:
+			अवरोध;
+		हाल 0x2:
 			run->mmio.len = 4;
 			*(u32 *)data = vcpu->arch.gprs[rt];
 
 			kvm_debug("[%#lx] OP_GSSWX: eaddr: %#lx, gpr: %#lx, data: %#x\n",
 				  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 				  vcpu->arch.gprs[rt], *(u32 *)data);
-			break;
-		case 0x3:
+			अवरोध;
+		हाल 0x3:
 			run->mmio.len = 8;
 			*(u64 *)data = vcpu->arch.gprs[rt];
 
 			kvm_debug("[%#lx] OP_GSSDX: eaddr: %#lx, gpr: %#lx, data: %#llx\n",
 				  vcpu->arch.pc, vcpu->arch.host_cp0_badvaddr,
 				  vcpu->arch.gprs[rt], *(u64 *)data);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			kvm_err("Godson Extended GS-Store not yet supported (inst=0x%08x)\n",
 				inst.word);
-			break;
-		}
-		break;
-#endif
-	default:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		kvm_err("Store not yet supported (inst=0x%08x)\n",
 			inst.word);
-		goto out_fail;
-	}
+		जाओ out_fail;
+	पूर्ण
 
 	vcpu->mmio_needed = 1;
-	run->mmio.is_write = 1;
-	vcpu->mmio_is_write = 1;
+	run->mmio.is_ग_लिखो = 1;
+	vcpu->mmio_is_ग_लिखो = 1;
 
-	r = kvm_io_bus_write(vcpu, KVM_MMIO_BUS,
+	r = kvm_io_bus_ग_लिखो(vcpu, KVM_MMIO_BUS,
 			run->mmio.phys_addr, run->mmio.len, data);
 
-	if (!r) {
+	अगर (!r) अणु
 		vcpu->mmio_needed = 0;
-		return EMULATE_DONE;
-	}
+		वापस EMULATE_DONE;
+	पूर्ण
 
-	return EMULATE_DO_MMIO;
+	वापस EMULATE_DO_MMIO;
 
 out_fail:
-	/* Rollback PC if emulation was unsuccessful */
+	/* Rollback PC अगर emulation was unsuccessful */
 	vcpu->arch.pc = curr_pc;
-	return EMULATE_FAIL;
-}
+	वापस EMULATE_FAIL;
+पूर्ण
 
-enum emulation_result kvm_mips_emulate_load(union mips_instruction inst,
-					    u32 cause, struct kvm_vcpu *vcpu)
-{
-	struct kvm_run *run = vcpu->run;
-	int r;
-	enum emulation_result er;
-	unsigned long curr_pc;
+क्रमागत emulation_result kvm_mips_emulate_load(जोड़ mips_inकाष्ठाion inst,
+					    u32 cause, काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm_run *run = vcpu->run;
+	पूर्णांक r;
+	क्रमागत emulation_result er;
+	अचिन्हित दीर्घ curr_pc;
 	u32 op, rt;
-	unsigned int imme;
+	अचिन्हित पूर्णांक imme;
 
-	rt = inst.i_format.rt;
-	op = inst.i_format.opcode;
+	rt = inst.i_क्रमmat.rt;
+	op = inst.i_क्रमmat.opcode;
 
 	/*
-	 * Find the resume PC now while we have safe and easy access to the
-	 * prior branch instruction, and save it for
+	 * Find the resume PC now जबतक we have safe and easy access to the
+	 * prior branch inकाष्ठाion, and save it क्रम
 	 * kvm_mips_complete_mmio_load() to restore later.
 	 */
 	curr_pc = vcpu->arch.pc;
 	er = update_pc(vcpu, cause);
-	if (er == EMULATE_FAIL)
-		return er;
+	अगर (er == EMULATE_FAIL)
+		वापस er;
 	vcpu->arch.io_pc = vcpu->arch.pc;
 	vcpu->arch.pc = curr_pc;
 
@@ -1296,357 +1297,357 @@ enum emulation_result kvm_mips_emulate_load(union mips_instruction inst,
 
 	run->mmio.phys_addr = kvm_mips_callbacks->gva_to_gpa(
 						vcpu->arch.host_cp0_badvaddr);
-	if (run->mmio.phys_addr == KVM_INVALID_ADDR)
-		return EMULATE_FAIL;
+	अगर (run->mmio.phys_addr == KVM_INVALID_ADDR)
+		वापस EMULATE_FAIL;
 
-	vcpu->mmio_needed = 2;	/* signed */
-	switch (op) {
-#if defined(CONFIG_64BIT)
-	case ld_op:
+	vcpu->mmio_needed = 2;	/* चिन्हित */
+	चयन (op) अणु
+#अगर defined(CONFIG_64BIT)
+	हाल ld_op:
 		run->mmio.len = 8;
-		break;
+		अवरोध;
 
-	case lwu_op:
-		vcpu->mmio_needed = 1;	/* unsigned */
+	हाल lwu_op:
+		vcpu->mmio_needed = 1;	/* अचिन्हित */
 		fallthrough;
-#endif
-	case lw_op:
+#पूर्ण_अगर
+	हाल lw_op:
 		run->mmio.len = 4;
-		break;
+		अवरोध;
 
-	case lhu_op:
-		vcpu->mmio_needed = 1;	/* unsigned */
+	हाल lhu_op:
+		vcpu->mmio_needed = 1;	/* अचिन्हित */
 		fallthrough;
-	case lh_op:
+	हाल lh_op:
 		run->mmio.len = 2;
-		break;
+		अवरोध;
 
-	case lbu_op:
-		vcpu->mmio_needed = 1;	/* unsigned */
+	हाल lbu_op:
+		vcpu->mmio_needed = 1;	/* अचिन्हित */
 		fallthrough;
-	case lb_op:
+	हाल lb_op:
 		run->mmio.len = 1;
-		break;
+		अवरोध;
 
-	case lwl_op:
+	हाल lwl_op:
 		run->mmio.phys_addr = kvm_mips_callbacks->gva_to_gpa(
 					vcpu->arch.host_cp0_badvaddr) & (~0x3);
 
 		run->mmio.len = 4;
 		imme = vcpu->arch.host_cp0_badvaddr & 0x3;
-		switch (imme) {
-		case 0:
+		चयन (imme) अणु
+		हाल 0:
 			vcpu->mmio_needed = 3;	/* 1 byte */
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			vcpu->mmio_needed = 4;	/* 2 bytes */
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			vcpu->mmio_needed = 5;	/* 3 bytes */
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			vcpu->mmio_needed = 6;	/* 4 bytes */
-			break;
-		default:
-			break;
-		}
-		break;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case lwr_op:
+	हाल lwr_op:
 		run->mmio.phys_addr = kvm_mips_callbacks->gva_to_gpa(
 					vcpu->arch.host_cp0_badvaddr) & (~0x3);
 
 		run->mmio.len = 4;
 		imme = vcpu->arch.host_cp0_badvaddr & 0x3;
-		switch (imme) {
-		case 0:
+		चयन (imme) अणु
+		हाल 0:
 			vcpu->mmio_needed = 7;	/* 4 bytes */
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			vcpu->mmio_needed = 8;	/* 3 bytes */
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			vcpu->mmio_needed = 9;	/* 2 bytes */
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			vcpu->mmio_needed = 10;	/* 1 byte */
-			break;
-		default:
-			break;
-		}
-		break;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-#if defined(CONFIG_64BIT)
-	case ldl_op:
+#अगर defined(CONFIG_64BIT)
+	हाल ldl_op:
 		run->mmio.phys_addr = kvm_mips_callbacks->gva_to_gpa(
 					vcpu->arch.host_cp0_badvaddr) & (~0x7);
 
 		run->mmio.len = 8;
 		imme = vcpu->arch.host_cp0_badvaddr & 0x7;
-		switch (imme) {
-		case 0:
+		चयन (imme) अणु
+		हाल 0:
 			vcpu->mmio_needed = 11;	/* 1 byte */
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			vcpu->mmio_needed = 12;	/* 2 bytes */
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			vcpu->mmio_needed = 13;	/* 3 bytes */
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			vcpu->mmio_needed = 14;	/* 4 bytes */
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			vcpu->mmio_needed = 15;	/* 5 bytes */
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			vcpu->mmio_needed = 16;	/* 6 bytes */
-			break;
-		case 6:
+			अवरोध;
+		हाल 6:
 			vcpu->mmio_needed = 17;	/* 7 bytes */
-			break;
-		case 7:
+			अवरोध;
+		हाल 7:
 			vcpu->mmio_needed = 18;	/* 8 bytes */
-			break;
-		default:
-			break;
-		}
-		break;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case ldr_op:
+	हाल ldr_op:
 		run->mmio.phys_addr = kvm_mips_callbacks->gva_to_gpa(
 					vcpu->arch.host_cp0_badvaddr) & (~0x7);
 
 		run->mmio.len = 8;
 		imme = vcpu->arch.host_cp0_badvaddr & 0x7;
-		switch (imme) {
-		case 0:
+		चयन (imme) अणु
+		हाल 0:
 			vcpu->mmio_needed = 19;	/* 8 bytes */
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			vcpu->mmio_needed = 20;	/* 7 bytes */
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			vcpu->mmio_needed = 21;	/* 6 bytes */
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			vcpu->mmio_needed = 22;	/* 5 bytes */
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			vcpu->mmio_needed = 23;	/* 4 bytes */
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			vcpu->mmio_needed = 24;	/* 3 bytes */
-			break;
-		case 6:
+			अवरोध;
+		हाल 6:
 			vcpu->mmio_needed = 25;	/* 2 bytes */
-			break;
-		case 7:
+			अवरोध;
+		हाल 7:
 			vcpu->mmio_needed = 26;	/* 1 byte */
-			break;
-		default:
-			break;
-		}
-		break;
-#endif
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_LOONGSON64
-	case ldc2_op:
-		rt = inst.loongson3_lsdc2_format.rt;
-		switch (inst.loongson3_lsdc2_format.opcode1) {
+#अगर_घोषित CONFIG_CPU_LOONGSON64
+	हाल ldc2_op:
+		rt = inst.loongson3_lsdc2_क्रमmat.rt;
+		चयन (inst.loongson3_lsdc2_क्रमmat.opcode1) अणु
 		/*
-		 * Loongson-3 overridden ldc2 instructions.
-		 * opcode1              instruction
+		 * Loongson-3 overridden ldc2 inकाष्ठाions.
+		 * opcode1              inकाष्ठाion
 		 *   0x0          gslbx: store 1 bytes from GPR
 		 *   0x1          gslhx: store 2 bytes from GPR
 		 *   0x2          gslwx: store 4 bytes from GPR
 		 *   0x3          gsldx: store 8 bytes from GPR
 		 */
-		case 0x0:
+		हाल 0x0:
 			run->mmio.len = 1;
-			vcpu->mmio_needed = 27;	/* signed */
-			break;
-		case 0x1:
+			vcpu->mmio_needed = 27;	/* चिन्हित */
+			अवरोध;
+		हाल 0x1:
 			run->mmio.len = 2;
-			vcpu->mmio_needed = 28;	/* signed */
-			break;
-		case 0x2:
+			vcpu->mmio_needed = 28;	/* चिन्हित */
+			अवरोध;
+		हाल 0x2:
 			run->mmio.len = 4;
-			vcpu->mmio_needed = 29;	/* signed */
-			break;
-		case 0x3:
+			vcpu->mmio_needed = 29;	/* चिन्हित */
+			अवरोध;
+		हाल 0x3:
 			run->mmio.len = 8;
-			vcpu->mmio_needed = 30;	/* signed */
-			break;
-		default:
+			vcpu->mmio_needed = 30;	/* चिन्हित */
+			अवरोध;
+		शेष:
 			kvm_err("Godson Extended GS-Load for float not yet supported (inst=0x%08x)\n",
 				inst.word);
-			break;
-		}
-		break;
-#endif
+			अवरोध;
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर
 
-	default:
+	शेष:
 		kvm_err("Load not yet supported (inst=0x%08x)\n",
 			inst.word);
 		vcpu->mmio_needed = 0;
-		return EMULATE_FAIL;
-	}
+		वापस EMULATE_FAIL;
+	पूर्ण
 
-	run->mmio.is_write = 0;
-	vcpu->mmio_is_write = 0;
+	run->mmio.is_ग_लिखो = 0;
+	vcpu->mmio_is_ग_लिखो = 0;
 
-	r = kvm_io_bus_read(vcpu, KVM_MMIO_BUS,
+	r = kvm_io_bus_पढ़ो(vcpu, KVM_MMIO_BUS,
 			run->mmio.phys_addr, run->mmio.len, run->mmio.data);
 
-	if (!r) {
+	अगर (!r) अणु
 		kvm_mips_complete_mmio_load(vcpu);
 		vcpu->mmio_needed = 0;
-		return EMULATE_DONE;
-	}
+		वापस EMULATE_DONE;
+	पूर्ण
 
-	return EMULATE_DO_MMIO;
-}
+	वापस EMULATE_DO_MMIO;
+पूर्ण
 
-enum emulation_result kvm_mips_complete_mmio_load(struct kvm_vcpu *vcpu)
-{
-	struct kvm_run *run = vcpu->run;
-	unsigned long *gpr = &vcpu->arch.gprs[vcpu->arch.io_gpr];
-	enum emulation_result er = EMULATE_DONE;
+क्रमागत emulation_result kvm_mips_complete_mmio_load(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm_run *run = vcpu->run;
+	अचिन्हित दीर्घ *gpr = &vcpu->arch.gprs[vcpu->arch.io_gpr];
+	क्रमागत emulation_result er = EMULATE_DONE;
 
-	if (run->mmio.len > sizeof(*gpr)) {
+	अगर (run->mmio.len > माप(*gpr)) अणु
 		kvm_err("Bad MMIO length: %d", run->mmio.len);
 		er = EMULATE_FAIL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* Restore saved resume PC */
 	vcpu->arch.pc = vcpu->arch.io_pc;
 
-	switch (run->mmio.len) {
-	case 8:
-		switch (vcpu->mmio_needed) {
-		case 11:
+	चयन (run->mmio.len) अणु
+	हाल 8:
+		चयन (vcpu->mmio_needed) अणु
+		हाल 11:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffffffffffff) |
 				(((*(s64 *)run->mmio.data) & 0xff) << 56);
-			break;
-		case 12:
+			अवरोध;
+		हाल 12:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffffffffff) |
 				(((*(s64 *)run->mmio.data) & 0xffff) << 48);
-			break;
-		case 13:
+			अवरोध;
+		हाल 13:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffffffff) |
 				(((*(s64 *)run->mmio.data) & 0xffffff) << 40);
-			break;
-		case 14:
+			अवरोध;
+		हाल 14:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffffff) |
 				(((*(s64 *)run->mmio.data) & 0xffffffff) << 32);
-			break;
-		case 15:
+			अवरोध;
+		हाल 15:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffff) |
 				(((*(s64 *)run->mmio.data) & 0xffffffffff) << 24);
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffff) |
 				(((*(s64 *)run->mmio.data) & 0xffffffffffff) << 16);
-			break;
-		case 17:
+			अवरोध;
+		हाल 17:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xff) |
 				(((*(s64 *)run->mmio.data) & 0xffffffffffffff) << 8);
-			break;
-		case 18:
-		case 19:
+			अवरोध;
+		हाल 18:
+		हाल 19:
 			*gpr = *(s64 *)run->mmio.data;
-			break;
-		case 20:
+			अवरोध;
+		हाल 20:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xff00000000000000) |
 				((((*(s64 *)run->mmio.data)) >> 8) & 0xffffffffffffff);
-			break;
-		case 21:
+			अवरोध;
+		हाल 21:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffff000000000000) |
 				((((*(s64 *)run->mmio.data)) >> 16) & 0xffffffffffff);
-			break;
-		case 22:
+			अवरोध;
+		हाल 22:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffff0000000000) |
 				((((*(s64 *)run->mmio.data)) >> 24) & 0xffffffffff);
-			break;
-		case 23:
+			अवरोध;
+		हाल 23:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffffff00000000) |
 				((((*(s64 *)run->mmio.data)) >> 32) & 0xffffffff);
-			break;
-		case 24:
+			अवरोध;
+		हाल 24:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffffffff000000) |
 				((((*(s64 *)run->mmio.data)) >> 40) & 0xffffff);
-			break;
-		case 25:
+			अवरोध;
+		हाल 25:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffffffffff0000) |
 				((((*(s64 *)run->mmio.data)) >> 48) & 0xffff);
-			break;
-		case 26:
+			अवरोध;
+		हाल 26:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffffffffffff00) |
 				((((*(s64 *)run->mmio.data)) >> 56) & 0xff);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			*gpr = *(s64 *)run->mmio.data;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 4:
-		switch (vcpu->mmio_needed) {
-		case 1:
+	हाल 4:
+		चयन (vcpu->mmio_needed) अणु
+		हाल 1:
 			*gpr = *(u32 *)run->mmio.data;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			*gpr = *(s32 *)run->mmio.data;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffff) |
 				(((*(s32 *)run->mmio.data) & 0xff) << 24);
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffff) |
 				(((*(s32 *)run->mmio.data) & 0xffff) << 16);
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xff) |
 				(((*(s32 *)run->mmio.data) & 0xffffff) << 8);
-			break;
-		case 6:
-		case 7:
+			अवरोध;
+		हाल 6:
+		हाल 7:
 			*gpr = *(s32 *)run->mmio.data;
-			break;
-		case 8:
+			अवरोध;
+		हाल 8:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xff000000) |
 				((((*(s32 *)run->mmio.data)) >> 8) & 0xffffff);
-			break;
-		case 9:
+			अवरोध;
+		हाल 9:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffff0000) |
 				((((*(s32 *)run->mmio.data)) >> 16) & 0xffff);
-			break;
-		case 10:
+			अवरोध;
+		हाल 10:
 			*gpr = (vcpu->arch.gprs[vcpu->arch.io_gpr] & 0xffffff00) |
 				((((*(s32 *)run->mmio.data)) >> 24) & 0xff);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			*gpr = *(s32 *)run->mmio.data;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 2:
-		if (vcpu->mmio_needed == 1)
+	हाल 2:
+		अगर (vcpu->mmio_needed == 1)
 			*gpr = *(u16 *)run->mmio.data;
-		else
+		अन्यथा
 			*gpr = *(s16 *)run->mmio.data;
 
-		break;
-	case 1:
-		if (vcpu->mmio_needed == 1)
+		अवरोध;
+	हाल 1:
+		अगर (vcpu->mmio_needed == 1)
 			*gpr = *(u8 *)run->mmio.data;
-		else
+		अन्यथा
 			*gpr = *(s8 *)run->mmio.data;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-done:
-	return er;
-}
+करोne:
+	वापस er;
+पूर्ण

@@ -1,216 +1,217 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * rcar_cmm.c -- R-Car Display Unit Color Management Module
  *
  * Copyright (C) 2019 Jacopo Mondi <jacopo+renesas@jmondi.org>
  */
 
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <drm/drm_color_mgmt.h>
+#समावेश <drm/drm_color_mgmt.h>
 
-#include "rcar_cmm.h"
+#समावेश "rcar_cmm.h"
 
-#define CM2_LUT_CTRL		0x0000
-#define CM2_LUT_CTRL_LUT_EN	BIT(0)
-#define CM2_LUT_TBL_BASE	0x0600
-#define CM2_LUT_TBL(__i)	(CM2_LUT_TBL_BASE + (__i) * 4)
+#घोषणा CM2_LUT_CTRL		0x0000
+#घोषणा CM2_LUT_CTRL_LUT_EN	BIT(0)
+#घोषणा CM2_LUT_TBL_BASE	0x0600
+#घोषणा CM2_LUT_TBL(__i)	(CM2_LUT_TBL_BASE + (__i) * 4)
 
-struct rcar_cmm {
-	void __iomem *base;
+काष्ठा rcar_cmm अणु
+	व्योम __iomem *base;
 
 	/*
 	 * @lut:		1D-LUT state
 	 * @lut.enabled:	1D-LUT enabled flag
 	 */
-	struct {
+	काष्ठा अणु
 		bool enabled;
-	} lut;
-};
+	पूर्ण lut;
+पूर्ण;
 
-static inline int rcar_cmm_read(struct rcar_cmm *rcmm, u32 reg)
-{
-	return ioread32(rcmm->base + reg);
-}
+अटल अंतरभूत पूर्णांक rcar_cmm_पढ़ो(काष्ठा rcar_cmm *rcmm, u32 reg)
+अणु
+	वापस ioपढ़ो32(rcmm->base + reg);
+पूर्ण
 
-static inline void rcar_cmm_write(struct rcar_cmm *rcmm, u32 reg, u32 data)
-{
-	iowrite32(data, rcmm->base + reg);
-}
+अटल अंतरभूत व्योम rcar_cmm_ग_लिखो(काष्ठा rcar_cmm *rcmm, u32 reg, u32 data)
+अणु
+	ioग_लिखो32(data, rcmm->base + reg);
+पूर्ण
 
 /*
- * rcar_cmm_lut_write() - Scale the DRM LUT table entries to hardware precision
- *			  and write to the CMM registers
- * @rcmm: Pointer to the CMM device
- * @drm_lut: Pointer to the DRM LUT table
+ * rcar_cmm_lut_ग_लिखो() - Scale the DRM LUT table entries to hardware precision
+ *			  and ग_लिखो to the CMM रेजिस्टरs
+ * @rcmm: Poपूर्णांकer to the CMM device
+ * @drm_lut: Poपूर्णांकer to the DRM LUT table
  */
-static void rcar_cmm_lut_write(struct rcar_cmm *rcmm,
-			       const struct drm_color_lut *drm_lut)
-{
-	unsigned int i;
+अटल व्योम rcar_cmm_lut_ग_लिखो(काष्ठा rcar_cmm *rcmm,
+			       स्थिर काष्ठा drm_color_lut *drm_lut)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < CM2_LUT_SIZE; ++i) {
+	क्रम (i = 0; i < CM2_LUT_SIZE; ++i) अणु
 		u32 entry = drm_color_lut_extract(drm_lut[i].red, 8) << 16
 			  | drm_color_lut_extract(drm_lut[i].green, 8) << 8
 			  | drm_color_lut_extract(drm_lut[i].blue, 8);
 
-		rcar_cmm_write(rcmm, CM2_LUT_TBL(i), entry);
-	}
-}
+		rcar_cmm_ग_लिखो(rcmm, CM2_LUT_TBL(i), entry);
+	पूर्ण
+पूर्ण
 
 /*
  * rcar_cmm_setup() - Configure the CMM unit
- * @pdev: The platform device associated with the CMM instance
+ * @pdev: The platक्रमm device associated with the CMM instance
  * @config: The CMM unit configuration
  *
  * Configure the CMM unit with the given configuration. Currently enabling,
  * disabling and programming of the 1-D LUT unit is supported.
  *
- * As rcar_cmm_setup() accesses the CMM registers the unit should be powered
- * and its functional clock enabled. To guarantee this, before any call to
+ * As rcar_cmm_setup() accesses the CMM रेजिस्टरs the unit should be घातered
+ * and its functional घड़ी enabled. To guarantee this, beक्रमe any call to
  * this function is made, the CMM unit has to be enabled by calling
  * rcar_cmm_enable() first.
  *
- * TODO: Add support for LUT double buffer operations to avoid updating the
- * LUT table entries while a frame is being displayed.
+ * TODO: Add support क्रम LUT द्विगुन buffer operations to aव्योम updating the
+ * LUT table entries जबतक a frame is being displayed.
  */
-int rcar_cmm_setup(struct platform_device *pdev,
-		   const struct rcar_cmm_config *config)
-{
-	struct rcar_cmm *rcmm = platform_get_drvdata(pdev);
+पूर्णांक rcar_cmm_setup(काष्ठा platक्रमm_device *pdev,
+		   स्थिर काष्ठा rcar_cmm_config *config)
+अणु
+	काष्ठा rcar_cmm *rcmm = platक्रमm_get_drvdata(pdev);
 
-	/* Disable LUT if no table is provided. */
-	if (!config->lut.table) {
-		if (rcmm->lut.enabled) {
-			rcar_cmm_write(rcmm, CM2_LUT_CTRL, 0);
+	/* Disable LUT अगर no table is provided. */
+	अगर (!config->lut.table) अणु
+		अगर (rcmm->lut.enabled) अणु
+			rcar_cmm_ग_लिखो(rcmm, CM2_LUT_CTRL, 0);
 			rcmm->lut.enabled = false;
-		}
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Enable LUT and program the new gamma table values. */
-	if (!rcmm->lut.enabled) {
-		rcar_cmm_write(rcmm, CM2_LUT_CTRL, CM2_LUT_CTRL_LUT_EN);
+	अगर (!rcmm->lut.enabled) अणु
+		rcar_cmm_ग_लिखो(rcmm, CM2_LUT_CTRL, CM2_LUT_CTRL_LUT_EN);
 		rcmm->lut.enabled = true;
-	}
+	पूर्ण
 
-	rcar_cmm_lut_write(rcmm, config->lut.table);
+	rcar_cmm_lut_ग_लिखो(rcmm, config->lut.table);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rcar_cmm_setup);
 
 /*
  * rcar_cmm_enable() - Enable the CMM unit
- * @pdev: The platform device associated with the CMM instance
+ * @pdev: The platक्रमm device associated with the CMM instance
  *
  * When the output of the corresponding DU channel is routed to the CMM unit,
- * the unit shall be enabled before the DU channel is started, and remain
+ * the unit shall be enabled beक्रमe the DU channel is started, and reमुख्य
  * enabled until the channel is stopped. The CMM unit shall be disabled with
  * rcar_cmm_disable().
  *
  * Calls to rcar_cmm_enable() and rcar_cmm_disable() are not reference-counted.
- * It is an error to attempt to enable an already enabled CMM unit, or to
+ * It is an error to attempt to enable an alपढ़ोy enabled CMM unit, or to
  * attempt to disable a disabled unit.
  */
-int rcar_cmm_enable(struct platform_device *pdev)
-{
-	int ret;
+पूर्णांक rcar_cmm_enable(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 
-	ret = pm_runtime_resume_and_get(&pdev->dev);
-	if (ret < 0)
-		return ret;
+	ret = pm_runसमय_resume_and_get(&pdev->dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rcar_cmm_enable);
 
 /*
  * rcar_cmm_disable() - Disable the CMM unit
- * @pdev: The platform device associated with the CMM instance
+ * @pdev: The platक्रमm device associated with the CMM instance
  *
- * See rcar_cmm_enable() for usage information.
+ * See rcar_cmm_enable() क्रम usage inक्रमmation.
  *
- * Disabling the CMM unit disable all the internal processing blocks. The CMM
+ * Disabling the CMM unit disable all the पूर्णांकernal processing blocks. The CMM
  * state shall thus be restored with rcar_cmm_setup() when re-enabling the CMM
  * unit after the next rcar_cmm_enable() call.
  */
-void rcar_cmm_disable(struct platform_device *pdev)
-{
-	struct rcar_cmm *rcmm = platform_get_drvdata(pdev);
+व्योम rcar_cmm_disable(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rcar_cmm *rcmm = platक्रमm_get_drvdata(pdev);
 
-	rcar_cmm_write(rcmm, CM2_LUT_CTRL, 0);
+	rcar_cmm_ग_लिखो(rcmm, CM2_LUT_CTRL, 0);
 	rcmm->lut.enabled = false;
 
-	pm_runtime_put(&pdev->dev);
-}
+	pm_runसमय_put(&pdev->dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(rcar_cmm_disable);
 
 /*
  * rcar_cmm_init() - Initialize the CMM unit
- * @pdev: The platform device associated with the CMM instance
+ * @pdev: The platक्रमm device associated with the CMM instance
  *
- * Return: 0 on success, -EPROBE_DEFER if the CMM is not available yet,
- *         -ENODEV if the DRM_RCAR_CMM config option is disabled
+ * Return: 0 on success, -EPROBE_DEFER अगर the CMM is not available yet,
+ *         -ENODEV अगर the DRM_RCAR_CMM config option is disabled
  */
-int rcar_cmm_init(struct platform_device *pdev)
-{
-	struct rcar_cmm *rcmm = platform_get_drvdata(pdev);
+पूर्णांक rcar_cmm_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rcar_cmm *rcmm = platक्रमm_get_drvdata(pdev);
 
-	if (!rcmm)
-		return -EPROBE_DEFER;
+	अगर (!rcmm)
+		वापस -EPROBE_DEFER;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rcar_cmm_init);
 
-static int rcar_cmm_probe(struct platform_device *pdev)
-{
-	struct rcar_cmm *rcmm;
+अटल पूर्णांक rcar_cmm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rcar_cmm *rcmm;
 
-	rcmm = devm_kzalloc(&pdev->dev, sizeof(*rcmm), GFP_KERNEL);
-	if (!rcmm)
-		return -ENOMEM;
-	platform_set_drvdata(pdev, rcmm);
+	rcmm = devm_kzalloc(&pdev->dev, माप(*rcmm), GFP_KERNEL);
+	अगर (!rcmm)
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, rcmm);
 
-	rcmm->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(rcmm->base))
-		return PTR_ERR(rcmm->base);
+	rcmm->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(rcmm->base))
+		वापस PTR_ERR(rcmm->base);
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rcar_cmm_remove(struct platform_device *pdev)
-{
-	pm_runtime_disable(&pdev->dev);
+अटल पूर्णांक rcar_cmm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id rcar_cmm_of_table[] = {
-	{ .compatible = "renesas,rcar-gen3-cmm", },
-	{ .compatible = "renesas,rcar-gen2-cmm", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id rcar_cmm_of_table[] = अणु
+	अणु .compatible = "renesas,rcar-gen3-cmm", पूर्ण,
+	अणु .compatible = "renesas,rcar-gen2-cmm", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rcar_cmm_of_table);
 
-static struct platform_driver rcar_cmm_platform_driver = {
+अटल काष्ठा platक्रमm_driver rcar_cmm_platक्रमm_driver = अणु
 	.probe		= rcar_cmm_probe,
-	.remove		= rcar_cmm_remove,
-	.driver		= {
+	.हटाओ		= rcar_cmm_हटाओ,
+	.driver		= अणु
 		.name	= "rcar-cmm",
 		.of_match_table = rcar_cmm_of_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(rcar_cmm_platform_driver);
+module_platक्रमm_driver(rcar_cmm_platक्रमm_driver);
 
 MODULE_AUTHOR("Jacopo Mondi <jacopo+renesas@jmondi.org>");
 MODULE_DESCRIPTION("Renesas R-Car CMM Driver");

@@ -1,276 +1,277 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * svm_vmcall_test
  *
- * Copyright © 2021 Amazon.com, Inc. or its affiliates.
+ * Copyright तऊ 2021 Amazon.com, Inc. or its affiliates.
  *
- * Xen shared_info / pvclock testing
+ * Xen shared_info / pvघड़ी testing
  */
 
-#include "test_util.h"
-#include "kvm_util.h"
-#include "processor.h"
+#समावेश "test_util.h"
+#समावेश "kvm_util.h"
+#समावेश "processor.h"
 
-#include <stdint.h>
-#include <time.h>
-#include <sched.h>
-#include <sys/syscall.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <समय.स>
+#समावेश <sched.h>
+#समावेश <sys/syscall.h>
 
-#define VCPU_ID		5
+#घोषणा VCPU_ID		5
 
-#define SHINFO_REGION_GVA	0xc0000000ULL
-#define SHINFO_REGION_GPA	0xc0000000ULL
-#define SHINFO_REGION_SLOT	10
-#define PAGE_SIZE		4096
+#घोषणा SHINFO_REGION_GVA	0xc0000000ULL
+#घोषणा SHINFO_REGION_GPA	0xc0000000ULL
+#घोषणा SHINFO_REGION_SLOT	10
+#घोषणा PAGE_SIZE		4096
 
-#define PVTIME_ADDR	(SHINFO_REGION_GPA + PAGE_SIZE)
-#define RUNSTATE_ADDR	(SHINFO_REGION_GPA + PAGE_SIZE + 0x20)
+#घोषणा PVTIME_ADDR	(SHINFO_REGION_GPA + PAGE_SIZE)
+#घोषणा RUNSTATE_ADDR	(SHINFO_REGION_GPA + PAGE_SIZE + 0x20)
 
-#define RUNSTATE_VADDR	(SHINFO_REGION_GVA + PAGE_SIZE + 0x20)
+#घोषणा RUNSTATE_VADDR	(SHINFO_REGION_GVA + PAGE_SIZE + 0x20)
 
-static struct kvm_vm *vm;
+अटल काष्ठा kvm_vm *vm;
 
-#define XEN_HYPERCALL_MSR	0x40000000
+#घोषणा XEN_HYPERCALL_MSR	0x40000000
 
-#define MIN_STEAL_TIME		50000
+#घोषणा MIN_STEAL_TIME		50000
 
-struct pvclock_vcpu_time_info {
+काष्ठा pvघड़ी_vcpu_समय_info अणु
         u32   version;
         u32   pad0;
-        u64   tsc_timestamp;
-        u64   system_time;
-        u32   tsc_to_system_mul;
-        s8    tsc_shift;
+        u64   tsc_बारtamp;
+        u64   प्रणाली_समय;
+        u32   tsc_to_प्रणाली_mul;
+        s8    tsc_shअगरt;
         u8    flags;
         u8    pad[2];
-} __attribute__((__packed__)); /* 32 bytes */
+पूर्ण __attribute__((__packed__)); /* 32 bytes */
 
-struct pvclock_wall_clock {
+काष्ठा pvघड़ी_wall_घड़ी अणु
         u32   version;
         u32   sec;
         u32   nsec;
-} __attribute__((__packed__));
+पूर्ण __attribute__((__packed__));
 
-struct vcpu_runstate_info {
-    uint32_t state;
-    uint64_t state_entry_time;
-    uint64_t time[4];
-};
+काष्ठा vcpu_runstate_info अणु
+    uपूर्णांक32_t state;
+    uपूर्णांक64_t state_entry_समय;
+    uपूर्णांक64_t समय[4];
+पूर्ण;
 
-#define RUNSTATE_running  0
-#define RUNSTATE_runnable 1
-#define RUNSTATE_blocked  2
-#define RUNSTATE_offline  3
+#घोषणा RUNSTATE_running  0
+#घोषणा RUNSTATE_runnable 1
+#घोषणा RUNSTATE_blocked  2
+#घोषणा RUNSTATE_offline  3
 
-static void guest_code(void)
-{
-	struct vcpu_runstate_info *rs = (void *)RUNSTATE_VADDR;
+अटल व्योम guest_code(व्योम)
+अणु
+	काष्ठा vcpu_runstate_info *rs = (व्योम *)RUNSTATE_VADDR;
 
 	/* Test having the host set runstates manually */
 	GUEST_SYNC(RUNSTATE_runnable);
-	GUEST_ASSERT(rs->time[RUNSTATE_runnable] != 0);
+	GUEST_ASSERT(rs->समय[RUNSTATE_runnable] != 0);
 	GUEST_ASSERT(rs->state == 0);
 
 	GUEST_SYNC(RUNSTATE_blocked);
-	GUEST_ASSERT(rs->time[RUNSTATE_blocked] != 0);
+	GUEST_ASSERT(rs->समय[RUNSTATE_blocked] != 0);
 	GUEST_ASSERT(rs->state == 0);
 
 	GUEST_SYNC(RUNSTATE_offline);
-	GUEST_ASSERT(rs->time[RUNSTATE_offline] != 0);
+	GUEST_ASSERT(rs->समय[RUNSTATE_offline] != 0);
 	GUEST_ASSERT(rs->state == 0);
 
-	/* Test runstate time adjust */
+	/* Test runstate समय adjust */
 	GUEST_SYNC(4);
-	GUEST_ASSERT(rs->time[RUNSTATE_blocked] == 0x5a);
-	GUEST_ASSERT(rs->time[RUNSTATE_offline] == 0x6b6b);
+	GUEST_ASSERT(rs->समय[RUNSTATE_blocked] == 0x5a);
+	GUEST_ASSERT(rs->समय[RUNSTATE_offline] == 0x6b6b);
 
-	/* Test runstate time set */
+	/* Test runstate समय set */
 	GUEST_SYNC(5);
-	GUEST_ASSERT(rs->state_entry_time >= 0x8000);
-	GUEST_ASSERT(rs->time[RUNSTATE_runnable] == 0);
-	GUEST_ASSERT(rs->time[RUNSTATE_blocked] == 0x6b6b);
-	GUEST_ASSERT(rs->time[RUNSTATE_offline] == 0x5a);
+	GUEST_ASSERT(rs->state_entry_समय >= 0x8000);
+	GUEST_ASSERT(rs->समय[RUNSTATE_runnable] == 0);
+	GUEST_ASSERT(rs->समय[RUNSTATE_blocked] == 0x6b6b);
+	GUEST_ASSERT(rs->समय[RUNSTATE_offline] == 0x5a);
 
-	/* sched_yield() should result in some 'runnable' time */
+	/* sched_yield() should result in some 'runnable' समय */
 	GUEST_SYNC(6);
-	GUEST_ASSERT(rs->time[RUNSTATE_runnable] >= MIN_STEAL_TIME);
+	GUEST_ASSERT(rs->समय[RUNSTATE_runnable] >= MIN_STEAL_TIME);
 
 	GUEST_DONE();
-}
+पूर्ण
 
-static long get_run_delay(void)
-{
-        char path[64];
-        long val[2];
-        FILE *fp;
+अटल दीर्घ get_run_delay(व्योम)
+अणु
+        अक्षर path[64];
+        दीर्घ val[2];
+        खाता *fp;
 
-        sprintf(path, "/proc/%ld/schedstat", syscall(SYS_gettid));
-        fp = fopen(path, "r");
-        fscanf(fp, "%ld %ld ", &val[0], &val[1]);
-        fclose(fp);
+        प्र_लिखो(path, "/proc/%ld/schedstat", syscall(SYS_gettid));
+        fp = ख_खोलो(path, "r");
+        ख_पूछो(fp, "%ld %ld ", &val[0], &val[1]);
+        ख_बंद(fp);
 
-        return val[1];
-}
+        वापस val[1];
+पूर्ण
 
-static int cmp_timespec(struct timespec *a, struct timespec *b)
-{
-	if (a->tv_sec > b->tv_sec)
-		return 1;
-	else if (a->tv_sec < b->tv_sec)
-		return -1;
-	else if (a->tv_nsec > b->tv_nsec)
-		return 1;
-	else if (a->tv_nsec < b->tv_nsec)
-		return -1;
-	else
-		return 0;
-}
+अटल पूर्णांक cmp_बारpec(काष्ठा बारpec *a, काष्ठा बारpec *b)
+अणु
+	अगर (a->tv_sec > b->tv_sec)
+		वापस 1;
+	अन्यथा अगर (a->tv_sec < b->tv_sec)
+		वापस -1;
+	अन्यथा अगर (a->tv_nsec > b->tv_nsec)
+		वापस 1;
+	अन्यथा अगर (a->tv_nsec < b->tv_nsec)
+		वापस -1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	struct timespec min_ts, max_ts, vm_ts;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	काष्ठा बारpec min_ts, max_ts, vm_ts;
 
-	int xen_caps = kvm_check_cap(KVM_CAP_XEN_HVM);
-	if (!(xen_caps & KVM_XEN_HVM_CONFIG_SHARED_INFO) ) {
-		print_skip("KVM_XEN_HVM_CONFIG_SHARED_INFO not available");
-		exit(KSFT_SKIP);
-	}
+	पूर्णांक xen_caps = kvm_check_cap(KVM_CAP_XEN_HVM);
+	अगर (!(xen_caps & KVM_XEN_HVM_CONFIG_SHARED_INFO) ) अणु
+		prपूर्णांक_skip("KVM_XEN_HVM_CONFIG_SHARED_INFO not available");
+		निकास(KSFT_SKIP);
+	पूर्ण
 
-	bool do_runstate_tests = !!(xen_caps & KVM_XEN_HVM_CONFIG_RUNSTATE);
+	bool करो_runstate_tests = !!(xen_caps & KVM_XEN_HVM_CONFIG_RUNSTATE);
 
-	clock_gettime(CLOCK_REALTIME, &min_ts);
+	घड़ी_समय_लो(CLOCK_REALTIME, &min_ts);
 
-	vm = vm_create_default(VCPU_ID, 0, (void *) guest_code);
+	vm = vm_create_शेष(VCPU_ID, 0, (व्योम *) guest_code);
 	vcpu_set_cpuid(vm, VCPU_ID, kvm_get_supported_cpuid());
 
-	/* Map a region for the shared_info page */
+	/* Map a region क्रम the shared_info page */
 	vm_userspace_mem_region_add(vm, VM_MEM_SRC_ANONYMOUS,
 				    SHINFO_REGION_GPA, SHINFO_REGION_SLOT, 2, 0);
 	virt_map(vm, SHINFO_REGION_GVA, SHINFO_REGION_GPA, 2, 0);
 
-	struct kvm_xen_hvm_config hvmc = {
+	काष्ठा kvm_xen_hvm_config hvmc = अणु
 		.flags = KVM_XEN_HVM_CONFIG_INTERCEPT_HCALL,
 		.msr = XEN_HYPERCALL_MSR,
-	};
+	पूर्ण;
 	vm_ioctl(vm, KVM_XEN_HVM_CONFIG, &hvmc);
 
-	struct kvm_xen_hvm_attr lm = {
+	काष्ठा kvm_xen_hvm_attr lm = अणु
 		.type = KVM_XEN_ATTR_TYPE_LONG_MODE,
-		.u.long_mode = 1,
-	};
+		.u.दीर्घ_mode = 1,
+	पूर्ण;
 	vm_ioctl(vm, KVM_XEN_HVM_SET_ATTR, &lm);
 
-	struct kvm_xen_hvm_attr ha = {
+	काष्ठा kvm_xen_hvm_attr ha = अणु
 		.type = KVM_XEN_ATTR_TYPE_SHARED_INFO,
 		.u.shared_info.gfn = SHINFO_REGION_GPA / PAGE_SIZE,
-	};
+	पूर्ण;
 	vm_ioctl(vm, KVM_XEN_HVM_SET_ATTR, &ha);
 
-	struct kvm_xen_vcpu_attr vi = {
+	काष्ठा kvm_xen_vcpu_attr vi = अणु
 		.type = KVM_XEN_VCPU_ATTR_TYPE_VCPU_INFO,
 		.u.gpa = SHINFO_REGION_GPA + 0x40,
-	};
+	पूर्ण;
 	vcpu_ioctl(vm, VCPU_ID, KVM_XEN_VCPU_SET_ATTR, &vi);
 
-	struct kvm_xen_vcpu_attr pvclock = {
+	काष्ठा kvm_xen_vcpu_attr pvघड़ी = अणु
 		.type = KVM_XEN_VCPU_ATTR_TYPE_VCPU_TIME_INFO,
 		.u.gpa = PVTIME_ADDR,
-	};
-	vcpu_ioctl(vm, VCPU_ID, KVM_XEN_VCPU_SET_ATTR, &pvclock);
+	पूर्ण;
+	vcpu_ioctl(vm, VCPU_ID, KVM_XEN_VCPU_SET_ATTR, &pvघड़ी);
 
-	if (do_runstate_tests) {
-		struct kvm_xen_vcpu_attr st = {
+	अगर (करो_runstate_tests) अणु
+		काष्ठा kvm_xen_vcpu_attr st = अणु
 			.type = KVM_XEN_VCPU_ATTR_TYPE_RUNSTATE_ADDR,
 			.u.gpa = RUNSTATE_ADDR,
-		};
+		पूर्ण;
 		vcpu_ioctl(vm, VCPU_ID, KVM_XEN_VCPU_SET_ATTR, &st);
-	}
+	पूर्ण
 
-	struct vcpu_runstate_info *rs = addr_gpa2hva(vm, RUNSTATE_ADDR);
+	काष्ठा vcpu_runstate_info *rs = addr_gpa2hva(vm, RUNSTATE_ADDR);
 	rs->state = 0x5a;
 
-	for (;;) {
-		volatile struct kvm_run *run = vcpu_state(vm, VCPU_ID);
-		struct ucall uc;
+	क्रम (;;) अणु
+		अस्थिर काष्ठा kvm_run *run = vcpu_state(vm, VCPU_ID);
+		काष्ठा ucall uc;
 
 		vcpu_run(vm, VCPU_ID);
 
-		TEST_ASSERT(run->exit_reason == KVM_EXIT_IO,
+		TEST_ASSERT(run->निकास_reason == KVM_EXIT_IO,
 			    "Got exit_reason other than KVM_EXIT_IO: %u (%s)\n",
-			    run->exit_reason,
-			    exit_reason_str(run->exit_reason));
+			    run->निकास_reason,
+			    निकास_reason_str(run->निकास_reason));
 
-		switch (get_ucall(vm, VCPU_ID, &uc)) {
-		case UCALL_ABORT:
-			TEST_FAIL("%s", (const char *)uc.args[0]);
+		चयन (get_ucall(vm, VCPU_ID, &uc)) अणु
+		हाल UCALL_ABORT:
+			TEST_FAIL("%s", (स्थिर अक्षर *)uc.args[0]);
 			/* NOT REACHED */
-		case UCALL_SYNC: {
-			struct kvm_xen_vcpu_attr rst;
-			long rundelay;
+		हाल UCALL_SYNC: अणु
+			काष्ठा kvm_xen_vcpu_attr rst;
+			दीर्घ rundelay;
 
 			/* If no runstate support, bail out early */
-			if (!do_runstate_tests)
-				goto done;
+			अगर (!करो_runstate_tests)
+				जाओ करोne;
 
-			TEST_ASSERT(rs->state_entry_time == rs->time[0] +
-				    rs->time[1] + rs->time[2] + rs->time[3],
+			TEST_ASSERT(rs->state_entry_समय == rs->समय[0] +
+				    rs->समय[1] + rs->समय[2] + rs->समय[3],
 				    "runstate times don't add up");
 
-			switch (uc.args[1]) {
-			case RUNSTATE_running...RUNSTATE_offline:
+			चयन (uc.args[1]) अणु
+			हाल RUNSTATE_running...RUNSTATE_offline:
 				rst.type = KVM_XEN_VCPU_ATTR_TYPE_RUNSTATE_CURRENT;
 				rst.u.runstate.state = uc.args[1];
 				vcpu_ioctl(vm, VCPU_ID, KVM_XEN_VCPU_SET_ATTR, &rst);
-				break;
-			case 4:
+				अवरोध;
+			हाल 4:
 				rst.type = KVM_XEN_VCPU_ATTR_TYPE_RUNSTATE_ADJUST;
-				memset(&rst.u, 0, sizeof(rst.u));
-				rst.u.runstate.state = (uint64_t)-1;
-				rst.u.runstate.time_blocked =
-					0x5a - rs->time[RUNSTATE_blocked];
-				rst.u.runstate.time_offline =
-					0x6b6b - rs->time[RUNSTATE_offline];
-				rst.u.runstate.time_runnable = -rst.u.runstate.time_blocked -
-					rst.u.runstate.time_offline;
+				स_रखो(&rst.u, 0, माप(rst.u));
+				rst.u.runstate.state = (uपूर्णांक64_t)-1;
+				rst.u.runstate.समय_blocked =
+					0x5a - rs->समय[RUNSTATE_blocked];
+				rst.u.runstate.समय_offline =
+					0x6b6b - rs->समय[RUNSTATE_offline];
+				rst.u.runstate.समय_runnable = -rst.u.runstate.समय_blocked -
+					rst.u.runstate.समय_offline;
 				vcpu_ioctl(vm, VCPU_ID, KVM_XEN_VCPU_SET_ATTR, &rst);
-				break;
+				अवरोध;
 
-			case 5:
+			हाल 5:
 				rst.type = KVM_XEN_VCPU_ATTR_TYPE_RUNSTATE_DATA;
-				memset(&rst.u, 0, sizeof(rst.u));
+				स_रखो(&rst.u, 0, माप(rst.u));
 				rst.u.runstate.state = RUNSTATE_running;
-				rst.u.runstate.state_entry_time = 0x6b6b + 0x5a;
-				rst.u.runstate.time_blocked = 0x6b6b;
-				rst.u.runstate.time_offline = 0x5a;
+				rst.u.runstate.state_entry_समय = 0x6b6b + 0x5a;
+				rst.u.runstate.समय_blocked = 0x6b6b;
+				rst.u.runstate.समय_offline = 0x5a;
 				vcpu_ioctl(vm, VCPU_ID, KVM_XEN_VCPU_SET_ATTR, &rst);
-				break;
-			case 6:
+				अवरोध;
+			हाल 6:
 				/* Yield until scheduler delay exceeds target */
 				rundelay = get_run_delay() + MIN_STEAL_TIME;
-				do {
+				करो अणु
 					sched_yield();
-				} while (get_run_delay() < rundelay);
-				break;
-			}
-			break;
-		}
-		case UCALL_DONE:
-			goto done;
-		default:
+				पूर्ण जबतक (get_run_delay() < rundelay);
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		हाल UCALL_DONE:
+			जाओ करोne;
+		शेष:
 			TEST_FAIL("Unknown ucall 0x%lx.", uc.cmd);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
- done:
-	clock_gettime(CLOCK_REALTIME, &max_ts);
+ करोne:
+	घड़ी_समय_लो(CLOCK_REALTIME, &max_ts);
 
 	/*
 	 * Just a *really* basic check that things are being put in the
-	 * right place. The actual calculations are much the same for
-	 * Xen as they are for the KVM variants, so no need to check.
+	 * right place. The actual calculations are much the same क्रम
+	 * Xen as they are क्रम the KVM variants, so no need to check.
 	 */
-	struct pvclock_wall_clock *wc;
-	struct pvclock_vcpu_time_info *ti, *ti2;
+	काष्ठा pvघड़ी_wall_घड़ी *wc;
+	काष्ठा pvघड़ी_vcpu_समय_info *ti, *ti2;
 
 	wc = addr_gpa2hva(vm, SHINFO_REGION_GPA + 0xc00);
 	ti = addr_gpa2hva(vm, SHINFO_REGION_GPA + 0x40 + 0x20);
@@ -280,41 +281,41 @@ int main(int argc, char *argv[])
 	vm_ts.tv_nsec = wc->nsec;
         TEST_ASSERT(wc->version && !(wc->version & 1),
 		    "Bad wallclock version %x", wc->version);
-	TEST_ASSERT(cmp_timespec(&min_ts, &vm_ts) <= 0, "VM time too old");
-	TEST_ASSERT(cmp_timespec(&max_ts, &vm_ts) >= 0, "VM time too new");
+	TEST_ASSERT(cmp_बारpec(&min_ts, &vm_ts) <= 0, "VM time too old");
+	TEST_ASSERT(cmp_बारpec(&max_ts, &vm_ts) >= 0, "VM time too new");
 
 	TEST_ASSERT(ti->version && !(ti->version & 1),
 		    "Bad time_info version %x", ti->version);
 	TEST_ASSERT(ti2->version && !(ti2->version & 1),
 		    "Bad time_info version %x", ti->version);
 
-	if (do_runstate_tests) {
+	अगर (करो_runstate_tests) अणु
 		/*
 		 * Fetch runstate and check sanity. Strictly speaking in the
-		 * general case we might not expect the numbers to be identical
-		 * but in this case we know we aren't running the vCPU any more.
+		 * general हाल we might not expect the numbers to be identical
+		 * but in this हाल we know we aren't running the vCPU any more.
 		 */
-		struct kvm_xen_vcpu_attr rst = {
+		काष्ठा kvm_xen_vcpu_attr rst = अणु
 			.type = KVM_XEN_VCPU_ATTR_TYPE_RUNSTATE_DATA,
-		};
+		पूर्ण;
 		vcpu_ioctl(vm, VCPU_ID, KVM_XEN_VCPU_GET_ATTR, &rst);
 
 		TEST_ASSERT(rs->state == rst.u.runstate.state, "Runstate mismatch");
-		TEST_ASSERT(rs->state_entry_time == rst.u.runstate.state_entry_time,
+		TEST_ASSERT(rs->state_entry_समय == rst.u.runstate.state_entry_समय,
 			    "State entry time mismatch");
-		TEST_ASSERT(rs->time[RUNSTATE_running] == rst.u.runstate.time_running,
+		TEST_ASSERT(rs->समय[RUNSTATE_running] == rst.u.runstate.समय_running,
 			    "Running time mismatch");
-		TEST_ASSERT(rs->time[RUNSTATE_runnable] == rst.u.runstate.time_runnable,
+		TEST_ASSERT(rs->समय[RUNSTATE_runnable] == rst.u.runstate.समय_runnable,
 			    "Runnable time mismatch");
-		TEST_ASSERT(rs->time[RUNSTATE_blocked] == rst.u.runstate.time_blocked,
+		TEST_ASSERT(rs->समय[RUNSTATE_blocked] == rst.u.runstate.समय_blocked,
 			    "Blocked time mismatch");
-		TEST_ASSERT(rs->time[RUNSTATE_offline] == rst.u.runstate.time_offline,
+		TEST_ASSERT(rs->समय[RUNSTATE_offline] == rst.u.runstate.समय_offline,
 			    "Offline time mismatch");
 
-		TEST_ASSERT(rs->state_entry_time == rs->time[0] +
-			    rs->time[1] + rs->time[2] + rs->time[3],
+		TEST_ASSERT(rs->state_entry_समय == rs->समय[0] +
+			    rs->समय[1] + rs->समय[2] + rs->समय[3],
 			    "runstate times don't add up");
-	}
-	kvm_vm_free(vm);
-	return 0;
-}
+	पूर्ण
+	kvm_vm_मुक्त(vm);
+	वापस 0;
+पूर्ण

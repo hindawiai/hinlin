@@ -1,136 +1,137 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
    Linux loop encryption enabling module
 
    Copyright (C)  2002 Herbert Valerio Riedel <hvr@gnu.org>
-   Copyright (C)  2003 Fruhwirth Clemens <clemens@endorphin.org>
+   Copyright (C)  2003 Fruhwirth Clemens <clemens@enकरोrphin.org>
 
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <crypto/skcipher.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/blkdev.h>
-#include <linux/scatterlist.h>
-#include <linux/uaccess.h>
-#include "loop.h"
+#समावेश <crypto/skcipher.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/uaccess.h>
+#समावेश "loop.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("loop blockdevice transferfunction adaptor / CryptoAPI");
 MODULE_AUTHOR("Herbert Valerio Riedel <hvr@gnu.org>");
 
-#define LOOP_IV_SECTOR_BITS 9
-#define LOOP_IV_SECTOR_SIZE (1 << LOOP_IV_SECTOR_BITS)
+#घोषणा LOOP_IV_SECTOR_BITS 9
+#घोषणा LOOP_IV_SECTOR_SIZE (1 << LOOP_IV_SECTOR_BITS)
 
-static int
-cryptoloop_init(struct loop_device *lo, const struct loop_info64 *info)
-{
-	int err = -EINVAL;
-	int cipher_len;
-	int mode_len;
-	char cms[LO_NAME_SIZE];			/* cipher-mode string */
-	char *mode;
-	char *cmsp = cms;			/* c-m string pointer */
-	struct crypto_sync_skcipher *tfm;
+अटल पूर्णांक
+cryptoloop_init(काष्ठा loop_device *lo, स्थिर काष्ठा loop_info64 *info)
+अणु
+	पूर्णांक err = -EINVAL;
+	पूर्णांक cipher_len;
+	पूर्णांक mode_len;
+	अक्षर cms[LO_NAME_SIZE];			/* cipher-mode string */
+	अक्षर *mode;
+	अक्षर *cmsp = cms;			/* c-m string poपूर्णांकer */
+	काष्ठा crypto_sync_skcipher *tfm;
 
-	/* encryption breaks for non sector aligned offsets */
+	/* encryption अवरोधs क्रम non sector aligned offsets */
 
-	if (info->lo_offset % LOOP_IV_SECTOR_SIZE)
-		goto out;
+	अगर (info->lo_offset % LOOP_IV_SECTOR_SIZE)
+		जाओ out;
 
-	strncpy(cms, info->lo_crypt_name, LO_NAME_SIZE);
+	म_नकलन(cms, info->lo_crypt_name, LO_NAME_SIZE);
 	cms[LO_NAME_SIZE - 1] = 0;
 
-	cipher_len = strcspn(cmsp, "-");
+	cipher_len = म_खोज(cmsp, "-");
 
 	mode = cmsp + cipher_len;
 	mode_len = 0;
-	if (*mode) {
+	अगर (*mode) अणु
 		mode++;
-		mode_len = strcspn(mode, "-");
-	}
+		mode_len = म_खोज(mode, "-");
+	पूर्ण
 
-	if (!mode_len) {
+	अगर (!mode_len) अणु
 		mode = "cbc";
 		mode_len = 3;
-	}
+	पूर्ण
 
-	if (cipher_len + mode_len + 3 > LO_NAME_SIZE)
-		return -EINVAL;
+	अगर (cipher_len + mode_len + 3 > LO_NAME_SIZE)
+		वापस -EINVAL;
 
-	memmove(cms, mode, mode_len);
+	स_हटाओ(cms, mode, mode_len);
 	cmsp = cms + mode_len;
 	*cmsp++ = '(';
-	memcpy(cmsp, info->lo_crypt_name, cipher_len);
+	स_नकल(cmsp, info->lo_crypt_name, cipher_len);
 	cmsp += cipher_len;
 	*cmsp++ = ')';
 	*cmsp = 0;
 
 	tfm = crypto_alloc_sync_skcipher(cms, 0, 0);
-	if (IS_ERR(tfm))
-		return PTR_ERR(tfm);
+	अगर (IS_ERR(tfm))
+		वापस PTR_ERR(tfm);
 
 	err = crypto_sync_skcipher_setkey(tfm, info->lo_encrypt_key,
 					  info->lo_encrypt_key_size);
 
-	if (err != 0)
-		goto out_free_tfm;
+	अगर (err != 0)
+		जाओ out_मुक्त_tfm;
 
 	lo->key_data = tfm;
-	return 0;
+	वापस 0;
 
- out_free_tfm:
-	crypto_free_sync_skcipher(tfm);
+ out_मुक्त_tfm:
+	crypto_मुक्त_sync_skcipher(tfm);
 
  out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-typedef int (*encdec_cbc_t)(struct skcipher_request *req);
+प्रकार पूर्णांक (*encdec_cbc_t)(काष्ठा skcipher_request *req);
 
-static int
-cryptoloop_transfer(struct loop_device *lo, int cmd,
-		    struct page *raw_page, unsigned raw_off,
-		    struct page *loop_page, unsigned loop_off,
-		    int size, sector_t IV)
-{
-	struct crypto_sync_skcipher *tfm = lo->key_data;
+अटल पूर्णांक
+cryptoloop_transfer(काष्ठा loop_device *lo, पूर्णांक cmd,
+		    काष्ठा page *raw_page, अचिन्हित raw_off,
+		    काष्ठा page *loop_page, अचिन्हित loop_off,
+		    पूर्णांक size, sector_t IV)
+अणु
+	काष्ठा crypto_sync_skcipher *tfm = lo->key_data;
 	SYNC_SKCIPHER_REQUEST_ON_STACK(req, tfm);
-	struct scatterlist sg_out;
-	struct scatterlist sg_in;
+	काष्ठा scatterlist sg_out;
+	काष्ठा scatterlist sg_in;
 
 	encdec_cbc_t encdecfunc;
-	struct page *in_page, *out_page;
-	unsigned in_offs, out_offs;
-	int err;
+	काष्ठा page *in_page, *out_page;
+	अचिन्हित in_offs, out_offs;
+	पूर्णांक err;
 
 	skcipher_request_set_sync_tfm(req, tfm);
 	skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP,
-				      NULL, NULL);
+				      शून्य, शून्य);
 
 	sg_init_table(&sg_out, 1);
 	sg_init_table(&sg_in, 1);
 
-	if (cmd == READ) {
+	अगर (cmd == READ) अणु
 		in_page = raw_page;
 		in_offs = raw_off;
 		out_page = loop_page;
 		out_offs = loop_off;
 		encdecfunc = crypto_skcipher_decrypt;
-	} else {
+	पूर्ण अन्यथा अणु
 		in_page = loop_page;
 		in_offs = loop_off;
 		out_page = raw_page;
 		out_offs = raw_off;
 		encdecfunc = crypto_skcipher_encrypt;
-	}
+	पूर्ण
 
-	while (size > 0) {
-		const int sz = min(size, LOOP_IV_SECTOR_SIZE);
-		u32 iv[4] = { 0, };
+	जबतक (size > 0) अणु
+		स्थिर पूर्णांक sz = min(size, LOOP_IV_SECTOR_SIZE);
+		u32 iv[4] = अणु 0, पूर्ण;
 		iv[0] = cpu_to_le32(IV & 0xffffffff);
 
 		sg_set_page(&sg_in, in_page, sz, in_offs);
@@ -138,67 +139,67 @@ cryptoloop_transfer(struct loop_device *lo, int cmd,
 
 		skcipher_request_set_crypt(req, &sg_in, &sg_out, sz, iv);
 		err = encdecfunc(req);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		IV++;
 		size -= sz;
 		in_offs += sz;
 		out_offs += sz;
-	}
+	पूर्ण
 
 	err = 0;
 
 out:
 	skcipher_request_zero(req);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-cryptoloop_ioctl(struct loop_device *lo, int cmd, unsigned long arg)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक
+cryptoloop_ioctl(काष्ठा loop_device *lo, पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static int
-cryptoloop_release(struct loop_device *lo)
-{
-	struct crypto_sync_skcipher *tfm = lo->key_data;
-	if (tfm != NULL) {
-		crypto_free_sync_skcipher(tfm);
-		lo->key_data = NULL;
-		return 0;
-	}
-	printk(KERN_ERR "cryptoloop_release(): tfm == NULL?\n");
-	return -EINVAL;
-}
+अटल पूर्णांक
+cryptoloop_release(काष्ठा loop_device *lo)
+अणु
+	काष्ठा crypto_sync_skcipher *tfm = lo->key_data;
+	अगर (tfm != शून्य) अणु
+		crypto_मुक्त_sync_skcipher(tfm);
+		lo->key_data = शून्य;
+		वापस 0;
+	पूर्ण
+	prपूर्णांकk(KERN_ERR "cryptoloop_release(): tfm == NULL?\n");
+	वापस -EINVAL;
+पूर्ण
 
-static struct loop_func_table cryptoloop_funcs = {
+अटल काष्ठा loop_func_table cryptoloop_funcs = अणु
 	.number = LO_CRYPT_CRYPTOAPI,
 	.init = cryptoloop_init,
 	.ioctl = cryptoloop_ioctl,
 	.transfer = cryptoloop_transfer,
 	.release = cryptoloop_release,
 	.owner = THIS_MODULE
-};
+पूर्ण;
 
-static int __init
-init_cryptoloop(void)
-{
-	int rc = loop_register_transfer(&cryptoloop_funcs);
+अटल पूर्णांक __init
+init_cryptoloop(व्योम)
+अणु
+	पूर्णांक rc = loop_रेजिस्टर_transfer(&cryptoloop_funcs);
 
-	if (rc)
-		printk(KERN_ERR "cryptoloop: loop_register_transfer failed\n");
-	return rc;
-}
+	अगर (rc)
+		prपूर्णांकk(KERN_ERR "cryptoloop: loop_register_transfer failed\n");
+	वापस rc;
+पूर्ण
 
-static void __exit
-cleanup_cryptoloop(void)
-{
-	if (loop_unregister_transfer(LO_CRYPT_CRYPTOAPI))
-		printk(KERN_ERR
+अटल व्योम __निकास
+cleanup_cryptoloop(व्योम)
+अणु
+	अगर (loop_unरेजिस्टर_transfer(LO_CRYPT_CRYPTOAPI))
+		prपूर्णांकk(KERN_ERR
 			"cryptoloop: loop_unregister_transfer failed\n");
-}
+पूर्ण
 
 module_init(init_cryptoloop);
-module_exit(cleanup_cryptoloop);
+module_निकास(cleanup_cryptoloop);

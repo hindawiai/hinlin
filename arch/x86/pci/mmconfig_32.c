@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2004 Matthew Wilcox <matthew@wil.cx>
  * Copyright (C) 2004 Intel Corp.
@@ -8,149 +9,149 @@
  * mmconfig.c - Low-level direct PCI config space access via MMCONFIG
  */
 
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/rcupdate.h>
-#include <asm/e820/api.h>
-#include <asm/pci_x86.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/pci_x86.h>
 
-/* Assume systems with more busses have correct MCFG */
-#define mmcfg_virt_addr ((void __iomem *) fix_to_virt(FIX_PCIE_MCFG))
+/* Assume प्रणालीs with more busses have correct MCFG */
+#घोषणा mmcfg_virt_addr ((व्योम __iomem *) fix_to_virt(FIX_PCIE_MCFG))
 
 /* The base address of the last MMCONFIG device accessed */
-static u32 mmcfg_last_accessed_device;
-static int mmcfg_last_accessed_cpu;
+अटल u32 mmcfg_last_accessed_device;
+अटल पूर्णांक mmcfg_last_accessed_cpu;
 
 /*
- * Functions for accessing PCI configuration space with MMCONFIG accesses
+ * Functions क्रम accessing PCI configuration space with MMCONFIG accesses
  */
-static u32 get_base_addr(unsigned int seg, int bus, unsigned devfn)
-{
-	struct pci_mmcfg_region *cfg = pci_mmconfig_lookup(seg, bus);
+अटल u32 get_base_addr(अचिन्हित पूर्णांक seg, पूर्णांक bus, अचिन्हित devfn)
+अणु
+	काष्ठा pci_mmcfg_region *cfg = pci_mmconfig_lookup(seg, bus);
 
-	if (cfg)
-		return cfg->address;
-	return 0;
-}
+	अगर (cfg)
+		वापस cfg->address;
+	वापस 0;
+पूर्ण
 
 /*
  * This is always called under pci_config_lock
  */
-static void pci_exp_set_dev_base(unsigned int base, int bus, int devfn)
-{
+अटल व्योम pci_exp_set_dev_base(अचिन्हित पूर्णांक base, पूर्णांक bus, पूर्णांक devfn)
+अणु
 	u32 dev_base = base | PCI_MMCFG_BUS_OFFSET(bus) | (devfn << 12);
-	int cpu = smp_processor_id();
-	if (dev_base != mmcfg_last_accessed_device ||
-	    cpu != mmcfg_last_accessed_cpu) {
+	पूर्णांक cpu = smp_processor_id();
+	अगर (dev_base != mmcfg_last_accessed_device ||
+	    cpu != mmcfg_last_accessed_cpu) अणु
 		mmcfg_last_accessed_device = dev_base;
 		mmcfg_last_accessed_cpu = cpu;
 		set_fixmap_nocache(FIX_PCIE_MCFG, dev_base);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pci_mmcfg_read(unsigned int seg, unsigned int bus,
-			  unsigned int devfn, int reg, int len, u32 *value)
-{
-	unsigned long flags;
+अटल पूर्णांक pci_mmcfg_पढ़ो(अचिन्हित पूर्णांक seg, अचिन्हित पूर्णांक bus,
+			  अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 *value)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 base;
 
-	if ((bus > 255) || (devfn > 255) || (reg > 4095)) {
+	अगर ((bus > 255) || (devfn > 255) || (reg > 4095)) अणु
 err:		*value = -1;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	base = get_base_addr(seg, bus, devfn);
-	if (!base) {
-		rcu_read_unlock();
-		goto err;
-	}
+	अगर (!base) अणु
+		rcu_पढ़ो_unlock();
+		जाओ err;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&pci_config_lock, flags);
 
 	pci_exp_set_dev_base(base, bus, devfn);
 
-	switch (len) {
-	case 1:
-		*value = mmio_config_readb(mmcfg_virt_addr + reg);
-		break;
-	case 2:
-		*value = mmio_config_readw(mmcfg_virt_addr + reg);
-		break;
-	case 4:
-		*value = mmio_config_readl(mmcfg_virt_addr + reg);
-		break;
-	}
+	चयन (len) अणु
+	हाल 1:
+		*value = mmio_config_पढ़ोb(mmcfg_virt_addr + reg);
+		अवरोध;
+	हाल 2:
+		*value = mmio_config_पढ़ोw(mmcfg_virt_addr + reg);
+		अवरोध;
+	हाल 4:
+		*value = mmio_config_पढ़ोl(mmcfg_virt_addr + reg);
+		अवरोध;
+	पूर्ण
 	raw_spin_unlock_irqrestore(&pci_config_lock, flags);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pci_mmcfg_write(unsigned int seg, unsigned int bus,
-			   unsigned int devfn, int reg, int len, u32 value)
-{
-	unsigned long flags;
+अटल पूर्णांक pci_mmcfg_ग_लिखो(अचिन्हित पूर्णांक seg, अचिन्हित पूर्णांक bus,
+			   अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 value)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 base;
 
-	if ((bus > 255) || (devfn > 255) || (reg > 4095))
-		return -EINVAL;
+	अगर ((bus > 255) || (devfn > 255) || (reg > 4095))
+		वापस -EINVAL;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	base = get_base_addr(seg, bus, devfn);
-	if (!base) {
-		rcu_read_unlock();
-		return -EINVAL;
-	}
+	अगर (!base) अणु
+		rcu_पढ़ो_unlock();
+		वापस -EINVAL;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&pci_config_lock, flags);
 
 	pci_exp_set_dev_base(base, bus, devfn);
 
-	switch (len) {
-	case 1:
-		mmio_config_writeb(mmcfg_virt_addr + reg, value);
-		break;
-	case 2:
-		mmio_config_writew(mmcfg_virt_addr + reg, value);
-		break;
-	case 4:
-		mmio_config_writel(mmcfg_virt_addr + reg, value);
-		break;
-	}
+	चयन (len) अणु
+	हाल 1:
+		mmio_config_ग_लिखोb(mmcfg_virt_addr + reg, value);
+		अवरोध;
+	हाल 2:
+		mmio_config_ग_लिखोw(mmcfg_virt_addr + reg, value);
+		अवरोध;
+	हाल 4:
+		mmio_config_ग_लिखोl(mmcfg_virt_addr + reg, value);
+		अवरोध;
+	पूर्ण
 	raw_spin_unlock_irqrestore(&pci_config_lock, flags);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct pci_raw_ops pci_mmcfg = {
-	.read =		pci_mmcfg_read,
-	.write =	pci_mmcfg_write,
-};
+स्थिर काष्ठा pci_raw_ops pci_mmcfg = अणु
+	.पढ़ो =		pci_mmcfg_पढ़ो,
+	.ग_लिखो =	pci_mmcfg_ग_लिखो,
+पूर्ण;
 
-int __init pci_mmcfg_arch_init(void)
-{
-	printk(KERN_INFO "PCI: Using MMCONFIG for extended config space\n");
+पूर्णांक __init pci_mmcfg_arch_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "PCI: Using MMCONFIG for extended config space\n");
 	raw_pci_ext_ops = &pci_mmcfg;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void __init pci_mmcfg_arch_free(void)
-{
-}
+व्योम __init pci_mmcfg_arch_मुक्त(व्योम)
+अणु
+पूर्ण
 
-int pci_mmcfg_arch_map(struct pci_mmcfg_region *cfg)
-{
-	return 0;
-}
+पूर्णांक pci_mmcfg_arch_map(काष्ठा pci_mmcfg_region *cfg)
+अणु
+	वापस 0;
+पूर्ण
 
-void pci_mmcfg_arch_unmap(struct pci_mmcfg_region *cfg)
-{
-	unsigned long flags;
+व्योम pci_mmcfg_arch_unmap(काष्ठा pci_mmcfg_region *cfg)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/* Invalidate the cached mmcfg map entry. */
 	raw_spin_lock_irqsave(&pci_config_lock, flags);
 	mmcfg_last_accessed_device = 0;
 	raw_spin_unlock_irqrestore(&pci_config_lock, flags);
-}
+पूर्ण

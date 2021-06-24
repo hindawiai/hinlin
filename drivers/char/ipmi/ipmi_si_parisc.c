@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 
-#include <linux/module.h>
-#include <asm/hardware.h>	/* for register_parisc_driver() stuff */
-#include <asm/parisc-device.h>
-#include "ipmi_si.h"
+#समावेश <linux/module.h>
+#समावेश <यंत्र/hardware.h>	/* क्रम रेजिस्टर_parisc_driver() stuff */
+#समावेश <यंत्र/parisc-device.h>
+#समावेश "ipmi_si.h"
 
-static bool parisc_registered;
+अटल bool parisc_रेजिस्टरed;
 
-static int __init ipmi_parisc_probe(struct parisc_device *dev)
-{
-	struct si_sm_io io;
+अटल पूर्णांक __init ipmi_parisc_probe(काष्ठा parisc_device *dev)
+अणु
+	काष्ठा si_sm_io io;
 
-	memset(&io, 0, sizeof(io));
+	स_रखो(&io, 0, माप(io));
 
 	io.si_type	= SI_KCS;
 	io.addr_source	= SI_DEVICETREE;
@@ -19,43 +20,43 @@ static int __init ipmi_parisc_probe(struct parisc_device *dev)
 	io.addr_data	= dev->hpa.start;
 	io.regsize	= 1;
 	io.regspacing	= 1;
-	io.regshift	= 0;
-	io.irq		= 0; /* no interrupt */
-	io.irq_setup	= NULL;
+	io.regshअगरt	= 0;
+	io.irq		= 0; /* no पूर्णांकerrupt */
+	io.irq_setup	= शून्य;
 	io.dev		= &dev->dev;
 
 	dev_dbg(&dev->dev, "addr 0x%lx\n", io.addr_data);
 
-	return ipmi_si_add_smi(&io);
-}
+	वापस ipmi_si_add_smi(&io);
+पूर्ण
 
-static int __exit ipmi_parisc_remove(struct parisc_device *dev)
-{
-	return ipmi_si_remove_by_dev(&dev->dev);
-}
+अटल पूर्णांक __निकास ipmi_parisc_हटाओ(काष्ठा parisc_device *dev)
+अणु
+	वापस ipmi_si_हटाओ_by_dev(&dev->dev);
+पूर्ण
 
-static const struct parisc_device_id ipmi_parisc_tbl[] __initconst = {
-	{ HPHW_MC, HVERSION_REV_ANY_ID, 0x004, 0xC0 },
-	{ 0, }
-};
+अटल स्थिर काष्ठा parisc_device_id ipmi_parisc_tbl[] __initस्थिर = अणु
+	अणु HPHW_MC, HVERSION_REV_ANY_ID, 0x004, 0xC0 पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(parisc, ipmi_parisc_tbl);
 
-static struct parisc_driver ipmi_parisc_driver __refdata = {
+अटल काष्ठा parisc_driver ipmi_parisc_driver __refdata = अणु
 	.name =		"ipmi",
 	.id_table =	ipmi_parisc_tbl,
 	.probe =	ipmi_parisc_probe,
-	.remove =	__exit_p(ipmi_parisc_remove),
-};
+	.हटाओ =	__निकास_p(ipmi_parisc_हटाओ),
+पूर्ण;
 
-void ipmi_si_parisc_init(void)
-{
-	register_parisc_driver(&ipmi_parisc_driver);
-	parisc_registered = true;
-}
+व्योम ipmi_si_parisc_init(व्योम)
+अणु
+	रेजिस्टर_parisc_driver(&ipmi_parisc_driver);
+	parisc_रेजिस्टरed = true;
+पूर्ण
 
-void ipmi_si_parisc_shutdown(void)
-{
-	if (parisc_registered)
-		unregister_parisc_driver(&ipmi_parisc_driver);
-}
+व्योम ipmi_si_parisc_shutकरोwn(व्योम)
+अणु
+	अगर (parisc_रेजिस्टरed)
+		unरेजिस्टर_parisc_driver(&ipmi_parisc_driver);
+पूर्ण

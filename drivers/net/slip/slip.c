@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * slip.c	This module implements the SLIP protocol for kernel-based
- *		devices like TTY.  It interfaces between a raw TTY, and the
+ * slip.c	This module implements the SLIP protocol क्रम kernel-based
+ *		devices like TTY.  It पूर्णांकerfaces between a raw TTY, and the
  *		kernel's INET protocol layers.
  *
  * Version:	@(#)slip.c	0.8.3	12/24/94
@@ -10,42 +11,42 @@
  *		Fred N. van Kempen, <waltje@uwalt.nl.mugnet.org>
  *
  * Fixes:
- *		Alan Cox	: 	Sanity checks and avoid tx overruns.
+ *		Alan Cox	: 	Sanity checks and aव्योम tx overruns.
  *					Has a new sl->mtu field.
- *		Alan Cox	: 	Found cause of overrun. ifconfig sl0
+ *		Alan Cox	: 	Found cause of overrun. अगरconfig sl0
  *					mtu upwards. Driver now spots this
  *					and grows/shrinks its buffers(hack!).
- *					Memory leak if you run out of memory
+ *					Memory leak अगर you run out of memory
  *					setting up a slip driver fixed.
- *		Matt Dillon	:	Printable slip (borrowed from NET2E)
+ *		Matt Dillon	:	Prपूर्णांकable slip (borrowed from NET2E)
  *	Pauline Middelink	:	Slip driver fixes.
  *		Alan Cox	:	Honours the old SL_COMPRESSED flag
  *		Alan Cox	:	KISS AX.25 and AXUI IP support
  *		Michael Riepe	:	Automatic CSLIP recognition added
  *		Charles Hedrick :	CSLIP header length problem fix.
- *		Alan Cox	:	Corrected non-IP cases of the above.
+ *		Alan Cox	:	Corrected non-IP हालs of the above.
  *		Alan Cox	:	Now uses hardware type as per FvK.
  *		Alan Cox	:	Default to 192.168.0.0 (RFC 1597)
- *		A.N.Kuznetsov	:	dev_tint() recursion fix.
+ *		A.N.Kuznetsov	:	dev_tपूर्णांक() recursion fix.
  *	Dmitry Gorodchanin	:	SLIP memory leaks
  *      Dmitry Gorodchanin      :       Code cleanup. Reduce tty driver
  *                                      buffering from 4096 to 256 bytes.
- *                                      Improving SLIP response time.
+ *                                      Improving SLIP response समय.
  *                                      CONFIG_SLIP_MODE_SLIP6.
- *                                      ifconfig sl? up & down now works
+ *                                      अगरconfig sl? up & करोwn now works
  *					correctly.
  *					Modularization.
  *              Alan Cox        :       Oops - fix AX.25 buffer lengths
  *      Dmitry Gorodchanin      :       Even more cleanups. Preserve CSLIP
  *                                      statistics. Include CSLIP code only
- *                                      if it really needed.
+ *                                      अगर it really needed.
  *		Alan Cox	:	Free slhc buffers in the right place.
- *		Alan Cox	:	Allow for digipeated IP over AX.25
+ *		Alan Cox	:	Allow क्रम digipeated IP over AX.25
  *		Matti Aarnio	:	Dynamic SLIP devices, with ideas taken
- *					from Jim Freeman's <jfree@caldera.com>
- *					dynamic PPP devices.  We do NOT kfree()
+ *					from Jim Freeman's <jमुक्त@caldera.com>
+ *					dynamic PPP devices.  We करो NOT kमुक्त()
  *					device entries, just reg./unreg. them
- *					as they are needed.  We kfree() them
+ *					as they are needed.  We kमुक्त() them
  *					at module cleanup.
  *					With MODULE-loading ``insmod'', user
  *					can issue parameter:  slip_maxdev=1024
@@ -57,68 +58,68 @@
  *					Only algorithms have been ported to
  *					Linux SLIP driver.
  *	Vitaly E. Lavrov	:	Sane behaviour on tty hangup.
- *	Alexey Kuznetsov	:	Cleanup interfaces to tty & netdevice
+ *	Alexey Kuznetsov	:	Cleanup पूर्णांकerfaces to tty & netdevice
  *					modules.
  */
 
-#define SL_CHECK_TRANSMIT
-#include <linux/module.h>
-#include <linux/moduleparam.h>
+#घोषणा SL_CHECK_TRANSMIT
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
 
-#include <linux/uaccess.h>
-#include <linux/bitops.h>
-#include <linux/sched/signal.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/in.h>
-#include <linux/tty.h>
-#include <linux/errno.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <linux/if_arp.h>
-#include <linux/if_slip.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include "slip.h"
-#ifdef CONFIG_INET
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <net/slhc_vj.h>
-#endif
+#समावेश <linux/uaccess.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/in.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_slip.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश "slip.h"
+#अगर_घोषित CONFIG_INET
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <net/slhc_vj.h>
+#पूर्ण_अगर
 
-#define SLIP_VERSION	"0.8.4-NET3.019-NEWTTY"
+#घोषणा SLIP_VERSION	"0.8.4-NET3.019-NEWTTY"
 
-static struct net_device **slip_devs;
+अटल काष्ठा net_device **slip_devs;
 
-static int slip_maxdev = SL_NRUNIT;
-module_param(slip_maxdev, int, 0);
+अटल पूर्णांक slip_maxdev = SL_NRUNIT;
+module_param(slip_maxdev, पूर्णांक, 0);
 MODULE_PARM_DESC(slip_maxdev, "Maximum number of slip devices");
 
-static int slip_esc(unsigned char *p, unsigned char *d, int len);
-static void slip_unesc(struct slip *sl, unsigned char c);
-#ifdef CONFIG_SLIP_MODE_SLIP6
-static int slip_esc6(unsigned char *p, unsigned char *d, int len);
-static void slip_unesc6(struct slip *sl, unsigned char c);
-#endif
-#ifdef CONFIG_SLIP_SMART
-static void sl_keepalive(struct timer_list *t);
-static void sl_outfill(struct timer_list *t);
-static int sl_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
-#endif
+अटल पूर्णांक slip_esc(अचिन्हित अक्षर *p, अचिन्हित अक्षर *d, पूर्णांक len);
+अटल व्योम slip_unesc(काष्ठा slip *sl, अचिन्हित अक्षर c);
+#अगर_घोषित CONFIG_SLIP_MODE_SLIP6
+अटल पूर्णांक slip_esc6(अचिन्हित अक्षर *p, अचिन्हित अक्षर *d, पूर्णांक len);
+अटल व्योम slip_unesc6(काष्ठा slip *sl, अचिन्हित अक्षर c);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SLIP_SMART
+अटल व्योम sl_keepalive(काष्ठा समयr_list *t);
+अटल व्योम sl_outfill(काष्ठा समयr_list *t);
+अटल पूर्णांक sl_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd);
+#पूर्ण_अगर
 
 /********************************
 *  Buffer administration routines:
 *	sl_alloc_bufs()
-*	sl_free_bufs()
-*	sl_realloc_bufs()
+*	sl_मुक्त_bufs()
+*	sl_पुनः_स्मृति_bufs()
 *
-* NOTE: sl_realloc_bufs != sl_free_bufs + sl_alloc_bufs, because
-*	sl_realloc_bufs provides strong atomicity and reallocation
+* NOTE: sl_पुनः_स्मृति_bufs != sl_मुक्त_bufs + sl_alloc_bufs, because
+*	sl_पुनः_स्मृति_bufs provides strong atomicity and पुनः_स्मृतिation
 *	on actively running device.
 *********************************/
 
@@ -126,16 +127,16 @@ static int sl_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
    Allocate channel buffers.
  */
 
-static int sl_alloc_bufs(struct slip *sl, int mtu)
-{
-	int err = -ENOBUFS;
-	unsigned long len;
-	char *rbuff = NULL;
-	char *xbuff = NULL;
-#ifdef SL_INCLUDE_CSLIP
-	char *cbuff = NULL;
-	struct slcompress *slcomp = NULL;
-#endif
+अटल पूर्णांक sl_alloc_bufs(काष्ठा slip *sl, पूर्णांक mtu)
+अणु
+	पूर्णांक err = -ENOBUFS;
+	अचिन्हित दीर्घ len;
+	अक्षर *rbuff = शून्य;
+	अक्षर *xbuff = शून्य;
+#अगर_घोषित SL_INCLUDE_CSLIP
+	अक्षर *cbuff = शून्य;
+	काष्ठा slcompress *slcomp = शून्य;
+#पूर्ण_अगर
 
 	/*
 	 * Allocate the SLIP frame buffers:
@@ -147,379 +148,379 @@ static int sl_alloc_bufs(struct slip *sl, int mtu)
 	len = mtu * 2;
 
 	/*
-	 * allow for arrival of larger UDP packets, even if we say not to
+	 * allow क्रम arrival of larger UDP packets, even अगर we say not to
 	 * also fixes a bug in which SunOS sends 512-byte packets even with
 	 * an MSS of 128
 	 */
-	if (len < 576 * 2)
+	अगर (len < 576 * 2)
 		len = 576 * 2;
-	rbuff = kmalloc(len + 4, GFP_KERNEL);
-	if (rbuff == NULL)
-		goto err_exit;
-	xbuff = kmalloc(len + 4, GFP_KERNEL);
-	if (xbuff == NULL)
-		goto err_exit;
-#ifdef SL_INCLUDE_CSLIP
-	cbuff = kmalloc(len + 4, GFP_KERNEL);
-	if (cbuff == NULL)
-		goto err_exit;
+	rbuff = kदो_स्मृति(len + 4, GFP_KERNEL);
+	अगर (rbuff == शून्य)
+		जाओ err_निकास;
+	xbuff = kदो_स्मृति(len + 4, GFP_KERNEL);
+	अगर (xbuff == शून्य)
+		जाओ err_निकास;
+#अगर_घोषित SL_INCLUDE_CSLIP
+	cbuff = kदो_स्मृति(len + 4, GFP_KERNEL);
+	अगर (cbuff == शून्य)
+		जाओ err_निकास;
 	slcomp = slhc_init(16, 16);
-	if (IS_ERR(slcomp))
-		goto err_exit;
-#endif
+	अगर (IS_ERR(slcomp))
+		जाओ err_निकास;
+#पूर्ण_अगर
 	spin_lock_bh(&sl->lock);
-	if (sl->tty == NULL) {
+	अगर (sl->tty == शून्य) अणु
 		spin_unlock_bh(&sl->lock);
 		err = -ENODEV;
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 	sl->mtu	     = mtu;
 	sl->buffsize = len;
 	sl->rcount   = 0;
 	sl->xleft    = 0;
 	rbuff = xchg(&sl->rbuff, rbuff);
 	xbuff = xchg(&sl->xbuff, xbuff);
-#ifdef SL_INCLUDE_CSLIP
+#अगर_घोषित SL_INCLUDE_CSLIP
 	cbuff = xchg(&sl->cbuff, cbuff);
 	slcomp = xchg(&sl->slcomp, slcomp);
-#endif
-#ifdef CONFIG_SLIP_MODE_SLIP6
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SLIP_MODE_SLIP6
 	sl->xdata    = 0;
 	sl->xbits    = 0;
-#endif
+#पूर्ण_अगर
 	spin_unlock_bh(&sl->lock);
 	err = 0;
 
 	/* Cleanup */
-err_exit:
-#ifdef SL_INCLUDE_CSLIP
-	kfree(cbuff);
-	slhc_free(slcomp);
-#endif
-	kfree(xbuff);
-	kfree(rbuff);
-	return err;
-}
+err_निकास:
+#अगर_घोषित SL_INCLUDE_CSLIP
+	kमुक्त(cbuff);
+	slhc_मुक्त(slcomp);
+#पूर्ण_अगर
+	kमुक्त(xbuff);
+	kमुक्त(rbuff);
+	वापस err;
+पूर्ण
 
 /* Free a SLIP channel buffers. */
-static void sl_free_bufs(struct slip *sl)
-{
+अटल व्योम sl_मुक्त_bufs(काष्ठा slip *sl)
+अणु
 	/* Free all SLIP frame buffers. */
-	kfree(xchg(&sl->rbuff, NULL));
-	kfree(xchg(&sl->xbuff, NULL));
-#ifdef SL_INCLUDE_CSLIP
-	kfree(xchg(&sl->cbuff, NULL));
-	slhc_free(xchg(&sl->slcomp, NULL));
-#endif
-}
+	kमुक्त(xchg(&sl->rbuff, शून्य));
+	kमुक्त(xchg(&sl->xbuff, शून्य));
+#अगर_घोषित SL_INCLUDE_CSLIP
+	kमुक्त(xchg(&sl->cbuff, शून्य));
+	slhc_मुक्त(xchg(&sl->slcomp, शून्य));
+#पूर्ण_अगर
+पूर्ण
 
 /*
    Reallocate slip channel buffers.
  */
 
-static int sl_realloc_bufs(struct slip *sl, int mtu)
-{
-	int err = 0;
-	struct net_device *dev = sl->dev;
-	unsigned char *xbuff, *rbuff;
-#ifdef SL_INCLUDE_CSLIP
-	unsigned char *cbuff;
-#endif
-	int len = mtu * 2;
+अटल पूर्णांक sl_पुनः_स्मृति_bufs(काष्ठा slip *sl, पूर्णांक mtu)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा net_device *dev = sl->dev;
+	अचिन्हित अक्षर *xbuff, *rbuff;
+#अगर_घोषित SL_INCLUDE_CSLIP
+	अचिन्हित अक्षर *cbuff;
+#पूर्ण_अगर
+	पूर्णांक len = mtu * 2;
 
 /*
- * allow for arrival of larger UDP packets, even if we say not to
+ * allow क्रम arrival of larger UDP packets, even अगर we say not to
  * also fixes a bug in which SunOS sends 512-byte packets even with
  * an MSS of 128
  */
-	if (len < 576 * 2)
+	अगर (len < 576 * 2)
 		len = 576 * 2;
 
-	xbuff = kmalloc(len + 4, GFP_ATOMIC);
-	rbuff = kmalloc(len + 4, GFP_ATOMIC);
-#ifdef SL_INCLUDE_CSLIP
-	cbuff = kmalloc(len + 4, GFP_ATOMIC);
-#endif
+	xbuff = kदो_स्मृति(len + 4, GFP_ATOMIC);
+	rbuff = kदो_स्मृति(len + 4, GFP_ATOMIC);
+#अगर_घोषित SL_INCLUDE_CSLIP
+	cbuff = kदो_स्मृति(len + 4, GFP_ATOMIC);
+#पूर्ण_अगर
 
 
-#ifdef SL_INCLUDE_CSLIP
-	if (xbuff == NULL || rbuff == NULL || cbuff == NULL)  {
-#else
-	if (xbuff == NULL || rbuff == NULL)  {
-#endif
-		if (mtu > sl->mtu) {
-			printk(KERN_WARNING "%s: unable to grow slip buffers, MTU change cancelled.\n",
+#अगर_घोषित SL_INCLUDE_CSLIP
+	अगर (xbuff == शून्य || rbuff == शून्य || cbuff == शून्य)  अणु
+#अन्यथा
+	अगर (xbuff == शून्य || rbuff == शून्य)  अणु
+#पूर्ण_अगर
+		अगर (mtu > sl->mtu) अणु
+			prपूर्णांकk(KERN_WARNING "%s: unable to grow slip buffers, MTU change cancelled.\n",
 			       dev->name);
 			err = -ENOBUFS;
-		}
-		goto done;
-	}
+		पूर्ण
+		जाओ करोne;
+	पूर्ण
 	spin_lock_bh(&sl->lock);
 
 	err = -ENODEV;
-	if (sl->tty == NULL)
-		goto done_on_bh;
+	अगर (sl->tty == शून्य)
+		जाओ करोne_on_bh;
 
 	xbuff    = xchg(&sl->xbuff, xbuff);
 	rbuff    = xchg(&sl->rbuff, rbuff);
-#ifdef SL_INCLUDE_CSLIP
+#अगर_घोषित SL_INCLUDE_CSLIP
 	cbuff    = xchg(&sl->cbuff, cbuff);
-#endif
-	if (sl->xleft)  {
-		if (sl->xleft <= len)  {
-			memcpy(sl->xbuff, sl->xhead, sl->xleft);
-		} else  {
+#पूर्ण_अगर
+	अगर (sl->xleft)  अणु
+		अगर (sl->xleft <= len)  अणु
+			स_नकल(sl->xbuff, sl->xhead, sl->xleft);
+		पूर्ण अन्यथा  अणु
 			sl->xleft = 0;
 			dev->stats.tx_dropped++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	sl->xhead = sl->xbuff;
 
-	if (sl->rcount)  {
-		if (sl->rcount <= len) {
-			memcpy(sl->rbuff, rbuff, sl->rcount);
-		} else  {
+	अगर (sl->rcount)  अणु
+		अगर (sl->rcount <= len) अणु
+			स_नकल(sl->rbuff, rbuff, sl->rcount);
+		पूर्ण अन्यथा  अणु
 			sl->rcount = 0;
 			dev->stats.rx_over_errors++;
 			set_bit(SLF_ERROR, &sl->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	sl->mtu      = mtu;
 	dev->mtu      = mtu;
 	sl->buffsize = len;
 	err = 0;
 
-done_on_bh:
+करोne_on_bh:
 	spin_unlock_bh(&sl->lock);
 
-done:
-	kfree(xbuff);
-	kfree(rbuff);
-#ifdef SL_INCLUDE_CSLIP
-	kfree(cbuff);
-#endif
-	return err;
-}
+करोne:
+	kमुक्त(xbuff);
+	kमुक्त(rbuff);
+#अगर_घोषित SL_INCLUDE_CSLIP
+	kमुक्त(cbuff);
+#पूर्ण_अगर
+	वापस err;
+पूर्ण
 
 
 /* Set the "sending" flag.  This must be atomic hence the set_bit. */
-static inline void sl_lock(struct slip *sl)
-{
-	netif_stop_queue(sl->dev);
-}
+अटल अंतरभूत व्योम sl_lock(काष्ठा slip *sl)
+अणु
+	netअगर_stop_queue(sl->dev);
+पूर्ण
 
 
 /* Clear the "sending" flag.  This must be atomic, hence the ASM. */
-static inline void sl_unlock(struct slip *sl)
-{
-	netif_wake_queue(sl->dev);
-}
+अटल अंतरभूत व्योम sl_unlock(काष्ठा slip *sl)
+अणु
+	netअगर_wake_queue(sl->dev);
+पूर्ण
 
 /* Send one completely decapsulated IP datagram to the IP layer. */
-static void sl_bump(struct slip *sl)
-{
-	struct net_device *dev = sl->dev;
-	struct sk_buff *skb;
-	int count;
+अटल व्योम sl_bump(काष्ठा slip *sl)
+अणु
+	काष्ठा net_device *dev = sl->dev;
+	काष्ठा sk_buff *skb;
+	पूर्णांक count;
 
 	count = sl->rcount;
-#ifdef SL_INCLUDE_CSLIP
-	if (sl->mode & (SL_MODE_ADAPTIVE | SL_MODE_CSLIP)) {
-		unsigned char c = sl->rbuff[0];
-		if (c & SL_TYPE_COMPRESSED_TCP) {
+#अगर_घोषित SL_INCLUDE_CSLIP
+	अगर (sl->mode & (SL_MODE_ADAPTIVE | SL_MODE_CSLIP)) अणु
+		अचिन्हित अक्षर c = sl->rbuff[0];
+		अगर (c & SL_TYPE_COMPRESSED_TCP) अणु
 			/* ignore compressed packets when CSLIP is off */
-			if (!(sl->mode & SL_MODE_CSLIP)) {
-				printk(KERN_WARNING "%s: compressed packet ignored\n", dev->name);
-				return;
-			}
-			/* make sure we've reserved enough space for uncompress
+			अगर (!(sl->mode & SL_MODE_CSLIP)) अणु
+				prपूर्णांकk(KERN_WARNING "%s: compressed packet ignored\n", dev->name);
+				वापस;
+			पूर्ण
+			/* make sure we've reserved enough space क्रम uncompress
 			   to use */
-			if (count + 80 > sl->buffsize) {
+			अगर (count + 80 > sl->buffsize) अणु
 				dev->stats.rx_over_errors++;
-				return;
-			}
+				वापस;
+			पूर्ण
 			count = slhc_uncompress(sl->slcomp, sl->rbuff, count);
-			if (count <= 0)
-				return;
-		} else if (c >= SL_TYPE_UNCOMPRESSED_TCP) {
-			if (!(sl->mode & SL_MODE_CSLIP)) {
+			अगर (count <= 0)
+				वापस;
+		पूर्ण अन्यथा अगर (c >= SL_TYPE_UNCOMPRESSED_TCP) अणु
+			अगर (!(sl->mode & SL_MODE_CSLIP)) अणु
 				/* turn on header compression */
 				sl->mode |= SL_MODE_CSLIP;
 				sl->mode &= ~SL_MODE_ADAPTIVE;
-				printk(KERN_INFO "%s: header compression turned on\n", dev->name);
-			}
+				prपूर्णांकk(KERN_INFO "%s: header compression turned on\n", dev->name);
+			पूर्ण
 			sl->rbuff[0] &= 0x4f;
-			if (slhc_remember(sl->slcomp, sl->rbuff, count) <= 0)
-				return;
-		}
-	}
-#endif  /* SL_INCLUDE_CSLIP */
+			अगर (slhc_remember(sl->slcomp, sl->rbuff, count) <= 0)
+				वापस;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर  /* SL_INCLUDE_CSLIP */
 
 	dev->stats.rx_bytes += count;
 
 	skb = dev_alloc_skb(count);
-	if (skb == NULL) {
-		printk(KERN_WARNING "%s: memory squeeze, dropping packet.\n", dev->name);
+	अगर (skb == शून्य) अणु
+		prपूर्णांकk(KERN_WARNING "%s: memory squeeze, dropping packet.\n", dev->name);
 		dev->stats.rx_dropped++;
-		return;
-	}
+		वापस;
+	पूर्ण
 	skb->dev = dev;
 	skb_put_data(skb, sl->rbuff, count);
 	skb_reset_mac_header(skb);
 	skb->protocol = htons(ETH_P_IP);
-	netif_rx_ni(skb);
+	netअगर_rx_ni(skb);
 	dev->stats.rx_packets++;
-}
+पूर्ण
 
-/* Encapsulate one IP datagram and stuff into a TTY queue. */
-static void sl_encaps(struct slip *sl, unsigned char *icp, int len)
-{
-	unsigned char *p;
-	int actual, count;
+/* Encapsulate one IP datagram and stuff पूर्णांकo a TTY queue. */
+अटल व्योम sl_encaps(काष्ठा slip *sl, अचिन्हित अक्षर *icp, पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *p;
+	पूर्णांक actual, count;
 
-	if (len > sl->mtu) {		/* Sigh, shouldn't occur BUT ... */
-		printk(KERN_WARNING "%s: truncating oversized transmit packet!\n", sl->dev->name);
+	अगर (len > sl->mtu) अणु		/* Sigh, shouldn't occur BUT ... */
+		prपूर्णांकk(KERN_WARNING "%s: truncating oversized transmit packet!\n", sl->dev->name);
 		sl->dev->stats.tx_dropped++;
 		sl_unlock(sl);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	p = icp;
-#ifdef SL_INCLUDE_CSLIP
-	if (sl->mode & SL_MODE_CSLIP)
+#अगर_घोषित SL_INCLUDE_CSLIP
+	अगर (sl->mode & SL_MODE_CSLIP)
 		len = slhc_compress(sl->slcomp, p, len, sl->cbuff, &p, 1);
-#endif
-#ifdef CONFIG_SLIP_MODE_SLIP6
-	if (sl->mode & SL_MODE_SLIP6)
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SLIP_MODE_SLIP6
+	अगर (sl->mode & SL_MODE_SLIP6)
 		count = slip_esc6(p, sl->xbuff, len);
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 		count = slip_esc(p, sl->xbuff, len);
 
 	/* Order of next two lines is *very* important.
 	 * When we are sending a little amount of data,
-	 * the transfer may be completed inside the ops->write()
-	 * routine, because it's running with interrupts enabled.
-	 * In this case we *never* got WRITE_WAKEUP event,
-	 * if we did not request it before write operation.
+	 * the transfer may be completed inside the ops->ग_लिखो()
+	 * routine, because it's running with पूर्णांकerrupts enabled.
+	 * In this हाल we *never* got WRITE_WAKEUP event,
+	 * अगर we did not request it beक्रमe ग_लिखो operation.
 	 *       14 Oct 1994  Dmitry Gorodchanin.
 	 */
 	set_bit(TTY_DO_WRITE_WAKEUP, &sl->tty->flags);
-	actual = sl->tty->ops->write(sl->tty, sl->xbuff, count);
-#ifdef SL_CHECK_TRANSMIT
-	netif_trans_update(sl->dev);
-#endif
+	actual = sl->tty->ops->ग_लिखो(sl->tty, sl->xbuff, count);
+#अगर_घोषित SL_CHECK_TRANSMIT
+	netअगर_trans_update(sl->dev);
+#पूर्ण_अगर
 	sl->xleft = count - actual;
 	sl->xhead = sl->xbuff + actual;
-#ifdef CONFIG_SLIP_SMART
+#अगर_घोषित CONFIG_SLIP_SMART
 	/* VSV */
 	clear_bit(SLF_OUTWAIT, &sl->flags);	/* reset outfill flag */
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-/* Write out any remaining transmit buffer. Scheduled when tty is writable */
-static void slip_transmit(struct work_struct *work)
-{
-	struct slip *sl = container_of(work, struct slip, tx_work);
-	int actual;
+/* Write out any reमुख्यing transmit buffer. Scheduled when tty is writable */
+अटल व्योम slip_transmit(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा slip *sl = container_of(work, काष्ठा slip, tx_work);
+	पूर्णांक actual;
 
 	spin_lock_bh(&sl->lock);
 	/* First make sure we're connected. */
-	if (!sl->tty || sl->magic != SLIP_MAGIC || !netif_running(sl->dev)) {
+	अगर (!sl->tty || sl->magic != SLIP_MAGIC || !netअगर_running(sl->dev)) अणु
 		spin_unlock_bh(&sl->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sl->xleft <= 0)  {
-		/* Now serial buffer is almost free & we can start
+	अगर (sl->xleft <= 0)  अणु
+		/* Now serial buffer is almost मुक्त & we can start
 		 * transmission of another packet */
 		sl->dev->stats.tx_packets++;
 		clear_bit(TTY_DO_WRITE_WAKEUP, &sl->tty->flags);
 		spin_unlock_bh(&sl->lock);
 		sl_unlock(sl);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	actual = sl->tty->ops->write(sl->tty, sl->xhead, sl->xleft);
+	actual = sl->tty->ops->ग_लिखो(sl->tty, sl->xhead, sl->xleft);
 	sl->xleft -= actual;
 	sl->xhead += actual;
 	spin_unlock_bh(&sl->lock);
-}
+पूर्ण
 
 /*
- * Called by the driver when there's room for more data.
+ * Called by the driver when there's room क्रम more data.
  * Schedule the transmit.
  */
-static void slip_write_wakeup(struct tty_struct *tty)
-{
-	struct slip *sl;
+अटल व्योम slip_ग_लिखो_wakeup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा slip *sl;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	sl = rcu_dereference(tty->disc_data);
-	if (sl)
+	अगर (sl)
 		schedule_work(&sl->tx_work);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void sl_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct slip *sl = netdev_priv(dev);
+अटल व्योम sl_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा slip *sl = netdev_priv(dev);
 
 	spin_lock(&sl->lock);
 
-	if (netif_queue_stopped(dev)) {
-		if (!netif_running(dev))
-			goto out;
+	अगर (netअगर_queue_stopped(dev)) अणु
+		अगर (!netअगर_running(dev))
+			जाओ out;
 
-		/* May be we must check transmitter timeout here ?
+		/* May be we must check transmitter समयout here ?
 		 *      14 Oct 1994 Dmitry Gorodchanin.
 		 */
-#ifdef SL_CHECK_TRANSMIT
-		if (time_before(jiffies, dev_trans_start(dev) + 20 * HZ))  {
-			/* 20 sec timeout not reached */
-			goto out;
-		}
-		printk(KERN_WARNING "%s: transmit timed out, %s?\n",
+#अगर_घोषित SL_CHECK_TRANSMIT
+		अगर (समय_beक्रमe(jअगरfies, dev_trans_start(dev) + 20 * HZ))  अणु
+			/* 20 sec समयout not reached */
+			जाओ out;
+		पूर्ण
+		prपूर्णांकk(KERN_WARNING "%s: transmit timed out, %s?\n",
 			dev->name,
-			(tty_chars_in_buffer(sl->tty) || sl->xleft) ?
+			(tty_अक्षरs_in_buffer(sl->tty) || sl->xleft) ?
 				"bad line quality" : "driver error");
 		sl->xleft = 0;
 		clear_bit(TTY_DO_WRITE_WAKEUP, &sl->tty->flags);
 		sl_unlock(sl);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 out:
 	spin_unlock(&sl->lock);
-}
+पूर्ण
 
 
-/* Encapsulate an IP datagram and kick it into a TTY queue. */
-static netdev_tx_t
-sl_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct slip *sl = netdev_priv(dev);
+/* Encapsulate an IP datagram and kick it पूर्णांकo a TTY queue. */
+अटल netdev_tx_t
+sl_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा slip *sl = netdev_priv(dev);
 
 	spin_lock(&sl->lock);
-	if (!netif_running(dev)) {
+	अगर (!netअगर_running(dev)) अणु
 		spin_unlock(&sl->lock);
-		printk(KERN_WARNING "%s: xmit call when iface is down\n", dev->name);
-		dev_kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
-	if (sl->tty == NULL) {
+		prपूर्णांकk(KERN_WARNING "%s: xmit call when iface is down\n", dev->name);
+		dev_kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
+	अगर (sl->tty == शून्य) अणु
 		spin_unlock(&sl->lock);
-		dev_kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
+		dev_kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	sl_lock(sl);
 	dev->stats.tx_bytes += skb->len;
 	sl_encaps(sl, skb->data, skb->len);
 	spin_unlock(&sl->lock);
 
-	dev_kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 
 /******************************************
@@ -528,56 +529,56 @@ sl_xmit(struct sk_buff *skb, struct net_device *dev)
 
 /* Netdevice UP -> DOWN routine */
 
-static int
-sl_close(struct net_device *dev)
-{
-	struct slip *sl = netdev_priv(dev);
+अटल पूर्णांक
+sl_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा slip *sl = netdev_priv(dev);
 
 	spin_lock_bh(&sl->lock);
-	if (sl->tty)
+	अगर (sl->tty)
 		/* TTY discipline is running. */
 		clear_bit(TTY_DO_WRITE_WAKEUP, &sl->tty->flags);
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	sl->rcount   = 0;
 	sl->xleft    = 0;
 	spin_unlock_bh(&sl->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Netdevice DOWN -> UP routine */
 
-static int sl_open(struct net_device *dev)
-{
-	struct slip *sl = netdev_priv(dev);
+अटल पूर्णांक sl_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा slip *sl = netdev_priv(dev);
 
-	if (sl->tty == NULL)
-		return -ENODEV;
+	अगर (sl->tty == शून्य)
+		वापस -ENODEV;
 
 	sl->flags &= (1 << SLF_INUSE);
-	netif_start_queue(dev);
-	return 0;
-}
+	netअगर_start_queue(dev);
+	वापस 0;
+पूर्ण
 
 /* Netdevice change MTU request */
 
-static int sl_change_mtu(struct net_device *dev, int new_mtu)
-{
-	struct slip *sl = netdev_priv(dev);
+अटल पूर्णांक sl_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
+अणु
+	काष्ठा slip *sl = netdev_priv(dev);
 
-	return sl_realloc_bufs(sl, new_mtu);
-}
+	वापस sl_पुनः_स्मृति_bufs(sl, new_mtu);
+पूर्ण
 
 /* Netdevice get statistics request */
 
-static void
-sl_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
-{
-	struct net_device_stats *devstats = &dev->stats;
-#ifdef SL_INCLUDE_CSLIP
-	struct slip *sl = netdev_priv(dev);
-	struct slcompress *comp = sl->slcomp;
-#endif
+अटल व्योम
+sl_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा net_device_stats *devstats = &dev->stats;
+#अगर_घोषित SL_INCLUDE_CSLIP
+	काष्ठा slip *sl = netdev_priv(dev);
+	काष्ठा slcompress *comp = sl->slcomp;
+#पूर्ण_अगर
 	stats->rx_packets     = devstats->rx_packets;
 	stats->tx_packets     = devstats->tx_packets;
 	stats->rx_bytes       = devstats->rx_bytes;
@@ -588,26 +589,26 @@ sl_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 	stats->rx_errors      = devstats->rx_errors;
 	stats->rx_over_errors = devstats->rx_over_errors;
 
-#ifdef SL_INCLUDE_CSLIP
-	if (comp) {
+#अगर_घोषित SL_INCLUDE_CSLIP
+	अगर (comp) अणु
 		/* Generic compressed statistics */
 		stats->rx_compressed   = comp->sls_i_compressed;
 		stats->tx_compressed   = comp->sls_o_compressed;
 
 		/* Are we really still needs this? */
-		stats->rx_fifo_errors += comp->sls_i_compressed;
+		stats->rx_fअगरo_errors += comp->sls_i_compressed;
 		stats->rx_dropped     += comp->sls_i_tossed;
-		stats->tx_fifo_errors += comp->sls_o_compressed;
+		stats->tx_fअगरo_errors += comp->sls_o_compressed;
 		stats->collisions     += comp->sls_o_misses;
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-/* Netdevice register callback */
+/* Netdevice रेजिस्टर callback */
 
-static int sl_init(struct net_device *dev)
-{
-	struct slip *sl = netdev_priv(dev);
+अटल पूर्णांक sl_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा slip *sl = netdev_priv(dev);
 
 	/*
 	 *	Finish setting up the DEVICE info.
@@ -615,48 +616,48 @@ static int sl_init(struct net_device *dev)
 
 	dev->mtu		= sl->mtu;
 	dev->type		= ARPHRD_SLIP + sl->mode;
-#ifdef SL_CHECK_TRANSMIT
-	dev->watchdog_timeo	= 20*HZ;
-#endif
-	return 0;
-}
+#अगर_घोषित SL_CHECK_TRANSMIT
+	dev->watchकरोg_समयo	= 20*HZ;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 
-static void sl_uninit(struct net_device *dev)
-{
-	struct slip *sl = netdev_priv(dev);
+अटल व्योम sl_uninit(काष्ठा net_device *dev)
+अणु
+	काष्ठा slip *sl = netdev_priv(dev);
 
-	sl_free_bufs(sl);
-}
+	sl_मुक्त_bufs(sl);
+पूर्ण
 
-/* Hook the destructor so we can free slip devices at the right point in time */
-static void sl_free_netdev(struct net_device *dev)
-{
-	int i = dev->base_addr;
+/* Hook the deकाष्ठाor so we can मुक्त slip devices at the right poपूर्णांक in समय */
+अटल व्योम sl_मुक्त_netdev(काष्ठा net_device *dev)
+अणु
+	पूर्णांक i = dev->base_addr;
 
-	slip_devs[i] = NULL;
-}
+	slip_devs[i] = शून्य;
+पूर्ण
 
-static const struct net_device_ops sl_netdev_ops = {
-	.ndo_init		= sl_init,
-	.ndo_uninit	  	= sl_uninit,
-	.ndo_open		= sl_open,
-	.ndo_stop		= sl_close,
-	.ndo_start_xmit		= sl_xmit,
-	.ndo_get_stats64        = sl_get_stats64,
-	.ndo_change_mtu		= sl_change_mtu,
-	.ndo_tx_timeout		= sl_tx_timeout,
-#ifdef CONFIG_SLIP_SMART
-	.ndo_do_ioctl		= sl_ioctl,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops sl_netdev_ops = अणु
+	.nकरो_init		= sl_init,
+	.nकरो_uninit	  	= sl_uninit,
+	.nकरो_खोलो		= sl_खोलो,
+	.nकरो_stop		= sl_बंद,
+	.nकरो_start_xmit		= sl_xmit,
+	.nकरो_get_stats64        = sl_get_stats64,
+	.nकरो_change_mtu		= sl_change_mtu,
+	.nकरो_tx_समयout		= sl_tx_समयout,
+#अगर_घोषित CONFIG_SLIP_SMART
+	.nकरो_करो_ioctl		= sl_ioctl,
+#पूर्ण_अगर
+पूर्ण;
 
 
-static void sl_setup(struct net_device *dev)
-{
+अटल व्योम sl_setup(काष्ठा net_device *dev)
+अणु
 	dev->netdev_ops		= &sl_netdev_ops;
-	dev->needs_free_netdev	= true;
-	dev->priv_destructor	= sl_free_netdev;
+	dev->needs_मुक्त_netdev	= true;
+	dev->priv_deकाष्ठाor	= sl_मुक्त_netdev;
 
 	dev->hard_header_len	= 0;
 	dev->addr_len		= 0;
@@ -668,7 +669,7 @@ static void sl_setup(struct net_device *dev)
 
 	/* New-style flags. */
 	dev->flags		= IFF_NOARP|IFF_POINTOPOINT|IFF_MULTICAST;
-}
+पूर्ण
 
 /******************************************
   Routines looking at TTY side.
@@ -676,85 +677,85 @@ static void sl_setup(struct net_device *dev)
 
 
 /*
- * Handle the 'receiver data ready' interrupt.
+ * Handle the 'receiver data ready' पूर्णांकerrupt.
  * This function is called by the 'tty_io' module in the kernel when
  * a block of SLIP data has been received, which can now be decapsulated
- * and sent on to some IP layer for further processing. This will not
- * be re-entered while running but other ldisc functions may be called
+ * and sent on to some IP layer क्रम further processing. This will not
+ * be re-entered जबतक running but other ldisc functions may be called
  * in parallel
  */
 
-static void slip_receive_buf(struct tty_struct *tty, const unsigned char *cp,
-							char *fp, int count)
-{
-	struct slip *sl = tty->disc_data;
+अटल व्योम slip_receive_buf(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
+							अक्षर *fp, पूर्णांक count)
+अणु
+	काष्ठा slip *sl = tty->disc_data;
 
-	if (!sl || sl->magic != SLIP_MAGIC || !netif_running(sl->dev))
-		return;
+	अगर (!sl || sl->magic != SLIP_MAGIC || !netअगर_running(sl->dev))
+		वापस;
 
-	/* Read the characters out of the buffer */
-	while (count--) {
-		if (fp && *fp++) {
-			if (!test_and_set_bit(SLF_ERROR, &sl->flags))
+	/* Read the अक्षरacters out of the buffer */
+	जबतक (count--) अणु
+		अगर (fp && *fp++) अणु
+			अगर (!test_and_set_bit(SLF_ERROR, &sl->flags))
 				sl->dev->stats.rx_errors++;
 			cp++;
-			continue;
-		}
-#ifdef CONFIG_SLIP_MODE_SLIP6
-		if (sl->mode & SL_MODE_SLIP6)
+			जारी;
+		पूर्ण
+#अगर_घोषित CONFIG_SLIP_MODE_SLIP6
+		अगर (sl->mode & SL_MODE_SLIP6)
 			slip_unesc6(sl, *cp++);
-		else
-#endif
+		अन्यथा
+#पूर्ण_अगर
 			slip_unesc(sl, *cp++);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /************************************
- *  slip_open helper routines.
+ *  slip_खोलो helper routines.
  ************************************/
 
 /* Collect hanged up channels */
-static void sl_sync(void)
-{
-	int i;
-	struct net_device *dev;
-	struct slip	  *sl;
+अटल व्योम sl_sync(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा net_device *dev;
+	काष्ठा slip	  *sl;
 
-	for (i = 0; i < slip_maxdev; i++) {
+	क्रम (i = 0; i < slip_maxdev; i++) अणु
 		dev = slip_devs[i];
-		if (dev == NULL)
-			break;
+		अगर (dev == शून्य)
+			अवरोध;
 
 		sl = netdev_priv(dev);
-		if (sl->tty || sl->leased)
-			continue;
-		if (dev->flags & IFF_UP)
-			dev_close(dev);
-	}
-}
+		अगर (sl->tty || sl->leased)
+			जारी;
+		अगर (dev->flags & IFF_UP)
+			dev_बंद(dev);
+	पूर्ण
+पूर्ण
 
 
-/* Find a free SLIP channel, and link in this `tty' line. */
-static struct slip *sl_alloc(void)
-{
-	int i;
-	char name[IFNAMSIZ];
-	struct net_device *dev = NULL;
-	struct slip       *sl;
+/* Find a मुक्त SLIP channel, and link in this `tty' line. */
+अटल काष्ठा slip *sl_alloc(व्योम)
+अणु
+	पूर्णांक i;
+	अक्षर name[IFNAMSIZ];
+	काष्ठा net_device *dev = शून्य;
+	काष्ठा slip       *sl;
 
-	for (i = 0; i < slip_maxdev; i++) {
+	क्रम (i = 0; i < slip_maxdev; i++) अणु
 		dev = slip_devs[i];
-		if (dev == NULL)
-			break;
-	}
+		अगर (dev == शून्य)
+			अवरोध;
+	पूर्ण
 	/* Sorry, too many, all slots in use */
-	if (i >= slip_maxdev)
-		return NULL;
+	अगर (i >= slip_maxdev)
+		वापस शून्य;
 
-	sprintf(name, "sl%d", i);
-	dev = alloc_netdev(sizeof(*sl), name, NET_NAME_UNKNOWN, sl_setup);
-	if (!dev)
-		return NULL;
+	प्र_लिखो(name, "sl%d", i);
+	dev = alloc_netdev(माप(*sl), name, NET_NAME_UNKNOWN, sl_setup);
+	अगर (!dev)
+		वापस शून्य;
 
 	dev->base_addr  = i;
 	sl = netdev_priv(dev);
@@ -765,38 +766,38 @@ static struct slip *sl_alloc(void)
 	spin_lock_init(&sl->lock);
 	INIT_WORK(&sl->tx_work, slip_transmit);
 	sl->mode        = SL_MODE_DEFAULT;
-#ifdef CONFIG_SLIP_SMART
-	/* initialize timer_list struct */
-	timer_setup(&sl->keepalive_timer, sl_keepalive, 0);
-	timer_setup(&sl->outfill_timer, sl_outfill, 0);
-#endif
+#अगर_घोषित CONFIG_SLIP_SMART
+	/* initialize समयr_list काष्ठा */
+	समयr_setup(&sl->keepalive_समयr, sl_keepalive, 0);
+	समयr_setup(&sl->outfill_समयr, sl_outfill, 0);
+#पूर्ण_अगर
 	slip_devs[i] = dev;
-	return sl;
-}
+	वापस sl;
+पूर्ण
 
 /*
  * Open the high-level part of the SLIP channel.
  * This function is called by the TTY module when the
- * SLIP line discipline is called for.  Because we are
+ * SLIP line discipline is called क्रम.  Because we are
  * sure the tty line exists, we only have to link it to
- * a free SLIP channel...
+ * a मुक्त SLIP channel...
  *
  * Called in process context serialized from other ldisc calls.
  */
 
-static int slip_open(struct tty_struct *tty)
-{
-	struct slip *sl;
-	int err;
+अटल पूर्णांक slip_खोलो(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा slip *sl;
+	पूर्णांक err;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (tty->ops->write == NULL)
-		return -EOPNOTSUPP;
+	अगर (tty->ops->ग_लिखो == शून्य)
+		वापस -EOPNOTSUPP;
 
 	/* RTnetlink lock is misused here to serialize concurrent
-	   opens of slip channels. There are better ways, but it is
+	   खोलोs of slip channels. There are better ways, but it is
 	   the simplest one.
 	 */
 	rtnl_lock();
@@ -807,121 +808,121 @@ static int slip_open(struct tty_struct *tty)
 	sl = tty->disc_data;
 
 	err = -EEXIST;
-	/* First make sure we're not already connected. */
-	if (sl && sl->magic == SLIP_MAGIC)
-		goto err_exit;
+	/* First make sure we're not alपढ़ोy connected. */
+	अगर (sl && sl->magic == SLIP_MAGIC)
+		जाओ err_निकास;
 
-	/* OK.  Find a free SLIP channel to use. */
-	err = -ENFILE;
+	/* OK.  Find a मुक्त SLIP channel to use. */
+	err = -ENखाता;
 	sl = sl_alloc();
-	if (sl == NULL)
-		goto err_exit;
+	अगर (sl == शून्य)
+		जाओ err_निकास;
 
 	sl->tty = tty;
 	tty->disc_data = sl;
 	sl->pid = current->pid;
 
-	if (!test_bit(SLF_INUSE, &sl->flags)) {
-		/* Perform the low-level SLIP initialization. */
+	अगर (!test_bit(SLF_INUSE, &sl->flags)) अणु
+		/* Perक्रमm the low-level SLIP initialization. */
 		err = sl_alloc_bufs(sl, SL_MTU);
-		if (err)
-			goto err_free_chan;
+		अगर (err)
+			जाओ err_मुक्त_chan;
 
 		set_bit(SLF_INUSE, &sl->flags);
 
-		err = register_netdevice(sl->dev);
-		if (err)
-			goto err_free_bufs;
-	}
+		err = रेजिस्टर_netdevice(sl->dev);
+		अगर (err)
+			जाओ err_मुक्त_bufs;
+	पूर्ण
 
-#ifdef CONFIG_SLIP_SMART
-	if (sl->keepalive) {
-		sl->keepalive_timer.expires = jiffies + sl->keepalive * HZ;
-		add_timer(&sl->keepalive_timer);
-	}
-	if (sl->outfill) {
-		sl->outfill_timer.expires = jiffies + sl->outfill * HZ;
-		add_timer(&sl->outfill_timer);
-	}
-#endif
+#अगर_घोषित CONFIG_SLIP_SMART
+	अगर (sl->keepalive) अणु
+		sl->keepalive_समयr.expires = jअगरfies + sl->keepalive * HZ;
+		add_समयr(&sl->keepalive_समयr);
+	पूर्ण
+	अगर (sl->outfill) अणु
+		sl->outfill_समयr.expires = jअगरfies + sl->outfill * HZ;
+		add_समयr(&sl->outfill_समयr);
+	पूर्ण
+#पूर्ण_अगर
 
 	/* Done.  We have linked the TTY line to a channel. */
 	rtnl_unlock();
-	tty->receive_room = 65536;	/* We don't flow control */
+	tty->receive_room = 65536;	/* We करोn't flow control */
 
 	/* TTY layer expects 0 on success */
-	return 0;
+	वापस 0;
 
-err_free_bufs:
-	sl_free_bufs(sl);
+err_मुक्त_bufs:
+	sl_मुक्त_bufs(sl);
 
-err_free_chan:
-	sl->tty = NULL;
-	tty->disc_data = NULL;
+err_मुक्त_chan:
+	sl->tty = शून्य;
+	tty->disc_data = शून्य;
 	clear_bit(SLF_INUSE, &sl->flags);
-	sl_free_netdev(sl->dev);
-	/* do not call free_netdev before rtnl_unlock */
+	sl_मुक्त_netdev(sl->dev);
+	/* करो not call मुक्त_netdev beक्रमe rtnl_unlock */
 	rtnl_unlock();
-	free_netdev(sl->dev);
-	return err;
+	मुक्त_netdev(sl->dev);
+	वापस err;
 
-err_exit:
+err_निकास:
 	rtnl_unlock();
 
 	/* Count references from TTY module */
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Close down a SLIP channel.
- * This means flushing out any pending queues, and then returning. This
+ * Close करोwn a SLIP channel.
+ * This means flushing out any pending queues, and then वापसing. This
  * call is serialized against other ldisc functions.
  *
  * We also use this method fo a hangup event
  */
 
-static void slip_close(struct tty_struct *tty)
-{
-	struct slip *sl = tty->disc_data;
+अटल व्योम slip_बंद(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा slip *sl = tty->disc_data;
 
 	/* First make sure we're connected. */
-	if (!sl || sl->magic != SLIP_MAGIC || sl->tty != tty)
-		return;
+	अगर (!sl || sl->magic != SLIP_MAGIC || sl->tty != tty)
+		वापस;
 
 	spin_lock_bh(&sl->lock);
-	rcu_assign_pointer(tty->disc_data, NULL);
-	sl->tty = NULL;
+	rcu_assign_poपूर्णांकer(tty->disc_data, शून्य);
+	sl->tty = शून्य;
 	spin_unlock_bh(&sl->lock);
 
 	synchronize_rcu();
 	flush_work(&sl->tx_work);
 
-	/* VSV = very important to remove timers */
-#ifdef CONFIG_SLIP_SMART
-	del_timer_sync(&sl->keepalive_timer);
-	del_timer_sync(&sl->outfill_timer);
-#endif
+	/* VSV = very important to हटाओ समयrs */
+#अगर_घोषित CONFIG_SLIP_SMART
+	del_समयr_sync(&sl->keepalive_समयr);
+	del_समयr_sync(&sl->outfill_समयr);
+#पूर्ण_अगर
 	/* Flush network side */
-	unregister_netdev(sl->dev);
-	/* This will complete via sl_free_netdev */
-}
+	unरेजिस्टर_netdev(sl->dev);
+	/* This will complete via sl_मुक्त_netdev */
+पूर्ण
 
-static int slip_hangup(struct tty_struct *tty)
-{
-	slip_close(tty);
-	return 0;
-}
+अटल पूर्णांक slip_hangup(काष्ठा tty_काष्ठा *tty)
+अणु
+	slip_बंद(tty);
+	वापस 0;
+पूर्ण
  /************************************************************************
   *			STANDARD SLIP ENCAPSULATION		  	 *
   ************************************************************************/
 
-static int slip_esc(unsigned char *s, unsigned char *d, int len)
-{
-	unsigned char *ptr = d;
-	unsigned char c;
+अटल पूर्णांक slip_esc(अचिन्हित अक्षर *s, अचिन्हित अक्षर *d, पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *ptr = d;
+	अचिन्हित अक्षर c;
 
 	/*
-	 * Send an initial END character to flush out any
+	 * Send an initial END अक्षरacter to flush out any
 	 * data that may have accumulated in the receiver
 	 * due to line noise.
 	 */
@@ -930,84 +931,84 @@ static int slip_esc(unsigned char *s, unsigned char *d, int len)
 
 	/*
 	 * For each byte in the packet, send the appropriate
-	 * character sequence, according to the SLIP protocol.
+	 * अक्षरacter sequence, according to the SLIP protocol.
 	 */
 
-	while (len-- > 0) {
-		switch (c = *s++) {
-		case END:
+	जबतक (len-- > 0) अणु
+		चयन (c = *s++) अणु
+		हाल END:
 			*ptr++ = ESC;
 			*ptr++ = ESC_END;
-			break;
-		case ESC:
+			अवरोध;
+		हाल ESC:
 			*ptr++ = ESC;
 			*ptr++ = ESC_ESC;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			*ptr++ = c;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	*ptr++ = END;
-	return ptr - d;
-}
+	वापस ptr - d;
+पूर्ण
 
-static void slip_unesc(struct slip *sl, unsigned char s)
-{
+अटल व्योम slip_unesc(काष्ठा slip *sl, अचिन्हित अक्षर s)
+अणु
 
-	switch (s) {
-	case END:
-#ifdef CONFIG_SLIP_SMART
+	चयन (s) अणु
+	हाल END:
+#अगर_घोषित CONFIG_SLIP_SMART
 		/* drop keeptest bit = VSV */
-		if (test_bit(SLF_KEEPTEST, &sl->flags))
+		अगर (test_bit(SLF_KEEPTEST, &sl->flags))
 			clear_bit(SLF_KEEPTEST, &sl->flags);
-#endif
+#पूर्ण_अगर
 
-		if (!test_and_clear_bit(SLF_ERROR, &sl->flags) &&
+		अगर (!test_and_clear_bit(SLF_ERROR, &sl->flags) &&
 		    (sl->rcount > 2))
 			sl_bump(sl);
 		clear_bit(SLF_ESCAPE, &sl->flags);
 		sl->rcount = 0;
-		return;
+		वापस;
 
-	case ESC:
+	हाल ESC:
 		set_bit(SLF_ESCAPE, &sl->flags);
-		return;
-	case ESC_ESC:
-		if (test_and_clear_bit(SLF_ESCAPE, &sl->flags))
+		वापस;
+	हाल ESC_ESC:
+		अगर (test_and_clear_bit(SLF_ESCAPE, &sl->flags))
 			s = ESC;
-		break;
-	case ESC_END:
-		if (test_and_clear_bit(SLF_ESCAPE, &sl->flags))
+		अवरोध;
+	हाल ESC_END:
+		अगर (test_and_clear_bit(SLF_ESCAPE, &sl->flags))
 			s = END;
-		break;
-	}
-	if (!test_bit(SLF_ERROR, &sl->flags))  {
-		if (sl->rcount < sl->buffsize)  {
+		अवरोध;
+	पूर्ण
+	अगर (!test_bit(SLF_ERROR, &sl->flags))  अणु
+		अगर (sl->rcount < sl->buffsize)  अणु
 			sl->rbuff[sl->rcount++] = s;
-			return;
-		}
+			वापस;
+		पूर्ण
 		sl->dev->stats.rx_over_errors++;
 		set_bit(SLF_ERROR, &sl->flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-#ifdef CONFIG_SLIP_MODE_SLIP6
+#अगर_घोषित CONFIG_SLIP_MODE_SLIP6
 /************************************************************************
  *			 6 BIT SLIP ENCAPSULATION			*
  ************************************************************************/
 
-static int slip_esc6(unsigned char *s, unsigned char *d, int len)
-{
-	unsigned char *ptr = d;
-	unsigned char c;
-	int i;
-	unsigned short v = 0;
-	short bits = 0;
+अटल पूर्णांक slip_esc6(अचिन्हित अक्षर *s, अचिन्हित अक्षर *d, पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *ptr = d;
+	अचिन्हित अक्षर c;
+	पूर्णांक i;
+	अचिन्हित लघु v = 0;
+	लघु bits = 0;
 
 	/*
-	 * Send an initial END character to flush out any
+	 * Send an initial END अक्षरacter to flush out any
 	 * data that may have accumulated in the receiver
 	 * due to line noise.
 	 */
@@ -1015,424 +1016,424 @@ static int slip_esc6(unsigned char *s, unsigned char *d, int len)
 	*ptr++ = 0x70;
 
 	/*
-	 * Encode the packet into printable ascii characters
+	 * Encode the packet पूर्णांकo prपूर्णांकable ascii अक्षरacters
 	 */
 
-	for (i = 0; i < len; ++i) {
+	क्रम (i = 0; i < len; ++i) अणु
 		v = (v << 8) | s[i];
 		bits += 8;
-		while (bits >= 6) {
+		जबतक (bits >= 6) अणु
 			bits -= 6;
 			c = 0x30 + ((v >> bits) & 0x3F);
 			*ptr++ = c;
-		}
-	}
-	if (bits) {
+		पूर्ण
+	पूर्ण
+	अगर (bits) अणु
 		c = 0x30 + ((v << (6 - bits)) & 0x3F);
 		*ptr++ = c;
-	}
+	पूर्ण
 	*ptr++ = 0x70;
-	return ptr - d;
-}
+	वापस ptr - d;
+पूर्ण
 
-static void slip_unesc6(struct slip *sl, unsigned char s)
-{
-	unsigned char c;
+अटल व्योम slip_unesc6(काष्ठा slip *sl, अचिन्हित अक्षर s)
+अणु
+	अचिन्हित अक्षर c;
 
-	if (s == 0x70) {
-#ifdef CONFIG_SLIP_SMART
+	अगर (s == 0x70) अणु
+#अगर_घोषित CONFIG_SLIP_SMART
 		/* drop keeptest bit = VSV */
-		if (test_bit(SLF_KEEPTEST, &sl->flags))
+		अगर (test_bit(SLF_KEEPTEST, &sl->flags))
 			clear_bit(SLF_KEEPTEST, &sl->flags);
-#endif
+#पूर्ण_अगर
 
-		if (!test_and_clear_bit(SLF_ERROR, &sl->flags) &&
+		अगर (!test_and_clear_bit(SLF_ERROR, &sl->flags) &&
 		    (sl->rcount > 2))
 			sl_bump(sl);
 		sl->rcount = 0;
 		sl->xbits = 0;
 		sl->xdata = 0;
-	} else if (s >= 0x30 && s < 0x70) {
+	पूर्ण अन्यथा अगर (s >= 0x30 && s < 0x70) अणु
 		sl->xdata = (sl->xdata << 6) | ((s - 0x30) & 0x3F);
 		sl->xbits += 6;
-		if (sl->xbits >= 8) {
+		अगर (sl->xbits >= 8) अणु
 			sl->xbits -= 8;
-			c = (unsigned char)(sl->xdata >> sl->xbits);
-			if (!test_bit(SLF_ERROR, &sl->flags))  {
-				if (sl->rcount < sl->buffsize)  {
+			c = (अचिन्हित अक्षर)(sl->xdata >> sl->xbits);
+			अगर (!test_bit(SLF_ERROR, &sl->flags))  अणु
+				अगर (sl->rcount < sl->buffsize)  अणु
 					sl->rbuff[sl->rcount++] = c;
-					return;
-				}
+					वापस;
+				पूर्ण
 				sl->dev->stats.rx_over_errors++;
 				set_bit(SLF_ERROR, &sl->flags);
-			}
-		}
-	}
-}
-#endif /* CONFIG_SLIP_MODE_SLIP6 */
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SLIP_MODE_SLIP6 */
 
-/* Perform I/O control on an active SLIP channel. */
-static int slip_ioctl(struct tty_struct *tty, struct file *file,
-					unsigned int cmd, unsigned long arg)
-{
-	struct slip *sl = tty->disc_data;
-	unsigned int tmp;
-	int __user *p = (int __user *)arg;
+/* Perक्रमm I/O control on an active SLIP channel. */
+अटल पूर्णांक slip_ioctl(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+					अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा slip *sl = tty->disc_data;
+	अचिन्हित पूर्णांक पंचांगp;
+	पूर्णांक __user *p = (पूर्णांक __user *)arg;
 
 	/* First make sure we're connected. */
-	if (!sl || sl->magic != SLIP_MAGIC)
-		return -EINVAL;
+	अगर (!sl || sl->magic != SLIP_MAGIC)
+		वापस -EINVAL;
 
-	switch (cmd) {
-	case SIOCGIFNAME:
-		tmp = strlen(sl->dev->name) + 1;
-		if (copy_to_user((void __user *)arg, sl->dev->name, tmp))
-			return -EFAULT;
-		return 0;
+	चयन (cmd) अणु
+	हाल SIOCGIFNAME:
+		पंचांगp = म_माप(sl->dev->name) + 1;
+		अगर (copy_to_user((व्योम __user *)arg, sl->dev->name, पंचांगp))
+			वापस -EFAULT;
+		वापस 0;
 
-	case SIOCGIFENCAP:
-		if (put_user(sl->mode, p))
-			return -EFAULT;
-		return 0;
+	हाल SIOCGIFENCAP:
+		अगर (put_user(sl->mode, p))
+			वापस -EFAULT;
+		वापस 0;
 
-	case SIOCSIFENCAP:
-		if (get_user(tmp, p))
-			return -EFAULT;
-#ifndef SL_INCLUDE_CSLIP
-		if (tmp & (SL_MODE_CSLIP|SL_MODE_ADAPTIVE))
-			return -EINVAL;
-#else
-		if ((tmp & (SL_MODE_ADAPTIVE | SL_MODE_CSLIP)) ==
+	हाल SIOCSIFENCAP:
+		अगर (get_user(पंचांगp, p))
+			वापस -EFAULT;
+#अगर_अघोषित SL_INCLUDE_CSLIP
+		अगर (पंचांगp & (SL_MODE_CSLIP|SL_MODE_ADAPTIVE))
+			वापस -EINVAL;
+#अन्यथा
+		अगर ((पंचांगp & (SL_MODE_ADAPTIVE | SL_MODE_CSLIP)) ==
 		    (SL_MODE_ADAPTIVE | SL_MODE_CSLIP))
-			/* return -EINVAL; */
-			tmp &= ~SL_MODE_ADAPTIVE;
-#endif
-#ifndef CONFIG_SLIP_MODE_SLIP6
-		if (tmp & SL_MODE_SLIP6)
-			return -EINVAL;
-#endif
-		sl->mode = tmp;
+			/* वापस -EINVAL; */
+			पंचांगp &= ~SL_MODE_ADAPTIVE;
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_SLIP_MODE_SLIP6
+		अगर (पंचांगp & SL_MODE_SLIP6)
+			वापस -EINVAL;
+#पूर्ण_अगर
+		sl->mode = पंचांगp;
 		sl->dev->type = ARPHRD_SLIP + sl->mode;
-		return 0;
+		वापस 0;
 
-	case SIOCSIFHWADDR:
-		return -EINVAL;
+	हाल SIOCSIFHWADDR:
+		वापस -EINVAL;
 
-#ifdef CONFIG_SLIP_SMART
+#अगर_घोषित CONFIG_SLIP_SMART
 	/* VSV changes start here */
-	case SIOCSKEEPALIVE:
-		if (get_user(tmp, p))
-			return -EFAULT;
-		if (tmp > 255) /* max for unchar */
-			return -EINVAL;
+	हाल SIOCSKEEPALIVE:
+		अगर (get_user(पंचांगp, p))
+			वापस -EFAULT;
+		अगर (पंचांगp > 255) /* max क्रम unअक्षर */
+			वापस -EINVAL;
 
 		spin_lock_bh(&sl->lock);
-		if (!sl->tty) {
+		अगर (!sl->tty) अणु
 			spin_unlock_bh(&sl->lock);
-			return -ENODEV;
-		}
-		sl->keepalive = (u8)tmp;
-		if (sl->keepalive != 0) {
-			mod_timer(&sl->keepalive_timer,
-					jiffies + sl->keepalive * HZ);
+			वापस -ENODEV;
+		पूर्ण
+		sl->keepalive = (u8)पंचांगp;
+		अगर (sl->keepalive != 0) अणु
+			mod_समयr(&sl->keepalive_समयr,
+					jअगरfies + sl->keepalive * HZ);
 			set_bit(SLF_KEEPTEST, &sl->flags);
-		} else
-			del_timer(&sl->keepalive_timer);
+		पूर्ण अन्यथा
+			del_समयr(&sl->keepalive_समयr);
 		spin_unlock_bh(&sl->lock);
-		return 0;
+		वापस 0;
 
-	case SIOCGKEEPALIVE:
-		if (put_user(sl->keepalive, p))
-			return -EFAULT;
-		return 0;
+	हाल SIOCGKEEPALIVE:
+		अगर (put_user(sl->keepalive, p))
+			वापस -EFAULT;
+		वापस 0;
 
-	case SIOCSOUTFILL:
-		if (get_user(tmp, p))
-			return -EFAULT;
-		if (tmp > 255) /* max for unchar */
-			return -EINVAL;
+	हाल SIOCSOUTFILL:
+		अगर (get_user(पंचांगp, p))
+			वापस -EFAULT;
+		अगर (पंचांगp > 255) /* max क्रम unअक्षर */
+			वापस -EINVAL;
 		spin_lock_bh(&sl->lock);
-		if (!sl->tty) {
+		अगर (!sl->tty) अणु
 			spin_unlock_bh(&sl->lock);
-			return -ENODEV;
-		}
-		sl->outfill = (u8)tmp;
-		if (sl->outfill != 0) {
-			mod_timer(&sl->outfill_timer,
-						jiffies + sl->outfill * HZ);
+			वापस -ENODEV;
+		पूर्ण
+		sl->outfill = (u8)पंचांगp;
+		अगर (sl->outfill != 0) अणु
+			mod_समयr(&sl->outfill_समयr,
+						jअगरfies + sl->outfill * HZ);
 			set_bit(SLF_OUTWAIT, &sl->flags);
-		} else
-			del_timer(&sl->outfill_timer);
+		पूर्ण अन्यथा
+			del_समयr(&sl->outfill_समयr);
 		spin_unlock_bh(&sl->lock);
-		return 0;
+		वापस 0;
 
-	case SIOCGOUTFILL:
-		if (put_user(sl->outfill, p))
-			return -EFAULT;
-		return 0;
+	हाल SIOCGOUTFILL:
+		अगर (put_user(sl->outfill, p))
+			वापस -EFAULT;
+		वापस 0;
 	/* VSV changes end */
-#endif
-	default:
-		return tty_mode_ioctl(tty, file, cmd, arg);
-	}
-}
+#पूर्ण_अगर
+	शेष:
+		वापस tty_mode_ioctl(tty, file, cmd, arg);
+	पूर्ण
+पूर्ण
 
 /* VSV changes start here */
-#ifdef CONFIG_SLIP_SMART
-/* function do_ioctl called from net/core/dev.c
+#अगर_घोषित CONFIG_SLIP_SMART
+/* function करो_ioctl called from net/core/dev.c
    to allow get/set outfill/keepalive parameter
-   by ifconfig                                 */
+   by अगरconfig                                 */
 
-static int sl_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-	struct slip *sl = netdev_priv(dev);
-	unsigned long *p = (unsigned long *)&rq->ifr_ifru;
+अटल पूर्णांक sl_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा slip *sl = netdev_priv(dev);
+	अचिन्हित दीर्घ *p = (अचिन्हित दीर्घ *)&rq->अगरr_अगरru;
 
-	if (sl == NULL)		/* Allocation failed ?? */
-		return -ENODEV;
+	अगर (sl == शून्य)		/* Allocation failed ?? */
+		वापस -ENODEV;
 
 	spin_lock_bh(&sl->lock);
 
-	if (!sl->tty) {
+	अगर (!sl->tty) अणु
 		spin_unlock_bh(&sl->lock);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	switch (cmd) {
-	case SIOCSKEEPALIVE:
-		/* max for unchar */
-		if ((unsigned)*p > 255) {
+	चयन (cmd) अणु
+	हाल SIOCSKEEPALIVE:
+		/* max क्रम unअक्षर */
+		अगर ((अचिन्हित)*p > 255) अणु
 			spin_unlock_bh(&sl->lock);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		sl->keepalive = (u8)*p;
-		if (sl->keepalive != 0) {
-			sl->keepalive_timer.expires =
-						jiffies + sl->keepalive * HZ;
-			mod_timer(&sl->keepalive_timer,
-						jiffies + sl->keepalive * HZ);
+		अगर (sl->keepalive != 0) अणु
+			sl->keepalive_समयr.expires =
+						jअगरfies + sl->keepalive * HZ;
+			mod_समयr(&sl->keepalive_समयr,
+						jअगरfies + sl->keepalive * HZ);
 			set_bit(SLF_KEEPTEST, &sl->flags);
-		} else
-			del_timer(&sl->keepalive_timer);
-		break;
+		पूर्ण अन्यथा
+			del_समयr(&sl->keepalive_समयr);
+		अवरोध;
 
-	case SIOCGKEEPALIVE:
+	हाल SIOCGKEEPALIVE:
 		*p = sl->keepalive;
-		break;
+		अवरोध;
 
-	case SIOCSOUTFILL:
-		if ((unsigned)*p > 255) { /* max for unchar */
+	हाल SIOCSOUTFILL:
+		अगर ((अचिन्हित)*p > 255) अणु /* max क्रम unअक्षर */
 			spin_unlock_bh(&sl->lock);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		sl->outfill = (u8)*p;
-		if (sl->outfill != 0) {
-			mod_timer(&sl->outfill_timer,
-						jiffies + sl->outfill * HZ);
+		अगर (sl->outfill != 0) अणु
+			mod_समयr(&sl->outfill_समयr,
+						jअगरfies + sl->outfill * HZ);
 			set_bit(SLF_OUTWAIT, &sl->flags);
-		} else
-			del_timer(&sl->outfill_timer);
-		break;
+		पूर्ण अन्यथा
+			del_समयr(&sl->outfill_समयr);
+		अवरोध;
 
-	case SIOCGOUTFILL:
+	हाल SIOCGOUTFILL:
 		*p = sl->outfill;
-		break;
+		अवरोध;
 
-	case SIOCSLEASE:
+	हाल SIOCSLEASE:
 		/* Resolve race condition, when ioctl'ing hanged up
-		   and opened by another process device.
+		   and खोलोed by another process device.
 		 */
-		if (sl->tty != current->signal->tty &&
-						sl->pid != current->pid) {
+		अगर (sl->tty != current->संकेत->tty &&
+						sl->pid != current->pid) अणु
 			spin_unlock_bh(&sl->lock);
-			return -EPERM;
-		}
+			वापस -EPERM;
+		पूर्ण
 		sl->leased = 0;
-		if (*p)
+		अगर (*p)
 			sl->leased = 1;
-		break;
+		अवरोध;
 
-	case SIOCGLEASE:
+	हाल SIOCGLEASE:
 		*p = sl->leased;
-	}
+	पूर्ण
 	spin_unlock_bh(&sl->lock);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 /* VSV changes end */
 
-static struct tty_ldisc_ops sl_ldisc = {
+अटल काष्ठा tty_ldisc_ops sl_ldisc = अणु
 	.owner 		= THIS_MODULE,
 	.name 		= "slip",
-	.open 		= slip_open,
-	.close	 	= slip_close,
+	.खोलो 		= slip_खोलो,
+	.बंद	 	= slip_बंद,
 	.hangup	 	= slip_hangup,
 	.ioctl		= slip_ioctl,
 	.receive_buf	= slip_receive_buf,
-	.write_wakeup	= slip_write_wakeup,
-};
+	.ग_लिखो_wakeup	= slip_ग_लिखो_wakeup,
+पूर्ण;
 
-static int __init slip_init(void)
-{
-	int status;
+अटल पूर्णांक __init slip_init(व्योम)
+अणु
+	पूर्णांक status;
 
-	if (slip_maxdev < 4)
+	अगर (slip_maxdev < 4)
 		slip_maxdev = 4; /* Sanity */
 
-	printk(KERN_INFO "SLIP: version %s (dynamic channels, max=%d)"
-#ifdef CONFIG_SLIP_MODE_SLIP6
+	prपूर्णांकk(KERN_INFO "SLIP: version %s (dynamic channels, max=%d)"
+#अगर_घोषित CONFIG_SLIP_MODE_SLIP6
 	       " (6 bit encapsulation enabled)"
-#endif
+#पूर्ण_अगर
 	       ".\n",
 	       SLIP_VERSION, slip_maxdev);
-#if defined(SL_INCLUDE_CSLIP)
-	printk(KERN_INFO "CSLIP: code copyright 1989 Regents of the University of California.\n");
-#endif
-#ifdef CONFIG_SLIP_SMART
-	printk(KERN_INFO "SLIP linefill/keepalive option.\n");
-#endif
+#अगर defined(SL_INCLUDE_CSLIP)
+	prपूर्णांकk(KERN_INFO "CSLIP: code copyright 1989 Regents of the University of California.\n");
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SLIP_SMART
+	prपूर्णांकk(KERN_INFO "SLIP linefill/keepalive option.\n");
+#पूर्ण_अगर
 
-	slip_devs = kcalloc(slip_maxdev, sizeof(struct net_device *),
+	slip_devs = kसुस्मृति(slip_maxdev, माप(काष्ठा net_device *),
 								GFP_KERNEL);
-	if (!slip_devs)
-		return -ENOMEM;
+	अगर (!slip_devs)
+		वापस -ENOMEM;
 
-	/* Fill in our line protocol discipline, and register it */
-	status = tty_register_ldisc(N_SLIP, &sl_ldisc);
-	if (status != 0) {
-		printk(KERN_ERR "SLIP: can't register line discipline (err = %d)\n", status);
-		kfree(slip_devs);
-	}
-	return status;
-}
+	/* Fill in our line protocol discipline, and रेजिस्टर it */
+	status = tty_रेजिस्टर_ldisc(N_SLIP, &sl_ldisc);
+	अगर (status != 0) अणु
+		prपूर्णांकk(KERN_ERR "SLIP: can't register line discipline (err = %d)\n", status);
+		kमुक्त(slip_devs);
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static void __exit slip_exit(void)
-{
-	int i;
-	struct net_device *dev;
-	struct slip *sl;
-	unsigned long timeout = jiffies + HZ;
-	int busy = 0;
+अटल व्योम __निकास slip_निकास(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा net_device *dev;
+	काष्ठा slip *sl;
+	अचिन्हित दीर्घ समयout = jअगरfies + HZ;
+	पूर्णांक busy = 0;
 
-	if (slip_devs == NULL)
-		return;
+	अगर (slip_devs == शून्य)
+		वापस;
 
-	/* First of all: check for active disciplines and hangup them.
+	/* First of all: check क्रम active disciplines and hangup them.
 	 */
-	do {
-		if (busy)
-			msleep_interruptible(100);
+	करो अणु
+		अगर (busy)
+			msleep_पूर्णांकerruptible(100);
 
 		busy = 0;
-		for (i = 0; i < slip_maxdev; i++) {
+		क्रम (i = 0; i < slip_maxdev; i++) अणु
 			dev = slip_devs[i];
-			if (!dev)
-				continue;
+			अगर (!dev)
+				जारी;
 			sl = netdev_priv(dev);
 			spin_lock_bh(&sl->lock);
-			if (sl->tty) {
+			अगर (sl->tty) अणु
 				busy++;
 				tty_hangup(sl->tty);
-			}
+			पूर्ण
 			spin_unlock_bh(&sl->lock);
-		}
-	} while (busy && time_before(jiffies, timeout));
+		पूर्ण
+	पूर्ण जबतक (busy && समय_beक्रमe(jअगरfies, समयout));
 
-	/* FIXME: hangup is async so we should wait when doing this second
+	/* FIXME: hangup is async so we should रुको when करोing this second
 	   phase */
 
-	for (i = 0; i < slip_maxdev; i++) {
+	क्रम (i = 0; i < slip_maxdev; i++) अणु
 		dev = slip_devs[i];
-		if (!dev)
-			continue;
-		slip_devs[i] = NULL;
+		अगर (!dev)
+			जारी;
+		slip_devs[i] = शून्य;
 
 		sl = netdev_priv(dev);
-		if (sl->tty) {
-			printk(KERN_ERR "%s: tty discipline still running\n",
+		अगर (sl->tty) अणु
+			prपूर्णांकk(KERN_ERR "%s: tty discipline still running\n",
 			       dev->name);
-		}
+		पूर्ण
 
-		unregister_netdev(dev);
-	}
+		unरेजिस्टर_netdev(dev);
+	पूर्ण
 
-	kfree(slip_devs);
-	slip_devs = NULL;
+	kमुक्त(slip_devs);
+	slip_devs = शून्य;
 
-	i = tty_unregister_ldisc(N_SLIP);
-	if (i != 0)
-		printk(KERN_ERR "SLIP: can't unregister line discipline (err = %d)\n", i);
-}
+	i = tty_unरेजिस्टर_ldisc(N_SLIP);
+	अगर (i != 0)
+		prपूर्णांकk(KERN_ERR "SLIP: can't unregister line discipline (err = %d)\n", i);
+पूर्ण
 
 module_init(slip_init);
-module_exit(slip_exit);
+module_निकास(slip_निकास);
 
-#ifdef CONFIG_SLIP_SMART
+#अगर_घोषित CONFIG_SLIP_SMART
 /*
- * This is start of the code for multislip style line checking
- * added by Stanislav Voronyi. All changes before marked VSV
+ * This is start of the code क्रम multislip style line checking
+ * added by Stanislav Voronyi. All changes beक्रमe marked VSV
  */
 
-static void sl_outfill(struct timer_list *t)
-{
-	struct slip *sl = from_timer(sl, t, outfill_timer);
+अटल व्योम sl_outfill(काष्ठा समयr_list *t)
+अणु
+	काष्ठा slip *sl = from_समयr(sl, t, outfill_समयr);
 
 	spin_lock(&sl->lock);
 
-	if (sl->tty == NULL)
-		goto out;
+	अगर (sl->tty == शून्य)
+		जाओ out;
 
-	if (sl->outfill) {
-		if (test_bit(SLF_OUTWAIT, &sl->flags)) {
-			/* no packets were transmitted, do outfill */
-#ifdef CONFIG_SLIP_MODE_SLIP6
-			unsigned char s = (sl->mode & SL_MODE_SLIP6)?0x70:END;
-#else
-			unsigned char s = END;
-#endif
-			/* put END into tty queue. Is it right ??? */
-			if (!netif_queue_stopped(sl->dev)) {
-				/* if device busy no outfill */
-				sl->tty->ops->write(sl->tty, &s, 1);
-			}
-		} else
+	अगर (sl->outfill) अणु
+		अगर (test_bit(SLF_OUTWAIT, &sl->flags)) अणु
+			/* no packets were transmitted, करो outfill */
+#अगर_घोषित CONFIG_SLIP_MODE_SLIP6
+			अचिन्हित अक्षर s = (sl->mode & SL_MODE_SLIP6)?0x70:END;
+#अन्यथा
+			अचिन्हित अक्षर s = END;
+#पूर्ण_अगर
+			/* put END पूर्णांकo tty queue. Is it right ??? */
+			अगर (!netअगर_queue_stopped(sl->dev)) अणु
+				/* अगर device busy no outfill */
+				sl->tty->ops->ग_लिखो(sl->tty, &s, 1);
+			पूर्ण
+		पूर्ण अन्यथा
 			set_bit(SLF_OUTWAIT, &sl->flags);
 
-		mod_timer(&sl->outfill_timer, jiffies+sl->outfill*HZ);
-	}
+		mod_समयr(&sl->outfill_समयr, jअगरfies+sl->outfill*HZ);
+	पूर्ण
 out:
 	spin_unlock(&sl->lock);
-}
+पूर्ण
 
-static void sl_keepalive(struct timer_list *t)
-{
-	struct slip *sl = from_timer(sl, t, keepalive_timer);
+अटल व्योम sl_keepalive(काष्ठा समयr_list *t)
+अणु
+	काष्ठा slip *sl = from_समयr(sl, t, keepalive_समयr);
 
 	spin_lock(&sl->lock);
 
-	if (sl->tty == NULL)
-		goto out;
+	अगर (sl->tty == शून्य)
+		जाओ out;
 
-	if (sl->keepalive) {
-		if (test_bit(SLF_KEEPTEST, &sl->flags)) {
+	अगर (sl->keepalive) अणु
+		अगर (test_bit(SLF_KEEPTEST, &sl->flags)) अणु
 			/* keepalive still high :(, we must hangup */
-			if (sl->outfill)
-				/* outfill timer must be deleted too */
-				(void)del_timer(&sl->outfill_timer);
-			printk(KERN_DEBUG "%s: no packets received during keepalive timeout, hangup.\n", sl->dev->name);
-			/* this must hangup tty & close slip */
+			अगर (sl->outfill)
+				/* outfill समयr must be deleted too */
+				(व्योम)del_समयr(&sl->outfill_समयr);
+			prपूर्णांकk(KERN_DEBUG "%s: no packets received during keepalive timeout, hangup.\n", sl->dev->name);
+			/* this must hangup tty & बंद slip */
 			tty_hangup(sl->tty);
-			/* I think we need not something else */
-			goto out;
-		} else
+			/* I think we need not something अन्यथा */
+			जाओ out;
+		पूर्ण अन्यथा
 			set_bit(SLF_KEEPTEST, &sl->flags);
 
-		mod_timer(&sl->keepalive_timer, jiffies+sl->keepalive*HZ);
-	}
+		mod_समयr(&sl->keepalive_समयr, jअगरfies+sl->keepalive*HZ);
+	पूर्ण
 out:
 	spin_unlock(&sl->lock);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_LDISC(N_SLIP);

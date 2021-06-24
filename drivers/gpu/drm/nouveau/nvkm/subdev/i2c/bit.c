@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial busions of the Software.
@@ -21,79 +22,79 @@
  *
  * Authors: Ben Skeggs
  */
-#include "bus.h"
+#समावेश "bus.h"
 
-#ifdef CONFIG_NOUVEAU_I2C_INTERNAL
-#define T_TIMEOUT  2200000
-#define T_RISEFALL 1000
-#define T_HOLD     5000
+#अगर_घोषित CONFIG_NOUVEAU_I2C_INTERNAL
+#घोषणा T_TIMEOUT  2200000
+#घोषणा T_RISEFALL 1000
+#घोषणा T_HOLD     5000
 
-static inline void
-nvkm_i2c_drive_scl(struct nvkm_i2c_bus *bus, int state)
-{
+अटल अंतरभूत व्योम
+nvkm_i2c_drive_scl(काष्ठा nvkm_i2c_bus *bus, पूर्णांक state)
+अणु
 	bus->func->drive_scl(bus, state);
-}
+पूर्ण
 
-static inline void
-nvkm_i2c_drive_sda(struct nvkm_i2c_bus *bus, int state)
-{
+अटल अंतरभूत व्योम
+nvkm_i2c_drive_sda(काष्ठा nvkm_i2c_bus *bus, पूर्णांक state)
+अणु
 	bus->func->drive_sda(bus, state);
-}
+पूर्ण
 
-static inline int
-nvkm_i2c_sense_scl(struct nvkm_i2c_bus *bus)
-{
-	return bus->func->sense_scl(bus);
-}
+अटल अंतरभूत पूर्णांक
+nvkm_i2c_sense_scl(काष्ठा nvkm_i2c_bus *bus)
+अणु
+	वापस bus->func->sense_scl(bus);
+पूर्ण
 
-static inline int
-nvkm_i2c_sense_sda(struct nvkm_i2c_bus *bus)
-{
-	return bus->func->sense_sda(bus);
-}
+अटल अंतरभूत पूर्णांक
+nvkm_i2c_sense_sda(काष्ठा nvkm_i2c_bus *bus)
+अणु
+	वापस bus->func->sense_sda(bus);
+पूर्ण
 
-static void
-nvkm_i2c_delay(struct nvkm_i2c_bus *bus, u32 nsec)
-{
+अटल व्योम
+nvkm_i2c_delay(काष्ठा nvkm_i2c_bus *bus, u32 nsec)
+अणु
 	udelay((nsec + 500) / 1000);
-}
+पूर्ण
 
-static bool
-nvkm_i2c_raise_scl(struct nvkm_i2c_bus *bus)
-{
-	u32 timeout = T_TIMEOUT / T_RISEFALL;
+अटल bool
+nvkm_i2c_उठाओ_scl(काष्ठा nvkm_i2c_bus *bus)
+अणु
+	u32 समयout = T_TIMEOUT / T_RISEFALL;
 
 	nvkm_i2c_drive_scl(bus, 1);
-	do {
+	करो अणु
 		nvkm_i2c_delay(bus, T_RISEFALL);
-	} while (!nvkm_i2c_sense_scl(bus) && --timeout);
+	पूर्ण जबतक (!nvkm_i2c_sense_scl(bus) && --समयout);
 
-	return timeout != 0;
-}
+	वापस समयout != 0;
+पूर्ण
 
-static int
-i2c_start(struct nvkm_i2c_bus *bus)
-{
-	int ret = 0;
+अटल पूर्णांक
+i2c_start(काष्ठा nvkm_i2c_bus *bus)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!nvkm_i2c_sense_scl(bus) ||
-	    !nvkm_i2c_sense_sda(bus)) {
+	अगर (!nvkm_i2c_sense_scl(bus) ||
+	    !nvkm_i2c_sense_sda(bus)) अणु
 		nvkm_i2c_drive_scl(bus, 0);
 		nvkm_i2c_drive_sda(bus, 1);
-		if (!nvkm_i2c_raise_scl(bus))
+		अगर (!nvkm_i2c_उठाओ_scl(bus))
 			ret = -EBUSY;
-	}
+	पूर्ण
 
 	nvkm_i2c_drive_sda(bus, 0);
 	nvkm_i2c_delay(bus, T_HOLD);
 	nvkm_i2c_drive_scl(bus, 0);
 	nvkm_i2c_delay(bus, T_HOLD);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-i2c_stop(struct nvkm_i2c_bus *bus)
-{
+अटल व्योम
+i2c_stop(काष्ठा nvkm_i2c_bus *bus)
+अणु
 	nvkm_i2c_drive_scl(bus, 0);
 	nvkm_i2c_drive_sda(bus, 0);
 	nvkm_i2c_delay(bus, T_RISEFALL);
@@ -102,115 +103,115 @@ i2c_stop(struct nvkm_i2c_bus *bus)
 	nvkm_i2c_delay(bus, T_HOLD);
 	nvkm_i2c_drive_sda(bus, 1);
 	nvkm_i2c_delay(bus, T_HOLD);
-}
+पूर्ण
 
-static int
-i2c_bitw(struct nvkm_i2c_bus *bus, int sda)
-{
+अटल पूर्णांक
+i2c_bitw(काष्ठा nvkm_i2c_bus *bus, पूर्णांक sda)
+अणु
 	nvkm_i2c_drive_sda(bus, sda);
 	nvkm_i2c_delay(bus, T_RISEFALL);
 
-	if (!nvkm_i2c_raise_scl(bus))
-		return -ETIMEDOUT;
+	अगर (!nvkm_i2c_उठाओ_scl(bus))
+		वापस -ETIMEDOUT;
 	nvkm_i2c_delay(bus, T_HOLD);
 
 	nvkm_i2c_drive_scl(bus, 0);
 	nvkm_i2c_delay(bus, T_HOLD);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-i2c_bitr(struct nvkm_i2c_bus *bus)
-{
-	int sda;
+अटल पूर्णांक
+i2c_bitr(काष्ठा nvkm_i2c_bus *bus)
+अणु
+	पूर्णांक sda;
 
 	nvkm_i2c_drive_sda(bus, 1);
 	nvkm_i2c_delay(bus, T_RISEFALL);
 
-	if (!nvkm_i2c_raise_scl(bus))
-		return -ETIMEDOUT;
+	अगर (!nvkm_i2c_उठाओ_scl(bus))
+		वापस -ETIMEDOUT;
 	nvkm_i2c_delay(bus, T_HOLD);
 
 	sda = nvkm_i2c_sense_sda(bus);
 
 	nvkm_i2c_drive_scl(bus, 0);
 	nvkm_i2c_delay(bus, T_HOLD);
-	return sda;
-}
+	वापस sda;
+पूर्ण
 
-static int
-nvkm_i2c_get_byte(struct nvkm_i2c_bus *bus, u8 *byte, bool last)
-{
-	int i, bit;
+अटल पूर्णांक
+nvkm_i2c_get_byte(काष्ठा nvkm_i2c_bus *bus, u8 *byte, bool last)
+अणु
+	पूर्णांक i, bit;
 
 	*byte = 0;
-	for (i = 7; i >= 0; i--) {
+	क्रम (i = 7; i >= 0; i--) अणु
 		bit = i2c_bitr(bus);
-		if (bit < 0)
-			return bit;
+		अगर (bit < 0)
+			वापस bit;
 		*byte |= bit << i;
-	}
+	पूर्ण
 
-	return i2c_bitw(bus, last ? 1 : 0);
-}
+	वापस i2c_bitw(bus, last ? 1 : 0);
+पूर्ण
 
-static int
-nvkm_i2c_put_byte(struct nvkm_i2c_bus *bus, u8 byte)
-{
-	int i, ret;
-	for (i = 7; i >= 0; i--) {
+अटल पूर्णांक
+nvkm_i2c_put_byte(काष्ठा nvkm_i2c_bus *bus, u8 byte)
+अणु
+	पूर्णांक i, ret;
+	क्रम (i = 7; i >= 0; i--) अणु
 		ret = i2c_bitw(bus, !!(byte & (1 << i)));
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	ret = i2c_bitr(bus);
-	if (ret == 1) /* nack */
+	अगर (ret == 1) /* nack */
 		ret = -EIO;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-i2c_addr(struct nvkm_i2c_bus *bus, struct i2c_msg *msg)
-{
+अटल पूर्णांक
+i2c_addr(काष्ठा nvkm_i2c_bus *bus, काष्ठा i2c_msg *msg)
+अणु
 	u32 addr = msg->addr << 1;
-	if (msg->flags & I2C_M_RD)
+	अगर (msg->flags & I2C_M_RD)
 		addr |= 1;
-	return nvkm_i2c_put_byte(bus, addr);
-}
+	वापस nvkm_i2c_put_byte(bus, addr);
+पूर्ण
 
-int
-nvkm_i2c_bit_xfer(struct nvkm_i2c_bus *bus, struct i2c_msg *msgs, int num)
-{
-	struct i2c_msg *msg = msgs;
-	int ret = 0, mcnt = num;
+पूर्णांक
+nvkm_i2c_bit_xfer(काष्ठा nvkm_i2c_bus *bus, काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा i2c_msg *msg = msgs;
+	पूर्णांक ret = 0, mcnt = num;
 
-	while (!ret && mcnt--) {
-		u8 remaining = msg->len;
+	जबतक (!ret && mcnt--) अणु
+		u8 reमुख्यing = msg->len;
 		u8 *ptr = msg->buf;
 
 		ret = i2c_start(bus);
-		if (ret == 0)
+		अगर (ret == 0)
 			ret = i2c_addr(bus, msg);
 
-		if (msg->flags & I2C_M_RD) {
-			while (!ret && remaining--)
-				ret = nvkm_i2c_get_byte(bus, ptr++, !remaining);
-		} else {
-			while (!ret && remaining--)
+		अगर (msg->flags & I2C_M_RD) अणु
+			जबतक (!ret && reमुख्यing--)
+				ret = nvkm_i2c_get_byte(bus, ptr++, !reमुख्यing);
+		पूर्ण अन्यथा अणु
+			जबतक (!ret && reमुख्यing--)
 				ret = nvkm_i2c_put_byte(bus, *ptr++);
-		}
+		पूर्ण
 
 		msg++;
-	}
+	पूर्ण
 
 	i2c_stop(bus);
-	return (ret < 0) ? ret : num;
-}
-#else
-int
-nvkm_i2c_bit_xfer(struct nvkm_i2c_bus *bus, struct i2c_msg *msgs, int num)
-{
-	return -ENODEV;
-}
-#endif
+	वापस (ret < 0) ? ret : num;
+पूर्ण
+#अन्यथा
+पूर्णांक
+nvkm_i2c_bit_xfer(काष्ठा nvkm_i2c_bus *bus, काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर

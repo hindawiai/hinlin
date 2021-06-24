@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for Amplicon PCI263 relay board.
+ * Driver क्रम Amplicon PCI263 relay board.
  *
  * Copyright (C) 2002 MEV Ltd. <https://www.mev.co.uk/>
  *
@@ -16,51 +17,51 @@
  * Updated: Fri, 12 Apr 2013 15:19:36 +0100
  * Status: works
  *
- * Configuration options: not applicable, uses PCI auto config
+ * Configuration options: not applicable, uses PCI स्वतः config
  *
- * The board appears as one subdevice, with 16 digital outputs, each
- * connected to a reed-relay. Relay contacts are closed when output is 1.
- * The state of the outputs can be read.
+ * The board appears as one subdevice, with 16 digital outमाला_दो, each
+ * connected to a reed-relay. Relay contacts are बंदd when output is 1.
+ * The state of the outमाला_दो can be पढ़ो.
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include "../comedi_pci.h"
+#समावेश "../comedi_pci.h"
 
-/* PCI263 registers */
-#define PCI263_DO_0_7_REG	0x00
-#define PCI263_DO_8_15_REG	0x01
+/* PCI263 रेजिस्टरs */
+#घोषणा PCI263_DO_0_7_REG	0x00
+#घोषणा PCI263_DO_8_15_REG	0x01
 
-static int pci263_do_insn_bits(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
-	if (comedi_dio_update_state(s, data)) {
+अटल पूर्णांक pci263_करो_insn_bits(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
+	अगर (comedi_dio_update_state(s, data)) अणु
 		outb(s->state & 0xff, dev->iobase + PCI263_DO_0_7_REG);
 		outb((s->state >> 8) & 0xff, dev->iobase + PCI263_DO_8_15_REG);
-	}
+	पूर्ण
 
 	data[1] = s->state;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pci263_auto_attach(struct comedi_device *dev,
-			      unsigned long context_unused)
-{
-	struct pci_dev *pci_dev = comedi_to_pci_dev(dev);
-	struct comedi_subdevice *s;
-	int ret;
+अटल पूर्णांक pci263_स्वतः_attach(काष्ठा comedi_device *dev,
+			      अचिन्हित दीर्घ context_unused)
+अणु
+	काष्ठा pci_dev *pci_dev = comedi_to_pci_dev(dev);
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret;
 
 	ret = comedi_pci_enable(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dev->iobase = pci_resource_start(pci_dev, 2);
 	ret = comedi_alloc_subdevices(dev, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Digital Output subdevice */
 	s = &dev->subdevices[0];
@@ -69,41 +70,41 @@ static int pci263_auto_attach(struct comedi_device *dev,
 	s->n_chan	= 16;
 	s->maxdata	= 1;
 	s->range_table	= &range_digital;
-	s->insn_bits	= pci263_do_insn_bits;
+	s->insn_bits	= pci263_करो_insn_bits;
 
-	/* read initial relay state */
+	/* पढ़ो initial relay state */
 	s->state = inb(dev->iobase + PCI263_DO_0_7_REG) |
 		   (inb(dev->iobase + PCI263_DO_8_15_REG) << 8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct comedi_driver amplc_pci263_driver = {
+अटल काष्ठा comedi_driver amplc_pci263_driver = अणु
 	.driver_name	= "amplc_pci263",
 	.module		= THIS_MODULE,
-	.auto_attach	= pci263_auto_attach,
+	.स्वतः_attach	= pci263_स्वतः_attach,
 	.detach		= comedi_pci_detach,
-};
+पूर्ण;
 
-static const struct pci_device_id pci263_pci_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMPLICON, 0x000c) },
-	{0}
-};
+अटल स्थिर काष्ठा pci_device_id pci263_pci_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMPLICON, 0x000c) पूर्ण,
+	अणु0पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, pci263_pci_table);
 
-static int amplc_pci263_pci_probe(struct pci_dev *dev,
-				  const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &amplc_pci263_driver,
+अटल पूर्णांक amplc_pci263_pci_probe(काष्ठा pci_dev *dev,
+				  स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &amplc_pci263_driver,
 				      id->driver_data);
-}
+पूर्ण
 
-static struct pci_driver amplc_pci263_pci_driver = {
+अटल काष्ठा pci_driver amplc_pci263_pci_driver = अणु
 	.name		= "amplc_pci263",
 	.id_table	= pci263_pci_table,
 	.probe		= &amplc_pci263_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(amplc_pci263_driver, amplc_pci263_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

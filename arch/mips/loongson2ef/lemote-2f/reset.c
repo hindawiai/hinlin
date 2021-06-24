@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Board-specific reboot/shutdown routines
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Board-specअगरic reboot/shutकरोwn routines
  *
  * Copyright (c) 2009 Philippe Vachon <philippe@cowpig.ca>
  *
@@ -7,51 +8,51 @@
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
 
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/types.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/types.h>
 
-#include <asm/bootinfo.h>
+#समावेश <यंत्र/bootinfo.h>
 
-#include <loongson.h>
+#समावेश <loongson.h>
 
-#include <cs5536/cs5536.h>
-#include "ec_kb3310b.h"
+#समावेश <cs5536/cs5536.h>
+#समावेश "ec_kb3310b.h"
 
-static void reset_cpu(void)
-{
+अटल व्योम reset_cpu(व्योम)
+अणु
 	/*
 	 * reset cpu to full speed, this is needed when enabling cpu frequency
 	 * scalling
 	 */
-	writel(readl(LOONGSON_CHIPCFG) | 0x7, LOONGSON_CHIPCFG);
-}
+	ग_लिखोl(पढ़ोl(LOONGSON_CHIPCFG) | 0x7, LOONGSON_CHIPCFG);
+पूर्ण
 
-/* reset support for fuloong2f */
+/* reset support क्रम fuloong2f */
 
-static void fl2f_reboot(void)
-{
+अटल व्योम fl2f_reboot(व्योम)
+अणु
 	reset_cpu();
 
-	/* send a reset signal to south bridge.
+	/* send a reset संकेत to south bridge.
 	 *
-	 * NOTE: if enable "Power Management" in kernel, rtl8169 will not reset
+	 * NOTE: अगर enable "Power Management" in kernel, rtl8169 will not reset
 	 * normally with this reset operation and it will not work in PMON, but
 	 * you can type halt command and then reboot, seems the hardware reset
 	 * logic not work normally.
 	 */
-	{
+	अणु
 		u32 hi, lo;
 		_rdmsr(DIVIL_MSR_REG(DIVIL_SOFT_RESET), &hi, &lo);
 		lo |= 0x00000001;
 		_wrmsr(DIVIL_MSR_REG(DIVIL_SOFT_RESET), hi, lo);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fl2f_shutdown(void)
-{
+अटल व्योम fl2f_shutकरोwn(व्योम)
+अणु
 	u32 hi, lo, val;
-	int gpio_base;
+	पूर्णांक gpio_base;
 
 	/* get gpio base */
 	_rdmsr(DIVIL_MSR_REG(DIVIL_LBAR_GPIO), &hi, &lo);
@@ -68,30 +69,30 @@ static void fl2f_shutdown(void)
 	val |= (1 << (16 + 13));
 	outl(val, gpio_base + GPIOL_OUT_VAL);
 	mmiowb();
-}
+पूर्ण
 
-/* reset support for yeeloong2f and mengloong2f notebook */
+/* reset support क्रम yeeloong2f and mengloong2f notebook */
 
-static void ml2f_reboot(void)
-{
+अटल व्योम ml2f_reboot(व्योम)
+अणु
 	reset_cpu();
 
-	/* sending an reset signal to EC(embedded controller) */
-	ec_write(REG_RESET, BIT_RESET_ON);
-}
+	/* sending an reset संकेत to EC(embedded controller) */
+	ec_ग_लिखो(REG_RESET, BIT_RESET_ON);
+पूर्ण
 
-#define yl2f89_reboot ml2f_reboot
+#घोषणा yl2f89_reboot ml2f_reboot
 
-/* menglong(7inches) laptop has different shutdown logic from 8.9inches */
-#define EC_SHUTDOWN_IO_PORT_HIGH 0xff2d
-#define EC_SHUTDOWN_IO_PORT_LOW	 0xff2e
-#define EC_SHUTDOWN_IO_PORT_DATA 0xff2f
-#define REG_SHUTDOWN_HIGH	 0xFC
-#define REG_SHUTDOWN_LOW	 0x29
-#define BIT_SHUTDOWN_ON		 (1 << 1)
+/* mengदीर्घ(7inches) laptop has dअगरferent shutकरोwn logic from 8.9inches */
+#घोषणा EC_SHUTDOWN_IO_PORT_HIGH 0xff2d
+#घोषणा EC_SHUTDOWN_IO_PORT_LOW	 0xff2e
+#घोषणा EC_SHUTDOWN_IO_PORT_DATA 0xff2f
+#घोषणा REG_SHUTDOWN_HIGH	 0xFC
+#घोषणा REG_SHUTDOWN_LOW	 0x29
+#घोषणा BIT_SHUTDOWN_ON		 (1 << 1)
 
-static void ml2f_shutdown(void)
-{
+अटल व्योम ml2f_shutकरोwn(व्योम)
+अणु
 	u8 val;
 	u64 i;
 
@@ -101,55 +102,55 @@ static void ml2f_shutdown(void)
 	val = inb(EC_SHUTDOWN_IO_PORT_DATA);
 	outb(val & (~BIT_SHUTDOWN_ON), EC_SHUTDOWN_IO_PORT_DATA);
 	mmiowb();
-	/* need enough wait here... how many microseconds needs? */
-	for (i = 0; i < 0x10000; i++)
+	/* need enough रुको here... how many microseconds needs? */
+	क्रम (i = 0; i < 0x10000; i++)
 		delay();
 	outb(val | BIT_SHUTDOWN_ON, EC_SHUTDOWN_IO_PORT_DATA);
 	mmiowb();
-}
+पूर्ण
 
-static void yl2f89_shutdown(void)
-{
+अटल व्योम yl2f89_shutकरोwn(व्योम)
+अणु
 	/* cpu-gpio0 output low */
 	LOONGSON_GPIODATA &= ~0x00000001;
 	/* cpu-gpio0 as output */
 	LOONGSON_GPIOIE &= ~0x00000001;
-}
+पूर्ण
 
-void mach_prepare_reboot(void)
-{
-	switch (mips_machtype) {
-	case MACH_LEMOTE_FL2F:
-	case MACH_LEMOTE_NAS:
-	case MACH_LEMOTE_LL2F:
+व्योम mach_prepare_reboot(व्योम)
+अणु
+	चयन (mips_machtype) अणु
+	हाल MACH_LEMOTE_FL2F:
+	हाल MACH_LEMOTE_NAS:
+	हाल MACH_LEMOTE_LL2F:
 		fl2f_reboot();
-		break;
-	case MACH_LEMOTE_ML2F7:
+		अवरोध;
+	हाल MACH_LEMOTE_ML2F7:
 		ml2f_reboot();
-		break;
-	case MACH_LEMOTE_YL2F89:
+		अवरोध;
+	हाल MACH_LEMOTE_YL2F89:
 		yl2f89_reboot();
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void mach_prepare_shutdown(void)
-{
-	switch (mips_machtype) {
-	case MACH_LEMOTE_FL2F:
-	case MACH_LEMOTE_NAS:
-	case MACH_LEMOTE_LL2F:
-		fl2f_shutdown();
-		break;
-	case MACH_LEMOTE_ML2F7:
-		ml2f_shutdown();
-		break;
-	case MACH_LEMOTE_YL2F89:
-		yl2f89_shutdown();
-		break;
-	default:
-		break;
-	}
-}
+व्योम mach_prepare_shutकरोwn(व्योम)
+अणु
+	चयन (mips_machtype) अणु
+	हाल MACH_LEMOTE_FL2F:
+	हाल MACH_LEMOTE_NAS:
+	हाल MACH_LEMOTE_LL2F:
+		fl2f_shutकरोwn();
+		अवरोध;
+	हाल MACH_LEMOTE_ML2F7:
+		ml2f_shutकरोwn();
+		अवरोध;
+	हाल MACH_LEMOTE_YL2F89:
+		yl2f89_shutकरोwn();
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण

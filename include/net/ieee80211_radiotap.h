@@ -1,38 +1,39 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017		Intel Deutschland GmbH
  * Copyright (c) 2018-2019	Intel Corporation
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef __RADIOTAP_H
-#define __RADIOTAP_H
+#अगर_अघोषित __RADIOTAP_H
+#घोषणा __RADIOTAP_H
 
-#include <linux/kernel.h>
-#include <asm/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/unaligned.h>
 
 /**
- * struct ieee82011_radiotap_header - base radiotap header
+ * काष्ठा ieee82011_radiotap_header - base radiotap header
  */
-struct ieee80211_radiotap_header {
+काष्ठा ieee80211_radiotap_header अणु
 	/**
 	 * @it_version: radiotap version, always 0
 	 */
-	uint8_t it_version;
+	uपूर्णांक8_t it_version;
 
 	/**
 	 * @it_pad: padding (or alignment)
 	 */
-	uint8_t it_pad;
+	uपूर्णांक8_t it_pad;
 
 	/**
 	 * @it_len: overall radiotap header length
@@ -43,13 +44,13 @@ struct ieee80211_radiotap_header {
 	 * @it_present: (first) present word
 	 */
 	__le32 it_present;
-} __packed;
+पूर्ण __packed;
 
 /* version is always 0 */
-#define PKTHDR_RADIOTAP_VERSION	0
+#घोषणा PKTHDR_RADIOTAP_VERSION	0
 
-/* see the radiotap website for the descriptions */
-enum ieee80211_radiotap_presence {
+/* see the radiotap website क्रम the descriptions */
+क्रमागत ieee80211_radiotap_presence अणु
 	IEEE80211_RADIOTAP_TSFT = 0,
 	IEEE80211_RADIOTAP_FLAGS = 1,
 	IEEE80211_RADIOTAP_RATE = 2,
@@ -78,14 +79,14 @@ enum ieee80211_radiotap_presence {
 	IEEE80211_RADIOTAP_ZERO_LEN_PSDU = 26,
 	IEEE80211_RADIOTAP_LSIG = 27,
 
-	/* valid in every it_present bitmap, even vendor namespaces */
+	/* valid in every it_present biपंचांगap, even venकरोr namespaces */
 	IEEE80211_RADIOTAP_RADIOTAP_NAMESPACE = 29,
 	IEEE80211_RADIOTAP_VENDOR_NAMESPACE = 30,
 	IEEE80211_RADIOTAP_EXT = 31
-};
+पूर्ण;
 
-/* for IEEE80211_RADIOTAP_FLAGS */
-enum ieee80211_radiotap_flags {
+/* क्रम IEEE80211_RADIOTAP_FLAGS */
+क्रमागत ieee80211_radiotap_flags अणु
 	IEEE80211_RADIOTAP_F_CFP = 0x01,
 	IEEE80211_RADIOTAP_F_SHORTPRE = 0x02,
 	IEEE80211_RADIOTAP_F_WEP = 0x04,
@@ -93,10 +94,10 @@ enum ieee80211_radiotap_flags {
 	IEEE80211_RADIOTAP_F_FCS = 0x10,
 	IEEE80211_RADIOTAP_F_DATAPAD = 0x20,
 	IEEE80211_RADIOTAP_F_BADFCS = 0x40,
-};
+पूर्ण;
 
-/* for IEEE80211_RADIOTAP_CHANNEL */
-enum ieee80211_radiotap_channel_flags {
+/* क्रम IEEE80211_RADIOTAP_CHANNEL */
+क्रमागत ieee80211_radiotap_channel_flags अणु
 	IEEE80211_CHAN_CCK = 0x0020,
 	IEEE80211_CHAN_OFDM = 0x0040,
 	IEEE80211_CHAN_2GHZ = 0x0080,
@@ -104,34 +105,34 @@ enum ieee80211_radiotap_channel_flags {
 	IEEE80211_CHAN_DYN = 0x0400,
 	IEEE80211_CHAN_HALF = 0x4000,
 	IEEE80211_CHAN_QUARTER = 0x8000,
-};
+पूर्ण;
 
-/* for IEEE80211_RADIOTAP_RX_FLAGS */
-enum ieee80211_radiotap_rx_flags {
+/* क्रम IEEE80211_RADIOTAP_RX_FLAGS */
+क्रमागत ieee80211_radiotap_rx_flags अणु
 	IEEE80211_RADIOTAP_F_RX_BADPLCP = 0x0002,
-};
+पूर्ण;
 
-/* for IEEE80211_RADIOTAP_TX_FLAGS */
-enum ieee80211_radiotap_tx_flags {
+/* क्रम IEEE80211_RADIOTAP_TX_FLAGS */
+क्रमागत ieee80211_radiotap_tx_flags अणु
 	IEEE80211_RADIOTAP_F_TX_FAIL = 0x0001,
 	IEEE80211_RADIOTAP_F_TX_CTS = 0x0002,
 	IEEE80211_RADIOTAP_F_TX_RTS = 0x0004,
 	IEEE80211_RADIOTAP_F_TX_NOACK = 0x0008,
 	IEEE80211_RADIOTAP_F_TX_NOSEQNO = 0x0010,
 	IEEE80211_RADIOTAP_F_TX_ORDER = 0x0020,
-};
+पूर्ण;
 
-/* for IEEE80211_RADIOTAP_MCS "have" flags */
-enum ieee80211_radiotap_mcs_have {
+/* क्रम IEEE80211_RADIOTAP_MCS "have" flags */
+क्रमागत ieee80211_radiotap_mcs_have अणु
 	IEEE80211_RADIOTAP_MCS_HAVE_BW = 0x01,
 	IEEE80211_RADIOTAP_MCS_HAVE_MCS = 0x02,
 	IEEE80211_RADIOTAP_MCS_HAVE_GI = 0x04,
 	IEEE80211_RADIOTAP_MCS_HAVE_FMT = 0x08,
 	IEEE80211_RADIOTAP_MCS_HAVE_FEC = 0x10,
 	IEEE80211_RADIOTAP_MCS_HAVE_STBC = 0x20,
-};
+पूर्ण;
 
-enum ieee80211_radiotap_mcs_flags {
+क्रमागत ieee80211_radiotap_mcs_flags अणु
 	IEEE80211_RADIOTAP_MCS_BW_MASK = 0x03,
 	IEEE80211_RADIOTAP_MCS_BW_20 = 0,
 	IEEE80211_RADIOTAP_MCS_BW_40 = 1,
@@ -146,22 +147,22 @@ enum ieee80211_radiotap_mcs_flags {
 	IEEE80211_RADIOTAP_MCS_STBC_2 = 2,
 	IEEE80211_RADIOTAP_MCS_STBC_3 = 3,
 	IEEE80211_RADIOTAP_MCS_STBC_SHIFT = 5,
-};
+पूर्ण;
 
-/* for IEEE80211_RADIOTAP_AMPDU_STATUS */
-enum ieee80211_radiotap_ampdu_flags {
+/* क्रम IEEE80211_RADIOTAP_AMPDU_STATUS */
+क्रमागत ieee80211_radiotap_ampdu_flags अणु
 	IEEE80211_RADIOTAP_AMPDU_REPORT_ZEROLEN = 0x0001,
 	IEEE80211_RADIOTAP_AMPDU_IS_ZEROLEN = 0x0002,
 	IEEE80211_RADIOTAP_AMPDU_LAST_KNOWN = 0x0004,
 	IEEE80211_RADIOTAP_AMPDU_IS_LAST = 0x0008,
 	IEEE80211_RADIOTAP_AMPDU_DELIM_CRC_ERR = 0x0010,
 	IEEE80211_RADIOTAP_AMPDU_DELIM_CRC_KNOWN = 0x0020,
-	IEEE80211_RADIOTAP_AMPDU_EOF = 0x0040,
-	IEEE80211_RADIOTAP_AMPDU_EOF_KNOWN = 0x0080,
-};
+	IEEE80211_RADIOTAP_AMPDU_खातापूर्ण = 0x0040,
+	IEEE80211_RADIOTAP_AMPDU_खातापूर्ण_KNOWN = 0x0080,
+पूर्ण;
 
-/* for IEEE80211_RADIOTAP_VHT */
-enum ieee80211_radiotap_vht_known {
+/* क्रम IEEE80211_RADIOTAP_VHT */
+क्रमागत ieee80211_radiotap_vht_known अणु
 	IEEE80211_RADIOTAP_VHT_KNOWN_STBC = 0x0001,
 	IEEE80211_RADIOTAP_VHT_KNOWN_TXOP_PS_NA = 0x0002,
 	IEEE80211_RADIOTAP_VHT_KNOWN_GI = 0x0004,
@@ -171,26 +172,26 @@ enum ieee80211_radiotap_vht_known {
 	IEEE80211_RADIOTAP_VHT_KNOWN_BANDWIDTH = 0x0040,
 	IEEE80211_RADIOTAP_VHT_KNOWN_GROUP_ID = 0x0080,
 	IEEE80211_RADIOTAP_VHT_KNOWN_PARTIAL_AID = 0x0100,
-};
+पूर्ण;
 
-enum ieee80211_radiotap_vht_flags {
+क्रमागत ieee80211_radiotap_vht_flags अणु
 	IEEE80211_RADIOTAP_VHT_FLAG_STBC = 0x01,
 	IEEE80211_RADIOTAP_VHT_FLAG_TXOP_PS_NA = 0x02,
 	IEEE80211_RADIOTAP_VHT_FLAG_SGI = 0x04,
 	IEEE80211_RADIOTAP_VHT_FLAG_SGI_NSYM_M10_9 = 0x08,
 	IEEE80211_RADIOTAP_VHT_FLAG_LDPC_EXTRA_OFDM_SYM = 0x10,
 	IEEE80211_RADIOTAP_VHT_FLAG_BEAMFORMED = 0x20,
-};
+पूर्ण;
 
-enum ieee80211_radiotap_vht_coding {
+क्रमागत ieee80211_radiotap_vht_coding अणु
 	IEEE80211_RADIOTAP_CODING_LDPC_USER0 = 0x01,
 	IEEE80211_RADIOTAP_CODING_LDPC_USER1 = 0x02,
 	IEEE80211_RADIOTAP_CODING_LDPC_USER2 = 0x04,
 	IEEE80211_RADIOTAP_CODING_LDPC_USER3 = 0x08,
-};
+पूर्ण;
 
-/* for IEEE80211_RADIOTAP_TIMESTAMP */
-enum ieee80211_radiotap_timestamp_unit_spos {
+/* क्रम IEEE80211_RADIOTAP_TIMESTAMP */
+क्रमागत ieee80211_radiotap_बारtamp_unit_spos अणु
 	IEEE80211_RADIOTAP_TIMESTAMP_UNIT_MASK = 0x000F,
 	IEEE80211_RADIOTAP_TIMESTAMP_UNIT_MS = 0x0000,
 	IEEE80211_RADIOTAP_TIMESTAMP_UNIT_US = 0x0001,
@@ -201,19 +202,19 @@ enum ieee80211_radiotap_timestamp_unit_spos {
 	IEEE80211_RADIOTAP_TIMESTAMP_SPOS_EO_PPDU = 0x0020,
 	IEEE80211_RADIOTAP_TIMESTAMP_SPOS_EO_MPDU = 0x0030,
 	IEEE80211_RADIOTAP_TIMESTAMP_SPOS_UNKNOWN = 0x00F0,
-};
+पूर्ण;
 
-enum ieee80211_radiotap_timestamp_flags {
+क्रमागत ieee80211_radiotap_बारtamp_flags अणु
 	IEEE80211_RADIOTAP_TIMESTAMP_FLAG_64BIT = 0x00,
 	IEEE80211_RADIOTAP_TIMESTAMP_FLAG_32BIT = 0x01,
 	IEEE80211_RADIOTAP_TIMESTAMP_FLAG_ACCURACY = 0x02,
-};
+पूर्ण;
 
-struct ieee80211_radiotap_he {
+काष्ठा ieee80211_radiotap_he अणु
 	__le16 data1, data2, data3, data4, data5, data6;
-};
+पूर्ण;
 
-enum ieee80211_radiotap_he_bits {
+क्रमागत ieee80211_radiotap_he_bits अणु
 	IEEE80211_RADIOTAP_HE_DATA1_FORMAT_MASK		= 3,
 	IEEE80211_RADIOTAP_HE_DATA1_FORMAT_SU		= 0,
 	IEEE80211_RADIOTAP_HE_DATA1_FORMAT_EXT_SU	= 1,
@@ -301,15 +302,15 @@ enum ieee80211_radiotap_he_bits {
 		IEEE80211_RADIOTAP_HE_DATA6_TB_PPDU_BW_160MHZ	= 3,
 	IEEE80211_RADIOTAP_HE_DATA6_TXOP		= 0x7f00,
 	IEEE80211_RADIOTAP_HE_DATA6_MIDAMBLE_PDCTY	= 0x8000,
-};
+पूर्ण;
 
-struct ieee80211_radiotap_he_mu {
+काष्ठा ieee80211_radiotap_he_mu अणु
 	__le16 flags1, flags2;
 	u8 ru_ch1[4];
 	u8 ru_ch2[4];
-};
+पूर्ण;
 
-enum ieee80211_radiotap_he_mu_bits {
+क्रमागत ieee80211_radiotap_he_mu_bits अणु
 	IEEE80211_RADIOTAP_HE_MU_FLAGS1_SIG_B_MCS		= 0x000f,
 	IEEE80211_RADIOTAP_HE_MU_FLAGS1_SIG_B_MCS_KNOWN		= 0x0010,
 	IEEE80211_RADIOTAP_HE_MU_FLAGS1_SIG_B_DCM		= 0x0020,
@@ -333,36 +334,36 @@ enum ieee80211_radiotap_he_mu_bits {
 	IEEE80211_RADIOTAP_HE_MU_FLAGS2_PUNC_FROM_SIG_A_BW	= 0x0300,
 	IEEE80211_RADIOTAP_HE_MU_FLAGS2_PUNC_FROM_SIG_A_BW_KNOWN= 0x0400,
 	IEEE80211_RADIOTAP_HE_MU_FLAGS2_CH2_CTR_26T_RU		= 0x0800,
-};
+पूर्ण;
 
-enum ieee80211_radiotap_lsig_data1 {
+क्रमागत ieee80211_radiotap_lsig_data1 अणु
 	IEEE80211_RADIOTAP_LSIG_DATA1_RATE_KNOWN		= 0x0001,
 	IEEE80211_RADIOTAP_LSIG_DATA1_LENGTH_KNOWN		= 0x0002,
-};
+पूर्ण;
 
-enum ieee80211_radiotap_lsig_data2 {
+क्रमागत ieee80211_radiotap_lsig_data2 अणु
 	IEEE80211_RADIOTAP_LSIG_DATA2_RATE			= 0x000f,
 	IEEE80211_RADIOTAP_LSIG_DATA2_LENGTH			= 0xfff0,
-};
+पूर्ण;
 
-struct ieee80211_radiotap_lsig {
+काष्ठा ieee80211_radiotap_lsig अणु
 	__le16 data1, data2;
-};
+पूर्ण;
 
-enum ieee80211_radiotap_zero_len_psdu_type {
+क्रमागत ieee80211_radiotap_zero_len_psdu_type अणु
 	IEEE80211_RADIOTAP_ZERO_LEN_PSDU_SOUNDING		= 0,
 	IEEE80211_RADIOTAP_ZERO_LEN_PSDU_NOT_CAPTURED		= 1,
 	IEEE80211_RADIOTAP_ZERO_LEN_PSDU_VENDOR			= 0xff,
-};
+पूर्ण;
 
 /**
  * ieee80211_get_radiotap_len - get radiotap header length
  */
-static inline u16 ieee80211_get_radiotap_len(const char *data)
-{
-	struct ieee80211_radiotap_header *hdr = (void *)data;
+अटल अंतरभूत u16 ieee80211_get_radiotap_len(स्थिर अक्षर *data)
+अणु
+	काष्ठा ieee80211_radiotap_header *hdr = (व्योम *)data;
 
-	return get_unaligned_le16(&hdr->it_len);
-}
+	वापस get_unaligned_le16(&hdr->it_len);
+पूर्ण
 
-#endif /* __RADIOTAP_H */
+#पूर्ण_अगर /* __RADIOTAP_H */

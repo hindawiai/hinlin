@@ -1,390 +1,391 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2013 - 2015 Linaro Ltd.
  * Copyright (c) 2013 HiSilicon Limited.
  */
-#include <linux/sched.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmapool.h>
-#include <linux/dmaengine.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/of_device.h>
-#include <linux/of.h>
-#include <linux/clk.h>
-#include <linux/of_dma.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of_dma.h>
 
-#include "virt-dma.h"
+#समावेश "virt-dma.h"
 
-#define DRIVER_NAME		"k3-dma"
-#define DMA_MAX_SIZE		0x1ffc
-#define DMA_CYCLIC_MAX_PERIOD	0x1000
-#define LLI_BLOCK_SIZE		(4 * PAGE_SIZE)
+#घोषणा DRIVER_NAME		"k3-dma"
+#घोषणा DMA_MAX_SIZE		0x1ffc
+#घोषणा DMA_CYCLIC_MAX_PERIOD	0x1000
+#घोषणा LLI_BLOCK_SIZE		(4 * PAGE_SIZE)
 
-#define INT_STAT		0x00
-#define INT_TC1			0x04
-#define INT_TC2			0x08
-#define INT_ERR1		0x0c
-#define INT_ERR2		0x10
-#define INT_TC1_MASK		0x18
-#define INT_TC2_MASK		0x1c
-#define INT_ERR1_MASK		0x20
-#define INT_ERR2_MASK		0x24
-#define INT_TC1_RAW		0x600
-#define INT_TC2_RAW		0x608
-#define INT_ERR1_RAW		0x610
-#define INT_ERR2_RAW		0x618
-#define CH_PRI			0x688
-#define CH_STAT			0x690
-#define CX_CUR_CNT		0x704
-#define CX_LLI			0x800
-#define CX_CNT1			0x80c
-#define CX_CNT0			0x810
-#define CX_SRC			0x814
-#define CX_DST			0x818
-#define CX_CFG			0x81c
+#घोषणा INT_STAT		0x00
+#घोषणा INT_TC1			0x04
+#घोषणा INT_TC2			0x08
+#घोषणा INT_ERR1		0x0c
+#घोषणा INT_ERR2		0x10
+#घोषणा INT_TC1_MASK		0x18
+#घोषणा INT_TC2_MASK		0x1c
+#घोषणा INT_ERR1_MASK		0x20
+#घोषणा INT_ERR2_MASK		0x24
+#घोषणा INT_TC1_RAW		0x600
+#घोषणा INT_TC2_RAW		0x608
+#घोषणा INT_ERR1_RAW		0x610
+#घोषणा INT_ERR2_RAW		0x618
+#घोषणा CH_PRI			0x688
+#घोषणा CH_STAT			0x690
+#घोषणा CX_CUR_CNT		0x704
+#घोषणा CX_LLI			0x800
+#घोषणा CX_CNT1			0x80c
+#घोषणा CX_CNT0			0x810
+#घोषणा CX_SRC			0x814
+#घोषणा CX_DST			0x818
+#घोषणा CX_CFG			0x81c
 
-#define CX_LLI_CHAIN_EN		0x2
-#define CX_CFG_EN		0x1
-#define CX_CFG_NODEIRQ		BIT(1)
-#define CX_CFG_MEM2PER		(0x1 << 2)
-#define CX_CFG_PER2MEM		(0x2 << 2)
-#define CX_CFG_SRCINCR		(0x1 << 31)
-#define CX_CFG_DSTINCR		(0x1 << 30)
+#घोषणा CX_LLI_CHAIN_EN		0x2
+#घोषणा CX_CFG_EN		0x1
+#घोषणा CX_CFG_NODEIRQ		BIT(1)
+#घोषणा CX_CFG_MEM2PER		(0x1 << 2)
+#घोषणा CX_CFG_PER2MEM		(0x2 << 2)
+#घोषणा CX_CFG_SRCINCR		(0x1 << 31)
+#घोषणा CX_CFG_DSTINCR		(0x1 << 30)
 
-struct k3_desc_hw {
+काष्ठा k3_desc_hw अणु
 	u32 lli;
 	u32 reserved[3];
 	u32 count;
 	u32 saddr;
 	u32 daddr;
 	u32 config;
-} __aligned(32);
+पूर्ण __aligned(32);
 
-struct k3_dma_desc_sw {
-	struct virt_dma_desc	vd;
+काष्ठा k3_dma_desc_sw अणु
+	काष्ठा virt_dma_desc	vd;
 	dma_addr_t		desc_hw_lli;
-	size_t			desc_num;
-	size_t			size;
-	struct k3_desc_hw	*desc_hw;
-};
+	माप_प्रकार			desc_num;
+	माप_प्रकार			size;
+	काष्ठा k3_desc_hw	*desc_hw;
+पूर्ण;
 
-struct k3_dma_phy;
+काष्ठा k3_dma_phy;
 
-struct k3_dma_chan {
+काष्ठा k3_dma_chan अणु
 	u32			ccfg;
-	struct virt_dma_chan	vc;
-	struct k3_dma_phy	*phy;
-	struct list_head	node;
+	काष्ठा virt_dma_chan	vc;
+	काष्ठा k3_dma_phy	*phy;
+	काष्ठा list_head	node;
 	dma_addr_t		dev_addr;
-	enum dma_status		status;
+	क्रमागत dma_status		status;
 	bool			cyclic;
-	struct dma_slave_config	slave_config;
-};
+	काष्ठा dma_slave_config	slave_config;
+पूर्ण;
 
-struct k3_dma_phy {
+काष्ठा k3_dma_phy अणु
 	u32			idx;
-	void __iomem		*base;
-	struct k3_dma_chan	*vchan;
-	struct k3_dma_desc_sw	*ds_run;
-	struct k3_dma_desc_sw	*ds_done;
-};
+	व्योम __iomem		*base;
+	काष्ठा k3_dma_chan	*vchan;
+	काष्ठा k3_dma_desc_sw	*ds_run;
+	काष्ठा k3_dma_desc_sw	*ds_करोne;
+पूर्ण;
 
-struct k3_dma_dev {
-	struct dma_device	slave;
-	void __iomem		*base;
-	struct tasklet_struct	task;
+काष्ठा k3_dma_dev अणु
+	काष्ठा dma_device	slave;
+	व्योम __iomem		*base;
+	काष्ठा tasklet_काष्ठा	task;
 	spinlock_t		lock;
-	struct list_head	chan_pending;
-	struct k3_dma_phy	*phy;
-	struct k3_dma_chan	*chans;
-	struct clk		*clk;
-	struct dma_pool		*pool;
+	काष्ठा list_head	chan_pending;
+	काष्ठा k3_dma_phy	*phy;
+	काष्ठा k3_dma_chan	*chans;
+	काष्ठा clk		*clk;
+	काष्ठा dma_pool		*pool;
 	u32			dma_channels;
 	u32			dma_requests;
 	u32			dma_channel_mask;
-	unsigned int		irq;
-};
+	अचिन्हित पूर्णांक		irq;
+पूर्ण;
 
 
-#define K3_FLAG_NOCLK	BIT(1)
+#घोषणा K3_FLAG_NOCLK	BIT(1)
 
-struct k3dma_soc_data {
-	unsigned long flags;
-};
+काष्ठा k3dma_soc_data अणु
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
 
-#define to_k3_dma(dmadev) container_of(dmadev, struct k3_dma_dev, slave)
+#घोषणा to_k3_dma(dmadev) container_of(dmadev, काष्ठा k3_dma_dev, slave)
 
-static int k3_dma_config_write(struct dma_chan *chan,
-			       enum dma_transfer_direction dir,
-			       struct dma_slave_config *cfg);
+अटल पूर्णांक k3_dma_config_ग_लिखो(काष्ठा dma_chan *chan,
+			       क्रमागत dma_transfer_direction dir,
+			       काष्ठा dma_slave_config *cfg);
 
-static struct k3_dma_chan *to_k3_chan(struct dma_chan *chan)
-{
-	return container_of(chan, struct k3_dma_chan, vc.chan);
-}
+अटल काष्ठा k3_dma_chan *to_k3_chan(काष्ठा dma_chan *chan)
+अणु
+	वापस container_of(chan, काष्ठा k3_dma_chan, vc.chan);
+पूर्ण
 
-static void k3_dma_pause_dma(struct k3_dma_phy *phy, bool on)
-{
+अटल व्योम k3_dma_छोड़ो_dma(काष्ठा k3_dma_phy *phy, bool on)
+अणु
 	u32 val = 0;
 
-	if (on) {
-		val = readl_relaxed(phy->base + CX_CFG);
+	अगर (on) अणु
+		val = पढ़ोl_relaxed(phy->base + CX_CFG);
 		val |= CX_CFG_EN;
-		writel_relaxed(val, phy->base + CX_CFG);
-	} else {
-		val = readl_relaxed(phy->base + CX_CFG);
+		ग_लिखोl_relaxed(val, phy->base + CX_CFG);
+	पूर्ण अन्यथा अणु
+		val = पढ़ोl_relaxed(phy->base + CX_CFG);
 		val &= ~CX_CFG_EN;
-		writel_relaxed(val, phy->base + CX_CFG);
-	}
-}
+		ग_लिखोl_relaxed(val, phy->base + CX_CFG);
+	पूर्ण
+पूर्ण
 
-static void k3_dma_terminate_chan(struct k3_dma_phy *phy, struct k3_dma_dev *d)
-{
+अटल व्योम k3_dma_terminate_chan(काष्ठा k3_dma_phy *phy, काष्ठा k3_dma_dev *d)
+अणु
 	u32 val = 0;
 
-	k3_dma_pause_dma(phy, false);
+	k3_dma_छोड़ो_dma(phy, false);
 
 	val = 0x1 << phy->idx;
-	writel_relaxed(val, d->base + INT_TC1_RAW);
-	writel_relaxed(val, d->base + INT_TC2_RAW);
-	writel_relaxed(val, d->base + INT_ERR1_RAW);
-	writel_relaxed(val, d->base + INT_ERR2_RAW);
-}
+	ग_लिखोl_relaxed(val, d->base + INT_TC1_RAW);
+	ग_लिखोl_relaxed(val, d->base + INT_TC2_RAW);
+	ग_लिखोl_relaxed(val, d->base + INT_ERR1_RAW);
+	ग_लिखोl_relaxed(val, d->base + INT_ERR2_RAW);
+पूर्ण
 
-static void k3_dma_set_desc(struct k3_dma_phy *phy, struct k3_desc_hw *hw)
-{
-	writel_relaxed(hw->lli, phy->base + CX_LLI);
-	writel_relaxed(hw->count, phy->base + CX_CNT0);
-	writel_relaxed(hw->saddr, phy->base + CX_SRC);
-	writel_relaxed(hw->daddr, phy->base + CX_DST);
-	writel_relaxed(hw->config, phy->base + CX_CFG);
-}
+अटल व्योम k3_dma_set_desc(काष्ठा k3_dma_phy *phy, काष्ठा k3_desc_hw *hw)
+अणु
+	ग_लिखोl_relaxed(hw->lli, phy->base + CX_LLI);
+	ग_लिखोl_relaxed(hw->count, phy->base + CX_CNT0);
+	ग_लिखोl_relaxed(hw->saddr, phy->base + CX_SRC);
+	ग_लिखोl_relaxed(hw->daddr, phy->base + CX_DST);
+	ग_लिखोl_relaxed(hw->config, phy->base + CX_CFG);
+पूर्ण
 
-static u32 k3_dma_get_curr_cnt(struct k3_dma_dev *d, struct k3_dma_phy *phy)
-{
+अटल u32 k3_dma_get_curr_cnt(काष्ठा k3_dma_dev *d, काष्ठा k3_dma_phy *phy)
+अणु
 	u32 cnt = 0;
 
-	cnt = readl_relaxed(d->base + CX_CUR_CNT + phy->idx * 0x10);
+	cnt = पढ़ोl_relaxed(d->base + CX_CUR_CNT + phy->idx * 0x10);
 	cnt &= 0xffff;
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static u32 k3_dma_get_curr_lli(struct k3_dma_phy *phy)
-{
-	return readl_relaxed(phy->base + CX_LLI);
-}
+अटल u32 k3_dma_get_curr_lli(काष्ठा k3_dma_phy *phy)
+अणु
+	वापस पढ़ोl_relaxed(phy->base + CX_LLI);
+पूर्ण
 
-static u32 k3_dma_get_chan_stat(struct k3_dma_dev *d)
-{
-	return readl_relaxed(d->base + CH_STAT);
-}
+अटल u32 k3_dma_get_chan_stat(काष्ठा k3_dma_dev *d)
+अणु
+	वापस पढ़ोl_relaxed(d->base + CH_STAT);
+पूर्ण
 
-static void k3_dma_enable_dma(struct k3_dma_dev *d, bool on)
-{
-	if (on) {
+अटल व्योम k3_dma_enable_dma(काष्ठा k3_dma_dev *d, bool on)
+अणु
+	अगर (on) अणु
 		/* set same priority */
-		writel_relaxed(0x0, d->base + CH_PRI);
+		ग_लिखोl_relaxed(0x0, d->base + CH_PRI);
 
 		/* unmask irq */
-		writel_relaxed(0xffff, d->base + INT_TC1_MASK);
-		writel_relaxed(0xffff, d->base + INT_TC2_MASK);
-		writel_relaxed(0xffff, d->base + INT_ERR1_MASK);
-		writel_relaxed(0xffff, d->base + INT_ERR2_MASK);
-	} else {
+		ग_लिखोl_relaxed(0xffff, d->base + INT_TC1_MASK);
+		ग_लिखोl_relaxed(0xffff, d->base + INT_TC2_MASK);
+		ग_लिखोl_relaxed(0xffff, d->base + INT_ERR1_MASK);
+		ग_लिखोl_relaxed(0xffff, d->base + INT_ERR2_MASK);
+	पूर्ण अन्यथा अणु
 		/* mask irq */
-		writel_relaxed(0x0, d->base + INT_TC1_MASK);
-		writel_relaxed(0x0, d->base + INT_TC2_MASK);
-		writel_relaxed(0x0, d->base + INT_ERR1_MASK);
-		writel_relaxed(0x0, d->base + INT_ERR2_MASK);
-	}
-}
+		ग_लिखोl_relaxed(0x0, d->base + INT_TC1_MASK);
+		ग_लिखोl_relaxed(0x0, d->base + INT_TC2_MASK);
+		ग_लिखोl_relaxed(0x0, d->base + INT_ERR1_MASK);
+		ग_लिखोl_relaxed(0x0, d->base + INT_ERR2_MASK);
+	पूर्ण
+पूर्ण
 
-static irqreturn_t k3_dma_int_handler(int irq, void *dev_id)
-{
-	struct k3_dma_dev *d = (struct k3_dma_dev *)dev_id;
-	struct k3_dma_phy *p;
-	struct k3_dma_chan *c;
-	u32 stat = readl_relaxed(d->base + INT_STAT);
-	u32 tc1  = readl_relaxed(d->base + INT_TC1);
-	u32 tc2  = readl_relaxed(d->base + INT_TC2);
-	u32 err1 = readl_relaxed(d->base + INT_ERR1);
-	u32 err2 = readl_relaxed(d->base + INT_ERR2);
+अटल irqवापस_t k3_dma_पूर्णांक_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा k3_dma_dev *d = (काष्ठा k3_dma_dev *)dev_id;
+	काष्ठा k3_dma_phy *p;
+	काष्ठा k3_dma_chan *c;
+	u32 stat = पढ़ोl_relaxed(d->base + INT_STAT);
+	u32 tc1  = पढ़ोl_relaxed(d->base + INT_TC1);
+	u32 tc2  = पढ़ोl_relaxed(d->base + INT_TC2);
+	u32 err1 = पढ़ोl_relaxed(d->base + INT_ERR1);
+	u32 err2 = पढ़ोl_relaxed(d->base + INT_ERR2);
 	u32 i, irq_chan = 0;
 
-	while (stat) {
+	जबतक (stat) अणु
 		i = __ffs(stat);
 		stat &= ~BIT(i);
-		if (likely(tc1 & BIT(i)) || (tc2 & BIT(i))) {
+		अगर (likely(tc1 & BIT(i)) || (tc2 & BIT(i))) अणु
 
 			p = &d->phy[i];
 			c = p->vchan;
-			if (c && (tc1 & BIT(i))) {
+			अगर (c && (tc1 & BIT(i))) अणु
 				spin_lock(&c->vc.lock);
-				if (p->ds_run != NULL) {
+				अगर (p->ds_run != शून्य) अणु
 					vchan_cookie_complete(&p->ds_run->vd);
-					p->ds_done = p->ds_run;
-					p->ds_run = NULL;
-				}
+					p->ds_करोne = p->ds_run;
+					p->ds_run = शून्य;
+				पूर्ण
 				spin_unlock(&c->vc.lock);
-			}
-			if (c && (tc2 & BIT(i))) {
+			पूर्ण
+			अगर (c && (tc2 & BIT(i))) अणु
 				spin_lock(&c->vc.lock);
-				if (p->ds_run != NULL)
+				अगर (p->ds_run != शून्य)
 					vchan_cyclic_callback(&p->ds_run->vd);
 				spin_unlock(&c->vc.lock);
-			}
+			पूर्ण
 			irq_chan |= BIT(i);
-		}
-		if (unlikely((err1 & BIT(i)) || (err2 & BIT(i))))
+		पूर्ण
+		अगर (unlikely((err1 & BIT(i)) || (err2 & BIT(i))))
 			dev_warn(d->slave.dev, "DMA ERR\n");
-	}
+	पूर्ण
 
-	writel_relaxed(irq_chan, d->base + INT_TC1_RAW);
-	writel_relaxed(irq_chan, d->base + INT_TC2_RAW);
-	writel_relaxed(err1, d->base + INT_ERR1_RAW);
-	writel_relaxed(err2, d->base + INT_ERR2_RAW);
+	ग_लिखोl_relaxed(irq_chan, d->base + INT_TC1_RAW);
+	ग_लिखोl_relaxed(irq_chan, d->base + INT_TC2_RAW);
+	ग_लिखोl_relaxed(err1, d->base + INT_ERR1_RAW);
+	ग_लिखोl_relaxed(err2, d->base + INT_ERR2_RAW);
 
-	if (irq_chan)
+	अगर (irq_chan)
 		tasklet_schedule(&d->task);
 
-	if (irq_chan || err1 || err2)
-		return IRQ_HANDLED;
+	अगर (irq_chan || err1 || err2)
+		वापस IRQ_HANDLED;
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static int k3_dma_start_txd(struct k3_dma_chan *c)
-{
-	struct k3_dma_dev *d = to_k3_dma(c->vc.chan.device);
-	struct virt_dma_desc *vd = vchan_next_desc(&c->vc);
+अटल पूर्णांक k3_dma_start_txd(काष्ठा k3_dma_chan *c)
+अणु
+	काष्ठा k3_dma_dev *d = to_k3_dma(c->vc.chan.device);
+	काष्ठा virt_dma_desc *vd = vchan_next_desc(&c->vc);
 
-	if (!c->phy)
-		return -EAGAIN;
+	अगर (!c->phy)
+		वापस -EAGAIN;
 
-	if (BIT(c->phy->idx) & k3_dma_get_chan_stat(d))
-		return -EAGAIN;
+	अगर (BIT(c->phy->idx) & k3_dma_get_chan_stat(d))
+		वापस -EAGAIN;
 
-	/* Avoid losing track of  ds_run if a transaction is in flight */
-	if (c->phy->ds_run)
-		return -EAGAIN;
+	/* Aव्योम losing track of  ds_run अगर a transaction is in flight */
+	अगर (c->phy->ds_run)
+		वापस -EAGAIN;
 
-	if (vd) {
-		struct k3_dma_desc_sw *ds =
-			container_of(vd, struct k3_dma_desc_sw, vd);
+	अगर (vd) अणु
+		काष्ठा k3_dma_desc_sw *ds =
+			container_of(vd, काष्ठा k3_dma_desc_sw, vd);
 		/*
-		 * fetch and remove request from vc->desc_issued
+		 * fetch and हटाओ request from vc->desc_issued
 		 * so vc->desc_issued only contains desc pending
 		 */
 		list_del(&ds->vd.node);
 
 		c->phy->ds_run = ds;
-		c->phy->ds_done = NULL;
+		c->phy->ds_करोne = शून्य;
 		/* start dma */
 		k3_dma_set_desc(c->phy, &ds->desc_hw[0]);
-		return 0;
-	}
-	c->phy->ds_run = NULL;
-	c->phy->ds_done = NULL;
-	return -EAGAIN;
-}
+		वापस 0;
+	पूर्ण
+	c->phy->ds_run = शून्य;
+	c->phy->ds_करोne = शून्य;
+	वापस -EAGAIN;
+पूर्ण
 
-static void k3_dma_tasklet(struct tasklet_struct *t)
-{
-	struct k3_dma_dev *d = from_tasklet(d, t, task);
-	struct k3_dma_phy *p;
-	struct k3_dma_chan *c, *cn;
-	unsigned pch, pch_alloc = 0;
+अटल व्योम k3_dma_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा k3_dma_dev *d = from_tasklet(d, t, task);
+	काष्ठा k3_dma_phy *p;
+	काष्ठा k3_dma_chan *c, *cn;
+	अचिन्हित pch, pch_alloc = 0;
 
 	/* check new dma request of running channel in vc->desc_issued */
-	list_for_each_entry_safe(c, cn, &d->slave.channels, vc.chan.device_node) {
+	list_क्रम_each_entry_safe(c, cn, &d->slave.channels, vc.chan.device_node) अणु
 		spin_lock_irq(&c->vc.lock);
 		p = c->phy;
-		if (p && p->ds_done) {
-			if (k3_dma_start_txd(c)) {
+		अगर (p && p->ds_करोne) अणु
+			अगर (k3_dma_start_txd(c)) अणु
 				/* No current txd associated with this channel */
 				dev_dbg(d->slave.dev, "pchan %u: free\n", p->idx);
-				/* Mark this channel free */
-				c->phy = NULL;
-				p->vchan = NULL;
-			}
-		}
+				/* Mark this channel मुक्त */
+				c->phy = शून्य;
+				p->vchan = शून्य;
+			पूर्ण
+		पूर्ण
 		spin_unlock_irq(&c->vc.lock);
-	}
+	पूर्ण
 
 	/* check new channel request in d->chan_pending */
 	spin_lock_irq(&d->lock);
-	for (pch = 0; pch < d->dma_channels; pch++) {
-		if (!(d->dma_channel_mask & (1 << pch)))
-			continue;
+	क्रम (pch = 0; pch < d->dma_channels; pch++) अणु
+		अगर (!(d->dma_channel_mask & (1 << pch)))
+			जारी;
 
 		p = &d->phy[pch];
 
-		if (p->vchan == NULL && !list_empty(&d->chan_pending)) {
+		अगर (p->vchan == शून्य && !list_empty(&d->chan_pending)) अणु
 			c = list_first_entry(&d->chan_pending,
-				struct k3_dma_chan, node);
-			/* remove from d->chan_pending */
+				काष्ठा k3_dma_chan, node);
+			/* हटाओ from d->chan_pending */
 			list_del_init(&c->node);
 			pch_alloc |= 1 << pch;
 			/* Mark this channel allocated */
 			p->vchan = c;
 			c->phy = p;
 			dev_dbg(d->slave.dev, "pchan %u: alloc vchan %p\n", pch, &c->vc);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irq(&d->lock);
 
-	for (pch = 0; pch < d->dma_channels; pch++) {
-		if (!(d->dma_channel_mask & (1 << pch)))
-			continue;
+	क्रम (pch = 0; pch < d->dma_channels; pch++) अणु
+		अगर (!(d->dma_channel_mask & (1 << pch)))
+			जारी;
 
-		if (pch_alloc & (1 << pch)) {
+		अगर (pch_alloc & (1 << pch)) अणु
 			p = &d->phy[pch];
 			c = p->vchan;
-			if (c) {
+			अगर (c) अणु
 				spin_lock_irq(&c->vc.lock);
 				k3_dma_start_txd(c);
 				spin_unlock_irq(&c->vc.lock);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void k3_dma_free_chan_resources(struct dma_chan *chan)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
-	struct k3_dma_dev *d = to_k3_dma(chan->device);
-	unsigned long flags;
+अटल व्योम k3_dma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
+	काष्ठा k3_dma_dev *d = to_k3_dma(chan->device);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&d->lock, flags);
 	list_del_init(&c->node);
 	spin_unlock_irqrestore(&d->lock, flags);
 
-	vchan_free_chan_resources(&c->vc);
+	vchan_मुक्त_chan_resources(&c->vc);
 	c->ccfg = 0;
-}
+पूर्ण
 
-static enum dma_status k3_dma_tx_status(struct dma_chan *chan,
-	dma_cookie_t cookie, struct dma_tx_state *state)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
-	struct k3_dma_dev *d = to_k3_dma(chan->device);
-	struct k3_dma_phy *p;
-	struct virt_dma_desc *vd;
-	unsigned long flags;
-	enum dma_status ret;
-	size_t bytes = 0;
+अटल क्रमागत dma_status k3_dma_tx_status(काष्ठा dma_chan *chan,
+	dma_cookie_t cookie, काष्ठा dma_tx_state *state)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
+	काष्ठा k3_dma_dev *d = to_k3_dma(chan->device);
+	काष्ठा k3_dma_phy *p;
+	काष्ठा virt_dma_desc *vd;
+	अचिन्हित दीर्घ flags;
+	क्रमागत dma_status ret;
+	माप_प्रकार bytes = 0;
 
 	ret = dma_cookie_status(&c->vc.chan, cookie, state);
-	if (ret == DMA_COMPLETE)
-		return ret;
+	अगर (ret == DMA_COMPLETE)
+		वापस ret;
 
 	spin_lock_irqsave(&c->vc.lock, flags);
 	p = c->phy;
@@ -395,334 +396,334 @@ static enum dma_status k3_dma_tx_status(struct dma_chan *chan,
 	 * its total size.
 	 */
 	vd = vchan_find_desc(&c->vc, cookie);
-	if (vd && !c->cyclic) {
-		bytes = container_of(vd, struct k3_dma_desc_sw, vd)->size;
-	} else if ((!p) || (!p->ds_run)) {
+	अगर (vd && !c->cyclic) अणु
+		bytes = container_of(vd, काष्ठा k3_dma_desc_sw, vd)->size;
+	पूर्ण अन्यथा अगर ((!p) || (!p->ds_run)) अणु
 		bytes = 0;
-	} else {
-		struct k3_dma_desc_sw *ds = p->ds_run;
+	पूर्ण अन्यथा अणु
+		काष्ठा k3_dma_desc_sw *ds = p->ds_run;
 		u32 clli = 0, index = 0;
 
 		bytes = k3_dma_get_curr_cnt(d, p);
 		clli = k3_dma_get_curr_lli(p);
 		index = ((clli - ds->desc_hw_lli) /
-				sizeof(struct k3_desc_hw)) + 1;
-		for (; index < ds->desc_num; index++) {
+				माप(काष्ठा k3_desc_hw)) + 1;
+		क्रम (; index < ds->desc_num; index++) अणु
 			bytes += ds->desc_hw[index].count;
 			/* end of lli */
-			if (!ds->desc_hw[index].lli)
-				break;
-		}
-	}
+			अगर (!ds->desc_hw[index].lli)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&c->vc.lock, flags);
 	dma_set_residue(state, bytes);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void k3_dma_issue_pending(struct dma_chan *chan)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
-	struct k3_dma_dev *d = to_k3_dma(chan->device);
-	unsigned long flags;
+अटल व्योम k3_dma_issue_pending(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
+	काष्ठा k3_dma_dev *d = to_k3_dma(chan->device);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&c->vc.lock, flags);
 	/* add request to vc->desc_issued */
-	if (vchan_issue_pending(&c->vc)) {
+	अगर (vchan_issue_pending(&c->vc)) अणु
 		spin_lock(&d->lock);
-		if (!c->phy) {
-			if (list_empty(&c->node)) {
-				/* if new channel, add chan_pending */
+		अगर (!c->phy) अणु
+			अगर (list_empty(&c->node)) अणु
+				/* अगर new channel, add chan_pending */
 				list_add_tail(&c->node, &d->chan_pending);
 				/* check in tasklet */
 				tasklet_schedule(&d->task);
 				dev_dbg(d->slave.dev, "vchan %p: issued\n", &c->vc);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		spin_unlock(&d->lock);
-	} else
+	पूर्ण अन्यथा
 		dev_dbg(d->slave.dev, "vchan %p: nothing to issue\n", &c->vc);
 	spin_unlock_irqrestore(&c->vc.lock, flags);
-}
+पूर्ण
 
-static void k3_dma_fill_desc(struct k3_dma_desc_sw *ds, dma_addr_t dst,
-			dma_addr_t src, size_t len, u32 num, u32 ccfg)
-{
-	if (num != ds->desc_num - 1)
+अटल व्योम k3_dma_fill_desc(काष्ठा k3_dma_desc_sw *ds, dma_addr_t dst,
+			dma_addr_t src, माप_प्रकार len, u32 num, u32 ccfg)
+अणु
+	अगर (num != ds->desc_num - 1)
 		ds->desc_hw[num].lli = ds->desc_hw_lli + (num + 1) *
-			sizeof(struct k3_desc_hw);
+			माप(काष्ठा k3_desc_hw);
 
 	ds->desc_hw[num].lli |= CX_LLI_CHAIN_EN;
 	ds->desc_hw[num].count = len;
 	ds->desc_hw[num].saddr = src;
 	ds->desc_hw[num].daddr = dst;
 	ds->desc_hw[num].config = ccfg;
-}
+पूर्ण
 
-static struct k3_dma_desc_sw *k3_dma_alloc_desc_resource(int num,
-							struct dma_chan *chan)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
-	struct k3_dma_desc_sw *ds;
-	struct k3_dma_dev *d = to_k3_dma(chan->device);
-	int lli_limit = LLI_BLOCK_SIZE / sizeof(struct k3_desc_hw);
+अटल काष्ठा k3_dma_desc_sw *k3_dma_alloc_desc_resource(पूर्णांक num,
+							काष्ठा dma_chan *chan)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
+	काष्ठा k3_dma_desc_sw *ds;
+	काष्ठा k3_dma_dev *d = to_k3_dma(chan->device);
+	पूर्णांक lli_limit = LLI_BLOCK_SIZE / माप(काष्ठा k3_desc_hw);
 
-	if (num > lli_limit) {
+	अगर (num > lli_limit) अणु
 		dev_dbg(chan->device->dev, "vch %p: sg num %d exceed max %d\n",
 			&c->vc, num, lli_limit);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	ds = kzalloc(sizeof(*ds), GFP_NOWAIT);
-	if (!ds)
-		return NULL;
+	ds = kzalloc(माप(*ds), GFP_NOWAIT);
+	अगर (!ds)
+		वापस शून्य;
 
 	ds->desc_hw = dma_pool_zalloc(d->pool, GFP_NOWAIT, &ds->desc_hw_lli);
-	if (!ds->desc_hw) {
+	अगर (!ds->desc_hw) अणु
 		dev_dbg(chan->device->dev, "vch %p: dma alloc fail\n", &c->vc);
-		kfree(ds);
-		return NULL;
-	}
+		kमुक्त(ds);
+		वापस शून्य;
+	पूर्ण
 	ds->desc_num = num;
-	return ds;
-}
+	वापस ds;
+पूर्ण
 
-static struct dma_async_tx_descriptor *k3_dma_prep_memcpy(
-	struct dma_chan *chan,	dma_addr_t dst, dma_addr_t src,
-	size_t len, unsigned long flags)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
-	struct k3_dma_desc_sw *ds;
-	size_t copy = 0;
-	int num = 0;
+अटल काष्ठा dma_async_tx_descriptor *k3_dma_prep_स_नकल(
+	काष्ठा dma_chan *chan,	dma_addr_t dst, dma_addr_t src,
+	माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
+	काष्ठा k3_dma_desc_sw *ds;
+	माप_प्रकार copy = 0;
+	पूर्णांक num = 0;
 
-	if (!len)
-		return NULL;
+	अगर (!len)
+		वापस शून्य;
 
 	num = DIV_ROUND_UP(len, DMA_MAX_SIZE);
 
 	ds = k3_dma_alloc_desc_resource(num, chan);
-	if (!ds)
-		return NULL;
+	अगर (!ds)
+		वापस शून्य;
 
 	c->cyclic = 0;
 	ds->size = len;
 	num = 0;
 
-	if (!c->ccfg) {
-		/* default is memtomem, without calling device_config */
+	अगर (!c->ccfg) अणु
+		/* शेष is memtomem, without calling device_config */
 		c->ccfg = CX_CFG_SRCINCR | CX_CFG_DSTINCR | CX_CFG_EN;
 		c->ccfg |= (0xf << 20) | (0xf << 24);	/* burst = 16 */
 		c->ccfg |= (0x3 << 12) | (0x3 << 16);	/* width = 64 bit */
-	}
+	पूर्ण
 
-	do {
-		copy = min_t(size_t, len, DMA_MAX_SIZE);
+	करो अणु
+		copy = min_t(माप_प्रकार, len, DMA_MAX_SIZE);
 		k3_dma_fill_desc(ds, dst, src, copy, num++, c->ccfg);
 
 		src += copy;
 		dst += copy;
 		len -= copy;
-	} while (len);
+	पूर्ण जबतक (len);
 
 	ds->desc_hw[num-1].lli = 0;	/* end of link */
-	return vchan_tx_prep(&c->vc, &ds->vd, flags);
-}
+	वापस vchan_tx_prep(&c->vc, &ds->vd, flags);
+पूर्ण
 
-static struct dma_async_tx_descriptor *k3_dma_prep_slave_sg(
-	struct dma_chan *chan, struct scatterlist *sgl, unsigned int sglen,
-	enum dma_transfer_direction dir, unsigned long flags, void *context)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
-	struct k3_dma_desc_sw *ds;
-	size_t len, avail, total = 0;
-	struct scatterlist *sg;
+अटल काष्ठा dma_async_tx_descriptor *k3_dma_prep_slave_sg(
+	काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl, अचिन्हित पूर्णांक sglen,
+	क्रमागत dma_transfer_direction dir, अचिन्हित दीर्घ flags, व्योम *context)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
+	काष्ठा k3_dma_desc_sw *ds;
+	माप_प्रकार len, avail, total = 0;
+	काष्ठा scatterlist *sg;
 	dma_addr_t addr, src = 0, dst = 0;
-	int num = sglen, i;
+	पूर्णांक num = sglen, i;
 
-	if (sgl == NULL)
-		return NULL;
+	अगर (sgl == शून्य)
+		वापस शून्य;
 
 	c->cyclic = 0;
 
-	for_each_sg(sgl, sg, sglen, i) {
+	क्रम_each_sg(sgl, sg, sglen, i) अणु
 		avail = sg_dma_len(sg);
-		if (avail > DMA_MAX_SIZE)
+		अगर (avail > DMA_MAX_SIZE)
 			num += DIV_ROUND_UP(avail, DMA_MAX_SIZE) - 1;
-	}
+	पूर्ण
 
 	ds = k3_dma_alloc_desc_resource(num, chan);
-	if (!ds)
-		return NULL;
+	अगर (!ds)
+		वापस शून्य;
 	num = 0;
-	k3_dma_config_write(chan, dir, &c->slave_config);
+	k3_dma_config_ग_लिखो(chan, dir, &c->slave_config);
 
-	for_each_sg(sgl, sg, sglen, i) {
+	क्रम_each_sg(sgl, sg, sglen, i) अणु
 		addr = sg_dma_address(sg);
 		avail = sg_dma_len(sg);
 		total += avail;
 
-		do {
-			len = min_t(size_t, avail, DMA_MAX_SIZE);
+		करो अणु
+			len = min_t(माप_प्रकार, avail, DMA_MAX_SIZE);
 
-			if (dir == DMA_MEM_TO_DEV) {
+			अगर (dir == DMA_MEM_TO_DEV) अणु
 				src = addr;
 				dst = c->dev_addr;
-			} else if (dir == DMA_DEV_TO_MEM) {
+			पूर्ण अन्यथा अगर (dir == DMA_DEV_TO_MEM) अणु
 				src = c->dev_addr;
 				dst = addr;
-			}
+			पूर्ण
 
 			k3_dma_fill_desc(ds, dst, src, len, num++, c->ccfg);
 
 			addr += len;
 			avail -= len;
-		} while (avail);
-	}
+		पूर्ण जबतक (avail);
+	पूर्ण
 
 	ds->desc_hw[num-1].lli = 0;	/* end of link */
 	ds->size = total;
-	return vchan_tx_prep(&c->vc, &ds->vd, flags);
-}
+	वापस vchan_tx_prep(&c->vc, &ds->vd, flags);
+पूर्ण
 
-static struct dma_async_tx_descriptor *
-k3_dma_prep_dma_cyclic(struct dma_chan *chan, dma_addr_t buf_addr,
-		       size_t buf_len, size_t period_len,
-		       enum dma_transfer_direction dir,
-		       unsigned long flags)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
-	struct k3_dma_desc_sw *ds;
-	size_t len, avail, total = 0;
+अटल काष्ठा dma_async_tx_descriptor *
+k3_dma_prep_dma_cyclic(काष्ठा dma_chan *chan, dma_addr_t buf_addr,
+		       माप_प्रकार buf_len, माप_प्रकार period_len,
+		       क्रमागत dma_transfer_direction dir,
+		       अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
+	काष्ठा k3_dma_desc_sw *ds;
+	माप_प्रकार len, avail, total = 0;
 	dma_addr_t addr, src = 0, dst = 0;
-	int num = 1, since = 0;
-	size_t modulo = DMA_CYCLIC_MAX_PERIOD;
+	पूर्णांक num = 1, since = 0;
+	माप_प्रकार modulo = DMA_CYCLIC_MAX_PERIOD;
 	u32 en_tc2 = 0;
 
 	dev_dbg(chan->device->dev, "%s: buf %pad, dst %pad, buf len %zu, period_len = %zu, dir %d\n",
 	       __func__, &buf_addr, &to_k3_chan(chan)->dev_addr,
-	       buf_len, period_len, (int)dir);
+	       buf_len, period_len, (पूर्णांक)dir);
 
 	avail = buf_len;
-	if (avail > modulo)
+	अगर (avail > modulo)
 		num += DIV_ROUND_UP(avail, modulo) - 1;
 
 	ds = k3_dma_alloc_desc_resource(num, chan);
-	if (!ds)
-		return NULL;
+	अगर (!ds)
+		वापस शून्य;
 
 	c->cyclic = 1;
 	addr = buf_addr;
 	avail = buf_len;
 	total = avail;
 	num = 0;
-	k3_dma_config_write(chan, dir, &c->slave_config);
+	k3_dma_config_ग_लिखो(chan, dir, &c->slave_config);
 
-	if (period_len < modulo)
+	अगर (period_len < modulo)
 		modulo = period_len;
 
-	do {
-		len = min_t(size_t, avail, modulo);
+	करो अणु
+		len = min_t(माप_प्रकार, avail, modulo);
 
-		if (dir == DMA_MEM_TO_DEV) {
+		अगर (dir == DMA_MEM_TO_DEV) अणु
 			src = addr;
 			dst = c->dev_addr;
-		} else if (dir == DMA_DEV_TO_MEM) {
+		पूर्ण अन्यथा अगर (dir == DMA_DEV_TO_MEM) अणु
 			src = c->dev_addr;
 			dst = addr;
-		}
+		पूर्ण
 		since += len;
-		if (since >= period_len) {
-			/* descriptor asks for TC2 interrupt on completion */
+		अगर (since >= period_len) अणु
+			/* descriptor asks क्रम TC2 पूर्णांकerrupt on completion */
 			en_tc2 = CX_CFG_NODEIRQ;
 			since -= period_len;
-		} else
+		पूर्ण अन्यथा
 			en_tc2 = 0;
 
 		k3_dma_fill_desc(ds, dst, src, len, num++, c->ccfg | en_tc2);
 
 		addr += len;
 		avail -= len;
-	} while (avail);
+	पूर्ण जबतक (avail);
 
-	/* "Cyclic" == end of link points back to start of link */
+	/* "Cyclic" == end of link poपूर्णांकs back to start of link */
 	ds->desc_hw[num - 1].lli |= ds->desc_hw_lli;
 
 	ds->size = total;
 
-	return vchan_tx_prep(&c->vc, &ds->vd, flags);
-}
+	वापस vchan_tx_prep(&c->vc, &ds->vd, flags);
+पूर्ण
 
-static int k3_dma_config(struct dma_chan *chan,
-			 struct dma_slave_config *cfg)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
+अटल पूर्णांक k3_dma_config(काष्ठा dma_chan *chan,
+			 काष्ठा dma_slave_config *cfg)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
 
-	memcpy(&c->slave_config, cfg, sizeof(*cfg));
+	स_नकल(&c->slave_config, cfg, माप(*cfg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int k3_dma_config_write(struct dma_chan *chan,
-			       enum dma_transfer_direction dir,
-			       struct dma_slave_config *cfg)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
+अटल पूर्णांक k3_dma_config_ग_लिखो(काष्ठा dma_chan *chan,
+			       क्रमागत dma_transfer_direction dir,
+			       काष्ठा dma_slave_config *cfg)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
 	u32 maxburst = 0, val = 0;
-	enum dma_slave_buswidth width = DMA_SLAVE_BUSWIDTH_UNDEFINED;
+	क्रमागत dma_slave_buswidth width = DMA_SLAVE_BUSWIDTH_UNDEFINED;
 
-	if (dir == DMA_DEV_TO_MEM) {
+	अगर (dir == DMA_DEV_TO_MEM) अणु
 		c->ccfg = CX_CFG_DSTINCR;
 		c->dev_addr = cfg->src_addr;
 		maxburst = cfg->src_maxburst;
 		width = cfg->src_addr_width;
-	} else if (dir == DMA_MEM_TO_DEV) {
+	पूर्ण अन्यथा अगर (dir == DMA_MEM_TO_DEV) अणु
 		c->ccfg = CX_CFG_SRCINCR;
 		c->dev_addr = cfg->dst_addr;
 		maxburst = cfg->dst_maxburst;
 		width = cfg->dst_addr_width;
-	}
-	switch (width) {
-	case DMA_SLAVE_BUSWIDTH_1_BYTE:
-	case DMA_SLAVE_BUSWIDTH_2_BYTES:
-	case DMA_SLAVE_BUSWIDTH_4_BYTES:
-	case DMA_SLAVE_BUSWIDTH_8_BYTES:
+	पूर्ण
+	चयन (width) अणु
+	हाल DMA_SLAVE_BUSWIDTH_1_BYTE:
+	हाल DMA_SLAVE_BUSWIDTH_2_BYTES:
+	हाल DMA_SLAVE_BUSWIDTH_4_BYTES:
+	हाल DMA_SLAVE_BUSWIDTH_8_BYTES:
 		val =  __ffs(width);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val = 3;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	c->ccfg |= (val << 12) | (val << 16);
 
-	if ((maxburst == 0) || (maxburst > 16))
+	अगर ((maxburst == 0) || (maxburst > 16))
 		val = 15;
-	else
+	अन्यथा
 		val = maxburst - 1;
 	c->ccfg |= (val << 20) | (val << 24);
 	c->ccfg |= CX_CFG_MEM2PER | CX_CFG_EN;
 
-	/* specific request line */
+	/* specअगरic request line */
 	c->ccfg |= c->vc.chan.chan_id << 4;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void k3_dma_free_desc(struct virt_dma_desc *vd)
-{
-	struct k3_dma_desc_sw *ds =
-		container_of(vd, struct k3_dma_desc_sw, vd);
-	struct k3_dma_dev *d = to_k3_dma(vd->tx.chan->device);
+अटल व्योम k3_dma_मुक्त_desc(काष्ठा virt_dma_desc *vd)
+अणु
+	काष्ठा k3_dma_desc_sw *ds =
+		container_of(vd, काष्ठा k3_dma_desc_sw, vd);
+	काष्ठा k3_dma_dev *d = to_k3_dma(vd->tx.chan->device);
 
-	dma_pool_free(d->pool, ds->desc_hw, ds->desc_hw_lli);
-	kfree(ds);
-}
+	dma_pool_मुक्त(d->pool, ds->desc_hw, ds->desc_hw_lli);
+	kमुक्त(ds);
+पूर्ण
 
-static int k3_dma_terminate_all(struct dma_chan *chan)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
-	struct k3_dma_dev *d = to_k3_dma(chan->device);
-	struct k3_dma_phy *p = c->phy;
-	unsigned long flags;
+अटल पूर्णांक k3_dma_terminate_all(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
+	काष्ठा k3_dma_dev *d = to_k3_dma(chan->device);
+	काष्ठा k3_dma_phy *p = c->phy;
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(head);
 
 	dev_dbg(d->slave.dev, "vchan %p: terminate all\n", &c->vc);
@@ -735,309 +736,309 @@ static int k3_dma_terminate_all(struct dma_chan *chan)
 	/* Clear the tx descriptor lists */
 	spin_lock_irqsave(&c->vc.lock, flags);
 	vchan_get_all_descriptors(&c->vc, &head);
-	if (p) {
-		/* vchan is assigned to a pchan - stop the channel */
+	अगर (p) अणु
+		/* vchan is asचिन्हित to a pchan - stop the channel */
 		k3_dma_terminate_chan(p, d);
-		c->phy = NULL;
-		p->vchan = NULL;
-		if (p->ds_run) {
+		c->phy = शून्य;
+		p->vchan = शून्य;
+		अगर (p->ds_run) अणु
 			vchan_terminate_vdesc(&p->ds_run->vd);
-			p->ds_run = NULL;
-		}
-		p->ds_done = NULL;
-	}
+			p->ds_run = शून्य;
+		पूर्ण
+		p->ds_करोne = शून्य;
+	पूर्ण
 	spin_unlock_irqrestore(&c->vc.lock, flags);
-	vchan_dma_desc_free_list(&c->vc, &head);
+	vchan_dma_desc_मुक्त_list(&c->vc, &head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void k3_dma_synchronize(struct dma_chan *chan)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
+अटल व्योम k3_dma_synchronize(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
 
 	vchan_synchronize(&c->vc);
-}
+पूर्ण
 
-static int k3_dma_transfer_pause(struct dma_chan *chan)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
-	struct k3_dma_dev *d = to_k3_dma(chan->device);
-	struct k3_dma_phy *p = c->phy;
+अटल पूर्णांक k3_dma_transfer_छोड़ो(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
+	काष्ठा k3_dma_dev *d = to_k3_dma(chan->device);
+	काष्ठा k3_dma_phy *p = c->phy;
 
 	dev_dbg(d->slave.dev, "vchan %p: pause\n", &c->vc);
-	if (c->status == DMA_IN_PROGRESS) {
+	अगर (c->status == DMA_IN_PROGRESS) अणु
 		c->status = DMA_PAUSED;
-		if (p) {
-			k3_dma_pause_dma(p, false);
-		} else {
+		अगर (p) अणु
+			k3_dma_छोड़ो_dma(p, false);
+		पूर्ण अन्यथा अणु
 			spin_lock(&d->lock);
 			list_del_init(&c->node);
 			spin_unlock(&d->lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int k3_dma_transfer_resume(struct dma_chan *chan)
-{
-	struct k3_dma_chan *c = to_k3_chan(chan);
-	struct k3_dma_dev *d = to_k3_dma(chan->device);
-	struct k3_dma_phy *p = c->phy;
-	unsigned long flags;
+अटल पूर्णांक k3_dma_transfer_resume(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा k3_dma_chan *c = to_k3_chan(chan);
+	काष्ठा k3_dma_dev *d = to_k3_dma(chan->device);
+	काष्ठा k3_dma_phy *p = c->phy;
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(d->slave.dev, "vchan %p: resume\n", &c->vc);
 	spin_lock_irqsave(&c->vc.lock, flags);
-	if (c->status == DMA_PAUSED) {
+	अगर (c->status == DMA_PAUSED) अणु
 		c->status = DMA_IN_PROGRESS;
-		if (p) {
-			k3_dma_pause_dma(p, true);
-		} else if (!list_empty(&c->vc.desc_issued)) {
+		अगर (p) अणु
+			k3_dma_छोड़ो_dma(p, true);
+		पूर्ण अन्यथा अगर (!list_empty(&c->vc.desc_issued)) अणु
 			spin_lock(&d->lock);
 			list_add_tail(&c->node, &d->chan_pending);
 			spin_unlock(&d->lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&c->vc.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct k3dma_soc_data k3_v1_dma_data = {
+अटल स्थिर काष्ठा k3dma_soc_data k3_v1_dma_data = अणु
 	.flags = 0,
-};
+पूर्ण;
 
-static const struct k3dma_soc_data asp_v1_dma_data = {
+अटल स्थिर काष्ठा k3dma_soc_data asp_v1_dma_data = अणु
 	.flags = K3_FLAG_NOCLK,
-};
+पूर्ण;
 
-static const struct of_device_id k3_pdma_dt_ids[] = {
-	{ .compatible = "hisilicon,k3-dma-1.0",
+अटल स्थिर काष्ठा of_device_id k3_pdma_dt_ids[] = अणु
+	अणु .compatible = "hisilicon,k3-dma-1.0",
 	  .data = &k3_v1_dma_data
-	},
-	{ .compatible = "hisilicon,hisi-pcm-asp-dma-1.0",
+	पूर्ण,
+	अणु .compatible = "hisilicon,hisi-pcm-asp-dma-1.0",
 	  .data = &asp_v1_dma_data
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, k3_pdma_dt_ids);
 
-static struct dma_chan *k3_of_dma_simple_xlate(struct of_phandle_args *dma_spec,
-						struct of_dma *ofdma)
-{
-	struct k3_dma_dev *d = ofdma->of_dma_data;
-	unsigned int request = dma_spec->args[0];
+अटल काष्ठा dma_chan *k3_of_dma_simple_xlate(काष्ठा of_phandle_args *dma_spec,
+						काष्ठा of_dma *ofdma)
+अणु
+	काष्ठा k3_dma_dev *d = ofdma->of_dma_data;
+	अचिन्हित पूर्णांक request = dma_spec->args[0];
 
-	if (request >= d->dma_requests)
-		return NULL;
+	अगर (request >= d->dma_requests)
+		वापस शून्य;
 
-	return dma_get_slave_channel(&(d->chans[request].vc.chan));
-}
+	वापस dma_get_slave_channel(&(d->chans[request].vc.chan));
+पूर्ण
 
-static int k3_dma_probe(struct platform_device *op)
-{
-	const struct k3dma_soc_data *soc_data;
-	struct k3_dma_dev *d;
-	const struct of_device_id *of_id;
-	int i, ret, irq = 0;
+अटल पूर्णांक k3_dma_probe(काष्ठा platक्रमm_device *op)
+अणु
+	स्थिर काष्ठा k3dma_soc_data *soc_data;
+	काष्ठा k3_dma_dev *d;
+	स्थिर काष्ठा of_device_id *of_id;
+	पूर्णांक i, ret, irq = 0;
 
-	d = devm_kzalloc(&op->dev, sizeof(*d), GFP_KERNEL);
-	if (!d)
-		return -ENOMEM;
+	d = devm_kzalloc(&op->dev, माप(*d), GFP_KERNEL);
+	अगर (!d)
+		वापस -ENOMEM;
 
 	soc_data = device_get_match_data(&op->dev);
-	if (!soc_data)
-		return -EINVAL;
+	अगर (!soc_data)
+		वापस -EINVAL;
 
-	d->base = devm_platform_ioremap_resource(op, 0);
-	if (IS_ERR(d->base))
-		return PTR_ERR(d->base);
+	d->base = devm_platक्रमm_ioremap_resource(op, 0);
+	अगर (IS_ERR(d->base))
+		वापस PTR_ERR(d->base);
 
 	of_id = of_match_device(k3_pdma_dt_ids, &op->dev);
-	if (of_id) {
-		of_property_read_u32((&op->dev)->of_node,
+	अगर (of_id) अणु
+		of_property_पढ़ो_u32((&op->dev)->of_node,
 				"dma-channels", &d->dma_channels);
-		of_property_read_u32((&op->dev)->of_node,
+		of_property_पढ़ो_u32((&op->dev)->of_node,
 				"dma-requests", &d->dma_requests);
-		ret = of_property_read_u32((&op->dev)->of_node,
+		ret = of_property_पढ़ो_u32((&op->dev)->of_node,
 				"dma-channel-mask", &d->dma_channel_mask);
-		if (ret) {
+		अगर (ret) अणु
 			dev_warn(&op->dev,
 				 "dma-channel-mask doesn't exist, considering all as available.\n");
 			d->dma_channel_mask = (u32)~0UL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!(soc_data->flags & K3_FLAG_NOCLK)) {
-		d->clk = devm_clk_get(&op->dev, NULL);
-		if (IS_ERR(d->clk)) {
+	अगर (!(soc_data->flags & K3_FLAG_NOCLK)) अणु
+		d->clk = devm_clk_get(&op->dev, शून्य);
+		अगर (IS_ERR(d->clk)) अणु
 			dev_err(&op->dev, "no dma clk\n");
-			return PTR_ERR(d->clk);
-		}
-	}
+			वापस PTR_ERR(d->clk);
+		पूर्ण
+	पूर्ण
 
-	irq = platform_get_irq(op, 0);
+	irq = platक्रमm_get_irq(op, 0);
 	ret = devm_request_irq(&op->dev, irq,
-			k3_dma_int_handler, 0, DRIVER_NAME, d);
-	if (ret)
-		return ret;
+			k3_dma_पूर्णांक_handler, 0, DRIVER_NAME, d);
+	अगर (ret)
+		वापस ret;
 
 	d->irq = irq;
 
-	/* A DMA memory pool for LLIs, align on 32-byte boundary */
+	/* A DMA memory pool क्रम LLIs, align on 32-byte boundary */
 	d->pool = dmam_pool_create(DRIVER_NAME, &op->dev,
 					LLI_BLOCK_SIZE, 32, 0);
-	if (!d->pool)
-		return -ENOMEM;
+	अगर (!d->pool)
+		वापस -ENOMEM;
 
 	/* init phy channel */
-	d->phy = devm_kcalloc(&op->dev,
-		d->dma_channels, sizeof(struct k3_dma_phy), GFP_KERNEL);
-	if (d->phy == NULL)
-		return -ENOMEM;
+	d->phy = devm_kसुस्मृति(&op->dev,
+		d->dma_channels, माप(काष्ठा k3_dma_phy), GFP_KERNEL);
+	अगर (d->phy == शून्य)
+		वापस -ENOMEM;
 
-	for (i = 0; i < d->dma_channels; i++) {
-		struct k3_dma_phy *p;
+	क्रम (i = 0; i < d->dma_channels; i++) अणु
+		काष्ठा k3_dma_phy *p;
 
-		if (!(d->dma_channel_mask & BIT(i)))
-			continue;
+		अगर (!(d->dma_channel_mask & BIT(i)))
+			जारी;
 
 		p = &d->phy[i];
 		p->idx = i;
 		p->base = d->base + i * 0x40;
-	}
+	पूर्ण
 
 	INIT_LIST_HEAD(&d->slave.channels);
 	dma_cap_set(DMA_SLAVE, d->slave.cap_mask);
 	dma_cap_set(DMA_MEMCPY, d->slave.cap_mask);
 	dma_cap_set(DMA_CYCLIC, d->slave.cap_mask);
 	d->slave.dev = &op->dev;
-	d->slave.device_free_chan_resources = k3_dma_free_chan_resources;
+	d->slave.device_मुक्त_chan_resources = k3_dma_मुक्त_chan_resources;
 	d->slave.device_tx_status = k3_dma_tx_status;
-	d->slave.device_prep_dma_memcpy = k3_dma_prep_memcpy;
+	d->slave.device_prep_dma_स_नकल = k3_dma_prep_स_नकल;
 	d->slave.device_prep_slave_sg = k3_dma_prep_slave_sg;
 	d->slave.device_prep_dma_cyclic = k3_dma_prep_dma_cyclic;
 	d->slave.device_issue_pending = k3_dma_issue_pending;
 	d->slave.device_config = k3_dma_config;
-	d->slave.device_pause = k3_dma_transfer_pause;
+	d->slave.device_छोड़ो = k3_dma_transfer_छोड़ो;
 	d->slave.device_resume = k3_dma_transfer_resume;
 	d->slave.device_terminate_all = k3_dma_terminate_all;
 	d->slave.device_synchronize = k3_dma_synchronize;
 	d->slave.copy_align = DMAENGINE_ALIGN_8_BYTES;
 
-	/* init virtual channel */
-	d->chans = devm_kcalloc(&op->dev,
-		d->dma_requests, sizeof(struct k3_dma_chan), GFP_KERNEL);
-	if (d->chans == NULL)
-		return -ENOMEM;
+	/* init भव channel */
+	d->chans = devm_kसुस्मृति(&op->dev,
+		d->dma_requests, माप(काष्ठा k3_dma_chan), GFP_KERNEL);
+	अगर (d->chans == शून्य)
+		वापस -ENOMEM;
 
-	for (i = 0; i < d->dma_requests; i++) {
-		struct k3_dma_chan *c = &d->chans[i];
+	क्रम (i = 0; i < d->dma_requests; i++) अणु
+		काष्ठा k3_dma_chan *c = &d->chans[i];
 
 		c->status = DMA_IN_PROGRESS;
 		INIT_LIST_HEAD(&c->node);
-		c->vc.desc_free = k3_dma_free_desc;
+		c->vc.desc_मुक्त = k3_dma_मुक्त_desc;
 		vchan_init(&c->vc, &d->slave);
-	}
+	पूर्ण
 
-	/* Enable clock before accessing registers */
+	/* Enable घड़ी beक्रमe accessing रेजिस्टरs */
 	ret = clk_prepare_enable(d->clk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&op->dev, "clk_prepare_enable failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	k3_dma_enable_dma(d, true);
 
-	ret = dma_async_device_register(&d->slave);
-	if (ret)
-		goto dma_async_register_fail;
+	ret = dma_async_device_रेजिस्टर(&d->slave);
+	अगर (ret)
+		जाओ dma_async_रेजिस्टर_fail;
 
-	ret = of_dma_controller_register((&op->dev)->of_node,
+	ret = of_dma_controller_रेजिस्टर((&op->dev)->of_node,
 					k3_of_dma_simple_xlate, d);
-	if (ret)
-		goto of_dma_register_fail;
+	अगर (ret)
+		जाओ of_dma_रेजिस्टर_fail;
 
 	spin_lock_init(&d->lock);
 	INIT_LIST_HEAD(&d->chan_pending);
 	tasklet_setup(&d->task, k3_dma_tasklet);
-	platform_set_drvdata(op, d);
+	platक्रमm_set_drvdata(op, d);
 	dev_info(&op->dev, "initialized\n");
 
-	return 0;
+	वापस 0;
 
-of_dma_register_fail:
-	dma_async_device_unregister(&d->slave);
-dma_async_register_fail:
+of_dma_रेजिस्टर_fail:
+	dma_async_device_unरेजिस्टर(&d->slave);
+dma_async_रेजिस्टर_fail:
 	clk_disable_unprepare(d->clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int k3_dma_remove(struct platform_device *op)
-{
-	struct k3_dma_chan *c, *cn;
-	struct k3_dma_dev *d = platform_get_drvdata(op);
+अटल पूर्णांक k3_dma_हटाओ(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा k3_dma_chan *c, *cn;
+	काष्ठा k3_dma_dev *d = platक्रमm_get_drvdata(op);
 
-	dma_async_device_unregister(&d->slave);
-	of_dma_controller_free((&op->dev)->of_node);
+	dma_async_device_unरेजिस्टर(&d->slave);
+	of_dma_controller_मुक्त((&op->dev)->of_node);
 
-	devm_free_irq(&op->dev, d->irq, d);
+	devm_मुक्त_irq(&op->dev, d->irq, d);
 
-	list_for_each_entry_safe(c, cn, &d->slave.channels, vc.chan.device_node) {
+	list_क्रम_each_entry_safe(c, cn, &d->slave.channels, vc.chan.device_node) अणु
 		list_del(&c->vc.chan.device_node);
-		tasklet_kill(&c->vc.task);
-	}
-	tasklet_kill(&d->task);
+		tasklet_समाप्त(&c->vc.task);
+	पूर्ण
+	tasklet_समाप्त(&d->task);
 	clk_disable_unprepare(d->clk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int k3_dma_suspend_dev(struct device *dev)
-{
-	struct k3_dma_dev *d = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक k3_dma_suspend_dev(काष्ठा device *dev)
+अणु
+	काष्ठा k3_dma_dev *d = dev_get_drvdata(dev);
 	u32 stat = 0;
 
 	stat = k3_dma_get_chan_stat(d);
-	if (stat) {
+	अगर (stat) अणु
 		dev_warn(d->slave.dev,
 			"chan %d is running fail to suspend\n", stat);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	k3_dma_enable_dma(d, false);
 	clk_disable_unprepare(d->clk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int k3_dma_resume_dev(struct device *dev)
-{
-	struct k3_dma_dev *d = dev_get_drvdata(dev);
-	int ret = 0;
+अटल पूर्णांक k3_dma_resume_dev(काष्ठा device *dev)
+अणु
+	काष्ठा k3_dma_dev *d = dev_get_drvdata(dev);
+	पूर्णांक ret = 0;
 
 	ret = clk_prepare_enable(d->clk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(d->slave.dev, "clk_prepare_enable failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	k3_dma_enable_dma(d, true);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(k3_dma_pmops, k3_dma_suspend_dev, k3_dma_resume_dev);
+अटल SIMPLE_DEV_PM_OPS(k3_dma_pmops, k3_dma_suspend_dev, k3_dma_resume_dev);
 
-static struct platform_driver k3_pdma_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver k3_pdma_driver = अणु
+	.driver		= अणु
 		.name	= DRIVER_NAME,
 		.pm	= &k3_dma_pmops,
 		.of_match_table = k3_pdma_dt_ids,
-	},
+	पूर्ण,
 	.probe		= k3_dma_probe,
-	.remove		= k3_dma_remove,
-};
+	.हटाओ		= k3_dma_हटाओ,
+पूर्ण;
 
-module_platform_driver(k3_pdma_driver);
+module_platक्रमm_driver(k3_pdma_driver);
 
 MODULE_DESCRIPTION("HiSilicon k3 DMA Driver");
 MODULE_ALIAS("platform:k3dma");

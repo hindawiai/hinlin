@@ -1,15 +1,16 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2012 Red Hat. All rights reserved.
  *
  * This file is released under the GPL.
  */
 
-#ifndef DM_CACHE_POLICY_H
-#define DM_CACHE_POLICY_H
+#अगर_अघोषित DM_CACHE_POLICY_H
+#घोषणा DM_CACHE_POLICY_H
 
-#include "dm-cache-block-types.h"
+#समावेश "dm-cache-block-types.h"
 
-#include <linux/device-mapper.h>
+#समावेश <linux/device-mapper.h>
 
 /*----------------------------------------------------------------*/
 
@@ -17,101 +18,101 @@
  * The cache policy makes the important decisions about which blocks get to
  * live on the faster cache device.
  */
-enum policy_operation {
+क्रमागत policy_operation अणु
 	POLICY_PROMOTE,
 	POLICY_DEMOTE,
 	POLICY_WRITEBACK
-};
+पूर्ण;
 
 /*
- * This is the instruction passed back to the core target.
+ * This is the inकाष्ठाion passed back to the core target.
  */
-struct policy_work {
-	enum policy_operation op;
+काष्ठा policy_work अणु
+	क्रमागत policy_operation op;
 	dm_oblock_t oblock;
 	dm_cblock_t cblock;
-};
+पूर्ण;
 
 /*
- * The cache policy object.  It is envisaged that this structure will be
- * embedded in a bigger, policy specific structure (ie. use container_of()).
+ * The cache policy object.  It is envisaged that this काष्ठाure will be
+ * embedded in a bigger, policy specअगरic काष्ठाure (ie. use container_of()).
  */
-struct dm_cache_policy {
+काष्ठा dm_cache_policy अणु
 	/*
 	 * Destroys this object.
 	 */
-	void (*destroy)(struct dm_cache_policy *p);
+	व्योम (*destroy)(काष्ठा dm_cache_policy *p);
 
 	/*
 	 * Find the location of a block.
 	 *
 	 * Must not block.
 	 *
-	 * Returns 0 if in cache (cblock will be set), -ENOENT if not, < 0 for
+	 * Returns 0 अगर in cache (cblock will be set), -ENOENT अगर not, < 0 क्रम
 	 * other errors (-EWOULDBLOCK would be typical).  data_dir should be
-	 * READ or WRITE. fast_copy should be set if migrating this block would
+	 * READ or WRITE. fast_copy should be set अगर migrating this block would
 	 * be 'cheap' somehow (eg, discarded data). background_queued will be set
-	 * if a migration has just been queued.
+	 * अगर a migration has just been queued.
 	 */
-	int (*lookup)(struct dm_cache_policy *p, dm_oblock_t oblock, dm_cblock_t *cblock,
-		      int data_dir, bool fast_copy, bool *background_queued);
+	पूर्णांक (*lookup)(काष्ठा dm_cache_policy *p, dm_oblock_t oblock, dm_cblock_t *cblock,
+		      पूर्णांक data_dir, bool fast_copy, bool *background_queued);
 
 	/*
-	 * Sometimes the core target can optimise a migration, eg, the
+	 * Someबार the core target can optimise a migration, eg, the
 	 * block may be discarded, or the bio may cover an entire block.
 	 * In order to optimise it needs the migration immediately though
-	 * so it knows to do something different with the bio.
+	 * so it knows to करो something dअगरferent with the bio.
 	 *
-	 * This method is optional (policy-internal will fallback to using
+	 * This method is optional (policy-पूर्णांकernal will fallback to using
 	 * lookup).
 	 */
-	int (*lookup_with_work)(struct dm_cache_policy *p,
+	पूर्णांक (*lookup_with_work)(काष्ठा dm_cache_policy *p,
 				dm_oblock_t oblock, dm_cblock_t *cblock,
-				int data_dir, bool fast_copy,
-				struct policy_work **work);
+				पूर्णांक data_dir, bool fast_copy,
+				काष्ठा policy_work **work);
 
 	/*
 	 * Retrieves background work.  Returns -ENODATA when there's no
 	 * background work.
 	 */
-	int (*get_background_work)(struct dm_cache_policy *p, bool idle,
-			           struct policy_work **result);
+	पूर्णांक (*get_background_work)(काष्ठा dm_cache_policy *p, bool idle,
+			           काष्ठा policy_work **result);
 
 	/*
-	 * You must pass in the same work pointer that you were given, not
+	 * You must pass in the same work poपूर्णांकer that you were given, not
 	 * a copy.
 	 */
-	void (*complete_background_work)(struct dm_cache_policy *p,
-					 struct policy_work *work,
+	व्योम (*complete_background_work)(काष्ठा dm_cache_policy *p,
+					 काष्ठा policy_work *work,
 					 bool success);
 
-	void (*set_dirty)(struct dm_cache_policy *p, dm_cblock_t cblock);
-	void (*clear_dirty)(struct dm_cache_policy *p, dm_cblock_t cblock);
+	व्योम (*set_dirty)(काष्ठा dm_cache_policy *p, dm_cblock_t cblock);
+	व्योम (*clear_dirty)(काष्ठा dm_cache_policy *p, dm_cblock_t cblock);
 
 	/*
 	 * Called when a cache target is first created.  Used to load a
-	 * mapping from the metadata device into the policy.
+	 * mapping from the metadata device पूर्णांकo the policy.
 	 */
-	int (*load_mapping)(struct dm_cache_policy *p, dm_oblock_t oblock,
+	पूर्णांक (*load_mapping)(काष्ठा dm_cache_policy *p, dm_oblock_t oblock,
 			    dm_cblock_t cblock, bool dirty,
-			    uint32_t hint, bool hint_valid);
+			    uपूर्णांक32_t hपूर्णांक, bool hपूर्णांक_valid);
 
 	/*
 	 * Drops the mapping, irrespective of whether it's clean or dirty.
-	 * Returns -ENODATA if cblock is not mapped.
+	 * Returns -ENODATA अगर cblock is not mapped.
 	 */
-	int (*invalidate_mapping)(struct dm_cache_policy *p, dm_cblock_t cblock);
+	पूर्णांक (*invalidate_mapping)(काष्ठा dm_cache_policy *p, dm_cblock_t cblock);
 
 	/*
-	 * Gets the hint for a given cblock.  Called in a single threaded
+	 * Gets the hपूर्णांक क्रम a given cblock.  Called in a single thपढ़ोed
 	 * context.  So no locking required.
 	 */
-	uint32_t (*get_hint)(struct dm_cache_policy *p, dm_cblock_t cblock);
+	uपूर्णांक32_t (*get_hपूर्णांक)(काष्ठा dm_cache_policy *p, dm_cblock_t cblock);
 
 	/*
 	 * How full is the cache?
 	 */
-	dm_cblock_t (*residency)(struct dm_cache_policy *p);
+	dm_cblock_t (*residency)(काष्ठा dm_cache_policy *p);
 
 	/*
 	 * Because of where we sit in the block layer, we can be asked to
@@ -122,65 +123,65 @@ struct dm_cache_policy {
 	 *
 	 * This method is optional.
 	 */
-	void (*tick)(struct dm_cache_policy *p, bool can_block);
+	व्योम (*tick)(काष्ठा dm_cache_policy *p, bool can_block);
 
 	/*
 	 * Configuration.
 	 */
-	int (*emit_config_values)(struct dm_cache_policy *p, char *result,
-				  unsigned maxlen, ssize_t *sz_ptr);
-	int (*set_config_value)(struct dm_cache_policy *p,
-				const char *key, const char *value);
+	पूर्णांक (*emit_config_values)(काष्ठा dm_cache_policy *p, अक्षर *result,
+				  अचिन्हित maxlen, sमाप_प्रकार *sz_ptr);
+	पूर्णांक (*set_config_value)(काष्ठा dm_cache_policy *p,
+				स्थिर अक्षर *key, स्थिर अक्षर *value);
 
-	void (*allow_migrations)(struct dm_cache_policy *p, bool allow);
+	व्योम (*allow_migrations)(काष्ठा dm_cache_policy *p, bool allow);
 
 	/*
-	 * Book keeping ptr for the policy register, not for general use.
+	 * Book keeping ptr क्रम the policy रेजिस्टर, not क्रम general use.
 	 */
-	void *private;
-};
+	व्योम *निजी;
+पूर्ण;
 
 /*----------------------------------------------------------------*/
 
 /*
- * We maintain a little register of the different policy types.
+ * We मुख्यtain a little रेजिस्टर of the dअगरferent policy types.
  */
-#define CACHE_POLICY_NAME_SIZE 16
-#define CACHE_POLICY_VERSION_SIZE 3
+#घोषणा CACHE_POLICY_NAME_SIZE 16
+#घोषणा CACHE_POLICY_VERSION_SIZE 3
 
-struct dm_cache_policy_type {
-	/* For use by the register code only. */
-	struct list_head list;
+काष्ठा dm_cache_policy_type अणु
+	/* For use by the रेजिस्टर code only. */
+	काष्ठा list_head list;
 
 	/*
-	 * Policy writers should fill in these fields.  The name field is
-	 * what gets passed on the target line to select your policy.
+	 * Policy ग_लिखोrs should fill in these fields.  The name field is
+	 * what माला_लो passed on the target line to select your policy.
 	 */
-	char name[CACHE_POLICY_NAME_SIZE];
-	unsigned version[CACHE_POLICY_VERSION_SIZE];
+	अक्षर name[CACHE_POLICY_NAME_SIZE];
+	अचिन्हित version[CACHE_POLICY_VERSION_SIZE];
 
 	/*
-	 * For use by an alias dm_cache_policy_type to point to the
+	 * For use by an alias dm_cache_policy_type to poपूर्णांक to the
 	 * real dm_cache_policy_type.
 	 */
-	struct dm_cache_policy_type *real;
+	काष्ठा dm_cache_policy_type *real;
 
 	/*
-	 * Policies may store a hint for each each cache block.
-	 * Currently the size of this hint must be 0 or 4 bytes but we
+	 * Policies may store a hपूर्णांक क्रम each each cache block.
+	 * Currently the size of this hपूर्णांक must be 0 or 4 bytes but we
 	 * expect to relax this in future.
 	 */
-	size_t hint_size;
+	माप_प्रकार hपूर्णांक_size;
 
-	struct module *owner;
-	struct dm_cache_policy *(*create)(dm_cblock_t cache_size,
+	काष्ठा module *owner;
+	काष्ठा dm_cache_policy *(*create)(dm_cblock_t cache_size,
 					  sector_t origin_size,
 					  sector_t block_size);
-};
+पूर्ण;
 
-int dm_cache_policy_register(struct dm_cache_policy_type *type);
-void dm_cache_policy_unregister(struct dm_cache_policy_type *type);
+पूर्णांक dm_cache_policy_रेजिस्टर(काष्ठा dm_cache_policy_type *type);
+व्योम dm_cache_policy_unरेजिस्टर(काष्ठा dm_cache_policy_type *type);
 
 /*----------------------------------------------------------------*/
 
-#endif	/* DM_CACHE_POLICY_H */
+#पूर्ण_अगर	/* DM_CACHE_POLICY_H */

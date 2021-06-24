@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2018-2019, Vladimir Oltean <olteanv@gmail.com>
  */
-#include "sja1105.h"
+#समावेश "sja1105.h"
 
-#define SJA1105_SIZE_MAC_AREA		(0x02 * 4)
-#define SJA1105_SIZE_HL1_AREA		(0x10 * 4)
-#define SJA1105_SIZE_HL2_AREA		(0x4 * 4)
-#define SJA1105_SIZE_QLEVEL_AREA	(0x8 * 4) /* 0x4 to 0xB */
-#define SJA1105_SIZE_ETHER_AREA		(0x17 * 4)
+#घोषणा SJA1105_SIZE_MAC_AREA		(0x02 * 4)
+#घोषणा SJA1105_SIZE_HL1_AREA		(0x10 * 4)
+#घोषणा SJA1105_SIZE_HL2_AREA		(0x4 * 4)
+#घोषणा SJA1105_SIZE_QLEVEL_AREA	(0x8 * 4) /* 0x4 to 0xB */
+#घोषणा SJA1105_SIZE_ETHER_AREA		(0x17 * 4)
 
-struct sja1105_port_status_mac {
+काष्ठा sja1105_port_status_mac अणु
 	u64 n_runt;
 	u64 n_soferr;
 	u64 n_alignerr;
 	u64 n_miierr;
 	u64 typeerr;
 	u64 sizeerr;
-	u64 tctimeout;
+	u64 tस_समयout;
 	u64 priorerr;
 	u64 nomaster;
 	u64 memov;
 	u64 memerr;
 	u64 invtyp;
-	u64 intcyov;
-	u64 domerr;
+	u64 पूर्णांकcyov;
+	u64 करोmerr;
 	u64 pcfbagdrop;
 	u64 spcprior;
 	u64 ageprior;
@@ -34,9 +35,9 @@ struct sja1105_port_status_mac {
 	u64 drpnona664err;
 	u64 spcerr;
 	u64 agedrp;
-};
+पूर्ण;
 
-struct sja1105_port_status_hl1 {
+काष्ठा sja1105_port_status_hl1 अणु
 	u64 n_n664err;
 	u64 n_vlanerr;
 	u64 n_unreleased;
@@ -53,18 +54,18 @@ struct sja1105_port_status_hl1 {
 	u64 n_txfrm;
 	u64 n_txbytesh;
 	u64 n_txbyte;
-};
+पूर्ण;
 
-struct sja1105_port_status_hl2 {
+काष्ठा sja1105_port_status_hl2 अणु
 	u64 n_qfull;
 	u64 n_part_drop;
 	u64 n_egr_disabled;
 	u64 n_not_reach;
-	u64 qlevel_hwm[8]; /* Only for P/Q/R/S */
-	u64 qlevel[8];     /* Only for P/Q/R/S */
-};
+	u64 qlevel_hwm[8]; /* Only क्रम P/Q/R/S */
+	u64 qlevel[8];     /* Only क्रम P/Q/R/S */
+पूर्ण;
 
-struct sja1105_port_status_ether {
+काष्ठा sja1105_port_status_ether अणु
 	u64 n_drops_nolearn;
 	u64 n_drops_noroute;
 	u64 n_drops_ill_dtag;
@@ -88,20 +89,20 @@ struct sja1105_port_status_ether {
 	u64 n_rx_bytes_64;
 	u64 n_rx_mcast;
 	u64 n_rx_bcast;
-};
+पूर्ण;
 
-struct sja1105_port_status {
-	struct sja1105_port_status_mac mac;
-	struct sja1105_port_status_hl1 hl1;
-	struct sja1105_port_status_hl2 hl2;
-	struct sja1105_port_status_ether ether;
-};
+काष्ठा sja1105_port_status अणु
+	काष्ठा sja1105_port_status_mac mac;
+	काष्ठा sja1105_port_status_hl1 hl1;
+	काष्ठा sja1105_port_status_hl2 hl2;
+	काष्ठा sja1105_port_status_ether ether;
+पूर्ण;
 
-static void
-sja1105_port_status_mac_unpack(void *buf,
-			       struct sja1105_port_status_mac *status)
-{
-	/* Make pointer arithmetic work on 4 bytes */
+अटल व्योम
+sja1105_port_status_mac_unpack(व्योम *buf,
+			       काष्ठा sja1105_port_status_mac *status)
+अणु
+	/* Make poपूर्णांकer arithmetic work on 4 bytes */
 	u32 *p = buf;
 
 	sja1105_unpack(p + 0x0, &status->n_runt,       31, 24, 4);
@@ -110,14 +111,14 @@ sja1105_port_status_mac_unpack(void *buf,
 	sja1105_unpack(p + 0x0, &status->n_miierr,      7,  0, 4);
 	sja1105_unpack(p + 0x1, &status->typeerr,      27, 27, 4);
 	sja1105_unpack(p + 0x1, &status->sizeerr,      26, 26, 4);
-	sja1105_unpack(p + 0x1, &status->tctimeout,    25, 25, 4);
+	sja1105_unpack(p + 0x1, &status->tस_समयout,    25, 25, 4);
 	sja1105_unpack(p + 0x1, &status->priorerr,     24, 24, 4);
 	sja1105_unpack(p + 0x1, &status->nomaster,     23, 23, 4);
 	sja1105_unpack(p + 0x1, &status->memov,        22, 22, 4);
 	sja1105_unpack(p + 0x1, &status->memerr,       21, 21, 4);
 	sja1105_unpack(p + 0x1, &status->invtyp,       19, 19, 4);
-	sja1105_unpack(p + 0x1, &status->intcyov,      18, 18, 4);
-	sja1105_unpack(p + 0x1, &status->domerr,       17, 17, 4);
+	sja1105_unpack(p + 0x1, &status->पूर्णांकcyov,      18, 18, 4);
+	sja1105_unpack(p + 0x1, &status->करोmerr,       17, 17, 4);
 	sja1105_unpack(p + 0x1, &status->pcfbagdrop,   16, 16, 4);
 	sja1105_unpack(p + 0x1, &status->spcprior,     15, 12, 4);
 	sja1105_unpack(p + 0x1, &status->ageprior,     11,  8, 4);
@@ -128,13 +129,13 @@ sja1105_port_status_mac_unpack(void *buf,
 	sja1105_unpack(p + 0x1, &status->drpnona664err, 2,  2, 4);
 	sja1105_unpack(p + 0x1, &status->spcerr,        1,  1, 4);
 	sja1105_unpack(p + 0x1, &status->agedrp,        0,  0, 4);
-}
+पूर्ण
 
-static void
-sja1105_port_status_hl1_unpack(void *buf,
-			       struct sja1105_port_status_hl1 *status)
-{
-	/* Make pointer arithmetic work on 4 bytes */
+अटल व्योम
+sja1105_port_status_hl1_unpack(व्योम *buf,
+			       काष्ठा sja1105_port_status_hl1 *status)
+अणु
+	/* Make poपूर्णांकer arithmetic work on 4 bytes */
 	u32 *p = buf;
 
 	sja1105_unpack(p + 0xF, &status->n_n664err,    31,  0, 4);
@@ -157,40 +158,40 @@ sja1105_port_status_hl1_unpack(void *buf,
 	status->n_rxbyte += status->n_rxbytesh << 32;
 	status->n_txfrm  += status->n_txfrmsh  << 32;
 	status->n_txbyte += status->n_txbytesh << 32;
-}
+पूर्ण
 
-static void
-sja1105_port_status_hl2_unpack(void *buf,
-			       struct sja1105_port_status_hl2 *status)
-{
-	/* Make pointer arithmetic work on 4 bytes */
+अटल व्योम
+sja1105_port_status_hl2_unpack(व्योम *buf,
+			       काष्ठा sja1105_port_status_hl2 *status)
+अणु
+	/* Make poपूर्णांकer arithmetic work on 4 bytes */
 	u32 *p = buf;
 
 	sja1105_unpack(p + 0x3, &status->n_qfull,        31,  0, 4);
 	sja1105_unpack(p + 0x2, &status->n_part_drop,    31,  0, 4);
 	sja1105_unpack(p + 0x1, &status->n_egr_disabled, 31,  0, 4);
 	sja1105_unpack(p + 0x0, &status->n_not_reach,    31,  0, 4);
-}
+पूर्ण
 
-static void
-sja1105pqrs_port_status_qlevel_unpack(void *buf,
-				      struct sja1105_port_status_hl2 *status)
-{
-	/* Make pointer arithmetic work on 4 bytes */
+अटल व्योम
+sja1105pqrs_port_status_qlevel_unpack(व्योम *buf,
+				      काष्ठा sja1105_port_status_hl2 *status)
+अणु
+	/* Make poपूर्णांकer arithmetic work on 4 bytes */
 	u32 *p = buf;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		sja1105_unpack(p + i, &status->qlevel_hwm[i], 24, 16, 4);
 		sja1105_unpack(p + i, &status->qlevel[i],      8,  0, 4);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-sja1105pqrs_port_status_ether_unpack(void *buf,
-				     struct sja1105_port_status_ether *status)
-{
-	/* Make pointer arithmetic work on 4 bytes */
+अटल व्योम
+sja1105pqrs_port_status_ether_unpack(व्योम *buf,
+				     काष्ठा sja1105_port_status_ether *status)
+अणु
+	/* Make poपूर्णांकer arithmetic work on 4 bytes */
 	u32 *p = buf;
 
 	sja1105_unpack(p + 0x16, &status->n_drops_nolearn,      31, 0, 4);
@@ -216,119 +217,119 @@ sja1105pqrs_port_status_ether_unpack(void *buf,
 	sja1105_unpack(p + 0x02, &status->n_rx_bytes_64,        31, 0, 4);
 	sja1105_unpack(p + 0x01, &status->n_rx_mcast,           31, 0, 4);
 	sja1105_unpack(p + 0x00, &status->n_rx_bcast,           31, 0, 4);
-}
+पूर्ण
 
-static int
-sja1105pqrs_port_status_get_ether(struct sja1105_private *priv,
-				  struct sja1105_port_status_ether *ether,
-				  int port)
-{
-	const struct sja1105_regs *regs = priv->info->regs;
-	u8 packed_buf[SJA1105_SIZE_ETHER_AREA] = {0};
-	int rc;
+अटल पूर्णांक
+sja1105pqrs_port_status_get_ether(काष्ठा sja1105_निजी *priv,
+				  काष्ठा sja1105_port_status_ether *ether,
+				  पूर्णांक port)
+अणु
+	स्थिर काष्ठा sja1105_regs *regs = priv->info->regs;
+	u8 packed_buf[SJA1105_SIZE_ETHER_AREA] = अणु0पूर्ण;
+	पूर्णांक rc;
 
 	/* Ethernet statistics area */
 	rc = sja1105_xfer_buf(priv, SPI_READ, regs->ether_stats[port],
 			      packed_buf, SJA1105_SIZE_ETHER_AREA);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	sja1105pqrs_port_status_ether_unpack(packed_buf, ether);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_port_status_get_mac(struct sja1105_private *priv,
-				       struct sja1105_port_status_mac *status,
-				       int port)
-{
-	const struct sja1105_regs *regs = priv->info->regs;
-	u8 packed_buf[SJA1105_SIZE_MAC_AREA] = {0};
-	int rc;
+अटल पूर्णांक sja1105_port_status_get_mac(काष्ठा sja1105_निजी *priv,
+				       काष्ठा sja1105_port_status_mac *status,
+				       पूर्णांक port)
+अणु
+	स्थिर काष्ठा sja1105_regs *regs = priv->info->regs;
+	u8 packed_buf[SJA1105_SIZE_MAC_AREA] = अणु0पूर्ण;
+	पूर्णांक rc;
 
 	/* MAC area */
 	rc = sja1105_xfer_buf(priv, SPI_READ, regs->mac[port], packed_buf,
 			      SJA1105_SIZE_MAC_AREA);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	sja1105_port_status_mac_unpack(packed_buf, status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_port_status_get_hl1(struct sja1105_private *priv,
-				       struct sja1105_port_status_hl1 *status,
-				       int port)
-{
-	const struct sja1105_regs *regs = priv->info->regs;
-	u8 packed_buf[SJA1105_SIZE_HL1_AREA] = {0};
-	int rc;
+अटल पूर्णांक sja1105_port_status_get_hl1(काष्ठा sja1105_निजी *priv,
+				       काष्ठा sja1105_port_status_hl1 *status,
+				       पूर्णांक port)
+अणु
+	स्थिर काष्ठा sja1105_regs *regs = priv->info->regs;
+	u8 packed_buf[SJA1105_SIZE_HL1_AREA] = अणु0पूर्ण;
+	पूर्णांक rc;
 
 	rc = sja1105_xfer_buf(priv, SPI_READ, regs->mac_hl1[port], packed_buf,
 			      SJA1105_SIZE_HL1_AREA);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	sja1105_port_status_hl1_unpack(packed_buf, status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_port_status_get_hl2(struct sja1105_private *priv,
-				       struct sja1105_port_status_hl2 *status,
-				       int port)
-{
-	const struct sja1105_regs *regs = priv->info->regs;
-	u8 packed_buf[SJA1105_SIZE_QLEVEL_AREA] = {0};
-	int rc;
+अटल पूर्णांक sja1105_port_status_get_hl2(काष्ठा sja1105_निजी *priv,
+				       काष्ठा sja1105_port_status_hl2 *status,
+				       पूर्णांक port)
+अणु
+	स्थिर काष्ठा sja1105_regs *regs = priv->info->regs;
+	u8 packed_buf[SJA1105_SIZE_QLEVEL_AREA] = अणु0पूर्ण;
+	पूर्णांक rc;
 
 	rc = sja1105_xfer_buf(priv, SPI_READ, regs->mac_hl2[port], packed_buf,
 			      SJA1105_SIZE_HL2_AREA);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	sja1105_port_status_hl2_unpack(packed_buf, status);
 
-	/* Code below is strictly P/Q/R/S specific. */
-	if (priv->info->device_id == SJA1105E_DEVICE_ID ||
+	/* Code below is strictly P/Q/R/S specअगरic. */
+	अगर (priv->info->device_id == SJA1105E_DEVICE_ID ||
 	    priv->info->device_id == SJA1105T_DEVICE_ID)
-		return 0;
+		वापस 0;
 
 	rc = sja1105_xfer_buf(priv, SPI_READ, regs->qlevel[port], packed_buf,
 			      SJA1105_SIZE_QLEVEL_AREA);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	sja1105pqrs_port_status_qlevel_unpack(packed_buf, status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_port_status_get(struct sja1105_private *priv,
-				   struct sja1105_port_status *status,
-				   int port)
-{
-	int rc;
+अटल पूर्णांक sja1105_port_status_get(काष्ठा sja1105_निजी *priv,
+				   काष्ठा sja1105_port_status *status,
+				   पूर्णांक port)
+अणु
+	पूर्णांक rc;
 
 	rc = sja1105_port_status_get_mac(priv, &status->mac, port);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 	rc = sja1105_port_status_get_hl1(priv, &status->hl1, port);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 	rc = sja1105_port_status_get_hl2(priv, &status->hl2, port);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	if (priv->info->device_id == SJA1105E_DEVICE_ID ||
+	अगर (priv->info->device_id == SJA1105E_DEVICE_ID ||
 	    priv->info->device_id == SJA1105T_DEVICE_ID)
-		return 0;
+		वापस 0;
 
-	return sja1105pqrs_port_status_get_ether(priv, &status->ether, port);
-}
+	वापस sja1105pqrs_port_status_get_ether(priv, &status->ether, port);
+पूर्ण
 
-static char sja1105_port_stats[][ETH_GSTRING_LEN] = {
+अटल अक्षर sja1105_port_stats[][ETH_GSTRING_LEN] = अणु
 	/* MAC-Level Diagnostic Counters */
 	"n_runt",
 	"n_soferr",
@@ -372,9 +373,9 @@ static char sja1105_port_stats[][ETH_GSTRING_LEN] = {
 	"n_part_drop",
 	"n_egr_disabled",
 	"n_not_reach",
-};
+पूर्ण;
 
-static char sja1105pqrs_extra_port_stats[][ETH_GSTRING_LEN] = {
+अटल अक्षर sja1105pqrs_extra_port_stats[][ETH_GSTRING_LEN] = अणु
 	/* Queue Levels */
 	"qlevel_hwm_0",
 	"qlevel_hwm_1",
@@ -416,39 +417,39 @@ static char sja1105pqrs_extra_port_stats[][ETH_GSTRING_LEN] = {
 	"n_rx_bytes_64",
 	"n_rx_mcast",
 	"n_rx_bcast",
-};
+पूर्ण;
 
-void sja1105_get_ethtool_stats(struct dsa_switch *ds, int port, u64 *data)
-{
-	struct sja1105_private *priv = ds->priv;
-	struct sja1105_port_status *status;
-	int rc, i, k = 0;
+व्योम sja1105_get_ethtool_stats(काष्ठा dsa_चयन *ds, पूर्णांक port, u64 *data)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	काष्ठा sja1105_port_status *status;
+	पूर्णांक rc, i, k = 0;
 
-	status = kzalloc(sizeof(*status), GFP_KERNEL);
-	if (!status)
-		goto out;
+	status = kzalloc(माप(*status), GFP_KERNEL);
+	अगर (!status)
+		जाओ out;
 
 	rc = sja1105_port_status_get(priv, status, port);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(ds->dev, "Failed to read port %d counters: %d\n",
 			port, rc);
-		goto out;
-	}
-	memset(data, 0, ARRAY_SIZE(sja1105_port_stats) * sizeof(u64));
+		जाओ out;
+	पूर्ण
+	स_रखो(data, 0, ARRAY_SIZE(sja1105_port_stats) * माप(u64));
 	data[k++] = status->mac.n_runt;
 	data[k++] = status->mac.n_soferr;
 	data[k++] = status->mac.n_alignerr;
 	data[k++] = status->mac.n_miierr;
 	data[k++] = status->mac.typeerr;
 	data[k++] = status->mac.sizeerr;
-	data[k++] = status->mac.tctimeout;
+	data[k++] = status->mac.tस_समयout;
 	data[k++] = status->mac.priorerr;
 	data[k++] = status->mac.nomaster;
 	data[k++] = status->mac.memov;
 	data[k++] = status->mac.memerr;
 	data[k++] = status->mac.invtyp;
-	data[k++] = status->mac.intcyov;
-	data[k++] = status->mac.domerr;
+	data[k++] = status->mac.पूर्णांकcyov;
+	data[k++] = status->mac.करोmerr;
 	data[k++] = status->mac.pcfbagdrop;
 	data[k++] = status->mac.spcprior;
 	data[k++] = status->mac.ageprior;
@@ -476,16 +477,16 @@ void sja1105_get_ethtool_stats(struct dsa_switch *ds, int port, u64 *data)
 	data[k++] = status->hl2.n_egr_disabled;
 	data[k++] = status->hl2.n_not_reach;
 
-	if (priv->info->device_id == SJA1105E_DEVICE_ID ||
+	अगर (priv->info->device_id == SJA1105E_DEVICE_ID ||
 	    priv->info->device_id == SJA1105T_DEVICE_ID)
-		goto out;
+		जाओ out;
 
-	memset(data + k, 0, ARRAY_SIZE(sja1105pqrs_extra_port_stats) *
-			sizeof(u64));
-	for (i = 0; i < 8; i++) {
+	स_रखो(data + k, 0, ARRAY_SIZE(sja1105pqrs_extra_port_stats) *
+			माप(u64));
+	क्रम (i = 0; i < 8; i++) अणु
 		data[k++] = status->hl2.qlevel_hwm[i];
 		data[k++] = status->hl2.qlevel[i];
-	}
+	पूर्ण
 	data[k++] = status->ether.n_drops_nolearn;
 	data[k++] = status->ether.n_drops_noroute;
 	data[k++] = status->ether.n_drops_ill_dtag;
@@ -510,45 +511,45 @@ void sja1105_get_ethtool_stats(struct dsa_switch *ds, int port, u64 *data)
 	data[k++] = status->ether.n_rx_mcast;
 	data[k++] = status->ether.n_rx_bcast;
 out:
-	kfree(status);
-}
+	kमुक्त(status);
+पूर्ण
 
-void sja1105_get_strings(struct dsa_switch *ds, int port,
+व्योम sja1105_get_strings(काष्ठा dsa_चयन *ds, पूर्णांक port,
 			 u32 stringset, u8 *data)
-{
-	struct sja1105_private *priv = ds->priv;
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
 	u8 *p = data;
-	int i;
+	पूर्णांक i;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < ARRAY_SIZE(sja1105_port_stats); i++) {
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < ARRAY_SIZE(sja1105_port_stats); i++) अणु
 			strlcpy(p, sja1105_port_stats[i], ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
-		if (priv->info->device_id == SJA1105E_DEVICE_ID ||
+		पूर्ण
+		अगर (priv->info->device_id == SJA1105E_DEVICE_ID ||
 		    priv->info->device_id == SJA1105T_DEVICE_ID)
-			return;
-		for (i = 0; i < ARRAY_SIZE(sja1105pqrs_extra_port_stats); i++) {
+			वापस;
+		क्रम (i = 0; i < ARRAY_SIZE(sja1105pqrs_extra_port_stats); i++) अणु
 			strlcpy(p, sja1105pqrs_extra_port_stats[i],
 				ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-int sja1105_get_sset_count(struct dsa_switch *ds, int port, int sset)
-{
-	int count = ARRAY_SIZE(sja1105_port_stats);
-	struct sja1105_private *priv = ds->priv;
+पूर्णांक sja1105_get_sset_count(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक sset)
+अणु
+	पूर्णांक count = ARRAY_SIZE(sja1105_port_stats);
+	काष्ठा sja1105_निजी *priv = ds->priv;
 
-	if (sset != ETH_SS_STATS)
-		return -EOPNOTSUPP;
+	अगर (sset != ETH_SS_STATS)
+		वापस -EOPNOTSUPP;
 
-	if (priv->info->device_id == SJA1105PR_DEVICE_ID ||
+	अगर (priv->info->device_id == SJA1105PR_DEVICE_ID ||
 	    priv->info->device_id == SJA1105QS_DEVICE_ID)
 		count += ARRAY_SIZE(sja1105pqrs_extra_port_stats);
 
-	return count;
-}
+	वापस count;
+पूर्ण

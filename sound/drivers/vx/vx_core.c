@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for Digigram VX soundcards
+ * Driver क्रम Digigram VX soundcards
  *
  * Hardware core part
  *
  * Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  */
 
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/asoundef.h>
-#include <sound/info.h>
-#include <sound/vx_core.h>
-#include "vx_cmd.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/info.h>
+#समावेश <sound/vx_core.h>
+#समावेश "vx_cmd.h"
 
 MODULE_AUTHOR("Takashi Iwai <tiwai@suse.de>");
 MODULE_DESCRIPTION("Common routines for Digigram VX drivers");
@@ -28,33 +29,33 @@ MODULE_LICENSE("GPL");
 
 
 /*
- * vx_check_reg_bit - wait for the specified bit is set/reset on a register
- * @reg: register to check
+ * vx_check_reg_bit - रुको क्रम the specअगरied bit is set/reset on a रेजिस्टर
+ * @reg: रेजिस्टर to check
  * @mask: bit mask
  * @bit: resultant bit to be checked
- * @time: time-out of loop in msec
+ * @समय: समय-out of loop in msec
  *
- * returns zero if a bit matches, or a negative error code.
+ * वापसs zero अगर a bit matches, or a negative error code.
  */
-int snd_vx_check_reg_bit(struct vx_core *chip, int reg, int mask, int bit, int time)
-{
-	unsigned long end_time = jiffies + (time * HZ + 999) / 1000;
-	static const char * const reg_names[VX_REG_MAX] = {
+पूर्णांक snd_vx_check_reg_bit(काष्ठा vx_core *chip, पूर्णांक reg, पूर्णांक mask, पूर्णांक bit, पूर्णांक समय)
+अणु
+	अचिन्हित दीर्घ end_समय = jअगरfies + (समय * HZ + 999) / 1000;
+	अटल स्थिर अक्षर * स्थिर reg_names[VX_REG_MAX] = अणु
 		"ICR", "CVR", "ISR", "IVR", "RXH", "RXM", "RXL",
 		"DMA", "CDSP", "RFREQ", "RUER/V2", "DATA", "MEMIRQ",
 		"ACQ", "BIT0", "BIT1", "MIC0", "MIC1", "MIC2",
 		"MIC3", "INTCSR", "CNTRL", "GPIOC",
 		"LOFREQ", "HIFREQ", "CSUER", "RUER"
-	};
+	पूर्ण;
 
-	do {
-		if ((snd_vx_inb(chip, reg) & mask) == bit)
-			return 0;
+	करो अणु
+		अगर ((snd_vx_inb(chip, reg) & mask) == bit)
+			वापस 0;
 		//msleep(10);
-	} while (time_after_eq(end_time, jiffies));
-	snd_printd(KERN_DEBUG "vx_check_reg_bit: timeout, reg=%s, mask=0x%x, val=0x%x\n", reg_names[reg], mask, snd_vx_inb(chip, reg));
-	return -EIO;
-}
+	पूर्ण जबतक (समय_after_eq(end_समय, jअगरfies));
+	snd_prपूर्णांकd(KERN_DEBUG "vx_check_reg_bit: timeout, reg=%s, mask=0x%x, val=0x%x\n", reg_names[reg], mask, snd_vx_inb(chip, reg));
+	वापस -EIO;
+पूर्ण
 
 EXPORT_SYMBOL(snd_vx_check_reg_bit);
 
@@ -62,102 +63,102 @@ EXPORT_SYMBOL(snd_vx_check_reg_bit);
  * vx_send_irq_dsp - set command irq bit
  * @num: the requested IRQ type, IRQ_XXX
  *
- * this triggers the specified IRQ request
- * returns 0 if successful, or a negative error code.
+ * this triggers the specअगरied IRQ request
+ * वापसs 0 अगर successful, or a negative error code.
  * 
  */
-static int vx_send_irq_dsp(struct vx_core *chip, int num)
-{
-	int nirq;
+अटल पूर्णांक vx_send_irq_dsp(काष्ठा vx_core *chip, पूर्णांक num)
+अणु
+	पूर्णांक nirq;
 
-	/* wait for Hc = 0 */
-	if (snd_vx_check_reg_bit(chip, VX_CVR, CVR_HC, 0, 200) < 0)
-		return -EIO;
+	/* रुको क्रम Hc = 0 */
+	अगर (snd_vx_check_reg_bit(chip, VX_CVR, CVR_HC, 0, 200) < 0)
+		वापस -EIO;
 
 	nirq = num;
-	if (vx_has_new_dsp(chip))
+	अगर (vx_has_new_dsp(chip))
 		nirq += VXP_IRQ_OFFSET;
 	vx_outb(chip, CVR, (nirq >> 1) | CVR_HC);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * vx_reset_chk - reset CHK bit on ISR
  *
- * returns 0 if successful, or a negative error code.
+ * वापसs 0 अगर successful, or a negative error code.
  */
-static int vx_reset_chk(struct vx_core *chip)
-{
+अटल पूर्णांक vx_reset_chk(काष्ठा vx_core *chip)
+अणु
 	/* Reset irq CHK */
-	if (vx_send_irq_dsp(chip, IRQ_RESET_CHK) < 0)
-		return -EIO;
+	अगर (vx_send_irq_dsp(chip, IRQ_RESET_CHK) < 0)
+		वापस -EIO;
 	/* Wait until CHK = 0 */
-	if (vx_check_isr(chip, ISR_CHK, 0, 200) < 0)
-		return -EIO;
-	return 0;
-}
+	अगर (vx_check_isr(chip, ISR_CHK, 0, 200) < 0)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
 /*
  * vx_transfer_end - terminate message transfer
  * @cmd: IRQ message to send (IRQ_MESS_XXX_END)
  *
- * returns 0 if successful, or a negative error code.
- * the error code can be VX-specific, retrieved via vx_get_error().
+ * वापसs 0 अगर successful, or a negative error code.
+ * the error code can be VX-specअगरic, retrieved via vx_get_error().
  * NB: call with mutex held!
  */
-static int vx_transfer_end(struct vx_core *chip, int cmd)
-{
-	int err;
+अटल पूर्णांक vx_transfer_end(काष्ठा vx_core *chip, पूर्णांक cmd)
+अणु
+	पूर्णांक err;
 
-	if ((err = vx_reset_chk(chip)) < 0)
-		return err;
+	अगर ((err = vx_reset_chk(chip)) < 0)
+		वापस err;
 
 	/* irq MESS_READ/WRITE_END */
-	if ((err = vx_send_irq_dsp(chip, cmd)) < 0)
-		return err;
+	अगर ((err = vx_send_irq_dsp(chip, cmd)) < 0)
+		वापस err;
 
 	/* Wait CHK = 1 */
-	if ((err = vx_wait_isr_bit(chip, ISR_CHK)) < 0)
-		return err;
+	अगर ((err = vx_रुको_isr_bit(chip, ISR_CHK)) < 0)
+		वापस err;
 
 	/* If error, Read RX */
-	if ((err = vx_inb(chip, ISR)) & ISR_ERR) {
-		if ((err = vx_wait_for_rx_full(chip)) < 0) {
-			snd_printd(KERN_DEBUG "transfer_end: error in rx_full\n");
-			return err;
-		}
+	अगर ((err = vx_inb(chip, ISR)) & ISR_ERR) अणु
+		अगर ((err = vx_रुको_क्रम_rx_full(chip)) < 0) अणु
+			snd_prपूर्णांकd(KERN_DEBUG "transfer_end: error in rx_full\n");
+			वापस err;
+		पूर्ण
 		err = vx_inb(chip, RXH) << 16;
 		err |= vx_inb(chip, RXM) << 8;
 		err |= vx_inb(chip, RXL);
-		snd_printd(KERN_DEBUG "transfer_end: error = 0x%x\n", err);
-		return -(VX_ERR_MASK | err);
-	}
-	return 0;
-}
+		snd_prपूर्णांकd(KERN_DEBUG "transfer_end: error = 0x%x\n", err);
+		वापस -(VX_ERR_MASK | err);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * vx_read_status - return the status rmh
+ * vx_पढ़ो_status - वापस the status rmh
  * @rmh: rmh record to store the status
  *
- * returns 0 if successful, or a negative error code.
- * the error code can be VX-specific, retrieved via vx_get_error().
+ * वापसs 0 अगर successful, or a negative error code.
+ * the error code can be VX-specअगरic, retrieved via vx_get_error().
  * NB: call with mutex held!
  */
-static int vx_read_status(struct vx_core *chip, struct vx_rmh *rmh)
-{
-	int i, err, val, size;
+अटल पूर्णांक vx_पढ़ो_status(काष्ठा vx_core *chip, काष्ठा vx_rmh *rmh)
+अणु
+	पूर्णांक i, err, val, size;
 
-	/* no read necessary? */
-	if (rmh->DspStat == RMH_SSIZE_FIXED && rmh->LgStat == 0)
-		return 0;
+	/* no पढ़ो necessary? */
+	अगर (rmh->DspStat == RMH_SSIZE_FIXED && rmh->LgStat == 0)
+		वापस 0;
 
-	/* Wait for RX full (with timeout protection)
+	/* Wait क्रम RX full (with समयout protection)
 	 * The first word of status is in RX
 	 */
-	err = vx_wait_for_rx_full(chip);
-	if (err < 0)
-		return err;
+	err = vx_रुको_क्रम_rx_full(chip);
+	अगर (err < 0)
+		वापस err;
 
 	/* Read RX */
 	val = vx_inb(chip, RXH) << 16;
@@ -165,99 +166,99 @@ static int vx_read_status(struct vx_core *chip, struct vx_rmh *rmh)
 	val |= vx_inb(chip, RXL);
 
 	/* If status given by DSP, let's decode its size */
-	switch (rmh->DspStat) {
-	case RMH_SSIZE_ARG:
+	चयन (rmh->DspStat) अणु
+	हाल RMH_SSIZE_ARG:
 		size = val & 0xff;
 		rmh->Stat[0] = val & 0xffff00;
 		rmh->LgStat = size + 1;
-		break;
-	case RMH_SSIZE_MASK:
+		अवरोध;
+	हाल RMH_SSIZE_MASK:
 		/* Let's count the arg numbers from a mask */
 		rmh->Stat[0] = val;
 		size = 0;
-		while (val) {
-			if (val & 0x01)
+		जबतक (val) अणु
+			अगर (val & 0x01)
 				size++;
 			val >>= 1;
-		}
+		पूर्ण
 		rmh->LgStat = size + 1;
-		break;
-	default:
-		/* else retrieve the status length given by the driver */
+		अवरोध;
+	शेष:
+		/* अन्यथा retrieve the status length given by the driver */
 		size = rmh->LgStat;
 		rmh->Stat[0] = val;  /* Val is the status 1st word */
-		size--;              /* hence adjust remaining length */
-		break;
-        }
+		size--;              /* hence adjust reमुख्यing length */
+		अवरोध;
+        पूर्ण
 
-	if (size < 1)
-		return 0;
-	if (snd_BUG_ON(size >= SIZE_MAX_STATUS))
-		return -EINVAL;
+	अगर (size < 1)
+		वापस 0;
+	अगर (snd_BUG_ON(size >= SIZE_MAX_STATUS))
+		वापस -EINVAL;
 
-	for (i = 1; i <= size; i++) {
+	क्रम (i = 1; i <= size; i++) अणु
 		/* trigger an irq MESS_WRITE_NEXT */
 		err = vx_send_irq_dsp(chip, IRQ_MESS_WRITE_NEXT);
-		if (err < 0)
-			return err;
-		/* Wait for RX full (with timeout protection) */
-		err = vx_wait_for_rx_full(chip);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
+		/* Wait क्रम RX full (with समयout protection) */
+		err = vx_रुको_क्रम_rx_full(chip);
+		अगर (err < 0)
+			वापस err;
 		rmh->Stat[i] = vx_inb(chip, RXH) << 16;
 		rmh->Stat[i] |= vx_inb(chip, RXM) <<  8;
 		rmh->Stat[i] |= vx_inb(chip, RXL);
-	}
+	पूर्ण
 
-	return vx_transfer_end(chip, IRQ_MESS_WRITE_END);
-}
+	वापस vx_transfer_end(chip, IRQ_MESS_WRITE_END);
+पूर्ण
 
 
-#define MASK_MORE_THAN_1_WORD_COMMAND   0x00008000
-#define MASK_1_WORD_COMMAND             0x00ff7fff
+#घोषणा MASK_MORE_THAN_1_WORD_COMMAND   0x00008000
+#घोषणा MASK_1_WORD_COMMAND             0x00ff7fff
 
 /*
- * vx_send_msg_nolock - send a DSP message and read back the status
+ * vx_send_msg_nolock - send a DSP message and पढ़ो back the status
  * @rmh: the rmh record to send and receive
  *
- * returns 0 if successful, or a negative error code.
- * the error code can be VX-specific, retrieved via vx_get_error().
+ * वापसs 0 अगर successful, or a negative error code.
+ * the error code can be VX-specअगरic, retrieved via vx_get_error().
  * 
- * this function doesn't call mutex lock at all.
+ * this function करोesn't call mutex lock at all.
  */
-int vx_send_msg_nolock(struct vx_core *chip, struct vx_rmh *rmh)
-{
-	int i, err;
+पूर्णांक vx_send_msg_nolock(काष्ठा vx_core *chip, काष्ठा vx_rmh *rmh)
+अणु
+	पूर्णांक i, err;
 	
-	if (chip->chip_status & VX_STAT_IS_STALE)
-		return -EBUSY;
+	अगर (chip->chip_status & VX_STAT_IS_STALE)
+		वापस -EBUSY;
 
-	if ((err = vx_reset_chk(chip)) < 0) {
-		snd_printd(KERN_DEBUG "vx_send_msg: vx_reset_chk error\n");
-		return err;
-	}
+	अगर ((err = vx_reset_chk(chip)) < 0) अणु
+		snd_prपूर्णांकd(KERN_DEBUG "vx_send_msg: vx_reset_chk error\n");
+		वापस err;
+	पूर्ण
 
-#if 0
-	printk(KERN_DEBUG "rmh: cmd = 0x%06x, length = %d, stype = %d\n",
+#अगर 0
+	prपूर्णांकk(KERN_DEBUG "rmh: cmd = 0x%06x, length = %d, stype = %d\n",
 	       rmh->Cmd[0], rmh->LgCmd, rmh->DspStat);
-	if (rmh->LgCmd > 1) {
-		printk(KERN_DEBUG "  ");
-		for (i = 1; i < rmh->LgCmd; i++)
-			printk(KERN_CONT "0x%06x ", rmh->Cmd[i]);
-		printk(KERN_CONT "\n");
-	}
-#endif
+	अगर (rmh->LgCmd > 1) अणु
+		prपूर्णांकk(KERN_DEBUG "  ");
+		क्रम (i = 1; i < rmh->LgCmd; i++)
+			prपूर्णांकk(KERN_CONT "0x%06x ", rmh->Cmd[i]);
+		prपूर्णांकk(KERN_CONT "\n");
+	पूर्ण
+#पूर्ण_अगर
 	/* Check bit M is set according to length of the command */
-	if (rmh->LgCmd > 1)
+	अगर (rmh->LgCmd > 1)
 		rmh->Cmd[0] |= MASK_MORE_THAN_1_WORD_COMMAND;
-	else
+	अन्यथा
 		rmh->Cmd[0] &= MASK_1_WORD_COMMAND;
 
-	/* Wait for TX empty */
-	if ((err = vx_wait_isr_bit(chip, ISR_TX_EMPTY)) < 0) {
-		snd_printd(KERN_DEBUG "vx_send_msg: wait tx empty error\n");
-		return err;
-	}
+	/* Wait क्रम TX empty */
+	अगर ((err = vx_रुको_isr_bit(chip, ISR_TX_EMPTY)) < 0) अणु
+		snd_prपूर्णांकd(KERN_DEBUG "vx_send_msg: wait tx empty error\n");
+		वापस err;
+	पूर्ण
 
 	/* Write Cmd[0] */
 	vx_outb(chip, TXH, (rmh->Cmd[0] >> 16) & 0xff);
@@ -265,37 +266,37 @@ int vx_send_msg_nolock(struct vx_core *chip, struct vx_rmh *rmh)
 	vx_outb(chip, TXL, rmh->Cmd[0] & 0xff);
 
 	/* Trigger irq MESSAGE */
-	if ((err = vx_send_irq_dsp(chip, IRQ_MESSAGE)) < 0) {
-		snd_printd(KERN_DEBUG "vx_send_msg: send IRQ_MESSAGE error\n");
-		return err;
-	}
+	अगर ((err = vx_send_irq_dsp(chip, IRQ_MESSAGE)) < 0) अणु
+		snd_prपूर्णांकd(KERN_DEBUG "vx_send_msg: send IRQ_MESSAGE error\n");
+		वापस err;
+	पूर्ण
 
-	/* Wait for CHK = 1 */
-	if ((err = vx_wait_isr_bit(chip, ISR_CHK)) < 0)
-		return err;
+	/* Wait क्रम CHK = 1 */
+	अगर ((err = vx_रुको_isr_bit(chip, ISR_CHK)) < 0)
+		वापस err;
 
 	/* If error, get error value from RX */
-	if (vx_inb(chip, ISR) & ISR_ERR) {
-		if ((err = vx_wait_for_rx_full(chip)) < 0) {
-			snd_printd(KERN_DEBUG "vx_send_msg: rx_full read error\n");
-			return err;
-		}
+	अगर (vx_inb(chip, ISR) & ISR_ERR) अणु
+		अगर ((err = vx_रुको_क्रम_rx_full(chip)) < 0) अणु
+			snd_prपूर्णांकd(KERN_DEBUG "vx_send_msg: rx_full read error\n");
+			वापस err;
+		पूर्ण
 		err = vx_inb(chip, RXH) << 16;
 		err |= vx_inb(chip, RXM) << 8;
 		err |= vx_inb(chip, RXL);
-		snd_printd(KERN_DEBUG "msg got error = 0x%x at cmd[0]\n", err);
+		snd_prपूर्णांकd(KERN_DEBUG "msg got error = 0x%x at cmd[0]\n", err);
 		err = -(VX_ERR_MASK | err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Send the other words */
-	if (rmh->LgCmd > 1) {
-		for (i = 1; i < rmh->LgCmd; i++) {
-			/* Wait for TX ready */
-			if ((err = vx_wait_isr_bit(chip, ISR_TX_READY)) < 0) {
-				snd_printd(KERN_DEBUG "vx_send_msg: tx_ready error\n");
-				return err;
-			}
+	अगर (rmh->LgCmd > 1) अणु
+		क्रम (i = 1; i < rmh->LgCmd; i++) अणु
+			/* Wait क्रम TX पढ़ोy */
+			अगर ((err = vx_रुको_isr_bit(chip, ISR_TX_READY)) < 0) अणु
+				snd_prपूर्णांकd(KERN_DEBUG "vx_send_msg: tx_ready error\n");
+				वापस err;
+			पूर्ण
 
 			/* Write Cmd[i] */
 			vx_outb(chip, TXH, (rmh->Cmd[i] >> 16) & 0xff);
@@ -303,84 +304,84 @@ int vx_send_msg_nolock(struct vx_core *chip, struct vx_rmh *rmh)
 			vx_outb(chip, TXL, rmh->Cmd[i] & 0xff);
 
 			/* Trigger irq MESS_READ_NEXT */
-			if ((err = vx_send_irq_dsp(chip, IRQ_MESS_READ_NEXT)) < 0) {
-				snd_printd(KERN_DEBUG "vx_send_msg: IRQ_READ_NEXT error\n");
-				return err;
-			}
-		}
-		/* Wait for TX empty */
-		if ((err = vx_wait_isr_bit(chip, ISR_TX_READY)) < 0) {
-			snd_printd(KERN_DEBUG "vx_send_msg: TX_READY error\n");
-			return err;
-		}
+			अगर ((err = vx_send_irq_dsp(chip, IRQ_MESS_READ_NEXT)) < 0) अणु
+				snd_prपूर्णांकd(KERN_DEBUG "vx_send_msg: IRQ_READ_NEXT error\n");
+				वापस err;
+			पूर्ण
+		पूर्ण
+		/* Wait क्रम TX empty */
+		अगर ((err = vx_रुको_isr_bit(chip, ISR_TX_READY)) < 0) अणु
+			snd_prपूर्णांकd(KERN_DEBUG "vx_send_msg: TX_READY error\n");
+			वापस err;
+		पूर्ण
 		/* End of transfer */
 		err = vx_transfer_end(chip, IRQ_MESS_READ_END);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	return vx_read_status(chip, rmh);
-}
+	वापस vx_पढ़ो_status(chip, rmh);
+पूर्ण
 
 
 /*
  * vx_send_msg - send a DSP message with mutex
  * @rmh: the rmh record to send and receive
  *
- * returns 0 if successful, or a negative error code.
+ * वापसs 0 अगर successful, or a negative error code.
  * see vx_send_msg_nolock().
  */
-int vx_send_msg(struct vx_core *chip, struct vx_rmh *rmh)
-{
-	int err;
+पूर्णांक vx_send_msg(काष्ठा vx_core *chip, काष्ठा vx_rmh *rmh)
+अणु
+	पूर्णांक err;
 
 	mutex_lock(&chip->lock);
 	err = vx_send_msg_nolock(chip, rmh);
 	mutex_unlock(&chip->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 /*
  * vx_send_rih_nolock - send an RIH to xilinx
  * @cmd: the command to send
  *
- * returns 0 if successful, or a negative error code.
- * the error code can be VX-specific, retrieved via vx_get_error().
+ * वापसs 0 अगर successful, or a negative error code.
+ * the error code can be VX-specअगरic, retrieved via vx_get_error().
  *
- * this function doesn't call mutex at all.
+ * this function करोesn't call mutex at all.
  *
  * unlike RMH, no command is sent to DSP.
  */
-int vx_send_rih_nolock(struct vx_core *chip, int cmd)
-{
-	int err;
+पूर्णांक vx_send_rih_nolock(काष्ठा vx_core *chip, पूर्णांक cmd)
+अणु
+	पूर्णांक err;
 
-	if (chip->chip_status & VX_STAT_IS_STALE)
-		return -EBUSY;
+	अगर (chip->chip_status & VX_STAT_IS_STALE)
+		वापस -EBUSY;
 
-#if 0
-	printk(KERN_DEBUG "send_rih: cmd = 0x%x\n", cmd);
-#endif
-	if ((err = vx_reset_chk(chip)) < 0)
-		return err;
+#अगर 0
+	prपूर्णांकk(KERN_DEBUG "send_rih: cmd = 0x%x\n", cmd);
+#पूर्ण_अगर
+	अगर ((err = vx_reset_chk(chip)) < 0)
+		वापस err;
 	/* send the IRQ */
-	if ((err = vx_send_irq_dsp(chip, cmd)) < 0)
-		return err;
+	अगर ((err = vx_send_irq_dsp(chip, cmd)) < 0)
+		वापस err;
 	/* Wait CHK = 1 */
-	if ((err = vx_wait_isr_bit(chip, ISR_CHK)) < 0)
-		return err;
-	/* If error, read RX */
-	if (vx_inb(chip, ISR) & ISR_ERR) {
-		if ((err = vx_wait_for_rx_full(chip)) < 0)
-			return err;
+	अगर ((err = vx_रुको_isr_bit(chip, ISR_CHK)) < 0)
+		वापस err;
+	/* If error, पढ़ो RX */
+	अगर (vx_inb(chip, ISR) & ISR_ERR) अणु
+		अगर ((err = vx_रुको_क्रम_rx_full(chip)) < 0)
+			वापस err;
 		err = vx_inb(chip, RXH) << 16;
 		err |= vx_inb(chip, RXM) << 8;
 		err |= vx_inb(chip, RXL);
-		return -(VX_ERR_MASK | err);
-	}
-	return 0;
-}
+		वापस -(VX_ERR_MASK | err);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /*
@@ -389,250 +390,250 @@ int vx_send_rih_nolock(struct vx_core *chip, int cmd)
  *
  * see vx_send_rih_nolock().
  */
-int vx_send_rih(struct vx_core *chip, int cmd)
-{
-	int err;
+पूर्णांक vx_send_rih(काष्ठा vx_core *chip, पूर्णांक cmd)
+अणु
+	पूर्णांक err;
 
 	mutex_lock(&chip->lock);
 	err = vx_send_rih_nolock(chip, cmd);
 	mutex_unlock(&chip->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#define END_OF_RESET_WAIT_TIME		500	/* us */
+#घोषणा END_OF_RESET_WAIT_TIME		500	/* us */
 
 /**
- * snd_vx_load_boot_image - boot up the xilinx interface
+ * snd_vx_load_boot_image - boot up the xilinx पूर्णांकerface
  * @chip: VX core instance
  * @boot: the boot record to load
  */
-int snd_vx_load_boot_image(struct vx_core *chip, const struct firmware *boot)
-{
-	unsigned int i;
-	int no_fillup = vx_has_new_dsp(chip);
+पूर्णांक snd_vx_load_boot_image(काष्ठा vx_core *chip, स्थिर काष्ठा firmware *boot)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक no_fillup = vx_has_new_dsp(chip);
 
 	/* check the length of boot image */
-	if (boot->size <= 0)
-		return -EINVAL;
-	if (boot->size % 3)
-		return -EINVAL;
-#if 0
-	{
+	अगर (boot->size <= 0)
+		वापस -EINVAL;
+	अगर (boot->size % 3)
+		वापस -EINVAL;
+#अगर 0
+	अणु
 		/* more strict check */
-		unsigned int c = ((u32)boot->data[0] << 16) | ((u32)boot->data[1] << 8) | boot->data[2];
-		if (boot->size != (c + 2) * 3)
-			return -EINVAL;
-	}
-#endif
+		अचिन्हित पूर्णांक c = ((u32)boot->data[0] << 16) | ((u32)boot->data[1] << 8) | boot->data[2];
+		अगर (boot->size != (c + 2) * 3)
+			वापस -EINVAL;
+	पूर्ण
+#पूर्ण_अगर
 
 	/* reset dsp */
 	vx_reset_dsp(chip);
 	
-	udelay(END_OF_RESET_WAIT_TIME); /* another wait? */
+	udelay(END_OF_RESET_WAIT_TIME); /* another रुको? */
 
-	/* download boot strap */
-	for (i = 0; i < 0x600; i += 3) {
-		if (i >= boot->size) {
-			if (no_fillup)
-				break;
-			if (vx_wait_isr_bit(chip, ISR_TX_EMPTY) < 0) {
-				snd_printk(KERN_ERR "dsp boot failed at %d\n", i);
-				return -EIO;
-			}
+	/* करोwnload boot strap */
+	क्रम (i = 0; i < 0x600; i += 3) अणु
+		अगर (i >= boot->size) अणु
+			अगर (no_fillup)
+				अवरोध;
+			अगर (vx_रुको_isr_bit(chip, ISR_TX_EMPTY) < 0) अणु
+				snd_prपूर्णांकk(KERN_ERR "dsp boot failed at %d\n", i);
+				वापस -EIO;
+			पूर्ण
 			vx_outb(chip, TXH, 0);
 			vx_outb(chip, TXM, 0);
 			vx_outb(chip, TXL, 0);
-		} else {
-			const unsigned char *image = boot->data + i;
-			if (vx_wait_isr_bit(chip, ISR_TX_EMPTY) < 0) {
-				snd_printk(KERN_ERR "dsp boot failed at %d\n", i);
-				return -EIO;
-			}
+		पूर्ण अन्यथा अणु
+			स्थिर अचिन्हित अक्षर *image = boot->data + i;
+			अगर (vx_रुको_isr_bit(chip, ISR_TX_EMPTY) < 0) अणु
+				snd_prपूर्णांकk(KERN_ERR "dsp boot failed at %d\n", i);
+				वापस -EIO;
+			पूर्ण
 			vx_outb(chip, TXH, image[0]);
 			vx_outb(chip, TXM, image[1]);
 			vx_outb(chip, TXL, image[2]);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(snd_vx_load_boot_image);
 
 /*
- * vx_test_irq_src - query the source of interrupts
+ * vx_test_irq_src - query the source of पूर्णांकerrupts
  *
  * called from irq handler only
  */
-static int vx_test_irq_src(struct vx_core *chip, unsigned int *ret)
-{
-	int err;
+अटल पूर्णांक vx_test_irq_src(काष्ठा vx_core *chip, अचिन्हित पूर्णांक *ret)
+अणु
+	पूर्णांक err;
 
 	vx_init_rmh(&chip->irq_rmh, CMD_TEST_IT);
 	mutex_lock(&chip->lock);
 	err = vx_send_msg_nolock(chip, &chip->irq_rmh);
-	if (err < 0)
+	अगर (err < 0)
 		*ret = 0;
-	else
+	अन्यथा
 		*ret = chip->irq_rmh.Stat[0];
 	mutex_unlock(&chip->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 /*
- * snd_vx_threaded_irq_handler - threaded irq handler
+ * snd_vx_thपढ़ोed_irq_handler - thपढ़ोed irq handler
  */
-irqreturn_t snd_vx_threaded_irq_handler(int irq, void *dev)
-{
-	struct vx_core *chip = dev;
-	unsigned int events;
+irqवापस_t snd_vx_thपढ़ोed_irq_handler(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा vx_core *chip = dev;
+	अचिन्हित पूर्णांक events;
 		
-	if (chip->chip_status & VX_STAT_IS_STALE)
-		return IRQ_HANDLED;
+	अगर (chip->chip_status & VX_STAT_IS_STALE)
+		वापस IRQ_HANDLED;
 
-	if (vx_test_irq_src(chip, &events) < 0)
-		return IRQ_HANDLED;
+	अगर (vx_test_irq_src(chip, &events) < 0)
+		वापस IRQ_HANDLED;
     
-#if 0
-	if (events & 0x000800)
-		printk(KERN_ERR "DSP Stream underrun ! IRQ events = 0x%x\n", events);
-#endif
-	// printk(KERN_DEBUG "IRQ events = 0x%x\n", events);
+#अगर 0
+	अगर (events & 0x000800)
+		prपूर्णांकk(KERN_ERR "DSP Stream underrun ! IRQ events = 0x%x\n", events);
+#पूर्ण_अगर
+	// prपूर्णांकk(KERN_DEBUG "IRQ events = 0x%x\n", events);
 
 	/* We must prevent any application using this DSP
 	 * and block any further request until the application
-	 * either unregisters or reloads the DSP
+	 * either unरेजिस्टरs or reloads the DSP
 	 */
-	if (events & FATAL_DSP_ERROR) {
-		snd_printk(KERN_ERR "vx_core: fatal DSP error!!\n");
-		return IRQ_HANDLED;
-	}
+	अगर (events & FATAL_DSP_ERROR) अणु
+		snd_prपूर्णांकk(KERN_ERR "vx_core: fatal DSP error!!\n");
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	/* The start on time code conditions are filled (ie the time code
+	/* The start on समय code conditions are filled (ie the समय code
 	 * received by the board is equal to one of those given to it).
 	 */
-	if (events & TIME_CODE_EVENT_PENDING) {
-		; /* so far, nothing to do yet */
-	}
+	अगर (events & TIME_CODE_EVENT_PENDING) अणु
+		; /* so far, nothing to करो yet */
+	पूर्ण
 
 	/* The frequency has changed on the board (UER mode). */
-	if (events & FREQUENCY_CHANGE_EVENT_PENDING)
+	अगर (events & FREQUENCY_CHANGE_EVENT_PENDING)
 		vx_change_frequency(chip);
 
 	/* update the pcm streams */
-	vx_pcm_update_intr(chip, events);
-	return IRQ_HANDLED;
-}
-EXPORT_SYMBOL(snd_vx_threaded_irq_handler);
+	vx_pcm_update_पूर्णांकr(chip, events);
+	वापस IRQ_HANDLED;
+पूर्ण
+EXPORT_SYMBOL(snd_vx_thपढ़ोed_irq_handler);
 
 /**
- * snd_vx_irq_handler - interrupt handler
+ * snd_vx_irq_handler - पूर्णांकerrupt handler
  * @irq: irq number
  * @dev: VX core instance
  */
-irqreturn_t snd_vx_irq_handler(int irq, void *dev)
-{
-	struct vx_core *chip = dev;
+irqवापस_t snd_vx_irq_handler(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा vx_core *chip = dev;
 
-	if (! (chip->chip_status & VX_STAT_CHIP_INIT) ||
+	अगर (! (chip->chip_status & VX_STAT_CHIP_INIT) ||
 	    (chip->chip_status & VX_STAT_IS_STALE))
-		return IRQ_NONE;
-	if (! vx_test_and_ack(chip))
-		return IRQ_WAKE_THREAD;
-	return IRQ_NONE;
-}
+		वापस IRQ_NONE;
+	अगर (! vx_test_and_ack(chip))
+		वापस IRQ_WAKE_THREAD;
+	वापस IRQ_NONE;
+पूर्ण
 
 EXPORT_SYMBOL(snd_vx_irq_handler);
 
 /*
  */
-static void vx_reset_board(struct vx_core *chip, int cold_reset)
-{
-	if (snd_BUG_ON(!chip->ops->reset_board))
-		return;
+अटल व्योम vx_reset_board(काष्ठा vx_core *chip, पूर्णांक cold_reset)
+अणु
+	अगर (snd_BUG_ON(!chip->ops->reset_board))
+		वापस;
 
 	/* current source, later sync'ed with target */
 	chip->audio_source = VX_AUDIO_SRC_LINE;
-	if (cold_reset) {
+	अगर (cold_reset) अणु
 		chip->audio_source_target = chip->audio_source;
-		chip->clock_source = INTERNAL_QUARTZ;
-		chip->clock_mode = VX_CLOCK_MODE_AUTO;
+		chip->घड़ी_source = INTERNAL_QUARTZ;
+		chip->घड़ी_mode = VX_CLOCK_MODE_AUTO;
 		chip->freq = 48000;
 		chip->uer_detected = VX_UER_MODE_NOT_PRESENT;
 		chip->uer_bits = SNDRV_PCM_DEFAULT_CON_SPDIF;
-	}
+	पूर्ण
 
 	chip->ops->reset_board(chip, cold_reset);
 
 	vx_reset_codec(chip, cold_reset);
 
-	vx_set_internal_clock(chip, chip->freq);
+	vx_set_पूर्णांकernal_घड़ी(chip, chip->freq);
 
 	/* Reset the DSP */
 	vx_reset_dsp(chip);
 
-	if (vx_is_pcmcia(chip)) {
+	अगर (vx_is_pcmcia(chip)) अणु
 		/* Acknowledge any pending IRQ and reset the MEMIRQ flag. */
 		vx_test_and_ack(chip);
 		vx_validate_irq(chip, 1);
-	}
+	पूर्ण
 
 	/* init CBits */
 	vx_set_iec958_status(chip, chip->uer_bits);
-}
+पूर्ण
 
 
 /*
- * proc interface
+ * proc पूर्णांकerface
  */
 
-static void vx_proc_read(struct snd_info_entry *entry, struct snd_info_buffer *buffer)
-{
-	struct vx_core *chip = entry->private_data;
-	static const char * const audio_src_vxp[] = { "Line", "Mic", "Digital" };
-	static const char * const audio_src_vx2[] = { "Analog", "Analog", "Digital" };
-	static const char * const clock_mode[] = { "Auto", "Internal", "External" };
-	static const char * const clock_src[] = { "Internal", "External" };
-	static const char * const uer_type[] = { "Consumer", "Professional", "Not Present" };
+अटल व्योम vx_proc_पढ़ो(काष्ठा snd_info_entry *entry, काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा vx_core *chip = entry->निजी_data;
+	अटल स्थिर अक्षर * स्थिर audio_src_vxp[] = अणु "Line", "Mic", "Digital" पूर्ण;
+	अटल स्थिर अक्षर * स्थिर audio_src_vx2[] = अणु "Analog", "Analog", "Digital" पूर्ण;
+	अटल स्थिर अक्षर * स्थिर घड़ी_mode[] = अणु "Auto", "Internal", "External" पूर्ण;
+	अटल स्थिर अक्षर * स्थिर घड़ी_src[] = अणु "Internal", "External" पूर्ण;
+	अटल स्थिर अक्षर * स्थिर uer_type[] = अणु "Consumer", "Professional", "Not Present" पूर्ण;
 	
-	snd_iprintf(buffer, "%s\n", chip->card->longname);
-	snd_iprintf(buffer, "Xilinx Firmware: %s\n",
+	snd_iम_लिखो(buffer, "%s\n", chip->card->दीर्घname);
+	snd_iम_लिखो(buffer, "Xilinx Firmware: %s\n",
 		    (chip->chip_status & VX_STAT_XILINX_LOADED) ? "Loaded" : "No");
-	snd_iprintf(buffer, "Device Initialized: %s\n",
+	snd_iम_लिखो(buffer, "Device Initialized: %s\n",
 		    (chip->chip_status & VX_STAT_DEVICE_INIT) ? "Yes" : "No");
-	snd_iprintf(buffer, "DSP audio info:");
-	if (chip->audio_info & VX_AUDIO_INFO_REAL_TIME)
-		snd_iprintf(buffer, " realtime");
-	if (chip->audio_info & VX_AUDIO_INFO_OFFLINE)
-		snd_iprintf(buffer, " offline");
-	if (chip->audio_info & VX_AUDIO_INFO_MPEG1)
-		snd_iprintf(buffer, " mpeg1");
-	if (chip->audio_info & VX_AUDIO_INFO_MPEG2)
-		snd_iprintf(buffer, " mpeg2");
-	if (chip->audio_info & VX_AUDIO_INFO_LINEAR_8)
-		snd_iprintf(buffer, " linear8");
-	if (chip->audio_info & VX_AUDIO_INFO_LINEAR_16)
-		snd_iprintf(buffer, " linear16");
-	if (chip->audio_info & VX_AUDIO_INFO_LINEAR_24)
-		snd_iprintf(buffer, " linear24");
-	snd_iprintf(buffer, "\n");
-	snd_iprintf(buffer, "Input Source: %s\n", vx_is_pcmcia(chip) ?
+	snd_iम_लिखो(buffer, "DSP audio info:");
+	अगर (chip->audio_info & VX_AUDIO_INFO_REAL_TIME)
+		snd_iम_लिखो(buffer, " realtime");
+	अगर (chip->audio_info & VX_AUDIO_INFO_OFFLINE)
+		snd_iम_लिखो(buffer, " offline");
+	अगर (chip->audio_info & VX_AUDIO_INFO_MPEG1)
+		snd_iम_लिखो(buffer, " mpeg1");
+	अगर (chip->audio_info & VX_AUDIO_INFO_MPEG2)
+		snd_iम_लिखो(buffer, " mpeg2");
+	अगर (chip->audio_info & VX_AUDIO_INFO_LINEAR_8)
+		snd_iम_लिखो(buffer, " linear8");
+	अगर (chip->audio_info & VX_AUDIO_INFO_LINEAR_16)
+		snd_iम_लिखो(buffer, " linear16");
+	अगर (chip->audio_info & VX_AUDIO_INFO_LINEAR_24)
+		snd_iम_लिखो(buffer, " linear24");
+	snd_iम_लिखो(buffer, "\n");
+	snd_iम_लिखो(buffer, "Input Source: %s\n", vx_is_pcmcia(chip) ?
 		    audio_src_vxp[chip->audio_source] :
 		    audio_src_vx2[chip->audio_source]);
-	snd_iprintf(buffer, "Clock Mode: %s\n", clock_mode[chip->clock_mode]);
-	snd_iprintf(buffer, "Clock Source: %s\n", clock_src[chip->clock_source]);
-	snd_iprintf(buffer, "Frequency: %d\n", chip->freq);
-	snd_iprintf(buffer, "Detected Frequency: %d\n", chip->freq_detected);
-	snd_iprintf(buffer, "Detected UER type: %s\n", uer_type[chip->uer_detected]);
-	snd_iprintf(buffer, "Min/Max/Cur IBL: %d/%d/%d (granularity=%d)\n",
+	snd_iम_लिखो(buffer, "Clock Mode: %s\n", घड़ी_mode[chip->घड़ी_mode]);
+	snd_iम_लिखो(buffer, "Clock Source: %s\n", घड़ी_src[chip->घड़ी_source]);
+	snd_iम_लिखो(buffer, "Frequency: %d\n", chip->freq);
+	snd_iम_लिखो(buffer, "Detected Frequency: %d\n", chip->freq_detected);
+	snd_iम_लिखो(buffer, "Detected UER type: %s\n", uer_type[chip->uer_detected]);
+	snd_iम_लिखो(buffer, "Min/Max/Cur IBL: %d/%d/%d (granularity=%d)\n",
 		    chip->ibl.min_size, chip->ibl.max_size, chip->ibl.size,
 		    chip->ibl.granularity);
-}
+पूर्ण
 
-static void vx_proc_init(struct vx_core *chip)
-{
-	snd_card_ro_proc_new(chip->card, "vx-status", chip, vx_proc_read);
-}
+अटल व्योम vx_proc_init(काष्ठा vx_core *chip)
+अणु
+	snd_card_ro_proc_new(chip->card, "vx-status", chip, vx_proc_पढ़ो);
+पूर्ण
 
 
 /**
@@ -640,20 +641,20 @@ static void vx_proc_init(struct vx_core *chip)
  * @chip: VX core instance
  * @boot: firmware data
  */
-int snd_vx_dsp_boot(struct vx_core *chip, const struct firmware *boot)
-{
-	int err;
-	int cold_reset = !(chip->chip_status & VX_STAT_DEVICE_INIT);
+पूर्णांक snd_vx_dsp_boot(काष्ठा vx_core *chip, स्थिर काष्ठा firmware *boot)
+अणु
+	पूर्णांक err;
+	पूर्णांक cold_reset = !(chip->chip_status & VX_STAT_DEVICE_INIT);
 
 	vx_reset_board(chip, cold_reset);
 	vx_validate_irq(chip, 0);
 
-	if ((err = snd_vx_load_boot_image(chip, boot)) < 0)
-		return err;
+	अगर ((err = snd_vx_load_boot_image(chip, boot)) < 0)
+		वापस err;
 	msleep(10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(snd_vx_dsp_boot);
 
@@ -662,27 +663,27 @@ EXPORT_SYMBOL(snd_vx_dsp_boot);
  * @chip: VX core instance
  * @dsp: firmware data
  */
-int snd_vx_dsp_load(struct vx_core *chip, const struct firmware *dsp)
-{
-	unsigned int i;
-	int err;
-	unsigned int csum = 0;
-	const unsigned char *image, *cptr;
+पूर्णांक snd_vx_dsp_load(काष्ठा vx_core *chip, स्थिर काष्ठा firmware *dsp)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक csum = 0;
+	स्थिर अचिन्हित अक्षर *image, *cptr;
 
-	if (dsp->size % 3)
-		return -EINVAL;
+	अगर (dsp->size % 3)
+		वापस -EINVAL;
 
 	vx_toggle_dac_mute(chip, 1);
 
 	/* Transfert data buffer from PC to DSP */
-	for (i = 0; i < dsp->size; i += 3) {
+	क्रम (i = 0; i < dsp->size; i += 3) अणु
 		image = dsp->data + i;
-		/* Wait DSP ready for a new read */
-		if ((err = vx_wait_isr_bit(chip, ISR_TX_EMPTY)) < 0) {
-			printk(KERN_ERR
+		/* Wait DSP पढ़ोy क्रम a new पढ़ो */
+		अगर ((err = vx_रुको_isr_bit(chip, ISR_TX_EMPTY)) < 0) अणु
+			prपूर्णांकk(KERN_ERR
 			       "dsp loading error at position %d\n", i);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		cptr = image;
 		csum ^= *cptr;
 		csum = (csum >> 24) | (csum << 8);
@@ -693,92 +694,92 @@ int snd_vx_dsp_load(struct vx_core *chip, const struct firmware *dsp)
 		csum ^= *cptr;
 		csum = (csum >> 24) | (csum << 8);
 		vx_outb(chip, TXL, *cptr++);
-	}
-	snd_printdd(KERN_DEBUG "checksum = 0x%08x\n", csum);
+	पूर्ण
+	snd_prपूर्णांकdd(KERN_DEBUG "checksum = 0x%08x\n", csum);
 
 	msleep(200);
 
-	if ((err = vx_wait_isr_bit(chip, ISR_CHK)) < 0)
-		return err;
+	अगर ((err = vx_रुको_isr_bit(chip, ISR_CHK)) < 0)
+		वापस err;
 
 	vx_toggle_dac_mute(chip, 0);
 
 	vx_test_and_ack(chip);
 	vx_validate_irq(chip, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(snd_vx_dsp_load);
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /*
  * suspend
  */
-int snd_vx_suspend(struct vx_core *chip)
-{
-	snd_power_change_state(chip->card, SNDRV_CTL_POWER_D3hot);
+पूर्णांक snd_vx_suspend(काष्ठा vx_core *chip)
+अणु
+	snd_घातer_change_state(chip->card, SNDRV_CTL_POWER_D3hot);
 	chip->chip_status |= VX_STAT_IN_SUSPEND;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(snd_vx_suspend);
 
 /*
  * resume
  */
-int snd_vx_resume(struct vx_core *chip)
-{
-	int i, err;
+पूर्णांक snd_vx_resume(काष्ठा vx_core *chip)
+अणु
+	पूर्णांक i, err;
 
 	chip->chip_status &= ~VX_STAT_CHIP_INIT;
 
-	for (i = 0; i < 4; i++) {
-		if (! chip->firmware[i])
-			continue;
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (! chip->firmware[i])
+			जारी;
 		err = chip->ops->load_dsp(chip, i, chip->firmware[i]);
-		if (err < 0) {
-			snd_printk(KERN_ERR "vx: firmware resume error at DSP %d\n", i);
-			return -EIO;
-		}
-	}
+		अगर (err < 0) अणु
+			snd_prपूर्णांकk(KERN_ERR "vx: firmware resume error at DSP %d\n", i);
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	chip->chip_status |= VX_STAT_CHIP_INIT;
 	chip->chip_status &= ~VX_STAT_IN_SUSPEND;
 
-	snd_power_change_state(chip->card, SNDRV_CTL_POWER_D0);
-	return 0;
-}
+	snd_घातer_change_state(chip->card, SNDRV_CTL_POWER_D0);
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(snd_vx_resume);
-#endif
+#पूर्ण_अगर
 
 /**
- * snd_vx_create - constructor for struct vx_core
+ * snd_vx_create - स्थिरructor क्रम काष्ठा vx_core
  * @card: card instance
- * @hw: hardware specific record
- * @ops: VX ops pointer
+ * @hw: hardware specअगरic record
+ * @ops: VX ops poपूर्णांकer
  * @extra_size: extra byte size to allocate appending to chip
  *
- * this function allocates the instance and prepare for the hardware
+ * this function allocates the instance and prepare क्रम the hardware
  * initialization.
  *
- * return the instance pointer if successful, NULL in error.
+ * वापस the instance poपूर्णांकer अगर successful, शून्य in error.
  */
-struct vx_core *snd_vx_create(struct snd_card *card,
-			      const struct snd_vx_hardware *hw,
-			      const struct snd_vx_ops *ops,
-			      int extra_size)
-{
-	struct vx_core *chip;
+काष्ठा vx_core *snd_vx_create(काष्ठा snd_card *card,
+			      स्थिर काष्ठा snd_vx_hardware *hw,
+			      स्थिर काष्ठा snd_vx_ops *ops,
+			      पूर्णांक extra_size)
+अणु
+	काष्ठा vx_core *chip;
 
-	if (snd_BUG_ON(!card || !hw || !ops))
-		return NULL;
+	अगर (snd_BUG_ON(!card || !hw || !ops))
+		वापस शून्य;
 
-	chip = kzalloc(sizeof(*chip) + extra_size, GFP_KERNEL);
-	if (! chip)
-		return NULL;
+	chip = kzalloc(माप(*chip) + extra_size, GFP_KERNEL);
+	अगर (! chip)
+		वापस शून्य;
 	mutex_init(&chip->lock);
 	chip->irq = -1;
 	chip->hw = hw;
@@ -787,13 +788,13 @@ struct vx_core *snd_vx_create(struct snd_card *card,
 	mutex_init(&chip->mixer_mutex);
 
 	chip->card = card;
-	card->private_data = chip;
-	strcpy(card->driver, hw->name);
-	sprintf(card->shortname, "Digigram %s", hw->name);
+	card->निजी_data = chip;
+	म_नकल(card->driver, hw->name);
+	प्र_लिखो(card->लघुname, "Digigram %s", hw->name);
 
 	vx_proc_init(chip);
 
-	return chip;
-}
+	वापस chip;
+पूर्ण
 
 EXPORT_SYMBOL(snd_vx_create);

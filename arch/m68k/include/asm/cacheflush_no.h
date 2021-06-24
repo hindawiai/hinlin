@@ -1,86 +1,87 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _M68KNOMMU_CACHEFLUSH_H
-#define _M68KNOMMU_CACHEFLUSH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _M68KNOMMU_CACHEFLUSH_H
+#घोषणा _M68KNOMMU_CACHEFLUSH_H
 
 /*
  * (C) Copyright 2000-2010, Greg Ungerer <gerg@snapgear.com>
  */
-#include <linux/mm.h>
-#include <asm/mcfsim.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/mcfsim.h>
 
-#define flush_cache_all()			__flush_cache_all()
-#define flush_dcache_range(start, len)		__flush_dcache_all()
-#define flush_icache_range(start, len)		__flush_icache_all()
+#घोषणा flush_cache_all()			__flush_cache_all()
+#घोषणा flush_dcache_range(start, len)		__flush_dcache_all()
+#घोषणा flush_icache_range(start, len)		__flush_icache_all()
 
-void mcf_cache_push(void);
+व्योम mcf_cache_push(व्योम);
 
-static inline void __clear_cache_all(void)
-{
-#ifdef CACHE_INVALIDATE
-	__asm__ __volatile__ (
+अटल अंतरभूत व्योम __clear_cache_all(व्योम)
+अणु
+#अगर_घोषित CACHE_INVALIDATE
+	__यंत्र__ __अस्थिर__ (
 		"movec	%0, %%CACR\n\t"
 		"nop\n\t"
 		: : "r" (CACHE_INVALIDATE) );
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void __flush_cache_all(void)
-{
-#ifdef CACHE_PUSH
+अटल अंतरभूत व्योम __flush_cache_all(व्योम)
+अणु
+#अगर_घोषित CACHE_PUSH
 	mcf_cache_push();
-#endif
+#पूर्ण_अगर
 	__clear_cache_all();
-}
+पूर्ण
 
 /*
- * Some ColdFire parts implement separate instruction and data caches,
- * on those we should just flush the appropriate cache. If we don't need
- * to do any specific flushing then this will be optimized away.
+ * Some ColdFire parts implement separate inकाष्ठाion and data caches,
+ * on those we should just flush the appropriate cache. If we करोn't need
+ * to करो any specअगरic flushing then this will be optimized away.
  */
-static inline void __flush_icache_all(void)
-{
-#ifdef CACHE_INVALIDATEI
-	__asm__ __volatile__ (
+अटल अंतरभूत व्योम __flush_icache_all(व्योम)
+अणु
+#अगर_घोषित CACHE_INVALIDATEI
+	__यंत्र__ __अस्थिर__ (
 		"movec	%0, %%CACR\n\t"
 		"nop\n\t"
 		: : "r" (CACHE_INVALIDATEI) );
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void __flush_dcache_all(void)
-{
-#ifdef CACHE_PUSH
+अटल अंतरभूत व्योम __flush_dcache_all(व्योम)
+अणु
+#अगर_घोषित CACHE_PUSH
 	mcf_cache_push();
-#endif
-#ifdef CACHE_INVALIDATED
-	__asm__ __volatile__ (
+#पूर्ण_अगर
+#अगर_घोषित CACHE_INVALIDATED
+	__यंत्र__ __अस्थिर__ (
 		"movec	%0, %%CACR\n\t"
 		"nop\n\t"
 		: : "r" (CACHE_INVALIDATED) );
-#else
-	/* Flush the write buffer */
-	__asm__ __volatile__ ( "nop" );
-#endif
-}
+#अन्यथा
+	/* Flush the ग_लिखो buffer */
+	__यंत्र__ __अस्थिर__ ( "nop" );
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Push cache entries at supplied address. We want to write back any dirty
+ * Push cache entries at supplied address. We want to ग_लिखो back any dirty
  * data and then invalidate the cache lines associated with this address.
  */
-static inline void cache_push(unsigned long paddr, int len)
-{
+अटल अंतरभूत व्योम cache_push(अचिन्हित दीर्घ paddr, पूर्णांक len)
+अणु
 	__flush_cache_all();
-}
+पूर्ण
 
 /*
- * Clear cache entries at supplied address (that is don't write back any
+ * Clear cache entries at supplied address (that is करोn't ग_लिखो back any
  * dirty data).
  */
-static inline void cache_clear(unsigned long paddr, int len)
-{
+अटल अंतरभूत व्योम cache_clear(अचिन्हित दीर्घ paddr, पूर्णांक len)
+अणु
 	__clear_cache_all();
-}
+पूर्ण
 
-#include <asm-generic/cacheflush.h>
+#समावेश <यंत्र-generic/cacheflush.h>
 
-#endif /* _M68KNOMMU_CACHEFLUSH_H */
+#पूर्ण_अगर /* _M68KNOMMU_CACHEFLUSH_H */

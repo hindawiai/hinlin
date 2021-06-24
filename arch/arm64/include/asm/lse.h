@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_LSE_H
-#define __ASM_LSE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_LSE_H
+#घोषणा __ASM_LSE_H
 
-#include <asm/atomic_ll_sc.h>
+#समावेश <यंत्र/atomic_ll_sc.h>
 
-#ifdef CONFIG_ARM64_LSE_ATOMICS
+#अगर_घोषित CONFIG_ARM64_LSE_ATOMICS
 
-#define __LSE_PREAMBLE	".arch_extension lse\n"
+#घोषणा __LSE_PREAMBLE	".arch_extension lse\n"
 
-#include <linux/compiler_types.h>
-#include <linux/export.h>
-#include <linux/jump_label.h>
-#include <linux/stringify.h>
-#include <asm/alternative.h>
-#include <asm/atomic_lse.h>
-#include <asm/cpucaps.h>
+#समावेश <linux/compiler_types.h>
+#समावेश <linux/export.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <यंत्र/alternative.h>
+#समावेश <यंत्र/atomic_lse.h>
+#समावेश <यंत्र/cpucaps.h>
 
-extern struct static_key_false cpu_hwcap_keys[ARM64_NCAPS];
-extern struct static_key_false arm64_const_caps_ready;
+बाह्य काष्ठा अटल_key_false cpu_hwcap_keys[ARM64_NCAPS];
+बाह्य काष्ठा अटल_key_false arm64_स्थिर_caps_पढ़ोy;
 
-static inline bool system_uses_lse_atomics(void)
-{
-	return (static_branch_likely(&arm64_const_caps_ready)) &&
-		static_branch_likely(&cpu_hwcap_keys[ARM64_HAS_LSE_ATOMICS]);
-}
+अटल अंतरभूत bool प्रणाली_uses_lse_atomics(व्योम)
+अणु
+	वापस (अटल_branch_likely(&arm64_स्थिर_caps_पढ़ोy)) &&
+		अटल_branch_likely(&cpu_hwcap_keys[ARM64_HAS_LSE_ATOMICS]);
+पूर्ण
 
-#define __lse_ll_sc_body(op, ...)					\
-({									\
-	system_uses_lse_atomics() ?					\
+#घोषणा __lse_ll_sc_body(op, ...)					\
+(अणु									\
+	प्रणाली_uses_lse_atomics() ?					\
 		__lse_##op(__VA_ARGS__) :				\
 		__ll_sc_##op(__VA_ARGS__);				\
-})
+पूर्ण)
 
-/* In-line patching at runtime */
-#define ARM64_LSE_ATOMIC_INSN(llsc, lse)				\
+/* In-line patching at runसमय */
+#घोषणा ARM64_LSE_ATOMIC_INSN(llsc, lse)				\
 	ALTERNATIVE(llsc, __LSE_PREAMBLE lse, ARM64_HAS_LSE_ATOMICS)
 
-#else	/* CONFIG_ARM64_LSE_ATOMICS */
+#अन्यथा	/* CONFIG_ARM64_LSE_ATOMICS */
 
-static inline bool system_uses_lse_atomics(void) { return false; }
+अटल अंतरभूत bool प्रणाली_uses_lse_atomics(व्योम) अणु वापस false; पूर्ण
 
-#define __lse_ll_sc_body(op, ...)		__ll_sc_##op(__VA_ARGS__)
+#घोषणा __lse_ll_sc_body(op, ...)		__ll_sc_##op(__VA_ARGS__)
 
-#define ARM64_LSE_ATOMIC_INSN(llsc, lse)	llsc
+#घोषणा ARM64_LSE_ATOMIC_INSN(llsc, lse)	llsc
 
-#endif	/* CONFIG_ARM64_LSE_ATOMICS */
-#endif	/* __ASM_LSE_H */
+#पूर्ण_अगर	/* CONFIG_ARM64_LSE_ATOMICS */
+#पूर्ण_अगर	/* __ASM_LSE_H */

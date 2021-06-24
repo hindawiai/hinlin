@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* qlogicpti.c: Performance Technologies QlogicISP sbus card driver.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* qlogicpti.c: Perक्रमmance Technologies QlogicISP sbus card driver.
  *
  * Copyright (C) 1996, 2006, 2008 David S. Miller (davem@davemloft.net)
  *
  * A lot of this driver was directly stolen from Erik H. Moe's PCI
- * Qlogic ISP driver.  Mucho kudos to him for this code.
+ * Qlogic ISP driver.  Mucho kuकरोs to him क्रम this code.
  *
- * An even bigger kudos to John Grana at Performance Technologies
- * for providing me with the hardware to write this driver, you rule
- * John you really do.
+ * An even bigger kuकरोs to John Grana at Perक्रमmance Technologies
+ * क्रम providing me with the hardware to ग_लिखो this driver, you rule
+ * John you really करो.
  *
- * May, 2, 1997: Added support for QLGC,isp --jj
+ * May, 2, 1997: Added support क्रम QLGC,isp --jj
  */
 
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/gfp.h>
-#include <linux/blkdev.h>
-#include <linux/proc_fs.h>
-#include <linux/stat.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/jiffies.h>
-#include <linux/dma-mapping.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/firmware.h>
-#include <linux/pgtable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/gfp.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-#include "qlogicpti.h"
+#समावेश "qlogicpti.h"
 
-#include <asm/dma.h>
-#include <asm/ptrace.h>
-#include <asm/oplib.h>
-#include <asm/io.h>
-#include <asm/irq.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_eh.h>
-#include <scsi/scsi_tcq.h>
-#include <scsi/scsi_host.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_eh.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <scsi/scsi_host.h>
 
-#define MAX_TARGETS	16
-#define MAX_LUNS	8	/* 32 for 1.31 F/W */
+#घोषणा MAX_TARGETS	16
+#घोषणा MAX_LUNS	8	/* 32 क्रम 1.31 F/W */
 
-#define DEFAULT_LOOP_COUNT	10000
+#घोषणा DEFAULT_LOOP_COUNT	10000
 
-static struct qlogicpti *qptichain = NULL;
-static DEFINE_SPINLOCK(qptichain_lock);
+अटल काष्ठा qlogicpti *qptichain = शून्य;
+अटल DEFINE_SPINLOCK(qptichain_lock);
 
-#define PACKB(a, b)			(((a)<<4)|(b))
+#घोषणा PACKB(a, b)			(((a)<<4)|(b))
 
-static const u_char mbox_param[] = {
+अटल स्थिर u_अक्षर mbox_param[] = अणु
 	PACKB(1, 1),	/* MBOX_NO_OP */
 	PACKB(5, 5),	/* MBOX_LOAD_RAM */
 	PACKB(2, 0),	/* MBOX_EXEC_FIRMWARE */
@@ -127,182 +128,182 @@ static const u_char mbox_param[] = {
 	PACKB(0, 0),	/* 0x0040 */
 	PACKB(0, 0),	/* 0x0041 */
 	PACKB(0, 0)	/* 0x0042 */
-};
+पूर्ण;
 
-#define MAX_MBOX_COMMAND	ARRAY_SIZE(mbox_param)
+#घोषणा MAX_MBOX_COMMAND	ARRAY_SIZE(mbox_param)
 
-/* queue length's _must_ be power of two: */
-#define QUEUE_DEPTH(in, out, ql)	((in - out) & (ql))
-#define REQ_QUEUE_DEPTH(in, out)	QUEUE_DEPTH(in, out, 		     \
+/* queue length's _must_ be घातer of two: */
+#घोषणा QUEUE_DEPTH(in, out, ql)	((in - out) & (ql))
+#घोषणा REQ_QUEUE_DEPTH(in, out)	QUEUE_DEPTH(in, out, 		     \
 						    QLOGICPTI_REQ_QUEUE_LEN)
-#define RES_QUEUE_DEPTH(in, out)	QUEUE_DEPTH(in, out, RES_QUEUE_LEN)
+#घोषणा RES_QUEUE_DEPTH(in, out)	QUEUE_DEPTH(in, out, RES_QUEUE_LEN)
 
-static inline void qlogicpti_enable_irqs(struct qlogicpti *qpti)
-{
-	sbus_writew(SBUS_CTRL_ERIRQ | SBUS_CTRL_GENAB,
+अटल अंतरभूत व्योम qlogicpti_enable_irqs(काष्ठा qlogicpti *qpti)
+अणु
+	sbus_ग_लिखोw(SBUS_CTRL_ERIRQ | SBUS_CTRL_GENAB,
 		    qpti->qregs + SBUS_CTRL);
-}
+पूर्ण
 
-static inline void qlogicpti_disable_irqs(struct qlogicpti *qpti)
-{
-	sbus_writew(0, qpti->qregs + SBUS_CTRL);
-}
+अटल अंतरभूत व्योम qlogicpti_disable_irqs(काष्ठा qlogicpti *qpti)
+अणु
+	sbus_ग_लिखोw(0, qpti->qregs + SBUS_CTRL);
+पूर्ण
 
-static inline void set_sbus_cfg1(struct qlogicpti *qpti)
-{
+अटल अंतरभूत व्योम set_sbus_cfg1(काष्ठा qlogicpti *qpti)
+अणु
 	u16 val;
 	u8 bursts = qpti->bursts;
 
-#if 0	/* It appears that at least PTI cards do not support
+#अगर 0	/* It appears that at least PTI cards करो not support
 	 * 64-byte bursts and that setting the B64 bit actually
 	 * is a nop and the chip ends up using the smallest burst
 	 * size. -DaveM
 	 */
-	if (sbus_can_burst64() && (bursts & DMA_BURST64)) {
+	अगर (sbus_can_burst64() && (bursts & DMA_BURST64)) अणु
 		val = (SBUS_CFG1_BENAB | SBUS_CFG1_B64);
-	} else
-#endif
-	if (bursts & DMA_BURST32) {
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अगर (bursts & DMA_BURST32) अणु
 		val = (SBUS_CFG1_BENAB | SBUS_CFG1_B32);
-	} else if (bursts & DMA_BURST16) {
+	पूर्ण अन्यथा अगर (bursts & DMA_BURST16) अणु
 		val = (SBUS_CFG1_BENAB | SBUS_CFG1_B16);
-	} else if (bursts & DMA_BURST8) {
+	पूर्ण अन्यथा अगर (bursts & DMA_BURST8) अणु
 		val = (SBUS_CFG1_BENAB | SBUS_CFG1_B8);
-	} else {
-		val = 0; /* No sbus bursts for you... */
-	}
-	sbus_writew(val, qpti->qregs + SBUS_CFG1);
-}
+	पूर्ण अन्यथा अणु
+		val = 0; /* No sbus bursts क्रम you... */
+	पूर्ण
+	sbus_ग_लिखोw(val, qpti->qregs + SBUS_CFG1);
+पूर्ण
 
-static int qlogicpti_mbox_command(struct qlogicpti *qpti, u_short param[], int force)
-{
-	int loop_count;
-	u16 tmp;
+अटल पूर्णांक qlogicpti_mbox_command(काष्ठा qlogicpti *qpti, u_लघु param[], पूर्णांक क्रमce)
+अणु
+	पूर्णांक loop_count;
+	u16 पंचांगp;
 
-	if (mbox_param[param[0]] == 0)
-		return 1;
+	अगर (mbox_param[param[0]] == 0)
+		वापस 1;
 
 	/* Set SBUS semaphore. */
-	tmp = sbus_readw(qpti->qregs + SBUS_SEMAPHORE);
-	tmp |= SBUS_SEMAPHORE_LCK;
-	sbus_writew(tmp, qpti->qregs + SBUS_SEMAPHORE);
+	पंचांगp = sbus_पढ़ोw(qpti->qregs + SBUS_SEMAPHORE);
+	पंचांगp |= SBUS_SEMAPHORE_LCK;
+	sbus_ग_लिखोw(पंचांगp, qpti->qregs + SBUS_SEMAPHORE);
 
-	/* Wait for host IRQ bit to clear. */
+	/* Wait क्रम host IRQ bit to clear. */
 	loop_count = DEFAULT_LOOP_COUNT;
-	while (--loop_count && (sbus_readw(qpti->qregs + HCCTRL) & HCCTRL_HIRQ)) {
+	जबतक (--loop_count && (sbus_पढ़ोw(qpti->qregs + HCCTRL) & HCCTRL_HIRQ)) अणु
 		barrier();
 		cpu_relax();
-	}
-	if (!loop_count)
-		printk(KERN_EMERG "qlogicpti%d: mbox_command loop timeout #1\n",
+	पूर्ण
+	अगर (!loop_count)
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: mbox_command loop timeout #1\n",
 		       qpti->qpti_id);
 
-	/* Write mailbox command registers. */
-	switch (mbox_param[param[0]] >> 4) {
-	case 6: sbus_writew(param[5], qpti->qregs + MBOX5);
+	/* Write mailbox command रेजिस्टरs. */
+	चयन (mbox_param[param[0]] >> 4) अणु
+	हाल 6: sbus_ग_लिखोw(param[5], qpti->qregs + MBOX5);
 		fallthrough;
-	case 5: sbus_writew(param[4], qpti->qregs + MBOX4);
+	हाल 5: sbus_ग_लिखोw(param[4], qpti->qregs + MBOX4);
 		fallthrough;
-	case 4: sbus_writew(param[3], qpti->qregs + MBOX3);
+	हाल 4: sbus_ग_लिखोw(param[3], qpti->qregs + MBOX3);
 		fallthrough;
-	case 3: sbus_writew(param[2], qpti->qregs + MBOX2);
+	हाल 3: sbus_ग_लिखोw(param[2], qpti->qregs + MBOX2);
 		fallthrough;
-	case 2: sbus_writew(param[1], qpti->qregs + MBOX1);
+	हाल 2: sbus_ग_लिखोw(param[1], qpti->qregs + MBOX1);
 		fallthrough;
-	case 1: sbus_writew(param[0], qpti->qregs + MBOX0);
-	}
+	हाल 1: sbus_ग_लिखोw(param[0], qpti->qregs + MBOX0);
+	पूर्ण
 
-	/* Clear RISC interrupt. */
-	tmp = sbus_readw(qpti->qregs + HCCTRL);
-	tmp |= HCCTRL_CRIRQ;
-	sbus_writew(tmp, qpti->qregs + HCCTRL);
+	/* Clear RISC पूर्णांकerrupt. */
+	पंचांगp = sbus_पढ़ोw(qpti->qregs + HCCTRL);
+	पंचांगp |= HCCTRL_CRIRQ;
+	sbus_ग_लिखोw(पंचांगp, qpti->qregs + HCCTRL);
 
 	/* Clear SBUS semaphore. */
-	sbus_writew(0, qpti->qregs + SBUS_SEMAPHORE);
+	sbus_ग_लिखोw(0, qpti->qregs + SBUS_SEMAPHORE);
 
-	/* Set HOST interrupt. */
-	tmp = sbus_readw(qpti->qregs + HCCTRL);
-	tmp |= HCCTRL_SHIRQ;
-	sbus_writew(tmp, qpti->qregs + HCCTRL);
+	/* Set HOST पूर्णांकerrupt. */
+	पंचांगp = sbus_पढ़ोw(qpti->qregs + HCCTRL);
+	पंचांगp |= HCCTRL_SHIRQ;
+	sbus_ग_लिखोw(पंचांगp, qpti->qregs + HCCTRL);
 
-	/* Wait for HOST interrupt clears. */
+	/* Wait क्रम HOST पूर्णांकerrupt clears. */
 	loop_count = DEFAULT_LOOP_COUNT;
-	while (--loop_count &&
-	       (sbus_readw(qpti->qregs + HCCTRL) & HCCTRL_CRIRQ))
+	जबतक (--loop_count &&
+	       (sbus_पढ़ोw(qpti->qregs + HCCTRL) & HCCTRL_CRIRQ))
 		udelay(20);
-	if (!loop_count)
-		printk(KERN_EMERG "qlogicpti%d: mbox_command[%04x] loop timeout #2\n",
+	अगर (!loop_count)
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: mbox_command[%04x] loop timeout #2\n",
 		       qpti->qpti_id, param[0]);
 
-	/* Wait for SBUS semaphore to get set. */
+	/* Wait क्रम SBUS semaphore to get set. */
 	loop_count = DEFAULT_LOOP_COUNT;
-	while (--loop_count &&
-	       !(sbus_readw(qpti->qregs + SBUS_SEMAPHORE) & SBUS_SEMAPHORE_LCK)) {
+	जबतक (--loop_count &&
+	       !(sbus_पढ़ोw(qpti->qregs + SBUS_SEMAPHORE) & SBUS_SEMAPHORE_LCK)) अणु
 		udelay(20);
 
-		/* Workaround for some buggy chips. */
-		if (sbus_readw(qpti->qregs + MBOX0) & 0x4000)
-			break;
-	}
-	if (!loop_count)
-		printk(KERN_EMERG "qlogicpti%d: mbox_command[%04x] loop timeout #3\n",
+		/* Workaround क्रम some buggy chips. */
+		अगर (sbus_पढ़ोw(qpti->qregs + MBOX0) & 0x4000)
+			अवरोध;
+	पूर्ण
+	अगर (!loop_count)
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: mbox_command[%04x] loop timeout #3\n",
 		       qpti->qpti_id, param[0]);
 
-	/* Wait for MBOX busy condition to go away. */
+	/* Wait क्रम MBOX busy condition to go away. */
 	loop_count = DEFAULT_LOOP_COUNT;
-	while (--loop_count && (sbus_readw(qpti->qregs + MBOX0) == 0x04))
+	जबतक (--loop_count && (sbus_पढ़ोw(qpti->qregs + MBOX0) == 0x04))
 		udelay(20);
-	if (!loop_count)
-		printk(KERN_EMERG "qlogicpti%d: mbox_command[%04x] loop timeout #4\n",
+	अगर (!loop_count)
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: mbox_command[%04x] loop timeout #4\n",
 		       qpti->qpti_id, param[0]);
 
 	/* Read back output parameters. */
-	switch (mbox_param[param[0]] & 0xf) {
-	case 6: param[5] = sbus_readw(qpti->qregs + MBOX5);
+	चयन (mbox_param[param[0]] & 0xf) अणु
+	हाल 6: param[5] = sbus_पढ़ोw(qpti->qregs + MBOX5);
 		fallthrough;
-	case 5: param[4] = sbus_readw(qpti->qregs + MBOX4);
+	हाल 5: param[4] = sbus_पढ़ोw(qpti->qregs + MBOX4);
 		fallthrough;
-	case 4: param[3] = sbus_readw(qpti->qregs + MBOX3);
+	हाल 4: param[3] = sbus_पढ़ोw(qpti->qregs + MBOX3);
 		fallthrough;
-	case 3: param[2] = sbus_readw(qpti->qregs + MBOX2);
+	हाल 3: param[2] = sbus_पढ़ोw(qpti->qregs + MBOX2);
 		fallthrough;
-	case 2: param[1] = sbus_readw(qpti->qregs + MBOX1);
+	हाल 2: param[1] = sbus_पढ़ोw(qpti->qregs + MBOX1);
 		fallthrough;
-	case 1: param[0] = sbus_readw(qpti->qregs + MBOX0);
-	}
+	हाल 1: param[0] = sbus_पढ़ोw(qpti->qregs + MBOX0);
+	पूर्ण
 
-	/* Clear RISC interrupt. */
-	tmp = sbus_readw(qpti->qregs + HCCTRL);
-	tmp |= HCCTRL_CRIRQ;
-	sbus_writew(tmp, qpti->qregs + HCCTRL);
+	/* Clear RISC पूर्णांकerrupt. */
+	पंचांगp = sbus_पढ़ोw(qpti->qregs + HCCTRL);
+	पंचांगp |= HCCTRL_CRIRQ;
+	sbus_ग_लिखोw(पंचांगp, qpti->qregs + HCCTRL);
 
 	/* Release SBUS semaphore. */
-	tmp = sbus_readw(qpti->qregs + SBUS_SEMAPHORE);
-	tmp &= ~(SBUS_SEMAPHORE_LCK);
-	sbus_writew(tmp, qpti->qregs + SBUS_SEMAPHORE);
+	पंचांगp = sbus_पढ़ोw(qpti->qregs + SBUS_SEMAPHORE);
+	पंचांगp &= ~(SBUS_SEMAPHORE_LCK);
+	sbus_ग_लिखोw(पंचांगp, qpti->qregs + SBUS_SEMAPHORE);
 
-	/* We're done. */
-	return 0;
-}
+	/* We're करोne. */
+	वापस 0;
+पूर्ण
 
-static inline void qlogicpti_set_hostdev_defaults(struct qlogicpti *qpti)
-{
-	int i;
+अटल अंतरभूत व्योम qlogicpti_set_hostdev_शेषs(काष्ठा qlogicpti *qpti)
+अणु
+	पूर्णांक i;
 
 	qpti->host_param.initiator_scsi_id = qpti->scsi_id;
 	qpti->host_param.bus_reset_delay = 3;
 	qpti->host_param.retry_count = 0;
 	qpti->host_param.retry_delay = 5;
-	qpti->host_param.async_data_setup_time = 3;
+	qpti->host_param.async_data_setup_समय = 3;
 	qpti->host_param.req_ack_active_negation = 1;
 	qpti->host_param.data_line_active_negation = 1;
 	qpti->host_param.data_dma_burst_enable = 1;
 	qpti->host_param.command_dma_burst_enable = 1;
 	qpti->host_param.tag_aging = 8;
-	qpti->host_param.selection_timeout = 250;
+	qpti->host_param.selection_समयout = 250;
 	qpti->host_param.max_queue_depth = 256;
 
-	for(i = 0; i < MAX_TARGETS; i++) {
+	क्रम(i = 0; i < MAX_TARGETS; i++) अणु
 		/*
 		 * disconnect, parity, arq, reneg on reset, and, oddly enough
 		 * tags...the midlayer's notion of tagged support has to match
@@ -312,117 +313,117 @@ static inline void qlogicpti_set_hostdev_defaults(struct qlogicpti *qpti)
 		 */
 		qpti->dev_param[i].device_flags = 0xcd;
 		qpti->dev_param[i].execution_throttle = 16;
-		if (qpti->ultra) {
+		अगर (qpti->ultra) अणु
 			qpti->dev_param[i].synchronous_period = 12;
 			qpti->dev_param[i].synchronous_offset = 8;
-		} else {
+		पूर्ण अन्यथा अणु
 			qpti->dev_param[i].synchronous_period = 25;
 			qpti->dev_param[i].synchronous_offset = 12;
-		}
+		पूर्ण
 		qpti->dev_param[i].device_enable = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int qlogicpti_reset_hardware(struct Scsi_Host *host)
-{
-	struct qlogicpti *qpti = (struct qlogicpti *) host->hostdata;
-	u_short param[6];
-	unsigned short risc_code_addr;
-	int loop_count, i;
-	unsigned long flags;
+अटल पूर्णांक qlogicpti_reset_hardware(काष्ठा Scsi_Host *host)
+अणु
+	काष्ठा qlogicpti *qpti = (काष्ठा qlogicpti *) host->hostdata;
+	u_लघु param[6];
+	अचिन्हित लघु risc_code_addr;
+	पूर्णांक loop_count, i;
+	अचिन्हित दीर्घ flags;
 
 	risc_code_addr = 0x1000;	/* all load addresses are at 0x1000 */
 
 	spin_lock_irqsave(host->host_lock, flags);
 
-	sbus_writew(HCCTRL_PAUSE, qpti->qregs + HCCTRL);
+	sbus_ग_लिखोw(HCCTRL_PAUSE, qpti->qregs + HCCTRL);
 
-	/* Only reset the scsi bus if it is not free. */
-	if (sbus_readw(qpti->qregs + CPU_PCTRL) & CPU_PCTRL_BSY) {
-		sbus_writew(CPU_ORIDE_RMOD, qpti->qregs + CPU_ORIDE);
-		sbus_writew(CPU_CMD_BRESET, qpti->qregs + CPU_CMD);
+	/* Only reset the scsi bus अगर it is not मुक्त. */
+	अगर (sbus_पढ़ोw(qpti->qregs + CPU_PCTRL) & CPU_PCTRL_BSY) अणु
+		sbus_ग_लिखोw(CPU_ORIDE_RMOD, qpti->qregs + CPU_ORIDE);
+		sbus_ग_लिखोw(CPU_CMD_BRESET, qpti->qregs + CPU_CMD);
 		udelay(400);
-	}
+	पूर्ण
 
-	sbus_writew(SBUS_CTRL_RESET, qpti->qregs + SBUS_CTRL);
-	sbus_writew((DMA_CTRL_CCLEAR | DMA_CTRL_CIRQ), qpti->qregs + CMD_DMA_CTRL);
-	sbus_writew((DMA_CTRL_CCLEAR | DMA_CTRL_CIRQ), qpti->qregs + DATA_DMA_CTRL);
+	sbus_ग_लिखोw(SBUS_CTRL_RESET, qpti->qregs + SBUS_CTRL);
+	sbus_ग_लिखोw((DMA_CTRL_CCLEAR | DMA_CTRL_CIRQ), qpti->qregs + CMD_DMA_CTRL);
+	sbus_ग_लिखोw((DMA_CTRL_CCLEAR | DMA_CTRL_CIRQ), qpti->qregs + DATA_DMA_CTRL);
 
 	loop_count = DEFAULT_LOOP_COUNT;
-	while (--loop_count && ((sbus_readw(qpti->qregs + MBOX0) & 0xff) == 0x04))
+	जबतक (--loop_count && ((sbus_पढ़ोw(qpti->qregs + MBOX0) & 0xff) == 0x04))
 		udelay(20);
-	if (!loop_count)
-		printk(KERN_EMERG "qlogicpti%d: reset_hardware loop timeout\n",
+	अगर (!loop_count)
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: reset_hardware loop timeout\n",
 		       qpti->qpti_id);
 
-	sbus_writew(HCCTRL_PAUSE, qpti->qregs + HCCTRL);
+	sbus_ग_लिखोw(HCCTRL_PAUSE, qpti->qregs + HCCTRL);
 	set_sbus_cfg1(qpti);
 	qlogicpti_enable_irqs(qpti);
 
-	if (sbus_readw(qpti->qregs + RISC_PSR) & RISC_PSR_ULTRA) {
+	अगर (sbus_पढ़ोw(qpti->qregs + RISC_PSR) & RISC_PSR_ULTRA) अणु
 		qpti->ultra = 1;
-		sbus_writew((RISC_MTREG_P0ULTRA | RISC_MTREG_P1ULTRA),
+		sbus_ग_लिखोw((RISC_MTREG_P0ULTRA | RISC_MTREG_P1ULTRA),
 			    qpti->qregs + RISC_MTREG);
-	} else {
+	पूर्ण अन्यथा अणु
 		qpti->ultra = 0;
-		sbus_writew((RISC_MTREG_P0DFLT | RISC_MTREG_P1DFLT),
+		sbus_ग_लिखोw((RISC_MTREG_P0DFLT | RISC_MTREG_P1DFLT),
 			    qpti->qregs + RISC_MTREG);
-	}
+	पूर्ण
 
-	/* reset adapter and per-device default values. */
-	/* do it after finding out whether we're ultra mode capable */
-	qlogicpti_set_hostdev_defaults(qpti);
+	/* reset adapter and per-device शेष values. */
+	/* करो it after finding out whether we're ultra mode capable */
+	qlogicpti_set_hostdev_शेषs(qpti);
 
 	/* Release the RISC processor. */
-	sbus_writew(HCCTRL_REL, qpti->qregs + HCCTRL);
+	sbus_ग_लिखोw(HCCTRL_REL, qpti->qregs + HCCTRL);
 
 	/* Get RISC to start executing the firmware code. */
 	param[0] = MBOX_EXEC_FIRMWARE;
 	param[1] = risc_code_addr;
-	if (qlogicpti_mbox_command(qpti, param, 1)) {
-		printk(KERN_EMERG "qlogicpti%d: Cannot execute ISP firmware.\n",
+	अगर (qlogicpti_mbox_command(qpti, param, 1)) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: Cannot execute ISP firmware.\n",
 		       qpti->qpti_id);
 		spin_unlock_irqrestore(host->host_lock, flags);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* Set initiator scsi ID. */
 	param[0] = MBOX_SET_INIT_SCSI_ID;
 	param[1] = qpti->host_param.initiator_scsi_id;
-	if (qlogicpti_mbox_command(qpti, param, 1) ||
-	   (param[0] != MBOX_COMMAND_COMPLETE)) {
-		printk(KERN_EMERG "qlogicpti%d: Cannot set initiator SCSI ID.\n",
+	अगर (qlogicpti_mbox_command(qpti, param, 1) ||
+	   (param[0] != MBOX_COMMAND_COMPLETE)) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: Cannot set initiator SCSI ID.\n",
 		       qpti->qpti_id);
 		spin_unlock_irqrestore(host->host_lock, flags);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* Initialize state of the queues, both hw and sw. */
 	qpti->req_in_ptr = qpti->res_out_ptr = 0;
 
 	param[0] = MBOX_INIT_RES_QUEUE;
 	param[1] = RES_QUEUE_LEN + 1;
-	param[2] = (u_short) (qpti->res_dvma >> 16);
-	param[3] = (u_short) (qpti->res_dvma & 0xffff);
+	param[2] = (u_लघु) (qpti->res_dvma >> 16);
+	param[3] = (u_लघु) (qpti->res_dvma & 0xffff);
 	param[4] = param[5] = 0;
-	if (qlogicpti_mbox_command(qpti, param, 1)) {
-		printk(KERN_EMERG "qlogicpti%d: Cannot init response queue.\n",
+	अगर (qlogicpti_mbox_command(qpti, param, 1)) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: Cannot init response queue.\n",
 		       qpti->qpti_id);
 		spin_unlock_irqrestore(host->host_lock, flags);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	param[0] = MBOX_INIT_REQ_QUEUE;
 	param[1] = QLOGICPTI_REQ_QUEUE_LEN + 1;
-	param[2] = (u_short) (qpti->req_dvma >> 16);
-	param[3] = (u_short) (qpti->req_dvma & 0xffff);
+	param[2] = (u_लघु) (qpti->req_dvma >> 16);
+	param[3] = (u_लघु) (qpti->req_dvma & 0xffff);
 	param[4] = param[5] = 0;
-	if (qlogicpti_mbox_command(qpti, param, 1)) {
-		printk(KERN_EMERG "qlogicpti%d: Cannot init request queue.\n",
+	अगर (qlogicpti_mbox_command(qpti, param, 1)) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: Cannot init request queue.\n",
 		       qpti->qpti_id);
 		spin_unlock_irqrestore(host->host_lock, flags);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	param[0] = MBOX_SET_RETRY_COUNT;
 	param[1] = qpti->host_param.retry_count;
@@ -433,33 +434,33 @@ static int qlogicpti_reset_hardware(struct Scsi_Host *host)
 	param[1] = qpti->host_param.tag_aging;
 	qlogicpti_mbox_command(qpti, param, 0);
 
-	for (i = 0; i < MAX_TARGETS; i++) {
+	क्रम (i = 0; i < MAX_TARGETS; i++) अणु
 		param[0] = MBOX_GET_DEV_QUEUE_PARAMS;
 		param[1] = (i << 8);
 		qlogicpti_mbox_command(qpti, param, 0);
-	}
+	पूर्ण
 
 	param[0] = MBOX_GET_FIRMWARE_STATUS;
 	qlogicpti_mbox_command(qpti, param, 0);
 
 	param[0] = MBOX_SET_SELECT_TIMEOUT;
-	param[1] = qpti->host_param.selection_timeout;
+	param[1] = qpti->host_param.selection_समयout;
 	qlogicpti_mbox_command(qpti, param, 0);
 
-	for (i = 0; i < MAX_TARGETS; i++) {
+	क्रम (i = 0; i < MAX_TARGETS; i++) अणु
 		param[0] = MBOX_SET_TARGET_PARAMS;
 		param[1] = (i << 8);
 		param[2] = (qpti->dev_param[i].device_flags << 8);
 		/*
-		 * Since we're now loading 1.31 f/w, force narrow/async.
+		 * Since we're now loading 1.31 f/w, क्रमce narrow/async.
 		 */
 		param[2] |= 0xc0;
-		param[3] = 0;	/* no offset, we do not have sync mode yet */
+		param[3] = 0;	/* no offset, we करो not have sync mode yet */
 		qlogicpti_mbox_command(qpti, param, 0);
-	}
+	पूर्ण
 
 	/*
-	 * Always (sigh) do an initial bus reset (kicks f/w).
+	 * Always (sigh) करो an initial bus reset (kicks f/w).
 	 */
 	param[0] = MBOX_BUS_RESET;
 	param[1] = qpti->host_param.bus_reset_delay;
@@ -467,443 +468,443 @@ static int qlogicpti_reset_hardware(struct Scsi_Host *host)
 	qpti->send_marker = 1;
 
 	spin_unlock_irqrestore(host->host_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define PTI_RESET_LIMIT 400
+#घोषणा PTI_RESET_LIMIT 400
 
-static int qlogicpti_load_firmware(struct qlogicpti *qpti)
-{
-	const struct firmware *fw;
-	const char fwname[] = "qlogic/isp1000.bin";
-	const __le16 *fw_data;
-	struct Scsi_Host *host = qpti->qhost;
-	unsigned short csum = 0;
-	unsigned short param[6];
-	unsigned short risc_code_addr, risc_code_length;
-	int err;
-	unsigned long flags;
-	int i, timeout;
+अटल पूर्णांक qlogicpti_load_firmware(काष्ठा qlogicpti *qpti)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	स्थिर अक्षर fwname[] = "qlogic/isp1000.bin";
+	स्थिर __le16 *fw_data;
+	काष्ठा Scsi_Host *host = qpti->qhost;
+	अचिन्हित लघु csum = 0;
+	अचिन्हित लघु param[6];
+	अचिन्हित लघु risc_code_addr, risc_code_length;
+	पूर्णांक err;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, समयout;
 
 	err = request_firmware(&fw, fwname, &qpti->op->dev);
-	if (err) {
-		printk(KERN_ERR "Failed to load image \"%s\" err %d\n",
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "Failed to load image \"%s\" err %d\n",
 		       fwname, err);
-		return err;
-	}
-	if (fw->size % 2) {
-		printk(KERN_ERR "Bogus length %zu in image \"%s\"\n",
+		वापस err;
+	पूर्ण
+	अगर (fw->size % 2) अणु
+		prपूर्णांकk(KERN_ERR "Bogus length %zu in image \"%s\"\n",
 		       fw->size, fwname);
 		err = -EINVAL;
-		goto outfirm;
-	}
-	fw_data = (const __le16 *)&fw->data[0];
+		जाओ outfirm;
+	पूर्ण
+	fw_data = (स्थिर __le16 *)&fw->data[0];
 	risc_code_addr = 0x1000;	/* all f/w modules load at 0x1000 */
 	risc_code_length = fw->size / 2;
 
 	spin_lock_irqsave(host->host_lock, flags);
 
-	/* Verify the checksum twice, one before loading it, and once
+	/* Verअगरy the checksum twice, one beक्रमe loading it, and once
 	 * afterwards via the mailbox commands.
 	 */
-	for (i = 0; i < risc_code_length; i++)
+	क्रम (i = 0; i < risc_code_length; i++)
 		csum += __le16_to_cpu(fw_data[i]);
-	if (csum) {
-		printk(KERN_EMERG "qlogicpti%d: Aieee, firmware checksum failed!",
+	अगर (csum) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: Aieee, firmware checksum failed!",
 		       qpti->qpti_id);
 		err = 1;
-		goto out;
-	}		
-	sbus_writew(SBUS_CTRL_RESET, qpti->qregs + SBUS_CTRL);
-	sbus_writew((DMA_CTRL_CCLEAR | DMA_CTRL_CIRQ), qpti->qregs + CMD_DMA_CTRL);
-	sbus_writew((DMA_CTRL_CCLEAR | DMA_CTRL_CIRQ), qpti->qregs + DATA_DMA_CTRL);
-	timeout = PTI_RESET_LIMIT;
-	while (--timeout && (sbus_readw(qpti->qregs + SBUS_CTRL) & SBUS_CTRL_RESET))
+		जाओ out;
+	पूर्ण		
+	sbus_ग_लिखोw(SBUS_CTRL_RESET, qpti->qregs + SBUS_CTRL);
+	sbus_ग_लिखोw((DMA_CTRL_CCLEAR | DMA_CTRL_CIRQ), qpti->qregs + CMD_DMA_CTRL);
+	sbus_ग_लिखोw((DMA_CTRL_CCLEAR | DMA_CTRL_CIRQ), qpti->qregs + DATA_DMA_CTRL);
+	समयout = PTI_RESET_LIMIT;
+	जबतक (--समयout && (sbus_पढ़ोw(qpti->qregs + SBUS_CTRL) & SBUS_CTRL_RESET))
 		udelay(20);
-	if (!timeout) {
-		printk(KERN_EMERG "qlogicpti%d: Cannot reset the ISP.", qpti->qpti_id);
+	अगर (!समयout) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: Cannot reset the ISP.", qpti->qpti_id);
 		err = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	sbus_writew(HCCTRL_RESET, qpti->qregs + HCCTRL);
+	sbus_ग_लिखोw(HCCTRL_RESET, qpti->qregs + HCCTRL);
 	mdelay(1);
 
-	sbus_writew((SBUS_CTRL_GENAB | SBUS_CTRL_ERIRQ), qpti->qregs + SBUS_CTRL);
+	sbus_ग_लिखोw((SBUS_CTRL_GENAB | SBUS_CTRL_ERIRQ), qpti->qregs + SBUS_CTRL);
 	set_sbus_cfg1(qpti);
-	sbus_writew(0, qpti->qregs + SBUS_SEMAPHORE);
+	sbus_ग_लिखोw(0, qpti->qregs + SBUS_SEMAPHORE);
 
-	if (sbus_readw(qpti->qregs + RISC_PSR) & RISC_PSR_ULTRA) {
+	अगर (sbus_पढ़ोw(qpti->qregs + RISC_PSR) & RISC_PSR_ULTRA) अणु
 		qpti->ultra = 1;
-		sbus_writew((RISC_MTREG_P0ULTRA | RISC_MTREG_P1ULTRA),
+		sbus_ग_लिखोw((RISC_MTREG_P0ULTRA | RISC_MTREG_P1ULTRA),
 			    qpti->qregs + RISC_MTREG);
-	} else {
+	पूर्ण अन्यथा अणु
 		qpti->ultra = 0;
-		sbus_writew((RISC_MTREG_P0DFLT | RISC_MTREG_P1DFLT),
+		sbus_ग_लिखोw((RISC_MTREG_P0DFLT | RISC_MTREG_P1DFLT),
 			    qpti->qregs + RISC_MTREG);
-	}
+	पूर्ण
 
-	sbus_writew(HCCTRL_REL, qpti->qregs + HCCTRL);
+	sbus_ग_लिखोw(HCCTRL_REL, qpti->qregs + HCCTRL);
 
-	/* Pin lines are only stable while RISC is paused. */
-	sbus_writew(HCCTRL_PAUSE, qpti->qregs + HCCTRL);
-	if (sbus_readw(qpti->qregs + CPU_PDIFF) & CPU_PDIFF_MODE)
-		qpti->differential = 1;
-	else
-		qpti->differential = 0;
-	sbus_writew(HCCTRL_REL, qpti->qregs + HCCTRL);
+	/* Pin lines are only stable जबतक RISC is छोड़ोd. */
+	sbus_ग_लिखोw(HCCTRL_PAUSE, qpti->qregs + HCCTRL);
+	अगर (sbus_पढ़ोw(qpti->qregs + CPU_PDIFF) & CPU_PDIFF_MODE)
+		qpti->dअगरferential = 1;
+	अन्यथा
+		qpti->dअगरferential = 0;
+	sbus_ग_लिखोw(HCCTRL_REL, qpti->qregs + HCCTRL);
 
 	/* This shouldn't be necessary- we've reset things so we should be
 	   running from the ROM now.. */
 
 	param[0] = MBOX_STOP_FIRMWARE;
 	param[1] = param[2] = param[3] = param[4] = param[5] = 0;
-	if (qlogicpti_mbox_command(qpti, param, 1)) {
-		printk(KERN_EMERG "qlogicpti%d: Cannot stop firmware for reload.\n",
+	अगर (qlogicpti_mbox_command(qpti, param, 1)) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: Cannot stop firmware for reload.\n",
 		       qpti->qpti_id);
 		err = 1;
-		goto out;
-	}		
+		जाओ out;
+	पूर्ण		
 
 	/* Load it up.. */
-	for (i = 0; i < risc_code_length; i++) {
+	क्रम (i = 0; i < risc_code_length; i++) अणु
 		param[0] = MBOX_WRITE_RAM_WORD;
 		param[1] = risc_code_addr + i;
 		param[2] = __le16_to_cpu(fw_data[i]);
-		if (qlogicpti_mbox_command(qpti, param, 1) ||
-		    param[0] != MBOX_COMMAND_COMPLETE) {
-			printk("qlogicpti%d: Firmware dload failed, I'm bolixed!\n",
+		अगर (qlogicpti_mbox_command(qpti, param, 1) ||
+		    param[0] != MBOX_COMMAND_COMPLETE) अणु
+			prपूर्णांकk("qlogicpti%d: Firmware dload failed, I'm bolixed!\n",
 			       qpti->qpti_id);
 			err = 1;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Reset the ISP again. */
-	sbus_writew(HCCTRL_RESET, qpti->qregs + HCCTRL);
+	sbus_ग_लिखोw(HCCTRL_RESET, qpti->qregs + HCCTRL);
 	mdelay(1);
 
 	qlogicpti_enable_irqs(qpti);
-	sbus_writew(0, qpti->qregs + SBUS_SEMAPHORE);
-	sbus_writew(HCCTRL_REL, qpti->qregs + HCCTRL);
+	sbus_ग_लिखोw(0, qpti->qregs + SBUS_SEMAPHORE);
+	sbus_ग_लिखोw(HCCTRL_REL, qpti->qregs + HCCTRL);
 
-	/* Ask ISP to verify the checksum of the new code. */
+	/* Ask ISP to verअगरy the checksum of the new code. */
 	param[0] = MBOX_VERIFY_CHECKSUM;
 	param[1] = risc_code_addr;
-	if (qlogicpti_mbox_command(qpti, param, 1) ||
-	    (param[0] != MBOX_COMMAND_COMPLETE)) {
-		printk(KERN_EMERG "qlogicpti%d: New firmware csum failure!\n",
+	अगर (qlogicpti_mbox_command(qpti, param, 1) ||
+	    (param[0] != MBOX_COMMAND_COMPLETE)) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: New firmware csum failure!\n",
 		       qpti->qpti_id);
 		err = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Start using newly downloaded firmware. */
+	/* Start using newly करोwnloaded firmware. */
 	param[0] = MBOX_EXEC_FIRMWARE;
 	param[1] = risc_code_addr;
 	qlogicpti_mbox_command(qpti, param, 1);
 
 	param[0] = MBOX_ABOUT_FIRMWARE;
-	if (qlogicpti_mbox_command(qpti, param, 1) ||
-	    (param[0] != MBOX_COMMAND_COMPLETE)) {
-		printk(KERN_EMERG "qlogicpti%d: AboutFirmware cmd fails.\n",
+	अगर (qlogicpti_mbox_command(qpti, param, 1) ||
+	    (param[0] != MBOX_COMMAND_COMPLETE)) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: AboutFirmware cmd fails.\n",
 		       qpti->qpti_id);
 		err = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Snag the major and minor revisions from the result. */
 	qpti->fware_majrev = param[1];
 	qpti->fware_minrev = param[2];
 	qpti->fware_micrev = param[3];
 
-	/* Set the clock rate */
+	/* Set the घड़ी rate */
 	param[0] = MBOX_SET_CLOCK_RATE;
-	param[1] = qpti->clock;
-	if (qlogicpti_mbox_command(qpti, param, 1) ||
-	    (param[0] != MBOX_COMMAND_COMPLETE)) {
-		printk(KERN_EMERG "qlogicpti%d: could not set clock rate.\n",
+	param[1] = qpti->घड़ी;
+	अगर (qlogicpti_mbox_command(qpti, param, 1) ||
+	    (param[0] != MBOX_COMMAND_COMPLETE)) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: could not set clock rate.\n",
 		       qpti->qpti_id);
 		err = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (qpti->is_pti != 0) {
-		/* Load scsi initiator ID and interrupt level into sbus static ram. */
+	अगर (qpti->is_pti != 0) अणु
+		/* Load scsi initiator ID and पूर्णांकerrupt level पूर्णांकo sbus अटल ram. */
 		param[0] = MBOX_WRITE_RAM_WORD;
 		param[1] = 0xff80;
-		param[2] = (unsigned short) qpti->scsi_id;
+		param[2] = (अचिन्हित लघु) qpti->scsi_id;
 		qlogicpti_mbox_command(qpti, param, 1);
 
 		param[0] = MBOX_WRITE_RAM_WORD;
 		param[1] = 0xff00;
-		param[2] = (unsigned short) 3;
+		param[2] = (अचिन्हित लघु) 3;
 		qlogicpti_mbox_command(qpti, param, 1);
-	}
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(host->host_lock, flags);
 outfirm:
 	release_firmware(fw);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int qlogicpti_verify_tmon(struct qlogicpti *qpti)
-{
-	int curstat = sbus_readb(qpti->sreg);
+अटल पूर्णांक qlogicpti_verअगरy_पंचांगon(काष्ठा qlogicpti *qpti)
+अणु
+	पूर्णांक curstat = sbus_पढ़ोb(qpti->sreg);
 
 	curstat &= 0xf0;
-	if (!(curstat & SREG_FUSE) && (qpti->swsreg & SREG_FUSE))
-		printk("qlogicpti%d: Fuse returned to normal state.\n", qpti->qpti_id);
-	if (!(curstat & SREG_TPOWER) && (qpti->swsreg & SREG_TPOWER))
-		printk("qlogicpti%d: termpwr back to normal state.\n", qpti->qpti_id);
-	if (curstat != qpti->swsreg) {
-		int error = 0;
-		if (curstat & SREG_FUSE) {
+	अगर (!(curstat & SREG_FUSE) && (qpti->swsreg & SREG_FUSE))
+		prपूर्णांकk("qlogicpti%d: Fuse returned to normal state.\n", qpti->qpti_id);
+	अगर (!(curstat & SREG_TPOWER) && (qpti->swsreg & SREG_TPOWER))
+		prपूर्णांकk("qlogicpti%d: termpwr back to normal state.\n", qpti->qpti_id);
+	अगर (curstat != qpti->swsreg) अणु
+		पूर्णांक error = 0;
+		अगर (curstat & SREG_FUSE) अणु
 			error++;
-			printk("qlogicpti%d: Fuse is open!\n", qpti->qpti_id);
-		}
-		if (curstat & SREG_TPOWER) {
+			prपूर्णांकk("qlogicpti%d: Fuse is open!\n", qpti->qpti_id);
+		पूर्ण
+		अगर (curstat & SREG_TPOWER) अणु
 			error++;
-			printk("qlogicpti%d: termpwr failure\n", qpti->qpti_id);
-		}
-		if (qpti->differential &&
-		    (curstat & SREG_DSENSE) != SREG_DSENSE) {
+			prपूर्णांकk("qlogicpti%d: termpwr failure\n", qpti->qpti_id);
+		पूर्ण
+		अगर (qpti->dअगरferential &&
+		    (curstat & SREG_DSENSE) != SREG_DSENSE) अणु
 			error++;
-			printk("qlogicpti%d: You have a single ended device on a "
+			prपूर्णांकk("qlogicpti%d: You have a single ended device on a "
 			       "differential bus!  Please fix!\n", qpti->qpti_id);
-		}
+		पूर्ण
 		qpti->swsreg = curstat;
-		return error;
-	}
-	return 0;
-}
+		वापस error;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static irqreturn_t qpti_intr(int irq, void *dev_id);
+अटल irqवापस_t qpti_पूर्णांकr(पूर्णांक irq, व्योम *dev_id);
 
-static void qpti_chain_add(struct qlogicpti *qpti)
-{
+अटल व्योम qpti_chain_add(काष्ठा qlogicpti *qpti)
+अणु
 	spin_lock_irq(&qptichain_lock);
-	if (qptichain != NULL) {
-		struct qlogicpti *qlink = qptichain;
+	अगर (qptichain != शून्य) अणु
+		काष्ठा qlogicpti *qlink = qptichain;
 
-		while(qlink->next)
+		जबतक(qlink->next)
 			qlink = qlink->next;
 		qlink->next = qpti;
-	} else {
+	पूर्ण अन्यथा अणु
 		qptichain = qpti;
-	}
-	qpti->next = NULL;
+	पूर्ण
+	qpti->next = शून्य;
 	spin_unlock_irq(&qptichain_lock);
-}
+पूर्ण
 
-static void qpti_chain_del(struct qlogicpti *qpti)
-{
+अटल व्योम qpti_chain_del(काष्ठा qlogicpti *qpti)
+अणु
 	spin_lock_irq(&qptichain_lock);
-	if (qptichain == qpti) {
+	अगर (qptichain == qpti) अणु
 		qptichain = qpti->next;
-	} else {
-		struct qlogicpti *qlink = qptichain;
-		while(qlink->next != qpti)
+	पूर्ण अन्यथा अणु
+		काष्ठा qlogicpti *qlink = qptichain;
+		जबतक(qlink->next != qpti)
 			qlink = qlink->next;
 		qlink->next = qpti->next;
-	}
-	qpti->next = NULL;
+	पूर्ण
+	qpti->next = शून्य;
 	spin_unlock_irq(&qptichain_lock);
-}
+पूर्ण
 
-static int qpti_map_regs(struct qlogicpti *qpti)
-{
-	struct platform_device *op = qpti->op;
+अटल पूर्णांक qpti_map_regs(काष्ठा qlogicpti *qpti)
+अणु
+	काष्ठा platक्रमm_device *op = qpti->op;
 
 	qpti->qregs = of_ioremap(&op->resource[0], 0,
 				 resource_size(&op->resource[0]),
 				 "PTI Qlogic/ISP");
-	if (!qpti->qregs) {
-		printk("PTI: Qlogic/ISP registers are unmappable\n");
-		return -ENODEV;
-	}
-	if (qpti->is_pti) {
+	अगर (!qpti->qregs) अणु
+		prपूर्णांकk("PTI: Qlogic/ISP registers are unmappable\n");
+		वापस -ENODEV;
+	पूर्ण
+	अगर (qpti->is_pti) अणु
 		qpti->sreg = of_ioremap(&op->resource[0], (16 * 4096),
-					sizeof(unsigned char),
+					माप(अचिन्हित अक्षर),
 					"PTI Qlogic/ISP statreg");
-		if (!qpti->sreg) {
-			printk("PTI: Qlogic/ISP status register is unmappable\n");
-			return -ENODEV;
-		}
-	}
-	return 0;
-}
+		अगर (!qpti->sreg) अणु
+			prपूर्णांकk("PTI: Qlogic/ISP status register is unmappable\n");
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int qpti_register_irq(struct qlogicpti *qpti)
-{
-	struct platform_device *op = qpti->op;
+अटल पूर्णांक qpti_रेजिस्टर_irq(काष्ठा qlogicpti *qpti)
+अणु
+	काष्ठा platक्रमm_device *op = qpti->op;
 
 	qpti->qhost->irq = qpti->irq = op->archdata.irqs[0];
 
 	/* We used to try various overly-clever things to
-	 * reduce the interrupt processing overhead on
+	 * reduce the पूर्णांकerrupt processing overhead on
 	 * sun4c/sun4m when multiple PTI's shared the
 	 * same IRQ.  It was too complex and messy to
-	 * sanely maintain.
+	 * sanely मुख्यtain.
 	 */
-	if (request_irq(qpti->irq, qpti_intr,
+	अगर (request_irq(qpti->irq, qpti_पूर्णांकr,
 			IRQF_SHARED, "QlogicPTI", qpti))
-		goto fail;
+		जाओ fail;
 
-	printk("qlogicpti%d: IRQ %d ", qpti->qpti_id, qpti->irq);
+	prपूर्णांकk("qlogicpti%d: IRQ %d ", qpti->qpti_id, qpti->irq);
 
-	return 0;
+	वापस 0;
 
 fail:
-	printk("qlogicpti%d: Cannot acquire irq line\n", qpti->qpti_id);
-	return -1;
-}
+	prपूर्णांकk("qlogicpti%d: Cannot acquire irq line\n", qpti->qpti_id);
+	वापस -1;
+पूर्ण
 
-static void qpti_get_scsi_id(struct qlogicpti *qpti)
-{
-	struct platform_device *op = qpti->op;
-	struct device_node *dp;
+अटल व्योम qpti_get_scsi_id(काष्ठा qlogicpti *qpti)
+अणु
+	काष्ठा platक्रमm_device *op = qpti->op;
+	काष्ठा device_node *dp;
 
 	dp = op->dev.of_node;
 
-	qpti->scsi_id = of_getintprop_default(dp, "initiator-id", -1);
-	if (qpti->scsi_id == -1)
-		qpti->scsi_id = of_getintprop_default(dp, "scsi-initiator-id",
+	qpti->scsi_id = of_getपूर्णांकprop_शेष(dp, "initiator-id", -1);
+	अगर (qpti->scsi_id == -1)
+		qpti->scsi_id = of_getपूर्णांकprop_शेष(dp, "scsi-initiator-id",
 						      -1);
-	if (qpti->scsi_id == -1)
+	अगर (qpti->scsi_id == -1)
 		qpti->scsi_id =
-			of_getintprop_default(dp->parent,
+			of_getपूर्णांकprop_शेष(dp->parent,
 					      "scsi-initiator-id", 7);
 	qpti->qhost->this_id = qpti->scsi_id;
 	qpti->qhost->max_sectors = 64;
 
-	printk("SCSI ID %d ", qpti->scsi_id);
-}
+	prपूर्णांकk("SCSI ID %d ", qpti->scsi_id);
+पूर्ण
 
-static void qpti_get_bursts(struct qlogicpti *qpti)
-{
-	struct platform_device *op = qpti->op;
+अटल व्योम qpti_get_bursts(काष्ठा qlogicpti *qpti)
+अणु
+	काष्ठा platक्रमm_device *op = qpti->op;
 	u8 bursts, bmask;
 
-	bursts = of_getintprop_default(op->dev.of_node, "burst-sizes", 0xff);
-	bmask = of_getintprop_default(op->dev.of_node->parent, "burst-sizes", 0xff);
-	if (bmask != 0xff)
+	bursts = of_getपूर्णांकprop_शेष(op->dev.of_node, "burst-sizes", 0xff);
+	bmask = of_getपूर्णांकprop_शेष(op->dev.of_node->parent, "burst-sizes", 0xff);
+	अगर (bmask != 0xff)
 		bursts &= bmask;
-	if (bursts == 0xff ||
+	अगर (bursts == 0xff ||
 	    (bursts & DMA_BURST16) == 0 ||
 	    (bursts & DMA_BURST32) == 0)
 		bursts = (DMA_BURST32 - 1);
 
 	qpti->bursts = bursts;
-}
+पूर्ण
 
-static void qpti_get_clock(struct qlogicpti *qpti)
-{
-	unsigned int cfreq;
+अटल व्योम qpti_get_घड़ी(काष्ठा qlogicpti *qpti)
+अणु
+	अचिन्हित पूर्णांक cfreq;
 
-	/* Check for what the clock input to this card is.
+	/* Check क्रम what the घड़ी input to this card is.
 	 * Default to 40Mhz.
 	 */
-	cfreq = prom_getintdefault(qpti->prom_node,"clock-frequency",40000000);
-	qpti->clock = (cfreq + 500000)/1000000;
-	if (qpti->clock == 0) /* bullshit */
-		qpti->clock = 40;
-}
+	cfreq = prom_getपूर्णांकशेष(qpti->prom_node,"clock-frequency",40000000);
+	qpti->घड़ी = (cfreq + 500000)/1000000;
+	अगर (qpti->घड़ी == 0) /* bullshit */
+		qpti->घड़ी = 40;
+पूर्ण
 
 /* The request and response queues must each be aligned
  * on a page boundary.
  */
-static int qpti_map_queues(struct qlogicpti *qpti)
-{
-	struct platform_device *op = qpti->op;
+अटल पूर्णांक qpti_map_queues(काष्ठा qlogicpti *qpti)
+अणु
+	काष्ठा platक्रमm_device *op = qpti->op;
 
-#define QSIZE(entries)	(((entries) + 1) * QUEUE_ENTRY_LEN)
+#घोषणा QSIZE(entries)	(((entries) + 1) * QUEUE_ENTRY_LEN)
 	qpti->res_cpu = dma_alloc_coherent(&op->dev,
 					   QSIZE(RES_QUEUE_LEN),
 					   &qpti->res_dvma, GFP_ATOMIC);
-	if (qpti->res_cpu == NULL ||
-	    qpti->res_dvma == 0) {
-		printk("QPTI: Cannot map response queue.\n");
-		return -1;
-	}
+	अगर (qpti->res_cpu == शून्य ||
+	    qpti->res_dvma == 0) अणु
+		prपूर्णांकk("QPTI: Cannot map response queue.\n");
+		वापस -1;
+	पूर्ण
 
 	qpti->req_cpu = dma_alloc_coherent(&op->dev,
 					   QSIZE(QLOGICPTI_REQ_QUEUE_LEN),
 					   &qpti->req_dvma, GFP_ATOMIC);
-	if (qpti->req_cpu == NULL ||
-	    qpti->req_dvma == 0) {
-		dma_free_coherent(&op->dev, QSIZE(RES_QUEUE_LEN),
+	अगर (qpti->req_cpu == शून्य ||
+	    qpti->req_dvma == 0) अणु
+		dma_मुक्त_coherent(&op->dev, QSIZE(RES_QUEUE_LEN),
 				  qpti->res_cpu, qpti->res_dvma);
-		printk("QPTI: Cannot map request queue.\n");
-		return -1;
-	}
-	memset(qpti->res_cpu, 0, QSIZE(RES_QUEUE_LEN));
-	memset(qpti->req_cpu, 0, QSIZE(QLOGICPTI_REQ_QUEUE_LEN));
-	return 0;
-}
+		prपूर्णांकk("QPTI: Cannot map request queue.\n");
+		वापस -1;
+	पूर्ण
+	स_रखो(qpti->res_cpu, 0, QSIZE(RES_QUEUE_LEN));
+	स_रखो(qpti->req_cpu, 0, QSIZE(QLOGICPTI_REQ_QUEUE_LEN));
+	वापस 0;
+पूर्ण
 
-const char *qlogicpti_info(struct Scsi_Host *host)
-{
-	static char buf[80];
-	struct qlogicpti *qpti = (struct qlogicpti *) host->hostdata;
+स्थिर अक्षर *qlogicpti_info(काष्ठा Scsi_Host *host)
+अणु
+	अटल अक्षर buf[80];
+	काष्ठा qlogicpti *qpti = (काष्ठा qlogicpti *) host->hostdata;
 
-	sprintf(buf, "PTI Qlogic,ISP SBUS SCSI irq %d regs at %p",
+	प्र_लिखो(buf, "PTI Qlogic,ISP SBUS SCSI irq %d regs at %p",
 		qpti->qhost->irq, qpti->qregs);
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-/* I am a certified frobtronicist. */
-static inline void marker_frob(struct Command_Entry *cmd)
-{
-	struct Marker_Entry *marker = (struct Marker_Entry *) cmd;
+/* I am a certअगरied frobtronicist. */
+अटल अंतरभूत व्योम marker_frob(काष्ठा Command_Entry *cmd)
+अणु
+	काष्ठा Marker_Entry *marker = (काष्ठा Marker_Entry *) cmd;
 
-	memset(marker, 0, sizeof(struct Marker_Entry));
+	स_रखो(marker, 0, माप(काष्ठा Marker_Entry));
 	marker->hdr.entry_cnt = 1;
 	marker->hdr.entry_type = ENTRY_MARKER;
-	marker->modifier = SYNC_ALL;
+	marker->modअगरier = SYNC_ALL;
 	marker->rsvd = 0;
-}
+पूर्ण
 
-static inline void cmd_frob(struct Command_Entry *cmd, struct scsi_cmnd *Cmnd,
-			    struct qlogicpti *qpti)
-{
-	memset(cmd, 0, sizeof(struct Command_Entry));
+अटल अंतरभूत व्योम cmd_frob(काष्ठा Command_Entry *cmd, काष्ठा scsi_cmnd *Cmnd,
+			    काष्ठा qlogicpti *qpti)
+अणु
+	स_रखो(cmd, 0, माप(काष्ठा Command_Entry));
 	cmd->hdr.entry_cnt = 1;
 	cmd->hdr.entry_type = ENTRY_COMMAND;
 	cmd->target_id = Cmnd->device->id;
 	cmd->target_lun = Cmnd->device->lun;
 	cmd->cdb_length = Cmnd->cmd_len;
 	cmd->control_flags = 0;
-	if (Cmnd->device->tagged_supported) {
-		if (qpti->cmd_count[Cmnd->device->id] == 0)
-			qpti->tag_ages[Cmnd->device->id] = jiffies;
-		if (time_after(jiffies, qpti->tag_ages[Cmnd->device->id] + (5*HZ))) {
+	अगर (Cmnd->device->tagged_supported) अणु
+		अगर (qpti->cmd_count[Cmnd->device->id] == 0)
+			qpti->tag_ages[Cmnd->device->id] = jअगरfies;
+		अगर (समय_after(jअगरfies, qpti->tag_ages[Cmnd->device->id] + (5*HZ))) अणु
 			cmd->control_flags = CFLAG_ORDERED_TAG;
-			qpti->tag_ages[Cmnd->device->id] = jiffies;
-		} else
+			qpti->tag_ages[Cmnd->device->id] = jअगरfies;
+		पूर्ण अन्यथा
 			cmd->control_flags = CFLAG_SIMPLE_TAG;
-	}
-	if ((Cmnd->cmnd[0] == WRITE_6) ||
+	पूर्ण
+	अगर ((Cmnd->cmnd[0] == WRITE_6) ||
 	    (Cmnd->cmnd[0] == WRITE_10) ||
 	    (Cmnd->cmnd[0] == WRITE_12))
 		cmd->control_flags |= CFLAG_WRITE;
-	else
+	अन्यथा
 		cmd->control_flags |= CFLAG_READ;
-	cmd->time_out = Cmnd->request->timeout/HZ;
-	memcpy(cmd->cdb, Cmnd->cmnd, Cmnd->cmd_len);
-}
+	cmd->समय_out = Cmnd->request->समयout/HZ;
+	स_नकल(cmd->cdb, Cmnd->cmnd, Cmnd->cmd_len);
+पूर्ण
 
 /* Do it to it baby. */
-static inline int load_cmd(struct scsi_cmnd *Cmnd, struct Command_Entry *cmd,
-			   struct qlogicpti *qpti, u_int in_ptr, u_int out_ptr)
-{
-	struct dataseg *ds;
-	struct scatterlist *sg, *s;
-	int i, n;
+अटल अंतरभूत पूर्णांक load_cmd(काष्ठा scsi_cmnd *Cmnd, काष्ठा Command_Entry *cmd,
+			   काष्ठा qlogicpti *qpti, u_पूर्णांक in_ptr, u_पूर्णांक out_ptr)
+अणु
+	काष्ठा dataseg *ds;
+	काष्ठा scatterlist *sg, *s;
+	पूर्णांक i, n;
 
-	if (scsi_bufflen(Cmnd)) {
-		int sg_count;
+	अगर (scsi_bufflen(Cmnd)) अणु
+		पूर्णांक sg_count;
 
 		sg = scsi_sglist(Cmnd);
 		sg_count = dma_map_sg(&qpti->op->dev, sg,
@@ -915,22 +916,22 @@ static inline int load_cmd(struct scsi_cmnd *Cmnd, struct Command_Entry *cmd,
 
 		/* Fill in first four sg entries: */
 		n = sg_count;
-		if (n > 4)
+		अगर (n > 4)
 			n = 4;
-		for_each_sg(sg, s, n, i) {
+		क्रम_each_sg(sg, s, n, i) अणु
 			ds[i].d_base = sg_dma_address(s);
 			ds[i].d_count = sg_dma_len(s);
-		}
+		पूर्ण
 		sg_count -= 4;
 		sg = s;
-		while (sg_count > 0) {
-			struct Continuation_Entry *cont;
+		जबतक (sg_count > 0) अणु
+			काष्ठा Continuation_Entry *cont;
 
 			++cmd->hdr.entry_cnt;
-			cont = (struct Continuation_Entry *) &qpti->req_cpu[in_ptr];
+			cont = (काष्ठा Continuation_Entry *) &qpti->req_cpu[in_ptr];
 			in_ptr = NEXT_REQ_PTR(in_ptr);
-			if (in_ptr == out_ptr)
-				return -1;
+			अगर (in_ptr == out_ptr)
+				वापस -1;
 
 			cont->hdr.entry_type = ENTRY_CONTINUATION;
 			cont->hdr.entry_cnt = 0;
@@ -939,385 +940,385 @@ static inline int load_cmd(struct scsi_cmnd *Cmnd, struct Command_Entry *cmd,
 			cont->reserved = 0;
 			ds = cont->dataseg;
 			n = sg_count;
-			if (n > 7)
+			अगर (n > 7)
 				n = 7;
-			for_each_sg(sg, s, n, i) {
+			क्रम_each_sg(sg, s, n, i) अणु
 				ds[i].d_base = sg_dma_address(s);
 				ds[i].d_count = sg_dma_len(s);
-			}
+			पूर्ण
 			sg_count -= n;
 			sg = s;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		cmd->dataseg[0].d_base = 0;
 		cmd->dataseg[0].d_count = 0;
 		cmd->segment_cnt = 1; /* Shouldn't this be 0? */
-	}
+	पूर्ण
 
 	/* Committed, record Scsi_Cmd so we can find it later. */
 	cmd->handle = in_ptr;
 	qpti->cmd_slots[in_ptr] = Cmnd;
 
 	qpti->cmd_count[Cmnd->device->id]++;
-	sbus_writew(in_ptr, qpti->qregs + MBOX4);
+	sbus_ग_लिखोw(in_ptr, qpti->qregs + MBOX4);
 	qpti->req_in_ptr = in_ptr;
 
-	return in_ptr;
-}
+	वापस in_ptr;
+पूर्ण
 
-static inline void update_can_queue(struct Scsi_Host *host, u_int in_ptr, u_int out_ptr)
-{
+अटल अंतरभूत व्योम update_can_queue(काष्ठा Scsi_Host *host, u_पूर्णांक in_ptr, u_पूर्णांक out_ptr)
+अणु
 	/* Temporary workaround until bug is found and fixed (one bug has been found
-	   already, but fixing it makes things even worse) -jj */
-	int num_free = QLOGICPTI_REQ_QUEUE_LEN - REQ_QUEUE_DEPTH(in_ptr, out_ptr) - 64;
-	host->can_queue = scsi_host_busy(host) + num_free;
-	host->sg_tablesize = QLOGICPTI_MAX_SG(num_free);
-}
+	   alपढ़ोy, but fixing it makes things even worse) -jj */
+	पूर्णांक num_मुक्त = QLOGICPTI_REQ_QUEUE_LEN - REQ_QUEUE_DEPTH(in_ptr, out_ptr) - 64;
+	host->can_queue = scsi_host_busy(host) + num_मुक्त;
+	host->sg_tablesize = QLOGICPTI_MAX_SG(num_मुक्त);
+पूर्ण
 
-static int qlogicpti_slave_configure(struct scsi_device *sdev)
-{
-	struct qlogicpti *qpti = shost_priv(sdev->host);
-	int tgt = sdev->id;
-	u_short param[6];
+अटल पूर्णांक qlogicpti_slave_configure(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा qlogicpti *qpti = shost_priv(sdev->host);
+	पूर्णांक tgt = sdev->id;
+	u_लघु param[6];
 
 	/* tags handled in midlayer */
 	/* enable sync mode? */
-	if (sdev->sdtr) {
+	अगर (sdev->sdtr) अणु
 		qpti->dev_param[tgt].device_flags |= 0x10;
-	} else {
+	पूर्ण अन्यथा अणु
 		qpti->dev_param[tgt].synchronous_offset = 0;
 		qpti->dev_param[tgt].synchronous_period = 0;
-	}
+	पूर्ण
 	/* are we wide capable? */
-	if (sdev->wdtr)
+	अगर (sdev->wdtr)
 		qpti->dev_param[tgt].device_flags |= 0x20;
 
 	param[0] = MBOX_SET_TARGET_PARAMS;
 	param[1] = (tgt << 8);
 	param[2] = (qpti->dev_param[tgt].device_flags << 8);
-	if (qpti->dev_param[tgt].device_flags & 0x10) {
+	अगर (qpti->dev_param[tgt].device_flags & 0x10) अणु
 		param[3] = (qpti->dev_param[tgt].synchronous_offset << 8) |
 			qpti->dev_param[tgt].synchronous_period;
-	} else {
+	पूर्ण अन्यथा अणु
 		param[3] = 0;
-	}
+	पूर्ण
 	qlogicpti_mbox_command(qpti, param, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The middle SCSI layer ensures that queuecommand never gets invoked
- * concurrently with itself or the interrupt handler (though the
- * interrupt handler may call this routine as part of
+ * The middle SCSI layer ensures that queuecommand never माला_लो invoked
+ * concurrently with itself or the पूर्णांकerrupt handler (though the
+ * पूर्णांकerrupt handler may call this routine as part of
  * request-completion handling).
  *
  * "This code must fly." -davem
  */
-static int qlogicpti_queuecommand_lck(struct scsi_cmnd *Cmnd, void (*done)(struct scsi_cmnd *))
-{
-	struct Scsi_Host *host = Cmnd->device->host;
-	struct qlogicpti *qpti = (struct qlogicpti *) host->hostdata;
-	struct Command_Entry *cmd;
-	u_int out_ptr;
-	int in_ptr;
+अटल पूर्णांक qlogicpti_queuecommand_lck(काष्ठा scsi_cmnd *Cmnd, व्योम (*करोne)(काष्ठा scsi_cmnd *))
+अणु
+	काष्ठा Scsi_Host *host = Cmnd->device->host;
+	काष्ठा qlogicpti *qpti = (काष्ठा qlogicpti *) host->hostdata;
+	काष्ठा Command_Entry *cmd;
+	u_पूर्णांक out_ptr;
+	पूर्णांक in_ptr;
 
-	Cmnd->scsi_done = done;
+	Cmnd->scsi_करोne = करोne;
 
 	in_ptr = qpti->req_in_ptr;
-	cmd = (struct Command_Entry *) &qpti->req_cpu[in_ptr];
-	out_ptr = sbus_readw(qpti->qregs + MBOX4);
+	cmd = (काष्ठा Command_Entry *) &qpti->req_cpu[in_ptr];
+	out_ptr = sbus_पढ़ोw(qpti->qregs + MBOX4);
 	in_ptr = NEXT_REQ_PTR(in_ptr);
-	if (in_ptr == out_ptr)
-		goto toss_command;
+	अगर (in_ptr == out_ptr)
+		जाओ toss_command;
 
-	if (qpti->send_marker) {
+	अगर (qpti->send_marker) अणु
 		marker_frob(cmd);
 		qpti->send_marker = 0;
-		if (NEXT_REQ_PTR(in_ptr) == out_ptr) {
-			sbus_writew(in_ptr, qpti->qregs + MBOX4);
+		अगर (NEXT_REQ_PTR(in_ptr) == out_ptr) अणु
+			sbus_ग_लिखोw(in_ptr, qpti->qregs + MBOX4);
 			qpti->req_in_ptr = in_ptr;
-			goto toss_command;
-		}
-		cmd = (struct Command_Entry *) &qpti->req_cpu[in_ptr];
+			जाओ toss_command;
+		पूर्ण
+		cmd = (काष्ठा Command_Entry *) &qpti->req_cpu[in_ptr];
 		in_ptr = NEXT_REQ_PTR(in_ptr);
-	}
+	पूर्ण
 	cmd_frob(cmd, Cmnd, qpti);
-	if ((in_ptr = load_cmd(Cmnd, cmd, qpti, in_ptr, out_ptr)) == -1)
-		goto toss_command;
+	अगर ((in_ptr = load_cmd(Cmnd, cmd, qpti, in_ptr, out_ptr)) == -1)
+		जाओ toss_command;
 
 	update_can_queue(host, in_ptr, out_ptr);
 
-	return 0;
+	वापस 0;
 
 toss_command:
-	printk(KERN_EMERG "qlogicpti%d: request queue overflow\n",
+	prपूर्णांकk(KERN_EMERG "qlogicpti%d: request queue overflow\n",
 	       qpti->qpti_id);
 
-	/* Unfortunately, unless you use the new EH code, which
-	 * we don't, the midlayer will ignore the return value,
+	/* Unक्रमtunately, unless you use the new EH code, which
+	 * we करोn't, the midlayer will ignore the वापस value,
 	 * which is insane.  We pick up the pieces like this.
 	 */
 	Cmnd->result = DID_BUS_BUSY;
-	done(Cmnd);
-	return 1;
-}
+	करोne(Cmnd);
+	वापस 1;
+पूर्ण
 
-static DEF_SCSI_QCMD(qlogicpti_queuecommand)
+अटल DEF_SCSI_QCMD(qlogicpti_queuecommand)
 
-static int qlogicpti_return_status(struct Status_Entry *sts, int id)
-{
-	int host_status = DID_ERROR;
+अटल पूर्णांक qlogicpti_वापस_status(काष्ठा Status_Entry *sts, पूर्णांक id)
+अणु
+	पूर्णांक host_status = DID_ERROR;
 
-	switch (sts->completion_status) {
-	      case CS_COMPLETE:
+	चयन (sts->completion_status) अणु
+	      हाल CS_COMPLETE:
 		host_status = DID_OK;
-		break;
-	      case CS_INCOMPLETE:
-		if (!(sts->state_flags & SF_GOT_BUS))
+		अवरोध;
+	      हाल CS_INCOMPLETE:
+		अगर (!(sts->state_flags & SF_GOT_BUS))
 			host_status = DID_NO_CONNECT;
-		else if (!(sts->state_flags & SF_GOT_TARGET))
+		अन्यथा अगर (!(sts->state_flags & SF_GOT_TARGET))
 			host_status = DID_BAD_TARGET;
-		else if (!(sts->state_flags & SF_SENT_CDB))
+		अन्यथा अगर (!(sts->state_flags & SF_SENT_CDB))
 			host_status = DID_ERROR;
-		else if (!(sts->state_flags & SF_TRANSFERRED_DATA))
+		अन्यथा अगर (!(sts->state_flags & SF_TRANSFERRED_DATA))
 			host_status = DID_ERROR;
-		else if (!(sts->state_flags & SF_GOT_STATUS))
+		अन्यथा अगर (!(sts->state_flags & SF_GOT_STATUS))
 			host_status = DID_ERROR;
-		else if (!(sts->state_flags & SF_GOT_SENSE))
+		अन्यथा अगर (!(sts->state_flags & SF_GOT_SENSE))
 			host_status = DID_ERROR;
-		break;
-	      case CS_DMA_ERROR:
-	      case CS_TRANSPORT_ERROR:
+		अवरोध;
+	      हाल CS_DMA_ERROR:
+	      हाल CS_TRANSPORT_ERROR:
 		host_status = DID_ERROR;
-		break;
-	      case CS_RESET_OCCURRED:
-	      case CS_BUS_RESET:
+		अवरोध;
+	      हाल CS_RESET_OCCURRED:
+	      हाल CS_BUS_RESET:
 		host_status = DID_RESET;
-		break;
-	      case CS_ABORTED:
+		अवरोध;
+	      हाल CS_ABORTED:
 		host_status = DID_ABORT;
-		break;
-	      case CS_TIMEOUT:
+		अवरोध;
+	      हाल CS_TIMEOUT:
 		host_status = DID_TIME_OUT;
-		break;
-	      case CS_DATA_OVERRUN:
-	      case CS_COMMAND_OVERRUN:
-	      case CS_STATUS_OVERRUN:
-	      case CS_BAD_MESSAGE:
-	      case CS_NO_MESSAGE_OUT:
-	      case CS_EXT_ID_FAILED:
-	      case CS_IDE_MSG_FAILED:
-	      case CS_ABORT_MSG_FAILED:
-	      case CS_NOP_MSG_FAILED:
-	      case CS_PARITY_ERROR_MSG_FAILED:
-	      case CS_DEVICE_RESET_MSG_FAILED:
-	      case CS_ID_MSG_FAILED:
-	      case CS_UNEXP_BUS_FREE:
+		अवरोध;
+	      हाल CS_DATA_OVERRUN:
+	      हाल CS_COMMAND_OVERRUN:
+	      हाल CS_STATUS_OVERRUN:
+	      हाल CS_BAD_MESSAGE:
+	      हाल CS_NO_MESSAGE_OUT:
+	      हाल CS_EXT_ID_FAILED:
+	      हाल CS_IDE_MSG_FAILED:
+	      हाल CS_ABORT_MSG_FAILED:
+	      हाल CS_NOP_MSG_FAILED:
+	      हाल CS_PARITY_ERROR_MSG_FAILED:
+	      हाल CS_DEVICE_RESET_MSG_FAILED:
+	      हाल CS_ID_MSG_FAILED:
+	      हाल CS_UNEXP_BUS_FREE:
 		host_status = DID_ERROR;
-		break;
-	      case CS_DATA_UNDERRUN:
+		अवरोध;
+	      हाल CS_DATA_UNDERRUN:
 		host_status = DID_OK;
-		break;
-	      default:
-		printk(KERN_EMERG "qlogicpti%d: unknown completion status 0x%04x\n",
+		अवरोध;
+	      शेष:
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: unknown completion status 0x%04x\n",
 		       id, sts->completion_status);
 		host_status = DID_ERROR;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return (sts->scsi_status & STATUS_MASK) | (host_status << 16);
-}
+	वापस (sts->scsi_status & STATUS_MASK) | (host_status << 16);
+पूर्ण
 
-static struct scsi_cmnd *qlogicpti_intr_handler(struct qlogicpti *qpti)
-{
-	struct scsi_cmnd *Cmnd, *done_queue = NULL;
-	struct Status_Entry *sts;
-	u_int in_ptr, out_ptr;
+अटल काष्ठा scsi_cmnd *qlogicpti_पूर्णांकr_handler(काष्ठा qlogicpti *qpti)
+अणु
+	काष्ठा scsi_cmnd *Cmnd, *करोne_queue = शून्य;
+	काष्ठा Status_Entry *sts;
+	u_पूर्णांक in_ptr, out_ptr;
 
-	if (!(sbus_readw(qpti->qregs + SBUS_STAT) & SBUS_STAT_RINT))
-		return NULL;
+	अगर (!(sbus_पढ़ोw(qpti->qregs + SBUS_STAT) & SBUS_STAT_RINT))
+		वापस शून्य;
 		
-	in_ptr = sbus_readw(qpti->qregs + MBOX5);
-	sbus_writew(HCCTRL_CRIRQ, qpti->qregs + HCCTRL);
-	if (sbus_readw(qpti->qregs + SBUS_SEMAPHORE) & SBUS_SEMAPHORE_LCK) {
-		switch (sbus_readw(qpti->qregs + MBOX0)) {
-		case ASYNC_SCSI_BUS_RESET:
-		case EXECUTION_TIMEOUT_RESET:
+	in_ptr = sbus_पढ़ोw(qpti->qregs + MBOX5);
+	sbus_ग_लिखोw(HCCTRL_CRIRQ, qpti->qregs + HCCTRL);
+	अगर (sbus_पढ़ोw(qpti->qregs + SBUS_SEMAPHORE) & SBUS_SEMAPHORE_LCK) अणु
+		चयन (sbus_पढ़ोw(qpti->qregs + MBOX0)) अणु
+		हाल ASYNC_SCSI_BUS_RESET:
+		हाल EXECUTION_TIMEOUT_RESET:
 			qpti->send_marker = 1;
-			break;
-		case INVALID_COMMAND:
-		case HOST_INTERFACE_ERROR:
-		case COMMAND_ERROR:
-		case COMMAND_PARAM_ERROR:
-			break;
-		};
-		sbus_writew(0, qpti->qregs + SBUS_SEMAPHORE);
-	}
+			अवरोध;
+		हाल INVALID_COMMAND:
+		हाल HOST_INTERFACE_ERROR:
+		हाल COMMAND_ERROR:
+		हाल COMMAND_PARAM_ERROR:
+			अवरोध;
+		पूर्ण;
+		sbus_ग_लिखोw(0, qpti->qregs + SBUS_SEMAPHORE);
+	पूर्ण
 
 	/* This looks like a network driver! */
 	out_ptr = qpti->res_out_ptr;
-	while (out_ptr != in_ptr) {
-		u_int cmd_slot;
+	जबतक (out_ptr != in_ptr) अणु
+		u_पूर्णांक cmd_slot;
 
-		sts = (struct Status_Entry *) &qpti->res_cpu[out_ptr];
+		sts = (काष्ठा Status_Entry *) &qpti->res_cpu[out_ptr];
 		out_ptr = NEXT_RES_PTR(out_ptr);
 
-		/* We store an index in the handle, not the pointer in
-		 * some form.  This avoids problems due to the fact
+		/* We store an index in the handle, not the poपूर्णांकer in
+		 * some क्रमm.  This aव्योमs problems due to the fact
 		 * that the handle provided is only 32-bits. -DaveM
 		 */
 		cmd_slot = sts->handle;
 		Cmnd = qpti->cmd_slots[cmd_slot];
-		qpti->cmd_slots[cmd_slot] = NULL;
+		qpti->cmd_slots[cmd_slot] = शून्य;
 
-		if (sts->completion_status == CS_RESET_OCCURRED ||
+		अगर (sts->completion_status == CS_RESET_OCCURRED ||
 		    sts->completion_status == CS_ABORTED ||
 		    (sts->status_flags & STF_BUS_RESET))
 			qpti->send_marker = 1;
 
-		if (sts->state_flags & SF_GOT_SENSE)
-			memcpy(Cmnd->sense_buffer, sts->req_sense_data,
+		अगर (sts->state_flags & SF_GOT_SENSE)
+			स_नकल(Cmnd->sense_buffer, sts->req_sense_data,
 			       SCSI_SENSE_BUFFERSIZE);
 
-		if (sts->hdr.entry_type == ENTRY_STATUS)
+		अगर (sts->hdr.entry_type == ENTRY_STATUS)
 			Cmnd->result =
-			    qlogicpti_return_status(sts, qpti->qpti_id);
-		else
+			    qlogicpti_वापस_status(sts, qpti->qpti_id);
+		अन्यथा
 			Cmnd->result = DID_ERROR << 16;
 
-		if (scsi_bufflen(Cmnd))
+		अगर (scsi_bufflen(Cmnd))
 			dma_unmap_sg(&qpti->op->dev,
 				     scsi_sglist(Cmnd), scsi_sg_count(Cmnd),
 				     Cmnd->sc_data_direction);
 
 		qpti->cmd_count[Cmnd->device->id]--;
-		sbus_writew(out_ptr, qpti->qregs + MBOX5);
-		Cmnd->host_scribble = (unsigned char *) done_queue;
-		done_queue = Cmnd;
-	}
+		sbus_ग_लिखोw(out_ptr, qpti->qregs + MBOX5);
+		Cmnd->host_scribble = (अचिन्हित अक्षर *) करोne_queue;
+		करोne_queue = Cmnd;
+	पूर्ण
 	qpti->res_out_ptr = out_ptr;
 
-	return done_queue;
-}
+	वापस करोne_queue;
+पूर्ण
 
-static irqreturn_t qpti_intr(int irq, void *dev_id)
-{
-	struct qlogicpti *qpti = dev_id;
-	unsigned long flags;
-	struct scsi_cmnd *dq;
+अटल irqवापस_t qpti_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा qlogicpti *qpti = dev_id;
+	अचिन्हित दीर्घ flags;
+	काष्ठा scsi_cmnd *dq;
 
 	spin_lock_irqsave(qpti->qhost->host_lock, flags);
-	dq = qlogicpti_intr_handler(qpti);
+	dq = qlogicpti_पूर्णांकr_handler(qpti);
 
-	if (dq != NULL) {
-		do {
-			struct scsi_cmnd *next;
+	अगर (dq != शून्य) अणु
+		करो अणु
+			काष्ठा scsi_cmnd *next;
 
-			next = (struct scsi_cmnd *) dq->host_scribble;
-			dq->scsi_done(dq);
+			next = (काष्ठा scsi_cmnd *) dq->host_scribble;
+			dq->scsi_करोne(dq);
 			dq = next;
-		} while (dq != NULL);
-	}
+		पूर्ण जबतक (dq != शून्य);
+	पूर्ण
 	spin_unlock_irqrestore(qpti->qhost->host_lock, flags);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int qlogicpti_abort(struct scsi_cmnd *Cmnd)
-{
-	u_short param[6];
-	struct Scsi_Host *host = Cmnd->device->host;
-	struct qlogicpti *qpti = (struct qlogicpti *) host->hostdata;
-	int return_status = SUCCESS;
+अटल पूर्णांक qlogicpti_पात(काष्ठा scsi_cmnd *Cmnd)
+अणु
+	u_लघु param[6];
+	काष्ठा Scsi_Host *host = Cmnd->device->host;
+	काष्ठा qlogicpti *qpti = (काष्ठा qlogicpti *) host->hostdata;
+	पूर्णांक वापस_status = SUCCESS;
 	u32 cmd_cookie;
-	int i;
+	पूर्णांक i;
 
-	printk(KERN_WARNING "qlogicpti%d: Aborting cmd for tgt[%d] lun[%d]\n",
-	       qpti->qpti_id, (int)Cmnd->device->id, (int)Cmnd->device->lun);
+	prपूर्णांकk(KERN_WARNING "qlogicpti%d: Aborting cmd for tgt[%d] lun[%d]\n",
+	       qpti->qpti_id, (पूर्णांक)Cmnd->device->id, (पूर्णांक)Cmnd->device->lun);
 
 	qlogicpti_disable_irqs(qpti);
 
-	/* Find the 32-bit cookie we gave to the firmware for
+	/* Find the 32-bit cookie we gave to the firmware क्रम
 	 * this command.
 	 */
-	for (i = 0; i < QLOGICPTI_REQ_QUEUE_LEN + 1; i++)
-		if (qpti->cmd_slots[i] == Cmnd)
-			break;
+	क्रम (i = 0; i < QLOGICPTI_REQ_QUEUE_LEN + 1; i++)
+		अगर (qpti->cmd_slots[i] == Cmnd)
+			अवरोध;
 	cmd_cookie = i;
 
 	param[0] = MBOX_ABORT;
-	param[1] = (((u_short) Cmnd->device->id) << 8) | Cmnd->device->lun;
+	param[1] = (((u_लघु) Cmnd->device->id) << 8) | Cmnd->device->lun;
 	param[2] = cmd_cookie >> 16;
 	param[3] = cmd_cookie & 0xffff;
-	if (qlogicpti_mbox_command(qpti, param, 0) ||
-	    (param[0] != MBOX_COMMAND_COMPLETE)) {
-		printk(KERN_EMERG "qlogicpti%d: scsi abort failure: %x\n",
+	अगर (qlogicpti_mbox_command(qpti, param, 0) ||
+	    (param[0] != MBOX_COMMAND_COMPLETE)) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicpti%d: scsi abort failure: %x\n",
 		       qpti->qpti_id, param[0]);
-		return_status = FAILED;
-	}
+		वापस_status = FAILED;
+	पूर्ण
 
 	qlogicpti_enable_irqs(qpti);
 
-	return return_status;
-}
+	वापस वापस_status;
+पूर्ण
 
-static int qlogicpti_reset(struct scsi_cmnd *Cmnd)
-{
-	u_short param[6];
-	struct Scsi_Host *host = Cmnd->device->host;
-	struct qlogicpti *qpti = (struct qlogicpti *) host->hostdata;
-	int return_status = SUCCESS;
+अटल पूर्णांक qlogicpti_reset(काष्ठा scsi_cmnd *Cmnd)
+अणु
+	u_लघु param[6];
+	काष्ठा Scsi_Host *host = Cmnd->device->host;
+	काष्ठा qlogicpti *qpti = (काष्ठा qlogicpti *) host->hostdata;
+	पूर्णांक वापस_status = SUCCESS;
 
-	printk(KERN_WARNING "qlogicpti%d: Resetting SCSI bus!\n",
+	prपूर्णांकk(KERN_WARNING "qlogicpti%d: Resetting SCSI bus!\n",
 	       qpti->qpti_id);
 
 	qlogicpti_disable_irqs(qpti);
 
 	param[0] = MBOX_BUS_RESET;
 	param[1] = qpti->host_param.bus_reset_delay;
-	if (qlogicpti_mbox_command(qpti, param, 0) ||
-	   (param[0] != MBOX_COMMAND_COMPLETE)) {
-		printk(KERN_EMERG "qlogicisp%d: scsi bus reset failure: %x\n",
+	अगर (qlogicpti_mbox_command(qpti, param, 0) ||
+	   (param[0] != MBOX_COMMAND_COMPLETE)) अणु
+		prपूर्णांकk(KERN_EMERG "qlogicisp%d: scsi bus reset failure: %x\n",
 		       qpti->qpti_id, param[0]);
-		return_status = FAILED;
-	}
+		वापस_status = FAILED;
+	पूर्ण
 
 	qlogicpti_enable_irqs(qpti);
 
-	return return_status;
-}
+	वापस वापस_status;
+पूर्ण
 
-static struct scsi_host_template qpti_template = {
+अटल काष्ठा scsi_host_ढाँचा qpti_ढाँचा = अणु
 	.module			= THIS_MODULE,
 	.name			= "qlogicpti",
 	.info			= qlogicpti_info,
 	.queuecommand		= qlogicpti_queuecommand,
 	.slave_configure	= qlogicpti_slave_configure,
-	.eh_abort_handler	= qlogicpti_abort,
+	.eh_पात_handler	= qlogicpti_पात,
 	.eh_host_reset_handler	= qlogicpti_reset,
 	.can_queue		= QLOGICPTI_REQ_QUEUE_LEN,
 	.this_id		= 7,
 	.sg_tablesize		= QLOGICPTI_MAX_SG(QLOGICPTI_REQ_QUEUE_LEN),
-};
+पूर्ण;
 
-static const struct of_device_id qpti_match[];
-static int qpti_sbus_probe(struct platform_device *op)
-{
-	struct device_node *dp = op->dev.of_node;
-	struct Scsi_Host *host;
-	struct qlogicpti *qpti;
-	static int nqptis;
-	const char *fcode;
+अटल स्थिर काष्ठा of_device_id qpti_match[];
+अटल पूर्णांक qpti_sbus_probe(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा device_node *dp = op->dev.of_node;
+	काष्ठा Scsi_Host *host;
+	काष्ठा qlogicpti *qpti;
+	अटल पूर्णांक nqptis;
+	स्थिर अक्षर *fcode;
 
-	/* Sometimes Antares cards come up not completely
+	/* Someबार Antares cards come up not completely
 	 * setup, and we get a report of a zero IRQ.
 	 */
-	if (op->archdata.irqs[0] == 0)
-		return -ENODEV;
+	अगर (op->archdata.irqs[0] == 0)
+		वापस -ENODEV;
 
-	host = scsi_host_alloc(&qpti_template, sizeof(struct qlogicpti));
-	if (!host)
-		return -ENOMEM;
+	host = scsi_host_alloc(&qpti_ढाँचा, माप(काष्ठा qlogicpti));
+	अगर (!host)
+		वापस -ENOMEM;
 
 	qpti = shost_priv(host);
 
@@ -1327,53 +1328,53 @@ static int qpti_sbus_probe(struct platform_device *op)
 	qpti->qpti_id = nqptis;
 	qpti->is_pti = !of_node_name_eq(op->dev.of_node, "QLGC,isp");
 
-	if (qpti_map_regs(qpti) < 0)
-		goto fail_unlink;
+	अगर (qpti_map_regs(qpti) < 0)
+		जाओ fail_unlink;
 
-	if (qpti_register_irq(qpti) < 0)
-		goto fail_unmap_regs;
+	अगर (qpti_रेजिस्टर_irq(qpti) < 0)
+		जाओ fail_unmap_regs;
 
 	qpti_get_scsi_id(qpti);
 	qpti_get_bursts(qpti);
-	qpti_get_clock(qpti);
+	qpti_get_घड़ी(qpti);
 
 	/* Clear out scsi_cmnd array. */
-	memset(qpti->cmd_slots, 0, sizeof(qpti->cmd_slots));
+	स_रखो(qpti->cmd_slots, 0, माप(qpti->cmd_slots));
 
-	if (qpti_map_queues(qpti) < 0)
-		goto fail_free_irq;
+	अगर (qpti_map_queues(qpti) < 0)
+		जाओ fail_मुक्त_irq;
 
 	/* Load the firmware. */
-	if (qlogicpti_load_firmware(qpti))
-		goto fail_unmap_queues;
-	if (qpti->is_pti) {
+	अगर (qlogicpti_load_firmware(qpti))
+		जाओ fail_unmap_queues;
+	अगर (qpti->is_pti) अणु
 		/* Check the PTI status reg. */
-		if (qlogicpti_verify_tmon(qpti))
-			goto fail_unmap_queues;
-	}
+		अगर (qlogicpti_verअगरy_पंचांगon(qpti))
+			जाओ fail_unmap_queues;
+	पूर्ण
 
 	/* Reset the ISP and init res/req queues. */
-	if (qlogicpti_reset_hardware(host))
-		goto fail_unmap_queues;
+	अगर (qlogicpti_reset_hardware(host))
+		जाओ fail_unmap_queues;
 
-	printk("(Firmware v%d.%d.%d)", qpti->fware_majrev,
+	prपूर्णांकk("(Firmware v%d.%d.%d)", qpti->fware_majrev,
 	       qpti->fware_minrev, qpti->fware_micrev);
 
-	fcode = of_get_property(dp, "isp-fcode", NULL);
-	if (fcode && fcode[0])
-		printk("(FCode %s)", fcode);
-	if (of_find_property(dp, "differential", NULL) != NULL)
-		qpti->differential = 1;
+	fcode = of_get_property(dp, "isp-fcode", शून्य);
+	अगर (fcode && fcode[0])
+		prपूर्णांकk("(FCode %s)", fcode);
+	अगर (of_find_property(dp, "differential", शून्य) != शून्य)
+		qpti->dअगरferential = 1;
 			
-	printk("\nqlogicpti%d: [%s Wide, using %s interface]\n",
+	prपूर्णांकk("\nqlogicpti%d: [%s Wide, using %s interface]\n",
 		qpti->qpti_id,
 		(qpti->ultra ? "Ultra" : "Fast"),
-		(qpti->differential ? "differential" : "single ended"));
+		(qpti->dअगरferential ? "differential" : "single ended"));
 
-	if (scsi_add_host(host, &op->dev)) {
-		printk("qlogicpti%d: Failed scsi_add_host\n", qpti->qpti_id);
-		goto fail_unmap_queues;
-	}
+	अगर (scsi_add_host(host, &op->dev)) अणु
+		prपूर्णांकk("qlogicpti%d: Failed scsi_add_host\n", qpti->qpti_id);
+		जाओ fail_unmap_queues;
+	पूर्ण
 
 	dev_set_drvdata(&op->dev, qpti);
 
@@ -1382,93 +1383,93 @@ static int qpti_sbus_probe(struct platform_device *op)
 	scsi_scan_host(host);
 	nqptis++;
 
-	return 0;
+	वापस 0;
 
 fail_unmap_queues:
-#define QSIZE(entries)	(((entries) + 1) * QUEUE_ENTRY_LEN)
-	dma_free_coherent(&op->dev,
+#घोषणा QSIZE(entries)	(((entries) + 1) * QUEUE_ENTRY_LEN)
+	dma_मुक्त_coherent(&op->dev,
 			  QSIZE(RES_QUEUE_LEN),
 			  qpti->res_cpu, qpti->res_dvma);
-	dma_free_coherent(&op->dev,
+	dma_मुक्त_coherent(&op->dev,
 			  QSIZE(QLOGICPTI_REQ_QUEUE_LEN),
 			  qpti->req_cpu, qpti->req_dvma);
-#undef QSIZE
+#अघोषित QSIZE
 
-fail_free_irq:
-	free_irq(qpti->irq, qpti);
+fail_मुक्त_irq:
+	मुक्त_irq(qpti->irq, qpti);
 
 fail_unmap_regs:
 	of_iounmap(&op->resource[0], qpti->qregs,
 		   resource_size(&op->resource[0]));
-	if (qpti->is_pti)
+	अगर (qpti->is_pti)
 		of_iounmap(&op->resource[0], qpti->sreg,
-			   sizeof(unsigned char));
+			   माप(अचिन्हित अक्षर));
 
 fail_unlink:
 	scsi_host_put(host);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int qpti_sbus_remove(struct platform_device *op)
-{
-	struct qlogicpti *qpti = dev_get_drvdata(&op->dev);
+अटल पूर्णांक qpti_sbus_हटाओ(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा qlogicpti *qpti = dev_get_drvdata(&op->dev);
 
 	qpti_chain_del(qpti);
 
-	scsi_remove_host(qpti->qhost);
+	scsi_हटाओ_host(qpti->qhost);
 
 	/* Shut up the card. */
-	sbus_writew(0, qpti->qregs + SBUS_CTRL);
+	sbus_ग_लिखोw(0, qpti->qregs + SBUS_CTRL);
 
 	/* Free IRQ handler and unmap Qlogic,ISP and PTI status regs. */
-	free_irq(qpti->irq, qpti);
+	मुक्त_irq(qpti->irq, qpti);
 
-#define QSIZE(entries)	(((entries) + 1) * QUEUE_ENTRY_LEN)
-	dma_free_coherent(&op->dev,
+#घोषणा QSIZE(entries)	(((entries) + 1) * QUEUE_ENTRY_LEN)
+	dma_मुक्त_coherent(&op->dev,
 			  QSIZE(RES_QUEUE_LEN),
 			  qpti->res_cpu, qpti->res_dvma);
-	dma_free_coherent(&op->dev,
+	dma_मुक्त_coherent(&op->dev,
 			  QSIZE(QLOGICPTI_REQ_QUEUE_LEN),
 			  qpti->req_cpu, qpti->req_dvma);
-#undef QSIZE
+#अघोषित QSIZE
 
 	of_iounmap(&op->resource[0], qpti->qregs,
 		   resource_size(&op->resource[0]));
-	if (qpti->is_pti)
-		of_iounmap(&op->resource[0], qpti->sreg, sizeof(unsigned char));
+	अगर (qpti->is_pti)
+		of_iounmap(&op->resource[0], qpti->sreg, माप(अचिन्हित अक्षर));
 
 	scsi_host_put(qpti->qhost);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id qpti_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id qpti_match[] = अणु
+	अणु
 		.name = "ptisp",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "PTI,ptisp",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "QLGC,isp",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "SUNW,isp",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qpti_match);
 
-static struct platform_driver qpti_sbus_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver qpti_sbus_driver = अणु
+	.driver = अणु
 		.name = "qpti",
 		.of_match_table = qpti_match,
-	},
+	पूर्ण,
 	.probe		= qpti_sbus_probe,
-	.remove		= qpti_sbus_remove,
-};
-module_platform_driver(qpti_sbus_driver);
+	.हटाओ		= qpti_sbus_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(qpti_sbus_driver);
 
 MODULE_DESCRIPTION("QlogicISP SBUS driver");
 MODULE_AUTHOR("David S. Miller (davem@davemloft.net)");

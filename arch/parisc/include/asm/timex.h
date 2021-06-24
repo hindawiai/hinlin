@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * linux/include/asm-parisc/timex.h
+ * linux/include/यंत्र-parisc/समयx.h
  *
- * PARISC architecture timex specifications
+ * PARISC architecture समयx specअगरications
  */
-#ifndef _ASMPARISC_TIMEX_H
-#define _ASMPARISC_TIMEX_H
+#अगर_अघोषित _ASMPARISC_TIMEX_H
+#घोषणा _ASMPARISC_TIMEX_H
 
-#include <asm/special_insns.h>
+#समावेश <यंत्र/special_insns.h>
 
-#define CLOCK_TICK_RATE	1193180 /* Underlying HZ */
+#घोषणा CLOCK_TICK_RATE	1193180 /* Underlying HZ */
 
-typedef unsigned long cycles_t;
+प्रकार अचिन्हित दीर्घ cycles_t;
 
-static inline cycles_t get_cycles (void)
-{
-	return mfctl(16);
-}
+अटल अंतरभूत cycles_t get_cycles (व्योम)
+अणु
+	वापस mfctl(16);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

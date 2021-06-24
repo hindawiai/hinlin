@@ -1,607 +1,608 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ALPHA_IO_H
-#define __ALPHA_IO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ALPHA_IO_H
+#घोषणा __ALPHA_IO_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <asm/compiler.h>
-#include <asm/machvec.h>
-#include <asm/hwrpb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/compiler.h>
+#समावेश <यंत्र/machvec.h>
+#समावेश <यंत्र/hwrpb.h>
 
 /* The generic header contains only prototypes.  Including it ensures that
-   the implementation we have here matches that interface.  */
-#include <asm-generic/iomap.h>
+   the implementation we have here matches that पूर्णांकerface.  */
+#समावेश <यंत्र-generic/iomap.h>
 
-/* We don't use IO slowdowns on the Alpha, but.. */
-#define __SLOW_DOWN_IO	do { } while (0)
-#define SLOW_DOWN_IO	do { } while (0)
+/* We करोn't use IO slowकरोwns on the Alpha, but.. */
+#घोषणा __SLOW_DOWN_IO	करो अणु पूर्ण जबतक (0)
+#घोषणा SLOW_DOWN_IO	करो अणु पूर्ण जबतक (0)
 
 /*
  * Virtual -> physical identity mapping starts at this offset
  */
-#ifdef USE_48_BIT_KSEG
-#define IDENT_ADDR     0xffff800000000000UL
-#else
-#define IDENT_ADDR     0xfffffc0000000000UL
-#endif
+#अगर_घोषित USE_48_BIT_KSEG
+#घोषणा IDENT_ADDR     0xffff800000000000UL
+#अन्यथा
+#घोषणा IDENT_ADDR     0xfffffc0000000000UL
+#पूर्ण_अगर
 
 /*
- * We try to avoid hae updates (thus the cache), but when we
- * do need to update the hae, we need to do it atomically, so
- * that any interrupts wouldn't get confused with the hae
- * register not being up-to-date with respect to the hardware
+ * We try to aव्योम hae updates (thus the cache), but when we
+ * करो need to update the hae, we need to करो it atomically, so
+ * that any पूर्णांकerrupts wouldn't get confused with the hae
+ * रेजिस्टर not being up-to-date with respect to the hardware
  * value.
  */
-extern inline void __set_hae(unsigned long new_hae)
-{
-	unsigned long flags = swpipl(IPL_MAX);
+बाह्य अंतरभूत व्योम __set_hae(अचिन्हित दीर्घ new_hae)
+अणु
+	अचिन्हित दीर्घ flags = swpipl(IPL_MAX);
 
 	barrier();
 
 	alpha_mv.hae_cache = new_hae;
-	*alpha_mv.hae_register = new_hae;
+	*alpha_mv.hae_रेजिस्टर = new_hae;
 	mb();
-	/* Re-read to make sure it was written.  */
-	new_hae = *alpha_mv.hae_register;
+	/* Re-पढ़ो to make sure it was written.  */
+	new_hae = *alpha_mv.hae_रेजिस्टर;
 
 	setipl(flags);
 	barrier();
-}
+पूर्ण
 
-extern inline void set_hae(unsigned long new_hae)
-{
-	if (new_hae != alpha_mv.hae_cache)
+बाह्य अंतरभूत व्योम set_hae(अचिन्हित दीर्घ new_hae)
+अणु
+	अगर (new_hae != alpha_mv.hae_cache)
 		__set_hae(new_hae);
-}
+पूर्ण
 
 /*
- * Change virtual addresses to physical addresses and vv.
+ * Change भव addresses to physical addresses and vv.
  */
-#ifdef USE_48_BIT_KSEG
-static inline unsigned long virt_to_phys(void *address)
-{
-	return (unsigned long)address - IDENT_ADDR;
-}
+#अगर_घोषित USE_48_BIT_KSEG
+अटल अंतरभूत अचिन्हित दीर्घ virt_to_phys(व्योम *address)
+अणु
+	वापस (अचिन्हित दीर्घ)address - IDENT_ADDR;
+पूर्ण
 
-static inline void * phys_to_virt(unsigned long address)
-{
-	return (void *) (address + IDENT_ADDR);
-}
-#else
-static inline unsigned long virt_to_phys(void *address)
-{
-        unsigned long phys = (unsigned long)address;
+अटल अंतरभूत व्योम * phys_to_virt(अचिन्हित दीर्घ address)
+अणु
+	वापस (व्योम *) (address + IDENT_ADDR);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत अचिन्हित दीर्घ virt_to_phys(व्योम *address)
+अणु
+        अचिन्हित दीर्घ phys = (अचिन्हित दीर्घ)address;
 
 	/* Sign-extend from bit 41.  */
 	phys <<= (64 - 41);
-	phys = (long)phys >> (64 - 41);
+	phys = (दीर्घ)phys >> (64 - 41);
 
 	/* Crop to the physical address width of the processor.  */
         phys &= (1ul << hwrpb->pa_bits) - 1;
 
-        return phys;
-}
+        वापस phys;
+पूर्ण
 
-static inline void * phys_to_virt(unsigned long address)
-{
-        return (void *)(IDENT_ADDR + (address & ((1ul << 41) - 1)));
-}
-#endif
+अटल अंतरभूत व्योम * phys_to_virt(अचिन्हित दीर्घ address)
+अणु
+        वापस (व्योम *)(IDENT_ADDR + (address & ((1ul << 41) - 1)));
+पूर्ण
+#पूर्ण_अगर
 
-#define page_to_phys(page)	page_to_pa(page)
+#घोषणा page_to_phys(page)	page_to_pa(page)
 
 /* Maximum PIO space address supported?  */
-#define IO_SPACE_LIMIT 0xffff
+#घोषणा IO_SPACE_LIMIT 0xffff
 
 /*
- * Change addresses as seen by the kernel (virtual) to addresses as
+ * Change addresses as seen by the kernel (भव) to addresses as
  * seen by a device (bus), and vice versa.
  *
- * Note that this only works for a limited range of kernel addresses,
- * and very well may not span all memory.  Consider this interface 
+ * Note that this only works क्रम a limited range of kernel addresses,
+ * and very well may not span all memory.  Consider this पूर्णांकerface 
  * deprecated in favour of the DMA-mapping API.
  */
-extern unsigned long __direct_map_base;
-extern unsigned long __direct_map_size;
+बाह्य अचिन्हित दीर्घ __direct_map_base;
+बाह्य अचिन्हित दीर्घ __direct_map_size;
 
-static inline unsigned long __deprecated virt_to_bus(void *address)
-{
-	unsigned long phys = virt_to_phys(address);
-	unsigned long bus = phys + __direct_map_base;
-	return phys <= __direct_map_size ? bus : 0;
-}
-#define isa_virt_to_bus virt_to_bus
+अटल अंतरभूत अचिन्हित दीर्घ __deprecated virt_to_bus(व्योम *address)
+अणु
+	अचिन्हित दीर्घ phys = virt_to_phys(address);
+	अचिन्हित दीर्घ bus = phys + __direct_map_base;
+	वापस phys <= __direct_map_size ? bus : 0;
+पूर्ण
+#घोषणा isa_virt_to_bus virt_to_bus
 
-static inline void * __deprecated bus_to_virt(unsigned long address)
-{
-	void *virt;
+अटल अंतरभूत व्योम * __deprecated bus_to_virt(अचिन्हित दीर्घ address)
+अणु
+	व्योम *virt;
 
 	/* This check is a sanity check but also ensures that bus address 0
-	   maps to virtual address 0 which is useful to detect null pointers
-	   (the NCR driver is much simpler if NULL pointers are preserved).  */
+	   maps to भव address 0 which is useful to detect null poपूर्णांकers
+	   (the NCR driver is much simpler अगर शून्य poपूर्णांकers are preserved).  */
 	address -= __direct_map_base;
 	virt = phys_to_virt(address);
-	return (long)address <= 0 ? NULL : virt;
-}
-#define isa_bus_to_virt bus_to_virt
+	वापस (दीर्घ)address <= 0 ? शून्य : virt;
+पूर्ण
+#घोषणा isa_bus_to_virt bus_to_virt
 
 /*
- * There are different chipsets to interface the Alpha CPUs to the world.
+ * There are dअगरferent chipsets to पूर्णांकerface the Alpha CPUs to the world.
  */
 
-#define IO_CONCAT(a,b)	_IO_CONCAT(a,b)
-#define _IO_CONCAT(a,b)	a ## _ ## b
+#घोषणा IO_CONCAT(a,b)	_IO_CONCAT(a,b)
+#घोषणा _IO_CONCAT(a,b)	a ## _ ## b
 
-#ifdef CONFIG_ALPHA_GENERIC
+#अगर_घोषित CONFIG_ALPHA_GENERIC
 
 /* In a generic kernel, we always go through the machine vector.  */
 
-#define REMAP1(TYPE, NAME, QUAL)					\
-static inline TYPE generic_##NAME(QUAL void __iomem *addr)		\
-{									\
-	return alpha_mv.mv_##NAME(addr);				\
-}
+#घोषणा REMAP1(TYPE, NAME, QUAL)					\
+अटल अंतरभूत TYPE generic_##NAME(QUAL व्योम __iomem *addr)		\
+अणु									\
+	वापस alpha_mv.mv_##NAME(addr);				\
+पूर्ण
 
-#define REMAP2(TYPE, NAME, QUAL)					\
-static inline void generic_##NAME(TYPE b, QUAL void __iomem *addr)	\
-{									\
+#घोषणा REMAP2(TYPE, NAME, QUAL)					\
+अटल अंतरभूत व्योम generic_##NAME(TYPE b, QUAL व्योम __iomem *addr)	\
+अणु									\
 	alpha_mv.mv_##NAME(b, addr);					\
-}
+पूर्ण
 
-REMAP1(unsigned int, ioread8, const)
-REMAP1(unsigned int, ioread16, const)
-REMAP1(unsigned int, ioread32, const)
-REMAP1(u8, readb, const volatile)
-REMAP1(u16, readw, const volatile)
-REMAP1(u32, readl, const volatile)
-REMAP1(u64, readq, const volatile)
+REMAP1(अचिन्हित पूर्णांक, ioपढ़ो8, स्थिर)
+REMAP1(अचिन्हित पूर्णांक, ioपढ़ो16, स्थिर)
+REMAP1(अचिन्हित पूर्णांक, ioपढ़ो32, स्थिर)
+REMAP1(u8, पढ़ोb, स्थिर अस्थिर)
+REMAP1(u16, पढ़ोw, स्थिर अस्थिर)
+REMAP1(u32, पढ़ोl, स्थिर अस्थिर)
+REMAP1(u64, पढ़ोq, स्थिर अस्थिर)
 
-REMAP2(u8, iowrite8, /**/)
-REMAP2(u16, iowrite16, /**/)
-REMAP2(u32, iowrite32, /**/)
-REMAP2(u8, writeb, volatile)
-REMAP2(u16, writew, volatile)
-REMAP2(u32, writel, volatile)
-REMAP2(u64, writeq, volatile)
+REMAP2(u8, ioग_लिखो8, /**/)
+REMAP2(u16, ioग_लिखो16, /**/)
+REMAP2(u32, ioग_लिखो32, /**/)
+REMAP2(u8, ग_लिखोb, अस्थिर)
+REMAP2(u16, ग_लिखोw, अस्थिर)
+REMAP2(u32, ग_लिखोl, अस्थिर)
+REMAP2(u64, ग_लिखोq, अस्थिर)
 
-#undef REMAP1
-#undef REMAP2
+#अघोषित REMAP1
+#अघोषित REMAP2
 
-extern inline void __iomem *generic_ioportmap(unsigned long a)
-{
-	return alpha_mv.mv_ioportmap(a);
-}
+बाह्य अंतरभूत व्योम __iomem *generic_ioporपंचांगap(अचिन्हित दीर्घ a)
+अणु
+	वापस alpha_mv.mv_ioporपंचांगap(a);
+पूर्ण
 
-static inline void __iomem *generic_ioremap(unsigned long a, unsigned long s)
-{
-	return alpha_mv.mv_ioremap(a, s);
-}
+अटल अंतरभूत व्योम __iomem *generic_ioremap(अचिन्हित दीर्घ a, अचिन्हित दीर्घ s)
+अणु
+	वापस alpha_mv.mv_ioremap(a, s);
+पूर्ण
 
-static inline void generic_iounmap(volatile void __iomem *a)
-{
-	return alpha_mv.mv_iounmap(a);
-}
+अटल अंतरभूत व्योम generic_iounmap(अस्थिर व्योम __iomem *a)
+अणु
+	वापस alpha_mv.mv_iounmap(a);
+पूर्ण
 
-static inline int generic_is_ioaddr(unsigned long a)
-{
-	return alpha_mv.mv_is_ioaddr(a);
-}
+अटल अंतरभूत पूर्णांक generic_is_ioaddr(अचिन्हित दीर्घ a)
+अणु
+	वापस alpha_mv.mv_is_ioaddr(a);
+पूर्ण
 
-static inline int generic_is_mmio(const volatile void __iomem *a)
-{
-	return alpha_mv.mv_is_mmio(a);
-}
+अटल अंतरभूत पूर्णांक generic_is_mmio(स्थिर अस्थिर व्योम __iomem *a)
+अणु
+	वापस alpha_mv.mv_is_mmio(a);
+पूर्ण
 
-#define __IO_PREFIX		generic
-#define generic_trivial_rw_bw	0
-#define generic_trivial_rw_lq	0
-#define generic_trivial_io_bw	0
-#define generic_trivial_io_lq	0
-#define generic_trivial_iounmap	0
+#घोषणा __IO_PREFIX		generic
+#घोषणा generic_trivial_rw_bw	0
+#घोषणा generic_trivial_rw_lq	0
+#घोषणा generic_trivial_io_bw	0
+#घोषणा generic_trivial_io_lq	0
+#घोषणा generic_trivial_iounmap	0
 
-#else
+#अन्यथा
 
-#if defined(CONFIG_ALPHA_APECS)
-# include <asm/core_apecs.h>
-#elif defined(CONFIG_ALPHA_CIA)
-# include <asm/core_cia.h>
-#elif defined(CONFIG_ALPHA_IRONGATE)
-# include <asm/core_irongate.h>
-#elif defined(CONFIG_ALPHA_JENSEN)
-# include <asm/jensen.h>
-#elif defined(CONFIG_ALPHA_LCA)
-# include <asm/core_lca.h>
-#elif defined(CONFIG_ALPHA_MARVEL)
-# include <asm/core_marvel.h>
-#elif defined(CONFIG_ALPHA_MCPCIA)
-# include <asm/core_mcpcia.h>
-#elif defined(CONFIG_ALPHA_POLARIS)
-# include <asm/core_polaris.h>
-#elif defined(CONFIG_ALPHA_T2)
-# include <asm/core_t2.h>
-#elif defined(CONFIG_ALPHA_TSUNAMI)
-# include <asm/core_tsunami.h>
-#elif defined(CONFIG_ALPHA_TITAN)
-# include <asm/core_titan.h>
-#elif defined(CONFIG_ALPHA_WILDFIRE)
-# include <asm/core_wildfire.h>
-#else
-#error "What system is this?"
-#endif
+#अगर defined(CONFIG_ALPHA_APECS)
+# include <यंत्र/core_apecs.h>
+#या_अगर defined(CONFIG_ALPHA_CIA)
+# include <यंत्र/core_cia.h>
+#या_अगर defined(CONFIG_ALPHA_IRONGATE)
+# include <यंत्र/core_irongate.h>
+#या_अगर defined(CONFIG_ALPHA_JENSEN)
+# include <यंत्र/jensen.h>
+#या_अगर defined(CONFIG_ALPHA_LCA)
+# include <यंत्र/core_lca.h>
+#या_अगर defined(CONFIG_ALPHA_MARVEL)
+# include <यंत्र/core_marvel.h>
+#या_अगर defined(CONFIG_ALPHA_MCPCIA)
+# include <यंत्र/core_mcpcia.h>
+#या_अगर defined(CONFIG_ALPHA_POLARIS)
+# include <यंत्र/core_polaris.h>
+#या_अगर defined(CONFIG_ALPHA_T2)
+# include <यंत्र/core_t2.h>
+#या_अगर defined(CONFIG_ALPHA_TSUNAMI)
+# include <यंत्र/core_tsunami.h>
+#या_अगर defined(CONFIG_ALPHA_TITAN)
+# include <यंत्र/core_titan.h>
+#या_अगर defined(CONFIG_ALPHA_WILDFIRE)
+# include <यंत्र/core_wildfire.h>
+#अन्यथा
+#त्रुटि "What system is this?"
+#पूर्ण_अगर
 
-#endif /* GENERIC */
+#पूर्ण_अगर /* GENERIC */
 
 /*
- * We always have external versions of these routines.
+ * We always have बाह्यal versions of these routines.
  */
-extern u8		inb(unsigned long port);
-extern u16		inw(unsigned long port);
-extern u32		inl(unsigned long port);
-extern void		outb(u8 b, unsigned long port);
-extern void		outw(u16 b, unsigned long port);
-extern void		outl(u32 b, unsigned long port);
+बाह्य u8		inb(अचिन्हित दीर्घ port);
+बाह्य u16		inw(अचिन्हित दीर्घ port);
+बाह्य u32		inl(अचिन्हित दीर्घ port);
+बाह्य व्योम		outb(u8 b, अचिन्हित दीर्घ port);
+बाह्य व्योम		outw(u16 b, अचिन्हित दीर्घ port);
+बाह्य व्योम		outl(u32 b, अचिन्हित दीर्घ port);
 
-extern u8		readb(const volatile void __iomem *addr);
-extern u16		readw(const volatile void __iomem *addr);
-extern u32		readl(const volatile void __iomem *addr);
-extern u64		readq(const volatile void __iomem *addr);
-extern void		writeb(u8 b, volatile void __iomem *addr);
-extern void		writew(u16 b, volatile void __iomem *addr);
-extern void		writel(u32 b, volatile void __iomem *addr);
-extern void		writeq(u64 b, volatile void __iomem *addr);
+बाह्य u8		पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य u16		पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य u32		पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य u64		पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य व्योम		ग_लिखोb(u8 b, अस्थिर व्योम __iomem *addr);
+बाह्य व्योम		ग_लिखोw(u16 b, अस्थिर व्योम __iomem *addr);
+बाह्य व्योम		ग_लिखोl(u32 b, अस्थिर व्योम __iomem *addr);
+बाह्य व्योम		ग_लिखोq(u64 b, अस्थिर व्योम __iomem *addr);
 
-extern u8		__raw_readb(const volatile void __iomem *addr);
-extern u16		__raw_readw(const volatile void __iomem *addr);
-extern u32		__raw_readl(const volatile void __iomem *addr);
-extern u64		__raw_readq(const volatile void __iomem *addr);
-extern void		__raw_writeb(u8 b, volatile void __iomem *addr);
-extern void		__raw_writew(u16 b, volatile void __iomem *addr);
-extern void		__raw_writel(u32 b, volatile void __iomem *addr);
-extern void		__raw_writeq(u64 b, volatile void __iomem *addr);
+बाह्य u8		__raw_पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य u16		__raw_पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य u32		__raw_पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य u64		__raw_पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य व्योम		__raw_ग_लिखोb(u8 b, अस्थिर व्योम __iomem *addr);
+बाह्य व्योम		__raw_ग_लिखोw(u16 b, अस्थिर व्योम __iomem *addr);
+बाह्य व्योम		__raw_ग_लिखोl(u32 b, अस्थिर व्योम __iomem *addr);
+बाह्य व्योम		__raw_ग_लिखोq(u64 b, अस्थिर व्योम __iomem *addr);
 
 /*
  * Mapping from port numbers to __iomem space is pretty easy.
  */
 
-/* These two have to be extern inline because of the extern prototype from
-   <asm-generic/iomap.h>.  It is not legal to mix "extern" and "static" for
+/* These two have to be बाह्य अंतरभूत because of the बाह्य prototype from
+   <यंत्र-generic/iomap.h>.  It is not legal to mix "extern" and "static" क्रम
    the same declaration.  */
-extern inline void __iomem *ioport_map(unsigned long port, unsigned int size)
-{
-	return IO_CONCAT(__IO_PREFIX,ioportmap) (port);
-}
+बाह्य अंतरभूत व्योम __iomem *ioport_map(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक size)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,ioporपंचांगap) (port);
+पूर्ण
 
-extern inline void ioport_unmap(void __iomem *addr)
-{
-}
+बाह्य अंतरभूत व्योम ioport_unmap(व्योम __iomem *addr)
+अणु
+पूर्ण
 
-static inline void __iomem *ioremap(unsigned long port, unsigned long size)
-{
-	return IO_CONCAT(__IO_PREFIX,ioremap) (port, size);
-}
+अटल अंतरभूत व्योम __iomem *ioremap(अचिन्हित दीर्घ port, अचिन्हित दीर्घ size)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,ioremap) (port, size);
+पूर्ण
 
-#define ioremap_wc ioremap
-#define ioremap_uc ioremap
+#घोषणा ioremap_wc ioremap
+#घोषणा ioremap_uc ioremap
 
-static inline void iounmap(volatile void __iomem *addr)
-{
+अटल अंतरभूत व्योम iounmap(अस्थिर व्योम __iomem *addr)
+अणु
 	IO_CONCAT(__IO_PREFIX,iounmap)(addr);
-}
+पूर्ण
 
-static inline int __is_ioaddr(unsigned long addr)
-{
-	return IO_CONCAT(__IO_PREFIX,is_ioaddr)(addr);
-}
-#define __is_ioaddr(a)		__is_ioaddr((unsigned long)(a))
+अटल अंतरभूत पूर्णांक __is_ioaddr(अचिन्हित दीर्घ addr)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,is_ioaddr)(addr);
+पूर्ण
+#घोषणा __is_ioaddr(a)		__is_ioaddr((अचिन्हित दीर्घ)(a))
 
-static inline int __is_mmio(const volatile void __iomem *addr)
-{
-	return IO_CONCAT(__IO_PREFIX,is_mmio)(addr);
-}
+अटल अंतरभूत पूर्णांक __is_mmio(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,is_mmio)(addr);
+पूर्ण
 
 
 /*
- * If the actual I/O bits are sufficiently trivial, then expand inline.
+ * If the actual I/O bits are sufficiently trivial, then expand अंतरभूत.
  */
 
-#if IO_CONCAT(__IO_PREFIX,trivial_io_bw)
-extern inline unsigned int ioread8(const void __iomem *addr)
-{
-	unsigned int ret;
+#अगर IO_CONCAT(__IO_PREFIX,trivial_io_bw)
+बाह्य अंतरभूत अचिन्हित पूर्णांक ioपढ़ो8(स्थिर व्योम __iomem *addr)
+अणु
+	अचिन्हित पूर्णांक ret;
 	mb();
-	ret = IO_CONCAT(__IO_PREFIX,ioread8)(addr);
+	ret = IO_CONCAT(__IO_PREFIX,ioपढ़ो8)(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-extern inline unsigned int ioread16(const void __iomem *addr)
-{
-	unsigned int ret;
+बाह्य अंतरभूत अचिन्हित पूर्णांक ioपढ़ो16(स्थिर व्योम __iomem *addr)
+अणु
+	अचिन्हित पूर्णांक ret;
 	mb();
-	ret = IO_CONCAT(__IO_PREFIX,ioread16)(addr);
+	ret = IO_CONCAT(__IO_PREFIX,ioपढ़ो16)(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-extern inline void iowrite8(u8 b, void __iomem *addr)
-{
+बाह्य अंतरभूत व्योम ioग_लिखो8(u8 b, व्योम __iomem *addr)
+अणु
 	mb();
-	IO_CONCAT(__IO_PREFIX, iowrite8)(b, addr);
-}
+	IO_CONCAT(__IO_PREFIX, ioग_लिखो8)(b, addr);
+पूर्ण
 
-extern inline void iowrite16(u16 b, void __iomem *addr)
-{
+बाह्य अंतरभूत व्योम ioग_लिखो16(u16 b, व्योम __iomem *addr)
+अणु
 	mb();
-	IO_CONCAT(__IO_PREFIX, iowrite16)(b, addr);
-}
+	IO_CONCAT(__IO_PREFIX, ioग_लिखो16)(b, addr);
+पूर्ण
 
-extern inline u8 inb(unsigned long port)
-{
-	return ioread8(ioport_map(port, 1));
-}
+बाह्य अंतरभूत u8 inb(अचिन्हित दीर्घ port)
+अणु
+	वापस ioपढ़ो8(ioport_map(port, 1));
+पूर्ण
 
-extern inline u16 inw(unsigned long port)
-{
-	return ioread16(ioport_map(port, 2));
-}
+बाह्य अंतरभूत u16 inw(अचिन्हित दीर्घ port)
+अणु
+	वापस ioपढ़ो16(ioport_map(port, 2));
+पूर्ण
 
-extern inline void outb(u8 b, unsigned long port)
-{
-	iowrite8(b, ioport_map(port, 1));
-}
+बाह्य अंतरभूत व्योम outb(u8 b, अचिन्हित दीर्घ port)
+अणु
+	ioग_लिखो8(b, ioport_map(port, 1));
+पूर्ण
 
-extern inline void outw(u16 b, unsigned long port)
-{
-	iowrite16(b, ioport_map(port, 2));
-}
-#endif
+बाह्य अंतरभूत व्योम outw(u16 b, अचिन्हित दीर्घ port)
+अणु
+	ioग_लिखो16(b, ioport_map(port, 2));
+पूर्ण
+#पूर्ण_अगर
 
-#if IO_CONCAT(__IO_PREFIX,trivial_io_lq)
-extern inline unsigned int ioread32(const void __iomem *addr)
-{
-	unsigned int ret;
+#अगर IO_CONCAT(__IO_PREFIX,trivial_io_lq)
+बाह्य अंतरभूत अचिन्हित पूर्णांक ioपढ़ो32(स्थिर व्योम __iomem *addr)
+अणु
+	अचिन्हित पूर्णांक ret;
 	mb();
-	ret = IO_CONCAT(__IO_PREFIX,ioread32)(addr);
+	ret = IO_CONCAT(__IO_PREFIX,ioपढ़ो32)(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-extern inline void iowrite32(u32 b, void __iomem *addr)
-{
+बाह्य अंतरभूत व्योम ioग_लिखो32(u32 b, व्योम __iomem *addr)
+अणु
 	mb();
-	IO_CONCAT(__IO_PREFIX, iowrite32)(b, addr);
-}
+	IO_CONCAT(__IO_PREFIX, ioग_लिखो32)(b, addr);
+पूर्ण
 
-extern inline u32 inl(unsigned long port)
-{
-	return ioread32(ioport_map(port, 4));
-}
+बाह्य अंतरभूत u32 inl(अचिन्हित दीर्घ port)
+अणु
+	वापस ioपढ़ो32(ioport_map(port, 4));
+पूर्ण
 
-extern inline void outl(u32 b, unsigned long port)
-{
-	iowrite32(b, ioport_map(port, 4));
-}
-#endif
+बाह्य अंतरभूत व्योम outl(u32 b, अचिन्हित दीर्घ port)
+अणु
+	ioग_लिखो32(b, ioport_map(port, 4));
+पूर्ण
+#पूर्ण_अगर
 
-#if IO_CONCAT(__IO_PREFIX,trivial_rw_bw) == 1
-extern inline u8 __raw_readb(const volatile void __iomem *addr)
-{
-	return IO_CONCAT(__IO_PREFIX,readb)(addr);
-}
+#अगर IO_CONCAT(__IO_PREFIX,trivial_rw_bw) == 1
+बाह्य अंतरभूत u8 __raw_पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,पढ़ोb)(addr);
+पूर्ण
 
-extern inline u16 __raw_readw(const volatile void __iomem *addr)
-{
-	return IO_CONCAT(__IO_PREFIX,readw)(addr);
-}
+बाह्य अंतरभूत u16 __raw_पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,पढ़ोw)(addr);
+पूर्ण
 
-extern inline void __raw_writeb(u8 b, volatile void __iomem *addr)
-{
-	IO_CONCAT(__IO_PREFIX,writeb)(b, addr);
-}
+बाह्य अंतरभूत व्योम __raw_ग_लिखोb(u8 b, अस्थिर व्योम __iomem *addr)
+अणु
+	IO_CONCAT(__IO_PREFIX,ग_लिखोb)(b, addr);
+पूर्ण
 
-extern inline void __raw_writew(u16 b, volatile void __iomem *addr)
-{
-	IO_CONCAT(__IO_PREFIX,writew)(b, addr);
-}
+बाह्य अंतरभूत व्योम __raw_ग_लिखोw(u16 b, अस्थिर व्योम __iomem *addr)
+अणु
+	IO_CONCAT(__IO_PREFIX,ग_लिखोw)(b, addr);
+पूर्ण
 
-extern inline u8 readb(const volatile void __iomem *addr)
-{
+बाह्य अंतरभूत u8 पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u8 ret;
 	mb();
-	ret = __raw_readb(addr);
+	ret = __raw_पढ़ोb(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-extern inline u16 readw(const volatile void __iomem *addr)
-{
+बाह्य अंतरभूत u16 पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u16 ret;
 	mb();
-	ret = __raw_readw(addr);
+	ret = __raw_पढ़ोw(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-extern inline void writeb(u8 b, volatile void __iomem *addr)
-{
+बाह्य अंतरभूत व्योम ग_लिखोb(u8 b, अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	__raw_writeb(b, addr);
-}
+	__raw_ग_लिखोb(b, addr);
+पूर्ण
 
-extern inline void writew(u16 b, volatile void __iomem *addr)
-{
+बाह्य अंतरभूत व्योम ग_लिखोw(u16 b, अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	__raw_writew(b, addr);
-}
-#endif
+	__raw_ग_लिखोw(b, addr);
+पूर्ण
+#पूर्ण_अगर
 
-#if IO_CONCAT(__IO_PREFIX,trivial_rw_lq) == 1
-extern inline u32 __raw_readl(const volatile void __iomem *addr)
-{
-	return IO_CONCAT(__IO_PREFIX,readl)(addr);
-}
+#अगर IO_CONCAT(__IO_PREFIX,trivial_rw_lq) == 1
+बाह्य अंतरभूत u32 __raw_पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,पढ़ोl)(addr);
+पूर्ण
 
-extern inline u64 __raw_readq(const volatile void __iomem *addr)
-{
-	return IO_CONCAT(__IO_PREFIX,readq)(addr);
-}
+बाह्य अंतरभूत u64 __raw_पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस IO_CONCAT(__IO_PREFIX,पढ़ोq)(addr);
+पूर्ण
 
-extern inline void __raw_writel(u32 b, volatile void __iomem *addr)
-{
-	IO_CONCAT(__IO_PREFIX,writel)(b, addr);
-}
+बाह्य अंतरभूत व्योम __raw_ग_लिखोl(u32 b, अस्थिर व्योम __iomem *addr)
+अणु
+	IO_CONCAT(__IO_PREFIX,ग_लिखोl)(b, addr);
+पूर्ण
 
-extern inline void __raw_writeq(u64 b, volatile void __iomem *addr)
-{
-	IO_CONCAT(__IO_PREFIX,writeq)(b, addr);
-}
+बाह्य अंतरभूत व्योम __raw_ग_लिखोq(u64 b, अस्थिर व्योम __iomem *addr)
+अणु
+	IO_CONCAT(__IO_PREFIX,ग_लिखोq)(b, addr);
+पूर्ण
 
-extern inline u32 readl(const volatile void __iomem *addr)
-{
+बाह्य अंतरभूत u32 पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u32 ret;
 	mb();
-	ret = __raw_readl(addr);
+	ret = __raw_पढ़ोl(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-extern inline u64 readq(const volatile void __iomem *addr)
-{
+बाह्य अंतरभूत u64 पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u64 ret;
 	mb();
-	ret = __raw_readq(addr);
+	ret = __raw_पढ़ोq(addr);
 	mb();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-extern inline void writel(u32 b, volatile void __iomem *addr)
-{
+बाह्य अंतरभूत व्योम ग_लिखोl(u32 b, अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	__raw_writel(b, addr);
-}
+	__raw_ग_लिखोl(b, addr);
+पूर्ण
 
-extern inline void writeq(u64 b, volatile void __iomem *addr)
-{
+बाह्य अंतरभूत व्योम ग_लिखोq(u64 b, अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	__raw_writeq(b, addr);
-}
-#endif
+	__raw_ग_लिखोq(b, addr);
+पूर्ण
+#पूर्ण_अगर
 
-#define ioread16be(p) swab16(ioread16(p))
-#define ioread32be(p) swab32(ioread32(p))
-#define iowrite16be(v,p) iowrite16(swab16(v), (p))
-#define iowrite32be(v,p) iowrite32(swab32(v), (p))
+#घोषणा ioपढ़ो16be(p) swab16(ioपढ़ो16(p))
+#घोषणा ioपढ़ो32be(p) swab32(ioपढ़ो32(p))
+#घोषणा ioग_लिखो16be(v,p) ioग_लिखो16(swab16(v), (p))
+#घोषणा ioग_लिखो32be(v,p) ioग_लिखो32(swab32(v), (p))
 
-#define inb_p		inb
-#define inw_p		inw
-#define inl_p		inl
-#define outb_p		outb
-#define outw_p		outw
-#define outl_p		outl
+#घोषणा inb_p		inb
+#घोषणा inw_p		inw
+#घोषणा inl_p		inl
+#घोषणा outb_p		outb
+#घोषणा outw_p		outw
+#घोषणा outl_p		outl
 
-extern u8 readb_relaxed(const volatile void __iomem *addr);
-extern u16 readw_relaxed(const volatile void __iomem *addr);
-extern u32 readl_relaxed(const volatile void __iomem *addr);
-extern u64 readq_relaxed(const volatile void __iomem *addr);
+बाह्य u8 पढ़ोb_relaxed(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य u16 पढ़ोw_relaxed(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य u32 पढ़ोl_relaxed(स्थिर अस्थिर व्योम __iomem *addr);
+बाह्य u64 पढ़ोq_relaxed(स्थिर अस्थिर व्योम __iomem *addr);
 
-#if IO_CONCAT(__IO_PREFIX,trivial_io_bw)
-extern inline u8 readb_relaxed(const volatile void __iomem *addr)
-{
+#अगर IO_CONCAT(__IO_PREFIX,trivial_io_bw)
+बाह्य अंतरभूत u8 पढ़ोb_relaxed(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	return __raw_readb(addr);
-}
+	वापस __raw_पढ़ोb(addr);
+पूर्ण
 
-extern inline u16 readw_relaxed(const volatile void __iomem *addr)
-{
+बाह्य अंतरभूत u16 पढ़ोw_relaxed(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	return __raw_readw(addr);
-}
-#endif
+	वापस __raw_पढ़ोw(addr);
+पूर्ण
+#पूर्ण_अगर
 
-#if IO_CONCAT(__IO_PREFIX,trivial_io_lq)
-extern inline u32 readl_relaxed(const volatile void __iomem *addr)
-{
+#अगर IO_CONCAT(__IO_PREFIX,trivial_io_lq)
+बाह्य अंतरभूत u32 पढ़ोl_relaxed(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	return __raw_readl(addr);
-}
+	वापस __raw_पढ़ोl(addr);
+पूर्ण
 
-extern inline u64 readq_relaxed(const volatile void __iomem *addr)
-{
+बाह्य अंतरभूत u64 पढ़ोq_relaxed(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	mb();
-	return __raw_readq(addr);
-}
-#endif
+	वापस __raw_पढ़ोq(addr);
+पूर्ण
+#पूर्ण_अगर
 
-#define writeb_relaxed	writeb
-#define writew_relaxed	writew
-#define writel_relaxed	writel
-#define writeq_relaxed	writeq
+#घोषणा ग_लिखोb_relaxed	ग_लिखोb
+#घोषणा ग_लिखोw_relaxed	ग_लिखोw
+#घोषणा ग_लिखोl_relaxed	ग_लिखोl
+#घोषणा ग_लिखोq_relaxed	ग_लिखोq
 
 /*
  * String version of IO memory access ops:
  */
-extern void memcpy_fromio(void *, const volatile void __iomem *, long);
-extern void memcpy_toio(volatile void __iomem *, const void *, long);
-extern void _memset_c_io(volatile void __iomem *, unsigned long, long);
+बाह्य व्योम स_नकल_fromio(व्योम *, स्थिर अस्थिर व्योम __iomem *, दीर्घ);
+बाह्य व्योम स_नकल_toio(अस्थिर व्योम __iomem *, स्थिर व्योम *, दीर्घ);
+बाह्य व्योम _स_रखो_c_io(अस्थिर व्योम __iomem *, अचिन्हित दीर्घ, दीर्घ);
 
-static inline void memset_io(volatile void __iomem *addr, u8 c, long len)
-{
-	_memset_c_io(addr, 0x0101010101010101UL * c, len);
-}
+अटल अंतरभूत व्योम स_रखो_io(अस्थिर व्योम __iomem *addr, u8 c, दीर्घ len)
+अणु
+	_स_रखो_c_io(addr, 0x0101010101010101UL * c, len);
+पूर्ण
 
-#define __HAVE_ARCH_MEMSETW_IO
-static inline void memsetw_io(volatile void __iomem *addr, u16 c, long len)
-{
-	_memset_c_io(addr, 0x0001000100010001UL * c, len);
-}
+#घोषणा __HAVE_ARCH_MEMSETW_IO
+अटल अंतरभूत व्योम स_रखोw_io(अस्थिर व्योम __iomem *addr, u16 c, दीर्घ len)
+अणु
+	_स_रखो_c_io(addr, 0x0001000100010001UL * c, len);
+पूर्ण
 
 /*
  * String versions of in/out ops:
  */
-extern void insb (unsigned long port, void *dst, unsigned long count);
-extern void insw (unsigned long port, void *dst, unsigned long count);
-extern void insl (unsigned long port, void *dst, unsigned long count);
-extern void outsb (unsigned long port, const void *src, unsigned long count);
-extern void outsw (unsigned long port, const void *src, unsigned long count);
-extern void outsl (unsigned long port, const void *src, unsigned long count);
+बाह्य व्योम insb (अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count);
+बाह्य व्योम insw (अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count);
+बाह्य व्योम insl (अचिन्हित दीर्घ port, व्योम *dst, अचिन्हित दीर्घ count);
+बाह्य व्योम outsb (अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count);
+बाह्य व्योम outsw (अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count);
+बाह्य व्योम outsl (अचिन्हित दीर्घ port, स्थिर व्योम *src, अचिन्हित दीर्घ count);
 
 /*
- * The Alpha Jensen hardware for some rather strange reason puts
- * the RTC clock at 0x170 instead of 0x70. Probably due to some
- * misguided idea about using 0x70 for NMI stuff.
+ * The Alpha Jensen hardware क्रम some rather strange reason माला_दो
+ * the RTC घड़ी at 0x170 instead of 0x70. Probably due to some
+ * misguided idea about using 0x70 क्रम NMI stuff.
  *
- * These defines will override the defaults when doing RTC queries
+ * These defines will override the शेषs when करोing RTC queries
  */
 
-#ifdef CONFIG_ALPHA_GENERIC
+#अगर_घोषित CONFIG_ALPHA_GENERIC
 # define RTC_PORT(x)	((x) + alpha_mv.rtc_port)
-#else
-# ifdef CONFIG_ALPHA_JENSEN
+#अन्यथा
+# अगरdef CONFIG_ALPHA_JENSEN
 #  define RTC_PORT(x)	(0x170+(x))
-# else
+# अन्यथा
 #  define RTC_PORT(x)	(0x70 + (x))
-# endif
-#endif
-#define RTC_ALWAYS_BCD	0
+# endअगर
+#पूर्ण_अगर
+#घोषणा RTC_ALWAYS_BCD	0
 
 /*
- * Some mucking forons use if[n]def writeq to check if platform has it.
- * It's a bloody bad idea and we probably want ARCH_HAS_WRITEQ for them
- * to play with; for now just use cpp anti-recursion logics and make sure
+ * Some mucking क्रमons use अगर[n]def ग_लिखोq to check अगर platक्रमm has it.
+ * It's a bloody bad idea and we probably want ARCH_HAS_WRITEQ क्रम them
+ * to play with; क्रम now just use cpp anti-recursion logics and make sure
  * that damn thing is defined and expands to itself.
  */
 
-#define writeq writeq
-#define readq readq
+#घोषणा ग_लिखोq ग_लिखोq
+#घोषणा पढ़ोq पढ़ोq
 
 /*
- * Convert a physical pointer to a virtual kernel pointer for /dev/mem
+ * Convert a physical poपूर्णांकer to a भव kernel poपूर्णांकer क्रम /dev/mem
  * access
  */
-#define xlate_dev_mem_ptr(p)	__va(p)
+#घोषणा xlate_dev_mem_ptr(p)	__va(p)
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* __ALPHA_IO_H */
+#पूर्ण_अगर /* __ALPHA_IO_H */

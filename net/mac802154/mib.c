@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2007-2012 Siemens AG
  *
@@ -9,39 +10,39 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
-#include <linux/if_arp.h>
+#समावेश <linux/अगर_arp.h>
 
-#include <net/mac802154.h>
-#include <net/ieee802154_netdev.h>
-#include <net/cfg802154.h>
+#समावेश <net/mac802154.h>
+#समावेश <net/ieee802154_netdev.h>
+#समावेश <net/cfg802154.h>
 
-#include "ieee802154_i.h"
-#include "driver-ops.h"
+#समावेश "ieee802154_i.h"
+#समावेश "driver-ops.h"
 
-void mac802154_dev_set_page_channel(struct net_device *dev, u8 page, u8 chan)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct ieee802154_local *local = sdata->local;
-	int res;
+व्योम mac802154_dev_set_page_channel(काष्ठा net_device *dev, u8 page, u8 chan)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा ieee802154_local *local = sdata->local;
+	पूर्णांक res;
 
 	ASSERT_RTNL();
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
 	res = drv_set_channel(local, page, chan);
-	if (res) {
+	अगर (res) अणु
 		pr_debug("set_channel failed\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		local->phy->current_channel = chan;
 		local->phy->current_page = page;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int mac802154_get_params(struct net_device *dev,
-			 struct ieee802154_llsec_params *params)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+पूर्णांक mac802154_get_params(काष्ठा net_device *dev,
+			 काष्ठा ieee802154_llsec_params *params)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
@@ -49,15 +50,15 @@ int mac802154_get_params(struct net_device *dev,
 	res = mac802154_llsec_get_params(&sdata->sec, params);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int mac802154_set_params(struct net_device *dev,
-			 const struct ieee802154_llsec_params *params,
-			 int changed)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+पूर्णांक mac802154_set_params(काष्ठा net_device *dev,
+			 स्थिर काष्ठा ieee802154_llsec_params *params,
+			 पूर्णांक changed)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
@@ -65,15 +66,15 @@ int mac802154_set_params(struct net_device *dev,
 	res = mac802154_llsec_set_params(&sdata->sec, params, changed);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int mac802154_add_key(struct net_device *dev,
-		      const struct ieee802154_llsec_key_id *id,
-		      const struct ieee802154_llsec_key *key)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+पूर्णांक mac802154_add_key(काष्ठा net_device *dev,
+		      स्थिर काष्ठा ieee802154_llsec_key_id *id,
+		      स्थिर काष्ठा ieee802154_llsec_key *key)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
@@ -81,14 +82,14 @@ int mac802154_add_key(struct net_device *dev,
 	res = mac802154_llsec_key_add(&sdata->sec, id, key);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int mac802154_del_key(struct net_device *dev,
-		      const struct ieee802154_llsec_key_id *id)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+पूर्णांक mac802154_del_key(काष्ठा net_device *dev,
+		      स्थिर काष्ठा ieee802154_llsec_key_id *id)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
@@ -96,14 +97,14 @@ int mac802154_del_key(struct net_device *dev,
 	res = mac802154_llsec_key_del(&sdata->sec, id);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int mac802154_add_dev(struct net_device *dev,
-		      const struct ieee802154_llsec_device *llsec_dev)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+पूर्णांक mac802154_add_dev(काष्ठा net_device *dev,
+		      स्थिर काष्ठा ieee802154_llsec_device *llsec_dev)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
@@ -111,13 +112,13 @@ int mac802154_add_dev(struct net_device *dev,
 	res = mac802154_llsec_dev_add(&sdata->sec, llsec_dev);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int mac802154_del_dev(struct net_device *dev, __le64 dev_addr)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+पूर्णांक mac802154_del_dev(काष्ठा net_device *dev, __le64 dev_addr)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
@@ -125,15 +126,15 @@ int mac802154_del_dev(struct net_device *dev, __le64 dev_addr)
 	res = mac802154_llsec_dev_del(&sdata->sec, dev_addr);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int mac802154_add_devkey(struct net_device *dev,
+पूर्णांक mac802154_add_devkey(काष्ठा net_device *dev,
 			 __le64 device_addr,
-			 const struct ieee802154_llsec_device_key *key)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+			 स्थिर काष्ठा ieee802154_llsec_device_key *key)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
@@ -141,15 +142,15 @@ int mac802154_add_devkey(struct net_device *dev,
 	res = mac802154_llsec_devkey_add(&sdata->sec, device_addr, key);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int mac802154_del_devkey(struct net_device *dev,
+पूर्णांक mac802154_del_devkey(काष्ठा net_device *dev,
 			 __le64 device_addr,
-			 const struct ieee802154_llsec_device_key *key)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+			 स्थिर काष्ठा ieee802154_llsec_device_key *key)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
@@ -157,14 +158,14 @@ int mac802154_del_devkey(struct net_device *dev,
 	res = mac802154_llsec_devkey_del(&sdata->sec, device_addr, key);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int mac802154_add_seclevel(struct net_device *dev,
-			   const struct ieee802154_llsec_seclevel *sl)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+पूर्णांक mac802154_add_seclevel(काष्ठा net_device *dev,
+			   स्थिर काष्ठा ieee802154_llsec_seclevel *sl)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
@@ -172,14 +173,14 @@ int mac802154_add_seclevel(struct net_device *dev,
 	res = mac802154_llsec_seclevel_add(&sdata->sec, sl);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int mac802154_del_seclevel(struct net_device *dev,
-			   const struct ieee802154_llsec_seclevel *sl)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int res;
+पूर्णांक mac802154_del_seclevel(काष्ठा net_device *dev,
+			   स्थिर काष्ठा ieee802154_llsec_seclevel *sl)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक res;
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
@@ -187,33 +188,33 @@ int mac802154_del_seclevel(struct net_device *dev,
 	res = mac802154_llsec_seclevel_del(&sdata->sec, sl);
 	mutex_unlock(&sdata->sec_mtx);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-void mac802154_lock_table(struct net_device *dev)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+व्योम mac802154_lock_table(काष्ठा net_device *dev)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
 	mutex_lock(&sdata->sec_mtx);
-}
+पूर्ण
 
-void mac802154_get_table(struct net_device *dev,
-			 struct ieee802154_llsec_table **t)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+व्योम mac802154_get_table(काष्ठा net_device *dev,
+			 काष्ठा ieee802154_llsec_table **t)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
 	*t = &sdata->sec.table;
-}
+पूर्ण
 
-void mac802154_unlock_table(struct net_device *dev)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+व्योम mac802154_unlock_table(काष्ठा net_device *dev)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
 
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
 	mutex_unlock(&sdata->sec_mtx);
-}
+पूर्ण

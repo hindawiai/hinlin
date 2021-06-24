@@ -1,385 +1,386 @@
+<शैली गुरु>
 /*
  * Allwinner A1X SoCs pinctrl driver.
  *
  * Copyright (C) 2012 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/irqdomain.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/export.h>
-#include <linux/of.h>
-#include <linux/of_clk.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/pinctrl/machine.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/regulator/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/export.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_clk.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/pinctrl/machine.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include <dt-bindings/pinctrl/sun4i-a10.h>
+#समावेश <dt-bindings/pinctrl/sun4i-a10.h>
 
-#include "../core.h"
-#include "pinctrl-sunxi.h"
+#समावेश "../core.h"
+#समावेश "pinctrl-sunxi.h"
 
-static struct irq_chip sunxi_pinctrl_edge_irq_chip;
-static struct irq_chip sunxi_pinctrl_level_irq_chip;
+अटल काष्ठा irq_chip sunxi_pinctrl_edge_irq_chip;
+अटल काष्ठा irq_chip sunxi_pinctrl_level_irq_chip;
 
-static struct sunxi_pinctrl_group *
-sunxi_pinctrl_find_group_by_name(struct sunxi_pinctrl *pctl, const char *group)
-{
-	int i;
+अटल काष्ठा sunxi_pinctrl_group *
+sunxi_pinctrl_find_group_by_name(काष्ठा sunxi_pinctrl *pctl, स्थिर अक्षर *group)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pctl->ngroups; i++) {
-		struct sunxi_pinctrl_group *grp = pctl->groups + i;
+	क्रम (i = 0; i < pctl->ngroups; i++) अणु
+		काष्ठा sunxi_pinctrl_group *grp = pctl->groups + i;
 
-		if (!strcmp(grp->name, group))
-			return grp;
-	}
+		अगर (!म_भेद(grp->name, group))
+			वापस grp;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct sunxi_pinctrl_function *
-sunxi_pinctrl_find_function_by_name(struct sunxi_pinctrl *pctl,
-				    const char *name)
-{
-	struct sunxi_pinctrl_function *func = pctl->functions;
-	int i;
+अटल काष्ठा sunxi_pinctrl_function *
+sunxi_pinctrl_find_function_by_name(काष्ठा sunxi_pinctrl *pctl,
+				    स्थिर अक्षर *name)
+अणु
+	काष्ठा sunxi_pinctrl_function *func = pctl->functions;
+	पूर्णांक i;
 
-	for (i = 0; i < pctl->nfunctions; i++) {
-		if (!func[i].name)
-			break;
+	क्रम (i = 0; i < pctl->nfunctions; i++) अणु
+		अगर (!func[i].name)
+			अवरोध;
 
-		if (!strcmp(func[i].name, name))
-			return func + i;
-	}
+		अगर (!म_भेद(func[i].name, name))
+			वापस func + i;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct sunxi_desc_function *
-sunxi_pinctrl_desc_find_function_by_name(struct sunxi_pinctrl *pctl,
-					 const char *pin_name,
-					 const char *func_name)
-{
-	int i;
+अटल काष्ठा sunxi_desc_function *
+sunxi_pinctrl_desc_find_function_by_name(काष्ठा sunxi_pinctrl *pctl,
+					 स्थिर अक्षर *pin_name,
+					 स्थिर अक्षर *func_name)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pctl->desc->npins; i++) {
-		const struct sunxi_desc_pin *pin = pctl->desc->pins + i;
+	क्रम (i = 0; i < pctl->desc->npins; i++) अणु
+		स्थिर काष्ठा sunxi_desc_pin *pin = pctl->desc->pins + i;
 
-		if (!strcmp(pin->pin.name, pin_name)) {
-			struct sunxi_desc_function *func = pin->functions;
+		अगर (!म_भेद(pin->pin.name, pin_name)) अणु
+			काष्ठा sunxi_desc_function *func = pin->functions;
 
-			while (func->name) {
-				if (!strcmp(func->name, func_name) &&
+			जबतक (func->name) अणु
+				अगर (!म_भेद(func->name, func_name) &&
 					(!func->variant ||
 					func->variant & pctl->variant))
-					return func;
+					वापस func;
 
 				func++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct sunxi_desc_function *
-sunxi_pinctrl_desc_find_function_by_pin(struct sunxi_pinctrl *pctl,
-					const u16 pin_num,
-					const char *func_name)
-{
-	int i;
+अटल काष्ठा sunxi_desc_function *
+sunxi_pinctrl_desc_find_function_by_pin(काष्ठा sunxi_pinctrl *pctl,
+					स्थिर u16 pin_num,
+					स्थिर अक्षर *func_name)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pctl->desc->npins; i++) {
-		const struct sunxi_desc_pin *pin = pctl->desc->pins + i;
+	क्रम (i = 0; i < pctl->desc->npins; i++) अणु
+		स्थिर काष्ठा sunxi_desc_pin *pin = pctl->desc->pins + i;
 
-		if (pin->pin.number == pin_num) {
-			struct sunxi_desc_function *func = pin->functions;
+		अगर (pin->pin.number == pin_num) अणु
+			काष्ठा sunxi_desc_function *func = pin->functions;
 
-			while (func->name) {
-				if (!strcmp(func->name, func_name))
-					return func;
+			जबतक (func->name) अणु
+				अगर (!म_भेद(func->name, func_name))
+					वापस func;
 
 				func++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int sunxi_pctrl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक sunxi_pctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->ngroups;
-}
+	वापस pctl->ngroups;
+पूर्ण
 
-static const char *sunxi_pctrl_get_group_name(struct pinctrl_dev *pctldev,
-					      unsigned group)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *sunxi_pctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+					      अचिन्हित group)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->groups[group].name;
-}
+	वापस pctl->groups[group].name;
+पूर्ण
 
-static int sunxi_pctrl_get_group_pins(struct pinctrl_dev *pctldev,
-				      unsigned group,
-				      const unsigned **pins,
-				      unsigned *num_pins)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक sunxi_pctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+				      अचिन्हित group,
+				      स्थिर अचिन्हित **pins,
+				      अचिन्हित *num_pins)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	*pins = (unsigned *)&pctl->groups[group].pin;
+	*pins = (अचिन्हित *)&pctl->groups[group].pin;
 	*num_pins = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool sunxi_pctrl_has_bias_prop(struct device_node *node)
-{
-	return of_find_property(node, "bias-pull-up", NULL) ||
-		of_find_property(node, "bias-pull-down", NULL) ||
-		of_find_property(node, "bias-disable", NULL) ||
-		of_find_property(node, "allwinner,pull", NULL);
-}
+अटल bool sunxi_pctrl_has_bias_prop(काष्ठा device_node *node)
+अणु
+	वापस of_find_property(node, "bias-pull-up", शून्य) ||
+		of_find_property(node, "bias-pull-down", शून्य) ||
+		of_find_property(node, "bias-disable", शून्य) ||
+		of_find_property(node, "allwinner,pull", शून्य);
+पूर्ण
 
-static bool sunxi_pctrl_has_drive_prop(struct device_node *node)
-{
-	return of_find_property(node, "drive-strength", NULL) ||
-		of_find_property(node, "allwinner,drive", NULL);
-}
+अटल bool sunxi_pctrl_has_drive_prop(काष्ठा device_node *node)
+अणु
+	वापस of_find_property(node, "drive-strength", शून्य) ||
+		of_find_property(node, "allwinner,drive", शून्य);
+पूर्ण
 
-static int sunxi_pctrl_parse_bias_prop(struct device_node *node)
-{
+अटल पूर्णांक sunxi_pctrl_parse_bias_prop(काष्ठा device_node *node)
+अणु
 	u32 val;
 
 	/* Try the new style binding */
-	if (of_find_property(node, "bias-pull-up", NULL))
-		return PIN_CONFIG_BIAS_PULL_UP;
+	अगर (of_find_property(node, "bias-pull-up", शून्य))
+		वापस PIN_CONFIG_BIAS_PULL_UP;
 
-	if (of_find_property(node, "bias-pull-down", NULL))
-		return PIN_CONFIG_BIAS_PULL_DOWN;
+	अगर (of_find_property(node, "bias-pull-down", शून्य))
+		वापस PIN_CONFIG_BIAS_PULL_DOWN;
 
-	if (of_find_property(node, "bias-disable", NULL))
-		return PIN_CONFIG_BIAS_DISABLE;
+	अगर (of_find_property(node, "bias-disable", शून्य))
+		वापस PIN_CONFIG_BIAS_DISABLE;
 
 	/* And fall back to the old binding */
-	if (of_property_read_u32(node, "allwinner,pull", &val))
-		return -EINVAL;
+	अगर (of_property_पढ़ो_u32(node, "allwinner,pull", &val))
+		वापस -EINVAL;
 
-	switch (val) {
-	case SUN4I_PINCTRL_NO_PULL:
-		return PIN_CONFIG_BIAS_DISABLE;
-	case SUN4I_PINCTRL_PULL_UP:
-		return PIN_CONFIG_BIAS_PULL_UP;
-	case SUN4I_PINCTRL_PULL_DOWN:
-		return PIN_CONFIG_BIAS_PULL_DOWN;
-	}
+	चयन (val) अणु
+	हाल SUN4I_PINCTRL_NO_PULL:
+		वापस PIN_CONFIG_BIAS_DISABLE;
+	हाल SUN4I_PINCTRL_PULL_UP:
+		वापस PIN_CONFIG_BIAS_PULL_UP;
+	हाल SUN4I_PINCTRL_PULL_DOWN:
+		वापस PIN_CONFIG_BIAS_PULL_DOWN;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int sunxi_pctrl_parse_drive_prop(struct device_node *node)
-{
+अटल पूर्णांक sunxi_pctrl_parse_drive_prop(काष्ठा device_node *node)
+अणु
 	u32 val;
 
 	/* Try the new style binding */
-	if (!of_property_read_u32(node, "drive-strength", &val)) {
+	अगर (!of_property_पढ़ो_u32(node, "drive-strength", &val)) अणु
 		/* We can't go below 10mA ... */
-		if (val < 10)
-			return -EINVAL;
+		अगर (val < 10)
+			वापस -EINVAL;
 
 		/* ... and only up to 40 mA ... */
-		if (val > 40)
+		अगर (val > 40)
 			val = 40;
 
 		/* by steps of 10 mA */
-		return rounddown(val, 10);
-	}
+		वापस roundकरोwn(val, 10);
+	पूर्ण
 
 	/* And then fall back to the old binding */
-	if (of_property_read_u32(node, "allwinner,drive", &val))
-		return -EINVAL;
+	अगर (of_property_पढ़ो_u32(node, "allwinner,drive", &val))
+		वापस -EINVAL;
 
-	return (val + 1) * 10;
-}
+	वापस (val + 1) * 10;
+पूर्ण
 
-static const char *sunxi_pctrl_parse_function_prop(struct device_node *node)
-{
-	const char *function;
-	int ret;
+अटल स्थिर अक्षर *sunxi_pctrl_parse_function_prop(काष्ठा device_node *node)
+अणु
+	स्थिर अक्षर *function;
+	पूर्णांक ret;
 
 	/* Try the generic binding */
-	ret = of_property_read_string(node, "function", &function);
-	if (!ret)
-		return function;
+	ret = of_property_पढ़ो_string(node, "function", &function);
+	अगर (!ret)
+		वापस function;
 
 	/* And fall back to our legacy one */
-	ret = of_property_read_string(node, "allwinner,function", &function);
-	if (!ret)
-		return function;
+	ret = of_property_पढ़ो_string(node, "allwinner,function", &function);
+	अगर (!ret)
+		वापस function;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static const char *sunxi_pctrl_find_pins_prop(struct device_node *node,
-					      int *npins)
-{
-	int count;
+अटल स्थिर अक्षर *sunxi_pctrl_find_pins_prop(काष्ठा device_node *node,
+					      पूर्णांक *npins)
+अणु
+	पूर्णांक count;
 
 	/* Try the generic binding */
 	count = of_property_count_strings(node, "pins");
-	if (count > 0) {
+	अगर (count > 0) अणु
 		*npins = count;
-		return "pins";
-	}
+		वापस "pins";
+	पूर्ण
 
 	/* And fall back to our legacy one */
 	count = of_property_count_strings(node, "allwinner,pins");
-	if (count > 0) {
+	अगर (count > 0) अणु
 		*npins = count;
-		return "allwinner,pins";
-	}
+		वापस "allwinner,pins";
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static unsigned long *sunxi_pctrl_build_pin_config(struct device_node *node,
-						   unsigned int *len)
-{
-	unsigned long *pinconfig;
-	unsigned int configlen = 0, idx = 0;
-	int ret;
+अटल अचिन्हित दीर्घ *sunxi_pctrl_build_pin_config(काष्ठा device_node *node,
+						   अचिन्हित पूर्णांक *len)
+अणु
+	अचिन्हित दीर्घ *pinconfig;
+	अचिन्हित पूर्णांक configlen = 0, idx = 0;
+	पूर्णांक ret;
 
-	if (sunxi_pctrl_has_drive_prop(node))
+	अगर (sunxi_pctrl_has_drive_prop(node))
 		configlen++;
-	if (sunxi_pctrl_has_bias_prop(node))
+	अगर (sunxi_pctrl_has_bias_prop(node))
 		configlen++;
 
 	/*
-	 * If we don't have any configuration, bail out
+	 * If we करोn't have any configuration, bail out
 	 */
-	if (!configlen)
-		return NULL;
+	अगर (!configlen)
+		वापस शून्य;
 
-	pinconfig = kcalloc(configlen, sizeof(*pinconfig), GFP_KERNEL);
-	if (!pinconfig)
-		return ERR_PTR(-ENOMEM);
+	pinconfig = kसुस्मृति(configlen, माप(*pinconfig), GFP_KERNEL);
+	अगर (!pinconfig)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (sunxi_pctrl_has_drive_prop(node)) {
-		int drive = sunxi_pctrl_parse_drive_prop(node);
-		if (drive < 0) {
+	अगर (sunxi_pctrl_has_drive_prop(node)) अणु
+		पूर्णांक drive = sunxi_pctrl_parse_drive_prop(node);
+		अगर (drive < 0) अणु
 			ret = drive;
-			goto err_free;
-		}
+			जाओ err_मुक्त;
+		पूर्ण
 
 		pinconfig[idx++] = pinconf_to_config_packed(PIN_CONFIG_DRIVE_STRENGTH,
 							  drive);
-	}
+	पूर्ण
 
-	if (sunxi_pctrl_has_bias_prop(node)) {
-		int pull = sunxi_pctrl_parse_bias_prop(node);
-		int arg = 0;
-		if (pull < 0) {
+	अगर (sunxi_pctrl_has_bias_prop(node)) अणु
+		पूर्णांक pull = sunxi_pctrl_parse_bias_prop(node);
+		पूर्णांक arg = 0;
+		अगर (pull < 0) अणु
 			ret = pull;
-			goto err_free;
-		}
+			जाओ err_मुक्त;
+		पूर्ण
 
-		if (pull != PIN_CONFIG_BIAS_DISABLE)
+		अगर (pull != PIN_CONFIG_BIAS_DISABLE)
 			arg = 1; /* hardware uses weak pull resistors */
 
 		pinconfig[idx++] = pinconf_to_config_packed(pull, arg);
-	}
+	पूर्ण
 
 
 	*len = configlen;
-	return pinconfig;
+	वापस pinconfig;
 
-err_free:
-	kfree(pinconfig);
-	return ERR_PTR(ret);
-}
+err_मुक्त:
+	kमुक्त(pinconfig);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static int sunxi_pctrl_dt_node_to_map(struct pinctrl_dev *pctldev,
-				      struct device_node *node,
-				      struct pinctrl_map **map,
-				      unsigned *num_maps)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	unsigned long *pinconfig;
-	struct property *prop;
-	const char *function, *pin_prop;
-	const char *group;
-	int ret, npins, nmaps, configlen = 0, i = 0;
+अटल पूर्णांक sunxi_pctrl_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
+				      काष्ठा device_node *node,
+				      काष्ठा pinctrl_map **map,
+				      अचिन्हित *num_maps)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित दीर्घ *pinconfig;
+	काष्ठा property *prop;
+	स्थिर अक्षर *function, *pin_prop;
+	स्थिर अक्षर *group;
+	पूर्णांक ret, npins, nmaps, configlen = 0, i = 0;
 
-	*map = NULL;
+	*map = शून्य;
 	*num_maps = 0;
 
 	function = sunxi_pctrl_parse_function_prop(node);
-	if (!function) {
+	अगर (!function) अणु
 		dev_err(pctl->dev, "missing function property in node %pOFn\n",
 			node);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pin_prop = sunxi_pctrl_find_pins_prop(node, &npins);
-	if (!pin_prop) {
+	अगर (!pin_prop) अणु
 		dev_err(pctl->dev, "missing pins property in node %pOFn\n",
 			node);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * We have two maps for each pin: one for the function, one
-	 * for the configuration (bias, strength, etc).
+	 * We have two maps क्रम each pin: one क्रम the function, one
+	 * क्रम the configuration (bias, strength, etc).
 	 *
 	 * We might be slightly overshooting, since we might not have
 	 * any configuration.
 	 */
 	nmaps = npins * 2;
-	*map = kmalloc_array(nmaps, sizeof(struct pinctrl_map), GFP_KERNEL);
-	if (!*map)
-		return -ENOMEM;
+	*map = kदो_स्मृति_array(nmaps, माप(काष्ठा pinctrl_map), GFP_KERNEL);
+	अगर (!*map)
+		वापस -ENOMEM;
 
 	pinconfig = sunxi_pctrl_build_pin_config(node, &configlen);
-	if (IS_ERR(pinconfig)) {
+	अगर (IS_ERR(pinconfig)) अणु
 		ret = PTR_ERR(pinconfig);
-		goto err_free_map;
-	}
+		जाओ err_मुक्त_map;
+	पूर्ण
 
-	of_property_for_each_string(node, pin_prop, prop, group) {
-		struct sunxi_pinctrl_group *grp =
+	of_property_क्रम_each_string(node, pin_prop, prop, group) अणु
+		काष्ठा sunxi_pinctrl_group *grp =
 			sunxi_pinctrl_find_group_by_name(pctl, group);
 
-		if (!grp) {
+		अगर (!grp) अणु
 			dev_err(pctl->dev, "unknown pin %s", group);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!sunxi_pinctrl_desc_find_function_by_name(pctl,
+		अगर (!sunxi_pinctrl_desc_find_function_by_name(pctl,
 							      grp->name,
-							      function)) {
+							      function)) अणु
 			dev_err(pctl->dev, "unsupported function %s on pin %s",
 				function, group);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		(*map)[i].type = PIN_MAP_TYPE_MUX_GROUP;
 		(*map)[i].data.mux.group = group;
@@ -387,14 +388,14 @@ static int sunxi_pctrl_dt_node_to_map(struct pinctrl_dev *pctldev,
 
 		i++;
 
-		if (pinconfig) {
+		अगर (pinconfig) अणु
 			(*map)[i].type = PIN_MAP_TYPE_CONFIGS_GROUP;
 			(*map)[i].data.configs.group_or_pin = group;
 			(*map)[i].data.configs.configs = pinconfig;
 			(*map)[i].data.configs.num_configs = configlen;
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*num_maps = i;
 
@@ -402,672 +403,672 @@ static int sunxi_pctrl_dt_node_to_map(struct pinctrl_dev *pctldev,
 	 * We know have the number of maps we need, we can resize our
 	 * map array
 	 */
-	*map = krealloc(*map, i * sizeof(struct pinctrl_map), GFP_KERNEL);
-	if (!*map)
-		return -ENOMEM;
+	*map = kपुनः_स्मृति(*map, i * माप(काष्ठा pinctrl_map), GFP_KERNEL);
+	अगर (!*map)
+		वापस -ENOMEM;
 
-	return 0;
+	वापस 0;
 
-err_free_map:
-	kfree(*map);
-	*map = NULL;
-	return ret;
-}
+err_मुक्त_map:
+	kमुक्त(*map);
+	*map = शून्य;
+	वापस ret;
+पूर्ण
 
-static void sunxi_pctrl_dt_free_map(struct pinctrl_dev *pctldev,
-				    struct pinctrl_map *map,
-				    unsigned num_maps)
-{
-	int i;
+अटल व्योम sunxi_pctrl_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
+				    काष्ठा pinctrl_map *map,
+				    अचिन्हित num_maps)
+अणु
+	पूर्णांक i;
 
 	/* pin config is never in the first map */
-	for (i = 1; i < num_maps; i++) {
-		if (map[i].type != PIN_MAP_TYPE_CONFIGS_GROUP)
-			continue;
+	क्रम (i = 1; i < num_maps; i++) अणु
+		अगर (map[i].type != PIN_MAP_TYPE_CONFIGS_GROUP)
+			जारी;
 
 		/*
 		 * All the maps share the same pin config,
-		 * free only the first one we find.
+		 * मुक्त only the first one we find.
 		 */
-		kfree(map[i].data.configs.configs);
-		break;
-	}
+		kमुक्त(map[i].data.configs.configs);
+		अवरोध;
+	पूर्ण
 
-	kfree(map);
-}
+	kमुक्त(map);
+पूर्ण
 
-static const struct pinctrl_ops sunxi_pctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops sunxi_pctrl_ops = अणु
 	.dt_node_to_map		= sunxi_pctrl_dt_node_to_map,
-	.dt_free_map		= sunxi_pctrl_dt_free_map,
+	.dt_मुक्त_map		= sunxi_pctrl_dt_मुक्त_map,
 	.get_groups_count	= sunxi_pctrl_get_groups_count,
 	.get_group_name		= sunxi_pctrl_get_group_name,
 	.get_group_pins		= sunxi_pctrl_get_group_pins,
-};
+पूर्ण;
 
-static int sunxi_pconf_reg(unsigned pin, enum pin_config_param param,
-			   u32 *offset, u32 *shift, u32 *mask)
-{
-	switch (param) {
-	case PIN_CONFIG_DRIVE_STRENGTH:
+अटल पूर्णांक sunxi_pconf_reg(अचिन्हित pin, क्रमागत pin_config_param param,
+			   u32 *offset, u32 *shअगरt, u32 *mask)
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
 		*offset = sunxi_dlevel_reg(pin);
-		*shift = sunxi_dlevel_offset(pin);
+		*shअगरt = sunxi_dlevel_offset(pin);
 		*mask = DLEVEL_PINS_MASK;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-	case PIN_CONFIG_BIAS_DISABLE:
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+	हाल PIN_CONFIG_BIAS_DISABLE:
 		*offset = sunxi_pull_reg(pin);
-		*shift = sunxi_pull_offset(pin);
+		*shअगरt = sunxi_pull_offset(pin);
 		*mask = PULL_PINS_MASK;
-		break;
+		अवरोध;
 
-	default:
-		return -ENOTSUPP;
-	}
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_pconf_get(struct pinctrl_dev *pctldev, unsigned pin,
-			   unsigned long *config)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param = pinconf_to_config_param(*config);
-	u32 offset, shift, mask, val;
+अटल पूर्णांक sunxi_pconf_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+			   अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+	u32 offset, shअगरt, mask, val;
 	u16 arg;
-	int ret;
+	पूर्णांक ret;
 
 	pin -= pctl->desc->pin_base;
 
-	ret = sunxi_pconf_reg(pin, param, &offset, &shift, &mask);
-	if (ret < 0)
-		return ret;
+	ret = sunxi_pconf_reg(pin, param, &offset, &shअगरt, &mask);
+	अगर (ret < 0)
+		वापस ret;
 
-	val = (readl(pctl->membase + offset) >> shift) & mask;
+	val = (पढ़ोl(pctl->membase + offset) >> shअगरt) & mask;
 
-	switch (pinconf_to_config_param(*config)) {
-	case PIN_CONFIG_DRIVE_STRENGTH:
+	चयन (pinconf_to_config_param(*config)) अणु
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
 		arg = (val + 1) * 10;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if (val != SUN4I_PINCTRL_PULL_UP)
-			return -EINVAL;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर (val != SUN4I_PINCTRL_PULL_UP)
+			वापस -EINVAL;
 		arg = 1; /* hardware is weak pull-up */
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		if (val != SUN4I_PINCTRL_PULL_DOWN)
-			return -EINVAL;
-		arg = 1; /* hardware is weak pull-down */
-		break;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		अगर (val != SUN4I_PINCTRL_PULL_DOWN)
+			वापस -EINVAL;
+		arg = 1; /* hardware is weak pull-करोwn */
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_DISABLE:
-		if (val != SUN4I_PINCTRL_NO_PULL)
-			return -EINVAL;
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर (val != SUN4I_PINCTRL_NO_PULL)
+			वापस -EINVAL;
 		arg = 0;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* sunxi_pconf_reg should catch anything unsupported */
 		WARN_ON(1);
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_pconf_group_get(struct pinctrl_dev *pctldev,
-				 unsigned group,
-				 unsigned long *config)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct sunxi_pinctrl_group *g = &pctl->groups[group];
+अटल पूर्णांक sunxi_pconf_group_get(काष्ठा pinctrl_dev *pctldev,
+				 अचिन्हित group,
+				 अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा sunxi_pinctrl_group *g = &pctl->groups[group];
 
 	/* We only support 1 pin per group. Chain it to the pin callback */
-	return sunxi_pconf_get(pctldev, g->pin, config);
-}
+	वापस sunxi_pconf_get(pctldev, g->pin, config);
+पूर्ण
 
-static int sunxi_pconf_set(struct pinctrl_dev *pctldev, unsigned pin,
-			   unsigned long *configs, unsigned num_configs)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	int i;
+अटल पूर्णांक sunxi_pconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+			   अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक i;
 
-	for (i = 0; i < num_configs; i++) {
-		enum pin_config_param param;
-		unsigned long flags;
-		u32 offset, shift, mask, reg;
+	क्रम (i = 0; i < num_configs; i++) अणु
+		क्रमागत pin_config_param param;
+		अचिन्हित दीर्घ flags;
+		u32 offset, shअगरt, mask, reg;
 		u32 arg, val;
-		int ret;
+		पूर्णांक ret;
 
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		ret = sunxi_pconf_reg(pin, param, &offset, &shift, &mask);
-		if (ret < 0)
-			return ret;
+		ret = sunxi_pconf_reg(pin, param, &offset, &shअगरt, &mask);
+		अगर (ret < 0)
+			वापस ret;
 
-		switch (param) {
-		case PIN_CONFIG_DRIVE_STRENGTH:
-			if (arg < 10 || arg > 40)
-				return -EINVAL;
+		चयन (param) अणु
+		हाल PIN_CONFIG_DRIVE_STRENGTH:
+			अगर (arg < 10 || arg > 40)
+				वापस -EINVAL;
 			/*
-			 * We convert from mA to what the register expects:
+			 * We convert from mA to what the रेजिस्टर expects:
 			 *   0: 10mA
 			 *   1: 20mA
 			 *   2: 30mA
 			 *   3: 40mA
 			 */
 			val = arg / 10 - 1;
-			break;
-		case PIN_CONFIG_BIAS_DISABLE:
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_DISABLE:
 			val = 0;
-			break;
-		case PIN_CONFIG_BIAS_PULL_UP:
-			if (arg == 0)
-				return -EINVAL;
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_UP:
+			अगर (arg == 0)
+				वापस -EINVAL;
 			val = 1;
-			break;
-		case PIN_CONFIG_BIAS_PULL_DOWN:
-			if (arg == 0)
-				return -EINVAL;
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
+			अगर (arg == 0)
+				वापस -EINVAL;
 			val = 2;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/* sunxi_pconf_reg should catch anything unsupported */
 			WARN_ON(1);
-			return -ENOTSUPP;
-		}
+			वापस -ENOTSUPP;
+		पूर्ण
 
 		raw_spin_lock_irqsave(&pctl->lock, flags);
-		reg = readl(pctl->membase + offset);
-		reg &= ~(mask << shift);
-		writel(reg | val << shift, pctl->membase + offset);
+		reg = पढ़ोl(pctl->membase + offset);
+		reg &= ~(mask << shअगरt);
+		ग_लिखोl(reg | val << shअगरt, pctl->membase + offset);
 		raw_spin_unlock_irqrestore(&pctl->lock, flags);
-	} /* for each config */
+	पूर्ण /* क्रम each config */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_pconf_group_set(struct pinctrl_dev *pctldev, unsigned group,
-				 unsigned long *configs, unsigned num_configs)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct sunxi_pinctrl_group *g = &pctl->groups[group];
+अटल पूर्णांक sunxi_pconf_group_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित group,
+				 अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा sunxi_pinctrl_group *g = &pctl->groups[group];
 
 	/* We only support 1 pin per group. Chain it to the pin callback */
-	return sunxi_pconf_set(pctldev, g->pin, configs, num_configs);
-}
+	वापस sunxi_pconf_set(pctldev, g->pin, configs, num_configs);
+पूर्ण
 
-static const struct pinconf_ops sunxi_pconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops sunxi_pconf_ops = अणु
 	.is_generic		= true,
 	.pin_config_get		= sunxi_pconf_get,
 	.pin_config_set		= sunxi_pconf_set,
 	.pin_config_group_get	= sunxi_pconf_group_get,
 	.pin_config_group_set	= sunxi_pconf_group_set,
-};
+पूर्ण;
 
-static int sunxi_pinctrl_set_io_bias_cfg(struct sunxi_pinctrl *pctl,
-					 unsigned pin,
-					 struct regulator *supply)
-{
-	unsigned short bank = pin / PINS_PER_BANK;
-	unsigned long flags;
+अटल पूर्णांक sunxi_pinctrl_set_io_bias_cfg(काष्ठा sunxi_pinctrl *pctl,
+					 अचिन्हित pin,
+					 काष्ठा regulator *supply)
+अणु
+	अचिन्हित लघु bank = pin / PINS_PER_BANK;
+	अचिन्हित दीर्घ flags;
 	u32 val, reg;
-	int uV;
+	पूर्णांक uV;
 
-	if (!pctl->desc->io_bias_cfg_variant)
-		return 0;
+	अगर (!pctl->desc->io_bias_cfg_variant)
+		वापस 0;
 
 	uV = regulator_get_voltage(supply);
-	if (uV < 0)
-		return uV;
+	अगर (uV < 0)
+		वापस uV;
 
 	/* Might be dummy regulator with no voltage set */
-	if (uV == 0)
-		return 0;
+	अगर (uV == 0)
+		वापस 0;
 
-	switch (pctl->desc->io_bias_cfg_variant) {
-	case BIAS_VOLTAGE_GRP_CONFIG:
+	चयन (pctl->desc->io_bias_cfg_variant) अणु
+	हाल BIAS_VOLTAGE_GRP_CONFIG:
 		/*
 		 * Configured value must be equal or greater to actual
 		 * voltage.
 		 */
-		if (uV <= 1800000)
+		अगर (uV <= 1800000)
 			val = 0x0; /* 1.8V */
-		else if (uV <= 2500000)
+		अन्यथा अगर (uV <= 2500000)
 			val = 0x6; /* 2.5V */
-		else if (uV <= 2800000)
+		अन्यथा अगर (uV <= 2800000)
 			val = 0x9; /* 2.8V */
-		else if (uV <= 3000000)
+		अन्यथा अगर (uV <= 3000000)
 			val = 0xA; /* 3.0V */
-		else
+		अन्यथा
 			val = 0xD; /* 3.3V */
 
 		pin -= pctl->desc->pin_base;
 
-		reg = readl(pctl->membase + sunxi_grp_config_reg(pin));
+		reg = पढ़ोl(pctl->membase + sunxi_grp_config_reg(pin));
 		reg &= ~IO_BIAS_MASK;
-		writel(reg | val, pctl->membase + sunxi_grp_config_reg(pin));
-		return 0;
-	case BIAS_VOLTAGE_PIO_POW_MODE_SEL:
+		ग_लिखोl(reg | val, pctl->membase + sunxi_grp_config_reg(pin));
+		वापस 0;
+	हाल BIAS_VOLTAGE_PIO_POW_MODE_SEL:
 		val = uV <= 1800000 ? 1 : 0;
 
 		raw_spin_lock_irqsave(&pctl->lock, flags);
-		reg = readl(pctl->membase + PIO_POW_MOD_SEL_REG);
+		reg = पढ़ोl(pctl->membase + PIO_POW_MOD_SEL_REG);
 		reg &= ~(1 << bank);
-		writel(reg | val << bank, pctl->membase + PIO_POW_MOD_SEL_REG);
+		ग_लिखोl(reg | val << bank, pctl->membase + PIO_POW_MOD_SEL_REG);
 		raw_spin_unlock_irqrestore(&pctl->lock, flags);
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int sunxi_pmx_get_funcs_cnt(struct pinctrl_dev *pctldev)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक sunxi_pmx_get_funcs_cnt(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->nfunctions;
-}
+	वापस pctl->nfunctions;
+पूर्ण
 
-static const char *sunxi_pmx_get_func_name(struct pinctrl_dev *pctldev,
-					   unsigned function)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *sunxi_pmx_get_func_name(काष्ठा pinctrl_dev *pctldev,
+					   अचिन्हित function)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->functions[function].name;
-}
+	वापस pctl->functions[function].name;
+पूर्ण
 
-static int sunxi_pmx_get_func_groups(struct pinctrl_dev *pctldev,
-				     unsigned function,
-				     const char * const **groups,
-				     unsigned * const num_groups)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक sunxi_pmx_get_func_groups(काष्ठा pinctrl_dev *pctldev,
+				     अचिन्हित function,
+				     स्थिर अक्षर * स्थिर **groups,
+				     अचिन्हित * स्थिर num_groups)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pctl->functions[function].groups;
 	*num_groups = pctl->functions[function].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sunxi_pmx_set(struct pinctrl_dev *pctldev,
-				 unsigned pin,
+अटल व्योम sunxi_pmx_set(काष्ठा pinctrl_dev *pctldev,
+				 अचिन्हित pin,
 				 u8 config)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	unsigned long flags;
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित दीर्घ flags;
 	u32 val, mask;
 
 	raw_spin_lock_irqsave(&pctl->lock, flags);
 
 	pin -= pctl->desc->pin_base;
-	val = readl(pctl->membase + sunxi_mux_reg(pin));
+	val = पढ़ोl(pctl->membase + sunxi_mux_reg(pin));
 	mask = MUX_PINS_MASK << sunxi_mux_offset(pin);
-	writel((val & ~mask) | config << sunxi_mux_offset(pin),
+	ग_लिखोl((val & ~mask) | config << sunxi_mux_offset(pin),
 		pctl->membase + sunxi_mux_reg(pin));
 
 	raw_spin_unlock_irqrestore(&pctl->lock, flags);
-}
+पूर्ण
 
-static int sunxi_pmx_set_mux(struct pinctrl_dev *pctldev,
-			     unsigned function,
-			     unsigned group)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct sunxi_pinctrl_group *g = pctl->groups + group;
-	struct sunxi_pinctrl_function *func = pctl->functions + function;
-	struct sunxi_desc_function *desc =
+अटल पूर्णांक sunxi_pmx_set_mux(काष्ठा pinctrl_dev *pctldev,
+			     अचिन्हित function,
+			     अचिन्हित group)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा sunxi_pinctrl_group *g = pctl->groups + group;
+	काष्ठा sunxi_pinctrl_function *func = pctl->functions + function;
+	काष्ठा sunxi_desc_function *desc =
 		sunxi_pinctrl_desc_find_function_by_name(pctl,
 							 g->name,
 							 func->name);
 
-	if (!desc)
-		return -EINVAL;
+	अगर (!desc)
+		वापस -EINVAL;
 
 	sunxi_pmx_set(pctldev, g->pin, desc->muxval);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-sunxi_pmx_gpio_set_direction(struct pinctrl_dev *pctldev,
-			struct pinctrl_gpio_range *range,
-			unsigned offset,
+अटल पूर्णांक
+sunxi_pmx_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+			काष्ठा pinctrl_gpio_range *range,
+			अचिन्हित offset,
 			bool input)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct sunxi_desc_function *desc;
-	const char *func;
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा sunxi_desc_function *desc;
+	स्थिर अक्षर *func;
 
-	if (input)
+	अगर (input)
 		func = "gpio_in";
-	else
+	अन्यथा
 		func = "gpio_out";
 
 	desc = sunxi_pinctrl_desc_find_function_by_pin(pctl, offset, func);
-	if (!desc)
-		return -EINVAL;
+	अगर (!desc)
+		वापस -EINVAL;
 
 	sunxi_pmx_set(pctldev, offset, desc->muxval);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_pmx_request(struct pinctrl_dev *pctldev, unsigned offset)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	unsigned short bank = offset / PINS_PER_BANK;
-	unsigned short bank_offset = bank - pctl->desc->pin_base /
+अटल पूर्णांक sunxi_pmx_request(काष्ठा pinctrl_dev *pctldev, अचिन्हित offset)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित लघु bank = offset / PINS_PER_BANK;
+	अचिन्हित लघु bank_offset = bank - pctl->desc->pin_base /
 					    PINS_PER_BANK;
-	struct sunxi_pinctrl_regulator *s_reg = &pctl->regulators[bank_offset];
-	struct regulator *reg = s_reg->regulator;
-	char supply[16];
-	int ret;
+	काष्ठा sunxi_pinctrl_regulator *s_reg = &pctl->regulators[bank_offset];
+	काष्ठा regulator *reg = s_reg->regulator;
+	अक्षर supply[16];
+	पूर्णांक ret;
 
-	if (reg) {
+	अगर (reg) अणु
 		refcount_inc(&s_reg->refcount);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	snprintf(supply, sizeof(supply), "vcc-p%c", 'a' + bank);
+	snम_लिखो(supply, माप(supply), "vcc-p%c", 'a' + bank);
 	reg = regulator_get(pctl->dev, supply);
-	if (IS_ERR(reg)) {
+	अगर (IS_ERR(reg)) अणु
 		dev_err(pctl->dev, "Couldn't get bank P%c regulator\n",
 			'A' + bank);
-		return PTR_ERR(reg);
-	}
+		वापस PTR_ERR(reg);
+	पूर्ण
 
 	ret = regulator_enable(reg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pctl->dev,
 			"Couldn't enable bank P%c regulator\n", 'A' + bank);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	sunxi_pinctrl_set_io_bias_cfg(pctl, offset, reg);
 
 	s_reg->regulator = reg;
 	refcount_set(&s_reg->refcount, 1);
 
-	return 0;
+	वापस 0;
 
 out:
 	regulator_put(s_reg->regulator);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sunxi_pmx_free(struct pinctrl_dev *pctldev, unsigned offset)
-{
-	struct sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	unsigned short bank = offset / PINS_PER_BANK;
-	unsigned short bank_offset = bank - pctl->desc->pin_base /
+अटल पूर्णांक sunxi_pmx_मुक्त(काष्ठा pinctrl_dev *pctldev, अचिन्हित offset)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित लघु bank = offset / PINS_PER_BANK;
+	अचिन्हित लघु bank_offset = bank - pctl->desc->pin_base /
 					    PINS_PER_BANK;
-	struct sunxi_pinctrl_regulator *s_reg = &pctl->regulators[bank_offset];
+	काष्ठा sunxi_pinctrl_regulator *s_reg = &pctl->regulators[bank_offset];
 
-	if (!refcount_dec_and_test(&s_reg->refcount))
-		return 0;
+	अगर (!refcount_dec_and_test(&s_reg->refcount))
+		वापस 0;
 
 	regulator_disable(s_reg->regulator);
 	regulator_put(s_reg->regulator);
-	s_reg->regulator = NULL;
+	s_reg->regulator = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops sunxi_pmx_ops = {
+अटल स्थिर काष्ठा pinmux_ops sunxi_pmx_ops = अणु
 	.get_functions_count	= sunxi_pmx_get_funcs_cnt,
 	.get_function_name	= sunxi_pmx_get_func_name,
 	.get_function_groups	= sunxi_pmx_get_func_groups,
 	.set_mux		= sunxi_pmx_set_mux,
 	.gpio_set_direction	= sunxi_pmx_gpio_set_direction,
 	.request		= sunxi_pmx_request,
-	.free			= sunxi_pmx_free,
+	.मुक्त			= sunxi_pmx_मुक्त,
 	.strict			= true,
-};
+पूर्ण;
 
-static int sunxi_pinctrl_gpio_direction_input(struct gpio_chip *chip,
-					unsigned offset)
-{
-	return pinctrl_gpio_direction_input(chip->base + offset);
-}
+अटल पूर्णांक sunxi_pinctrl_gpio_direction_input(काष्ठा gpio_chip *chip,
+					अचिन्हित offset)
+अणु
+	वापस pinctrl_gpio_direction_input(chip->base + offset);
+पूर्ण
 
-static int sunxi_pinctrl_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct sunxi_pinctrl *pctl = gpiochip_get_data(chip);
+अटल पूर्णांक sunxi_pinctrl_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = gpiochip_get_data(chip);
 	u32 reg = sunxi_data_reg(offset);
 	u8 index = sunxi_data_offset(offset);
-	bool set_mux = pctl->desc->irq_read_needs_mux &&
+	bool set_mux = pctl->desc->irq_पढ़ो_needs_mux &&
 		gpiochip_line_is_irq(chip, offset);
 	u32 pin = offset + chip->base;
 	u32 val;
 
-	if (set_mux)
+	अगर (set_mux)
 		sunxi_pmx_set(pctl->pctl_dev, pin, SUN4I_FUNC_INPUT);
 
-	val = (readl(pctl->membase + reg) >> index) & DATA_PINS_MASK;
+	val = (पढ़ोl(pctl->membase + reg) >> index) & DATA_PINS_MASK;
 
-	if (set_mux)
+	अगर (set_mux)
 		sunxi_pmx_set(pctl->pctl_dev, pin, SUN4I_FUNC_IRQ);
 
-	return !!val;
-}
+	वापस !!val;
+पूर्ण
 
-static void sunxi_pinctrl_gpio_set(struct gpio_chip *chip,
-				unsigned offset, int value)
-{
-	struct sunxi_pinctrl *pctl = gpiochip_get_data(chip);
+अटल व्योम sunxi_pinctrl_gpio_set(काष्ठा gpio_chip *chip,
+				अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = gpiochip_get_data(chip);
 	u32 reg = sunxi_data_reg(offset);
 	u8 index = sunxi_data_offset(offset);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 regval;
 
 	raw_spin_lock_irqsave(&pctl->lock, flags);
 
-	regval = readl(pctl->membase + reg);
+	regval = पढ़ोl(pctl->membase + reg);
 
-	if (value)
+	अगर (value)
 		regval |= BIT(index);
-	else
+	अन्यथा
 		regval &= ~(BIT(index));
 
-	writel(regval, pctl->membase + reg);
+	ग_लिखोl(regval, pctl->membase + reg);
 
 	raw_spin_unlock_irqrestore(&pctl->lock, flags);
-}
+पूर्ण
 
-static int sunxi_pinctrl_gpio_direction_output(struct gpio_chip *chip,
-					unsigned offset, int value)
-{
+अटल पूर्णांक sunxi_pinctrl_gpio_direction_output(काष्ठा gpio_chip *chip,
+					अचिन्हित offset, पूर्णांक value)
+अणु
 	sunxi_pinctrl_gpio_set(chip, offset, value);
-	return pinctrl_gpio_direction_output(chip->base + offset);
-}
+	वापस pinctrl_gpio_direction_output(chip->base + offset);
+पूर्ण
 
-static int sunxi_pinctrl_gpio_of_xlate(struct gpio_chip *gc,
-				const struct of_phandle_args *gpiospec,
+अटल पूर्णांक sunxi_pinctrl_gpio_of_xlate(काष्ठा gpio_chip *gc,
+				स्थिर काष्ठा of_phandle_args *gpiospec,
 				u32 *flags)
-{
-	int pin, base;
+अणु
+	पूर्णांक pin, base;
 
 	base = PINS_PER_BANK * gpiospec->args[0];
 	pin = base + gpiospec->args[1];
 
-	if (pin > gc->ngpio)
-		return -EINVAL;
+	अगर (pin > gc->ngpio)
+		वापस -EINVAL;
 
-	if (flags)
+	अगर (flags)
 		*flags = gpiospec->args[2];
 
-	return pin;
-}
+	वापस pin;
+पूर्ण
 
-static int sunxi_pinctrl_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
-{
-	struct sunxi_pinctrl *pctl = gpiochip_get_data(chip);
-	struct sunxi_desc_function *desc;
-	unsigned pinnum = pctl->desc->pin_base + offset;
-	unsigned irqnum;
+अटल पूर्णांक sunxi_pinctrl_gpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = gpiochip_get_data(chip);
+	काष्ठा sunxi_desc_function *desc;
+	अचिन्हित pinnum = pctl->desc->pin_base + offset;
+	अचिन्हित irqnum;
 
-	if (offset >= chip->ngpio)
-		return -ENXIO;
+	अगर (offset >= chip->ngpio)
+		वापस -ENXIO;
 
 	desc = sunxi_pinctrl_desc_find_function_by_pin(pctl, pinnum, "irq");
-	if (!desc)
-		return -EINVAL;
+	अगर (!desc)
+		वापस -EINVAL;
 
 	irqnum = desc->irqbank * IRQ_PER_BANK + desc->irqnum;
 
 	dev_dbg(chip->parent, "%s: request IRQ for GPIO %d, return %d\n",
 		chip->label, offset + chip->base, irqnum);
 
-	return irq_find_mapping(pctl->domain, irqnum);
-}
+	वापस irq_find_mapping(pctl->करोमुख्य, irqnum);
+पूर्ण
 
-static int sunxi_pinctrl_irq_request_resources(struct irq_data *d)
-{
-	struct sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
-	struct sunxi_desc_function *func;
-	int ret;
+अटल पूर्णांक sunxi_pinctrl_irq_request_resources(काष्ठा irq_data *d)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
+	काष्ठा sunxi_desc_function *func;
+	पूर्णांक ret;
 
 	func = sunxi_pinctrl_desc_find_function_by_pin(pctl,
 					pctl->irq_array[d->hwirq], "irq");
-	if (!func)
-		return -EINVAL;
+	अगर (!func)
+		वापस -EINVAL;
 
 	ret = gpiochip_lock_as_irq(pctl->chip,
 			pctl->irq_array[d->hwirq] - pctl->desc->pin_base);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pctl->dev, "unable to lock HW IRQ %lu for IRQ\n",
 			irqd_to_hwirq(d));
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Change muxing to INT mode */
 	sunxi_pmx_set(pctl->pctl_dev, pctl->irq_array[d->hwirq], func->muxval);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sunxi_pinctrl_irq_release_resources(struct irq_data *d)
-{
-	struct sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
+अटल व्योम sunxi_pinctrl_irq_release_resources(काष्ठा irq_data *d)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
 
 	gpiochip_unlock_as_irq(pctl->chip,
 			      pctl->irq_array[d->hwirq] - pctl->desc->pin_base);
-}
+पूर्ण
 
-static int sunxi_pinctrl_irq_set_type(struct irq_data *d, unsigned int type)
-{
-	struct sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
+अटल पूर्णांक sunxi_pinctrl_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
 	u32 reg = sunxi_irq_cfg_reg(pctl->desc, d->hwirq);
 	u8 index = sunxi_irq_cfg_offset(d->hwirq);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 regval;
 	u8 mode;
 
-	switch (type) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		mode = IRQ_EDGE_RISING;
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
 		mode = IRQ_EDGE_FALLING;
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
 		mode = IRQ_EDGE_BOTH;
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		mode = IRQ_LEVEL_HIGH;
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		mode = IRQ_LEVEL_LOW;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&pctl->lock, flags);
 
-	if (type & IRQ_TYPE_LEVEL_MASK)
+	अगर (type & IRQ_TYPE_LEVEL_MASK)
 		irq_set_chip_handler_name_locked(d, &sunxi_pinctrl_level_irq_chip,
-						 handle_fasteoi_irq, NULL);
-	else
+						 handle_fasteoi_irq, शून्य);
+	अन्यथा
 		irq_set_chip_handler_name_locked(d, &sunxi_pinctrl_edge_irq_chip,
-						 handle_edge_irq, NULL);
+						 handle_edge_irq, शून्य);
 
-	regval = readl(pctl->membase + reg);
+	regval = पढ़ोl(pctl->membase + reg);
 	regval &= ~(IRQ_CFG_IRQ_MASK << index);
-	writel(regval | (mode << index), pctl->membase + reg);
+	ग_लिखोl(regval | (mode << index), pctl->membase + reg);
 
 	raw_spin_unlock_irqrestore(&pctl->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sunxi_pinctrl_irq_ack(struct irq_data *d)
-{
-	struct sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
+अटल व्योम sunxi_pinctrl_irq_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
 	u32 status_reg = sunxi_irq_status_reg(pctl->desc, d->hwirq);
 	u8 status_idx = sunxi_irq_status_offset(d->hwirq);
 
 	/* Clear the IRQ */
-	writel(1 << status_idx, pctl->membase + status_reg);
-}
+	ग_लिखोl(1 << status_idx, pctl->membase + status_reg);
+पूर्ण
 
-static void sunxi_pinctrl_irq_mask(struct irq_data *d)
-{
-	struct sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
+अटल व्योम sunxi_pinctrl_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
 	u32 reg = sunxi_irq_ctrl_reg(pctl->desc, d->hwirq);
 	u8 idx = sunxi_irq_ctrl_offset(d->hwirq);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	raw_spin_lock_irqsave(&pctl->lock, flags);
 
 	/* Mask the IRQ */
-	val = readl(pctl->membase + reg);
-	writel(val & ~(1 << idx), pctl->membase + reg);
+	val = पढ़ोl(pctl->membase + reg);
+	ग_लिखोl(val & ~(1 << idx), pctl->membase + reg);
 
 	raw_spin_unlock_irqrestore(&pctl->lock, flags);
-}
+पूर्ण
 
-static void sunxi_pinctrl_irq_unmask(struct irq_data *d)
-{
-	struct sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
+अटल व्योम sunxi_pinctrl_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
 	u32 reg = sunxi_irq_ctrl_reg(pctl->desc, d->hwirq);
 	u8 idx = sunxi_irq_ctrl_offset(d->hwirq);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	raw_spin_lock_irqsave(&pctl->lock, flags);
 
 	/* Unmask the IRQ */
-	val = readl(pctl->membase + reg);
-	writel(val | (1 << idx), pctl->membase + reg);
+	val = पढ़ोl(pctl->membase + reg);
+	ग_लिखोl(val | (1 << idx), pctl->membase + reg);
 
 	raw_spin_unlock_irqrestore(&pctl->lock, flags);
-}
+पूर्ण
 
-static void sunxi_pinctrl_irq_ack_unmask(struct irq_data *d)
-{
+अटल व्योम sunxi_pinctrl_irq_ack_unmask(काष्ठा irq_data *d)
+अणु
 	sunxi_pinctrl_irq_ack(d);
 	sunxi_pinctrl_irq_unmask(d);
-}
+पूर्ण
 
-static int sunxi_pinctrl_irq_set_wake(struct irq_data *d, unsigned int on)
-{
-	struct sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
+अटल पूर्णांक sunxi_pinctrl_irq_set_wake(काष्ठा irq_data *d, अचिन्हित पूर्णांक on)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = irq_data_get_irq_chip_data(d);
 	u8 bank = d->hwirq / IRQ_PER_BANK;
 
-	return irq_set_irq_wake(pctl->irq[bank], on);
-}
+	वापस irq_set_irq_wake(pctl->irq[bank], on);
+पूर्ण
 
-static struct irq_chip sunxi_pinctrl_edge_irq_chip = {
+अटल काष्ठा irq_chip sunxi_pinctrl_edge_irq_chip = अणु
 	.name		= "sunxi_pio_edge",
 	.irq_ack	= sunxi_pinctrl_irq_ack,
 	.irq_mask	= sunxi_pinctrl_irq_mask,
@@ -1077,15 +1078,15 @@ static struct irq_chip sunxi_pinctrl_edge_irq_chip = {
 	.irq_set_type	= sunxi_pinctrl_irq_set_type,
 	.irq_set_wake	= sunxi_pinctrl_irq_set_wake,
 	.flags		= IRQCHIP_MASK_ON_SUSPEND,
-};
+पूर्ण;
 
-static struct irq_chip sunxi_pinctrl_level_irq_chip = {
+अटल काष्ठा irq_chip sunxi_pinctrl_level_irq_chip = अणु
 	.name		= "sunxi_pio_level",
 	.irq_eoi	= sunxi_pinctrl_irq_ack,
 	.irq_mask	= sunxi_pinctrl_irq_mask,
 	.irq_unmask	= sunxi_pinctrl_irq_unmask,
-	/* Define irq_enable / disable to avoid spurious irqs for drivers
-	 * using these to suppress irqs while they clear the irq source */
+	/* Define irq_enable / disable to aव्योम spurious irqs क्रम drivers
+	 * using these to suppress irqs जबतक they clear the irq source */
 	.irq_enable	= sunxi_pinctrl_irq_ack_unmask,
 	.irq_disable	= sunxi_pinctrl_irq_mask,
 	.irq_request_resources = sunxi_pinctrl_irq_request_resources,
@@ -1095,97 +1096,97 @@ static struct irq_chip sunxi_pinctrl_level_irq_chip = {
 	.flags		= IRQCHIP_EOI_THREADED |
 			  IRQCHIP_MASK_ON_SUSPEND |
 			  IRQCHIP_EOI_IF_HANDLED,
-};
+पूर्ण;
 
-static int sunxi_pinctrl_irq_of_xlate(struct irq_domain *d,
-				      struct device_node *node,
-				      const u32 *intspec,
-				      unsigned int intsize,
-				      unsigned long *out_hwirq,
-				      unsigned int *out_type)
-{
-	struct sunxi_pinctrl *pctl = d->host_data;
-	struct sunxi_desc_function *desc;
-	int pin, base;
+अटल पूर्णांक sunxi_pinctrl_irq_of_xlate(काष्ठा irq_करोमुख्य *d,
+				      काष्ठा device_node *node,
+				      स्थिर u32 *पूर्णांकspec,
+				      अचिन्हित पूर्णांक पूर्णांकsize,
+				      अचिन्हित दीर्घ *out_hwirq,
+				      अचिन्हित पूर्णांक *out_type)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = d->host_data;
+	काष्ठा sunxi_desc_function *desc;
+	पूर्णांक pin, base;
 
-	if (intsize < 3)
-		return -EINVAL;
+	अगर (पूर्णांकsize < 3)
+		वापस -EINVAL;
 
-	base = PINS_PER_BANK * intspec[0];
-	pin = pctl->desc->pin_base + base + intspec[1];
+	base = PINS_PER_BANK * पूर्णांकspec[0];
+	pin = pctl->desc->pin_base + base + पूर्णांकspec[1];
 
 	desc = sunxi_pinctrl_desc_find_function_by_pin(pctl, pin, "irq");
-	if (!desc)
-		return -EINVAL;
+	अगर (!desc)
+		वापस -EINVAL;
 
 	*out_hwirq = desc->irqbank * PINS_PER_BANK + desc->irqnum;
-	*out_type = intspec[2];
+	*out_type = पूर्णांकspec[2];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops sunxi_pinctrl_irq_domain_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops sunxi_pinctrl_irq_करोमुख्य_ops = अणु
 	.xlate		= sunxi_pinctrl_irq_of_xlate,
-};
+पूर्ण;
 
-static void sunxi_pinctrl_irq_handler(struct irq_desc *desc)
-{
-	unsigned int irq = irq_desc_get_irq(desc);
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct sunxi_pinctrl *pctl = irq_desc_get_handler_data(desc);
-	unsigned long bank, reg, val;
+अटल व्योम sunxi_pinctrl_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	अचिन्हित पूर्णांक irq = irq_desc_get_irq(desc);
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा sunxi_pinctrl *pctl = irq_desc_get_handler_data(desc);
+	अचिन्हित दीर्घ bank, reg, val;
 
-	for (bank = 0; bank < pctl->desc->irq_banks; bank++)
-		if (irq == pctl->irq[bank])
-			break;
+	क्रम (bank = 0; bank < pctl->desc->irq_banks; bank++)
+		अगर (irq == pctl->irq[bank])
+			अवरोध;
 
 	WARN_ON(bank == pctl->desc->irq_banks);
 
 	chained_irq_enter(chip, desc);
 
 	reg = sunxi_irq_status_reg_from_bank(pctl->desc, bank);
-	val = readl(pctl->membase + reg);
+	val = पढ़ोl(pctl->membase + reg);
 
-	if (val) {
-		int irqoffset;
+	अगर (val) अणु
+		पूर्णांक irqoffset;
 
-		for_each_set_bit(irqoffset, &val, IRQ_PER_BANK) {
-			int pin_irq = irq_find_mapping(pctl->domain,
+		क्रम_each_set_bit(irqoffset, &val, IRQ_PER_BANK) अणु
+			पूर्णांक pin_irq = irq_find_mapping(pctl->करोमुख्य,
 						       bank * IRQ_PER_BANK + irqoffset);
 			generic_handle_irq(pin_irq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
-static int sunxi_pinctrl_add_function(struct sunxi_pinctrl *pctl,
-					const char *name)
-{
-	struct sunxi_pinctrl_function *func = pctl->functions;
+अटल पूर्णांक sunxi_pinctrl_add_function(काष्ठा sunxi_pinctrl *pctl,
+					स्थिर अक्षर *name)
+अणु
+	काष्ठा sunxi_pinctrl_function *func = pctl->functions;
 
-	while (func->name) {
-		/* function already there */
-		if (strcmp(func->name, name) == 0) {
+	जबतक (func->name) अणु
+		/* function alपढ़ोy there */
+		अगर (म_भेद(func->name, name) == 0) अणु
 			func->ngroups++;
-			return -EEXIST;
-		}
+			वापस -EEXIST;
+		पूर्ण
 		func++;
-	}
+	पूर्ण
 
 	func->name = name;
 	func->ngroups = 1;
 
 	pctl->nfunctions++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_pinctrl_build_state(struct platform_device *pdev)
-{
-	struct sunxi_pinctrl *pctl = platform_get_drvdata(pdev);
-	void *ptr;
-	int i;
+अटल पूर्णांक sunxi_pinctrl_build_state(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sunxi_pinctrl *pctl = platक्रमm_get_drvdata(pdev);
+	व्योम *ptr;
+	पूर्णांक i;
 
 	/*
 	 * Allocate groups
@@ -1194,261 +1195,261 @@ static int sunxi_pinctrl_build_state(struct platform_device *pdev)
 	 * given in the data array.
 
 	 * This will not always be true, since some pins might not be
-	 * available in the current variant, but fortunately for us,
+	 * available in the current variant, but क्रमtunately क्रम us,
 	 * this means that the number of pins is the maximum group
 	 * number we will ever see.
 	 */
-	pctl->groups = devm_kcalloc(&pdev->dev,
-				    pctl->desc->npins, sizeof(*pctl->groups),
+	pctl->groups = devm_kसुस्मृति(&pdev->dev,
+				    pctl->desc->npins, माप(*pctl->groups),
 				    GFP_KERNEL);
-	if (!pctl->groups)
-		return -ENOMEM;
+	अगर (!pctl->groups)
+		वापस -ENOMEM;
 
-	for (i = 0; i < pctl->desc->npins; i++) {
-		const struct sunxi_desc_pin *pin = pctl->desc->pins + i;
-		struct sunxi_pinctrl_group *group = pctl->groups + pctl->ngroups;
+	क्रम (i = 0; i < pctl->desc->npins; i++) अणु
+		स्थिर काष्ठा sunxi_desc_pin *pin = pctl->desc->pins + i;
+		काष्ठा sunxi_pinctrl_group *group = pctl->groups + pctl->ngroups;
 
-		if (pin->variant && !(pctl->variant & pin->variant))
-			continue;
+		अगर (pin->variant && !(pctl->variant & pin->variant))
+			जारी;
 
 		group->name = pin->pin.name;
 		group->pin = pin->pin.number;
 
 		/* And now we count the actual number of pins / groups */
 		pctl->ngroups++;
-	}
+	पूर्ण
 
 	/*
 	 * We suppose that we won't have any more functions than pins,
-	 * we'll reallocate that later anyway
+	 * we'll पुनः_स्मृतिate that later anyway
 	 */
-	pctl->functions = kcalloc(pctl->ngroups,
-				  sizeof(*pctl->functions),
+	pctl->functions = kसुस्मृति(pctl->ngroups,
+				  माप(*pctl->functions),
 				  GFP_KERNEL);
-	if (!pctl->functions)
-		return -ENOMEM;
+	अगर (!pctl->functions)
+		वापस -ENOMEM;
 
 	/* Count functions and their associated groups */
-	for (i = 0; i < pctl->desc->npins; i++) {
-		const struct sunxi_desc_pin *pin = pctl->desc->pins + i;
-		struct sunxi_desc_function *func;
+	क्रम (i = 0; i < pctl->desc->npins; i++) अणु
+		स्थिर काष्ठा sunxi_desc_pin *pin = pctl->desc->pins + i;
+		काष्ठा sunxi_desc_function *func;
 
-		if (pin->variant && !(pctl->variant & pin->variant))
-			continue;
+		अगर (pin->variant && !(pctl->variant & pin->variant))
+			जारी;
 
-		for (func = pin->functions; func->name; func++) {
-			if (func->variant && !(pctl->variant & func->variant))
-				continue;
+		क्रम (func = pin->functions; func->name; func++) अणु
+			अगर (func->variant && !(pctl->variant & func->variant))
+				जारी;
 
-			/* Create interrupt mapping while we're at it */
-			if (!strcmp(func->name, "irq")) {
-				int irqnum = func->irqnum + func->irqbank * IRQ_PER_BANK;
+			/* Create पूर्णांकerrupt mapping जबतक we're at it */
+			अगर (!म_भेद(func->name, "irq")) अणु
+				पूर्णांक irqnum = func->irqnum + func->irqbank * IRQ_PER_BANK;
 				pctl->irq_array[irqnum] = pin->pin.number;
-			}
+			पूर्ण
 
 			sunxi_pinctrl_add_function(pctl, func->name);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* And now allocated and fill the array for real */
-	ptr = krealloc(pctl->functions,
-		       pctl->nfunctions * sizeof(*pctl->functions),
+	/* And now allocated and fill the array क्रम real */
+	ptr = kपुनः_स्मृति(pctl->functions,
+		       pctl->nfunctions * माप(*pctl->functions),
 		       GFP_KERNEL);
-	if (!ptr) {
-		kfree(pctl->functions);
-		pctl->functions = NULL;
-		return -ENOMEM;
-	}
+	अगर (!ptr) अणु
+		kमुक्त(pctl->functions);
+		pctl->functions = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 	pctl->functions = ptr;
 
-	for (i = 0; i < pctl->desc->npins; i++) {
-		const struct sunxi_desc_pin *pin = pctl->desc->pins + i;
-		struct sunxi_desc_function *func;
+	क्रम (i = 0; i < pctl->desc->npins; i++) अणु
+		स्थिर काष्ठा sunxi_desc_pin *pin = pctl->desc->pins + i;
+		काष्ठा sunxi_desc_function *func;
 
-		if (pin->variant && !(pctl->variant & pin->variant))
-			continue;
+		अगर (pin->variant && !(pctl->variant & pin->variant))
+			जारी;
 
-		for (func = pin->functions; func->name; func++) {
-			struct sunxi_pinctrl_function *func_item;
-			const char **func_grp;
+		क्रम (func = pin->functions; func->name; func++) अणु
+			काष्ठा sunxi_pinctrl_function *func_item;
+			स्थिर अक्षर **func_grp;
 
-			if (func->variant && !(pctl->variant & func->variant))
-				continue;
+			अगर (func->variant && !(pctl->variant & func->variant))
+				जारी;
 
 			func_item = sunxi_pinctrl_find_function_by_name(pctl,
 									func->name);
-			if (!func_item) {
-				kfree(pctl->functions);
-				return -EINVAL;
-			}
+			अगर (!func_item) अणु
+				kमुक्त(pctl->functions);
+				वापस -EINVAL;
+			पूर्ण
 
-			if (!func_item->groups) {
+			अगर (!func_item->groups) अणु
 				func_item->groups =
-					devm_kcalloc(&pdev->dev,
+					devm_kसुस्मृति(&pdev->dev,
 						     func_item->ngroups,
-						     sizeof(*func_item->groups),
+						     माप(*func_item->groups),
 						     GFP_KERNEL);
-				if (!func_item->groups) {
-					kfree(pctl->functions);
-					return -ENOMEM;
-				}
-			}
+				अगर (!func_item->groups) अणु
+					kमुक्त(pctl->functions);
+					वापस -ENOMEM;
+				पूर्ण
+			पूर्ण
 
 			func_grp = func_item->groups;
-			while (*func_grp)
+			जबतक (*func_grp)
 				func_grp++;
 
 			*func_grp = pin->pin.name;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_pinctrl_get_debounce_div(struct clk *clk, int freq, int *diff)
-{
-	unsigned long clock = clk_get_rate(clk);
-	unsigned int best_diff, best_div;
-	int i;
+अटल पूर्णांक sunxi_pinctrl_get_debounce_भाग(काष्ठा clk *clk, पूर्णांक freq, पूर्णांक *dअगरf)
+अणु
+	अचिन्हित दीर्घ घड़ी = clk_get_rate(clk);
+	अचिन्हित पूर्णांक best_dअगरf, best_भाग;
+	पूर्णांक i;
 
-	best_diff = abs(freq - clock);
-	best_div = 0;
+	best_dअगरf = असल(freq - घड़ी);
+	best_भाग = 0;
 
-	for (i = 1; i < 8; i++) {
-		int cur_diff = abs(freq - (clock >> i));
+	क्रम (i = 1; i < 8; i++) अणु
+		पूर्णांक cur_dअगरf = असल(freq - (घड़ी >> i));
 
-		if (cur_diff < best_diff) {
-			best_diff = cur_diff;
-			best_div = i;
-		}
-	}
+		अगर (cur_dअगरf < best_dअगरf) अणु
+			best_dअगरf = cur_dअगरf;
+			best_भाग = i;
+		पूर्ण
+	पूर्ण
 
-	*diff = best_diff;
-	return best_div;
-}
+	*dअगरf = best_dअगरf;
+	वापस best_भाग;
+पूर्ण
 
-static int sunxi_pinctrl_setup_debounce(struct sunxi_pinctrl *pctl,
-					struct device_node *node)
-{
-	unsigned int hosc_diff, losc_diff;
-	unsigned int hosc_div, losc_div;
-	struct clk *hosc, *losc;
-	u8 div, src;
-	int i, ret;
+अटल पूर्णांक sunxi_pinctrl_setup_debounce(काष्ठा sunxi_pinctrl *pctl,
+					काष्ठा device_node *node)
+अणु
+	अचिन्हित पूर्णांक hosc_dअगरf, losc_dअगरf;
+	अचिन्हित पूर्णांक hosc_भाग, losc_भाग;
+	काष्ठा clk *hosc, *losc;
+	u8 भाग, src;
+	पूर्णांक i, ret;
 
 	/* Deal with old DTs that didn't have the oscillators */
-	if (of_clk_get_parent_count(node) != 3)
-		return 0;
+	अगर (of_clk_get_parent_count(node) != 3)
+		वापस 0;
 
-	/* If we don't have any setup, bail out */
-	if (!of_find_property(node, "input-debounce", NULL))
-		return 0;
+	/* If we करोn't have any setup, bail out */
+	अगर (!of_find_property(node, "input-debounce", शून्य))
+		वापस 0;
 
 	losc = devm_clk_get(pctl->dev, "losc");
-	if (IS_ERR(losc))
-		return PTR_ERR(losc);
+	अगर (IS_ERR(losc))
+		वापस PTR_ERR(losc);
 
 	hosc = devm_clk_get(pctl->dev, "hosc");
-	if (IS_ERR(hosc))
-		return PTR_ERR(hosc);
+	अगर (IS_ERR(hosc))
+		वापस PTR_ERR(hosc);
 
-	for (i = 0; i < pctl->desc->irq_banks; i++) {
-		unsigned long debounce_freq;
+	क्रम (i = 0; i < pctl->desc->irq_banks; i++) अणु
+		अचिन्हित दीर्घ debounce_freq;
 		u32 debounce;
 
-		ret = of_property_read_u32_index(node, "input-debounce",
+		ret = of_property_पढ़ो_u32_index(node, "input-debounce",
 						 i, &debounce);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (!debounce)
-			continue;
+		अगर (!debounce)
+			जारी;
 
 		debounce_freq = DIV_ROUND_CLOSEST(USEC_PER_SEC, debounce);
-		losc_div = sunxi_pinctrl_get_debounce_div(losc,
+		losc_भाग = sunxi_pinctrl_get_debounce_भाग(losc,
 							  debounce_freq,
-							  &losc_diff);
+							  &losc_dअगरf);
 
-		hosc_div = sunxi_pinctrl_get_debounce_div(hosc,
+		hosc_भाग = sunxi_pinctrl_get_debounce_भाग(hosc,
 							  debounce_freq,
-							  &hosc_diff);
+							  &hosc_dअगरf);
 
-		if (hosc_diff < losc_diff) {
-			div = hosc_div;
+		अगर (hosc_dअगरf < losc_dअगरf) अणु
+			भाग = hosc_भाग;
 			src = 1;
-		} else {
-			div = losc_div;
+		पूर्ण अन्यथा अणु
+			भाग = losc_भाग;
 			src = 0;
-		}
+		पूर्ण
 
-		writel(src | div << 4,
+		ग_लिखोl(src | भाग << 4,
 		       pctl->membase +
 		       sunxi_irq_debounce_reg_from_bank(pctl->desc, i));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sunxi_pinctrl_init_with_variant(struct platform_device *pdev,
-				    const struct sunxi_pinctrl_desc *desc,
-				    unsigned long variant)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct pinctrl_desc *pctrl_desc;
-	struct pinctrl_pin_desc *pins;
-	struct sunxi_pinctrl *pctl;
-	struct pinmux_ops *pmxops;
-	int i, ret, last_pin, pin_idx;
-	struct clk *clk;
+पूर्णांक sunxi_pinctrl_init_with_variant(काष्ठा platक्रमm_device *pdev,
+				    स्थिर काष्ठा sunxi_pinctrl_desc *desc,
+				    अचिन्हित दीर्घ variant)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा pinctrl_desc *pctrl_desc;
+	काष्ठा pinctrl_pin_desc *pins;
+	काष्ठा sunxi_pinctrl *pctl;
+	काष्ठा pinmux_ops *pmxops;
+	पूर्णांक i, ret, last_pin, pin_idx;
+	काष्ठा clk *clk;
 
-	pctl = devm_kzalloc(&pdev->dev, sizeof(*pctl), GFP_KERNEL);
-	if (!pctl)
-		return -ENOMEM;
-	platform_set_drvdata(pdev, pctl);
+	pctl = devm_kzalloc(&pdev->dev, माप(*pctl), GFP_KERNEL);
+	अगर (!pctl)
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, pctl);
 
 	raw_spin_lock_init(&pctl->lock);
 
-	pctl->membase = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(pctl->membase))
-		return PTR_ERR(pctl->membase);
+	pctl->membase = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(pctl->membase))
+		वापस PTR_ERR(pctl->membase);
 
 	pctl->dev = &pdev->dev;
 	pctl->desc = desc;
 	pctl->variant = variant;
 
-	pctl->irq_array = devm_kcalloc(&pdev->dev,
+	pctl->irq_array = devm_kसुस्मृति(&pdev->dev,
 				       IRQ_PER_BANK * pctl->desc->irq_banks,
-				       sizeof(*pctl->irq_array),
+				       माप(*pctl->irq_array),
 				       GFP_KERNEL);
-	if (!pctl->irq_array)
-		return -ENOMEM;
+	अगर (!pctl->irq_array)
+		वापस -ENOMEM;
 
 	ret = sunxi_pinctrl_build_state(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "dt probe failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pins = devm_kcalloc(&pdev->dev,
-			    pctl->desc->npins, sizeof(*pins),
+	pins = devm_kसुस्मृति(&pdev->dev,
+			    pctl->desc->npins, माप(*pins),
 			    GFP_KERNEL);
-	if (!pins)
-		return -ENOMEM;
+	अगर (!pins)
+		वापस -ENOMEM;
 
-	for (i = 0, pin_idx = 0; i < pctl->desc->npins; i++) {
-		const struct sunxi_desc_pin *pin = pctl->desc->pins + i;
+	क्रम (i = 0, pin_idx = 0; i < pctl->desc->npins; i++) अणु
+		स्थिर काष्ठा sunxi_desc_pin *pin = pctl->desc->pins + i;
 
-		if (pin->variant && !(pctl->variant & pin->variant))
-			continue;
+		अगर (pin->variant && !(pctl->variant & pin->variant))
+			जारी;
 
 		pins[pin_idx++] = pin->pin;
-	}
+	पूर्ण
 
 	pctrl_desc = devm_kzalloc(&pdev->dev,
-				  sizeof(*pctrl_desc),
+				  माप(*pctrl_desc),
 				  GFP_KERNEL);
-	if (!pctrl_desc)
-		return -ENOMEM;
+	अगर (!pctrl_desc)
+		वापस -ENOMEM;
 
 	pctrl_desc->name = dev_name(&pdev->dev);
 	pctrl_desc->owner = THIS_MODULE;
@@ -1457,30 +1458,30 @@ int sunxi_pinctrl_init_with_variant(struct platform_device *pdev,
 	pctrl_desc->confops = &sunxi_pconf_ops;
 	pctrl_desc->pctlops = &sunxi_pctrl_ops;
 
-	pmxops = devm_kmemdup(&pdev->dev, &sunxi_pmx_ops, sizeof(sunxi_pmx_ops),
+	pmxops = devm_kmemdup(&pdev->dev, &sunxi_pmx_ops, माप(sunxi_pmx_ops),
 			      GFP_KERNEL);
-	if (!pmxops)
-		return -ENOMEM;
+	अगर (!pmxops)
+		वापस -ENOMEM;
 
-	if (desc->disable_strict_mode)
+	अगर (desc->disable_strict_mode)
 		pmxops->strict = false;
 
 	pctrl_desc->pmxops = pmxops;
 
-	pctl->pctl_dev = devm_pinctrl_register(&pdev->dev, pctrl_desc, pctl);
-	if (IS_ERR(pctl->pctl_dev)) {
+	pctl->pctl_dev = devm_pinctrl_रेजिस्टर(&pdev->dev, pctrl_desc, pctl);
+	अगर (IS_ERR(pctl->pctl_dev)) अणु
 		dev_err(&pdev->dev, "couldn't register pinctrl driver\n");
-		return PTR_ERR(pctl->pctl_dev);
-	}
+		वापस PTR_ERR(pctl->pctl_dev);
+	पूर्ण
 
-	pctl->chip = devm_kzalloc(&pdev->dev, sizeof(*pctl->chip), GFP_KERNEL);
-	if (!pctl->chip)
-		return -ENOMEM;
+	pctl->chip = devm_kzalloc(&pdev->dev, माप(*pctl->chip), GFP_KERNEL);
+	अगर (!pctl->chip)
+		वापस -ENOMEM;
 
 	last_pin = pctl->desc->pins[pctl->desc->npins - 1].pin.number;
 	pctl->chip->owner = THIS_MODULE;
 	pctl->chip->request = gpiochip_generic_request;
-	pctl->chip->free = gpiochip_generic_free;
+	pctl->chip->मुक्त = gpiochip_generic_मुक्त;
 	pctl->chip->set_config = gpiochip_generic_config;
 	pctl->chip->direction_input = sunxi_pinctrl_gpio_direction_input;
 	pctl->chip->direction_output = sunxi_pinctrl_gpio_direction_output;
@@ -1497,87 +1498,87 @@ int sunxi_pinctrl_init_with_variant(struct platform_device *pdev,
 	pctl->chip->base = pctl->desc->pin_base;
 
 	ret = gpiochip_add_data(pctl->chip, pctl);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < pctl->desc->npins; i++) {
-		const struct sunxi_desc_pin *pin = pctl->desc->pins + i;
+	क्रम (i = 0; i < pctl->desc->npins; i++) अणु
+		स्थिर काष्ठा sunxi_desc_pin *pin = pctl->desc->pins + i;
 
 		ret = gpiochip_add_pin_range(pctl->chip, dev_name(&pdev->dev),
 					     pin->pin.number - pctl->desc->pin_base,
 					     pin->pin.number, 1);
-		if (ret)
-			goto gpiochip_error;
-	}
+		अगर (ret)
+			जाओ gpiochip_error;
+	पूर्ण
 
 	ret = of_clk_get_parent_count(node);
-	clk = devm_clk_get(&pdev->dev, ret == 1 ? NULL : "apb");
-	if (IS_ERR(clk)) {
+	clk = devm_clk_get(&pdev->dev, ret == 1 ? शून्य : "apb");
+	अगर (IS_ERR(clk)) अणु
 		ret = PTR_ERR(clk);
-		goto gpiochip_error;
-	}
+		जाओ gpiochip_error;
+	पूर्ण
 
 	ret = clk_prepare_enable(clk);
-	if (ret)
-		goto gpiochip_error;
+	अगर (ret)
+		जाओ gpiochip_error;
 
-	pctl->irq = devm_kcalloc(&pdev->dev,
+	pctl->irq = devm_kसुस्मृति(&pdev->dev,
 				 pctl->desc->irq_banks,
-				 sizeof(*pctl->irq),
+				 माप(*pctl->irq),
 				 GFP_KERNEL);
-	if (!pctl->irq) {
+	अगर (!pctl->irq) अणु
 		ret = -ENOMEM;
-		goto clk_error;
-	}
+		जाओ clk_error;
+	पूर्ण
 
-	for (i = 0; i < pctl->desc->irq_banks; i++) {
-		pctl->irq[i] = platform_get_irq(pdev, i);
-		if (pctl->irq[i] < 0) {
+	क्रम (i = 0; i < pctl->desc->irq_banks; i++) अणु
+		pctl->irq[i] = platक्रमm_get_irq(pdev, i);
+		अगर (pctl->irq[i] < 0) अणु
 			ret = pctl->irq[i];
-			goto clk_error;
-		}
-	}
+			जाओ clk_error;
+		पूर्ण
+	पूर्ण
 
-	pctl->domain = irq_domain_add_linear(node,
+	pctl->करोमुख्य = irq_करोमुख्य_add_linear(node,
 					     pctl->desc->irq_banks * IRQ_PER_BANK,
-					     &sunxi_pinctrl_irq_domain_ops,
+					     &sunxi_pinctrl_irq_करोमुख्य_ops,
 					     pctl);
-	if (!pctl->domain) {
+	अगर (!pctl->करोमुख्य) अणु
 		dev_err(&pdev->dev, "Couldn't register IRQ domain\n");
 		ret = -ENOMEM;
-		goto clk_error;
-	}
+		जाओ clk_error;
+	पूर्ण
 
-	for (i = 0; i < (pctl->desc->irq_banks * IRQ_PER_BANK); i++) {
-		int irqno = irq_create_mapping(pctl->domain, i);
+	क्रम (i = 0; i < (pctl->desc->irq_banks * IRQ_PER_BANK); i++) अणु
+		पूर्णांक irqno = irq_create_mapping(pctl->करोमुख्य, i);
 
 		irq_set_chip_and_handler(irqno, &sunxi_pinctrl_edge_irq_chip,
 					 handle_edge_irq);
 		irq_set_chip_data(irqno, pctl);
-	}
+	पूर्ण
 
-	for (i = 0; i < pctl->desc->irq_banks; i++) {
-		/* Mask and clear all IRQs before registering a handler */
-		writel(0, pctl->membase +
+	क्रम (i = 0; i < pctl->desc->irq_banks; i++) अणु
+		/* Mask and clear all IRQs beक्रमe रेजिस्टरing a handler */
+		ग_लिखोl(0, pctl->membase +
 			  sunxi_irq_ctrl_reg_from_bank(pctl->desc, i));
-		writel(0xffffffff,
+		ग_लिखोl(0xffffffff,
 		       pctl->membase +
 		       sunxi_irq_status_reg_from_bank(pctl->desc, i));
 
 		irq_set_chained_handler_and_data(pctl->irq[i],
 						 sunxi_pinctrl_irq_handler,
 						 pctl);
-	}
+	पूर्ण
 
 	sunxi_pinctrl_setup_debounce(pctl, node);
 
 	dev_info(&pdev->dev, "initialized sunXi PIO driver\n");
 
-	return 0;
+	वापस 0;
 
 clk_error:
 	clk_disable_unprepare(clk);
 gpiochip_error:
-	gpiochip_remove(pctl->chip);
-	return ret;
-}
+	gpiochip_हटाओ(pctl->chip);
+	वापस ret;
+पूर्ण

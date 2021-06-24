@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  ALSA driver for Echoaudio soundcards.
+ *  ALSA driver क्रम Echoaudio soundcards.
  *  Copyright (C) 2003-2004 Giuliano Pochini <pochini@shiny.it>
  */
 
-#define ECHO24_FAMILY
-#define ECHOCARD_GINA24
-#define ECHOCARD_NAME "Gina24"
-#define ECHOCARD_HAS_MONITOR
-#define ECHOCARD_HAS_ASIC
-#define ECHOCARD_HAS_INPUT_NOMINAL_LEVEL
-#define ECHOCARD_HAS_OUTPUT_NOMINAL_LEVEL
-#define ECHOCARD_HAS_SUPER_INTERLEAVE
-#define ECHOCARD_HAS_DIGITAL_IO
-#define ECHOCARD_HAS_DIGITAL_IN_AUTOMUTE
-#define ECHOCARD_HAS_DIGITAL_MODE_SWITCH
-#define ECHOCARD_HAS_EXTERNAL_CLOCK
-#define ECHOCARD_HAS_ADAT	6
-#define ECHOCARD_HAS_STEREO_BIG_ENDIAN32
+#घोषणा ECHO24_FAMILY
+#घोषणा ECHOCARD_GINA24
+#घोषणा ECHOCARD_NAME "Gina24"
+#घोषणा ECHOCARD_HAS_MONITOR
+#घोषणा ECHOCARD_HAS_ASIC
+#घोषणा ECHOCARD_HAS_INPUT_NOMINAL_LEVEL
+#घोषणा ECHOCARD_HAS_OUTPUT_NOMINAL_LEVEL
+#घोषणा ECHOCARD_HAS_SUPER_INTERLEAVE
+#घोषणा ECHOCARD_HAS_DIGITAL_IO
+#घोषणा ECHOCARD_HAS_DIGITAL_IN_AUTOMUTE
+#घोषणा ECHOCARD_HAS_DIGITAL_MODE_SWITCH
+#घोषणा ECHOCARD_HAS_EXTERNAL_CLOCK
+#घोषणा ECHOCARD_HAS_ADAT	6
+#घोषणा ECHOCARD_HAS_STEREO_BIG_ENDIAN32
 
 /* Pipe indexes */
-#define PX_ANALOG_OUT	0	/* 8 */
-#define PX_DIGITAL_OUT	8	/* 8 */
-#define PX_ANALOG_IN	16	/* 2 */
-#define PX_DIGITAL_IN	18	/* 8 */
-#define PX_NUM		26
+#घोषणा PX_ANALOG_OUT	0	/* 8 */
+#घोषणा PX_DIGITAL_OUT	8	/* 8 */
+#घोषणा PX_ANALOG_IN	16	/* 2 */
+#घोषणा PX_DIGITAL_IN	18	/* 8 */
+#घोषणा PX_NUM		26
 
 /* Bus indexes */
-#define BX_ANALOG_OUT	0	/* 8 */
-#define BX_DIGITAL_OUT	8	/* 8 */
-#define BX_ANALOG_IN	16	/* 2 */
-#define BX_DIGITAL_IN	18	/* 8 */
-#define BX_NUM		26
+#घोषणा BX_ANALOG_OUT	0	/* 8 */
+#घोषणा BX_DIGITAL_OUT	8	/* 8 */
+#घोषणा BX_ANALOG_IN	16	/* 2 */
+#घोषणा BX_DIGITAL_IN	18	/* 8 */
+#घोषणा BX_NUM		26
 
 
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/firmware.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <sound/core.h>
-#include <sound/info.h>
-#include <sound/control.h>
-#include <sound/tlv.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/asoundef.h>
-#include <sound/initval.h>
-#include <linux/atomic.h>
-#include "echoaudio.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <sound/core.h>
+#समावेश <sound/info.h>
+#समावेश <sound/control.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/initval.h>
+#समावेश <linux/atomic.h>
+#समावेश "echoaudio.h"
 
 MODULE_FIRMWARE("ea/loader_dsp.fw");
 MODULE_FIRMWARE("ea/gina24_301_dsp.fw");
@@ -59,36 +60,36 @@ MODULE_FIRMWARE("ea/gina24_361_dsp.fw");
 MODULE_FIRMWARE("ea/gina24_301_asic.fw");
 MODULE_FIRMWARE("ea/gina24_361_asic.fw");
 
-#define FW_361_LOADER		0
-#define FW_GINA24_301_DSP	1
-#define FW_GINA24_361_DSP	2
-#define FW_GINA24_301_ASIC	3
-#define FW_GINA24_361_ASIC	4
+#घोषणा FW_361_LOADER		0
+#घोषणा FW_GINA24_301_DSP	1
+#घोषणा FW_GINA24_361_DSP	2
+#घोषणा FW_GINA24_301_ASIC	3
+#घोषणा FW_GINA24_361_ASIC	4
 
-static const struct firmware card_fw[] = {
-	{0, "loader_dsp.fw"},
-	{0, "gina24_301_dsp.fw"},
-	{0, "gina24_361_dsp.fw"},
-	{0, "gina24_301_asic.fw"},
-	{0, "gina24_361_asic.fw"}
-};
+अटल स्थिर काष्ठा firmware card_fw[] = अणु
+	अणु0, "loader_dsp.fw"पूर्ण,
+	अणु0, "gina24_301_dsp.fw"पूर्ण,
+	अणु0, "gina24_361_dsp.fw"पूर्ण,
+	अणु0, "gina24_301_asic.fw"पूर्ण,
+	अणु0, "gina24_361_asic.fw"पूर्ण
+पूर्ण;
 
-static const struct pci_device_id snd_echo_ids[] = {
-	{0x1057, 0x1801, 0xECC0, 0x0050, 0, 0, 0},	/* DSP 56301 Gina24 rev.0 */
-	{0x1057, 0x1801, 0xECC0, 0x0051, 0, 0, 0},	/* DSP 56301 Gina24 rev.1 */
-	{0x1057, 0x3410, 0xECC0, 0x0050, 0, 0, 0},	/* DSP 56361 Gina24 rev.0 */
-	{0x1057, 0x3410, 0xECC0, 0x0051, 0, 0, 0},	/* DSP 56361 Gina24 rev.1 */
-	{0,}
-};
+अटल स्थिर काष्ठा pci_device_id snd_echo_ids[] = अणु
+	अणु0x1057, 0x1801, 0xECC0, 0x0050, 0, 0, 0पूर्ण,	/* DSP 56301 Gina24 rev.0 */
+	अणु0x1057, 0x1801, 0xECC0, 0x0051, 0, 0, 0पूर्ण,	/* DSP 56301 Gina24 rev.1 */
+	अणु0x1057, 0x3410, 0xECC0, 0x0050, 0, 0, 0पूर्ण,	/* DSP 56361 Gina24 rev.0 */
+	अणु0x1057, 0x3410, 0xECC0, 0x0051, 0, 0, 0पूर्ण,	/* DSP 56361 Gina24 rev.1 */
+	अणु0,पूर्ण
+पूर्ण;
 
-static const struct snd_pcm_hardware pcm_hardware_skel = {
+अटल स्थिर काष्ठा snd_pcm_hardware pcm_hardware_skel = अणु
 	.info = SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_PAUSE |
 		SNDRV_PCM_INFO_SYNC_START,
-	.formats =	SNDRV_PCM_FMTBIT_U8 |
+	.क्रमmats =	SNDRV_PCM_FMTBIT_U8 |
 			SNDRV_PCM_FMTBIT_S16_LE |
 			SNDRV_PCM_FMTBIT_S24_3LE |
 			SNDRV_PCM_FMTBIT_S32_LE |
@@ -105,13 +106,13 @@ static const struct snd_pcm_hardware pcm_hardware_skel = {
 	.period_bytes_max = 131072,
 	.periods_min = 2,
 	.periods_max = 220,
-	/* One page (4k) contains 512 instructions. I don't know if the hw
-	supports lists longer than this. In this case periods_max=220 is a
-	safe limit to make sure the list never exceeds 512 instructions.
+	/* One page (4k) contains 512 inकाष्ठाions. I करोn't know अगर the hw
+	supports lists दीर्घer than this. In this हाल periods_max=220 is a
+	safe limit to make sure the list never exceeds 512 inकाष्ठाions.
 	220 ~= (512 - 1 - (BUFFER_BYTES_MAX / PAGE_SIZE)) / 2 */
-};
+पूर्ण;
 
-#include "gina24_dsp.c"
-#include "echoaudio_dsp.c"
-#include "echoaudio_gml.c"
-#include "echoaudio.c"
+#समावेश "gina24_dsp.c"
+#समावेश "echoaudio_dsp.c"
+#समावेश "echoaudio_gml.c"
+#समावेश "echoaudio.c"

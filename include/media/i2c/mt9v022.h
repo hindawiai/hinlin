@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * mt9v022 sensor
  */
 
-#ifndef __MT9V022_H__
-#define __MT9V022_H__
+#अगर_अघोषित __MT9V022_H__
+#घोषणा __MT9V022_H__
 
-struct mt9v022_platform_data {
-	unsigned short y_skip_top;	/* Lines to skip at the top */
-};
+काष्ठा mt9v022_platक्रमm_data अणु
+	अचिन्हित लघु y_skip_top;	/* Lines to skip at the top */
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

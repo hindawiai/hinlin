@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2005 Cisco Systems.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,19 +33,19 @@
  * $Id$
  */
 
-#ifndef SCSI_SRP_H
-#define SCSI_SRP_H
+#अगर_अघोषित SCSI_SRP_H
+#घोषणा SCSI_SRP_H
 
 /*
- * Structures and constants for the SCSI RDMA Protocol (SRP) as
+ * Structures and स्थिरants क्रम the SCSI RDMA Protocol (SRP) as
  * defined by the INCITS T10 committee.  This file was written using
  * draft Revision 16a of the SRP standard.
  */
 
-#include <linux/types.h>
-#include <scsi/scsi.h>
+#समावेश <linux/types.h>
+#समावेश <scsi/scsi.h>
 
-enum {
+क्रमागत अणु
 	SRP_LOGIN_REQ	= 0x00,
 	SRP_TSK_MGMT	= 0x01,
 	SRP_CMD		= 0x02,
@@ -57,29 +58,29 @@ enum {
 	SRP_AER_REQ	= 0x82,
 	SRP_CRED_RSP	= 0x41,
 	SRP_AER_RSP	= 0x42
-};
+पूर्ण;
 
-enum {
-	SRP_BUF_FORMAT_DIRECT	= 1 << 1,
-	SRP_BUF_FORMAT_INDIRECT	= 1 << 2
-};
+क्रमागत अणु
+	SRP_BUF_FORMAT_सूचीECT	= 1 << 1,
+	SRP_BUF_FORMAT_INसूचीECT	= 1 << 2
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SRP_NO_DATA_DESC	= 0,
-	SRP_DATA_DESC_DIRECT	= 1,
-	SRP_DATA_DESC_INDIRECT	= 2,
+	SRP_DATA_DESC_सूचीECT	= 1,
+	SRP_DATA_DESC_INसूचीECT	= 2,
 	SRP_DATA_DESC_IMM	= 3,	/* new in SRP2 */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SRP_TSK_ABORT_TASK	= 0x01,
 	SRP_TSK_ABORT_TASK_SET	= 0x02,
 	SRP_TSK_CLEAR_TASK_SET	= 0x04,
 	SRP_TSK_LUN_RESET	= 0x08,
 	SRP_TSK_CLEAR_ACA	= 0x40
-};
+पूर्ण;
 
-enum srp_login_rej_reason {
+क्रमागत srp_login_rej_reason अणु
 	SRP_LOGIN_REJ_UNABLE_ESTABLISH_CHANNEL		= 0x00010000,
 	SRP_LOGIN_REJ_INSUFFICIENT_RESOURCES		= 0x00010001,
 	SRP_LOGIN_REJ_REQ_IT_IU_LENGTH_TOO_LARGE	= 0x00010002,
@@ -87,44 +88,44 @@ enum srp_login_rej_reason {
 	SRP_LOGIN_REJ_UNSUPPORTED_DESCRIPTOR_FMT	= 0x00010004,
 	SRP_LOGIN_REJ_MULTI_CHANNEL_UNSUPPORTED		= 0x00010005,
 	SRP_LOGIN_REJ_CHANNEL_LIMIT_REACHED		= 0x00010006
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SRP_REV10_IB_IO_CLASS	= 0xff00,
 	SRP_REV16A_IB_IO_CLASS	= 0x0100
-};
+पूर्ण;
 
-struct srp_direct_buf {
+काष्ठा srp_direct_buf अणु
 	__be64	va;
 	__be32	key;
 	__be32  len;
-};
+पूर्ण;
 
 /*
- * We need the packed attribute because the SRP spec puts the list of
+ * We need the packed attribute because the SRP spec माला_दो the list of
  * descriptors at an offset of 20, which is not aligned to the size of
- * struct srp_direct_buf.  The whole structure must be packed to avoid
- * having the 20-byte structure padded to 24 bytes on 64-bit architectures.
+ * काष्ठा srp_direct_buf.  The whole काष्ठाure must be packed to aव्योम
+ * having the 20-byte काष्ठाure padded to 24 bytes on 64-bit architectures.
  */
-struct srp_indirect_buf {
-	struct srp_direct_buf	table_desc;
+काष्ठा srp_indirect_buf अणु
+	काष्ठा srp_direct_buf	table_desc;
 	__be32			len;
-	struct srp_direct_buf	desc_list[];
-} __attribute__((packed));
+	काष्ठा srp_direct_buf	desc_list[];
+पूर्ण __attribute__((packed));
 
 /* Immediate data buffer descriptor as defined in SRP2. */
-struct srp_imm_buf {
+काष्ठा srp_imm_buf अणु
 	__be32	len;
-};
+पूर्ण;
 
 /* srp_login_req.flags */
-enum {
+क्रमागत अणु
 	SRP_MULTICHAN_SINGLE = 0,
 	SRP_MULTICHAN_MULTI  = 1,
 	SRP_IMMED_REQUESTED  = 0x80,	/* new in SRP2 */
-};
+पूर्ण;
 
-struct srp_login_req {
+काष्ठा srp_login_req अणु
 	u8	opcode;
 	u8	reserved1[7];
 	u64	tag;
@@ -137,16 +138,16 @@ struct srp_login_req {
 	u8	reserved4[2];
 	u8	initiator_port_id[16];
 	u8	target_port_id[16];
-};
+पूर्ण;
 
 /**
- * struct srp_login_req_rdma - RDMA/CM login parameters.
+ * काष्ठा srp_login_req_rdma - RDMA/CM login parameters.
  *
- * RDMA/CM over InfiniBand can only carry 92 - 36 = 56 bytes of private
- * data. The %srp_login_req_rdma structure contains the same information as
- * %srp_login_req but with the reserved data removed.
+ * RDMA/CM over InfiniBand can only carry 92 - 36 = 56 bytes of निजी
+ * data. The %srp_login_req_rdma काष्ठाure contains the same inक्रमmation as
+ * %srp_login_req but with the reserved data हटाओd.
  */
-struct srp_login_req_rdma {
+काष्ठा srp_login_req_rdma अणु
 	u64	tag;
 	__be16	req_buf_fmt;
 	u8	req_flags;
@@ -156,22 +157,22 @@ struct srp_login_req_rdma {
 	u8	target_port_id[16];
 	__be16	imm_data_offset;
 	u8	reserved[6];
-};
+पूर्ण;
 
 /* srp_login_rsp.rsp_flags */
-enum {
+क्रमागत अणु
 	SRP_LOGIN_RSP_MULTICHAN_NO_CHAN	   = 0x0,
 	SRP_LOGIN_RSP_MULTICHAN_TERMINATED = 0x1,
 	SRP_LOGIN_RSP_MULTICHAN_MAINTAINED = 0x2,
 	SRP_LOGIN_RSP_IMMED_SUPP	   = 0x80, /* new in SRP2 */
-};
+पूर्ण;
 
 /*
- * The SRP spec defines the size of the LOGIN_RSP structure to be 52
- * bytes, so it needs to be packed to avoid having it padded to 56
+ * The SRP spec defines the size of the LOGIN_RSP काष्ठाure to be 52
+ * bytes, so it needs to be packed to aव्योम having it padded to 56
  * bytes on 64-bit architectures.
  */
-struct srp_login_rsp {
+काष्ठा srp_login_rsp अणु
 	u8	opcode;
 	u8	reserved1[3];
 	__be32	req_lim_delta;
@@ -181,9 +182,9 @@ struct srp_login_rsp {
 	__be16	buf_fmt;
 	u8	rsp_flags;
 	u8	reserved2[25];
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct srp_login_rej {
+काष्ठा srp_login_rej अणु
 	u8	opcode;
 	u8	reserved1[3];
 	__be32	reason;
@@ -191,45 +192,45 @@ struct srp_login_rej {
 	u8	reserved2[8];
 	__be16	buf_fmt;
 	u8	reserved3[6];
-};
+पूर्ण;
 
-struct srp_i_logout {
+काष्ठा srp_i_logout अणु
 	u8	opcode;
 	u8	reserved[7];
 	u64	tag;
-};
+पूर्ण;
 
-struct srp_t_logout {
+काष्ठा srp_t_logout अणु
 	u8	opcode;
 	u8	sol_not;
 	u8	reserved[2];
 	__be32	reason;
 	u64	tag;
-};
+पूर्ण;
 
 /*
  * We need the packed attribute because the SRP spec only aligns the
  * 8-byte LUN field to 4 bytes.
  */
-struct srp_tsk_mgmt {
+काष्ठा srp_tsk_mgmt अणु
 	u8	opcode;
 	u8	sol_not;
 	u8	reserved1[6];
 	u64	tag;
 	u8	reserved2[4];
-	struct scsi_lun	lun;
+	काष्ठा scsi_lun	lun;
 	u8	reserved3[2];
 	u8	tsk_mgmt_func;
 	u8	reserved4;
 	u64	task_tag;
 	u8	reserved5[8];
-};
+पूर्ण;
 
 /*
  * We need the packed attribute because the SRP spec only aligns the
  * 8-byte LUN field to 4 bytes.
  */
-struct srp_cmd {
+काष्ठा srp_cmd अणु
 	u8	opcode;
 	u8	sol_not;
 	u8	reserved1[3];
@@ -238,30 +239,30 @@ struct srp_cmd {
 	u8	data_in_desc_cnt;
 	u64	tag;
 	u8	reserved2[4];
-	struct scsi_lun	lun;
+	काष्ठा scsi_lun	lun;
 	u8	reserved3;
 	u8	task_attr;
 	u8	reserved4;
 	u8	add_cdb_len;
 	u8	cdb[16];
 	u8	add_data[];
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SRP_RSP_FLAG_RSPVALID = 1 << 0,
 	SRP_RSP_FLAG_SNSVALID = 1 << 1,
 	SRP_RSP_FLAG_DOOVER   = 1 << 2,
 	SRP_RSP_FLAG_DOUNDER  = 1 << 3,
 	SRP_RSP_FLAG_DIOVER   = 1 << 4,
 	SRP_RSP_FLAG_DIUNDER  = 1 << 5
-};
+पूर्ण;
 
 /*
- * The SRP spec defines the size of the RSP structure to be 36 bytes,
- * so it needs to be packed to avoid having it padded to 40 bytes on
+ * The SRP spec defines the size of the RSP काष्ठाure to be 36 bytes,
+ * so it needs to be packed to aव्योम having it padded to 40 bytes on
  * 64-bit architectures.
  */
-struct srp_rsp {
+काष्ठा srp_rsp अणु
 	u8	opcode;
 	u8	sol_not;
 	u8	reserved1[2];
@@ -275,44 +276,44 @@ struct srp_rsp {
 	__be32	sense_data_len;
 	__be32	resp_data_len;
 	u8	data[];
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct srp_cred_req {
+काष्ठा srp_cred_req अणु
 	u8	opcode;
 	u8	sol_not;
 	u8	reserved[2];
 	__be32	req_lim_delta;
 	u64	tag;
-};
+पूर्ण;
 
-struct srp_cred_rsp {
+काष्ठा srp_cred_rsp अणु
 	u8	opcode;
 	u8	reserved[7];
 	u64	tag;
-};
+पूर्ण;
 
 /*
- * The SRP spec defines the fixed portion of the AER_REQ structure to be
- * 36 bytes, so it needs to be packed to avoid having it padded to 40 bytes
+ * The SRP spec defines the fixed portion of the AER_REQ काष्ठाure to be
+ * 36 bytes, so it needs to be packed to aव्योम having it padded to 40 bytes
  * on 64-bit architectures.
  */
-struct srp_aer_req {
+काष्ठा srp_aer_req अणु
 	u8	opcode;
 	u8	sol_not;
 	u8	reserved[2];
 	__be32	req_lim_delta;
 	u64	tag;
 	u32	reserved2;
-	struct scsi_lun	lun;
+	काष्ठा scsi_lun	lun;
 	__be32	sense_data_len;
 	u32	reserved3;
 	u8	sense_data[];
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct srp_aer_rsp {
+काष्ठा srp_aer_rsp अणु
 	u8	opcode;
 	u8	reserved[7];
 	u64	tag;
-};
+पूर्ण;
 
-#endif /* SCSI_SRP_H */
+#पूर्ण_अगर /* SCSI_SRP_H */

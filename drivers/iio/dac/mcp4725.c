@@ -1,247 +1,248 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * mcp4725.c - Support for Microchip MCP4725/6
+ * mcp4725.c - Support क्रम Microchip MCP4725/6
  *
  * Copyright (C) 2012 Peter Meerwald <pmeerw@pmeerw.net>
  *
  * Based on max517 by Roland Stigge <stigge@antcom.de>
  *
- * driver for the Microchip I2C 12-bit digital-to-analog converter (DAC)
+ * driver क्रम the Microchip I2C 12-bit digital-to-analog converter (DAC)
  * (7-bit I2C slave address 0x60, the three LSBs can be configured in
  * hardware)
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/regulator/consumer.h>
-#include <linux/mod_devicetable.h>
-#include <linux/property.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/property.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
 
-#include <linux/iio/dac/mcp4725.h>
+#समावेश <linux/iio/dac/mcp4725.h>
 
-#define MCP4725_DRV_NAME "mcp4725"
+#घोषणा MCP4725_DRV_NAME "mcp4725"
 
-#define MCP472X_REF_VDD			0x00
-#define MCP472X_REF_VREF_UNBUFFERED	0x02
-#define MCP472X_REF_VREF_BUFFERED	0x03
+#घोषणा MCP472X_REF_VDD			0x00
+#घोषणा MCP472X_REF_VREF_UNBUFFERED	0x02
+#घोषणा MCP472X_REF_VREF_BUFFERED	0x03
 
-struct mcp4725_data {
-	struct i2c_client *client;
-	int id;
-	unsigned ref_mode;
+काष्ठा mcp4725_data अणु
+	काष्ठा i2c_client *client;
+	पूर्णांक id;
+	अचिन्हित ref_mode;
 	bool vref_buffered;
 	u16 dac_value;
-	bool powerdown;
-	unsigned powerdown_mode;
-	struct regulator *vdd_reg;
-	struct regulator *vref_reg;
-};
+	bool घातerकरोwn;
+	अचिन्हित घातerकरोwn_mode;
+	काष्ठा regulator *vdd_reg;
+	काष्ठा regulator *vref_reg;
+पूर्ण;
 
-static int __maybe_unused mcp4725_suspend(struct device *dev)
-{
-	struct mcp4725_data *data = iio_priv(i2c_get_clientdata(
+अटल पूर्णांक __maybe_unused mcp4725_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mcp4725_data *data = iio_priv(i2c_get_clientdata(
 		to_i2c_client(dev)));
 	u8 outbuf[2];
 
-	outbuf[0] = (data->powerdown_mode + 1) << 4;
+	outbuf[0] = (data->घातerकरोwn_mode + 1) << 4;
 	outbuf[1] = 0;
-	data->powerdown = true;
+	data->घातerकरोwn = true;
 
-	return i2c_master_send(data->client, outbuf, 2);
-}
+	वापस i2c_master_send(data->client, outbuf, 2);
+पूर्ण
 
-static int __maybe_unused mcp4725_resume(struct device *dev)
-{
-	struct mcp4725_data *data = iio_priv(i2c_get_clientdata(
+अटल पूर्णांक __maybe_unused mcp4725_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mcp4725_data *data = iio_priv(i2c_get_clientdata(
 		to_i2c_client(dev)));
 	u8 outbuf[2];
 
 	/* restore previous DAC value */
 	outbuf[0] = (data->dac_value >> 8) & 0xf;
 	outbuf[1] = data->dac_value & 0xff;
-	data->powerdown = false;
+	data->घातerकरोwn = false;
 
-	return i2c_master_send(data->client, outbuf, 2);
-}
-static SIMPLE_DEV_PM_OPS(mcp4725_pm_ops, mcp4725_suspend, mcp4725_resume);
+	वापस i2c_master_send(data->client, outbuf, 2);
+पूर्ण
+अटल SIMPLE_DEV_PM_OPS(mcp4725_pm_ops, mcp4725_suspend, mcp4725_resume);
 
-static ssize_t mcp4725_store_eeprom(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct mcp4725_data *data = iio_priv(indio_dev);
-	int tries = 20;
+अटल sमाप_प्रकार mcp4725_store_eeprom(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा mcp4725_data *data = iio_priv(indio_dev);
+	पूर्णांक tries = 20;
 	u8 inoutbuf[3];
 	bool state;
-	int ret;
+	पूर्णांक ret;
 
 	ret = strtobool(buf, &state);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!state)
-		return 0;
+	अगर (!state)
+		वापस 0;
 
-	inoutbuf[0] = 0x60; /* write EEPROM */
+	inoutbuf[0] = 0x60; /* ग_लिखो EEPROM */
 	inoutbuf[0] |= data->ref_mode << 3;
-	inoutbuf[0] |= data->powerdown ? ((data->powerdown_mode + 1) << 1) : 0;
+	inoutbuf[0] |= data->घातerकरोwn ? ((data->घातerकरोwn_mode + 1) << 1) : 0;
 	inoutbuf[1] = data->dac_value >> 4;
 	inoutbuf[2] = (data->dac_value & 0xf) << 4;
 
 	ret = i2c_master_send(data->client, inoutbuf, 3);
-	if (ret < 0)
-		return ret;
-	else if (ret != 3)
-		return -EIO;
+	अगर (ret < 0)
+		वापस ret;
+	अन्यथा अगर (ret != 3)
+		वापस -EIO;
 
-	/* wait for write complete, takes up to 50ms */
-	while (tries--) {
+	/* रुको क्रम ग_लिखो complete, takes up to 50ms */
+	जबतक (tries--) अणु
 		msleep(20);
 		ret = i2c_master_recv(data->client, inoutbuf, 3);
-		if (ret < 0)
-			return ret;
-		else if (ret != 3)
-			return -EIO;
+		अगर (ret < 0)
+			वापस ret;
+		अन्यथा अगर (ret != 3)
+			वापस -EIO;
 
-		if (inoutbuf[0] & 0x80)
-			break;
-	}
+		अगर (inoutbuf[0] & 0x80)
+			अवरोध;
+	पूर्ण
 
-	if (tries < 0) {
+	अगर (tries < 0) अणु
 		dev_err(&data->client->dev,
 			"mcp4725_store_eeprom() failed, incomplete\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static IIO_DEVICE_ATTR(store_eeprom, S_IWUSR, NULL, mcp4725_store_eeprom, 0);
+अटल IIO_DEVICE_ATTR(store_eeprom, S_IWUSR, शून्य, mcp4725_store_eeprom, 0);
 
-static struct attribute *mcp4725_attributes[] = {
+अटल काष्ठा attribute *mcp4725_attributes[] = अणु
 	&iio_dev_attr_store_eeprom.dev_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group mcp4725_attribute_group = {
+अटल स्थिर काष्ठा attribute_group mcp4725_attribute_group = अणु
 	.attrs = mcp4725_attributes,
-};
+पूर्ण;
 
-static const char * const mcp4725_powerdown_modes[] = {
+अटल स्थिर अक्षर * स्थिर mcp4725_घातerकरोwn_modes[] = अणु
 	"1kohm_to_gnd",
 	"100kohm_to_gnd",
 	"500kohm_to_gnd"
-};
+पूर्ण;
 
-static const char * const mcp4726_powerdown_modes[] = {
+अटल स्थिर अक्षर * स्थिर mcp4726_घातerकरोwn_modes[] = अणु
 	"1kohm_to_gnd",
 	"125kohm_to_gnd",
 	"640kohm_to_gnd"
-};
+पूर्ण;
 
-static int mcp4725_get_powerdown_mode(struct iio_dev *indio_dev,
-	const struct iio_chan_spec *chan)
-{
-	struct mcp4725_data *data = iio_priv(indio_dev);
+अटल पूर्णांक mcp4725_get_घातerकरोwn_mode(काष्ठा iio_dev *indio_dev,
+	स्थिर काष्ठा iio_chan_spec *chan)
+अणु
+	काष्ठा mcp4725_data *data = iio_priv(indio_dev);
 
-	return data->powerdown_mode;
-}
+	वापस data->घातerकरोwn_mode;
+पूर्ण
 
-static int mcp4725_set_powerdown_mode(struct iio_dev *indio_dev,
-	const struct iio_chan_spec *chan, unsigned mode)
-{
-	struct mcp4725_data *data = iio_priv(indio_dev);
+अटल पूर्णांक mcp4725_set_घातerकरोwn_mode(काष्ठा iio_dev *indio_dev,
+	स्थिर काष्ठा iio_chan_spec *chan, अचिन्हित mode)
+अणु
+	काष्ठा mcp4725_data *data = iio_priv(indio_dev);
 
-	data->powerdown_mode = mode;
+	data->घातerकरोwn_mode = mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t mcp4725_read_powerdown(struct iio_dev *indio_dev,
-	uintptr_t private, const struct iio_chan_spec *chan, char *buf)
-{
-	struct mcp4725_data *data = iio_priv(indio_dev);
+अटल sमाप_प्रकार mcp4725_पढ़ो_घातerकरोwn(काष्ठा iio_dev *indio_dev,
+	uपूर्णांकptr_t निजी, स्थिर काष्ठा iio_chan_spec *chan, अक्षर *buf)
+अणु
+	काष्ठा mcp4725_data *data = iio_priv(indio_dev);
 
-	return sysfs_emit(buf, "%d\n", data->powerdown);
-}
+	वापस sysfs_emit(buf, "%d\n", data->घातerकरोwn);
+पूर्ण
 
-static ssize_t mcp4725_write_powerdown(struct iio_dev *indio_dev,
-	 uintptr_t private, const struct iio_chan_spec *chan,
-	 const char *buf, size_t len)
-{
-	struct mcp4725_data *data = iio_priv(indio_dev);
+अटल sमाप_प्रकार mcp4725_ग_लिखो_घातerकरोwn(काष्ठा iio_dev *indio_dev,
+	 uपूर्णांकptr_t निजी, स्थिर काष्ठा iio_chan_spec *chan,
+	 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा mcp4725_data *data = iio_priv(indio_dev);
 	bool state;
-	int ret;
+	पूर्णांक ret;
 
 	ret = strtobool(buf, &state);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (state)
+	अगर (state)
 		ret = mcp4725_suspend(&data->client->dev);
-	else
+	अन्यथा
 		ret = mcp4725_resume(&data->client->dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-enum chip_id {
+क्रमागत chip_id अणु
 	MCP4725,
 	MCP4726,
-};
+पूर्ण;
 
-static const struct iio_enum mcp472x_powerdown_mode_enum[] = {
-	[MCP4725] = {
-		.items = mcp4725_powerdown_modes,
-		.num_items = ARRAY_SIZE(mcp4725_powerdown_modes),
-		.get = mcp4725_get_powerdown_mode,
-		.set = mcp4725_set_powerdown_mode,
-	},
-	[MCP4726] = {
-		.items = mcp4726_powerdown_modes,
-		.num_items = ARRAY_SIZE(mcp4726_powerdown_modes),
-		.get = mcp4725_get_powerdown_mode,
-		.set = mcp4725_set_powerdown_mode,
-	},
-};
+अटल स्थिर काष्ठा iio_क्रमागत mcp472x_घातerकरोwn_mode_क्रमागत[] = अणु
+	[MCP4725] = अणु
+		.items = mcp4725_घातerकरोwn_modes,
+		.num_items = ARRAY_SIZE(mcp4725_घातerकरोwn_modes),
+		.get = mcp4725_get_घातerकरोwn_mode,
+		.set = mcp4725_set_घातerकरोwn_mode,
+	पूर्ण,
+	[MCP4726] = अणु
+		.items = mcp4726_घातerकरोwn_modes,
+		.num_items = ARRAY_SIZE(mcp4726_घातerकरोwn_modes),
+		.get = mcp4725_get_घातerकरोwn_mode,
+		.set = mcp4725_set_घातerकरोwn_mode,
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec_ext_info mcp4725_ext_info[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec_ext_info mcp4725_ext_info[] = अणु
+	अणु
 		.name = "powerdown",
-		.read = mcp4725_read_powerdown,
-		.write = mcp4725_write_powerdown,
+		.पढ़ो = mcp4725_पढ़ो_घातerकरोwn,
+		.ग_लिखो = mcp4725_ग_लिखो_घातerकरोwn,
 		.shared = IIO_SEPARATE,
-	},
+	पूर्ण,
 	IIO_ENUM("powerdown_mode", IIO_SEPARATE,
-			&mcp472x_powerdown_mode_enum[MCP4725]),
+			&mcp472x_घातerकरोwn_mode_क्रमागत[MCP4725]),
 	IIO_ENUM_AVAILABLE("powerdown_mode",
-			&mcp472x_powerdown_mode_enum[MCP4725]),
-	{ },
-};
+			&mcp472x_घातerकरोwn_mode_क्रमागत[MCP4725]),
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec_ext_info mcp4726_ext_info[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec_ext_info mcp4726_ext_info[] = अणु
+	अणु
 		.name = "powerdown",
-		.read = mcp4725_read_powerdown,
-		.write = mcp4725_write_powerdown,
+		.पढ़ो = mcp4725_पढ़ो_घातerकरोwn,
+		.ग_लिखो = mcp4725_ग_लिखो_घातerकरोwn,
 		.shared = IIO_SEPARATE,
-	},
+	पूर्ण,
 	IIO_ENUM("powerdown_mode", IIO_SEPARATE,
-			&mcp472x_powerdown_mode_enum[MCP4726]),
+			&mcp472x_घातerकरोwn_mode_क्रमागत[MCP4726]),
 	IIO_ENUM_AVAILABLE("powerdown_mode",
-			&mcp472x_powerdown_mode_enum[MCP4726]),
-	{ },
-};
+			&mcp472x_घातerकरोwn_mode_क्रमागत[MCP4726]),
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec mcp472x_channel[] = {
-	[MCP4725] = {
+अटल स्थिर काष्ठा iio_chan_spec mcp472x_channel[] = अणु
+	[MCP4725] = अणु
 		.type		= IIO_VOLTAGE,
 		.indexed	= 1,
 		.output		= 1,
@@ -249,8 +250,8 @@ static const struct iio_chan_spec mcp472x_channel[] = {
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),
 		.ext_info	= mcp4725_ext_info,
-	},
-	[MCP4726] = {
+	पूर्ण,
+	[MCP4726] = अणु
 		.type		= IIO_VOLTAGE,
 		.indexed	= 1,
 		.output		= 1,
@@ -258,277 +259,277 @@ static const struct iio_chan_spec mcp472x_channel[] = {
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),
 		.ext_info	= mcp4726_ext_info,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int mcp4725_set_value(struct iio_dev *indio_dev, int val)
-{
-	struct mcp4725_data *data = iio_priv(indio_dev);
+अटल पूर्णांक mcp4725_set_value(काष्ठा iio_dev *indio_dev, पूर्णांक val)
+अणु
+	काष्ठा mcp4725_data *data = iio_priv(indio_dev);
 	u8 outbuf[2];
-	int ret;
+	पूर्णांक ret;
 
-	if (val >= (1 << 12) || val < 0)
-		return -EINVAL;
+	अगर (val >= (1 << 12) || val < 0)
+		वापस -EINVAL;
 
 	outbuf[0] = (val >> 8) & 0xf;
 	outbuf[1] = val & 0xff;
 
 	ret = i2c_master_send(data->client, outbuf, 2);
-	if (ret < 0)
-		return ret;
-	else if (ret != 2)
-		return -EIO;
-	else
-		return 0;
-}
+	अगर (ret < 0)
+		वापस ret;
+	अन्यथा अगर (ret != 2)
+		वापस -EIO;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int mcp4726_set_cfg(struct iio_dev *indio_dev)
-{
-	struct mcp4725_data *data = iio_priv(indio_dev);
+अटल पूर्णांक mcp4726_set_cfg(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा mcp4725_data *data = iio_priv(indio_dev);
 	u8 outbuf[3];
-	int ret;
+	पूर्णांक ret;
 
 	outbuf[0] = 0x40;
 	outbuf[0] |= data->ref_mode << 3;
-	if (data->powerdown)
-		outbuf[0] |= data->powerdown << 1;
+	अगर (data->घातerकरोwn)
+		outbuf[0] |= data->घातerकरोwn << 1;
 	outbuf[1] = data->dac_value >> 4;
 	outbuf[2] = (data->dac_value & 0xf) << 4;
 
 	ret = i2c_master_send(data->client, outbuf, 3);
-	if (ret < 0)
-		return ret;
-	else if (ret != 3)
-		return -EIO;
-	else
-		return 0;
-}
+	अगर (ret < 0)
+		वापस ret;
+	अन्यथा अगर (ret != 3)
+		वापस -EIO;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int mcp4725_read_raw(struct iio_dev *indio_dev,
-			   struct iio_chan_spec const *chan,
-			   int *val, int *val2, long mask)
-{
-	struct mcp4725_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक mcp4725_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			   काष्ठा iio_chan_spec स्थिर *chan,
+			   पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा mcp4725_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		*val = data->dac_value;
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
-		if (data->ref_mode == MCP472X_REF_VDD)
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
+		अगर (data->ref_mode == MCP472X_REF_VDD)
 			ret = regulator_get_voltage(data->vdd_reg);
-		else
+		अन्यथा
 			ret = regulator_get_voltage(data->vref_reg);
 
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		*val = ret / 1000;
 		*val2 = 12;
-		return IIO_VAL_FRACTIONAL_LOG2;
-	}
-	return -EINVAL;
-}
+		वापस IIO_VAL_FRACTIONAL_LOG2;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int mcp4725_write_raw(struct iio_dev *indio_dev,
-			       struct iio_chan_spec const *chan,
-			       int val, int val2, long mask)
-{
-	struct mcp4725_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक mcp4725_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			       काष्ठा iio_chan_spec स्थिर *chan,
+			       पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा mcp4725_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		ret = mcp4725_set_value(indio_dev, val);
 		data->dac_value = val;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct iio_info mcp4725_info = {
-	.read_raw = mcp4725_read_raw,
-	.write_raw = mcp4725_write_raw,
+अटल स्थिर काष्ठा iio_info mcp4725_info = अणु
+	.पढ़ो_raw = mcp4725_पढ़ो_raw,
+	.ग_लिखो_raw = mcp4725_ग_लिखो_raw,
 	.attrs = &mcp4725_attribute_group,
-};
+पूर्ण;
 
-static int mcp4725_probe_dt(struct device *dev,
-			    struct mcp4725_platform_data *pdata)
-{
-	/* check if is the vref-supply defined */
-	pdata->use_vref = device_property_read_bool(dev, "vref-supply");
+अटल पूर्णांक mcp4725_probe_dt(काष्ठा device *dev,
+			    काष्ठा mcp4725_platक्रमm_data *pdata)
+अणु
+	/* check अगर is the vref-supply defined */
+	pdata->use_vref = device_property_पढ़ो_bool(dev, "vref-supply");
 	pdata->vref_buffered =
-		device_property_read_bool(dev, "microchip,vref-buffered");
+		device_property_पढ़ो_bool(dev, "microchip,vref-buffered");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mcp4725_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct mcp4725_data *data;
-	struct iio_dev *indio_dev;
-	struct mcp4725_platform_data *pdata, pdata_dt;
+अटल पूर्णांक mcp4725_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा mcp4725_data *data;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा mcp4725_platक्रमm_data *pdata, pdata_dt;
 	u8 inbuf[4];
 	u8 pd;
 	u8 ref;
-	int err;
+	पूर्णांक err;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (indio_dev == NULL)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (indio_dev == शून्य)
+		वापस -ENOMEM;
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
 	data->client = client;
-	if (dev_fwnode(&client->dev))
-		data->id = (enum chip_id)device_get_match_data(&client->dev);
-	else
+	अगर (dev_fwnode(&client->dev))
+		data->id = (क्रमागत chip_id)device_get_match_data(&client->dev);
+	अन्यथा
 		data->id = id->driver_data;
 	pdata = dev_get_platdata(&client->dev);
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		err = mcp4725_probe_dt(&client->dev, &pdata_dt);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&client->dev,
 				"invalid platform or devicetree data");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		pdata = &pdata_dt;
-	}
+	पूर्ण
 
-	if (data->id == MCP4725 && pdata->use_vref) {
+	अगर (data->id == MCP4725 && pdata->use_vref) अणु
 		dev_err(&client->dev,
 			"external reference is unavailable on MCP4725");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!pdata->use_vref && pdata->vref_buffered) {
+	अगर (!pdata->use_vref && pdata->vref_buffered) अणु
 		dev_err(&client->dev,
 			"buffering is unavailable on the internal reference");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!pdata->use_vref)
+	अगर (!pdata->use_vref)
 		data->ref_mode = MCP472X_REF_VDD;
-	else
+	अन्यथा
 		data->ref_mode = pdata->vref_buffered ?
 			MCP472X_REF_VREF_BUFFERED :
 			MCP472X_REF_VREF_UNBUFFERED;
 
 	data->vdd_reg = devm_regulator_get(&client->dev, "vdd");
-	if (IS_ERR(data->vdd_reg))
-		return PTR_ERR(data->vdd_reg);
+	अगर (IS_ERR(data->vdd_reg))
+		वापस PTR_ERR(data->vdd_reg);
 
 	err = regulator_enable(data->vdd_reg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (pdata->use_vref) {
+	अगर (pdata->use_vref) अणु
 		data->vref_reg = devm_regulator_get(&client->dev, "vref");
-		if (IS_ERR(data->vref_reg)) {
+		अगर (IS_ERR(data->vref_reg)) अणु
 			err = PTR_ERR(data->vref_reg);
-			goto err_disable_vdd_reg;
-		}
+			जाओ err_disable_vdd_reg;
+		पूर्ण
 
 		err = regulator_enable(data->vref_reg);
-		if (err)
-			goto err_disable_vdd_reg;
-	}
+		अगर (err)
+			जाओ err_disable_vdd_reg;
+	पूर्ण
 
 	indio_dev->name = id->name;
 	indio_dev->info = &mcp4725_info;
 	indio_dev->channels = &mcp472x_channel[id->driver_data];
 	indio_dev->num_channels = 1;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
-	/* read current DAC value and settings */
+	/* पढ़ो current DAC value and settings */
 	err = i2c_master_recv(client, inbuf, data->id == MCP4725 ? 3 : 4);
 
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&client->dev, "failed to read DAC value");
-		goto err_disable_vref_reg;
-	}
+		जाओ err_disable_vref_reg;
+	पूर्ण
 	pd = (inbuf[0] >> 1) & 0x3;
-	data->powerdown = pd > 0;
-	data->powerdown_mode = pd ? pd - 1 : 2; /* largest resistor to gnd */
+	data->घातerकरोwn = pd > 0;
+	data->घातerकरोwn_mode = pd ? pd - 1 : 2; /* largest resistor to gnd */
 	data->dac_value = (inbuf[1] << 4) | (inbuf[2] >> 4);
-	if (data->id == MCP4726)
+	अगर (data->id == MCP4726)
 		ref = (inbuf[3] >> 3) & 0x3;
 
-	if (data->id == MCP4726 && ref != data->ref_mode) {
+	अगर (data->id == MCP4726 && ref != data->ref_mode) अणु
 		dev_info(&client->dev,
 			"voltage reference mode differs (conf: %u, eeprom: %u), setting %u",
 			data->ref_mode, ref, data->ref_mode);
 		err = mcp4726_set_cfg(indio_dev);
-		if (err < 0)
-			goto err_disable_vref_reg;
-	}
+		अगर (err < 0)
+			जाओ err_disable_vref_reg;
+	पूर्ण
  
-	err = iio_device_register(indio_dev);
-	if (err)
-		goto err_disable_vref_reg;
+	err = iio_device_रेजिस्टर(indio_dev);
+	अगर (err)
+		जाओ err_disable_vref_reg;
 
-	return 0;
+	वापस 0;
 
 err_disable_vref_reg:
-	if (data->vref_reg)
+	अगर (data->vref_reg)
 		regulator_disable(data->vref_reg);
 
 err_disable_vdd_reg:
 	regulator_disable(data->vdd_reg);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mcp4725_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct mcp4725_data *data = iio_priv(indio_dev);
+अटल पूर्णांक mcp4725_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा mcp4725_data *data = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 
-	if (data->vref_reg)
+	अगर (data->vref_reg)
 		regulator_disable(data->vref_reg);
 	regulator_disable(data->vdd_reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id mcp4725_id[] = {
-	{ "mcp4725", MCP4725 },
-	{ "mcp4726", MCP4726 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id mcp4725_id[] = अणु
+	अणु "mcp4725", MCP4725 पूर्ण,
+	अणु "mcp4726", MCP4726 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, mcp4725_id);
 
-static const struct of_device_id mcp4725_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mcp4725_of_match[] = अणु
+	अणु
 		.compatible = "microchip,mcp4725",
-		.data = (void *)MCP4725
-	},
-	{
+		.data = (व्योम *)MCP4725
+	पूर्ण,
+	अणु
 		.compatible = "microchip,mcp4726",
-		.data = (void *)MCP4726
-	},
-	{ }
-};
+		.data = (व्योम *)MCP4726
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mcp4725_of_match);
 
-static struct i2c_driver mcp4725_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver mcp4725_driver = अणु
+	.driver = अणु
 		.name	= MCP4725_DRV_NAME,
 		.of_match_table = mcp4725_of_match,
 		.pm	= &mcp4725_pm_ops,
-	},
+	पूर्ण,
 	.probe		= mcp4725_probe,
-	.remove		= mcp4725_remove,
+	.हटाओ		= mcp4725_हटाओ,
 	.id_table	= mcp4725_id,
-};
+पूर्ण;
 module_i2c_driver(mcp4725_driver);
 
 MODULE_AUTHOR("Peter Meerwald <pmeerw@pmeerw.net>");

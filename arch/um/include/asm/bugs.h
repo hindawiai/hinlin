@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __UM_BUGS_H
-#define __UM_BUGS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __UM_BUGS_H
+#घोषणा __UM_BUGS_H
 
-void check_bugs(void);
+व्योम check_bugs(व्योम);
 
-#endif
+#पूर्ण_अगर

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,25 +20,25 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "base.h"
+#समावेश "base.h"
 
-#include <nvif/push507c.h>
+#समावेश <nvअगर/push507c.h>
 
-#include <nvhw/class/cl907c.h>
+#समावेश <nvhw/class/cl907c.h>
 
-static int
-base907c_image_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
-{
-	struct nvif_push *push = wndw->wndw.push;
-	int ret;
+अटल पूर्णांक
+base907c_image_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wndw.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 10)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 10)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV907C, SET_PRESENT_CONTROL,
 		  NVVAL(NV907C, SET_PRESENT_CONTROL, BEGIN_MODE, asyw->image.mode) |
 		  NVDEF(NV907C, SET_PRESENT_CONTROL, TIMESTAMP_MODE, DISABLE) |
-		  NVVAL(NV907C, SET_PRESENT_CONTROL, MIN_PRESENT_INTERVAL, asyw->image.interval));
+		  NVVAL(NV907C, SET_PRESENT_CONTROL, MIN_PRESENT_INTERVAL, asyw->image.पूर्णांकerval));
 
 	PUSH_MTHD(push, NV907C, SET_CONTEXT_DMAS_ISO(0), asyw->image.handle, 1);
 
@@ -55,21 +56,21 @@ base907c_image_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
 		  NVVAL(NV907C, SURFACE_SET_STORAGE, MEMORY_LAYOUT, asyw->image.layout),
 
 				SURFACE_SET_PARAMS(0),
-		  NVVAL(NV907C, SURFACE_SET_PARAMS, FORMAT, asyw->image.format) |
+		  NVVAL(NV907C, SURFACE_SET_PARAMS, FORMAT, asyw->image.क्रमmat) |
 		  NVDEF(NV907C, SURFACE_SET_PARAMS, SUPER_SAMPLE, X1_AA) |
 		  NVDEF(NV907C, SURFACE_SET_PARAMS, GAMMA, LINEAR) |
 		  NVDEF(NV907C, SURFACE_SET_PARAMS, LAYOUT, FRM));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-base907c_xlut_clr(struct nv50_wndw *wndw)
-{
-	struct nvif_push *push = wndw->wndw.push;
-	int ret;
+अटल पूर्णांक
+base907c_xlut_clr(काष्ठा nv50_wndw *wndw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wndw.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 6)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 6)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV907C, SET_BASE_LUT_LO,
 		  NVDEF(NV907C, SET_BASE_LUT_LO, ENABLE, DISABLE));
@@ -78,17 +79,17 @@ base907c_xlut_clr(struct nv50_wndw *wndw)
 		  NVDEF(NV907C, SET_OUTPUT_LUT_LO, ENABLE, DISABLE));
 
 	PUSH_MTHD(push, NV907C, SET_CONTEXT_DMA_LUT, 0x00000000);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-base907c_xlut_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
-{
-	struct nvif_push *push = wndw->wndw.push;
-	int ret;
+अटल पूर्णांक
+base907c_xlut_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wndw.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 6)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 6)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV907C, SET_BASE_LUT_LO,
 		  NVVAL(NV907C, SET_BASE_LUT_LO, ENABLE, asyw->xlut.i.enable) |
@@ -100,96 +101,96 @@ base907c_xlut_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
 		  NVDEF(NV907C, SET_OUTPUT_LUT_LO, ENABLE, USE_CORE_LUT));
 
 	PUSH_MTHD(push, NV907C, SET_CONTEXT_DMA_LUT, asyw->xlut.handle);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool
-base907c_ilut(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw, int size)
-{
-	if (size != 256 && size != 1024)
-		return false;
+अटल bool
+base907c_ilut(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw, पूर्णांक size)
+अणु
+	अगर (size != 256 && size != 1024)
+		वापस false;
 
-	if (size == 1024)
+	अगर (size == 1024)
 		asyw->xlut.i.mode = NV907C_SET_BASE_LUT_LO_MODE_INTERPOLATE_1025_UNITY_RANGE;
-	else
+	अन्यथा
 		asyw->xlut.i.mode = NV907C_SET_BASE_LUT_LO_MODE_INTERPOLATE_257_UNITY_RANGE;
 
 	asyw->xlut.i.enable = NV907C_SET_BASE_LUT_LO_ENABLE_ENABLE;
 	asyw->xlut.i.load = head907d_olut_load;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline u32
+अटल अंतरभूत u32
 csc_drm_to_base(u64 in)
-{
-	/* base takes a 19-bit 2's complement value in S3.16 format */
+अणु
+	/* base takes a 19-bit 2's complement value in S3.16 क्रमmat */
 	bool sign = in & BIT_ULL(63);
-	u32 integer = (in >> 32) & 0x7fffffff;
+	u32 पूर्णांकeger = (in >> 32) & 0x7fffffff;
 	u32 fraction = in & 0xffffffff;
 
-	if (integer >= 4) {
-		return (1 << 18) - (sign ? 0 : 1);
-	} else {
-		u32 ret = (integer << 16) | (fraction >> 16);
-		if (sign)
+	अगर (पूर्णांकeger >= 4) अणु
+		वापस (1 << 18) - (sign ? 0 : 1);
+	पूर्ण अन्यथा अणु
+		u32 ret = (पूर्णांकeger << 16) | (fraction >> 16);
+		अगर (sign)
 			ret = -ret;
-		return ret & GENMASK(18, 0);
-	}
-}
+		वापस ret & GENMASK(18, 0);
+	पूर्ण
+पूर्ण
 
-void
-base907c_csc(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw,
-	     const struct drm_color_ctm *ctm)
-{
-	int i, j;
+व्योम
+base907c_csc(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw,
+	     स्थिर काष्ठा drm_color_cपंचांग *cपंचांग)
+अणु
+	पूर्णांक i, j;
 
-	for (j = 0; j < 3; j++) {
-		for (i = 0; i < 4; i++) {
+	क्रम (j = 0; j < 3; j++) अणु
+		क्रम (i = 0; i < 4; i++) अणु
 			u32 *val = &asyw->csc.matrix[j * 4 + i];
-			/* DRM does not support constant offset, while
-			 * HW CSC does. Skip it. */
-			if (i == 3) {
+			/* DRM करोes not support स्थिरant offset, जबतक
+			 * HW CSC करोes. Skip it. */
+			अगर (i == 3) अणु
 				*val = 0;
-			} else {
-				*val = csc_drm_to_base(ctm->matrix[j * 3 + i]);
-			}
-		}
-	}
-}
+			पूर्ण अन्यथा अणु
+				*val = csc_drm_to_base(cपंचांग->matrix[j * 3 + i]);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int
-base907c_csc_clr(struct nv50_wndw *wndw)
-{
-	struct nvif_push *push = wndw->wndw.push;
-	int ret;
+अटल पूर्णांक
+base907c_csc_clr(काष्ठा nv50_wndw *wndw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wndw.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV907C, SET_CSC_RED2RED,
 		  NVDEF(NV907C, SET_CSC_RED2RED, OWNER, CORE));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-base907c_csc_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
-{
-	struct nvif_push *push = wndw->wndw.push;
-	int ret;
+अटल पूर्णांक
+base907c_csc_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wndw.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 13)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 13)))
+		वापस ret;
 
 	PUSH_MTHD(push, NV907C, SET_CSC_RED2RED,
 		  NVDEF(NV907C, SET_CSC_RED2RED, OWNER, BASE) |
 		  NVVAL(NV907C, SET_CSC_RED2RED, COEFF, asyw->csc.matrix[0]),
 
 				SET_CSC_GRN2RED, &asyw->csc.matrix[1], 11);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct nv50_wndw_func
-base907c = {
+स्थिर काष्ठा nv50_wndw_func
+base907c = अणु
 	.acquire = base507c_acquire,
 	.release = base507c_release,
 	.sema_set = base507c_sema_set,
@@ -197,7 +198,7 @@ base907c = {
 	.ntfy_reset = base507c_ntfy_reset,
 	.ntfy_set = base507c_ntfy_set,
 	.ntfy_clr = base507c_ntfy_clr,
-	.ntfy_wait_begun = base507c_ntfy_wait_begun,
+	.ntfy_रुको_begun = base507c_ntfy_रुको_begun,
 	.ilut = base907c_ilut,
 	.csc = base907c_csc,
 	.csc_set = base907c_csc_set,
@@ -209,12 +210,12 @@ base907c = {
 	.image_set = base907c_image_set,
 	.image_clr = base507c_image_clr,
 	.update = base507c_update,
-};
+पूर्ण;
 
-int
-base907c_new(struct nouveau_drm *drm, int head, s32 oclass,
-	     struct nv50_wndw **pwndw)
-{
-	return base507c_new_(&base907c, base507c_format, drm, head, oclass,
+पूर्णांक
+base907c_new(काष्ठा nouveau_drm *drm, पूर्णांक head, s32 oclass,
+	     काष्ठा nv50_wndw **pwndw)
+अणु
+	वापस base507c_new_(&base907c, base507c_क्रमmat, drm, head, oclass,
 			     0x00000002 << (head * 4), pwndw);
-}
+पूर्ण

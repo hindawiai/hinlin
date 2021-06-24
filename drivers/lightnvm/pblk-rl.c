@@ -1,224 +1,225 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2016 CNEX Labs
- * Initial release: Javier Gonzalez <javier@cnexlabs.com>
- *                  Matias Bjorling <matias@cnexlabs.com>
+ * Copyright (C) 2016 CNEX Lअसल
+ * Initial release: Javier Gonzalez <javier@cnexद_असल.com>
+ *                  Matias Bjorling <matias@cnexद_असल.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
- * pblk-rl.c - pblk's rate limiter for user I/O
+ * pblk-rl.c - pblk's rate limiter क्रम user I/O
  *
  */
 
-#include "pblk.h"
+#समावेश "pblk.h"
 
-static void pblk_rl_kick_u_timer(struct pblk_rl *rl)
-{
-	mod_timer(&rl->u_timer, jiffies + msecs_to_jiffies(5000));
-}
+अटल व्योम pblk_rl_kick_u_समयr(काष्ठा pblk_rl *rl)
+अणु
+	mod_समयr(&rl->u_समयr, jअगरfies + msecs_to_jअगरfies(5000));
+पूर्ण
 
-int pblk_rl_is_limit(struct pblk_rl *rl)
-{
-	int rb_space;
+पूर्णांक pblk_rl_is_limit(काष्ठा pblk_rl *rl)
+अणु
+	पूर्णांक rb_space;
 
-	rb_space = atomic_read(&rl->rb_space);
+	rb_space = atomic_पढ़ो(&rl->rb_space);
 
-	return (rb_space == 0);
-}
+	वापस (rb_space == 0);
+पूर्ण
 
-int pblk_rl_user_may_insert(struct pblk_rl *rl, int nr_entries)
-{
-	int rb_user_cnt = atomic_read(&rl->rb_user_cnt);
-	int rb_space = atomic_read(&rl->rb_space);
+पूर्णांक pblk_rl_user_may_insert(काष्ठा pblk_rl *rl, पूर्णांक nr_entries)
+अणु
+	पूर्णांक rb_user_cnt = atomic_पढ़ो(&rl->rb_user_cnt);
+	पूर्णांक rb_space = atomic_पढ़ो(&rl->rb_space);
 
-	if (unlikely(rb_space >= 0) && (rb_space - nr_entries < 0))
-		return NVM_IO_ERR;
+	अगर (unlikely(rb_space >= 0) && (rb_space - nr_entries < 0))
+		वापस NVM_IO_ERR;
 
-	if (rb_user_cnt >= rl->rb_user_max)
-		return NVM_IO_REQUEUE;
+	अगर (rb_user_cnt >= rl->rb_user_max)
+		वापस NVM_IO_REQUEUE;
 
-	return NVM_IO_OK;
-}
+	वापस NVM_IO_OK;
+पूर्ण
 
-void pblk_rl_inserted(struct pblk_rl *rl, int nr_entries)
-{
-	int rb_space = atomic_read(&rl->rb_space);
+व्योम pblk_rl_inserted(काष्ठा pblk_rl *rl, पूर्णांक nr_entries)
+अणु
+	पूर्णांक rb_space = atomic_पढ़ो(&rl->rb_space);
 
-	if (unlikely(rb_space >= 0))
+	अगर (unlikely(rb_space >= 0))
 		atomic_sub(nr_entries, &rl->rb_space);
-}
+पूर्ण
 
-int pblk_rl_gc_may_insert(struct pblk_rl *rl, int nr_entries)
-{
-	int rb_gc_cnt = atomic_read(&rl->rb_gc_cnt);
-	int rb_user_active;
+पूर्णांक pblk_rl_gc_may_insert(काष्ठा pblk_rl *rl, पूर्णांक nr_entries)
+अणु
+	पूर्णांक rb_gc_cnt = atomic_पढ़ो(&rl->rb_gc_cnt);
+	पूर्णांक rb_user_active;
 
-	/* If there is no user I/O let GC take over space on the write buffer */
+	/* If there is no user I/O let GC take over space on the ग_लिखो buffer */
 	rb_user_active = READ_ONCE(rl->rb_user_active);
-	return (!(rb_gc_cnt >= rl->rb_gc_max && rb_user_active));
-}
+	वापस (!(rb_gc_cnt >= rl->rb_gc_max && rb_user_active));
+पूर्ण
 
-void pblk_rl_user_in(struct pblk_rl *rl, int nr_entries)
-{
+व्योम pblk_rl_user_in(काष्ठा pblk_rl *rl, पूर्णांक nr_entries)
+अणु
 	atomic_add(nr_entries, &rl->rb_user_cnt);
 
 	/* Release user I/O state. Protect from GC */
 	smp_store_release(&rl->rb_user_active, 1);
-	pblk_rl_kick_u_timer(rl);
-}
+	pblk_rl_kick_u_समयr(rl);
+पूर्ण
 
-void pblk_rl_werr_line_in(struct pblk_rl *rl)
-{
+व्योम pblk_rl_werr_line_in(काष्ठा pblk_rl *rl)
+अणु
 	atomic_inc(&rl->werr_lines);
-}
+पूर्ण
 
-void pblk_rl_werr_line_out(struct pblk_rl *rl)
-{
+व्योम pblk_rl_werr_line_out(काष्ठा pblk_rl *rl)
+अणु
 	atomic_dec(&rl->werr_lines);
-}
+पूर्ण
 
-void pblk_rl_gc_in(struct pblk_rl *rl, int nr_entries)
-{
+व्योम pblk_rl_gc_in(काष्ठा pblk_rl *rl, पूर्णांक nr_entries)
+अणु
 	atomic_add(nr_entries, &rl->rb_gc_cnt);
-}
+पूर्ण
 
-void pblk_rl_out(struct pblk_rl *rl, int nr_user, int nr_gc)
-{
+व्योम pblk_rl_out(काष्ठा pblk_rl *rl, पूर्णांक nr_user, पूर्णांक nr_gc)
+अणु
 	atomic_sub(nr_user, &rl->rb_user_cnt);
 	atomic_sub(nr_gc, &rl->rb_gc_cnt);
-}
+पूर्ण
 
-unsigned long pblk_rl_nr_free_blks(struct pblk_rl *rl)
-{
-	return atomic_read(&rl->free_blocks);
-}
+अचिन्हित दीर्घ pblk_rl_nr_मुक्त_blks(काष्ठा pblk_rl *rl)
+अणु
+	वापस atomic_पढ़ो(&rl->मुक्त_blocks);
+पूर्ण
 
-unsigned long pblk_rl_nr_user_free_blks(struct pblk_rl *rl)
-{
-	return atomic_read(&rl->free_user_blocks);
-}
+अचिन्हित दीर्घ pblk_rl_nr_user_मुक्त_blks(काष्ठा pblk_rl *rl)
+अणु
+	वापस atomic_पढ़ो(&rl->मुक्त_user_blocks);
+पूर्ण
 
-static void __pblk_rl_update_rates(struct pblk_rl *rl,
-				   unsigned long free_blocks)
-{
-	struct pblk *pblk = container_of(rl, struct pblk, rl);
-	int max = rl->rb_budget;
-	int werr_gc_needed = atomic_read(&rl->werr_lines);
+अटल व्योम __pblk_rl_update_rates(काष्ठा pblk_rl *rl,
+				   अचिन्हित दीर्घ मुक्त_blocks)
+अणु
+	काष्ठा pblk *pblk = container_of(rl, काष्ठा pblk, rl);
+	पूर्णांक max = rl->rb_budget;
+	पूर्णांक werr_gc_needed = atomic_पढ़ो(&rl->werr_lines);
 
-	if (free_blocks >= rl->high) {
-		if (werr_gc_needed) {
-			/* Allocate a small budget for recovering
-			 * lines with write errors
+	अगर (मुक्त_blocks >= rl->high) अणु
+		अगर (werr_gc_needed) अणु
+			/* Allocate a small budget क्रम recovering
+			 * lines with ग_लिखो errors
 			 */
-			rl->rb_gc_max = 1 << rl->rb_windows_pw;
+			rl->rb_gc_max = 1 << rl->rb_winकरोws_pw;
 			rl->rb_user_max = max - rl->rb_gc_max;
 			rl->rb_state = PBLK_RL_WERR;
-		} else {
+		पूर्ण अन्यथा अणु
 			rl->rb_user_max = max;
 			rl->rb_gc_max = 0;
 			rl->rb_state = PBLK_RL_OFF;
-		}
-	} else if (free_blocks < rl->high) {
-		int shift = rl->high_pw - rl->rb_windows_pw;
-		int user_windows = free_blocks >> shift;
-		int user_max = user_windows << ilog2(NVM_MAX_VLBA);
+		पूर्ण
+	पूर्ण अन्यथा अगर (मुक्त_blocks < rl->high) अणु
+		पूर्णांक shअगरt = rl->high_pw - rl->rb_winकरोws_pw;
+		पूर्णांक user_winकरोws = मुक्त_blocks >> shअगरt;
+		पूर्णांक user_max = user_winकरोws << ilog2(NVM_MAX_VLBA);
 
 		rl->rb_user_max = user_max;
 		rl->rb_gc_max = max - user_max;
 
-		if (free_blocks <= rl->rsv_blocks) {
+		अगर (मुक्त_blocks <= rl->rsv_blocks) अणु
 			rl->rb_user_max = 0;
 			rl->rb_gc_max = max;
-		}
+		पूर्ण
 
-		/* In the worst case, we will need to GC lines in the low list
+		/* In the worst हाल, we will need to GC lines in the low list
 		 * (high valid sector count). If there are lines to GC on high
 		 * or mid lists, these will be prioritized
 		 */
 		rl->rb_state = PBLK_RL_LOW;
-	}
+	पूर्ण
 
-	if (rl->rb_state != PBLK_RL_OFF)
+	अगर (rl->rb_state != PBLK_RL_OFF)
 		pblk_gc_should_start(pblk);
-	else
+	अन्यथा
 		pblk_gc_should_stop(pblk);
-}
+पूर्ण
 
-void pblk_rl_update_rates(struct pblk_rl *rl)
-{
-	__pblk_rl_update_rates(rl, pblk_rl_nr_user_free_blks(rl));
-}
+व्योम pblk_rl_update_rates(काष्ठा pblk_rl *rl)
+अणु
+	__pblk_rl_update_rates(rl, pblk_rl_nr_user_मुक्त_blks(rl));
+पूर्ण
 
-void pblk_rl_free_lines_inc(struct pblk_rl *rl, struct pblk_line *line)
-{
-	int blk_in_line = atomic_read(&line->blk_in_line);
-	int free_blocks;
+व्योम pblk_rl_मुक्त_lines_inc(काष्ठा pblk_rl *rl, काष्ठा pblk_line *line)
+अणु
+	पूर्णांक blk_in_line = atomic_पढ़ो(&line->blk_in_line);
+	पूर्णांक मुक्त_blocks;
 
-	atomic_add(blk_in_line, &rl->free_blocks);
-	free_blocks = atomic_add_return(blk_in_line, &rl->free_user_blocks);
+	atomic_add(blk_in_line, &rl->मुक्त_blocks);
+	मुक्त_blocks = atomic_add_वापस(blk_in_line, &rl->मुक्त_user_blocks);
 
-	__pblk_rl_update_rates(rl, free_blocks);
-}
+	__pblk_rl_update_rates(rl, मुक्त_blocks);
+पूर्ण
 
-void pblk_rl_free_lines_dec(struct pblk_rl *rl, struct pblk_line *line,
+व्योम pblk_rl_मुक्त_lines_dec(काष्ठा pblk_rl *rl, काष्ठा pblk_line *line,
 			    bool used)
-{
-	int blk_in_line = atomic_read(&line->blk_in_line);
-	int free_blocks;
+अणु
+	पूर्णांक blk_in_line = atomic_पढ़ो(&line->blk_in_line);
+	पूर्णांक मुक्त_blocks;
 
-	atomic_sub(blk_in_line, &rl->free_blocks);
+	atomic_sub(blk_in_line, &rl->मुक्त_blocks);
 
-	if (used)
-		free_blocks = atomic_sub_return(blk_in_line,
-							&rl->free_user_blocks);
-	else
-		free_blocks = atomic_read(&rl->free_user_blocks);
+	अगर (used)
+		मुक्त_blocks = atomic_sub_वापस(blk_in_line,
+							&rl->मुक्त_user_blocks);
+	अन्यथा
+		मुक्त_blocks = atomic_पढ़ो(&rl->मुक्त_user_blocks);
 
-	__pblk_rl_update_rates(rl, free_blocks);
-}
+	__pblk_rl_update_rates(rl, मुक्त_blocks);
+पूर्ण
 
-int pblk_rl_high_thrs(struct pblk_rl *rl)
-{
-	return rl->high;
-}
+पूर्णांक pblk_rl_high_thrs(काष्ठा pblk_rl *rl)
+अणु
+	वापस rl->high;
+पूर्ण
 
-int pblk_rl_max_io(struct pblk_rl *rl)
-{
-	return rl->rb_max_io;
-}
+पूर्णांक pblk_rl_max_io(काष्ठा pblk_rl *rl)
+अणु
+	वापस rl->rb_max_io;
+पूर्ण
 
-static void pblk_rl_u_timer(struct timer_list *t)
-{
-	struct pblk_rl *rl = from_timer(rl, t, u_timer);
+अटल व्योम pblk_rl_u_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा pblk_rl *rl = from_समयr(rl, t, u_समयr);
 
 	/* Release user I/O state. Protect from GC */
 	smp_store_release(&rl->rb_user_active, 0);
-}
+पूर्ण
 
-void pblk_rl_free(struct pblk_rl *rl)
-{
-	del_timer(&rl->u_timer);
-}
+व्योम pblk_rl_मुक्त(काष्ठा pblk_rl *rl)
+अणु
+	del_समयr(&rl->u_समयr);
+पूर्ण
 
-void pblk_rl_init(struct pblk_rl *rl, int budget, int threshold)
-{
-	struct pblk *pblk = container_of(rl, struct pblk, rl);
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct pblk_line_meta *lm = &pblk->lm;
-	int sec_meta, blk_meta;
-	unsigned int rb_windows;
+व्योम pblk_rl_init(काष्ठा pblk_rl *rl, पूर्णांक budget, पूर्णांक threshold)
+अणु
+	काष्ठा pblk *pblk = container_of(rl, काष्ठा pblk, rl);
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	पूर्णांक sec_meta, blk_meta;
+	अचिन्हित पूर्णांक rb_winकरोws;
 
-	/* Consider sectors used for metadata */
-	sec_meta = (lm->smeta_sec + lm->emeta_sec[0]) * l_mg->nr_free_lines;
+	/* Consider sectors used क्रम metadata */
+	sec_meta = (lm->smeta_sec + lm->emeta_sec[0]) * l_mg->nr_मुक्त_lines;
 	blk_meta = DIV_ROUND_UP(sec_meta, geo->clba);
 
 	rl->high = pblk->op_blks - blk_meta - lm->blk_per_line;
@@ -226,29 +227,29 @@ void pblk_rl_init(struct pblk_rl *rl, int budget, int threshold)
 
 	rl->rsv_blocks = pblk_get_min_chks(pblk);
 
-	/* This will always be a power-of-2 */
-	rb_windows = budget / NVM_MAX_VLBA;
-	rl->rb_windows_pw = get_count_order(rb_windows);
+	/* This will always be a घातer-of-2 */
+	rb_winकरोws = budget / NVM_MAX_VLBA;
+	rl->rb_winकरोws_pw = get_count_order(rb_winकरोws);
 
-	/* To start with, all buffer is available to user I/O writers */
+	/* To start with, all buffer is available to user I/O ग_लिखोrs */
 	rl->rb_budget = budget;
 	rl->rb_user_max = budget;
 	rl->rb_gc_max = 0;
 	rl->rb_state = PBLK_RL_HIGH;
 
 	/* Maximize I/O size and ansure that back threshold is respected */
-	if (threshold)
-		rl->rb_max_io = budget - pblk->min_write_pgs_data - threshold;
-	else
-		rl->rb_max_io = budget - pblk->min_write_pgs_data - 1;
+	अगर (threshold)
+		rl->rb_max_io = budget - pblk->min_ग_लिखो_pgs_data - threshold;
+	अन्यथा
+		rl->rb_max_io = budget - pblk->min_ग_लिखो_pgs_data - 1;
 
 	atomic_set(&rl->rb_user_cnt, 0);
 	atomic_set(&rl->rb_gc_cnt, 0);
 	atomic_set(&rl->rb_space, -1);
 	atomic_set(&rl->werr_lines, 0);
 
-	timer_setup(&rl->u_timer, pblk_rl_u_timer, 0);
+	समयr_setup(&rl->u_समयr, pblk_rl_u_समयr, 0);
 
 	rl->rb_user_active = 0;
 	rl->rb_gc_active = 0;
-}
+पूर्ण

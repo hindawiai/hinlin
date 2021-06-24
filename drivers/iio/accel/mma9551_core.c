@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Common code for Freescale MMA955x Intelligent Sensor Platform drivers
+ * Common code क्रम Freescale MMA955x Intelligent Sensor Platक्रमm drivers
  * Copyright (c) 2014, Intel Corporation.
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/delay.h>
-#include <linux/iio/iio.h>
-#include <linux/pm_runtime.h>
-#include "mma9551_core.h"
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/pm_runसमय.स>
+#समावेश "mma9551_core.h"
 
-/* Command masks for mailbox write command */
-#define MMA9551_CMD_READ_VERSION_INFO	0x00
-#define MMA9551_CMD_READ_CONFIG		0x10
-#define MMA9551_CMD_WRITE_CONFIG	0x20
-#define MMA9551_CMD_READ_STATUS		0x30
+/* Command masks क्रम mailbox ग_लिखो command */
+#घोषणा MMA9551_CMD_READ_VERSION_INFO	0x00
+#घोषणा MMA9551_CMD_READ_CONFIG		0x10
+#घोषणा MMA9551_CMD_WRITE_CONFIG	0x20
+#घोषणा MMA9551_CMD_READ_STATUS		0x30
 
-/* Mailbox read command */
-#define MMA9551_RESPONSE_COCO		BIT(7)
+/* Mailbox पढ़ो command */
+#घोषणा MMA9551_RESPONSE_COCO		BIT(7)
 
-/* Error-Status codes returned in mailbox read command */
-#define MMA9551_MCI_ERROR_NONE			0x00
-#define MMA9551_MCI_ERROR_PARAM			0x04
-#define MMA9551_MCI_INVALID_COUNT		0x19
-#define MMA9551_MCI_ERROR_COMMAND		0x1C
-#define MMA9551_MCI_ERROR_INVALID_LENGTH	0x21
-#define MMA9551_MCI_ERROR_FIFO_BUSY		0x22
-#define MMA9551_MCI_ERROR_FIFO_ALLOCATED	0x23
-#define MMA9551_MCI_ERROR_FIFO_OVERSIZE		0x24
+/* Error-Status codes वापसed in mailbox पढ़ो command */
+#घोषणा MMA9551_MCI_ERROR_NONE			0x00
+#घोषणा MMA9551_MCI_ERROR_PARAM			0x04
+#घोषणा MMA9551_MCI_INVALID_COUNT		0x19
+#घोषणा MMA9551_MCI_ERROR_COMMAND		0x1C
+#घोषणा MMA9551_MCI_ERROR_INVALID_LENGTH	0x21
+#घोषणा MMA9551_MCI_ERROR_FIFO_BUSY		0x22
+#घोषणा MMA9551_MCI_ERROR_FIFO_ALLOCATED	0x23
+#घोषणा MMA9551_MCI_ERROR_FIFO_OVERSIZE		0x24
 
 /* GPIO Application */
-#define MMA9551_GPIO_POL_MSB		0x08
-#define MMA9551_GPIO_POL_LSB		0x09
+#घोषणा MMA9551_GPIO_POL_MSB		0x08
+#घोषणा MMA9551_GPIO_POL_LSB		0x09
 
 /* Sleep/Wake application */
-#define MMA9551_SLEEP_CFG		0x06
-#define MMA9551_SLEEP_CFG_SNCEN		BIT(0)
-#define MMA9551_SLEEP_CFG_FLEEN		BIT(1)
-#define MMA9551_SLEEP_CFG_SCHEN		BIT(2)
+#घोषणा MMA9551_SLEEP_CFG		0x06
+#घोषणा MMA9551_SLEEP_CFG_SNCEN		BIT(0)
+#घोषणा MMA9551_SLEEP_CFG_FLEEN		BIT(1)
+#घोषणा MMA9551_SLEEP_CFG_SCHEN		BIT(2)
 
 /* AFE application */
-#define MMA9551_AFE_X_ACCEL_REG		0x00
-#define MMA9551_AFE_Y_ACCEL_REG		0x02
-#define MMA9551_AFE_Z_ACCEL_REG		0x04
+#घोषणा MMA9551_AFE_X_ACCEL_REG		0x00
+#घोषणा MMA9551_AFE_Y_ACCEL_REG		0x02
+#घोषणा MMA9551_AFE_Z_ACCEL_REG		0x04
 
 /* Reset/Suspend/Clear application */
-#define MMA9551_RSC_RESET		0x00
-#define MMA9551_RSC_OFFSET(mask)	(3 - (ffs(mask) - 1) / 8)
-#define MMA9551_RSC_VAL(mask)		(mask >> (((ffs(mask) - 1) / 8) * 8))
+#घोषणा MMA9551_RSC_RESET		0x00
+#घोषणा MMA9551_RSC_OFFSET(mask)	(3 - (ffs(mask) - 1) / 8)
+#घोषणा MMA9551_RSC_VAL(mask)		(mask >> (((ffs(mask) - 1) / 8) * 8))
 
 /*
  * A response is composed of:
- * - control registers: MB0-3
- * - data registers: MB4-31
+ * - control रेजिस्टरs: MB0-3
+ * - data रेजिस्टरs: MB4-31
  *
  * A request is composed of:
- * - mbox to write to (always 0)
- * - control registers: MB1-4
- * - data registers: MB5-31
+ * - mbox to ग_लिखो to (always 0)
+ * - control रेजिस्टरs: MB1-4
+ * - data रेजिस्टरs: MB5-31
  */
-#define MMA9551_MAILBOX_CTRL_REGS	4
-#define MMA9551_MAX_MAILBOX_DATA_REGS	28
-#define MMA9551_MAILBOX_REGS		32
+#घोषणा MMA9551_MAILBOX_CTRL_REGS	4
+#घोषणा MMA9551_MAX_MAILBOX_DATA_REGS	28
+#घोषणा MMA9551_MAILBOX_REGS		32
 
-#define MMA9551_I2C_READ_RETRIES	5
-#define MMA9551_I2C_READ_DELAY	50	/* us */
+#घोषणा MMA9551_I2C_READ_RETRIES	5
+#घोषणा MMA9551_I2C_READ_DELAY	50	/* us */
 
-struct mma9551_mbox_request {
+काष्ठा mma9551_mbox_request अणु
 	u8 start_mbox;		/* Always 0. */
 	u8 app_id;
 	/*
@@ -75,15 +76,15 @@ struct mma9551_mbox_request {
 	 *
 	 * Bit 7: reserved, always 0
 	 * Bits 6-4: command
-	 * Bits 3-0: upper bits of register offset
+	 * Bits 3-0: upper bits of रेजिस्टर offset
 	 */
 	u8 cmd_off;
 	u8 lower_off;
 	u8 nbytes;
 	u8 buf[MMA9551_MAX_MAILBOX_DATA_REGS - 1];
-} __packed;
+पूर्ण __packed;
 
-struct mma9551_mbox_response {
+काष्ठा mma9551_mbox_response अणु
 	u8 app_id;
 	/*
 	 * See Section 5.3.3 of the MMA955xL Software Reference Manual.
@@ -95,31 +96,31 @@ struct mma9551_mbox_response {
 	u8 nbytes;
 	u8 req_bytes;
 	u8 buf[MMA9551_MAX_MAILBOX_DATA_REGS];
-} __packed;
+पूर्ण __packed;
 
-struct mma9551_version_info {
+काष्ठा mma9551_version_info अणु
 	__be32 device_id;
 	u8 rom_version[2];
 	u8 fw_version[2];
 	u8 hw_version[2];
 	u8 fw_build[2];
-};
+पूर्ण;
 
-static int mma9551_transfer(struct i2c_client *client,
+अटल पूर्णांक mma9551_transfer(काष्ठा i2c_client *client,
 			    u8 app_id, u8 command, u16 offset,
-			    u8 *inbytes, int num_inbytes,
-			    u8 *outbytes, int num_outbytes)
-{
-	struct mma9551_mbox_request req;
-	struct mma9551_mbox_response rsp;
-	struct i2c_msg in, out;
+			    u8 *inbytes, पूर्णांक num_inbytes,
+			    u8 *outbytes, पूर्णांक num_outbytes)
+अणु
+	काष्ठा mma9551_mbox_request req;
+	काष्ठा mma9551_mbox_response rsp;
+	काष्ठा i2c_msg in, out;
 	u8 req_len, err_code;
-	int ret, retries;
+	पूर्णांक ret, retries;
 
-	if (offset >= 1 << 12) {
+	अगर (offset >= 1 << 12) अणु
 		dev_err(&client->dev, "register offset too large\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	req_len = 1 + MMA9551_MAILBOX_CTRL_REGS + num_inbytes;
 	req.start_mbox = 0;
@@ -127,12 +128,12 @@ static int mma9551_transfer(struct i2c_client *client,
 	req.cmd_off = command | (offset >> 8);
 	req.lower_off = offset;
 
-	if (command == MMA9551_CMD_WRITE_CONFIG)
+	अगर (command == MMA9551_CMD_WRITE_CONFIG)
 		req.nbytes = num_inbytes;
-	else
+	अन्यथा
 		req.nbytes = num_outbytes;
-	if (num_inbytes)
-		memcpy(req.buf, inbytes, num_inbytes);
+	अगर (num_inbytes)
+		स_नकल(req.buf, inbytes, num_inbytes);
 
 	out.addr = client->addr;
 	out.flags = 0;
@@ -140,72 +141,72 @@ static int mma9551_transfer(struct i2c_client *client,
 	out.buf = (u8 *)&req;
 
 	ret = i2c_transfer(client->adapter, &out, 1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "i2c write failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	retries = MMA9551_I2C_READ_RETRIES;
-	do {
+	करो अणु
 		udelay(MMA9551_I2C_READ_DELAY);
 
 		in.addr = client->addr;
 		in.flags = I2C_M_RD;
-		in.len = sizeof(rsp);
+		in.len = माप(rsp);
 		in.buf = (u8 *)&rsp;
 
 		ret = i2c_transfer(client->adapter, &in, 1);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&client->dev, "i2c read failed\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (rsp.coco_err & MMA9551_RESPONSE_COCO)
-			break;
-	} while (--retries > 0);
+		अगर (rsp.coco_err & MMA9551_RESPONSE_COCO)
+			अवरोध;
+	पूर्ण जबतक (--retries > 0);
 
-	if (retries == 0) {
+	अगर (retries == 0) अणु
 		dev_err(&client->dev,
 			"timed out while waiting for command response\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	if (rsp.app_id != app_id) {
+	अगर (rsp.app_id != app_id) अणु
 		dev_err(&client->dev,
 			"app_id mismatch in response got %02x expected %02x\n",
 			rsp.app_id, app_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err_code = rsp.coco_err & ~MMA9551_RESPONSE_COCO;
-	if (err_code != MMA9551_MCI_ERROR_NONE) {
+	अगर (err_code != MMA9551_MCI_ERROR_NONE) अणु
 		dev_err(&client->dev, "read returned error %x\n", err_code);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (rsp.nbytes != rsp.req_bytes) {
+	अगर (rsp.nbytes != rsp.req_bytes) अणु
 		dev_err(&client->dev,
 			"output length mismatch got %d expected %d\n",
 			rsp.nbytes, rsp.req_bytes);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (num_outbytes)
-		memcpy(outbytes, rsp.buf, num_outbytes);
+	अगर (num_outbytes)
+		स_नकल(outbytes, rsp.buf, num_outbytes);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mma9551_read_config_byte() - read 1 configuration byte
+ * mma9551_पढ़ो_config_byte() - पढ़ो 1 configuration byte
  * @client:	I2C client
  * @app_id:	Application ID
- * @reg:	Application register
- * @val:	Pointer to store value read
+ * @reg:	Application रेजिस्टर
+ * @val:	Poपूर्णांकer to store value पढ़ो
  *
- * Read one configuration byte from the device using MMA955xL command format.
- * Commands to the MMA955xL platform consist of a write followed
- * by one or more reads.
+ * Read one configuration byte from the device using MMA955xL command क्रमmat.
+ * Commands to the MMA955xL platक्रमm consist of a ग_लिखो followed
+ * by one or more पढ़ोs.
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -213,24 +214,24 @@ static int mma9551_transfer(struct i2c_client *client,
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_read_config_byte(struct i2c_client *client, u8 app_id,
+पूर्णांक mma9551_पढ़ो_config_byte(काष्ठा i2c_client *client, u8 app_id,
 			     u16 reg, u8 *val)
-{
-	return mma9551_transfer(client, app_id, MMA9551_CMD_READ_CONFIG,
-				reg, NULL, 0, val, 1);
-}
-EXPORT_SYMBOL(mma9551_read_config_byte);
+अणु
+	वापस mma9551_transfer(client, app_id, MMA9551_CMD_READ_CONFIG,
+				reg, शून्य, 0, val, 1);
+पूर्ण
+EXPORT_SYMBOL(mma9551_पढ़ो_config_byte);
 
 /**
- * mma9551_write_config_byte() - write 1 configuration byte
+ * mma9551_ग_लिखो_config_byte() - ग_लिखो 1 configuration byte
  * @client:	I2C client
  * @app_id:	Application ID
- * @reg:	Application register
- * @val:	Value to write
+ * @reg:	Application रेजिस्टर
+ * @val:	Value to ग_लिखो
  *
- * Write one configuration byte from the device using MMA955xL command format.
- * Commands to the MMA955xL platform consist of a write followed by one or
- * more reads.
+ * Write one configuration byte from the device using MMA955xL command क्रमmat.
+ * Commands to the MMA955xL platक्रमm consist of a ग_लिखो followed by one or
+ * more पढ़ोs.
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -238,24 +239,24 @@ EXPORT_SYMBOL(mma9551_read_config_byte);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_write_config_byte(struct i2c_client *client, u8 app_id,
+पूर्णांक mma9551_ग_लिखो_config_byte(काष्ठा i2c_client *client, u8 app_id,
 			      u16 reg, u8 val)
-{
-	return mma9551_transfer(client, app_id, MMA9551_CMD_WRITE_CONFIG, reg,
-				&val, 1, NULL, 0);
-}
-EXPORT_SYMBOL(mma9551_write_config_byte);
+अणु
+	वापस mma9551_transfer(client, app_id, MMA9551_CMD_WRITE_CONFIG, reg,
+				&val, 1, शून्य, 0);
+पूर्ण
+EXPORT_SYMBOL(mma9551_ग_लिखो_config_byte);
 
 /**
- * mma9551_read_status_byte() - read 1 status byte
+ * mma9551_पढ़ो_status_byte() - पढ़ो 1 status byte
  * @client:	I2C client
  * @app_id:	Application ID
- * @reg:	Application register
- * @val:	Pointer to store value read
+ * @reg:	Application रेजिस्टर
+ * @val:	Poपूर्णांकer to store value पढ़ो
  *
- * Read one status byte from the device using MMA955xL command format.
- * Commands to the MMA955xL platform consist of a write followed by one or
- * more reads.
+ * Read one status byte from the device using MMA955xL command क्रमmat.
+ * Commands to the MMA955xL platक्रमm consist of a ग_लिखो followed by one or
+ * more पढ़ोs.
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -263,24 +264,24 @@ EXPORT_SYMBOL(mma9551_write_config_byte);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_read_status_byte(struct i2c_client *client, u8 app_id,
+पूर्णांक mma9551_पढ़ो_status_byte(काष्ठा i2c_client *client, u8 app_id,
 			     u16 reg, u8 *val)
-{
-	return mma9551_transfer(client, app_id, MMA9551_CMD_READ_STATUS,
-				reg, NULL, 0, val, 1);
-}
-EXPORT_SYMBOL(mma9551_read_status_byte);
+अणु
+	वापस mma9551_transfer(client, app_id, MMA9551_CMD_READ_STATUS,
+				reg, शून्य, 0, val, 1);
+पूर्ण
+EXPORT_SYMBOL(mma9551_पढ़ो_status_byte);
 
 /**
- * mma9551_read_config_word() - read 1 config word
+ * mma9551_पढ़ो_config_word() - पढ़ो 1 config word
  * @client:	I2C client
  * @app_id:	Application ID
- * @reg:	Application register
- * @val:	Pointer to store value read
+ * @reg:	Application रेजिस्टर
+ * @val:	Poपूर्णांकer to store value पढ़ो
  *
- * Read one configuration word from the device using MMA955xL command format.
- * Commands to the MMA955xL platform consist of a write followed by one or
- * more reads.
+ * Read one configuration word from the device using MMA955xL command क्रमmat.
+ * Commands to the MMA955xL platक्रमm consist of a ग_लिखो followed by one or
+ * more पढ़ोs.
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -288,30 +289,30 @@ EXPORT_SYMBOL(mma9551_read_status_byte);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_read_config_word(struct i2c_client *client, u8 app_id,
+पूर्णांक mma9551_पढ़ो_config_word(काष्ठा i2c_client *client, u8 app_id,
 			     u16 reg, u16 *val)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	__be16 v;
 
 	ret = mma9551_transfer(client, app_id, MMA9551_CMD_READ_CONFIG,
-			       reg, NULL, 0, (u8 *)&v, 2);
+			       reg, शून्य, 0, (u8 *)&v, 2);
 	*val = be16_to_cpu(v);
 
-	return ret;
-}
-EXPORT_SYMBOL(mma9551_read_config_word);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(mma9551_पढ़ो_config_word);
 
 /**
- * mma9551_write_config_word() - write 1 config word
+ * mma9551_ग_लिखो_config_word() - ग_लिखो 1 config word
  * @client:	I2C client
  * @app_id:	Application ID
- * @reg:	Application register
- * @val:	Value to write
+ * @reg:	Application रेजिस्टर
+ * @val:	Value to ग_लिखो
  *
- * Write one configuration word from the device using MMA955xL command format.
- * Commands to the MMA955xL platform consist of a write followed by one or
- * more reads.
+ * Write one configuration word from the device using MMA955xL command क्रमmat.
+ * Commands to the MMA955xL platक्रमm consist of a ग_लिखो followed by one or
+ * more पढ़ोs.
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -319,26 +320,26 @@ EXPORT_SYMBOL(mma9551_read_config_word);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_write_config_word(struct i2c_client *client, u8 app_id,
+पूर्णांक mma9551_ग_लिखो_config_word(काष्ठा i2c_client *client, u8 app_id,
 			      u16 reg, u16 val)
-{
+अणु
 	__be16 v = cpu_to_be16(val);
 
-	return mma9551_transfer(client, app_id, MMA9551_CMD_WRITE_CONFIG, reg,
-				(u8 *)&v, 2, NULL, 0);
-}
-EXPORT_SYMBOL(mma9551_write_config_word);
+	वापस mma9551_transfer(client, app_id, MMA9551_CMD_WRITE_CONFIG, reg,
+				(u8 *)&v, 2, शून्य, 0);
+पूर्ण
+EXPORT_SYMBOL(mma9551_ग_लिखो_config_word);
 
 /**
- * mma9551_read_status_word() - read 1 status word
+ * mma9551_पढ़ो_status_word() - पढ़ो 1 status word
  * @client:	I2C client
  * @app_id:	Application ID
- * @reg:	Application register
- * @val:	Pointer to store value read
+ * @reg:	Application रेजिस्टर
+ * @val:	Poपूर्णांकer to store value पढ़ो
  *
- * Read one status word from the device using MMA955xL command format.
- * Commands to the MMA955xL platform consist of a write followed by one or
- * more reads.
+ * Read one status word from the device using MMA955xL command क्रमmat.
+ * Commands to the MMA955xL platक्रमm consist of a ग_लिखो followed by one or
+ * more पढ़ोs.
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -346,29 +347,29 @@ EXPORT_SYMBOL(mma9551_write_config_word);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_read_status_word(struct i2c_client *client, u8 app_id,
+पूर्णांक mma9551_पढ़ो_status_word(काष्ठा i2c_client *client, u8 app_id,
 			     u16 reg, u16 *val)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	__be16 v;
 
 	ret = mma9551_transfer(client, app_id, MMA9551_CMD_READ_STATUS,
-			       reg, NULL, 0, (u8 *)&v, 2);
+			       reg, शून्य, 0, (u8 *)&v, 2);
 	*val = be16_to_cpu(v);
 
-	return ret;
-}
-EXPORT_SYMBOL(mma9551_read_status_word);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(mma9551_पढ़ो_status_word);
 
 /**
- * mma9551_read_config_words() - read multiple config words
+ * mma9551_पढ़ो_config_words() - पढ़ो multiple config words
  * @client:	I2C client
  * @app_id:	Application ID
- * @reg:	Application register
- * @len:	Length of array to read (in words)
- * @buf:	Array of words to read
+ * @reg:	Application रेजिस्टर
+ * @len:	Length of array to पढ़ो (in words)
+ * @buf:	Array of words to पढ़ो
  *
- * Read multiple configuration registers (word-sized registers).
+ * Read multiple configuration रेजिस्टरs (word-sized रेजिस्टरs).
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -376,38 +377,38 @@ EXPORT_SYMBOL(mma9551_read_status_word);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_read_config_words(struct i2c_client *client, u8 app_id,
+पूर्णांक mma9551_पढ़ो_config_words(काष्ठा i2c_client *client, u8 app_id,
 			      u16 reg, u8 len, u16 *buf)
-{
-	int ret, i;
+अणु
+	पूर्णांक ret, i;
 	__be16 be_buf[MMA9551_MAX_MAILBOX_DATA_REGS / 2];
 
-	if (len > ARRAY_SIZE(be_buf)) {
+	अगर (len > ARRAY_SIZE(be_buf)) अणु
 		dev_err(&client->dev, "Invalid buffer size %d\n", len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = mma9551_transfer(client, app_id, MMA9551_CMD_READ_CONFIG,
-			       reg, NULL, 0, (u8 *)be_buf, len * sizeof(u16));
-	if (ret < 0)
-		return ret;
+			       reg, शून्य, 0, (u8 *)be_buf, len * माप(u16));
+	अगर (ret < 0)
+		वापस ret;
 
-	for (i = 0; i < len; i++)
+	क्रम (i = 0; i < len; i++)
 		buf[i] = be16_to_cpu(be_buf[i]);
 
-	return 0;
-}
-EXPORT_SYMBOL(mma9551_read_config_words);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mma9551_पढ़ो_config_words);
 
 /**
- * mma9551_read_status_words() - read multiple status words
+ * mma9551_पढ़ो_status_words() - पढ़ो multiple status words
  * @client:	I2C client
  * @app_id:	Application ID
- * @reg:	Application register
- * @len:	Length of array to read (in words)
- * @buf:	Array of words to read
+ * @reg:	Application रेजिस्टर
+ * @len:	Length of array to पढ़ो (in words)
+ * @buf:	Array of words to पढ़ो
  *
- * Read multiple status registers (word-sized registers).
+ * Read multiple status रेजिस्टरs (word-sized रेजिस्टरs).
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -415,38 +416,38 @@ EXPORT_SYMBOL(mma9551_read_config_words);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_read_status_words(struct i2c_client *client, u8 app_id,
+पूर्णांक mma9551_पढ़ो_status_words(काष्ठा i2c_client *client, u8 app_id,
 			      u16 reg, u8 len, u16 *buf)
-{
-	int ret, i;
+अणु
+	पूर्णांक ret, i;
 	__be16 be_buf[MMA9551_MAX_MAILBOX_DATA_REGS / 2];
 
-	if (len > ARRAY_SIZE(be_buf)) {
+	अगर (len > ARRAY_SIZE(be_buf)) अणु
 		dev_err(&client->dev, "Invalid buffer size %d\n", len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = mma9551_transfer(client, app_id, MMA9551_CMD_READ_STATUS,
-			       reg, NULL, 0, (u8 *)be_buf, len * sizeof(u16));
-	if (ret < 0)
-		return ret;
+			       reg, शून्य, 0, (u8 *)be_buf, len * माप(u16));
+	अगर (ret < 0)
+		वापस ret;
 
-	for (i = 0; i < len; i++)
+	क्रम (i = 0; i < len; i++)
 		buf[i] = be16_to_cpu(be_buf[i]);
 
-	return 0;
-}
-EXPORT_SYMBOL(mma9551_read_status_words);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mma9551_पढ़ो_status_words);
 
 /**
- * mma9551_write_config_words() - write multiple config words
+ * mma9551_ग_लिखो_config_words() - ग_लिखो multiple config words
  * @client:	I2C client
  * @app_id:	Application ID
- * @reg:	Application register
- * @len:	Length of array to write (in words)
- * @buf:	Array of words to write
+ * @reg:	Application रेजिस्टर
+ * @len:	Length of array to ग_लिखो (in words)
+ * @buf:	Array of words to ग_लिखो
  *
- * Write multiple configuration registers (word-sized registers).
+ * Write multiple configuration रेजिस्टरs (word-sized रेजिस्टरs).
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -454,34 +455,34 @@ EXPORT_SYMBOL(mma9551_read_status_words);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_write_config_words(struct i2c_client *client, u8 app_id,
+पूर्णांक mma9551_ग_लिखो_config_words(काष्ठा i2c_client *client, u8 app_id,
 			       u16 reg, u8 len, u16 *buf)
-{
-	int i;
+अणु
+	पूर्णांक i;
 	__be16 be_buf[(MMA9551_MAX_MAILBOX_DATA_REGS - 1) / 2];
 
-	if (len > ARRAY_SIZE(be_buf)) {
+	अगर (len > ARRAY_SIZE(be_buf)) अणु
 		dev_err(&client->dev, "Invalid buffer size %d\n", len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < len; i++)
+	क्रम (i = 0; i < len; i++)
 		be_buf[i] = cpu_to_be16(buf[i]);
 
-	return mma9551_transfer(client, app_id, MMA9551_CMD_WRITE_CONFIG,
-				reg, (u8 *)be_buf, len * sizeof(u16), NULL, 0);
-}
-EXPORT_SYMBOL(mma9551_write_config_words);
+	वापस mma9551_transfer(client, app_id, MMA9551_CMD_WRITE_CONFIG,
+				reg, (u8 *)be_buf, len * माप(u16), शून्य, 0);
+पूर्ण
+EXPORT_SYMBOL(mma9551_ग_लिखो_config_words);
 
 /**
- * mma9551_update_config_bits() - update bits in register
+ * mma9551_update_config_bits() - update bits in रेजिस्टर
  * @client:	I2C client
  * @app_id:	Application ID
- * @reg:	Application register
- * @mask:	Mask for the bits to update
+ * @reg:	Application रेजिस्टर
+ * @mask:	Mask क्रम the bits to update
  * @val:	Value of the bits to update
  *
- * Update bits in the given register using a bit mask.
+ * Update bits in the given रेजिस्टर using a bit mask.
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -489,24 +490,24 @@ EXPORT_SYMBOL(mma9551_write_config_words);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_update_config_bits(struct i2c_client *client, u8 app_id,
+पूर्णांक mma9551_update_config_bits(काष्ठा i2c_client *client, u8 app_id,
 			       u16 reg, u8 mask, u8 val)
-{
-	int ret;
-	u8 tmp, orig;
+अणु
+	पूर्णांक ret;
+	u8 पंचांगp, orig;
 
-	ret = mma9551_read_config_byte(client, app_id, reg, &orig);
-	if (ret < 0)
-		return ret;
+	ret = mma9551_पढ़ो_config_byte(client, app_id, reg, &orig);
+	अगर (ret < 0)
+		वापस ret;
 
-	tmp = orig & ~mask;
-	tmp |= val & mask;
+	पंचांगp = orig & ~mask;
+	पंचांगp |= val & mask;
 
-	if (tmp == orig)
-		return 0;
+	अगर (पंचांगp == orig)
+		वापस 0;
 
-	return mma9551_write_config_byte(client, app_id, reg, tmp);
-}
+	वापस mma9551_ग_लिखो_config_byte(client, app_id, reg, पंचांगp);
+पूर्ण
 EXPORT_SYMBOL(mma9551_update_config_bits);
 
 /**
@@ -514,13 +515,13 @@ EXPORT_SYMBOL(mma9551_update_config_bits);
  * @client:	I2C client
  * @pin:	GPIO pin to configure
  * @app_id:	Application ID
- * @bitnum:	Bit number of status register being assigned to the GPIO pin.
+ * @bitnum:	Bit number of status रेजिस्टर being asचिन्हित to the GPIO pin.
  * @polarity:	The polarity parameter is described in section 6.2.2, page 66,
  *		of the Software Reference Manual.  Basically, polarity=0 means
- *		the interrupt line has the same value as the selected bit,
- *		while polarity=1 means the line is inverted.
+ *		the पूर्णांकerrupt line has the same value as the selected bit,
+ *		जबतक polarity=1 means the line is inverted.
  *
- * Assign a bit from an application’s status register to a specific GPIO pin.
+ * Assign a bit from an applicationै s status रेजिस्टर to a specअगरic GPIO pin.
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -528,16 +529,16 @@ EXPORT_SYMBOL(mma9551_update_config_bits);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_gpio_config(struct i2c_client *client, enum mma9551_gpio_pin pin,
-			u8 app_id, u8 bitnum, int polarity)
-{
+पूर्णांक mma9551_gpio_config(काष्ठा i2c_client *client, क्रमागत mma9551_gpio_pin pin,
+			u8 app_id, u8 bitnum, पूर्णांक polarity)
+अणु
 	u8 reg, pol_mask, pol_val;
-	int ret;
+	पूर्णांक ret;
 
-	if (pin > mma9551_gpio_max) {
+	अगर (pin > mma9551_gpio_max) अणु
 		dev_err(&client->dev, "bad GPIO pin\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Pin 6 is configured by regs 0x00 and 0x01, pin 7 by 0x02 and
@@ -545,54 +546,54 @@ int mma9551_gpio_config(struct i2c_client *client, enum mma9551_gpio_pin pin,
 	 */
 	reg = pin * 2;
 
-	ret = mma9551_write_config_byte(client, MMA9551_APPID_GPIO,
+	ret = mma9551_ग_लिखो_config_byte(client, MMA9551_APPID_GPIO,
 					reg, app_id);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "error setting GPIO app_id\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = mma9551_write_config_byte(client, MMA9551_APPID_GPIO,
+	ret = mma9551_ग_लिखो_config_byte(client, MMA9551_APPID_GPIO,
 					reg + 1, bitnum);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "error setting GPIO bit number\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (pin) {
-	case mma9551_gpio6:
+	चयन (pin) अणु
+	हाल mma9551_gpio6:
 		reg = MMA9551_GPIO_POL_LSB;
 		pol_mask = 1 << 6;
-		break;
-	case mma9551_gpio7:
+		अवरोध;
+	हाल mma9551_gpio7:
 		reg = MMA9551_GPIO_POL_LSB;
 		pol_mask = 1 << 7;
-		break;
-	case mma9551_gpio8:
+		अवरोध;
+	हाल mma9551_gpio8:
 		reg = MMA9551_GPIO_POL_MSB;
 		pol_mask = 1 << 0;
-		break;
-	case mma9551_gpio9:
+		अवरोध;
+	हाल mma9551_gpio9:
 		reg = MMA9551_GPIO_POL_MSB;
 		pol_mask = 1 << 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	pol_val = polarity ? pol_mask : 0;
 
 	ret = mma9551_update_config_bits(client, MMA9551_APPID_GPIO, reg,
 					 pol_mask, pol_val);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&client->dev, "error setting GPIO polarity\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(mma9551_gpio_config);
 
 /**
- * mma9551_read_version() - read device version information
+ * mma9551_पढ़ो_version() - पढ़ो device version inक्रमmation
  * @client:	I2C client
  *
- * Read version information and print device id and firmware version.
+ * Read version inक्रमmation and prपूर्णांक device id and firmware version.
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -600,34 +601,34 @@ EXPORT_SYMBOL(mma9551_gpio_config);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_read_version(struct i2c_client *client)
-{
-	struct mma9551_version_info info;
-	int ret;
+पूर्णांक mma9551_पढ़ो_version(काष्ठा i2c_client *client)
+अणु
+	काष्ठा mma9551_version_info info;
+	पूर्णांक ret;
 
 	ret = mma9551_transfer(client, MMA9551_APPID_VERSION, 0x00, 0x00,
-			       NULL, 0, (u8 *)&info, sizeof(info));
-	if (ret < 0)
-		return ret;
+			       शून्य, 0, (u8 *)&info, माप(info));
+	अगर (ret < 0)
+		वापस ret;
 
 	dev_info(&client->dev, "device ID 0x%x, firmware version %02x.%02x\n",
 		 be32_to_cpu(info.device_id), info.fw_version[0],
 		 info.fw_version[1]);
 
-	return 0;
-}
-EXPORT_SYMBOL(mma9551_read_version);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mma9551_पढ़ो_version);
 
 /**
- * mma9551_set_device_state() - sets HW power mode
+ * mma9551_set_device_state() - sets HW घातer mode
  * @client:	I2C client
- * @enable:	Use true to power on device, false to cause the device
+ * @enable:	Use true to घातer on device, false to cause the device
  *		to enter sleep.
  *
- * Set power on/off for device using the Sleep/Wake Application.
- * When enable is true, power on chip and enable doze mode.
- * When enable is false, enter sleep mode (device remains in the
- * lowest-power mode).
+ * Set घातer on/off क्रम device using the Sleep/Wake Application.
+ * When enable is true, घातer on chip and enable करोze mode.
+ * When enable is false, enter sleep mode (device reमुख्यs in the
+ * lowest-घातer mode).
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -635,9 +636,9 @@ EXPORT_SYMBOL(mma9551_read_version);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_set_device_state(struct i2c_client *client, bool enable)
-{
-	return mma9551_update_config_bits(client, MMA9551_APPID_SLEEP_WAKE,
+पूर्णांक mma9551_set_device_state(काष्ठा i2c_client *client, bool enable)
+अणु
+	वापस mma9551_update_config_bits(client, MMA9551_APPID_SLEEP_WAKE,
 					  MMA9551_SLEEP_CFG,
 					  MMA9551_SLEEP_CFG_SNCEN |
 					  MMA9551_SLEEP_CFG_FLEEN |
@@ -645,72 +646,72 @@ int mma9551_set_device_state(struct i2c_client *client, bool enable)
 					  enable ? MMA9551_SLEEP_CFG_SCHEN |
 					  MMA9551_SLEEP_CFG_FLEEN :
 					  MMA9551_SLEEP_CFG_SNCEN);
-}
+पूर्ण
 EXPORT_SYMBOL(mma9551_set_device_state);
 
 /**
- * mma9551_set_power_state() - sets runtime PM state
+ * mma9551_set_घातer_state() - sets runसमय PM state
  * @client:	I2C client
- * @on:		Use true to power on device, false to power off
+ * @on:		Use true to घातer on device, false to घातer off
  *
- * Resume or suspend the device using Runtime PM.
- * The device will suspend after the autosuspend delay.
+ * Resume or suspend the device using Runसमय PM.
+ * The device will suspend after the स्वतःsuspend delay.
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_set_power_state(struct i2c_client *client, bool on)
-{
-#ifdef CONFIG_PM
-	int ret;
+पूर्णांक mma9551_set_घातer_state(काष्ठा i2c_client *client, bool on)
+अणु
+#अगर_घोषित CONFIG_PM
+	पूर्णांक ret;
 
-	if (on)
-		ret = pm_runtime_get_sync(&client->dev);
-	else {
-		pm_runtime_mark_last_busy(&client->dev);
-		ret = pm_runtime_put_autosuspend(&client->dev);
-	}
+	अगर (on)
+		ret = pm_runसमय_get_sync(&client->dev);
+	अन्यथा अणु
+		pm_runसमय_mark_last_busy(&client->dev);
+		ret = pm_runसमय_put_स्वतःsuspend(&client->dev);
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev,
 			"failed to change power state to %d\n", on);
-		if (on)
-			pm_runtime_put_noidle(&client->dev);
+		अगर (on)
+			pm_runसमय_put_noidle(&client->dev);
 
-		return ret;
-	}
-#endif
+		वापस ret;
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
-EXPORT_SYMBOL(mma9551_set_power_state);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mma9551_set_घातer_state);
 
 /**
  * mma9551_sleep() - sleep
  * @freq:	Application frequency
  *
  * Firmware applications run at a certain frequency on the
- * device. Sleep for one application cycle to make sure the
- * application had time to run once and initialize set values.
+ * device. Sleep क्रम one application cycle to make sure the
+ * application had समय to run once and initialize set values.
  */
-void mma9551_sleep(int freq)
-{
-	int sleep_val = 1000 / freq;
+व्योम mma9551_sleep(पूर्णांक freq)
+अणु
+	पूर्णांक sleep_val = 1000 / freq;
 
-	if (sleep_val < 20)
+	अगर (sleep_val < 20)
 		usleep_range(sleep_val * 1000, 20000);
-	else
-		msleep_interruptible(sleep_val);
-}
+	अन्यथा
+		msleep_पूर्णांकerruptible(sleep_val);
+पूर्ण
 EXPORT_SYMBOL(mma9551_sleep);
 
 /**
- * mma9551_read_accel_chan() - read accelerometer channel
+ * mma9551_पढ़ो_accel_chan() - पढ़ो accelerometer channel
  * @client:	I2C client
  * @chan:	IIO channel
- * @val:	Pointer to the accelerometer value read
+ * @val:	Poपूर्णांकer to the accelerometer value पढ़ो
  * @val2:	Unused
  *
- * Read accelerometer value for the specified channel.
+ * Read accelerometer value क्रम the specअगरied channel.
  *
  * Locking note: This function must be called with the device lock held.
  * Locking is not handled inside the function. Callers should ensure they
@@ -718,64 +719,64 @@ EXPORT_SYMBOL(mma9551_sleep);
  *
  * Returns: IIO_VAL_INT on success, negative value on failure.
  */
-int mma9551_read_accel_chan(struct i2c_client *client,
-			    const struct iio_chan_spec *chan,
-			    int *val, int *val2)
-{
+पूर्णांक mma9551_पढ़ो_accel_chan(काष्ठा i2c_client *client,
+			    स्थिर काष्ठा iio_chan_spec *chan,
+			    पूर्णांक *val, पूर्णांक *val2)
+अणु
 	u16 reg_addr;
 	s16 raw_accel;
-	int ret;
+	पूर्णांक ret;
 
-	switch (chan->channel2) {
-	case IIO_MOD_X:
+	चयन (chan->channel2) अणु
+	हाल IIO_MOD_X:
 		reg_addr = MMA9551_AFE_X_ACCEL_REG;
-		break;
-	case IIO_MOD_Y:
+		अवरोध;
+	हाल IIO_MOD_Y:
 		reg_addr = MMA9551_AFE_Y_ACCEL_REG;
-		break;
-	case IIO_MOD_Z:
+		अवरोध;
+	हाल IIO_MOD_Z:
 		reg_addr = MMA9551_AFE_Z_ACCEL_REG;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = mma9551_set_power_state(client, true);
-	if (ret < 0)
-		return ret;
+	ret = mma9551_set_घातer_state(client, true);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = mma9551_read_status_word(client, MMA9551_APPID_AFE,
+	ret = mma9551_पढ़ो_status_word(client, MMA9551_APPID_AFE,
 				       reg_addr, &raw_accel);
-	if (ret < 0)
-		goto out_poweroff;
+	अगर (ret < 0)
+		जाओ out_घातeroff;
 
 	*val = raw_accel;
 
 	ret = IIO_VAL_INT;
 
-out_poweroff:
-	mma9551_set_power_state(client, false);
-	return ret;
-}
-EXPORT_SYMBOL(mma9551_read_accel_chan);
+out_घातeroff:
+	mma9551_set_घातer_state(client, false);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(mma9551_पढ़ो_accel_chan);
 
 /**
- * mma9551_read_accel_scale() - read accelerometer scale
- * @val:	Pointer to the accelerometer scale (int value)
- * @val2:	Pointer to the accelerometer scale (micro value)
+ * mma9551_पढ़ो_accel_scale() - पढ़ो accelerometer scale
+ * @val:	Poपूर्णांकer to the accelerometer scale (पूर्णांक value)
+ * @val2:	Poपूर्णांकer to the accelerometer scale (micro value)
  *
  * Read accelerometer scale.
  *
  * Returns: IIO_VAL_INT_PLUS_MICRO.
  */
-int mma9551_read_accel_scale(int *val, int *val2)
-{
+पूर्णांक mma9551_पढ़ो_accel_scale(पूर्णांक *val, पूर्णांक *val2)
+अणु
 	*val = 0;
 	*val2 = 2440;
 
-	return IIO_VAL_INT_PLUS_MICRO;
-}
-EXPORT_SYMBOL(mma9551_read_accel_scale);
+	वापस IIO_VAL_INT_PLUS_MICRO;
+पूर्ण
+EXPORT_SYMBOL(mma9551_पढ़ो_accel_scale);
 
 /**
  * mma9551_app_reset() - reset application
@@ -787,13 +788,13 @@ EXPORT_SYMBOL(mma9551_read_accel_scale);
  *
  * Returns: 0 on success, negative value on failure.
  */
-int mma9551_app_reset(struct i2c_client *client, u32 app_mask)
-{
-	return mma9551_write_config_byte(client, MMA9551_APPID_RSC,
+पूर्णांक mma9551_app_reset(काष्ठा i2c_client *client, u32 app_mask)
+अणु
+	वापस mma9551_ग_लिखो_config_byte(client, MMA9551_APPID_RSC,
 					 MMA9551_RSC_RESET +
 					 MMA9551_RSC_OFFSET(app_mask),
 					 MMA9551_RSC_VAL(app_mask));
-}
+पूर्ण
 EXPORT_SYMBOL(mma9551_app_reset);
 
 MODULE_AUTHOR("Irina Tirdea <irina.tirdea@intel.com>");

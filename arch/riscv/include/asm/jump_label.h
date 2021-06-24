@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 Emil Renner Berthing
  *
- * Based on arch/arm64/include/asm/jump_label.h
+ * Based on arch/arm64/include/यंत्र/jump_label.h
  */
-#ifndef __ASM_JUMP_LABEL_H
-#define __ASM_JUMP_LABEL_H
+#अगर_अघोषित __ASM_JUMP_LABEL_H
+#घोषणा __ASM_JUMP_LABEL_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/types.h>
-#include <asm/asm.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/यंत्र.h>
 
-#define JUMP_LABEL_NOP_SIZE 4
+#घोषणा JUMP_LABEL_NOP_SIZE 4
 
-static __always_inline bool arch_static_branch(struct static_key *key,
+अटल __always_अंतरभूत bool arch_अटल_branch(काष्ठा अटल_key *key,
 					       bool branch)
-{
-	asm_volatile_goto(
+अणु
+	यंत्र_अस्थिर_जाओ(
 		"	.option push				\n\t"
 		"	.option norelax				\n\t"
 		"	.option norvc				\n\t"
@@ -28,17 +29,17 @@ static __always_inline bool arch_static_branch(struct static_key *key,
 		"	.long		1b - ., %l[label] - .	\n\t"
 		"	" RISCV_PTR "	%0 - .			\n\t"
 		"	.popsection				\n\t"
-		:  :  "i"(&((char *)key)[branch]) :  : label);
+		:  :  "i"(&((अक्षर *)key)[branch]) :  : label);
 
-	return false;
+	वापस false;
 label:
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static __always_inline bool arch_static_branch_jump(struct static_key *key,
+अटल __always_अंतरभूत bool arch_अटल_branch_jump(काष्ठा अटल_key *key,
 						    bool branch)
-{
-	asm_volatile_goto(
+अणु
+	यंत्र_अस्थिर_जाओ(
 		"	.option push				\n\t"
 		"	.option norelax				\n\t"
 		"	.option norvc				\n\t"
@@ -49,12 +50,12 @@ static __always_inline bool arch_static_branch_jump(struct static_key *key,
 		"	.long		1b - ., %l[label] - .	\n\t"
 		"	" RISCV_PTR "	%0 - .			\n\t"
 		"	.popsection				\n\t"
-		:  :  "i"(&((char *)key)[branch]) :  : label);
+		:  :  "i"(&((अक्षर *)key)[branch]) :  : label);
 
-	return false;
+	वापस false;
 label:
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#endif  /* __ASSEMBLY__ */
-#endif	/* __ASM_JUMP_LABEL_H */
+#पूर्ण_अगर  /* __ASSEMBLY__ */
+#पूर्ण_अगर	/* __ASM_JUMP_LABEL_H */

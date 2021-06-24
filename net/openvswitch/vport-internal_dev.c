@@ -1,112 +1,113 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2007-2012 Nicira, Inc.
  */
 
-#include <linux/if_vlan.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/skbuff.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/skbuff.h>
 
-#include <net/dst.h>
-#include <net/xfrm.h>
-#include <net/rtnetlink.h>
+#समावेश <net/dst.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/rtnetlink.h>
 
-#include "datapath.h"
-#include "vport-internal_dev.h"
-#include "vport-netdev.h"
+#समावेश "datapath.h"
+#समावेश "vport-internal_dev.h"
+#समावेश "vport-netdev.h"
 
-struct internal_dev {
-	struct vport *vport;
-};
+काष्ठा पूर्णांकernal_dev अणु
+	काष्ठा vport *vport;
+पूर्ण;
 
-static struct vport_ops ovs_internal_vport_ops;
+अटल काष्ठा vport_ops ovs_पूर्णांकernal_vport_ops;
 
-static struct internal_dev *internal_dev_priv(struct net_device *netdev)
-{
-	return netdev_priv(netdev);
-}
+अटल काष्ठा पूर्णांकernal_dev *पूर्णांकernal_dev_priv(काष्ठा net_device *netdev)
+अणु
+	वापस netdev_priv(netdev);
+पूर्ण
 
-/* Called with rcu_read_lock_bh. */
-static netdev_tx_t
-internal_dev_xmit(struct sk_buff *skb, struct net_device *netdev)
-{
-	int len, err;
+/* Called with rcu_पढ़ो_lock_bh. */
+अटल netdev_tx_t
+पूर्णांकernal_dev_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
+अणु
+	पूर्णांक len, err;
 
-	/* store len value because skb can be freed inside ovs_vport_receive() */
+	/* store len value because skb can be मुक्तd inside ovs_vport_receive() */
 	len = skb->len;
 
-	rcu_read_lock();
-	err = ovs_vport_receive(internal_dev_priv(netdev)->vport, skb, NULL);
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	err = ovs_vport_receive(पूर्णांकernal_dev_priv(netdev)->vport, skb, शून्य);
+	rcu_पढ़ो_unlock();
 
-	if (likely(!err))
+	अगर (likely(!err))
 		dev_sw_netstats_tx_add(netdev, 1, len);
-	else
+	अन्यथा
 		netdev->stats.tx_errors++;
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int internal_dev_open(struct net_device *netdev)
-{
-	netif_start_queue(netdev);
-	return 0;
-}
+अटल पूर्णांक पूर्णांकernal_dev_खोलो(काष्ठा net_device *netdev)
+अणु
+	netअगर_start_queue(netdev);
+	वापस 0;
+पूर्ण
 
-static int internal_dev_stop(struct net_device *netdev)
-{
-	netif_stop_queue(netdev);
-	return 0;
-}
+अटल पूर्णांक पूर्णांकernal_dev_stop(काष्ठा net_device *netdev)
+अणु
+	netअगर_stop_queue(netdev);
+	वापस 0;
+पूर्ण
 
-static void internal_dev_getinfo(struct net_device *netdev,
-				 struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, "openvswitch", sizeof(info->driver));
-}
+अटल व्योम पूर्णांकernal_dev_getinfo(काष्ठा net_device *netdev,
+				 काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, "openvswitch", माप(info->driver));
+पूर्ण
 
-static const struct ethtool_ops internal_dev_ethtool_ops = {
-	.get_drvinfo	= internal_dev_getinfo,
+अटल स्थिर काष्ठा ethtool_ops पूर्णांकernal_dev_ethtool_ops = अणु
+	.get_drvinfo	= पूर्णांकernal_dev_getinfo,
 	.get_link	= ethtool_op_get_link,
-};
+पूर्ण;
 
-static void internal_dev_destructor(struct net_device *dev)
-{
-	struct vport *vport = ovs_internal_dev_get_vport(dev);
+अटल व्योम पूर्णांकernal_dev_deकाष्ठाor(काष्ठा net_device *dev)
+अणु
+	काष्ठा vport *vport = ovs_पूर्णांकernal_dev_get_vport(dev);
 
-	ovs_vport_free(vport);
-}
+	ovs_vport_मुक्त(vport);
+पूर्ण
 
-static const struct net_device_ops internal_dev_netdev_ops = {
-	.ndo_open = internal_dev_open,
-	.ndo_stop = internal_dev_stop,
-	.ndo_start_xmit = internal_dev_xmit,
-	.ndo_set_mac_address = eth_mac_addr,
-	.ndo_get_stats64 = dev_get_tstats64,
-};
+अटल स्थिर काष्ठा net_device_ops पूर्णांकernal_dev_netdev_ops = अणु
+	.nकरो_खोलो = पूर्णांकernal_dev_खोलो,
+	.nकरो_stop = पूर्णांकernal_dev_stop,
+	.nकरो_start_xmit = पूर्णांकernal_dev_xmit,
+	.nकरो_set_mac_address = eth_mac_addr,
+	.nकरो_get_stats64 = dev_get_tstats64,
+पूर्ण;
 
-static struct rtnl_link_ops internal_dev_link_ops __read_mostly = {
+अटल काष्ठा rtnl_link_ops पूर्णांकernal_dev_link_ops __पढ़ो_mostly = अणु
 	.kind = "openvswitch",
-};
+पूर्ण;
 
-static void do_setup(struct net_device *netdev)
-{
+अटल व्योम करो_setup(काष्ठा net_device *netdev)
+अणु
 	ether_setup(netdev);
 
 	netdev->max_mtu = ETH_MAX_MTU;
 
-	netdev->netdev_ops = &internal_dev_netdev_ops;
+	netdev->netdev_ops = &पूर्णांकernal_dev_netdev_ops;
 
 	netdev->priv_flags &= ~IFF_TX_SKB_SHARING;
 	netdev->priv_flags |= IFF_LIVE_ADDR_CHANGE | IFF_OPENVSWITCH |
 			      IFF_NO_QUEUE;
-	netdev->needs_free_netdev = true;
-	netdev->priv_destructor = NULL;
-	netdev->ethtool_ops = &internal_dev_ethtool_ops;
-	netdev->rtnl_link_ops = &internal_dev_link_ops;
+	netdev->needs_मुक्त_netdev = true;
+	netdev->priv_deकाष्ठाor = शून्य;
+	netdev->ethtool_ops = &पूर्णांकernal_dev_ethtool_ops;
+	netdev->rtnl_link_ops = &पूर्णांकernal_dev_link_ops;
 
 	netdev->features = NETIF_F_LLTX | NETIF_F_SG | NETIF_F_FRAGLIST |
 			   NETIF_F_HIGHDMA | NETIF_F_HW_CSUM |
@@ -117,87 +118,87 @@ static void do_setup(struct net_device *netdev)
 	netdev->features |= NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_STAG_TX;
 	netdev->hw_features = netdev->features & ~NETIF_F_LLTX;
 
-	eth_hw_addr_random(netdev);
-}
+	eth_hw_addr_अक्रमom(netdev);
+पूर्ण
 
-static struct vport *internal_dev_create(const struct vport_parms *parms)
-{
-	struct vport *vport;
-	struct internal_dev *internal_dev;
-	struct net_device *dev;
-	int err;
+अटल काष्ठा vport *पूर्णांकernal_dev_create(स्थिर काष्ठा vport_parms *parms)
+अणु
+	काष्ठा vport *vport;
+	काष्ठा पूर्णांकernal_dev *पूर्णांकernal_dev;
+	काष्ठा net_device *dev;
+	पूर्णांक err;
 
-	vport = ovs_vport_alloc(0, &ovs_internal_vport_ops, parms);
-	if (IS_ERR(vport)) {
+	vport = ovs_vport_alloc(0, &ovs_पूर्णांकernal_vport_ops, parms);
+	अगर (IS_ERR(vport)) अणु
 		err = PTR_ERR(vport);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	dev = alloc_netdev(sizeof(struct internal_dev),
-			   parms->name, NET_NAME_USER, do_setup);
+	dev = alloc_netdev(माप(काष्ठा पूर्णांकernal_dev),
+			   parms->name, NET_NAME_USER, करो_setup);
 	vport->dev = dev;
-	if (!vport->dev) {
+	अगर (!vport->dev) अणु
 		err = -ENOMEM;
-		goto error_free_vport;
-	}
-	vport->dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_sw_netstats);
-	if (!vport->dev->tstats) {
+		जाओ error_मुक्त_vport;
+	पूर्ण
+	vport->dev->tstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_sw_netstats);
+	अगर (!vport->dev->tstats) अणु
 		err = -ENOMEM;
-		goto error_free_netdev;
-	}
+		जाओ error_मुक्त_netdev;
+	पूर्ण
 
 	dev_net_set(vport->dev, ovs_dp_get_net(vport->dp));
-	internal_dev = internal_dev_priv(vport->dev);
-	internal_dev->vport = vport;
+	पूर्णांकernal_dev = पूर्णांकernal_dev_priv(vport->dev);
+	पूर्णांकernal_dev->vport = vport;
 
 	/* Restrict bridge port to current netns. */
-	if (vport->port_no == OVSP_LOCAL)
+	अगर (vport->port_no == OVSP_LOCAL)
 		vport->dev->features |= NETIF_F_NETNS_LOCAL;
 
 	rtnl_lock();
-	err = register_netdevice(vport->dev);
-	if (err)
-		goto error_unlock;
-	vport->dev->priv_destructor = internal_dev_destructor;
+	err = रेजिस्टर_netdevice(vport->dev);
+	अगर (err)
+		जाओ error_unlock;
+	vport->dev->priv_deकाष्ठाor = पूर्णांकernal_dev_deकाष्ठाor;
 
 	dev_set_promiscuity(vport->dev, 1);
 	rtnl_unlock();
-	netif_start_queue(vport->dev);
+	netअगर_start_queue(vport->dev);
 
-	return vport;
+	वापस vport;
 
 error_unlock:
 	rtnl_unlock();
-	free_percpu(dev->tstats);
-error_free_netdev:
-	free_netdev(dev);
-error_free_vport:
-	ovs_vport_free(vport);
+	मुक्त_percpu(dev->tstats);
+error_मुक्त_netdev:
+	मुक्त_netdev(dev);
+error_मुक्त_vport:
+	ovs_vport_मुक्त(vport);
 error:
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void internal_dev_destroy(struct vport *vport)
-{
-	netif_stop_queue(vport->dev);
+अटल व्योम पूर्णांकernal_dev_destroy(काष्ठा vport *vport)
+अणु
+	netअगर_stop_queue(vport->dev);
 	rtnl_lock();
 	dev_set_promiscuity(vport->dev, -1);
 
-	/* unregister_netdevice() waits for an RCU grace period. */
-	unregister_netdevice(vport->dev);
-	free_percpu(vport->dev->tstats);
+	/* unरेजिस्टर_netdevice() रुकोs क्रम an RCU grace period. */
+	unरेजिस्टर_netdevice(vport->dev);
+	मुक्त_percpu(vport->dev->tstats);
 	rtnl_unlock();
-}
+पूर्ण
 
-static netdev_tx_t internal_dev_recv(struct sk_buff *skb)
-{
-	struct net_device *netdev = skb->dev;
+अटल netdev_tx_t पूर्णांकernal_dev_recv(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *netdev = skb->dev;
 
-	if (unlikely(!(netdev->flags & IFF_UP))) {
-		kfree_skb(skb);
+	अगर (unlikely(!(netdev->flags & IFF_UP))) अणु
+		kमुक्त_skb(skb);
 		netdev->stats.rx_dropped++;
-		return NETDEV_TX_OK;
-	}
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	skb_dst_drop(skb);
 	nf_reset_ct(skb);
@@ -208,47 +209,47 @@ static netdev_tx_t internal_dev_recv(struct sk_buff *skb)
 	skb_postpull_rcsum(skb, eth_hdr(skb), ETH_HLEN);
 	dev_sw_netstats_rx_add(netdev, skb->len);
 
-	netif_rx(skb);
-	return NETDEV_TX_OK;
-}
+	netअगर_rx(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static struct vport_ops ovs_internal_vport_ops = {
+अटल काष्ठा vport_ops ovs_पूर्णांकernal_vport_ops = अणु
 	.type		= OVS_VPORT_TYPE_INTERNAL,
-	.create		= internal_dev_create,
-	.destroy	= internal_dev_destroy,
-	.send		= internal_dev_recv,
-};
+	.create		= पूर्णांकernal_dev_create,
+	.destroy	= पूर्णांकernal_dev_destroy,
+	.send		= पूर्णांकernal_dev_recv,
+पूर्ण;
 
-int ovs_is_internal_dev(const struct net_device *netdev)
-{
-	return netdev->netdev_ops == &internal_dev_netdev_ops;
-}
+पूर्णांक ovs_is_पूर्णांकernal_dev(स्थिर काष्ठा net_device *netdev)
+अणु
+	वापस netdev->netdev_ops == &पूर्णांकernal_dev_netdev_ops;
+पूर्ण
 
-struct vport *ovs_internal_dev_get_vport(struct net_device *netdev)
-{
-	if (!ovs_is_internal_dev(netdev))
-		return NULL;
+काष्ठा vport *ovs_पूर्णांकernal_dev_get_vport(काष्ठा net_device *netdev)
+अणु
+	अगर (!ovs_is_पूर्णांकernal_dev(netdev))
+		वापस शून्य;
 
-	return internal_dev_priv(netdev)->vport;
-}
+	वापस पूर्णांकernal_dev_priv(netdev)->vport;
+पूर्ण
 
-int ovs_internal_dev_rtnl_link_register(void)
-{
-	int err;
+पूर्णांक ovs_पूर्णांकernal_dev_rtnl_link_रेजिस्टर(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = rtnl_link_register(&internal_dev_link_ops);
-	if (err < 0)
-		return err;
+	err = rtnl_link_रेजिस्टर(&पूर्णांकernal_dev_link_ops);
+	अगर (err < 0)
+		वापस err;
 
-	err = ovs_vport_ops_register(&ovs_internal_vport_ops);
-	if (err < 0)
-		rtnl_link_unregister(&internal_dev_link_ops);
+	err = ovs_vport_ops_रेजिस्टर(&ovs_पूर्णांकernal_vport_ops);
+	अगर (err < 0)
+		rtnl_link_unरेजिस्टर(&पूर्णांकernal_dev_link_ops);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void ovs_internal_dev_rtnl_link_unregister(void)
-{
-	ovs_vport_ops_unregister(&ovs_internal_vport_ops);
-	rtnl_link_unregister(&internal_dev_link_ops);
-}
+व्योम ovs_पूर्णांकernal_dev_rtnl_link_unरेजिस्टर(व्योम)
+अणु
+	ovs_vport_ops_unरेजिस्टर(&ovs_पूर्णांकernal_vport_ops);
+	rtnl_link_unरेजिस्टर(&पूर्णांकernal_dev_link_ops);
+पूर्ण

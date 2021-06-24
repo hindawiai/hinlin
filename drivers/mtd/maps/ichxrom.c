@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ichxrom.c
  *
  * Normal mappings of chips in physical memory
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <asm/io.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/map.h>
-#include <linux/mtd/cfi.h>
-#include <linux/mtd/flashchip.h>
-#include <linux/pci.h>
-#include <linux/pci_ids.h>
-#include <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/map.h>
+#समावेश <linux/mtd/cfi.h>
+#समावेश <linux/mtd/flashchip.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/list.h>
 
-#define xstr(s) str(s)
-#define str(s) #s
-#define MOD_NAME xstr(KBUILD_BASENAME)
+#घोषणा xstr(s) str(s)
+#घोषणा str(s) #s
+#घोषणा MOD_NAME xstr(KBUILD_BASENAME)
 
-#define ADDRESS_NAME_LEN 18
+#घोषणा ADDRESS_NAME_LEN 18
 
-#define ROM_PROBE_STEP_SIZE (64*1024) /* 64KiB */
+#घोषणा ROM_PROBE_STEP_SIZE (64*1024) /* 64KiB */
 
-#define BIOS_CNTL	0x4e
-#define FWH_DEC_EN1	0xE3
-#define FWH_DEC_EN2	0xF0
-#define FWH_SEL1	0xE8
-#define FWH_SEL2	0xEE
+#घोषणा BIOS_CNTL	0x4e
+#घोषणा FWH_DEC_EN1	0xE3
+#घोषणा FWH_DEC_EN2	0xF0
+#घोषणा FWH_SEL1	0xE8
+#घोषणा FWH_SEL2	0xEE
 
-struct ichxrom_window {
-	void __iomem* virt;
-	unsigned long phys;
-	unsigned long size;
-	struct list_head maps;
-	struct resource rsrc;
-	struct pci_dev *pdev;
-};
+काष्ठा ichxrom_winकरोw अणु
+	व्योम __iomem* virt;
+	अचिन्हित दीर्घ phys;
+	अचिन्हित दीर्घ size;
+	काष्ठा list_head maps;
+	काष्ठा resource rsrc;
+	काष्ठा pci_dev *pdev;
+पूर्ण;
 
-struct ichxrom_map_info {
-	struct list_head list;
-	struct map_info map;
-	struct mtd_info *mtd;
-	struct resource rsrc;
-	char map_name[sizeof(MOD_NAME) + 2 + ADDRESS_NAME_LEN];
-};
+काष्ठा ichxrom_map_info अणु
+	काष्ठा list_head list;
+	काष्ठा map_info map;
+	काष्ठा mtd_info *mtd;
+	काष्ठा resource rsrc;
+	अक्षर map_name[माप(MOD_NAME) + 2 + ADDRESS_NAME_LEN];
+पूर्ण;
 
-static struct ichxrom_window ichxrom_window = {
-	.maps = LIST_HEAD_INIT(ichxrom_window.maps),
-};
+अटल काष्ठा ichxrom_winकरोw ichxrom_winकरोw = अणु
+	.maps = LIST_HEAD_INIT(ichxrom_winकरोw.maps),
+पूर्ण;
 
-static void ichxrom_cleanup(struct ichxrom_window *window)
-{
-	struct ichxrom_map_info *map, *scratch;
+अटल व्योम ichxrom_cleanup(काष्ठा ichxrom_winकरोw *winकरोw)
+अणु
+	काष्ठा ichxrom_map_info *map, *scratch;
 	u16 word;
-	int ret;
+	पूर्णांक ret;
 
-	/* Disable writes through the rom window */
-	ret = pci_read_config_word(window->pdev, BIOS_CNTL, &word);
-	if (!ret)
-		pci_write_config_word(window->pdev, BIOS_CNTL, word & ~1);
-	pci_dev_put(window->pdev);
+	/* Disable ग_लिखोs through the rom winकरोw */
+	ret = pci_पढ़ो_config_word(winकरोw->pdev, BIOS_CNTL, &word);
+	अगर (!ret)
+		pci_ग_लिखो_config_word(winकरोw->pdev, BIOS_CNTL, word & ~1);
+	pci_dev_put(winकरोw->pdev);
 
 	/* Free all of the mtd devices */
-	list_for_each_entry_safe(map, scratch, &window->maps, list) {
-		if (map->rsrc.parent)
+	list_क्रम_each_entry_safe(map, scratch, &winकरोw->maps, list) अणु
+		अगर (map->rsrc.parent)
 			release_resource(&map->rsrc);
-		mtd_device_unregister(map->mtd);
+		mtd_device_unरेजिस्टर(map->mtd);
 		map_destroy(map->mtd);
 		list_del(&map->list);
-		kfree(map);
-	}
-	if (window->rsrc.parent)
-		release_resource(&window->rsrc);
-	if (window->virt) {
-		iounmap(window->virt);
-		window->virt = NULL;
-		window->phys = 0;
-		window->size = 0;
-		window->pdev = NULL;
-	}
-}
+		kमुक्त(map);
+	पूर्ण
+	अगर (winकरोw->rsrc.parent)
+		release_resource(&winकरोw->rsrc);
+	अगर (winकरोw->virt) अणु
+		iounmap(winकरोw->virt);
+		winकरोw->virt = शून्य;
+		winकरोw->phys = 0;
+		winकरोw->size = 0;
+		winकरोw->pdev = शून्य;
+	पूर्ण
+पूर्ण
 
 
-static int __init ichxrom_init_one(struct pci_dev *pdev,
-				   const struct pci_device_id *ent)
-{
-	static char *rom_probe_types[] = { "cfi_probe", "jedec_probe", NULL };
-	struct ichxrom_window *window = &ichxrom_window;
-	struct ichxrom_map_info *map = NULL;
-	unsigned long map_top;
+अटल पूर्णांक __init ichxrom_init_one(काष्ठा pci_dev *pdev,
+				   स्थिर काष्ठा pci_device_id *ent)
+अणु
+	अटल अक्षर *rom_probe_types[] = अणु "cfi_probe", "jedec_probe", शून्य पूर्ण;
+	काष्ठा ichxrom_winकरोw *winकरोw = &ichxrom_winकरोw;
+	काष्ठा ichxrom_map_info *map = शून्य;
+	अचिन्हित दीर्घ map_top;
 	u8 byte;
 	u16 word;
 
@@ -102,281 +103,281 @@ static int __init ichxrom_init_one(struct pci_dev *pdev,
 	 * space.  It is possible to handle other devices in the
 	 * top 16MB but it is very painful.  Also since
 	 * you can only really attach a FWH to an ICHX there
-	 * a number of simplifications you can make.
+	 * a number of simplअगरications you can make.
 	 *
-	 * Also you can page firmware hubs if an 8MB window isn't enough
-	 * but don't currently handle that case either.
+	 * Also you can page firmware hubs अगर an 8MB winकरोw isn't enough
+	 * but करोn't currently handle that हाल either.
 	 */
-	window->pdev = pdev;
+	winकरोw->pdev = pdev;
 
-	/* Find a region continuous to the end of the ROM window  */
-	window->phys = 0;
-	pci_read_config_byte(pdev, FWH_DEC_EN1, &byte);
-	if (byte == 0xff) {
-		window->phys = 0xffc00000;
-		pci_read_config_byte(pdev, FWH_DEC_EN2, &byte);
-		if ((byte & 0x0f) == 0x0f) {
-			window->phys = 0xff400000;
-		}
-		else if ((byte & 0x0e) == 0x0e) {
-			window->phys = 0xff500000;
-		}
-		else if ((byte & 0x0c) == 0x0c) {
-			window->phys = 0xff600000;
-		}
-		else if ((byte & 0x08) == 0x08) {
-			window->phys = 0xff700000;
-		}
-	}
-	else if ((byte & 0xfe) == 0xfe) {
-		window->phys = 0xffc80000;
-	}
-	else if ((byte & 0xfc) == 0xfc) {
-		window->phys = 0xffd00000;
-	}
-	else if ((byte & 0xf8) == 0xf8) {
-		window->phys = 0xffd80000;
-	}
-	else if ((byte & 0xf0) == 0xf0) {
-		window->phys = 0xffe00000;
-	}
-	else if ((byte & 0xe0) == 0xe0) {
-		window->phys = 0xffe80000;
-	}
-	else if ((byte & 0xc0) == 0xc0) {
-		window->phys = 0xfff00000;
-	}
-	else if ((byte & 0x80) == 0x80) {
-		window->phys = 0xfff80000;
-	}
+	/* Find a region continuous to the end of the ROM winकरोw  */
+	winकरोw->phys = 0;
+	pci_पढ़ो_config_byte(pdev, FWH_DEC_EN1, &byte);
+	अगर (byte == 0xff) अणु
+		winकरोw->phys = 0xffc00000;
+		pci_पढ़ो_config_byte(pdev, FWH_DEC_EN2, &byte);
+		अगर ((byte & 0x0f) == 0x0f) अणु
+			winकरोw->phys = 0xff400000;
+		पूर्ण
+		अन्यथा अगर ((byte & 0x0e) == 0x0e) अणु
+			winकरोw->phys = 0xff500000;
+		पूर्ण
+		अन्यथा अगर ((byte & 0x0c) == 0x0c) अणु
+			winकरोw->phys = 0xff600000;
+		पूर्ण
+		अन्यथा अगर ((byte & 0x08) == 0x08) अणु
+			winकरोw->phys = 0xff700000;
+		पूर्ण
+	पूर्ण
+	अन्यथा अगर ((byte & 0xfe) == 0xfe) अणु
+		winकरोw->phys = 0xffc80000;
+	पूर्ण
+	अन्यथा अगर ((byte & 0xfc) == 0xfc) अणु
+		winकरोw->phys = 0xffd00000;
+	पूर्ण
+	अन्यथा अगर ((byte & 0xf8) == 0xf8) अणु
+		winकरोw->phys = 0xffd80000;
+	पूर्ण
+	अन्यथा अगर ((byte & 0xf0) == 0xf0) अणु
+		winकरोw->phys = 0xffe00000;
+	पूर्ण
+	अन्यथा अगर ((byte & 0xe0) == 0xe0) अणु
+		winकरोw->phys = 0xffe80000;
+	पूर्ण
+	अन्यथा अगर ((byte & 0xc0) == 0xc0) अणु
+		winकरोw->phys = 0xfff00000;
+	पूर्ण
+	अन्यथा अगर ((byte & 0x80) == 0x80) अणु
+		winकरोw->phys = 0xfff80000;
+	पूर्ण
 
-	if (window->phys == 0) {
-		printk(KERN_ERR MOD_NAME ": Rom window is closed\n");
-		goto out;
-	}
-	window->phys -= 0x400000UL;
-	window->size = (0xffffffffUL - window->phys) + 1UL;
+	अगर (winकरोw->phys == 0) अणु
+		prपूर्णांकk(KERN_ERR MOD_NAME ": Rom window is closed\n");
+		जाओ out;
+	पूर्ण
+	winकरोw->phys -= 0x400000UL;
+	winकरोw->size = (0xffffffffUL - winकरोw->phys) + 1UL;
 
-	/* Enable writes through the rom window */
-	pci_read_config_word(pdev, BIOS_CNTL, &word);
-	if (!(word & 1)  && (word & (1<<1))) {
-		/* The BIOS will generate an error if I enable
-		 * this device, so don't even try.
+	/* Enable ग_लिखोs through the rom winकरोw */
+	pci_पढ़ो_config_word(pdev, BIOS_CNTL, &word);
+	अगर (!(word & 1)  && (word & (1<<1))) अणु
+		/* The BIOS will generate an error अगर I enable
+		 * this device, so करोn't even try.
 		 */
-		printk(KERN_ERR MOD_NAME ": firmware access control, I can't enable writes\n");
-		goto out;
-	}
-	pci_write_config_word(pdev, BIOS_CNTL, word | 1);
+		prपूर्णांकk(KERN_ERR MOD_NAME ": firmware access control, I can't enable writes\n");
+		जाओ out;
+	पूर्ण
+	pci_ग_लिखो_config_word(pdev, BIOS_CNTL, word | 1);
 
 	/*
-	 * Try to reserve the window mem region.  If this fails then
-	 * it is likely due to the window being "reserved" by the BIOS.
+	 * Try to reserve the winकरोw mem region.  If this fails then
+	 * it is likely due to the winकरोw being "reserved" by the BIOS.
 	 */
-	window->rsrc.name = MOD_NAME;
-	window->rsrc.start = window->phys;
-	window->rsrc.end   = window->phys + window->size - 1;
-	window->rsrc.flags = IORESOURCE_MEM | IORESOURCE_BUSY;
-	if (request_resource(&iomem_resource, &window->rsrc)) {
-		window->rsrc.parent = NULL;
-		printk(KERN_DEBUG MOD_NAME ": "
+	winकरोw->rsrc.name = MOD_NAME;
+	winकरोw->rsrc.start = winकरोw->phys;
+	winकरोw->rsrc.end   = winकरोw->phys + winकरोw->size - 1;
+	winकरोw->rsrc.flags = IORESOURCE_MEM | IORESOURCE_BUSY;
+	अगर (request_resource(&iomem_resource, &winकरोw->rsrc)) अणु
+		winकरोw->rsrc.parent = शून्य;
+		prपूर्णांकk(KERN_DEBUG MOD_NAME ": "
 		       "%s(): Unable to register resource %pR - kernel bug?\n",
-		       __func__, &window->rsrc);
-	}
+		       __func__, &winकरोw->rsrc);
+	पूर्ण
 
-	/* Map the firmware hub into my address space. */
-	window->virt = ioremap(window->phys, window->size);
-	if (!window->virt) {
-		printk(KERN_ERR MOD_NAME ": ioremap(%08lx, %08lx) failed\n",
-			window->phys, window->size);
-		goto out;
-	}
+	/* Map the firmware hub पूर्णांकo my address space. */
+	winकरोw->virt = ioremap(winकरोw->phys, winकरोw->size);
+	अगर (!winकरोw->virt) अणु
+		prपूर्णांकk(KERN_ERR MOD_NAME ": ioremap(%08lx, %08lx) failed\n",
+			winकरोw->phys, winकरोw->size);
+		जाओ out;
+	पूर्ण
 
-	/* Get the first address to look for an rom chip at */
-	map_top = window->phys;
-	if ((window->phys & 0x3fffff) != 0) {
-		map_top = window->phys + 0x400000;
-	}
-#if 1
+	/* Get the first address to look क्रम an rom chip at */
+	map_top = winकरोw->phys;
+	अगर ((winकरोw->phys & 0x3fffff) != 0) अणु
+		map_top = winकरोw->phys + 0x400000;
+	पूर्ण
+#अगर 1
 	/* The probe sequence run over the firmware hub lock
-	 * registers sets them to 0x7 (no access).
+	 * रेजिस्टरs sets them to 0x7 (no access).
 	 * Probe at most the last 4M of the address space.
 	 */
-	if (map_top < 0xffc00000) {
+	अगर (map_top < 0xffc00000) अणु
 		map_top = 0xffc00000;
-	}
-#endif
-	/* Loop through and look for rom chips */
-	while((map_top - 1) < 0xffffffffUL) {
-		struct cfi_private *cfi;
-		unsigned long offset;
-		int i;
+	पूर्ण
+#पूर्ण_अगर
+	/* Loop through and look क्रम rom chips */
+	जबतक((map_top - 1) < 0xffffffffUL) अणु
+		काष्ठा cfi_निजी *cfi;
+		अचिन्हित दीर्घ offset;
+		पूर्णांक i;
 
-		if (!map) {
-			map = kmalloc(sizeof(*map), GFP_KERNEL);
-		}
-		if (!map) {
-			printk(KERN_ERR MOD_NAME ": kmalloc failed");
-			goto out;
-		}
-		memset(map, 0, sizeof(*map));
+		अगर (!map) अणु
+			map = kदो_स्मृति(माप(*map), GFP_KERNEL);
+		पूर्ण
+		अगर (!map) अणु
+			prपूर्णांकk(KERN_ERR MOD_NAME ": kmalloc failed");
+			जाओ out;
+		पूर्ण
+		स_रखो(map, 0, माप(*map));
 		INIT_LIST_HEAD(&map->list);
 		map->map.name = map->map_name;
 		map->map.phys = map_top;
-		offset = map_top - window->phys;
-		map->map.virt = (void __iomem *)
-			(((unsigned long)(window->virt)) + offset);
+		offset = map_top - winकरोw->phys;
+		map->map.virt = (व्योम __iomem *)
+			(((अचिन्हित दीर्घ)(winकरोw->virt)) + offset);
 		map->map.size = 0xffffffffUL - map_top + 1UL;
 		/* Set the name of the map to the address I am trying */
-		sprintf(map->map_name, "%s @%08Lx",
-			MOD_NAME, (unsigned long long)map->map.phys);
+		प्र_लिखो(map->map_name, "%s @%08Lx",
+			MOD_NAME, (अचिन्हित दीर्घ दीर्घ)map->map.phys);
 
 		/* Firmware hubs only use vpp when being programmed
 		 * in a factory setting.  So in-place programming
-		 * needs to use a different method.
+		 * needs to use a dअगरferent method.
 		 */
-		for(map->map.bankwidth = 32; map->map.bankwidth;
+		क्रम(map->map.bankwidth = 32; map->map.bankwidth;
 			map->map.bankwidth >>= 1)
-		{
-			char **probe_type;
+		अणु
+			अक्षर **probe_type;
 			/* Skip bankwidths that are not supported */
-			if (!map_bankwidth_supported(map->map.bankwidth))
-				continue;
+			अगर (!map_bankwidth_supported(map->map.bankwidth))
+				जारी;
 
 			/* Setup the map methods */
 			simple_map_init(&map->map);
 
 			/* Try all of the probe methods */
 			probe_type = rom_probe_types;
-			for(; *probe_type; probe_type++) {
-				map->mtd = do_map_probe(*probe_type, &map->map);
-				if (map->mtd)
-					goto found;
-			}
-		}
+			क्रम(; *probe_type; probe_type++) अणु
+				map->mtd = करो_map_probe(*probe_type, &map->map);
+				अगर (map->mtd)
+					जाओ found;
+			पूर्ण
+		पूर्ण
 		map_top += ROM_PROBE_STEP_SIZE;
-		continue;
+		जारी;
 	found:
-		/* Trim the size if we are larger than the map */
-		if (map->mtd->size > map->map.size) {
-			printk(KERN_WARNING MOD_NAME
+		/* Trim the size अगर we are larger than the map */
+		अगर (map->mtd->size > map->map.size) अणु
+			prपूर्णांकk(KERN_WARNING MOD_NAME
 				" rom(%llu) larger than window(%lu). fixing...\n",
-				(unsigned long long)map->mtd->size, map->map.size);
+				(अचिन्हित दीर्घ दीर्घ)map->mtd->size, map->map.size);
 			map->mtd->size = map->map.size;
-		}
-		if (window->rsrc.parent) {
+		पूर्ण
+		अगर (winकरोw->rsrc.parent) अणु
 			/*
 			 * Registering the MTD device in iomem may not be possible
-			 * if there is a BIOS "reserved" and BUSY range.  If this
-			 * fails then continue anyway.
+			 * अगर there is a BIOS "reserved" and BUSY range.  If this
+			 * fails then जारी anyway.
 			 */
 			map->rsrc.name  = map->map_name;
 			map->rsrc.start = map->map.phys;
 			map->rsrc.end   = map->map.phys + map->mtd->size - 1;
 			map->rsrc.flags = IORESOURCE_MEM | IORESOURCE_BUSY;
-			if (request_resource(&window->rsrc, &map->rsrc)) {
-				printk(KERN_ERR MOD_NAME
+			अगर (request_resource(&winकरोw->rsrc, &map->rsrc)) अणु
+				prपूर्णांकk(KERN_ERR MOD_NAME
 					": cannot reserve MTD resource\n");
-				map->rsrc.parent = NULL;
-			}
-		}
+				map->rsrc.parent = शून्य;
+			पूर्ण
+		पूर्ण
 
 		/* Make the whole region visible in the map */
-		map->map.virt = window->virt;
-		map->map.phys = window->phys;
+		map->map.virt = winकरोw->virt;
+		map->map.phys = winकरोw->phys;
 		cfi = map->map.fldrv_priv;
-		for(i = 0; i < cfi->numchips; i++) {
+		क्रम(i = 0; i < cfi->numchips; i++) अणु
 			cfi->chips[i].start += offset;
-		}
+		पूर्ण
 
 		/* Now that the mtd devices is complete claim and export it */
 		map->mtd->owner = THIS_MODULE;
-		if (mtd_device_register(map->mtd, NULL, 0)) {
+		अगर (mtd_device_रेजिस्टर(map->mtd, शून्य, 0)) अणु
 			map_destroy(map->mtd);
-			map->mtd = NULL;
-			goto out;
-		}
+			map->mtd = शून्य;
+			जाओ out;
+		पूर्ण
 
 
 		/* Calculate the new value of map_top */
 		map_top += map->mtd->size;
 
-		/* File away the map structure */
-		list_add(&map->list, &window->maps);
-		map = NULL;
-	}
+		/* File away the map काष्ठाure */
+		list_add(&map->list, &winकरोw->maps);
+		map = शून्य;
+	पूर्ण
 
  out:
-	/* Free any left over map structures */
-	kfree(map);
+	/* Free any left over map काष्ठाures */
+	kमुक्त(map);
 
-	/* See if I have any map structures */
-	if (list_empty(&window->maps)) {
-		ichxrom_cleanup(window);
-		return -ENODEV;
-	}
-	return 0;
-}
+	/* See अगर I have any map काष्ठाures */
+	अगर (list_empty(&winकरोw->maps)) अणु
+		ichxrom_cleanup(winकरोw);
+		वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-static void ichxrom_remove_one(struct pci_dev *pdev)
-{
-	struct ichxrom_window *window = &ichxrom_window;
-	ichxrom_cleanup(window);
-}
+अटल व्योम ichxrom_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ichxrom_winकरोw *winकरोw = &ichxrom_winकरोw;
+	ichxrom_cleanup(winकरोw);
+पूर्ण
 
-static const struct pci_device_id ichxrom_pci_tbl[] = {
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_0,
-	  PCI_ANY_ID, PCI_ANY_ID, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801CA_0,
-	  PCI_ANY_ID, PCI_ANY_ID, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_0,
-	  PCI_ANY_ID, PCI_ANY_ID, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801EB_0,
-	  PCI_ANY_ID, PCI_ANY_ID, },
-	{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ESB_1,
-	  PCI_ANY_ID, PCI_ANY_ID, },
-	{ 0, },
-};
+अटल स्थिर काष्ठा pci_device_id ichxrom_pci_tbl[] = अणु
+	अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_0,
+	  PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801CA_0,
+	  PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801DB_0,
+	  PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801EB_0,
+	  PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ESB_1,
+	  PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु 0, पूर्ण,
+पूर्ण;
 
-#if 0
+#अगर 0
 MODULE_DEVICE_TABLE(pci, ichxrom_pci_tbl);
 
-static struct pci_driver ichxrom_driver = {
+अटल काष्ठा pci_driver ichxrom_driver = अणु
 	.name =		MOD_NAME,
 	.id_table =	ichxrom_pci_tbl,
 	.probe =	ichxrom_init_one,
-	.remove =	ichxrom_remove_one,
-};
-#endif
+	.हटाओ =	ichxrom_हटाओ_one,
+पूर्ण;
+#पूर्ण_अगर
 
-static int __init init_ichxrom(void)
-{
-	struct pci_dev *pdev;
-	const struct pci_device_id *id;
+अटल पूर्णांक __init init_ichxrom(व्योम)
+अणु
+	काष्ठा pci_dev *pdev;
+	स्थिर काष्ठा pci_device_id *id;
 
-	pdev = NULL;
-	for (id = ichxrom_pci_tbl; id->vendor; id++) {
-		pdev = pci_get_device(id->vendor, id->device, NULL);
-		if (pdev) {
-			break;
-		}
-	}
-	if (pdev) {
-		return ichxrom_init_one(pdev, &ichxrom_pci_tbl[0]);
-	}
-	return -ENXIO;
-#if 0
-	return pci_register_driver(&ichxrom_driver);
-#endif
-}
+	pdev = शून्य;
+	क्रम (id = ichxrom_pci_tbl; id->venकरोr; id++) अणु
+		pdev = pci_get_device(id->venकरोr, id->device, शून्य);
+		अगर (pdev) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (pdev) अणु
+		वापस ichxrom_init_one(pdev, &ichxrom_pci_tbl[0]);
+	पूर्ण
+	वापस -ENXIO;
+#अगर 0
+	वापस pci_रेजिस्टर_driver(&ichxrom_driver);
+#पूर्ण_अगर
+पूर्ण
 
-static void __exit cleanup_ichxrom(void)
-{
-	ichxrom_remove_one(ichxrom_window.pdev);
-}
+अटल व्योम __निकास cleanup_ichxrom(व्योम)
+अणु
+	ichxrom_हटाओ_one(ichxrom_winकरोw.pdev);
+पूर्ण
 
 module_init(init_ichxrom);
-module_exit(cleanup_ichxrom);
+module_निकास(cleanup_ichxrom);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Eric Biederman <ebiederman@lnxi.com>");

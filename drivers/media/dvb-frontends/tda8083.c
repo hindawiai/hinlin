@@ -1,445 +1,446 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-    Driver for Philips TDA8083 based QPSK Demodulator
+    Driver क्रम Philips TDA8083 based QPSK Demodulator
 
     Copyright (C) 2001 Convergence Integrated Media GmbH
 
     written by Ralph Metzler <ralph@convergence.de>
 
-    adoption to the new DVB frontend API and diagnostic ioctl's
+    aकरोption to the new DVB frontend API and diagnostic ioctl's
     by Holger Waechtler <holger@convergence.de>
 
 
 */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <media/dvb_frontend.h>
-#include "tda8083.h"
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश "tda8083.h"
 
 
-struct tda8083_state {
-	struct i2c_adapter* i2c;
+काष्ठा tda8083_state अणु
+	काष्ठा i2c_adapter* i2c;
 	/* configuration settings */
-	const struct tda8083_config* config;
-	struct dvb_frontend frontend;
-};
+	स्थिर काष्ठा tda8083_config* config;
+	काष्ठा dvb_frontend frontend;
+पूर्ण;
 
-static int debug;
-#define dprintk(args...) \
-	do { \
-		if (debug) printk(KERN_DEBUG "tda8083: " args); \
-	} while (0)
+अटल पूर्णांक debug;
+#घोषणा dprपूर्णांकk(args...) \
+	करो अणु \
+		अगर (debug) prपूर्णांकk(KERN_DEBUG "tda8083: " args); \
+	पूर्ण जबतक (0)
 
 
-static u8 tda8083_init_tab [] = {
+अटल u8 tda8083_init_tab [] = अणु
 	0x04, 0x00, 0x4a, 0x79, 0x04, 0x00, 0xff, 0xea,
 	0x48, 0x42, 0x79, 0x60, 0x70, 0x52, 0x9a, 0x10,
 	0x0e, 0x10, 0xf2, 0xa7, 0x93, 0x0b, 0x05, 0xc8,
 	0x9d, 0x00, 0x42, 0x80, 0x00, 0x60, 0x40, 0x00,
 	0x00, 0x75, 0x00, 0xe0, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00
-};
+पूर्ण;
 
 
-static int tda8083_writereg (struct tda8083_state* state, u8 reg, u8 data)
-{
-	int ret;
-	u8 buf [] = { reg, data };
-	struct i2c_msg msg = { .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = 2 };
+अटल पूर्णांक tda8083_ग_लिखोreg (काष्ठा tda8083_state* state, u8 reg, u8 data)
+अणु
+	पूर्णांक ret;
+	u8 buf [] = अणु reg, data पूर्ण;
+	काष्ठा i2c_msg msg = अणु .addr = state->config->demod_address, .flags = 0, .buf = buf, .len = 2 पूर्ण;
 
 	ret = i2c_transfer(state->i2c, &msg, 1);
 
-	if (ret != 1)
-		dprintk ("%s: writereg error (reg %02x, ret == %i)\n",
+	अगर (ret != 1)
+		dprपूर्णांकk ("%s: writereg error (reg %02x, ret == %i)\n",
 			__func__, reg, ret);
 
-	return (ret != 1) ? -1 : 0;
-}
+	वापस (ret != 1) ? -1 : 0;
+पूर्ण
 
-static int tda8083_readregs (struct tda8083_state* state, u8 reg1, u8 *b, u8 len)
-{
-	int ret;
-	struct i2c_msg msg [] = { { .addr = state->config->demod_address, .flags = 0, .buf = &reg1, .len = 1 },
-			   { .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b, .len = len } };
+अटल पूर्णांक tda8083_पढ़ोregs (काष्ठा tda8083_state* state, u8 reg1, u8 *b, u8 len)
+अणु
+	पूर्णांक ret;
+	काष्ठा i2c_msg msg [] = अणु अणु .addr = state->config->demod_address, .flags = 0, .buf = &reg1, .len = 1 पूर्ण,
+			   अणु .addr = state->config->demod_address, .flags = I2C_M_RD, .buf = b, .len = len पूर्ण पूर्ण;
 
 	ret = i2c_transfer(state->i2c, msg, 2);
 
-	if (ret != 2)
-		dprintk ("%s: readreg error (reg %02x, ret == %i)\n",
+	अगर (ret != 2)
+		dprपूर्णांकk ("%s: readreg error (reg %02x, ret == %i)\n",
 			__func__, reg1, ret);
 
-	return ret == 2 ? 0 : -1;
-}
+	वापस ret == 2 ? 0 : -1;
+पूर्ण
 
-static inline u8 tda8083_readreg (struct tda8083_state* state, u8 reg)
-{
+अटल अंतरभूत u8 tda8083_पढ़ोreg (काष्ठा tda8083_state* state, u8 reg)
+अणु
 	u8 val;
 
-	tda8083_readregs (state, reg, &val, 1);
+	tda8083_पढ़ोregs (state, reg, &val, 1);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int tda8083_set_inversion(struct tda8083_state *state,
-				 enum fe_spectral_inversion inversion)
-{
+अटल पूर्णांक tda8083_set_inversion(काष्ठा tda8083_state *state,
+				 क्रमागत fe_spectral_inversion inversion)
+अणु
 	/*  XXX FIXME: implement other modes than FEC_AUTO */
-	if (inversion == INVERSION_AUTO)
-		return 0;
+	अगर (inversion == INVERSION_AUTO)
+		वापस 0;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int tda8083_set_fec(struct tda8083_state *state, enum fe_code_rate fec)
-{
-	if (fec == FEC_AUTO)
-		return tda8083_writereg (state, 0x07, 0xff);
+अटल पूर्णांक tda8083_set_fec(काष्ठा tda8083_state *state, क्रमागत fe_code_rate fec)
+अणु
+	अगर (fec == FEC_AUTO)
+		वापस tda8083_ग_लिखोreg (state, 0x07, 0xff);
 
-	if (fec >= FEC_1_2 && fec <= FEC_8_9)
-		return tda8083_writereg (state, 0x07, 1 << (FEC_8_9 - fec));
+	अगर (fec >= FEC_1_2 && fec <= FEC_8_9)
+		वापस tda8083_ग_लिखोreg (state, 0x07, 1 << (FEC_8_9 - fec));
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static enum fe_code_rate tda8083_get_fec(struct tda8083_state *state)
-{
+अटल क्रमागत fe_code_rate tda8083_get_fec(काष्ठा tda8083_state *state)
+अणु
 	u8 index;
-	static enum fe_code_rate fec_tab[] = {
+	अटल क्रमागत fe_code_rate fec_tab[] = अणु
 		FEC_8_9, FEC_1_2, FEC_2_3, FEC_3_4,
 		FEC_4_5, FEC_5_6, FEC_6_7, FEC_7_8
-	};
+	पूर्ण;
 
-	index = tda8083_readreg(state, 0x0e) & 0x07;
+	index = tda8083_पढ़ोreg(state, 0x0e) & 0x07;
 
-	return fec_tab [index];
-}
+	वापस fec_tab [index];
+पूर्ण
 
-static int tda8083_set_symbolrate (struct tda8083_state* state, u32 srate)
-{
+अटल पूर्णांक tda8083_set_symbolrate (काष्ठा tda8083_state* state, u32 srate)
+अणु
 	u32 ratio;
-	u32 tmp;
+	u32 पंचांगp;
 	u8 filter;
 
-	if (srate > 32000000)
+	अगर (srate > 32000000)
 		srate = 32000000;
-	if (srate < 500000)
+	अगर (srate < 500000)
 		srate = 500000;
 
 	filter = 0;
-	if (srate < 24000000)
+	अगर (srate < 24000000)
 		filter = 2;
-	if (srate < 16000000)
+	अगर (srate < 16000000)
 		filter = 3;
 
-	tmp = 31250 << 16;
-	ratio = tmp / srate;
+	पंचांगp = 31250 << 16;
+	ratio = पंचांगp / srate;
 
-	tmp = (tmp % srate) << 8;
-	ratio = (ratio << 8) + tmp / srate;
+	पंचांगp = (पंचांगp % srate) << 8;
+	ratio = (ratio << 8) + पंचांगp / srate;
 
-	tmp = (tmp % srate) << 8;
-	ratio = (ratio << 8) + tmp / srate;
+	पंचांगp = (पंचांगp % srate) << 8;
+	ratio = (ratio << 8) + पंचांगp / srate;
 
-	dprintk("tda8083: ratio == %08x\n", (unsigned int) ratio);
+	dprपूर्णांकk("tda8083: ratio == %08x\n", (अचिन्हित पूर्णांक) ratio);
 
-	tda8083_writereg (state, 0x05, filter);
-	tda8083_writereg (state, 0x02, (ratio >> 16) & 0xff);
-	tda8083_writereg (state, 0x03, (ratio >>  8) & 0xff);
-	tda8083_writereg (state, 0x04, (ratio      ) & 0xff);
+	tda8083_ग_लिखोreg (state, 0x05, filter);
+	tda8083_ग_लिखोreg (state, 0x02, (ratio >> 16) & 0xff);
+	tda8083_ग_लिखोreg (state, 0x03, (ratio >>  8) & 0xff);
+	tda8083_ग_लिखोreg (state, 0x04, (ratio      ) & 0xff);
 
-	tda8083_writereg (state, 0x00, 0x3c);
-	tda8083_writereg (state, 0x00, 0x04);
+	tda8083_ग_लिखोreg (state, 0x00, 0x3c);
+	tda8083_ग_लिखोreg (state, 0x00, 0x04);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void tda8083_wait_diseqc_fifo (struct tda8083_state* state, int timeout)
-{
-	unsigned long start = jiffies;
+अटल व्योम tda8083_रुको_diseqc_fअगरo (काष्ठा tda8083_state* state, पूर्णांक समयout)
+अणु
+	अचिन्हित दीर्घ start = jअगरfies;
 
-	while (jiffies - start < timeout &&
-	       !(tda8083_readreg(state, 0x02) & 0x80))
-	{
+	जबतक (jअगरfies - start < समयout &&
+	       !(tda8083_पढ़ोreg(state, 0x02) & 0x80))
+	अणु
 		msleep(50);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int tda8083_set_tone(struct tda8083_state *state,
-			    enum fe_sec_tone_mode tone)
-{
-	tda8083_writereg (state, 0x26, 0xf1);
+अटल पूर्णांक tda8083_set_tone(काष्ठा tda8083_state *state,
+			    क्रमागत fe_sec_tone_mode tone)
+अणु
+	tda8083_ग_लिखोreg (state, 0x26, 0xf1);
 
-	switch (tone) {
-	case SEC_TONE_OFF:
-		return tda8083_writereg (state, 0x29, 0x00);
-	case SEC_TONE_ON:
-		return tda8083_writereg (state, 0x29, 0x80);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (tone) अणु
+	हाल SEC_TONE_OFF:
+		वापस tda8083_ग_लिखोreg (state, 0x29, 0x00);
+	हाल SEC_TONE_ON:
+		वापस tda8083_ग_लिखोreg (state, 0x29, 0x80);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int tda8083_set_voltage(struct tda8083_state *state,
-			       enum fe_sec_voltage voltage)
-{
-	switch (voltage) {
-	case SEC_VOLTAGE_13:
-		return tda8083_writereg (state, 0x20, 0x00);
-	case SEC_VOLTAGE_18:
-		return tda8083_writereg (state, 0x20, 0x11);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक tda8083_set_voltage(काष्ठा tda8083_state *state,
+			       क्रमागत fe_sec_voltage voltage)
+अणु
+	चयन (voltage) अणु
+	हाल SEC_VOLTAGE_13:
+		वापस tda8083_ग_लिखोreg (state, 0x20, 0x00);
+	हाल SEC_VOLTAGE_18:
+		वापस tda8083_ग_लिखोreg (state, 0x20, 0x11);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int tda8083_send_diseqc_burst(struct tda8083_state *state,
-				     enum fe_sec_mini_cmd burst)
-{
-	switch (burst) {
-	case SEC_MINI_A:
-		tda8083_writereg (state, 0x29, (5 << 2));  /* send burst A */
-		break;
-	case SEC_MINI_B:
-		tda8083_writereg (state, 0x29, (7 << 2));  /* send B */
-		break;
-	default:
-		return -EINVAL;
-	}
+अटल पूर्णांक tda8083_send_diseqc_burst(काष्ठा tda8083_state *state,
+				     क्रमागत fe_sec_mini_cmd burst)
+अणु
+	चयन (burst) अणु
+	हाल SEC_MINI_A:
+		tda8083_ग_लिखोreg (state, 0x29, (5 << 2));  /* send burst A */
+		अवरोध;
+	हाल SEC_MINI_B:
+		tda8083_ग_लिखोreg (state, 0x29, (7 << 2));  /* send B */
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	tda8083_wait_diseqc_fifo (state, 100);
+	tda8083_रुको_diseqc_fअगरo (state, 100);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_send_diseqc_msg(struct dvb_frontend *fe,
-				   struct dvb_diseqc_master_cmd *m)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
-	int i;
+अटल पूर्णांक tda8083_send_diseqc_msg(काष्ठा dvb_frontend *fe,
+				   काष्ठा dvb_diseqc_master_cmd *m)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
+	पूर्णांक i;
 
-	tda8083_writereg (state, 0x29, (m->msg_len - 3) | (1 << 2)); /* enable */
+	tda8083_ग_लिखोreg (state, 0x29, (m->msg_len - 3) | (1 << 2)); /* enable */
 
-	for (i=0; i<m->msg_len; i++)
-		tda8083_writereg (state, 0x23 + i, m->msg[i]);
+	क्रम (i=0; i<m->msg_len; i++)
+		tda8083_ग_लिखोreg (state, 0x23 + i, m->msg[i]);
 
-	tda8083_writereg (state, 0x29, (m->msg_len - 3) | (3 << 2)); /* send!! */
+	tda8083_ग_लिखोreg (state, 0x29, (m->msg_len - 3) | (3 << 2)); /* send!! */
 
-	tda8083_wait_diseqc_fifo (state, 100);
+	tda8083_रुको_diseqc_fअगरo (state, 100);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_read_status(struct dvb_frontend *fe,
-			       enum fe_status *status)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
+अटल पूर्णांक tda8083_पढ़ो_status(काष्ठा dvb_frontend *fe,
+			       क्रमागत fe_status *status)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
 
-	u8 signal = ~tda8083_readreg (state, 0x01);
-	u8 sync = tda8083_readreg (state, 0x02);
+	u8 संकेत = ~tda8083_पढ़ोreg (state, 0x01);
+	u8 sync = tda8083_पढ़ोreg (state, 0x02);
 
 	*status = 0;
 
-	if (signal > 10)
+	अगर (संकेत > 10)
 		*status |= FE_HAS_SIGNAL;
 
-	if (sync & 0x01)
+	अगर (sync & 0x01)
 		*status |= FE_HAS_CARRIER;
 
-	if (sync & 0x02)
+	अगर (sync & 0x02)
 		*status |= FE_HAS_VITERBI;
 
-	if (sync & 0x10)
+	अगर (sync & 0x10)
 		*status |= FE_HAS_SYNC;
 
-	if (sync & 0x20) /* frontend can not lock */
+	अगर (sync & 0x20) /* frontend can not lock */
 		*status |= FE_TIMEDOUT;
 
-	if ((sync & 0x1f) == 0x1f)
+	अगर ((sync & 0x1f) == 0x1f)
 		*status |= FE_HAS_LOCK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_read_ber(struct dvb_frontend* fe, u32* ber)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
-	int ret;
+अटल पूर्णांक tda8083_पढ़ो_ber(काष्ठा dvb_frontend* fe, u32* ber)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
+	पूर्णांक ret;
 	u8 buf[3];
 
-	if ((ret = tda8083_readregs(state, 0x0b, buf, sizeof(buf))))
-		return ret;
+	अगर ((ret = tda8083_पढ़ोregs(state, 0x0b, buf, माप(buf))))
+		वापस ret;
 
 	*ber = ((buf[0] & 0x1f) << 16) | (buf[1] << 8) | buf[2];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_read_signal_strength(struct dvb_frontend* fe, u16* strength)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
+अटल पूर्णांक tda8083_पढ़ो_संकेत_strength(काष्ठा dvb_frontend* fe, u16* strength)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
 
-	u8 signal = ~tda8083_readreg (state, 0x01);
-	*strength = (signal << 8) | signal;
+	u8 संकेत = ~tda8083_पढ़ोreg (state, 0x01);
+	*strength = (संकेत << 8) | संकेत;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_read_snr(struct dvb_frontend* fe, u16* snr)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
+अटल पूर्णांक tda8083_पढ़ो_snr(काष्ठा dvb_frontend* fe, u16* snr)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
 
-	u8 _snr = tda8083_readreg (state, 0x08);
+	u8 _snr = tda8083_पढ़ोreg (state, 0x08);
 	*snr = (_snr << 8) | _snr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_read_ucblocks(struct dvb_frontend* fe, u32* ucblocks)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
+अटल पूर्णांक tda8083_पढ़ो_ucblocks(काष्ठा dvb_frontend* fe, u32* ucblocks)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
 
-	*ucblocks = tda8083_readreg(state, 0x0f);
-	if (*ucblocks == 0xff)
+	*ucblocks = tda8083_पढ़ोreg(state, 0x0f);
+	अगर (*ucblocks == 0xff)
 		*ucblocks = 0xffffffff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_set_frontend(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct tda8083_state* state = fe->demodulator_priv;
+अटल पूर्णांक tda8083_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
 
-	if (fe->ops.tuner_ops.set_params) {
+	अगर (fe->ops.tuner_ops.set_params) अणु
 		fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
-	}
+		अगर (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
+	पूर्ण
 
 	tda8083_set_inversion (state, p->inversion);
 	tda8083_set_fec(state, p->fec_inner);
 	tda8083_set_symbolrate(state, p->symbol_rate);
 
-	tda8083_writereg (state, 0x00, 0x3c);
-	tda8083_writereg (state, 0x00, 0x04);
+	tda8083_ग_लिखोreg (state, 0x00, 0x3c);
+	tda8083_ग_लिखोreg (state, 0x00, 0x04);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_get_frontend(struct dvb_frontend *fe,
-				struct dtv_frontend_properties *p)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
+अटल पूर्णांक tda8083_get_frontend(काष्ठा dvb_frontend *fe,
+				काष्ठा dtv_frontend_properties *p)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
 
 	/*  FIXME: get symbolrate & frequency offset...*/
 	/*p->frequency = ???;*/
-	p->inversion = (tda8083_readreg (state, 0x0e) & 0x80) ?
+	p->inversion = (tda8083_पढ़ोreg (state, 0x0e) & 0x80) ?
 			INVERSION_ON : INVERSION_OFF;
 	p->fec_inner = tda8083_get_fec(state);
 	/*p->symbol_rate = tda8083_get_symbolrate (state);*/
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_sleep(struct dvb_frontend* fe)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
+अटल पूर्णांक tda8083_sleep(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
 
-	tda8083_writereg (state, 0x00, 0x02);
-	return 0;
-}
+	tda8083_ग_लिखोreg (state, 0x00, 0x02);
+	वापस 0;
+पूर्ण
 
-static int tda8083_init(struct dvb_frontend* fe)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
-	int i;
+अटल पूर्णांक tda8083_init(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
+	पूर्णांक i;
 
-	for (i=0; i<44; i++)
-		tda8083_writereg (state, i, tda8083_init_tab[i]);
+	क्रम (i=0; i<44; i++)
+		tda8083_ग_लिखोreg (state, i, tda8083_init_tab[i]);
 
-	tda8083_writereg (state, 0x00, 0x3c);
-	tda8083_writereg (state, 0x00, 0x04);
+	tda8083_ग_लिखोreg (state, 0x00, 0x3c);
+	tda8083_ग_लिखोreg (state, 0x00, 0x04);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_diseqc_send_burst(struct dvb_frontend *fe,
-				     enum fe_sec_mini_cmd burst)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
+अटल पूर्णांक tda8083_diseqc_send_burst(काष्ठा dvb_frontend *fe,
+				     क्रमागत fe_sec_mini_cmd burst)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
 
 	tda8083_send_diseqc_burst (state, burst);
-	tda8083_writereg (state, 0x00, 0x3c);
-	tda8083_writereg (state, 0x00, 0x04);
+	tda8083_ग_लिखोreg (state, 0x00, 0x3c);
+	tda8083_ग_लिखोreg (state, 0x00, 0x04);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_diseqc_set_tone(struct dvb_frontend *fe,
-				   enum fe_sec_tone_mode tone)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
+अटल पूर्णांक tda8083_diseqc_set_tone(काष्ठा dvb_frontend *fe,
+				   क्रमागत fe_sec_tone_mode tone)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
 
 	tda8083_set_tone (state, tone);
-	tda8083_writereg (state, 0x00, 0x3c);
-	tda8083_writereg (state, 0x00, 0x04);
+	tda8083_ग_लिखोreg (state, 0x00, 0x3c);
+	tda8083_ग_लिखोreg (state, 0x00, 0x04);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tda8083_diseqc_set_voltage(struct dvb_frontend *fe,
-				      enum fe_sec_voltage voltage)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
+अटल पूर्णांक tda8083_diseqc_set_voltage(काष्ठा dvb_frontend *fe,
+				      क्रमागत fe_sec_voltage voltage)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
 
 	tda8083_set_voltage (state, voltage);
-	tda8083_writereg (state, 0x00, 0x3c);
-	tda8083_writereg (state, 0x00, 0x04);
+	tda8083_ग_लिखोreg (state, 0x00, 0x3c);
+	tda8083_ग_लिखोreg (state, 0x00, 0x04);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tda8083_release(struct dvb_frontend* fe)
-{
-	struct tda8083_state* state = fe->demodulator_priv;
-	kfree(state);
-}
+अटल व्योम tda8083_release(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा tda8083_state* state = fe->demodulator_priv;
+	kमुक्त(state);
+पूर्ण
 
-static const struct dvb_frontend_ops tda8083_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops tda8083_ops;
 
-struct dvb_frontend* tda8083_attach(const struct tda8083_config* config,
-				    struct i2c_adapter* i2c)
-{
-	struct tda8083_state* state = NULL;
+काष्ठा dvb_frontend* tda8083_attach(स्थिर काष्ठा tda8083_config* config,
+				    काष्ठा i2c_adapter* i2c)
+अणु
+	काष्ठा tda8083_state* state = शून्य;
 
-	/* allocate memory for the internal state */
-	state = kzalloc(sizeof(struct tda8083_state), GFP_KERNEL);
-	if (state == NULL) goto error;
+	/* allocate memory क्रम the पूर्णांकernal state */
+	state = kzalloc(माप(काष्ठा tda8083_state), GFP_KERNEL);
+	अगर (state == शून्य) जाओ error;
 
 	/* setup the state */
 	state->config = config;
 	state->i2c = i2c;
 
-	/* check if the demod is there */
-	if ((tda8083_readreg(state, 0x00)) != 0x05) goto error;
+	/* check अगर the demod is there */
+	अगर ((tda8083_पढ़ोreg(state, 0x00)) != 0x05) जाओ error;
 
 	/* create dvb_frontend */
-	memcpy(&state->frontend.ops, &tda8083_ops, sizeof(struct dvb_frontend_ops));
+	स_नकल(&state->frontend.ops, &tda8083_ops, माप(काष्ठा dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
-	return &state->frontend;
+	वापस &state->frontend;
 
 error:
-	kfree(state);
-	return NULL;
-}
+	kमुक्त(state);
+	वापस शून्य;
+पूर्ण
 
-static const struct dvb_frontend_ops tda8083_ops = {
-	.delsys = { SYS_DVBS },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops tda8083_ops = अणु
+	.delsys = अणु SYS_DVBS पूर्ण,
+	.info = अणु
 		.name			= "Philips TDA8083 DVB-S",
 		.frequency_min_hz	=  920 * MHz,     /* TDA8060 */
 		.frequency_max_hz	= 2200 * MHz,    /* TDA8060 */
@@ -452,7 +453,7 @@ static const struct dvb_frontend_ops tda8083_ops = {
 			FE_CAN_FEC_4_5 | FE_CAN_FEC_5_6 | FE_CAN_FEC_6_7 |
 			FE_CAN_FEC_7_8 | FE_CAN_FEC_8_9 | FE_CAN_FEC_AUTO |
 			FE_CAN_QPSK | FE_CAN_MUTE_TS
-	},
+	पूर्ण,
 
 	.release = tda8083_release,
 
@@ -462,19 +463,19 @@ static const struct dvb_frontend_ops tda8083_ops = {
 	.set_frontend = tda8083_set_frontend,
 	.get_frontend = tda8083_get_frontend,
 
-	.read_status = tda8083_read_status,
-	.read_signal_strength = tda8083_read_signal_strength,
-	.read_snr = tda8083_read_snr,
-	.read_ber = tda8083_read_ber,
-	.read_ucblocks = tda8083_read_ucblocks,
+	.पढ़ो_status = tda8083_पढ़ो_status,
+	.पढ़ो_संकेत_strength = tda8083_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = tda8083_पढ़ो_snr,
+	.पढ़ो_ber = tda8083_पढ़ो_ber,
+	.पढ़ो_ucblocks = tda8083_पढ़ो_ucblocks,
 
 	.diseqc_send_master_cmd = tda8083_send_diseqc_msg,
 	.diseqc_send_burst = tda8083_diseqc_send_burst,
 	.set_tone = tda8083_diseqc_set_tone,
 	.set_voltage = tda8083_diseqc_set_voltage,
-};
+पूर्ण;
 
-module_param(debug, int, 0644);
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off frontend debugging (default:off).");
 
 MODULE_DESCRIPTION("Philips TDA8083 DVB-S Demodulator");

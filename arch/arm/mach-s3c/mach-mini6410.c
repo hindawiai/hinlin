@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright 2010 Darius Augulis <augulis.darius@gmail.com>
 // Copyright 2008 Openmoko, Inc.
@@ -6,146 +7,146 @@
 //	Ben Dooks <ben@simtec.co.uk>
 //	http://armlinux.simtec.co.uk/
 
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/fb.h>
-#include <linux/gpio.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/dm9000.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/serial_core.h>
-#include <linux/serial_s3c.h>
-#include <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/dm9000.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial_s3c.h>
+#समावेश <linux/types.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include "map.h"
-#include "regs-gpio.h"
-#include "gpio-samsung.h"
+#समावेश "map.h"
+#समावेश "regs-gpio.h"
+#समावेश "gpio-samsung.h"
 
-#include <linux/soc/samsung/s3c-adc.h>
-#include "cpu.h"
-#include "devs.h"
-#include "fb.h"
-#include <linux/platform_data/mtd-nand-s3c2410.h>
-#include <linux/platform_data/mmc-sdhci-s3c.h>
-#include "sdhci.h"
-#include <linux/platform_data/touchscreen-s3c2410.h>
-#include <mach/irqs.h>
+#समावेश <linux/soc/samsung/s3c-adc.h>
+#समावेश "cpu.h"
+#समावेश "devs.h"
+#समावेश "fb.h"
+#समावेश <linux/platक्रमm_data/mtd-nand-s3c2410.h>
+#समावेश <linux/platक्रमm_data/mmc-sdhci-s3c.h>
+#समावेश "sdhci.h"
+#समावेश <linux/platक्रमm_data/touchscreen-s3c2410.h>
+#समावेश <mach/irqs.h>
 
-#include <video/platform_lcd.h>
-#include <video/samsung_fimd.h>
+#समावेश <video/platक्रमm_lcd.h>
+#समावेश <video/samsung_fimd.h>
 
-#include "s3c64xx.h"
-#include "regs-modem-s3c64xx.h"
-#include "regs-srom-s3c64xx.h"
+#समावेश "s3c64xx.h"
+#समावेश "regs-modem-s3c64xx.h"
+#समावेश "regs-srom-s3c64xx.h"
 
-#define UCON S3C2410_UCON_DEFAULT
-#define ULCON (S3C2410_LCON_CS8 | S3C2410_LCON_PNONE | S3C2410_LCON_STOPB)
-#define UFCON (S3C2410_UFCON_RXTRIG8 | S3C2410_UFCON_FIFOMODE)
+#घोषणा UCON S3C2410_UCON_DEFAULT
+#घोषणा ULCON (S3C2410_LCON_CS8 | S3C2410_LCON_PNONE | S3C2410_LCON_STOPB)
+#घोषणा UFCON (S3C2410_UFCON_RXTRIG8 | S3C2410_UFCON_FIFOMODE)
 
-static struct s3c2410_uartcfg mini6410_uartcfgs[] __initdata = {
-	[0] = {
+अटल काष्ठा s3c2410_uartcfg mini6410_uartcfgs[] __initdata = अणु
+	[0] = अणु
 		.hwport	= 0,
 		.flags	= 0,
 		.ucon	= UCON,
 		.ulcon	= ULCON,
 		.ufcon	= UFCON,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.hwport	= 1,
 		.flags	= 0,
 		.ucon	= UCON,
 		.ulcon	= ULCON,
 		.ufcon	= UFCON,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.hwport	= 2,
 		.flags	= 0,
 		.ucon	= UCON,
 		.ulcon	= ULCON,
 		.ufcon	= UFCON,
-	},
-	[3] = {
+	पूर्ण,
+	[3] = अणु
 		.hwport	= 3,
 		.flags	= 0,
 		.ucon	= UCON,
 		.ulcon	= ULCON,
 		.ufcon	= UFCON,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* DM9000AEP 10/100 ethernet controller */
 
-static struct resource mini6410_dm9k_resource[] = {
+अटल काष्ठा resource mini6410_dm9k_resource[] = अणु
 	[0] = DEFINE_RES_MEM(S3C64XX_PA_XM0CSN1, 2),
 	[1] = DEFINE_RES_MEM(S3C64XX_PA_XM0CSN1 + 4, 2),
-	[2] = DEFINE_RES_NAMED(S3C_EINT(7), 1, NULL, IORESOURCE_IRQ \
+	[2] = DEFINE_RES_NAMED(S3C_EINT(7), 1, शून्य, IORESOURCE_IRQ \
 					| IORESOURCE_IRQ_HIGHLEVEL),
-};
+पूर्ण;
 
-static struct dm9000_plat_data mini6410_dm9k_pdata = {
+अटल काष्ठा dm9000_plat_data mini6410_dm9k_pdata = अणु
 	.flags		= (DM9000_PLATF_16BITONLY | DM9000_PLATF_NO_EEPROM),
-};
+पूर्ण;
 
-static struct platform_device mini6410_device_eth = {
+अटल काष्ठा platक्रमm_device mini6410_device_eth = अणु
 	.name		= "dm9000",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(mini6410_dm9k_resource),
 	.resource	= mini6410_dm9k_resource,
-	.dev		= {
-		.platform_data	= &mini6410_dm9k_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &mini6410_dm9k_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct mtd_partition mini6410_nand_part[] = {
-	[0] = {
+अटल काष्ठा mtd_partition mini6410_nand_part[] = अणु
+	[0] = अणु
 		.name	= "uboot",
 		.size	= SZ_1M,
 		.offset	= 0,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.name	= "kernel",
 		.size	= SZ_2M,
 		.offset	= SZ_1M,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.name	= "rootfs",
 		.size	= MTDPART_SIZ_FULL,
 		.offset	= SZ_1M + SZ_2M,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct s3c2410_nand_set mini6410_nand_sets[] = {
-	[0] = {
+अटल काष्ठा s3c2410_nand_set mini6410_nand_sets[] = अणु
+	[0] = अणु
 		.name		= "nand",
 		.nr_chips	= 1,
 		.nr_partitions	= ARRAY_SIZE(mini6410_nand_part),
 		.partitions	= mini6410_nand_part,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct s3c2410_platform_nand mini6410_nand_info = {
+अटल काष्ठा s3c2410_platक्रमm_nand mini6410_nand_info = अणु
 	.tacls		= 25,
 	.twrph0		= 55,
 	.twrph1		= 40,
 	.nr_sets	= ARRAY_SIZE(mini6410_nand_sets),
 	.sets		= mini6410_nand_sets,
-	.engine_type	= NAND_ECC_ENGINE_TYPE_SOFT,
-};
+	.engine_type	= न_अंकD_ECC_ENGINE_TYPE_SOFT,
+पूर्ण;
 
-static struct s3c_fb_pd_win mini6410_lcd_type0_fb_win = {
+अटल काष्ठा s3c_fb_pd_win mini6410_lcd_type0_fb_win = अणु
 	.max_bpp	= 32,
-	.default_bpp	= 16,
+	.शेष_bpp	= 16,
 	.xres		= 480,
 	.yres		= 272,
-};
+पूर्ण;
 
-static struct fb_videomode mini6410_lcd_type0_timing = {
+अटल काष्ठा fb_videomode mini6410_lcd_type0_timing = अणु
 	/* 4.3" 480x272 */
 	.left_margin	= 3,
 	.right_margin	= 2,
@@ -155,16 +156,16 @@ static struct fb_videomode mini6410_lcd_type0_timing = {
 	.vsync_len	= 1,
 	.xres		= 480,
 	.yres		= 272,
-};
+पूर्ण;
 
-static struct s3c_fb_pd_win mini6410_lcd_type1_fb_win = {
+अटल काष्ठा s3c_fb_pd_win mini6410_lcd_type1_fb_win = अणु
 	.max_bpp	= 32,
-	.default_bpp	= 16,
+	.शेष_bpp	= 16,
 	.xres		= 800,
 	.yres		= 480,
-};
+पूर्ण;
 
-static struct fb_videomode mini6410_lcd_type1_timing = {
+अटल काष्ठा fb_videomode mini6410_lcd_type1_timing = अणु
 	/* 7.0" 800x480 */
 	.left_margin	= 8,
 	.right_margin	= 13,
@@ -174,82 +175,82 @@ static struct fb_videomode mini6410_lcd_type1_timing = {
 	.vsync_len	= 1,
 	.xres		= 800,
 	.yres		= 480,
-};
+पूर्ण;
 
-static struct s3c_fb_platdata mini6410_lcd_pdata[] __initdata = {
-	{
+अटल काष्ठा s3c_fb_platdata mini6410_lcd_pdata[] __initdata = अणु
+	अणु
 		.setup_gpio	= s3c64xx_fb_gpio_setup_24bpp,
 		.vtiming	= &mini6410_lcd_type0_timing,
 		.win[0]		= &mini6410_lcd_type0_fb_win,
 		.vidcon0	= VIDCON0_VIDOUT_RGB | VIDCON0_PNRMODE_RGB,
 		.vidcon1	= VIDCON1_INV_HSYNC | VIDCON1_INV_VSYNC,
-	}, {
+	पूर्ण, अणु
 		.setup_gpio	= s3c64xx_fb_gpio_setup_24bpp,
 		.vtiming	= &mini6410_lcd_type1_timing,
 		.win[0]		= &mini6410_lcd_type1_fb_win,
 		.vidcon0	= VIDCON0_VIDOUT_RGB | VIDCON0_PNRMODE_RGB,
 		.vidcon1	= VIDCON1_INV_HSYNC | VIDCON1_INV_VSYNC,
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static void mini6410_lcd_power_set(struct plat_lcd_data *pd,
-				   unsigned int power)
-{
-	if (power)
+अटल व्योम mini6410_lcd_घातer_set(काष्ठा plat_lcd_data *pd,
+				   अचिन्हित पूर्णांक घातer)
+अणु
+	अगर (घातer)
 		gpio_direction_output(S3C64XX_GPE(0), 1);
-	else
+	अन्यथा
 		gpio_direction_output(S3C64XX_GPE(0), 0);
-}
+पूर्ण
 
-static struct plat_lcd_data mini6410_lcd_power_data = {
-	.set_power	= mini6410_lcd_power_set,
-};
+अटल काष्ठा plat_lcd_data mini6410_lcd_घातer_data = अणु
+	.set_घातer	= mini6410_lcd_घातer_set,
+पूर्ण;
 
-static struct platform_device mini6410_lcd_powerdev = {
+अटल काष्ठा platक्रमm_device mini6410_lcd_घातerdev = अणु
 	.name			= "platform-lcd",
 	.dev.parent		= &s3c_device_fb.dev,
-	.dev.platform_data	= &mini6410_lcd_power_data,
-};
+	.dev.platक्रमm_data	= &mini6410_lcd_घातer_data,
+पूर्ण;
 
-static struct s3c_sdhci_platdata mini6410_hsmmc1_pdata = {
+अटल काष्ठा s3c_sdhci_platdata mini6410_hsmmc1_pdata = अणु
 	.max_width		= 4,
 	.cd_type		= S3C_SDHCI_CD_GPIO,
 	.ext_cd_gpio		= S3C64XX_GPN(10),
 	.ext_cd_gpio_invert	= true,
-};
+पूर्ण;
 
-static struct platform_device *mini6410_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *mini6410_devices[] __initdata = अणु
 	&mini6410_device_eth,
 	&s3c_device_hsmmc0,
 	&s3c_device_hsmmc1,
 	&s3c_device_ohci,
 	&s3c_device_nand,
 	&s3c_device_fb,
-	&mini6410_lcd_powerdev,
+	&mini6410_lcd_घातerdev,
 	&s3c_device_adc,
-};
+पूर्ण;
 
-static void __init mini6410_map_io(void)
-{
-	u32 tmp;
+अटल व्योम __init mini6410_map_io(व्योम)
+अणु
+	u32 पंचांगp;
 
-	s3c64xx_init_io(NULL, 0);
+	s3c64xx_init_io(शून्य, 0);
 	s3c64xx_set_xtal_freq(12000000);
 	s3c24xx_init_uarts(mini6410_uartcfgs, ARRAY_SIZE(mini6410_uartcfgs));
-	s3c64xx_set_timer_source(S3C64XX_PWM3, S3C64XX_PWM4);
+	s3c64xx_set_समयr_source(S3C64XX_PWM3, S3C64XX_PWM4);
 
 	/* set the LCD type */
-	tmp = __raw_readl(S3C64XX_SPCON);
-	tmp &= ~S3C64XX_SPCON_LCD_SEL_MASK;
-	tmp |= S3C64XX_SPCON_LCD_SEL_RGB;
-	__raw_writel(tmp, S3C64XX_SPCON);
+	पंचांगp = __raw_पढ़ोl(S3C64XX_SPCON);
+	पंचांगp &= ~S3C64XX_SPCON_LCD_SEL_MASK;
+	पंचांगp |= S3C64XX_SPCON_LCD_SEL_RGB;
+	__raw_ग_लिखोl(पंचांगp, S3C64XX_SPCON);
 
-	/* remove the LCD bypass */
-	tmp = __raw_readl(S3C64XX_MODEM_MIFPCON);
-	tmp &= ~MIFPCON_LCD_BYPASS;
-	__raw_writel(tmp, S3C64XX_MODEM_MIFPCON);
-}
+	/* हटाओ the LCD bypass */
+	पंचांगp = __raw_पढ़ोl(S3C64XX_MODEM_MIFPCON);
+	पंचांगp &= ~MIFPCON_LCD_BYPASS;
+	__raw_ग_लिखोl(पंचांगp, S3C64XX_MODEM_MIFPCON);
+पूर्ण
 
 /*
  * mini6410_features string
@@ -257,90 +258,90 @@ static void __init mini6410_map_io(void)
  * 0-9 LCD configuration
  *
  */
-static char mini6410_features_str[12] __initdata = "0";
+अटल अक्षर mini6410_features_str[12] __initdata = "0";
 
-static int __init mini6410_features_setup(char *str)
-{
-	if (str)
+अटल पूर्णांक __init mini6410_features_setup(अक्षर *str)
+अणु
+	अगर (str)
 		strlcpy(mini6410_features_str, str,
-			sizeof(mini6410_features_str));
-	return 1;
-}
+			माप(mini6410_features_str));
+	वापस 1;
+पूर्ण
 
 __setup("mini6410=", mini6410_features_setup);
 
-#define FEATURE_SCREEN (1 << 0)
+#घोषणा FEATURE_SCREEN (1 << 0)
 
-struct mini6410_features_t {
-	int done;
-	int lcd_index;
-};
+काष्ठा mini6410_features_t अणु
+	पूर्णांक करोne;
+	पूर्णांक lcd_index;
+पूर्ण;
 
-static void mini6410_parse_features(
-		struct mini6410_features_t *features,
-		const char *features_str)
-{
-	const char *fp = features_str;
+अटल व्योम mini6410_parse_features(
+		काष्ठा mini6410_features_t *features,
+		स्थिर अक्षर *features_str)
+अणु
+	स्थिर अक्षर *fp = features_str;
 
-	features->done = 0;
+	features->करोne = 0;
 	features->lcd_index = 0;
 
-	while (*fp) {
-		char f = *fp++;
+	जबतक (*fp) अणु
+		अक्षर f = *fp++;
 
-		switch (f) {
-		case '0'...'9':	/* tft screen */
-			if (features->done & FEATURE_SCREEN) {
-				printk(KERN_INFO "MINI6410: '%c' ignored, "
+		चयन (f) अणु
+		हाल '0'...'9':	/* tft screen */
+			अगर (features->करोne & FEATURE_SCREEN) अणु
+				prपूर्णांकk(KERN_INFO "MINI6410: '%c' ignored, "
 					"screen type already set\n", f);
-			} else {
-				int li = f - '0';
-				if (li >= ARRAY_SIZE(mini6410_lcd_pdata))
-					printk(KERN_INFO "MINI6410: '%c' out "
+			पूर्ण अन्यथा अणु
+				पूर्णांक li = f - '0';
+				अगर (li >= ARRAY_SIZE(mini6410_lcd_pdata))
+					prपूर्णांकk(KERN_INFO "MINI6410: '%c' out "
 						"of range LCD mode\n", f);
-				else {
+				अन्यथा अणु
 					features->lcd_index = li;
-				}
-			}
-			features->done |= FEATURE_SCREEN;
-			break;
-		}
-	}
-}
+				पूर्ण
+			पूर्ण
+			features->करोne |= FEATURE_SCREEN;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __init mini6410_machine_init(void)
-{
+अटल व्योम __init mini6410_machine_init(व्योम)
+अणु
 	u32 cs1;
-	struct mini6410_features_t features = { 0 };
+	काष्ठा mini6410_features_t features = अणु 0 पूर्ण;
 
-	printk(KERN_INFO "MINI6410: Option string mini6410=%s\n",
+	prपूर्णांकk(KERN_INFO "MINI6410: Option string mini6410=%s\n",
 			mini6410_features_str);
 
 	/* Parse the feature string */
 	mini6410_parse_features(&features, mini6410_features_str);
 
-	printk(KERN_INFO "MINI6410: selected LCD display is %dx%d\n",
+	prपूर्णांकk(KERN_INFO "MINI6410: selected LCD display is %dx%d\n",
 		mini6410_lcd_pdata[features.lcd_index].win[0]->xres,
 		mini6410_lcd_pdata[features.lcd_index].win[0]->yres);
 
 	s3c_nand_set_platdata(&mini6410_nand_info);
 	s3c_fb_set_platdata(&mini6410_lcd_pdata[features.lcd_index]);
 	s3c_sdhci1_set_platdata(&mini6410_hsmmc1_pdata);
-	s3c64xx_ts_set_platdata(NULL);
+	s3c64xx_ts_set_platdata(शून्य);
 
 	/* configure nCS1 width to 16 bits */
 
-	cs1 = __raw_readl(S3C64XX_SROM_BW) &
+	cs1 = __raw_पढ़ोl(S3C64XX_SROM_BW) &
 		~(S3C64XX_SROM_BW__CS_MASK << S3C64XX_SROM_BW__NCS1__SHIFT);
 	cs1 |= ((1 << S3C64XX_SROM_BW__DATAWIDTH__SHIFT) |
 		(1 << S3C64XX_SROM_BW__WAITENABLE__SHIFT) |
 		(1 << S3C64XX_SROM_BW__BYTEENABLE__SHIFT)) <<
 			S3C64XX_SROM_BW__NCS1__SHIFT;
-	__raw_writel(cs1, S3C64XX_SROM_BW);
+	__raw_ग_लिखोl(cs1, S3C64XX_SROM_BW);
 
-	/* set timing for nCS1 suitable for ethernet chip */
+	/* set timing क्रम nCS1 suitable क्रम ethernet chip */
 
-	__raw_writel((0 << S3C64XX_SROM_BCX__PMC__SHIFT) |
+	__raw_ग_लिखोl((0 << S3C64XX_SROM_BCX__PMC__SHIFT) |
 		(6 << S3C64XX_SROM_BCX__TACP__SHIFT) |
 		(4 << S3C64XX_SROM_BCX__TCAH__SHIFT) |
 		(1 << S3C64XX_SROM_BCX__TCOH__SHIFT) |
@@ -351,15 +352,15 @@ static void __init mini6410_machine_init(void)
 	gpio_request(S3C64XX_GPF(15), "LCD power");
 	gpio_request(S3C64XX_GPE(0), "LCD power");
 
-	platform_add_devices(mini6410_devices, ARRAY_SIZE(mini6410_devices));
-}
+	platक्रमm_add_devices(mini6410_devices, ARRAY_SIZE(mini6410_devices));
+पूर्ण
 
 MACHINE_START(MINI6410, "MINI6410")
-	/* Maintainer: Darius Augulis <augulis.darius@gmail.com> */
+	/* Maपूर्णांकainer: Darius Augulis <augulis.darius@gmail.com> */
 	.atag_offset	= 0x100,
 	.nr_irqs	= S3C64XX_NR_IRQS,
 	.init_irq	= s3c6410_init_irq,
 	.map_io		= mini6410_map_io,
 	.init_machine	= mini6410_machine_init,
-	.init_time	= s3c64xx_timer_init,
+	.init_समय	= s3c64xx_समयr_init,
 MACHINE_END

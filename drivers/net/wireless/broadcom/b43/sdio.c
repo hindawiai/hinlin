@@ -1,203 +1,204 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Broadcom B43 wireless driver
  *
- * SDIO over Sonics Silicon Backplane bus glue for b43.
+ * SDIO over Sonics Silicon Backplane bus glue क्रम b43.
  *
  * Copyright (C) 2009 Albert Herranz
  * Copyright (C) 2009 Michael Buesch <m@bues.ch>
  */
 
-#include <linux/kernel.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/mmc/sdio_ids.h>
-#include <linux/slab.h>
-#include <linux/ssb/ssb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/mmc/sdio_ids.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ssb/ssb.h>
 
-#include "sdio.h"
-#include "b43.h"
-
-
-#define HNBU_CHIPID		0x01	/* vendor & device id */
-
-#define B43_SDIO_BLOCK_SIZE	64	/* rx fifo max size in bytes */
+#समावेश "sdio.h"
+#समावेश "b43.h"
 
 
-static const struct b43_sdio_quirk {
-	u16 vendor;
+#घोषणा HNBU_CHIPID		0x01	/* venकरोr & device id */
+
+#घोषणा B43_SDIO_BLOCK_SIZE	64	/* rx fअगरo max size in bytes */
+
+
+अटल स्थिर काष्ठा b43_sdio_quirk अणु
+	u16 venकरोr;
 	u16 device;
-	unsigned int quirks;
-} b43_sdio_quirks[] = {
-	{ 0x14E4, 0x4318, SSB_QUIRK_SDIO_READ_AFTER_WRITE32, },
-	{ },
-};
+	अचिन्हित पूर्णांक quirks;
+पूर्ण b43_sdio_quirks[] = अणु
+	अणु 0x14E4, 0x4318, SSB_QUIRK_SDIO_READ_AFTER_WRITE32, पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 
-static unsigned int b43_sdio_get_quirks(u16 vendor, u16 device)
-{
-	const struct b43_sdio_quirk *q;
+अटल अचिन्हित पूर्णांक b43_sdio_get_quirks(u16 venकरोr, u16 device)
+अणु
+	स्थिर काष्ठा b43_sdio_quirk *q;
 
-	for (q = b43_sdio_quirks; q->quirks; q++) {
-		if (vendor == q->vendor && device == q->device)
-			return q->quirks;
-	}
+	क्रम (q = b43_sdio_quirks; q->quirks; q++) अणु
+		अगर (venकरोr == q->venकरोr && device == q->device)
+			वापस q->quirks;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void b43_sdio_interrupt_dispatcher(struct sdio_func *func)
-{
-	struct b43_sdio *sdio = sdio_get_drvdata(func);
-	struct b43_wldev *dev = sdio->irq_handler_opaque;
+अटल व्योम b43_sdio_पूर्णांकerrupt_dispatcher(काष्ठा sdio_func *func)
+अणु
+	काष्ठा b43_sdio *sdio = sdio_get_drvdata(func);
+	काष्ठा b43_wldev *dev = sdio->irq_handler_opaque;
 
-	if (unlikely(b43_status(dev) < B43_STAT_STARTED))
-		return;
+	अगर (unlikely(b43_status(dev) < B43_STAT_STARTED))
+		वापस;
 
 	sdio_release_host(func);
 	sdio->irq_handler(dev);
 	sdio_claim_host(func);
-}
+पूर्ण
 
-int b43_sdio_request_irq(struct b43_wldev *dev,
-			 void (*handler)(struct b43_wldev *dev))
-{
-	struct ssb_bus *bus = dev->dev->sdev->bus;
-	struct sdio_func *func = bus->host_sdio;
-	struct b43_sdio *sdio = sdio_get_drvdata(func);
-	int err;
+पूर्णांक b43_sdio_request_irq(काष्ठा b43_wldev *dev,
+			 व्योम (*handler)(काष्ठा b43_wldev *dev))
+अणु
+	काष्ठा ssb_bus *bus = dev->dev->sdev->bus;
+	काष्ठा sdio_func *func = bus->host_sdio;
+	काष्ठा b43_sdio *sdio = sdio_get_drvdata(func);
+	पूर्णांक err;
 
 	sdio->irq_handler_opaque = dev;
 	sdio->irq_handler = handler;
 	sdio_claim_host(func);
-	err = sdio_claim_irq(func, b43_sdio_interrupt_dispatcher);
+	err = sdio_claim_irq(func, b43_sdio_पूर्णांकerrupt_dispatcher);
 	sdio_release_host(func);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void b43_sdio_free_irq(struct b43_wldev *dev)
-{
-	struct ssb_bus *bus = dev->dev->sdev->bus;
-	struct sdio_func *func = bus->host_sdio;
-	struct b43_sdio *sdio = sdio_get_drvdata(func);
+व्योम b43_sdio_मुक्त_irq(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा ssb_bus *bus = dev->dev->sdev->bus;
+	काष्ठा sdio_func *func = bus->host_sdio;
+	काष्ठा b43_sdio *sdio = sdio_get_drvdata(func);
 
 	sdio_claim_host(func);
 	sdio_release_irq(func);
 	sdio_release_host(func);
-	sdio->irq_handler_opaque = NULL;
-	sdio->irq_handler = NULL;
-}
+	sdio->irq_handler_opaque = शून्य;
+	sdio->irq_handler = शून्य;
+पूर्ण
 
-static int b43_sdio_probe(struct sdio_func *func,
-				    const struct sdio_device_id *id)
-{
-	struct b43_sdio *sdio;
-	struct sdio_func_tuple *tuple;
-	u16 vendor = 0, device = 0;
-	int error;
+अटल पूर्णांक b43_sdio_probe(काष्ठा sdio_func *func,
+				    स्थिर काष्ठा sdio_device_id *id)
+अणु
+	काष्ठा b43_sdio *sdio;
+	काष्ठा sdio_func_tuple *tuple;
+	u16 venकरोr = 0, device = 0;
+	पूर्णांक error;
 
-	/* Look for the card chip identifier. */
+	/* Look क्रम the card chip identअगरier. */
 	tuple = func->tuples;
-	while (tuple) {
-		switch (tuple->code) {
-		case 0x80:
-			switch (tuple->data[0]) {
-			case HNBU_CHIPID:
-				if (tuple->size != 5)
-					break;
-				vendor = tuple->data[1] | (tuple->data[2]<<8);
+	जबतक (tuple) अणु
+		चयन (tuple->code) अणु
+		हाल 0x80:
+			चयन (tuple->data[0]) अणु
+			हाल HNBU_CHIPID:
+				अगर (tuple->size != 5)
+					अवरोध;
+				venकरोr = tuple->data[1] | (tuple->data[2]<<8);
 				device = tuple->data[3] | (tuple->data[4]<<8);
 				dev_info(&func->dev, "Chip ID %04x:%04x\n",
-					 vendor, device);
-				break;
-			default:
-				break;
-			}
-			break;
-		default:
-			break;
-		}
+					 venकरोr, device);
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		tuple = tuple->next;
-	}
-	if (!vendor || !device) {
+	पूर्ण
+	अगर (!venकरोr || !device) अणु
 		error = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	sdio_claim_host(func);
 	error = sdio_set_block_size(func, B43_SDIO_BLOCK_SIZE);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&func->dev, "failed to set block size to %u bytes,"
 			" error %d\n", B43_SDIO_BLOCK_SIZE, error);
-		goto err_release_host;
-	}
+		जाओ err_release_host;
+	पूर्ण
 	error = sdio_enable_func(func);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&func->dev, "failed to enable func, error %d\n", error);
-		goto err_release_host;
-	}
+		जाओ err_release_host;
+	पूर्ण
 	sdio_release_host(func);
 
-	sdio = kzalloc(sizeof(*sdio), GFP_KERNEL);
-	if (!sdio) {
+	sdio = kzalloc(माप(*sdio), GFP_KERNEL);
+	अगर (!sdio) अणु
 		error = -ENOMEM;
 		dev_err(&func->dev, "failed to allocate ssb bus\n");
-		goto err_disable_func;
-	}
-	error = ssb_bus_sdiobus_register(&sdio->ssb, func,
-					 b43_sdio_get_quirks(vendor, device));
-	if (error) {
+		जाओ err_disable_func;
+	पूर्ण
+	error = ssb_bus_sdiobus_रेजिस्टर(&sdio->ssb, func,
+					 b43_sdio_get_quirks(venकरोr, device));
+	अगर (error) अणु
 		dev_err(&func->dev, "failed to register ssb sdio bus,"
 			" error %d\n", error);
-		goto err_free_ssb;
-	}
+		जाओ err_मुक्त_ssb;
+	पूर्ण
 	sdio_set_drvdata(func, sdio);
 
-	return 0;
+	वापस 0;
 
-err_free_ssb:
-	kfree(sdio);
+err_मुक्त_ssb:
+	kमुक्त(sdio);
 err_disable_func:
 	sdio_claim_host(func);
 	sdio_disable_func(func);
 err_release_host:
 	sdio_release_host(func);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void b43_sdio_remove(struct sdio_func *func)
-{
-	struct b43_sdio *sdio = sdio_get_drvdata(func);
+अटल व्योम b43_sdio_हटाओ(काष्ठा sdio_func *func)
+अणु
+	काष्ठा b43_sdio *sdio = sdio_get_drvdata(func);
 
-	ssb_bus_unregister(&sdio->ssb);
+	ssb_bus_unरेजिस्टर(&sdio->ssb);
 	sdio_claim_host(func);
 	sdio_disable_func(func);
 	sdio_release_host(func);
-	kfree(sdio);
-	sdio_set_drvdata(func, NULL);
-}
+	kमुक्त(sdio);
+	sdio_set_drvdata(func, शून्य);
+पूर्ण
 
-static const struct sdio_device_id b43_sdio_ids[] = {
-	{ SDIO_DEVICE(SDIO_VENDOR_ID_BROADCOM, SDIO_DEVICE_ID_BROADCOM_NINTENDO_WII) },
-	{ SDIO_DEVICE(SDIO_VENDOR_ID_CGUYS, SDIO_DEVICE_ID_CGUYS_EW_CG1102GC) },
-	{ },
-};
+अटल स्थिर काष्ठा sdio_device_id b43_sdio_ids[] = अणु
+	अणु SDIO_DEVICE(SDIO_VENDOR_ID_BROADCOM, SDIO_DEVICE_ID_BROADCOM_NINTENDO_WII) पूर्ण,
+	अणु SDIO_DEVICE(SDIO_VENDOR_ID_CGUYS, SDIO_DEVICE_ID_CGUYS_EW_CG1102GC) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct sdio_driver b43_sdio_driver = {
+अटल काष्ठा sdio_driver b43_sdio_driver = अणु
 	.name		= "b43-sdio",
 	.id_table	= b43_sdio_ids,
 	.probe		= b43_sdio_probe,
-	.remove		= b43_sdio_remove,
-};
+	.हटाओ		= b43_sdio_हटाओ,
+पूर्ण;
 
-int b43_sdio_init(void)
-{
-	return sdio_register_driver(&b43_sdio_driver);
-}
+पूर्णांक b43_sdio_init(व्योम)
+अणु
+	वापस sdio_रेजिस्टर_driver(&b43_sdio_driver);
+पूर्ण
 
-void b43_sdio_exit(void)
-{
-	sdio_unregister_driver(&b43_sdio_driver);
-}
+व्योम b43_sdio_निकास(व्योम)
+अणु
+	sdio_unरेजिस्टर_driver(&b43_sdio_driver);
+पूर्ण

@@ -1,1 +1,2 @@
-#define CONFIG_XARRAY_MULTI 1
+<शैली गुरु>
+#घोषणा CONFIG_XARRAY_MULTI 1

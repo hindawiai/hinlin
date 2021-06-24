@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * ACPI Sony Notebook Control Driver (SNC and SPIC)
  *
@@ -15,7 +16,7 @@
  *
  * Copyright (C) 2005 Narayanan R S <nars@kadamba.org>
  *
- * Copyright (C) 2001-2002 Alcôve <www.alcove.com>
+ * Copyright (C) 2001-2002 Alcथखve <www.alcove.com>
  *
  * Copyright (C) 2001 Michael Ashley <m.ashley@unsw.edu.au>
  *
@@ -28,187 +29,187 @@
  * Earlier work by Werner Almesberger, Paul `Rusty' Russell and Paul Mackerras.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/backlight.h>
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/dmi.h>
-#include <linux/pci.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/input.h>
-#include <linux/kfifo.h>
-#include <linux/workqueue.h>
-#include <linux/acpi.h>
-#include <linux/slab.h>
-#include <linux/sonypi.h>
-#include <linux/sony-laptop.h>
-#include <linux/rfkill.h>
-#ifdef CONFIG_SONYPI_COMPAT
-#include <linux/poll.h>
-#include <linux/miscdevice.h>
-#endif
-#include <linux/uaccess.h>
-#include <acpi/video.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/input.h>
+#समावेश <linux/kfअगरo.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sonypi.h>
+#समावेश <linux/sony-laptop.h>
+#समावेश <linux/rfसमाप्त.h>
+#अगर_घोषित CONFIG_SONYPI_COMPAT
+#समावेश <linux/poll.h>
+#समावेश <linux/miscdevice.h>
+#पूर्ण_अगर
+#समावेश <linux/uaccess.h>
+#समावेश <acpi/video.h>
 
-#define dprintk(fmt, ...)			\
-do {						\
-	if (debug)				\
+#घोषणा dprपूर्णांकk(fmt, ...)			\
+करो अणु						\
+	अगर (debug)				\
 		pr_warn(fmt, ##__VA_ARGS__);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define SONY_NC_CLASS		"sony-nc"
-#define SONY_NC_HID		"SNY5001"
-#define SONY_NC_DRIVER_NAME	"Sony Notebook Control Driver"
+#घोषणा SONY_NC_CLASS		"sony-nc"
+#घोषणा SONY_NC_HID		"SNY5001"
+#घोषणा SONY_NC_DRIVER_NAME	"Sony Notebook Control Driver"
 
-#define SONY_PIC_CLASS		"sony-pic"
-#define SONY_PIC_HID		"SNY6001"
-#define SONY_PIC_DRIVER_NAME	"Sony Programmable IO Control Driver"
+#घोषणा SONY_PIC_CLASS		"sony-pic"
+#घोषणा SONY_PIC_HID		"SNY6001"
+#घोषणा SONY_PIC_DRIVER_NAME	"Sony Programmable IO Control Driver"
 
 MODULE_AUTHOR("Stelian Pop, Mattia Dongili");
 MODULE_DESCRIPTION("Sony laptop extras driver (SPIC and SNC ACPI device)");
 MODULE_LICENSE("GPL");
 
-static int debug;
-module_param(debug, int, 0);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0);
 MODULE_PARM_DESC(debug, "set this to 1 (and RTFM) if you want to help "
 		 "the development of this driver");
 
-static int no_spic;		/* = 0 */
-module_param(no_spic, int, 0444);
+अटल पूर्णांक no_spic;		/* = 0 */
+module_param(no_spic, पूर्णांक, 0444);
 MODULE_PARM_DESC(no_spic,
 		 "set this if you don't want to enable the SPIC device");
 
-static int compat;		/* = 0 */
-module_param(compat, int, 0444);
+अटल पूर्णांक compat;		/* = 0 */
+module_param(compat, पूर्णांक, 0444);
 MODULE_PARM_DESC(compat,
 		 "set this if you want to enable backward compatibility mode");
 
-static unsigned long mask = 0xffffffff;
-module_param(mask, ulong, 0644);
+अटल अचिन्हित दीर्घ mask = 0xffffffff;
+module_param(mask, uदीर्घ, 0644);
 MODULE_PARM_DESC(mask,
 		 "set this to the mask of event you want to enable (see doc)");
 
-static int camera;		/* = 0 */
-module_param(camera, int, 0444);
+अटल पूर्णांक camera;		/* = 0 */
+module_param(camera, पूर्णांक, 0444);
 MODULE_PARM_DESC(camera,
 		 "set this to 1 to enable Motion Eye camera controls "
 		 "(only use it if you have a C1VE or C1VN model)");
 
-#ifdef CONFIG_SONYPI_COMPAT
-static int minor = -1;
-module_param(minor, int, 0);
+#अगर_घोषित CONFIG_SONYPI_COMPAT
+अटल पूर्णांक minor = -1;
+module_param(minor, पूर्णांक, 0);
 MODULE_PARM_DESC(minor,
 		 "minor number of the misc device for the SPIC compatibility code, "
 		 "default is -1 (automatic)");
-#endif
+#पूर्ण_अगर
 
-static int kbd_backlight = -1;
-module_param(kbd_backlight, int, 0444);
+अटल पूर्णांक kbd_backlight = -1;
+module_param(kbd_backlight, पूर्णांक, 0444);
 MODULE_PARM_DESC(kbd_backlight,
 		 "set this to 0 to disable keyboard backlight, "
 		 "1 to enable it with automatic control and 2 to have it always "
 		 "on (default: no change from current value)");
 
-static int kbd_backlight_timeout = -1;
-module_param(kbd_backlight_timeout, int, 0444);
-MODULE_PARM_DESC(kbd_backlight_timeout,
+अटल पूर्णांक kbd_backlight_समयout = -1;
+module_param(kbd_backlight_समयout, पूर्णांक, 0444);
+MODULE_PARM_DESC(kbd_backlight_समयout,
 		 "meaningful values vary from 0 to 3 and their meaning depends "
 		 "on the model (default: no change from current value)");
 
-#ifdef CONFIG_PM_SLEEP
-static void sony_nc_thermal_resume(void);
-#endif
-static int sony_nc_kbd_backlight_setup(struct platform_device *pd,
-		unsigned int handle);
-static void sony_nc_kbd_backlight_cleanup(struct platform_device *pd,
-		unsigned int handle);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल व्योम sony_nc_thermal_resume(व्योम);
+#पूर्ण_अगर
+अटल पूर्णांक sony_nc_kbd_backlight_setup(काष्ठा platक्रमm_device *pd,
+		अचिन्हित पूर्णांक handle);
+अटल व्योम sony_nc_kbd_backlight_cleanup(काष्ठा platक्रमm_device *pd,
+		अचिन्हित पूर्णांक handle);
 
-static int sony_nc_battery_care_setup(struct platform_device *pd,
-		unsigned int handle);
-static void sony_nc_battery_care_cleanup(struct platform_device *pd);
+अटल पूर्णांक sony_nc_battery_care_setup(काष्ठा platक्रमm_device *pd,
+		अचिन्हित पूर्णांक handle);
+अटल व्योम sony_nc_battery_care_cleanup(काष्ठा platक्रमm_device *pd);
 
-static int sony_nc_thermal_setup(struct platform_device *pd);
-static void sony_nc_thermal_cleanup(struct platform_device *pd);
+अटल पूर्णांक sony_nc_thermal_setup(काष्ठा platक्रमm_device *pd);
+अटल व्योम sony_nc_thermal_cleanup(काष्ठा platक्रमm_device *pd);
 
-static int sony_nc_lid_resume_setup(struct platform_device *pd,
-				    unsigned int handle);
-static void sony_nc_lid_resume_cleanup(struct platform_device *pd);
+अटल पूर्णांक sony_nc_lid_resume_setup(काष्ठा platक्रमm_device *pd,
+				    अचिन्हित पूर्णांक handle);
+अटल व्योम sony_nc_lid_resume_cleanup(काष्ठा platक्रमm_device *pd);
 
-static int sony_nc_gfx_switch_setup(struct platform_device *pd,
-		unsigned int handle);
-static void sony_nc_gfx_switch_cleanup(struct platform_device *pd);
-static int __sony_nc_gfx_switch_status_get(void);
+अटल पूर्णांक sony_nc_gfx_चयन_setup(काष्ठा platक्रमm_device *pd,
+		अचिन्हित पूर्णांक handle);
+अटल व्योम sony_nc_gfx_चयन_cleanup(काष्ठा platक्रमm_device *pd);
+अटल पूर्णांक __sony_nc_gfx_चयन_status_get(व्योम);
 
-static int sony_nc_highspeed_charging_setup(struct platform_device *pd);
-static void sony_nc_highspeed_charging_cleanup(struct platform_device *pd);
+अटल पूर्णांक sony_nc_highspeed_अक्षरging_setup(काष्ठा platक्रमm_device *pd);
+अटल व्योम sony_nc_highspeed_अक्षरging_cleanup(काष्ठा platक्रमm_device *pd);
 
-static int sony_nc_lowbatt_setup(struct platform_device *pd);
-static void sony_nc_lowbatt_cleanup(struct platform_device *pd);
+अटल पूर्णांक sony_nc_lowbatt_setup(काष्ठा platक्रमm_device *pd);
+अटल व्योम sony_nc_lowbatt_cleanup(काष्ठा platक्रमm_device *pd);
 
-static int sony_nc_fanspeed_setup(struct platform_device *pd);
-static void sony_nc_fanspeed_cleanup(struct platform_device *pd);
+अटल पूर्णांक sony_nc_fanspeed_setup(काष्ठा platक्रमm_device *pd);
+अटल व्योम sony_nc_fanspeed_cleanup(काष्ठा platक्रमm_device *pd);
 
-static int sony_nc_usb_charge_setup(struct platform_device *pd);
-static void sony_nc_usb_charge_cleanup(struct platform_device *pd);
+अटल पूर्णांक sony_nc_usb_अक्षरge_setup(काष्ठा platक्रमm_device *pd);
+अटल व्योम sony_nc_usb_अक्षरge_cleanup(काष्ठा platक्रमm_device *pd);
 
-static int sony_nc_panelid_setup(struct platform_device *pd);
-static void sony_nc_panelid_cleanup(struct platform_device *pd);
+अटल पूर्णांक sony_nc_panelid_setup(काष्ठा platक्रमm_device *pd);
+अटल व्योम sony_nc_panelid_cleanup(काष्ठा platक्रमm_device *pd);
 
-static int sony_nc_smart_conn_setup(struct platform_device *pd);
-static void sony_nc_smart_conn_cleanup(struct platform_device *pd);
+अटल पूर्णांक sony_nc_smart_conn_setup(काष्ठा platक्रमm_device *pd);
+अटल व्योम sony_nc_smart_conn_cleanup(काष्ठा platक्रमm_device *pd);
 
-static int sony_nc_touchpad_setup(struct platform_device *pd,
-				  unsigned int handle);
-static void sony_nc_touchpad_cleanup(struct platform_device *pd);
+अटल पूर्णांक sony_nc_touchpad_setup(काष्ठा platक्रमm_device *pd,
+				  अचिन्हित पूर्णांक handle);
+अटल व्योम sony_nc_touchpad_cleanup(काष्ठा platक्रमm_device *pd);
 
-enum sony_nc_rfkill {
+क्रमागत sony_nc_rfसमाप्त अणु
 	SONY_WIFI,
 	SONY_BLUETOOTH,
 	SONY_WWAN,
 	SONY_WIMAX,
 	N_SONY_RFKILL,
-};
+पूर्ण;
 
-static int sony_rfkill_handle;
-static struct rfkill *sony_rfkill_devices[N_SONY_RFKILL];
-static int sony_rfkill_address[N_SONY_RFKILL] = {0x300, 0x500, 0x700, 0x900};
-static int sony_nc_rfkill_setup(struct acpi_device *device,
-		unsigned int handle);
-static void sony_nc_rfkill_cleanup(void);
-static void sony_nc_rfkill_update(void);
+अटल पूर्णांक sony_rfसमाप्त_handle;
+अटल काष्ठा rfसमाप्त *sony_rfसमाप्त_devices[N_SONY_RFKILL];
+अटल पूर्णांक sony_rfसमाप्त_address[N_SONY_RFKILL] = अणु0x300, 0x500, 0x700, 0x900पूर्ण;
+अटल पूर्णांक sony_nc_rfसमाप्त_setup(काष्ठा acpi_device *device,
+		अचिन्हित पूर्णांक handle);
+अटल व्योम sony_nc_rfसमाप्त_cleanup(व्योम);
+अटल व्योम sony_nc_rfसमाप्त_update(व्योम);
 
 /*********** Input Devices ***********/
 
-#define SONY_LAPTOP_BUF_SIZE	128
-struct sony_laptop_input_s {
+#घोषणा SONY_LAPTOP_BUF_SIZE	128
+काष्ठा sony_laptop_input_s अणु
 	atomic_t		users;
-	struct input_dev	*jog_dev;
-	struct input_dev	*key_dev;
-	struct kfifo		fifo;
-	spinlock_t		fifo_lock;
-	struct timer_list	release_key_timer;
-};
+	काष्ठा input_dev	*jog_dev;
+	काष्ठा input_dev	*key_dev;
+	काष्ठा kfअगरo		fअगरo;
+	spinlock_t		fअगरo_lock;
+	काष्ठा समयr_list	release_key_समयr;
+पूर्ण;
 
-static struct sony_laptop_input_s sony_laptop_input = {
+अटल काष्ठा sony_laptop_input_s sony_laptop_input = अणु
 	.users = ATOMIC_INIT(0),
-};
+पूर्ण;
 
-struct sony_laptop_keypress {
-	struct input_dev *dev;
-	int key;
-};
+काष्ठा sony_laptop_keypress अणु
+	काष्ठा input_dev *dev;
+	पूर्णांक key;
+पूर्ण;
 
 /* Correspondance table between sonypi events
  * and input layer indexes in the keymap
  */
-static const int sony_laptop_input_index[] = {
+अटल स्थिर पूर्णांक sony_laptop_input_index[] = अणु
 	-1,	/*  0 no event */
 	-1,	/*  1 SONYPI_EVENT_JOGDIAL_DOWN */
 	-1,	/*  2 SONYPI_EVENT_JOGDIAL_UP */
@@ -283,9 +284,9 @@ static const int sony_laptop_input_index[] = {
 	-1,	/* 71 SONYPI_EVENT_BRIGHTNESS_PRESSED */
 	58,	/* 72 SONYPI_EVENT_MEDIA_PRESSED */
 	59,	/* 72 SONYPI_EVENT_VENDOR_PRESSED */
-};
+पूर्ण;
 
-static int sony_laptop_input_keycode_map[] = {
+अटल पूर्णांक sony_laptop_input_keycode_map[] = अणु
 	KEY_CAMERA,	/*  0 SONYPI_EVENT_CAPTURE_PRESSED */
 	KEY_RESERVED,	/*  1 SONYPI_EVENT_CAPTURE_RELEASED */
 	KEY_RESERVED,	/*  2 SONYPI_EVENT_CAPTURE_PARTIALPRESSED */
@@ -346,331 +347,331 @@ static int sony_laptop_input_keycode_map[] = {
 	KEY_VOLUMEDOWN,	/* 57 SONYPI_EVENT_VOLUME_DEC_PRESSED */
 	KEY_MEDIA,	/* 58 SONYPI_EVENT_MEDIA_PRESSED */
 	KEY_VENDOR,	/* 59 SONYPI_EVENT_VENDOR_PRESSED */
-};
+पूर्ण;
 
-/* release buttons after a short delay if pressed */
-static void do_sony_laptop_release_key(struct timer_list *unused)
-{
-	struct sony_laptop_keypress kp;
-	unsigned long flags;
+/* release buttons after a लघु delay अगर pressed */
+अटल व्योम करो_sony_laptop_release_key(काष्ठा समयr_list *unused)
+अणु
+	काष्ठा sony_laptop_keypress kp;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&sony_laptop_input.fifo_lock, flags);
+	spin_lock_irqsave(&sony_laptop_input.fअगरo_lock, flags);
 
-	if (kfifo_out(&sony_laptop_input.fifo,
-		      (unsigned char *)&kp, sizeof(kp)) == sizeof(kp)) {
+	अगर (kfअगरo_out(&sony_laptop_input.fअगरo,
+		      (अचिन्हित अक्षर *)&kp, माप(kp)) == माप(kp)) अणु
 		input_report_key(kp.dev, kp.key, 0);
 		input_sync(kp.dev);
-	}
+	पूर्ण
 
-	/* If there is something in the fifo schedule next release. */
-	if (kfifo_len(&sony_laptop_input.fifo) != 0)
-		mod_timer(&sony_laptop_input.release_key_timer,
-			  jiffies + msecs_to_jiffies(10));
+	/* If there is something in the fअगरo schedule next release. */
+	अगर (kfअगरo_len(&sony_laptop_input.fअगरo) != 0)
+		mod_समयr(&sony_laptop_input.release_key_समयr,
+			  jअगरfies + msecs_to_jअगरfies(10));
 
-	spin_unlock_irqrestore(&sony_laptop_input.fifo_lock, flags);
-}
+	spin_unlock_irqrestore(&sony_laptop_input.fअगरo_lock, flags);
+पूर्ण
 
-/* forward event to the input subsystem */
-static void sony_laptop_report_input_event(u8 event)
-{
-	struct input_dev *jog_dev = sony_laptop_input.jog_dev;
-	struct input_dev *key_dev = sony_laptop_input.key_dev;
-	struct sony_laptop_keypress kp = { NULL };
-	int scancode = -1;
+/* क्रमward event to the input subप्रणाली */
+अटल व्योम sony_laptop_report_input_event(u8 event)
+अणु
+	काष्ठा input_dev *jog_dev = sony_laptop_input.jog_dev;
+	काष्ठा input_dev *key_dev = sony_laptop_input.key_dev;
+	काष्ठा sony_laptop_keypress kp = अणु शून्य पूर्ण;
+	पूर्णांक scancode = -1;
 
-	if (event == SONYPI_EVENT_FNKEY_RELEASED ||
-			event == SONYPI_EVENT_ANYBUTTON_RELEASED) {
+	अगर (event == SONYPI_EVENT_FNKEY_RELEASED ||
+			event == SONYPI_EVENT_ANYBUTTON_RELEASED) अणु
 		/* Nothing, not all VAIOs generate this event */
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* report events */
-	switch (event) {
+	चयन (event) अणु
 	/* jog_dev events */
-	case SONYPI_EVENT_JOGDIAL_UP:
-	case SONYPI_EVENT_JOGDIAL_UP_PRESSED:
+	हाल SONYPI_EVENT_JOGDIAL_UP:
+	हाल SONYPI_EVENT_JOGDIAL_UP_PRESSED:
 		input_report_rel(jog_dev, REL_WHEEL, 1);
 		input_sync(jog_dev);
-		return;
+		वापस;
 
-	case SONYPI_EVENT_JOGDIAL_DOWN:
-	case SONYPI_EVENT_JOGDIAL_DOWN_PRESSED:
+	हाल SONYPI_EVENT_JOGDIAL_DOWN:
+	हाल SONYPI_EVENT_JOGDIAL_DOWN_PRESSED:
 		input_report_rel(jog_dev, REL_WHEEL, -1);
 		input_sync(jog_dev);
-		return;
+		वापस;
 
 	/* key_dev events */
-	case SONYPI_EVENT_JOGDIAL_PRESSED:
+	हाल SONYPI_EVENT_JOGDIAL_PRESSED:
 		kp.key = BTN_MIDDLE;
 		kp.dev = jog_dev;
-		break;
+		अवरोध;
 
-	default:
-		if (event >= ARRAY_SIZE(sony_laptop_input_index)) {
-			dprintk("sony_laptop_report_input_event, event not known: %d\n", event);
-			break;
-		}
-		if ((scancode = sony_laptop_input_index[event]) != -1) {
+	शेष:
+		अगर (event >= ARRAY_SIZE(sony_laptop_input_index)) अणु
+			dprपूर्णांकk("sony_laptop_report_input_event, event not known: %d\n", event);
+			अवरोध;
+		पूर्ण
+		अगर ((scancode = sony_laptop_input_index[event]) != -1) अणु
 			kp.key = sony_laptop_input_keycode_map[scancode];
-			if (kp.key != KEY_UNKNOWN)
+			अगर (kp.key != KEY_UNKNOWN)
 				kp.dev = key_dev;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (kp.dev) {
-		/* if we have a scancode we emit it so we can always
+	अगर (kp.dev) अणु
+		/* अगर we have a scancode we emit it so we can always
 		    remap the key */
-		if (scancode != -1)
+		अगर (scancode != -1)
 			input_event(kp.dev, EV_MSC, MSC_SCAN, scancode);
 		input_report_key(kp.dev, kp.key, 1);
 		input_sync(kp.dev);
 
 		/* schedule key release */
-		kfifo_in_locked(&sony_laptop_input.fifo,
-				(unsigned char *)&kp, sizeof(kp),
-				&sony_laptop_input.fifo_lock);
-		mod_timer(&sony_laptop_input.release_key_timer,
-			  jiffies + msecs_to_jiffies(10));
-	} else
-		dprintk("unknown input event %.2x\n", event);
-}
+		kfअगरo_in_locked(&sony_laptop_input.fअगरo,
+				(अचिन्हित अक्षर *)&kp, माप(kp),
+				&sony_laptop_input.fअगरo_lock);
+		mod_समयr(&sony_laptop_input.release_key_समयr,
+			  jअगरfies + msecs_to_jअगरfies(10));
+	पूर्ण अन्यथा
+		dprपूर्णांकk("unknown input event %.2x\n", event);
+पूर्ण
 
-static int sony_laptop_setup_input(struct acpi_device *acpi_device)
-{
-	struct input_dev *jog_dev;
-	struct input_dev *key_dev;
-	int i;
-	int error;
+अटल पूर्णांक sony_laptop_setup_input(काष्ठा acpi_device *acpi_device)
+अणु
+	काष्ठा input_dev *jog_dev;
+	काष्ठा input_dev *key_dev;
+	पूर्णांक i;
+	पूर्णांक error;
 
-	/* don't run again if already initialized */
-	if (atomic_add_return(1, &sony_laptop_input.users) > 1)
-		return 0;
+	/* करोn't run again अगर alपढ़ोy initialized */
+	अगर (atomic_add_वापस(1, &sony_laptop_input.users) > 1)
+		वापस 0;
 
-	/* kfifo */
-	spin_lock_init(&sony_laptop_input.fifo_lock);
-	error = kfifo_alloc(&sony_laptop_input.fifo,
+	/* kfअगरo */
+	spin_lock_init(&sony_laptop_input.fअगरo_lock);
+	error = kfअगरo_alloc(&sony_laptop_input.fअगरo,
 			    SONY_LAPTOP_BUF_SIZE, GFP_KERNEL);
-	if (error) {
+	अगर (error) अणु
 		pr_err("kfifo_alloc failed\n");
-		goto err_dec_users;
-	}
+		जाओ err_dec_users;
+	पूर्ण
 
-	timer_setup(&sony_laptop_input.release_key_timer,
-		    do_sony_laptop_release_key, 0);
+	समयr_setup(&sony_laptop_input.release_key_समयr,
+		    करो_sony_laptop_release_key, 0);
 
 	/* input keys */
 	key_dev = input_allocate_device();
-	if (!key_dev) {
+	अगर (!key_dev) अणु
 		error = -ENOMEM;
-		goto err_free_kfifo;
-	}
+		जाओ err_मुक्त_kfअगरo;
+	पूर्ण
 
 	key_dev->name = "Sony Vaio Keys";
 	key_dev->id.bustype = BUS_ISA;
-	key_dev->id.vendor = PCI_VENDOR_ID_SONY;
+	key_dev->id.venकरोr = PCI_VENDOR_ID_SONY;
 	key_dev->dev.parent = &acpi_device->dev;
 
 	/* Initialize the Input Drivers: special keys */
 	input_set_capability(key_dev, EV_MSC, MSC_SCAN);
 
 	__set_bit(EV_KEY, key_dev->evbit);
-	key_dev->keycodesize = sizeof(sony_laptop_input_keycode_map[0]);
+	key_dev->keycodesize = माप(sony_laptop_input_keycode_map[0]);
 	key_dev->keycodemax = ARRAY_SIZE(sony_laptop_input_keycode_map);
 	key_dev->keycode = &sony_laptop_input_keycode_map;
-	for (i = 0; i < ARRAY_SIZE(sony_laptop_input_keycode_map); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(sony_laptop_input_keycode_map); i++)
 		__set_bit(sony_laptop_input_keycode_map[i], key_dev->keybit);
 	__clear_bit(KEY_RESERVED, key_dev->keybit);
 
-	error = input_register_device(key_dev);
-	if (error)
-		goto err_free_keydev;
+	error = input_रेजिस्टर_device(key_dev);
+	अगर (error)
+		जाओ err_मुक्त_keydev;
 
 	sony_laptop_input.key_dev = key_dev;
 
 	/* jogdial */
 	jog_dev = input_allocate_device();
-	if (!jog_dev) {
+	अगर (!jog_dev) अणु
 		error = -ENOMEM;
-		goto err_unregister_keydev;
-	}
+		जाओ err_unरेजिस्टर_keydev;
+	पूर्ण
 
 	jog_dev->name = "Sony Vaio Jogdial";
 	jog_dev->id.bustype = BUS_ISA;
-	jog_dev->id.vendor = PCI_VENDOR_ID_SONY;
+	jog_dev->id.venकरोr = PCI_VENDOR_ID_SONY;
 	jog_dev->dev.parent = &acpi_device->dev;
 
 	input_set_capability(jog_dev, EV_KEY, BTN_MIDDLE);
 	input_set_capability(jog_dev, EV_REL, REL_WHEEL);
 
-	error = input_register_device(jog_dev);
-	if (error)
-		goto err_free_jogdev;
+	error = input_रेजिस्टर_device(jog_dev);
+	अगर (error)
+		जाओ err_मुक्त_jogdev;
 
 	sony_laptop_input.jog_dev = jog_dev;
 
-	return 0;
+	वापस 0;
 
-err_free_jogdev:
-	input_free_device(jog_dev);
+err_मुक्त_jogdev:
+	input_मुक्त_device(jog_dev);
 
-err_unregister_keydev:
-	input_unregister_device(key_dev);
-	/* to avoid kref underflow below at input_free_device */
-	key_dev = NULL;
+err_unरेजिस्टर_keydev:
+	input_unरेजिस्टर_device(key_dev);
+	/* to aव्योम kref underflow below at input_मुक्त_device */
+	key_dev = शून्य;
 
-err_free_keydev:
-	input_free_device(key_dev);
+err_मुक्त_keydev:
+	input_मुक्त_device(key_dev);
 
-err_free_kfifo:
-	kfifo_free(&sony_laptop_input.fifo);
+err_मुक्त_kfअगरo:
+	kfअगरo_मुक्त(&sony_laptop_input.fअगरo);
 
 err_dec_users:
 	atomic_dec(&sony_laptop_input.users);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void sony_laptop_remove_input(void)
-{
-	struct sony_laptop_keypress kp = { NULL };
+अटल व्योम sony_laptop_हटाओ_input(व्योम)
+अणु
+	काष्ठा sony_laptop_keypress kp = अणु शून्य पूर्ण;
 
 	/* Cleanup only after the last user has gone */
-	if (!atomic_dec_and_test(&sony_laptop_input.users))
-		return;
+	अगर (!atomic_dec_and_test(&sony_laptop_input.users))
+		वापस;
 
-	del_timer_sync(&sony_laptop_input.release_key_timer);
+	del_समयr_sync(&sony_laptop_input.release_key_समयr);
 
 	/*
-	 * Generate key-up events for remaining keys. Note that we don't
-	 * need locking since nobody is adding new events to the kfifo.
+	 * Generate key-up events क्रम reमुख्यing keys. Note that we करोn't
+	 * need locking since nobody is adding new events to the kfअगरo.
 	 */
-	while (kfifo_out(&sony_laptop_input.fifo,
-			 (unsigned char *)&kp, sizeof(kp)) == sizeof(kp)) {
+	जबतक (kfअगरo_out(&sony_laptop_input.fअगरo,
+			 (अचिन्हित अक्षर *)&kp, माप(kp)) == माप(kp)) अणु
 		input_report_key(kp.dev, kp.key, 0);
 		input_sync(kp.dev);
-	}
+	पूर्ण
 
 	/* destroy input devs */
-	input_unregister_device(sony_laptop_input.key_dev);
-	sony_laptop_input.key_dev = NULL;
+	input_unरेजिस्टर_device(sony_laptop_input.key_dev);
+	sony_laptop_input.key_dev = शून्य;
 
-	if (sony_laptop_input.jog_dev) {
-		input_unregister_device(sony_laptop_input.jog_dev);
-		sony_laptop_input.jog_dev = NULL;
-	}
+	अगर (sony_laptop_input.jog_dev) अणु
+		input_unरेजिस्टर_device(sony_laptop_input.jog_dev);
+		sony_laptop_input.jog_dev = शून्य;
+	पूर्ण
 
-	kfifo_free(&sony_laptop_input.fifo);
-}
+	kfअगरo_मुक्त(&sony_laptop_input.fअगरo);
+पूर्ण
 
-/*********** Platform Device ***********/
+/*********** Platक्रमm Device ***********/
 
-static atomic_t sony_pf_users = ATOMIC_INIT(0);
-static struct platform_driver sony_pf_driver = {
-	.driver = {
+अटल atomic_t sony_pf_users = ATOMIC_INIT(0);
+अटल काष्ठा platक्रमm_driver sony_pf_driver = अणु
+	.driver = अणु
 		   .name = "sony-laptop",
-		   }
-};
-static struct platform_device *sony_pf_device;
+		   पूर्ण
+पूर्ण;
+अटल काष्ठा platक्रमm_device *sony_pf_device;
 
-static int sony_pf_add(void)
-{
-	int ret = 0;
+अटल पूर्णांक sony_pf_add(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	/* don't run again if already initialized */
-	if (atomic_add_return(1, &sony_pf_users) > 1)
-		return 0;
+	/* करोn't run again अगर alपढ़ोy initialized */
+	अगर (atomic_add_वापस(1, &sony_pf_users) > 1)
+		वापस 0;
 
-	ret = platform_driver_register(&sony_pf_driver);
-	if (ret)
-		goto out;
+	ret = platक्रमm_driver_रेजिस्टर(&sony_pf_driver);
+	अगर (ret)
+		जाओ out;
 
-	sony_pf_device = platform_device_alloc("sony-laptop", -1);
-	if (!sony_pf_device) {
+	sony_pf_device = platक्रमm_device_alloc("sony-laptop", -1);
+	अगर (!sony_pf_device) अणु
 		ret = -ENOMEM;
-		goto out_platform_registered;
-	}
+		जाओ out_platक्रमm_रेजिस्टरed;
+	पूर्ण
 
-	ret = platform_device_add(sony_pf_device);
-	if (ret)
-		goto out_platform_alloced;
+	ret = platक्रमm_device_add(sony_pf_device);
+	अगर (ret)
+		जाओ out_platक्रमm_alloced;
 
-	return 0;
+	वापस 0;
 
-      out_platform_alloced:
-	platform_device_put(sony_pf_device);
-	sony_pf_device = NULL;
-      out_platform_registered:
-	platform_driver_unregister(&sony_pf_driver);
+      out_platक्रमm_alloced:
+	platक्रमm_device_put(sony_pf_device);
+	sony_pf_device = शून्य;
+      out_platक्रमm_रेजिस्टरed:
+	platक्रमm_driver_unरेजिस्टर(&sony_pf_driver);
       out:
 	atomic_dec(&sony_pf_users);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sony_pf_remove(void)
-{
-	/* deregister only after the last user has gone */
-	if (!atomic_dec_and_test(&sony_pf_users))
-		return;
+अटल व्योम sony_pf_हटाओ(व्योम)
+अणु
+	/* deरेजिस्टर only after the last user has gone */
+	अगर (!atomic_dec_and_test(&sony_pf_users))
+		वापस;
 
-	platform_device_unregister(sony_pf_device);
-	platform_driver_unregister(&sony_pf_driver);
-}
+	platक्रमm_device_unरेजिस्टर(sony_pf_device);
+	platक्रमm_driver_unरेजिस्टर(&sony_pf_driver);
+पूर्ण
 
 /*********** SNC (SNY5001) Device ***********/
 
-/* the device uses 1-based values, while the backlight subsystem uses
+/* the device uses 1-based values, जबतक the backlight subप्रणाली uses
    0-based values */
-#define SONY_MAX_BRIGHTNESS	8
+#घोषणा SONY_MAX_BRIGHTNESS	8
 
-#define SNC_VALIDATE_IN		0
-#define SNC_VALIDATE_OUT	1
+#घोषणा SNC_VALIDATE_IN		0
+#घोषणा SNC_VALIDATE_OUT	1
 
-static ssize_t sony_nc_sysfs_show(struct device *, struct device_attribute *,
-			      char *);
-static ssize_t sony_nc_sysfs_store(struct device *, struct device_attribute *,
-			       const char *, size_t);
-static int boolean_validate(const int, const int);
-static int brightness_default_validate(const int, const int);
+अटल sमाप_प्रकार sony_nc_sysfs_show(काष्ठा device *, काष्ठा device_attribute *,
+			      अक्षर *);
+अटल sमाप_प्रकार sony_nc_sysfs_store(काष्ठा device *, काष्ठा device_attribute *,
+			       स्थिर अक्षर *, माप_प्रकार);
+अटल पूर्णांक boolean_validate(स्थिर पूर्णांक, स्थिर पूर्णांक);
+अटल पूर्णांक brightness_शेष_validate(स्थिर पूर्णांक, स्थिर पूर्णांक);
 
-struct sony_nc_value {
-	char *name;		/* name of the entry */
-	char **acpiget;		/* names of the ACPI get function */
-	char **acpiset;		/* names of the ACPI set function */
-	int (*validate)(const int, const int);	/* input/output validation */
-	int value;		/* current setting */
-	int valid;		/* Has ever been set */
-	int debug;		/* active only in debug mode ? */
-	struct device_attribute devattr;	/* sysfs attribute */
-};
+काष्ठा sony_nc_value अणु
+	अक्षर *name;		/* name of the entry */
+	अक्षर **acpiget;		/* names of the ACPI get function */
+	अक्षर **acpiset;		/* names of the ACPI set function */
+	पूर्णांक (*validate)(स्थिर पूर्णांक, स्थिर पूर्णांक);	/* input/output validation */
+	पूर्णांक value;		/* current setting */
+	पूर्णांक valid;		/* Has ever been set */
+	पूर्णांक debug;		/* active only in debug mode ? */
+	काष्ठा device_attribute devattr;	/* sysfs attribute */
+पूर्ण;
 
-#define SNC_HANDLE_NAMES(_name, _values...) \
-	static char *snc_##_name[] = { _values, NULL }
+#घोषणा SNC_HANDLE_NAMES(_name, _values...) \
+	अटल अक्षर *snc_##_name[] = अणु _values, शून्य पूर्ण
 
-#define SNC_HANDLE(_name, _getters, _setters, _validate, _debug) \
-	{ \
-		.name		= __stringify(_name), \
+#घोषणा SNC_HANDLE(_name, _getters, _setters, _validate, _debug) \
+	अणु \
+		.name		= __stringअगरy(_name), \
 		.acpiget	= _getters, \
 		.acpiset	= _setters, \
 		.validate	= _validate, \
 		.debug		= _debug, \
 		.devattr	= __ATTR(_name, 0, sony_nc_sysfs_show, sony_nc_sysfs_store), \
-	}
+	पूर्ण
 
-#define SNC_HANDLE_NULL	{ .name = NULL }
+#घोषणा SNC_HANDLE_शून्य	अणु .name = शून्य पूर्ण
 
 SNC_HANDLE_NAMES(fnkey_get, "GHKE");
 
 SNC_HANDLE_NAMES(brightness_def_get, "GPBR");
 SNC_HANDLE_NAMES(brightness_def_set, "SPBR");
 
-SNC_HANDLE_NAMES(cdpower_get, "GCDP");
-SNC_HANDLE_NAMES(cdpower_set, "SCDP", "CDPW");
+SNC_HANDLE_NAMES(cdघातer_get, "GCDP");
+SNC_HANDLE_NAMES(cdघातer_set, "SCDP", "CDPW");
 
-SNC_HANDLE_NAMES(audiopower_get, "GAZP");
-SNC_HANDLE_NAMES(audiopower_set, "AZPW");
+SNC_HANDLE_NAMES(audioघातer_get, "GAZP");
+SNC_HANDLE_NAMES(audioघातer_set, "AZPW");
 
-SNC_HANDLE_NAMES(lanpower_get, "GLNP");
-SNC_HANDLE_NAMES(lanpower_set, "LNPW");
+SNC_HANDLE_NAMES(lanघातer_get, "GLNP");
+SNC_HANDLE_NAMES(lanघातer_set, "LNPW");
 
 SNC_HANDLE_NAMES(lidstate_get, "GLID");
 
@@ -691,1027 +692,1027 @@ SNC_HANDLE_NAMES(PCR_set, "SPCR");
 SNC_HANDLE_NAMES(CMI_get, "GCMI");
 SNC_HANDLE_NAMES(CMI_set, "SCMI");
 
-static struct sony_nc_value sony_nc_values[] = {
-	SNC_HANDLE(brightness_default, snc_brightness_def_get,
-			snc_brightness_def_set, brightness_default_validate, 0),
-	SNC_HANDLE(fnkey, snc_fnkey_get, NULL, NULL, 0),
-	SNC_HANDLE(cdpower, snc_cdpower_get, snc_cdpower_set, boolean_validate, 0),
-	SNC_HANDLE(audiopower, snc_audiopower_get, snc_audiopower_set,
+अटल काष्ठा sony_nc_value sony_nc_values[] = अणु
+	SNC_HANDLE(brightness_शेष, snc_brightness_def_get,
+			snc_brightness_def_set, brightness_शेष_validate, 0),
+	SNC_HANDLE(fnkey, snc_fnkey_get, शून्य, शून्य, 0),
+	SNC_HANDLE(cdघातer, snc_cdघातer_get, snc_cdघातer_set, boolean_validate, 0),
+	SNC_HANDLE(audioघातer, snc_audioघातer_get, snc_audioघातer_set,
 			boolean_validate, 0),
-	SNC_HANDLE(lanpower, snc_lanpower_get, snc_lanpower_set,
+	SNC_HANDLE(lanघातer, snc_lanघातer_get, snc_lanघातer_set,
 			boolean_validate, 1),
-	SNC_HANDLE(lidstate, snc_lidstate_get, NULL,
+	SNC_HANDLE(lidstate, snc_lidstate_get, शून्य,
 			boolean_validate, 0),
 	SNC_HANDLE(indicatorlamp, snc_indicatorlamp_get, snc_indicatorlamp_set,
 			boolean_validate, 0),
 	SNC_HANDLE(gainbass, snc_gainbass_get, snc_gainbass_set,
 			boolean_validate, 0),
 	/* unknown methods */
-	SNC_HANDLE(PID, snc_PID_get, NULL, NULL, 1),
-	SNC_HANDLE(CTR, snc_CTR_get, snc_CTR_set, NULL, 1),
-	SNC_HANDLE(PCR, snc_PCR_get, snc_PCR_set, NULL, 1),
-	SNC_HANDLE(CMI, snc_CMI_get, snc_CMI_set, NULL, 1),
-	SNC_HANDLE_NULL
-};
+	SNC_HANDLE(PID, snc_PID_get, शून्य, शून्य, 1),
+	SNC_HANDLE(CTR, snc_CTR_get, snc_CTR_set, शून्य, 1),
+	SNC_HANDLE(PCR, snc_PCR_get, snc_PCR_set, शून्य, 1),
+	SNC_HANDLE(CMI, snc_CMI_get, snc_CMI_set, शून्य, 1),
+	SNC_HANDLE_शून्य
+पूर्ण;
 
-static acpi_handle sony_nc_acpi_handle;
-static struct acpi_device *sony_nc_acpi_device = NULL;
+अटल acpi_handle sony_nc_acpi_handle;
+अटल काष्ठा acpi_device *sony_nc_acpi_device = शून्य;
 
 /*
  * acpi_evaluate_object wrappers
- * all useful calls into SNC methods take one or zero parameters and return
- * integers or arrays.
+ * all useful calls पूर्णांकo SNC methods take one or zero parameters and वापस
+ * पूर्णांकegers or arrays.
  */
-static union acpi_object *__call_snc_method(acpi_handle handle, char *method,
+अटल जोड़ acpi_object *__call_snc_method(acpi_handle handle, अक्षर *method,
 		u64 *value)
-{
-	union acpi_object *result = NULL;
-	struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
+अणु
+	जोड़ acpi_object *result = शून्य;
+	काष्ठा acpi_buffer output = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
 	acpi_status status;
 
-	if (value) {
-		struct acpi_object_list params;
-		union acpi_object in;
+	अगर (value) अणु
+		काष्ठा acpi_object_list params;
+		जोड़ acpi_object in;
 		in.type = ACPI_TYPE_INTEGER;
-		in.integer.value = *value;
+		in.पूर्णांकeger.value = *value;
 		params.count = 1;
-		params.pointer = &in;
+		params.poपूर्णांकer = &in;
 		status = acpi_evaluate_object(handle, method, &params, &output);
-		dprintk("__call_snc_method: [%s:0x%.8x%.8x]\n", method,
-				(unsigned int)(*value >> 32),
-				(unsigned int)*value & 0xffffffff);
-	} else {
-		status = acpi_evaluate_object(handle, method, NULL, &output);
-		dprintk("__call_snc_method: [%s]\n", method);
-	}
+		dprपूर्णांकk("__call_snc_method: [%s:0x%.8x%.8x]\n", method,
+				(अचिन्हित पूर्णांक)(*value >> 32),
+				(अचिन्हित पूर्णांक)*value & 0xffffffff);
+	पूर्ण अन्यथा अणु
+		status = acpi_evaluate_object(handle, method, शून्य, &output);
+		dprपूर्णांकk("__call_snc_method: [%s]\n", method);
+	पूर्ण
 
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		pr_err("Failed to evaluate [%s]\n", method);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	result = (union acpi_object *) output.pointer;
-	if (!result)
-		dprintk("No return object [%s]\n", method);
+	result = (जोड़ acpi_object *) output.poपूर्णांकer;
+	अगर (!result)
+		dprपूर्णांकk("No return object [%s]\n", method);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-#define MIN(a, b)	(a > b ? b : a)
-static int sony_nc_buffer_call(acpi_handle handle, char *name, u64 *value,
-		void *buffer, size_t buflen)
-{
-	int ret = 0;
-	size_t len;
-	union acpi_object *object = __call_snc_method(handle, name, value);
+#घोषणा MIN(a, b)	(a > b ? b : a)
+अटल पूर्णांक sony_nc_buffer_call(acpi_handle handle, अक्षर *name, u64 *value,
+		व्योम *buffer, माप_प्रकार buflen)
+अणु
+	पूर्णांक ret = 0;
+	माप_प्रकार len;
+	जोड़ acpi_object *object = __call_snc_method(handle, name, value);
 
-	if (!object)
-		return -EINVAL;
+	अगर (!object)
+		वापस -EINVAL;
 
-	if (!buffer) {
-		/* do nothing */
-	} else if (object->type == ACPI_TYPE_BUFFER) {
+	अगर (!buffer) अणु
+		/* करो nothing */
+	पूर्ण अन्यथा अगर (object->type == ACPI_TYPE_BUFFER) अणु
 		len = MIN(buflen, object->buffer.length);
-		memset(buffer, 0, buflen);
-		memcpy(buffer, object->buffer.pointer, len);
+		स_रखो(buffer, 0, buflen);
+		स_नकल(buffer, object->buffer.poपूर्णांकer, len);
 
-	} else if (object->type == ACPI_TYPE_INTEGER) {
-		len = MIN(buflen, sizeof(object->integer.value));
-		memset(buffer, 0, buflen);
-		memcpy(buffer, &object->integer.value, len);
+	पूर्ण अन्यथा अगर (object->type == ACPI_TYPE_INTEGER) अणु
+		len = MIN(buflen, माप(object->पूर्णांकeger.value));
+		स_रखो(buffer, 0, buflen);
+		स_नकल(buffer, &object->पूर्णांकeger.value, len);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_warn("Unexpected acpi_object: 0x%x\n", object->type);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	kfree(object);
-	return ret;
-}
+	kमुक्त(object);
+	वापस ret;
+पूर्ण
 
-static int sony_nc_int_call(acpi_handle handle, char *name, int *value, int
+अटल पूर्णांक sony_nc_पूर्णांक_call(acpi_handle handle, अक्षर *name, पूर्णांक *value, पूर्णांक
 		*result)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	if (value) {
+	अगर (value) अणु
 		u64 v = *value;
 
 		ret = sony_nc_buffer_call(handle, name, &v, result,
-				sizeof(*result));
-	} else {
-		ret =  sony_nc_buffer_call(handle, name, NULL, result,
-				sizeof(*result));
-	}
-	return ret;
-}
+				माप(*result));
+	पूर्ण अन्यथा अणु
+		ret =  sony_nc_buffer_call(handle, name, शून्य, result,
+				माप(*result));
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-struct sony_nc_handles {
+काष्ठा sony_nc_handles अणु
 	u16 cap[0x10];
-	struct device_attribute devattr;
-};
+	काष्ठा device_attribute devattr;
+पूर्ण;
 
-static struct sony_nc_handles *handles;
+अटल काष्ठा sony_nc_handles *handles;
 
-static ssize_t sony_nc_handles_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	ssize_t len = 0;
-	int i;
+अटल sमाप_प्रकार sony_nc_handles_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	sमाप_प्रकार len = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(handles->cap); i++) {
-		len += scnprintf(buffer + len, PAGE_SIZE - len, "0x%.4x ",
+	क्रम (i = 0; i < ARRAY_SIZE(handles->cap); i++) अणु
+		len += scnम_लिखो(buffer + len, PAGE_SIZE - len, "0x%.4x ",
 				handles->cap[i]);
-	}
-	len += scnprintf(buffer + len, PAGE_SIZE - len, "\n");
+	पूर्ण
+	len += scnम_लिखो(buffer + len, PAGE_SIZE - len, "\n");
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int sony_nc_handles_setup(struct platform_device *pd)
-{
-	int i, r, result, arg;
+अटल पूर्णांक sony_nc_handles_setup(काष्ठा platक्रमm_device *pd)
+अणु
+	पूर्णांक i, r, result, arg;
 
-	handles = kzalloc(sizeof(*handles), GFP_KERNEL);
-	if (!handles)
-		return -ENOMEM;
+	handles = kzalloc(माप(*handles), GFP_KERNEL);
+	अगर (!handles)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ARRAY_SIZE(handles->cap); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(handles->cap); i++) अणु
 		arg = i + 0x20;
-		r = sony_nc_int_call(sony_nc_acpi_handle, "SN00", &arg,
+		r = sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SN00", &arg,
 					&result);
-		if (!r) {
-			dprintk("caching handle 0x%.4x (offset: 0x%.2x)\n",
+		अगर (!r) अणु
+			dprपूर्णांकk("caching handle 0x%.4x (offset: 0x%.2x)\n",
 					result, i);
 			handles->cap[i] = result;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (debug) {
+	अगर (debug) अणु
 		sysfs_attr_init(&handles->devattr.attr);
 		handles->devattr.attr.name = "handles";
 		handles->devattr.attr.mode = S_IRUGO;
 		handles->devattr.show = sony_nc_handles_show;
 
-		/* allow reading capabilities via sysfs */
-		if (device_create_file(&pd->dev, &handles->devattr)) {
-			kfree(handles);
-			handles = NULL;
-			return -1;
-		}
-	}
+		/* allow पढ़ोing capabilities via sysfs */
+		अगर (device_create_file(&pd->dev, &handles->devattr)) अणु
+			kमुक्त(handles);
+			handles = शून्य;
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sony_nc_handles_cleanup(struct platform_device *pd)
-{
-	if (handles) {
-		if (debug)
-			device_remove_file(&pd->dev, &handles->devattr);
-		kfree(handles);
-		handles = NULL;
-	}
-	return 0;
-}
+अटल पूर्णांक sony_nc_handles_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (handles) अणु
+		अगर (debug)
+			device_हटाओ_file(&pd->dev, &handles->devattr);
+		kमुक्त(handles);
+		handles = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int sony_find_snc_handle(int handle)
-{
-	int i;
+अटल पूर्णांक sony_find_snc_handle(पूर्णांक handle)
+अणु
+	पूर्णांक i;
 
-	/* not initialized yet, return early */
-	if (!handles || !handle)
-		return -EINVAL;
+	/* not initialized yet, वापस early */
+	अगर (!handles || !handle)
+		वापस -EINVAL;
 
-	for (i = 0; i < 0x10; i++) {
-		if (handles->cap[i] == handle) {
-			dprintk("found handle 0x%.4x (offset: 0x%.2x)\n",
+	क्रम (i = 0; i < 0x10; i++) अणु
+		अगर (handles->cap[i] == handle) अणु
+			dprपूर्णांकk("found handle 0x%.4x (offset: 0x%.2x)\n",
 					handle, i);
-			return i;
-		}
-	}
-	dprintk("handle 0x%.4x not found\n", handle);
-	return -EINVAL;
-}
+			वापस i;
+		पूर्ण
+	पूर्ण
+	dprपूर्णांकk("handle 0x%.4x not found\n", handle);
+	वापस -EINVAL;
+पूर्ण
 
-static int sony_call_snc_handle(int handle, int argument, int *result)
-{
-	int arg, ret = 0;
-	int offset = sony_find_snc_handle(handle);
+अटल पूर्णांक sony_call_snc_handle(पूर्णांक handle, पूर्णांक argument, पूर्णांक *result)
+अणु
+	पूर्णांक arg, ret = 0;
+	पूर्णांक offset = sony_find_snc_handle(handle);
 
-	if (offset < 0)
-		return offset;
+	अगर (offset < 0)
+		वापस offset;
 
 	arg = offset | argument;
-	ret = sony_nc_int_call(sony_nc_acpi_handle, "SN07", &arg, result);
-	dprintk("called SN07 with 0x%.4x (result: 0x%.4x)\n", arg, *result);
-	return ret;
-}
+	ret = sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SN07", &arg, result);
+	dprपूर्णांकk("called SN07 with 0x%.4x (result: 0x%.4x)\n", arg, *result);
+	वापस ret;
+पूर्ण
 
 /*
  * sony_nc_values input/output validate functions
  */
 
-/* brightness_default_validate:
+/* brightness_शेष_validate:
  *
  * manipulate input output values to keep consistency with the
- * backlight framework for which brightness values are 0-based.
+ * backlight framework क्रम which brightness values are 0-based.
  */
-static int brightness_default_validate(const int direction, const int value)
-{
-	switch (direction) {
-		case SNC_VALIDATE_OUT:
-			return value - 1;
-		case SNC_VALIDATE_IN:
-			if (value >= 0 && value < SONY_MAX_BRIGHTNESS)
-				return value + 1;
-	}
-	return -EINVAL;
-}
+अटल पूर्णांक brightness_शेष_validate(स्थिर पूर्णांक direction, स्थिर पूर्णांक value)
+अणु
+	चयन (direction) अणु
+		हाल SNC_VALIDATE_OUT:
+			वापस value - 1;
+		हाल SNC_VALIDATE_IN:
+			अगर (value >= 0 && value < SONY_MAX_BRIGHTNESS)
+				वापस value + 1;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
 /* boolean_validate:
  *
  * on input validate boolean values 0/1, on output just pass the
  * received value.
  */
-static int boolean_validate(const int direction, const int value)
-{
-	if (direction == SNC_VALIDATE_IN) {
-		if (value != 0 && value != 1)
-			return -EINVAL;
-	}
-	return value;
-}
+अटल पूर्णांक boolean_validate(स्थिर पूर्णांक direction, स्थिर पूर्णांक value)
+अणु
+	अगर (direction == SNC_VALIDATE_IN) अणु
+		अगर (value != 0 && value != 1)
+			वापस -EINVAL;
+	पूर्ण
+	वापस value;
+पूर्ण
 
 /*
  * Sysfs show/store common to all sony_nc_values
  */
-static ssize_t sony_nc_sysfs_show(struct device *dev, struct device_attribute *attr,
-			      char *buffer)
-{
-	int value, ret = 0;
-	struct sony_nc_value *item =
-	    container_of(attr, struct sony_nc_value, devattr);
+अटल sमाप_प्रकार sony_nc_sysfs_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      अक्षर *buffer)
+अणु
+	पूर्णांक value, ret = 0;
+	काष्ठा sony_nc_value *item =
+	    container_of(attr, काष्ठा sony_nc_value, devattr);
 
-	if (!*item->acpiget)
-		return -EIO;
+	अगर (!*item->acpiget)
+		वापस -EIO;
 
-	ret = sony_nc_int_call(sony_nc_acpi_handle, *item->acpiget, NULL,
+	ret = sony_nc_पूर्णांक_call(sony_nc_acpi_handle, *item->acpiget, शून्य,
 				&value);
-	if (ret < 0)
-		return -EIO;
+	अगर (ret < 0)
+		वापस -EIO;
 
-	if (item->validate)
+	अगर (item->validate)
 		value = item->validate(SNC_VALIDATE_OUT, value);
 
-	return snprintf(buffer, PAGE_SIZE, "%d\n", value);
-}
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n", value);
+पूर्ण
 
-static ssize_t sony_nc_sysfs_store(struct device *dev,
-			       struct device_attribute *attr,
-			       const char *buffer, size_t count)
-{
-	int value;
-	int ret = 0;
-	struct sony_nc_value *item =
-	    container_of(attr, struct sony_nc_value, devattr);
+अटल sमाप_प्रकार sony_nc_sysfs_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	पूर्णांक value;
+	पूर्णांक ret = 0;
+	काष्ठा sony_nc_value *item =
+	    container_of(attr, काष्ठा sony_nc_value, devattr);
 
-	if (!item->acpiset)
-		return -EIO;
+	अगर (!item->acpiset)
+		वापस -EIO;
 
-	if (count > 31)
-		return -EINVAL;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoint(buffer, 10, &value))
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buffer, 10, &value))
+		वापस -EINVAL;
 
-	if (item->validate)
+	अगर (item->validate)
 		value = item->validate(SNC_VALIDATE_IN, value);
 
-	if (value < 0)
-		return value;
+	अगर (value < 0)
+		वापस value;
 
-	ret = sony_nc_int_call(sony_nc_acpi_handle, *item->acpiset,
-			       &value, NULL);
-	if (ret < 0)
-		return -EIO;
+	ret = sony_nc_पूर्णांक_call(sony_nc_acpi_handle, *item->acpiset,
+			       &value, शून्य);
+	अगर (ret < 0)
+		वापस -EIO;
 
 	item->value = value;
 	item->valid = 1;
-	return count;
-}
+	वापस count;
+पूर्ण
 
 
 /*
  * Backlight device
  */
-struct sony_backlight_props {
-	struct backlight_device *dev;
-	int			handle;
-	int			cmd_base;
+काष्ठा sony_backlight_props अणु
+	काष्ठा backlight_device *dev;
+	पूर्णांक			handle;
+	पूर्णांक			cmd_base;
 	u8			offset;
 	u8			maxlvl;
-};
-static struct sony_backlight_props sony_bl_props;
+पूर्ण;
+अटल काष्ठा sony_backlight_props sony_bl_props;
 
-static int sony_backlight_update_status(struct backlight_device *bd)
-{
-	int arg = bd->props.brightness + 1;
-	return sony_nc_int_call(sony_nc_acpi_handle, "SBRT", &arg, NULL);
-}
+अटल पूर्णांक sony_backlight_update_status(काष्ठा backlight_device *bd)
+अणु
+	पूर्णांक arg = bd->props.brightness + 1;
+	वापस sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SBRT", &arg, शून्य);
+पूर्ण
 
-static int sony_backlight_get_brightness(struct backlight_device *bd)
-{
-	int value;
+अटल पूर्णांक sony_backlight_get_brightness(काष्ठा backlight_device *bd)
+अणु
+	पूर्णांक value;
 
-	if (sony_nc_int_call(sony_nc_acpi_handle, "GBRT", NULL, &value))
-		return 0;
-	/* brightness levels are 1-based, while backlight ones are 0-based */
-	return value - 1;
-}
+	अगर (sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "GBRT", शून्य, &value))
+		वापस 0;
+	/* brightness levels are 1-based, जबतक backlight ones are 0-based */
+	वापस value - 1;
+पूर्ण
 
-static int sony_nc_get_brightness_ng(struct backlight_device *bd)
-{
-	int result;
-	struct sony_backlight_props *sdev =
-		(struct sony_backlight_props *)bl_get_data(bd);
+अटल पूर्णांक sony_nc_get_brightness_ng(काष्ठा backlight_device *bd)
+अणु
+	पूर्णांक result;
+	काष्ठा sony_backlight_props *sdev =
+		(काष्ठा sony_backlight_props *)bl_get_data(bd);
 
 	sony_call_snc_handle(sdev->handle, sdev->cmd_base + 0x100, &result);
 
-	return (result & 0xff) - sdev->offset;
-}
+	वापस (result & 0xff) - sdev->offset;
+पूर्ण
 
-static int sony_nc_update_status_ng(struct backlight_device *bd)
-{
-	int value, result;
-	struct sony_backlight_props *sdev =
-		(struct sony_backlight_props *)bl_get_data(bd);
+अटल पूर्णांक sony_nc_update_status_ng(काष्ठा backlight_device *bd)
+अणु
+	पूर्णांक value, result;
+	काष्ठा sony_backlight_props *sdev =
+		(काष्ठा sony_backlight_props *)bl_get_data(bd);
 
 	value = bd->props.brightness + sdev->offset;
-	if (sony_call_snc_handle(sdev->handle, sdev->cmd_base | (value << 0x10),
+	अगर (sony_call_snc_handle(sdev->handle, sdev->cmd_base | (value << 0x10),
 				&result))
-		return -EIO;
+		वापस -EIO;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static const struct backlight_ops sony_backlight_ops = {
+अटल स्थिर काष्ठा backlight_ops sony_backlight_ops = अणु
 	.options = BL_CORE_SUSPENDRESUME,
 	.update_status = sony_backlight_update_status,
 	.get_brightness = sony_backlight_get_brightness,
-};
-static const struct backlight_ops sony_backlight_ng_ops = {
+पूर्ण;
+अटल स्थिर काष्ठा backlight_ops sony_backlight_ng_ops = अणु
 	.options = BL_CORE_SUSPENDRESUME,
 	.update_status = sony_nc_update_status_ng,
 	.get_brightness = sony_nc_get_brightness_ng,
-};
+पूर्ण;
 
 /*
  * New SNC-only Vaios event mapping to driver known keys
  */
-struct sony_nc_event {
+काष्ठा sony_nc_event अणु
 	u8	data;
 	u8	event;
-};
+पूर्ण;
 
-static struct sony_nc_event sony_100_events[] = {
-	{ 0x90, SONYPI_EVENT_PKEY_P1 },
-	{ 0x10, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0x91, SONYPI_EVENT_PKEY_P2 },
-	{ 0x11, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0x81, SONYPI_EVENT_FNKEY_F1 },
-	{ 0x01, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x82, SONYPI_EVENT_FNKEY_F2 },
-	{ 0x02, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x83, SONYPI_EVENT_FNKEY_F3 },
-	{ 0x03, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x84, SONYPI_EVENT_FNKEY_F4 },
-	{ 0x04, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x85, SONYPI_EVENT_FNKEY_F5 },
-	{ 0x05, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x86, SONYPI_EVENT_FNKEY_F6 },
-	{ 0x06, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x87, SONYPI_EVENT_FNKEY_F7 },
-	{ 0x07, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x88, SONYPI_EVENT_FNKEY_F8 },
-	{ 0x08, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x89, SONYPI_EVENT_FNKEY_F9 },
-	{ 0x09, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x8A, SONYPI_EVENT_FNKEY_F10 },
-	{ 0x0A, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x8B, SONYPI_EVENT_FNKEY_F11 },
-	{ 0x0B, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x8C, SONYPI_EVENT_FNKEY_F12 },
-	{ 0x0C, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x9d, SONYPI_EVENT_ZOOM_PRESSED },
-	{ 0x1d, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0x9f, SONYPI_EVENT_CD_EJECT_PRESSED },
-	{ 0x1f, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0xa1, SONYPI_EVENT_MEDIA_PRESSED },
-	{ 0x21, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0xa4, SONYPI_EVENT_CD_EJECT_PRESSED },
-	{ 0x24, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0xa5, SONYPI_EVENT_VENDOR_PRESSED },
-	{ 0x25, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0xa6, SONYPI_EVENT_HELP_PRESSED },
-	{ 0x26, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0xa8, SONYPI_EVENT_FNKEY_1 },
-	{ 0x28, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0, 0 },
-};
+अटल काष्ठा sony_nc_event sony_100_events[] = अणु
+	अणु 0x90, SONYPI_EVENT_PKEY_P1 पूर्ण,
+	अणु 0x10, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0x91, SONYPI_EVENT_PKEY_P2 पूर्ण,
+	अणु 0x11, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0x81, SONYPI_EVENT_FNKEY_F1 पूर्ण,
+	अणु 0x01, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x82, SONYPI_EVENT_FNKEY_F2 पूर्ण,
+	अणु 0x02, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x83, SONYPI_EVENT_FNKEY_F3 पूर्ण,
+	अणु 0x03, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x84, SONYPI_EVENT_FNKEY_F4 पूर्ण,
+	अणु 0x04, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x85, SONYPI_EVENT_FNKEY_F5 पूर्ण,
+	अणु 0x05, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x86, SONYPI_EVENT_FNKEY_F6 पूर्ण,
+	अणु 0x06, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x87, SONYPI_EVENT_FNKEY_F7 पूर्ण,
+	अणु 0x07, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x88, SONYPI_EVENT_FNKEY_F8 पूर्ण,
+	अणु 0x08, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x89, SONYPI_EVENT_FNKEY_F9 पूर्ण,
+	अणु 0x09, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x8A, SONYPI_EVENT_FNKEY_F10 पूर्ण,
+	अणु 0x0A, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x8B, SONYPI_EVENT_FNKEY_F11 पूर्ण,
+	अणु 0x0B, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x8C, SONYPI_EVENT_FNKEY_F12 पूर्ण,
+	अणु 0x0C, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x9d, SONYPI_EVENT_ZOOM_PRESSED पूर्ण,
+	अणु 0x1d, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0x9f, SONYPI_EVENT_CD_EJECT_PRESSED पूर्ण,
+	अणु 0x1f, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0xa1, SONYPI_EVENT_MEDIA_PRESSED पूर्ण,
+	अणु 0x21, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0xa4, SONYPI_EVENT_CD_EJECT_PRESSED पूर्ण,
+	अणु 0x24, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0xa5, SONYPI_EVENT_VENDOR_PRESSED पूर्ण,
+	अणु 0x25, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0xa6, SONYPI_EVENT_HELP_PRESSED पूर्ण,
+	अणु 0x26, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0xa8, SONYPI_EVENT_FNKEY_1 पूर्ण,
+	अणु 0x28, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0, 0 पूर्ण,
+पूर्ण;
 
-static struct sony_nc_event sony_127_events[] = {
-	{ 0x81, SONYPI_EVENT_MODEKEY_PRESSED },
-	{ 0x01, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0x82, SONYPI_EVENT_PKEY_P1 },
-	{ 0x02, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0x83, SONYPI_EVENT_PKEY_P2 },
-	{ 0x03, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0x84, SONYPI_EVENT_PKEY_P3 },
-	{ 0x04, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0x85, SONYPI_EVENT_PKEY_P4 },
-	{ 0x05, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0x86, SONYPI_EVENT_PKEY_P5 },
-	{ 0x06, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0x87, SONYPI_EVENT_SETTINGKEY_PRESSED },
-	{ 0x07, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0, 0 },
-};
+अटल काष्ठा sony_nc_event sony_127_events[] = अणु
+	अणु 0x81, SONYPI_EVENT_MODEKEY_PRESSED पूर्ण,
+	अणु 0x01, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0x82, SONYPI_EVENT_PKEY_P1 पूर्ण,
+	अणु 0x02, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0x83, SONYPI_EVENT_PKEY_P2 पूर्ण,
+	अणु 0x03, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0x84, SONYPI_EVENT_PKEY_P3 पूर्ण,
+	अणु 0x04, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0x85, SONYPI_EVENT_PKEY_P4 पूर्ण,
+	अणु 0x05, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0x86, SONYPI_EVENT_PKEY_P5 पूर्ण,
+	अणु 0x06, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0x87, SONYPI_EVENT_SETTINGKEY_PRESSED पूर्ण,
+	अणु 0x07, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0, 0 पूर्ण,
+पूर्ण;
 
-static int sony_nc_hotkeys_decode(u32 event, unsigned int handle)
-{
-	int ret = -EINVAL;
-	unsigned int result = 0;
-	struct sony_nc_event *key_event;
+अटल पूर्णांक sony_nc_hotkeys_decode(u32 event, अचिन्हित पूर्णांक handle)
+अणु
+	पूर्णांक ret = -EINVAL;
+	अचिन्हित पूर्णांक result = 0;
+	काष्ठा sony_nc_event *key_event;
 
-	if (sony_call_snc_handle(handle, 0x200, &result)) {
-		dprintk("Unable to decode event 0x%.2x 0x%.2x\n", handle,
+	अगर (sony_call_snc_handle(handle, 0x200, &result)) अणु
+		dprपूर्णांकk("Unable to decode event 0x%.2x 0x%.2x\n", handle,
 				event);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	result &= 0xFF;
 
-	if (handle == 0x0100)
+	अगर (handle == 0x0100)
 		key_event = sony_100_events;
-	else
+	अन्यथा
 		key_event = sony_127_events;
 
-	for (; key_event->data; key_event++) {
-		if (key_event->data == result) {
+	क्रम (; key_event->data; key_event++) अणु
+		अगर (key_event->data == result) अणु
 			ret = key_event->event;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!key_event->data)
+	अगर (!key_event->data)
 		pr_info("Unknown hotkey 0x%.2x/0x%.2x (handle 0x%.2x)\n",
 				event, result, handle);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * ACPI callbacks
  */
-enum event_types {
+क्रमागत event_types अणु
 	HOTKEY = 1,
 	KILLSWITCH,
 	GFX_SWITCH
-};
-static void sony_nc_notify(struct acpi_device *device, u32 event)
-{
+पूर्ण;
+अटल व्योम sony_nc_notअगरy(काष्ठा acpi_device *device, u32 event)
+अणु
 	u32 real_ev = event;
 	u8 ev_type = 0;
-	int ret;
+	पूर्णांक ret;
 
-	dprintk("sony_nc_notify, event: 0x%.2x\n", event);
+	dprपूर्णांकk("sony_nc_notify, event: 0x%.2x\n", event);
 
-	if (event >= 0x90) {
-		unsigned int result = 0;
-		unsigned int arg = 0;
-		unsigned int handle = 0;
-		unsigned int offset = event - 0x90;
+	अगर (event >= 0x90) अणु
+		अचिन्हित पूर्णांक result = 0;
+		अचिन्हित पूर्णांक arg = 0;
+		अचिन्हित पूर्णांक handle = 0;
+		अचिन्हित पूर्णांक offset = event - 0x90;
 
-		if (offset >= ARRAY_SIZE(handles->cap)) {
+		अगर (offset >= ARRAY_SIZE(handles->cap)) अणु
 			pr_err("Event 0x%x outside of capabilities list\n",
 					event);
-			return;
-		}
+			वापस;
+		पूर्ण
 		handle = handles->cap[offset];
 
-		/* list of handles known for generating events */
-		switch (handle) {
+		/* list of handles known क्रम generating events */
+		चयन (handle) अणु
 		/* hotkey event */
-		case 0x0100:
-		case 0x0127:
+		हाल 0x0100:
+		हाल 0x0127:
 			ev_type = HOTKEY;
 			ret = sony_nc_hotkeys_decode(event, handle);
 
-			if (ret > 0) {
+			अगर (ret > 0) अणु
 				sony_laptop_report_input_event(ret);
 				real_ev = ret;
-			}
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		/* wlan switch */
-		case 0x0124:
-		case 0x0135:
+		/* wlan चयन */
+		हाल 0x0124:
+		हाल 0x0135:
 			/* events on this handle are reported when the
-			 * switch changes position or for battery
-			 * events. We'll notify both of them but only
-			 * update the rfkill device status when the
-			 * switch is moved.
+			 * चयन changes position or क्रम battery
+			 * events. We'll notअगरy both of them but only
+			 * update the rfसमाप्त device status when the
+			 * चयन is moved.
 			 */
 			ev_type = KILLSWITCH;
 			sony_call_snc_handle(handle, 0x0100, &result);
 			real_ev = result & 0x03;
 
-			/* hw switch event */
-			if (real_ev == 1)
-				sony_nc_rfkill_update();
+			/* hw चयन event */
+			अगर (real_ev == 1)
+				sony_nc_rfसमाप्त_update();
 
-			break;
+			अवरोध;
 
-		case 0x0128:
-		case 0x0146:
-			/* Hybrid GFX switching */
+		हाल 0x0128:
+		हाल 0x0146:
+			/* Hybrid GFX चयनing */
 			sony_call_snc_handle(handle, 0x0000, &result);
-			dprintk("GFX switch event received (reason: %s)\n",
+			dprपूर्णांकk("GFX switch event received (reason: %s)\n",
 					(result == 0x1) ? "switch change" :
 					(result == 0x2) ? "output switch" :
 					(result == 0x3) ? "output switch" :
 					"");
 
 			ev_type = GFX_SWITCH;
-			real_ev = __sony_nc_gfx_switch_status_get();
-			break;
+			real_ev = __sony_nc_gfx_चयन_status_get();
+			अवरोध;
 
-		case 0x015B:
-			/* Hybrid GFX switching SVS151290S */
+		हाल 0x015B:
+			/* Hybrid GFX चयनing SVS151290S */
 			ev_type = GFX_SWITCH;
-			real_ev = __sony_nc_gfx_switch_status_get();
-			break;
-		default:
-			dprintk("Unknown event 0x%x for handle 0x%x\n",
+			real_ev = __sony_nc_gfx_चयन_status_get();
+			अवरोध;
+		शेष:
+			dprपूर्णांकk("Unknown event 0x%x for handle 0x%x\n",
 					event, handle);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* clear the event (and the event reason when present) */
 		arg = 1 << offset;
-		sony_nc_int_call(sony_nc_acpi_handle, "SN05", &arg, &result);
+		sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SN05", &arg, &result);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* old style event */
 		ev_type = HOTKEY;
 		sony_laptop_report_input_event(real_ev);
-	}
+	पूर्ण
 	acpi_bus_generate_netlink_event(sony_nc_acpi_device->pnp.device_class,
 			dev_name(&sony_nc_acpi_device->dev), ev_type, real_ev);
-}
+पूर्ण
 
-static acpi_status sony_walk_callback(acpi_handle handle, u32 level,
-				      void *context, void **return_value)
-{
-	struct acpi_device_info *info;
+अटल acpi_status sony_walk_callback(acpi_handle handle, u32 level,
+				      व्योम *context, व्योम **वापस_value)
+अणु
+	काष्ठा acpi_device_info *info;
 
-	if (ACPI_SUCCESS(acpi_get_object_info(handle, &info))) {
+	अगर (ACPI_SUCCESS(acpi_get_object_info(handle, &info))) अणु
 		pr_warn("method: name: %4.4s, args %X\n",
-			(char *)&info->name, info->param_count);
+			(अक्षर *)&info->name, info->param_count);
 
-		kfree(info);
-	}
+		kमुक्त(info);
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
 /*
  * ACPI device
  */
-static void sony_nc_function_setup(struct acpi_device *device,
-		struct platform_device *pf_device)
-{
-	unsigned int i, result, bitmask, arg;
+अटल व्योम sony_nc_function_setup(काष्ठा acpi_device *device,
+		काष्ठा platक्रमm_device *pf_device)
+अणु
+	अचिन्हित पूर्णांक i, result, biपंचांगask, arg;
 
-	if (!handles)
-		return;
+	अगर (!handles)
+		वापस;
 
 	/* setup found handles here */
-	for (i = 0; i < ARRAY_SIZE(handles->cap); i++) {
-		unsigned int handle = handles->cap[i];
+	क्रम (i = 0; i < ARRAY_SIZE(handles->cap); i++) अणु
+		अचिन्हित पूर्णांक handle = handles->cap[i];
 
-		if (!handle)
-			continue;
+		अगर (!handle)
+			जारी;
 
-		dprintk("setting up handle 0x%.4x\n", handle);
+		dprपूर्णांकk("setting up handle 0x%.4x\n", handle);
 
-		switch (handle) {
-		case 0x0100:
-		case 0x0101:
-		case 0x0127:
+		चयन (handle) अणु
+		हाल 0x0100:
+		हाल 0x0101:
+		हाल 0x0127:
 			/* setup hotkeys */
 			sony_call_snc_handle(handle, 0, &result);
-			break;
-		case 0x0102:
+			अवरोध;
+		हाल 0x0102:
 			/* setup hotkeys */
 			sony_call_snc_handle(handle, 0x100, &result);
-			break;
-		case 0x0105:
-		case 0x0148:
+			अवरोध;
+		हाल 0x0105:
+		हाल 0x0148:
 			/* touchpad enable/disable */
 			result = sony_nc_touchpad_setup(pf_device, handle);
-			if (result)
+			अगर (result)
 				pr_err("couldn't set up touchpad control function (%d)\n",
 						result);
-			break;
-		case 0x0115:
-		case 0x0136:
-		case 0x013f:
+			अवरोध;
+		हाल 0x0115:
+		हाल 0x0136:
+		हाल 0x013f:
 			result = sony_nc_battery_care_setup(pf_device, handle);
-			if (result)
+			अगर (result)
 				pr_err("couldn't set up battery care function (%d)\n",
 						result);
-			break;
-		case 0x0119:
-		case 0x015D:
+			अवरोध;
+		हाल 0x0119:
+		हाल 0x015D:
 			result = sony_nc_lid_resume_setup(pf_device, handle);
-			if (result)
+			अगर (result)
 				pr_err("couldn't set up lid resume function (%d)\n",
 						result);
-			break;
-		case 0x0122:
+			अवरोध;
+		हाल 0x0122:
 			result = sony_nc_thermal_setup(pf_device);
-			if (result)
+			अगर (result)
 				pr_err("couldn't set up thermal profile function (%d)\n",
 						result);
-			break;
-		case 0x0128:
-		case 0x0146:
-		case 0x015B:
-			result = sony_nc_gfx_switch_setup(pf_device, handle);
-			if (result)
+			अवरोध;
+		हाल 0x0128:
+		हाल 0x0146:
+		हाल 0x015B:
+			result = sony_nc_gfx_चयन_setup(pf_device, handle);
+			अगर (result)
 				pr_err("couldn't set up GFX Switch status (%d)\n",
 						result);
-			break;
-		case 0x0131:
-			result = sony_nc_highspeed_charging_setup(pf_device);
-			if (result)
+			अवरोध;
+		हाल 0x0131:
+			result = sony_nc_highspeed_अक्षरging_setup(pf_device);
+			अगर (result)
 				pr_err("couldn't set up high speed charging function (%d)\n",
 				       result);
-			break;
-		case 0x0124:
-		case 0x0135:
-			result = sony_nc_rfkill_setup(device, handle);
-			if (result)
+			अवरोध;
+		हाल 0x0124:
+		हाल 0x0135:
+			result = sony_nc_rfसमाप्त_setup(device, handle);
+			अगर (result)
 				pr_err("couldn't set up rfkill support (%d)\n",
 						result);
-			break;
-		case 0x0137:
-		case 0x0143:
-		case 0x014b:
-		case 0x014c:
-		case 0x0153:
-		case 0x0163:
+			अवरोध;
+		हाल 0x0137:
+		हाल 0x0143:
+		हाल 0x014b:
+		हाल 0x014c:
+		हाल 0x0153:
+		हाल 0x0163:
 			result = sony_nc_kbd_backlight_setup(pf_device, handle);
-			if (result)
+			अगर (result)
 				pr_err("couldn't set up keyboard backlight function (%d)\n",
 						result);
-			break;
-		case 0x0121:
+			अवरोध;
+		हाल 0x0121:
 			result = sony_nc_lowbatt_setup(pf_device);
-			if (result)
+			अगर (result)
 				pr_err("couldn't set up low battery function (%d)\n",
 				       result);
-			break;
-		case 0x0149:
+			अवरोध;
+		हाल 0x0149:
 			result = sony_nc_fanspeed_setup(pf_device);
-			if (result)
+			अगर (result)
 				pr_err("couldn't set up fan speed function (%d)\n",
 				       result);
-			break;
-		case 0x0155:
-			result = sony_nc_usb_charge_setup(pf_device);
-			if (result)
+			अवरोध;
+		हाल 0x0155:
+			result = sony_nc_usb_अक्षरge_setup(pf_device);
+			अगर (result)
 				pr_err("couldn't set up USB charge support (%d)\n",
 						result);
-			break;
-		case 0x011D:
+			अवरोध;
+		हाल 0x011D:
 			result = sony_nc_panelid_setup(pf_device);
-			if (result)
+			अगर (result)
 				pr_err("couldn't set up panel ID function (%d)\n",
 				       result);
-			break;
-		case 0x0168:
+			अवरोध;
+		हाल 0x0168:
 			result = sony_nc_smart_conn_setup(pf_device);
-			if (result)
+			अगर (result)
 				pr_err("couldn't set up smart connect support (%d)\n",
 						result);
-			break;
-		default:
-			continue;
-		}
-	}
+			अवरोध;
+		शेष:
+			जारी;
+		पूर्ण
+	पूर्ण
 
 	/* Enable all events */
 	arg = 0x10;
-	if (!sony_nc_int_call(sony_nc_acpi_handle, "SN00", &arg, &bitmask))
-		sony_nc_int_call(sony_nc_acpi_handle, "SN02", &bitmask,
+	अगर (!sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SN00", &arg, &biपंचांगask))
+		sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SN02", &biपंचांगask,
 				&result);
-}
+पूर्ण
 
-static void sony_nc_function_cleanup(struct platform_device *pd)
-{
-	unsigned int i, result, bitmask, handle;
+अटल व्योम sony_nc_function_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अचिन्हित पूर्णांक i, result, biपंचांगask, handle;
 
-	if (!handles)
-		return;
+	अगर (!handles)
+		वापस;
 
 	/* get enabled events and disable them */
-	sony_nc_int_call(sony_nc_acpi_handle, "SN01", NULL, &bitmask);
-	sony_nc_int_call(sony_nc_acpi_handle, "SN03", &bitmask, &result);
+	sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SN01", शून्य, &biपंचांगask);
+	sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SN03", &biपंचांगask, &result);
 
 	/* cleanup handles here */
-	for (i = 0; i < ARRAY_SIZE(handles->cap); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(handles->cap); i++) अणु
 
 		handle = handles->cap[i];
 
-		if (!handle)
-			continue;
+		अगर (!handle)
+			जारी;
 
-		switch (handle) {
-		case 0x0105:
-		case 0x0148:
+		चयन (handle) अणु
+		हाल 0x0105:
+		हाल 0x0148:
 			sony_nc_touchpad_cleanup(pd);
-			break;
-		case 0x0115:
-		case 0x0136:
-		case 0x013f:
+			अवरोध;
+		हाल 0x0115:
+		हाल 0x0136:
+		हाल 0x013f:
 			sony_nc_battery_care_cleanup(pd);
-			break;
-		case 0x0119:
-		case 0x015D:
+			अवरोध;
+		हाल 0x0119:
+		हाल 0x015D:
 			sony_nc_lid_resume_cleanup(pd);
-			break;
-		case 0x0122:
+			अवरोध;
+		हाल 0x0122:
 			sony_nc_thermal_cleanup(pd);
-			break;
-		case 0x0128:
-		case 0x0146:
-		case 0x015B:
-			sony_nc_gfx_switch_cleanup(pd);
-			break;
-		case 0x0131:
-			sony_nc_highspeed_charging_cleanup(pd);
-			break;
-		case 0x0124:
-		case 0x0135:
-			sony_nc_rfkill_cleanup();
-			break;
-		case 0x0137:
-		case 0x0143:
-		case 0x014b:
-		case 0x014c:
-		case 0x0153:
-		case 0x0163:
+			अवरोध;
+		हाल 0x0128:
+		हाल 0x0146:
+		हाल 0x015B:
+			sony_nc_gfx_चयन_cleanup(pd);
+			अवरोध;
+		हाल 0x0131:
+			sony_nc_highspeed_अक्षरging_cleanup(pd);
+			अवरोध;
+		हाल 0x0124:
+		हाल 0x0135:
+			sony_nc_rfसमाप्त_cleanup();
+			अवरोध;
+		हाल 0x0137:
+		हाल 0x0143:
+		हाल 0x014b:
+		हाल 0x014c:
+		हाल 0x0153:
+		हाल 0x0163:
 			sony_nc_kbd_backlight_cleanup(pd, handle);
-			break;
-		case 0x0121:
+			अवरोध;
+		हाल 0x0121:
 			sony_nc_lowbatt_cleanup(pd);
-			break;
-		case 0x0149:
+			अवरोध;
+		हाल 0x0149:
 			sony_nc_fanspeed_cleanup(pd);
-			break;
-		case 0x0155:
-			sony_nc_usb_charge_cleanup(pd);
-			break;
-		case 0x011D:
+			अवरोध;
+		हाल 0x0155:
+			sony_nc_usb_अक्षरge_cleanup(pd);
+			अवरोध;
+		हाल 0x011D:
 			sony_nc_panelid_cleanup(pd);
-			break;
-		case 0x0168:
+			अवरोध;
+		हाल 0x0168:
 			sony_nc_smart_conn_cleanup(pd);
-			break;
-		default:
-			continue;
-		}
-	}
+			अवरोध;
+		शेष:
+			जारी;
+		पूर्ण
+	पूर्ण
 
 	/* finally cleanup the handles list */
 	sony_nc_handles_cleanup(pd);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static void sony_nc_function_resume(void)
-{
-	unsigned int i, result, bitmask, arg;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल व्योम sony_nc_function_resume(व्योम)
+अणु
+	अचिन्हित पूर्णांक i, result, biपंचांगask, arg;
 
-	dprintk("Resuming SNC device\n");
+	dprपूर्णांकk("Resuming SNC device\n");
 
-	for (i = 0; i < ARRAY_SIZE(handles->cap); i++) {
-		unsigned int handle = handles->cap[i];
+	क्रम (i = 0; i < ARRAY_SIZE(handles->cap); i++) अणु
+		अचिन्हित पूर्णांक handle = handles->cap[i];
 
-		if (!handle)
-			continue;
+		अगर (!handle)
+			जारी;
 
-		switch (handle) {
-		case 0x0100:
-		case 0x0101:
-		case 0x0127:
+		चयन (handle) अणु
+		हाल 0x0100:
+		हाल 0x0101:
+		हाल 0x0127:
 			/* re-enable hotkeys */
 			sony_call_snc_handle(handle, 0, &result);
-			break;
-		case 0x0102:
+			अवरोध;
+		हाल 0x0102:
 			/* re-enable hotkeys */
 			sony_call_snc_handle(handle, 0x100, &result);
-			break;
-		case 0x0122:
+			अवरोध;
+		हाल 0x0122:
 			sony_nc_thermal_resume();
-			break;
-		case 0x0124:
-		case 0x0135:
-			sony_nc_rfkill_update();
-			break;
-		default:
-			continue;
-		}
-	}
+			अवरोध;
+		हाल 0x0124:
+		हाल 0x0135:
+			sony_nc_rfसमाप्त_update();
+			अवरोध;
+		शेष:
+			जारी;
+		पूर्ण
+	पूर्ण
 
 	/* Enable all events */
 	arg = 0x10;
-	if (!sony_nc_int_call(sony_nc_acpi_handle, "SN00", &arg, &bitmask))
-		sony_nc_int_call(sony_nc_acpi_handle, "SN02", &bitmask,
+	अगर (!sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SN00", &arg, &biपंचांगask))
+		sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SN02", &biपंचांगask,
 				&result);
-}
+पूर्ण
 
-static int sony_nc_resume(struct device *dev)
-{
-	struct sony_nc_value *item;
+अटल पूर्णांक sony_nc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sony_nc_value *item;
 
-	for (item = sony_nc_values; item->name; item++) {
-		int ret;
+	क्रम (item = sony_nc_values; item->name; item++) अणु
+		पूर्णांक ret;
 
-		if (!item->valid)
-			continue;
-		ret = sony_nc_int_call(sony_nc_acpi_handle, *item->acpiset,
-				       &item->value, NULL);
-		if (ret < 0) {
+		अगर (!item->valid)
+			जारी;
+		ret = sony_nc_पूर्णांक_call(sony_nc_acpi_handle, *item->acpiset,
+				       &item->value, शून्य);
+		अगर (ret < 0) अणु
 			pr_err("%s: %d\n", __func__, ret);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (acpi_has_method(sony_nc_acpi_handle, "ECON")) {
-		int arg = 1;
-		if (sony_nc_int_call(sony_nc_acpi_handle, "ECON", &arg, NULL))
-			dprintk("ECON Method failed\n");
-	}
+	अगर (acpi_has_method(sony_nc_acpi_handle, "ECON")) अणु
+		पूर्णांक arg = 1;
+		अगर (sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "ECON", &arg, शून्य))
+			dprपूर्णांकk("ECON Method failed\n");
+	पूर्ण
 
-	if (acpi_has_method(sony_nc_acpi_handle, "SN00"))
+	अगर (acpi_has_method(sony_nc_acpi_handle, "SN00"))
 		sony_nc_function_resume();
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(sony_nc_pm, NULL, sony_nc_resume);
+अटल SIMPLE_DEV_PM_OPS(sony_nc_pm, शून्य, sony_nc_resume);
 
-static void sony_nc_rfkill_cleanup(void)
-{
-	int i;
+अटल व्योम sony_nc_rfसमाप्त_cleanup(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < N_SONY_RFKILL; i++) {
-		if (sony_rfkill_devices[i]) {
-			rfkill_unregister(sony_rfkill_devices[i]);
-			rfkill_destroy(sony_rfkill_devices[i]);
-		}
-	}
-}
+	क्रम (i = 0; i < N_SONY_RFKILL; i++) अणु
+		अगर (sony_rfसमाप्त_devices[i]) अणु
+			rfसमाप्त_unरेजिस्टर(sony_rfसमाप्त_devices[i]);
+			rfसमाप्त_destroy(sony_rfसमाप्त_devices[i]);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int sony_nc_rfkill_set(void *data, bool blocked)
-{
-	int result;
-	int argument = sony_rfkill_address[(long) data] + 0x100;
+अटल पूर्णांक sony_nc_rfसमाप्त_set(व्योम *data, bool blocked)
+अणु
+	पूर्णांक result;
+	पूर्णांक argument = sony_rfसमाप्त_address[(दीर्घ) data] + 0x100;
 
-	if (!blocked)
+	अगर (!blocked)
 		argument |= 0x070000;
 
-	return sony_call_snc_handle(sony_rfkill_handle, argument, &result);
-}
+	वापस sony_call_snc_handle(sony_rfसमाप्त_handle, argument, &result);
+पूर्ण
 
-static const struct rfkill_ops sony_rfkill_ops = {
-	.set_block = sony_nc_rfkill_set,
-};
+अटल स्थिर काष्ठा rfसमाप्त_ops sony_rfसमाप्त_ops = अणु
+	.set_block = sony_nc_rfसमाप्त_set,
+पूर्ण;
 
-static int sony_nc_setup_rfkill(struct acpi_device *device,
-				enum sony_nc_rfkill nc_type)
-{
-	int err;
-	struct rfkill *rfk;
-	enum rfkill_type type;
-	const char *name;
-	int result;
+अटल पूर्णांक sony_nc_setup_rfसमाप्त(काष्ठा acpi_device *device,
+				क्रमागत sony_nc_rfसमाप्त nc_type)
+अणु
+	पूर्णांक err;
+	काष्ठा rfसमाप्त *rfk;
+	क्रमागत rfसमाप्त_type type;
+	स्थिर अक्षर *name;
+	पूर्णांक result;
 	bool hwblock, swblock;
 
-	switch (nc_type) {
-	case SONY_WIFI:
+	चयन (nc_type) अणु
+	हाल SONY_WIFI:
 		type = RFKILL_TYPE_WLAN;
 		name = "sony-wifi";
-		break;
-	case SONY_BLUETOOTH:
+		अवरोध;
+	हाल SONY_BLUETOOTH:
 		type = RFKILL_TYPE_BLUETOOTH;
 		name = "sony-bluetooth";
-		break;
-	case SONY_WWAN:
+		अवरोध;
+	हाल SONY_WWAN:
 		type = RFKILL_TYPE_WWAN;
 		name = "sony-wwan";
-		break;
-	case SONY_WIMAX:
+		अवरोध;
+	हाल SONY_WIMAX:
 		type = RFKILL_TYPE_WIMAX;
 		name = "sony-wimax";
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	rfk = rfkill_alloc(name, &device->dev, type,
-			   &sony_rfkill_ops, (void *)nc_type);
-	if (!rfk)
-		return -ENOMEM;
+	rfk = rfसमाप्त_alloc(name, &device->dev, type,
+			   &sony_rfसमाप्त_ops, (व्योम *)nc_type);
+	अगर (!rfk)
+		वापस -ENOMEM;
 
-	err = sony_call_snc_handle(sony_rfkill_handle, 0x200, &result);
-	if (err < 0) {
-		rfkill_destroy(rfk);
-		return err;
-	}
+	err = sony_call_snc_handle(sony_rfसमाप्त_handle, 0x200, &result);
+	अगर (err < 0) अणु
+		rfसमाप्त_destroy(rfk);
+		वापस err;
+	पूर्ण
 	hwblock = !(result & 0x1);
 
-	err = sony_call_snc_handle(sony_rfkill_handle,
-				   sony_rfkill_address[nc_type],
+	err = sony_call_snc_handle(sony_rfसमाप्त_handle,
+				   sony_rfसमाप्त_address[nc_type],
 				   &result);
-	if (err < 0) {
-		rfkill_destroy(rfk);
-		return err;
-	}
+	अगर (err < 0) अणु
+		rfसमाप्त_destroy(rfk);
+		वापस err;
+	पूर्ण
 	swblock = !(result & 0x2);
 
-	rfkill_init_sw_state(rfk, swblock);
-	rfkill_set_hw_state(rfk, hwblock);
+	rfसमाप्त_init_sw_state(rfk, swblock);
+	rfसमाप्त_set_hw_state(rfk, hwblock);
 
-	err = rfkill_register(rfk);
-	if (err) {
-		rfkill_destroy(rfk);
-		return err;
-	}
-	sony_rfkill_devices[nc_type] = rfk;
-	return err;
-}
+	err = rfसमाप्त_रेजिस्टर(rfk);
+	अगर (err) अणु
+		rfसमाप्त_destroy(rfk);
+		वापस err;
+	पूर्ण
+	sony_rfसमाप्त_devices[nc_type] = rfk;
+	वापस err;
+पूर्ण
 
-static void sony_nc_rfkill_update(void)
-{
-	enum sony_nc_rfkill i;
-	int result;
+अटल व्योम sony_nc_rfसमाप्त_update(व्योम)
+अणु
+	क्रमागत sony_nc_rfसमाप्त i;
+	पूर्णांक result;
 	bool hwblock;
 
-	sony_call_snc_handle(sony_rfkill_handle, 0x200, &result);
+	sony_call_snc_handle(sony_rfसमाप्त_handle, 0x200, &result);
 	hwblock = !(result & 0x1);
 
-	for (i = 0; i < N_SONY_RFKILL; i++) {
-		int argument = sony_rfkill_address[i];
+	क्रम (i = 0; i < N_SONY_RFKILL; i++) अणु
+		पूर्णांक argument = sony_rfसमाप्त_address[i];
 
-		if (!sony_rfkill_devices[i])
-			continue;
+		अगर (!sony_rfसमाप्त_devices[i])
+			जारी;
 
-		if (hwblock) {
-			if (rfkill_set_hw_state(sony_rfkill_devices[i], true)) {
-				/* we already know we're blocked */
-			}
-			continue;
-		}
+		अगर (hwblock) अणु
+			अगर (rfसमाप्त_set_hw_state(sony_rfसमाप्त_devices[i], true)) अणु
+				/* we alपढ़ोy know we're blocked */
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		sony_call_snc_handle(sony_rfkill_handle, argument, &result);
-		rfkill_set_states(sony_rfkill_devices[i],
+		sony_call_snc_handle(sony_rfसमाप्त_handle, argument, &result);
+		rfसमाप्त_set_states(sony_rfसमाप्त_devices[i],
 				  !(result & 0x2), false);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sony_nc_rfkill_setup(struct acpi_device *device,
-		unsigned int handle)
-{
+अटल पूर्णांक sony_nc_rfसमाप्त_setup(काष्ठा acpi_device *device,
+		अचिन्हित पूर्णांक handle)
+अणु
 	u64 offset;
-	int i;
-	unsigned char buffer[32] = { 0 };
+	पूर्णांक i;
+	अचिन्हित अक्षर buffer[32] = अणु 0 पूर्ण;
 
 	offset = sony_find_snc_handle(handle);
-	sony_rfkill_handle = handle;
+	sony_rfसमाप्त_handle = handle;
 
 	i = sony_nc_buffer_call(sony_nc_acpi_handle, "SN06", &offset, buffer,
 			32);
-	if (i < 0)
-		return i;
+	अगर (i < 0)
+		वापस i;
 
 	/* The buffer is filled with magic numbers describing the devices
-	 * available, 0xff terminates the enumeration.
+	 * available, 0xff terminates the क्रमागतeration.
 	 * Known codes:
 	 *	0x00 WLAN
 	 *	0x10 BLUETOOTH
@@ -1729,189 +1730,189 @@ static int sony_nc_rfkill_setup(struct acpi_device *device,
 	 *	0x70 no SIM card slot
 	 *	0x71 SIM card slot
 	 */
-	for (i = 0; i < ARRAY_SIZE(buffer); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(buffer); i++) अणु
 
-		if (buffer[i] == 0xff)
-			break;
+		अगर (buffer[i] == 0xff)
+			अवरोध;
 
-		dprintk("Radio devices, found 0x%.2x\n", buffer[i]);
+		dprपूर्णांकk("Radio devices, found 0x%.2x\n", buffer[i]);
 
-		if (buffer[i] == 0 && !sony_rfkill_devices[SONY_WIFI])
-			sony_nc_setup_rfkill(device, SONY_WIFI);
+		अगर (buffer[i] == 0 && !sony_rfसमाप्त_devices[SONY_WIFI])
+			sony_nc_setup_rfसमाप्त(device, SONY_WIFI);
 
-		if (buffer[i] == 0x10 && !sony_rfkill_devices[SONY_BLUETOOTH])
-			sony_nc_setup_rfkill(device, SONY_BLUETOOTH);
+		अगर (buffer[i] == 0x10 && !sony_rfसमाप्त_devices[SONY_BLUETOOTH])
+			sony_nc_setup_rfसमाप्त(device, SONY_BLUETOOTH);
 
-		if (((0xf0 & buffer[i]) == 0x20 ||
+		अगर (((0xf0 & buffer[i]) == 0x20 ||
 					(0xf0 & buffer[i]) == 0x50) &&
-				!sony_rfkill_devices[SONY_WWAN])
-			sony_nc_setup_rfkill(device, SONY_WWAN);
+				!sony_rfसमाप्त_devices[SONY_WWAN])
+			sony_nc_setup_rfसमाप्त(device, SONY_WWAN);
 
-		if (buffer[i] == 0x30 && !sony_rfkill_devices[SONY_WIMAX])
-			sony_nc_setup_rfkill(device, SONY_WIMAX);
-	}
-	return 0;
-}
+		अगर (buffer[i] == 0x30 && !sony_rfसमाप्त_devices[SONY_WIMAX])
+			sony_nc_setup_rfसमाप्त(device, SONY_WIMAX);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Keyboard backlight feature */
-struct kbd_backlight {
-	unsigned int handle;
-	unsigned int base;
-	unsigned int mode;
-	unsigned int timeout;
-	unsigned int has_timeout;
-	struct device_attribute mode_attr;
-	struct device_attribute timeout_attr;
-};
+काष्ठा kbd_backlight अणु
+	अचिन्हित पूर्णांक handle;
+	अचिन्हित पूर्णांक base;
+	अचिन्हित पूर्णांक mode;
+	अचिन्हित पूर्णांक समयout;
+	अचिन्हित पूर्णांक has_समयout;
+	काष्ठा device_attribute mode_attr;
+	काष्ठा device_attribute समयout_attr;
+पूर्ण;
 
-static struct kbd_backlight *kbdbl_ctl;
+अटल काष्ठा kbd_backlight *kbdbl_ctl;
 
-static ssize_t __sony_nc_kbd_backlight_mode_set(u8 value)
-{
-	int result;
+अटल sमाप_प्रकार __sony_nc_kbd_backlight_mode_set(u8 value)
+अणु
+	पूर्णांक result;
 
-	if (value > 2)
-		return -EINVAL;
+	अगर (value > 2)
+		वापस -EINVAL;
 
-	if (sony_call_snc_handle(kbdbl_ctl->handle,
+	अगर (sony_call_snc_handle(kbdbl_ctl->handle,
 				(value << 0x10) | (kbdbl_ctl->base), &result))
-		return -EIO;
+		वापस -EIO;
 
 	/* Try to turn the light on/off immediately */
-	if (value != 1)
+	अगर (value != 1)
 		sony_call_snc_handle(kbdbl_ctl->handle,
 				(value << 0x0f) | (kbdbl_ctl->base + 0x100),
 				&result);
 
 	kbdbl_ctl->mode = value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t sony_nc_kbd_backlight_mode_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	int ret = 0;
-	unsigned long value;
+अटल sमाप_प्रकार sony_nc_kbd_backlight_mode_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ value;
 
-	if (count > 31)
-		return -EINVAL;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value))
+		वापस -EINVAL;
 
 	ret = __sony_nc_kbd_backlight_mode_set(value);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_nc_kbd_backlight_mode_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	ssize_t count = 0;
-	count = snprintf(buffer, PAGE_SIZE, "%d\n", kbdbl_ctl->mode);
-	return count;
-}
+अटल sमाप_प्रकार sony_nc_kbd_backlight_mode_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	sमाप_प्रकार count = 0;
+	count = snम_लिखो(buffer, PAGE_SIZE, "%d\n", kbdbl_ctl->mode);
+	वापस count;
+पूर्ण
 
-static int __sony_nc_kbd_backlight_timeout_set(u8 value)
-{
-	int result;
+अटल पूर्णांक __sony_nc_kbd_backlight_समयout_set(u8 value)
+अणु
+	पूर्णांक result;
 
-	if (value > 3)
-		return -EINVAL;
+	अगर (value > 3)
+		वापस -EINVAL;
 
-	if (sony_call_snc_handle(kbdbl_ctl->handle, (value << 0x10) |
+	अगर (sony_call_snc_handle(kbdbl_ctl->handle, (value << 0x10) |
 				(kbdbl_ctl->base + 0x200), &result))
-		return -EIO;
+		वापस -EIO;
 
-	kbdbl_ctl->timeout = value;
+	kbdbl_ctl->समयout = value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t sony_nc_kbd_backlight_timeout_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	int ret = 0;
-	unsigned long value;
+अटल sमाप_प्रकार sony_nc_kbd_backlight_समयout_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ value;
 
-	if (count > 31)
-		return -EINVAL;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value))
+		वापस -EINVAL;
 
-	ret = __sony_nc_kbd_backlight_timeout_set(value);
-	if (ret < 0)
-		return ret;
+	ret = __sony_nc_kbd_backlight_समयout_set(value);
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_nc_kbd_backlight_timeout_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	ssize_t count = 0;
-	count = snprintf(buffer, PAGE_SIZE, "%d\n", kbdbl_ctl->timeout);
-	return count;
-}
+अटल sमाप_प्रकार sony_nc_kbd_backlight_समयout_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	sमाप_प्रकार count = 0;
+	count = snम_लिखो(buffer, PAGE_SIZE, "%d\n", kbdbl_ctl->समयout);
+	वापस count;
+पूर्ण
 
-static int sony_nc_kbd_backlight_setup(struct platform_device *pd,
-		unsigned int handle)
-{
-	int result;
-	int probe_base = 0;
-	int ctl_base = 0;
-	int ret = 0;
+अटल पूर्णांक sony_nc_kbd_backlight_setup(काष्ठा platक्रमm_device *pd,
+		अचिन्हित पूर्णांक handle)
+अणु
+	पूर्णांक result;
+	पूर्णांक probe_base = 0;
+	पूर्णांक ctl_base = 0;
+	पूर्णांक ret = 0;
 
-	if (kbdbl_ctl) {
+	अगर (kbdbl_ctl) अणु
 		pr_warn("handle 0x%.4x: keyboard backlight setup already done for 0x%.4x\n",
 				handle, kbdbl_ctl->handle);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* verify the kbd backlight presence, some of these handles are not used
-	 * for keyboard backlight only
+	/* verअगरy the kbd backlight presence, some of these handles are not used
+	 * क्रम keyboard backlight only
 	 */
-	switch (handle) {
-	case 0x0153:
+	चयन (handle) अणु
+	हाल 0x0153:
 		probe_base = 0x0;
 		ctl_base = 0x0;
-		break;
-	case 0x0137:
+		अवरोध;
+	हाल 0x0137:
 		probe_base = 0x0B00;
 		ctl_base = 0x0C00;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		probe_base = 0x0100;
 		ctl_base = 0x4000;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ret = sony_call_snc_handle(handle, probe_base, &result);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if ((handle == 0x0137 && !(result & 0x02)) ||
-			!(result & 0x01)) {
-		dprintk("no backlight keyboard found\n");
-		return 0;
-	}
+	अगर ((handle == 0x0137 && !(result & 0x02)) ||
+			!(result & 0x01)) अणु
+		dprपूर्णांकk("no backlight keyboard found\n");
+		वापस 0;
+	पूर्ण
 
-	kbdbl_ctl = kzalloc(sizeof(*kbdbl_ctl), GFP_KERNEL);
-	if (!kbdbl_ctl)
-		return -ENOMEM;
+	kbdbl_ctl = kzalloc(माप(*kbdbl_ctl), GFP_KERNEL);
+	अगर (!kbdbl_ctl)
+		वापस -ENOMEM;
 
 	kbdbl_ctl->mode = kbd_backlight;
-	kbdbl_ctl->timeout = kbd_backlight_timeout;
+	kbdbl_ctl->समयout = kbd_backlight_समयout;
 	kbdbl_ctl->handle = handle;
 	kbdbl_ctl->base = ctl_base;
-	/* Some models do not allow timeout control */
-	kbdbl_ctl->has_timeout = handle != 0x0153;
+	/* Some models करो not allow समयout control */
+	kbdbl_ctl->has_समयout = handle != 0x0153;
 
 	sysfs_attr_init(&kbdbl_ctl->mode_attr.attr);
 	kbdbl_ctl->mode_attr.attr.name = "kbd_backlight";
@@ -1920,68 +1921,68 @@ static int sony_nc_kbd_backlight_setup(struct platform_device *pd,
 	kbdbl_ctl->mode_attr.store = sony_nc_kbd_backlight_mode_store;
 
 	ret = device_create_file(&pd->dev, &kbdbl_ctl->mode_attr);
-	if (ret)
-		goto outkzalloc;
+	अगर (ret)
+		जाओ outkzalloc;
 
 	__sony_nc_kbd_backlight_mode_set(kbdbl_ctl->mode);
 
-	if (kbdbl_ctl->has_timeout) {
-		sysfs_attr_init(&kbdbl_ctl->timeout_attr.attr);
-		kbdbl_ctl->timeout_attr.attr.name = "kbd_backlight_timeout";
-		kbdbl_ctl->timeout_attr.attr.mode = S_IRUGO | S_IWUSR;
-		kbdbl_ctl->timeout_attr.show =
-			sony_nc_kbd_backlight_timeout_show;
-		kbdbl_ctl->timeout_attr.store =
-			sony_nc_kbd_backlight_timeout_store;
+	अगर (kbdbl_ctl->has_समयout) अणु
+		sysfs_attr_init(&kbdbl_ctl->समयout_attr.attr);
+		kbdbl_ctl->समयout_attr.attr.name = "kbd_backlight_timeout";
+		kbdbl_ctl->समयout_attr.attr.mode = S_IRUGO | S_IWUSR;
+		kbdbl_ctl->समयout_attr.show =
+			sony_nc_kbd_backlight_समयout_show;
+		kbdbl_ctl->समयout_attr.store =
+			sony_nc_kbd_backlight_समयout_store;
 
-		ret = device_create_file(&pd->dev, &kbdbl_ctl->timeout_attr);
-		if (ret)
-			goto outmode;
+		ret = device_create_file(&pd->dev, &kbdbl_ctl->समयout_attr);
+		अगर (ret)
+			जाओ ouपंचांगode;
 
-		__sony_nc_kbd_backlight_timeout_set(kbdbl_ctl->timeout);
-	}
+		__sony_nc_kbd_backlight_समयout_set(kbdbl_ctl->समयout);
+	पूर्ण
 
 
-	return 0;
+	वापस 0;
 
-outmode:
-	device_remove_file(&pd->dev, &kbdbl_ctl->mode_attr);
+ouपंचांगode:
+	device_हटाओ_file(&pd->dev, &kbdbl_ctl->mode_attr);
 outkzalloc:
-	kfree(kbdbl_ctl);
-	kbdbl_ctl = NULL;
-	return ret;
-}
+	kमुक्त(kbdbl_ctl);
+	kbdbl_ctl = शून्य;
+	वापस ret;
+पूर्ण
 
-static void sony_nc_kbd_backlight_cleanup(struct platform_device *pd,
-		unsigned int handle)
-{
-	if (kbdbl_ctl && handle == kbdbl_ctl->handle) {
-		device_remove_file(&pd->dev, &kbdbl_ctl->mode_attr);
-		if (kbdbl_ctl->has_timeout)
-			device_remove_file(&pd->dev, &kbdbl_ctl->timeout_attr);
-		kfree(kbdbl_ctl);
-		kbdbl_ctl = NULL;
-	}
-}
+अटल व्योम sony_nc_kbd_backlight_cleanup(काष्ठा platक्रमm_device *pd,
+		अचिन्हित पूर्णांक handle)
+अणु
+	अगर (kbdbl_ctl && handle == kbdbl_ctl->handle) अणु
+		device_हटाओ_file(&pd->dev, &kbdbl_ctl->mode_attr);
+		अगर (kbdbl_ctl->has_समयout)
+			device_हटाओ_file(&pd->dev, &kbdbl_ctl->समयout_attr);
+		kमुक्त(kbdbl_ctl);
+		kbdbl_ctl = शून्य;
+	पूर्ण
+पूर्ण
 
-struct battery_care_control {
-	struct device_attribute attrs[2];
-	unsigned int handle;
-};
-static struct battery_care_control *bcare_ctl;
+काष्ठा battery_care_control अणु
+	काष्ठा device_attribute attrs[2];
+	अचिन्हित पूर्णांक handle;
+पूर्ण;
+अटल काष्ठा battery_care_control *bcare_ctl;
 
-static ssize_t sony_nc_battery_care_limit_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	unsigned int result, cmd;
-	unsigned long value;
+अटल sमाप_प्रकार sony_nc_battery_care_limit_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक result, cmd;
+	अचिन्हित दीर्घ value;
 
-	if (count > 31)
-		return -EINVAL;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value))
+		वापस -EINVAL;
 
 	/*  limit values (2 bits):
 	 *  00 - none
@@ -1992,90 +1993,90 @@ static ssize_t sony_nc_battery_care_limit_store(struct device *dev,
 	 *  bit 0: 0 disable BCL, 1 enable BCL
 	 *  bit 1: 1 tell to store the battery limit (see bits 6,7) too
 	 *  bits 2,3: reserved
-	 *  bits 4,5: store the limit into the EC
-	 *  bits 6,7: store the limit into the battery
+	 *  bits 4,5: store the limit पूर्णांकo the EC
+	 *  bits 6,7: store the limit पूर्णांकo the battery
 	 */
 	cmd = 0;
 
-	if (value > 0) {
-		if (value <= 50)
+	अगर (value > 0) अणु
+		अगर (value <= 50)
 			cmd = 0x20;
 
-		else if (value <= 80)
+		अन्यथा अगर (value <= 80)
 			cmd = 0x10;
 
-		else if (value <= 100)
+		अन्यथा अगर (value <= 100)
 			cmd = 0x30;
 
-		else
-			return -EINVAL;
+		अन्यथा
+			वापस -EINVAL;
 
 		/*
 		 * handle 0x0115 should allow storing on battery too;
 		 * handle 0x0136 same as 0x0115 + health status;
 		 * handle 0x013f, same as 0x0136 but no storing on the battery
 		 */
-		if (bcare_ctl->handle != 0x013f)
+		अगर (bcare_ctl->handle != 0x013f)
 			cmd = cmd | (cmd << 2);
 
 		cmd = (cmd | 0x1) << 0x10;
-	}
+	पूर्ण
 
-	if (sony_call_snc_handle(bcare_ctl->handle, cmd | 0x0100, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(bcare_ctl->handle, cmd | 0x0100, &result))
+		वापस -EIO;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_nc_battery_care_limit_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	unsigned int result, status;
+अटल sमाप_प्रकार sony_nc_battery_care_limit_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	अचिन्हित पूर्णांक result, status;
 
-	if (sony_call_snc_handle(bcare_ctl->handle, 0x0000, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(bcare_ctl->handle, 0x0000, &result))
+		वापस -EIO;
 
 	status = (result & 0x01) ? ((result & 0x30) >> 0x04) : 0;
-	switch (status) {
-	case 1:
+	चयन (status) अणु
+	हाल 1:
 		status = 80;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		status = 50;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		status = 100;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		status = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return snprintf(buffer, PAGE_SIZE, "%d\n", status);
-}
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n", status);
+पूर्ण
 
-static ssize_t sony_nc_battery_care_health_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	ssize_t count = 0;
-	unsigned int health;
+अटल sमाप_प्रकार sony_nc_battery_care_health_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	sमाप_प्रकार count = 0;
+	अचिन्हित पूर्णांक health;
 
-	if (sony_call_snc_handle(bcare_ctl->handle, 0x0200, &health))
-		return -EIO;
+	अगर (sony_call_snc_handle(bcare_ctl->handle, 0x0200, &health))
+		वापस -EIO;
 
-	count = snprintf(buffer, PAGE_SIZE, "%d\n", health & 0xff);
+	count = snम_लिखो(buffer, PAGE_SIZE, "%d\n", health & 0xff);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int sony_nc_battery_care_setup(struct platform_device *pd,
-		unsigned int handle)
-{
-	int ret = 0;
+अटल पूर्णांक sony_nc_battery_care_setup(काष्ठा platक्रमm_device *pd,
+		अचिन्हित पूर्णांक handle)
+अणु
+	पूर्णांक ret = 0;
 
-	bcare_ctl = kzalloc(sizeof(struct battery_care_control), GFP_KERNEL);
-	if (!bcare_ctl)
-		return -ENOMEM;
+	bcare_ctl = kzalloc(माप(काष्ठा battery_care_control), GFP_KERNEL);
+	अगर (!bcare_ctl)
+		वापस -ENOMEM;
 
 	bcare_ctl->handle = handle;
 
@@ -2086,12 +2087,12 @@ static int sony_nc_battery_care_setup(struct platform_device *pd,
 	bcare_ctl->attrs[0].store = sony_nc_battery_care_limit_store;
 
 	ret = device_create_file(&pd->dev, &bcare_ctl->attrs[0]);
-	if (ret)
-		goto outkzalloc;
+	अगर (ret)
+		जाओ outkzalloc;
 
-	/* 0x0115 is for models with no health reporting capability */
-	if (handle == 0x0115)
-		return 0;
+	/* 0x0115 is क्रम models with no health reporting capability */
+	अगर (handle == 0x0115)
+		वापस 0;
 
 	sysfs_attr_init(&bcare_ctl->attrs[1].attr);
 	bcare_ctl->attrs[1].attr.name = "battery_care_health";
@@ -2099,151 +2100,151 @@ static int sony_nc_battery_care_setup(struct platform_device *pd,
 	bcare_ctl->attrs[1].show = sony_nc_battery_care_health_show;
 
 	ret = device_create_file(&pd->dev, &bcare_ctl->attrs[1]);
-	if (ret)
-		goto outlimiter;
+	अगर (ret)
+		जाओ outlimiter;
 
-	return 0;
+	वापस 0;
 
 outlimiter:
-	device_remove_file(&pd->dev, &bcare_ctl->attrs[0]);
+	device_हटाओ_file(&pd->dev, &bcare_ctl->attrs[0]);
 
 outkzalloc:
-	kfree(bcare_ctl);
-	bcare_ctl = NULL;
+	kमुक्त(bcare_ctl);
+	bcare_ctl = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sony_nc_battery_care_cleanup(struct platform_device *pd)
-{
-	if (bcare_ctl) {
-		device_remove_file(&pd->dev, &bcare_ctl->attrs[0]);
-		if (bcare_ctl->handle != 0x0115)
-			device_remove_file(&pd->dev, &bcare_ctl->attrs[1]);
+अटल व्योम sony_nc_battery_care_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (bcare_ctl) अणु
+		device_हटाओ_file(&pd->dev, &bcare_ctl->attrs[0]);
+		अगर (bcare_ctl->handle != 0x0115)
+			device_हटाओ_file(&pd->dev, &bcare_ctl->attrs[1]);
 
-		kfree(bcare_ctl);
-		bcare_ctl = NULL;
-	}
-}
+		kमुक्त(bcare_ctl);
+		bcare_ctl = शून्य;
+	पूर्ण
+पूर्ण
 
-struct snc_thermal_ctrl {
-	unsigned int mode;
-	unsigned int profiles;
-	struct device_attribute mode_attr;
-	struct device_attribute profiles_attr;
-};
-static struct snc_thermal_ctrl *th_handle;
+काष्ठा snc_thermal_ctrl अणु
+	अचिन्हित पूर्णांक mode;
+	अचिन्हित पूर्णांक profiles;
+	काष्ठा device_attribute mode_attr;
+	काष्ठा device_attribute profiles_attr;
+पूर्ण;
+अटल काष्ठा snc_thermal_ctrl *th_handle;
 
-#define THM_PROFILE_MAX 3
-static const char * const snc_thermal_profiles[] = {
+#घोषणा THM_PROखाता_MAX 3
+अटल स्थिर अक्षर * स्थिर snc_thermal_profiles[] = अणु
 	"balanced",
 	"silent",
 	"performance"
-};
+पूर्ण;
 
-static int sony_nc_thermal_mode_set(unsigned short mode)
-{
-	unsigned int result;
+अटल पूर्णांक sony_nc_thermal_mode_set(अचिन्हित लघु mode)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	/* the thermal profile seems to be a two bit bitmask:
+	/* the thermal profile seems to be a two bit biपंचांगask:
 	 * lsb -> silent
-	 * msb -> performance
+	 * msb -> perक्रमmance
 	 * no bit set is the normal operation and is always valid
 	 * Some vaio models only have "balanced" and "performance"
 	 */
-	if ((mode && !(th_handle->profiles & mode)) || mode >= THM_PROFILE_MAX)
-		return -EINVAL;
+	अगर ((mode && !(th_handle->profiles & mode)) || mode >= THM_PROखाता_MAX)
+		वापस -EINVAL;
 
-	if (sony_call_snc_handle(0x0122, mode << 0x10 | 0x0200, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0122, mode << 0x10 | 0x0200, &result))
+		वापस -EIO;
 
 	th_handle->mode = mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sony_nc_thermal_mode_get(void)
-{
-	unsigned int result;
+अटल पूर्णांक sony_nc_thermal_mode_get(व्योम)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(0x0122, 0x0100, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0122, 0x0100, &result))
+		वापस -EIO;
 
-	return result & 0xff;
-}
+	वापस result & 0xff;
+पूर्ण
 
-static ssize_t sony_nc_thermal_profiles_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	short cnt;
-	size_t idx = 0;
+अटल sमाप_प्रकार sony_nc_thermal_profiles_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	लघु cnt;
+	माप_प्रकार idx = 0;
 
-	for (cnt = 0; cnt < THM_PROFILE_MAX; cnt++) {
-		if (!cnt || (th_handle->profiles & cnt))
-			idx += scnprintf(buffer + idx, PAGE_SIZE - idx, "%s ",
+	क्रम (cnt = 0; cnt < THM_PROखाता_MAX; cnt++) अणु
+		अगर (!cnt || (th_handle->profiles & cnt))
+			idx += scnम_लिखो(buffer + idx, PAGE_SIZE - idx, "%s ",
 					snc_thermal_profiles[cnt]);
-	}
-	idx += scnprintf(buffer + idx, PAGE_SIZE - idx, "\n");
+	पूर्ण
+	idx += scnम_लिखो(buffer + idx, PAGE_SIZE - idx, "\n");
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static ssize_t sony_nc_thermal_mode_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	unsigned short cmd;
-	size_t len = count;
+अटल sमाप_प्रकार sony_nc_thermal_mode_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित लघु cmd;
+	माप_प्रकार len = count;
 
-	if (count == 0)
-		return -EINVAL;
+	अगर (count == 0)
+		वापस -EINVAL;
 
-	/* skip the newline if present */
-	if (buffer[len - 1] == '\n')
+	/* skip the newline अगर present */
+	अगर (buffer[len - 1] == '\n')
 		len--;
 
-	for (cmd = 0; cmd < THM_PROFILE_MAX; cmd++)
-		if (strncmp(buffer, snc_thermal_profiles[cmd], len) == 0)
-			break;
+	क्रम (cmd = 0; cmd < THM_PROखाता_MAX; cmd++)
+		अगर (म_भेदन(buffer, snc_thermal_profiles[cmd], len) == 0)
+			अवरोध;
 
-	if (sony_nc_thermal_mode_set(cmd))
-		return -EIO;
+	अगर (sony_nc_thermal_mode_set(cmd))
+		वापस -EIO;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_nc_thermal_mode_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	ssize_t count = 0;
-	int mode = sony_nc_thermal_mode_get();
+अटल sमाप_प्रकार sony_nc_thermal_mode_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	sमाप_प्रकार count = 0;
+	पूर्णांक mode = sony_nc_thermal_mode_get();
 
-	if (mode < 0)
-		return mode;
+	अगर (mode < 0)
+		वापस mode;
 
-	count = snprintf(buffer, PAGE_SIZE, "%s\n", snc_thermal_profiles[mode]);
+	count = snम_लिखो(buffer, PAGE_SIZE, "%s\n", snc_thermal_profiles[mode]);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int sony_nc_thermal_setup(struct platform_device *pd)
-{
-	int ret = 0;
-	th_handle = kzalloc(sizeof(struct snc_thermal_ctrl), GFP_KERNEL);
-	if (!th_handle)
-		return -ENOMEM;
+अटल पूर्णांक sony_nc_thermal_setup(काष्ठा platक्रमm_device *pd)
+अणु
+	पूर्णांक ret = 0;
+	th_handle = kzalloc(माप(काष्ठा snc_thermal_ctrl), GFP_KERNEL);
+	अगर (!th_handle)
+		वापस -ENOMEM;
 
 	ret = sony_call_snc_handle(0x0122, 0x0000, &th_handle->profiles);
-	if (ret) {
+	अगर (ret) अणु
 		pr_warn("couldn't to read the thermal profiles\n");
-		goto outkzalloc;
-	}
+		जाओ outkzalloc;
+	पूर्ण
 
 	ret = sony_nc_thermal_mode_get();
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_warn("couldn't to read the current thermal profile");
-		goto outkzalloc;
-	}
+		जाओ outkzalloc;
+	पूर्ण
 	th_handle->mode = ret;
 
 	sysfs_attr_init(&th_handle->profiles_attr.attr);
@@ -2258,128 +2259,128 @@ static int sony_nc_thermal_setup(struct platform_device *pd)
 	th_handle->mode_attr.store = sony_nc_thermal_mode_store;
 
 	ret = device_create_file(&pd->dev, &th_handle->profiles_attr);
-	if (ret)
-		goto outkzalloc;
+	अगर (ret)
+		जाओ outkzalloc;
 
 	ret = device_create_file(&pd->dev, &th_handle->mode_attr);
-	if (ret)
-		goto outprofiles;
+	अगर (ret)
+		जाओ outprofiles;
 
-	return 0;
+	वापस 0;
 
 outprofiles:
-	device_remove_file(&pd->dev, &th_handle->profiles_attr);
+	device_हटाओ_file(&pd->dev, &th_handle->profiles_attr);
 outkzalloc:
-	kfree(th_handle);
-	th_handle = NULL;
-	return ret;
-}
+	kमुक्त(th_handle);
+	th_handle = शून्य;
+	वापस ret;
+पूर्ण
 
-static void sony_nc_thermal_cleanup(struct platform_device *pd)
-{
-	if (th_handle) {
-		device_remove_file(&pd->dev, &th_handle->profiles_attr);
-		device_remove_file(&pd->dev, &th_handle->mode_attr);
-		kfree(th_handle);
-		th_handle = NULL;
-	}
-}
+अटल व्योम sony_nc_thermal_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (th_handle) अणु
+		device_हटाओ_file(&pd->dev, &th_handle->profiles_attr);
+		device_हटाओ_file(&pd->dev, &th_handle->mode_attr);
+		kमुक्त(th_handle);
+		th_handle = शून्य;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static void sony_nc_thermal_resume(void)
-{
-	int status;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल व्योम sony_nc_thermal_resume(व्योम)
+अणु
+	पूर्णांक status;
 
-	if (!th_handle)
-		return;
+	अगर (!th_handle)
+		वापस;
 
 	status = sony_nc_thermal_mode_get();
 
-	if (status != th_handle->mode)
+	अगर (status != th_handle->mode)
 		sony_nc_thermal_mode_set(th_handle->mode);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-/* resume on LID open */
-#define LID_RESUME_S5	0
-#define LID_RESUME_S4	1
-#define LID_RESUME_S3	2
-#define LID_RESUME_MAX	3
-struct snc_lid_resume_control {
-	struct device_attribute attrs[LID_RESUME_MAX];
-	unsigned int status;
-	int handle;
-};
-static struct snc_lid_resume_control *lid_ctl;
+/* resume on LID खोलो */
+#घोषणा LID_RESUME_S5	0
+#घोषणा LID_RESUME_S4	1
+#घोषणा LID_RESUME_S3	2
+#घोषणा LID_RESUME_MAX	3
+काष्ठा snc_lid_resume_control अणु
+	काष्ठा device_attribute attrs[LID_RESUME_MAX];
+	अचिन्हित पूर्णांक status;
+	पूर्णांक handle;
+पूर्ण;
+अटल काष्ठा snc_lid_resume_control *lid_ctl;
 
-static ssize_t sony_nc_lid_resume_store(struct device *dev,
-					struct device_attribute *attr,
-					const char *buffer, size_t count)
-{
-	unsigned int result;
-	unsigned long value;
-	unsigned int pos = LID_RESUME_S5;
-	if (count > 31)
-		return -EINVAL;
+अटल sमाप_प्रकार sony_nc_lid_resume_store(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक result;
+	अचिन्हित दीर्घ value;
+	अचिन्हित पूर्णांक pos = LID_RESUME_S5;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value) || value > 1)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value) || value > 1)
+		वापस -EINVAL;
 
-	/* the value we have to write to SNC is a bitmask:
+	/* the value we have to ग_लिखो to SNC is a biपंचांगask:
 	 * +--------------+
 	 * | S3 | S4 | S5 |
 	 * +--------------+
 	 *   2    1    0
 	 */
-	while (pos < LID_RESUME_MAX) {
-		if (&lid_ctl->attrs[pos].attr == &attr->attr)
-			break;
+	जबतक (pos < LID_RESUME_MAX) अणु
+		अगर (&lid_ctl->attrs[pos].attr == &attr->attr)
+			अवरोध;
 		pos++;
-	}
-	if (pos == LID_RESUME_MAX)
-		return -EINVAL;
+	पूर्ण
+	अगर (pos == LID_RESUME_MAX)
+		वापस -EINVAL;
 
-	if (value)
+	अगर (value)
 		value = lid_ctl->status | (1 << pos);
-	else
+	अन्यथा
 		value = lid_ctl->status & ~(1 << pos);
 
-	if (sony_call_snc_handle(lid_ctl->handle, value << 0x10 | 0x0100,
+	अगर (sony_call_snc_handle(lid_ctl->handle, value << 0x10 | 0x0100,
 				&result))
-		return -EIO;
+		वापस -EIO;
 
 	lid_ctl->status = value;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_nc_lid_resume_show(struct device *dev,
-					struct device_attribute *attr,
-					char *buffer)
-{
-	unsigned int pos = LID_RESUME_S5;
+अटल sमाप_प्रकार sony_nc_lid_resume_show(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buffer)
+अणु
+	अचिन्हित पूर्णांक pos = LID_RESUME_S5;
 
-	while (pos < LID_RESUME_MAX) {
-		if (&lid_ctl->attrs[pos].attr == &attr->attr)
-			return snprintf(buffer, PAGE_SIZE, "%d\n",
+	जबतक (pos < LID_RESUME_MAX) अणु
+		अगर (&lid_ctl->attrs[pos].attr == &attr->attr)
+			वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n",
 					(lid_ctl->status >> pos) & 0x01);
 		pos++;
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int sony_nc_lid_resume_setup(struct platform_device *pd,
-					unsigned int handle)
-{
-	unsigned int result;
-	int i;
+अटल पूर्णांक sony_nc_lid_resume_setup(काष्ठा platक्रमm_device *pd,
+					अचिन्हित पूर्णांक handle)
+अणु
+	अचिन्हित पूर्णांक result;
+	पूर्णांक i;
 
-	if (sony_call_snc_handle(handle, 0x0000, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(handle, 0x0000, &result))
+		वापस -EIO;
 
-	lid_ctl = kzalloc(sizeof(struct snc_lid_resume_control), GFP_KERNEL);
-	if (!lid_ctl)
-		return -ENOMEM;
+	lid_ctl = kzalloc(माप(काष्ठा snc_lid_resume_control), GFP_KERNEL);
+	अगर (!lid_ctl)
+		वापस -ENOMEM;
 
 	lid_ctl->status = result & 0x7;
 	lid_ctl->handle = handle;
@@ -2390,7 +2391,7 @@ static int sony_nc_lid_resume_setup(struct platform_device *pd,
 	lid_ctl->attrs[LID_RESUME_S5].show = sony_nc_lid_resume_show;
 	lid_ctl->attrs[LID_RESUME_S5].store = sony_nc_lid_resume_store;
 
-	if (handle == 0x0119) {
+	अगर (handle == 0x0119) अणु
 		sysfs_attr_init(&lid_ctl->attrs[1].attr);
 		lid_ctl->attrs[LID_RESUME_S4].attr.name = "lid_resume_S4";
 		lid_ctl->attrs[LID_RESUME_S4].attr.mode = S_IRUGO | S_IWUSR;
@@ -2402,256 +2403,256 @@ static int sony_nc_lid_resume_setup(struct platform_device *pd,
 		lid_ctl->attrs[LID_RESUME_S3].attr.mode = S_IRUGO | S_IWUSR;
 		lid_ctl->attrs[LID_RESUME_S3].show = sony_nc_lid_resume_show;
 		lid_ctl->attrs[LID_RESUME_S3].store = sony_nc_lid_resume_store;
-	}
-	for (i = 0; i < LID_RESUME_MAX &&
-			lid_ctl->attrs[i].attr.name; i++) {
+	पूर्ण
+	क्रम (i = 0; i < LID_RESUME_MAX &&
+			lid_ctl->attrs[i].attr.name; i++) अणु
 		result = device_create_file(&pd->dev, &lid_ctl->attrs[i]);
-		if (result)
-			goto liderror;
-	}
+		अगर (result)
+			जाओ liderror;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 liderror:
-	for (i--; i >= 0; i--)
-		device_remove_file(&pd->dev, &lid_ctl->attrs[i]);
+	क्रम (i--; i >= 0; i--)
+		device_हटाओ_file(&pd->dev, &lid_ctl->attrs[i]);
 
-	kfree(lid_ctl);
-	lid_ctl = NULL;
+	kमुक्त(lid_ctl);
+	lid_ctl = शून्य;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void sony_nc_lid_resume_cleanup(struct platform_device *pd)
-{
-	int i;
+अटल व्योम sony_nc_lid_resume_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	पूर्णांक i;
 
-	if (lid_ctl) {
-		for (i = 0; i < LID_RESUME_MAX; i++) {
-			if (!lid_ctl->attrs[i].attr.name)
-				break;
+	अगर (lid_ctl) अणु
+		क्रम (i = 0; i < LID_RESUME_MAX; i++) अणु
+			अगर (!lid_ctl->attrs[i].attr.name)
+				अवरोध;
 
-			device_remove_file(&pd->dev, &lid_ctl->attrs[i]);
-		}
+			device_हटाओ_file(&pd->dev, &lid_ctl->attrs[i]);
+		पूर्ण
 
-		kfree(lid_ctl);
-		lid_ctl = NULL;
-	}
-}
+		kमुक्त(lid_ctl);
+		lid_ctl = शून्य;
+	पूर्ण
+पूर्ण
 
 /* GFX Switch position */
-enum gfx_switch {
+क्रमागत gfx_चयन अणु
 	SPEED,
 	STAMINA,
 	AUTO
-};
-struct snc_gfx_switch_control {
-	struct device_attribute attr;
-	unsigned int handle;
-};
-static struct snc_gfx_switch_control *gfxs_ctl;
+पूर्ण;
+काष्ठा snc_gfx_चयन_control अणु
+	काष्ठा device_attribute attr;
+	अचिन्हित पूर्णांक handle;
+पूर्ण;
+अटल काष्ठा snc_gfx_चयन_control *gfxs_ctl;
 
-/* returns 0 for speed, 1 for stamina */
-static int __sony_nc_gfx_switch_status_get(void)
-{
-	unsigned int result;
+/* वापसs 0 क्रम speed, 1 क्रम stamina */
+अटल पूर्णांक __sony_nc_gfx_चयन_status_get(व्योम)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(gfxs_ctl->handle,
+	अगर (sony_call_snc_handle(gfxs_ctl->handle,
 				gfxs_ctl->handle == 0x015B ? 0x0000 : 0x0100,
 				&result))
-		return -EIO;
+		वापस -EIO;
 
-	switch (gfxs_ctl->handle) {
-	case 0x0146:
+	चयन (gfxs_ctl->handle) अणु
+	हाल 0x0146:
 		/* 1: discrete GFX (speed)
-		 * 0: integrated GFX (stamina)
+		 * 0: पूर्णांकegrated GFX (stamina)
 		 */
-		return result & 0x1 ? SPEED : STAMINA;
-	case 0x015B:
+		वापस result & 0x1 ? SPEED : STAMINA;
+	हाल 0x015B:
 		/* 0: discrete GFX (speed)
-		 * 1: integrated GFX (stamina)
+		 * 1: पूर्णांकegrated GFX (stamina)
 		 */
-		return result & 0x1 ? STAMINA : SPEED;
-	case 0x0128:
-		/* it's a more elaborated bitmask, for now:
-		 * 2: integrated GFX (stamina)
+		वापस result & 0x1 ? STAMINA : SPEED;
+	हाल 0x0128:
+		/* it's a more elaborated biपंचांगask, क्रम now:
+		 * 2: पूर्णांकegrated GFX (stamina)
 		 * 0: discrete GFX (speed)
 		 */
-		dprintk("GFX Status: 0x%x\n", result);
-		return result & 0x80 ? AUTO :
+		dprपूर्णांकk("GFX Status: 0x%x\n", result);
+		वापस result & 0x80 ? AUTO :
 			result & 0x02 ? STAMINA : SPEED;
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t sony_nc_gfx_switch_status_show(struct device *dev,
-				       struct device_attribute *attr,
-				       char *buffer)
-{
-	int pos = __sony_nc_gfx_switch_status_get();
+अटल sमाप_प्रकार sony_nc_gfx_चयन_status_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       अक्षर *buffer)
+अणु
+	पूर्णांक pos = __sony_nc_gfx_चयन_status_get();
 
-	if (pos < 0)
-		return pos;
+	अगर (pos < 0)
+		वापस pos;
 
-	return snprintf(buffer, PAGE_SIZE, "%s\n",
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%s\n",
 					pos == SPEED ? "speed" :
 					pos == STAMINA ? "stamina" :
 					pos == AUTO ? "auto" : "unknown");
-}
+पूर्ण
 
-static int sony_nc_gfx_switch_setup(struct platform_device *pd,
-		unsigned int handle)
-{
-	unsigned int result;
+अटल पूर्णांक sony_nc_gfx_चयन_setup(काष्ठा platक्रमm_device *pd,
+		अचिन्हित पूर्णांक handle)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	gfxs_ctl = kzalloc(sizeof(struct snc_gfx_switch_control), GFP_KERNEL);
-	if (!gfxs_ctl)
-		return -ENOMEM;
+	gfxs_ctl = kzalloc(माप(काष्ठा snc_gfx_चयन_control), GFP_KERNEL);
+	अगर (!gfxs_ctl)
+		वापस -ENOMEM;
 
 	gfxs_ctl->handle = handle;
 
 	sysfs_attr_init(&gfxs_ctl->attr.attr);
 	gfxs_ctl->attr.attr.name = "gfx_switch_status";
 	gfxs_ctl->attr.attr.mode = S_IRUGO;
-	gfxs_ctl->attr.show = sony_nc_gfx_switch_status_show;
+	gfxs_ctl->attr.show = sony_nc_gfx_चयन_status_show;
 
 	result = device_create_file(&pd->dev, &gfxs_ctl->attr);
-	if (result)
-		goto gfxerror;
+	अगर (result)
+		जाओ gfxerror;
 
-	return 0;
+	वापस 0;
 
 gfxerror:
-	kfree(gfxs_ctl);
-	gfxs_ctl = NULL;
+	kमुक्त(gfxs_ctl);
+	gfxs_ctl = शून्य;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void sony_nc_gfx_switch_cleanup(struct platform_device *pd)
-{
-	if (gfxs_ctl) {
-		device_remove_file(&pd->dev, &gfxs_ctl->attr);
+अटल व्योम sony_nc_gfx_चयन_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (gfxs_ctl) अणु
+		device_हटाओ_file(&pd->dev, &gfxs_ctl->attr);
 
-		kfree(gfxs_ctl);
-		gfxs_ctl = NULL;
-	}
-}
+		kमुक्त(gfxs_ctl);
+		gfxs_ctl = शून्य;
+	पूर्ण
+पूर्ण
 
-/* High speed charging function */
-static struct device_attribute *hsc_handle;
+/* High speed अक्षरging function */
+अटल काष्ठा device_attribute *hsc_handle;
 
-static ssize_t sony_nc_highspeed_charging_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	unsigned int result;
-	unsigned long value;
+अटल sमाप_प्रकार sony_nc_highspeed_अक्षरging_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक result;
+	अचिन्हित दीर्घ value;
 
-	if (count > 31)
-		return -EINVAL;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value) || value > 1)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value) || value > 1)
+		वापस -EINVAL;
 
-	if (sony_call_snc_handle(0x0131, value << 0x10 | 0x0200, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0131, value << 0x10 | 0x0200, &result))
+		वापस -EIO;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_nc_highspeed_charging_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	unsigned int result;
+अटल sमाप_प्रकार sony_nc_highspeed_अक्षरging_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(0x0131, 0x0100, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0131, 0x0100, &result))
+		वापस -EIO;
 
-	return snprintf(buffer, PAGE_SIZE, "%d\n", result & 0x01);
-}
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n", result & 0x01);
+पूर्ण
 
-static int sony_nc_highspeed_charging_setup(struct platform_device *pd)
-{
-	unsigned int result;
+अटल पूर्णांक sony_nc_highspeed_अक्षरging_setup(काष्ठा platक्रमm_device *pd)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(0x0131, 0x0000, &result) || !(result & 0x01)) {
+	अगर (sony_call_snc_handle(0x0131, 0x0000, &result) || !(result & 0x01)) अणु
 		/* some models advertise the handle but have no implementation
-		 * for it
+		 * क्रम it
 		 */
 		pr_info("No High Speed Charging capability found\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	hsc_handle = kzalloc(sizeof(struct device_attribute), GFP_KERNEL);
-	if (!hsc_handle)
-		return -ENOMEM;
+	hsc_handle = kzalloc(माप(काष्ठा device_attribute), GFP_KERNEL);
+	अगर (!hsc_handle)
+		वापस -ENOMEM;
 
 	sysfs_attr_init(&hsc_handle->attr);
 	hsc_handle->attr.name = "battery_highspeed_charging";
 	hsc_handle->attr.mode = S_IRUGO | S_IWUSR;
-	hsc_handle->show = sony_nc_highspeed_charging_show;
-	hsc_handle->store = sony_nc_highspeed_charging_store;
+	hsc_handle->show = sony_nc_highspeed_अक्षरging_show;
+	hsc_handle->store = sony_nc_highspeed_अक्षरging_store;
 
 	result = device_create_file(&pd->dev, hsc_handle);
-	if (result) {
-		kfree(hsc_handle);
-		hsc_handle = NULL;
-		return result;
-	}
+	अगर (result) अणु
+		kमुक्त(hsc_handle);
+		hsc_handle = शून्य;
+		वापस result;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sony_nc_highspeed_charging_cleanup(struct platform_device *pd)
-{
-	if (hsc_handle) {
-		device_remove_file(&pd->dev, hsc_handle);
-		kfree(hsc_handle);
-		hsc_handle = NULL;
-	}
-}
+अटल व्योम sony_nc_highspeed_अक्षरging_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (hsc_handle) अणु
+		device_हटाओ_file(&pd->dev, hsc_handle);
+		kमुक्त(hsc_handle);
+		hsc_handle = शून्य;
+	पूर्ण
+पूर्ण
 
 /* low battery function */
-static struct device_attribute *lowbatt_handle;
+अटल काष्ठा device_attribute *lowbatt_handle;
 
-static ssize_t sony_nc_lowbatt_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	unsigned int result;
-	unsigned long value;
+अटल sमाप_प्रकार sony_nc_lowbatt_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक result;
+	अचिन्हित दीर्घ value;
 
-	if (count > 31)
-		return -EINVAL;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value) || value > 1)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value) || value > 1)
+		वापस -EINVAL;
 
-	if (sony_call_snc_handle(0x0121, value << 8, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0121, value << 8, &result))
+		वापस -EIO;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_nc_lowbatt_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	unsigned int result;
+अटल sमाप_प्रकार sony_nc_lowbatt_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(0x0121, 0x0200, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0121, 0x0200, &result))
+		वापस -EIO;
 
-	return snprintf(buffer, PAGE_SIZE, "%d\n", result & 1);
-}
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n", result & 1);
+पूर्ण
 
-static int sony_nc_lowbatt_setup(struct platform_device *pd)
-{
-	unsigned int result;
+अटल पूर्णांक sony_nc_lowbatt_setup(काष्ठा platक्रमm_device *pd)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	lowbatt_handle = kzalloc(sizeof(struct device_attribute), GFP_KERNEL);
-	if (!lowbatt_handle)
-		return -ENOMEM;
+	lowbatt_handle = kzalloc(माप(काष्ठा device_attribute), GFP_KERNEL);
+	अगर (!lowbatt_handle)
+		वापस -ENOMEM;
 
 	sysfs_attr_init(&lowbatt_handle->attr);
 	lowbatt_handle->attr.name = "lowbatt_hibernate";
@@ -2660,87 +2661,87 @@ static int sony_nc_lowbatt_setup(struct platform_device *pd)
 	lowbatt_handle->store = sony_nc_lowbatt_store;
 
 	result = device_create_file(&pd->dev, lowbatt_handle);
-	if (result) {
-		kfree(lowbatt_handle);
-		lowbatt_handle = NULL;
-		return result;
-	}
+	अगर (result) अणु
+		kमुक्त(lowbatt_handle);
+		lowbatt_handle = शून्य;
+		वापस result;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sony_nc_lowbatt_cleanup(struct platform_device *pd)
-{
-	if (lowbatt_handle) {
-		device_remove_file(&pd->dev, lowbatt_handle);
-		kfree(lowbatt_handle);
-		lowbatt_handle = NULL;
-	}
-}
+अटल व्योम sony_nc_lowbatt_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (lowbatt_handle) अणु
+		device_हटाओ_file(&pd->dev, lowbatt_handle);
+		kमुक्त(lowbatt_handle);
+		lowbatt_handle = शून्य;
+	पूर्ण
+पूर्ण
 
 /* fan speed function */
-static struct device_attribute *fan_handle, *hsf_handle;
+अटल काष्ठा device_attribute *fan_handle, *hsf_handle;
 
-static ssize_t sony_nc_hsfan_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	unsigned int result;
-	unsigned long value;
+अटल sमाप_प्रकार sony_nc_hsfan_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक result;
+	अचिन्हित दीर्घ value;
 
-	if (count > 31)
-		return -EINVAL;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value) || value > 1)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value) || value > 1)
+		वापस -EINVAL;
 
-	if (sony_call_snc_handle(0x0149, value << 0x10 | 0x0200, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0149, value << 0x10 | 0x0200, &result))
+		वापस -EIO;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_nc_hsfan_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	unsigned int result;
+अटल sमाप_प्रकार sony_nc_hsfan_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(0x0149, 0x0100, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0149, 0x0100, &result))
+		वापस -EIO;
 
-	return snprintf(buffer, PAGE_SIZE, "%d\n", result & 0x01);
-}
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n", result & 0x01);
+पूर्ण
 
-static ssize_t sony_nc_fanspeed_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	unsigned int result;
+अटल sमाप_प्रकार sony_nc_fanspeed_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(0x0149, 0x0300, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0149, 0x0300, &result))
+		वापस -EIO;
 
-	return snprintf(buffer, PAGE_SIZE, "%d\n", result & 0xff);
-}
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n", result & 0xff);
+पूर्ण
 
-static int sony_nc_fanspeed_setup(struct platform_device *pd)
-{
-	unsigned int result;
+अटल पूर्णांक sony_nc_fanspeed_setup(काष्ठा platक्रमm_device *pd)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	fan_handle = kzalloc(sizeof(struct device_attribute), GFP_KERNEL);
-	if (!fan_handle)
-		return -ENOMEM;
+	fan_handle = kzalloc(माप(काष्ठा device_attribute), GFP_KERNEL);
+	अगर (!fan_handle)
+		वापस -ENOMEM;
 
-	hsf_handle = kzalloc(sizeof(struct device_attribute), GFP_KERNEL);
-	if (!hsf_handle) {
+	hsf_handle = kzalloc(माप(काष्ठा device_attribute), GFP_KERNEL);
+	अगर (!hsf_handle) अणु
 		result = -ENOMEM;
-		goto out_hsf_handle_alloc;
-	}
+		जाओ out_hsf_handle_alloc;
+	पूर्ण
 
 	sysfs_attr_init(&fan_handle->attr);
 	fan_handle->attr.name = "fanspeed";
 	fan_handle->attr.mode = S_IRUGO;
 	fan_handle->show = sony_nc_fanspeed_show;
-	fan_handle->store = NULL;
+	fan_handle->store = शून्य;
 
 	sysfs_attr_init(&hsf_handle->attr);
 	hsf_handle->attr.name = "fan_forced";
@@ -2749,266 +2750,266 @@ static int sony_nc_fanspeed_setup(struct platform_device *pd)
 	hsf_handle->store = sony_nc_hsfan_store;
 
 	result = device_create_file(&pd->dev, fan_handle);
-	if (result)
-		goto out_fan_handle;
+	अगर (result)
+		जाओ out_fan_handle;
 
 	result = device_create_file(&pd->dev, hsf_handle);
-	if (result)
-		goto out_hsf_handle;
+	अगर (result)
+		जाओ out_hsf_handle;
 
-	return 0;
+	वापस 0;
 
 out_hsf_handle:
-	device_remove_file(&pd->dev, fan_handle);
+	device_हटाओ_file(&pd->dev, fan_handle);
 
 out_fan_handle:
-	kfree(hsf_handle);
-	hsf_handle = NULL;
+	kमुक्त(hsf_handle);
+	hsf_handle = शून्य;
 
 out_hsf_handle_alloc:
-	kfree(fan_handle);
-	fan_handle = NULL;
-	return result;
-}
+	kमुक्त(fan_handle);
+	fan_handle = शून्य;
+	वापस result;
+पूर्ण
 
-static void sony_nc_fanspeed_cleanup(struct platform_device *pd)
-{
-	if (fan_handle) {
-		device_remove_file(&pd->dev, fan_handle);
-		kfree(fan_handle);
-		fan_handle = NULL;
-	}
-	if (hsf_handle) {
-		device_remove_file(&pd->dev, hsf_handle);
-		kfree(hsf_handle);
-		hsf_handle = NULL;
-	}
-}
+अटल व्योम sony_nc_fanspeed_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (fan_handle) अणु
+		device_हटाओ_file(&pd->dev, fan_handle);
+		kमुक्त(fan_handle);
+		fan_handle = शून्य;
+	पूर्ण
+	अगर (hsf_handle) अणु
+		device_हटाओ_file(&pd->dev, hsf_handle);
+		kमुक्त(hsf_handle);
+		hsf_handle = शून्य;
+	पूर्ण
+पूर्ण
 
-/* USB charge function */
-static struct device_attribute *uc_handle;
+/* USB अक्षरge function */
+अटल काष्ठा device_attribute *uc_handle;
 
-static ssize_t sony_nc_usb_charge_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	unsigned int result;
-	unsigned long value;
+अटल sमाप_प्रकार sony_nc_usb_अक्षरge_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक result;
+	अचिन्हित दीर्घ value;
 
-	if (count > 31)
-		return -EINVAL;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value) || value > 1)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value) || value > 1)
+		वापस -EINVAL;
 
-	if (sony_call_snc_handle(0x0155, value << 0x10 | 0x0100, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0155, value << 0x10 | 0x0100, &result))
+		वापस -EIO;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_nc_usb_charge_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	unsigned int result;
+अटल sमाप_प्रकार sony_nc_usb_अक्षरge_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(0x0155, 0x0000, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0155, 0x0000, &result))
+		वापस -EIO;
 
-	return snprintf(buffer, PAGE_SIZE, "%d\n", result & 0x01);
-}
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n", result & 0x01);
+पूर्ण
 
-static int sony_nc_usb_charge_setup(struct platform_device *pd)
-{
-	unsigned int result;
+अटल पूर्णांक sony_nc_usb_अक्षरge_setup(काष्ठा platक्रमm_device *pd)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(0x0155, 0x0000, &result) || !(result & 0x01)) {
+	अगर (sony_call_snc_handle(0x0155, 0x0000, &result) || !(result & 0x01)) अणु
 		/* some models advertise the handle but have no implementation
-		 * for it
+		 * क्रम it
 		 */
 		pr_info("No USB Charge capability found\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	uc_handle = kzalloc(sizeof(struct device_attribute), GFP_KERNEL);
-	if (!uc_handle)
-		return -ENOMEM;
+	uc_handle = kzalloc(माप(काष्ठा device_attribute), GFP_KERNEL);
+	अगर (!uc_handle)
+		वापस -ENOMEM;
 
 	sysfs_attr_init(&uc_handle->attr);
 	uc_handle->attr.name = "usb_charge";
 	uc_handle->attr.mode = S_IRUGO | S_IWUSR;
-	uc_handle->show = sony_nc_usb_charge_show;
-	uc_handle->store = sony_nc_usb_charge_store;
+	uc_handle->show = sony_nc_usb_अक्षरge_show;
+	uc_handle->store = sony_nc_usb_अक्षरge_store;
 
 	result = device_create_file(&pd->dev, uc_handle);
-	if (result) {
-		kfree(uc_handle);
-		uc_handle = NULL;
-		return result;
-	}
+	अगर (result) अणु
+		kमुक्त(uc_handle);
+		uc_handle = शून्य;
+		वापस result;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sony_nc_usb_charge_cleanup(struct platform_device *pd)
-{
-	if (uc_handle) {
-		device_remove_file(&pd->dev, uc_handle);
-		kfree(uc_handle);
-		uc_handle = NULL;
-	}
-}
+अटल व्योम sony_nc_usb_अक्षरge_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (uc_handle) अणु
+		device_हटाओ_file(&pd->dev, uc_handle);
+		kमुक्त(uc_handle);
+		uc_handle = शून्य;
+	पूर्ण
+पूर्ण
 
 /* Panel ID function */
-static struct device_attribute *panel_handle;
+अटल काष्ठा device_attribute *panel_handle;
 
-static ssize_t sony_nc_panelid_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	unsigned int result;
+अटल sमाप_प्रकार sony_nc_panelid_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(0x011D, 0x0000, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x011D, 0x0000, &result))
+		वापस -EIO;
 
-	return snprintf(buffer, PAGE_SIZE, "%d\n", result);
-}
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n", result);
+पूर्ण
 
-static int sony_nc_panelid_setup(struct platform_device *pd)
-{
-	unsigned int result;
+अटल पूर्णांक sony_nc_panelid_setup(काष्ठा platक्रमm_device *pd)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	panel_handle = kzalloc(sizeof(struct device_attribute), GFP_KERNEL);
-	if (!panel_handle)
-		return -ENOMEM;
+	panel_handle = kzalloc(माप(काष्ठा device_attribute), GFP_KERNEL);
+	अगर (!panel_handle)
+		वापस -ENOMEM;
 
 	sysfs_attr_init(&panel_handle->attr);
 	panel_handle->attr.name = "panel_id";
 	panel_handle->attr.mode = S_IRUGO;
 	panel_handle->show = sony_nc_panelid_show;
-	panel_handle->store = NULL;
+	panel_handle->store = शून्य;
 
 	result = device_create_file(&pd->dev, panel_handle);
-	if (result) {
-		kfree(panel_handle);
-		panel_handle = NULL;
-		return result;
-	}
+	अगर (result) अणु
+		kमुक्त(panel_handle);
+		panel_handle = शून्य;
+		वापस result;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sony_nc_panelid_cleanup(struct platform_device *pd)
-{
-	if (panel_handle) {
-		device_remove_file(&pd->dev, panel_handle);
-		kfree(panel_handle);
-		panel_handle = NULL;
-	}
-}
+अटल व्योम sony_nc_panelid_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (panel_handle) अणु
+		device_हटाओ_file(&pd->dev, panel_handle);
+		kमुक्त(panel_handle);
+		panel_handle = शून्य;
+	पूर्ण
+पूर्ण
 
 /* smart connect function */
-static struct device_attribute *sc_handle;
+अटल काष्ठा device_attribute *sc_handle;
 
-static ssize_t sony_nc_smart_conn_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	unsigned int result;
-	unsigned long value;
+अटल sमाप_प्रकार sony_nc_smart_conn_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक result;
+	अचिन्हित दीर्घ value;
 
-	if (count > 31)
-		return -EINVAL;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value) || value > 1)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value) || value > 1)
+		वापस -EINVAL;
 
-	if (sony_call_snc_handle(0x0168, value << 0x10, &result))
-		return -EIO;
+	अगर (sony_call_snc_handle(0x0168, value << 0x10, &result))
+		वापस -EIO;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int sony_nc_smart_conn_setup(struct platform_device *pd)
-{
-	unsigned int result;
+अटल पूर्णांक sony_nc_smart_conn_setup(काष्ठा platक्रमm_device *pd)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	sc_handle = kzalloc(sizeof(struct device_attribute), GFP_KERNEL);
-	if (!sc_handle)
-		return -ENOMEM;
+	sc_handle = kzalloc(माप(काष्ठा device_attribute), GFP_KERNEL);
+	अगर (!sc_handle)
+		वापस -ENOMEM;
 
 	sysfs_attr_init(&sc_handle->attr);
 	sc_handle->attr.name = "smart_connect";
 	sc_handle->attr.mode = S_IWUSR;
-	sc_handle->show = NULL;
+	sc_handle->show = शून्य;
 	sc_handle->store = sony_nc_smart_conn_store;
 
 	result = device_create_file(&pd->dev, sc_handle);
-	if (result) {
-		kfree(sc_handle);
-		sc_handle = NULL;
-		return result;
-	}
+	अगर (result) अणु
+		kमुक्त(sc_handle);
+		sc_handle = शून्य;
+		वापस result;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sony_nc_smart_conn_cleanup(struct platform_device *pd)
-{
-	if (sc_handle) {
-		device_remove_file(&pd->dev, sc_handle);
-		kfree(sc_handle);
-		sc_handle = NULL;
-	}
-}
+अटल व्योम sony_nc_smart_conn_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (sc_handle) अणु
+		device_हटाओ_file(&pd->dev, sc_handle);
+		kमुक्त(sc_handle);
+		sc_handle = शून्य;
+	पूर्ण
+पूर्ण
 
 /* Touchpad enable/disable */
-struct touchpad_control {
-	struct device_attribute attr;
-	int handle;
-};
-static struct touchpad_control *tp_ctl;
+काष्ठा touchpad_control अणु
+	काष्ठा device_attribute attr;
+	पूर्णांक handle;
+पूर्ण;
+अटल काष्ठा touchpad_control *tp_ctl;
 
-static ssize_t sony_nc_touchpad_store(struct device *dev,
-		struct device_attribute *attr, const char *buffer, size_t count)
-{
-	unsigned int result;
-	unsigned long value;
+अटल sमाप_प्रकार sony_nc_touchpad_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक result;
+	अचिन्हित दीर्घ value;
 
-	if (count > 31)
-		return -EINVAL;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value) || value > 1)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value) || value > 1)
+		वापस -EINVAL;
 
 	/* sysfs: 0 disabled, 1 enabled
 	 * EC: 0 enabled, 1 disabled
 	 */
-	if (sony_call_snc_handle(tp_ctl->handle,
+	अगर (sony_call_snc_handle(tp_ctl->handle,
 				(!value << 0x10) | 0x100, &result))
-		return -EIO;
+		वापस -EIO;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_nc_touchpad_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	unsigned int result;
+अटल sमाप_प्रकार sony_nc_touchpad_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	अचिन्हित पूर्णांक result;
 
-	if (sony_call_snc_handle(tp_ctl->handle, 0x000, &result))
-		return -EINVAL;
+	अगर (sony_call_snc_handle(tp_ctl->handle, 0x000, &result))
+		वापस -EINVAL;
 
-	return snprintf(buffer, PAGE_SIZE, "%d\n", !(result & 0x01));
-}
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n", !(result & 0x01));
+पूर्ण
 
-static int sony_nc_touchpad_setup(struct platform_device *pd,
-		unsigned int handle)
-{
-	int ret = 0;
+अटल पूर्णांक sony_nc_touchpad_setup(काष्ठा platक्रमm_device *pd,
+		अचिन्हित पूर्णांक handle)
+अणु
+	पूर्णांक ret = 0;
 
-	tp_ctl = kzalloc(sizeof(struct touchpad_control), GFP_KERNEL);
-	if (!tp_ctl)
-		return -ENOMEM;
+	tp_ctl = kzalloc(माप(काष्ठा touchpad_control), GFP_KERNEL);
+	अगर (!tp_ctl)
+		वापस -ENOMEM;
 
 	tp_ctl->handle = handle;
 
@@ -3019,31 +3020,31 @@ static int sony_nc_touchpad_setup(struct platform_device *pd,
 	tp_ctl->attr.store = sony_nc_touchpad_store;
 
 	ret = device_create_file(&pd->dev, &tp_ctl->attr);
-	if (ret) {
-		kfree(tp_ctl);
-		tp_ctl = NULL;
-	}
+	अगर (ret) अणु
+		kमुक्त(tp_ctl);
+		tp_ctl = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sony_nc_touchpad_cleanup(struct platform_device *pd)
-{
-	if (tp_ctl) {
-		device_remove_file(&pd->dev, &tp_ctl->attr);
-		kfree(tp_ctl);
-		tp_ctl = NULL;
-	}
-}
+अटल व्योम sony_nc_touchpad_cleanup(काष्ठा platक्रमm_device *pd)
+अणु
+	अगर (tp_ctl) अणु
+		device_हटाओ_file(&pd->dev, &tp_ctl->attr);
+		kमुक्त(tp_ctl);
+		tp_ctl = शून्य;
+	पूर्ण
+पूर्ण
 
-static void sony_nc_backlight_ng_read_limits(int handle,
-		struct sony_backlight_props *props)
-{
+अटल व्योम sony_nc_backlight_ng_पढ़ो_limits(पूर्णांक handle,
+		काष्ठा sony_backlight_props *props)
+अणु
 	u64 offset;
-	int i;
-	int lvl_table_len = 0;
+	पूर्णांक i;
+	पूर्णांक lvl_table_len = 0;
 	u8 min = 0xff, max = 0x00;
-	unsigned char buffer[32] = { 0 };
+	अचिन्हित अक्षर buffer[32] = अणु 0 पूर्ण;
 
 	props->handle = handle;
 	props->offset = 0;
@@ -3051,674 +3052,674 @@ static void sony_nc_backlight_ng_read_limits(int handle,
 
 	offset = sony_find_snc_handle(handle);
 
-	/* try to read the boundaries from ACPI tables, if we fail the above
-	 * defaults should be reasonable
+	/* try to पढ़ो the boundaries from ACPI tables, अगर we fail the above
+	 * शेषs should be reasonable
 	 */
 	i = sony_nc_buffer_call(sony_nc_acpi_handle, "SN06", &offset, buffer,
 			32);
-	if (i < 0)
-		return;
+	अगर (i < 0)
+		वापस;
 
-	switch (handle) {
-	case 0x012f:
-	case 0x0137:
+	चयन (handle) अणु
+	हाल 0x012f:
+	हाल 0x0137:
 		lvl_table_len = 9;
-		break;
-	case 0x143:
-	case 0x14b:
-	case 0x14c:
+		अवरोध;
+	हाल 0x143:
+	हाल 0x14b:
+	हाल 0x14c:
 		lvl_table_len = 16;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* the buffer lists brightness levels available, brightness levels are
 	 * from position 0 to 8 in the array, other values are used by ALS
 	 * control.
 	 */
-	for (i = 0; i < lvl_table_len && i < ARRAY_SIZE(buffer); i++) {
+	क्रम (i = 0; i < lvl_table_len && i < ARRAY_SIZE(buffer); i++) अणु
 
-		dprintk("Brightness level: %d\n", buffer[i]);
+		dprपूर्णांकk("Brightness level: %d\n", buffer[i]);
 
-		if (!buffer[i])
-			break;
+		अगर (!buffer[i])
+			अवरोध;
 
-		if (buffer[i] > max)
+		अगर (buffer[i] > max)
 			max = buffer[i];
-		if (buffer[i] < min)
+		अगर (buffer[i] < min)
 			min = buffer[i];
-	}
+	पूर्ण
 	props->offset = min;
 	props->maxlvl = max;
-	dprintk("Brightness levels: min=%d max=%d\n", props->offset,
+	dprपूर्णांकk("Brightness levels: min=%d max=%d\n", props->offset,
 			props->maxlvl);
-}
+पूर्ण
 
-static void sony_nc_backlight_setup(void)
-{
-	int max_brightness = 0;
-	const struct backlight_ops *ops = NULL;
-	struct backlight_properties props;
+अटल व्योम sony_nc_backlight_setup(व्योम)
+अणु
+	पूर्णांक max_brightness = 0;
+	स्थिर काष्ठा backlight_ops *ops = शून्य;
+	काष्ठा backlight_properties props;
 
-	if (sony_find_snc_handle(0x12f) >= 0) {
+	अगर (sony_find_snc_handle(0x12f) >= 0) अणु
 		ops = &sony_backlight_ng_ops;
 		sony_bl_props.cmd_base = 0x0100;
-		sony_nc_backlight_ng_read_limits(0x12f, &sony_bl_props);
+		sony_nc_backlight_ng_पढ़ो_limits(0x12f, &sony_bl_props);
 		max_brightness = sony_bl_props.maxlvl - sony_bl_props.offset;
 
-	} else if (sony_find_snc_handle(0x137) >= 0) {
+	पूर्ण अन्यथा अगर (sony_find_snc_handle(0x137) >= 0) अणु
 		ops = &sony_backlight_ng_ops;
 		sony_bl_props.cmd_base = 0x0100;
-		sony_nc_backlight_ng_read_limits(0x137, &sony_bl_props);
+		sony_nc_backlight_ng_पढ़ो_limits(0x137, &sony_bl_props);
 		max_brightness = sony_bl_props.maxlvl - sony_bl_props.offset;
 
-	} else if (sony_find_snc_handle(0x143) >= 0) {
+	पूर्ण अन्यथा अगर (sony_find_snc_handle(0x143) >= 0) अणु
 		ops = &sony_backlight_ng_ops;
 		sony_bl_props.cmd_base = 0x3000;
-		sony_nc_backlight_ng_read_limits(0x143, &sony_bl_props);
+		sony_nc_backlight_ng_पढ़ो_limits(0x143, &sony_bl_props);
 		max_brightness = sony_bl_props.maxlvl - sony_bl_props.offset;
 
-	} else if (sony_find_snc_handle(0x14b) >= 0) {
+	पूर्ण अन्यथा अगर (sony_find_snc_handle(0x14b) >= 0) अणु
 		ops = &sony_backlight_ng_ops;
 		sony_bl_props.cmd_base = 0x3000;
-		sony_nc_backlight_ng_read_limits(0x14b, &sony_bl_props);
+		sony_nc_backlight_ng_पढ़ो_limits(0x14b, &sony_bl_props);
 		max_brightness = sony_bl_props.maxlvl - sony_bl_props.offset;
 
-	} else if (sony_find_snc_handle(0x14c) >= 0) {
+	पूर्ण अन्यथा अगर (sony_find_snc_handle(0x14c) >= 0) अणु
 		ops = &sony_backlight_ng_ops;
 		sony_bl_props.cmd_base = 0x3000;
-		sony_nc_backlight_ng_read_limits(0x14c, &sony_bl_props);
+		sony_nc_backlight_ng_पढ़ो_limits(0x14c, &sony_bl_props);
 		max_brightness = sony_bl_props.maxlvl - sony_bl_props.offset;
 
-	} else if (acpi_has_method(sony_nc_acpi_handle, "GBRT")) {
+	पूर्ण अन्यथा अगर (acpi_has_method(sony_nc_acpi_handle, "GBRT")) अणु
 		ops = &sony_backlight_ops;
 		max_brightness = SONY_MAX_BRIGHTNESS - 1;
 
-	} else
-		return;
+	पूर्ण अन्यथा
+		वापस;
 
-	memset(&props, 0, sizeof(struct backlight_properties));
+	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 	props.type = BACKLIGHT_PLATFORM;
 	props.max_brightness = max_brightness;
-	sony_bl_props.dev = backlight_device_register("sony", NULL,
+	sony_bl_props.dev = backlight_device_रेजिस्टर("sony", शून्य,
 						      &sony_bl_props,
 						      ops, &props);
 
-	if (IS_ERR(sony_bl_props.dev)) {
+	अगर (IS_ERR(sony_bl_props.dev)) अणु
 		pr_warn("unable to register backlight device\n");
-		sony_bl_props.dev = NULL;
-	} else
+		sony_bl_props.dev = शून्य;
+	पूर्ण अन्यथा
 		sony_bl_props.dev->props.brightness =
 			ops->get_brightness(sony_bl_props.dev);
-}
+पूर्ण
 
-static void sony_nc_backlight_cleanup(void)
-{
-	backlight_device_unregister(sony_bl_props.dev);
-}
+अटल व्योम sony_nc_backlight_cleanup(व्योम)
+अणु
+	backlight_device_unरेजिस्टर(sony_bl_props.dev);
+पूर्ण
 
-static int sony_nc_add(struct acpi_device *device)
-{
+अटल पूर्णांक sony_nc_add(काष्ठा acpi_device *device)
+अणु
 	acpi_status status;
-	int result = 0;
-	struct sony_nc_value *item;
+	पूर्णांक result = 0;
+	काष्ठा sony_nc_value *item;
 
 	sony_nc_acpi_device = device;
-	strcpy(acpi_device_class(device), "sony/hotkey");
+	म_नकल(acpi_device_class(device), "sony/hotkey");
 
 	sony_nc_acpi_handle = device->handle;
 
-	/* read device status */
+	/* पढ़ो device status */
 	result = acpi_bus_get_status(device);
 	/* bail IFF the above call was successful and the device is not present */
-	if (!result && !device->status.present) {
-		dprintk("Device not present\n");
+	अगर (!result && !device->status.present) अणु
+		dprपूर्णांकk("Device not present\n");
 		result = -ENODEV;
-		goto outwalk;
-	}
+		जाओ outwalk;
+	पूर्ण
 
 	result = sony_pf_add();
-	if (result)
-		goto outpresent;
+	अगर (result)
+		जाओ outpresent;
 
-	if (debug) {
+	अगर (debug) अणु
 		status = acpi_walk_namespace(ACPI_TYPE_METHOD,
 				sony_nc_acpi_handle, 1, sony_walk_callback,
-				NULL, NULL, NULL);
-		if (ACPI_FAILURE(status)) {
+				शून्य, शून्य, शून्य);
+		अगर (ACPI_FAILURE(status)) अणु
 			pr_warn("unable to walk acpi resources\n");
 			result = -ENODEV;
-			goto outpresent;
-		}
-	}
+			जाओ outpresent;
+		पूर्ण
+	पूर्ण
 
 	result = sony_laptop_setup_input(device);
-	if (result) {
+	अगर (result) अणु
 		pr_err("Unable to create input devices\n");
-		goto outplatform;
-	}
+		जाओ outplatक्रमm;
+	पूर्ण
 
-	if (acpi_has_method(sony_nc_acpi_handle, "ECON")) {
-		int arg = 1;
-		if (sony_nc_int_call(sony_nc_acpi_handle, "ECON", &arg, NULL))
-			dprintk("ECON Method failed\n");
-	}
+	अगर (acpi_has_method(sony_nc_acpi_handle, "ECON")) अणु
+		पूर्णांक arg = 1;
+		अगर (sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "ECON", &arg, शून्य))
+			dprपूर्णांकk("ECON Method failed\n");
+	पूर्ण
 
-	if (acpi_has_method(sony_nc_acpi_handle, "SN00")) {
-		dprintk("Doing SNC setup\n");
+	अगर (acpi_has_method(sony_nc_acpi_handle, "SN00")) अणु
+		dprपूर्णांकk("Doing SNC setup\n");
 		/* retrieve the available handles */
 		result = sony_nc_handles_setup(sony_pf_device);
-		if (!result)
+		अगर (!result)
 			sony_nc_function_setup(device, sony_pf_device);
-	}
+	पूर्ण
 
-	if (acpi_video_get_backlight_type() == acpi_backlight_vendor)
+	अगर (acpi_video_get_backlight_type() == acpi_backlight_venकरोr)
 		sony_nc_backlight_setup();
 
 	/* create sony_pf sysfs attributes related to the SNC device */
-	for (item = sony_nc_values; item->name; ++item) {
+	क्रम (item = sony_nc_values; item->name; ++item) अणु
 
-		if (!debug && item->debug)
-			continue;
+		अगर (!debug && item->debug)
+			जारी;
 
 		/* find the available acpiget as described in the DSDT */
-		for (; item->acpiget && *item->acpiget; ++item->acpiget) {
-			if (acpi_has_method(sony_nc_acpi_handle,
-							*item->acpiget)) {
-				dprintk("Found %s getter: %s\n",
+		क्रम (; item->acpiget && *item->acpiget; ++item->acpiget) अणु
+			अगर (acpi_has_method(sony_nc_acpi_handle,
+							*item->acpiget)) अणु
+				dprपूर्णांकk("Found %s getter: %s\n",
 						item->name, *item->acpiget);
 				item->devattr.attr.mode |= S_IRUGO;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/* find the available acpiset as described in the DSDT */
-		for (; item->acpiset && *item->acpiset; ++item->acpiset) {
-			if (acpi_has_method(sony_nc_acpi_handle,
-							*item->acpiset)) {
-				dprintk("Found %s setter: %s\n",
+		क्रम (; item->acpiset && *item->acpiset; ++item->acpiset) अणु
+			अगर (acpi_has_method(sony_nc_acpi_handle,
+							*item->acpiset)) अणु
+				dprपूर्णांकk("Found %s setter: %s\n",
 						item->name, *item->acpiset);
 				item->devattr.attr.mode |= S_IWUSR;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (item->devattr.attr.mode != 0) {
+		अगर (item->devattr.attr.mode != 0) अणु
 			result =
 			    device_create_file(&sony_pf_device->dev,
 					       &item->devattr);
-			if (result)
-				goto out_sysfs;
-		}
-	}
+			अगर (result)
+				जाओ out_sysfs;
+		पूर्ण
+	पूर्ण
 
 	pr_info("SNC setup done.\n");
-	return 0;
+	वापस 0;
 
 out_sysfs:
-	for (item = sony_nc_values; item->name; ++item) {
-		device_remove_file(&sony_pf_device->dev, &item->devattr);
-	}
+	क्रम (item = sony_nc_values; item->name; ++item) अणु
+		device_हटाओ_file(&sony_pf_device->dev, &item->devattr);
+	पूर्ण
 	sony_nc_backlight_cleanup();
 	sony_nc_function_cleanup(sony_pf_device);
 	sony_nc_handles_cleanup(sony_pf_device);
 
-outplatform:
-	sony_laptop_remove_input();
+outplatक्रमm:
+	sony_laptop_हटाओ_input();
 
 outpresent:
-	sony_pf_remove();
+	sony_pf_हटाओ();
 
 outwalk:
-	sony_nc_rfkill_cleanup();
-	return result;
-}
+	sony_nc_rfसमाप्त_cleanup();
+	वापस result;
+पूर्ण
 
-static int sony_nc_remove(struct acpi_device *device)
-{
-	struct sony_nc_value *item;
+अटल पूर्णांक sony_nc_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा sony_nc_value *item;
 
 	sony_nc_backlight_cleanup();
 
-	sony_nc_acpi_device = NULL;
+	sony_nc_acpi_device = शून्य;
 
-	for (item = sony_nc_values; item->name; ++item) {
-		device_remove_file(&sony_pf_device->dev, &item->devattr);
-	}
+	क्रम (item = sony_nc_values; item->name; ++item) अणु
+		device_हटाओ_file(&sony_pf_device->dev, &item->devattr);
+	पूर्ण
 
 	sony_nc_function_cleanup(sony_pf_device);
 	sony_nc_handles_cleanup(sony_pf_device);
-	sony_pf_remove();
-	sony_laptop_remove_input();
-	dprintk(SONY_NC_DRIVER_NAME " removed.\n");
+	sony_pf_हटाओ();
+	sony_laptop_हटाओ_input();
+	dprपूर्णांकk(SONY_NC_DRIVER_NAME " removed.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id sony_device_ids[] = {
-	{SONY_NC_HID, 0},
-	{SONY_PIC_HID, 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id sony_device_ids[] = अणु
+	अणुSONY_NC_HID, 0पूर्ण,
+	अणुSONY_PIC_HID, 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, sony_device_ids);
 
-static const struct acpi_device_id sony_nc_device_ids[] = {
-	{SONY_NC_HID, 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id sony_nc_device_ids[] = अणु
+	अणुSONY_NC_HID, 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 
-static struct acpi_driver sony_nc_driver = {
+अटल काष्ठा acpi_driver sony_nc_driver = अणु
 	.name = SONY_NC_DRIVER_NAME,
 	.class = SONY_NC_CLASS,
 	.ids = sony_nc_device_ids,
 	.owner = THIS_MODULE,
-	.ops = {
+	.ops = अणु
 		.add = sony_nc_add,
-		.remove = sony_nc_remove,
-		.notify = sony_nc_notify,
-		},
+		.हटाओ = sony_nc_हटाओ,
+		.notअगरy = sony_nc_notअगरy,
+		पूर्ण,
 	.drv.pm = &sony_nc_pm,
-};
+पूर्ण;
 
 /*********** SPIC (SNY6001) Device ***********/
 
-#define SONYPI_DEVICE_TYPE1	0x00000001
-#define SONYPI_DEVICE_TYPE2	0x00000002
-#define SONYPI_DEVICE_TYPE3	0x00000004
+#घोषणा SONYPI_DEVICE_TYPE1	0x00000001
+#घोषणा SONYPI_DEVICE_TYPE2	0x00000002
+#घोषणा SONYPI_DEVICE_TYPE3	0x00000004
 
-#define SONYPI_TYPE1_OFFSET	0x04
-#define SONYPI_TYPE2_OFFSET	0x12
-#define SONYPI_TYPE3_OFFSET	0x12
+#घोषणा SONYPI_TYPE1_OFFSET	0x04
+#घोषणा SONYPI_TYPE2_OFFSET	0x12
+#घोषणा SONYPI_TYPE3_OFFSET	0x12
 
-struct sony_pic_ioport {
-	struct acpi_resource_io	io1;
-	struct acpi_resource_io	io2;
-	struct list_head	list;
-};
+काष्ठा sony_pic_ioport अणु
+	काष्ठा acpi_resource_io	io1;
+	काष्ठा acpi_resource_io	io2;
+	काष्ठा list_head	list;
+पूर्ण;
 
-struct sony_pic_irq {
-	struct acpi_resource_irq	irq;
-	struct list_head		list;
-};
+काष्ठा sony_pic_irq अणु
+	काष्ठा acpi_resource_irq	irq;
+	काष्ठा list_head		list;
+पूर्ण;
 
-struct sonypi_eventtypes {
+काष्ठा sonypi_eventtypes अणु
 	u8			data;
-	unsigned long		mask;
-	struct sonypi_event	*events;
-};
+	अचिन्हित दीर्घ		mask;
+	काष्ठा sonypi_event	*events;
+पूर्ण;
 
-struct sony_pic_dev {
-	struct acpi_device		*acpi_dev;
-	struct sony_pic_irq		*cur_irq;
-	struct sony_pic_ioport		*cur_ioport;
-	struct list_head		interrupts;
-	struct list_head		ioports;
-	struct mutex			lock;
-	struct sonypi_eventtypes	*event_types;
-	int                             (*handle_irq)(const u8, const u8);
-	int				model;
+काष्ठा sony_pic_dev अणु
+	काष्ठा acpi_device		*acpi_dev;
+	काष्ठा sony_pic_irq		*cur_irq;
+	काष्ठा sony_pic_ioport		*cur_ioport;
+	काष्ठा list_head		पूर्णांकerrupts;
+	काष्ठा list_head		ioports;
+	काष्ठा mutex			lock;
+	काष्ठा sonypi_eventtypes	*event_types;
+	पूर्णांक                             (*handle_irq)(स्थिर u8, स्थिर u8);
+	पूर्णांक				model;
 	u16				evport_offset;
-	u8				camera_power;
-	u8				bluetooth_power;
-	u8				wwan_power;
-};
+	u8				camera_घातer;
+	u8				bluetooth_घातer;
+	u8				wwan_घातer;
+पूर्ण;
 
-static struct sony_pic_dev spic_dev = {
-	.interrupts	= LIST_HEAD_INIT(spic_dev.interrupts),
+अटल काष्ठा sony_pic_dev spic_dev = अणु
+	.पूर्णांकerrupts	= LIST_HEAD_INIT(spic_dev.पूर्णांकerrupts),
 	.ioports	= LIST_HEAD_INIT(spic_dev.ioports),
-};
+पूर्ण;
 
-static int spic_drv_registered;
+अटल पूर्णांक spic_drv_रेजिस्टरed;
 
 /* Event masks */
-#define SONYPI_JOGGER_MASK			0x00000001
-#define SONYPI_CAPTURE_MASK			0x00000002
-#define SONYPI_FNKEY_MASK			0x00000004
-#define SONYPI_BLUETOOTH_MASK			0x00000008
-#define SONYPI_PKEY_MASK			0x00000010
-#define SONYPI_BACK_MASK			0x00000020
-#define SONYPI_HELP_MASK			0x00000040
-#define SONYPI_LID_MASK				0x00000080
-#define SONYPI_ZOOM_MASK			0x00000100
-#define SONYPI_THUMBPHRASE_MASK			0x00000200
-#define SONYPI_MEYE_MASK			0x00000400
-#define SONYPI_MEMORYSTICK_MASK			0x00000800
-#define SONYPI_BATTERY_MASK			0x00001000
-#define SONYPI_WIRELESS_MASK			0x00002000
+#घोषणा SONYPI_JOGGER_MASK			0x00000001
+#घोषणा SONYPI_CAPTURE_MASK			0x00000002
+#घोषणा SONYPI_FNKEY_MASK			0x00000004
+#घोषणा SONYPI_BLUETOOTH_MASK			0x00000008
+#घोषणा SONYPI_PKEY_MASK			0x00000010
+#घोषणा SONYPI_BACK_MASK			0x00000020
+#घोषणा SONYPI_HELP_MASK			0x00000040
+#घोषणा SONYPI_LID_MASK				0x00000080
+#घोषणा SONYPI_ZOOM_MASK			0x00000100
+#घोषणा SONYPI_THUMBPHRASE_MASK			0x00000200
+#घोषणा SONYPI_MEYE_MASK			0x00000400
+#घोषणा SONYPI_MEMORYSTICK_MASK			0x00000800
+#घोषणा SONYPI_BATTERY_MASK			0x00001000
+#घोषणा SONYPI_WIRELESS_MASK			0x00002000
 
-struct sonypi_event {
+काष्ठा sonypi_event अणु
 	u8	data;
 	u8	event;
-};
+पूर्ण;
 
 /* The set of possible button release events */
-static struct sonypi_event sonypi_releaseev[] = {
-	{ 0x00, SONYPI_EVENT_ANYBUTTON_RELEASED },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_releaseev[] = अणु
+	अणु 0x00, SONYPI_EVENT_ANYBUTTON_RELEASED पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible jogger events  */
-static struct sonypi_event sonypi_joggerev[] = {
-	{ 0x1f, SONYPI_EVENT_JOGDIAL_UP },
-	{ 0x01, SONYPI_EVENT_JOGDIAL_DOWN },
-	{ 0x5f, SONYPI_EVENT_JOGDIAL_UP_PRESSED },
-	{ 0x41, SONYPI_EVENT_JOGDIAL_DOWN_PRESSED },
-	{ 0x1e, SONYPI_EVENT_JOGDIAL_FAST_UP },
-	{ 0x02, SONYPI_EVENT_JOGDIAL_FAST_DOWN },
-	{ 0x5e, SONYPI_EVENT_JOGDIAL_FAST_UP_PRESSED },
-	{ 0x42, SONYPI_EVENT_JOGDIAL_FAST_DOWN_PRESSED },
-	{ 0x1d, SONYPI_EVENT_JOGDIAL_VFAST_UP },
-	{ 0x03, SONYPI_EVENT_JOGDIAL_VFAST_DOWN },
-	{ 0x5d, SONYPI_EVENT_JOGDIAL_VFAST_UP_PRESSED },
-	{ 0x43, SONYPI_EVENT_JOGDIAL_VFAST_DOWN_PRESSED },
-	{ 0x40, SONYPI_EVENT_JOGDIAL_PRESSED },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_joggerev[] = अणु
+	अणु 0x1f, SONYPI_EVENT_JOGDIAL_UP पूर्ण,
+	अणु 0x01, SONYPI_EVENT_JOGDIAL_DOWN पूर्ण,
+	अणु 0x5f, SONYPI_EVENT_JOGDIAL_UP_PRESSED पूर्ण,
+	अणु 0x41, SONYPI_EVENT_JOGDIAL_DOWN_PRESSED पूर्ण,
+	अणु 0x1e, SONYPI_EVENT_JOGDIAL_FAST_UP पूर्ण,
+	अणु 0x02, SONYPI_EVENT_JOGDIAL_FAST_DOWN पूर्ण,
+	अणु 0x5e, SONYPI_EVENT_JOGDIAL_FAST_UP_PRESSED पूर्ण,
+	अणु 0x42, SONYPI_EVENT_JOGDIAL_FAST_DOWN_PRESSED पूर्ण,
+	अणु 0x1d, SONYPI_EVENT_JOGDIAL_VFAST_UP पूर्ण,
+	अणु 0x03, SONYPI_EVENT_JOGDIAL_VFAST_DOWN पूर्ण,
+	अणु 0x5d, SONYPI_EVENT_JOGDIAL_VFAST_UP_PRESSED पूर्ण,
+	अणु 0x43, SONYPI_EVENT_JOGDIAL_VFAST_DOWN_PRESSED पूर्ण,
+	अणु 0x40, SONYPI_EVENT_JOGDIAL_PRESSED पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible capture button events */
-static struct sonypi_event sonypi_captureev[] = {
-	{ 0x05, SONYPI_EVENT_CAPTURE_PARTIALPRESSED },
-	{ 0x07, SONYPI_EVENT_CAPTURE_PRESSED },
-	{ 0x40, SONYPI_EVENT_CAPTURE_PRESSED },
-	{ 0x01, SONYPI_EVENT_CAPTURE_PARTIALRELEASED },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_captureev[] = अणु
+	अणु 0x05, SONYPI_EVENT_CAPTURE_PARTIALPRESSED पूर्ण,
+	अणु 0x07, SONYPI_EVENT_CAPTURE_PRESSED पूर्ण,
+	अणु 0x40, SONYPI_EVENT_CAPTURE_PRESSED पूर्ण,
+	अणु 0x01, SONYPI_EVENT_CAPTURE_PARTIALRELEASED पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible fnkeys events */
-static struct sonypi_event sonypi_fnkeyev[] = {
-	{ 0x10, SONYPI_EVENT_FNKEY_ESC },
-	{ 0x11, SONYPI_EVENT_FNKEY_F1 },
-	{ 0x12, SONYPI_EVENT_FNKEY_F2 },
-	{ 0x13, SONYPI_EVENT_FNKEY_F3 },
-	{ 0x14, SONYPI_EVENT_FNKEY_F4 },
-	{ 0x15, SONYPI_EVENT_FNKEY_F5 },
-	{ 0x16, SONYPI_EVENT_FNKEY_F6 },
-	{ 0x17, SONYPI_EVENT_FNKEY_F7 },
-	{ 0x18, SONYPI_EVENT_FNKEY_F8 },
-	{ 0x19, SONYPI_EVENT_FNKEY_F9 },
-	{ 0x1a, SONYPI_EVENT_FNKEY_F10 },
-	{ 0x1b, SONYPI_EVENT_FNKEY_F11 },
-	{ 0x1c, SONYPI_EVENT_FNKEY_F12 },
-	{ 0x1f, SONYPI_EVENT_FNKEY_RELEASED },
-	{ 0x21, SONYPI_EVENT_FNKEY_1 },
-	{ 0x22, SONYPI_EVENT_FNKEY_2 },
-	{ 0x31, SONYPI_EVENT_FNKEY_D },
-	{ 0x32, SONYPI_EVENT_FNKEY_E },
-	{ 0x33, SONYPI_EVENT_FNKEY_F },
-	{ 0x34, SONYPI_EVENT_FNKEY_S },
-	{ 0x35, SONYPI_EVENT_FNKEY_B },
-	{ 0x36, SONYPI_EVENT_FNKEY_ONLY },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_fnkeyev[] = अणु
+	अणु 0x10, SONYPI_EVENT_FNKEY_ESC पूर्ण,
+	अणु 0x11, SONYPI_EVENT_FNKEY_F1 पूर्ण,
+	अणु 0x12, SONYPI_EVENT_FNKEY_F2 पूर्ण,
+	अणु 0x13, SONYPI_EVENT_FNKEY_F3 पूर्ण,
+	अणु 0x14, SONYPI_EVENT_FNKEY_F4 पूर्ण,
+	अणु 0x15, SONYPI_EVENT_FNKEY_F5 पूर्ण,
+	अणु 0x16, SONYPI_EVENT_FNKEY_F6 पूर्ण,
+	अणु 0x17, SONYPI_EVENT_FNKEY_F7 पूर्ण,
+	अणु 0x18, SONYPI_EVENT_FNKEY_F8 पूर्ण,
+	अणु 0x19, SONYPI_EVENT_FNKEY_F9 पूर्ण,
+	अणु 0x1a, SONYPI_EVENT_FNKEY_F10 पूर्ण,
+	अणु 0x1b, SONYPI_EVENT_FNKEY_F11 पूर्ण,
+	अणु 0x1c, SONYPI_EVENT_FNKEY_F12 पूर्ण,
+	अणु 0x1f, SONYPI_EVENT_FNKEY_RELEASED पूर्ण,
+	अणु 0x21, SONYPI_EVENT_FNKEY_1 पूर्ण,
+	अणु 0x22, SONYPI_EVENT_FNKEY_2 पूर्ण,
+	अणु 0x31, SONYPI_EVENT_FNKEY_D पूर्ण,
+	अणु 0x32, SONYPI_EVENT_FNKEY_E पूर्ण,
+	अणु 0x33, SONYPI_EVENT_FNKEY_F पूर्ण,
+	अणु 0x34, SONYPI_EVENT_FNKEY_S पूर्ण,
+	अणु 0x35, SONYPI_EVENT_FNKEY_B पूर्ण,
+	अणु 0x36, SONYPI_EVENT_FNKEY_ONLY पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible program key events */
-static struct sonypi_event sonypi_pkeyev[] = {
-	{ 0x01, SONYPI_EVENT_PKEY_P1 },
-	{ 0x02, SONYPI_EVENT_PKEY_P2 },
-	{ 0x04, SONYPI_EVENT_PKEY_P3 },
-	{ 0x20, SONYPI_EVENT_PKEY_P1 },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_pkeyev[] = अणु
+	अणु 0x01, SONYPI_EVENT_PKEY_P1 पूर्ण,
+	अणु 0x02, SONYPI_EVENT_PKEY_P2 पूर्ण,
+	अणु 0x04, SONYPI_EVENT_PKEY_P3 पूर्ण,
+	अणु 0x20, SONYPI_EVENT_PKEY_P1 पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible bluetooth events */
-static struct sonypi_event sonypi_blueev[] = {
-	{ 0x55, SONYPI_EVENT_BLUETOOTH_PRESSED },
-	{ 0x59, SONYPI_EVENT_BLUETOOTH_ON },
-	{ 0x5a, SONYPI_EVENT_BLUETOOTH_OFF },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_blueev[] = अणु
+	अणु 0x55, SONYPI_EVENT_BLUETOOTH_PRESSED पूर्ण,
+	अणु 0x59, SONYPI_EVENT_BLUETOOTH_ON पूर्ण,
+	अणु 0x5a, SONYPI_EVENT_BLUETOOTH_OFF पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible wireless events */
-static struct sonypi_event sonypi_wlessev[] = {
-	{ 0x59, SONYPI_EVENT_IGNORE },
-	{ 0x5a, SONYPI_EVENT_IGNORE },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_wlessev[] = अणु
+	अणु 0x59, SONYPI_EVENT_IGNORE पूर्ण,
+	अणु 0x5a, SONYPI_EVENT_IGNORE पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible back button events */
-static struct sonypi_event sonypi_backev[] = {
-	{ 0x20, SONYPI_EVENT_BACK_PRESSED },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_backev[] = अणु
+	अणु 0x20, SONYPI_EVENT_BACK_PRESSED पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible help button events */
-static struct sonypi_event sonypi_helpev[] = {
-	{ 0x3b, SONYPI_EVENT_HELP_PRESSED },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_helpev[] = अणु
+	अणु 0x3b, SONYPI_EVENT_HELP_PRESSED पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 
 /* The set of possible lid events */
-static struct sonypi_event sonypi_lidev[] = {
-	{ 0x51, SONYPI_EVENT_LID_CLOSED },
-	{ 0x50, SONYPI_EVENT_LID_OPENED },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_lidev[] = अणु
+	अणु 0x51, SONYPI_EVENT_LID_CLOSED पूर्ण,
+	अणु 0x50, SONYPI_EVENT_LID_OPENED पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible zoom events */
-static struct sonypi_event sonypi_zoomev[] = {
-	{ 0x39, SONYPI_EVENT_ZOOM_PRESSED },
-	{ 0x10, SONYPI_EVENT_ZOOM_IN_PRESSED },
-	{ 0x20, SONYPI_EVENT_ZOOM_OUT_PRESSED },
-	{ 0x04, SONYPI_EVENT_ZOOM_PRESSED },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_zoomev[] = अणु
+	अणु 0x39, SONYPI_EVENT_ZOOM_PRESSED पूर्ण,
+	अणु 0x10, SONYPI_EVENT_ZOOM_IN_PRESSED पूर्ण,
+	अणु 0x20, SONYPI_EVENT_ZOOM_OUT_PRESSED पूर्ण,
+	अणु 0x04, SONYPI_EVENT_ZOOM_PRESSED पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible thumbphrase events */
-static struct sonypi_event sonypi_thumbphraseev[] = {
-	{ 0x3a, SONYPI_EVENT_THUMBPHRASE_PRESSED },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_thumbphraseev[] = अणु
+	अणु 0x3a, SONYPI_EVENT_THUMBPHRASE_PRESSED पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible motioneye camera events */
-static struct sonypi_event sonypi_meyeev[] = {
-	{ 0x00, SONYPI_EVENT_MEYE_FACE },
-	{ 0x01, SONYPI_EVENT_MEYE_OPPOSITE },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_meyeev[] = अणु
+	अणु 0x00, SONYPI_EVENT_MEYE_FACE पूर्ण,
+	अणु 0x01, SONYPI_EVENT_MEYE_OPPOSITE पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible memorystick events */
-static struct sonypi_event sonypi_memorystickev[] = {
-	{ 0x53, SONYPI_EVENT_MEMORYSTICK_INSERT },
-	{ 0x54, SONYPI_EVENT_MEMORYSTICK_EJECT },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_memorystickev[] = अणु
+	अणु 0x53, SONYPI_EVENT_MEMORYSTICK_INSERT पूर्ण,
+	अणु 0x54, SONYPI_EVENT_MEMORYSTICK_EJECT पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible battery events */
-static struct sonypi_event sonypi_batteryev[] = {
-	{ 0x20, SONYPI_EVENT_BATTERY_INSERT },
-	{ 0x30, SONYPI_EVENT_BATTERY_REMOVE },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_batteryev[] = अणु
+	अणु 0x20, SONYPI_EVENT_BATTERY_INSERT पूर्ण,
+	अणु 0x30, SONYPI_EVENT_BATTERY_REMOVE पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible volume events */
-static struct sonypi_event sonypi_volumeev[] = {
-	{ 0x01, SONYPI_EVENT_VOLUME_INC_PRESSED },
-	{ 0x02, SONYPI_EVENT_VOLUME_DEC_PRESSED },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_volumeev[] = अणु
+	अणु 0x01, SONYPI_EVENT_VOLUME_INC_PRESSED पूर्ण,
+	अणु 0x02, SONYPI_EVENT_VOLUME_DEC_PRESSED पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
 /* The set of possible brightness events */
-static struct sonypi_event sonypi_brightnessev[] = {
-	{ 0x80, SONYPI_EVENT_BRIGHTNESS_PRESSED },
-	{ 0, 0 }
-};
+अटल काष्ठा sonypi_event sonypi_brightnessev[] = अणु
+	अणु 0x80, SONYPI_EVENT_BRIGHTNESS_PRESSED पूर्ण,
+	अणु 0, 0 पूर्ण
+पूर्ण;
 
-static struct sonypi_eventtypes type1_events[] = {
-	{ 0, 0xffffffff, sonypi_releaseev },
-	{ 0x70, SONYPI_MEYE_MASK, sonypi_meyeev },
-	{ 0x30, SONYPI_LID_MASK, sonypi_lidev },
-	{ 0x60, SONYPI_CAPTURE_MASK, sonypi_captureev },
-	{ 0x10, SONYPI_JOGGER_MASK, sonypi_joggerev },
-	{ 0x20, SONYPI_FNKEY_MASK, sonypi_fnkeyev },
-	{ 0x30, SONYPI_BLUETOOTH_MASK, sonypi_blueev },
-	{ 0x40, SONYPI_PKEY_MASK, sonypi_pkeyev },
-	{ 0x30, SONYPI_MEMORYSTICK_MASK, sonypi_memorystickev },
-	{ 0x40, SONYPI_BATTERY_MASK, sonypi_batteryev },
-	{ 0 },
-};
-static struct sonypi_eventtypes type2_events[] = {
-	{ 0, 0xffffffff, sonypi_releaseev },
-	{ 0x38, SONYPI_LID_MASK, sonypi_lidev },
-	{ 0x11, SONYPI_JOGGER_MASK, sonypi_joggerev },
-	{ 0x61, SONYPI_CAPTURE_MASK, sonypi_captureev },
-	{ 0x21, SONYPI_FNKEY_MASK, sonypi_fnkeyev },
-	{ 0x31, SONYPI_BLUETOOTH_MASK, sonypi_blueev },
-	{ 0x08, SONYPI_PKEY_MASK, sonypi_pkeyev },
-	{ 0x11, SONYPI_BACK_MASK, sonypi_backev },
-	{ 0x21, SONYPI_HELP_MASK, sonypi_helpev },
-	{ 0x21, SONYPI_ZOOM_MASK, sonypi_zoomev },
-	{ 0x20, SONYPI_THUMBPHRASE_MASK, sonypi_thumbphraseev },
-	{ 0x31, SONYPI_MEMORYSTICK_MASK, sonypi_memorystickev },
-	{ 0x41, SONYPI_BATTERY_MASK, sonypi_batteryev },
-	{ 0x31, SONYPI_PKEY_MASK, sonypi_pkeyev },
-	{ 0 },
-};
-static struct sonypi_eventtypes type3_events[] = {
-	{ 0, 0xffffffff, sonypi_releaseev },
-	{ 0x21, SONYPI_FNKEY_MASK, sonypi_fnkeyev },
-	{ 0x31, SONYPI_WIRELESS_MASK, sonypi_wlessev },
-	{ 0x31, SONYPI_MEMORYSTICK_MASK, sonypi_memorystickev },
-	{ 0x41, SONYPI_BATTERY_MASK, sonypi_batteryev },
-	{ 0x31, SONYPI_PKEY_MASK, sonypi_pkeyev },
-	{ 0x05, SONYPI_PKEY_MASK, sonypi_pkeyev },
-	{ 0x05, SONYPI_ZOOM_MASK, sonypi_zoomev },
-	{ 0x05, SONYPI_CAPTURE_MASK, sonypi_captureev },
-	{ 0x05, SONYPI_PKEY_MASK, sonypi_volumeev },
-	{ 0x05, SONYPI_PKEY_MASK, sonypi_brightnessev },
-	{ 0 },
-};
+अटल काष्ठा sonypi_eventtypes type1_events[] = अणु
+	अणु 0, 0xffffffff, sonypi_releaseev पूर्ण,
+	अणु 0x70, SONYPI_MEYE_MASK, sonypi_meyeev पूर्ण,
+	अणु 0x30, SONYPI_LID_MASK, sonypi_lidev पूर्ण,
+	अणु 0x60, SONYPI_CAPTURE_MASK, sonypi_captureev पूर्ण,
+	अणु 0x10, SONYPI_JOGGER_MASK, sonypi_joggerev पूर्ण,
+	अणु 0x20, SONYPI_FNKEY_MASK, sonypi_fnkeyev पूर्ण,
+	अणु 0x30, SONYPI_BLUETOOTH_MASK, sonypi_blueev पूर्ण,
+	अणु 0x40, SONYPI_PKEY_MASK, sonypi_pkeyev पूर्ण,
+	अणु 0x30, SONYPI_MEMORYSTICK_MASK, sonypi_memorystickev पूर्ण,
+	अणु 0x40, SONYPI_BATTERY_MASK, sonypi_batteryev पूर्ण,
+	अणु 0 पूर्ण,
+पूर्ण;
+अटल काष्ठा sonypi_eventtypes type2_events[] = अणु
+	अणु 0, 0xffffffff, sonypi_releaseev पूर्ण,
+	अणु 0x38, SONYPI_LID_MASK, sonypi_lidev पूर्ण,
+	अणु 0x11, SONYPI_JOGGER_MASK, sonypi_joggerev पूर्ण,
+	अणु 0x61, SONYPI_CAPTURE_MASK, sonypi_captureev पूर्ण,
+	अणु 0x21, SONYPI_FNKEY_MASK, sonypi_fnkeyev पूर्ण,
+	अणु 0x31, SONYPI_BLUETOOTH_MASK, sonypi_blueev पूर्ण,
+	अणु 0x08, SONYPI_PKEY_MASK, sonypi_pkeyev पूर्ण,
+	अणु 0x11, SONYPI_BACK_MASK, sonypi_backev पूर्ण,
+	अणु 0x21, SONYPI_HELP_MASK, sonypi_helpev पूर्ण,
+	अणु 0x21, SONYPI_ZOOM_MASK, sonypi_zoomev पूर्ण,
+	अणु 0x20, SONYPI_THUMBPHRASE_MASK, sonypi_thumbphraseev पूर्ण,
+	अणु 0x31, SONYPI_MEMORYSTICK_MASK, sonypi_memorystickev पूर्ण,
+	अणु 0x41, SONYPI_BATTERY_MASK, sonypi_batteryev पूर्ण,
+	अणु 0x31, SONYPI_PKEY_MASK, sonypi_pkeyev पूर्ण,
+	अणु 0 पूर्ण,
+पूर्ण;
+अटल काष्ठा sonypi_eventtypes type3_events[] = अणु
+	अणु 0, 0xffffffff, sonypi_releaseev पूर्ण,
+	अणु 0x21, SONYPI_FNKEY_MASK, sonypi_fnkeyev पूर्ण,
+	अणु 0x31, SONYPI_WIRELESS_MASK, sonypi_wlessev पूर्ण,
+	अणु 0x31, SONYPI_MEMORYSTICK_MASK, sonypi_memorystickev पूर्ण,
+	अणु 0x41, SONYPI_BATTERY_MASK, sonypi_batteryev पूर्ण,
+	अणु 0x31, SONYPI_PKEY_MASK, sonypi_pkeyev पूर्ण,
+	अणु 0x05, SONYPI_PKEY_MASK, sonypi_pkeyev पूर्ण,
+	अणु 0x05, SONYPI_ZOOM_MASK, sonypi_zoomev पूर्ण,
+	अणु 0x05, SONYPI_CAPTURE_MASK, sonypi_captureev पूर्ण,
+	अणु 0x05, SONYPI_PKEY_MASK, sonypi_volumeev पूर्ण,
+	अणु 0x05, SONYPI_PKEY_MASK, sonypi_brightnessev पूर्ण,
+	अणु 0 पूर्ण,
+पूर्ण;
 
 /* low level spic calls */
-#define ITERATIONS_LONG		10000
-#define ITERATIONS_SHORT	10
-#define wait_on_command(command, iterations) {				\
-	unsigned int n = iterations;					\
-	while (--n && (command))					\
+#घोषणा ITERATIONS_LONG		10000
+#घोषणा ITERATIONS_SHORT	10
+#घोषणा रुको_on_command(command, iterations) अणु				\
+	अचिन्हित पूर्णांक n = iterations;					\
+	जबतक (--n && (command))					\
 		udelay(1);						\
-	if (!n)								\
-		dprintk("command failed at %s : %s (line %d)\n",	\
-				__FILE__, __func__, __LINE__);	\
-}
+	अगर (!n)								\
+		dprपूर्णांकk("command failed at %s : %s (line %d)\n",	\
+				__खाता__, __func__, __LINE__);	\
+पूर्ण
 
-static u8 sony_pic_call1(u8 dev)
-{
+अटल u8 sony_pic_call1(u8 dev)
+अणु
 	u8 v1, v2;
 
-	wait_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2,
+	रुको_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2,
 			ITERATIONS_LONG);
 	outb(dev, spic_dev.cur_ioport->io1.minimum + 4);
 	v1 = inb_p(spic_dev.cur_ioport->io1.minimum + 4);
 	v2 = inb_p(spic_dev.cur_ioport->io1.minimum);
-	dprintk("sony_pic_call1(0x%.2x): 0x%.4x\n", dev, (v2 << 8) | v1);
-	return v2;
-}
+	dprपूर्णांकk("sony_pic_call1(0x%.2x): 0x%.4x\n", dev, (v2 << 8) | v1);
+	वापस v2;
+पूर्ण
 
-static u8 sony_pic_call2(u8 dev, u8 fn)
-{
+अटल u8 sony_pic_call2(u8 dev, u8 fn)
+अणु
 	u8 v1;
 
-	wait_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2,
+	रुको_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2,
 			ITERATIONS_LONG);
 	outb(dev, spic_dev.cur_ioport->io1.minimum + 4);
-	wait_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2,
+	रुको_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2,
 			ITERATIONS_LONG);
 	outb(fn, spic_dev.cur_ioport->io1.minimum);
 	v1 = inb_p(spic_dev.cur_ioport->io1.minimum);
-	dprintk("sony_pic_call2(0x%.2x - 0x%.2x): 0x%.4x\n", dev, fn, v1);
-	return v1;
-}
+	dprपूर्णांकk("sony_pic_call2(0x%.2x - 0x%.2x): 0x%.4x\n", dev, fn, v1);
+	वापस v1;
+पूर्ण
 
-static u8 sony_pic_call3(u8 dev, u8 fn, u8 v)
-{
+अटल u8 sony_pic_call3(u8 dev, u8 fn, u8 v)
+अणु
 	u8 v1;
 
-	wait_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2, ITERATIONS_LONG);
+	रुको_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2, ITERATIONS_LONG);
 	outb(dev, spic_dev.cur_ioport->io1.minimum + 4);
-	wait_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2, ITERATIONS_LONG);
+	रुको_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2, ITERATIONS_LONG);
 	outb(fn, spic_dev.cur_ioport->io1.minimum);
-	wait_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2, ITERATIONS_LONG);
+	रुको_on_command(inb_p(spic_dev.cur_ioport->io1.minimum + 4) & 2, ITERATIONS_LONG);
 	outb(v, spic_dev.cur_ioport->io1.minimum);
 	v1 = inb_p(spic_dev.cur_ioport->io1.minimum);
-	dprintk("sony_pic_call3(0x%.2x - 0x%.2x - 0x%.2x): 0x%.4x\n",
+	dprपूर्णांकk("sony_pic_call3(0x%.2x - 0x%.2x - 0x%.2x): 0x%.4x\n",
 			dev, fn, v, v1);
-	return v1;
-}
+	वापस v1;
+पूर्ण
 
 /*
- * minidrivers for SPIC models
+ * minidrivers क्रम SPIC models
  */
-static int type3_handle_irq(const u8 data_mask, const u8 ev)
-{
+अटल पूर्णांक type3_handle_irq(स्थिर u8 data_mask, स्थिर u8 ev)
+अणु
 	/*
-	 * 0x31 could mean we have to take some extra action and wait for
-	 * the next irq for some Type3 models, it will generate a new
-	 * irq and we can read new data from the device:
+	 * 0x31 could mean we have to take some extra action and रुको क्रम
+	 * the next irq क्रम some Type3 models, it will generate a new
+	 * irq and we can पढ़ो new data from the device:
 	 *  - 0x5c and 0x5f requires 0xA0
 	 *  - 0x61 requires 0xB3
 	 */
-	if (data_mask == 0x31) {
-		if (ev == 0x5c || ev == 0x5f)
+	अगर (data_mask == 0x31) अणु
+		अगर (ev == 0x5c || ev == 0x5f)
 			sony_pic_call1(0xA0);
-		else if (ev == 0x61)
+		अन्यथा अगर (ev == 0x61)
 			sony_pic_call1(0xB3);
-		return 0;
-	}
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static void sony_pic_detect_device_type(struct sony_pic_dev *dev)
-{
-	struct pci_dev *pcidev;
+अटल व्योम sony_pic_detect_device_type(काष्ठा sony_pic_dev *dev)
+अणु
+	काष्ठा pci_dev *pcidev;
 
 	pcidev = pci_get_device(PCI_VENDOR_ID_INTEL,
-			PCI_DEVICE_ID_INTEL_82371AB_3, NULL);
-	if (pcidev) {
+			PCI_DEVICE_ID_INTEL_82371AB_3, शून्य);
+	अगर (pcidev) अणु
 		dev->model = SONYPI_DEVICE_TYPE1;
 		dev->evport_offset = SONYPI_TYPE1_OFFSET;
 		dev->event_types = type1_events;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pcidev = pci_get_device(PCI_VENDOR_ID_INTEL,
-			PCI_DEVICE_ID_INTEL_ICH6_1, NULL);
-	if (pcidev) {
+			PCI_DEVICE_ID_INTEL_ICH6_1, शून्य);
+	अगर (pcidev) अणु
 		dev->model = SONYPI_DEVICE_TYPE2;
 		dev->evport_offset = SONYPI_TYPE2_OFFSET;
 		dev->event_types = type2_events;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pcidev = pci_get_device(PCI_VENDOR_ID_INTEL,
-			PCI_DEVICE_ID_INTEL_ICH7_1, NULL);
-	if (pcidev) {
+			PCI_DEVICE_ID_INTEL_ICH7_1, शून्य);
+	अगर (pcidev) अणु
 		dev->model = SONYPI_DEVICE_TYPE3;
 		dev->handle_irq = type3_handle_irq;
 		dev->evport_offset = SONYPI_TYPE3_OFFSET;
 		dev->event_types = type3_events;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pcidev = pci_get_device(PCI_VENDOR_ID_INTEL,
-			PCI_DEVICE_ID_INTEL_ICH8_4, NULL);
-	if (pcidev) {
+			PCI_DEVICE_ID_INTEL_ICH8_4, शून्य);
+	अगर (pcidev) अणु
 		dev->model = SONYPI_DEVICE_TYPE3;
 		dev->handle_irq = type3_handle_irq;
 		dev->evport_offset = SONYPI_TYPE3_OFFSET;
 		dev->event_types = type3_events;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pcidev = pci_get_device(PCI_VENDOR_ID_INTEL,
-			PCI_DEVICE_ID_INTEL_ICH9_1, NULL);
-	if (pcidev) {
+			PCI_DEVICE_ID_INTEL_ICH9_1, शून्य);
+	अगर (pcidev) अणु
 		dev->model = SONYPI_DEVICE_TYPE3;
 		dev->handle_irq = type3_handle_irq;
 		dev->evport_offset = SONYPI_TYPE3_OFFSET;
 		dev->event_types = type3_events;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* default */
+	/* शेष */
 	dev->model = SONYPI_DEVICE_TYPE2;
 	dev->evport_offset = SONYPI_TYPE2_OFFSET;
 	dev->event_types = type2_events;
@@ -3729,744 +3730,744 @@ out:
 	pr_info("detected Type%d model\n",
 		dev->model == SONYPI_DEVICE_TYPE1 ? 1 :
 		dev->model == SONYPI_DEVICE_TYPE2 ? 2 : 3);
-}
+पूर्ण
 
-/* camera tests and poweron/poweroff */
-#define SONYPI_CAMERA_PICTURE		5
-#define SONYPI_CAMERA_CONTROL		0x10
+/* camera tests and घातeron/घातeroff */
+#घोषणा SONYPI_CAMERA_PICTURE		5
+#घोषणा SONYPI_CAMERA_CONTROL		0x10
 
-#define SONYPI_CAMERA_BRIGHTNESS		0
-#define SONYPI_CAMERA_CONTRAST			1
-#define SONYPI_CAMERA_HUE			2
-#define SONYPI_CAMERA_COLOR			3
-#define SONYPI_CAMERA_SHARPNESS			4
+#घोषणा SONYPI_CAMERA_BRIGHTNESS		0
+#घोषणा SONYPI_CAMERA_CONTRAST			1
+#घोषणा SONYPI_CAMERA_HUE			2
+#घोषणा SONYPI_CAMERA_COLOR			3
+#घोषणा SONYPI_CAMERA_SHARPNESS			4
 
-#define SONYPI_CAMERA_EXPOSURE_MASK		0xC
-#define SONYPI_CAMERA_WHITE_BALANCE_MASK	0x3
-#define SONYPI_CAMERA_PICTURE_MODE_MASK		0x30
-#define SONYPI_CAMERA_MUTE_MASK			0x40
+#घोषणा SONYPI_CAMERA_EXPOSURE_MASK		0xC
+#घोषणा SONYPI_CAMERA_WHITE_BALANCE_MASK	0x3
+#घोषणा SONYPI_CAMERA_PICTURE_MODE_MASK		0x30
+#घोषणा SONYPI_CAMERA_MUTE_MASK			0x40
 
-/* the rest don't need a loop until not 0xff */
-#define SONYPI_CAMERA_AGC			6
-#define SONYPI_CAMERA_AGC_MASK			0x30
-#define SONYPI_CAMERA_SHUTTER_MASK 		0x7
+/* the rest करोn't need a loop until not 0xff */
+#घोषणा SONYPI_CAMERA_AGC			6
+#घोषणा SONYPI_CAMERA_AGC_MASK			0x30
+#घोषणा SONYPI_CAMERA_SHUTTER_MASK 		0x7
 
-#define SONYPI_CAMERA_SHUTDOWN_REQUEST		7
-#define SONYPI_CAMERA_CONTROL			0x10
+#घोषणा SONYPI_CAMERA_SHUTDOWN_REQUEST		7
+#घोषणा SONYPI_CAMERA_CONTROL			0x10
 
-#define SONYPI_CAMERA_STATUS 			7
-#define SONYPI_CAMERA_STATUS_READY 		0x2
-#define SONYPI_CAMERA_STATUS_POSITION		0x4
+#घोषणा SONYPI_CAMERA_STATUS 			7
+#घोषणा SONYPI_CAMERA_STATUS_READY 		0x2
+#घोषणा SONYPI_CAMERA_STATUS_POSITION		0x4
 
-#define SONYPI_DIRECTION_BACKWARDS 		0x4
+#घोषणा SONYPI_सूचीECTION_BACKWARDS 		0x4
 
-#define SONYPI_CAMERA_REVISION 			8
-#define SONYPI_CAMERA_ROMVERSION 		9
+#घोषणा SONYPI_CAMERA_REVISION 			8
+#घोषणा SONYPI_CAMERA_ROMVERSION 		9
 
-static int __sony_pic_camera_ready(void)
-{
+अटल पूर्णांक __sony_pic_camera_पढ़ोy(व्योम)
+अणु
 	u8 v;
 
 	v = sony_pic_call2(0x8f, SONYPI_CAMERA_STATUS);
-	return (v != 0xff && (v & SONYPI_CAMERA_STATUS_READY));
-}
+	वापस (v != 0xff && (v & SONYPI_CAMERA_STATUS_READY));
+पूर्ण
 
-static int __sony_pic_camera_off(void)
-{
-	if (!camera) {
+अटल पूर्णांक __sony_pic_camera_off(व्योम)
+अणु
+	अगर (!camera) अणु
 		pr_warn("camera control not enabled\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	wait_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_PICTURE,
+	रुको_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_PICTURE,
 				SONYPI_CAMERA_MUTE_MASK),
 			ITERATIONS_SHORT);
 
-	if (spic_dev.camera_power) {
+	अगर (spic_dev.camera_घातer) अणु
 		sony_pic_call2(0x91, 0);
-		spic_dev.camera_power = 0;
-	}
-	return 0;
-}
+		spic_dev.camera_घातer = 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __sony_pic_camera_on(void)
-{
-	int i, j, x;
+अटल पूर्णांक __sony_pic_camera_on(व्योम)
+अणु
+	पूर्णांक i, j, x;
 
-	if (!camera) {
+	अगर (!camera) अणु
 		pr_warn("camera control not enabled\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (spic_dev.camera_power)
-		return 0;
+	अगर (spic_dev.camera_घातer)
+		वापस 0;
 
-	for (j = 5; j > 0; j--) {
+	क्रम (j = 5; j > 0; j--) अणु
 
-		for (x = 0; x < 100 && sony_pic_call2(0x91, 0x1); x++)
+		क्रम (x = 0; x < 100 && sony_pic_call2(0x91, 0x1); x++)
 			msleep(10);
 		sony_pic_call1(0x93);
 
-		for (i = 400; i > 0; i--) {
-			if (__sony_pic_camera_ready())
-				break;
+		क्रम (i = 400; i > 0; i--) अणु
+			अगर (__sony_pic_camera_पढ़ोy())
+				अवरोध;
 			msleep(10);
-		}
-		if (i)
-			break;
-	}
+		पूर्ण
+		अगर (i)
+			अवरोध;
+	पूर्ण
 
-	if (j == 0) {
+	अगर (j == 0) अणु
 		pr_warn("failed to power on camera\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	wait_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_CONTROL,
+	रुको_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_CONTROL,
 				0x5a),
 			ITERATIONS_SHORT);
 
-	spic_dev.camera_power = 1;
-	return 0;
-}
+	spic_dev.camera_घातer = 1;
+	वापस 0;
+पूर्ण
 
 /* External camera command (exported to the motion eye v4l driver) */
-int sony_pic_camera_command(int command, u8 value)
-{
-	if (!camera)
-		return -EIO;
+पूर्णांक sony_pic_camera_command(पूर्णांक command, u8 value)
+अणु
+	अगर (!camera)
+		वापस -EIO;
 
 	mutex_lock(&spic_dev.lock);
 
-	switch (command) {
-	case SONY_PIC_COMMAND_SETCAMERA:
-		if (value)
+	चयन (command) अणु
+	हाल SONY_PIC_COMMAND_SETCAMERA:
+		अगर (value)
 			__sony_pic_camera_on();
-		else
+		अन्यथा
 			__sony_pic_camera_off();
-		break;
-	case SONY_PIC_COMMAND_SETCAMERABRIGHTNESS:
-		wait_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_BRIGHTNESS, value),
+		अवरोध;
+	हाल SONY_PIC_COMMAND_SETCAMERABRIGHTNESS:
+		रुको_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_BRIGHTNESS, value),
 				ITERATIONS_SHORT);
-		break;
-	case SONY_PIC_COMMAND_SETCAMERACONTRAST:
-		wait_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_CONTRAST, value),
+		अवरोध;
+	हाल SONY_PIC_COMMAND_SETCAMERACONTRAST:
+		रुको_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_CONTRAST, value),
 				ITERATIONS_SHORT);
-		break;
-	case SONY_PIC_COMMAND_SETCAMERAHUE:
-		wait_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_HUE, value),
+		अवरोध;
+	हाल SONY_PIC_COMMAND_SETCAMERAHUE:
+		रुको_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_HUE, value),
 				ITERATIONS_SHORT);
-		break;
-	case SONY_PIC_COMMAND_SETCAMERACOLOR:
-		wait_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_COLOR, value),
+		अवरोध;
+	हाल SONY_PIC_COMMAND_SETCAMERACOLOR:
+		रुको_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_COLOR, value),
 				ITERATIONS_SHORT);
-		break;
-	case SONY_PIC_COMMAND_SETCAMERASHARPNESS:
-		wait_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_SHARPNESS, value),
+		अवरोध;
+	हाल SONY_PIC_COMMAND_SETCAMERASHARPNESS:
+		रुको_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_SHARPNESS, value),
 				ITERATIONS_SHORT);
-		break;
-	case SONY_PIC_COMMAND_SETCAMERAPICTURE:
-		wait_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_PICTURE, value),
+		अवरोध;
+	हाल SONY_PIC_COMMAND_SETCAMERAPICTURE:
+		रुको_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_PICTURE, value),
 				ITERATIONS_SHORT);
-		break;
-	case SONY_PIC_COMMAND_SETCAMERAAGC:
-		wait_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_AGC, value),
+		अवरोध;
+	हाल SONY_PIC_COMMAND_SETCAMERAAGC:
+		रुको_on_command(sony_pic_call3(0x90, SONYPI_CAMERA_AGC, value),
 				ITERATIONS_SHORT);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("sony_pic_camera_command invalid: %d\n", command);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&spic_dev.lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(sony_pic_camera_command);
 
 /* gprs/edge modem (SZ460N and SZ210P), thanks to Joshua Wise */
-static void __sony_pic_set_wwanpower(u8 state)
-{
+अटल व्योम __sony_pic_set_wwanघातer(u8 state)
+अणु
 	state = !!state;
-	if (spic_dev.wwan_power == state)
-		return;
+	अगर (spic_dev.wwan_घातer == state)
+		वापस;
 	sony_pic_call2(0xB0, state);
 	sony_pic_call1(0x82);
-	spic_dev.wwan_power = state;
-}
+	spic_dev.wwan_घातer = state;
+पूर्ण
 
-static ssize_t sony_pic_wwanpower_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	unsigned long value;
-	if (count > 31)
-		return -EINVAL;
+अटल sमाप_प्रकार sony_pic_wwanघातer_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ value;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value))
+		वापस -EINVAL;
 
 	mutex_lock(&spic_dev.lock);
-	__sony_pic_set_wwanpower(value);
+	__sony_pic_set_wwanघातer(value);
 	mutex_unlock(&spic_dev.lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_pic_wwanpower_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	ssize_t count;
+अटल sमाप_प्रकार sony_pic_wwanघातer_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	sमाप_प्रकार count;
 	mutex_lock(&spic_dev.lock);
-	count = snprintf(buffer, PAGE_SIZE, "%d\n", spic_dev.wwan_power);
+	count = snम_लिखो(buffer, PAGE_SIZE, "%d\n", spic_dev.wwan_घातer);
 	mutex_unlock(&spic_dev.lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-/* bluetooth subsystem power state */
-static void __sony_pic_set_bluetoothpower(u8 state)
-{
+/* bluetooth subप्रणाली घातer state */
+अटल व्योम __sony_pic_set_bluetoothघातer(u8 state)
+अणु
 	state = !!state;
-	if (spic_dev.bluetooth_power == state)
-		return;
+	अगर (spic_dev.bluetooth_घातer == state)
+		वापस;
 	sony_pic_call2(0x96, state);
 	sony_pic_call1(0x82);
-	spic_dev.bluetooth_power = state;
-}
+	spic_dev.bluetooth_घातer = state;
+पूर्ण
 
-static ssize_t sony_pic_bluetoothpower_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	unsigned long value;
-	if (count > 31)
-		return -EINVAL;
+अटल sमाप_प्रकार sony_pic_bluetoothघातer_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ value;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value))
+		वापस -EINVAL;
 
 	mutex_lock(&spic_dev.lock);
-	__sony_pic_set_bluetoothpower(value);
+	__sony_pic_set_bluetoothघातer(value);
 	mutex_unlock(&spic_dev.lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_pic_bluetoothpower_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
-	ssize_t count = 0;
+अटल sमाप_प्रकार sony_pic_bluetoothघातer_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	sमाप_प्रकार count = 0;
 	mutex_lock(&spic_dev.lock);
-	count = snprintf(buffer, PAGE_SIZE, "%d\n", spic_dev.bluetooth_power);
+	count = snम_लिखो(buffer, PAGE_SIZE, "%d\n", spic_dev.bluetooth_घातer);
 	mutex_unlock(&spic_dev.lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* fan speed */
-/* FAN0 information (reverse engineered from ACPI tables) */
-#define SONY_PIC_FAN0_STATUS	0x93
-static int sony_pic_set_fanspeed(unsigned long value)
-{
-	return ec_write(SONY_PIC_FAN0_STATUS, value);
-}
+/* FAN0 inक्रमmation (reverse engineered from ACPI tables) */
+#घोषणा SONY_PIC_FAN0_STATUS	0x93
+अटल पूर्णांक sony_pic_set_fanspeed(अचिन्हित दीर्घ value)
+अणु
+	वापस ec_ग_लिखो(SONY_PIC_FAN0_STATUS, value);
+पूर्ण
 
-static int sony_pic_get_fanspeed(u8 *value)
-{
-	return ec_read(SONY_PIC_FAN0_STATUS, value);
-}
+अटल पूर्णांक sony_pic_get_fanspeed(u8 *value)
+अणु
+	वापस ec_पढ़ो(SONY_PIC_FAN0_STATUS, value);
+पूर्ण
 
-static ssize_t sony_pic_fanspeed_store(struct device *dev,
-		struct device_attribute *attr,
-		const char *buffer, size_t count)
-{
-	unsigned long value;
-	if (count > 31)
-		return -EINVAL;
+अटल sमाप_प्रकार sony_pic_fanspeed_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ value;
+	अगर (count > 31)
+		वापस -EINVAL;
 
-	if (kstrtoul(buffer, 10, &value))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buffer, 10, &value))
+		वापस -EINVAL;
 
-	if (sony_pic_set_fanspeed(value))
-		return -EIO;
+	अगर (sony_pic_set_fanspeed(value))
+		वापस -EIO;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t sony_pic_fanspeed_show(struct device *dev,
-		struct device_attribute *attr, char *buffer)
-{
+अटल sमाप_प्रकार sony_pic_fanspeed_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
 	u8 value = 0;
-	if (sony_pic_get_fanspeed(&value))
-		return -EIO;
+	अगर (sony_pic_get_fanspeed(&value))
+		वापस -EIO;
 
-	return snprintf(buffer, PAGE_SIZE, "%d\n", value);
-}
+	वापस snम_लिखो(buffer, PAGE_SIZE, "%d\n", value);
+पूर्ण
 
-#define SPIC_ATTR(_name, _mode)					\
-struct device_attribute spic_attr_##_name = __ATTR(_name,	\
+#घोषणा SPIC_ATTR(_name, _mode)					\
+काष्ठा device_attribute spic_attr_##_name = __ATTR(_name,	\
 		_mode, sony_pic_## _name ##_show,		\
 		sony_pic_## _name ##_store)
 
-static SPIC_ATTR(bluetoothpower, 0644);
-static SPIC_ATTR(wwanpower, 0644);
-static SPIC_ATTR(fanspeed, 0644);
+अटल SPIC_ATTR(bluetoothघातer, 0644);
+अटल SPIC_ATTR(wwanघातer, 0644);
+अटल SPIC_ATTR(fanspeed, 0644);
 
-static struct attribute *spic_attributes[] = {
-	&spic_attr_bluetoothpower.attr,
-	&spic_attr_wwanpower.attr,
+अटल काष्ठा attribute *spic_attributes[] = अणु
+	&spic_attr_bluetoothघातer.attr,
+	&spic_attr_wwanघातer.attr,
 	&spic_attr_fanspeed.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group spic_attribute_group = {
+अटल स्थिर काष्ठा attribute_group spic_attribute_group = अणु
 	.attrs = spic_attributes
-};
+पूर्ण;
 
 /******** SONYPI compatibility **********/
-#ifdef CONFIG_SONYPI_COMPAT
+#अगर_घोषित CONFIG_SONYPI_COMPAT
 
 /* battery / brightness / temperature  addresses */
-#define SONYPI_BAT_FLAGS	0x81
-#define SONYPI_LCD_LIGHT	0x96
-#define SONYPI_BAT1_PCTRM	0xa0
-#define SONYPI_BAT1_LEFT	0xa2
-#define SONYPI_BAT1_MAXRT	0xa4
-#define SONYPI_BAT2_PCTRM	0xa8
-#define SONYPI_BAT2_LEFT	0xaa
-#define SONYPI_BAT2_MAXRT	0xac
-#define SONYPI_BAT1_MAXTK	0xb0
-#define SONYPI_BAT1_FULL	0xb2
-#define SONYPI_BAT2_MAXTK	0xb8
-#define SONYPI_BAT2_FULL	0xba
-#define SONYPI_TEMP_STATUS	0xC1
+#घोषणा SONYPI_BAT_FLAGS	0x81
+#घोषणा SONYPI_LCD_LIGHT	0x96
+#घोषणा SONYPI_BAT1_PCTRM	0xa0
+#घोषणा SONYPI_BAT1_LEFT	0xa2
+#घोषणा SONYPI_BAT1_MAXRT	0xa4
+#घोषणा SONYPI_BAT2_PCTRM	0xa8
+#घोषणा SONYPI_BAT2_LEFT	0xaa
+#घोषणा SONYPI_BAT2_MAXRT	0xac
+#घोषणा SONYPI_BAT1_MAXTK	0xb0
+#घोषणा SONYPI_BAT1_FULL	0xb2
+#घोषणा SONYPI_BAT2_MAXTK	0xb8
+#घोषणा SONYPI_BAT2_FULL	0xba
+#घोषणा SONYPI_TEMP_STATUS	0xC1
 
-struct sonypi_compat_s {
-	struct fasync_struct	*fifo_async;
-	struct kfifo		fifo;
-	spinlock_t		fifo_lock;
-	wait_queue_head_t	fifo_proc_list;
-	atomic_t		open_count;
-};
-static struct sonypi_compat_s sonypi_compat = {
-	.open_count = ATOMIC_INIT(0),
-};
+काष्ठा sonypi_compat_s अणु
+	काष्ठा fasync_काष्ठा	*fअगरo_async;
+	काष्ठा kfअगरo		fअगरo;
+	spinlock_t		fअगरo_lock;
+	रुको_queue_head_t	fअगरo_proc_list;
+	atomic_t		खोलो_count;
+पूर्ण;
+अटल काष्ठा sonypi_compat_s sonypi_compat = अणु
+	.खोलो_count = ATOMIC_INIT(0),
+पूर्ण;
 
-static int sonypi_misc_fasync(int fd, struct file *filp, int on)
-{
-	return fasync_helper(fd, filp, on, &sonypi_compat.fifo_async);
-}
+अटल पूर्णांक sonypi_misc_fasync(पूर्णांक fd, काष्ठा file *filp, पूर्णांक on)
+अणु
+	वापस fasync_helper(fd, filp, on, &sonypi_compat.fअगरo_async);
+पूर्ण
 
-static int sonypi_misc_release(struct inode *inode, struct file *file)
-{
-	atomic_dec(&sonypi_compat.open_count);
-	return 0;
-}
+अटल पूर्णांक sonypi_misc_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	atomic_dec(&sonypi_compat.खोलो_count);
+	वापस 0;
+पूर्ण
 
-static int sonypi_misc_open(struct inode *inode, struct file *file)
-{
-	/* Flush input queue on first open */
-	unsigned long flags;
+अटल पूर्णांक sonypi_misc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	/* Flush input queue on first खोलो */
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&sonypi_compat.fifo_lock, flags);
+	spin_lock_irqsave(&sonypi_compat.fअगरo_lock, flags);
 
-	if (atomic_inc_return(&sonypi_compat.open_count) == 1)
-		kfifo_reset(&sonypi_compat.fifo);
+	अगर (atomic_inc_वापस(&sonypi_compat.खोलो_count) == 1)
+		kfअगरo_reset(&sonypi_compat.fअगरo);
 
-	spin_unlock_irqrestore(&sonypi_compat.fifo_lock, flags);
+	spin_unlock_irqrestore(&sonypi_compat.fअगरo_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t sonypi_misc_read(struct file *file, char __user *buf,
-				size_t count, loff_t *pos)
-{
-	ssize_t ret;
-	unsigned char c;
+अटल sमाप_प्रकार sonypi_misc_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				माप_प्रकार count, loff_t *pos)
+अणु
+	sमाप_प्रकार ret;
+	अचिन्हित अक्षर c;
 
-	if ((kfifo_len(&sonypi_compat.fifo) == 0) &&
+	अगर ((kfअगरo_len(&sonypi_compat.fअगरo) == 0) &&
 	    (file->f_flags & O_NONBLOCK))
-		return -EAGAIN;
+		वापस -EAGAIN;
 
-	ret = wait_event_interruptible(sonypi_compat.fifo_proc_list,
-				       kfifo_len(&sonypi_compat.fifo) != 0);
-	if (ret)
-		return ret;
+	ret = रुको_event_पूर्णांकerruptible(sonypi_compat.fअगरo_proc_list,
+				       kfअगरo_len(&sonypi_compat.fअगरo) != 0);
+	अगर (ret)
+		वापस ret;
 
-	while (ret < count &&
-	       (kfifo_out_locked(&sonypi_compat.fifo, &c, sizeof(c),
-			  &sonypi_compat.fifo_lock) == sizeof(c))) {
-		if (put_user(c, buf++))
-			return -EFAULT;
+	जबतक (ret < count &&
+	       (kfअगरo_out_locked(&sonypi_compat.fअगरo, &c, माप(c),
+			  &sonypi_compat.fअगरo_lock) == माप(c))) अणु
+		अगर (put_user(c, buf++))
+			वापस -EFAULT;
 		ret++;
-	}
+	पूर्ण
 
-	if (ret > 0) {
-		struct inode *inode = file_inode(file);
-		inode->i_atime = current_time(inode);
-	}
+	अगर (ret > 0) अणु
+		काष्ठा inode *inode = file_inode(file);
+		inode->i_aसमय = current_समय(inode);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __poll_t sonypi_misc_poll(struct file *file, poll_table *wait)
-{
-	poll_wait(file, &sonypi_compat.fifo_proc_list, wait);
-	if (kfifo_len(&sonypi_compat.fifo))
-		return EPOLLIN | EPOLLRDNORM;
-	return 0;
-}
+अटल __poll_t sonypi_misc_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	poll_रुको(file, &sonypi_compat.fअगरo_proc_list, रुको);
+	अगर (kfअगरo_len(&sonypi_compat.fअगरo))
+		वापस EPOLLIN | EPOLLRDNORM;
+	वापस 0;
+पूर्ण
 
-static int ec_read16(u8 addr, u16 *value)
-{
+अटल पूर्णांक ec_पढ़ो16(u8 addr, u16 *value)
+अणु
 	u8 val_lb, val_hb;
-	if (ec_read(addr, &val_lb))
-		return -1;
-	if (ec_read(addr + 1, &val_hb))
-		return -1;
+	अगर (ec_पढ़ो(addr, &val_lb))
+		वापस -1;
+	अगर (ec_पढ़ो(addr + 1, &val_hb))
+		वापस -1;
 	*value = val_lb | (val_hb << 8);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long sonypi_misc_ioctl(struct file *fp, unsigned int cmd,
-							unsigned long arg)
-{
-	int ret = 0;
-	void __user *argp = (void __user *)arg;
+अटल दीर्घ sonypi_misc_ioctl(काष्ठा file *fp, अचिन्हित पूर्णांक cmd,
+							अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret = 0;
+	व्योम __user *argp = (व्योम __user *)arg;
 	u8 val8;
 	u16 val16;
-	int value;
+	पूर्णांक value;
 
 	mutex_lock(&spic_dev.lock);
-	switch (cmd) {
-	case SONYPI_IOCGBRT:
-		if (sony_bl_props.dev == NULL) {
+	चयन (cmd) अणु
+	हाल SONYPI_IOCGBRT:
+		अगर (sony_bl_props.dev == शून्य) अणु
 			ret = -EIO;
-			break;
-		}
-		if (sony_nc_int_call(sony_nc_acpi_handle, "GBRT", NULL,
-					&value)) {
+			अवरोध;
+		पूर्ण
+		अगर (sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "GBRT", शून्य,
+					&value)) अणु
 			ret = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		val8 = ((value & 0xff) - 1) << 5;
-		if (copy_to_user(argp, &val8, sizeof(val8)))
+		अगर (copy_to_user(argp, &val8, माप(val8)))
 				ret = -EFAULT;
-		break;
-	case SONYPI_IOCSBRT:
-		if (sony_bl_props.dev == NULL) {
+		अवरोध;
+	हाल SONYPI_IOCSBRT:
+		अगर (sony_bl_props.dev == शून्य) अणु
 			ret = -EIO;
-			break;
-		}
-		if (copy_from_user(&val8, argp, sizeof(val8))) {
+			अवरोध;
+		पूर्ण
+		अगर (copy_from_user(&val8, argp, माप(val8))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		value = (val8 >> 5) + 1;
-		if (sony_nc_int_call(sony_nc_acpi_handle, "SBRT", &value,
-					NULL)) {
+		अगर (sony_nc_पूर्णांक_call(sony_nc_acpi_handle, "SBRT", &value,
+					शून्य)) अणु
 			ret = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/* sync the backlight device status */
 		sony_bl_props.dev->props.brightness =
 		    sony_backlight_get_brightness(sony_bl_props.dev);
-		break;
-	case SONYPI_IOCGBAT1CAP:
-		if (ec_read16(SONYPI_BAT1_FULL, &val16)) {
+		अवरोध;
+	हाल SONYPI_IOCGBAT1CAP:
+		अगर (ec_पढ़ो16(SONYPI_BAT1_FULL, &val16)) अणु
 			ret = -EIO;
-			break;
-		}
-		if (copy_to_user(argp, &val16, sizeof(val16)))
+			अवरोध;
+		पूर्ण
+		अगर (copy_to_user(argp, &val16, माप(val16)))
 			ret = -EFAULT;
-		break;
-	case SONYPI_IOCGBAT1REM:
-		if (ec_read16(SONYPI_BAT1_LEFT, &val16)) {
+		अवरोध;
+	हाल SONYPI_IOCGBAT1REM:
+		अगर (ec_पढ़ो16(SONYPI_BAT1_LEFT, &val16)) अणु
 			ret = -EIO;
-			break;
-		}
-		if (copy_to_user(argp, &val16, sizeof(val16)))
+			अवरोध;
+		पूर्ण
+		अगर (copy_to_user(argp, &val16, माप(val16)))
 			ret = -EFAULT;
-		break;
-	case SONYPI_IOCGBAT2CAP:
-		if (ec_read16(SONYPI_BAT2_FULL, &val16)) {
+		अवरोध;
+	हाल SONYPI_IOCGBAT2CAP:
+		अगर (ec_पढ़ो16(SONYPI_BAT2_FULL, &val16)) अणु
 			ret = -EIO;
-			break;
-		}
-		if (copy_to_user(argp, &val16, sizeof(val16)))
+			अवरोध;
+		पूर्ण
+		अगर (copy_to_user(argp, &val16, माप(val16)))
 			ret = -EFAULT;
-		break;
-	case SONYPI_IOCGBAT2REM:
-		if (ec_read16(SONYPI_BAT2_LEFT, &val16)) {
+		अवरोध;
+	हाल SONYPI_IOCGBAT2REM:
+		अगर (ec_पढ़ो16(SONYPI_BAT2_LEFT, &val16)) अणु
 			ret = -EIO;
-			break;
-		}
-		if (copy_to_user(argp, &val16, sizeof(val16)))
+			अवरोध;
+		पूर्ण
+		अगर (copy_to_user(argp, &val16, माप(val16)))
 			ret = -EFAULT;
-		break;
-	case SONYPI_IOCGBATFLAGS:
-		if (ec_read(SONYPI_BAT_FLAGS, &val8)) {
+		अवरोध;
+	हाल SONYPI_IOCGBATFLAGS:
+		अगर (ec_पढ़ो(SONYPI_BAT_FLAGS, &val8)) अणु
 			ret = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		val8 &= 0x07;
-		if (copy_to_user(argp, &val8, sizeof(val8)))
+		अगर (copy_to_user(argp, &val8, माप(val8)))
 			ret = -EFAULT;
-		break;
-	case SONYPI_IOCGBLUE:
-		val8 = spic_dev.bluetooth_power;
-		if (copy_to_user(argp, &val8, sizeof(val8)))
+		अवरोध;
+	हाल SONYPI_IOCGBLUE:
+		val8 = spic_dev.bluetooth_घातer;
+		अगर (copy_to_user(argp, &val8, माप(val8)))
 			ret = -EFAULT;
-		break;
-	case SONYPI_IOCSBLUE:
-		if (copy_from_user(&val8, argp, sizeof(val8))) {
+		अवरोध;
+	हाल SONYPI_IOCSBLUE:
+		अगर (copy_from_user(&val8, argp, माप(val8))) अणु
 			ret = -EFAULT;
-			break;
-		}
-		__sony_pic_set_bluetoothpower(val8);
-		break;
+			अवरोध;
+		पूर्ण
+		__sony_pic_set_bluetoothघातer(val8);
+		अवरोध;
 	/* FAN Controls */
-	case SONYPI_IOCGFAN:
-		if (sony_pic_get_fanspeed(&val8)) {
+	हाल SONYPI_IOCGFAN:
+		अगर (sony_pic_get_fanspeed(&val8)) अणु
 			ret = -EIO;
-			break;
-		}
-		if (copy_to_user(argp, &val8, sizeof(val8)))
+			अवरोध;
+		पूर्ण
+		अगर (copy_to_user(argp, &val8, माप(val8)))
 			ret = -EFAULT;
-		break;
-	case SONYPI_IOCSFAN:
-		if (copy_from_user(&val8, argp, sizeof(val8))) {
+		अवरोध;
+	हाल SONYPI_IOCSFAN:
+		अगर (copy_from_user(&val8, argp, माप(val8))) अणु
 			ret = -EFAULT;
-			break;
-		}
-		if (sony_pic_set_fanspeed(val8))
+			अवरोध;
+		पूर्ण
+		अगर (sony_pic_set_fanspeed(val8))
 			ret = -EIO;
-		break;
+		अवरोध;
 	/* GET Temperature (useful under APM) */
-	case SONYPI_IOCGTEMP:
-		if (ec_read(SONYPI_TEMP_STATUS, &val8)) {
+	हाल SONYPI_IOCGTEMP:
+		अगर (ec_पढ़ो(SONYPI_TEMP_STATUS, &val8)) अणु
 			ret = -EIO;
-			break;
-		}
-		if (copy_to_user(argp, &val8, sizeof(val8)))
+			अवरोध;
+		पूर्ण
+		अगर (copy_to_user(argp, &val8, माप(val8)))
 			ret = -EFAULT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 	mutex_unlock(&spic_dev.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations sonypi_misc_fops = {
+अटल स्थिर काष्ठा file_operations sonypi_misc_fops = अणु
 	.owner		= THIS_MODULE,
-	.read		= sonypi_misc_read,
+	.पढ़ो		= sonypi_misc_पढ़ो,
 	.poll		= sonypi_misc_poll,
-	.open		= sonypi_misc_open,
+	.खोलो		= sonypi_misc_खोलो,
 	.release	= sonypi_misc_release,
 	.fasync		= sonypi_misc_fasync,
 	.unlocked_ioctl	= sonypi_misc_ioctl,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static struct miscdevice sonypi_misc_device = {
+अटल काष्ठा miscdevice sonypi_misc_device = अणु
 	.minor		= MISC_DYNAMIC_MINOR,
 	.name		= "sonypi",
 	.fops		= &sonypi_misc_fops,
-};
+पूर्ण;
 
-static void sonypi_compat_report_event(u8 event)
-{
-	kfifo_in_locked(&sonypi_compat.fifo, (unsigned char *)&event,
-			sizeof(event), &sonypi_compat.fifo_lock);
-	kill_fasync(&sonypi_compat.fifo_async, SIGIO, POLL_IN);
-	wake_up_interruptible(&sonypi_compat.fifo_proc_list);
-}
+अटल व्योम sonypi_compat_report_event(u8 event)
+अणु
+	kfअगरo_in_locked(&sonypi_compat.fअगरo, (अचिन्हित अक्षर *)&event,
+			माप(event), &sonypi_compat.fअगरo_lock);
+	समाप्त_fasync(&sonypi_compat.fअगरo_async, SIGIO, POLL_IN);
+	wake_up_पूर्णांकerruptible(&sonypi_compat.fअगरo_proc_list);
+पूर्ण
 
-static int sonypi_compat_init(void)
-{
-	int error;
+अटल पूर्णांक sonypi_compat_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	spin_lock_init(&sonypi_compat.fifo_lock);
+	spin_lock_init(&sonypi_compat.fअगरo_lock);
 	error =
-	 kfifo_alloc(&sonypi_compat.fifo, SONY_LAPTOP_BUF_SIZE, GFP_KERNEL);
-	if (error) {
+	 kfअगरo_alloc(&sonypi_compat.fअगरo, SONY_LAPTOP_BUF_SIZE, GFP_KERNEL);
+	अगर (error) अणु
 		pr_err("kfifo_alloc failed\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	init_waitqueue_head(&sonypi_compat.fifo_proc_list);
+	init_रुकोqueue_head(&sonypi_compat.fअगरo_proc_list);
 
-	if (minor != -1)
+	अगर (minor != -1)
 		sonypi_misc_device.minor = minor;
-	error = misc_register(&sonypi_misc_device);
-	if (error) {
+	error = misc_रेजिस्टर(&sonypi_misc_device);
+	अगर (error) अणु
 		pr_err("misc_register failed\n");
-		goto err_free_kfifo;
-	}
-	if (minor == -1)
+		जाओ err_मुक्त_kfअगरo;
+	पूर्ण
+	अगर (minor == -1)
 		pr_info("device allocated minor is %d\n",
 			sonypi_misc_device.minor);
 
-	return 0;
+	वापस 0;
 
-err_free_kfifo:
-	kfifo_free(&sonypi_compat.fifo);
-	return error;
-}
+err_मुक्त_kfअगरo:
+	kfअगरo_मुक्त(&sonypi_compat.fअगरo);
+	वापस error;
+पूर्ण
 
-static void sonypi_compat_exit(void)
-{
-	misc_deregister(&sonypi_misc_device);
-	kfifo_free(&sonypi_compat.fifo);
-}
-#else
-static int sonypi_compat_init(void) { return 0; }
-static void sonypi_compat_exit(void) { }
-static void sonypi_compat_report_event(u8 event) { }
-#endif /* CONFIG_SONYPI_COMPAT */
+अटल व्योम sonypi_compat_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&sonypi_misc_device);
+	kfअगरo_मुक्त(&sonypi_compat.fअगरo);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक sonypi_compat_init(व्योम) अणु वापस 0; पूर्ण
+अटल व्योम sonypi_compat_निकास(व्योम) अणु पूर्ण
+अटल व्योम sonypi_compat_report_event(u8 event) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_SONYPI_COMPAT */
 
 /*
  * ACPI callbacks
  */
-static acpi_status
-sony_pic_read_possible_resource(struct acpi_resource *resource, void *context)
-{
+अटल acpi_status
+sony_pic_पढ़ो_possible_resource(काष्ठा acpi_resource *resource, व्योम *context)
+अणु
 	u32 i;
-	struct sony_pic_dev *dev = (struct sony_pic_dev *)context;
+	काष्ठा sony_pic_dev *dev = (काष्ठा sony_pic_dev *)context;
 
-	switch (resource->type) {
-	case ACPI_RESOURCE_TYPE_START_DEPENDENT:
-		{
-			/* start IO enumeration */
-			struct sony_pic_ioport *ioport = kzalloc(sizeof(*ioport), GFP_KERNEL);
-			if (!ioport)
-				return AE_ERROR;
+	चयन (resource->type) अणु
+	हाल ACPI_RESOURCE_TYPE_START_DEPENDENT:
+		अणु
+			/* start IO क्रमागतeration */
+			काष्ठा sony_pic_ioport *ioport = kzalloc(माप(*ioport), GFP_KERNEL);
+			अगर (!ioport)
+				वापस AE_ERROR;
 
 			list_add(&ioport->list, &dev->ioports);
-			return AE_OK;
-		}
+			वापस AE_OK;
+		पूर्ण
 
-	case ACPI_RESOURCE_TYPE_END_DEPENDENT:
-		/* end IO enumeration */
-		return AE_OK;
+	हाल ACPI_RESOURCE_TYPE_END_DEPENDENT:
+		/* end IO क्रमागतeration */
+		वापस AE_OK;
 
-	case ACPI_RESOURCE_TYPE_IRQ:
-		{
-			struct acpi_resource_irq *p = &resource->data.irq;
-			struct sony_pic_irq *interrupt = NULL;
-			if (!p || !p->interrupt_count) {
+	हाल ACPI_RESOURCE_TYPE_IRQ:
+		अणु
+			काष्ठा acpi_resource_irq *p = &resource->data.irq;
+			काष्ठा sony_pic_irq *पूर्णांकerrupt = शून्य;
+			अगर (!p || !p->पूर्णांकerrupt_count) अणु
 				/*
 				 * IRQ descriptors may have no IRQ# bits set,
 				 * particularly those those w/ _STA disabled
 				 */
-				dprintk("Blank IRQ resource\n");
-				return AE_OK;
-			}
-			for (i = 0; i < p->interrupt_count; i++) {
-				if (!p->interrupts[i]) {
+				dprपूर्णांकk("Blank IRQ resource\n");
+				वापस AE_OK;
+			पूर्ण
+			क्रम (i = 0; i < p->पूर्णांकerrupt_count; i++) अणु
+				अगर (!p->पूर्णांकerrupts[i]) अणु
 					pr_warn("Invalid IRQ %d\n",
-						p->interrupts[i]);
-					continue;
-				}
-				interrupt = kzalloc(sizeof(*interrupt),
+						p->पूर्णांकerrupts[i]);
+					जारी;
+				पूर्ण
+				पूर्णांकerrupt = kzalloc(माप(*पूर्णांकerrupt),
 						GFP_KERNEL);
-				if (!interrupt)
-					return AE_ERROR;
+				अगर (!पूर्णांकerrupt)
+					वापस AE_ERROR;
 
-				list_add(&interrupt->list, &dev->interrupts);
-				interrupt->irq.triggering = p->triggering;
-				interrupt->irq.polarity = p->polarity;
-				interrupt->irq.shareable = p->shareable;
-				interrupt->irq.interrupt_count = 1;
-				interrupt->irq.interrupts[0] = p->interrupts[i];
-			}
-			return AE_OK;
-		}
-	case ACPI_RESOURCE_TYPE_IO:
-		{
-			struct acpi_resource_io *io = &resource->data.io;
-			struct sony_pic_ioport *ioport =
-				list_first_entry(&dev->ioports, struct sony_pic_ioport, list);
-			if (!io) {
-				dprintk("Blank IO resource\n");
-				return AE_OK;
-			}
+				list_add(&पूर्णांकerrupt->list, &dev->पूर्णांकerrupts);
+				पूर्णांकerrupt->irq.triggering = p->triggering;
+				पूर्णांकerrupt->irq.polarity = p->polarity;
+				पूर्णांकerrupt->irq.shareable = p->shareable;
+				पूर्णांकerrupt->irq.पूर्णांकerrupt_count = 1;
+				पूर्णांकerrupt->irq.पूर्णांकerrupts[0] = p->पूर्णांकerrupts[i];
+			पूर्ण
+			वापस AE_OK;
+		पूर्ण
+	हाल ACPI_RESOURCE_TYPE_IO:
+		अणु
+			काष्ठा acpi_resource_io *io = &resource->data.io;
+			काष्ठा sony_pic_ioport *ioport =
+				list_first_entry(&dev->ioports, काष्ठा sony_pic_ioport, list);
+			अगर (!io) अणु
+				dprपूर्णांकk("Blank IO resource\n");
+				वापस AE_OK;
+			पूर्ण
 
-			if (!ioport->io1.minimum) {
-				memcpy(&ioport->io1, io, sizeof(*io));
-				dprintk("IO1 at 0x%.4x (0x%.2x)\n", ioport->io1.minimum,
+			अगर (!ioport->io1.minimum) अणु
+				स_नकल(&ioport->io1, io, माप(*io));
+				dprपूर्णांकk("IO1 at 0x%.4x (0x%.2x)\n", ioport->io1.minimum,
 						ioport->io1.address_length);
-			}
-			else if (!ioport->io2.minimum) {
-				memcpy(&ioport->io2, io, sizeof(*io));
-				dprintk("IO2 at 0x%.4x (0x%.2x)\n", ioport->io2.minimum,
+			पूर्ण
+			अन्यथा अगर (!ioport->io2.minimum) अणु
+				स_नकल(&ioport->io2, io, माप(*io));
+				dprपूर्णांकk("IO2 at 0x%.4x (0x%.2x)\n", ioport->io2.minimum,
 						ioport->io2.address_length);
-			}
-			else {
+			पूर्ण
+			अन्यथा अणु
 				pr_err("Unknown SPIC Type, more than 2 IO Ports\n");
-				return AE_ERROR;
-			}
-			return AE_OK;
-		}
+				वापस AE_ERROR;
+			पूर्ण
+			वापस AE_OK;
+		पूर्ण
 
-	case ACPI_RESOURCE_TYPE_END_TAG:
-		return AE_OK;
+	हाल ACPI_RESOURCE_TYPE_END_TAG:
+		वापस AE_OK;
 
-	default:
-		dprintk("Resource %d isn't an IRQ nor an IO port\n",
+	शेष:
+		dprपूर्णांकk("Resource %d isn't an IRQ nor an IO port\n",
 			resource->type);
-		return AE_CTRL_TERMINATE;
+		वापस AE_CTRL_TERMINATE;
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sony_pic_possible_resources(struct acpi_device *device)
-{
-	int result = 0;
+अटल पूर्णांक sony_pic_possible_resources(काष्ठा acpi_device *device)
+अणु
+	पूर्णांक result = 0;
 	acpi_status status = AE_OK;
 
-	if (!device)
-		return -EINVAL;
+	अगर (!device)
+		वापस -EINVAL;
 
 	/* get device status */
 	/* see acpi_pci_link_get_current acpi_pci_link_get_possible */
-	dprintk("Evaluating _STA\n");
+	dprपूर्णांकk("Evaluating _STA\n");
 	result = acpi_bus_get_status(device);
-	if (result) {
+	अगर (result) अणु
 		pr_warn("Unable to read status\n");
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (!device->status.enabled)
-		dprintk("Device disabled\n");
-	else
-		dprintk("Device enabled\n");
+	अगर (!device->status.enabled)
+		dprपूर्णांकk("Device disabled\n");
+	अन्यथा
+		dprपूर्णांकk("Device enabled\n");
 
 	/*
 	 * Query and parse 'method'
 	 */
-	dprintk("Evaluating %s\n", METHOD_NAME__PRS);
+	dprपूर्णांकk("Evaluating %s\n", METHOD_NAME__PRS);
 	status = acpi_walk_resources(device->handle, METHOD_NAME__PRS,
-			sony_pic_read_possible_resource, &spic_dev);
-	if (ACPI_FAILURE(status)) {
+			sony_pic_पढ़ो_possible_resource, &spic_dev);
+	अगर (ACPI_FAILURE(status)) अणु
 		pr_warn("Failure evaluating %s\n", METHOD_NAME__PRS);
 		result = -ENODEV;
-	}
+	पूर्ण
 end:
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
  *  Disable the spic device by calling its _DIS method
  */
-static int sony_pic_disable(struct acpi_device *device)
-{
-	acpi_status ret = acpi_evaluate_object(device->handle, "_DIS", NULL,
-					       NULL);
+अटल पूर्णांक sony_pic_disable(काष्ठा acpi_device *device)
+अणु
+	acpi_status ret = acpi_evaluate_object(device->handle, "_DIS", शून्य,
+					       शून्य);
 
-	if (ACPI_FAILURE(ret) && ret != AE_NOT_FOUND)
-		return -ENXIO;
+	अगर (ACPI_FAILURE(ret) && ret != AE_NOT_FOUND)
+		वापस -ENXIO;
 
-	dprintk("Device disabled\n");
-	return 0;
-}
+	dprपूर्णांकk("Device disabled\n");
+	वापस 0;
+पूर्ण
 
 
 /*
@@ -4474,11 +4475,11 @@ static int sony_pic_disable(struct acpi_device *device)
  *
  *  Call _SRS to set current resources
  */
-static int sony_pic_enable(struct acpi_device *device,
-		struct sony_pic_ioport *ioport, struct sony_pic_irq *irq)
-{
+अटल पूर्णांक sony_pic_enable(काष्ठा acpi_device *device,
+		काष्ठा sony_pic_ioport *ioport, काष्ठा sony_pic_irq *irq)
+अणु
 	acpi_status status;
-	int result = 0;
+	पूर्णांक result = 0;
 	/* Type 1 resource layout is:
 	 *    IO
 	 *    IO
@@ -4490,80 +4491,80 @@ static int sony_pic_enable(struct acpi_device *device,
 	 *    IRQNoFlags
 	 *    End
 	 */
-	struct {
-		struct acpi_resource res1;
-		struct acpi_resource res2;
-		struct acpi_resource res3;
-		struct acpi_resource res4;
-	} *resource;
-	struct acpi_buffer buffer = { 0, NULL };
+	काष्ठा अणु
+		काष्ठा acpi_resource res1;
+		काष्ठा acpi_resource res2;
+		काष्ठा acpi_resource res3;
+		काष्ठा acpi_resource res4;
+	पूर्ण *resource;
+	काष्ठा acpi_buffer buffer = अणु 0, शून्य पूर्ण;
 
-	if (!ioport || !irq)
-		return -EINVAL;
+	अगर (!ioport || !irq)
+		वापस -EINVAL;
 
 	/* init acpi_buffer */
-	resource = kzalloc(sizeof(*resource) + 1, GFP_KERNEL);
-	if (!resource)
-		return -ENOMEM;
+	resource = kzalloc(माप(*resource) + 1, GFP_KERNEL);
+	अगर (!resource)
+		वापस -ENOMEM;
 
-	buffer.length = sizeof(*resource) + 1;
-	buffer.pointer = resource;
+	buffer.length = माप(*resource) + 1;
+	buffer.poपूर्णांकer = resource;
 
 	/* setup Type 1 resources */
-	if (spic_dev.model == SONYPI_DEVICE_TYPE1) {
+	अगर (spic_dev.model == SONYPI_DEVICE_TYPE1) अणु
 
 		/* setup io resources */
 		resource->res1.type = ACPI_RESOURCE_TYPE_IO;
-		resource->res1.length = sizeof(struct acpi_resource);
-		memcpy(&resource->res1.data.io, &ioport->io1,
-				sizeof(struct acpi_resource_io));
+		resource->res1.length = माप(काष्ठा acpi_resource);
+		स_नकल(&resource->res1.data.io, &ioport->io1,
+				माप(काष्ठा acpi_resource_io));
 
 		resource->res2.type = ACPI_RESOURCE_TYPE_IO;
-		resource->res2.length = sizeof(struct acpi_resource);
-		memcpy(&resource->res2.data.io, &ioport->io2,
-				sizeof(struct acpi_resource_io));
+		resource->res2.length = माप(काष्ठा acpi_resource);
+		स_नकल(&resource->res2.data.io, &ioport->io2,
+				माप(काष्ठा acpi_resource_io));
 
 		/* setup irq resource */
 		resource->res3.type = ACPI_RESOURCE_TYPE_IRQ;
-		resource->res3.length = sizeof(struct acpi_resource);
-		memcpy(&resource->res3.data.irq, &irq->irq,
-				sizeof(struct acpi_resource_irq));
+		resource->res3.length = माप(काष्ठा acpi_resource);
+		स_नकल(&resource->res3.data.irq, &irq->irq,
+				माप(काष्ठा acpi_resource_irq));
 		/* we requested a shared irq */
 		resource->res3.data.irq.shareable = ACPI_SHARED;
 
 		resource->res4.type = ACPI_RESOURCE_TYPE_END_TAG;
-		resource->res4.length = sizeof(struct acpi_resource);
-	}
+		resource->res4.length = माप(काष्ठा acpi_resource);
+	पूर्ण
 	/* setup Type 2/3 resources */
-	else {
+	अन्यथा अणु
 		/* setup io resource */
 		resource->res1.type = ACPI_RESOURCE_TYPE_IO;
-		resource->res1.length = sizeof(struct acpi_resource);
-		memcpy(&resource->res1.data.io, &ioport->io1,
-				sizeof(struct acpi_resource_io));
+		resource->res1.length = माप(काष्ठा acpi_resource);
+		स_नकल(&resource->res1.data.io, &ioport->io1,
+				माप(काष्ठा acpi_resource_io));
 
 		/* setup irq resource */
 		resource->res2.type = ACPI_RESOURCE_TYPE_IRQ;
-		resource->res2.length = sizeof(struct acpi_resource);
-		memcpy(&resource->res2.data.irq, &irq->irq,
-				sizeof(struct acpi_resource_irq));
+		resource->res2.length = माप(काष्ठा acpi_resource);
+		स_नकल(&resource->res2.data.irq, &irq->irq,
+				माप(काष्ठा acpi_resource_irq));
 		/* we requested a shared irq */
 		resource->res2.data.irq.shareable = ACPI_SHARED;
 
 		resource->res3.type = ACPI_RESOURCE_TYPE_END_TAG;
-		resource->res3.length = sizeof(struct acpi_resource);
-	}
+		resource->res3.length = माप(काष्ठा acpi_resource);
+	पूर्ण
 
 	/* Attempt to set the resource */
-	dprintk("Evaluating _SRS\n");
+	dprपूर्णांकk("Evaluating _SRS\n");
 	status = acpi_set_current_resources(device->handle, &buffer);
 
-	/* check for total failure */
-	if (ACPI_FAILURE(status)) {
+	/* check क्रम total failure */
+	अगर (ACPI_FAILURE(status)) अणु
 		pr_err("Error evaluating _SRS\n");
 		result = -ENODEV;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	/* Necessary device initializations calls (from sonypi) */
 	sony_pic_call1(0x82);
@@ -4571,352 +4572,352 @@ static int sony_pic_enable(struct acpi_device *device,
 	sony_pic_call1(compat ? 0x92 : 0x82);
 
 end:
-	kfree(resource);
-	return result;
-}
+	kमुक्त(resource);
+	वापस result;
+पूर्ण
 
 /*****************
  *
  * ISR: some event is available
  *
  *****************/
-static irqreturn_t sony_pic_irq(int irq, void *dev_id)
-{
-	int i, j;
+अटल irqवापस_t sony_pic_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	पूर्णांक i, j;
 	u8 ev = 0;
 	u8 data_mask = 0;
 	u8 device_event = 0;
 
-	struct sony_pic_dev *dev = (struct sony_pic_dev *) dev_id;
+	काष्ठा sony_pic_dev *dev = (काष्ठा sony_pic_dev *) dev_id;
 
 	ev = inb_p(dev->cur_ioport->io1.minimum);
-	if (dev->cur_ioport->io2.minimum)
+	अगर (dev->cur_ioport->io2.minimum)
 		data_mask = inb_p(dev->cur_ioport->io2.minimum);
-	else
+	अन्यथा
 		data_mask = inb_p(dev->cur_ioport->io1.minimum +
 				dev->evport_offset);
 
-	dprintk("event ([%.2x] [%.2x]) at port 0x%.4x(+0x%.2x)\n",
+	dprपूर्णांकk("event ([%.2x] [%.2x]) at port 0x%.4x(+0x%.2x)\n",
 			ev, data_mask, dev->cur_ioport->io1.minimum,
 			dev->evport_offset);
 
-	if (ev == 0x00 || ev == 0xff)
-		return IRQ_HANDLED;
+	अगर (ev == 0x00 || ev == 0xff)
+		वापस IRQ_HANDLED;
 
-	for (i = 0; dev->event_types[i].mask; i++) {
+	क्रम (i = 0; dev->event_types[i].mask; i++) अणु
 
-		if ((data_mask & dev->event_types[i].data) !=
+		अगर ((data_mask & dev->event_types[i].data) !=
 		    dev->event_types[i].data)
-			continue;
+			जारी;
 
-		if (!(mask & dev->event_types[i].mask))
-			continue;
+		अगर (!(mask & dev->event_types[i].mask))
+			जारी;
 
-		for (j = 0; dev->event_types[i].events[j].event; j++) {
-			if (ev == dev->event_types[i].events[j].data) {
+		क्रम (j = 0; dev->event_types[i].events[j].event; j++) अणु
+			अगर (ev == dev->event_types[i].events[j].data) अणु
 				device_event =
 					dev->event_types[i].events[j].event;
 				/* some events may require ignoring */
-				if (!device_event)
-					return IRQ_HANDLED;
-				goto found;
-			}
-		}
-	}
+				अगर (!device_event)
+					वापस IRQ_HANDLED;
+				जाओ found;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	/* Still not able to decode the event try to pass
 	 * it over to the minidriver
 	 */
-	if (dev->handle_irq && dev->handle_irq(data_mask, ev) == 0)
-		return IRQ_HANDLED;
+	अगर (dev->handle_irq && dev->handle_irq(data_mask, ev) == 0)
+		वापस IRQ_HANDLED;
 
-	dprintk("unknown event ([%.2x] [%.2x]) at port 0x%.4x(+0x%.2x)\n",
+	dprपूर्णांकk("unknown event ([%.2x] [%.2x]) at port 0x%.4x(+0x%.2x)\n",
 			ev, data_mask, dev->cur_ioport->io1.minimum,
 			dev->evport_offset);
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 
 found:
 	sony_laptop_report_input_event(device_event);
 	sonypi_compat_report_event(device_event);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*****************
  *
  *  ACPI driver
  *
  *****************/
-static int sony_pic_remove(struct acpi_device *device)
-{
-	struct sony_pic_ioport *io, *tmp_io;
-	struct sony_pic_irq *irq, *tmp_irq;
+अटल पूर्णांक sony_pic_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा sony_pic_ioport *io, *पंचांगp_io;
+	काष्ठा sony_pic_irq *irq, *पंचांगp_irq;
 
-	if (sony_pic_disable(device)) {
+	अगर (sony_pic_disable(device)) अणु
 		pr_err("Couldn't disable device\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	free_irq(spic_dev.cur_irq->irq.interrupts[0], &spic_dev);
+	मुक्त_irq(spic_dev.cur_irq->irq.पूर्णांकerrupts[0], &spic_dev);
 	release_region(spic_dev.cur_ioport->io1.minimum,
 			spic_dev.cur_ioport->io1.address_length);
-	if (spic_dev.cur_ioport->io2.minimum)
+	अगर (spic_dev.cur_ioport->io2.minimum)
 		release_region(spic_dev.cur_ioport->io2.minimum,
 				spic_dev.cur_ioport->io2.address_length);
 
-	sonypi_compat_exit();
+	sonypi_compat_निकास();
 
-	sony_laptop_remove_input();
+	sony_laptop_हटाओ_input();
 
 	/* pf attrs */
-	sysfs_remove_group(&sony_pf_device->dev.kobj, &spic_attribute_group);
-	sony_pf_remove();
+	sysfs_हटाओ_group(&sony_pf_device->dev.kobj, &spic_attribute_group);
+	sony_pf_हटाओ();
 
-	list_for_each_entry_safe(io, tmp_io, &spic_dev.ioports, list) {
+	list_क्रम_each_entry_safe(io, पंचांगp_io, &spic_dev.ioports, list) अणु
 		list_del(&io->list);
-		kfree(io);
-	}
-	list_for_each_entry_safe(irq, tmp_irq, &spic_dev.interrupts, list) {
+		kमुक्त(io);
+	पूर्ण
+	list_क्रम_each_entry_safe(irq, पंचांगp_irq, &spic_dev.पूर्णांकerrupts, list) अणु
 		list_del(&irq->list);
-		kfree(irq);
-	}
-	spic_dev.cur_ioport = NULL;
-	spic_dev.cur_irq = NULL;
+		kमुक्त(irq);
+	पूर्ण
+	spic_dev.cur_ioport = शून्य;
+	spic_dev.cur_irq = शून्य;
 
-	dprintk(SONY_PIC_DRIVER_NAME " removed.\n");
-	return 0;
-}
+	dprपूर्णांकk(SONY_PIC_DRIVER_NAME " removed.\n");
+	वापस 0;
+पूर्ण
 
-static int sony_pic_add(struct acpi_device *device)
-{
-	int result;
-	struct sony_pic_ioport *io, *tmp_io;
-	struct sony_pic_irq *irq, *tmp_irq;
+अटल पूर्णांक sony_pic_add(काष्ठा acpi_device *device)
+अणु
+	पूर्णांक result;
+	काष्ठा sony_pic_ioport *io, *पंचांगp_io;
+	काष्ठा sony_pic_irq *irq, *पंचांगp_irq;
 
 	spic_dev.acpi_dev = device;
-	strcpy(acpi_device_class(device), "sony/hotkey");
+	म_नकल(acpi_device_class(device), "sony/hotkey");
 	sony_pic_detect_device_type(&spic_dev);
 	mutex_init(&spic_dev.lock);
 
-	/* read _PRS resources */
+	/* पढ़ो _PRS resources */
 	result = sony_pic_possible_resources(device);
-	if (result) {
+	अगर (result) अणु
 		pr_err("Unable to read possible resources\n");
-		goto err_free_resources;
-	}
+		जाओ err_मुक्त_resources;
+	पूर्ण
 
-	/* setup input devices and helper fifo */
+	/* setup input devices and helper fअगरo */
 	result = sony_laptop_setup_input(device);
-	if (result) {
+	अगर (result) अणु
 		pr_err("Unable to create input devices\n");
-		goto err_free_resources;
-	}
+		जाओ err_मुक्त_resources;
+	पूर्ण
 
 	result = sonypi_compat_init();
-	if (result)
-		goto err_remove_input;
+	अगर (result)
+		जाओ err_हटाओ_input;
 
 	/* request io port */
-	list_for_each_entry_reverse(io, &spic_dev.ioports, list) {
-		if (request_region(io->io1.minimum, io->io1.address_length,
-					"Sony Programmable I/O Device")) {
-			dprintk("I/O port1: 0x%.4x (0x%.4x) + 0x%.2x\n",
+	list_क्रम_each_entry_reverse(io, &spic_dev.ioports, list) अणु
+		अगर (request_region(io->io1.minimum, io->io1.address_length,
+					"Sony Programmable I/O Device")) अणु
+			dprपूर्णांकk("I/O port1: 0x%.4x (0x%.4x) + 0x%.2x\n",
 					io->io1.minimum, io->io1.maximum,
 					io->io1.address_length);
 			/* Type 1 have 2 ioports */
-			if (io->io2.minimum) {
-				if (request_region(io->io2.minimum,
+			अगर (io->io2.minimum) अणु
+				अगर (request_region(io->io2.minimum,
 						io->io2.address_length,
-						"Sony Programmable I/O Device")) {
-					dprintk("I/O port2: 0x%.4x (0x%.4x) + 0x%.2x\n",
+						"Sony Programmable I/O Device")) अणु
+					dprपूर्णांकk("I/O port2: 0x%.4x (0x%.4x) + 0x%.2x\n",
 							io->io2.minimum, io->io2.maximum,
 							io->io2.address_length);
 					spic_dev.cur_ioport = io;
-					break;
-				}
-				else {
-					dprintk("Unable to get I/O port2: "
+					अवरोध;
+				पूर्ण
+				अन्यथा अणु
+					dprपूर्णांकk("Unable to get I/O port2: "
 							"0x%.4x (0x%.4x) + 0x%.2x\n",
 							io->io2.minimum, io->io2.maximum,
 							io->io2.address_length);
 					release_region(io->io1.minimum,
 							io->io1.address_length);
-				}
-			}
-			else {
+				पूर्ण
+			पूर्ण
+			अन्यथा अणु
 				spic_dev.cur_ioport = io;
-				break;
-			}
-		}
-	}
-	if (!spic_dev.cur_ioport) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (!spic_dev.cur_ioport) अणु
 		pr_err("Failed to request_region\n");
 		result = -ENODEV;
-		goto err_remove_compat;
-	}
+		जाओ err_हटाओ_compat;
+	पूर्ण
 
 	/* request IRQ */
-	list_for_each_entry_reverse(irq, &spic_dev.interrupts, list) {
-		if (!request_irq(irq->irq.interrupts[0], sony_pic_irq,
-					0, "sony-laptop", &spic_dev)) {
-			dprintk("IRQ: %d - triggering: %d - "
+	list_क्रम_each_entry_reverse(irq, &spic_dev.पूर्णांकerrupts, list) अणु
+		अगर (!request_irq(irq->irq.पूर्णांकerrupts[0], sony_pic_irq,
+					0, "sony-laptop", &spic_dev)) अणु
+			dprपूर्णांकk("IRQ: %d - triggering: %d - "
 					"polarity: %d - shr: %d\n",
-					irq->irq.interrupts[0],
+					irq->irq.पूर्णांकerrupts[0],
 					irq->irq.triggering,
 					irq->irq.polarity,
 					irq->irq.shareable);
 			spic_dev.cur_irq = irq;
-			break;
-		}
-	}
-	if (!spic_dev.cur_irq) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!spic_dev.cur_irq) अणु
 		pr_err("Failed to request_irq\n");
 		result = -ENODEV;
-		goto err_release_region;
-	}
+		जाओ err_release_region;
+	पूर्ण
 
 	/* set resource status _SRS */
 	result = sony_pic_enable(device, spic_dev.cur_ioport, spic_dev.cur_irq);
-	if (result) {
+	अगर (result) अणु
 		pr_err("Couldn't enable device\n");
-		goto err_free_irq;
-	}
+		जाओ err_मुक्त_irq;
+	पूर्ण
 
-	spic_dev.bluetooth_power = -1;
+	spic_dev.bluetooth_घातer = -1;
 	/* create device attributes */
 	result = sony_pf_add();
-	if (result)
-		goto err_disable_device;
+	अगर (result)
+		जाओ err_disable_device;
 
 	result = sysfs_create_group(&sony_pf_device->dev.kobj, &spic_attribute_group);
-	if (result)
-		goto err_remove_pf;
+	अगर (result)
+		जाओ err_हटाओ_pf;
 
 	pr_info("SPIC setup done.\n");
-	return 0;
+	वापस 0;
 
-err_remove_pf:
-	sony_pf_remove();
+err_हटाओ_pf:
+	sony_pf_हटाओ();
 
 err_disable_device:
 	sony_pic_disable(device);
 
-err_free_irq:
-	free_irq(spic_dev.cur_irq->irq.interrupts[0], &spic_dev);
+err_मुक्त_irq:
+	मुक्त_irq(spic_dev.cur_irq->irq.पूर्णांकerrupts[0], &spic_dev);
 
 err_release_region:
 	release_region(spic_dev.cur_ioport->io1.minimum,
 			spic_dev.cur_ioport->io1.address_length);
-	if (spic_dev.cur_ioport->io2.minimum)
+	अगर (spic_dev.cur_ioport->io2.minimum)
 		release_region(spic_dev.cur_ioport->io2.minimum,
 				spic_dev.cur_ioport->io2.address_length);
 
-err_remove_compat:
-	sonypi_compat_exit();
+err_हटाओ_compat:
+	sonypi_compat_निकास();
 
-err_remove_input:
-	sony_laptop_remove_input();
+err_हटाओ_input:
+	sony_laptop_हटाओ_input();
 
-err_free_resources:
-	list_for_each_entry_safe(io, tmp_io, &spic_dev.ioports, list) {
+err_मुक्त_resources:
+	list_क्रम_each_entry_safe(io, पंचांगp_io, &spic_dev.ioports, list) अणु
 		list_del(&io->list);
-		kfree(io);
-	}
-	list_for_each_entry_safe(irq, tmp_irq, &spic_dev.interrupts, list) {
+		kमुक्त(io);
+	पूर्ण
+	list_क्रम_each_entry_safe(irq, पंचांगp_irq, &spic_dev.पूर्णांकerrupts, list) अणु
 		list_del(&irq->list);
-		kfree(irq);
-	}
-	spic_dev.cur_ioport = NULL;
-	spic_dev.cur_irq = NULL;
+		kमुक्त(irq);
+	पूर्ण
+	spic_dev.cur_ioport = शून्य;
+	spic_dev.cur_irq = शून्य;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int sony_pic_suspend(struct device *dev)
-{
-	if (sony_pic_disable(to_acpi_device(dev)))
-		return -ENXIO;
-	return 0;
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक sony_pic_suspend(काष्ठा device *dev)
+अणु
+	अगर (sony_pic_disable(to_acpi_device(dev)))
+		वापस -ENXIO;
+	वापस 0;
+पूर्ण
 
-static int sony_pic_resume(struct device *dev)
-{
+अटल पूर्णांक sony_pic_resume(काष्ठा device *dev)
+अणु
 	sony_pic_enable(to_acpi_device(dev),
 			spic_dev.cur_ioport, spic_dev.cur_irq);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(sony_pic_pm, sony_pic_suspend, sony_pic_resume);
+अटल SIMPLE_DEV_PM_OPS(sony_pic_pm, sony_pic_suspend, sony_pic_resume);
 
-static const struct acpi_device_id sony_pic_device_ids[] = {
-	{SONY_PIC_HID, 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id sony_pic_device_ids[] = अणु
+	अणुSONY_PIC_HID, 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 
-static struct acpi_driver sony_pic_driver = {
+अटल काष्ठा acpi_driver sony_pic_driver = अणु
 	.name = SONY_PIC_DRIVER_NAME,
 	.class = SONY_PIC_CLASS,
 	.ids = sony_pic_device_ids,
 	.owner = THIS_MODULE,
-	.ops = {
+	.ops = अणु
 		.add = sony_pic_add,
-		.remove = sony_pic_remove,
-		},
+		.हटाओ = sony_pic_हटाओ,
+		पूर्ण,
 	.drv.pm = &sony_pic_pm,
-};
+पूर्ण;
 
-static const struct dmi_system_id sonypi_dmi_table[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id sonypi_dmi_table[] __initस्थिर = अणु
+	अणु
 		.ident = "Sony Vaio",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "PCG-"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.ident = "Sony Vaio",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Sony Corporation"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "VGN-"),
-		},
-	},
-	{ }
-};
+		पूर्ण,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int __init sony_laptop_init(void)
-{
-	int result;
+अटल पूर्णांक __init sony_laptop_init(व्योम)
+अणु
+	पूर्णांक result;
 
-	if (!no_spic && dmi_check_system(sonypi_dmi_table)) {
-		result = acpi_bus_register_driver(&sony_pic_driver);
-		if (result) {
+	अगर (!no_spic && dmi_check_प्रणाली(sonypi_dmi_table)) अणु
+		result = acpi_bus_रेजिस्टर_driver(&sony_pic_driver);
+		अगर (result) अणु
 			pr_err("Unable to register SPIC driver\n");
-			goto out;
-		}
-		spic_drv_registered = 1;
-	}
+			जाओ out;
+		पूर्ण
+		spic_drv_रेजिस्टरed = 1;
+	पूर्ण
 
-	result = acpi_bus_register_driver(&sony_nc_driver);
-	if (result) {
+	result = acpi_bus_रेजिस्टर_driver(&sony_nc_driver);
+	अगर (result) अणु
 		pr_err("Unable to register SNC driver\n");
-		goto out_unregister_pic;
-	}
+		जाओ out_unरेजिस्टर_pic;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_unregister_pic:
-	if (spic_drv_registered)
-		acpi_bus_unregister_driver(&sony_pic_driver);
+out_unरेजिस्टर_pic:
+	अगर (spic_drv_रेजिस्टरed)
+		acpi_bus_unरेजिस्टर_driver(&sony_pic_driver);
 out:
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void __exit sony_laptop_exit(void)
-{
-	acpi_bus_unregister_driver(&sony_nc_driver);
-	if (spic_drv_registered)
-		acpi_bus_unregister_driver(&sony_pic_driver);
-}
+अटल व्योम __निकास sony_laptop_निकास(व्योम)
+अणु
+	acpi_bus_unरेजिस्टर_driver(&sony_nc_driver);
+	अगर (spic_drv_रेजिस्टरed)
+		acpi_bus_unरेजिस्टर_driver(&sony_pic_driver);
+पूर्ण
 
 module_init(sony_laptop_init);
-module_exit(sony_laptop_exit);
+module_निकास(sony_laptop_निकास);

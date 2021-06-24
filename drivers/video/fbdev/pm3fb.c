@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
- *  linux/drivers/video/pm3fb.c -- 3DLabs Permedia3 frame buffer device
+ *  linux/drivers/video/pm3fb.c -- 3DLअसल Permedia3 frame buffer device
  *
- *  Copyright (C) 2001 Romain Dolbeau <romain@dolbeau.org>.
+ *  Copyright (C) 2001 Roमुख्य Dolbeau <roमुख्य@करोlbeau.org>.
  *
  *  Ported to 2.6 kernel on 1 May 2007 by Krzysztof Helt <krzysztof.h1@wp.pl>
  *	based on pm2fb.c
@@ -17,67 +18,67 @@
  *	Copyright (C) 1999 Jakub Jelinek (jakub@redhat.com)
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the main directory of this archive for
+ *  License. See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  *
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
 
-#include <video/pm3fb.h>
+#समावेश <video/pm3fb.h>
 
-#if !defined(CONFIG_PCI)
-#error "Only generic PCI cards supported."
-#endif
+#अगर !defined(CONFIG_PCI)
+#त्रुटि "Only generic PCI cards supported."
+#पूर्ण_अगर
 
-#undef PM3FB_MASTER_DEBUG
-#ifdef PM3FB_MASTER_DEBUG
-#define DPRINTK(a, b...)	\
-	printk(KERN_DEBUG "pm3fb: %s: " a, __func__ , ## b)
-#else
-#define DPRINTK(a, b...)	no_printk(a, ##b)
-#endif
+#अघोषित PM3FB_MASTER_DEBUG
+#अगर_घोषित PM3FB_MASTER_DEBUG
+#घोषणा DPRINTK(a, b...)	\
+	prपूर्णांकk(KERN_DEBUG "pm3fb: %s: " a, __func__ , ## b)
+#अन्यथा
+#घोषणा DPRINTK(a, b...)	no_prपूर्णांकk(a, ##b)
+#पूर्ण_अगर
 
-#define PM3_PIXMAP_SIZE	(2048 * 4)
+#घोषणा PM3_PIXMAP_SIZE	(2048 * 4)
 
 /*
  * Driver data
  */
-static int hwcursor = 1;
-static char *mode_option;
-static bool noaccel;
-static bool nomtrr;
+अटल पूर्णांक hwcursor = 1;
+अटल अक्षर *mode_option;
+अटल bool noaccel;
+अटल bool nomtrr;
 
 /*
- * This structure defines the hardware state of the graphics card. Normally
+ * This काष्ठाure defines the hardware state of the graphics card. Normally
  * you place this in a header file in linux/include/video. This file usually
- * also includes register information. That allows other driver subsystems
+ * also includes रेजिस्टर inक्रमmation. That allows other driver subप्रणालीs
  * and userland applications the ability to use the same header file to
- * avoid duplicate work and easy porting of software.
+ * aव्योम duplicate work and easy porting of software.
  */
-struct pm3_par {
-	unsigned char	__iomem *v_regs;/* virtual address of p_regs */
-	u32		video;		/* video flags before blanking */
+काष्ठा pm3_par अणु
+	अचिन्हित अक्षर	__iomem *v_regs;/* भव address of p_regs */
+	u32		video;		/* video flags beक्रमe blanking */
 	u32		base;		/* screen base in 128 bits unit */
 	u32		palette[16];
-	int		wc_cookie;
-};
+	पूर्णांक		wc_cookie;
+पूर्ण;
 
 /*
- * Here we define the default structs fb_fix_screeninfo and fb_var_screeninfo
- * if we don't use modedb. If we do use modedb see pm3fb_init how to use it
- * to get a fb_var_screeninfo. Otherwise define a default var as well.
+ * Here we define the शेष काष्ठाs fb_fix_screeninfo and fb_var_screeninfo
+ * अगर we करोn't use modedb. If we करो use modedb see pm3fb_init how to use it
+ * to get a fb_var_screeninfo. Otherwise define a शेष var as well.
  */
-static struct fb_fix_screeninfo pm3fb_fix = {
+अटल काष्ठा fb_fix_screeninfo pm3fb_fix = अणु
 	.id =		"Permedia3",
 	.type =		FB_TYPE_PACKED_PIXELS,
 	.visual =	FB_VISUAL_PSEUDOCOLOR,
@@ -85,41 +86,41 @@ static struct fb_fix_screeninfo pm3fb_fix = {
 	.ypanstep =	1,
 	.ywrapstep =	0,
 	.accel =	FB_ACCEL_3DLABS_PERMEDIA3,
-};
+पूर्ण;
 
 /*
  * Utility functions
  */
 
-static inline u32 PM3_READ_REG(struct pm3_par *par, s32 off)
-{
-	return fb_readl(par->v_regs + off);
-}
+अटल अंतरभूत u32 PM3_READ_REG(काष्ठा pm3_par *par, s32 off)
+अणु
+	वापस fb_पढ़ोl(par->v_regs + off);
+पूर्ण
 
-static inline void PM3_WRITE_REG(struct pm3_par *par, s32 off, u32 v)
-{
-	fb_writel(v, par->v_regs + off);
-}
+अटल अंतरभूत व्योम PM3_WRITE_REG(काष्ठा pm3_par *par, s32 off, u32 v)
+अणु
+	fb_ग_लिखोl(v, par->v_regs + off);
+पूर्ण
 
-static inline void PM3_WAIT(struct pm3_par *par, u32 n)
-{
-	while (PM3_READ_REG(par, PM3InFIFOSpace) < n)
+अटल अंतरभूत व्योम PM3_WAIT(काष्ठा pm3_par *par, u32 n)
+अणु
+	जबतक (PM3_READ_REG(par, PM3InFIFOSpace) < n)
 		cpu_relax();
-}
+पूर्ण
 
-static inline void PM3_WRITE_DAC_REG(struct pm3_par *par, unsigned r, u8 v)
-{
+अटल अंतरभूत व्योम PM3_WRITE_DAC_REG(काष्ठा pm3_par *par, अचिन्हित r, u8 v)
+अणु
 	PM3_WAIT(par, 3);
 	PM3_WRITE_REG(par, PM3RD_IndexHigh, (r >> 8) & 0xff);
 	PM3_WRITE_REG(par, PM3RD_IndexLow, r & 0xff);
 	wmb();
 	PM3_WRITE_REG(par, PM3RD_IndexedData, v);
 	wmb();
-}
+पूर्ण
 
-static inline void pm3fb_set_color(struct pm3_par *par, unsigned char regno,
-			unsigned char r, unsigned char g, unsigned char b)
-{
+अटल अंतरभूत व्योम pm3fb_set_color(काष्ठा pm3_par *par, अचिन्हित अक्षर regno,
+			अचिन्हित अक्षर r, अचिन्हित अक्षर g, अचिन्हित अक्षर b)
+अणु
 	PM3_WAIT(par, 4);
 	PM3_WRITE_REG(par, PM3RD_PaletteWriteAddress, regno);
 	wmb();
@@ -129,91 +130,91 @@ static inline void pm3fb_set_color(struct pm3_par *par, unsigned char regno,
 	wmb();
 	PM3_WRITE_REG(par, PM3RD_PaletteData, b);
 	wmb();
-}
+पूर्ण
 
-static void pm3fb_clear_colormap(struct pm3_par *par,
-			unsigned char r, unsigned char g, unsigned char b)
-{
-	int i;
+अटल व्योम pm3fb_clear_colormap(काष्ठा pm3_par *par,
+			अचिन्हित अक्षर r, अचिन्हित अक्षर g, अचिन्हित अक्षर b)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 256 ; i++)
+	क्रम (i = 0; i < 256 ; i++)
 		pm3fb_set_color(par, i, r, g, b);
 
-}
+पूर्ण
 
-/* Calculating various clock parameters */
-static void pm3fb_calculate_clock(unsigned long reqclock,
-				unsigned char *prescale,
-				unsigned char *feedback,
-				unsigned char *postscale)
-{
-	int f, pre, post;
-	unsigned long freq;
-	long freqerr = 1000;
-	long currerr;
+/* Calculating various घड़ी parameters */
+अटल व्योम pm3fb_calculate_घड़ी(अचिन्हित दीर्घ reqघड़ी,
+				अचिन्हित अक्षर *prescale,
+				अचिन्हित अक्षर *feedback,
+				अचिन्हित अक्षर *postscale)
+अणु
+	पूर्णांक f, pre, post;
+	अचिन्हित दीर्घ freq;
+	दीर्घ freqerr = 1000;
+	दीर्घ currerr;
 
-	for (f = 1; f < 256; f++) {
-		for (pre = 1; pre < 256; pre++) {
-			for (post = 0; post < 5; post++) {
+	क्रम (f = 1; f < 256; f++) अणु
+		क्रम (pre = 1; pre < 256; pre++) अणु
+			क्रम (post = 0; post < 5; post++) अणु
 				freq = ((2*PM3_REF_CLOCK * f) >> post) / pre;
-				currerr = (reqclock > freq)
-					? reqclock - freq
-					: freq - reqclock;
-				if (currerr < freqerr) {
+				currerr = (reqघड़ी > freq)
+					? reqघड़ी - freq
+					: freq - reqघड़ी;
+				अगर (currerr < freqerr) अणु
 					freqerr = currerr;
 					*feedback = f;
 					*prescale = pre;
 					*postscale = post;
-				}
-			}
-		}
-	}
-}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline int pm3fb_depth(const struct fb_var_screeninfo *var)
-{
-	if (var->bits_per_pixel == 16)
-		return var->red.length + var->green.length
+अटल अंतरभूत पूर्णांक pm3fb_depth(स्थिर काष्ठा fb_var_screeninfo *var)
+अणु
+	अगर (var->bits_per_pixel == 16)
+		वापस var->red.length + var->green.length
 			+ var->blue.length;
 
-	return var->bits_per_pixel;
-}
+	वापस var->bits_per_pixel;
+पूर्ण
 
-static inline int pm3fb_shift_bpp(unsigned bpp, int v)
-{
-	switch (bpp) {
-	case 8:
-		return (v >> 4);
-	case 16:
-		return (v >> 3);
-	case 32:
-		return (v >> 2);
-	}
+अटल अंतरभूत पूर्णांक pm3fb_shअगरt_bpp(अचिन्हित bpp, पूर्णांक v)
+अणु
+	चयन (bpp) अणु
+	हाल 8:
+		वापस (v >> 4);
+	हाल 16:
+		वापस (v >> 3);
+	हाल 32:
+		वापस (v >> 2);
+	पूर्ण
 	DPRINTK("Unsupported depth %u\n", bpp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* acceleration */
-static int pm3fb_sync(struct fb_info *info)
-{
-	struct pm3_par *par = info->par;
+अटल पूर्णांक pm3fb_sync(काष्ठा fb_info *info)
+अणु
+	काष्ठा pm3_par *par = info->par;
 
 	PM3_WAIT(par, 2);
 	PM3_WRITE_REG(par, PM3FilterMode, PM3FilterModeSync);
 	PM3_WRITE_REG(par, PM3Sync, 0);
 	mb();
-	do {
-		while ((PM3_READ_REG(par, PM3OutFIFOWords)) == 0)
+	करो अणु
+		जबतक ((PM3_READ_REG(par, PM3OutFIFOWords)) == 0)
 			cpu_relax();
-	} while ((PM3_READ_REG(par, PM3OutputFifo)) != PM3Sync_Tag);
+	पूर्ण जबतक ((PM3_READ_REG(par, PM3OutputFअगरo)) != PM3Sync_Tag);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pm3fb_init_engine(struct fb_info *info)
-{
-	struct pm3_par *par = info->par;
-	const u32 width = (info->var.xres_virtual + 7) & ~7;
+अटल व्योम pm3fb_init_engine(काष्ठा fb_info *info)
+अणु
+	काष्ठा pm3_par *par = info->par;
+	स्थिर u32 width = (info->var.xres_भव + 7) & ~7;
 
 	PM3_WAIT(par, 50);
 	PM3_WRITE_REG(par, PM3FilterMode, PM3FilterModeSync);
@@ -250,7 +251,7 @@ static void pm3fb_init_engine(struct fb_info *info)
 	PM3_WRITE_REG(par, PM3DitherMode, 0x0);
 	PM3_WRITE_REG(par, PM3LogicalOpMode, 0x0);
 	PM3_WRITE_REG(par, PM3RouterMode, 0x0);
-	PM3_WRITE_REG(par, PM3Window, 0x0);
+	PM3_WRITE_REG(par, PM3Winकरोw, 0x0);
 
 	PM3_WRITE_REG(par, PM3Config2D, 0x0);
 
@@ -283,35 +284,35 @@ static void pm3fb_init_engine(struct fb_info *info)
 			   PM3FBSourceReadMode_ReadEnable);
 
 	PM3_WAIT(par, 2);
-	{
-		/* invert bits in bitmask */
-		unsigned long rm = 1 | (3 << 7);
-		switch (info->var.bits_per_pixel) {
-		case 8:
+	अणु
+		/* invert bits in biपंचांगask */
+		अचिन्हित दीर्घ rm = 1 | (3 << 7);
+		चयन (info->var.bits_per_pixel) अणु
+		हाल 8:
 			PM3_WRITE_REG(par, PM3PixelSize,
 					   PM3PixelSize_GLOBAL_8BIT);
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 			rm |= 3 << 15;
-#endif
-			break;
-		case 16:
+#पूर्ण_अगर
+			अवरोध;
+		हाल 16:
 			PM3_WRITE_REG(par, PM3PixelSize,
 					   PM3PixelSize_GLOBAL_16BIT);
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 			rm |= 2 << 15;
-#endif
-			break;
-		case 32:
+#पूर्ण_अगर
+			अवरोध;
+		हाल 32:
 			PM3_WRITE_REG(par, PM3PixelSize,
 					   PM3PixelSize_GLOBAL_32BIT);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DPRINTK("Unsupported depth %d\n",
 				info->var.bits_per_pixel);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		PM3_WRITE_REG(par, PM3RasterizerMode, rm);
-	}
+	पूर्ण
 
 	PM3_WAIT(par, 20);
 	PM3_WRITE_REG(par, PM3FBSoftwareWriteMask, 0xffffffff);
@@ -326,34 +327,34 @@ static void pm3fb_init_engine(struct fb_info *info)
 			   PM3FBWriteBufferWidth_Width(width));
 
 	PM3_WRITE_REG(par, PM3SizeOfFramebuffer, 0x0);
-	{
+	अणु
 		/* size in lines of FB */
-		unsigned long sofb = info->screen_size /
+		अचिन्हित दीर्घ sofb = info->screen_size /
 			info->fix.line_length;
-		if (sofb > 4095)
+		अगर (sofb > 4095)
 			PM3_WRITE_REG(par, PM3SizeOfFramebuffer, 4095);
-		else
+		अन्यथा
 			PM3_WRITE_REG(par, PM3SizeOfFramebuffer, sofb);
 
-		switch (info->var.bits_per_pixel) {
-		case 8:
+		चयन (info->var.bits_per_pixel) अणु
+		हाल 8:
 			PM3_WRITE_REG(par, PM3DitherMode,
 					   (1 << 10) | (2 << 3));
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			PM3_WRITE_REG(par, PM3DitherMode,
 					   (1 << 10) | (1 << 3));
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			PM3_WRITE_REG(par, PM3DitherMode,
 					   (1 << 10) | (0 << 3));
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DPRINTK("Unsupported depth %d\n",
 				info->var.bits_per_pixel);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	PM3_WRITE_REG(par, PM3dXDom, 0x0);
 	PM3_WRITE_REG(par, PM3dXSub, 0x0);
@@ -370,47 +371,47 @@ static void pm3fb_init_engine(struct fb_info *info)
 	PM3_WRITE_REG(par, PM3LBWriteMode, 0x0);
 
 	pm3fb_sync(info);
-}
+पूर्ण
 
-static void pm3fb_fillrect(struct fb_info *info,
-				const struct fb_fillrect *region)
-{
-	struct pm3_par *par = info->par;
-	struct fb_fillrect modded;
-	int vxres, vyres;
-	int rop;
+अटल व्योम pm3fb_fillrect(काष्ठा fb_info *info,
+				स्थिर काष्ठा fb_fillrect *region)
+अणु
+	काष्ठा pm3_par *par = info->par;
+	काष्ठा fb_fillrect modded;
+	पूर्णांक vxres, vyres;
+	पूर्णांक rop;
 	u32 color = (info->fix.visual == FB_VISUAL_TRUECOLOR) ?
-		((u32 *)info->pseudo_palette)[region->color] : region->color;
+		((u32 *)info->pseuकरो_palette)[region->color] : region->color;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return;
-	if (info->flags & FBINFO_HWACCEL_DISABLED) {
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस;
+	अगर (info->flags & FBINFO_HWACCEL_DISABLED) अणु
 		cfb_fillrect(info, region);
-		return;
-	}
-	if (region->rop == ROP_COPY )
+		वापस;
+	पूर्ण
+	अगर (region->rop == ROP_COPY )
 		rop = PM3Config2D_ForegroundROP(0x3); /* GXcopy */
-	else
+	अन्यथा
 		rop = PM3Config2D_ForegroundROP(0x6) | /* GXxor */
 			PM3Config2D_FBDestReadEnable;
 
-	vxres = info->var.xres_virtual;
-	vyres = info->var.yres_virtual;
+	vxres = info->var.xres_भव;
+	vyres = info->var.yres_भव;
 
-	memcpy(&modded, region, sizeof(struct fb_fillrect));
+	स_नकल(&modded, region, माप(काष्ठा fb_fillrect));
 
-	if (!modded.width || !modded.height ||
+	अगर (!modded.width || !modded.height ||
 	    modded.dx >= vxres || modded.dy >= vyres)
-		return;
+		वापस;
 
-	if (modded.dx + modded.width  > vxres)
+	अगर (modded.dx + modded.width  > vxres)
 		modded.width  = vxres - modded.dx;
-	if (modded.dy + modded.height > vyres)
+	अगर (modded.dy + modded.height > vyres)
 		modded.height = vyres - modded.dy;
 
-	if (info->var.bits_per_pixel == 8)
+	अगर (info->var.bits_per_pixel == 8)
 		color |= color << 8;
-	if (info->var.bits_per_pixel <= 16)
+	अगर (info->var.bits_per_pixel <= 16)
 		color |= color << 16;
 
 	PM3_WAIT(par, 4);
@@ -434,40 +435,40 @@ static void pm3fb_fillrect(struct fb_info *info,
 		      PM3Render2D_SpanOperation |
 		      PM3Render2D_Width(modded.width) |
 		      PM3Render2D_Height(modded.height));
-}
+पूर्ण
 
-static void pm3fb_copyarea(struct fb_info *info,
-				const struct fb_copyarea *area)
-{
-	struct pm3_par *par = info->par;
-	struct fb_copyarea modded;
+अटल व्योम pm3fb_copyarea(काष्ठा fb_info *info,
+				स्थिर काष्ठा fb_copyarea *area)
+अणु
+	काष्ठा pm3_par *par = info->par;
+	काष्ठा fb_copyarea modded;
 	u32 vxres, vyres;
-	int x_align, o_x, o_y;
+	पूर्णांक x_align, o_x, o_y;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return;
-	if (info->flags & FBINFO_HWACCEL_DISABLED) {
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस;
+	अगर (info->flags & FBINFO_HWACCEL_DISABLED) अणु
 		cfb_copyarea(info, area);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memcpy(&modded, area, sizeof(struct fb_copyarea));
+	स_नकल(&modded, area, माप(काष्ठा fb_copyarea));
 
-	vxres = info->var.xres_virtual;
-	vyres = info->var.yres_virtual;
+	vxres = info->var.xres_भव;
+	vyres = info->var.yres_भव;
 
-	if (!modded.width || !modded.height ||
+	अगर (!modded.width || !modded.height ||
 	    modded.sx >= vxres || modded.sy >= vyres ||
 	    modded.dx >= vxres || modded.dy >= vyres)
-		return;
+		वापस;
 
-	if (modded.sx + modded.width > vxres)
+	अगर (modded.sx + modded.width > vxres)
 		modded.width = vxres - modded.sx;
-	if (modded.dx + modded.width > vxres)
+	अगर (modded.dx + modded.width > vxres)
 		modded.width = vxres - modded.dx;
-	if (modded.sy + modded.height > vyres)
+	अगर (modded.sy + modded.height > vyres)
 		modded.height = vyres - modded.sy;
-	if (modded.dy + modded.height > vyres)
+	अगर (modded.dy + modded.height > vyres)
 		modded.height = vyres - modded.dy;
 
 	o_x = modded.sx - modded.dx;	/*(sx > dx ) ? (sx - dx) : (dx - sx); */
@@ -506,45 +507,45 @@ static void pm3fb_copyarea(struct fb_info *info,
 			PM3Render2D_FBSourceReadEnable |
 			PM3Render2D_Width(modded.width + x_align) |
 			PM3Render2D_Height(modded.height));
-}
+पूर्ण
 
-static void pm3fb_imageblit(struct fb_info *info, const struct fb_image *image)
-{
-	struct pm3_par *par = info->par;
+अटल व्योम pm3fb_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
+अणु
+	काष्ठा pm3_par *par = info->par;
 	u32 height = image->height;
 	u32 fgx, bgx;
-	const u32 *src = (const u32 *)image->data;
+	स्थिर u32 *src = (स्थिर u32 *)image->data;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return;
-	if (info->flags & FBINFO_HWACCEL_DISABLED) {
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस;
+	अगर (info->flags & FBINFO_HWACCEL_DISABLED) अणु
 		cfb_imageblit(info, image);
-		return;
-	}
-	switch (info->fix.visual) {
-	case FB_VISUAL_PSEUDOCOLOR:
+		वापस;
+	पूर्ण
+	चयन (info->fix.visual) अणु
+	हाल FB_VISUAL_PSEUDOCOLOR:
 		fgx = image->fg_color;
 		bgx = image->bg_color;
-		break;
-	case FB_VISUAL_TRUECOLOR:
-	default:
+		अवरोध;
+	हाल FB_VISUAL_TRUECOLOR:
+	शेष:
 		fgx = par->palette[image->fg_color];
 		bgx = par->palette[image->bg_color];
-		break;
-	}
-	if (image->depth != 1) {
+		अवरोध;
+	पूर्ण
+	अगर (image->depth != 1) अणु
 		cfb_imageblit(info, image);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (info->var.bits_per_pixel == 8) {
+	अगर (info->var.bits_per_pixel == 8) अणु
 		fgx |= fgx << 8;
 		bgx |= bgx << 8;
-	}
-	if (info->var.bits_per_pixel <= 16) {
+	पूर्ण
+	अगर (info->var.bits_per_pixel <= 16) अणु
 		fgx |= fgx << 16;
 		bgx |= bgx << 16;
-	}
+	पूर्ण
 
 	PM3_WAIT(par, 7);
 
@@ -576,90 +577,90 @@ static void pm3fb_imageblit(struct fb_info *info, const struct fb_image *image)
 			PM3Render2D_Height(image->height));
 
 
-	while (height--) {
-		int width = ((image->width + 7) >> 3)
+	जबतक (height--) अणु
+		पूर्णांक width = ((image->width + 7) >> 3)
 				+ info->pixmap.scan_align - 1;
 		width >>= 2;
 
-		while (width >= PM3_FIFO_SIZE) {
-			int i = PM3_FIFO_SIZE - 1;
+		जबतक (width >= PM3_FIFO_SIZE) अणु
+			पूर्णांक i = PM3_FIFO_SIZE - 1;
 
 			PM3_WAIT(par, PM3_FIFO_SIZE);
-			while (i--) {
+			जबतक (i--) अणु
 				PM3_WRITE_REG(par, PM3BitMaskPattern, *src);
 				src++;
-			}
+			पूर्ण
 			width -= PM3_FIFO_SIZE - 1;
-		}
+		पूर्ण
 
 		PM3_WAIT(par, width + 1);
-		while (width--) {
+		जबतक (width--) अणु
 			PM3_WRITE_REG(par, PM3BitMaskPattern, *src);
 			src++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 /* end of acceleration functions */
 
 /*
  *	Hardware Cursor support.
  */
-static const u8 cursor_bits_lookup[16] = {
+अटल स्थिर u8 cursor_bits_lookup[16] = अणु
 	0x00, 0x40, 0x10, 0x50, 0x04, 0x44, 0x14, 0x54,
 	0x01, 0x41, 0x11, 0x51, 0x05, 0x45, 0x15, 0x55
-};
+पूर्ण;
 
-static int pm3fb_cursor(struct fb_info *info, struct fb_cursor *cursor)
-{
-	struct pm3_par *par = info->par;
+अटल पूर्णांक pm3fb_cursor(काष्ठा fb_info *info, काष्ठा fb_cursor *cursor)
+अणु
+	काष्ठा pm3_par *par = info->par;
 	u8 mode;
 
-	if (!hwcursor)
-		return -EINVAL;	/* just to force soft_cursor() call */
+	अगर (!hwcursor)
+		वापस -EINVAL;	/* just to क्रमce soft_cursor() call */
 
 	/* Too large of a cursor or wrong bpp :-( */
-	if (cursor->image.width > 64 ||
+	अगर (cursor->image.width > 64 ||
 	    cursor->image.height > 64 ||
 	    cursor->image.depth > 1)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mode = PM3RD_CursorMode_TYPE_X;
-	if (cursor->enable)
+	अगर (cursor->enable)
 		 mode |= PM3RD_CursorMode_CURSOR_ENABLE;
 
 	PM3_WRITE_DAC_REG(par, PM3RD_CursorMode, mode);
 
 	/*
 	 * If the cursor is not be changed this means either we want the
-	 * current cursor state (if enable is set) or we want to query what
-	 * we can do with the cursor (if enable is not set)
+	 * current cursor state (अगर enable is set) or we want to query what
+	 * we can करो with the cursor (अगर enable is not set)
 	 */
-	if (!cursor->set)
-		return 0;
+	अगर (!cursor->set)
+		वापस 0;
 
-	if (cursor->set & FB_CUR_SETPOS) {
-		int x = cursor->image.dx - info->var.xoffset;
-		int y = cursor->image.dy - info->var.yoffset;
+	अगर (cursor->set & FB_CUR_SETPOS) अणु
+		पूर्णांक x = cursor->image.dx - info->var.xoffset;
+		पूर्णांक y = cursor->image.dy - info->var.yoffset;
 
 		PM3_WRITE_DAC_REG(par, PM3RD_CursorXLow, x & 0xff);
 		PM3_WRITE_DAC_REG(par, PM3RD_CursorXHigh, (x >> 8) & 0xf);
 		PM3_WRITE_DAC_REG(par, PM3RD_CursorYLow, y & 0xff);
 		PM3_WRITE_DAC_REG(par, PM3RD_CursorYHigh, (y >> 8) & 0xf);
-	}
+	पूर्ण
 
-	if (cursor->set & FB_CUR_SETHOT) {
+	अगर (cursor->set & FB_CUR_SETHOT) अणु
 		PM3_WRITE_DAC_REG(par, PM3RD_CursorHotSpotX,
 				  cursor->hot.x & 0x3f);
 		PM3_WRITE_DAC_REG(par, PM3RD_CursorHotSpotY,
 				  cursor->hot.y & 0x3f);
-	}
+	पूर्ण
 
-	if (cursor->set & FB_CUR_SETCMAP) {
+	अगर (cursor->set & FB_CUR_SETCMAP) अणु
 		u32 fg_idx = cursor->image.fg_color;
 		u32 bg_idx = cursor->image.bg_color;
-		struct fb_cmap cmap = info->cmap;
+		काष्ठा fb_cmap cmap = info->cmap;
 
-		/* the X11 driver says one should use these color registers */
+		/* the X11 driver says one should use these color रेजिस्टरs */
 		PM3_WRITE_DAC_REG(par, PM3RD_CursorPalette(39),
 				  cmap.red[fg_idx] >> 8 );
 		PM3_WRITE_DAC_REG(par, PM3RD_CursorPalette(40),
@@ -673,62 +674,62 @@ static int pm3fb_cursor(struct fb_info *info, struct fb_cursor *cursor)
 				  cmap.green[bg_idx] >> 8 );
 		PM3_WRITE_DAC_REG(par, PM3RD_CursorPalette(44),
 				  cmap.blue[bg_idx] >> 8 );
-	}
+	पूर्ण
 
-	if (cursor->set & (FB_CUR_SETSHAPE | FB_CUR_SETIMAGE)) {
-		u8 *bitmap = (u8 *)cursor->image.data;
+	अगर (cursor->set & (FB_CUR_SETSHAPE | FB_CUR_SETIMAGE)) अणु
+		u8 *biपंचांगap = (u8 *)cursor->image.data;
 		u8 *mask = (u8 *)cursor->mask;
-		int i;
-		int pos = PM3RD_CursorPattern(0);
+		पूर्णांक i;
+		पूर्णांक pos = PM3RD_CursorPattern(0);
 
-		for (i = 0; i < cursor->image.height; i++) {
-			int j = (cursor->image.width + 7) >> 3;
-			int k = 8 - j;
+		क्रम (i = 0; i < cursor->image.height; i++) अणु
+			पूर्णांक j = (cursor->image.width + 7) >> 3;
+			पूर्णांक k = 8 - j;
 
-			for (; j > 0; j--) {
-				u8 data = *bitmap ^ *mask;
+			क्रम (; j > 0; j--) अणु
+				u8 data = *biपंचांगap ^ *mask;
 
-				if (cursor->rop == ROP_COPY)
-					data = *mask & *bitmap;
-				/* Upper 4 bits of bitmap data */
+				अगर (cursor->rop == ROP_COPY)
+					data = *mask & *biपंचांगap;
+				/* Upper 4 bits of biपंचांगap data */
 				PM3_WRITE_DAC_REG(par, pos++,
 					cursor_bits_lookup[data >> 4] |
 					(cursor_bits_lookup[*mask >> 4] << 1));
-				/* Lower 4 bits of bitmap */
+				/* Lower 4 bits of biपंचांगap */
 				PM3_WRITE_DAC_REG(par, pos++,
 					cursor_bits_lookup[data & 0xf] |
 					(cursor_bits_lookup[*mask & 0xf] << 1));
-				bitmap++;
+				biपंचांगap++;
 				mask++;
-			}
-			for (; k > 0; k--) {
+			पूर्ण
+			क्रम (; k > 0; k--) अणु
 				PM3_WRITE_DAC_REG(par, pos++, 0);
 				PM3_WRITE_DAC_REG(par, pos++, 0);
-			}
-		}
-		while (pos < PM3RD_CursorPattern(1024))
+			पूर्ण
+		पूर्ण
+		जबतक (pos < PM3RD_CursorPattern(1024))
 			PM3_WRITE_DAC_REG(par, pos++, 0);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* write the mode to registers */
-static void pm3fb_write_mode(struct fb_info *info)
-{
-	struct pm3_par *par = info->par;
-	char tempsync = 0x00;
-	char tempmisc = 0x00;
-	const u32 hsstart = info->var.right_margin;
-	const u32 hsend = hsstart + info->var.hsync_len;
-	const u32 hbend = hsend + info->var.left_margin;
-	const u32 xres = (info->var.xres + 31) & ~31;
-	const u32 htotal = xres + hbend;
-	const u32 vsstart = info->var.lower_margin;
-	const u32 vsend = vsstart + info->var.vsync_len;
-	const u32 vbend = vsend + info->var.upper_margin;
-	const u32 vtotal = info->var.yres + vbend;
-	const u32 width = (info->var.xres_virtual + 7) & ~7;
-	const unsigned bpp = info->var.bits_per_pixel;
+/* ग_लिखो the mode to रेजिस्टरs */
+अटल व्योम pm3fb_ग_लिखो_mode(काष्ठा fb_info *info)
+अणु
+	काष्ठा pm3_par *par = info->par;
+	अक्षर tempsync = 0x00;
+	अक्षर tempmisc = 0x00;
+	स्थिर u32 hsstart = info->var.right_margin;
+	स्थिर u32 hsend = hsstart + info->var.hsync_len;
+	स्थिर u32 hbend = hsend + info->var.left_margin;
+	स्थिर u32 xres = (info->var.xres + 31) & ~31;
+	स्थिर u32 htotal = xres + hbend;
+	स्थिर u32 vsstart = info->var.lower_margin;
+	स्थिर u32 vsend = vsstart + info->var.vsync_len;
+	स्थिर u32 vbend = vsend + info->var.upper_margin;
+	स्थिर u32 vtotal = info->var.yres + vbend;
+	स्थिर u32 width = (info->var.xres_भव + 7) & ~7;
+	स्थिर अचिन्हित bpp = info->var.bits_per_pixel;
 
 	PM3_WAIT(par, 20);
 	PM3_WRITE_REG(par, PM3MemBypassWriteMask, 0xffffffff);
@@ -737,82 +738,82 @@ static void pm3fb_write_mode(struct fb_info *info)
 	PM3_WRITE_REG(par, PM3FIFODis, 0x00000007);
 
 	PM3_WRITE_REG(par, PM3HTotal,
-			   pm3fb_shift_bpp(bpp, htotal - 1));
+			   pm3fb_shअगरt_bpp(bpp, htotal - 1));
 	PM3_WRITE_REG(par, PM3HsEnd,
-			   pm3fb_shift_bpp(bpp, hsend));
+			   pm3fb_shअगरt_bpp(bpp, hsend));
 	PM3_WRITE_REG(par, PM3HsStart,
-			   pm3fb_shift_bpp(bpp, hsstart));
+			   pm3fb_shअगरt_bpp(bpp, hsstart));
 	PM3_WRITE_REG(par, PM3HbEnd,
-			   pm3fb_shift_bpp(bpp, hbend));
+			   pm3fb_shअगरt_bpp(bpp, hbend));
 	PM3_WRITE_REG(par, PM3HgEnd,
-			   pm3fb_shift_bpp(bpp, hbend));
+			   pm3fb_shअगरt_bpp(bpp, hbend));
 	PM3_WRITE_REG(par, PM3ScreenStride,
-			   pm3fb_shift_bpp(bpp, width));
+			   pm3fb_shअगरt_bpp(bpp, width));
 	PM3_WRITE_REG(par, PM3VTotal, vtotal - 1);
 	PM3_WRITE_REG(par, PM3VsEnd, vsend - 1);
 	PM3_WRITE_REG(par, PM3VsStart, vsstart - 1);
 	PM3_WRITE_REG(par, PM3VbEnd, vbend);
 
-	switch (bpp) {
-	case 8:
+	चयन (bpp) अणु
+	हाल 8:
 		PM3_WRITE_REG(par, PM3ByAperture1Mode,
 				   PM3ByApertureMode_PIXELSIZE_8BIT);
 		PM3_WRITE_REG(par, PM3ByAperture2Mode,
 				   PM3ByApertureMode_PIXELSIZE_8BIT);
-		break;
+		अवरोध;
 
-	case 16:
-#ifndef __BIG_ENDIAN
+	हाल 16:
+#अगर_अघोषित __BIG_ENDIAN
 		PM3_WRITE_REG(par, PM3ByAperture1Mode,
 				   PM3ByApertureMode_PIXELSIZE_16BIT);
 		PM3_WRITE_REG(par, PM3ByAperture2Mode,
 				   PM3ByApertureMode_PIXELSIZE_16BIT);
-#else
+#अन्यथा
 		PM3_WRITE_REG(par, PM3ByAperture1Mode,
 				   PM3ByApertureMode_PIXELSIZE_16BIT |
 				   PM3ByApertureMode_BYTESWAP_BADC);
 		PM3_WRITE_REG(par, PM3ByAperture2Mode,
 				   PM3ByApertureMode_PIXELSIZE_16BIT |
 				   PM3ByApertureMode_BYTESWAP_BADC);
-#endif /* ! __BIG_ENDIAN */
-		break;
+#पूर्ण_अगर /* ! __BIG_ENDIAN */
+		अवरोध;
 
-	case 32:
-#ifndef __BIG_ENDIAN
+	हाल 32:
+#अगर_अघोषित __BIG_ENDIAN
 		PM3_WRITE_REG(par, PM3ByAperture1Mode,
 				   PM3ByApertureMode_PIXELSIZE_32BIT);
 		PM3_WRITE_REG(par, PM3ByAperture2Mode,
 				   PM3ByApertureMode_PIXELSIZE_32BIT);
-#else
+#अन्यथा
 		PM3_WRITE_REG(par, PM3ByAperture1Mode,
 				   PM3ByApertureMode_PIXELSIZE_32BIT |
 				   PM3ByApertureMode_BYTESWAP_DCBA);
 		PM3_WRITE_REG(par, PM3ByAperture2Mode,
 				   PM3ByApertureMode_PIXELSIZE_32BIT |
 				   PM3ByApertureMode_BYTESWAP_DCBA);
-#endif /* ! __BIG_ENDIAN */
-		break;
+#पूर्ण_अगर /* ! __BIG_ENDIAN */
+		अवरोध;
 
-	default:
+	शेष:
 		DPRINTK("Unsupported depth %d\n", bpp);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * Oxygen VX1 - it appears that setting PM3VideoControl and
-	 * then PM3RD_SyncControl to the same SYNC settings undoes
+	 * then PM3RD_SyncControl to the same SYNC settings unकरोes
 	 * any net change - they seem to xor together.  Only set the
 	 * sync options in PM3RD_SyncControl.  --rmk
 	 */
-	{
-		unsigned int video = par->video;
+	अणु
+		अचिन्हित पूर्णांक video = par->video;
 
 		video &= ~(PM3VideoControl_HSYNC_MASK |
 			   PM3VideoControl_VSYNC_MASK);
 		video |= PM3VideoControl_HSYNC_ACTIVE_HIGH |
 			 PM3VideoControl_VSYNC_ACTIVE_HIGH;
 		PM3_WRITE_REG(par, PM3VideoControl, video);
-	}
+	पूर्ण
 	PM3_WRITE_REG(par, PM3VClkCtl,
 			   (PM3_READ_REG(par, PM3VClkCtl) & 0xFFFFFFFC));
 	PM3_WRITE_REG(par, PM3ScreenBase, par->base);
@@ -820,31 +821,31 @@ static void pm3fb_write_mode(struct fb_info *info)
 			   (PM3_READ_REG(par, PM3ChipConfig) & 0xFFFFFFFD));
 
 	wmb();
-	{
-		unsigned char m;	/* ClkPreScale */
-		unsigned char n;	/* ClkFeedBackScale */
-		unsigned char p;	/* ClkPostScale */
-		unsigned long pixclock = PICOS2KHZ(info->var.pixclock);
+	अणु
+		अचिन्हित अक्षर m;	/* ClkPreScale */
+		अचिन्हित अक्षर n;	/* ClkFeedBackScale */
+		अचिन्हित अक्षर p;	/* ClkPostScale */
+		अचिन्हित दीर्घ pixघड़ी = PICOS2KHZ(info->var.pixघड़ी);
 
-		(void)pm3fb_calculate_clock(pixclock, &m, &n, &p);
+		(व्योम)pm3fb_calculate_घड़ी(pixघड़ी, &m, &n, &p);
 
 		DPRINTK("Pixclock: %ld, Pre: %d, Feedback: %d, Post: %d\n",
-			pixclock, (int) m, (int) n, (int) p);
+			pixघड़ी, (पूर्णांक) m, (पूर्णांक) n, (पूर्णांक) p);
 
 		PM3_WRITE_DAC_REG(par, PM3RD_DClk0PreScale, m);
 		PM3_WRITE_DAC_REG(par, PM3RD_DClk0FeedbackScale, n);
 		PM3_WRITE_DAC_REG(par, PM3RD_DClk0PostScale, p);
-	}
+	पूर्ण
 	/*
 	   PM3_WRITE_DAC_REG(par, PM3RD_IndexControl, 0x00);
 	 */
 	/*
 	   PM3_SLOW_WRITE_REG(par, PM3RD_IndexControl, 0x00);
 	 */
-	if ((par->video & PM3VideoControl_HSYNC_MASK) ==
+	अगर ((par->video & PM3VideoControl_HSYNC_MASK) ==
 	    PM3VideoControl_HSYNC_ACTIVE_HIGH)
 		tempsync |= PM3RD_SyncControl_HSYNC_ACTIVE_HIGH;
-	if ((par->video & PM3VideoControl_VSYNC_MASK) ==
+	अगर ((par->video & PM3VideoControl_VSYNC_MASK) ==
 	    PM3VideoControl_VSYNC_ACTIVE_HIGH)
 		tempsync |= PM3RD_SyncControl_VSYNC_ACTIVE_HIGH;
 
@@ -853,72 +854,72 @@ static void pm3fb_write_mode(struct fb_info *info)
 
 	PM3_WRITE_DAC_REG(par, PM3RD_DACControl, 0x00);
 
-	switch (pm3fb_depth(&info->var)) {
-	case 8:
+	चयन (pm3fb_depth(&info->var)) अणु
+	हाल 8:
 		PM3_WRITE_DAC_REG(par, PM3RD_PixelSize,
 				  PM3RD_PixelSize_8_BIT_PIXELS);
 		PM3_WRITE_DAC_REG(par, PM3RD_ColorFormat,
 				  PM3RD_ColorFormat_CI8_COLOR |
 				  PM3RD_ColorFormat_COLOR_ORDER_BLUE_LOW);
 		tempmisc |= PM3RD_MiscControl_HIGHCOLOR_RES_ENABLE;
-		break;
-	case 12:
+		अवरोध;
+	हाल 12:
 		PM3_WRITE_DAC_REG(par, PM3RD_PixelSize,
 				  PM3RD_PixelSize_16_BIT_PIXELS);
 		PM3_WRITE_DAC_REG(par, PM3RD_ColorFormat,
 				  PM3RD_ColorFormat_4444_COLOR |
 				  PM3RD_ColorFormat_COLOR_ORDER_BLUE_LOW |
 				  PM3RD_ColorFormat_LINEAR_COLOR_EXT_ENABLE);
-		tempmisc |= PM3RD_MiscControl_DIRECTCOLOR_ENABLE |
+		tempmisc |= PM3RD_MiscControl_सूचीECTCOLOR_ENABLE |
 			PM3RD_MiscControl_HIGHCOLOR_RES_ENABLE;
-		break;
-	case 15:
+		अवरोध;
+	हाल 15:
 		PM3_WRITE_DAC_REG(par, PM3RD_PixelSize,
 				  PM3RD_PixelSize_16_BIT_PIXELS);
 		PM3_WRITE_DAC_REG(par, PM3RD_ColorFormat,
 				  PM3RD_ColorFormat_5551_FRONT_COLOR |
 				  PM3RD_ColorFormat_COLOR_ORDER_BLUE_LOW |
 				  PM3RD_ColorFormat_LINEAR_COLOR_EXT_ENABLE);
-		tempmisc |= PM3RD_MiscControl_DIRECTCOLOR_ENABLE |
+		tempmisc |= PM3RD_MiscControl_सूचीECTCOLOR_ENABLE |
 			PM3RD_MiscControl_HIGHCOLOR_RES_ENABLE;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		PM3_WRITE_DAC_REG(par, PM3RD_PixelSize,
 				  PM3RD_PixelSize_16_BIT_PIXELS);
 		PM3_WRITE_DAC_REG(par, PM3RD_ColorFormat,
 				  PM3RD_ColorFormat_565_FRONT_COLOR |
 				  PM3RD_ColorFormat_COLOR_ORDER_BLUE_LOW |
 				  PM3RD_ColorFormat_LINEAR_COLOR_EXT_ENABLE);
-		tempmisc |= PM3RD_MiscControl_DIRECTCOLOR_ENABLE |
+		tempmisc |= PM3RD_MiscControl_सूचीECTCOLOR_ENABLE |
 			PM3RD_MiscControl_HIGHCOLOR_RES_ENABLE;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		PM3_WRITE_DAC_REG(par, PM3RD_PixelSize,
 				  PM3RD_PixelSize_32_BIT_PIXELS);
 		PM3_WRITE_DAC_REG(par, PM3RD_ColorFormat,
 				  PM3RD_ColorFormat_8888_COLOR |
 				  PM3RD_ColorFormat_COLOR_ORDER_BLUE_LOW);
-		tempmisc |= PM3RD_MiscControl_DIRECTCOLOR_ENABLE |
+		tempmisc |= PM3RD_MiscControl_सूचीECTCOLOR_ENABLE |
 			PM3RD_MiscControl_HIGHCOLOR_RES_ENABLE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	PM3_WRITE_DAC_REG(par, PM3RD_MiscControl, tempmisc);
-}
+पूर्ण
 
 /*
  * hardware independent functions
  */
-static int pm3fb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
-{
+अटल पूर्णांक pm3fb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
 	u32 lpitch;
-	unsigned bpp = var->red.length + var->green.length
+	अचिन्हित bpp = var->red.length + var->green.length
 			+ var->blue.length + var->transp.length;
 
-	if (bpp != var->bits_per_pixel) {
-		/* set predefined mode for bits_per_pixel settings */
+	अगर (bpp != var->bits_per_pixel) अणु
+		/* set predefined mode क्रम bits_per_pixel settings */
 
-		switch (var->bits_per_pixel) {
-		case 8:
+		चयन (var->bits_per_pixel) अणु
+		हाल 8:
 			var->red.length = 8;
 			var->green.length = 8;
 			var->blue.length = 8;
@@ -927,237 +928,237 @@ static int pm3fb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 			var->blue.offset = 0;
 			var->transp.offset = 0;
 			var->transp.length = 0;
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			var->red.length = 5;
 			var->blue.length = 5;
 			var->green.length = 6;
 			var->transp.length = 0;
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			var->red.length = 8;
 			var->green.length = 8;
 			var->blue.length = 8;
 			var->transp.length = 8;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DPRINTK("depth not supported: %u\n",
 				var->bits_per_pixel);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 	/* it is assumed BGRA order */
-	if (var->bits_per_pixel > 8 ) {
+	अगर (var->bits_per_pixel > 8 ) अणु
 		var->blue.offset = 0;
 		var->green.offset = var->blue.length;
 		var->red.offset = var->green.offset + var->green.length;
 		var->transp.offset = var->red.offset + var->red.length;
-	}
+	पूर्ण
 	var->height = -1;
 	var->width = -1;
 
-	if (var->xres != var->xres_virtual) {
+	अगर (var->xres != var->xres_भव) अणु
 		DPRINTK("virtual x resolution != "
 			"physical x resolution not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (var->yres > var->yres_virtual) {
+	अगर (var->yres > var->yres_भव) अणु
 		DPRINTK("virtual y resolution < "
 			"physical y resolution not possible\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (var->xoffset) {
+	अगर (var->xoffset) अणु
 		DPRINTK("xoffset not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) {
+	अगर ((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED) अणु
 		DPRINTK("interlace not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	var->xres = (var->xres + 31) & ~31; /* could sometimes be 8 */
+	var->xres = (var->xres + 31) & ~31; /* could someबार be 8 */
 	lpitch = var->xres * ((var->bits_per_pixel + 7) >> 3);
 
-	if (var->xres < 200 || var->xres > 2048) {
+	अगर (var->xres < 200 || var->xres > 2048) अणु
 		DPRINTK("width not supported: %u\n", var->xres);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (var->yres < 200 || var->yres > 4095) {
+	अगर (var->yres < 200 || var->yres > 4095) अणु
 		DPRINTK("height not supported: %u\n", var->yres);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (lpitch * var->yres_virtual > info->fix.smem_len) {
+	अगर (lpitch * var->yres_भव > info->fix.smem_len) अणु
 		DPRINTK("no memory for screen (%ux%ux%u)\n",
-			var->xres, var->yres_virtual, var->bits_per_pixel);
-		return -EINVAL;
-	}
+			var->xres, var->yres_भव, var->bits_per_pixel);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (PICOS2KHZ(var->pixclock) > PM3_MAX_PIXCLOCK) {
+	अगर (PICOS2KHZ(var->pixघड़ी) > PM3_MAX_PIXCLOCK) अणु
 		DPRINTK("pixclock too high (%ldKHz)\n",
-			PICOS2KHZ(var->pixclock));
-		return -EINVAL;
-	}
+			PICOS2KHZ(var->pixघड़ी));
+		वापस -EINVAL;
+	पूर्ण
 
-	var->accel_flags = 0;	/* Can't mmap if this is on */
+	var->accel_flags = 0;	/* Can't mmap अगर this is on */
 
 	DPRINTK("Checking graphics mode at %dx%d depth %d\n",
 		var->xres, var->yres, var->bits_per_pixel);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pm3fb_set_par(struct fb_info *info)
-{
-	struct pm3_par *par = info->par;
-	const u32 xres = (info->var.xres + 31) & ~31;
-	const unsigned bpp = info->var.bits_per_pixel;
+अटल पूर्णांक pm3fb_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा pm3_par *par = info->par;
+	स्थिर u32 xres = (info->var.xres + 31) & ~31;
+	स्थिर अचिन्हित bpp = info->var.bits_per_pixel;
 
-	par->base = pm3fb_shift_bpp(bpp, (info->var.yoffset * xres)
+	par->base = pm3fb_shअगरt_bpp(bpp, (info->var.yoffset * xres)
 					+ info->var.xoffset);
 	par->video = 0;
 
-	if (info->var.sync & FB_SYNC_HOR_HIGH_ACT)
+	अगर (info->var.sync & FB_SYNC_HOR_HIGH_ACT)
 		par->video |= PM3VideoControl_HSYNC_ACTIVE_HIGH;
-	else
+	अन्यथा
 		par->video |= PM3VideoControl_HSYNC_ACTIVE_LOW;
 
-	if (info->var.sync & FB_SYNC_VERT_HIGH_ACT)
+	अगर (info->var.sync & FB_SYNC_VERT_HIGH_ACT)
 		par->video |= PM3VideoControl_VSYNC_ACTIVE_HIGH;
-	else
+	अन्यथा
 		par->video |= PM3VideoControl_VSYNC_ACTIVE_LOW;
 
-	if ((info->var.vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE)
+	अगर ((info->var.vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE)
 		par->video |= PM3VideoControl_LINE_DOUBLE_ON;
 
-	if ((info->var.activate & FB_ACTIVATE_MASK) == FB_ACTIVATE_NOW)
+	अगर ((info->var.activate & FB_ACTIVATE_MASK) == FB_ACTIVATE_NOW)
 		par->video |= PM3VideoControl_ENABLE;
-	else
+	अन्यथा
 		DPRINTK("PM3Video disabled\n");
 
-	switch (bpp) {
-	case 8:
+	चयन (bpp) अणु
+	हाल 8:
 		par->video |= PM3VideoControl_PIXELSIZE_8BIT;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		par->video |= PM3VideoControl_PIXELSIZE_16BIT;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		par->video |= PM3VideoControl_PIXELSIZE_32BIT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DPRINTK("Unsupported depth\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	info->fix.visual =
 		(bpp == 8) ? FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_TRUECOLOR;
-	info->fix.line_length = ((info->var.xres_virtual + 7)  >> 3) * bpp;
+	info->fix.line_length = ((info->var.xres_भव + 7)  >> 3) * bpp;
 
 /*	pm3fb_clear_memory(info, 0);*/
 	pm3fb_clear_colormap(par, 0, 0, 0);
 	PM3_WRITE_DAC_REG(par, PM3RD_CursorMode, 0);
 	pm3fb_init_engine(info);
-	pm3fb_write_mode(info);
-	return 0;
-}
+	pm3fb_ग_लिखो_mode(info);
+	वापस 0;
+पूर्ण
 
-static int pm3fb_setcolreg(unsigned regno, unsigned red, unsigned green,
-			   unsigned blue, unsigned transp,
-			   struct fb_info *info)
-{
-	struct pm3_par *par = info->par;
+अटल पूर्णांक pm3fb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
+			   अचिन्हित blue, अचिन्हित transp,
+			   काष्ठा fb_info *info)
+अणु
+	काष्ठा pm3_par *par = info->par;
 
-	if (regno >= 256)  /* no. of hw registers */
-	   return -EINVAL;
+	अगर (regno >= 256)  /* no. of hw रेजिस्टरs */
+	   वापस -EINVAL;
 
 	/* grayscale works only partially under directcolor */
 	/* grayscale = 0.30*R + 0.59*G + 0.11*B */
-	if (info->var.grayscale)
+	अगर (info->var.grayscale)
 	   red = green = blue = (red * 77 + green * 151 + blue * 28) >> 8;
 
 	/* Directcolor:
-	 *   var->{color}.offset contains start of bitfield
-	 *   var->{color}.length contains length of bitfield
-	 *   {hardwarespecific} contains width of DAC
-	 *   pseudo_palette[X] is programmed to (X << red.offset) |
+	 *   var->अणुcolorपूर्ण.offset contains start of bitfield
+	 *   var->अणुcolorपूर्ण.length contains length of bitfield
+	 *   अणुhardwarespecअगरicपूर्ण contains width of DAC
+	 *   pseuकरो_palette[X] is programmed to (X << red.offset) |
 	 *					(X << green.offset) |
 	 *					(X << blue.offset)
 	 *   RAMDAC[X] is programmed to (red, green, blue)
-	 *   color depth = SUM(var->{color}.length)
+	 *   color depth = SUM(var->अणुcolorपूर्ण.length)
 	 *
-	 * Pseudocolor:
-	 *	var->{color}.offset is 0
-	 *	var->{color}.length contains width of DAC or the number
+	 * Pseuकरोcolor:
+	 *	var->अणुcolorपूर्ण.offset is 0
+	 *	var->अणुcolorपूर्ण.length contains width of DAC or the number
 	 *			of unique colors available (color depth)
-	 *	pseudo_palette is not used
+	 *	pseuकरो_palette is not used
 	 *	RAMDAC[X] is programmed to (red, green, blue)
-	 *	color depth = var->{color}.length
+	 *	color depth = var->अणुcolorपूर्ण.length
 	 */
 
 	/*
-	 * This is the point where the color is converted to something that
+	 * This is the poपूर्णांक where the color is converted to something that
 	 * is acceptable by the hardware.
 	 */
-#define CNVT_TOHW(val, width) ((((val) << (width)) + 0x7FFF - (val)) >> 16)
+#घोषणा CNVT_TOHW(val, width) ((((val) << (width)) + 0x7FFF - (val)) >> 16)
 	red = CNVT_TOHW(red, info->var.red.length);
 	green = CNVT_TOHW(green, info->var.green.length);
 	blue = CNVT_TOHW(blue, info->var.blue.length);
 	transp = CNVT_TOHW(transp, info->var.transp.length);
-#undef CNVT_TOHW
+#अघोषित CNVT_TOHW
 
-	if (info->fix.visual == FB_VISUAL_TRUECOLOR ||
-	info->fix.visual == FB_VISUAL_DIRECTCOLOR) {
+	अगर (info->fix.visual == FB_VISUAL_TRUECOLOR ||
+	info->fix.visual == FB_VISUAL_सूचीECTCOLOR) अणु
 		u32 v;
 
-		if (regno >= 16)
-			return -EINVAL;
+		अगर (regno >= 16)
+			वापस -EINVAL;
 
 		v = (red << info->var.red.offset) |
 			(green << info->var.green.offset) |
 			(blue << info->var.blue.offset) |
 			(transp << info->var.transp.offset);
 
-		switch (info->var.bits_per_pixel) {
-		case 8:
-			break;
-		case 16:
-		case 32:
-			((u32 *)(info->pseudo_palette))[regno] = v;
-			break;
-		}
-		return 0;
-	} else if (info->fix.visual == FB_VISUAL_PSEUDOCOLOR)
+		चयन (info->var.bits_per_pixel) अणु
+		हाल 8:
+			अवरोध;
+		हाल 16:
+		हाल 32:
+			((u32 *)(info->pseuकरो_palette))[regno] = v;
+			अवरोध;
+		पूर्ण
+		वापस 0;
+	पूर्ण अन्यथा अगर (info->fix.visual == FB_VISUAL_PSEUDOCOLOR)
 		pm3fb_set_color(par, regno, red, green, blue);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pm3fb_pan_display(struct fb_var_screeninfo *var,
-				 struct fb_info *info)
-{
-	struct pm3_par *par = info->par;
-	const u32 xres = (info->var.xres + 31) & ~31;
+अटल पूर्णांक pm3fb_pan_display(काष्ठा fb_var_screeninfo *var,
+				 काष्ठा fb_info *info)
+अणु
+	काष्ठा pm3_par *par = info->par;
+	स्थिर u32 xres = (info->var.xres + 31) & ~31;
 
-	par->base = pm3fb_shift_bpp(info->var.bits_per_pixel,
+	par->base = pm3fb_shअगरt_bpp(info->var.bits_per_pixel,
 					(var->yoffset * xres)
 					+ var->xoffset);
 	PM3_WAIT(par, 1);
 	PM3_WRITE_REG(par, PM3ScreenBase, par->base);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pm3fb_blank(int blank_mode, struct fb_info *info)
-{
-	struct pm3_par *par = info->par;
+अटल पूर्णांक pm3fb_blank(पूर्णांक blank_mode, काष्ठा fb_info *info)
+अणु
+	काष्ठा pm3_par *par = info->par;
 	u32 video = par->video;
 
 	/*
 	 * Oxygen VX1 - it appears that setting PM3VideoControl and
-	 * then PM3RD_SyncControl to the same SYNC settings undoes
+	 * then PM3RD_SyncControl to the same SYNC settings unकरोes
 	 * any net change - they seem to xor together.  Only set the
 	 * sync options in PM3RD_SyncControl.  --rmk
 	 */
@@ -1166,41 +1167,41 @@ static int pm3fb_blank(int blank_mode, struct fb_info *info)
 	video |= PM3VideoControl_HSYNC_ACTIVE_HIGH |
 		 PM3VideoControl_VSYNC_ACTIVE_HIGH;
 
-	switch (blank_mode) {
-	case FB_BLANK_UNBLANK:
+	चयन (blank_mode) अणु
+	हाल FB_BLANK_UNBLANK:
 		video |= PM3VideoControl_ENABLE;
-		break;
-	case FB_BLANK_NORMAL:
+		अवरोध;
+	हाल FB_BLANK_NORMAL:
 		video &= ~PM3VideoControl_ENABLE;
-		break;
-	case FB_BLANK_HSYNC_SUSPEND:
+		अवरोध;
+	हाल FB_BLANK_HSYNC_SUSPEND:
 		video &= ~(PM3VideoControl_HSYNC_MASK |
 			  PM3VideoControl_BLANK_ACTIVE_LOW);
-		break;
-	case FB_BLANK_VSYNC_SUSPEND:
+		अवरोध;
+	हाल FB_BLANK_VSYNC_SUSPEND:
 		video &= ~(PM3VideoControl_VSYNC_MASK |
 			  PM3VideoControl_BLANK_ACTIVE_LOW);
-		break;
-	case FB_BLANK_POWERDOWN:
+		अवरोध;
+	हाल FB_BLANK_POWERDOWN:
 		video &= ~(PM3VideoControl_HSYNC_MASK |
 			  PM3VideoControl_VSYNC_MASK |
 			  PM3VideoControl_BLANK_ACTIVE_LOW);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DPRINTK("Unsupported blanking %d\n", blank_mode);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	PM3_WAIT(par, 1);
 	PM3_WRITE_REG(par, PM3VideoControl, video);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 	/*
 	 *  Frame buffer operations
 	 */
 
-static const struct fb_ops pm3fb_ops = {
+अटल स्थिर काष्ठा fb_ops pm3fb_ops = अणु
 	.owner		= THIS_MODULE,
 	.fb_check_var	= pm3fb_check_var,
 	.fb_set_par	= pm3fb_set_par,
@@ -1212,7 +1213,7 @@ static const struct fb_ops pm3fb_ops = {
 	.fb_blank	= pm3fb_blank,
 	.fb_sync	= pm3fb_sync,
 	.fb_cursor	= pm3fb_cursor,
-};
+पूर्ण;
 
 /* ------------------------------------------------------------------------- */
 
@@ -1220,30 +1221,30 @@ static const struct fb_ops pm3fb_ops = {
 	 *  Initialization
 	 */
 
-/* mmio register are already mapped when this function is called */
+/* mmio रेजिस्टर are alपढ़ोy mapped when this function is called */
 /* the pm3fb_fix.smem_start is also set */
-static unsigned long pm3fb_size_memory(struct pm3_par *par)
-{
-	unsigned long	memsize = 0;
-	unsigned long	tempBypass, i, temp1, temp2;
-	unsigned char	__iomem *screen_mem;
+अटल अचिन्हित दीर्घ pm3fb_size_memory(काष्ठा pm3_par *par)
+अणु
+	अचिन्हित दीर्घ	memsize = 0;
+	अचिन्हित दीर्घ	tempBypass, i, temp1, temp2;
+	अचिन्हित अक्षर	__iomem *screen_mem;
 
 	pm3fb_fix.smem_len = 64 * 1024l * 1024; /* request full aperture size */
 	/* Linear frame buffer - request region and map it. */
-	if (!request_mem_region(pm3fb_fix.smem_start, pm3fb_fix.smem_len,
-				 "pm3fb smem")) {
-		printk(KERN_WARNING "pm3fb: Can't reserve smem.\n");
-		return 0;
-	}
+	अगर (!request_mem_region(pm3fb_fix.smem_start, pm3fb_fix.smem_len,
+				 "pm3fb smem")) अणु
+		prपूर्णांकk(KERN_WARNING "pm3fb: Can't reserve smem.\n");
+		वापस 0;
+	पूर्ण
 	screen_mem =
 		ioremap(pm3fb_fix.smem_start, pm3fb_fix.smem_len);
-	if (!screen_mem) {
-		printk(KERN_WARNING "pm3fb: Can't ioremap smem area.\n");
+	अगर (!screen_mem) अणु
+		prपूर्णांकk(KERN_WARNING "pm3fb: Can't ioremap smem area.\n");
 		release_mem_region(pm3fb_fix.smem_start, pm3fb_fix.smem_len);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* TODO: card-specific stuff, *before* accessing *any* FB memory */
+	/* TODO: card-specअगरic stuff, *beक्रमe* accessing *any* FB memory */
 	/* For Appian Jeronimo 2000 board second head */
 
 	tempBypass = PM3_READ_REG(par, PM3MemBypassWriteMask);
@@ -1253,46 +1254,46 @@ static unsigned long pm3fb_size_memory(struct pm3_par *par)
 	PM3_WAIT(par, 1);
 	PM3_WRITE_REG(par, PM3MemBypassWriteMask, 0xFFFFFFFF);
 
-	/* pm3 split up memory, replicates, and do a lot of
+	/* pm3 split up memory, replicates, and करो a lot of
 	 * nasty stuff IMHO ;-)
 	 */
-	for (i = 0; i < 32; i++) {
-		fb_writel(i * 0x00345678,
+	क्रम (i = 0; i < 32; i++) अणु
+		fb_ग_लिखोl(i * 0x00345678,
 			  (screen_mem + (i * 1048576)));
 		mb();
-		temp1 = fb_readl((screen_mem + (i * 1048576)));
+		temp1 = fb_पढ़ोl((screen_mem + (i * 1048576)));
 
-		/* Let's check for wrapover, write will fail at 16MB boundary */
-		if (temp1 == (i * 0x00345678))
+		/* Let's check क्रम wrapover, ग_लिखो will fail at 16MB boundary */
+		अगर (temp1 == (i * 0x00345678))
 			memsize = i;
-		else
-			break;
-	}
+		अन्यथा
+			अवरोध;
+	पूर्ण
 
 	DPRINTK("First detect pass already got %ld MB\n", memsize + 1);
 
-	if (memsize + 1 == i) {
-		for (i = 0; i < 32; i++) {
+	अगर (memsize + 1 == i) अणु
+		क्रम (i = 0; i < 32; i++) अणु
 			/* Clear first 32MB ; 0 is 0, no need to byteswap */
-			writel(0x0000000, (screen_mem + (i * 1048576)));
-		}
+			ग_लिखोl(0x0000000, (screen_mem + (i * 1048576)));
+		पूर्ण
 		wmb();
 
-		for (i = 32; i < 64; i++) {
-			fb_writel(i * 0x00345678,
+		क्रम (i = 32; i < 64; i++) अणु
+			fb_ग_लिखोl(i * 0x00345678,
 				  (screen_mem + (i * 1048576)));
 			mb();
 			temp1 =
-			    fb_readl((screen_mem + (i * 1048576)));
+			    fb_पढ़ोl((screen_mem + (i * 1048576)));
 			temp2 =
-			    fb_readl((screen_mem + ((i - 32) * 1048576)));
-			/* different value, different RAM... */
-			if ((temp1 == (i * 0x00345678)) && (temp2 == 0))
+			    fb_पढ़ोl((screen_mem + ((i - 32) * 1048576)));
+			/* dअगरferent value, dअगरferent RAM... */
+			अगर ((temp1 == (i * 0x00345678)) && (temp2 == 0))
 				memsize = i;
-			else
-				break;
-		}
-	}
+			अन्यथा
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	DPRINTK("Second detect pass got %ld MB\n", memsize + 1);
 
 	PM3_WAIT(par, 1);
@@ -1304,79 +1305,79 @@ static unsigned long pm3fb_size_memory(struct pm3_par *par)
 
 	DPRINTK("Returning 0x%08lx bytes\n", memsize);
 
-	return memsize;
-}
+	वापस memsize;
+पूर्ण
 
-static int pm3fb_probe(struct pci_dev *dev, const struct pci_device_id *ent)
-{
-	struct fb_info *info;
-	struct pm3_par *par;
-	struct device *device = &dev->dev; /* for pci drivers */
-	int err;
-	int retval = -ENXIO;
+अटल पूर्णांक pm3fb_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा fb_info *info;
+	काष्ठा pm3_par *par;
+	काष्ठा device *device = &dev->dev; /* क्रम pci drivers */
+	पूर्णांक err;
+	पूर्णांक retval = -ENXIO;
 
 	err = pci_enable_device(dev);
-	if (err) {
-		printk(KERN_WARNING "pm3fb: Can't enable PCI dev: %d\n", err);
-		return err;
-	}
+	अगर (err) अणु
+		prपूर्णांकk(KERN_WARNING "pm3fb: Can't enable PCI dev: %d\n", err);
+		वापस err;
+	पूर्ण
 	/*
 	 * Dynamically allocate info and par
 	 */
-	info = framebuffer_alloc(sizeof(struct pm3_par), device);
+	info = framebuffer_alloc(माप(काष्ठा pm3_par), device);
 
-	if (!info)
-		return -ENOMEM;
+	अगर (!info)
+		वापस -ENOMEM;
 	par = info->par;
 
 	/*
-	 * Here we set the screen_base to the virtual memory address
-	 * for the framebuffer.
+	 * Here we set the screen_base to the भव memory address
+	 * क्रम the framebuffer.
 	 */
 	pm3fb_fix.mmio_start = pci_resource_start(dev, 0);
 	pm3fb_fix.mmio_len = PM3_REGS_SIZE;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	pm3fb_fix.mmio_start += PM3_REGS_SIZE;
 	DPRINTK("Adjusting register base for big-endian.\n");
-#endif
+#पूर्ण_अगर
 
 	/* Registers - request region and map it. */
-	if (!request_mem_region(pm3fb_fix.mmio_start, pm3fb_fix.mmio_len,
-				 "pm3fb regbase")) {
-		printk(KERN_WARNING "pm3fb: Can't reserve regbase.\n");
-		goto err_exit_neither;
-	}
+	अगर (!request_mem_region(pm3fb_fix.mmio_start, pm3fb_fix.mmio_len,
+				 "pm3fb regbase")) अणु
+		prपूर्णांकk(KERN_WARNING "pm3fb: Can't reserve regbase.\n");
+		जाओ err_निकास_neither;
+	पूर्ण
 	par->v_regs =
 		ioremap(pm3fb_fix.mmio_start, pm3fb_fix.mmio_len);
-	if (!par->v_regs) {
-		printk(KERN_WARNING "pm3fb: Can't remap %s register area.\n",
+	अगर (!par->v_regs) अणु
+		prपूर्णांकk(KERN_WARNING "pm3fb: Can't remap %s register area.\n",
 			pm3fb_fix.id);
 		release_mem_region(pm3fb_fix.mmio_start, pm3fb_fix.mmio_len);
-		goto err_exit_neither;
-	}
+		जाओ err_निकास_neither;
+	पूर्ण
 
 	/* Linear frame buffer - request region and map it. */
 	pm3fb_fix.smem_start = pci_resource_start(dev, 1);
 	pm3fb_fix.smem_len = pm3fb_size_memory(par);
-	if (!pm3fb_fix.smem_len) {
-		printk(KERN_WARNING "pm3fb: Can't find memory on board.\n");
-		goto err_exit_mmio;
-	}
-	if (!request_mem_region(pm3fb_fix.smem_start, pm3fb_fix.smem_len,
-				 "pm3fb smem")) {
-		printk(KERN_WARNING "pm3fb: Can't reserve smem.\n");
-		goto err_exit_mmio;
-	}
+	अगर (!pm3fb_fix.smem_len) अणु
+		prपूर्णांकk(KERN_WARNING "pm3fb: Can't find memory on board.\n");
+		जाओ err_निकास_mmio;
+	पूर्ण
+	अगर (!request_mem_region(pm3fb_fix.smem_start, pm3fb_fix.smem_len,
+				 "pm3fb smem")) अणु
+		prपूर्णांकk(KERN_WARNING "pm3fb: Can't reserve smem.\n");
+		जाओ err_निकास_mmio;
+	पूर्ण
 	info->screen_base = ioremap_wc(pm3fb_fix.smem_start,
 				       pm3fb_fix.smem_len);
-	if (!info->screen_base) {
-		printk(KERN_WARNING "pm3fb: Can't ioremap smem area.\n");
+	अगर (!info->screen_base) अणु
+		prपूर्णांकk(KERN_WARNING "pm3fb: Can't ioremap smem area.\n");
 		release_mem_region(pm3fb_fix.smem_start, pm3fb_fix.smem_len);
-		goto err_exit_mmio;
-	}
+		जाओ err_निकास_mmio;
+	पूर्ण
 	info->screen_size = pm3fb_fix.smem_len;
 
-	if (!nomtrr)
+	अगर (!nomtrr)
 		par->wc_cookie = arch_phys_wc_add(pm3fb_fix.smem_start,
 						  pm3fb_fix.smem_len);
 	info->fbops = &pm3fb_ops;
@@ -1384,7 +1385,7 @@ static int pm3fb_probe(struct pci_dev *dev, const struct pci_device_id *ent)
 	par->video = PM3_READ_REG(par, PM3VideoControl);
 
 	info->fix = pm3fb_fix;
-	info->pseudo_palette = par->palette;
+	info->pseuकरो_palette = par->palette;
 	info->flags = FBINFO_DEFAULT |
 			FBINFO_HWACCEL_XPAN |
 			FBINFO_HWACCEL_YPAN |
@@ -1392,15 +1393,15 @@ static int pm3fb_probe(struct pci_dev *dev, const struct pci_device_id *ent)
 			FBINFO_HWACCEL_IMAGEBLIT |
 			FBINFO_HWACCEL_FILLRECT;
 
-	if (noaccel) {
-		printk(KERN_DEBUG "disabling acceleration\n");
+	अगर (noaccel) अणु
+		prपूर्णांकk(KERN_DEBUG "disabling acceleration\n");
 		info->flags |= FBINFO_HWACCEL_DISABLED;
-	}
-	info->pixmap.addr = kmalloc(PM3_PIXMAP_SIZE, GFP_KERNEL);
-	if (!info->pixmap.addr) {
+	पूर्ण
+	info->pixmap.addr = kदो_स्मृति(PM3_PIXMAP_SIZE, GFP_KERNEL);
+	अगर (!info->pixmap.addr) अणु
 		retval = -ENOMEM;
-		goto err_exit_pixmap;
-	}
+		जाओ err_निकास_pixmap;
+	पूर्ण
 	info->pixmap.size = PM3_PIXMAP_SIZE;
 	info->pixmap.buf_align = 4;
 	info->pixmap.scan_align = 4;
@@ -1408,64 +1409,64 @@ static int pm3fb_probe(struct pci_dev *dev, const struct pci_device_id *ent)
 	info->pixmap.flags = FB_PIXMAP_SYSTEM;
 
 	/*
-	 * This should give a reasonable default video mode. The following is
-	 * done when we can set a video mode.
+	 * This should give a reasonable शेष video mode. The following is
+	 * करोne when we can set a video mode.
 	 */
-	if (!mode_option)
+	अगर (!mode_option)
 		mode_option = "640x480@60";
 
-	retval = fb_find_mode(&info->var, info, mode_option, NULL, 0, NULL, 8);
+	retval = fb_find_mode(&info->var, info, mode_option, शून्य, 0, शून्य, 8);
 
-	if (!retval || retval == 4) {
+	अगर (!retval || retval == 4) अणु
 		retval = -EINVAL;
-		goto err_exit_both;
-	}
+		जाओ err_निकास_both;
+	पूर्ण
 
-	if (fb_alloc_cmap(&info->cmap, 256, 0) < 0) {
+	अगर (fb_alloc_cmap(&info->cmap, 256, 0) < 0) अणु
 		retval = -ENOMEM;
-		goto err_exit_both;
-	}
+		जाओ err_निकास_both;
+	पूर्ण
 
 	/*
 	 * For drivers that can...
 	 */
 	pm3fb_check_var(&info->var, info);
 
-	if (register_framebuffer(info) < 0) {
+	अगर (रेजिस्टर_framebuffer(info) < 0) अणु
 		retval = -EINVAL;
-		goto err_exit_all;
-	}
+		जाओ err_निकास_all;
+	पूर्ण
 	fb_info(info, "%s frame buffer device\n", info->fix.id);
 	pci_set_drvdata(dev, info);
-	return 0;
+	वापस 0;
 
- err_exit_all:
+ err_निकास_all:
 	fb_dealloc_cmap(&info->cmap);
- err_exit_both:
-	kfree(info->pixmap.addr);
- err_exit_pixmap:
+ err_निकास_both:
+	kमुक्त(info->pixmap.addr);
+ err_निकास_pixmap:
 	iounmap(info->screen_base);
 	release_mem_region(pm3fb_fix.smem_start, pm3fb_fix.smem_len);
- err_exit_mmio:
+ err_निकास_mmio:
 	iounmap(par->v_regs);
 	release_mem_region(pm3fb_fix.mmio_start, pm3fb_fix.mmio_len);
- err_exit_neither:
+ err_निकास_neither:
 	framebuffer_release(info);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 	/*
 	 *  Cleanup
 	 */
-static void pm3fb_remove(struct pci_dev *dev)
-{
-	struct fb_info *info = pci_get_drvdata(dev);
+अटल व्योम pm3fb_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा fb_info *info = pci_get_drvdata(dev);
 
-	if (info) {
-		struct fb_fix_screeninfo *fix = &info->fix;
-		struct pm3_par *par = info->par;
+	अगर (info) अणु
+		काष्ठा fb_fix_screeninfo *fix = &info->fix;
+		काष्ठा pm3_par *par = info->par;
 
-		unregister_framebuffer(info);
+		unरेजिस्टर_framebuffer(info);
 		fb_dealloc_cmap(&info->cmap);
 
 		arch_phys_wc_del(par->wc_cookie);
@@ -1474,91 +1475,91 @@ static void pm3fb_remove(struct pci_dev *dev)
 		iounmap(par->v_regs);
 		release_mem_region(fix->mmio_start, fix->mmio_len);
 
-		kfree(info->pixmap.addr);
+		kमुक्त(info->pixmap.addr);
 		framebuffer_release(info);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct pci_device_id pm3fb_id_table[] = {
-	{ PCI_VENDOR_ID_3DLABS, 0x0a,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id pm3fb_id_table[] = अणु
+	अणु PCI_VENDOR_ID_3DLABS, 0x0a,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 /* For PCI drivers */
-static struct pci_driver pm3fb_driver = {
+अटल काष्ठा pci_driver pm3fb_driver = अणु
 	.name =		"pm3fb",
 	.id_table =	pm3fb_id_table,
 	.probe =	pm3fb_probe,
-	.remove =	pm3fb_remove,
-};
+	.हटाओ =	pm3fb_हटाओ,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, pm3fb_id_table);
 
-#ifndef MODULE
+#अगर_अघोषित MODULE
 	/*
 	 *  Setup
 	 */
 
 /*
- * Only necessary if your driver takes special options,
+ * Only necessary अगर your driver takes special options,
  * otherwise we fall back on the generic fb_setup().
  */
-static int __init pm3fb_setup(char *options)
-{
-	char *this_opt;
+अटल पूर्णांक __init pm3fb_setup(अक्षर *options)
+अणु
+	अक्षर *this_opt;
 
-	/* Parse user specified options (`video=pm3fb:') */
-	if (!options || !*options)
-		return 0;
+	/* Parse user specअगरied options (`video=pm3fb:') */
+	अगर (!options || !*options)
+		वापस 0;
 
-	while ((this_opt = strsep(&options, ",")) != NULL) {
-		if (!*this_opt)
-			continue;
-		else if (!strncmp(this_opt, "noaccel", 7))
+	जबतक ((this_opt = strsep(&options, ",")) != शून्य) अणु
+		अगर (!*this_opt)
+			जारी;
+		अन्यथा अगर (!म_भेदन(this_opt, "noaccel", 7))
 			noaccel = 1;
-		else if (!strncmp(this_opt, "hwcursor=", 9))
-			hwcursor = simple_strtoul(this_opt + 9, NULL, 0);
-		else if (!strncmp(this_opt, "nomtrr", 6))
+		अन्यथा अगर (!म_भेदन(this_opt, "hwcursor=", 9))
+			hwcursor = simple_म_से_अदीर्घ(this_opt + 9, शून्य, 0);
+		अन्यथा अगर (!म_भेदन(this_opt, "nomtrr", 6))
 			nomtrr = 1;
-		else
+		अन्यथा
 			mode_option = this_opt;
-	}
-	return 0;
-}
-#endif /* MODULE */
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* MODULE */
 
-static int __init pm3fb_init(void)
-{
+अटल पूर्णांक __init pm3fb_init(व्योम)
+अणु
 	/*
-	 *  For kernel boot options (in 'video=pm3fb:<options>' format)
+	 *  For kernel boot options (in 'video=pm3fb:<options>' क्रमmat)
 	 */
-#ifndef MODULE
-	char *option = NULL;
+#अगर_अघोषित MODULE
+	अक्षर *option = शून्य;
 
-	if (fb_get_options("pm3fb", &option))
-		return -ENODEV;
+	अगर (fb_get_options("pm3fb", &option))
+		वापस -ENODEV;
 	pm3fb_setup(option);
-#endif
+#पूर्ण_अगर
 
-	return pci_register_driver(&pm3fb_driver);
-}
+	वापस pci_रेजिस्टर_driver(&pm3fb_driver);
+पूर्ण
 
-#ifdef MODULE
-static void __exit pm3fb_exit(void)
-{
-	pci_unregister_driver(&pm3fb_driver);
-}
+#अगर_घोषित MODULE
+अटल व्योम __निकास pm3fb_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&pm3fb_driver);
+पूर्ण
 
-module_exit(pm3fb_exit);
-#endif
+module_निकास(pm3fb_निकास);
+#पूर्ण_अगर
 module_init(pm3fb_init);
 
-module_param(mode_option, charp, 0);
+module_param(mode_option, अक्षरp, 0);
 MODULE_PARM_DESC(mode_option, "Initial video mode e.g. '648x480-8@60'");
 module_param(noaccel, bool, 0);
 MODULE_PARM_DESC(noaccel, "Disable acceleration");
-module_param(hwcursor, int, 0644);
+module_param(hwcursor, पूर्णांक, 0644);
 MODULE_PARM_DESC(hwcursor, "Enable hardware cursor "
 			"(1=enable, 0=disable, default=1)");
 module_param(nomtrr, bool, 0);

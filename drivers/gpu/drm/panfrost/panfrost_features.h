@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* (C) COPYRIGHT 2014-2018 ARM Limited. All rights reserved. */
 /* Copyright 2019 Linaro, Ltd., Rob Herring <robh@kernel.org> */
-#ifndef __PANFROST_FEATURES_H__
-#define __PANFROST_FEATURES_H__
+#अगर_अघोषित __PANFROST_FEATURES_H__
+#घोषणा __PANFROST_FEATURES_H__
 
-#include <linux/bitops.h>
+#समावेश <linux/bitops.h>
 
-#include "panfrost_device.h"
+#समावेश "panfrost_device.h"
 
-enum panfrost_hw_feature {
+क्रमागत panfrost_hw_feature अणु
 	HW_FEATURE_JOBCHAIN_DISAMBIGUATION,
 	HW_FEATURE_PWRON_DURING_PWROFF_TRANS,
 	HW_FEATURE_XAFFINITY,
@@ -39,22 +40,22 @@ enum panfrost_hw_feature {
 	HW_FEATURE_TLS_HASHING,
 	HW_FEATURE_THREAD_GROUP_SPLIT,
 	HW_FEATURE_3BIT_EXT_RW_L2_MMU_CONFIG,
-};
+पूर्ण;
 
-#define hw_features_t600 (\
+#घोषणा hw_features_t600 (\
 	BIT_ULL(HW_FEATURE_LD_ST_LEA_TEX) | \
 	BIT_ULL(HW_FEATURE_LINEAR_FILTER_FLOAT) | \
 	BIT_ULL(HW_FEATURE_THREAD_GROUP_SPLIT) | \
 	BIT_ULL(HW_FEATURE_V4))
 
-#define hw_features_t620 (\
+#घोषणा hw_features_t620 (\
 	BIT_ULL(HW_FEATURE_LD_ST_LEA_TEX) | \
 	BIT_ULL(HW_FEATURE_LINEAR_FILTER_FLOAT) | \
 	BIT_ULL(HW_FEATURE_ATTR_AUTO_TYPE_INFERRAL) | \
 	BIT_ULL(HW_FEATURE_THREAD_GROUP_SPLIT) | \
 	BIT_ULL(HW_FEATURE_V4))
 
-#define hw_features_t720 (\
+#घोषणा hw_features_t720 (\
 	BIT_ULL(HW_FEATURE_32_BIT_UNIFORM_ADDRESS) | \
 	BIT_ULL(HW_FEATURE_ATTR_AUTO_TYPE_INFERRAL) | \
 	BIT_ULL(HW_FEATURE_INTERPIPE_REG_ALIASING) | \
@@ -66,7 +67,7 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_V4))
 
 
-#define hw_features_t760 (\
+#घोषणा hw_features_t760 (\
 	BIT_ULL(HW_FEATURE_JOBCHAIN_DISAMBIGUATION) | \
 	BIT_ULL(HW_FEATURE_PWRON_DURING_PWROFF_TRANS) | \
 	BIT_ULL(HW_FEATURE_XAFFINITY) | \
@@ -84,7 +85,7 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_THREAD_GROUP_SPLIT))
 
 // T860
-#define hw_features_t860 (\
+#घोषणा hw_features_t860 (\
 	BIT_ULL(HW_FEATURE_JOBCHAIN_DISAMBIGUATION) | \
 	BIT_ULL(HW_FEATURE_PWRON_DURING_PWROFF_TRANS) | \
 	BIT_ULL(HW_FEATURE_XAFFINITY) | \
@@ -103,9 +104,9 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_TEST4_DATUM_MODE) | \
 	BIT_ULL(HW_FEATURE_THREAD_GROUP_SPLIT))
 
-#define hw_features_t880 hw_features_t860
+#घोषणा hw_features_t880 hw_features_t860
 
-#define hw_features_t830 (\
+#घोषणा hw_features_t830 (\
 	BIT_ULL(HW_FEATURE_JOBCHAIN_DISAMBIGUATION) | \
 	BIT_ULL(HW_FEATURE_PWRON_DURING_PWROFF_TRANS) | \
 	BIT_ULL(HW_FEATURE_XAFFINITY) | \
@@ -125,7 +126,7 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_TEST4_DATUM_MODE) | \
 	BIT_ULL(HW_FEATURE_THREAD_GROUP_SPLIT))
 
-#define hw_features_t820 (\
+#घोषणा hw_features_t820 (\
 	BIT_ULL(HW_FEATURE_JOBCHAIN_DISAMBIGUATION) | \
 	BIT_ULL(HW_FEATURE_PWRON_DURING_PWROFF_TRANS) | \
 	BIT_ULL(HW_FEATURE_XAFFINITY) | \
@@ -145,7 +146,7 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_TEST4_DATUM_MODE) | \
 	BIT_ULL(HW_FEATURE_THREAD_GROUP_SPLIT))
 
-#define hw_features_g71 (\
+#घोषणा hw_features_g71 (\
 	BIT_ULL(HW_FEATURE_JOBCHAIN_DISAMBIGUATION) | \
 	BIT_ULL(HW_FEATURE_PWRON_DURING_PWROFF_TRANS) | \
 	BIT_ULL(HW_FEATURE_XAFFINITY) | \
@@ -169,7 +170,7 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_PROTECTED_MODE) | \
 	BIT_ULL(HW_FEATURE_COHERENCY_REG))
 
-#define hw_features_g72 (\
+#घोषणा hw_features_g72 (\
 	BIT_ULL(HW_FEATURE_JOBCHAIN_DISAMBIGUATION) | \
 	BIT_ULL(HW_FEATURE_PWRON_DURING_PWROFF_TRANS) | \
 	BIT_ULL(HW_FEATURE_XAFFINITY) | \
@@ -194,7 +195,7 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_PROTECTED_DEBUG_MODE) | \
 	BIT_ULL(HW_FEATURE_COHERENCY_REG))
 
-#define hw_features_g51 (\
+#घोषणा hw_features_g51 (\
 	BIT_ULL(HW_FEATURE_JOBCHAIN_DISAMBIGUATION) | \
 	BIT_ULL(HW_FEATURE_PWRON_DURING_PWROFF_TRANS) | \
 	BIT_ULL(HW_FEATURE_XAFFINITY) | \
@@ -219,7 +220,7 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_PROTECTED_DEBUG_MODE) | \
 	BIT_ULL(HW_FEATURE_COHERENCY_REG))
 
-#define hw_features_g52 (\
+#घोषणा hw_features_g52 (\
 	BIT_ULL(HW_FEATURE_JOBCHAIN_DISAMBIGUATION) | \
 	BIT_ULL(HW_FEATURE_PWRON_DURING_PWROFF_TRANS) | \
 	BIT_ULL(HW_FEATURE_XAFFINITY) | \
@@ -244,7 +245,7 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_PROTECTED_DEBUG_MODE) | \
 	BIT_ULL(HW_FEATURE_COHERENCY_REG))
 
-#define hw_features_g76 (\
+#घोषणा hw_features_g76 (\
 	BIT_ULL(HW_FEATURE_JOBCHAIN_DISAMBIGUATION) | \
 	BIT_ULL(HW_FEATURE_PWRON_DURING_PWROFF_TRANS) | \
 	BIT_ULL(HW_FEATURE_XAFFINITY) | \
@@ -272,7 +273,7 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_TLS_HASHING) | \
 	BIT_ULL(HW_FEATURE_3BIT_EXT_RW_L2_MMU_CONFIG))
 
-#define hw_features_g31 (\
+#घोषणा hw_features_g31 (\
 	BIT_ULL(HW_FEATURE_JOBCHAIN_DISAMBIGUATION) | \
 	BIT_ULL(HW_FEATURE_PWRON_DURING_PWROFF_TRANS) | \
 	BIT_ULL(HW_FEATURE_XAFFINITY) | \
@@ -300,10 +301,10 @@ enum panfrost_hw_feature {
 	BIT_ULL(HW_FEATURE_TLS_HASHING) | \
 	BIT_ULL(HW_FEATURE_3BIT_EXT_RW_L2_MMU_CONFIG))
 
-static inline bool panfrost_has_hw_feature(struct panfrost_device *pfdev,
-					   enum panfrost_hw_feature feat)
-{
-	return test_bit(feat, pfdev->features.hw_features);
-}
+अटल अंतरभूत bool panfrost_has_hw_feature(काष्ठा panfrost_device *pfdev,
+					   क्रमागत panfrost_hw_feature feat)
+अणु
+	वापस test_bit(feat, pfdev->features.hw_features);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

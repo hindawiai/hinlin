@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
-#ifndef __PERF_MAP_SYMBOL
-#define __PERF_MAP_SYMBOL 1
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#अगर_अघोषित __PERF_MAP_SYMBOL
+#घोषणा __PERF_MAP_SYMBOL 1
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct maps;
-struct map;
-struct symbol;
+काष्ठा maps;
+काष्ठा map;
+काष्ठा symbol;
 
-struct map_symbol {
-	struct maps   *maps;
-	struct map    *map;
-	struct symbol *sym;
-};
+काष्ठा map_symbol अणु
+	काष्ठा maps   *maps;
+	काष्ठा map    *map;
+	काष्ठा symbol *sym;
+पूर्ण;
 
-struct addr_map_symbol {
-	struct map_symbol ms;
+काष्ठा addr_map_symbol अणु
+	काष्ठा map_symbol ms;
 	u64	      addr;
 	u64	      al_addr;
 	u64	      phys_addr;
 	u64	      data_page_size;
-};
-#endif // __PERF_MAP_SYMBOL
+पूर्ण;
+#पूर्ण_अगर // __PERF_MAP_SYMBOL

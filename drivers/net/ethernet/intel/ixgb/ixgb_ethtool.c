@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 1999 - 2008 Intel Corporation. */
 
-/* ethtool support for ixgb */
+/* ethtool support क्रम ixgb */
 
-#include "ixgb.h"
+#समावेश "ixgb.h"
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#define IXGB_ALL_RAR_ENTRIES 16
+#घोषणा IXGB_ALL_RAR_ENTRIES 16
 
-enum {NETDEV_STATS, IXGB_STATS};
+क्रमागत अणुNETDEV_STATS, IXGB_STATSपूर्ण;
 
-struct ixgb_stats {
-	char stat_string[ETH_GSTRING_LEN];
-	int type;
-	int sizeof_stat;
-	int stat_offset;
-};
+काष्ठा ixgb_stats अणु
+	अक्षर stat_string[ETH_GSTRING_LEN];
+	पूर्णांक type;
+	पूर्णांक माप_stat;
+	पूर्णांक stat_offset;
+पूर्ण;
 
-#define IXGB_STAT(m)		IXGB_STATS, \
-				sizeof_field(struct ixgb_adapter, m), \
-				offsetof(struct ixgb_adapter, m)
-#define IXGB_NETDEV_STAT(m)	NETDEV_STATS, \
-				sizeof_field(struct net_device, m), \
-				offsetof(struct net_device, m)
+#घोषणा IXGB_STAT(m)		IXGB_STATS, \
+				माप_field(काष्ठा ixgb_adapter, m), \
+				दुरत्व(काष्ठा ixgb_adapter, m)
+#घोषणा IXGB_NETDEV_STAT(m)	NETDEV_STATS, \
+				माप_field(काष्ठा net_device, m), \
+				दुरत्व(काष्ठा net_device, m)
 
-static struct ixgb_stats ixgb_gstrings_stats[] = {
-	{"rx_packets", IXGB_NETDEV_STAT(stats.rx_packets)},
-	{"tx_packets", IXGB_NETDEV_STAT(stats.tx_packets)},
-	{"rx_bytes", IXGB_NETDEV_STAT(stats.rx_bytes)},
-	{"tx_bytes", IXGB_NETDEV_STAT(stats.tx_bytes)},
-	{"rx_errors", IXGB_NETDEV_STAT(stats.rx_errors)},
-	{"tx_errors", IXGB_NETDEV_STAT(stats.tx_errors)},
-	{"rx_dropped", IXGB_NETDEV_STAT(stats.rx_dropped)},
-	{"tx_dropped", IXGB_NETDEV_STAT(stats.tx_dropped)},
-	{"multicast", IXGB_NETDEV_STAT(stats.multicast)},
-	{"collisions", IXGB_NETDEV_STAT(stats.collisions)},
+अटल काष्ठा ixgb_stats ixgb_gstrings_stats[] = अणु
+	अणु"rx_packets", IXGB_NETDEV_STAT(stats.rx_packets)पूर्ण,
+	अणु"tx_packets", IXGB_NETDEV_STAT(stats.tx_packets)पूर्ण,
+	अणु"rx_bytes", IXGB_NETDEV_STAT(stats.rx_bytes)पूर्ण,
+	अणु"tx_bytes", IXGB_NETDEV_STAT(stats.tx_bytes)पूर्ण,
+	अणु"rx_errors", IXGB_NETDEV_STAT(stats.rx_errors)पूर्ण,
+	अणु"tx_errors", IXGB_NETDEV_STAT(stats.tx_errors)पूर्ण,
+	अणु"rx_dropped", IXGB_NETDEV_STAT(stats.rx_dropped)पूर्ण,
+	अणु"tx_dropped", IXGB_NETDEV_STAT(stats.tx_dropped)पूर्ण,
+	अणु"multicast", IXGB_NETDEV_STAT(stats.multicast)पूर्ण,
+	अणु"collisions", IXGB_NETDEV_STAT(stats.collisions)पूर्ण,
 
-/*	{ "rx_length_errors", IXGB_NETDEV_STAT(stats.rx_length_errors) },	*/
-	{"rx_over_errors", IXGB_NETDEV_STAT(stats.rx_over_errors)},
-	{"rx_crc_errors", IXGB_NETDEV_STAT(stats.rx_crc_errors)},
-	{"rx_frame_errors", IXGB_NETDEV_STAT(stats.rx_frame_errors)},
-	{"rx_no_buffer_count", IXGB_STAT(stats.rnbc)},
-	{"rx_fifo_errors", IXGB_NETDEV_STAT(stats.rx_fifo_errors)},
-	{"rx_missed_errors", IXGB_NETDEV_STAT(stats.rx_missed_errors)},
-	{"tx_aborted_errors", IXGB_NETDEV_STAT(stats.tx_aborted_errors)},
-	{"tx_carrier_errors", IXGB_NETDEV_STAT(stats.tx_carrier_errors)},
-	{"tx_fifo_errors", IXGB_NETDEV_STAT(stats.tx_fifo_errors)},
-	{"tx_heartbeat_errors", IXGB_NETDEV_STAT(stats.tx_heartbeat_errors)},
-	{"tx_window_errors", IXGB_NETDEV_STAT(stats.tx_window_errors)},
-	{"tx_deferred_ok", IXGB_STAT(stats.dc)},
-	{"tx_timeout_count", IXGB_STAT(tx_timeout_count) },
-	{"tx_restart_queue", IXGB_STAT(restart_queue) },
-	{"rx_long_length_errors", IXGB_STAT(stats.roc)},
-	{"rx_short_length_errors", IXGB_STAT(stats.ruc)},
-	{"tx_tcp_seg_good", IXGB_STAT(stats.tsctc)},
-	{"tx_tcp_seg_failed", IXGB_STAT(stats.tsctfc)},
-	{"rx_flow_control_xon", IXGB_STAT(stats.xonrxc)},
-	{"rx_flow_control_xoff", IXGB_STAT(stats.xoffrxc)},
-	{"tx_flow_control_xon", IXGB_STAT(stats.xontxc)},
-	{"tx_flow_control_xoff", IXGB_STAT(stats.xofftxc)},
-	{"rx_csum_offload_good", IXGB_STAT(hw_csum_rx_good)},
-	{"rx_csum_offload_errors", IXGB_STAT(hw_csum_rx_error)},
-	{"tx_csum_offload_good", IXGB_STAT(hw_csum_tx_good)},
-	{"tx_csum_offload_errors", IXGB_STAT(hw_csum_tx_error)}
-};
+/*	अणु "rx_length_errors", IXGB_NETDEV_STAT(stats.rx_length_errors) पूर्ण,	*/
+	अणु"rx_over_errors", IXGB_NETDEV_STAT(stats.rx_over_errors)पूर्ण,
+	अणु"rx_crc_errors", IXGB_NETDEV_STAT(stats.rx_crc_errors)पूर्ण,
+	अणु"rx_frame_errors", IXGB_NETDEV_STAT(stats.rx_frame_errors)पूर्ण,
+	अणु"rx_no_buffer_count", IXGB_STAT(stats.rnbc)पूर्ण,
+	अणु"rx_fifo_errors", IXGB_NETDEV_STAT(stats.rx_fअगरo_errors)पूर्ण,
+	अणु"rx_missed_errors", IXGB_NETDEV_STAT(stats.rx_missed_errors)पूर्ण,
+	अणु"tx_aborted_errors", IXGB_NETDEV_STAT(stats.tx_पातed_errors)पूर्ण,
+	अणु"tx_carrier_errors", IXGB_NETDEV_STAT(stats.tx_carrier_errors)पूर्ण,
+	अणु"tx_fifo_errors", IXGB_NETDEV_STAT(stats.tx_fअगरo_errors)पूर्ण,
+	अणु"tx_heartbeat_errors", IXGB_NETDEV_STAT(stats.tx_heartbeat_errors)पूर्ण,
+	अणु"tx_window_errors", IXGB_NETDEV_STAT(stats.tx_winकरोw_errors)पूर्ण,
+	अणु"tx_deferred_ok", IXGB_STAT(stats.dc)पूर्ण,
+	अणु"tx_timeout_count", IXGB_STAT(tx_समयout_count) पूर्ण,
+	अणु"tx_restart_queue", IXGB_STAT(restart_queue) पूर्ण,
+	अणु"rx_long_length_errors", IXGB_STAT(stats.roc)पूर्ण,
+	अणु"rx_short_length_errors", IXGB_STAT(stats.ruc)पूर्ण,
+	अणु"tx_tcp_seg_good", IXGB_STAT(stats.tsctc)पूर्ण,
+	अणु"tx_tcp_seg_failed", IXGB_STAT(stats.tsctfc)पूर्ण,
+	अणु"rx_flow_control_xon", IXGB_STAT(stats.xonrxc)पूर्ण,
+	अणु"rx_flow_control_xoff", IXGB_STAT(stats.xoffrxc)पूर्ण,
+	अणु"tx_flow_control_xon", IXGB_STAT(stats.xontxc)पूर्ण,
+	अणु"tx_flow_control_xoff", IXGB_STAT(stats.xofftxc)पूर्ण,
+	अणु"rx_csum_offload_good", IXGB_STAT(hw_csum_rx_good)पूर्ण,
+	अणु"rx_csum_offload_errors", IXGB_STAT(hw_csum_rx_error)पूर्ण,
+	अणु"tx_csum_offload_good", IXGB_STAT(hw_csum_tx_good)पूर्ण,
+	अणु"tx_csum_offload_errors", IXGB_STAT(hw_csum_tx_error)पूर्ण
+पूर्ण;
 
-#define IXGB_STATS_LEN	ARRAY_SIZE(ixgb_gstrings_stats)
+#घोषणा IXGB_STATS_LEN	ARRAY_SIZE(ixgb_gstrings_stats)
 
-static int
-ixgb_get_link_ksettings(struct net_device *netdev,
-			struct ethtool_link_ksettings *cmd)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक
+ixgb_get_link_ksettings(काष्ठा net_device *netdev,
+			काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
 
 	ethtool_link_ksettings_zero_link_mode(cmd, supported);
 	ethtool_link_ksettings_add_link_mode(cmd, supported, 10000baseT_Full);
@@ -84,132 +85,132 @@ ixgb_get_link_ksettings(struct net_device *netdev,
 
 	cmd->base.port = PORT_FIBRE;
 
-	if (netif_carrier_ok(adapter->netdev)) {
+	अगर (netअगर_carrier_ok(adapter->netdev)) अणु
 		cmd->base.speed = SPEED_10000;
 		cmd->base.duplex = DUPLEX_FULL;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd->base.speed = SPEED_UNKNOWN;
 		cmd->base.duplex = DUPLEX_UNKNOWN;
-	}
+	पूर्ण
 
-	cmd->base.autoneg = AUTONEG_DISABLE;
-	return 0;
-}
+	cmd->base.स्वतःneg = AUTONEG_DISABLE;
+	वापस 0;
+पूर्ण
 
-void ixgb_set_speed_duplex(struct net_device *netdev)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
-	/* be optimistic about our link, since we were up before */
+व्योम ixgb_set_speed_duplex(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
+	/* be optimistic about our link, since we were up beक्रमe */
 	adapter->link_speed = 10000;
 	adapter->link_duplex = FULL_DUPLEX;
-	netif_carrier_on(netdev);
-	netif_wake_queue(netdev);
-}
+	netअगर_carrier_on(netdev);
+	netअगर_wake_queue(netdev);
+पूर्ण
 
-static int
-ixgb_set_link_ksettings(struct net_device *netdev,
-			const struct ethtool_link_ksettings *cmd)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक
+ixgb_set_link_ksettings(काष्ठा net_device *netdev,
+			स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
 	u32 speed = cmd->base.speed;
 
-	if (cmd->base.autoneg == AUTONEG_ENABLE ||
+	अगर (cmd->base.स्वतःneg == AUTONEG_ENABLE ||
 	    (speed + cmd->base.duplex != SPEED_10000 + DUPLEX_FULL))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (netif_running(adapter->netdev)) {
-		ixgb_down(adapter, true);
+	अगर (netअगर_running(adapter->netdev)) अणु
+		ixgb_करोwn(adapter, true);
 		ixgb_reset(adapter);
 		ixgb_up(adapter);
 		ixgb_set_speed_duplex(netdev);
-	} else
+	पूर्ण अन्यथा
 		ixgb_reset(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-ixgb_get_pauseparam(struct net_device *netdev,
-			 struct ethtool_pauseparam *pause)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
-	struct ixgb_hw *hw = &adapter->hw;
+अटल व्योम
+ixgb_get_छोड़ोparam(काष्ठा net_device *netdev,
+			 काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgb_hw *hw = &adapter->hw;
 
-	pause->autoneg = AUTONEG_DISABLE;
+	छोड़ो->स्वतःneg = AUTONEG_DISABLE;
 
-	if (hw->fc.type == ixgb_fc_rx_pause)
-		pause->rx_pause = 1;
-	else if (hw->fc.type == ixgb_fc_tx_pause)
-		pause->tx_pause = 1;
-	else if (hw->fc.type == ixgb_fc_full) {
-		pause->rx_pause = 1;
-		pause->tx_pause = 1;
-	}
-}
+	अगर (hw->fc.type == ixgb_fc_rx_छोड़ो)
+		छोड़ो->rx_छोड़ो = 1;
+	अन्यथा अगर (hw->fc.type == ixgb_fc_tx_छोड़ो)
+		छोड़ो->tx_छोड़ो = 1;
+	अन्यथा अगर (hw->fc.type == ixgb_fc_full) अणु
+		छोड़ो->rx_छोड़ो = 1;
+		छोड़ो->tx_छोड़ो = 1;
+	पूर्ण
+पूर्ण
 
-static int
-ixgb_set_pauseparam(struct net_device *netdev,
-			 struct ethtool_pauseparam *pause)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
-	struct ixgb_hw *hw = &adapter->hw;
+अटल पूर्णांक
+ixgb_set_छोड़ोparam(काष्ठा net_device *netdev,
+			 काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgb_hw *hw = &adapter->hw;
 
-	if (pause->autoneg == AUTONEG_ENABLE)
-		return -EINVAL;
+	अगर (छोड़ो->स्वतःneg == AUTONEG_ENABLE)
+		वापस -EINVAL;
 
-	if (pause->rx_pause && pause->tx_pause)
+	अगर (छोड़ो->rx_छोड़ो && छोड़ो->tx_छोड़ो)
 		hw->fc.type = ixgb_fc_full;
-	else if (pause->rx_pause && !pause->tx_pause)
-		hw->fc.type = ixgb_fc_rx_pause;
-	else if (!pause->rx_pause && pause->tx_pause)
-		hw->fc.type = ixgb_fc_tx_pause;
-	else if (!pause->rx_pause && !pause->tx_pause)
+	अन्यथा अगर (छोड़ो->rx_छोड़ो && !छोड़ो->tx_छोड़ो)
+		hw->fc.type = ixgb_fc_rx_छोड़ो;
+	अन्यथा अगर (!छोड़ो->rx_छोड़ो && छोड़ो->tx_छोड़ो)
+		hw->fc.type = ixgb_fc_tx_छोड़ो;
+	अन्यथा अगर (!छोड़ो->rx_छोड़ो && !छोड़ो->tx_छोड़ो)
 		hw->fc.type = ixgb_fc_none;
 
-	if (netif_running(adapter->netdev)) {
-		ixgb_down(adapter, true);
+	अगर (netअगर_running(adapter->netdev)) अणु
+		ixgb_करोwn(adapter, true);
 		ixgb_up(adapter);
 		ixgb_set_speed_duplex(netdev);
-	} else
+	पूर्ण अन्यथा
 		ixgb_reset(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32
-ixgb_get_msglevel(struct net_device *netdev)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
-	return adapter->msg_enable;
-}
+अटल u32
+ixgb_get_msglevel(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
+	वापस adapter->msg_enable;
+पूर्ण
 
-static void
-ixgb_set_msglevel(struct net_device *netdev, u32 data)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
+अटल व्योम
+ixgb_set_msglevel(काष्ठा net_device *netdev, u32 data)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
 	adapter->msg_enable = data;
-}
-#define IXGB_GET_STAT(_A_, _R_) _A_->stats._R_
+पूर्ण
+#घोषणा IXGB_GET_STAT(_A_, _R_) _A_->stats._R_
 
-static int
-ixgb_get_regs_len(struct net_device *netdev)
-{
-#define IXGB_REG_DUMP_LEN  136*sizeof(u32)
-	return IXGB_REG_DUMP_LEN;
-}
+अटल पूर्णांक
+ixgb_get_regs_len(काष्ठा net_device *netdev)
+अणु
+#घोषणा IXGB_REG_DUMP_LEN  136*माप(u32)
+	वापस IXGB_REG_DUMP_LEN;
+पूर्ण
 
-static void
-ixgb_get_regs(struct net_device *netdev,
-		   struct ethtool_regs *regs, void *p)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
-	struct ixgb_hw *hw = &adapter->hw;
+अटल व्योम
+ixgb_get_regs(काष्ठा net_device *netdev,
+		   काष्ठा ethtool_regs *regs, व्योम *p)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgb_hw *hw = &adapter->hw;
 	u32 *reg = p;
 	u32 *reg_start = reg;
 	u8 i;
 
-	/* the 1 (one) below indicates an attempt at versioning, if the
-	 * interface in ethtool or the driver changes, this 1 should be
+	/* the 1 (one) below indicates an attempt at versioning, अगर the
+	 * पूर्णांकerface in ethtool or the driver changes, this 1 should be
 	 * incremented */
 	regs->version = (1<<24) | hw->revision_id << 16 | hw->device_id;
 
@@ -241,10 +242,10 @@ ixgb_get_regs(struct net_device *netdev,
 	*reg++ = IXGB_READ_REG(hw, RXCSUM);	/*  20 */
 
 	/* there are 16 RAR entries in hardware, we only use 3 */
-	for (i = 0; i < IXGB_ALL_RAR_ENTRIES; i++) {
+	क्रम (i = 0; i < IXGB_ALL_RAR_ENTRIES; i++) अणु
 		*reg++ = IXGB_READ_REG_ARRAY(hw, RAL, (i << 1)); /*21,...,51 */
 		*reg++ = IXGB_READ_REG_ARRAY(hw, RAH, (i << 1)); /*22,...,52 */
-	}
+	पूर्ण
 
 	/* Transmit */
 	*reg++ = IXGB_READ_REG(hw, TCTL);	/*  53 */
@@ -335,165 +336,165 @@ ixgb_get_regs(struct net_device *netdev,
 	*reg++ = IXGB_GET_STAT(adapter, xofftxc);	/* 134 */
 	*reg++ = IXGB_GET_STAT(adapter, rjc);	/* 135 */
 
-	regs->len = (reg - reg_start) * sizeof(u32);
-}
+	regs->len = (reg - reg_start) * माप(u32);
+पूर्ण
 
-static int
-ixgb_get_eeprom_len(struct net_device *netdev)
-{
-	/* return size in bytes */
-	return IXGB_EEPROM_SIZE << 1;
-}
+अटल पूर्णांक
+ixgb_get_eeprom_len(काष्ठा net_device *netdev)
+अणु
+	/* वापस size in bytes */
+	वापस IXGB_EEPROM_SIZE << 1;
+पूर्ण
 
-static int
-ixgb_get_eeprom(struct net_device *netdev,
-		  struct ethtool_eeprom *eeprom, u8 *bytes)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
-	struct ixgb_hw *hw = &adapter->hw;
+अटल पूर्णांक
+ixgb_get_eeprom(काष्ठा net_device *netdev,
+		  काष्ठा ethtool_eeprom *eeprom, u8 *bytes)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgb_hw *hw = &adapter->hw;
 	__le16 *eeprom_buff;
-	int i, max_len, first_word, last_word;
-	int ret_val = 0;
+	पूर्णांक i, max_len, first_word, last_word;
+	पूर्णांक ret_val = 0;
 
-	if (eeprom->len == 0) {
+	अगर (eeprom->len == 0) अणु
 		ret_val = -EINVAL;
-		goto geeprom_error;
-	}
+		जाओ geeprom_error;
+	पूर्ण
 
-	eeprom->magic = hw->vendor_id | (hw->device_id << 16);
+	eeprom->magic = hw->venकरोr_id | (hw->device_id << 16);
 
 	max_len = ixgb_get_eeprom_len(netdev);
 
-	if (eeprom->offset > eeprom->offset + eeprom->len) {
+	अगर (eeprom->offset > eeprom->offset + eeprom->len) अणु
 		ret_val = -EINVAL;
-		goto geeprom_error;
-	}
+		जाओ geeprom_error;
+	पूर्ण
 
-	if ((eeprom->offset + eeprom->len) > max_len)
+	अगर ((eeprom->offset + eeprom->len) > max_len)
 		eeprom->len = (max_len - eeprom->offset);
 
 	first_word = eeprom->offset >> 1;
 	last_word = (eeprom->offset + eeprom->len - 1) >> 1;
 
-	eeprom_buff = kmalloc_array(last_word - first_word + 1,
-				    sizeof(__le16),
+	eeprom_buff = kदो_स्मृति_array(last_word - first_word + 1,
+				    माप(__le16),
 				    GFP_KERNEL);
-	if (!eeprom_buff)
-		return -ENOMEM;
+	अगर (!eeprom_buff)
+		वापस -ENOMEM;
 
 	/* note the eeprom was good because the driver loaded */
-	for (i = 0; i <= (last_word - first_word); i++)
+	क्रम (i = 0; i <= (last_word - first_word); i++)
 		eeprom_buff[i] = ixgb_get_eeprom_word(hw, (first_word + i));
 
-	memcpy(bytes, (u8 *)eeprom_buff + (eeprom->offset & 1), eeprom->len);
-	kfree(eeprom_buff);
+	स_नकल(bytes, (u8 *)eeprom_buff + (eeprom->offset & 1), eeprom->len);
+	kमुक्त(eeprom_buff);
 
 geeprom_error:
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
-static int
-ixgb_set_eeprom(struct net_device *netdev,
-		  struct ethtool_eeprom *eeprom, u8 *bytes)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
-	struct ixgb_hw *hw = &adapter->hw;
+अटल पूर्णांक
+ixgb_set_eeprom(काष्ठा net_device *netdev,
+		  काष्ठा ethtool_eeprom *eeprom, u8 *bytes)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgb_hw *hw = &adapter->hw;
 	u16 *eeprom_buff;
-	void *ptr;
-	int max_len, first_word, last_word;
+	व्योम *ptr;
+	पूर्णांक max_len, first_word, last_word;
 	u16 i;
 
-	if (eeprom->len == 0)
-		return -EINVAL;
+	अगर (eeprom->len == 0)
+		वापस -EINVAL;
 
-	if (eeprom->magic != (hw->vendor_id | (hw->device_id << 16)))
-		return -EFAULT;
+	अगर (eeprom->magic != (hw->venकरोr_id | (hw->device_id << 16)))
+		वापस -EFAULT;
 
 	max_len = ixgb_get_eeprom_len(netdev);
 
-	if (eeprom->offset > eeprom->offset + eeprom->len)
-		return -EINVAL;
+	अगर (eeprom->offset > eeprom->offset + eeprom->len)
+		वापस -EINVAL;
 
-	if ((eeprom->offset + eeprom->len) > max_len)
+	अगर ((eeprom->offset + eeprom->len) > max_len)
 		eeprom->len = (max_len - eeprom->offset);
 
 	first_word = eeprom->offset >> 1;
 	last_word = (eeprom->offset + eeprom->len - 1) >> 1;
-	eeprom_buff = kmalloc(max_len, GFP_KERNEL);
-	if (!eeprom_buff)
-		return -ENOMEM;
+	eeprom_buff = kदो_स्मृति(max_len, GFP_KERNEL);
+	अगर (!eeprom_buff)
+		वापस -ENOMEM;
 
-	ptr = (void *)eeprom_buff;
+	ptr = (व्योम *)eeprom_buff;
 
-	if (eeprom->offset & 1) {
-		/* need read/modify/write of first changed EEPROM word */
-		/* only the second byte of the word is being modified */
-		eeprom_buff[0] = ixgb_read_eeprom(hw, first_word);
+	अगर (eeprom->offset & 1) अणु
+		/* need पढ़ो/modअगरy/ग_लिखो of first changed EEPROM word */
+		/* only the second byte of the word is being modअगरied */
+		eeprom_buff[0] = ixgb_पढ़ो_eeprom(hw, first_word);
 		ptr++;
-	}
-	if ((eeprom->offset + eeprom->len) & 1) {
-		/* need read/modify/write of last changed EEPROM word */
-		/* only the first byte of the word is being modified */
+	पूर्ण
+	अगर ((eeprom->offset + eeprom->len) & 1) अणु
+		/* need पढ़ो/modअगरy/ग_लिखो of last changed EEPROM word */
+		/* only the first byte of the word is being modअगरied */
 		eeprom_buff[last_word - first_word]
-			= ixgb_read_eeprom(hw, last_word);
-	}
+			= ixgb_पढ़ो_eeprom(hw, last_word);
+	पूर्ण
 
-	memcpy(ptr, bytes, eeprom->len);
-	for (i = 0; i <= (last_word - first_word); i++)
-		ixgb_write_eeprom(hw, first_word + i, eeprom_buff[i]);
+	स_नकल(ptr, bytes, eeprom->len);
+	क्रम (i = 0; i <= (last_word - first_word); i++)
+		ixgb_ग_लिखो_eeprom(hw, first_word + i, eeprom_buff[i]);
 
-	/* Update the checksum over the first part of the EEPROM if needed */
-	if (first_word <= EEPROM_CHECKSUM_REG)
+	/* Update the checksum over the first part of the EEPROM अगर needed */
+	अगर (first_word <= EEPROM_CHECKSUM_REG)
 		ixgb_update_eeprom_checksum(hw);
 
-	kfree(eeprom_buff);
-	return 0;
-}
+	kमुक्त(eeprom_buff);
+	वापस 0;
+पूर्ण
 
-static void
-ixgb_get_drvinfo(struct net_device *netdev,
-		   struct ethtool_drvinfo *drvinfo)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
+अटल व्योम
+ixgb_get_drvinfo(काष्ठा net_device *netdev,
+		   काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
 
 	strlcpy(drvinfo->driver,  ixgb_driver_name,
-		sizeof(drvinfo->driver));
+		माप(drvinfo->driver));
 	strlcpy(drvinfo->bus_info, pci_name(adapter->pdev),
-		sizeof(drvinfo->bus_info));
-}
+		माप(drvinfo->bus_info));
+पूर्ण
 
-static void
-ixgb_get_ringparam(struct net_device *netdev,
-		struct ethtool_ringparam *ring)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
-	struct ixgb_desc_ring *txdr = &adapter->tx_ring;
-	struct ixgb_desc_ring *rxdr = &adapter->rx_ring;
+अटल व्योम
+ixgb_get_ringparam(काष्ठा net_device *netdev,
+		काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgb_desc_ring *txdr = &adapter->tx_ring;
+	काष्ठा ixgb_desc_ring *rxdr = &adapter->rx_ring;
 
 	ring->rx_max_pending = MAX_RXD;
 	ring->tx_max_pending = MAX_TXD;
 	ring->rx_pending = rxdr->count;
 	ring->tx_pending = txdr->count;
-}
+पूर्ण
 
-static int
-ixgb_set_ringparam(struct net_device *netdev,
-		struct ethtool_ringparam *ring)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
-	struct ixgb_desc_ring *txdr = &adapter->tx_ring;
-	struct ixgb_desc_ring *rxdr = &adapter->rx_ring;
-	struct ixgb_desc_ring tx_old, tx_new, rx_old, rx_new;
-	int err;
+अटल पूर्णांक
+ixgb_set_ringparam(काष्ठा net_device *netdev,
+		काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgb_desc_ring *txdr = &adapter->tx_ring;
+	काष्ठा ixgb_desc_ring *rxdr = &adapter->rx_ring;
+	काष्ठा ixgb_desc_ring tx_old, tx_new, rx_old, rx_new;
+	पूर्णांक err;
 
 	tx_old = adapter->tx_ring;
 	rx_old = adapter->rx_ring;
 
-	if ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
-		return -EINVAL;
+	अगर ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
+		वापस -EINVAL;
 
-	if (netif_running(adapter->netdev))
-		ixgb_down(adapter, true);
+	अगर (netअगर_running(adapter->netdev))
+		ixgb_करोwn(adapter, true);
 
 	rxdr->count = max(ring->rx_pending,(u32)MIN_RXD);
 	rxdr->count = min(rxdr->count,(u32)MAX_RXD);
@@ -503,114 +504,114 @@ ixgb_set_ringparam(struct net_device *netdev,
 	txdr->count = min(txdr->count,(u32)MAX_TXD);
 	txdr->count = ALIGN(txdr->count, IXGB_REQ_TX_DESCRIPTOR_MULTIPLE);
 
-	if (netif_running(adapter->netdev)) {
-		/* Try to get new resources before deleting old */
-		if ((err = ixgb_setup_rx_resources(adapter)))
-			goto err_setup_rx;
-		if ((err = ixgb_setup_tx_resources(adapter)))
-			goto err_setup_tx;
+	अगर (netअगर_running(adapter->netdev)) अणु
+		/* Try to get new resources beक्रमe deleting old */
+		अगर ((err = ixgb_setup_rx_resources(adapter)))
+			जाओ err_setup_rx;
+		अगर ((err = ixgb_setup_tx_resources(adapter)))
+			जाओ err_setup_tx;
 
-		/* save the new, restore the old in order to free it,
+		/* save the new, restore the old in order to मुक्त it,
 		 * then restore the new back again */
 
 		rx_new = adapter->rx_ring;
 		tx_new = adapter->tx_ring;
 		adapter->rx_ring = rx_old;
 		adapter->tx_ring = tx_old;
-		ixgb_free_rx_resources(adapter);
-		ixgb_free_tx_resources(adapter);
+		ixgb_मुक्त_rx_resources(adapter);
+		ixgb_मुक्त_tx_resources(adapter);
 		adapter->rx_ring = rx_new;
 		adapter->tx_ring = tx_new;
-		if ((err = ixgb_up(adapter)))
-			return err;
+		अगर ((err = ixgb_up(adapter)))
+			वापस err;
 		ixgb_set_speed_duplex(netdev);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_setup_tx:
-	ixgb_free_rx_resources(adapter);
+	ixgb_मुक्त_rx_resources(adapter);
 err_setup_rx:
 	adapter->rx_ring = rx_old;
 	adapter->tx_ring = tx_old;
 	ixgb_up(adapter);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-ixgb_set_phys_id(struct net_device *netdev, enum ethtool_phys_id_state state)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक
+ixgb_set_phys_id(काष्ठा net_device *netdev, क्रमागत ethtool_phys_id_state state)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
 
-	switch (state) {
-	case ETHTOOL_ID_ACTIVE:
-		return 2;
+	चयन (state) अणु
+	हाल ETHTOOL_ID_ACTIVE:
+		वापस 2;
 
-	case ETHTOOL_ID_ON:
+	हाल ETHTOOL_ID_ON:
 		ixgb_led_on(&adapter->hw);
-		break;
+		अवरोध;
 
-	case ETHTOOL_ID_OFF:
-	case ETHTOOL_ID_INACTIVE:
+	हाल ETHTOOL_ID_OFF:
+	हाल ETHTOOL_ID_INACTIVE:
 		ixgb_led_off(&adapter->hw);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ixgb_get_sset_count(struct net_device *netdev, int sset)
-{
-	switch (sset) {
-	case ETH_SS_STATS:
-		return IXGB_STATS_LEN;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक
+ixgb_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		वापस IXGB_STATS_LEN;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void
-ixgb_get_ethtool_stats(struct net_device *netdev,
-		struct ethtool_stats *stats, u64 *data)
-{
-	struct ixgb_adapter *adapter = netdev_priv(netdev);
-	int i;
-	char *p = NULL;
+अटल व्योम
+ixgb_get_ethtool_stats(काष्ठा net_device *netdev,
+		काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा ixgb_adapter *adapter = netdev_priv(netdev);
+	पूर्णांक i;
+	अक्षर *p = शून्य;
 
 	ixgb_update_stats(adapter);
-	for (i = 0; i < IXGB_STATS_LEN; i++) {
-		switch (ixgb_gstrings_stats[i].type) {
-		case NETDEV_STATS:
-			p = (char *) netdev +
+	क्रम (i = 0; i < IXGB_STATS_LEN; i++) अणु
+		चयन (ixgb_gstrings_stats[i].type) अणु
+		हाल NETDEV_STATS:
+			p = (अक्षर *) netdev +
 					ixgb_gstrings_stats[i].stat_offset;
-			break;
-		case IXGB_STATS:
-			p = (char *) adapter +
+			अवरोध;
+		हाल IXGB_STATS:
+			p = (अक्षर *) adapter +
 					ixgb_gstrings_stats[i].stat_offset;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		data[i] = (ixgb_gstrings_stats[i].sizeof_stat ==
-			sizeof(u64)) ? *(u64 *)p : *(u32 *)p;
-	}
-}
+		data[i] = (ixgb_gstrings_stats[i].माप_stat ==
+			माप(u64)) ? *(u64 *)p : *(u32 *)p;
+	पूर्ण
+पूर्ण
 
-static void
-ixgb_get_strings(struct net_device *netdev, u32 stringset, u8 *data)
-{
-	int i;
+अटल व्योम
+ixgb_get_strings(काष्ठा net_device *netdev, u32 stringset, u8 *data)
+अणु
+	पूर्णांक i;
 
-	switch(stringset) {
-	case ETH_SS_STATS:
-		for (i = 0; i < IXGB_STATS_LEN; i++) {
-			memcpy(data + i * ETH_GSTRING_LEN,
+	चयन(stringset) अणु
+	हाल ETH_SS_STATS:
+		क्रम (i = 0; i < IXGB_STATS_LEN; i++) अणु
+			स_नकल(data + i * ETH_GSTRING_LEN,
 			ixgb_gstrings_stats[i].stat_string,
 			ETH_GSTRING_LEN);
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const struct ethtool_ops ixgb_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops ixgb_ethtool_ops = अणु
 	.get_drvinfo = ixgb_get_drvinfo,
 	.get_regs_len = ixgb_get_regs_len,
 	.get_regs = ixgb_get_regs,
@@ -620,8 +621,8 @@ static const struct ethtool_ops ixgb_ethtool_ops = {
 	.set_eeprom = ixgb_set_eeprom,
 	.get_ringparam = ixgb_get_ringparam,
 	.set_ringparam = ixgb_set_ringparam,
-	.get_pauseparam	= ixgb_get_pauseparam,
-	.set_pauseparam	= ixgb_set_pauseparam,
+	.get_छोड़ोparam	= ixgb_get_छोड़ोparam,
+	.set_छोड़ोparam	= ixgb_set_छोड़ोparam,
 	.get_msglevel = ixgb_get_msglevel,
 	.set_msglevel = ixgb_set_msglevel,
 	.get_strings = ixgb_get_strings,
@@ -630,9 +631,9 @@ static const struct ethtool_ops ixgb_ethtool_ops = {
 	.get_ethtool_stats = ixgb_get_ethtool_stats,
 	.get_link_ksettings = ixgb_get_link_ksettings,
 	.set_link_ksettings = ixgb_set_link_ksettings,
-};
+पूर्ण;
 
-void ixgb_set_ethtool_ops(struct net_device *netdev)
-{
+व्योम ixgb_set_ethtool_ops(काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = &ixgb_ethtool_ops;
-}
+पूर्ण

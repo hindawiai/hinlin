@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright 2019 Google LLC
  */
 
-#ifndef _UFSHCD_CRYPTO_H
-#define _UFSHCD_CRYPTO_H
+#अगर_अघोषित _UFSHCD_CRYPTO_H
+#घोषणा _UFSHCD_CRYPTO_H
 
-#ifdef CONFIG_SCSI_UFS_CRYPTO
-#include "ufshcd.h"
-#include "ufshci.h"
+#अगर_घोषित CONFIG_SCSI_UFS_CRYPTO
+#समावेश "ufshcd.h"
+#समावेश "ufshci.h"
 
-static inline void ufshcd_prepare_lrbp_crypto(struct request *rq,
-					      struct ufshcd_lrb *lrbp)
-{
-	if (!rq || !rq->crypt_keyslot) {
+अटल अंतरभूत व्योम ufshcd_prepare_lrbp_crypto(काष्ठा request *rq,
+					      काष्ठा ufshcd_lrb *lrbp)
+अणु
+	अगर (!rq || !rq->crypt_keyslot) अणु
 		lrbp->crypto_key_slot = -1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	lrbp->crypto_key_slot = blk_ksm_get_slot_idx(rq->crypt_keyslot);
 	lrbp->data_unit_num = rq->crypt_ctx->bc_dun[0];
-}
+पूर्ण
 
-static inline void
-ufshcd_prepare_req_desc_hdr_crypto(struct ufshcd_lrb *lrbp, u32 *dword_0,
+अटल अंतरभूत व्योम
+ufshcd_prepare_req_desc_hdr_crypto(काष्ठा ufshcd_lrb *lrbp, u32 *dword_0,
 				   u32 *dword_1, u32 *dword_3)
-{
-	if (lrbp->crypto_key_slot >= 0) {
+अणु
+	अगर (lrbp->crypto_key_slot >= 0) अणु
 		*dword_0 |= UTP_REQ_DESC_CRYPTO_ENABLE_CMD;
 		*dword_0 |= lrbp->crypto_key_slot;
 		*dword_1 = lower_32_bits(lrbp->data_unit_num);
 		*dword_3 = upper_32_bits(lrbp->data_unit_num);
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool ufshcd_crypto_enable(struct ufs_hba *hba);
+bool ufshcd_crypto_enable(काष्ठा ufs_hba *hba);
 
-int ufshcd_hba_init_crypto_capabilities(struct ufs_hba *hba);
+पूर्णांक ufshcd_hba_init_crypto_capabilities(काष्ठा ufs_hba *hba);
 
-void ufshcd_init_crypto(struct ufs_hba *hba);
+व्योम ufshcd_init_crypto(काष्ठा ufs_hba *hba);
 
-void ufshcd_crypto_setup_rq_keyslot_manager(struct ufs_hba *hba,
-					    struct request_queue *q);
+व्योम ufshcd_crypto_setup_rq_keyslot_manager(काष्ठा ufs_hba *hba,
+					    काष्ठा request_queue *q);
 
-#else /* CONFIG_SCSI_UFS_CRYPTO */
+#अन्यथा /* CONFIG_SCSI_UFS_CRYPTO */
 
-static inline void ufshcd_prepare_lrbp_crypto(struct request *rq,
-					      struct ufshcd_lrb *lrbp) { }
+अटल अंतरभूत व्योम ufshcd_prepare_lrbp_crypto(काष्ठा request *rq,
+					      काष्ठा ufshcd_lrb *lrbp) अणु पूर्ण
 
-static inline void
-ufshcd_prepare_req_desc_hdr_crypto(struct ufshcd_lrb *lrbp, u32 *dword_0,
-				   u32 *dword_1, u32 *dword_3) { }
+अटल अंतरभूत व्योम
+ufshcd_prepare_req_desc_hdr_crypto(काष्ठा ufshcd_lrb *lrbp, u32 *dword_0,
+				   u32 *dword_1, u32 *dword_3) अणु पूर्ण
 
-static inline bool ufshcd_crypto_enable(struct ufs_hba *hba)
-{
-	return false;
-}
+अटल अंतरभूत bool ufshcd_crypto_enable(काष्ठा ufs_hba *hba)
+अणु
+	वापस false;
+पूर्ण
 
-static inline int ufshcd_hba_init_crypto_capabilities(struct ufs_hba *hba)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ufshcd_hba_init_crypto_capabilities(काष्ठा ufs_hba *hba)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void ufshcd_init_crypto(struct ufs_hba *hba) { }
+अटल अंतरभूत व्योम ufshcd_init_crypto(काष्ठा ufs_hba *hba) अणु पूर्ण
 
-static inline void ufshcd_crypto_setup_rq_keyslot_manager(struct ufs_hba *hba,
-						struct request_queue *q) { }
+अटल अंतरभूत व्योम ufshcd_crypto_setup_rq_keyslot_manager(काष्ठा ufs_hba *hba,
+						काष्ठा request_queue *q) अणु पूर्ण
 
-#endif /* CONFIG_SCSI_UFS_CRYPTO */
+#पूर्ण_अगर /* CONFIG_SCSI_UFS_CRYPTO */
 
-#endif /* _UFSHCD_CRYPTO_H */
+#पूर्ण_अगर /* _UFSHCD_CRYPTO_H */

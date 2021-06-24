@@ -1,275 +1,276 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Battery measurement code for WM97xx
+ * Battery measurement code क्रम WM97xx
  *
  * based on tosa_battery.c
  *
  * Copyright (C) 2008 Marek Vasut <marek.vasut@gmail.com>
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/wm97xx.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/gpio/consumer.h>
-#include <linux/irq.h>
-#include <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/wm97xx.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/slab.h>
 
-static struct work_struct bat_work;
-static struct gpio_desc *charge_gpiod;
-static DEFINE_MUTEX(work_lock);
-static int bat_status = POWER_SUPPLY_STATUS_UNKNOWN;
-static enum power_supply_property *prop;
+अटल काष्ठा work_काष्ठा bat_work;
+अटल काष्ठा gpio_desc *अक्षरge_gpiod;
+अटल DEFINE_MUTEX(work_lock);
+अटल पूर्णांक bat_status = POWER_SUPPLY_STATUS_UNKNOWN;
+अटल क्रमागत घातer_supply_property *prop;
 
-static unsigned long wm97xx_read_bat(struct power_supply *bat_ps)
-{
-	struct wm97xx_batt_pdata *pdata = power_supply_get_drvdata(bat_ps);
+अटल अचिन्हित दीर्घ wm97xx_पढ़ो_bat(काष्ठा घातer_supply *bat_ps)
+अणु
+	काष्ठा wm97xx_batt_pdata *pdata = घातer_supply_get_drvdata(bat_ps);
 
-	return wm97xx_read_aux_adc(dev_get_drvdata(bat_ps->dev.parent),
+	वापस wm97xx_पढ़ो_aux_adc(dev_get_drvdata(bat_ps->dev.parent),
 					pdata->batt_aux) * pdata->batt_mult /
-					pdata->batt_div;
-}
+					pdata->batt_भाग;
+पूर्ण
 
-static unsigned long wm97xx_read_temp(struct power_supply *bat_ps)
-{
-	struct wm97xx_batt_pdata *pdata = power_supply_get_drvdata(bat_ps);
+अटल अचिन्हित दीर्घ wm97xx_पढ़ो_temp(काष्ठा घातer_supply *bat_ps)
+अणु
+	काष्ठा wm97xx_batt_pdata *pdata = घातer_supply_get_drvdata(bat_ps);
 
-	return wm97xx_read_aux_adc(dev_get_drvdata(bat_ps->dev.parent),
+	वापस wm97xx_पढ़ो_aux_adc(dev_get_drvdata(bat_ps->dev.parent),
 					pdata->temp_aux) * pdata->temp_mult /
-					pdata->temp_div;
-}
+					pdata->temp_भाग;
+पूर्ण
 
-static int wm97xx_bat_get_property(struct power_supply *bat_ps,
-			    enum power_supply_property psp,
-			    union power_supply_propval *val)
-{
-	struct wm97xx_batt_pdata *pdata = power_supply_get_drvdata(bat_ps);
+अटल पूर्णांक wm97xx_bat_get_property(काष्ठा घातer_supply *bat_ps,
+			    क्रमागत घातer_supply_property psp,
+			    जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा wm97xx_batt_pdata *pdata = घातer_supply_get_drvdata(bat_ps);
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		val->intval = bat_status;
-		break;
-	case POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->intval = pdata->batt_tech;
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		if (pdata->batt_aux >= 0)
-			val->intval = wm97xx_read_bat(bat_ps);
-		else
-			return -EINVAL;
-		break;
-	case POWER_SUPPLY_PROP_TEMP:
-		if (pdata->temp_aux >= 0)
-			val->intval = wm97xx_read_temp(bat_ps);
-		else
-			return -EINVAL;
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
-		if (pdata->max_voltage >= 0)
-			val->intval = pdata->max_voltage;
-		else
-			return -EINVAL;
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
-		if (pdata->min_voltage >= 0)
-			val->intval = pdata->min_voltage;
-		else
-			return -EINVAL;
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = 1;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		val->पूर्णांकval = bat_status;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->पूर्णांकval = pdata->batt_tech;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		अगर (pdata->batt_aux >= 0)
+			val->पूर्णांकval = wm97xx_पढ़ो_bat(bat_ps);
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TEMP:
+		अगर (pdata->temp_aux >= 0)
+			val->पूर्णांकval = wm97xx_पढ़ो_temp(bat_ps);
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		अगर (pdata->max_voltage >= 0)
+			val->पूर्णांकval = pdata->max_voltage;
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		अगर (pdata->min_voltage >= 0)
+			val->पूर्णांकval = pdata->min_voltage;
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		val->पूर्णांकval = 1;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void wm97xx_bat_external_power_changed(struct power_supply *bat_ps)
-{
+अटल व्योम wm97xx_bat_बाह्यal_घातer_changed(काष्ठा घातer_supply *bat_ps)
+अणु
 	schedule_work(&bat_work);
-}
+पूर्ण
 
-static void wm97xx_bat_update(struct power_supply *bat_ps)
-{
-	int old_status = bat_status;
+अटल व्योम wm97xx_bat_update(काष्ठा घातer_supply *bat_ps)
+अणु
+	पूर्णांक old_status = bat_status;
 
 	mutex_lock(&work_lock);
 
-	bat_status = (charge_gpiod) ?
-			(gpiod_get_value(charge_gpiod) ?
+	bat_status = (अक्षरge_gpiod) ?
+			(gpiod_get_value(अक्षरge_gpiod) ?
 			POWER_SUPPLY_STATUS_DISCHARGING :
 			POWER_SUPPLY_STATUS_CHARGING) :
 			POWER_SUPPLY_STATUS_UNKNOWN;
 
-	if (old_status != bat_status) {
+	अगर (old_status != bat_status) अणु
 		pr_debug("%s: %i -> %i\n", bat_ps->desc->name, old_status,
 					bat_status);
-		power_supply_changed(bat_ps);
-	}
+		घातer_supply_changed(bat_ps);
+	पूर्ण
 
 	mutex_unlock(&work_lock);
-}
+पूर्ण
 
-static struct power_supply *bat_psy;
-static struct power_supply_desc bat_psy_desc = {
+अटल काष्ठा घातer_supply *bat_psy;
+अटल काष्ठा घातer_supply_desc bat_psy_desc = अणु
 	.type			= POWER_SUPPLY_TYPE_BATTERY,
 	.get_property		= wm97xx_bat_get_property,
-	.external_power_changed = wm97xx_bat_external_power_changed,
-	.use_for_apm		= 1,
-};
+	.बाह्यal_घातer_changed = wm97xx_bat_बाह्यal_घातer_changed,
+	.use_क्रम_apm		= 1,
+पूर्ण;
 
-static void wm97xx_bat_work(struct work_struct *work)
-{
+अटल व्योम wm97xx_bat_work(काष्ठा work_काष्ठा *work)
+अणु
 	wm97xx_bat_update(bat_psy);
-}
+पूर्ण
 
-static irqreturn_t wm97xx_chrg_irq(int irq, void *data)
-{
+अटल irqवापस_t wm97xx_chrg_irq(पूर्णांक irq, व्योम *data)
+अणु
 	schedule_work(&bat_work);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int wm97xx_bat_suspend(struct device *dev)
-{
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक wm97xx_bat_suspend(काष्ठा device *dev)
+अणु
 	flush_work(&bat_work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wm97xx_bat_resume(struct device *dev)
-{
+अटल पूर्णांक wm97xx_bat_resume(काष्ठा device *dev)
+अणु
 	schedule_work(&bat_work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops wm97xx_bat_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops wm97xx_bat_pm_ops = अणु
 	.suspend	= wm97xx_bat_suspend,
 	.resume		= wm97xx_bat_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static int wm97xx_bat_probe(struct platform_device *dev)
-{
-	int ret = 0;
-	int props = 1;	/* POWER_SUPPLY_PROP_PRESENT */
-	int i = 0;
-	struct wm97xx_batt_pdata *pdata = dev->dev.platform_data;
-	struct power_supply_config cfg = {};
+अटल पूर्णांक wm97xx_bat_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक props = 1;	/* POWER_SUPPLY_PROP_PRESENT */
+	पूर्णांक i = 0;
+	काष्ठा wm97xx_batt_pdata *pdata = dev->dev.platक्रमm_data;
+	काष्ठा घातer_supply_config cfg = अणुपूर्ण;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&dev->dev, "No platform data supplied\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	cfg.drv_data = pdata;
 
-	if (dev->id != -1)
-		return -EINVAL;
+	अगर (dev->id != -1)
+		वापस -EINVAL;
 
-	charge_gpiod = devm_gpiod_get_optional(&dev->dev, NULL, GPIOD_IN);
-	if (IS_ERR(charge_gpiod))
-		return dev_err_probe(&dev->dev,
-				     PTR_ERR(charge_gpiod),
+	अक्षरge_gpiod = devm_gpiod_get_optional(&dev->dev, शून्य, GPIOD_IN);
+	अगर (IS_ERR(अक्षरge_gpiod))
+		वापस dev_err_probe(&dev->dev,
+				     PTR_ERR(अक्षरge_gpiod),
 				     "failed to get charge GPIO\n");
-	if (charge_gpiod) {
-		gpiod_set_consumer_name(charge_gpiod, "BATT CHRG");
-		ret = request_irq(gpiod_to_irq(charge_gpiod),
+	अगर (अक्षरge_gpiod) अणु
+		gpiod_set_consumer_name(अक्षरge_gpiod, "BATT CHRG");
+		ret = request_irq(gpiod_to_irq(अक्षरge_gpiod),
 				wm97xx_chrg_irq, 0,
 				"AC Detect", dev);
-		if (ret)
-			return dev_err_probe(&dev->dev, ret,
+		अगर (ret)
+			वापस dev_err_probe(&dev->dev, ret,
 					     "failed to request GPIO irq\n");
 		props++;	/* POWER_SUPPLY_PROP_STATUS */
-	}
+	पूर्ण
 
-	if (pdata->batt_tech >= 0)
+	अगर (pdata->batt_tech >= 0)
 		props++;	/* POWER_SUPPLY_PROP_TECHNOLOGY */
-	if (pdata->temp_aux >= 0)
+	अगर (pdata->temp_aux >= 0)
 		props++;	/* POWER_SUPPLY_PROP_TEMP */
-	if (pdata->batt_aux >= 0)
+	अगर (pdata->batt_aux >= 0)
 		props++;	/* POWER_SUPPLY_PROP_VOLTAGE_NOW */
-	if (pdata->max_voltage >= 0)
+	अगर (pdata->max_voltage >= 0)
 		props++;	/* POWER_SUPPLY_PROP_VOLTAGE_MAX */
-	if (pdata->min_voltage >= 0)
+	अगर (pdata->min_voltage >= 0)
 		props++;	/* POWER_SUPPLY_PROP_VOLTAGE_MIN */
 
-	prop = kcalloc(props, sizeof(*prop), GFP_KERNEL);
-	if (!prop) {
+	prop = kसुस्मृति(props, माप(*prop), GFP_KERNEL);
+	अगर (!prop) अणु
 		ret = -ENOMEM;
-		goto err3;
-	}
+		जाओ err3;
+	पूर्ण
 
 	prop[i++] = POWER_SUPPLY_PROP_PRESENT;
-	if (charge_gpiod)
+	अगर (अक्षरge_gpiod)
 		prop[i++] = POWER_SUPPLY_PROP_STATUS;
-	if (pdata->batt_tech >= 0)
+	अगर (pdata->batt_tech >= 0)
 		prop[i++] = POWER_SUPPLY_PROP_TECHNOLOGY;
-	if (pdata->temp_aux >= 0)
+	अगर (pdata->temp_aux >= 0)
 		prop[i++] = POWER_SUPPLY_PROP_TEMP;
-	if (pdata->batt_aux >= 0)
+	अगर (pdata->batt_aux >= 0)
 		prop[i++] = POWER_SUPPLY_PROP_VOLTAGE_NOW;
-	if (pdata->max_voltage >= 0)
+	अगर (pdata->max_voltage >= 0)
 		prop[i++] = POWER_SUPPLY_PROP_VOLTAGE_MAX;
-	if (pdata->min_voltage >= 0)
+	अगर (pdata->min_voltage >= 0)
 		prop[i++] = POWER_SUPPLY_PROP_VOLTAGE_MIN;
 
 	INIT_WORK(&bat_work, wm97xx_bat_work);
 
-	if (!pdata->batt_name) {
+	अगर (!pdata->batt_name) अणु
 		dev_info(&dev->dev, "Please consider setting proper battery "
 				"name in platform definition file, falling "
 				"back to name \"wm97xx-batt\"\n");
 		bat_psy_desc.name = "wm97xx-batt";
-	} else
+	पूर्ण अन्यथा
 		bat_psy_desc.name = pdata->batt_name;
 
 	bat_psy_desc.properties = prop;
 	bat_psy_desc.num_properties = props;
 
-	bat_psy = power_supply_register(&dev->dev, &bat_psy_desc, &cfg);
-	if (!IS_ERR(bat_psy)) {
+	bat_psy = घातer_supply_रेजिस्टर(&dev->dev, &bat_psy_desc, &cfg);
+	अगर (!IS_ERR(bat_psy)) अणु
 		schedule_work(&bat_work);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = PTR_ERR(bat_psy);
-		goto err4;
-	}
+		जाओ err4;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err4:
-	kfree(prop);
+	kमुक्त(prop);
 err3:
-	if (charge_gpiod)
-		free_irq(gpiod_to_irq(charge_gpiod), dev);
-	return ret;
-}
+	अगर (अक्षरge_gpiod)
+		मुक्त_irq(gpiod_to_irq(अक्षरge_gpiod), dev);
+	वापस ret;
+पूर्ण
 
-static int wm97xx_bat_remove(struct platform_device *dev)
-{
-	if (charge_gpiod)
-		free_irq(gpiod_to_irq(charge_gpiod), dev);
+अटल पूर्णांक wm97xx_bat_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	अगर (अक्षरge_gpiod)
+		मुक्त_irq(gpiod_to_irq(अक्षरge_gpiod), dev);
 	cancel_work_sync(&bat_work);
-	power_supply_unregister(bat_psy);
-	kfree(prop);
-	return 0;
-}
+	घातer_supply_unरेजिस्टर(bat_psy);
+	kमुक्त(prop);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver wm97xx_bat_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver wm97xx_bat_driver = अणु
+	.driver	= अणु
 		.name	= "wm97xx-battery",
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 		.pm	= &wm97xx_bat_pm_ops,
-#endif
-	},
+#पूर्ण_अगर
+	पूर्ण,
 	.probe		= wm97xx_bat_probe,
-	.remove		= wm97xx_bat_remove,
-};
+	.हटाओ		= wm97xx_bat_हटाओ,
+पूर्ण;
 
-module_platform_driver(wm97xx_bat_driver);
+module_platक्रमm_driver(wm97xx_bat_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Marek Vasut <marek.vasut@gmail.com>");

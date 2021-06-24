@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * mpls in net namespaces
  */
 
-#ifndef __NETNS_MPLS_H__
-#define __NETNS_MPLS_H__
+#अगर_अघोषित __NETNS_MPLS_H__
+#घोषणा __NETNS_MPLS_H__
 
-struct mpls_route;
-struct ctl_table_header;
+काष्ठा mpls_route;
+काष्ठा ctl_table_header;
 
-struct netns_mpls {
-	int ip_ttl_propagate;
-	int default_ttl;
-	size_t platform_labels;
-	struct mpls_route __rcu * __rcu *platform_label;
+काष्ठा netns_mpls अणु
+	पूर्णांक ip_ttl_propagate;
+	पूर्णांक शेष_ttl;
+	माप_प्रकार platक्रमm_labels;
+	काष्ठा mpls_route __rcu * __rcu *platक्रमm_label;
 
-	struct ctl_table_header *ctl;
-};
+	काष्ठा ctl_table_header *ctl;
+पूर्ण;
 
-#endif /* __NETNS_MPLS_H__ */
+#पूर्ण_अगर /* __NETNS_MPLS_H__ */

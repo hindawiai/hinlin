@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cherryview/Braswell pinctrl driver
  *
  * Copyright (C) 2014, 2020 Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  *
  * This driver is based on the original Cherryview GPIO driver by
- *   Ning Li <ning.li@intel.com>
- *   Alan Cox <alan@linux.intel.com>
+ *   Ning Li <ning.li@पूर्णांकel.com>
+ *   Alan Cox <alan@linux.पूर्णांकel.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/dmi.h>
-#include <linux/gpio/driver.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/types.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/types.h>
 
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define CHV_INTSTAT			0x300
-#define CHV_INTMASK			0x380
+#घोषणा CHV_INTSTAT			0x300
+#घोषणा CHV_INTMASK			0x380
 
-#define FAMILY_PAD_REGS_OFF		0x4400
-#define FAMILY_PAD_REGS_SIZE		0x400
-#define MAX_FAMILY_PAD_GPIO_NO		15
-#define GPIO_REGS_SIZE			8
+#घोषणा FAMILY_PAD_REGS_OFF		0x4400
+#घोषणा FAMILY_PAD_REGS_SIZE		0x400
+#घोषणा MAX_FAMILY_PAD_GPIO_NO		15
+#घोषणा GPIO_REGS_SIZE			8
 
-#define CHV_PADCTRL0			0x000
-#define CHV_PADCTRL0_INTSEL_SHIFT	28
-#define CHV_PADCTRL0_INTSEL_MASK	GENMASK(31, 28)
-#define CHV_PADCTRL0_TERM_UP		BIT(23)
-#define CHV_PADCTRL0_TERM_SHIFT		20
-#define CHV_PADCTRL0_TERM_MASK		GENMASK(22, 20)
-#define CHV_PADCTRL0_TERM_20K		1
-#define CHV_PADCTRL0_TERM_5K		2
-#define CHV_PADCTRL0_TERM_1K		4
-#define CHV_PADCTRL0_PMODE_SHIFT	16
-#define CHV_PADCTRL0_PMODE_MASK		GENMASK(19, 16)
-#define CHV_PADCTRL0_GPIOEN		BIT(15)
-#define CHV_PADCTRL0_GPIOCFG_SHIFT	8
-#define CHV_PADCTRL0_GPIOCFG_MASK	GENMASK(10, 8)
-#define CHV_PADCTRL0_GPIOCFG_GPIO	0
-#define CHV_PADCTRL0_GPIOCFG_GPO	1
-#define CHV_PADCTRL0_GPIOCFG_GPI	2
-#define CHV_PADCTRL0_GPIOCFG_HIZ	3
-#define CHV_PADCTRL0_GPIOTXSTATE	BIT(1)
-#define CHV_PADCTRL0_GPIORXSTATE	BIT(0)
+#घोषणा CHV_PADCTRL0			0x000
+#घोषणा CHV_PADCTRL0_INTSEL_SHIFT	28
+#घोषणा CHV_PADCTRL0_INTSEL_MASK	GENMASK(31, 28)
+#घोषणा CHV_PADCTRL0_TERM_UP		BIT(23)
+#घोषणा CHV_PADCTRL0_TERM_SHIFT		20
+#घोषणा CHV_PADCTRL0_TERM_MASK		GENMASK(22, 20)
+#घोषणा CHV_PADCTRL0_TERM_20K		1
+#घोषणा CHV_PADCTRL0_TERM_5K		2
+#घोषणा CHV_PADCTRL0_TERM_1K		4
+#घोषणा CHV_PADCTRL0_PMODE_SHIFT	16
+#घोषणा CHV_PADCTRL0_PMODE_MASK		GENMASK(19, 16)
+#घोषणा CHV_PADCTRL0_GPIOEN		BIT(15)
+#घोषणा CHV_PADCTRL0_GPIOCFG_SHIFT	8
+#घोषणा CHV_PADCTRL0_GPIOCFG_MASK	GENMASK(10, 8)
+#घोषणा CHV_PADCTRL0_GPIOCFG_GPIO	0
+#घोषणा CHV_PADCTRL0_GPIOCFG_GPO	1
+#घोषणा CHV_PADCTRL0_GPIOCFG_GPI	2
+#घोषणा CHV_PADCTRL0_GPIOCFG_HIZ	3
+#घोषणा CHV_PADCTRL0_GPIOTXSTATE	BIT(1)
+#घोषणा CHV_PADCTRL0_GPIORXSTATE	BIT(0)
 
-#define CHV_PADCTRL1			0x004
-#define CHV_PADCTRL1_CFGLOCK		BIT(31)
-#define CHV_PADCTRL1_INVRXTX_SHIFT	4
-#define CHV_PADCTRL1_INVRXTX_MASK	GENMASK(7, 4)
-#define CHV_PADCTRL1_INVRXTX_TXDATA	BIT(7)
-#define CHV_PADCTRL1_INVRXTX_RXDATA	BIT(6)
-#define CHV_PADCTRL1_INVRXTX_TXENABLE	BIT(5)
-#define CHV_PADCTRL1_ODEN		BIT(3)
-#define CHV_PADCTRL1_INTWAKECFG_MASK	GENMASK(2, 0)
-#define CHV_PADCTRL1_INTWAKECFG_FALLING	1
-#define CHV_PADCTRL1_INTWAKECFG_RISING	2
-#define CHV_PADCTRL1_INTWAKECFG_BOTH	3
-#define CHV_PADCTRL1_INTWAKECFG_LEVEL	4
+#घोषणा CHV_PADCTRL1			0x004
+#घोषणा CHV_PADCTRL1_CFGLOCK		BIT(31)
+#घोषणा CHV_PADCTRL1_INVRXTX_SHIFT	4
+#घोषणा CHV_PADCTRL1_INVRXTX_MASK	GENMASK(7, 4)
+#घोषणा CHV_PADCTRL1_INVRXTX_TXDATA	BIT(7)
+#घोषणा CHV_PADCTRL1_INVRXTX_RXDATA	BIT(6)
+#घोषणा CHV_PADCTRL1_INVRXTX_TXENABLE	BIT(5)
+#घोषणा CHV_PADCTRL1_ODEN		BIT(3)
+#घोषणा CHV_PADCTRL1_INTWAKECFG_MASK	GENMASK(2, 0)
+#घोषणा CHV_PADCTRL1_INTWAKECFG_FALLING	1
+#घोषणा CHV_PADCTRL1_INTWAKECFG_RISING	2
+#घोषणा CHV_PADCTRL1_INTWAKECFG_BOTH	3
+#घोषणा CHV_PADCTRL1_INTWAKECFG_LEVEL	4
 
-struct intel_pad_context {
+काष्ठा पूर्णांकel_pad_context अणु
 	u32 padctrl0;
 	u32 padctrl1;
-};
+पूर्ण;
 
 /**
- * struct intel_community_context - community context for Cherryview
- * @intr_lines: Mapping between 16 HW interrupt wires and GPIO offset (in GPIO number space)
- * @saved_intmask: Interrupt mask saved for system sleep
+ * काष्ठा पूर्णांकel_community_context - community context क्रम Cherryview
+ * @पूर्णांकr_lines: Mapping between 16 HW पूर्णांकerrupt wires and GPIO offset (in GPIO number space)
+ * @saved_पूर्णांकmask: Interrupt mask saved क्रम प्रणाली sleep
  */
-struct intel_community_context {
-	unsigned int intr_lines[16];
-	u32 saved_intmask;
-};
+काष्ठा पूर्णांकel_community_context अणु
+	अचिन्हित पूर्णांक पूर्णांकr_lines[16];
+	u32 saved_पूर्णांकmask;
+पूर्ण;
 
-#define	PINMODE_INVERT_OE	BIT(15)
+#घोषणा	PINMODE_INVERT_OE	BIT(15)
 
-#define PINMODE(m, i)		((m) | ((i) * PINMODE_INVERT_OE))
+#घोषणा PINMODE(m, i)		((m) | ((i) * PINMODE_INVERT_OE))
 
-#define CHV_GPP(start, end)			\
-	{					\
+#घोषणा CHV_GPP(start, end)			\
+	अणु					\
 		.base = (start),		\
 		.size = (end) - (start) + 1,	\
-	}
+	पूर्ण
 
-#define CHV_COMMUNITY(g, i, a)			\
-	{					\
+#घोषणा CHV_COMMUNITY(g, i, a)			\
+	अणु					\
 		.gpps = (g),			\
 		.ngpps = ARRAY_SIZE(g),		\
 		.nirqs = (i),			\
 		.acpi_space_id = (a),		\
-	}
+	पूर्ण
 
-static const struct pinctrl_pin_desc southwest_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc southwest_pins[] = अणु
 	PINCTRL_PIN(0, "FST_SPI_D2"),
 	PINCTRL_PIN(1, "FST_SPI_D0"),
 	PINCTRL_PIN(2, "FST_SPI_CLK"),
@@ -164,42 +165,42 @@ static const struct pinctrl_pin_desc southwest_pins[] = {
 	PINCTRL_PIN(95, "PCIE_CLKREQ3B"),
 	PINCTRL_PIN(96, "GP_SSP_2_FS"),
 	PINCTRL_PIN(97, "GP_SSP_2_TXD"),
-};
+पूर्ण;
 
-static const unsigned southwest_uart0_pins[] = { 16, 20 };
-static const unsigned southwest_uart1_pins[] = { 15, 16, 18, 20 };
-static const unsigned southwest_uart2_pins[] = { 17, 19, 21, 22 };
-static const unsigned southwest_i2c0_pins[] = { 61, 65 };
-static const unsigned southwest_hda_pins[] = { 30, 31, 32, 33, 34, 35, 36, 37 };
-static const unsigned southwest_lpe_pins[] = {
+अटल स्थिर अचिन्हित southwest_uart0_pins[] = अणु 16, 20 पूर्ण;
+अटल स्थिर अचिन्हित southwest_uart1_pins[] = अणु 15, 16, 18, 20 पूर्ण;
+अटल स्थिर अचिन्हित southwest_uart2_pins[] = अणु 17, 19, 21, 22 पूर्ण;
+अटल स्थिर अचिन्हित southwest_i2c0_pins[] = अणु 61, 65 पूर्ण;
+अटल स्थिर अचिन्हित southwest_hda_pins[] = अणु 30, 31, 32, 33, 34, 35, 36, 37 पूर्ण;
+अटल स्थिर अचिन्हित southwest_lpe_pins[] = अणु
 	30, 31, 32, 33, 34, 35, 36, 37, 92, 94, 96, 97,
-};
-static const unsigned southwest_i2c1_pins[] = { 60, 63 };
-static const unsigned southwest_i2c2_pins[] = { 62, 66 };
-static const unsigned southwest_i2c3_pins[] = { 64, 67 };
-static const unsigned southwest_i2c4_pins[] = { 46, 50 };
-static const unsigned southwest_i2c5_pins[] = { 45, 48 };
-static const unsigned southwest_i2c6_pins[] = { 47, 51 };
-static const unsigned southwest_i2c_nfc_pins[] = { 49, 52 };
-static const unsigned southwest_spi3_pins[] = { 76, 79, 80, 81, 82 };
+पूर्ण;
+अटल स्थिर अचिन्हित southwest_i2c1_pins[] = अणु 60, 63 पूर्ण;
+अटल स्थिर अचिन्हित southwest_i2c2_pins[] = अणु 62, 66 पूर्ण;
+अटल स्थिर अचिन्हित southwest_i2c3_pins[] = अणु 64, 67 पूर्ण;
+अटल स्थिर अचिन्हित southwest_i2c4_pins[] = अणु 46, 50 पूर्ण;
+अटल स्थिर अचिन्हित southwest_i2c5_pins[] = अणु 45, 48 पूर्ण;
+अटल स्थिर अचिन्हित southwest_i2c6_pins[] = अणु 47, 51 पूर्ण;
+अटल स्थिर अचिन्हित southwest_i2c_nfc_pins[] = अणु 49, 52 पूर्ण;
+अटल स्थिर अचिन्हित southwest_spi3_pins[] = अणु 76, 79, 80, 81, 82 पूर्ण;
 
 /* Some of LPE I2S TXD pins need to have OE inversion set */
-static const unsigned int southwest_lpe_altfuncs[] = {
+अटल स्थिर अचिन्हित पूर्णांक southwest_lpe_altfuncs[] = अणु
 	PINMODE(1, 1), PINMODE(1, 0), PINMODE(1, 0), PINMODE(1, 0), /* 30, 31, 32, 33 */
 	PINMODE(1, 1), PINMODE(1, 0), PINMODE(1, 0), PINMODE(1, 0), /* 34, 35, 36, 37 */
 	PINMODE(1, 0), PINMODE(1, 0), PINMODE(1, 0), PINMODE(1, 1), /* 92, 94, 96, 97 */
-};
+पूर्ण;
 
 /*
- * Two spi3 chipselects are available in different mode than the main spi3
+ * Two spi3 chipselects are available in dअगरferent mode than the मुख्य spi3
  * functionality, which is using mode 2.
  */
-static const unsigned int southwest_spi3_altfuncs[] = {
+अटल स्थिर अचिन्हित पूर्णांक southwest_spi3_altfuncs[] = अणु
 	PINMODE(3, 0), PINMODE(2, 0), PINMODE(3, 0), PINMODE(2, 0), /* 76, 79, 80, 81 */
 	PINMODE(2, 0),						    /* 82 */
-};
+पूर्ण;
 
-static const struct intel_pingroup southwest_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup southwest_groups[] = अणु
 	PIN_GROUP("uart0_grp", southwest_uart0_pins, PINMODE(2, 0)),
 	PIN_GROUP("uart1_grp", southwest_uart1_pins, PINMODE(1, 0)),
 	PIN_GROUP("uart2_grp", southwest_uart2_pins, PINMODE(1, 0)),
@@ -214,28 +215,28 @@ static const struct intel_pingroup southwest_groups[] = {
 	PIN_GROUP("i2c_nfc_grp", southwest_i2c_nfc_pins, PINMODE(2, 1)),
 	PIN_GROUP("lpe_grp", southwest_lpe_pins, southwest_lpe_altfuncs),
 	PIN_GROUP("spi3_grp", southwest_spi3_pins, southwest_spi3_altfuncs),
-};
+पूर्ण;
 
-static const char * const southwest_uart0_groups[] = { "uart0_grp" };
-static const char * const southwest_uart1_groups[] = { "uart1_grp" };
-static const char * const southwest_uart2_groups[] = { "uart2_grp" };
-static const char * const southwest_hda_groups[] = { "hda_grp" };
-static const char * const southwest_lpe_groups[] = { "lpe_grp" };
-static const char * const southwest_i2c0_groups[] = { "i2c0_grp" };
-static const char * const southwest_i2c1_groups[] = { "i2c1_grp" };
-static const char * const southwest_i2c2_groups[] = { "i2c2_grp" };
-static const char * const southwest_i2c3_groups[] = { "i2c3_grp" };
-static const char * const southwest_i2c4_groups[] = { "i2c4_grp" };
-static const char * const southwest_i2c5_groups[] = { "i2c5_grp" };
-static const char * const southwest_i2c6_groups[] = { "i2c6_grp" };
-static const char * const southwest_i2c_nfc_groups[] = { "i2c_nfc_grp" };
-static const char * const southwest_spi3_groups[] = { "spi3_grp" };
+अटल स्थिर अक्षर * स्थिर southwest_uart0_groups[] = अणु "uart0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_uart1_groups[] = अणु "uart1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_uart2_groups[] = अणु "uart2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_hda_groups[] = अणु "hda_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_lpe_groups[] = अणु "lpe_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_i2c0_groups[] = अणु "i2c0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_i2c1_groups[] = अणु "i2c1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_i2c2_groups[] = अणु "i2c2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_i2c3_groups[] = अणु "i2c3_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_i2c4_groups[] = अणु "i2c4_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_i2c5_groups[] = अणु "i2c5_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_i2c6_groups[] = अणु "i2c6_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_i2c_nfc_groups[] = अणु "i2c_nfc_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southwest_spi3_groups[] = अणु "spi3_grp" पूर्ण;
 
 /*
- * Only do pinmuxing for certain LPSS devices for now. Rest of the pins are
+ * Only करो pinmuxing क्रम certain LPSS devices क्रम now. Rest of the pins are
  * enabled only as GPIOs.
  */
-static const struct intel_function southwest_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function southwest_functions[] = अणु
 	FUNCTION("uart0", southwest_uart0_groups),
 	FUNCTION("uart1", southwest_uart1_groups),
 	FUNCTION("uart2", southwest_uart2_groups),
@@ -250,9 +251,9 @@ static const struct intel_function southwest_functions[] = {
 	FUNCTION("i2c6", southwest_i2c6_groups),
 	FUNCTION("i2c_nfc", southwest_i2c_nfc_groups),
 	FUNCTION("spi3", southwest_spi3_groups),
-};
+पूर्ण;
 
-static const struct intel_padgroup southwest_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup southwest_gpps[] = अणु
 	CHV_GPP(0, 7),
 	CHV_GPP(15, 22),
 	CHV_GPP(30, 37),
@@ -260,17 +261,17 @@ static const struct intel_padgroup southwest_gpps[] = {
 	CHV_GPP(60, 67),
 	CHV_GPP(75, 82),
 	CHV_GPP(90, 97),
-};
+पूर्ण;
 
 /*
- * Southwest community can generate GPIO interrupts only for the first 8
- * interrupts. The upper half (8-15) can only be used to trigger GPEs.
+ * Southwest community can generate GPIO पूर्णांकerrupts only क्रम the first 8
+ * पूर्णांकerrupts. The upper half (8-15) can only be used to trigger GPEs.
  */
-static const struct intel_community southwest_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community southwest_communities[] = अणु
 	CHV_COMMUNITY(southwest_gpps, 8, 0x91),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data southwest_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data southwest_soc_data = अणु
 	.uid = "1",
 	.pins = southwest_pins,
 	.npins = ARRAY_SIZE(southwest_pins),
@@ -280,9 +281,9 @@ static const struct intel_pinctrl_soc_data southwest_soc_data = {
 	.nfunctions = ARRAY_SIZE(southwest_functions),
 	.communities = southwest_communities,
 	.ncommunities = ARRAY_SIZE(southwest_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc north_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc north_pins[] = अणु
 	PINCTRL_PIN(0, "GPIO_DFX_0"),
 	PINCTRL_PIN(1, "GPIO_DFX_3"),
 	PINCTRL_PIN(2, "GPIO_DFX_7"),
@@ -346,33 +347,33 @@ static const struct pinctrl_pin_desc north_pins[] = {
 	PINCTRL_PIN(70, "PANEL1_BKLTEN"),
 	PINCTRL_PIN(71, "HV_DDI0_DDC_SCL"),
 	PINCTRL_PIN(72, "PANEL0_VDDEN"),
-};
+पूर्ण;
 
-static const struct intel_padgroup north_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup north_gpps[] = अणु
 	CHV_GPP(0, 8),
 	CHV_GPP(15, 27),
 	CHV_GPP(30, 41),
 	CHV_GPP(45, 56),
 	CHV_GPP(60, 72),
-};
+पूर्ण;
 
 /*
- * North community can generate GPIO interrupts only for the first 8
- * interrupts. The upper half (8-15) can only be used to trigger GPEs.
+ * North community can generate GPIO पूर्णांकerrupts only क्रम the first 8
+ * पूर्णांकerrupts. The upper half (8-15) can only be used to trigger GPEs.
  */
-static const struct intel_community north_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community north_communities[] = अणु
 	CHV_COMMUNITY(north_gpps, 8, 0x92),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data north_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data north_soc_data = अणु
 	.uid = "2",
 	.pins = north_pins,
 	.npins = ARRAY_SIZE(north_pins),
 	.communities = north_communities,
 	.ncommunities = ARRAY_SIZE(north_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc east_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc east_pins[] = अणु
 	PINCTRL_PIN(0, "PMU_SLP_S3_B"),
 	PINCTRL_PIN(1, "PMU_BATLOW_B"),
 	PINCTRL_PIN(2, "SUS_STAT_B"),
@@ -398,26 +399,26 @@ static const struct pinctrl_pin_desc east_pins[] = {
 	PINCTRL_PIN(24, "MF_ISH_GPIO_2"),
 	PINCTRL_PIN(25, "MF_ISH_GPIO_6"),
 	PINCTRL_PIN(26, "MF_ISH_I2C1_SDA"),
-};
+पूर्ण;
 
-static const struct intel_padgroup east_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup east_gpps[] = अणु
 	CHV_GPP(0, 11),
 	CHV_GPP(15, 26),
-};
+पूर्ण;
 
-static const struct intel_community east_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community east_communities[] = अणु
 	CHV_COMMUNITY(east_gpps, 16, 0x93),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data east_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data east_soc_data = अणु
 	.uid = "3",
 	.pins = east_pins,
 	.npins = ARRAY_SIZE(east_pins),
 	.communities = east_communities,
 	.ncommunities = ARRAY_SIZE(east_communities),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc southeast_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc southeast_pins[] = अणु
 	PINCTRL_PIN(0, "MF_PLT_CLK0"),
 	PINCTRL_PIN(1, "PWM1"),
 	PINCTRL_PIN(2, "MF_PLT_CLK1"),
@@ -478,21 +479,21 @@ static const struct pinctrl_pin_desc southeast_pins[] = {
 	PINCTRL_PIN(83, "SUSPWRDNACK"),
 	PINCTRL_PIN(84, "SPARE_PIN"),
 	PINCTRL_PIN(85, "SDMMC3_1P8_EN"),
-};
+पूर्ण;
 
-static const unsigned southeast_pwm0_pins[] = { 5 };
-static const unsigned southeast_pwm1_pins[] = { 1 };
-static const unsigned southeast_sdmmc1_pins[] = {
+अटल स्थिर अचिन्हित southeast_pwm0_pins[] = अणु 5 पूर्ण;
+अटल स्थिर अचिन्हित southeast_pwm1_pins[] = अणु 1 पूर्ण;
+अटल स्थिर अचिन्हित southeast_sdmmc1_pins[] = अणु
 	16, 17, 20, 23, 24, 26, 63, 65, 67, 68, 69,
-};
-static const unsigned southeast_sdmmc2_pins[] = { 15, 18, 19, 21, 22, 25 };
-static const unsigned southeast_sdmmc3_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित southeast_sdmmc2_pins[] = अणु 15, 18, 19, 21, 22, 25 पूर्ण;
+अटल स्थिर अचिन्हित southeast_sdmmc3_pins[] = अणु
 	30, 31, 32, 33, 34, 35, 78, 81, 85,
-};
-static const unsigned southeast_spi1_pins[] = { 60, 61, 62, 64, 66 };
-static const unsigned southeast_spi2_pins[] = { 2, 3, 4, 6, 7 };
+पूर्ण;
+अटल स्थिर अचिन्हित southeast_spi1_pins[] = अणु 60, 61, 62, 64, 66 पूर्ण;
+अटल स्थिर अचिन्हित southeast_spi2_pins[] = अणु 2, 3, 4, 6, 7 पूर्ण;
 
-static const struct intel_pingroup southeast_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup southeast_groups[] = अणु
 	PIN_GROUP("pwm0_grp", southeast_pwm0_pins, PINMODE(1, 0)),
 	PIN_GROUP("pwm1_grp", southeast_pwm1_pins, PINMODE(1, 0)),
 	PIN_GROUP("sdmmc1_grp", southeast_sdmmc1_pins, PINMODE(1, 0)),
@@ -500,17 +501,17 @@ static const struct intel_pingroup southeast_groups[] = {
 	PIN_GROUP("sdmmc3_grp", southeast_sdmmc3_pins, PINMODE(1, 0)),
 	PIN_GROUP("spi1_grp", southeast_spi1_pins, PINMODE(1, 0)),
 	PIN_GROUP("spi2_grp", southeast_spi2_pins, PINMODE(4, 0)),
-};
+पूर्ण;
 
-static const char * const southeast_pwm0_groups[] = { "pwm0_grp" };
-static const char * const southeast_pwm1_groups[] = { "pwm1_grp" };
-static const char * const southeast_sdmmc1_groups[] = { "sdmmc1_grp" };
-static const char * const southeast_sdmmc2_groups[] = { "sdmmc2_grp" };
-static const char * const southeast_sdmmc3_groups[] = { "sdmmc3_grp" };
-static const char * const southeast_spi1_groups[] = { "spi1_grp" };
-static const char * const southeast_spi2_groups[] = { "spi2_grp" };
+अटल स्थिर अक्षर * स्थिर southeast_pwm0_groups[] = अणु "pwm0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southeast_pwm1_groups[] = अणु "pwm1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southeast_sdmmc1_groups[] = अणु "sdmmc1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southeast_sdmmc2_groups[] = अणु "sdmmc2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southeast_sdmmc3_groups[] = अणु "sdmmc3_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southeast_spi1_groups[] = अणु "spi1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर southeast_spi2_groups[] = अणु "spi2_grp" पूर्ण;
 
-static const struct intel_function southeast_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function southeast_functions[] = अणु
 	FUNCTION("pwm0", southeast_pwm0_groups),
 	FUNCTION("pwm1", southeast_pwm1_groups),
 	FUNCTION("sdmmc1", southeast_sdmmc1_groups),
@@ -518,22 +519,22 @@ static const struct intel_function southeast_functions[] = {
 	FUNCTION("sdmmc3", southeast_sdmmc3_groups),
 	FUNCTION("spi1", southeast_spi1_groups),
 	FUNCTION("spi2", southeast_spi2_groups),
-};
+पूर्ण;
 
-static const struct intel_padgroup southeast_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup southeast_gpps[] = अणु
 	CHV_GPP(0, 7),
 	CHV_GPP(15, 26),
 	CHV_GPP(30, 35),
 	CHV_GPP(45, 52),
 	CHV_GPP(60, 69),
 	CHV_GPP(75, 85),
-};
+पूर्ण;
 
-static const struct intel_community southeast_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community southeast_communities[] = अणु
 	CHV_COMMUNITY(southeast_gpps, 16, 0x94),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data southeast_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data southeast_soc_data = अणु
 	.uid = "4",
 	.pins = southeast_pins,
 	.npins = ARRAY_SIZE(southeast_pins),
@@ -543,1001 +544,1001 @@ static const struct intel_pinctrl_soc_data southeast_soc_data = {
 	.nfunctions = ARRAY_SIZE(southeast_functions),
 	.communities = southeast_communities,
 	.ncommunities = ARRAY_SIZE(southeast_communities),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data *chv_soc_data[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *chv_soc_data[] = अणु
 	&southwest_soc_data,
 	&north_soc_data,
 	&east_soc_data,
 	&southeast_soc_data,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /*
- * Lock to serialize register accesses
+ * Lock to serialize रेजिस्टर accesses
  *
  * Due to a silicon issue, a shared lock must be used to prevent
  * concurrent accesses across the 4 GPIO controllers.
  *
- * See Intel Atom Z8000 Processor Series Specification Update (Rev. 005),
- * errata #CHT34, for further information.
+ * See Intel Atom Z8000 Processor Series Specअगरication Update (Rev. 005),
+ * errata #CHT34, क्रम further inक्रमmation.
  */
-static DEFINE_RAW_SPINLOCK(chv_lock);
+अटल DEFINE_RAW_SPINLOCK(chv_lock);
 
-static u32 chv_pctrl_readl(struct intel_pinctrl *pctrl, unsigned int offset)
-{
-	const struct intel_community *community = &pctrl->communities[0];
+अटल u32 chv_pctrl_पढ़ोl(काष्ठा पूर्णांकel_pinctrl *pctrl, अचिन्हित पूर्णांक offset)
+अणु
+	स्थिर काष्ठा पूर्णांकel_community *community = &pctrl->communities[0];
 
-	return readl(community->regs + offset);
-}
+	वापस पढ़ोl(community->regs + offset);
+पूर्ण
 
-static void chv_pctrl_writel(struct intel_pinctrl *pctrl, unsigned int offset, u32 value)
-{
-	const struct intel_community *community = &pctrl->communities[0];
-	void __iomem *reg = community->regs + offset;
+अटल व्योम chv_pctrl_ग_लिखोl(काष्ठा पूर्णांकel_pinctrl *pctrl, अचिन्हित पूर्णांक offset, u32 value)
+अणु
+	स्थिर काष्ठा पूर्णांकel_community *community = &pctrl->communities[0];
+	व्योम __iomem *reg = community->regs + offset;
 
-	/* Write and simple read back to confirm the bus transferring done */
-	writel(value, reg);
-	readl(reg);
-}
+	/* Write and simple पढ़ो back to confirm the bus transferring करोne */
+	ग_लिखोl(value, reg);
+	पढ़ोl(reg);
+पूर्ण
 
-static void __iomem *chv_padreg(struct intel_pinctrl *pctrl, unsigned int offset,
-				unsigned int reg)
-{
-	const struct intel_community *community = &pctrl->communities[0];
-	unsigned int family_no = offset / MAX_FAMILY_PAD_GPIO_NO;
-	unsigned int pad_no = offset % MAX_FAMILY_PAD_GPIO_NO;
+अटल व्योम __iomem *chv_padreg(काष्ठा पूर्णांकel_pinctrl *pctrl, अचिन्हित पूर्णांक offset,
+				अचिन्हित पूर्णांक reg)
+अणु
+	स्थिर काष्ठा पूर्णांकel_community *community = &pctrl->communities[0];
+	अचिन्हित पूर्णांक family_no = offset / MAX_FAMILY_PAD_GPIO_NO;
+	अचिन्हित पूर्णांक pad_no = offset % MAX_FAMILY_PAD_GPIO_NO;
 
 	offset = FAMILY_PAD_REGS_SIZE * family_no + GPIO_REGS_SIZE * pad_no;
 
-	return community->pad_regs + offset + reg;
-}
+	वापस community->pad_regs + offset + reg;
+पूर्ण
 
-static u32 chv_readl(struct intel_pinctrl *pctrl, unsigned int pin, unsigned int offset)
-{
-	return readl(chv_padreg(pctrl, pin, offset));
-}
+अटल u32 chv_पढ़ोl(काष्ठा पूर्णांकel_pinctrl *pctrl, अचिन्हित पूर्णांक pin, अचिन्हित पूर्णांक offset)
+अणु
+	वापस पढ़ोl(chv_padreg(pctrl, pin, offset));
+पूर्ण
 
-static void chv_writel(struct intel_pinctrl *pctrl, unsigned int pin, unsigned int offset, u32 value)
-{
-	void __iomem *reg = chv_padreg(pctrl, pin, offset);
+अटल व्योम chv_ग_लिखोl(काष्ठा पूर्णांकel_pinctrl *pctrl, अचिन्हित पूर्णांक pin, अचिन्हित पूर्णांक offset, u32 value)
+अणु
+	व्योम __iomem *reg = chv_padreg(pctrl, pin, offset);
 
-	/* Write and simple read back to confirm the bus transferring done */
-	writel(value, reg);
-	readl(reg);
-}
+	/* Write and simple पढ़ो back to confirm the bus transferring करोne */
+	ग_लिखोl(value, reg);
+	पढ़ोl(reg);
+पूर्ण
 
 /* When Pad Cfg is locked, driver can only change GPIOTXState or GPIORXState */
-static bool chv_pad_locked(struct intel_pinctrl *pctrl, unsigned int offset)
-{
-	return chv_readl(pctrl, offset, CHV_PADCTRL1) & CHV_PADCTRL1_CFGLOCK;
-}
+अटल bool chv_pad_locked(काष्ठा पूर्णांकel_pinctrl *pctrl, अचिन्हित पूर्णांक offset)
+अणु
+	वापस chv_पढ़ोl(pctrl, offset, CHV_PADCTRL1) & CHV_PADCTRL1_CFGLOCK;
+पूर्ण
 
-static int chv_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक chv_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctrl->soc->ngroups;
-}
+	वापस pctrl->soc->ngroups;
+पूर्ण
 
-static const char *chv_get_group_name(struct pinctrl_dev *pctldev,
-				      unsigned int group)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *chv_get_group_name(काष्ठा pinctrl_dev *pctldev,
+				      अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctrl->soc->groups[group].name;
-}
+	वापस pctrl->soc->groups[group].name;
+पूर्ण
 
-static int chv_get_group_pins(struct pinctrl_dev *pctldev, unsigned int group,
-			      const unsigned int **pins, unsigned int *npins)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक chv_get_group_pins(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक group,
+			      स्थिर अचिन्हित पूर्णांक **pins, अचिन्हित पूर्णांक *npins)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = pctrl->soc->groups[group].pins;
 	*npins = pctrl->soc->groups[group].npins;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void chv_pin_dbg_show(struct pinctrl_dev *pctldev, struct seq_file *s,
-			     unsigned int offset)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
-	unsigned long flags;
+अटल व्योम chv_pin_dbg_show(काष्ठा pinctrl_dev *pctldev, काष्ठा seq_file *s,
+			     अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित दीर्घ flags;
 	u32 ctrl0, ctrl1;
 	bool locked;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
-	ctrl0 = chv_readl(pctrl, offset, CHV_PADCTRL0);
-	ctrl1 = chv_readl(pctrl, offset, CHV_PADCTRL1);
+	ctrl0 = chv_पढ़ोl(pctrl, offset, CHV_PADCTRL0);
+	ctrl1 = chv_पढ़ोl(pctrl, offset, CHV_PADCTRL1);
 	locked = chv_pad_locked(pctrl, offset);
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	if (ctrl0 & CHV_PADCTRL0_GPIOEN) {
-		seq_puts(s, "GPIO ");
-	} else {
+	अगर (ctrl0 & CHV_PADCTRL0_GPIOEN) अणु
+		seq_माला_दो(s, "GPIO ");
+	पूर्ण अन्यथा अणु
 		u32 mode;
 
 		mode = ctrl0 & CHV_PADCTRL0_PMODE_MASK;
 		mode >>= CHV_PADCTRL0_PMODE_SHIFT;
 
-		seq_printf(s, "mode %d ", mode);
-	}
+		seq_म_लिखो(s, "mode %d ", mode);
+	पूर्ण
 
-	seq_printf(s, "0x%08x 0x%08x", ctrl0, ctrl1);
+	seq_म_लिखो(s, "0x%08x 0x%08x", ctrl0, ctrl1);
 
-	if (locked)
-		seq_puts(s, " [LOCKED]");
-}
+	अगर (locked)
+		seq_माला_दो(s, " [LOCKED]");
+पूर्ण
 
-static const struct pinctrl_ops chv_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops chv_pinctrl_ops = अणु
 	.get_groups_count = chv_get_groups_count,
 	.get_group_name = chv_get_group_name,
 	.get_group_pins = chv_get_group_pins,
 	.pin_dbg_show = chv_pin_dbg_show,
-};
+पूर्ण;
 
-static int chv_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक chv_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctrl->soc->nfunctions;
-}
+	वापस pctrl->soc->nfunctions;
+पूर्ण
 
-static const char *chv_get_function_name(struct pinctrl_dev *pctldev,
-					 unsigned int function)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *chv_get_function_name(काष्ठा pinctrl_dev *pctldev,
+					 अचिन्हित पूर्णांक function)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctrl->soc->functions[function].name;
-}
+	वापस pctrl->soc->functions[function].name;
+पूर्ण
 
-static int chv_get_function_groups(struct pinctrl_dev *pctldev,
-				   unsigned int function,
-				   const char * const **groups,
-				   unsigned int * const ngroups)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक chv_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+				   अचिन्हित पूर्णांक function,
+				   स्थिर अक्षर * स्थिर **groups,
+				   अचिन्हित पूर्णांक * स्थिर ngroups)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pctrl->soc->functions[function].groups;
 	*ngroups = pctrl->soc->functions[function].ngroups;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_pinmux_set_mux(struct pinctrl_dev *pctldev,
-			      unsigned int function, unsigned int group)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
-	const struct intel_pingroup *grp;
-	unsigned long flags;
-	int i;
+अटल पूर्णांक chv_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev,
+			      अचिन्हित पूर्णांक function, अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा पूर्णांकel_pingroup *grp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	grp = &pctrl->soc->groups[group];
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
 	/* Check first that the pad is not locked */
-	for (i = 0; i < grp->npins; i++) {
-		if (chv_pad_locked(pctrl, grp->pins[i])) {
+	क्रम (i = 0; i < grp->npins; i++) अणु
+		अगर (chv_pad_locked(pctrl, grp->pins[i])) अणु
 			dev_warn(pctrl->dev, "unable to set mode for locked pin %u\n",
 				 grp->pins[i]);
 			raw_spin_unlock_irqrestore(&chv_lock, flags);
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < grp->npins; i++) {
-		int pin = grp->pins[i];
-		unsigned int mode;
+	क्रम (i = 0; i < grp->npins; i++) अणु
+		पूर्णांक pin = grp->pins[i];
+		अचिन्हित पूर्णांक mode;
 		bool invert_oe;
 		u32 value;
 
-		/* Check if there is pin-specific config */
-		if (grp->modes)
+		/* Check अगर there is pin-specअगरic config */
+		अगर (grp->modes)
 			mode = grp->modes[i];
-		else
+		अन्यथा
 			mode = grp->mode;
 
 		/* Extract OE inversion */
 		invert_oe = mode & PINMODE_INVERT_OE;
 		mode &= ~PINMODE_INVERT_OE;
 
-		value = chv_readl(pctrl, pin, CHV_PADCTRL0);
+		value = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL0);
 		/* Disable GPIO mode */
 		value &= ~CHV_PADCTRL0_GPIOEN;
 		/* Set to desired mode */
 		value &= ~CHV_PADCTRL0_PMODE_MASK;
 		value |= mode << CHV_PADCTRL0_PMODE_SHIFT;
-		chv_writel(pctrl, pin, CHV_PADCTRL0, value);
+		chv_ग_लिखोl(pctrl, pin, CHV_PADCTRL0, value);
 
-		/* Update for invert_oe */
-		value = chv_readl(pctrl, pin, CHV_PADCTRL1) & ~CHV_PADCTRL1_INVRXTX_MASK;
-		if (invert_oe)
+		/* Update क्रम invert_oe */
+		value = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL1) & ~CHV_PADCTRL1_INVRXTX_MASK;
+		अगर (invert_oe)
 			value |= CHV_PADCTRL1_INVRXTX_TXENABLE;
-		chv_writel(pctrl, pin, CHV_PADCTRL1, value);
+		chv_ग_लिखोl(pctrl, pin, CHV_PADCTRL1, value);
 
 		dev_dbg(pctrl->dev, "configured pin %u mode %u OE %sinverted\n",
 			pin, mode, invert_oe ? "" : "not ");
-	}
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void chv_gpio_clear_triggering(struct intel_pinctrl *pctrl,
-				      unsigned int offset)
-{
+अटल व्योम chv_gpio_clear_triggering(काष्ठा पूर्णांकel_pinctrl *pctrl,
+				      अचिन्हित पूर्णांक offset)
+अणु
 	u32 invrxtx_mask = CHV_PADCTRL1_INVRXTX_MASK;
 	u32 value;
 
 	/*
 	 * One some devices the GPIO should output the inverted value from what
-	 * device-drivers / ACPI code expects (inverted external buffer?). The
+	 * device-drivers / ACPI code expects (inverted बाह्यal buffer?). The
 	 * BIOS makes this work by setting the CHV_PADCTRL1_INVRXTX_TXDATA flag,
-	 * preserve this flag if the pin is already setup as GPIO.
+	 * preserve this flag अगर the pin is alपढ़ोy setup as GPIO.
 	 */
-	value = chv_readl(pctrl, offset, CHV_PADCTRL0);
-	if (value & CHV_PADCTRL0_GPIOEN)
+	value = chv_पढ़ोl(pctrl, offset, CHV_PADCTRL0);
+	अगर (value & CHV_PADCTRL0_GPIOEN)
 		invrxtx_mask &= ~CHV_PADCTRL1_INVRXTX_TXDATA;
 
-	value = chv_readl(pctrl, offset, CHV_PADCTRL1);
+	value = chv_पढ़ोl(pctrl, offset, CHV_PADCTRL1);
 	value &= ~CHV_PADCTRL1_INTWAKECFG_MASK;
 	value &= ~invrxtx_mask;
-	chv_writel(pctrl, offset, CHV_PADCTRL1, value);
-}
+	chv_ग_लिखोl(pctrl, offset, CHV_PADCTRL1, value);
+पूर्ण
 
-static int chv_gpio_request_enable(struct pinctrl_dev *pctldev,
-				   struct pinctrl_gpio_range *range,
-				   unsigned int offset)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
-	unsigned long flags;
+अटल पूर्णांक chv_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+				   काष्ठा pinctrl_gpio_range *range,
+				   अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
-	if (chv_pad_locked(pctrl, offset)) {
-		value = chv_readl(pctrl, offset, CHV_PADCTRL0);
-		if (!(value & CHV_PADCTRL0_GPIOEN)) {
+	अगर (chv_pad_locked(pctrl, offset)) अणु
+		value = chv_पढ़ोl(pctrl, offset, CHV_PADCTRL0);
+		अगर (!(value & CHV_PADCTRL0_GPIOEN)) अणु
 			/* Locked so cannot enable */
 			raw_spin_unlock_irqrestore(&chv_lock, flags);
-			return -EBUSY;
-		}
-	} else {
-		struct intel_community_context *cctx = &pctrl->context.communities[0];
-		int i;
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा पूर्णांकel_community_context *cctx = &pctrl->context.communities[0];
+		पूर्णांक i;
 
-		/* Reset the interrupt mapping */
-		for (i = 0; i < ARRAY_SIZE(cctx->intr_lines); i++) {
-			if (cctx->intr_lines[i] == offset) {
-				cctx->intr_lines[i] = 0;
-				break;
-			}
-		}
+		/* Reset the पूर्णांकerrupt mapping */
+		क्रम (i = 0; i < ARRAY_SIZE(cctx->पूर्णांकr_lines); i++) अणु
+			अगर (cctx->पूर्णांकr_lines[i] == offset) अणु
+				cctx->पूर्णांकr_lines[i] = 0;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		/* Disable interrupt generation */
+		/* Disable पूर्णांकerrupt generation */
 		chv_gpio_clear_triggering(pctrl, offset);
 
-		value = chv_readl(pctrl, offset, CHV_PADCTRL0);
+		value = chv_पढ़ोl(pctrl, offset, CHV_PADCTRL0);
 
 		/*
 		 * If the pin is in HiZ mode (both TX and RX buffers are
 		 * disabled) we turn it to be input now.
 		 */
-		if ((value & CHV_PADCTRL0_GPIOCFG_MASK) ==
-		     (CHV_PADCTRL0_GPIOCFG_HIZ << CHV_PADCTRL0_GPIOCFG_SHIFT)) {
+		अगर ((value & CHV_PADCTRL0_GPIOCFG_MASK) ==
+		     (CHV_PADCTRL0_GPIOCFG_HIZ << CHV_PADCTRL0_GPIOCFG_SHIFT)) अणु
 			value &= ~CHV_PADCTRL0_GPIOCFG_MASK;
 			value |= CHV_PADCTRL0_GPIOCFG_GPI << CHV_PADCTRL0_GPIOCFG_SHIFT;
-		}
+		पूर्ण
 
 		/* Switch to a GPIO mode */
 		value |= CHV_PADCTRL0_GPIOEN;
-		chv_writel(pctrl, offset, CHV_PADCTRL0, value);
-	}
+		chv_ग_लिखोl(pctrl, offset, CHV_PADCTRL0, value);
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void chv_gpio_disable_free(struct pinctrl_dev *pctldev,
-				  struct pinctrl_gpio_range *range,
-				  unsigned int offset)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
-	unsigned long flags;
+अटल व्योम chv_gpio_disable_मुक्त(काष्ठा pinctrl_dev *pctldev,
+				  काष्ठा pinctrl_gpio_range *range,
+				  अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
-	if (!chv_pad_locked(pctrl, offset))
+	अगर (!chv_pad_locked(pctrl, offset))
 		chv_gpio_clear_triggering(pctrl, offset);
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
-}
+पूर्ण
 
-static int chv_gpio_set_direction(struct pinctrl_dev *pctldev,
-				  struct pinctrl_gpio_range *range,
-				  unsigned int offset, bool input)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
-	unsigned long flags;
+अटल पूर्णांक chv_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+				  काष्ठा pinctrl_gpio_range *range,
+				  अचिन्हित पूर्णांक offset, bool input)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित दीर्घ flags;
 	u32 ctrl0;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
-	ctrl0 = chv_readl(pctrl, offset, CHV_PADCTRL0) & ~CHV_PADCTRL0_GPIOCFG_MASK;
-	if (input)
+	ctrl0 = chv_पढ़ोl(pctrl, offset, CHV_PADCTRL0) & ~CHV_PADCTRL0_GPIOCFG_MASK;
+	अगर (input)
 		ctrl0 |= CHV_PADCTRL0_GPIOCFG_GPI << CHV_PADCTRL0_GPIOCFG_SHIFT;
-	else
+	अन्यथा
 		ctrl0 |= CHV_PADCTRL0_GPIOCFG_GPO << CHV_PADCTRL0_GPIOCFG_SHIFT;
-	chv_writel(pctrl, offset, CHV_PADCTRL0, ctrl0);
+	chv_ग_लिखोl(pctrl, offset, CHV_PADCTRL0, ctrl0);
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops chv_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops chv_pinmux_ops = अणु
 	.get_functions_count = chv_get_functions_count,
 	.get_function_name = chv_get_function_name,
 	.get_function_groups = chv_get_function_groups,
 	.set_mux = chv_pinmux_set_mux,
 	.gpio_request_enable = chv_gpio_request_enable,
-	.gpio_disable_free = chv_gpio_disable_free,
+	.gpio_disable_मुक्त = chv_gpio_disable_मुक्त,
 	.gpio_set_direction = chv_gpio_set_direction,
-};
+पूर्ण;
 
-static int chv_config_get(struct pinctrl_dev *pctldev, unsigned int pin,
-			  unsigned long *config)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param = pinconf_to_config_param(*config);
-	unsigned long flags;
+अटल पूर्णांक chv_config_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			  अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+	अचिन्हित दीर्घ flags;
 	u32 ctrl0, ctrl1;
 	u16 arg = 0;
 	u32 term;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
-	ctrl0 = chv_readl(pctrl, pin, CHV_PADCTRL0);
-	ctrl1 = chv_readl(pctrl, pin, CHV_PADCTRL1);
+	ctrl0 = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL0);
+	ctrl1 = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL1);
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
 	term = (ctrl0 & CHV_PADCTRL0_TERM_MASK) >> CHV_PADCTRL0_TERM_SHIFT;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-		if (term)
-			return -EINVAL;
-		break;
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर (term)
+			वापस -EINVAL;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if (!(ctrl0 & CHV_PADCTRL0_TERM_UP))
-			return -EINVAL;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर (!(ctrl0 & CHV_PADCTRL0_TERM_UP))
+			वापस -EINVAL;
 
-		switch (term) {
-		case CHV_PADCTRL0_TERM_20K:
+		चयन (term) अणु
+		हाल CHV_PADCTRL0_TERM_20K:
 			arg = 20000;
-			break;
-		case CHV_PADCTRL0_TERM_5K:
+			अवरोध;
+		हाल CHV_PADCTRL0_TERM_5K:
 			arg = 5000;
-			break;
-		case CHV_PADCTRL0_TERM_1K:
+			अवरोध;
+		हाल CHV_PADCTRL0_TERM_1K:
 			arg = 1000;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		if (!term || (ctrl0 & CHV_PADCTRL0_TERM_UP))
-			return -EINVAL;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		अगर (!term || (ctrl0 & CHV_PADCTRL0_TERM_UP))
+			वापस -EINVAL;
 
-		switch (term) {
-		case CHV_PADCTRL0_TERM_20K:
+		चयन (term) अणु
+		हाल CHV_PADCTRL0_TERM_20K:
 			arg = 20000;
-			break;
-		case CHV_PADCTRL0_TERM_5K:
+			अवरोध;
+		हाल CHV_PADCTRL0_TERM_5K:
 			arg = 5000;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
-		if (!(ctrl1 & CHV_PADCTRL1_ODEN))
-			return -EINVAL;
-		break;
+	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		अगर (!(ctrl1 & CHV_PADCTRL1_ODEN))
+			वापस -EINVAL;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_HIGH_IMPEDANCE: {
+	हाल PIN_CONFIG_BIAS_HIGH_IMPEDANCE: अणु
 		u32 cfg;
 
 		cfg = ctrl0 & CHV_PADCTRL0_GPIOCFG_MASK;
 		cfg >>= CHV_PADCTRL0_GPIOCFG_SHIFT;
-		if (cfg != CHV_PADCTRL0_GPIOCFG_HIZ)
-			return -EINVAL;
+		अगर (cfg != CHV_PADCTRL0_GPIOCFG_HIZ)
+			वापस -EINVAL;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	default:
-		return -ENOTSUPP;
-	}
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, arg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_config_set_pull(struct intel_pinctrl *pctrl, unsigned int pin,
-			       enum pin_config_param param, u32 arg)
-{
-	unsigned long flags;
+अटल पूर्णांक chv_config_set_pull(काष्ठा पूर्णांकel_pinctrl *pctrl, अचिन्हित पूर्णांक pin,
+			       क्रमागत pin_config_param param, u32 arg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 ctrl0, pull;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
-	ctrl0 = chv_readl(pctrl, pin, CHV_PADCTRL0);
+	ctrl0 = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL0);
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
 		ctrl0 &= ~(CHV_PADCTRL0_TERM_MASK | CHV_PADCTRL0_TERM_UP);
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
+	हाल PIN_CONFIG_BIAS_PULL_UP:
 		ctrl0 &= ~(CHV_PADCTRL0_TERM_MASK | CHV_PADCTRL0_TERM_UP);
 
-		switch (arg) {
-		case 1000:
+		चयन (arg) अणु
+		हाल 1000:
 			/* For 1k there is only pull up */
 			pull = CHV_PADCTRL0_TERM_1K << CHV_PADCTRL0_TERM_SHIFT;
-			break;
-		case 5000:
+			अवरोध;
+		हाल 5000:
 			pull = CHV_PADCTRL0_TERM_5K << CHV_PADCTRL0_TERM_SHIFT;
-			break;
-		case 20000:
+			अवरोध;
+		हाल 20000:
 			pull = CHV_PADCTRL0_TERM_20K << CHV_PADCTRL0_TERM_SHIFT;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			raw_spin_unlock_irqrestore(&chv_lock, flags);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		ctrl0 |= CHV_PADCTRL0_TERM_UP | pull;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		ctrl0 &= ~(CHV_PADCTRL0_TERM_MASK | CHV_PADCTRL0_TERM_UP);
 
-		switch (arg) {
-		case 5000:
+		चयन (arg) अणु
+		हाल 5000:
 			pull = CHV_PADCTRL0_TERM_5K << CHV_PADCTRL0_TERM_SHIFT;
-			break;
-		case 20000:
+			अवरोध;
+		हाल 20000:
 			pull = CHV_PADCTRL0_TERM_20K << CHV_PADCTRL0_TERM_SHIFT;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			raw_spin_unlock_irqrestore(&chv_lock, flags);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		ctrl0 |= pull;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		raw_spin_unlock_irqrestore(&chv_lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	chv_writel(pctrl, pin, CHV_PADCTRL0, ctrl0);
+	chv_ग_लिखोl(pctrl, pin, CHV_PADCTRL0, ctrl0);
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_config_set_oden(struct intel_pinctrl *pctrl, unsigned int pin,
+अटल पूर्णांक chv_config_set_oden(काष्ठा पूर्णांकel_pinctrl *pctrl, अचिन्हित पूर्णांक pin,
 			       bool enable)
-{
-	unsigned long flags;
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 ctrl1;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
-	ctrl1 = chv_readl(pctrl, pin, CHV_PADCTRL1);
+	ctrl1 = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL1);
 
-	if (enable)
+	अगर (enable)
 		ctrl1 |= CHV_PADCTRL1_ODEN;
-	else
+	अन्यथा
 		ctrl1 &= ~CHV_PADCTRL1_ODEN;
 
-	chv_writel(pctrl, pin, CHV_PADCTRL1, ctrl1);
+	chv_ग_लिखोl(pctrl, pin, CHV_PADCTRL1, ctrl1);
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
-			  unsigned long *configs, unsigned int nconfigs)
-{
-	struct intel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param;
-	int i, ret;
+अटल पूर्णांक chv_config_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			  अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक nconfigs)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param;
+	पूर्णांक i, ret;
 	u32 arg;
 
-	if (chv_pad_locked(pctrl, pin))
-		return -EBUSY;
+	अगर (chv_pad_locked(pctrl, pin))
+		वापस -EBUSY;
 
-	for (i = 0; i < nconfigs; i++) {
+	क्रम (i = 0; i < nconfigs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_DISABLE:
-		case PIN_CONFIG_BIAS_PULL_UP:
-		case PIN_CONFIG_BIAS_PULL_DOWN:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_DISABLE:
+		हाल PIN_CONFIG_BIAS_PULL_UP:
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
 			ret = chv_config_set_pull(pctrl, pin, param, arg);
-			if (ret)
-				return ret;
-			break;
+			अगर (ret)
+				वापस ret;
+			अवरोध;
 
-		case PIN_CONFIG_DRIVE_PUSH_PULL:
+		हाल PIN_CONFIG_DRIVE_PUSH_PULL:
 			ret = chv_config_set_oden(pctrl, pin, false);
-			if (ret)
-				return ret;
-			break;
+			अगर (ret)
+				वापस ret;
+			अवरोध;
 
-		case PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
 			ret = chv_config_set_oden(pctrl, pin, true);
-			if (ret)
-				return ret;
-			break;
+			अगर (ret)
+				वापस ret;
+			अवरोध;
 
-		default:
-			return -ENOTSUPP;
-		}
+		शेष:
+			वापस -ENOTSUPP;
+		पूर्ण
 
 		dev_dbg(pctrl->dev, "pin %d set config %d arg %u\n", pin,
 			param, arg);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_config_group_get(struct pinctrl_dev *pctldev,
-				unsigned int group,
-				unsigned long *config)
-{
-	const unsigned int *pins;
-	unsigned int npins;
-	int ret;
+अटल पूर्णांक chv_config_group_get(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित पूर्णांक group,
+				अचिन्हित दीर्घ *config)
+अणु
+	स्थिर अचिन्हित पूर्णांक *pins;
+	अचिन्हित पूर्णांक npins;
+	पूर्णांक ret;
 
 	ret = chv_get_group_pins(pctldev, group, &pins, &npins);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = chv_config_get(pctldev, pins[0], config);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_config_group_set(struct pinctrl_dev *pctldev,
-				unsigned int group, unsigned long *configs,
-				unsigned int num_configs)
-{
-	const unsigned int *pins;
-	unsigned int npins;
-	int i, ret;
+अटल पूर्णांक chv_config_group_set(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित पूर्णांक group, अचिन्हित दीर्घ *configs,
+				अचिन्हित पूर्णांक num_configs)
+अणु
+	स्थिर अचिन्हित पूर्णांक *pins;
+	अचिन्हित पूर्णांक npins;
+	पूर्णांक i, ret;
 
 	ret = chv_get_group_pins(pctldev, group, &pins, &npins);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < npins; i++) {
+	क्रम (i = 0; i < npins; i++) अणु
 		ret = chv_config_set(pctldev, pins[i], configs, num_configs);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops chv_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops chv_pinconf_ops = अणु
 	.is_generic = true,
 	.pin_config_set = chv_config_set,
 	.pin_config_get = chv_config_get,
 	.pin_config_group_get = chv_config_group_get,
 	.pin_config_group_set = chv_config_group_set,
-};
+पूर्ण;
 
-static struct pinctrl_desc chv_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc chv_pinctrl_desc = अणु
 	.pctlops = &chv_pinctrl_ops,
 	.pmxops = &chv_pinmux_ops,
 	.confops = &chv_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int chv_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct intel_pinctrl *pctrl = gpiochip_get_data(chip);
-	unsigned long flags;
+अटल पूर्णांक chv_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ flags;
 	u32 ctrl0, cfg;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
-	ctrl0 = chv_readl(pctrl, offset, CHV_PADCTRL0);
+	ctrl0 = chv_पढ़ोl(pctrl, offset, CHV_PADCTRL0);
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
 	cfg = ctrl0 & CHV_PADCTRL0_GPIOCFG_MASK;
 	cfg >>= CHV_PADCTRL0_GPIOCFG_SHIFT;
 
-	if (cfg == CHV_PADCTRL0_GPIOCFG_GPO)
-		return !!(ctrl0 & CHV_PADCTRL0_GPIOTXSTATE);
-	return !!(ctrl0 & CHV_PADCTRL0_GPIORXSTATE);
-}
+	अगर (cfg == CHV_PADCTRL0_GPIOCFG_GPO)
+		वापस !!(ctrl0 & CHV_PADCTRL0_GPIOTXSTATE);
+	वापस !!(ctrl0 & CHV_PADCTRL0_GPIORXSTATE);
+पूर्ण
 
-static void chv_gpio_set(struct gpio_chip *chip, unsigned int offset, int value)
-{
-	struct intel_pinctrl *pctrl = gpiochip_get_data(chip);
-	unsigned long flags;
+अटल व्योम chv_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ flags;
 	u32 ctrl0;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
-	ctrl0 = chv_readl(pctrl, offset, CHV_PADCTRL0);
+	ctrl0 = chv_पढ़ोl(pctrl, offset, CHV_PADCTRL0);
 
-	if (value)
+	अगर (value)
 		ctrl0 |= CHV_PADCTRL0_GPIOTXSTATE;
-	else
+	अन्यथा
 		ctrl0 &= ~CHV_PADCTRL0_GPIOTXSTATE;
 
-	chv_writel(pctrl, offset, CHV_PADCTRL0, ctrl0);
+	chv_ग_लिखोl(pctrl, offset, CHV_PADCTRL0, ctrl0);
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
-}
+पूर्ण
 
-static int chv_gpio_get_direction(struct gpio_chip *chip, unsigned int offset)
-{
-	struct intel_pinctrl *pctrl = gpiochip_get_data(chip);
+अटल पूर्णांक chv_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(chip);
 	u32 ctrl0, direction;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
-	ctrl0 = chv_readl(pctrl, offset, CHV_PADCTRL0);
+	ctrl0 = chv_पढ़ोl(pctrl, offset, CHV_PADCTRL0);
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
 	direction = ctrl0 & CHV_PADCTRL0_GPIOCFG_MASK;
 	direction >>= CHV_PADCTRL0_GPIOCFG_SHIFT;
 
-	if (direction == CHV_PADCTRL0_GPIOCFG_GPO)
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (direction == CHV_PADCTRL0_GPIOCFG_GPO)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int chv_gpio_direction_input(struct gpio_chip *chip, unsigned int offset)
-{
-	return pinctrl_gpio_direction_input(chip->base + offset);
-}
+अटल पूर्णांक chv_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	वापस pinctrl_gpio_direction_input(chip->base + offset);
+पूर्ण
 
-static int chv_gpio_direction_output(struct gpio_chip *chip, unsigned int offset,
-				     int value)
-{
+अटल पूर्णांक chv_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+				     पूर्णांक value)
+अणु
 	chv_gpio_set(chip, offset, value);
-	return pinctrl_gpio_direction_output(chip->base + offset);
-}
+	वापस pinctrl_gpio_direction_output(chip->base + offset);
+पूर्ण
 
-static const struct gpio_chip chv_gpio_chip = {
+अटल स्थिर काष्ठा gpio_chip chv_gpio_chip = अणु
 	.owner = THIS_MODULE,
 	.request = gpiochip_generic_request,
-	.free = gpiochip_generic_free,
+	.मुक्त = gpiochip_generic_मुक्त,
 	.get_direction = chv_gpio_get_direction,
 	.direction_input = chv_gpio_direction_input,
 	.direction_output = chv_gpio_direction_output,
 	.get = chv_gpio_get,
 	.set = chv_gpio_set,
-};
+पूर्ण;
 
-static void chv_gpio_irq_ack(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct intel_pinctrl *pctrl = gpiochip_get_data(gc);
-	int pin = irqd_to_hwirq(d);
-	u32 intr_line;
+अटल व्योम chv_gpio_irq_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(gc);
+	पूर्णांक pin = irqd_to_hwirq(d);
+	u32 पूर्णांकr_line;
 
 	raw_spin_lock(&chv_lock);
 
-	intr_line = chv_readl(pctrl, pin, CHV_PADCTRL0);
-	intr_line &= CHV_PADCTRL0_INTSEL_MASK;
-	intr_line >>= CHV_PADCTRL0_INTSEL_SHIFT;
-	chv_pctrl_writel(pctrl, CHV_INTSTAT, BIT(intr_line));
+	पूर्णांकr_line = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL0);
+	पूर्णांकr_line &= CHV_PADCTRL0_INTSEL_MASK;
+	पूर्णांकr_line >>= CHV_PADCTRL0_INTSEL_SHIFT;
+	chv_pctrl_ग_लिखोl(pctrl, CHV_INTSTAT, BIT(पूर्णांकr_line));
 
 	raw_spin_unlock(&chv_lock);
-}
+पूर्ण
 
-static void chv_gpio_irq_mask_unmask(struct irq_data *d, bool mask)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct intel_pinctrl *pctrl = gpiochip_get_data(gc);
-	int pin = irqd_to_hwirq(d);
-	u32 value, intr_line;
-	unsigned long flags;
+अटल व्योम chv_gpio_irq_mask_unmask(काष्ठा irq_data *d, bool mask)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(gc);
+	पूर्णांक pin = irqd_to_hwirq(d);
+	u32 value, पूर्णांकr_line;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
-	intr_line = chv_readl(pctrl, pin, CHV_PADCTRL0);
-	intr_line &= CHV_PADCTRL0_INTSEL_MASK;
-	intr_line >>= CHV_PADCTRL0_INTSEL_SHIFT;
+	पूर्णांकr_line = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL0);
+	पूर्णांकr_line &= CHV_PADCTRL0_INTSEL_MASK;
+	पूर्णांकr_line >>= CHV_PADCTRL0_INTSEL_SHIFT;
 
-	value = chv_pctrl_readl(pctrl, CHV_INTMASK);
-	if (mask)
-		value &= ~BIT(intr_line);
-	else
-		value |= BIT(intr_line);
-	chv_pctrl_writel(pctrl, CHV_INTMASK, value);
+	value = chv_pctrl_पढ़ोl(pctrl, CHV_INTMASK);
+	अगर (mask)
+		value &= ~BIT(पूर्णांकr_line);
+	अन्यथा
+		value |= BIT(पूर्णांकr_line);
+	chv_pctrl_ग_लिखोl(pctrl, CHV_INTMASK, value);
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
-}
+पूर्ण
 
-static void chv_gpio_irq_mask(struct irq_data *d)
-{
+अटल व्योम chv_gpio_irq_mask(काष्ठा irq_data *d)
+अणु
 	chv_gpio_irq_mask_unmask(d, true);
-}
+पूर्ण
 
-static void chv_gpio_irq_unmask(struct irq_data *d)
-{
+अटल व्योम chv_gpio_irq_unmask(काष्ठा irq_data *d)
+अणु
 	chv_gpio_irq_mask_unmask(d, false);
-}
+पूर्ण
 
-static unsigned chv_gpio_irq_startup(struct irq_data *d)
-{
+अटल अचिन्हित chv_gpio_irq_startup(काष्ठा irq_data *d)
+अणु
 	/*
-	 * Check if the interrupt has been requested with 0 as triggering
-	 * type. In that case it is assumed that the current values
+	 * Check अगर the पूर्णांकerrupt has been requested with 0 as triggering
+	 * type. In that हाल it is assumed that the current values
 	 * programmed to the hardware are used (e.g BIOS configured
-	 * defaults).
+	 * शेषs).
 	 *
-	 * In that case ->irq_set_type() will never be called so we need to
-	 * read back the values from hardware now, set correct flow handler
-	 * and update mappings before the interrupt is being used.
+	 * In that हाल ->irq_set_type() will never be called so we need to
+	 * पढ़ो back the values from hardware now, set correct flow handler
+	 * and update mappings beक्रमe the पूर्णांकerrupt is being used.
 	 */
-	if (irqd_get_trigger_type(d) == IRQ_TYPE_NONE) {
-		struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-		struct intel_pinctrl *pctrl = gpiochip_get_data(gc);
-		struct intel_community_context *cctx = &pctrl->context.communities[0];
-		unsigned int pin = irqd_to_hwirq(d);
+	अगर (irqd_get_trigger_type(d) == IRQ_TYPE_NONE) अणु
+		काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+		काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(gc);
+		काष्ठा पूर्णांकel_community_context *cctx = &pctrl->context.communities[0];
+		अचिन्हित पूर्णांक pin = irqd_to_hwirq(d);
 		irq_flow_handler_t handler;
-		unsigned long flags;
-		u32 intsel, value;
+		अचिन्हित दीर्घ flags;
+		u32 पूर्णांकsel, value;
 
 		raw_spin_lock_irqsave(&chv_lock, flags);
-		intsel = chv_readl(pctrl, pin, CHV_PADCTRL0);
-		intsel &= CHV_PADCTRL0_INTSEL_MASK;
-		intsel >>= CHV_PADCTRL0_INTSEL_SHIFT;
+		पूर्णांकsel = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL0);
+		पूर्णांकsel &= CHV_PADCTRL0_INTSEL_MASK;
+		पूर्णांकsel >>= CHV_PADCTRL0_INTSEL_SHIFT;
 
-		value = chv_readl(pctrl, pin, CHV_PADCTRL1);
-		if (value & CHV_PADCTRL1_INTWAKECFG_LEVEL)
+		value = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL1);
+		अगर (value & CHV_PADCTRL1_INTWAKECFG_LEVEL)
 			handler = handle_level_irq;
-		else
+		अन्यथा
 			handler = handle_edge_irq;
 
-		if (!cctx->intr_lines[intsel]) {
+		अगर (!cctx->पूर्णांकr_lines[पूर्णांकsel]) अणु
 			irq_set_handler_locked(d, handler);
-			cctx->intr_lines[intsel] = pin;
-		}
+			cctx->पूर्णांकr_lines[पूर्णांकsel] = pin;
+		पूर्ण
 		raw_spin_unlock_irqrestore(&chv_lock, flags);
-	}
+	पूर्ण
 
 	chv_gpio_irq_unmask(d);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_gpio_irq_type(struct irq_data *d, unsigned int type)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct intel_pinctrl *pctrl = gpiochip_get_data(gc);
-	struct intel_community_context *cctx = &pctrl->context.communities[0];
-	unsigned int pin = irqd_to_hwirq(d);
-	unsigned long flags;
+अटल पूर्णांक chv_gpio_irq_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(gc);
+	काष्ठा पूर्णांकel_community_context *cctx = &pctrl->context.communities[0];
+	अचिन्हित पूर्णांक pin = irqd_to_hwirq(d);
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
 	/*
-	 * Pins which can be used as shared interrupt are configured in
-	 * BIOS. Driver trusts BIOS configurations and assigns different
+	 * Pins which can be used as shared पूर्णांकerrupt are configured in
+	 * BIOS. Driver trusts BIOS configurations and assigns dअगरferent
 	 * handler according to the irq type.
 	 *
 	 * Driver needs to save the mapping between each pin and
-	 * its interrupt line.
+	 * its पूर्णांकerrupt line.
 	 * 1. If the pin cfg is locked in BIOS:
 	 *	Trust BIOS has programmed IntWakeCfg bits correctly,
 	 *	driver just needs to save the mapping.
 	 * 2. If the pin cfg is not locked in BIOS:
 	 *	Driver programs the IntWakeCfg bits and save the mapping.
 	 */
-	if (!chv_pad_locked(pctrl, pin)) {
-		value = chv_readl(pctrl, pin, CHV_PADCTRL1);
+	अगर (!chv_pad_locked(pctrl, pin)) अणु
+		value = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL1);
 		value &= ~CHV_PADCTRL1_INTWAKECFG_MASK;
 		value &= ~CHV_PADCTRL1_INVRXTX_MASK;
 
-		if (type & IRQ_TYPE_EDGE_BOTH) {
-			if ((type & IRQ_TYPE_EDGE_BOTH) == IRQ_TYPE_EDGE_BOTH)
+		अगर (type & IRQ_TYPE_EDGE_BOTH) अणु
+			अगर ((type & IRQ_TYPE_EDGE_BOTH) == IRQ_TYPE_EDGE_BOTH)
 				value |= CHV_PADCTRL1_INTWAKECFG_BOTH;
-			else if (type & IRQ_TYPE_EDGE_RISING)
+			अन्यथा अगर (type & IRQ_TYPE_EDGE_RISING)
 				value |= CHV_PADCTRL1_INTWAKECFG_RISING;
-			else if (type & IRQ_TYPE_EDGE_FALLING)
+			अन्यथा अगर (type & IRQ_TYPE_EDGE_FALLING)
 				value |= CHV_PADCTRL1_INTWAKECFG_FALLING;
-		} else if (type & IRQ_TYPE_LEVEL_MASK) {
+		पूर्ण अन्यथा अगर (type & IRQ_TYPE_LEVEL_MASK) अणु
 			value |= CHV_PADCTRL1_INTWAKECFG_LEVEL;
-			if (type & IRQ_TYPE_LEVEL_LOW)
+			अगर (type & IRQ_TYPE_LEVEL_LOW)
 				value |= CHV_PADCTRL1_INVRXTX_RXDATA;
-		}
+		पूर्ण
 
-		chv_writel(pctrl, pin, CHV_PADCTRL1, value);
-	}
+		chv_ग_लिखोl(pctrl, pin, CHV_PADCTRL1, value);
+	पूर्ण
 
-	value = chv_readl(pctrl, pin, CHV_PADCTRL0);
+	value = chv_पढ़ोl(pctrl, pin, CHV_PADCTRL0);
 	value &= CHV_PADCTRL0_INTSEL_MASK;
 	value >>= CHV_PADCTRL0_INTSEL_SHIFT;
 
-	cctx->intr_lines[value] = pin;
+	cctx->पूर्णांकr_lines[value] = pin;
 
-	if (type & IRQ_TYPE_EDGE_BOTH)
+	अगर (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(d, handle_edge_irq);
-	else if (type & IRQ_TYPE_LEVEL_MASK)
+	अन्यथा अगर (type & IRQ_TYPE_LEVEL_MASK)
 		irq_set_handler_locked(d, handle_level_irq);
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void chv_gpio_irq_handler(struct irq_desc *desc)
-{
-	struct gpio_chip *gc = irq_desc_get_handler_data(desc);
-	struct intel_pinctrl *pctrl = gpiochip_get_data(gc);
-	const struct intel_community *community = &pctrl->communities[0];
-	struct intel_community_context *cctx = &pctrl->context.communities[0];
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	unsigned long pending;
-	unsigned long flags;
-	u32 intr_line;
+अटल व्योम chv_gpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा gpio_chip *gc = irq_desc_get_handler_data(desc);
+	काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(gc);
+	स्थिर काष्ठा पूर्णांकel_community *community = &pctrl->communities[0];
+	काष्ठा पूर्णांकel_community_context *cctx = &pctrl->context.communities[0];
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	अचिन्हित दीर्घ pending;
+	अचिन्हित दीर्घ flags;
+	u32 पूर्णांकr_line;
 
 	chained_irq_enter(chip, desc);
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
-	pending = chv_pctrl_readl(pctrl, CHV_INTSTAT);
+	pending = chv_pctrl_पढ़ोl(pctrl, CHV_INTSTAT);
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	for_each_set_bit(intr_line, &pending, community->nirqs) {
-		unsigned int irq, offset;
+	क्रम_each_set_bit(पूर्णांकr_line, &pending, community->nirqs) अणु
+		अचिन्हित पूर्णांक irq, offset;
 
-		offset = cctx->intr_lines[intr_line];
-		irq = irq_find_mapping(gc->irq.domain, offset);
+		offset = cctx->पूर्णांकr_lines[पूर्णांकr_line];
+		irq = irq_find_mapping(gc->irq.करोमुख्य, offset);
 		generic_handle_irq(irq);
-	}
+	पूर्ण
 
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
 /*
  * Certain machines seem to hardcode Linux IRQ numbers in their ACPI
  * tables. Since we leave GPIOs that are not capable of generating
- * interrupts out of the irqdomain the numbering will be different and
+ * पूर्णांकerrupts out of the irqकरोमुख्य the numbering will be dअगरferent and
  * cause devices using the hardcoded IRQ numbers fail. In order not to
- * break such machines we will only mask pins from irqdomain if the machine
+ * अवरोध such machines we will only mask pins from irqकरोमुख्य अगर the machine
  * is not listed below.
  */
-static const struct dmi_system_id chv_no_valid_mask[] = {
+अटल स्थिर काष्ठा dmi_प्रणाली_id chv_no_valid_mask[] = अणु
 	/* See https://bugzilla.kernel.org/show_bug.cgi?id=194945 */
-	{
+	अणु
 		.ident = "Intel_Strago based Chromebooks (All models)",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "GOOGLE"),
 			DMI_MATCH(DMI_PRODUCT_FAMILY, "Intel_Strago"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.ident = "HP Chromebook 11 G5 (Setzer)",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "HP"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Setzer"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.ident = "Acer Chromebook R11 (Cyan)",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "GOOGLE"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Cyan"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.ident = "Samsung Chromebook 3 (Celes)",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "GOOGLE"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Celes"),
-		},
-	},
-	{}
-};
+		पूर्ण,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void chv_init_irq_valid_mask(struct gpio_chip *chip,
-				    unsigned long *valid_mask,
-				    unsigned int ngpios)
-{
-	struct intel_pinctrl *pctrl = gpiochip_get_data(chip);
-	const struct intel_community *community = &pctrl->communities[0];
-	int i;
+अटल व्योम chv_init_irq_valid_mask(काष्ठा gpio_chip *chip,
+				    अचिन्हित दीर्घ *valid_mask,
+				    अचिन्हित पूर्णांक ngpios)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(chip);
+	स्थिर काष्ठा पूर्णांकel_community *community = &pctrl->communities[0];
+	पूर्णांक i;
 
-	/* Do not add GPIOs that can only generate GPEs to the IRQ domain */
-	for (i = 0; i < pctrl->soc->npins; i++) {
-		const struct pinctrl_pin_desc *desc;
-		u32 intsel;
+	/* Do not add GPIOs that can only generate GPEs to the IRQ करोमुख्य */
+	क्रम (i = 0; i < pctrl->soc->npins; i++) अणु
+		स्थिर काष्ठा pinctrl_pin_desc *desc;
+		u32 पूर्णांकsel;
 
 		desc = &pctrl->soc->pins[i];
 
-		intsel = chv_readl(pctrl, desc->number, CHV_PADCTRL0);
-		intsel &= CHV_PADCTRL0_INTSEL_MASK;
-		intsel >>= CHV_PADCTRL0_INTSEL_SHIFT;
+		पूर्णांकsel = chv_पढ़ोl(pctrl, desc->number, CHV_PADCTRL0);
+		पूर्णांकsel &= CHV_PADCTRL0_INTSEL_MASK;
+		पूर्णांकsel >>= CHV_PADCTRL0_INTSEL_SHIFT;
 
-		if (intsel >= community->nirqs)
+		अगर (पूर्णांकsel >= community->nirqs)
 			clear_bit(desc->number, valid_mask);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int chv_gpio_irq_init_hw(struct gpio_chip *chip)
-{
-	struct intel_pinctrl *pctrl = gpiochip_get_data(chip);
-	const struct intel_community *community = &pctrl->communities[0];
+अटल पूर्णांक chv_gpio_irq_init_hw(काष्ठा gpio_chip *chip)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(chip);
+	स्थिर काष्ठा पूर्णांकel_community *community = &pctrl->communities[0];
 
 	/*
 	 * The same set of machines in chv_no_valid_mask[] have incorrectly
-	 * configured GPIOs that generate spurious interrupts so we use
-	 * this same list to apply another quirk for them.
+	 * configured GPIOs that generate spurious पूर्णांकerrupts so we use
+	 * this same list to apply another quirk क्रम them.
 	 *
 	 * See also https://bugzilla.kernel.org/show_bug.cgi?id=197953.
 	 */
-	if (!pctrl->chip.irq.init_valid_mask) {
+	अगर (!pctrl->chip.irq.init_valid_mask) अणु
 		/*
-		 * Mask all interrupts the community is able to generate
+		 * Mask all पूर्णांकerrupts the community is able to generate
 		 * but leave the ones that can only generate GPEs unmasked.
 		 */
-		chv_pctrl_writel(pctrl, CHV_INTMASK, GENMASK(31, community->nirqs));
-	}
+		chv_pctrl_ग_लिखोl(pctrl, CHV_INTMASK, GENMASK(31, community->nirqs));
+	पूर्ण
 
-	/* Clear all interrupts */
-	chv_pctrl_writel(pctrl, CHV_INTSTAT, 0xffff);
+	/* Clear all पूर्णांकerrupts */
+	chv_pctrl_ग_लिखोl(pctrl, CHV_INTSTAT, 0xffff);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_gpio_add_pin_ranges(struct gpio_chip *chip)
-{
-	struct intel_pinctrl *pctrl = gpiochip_get_data(chip);
-	const struct intel_community *community = &pctrl->communities[0];
-	const struct intel_padgroup *gpp;
-	int ret, i;
+अटल पूर्णांक chv_gpio_add_pin_ranges(काष्ठा gpio_chip *chip)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = gpiochip_get_data(chip);
+	स्थिर काष्ठा पूर्णांकel_community *community = &pctrl->communities[0];
+	स्थिर काष्ठा पूर्णांकel_padgroup *gpp;
+	पूर्णांक ret, i;
 
-	for (i = 0; i < community->ngpps; i++) {
+	क्रम (i = 0; i < community->ngpps; i++) अणु
 		gpp = &community->gpps[i];
 		ret = gpiochip_add_pin_range(chip, dev_name(pctrl->dev),
 					     gpp->base, gpp->base,
 					     gpp->size);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(pctrl->dev, "failed to add GPIO pin range\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_gpio_probe(struct intel_pinctrl *pctrl, int irq)
-{
-	const struct intel_community *community = &pctrl->communities[0];
-	const struct intel_padgroup *gpp;
-	struct gpio_chip *chip = &pctrl->chip;
-	bool need_valid_mask = !dmi_check_system(chv_no_valid_mask);
-	int ret, i, irq_base;
+अटल पूर्णांक chv_gpio_probe(काष्ठा पूर्णांकel_pinctrl *pctrl, पूर्णांक irq)
+अणु
+	स्थिर काष्ठा पूर्णांकel_community *community = &pctrl->communities[0];
+	स्थिर काष्ठा पूर्णांकel_padgroup *gpp;
+	काष्ठा gpio_chip *chip = &pctrl->chip;
+	bool need_valid_mask = !dmi_check_प्रणाली(chv_no_valid_mask);
+	पूर्णांक ret, i, irq_base;
 
 	*chip = chv_gpio_chip;
 
@@ -1561,270 +1562,270 @@ static int chv_gpio_probe(struct intel_pinctrl *pctrl, int irq)
 	chip->irq.parent_handler = chv_gpio_irq_handler;
 	chip->irq.num_parents = 1;
 	chip->irq.parents = &pctrl->irq;
-	chip->irq.default_type = IRQ_TYPE_NONE;
+	chip->irq.शेष_type = IRQ_TYPE_NONE;
 	chip->irq.handler = handle_bad_irq;
-	if (need_valid_mask) {
+	अगर (need_valid_mask) अणु
 		chip->irq.init_valid_mask = chv_init_irq_valid_mask;
-	} else {
+	पूर्ण अन्यथा अणु
 		irq_base = devm_irq_alloc_descs(pctrl->dev, -1, 0,
 						pctrl->soc->npins, NUMA_NO_NODE);
-		if (irq_base < 0) {
+		अगर (irq_base < 0) अणु
 			dev_err(pctrl->dev, "Failed to allocate IRQ numbers\n");
-			return irq_base;
-		}
-	}
+			वापस irq_base;
+		पूर्ण
+	पूर्ण
 
 	ret = devm_gpiochip_add_data(pctrl->dev, chip, pctrl);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pctrl->dev, "Failed to register gpiochip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!need_valid_mask) {
-		for (i = 0; i < community->ngpps; i++) {
+	अगर (!need_valid_mask) अणु
+		क्रम (i = 0; i < community->ngpps; i++) अणु
 			gpp = &community->gpps[i];
 
-			irq_domain_associate_many(chip->irq.domain, irq_base,
+			irq_करोमुख्य_associate_many(chip->irq.करोमुख्य, irq_base,
 						  gpp->base, gpp->size);
 			irq_base += gpp->size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static acpi_status chv_pinctrl_mmio_access_handler(u32 function,
+अटल acpi_status chv_pinctrl_mmio_access_handler(u32 function,
 	acpi_physical_address address, u32 bits, u64 *value,
-	void *handler_context, void *region_context)
-{
-	struct intel_pinctrl *pctrl = region_context;
-	unsigned long flags;
+	व्योम *handler_context, व्योम *region_context)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = region_context;
+	अचिन्हित दीर्घ flags;
 	acpi_status ret = AE_OK;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
-	if (function == ACPI_WRITE)
-		chv_pctrl_writel(pctrl, address, *value);
-	else if (function == ACPI_READ)
-		*value = chv_pctrl_readl(pctrl, address);
-	else
+	अगर (function == ACPI_WRITE)
+		chv_pctrl_ग_लिखोl(pctrl, address, *value);
+	अन्यथा अगर (function == ACPI_READ)
+		*value = chv_pctrl_पढ़ोl(pctrl, address);
+	अन्यथा
 		ret = AE_BAD_PARAMETER;
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int chv_pinctrl_probe(struct platform_device *pdev)
-{
-	const struct intel_pinctrl_soc_data *soc_data;
-	struct intel_community *community;
-	struct device *dev = &pdev->dev;
-	struct acpi_device *adev = ACPI_COMPANION(dev);
-	struct intel_pinctrl *pctrl;
+अटल पूर्णांक chv_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *soc_data;
+	काष्ठा पूर्णांकel_community *community;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
+	काष्ठा पूर्णांकel_pinctrl *pctrl;
 	acpi_status status;
-	int ret, irq;
+	पूर्णांक ret, irq;
 
-	soc_data = intel_pinctrl_get_soc_data(pdev);
-	if (IS_ERR(soc_data))
-		return PTR_ERR(soc_data);
+	soc_data = पूर्णांकel_pinctrl_get_soc_data(pdev);
+	अगर (IS_ERR(soc_data))
+		वापस PTR_ERR(soc_data);
 
-	pctrl = devm_kzalloc(dev, sizeof(*pctrl), GFP_KERNEL);
-	if (!pctrl)
-		return -ENOMEM;
+	pctrl = devm_kzalloc(dev, माप(*pctrl), GFP_KERNEL);
+	अगर (!pctrl)
+		वापस -ENOMEM;
 
 	pctrl->dev = dev;
 	pctrl->soc = soc_data;
 
 	pctrl->ncommunities = pctrl->soc->ncommunities;
 	pctrl->communities = devm_kmemdup(dev, pctrl->soc->communities,
-					  pctrl->ncommunities * sizeof(*pctrl->communities),
+					  pctrl->ncommunities * माप(*pctrl->communities),
 					  GFP_KERNEL);
-	if (!pctrl->communities)
-		return -ENOMEM;
+	अगर (!pctrl->communities)
+		वापस -ENOMEM;
 
 	community = &pctrl->communities[0];
-	community->regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(community->regs))
-		return PTR_ERR(community->regs);
+	community->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(community->regs))
+		वापस PTR_ERR(community->regs);
 
 	community->pad_regs = community->regs + FAMILY_PAD_REGS_OFF;
 
-#ifdef CONFIG_PM_SLEEP
-	pctrl->context.pads = devm_kcalloc(dev, pctrl->soc->npins,
-					   sizeof(*pctrl->context.pads),
+#अगर_घोषित CONFIG_PM_SLEEP
+	pctrl->context.pads = devm_kसुस्मृति(dev, pctrl->soc->npins,
+					   माप(*pctrl->context.pads),
 					   GFP_KERNEL);
-	if (!pctrl->context.pads)
-		return -ENOMEM;
-#endif
+	अगर (!pctrl->context.pads)
+		वापस -ENOMEM;
+#पूर्ण_अगर
 
-	pctrl->context.communities = devm_kcalloc(dev, pctrl->soc->ncommunities,
-						  sizeof(*pctrl->context.communities),
+	pctrl->context.communities = devm_kसुस्मृति(dev, pctrl->soc->ncommunities,
+						  माप(*pctrl->context.communities),
 						  GFP_KERNEL);
-	if (!pctrl->context.communities)
-		return -ENOMEM;
+	अगर (!pctrl->context.communities)
+		वापस -ENOMEM;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	pctrl->pctldesc = chv_pinctrl_desc;
 	pctrl->pctldesc.name = dev_name(dev);
 	pctrl->pctldesc.pins = pctrl->soc->pins;
 	pctrl->pctldesc.npins = pctrl->soc->npins;
 
-	pctrl->pctldev = devm_pinctrl_register(dev, &pctrl->pctldesc, pctrl);
-	if (IS_ERR(pctrl->pctldev)) {
+	pctrl->pctldev = devm_pinctrl_रेजिस्टर(dev, &pctrl->pctldesc, pctrl);
+	अगर (IS_ERR(pctrl->pctldev)) अणु
 		dev_err(dev, "failed to register pinctrl driver\n");
-		return PTR_ERR(pctrl->pctldev);
-	}
+		वापस PTR_ERR(pctrl->pctldev);
+	पूर्ण
 
 	ret = chv_gpio_probe(pctrl, irq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	status = acpi_install_address_space_handler(adev->handle,
 					community->acpi_space_id,
 					chv_pinctrl_mmio_access_handler,
-					NULL, pctrl);
-	if (ACPI_FAILURE(status))
+					शून्य, pctrl);
+	अगर (ACPI_FAILURE(status))
 		dev_err(dev, "failed to install ACPI addr space handler\n");
 
-	platform_set_drvdata(pdev, pctrl);
+	platक्रमm_set_drvdata(pdev, pctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_pinctrl_remove(struct platform_device *pdev)
-{
-	struct intel_pinctrl *pctrl = platform_get_drvdata(pdev);
-	const struct intel_community *community = &pctrl->communities[0];
+अटल पूर्णांक chv_pinctrl_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = platक्रमm_get_drvdata(pdev);
+	स्थिर काष्ठा पूर्णांकel_community *community = &pctrl->communities[0];
 
-	acpi_remove_address_space_handler(ACPI_COMPANION(&pdev->dev),
+	acpi_हटाओ_address_space_handler(ACPI_COMPANION(&pdev->dev),
 					  community->acpi_space_id,
 					  chv_pinctrl_mmio_access_handler);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int chv_pinctrl_suspend_noirq(struct device *dev)
-{
-	struct intel_pinctrl *pctrl = dev_get_drvdata(dev);
-	struct intel_community_context *cctx = &pctrl->context.communities[0];
-	unsigned long flags;
-	int i;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक chv_pinctrl_suspend_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = dev_get_drvdata(dev);
+	काष्ठा पूर्णांकel_community_context *cctx = &pctrl->context.communities[0];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
-	cctx->saved_intmask = chv_pctrl_readl(pctrl, CHV_INTMASK);
+	cctx->saved_पूर्णांकmask = chv_pctrl_पढ़ोl(pctrl, CHV_INTMASK);
 
-	for (i = 0; i < pctrl->soc->npins; i++) {
-		const struct pinctrl_pin_desc *desc;
-		struct intel_pad_context *ctx = &pctrl->context.pads[i];
+	क्रम (i = 0; i < pctrl->soc->npins; i++) अणु
+		स्थिर काष्ठा pinctrl_pin_desc *desc;
+		काष्ठा पूर्णांकel_pad_context *ctx = &pctrl->context.pads[i];
 
 		desc = &pctrl->soc->pins[i];
-		if (chv_pad_locked(pctrl, desc->number))
-			continue;
+		अगर (chv_pad_locked(pctrl, desc->number))
+			जारी;
 
-		ctx->padctrl0 = chv_readl(pctrl, desc->number, CHV_PADCTRL0);
+		ctx->padctrl0 = chv_पढ़ोl(pctrl, desc->number, CHV_PADCTRL0);
 		ctx->padctrl0 &= ~CHV_PADCTRL0_GPIORXSTATE;
 
-		ctx->padctrl1 = chv_readl(pctrl, desc->number, CHV_PADCTRL1);
-	}
+		ctx->padctrl1 = chv_पढ़ोl(pctrl, desc->number, CHV_PADCTRL1);
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int chv_pinctrl_resume_noirq(struct device *dev)
-{
-	struct intel_pinctrl *pctrl = dev_get_drvdata(dev);
-	struct intel_community_context *cctx = &pctrl->context.communities[0];
-	unsigned long flags;
-	int i;
+अटल पूर्णांक chv_pinctrl_resume_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *pctrl = dev_get_drvdata(dev);
+	काष्ठा पूर्णांकel_community_context *cctx = &pctrl->context.communities[0];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	raw_spin_lock_irqsave(&chv_lock, flags);
 
 	/*
-	 * Mask all interrupts before restoring per-pin configuration
-	 * registers because we don't know in which state BIOS left them
-	 * upon exiting suspend.
+	 * Mask all पूर्णांकerrupts beक्रमe restoring per-pin configuration
+	 * रेजिस्टरs because we करोn't know in which state BIOS left them
+	 * upon निकासing suspend.
 	 */
-	chv_pctrl_writel(pctrl, CHV_INTMASK, 0x0000);
+	chv_pctrl_ग_लिखोl(pctrl, CHV_INTMASK, 0x0000);
 
-	for (i = 0; i < pctrl->soc->npins; i++) {
-		const struct pinctrl_pin_desc *desc;
-		struct intel_pad_context *ctx = &pctrl->context.pads[i];
+	क्रम (i = 0; i < pctrl->soc->npins; i++) अणु
+		स्थिर काष्ठा pinctrl_pin_desc *desc;
+		काष्ठा पूर्णांकel_pad_context *ctx = &pctrl->context.pads[i];
 		u32 val;
 
 		desc = &pctrl->soc->pins[i];
-		if (chv_pad_locked(pctrl, desc->number))
-			continue;
+		अगर (chv_pad_locked(pctrl, desc->number))
+			जारी;
 
-		/* Only restore if our saved state differs from the current */
-		val = chv_readl(pctrl, desc->number, CHV_PADCTRL0);
+		/* Only restore अगर our saved state dअगरfers from the current */
+		val = chv_पढ़ोl(pctrl, desc->number, CHV_PADCTRL0);
 		val &= ~CHV_PADCTRL0_GPIORXSTATE;
-		if (ctx->padctrl0 != val) {
-			chv_writel(pctrl, desc->number, CHV_PADCTRL0, ctx->padctrl0);
+		अगर (ctx->padctrl0 != val) अणु
+			chv_ग_लिखोl(pctrl, desc->number, CHV_PADCTRL0, ctx->padctrl0);
 			dev_dbg(pctrl->dev, "restored pin %2u ctrl0 0x%08x\n",
-				desc->number, chv_readl(pctrl, desc->number, CHV_PADCTRL0));
-		}
+				desc->number, chv_पढ़ोl(pctrl, desc->number, CHV_PADCTRL0));
+		पूर्ण
 
-		val = chv_readl(pctrl, desc->number, CHV_PADCTRL1);
-		if (ctx->padctrl1 != val) {
-			chv_writel(pctrl, desc->number, CHV_PADCTRL1, ctx->padctrl1);
+		val = chv_पढ़ोl(pctrl, desc->number, CHV_PADCTRL1);
+		अगर (ctx->padctrl1 != val) अणु
+			chv_ग_लिखोl(pctrl, desc->number, CHV_PADCTRL1, ctx->padctrl1);
 			dev_dbg(pctrl->dev, "restored pin %2u ctrl1 0x%08x\n",
-				desc->number, chv_readl(pctrl, desc->number, CHV_PADCTRL1));
-		}
-	}
+				desc->number, chv_पढ़ोl(pctrl, desc->number, CHV_PADCTRL1));
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Now that all pins are restored to known state, we can restore
-	 * the interrupt mask register as well.
+	 * the पूर्णांकerrupt mask रेजिस्टर as well.
 	 */
-	chv_pctrl_writel(pctrl, CHV_INTSTAT, 0xffff);
-	chv_pctrl_writel(pctrl, CHV_INTMASK, cctx->saved_intmask);
+	chv_pctrl_ग_लिखोl(pctrl, CHV_INTSTAT, 0xffff);
+	chv_pctrl_ग_लिखोl(pctrl, CHV_INTMASK, cctx->saved_पूर्णांकmask);
 
 	raw_spin_unlock_irqrestore(&chv_lock, flags);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops chv_pinctrl_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops chv_pinctrl_pm_ops = अणु
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(chv_pinctrl_suspend_noirq,
 				      chv_pinctrl_resume_noirq)
-};
+पूर्ण;
 
-static const struct acpi_device_id chv_pinctrl_acpi_match[] = {
-	{ "INT33FF", (kernel_ulong_t)chv_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id chv_pinctrl_acpi_match[] = अणु
+	अणु "INT33FF", (kernel_uदीर्घ_t)chv_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, chv_pinctrl_acpi_match);
 
-static struct platform_driver chv_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver chv_pinctrl_driver = अणु
 	.probe = chv_pinctrl_probe,
-	.remove = chv_pinctrl_remove,
-	.driver = {
+	.हटाओ = chv_pinctrl_हटाओ,
+	.driver = अणु
 		.name = "cherryview-pinctrl",
 		.pm = &chv_pinctrl_pm_ops,
 		.acpi_match_table = chv_pinctrl_acpi_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init chv_pinctrl_init(void)
-{
-	return platform_driver_register(&chv_pinctrl_driver);
-}
+अटल पूर्णांक __init chv_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&chv_pinctrl_driver);
+पूर्ण
 subsys_initcall(chv_pinctrl_init);
 
-static void __exit chv_pinctrl_exit(void)
-{
-	platform_driver_unregister(&chv_pinctrl_driver);
-}
-module_exit(chv_pinctrl_exit);
+अटल व्योम __निकास chv_pinctrl_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&chv_pinctrl_driver);
+पूर्ण
+module_निकास(chv_pinctrl_निकास);
 
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Cherryview/Braswell pinctrl driver");

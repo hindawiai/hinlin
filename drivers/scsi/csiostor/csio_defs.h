@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio FCoE driver for Linux.
+ * This file is part of the Chelsio FCoE driver क्रम Linux.
  *
  * Copyright (c) 2008-2012 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,90 +33,90 @@
  * SOFTWARE.
  */
 
-#ifndef __CSIO_DEFS_H__
-#define __CSIO_DEFS_H__
+#अगर_अघोषित __CSIO_DEFS_H__
+#घोषणा __CSIO_DEFS_H__
 
-#include <linux/kernel.h>
-#include <linux/stddef.h>
-#include <linux/timer.h>
-#include <linux/list.h>
-#include <linux/bug.h>
-#include <linux/pci.h>
-#include <linux/jiffies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/list.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/jअगरfies.h>
 
-#define CSIO_INVALID_IDX		0xFFFFFFFF
-#define CSIO_INC_STATS(elem, val)	((elem)->stats.val++)
-#define CSIO_DEC_STATS(elem, val)	((elem)->stats.val--)
-#define CSIO_VALID_WWN(__n)		((*__n >> 4) == 0x5 ? true : false)
-#define CSIO_DID_MASK			0xFFFFFF
-#define CSIO_WORD_TO_BYTE		4
+#घोषणा CSIO_INVALID_IDX		0xFFFFFFFF
+#घोषणा CSIO_INC_STATS(elem, val)	((elem)->stats.val++)
+#घोषणा CSIO_DEC_STATS(elem, val)	((elem)->stats.val--)
+#घोषणा CSIO_VALID_WWN(__n)		((*__n >> 4) == 0x5 ? true : false)
+#घोषणा CSIO_DID_MASK			0xFFFFFF
+#घोषणा CSIO_WORD_TO_BYTE		4
 
-#ifndef readq
-static inline u64 readq(void __iomem *addr)
-{
-	return readl(addr) + ((u64)readl(addr + 4) << 32);
-}
+#अगर_अघोषित पढ़ोq
+अटल अंतरभूत u64 पढ़ोq(व्योम __iomem *addr)
+अणु
+	वापस पढ़ोl(addr) + ((u64)पढ़ोl(addr + 4) << 32);
+पूर्ण
 
-static inline void writeq(u64 val, void __iomem *addr)
-{
-	writel(val, addr);
-	writel(val >> 32, addr + 4);
-}
-#endif
+अटल अंतरभूत व्योम ग_लिखोq(u64 val, व्योम __iomem *addr)
+अणु
+	ग_लिखोl(val, addr);
+	ग_लिखोl(val >> 32, addr + 4);
+पूर्ण
+#पूर्ण_अगर
 
-static inline int
-csio_list_deleted(struct list_head *list)
-{
-	return ((list->next == list) && (list->prev == list));
-}
+अटल अंतरभूत पूर्णांक
+csio_list_deleted(काष्ठा list_head *list)
+अणु
+	वापस ((list->next == list) && (list->prev == list));
+पूर्ण
 
-#define csio_list_next(elem)	(((struct list_head *)(elem))->next)
-#define csio_list_prev(elem)	(((struct list_head *)(elem))->prev)
+#घोषणा csio_list_next(elem)	(((काष्ठा list_head *)(elem))->next)
+#घोषणा csio_list_prev(elem)	(((काष्ठा list_head *)(elem))->prev)
 
 /* State machine */
-typedef void (*csio_sm_state_t)(void *, uint32_t);
+प्रकार व्योम (*csio_sm_state_t)(व्योम *, uपूर्णांक32_t);
 
-struct csio_sm {
-	struct list_head	sm_list;
+काष्ठा csio_sm अणु
+	काष्ठा list_head	sm_list;
 	csio_sm_state_t		sm_state;
-};
+पूर्ण;
 
-static inline void
-csio_set_state(void *smp, void *state)
-{
-	((struct csio_sm *)smp)->sm_state = (csio_sm_state_t)state;
-}
+अटल अंतरभूत व्योम
+csio_set_state(व्योम *smp, व्योम *state)
+अणु
+	((काष्ठा csio_sm *)smp)->sm_state = (csio_sm_state_t)state;
+पूर्ण
 
-static inline void
-csio_init_state(struct csio_sm *smp, void *state)
-{
+अटल अंतरभूत व्योम
+csio_init_state(काष्ठा csio_sm *smp, व्योम *state)
+अणु
 	csio_set_state(smp, state);
-}
+पूर्ण
 
-static inline void
-csio_post_event(void *smp, uint32_t evt)
-{
-	((struct csio_sm *)smp)->sm_state(smp, evt);
-}
+अटल अंतरभूत व्योम
+csio_post_event(व्योम *smp, uपूर्णांक32_t evt)
+अणु
+	((काष्ठा csio_sm *)smp)->sm_state(smp, evt);
+पूर्ण
 
-static inline csio_sm_state_t
-csio_get_state(void *smp)
-{
-	return ((struct csio_sm *)smp)->sm_state;
-}
+अटल अंतरभूत csio_sm_state_t
+csio_get_state(व्योम *smp)
+अणु
+	वापस ((काष्ठा csio_sm *)smp)->sm_state;
+पूर्ण
 
-static inline bool
-csio_match_state(void *smp, void *state)
-{
-	return (csio_get_state(smp) == (csio_sm_state_t)state);
-}
+अटल अंतरभूत bool
+csio_match_state(व्योम *smp, व्योम *state)
+अणु
+	वापस (csio_get_state(smp) == (csio_sm_state_t)state);
+पूर्ण
 
-#define	CSIO_ASSERT(cond)		BUG_ON(!(cond))
+#घोषणा	CSIO_ASSERT(cond)		BUG_ON(!(cond))
 
-#ifdef __CSIO_DEBUG__
-#define CSIO_DB_ASSERT(__c)		CSIO_ASSERT((__c))
-#else
-#define CSIO_DB_ASSERT(__c)
-#endif
+#अगर_घोषित __CSIO_DEBUG__
+#घोषणा CSIO_DB_ASSERT(__c)		CSIO_ASSERT((__c))
+#अन्यथा
+#घोषणा CSIO_DB_ASSERT(__c)
+#पूर्ण_अगर
 
-#endif /* ifndef __CSIO_DEFS_H__ */
+#पूर्ण_अगर /* अगरndef __CSIO_DEFS_H__ */

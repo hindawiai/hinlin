@@ -1,51 +1,52 @@
-#pragma once
-#undef NDEBUG
-#include <assert.h>
-#include <dirent.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/syscall.h>
+<शैली गुरु>
+#आशय once
+#अघोषित न_संशोधन
+#समावेश <निश्चित.स>
+#समावेश <dirent.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <stdbool.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
 
-static inline pid_t sys_getpid(void)
-{
-	return syscall(SYS_getpid);
-}
+अटल अंतरभूत pid_t sys_getpid(व्योम)
+अणु
+	वापस syscall(SYS_getpid);
+पूर्ण
 
-static inline pid_t sys_gettid(void)
-{
-	return syscall(SYS_gettid);
-}
+अटल अंतरभूत pid_t sys_gettid(व्योम)
+अणु
+	वापस syscall(SYS_gettid);
+पूर्ण
 
-static inline bool streq(const char *s1, const char *s2)
-{
-	return strcmp(s1, s2) == 0;
-}
+अटल अंतरभूत bool streq(स्थिर अक्षर *s1, स्थिर अक्षर *s2)
+अणु
+	वापस म_भेद(s1, s2) == 0;
+पूर्ण
 
-static unsigned long long xstrtoull(const char *p, char **end)
-{
-	if (*p == '0') {
-		*end = (char *)p + 1;
-		return 0;
-	} else if ('1' <= *p && *p <= '9') {
-		unsigned long long val;
+अटल अचिन्हित दीर्घ दीर्घ xम_से_अदीर्घl(स्थिर अक्षर *p, अक्षर **end)
+अणु
+	अगर (*p == '0') अणु
+		*end = (अक्षर *)p + 1;
+		वापस 0;
+	पूर्ण अन्यथा अगर ('1' <= *p && *p <= '9') अणु
+		अचिन्हित दीर्घ दीर्घ val;
 
-		errno = 0;
-		val = strtoull(p, end, 10);
-		assert(errno == 0);
-		return val;
-	} else
-		assert(0);
-}
+		त्रुटि_सं = 0;
+		val = म_से_अदीर्घl(p, end, 10);
+		निश्चित(त्रुटि_सं == 0);
+		वापस val;
+	पूर्ण अन्यथा
+		निश्चित(0);
+पूर्ण
 
-static struct dirent *xreaddir(DIR *d)
-{
-	struct dirent *de;
+अटल काष्ठा dirent *xसूची_पढ़ो(सूची *d)
+अणु
+	काष्ठा dirent *de;
 
-	errno = 0;
-	de = readdir(d);
-	assert(de || errno == 0);
-	return de;
-}
+	त्रुटि_सं = 0;
+	de = सूची_पढ़ो(d);
+	निश्चित(de || त्रुटि_सं == 0);
+	वापस de;
+पूर्ण

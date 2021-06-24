@@ -1,298 +1,299 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * nokia-modem.c
  *
- * HSI client driver for Nokia N900 modem.
+ * HSI client driver क्रम Nokia N900 modem.
  *
  * Copyright (C) 2014 Sebastian Reichel <sre@kernel.org>
  */
 
-#include <linux/gpio/consumer.h>
-#include <linux/hsi/hsi.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/of_gpio.h>
-#include <linux/hsi/ssi_protocol.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/hsi/hsi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/hsi/ssi_protocol.h>
 
-static unsigned int pm = 1;
-module_param(pm, int, 0400);
+अटल अचिन्हित पूर्णांक pm = 1;
+module_param(pm, पूर्णांक, 0400);
 MODULE_PARM_DESC(pm,
 	"Enable power management (0=disabled, 1=userland based [default])");
 
-struct nokia_modem_gpio {
-	struct gpio_desc	*gpio;
-	const char		*name;
-};
+काष्ठा nokia_modem_gpio अणु
+	काष्ठा gpio_desc	*gpio;
+	स्थिर अक्षर		*name;
+पूर्ण;
 
-struct nokia_modem_device {
-	struct tasklet_struct	nokia_modem_rst_ind_tasklet;
-	int			nokia_modem_rst_ind_irq;
-	struct device		*device;
-	struct nokia_modem_gpio	*gpios;
-	int			gpio_amount;
-	struct hsi_client	*ssi_protocol;
-	struct hsi_client	*cmt_speech;
-};
+काष्ठा nokia_modem_device अणु
+	काष्ठा tasklet_काष्ठा	nokia_modem_rst_ind_tasklet;
+	पूर्णांक			nokia_modem_rst_ind_irq;
+	काष्ठा device		*device;
+	काष्ठा nokia_modem_gpio	*gpios;
+	पूर्णांक			gpio_amount;
+	काष्ठा hsi_client	*ssi_protocol;
+	काष्ठा hsi_client	*cmt_speech;
+पूर्ण;
 
-static void do_nokia_modem_rst_ind_tasklet(unsigned long data)
-{
-	struct nokia_modem_device *modem = (struct nokia_modem_device *)data;
+अटल व्योम करो_nokia_modem_rst_ind_tasklet(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा nokia_modem_device *modem = (काष्ठा nokia_modem_device *)data;
 
-	if (!modem)
-		return;
+	अगर (!modem)
+		वापस;
 
 	dev_info(modem->device, "CMT rst line change detected\n");
 
-	if (modem->ssi_protocol)
+	अगर (modem->ssi_protocol)
 		ssip_reset_event(modem->ssi_protocol);
-}
+पूर्ण
 
-static irqreturn_t nokia_modem_rst_ind_isr(int irq, void *data)
-{
-	struct nokia_modem_device *modem = (struct nokia_modem_device *)data;
+अटल irqवापस_t nokia_modem_rst_ind_isr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा nokia_modem_device *modem = (काष्ठा nokia_modem_device *)data;
 
 	tasklet_schedule(&modem->nokia_modem_rst_ind_tasklet);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void nokia_modem_gpio_unexport(struct device *dev)
-{
-	struct nokia_modem_device *modem = dev_get_drvdata(dev);
-	int i;
+अटल व्योम nokia_modem_gpio_unexport(काष्ठा device *dev)
+अणु
+	काष्ठा nokia_modem_device *modem = dev_get_drvdata(dev);
+	पूर्णांक i;
 
-	for (i = 0; i < modem->gpio_amount; i++) {
-		sysfs_remove_link(&dev->kobj, modem->gpios[i].name);
+	क्रम (i = 0; i < modem->gpio_amount; i++) अणु
+		sysfs_हटाओ_link(&dev->kobj, modem->gpios[i].name);
 		gpiod_unexport(modem->gpios[i].gpio);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int nokia_modem_gpio_probe(struct device *dev)
-{
-	struct device_node *np = dev->of_node;
-	struct nokia_modem_device *modem = dev_get_drvdata(dev);
-	int gpio_count, gpio_name_count, i, err;
+अटल पूर्णांक nokia_modem_gpio_probe(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा nokia_modem_device *modem = dev_get_drvdata(dev);
+	पूर्णांक gpio_count, gpio_name_count, i, err;
 
 	gpio_count = of_gpio_count(np);
 
-	if (gpio_count < 0) {
+	अगर (gpio_count < 0) अणु
 		dev_err(dev, "missing gpios: %d\n", gpio_count);
-		return gpio_count;
-	}
+		वापस gpio_count;
+	पूर्ण
 
 	gpio_name_count = of_property_count_strings(np, "gpio-names");
 
-	if (gpio_count != gpio_name_count) {
+	अगर (gpio_count != gpio_name_count) अणु
 		dev_err(dev, "number of gpios does not equal number of gpio names\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	modem->gpios = devm_kcalloc(dev, gpio_count, sizeof(*modem->gpios),
+	modem->gpios = devm_kसुस्मृति(dev, gpio_count, माप(*modem->gpios),
 				    GFP_KERNEL);
-	if (!modem->gpios)
-		return -ENOMEM;
+	अगर (!modem->gpios)
+		वापस -ENOMEM;
 
 	modem->gpio_amount = gpio_count;
 
-	for (i = 0; i < gpio_count; i++) {
-		modem->gpios[i].gpio = devm_gpiod_get_index(dev, NULL, i,
+	क्रम (i = 0; i < gpio_count; i++) अणु
+		modem->gpios[i].gpio = devm_gpiod_get_index(dev, शून्य, i,
 							    GPIOD_OUT_LOW);
-		if (IS_ERR(modem->gpios[i].gpio)) {
+		अगर (IS_ERR(modem->gpios[i].gpio)) अणु
 			dev_err(dev, "Could not get gpio %d\n", i);
-			return PTR_ERR(modem->gpios[i].gpio);
-		}
+			वापस PTR_ERR(modem->gpios[i].gpio);
+		पूर्ण
 
-		err = of_property_read_string_index(np, "gpio-names", i,
+		err = of_property_पढ़ो_string_index(np, "gpio-names", i,
 						&(modem->gpios[i].name));
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "Could not get gpio name %d\n", i);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		err = gpiod_export(modem->gpios[i].gpio, 0);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = gpiod_export_link(dev, modem->gpios[i].name,
 							modem->gpios[i].gpio);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nokia_modem_probe(struct device *dev)
-{
-	struct device_node *np;
-	struct nokia_modem_device *modem;
-	struct hsi_client *cl = to_hsi_client(dev);
-	struct hsi_port *port = hsi_get_port(cl);
-	int irq, pflags, err;
-	struct hsi_board_info ssip;
-	struct hsi_board_info cmtspeech;
+अटल पूर्णांक nokia_modem_probe(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा nokia_modem_device *modem;
+	काष्ठा hsi_client *cl = to_hsi_client(dev);
+	काष्ठा hsi_port *port = hsi_get_port(cl);
+	पूर्णांक irq, pflags, err;
+	काष्ठा hsi_board_info ssip;
+	काष्ठा hsi_board_info cmtspeech;
 
 	np = dev->of_node;
-	if (!np) {
+	अगर (!np) अणु
 		dev_err(dev, "device tree node not found\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	modem = devm_kzalloc(dev, sizeof(*modem), GFP_KERNEL);
-	if (!modem)
-		return -ENOMEM;
+	modem = devm_kzalloc(dev, माप(*modem), GFP_KERNEL);
+	अगर (!modem)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(dev, modem);
 	modem->device = dev;
 
 	irq = irq_of_parse_and_map(np, 0);
-	if (!irq) {
+	अगर (!irq) अणु
 		dev_err(dev, "Invalid rst_ind interrupt (%d)\n", irq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	modem->nokia_modem_rst_ind_irq = irq;
 	pflags = irq_get_trigger_type(irq);
 
 	tasklet_init(&modem->nokia_modem_rst_ind_tasklet,
-			do_nokia_modem_rst_ind_tasklet, (unsigned long)modem);
+			करो_nokia_modem_rst_ind_tasklet, (अचिन्हित दीर्घ)modem);
 	err = devm_request_irq(dev, irq, nokia_modem_rst_ind_isr,
 				pflags, "modem_rst_ind", modem);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "Request rst_ind irq(%d) failed (flags %d)\n",
 								irq, pflags);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	enable_irq_wake(irq);
 
-	if (pm) {
+	अगर (pm) अणु
 		err = nokia_modem_gpio_probe(dev);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "Could not probe GPIOs\n");
-			goto error1;
-		}
-	}
+			जाओ error1;
+		पूर्ण
+	पूर्ण
 
 	ssip.name = "ssi-protocol";
 	ssip.tx_cfg = cl->tx_cfg;
 	ssip.rx_cfg = cl->rx_cfg;
-	ssip.platform_data = NULL;
-	ssip.archdata = NULL;
+	ssip.platक्रमm_data = शून्य;
+	ssip.archdata = शून्य;
 
 	modem->ssi_protocol = hsi_new_client(port, &ssip);
-	if (!modem->ssi_protocol) {
+	अगर (!modem->ssi_protocol) अणु
 		dev_err(dev, "Could not register ssi-protocol device\n");
 		err = -ENOMEM;
-		goto error2;
-	}
+		जाओ error2;
+	पूर्ण
 
 	err = device_attach(&modem->ssi_protocol->device);
-	if (err == 0) {
+	अगर (err == 0) अणु
 		dev_dbg(dev, "Missing ssi-protocol driver\n");
 		err = -EPROBE_DEFER;
-		goto error3;
-	} else if (err < 0) {
+		जाओ error3;
+	पूर्ण अन्यथा अगर (err < 0) अणु
 		dev_err(dev, "Could not load ssi-protocol driver (%d)\n", err);
-		goto error3;
-	}
+		जाओ error3;
+	पूर्ण
 
 	cmtspeech.name = "cmt-speech";
 	cmtspeech.tx_cfg = cl->tx_cfg;
 	cmtspeech.rx_cfg = cl->rx_cfg;
-	cmtspeech.platform_data = NULL;
-	cmtspeech.archdata = NULL;
+	cmtspeech.platक्रमm_data = शून्य;
+	cmtspeech.archdata = शून्य;
 
 	modem->cmt_speech = hsi_new_client(port, &cmtspeech);
-	if (!modem->cmt_speech) {
+	अगर (!modem->cmt_speech) अणु
 		dev_err(dev, "Could not register cmt-speech device\n");
 		err = -ENOMEM;
-		goto error3;
-	}
+		जाओ error3;
+	पूर्ण
 
 	err = device_attach(&modem->cmt_speech->device);
-	if (err == 0) {
+	अगर (err == 0) अणु
 		dev_dbg(dev, "Missing cmt-speech driver\n");
 		err = -EPROBE_DEFER;
-		goto error4;
-	} else if (err < 0) {
+		जाओ error4;
+	पूर्ण अन्यथा अगर (err < 0) अणु
 		dev_err(dev, "Could not load cmt-speech driver (%d)\n", err);
-		goto error4;
-	}
+		जाओ error4;
+	पूर्ण
 
 	dev_info(dev, "Registered Nokia HSI modem\n");
 
-	return 0;
+	वापस 0;
 
 error4:
-	hsi_remove_client(&modem->cmt_speech->device, NULL);
+	hsi_हटाओ_client(&modem->cmt_speech->device, शून्य);
 error3:
-	hsi_remove_client(&modem->ssi_protocol->device, NULL);
+	hsi_हटाओ_client(&modem->ssi_protocol->device, शून्य);
 error2:
 	nokia_modem_gpio_unexport(dev);
 error1:
 	disable_irq_wake(modem->nokia_modem_rst_ind_irq);
-	tasklet_kill(&modem->nokia_modem_rst_ind_tasklet);
+	tasklet_समाप्त(&modem->nokia_modem_rst_ind_tasklet);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int nokia_modem_remove(struct device *dev)
-{
-	struct nokia_modem_device *modem = dev_get_drvdata(dev);
+अटल पूर्णांक nokia_modem_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा nokia_modem_device *modem = dev_get_drvdata(dev);
 
-	if (!modem)
-		return 0;
+	अगर (!modem)
+		वापस 0;
 
-	if (modem->cmt_speech) {
-		hsi_remove_client(&modem->cmt_speech->device, NULL);
-		modem->cmt_speech = NULL;
-	}
+	अगर (modem->cmt_speech) अणु
+		hsi_हटाओ_client(&modem->cmt_speech->device, शून्य);
+		modem->cmt_speech = शून्य;
+	पूर्ण
 
-	if (modem->ssi_protocol) {
-		hsi_remove_client(&modem->ssi_protocol->device, NULL);
-		modem->ssi_protocol = NULL;
-	}
+	अगर (modem->ssi_protocol) अणु
+		hsi_हटाओ_client(&modem->ssi_protocol->device, शून्य);
+		modem->ssi_protocol = शून्य;
+	पूर्ण
 
 	nokia_modem_gpio_unexport(dev);
-	dev_set_drvdata(dev, NULL);
+	dev_set_drvdata(dev, शून्य);
 	disable_irq_wake(modem->nokia_modem_rst_ind_irq);
-	tasklet_kill(&modem->nokia_modem_rst_ind_tasklet);
+	tasklet_समाप्त(&modem->nokia_modem_rst_ind_tasklet);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id nokia_modem_of_match[] = {
-	{ .compatible = "nokia,n900-modem", },
-	{ .compatible = "nokia,n950-modem", },
-	{ .compatible = "nokia,n9-modem", },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id nokia_modem_of_match[] = अणु
+	अणु .compatible = "nokia,n900-modem", पूर्ण,
+	अणु .compatible = "nokia,n950-modem", पूर्ण,
+	अणु .compatible = "nokia,n9-modem", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, nokia_modem_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct hsi_client_driver nokia_modem_driver = {
-	.driver = {
+अटल काष्ठा hsi_client_driver nokia_modem_driver = अणु
+	.driver = अणु
 		.name	= "nokia-modem",
 		.owner	= THIS_MODULE,
 		.probe	= nokia_modem_probe,
-		.remove	= nokia_modem_remove,
+		.हटाओ	= nokia_modem_हटाओ,
 		.of_match_table = of_match_ptr(nokia_modem_of_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init nokia_modem_init(void)
-{
-	return hsi_register_client_driver(&nokia_modem_driver);
-}
+अटल पूर्णांक __init nokia_modem_init(व्योम)
+अणु
+	वापस hsi_रेजिस्टर_client_driver(&nokia_modem_driver);
+पूर्ण
 module_init(nokia_modem_init);
 
-static void __exit nokia_modem_exit(void)
-{
-	hsi_unregister_client_driver(&nokia_modem_driver);
-}
-module_exit(nokia_modem_exit);
+अटल व्योम __निकास nokia_modem_निकास(व्योम)
+अणु
+	hsi_unरेजिस्टर_client_driver(&nokia_modem_driver);
+पूर्ण
+module_निकास(nokia_modem_निकास);
 
 MODULE_ALIAS("hsi:nokia-modem");
 MODULE_AUTHOR("Sebastian Reichel <sre@kernel.org>");

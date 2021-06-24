@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
 
-#include <sys/eventfd.h>
+#समावेश <sys/eventfd.h>
 
-int main(void)
-{
-	return eventfd(0, EFD_NONBLOCK);
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस eventfd(0, EFD_NONBLOCK);
+पूर्ण

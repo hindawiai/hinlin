@@ -1,54 +1,55 @@
+<शैली गुरु>
 /*
- * Support for virtual IRQ subgroups debugfs mapping.
+ * Support क्रम भव IRQ subgroups debugfs mapping.
  *
  * Copyright (C) 2010  Paul Mundt
  *
- * Modelled after arch/powerpc/kernel/irq.c.
+ * Modelled after arch/घातerpc/kernel/irq.c.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/seq_file.h>
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/debugfs.h>
-#include "internals.h"
+#समावेश <linux/seq_file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/debugfs.h>
+#समावेश "internals.h"
 
-static int intc_irq_xlate_show(struct seq_file *m, void *priv)
-{
-	int i;
+अटल पूर्णांक पूर्णांकc_irq_xlate_show(काष्ठा seq_file *m, व्योम *priv)
+अणु
+	पूर्णांक i;
 
-	seq_printf(m, "%-5s  %-7s  %-15s\n", "irq", "enum", "chip name");
+	seq_म_लिखो(m, "%-5s  %-7s  %-15s\n", "irq", "enum", "chip name");
 
-	for (i = 1; i < nr_irqs; i++) {
-		struct intc_map_entry *entry = intc_irq_xlate_get(i);
-		struct intc_desc_int *desc = entry->desc;
+	क्रम (i = 1; i < nr_irqs; i++) अणु
+		काष्ठा पूर्णांकc_map_entry *entry = पूर्णांकc_irq_xlate_get(i);
+		काष्ठा पूर्णांकc_desc_पूर्णांक *desc = entry->desc;
 
-		if (!desc)
-			continue;
+		अगर (!desc)
+			जारी;
 
-		seq_printf(m, "%5d  ", i);
-		seq_printf(m, "0x%05x  ", entry->enum_id);
-		seq_printf(m, "%-15s\n", desc->chip.name);
-	}
+		seq_म_लिखो(m, "%5d  ", i);
+		seq_म_लिखो(m, "0x%05x  ", entry->क्रमागत_id);
+		seq_म_लिखो(m, "%-15s\n", desc->chip.name);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-DEFINE_SHOW_ATTRIBUTE(intc_irq_xlate);
+DEFINE_SHOW_ATTRIBUTE(पूर्णांकc_irq_xlate);
 
-static int __init intc_irq_xlate_init(void)
-{
+अटल पूर्णांक __init पूर्णांकc_irq_xlate_init(व्योम)
+अणु
 	/*
-	 * XXX.. use arch_debugfs_dir here when all of the intc users are
+	 * XXX.. use arch_debugfs_dir here when all of the पूर्णांकc users are
 	 * converted.
 	 */
-	if (debugfs_create_file("intc_irq_xlate", S_IRUGO, NULL, NULL,
-				&intc_irq_xlate_fops) == NULL)
-		return -ENOMEM;
+	अगर (debugfs_create_file("intc_irq_xlate", S_IRUGO, शून्य, शून्य,
+				&पूर्णांकc_irq_xlate_fops) == शून्य)
+		वापस -ENOMEM;
 
-	return 0;
-}
-fs_initcall(intc_irq_xlate_init);
+	वापस 0;
+पूर्ण
+fs_initcall(पूर्णांकc_irq_xlate_init);

@@ -1,158 +1,159 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/fs/binfmt_script.c
  *
- *  Copyright (C) 1996  Martin von Löwis
+ *  Copyright (C) 1996  Martin von Lथघwis
  *  original #!-checking implemented by tytso.
  */
 
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/stat.h>
-#include <linux/binfmts.h>
-#include <linux/init.h>
-#include <linux/file.h>
-#include <linux/err.h>
-#include <linux/fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/init.h>
+#समावेश <linux/file.h>
+#समावेश <linux/err.h>
+#समावेश <linux/fs.h>
 
-static inline bool spacetab(char c) { return c == ' ' || c == '\t'; }
-static inline const char *next_non_spacetab(const char *first, const char *last)
-{
-	for (; first <= last; first++)
-		if (!spacetab(*first))
-			return first;
-	return NULL;
-}
-static inline const char *next_terminator(const char *first, const char *last)
-{
-	for (; first <= last; first++)
-		if (spacetab(*first) || !*first)
-			return first;
-	return NULL;
-}
+अटल अंतरभूत bool spacetab(अक्षर c) अणु वापस c == ' ' || c == '\t'; पूर्ण
+अटल अंतरभूत स्थिर अक्षर *next_non_spacetab(स्थिर अक्षर *first, स्थिर अक्षर *last)
+अणु
+	क्रम (; first <= last; first++)
+		अगर (!spacetab(*first))
+			वापस first;
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत स्थिर अक्षर *next_terminator(स्थिर अक्षर *first, स्थिर अक्षर *last)
+अणु
+	क्रम (; first <= last; first++)
+		अगर (spacetab(*first) || !*first)
+			वापस first;
+	वापस शून्य;
+पूर्ण
 
-static int load_script(struct linux_binprm *bprm)
-{
-	const char *i_name, *i_sep, *i_arg, *i_end, *buf_end;
-	struct file *file;
-	int retval;
+अटल पूर्णांक load_script(काष्ठा linux_binprm *bprm)
+अणु
+	स्थिर अक्षर *i_name, *i_sep, *i_arg, *i_end, *buf_end;
+	काष्ठा file *file;
+	पूर्णांक retval;
 
-	/* Not ours to exec if we don't start with "#!". */
-	if ((bprm->buf[0] != '#') || (bprm->buf[1] != '!'))
-		return -ENOEXEC;
+	/* Not ours to exec अगर we करोn't start with "#!". */
+	अगर ((bprm->buf[0] != '#') || (bprm->buf[1] != '!'))
+		वापस -ENOEXEC;
 
 	/*
-	 * This section handles parsing the #! line into separate
-	 * interpreter path and argument strings. We must be careful
+	 * This section handles parsing the #! line पूर्णांकo separate
+	 * पूर्णांकerpreter path and argument strings. We must be careful
 	 * because bprm->buf is not yet guaranteed to be NUL-terminated
 	 * (though the buffer will have trailing NUL padding when the
 	 * file size was smaller than the buffer size).
 	 *
-	 * We do not want to exec a truncated interpreter path, so either
+	 * We करो not want to exec a truncated पूर्णांकerpreter path, so either
 	 * we find a newline (which indicates nothing is truncated), or
-	 * we find a space/tab/NUL after the interpreter path (which
-	 * itself may be preceded by spaces/tabs). Truncating the
-	 * arguments is fine: the interpreter can re-read the script to
+	 * we find a space/tab/NUL after the पूर्णांकerpreter path (which
+	 * itself may be preceded by spaces/tअसल). Truncating the
+	 * arguments is fine: the पूर्णांकerpreter can re-पढ़ो the script to
 	 * parse them on its own.
 	 */
-	buf_end = bprm->buf + sizeof(bprm->buf) - 1;
-	i_end = strnchr(bprm->buf, sizeof(bprm->buf), '\n');
-	if (!i_end) {
+	buf_end = bprm->buf + माप(bprm->buf) - 1;
+	i_end = strnchr(bprm->buf, माप(bprm->buf), '\n');
+	अगर (!i_end) अणु
 		i_end = next_non_spacetab(bprm->buf + 2, buf_end);
-		if (!i_end)
-			return -ENOEXEC; /* Entire buf is spaces/tabs */
+		अगर (!i_end)
+			वापस -ENOEXEC; /* Entire buf is spaces/tअसल */
 		/*
 		 * If there is no later space/tab/NUL we must assume the
-		 * interpreter path is truncated.
+		 * पूर्णांकerpreter path is truncated.
 		 */
-		if (!next_terminator(i_end, buf_end))
-			return -ENOEXEC;
+		अगर (!next_terminator(i_end, buf_end))
+			वापस -ENOEXEC;
 		i_end = buf_end;
-	}
-	/* Trim any trailing spaces/tabs from i_end */
-	while (spacetab(i_end[-1]))
+	पूर्ण
+	/* Trim any trailing spaces/tअसल from i_end */
+	जबतक (spacetab(i_end[-1]))
 		i_end--;
 
-	/* Skip over leading spaces/tabs */
+	/* Skip over leading spaces/tअसल */
 	i_name = next_non_spacetab(bprm->buf+2, i_end);
-	if (!i_name || (i_name == i_end))
-		return -ENOEXEC; /* No interpreter name found */
+	अगर (!i_name || (i_name == i_end))
+		वापस -ENOEXEC; /* No पूर्णांकerpreter name found */
 
 	/* Is there an optional argument? */
-	i_arg = NULL;
+	i_arg = शून्य;
 	i_sep = next_terminator(i_name, i_end);
-	if (i_sep && (*i_sep != '\0'))
+	अगर (i_sep && (*i_sep != '\0'))
 		i_arg = next_non_spacetab(i_sep, i_end);
 
 	/*
 	 * If the script filename will be inaccessible after exec, typically
 	 * because it is a "/dev/fd/<fd>/.." path against an O_CLOEXEC fd, give
-	 * up now (on the assumption that the interpreter will want to load
+	 * up now (on the assumption that the पूर्णांकerpreter will want to load
 	 * this file).
 	 */
-	if (bprm->interp_flags & BINPRM_FLAGS_PATH_INACCESSIBLE)
-		return -ENOENT;
+	अगर (bprm->पूर्णांकerp_flags & BINPRM_FLAGS_PATH_INACCESSIBLE)
+		वापस -ENOENT;
 
 	/*
-	 * OK, we've parsed out the interpreter name and
+	 * OK, we've parsed out the पूर्णांकerpreter name and
 	 * (optional) argument.
-	 * Splice in (1) the interpreter's name for argv[0]
-	 *           (2) (optional) argument to interpreter
+	 * Splice in (1) the पूर्णांकerpreter's name क्रम argv[0]
+	 *           (2) (optional) argument to पूर्णांकerpreter
 	 *           (3) filename of shell script (replace argv[0])
 	 *
-	 * This is done in reverse order, because of how the
+	 * This is करोne in reverse order, because of how the
 	 * user environment and arguments are stored.
 	 */
-	retval = remove_arg_zero(bprm);
-	if (retval)
-		return retval;
-	retval = copy_string_kernel(bprm->interp, bprm);
-	if (retval < 0)
-		return retval;
+	retval = हटाओ_arg_zero(bprm);
+	अगर (retval)
+		वापस retval;
+	retval = copy_string_kernel(bprm->पूर्णांकerp, bprm);
+	अगर (retval < 0)
+		वापस retval;
 	bprm->argc++;
-	*((char *)i_end) = '\0';
-	if (i_arg) {
-		*((char *)i_sep) = '\0';
+	*((अक्षर *)i_end) = '\0';
+	अगर (i_arg) अणु
+		*((अक्षर *)i_sep) = '\0';
 		retval = copy_string_kernel(i_arg, bprm);
-		if (retval < 0)
-			return retval;
+		अगर (retval < 0)
+			वापस retval;
 		bprm->argc++;
-	}
+	पूर्ण
 	retval = copy_string_kernel(i_name, bprm);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 	bprm->argc++;
-	retval = bprm_change_interp(i_name, bprm);
-	if (retval < 0)
-		return retval;
+	retval = bprm_change_पूर्णांकerp(i_name, bprm);
+	अगर (retval < 0)
+		वापस retval;
 
 	/*
-	 * OK, now restart the process with the interpreter's dentry.
+	 * OK, now restart the process with the पूर्णांकerpreter's dentry.
 	 */
-	file = open_exec(i_name);
-	if (IS_ERR(file))
-		return PTR_ERR(file);
+	file = खोलो_exec(i_name);
+	अगर (IS_ERR(file))
+		वापस PTR_ERR(file);
 
-	bprm->interpreter = file;
-	return 0;
-}
+	bprm->पूर्णांकerpreter = file;
+	वापस 0;
+पूर्ण
 
-static struct linux_binfmt script_format = {
+अटल काष्ठा linux_binfmt script_क्रमmat = अणु
 	.module		= THIS_MODULE,
 	.load_binary	= load_script,
-};
+पूर्ण;
 
-static int __init init_script_binfmt(void)
-{
-	register_binfmt(&script_format);
-	return 0;
-}
+अटल पूर्णांक __init init_script_binfmt(व्योम)
+अणु
+	रेजिस्टर_binfmt(&script_क्रमmat);
+	वापस 0;
+पूर्ण
 
-static void __exit exit_script_binfmt(void)
-{
-	unregister_binfmt(&script_format);
-}
+अटल व्योम __निकास निकास_script_binfmt(व्योम)
+अणु
+	unरेजिस्टर_binfmt(&script_क्रमmat);
+पूर्ण
 
 core_initcall(init_script_binfmt);
-module_exit(exit_script_binfmt);
+module_निकास(निकास_script_binfmt);
 MODULE_LICENSE("GPL");

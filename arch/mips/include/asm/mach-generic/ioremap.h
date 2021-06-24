@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *	include/asm-mips/mach-generic/ioremap.h
+ *	include/यंत्र-mips/mach-generic/ioremap.h
  */
-#ifndef __ASM_MACH_GENERIC_IOREMAP_H
-#define __ASM_MACH_GENERIC_IOREMAP_H
+#अगर_अघोषित __ASM_MACH_GENERIC_IOREMAP_H
+#घोषणा __ASM_MACH_GENERIC_IOREMAP_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-static inline void __iomem *plat_ioremap(phys_addr_t offset, unsigned long size,
-	unsigned long flags)
-{
-	return NULL;
-}
+अटल अंतरभूत व्योम __iomem *plat_ioremap(phys_addr_t offset, अचिन्हित दीर्घ size,
+	अचिन्हित दीर्घ flags)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int plat_iounmap(const volatile void __iomem *addr)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक plat_iounmap(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* __ASM_MACH_GENERIC_IOREMAP_H */
+#पूर्ण_अगर /* __ASM_MACH_GENERIC_IOREMAP_H */

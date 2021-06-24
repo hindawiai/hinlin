@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  QLogic FCoE Offload Driver
  *  Copyright (c) 2016-2018 Cavium Inc.
  */
-#include <linux/spinlock.h>
-#include <linux/vmalloc.h>
-#include "qedf.h"
-#include <scsi/scsi_tcq.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश "qedf.h"
+#समावेश <scsi/scsi_tcq.h>
 
-void qedf_cmd_timer_set(struct qedf_ctx *qedf, struct qedf_ioreq *io_req,
-	unsigned int timer_msec)
-{
-	queue_delayed_work(qedf->timer_work_queue, &io_req->timeout_work,
-	    msecs_to_jiffies(timer_msec));
-}
+व्योम qedf_cmd_समयr_set(काष्ठा qedf_ctx *qedf, काष्ठा qedf_ioreq *io_req,
+	अचिन्हित पूर्णांक समयr_msec)
+अणु
+	queue_delayed_work(qedf->समयr_work_queue, &io_req->समयout_work,
+	    msecs_to_jअगरfies(समयr_msec));
+पूर्ण
 
-static void qedf_cmd_timeout(struct work_struct *work)
-{
+अटल व्योम qedf_cmd_समयout(काष्ठा work_काष्ठा *work)
+अणु
 
-	struct qedf_ioreq *io_req =
-	    container_of(work, struct qedf_ioreq, timeout_work.work);
-	struct qedf_ctx *qedf;
-	struct qedf_rport *fcport;
+	काष्ठा qedf_ioreq *io_req =
+	    container_of(work, काष्ठा qedf_ioreq, समयout_work.work);
+	काष्ठा qedf_ctx *qedf;
+	काष्ठा qedf_rport *fcport;
 
-	if (io_req == NULL) {
-		QEDF_INFO(NULL, QEDF_LOG_IO, "io_req is NULL.\n");
-		return;
-	}
+	अगर (io_req == शून्य) अणु
+		QEDF_INFO(शून्य, QEDF_LOG_IO, "io_req is NULL.\n");
+		वापस;
+	पूर्ण
 
 	fcport = io_req->fcport;
-	if (io_req->fcport == NULL) {
-		QEDF_INFO(NULL, QEDF_LOG_IO,  "fcport is NULL.\n");
-		return;
-	}
+	अगर (io_req->fcport == शून्य) अणु
+		QEDF_INFO(शून्य, QEDF_LOG_IO,  "fcport is NULL.\n");
+		वापस;
+	पूर्ण
 
 	qedf = fcport->qedf;
 
-	switch (io_req->cmd_type) {
-	case QEDF_ABTS:
-		if (qedf == NULL) {
-			QEDF_INFO(NULL, QEDF_LOG_IO,
+	चयन (io_req->cmd_type) अणु
+	हाल QEDF_ABTS:
+		अगर (qedf == शून्य) अणु
+			QEDF_INFO(शून्य, QEDF_LOG_IO,
 				  "qedf is NULL for ABTS xid=0x%x.\n",
 				  io_req->xid);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		QEDF_ERR((&qedf->dbg_ctx), "ABTS timeout, xid=0x%x.\n",
 		    io_req->xid);
-		/* Cleanup timed out ABTS */
+		/* Cleanup समयd out ABTS */
 		qedf_initiate_cleanup(io_req, true);
-		complete(&io_req->abts_done);
+		complete(&io_req->abts_करोne);
 
 		/*
-		 * Need to call kref_put for reference taken when initiate_abts
+		 * Need to call kref_put क्रम reference taken when initiate_abts
 		 * was called since abts_compl won't be called now that we've
 		 * cleaned up the task.
 		 */
 		kref_put(&io_req->refcount, qedf_release_cmd);
 
-		/* Clear in abort bit now that we're done with the command */
+		/* Clear in पात bit now that we're करोne with the command */
 		clear_bit(QEDF_CMD_IN_ABORT, &io_req->flags);
 
 		/*
 		 * Now that the original I/O and the ABTS are complete see
-		 * if we need to reconnect to the target.
+		 * अगर we need to reconnect to the target.
 		 */
 		qedf_restart_rport(fcport);
-		break;
-	case QEDF_ELS:
-		if (!qedf) {
-			QEDF_INFO(NULL, QEDF_LOG_IO,
+		अवरोध;
+	हाल QEDF_ELS:
+		अगर (!qedf) अणु
+			QEDF_INFO(शून्य, QEDF_LOG_IO,
 				  "qedf is NULL for ELS xid=0x%x.\n",
 				  io_req->xid);
-			return;
-		}
-		/* ELS request no longer outstanding since it timed out */
+			वापस;
+		पूर्ण
+		/* ELS request no दीर्घer outstanding since it समयd out */
 		clear_bit(QEDF_CMD_OUTSTANDING, &io_req->flags);
 
 		kref_get(&io_req->refcount);
 		/*
-		 * Don't attempt to clean an ELS timeout as any subseqeunt
-		 * ABTS or cleanup requests just hang.  For now just free
+		 * Don't attempt to clean an ELS समयout as any subseqeunt
+		 * ABTS or cleanup requests just hang.  For now just मुक्त
 		 * the resources of the original I/O and the RRQ
 		 */
 		QEDF_ERR(&(qedf->dbg_ctx), "ELS timeout, xid=0x%x.\n",
@@ -88,125 +89,125 @@ static void qedf_cmd_timeout(struct work_struct *work)
 		qedf_initiate_cleanup(io_req, true);
 		io_req->event = QEDF_IOREQ_EV_ELS_TMO;
 		/* Call callback function to complete command */
-		if (io_req->cb_func && io_req->cb_arg) {
+		अगर (io_req->cb_func && io_req->cb_arg) अणु
 			io_req->cb_func(io_req->cb_arg);
-			io_req->cb_arg = NULL;
-		}
+			io_req->cb_arg = शून्य;
+		पूर्ण
 		kref_put(&io_req->refcount, qedf_release_cmd);
-		break;
-	case QEDF_SEQ_CLEANUP:
+		अवरोध;
+	हाल QEDF_SEQ_CLEANUP:
 		QEDF_ERR(&(qedf->dbg_ctx), "Sequence cleanup timeout, "
 		    "xid=0x%x.\n", io_req->xid);
 		qedf_initiate_cleanup(io_req, true);
 		io_req->event = QEDF_IOREQ_EV_ELS_TMO;
-		qedf_process_seq_cleanup_compl(qedf, NULL, io_req);
-		break;
-	default:
+		qedf_process_seq_cleanup_compl(qedf, शून्य, io_req);
+		अवरोध;
+	शेष:
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 			  "Hit default case, xid=0x%x.\n", io_req->xid);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void qedf_cmd_mgr_free(struct qedf_cmd_mgr *cmgr)
-{
-	struct io_bdt *bdt_info;
-	struct qedf_ctx *qedf = cmgr->qedf;
-	size_t bd_tbl_sz;
+व्योम qedf_cmd_mgr_मुक्त(काष्ठा qedf_cmd_mgr *cmgr)
+अणु
+	काष्ठा io_bdt *bdt_info;
+	काष्ठा qedf_ctx *qedf = cmgr->qedf;
+	माप_प्रकार bd_tbl_sz;
 	u16 min_xid = 0;
 	u16 max_xid = (FCOE_PARAMS_NUM_TASKS - 1);
-	int num_ios;
-	int i;
-	struct qedf_ioreq *io_req;
+	पूर्णांक num_ios;
+	पूर्णांक i;
+	काष्ठा qedf_ioreq *io_req;
 
 	num_ios = max_xid - min_xid + 1;
 
-	/* Free fcoe_bdt_ctx structures */
-	if (!cmgr->io_bdt_pool) {
+	/* Free fcoe_bdt_ctx काष्ठाures */
+	अगर (!cmgr->io_bdt_pool) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "io_bdt_pool is NULL.\n");
-		goto free_cmd_pool;
-	}
+		जाओ मुक्त_cmd_pool;
+	पूर्ण
 
-	bd_tbl_sz = QEDF_MAX_BDS_PER_CMD * sizeof(struct scsi_sge);
-	for (i = 0; i < num_ios; i++) {
+	bd_tbl_sz = QEDF_MAX_BDS_PER_CMD * माप(काष्ठा scsi_sge);
+	क्रम (i = 0; i < num_ios; i++) अणु
 		bdt_info = cmgr->io_bdt_pool[i];
-		if (bdt_info->bd_tbl) {
-			dma_free_coherent(&qedf->pdev->dev, bd_tbl_sz,
+		अगर (bdt_info->bd_tbl) अणु
+			dma_मुक्त_coherent(&qedf->pdev->dev, bd_tbl_sz,
 			    bdt_info->bd_tbl, bdt_info->bd_tbl_dma);
-			bdt_info->bd_tbl = NULL;
-		}
-	}
+			bdt_info->bd_tbl = शून्य;
+		पूर्ण
+	पूर्ण
 
 	/* Destroy io_bdt pool */
-	for (i = 0; i < num_ios; i++) {
-		kfree(cmgr->io_bdt_pool[i]);
-		cmgr->io_bdt_pool[i] = NULL;
-	}
+	क्रम (i = 0; i < num_ios; i++) अणु
+		kमुक्त(cmgr->io_bdt_pool[i]);
+		cmgr->io_bdt_pool[i] = शून्य;
+	पूर्ण
 
-	kfree(cmgr->io_bdt_pool);
-	cmgr->io_bdt_pool = NULL;
+	kमुक्त(cmgr->io_bdt_pool);
+	cmgr->io_bdt_pool = शून्य;
 
-free_cmd_pool:
+मुक्त_cmd_pool:
 
-	for (i = 0; i < num_ios; i++) {
+	क्रम (i = 0; i < num_ios; i++) अणु
 		io_req = &cmgr->cmds[i];
-		kfree(io_req->sgl_task_params);
-		kfree(io_req->task_params);
-		/* Make sure we free per command sense buffer */
-		if (io_req->sense_buffer)
-			dma_free_coherent(&qedf->pdev->dev,
+		kमुक्त(io_req->sgl_task_params);
+		kमुक्त(io_req->task_params);
+		/* Make sure we मुक्त per command sense buffer */
+		अगर (io_req->sense_buffer)
+			dma_मुक्त_coherent(&qedf->pdev->dev,
 			    QEDF_SCSI_SENSE_BUFFERSIZE, io_req->sense_buffer,
 			    io_req->sense_buffer_dma);
 		cancel_delayed_work_sync(&io_req->rrq_work);
-	}
+	पूर्ण
 
 	/* Free command manager itself */
-	vfree(cmgr);
-}
+	vमुक्त(cmgr);
+पूर्ण
 
-static void qedf_handle_rrq(struct work_struct *work)
-{
-	struct qedf_ioreq *io_req =
-	    container_of(work, struct qedf_ioreq, rrq_work.work);
+अटल व्योम qedf_handle_rrq(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qedf_ioreq *io_req =
+	    container_of(work, काष्ठा qedf_ioreq, rrq_work.work);
 
 	atomic_set(&io_req->state, QEDFC_CMD_ST_RRQ_ACTIVE);
 	qedf_send_rrq(io_req);
 
-}
+पूर्ण
 
-struct qedf_cmd_mgr *qedf_cmd_mgr_alloc(struct qedf_ctx *qedf)
-{
-	struct qedf_cmd_mgr *cmgr;
-	struct io_bdt *bdt_info;
-	struct qedf_ioreq *io_req;
+काष्ठा qedf_cmd_mgr *qedf_cmd_mgr_alloc(काष्ठा qedf_ctx *qedf)
+अणु
+	काष्ठा qedf_cmd_mgr *cmgr;
+	काष्ठा io_bdt *bdt_info;
+	काष्ठा qedf_ioreq *io_req;
 	u16 xid;
-	int i;
-	int num_ios;
+	पूर्णांक i;
+	पूर्णांक num_ios;
 	u16 min_xid = 0;
 	u16 max_xid = (FCOE_PARAMS_NUM_TASKS - 1);
 
-	/* Make sure num_queues is already set before calling this function */
-	if (!qedf->num_queues) {
+	/* Make sure num_queues is alपढ़ोy set beक्रमe calling this function */
+	अगर (!qedf->num_queues) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "num_queues is not set.\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (max_xid <= min_xid || max_xid == FC_XID_UNKNOWN) {
+	अगर (max_xid <= min_xid || max_xid == FC_XID_UNKNOWN) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Invalid min_xid 0x%x and "
 			   "max_xid 0x%x.\n", min_xid, max_xid);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC, "min xid 0x%x, max xid "
 		   "0x%x.\n", min_xid, max_xid);
 
 	num_ios = max_xid - min_xid + 1;
 
-	cmgr = vzalloc(sizeof(struct qedf_cmd_mgr));
-	if (!cmgr) {
+	cmgr = vzalloc(माप(काष्ठा qedf_cmd_mgr));
+	अगर (!cmgr) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Failed to alloc cmd mgr.\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	cmgr->qedf = qedf;
 	spin_lock_init(&cmgr->lock);
@@ -216,9 +217,9 @@ struct qedf_cmd_mgr *qedf_cmd_mgr_alloc(struct qedf_ctx *qedf)
 	 */
 	xid = 0;
 
-	for (i = 0; i < num_ios; i++) {
+	क्रम (i = 0; i < num_ios; i++) अणु
 		io_req = &cmgr->cmds[i];
-		INIT_DELAYED_WORK(&io_req->timeout_work, qedf_cmd_timeout);
+		INIT_DELAYED_WORK(&io_req->समयout_work, qedf_cmd_समयout);
 
 		io_req->xid = xid++;
 
@@ -228,265 +229,265 @@ struct qedf_cmd_mgr *qedf_cmd_mgr_alloc(struct qedf_ctx *qedf)
 		io_req->sense_buffer = dma_alloc_coherent(&qedf->pdev->dev,
 		    QEDF_SCSI_SENSE_BUFFERSIZE, &io_req->sense_buffer_dma,
 		    GFP_KERNEL);
-		if (!io_req->sense_buffer) {
+		अगर (!io_req->sense_buffer) अणु
 			QEDF_ERR(&qedf->dbg_ctx,
 				 "Failed to alloc sense buffer.\n");
-			goto mem_err;
-		}
+			जाओ mem_err;
+		पूर्ण
 
 		/* Allocate task parameters to pass to f/w init funcions */
-		io_req->task_params = kzalloc(sizeof(*io_req->task_params),
+		io_req->task_params = kzalloc(माप(*io_req->task_params),
 					      GFP_KERNEL);
-		if (!io_req->task_params) {
+		अगर (!io_req->task_params) अणु
 			QEDF_ERR(&(qedf->dbg_ctx),
 				 "Failed to allocate task_params for xid=0x%x\n",
 				 i);
-			goto mem_err;
-		}
+			जाओ mem_err;
+		पूर्ण
 
 		/*
 		 * Allocate scatter/gather list info to pass to f/w init
 		 * functions.
 		 */
 		io_req->sgl_task_params = kzalloc(
-		    sizeof(struct scsi_sgl_task_params), GFP_KERNEL);
-		if (!io_req->sgl_task_params) {
+		    माप(काष्ठा scsi_sgl_task_params), GFP_KERNEL);
+		अगर (!io_req->sgl_task_params) अणु
 			QEDF_ERR(&(qedf->dbg_ctx),
 				 "Failed to allocate sgl_task_params for xid=0x%x\n",
 				 i);
-			goto mem_err;
-		}
-	}
+			जाओ mem_err;
+		पूर्ण
+	पूर्ण
 
-	/* Allocate pool of io_bdts - one for each qedf_ioreq */
-	cmgr->io_bdt_pool = kmalloc_array(num_ios, sizeof(struct io_bdt *),
+	/* Allocate pool of io_bdts - one क्रम each qedf_ioreq */
+	cmgr->io_bdt_pool = kदो_स्मृति_array(num_ios, माप(काष्ठा io_bdt *),
 	    GFP_KERNEL);
 
-	if (!cmgr->io_bdt_pool) {
+	अगर (!cmgr->io_bdt_pool) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Failed to alloc io_bdt_pool.\n");
-		goto mem_err;
-	}
+		जाओ mem_err;
+	पूर्ण
 
-	for (i = 0; i < num_ios; i++) {
-		cmgr->io_bdt_pool[i] = kmalloc(sizeof(struct io_bdt),
+	क्रम (i = 0; i < num_ios; i++) अणु
+		cmgr->io_bdt_pool[i] = kदो_स्मृति(माप(काष्ठा io_bdt),
 		    GFP_KERNEL);
-		if (!cmgr->io_bdt_pool[i]) {
+		अगर (!cmgr->io_bdt_pool[i]) अणु
 			QEDF_WARN(&(qedf->dbg_ctx),
 				  "Failed to alloc io_bdt_pool[%d].\n", i);
-			goto mem_err;
-		}
-	}
+			जाओ mem_err;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < num_ios; i++) {
+	क्रम (i = 0; i < num_ios; i++) अणु
 		bdt_info = cmgr->io_bdt_pool[i];
 		bdt_info->bd_tbl = dma_alloc_coherent(&qedf->pdev->dev,
-		    QEDF_MAX_BDS_PER_CMD * sizeof(struct scsi_sge),
+		    QEDF_MAX_BDS_PER_CMD * माप(काष्ठा scsi_sge),
 		    &bdt_info->bd_tbl_dma, GFP_KERNEL);
-		if (!bdt_info->bd_tbl) {
+		अगर (!bdt_info->bd_tbl) अणु
 			QEDF_WARN(&(qedf->dbg_ctx),
 				  "Failed to alloc bdt_tbl[%d].\n", i);
-			goto mem_err;
-		}
-	}
-	atomic_set(&cmgr->free_list_cnt, num_ios);
+			जाओ mem_err;
+		पूर्ण
+	पूर्ण
+	atomic_set(&cmgr->मुक्त_list_cnt, num_ios);
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 	    "cmgr->free_list_cnt=%d.\n",
-	    atomic_read(&cmgr->free_list_cnt));
+	    atomic_पढ़ो(&cmgr->मुक्त_list_cnt));
 
-	return cmgr;
+	वापस cmgr;
 
 mem_err:
-	qedf_cmd_mgr_free(cmgr);
-	return NULL;
-}
+	qedf_cmd_mgr_मुक्त(cmgr);
+	वापस शून्य;
+पूर्ण
 
-struct qedf_ioreq *qedf_alloc_cmd(struct qedf_rport *fcport, u8 cmd_type)
-{
-	struct qedf_ctx *qedf = fcport->qedf;
-	struct qedf_cmd_mgr *cmd_mgr = qedf->cmd_mgr;
-	struct qedf_ioreq *io_req = NULL;
-	struct io_bdt *bd_tbl;
+काष्ठा qedf_ioreq *qedf_alloc_cmd(काष्ठा qedf_rport *fcport, u8 cmd_type)
+अणु
+	काष्ठा qedf_ctx *qedf = fcport->qedf;
+	काष्ठा qedf_cmd_mgr *cmd_mgr = qedf->cmd_mgr;
+	काष्ठा qedf_ioreq *io_req = शून्य;
+	काष्ठा io_bdt *bd_tbl;
 	u16 xid;
-	uint32_t free_sqes;
-	int i;
-	unsigned long flags;
+	uपूर्णांक32_t मुक्त_sqes;
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
-	free_sqes = atomic_read(&fcport->free_sqes);
+	मुक्त_sqes = atomic_पढ़ो(&fcport->मुक्त_sqes);
 
-	if (!free_sqes) {
+	अगर (!मुक्त_sqes) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Returning NULL, free_sqes=%d.\n ",
-		    free_sqes);
-		goto out_failed;
-	}
+		    मुक्त_sqes);
+		जाओ out_failed;
+	पूर्ण
 
 	/* Limit the number of outstanding R/W tasks */
-	if ((atomic_read(&fcport->num_active_ios) >=
-	    NUM_RW_TASKS_PER_CONNECTION)) {
+	अगर ((atomic_पढ़ो(&fcport->num_active_ios) >=
+	    NUM_RW_TASKS_PER_CONNECTION)) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Returning NULL, num_active_ios=%d.\n",
-		    atomic_read(&fcport->num_active_ios));
-		goto out_failed;
-	}
+		    atomic_पढ़ो(&fcport->num_active_ios));
+		जाओ out_failed;
+	पूर्ण
 
 	/* Limit global TIDs certain tasks */
-	if (atomic_read(&cmd_mgr->free_list_cnt) <= GBL_RSVD_TASKS) {
+	अगर (atomic_पढ़ो(&cmd_mgr->मुक्त_list_cnt) <= GBL_RSVD_TASKS) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Returning NULL, free_list_cnt=%d.\n",
-		    atomic_read(&cmd_mgr->free_list_cnt));
-		goto out_failed;
-	}
+		    atomic_पढ़ो(&cmd_mgr->मुक्त_list_cnt));
+		जाओ out_failed;
+	पूर्ण
 
 	spin_lock_irqsave(&cmd_mgr->lock, flags);
-	for (i = 0; i < FCOE_PARAMS_NUM_TASKS; i++) {
+	क्रम (i = 0; i < FCOE_PARAMS_NUM_TASKS; i++) अणु
 		io_req = &cmd_mgr->cmds[cmd_mgr->idx];
 		cmd_mgr->idx++;
-		if (cmd_mgr->idx == FCOE_PARAMS_NUM_TASKS)
+		अगर (cmd_mgr->idx == FCOE_PARAMS_NUM_TASKS)
 			cmd_mgr->idx = 0;
 
-		/* Check to make sure command was previously freed */
-		if (!io_req->alloc)
-			break;
-	}
+		/* Check to make sure command was previously मुक्तd */
+		अगर (!io_req->alloc)
+			अवरोध;
+	पूर्ण
 
-	if (i == FCOE_PARAMS_NUM_TASKS) {
+	अगर (i == FCOE_PARAMS_NUM_TASKS) अणु
 		spin_unlock_irqrestore(&cmd_mgr->lock, flags);
-		goto out_failed;
-	}
+		जाओ out_failed;
+	पूर्ण
 
-	if (test_bit(QEDF_CMD_DIRTY, &io_req->flags))
+	अगर (test_bit(QEDF_CMD_सूचीTY, &io_req->flags))
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "io_req found to be dirty ox_id = 0x%x.\n",
 			 io_req->xid);
 
-	/* Clear any flags now that we've reallocated the xid */
+	/* Clear any flags now that we've पुनः_स्मृतिated the xid */
 	io_req->flags = 0;
 	io_req->alloc = 1;
 	spin_unlock_irqrestore(&cmd_mgr->lock, flags);
 
 	atomic_inc(&fcport->num_active_ios);
-	atomic_dec(&fcport->free_sqes);
+	atomic_dec(&fcport->मुक्त_sqes);
 	xid = io_req->xid;
-	atomic_dec(&cmd_mgr->free_list_cnt);
+	atomic_dec(&cmd_mgr->मुक्त_list_cnt);
 
 	io_req->cmd_mgr = cmd_mgr;
 	io_req->fcport = fcport;
 
-	/* Clear any stale sc_cmd back pointer */
-	io_req->sc_cmd = NULL;
+	/* Clear any stale sc_cmd back poपूर्णांकer */
+	io_req->sc_cmd = शून्य;
 	io_req->lun = -1;
 
 	/* Hold the io_req against deletion */
 	kref_init(&io_req->refcount);	/* ID: 001 */
 	atomic_set(&io_req->state, QEDFC_CMD_ST_IO_ACTIVE);
 
-	/* Bind io_bdt for this io_req */
-	/* Have a static link between io_req and io_bdt_pool */
+	/* Bind io_bdt क्रम this io_req */
+	/* Have a अटल link between io_req and io_bdt_pool */
 	bd_tbl = io_req->bd_tbl = cmd_mgr->io_bdt_pool[xid];
-	if (bd_tbl == NULL) {
+	अगर (bd_tbl == शून्य) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "bd_tbl is NULL, xid=%x.\n", xid);
 		kref_put(&io_req->refcount, qedf_release_cmd);
-		goto out_failed;
-	}
+		जाओ out_failed;
+	पूर्ण
 	bd_tbl->io_req = io_req;
 	io_req->cmd_type = cmd_type;
-	io_req->tm_flags = 0;
+	io_req->पंचांग_flags = 0;
 
 	/* Reset sequence offset data */
 	io_req->rx_buf_off = 0;
 	io_req->tx_buf_off = 0;
 	io_req->rx_id = 0xffff; /* No OX_ID */
 
-	return io_req;
+	वापस io_req;
 
 out_failed:
-	/* Record failure for stats and return NULL to caller */
+	/* Record failure क्रम stats and वापस शून्य to caller */
 	qedf->alloc_failures++;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void qedf_free_mp_resc(struct qedf_ioreq *io_req)
-{
-	struct qedf_mp_req *mp_req = &(io_req->mp_req);
-	struct qedf_ctx *qedf = io_req->fcport->qedf;
-	uint64_t sz = sizeof(struct scsi_sge);
+अटल व्योम qedf_मुक्त_mp_resc(काष्ठा qedf_ioreq *io_req)
+अणु
+	काष्ठा qedf_mp_req *mp_req = &(io_req->mp_req);
+	काष्ठा qedf_ctx *qedf = io_req->fcport->qedf;
+	uपूर्णांक64_t sz = माप(काष्ठा scsi_sge);
 
-	/* clear tm flags */
-	if (mp_req->mp_req_bd) {
-		dma_free_coherent(&qedf->pdev->dev, sz,
+	/* clear पंचांग flags */
+	अगर (mp_req->mp_req_bd) अणु
+		dma_मुक्त_coherent(&qedf->pdev->dev, sz,
 		    mp_req->mp_req_bd, mp_req->mp_req_bd_dma);
-		mp_req->mp_req_bd = NULL;
-	}
-	if (mp_req->mp_resp_bd) {
-		dma_free_coherent(&qedf->pdev->dev, sz,
+		mp_req->mp_req_bd = शून्य;
+	पूर्ण
+	अगर (mp_req->mp_resp_bd) अणु
+		dma_मुक्त_coherent(&qedf->pdev->dev, sz,
 		    mp_req->mp_resp_bd, mp_req->mp_resp_bd_dma);
-		mp_req->mp_resp_bd = NULL;
-	}
-	if (mp_req->req_buf) {
-		dma_free_coherent(&qedf->pdev->dev, QEDF_PAGE_SIZE,
+		mp_req->mp_resp_bd = शून्य;
+	पूर्ण
+	अगर (mp_req->req_buf) अणु
+		dma_मुक्त_coherent(&qedf->pdev->dev, QEDF_PAGE_SIZE,
 		    mp_req->req_buf, mp_req->req_buf_dma);
-		mp_req->req_buf = NULL;
-	}
-	if (mp_req->resp_buf) {
-		dma_free_coherent(&qedf->pdev->dev, QEDF_PAGE_SIZE,
+		mp_req->req_buf = शून्य;
+	पूर्ण
+	अगर (mp_req->resp_buf) अणु
+		dma_मुक्त_coherent(&qedf->pdev->dev, QEDF_PAGE_SIZE,
 		    mp_req->resp_buf, mp_req->resp_buf_dma);
-		mp_req->resp_buf = NULL;
-	}
-}
+		mp_req->resp_buf = शून्य;
+	पूर्ण
+पूर्ण
 
-void qedf_release_cmd(struct kref *ref)
-{
-	struct qedf_ioreq *io_req =
-	    container_of(ref, struct qedf_ioreq, refcount);
-	struct qedf_cmd_mgr *cmd_mgr = io_req->cmd_mgr;
-	struct qedf_rport *fcport = io_req->fcport;
-	unsigned long flags;
+व्योम qedf_release_cmd(काष्ठा kref *ref)
+अणु
+	काष्ठा qedf_ioreq *io_req =
+	    container_of(ref, काष्ठा qedf_ioreq, refcount);
+	काष्ठा qedf_cmd_mgr *cmd_mgr = io_req->cmd_mgr;
+	काष्ठा qedf_rport *fcport = io_req->fcport;
+	अचिन्हित दीर्घ flags;
 
-	if (io_req->cmd_type == QEDF_SCSI_CMD) {
+	अगर (io_req->cmd_type == QEDF_SCSI_CMD) अणु
 		QEDF_WARN(&fcport->qedf->dbg_ctx,
 			  "Cmd released called without scsi_done called, io_req %p xid=0x%x.\n",
 			  io_req, io_req->xid);
 		WARN_ON(io_req->sc_cmd);
-	}
+	पूर्ण
 
-	if (io_req->cmd_type == QEDF_ELS ||
+	अगर (io_req->cmd_type == QEDF_ELS ||
 	    io_req->cmd_type == QEDF_TASK_MGMT_CMD)
-		qedf_free_mp_resc(io_req);
+		qedf_मुक्त_mp_resc(io_req);
 
-	atomic_inc(&cmd_mgr->free_list_cnt);
+	atomic_inc(&cmd_mgr->मुक्त_list_cnt);
 	atomic_dec(&fcport->num_active_ios);
 	atomic_set(&io_req->state, QEDF_CMD_ST_INACTIVE);
-	if (atomic_read(&fcport->num_active_ios) < 0) {
+	अगर (atomic_पढ़ो(&fcport->num_active_ios) < 0) अणु
 		QEDF_WARN(&(fcport->qedf->dbg_ctx), "active_ios < 0.\n");
 		WARN_ON(1);
-	}
+	पूर्ण
 
-	/* Increment task retry identifier now that the request is released */
-	io_req->task_retry_identifier++;
-	io_req->fcport = NULL;
+	/* Increment task retry identअगरier now that the request is released */
+	io_req->task_retry_identअगरier++;
+	io_req->fcport = शून्य;
 
-	clear_bit(QEDF_CMD_DIRTY, &io_req->flags);
+	clear_bit(QEDF_CMD_सूचीTY, &io_req->flags);
 	io_req->cpu = 0;
 	spin_lock_irqsave(&cmd_mgr->lock, flags);
-	io_req->fcport = NULL;
+	io_req->fcport = शून्य;
 	io_req->alloc = 0;
 	spin_unlock_irqrestore(&cmd_mgr->lock, flags);
-}
+पूर्ण
 
-static int qedf_map_sg(struct qedf_ioreq *io_req)
-{
-	struct scsi_cmnd *sc = io_req->sc_cmd;
-	struct Scsi_Host *host = sc->device->host;
-	struct fc_lport *lport = shost_priv(host);
-	struct qedf_ctx *qedf = lport_priv(lport);
-	struct scsi_sge *bd = io_req->bd_tbl->bd_tbl;
-	struct scatterlist *sg;
-	int byte_count = 0;
-	int sg_count = 0;
-	int bd_count = 0;
+अटल पूर्णांक qedf_map_sg(काष्ठा qedf_ioreq *io_req)
+अणु
+	काष्ठा scsi_cmnd *sc = io_req->sc_cmd;
+	काष्ठा Scsi_Host *host = sc->device->host;
+	काष्ठा fc_lport *lport = shost_priv(host);
+	काष्ठा qedf_ctx *qedf = lport_priv(lport);
+	काष्ठा scsi_sge *bd = io_req->bd_tbl->bd_tbl;
+	काष्ठा scatterlist *sg;
+	पूर्णांक byte_count = 0;
+	पूर्णांक sg_count = 0;
+	पूर्णांक bd_count = 0;
 	u32 sg_len;
 	u64 addr;
-	int i = 0;
+	पूर्णांक i = 0;
 
 	sg_count = dma_map_sg(&qedf->pdev->dev, scsi_sglist(sc),
 	    scsi_sg_count(sc), sc->sc_data_direction);
@@ -494,19 +495,19 @@ static int qedf_map_sg(struct qedf_ioreq *io_req)
 
 	io_req->sge_type = QEDF_IOREQ_UNKNOWN_SGE;
 
-	if (sg_count <= 8 || io_req->io_req_flags == QEDF_READ)
+	अगर (sg_count <= 8 || io_req->io_req_flags == QEDF_READ)
 		io_req->sge_type = QEDF_IOREQ_FAST_SGE;
 
-	scsi_for_each_sg(sc, sg, sg_count, i) {
+	scsi_क्रम_each_sg(sc, sg, sg_count, i) अणु
 		sg_len = (u32)sg_dma_len(sg);
 		addr = (u64)sg_dma_address(sg);
 
 		/*
-		 * Intermediate s/g element so check if start address
-		 * is page aligned.  Only required for writes and only if the
+		 * Intermediate s/g element so check अगर start address
+		 * is page aligned.  Only required क्रम ग_लिखोs and only अगर the
 		 * number of scatter/gather elements is 8 or more.
 		 */
-		if (io_req->sge_type == QEDF_IOREQ_UNKNOWN_SGE && (i) &&
+		अगर (io_req->sge_type == QEDF_IOREQ_UNKNOWN_SGE && (i) &&
 		    (i != (sg_count - 1)) && sg_len < QEDF_PAGE_SIZE)
 			io_req->sge_type = QEDF_IOREQ_SLOW_SGE;
 
@@ -516,115 +517,115 @@ static int qedf_map_sg(struct qedf_ioreq *io_req)
 
 		bd_count++;
 		byte_count += sg_len;
-	}
+	पूर्ण
 
-	/* To catch a case where FAST and SLOW nothing is set, set FAST */
-	if (io_req->sge_type == QEDF_IOREQ_UNKNOWN_SGE)
+	/* To catch a हाल where FAST and SLOW nothing is set, set FAST */
+	अगर (io_req->sge_type == QEDF_IOREQ_UNKNOWN_SGE)
 		io_req->sge_type = QEDF_IOREQ_FAST_SGE;
 
-	if (byte_count != scsi_bufflen(sc))
+	अगर (byte_count != scsi_bufflen(sc))
 		QEDF_ERR(&(qedf->dbg_ctx), "byte_count = %d != "
 			  "scsi_bufflen = %d, task_id = 0x%x.\n", byte_count,
 			   scsi_bufflen(sc), io_req->xid);
 
-	return bd_count;
-}
+	वापस bd_count;
+पूर्ण
 
-static int qedf_build_bd_list_from_sg(struct qedf_ioreq *io_req)
-{
-	struct scsi_cmnd *sc = io_req->sc_cmd;
-	struct scsi_sge *bd = io_req->bd_tbl->bd_tbl;
-	int bd_count;
+अटल पूर्णांक qedf_build_bd_list_from_sg(काष्ठा qedf_ioreq *io_req)
+अणु
+	काष्ठा scsi_cmnd *sc = io_req->sc_cmd;
+	काष्ठा scsi_sge *bd = io_req->bd_tbl->bd_tbl;
+	पूर्णांक bd_count;
 
-	if (scsi_sg_count(sc)) {
+	अगर (scsi_sg_count(sc)) अणु
 		bd_count = qedf_map_sg(io_req);
-		if (bd_count == 0)
-			return -ENOMEM;
-	} else {
+		अगर (bd_count == 0)
+			वापस -ENOMEM;
+	पूर्ण अन्यथा अणु
 		bd_count = 0;
 		bd[0].sge_addr.lo = bd[0].sge_addr.hi = 0;
 		bd[0].sge_len = 0;
-	}
+	पूर्ण
 	io_req->bd_tbl->bd_valid = bd_count;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qedf_build_fcp_cmnd(struct qedf_ioreq *io_req,
-				  struct fcp_cmnd *fcp_cmnd)
-{
-	struct scsi_cmnd *sc_cmd = io_req->sc_cmd;
+अटल व्योम qedf_build_fcp_cmnd(काष्ठा qedf_ioreq *io_req,
+				  काष्ठा fcp_cmnd *fcp_cmnd)
+अणु
+	काष्ठा scsi_cmnd *sc_cmd = io_req->sc_cmd;
 
 	/* fcp_cmnd is 32 bytes */
-	memset(fcp_cmnd, 0, FCP_CMND_LEN);
+	स_रखो(fcp_cmnd, 0, FCP_CMND_LEN);
 
 	/* 8 bytes: SCSI LUN info */
-	int_to_scsilun(sc_cmd->device->lun,
-			(struct scsi_lun *)&fcp_cmnd->fc_lun);
+	पूर्णांक_to_scsilun(sc_cmd->device->lun,
+			(काष्ठा scsi_lun *)&fcp_cmnd->fc_lun);
 
 	/* 4 bytes: flag info */
 	fcp_cmnd->fc_pri_ta = 0;
-	fcp_cmnd->fc_tm_flags = io_req->tm_flags;
+	fcp_cmnd->fc_पंचांग_flags = io_req->पंचांग_flags;
 	fcp_cmnd->fc_flags = io_req->io_req_flags;
 	fcp_cmnd->fc_cmdref = 0;
 
 	/* Populate data direction */
-	if (io_req->cmd_type == QEDF_TASK_MGMT_CMD) {
+	अगर (io_req->cmd_type == QEDF_TASK_MGMT_CMD) अणु
 		fcp_cmnd->fc_flags |= FCP_CFL_RDDATA;
-	} else {
-		if (sc_cmd->sc_data_direction == DMA_TO_DEVICE)
+	पूर्ण अन्यथा अणु
+		अगर (sc_cmd->sc_data_direction == DMA_TO_DEVICE)
 			fcp_cmnd->fc_flags |= FCP_CFL_WRDATA;
-		else if (sc_cmd->sc_data_direction == DMA_FROM_DEVICE)
+		अन्यथा अगर (sc_cmd->sc_data_direction == DMA_FROM_DEVICE)
 			fcp_cmnd->fc_flags |= FCP_CFL_RDDATA;
-	}
+	पूर्ण
 
 	fcp_cmnd->fc_pri_ta = FCP_PTA_SIMPLE;
 
-	/* 16 bytes: CDB information */
-	if (io_req->cmd_type != QEDF_TASK_MGMT_CMD)
-		memcpy(fcp_cmnd->fc_cdb, sc_cmd->cmnd, sc_cmd->cmd_len);
+	/* 16 bytes: CDB inक्रमmation */
+	अगर (io_req->cmd_type != QEDF_TASK_MGMT_CMD)
+		स_नकल(fcp_cmnd->fc_cdb, sc_cmd->cmnd, sc_cmd->cmd_len);
 
 	/* 4 bytes: FCP data length */
 	fcp_cmnd->fc_dl = htonl(io_req->data_xfer_len);
-}
+पूर्ण
 
-static void  qedf_init_task(struct qedf_rport *fcport, struct fc_lport *lport,
-	struct qedf_ioreq *io_req, struct e4_fcoe_task_context *task_ctx,
-	struct fcoe_wqe *sqe)
-{
-	enum fcoe_task_type task_type;
-	struct scsi_cmnd *sc_cmd = io_req->sc_cmd;
-	struct io_bdt *bd_tbl = io_req->bd_tbl;
+अटल व्योम  qedf_init_task(काष्ठा qedf_rport *fcport, काष्ठा fc_lport *lport,
+	काष्ठा qedf_ioreq *io_req, काष्ठा e4_fcoe_task_context *task_ctx,
+	काष्ठा fcoe_wqe *sqe)
+अणु
+	क्रमागत fcoe_task_type task_type;
+	काष्ठा scsi_cmnd *sc_cmd = io_req->sc_cmd;
+	काष्ठा io_bdt *bd_tbl = io_req->bd_tbl;
 	u8 fcp_cmnd[32];
-	u32 tmp_fcp_cmnd[8];
-	int bd_count = 0;
-	struct qedf_ctx *qedf = fcport->qedf;
-	uint16_t cq_idx = smp_processor_id() % qedf->num_queues;
-	struct regpair sense_data_buffer_phys_addr;
+	u32 पंचांगp_fcp_cmnd[8];
+	पूर्णांक bd_count = 0;
+	काष्ठा qedf_ctx *qedf = fcport->qedf;
+	uपूर्णांक16_t cq_idx = smp_processor_id() % qedf->num_queues;
+	काष्ठा regpair sense_data_buffer_phys_addr;
 	u32 tx_io_size = 0;
 	u32 rx_io_size = 0;
-	int i, cnt;
+	पूर्णांक i, cnt;
 
-	/* Note init_initiator_rw_fcoe_task memsets the task context */
+	/* Note init_initiator_rw_fcoe_task स_रखोs the task context */
 	io_req->task = task_ctx;
-	memset(task_ctx, 0, sizeof(struct e4_fcoe_task_context));
-	memset(io_req->task_params, 0, sizeof(struct fcoe_task_params));
-	memset(io_req->sgl_task_params, 0, sizeof(struct scsi_sgl_task_params));
+	स_रखो(task_ctx, 0, माप(काष्ठा e4_fcoe_task_context));
+	स_रखो(io_req->task_params, 0, माप(काष्ठा fcoe_task_params));
+	स_रखो(io_req->sgl_task_params, 0, माप(काष्ठा scsi_sgl_task_params));
 
 	/* Set task type bassed on DMA directio of command */
-	if (io_req->cmd_type == QEDF_TASK_MGMT_CMD) {
+	अगर (io_req->cmd_type == QEDF_TASK_MGMT_CMD) अणु
 		task_type = FCOE_TASK_TYPE_READ_INITIATOR;
-	} else {
-		if (sc_cmd->sc_data_direction == DMA_TO_DEVICE) {
+	पूर्ण अन्यथा अणु
+		अगर (sc_cmd->sc_data_direction == DMA_TO_DEVICE) अणु
 			task_type = FCOE_TASK_TYPE_WRITE_INITIATOR;
 			tx_io_size = io_req->data_xfer_len;
-		} else {
+		पूर्ण अन्यथा अणु
 			task_type = FCOE_TASK_TYPE_READ_INITIATOR;
 			rx_io_size = io_req->data_xfer_len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Setup the fields for fcoe_task_params */
+	/* Setup the fields क्रम fcoe_task_params */
 	io_req->task_params->context = task_ctx;
 	io_req->task_params->sqe = sqe;
 	io_req->task_params->task_type = task_type;
@@ -635,8 +636,8 @@ static void  qedf_init_task(struct qedf_rport *fcport, struct fc_lport *lport,
 	io_req->task_params->cq_rss_number = cq_idx;
 	io_req->task_params->is_tape_device = fcport->dev_type;
 
-	/* Fill in information for scatter/gather list */
-	if (io_req->cmd_type != QEDF_TASK_MGMT_CMD) {
+	/* Fill in inक्रमmation क्रम scatter/gather list */
+	अगर (io_req->cmd_type != QEDF_TASK_MGMT_CMD) अणु
 		bd_count = bd_tbl->bd_valid;
 		io_req->sgl_task_params->sgl = bd_tbl->bd_tbl;
 		io_req->sgl_task_params->sgl_phys_addr.lo =
@@ -646,48 +647,48 @@ static void  qedf_init_task(struct qedf_rport *fcport, struct fc_lport *lport,
 		io_req->sgl_task_params->num_sges = bd_count;
 		io_req->sgl_task_params->total_buffer_size =
 		    scsi_bufflen(io_req->sc_cmd);
-		if (io_req->sge_type == QEDF_IOREQ_SLOW_SGE)
+		अगर (io_req->sge_type == QEDF_IOREQ_SLOW_SGE)
 			io_req->sgl_task_params->small_mid_sge = 1;
-		else
+		अन्यथा
 			io_req->sgl_task_params->small_mid_sge = 0;
-	}
+	पूर्ण
 
 	/* Fill in physical address of sense buffer */
 	sense_data_buffer_phys_addr.lo = U64_LO(io_req->sense_buffer_dma);
 	sense_data_buffer_phys_addr.hi = U64_HI(io_req->sense_buffer_dma);
 
 	/* fill FCP_CMND IU */
-	qedf_build_fcp_cmnd(io_req, (struct fcp_cmnd *)tmp_fcp_cmnd);
+	qedf_build_fcp_cmnd(io_req, (काष्ठा fcp_cmnd *)पंचांगp_fcp_cmnd);
 
 	/* Swap fcp_cmnd since FC is big endian */
-	cnt = sizeof(struct fcp_cmnd) / sizeof(u32);
-	for (i = 0; i < cnt; i++) {
-		tmp_fcp_cmnd[i] = cpu_to_be32(tmp_fcp_cmnd[i]);
-	}
-	memcpy(fcp_cmnd, tmp_fcp_cmnd, sizeof(struct fcp_cmnd));
+	cnt = माप(काष्ठा fcp_cmnd) / माप(u32);
+	क्रम (i = 0; i < cnt; i++) अणु
+		पंचांगp_fcp_cmnd[i] = cpu_to_be32(पंचांगp_fcp_cmnd[i]);
+	पूर्ण
+	स_नकल(fcp_cmnd, पंचांगp_fcp_cmnd, माप(काष्ठा fcp_cmnd));
 
 	init_initiator_rw_fcoe_task(io_req->task_params,
 				    io_req->sgl_task_params,
 				    sense_data_buffer_phys_addr,
-				    io_req->task_retry_identifier, fcp_cmnd);
+				    io_req->task_retry_identअगरier, fcp_cmnd);
 
 	/* Increment SGL type counters */
-	if (io_req->sge_type == QEDF_IOREQ_SLOW_SGE)
+	अगर (io_req->sge_type == QEDF_IOREQ_SLOW_SGE)
 		qedf->slow_sge_ios++;
-	else
+	अन्यथा
 		qedf->fast_sge_ios++;
-}
+पूर्ण
 
-void qedf_init_mp_task(struct qedf_ioreq *io_req,
-	struct e4_fcoe_task_context *task_ctx, struct fcoe_wqe *sqe)
-{
-	struct qedf_mp_req *mp_req = &(io_req->mp_req);
-	struct qedf_rport *fcport = io_req->fcport;
-	struct qedf_ctx *qedf = io_req->fcport->qedf;
-	struct fc_frame_header *fc_hdr;
-	struct fcoe_tx_mid_path_params task_fc_hdr;
-	struct scsi_sgl_task_params tx_sgl_task_params;
-	struct scsi_sgl_task_params rx_sgl_task_params;
+व्योम qedf_init_mp_task(काष्ठा qedf_ioreq *io_req,
+	काष्ठा e4_fcoe_task_context *task_ctx, काष्ठा fcoe_wqe *sqe)
+अणु
+	काष्ठा qedf_mp_req *mp_req = &(io_req->mp_req);
+	काष्ठा qedf_rport *fcport = io_req->fcport;
+	काष्ठा qedf_ctx *qedf = io_req->fcport->qedf;
+	काष्ठा fc_frame_header *fc_hdr;
+	काष्ठा fcoe_tx_mid_path_params task_fc_hdr;
+	काष्ठा scsi_sgl_task_params tx_sgl_task_params;
+	काष्ठा scsi_sgl_task_params rx_sgl_task_params;
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_DISC,
 		  "Initializing MP task for cmd_type=%d\n",
@@ -695,15 +696,15 @@ void qedf_init_mp_task(struct qedf_ioreq *io_req,
 
 	qedf->control_requests++;
 
-	memset(&tx_sgl_task_params, 0, sizeof(struct scsi_sgl_task_params));
-	memset(&rx_sgl_task_params, 0, sizeof(struct scsi_sgl_task_params));
-	memset(task_ctx, 0, sizeof(struct e4_fcoe_task_context));
-	memset(&task_fc_hdr, 0, sizeof(struct fcoe_tx_mid_path_params));
+	स_रखो(&tx_sgl_task_params, 0, माप(काष्ठा scsi_sgl_task_params));
+	स_रखो(&rx_sgl_task_params, 0, माप(काष्ठा scsi_sgl_task_params));
+	स_रखो(task_ctx, 0, माप(काष्ठा e4_fcoe_task_context));
+	स_रखो(&task_fc_hdr, 0, माप(काष्ठा fcoe_tx_mid_path_params));
 
-	/* Setup the task from io_req for easy reference */
+	/* Setup the task from io_req क्रम easy reference */
 	io_req->task = task_ctx;
 
-	/* Setup the fields for fcoe_task_params */
+	/* Setup the fields क्रम fcoe_task_params */
 	io_req->task_params->context = task_ctx;
 	io_req->task_params->sqe = sqe;
 	io_req->task_params->task_type = FCOE_TASK_TYPE_MIDPATH;
@@ -721,7 +722,7 @@ void qedf_init_mp_task(struct qedf_ioreq *io_req,
 	fc_hdr->fh_ox_id = io_req->xid;
 	fc_hdr->fh_rx_id = htons(0xffff);
 
-	/* Set up FC header information */
+	/* Set up FC header inक्रमmation */
 	task_fc_hdr.parameter = fc_hdr->fh_parm_offset;
 	task_fc_hdr.r_ctl = fc_hdr->fh_r_ctl;
 	task_fc_hdr.type = fc_hdr->fh_type;
@@ -730,39 +731,39 @@ void qedf_init_mp_task(struct qedf_ioreq *io_req,
 	task_fc_hdr.rx_id = fc_hdr->fh_rx_id;
 	task_fc_hdr.ox_id = fc_hdr->fh_ox_id;
 
-	/* Set up s/g list parameters for request buffer */
+	/* Set up s/g list parameters क्रम request buffer */
 	tx_sgl_task_params.sgl = mp_req->mp_req_bd;
 	tx_sgl_task_params.sgl_phys_addr.lo = U64_LO(mp_req->mp_req_bd_dma);
 	tx_sgl_task_params.sgl_phys_addr.hi = U64_HI(mp_req->mp_req_bd_dma);
 	tx_sgl_task_params.num_sges = 1;
-	/* Set PAGE_SIZE for now since sg element is that size ??? */
+	/* Set PAGE_SIZE क्रम now since sg element is that size ??? */
 	tx_sgl_task_params.total_buffer_size = io_req->data_xfer_len;
 	tx_sgl_task_params.small_mid_sge = 0;
 
-	/* Set up s/g list parameters for request buffer */
+	/* Set up s/g list parameters क्रम request buffer */
 	rx_sgl_task_params.sgl = mp_req->mp_resp_bd;
 	rx_sgl_task_params.sgl_phys_addr.lo = U64_LO(mp_req->mp_resp_bd_dma);
 	rx_sgl_task_params.sgl_phys_addr.hi = U64_HI(mp_req->mp_resp_bd_dma);
 	rx_sgl_task_params.num_sges = 1;
-	/* Set PAGE_SIZE for now since sg element is that size ??? */
+	/* Set PAGE_SIZE क्रम now since sg element is that size ??? */
 	rx_sgl_task_params.total_buffer_size = PAGE_SIZE;
 	rx_sgl_task_params.small_mid_sge = 0;
 
 
 	/*
 	 * Last arg is 0 as previous code did not set that we wanted the
-	 * fc header information.
+	 * fc header inक्रमmation.
 	 */
 	init_initiator_midpath_unsolicited_fcoe_task(io_req->task_params,
 						     &task_fc_hdr,
 						     &tx_sgl_task_params,
 						     &rx_sgl_task_params, 0);
-}
+पूर्ण
 
 /* Presumed that fcport->rport_lock is held */
-u16 qedf_get_sqe_idx(struct qedf_rport *fcport)
-{
-	uint16_t total_sqe = (fcport->sq_mem_size)/(sizeof(struct fcoe_wqe));
+u16 qedf_get_sqe_idx(काष्ठा qedf_rport *fcport)
+अणु
+	uपूर्णांक16_t total_sqe = (fcport->sq_mem_size)/(माप(काष्ठा fcoe_wqe));
 	u16 rval;
 
 	rval = fcport->sq_prod_idx;
@@ -770,15 +771,15 @@ u16 qedf_get_sqe_idx(struct qedf_rport *fcport)
 	/* Adjust ring index */
 	fcport->sq_prod_idx++;
 	fcport->fw_sq_prod_idx++;
-	if (fcport->sq_prod_idx == total_sqe)
+	अगर (fcport->sq_prod_idx == total_sqe)
 		fcport->sq_prod_idx = 0;
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-void qedf_ring_doorbell(struct qedf_rport *fcport)
-{
-	struct fcoe_db_data dbell = { 0 };
+व्योम qedf_ring_करोorbell(काष्ठा qedf_rport *fcport)
+अणु
+	काष्ठा fcoe_db_data dbell = अणु 0 पूर्ण;
 
 	dbell.agg_flags = 0;
 
@@ -788,28 +789,28 @@ void qedf_ring_doorbell(struct qedf_rport *fcport)
 	    FCOE_DB_DATA_AGG_VAL_SEL_SHIFT;
 
 	dbell.sq_prod = fcport->fw_sq_prod_idx;
-	/* wmb makes sure that the BDs data is updated before updating the
-	 * producer, otherwise FW may read old data from the BDs.
+	/* wmb makes sure that the BDs data is updated beक्रमe updating the
+	 * producer, otherwise FW may पढ़ो old data from the BDs.
 	 */
 	wmb();
 	barrier();
-	writel(*(u32 *)&dbell, fcport->p_doorbell);
+	ग_लिखोl(*(u32 *)&dbell, fcport->p_करोorbell);
 	/*
-	 * Fence required to flush the write combined buffer, since another
-	 * CPU may write to the same doorbell address and data may be lost
-	 * due to relaxed order nature of write combined bar.
+	 * Fence required to flush the ग_लिखो combined buffer, since another
+	 * CPU may ग_लिखो to the same करोorbell address and data may be lost
+	 * due to relaxed order nature of ग_लिखो combined bar.
 	 */
 	wmb();
-}
+पूर्ण
 
-static void qedf_trace_io(struct qedf_rport *fcport, struct qedf_ioreq *io_req,
-			  int8_t direction)
-{
-	struct qedf_ctx *qedf = fcport->qedf;
-	struct qedf_io_log *io_log;
-	struct scsi_cmnd *sc_cmd = io_req->sc_cmd;
-	unsigned long flags;
-	uint8_t op;
+अटल व्योम qedf_trace_io(काष्ठा qedf_rport *fcport, काष्ठा qedf_ioreq *io_req,
+			  पूर्णांक8_t direction)
+अणु
+	काष्ठा qedf_ctx *qedf = fcport->qedf;
+	काष्ठा qedf_io_log *io_log;
+	काष्ठा scsi_cmnd *sc_cmd = io_req->sc_cmd;
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t op;
 
 	spin_lock_irqsave(&qedf->io_trace_lock, flags);
 
@@ -826,246 +827,246 @@ static void qedf_trace_io(struct qedf_rport *fcport, struct qedf_ioreq *io_req,
 	io_log->bufflen = scsi_bufflen(sc_cmd);
 	io_log->sg_count = scsi_sg_count(sc_cmd);
 	io_log->result = sc_cmd->result;
-	io_log->jiffies = jiffies;
-	io_log->refcount = kref_read(&io_req->refcount);
+	io_log->jअगरfies = jअगरfies;
+	io_log->refcount = kref_पढ़ो(&io_req->refcount);
 
-	if (direction == QEDF_IO_TRACE_REQ) {
+	अगर (direction == QEDF_IO_TRACE_REQ) अणु
 		/* For requests we only care abot the submission CPU */
 		io_log->req_cpu = io_req->cpu;
-		io_log->int_cpu = 0;
+		io_log->पूर्णांक_cpu = 0;
 		io_log->rsp_cpu = 0;
-	} else if (direction == QEDF_IO_TRACE_RSP) {
+	पूर्ण अन्यथा अगर (direction == QEDF_IO_TRACE_RSP) अणु
 		io_log->req_cpu = io_req->cpu;
-		io_log->int_cpu = io_req->int_cpu;
+		io_log->पूर्णांक_cpu = io_req->पूर्णांक_cpu;
 		io_log->rsp_cpu = smp_processor_id();
-	}
+	पूर्ण
 
 	io_log->sge_type = io_req->sge_type;
 
 	qedf->io_trace_idx++;
-	if (qedf->io_trace_idx == QEDF_IO_TRACE_SIZE)
+	अगर (qedf->io_trace_idx == QEDF_IO_TRACE_SIZE)
 		qedf->io_trace_idx = 0;
 
 	spin_unlock_irqrestore(&qedf->io_trace_lock, flags);
-}
+पूर्ण
 
-int qedf_post_io_req(struct qedf_rport *fcport, struct qedf_ioreq *io_req)
-{
-	struct scsi_cmnd *sc_cmd = io_req->sc_cmd;
-	struct Scsi_Host *host = sc_cmd->device->host;
-	struct fc_lport *lport = shost_priv(host);
-	struct qedf_ctx *qedf = lport_priv(lport);
-	struct e4_fcoe_task_context *task_ctx;
+पूर्णांक qedf_post_io_req(काष्ठा qedf_rport *fcport, काष्ठा qedf_ioreq *io_req)
+अणु
+	काष्ठा scsi_cmnd *sc_cmd = io_req->sc_cmd;
+	काष्ठा Scsi_Host *host = sc_cmd->device->host;
+	काष्ठा fc_lport *lport = shost_priv(host);
+	काष्ठा qedf_ctx *qedf = lport_priv(lport);
+	काष्ठा e4_fcoe_task_context *task_ctx;
 	u16 xid;
-	struct fcoe_wqe *sqe;
+	काष्ठा fcoe_wqe *sqe;
 	u16 sqe_idx;
 
 	/* Initialize rest of io_req fileds */
 	io_req->data_xfer_len = scsi_bufflen(sc_cmd);
-	sc_cmd->SCp.ptr = (char *)io_req;
-	io_req->sge_type = QEDF_IOREQ_FAST_SGE; /* Assume fast SGL by default */
+	sc_cmd->SCp.ptr = (अक्षर *)io_req;
+	io_req->sge_type = QEDF_IOREQ_FAST_SGE; /* Assume fast SGL by शेष */
 
 	/* Record which cpu this request is associated with */
 	io_req->cpu = smp_processor_id();
 
-	if (sc_cmd->sc_data_direction == DMA_FROM_DEVICE) {
+	अगर (sc_cmd->sc_data_direction == DMA_FROM_DEVICE) अणु
 		io_req->io_req_flags = QEDF_READ;
 		qedf->input_requests++;
-	} else if (sc_cmd->sc_data_direction == DMA_TO_DEVICE) {
+	पूर्ण अन्यथा अगर (sc_cmd->sc_data_direction == DMA_TO_DEVICE) अणु
 		io_req->io_req_flags = QEDF_WRITE;
 		qedf->output_requests++;
-	} else {
+	पूर्ण अन्यथा अणु
 		io_req->io_req_flags = 0;
 		qedf->control_requests++;
-	}
+	पूर्ण
 
 	xid = io_req->xid;
 
-	/* Build buffer descriptor list for firmware from sg list */
-	if (qedf_build_bd_list_from_sg(io_req)) {
+	/* Build buffer descriptor list क्रम firmware from sg list */
+	अगर (qedf_build_bd_list_from_sg(io_req)) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "BD list creation failed.\n");
-		/* Release cmd will release io_req, but sc_cmd is assigned */
-		io_req->sc_cmd = NULL;
+		/* Release cmd will release io_req, but sc_cmd is asचिन्हित */
+		io_req->sc_cmd = शून्य;
 		kref_put(&io_req->refcount, qedf_release_cmd);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags) ||
-	    test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) {
+	अगर (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags) ||
+	    test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Session not offloaded yet.\n");
-		/* Release cmd will release io_req, but sc_cmd is assigned */
-		io_req->sc_cmd = NULL;
+		/* Release cmd will release io_req, but sc_cmd is asचिन्हित */
+		io_req->sc_cmd = शून्य;
 		kref_put(&io_req->refcount, qedf_release_cmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Record LUN number for later use if we neeed them */
-	io_req->lun = (int)sc_cmd->device->lun;
+	/* Record LUN number क्रम later use अगर we neeed them */
+	io_req->lun = (पूर्णांक)sc_cmd->device->lun;
 
-	/* Obtain free SQE */
+	/* Obtain मुक्त SQE */
 	sqe_idx = qedf_get_sqe_idx(fcport);
 	sqe = &fcport->sq[sqe_idx];
-	memset(sqe, 0, sizeof(struct fcoe_wqe));
+	स_रखो(sqe, 0, माप(काष्ठा fcoe_wqe));
 
 	/* Get the task context */
 	task_ctx = qedf_get_task_mem(&qedf->tasks, xid);
-	if (!task_ctx) {
+	अगर (!task_ctx) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "task_ctx is NULL, xid=%d.\n",
 			   xid);
-		/* Release cmd will release io_req, but sc_cmd is assigned */
-		io_req->sc_cmd = NULL;
+		/* Release cmd will release io_req, but sc_cmd is asचिन्हित */
+		io_req->sc_cmd = शून्य;
 		kref_put(&io_req->refcount, qedf_release_cmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	qedf_init_task(fcport, lport, io_req, task_ctx, sqe);
 
-	/* Ring doorbell */
-	qedf_ring_doorbell(fcport);
+	/* Ring करोorbell */
+	qedf_ring_करोorbell(fcport);
 
 	/* Set that command is with the firmware now */
 	set_bit(QEDF_CMD_OUTSTANDING, &io_req->flags);
 
-	if (qedf_io_tracing && io_req->sc_cmd)
+	अगर (qedf_io_tracing && io_req->sc_cmd)
 		qedf_trace_io(fcport, io_req, QEDF_IO_TRACE_REQ);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int
-qedf_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *sc_cmd)
-{
-	struct fc_lport *lport = shost_priv(host);
-	struct qedf_ctx *qedf = lport_priv(lport);
-	struct fc_rport *rport = starget_to_rport(scsi_target(sc_cmd->device));
-	struct fc_rport_libfc_priv *rp = rport->dd_data;
-	struct qedf_rport *fcport;
-	struct qedf_ioreq *io_req;
-	int rc = 0;
-	int rval;
-	unsigned long flags = 0;
-	int num_sgs = 0;
+पूर्णांक
+qedf_queuecommand(काष्ठा Scsi_Host *host, काष्ठा scsi_cmnd *sc_cmd)
+अणु
+	काष्ठा fc_lport *lport = shost_priv(host);
+	काष्ठा qedf_ctx *qedf = lport_priv(lport);
+	काष्ठा fc_rport *rport = starget_to_rport(scsi_target(sc_cmd->device));
+	काष्ठा fc_rport_libfc_priv *rp = rport->dd_data;
+	काष्ठा qedf_rport *fcport;
+	काष्ठा qedf_ioreq *io_req;
+	पूर्णांक rc = 0;
+	पूर्णांक rval;
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक num_sgs = 0;
 
 	num_sgs = scsi_sg_count(sc_cmd);
-	if (scsi_sg_count(sc_cmd) > QEDF_MAX_BDS_PER_CMD) {
+	अगर (scsi_sg_count(sc_cmd) > QEDF_MAX_BDS_PER_CMD) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Number of SG elements %d exceeds what hardware limitation of %d.\n",
 			 num_sgs, QEDF_MAX_BDS_PER_CMD);
 		sc_cmd->result = DID_ERROR;
-		sc_cmd->scsi_done(sc_cmd);
-		return 0;
-	}
+		sc_cmd->scsi_करोne(sc_cmd);
+		वापस 0;
+	पूर्ण
 
-	if (test_bit(QEDF_UNLOADING, &qedf->flags) ||
-	    test_bit(QEDF_DBG_STOP_IO, &qedf->flags)) {
+	अगर (test_bit(QEDF_UNLOADING, &qedf->flags) ||
+	    test_bit(QEDF_DBG_STOP_IO, &qedf->flags)) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 			  "Returning DNC as unloading or stop io, flags 0x%lx.\n",
 			  qedf->flags);
 		sc_cmd->result = DID_NO_CONNECT << 16;
-		sc_cmd->scsi_done(sc_cmd);
-		return 0;
-	}
+		sc_cmd->scsi_करोne(sc_cmd);
+		वापस 0;
+	पूर्ण
 
-	if (!qedf->pdev->msix_enabled) {
+	अगर (!qedf->pdev->msix_enabled) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Completing sc_cmd=%p DID_NO_CONNECT as MSI-X is not enabled.\n",
 		    sc_cmd);
 		sc_cmd->result = DID_NO_CONNECT << 16;
-		sc_cmd->scsi_done(sc_cmd);
-		return 0;
-	}
+		sc_cmd->scsi_करोne(sc_cmd);
+		वापस 0;
+	पूर्ण
 
-	rval = fc_remote_port_chkready(rport);
-	if (rval) {
+	rval = fc_remote_port_chkपढ़ोy(rport);
+	अगर (rval) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 			  "fc_remote_port_chkready failed=0x%x for port_id=0x%06x.\n",
 			  rval, rport->port_id);
 		sc_cmd->result = rval;
-		sc_cmd->scsi_done(sc_cmd);
-		return 0;
-	}
+		sc_cmd->scsi_करोne(sc_cmd);
+		वापस 0;
+	पूर्ण
 
-	/* Retry command if we are doing a qed drain operation */
-	if (test_bit(QEDF_DRAIN_ACTIVE, &qedf->flags)) {
+	/* Retry command अगर we are करोing a qed drain operation */
+	अगर (test_bit(QEDF_DRAIN_ACTIVE, &qedf->flags)) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO, "Drain active.\n");
 		rc = SCSI_MLQUEUE_HOST_BUSY;
-		goto exit_qcmd;
-	}
+		जाओ निकास_qcmd;
+	पूर्ण
 
-	if (lport->state != LPORT_ST_READY ||
-	    atomic_read(&qedf->link_state) != QEDF_LINK_UP) {
+	अगर (lport->state != LPORT_ST_READY ||
+	    atomic_पढ़ो(&qedf->link_state) != QEDF_LINK_UP) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO, "Link down.\n");
 		rc = SCSI_MLQUEUE_HOST_BUSY;
-		goto exit_qcmd;
-	}
+		जाओ निकास_qcmd;
+	पूर्ण
 
-	/* rport and tgt are allocated together, so tgt should be non-NULL */
-	fcport = (struct qedf_rport *)&rp[1];
+	/* rport and tgt are allocated together, so tgt should be non-शून्य */
+	fcport = (काष्ठा qedf_rport *)&rp[1];
 
-	if (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags) ||
-	    test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) {
+	अगर (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags) ||
+	    test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) अणु
 		/*
 		 * Session is not offloaded yet. Let SCSI-ml retry
 		 * the command.
 		 */
 		rc = SCSI_MLQUEUE_TARGET_BUSY;
-		goto exit_qcmd;
-	}
+		जाओ निकास_qcmd;
+	पूर्ण
 
 	atomic_inc(&fcport->ios_to_queue);
 
-	if (fcport->retry_delay_timestamp) {
-		/* Take fcport->rport_lock for resetting the delay_timestamp */
+	अगर (fcport->retry_delay_बारtamp) अणु
+		/* Take fcport->rport_lock क्रम resetting the delay_बारtamp */
 		spin_lock_irqsave(&fcport->rport_lock, flags);
-		if (time_after(jiffies, fcport->retry_delay_timestamp)) {
-			fcport->retry_delay_timestamp = 0;
-		} else {
+		अगर (समय_after(jअगरfies, fcport->retry_delay_बारtamp)) अणु
+			fcport->retry_delay_बारtamp = 0;
+		पूर्ण अन्यथा अणु
 			spin_unlock_irqrestore(&fcport->rport_lock, flags);
-			/* If retry_delay timer is active, flow off the ML */
+			/* If retry_delay समयr is active, flow off the ML */
 			rc = SCSI_MLQUEUE_TARGET_BUSY;
 			atomic_dec(&fcport->ios_to_queue);
-			goto exit_qcmd;
-		}
+			जाओ निकास_qcmd;
+		पूर्ण
 		spin_unlock_irqrestore(&fcport->rport_lock, flags);
-	}
+	पूर्ण
 
 	io_req = qedf_alloc_cmd(fcport, QEDF_SCSI_CMD);
-	if (!io_req) {
+	अगर (!io_req) अणु
 		rc = SCSI_MLQUEUE_HOST_BUSY;
 		atomic_dec(&fcport->ios_to_queue);
-		goto exit_qcmd;
-	}
+		जाओ निकास_qcmd;
+	पूर्ण
 
 	io_req->sc_cmd = sc_cmd;
 
-	/* Take fcport->rport_lock for posting to fcport send queue */
+	/* Take fcport->rport_lock क्रम posting to fcport send queue */
 	spin_lock_irqsave(&fcport->rport_lock, flags);
-	if (qedf_post_io_req(fcport, io_req)) {
+	अगर (qedf_post_io_req(fcport, io_req)) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Unable to post io_req\n");
 		/* Return SQE to pool */
-		atomic_inc(&fcport->free_sqes);
+		atomic_inc(&fcport->मुक्त_sqes);
 		rc = SCSI_MLQUEUE_HOST_BUSY;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&fcport->rport_lock, flags);
 	atomic_dec(&fcport->ios_to_queue);
 
-exit_qcmd:
-	return rc;
-}
+निकास_qcmd:
+	वापस rc;
+पूर्ण
 
-static void qedf_parse_fcp_rsp(struct qedf_ioreq *io_req,
-				 struct fcoe_cqe_rsp_info *fcp_rsp)
-{
-	struct scsi_cmnd *sc_cmd = io_req->sc_cmd;
-	struct qedf_ctx *qedf = io_req->fcport->qedf;
+अटल व्योम qedf_parse_fcp_rsp(काष्ठा qedf_ioreq *io_req,
+				 काष्ठा fcoe_cqe_rsp_info *fcp_rsp)
+अणु
+	काष्ठा scsi_cmnd *sc_cmd = io_req->sc_cmd;
+	काष्ठा qedf_ctx *qedf = io_req->fcport->qedf;
 	u8 rsp_flags = fcp_rsp->rsp_flags.flags;
-	int fcp_sns_len = 0;
-	int fcp_rsp_len = 0;
-	uint8_t *rsp_info, *sense_data;
+	पूर्णांक fcp_sns_len = 0;
+	पूर्णांक fcp_rsp_len = 0;
+	uपूर्णांक8_t *rsp_info, *sense_data;
 
 	io_req->fcp_status = FC_GOOD;
 	io_req->fcp_resid = 0;
-	if (rsp_flags & (FCOE_FCP_RSP_FLAGS_FCP_RESID_OVER |
+	अगर (rsp_flags & (FCOE_FCP_RSP_FLAGS_FCP_RESID_OVER |
 	    FCOE_FCP_RSP_FLAGS_FCP_RESID_UNDER))
 		io_req->fcp_resid = fcp_rsp->fcp_resid;
 
@@ -1073,11 +1074,11 @@ static void qedf_parse_fcp_rsp(struct qedf_ioreq *io_req,
 	CMD_SCSI_STATUS(sc_cmd) = io_req->cdb_status =
 	    fcp_rsp->scsi_status_code;
 
-	if (rsp_flags &
+	अगर (rsp_flags &
 	    FCOE_FCP_RSP_FLAGS_FCP_RSP_LEN_VALID)
 		fcp_rsp_len = fcp_rsp->fcp_rsp_len;
 
-	if (rsp_flags &
+	अगर (rsp_flags &
 	    FCOE_FCP_RSP_FLAGS_FCP_SNS_LEN_VALID)
 		fcp_sns_len = fcp_rsp->fcp_sns_len;
 
@@ -1086,98 +1087,98 @@ static void qedf_parse_fcp_rsp(struct qedf_ioreq *io_req,
 	rsp_info = sense_data = io_req->sense_buffer;
 
 	/* fetch fcp_rsp_code */
-	if ((fcp_rsp_len == 4) || (fcp_rsp_len == 8)) {
-		/* Only for task management function */
+	अगर ((fcp_rsp_len == 4) || (fcp_rsp_len == 8)) अणु
+		/* Only क्रम task management function */
 		io_req->fcp_rsp_code = rsp_info[3];
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "fcp_rsp_code = %d\n", io_req->fcp_rsp_code);
 		/* Adjust sense-data location. */
 		sense_data += fcp_rsp_len;
-	}
+	पूर्ण
 
-	if (fcp_sns_len > SCSI_SENSE_BUFFERSIZE) {
+	अगर (fcp_sns_len > SCSI_SENSE_BUFFERSIZE) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Truncating sense buffer\n");
 		fcp_sns_len = SCSI_SENSE_BUFFERSIZE;
-	}
+	पूर्ण
 
-	/* The sense buffer can be NULL for TMF commands */
-	if (sc_cmd->sense_buffer) {
-		memset(sc_cmd->sense_buffer, 0, SCSI_SENSE_BUFFERSIZE);
-		if (fcp_sns_len)
-			memcpy(sc_cmd->sense_buffer, sense_data,
+	/* The sense buffer can be शून्य क्रम TMF commands */
+	अगर (sc_cmd->sense_buffer) अणु
+		स_रखो(sc_cmd->sense_buffer, 0, SCSI_SENSE_BUFFERSIZE);
+		अगर (fcp_sns_len)
+			स_नकल(sc_cmd->sense_buffer, sense_data,
 			    fcp_sns_len);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qedf_unmap_sg_list(struct qedf_ctx *qedf, struct qedf_ioreq *io_req)
-{
-	struct scsi_cmnd *sc = io_req->sc_cmd;
+अटल व्योम qedf_unmap_sg_list(काष्ठा qedf_ctx *qedf, काष्ठा qedf_ioreq *io_req)
+अणु
+	काष्ठा scsi_cmnd *sc = io_req->sc_cmd;
 
-	if (io_req->bd_tbl->bd_valid && sc && scsi_sg_count(sc)) {
+	अगर (io_req->bd_tbl->bd_valid && sc && scsi_sg_count(sc)) अणु
 		dma_unmap_sg(&qedf->pdev->dev, scsi_sglist(sc),
 		    scsi_sg_count(sc), sc->sc_data_direction);
 		io_req->bd_tbl->bd_valid = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
-	struct qedf_ioreq *io_req)
-{
-	struct scsi_cmnd *sc_cmd;
-	struct fcoe_cqe_rsp_info *fcp_rsp;
-	struct qedf_rport *fcport;
-	int refcount;
-	u16 scope, qualifier = 0;
+व्योम qedf_scsi_completion(काष्ठा qedf_ctx *qedf, काष्ठा fcoe_cqe *cqe,
+	काष्ठा qedf_ioreq *io_req)
+अणु
+	काष्ठा scsi_cmnd *sc_cmd;
+	काष्ठा fcoe_cqe_rsp_info *fcp_rsp;
+	काष्ठा qedf_rport *fcport;
+	पूर्णांक refcount;
+	u16 scope, qualअगरier = 0;
 	u8 fw_residual_flag = 0;
-	unsigned long flags = 0;
+	अचिन्हित दीर्घ flags = 0;
 	u16 chk_scope = 0;
 
-	if (!io_req)
-		return;
-	if (!cqe)
-		return;
+	अगर (!io_req)
+		वापस;
+	अगर (!cqe)
+		वापस;
 
-	if (!test_bit(QEDF_CMD_OUTSTANDING, &io_req->flags) ||
+	अगर (!test_bit(QEDF_CMD_OUTSTANDING, &io_req->flags) ||
 	    test_bit(QEDF_CMD_IN_CLEANUP, &io_req->flags) ||
-	    test_bit(QEDF_CMD_IN_ABORT, &io_req->flags)) {
+	    test_bit(QEDF_CMD_IN_ABORT, &io_req->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "io_req xid=0x%x already in cleanup or abort processing or already completed.\n",
 			 io_req->xid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sc_cmd = io_req->sc_cmd;
 	fcp_rsp = &cqe->cqe_info.rsp_info;
 
-	if (!sc_cmd) {
+	अगर (!sc_cmd) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "sc_cmd is NULL!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sc_cmd->SCp.ptr) {
+	अगर (!sc_cmd->SCp.ptr) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "SCp.ptr is NULL, returned in "
 		    "another context.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sc_cmd->device) {
+	अगर (!sc_cmd->device) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Device for sc_cmd %p is NULL.\n", sc_cmd);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sc_cmd->request) {
+	अगर (!sc_cmd->request) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "sc_cmd->request is NULL, "
 		    "sc_cmd=%p.\n", sc_cmd);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sc_cmd->request->q) {
+	अगर (!sc_cmd->request->q) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "request->q is NULL so request "
 		   "is not valid, sc_cmd=%p.\n", sc_cmd);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fcport = io_req->fcport;
 
@@ -1185,32 +1186,32 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 	 * When flush is active, let the cmds be completed from the cleanup
 	 * context
 	 */
-	if (test_bit(QEDF_RPORT_IN_TARGET_RESET, &fcport->flags) ||
+	अगर (test_bit(QEDF_RPORT_IN_TARGET_RESET, &fcport->flags) ||
 	    (test_bit(QEDF_RPORT_IN_LUN_RESET, &fcport->flags) &&
-	     sc_cmd->device->lun == (u64)fcport->lun_reset_lun)) {
+	     sc_cmd->device->lun == (u64)fcport->lun_reset_lun)) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 			  "Dropping good completion xid=0x%x as fcport is flushing",
 			  io_req->xid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	qedf_parse_fcp_rsp(io_req, fcp_rsp);
 
 	qedf_unmap_sg_list(qedf, io_req);
 
-	/* Check for FCP transport error */
-	if (io_req->fcp_rsp_len > 3 && io_req->fcp_rsp_code) {
+	/* Check क्रम FCP transport error */
+	अगर (io_req->fcp_rsp_len > 3 && io_req->fcp_rsp_code) अणु
 		QEDF_ERR(&(qedf->dbg_ctx),
 		    "FCP I/O protocol failure xid=0x%x fcp_rsp_len=%d "
 		    "fcp_rsp_code=%d.\n", io_req->xid, io_req->fcp_rsp_len,
 		    io_req->fcp_rsp_code);
 		sc_cmd->result = DID_BUS_BUSY << 16;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	fw_residual_flag = GET_FIELD(cqe->cqe_info.rsp_info.fw_error_flags,
 	    FCOE_CQE_RSP_INFO_FW_UNDERRUN);
-	if (fw_residual_flag) {
+	अगर (fw_residual_flag) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Firmware detected underrun: xid=0x%x fcp_rsp.flags=0x%02x fcp_resid=%d fw_residual=0x%x lba=%02x%02x%02x%02x.\n",
 			 io_req->xid, fcp_rsp->rsp_flags.flags,
@@ -1218,9 +1219,9 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 			 cqe->cqe_info.rsp_info.fw_residual, sc_cmd->cmnd[2],
 			 sc_cmd->cmnd[3], sc_cmd->cmnd[4], sc_cmd->cmnd[5]);
 
-		if (io_req->cdb_status == 0)
+		अगर (io_req->cdb_status == 0)
 			sc_cmd->result = (DID_ERROR << 16) | io_req->cdb_status;
-		else
+		अन्यथा
 			sc_cmd->result = (DID_OK << 16) | io_req->cdb_status;
 
 		/*
@@ -1228,16 +1229,16 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 		 * any previously data.
 		 */
 		scsi_set_resid(sc_cmd, scsi_bufflen(sc_cmd));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (io_req->fcp_status) {
-	case FC_GOOD:
-		if (io_req->cdb_status == 0) {
+	चयन (io_req->fcp_status) अणु
+	हाल FC_GOOD:
+		अगर (io_req->cdb_status == 0) अणु
 			/* Good I/O completion */
 			sc_cmd->result = DID_OK << 16;
-		} else {
-			refcount = kref_read(&io_req->refcount);
+		पूर्ण अन्यथा अणु
+			refcount = kref_पढ़ो(&io_req->refcount);
 			QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 			    "%d:0:%d:%lld xid=0x%0x op=0x%02x "
 			    "lba=%02x%02x%02x%02x cdb_status=%d "
@@ -1250,164 +1251,164 @@ void qedf_scsi_completion(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 			    refcount);
 			sc_cmd->result = (DID_OK << 16) | io_req->cdb_status;
 
-			if (io_req->cdb_status == SAM_STAT_TASK_SET_FULL ||
-			    io_req->cdb_status == SAM_STAT_BUSY) {
+			अगर (io_req->cdb_status == SAM_STAT_TASK_SET_FULL ||
+			    io_req->cdb_status == SAM_STAT_BUSY) अणु
 				/*
 				 * Check whether we need to set retry_delay at
 				 * all based on retry_delay module parameter
-				 * and the status qualifier.
+				 * and the status qualअगरier.
 				 */
 
 				/* Upper 2 bits */
-				scope = fcp_rsp->retry_delay_timer & 0xC000;
+				scope = fcp_rsp->retry_delay_समयr & 0xC000;
 				/* Lower 14 bits */
-				qualifier = fcp_rsp->retry_delay_timer & 0x3FFF;
+				qualअगरier = fcp_rsp->retry_delay_समयr & 0x3FFF;
 
-				if (qedf_retry_delay)
+				अगर (qedf_retry_delay)
 					chk_scope = 1;
 				/* Record stats */
-				if (io_req->cdb_status ==
+				अगर (io_req->cdb_status ==
 				    SAM_STAT_TASK_SET_FULL)
 					qedf->task_set_fulls++;
-				else
+				अन्यथा
 					qedf->busy++;
-			}
-		}
-		if (io_req->fcp_resid)
+			पूर्ण
+		पूर्ण
+		अगर (io_req->fcp_resid)
 			scsi_set_resid(sc_cmd, io_req->fcp_resid);
 
-		if (chk_scope == 1) {
-			if ((scope == 1 || scope == 2) &&
-			    (qualifier > 0 && qualifier <= 0x3FEF)) {
-				/* Check we don't go over the max */
-				if (qualifier > QEDF_RETRY_DELAY_MAX) {
-					qualifier = QEDF_RETRY_DELAY_MAX;
+		अगर (chk_scope == 1) अणु
+			अगर ((scope == 1 || scope == 2) &&
+			    (qualअगरier > 0 && qualअगरier <= 0x3FEF)) अणु
+				/* Check we करोn't go over the max */
+				अगर (qualअगरier > QEDF_RETRY_DELAY_MAX) अणु
+					qualअगरier = QEDF_RETRY_DELAY_MAX;
 					QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 						  "qualifier = %d\n",
-						  (fcp_rsp->retry_delay_timer &
+						  (fcp_rsp->retry_delay_समयr &
 						  0x3FFF));
-				}
+				पूर्ण
 				QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 					  "Scope = %d and qualifier = %d",
-					  scope, qualifier);
+					  scope, qualअगरier);
 				/*  Take fcport->rport_lock to
-				 *  update the retry_delay_timestamp
+				 *  update the retry_delay_बारtamp
 				 */
 				spin_lock_irqsave(&fcport->rport_lock, flags);
-				fcport->retry_delay_timestamp =
-					jiffies + (qualifier * HZ / 10);
+				fcport->retry_delay_बारtamp =
+					jअगरfies + (qualअगरier * HZ / 10);
 				spin_unlock_irqrestore(&fcport->rport_lock,
 						       flags);
 
-			} else {
+			पूर्ण अन्यथा अणु
 				QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 					  "combination of scope = %d and qualifier = %d is not handled in qedf.\n",
-					  scope, qualifier);
-			}
-		}
-		break;
-	default:
+					  scope, qualअगरier);
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO, "fcp_status=%d.\n",
 			   io_req->fcp_status);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
-	if (qedf_io_tracing)
+	अगर (qedf_io_tracing)
 		qedf_trace_io(fcport, io_req, QEDF_IO_TRACE_RSP);
 
 	/*
-	 * We wait till the end of the function to clear the
-	 * outstanding bit in case we need to send an abort
+	 * We रुको till the end of the function to clear the
+	 * outstanding bit in हाल we need to send an पात
 	 */
 	clear_bit(QEDF_CMD_OUTSTANDING, &io_req->flags);
 
-	io_req->sc_cmd = NULL;
-	sc_cmd->SCp.ptr =  NULL;
-	sc_cmd->scsi_done(sc_cmd);
+	io_req->sc_cmd = शून्य;
+	sc_cmd->SCp.ptr =  शून्य;
+	sc_cmd->scsi_करोne(sc_cmd);
 	kref_put(&io_req->refcount, qedf_release_cmd);
-}
+पूर्ण
 
 /* Return a SCSI command in some other context besides a normal completion */
-void qedf_scsi_done(struct qedf_ctx *qedf, struct qedf_ioreq *io_req,
-	int result)
-{
-	struct scsi_cmnd *sc_cmd;
-	int refcount;
+व्योम qedf_scsi_करोne(काष्ठा qedf_ctx *qedf, काष्ठा qedf_ioreq *io_req,
+	पूर्णांक result)
+अणु
+	काष्ठा scsi_cmnd *sc_cmd;
+	पूर्णांक refcount;
 
-	if (!io_req) {
+	अगर (!io_req) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO, "io_req is NULL\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (test_and_set_bit(QEDF_CMD_ERR_SCSI_DONE, &io_req->flags)) {
+	अगर (test_and_set_bit(QEDF_CMD_ERR_SCSI_DONE, &io_req->flags)) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 			  "io_req:%p scsi_done handling already done\n",
 			  io_req);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * We will be done with this command after this call so clear the
+	 * We will be करोne with this command after this call so clear the
 	 * outstanding bit.
 	 */
 	clear_bit(QEDF_CMD_OUTSTANDING, &io_req->flags);
 
 	sc_cmd = io_req->sc_cmd;
 
-	if (!sc_cmd) {
+	अगर (!sc_cmd) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "sc_cmd is NULL!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!virt_addr_valid(sc_cmd)) {
+	अगर (!virt_addr_valid(sc_cmd)) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "sc_cmd=%p is not valid.", sc_cmd);
-		goto bad_scsi_ptr;
-	}
+		जाओ bad_scsi_ptr;
+	पूर्ण
 
-	if (!sc_cmd->SCp.ptr) {
+	अगर (!sc_cmd->SCp.ptr) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "SCp.ptr is NULL, returned in "
 		    "another context.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sc_cmd->device) {
+	अगर (!sc_cmd->device) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "Device for sc_cmd %p is NULL.\n",
 			 sc_cmd);
-		goto bad_scsi_ptr;
-	}
+		जाओ bad_scsi_ptr;
+	पूर्ण
 
-	if (!virt_addr_valid(sc_cmd->device)) {
+	अगर (!virt_addr_valid(sc_cmd->device)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Device pointer for sc_cmd %p is bad.\n", sc_cmd);
-		goto bad_scsi_ptr;
-	}
+		जाओ bad_scsi_ptr;
+	पूर्ण
 
-	if (!sc_cmd->sense_buffer) {
+	अगर (!sc_cmd->sense_buffer) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "sc_cmd->sense_buffer for sc_cmd %p is NULL.\n",
 			 sc_cmd);
-		goto bad_scsi_ptr;
-	}
+		जाओ bad_scsi_ptr;
+	पूर्ण
 
-	if (!virt_addr_valid(sc_cmd->sense_buffer)) {
+	अगर (!virt_addr_valid(sc_cmd->sense_buffer)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "sc_cmd->sense_buffer for sc_cmd %p is bad.\n",
 			 sc_cmd);
-		goto bad_scsi_ptr;
-	}
+		जाओ bad_scsi_ptr;
+	पूर्ण
 
-	if (!sc_cmd->scsi_done) {
+	अगर (!sc_cmd->scsi_करोne) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "sc_cmd->scsi_done for sc_cmd %p is NULL.\n",
 			 sc_cmd);
-		goto bad_scsi_ptr;
-	}
+		जाओ bad_scsi_ptr;
+	पूर्ण
 
 	qedf_unmap_sg_list(qedf, io_req);
 
 	sc_cmd->result = result << 16;
-	refcount = kref_read(&io_req->refcount);
+	refcount = kref_पढ़ो(&io_req->refcount);
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO, "%d:0:%d:%lld: Completing "
 	    "sc_cmd=%p result=0x%08x op=0x%02x lba=0x%02x%02x%02x%02x, "
 	    "allowed=%d retries=%d refcount=%d.\n",
@@ -1419,76 +1420,76 @@ void qedf_scsi_done(struct qedf_ctx *qedf, struct qedf_ioreq *io_req,
 
 	/*
 	 * Set resid to the whole buffer length so we won't try to resue any
-	 * previously read data
+	 * previously पढ़ो data
 	 */
 	scsi_set_resid(sc_cmd, scsi_bufflen(sc_cmd));
 
-	if (qedf_io_tracing)
+	अगर (qedf_io_tracing)
 		qedf_trace_io(io_req->fcport, io_req, QEDF_IO_TRACE_RSP);
 
-	io_req->sc_cmd = NULL;
-	sc_cmd->SCp.ptr = NULL;
-	sc_cmd->scsi_done(sc_cmd);
+	io_req->sc_cmd = शून्य;
+	sc_cmd->SCp.ptr = शून्य;
+	sc_cmd->scsi_करोne(sc_cmd);
 	kref_put(&io_req->refcount, qedf_release_cmd);
-	return;
+	वापस;
 
 bad_scsi_ptr:
 	/*
-	 * Clear the io_req->sc_cmd backpointer so we don't try to process
+	 * Clear the io_req->sc_cmd backpoपूर्णांकer so we करोn't try to process
 	 * this again
 	 */
-	io_req->sc_cmd = NULL;
+	io_req->sc_cmd = शून्य;
 	kref_put(&io_req->refcount, qedf_release_cmd);  /* ID: 001 */
-}
+पूर्ण
 
 /*
- * Handle warning type CQE completions. This is mainly used for REC timer
+ * Handle warning type CQE completions. This is मुख्यly used क्रम REC समयr
  * popping.
  */
-void qedf_process_warning_compl(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
-	struct qedf_ioreq *io_req)
-{
-	int rval, i;
-	struct qedf_rport *fcport = io_req->fcport;
+व्योम qedf_process_warning_compl(काष्ठा qedf_ctx *qedf, काष्ठा fcoe_cqe *cqe,
+	काष्ठा qedf_ioreq *io_req)
+अणु
+	पूर्णांक rval, i;
+	काष्ठा qedf_rport *fcport = io_req->fcport;
 	u64 err_warn_bit_map;
 	u8 err_warn = 0xff;
 
-	if (!cqe) {
+	अगर (!cqe) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 			  "cqe is NULL for io_req %p xid=0x%x\n",
 			  io_req, io_req->xid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	QEDF_ERR(&(io_req->fcport->qedf->dbg_ctx), "Warning CQE, "
 		  "xid=0x%x\n", io_req->xid);
 	QEDF_ERR(&(io_req->fcport->qedf->dbg_ctx),
 		  "err_warn_bitmap=%08x:%08x\n",
-		  le32_to_cpu(cqe->cqe_info.err_info.err_warn_bitmap_hi),
-		  le32_to_cpu(cqe->cqe_info.err_info.err_warn_bitmap_lo));
+		  le32_to_cpu(cqe->cqe_info.err_info.err_warn_biपंचांगap_hi),
+		  le32_to_cpu(cqe->cqe_info.err_info.err_warn_biपंचांगap_lo));
 	QEDF_ERR(&(io_req->fcport->qedf->dbg_ctx), "tx_buff_off=%08x, "
 		  "rx_buff_off=%08x, rx_id=%04x\n",
 		  le32_to_cpu(cqe->cqe_info.err_info.tx_buf_off),
 		  le32_to_cpu(cqe->cqe_info.err_info.rx_buf_off),
 		  le32_to_cpu(cqe->cqe_info.err_info.rx_id));
 
-	/* Normalize the error bitmap value to an just an unsigned int */
+	/* Normalize the error biपंचांगap value to an just an अचिन्हित पूर्णांक */
 	err_warn_bit_map = (u64)
-	    ((u64)cqe->cqe_info.err_info.err_warn_bitmap_hi << 32) |
-	    (u64)cqe->cqe_info.err_info.err_warn_bitmap_lo;
-	for (i = 0; i < 64; i++) {
-		if (err_warn_bit_map & (u64)((u64)1 << i)) {
+	    ((u64)cqe->cqe_info.err_info.err_warn_biपंचांगap_hi << 32) |
+	    (u64)cqe->cqe_info.err_info.err_warn_biपंचांगap_lo;
+	क्रम (i = 0; i < 64; i++) अणु
+		अगर (err_warn_bit_map & (u64)((u64)1 << i)) अणु
 			err_warn = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Check if REC TOV expired if this is a tape device */
-	if (fcport->dev_type == QEDF_RPORT_TYPE_TAPE) {
-		if (err_warn ==
-		    FCOE_WARNING_CODE_REC_TOV_TIMER_EXPIRATION) {
+	/* Check अगर REC TOV expired अगर this is a tape device */
+	अगर (fcport->dev_type == QEDF_RPORT_TYPE_TAPE) अणु
+		अगर (err_warn ==
+		    FCOE_WARNING_CODE_REC_TOV_TIMER_EXPIRATION) अणु
 			QEDF_ERR(&(qedf->dbg_ctx), "REC timer expired.\n");
-			if (!test_bit(QEDF_CMD_SRR_SENT, &io_req->flags)) {
+			अगर (!test_bit(QEDF_CMD_SRR_SENT, &io_req->flags)) अणु
 				io_req->rx_buf_off =
 				    cqe->cqe_info.err_info.rx_buf_off;
 				io_req->tx_buf_off =
@@ -1496,216 +1497,216 @@ void qedf_process_warning_compl(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
 				io_req->rx_id = cqe->cqe_info.err_info.rx_id;
 				rval = qedf_send_rec(io_req);
 				/*
-				 * We only want to abort the io_req if we
+				 * We only want to पात the io_req अगर we
 				 * can't queue the REC command as we want to
-				 * keep the exchange open for recovery.
+				 * keep the exchange खोलो क्रम recovery.
 				 */
-				if (rval)
-					goto send_abort;
-			}
-			return;
-		}
-	}
+				अगर (rval)
+					जाओ send_पात;
+			पूर्ण
+			वापस;
+		पूर्ण
+	पूर्ण
 
-send_abort:
-	init_completion(&io_req->abts_done);
+send_पात:
+	init_completion(&io_req->abts_करोne);
 	rval = qedf_initiate_abts(io_req, true);
-	if (rval)
+	अगर (rval)
 		QEDF_ERR(&(qedf->dbg_ctx), "Failed to queue ABTS.\n");
-}
+पूर्ण
 
 /* Cleanup a command when we receive an error detection completion */
-void qedf_process_error_detect(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
-	struct qedf_ioreq *io_req)
-{
-	int rval;
+व्योम qedf_process_error_detect(काष्ठा qedf_ctx *qedf, काष्ठा fcoe_cqe *cqe,
+	काष्ठा qedf_ioreq *io_req)
+अणु
+	पूर्णांक rval;
 
-	if (!cqe) {
+	अगर (!cqe) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 			  "cqe is NULL for io_req %p\n", io_req);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	QEDF_ERR(&(io_req->fcport->qedf->dbg_ctx), "Error detection CQE, "
 		  "xid=0x%x\n", io_req->xid);
 	QEDF_ERR(&(io_req->fcport->qedf->dbg_ctx),
 		  "err_warn_bitmap=%08x:%08x\n",
-		  le32_to_cpu(cqe->cqe_info.err_info.err_warn_bitmap_hi),
-		  le32_to_cpu(cqe->cqe_info.err_info.err_warn_bitmap_lo));
+		  le32_to_cpu(cqe->cqe_info.err_info.err_warn_biपंचांगap_hi),
+		  le32_to_cpu(cqe->cqe_info.err_info.err_warn_biपंचांगap_lo));
 	QEDF_ERR(&(io_req->fcport->qedf->dbg_ctx), "tx_buff_off=%08x, "
 		  "rx_buff_off=%08x, rx_id=%04x\n",
 		  le32_to_cpu(cqe->cqe_info.err_info.tx_buf_off),
 		  le32_to_cpu(cqe->cqe_info.err_info.rx_buf_off),
 		  le32_to_cpu(cqe->cqe_info.err_info.rx_id));
 
-	if (qedf->stop_io_on_error) {
+	अगर (qedf->stop_io_on_error) अणु
 		qedf_stop_all_io(qedf);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	init_completion(&io_req->abts_done);
+	init_completion(&io_req->abts_करोne);
 	rval = qedf_initiate_abts(io_req, true);
-	if (rval)
+	अगर (rval)
 		QEDF_ERR(&(qedf->dbg_ctx), "Failed to queue ABTS.\n");
-}
+पूर्ण
 
-static void qedf_flush_els_req(struct qedf_ctx *qedf,
-	struct qedf_ioreq *els_req)
-{
+अटल व्योम qedf_flush_els_req(काष्ठा qedf_ctx *qedf,
+	काष्ठा qedf_ioreq *els_req)
+अणु
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 	    "Flushing ELS request xid=0x%x refcount=%d.\n", els_req->xid,
-	    kref_read(&els_req->refcount));
+	    kref_पढ़ो(&els_req->refcount));
 
 	/*
-	 * Need to distinguish this from a timeout when calling the
+	 * Need to distinguish this from a समयout when calling the
 	 * els_req->cb_func.
 	 */
 	els_req->event = QEDF_IOREQ_EV_ELS_FLUSH;
 
 	clear_bit(QEDF_CMD_OUTSTANDING, &els_req->flags);
 
-	/* Cancel the timer */
-	cancel_delayed_work_sync(&els_req->timeout_work);
+	/* Cancel the समयr */
+	cancel_delayed_work_sync(&els_req->समयout_work);
 
 	/* Call callback function to complete command */
-	if (els_req->cb_func && els_req->cb_arg) {
+	अगर (els_req->cb_func && els_req->cb_arg) अणु
 		els_req->cb_func(els_req->cb_arg);
-		els_req->cb_arg = NULL;
-	}
+		els_req->cb_arg = शून्य;
+	पूर्ण
 
-	/* Release kref for original initiate_els */
+	/* Release kref क्रम original initiate_els */
 	kref_put(&els_req->refcount, qedf_release_cmd);
-}
+पूर्ण
 
-/* A value of -1 for lun is a wild card that means flush all
- * active SCSI I/Os for the target.
+/* A value of -1 क्रम lun is a wild card that means flush all
+ * active SCSI I/Os क्रम the target.
  */
-void qedf_flush_active_ios(struct qedf_rport *fcport, int lun)
-{
-	struct qedf_ioreq *io_req;
-	struct qedf_ctx *qedf;
-	struct qedf_cmd_mgr *cmd_mgr;
-	int i, rc;
-	unsigned long flags;
-	int flush_cnt = 0;
-	int wait_cnt = 100;
-	int refcount = 0;
+व्योम qedf_flush_active_ios(काष्ठा qedf_rport *fcport, पूर्णांक lun)
+अणु
+	काष्ठा qedf_ioreq *io_req;
+	काष्ठा qedf_ctx *qedf;
+	काष्ठा qedf_cmd_mgr *cmd_mgr;
+	पूर्णांक i, rc;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक flush_cnt = 0;
+	पूर्णांक रुको_cnt = 100;
+	पूर्णांक refcount = 0;
 
-	if (!fcport) {
-		QEDF_ERR(NULL, "fcport is NULL\n");
-		return;
-	}
+	अगर (!fcport) अणु
+		QEDF_ERR(शून्य, "fcport is NULL\n");
+		वापस;
+	पूर्ण
 
 	/* Check that fcport is still offloaded */
-	if (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) {
-		QEDF_ERR(NULL, "fcport is no longer offloaded.\n");
-		return;
-	}
+	अगर (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) अणु
+		QEDF_ERR(शून्य, "fcport is no longer offloaded.\n");
+		वापस;
+	पूर्ण
 
 	qedf = fcport->qedf;
 
-	if (!qedf) {
-		QEDF_ERR(NULL, "qedf is NULL.\n");
-		return;
-	}
+	अगर (!qedf) अणु
+		QEDF_ERR(शून्य, "qedf is NULL.\n");
+		वापस;
+	पूर्ण
 
-	/* Only wait for all commands to be queued in the Upload context */
-	if (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags) &&
-	    (lun == -1)) {
-		while (atomic_read(&fcport->ios_to_queue)) {
+	/* Only रुको क्रम all commands to be queued in the Upload context */
+	अगर (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags) &&
+	    (lun == -1)) अणु
+		जबतक (atomic_पढ़ो(&fcport->ios_to_queue)) अणु
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 				  "Waiting for %d I/Os to be queued\n",
-				  atomic_read(&fcport->ios_to_queue));
-			if (wait_cnt == 0) {
-				QEDF_ERR(NULL,
+				  atomic_पढ़ो(&fcport->ios_to_queue));
+			अगर (रुको_cnt == 0) अणु
+				QEDF_ERR(शून्य,
 					 "%d IOs request could not be queued\n",
-					 atomic_read(&fcport->ios_to_queue));
-			}
+					 atomic_पढ़ो(&fcport->ios_to_queue));
+			पूर्ण
 			msleep(20);
-			wait_cnt--;
-		}
-	}
+			रुको_cnt--;
+		पूर्ण
+	पूर्ण
 
 	cmd_mgr = qedf->cmd_mgr;
 
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 		  "Flush active i/o's num=0x%x fcport=0x%p port_id=0x%06x scsi_id=%d.\n",
-		  atomic_read(&fcport->num_active_ios), fcport,
+		  atomic_पढ़ो(&fcport->num_active_ios), fcport,
 		  fcport->rdata->ids.port_id, fcport->rport->scsi_target_id);
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO, "Locking flush mutex.\n");
 
 	mutex_lock(&qedf->flush_mutex);
-	if (lun == -1) {
+	अगर (lun == -1) अणु
 		set_bit(QEDF_RPORT_IN_TARGET_RESET, &fcport->flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_bit(QEDF_RPORT_IN_LUN_RESET, &fcport->flags);
 		fcport->lun_reset_lun = lun;
-	}
+	पूर्ण
 
-	for (i = 0; i < FCOE_PARAMS_NUM_TASKS; i++) {
+	क्रम (i = 0; i < FCOE_PARAMS_NUM_TASKS; i++) अणु
 		io_req = &cmd_mgr->cmds[i];
 
-		if (!io_req)
-			continue;
-		if (!io_req->fcport)
-			continue;
+		अगर (!io_req)
+			जारी;
+		अगर (!io_req->fcport)
+			जारी;
 
 		spin_lock_irqsave(&cmd_mgr->lock, flags);
 
-		if (io_req->alloc) {
-			if (!test_bit(QEDF_CMD_OUTSTANDING, &io_req->flags)) {
-				if (io_req->cmd_type == QEDF_SCSI_CMD)
+		अगर (io_req->alloc) अणु
+			अगर (!test_bit(QEDF_CMD_OUTSTANDING, &io_req->flags)) अणु
+				अगर (io_req->cmd_type == QEDF_SCSI_CMD)
 					QEDF_ERR(&qedf->dbg_ctx,
 						 "Allocated but not queued, xid=0x%x\n",
 						 io_req->xid);
-			}
+			पूर्ण
 			spin_unlock_irqrestore(&cmd_mgr->lock, flags);
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_unlock_irqrestore(&cmd_mgr->lock, flags);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (io_req->fcport != fcport)
-			continue;
+		अगर (io_req->fcport != fcport)
+			जारी;
 
-		/* In case of ABTS, CMD_OUTSTANDING is cleared on ABTS response,
+		/* In हाल of ABTS, CMD_OUTSTANDING is cleared on ABTS response,
 		 * but RRQ is still pending.
-		 * Workaround: Within qedf_send_rrq, we check if the fcport is
-		 * NULL, and we drop the ref on the io_req to clean it up.
+		 * Workaround: Within qedf_send_rrq, we check अगर the fcport is
+		 * शून्य, and we drop the ref on the io_req to clean it up.
 		 */
-		if (!test_bit(QEDF_CMD_OUTSTANDING, &io_req->flags)) {
-			refcount = kref_read(&io_req->refcount);
+		अगर (!test_bit(QEDF_CMD_OUTSTANDING, &io_req->flags)) अणु
+			refcount = kref_पढ़ो(&io_req->refcount);
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 				  "Not outstanding, xid=0x%x, cmd_type=%d refcount=%d.\n",
 				  io_req->xid, io_req->cmd_type, refcount);
 			/* If RRQ work has been queue, try to cancel it and
-			 * free the io_req
+			 * मुक्त the io_req
 			 */
-			if (atomic_read(&io_req->state) ==
-			    QEDFC_CMD_ST_RRQ_WAIT) {
-				if (cancel_delayed_work_sync
-				    (&io_req->rrq_work)) {
+			अगर (atomic_पढ़ो(&io_req->state) ==
+			    QEDFC_CMD_ST_RRQ_WAIT) अणु
+				अगर (cancel_delayed_work_sync
+				    (&io_req->rrq_work)) अणु
 					QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 						  "Putting reference for pending RRQ work xid=0x%x.\n",
 						  io_req->xid);
 					/* ID: 003 */
 					kref_put(&io_req->refcount,
 						 qedf_release_cmd);
-				}
-			}
-			continue;
-		}
+				पूर्ण
+			पूर्ण
+			जारी;
+		पूर्ण
 
 		/* Only consider flushing ELS during target reset */
-		if (io_req->cmd_type == QEDF_ELS &&
-		    lun == -1) {
+		अगर (io_req->cmd_type == QEDF_ELS &&
+		    lun == -1) अणु
 			rc = kref_get_unless_zero(&io_req->refcount);
-			if (!rc) {
+			अगर (!rc) अणु
 				QEDF_ERR(&(qedf->dbg_ctx),
 				    "Could not get kref for ELS io_req=0x%p xid=0x%x.\n",
 				    io_req, io_req->xid);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			qedf_initiate_cleanup(io_req, false);
 			flush_cnt++;
 			qedf_flush_els_req(qedf, io_req);
@@ -1714,112 +1715,112 @@ void qedf_flush_active_ios(struct qedf_rport *fcport, int lun)
 			 * Release the kref and go back to the top of the
 			 * loop.
 			 */
-			goto free_cmd;
-		}
+			जाओ मुक्त_cmd;
+		पूर्ण
 
-		if (io_req->cmd_type == QEDF_ABTS) {
+		अगर (io_req->cmd_type == QEDF_ABTS) अणु
 			/* ID: 004 */
 			rc = kref_get_unless_zero(&io_req->refcount);
-			if (!rc) {
+			अगर (!rc) अणु
 				QEDF_ERR(&(qedf->dbg_ctx),
 				    "Could not get kref for abort io_req=0x%p xid=0x%x.\n",
 				    io_req, io_req->xid);
-				continue;
-			}
-			if (lun != -1 && io_req->lun != lun)
-				goto free_cmd;
+				जारी;
+			पूर्ण
+			अगर (lun != -1 && io_req->lun != lun)
+				जाओ मुक्त_cmd;
 
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 			    "Flushing abort xid=0x%x.\n", io_req->xid);
 
-			if (cancel_delayed_work_sync(&io_req->rrq_work)) {
+			अगर (cancel_delayed_work_sync(&io_req->rrq_work)) अणु
 				QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 					  "Putting ref for cancelled RRQ work xid=0x%x.\n",
 					  io_req->xid);
 				kref_put(&io_req->refcount, qedf_release_cmd);
-			}
+			पूर्ण
 
-			if (cancel_delayed_work_sync(&io_req->timeout_work)) {
+			अगर (cancel_delayed_work_sync(&io_req->समयout_work)) अणु
 				QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 					  "Putting ref for cancelled tmo work xid=0x%x.\n",
 					  io_req->xid);
 				qedf_initiate_cleanup(io_req, true);
-				/* Notify eh_abort handler that ABTS is
+				/* Notअगरy eh_पात handler that ABTS is
 				 * complete
 				 */
-				complete(&io_req->abts_done);
+				complete(&io_req->abts_करोne);
 				clear_bit(QEDF_CMD_IN_ABORT, &io_req->flags);
 				/* ID: 002 */
 				kref_put(&io_req->refcount, qedf_release_cmd);
-			}
+			पूर्ण
 			flush_cnt++;
-			goto free_cmd;
-		}
+			जाओ मुक्त_cmd;
+		पूर्ण
 
-		if (!io_req->sc_cmd)
-			continue;
-		if (!io_req->sc_cmd->device) {
+		अगर (!io_req->sc_cmd)
+			जारी;
+		अगर (!io_req->sc_cmd->device) अणु
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 				  "Device backpointer NULL for sc_cmd=%p.\n",
 				  io_req->sc_cmd);
-			/* Put reference for non-existent scsi_cmnd */
-			io_req->sc_cmd = NULL;
+			/* Put reference क्रम non-existent scsi_cmnd */
+			io_req->sc_cmd = शून्य;
 			qedf_initiate_cleanup(io_req, false);
 			kref_put(&io_req->refcount, qedf_release_cmd);
-			continue;
-		}
-		if (lun > -1) {
-			if (io_req->lun != lun)
-				continue;
-		}
+			जारी;
+		पूर्ण
+		अगर (lun > -1) अणु
+			अगर (io_req->lun != lun)
+				जारी;
+		पूर्ण
 
 		/*
-		 * Use kref_get_unless_zero in the unlikely case the command
+		 * Use kref_get_unless_zero in the unlikely हाल the command
 		 * we're about to flush was completed in the normal SCSI path
 		 */
 		rc = kref_get_unless_zero(&io_req->refcount);
-		if (!rc) {
+		अगर (!rc) अणु
 			QEDF_ERR(&(qedf->dbg_ctx), "Could not get kref for "
 			    "io_req=0x%p xid=0x%x\n", io_req, io_req->xid);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO,
 		    "Cleanup xid=0x%x.\n", io_req->xid);
 		flush_cnt++;
 
-		/* Cleanup task and return I/O mid-layer */
+		/* Cleanup task and वापस I/O mid-layer */
 		qedf_initiate_cleanup(io_req, true);
 
-free_cmd:
+मुक्त_cmd:
 		kref_put(&io_req->refcount, qedf_release_cmd);	/* ID: 004 */
-	}
+	पूर्ण
 
-	wait_cnt = 60;
+	रुको_cnt = 60;
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 		  "Flushed 0x%x I/Os, active=0x%x.\n",
-		  flush_cnt, atomic_read(&fcport->num_active_ios));
-	/* Only wait for all commands to complete in the Upload context */
-	if (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags) &&
-	    (lun == -1)) {
-		while (atomic_read(&fcport->num_active_ios)) {
+		  flush_cnt, atomic_पढ़ो(&fcport->num_active_ios));
+	/* Only रुको क्रम all commands to complete in the Upload context */
+	अगर (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags) &&
+	    (lun == -1)) अणु
+		जबतक (atomic_पढ़ो(&fcport->num_active_ios)) अणु
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 				  "Flushed 0x%x I/Os, active=0x%x cnt=%d.\n",
 				  flush_cnt,
-				  atomic_read(&fcport->num_active_ios),
-				  wait_cnt);
-			if (wait_cnt == 0) {
+				  atomic_पढ़ो(&fcport->num_active_ios),
+				  रुको_cnt);
+			अगर (रुको_cnt == 0) अणु
 				QEDF_ERR(&qedf->dbg_ctx,
 					 "Flushed %d I/Os, active=%d.\n",
 					 flush_cnt,
-					 atomic_read(&fcport->num_active_ios));
-				for (i = 0; i < FCOE_PARAMS_NUM_TASKS; i++) {
+					 atomic_पढ़ो(&fcport->num_active_ios));
+				क्रम (i = 0; i < FCOE_PARAMS_NUM_TASKS; i++) अणु
 					io_req = &cmd_mgr->cmds[i];
-					if (io_req->fcport &&
-					    io_req->fcport == fcport) {
+					अगर (io_req->fcport &&
+					    io_req->fcport == fcport) अणु
 						refcount =
-						kref_read(&io_req->refcount);
-						set_bit(QEDF_CMD_DIRTY,
+						kref_पढ़ो(&io_req->refcount);
+						set_bit(QEDF_CMD_सूचीTY,
 							&io_req->flags);
 						QEDF_ERR(&qedf->dbg_ctx,
 							 "Outstanding io_req =%p xid=0x%x flags=0x%lx, sc_cmd=%p refcount=%d cmd_type=%d.\n",
@@ -1828,270 +1829,270 @@ free_cmd:
 							 io_req->sc_cmd,
 							 refcount,
 							 io_req->cmd_type);
-					}
-				}
+					पूर्ण
+				पूर्ण
 				WARN_ON(1);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			msleep(500);
-			wait_cnt--;
-		}
-	}
+			रुको_cnt--;
+		पूर्ण
+	पूर्ण
 
 	clear_bit(QEDF_RPORT_IN_LUN_RESET, &fcport->flags);
 	clear_bit(QEDF_RPORT_IN_TARGET_RESET, &fcport->flags);
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO, "Unlocking flush mutex.\n");
 	mutex_unlock(&qedf->flush_mutex);
-}
+पूर्ण
 
 /*
- * Initiate a ABTS middle path command. Note that we don't have to initialize
- * the task context for an ABTS task.
+ * Initiate a ABTS middle path command. Note that we करोn't have to initialize
+ * the task context क्रम an ABTS task.
  */
-int qedf_initiate_abts(struct qedf_ioreq *io_req, bool return_scsi_cmd_on_abts)
-{
-	struct fc_lport *lport;
-	struct qedf_rport *fcport = io_req->fcport;
-	struct fc_rport_priv *rdata;
-	struct qedf_ctx *qedf;
+पूर्णांक qedf_initiate_abts(काष्ठा qedf_ioreq *io_req, bool वापस_scsi_cmd_on_abts)
+अणु
+	काष्ठा fc_lport *lport;
+	काष्ठा qedf_rport *fcport = io_req->fcport;
+	काष्ठा fc_rport_priv *rdata;
+	काष्ठा qedf_ctx *qedf;
 	u16 xid;
-	int rc = 0;
-	unsigned long flags;
-	struct fcoe_wqe *sqe;
+	पूर्णांक rc = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा fcoe_wqe *sqe;
 	u16 sqe_idx;
-	int refcount = 0;
+	पूर्णांक refcount = 0;
 
-	/* Sanity check qedf_rport before dereferencing any pointers */
-	if (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) {
-		QEDF_ERR(NULL, "tgt not offloaded\n");
+	/* Sanity check qedf_rport beक्रमe dereferencing any poपूर्णांकers */
+	अगर (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) अणु
+		QEDF_ERR(शून्य, "tgt not offloaded\n");
 		rc = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	qedf = fcport->qedf;
 	rdata = fcport->rdata;
 
-	if (!rdata || !kref_get_unless_zero(&rdata->kref)) {
+	अगर (!rdata || !kref_get_unless_zero(&rdata->kref)) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "stale rport\n");
 		rc = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	lport = qedf->lport;
 
-	if (lport->state != LPORT_ST_READY || !(lport->link_up)) {
+	अगर (lport->state != LPORT_ST_READY || !(lport->link_up)) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "link is not ready\n");
 		rc = 1;
-		goto drop_rdata_kref;
-	}
+		जाओ drop_rdata_kref;
+	पूर्ण
 
-	if (atomic_read(&qedf->link_down_tmo_valid) > 0) {
+	अगर (atomic_पढ़ो(&qedf->link_करोwn_पंचांगo_valid) > 0) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "link_down_tmo active.\n");
 		rc = 1;
-		goto drop_rdata_kref;
-	}
+		जाओ drop_rdata_kref;
+	पूर्ण
 
 	/* Ensure room on SQ */
-	if (!atomic_read(&fcport->free_sqes)) {
+	अगर (!atomic_पढ़ो(&fcport->मुक्त_sqes)) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "No SQ entries available\n");
 		rc = 1;
-		goto drop_rdata_kref;
-	}
+		जाओ drop_rdata_kref;
+	पूर्ण
 
-	if (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) {
+	अगर (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "fcport is uploading.\n");
 		rc = 1;
-		goto drop_rdata_kref;
-	}
+		जाओ drop_rdata_kref;
+	पूर्ण
 
-	if (!test_bit(QEDF_CMD_OUTSTANDING, &io_req->flags) ||
+	अगर (!test_bit(QEDF_CMD_OUTSTANDING, &io_req->flags) ||
 	    test_bit(QEDF_CMD_IN_CLEANUP, &io_req->flags) ||
-	    test_bit(QEDF_CMD_IN_ABORT, &io_req->flags)) {
+	    test_bit(QEDF_CMD_IN_ABORT, &io_req->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "io_req xid=0x%x sc_cmd=%p already in cleanup or abort processing or already completed.\n",
 			 io_req->xid, io_req->sc_cmd);
 		rc = 1;
-		goto drop_rdata_kref;
-	}
+		जाओ drop_rdata_kref;
+	पूर्ण
 
 	kref_get(&io_req->refcount);
 
 	xid = io_req->xid;
 	qedf->control_requests++;
-	qedf->packet_aborts++;
+	qedf->packet_पातs++;
 
-	/* Set the command type to abort */
+	/* Set the command type to पात */
 	io_req->cmd_type = QEDF_ABTS;
-	io_req->return_scsi_cmd_on_abts = return_scsi_cmd_on_abts;
+	io_req->वापस_scsi_cmd_on_abts = वापस_scsi_cmd_on_abts;
 
 	set_bit(QEDF_CMD_IN_ABORT, &io_req->flags);
-	refcount = kref_read(&io_req->refcount);
+	refcount = kref_पढ़ो(&io_req->refcount);
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_SCSI_TM,
 		  "ABTS io_req xid = 0x%x refcount=%d\n",
 		  xid, refcount);
 
-	qedf_cmd_timer_set(qedf, io_req, QEDF_ABORT_TIMEOUT);
+	qedf_cmd_समयr_set(qedf, io_req, QEDF_ABORT_TIMEOUT);
 
 	spin_lock_irqsave(&fcport->rport_lock, flags);
 
 	sqe_idx = qedf_get_sqe_idx(fcport);
 	sqe = &fcport->sq[sqe_idx];
-	memset(sqe, 0, sizeof(struct fcoe_wqe));
+	स_रखो(sqe, 0, माप(काष्ठा fcoe_wqe));
 	io_req->task_params->sqe = sqe;
 
-	init_initiator_abort_fcoe_task(io_req->task_params);
-	qedf_ring_doorbell(fcport);
+	init_initiator_पात_fcoe_task(io_req->task_params);
+	qedf_ring_करोorbell(fcport);
 
 	spin_unlock_irqrestore(&fcport->rport_lock, flags);
 
 drop_rdata_kref:
 	kref_put(&rdata->kref, fc_rport_destroy);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void qedf_process_abts_compl(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
-	struct qedf_ioreq *io_req)
-{
-	uint32_t r_ctl;
-	int rc;
-	struct qedf_rport *fcport = io_req->fcport;
+व्योम qedf_process_abts_compl(काष्ठा qedf_ctx *qedf, काष्ठा fcoe_cqe *cqe,
+	काष्ठा qedf_ioreq *io_req)
+अणु
+	uपूर्णांक32_t r_ctl;
+	पूर्णांक rc;
+	काष्ठा qedf_rport *fcport = io_req->fcport;
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_SCSI_TM, "Entered with xid = "
 		   "0x%x cmd_type = %d\n", io_req->xid, io_req->cmd_type);
 
 	r_ctl = cqe->cqe_info.abts_info.r_ctl;
 
-	/* This was added at a point when we were scheduling abts_compl &
-	 * cleanup_compl on different CPUs and there was a possibility of
-	 * the io_req to be freed from the other context before we got here.
+	/* This was added at a poपूर्णांक when we were scheduling abts_compl &
+	 * cleanup_compl on dअगरferent CPUs and there was a possibility of
+	 * the io_req to be मुक्तd from the other context beक्रमe we got here.
 	 */
-	if (!fcport) {
+	अगर (!fcport) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 			  "Dropping ABTS completion xid=0x%x as fcport is NULL",
 			  io_req->xid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * When flush is active, let the cmds be completed from the cleanup
 	 * context
 	 */
-	if (test_bit(QEDF_RPORT_IN_TARGET_RESET, &fcport->flags) ||
-	    test_bit(QEDF_RPORT_IN_LUN_RESET, &fcport->flags)) {
+	अगर (test_bit(QEDF_RPORT_IN_TARGET_RESET, &fcport->flags) ||
+	    test_bit(QEDF_RPORT_IN_LUN_RESET, &fcport->flags)) अणु
 		QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 			  "Dropping ABTS completion xid=0x%x as fcport is flushing",
 			  io_req->xid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!cancel_delayed_work(&io_req->timeout_work)) {
+	अगर (!cancel_delayed_work(&io_req->समयout_work)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "Wasn't able to cancel abts timeout work.\n");
-	}
+	पूर्ण
 
-	switch (r_ctl) {
-	case FC_RCTL_BA_ACC:
+	चयन (r_ctl) अणु
+	हाल FC_RCTL_BA_ACC:
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_SCSI_TM,
 		    "ABTS response - ACC Send RRQ after R_A_TOV\n");
 		io_req->event = QEDF_IOREQ_EV_ABORT_SUCCESS;
 		rc = kref_get_unless_zero(&io_req->refcount);	/* ID: 003 */
-		if (!rc) {
+		अगर (!rc) अणु
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_SCSI_TM,
 				  "kref is already zero so ABTS was already completed or flushed xid=0x%x.\n",
 				  io_req->xid);
-			return;
-		}
+			वापस;
+		पूर्ण
 		/*
 		 * Dont release this cmd yet. It will be relesed
 		 * after we get RRQ response
 		 */
 		queue_delayed_work(qedf->dpc_wq, &io_req->rrq_work,
-		    msecs_to_jiffies(qedf->lport->r_a_tov));
+		    msecs_to_jअगरfies(qedf->lport->r_a_tov));
 		atomic_set(&io_req->state, QEDFC_CMD_ST_RRQ_WAIT);
-		break;
-	/* For error cases let the cleanup return the command */
-	case FC_RCTL_BA_RJT:
+		अवरोध;
+	/* For error हालs let the cleanup वापस the command */
+	हाल FC_RCTL_BA_RJT:
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_SCSI_TM,
 		   "ABTS response - RJT\n");
 		io_req->event = QEDF_IOREQ_EV_ABORT_FAILED;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		QEDF_ERR(&(qedf->dbg_ctx), "Unknown ABTS response\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	clear_bit(QEDF_CMD_IN_ABORT, &io_req->flags);
 
-	if (io_req->sc_cmd) {
-		if (!io_req->return_scsi_cmd_on_abts)
+	अगर (io_req->sc_cmd) अणु
+		अगर (!io_req->वापस_scsi_cmd_on_abts)
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_SCSI_TM,
 				  "Not call scsi_done for xid=0x%x.\n",
 				  io_req->xid);
-		if (io_req->return_scsi_cmd_on_abts)
-			qedf_scsi_done(qedf, io_req, DID_ERROR);
-	}
+		अगर (io_req->वापस_scsi_cmd_on_abts)
+			qedf_scsi_करोne(qedf, io_req, DID_ERROR);
+	पूर्ण
 
-	/* Notify eh_abort handler that ABTS is complete */
-	complete(&io_req->abts_done);
+	/* Notअगरy eh_पात handler that ABTS is complete */
+	complete(&io_req->abts_करोne);
 
 	kref_put(&io_req->refcount, qedf_release_cmd);
-}
+पूर्ण
 
-int qedf_init_mp_req(struct qedf_ioreq *io_req)
-{
-	struct qedf_mp_req *mp_req;
-	struct scsi_sge *mp_req_bd;
-	struct scsi_sge *mp_resp_bd;
-	struct qedf_ctx *qedf = io_req->fcport->qedf;
+पूर्णांक qedf_init_mp_req(काष्ठा qedf_ioreq *io_req)
+अणु
+	काष्ठा qedf_mp_req *mp_req;
+	काष्ठा scsi_sge *mp_req_bd;
+	काष्ठा scsi_sge *mp_resp_bd;
+	काष्ठा qedf_ctx *qedf = io_req->fcport->qedf;
 	dma_addr_t addr;
-	uint64_t sz;
+	uपूर्णांक64_t sz;
 
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_MP_REQ, "Entered.\n");
 
-	mp_req = (struct qedf_mp_req *)&(io_req->mp_req);
-	memset(mp_req, 0, sizeof(struct qedf_mp_req));
+	mp_req = (काष्ठा qedf_mp_req *)&(io_req->mp_req);
+	स_रखो(mp_req, 0, माप(काष्ठा qedf_mp_req));
 
-	if (io_req->cmd_type != QEDF_ELS) {
-		mp_req->req_len = sizeof(struct fcp_cmnd);
+	अगर (io_req->cmd_type != QEDF_ELS) अणु
+		mp_req->req_len = माप(काष्ठा fcp_cmnd);
 		io_req->data_xfer_len = mp_req->req_len;
-	} else
+	पूर्ण अन्यथा
 		mp_req->req_len = io_req->data_xfer_len;
 
 	mp_req->req_buf = dma_alloc_coherent(&qedf->pdev->dev, QEDF_PAGE_SIZE,
 	    &mp_req->req_buf_dma, GFP_KERNEL);
-	if (!mp_req->req_buf) {
+	अगर (!mp_req->req_buf) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Unable to alloc MP req buffer\n");
-		qedf_free_mp_resc(io_req);
-		return -ENOMEM;
-	}
+		qedf_मुक्त_mp_resc(io_req);
+		वापस -ENOMEM;
+	पूर्ण
 
 	mp_req->resp_buf = dma_alloc_coherent(&qedf->pdev->dev,
 	    QEDF_PAGE_SIZE, &mp_req->resp_buf_dma, GFP_KERNEL);
-	if (!mp_req->resp_buf) {
+	अगर (!mp_req->resp_buf) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Unable to alloc TM resp "
 			  "buffer\n");
-		qedf_free_mp_resc(io_req);
-		return -ENOMEM;
-	}
+		qedf_मुक्त_mp_resc(io_req);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Allocate and map mp_req_bd and mp_resp_bd */
-	sz = sizeof(struct scsi_sge);
+	sz = माप(काष्ठा scsi_sge);
 	mp_req->mp_req_bd = dma_alloc_coherent(&qedf->pdev->dev, sz,
 	    &mp_req->mp_req_bd_dma, GFP_KERNEL);
-	if (!mp_req->mp_req_bd) {
+	अगर (!mp_req->mp_req_bd) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Unable to alloc MP req bd\n");
-		qedf_free_mp_resc(io_req);
-		return -ENOMEM;
-	}
+		qedf_मुक्त_mp_resc(io_req);
+		वापस -ENOMEM;
+	पूर्ण
 
 	mp_req->mp_resp_bd = dma_alloc_coherent(&qedf->pdev->dev, sz,
 	    &mp_req->mp_resp_bd_dma, GFP_KERNEL);
-	if (!mp_req->mp_resp_bd) {
+	अगर (!mp_req->mp_resp_bd) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Unable to alloc MP resp bd\n");
-		qedf_free_mp_resc(io_req);
-		return -ENOMEM;
-	}
+		qedf_मुक्त_mp_resc(io_req);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Fill bd table */
 	addr = mp_req->req_buf_dma;
@@ -2111,98 +2112,98 @@ int qedf_init_mp_req(struct qedf_ioreq *io_req)
 	mp_resp_bd->sge_addr.hi = U64_HI(addr);
 	mp_resp_bd->sge_len = QEDF_PAGE_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Last ditch effort to clear the port if it's stuck. Used only after a
- * cleanup task times out.
+ * Last ditch efक्रमt to clear the port अगर it's stuck. Used only after a
+ * cleanup task बार out.
  */
-static void qedf_drain_request(struct qedf_ctx *qedf)
-{
-	if (test_bit(QEDF_DRAIN_ACTIVE, &qedf->flags)) {
+अटल व्योम qedf_drain_request(काष्ठा qedf_ctx *qedf)
+अणु
+	अगर (test_bit(QEDF_DRAIN_ACTIVE, &qedf->flags)) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "MCP drain already active.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Set bit to return all queuecommand requests as busy */
+	/* Set bit to वापस all queuecommand requests as busy */
 	set_bit(QEDF_DRAIN_ACTIVE, &qedf->flags);
 
-	/* Call qed drain request for function. Should be synchronous */
+	/* Call qed drain request क्रम function. Should be synchronous */
 	qed_ops->common->drain(qedf->cdev);
 
-	/* Settle time for CQEs to be returned */
+	/* Settle समय क्रम CQEs to be वापसed */
 	msleep(100);
 
-	/* Unplug and continue */
+	/* Unplug and जारी */
 	clear_bit(QEDF_DRAIN_ACTIVE, &qedf->flags);
-}
+पूर्ण
 
 /*
- * Returns SUCCESS if the cleanup task does not timeout, otherwise return
+ * Returns SUCCESS अगर the cleanup task करोes not समयout, otherwise वापस
  * FAILURE.
  */
-int qedf_initiate_cleanup(struct qedf_ioreq *io_req,
-	bool return_scsi_cmd_on_abts)
-{
-	struct qedf_rport *fcport;
-	struct qedf_ctx *qedf;
-	int tmo = 0;
-	int rc = SUCCESS;
-	unsigned long flags;
-	struct fcoe_wqe *sqe;
+पूर्णांक qedf_initiate_cleanup(काष्ठा qedf_ioreq *io_req,
+	bool वापस_scsi_cmd_on_abts)
+अणु
+	काष्ठा qedf_rport *fcport;
+	काष्ठा qedf_ctx *qedf;
+	पूर्णांक पंचांगo = 0;
+	पूर्णांक rc = SUCCESS;
+	अचिन्हित दीर्घ flags;
+	काष्ठा fcoe_wqe *sqe;
 	u16 sqe_idx;
-	int refcount = 0;
+	पूर्णांक refcount = 0;
 
 	fcport = io_req->fcport;
-	if (!fcport) {
-		QEDF_ERR(NULL, "fcport is NULL.\n");
-		return SUCCESS;
-	}
+	अगर (!fcport) अणु
+		QEDF_ERR(शून्य, "fcport is NULL.\n");
+		वापस SUCCESS;
+	पूर्ण
 
-	/* Sanity check qedf_rport before dereferencing any pointers */
-	if (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) {
-		QEDF_ERR(NULL, "tgt not offloaded\n");
-		return SUCCESS;
-	}
+	/* Sanity check qedf_rport beक्रमe dereferencing any poपूर्णांकers */
+	अगर (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) अणु
+		QEDF_ERR(शून्य, "tgt not offloaded\n");
+		वापस SUCCESS;
+	पूर्ण
 
 	qedf = fcport->qedf;
-	if (!qedf) {
-		QEDF_ERR(NULL, "qedf is NULL.\n");
-		return SUCCESS;
-	}
+	अगर (!qedf) अणु
+		QEDF_ERR(शून्य, "qedf is NULL.\n");
+		वापस SUCCESS;
+	पूर्ण
 
-	if (io_req->cmd_type == QEDF_ELS) {
-		goto process_els;
-	}
+	अगर (io_req->cmd_type == QEDF_ELS) अणु
+		जाओ process_els;
+	पूर्ण
 
-	if (!test_bit(QEDF_CMD_OUTSTANDING, &io_req->flags) ||
-	    test_and_set_bit(QEDF_CMD_IN_CLEANUP, &io_req->flags)) {
+	अगर (!test_bit(QEDF_CMD_OUTSTANDING, &io_req->flags) ||
+	    test_and_set_bit(QEDF_CMD_IN_CLEANUP, &io_req->flags)) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "io_req xid=0x%x already in "
 			  "cleanup processing or already completed.\n",
 			  io_req->xid);
-		return SUCCESS;
-	}
+		वापस SUCCESS;
+	पूर्ण
 	set_bit(QEDF_CMD_IN_CLEANUP, &io_req->flags);
 
 process_els:
 	/* Ensure room on SQ */
-	if (!atomic_read(&fcport->free_sqes)) {
+	अगर (!atomic_पढ़ो(&fcport->मुक्त_sqes)) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "No SQ entries available\n");
 		/* Need to make sure we clear the flag since it was set */
 		clear_bit(QEDF_CMD_IN_CLEANUP, &io_req->flags);
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
-	if (io_req->cmd_type == QEDF_CLEANUP) {
+	अगर (io_req->cmd_type == QEDF_CLEANUP) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "io_req=0x%x is already a cleanup command cmd_type=%d.\n",
 			 io_req->xid, io_req->cmd_type);
 		clear_bit(QEDF_CMD_IN_CLEANUP, &io_req->flags);
-		return SUCCESS;
-	}
+		वापस SUCCESS;
+	पूर्ण
 
-	refcount = kref_read(&io_req->refcount);
+	refcount = kref_पढ़ो(&io_req->refcount);
 
 	QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_IO,
 		  "Entered xid=0x%x sc_cmd=%p cmd_type=%d flags=0x%lx refcount=%d fcport=%p port_id=0x%06x\n",
@@ -2211,112 +2212,112 @@ process_els:
 
 	/* Cleanup cmds re-use the same TID as the original I/O */
 	io_req->cmd_type = QEDF_CLEANUP;
-	io_req->return_scsi_cmd_on_abts = return_scsi_cmd_on_abts;
+	io_req->वापस_scsi_cmd_on_abts = वापस_scsi_cmd_on_abts;
 
-	init_completion(&io_req->cleanup_done);
+	init_completion(&io_req->cleanup_करोne);
 
 	spin_lock_irqsave(&fcport->rport_lock, flags);
 
 	sqe_idx = qedf_get_sqe_idx(fcport);
 	sqe = &fcport->sq[sqe_idx];
-	memset(sqe, 0, sizeof(struct fcoe_wqe));
+	स_रखो(sqe, 0, माप(काष्ठा fcoe_wqe));
 	io_req->task_params->sqe = sqe;
 
 	init_initiator_cleanup_fcoe_task(io_req->task_params);
-	qedf_ring_doorbell(fcport);
+	qedf_ring_करोorbell(fcport);
 
 	spin_unlock_irqrestore(&fcport->rport_lock, flags);
 
-	tmo = wait_for_completion_timeout(&io_req->cleanup_done,
+	पंचांगo = रुको_क्रम_completion_समयout(&io_req->cleanup_करोne,
 					  QEDF_CLEANUP_TIMEOUT * HZ);
 
-	if (!tmo) {
+	अगर (!पंचांगo) अणु
 		rc = FAILED;
-		/* Timeout case */
+		/* Timeout हाल */
 		QEDF_ERR(&(qedf->dbg_ctx), "Cleanup command timeout, "
 			  "xid=%x.\n", io_req->xid);
 		clear_bit(QEDF_CMD_IN_CLEANUP, &io_req->flags);
-		/* Issue a drain request if cleanup task times out */
+		/* Issue a drain request अगर cleanup task बार out */
 		QEDF_ERR(&(qedf->dbg_ctx), "Issuing MCP drain request.\n");
 		qedf_drain_request(qedf);
-	}
+	पूर्ण
 
 	/* If it TASK MGMT handle it, reference will be decreased
-	 * in qedf_execute_tmf
+	 * in qedf_execute_पंचांगf
 	 */
-	if (io_req->tm_flags  == FCP_TMF_LUN_RESET ||
-	    io_req->tm_flags == FCP_TMF_TGT_RESET) {
+	अगर (io_req->पंचांग_flags  == FCP_TMF_LUN_RESET ||
+	    io_req->पंचांग_flags == FCP_TMF_TGT_RESET) अणु
 		clear_bit(QEDF_CMD_OUTSTANDING, &io_req->flags);
-		io_req->sc_cmd = NULL;
-		complete(&io_req->tm_done);
-	}
+		io_req->sc_cmd = शून्य;
+		complete(&io_req->पंचांग_करोne);
+	पूर्ण
 
-	if (io_req->sc_cmd) {
-		if (!io_req->return_scsi_cmd_on_abts)
+	अगर (io_req->sc_cmd) अणु
+		अगर (!io_req->वापस_scsi_cmd_on_abts)
 			QEDF_INFO(&qedf->dbg_ctx, QEDF_LOG_SCSI_TM,
 				  "Not call scsi_done for xid=0x%x.\n",
 				  io_req->xid);
-		if (io_req->return_scsi_cmd_on_abts)
-			qedf_scsi_done(qedf, io_req, DID_ERROR);
-	}
+		अगर (io_req->वापस_scsi_cmd_on_abts)
+			qedf_scsi_करोne(qedf, io_req, DID_ERROR);
+	पूर्ण
 
-	if (rc == SUCCESS)
+	अगर (rc == SUCCESS)
 		io_req->event = QEDF_IOREQ_EV_CLEANUP_SUCCESS;
-	else
+	अन्यथा
 		io_req->event = QEDF_IOREQ_EV_CLEANUP_FAILED;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void qedf_process_cleanup_compl(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
-	struct qedf_ioreq *io_req)
-{
+व्योम qedf_process_cleanup_compl(काष्ठा qedf_ctx *qedf, काष्ठा fcoe_cqe *cqe,
+	काष्ठा qedf_ioreq *io_req)
+अणु
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_IO, "Entered xid = 0x%x\n",
 		   io_req->xid);
 
 	clear_bit(QEDF_CMD_IN_CLEANUP, &io_req->flags);
 
 	/* Complete so we can finish cleaning up the I/O */
-	complete(&io_req->cleanup_done);
-}
+	complete(&io_req->cleanup_करोne);
+पूर्ण
 
-static int qedf_execute_tmf(struct qedf_rport *fcport, struct scsi_cmnd *sc_cmd,
-	uint8_t tm_flags)
-{
-	struct qedf_ioreq *io_req;
-	struct e4_fcoe_task_context *task;
-	struct qedf_ctx *qedf = fcport->qedf;
-	struct fc_lport *lport = qedf->lport;
-	int rc = 0;
-	uint16_t xid;
-	int tmo = 0;
-	int lun = 0;
-	unsigned long flags;
-	struct fcoe_wqe *sqe;
+अटल पूर्णांक qedf_execute_पंचांगf(काष्ठा qedf_rport *fcport, काष्ठा scsi_cmnd *sc_cmd,
+	uपूर्णांक8_t पंचांग_flags)
+अणु
+	काष्ठा qedf_ioreq *io_req;
+	काष्ठा e4_fcoe_task_context *task;
+	काष्ठा qedf_ctx *qedf = fcport->qedf;
+	काष्ठा fc_lport *lport = qedf->lport;
+	पूर्णांक rc = 0;
+	uपूर्णांक16_t xid;
+	पूर्णांक पंचांगo = 0;
+	पूर्णांक lun = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा fcoe_wqe *sqe;
 	u16 sqe_idx;
 
-	if (!sc_cmd) {
+	अगर (!sc_cmd) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "sc_cmd is NULL\n");
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
-	lun = (int)sc_cmd->device->lun;
-	if (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) {
+	lun = (पूर्णांक)sc_cmd->device->lun;
+	अगर (!test_bit(QEDF_RPORT_SESSION_READY, &fcport->flags)) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "fcport not offloaded\n");
 		rc = FAILED;
-		goto no_flush;
-	}
+		जाओ no_flush;
+	पूर्ण
 
 	io_req = qedf_alloc_cmd(fcport, QEDF_TASK_MGMT_CMD);
-	if (!io_req) {
+	अगर (!io_req) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Failed TMF");
 		rc = -EAGAIN;
-		goto no_flush;
-	}
+		जाओ no_flush;
+	पूर्ण
 
-	if (tm_flags == FCP_TMF_LUN_RESET)
+	अगर (पंचांग_flags == FCP_TMF_LUN_RESET)
 		qedf->lun_resets++;
-	else if (tm_flags == FCP_TMF_TGT_RESET)
+	अन्यथा अगर (पंचांग_flags == FCP_TMF_TGT_RESET)
 		qedf->target_resets++;
 
 	/* Initialize rest of io_req fields */
@@ -2330,10 +2331,10 @@ static int qedf_execute_tmf(struct qedf_rport *fcport, struct scsi_cmnd *sc_cmd,
 	/* Set TM flags */
 	io_req->io_req_flags = QEDF_READ;
 	io_req->data_xfer_len = 0;
-	io_req->tm_flags = tm_flags;
+	io_req->पंचांग_flags = पंचांग_flags;
 
-	/* Default is to return a SCSI command when an error occurs */
-	io_req->return_scsi_cmd_on_abts = false;
+	/* Default is to वापस a SCSI command when an error occurs */
+	io_req->वापस_scsi_cmd_on_abts = false;
 
 	/* Obtain exchange id */
 	xid = io_req->xid;
@@ -2341,191 +2342,191 @@ static int qedf_execute_tmf(struct qedf_rport *fcport, struct scsi_cmnd *sc_cmd,
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_SCSI_TM, "TMF io_req xid = "
 		   "0x%x\n", xid);
 
-	/* Initialize task context for this IO request */
+	/* Initialize task context क्रम this IO request */
 	task = qedf_get_task_mem(&qedf->tasks, xid);
 
-	init_completion(&io_req->tm_done);
+	init_completion(&io_req->पंचांग_करोne);
 
 	spin_lock_irqsave(&fcport->rport_lock, flags);
 
 	sqe_idx = qedf_get_sqe_idx(fcport);
 	sqe = &fcport->sq[sqe_idx];
-	memset(sqe, 0, sizeof(struct fcoe_wqe));
+	स_रखो(sqe, 0, माप(काष्ठा fcoe_wqe));
 
 	qedf_init_task(fcport, lport, io_req, task, sqe);
-	qedf_ring_doorbell(fcport);
+	qedf_ring_करोorbell(fcport);
 
 	spin_unlock_irqrestore(&fcport->rport_lock, flags);
 
 	set_bit(QEDF_CMD_OUTSTANDING, &io_req->flags);
-	tmo = wait_for_completion_timeout(&io_req->tm_done,
+	पंचांगo = रुको_क्रम_completion_समयout(&io_req->पंचांग_करोne,
 	    QEDF_TM_TIMEOUT * HZ);
 
-	if (!tmo) {
+	अगर (!पंचांगo) अणु
 		rc = FAILED;
 		QEDF_ERR(&(qedf->dbg_ctx), "wait for tm_cmpl timeout!\n");
-		/* Clear outstanding bit since command timed out */
+		/* Clear outstanding bit since command समयd out */
 		clear_bit(QEDF_CMD_OUTSTANDING, &io_req->flags);
-		io_req->sc_cmd = NULL;
-	} else {
+		io_req->sc_cmd = शून्य;
+	पूर्ण अन्यथा अणु
 		/* Check TMF response code */
-		if (io_req->fcp_rsp_code == 0)
+		अगर (io_req->fcp_rsp_code == 0)
 			rc = SUCCESS;
-		else
+		अन्यथा
 			rc = FAILED;
-	}
+	पूर्ण
 	/*
-	 * Double check that fcport has not gone into an uploading state before
-	 * executing the command flush for the LUN/target.
+	 * Double check that fcport has not gone पूर्णांकo an uploading state beक्रमe
+	 * executing the command flush क्रम the LUN/target.
 	 */
-	if (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) {
+	अगर (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx,
 			 "fcport is uploading, not executing flush.\n");
-		goto no_flush;
-	}
-	/* We do not need this io_req any more */
+		जाओ no_flush;
+	पूर्ण
+	/* We करो not need this io_req any more */
 	kref_put(&io_req->refcount, qedf_release_cmd);
 
 
-	if (tm_flags == FCP_TMF_LUN_RESET)
+	अगर (पंचांग_flags == FCP_TMF_LUN_RESET)
 		qedf_flush_active_ios(fcport, lun);
-	else
+	अन्यथा
 		qedf_flush_active_ios(fcport, -1);
 
 no_flush:
-	if (rc != SUCCESS) {
+	अगर (rc != SUCCESS) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "task mgmt command failed...\n");
 		rc = FAILED;
-	} else {
+	पूर्ण अन्यथा अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "task mgmt command success...\n");
 		rc = SUCCESS;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-int qedf_initiate_tmf(struct scsi_cmnd *sc_cmd, u8 tm_flags)
-{
-	struct fc_rport *rport = starget_to_rport(scsi_target(sc_cmd->device));
-	struct fc_rport_libfc_priv *rp = rport->dd_data;
-	struct qedf_rport *fcport = (struct qedf_rport *)&rp[1];
-	struct qedf_ctx *qedf;
-	struct fc_lport *lport = shost_priv(sc_cmd->device->host);
-	int rc = SUCCESS;
-	int rval;
-	struct qedf_ioreq *io_req = NULL;
-	int ref_cnt = 0;
-	struct fc_rport_priv *rdata = fcport->rdata;
+पूर्णांक qedf_initiate_पंचांगf(काष्ठा scsi_cmnd *sc_cmd, u8 पंचांग_flags)
+अणु
+	काष्ठा fc_rport *rport = starget_to_rport(scsi_target(sc_cmd->device));
+	काष्ठा fc_rport_libfc_priv *rp = rport->dd_data;
+	काष्ठा qedf_rport *fcport = (काष्ठा qedf_rport *)&rp[1];
+	काष्ठा qedf_ctx *qedf;
+	काष्ठा fc_lport *lport = shost_priv(sc_cmd->device->host);
+	पूर्णांक rc = SUCCESS;
+	पूर्णांक rval;
+	काष्ठा qedf_ioreq *io_req = शून्य;
+	पूर्णांक ref_cnt = 0;
+	काष्ठा fc_rport_priv *rdata = fcport->rdata;
 
-	QEDF_ERR(NULL,
+	QEDF_ERR(शून्य,
 		 "tm_flags 0x%x sc_cmd %p op = 0x%02x target_id = 0x%x lun=%d\n",
-		 tm_flags, sc_cmd, sc_cmd->cmd_len ? sc_cmd->cmnd[0] : 0xff,
-		 rport->scsi_target_id, (int)sc_cmd->device->lun);
+		 पंचांग_flags, sc_cmd, sc_cmd->cmd_len ? sc_cmd->cmnd[0] : 0xff,
+		 rport->scsi_target_id, (पूर्णांक)sc_cmd->device->lun);
 
-	if (!rdata || !kref_get_unless_zero(&rdata->kref)) {
-		QEDF_ERR(NULL, "stale rport\n");
-		return FAILED;
-	}
+	अगर (!rdata || !kref_get_unless_zero(&rdata->kref)) अणु
+		QEDF_ERR(शून्य, "stale rport\n");
+		वापस FAILED;
+	पूर्ण
 
-	QEDF_ERR(NULL, "portid=%06x tm_flags =%s\n", rdata->ids.port_id,
-		 (tm_flags == FCP_TMF_TGT_RESET) ? "TARGET RESET" :
+	QEDF_ERR(शून्य, "portid=%06x tm_flags =%s\n", rdata->ids.port_id,
+		 (पंचांग_flags == FCP_TMF_TGT_RESET) ? "TARGET RESET" :
 		 "LUN RESET");
 
-	if (sc_cmd->SCp.ptr) {
-		io_req = (struct qedf_ioreq *)sc_cmd->SCp.ptr;
-		ref_cnt = kref_read(&io_req->refcount);
-		QEDF_ERR(NULL,
+	अगर (sc_cmd->SCp.ptr) अणु
+		io_req = (काष्ठा qedf_ioreq *)sc_cmd->SCp.ptr;
+		ref_cnt = kref_पढ़ो(&io_req->refcount);
+		QEDF_ERR(शून्य,
 			 "orig io_req = %p xid = 0x%x ref_cnt = %d.\n",
 			 io_req, io_req->xid, ref_cnt);
-	}
+	पूर्ण
 
-	rval = fc_remote_port_chkready(rport);
-	if (rval) {
-		QEDF_ERR(NULL, "device_reset rport not ready\n");
+	rval = fc_remote_port_chkपढ़ोy(rport);
+	अगर (rval) अणु
+		QEDF_ERR(शून्य, "device_reset rport not ready\n");
 		rc = FAILED;
-		goto tmf_err;
-	}
+		जाओ पंचांगf_err;
+	पूर्ण
 
 	rc = fc_block_scsi_eh(sc_cmd);
-	if (rc)
-		goto tmf_err;
+	अगर (rc)
+		जाओ पंचांगf_err;
 
-	if (!fcport) {
-		QEDF_ERR(NULL, "device_reset: rport is NULL\n");
+	अगर (!fcport) अणु
+		QEDF_ERR(शून्य, "device_reset: rport is NULL\n");
 		rc = FAILED;
-		goto tmf_err;
-	}
+		जाओ पंचांगf_err;
+	पूर्ण
 
 	qedf = fcport->qedf;
 
-	if (!qedf) {
-		QEDF_ERR(NULL, "qedf is NULL.\n");
+	अगर (!qedf) अणु
+		QEDF_ERR(शून्य, "qedf is NULL.\n");
 		rc = FAILED;
-		goto tmf_err;
-	}
+		जाओ पंचांगf_err;
+	पूर्ण
 
-	if (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) {
+	अगर (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) अणु
 		QEDF_ERR(&qedf->dbg_ctx, "Connection is getting uploaded.\n");
 		rc = SUCCESS;
-		goto tmf_err;
-	}
+		जाओ पंचांगf_err;
+	पूर्ण
 
-	if (test_bit(QEDF_UNLOADING, &qedf->flags) ||
-	    test_bit(QEDF_DBG_STOP_IO, &qedf->flags)) {
+	अगर (test_bit(QEDF_UNLOADING, &qedf->flags) ||
+	    test_bit(QEDF_DBG_STOP_IO, &qedf->flags)) अणु
 		rc = SUCCESS;
-		goto tmf_err;
-	}
+		जाओ पंचांगf_err;
+	पूर्ण
 
-	if (lport->state != LPORT_ST_READY || !(lport->link_up)) {
+	अगर (lport->state != LPORT_ST_READY || !(lport->link_up)) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "link is not ready\n");
 		rc = FAILED;
-		goto tmf_err;
-	}
+		जाओ पंचांगf_err;
+	पूर्ण
 
-	if (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) {
-		if (!fcport->rdata)
+	अगर (test_bit(QEDF_RPORT_UPLOADING_CONNECTION, &fcport->flags)) अणु
+		अगर (!fcport->rdata)
 			QEDF_ERR(&qedf->dbg_ctx, "fcport %p is uploading.\n",
 				 fcport);
-		else
+		अन्यथा
 			QEDF_ERR(&qedf->dbg_ctx,
 				 "fcport %p port_id=%06x is uploading.\n",
 				 fcport, fcport->rdata->ids.port_id);
 		rc = FAILED;
-		goto tmf_err;
-	}
+		जाओ पंचांगf_err;
+	पूर्ण
 
-	rc = qedf_execute_tmf(fcport, sc_cmd, tm_flags);
+	rc = qedf_execute_पंचांगf(fcport, sc_cmd, पंचांग_flags);
 
-tmf_err:
+पंचांगf_err:
 	kref_put(&rdata->kref, fc_rport_destroy);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void qedf_process_tmf_compl(struct qedf_ctx *qedf, struct fcoe_cqe *cqe,
-	struct qedf_ioreq *io_req)
-{
-	struct fcoe_cqe_rsp_info *fcp_rsp;
+व्योम qedf_process_पंचांगf_compl(काष्ठा qedf_ctx *qedf, काष्ठा fcoe_cqe *cqe,
+	काष्ठा qedf_ioreq *io_req)
+अणु
+	काष्ठा fcoe_cqe_rsp_info *fcp_rsp;
 
 	clear_bit(QEDF_CMD_OUTSTANDING, &io_req->flags);
 
 	fcp_rsp = &cqe->cqe_info.rsp_info;
 	qedf_parse_fcp_rsp(io_req, fcp_rsp);
 
-	io_req->sc_cmd = NULL;
-	complete(&io_req->tm_done);
-}
+	io_req->sc_cmd = शून्य;
+	complete(&io_req->पंचांग_करोne);
+पूर्ण
 
-void qedf_process_unsol_compl(struct qedf_ctx *qedf, uint16_t que_idx,
-	struct fcoe_cqe *cqe)
-{
-	unsigned long flags;
-	uint16_t pktlen = cqe->cqe_info.unsolic_info.pkt_len;
+व्योम qedf_process_unsol_compl(काष्ठा qedf_ctx *qedf, uपूर्णांक16_t que_idx,
+	काष्ठा fcoe_cqe *cqe)
+अणु
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक16_t pktlen = cqe->cqe_info.unsolic_info.pkt_len;
 	u32 payload_len, crc;
-	struct fc_frame_header *fh;
-	struct fc_frame *fp;
-	struct qedf_io_work *io_work;
+	काष्ठा fc_frame_header *fh;
+	काष्ठा fc_frame *fp;
+	काष्ठा qedf_io_work *io_work;
 	u32 bdq_idx;
-	void *bdq_addr;
-	struct scsi_bd *p_bd_info;
+	व्योम *bdq_addr;
+	काष्ठा scsi_bd *p_bd_info;
 
 	p_bd_info = &cqe->cqe_info.unsolic_info.bd_info;
 	QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_UNSOL,
@@ -2537,37 +2538,37 @@ void qedf_process_unsol_compl(struct qedf_ctx *qedf, uint16_t que_idx,
 		  qedf->bdq_prod_idx, pktlen);
 
 	bdq_idx = le32_to_cpu(p_bd_info->opaque.fcoe_opaque.lo);
-	if (bdq_idx >= QEDF_BDQ_SIZE) {
+	अगर (bdq_idx >= QEDF_BDQ_SIZE) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "bdq_idx is out of range %d.\n",
 		    bdq_idx);
-		goto increment_prod;
-	}
+		जाओ increment_prod;
+	पूर्ण
 
 	bdq_addr = qedf->bdq[bdq_idx].buf_addr;
-	if (!bdq_addr) {
+	अगर (!bdq_addr) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "bdq_addr is NULL, dropping "
 		    "unsolicited packet.\n");
-		goto increment_prod;
-	}
+		जाओ increment_prod;
+	पूर्ण
 
-	if (qedf_dump_frames) {
+	अगर (qedf_dump_frames) अणु
 		QEDF_INFO(&(qedf->dbg_ctx), QEDF_LOG_UNSOL,
 		    "BDQ frame is at addr=%p.\n", bdq_addr);
-		print_hex_dump(KERN_WARNING, "bdq ", DUMP_PREFIX_OFFSET, 16, 1,
-		    (void *)bdq_addr, pktlen, false);
-	}
+		prपूर्णांक_hex_dump(KERN_WARNING, "bdq ", DUMP_PREFIX_OFFSET, 16, 1,
+		    (व्योम *)bdq_addr, pktlen, false);
+	पूर्ण
 
 	/* Allocate frame */
-	payload_len = pktlen - sizeof(struct fc_frame_header);
+	payload_len = pktlen - माप(काष्ठा fc_frame_header);
 	fp = fc_frame_alloc(qedf->lport, payload_len);
-	if (!fp) {
+	अगर (!fp) अणु
 		QEDF_ERR(&(qedf->dbg_ctx), "Could not allocate fp.\n");
-		goto increment_prod;
-	}
+		जाओ increment_prod;
+	पूर्ण
 
-	/* Copy data from BDQ buffer into fc_frame struct */
-	fh = (struct fc_frame_header *)fc_frame_header_get(fp);
-	memcpy(fh, (void *)bdq_addr, pktlen);
+	/* Copy data from BDQ buffer पूर्णांकo fc_frame काष्ठा */
+	fh = (काष्ठा fc_frame_header *)fc_frame_header_get(fp);
+	स_नकल(fh, (व्योम *)bdq_addr, pktlen);
 
 	QEDF_WARN(&qedf->dbg_ctx,
 		  "Processing Unsolicated frame, src=%06x dest=%06x r_ctl=0x%x type=0x%x cmd=%02x\n",
@@ -2579,26 +2580,26 @@ void qedf_process_unsol_compl(struct qedf_ctx *qedf, uint16_t que_idx,
 	fc_frame_init(fp);
 	fr_dev(fp) = qedf->lport;
 	fr_sof(fp) = FC_SOF_I3;
-	fr_eof(fp) = FC_EOF_T;
+	fr_eof(fp) = FC_खातापूर्ण_T;
 	fr_crc(fp) = cpu_to_le32(~crc);
 
 	/*
-	 * We need to return the frame back up to libfc in a non-atomic
+	 * We need to वापस the frame back up to libfc in a non-atomic
 	 * context
 	 */
 	io_work = mempool_alloc(qedf->io_mempool, GFP_ATOMIC);
-	if (!io_work) {
+	अगर (!io_work) अणु
 		QEDF_WARN(&(qedf->dbg_ctx), "Could not allocate "
 			   "work for I/O completion.\n");
-		fc_frame_free(fp);
-		goto increment_prod;
-	}
-	memset(io_work, 0, sizeof(struct qedf_io_work));
+		fc_frame_मुक्त(fp);
+		जाओ increment_prod;
+	पूर्ण
+	स_रखो(io_work, 0, माप(काष्ठा qedf_io_work));
 
 	INIT_WORK(&io_work->work, qedf_fp_io_handler);
 
-	/* Copy contents of CQE for deferred processing */
-	memcpy(&io_work->cqe, cqe, sizeof(struct fcoe_cqe));
+	/* Copy contents of CQE क्रम deferred processing */
+	स_नकल(&io_work->cqe, cqe, माप(काष्ठा fcoe_cqe));
 
 	io_work->qedf = qedf;
 	io_work->fp = fp;
@@ -2610,14 +2611,14 @@ increment_prod:
 	/* Increment producer to let f/w know we've handled the frame */
 	qedf->bdq_prod_idx++;
 
-	/* Producer index wraps at uint16_t boundary */
-	if (qedf->bdq_prod_idx == 0xffff)
+	/* Producer index wraps at uपूर्णांक16_t boundary */
+	अगर (qedf->bdq_prod_idx == 0xffff)
 		qedf->bdq_prod_idx = 0;
 
-	writew(qedf->bdq_prod_idx, qedf->bdq_primary_prod);
-	readw(qedf->bdq_primary_prod);
-	writew(qedf->bdq_prod_idx, qedf->bdq_secondary_prod);
-	readw(qedf->bdq_secondary_prod);
+	ग_लिखोw(qedf->bdq_prod_idx, qedf->bdq_primary_prod);
+	पढ़ोw(qedf->bdq_primary_prod);
+	ग_लिखोw(qedf->bdq_prod_idx, qedf->bdq_secondary_prod);
+	पढ़ोw(qedf->bdq_secondary_prod);
 
 	spin_unlock_irqrestore(&qedf->hba_lock, flags);
-}
+पूर्ण

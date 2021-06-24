@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_CONNTRACK_COMMON_H
-#define _NF_CONNTRACK_COMMON_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_CONNTRACK_COMMON_H
+#घोषणा _NF_CONNTRACK_COMMON_H
 
-#include <linux/atomic.h>
-#include <uapi/linux/netfilter/nf_conntrack_common.h>
+#समावेश <linux/atomic.h>
+#समावेश <uapi/linux/netfilter/nf_conntrack_common.h>
 
-struct ip_conntrack_stat {
-	unsigned int found;
-	unsigned int invalid;
-	unsigned int insert;
-	unsigned int insert_failed;
-	unsigned int clash_resolve;
-	unsigned int drop;
-	unsigned int early_drop;
-	unsigned int error;
-	unsigned int expect_new;
-	unsigned int expect_create;
-	unsigned int expect_delete;
-	unsigned int search_restart;
-};
+काष्ठा ip_conntrack_stat अणु
+	अचिन्हित पूर्णांक found;
+	अचिन्हित पूर्णांक invalid;
+	अचिन्हित पूर्णांक insert;
+	अचिन्हित पूर्णांक insert_failed;
+	अचिन्हित पूर्णांक clash_resolve;
+	अचिन्हित पूर्णांक drop;
+	अचिन्हित पूर्णांक early_drop;
+	अचिन्हित पूर्णांक error;
+	अचिन्हित पूर्णांक expect_new;
+	अचिन्हित पूर्णांक expect_create;
+	अचिन्हित पूर्णांक expect_delete;
+	अचिन्हित पूर्णांक search_restart;
+पूर्ण;
 
-#define NFCT_INFOMASK	7UL
-#define NFCT_PTRMASK	~(NFCT_INFOMASK)
+#घोषणा NFCT_INFOMASK	7UL
+#घोषणा NFCT_PTRMASK	~(NFCT_INFOMASK)
 
-struct nf_conntrack {
+काष्ठा nf_conntrack अणु
 	atomic_t use;
-};
+पूर्ण;
 
-void nf_conntrack_destroy(struct nf_conntrack *nfct);
-static inline void nf_conntrack_put(struct nf_conntrack *nfct)
-{
-	if (nfct && atomic_dec_and_test(&nfct->use))
+व्योम nf_conntrack_destroy(काष्ठा nf_conntrack *nfct);
+अटल अंतरभूत व्योम nf_conntrack_put(काष्ठा nf_conntrack *nfct)
+अणु
+	अगर (nfct && atomic_dec_and_test(&nfct->use))
 		nf_conntrack_destroy(nfct);
-}
-static inline void nf_conntrack_get(struct nf_conntrack *nfct)
-{
-	if (nfct)
+पूर्ण
+अटल अंतरभूत व्योम nf_conntrack_get(काष्ठा nf_conntrack *nfct)
+अणु
+	अगर (nfct)
 		atomic_inc(&nfct->use);
-}
+पूर्ण
 
-#endif /* _NF_CONNTRACK_COMMON_H */
+#पूर्ण_अगर /* _NF_CONNTRACK_COMMON_H */

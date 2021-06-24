@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM mptcp
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM mptcp
 
-#if !defined(_TRACE_MPTCP_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_MPTCP_H
+#अगर !defined(_TRACE_MPTCP_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_MPTCP_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#define show_mapping_status(status)					\
-	__print_symbolic(status,					\
-		{ 0, "MAPPING_OK" },					\
-		{ 1, "MAPPING_INVALID" },				\
-		{ 2, "MAPPING_EMPTY" },					\
-		{ 3, "MAPPING_DATA_FIN" },				\
-		{ 4, "MAPPING_DUMMY" })
+#घोषणा show_mapping_status(status)					\
+	__prपूर्णांक_symbolic(status,					\
+		अणु 0, "MAPPING_OK" पूर्ण,					\
+		अणु 1, "MAPPING_INVALID" पूर्ण,				\
+		अणु 2, "MAPPING_EMPTY" पूर्ण,					\
+		अणु 3, "MAPPING_DATA_FIN" पूर्ण,				\
+		अणु 4, "MAPPING_DUMMY" पूर्ण)
 
 TRACE_EVENT(mptcp_subflow_get_send,
 
-	TP_PROTO(struct mptcp_subflow_context *subflow),
+	TP_PROTO(काष्ठा mptcp_subflow_context *subflow),
 
 	TP_ARGS(subflow),
 
 	TP_STRUCT__entry(
 		__field(bool, active)
-		__field(bool, free)
+		__field(bool, मुक्त)
 		__field(u32, snd_wnd)
 		__field(u32, pace)
 		__field(u8, backup)
@@ -31,40 +32,40 @@ TRACE_EVENT(mptcp_subflow_get_send,
 	),
 
 	TP_fast_assign(
-		struct sock *ssk;
+		काष्ठा sock *ssk;
 
 		__entry->active = mptcp_subflow_active(subflow);
 		__entry->backup = subflow->backup;
 
-		if (subflow->tcp_sock && sk_fullsock(subflow->tcp_sock))
-			__entry->free = sk_stream_memory_free(subflow->tcp_sock);
-		else
-			__entry->free = 0;
+		अगर (subflow->tcp_sock && sk_fullsock(subflow->tcp_sock))
+			__entry->मुक्त = sk_stream_memory_मुक्त(subflow->tcp_sock);
+		अन्यथा
+			__entry->मुक्त = 0;
 
 		ssk = mptcp_subflow_tcp_sock(subflow);
-		if (ssk && sk_fullsock(ssk)) {
+		अगर (ssk && sk_fullsock(ssk)) अणु
 			__entry->snd_wnd = tcp_sk(ssk)->snd_wnd;
 			__entry->pace = ssk->sk_pacing_rate;
-		} else {
+		पूर्ण अन्यथा अणु
 			__entry->snd_wnd = 0;
 			__entry->pace = 0;
-		}
+		पूर्ण
 
-		if (ssk && sk_fullsock(ssk) && __entry->pace)
-			__entry->ratio = div_u64((u64)ssk->sk_wmem_queued << 32, __entry->pace);
-		else
+		अगर (ssk && sk_fullsock(ssk) && __entry->pace)
+			__entry->ratio = भाग_u64((u64)ssk->sk_wmem_queued << 32, __entry->pace);
+		अन्यथा
 			__entry->ratio = 0;
 	),
 
-	TP_printk("active=%d free=%d snd_wnd=%u pace=%u backup=%u ratio=%llu",
-		  __entry->active, __entry->free,
+	TP_prपूर्णांकk("active=%d free=%d snd_wnd=%u pace=%u backup=%u ratio=%llu",
+		  __entry->active, __entry->मुक्त,
 		  __entry->snd_wnd, __entry->pace,
 		  __entry->backup, __entry->ratio)
 );
 
 DECLARE_EVENT_CLASS(mptcp_dump_mpext,
 
-	TP_PROTO(struct mptcp_ext *mpext),
+	TP_PROTO(काष्ठा mptcp_ext *mpext),
 
 	TP_ARGS(mpext),
 
@@ -100,7 +101,7 @@ DECLARE_EVENT_CLASS(mptcp_dump_mpext,
 		__entry->reset_reason = mpext->reset_reason;
 	),
 
-	TP_printk("data_ack=%llu data_seq=%llu subflow_seq=%u data_len=%u use_map=%u dsn64=%u data_fin=%u use_ack=%u ack64=%u mpc_map=%u frozen=%u reset_transient=%u reset_reason=%u",
+	TP_prपूर्णांकk("data_ack=%llu data_seq=%llu subflow_seq=%u data_len=%u use_map=%u dsn64=%u data_fin=%u use_ack=%u ack64=%u mpc_map=%u frozen=%u reset_transient=%u reset_reason=%u",
 		  __entry->data_ack, __entry->data_seq,
 		  __entry->subflow_seq, __entry->data_len,
 		  __entry->use_map, __entry->dsn64,
@@ -111,7 +112,7 @@ DECLARE_EVENT_CLASS(mptcp_dump_mpext,
 );
 
 DEFINE_EVENT(mptcp_dump_mpext, get_mapping_status,
-	TP_PROTO(struct mptcp_ext *mpext),
+	TP_PROTO(काष्ठा mptcp_ext *mpext),
 	TP_ARGS(mpext));
 
 TRACE_EVENT(ack_update_msk,
@@ -140,7 +141,7 @@ TRACE_EVENT(ack_update_msk,
 		__entry->msk_wnd_end = msk_wnd_end;
 	),
 
-	TP_printk("data_ack=%llu old_snd_una=%llu new_snd_una=%llu new_wnd_end=%llu msk_wnd_end=%llu",
+	TP_prपूर्णांकk("data_ack=%llu old_snd_una=%llu new_snd_una=%llu new_wnd_end=%llu msk_wnd_end=%llu",
 		  __entry->data_ack, __entry->old_snd_una,
 		  __entry->new_snd_una, __entry->new_wnd_end,
 		  __entry->msk_wnd_end)
@@ -148,13 +149,13 @@ TRACE_EVENT(ack_update_msk,
 
 TRACE_EVENT(subflow_check_data_avail,
 
-	TP_PROTO(__u8 status, struct sk_buff *skb),
+	TP_PROTO(__u8 status, काष्ठा sk_buff *skb),
 
 	TP_ARGS(status, skb),
 
 	TP_STRUCT__entry(
 		__field(u8, status)
-		__field(const void *, skb)
+		__field(स्थिर व्योम *, skb)
 	),
 
 	TP_fast_assign(
@@ -162,12 +163,12 @@ TRACE_EVENT(subflow_check_data_avail,
 		__entry->skb = skb;
 	),
 
-	TP_printk("mapping_status=%s, skb=%p",
+	TP_prपूर्णांकk("mapping_status=%s, skb=%p",
 		  show_mapping_status(__entry->status),
 		  __entry->skb)
 );
 
-#endif /* _TRACE_MPTCP_H */
+#पूर्ण_अगर /* _TRACE_MPTCP_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

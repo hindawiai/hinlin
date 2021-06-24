@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of California
+ * Copyright (C) 2012 Regents of the University of Calअगरornia
  */
 
-#ifndef _ASM_RISCV_PROCESSOR_H
-#define _ASM_RISCV_PROCESSOR_H
+#अगर_अघोषित _ASM_RISCV_PROCESSOR_H
+#घोषणा _ASM_RISCV_PROCESSOR_H
 
-#include <linux/const.h>
+#समावेश <linux/स्थिर.h>
 
-#include <vdso/processor.h>
+#समावेश <vdso/processor.h>
 
-#include <asm/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
 /*
- * This decides where the kernel will search for a free chunk of vm
+ * This decides where the kernel will search क्रम a मुक्त chunk of vm
  * space during mmap's.
  */
-#define TASK_UNMAPPED_BASE	PAGE_ALIGN(TASK_SIZE / 3)
+#घोषणा TASK_UNMAPPED_BASE	PAGE_ALIGN(TASK_SIZE / 3)
 
-#define STACK_TOP		TASK_SIZE
-#define STACK_TOP_MAX		STACK_TOP
-#define STACK_ALIGN		16
+#घोषणा STACK_TOP		TASK_SIZE
+#घोषणा STACK_TOP_MAX		STACK_TOP
+#घोषणा STACK_ALIGN		16
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-struct task_struct;
-struct pt_regs;
+काष्ठा task_काष्ठा;
+काष्ठा pt_regs;
 
-/* CPU-specific state of a task */
-struct thread_struct {
-	/* Callee-saved registers */
-	unsigned long ra;
-	unsigned long sp;	/* Kernel mode stack */
-	unsigned long s[12];	/* s[0]: frame pointer */
-	struct __riscv_d_ext_state fstate;
-	unsigned long bad_cause;
-};
+/* CPU-specअगरic state of a task */
+काष्ठा thपढ़ो_काष्ठा अणु
+	/* Callee-saved रेजिस्टरs */
+	अचिन्हित दीर्घ ra;
+	अचिन्हित दीर्घ sp;	/* Kernel mode stack */
+	अचिन्हित दीर्घ s[12];	/* s[0]: frame poपूर्णांकer */
+	काष्ठा __riscv_d_ext_state ख_स्थितिe;
+	अचिन्हित दीर्घ bad_cause;
+पूर्ण;
 
-#define INIT_THREAD {					\
-	.sp = sizeof(init_stack) + (long)&init_stack,	\
-}
+#घोषणा INIT_THREAD अणु					\
+	.sp = माप(init_stack) + (दीर्घ)&init_stack,	\
+पूर्ण
 
-#define task_pt_regs(tsk)						\
-	((struct pt_regs *)(task_stack_page(tsk) + THREAD_SIZE		\
-			    - ALIGN(sizeof(struct pt_regs), STACK_ALIGN)))
+#घोषणा task_pt_regs(tsk)						\
+	((काष्ठा pt_regs *)(task_stack_page(tsk) + THREAD_SIZE		\
+			    - ALIGN(माप(काष्ठा pt_regs), STACK_ALIGN)))
 
-#define KSTK_EIP(tsk)		(task_pt_regs(tsk)->epc)
-#define KSTK_ESP(tsk)		(task_pt_regs(tsk)->sp)
-
-
-/* Do necessary setup to start up a newly executed thread. */
-extern void start_thread(struct pt_regs *regs,
-			unsigned long pc, unsigned long sp);
-
-/* Free all resources held by a thread. */
-static inline void release_thread(struct task_struct *dead_task)
-{
-}
-
-extern unsigned long get_wchan(struct task_struct *p);
+#घोषणा KSTK_EIP(tsk)		(task_pt_regs(tsk)->epc)
+#घोषणा KSTK_ESP(tsk)		(task_pt_regs(tsk)->sp)
 
 
-static inline void wait_for_interrupt(void)
-{
-	__asm__ __volatile__ ("wfi");
-}
+/* Do necessary setup to start up a newly executed thपढ़ो. */
+बाह्य व्योम start_thपढ़ो(काष्ठा pt_regs *regs,
+			अचिन्हित दीर्घ pc, अचिन्हित दीर्घ sp);
 
-struct device_node;
-int riscv_of_processor_hartid(struct device_node *node);
-int riscv_of_parent_hartid(struct device_node *node);
+/* Free all resources held by a thपढ़ो. */
+अटल अंतरभूत व्योम release_thपढ़ो(काष्ठा task_काष्ठा *dead_task)
+अणु
+पूर्ण
 
-extern void riscv_fill_hwcap(void);
-extern int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src);
+बाह्य अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
 
-#endif /* __ASSEMBLY__ */
 
-#endif /* _ASM_RISCV_PROCESSOR_H */
+अटल अंतरभूत व्योम रुको_क्रम_पूर्णांकerrupt(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__ ("wfi");
+पूर्ण
+
+काष्ठा device_node;
+पूर्णांक riscv_of_processor_hartid(काष्ठा device_node *node);
+पूर्णांक riscv_of_parent_hartid(काष्ठा device_node *node);
+
+बाह्य व्योम riscv_fill_hwcap(व्योम);
+बाह्य पूर्णांक arch_dup_task_काष्ठा(काष्ठा task_काष्ठा *dst, काष्ठा task_काष्ठा *src);
+
+#पूर्ण_अगर /* __ASSEMBLY__ */
+
+#पूर्ण_अगर /* _ASM_RISCV_PROCESSOR_H */

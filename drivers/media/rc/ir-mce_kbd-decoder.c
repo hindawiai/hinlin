@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* ir-mce_kbd-decoder.c - A decoder for the RC6-ish keyboard/mouse IR protocol
- * used by the Microsoft Remote Keyboard for Windows Media Center Edition,
- * referred to by Microsoft's Windows Media Center remote specification docs
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* ir-mce_kbd-decoder.c - A decoder क्रम the RC6-ish keyboard/mouse IR protocol
+ * used by the Microsoft Remote Keyboard क्रम Winकरोws Media Center Edition,
+ * referred to by Microsoft's Winकरोws Media Center remote specअगरication करोcs
  * as "an internal protocol called MCIR-2".
  *
  * Copyright (C) 2011 by Jarod Wilson <jarod@redhat.com>
  */
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include "rc-core-priv.h"
+#समावेश "rc-core-priv.h"
 
 /*
  * This decoder currently supports:
- * - MCIR-2 29-bit IR signals used for mouse movement and buttons
- * - MCIR-2 32-bit IR signals used for standard keyboard keys
+ * - MCIR-2 29-bit IR संकेतs used क्रम mouse movement and buttons
+ * - MCIR-2 32-bit IR संकेतs used क्रम standard keyboard keys
  *
- * The media keys on the keyboard send RC-6 signals that are indistinguishable
+ * The media keys on the keyboard send RC-6 संकेतs that are indistinguishable
  * from the keys of the same name on the stock MCE remote, and will be handled
- * by the standard RC-6 decoder, and be made available to the system via the
- * input device for the remote, rather than the keyboard/mouse one.
+ * by the standard RC-6 decoder, and be made available to the प्रणाली via the
+ * input device क्रम the remote, rather than the keyboard/mouse one.
  */
 
-#define MCIR2_UNIT		333	/* us */
-#define MCIR2_HEADER_NBITS	5
-#define MCIR2_MOUSE_NBITS	29
-#define MCIR2_KEYBOARD_NBITS	32
-#define MCIR2_PREFIX_PULSE	(8 * MCIR2_UNIT)
-#define MCIR2_PREFIX_SPACE	(1 * MCIR2_UNIT)
-#define MCIR2_MAX_LEN		(3 * MCIR2_UNIT)
-#define MCIR2_BIT_START		(1 * MCIR2_UNIT)
-#define MCIR2_BIT_END		(1 * MCIR2_UNIT)
-#define MCIR2_BIT_0		(1 * MCIR2_UNIT)
-#define MCIR2_BIT_SET		(2 * MCIR2_UNIT)
-#define MCIR2_MODE_MASK		0xf	/* for the header bits */
-#define MCIR2_KEYBOARD_HEADER	0x4
-#define MCIR2_MOUSE_HEADER	0x1
-#define MCIR2_MASK_KEYS_START	0xe0
+#घोषणा MCIR2_UNIT		333	/* us */
+#घोषणा MCIR2_HEADER_NBITS	5
+#घोषणा MCIR2_MOUSE_NBITS	29
+#घोषणा MCIR2_KEYBOARD_NBITS	32
+#घोषणा MCIR2_PREFIX_PULSE	(8 * MCIR2_UNIT)
+#घोषणा MCIR2_PREFIX_SPACE	(1 * MCIR2_UNIT)
+#घोषणा MCIR2_MAX_LEN		(3 * MCIR2_UNIT)
+#घोषणा MCIR2_BIT_START		(1 * MCIR2_UNIT)
+#घोषणा MCIR2_BIT_END		(1 * MCIR2_UNIT)
+#घोषणा MCIR2_BIT_0		(1 * MCIR2_UNIT)
+#घोषणा MCIR2_BIT_SET		(2 * MCIR2_UNIT)
+#घोषणा MCIR2_MODE_MASK		0xf	/* क्रम the header bits */
+#घोषणा MCIR2_KEYBOARD_HEADER	0x4
+#घोषणा MCIR2_MOUSE_HEADER	0x1
+#घोषणा MCIR2_MASK_KEYS_START	0xe0
 
-enum mce_kbd_mode {
+क्रमागत mce_kbd_mode अणु
 	MCIR2_MODE_KEYBOARD,
 	MCIR2_MODE_MOUSE,
 	MCIR2_MODE_UNKNOWN,
-};
+पूर्ण;
 
-enum mce_kbd_state {
+क्रमागत mce_kbd_state अणु
 	STATE_INACTIVE,
 	STATE_HEADER_BIT_START,
 	STATE_HEADER_BIT_END,
 	STATE_BODY_BIT_START,
 	STATE_BODY_BIT_END,
 	STATE_FINISHED,
-};
+पूर्ण;
 
-static unsigned char kbd_keycodes[256] = {
+अटल अचिन्हित अक्षर kbd_keycodes[256] = अणु
 	KEY_RESERVED,	KEY_RESERVED,	KEY_RESERVED,	KEY_RESERVED,	KEY_A,
 	KEY_B,		KEY_C,		KEY_D,		KEY_E,		KEY_F,
 	KEY_G,		KEY_H,		KEY_I,		KEY_J,		KEY_K,
@@ -105,95 +106,95 @@ static unsigned char kbd_keycodes[256] = {
 	KEY_SCROLLUP,	KEY_SCROLLDOWN,	KEY_EDIT,	KEY_SLEEP,	KEY_COFFEE,
 	KEY_REFRESH,	KEY_CALC,	KEY_RESERVED,	KEY_RESERVED,	KEY_RESERVED,
 	KEY_RESERVED
-};
+पूर्ण;
 
-static void mce_kbd_rx_timeout(struct timer_list *t)
-{
-	struct ir_raw_event_ctrl *raw = from_timer(raw, t, mce_kbd.rx_timeout);
-	unsigned char maskcode;
-	unsigned long flags;
-	int i;
+अटल व्योम mce_kbd_rx_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ir_raw_event_ctrl *raw = from_समयr(raw, t, mce_kbd.rx_समयout);
+	अचिन्हित अक्षर maskcode;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	dev_dbg(&raw->dev->dev, "timer callback clearing all keys\n");
 
 	spin_lock_irqsave(&raw->mce_kbd.keylock, flags);
 
-	if (time_is_before_eq_jiffies(raw->mce_kbd.rx_timeout.expires)) {
-		for (i = 0; i < 7; i++) {
+	अगर (समय_is_beक्रमe_eq_jअगरfies(raw->mce_kbd.rx_समयout.expires)) अणु
+		क्रम (i = 0; i < 7; i++) अणु
 			maskcode = kbd_keycodes[MCIR2_MASK_KEYS_START + i];
 			input_report_key(raw->dev->input_dev, maskcode, 0);
-		}
+		पूर्ण
 
-		for (i = 0; i < MCIR2_MASK_KEYS_START; i++)
+		क्रम (i = 0; i < MCIR2_MASK_KEYS_START; i++)
 			input_report_key(raw->dev->input_dev, kbd_keycodes[i],
 					 0);
 
 		input_sync(raw->dev->input_dev);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&raw->mce_kbd.keylock, flags);
-}
+पूर्ण
 
-static enum mce_kbd_mode mce_kbd_mode(struct mce_kbd_dec *data)
-{
-	switch (data->header & MCIR2_MODE_MASK) {
-	case MCIR2_KEYBOARD_HEADER:
-		return MCIR2_MODE_KEYBOARD;
-	case MCIR2_MOUSE_HEADER:
-		return MCIR2_MODE_MOUSE;
-	default:
-		return MCIR2_MODE_UNKNOWN;
-	}
-}
+अटल क्रमागत mce_kbd_mode mce_kbd_mode(काष्ठा mce_kbd_dec *data)
+अणु
+	चयन (data->header & MCIR2_MODE_MASK) अणु
+	हाल MCIR2_KEYBOARD_HEADER:
+		वापस MCIR2_MODE_KEYBOARD;
+	हाल MCIR2_MOUSE_HEADER:
+		वापस MCIR2_MODE_MOUSE;
+	शेष:
+		वापस MCIR2_MODE_UNKNOWN;
+	पूर्ण
+पूर्ण
 
-static void ir_mce_kbd_process_keyboard_data(struct rc_dev *dev, u32 scancode)
-{
+अटल व्योम ir_mce_kbd_process_keyboard_data(काष्ठा rc_dev *dev, u32 scancode)
+अणु
 	u8 keydata1  = (scancode >> 8) & 0xff;
 	u8 keydata2  = (scancode >> 16) & 0xff;
-	u8 shiftmask = scancode & 0xff;
-	unsigned char maskcode;
-	int i, keystate;
+	u8 shअगरपंचांगask = scancode & 0xff;
+	अचिन्हित अक्षर maskcode;
+	पूर्णांक i, keystate;
 
 	dev_dbg(&dev->dev, "keyboard: keydata2 = 0x%02x, keydata1 = 0x%02x, shiftmask = 0x%02x\n",
-		keydata2, keydata1, shiftmask);
+		keydata2, keydata1, shअगरपंचांगask);
 
-	for (i = 0; i < 7; i++) {
+	क्रम (i = 0; i < 7; i++) अणु
 		maskcode = kbd_keycodes[MCIR2_MASK_KEYS_START + i];
-		if (shiftmask & (1 << i))
+		अगर (shअगरपंचांगask & (1 << i))
 			keystate = 1;
-		else
+		अन्यथा
 			keystate = 0;
 		input_report_key(dev->input_dev, maskcode, keystate);
-	}
+	पूर्ण
 
-	if (keydata1)
+	अगर (keydata1)
 		input_report_key(dev->input_dev, kbd_keycodes[keydata1], 1);
-	if (keydata2)
+	अगर (keydata2)
 		input_report_key(dev->input_dev, kbd_keycodes[keydata2], 1);
 
-	if (!keydata1 && !keydata2) {
-		for (i = 0; i < MCIR2_MASK_KEYS_START; i++)
+	अगर (!keydata1 && !keydata2) अणु
+		क्रम (i = 0; i < MCIR2_MASK_KEYS_START; i++)
 			input_report_key(dev->input_dev, kbd_keycodes[i], 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ir_mce_kbd_process_mouse_data(struct rc_dev *dev, u32 scancode)
-{
+अटल व्योम ir_mce_kbd_process_mouse_data(काष्ठा rc_dev *dev, u32 scancode)
+अणु
 	/* raw mouse coordinates */
 	u8 xdata = (scancode >> 7) & 0x7f;
 	u8 ydata = (scancode >> 14) & 0x7f;
-	int x, y;
+	पूर्णांक x, y;
 	/* mouse buttons */
 	bool right = scancode & 0x40;
 	bool left  = scancode & 0x20;
 
-	if (xdata & 0x40)
+	अगर (xdata & 0x40)
 		x = -((~xdata & 0x7f) + 1);
-	else
+	अन्यथा
 		x = xdata;
 
-	if (ydata & 0x40)
+	अगर (ydata & 0x40)
 		y = -((~ydata & 0x7f) + 1);
-	else
+	अन्यथा
 		y = ydata;
 
 	dev_dbg(&dev->dev, "mouse: x = %d, y = %d, btns = %s%s\n",
@@ -204,247 +205,247 @@ static void ir_mce_kbd_process_mouse_data(struct rc_dev *dev, u32 scancode)
 
 	input_report_key(dev->input_dev, BTN_LEFT, left);
 	input_report_key(dev->input_dev, BTN_RIGHT, right);
-}
+पूर्ण
 
 /**
  * ir_mce_kbd_decode() - Decode one mce_kbd pulse or space
- * @dev:	the struct rc_dev descriptor of the device
- * @ev:		the struct ir_raw_event descriptor of the pulse/space
+ * @dev:	the काष्ठा rc_dev descriptor of the device
+ * @ev:		the काष्ठा ir_raw_event descriptor of the pulse/space
  *
- * This function returns -EINVAL if the pulse violates the state machine
+ * This function वापसs -EINVAL अगर the pulse violates the state machine
  */
-static int ir_mce_kbd_decode(struct rc_dev *dev, struct ir_raw_event ev)
-{
-	struct mce_kbd_dec *data = &dev->raw->mce_kbd;
+अटल पूर्णांक ir_mce_kbd_decode(काष्ठा rc_dev *dev, काष्ठा ir_raw_event ev)
+अणु
+	काष्ठा mce_kbd_dec *data = &dev->raw->mce_kbd;
 	u32 scancode;
-	unsigned long delay;
-	struct lirc_scancode lsc = {};
+	अचिन्हित दीर्घ delay;
+	काष्ठा lirc_scancode lsc = अणुपूर्ण;
 
-	if (!is_timing_event(ev)) {
-		if (ev.reset)
+	अगर (!is_timing_event(ev)) अणु
+		अगर (ev.reset)
 			data->state = STATE_INACTIVE;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!geq_margin(ev.duration, MCIR2_UNIT, MCIR2_UNIT / 2))
-		goto out;
+	अगर (!geq_margin(ev.duration, MCIR2_UNIT, MCIR2_UNIT / 2))
+		जाओ out;
 
 again:
 	dev_dbg(&dev->dev, "started at state %i (%uus %s)\n",
 		data->state, ev.duration, TO_STR(ev.pulse));
 
-	if (!geq_margin(ev.duration, MCIR2_UNIT, MCIR2_UNIT / 2))
-		return 0;
+	अगर (!geq_margin(ev.duration, MCIR2_UNIT, MCIR2_UNIT / 2))
+		वापस 0;
 
-	switch (data->state) {
+	चयन (data->state) अणु
 
-	case STATE_INACTIVE:
-		if (!ev.pulse)
-			break;
+	हाल STATE_INACTIVE:
+		अगर (!ev.pulse)
+			अवरोध;
 
 		/* Note: larger margin on first pulse since each MCIR2_UNIT
-		   is quite short and some hardware takes some time to
-		   adjust to the signal */
-		if (!eq_margin(ev.duration, MCIR2_PREFIX_PULSE, MCIR2_UNIT))
-			break;
+		   is quite लघु and some hardware takes some समय to
+		   adjust to the संकेत */
+		अगर (!eq_margin(ev.duration, MCIR2_PREFIX_PULSE, MCIR2_UNIT))
+			अवरोध;
 
 		data->state = STATE_HEADER_BIT_START;
 		data->count = 0;
 		data->header = 0;
-		return 0;
+		वापस 0;
 
-	case STATE_HEADER_BIT_START:
-		if (geq_margin(ev.duration, MCIR2_MAX_LEN, MCIR2_UNIT / 2))
-			break;
+	हाल STATE_HEADER_BIT_START:
+		अगर (geq_margin(ev.duration, MCIR2_MAX_LEN, MCIR2_UNIT / 2))
+			अवरोध;
 
 		data->header <<= 1;
-		if (ev.pulse)
+		अगर (ev.pulse)
 			data->header |= 1;
 		data->count++;
 		data->state = STATE_HEADER_BIT_END;
-		return 0;
+		वापस 0;
 
-	case STATE_HEADER_BIT_END:
+	हाल STATE_HEADER_BIT_END:
 		decrease_duration(&ev, MCIR2_BIT_END);
 
-		if (data->count != MCIR2_HEADER_NBITS) {
+		अगर (data->count != MCIR2_HEADER_NBITS) अणु
 			data->state = STATE_HEADER_BIT_START;
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 
-		switch (mce_kbd_mode(data)) {
-		case MCIR2_MODE_KEYBOARD:
+		चयन (mce_kbd_mode(data)) अणु
+		हाल MCIR2_MODE_KEYBOARD:
 			data->wanted_bits = MCIR2_KEYBOARD_NBITS;
-			break;
-		case MCIR2_MODE_MOUSE:
+			अवरोध;
+		हाल MCIR2_MODE_MOUSE:
 			data->wanted_bits = MCIR2_MOUSE_NBITS;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_dbg(&dev->dev, "not keyboard or mouse data\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		data->count = 0;
 		data->body = 0;
 		data->state = STATE_BODY_BIT_START;
-		goto again;
+		जाओ again;
 
-	case STATE_BODY_BIT_START:
-		if (geq_margin(ev.duration, MCIR2_MAX_LEN, MCIR2_UNIT / 2))
-			break;
+	हाल STATE_BODY_BIT_START:
+		अगर (geq_margin(ev.duration, MCIR2_MAX_LEN, MCIR2_UNIT / 2))
+			अवरोध;
 
 		data->body <<= 1;
-		if (ev.pulse)
+		अगर (ev.pulse)
 			data->body |= 1;
 		data->count++;
 		data->state = STATE_BODY_BIT_END;
-		return 0;
+		वापस 0;
 
-	case STATE_BODY_BIT_END:
-		if (data->count == data->wanted_bits)
+	हाल STATE_BODY_BIT_END:
+		अगर (data->count == data->wanted_bits)
 			data->state = STATE_FINISHED;
-		else
+		अन्यथा
 			data->state = STATE_BODY_BIT_START;
 
 		decrease_duration(&ev, MCIR2_BIT_END);
-		goto again;
+		जाओ again;
 
-	case STATE_FINISHED:
-		if (ev.pulse)
-			break;
+	हाल STATE_FINISHED:
+		अगर (ev.pulse)
+			अवरोध;
 
-		switch (data->wanted_bits) {
-		case MCIR2_KEYBOARD_NBITS:
+		चयन (data->wanted_bits) अणु
+		हाल MCIR2_KEYBOARD_NBITS:
 			scancode = data->body & 0xffffff;
 			dev_dbg(&dev->dev, "keyboard data 0x%08x\n",
 				data->body);
 			spin_lock(&data->keylock);
-			if (scancode) {
-				delay = usecs_to_jiffies(dev->timeout) +
-					msecs_to_jiffies(100);
-				mod_timer(&data->rx_timeout, jiffies + delay);
-			} else {
-				del_timer(&data->rx_timeout);
-			}
+			अगर (scancode) अणु
+				delay = usecs_to_jअगरfies(dev->समयout) +
+					msecs_to_jअगरfies(100);
+				mod_समयr(&data->rx_समयout, jअगरfies + delay);
+			पूर्ण अन्यथा अणु
+				del_समयr(&data->rx_समयout);
+			पूर्ण
 			/* Pass data to keyboard buffer parser */
 			ir_mce_kbd_process_keyboard_data(dev, scancode);
 			spin_unlock(&data->keylock);
 			lsc.rc_proto = RC_PROTO_MCIR2_KBD;
-			break;
-		case MCIR2_MOUSE_NBITS:
+			अवरोध;
+		हाल MCIR2_MOUSE_NBITS:
 			scancode = data->body & 0x1fffff;
 			dev_dbg(&dev->dev, "mouse data 0x%06x\n", scancode);
 			/* Pass data to mouse buffer parser */
 			ir_mce_kbd_process_mouse_data(dev, scancode);
 			lsc.rc_proto = RC_PROTO_MCIR2_MSE;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_dbg(&dev->dev, "not keyboard or mouse data\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		lsc.scancode = scancode;
 		lirc_scancode_event(dev, &lsc);
 		data->state = STATE_INACTIVE;
 		input_event(dev->input_dev, EV_MSC, MSC_SCAN, scancode);
 		input_sync(dev->input_dev);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 out:
 	dev_dbg(&dev->dev, "failed at state %i (%uus %s)\n",
 		data->state, ev.duration, TO_STR(ev.pulse));
 	data->state = STATE_INACTIVE;
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int ir_mce_kbd_register(struct rc_dev *dev)
-{
-	struct mce_kbd_dec *mce_kbd = &dev->raw->mce_kbd;
+अटल पूर्णांक ir_mce_kbd_रेजिस्टर(काष्ठा rc_dev *dev)
+अणु
+	काष्ठा mce_kbd_dec *mce_kbd = &dev->raw->mce_kbd;
 
-	timer_setup(&mce_kbd->rx_timeout, mce_kbd_rx_timeout, 0);
+	समयr_setup(&mce_kbd->rx_समयout, mce_kbd_rx_समयout, 0);
 	spin_lock_init(&mce_kbd->keylock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ir_mce_kbd_unregister(struct rc_dev *dev)
-{
-	struct mce_kbd_dec *mce_kbd = &dev->raw->mce_kbd;
+अटल पूर्णांक ir_mce_kbd_unरेजिस्टर(काष्ठा rc_dev *dev)
+अणु
+	काष्ठा mce_kbd_dec *mce_kbd = &dev->raw->mce_kbd;
 
-	del_timer_sync(&mce_kbd->rx_timeout);
+	del_समयr_sync(&mce_kbd->rx_समयout);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ir_raw_timings_manchester ir_mce_kbd_timings = {
+अटल स्थिर काष्ठा ir_raw_timings_manchester ir_mce_kbd_timings = अणु
 	.leader_pulse	= MCIR2_PREFIX_PULSE,
 	.invert		= 1,
-	.clock		= MCIR2_UNIT,
+	.घड़ी		= MCIR2_UNIT,
 	.trailer_space	= MCIR2_UNIT * 10,
-};
+पूर्ण;
 
 /**
  * ir_mce_kbd_encode() - Encode a scancode as a stream of raw events
  *
  * @protocol:   protocol to encode
  * @scancode:   scancode to encode
- * @events:     array of raw ir events to write into
+ * @events:     array of raw ir events to ग_लिखो पूर्णांकo
  * @max:        maximum size of @events
  *
  * Returns:     The number of events written.
- *              -ENOBUFS if there isn't enough space in the array to fit the
- *              encoding. In this case all @max events will have been written.
+ *              -ENOBUFS अगर there isn't enough space in the array to fit the
+ *              encoding. In this हाल all @max events will have been written.
  */
-static int ir_mce_kbd_encode(enum rc_proto protocol, u32 scancode,
-			     struct ir_raw_event *events, unsigned int max)
-{
-	struct ir_raw_event *e = events;
-	int len, ret;
+अटल पूर्णांक ir_mce_kbd_encode(क्रमागत rc_proto protocol, u32 scancode,
+			     काष्ठा ir_raw_event *events, अचिन्हित पूर्णांक max)
+अणु
+	काष्ठा ir_raw_event *e = events;
+	पूर्णांक len, ret;
 	u64 raw;
 
-	if (protocol == RC_PROTO_MCIR2_KBD) {
+	अगर (protocol == RC_PROTO_MCIR2_KBD) अणु
 		raw = scancode |
 		      ((u64)MCIR2_KEYBOARD_HEADER << MCIR2_KEYBOARD_NBITS);
 		len = MCIR2_KEYBOARD_NBITS + MCIR2_HEADER_NBITS;
-	} else {
+	पूर्ण अन्यथा अणु
 		raw = scancode |
 		      ((u64)MCIR2_MOUSE_HEADER << MCIR2_MOUSE_NBITS);
 		len = MCIR2_MOUSE_NBITS + MCIR2_HEADER_NBITS;
-	}
+	पूर्ण
 
 	ret = ir_raw_gen_manchester(&e, max, &ir_mce_kbd_timings, len, raw);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return e - events;
-}
+	वापस e - events;
+पूर्ण
 
-static struct ir_raw_handler mce_kbd_handler = {
+अटल काष्ठा ir_raw_handler mce_kbd_handler = अणु
 	.protocols	= RC_PROTO_BIT_MCIR2_KBD | RC_PROTO_BIT_MCIR2_MSE,
 	.decode		= ir_mce_kbd_decode,
 	.encode		= ir_mce_kbd_encode,
-	.raw_register	= ir_mce_kbd_register,
-	.raw_unregister	= ir_mce_kbd_unregister,
+	.raw_रेजिस्टर	= ir_mce_kbd_रेजिस्टर,
+	.raw_unरेजिस्टर	= ir_mce_kbd_unरेजिस्टर,
 	.carrier	= 36000,
-	.min_timeout	= MCIR2_MAX_LEN + MCIR2_UNIT / 2,
-};
+	.min_समयout	= MCIR2_MAX_LEN + MCIR2_UNIT / 2,
+पूर्ण;
 
-static int __init ir_mce_kbd_decode_init(void)
-{
-	ir_raw_handler_register(&mce_kbd_handler);
+अटल पूर्णांक __init ir_mce_kbd_decode_init(व्योम)
+अणु
+	ir_raw_handler_रेजिस्टर(&mce_kbd_handler);
 
-	printk(KERN_INFO "IR MCE Keyboard/mouse protocol handler initialized\n");
-	return 0;
-}
+	prपूर्णांकk(KERN_INFO "IR MCE Keyboard/mouse protocol handler initialized\n");
+	वापस 0;
+पूर्ण
 
-static void __exit ir_mce_kbd_decode_exit(void)
-{
-	ir_raw_handler_unregister(&mce_kbd_handler);
-}
+अटल व्योम __निकास ir_mce_kbd_decode_निकास(व्योम)
+अणु
+	ir_raw_handler_unरेजिस्टर(&mce_kbd_handler);
+पूर्ण
 
 module_init(ir_mce_kbd_decode_init);
-module_exit(ir_mce_kbd_decode_exit);
+module_निकास(ir_mce_kbd_decode_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jarod Wilson <jarod@redhat.com>");

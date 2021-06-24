@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * File attributes for Mediated devices
+ * File attributes क्रम Mediated devices
  *
  * Copyright (c) 2016, NVIDIA CORPORATION. All rights reserved.
  *     Author: Neo Jia <cjia@nvidia.com>
  *             Kirti Wankhede <kwankhede@nvidia.com>
  */
 
-#include <linux/sysfs.h>
-#include <linux/ctype.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/uuid.h>
-#include <linux/mdev.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uuid.h>
+#समावेश <linux/mdev.h>
 
-#include "mdev_private.h"
+#समावेश "mdev_private.h"
 
 /* Static functions */
 
-static ssize_t mdev_type_attr_show(struct kobject *kobj,
-				     struct attribute *__attr, char *buf)
-{
-	struct mdev_type_attribute *attr = to_mdev_type_attr(__attr);
-	struct mdev_type *type = to_mdev_type(kobj);
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार mdev_type_attr_show(काष्ठा kobject *kobj,
+				     काष्ठा attribute *__attr, अक्षर *buf)
+अणु
+	काष्ठा mdev_type_attribute *attr = to_mdev_type_attr(__attr);
+	काष्ठा mdev_type *type = to_mdev_type(kobj);
+	sमाप_प्रकार ret = -EIO;
 
-	if (attr->show)
+	अगर (attr->show)
 		ret = attr->show(type, attr, buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t mdev_type_attr_store(struct kobject *kobj,
-				      struct attribute *__attr,
-				      const char *buf, size_t count)
-{
-	struct mdev_type_attribute *attr = to_mdev_type_attr(__attr);
-	struct mdev_type *type = to_mdev_type(kobj);
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार mdev_type_attr_store(काष्ठा kobject *kobj,
+				      काष्ठा attribute *__attr,
+				      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा mdev_type_attribute *attr = to_mdev_type_attr(__attr);
+	काष्ठा mdev_type *type = to_mdev_type(kobj);
+	sमाप_प्रकार ret = -EIO;
 
-	if (attr->store)
+	अगर (attr->store)
 		ret = attr->store(type, attr, buf, count);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct sysfs_ops mdev_type_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops mdev_type_sysfs_ops = अणु
 	.show = mdev_type_attr_show,
 	.store = mdev_type_attr_store,
-};
+पूर्ण;
 
-static ssize_t create_store(struct mdev_type *mtype,
-			    struct mdev_type_attribute *attr, const char *buf,
-			    size_t count)
-{
-	char *str;
+अटल sमाप_प्रकार create_store(काष्ठा mdev_type *mtype,
+			    काष्ठा mdev_type_attribute *attr, स्थिर अक्षर *buf,
+			    माप_प्रकार count)
+अणु
+	अक्षर *str;
 	guid_t uuid;
-	int ret;
+	पूर्णांक ret;
 
-	if ((count < UUID_STRING_LEN) || (count > UUID_STRING_LEN + 1))
-		return -EINVAL;
+	अगर ((count < UUID_STRING_LEN) || (count > UUID_STRING_LEN + 1))
+		वापस -EINVAL;
 
 	str = kstrndup(buf, count, GFP_KERNEL);
-	if (!str)
-		return -ENOMEM;
+	अगर (!str)
+		वापस -ENOMEM;
 
 	ret = guid_parse(str, &uuid);
-	kfree(str);
-	if (ret)
-		return ret;
+	kमुक्त(str);
+	अगर (ret)
+		वापस ret;
 
 	ret = mdev_device_create(mtype, &uuid);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static MDEV_TYPE_ATTR_WO(create);
+अटल MDEV_TYPE_ATTR_WO(create);
 
-static void mdev_type_release(struct kobject *kobj)
-{
-	struct mdev_type *type = to_mdev_type(kobj);
+अटल व्योम mdev_type_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा mdev_type *type = to_mdev_type(kobj);
 
 	pr_debug("Releasing group %s\n", kobj->name);
 	/* Pairs with the get in add_mdev_supported_type() */
 	mdev_put_parent(type->parent);
-	kfree(type);
-}
+	kमुक्त(type);
+पूर्ण
 
-static struct kobj_type mdev_type_ktype = {
+अटल काष्ठा kobj_type mdev_type_ktype = अणु
 	.sysfs_ops = &mdev_type_sysfs_ops,
 	.release = mdev_type_release,
-};
+पूर्ण;
 
-static struct mdev_type *add_mdev_supported_type(struct mdev_parent *parent,
-						 unsigned int type_group_id)
-{
-	struct mdev_type *type;
-	struct attribute_group *group =
+अटल काष्ठा mdev_type *add_mdev_supported_type(काष्ठा mdev_parent *parent,
+						 अचिन्हित पूर्णांक type_group_id)
+अणु
+	काष्ठा mdev_type *type;
+	काष्ठा attribute_group *group =
 		parent->ops->supported_type_groups[type_group_id];
-	int ret;
+	पूर्णांक ret;
 
-	if (!group->name) {
+	अगर (!group->name) अणु
 		pr_err("%s: Type name empty!\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	type = kzalloc(sizeof(*type), GFP_KERNEL);
-	if (!type)
-		return ERR_PTR(-ENOMEM);
+	type = kzalloc(माप(*type), GFP_KERNEL);
+	अगर (!type)
+		वापस ERR_PTR(-ENOMEM);
 
 	type->kobj.kset = parent->mdev_types_kset;
 	type->parent = parent;
@@ -115,180 +116,180 @@ static struct mdev_type *add_mdev_supported_type(struct mdev_parent *parent,
 	mdev_get_parent(parent);
 	type->type_group_id = type_group_id;
 
-	ret = kobject_init_and_add(&type->kobj, &mdev_type_ktype, NULL,
+	ret = kobject_init_and_add(&type->kobj, &mdev_type_ktype, शून्य,
 				   "%s-%s", dev_driver_string(parent->dev),
 				   group->name);
-	if (ret) {
+	अगर (ret) अणु
 		kobject_put(&type->kobj);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	ret = sysfs_create_file(&type->kobj, &mdev_type_attr_create.attr);
-	if (ret)
-		goto attr_create_failed;
+	अगर (ret)
+		जाओ attr_create_failed;
 
 	type->devices_kobj = kobject_create_and_add("devices", &type->kobj);
-	if (!type->devices_kobj) {
+	अगर (!type->devices_kobj) अणु
 		ret = -ENOMEM;
-		goto attr_devices_failed;
-	}
+		जाओ attr_devices_failed;
+	पूर्ण
 
 	ret = sysfs_create_files(&type->kobj,
-				 (const struct attribute **)group->attrs);
-	if (ret) {
+				 (स्थिर काष्ठा attribute **)group->attrs);
+	अगर (ret) अणु
 		ret = -ENOMEM;
-		goto attrs_failed;
-	}
-	return type;
+		जाओ attrs_failed;
+	पूर्ण
+	वापस type;
 
 attrs_failed:
 	kobject_put(type->devices_kobj);
 attr_devices_failed:
-	sysfs_remove_file(&type->kobj, &mdev_type_attr_create.attr);
+	sysfs_हटाओ_file(&type->kobj, &mdev_type_attr_create.attr);
 attr_create_failed:
 	kobject_del(&type->kobj);
 	kobject_put(&type->kobj);
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static void remove_mdev_supported_type(struct mdev_type *type)
-{
-	struct attribute_group *group =
+अटल व्योम हटाओ_mdev_supported_type(काष्ठा mdev_type *type)
+अणु
+	काष्ठा attribute_group *group =
 		type->parent->ops->supported_type_groups[type->type_group_id];
 
-	sysfs_remove_files(&type->kobj,
-			   (const struct attribute **)group->attrs);
+	sysfs_हटाओ_files(&type->kobj,
+			   (स्थिर काष्ठा attribute **)group->attrs);
 	kobject_put(type->devices_kobj);
-	sysfs_remove_file(&type->kobj, &mdev_type_attr_create.attr);
+	sysfs_हटाओ_file(&type->kobj, &mdev_type_attr_create.attr);
 	kobject_del(&type->kobj);
 	kobject_put(&type->kobj);
-}
+पूर्ण
 
-static int add_mdev_supported_type_groups(struct mdev_parent *parent)
-{
-	int i;
+अटल पूर्णांक add_mdev_supported_type_groups(काष्ठा mdev_parent *parent)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; parent->ops->supported_type_groups[i]; i++) {
-		struct mdev_type *type;
+	क्रम (i = 0; parent->ops->supported_type_groups[i]; i++) अणु
+		काष्ठा mdev_type *type;
 
 		type = add_mdev_supported_type(parent, i);
-		if (IS_ERR(type)) {
-			struct mdev_type *ltype, *tmp;
+		अगर (IS_ERR(type)) अणु
+			काष्ठा mdev_type *ltype, *पंचांगp;
 
-			list_for_each_entry_safe(ltype, tmp, &parent->type_list,
-						  next) {
+			list_क्रम_each_entry_safe(ltype, पंचांगp, &parent->type_list,
+						  next) अणु
 				list_del(&ltype->next);
-				remove_mdev_supported_type(ltype);
-			}
-			return PTR_ERR(type);
-		}
+				हटाओ_mdev_supported_type(ltype);
+			पूर्ण
+			वापस PTR_ERR(type);
+		पूर्ण
 		list_add(&type->next, &parent->type_list);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* mdev sysfs functions */
-void parent_remove_sysfs_files(struct mdev_parent *parent)
-{
-	struct mdev_type *type, *tmp;
+व्योम parent_हटाओ_sysfs_files(काष्ठा mdev_parent *parent)
+अणु
+	काष्ठा mdev_type *type, *पंचांगp;
 
-	list_for_each_entry_safe(type, tmp, &parent->type_list, next) {
+	list_क्रम_each_entry_safe(type, पंचांगp, &parent->type_list, next) अणु
 		list_del(&type->next);
-		remove_mdev_supported_type(type);
-	}
+		हटाओ_mdev_supported_type(type);
+	पूर्ण
 
-	sysfs_remove_groups(&parent->dev->kobj, parent->ops->dev_attr_groups);
-	kset_unregister(parent->mdev_types_kset);
-}
+	sysfs_हटाओ_groups(&parent->dev->kobj, parent->ops->dev_attr_groups);
+	kset_unरेजिस्टर(parent->mdev_types_kset);
+पूर्ण
 
-int parent_create_sysfs_files(struct mdev_parent *parent)
-{
-	int ret;
+पूर्णांक parent_create_sysfs_files(काष्ठा mdev_parent *parent)
+अणु
+	पूर्णांक ret;
 
 	parent->mdev_types_kset = kset_create_and_add("mdev_supported_types",
-					       NULL, &parent->dev->kobj);
+					       शून्य, &parent->dev->kobj);
 
-	if (!parent->mdev_types_kset)
-		return -ENOMEM;
+	अगर (!parent->mdev_types_kset)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&parent->type_list);
 
 	ret = sysfs_create_groups(&parent->dev->kobj,
 				  parent->ops->dev_attr_groups);
-	if (ret)
-		goto create_err;
+	अगर (ret)
+		जाओ create_err;
 
 	ret = add_mdev_supported_type_groups(parent);
-	if (ret)
-		sysfs_remove_groups(&parent->dev->kobj,
+	अगर (ret)
+		sysfs_हटाओ_groups(&parent->dev->kobj,
 				    parent->ops->dev_attr_groups);
-	else
-		return ret;
+	अन्यथा
+		वापस ret;
 
 create_err:
-	kset_unregister(parent->mdev_types_kset);
-	return ret;
-}
+	kset_unरेजिस्टर(parent->mdev_types_kset);
+	वापस ret;
+पूर्ण
 
-static ssize_t remove_store(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
-	struct mdev_device *mdev = to_mdev_device(dev);
-	unsigned long val;
+अटल sमाप_प्रकार हटाओ_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा mdev_device *mdev = to_mdev_device(dev);
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val) < 0)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val) < 0)
+		वापस -EINVAL;
 
-	if (val && device_remove_file_self(dev, attr)) {
-		int ret;
+	अगर (val && device_हटाओ_file_self(dev, attr)) अणु
+		पूर्णांक ret;
 
-		ret = mdev_device_remove(mdev);
-		if (ret)
-			return ret;
-	}
+		ret = mdev_device_हटाओ(mdev);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_WO(remove);
+अटल DEVICE_ATTR_WO(हटाओ);
 
-static const struct attribute *mdev_device_attrs[] = {
-	&dev_attr_remove.attr,
-	NULL,
-};
+अटल स्थिर काष्ठा attribute *mdev_device_attrs[] = अणु
+	&dev_attr_हटाओ.attr,
+	शून्य,
+पूर्ण;
 
-int mdev_create_sysfs_files(struct mdev_device *mdev)
-{
-	struct mdev_type *type = mdev->type;
-	struct kobject *kobj = &mdev->dev.kobj;
-	int ret;
+पूर्णांक mdev_create_sysfs_files(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा mdev_type *type = mdev->type;
+	काष्ठा kobject *kobj = &mdev->dev.kobj;
+	पूर्णांक ret;
 
 	ret = sysfs_create_link(type->devices_kobj, kobj, dev_name(&mdev->dev));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = sysfs_create_link(kobj, &type->kobj, "mdev_type");
-	if (ret)
-		goto type_link_failed;
+	अगर (ret)
+		जाओ type_link_failed;
 
 	ret = sysfs_create_files(kobj, mdev_device_attrs);
-	if (ret)
-		goto create_files_failed;
+	अगर (ret)
+		जाओ create_files_failed;
 
-	return ret;
+	वापस ret;
 
 create_files_failed:
-	sysfs_remove_link(kobj, "mdev_type");
+	sysfs_हटाओ_link(kobj, "mdev_type");
 type_link_failed:
-	sysfs_remove_link(mdev->type->devices_kobj, dev_name(&mdev->dev));
-	return ret;
-}
+	sysfs_हटाओ_link(mdev->type->devices_kobj, dev_name(&mdev->dev));
+	वापस ret;
+पूर्ण
 
-void mdev_remove_sysfs_files(struct mdev_device *mdev)
-{
-	struct kobject *kobj = &mdev->dev.kobj;
+व्योम mdev_हटाओ_sysfs_files(काष्ठा mdev_device *mdev)
+अणु
+	काष्ठा kobject *kobj = &mdev->dev.kobj;
 
-	sysfs_remove_files(kobj, mdev_device_attrs);
-	sysfs_remove_link(kobj, "mdev_type");
-	sysfs_remove_link(mdev->type->devices_kobj, dev_name(&mdev->dev));
-}
+	sysfs_हटाओ_files(kobj, mdev_device_attrs);
+	sysfs_हटाओ_link(kobj, "mdev_type");
+	sysfs_हटाओ_link(mdev->type->devices_kobj, dev_name(&mdev->dev));
+पूर्ण

@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
- *   fs/cifs/misc.c
+ *   fs/cअगरs/misc.c
  *
  *   Copyright (C) International Business Machines  Corp., 2002,2008
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -12,379 +13,379 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   the GNU Lesser General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, write to the Free Software
+ *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <linux/slab.h>
-#include <linux/ctype.h>
-#include <linux/mempool.h>
-#include <linux/vmalloc.h>
-#include "cifspdu.h"
-#include "cifsglob.h"
-#include "cifsproto.h"
-#include "cifs_debug.h"
-#include "smberr.h"
-#include "nterr.h"
-#include "cifs_unicode.h"
-#include "smb2pdu.h"
-#include "cifsfs.h"
-#ifdef CONFIG_CIFS_DFS_UPCALL
-#include "dns_resolve.h"
-#endif
-#include "fs_context.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/mempool.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश "cifspdu.h"
+#समावेश "cifsglob.h"
+#समावेश "cifsproto.h"
+#समावेश "cifs_debug.h"
+#समावेश "smberr.h"
+#समावेश "nterr.h"
+#समावेश "cifs_unicode.h"
+#समावेश "smb2pdu.h"
+#समावेश "cifsfs.h"
+#अगर_घोषित CONFIG_CIFS_DFS_UPCALL
+#समावेश "dns_resolve.h"
+#पूर्ण_अगर
+#समावेश "fs_context.h"
 
-extern mempool_t *cifs_sm_req_poolp;
-extern mempool_t *cifs_req_poolp;
+बाह्य mempool_t *cअगरs_sm_req_poolp;
+बाह्य mempool_t *cअगरs_req_poolp;
 
-/* The xid serves as a useful identifier for each incoming vfs request,
+/* The xid serves as a useful identअगरier क्रम each incoming vfs request,
    in a similar way to the mid which is useful to track each sent smb,
    and CurrentXid can also provide a running counter (although it
    will eventually wrap past zero) of the total vfs operations handled
-   since the cifs fs was mounted */
+   since the cअगरs fs was mounted */
 
-unsigned int
-_get_xid(void)
-{
-	unsigned int xid;
+अचिन्हित पूर्णांक
+_get_xid(व्योम)
+अणु
+	अचिन्हित पूर्णांक xid;
 
 	spin_lock(&GlobalMid_Lock);
 	GlobalTotalActiveXid++;
 
-	/* keep high water mark for number of simultaneous ops in filesystem */
-	if (GlobalTotalActiveXid > GlobalMaxActiveXid)
+	/* keep high water mark क्रम number of simultaneous ops in fileप्रणाली */
+	अगर (GlobalTotalActiveXid > GlobalMaxActiveXid)
 		GlobalMaxActiveXid = GlobalTotalActiveXid;
-	if (GlobalTotalActiveXid > 65000)
-		cifs_dbg(FYI, "warning: more than 65000 requests active\n");
+	अगर (GlobalTotalActiveXid > 65000)
+		cअगरs_dbg(FYI, "warning: more than 65000 requests active\n");
 	xid = GlobalCurrentXid++;
 	spin_unlock(&GlobalMid_Lock);
-	return xid;
-}
+	वापस xid;
+पूर्ण
 
-void
-_free_xid(unsigned int xid)
-{
+व्योम
+_मुक्त_xid(अचिन्हित पूर्णांक xid)
+अणु
 	spin_lock(&GlobalMid_Lock);
-	/* if (GlobalTotalActiveXid == 0)
+	/* अगर (GlobalTotalActiveXid == 0)
 		BUG(); */
 	GlobalTotalActiveXid--;
 	spin_unlock(&GlobalMid_Lock);
-}
+पूर्ण
 
-struct cifs_ses *
-sesInfoAlloc(void)
-{
-	struct cifs_ses *ret_buf;
+काष्ठा cअगरs_ses *
+sesInfoAlloc(व्योम)
+अणु
+	काष्ठा cअगरs_ses *ret_buf;
 
-	ret_buf = kzalloc(sizeof(struct cifs_ses), GFP_KERNEL);
-	if (ret_buf) {
+	ret_buf = kzalloc(माप(काष्ठा cअगरs_ses), GFP_KERNEL);
+	अगर (ret_buf) अणु
 		atomic_inc(&sesInfoAllocCount);
-		ret_buf->status = CifsNew;
+		ret_buf->status = CअगरsNew;
 		++ret_buf->ses_count;
 		INIT_LIST_HEAD(&ret_buf->smb_ses_list);
 		INIT_LIST_HEAD(&ret_buf->tcon_list);
 		mutex_init(&ret_buf->session_mutex);
-		spin_lock_init(&ret_buf->iface_lock);
-	}
-	return ret_buf;
-}
+		spin_lock_init(&ret_buf->अगरace_lock);
+	पूर्ण
+	वापस ret_buf;
+पूर्ण
 
-void
-sesInfoFree(struct cifs_ses *buf_to_free)
-{
-	if (buf_to_free == NULL) {
-		cifs_dbg(FYI, "Null buffer passed to sesInfoFree\n");
-		return;
-	}
+व्योम
+sesInfoFree(काष्ठा cअगरs_ses *buf_to_मुक्त)
+अणु
+	अगर (buf_to_मुक्त == शून्य) अणु
+		cअगरs_dbg(FYI, "Null buffer passed to sesInfoFree\n");
+		वापस;
+	पूर्ण
 
 	atomic_dec(&sesInfoAllocCount);
-	kfree(buf_to_free->serverOS);
-	kfree(buf_to_free->serverDomain);
-	kfree(buf_to_free->serverNOS);
-	kfree_sensitive(buf_to_free->password);
-	kfree(buf_to_free->user_name);
-	kfree(buf_to_free->domainName);
-	kfree_sensitive(buf_to_free->auth_key.response);
-	kfree(buf_to_free->iface_list);
-	kfree_sensitive(buf_to_free);
-}
+	kमुक्त(buf_to_मुक्त->serverOS);
+	kमुक्त(buf_to_मुक्त->serverDoमुख्य);
+	kमुक्त(buf_to_मुक्त->serverNOS);
+	kमुक्त_sensitive(buf_to_मुक्त->password);
+	kमुक्त(buf_to_मुक्त->user_name);
+	kमुक्त(buf_to_मुक्त->करोमुख्यName);
+	kमुक्त_sensitive(buf_to_मुक्त->auth_key.response);
+	kमुक्त(buf_to_मुक्त->अगरace_list);
+	kमुक्त_sensitive(buf_to_मुक्त);
+पूर्ण
 
-struct cifs_tcon *
-tconInfoAlloc(void)
-{
-	struct cifs_tcon *ret_buf;
+काष्ठा cअगरs_tcon *
+tconInfoAlloc(व्योम)
+अणु
+	काष्ठा cअगरs_tcon *ret_buf;
 
-	ret_buf = kzalloc(sizeof(*ret_buf), GFP_KERNEL);
-	if (!ret_buf)
-		return NULL;
-	ret_buf->crfid.fid = kzalloc(sizeof(*ret_buf->crfid.fid), GFP_KERNEL);
-	if (!ret_buf->crfid.fid) {
-		kfree(ret_buf);
-		return NULL;
-	}
+	ret_buf = kzalloc(माप(*ret_buf), GFP_KERNEL);
+	अगर (!ret_buf)
+		वापस शून्य;
+	ret_buf->crfid.fid = kzalloc(माप(*ret_buf->crfid.fid), GFP_KERNEL);
+	अगर (!ret_buf->crfid.fid) अणु
+		kमुक्त(ret_buf);
+		वापस शून्य;
+	पूर्ण
 
 	atomic_inc(&tconInfoAllocCount);
-	ret_buf->tidStatus = CifsNew;
+	ret_buf->tidStatus = CअगरsNew;
 	++ret_buf->tc_count;
-	INIT_LIST_HEAD(&ret_buf->openFileList);
+	INIT_LIST_HEAD(&ret_buf->खोलोFileList);
 	INIT_LIST_HEAD(&ret_buf->tcon_list);
-	spin_lock_init(&ret_buf->open_file_lock);
+	spin_lock_init(&ret_buf->खोलो_file_lock);
 	mutex_init(&ret_buf->crfid.fid_mutex);
 	spin_lock_init(&ret_buf->stat_lock);
-	atomic_set(&ret_buf->num_local_opens, 0);
-	atomic_set(&ret_buf->num_remote_opens, 0);
+	atomic_set(&ret_buf->num_local_खोलोs, 0);
+	atomic_set(&ret_buf->num_remote_खोलोs, 0);
 
-	return ret_buf;
-}
+	वापस ret_buf;
+पूर्ण
 
-void
-tconInfoFree(struct cifs_tcon *buf_to_free)
-{
-	if (buf_to_free == NULL) {
-		cifs_dbg(FYI, "Null buffer passed to tconInfoFree\n");
-		return;
-	}
+व्योम
+tconInfoFree(काष्ठा cअगरs_tcon *buf_to_मुक्त)
+अणु
+	अगर (buf_to_मुक्त == शून्य) अणु
+		cअगरs_dbg(FYI, "Null buffer passed to tconInfoFree\n");
+		वापस;
+	पूर्ण
 	atomic_dec(&tconInfoAllocCount);
-	kfree(buf_to_free->nativeFileSystem);
-	kfree_sensitive(buf_to_free->password);
-	kfree(buf_to_free->crfid.fid);
-#ifdef CONFIG_CIFS_DFS_UPCALL
-	kfree(buf_to_free->dfs_path);
-#endif
-	kfree(buf_to_free);
-}
+	kमुक्त(buf_to_मुक्त->nativeFileSystem);
+	kमुक्त_sensitive(buf_to_मुक्त->password);
+	kमुक्त(buf_to_मुक्त->crfid.fid);
+#अगर_घोषित CONFIG_CIFS_DFS_UPCALL
+	kमुक्त(buf_to_मुक्त->dfs_path);
+#पूर्ण_अगर
+	kमुक्त(buf_to_मुक्त);
+पूर्ण
 
-struct smb_hdr *
-cifs_buf_get(void)
-{
-	struct smb_hdr *ret_buf = NULL;
+काष्ठा smb_hdr *
+cअगरs_buf_get(व्योम)
+अणु
+	काष्ठा smb_hdr *ret_buf = शून्य;
 	/*
 	 * SMB2 header is bigger than CIFS one - no problems to clean some
-	 * more bytes for CIFS.
+	 * more bytes क्रम CIFS.
 	 */
-	size_t buf_size = sizeof(struct smb2_sync_hdr);
+	माप_प्रकार buf_size = माप(काष्ठा smb2_sync_hdr);
 
 	/*
 	 * We could use negotiated size instead of max_msgsize -
 	 * but it may be more efficient to always alloc same size
 	 * albeit slightly larger than necessary and maxbuffersize
-	 * defaults to this and can not be bigger.
+	 * शेषs to this and can not be bigger.
 	 */
-	ret_buf = mempool_alloc(cifs_req_poolp, GFP_NOFS);
+	ret_buf = mempool_alloc(cअगरs_req_poolp, GFP_NOFS);
 
 	/* clear the first few header bytes */
-	/* for most paths, more is cleared in header_assemble */
-	memset(ret_buf, 0, buf_size + 3);
+	/* क्रम most paths, more is cleared in header_assemble */
+	स_रखो(ret_buf, 0, buf_size + 3);
 	atomic_inc(&bufAllocCount);
-#ifdef CONFIG_CIFS_STATS2
+#अगर_घोषित CONFIG_CIFS_STATS2
 	atomic_inc(&totBufAllocCount);
-#endif /* CONFIG_CIFS_STATS2 */
+#पूर्ण_अगर /* CONFIG_CIFS_STATS2 */
 
-	return ret_buf;
-}
+	वापस ret_buf;
+पूर्ण
 
-void
-cifs_buf_release(void *buf_to_free)
-{
-	if (buf_to_free == NULL) {
-		/* cifs_dbg(FYI, "Null buffer passed to cifs_buf_release\n");*/
-		return;
-	}
-	mempool_free(buf_to_free, cifs_req_poolp);
+व्योम
+cअगरs_buf_release(व्योम *buf_to_मुक्त)
+अणु
+	अगर (buf_to_मुक्त == शून्य) अणु
+		/* cअगरs_dbg(FYI, "Null buffer passed to cifs_buf_release\n");*/
+		वापस;
+	पूर्ण
+	mempool_मुक्त(buf_to_मुक्त, cअगरs_req_poolp);
 
 	atomic_dec(&bufAllocCount);
-	return;
-}
+	वापस;
+पूर्ण
 
-struct smb_hdr *
-cifs_small_buf_get(void)
-{
-	struct smb_hdr *ret_buf = NULL;
+काष्ठा smb_hdr *
+cअगरs_small_buf_get(व्योम)
+अणु
+	काष्ठा smb_hdr *ret_buf = शून्य;
 
 /* We could use negotiated size instead of max_msgsize -
    but it may be more efficient to always alloc same size
    albeit slightly larger than necessary and maxbuffersize
-   defaults to this and can not be bigger */
-	ret_buf = mempool_alloc(cifs_sm_req_poolp, GFP_NOFS);
+   शेषs to this and can not be bigger */
+	ret_buf = mempool_alloc(cअगरs_sm_req_poolp, GFP_NOFS);
 	/* No need to clear memory here, cleared in header assemble */
-	/*	memset(ret_buf, 0, sizeof(struct smb_hdr) + 27);*/
+	/*	स_रखो(ret_buf, 0, माप(काष्ठा smb_hdr) + 27);*/
 	atomic_inc(&smBufAllocCount);
-#ifdef CONFIG_CIFS_STATS2
+#अगर_घोषित CONFIG_CIFS_STATS2
 	atomic_inc(&totSmBufAllocCount);
-#endif /* CONFIG_CIFS_STATS2 */
+#पूर्ण_अगर /* CONFIG_CIFS_STATS2 */
 
-	return ret_buf;
-}
+	वापस ret_buf;
+पूर्ण
 
-void
-cifs_small_buf_release(void *buf_to_free)
-{
+व्योम
+cअगरs_small_buf_release(व्योम *buf_to_मुक्त)
+अणु
 
-	if (buf_to_free == NULL) {
-		cifs_dbg(FYI, "Null buffer passed to cifs_small_buf_release\n");
-		return;
-	}
-	mempool_free(buf_to_free, cifs_sm_req_poolp);
+	अगर (buf_to_मुक्त == शून्य) अणु
+		cअगरs_dbg(FYI, "Null buffer passed to cifs_small_buf_release\n");
+		वापस;
+	पूर्ण
+	mempool_मुक्त(buf_to_मुक्त, cअगरs_sm_req_poolp);
 
 	atomic_dec(&smBufAllocCount);
-	return;
-}
+	वापस;
+पूर्ण
 
-void
-free_rsp_buf(int resp_buftype, void *rsp)
-{
-	if (resp_buftype == CIFS_SMALL_BUFFER)
-		cifs_small_buf_release(rsp);
-	else if (resp_buftype == CIFS_LARGE_BUFFER)
-		cifs_buf_release(rsp);
-}
+व्योम
+मुक्त_rsp_buf(पूर्णांक resp_buftype, व्योम *rsp)
+अणु
+	अगर (resp_buftype == CIFS_SMALL_BUFFER)
+		cअगरs_small_buf_release(rsp);
+	अन्यथा अगर (resp_buftype == CIFS_LARGE_BUFFER)
+		cअगरs_buf_release(rsp);
+पूर्ण
 
-/* NB: MID can not be set if treeCon not passed in, in that
-   case it is responsbility of caller to set the mid */
-void
-header_assemble(struct smb_hdr *buffer, char smb_command /* command */ ,
-		const struct cifs_tcon *treeCon, int word_count
+/* NB: MID can not be set अगर treeCon not passed in, in that
+   हाल it is responsbility of caller to set the mid */
+व्योम
+header_assemble(काष्ठा smb_hdr *buffer, अक्षर smb_command /* command */ ,
+		स्थिर काष्ठा cअगरs_tcon *treeCon, पूर्णांक word_count
 		/* length of fixed section (word count) in two byte units  */)
-{
-	char *temp = (char *) buffer;
+अणु
+	अक्षर *temp = (अक्षर *) buffer;
 
-	memset(temp, 0, 256); /* bigger than MAX_CIFS_HDR_SIZE */
+	स_रखो(temp, 0, 256); /* bigger than MAX_CIFS_HDR_SIZE */
 
 	buffer->smb_buf_length = cpu_to_be32(
-	    (2 * word_count) + sizeof(struct smb_hdr) -
-	    4 /*  RFC 1001 length field does not count */  +
-	    2 /* for bcc field itself */) ;
+	    (2 * word_count) + माप(काष्ठा smb_hdr) -
+	    4 /*  RFC 1001 length field करोes not count */  +
+	    2 /* क्रम bcc field itself */) ;
 
 	buffer->Protocol[0] = 0xFF;
 	buffer->Protocol[1] = 'S';
 	buffer->Protocol[2] = 'M';
 	buffer->Protocol[3] = 'B';
 	buffer->Command = smb_command;
-	buffer->Flags = 0x00;	/* case sensitive */
+	buffer->Flags = 0x00;	/* हाल sensitive */
 	buffer->Flags2 = SMBFLG2_KNOWS_LONG_NAMES;
 	buffer->Pid = cpu_to_le16((__u16)current->tgid);
 	buffer->PidHigh = cpu_to_le16((__u16)(current->tgid >> 16));
-	if (treeCon) {
+	अगर (treeCon) अणु
 		buffer->Tid = treeCon->tid;
-		if (treeCon->ses) {
-			if (treeCon->ses->capabilities & CAP_UNICODE)
+		अगर (treeCon->ses) अणु
+			अगर (treeCon->ses->capabilities & CAP_UNICODE)
 				buffer->Flags2 |= SMBFLG2_UNICODE;
-			if (treeCon->ses->capabilities & CAP_STATUS32)
+			अगर (treeCon->ses->capabilities & CAP_STATUS32)
 				buffer->Flags2 |= SMBFLG2_ERR_STATUS;
 
 			/* Uid is not converted */
 			buffer->Uid = treeCon->ses->Suid;
 			buffer->Mid = get_next_mid(treeCon->ses->server);
-		}
-		if (treeCon->Flags & SMB_SHARE_IS_IN_DFS)
+		पूर्ण
+		अगर (treeCon->Flags & SMB_SHARE_IS_IN_DFS)
 			buffer->Flags2 |= SMBFLG2_DFS;
-		if (treeCon->nocase)
+		अगर (treeCon->noहाल)
 			buffer->Flags  |= SMBFLG_CASELESS;
-		if ((treeCon->ses) && (treeCon->ses->server))
-			if (treeCon->ses->server->sign)
+		अगर ((treeCon->ses) && (treeCon->ses->server))
+			अगर (treeCon->ses->server->sign)
 				buffer->Flags2 |= SMBFLG2_SECURITY_SIGNATURE;
-	}
+	पूर्ण
 
-/*  endian conversion of flags is now done just before sending */
-	buffer->WordCount = (char) word_count;
-	return;
-}
+/*  endian conversion of flags is now करोne just beक्रमe sending */
+	buffer->WordCount = (अक्षर) word_count;
+	वापस;
+पूर्ण
 
-static int
-check_smb_hdr(struct smb_hdr *smb)
-{
-	/* does it have the right SMB "signature" ? */
-	if (*(__le32 *) smb->Protocol != cpu_to_le32(0x424d53ff)) {
-		cifs_dbg(VFS, "Bad protocol string signature header 0x%x\n",
-			 *(unsigned int *)smb->Protocol);
-		return 1;
-	}
+अटल पूर्णांक
+check_smb_hdr(काष्ठा smb_hdr *smb)
+अणु
+	/* करोes it have the right SMB "signature" ? */
+	अगर (*(__le32 *) smb->Protocol != cpu_to_le32(0x424d53ff)) अणु
+		cअगरs_dbg(VFS, "Bad protocol string signature header 0x%x\n",
+			 *(अचिन्हित पूर्णांक *)smb->Protocol);
+		वापस 1;
+	पूर्ण
 
-	/* if it's a response then accept */
-	if (smb->Flags & SMBFLG_RESPONSE)
-		return 0;
+	/* अगर it's a response then accept */
+	अगर (smb->Flags & SMBFLG_RESPONSE)
+		वापस 0;
 
-	/* only one valid case where server sends us request */
-	if (smb->Command == SMB_COM_LOCKING_ANDX)
-		return 0;
+	/* only one valid हाल where server sends us request */
+	अगर (smb->Command == SMB_COM_LOCKING_ANDX)
+		वापस 0;
 
-	cifs_dbg(VFS, "Server sent request, not response. mid=%u\n",
+	cअगरs_dbg(VFS, "Server sent request, not response. mid=%u\n",
 		 get_mid(smb));
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int
-checkSMB(char *buf, unsigned int total_read, struct TCP_Server_Info *server)
-{
-	struct smb_hdr *smb = (struct smb_hdr *)buf;
+पूर्णांक
+checkSMB(अक्षर *buf, अचिन्हित पूर्णांक total_पढ़ो, काष्ठा TCP_Server_Info *server)
+अणु
+	काष्ठा smb_hdr *smb = (काष्ठा smb_hdr *)buf;
 	__u32 rfclen = be32_to_cpu(smb->smb_buf_length);
 	__u32 clc_len;  /* calculated length */
-	cifs_dbg(FYI, "checkSMB Length: 0x%x, smb_buf_length: 0x%x\n",
-		 total_read, rfclen);
+	cअगरs_dbg(FYI, "checkSMB Length: 0x%x, smb_buf_length: 0x%x\n",
+		 total_पढ़ो, rfclen);
 
 	/* is this frame too small to even get to a BCC? */
-	if (total_read < 2 + sizeof(struct smb_hdr)) {
-		if ((total_read >= sizeof(struct smb_hdr) - 1)
-			    && (smb->Status.CifsError != 0)) {
-			/* it's an error return */
+	अगर (total_पढ़ो < 2 + माप(काष्ठा smb_hdr)) अणु
+		अगर ((total_पढ़ो >= माप(काष्ठा smb_hdr) - 1)
+			    && (smb->Status.CअगरsError != 0)) अणु
+			/* it's an error वापस */
 			smb->WordCount = 0;
-			/* some error cases do not return wct and bcc */
-			return 0;
-		} else if ((total_read == sizeof(struct smb_hdr) + 1) &&
-				(smb->WordCount == 0)) {
-			char *tmp = (char *)smb;
+			/* some error हालs करो not वापस wct and bcc */
+			वापस 0;
+		पूर्ण अन्यथा अगर ((total_पढ़ो == माप(काष्ठा smb_hdr) + 1) &&
+				(smb->WordCount == 0)) अणु
+			अक्षर *पंचांगp = (अक्षर *)smb;
 			/* Need to work around a bug in two servers here */
-			/* First, check if the part of bcc they sent was zero */
-			if (tmp[sizeof(struct smb_hdr)] == 0) {
-				/* some servers return only half of bcc
+			/* First, check अगर the part of bcc they sent was zero */
+			अगर (पंचांगp[माप(काष्ठा smb_hdr)] == 0) अणु
+				/* some servers वापस only half of bcc
 				 * on simple responses (wct, bcc both zero)
 				 * in particular have seen this on
 				 * ulogoffX and FindClose. This leaves
 				 * one byte of bcc potentially unitialized
 				 */
 				/* zero rest of bcc */
-				tmp[sizeof(struct smb_hdr)+1] = 0;
-				return 0;
-			}
-			cifs_dbg(VFS, "rcvd invalid byte count (bcc)\n");
-		} else {
-			cifs_dbg(VFS, "Length less than smb header size\n");
-		}
-		return -EIO;
-	}
+				पंचांगp[माप(काष्ठा smb_hdr)+1] = 0;
+				वापस 0;
+			पूर्ण
+			cअगरs_dbg(VFS, "rcvd invalid byte count (bcc)\n");
+		पूर्ण अन्यथा अणु
+			cअगरs_dbg(VFS, "Length less than smb header size\n");
+		पूर्ण
+		वापस -EIO;
+	पूर्ण
 
 	/* otherwise, there is enough to get to the BCC */
-	if (check_smb_hdr(smb))
-		return -EIO;
+	अगर (check_smb_hdr(smb))
+		वापस -EIO;
 	clc_len = smbCalcSize(smb, server);
 
-	if (4 + rfclen != total_read) {
-		cifs_dbg(VFS, "Length read does not match RFC1001 length %d\n",
+	अगर (4 + rfclen != total_पढ़ो) अणु
+		cअगरs_dbg(VFS, "Length read does not match RFC1001 length %d\n",
 			 rfclen);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (4 + rfclen != clc_len) {
+	अगर (4 + rfclen != clc_len) अणु
 		__u16 mid = get_mid(smb);
-		/* check if bcc wrapped around for large read responses */
-		if ((rfclen > 64 * 1024) && (rfclen > clc_len)) {
-			/* check if lengths match mod 64K */
-			if (((4 + rfclen) & 0xFFFF) == (clc_len & 0xFFFF))
-				return 0; /* bcc wrapped */
-		}
-		cifs_dbg(FYI, "Calculated size %u vs length %u mismatch for mid=%u\n",
+		/* check अगर bcc wrapped around क्रम large पढ़ो responses */
+		अगर ((rfclen > 64 * 1024) && (rfclen > clc_len)) अणु
+			/* check अगर lengths match mod 64K */
+			अगर (((4 + rfclen) & 0xFFFF) == (clc_len & 0xFFFF))
+				वापस 0; /* bcc wrapped */
+		पूर्ण
+		cअगरs_dbg(FYI, "Calculated size %u vs length %u mismatch for mid=%u\n",
 			 clc_len, 4 + rfclen, mid);
 
-		if (4 + rfclen < clc_len) {
-			cifs_dbg(VFS, "RFC1001 size %u smaller than SMB for mid=%u\n",
+		अगर (4 + rfclen < clc_len) अणु
+			cअगरs_dbg(VFS, "RFC1001 size %u smaller than SMB for mid=%u\n",
 				 rfclen, mid);
-			return -EIO;
-		} else if (rfclen > clc_len + 512) {
+			वापस -EIO;
+		पूर्ण अन्यथा अगर (rfclen > clc_len + 512) अणु
 			/*
-			 * Some servers (Windows XP in particular) send more
+			 * Some servers (Winकरोws XP in particular) send more
 			 * data than the lengths in the SMB packet would
 			 * indicate on certain calls (byte range locks and
 			 * trans2 find first calls in particular). While the
@@ -392,901 +393,901 @@ checkSMB(char *buf, unsigned int total_read, struct TCP_Server_Info *server)
 			 * trailing data, we choose limit the amount of extra
 			 * data to 512 bytes.
 			 */
-			cifs_dbg(VFS, "RFC1001 size %u more than 512 bytes larger than SMB for mid=%u\n",
+			cअगरs_dbg(VFS, "RFC1001 size %u more than 512 bytes larger than SMB for mid=%u\n",
 				 rfclen, mid);
-			return -EIO;
-		}
-	}
-	return 0;
-}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 bool
-is_valid_oplock_break(char *buffer, struct TCP_Server_Info *srv)
-{
-	struct smb_hdr *buf = (struct smb_hdr *)buffer;
-	struct smb_com_lock_req *pSMB = (struct smb_com_lock_req *)buf;
-	struct list_head *tmp, *tmp1, *tmp2;
-	struct cifs_ses *ses;
-	struct cifs_tcon *tcon;
-	struct cifsInodeInfo *pCifsInode;
-	struct cifsFileInfo *netfile;
+is_valid_oplock_अवरोध(अक्षर *buffer, काष्ठा TCP_Server_Info *srv)
+अणु
+	काष्ठा smb_hdr *buf = (काष्ठा smb_hdr *)buffer;
+	काष्ठा smb_com_lock_req *pSMB = (काष्ठा smb_com_lock_req *)buf;
+	काष्ठा list_head *पंचांगp, *पंचांगp1, *पंचांगp2;
+	काष्ठा cअगरs_ses *ses;
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा cअगरsInodeInfo *pCअगरsInode;
+	काष्ठा cअगरsFileInfo *netfile;
 
-	cifs_dbg(FYI, "Checking for oplock break or dnotify response\n");
-	if ((pSMB->hdr.Command == SMB_COM_NT_TRANSACT) &&
-	   (pSMB->hdr.Flags & SMBFLG_RESPONSE)) {
-		struct smb_com_transaction_change_notify_rsp *pSMBr =
-			(struct smb_com_transaction_change_notify_rsp *)buf;
-		struct file_notify_information *pnotify;
+	cअगरs_dbg(FYI, "Checking for oplock break or dnotify response\n");
+	अगर ((pSMB->hdr.Command == SMB_COM_NT_TRANSACT) &&
+	   (pSMB->hdr.Flags & SMBFLG_RESPONSE)) अणु
+		काष्ठा smb_com_transaction_change_notअगरy_rsp *pSMBr =
+			(काष्ठा smb_com_transaction_change_notअगरy_rsp *)buf;
+		काष्ठा file_notअगरy_inक्रमmation *pnotअगरy;
 		__u32 data_offset = 0;
-		size_t len = srv->total_read - sizeof(pSMBr->hdr.smb_buf_length);
+		माप_प्रकार len = srv->total_पढ़ो - माप(pSMBr->hdr.smb_buf_length);
 
-		if (get_bcc(buf) > sizeof(struct file_notify_information)) {
+		अगर (get_bcc(buf) > माप(काष्ठा file_notअगरy_inक्रमmation)) अणु
 			data_offset = le32_to_cpu(pSMBr->DataOffset);
 
-			if (data_offset >
-			    len - sizeof(struct file_notify_information)) {
-				cifs_dbg(FYI, "Invalid data_offset %u\n",
+			अगर (data_offset >
+			    len - माप(काष्ठा file_notअगरy_inक्रमmation)) अणु
+				cअगरs_dbg(FYI, "Invalid data_offset %u\n",
 					 data_offset);
-				return true;
-			}
-			pnotify = (struct file_notify_information *)
-				((char *)&pSMBr->hdr.Protocol + data_offset);
-			cifs_dbg(FYI, "dnotify on %s Action: 0x%x\n",
-				 pnotify->FileName, pnotify->Action);
-			/*   cifs_dump_mem("Rcvd notify Data: ",buf,
-				sizeof(struct smb_hdr)+60); */
-			return true;
-		}
-		if (pSMBr->hdr.Status.CifsError) {
-			cifs_dbg(FYI, "notify err 0x%x\n",
-				 pSMBr->hdr.Status.CifsError);
-			return true;
-		}
-		return false;
-	}
-	if (pSMB->hdr.Command != SMB_COM_LOCKING_ANDX)
-		return false;
-	if (pSMB->hdr.Flags & SMBFLG_RESPONSE) {
+				वापस true;
+			पूर्ण
+			pnotअगरy = (काष्ठा file_notअगरy_inक्रमmation *)
+				((अक्षर *)&pSMBr->hdr.Protocol + data_offset);
+			cअगरs_dbg(FYI, "dnotify on %s Action: 0x%x\n",
+				 pnotअगरy->FileName, pnotअगरy->Action);
+			/*   cअगरs_dump_mem("Rcvd notify Data: ",buf,
+				माप(काष्ठा smb_hdr)+60); */
+			वापस true;
+		पूर्ण
+		अगर (pSMBr->hdr.Status.CअगरsError) अणु
+			cअगरs_dbg(FYI, "notify err 0x%x\n",
+				 pSMBr->hdr.Status.CअगरsError);
+			वापस true;
+		पूर्ण
+		वापस false;
+	पूर्ण
+	अगर (pSMB->hdr.Command != SMB_COM_LOCKING_ANDX)
+		वापस false;
+	अगर (pSMB->hdr.Flags & SMBFLG_RESPONSE) अणु
 		/* no sense logging error on invalid handle on oplock
-		   break - harmless race between close request and oplock
-		   break response is expected from time to time writing out
+		   अवरोध - harmless race between बंद request and oplock
+		   अवरोध response is expected from समय to समय writing out
 		   large dirty files cached on the client */
-		if ((NT_STATUS_INVALID_HANDLE) ==
-		   le32_to_cpu(pSMB->hdr.Status.CifsError)) {
-			cifs_dbg(FYI, "Invalid handle on oplock break\n");
-			return true;
-		} else if (ERRbadfid ==
-		   le16_to_cpu(pSMB->hdr.Status.DosError.Error)) {
-			return true;
-		} else {
-			return false; /* on valid oplock brk we get "request" */
-		}
-	}
-	if (pSMB->hdr.WordCount != 8)
-		return false;
+		अगर ((NT_STATUS_INVALID_HANDLE) ==
+		   le32_to_cpu(pSMB->hdr.Status.CअगरsError)) अणु
+			cअगरs_dbg(FYI, "Invalid handle on oplock break\n");
+			वापस true;
+		पूर्ण अन्यथा अगर (ERRbadfid ==
+		   le16_to_cpu(pSMB->hdr.Status.DosError.Error)) अणु
+			वापस true;
+		पूर्ण अन्यथा अणु
+			वापस false; /* on valid oplock brk we get "request" */
+		पूर्ण
+	पूर्ण
+	अगर (pSMB->hdr.WordCount != 8)
+		वापस false;
 
-	cifs_dbg(FYI, "oplock type 0x%x level 0x%x\n",
+	cअगरs_dbg(FYI, "oplock type 0x%x level 0x%x\n",
 		 pSMB->LockType, pSMB->OplockLevel);
-	if (!(pSMB->LockType & LOCKING_ANDX_OPLOCK_RELEASE))
-		return false;
+	अगर (!(pSMB->LockType & LOCKING_ANDX_OPLOCK_RELEASE))
+		वापस false;
 
 	/* look up tcon based on tid & uid */
-	spin_lock(&cifs_tcp_ses_lock);
-	list_for_each(tmp, &srv->smb_ses_list) {
-		ses = list_entry(tmp, struct cifs_ses, smb_ses_list);
-		list_for_each(tmp1, &ses->tcon_list) {
-			tcon = list_entry(tmp1, struct cifs_tcon, tcon_list);
-			if (tcon->tid != buf->Tid)
-				continue;
+	spin_lock(&cअगरs_tcp_ses_lock);
+	list_क्रम_each(पंचांगp, &srv->smb_ses_list) अणु
+		ses = list_entry(पंचांगp, काष्ठा cअगरs_ses, smb_ses_list);
+		list_क्रम_each(पंचांगp1, &ses->tcon_list) अणु
+			tcon = list_entry(पंचांगp1, काष्ठा cअगरs_tcon, tcon_list);
+			अगर (tcon->tid != buf->Tid)
+				जारी;
 
-			cifs_stats_inc(&tcon->stats.cifs_stats.num_oplock_brks);
-			spin_lock(&tcon->open_file_lock);
-			list_for_each(tmp2, &tcon->openFileList) {
-				netfile = list_entry(tmp2, struct cifsFileInfo,
+			cअगरs_stats_inc(&tcon->stats.cअगरs_stats.num_oplock_brks);
+			spin_lock(&tcon->खोलो_file_lock);
+			list_क्रम_each(पंचांगp2, &tcon->खोलोFileList) अणु
+				netfile = list_entry(पंचांगp2, काष्ठा cअगरsFileInfo,
 						     tlist);
-				if (pSMB->Fid != netfile->fid.netfid)
-					continue;
+				अगर (pSMB->Fid != netfile->fid.netfid)
+					जारी;
 
-				cifs_dbg(FYI, "file id match, oplock break\n");
-				pCifsInode = CIFS_I(d_inode(netfile->dentry));
+				cअगरs_dbg(FYI, "file id match, oplock break\n");
+				pCअगरsInode = CIFS_I(d_inode(netfile->dentry));
 
 				set_bit(CIFS_INODE_PENDING_OPLOCK_BREAK,
-					&pCifsInode->flags);
+					&pCअगरsInode->flags);
 
 				netfile->oplock_epoch = 0;
 				netfile->oplock_level = pSMB->OplockLevel;
-				netfile->oplock_break_cancelled = false;
-				cifs_queue_oplock_break(netfile);
+				netfile->oplock_अवरोध_cancelled = false;
+				cअगरs_queue_oplock_अवरोध(netfile);
 
-				spin_unlock(&tcon->open_file_lock);
-				spin_unlock(&cifs_tcp_ses_lock);
-				return true;
-			}
-			spin_unlock(&tcon->open_file_lock);
-			spin_unlock(&cifs_tcp_ses_lock);
-			cifs_dbg(FYI, "No matching file for oplock break\n");
-			return true;
-		}
-	}
-	spin_unlock(&cifs_tcp_ses_lock);
-	cifs_dbg(FYI, "Can not process oplock break for non-existent connection\n");
-	return true;
-}
+				spin_unlock(&tcon->खोलो_file_lock);
+				spin_unlock(&cअगरs_tcp_ses_lock);
+				वापस true;
+			पूर्ण
+			spin_unlock(&tcon->खोलो_file_lock);
+			spin_unlock(&cअगरs_tcp_ses_lock);
+			cअगरs_dbg(FYI, "No matching file for oplock break\n");
+			वापस true;
+		पूर्ण
+	पूर्ण
+	spin_unlock(&cअगरs_tcp_ses_lock);
+	cअगरs_dbg(FYI, "Can not process oplock break for non-existent connection\n");
+	वापस true;
+पूर्ण
 
-void
-dump_smb(void *buf, int smb_buf_length)
-{
-	if (traceSMB == 0)
-		return;
+व्योम
+dump_smb(व्योम *buf, पूर्णांक smb_buf_length)
+अणु
+	अगर (traceSMB == 0)
+		वापस;
 
-	print_hex_dump(KERN_DEBUG, "", DUMP_PREFIX_NONE, 8, 2, buf,
+	prपूर्णांक_hex_dump(KERN_DEBUG, "", DUMP_PREFIX_NONE, 8, 2, buf,
 		       smb_buf_length, true);
-}
+पूर्ण
 
-void
-cifs_autodisable_serverino(struct cifs_sb_info *cifs_sb)
-{
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM) {
-		struct cifs_tcon *tcon = NULL;
+व्योम
+cअगरs_स्वतःdisable_serverino(काष्ठा cअगरs_sb_info *cअगरs_sb)
+अणु
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM) अणु
+		काष्ठा cअगरs_tcon *tcon = शून्य;
 
-		if (cifs_sb->master_tlink)
-			tcon = cifs_sb_master_tcon(cifs_sb);
+		अगर (cअगरs_sb->master_tlink)
+			tcon = cअगरs_sb_master_tcon(cअगरs_sb);
 
-		cifs_sb->mnt_cifs_flags &= ~CIFS_MOUNT_SERVER_INUM;
-		cifs_sb->mnt_cifs_serverino_autodisabled = true;
-		cifs_dbg(VFS, "Autodisabling the use of server inode numbers on %s\n",
+		cअगरs_sb->mnt_cअगरs_flags &= ~CIFS_MOUNT_SERVER_INUM;
+		cअगरs_sb->mnt_cअगरs_serverino_स्वतःdisabled = true;
+		cअगरs_dbg(VFS, "Autodisabling the use of server inode numbers on %s\n",
 			 tcon ? tcon->treeName : "new server");
-		cifs_dbg(VFS, "The server doesn't seem to support them properly or the files might be on different servers (DFS)\n");
-		cifs_dbg(VFS, "Hardlinks will not be recognized on this mount. Consider mounting with the \"noserverino\" option to silence this message.\n");
+		cअगरs_dbg(VFS, "The server doesn't seem to support them properly or the files might be on different servers (DFS)\n");
+		cअगरs_dbg(VFS, "Hardlinks will not be recognized on this mount. Consider mounting with the \"noserverino\" option to silence this message.\n");
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-void cifs_set_oplock_level(struct cifsInodeInfo *cinode, __u32 oplock)
-{
+व्योम cअगरs_set_oplock_level(काष्ठा cअगरsInodeInfo *cinode, __u32 oplock)
+अणु
 	oplock &= 0xF;
 
-	if (oplock == OPLOCK_EXCLUSIVE) {
+	अगर (oplock == OPLOCK_EXCLUSIVE) अणु
 		cinode->oplock = CIFS_CACHE_WRITE_FLG | CIFS_CACHE_READ_FLG;
-		cifs_dbg(FYI, "Exclusive Oplock granted on inode %p\n",
+		cअगरs_dbg(FYI, "Exclusive Oplock granted on inode %p\n",
 			 &cinode->vfs_inode);
-	} else if (oplock == OPLOCK_READ) {
+	पूर्ण अन्यथा अगर (oplock == OPLOCK_READ) अणु
 		cinode->oplock = CIFS_CACHE_READ_FLG;
-		cifs_dbg(FYI, "Level II Oplock granted on inode %p\n",
+		cअगरs_dbg(FYI, "Level II Oplock granted on inode %p\n",
 			 &cinode->vfs_inode);
-	} else
+	पूर्ण अन्यथा
 		cinode->oplock = 0;
-}
+पूर्ण
 
 /*
- * We wait for oplock breaks to be processed before we attempt to perform
- * writes.
+ * We रुको क्रम oplock अवरोधs to be processed beक्रमe we attempt to perक्रमm
+ * ग_लिखोs.
  */
-int cifs_get_writer(struct cifsInodeInfo *cinode)
-{
-	int rc;
+पूर्णांक cअगरs_get_ग_लिखोr(काष्ठा cअगरsInodeInfo *cinode)
+अणु
+	पूर्णांक rc;
 
 start:
-	rc = wait_on_bit(&cinode->flags, CIFS_INODE_PENDING_OPLOCK_BREAK,
+	rc = रुको_on_bit(&cinode->flags, CIFS_INODE_PENDING_OPLOCK_BREAK,
 			 TASK_KILLABLE);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	spin_lock(&cinode->writers_lock);
-	if (!cinode->writers)
+	spin_lock(&cinode->ग_लिखोrs_lock);
+	अगर (!cinode->ग_लिखोrs)
 		set_bit(CIFS_INODE_PENDING_WRITERS, &cinode->flags);
-	cinode->writers++;
-	/* Check to see if we have started servicing an oplock break */
-	if (test_bit(CIFS_INODE_PENDING_OPLOCK_BREAK, &cinode->flags)) {
-		cinode->writers--;
-		if (cinode->writers == 0) {
+	cinode->ग_लिखोrs++;
+	/* Check to see अगर we have started servicing an oplock अवरोध */
+	अगर (test_bit(CIFS_INODE_PENDING_OPLOCK_BREAK, &cinode->flags)) अणु
+		cinode->ग_लिखोrs--;
+		अगर (cinode->ग_लिखोrs == 0) अणु
 			clear_bit(CIFS_INODE_PENDING_WRITERS, &cinode->flags);
 			wake_up_bit(&cinode->flags, CIFS_INODE_PENDING_WRITERS);
-		}
-		spin_unlock(&cinode->writers_lock);
-		goto start;
-	}
-	spin_unlock(&cinode->writers_lock);
-	return 0;
-}
+		पूर्ण
+		spin_unlock(&cinode->ग_लिखोrs_lock);
+		जाओ start;
+	पूर्ण
+	spin_unlock(&cinode->ग_लिखोrs_lock);
+	वापस 0;
+पूर्ण
 
-void cifs_put_writer(struct cifsInodeInfo *cinode)
-{
-	spin_lock(&cinode->writers_lock);
-	cinode->writers--;
-	if (cinode->writers == 0) {
+व्योम cअगरs_put_ग_लिखोr(काष्ठा cअगरsInodeInfo *cinode)
+अणु
+	spin_lock(&cinode->ग_लिखोrs_lock);
+	cinode->ग_लिखोrs--;
+	अगर (cinode->ग_लिखोrs == 0) अणु
 		clear_bit(CIFS_INODE_PENDING_WRITERS, &cinode->flags);
 		wake_up_bit(&cinode->flags, CIFS_INODE_PENDING_WRITERS);
-	}
-	spin_unlock(&cinode->writers_lock);
-}
+	पूर्ण
+	spin_unlock(&cinode->ग_लिखोrs_lock);
+पूर्ण
 
 /**
- * cifs_queue_oplock_break - queue the oplock break handler for cfile
+ * cअगरs_queue_oplock_अवरोध - queue the oplock अवरोध handler क्रम cfile
  *
- * This function is called from the demultiplex thread when it
- * receives an oplock break for @cfile.
+ * This function is called from the demultiplex thपढ़ो when it
+ * receives an oplock अवरोध क्रम @cfile.
  *
- * Assumes the tcon->open_file_lock is held.
+ * Assumes the tcon->खोलो_file_lock is held.
  * Assumes cfile->file_info_lock is NOT held.
  */
-void cifs_queue_oplock_break(struct cifsFileInfo *cfile)
-{
+व्योम cअगरs_queue_oplock_अवरोध(काष्ठा cअगरsFileInfo *cfile)
+अणु
 	/*
-	 * Bump the handle refcount now while we hold the
-	 * open_file_lock to enforce the validity of it for the oplock
-	 * break handler. The matching put is done at the end of the
+	 * Bump the handle refcount now जबतक we hold the
+	 * खोलो_file_lock to enक्रमce the validity of it क्रम the oplock
+	 * अवरोध handler. The matching put is करोne at the end of the
 	 * handler.
 	 */
-	cifsFileInfo_get(cfile);
+	cअगरsFileInfo_get(cfile);
 
-	queue_work(cifsoplockd_wq, &cfile->oplock_break);
-}
+	queue_work(cअगरsoplockd_wq, &cfile->oplock_अवरोध);
+पूर्ण
 
-void cifs_done_oplock_break(struct cifsInodeInfo *cinode)
-{
+व्योम cअगरs_करोne_oplock_अवरोध(काष्ठा cअगरsInodeInfo *cinode)
+अणु
 	clear_bit(CIFS_INODE_PENDING_OPLOCK_BREAK, &cinode->flags);
 	wake_up_bit(&cinode->flags, CIFS_INODE_PENDING_OPLOCK_BREAK);
-}
+पूर्ण
 
 bool
-backup_cred(struct cifs_sb_info *cifs_sb)
-{
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_CIFS_BACKUPUID) {
-		if (uid_eq(cifs_sb->ctx->backupuid, current_fsuid()))
-			return true;
-	}
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_CIFS_BACKUPGID) {
-		if (in_group_p(cifs_sb->ctx->backupgid))
-			return true;
-	}
+backup_cred(काष्ठा cअगरs_sb_info *cअगरs_sb)
+अणु
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_CIFS_BACKUPUID) अणु
+		अगर (uid_eq(cअगरs_sb->ctx->backupuid, current_fsuid()))
+			वापस true;
+	पूर्ण
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_CIFS_BACKUPGID) अणु
+		अगर (in_group_p(cअगरs_sb->ctx->backupgid))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void
-cifs_del_pending_open(struct cifs_pending_open *open)
-{
-	spin_lock(&tlink_tcon(open->tlink)->open_file_lock);
-	list_del(&open->olist);
-	spin_unlock(&tlink_tcon(open->tlink)->open_file_lock);
-}
+व्योम
+cअगरs_del_pending_खोलो(काष्ठा cअगरs_pending_खोलो *खोलो)
+अणु
+	spin_lock(&tlink_tcon(खोलो->tlink)->खोलो_file_lock);
+	list_del(&खोलो->olist);
+	spin_unlock(&tlink_tcon(खोलो->tlink)->खोलो_file_lock);
+पूर्ण
 
-void
-cifs_add_pending_open_locked(struct cifs_fid *fid, struct tcon_link *tlink,
-			     struct cifs_pending_open *open)
-{
-	memcpy(open->lease_key, fid->lease_key, SMB2_LEASE_KEY_SIZE);
-	open->oplock = CIFS_OPLOCK_NO_CHANGE;
-	open->tlink = tlink;
-	fid->pending_open = open;
-	list_add_tail(&open->olist, &tlink_tcon(tlink)->pending_opens);
-}
+व्योम
+cअगरs_add_pending_खोलो_locked(काष्ठा cअगरs_fid *fid, काष्ठा tcon_link *tlink,
+			     काष्ठा cअगरs_pending_खोलो *खोलो)
+अणु
+	स_नकल(खोलो->lease_key, fid->lease_key, SMB2_LEASE_KEY_SIZE);
+	खोलो->oplock = CIFS_OPLOCK_NO_CHANGE;
+	खोलो->tlink = tlink;
+	fid->pending_खोलो = खोलो;
+	list_add_tail(&खोलो->olist, &tlink_tcon(tlink)->pending_खोलोs);
+पूर्ण
 
-void
-cifs_add_pending_open(struct cifs_fid *fid, struct tcon_link *tlink,
-		      struct cifs_pending_open *open)
-{
-	spin_lock(&tlink_tcon(tlink)->open_file_lock);
-	cifs_add_pending_open_locked(fid, tlink, open);
-	spin_unlock(&tlink_tcon(open->tlink)->open_file_lock);
-}
+व्योम
+cअगरs_add_pending_खोलो(काष्ठा cअगरs_fid *fid, काष्ठा tcon_link *tlink,
+		      काष्ठा cअगरs_pending_खोलो *खोलो)
+अणु
+	spin_lock(&tlink_tcon(tlink)->खोलो_file_lock);
+	cअगरs_add_pending_खोलो_locked(fid, tlink, खोलो);
+	spin_unlock(&tlink_tcon(खोलो->tlink)->खोलो_file_lock);
+पूर्ण
 
 /*
  * Critical section which runs after acquiring deferred_lock.
- * As there is no reference count on cifs_deferred_close, pdclose
+ * As there is no reference count on cअगरs_deferred_बंद, pdबंद
  * should not be used outside deferred_lock.
  */
 bool
-cifs_is_deferred_close(struct cifsFileInfo *cfile, struct cifs_deferred_close **pdclose)
-{
-	struct cifs_deferred_close *dclose;
+cअगरs_is_deferred_बंद(काष्ठा cअगरsFileInfo *cfile, काष्ठा cअगरs_deferred_बंद **pdबंद)
+अणु
+	काष्ठा cअगरs_deferred_बंद *dबंद;
 
-	list_for_each_entry(dclose, &CIFS_I(d_inode(cfile->dentry))->deferred_closes, dlist) {
-		if ((dclose->netfid == cfile->fid.netfid) &&
-			(dclose->persistent_fid == cfile->fid.persistent_fid) &&
-			(dclose->volatile_fid == cfile->fid.volatile_fid)) {
-			*pdclose = dclose;
-			return true;
-		}
-	}
-	return false;
-}
-
-/*
- * Critical section which runs after acquiring deferred_lock.
- */
-void
-cifs_add_deferred_close(struct cifsFileInfo *cfile, struct cifs_deferred_close *dclose)
-{
-	bool is_deferred = false;
-	struct cifs_deferred_close *pdclose;
-
-	is_deferred = cifs_is_deferred_close(cfile, &pdclose);
-	if (is_deferred) {
-		kfree(dclose);
-		return;
-	}
-
-	dclose->tlink = cfile->tlink;
-	dclose->netfid = cfile->fid.netfid;
-	dclose->persistent_fid = cfile->fid.persistent_fid;
-	dclose->volatile_fid = cfile->fid.volatile_fid;
-	list_add_tail(&dclose->dlist, &CIFS_I(d_inode(cfile->dentry))->deferred_closes);
-}
+	list_क्रम_each_entry(dबंद, &CIFS_I(d_inode(cfile->dentry))->deferred_बंदs, dlist) अणु
+		अगर ((dबंद->netfid == cfile->fid.netfid) &&
+			(dबंद->persistent_fid == cfile->fid.persistent_fid) &&
+			(dबंद->अस्थिर_fid == cfile->fid.अस्थिर_fid)) अणु
+			*pdबंद = dबंद;
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
  * Critical section which runs after acquiring deferred_lock.
  */
-void
-cifs_del_deferred_close(struct cifsFileInfo *cfile)
-{
+व्योम
+cअगरs_add_deferred_बंद(काष्ठा cअगरsFileInfo *cfile, काष्ठा cअगरs_deferred_बंद *dबंद)
+अणु
 	bool is_deferred = false;
-	struct cifs_deferred_close *dclose;
+	काष्ठा cअगरs_deferred_बंद *pdबंद;
 
-	is_deferred = cifs_is_deferred_close(cfile, &dclose);
-	if (!is_deferred)
-		return;
-	list_del(&dclose->dlist);
-	kfree(dclose);
-}
+	is_deferred = cअगरs_is_deferred_बंद(cfile, &pdबंद);
+	अगर (is_deferred) अणु
+		kमुक्त(dबंद);
+		वापस;
+	पूर्ण
 
-void
-cifs_close_deferred_file(struct cifsInodeInfo *cifs_inode)
-{
-	struct cifsFileInfo *cfile = NULL;
-	struct cifs_deferred_close *dclose;
+	dबंद->tlink = cfile->tlink;
+	dबंद->netfid = cfile->fid.netfid;
+	dबंद->persistent_fid = cfile->fid.persistent_fid;
+	dबंद->अस्थिर_fid = cfile->fid.अस्थिर_fid;
+	list_add_tail(&dबंद->dlist, &CIFS_I(d_inode(cfile->dentry))->deferred_बंदs);
+पूर्ण
 
-	list_for_each_entry(cfile, &cifs_inode->openFileList, flist) {
-		spin_lock(&cifs_inode->deferred_lock);
-		if (cifs_is_deferred_close(cfile, &dclose))
-			mod_delayed_work(deferredclose_wq, &cfile->deferred, 0);
-		spin_unlock(&cifs_inode->deferred_lock);
-	}
-}
+/*
+ * Critical section which runs after acquiring deferred_lock.
+ */
+व्योम
+cअगरs_del_deferred_बंद(काष्ठा cअगरsFileInfo *cfile)
+अणु
+	bool is_deferred = false;
+	काष्ठा cअगरs_deferred_बंद *dबंद;
 
-void
-cifs_close_all_deferred_files(struct cifs_tcon *tcon)
-{
-	struct cifsFileInfo *cfile;
-	struct list_head *tmp;
+	is_deferred = cअगरs_is_deferred_बंद(cfile, &dबंद);
+	अगर (!is_deferred)
+		वापस;
+	list_del(&dबंद->dlist);
+	kमुक्त(dबंद);
+पूर्ण
 
-	spin_lock(&tcon->open_file_lock);
-	list_for_each(tmp, &tcon->openFileList) {
-		cfile = list_entry(tmp, struct cifsFileInfo, tlist);
-		if (delayed_work_pending(&cfile->deferred)) {
+व्योम
+cअगरs_बंद_deferred_file(काष्ठा cअगरsInodeInfo *cअगरs_inode)
+अणु
+	काष्ठा cअगरsFileInfo *cfile = शून्य;
+	काष्ठा cअगरs_deferred_बंद *dबंद;
+
+	list_क्रम_each_entry(cfile, &cअगरs_inode->खोलोFileList, flist) अणु
+		spin_lock(&cअगरs_inode->deferred_lock);
+		अगर (cअगरs_is_deferred_बंद(cfile, &dबंद))
+			mod_delayed_work(deferredबंद_wq, &cfile->deferred, 0);
+		spin_unlock(&cअगरs_inode->deferred_lock);
+	पूर्ण
+पूर्ण
+
+व्योम
+cअगरs_बंद_all_deferred_files(काष्ठा cअगरs_tcon *tcon)
+अणु
+	काष्ठा cअगरsFileInfo *cfile;
+	काष्ठा list_head *पंचांगp;
+
+	spin_lock(&tcon->खोलो_file_lock);
+	list_क्रम_each(पंचांगp, &tcon->खोलोFileList) अणु
+		cfile = list_entry(पंचांगp, काष्ठा cअगरsFileInfo, tlist);
+		अगर (delayed_work_pending(&cfile->deferred)) अणु
 			/*
 			 * If there is no pending work, mod_delayed_work queues new work.
-			 * So, Increase the ref count to avoid use-after-free.
+			 * So, Increase the ref count to aव्योम use-after-मुक्त.
 			 */
-			if (!mod_delayed_work(deferredclose_wq, &cfile->deferred, 0))
-				cifsFileInfo_get(cfile);
-		}
-	}
-	spin_unlock(&tcon->open_file_lock);
-}
+			अगर (!mod_delayed_work(deferredबंद_wq, &cfile->deferred, 0))
+				cअगरsFileInfo_get(cfile);
+		पूर्ण
+	पूर्ण
+	spin_unlock(&tcon->खोलो_file_lock);
+पूर्ण
 
-/* parses DFS refferal V3 structure
- * caller is responsible for freeing target_nodes
- * returns:
+/* parses DFS refferal V3 काष्ठाure
+ * caller is responsible क्रम मुक्तing target_nodes
+ * वापसs:
  * - on success - 0
- * - on failure - errno
+ * - on failure - त्रुटि_सं
  */
-int
-parse_dfs_referrals(struct get_dfs_referral_rsp *rsp, u32 rsp_size,
-		    unsigned int *num_of_nodes,
-		    struct dfs_info3_param **target_nodes,
-		    const struct nls_table *nls_codepage, int remap,
-		    const char *searchName, bool is_unicode)
-{
-	int i, rc = 0;
-	char *data_end;
-	struct dfs_referral_level_3 *ref;
+पूर्णांक
+parse_dfs_referrals(काष्ठा get_dfs_referral_rsp *rsp, u32 rsp_size,
+		    अचिन्हित पूर्णांक *num_of_nodes,
+		    काष्ठा dfs_info3_param **target_nodes,
+		    स्थिर काष्ठा nls_table *nls_codepage, पूर्णांक remap,
+		    स्थिर अक्षर *searchName, bool is_unicode)
+अणु
+	पूर्णांक i, rc = 0;
+	अक्षर *data_end;
+	काष्ठा dfs_referral_level_3 *ref;
 
 	*num_of_nodes = le16_to_cpu(rsp->NumberOfReferrals);
 
-	if (*num_of_nodes < 1) {
-		cifs_dbg(VFS, "num_referrals: must be at least > 0, but we get num_referrals = %d\n",
+	अगर (*num_of_nodes < 1) अणु
+		cअगरs_dbg(VFS, "num_referrals: must be at least > 0, but we get num_referrals = %d\n",
 			 *num_of_nodes);
 		rc = -EINVAL;
-		goto parse_DFS_referrals_exit;
-	}
+		जाओ parse_DFS_referrals_निकास;
+	पूर्ण
 
-	ref = (struct dfs_referral_level_3 *) &(rsp->referrals);
-	if (ref->VersionNumber != cpu_to_le16(3)) {
-		cifs_dbg(VFS, "Referrals of V%d version are not supported, should be V3\n",
+	ref = (काष्ठा dfs_referral_level_3 *) &(rsp->referrals);
+	अगर (ref->VersionNumber != cpu_to_le16(3)) अणु
+		cअगरs_dbg(VFS, "Referrals of V%d version are not supported, should be V3\n",
 			 le16_to_cpu(ref->VersionNumber));
 		rc = -EINVAL;
-		goto parse_DFS_referrals_exit;
-	}
+		जाओ parse_DFS_referrals_निकास;
+	पूर्ण
 
 	/* get the upper boundary of the resp buffer */
-	data_end = (char *)rsp + rsp_size;
+	data_end = (अक्षर *)rsp + rsp_size;
 
-	cifs_dbg(FYI, "num_referrals: %d dfs flags: 0x%x ...\n",
+	cअगरs_dbg(FYI, "num_referrals: %d dfs flags: 0x%x ...\n",
 		 *num_of_nodes, le32_to_cpu(rsp->DFSFlags));
 
-	*target_nodes = kcalloc(*num_of_nodes, sizeof(struct dfs_info3_param),
+	*target_nodes = kसुस्मृति(*num_of_nodes, माप(काष्ठा dfs_info3_param),
 				GFP_KERNEL);
-	if (*target_nodes == NULL) {
+	अगर (*target_nodes == शून्य) अणु
 		rc = -ENOMEM;
-		goto parse_DFS_referrals_exit;
-	}
+		जाओ parse_DFS_referrals_निकास;
+	पूर्ण
 
 	/* collect necessary data from referrals */
-	for (i = 0; i < *num_of_nodes; i++) {
-		char *temp;
-		int max_len;
-		struct dfs_info3_param *node = (*target_nodes)+i;
+	क्रम (i = 0; i < *num_of_nodes; i++) अणु
+		अक्षर *temp;
+		पूर्णांक max_len;
+		काष्ठा dfs_info3_param *node = (*target_nodes)+i;
 
 		node->flags = le32_to_cpu(rsp->DFSFlags);
-		if (is_unicode) {
-			__le16 *tmp = kmalloc(strlen(searchName)*2 + 2,
+		अगर (is_unicode) अणु
+			__le16 *पंचांगp = kदो_स्मृति(म_माप(searchName)*2 + 2,
 						GFP_KERNEL);
-			if (tmp == NULL) {
+			अगर (पंचांगp == शून्य) अणु
 				rc = -ENOMEM;
-				goto parse_DFS_referrals_exit;
-			}
-			cifsConvertToUTF16((__le16 *) tmp, searchName,
+				जाओ parse_DFS_referrals_निकास;
+			पूर्ण
+			cअगरsConvertToUTF16((__le16 *) पंचांगp, searchName,
 					   PATH_MAX, nls_codepage, remap);
-			node->path_consumed = cifs_utf16_bytes(tmp,
+			node->path_consumed = cअगरs_utf16_bytes(पंचांगp,
 					le16_to_cpu(rsp->PathConsumed),
 					nls_codepage);
-			kfree(tmp);
-		} else
+			kमुक्त(पंचांगp);
+		पूर्ण अन्यथा
 			node->path_consumed = le16_to_cpu(rsp->PathConsumed);
 
 		node->server_type = le16_to_cpu(ref->ServerType);
 		node->ref_flag = le16_to_cpu(ref->ReferralEntryFlags);
 
 		/* copy DfsPath */
-		temp = (char *)ref + le16_to_cpu(ref->DfsPathOffset);
+		temp = (अक्षर *)ref + le16_to_cpu(ref->DfsPathOffset);
 		max_len = data_end - temp;
-		node->path_name = cifs_strndup_from_utf16(temp, max_len,
+		node->path_name = cअगरs_strndup_from_utf16(temp, max_len,
 						is_unicode, nls_codepage);
-		if (!node->path_name) {
+		अगर (!node->path_name) अणु
 			rc = -ENOMEM;
-			goto parse_DFS_referrals_exit;
-		}
+			जाओ parse_DFS_referrals_निकास;
+		पूर्ण
 
 		/* copy link target UNC */
-		temp = (char *)ref + le16_to_cpu(ref->NetworkAddressOffset);
+		temp = (अक्षर *)ref + le16_to_cpu(ref->NetworkAddressOffset);
 		max_len = data_end - temp;
-		node->node_name = cifs_strndup_from_utf16(temp, max_len,
+		node->node_name = cअगरs_strndup_from_utf16(temp, max_len,
 						is_unicode, nls_codepage);
-		if (!node->node_name) {
+		अगर (!node->node_name) अणु
 			rc = -ENOMEM;
-			goto parse_DFS_referrals_exit;
-		}
+			जाओ parse_DFS_referrals_निकास;
+		पूर्ण
 
 		node->ttl = le32_to_cpu(ref->TimeToLive);
 
 		ref++;
-	}
+	पूर्ण
 
-parse_DFS_referrals_exit:
-	if (rc) {
-		free_dfs_info_array(*target_nodes, *num_of_nodes);
-		*target_nodes = NULL;
+parse_DFS_referrals_निकास:
+	अगर (rc) अणु
+		मुक्त_dfs_info_array(*target_nodes, *num_of_nodes);
+		*target_nodes = शून्य;
 		*num_of_nodes = 0;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-struct cifs_aio_ctx *
-cifs_aio_ctx_alloc(void)
-{
-	struct cifs_aio_ctx *ctx;
+काष्ठा cअगरs_aio_ctx *
+cअगरs_aio_ctx_alloc(व्योम)
+अणु
+	काष्ठा cअगरs_aio_ctx *ctx;
 
 	/*
-	 * Must use kzalloc to initialize ctx->bv to NULL and ctx->direct_io
+	 * Must use kzalloc to initialize ctx->bv to शून्य and ctx->direct_io
 	 * to false so that we know when we have to unreference pages within
-	 * cifs_aio_ctx_release()
+	 * cअगरs_aio_ctx_release()
 	 */
-	ctx = kzalloc(sizeof(struct cifs_aio_ctx), GFP_KERNEL);
-	if (!ctx)
-		return NULL;
+	ctx = kzalloc(माप(काष्ठा cअगरs_aio_ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&ctx->list);
 	mutex_init(&ctx->aio_mutex);
-	init_completion(&ctx->done);
+	init_completion(&ctx->करोne);
 	kref_init(&ctx->refcount);
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-void
-cifs_aio_ctx_release(struct kref *refcount)
-{
-	struct cifs_aio_ctx *ctx = container_of(refcount,
-					struct cifs_aio_ctx, refcount);
+व्योम
+cअगरs_aio_ctx_release(काष्ठा kref *refcount)
+अणु
+	काष्ठा cअगरs_aio_ctx *ctx = container_of(refcount,
+					काष्ठा cअगरs_aio_ctx, refcount);
 
-	cifsFileInfo_put(ctx->cfile);
+	cअगरsFileInfo_put(ctx->cfile);
 
 	/*
-	 * ctx->bv is only set if setup_aio_ctx_iter() was call successfuly
+	 * ctx->bv is only set अगर setup_aio_ctx_iter() was call successfuly
 	 * which means that iov_iter_get_pages() was a success and thus that
 	 * we have taken reference on pages.
 	 */
-	if (ctx->bv) {
-		unsigned i;
+	अगर (ctx->bv) अणु
+		अचिन्हित i;
 
-		for (i = 0; i < ctx->npages; i++) {
-			if (ctx->should_dirty)
+		क्रम (i = 0; i < ctx->npages; i++) अणु
+			अगर (ctx->should_dirty)
 				set_page_dirty(ctx->bv[i].bv_page);
 			put_page(ctx->bv[i].bv_page);
-		}
-		kvfree(ctx->bv);
-	}
+		पूर्ण
+		kvमुक्त(ctx->bv);
+	पूर्ण
 
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण
 
-#define CIFS_AIO_KMALLOC_LIMIT (1024 * 1024)
+#घोषणा CIFS_AIO_KMALLOC_LIMIT (1024 * 1024)
 
-int
-setup_aio_ctx_iter(struct cifs_aio_ctx *ctx, struct iov_iter *iter, int rw)
-{
-	ssize_t rc;
-	unsigned int cur_npages;
-	unsigned int npages = 0;
-	unsigned int i;
-	size_t len;
-	size_t count = iov_iter_count(iter);
-	unsigned int saved_len;
-	size_t start;
-	unsigned int max_pages = iov_iter_npages(iter, INT_MAX);
-	struct page **pages = NULL;
-	struct bio_vec *bv = NULL;
+पूर्णांक
+setup_aio_ctx_iter(काष्ठा cअगरs_aio_ctx *ctx, काष्ठा iov_iter *iter, पूर्णांक rw)
+अणु
+	sमाप_प्रकार rc;
+	अचिन्हित पूर्णांक cur_npages;
+	अचिन्हित पूर्णांक npages = 0;
+	अचिन्हित पूर्णांक i;
+	माप_प्रकार len;
+	माप_प्रकार count = iov_iter_count(iter);
+	अचिन्हित पूर्णांक saved_len;
+	माप_प्रकार start;
+	अचिन्हित पूर्णांक max_pages = iov_iter_npages(iter, पूर्णांक_उच्च);
+	काष्ठा page **pages = शून्य;
+	काष्ठा bio_vec *bv = शून्य;
 
-	if (iov_iter_is_kvec(iter)) {
-		memcpy(&ctx->iter, iter, sizeof(*iter));
+	अगर (iov_iter_is_kvec(iter)) अणु
+		स_नकल(&ctx->iter, iter, माप(*iter));
 		ctx->len = count;
 		iov_iter_advance(iter, count);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (array_size(max_pages, sizeof(*bv)) <= CIFS_AIO_KMALLOC_LIMIT)
-		bv = kmalloc_array(max_pages, sizeof(*bv), GFP_KERNEL);
+	अगर (array_size(max_pages, माप(*bv)) <= CIFS_AIO_KMALLOC_LIMIT)
+		bv = kदो_स्मृति_array(max_pages, माप(*bv), GFP_KERNEL);
 
-	if (!bv) {
-		bv = vmalloc(array_size(max_pages, sizeof(*bv)));
-		if (!bv)
-			return -ENOMEM;
-	}
+	अगर (!bv) अणु
+		bv = vदो_स्मृति(array_size(max_pages, माप(*bv)));
+		अगर (!bv)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (array_size(max_pages, sizeof(*pages)) <= CIFS_AIO_KMALLOC_LIMIT)
-		pages = kmalloc_array(max_pages, sizeof(*pages), GFP_KERNEL);
+	अगर (array_size(max_pages, माप(*pages)) <= CIFS_AIO_KMALLOC_LIMIT)
+		pages = kदो_स्मृति_array(max_pages, माप(*pages), GFP_KERNEL);
 
-	if (!pages) {
-		pages = vmalloc(array_size(max_pages, sizeof(*pages)));
-		if (!pages) {
-			kvfree(bv);
-			return -ENOMEM;
-		}
-	}
+	अगर (!pages) अणु
+		pages = vदो_स्मृति(array_size(max_pages, माप(*pages)));
+		अगर (!pages) अणु
+			kvमुक्त(bv);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	saved_len = count;
 
-	while (count && npages < max_pages) {
+	जबतक (count && npages < max_pages) अणु
 		rc = iov_iter_get_pages(iter, pages, count, max_pages, &start);
-		if (rc < 0) {
-			cifs_dbg(VFS, "Couldn't get user pages (rc=%zd)\n", rc);
-			break;
-		}
+		अगर (rc < 0) अणु
+			cअगरs_dbg(VFS, "Couldn't get user pages (rc=%zd)\n", rc);
+			अवरोध;
+		पूर्ण
 
-		if (rc > count) {
-			cifs_dbg(VFS, "get pages rc=%zd more than %zu\n", rc,
+		अगर (rc > count) अणु
+			cअगरs_dbg(VFS, "get pages rc=%zd more than %zu\n", rc,
 				 count);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		iov_iter_advance(iter, rc);
 		count -= rc;
 		rc += start;
 		cur_npages = DIV_ROUND_UP(rc, PAGE_SIZE);
 
-		if (npages + cur_npages > max_pages) {
-			cifs_dbg(VFS, "out of vec array capacity (%u vs %u)\n",
+		अगर (npages + cur_npages > max_pages) अणु
+			cअगरs_dbg(VFS, "out of vec array capacity (%u vs %u)\n",
 				 npages + cur_npages, max_pages);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		for (i = 0; i < cur_npages; i++) {
+		क्रम (i = 0; i < cur_npages; i++) अणु
 			len = rc > PAGE_SIZE ? PAGE_SIZE : rc;
 			bv[npages + i].bv_page = pages[i];
 			bv[npages + i].bv_offset = start;
 			bv[npages + i].bv_len = len - start;
 			rc -= len;
 			start = 0;
-		}
+		पूर्ण
 
 		npages += cur_npages;
-	}
+	पूर्ण
 
-	kvfree(pages);
+	kvमुक्त(pages);
 	ctx->bv = bv;
 	ctx->len = saved_len - count;
 	ctx->npages = npages;
 	iov_iter_bvec(&ctx->iter, rw, ctx->bv, npages, ctx->len);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cifs_alloc_hash - allocate hash and hash context together
+ * cअगरs_alloc_hash - allocate hash and hash context together
  *
- * The caller has to make sure @sdesc is initialized to either NULL or
- * a valid context. Both can be freed via cifs_free_hash().
+ * The caller has to make sure @sdesc is initialized to either शून्य or
+ * a valid context. Both can be मुक्तd via cअगरs_मुक्त_hash().
  */
-int
-cifs_alloc_hash(const char *name,
-		struct crypto_shash **shash, struct sdesc **sdesc)
-{
-	int rc = 0;
-	size_t size;
+पूर्णांक
+cअगरs_alloc_hash(स्थिर अक्षर *name,
+		काष्ठा crypto_shash **shash, काष्ठा sdesc **sdesc)
+अणु
+	पूर्णांक rc = 0;
+	माप_प्रकार size;
 
-	if (*sdesc != NULL)
-		return 0;
+	अगर (*sdesc != शून्य)
+		वापस 0;
 
 	*shash = crypto_alloc_shash(name, 0, 0);
-	if (IS_ERR(*shash)) {
-		cifs_dbg(VFS, "Could not allocate crypto %s\n", name);
+	अगर (IS_ERR(*shash)) अणु
+		cअगरs_dbg(VFS, "Could not allocate crypto %s\n", name);
 		rc = PTR_ERR(*shash);
-		*shash = NULL;
-		*sdesc = NULL;
-		return rc;
-	}
+		*shash = शून्य;
+		*sdesc = शून्य;
+		वापस rc;
+	पूर्ण
 
-	size = sizeof(struct shash_desc) + crypto_shash_descsize(*shash);
-	*sdesc = kmalloc(size, GFP_KERNEL);
-	if (*sdesc == NULL) {
-		cifs_dbg(VFS, "no memory left to allocate crypto %s\n", name);
-		crypto_free_shash(*shash);
-		*shash = NULL;
-		return -ENOMEM;
-	}
+	size = माप(काष्ठा shash_desc) + crypto_shash_descsize(*shash);
+	*sdesc = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (*sdesc == शून्य) अणु
+		cअगरs_dbg(VFS, "no memory left to allocate crypto %s\n", name);
+		crypto_मुक्त_shash(*shash);
+		*shash = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
 	(*sdesc)->shash.tfm = *shash;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cifs_free_hash - free hash and hash context together
+ * cअगरs_मुक्त_hash - मुक्त hash and hash context together
  *
- * Freeing a NULL hash or context is safe.
+ * Freeing a शून्य hash or context is safe.
  */
-void
-cifs_free_hash(struct crypto_shash **shash, struct sdesc **sdesc)
-{
-	kfree(*sdesc);
-	*sdesc = NULL;
-	if (*shash)
-		crypto_free_shash(*shash);
-	*shash = NULL;
-}
+व्योम
+cअगरs_मुक्त_hash(काष्ठा crypto_shash **shash, काष्ठा sdesc **sdesc)
+अणु
+	kमुक्त(*sdesc);
+	*sdesc = शून्य;
+	अगर (*shash)
+		crypto_मुक्त_shash(*shash);
+	*shash = शून्य;
+पूर्ण
 
 /**
- * rqst_page_get_length - obtain the length and offset for a page in smb_rqst
- * Input: rqst - a smb_rqst, page - a page index for rqst
- * Output: *len - the length for this page, *offset - the offset for this page
+ * rqst_page_get_length - obtain the length and offset क्रम a page in smb_rqst
+ * Input: rqst - a smb_rqst, page - a page index क्रम rqst
+ * Output: *len - the length क्रम this page, *offset - the offset क्रम this page
  */
-void rqst_page_get_length(struct smb_rqst *rqst, unsigned int page,
-				unsigned int *len, unsigned int *offset)
-{
+व्योम rqst_page_get_length(काष्ठा smb_rqst *rqst, अचिन्हित पूर्णांक page,
+				अचिन्हित पूर्णांक *len, अचिन्हित पूर्णांक *offset)
+अणु
 	*len = rqst->rq_pagesz;
 	*offset = (page == 0) ? rqst->rq_offset : 0;
 
-	if (rqst->rq_npages == 1 || page == rqst->rq_npages-1)
+	अगर (rqst->rq_npages == 1 || page == rqst->rq_npages-1)
 		*len = rqst->rq_tailsz;
-	else if (page == 0)
+	अन्यथा अगर (page == 0)
 		*len = rqst->rq_pagesz - rqst->rq_offset;
-}
+पूर्ण
 
-void extract_unc_hostname(const char *unc, const char **h, size_t *len)
-{
-	const char *end;
+व्योम extract_unc_hostname(स्थिर अक्षर *unc, स्थिर अक्षर **h, माप_प्रकार *len)
+अणु
+	स्थिर अक्षर *end;
 
 	/* skip initial slashes */
-	while (*unc && (*unc == '\\' || *unc == '/'))
+	जबतक (*unc && (*unc == '\\' || *unc == '/'))
 		unc++;
 
 	end = unc;
 
-	while (*end && !(*end == '\\' || *end == '/'))
+	जबतक (*end && !(*end == '\\' || *end == '/'))
 		end++;
 
 	*h = unc;
 	*len = end - unc;
-}
+पूर्ण
 
 /**
  * copy_path_name - copy src path to dst, possibly truncating
  *
- * returns number of bytes written (including trailing nul)
+ * वापसs number of bytes written (including trailing nul)
  */
-int copy_path_name(char *dst, const char *src)
-{
-	int name_len;
+पूर्णांक copy_path_name(अक्षर *dst, स्थिर अक्षर *src)
+अणु
+	पूर्णांक name_len;
 
 	/*
-	 * PATH_MAX includes nul, so if strlen(src) >= PATH_MAX it
-	 * will truncate and strlen(dst) will be PATH_MAX-1
+	 * PATH_MAX includes nul, so अगर म_माप(src) >= PATH_MAX it
+	 * will truncate and म_माप(dst) will be PATH_MAX-1
 	 */
 	name_len = strscpy(dst, src, PATH_MAX);
-	if (WARN_ON_ONCE(name_len < 0))
+	अगर (WARN_ON_ONCE(name_len < 0))
 		name_len = PATH_MAX-1;
 
 	/* we count the trailing nul */
 	name_len++;
-	return name_len;
-}
+	वापस name_len;
+पूर्ण
 
-struct super_cb_data {
-	void *data;
-	struct super_block *sb;
-};
+काष्ठा super_cb_data अणु
+	व्योम *data;
+	काष्ठा super_block *sb;
+पूर्ण;
 
-static void tcp_super_cb(struct super_block *sb, void *arg)
-{
-	struct super_cb_data *sd = arg;
-	struct TCP_Server_Info *server = sd->data;
-	struct cifs_sb_info *cifs_sb;
-	struct cifs_tcon *tcon;
+अटल व्योम tcp_super_cb(काष्ठा super_block *sb, व्योम *arg)
+अणु
+	काष्ठा super_cb_data *sd = arg;
+	काष्ठा TCP_Server_Info *server = sd->data;
+	काष्ठा cअगरs_sb_info *cअगरs_sb;
+	काष्ठा cअगरs_tcon *tcon;
 
-	if (sd->sb)
-		return;
+	अगर (sd->sb)
+		वापस;
 
-	cifs_sb = CIFS_SB(sb);
-	tcon = cifs_sb_master_tcon(cifs_sb);
-	if (tcon->ses->server == server)
+	cअगरs_sb = CIFS_SB(sb);
+	tcon = cअगरs_sb_master_tcon(cअगरs_sb);
+	अगर (tcon->ses->server == server)
 		sd->sb = sb;
-}
+पूर्ण
 
-static struct super_block *__cifs_get_super(void (*f)(struct super_block *, void *),
-					    void *data)
-{
-	struct super_cb_data sd = {
+अटल काष्ठा super_block *__cअगरs_get_super(व्योम (*f)(काष्ठा super_block *, व्योम *),
+					    व्योम *data)
+अणु
+	काष्ठा super_cb_data sd = अणु
 		.data = data,
-		.sb = NULL,
-	};
+		.sb = शून्य,
+	पूर्ण;
 
-	iterate_supers_type(&cifs_fs_type, f, &sd);
+	iterate_supers_type(&cअगरs_fs_type, f, &sd);
 
-	if (!sd.sb)
-		return ERR_PTR(-EINVAL);
+	अगर (!sd.sb)
+		वापस ERR_PTR(-EINVAL);
 	/*
-	 * Grab an active reference in order to prevent automounts (DFS links)
-	 * of expiring and then freeing up our cifs superblock pointer while
-	 * we're doing failover.
+	 * Grab an active reference in order to prevent स्वतःmounts (DFS links)
+	 * of expiring and then मुक्तing up our cअगरs superblock poपूर्णांकer जबतक
+	 * we're करोing failover.
 	 */
-	cifs_sb_active(sd.sb);
-	return sd.sb;
-}
+	cअगरs_sb_active(sd.sb);
+	वापस sd.sb;
+पूर्ण
 
-static void __cifs_put_super(struct super_block *sb)
-{
-	if (!IS_ERR_OR_NULL(sb))
-		cifs_sb_deactive(sb);
-}
+अटल व्योम __cअगरs_put_super(काष्ठा super_block *sb)
+अणु
+	अगर (!IS_ERR_OR_शून्य(sb))
+		cअगरs_sb_deactive(sb);
+पूर्ण
 
-struct super_block *cifs_get_tcp_super(struct TCP_Server_Info *server)
-{
-	return __cifs_get_super(tcp_super_cb, server);
-}
+काष्ठा super_block *cअगरs_get_tcp_super(काष्ठा TCP_Server_Info *server)
+अणु
+	वापस __cअगरs_get_super(tcp_super_cb, server);
+पूर्ण
 
-void cifs_put_tcp_super(struct super_block *sb)
-{
-	__cifs_put_super(sb);
-}
+व्योम cअगरs_put_tcp_super(काष्ठा super_block *sb)
+अणु
+	__cअगरs_put_super(sb);
+पूर्ण
 
-#ifdef CONFIG_CIFS_DFS_UPCALL
-int match_target_ip(struct TCP_Server_Info *server,
-		    const char *share, size_t share_len,
+#अगर_घोषित CONFIG_CIFS_DFS_UPCALL
+पूर्णांक match_target_ip(काष्ठा TCP_Server_Info *server,
+		    स्थिर अक्षर *share, माप_प्रकार share_len,
 		    bool *result)
-{
-	int rc;
-	char *target, *tip = NULL;
-	struct sockaddr tipaddr;
+अणु
+	पूर्णांक rc;
+	अक्षर *target, *tip = शून्य;
+	काष्ठा sockaddr tipaddr;
 
 	*result = false;
 
 	target = kzalloc(share_len + 3, GFP_KERNEL);
-	if (!target) {
+	अगर (!target) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	scnprintf(target, share_len + 3, "\\\\%.*s", (int)share_len, share);
+	scnम_लिखो(target, share_len + 3, "\\\\%.*s", (पूर्णांक)share_len, share);
 
-	cifs_dbg(FYI, "%s: target name: %s\n", __func__, target + 2);
+	cअगरs_dbg(FYI, "%s: target name: %s\n", __func__, target + 2);
 
 	rc = dns_resolve_server_name_to_ip(target, &tip);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 
-	cifs_dbg(FYI, "%s: target ip: %s\n", __func__, tip);
+	cअगरs_dbg(FYI, "%s: target ip: %s\n", __func__, tip);
 
-	if (!cifs_convert_address(&tipaddr, tip, strlen(tip))) {
-		cifs_dbg(VFS, "%s: failed to convert target ip address\n",
+	अगर (!cअगरs_convert_address(&tipaddr, tip, म_माप(tip))) अणु
+		cअगरs_dbg(VFS, "%s: failed to convert target ip address\n",
 			 __func__);
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	*result = cifs_match_ipaddr((struct sockaddr *)&server->dstaddr,
+	*result = cअगरs_match_ipaddr((काष्ठा sockaddr *)&server->dstaddr,
 				    &tipaddr);
-	cifs_dbg(FYI, "%s: ip addresses match: %u\n", __func__, *result);
+	cअगरs_dbg(FYI, "%s: ip addresses match: %u\n", __func__, *result);
 	rc = 0;
 
 out:
-	kfree(target);
-	kfree(tip);
+	kमुक्त(target);
+	kमुक्त(tip);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void tcon_super_cb(struct super_block *sb, void *arg)
-{
-	struct super_cb_data *sd = arg;
-	struct cifs_tcon *tcon = sd->data;
-	struct cifs_sb_info *cifs_sb;
+अटल व्योम tcon_super_cb(काष्ठा super_block *sb, व्योम *arg)
+अणु
+	काष्ठा super_cb_data *sd = arg;
+	काष्ठा cअगरs_tcon *tcon = sd->data;
+	काष्ठा cअगरs_sb_info *cअगरs_sb;
 
-	if (sd->sb)
-		return;
+	अगर (sd->sb)
+		वापस;
 
-	cifs_sb = CIFS_SB(sb);
-	if (tcon->dfs_path && cifs_sb->origin_fullpath &&
-	    !strcasecmp(tcon->dfs_path, cifs_sb->origin_fullpath))
+	cअगरs_sb = CIFS_SB(sb);
+	अगर (tcon->dfs_path && cअगरs_sb->origin_fullpath &&
+	    !strहालcmp(tcon->dfs_path, cअगरs_sb->origin_fullpath))
 		sd->sb = sb;
-}
+पूर्ण
 
-static inline struct super_block *cifs_get_tcon_super(struct cifs_tcon *tcon)
-{
-	return __cifs_get_super(tcon_super_cb, tcon);
-}
+अटल अंतरभूत काष्ठा super_block *cअगरs_get_tcon_super(काष्ठा cअगरs_tcon *tcon)
+अणु
+	वापस __cअगरs_get_super(tcon_super_cb, tcon);
+पूर्ण
 
-static inline void cifs_put_tcon_super(struct super_block *sb)
-{
-	__cifs_put_super(sb);
-}
-#else
-static inline struct super_block *cifs_get_tcon_super(struct cifs_tcon *tcon)
-{
-	return ERR_PTR(-EOPNOTSUPP);
-}
+अटल अंतरभूत व्योम cअगरs_put_tcon_super(काष्ठा super_block *sb)
+अणु
+	__cअगरs_put_super(sb);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत काष्ठा super_block *cअगरs_get_tcon_super(काष्ठा cअगरs_tcon *tcon)
+अणु
+	वापस ERR_PTR(-EOPNOTSUPP);
+पूर्ण
 
-static inline void cifs_put_tcon_super(struct super_block *sb)
-{
-}
-#endif
+अटल अंतरभूत व्योम cअगरs_put_tcon_super(काष्ठा super_block *sb)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-int update_super_prepath(struct cifs_tcon *tcon, char *prefix)
-{
-	struct super_block *sb;
-	struct cifs_sb_info *cifs_sb;
-	int rc = 0;
+पूर्णांक update_super_prepath(काष्ठा cअगरs_tcon *tcon, अक्षर *prefix)
+अणु
+	काष्ठा super_block *sb;
+	काष्ठा cअगरs_sb_info *cअगरs_sb;
+	पूर्णांक rc = 0;
 
-	sb = cifs_get_tcon_super(tcon);
-	if (IS_ERR(sb))
-		return PTR_ERR(sb);
+	sb = cअगरs_get_tcon_super(tcon);
+	अगर (IS_ERR(sb))
+		वापस PTR_ERR(sb);
 
-	cifs_sb = CIFS_SB(sb);
+	cअगरs_sb = CIFS_SB(sb);
 
-	kfree(cifs_sb->prepath);
+	kमुक्त(cअगरs_sb->prepath);
 
-	if (prefix && *prefix) {
-		cifs_sb->prepath = kstrdup(prefix, GFP_ATOMIC);
-		if (!cifs_sb->prepath) {
+	अगर (prefix && *prefix) अणु
+		cअगरs_sb->prepath = kstrdup(prefix, GFP_ATOMIC);
+		अगर (!cअगरs_sb->prepath) अणु
 			rc = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		convert_delimiter(cifs_sb->prepath, CIFS_DIR_SEP(cifs_sb));
-	} else
-		cifs_sb->prepath = NULL;
+		convert_delimiter(cअगरs_sb->prepath, CIFS_सूची_SEP(cअगरs_sb));
+	पूर्ण अन्यथा
+		cअगरs_sb->prepath = शून्य;
 
-	cifs_sb->mnt_cifs_flags |= CIFS_MOUNT_USE_PREFIX_PATH;
+	cअगरs_sb->mnt_cअगरs_flags |= CIFS_MOUNT_USE_PREFIX_PATH;
 
 out:
-	cifs_put_tcon_super(sb);
-	return rc;
-}
+	cअगरs_put_tcon_super(sb);
+	वापस rc;
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -26,89 +27,89 @@
  * NVIF client driver - NVKM directly linked
  ******************************************************************************/
 
-#include <core/client.h>
-#include <core/notify.h>
-#include <core/ioctl.h>
+#समावेश <core/client.h>
+#समावेश <core/notअगरy.h>
+#समावेश <core/ioctl.h>
 
-#include <nvif/client.h>
-#include <nvif/driver.h>
-#include <nvif/notify.h>
-#include <nvif/event.h>
-#include <nvif/ioctl.h>
+#समावेश <nvअगर/client.h>
+#समावेश <nvअगर/driver.h>
+#समावेश <nvअगर/notअगरy.h>
+#समावेश <nvअगर/event.h>
+#समावेश <nvअगर/ioctl.h>
 
-#include "nouveau_drv.h"
-#include "nouveau_usif.h"
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_usif.h"
 
-static void
-nvkm_client_unmap(void *priv, void __iomem *ptr, u32 size)
-{
+अटल व्योम
+nvkm_client_unmap(व्योम *priv, व्योम __iomem *ptr, u32 size)
+अणु
 	iounmap(ptr);
-}
+पूर्ण
 
-static void __iomem *
-nvkm_client_map(void *priv, u64 handle, u32 size)
-{
-	return ioremap(handle, size);
-}
+अटल व्योम __iomem *
+nvkm_client_map(व्योम *priv, u64 handle, u32 size)
+अणु
+	वापस ioremap(handle, size);
+पूर्ण
 
-static int
-nvkm_client_ioctl(void *priv, bool super, void *data, u32 size, void **hack)
-{
-	return nvkm_ioctl(priv, super, data, size, hack);
-}
+अटल पूर्णांक
+nvkm_client_ioctl(व्योम *priv, bool super, व्योम *data, u32 size, व्योम **hack)
+अणु
+	वापस nvkm_ioctl(priv, super, data, size, hack);
+पूर्ण
 
-static int
-nvkm_client_resume(void *priv)
-{
-	struct nvkm_client *client = priv;
-	return nvkm_object_init(&client->object);
-}
+अटल पूर्णांक
+nvkm_client_resume(व्योम *priv)
+अणु
+	काष्ठा nvkm_client *client = priv;
+	वापस nvkm_object_init(&client->object);
+पूर्ण
 
-static int
-nvkm_client_suspend(void *priv)
-{
-	struct nvkm_client *client = priv;
-	return nvkm_object_fini(&client->object, true);
-}
+अटल पूर्णांक
+nvkm_client_suspend(व्योम *priv)
+अणु
+	काष्ठा nvkm_client *client = priv;
+	वापस nvkm_object_fini(&client->object, true);
+पूर्ण
 
-static int
-nvkm_client_ntfy(const void *header, u32 length, const void *data, u32 size)
-{
-	const union {
-		struct nvif_notify_req_v0 v0;
-	} *args = header;
+अटल पूर्णांक
+nvkm_client_ntfy(स्थिर व्योम *header, u32 length, स्थिर व्योम *data, u32 size)
+अणु
+	स्थिर जोड़ अणु
+		काष्ठा nvअगर_notअगरy_req_v0 v0;
+	पूर्ण *args = header;
 	u8 route;
 
-	if (length == sizeof(args->v0) && args->v0.version == 0) {
+	अगर (length == माप(args->v0) && args->v0.version == 0) अणु
 		route = args->v0.route;
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(1);
-		return NVKM_NOTIFY_DROP;
-	}
+		वापस NVKM_NOTIFY_DROP;
+	पूर्ण
 
-	switch (route) {
-	case NVDRM_NOTIFY_NVIF:
-		return nvif_notify(header, length, data, size);
-	case NVDRM_NOTIFY_USIF:
-		return usif_notify(header, length, data, size);
-	default:
+	चयन (route) अणु
+	हाल NVDRM_NOTIFY_NVIF:
+		वापस nvअगर_notअगरy(header, length, data, size);
+	हाल NVDRM_NOTIFY_USIF:
+		वापस usअगर_notअगरy(header, length, data, size);
+	शेष:
 		WARN_ON(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return NVKM_NOTIFY_DROP;
-}
+	वापस NVKM_NOTIFY_DROP;
+पूर्ण
 
-static int
-nvkm_client_driver_init(const char *name, u64 device, const char *cfg,
-			const char *dbg, void **ppriv)
-{
-	return nvkm_client_new(name, device, cfg, dbg, nvkm_client_ntfy,
-			       (struct nvkm_client **)ppriv);
-}
+अटल पूर्णांक
+nvkm_client_driver_init(स्थिर अक्षर *name, u64 device, स्थिर अक्षर *cfg,
+			स्थिर अक्षर *dbg, व्योम **ppriv)
+अणु
+	वापस nvkm_client_new(name, device, cfg, dbg, nvkm_client_ntfy,
+			       (काष्ठा nvkm_client **)ppriv);
+पूर्ण
 
-const struct nvif_driver
-nvif_driver_nvkm = {
+स्थिर काष्ठा nvअगर_driver
+nvअगर_driver_nvkm = अणु
 	.name = "nvkm",
 	.init = nvkm_client_driver_init,
 	.suspend = nvkm_client_suspend,
@@ -117,4 +118,4 @@ nvif_driver_nvkm = {
 	.map = nvkm_client_map,
 	.unmap = nvkm_client_unmap,
 	.keep = false,
-};
+पूर्ण;

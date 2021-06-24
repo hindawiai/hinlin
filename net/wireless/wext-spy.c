@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * This file implement the Wireless Extensions spy API.
  *
@@ -7,226 +8,226 @@
  * (As all part of the Linux kernel, this file is GPL)
  */
 
-#include <linux/wireless.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/export.h>
-#include <net/iw_handler.h>
-#include <net/arp.h>
-#include <net/wext.h>
+#समावेश <linux/wireless.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/export.h>
+#समावेश <net/iw_handler.h>
+#समावेश <net/arp.h>
+#समावेश <net/wext.h>
 
-static inline struct iw_spy_data *get_spydata(struct net_device *dev)
-{
+अटल अंतरभूत काष्ठा iw_spy_data *get_spydata(काष्ठा net_device *dev)
+अणु
 	/* This is the new way */
-	if (dev->wireless_data)
-		return dev->wireless_data->spy_data;
-	return NULL;
-}
+	अगर (dev->wireless_data)
+		वापस dev->wireless_data->spy_data;
+	वापस शून्य;
+पूर्ण
 
-int iw_handler_set_spy(struct net_device *	dev,
-		       struct iw_request_info *	info,
-		       union iwreq_data *	wrqu,
-		       char *			extra)
-{
-	struct iw_spy_data *	spydata = get_spydata(dev);
-	struct sockaddr *	address = (struct sockaddr *) extra;
+पूर्णांक iw_handler_set_spy(काष्ठा net_device *	dev,
+		       काष्ठा iw_request_info *	info,
+		       जोड़ iwreq_data *	wrqu,
+		       अक्षर *			extra)
+अणु
+	काष्ठा iw_spy_data *	spydata = get_spydata(dev);
+	काष्ठा sockaddr *	address = (काष्ठा sockaddr *) extra;
 
 	/* Make sure driver is not buggy or using the old API */
-	if (!spydata)
-		return -EOPNOTSUPP;
+	अगर (!spydata)
+		वापस -EOPNOTSUPP;
 
-	/* Disable spy collection while we copy the addresses.
+	/* Disable spy collection जबतक we copy the addresses.
 	 * While we copy addresses, any call to wireless_spy_update()
 	 * will NOP. This is OK, as anyway the addresses are changing. */
 	spydata->spy_number = 0;
 
 	/* We want to operate without locking, because wireless_spy_update()
-	 * most likely will happen in the interrupt handler, and therefore
-	 * have its own locking constraints and needs performance.
-	 * The rtnl_lock() make sure we don't race with the other iw_handlers.
+	 * most likely will happen in the पूर्णांकerrupt handler, and thereक्रमe
+	 * have its own locking स्थिरraपूर्णांकs and needs perक्रमmance.
+	 * The rtnl_lock() make sure we करोn't race with the other iw_handlers.
 	 * This make sure wireless_spy_update() "see" that the spy list
 	 * is temporarily disabled. */
 	smp_wmb();
 
 	/* Are there are addresses to copy? */
-	if (wrqu->data.length > 0) {
-		int i;
+	अगर (wrqu->data.length > 0) अणु
+		पूर्णांक i;
 
 		/* Copy addresses */
-		for (i = 0; i < wrqu->data.length; i++)
-			memcpy(spydata->spy_address[i], address[i].sa_data,
+		क्रम (i = 0; i < wrqu->data.length; i++)
+			स_नकल(spydata->spy_address[i], address[i].sa_data,
 			       ETH_ALEN);
 		/* Reset stats */
-		memset(spydata->spy_stat, 0,
-		       sizeof(struct iw_quality) * IW_MAX_SPY);
-	}
+		स_रखो(spydata->spy_stat, 0,
+		       माप(काष्ठा iw_quality) * IW_MAX_SPY);
+	पूर्ण
 
-	/* Make sure above is updated before re-enabling */
+	/* Make sure above is updated beक्रमe re-enabling */
 	smp_wmb();
 
 	/* Enable addresses */
 	spydata->spy_number = wrqu->data.length;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(iw_handler_set_spy);
 
-int iw_handler_get_spy(struct net_device *	dev,
-		       struct iw_request_info *	info,
-		       union iwreq_data *	wrqu,
-		       char *			extra)
-{
-	struct iw_spy_data *	spydata = get_spydata(dev);
-	struct sockaddr *	address = (struct sockaddr *) extra;
-	int			i;
+पूर्णांक iw_handler_get_spy(काष्ठा net_device *	dev,
+		       काष्ठा iw_request_info *	info,
+		       जोड़ iwreq_data *	wrqu,
+		       अक्षर *			extra)
+अणु
+	काष्ठा iw_spy_data *	spydata = get_spydata(dev);
+	काष्ठा sockaddr *	address = (काष्ठा sockaddr *) extra;
+	पूर्णांक			i;
 
 	/* Make sure driver is not buggy or using the old API */
-	if (!spydata)
-		return -EOPNOTSUPP;
+	अगर (!spydata)
+		वापस -EOPNOTSUPP;
 
 	wrqu->data.length = spydata->spy_number;
 
 	/* Copy addresses. */
-	for (i = 0; i < spydata->spy_number; i++) 	{
-		memcpy(address[i].sa_data, spydata->spy_address[i], ETH_ALEN);
+	क्रम (i = 0; i < spydata->spy_number; i++) 	अणु
+		स_नकल(address[i].sa_data, spydata->spy_address[i], ETH_ALEN);
 		address[i].sa_family = AF_UNIX;
-	}
+	पूर्ण
 	/* Copy stats to the user buffer (just after). */
-	if (spydata->spy_number > 0)
-		memcpy(extra  + (sizeof(struct sockaddr) *spydata->spy_number),
+	अगर (spydata->spy_number > 0)
+		स_नकल(extra  + (माप(काष्ठा sockaddr) *spydata->spy_number),
 		       spydata->spy_stat,
-		       sizeof(struct iw_quality) * spydata->spy_number);
+		       माप(काष्ठा iw_quality) * spydata->spy_number);
 	/* Reset updated flags. */
-	for (i = 0; i < spydata->spy_number; i++)
+	क्रम (i = 0; i < spydata->spy_number; i++)
 		spydata->spy_stat[i].updated &= ~IW_QUAL_ALL_UPDATED;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(iw_handler_get_spy);
 
 /*------------------------------------------------------------------*/
 /*
  * Standard Wireless Handler : set spy threshold
  */
-int iw_handler_set_thrspy(struct net_device *	dev,
-			  struct iw_request_info *info,
-			  union iwreq_data *	wrqu,
-			  char *		extra)
-{
-	struct iw_spy_data *	spydata = get_spydata(dev);
-	struct iw_thrspy *	threshold = (struct iw_thrspy *) extra;
+पूर्णांक iw_handler_set_thrspy(काष्ठा net_device *	dev,
+			  काष्ठा iw_request_info *info,
+			  जोड़ iwreq_data *	wrqu,
+			  अक्षर *		extra)
+अणु
+	काष्ठा iw_spy_data *	spydata = get_spydata(dev);
+	काष्ठा iw_thrspy *	threshold = (काष्ठा iw_thrspy *) extra;
 
 	/* Make sure driver is not buggy or using the old API */
-	if (!spydata)
-		return -EOPNOTSUPP;
+	अगर (!spydata)
+		वापस -EOPNOTSUPP;
 
-	/* Just do it */
-	memcpy(&(spydata->spy_thr_low), &(threshold->low),
-	       2 * sizeof(struct iw_quality));
+	/* Just करो it */
+	स_नकल(&(spydata->spy_thr_low), &(threshold->low),
+	       2 * माप(काष्ठा iw_quality));
 
 	/* Clear flag */
-	memset(spydata->spy_thr_under, '\0', sizeof(spydata->spy_thr_under));
+	स_रखो(spydata->spy_thr_under, '\0', माप(spydata->spy_thr_under));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(iw_handler_set_thrspy);
 
 /*------------------------------------------------------------------*/
 /*
  * Standard Wireless Handler : get spy threshold
  */
-int iw_handler_get_thrspy(struct net_device *	dev,
-			  struct iw_request_info *info,
-			  union iwreq_data *	wrqu,
-			  char *		extra)
-{
-	struct iw_spy_data *	spydata = get_spydata(dev);
-	struct iw_thrspy *	threshold = (struct iw_thrspy *) extra;
+पूर्णांक iw_handler_get_thrspy(काष्ठा net_device *	dev,
+			  काष्ठा iw_request_info *info,
+			  जोड़ iwreq_data *	wrqu,
+			  अक्षर *		extra)
+अणु
+	काष्ठा iw_spy_data *	spydata = get_spydata(dev);
+	काष्ठा iw_thrspy *	threshold = (काष्ठा iw_thrspy *) extra;
 
 	/* Make sure driver is not buggy or using the old API */
-	if (!spydata)
-		return -EOPNOTSUPP;
+	अगर (!spydata)
+		वापस -EOPNOTSUPP;
 
-	/* Just do it */
-	memcpy(&(threshold->low), &(spydata->spy_thr_low),
-	       2 * sizeof(struct iw_quality));
+	/* Just करो it */
+	स_नकल(&(threshold->low), &(spydata->spy_thr_low),
+	       2 * माप(काष्ठा iw_quality));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(iw_handler_get_thrspy);
 
 /*------------------------------------------------------------------*/
 /*
  * Prepare and send a Spy Threshold event
  */
-static void iw_send_thrspy_event(struct net_device *	dev,
-				 struct iw_spy_data *	spydata,
-				 unsigned char *	address,
-				 struct iw_quality *	wstats)
-{
-	union iwreq_data	wrqu;
-	struct iw_thrspy	threshold;
+अटल व्योम iw_send_thrspy_event(काष्ठा net_device *	dev,
+				 काष्ठा iw_spy_data *	spydata,
+				 अचिन्हित अक्षर *	address,
+				 काष्ठा iw_quality *	wstats)
+अणु
+	जोड़ iwreq_data	wrqu;
+	काष्ठा iw_thrspy	threshold;
 
 	/* Init */
 	wrqu.data.length = 1;
 	wrqu.data.flags = 0;
 	/* Copy address */
-	memcpy(threshold.addr.sa_data, address, ETH_ALEN);
+	स_नकल(threshold.addr.sa_data, address, ETH_ALEN);
 	threshold.addr.sa_family = ARPHRD_ETHER;
 	/* Copy stats */
-	memcpy(&(threshold.qual), wstats, sizeof(struct iw_quality));
+	स_नकल(&(threshold.qual), wstats, माप(काष्ठा iw_quality));
 	/* Copy also thresholds */
-	memcpy(&(threshold.low), &(spydata->spy_thr_low),
-	       2 * sizeof(struct iw_quality));
+	स_नकल(&(threshold.low), &(spydata->spy_thr_low),
+	       2 * माप(काष्ठा iw_quality));
 
 	/* Send event to user space */
-	wireless_send_event(dev, SIOCGIWTHRSPY, &wrqu, (char *) &threshold);
-}
+	wireless_send_event(dev, SIOCGIWTHRSPY, &wrqu, (अक्षर *) &threshold);
+पूर्ण
 
 /* ---------------------------------------------------------------- */
 /*
- * Call for the driver to update the spy data.
+ * Call क्रम the driver to update the spy data.
  * For now, the spy data is a simple array. As the size of the array is
  * small, this is good enough. If we wanted to support larger number of
  * spy addresses, we should use something more efficient...
  */
-void wireless_spy_update(struct net_device *	dev,
-			 unsigned char *	address,
-			 struct iw_quality *	wstats)
-{
-	struct iw_spy_data *	spydata = get_spydata(dev);
-	int			i;
-	int			match = -1;
+व्योम wireless_spy_update(काष्ठा net_device *	dev,
+			 अचिन्हित अक्षर *	address,
+			 काष्ठा iw_quality *	wstats)
+अणु
+	काष्ठा iw_spy_data *	spydata = get_spydata(dev);
+	पूर्णांक			i;
+	पूर्णांक			match = -1;
 
 	/* Make sure driver is not buggy or using the old API */
-	if (!spydata)
-		return;
+	अगर (!spydata)
+		वापस;
 
 	/* Update all records that match */
-	for (i = 0; i < spydata->spy_number; i++)
-		if (ether_addr_equal(address, spydata->spy_address[i])) {
-			memcpy(&(spydata->spy_stat[i]), wstats,
-			       sizeof(struct iw_quality));
+	क्रम (i = 0; i < spydata->spy_number; i++)
+		अगर (ether_addr_equal(address, spydata->spy_address[i])) अणु
+			स_नकल(&(spydata->spy_stat[i]), wstats,
+			       माप(काष्ठा iw_quality));
 			match = i;
-		}
+		पूर्ण
 
-	/* Generate an event if we cross the spy threshold.
-	 * To avoid event storms, we have a simple hysteresis : we generate
+	/* Generate an event अगर we cross the spy threshold.
+	 * To aव्योम event storms, we have a simple hysteresis : we generate
 	 * event only when we go under the low threshold or above the
 	 * high threshold. */
-	if (match >= 0) {
-		if (spydata->spy_thr_under[match]) {
-			if (wstats->level > spydata->spy_thr_high.level) {
+	अगर (match >= 0) अणु
+		अगर (spydata->spy_thr_under[match]) अणु
+			अगर (wstats->level > spydata->spy_thr_high.level) अणु
 				spydata->spy_thr_under[match] = 0;
 				iw_send_thrspy_event(dev, spydata,
 						     address, wstats);
-			}
-		} else {
-			if (wstats->level < spydata->spy_thr_low.level) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (wstats->level < spydata->spy_thr_low.level) अणु
 				spydata->spy_thr_under[match] = 1;
 				iw_send_thrspy_event(dev, spydata,
 						     address, wstats);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(wireless_spy_update);

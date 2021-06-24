@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * TI DaVinci CPUFreq platform support.
+ * TI DaVinci CPUFreq platक्रमm support.
  *
  * Copyright (C) 2009 Texas Instruments, Inc. https://www.ti.com/
  */
 
-#ifndef _MACH_DAVINCI_CPUFREQ_H
-#define _MACH_DAVINCI_CPUFREQ_H
+#अगर_अघोषित _MACH_DAVINCI_CPUFREQ_H
+#घोषणा _MACH_DAVINCI_CPUFREQ_H
 
-#include <linux/cpufreq.h>
+#समावेश <linux/cpufreq.h>
 
-struct davinci_cpufreq_config {
-	struct cpufreq_frequency_table *freq_table;
-	int (*set_voltage)(unsigned int index);
-	int (*init)(void);
-};
+काष्ठा davinci_cpufreq_config अणु
+	काष्ठा cpufreq_frequency_table *freq_table;
+	पूर्णांक (*set_voltage)(अचिन्हित पूर्णांक index);
+	पूर्णांक (*init)(व्योम);
+पूर्ण;
 
-#endif /* _MACH_DAVINCI_CPUFREQ_H */
+#पूर्ण_अगर /* _MACH_DAVINCI_CPUFREQ_H */

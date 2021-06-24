@@ -1,170 +1,171 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_PGTABLE_H
-#define _ASM_POWERPC_PGTABLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_PGTABLE_H
+#घोषणा _ASM_POWERPC_PGTABLE_H
 
-#ifndef __ASSEMBLY__
-#include <linux/mmdebug.h>
-#include <linux/mmzone.h>
-#include <asm/processor.h>		/* For TASK_SIZE */
-#include <asm/mmu.h>
-#include <asm/page.h>
-#include <asm/tlbflush.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <linux/mmdebug.h>
+#समावेश <linux/mmzone.h>
+#समावेश <यंत्र/processor.h>		/* For TASK_SIZE */
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/tlbflush.h>
 
-struct mm_struct;
+काष्ठा mm_काष्ठा;
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#ifdef CONFIG_PPC_BOOK3S
-#include <asm/book3s/pgtable.h>
-#else
-#include <asm/nohash/pgtable.h>
-#endif /* !CONFIG_PPC_BOOK3S */
+#अगर_घोषित CONFIG_PPC_BOOK3S
+#समावेश <यंत्र/book3s/pgtable.h>
+#अन्यथा
+#समावेश <यंत्र/nohash/pgtable.h>
+#पूर्ण_अगर /* !CONFIG_PPC_BOOK3S */
 
 /* Note due to the way vm flags are laid out, the bits are XWR */
-#define __P000	PAGE_NONE
-#define __P001	PAGE_READONLY
-#define __P010	PAGE_COPY
-#define __P011	PAGE_COPY
-#define __P100	PAGE_READONLY_X
-#define __P101	PAGE_READONLY_X
-#define __P110	PAGE_COPY_X
-#define __P111	PAGE_COPY_X
+#घोषणा __P000	PAGE_NONE
+#घोषणा __P001	PAGE_READONLY
+#घोषणा __P010	PAGE_COPY
+#घोषणा __P011	PAGE_COPY
+#घोषणा __P100	PAGE_READONLY_X
+#घोषणा __P101	PAGE_READONLY_X
+#घोषणा __P110	PAGE_COPY_X
+#घोषणा __P111	PAGE_COPY_X
 
-#define __S000	PAGE_NONE
-#define __S001	PAGE_READONLY
-#define __S010	PAGE_SHARED
-#define __S011	PAGE_SHARED
-#define __S100	PAGE_READONLY_X
-#define __S101	PAGE_READONLY_X
-#define __S110	PAGE_SHARED_X
-#define __S111	PAGE_SHARED_X
+#घोषणा __S000	PAGE_NONE
+#घोषणा __S001	PAGE_READONLY
+#घोषणा __S010	PAGE_SHARED
+#घोषणा __S011	PAGE_SHARED
+#घोषणा __S100	PAGE_READONLY_X
+#घोषणा __S101	PAGE_READONLY_X
+#घोषणा __S110	PAGE_SHARED_X
+#घोषणा __S111	PAGE_SHARED_X
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-/* Keep these as a macros to avoid include dependency mess */
-#define pte_page(x)		pfn_to_page(pte_pfn(x))
-#define mk_pte(page, pgprot)	pfn_pte(page_to_pfn(page), (pgprot))
+/* Keep these as a macros to aव्योम include dependency mess */
+#घोषणा pte_page(x)		pfn_to_page(pte_pfn(x))
+#घोषणा mk_pte(page, pgprot)	pfn_pte(page_to_pfn(page), (pgprot))
 /*
  * Select all bits except the pfn
  */
-static inline pgprot_t pte_pgprot(pte_t pte)
-{
-	unsigned long pte_flags;
+अटल अंतरभूत pgprot_t pte_pgprot(pte_t pte)
+अणु
+	अचिन्हित दीर्घ pte_flags;
 
 	pte_flags = pte_val(pte) & ~PTE_RPN_MASK;
-	return __pgprot(pte_flags);
-}
+	वापस __pgprot(pte_flags);
+पूर्ण
 
-#ifndef pmd_page_vaddr
-static inline unsigned long pmd_page_vaddr(pmd_t pmd)
-{
-	return ((unsigned long)__va(pmd_val(pmd) & ~PMD_MASKED_BITS));
-}
-#define pmd_page_vaddr pmd_page_vaddr
-#endif
+#अगर_अघोषित pmd_page_vaddr
+अटल अंतरभूत अचिन्हित दीर्घ pmd_page_vaddr(pmd_t pmd)
+अणु
+	वापस ((अचिन्हित दीर्घ)__va(pmd_val(pmd) & ~PMD_MASKED_BITS));
+पूर्ण
+#घोषणा pmd_page_vaddr pmd_page_vaddr
+#पूर्ण_अगर
 /*
  * ZERO_PAGE is a global shared page that is always zero: used
- * for zero-mapped memory areas etc..
+ * क्रम zero-mapped memory areas etc..
  */
-extern unsigned long empty_zero_page[];
-#define ZERO_PAGE(vaddr) (virt_to_page(empty_zero_page))
+बाह्य अचिन्हित दीर्घ empty_zero_page[];
+#घोषणा ZERO_PAGE(vaddr) (virt_to_page(empty_zero_page))
 
-extern pgd_t swapper_pg_dir[];
+बाह्य pgd_t swapper_pg_dir[];
 
-extern void paging_init(void);
+बाह्य व्योम paging_init(व्योम);
 
-extern unsigned long ioremap_bot;
+बाह्य अचिन्हित दीर्घ ioremap_bot;
 
 /*
- * kern_addr_valid is intended to indicate whether an address is a valid
+ * kern_addr_valid is पूर्णांकended to indicate whether an address is a valid
  * kernel address.  Most 32-bit archs define it as always true (like this)
- * but most 64-bit archs actually perform a test.  What should we do here?
+ * but most 64-bit archs actually perक्रमm a test.  What should we करो here?
  */
-#define kern_addr_valid(addr)	(1)
+#घोषणा kern_addr_valid(addr)	(1)
 
-#ifndef CONFIG_TRANSPARENT_HUGEPAGE
-#define pmd_large(pmd)		0
-#endif
+#अगर_अघोषित CONFIG_TRANSPARENT_HUGEPAGE
+#घोषणा pmd_large(pmd)		0
+#पूर्ण_अगर
 
 /* can we use this in kvm */
-unsigned long vmalloc_to_phys(void *vmalloc_addr);
+अचिन्हित दीर्घ vदो_स्मृति_to_phys(व्योम *vदो_स्मृति_addr);
 
-void pgtable_cache_add(unsigned int shift);
+व्योम pgtable_cache_add(अचिन्हित पूर्णांक shअगरt);
 
-pte_t *early_pte_alloc_kernel(pmd_t *pmdp, unsigned long va);
+pte_t *early_pte_alloc_kernel(pmd_t *pmdp, अचिन्हित दीर्घ va);
 
-#if defined(CONFIG_STRICT_KERNEL_RWX) || defined(CONFIG_PPC32)
-void mark_initmem_nx(void);
-#else
-static inline void mark_initmem_nx(void) { }
-#endif
+#अगर defined(CONFIG_STRICT_KERNEL_RWX) || defined(CONFIG_PPC32)
+व्योम mark_iniपंचांगem_nx(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम mark_iniपंचांगem_nx(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
 /*
  * When used, PTE_FRAG_NR is defined in subarch pgtable.h
  * so we are sure it is included when arriving here.
  */
-#ifdef PTE_FRAG_NR
-static inline void *pte_frag_get(mm_context_t *ctx)
-{
-	return ctx->pte_frag;
-}
+#अगर_घोषित PTE_FRAG_NR
+अटल अंतरभूत व्योम *pte_frag_get(mm_context_t *ctx)
+अणु
+	वापस ctx->pte_frag;
+पूर्ण
 
-static inline void pte_frag_set(mm_context_t *ctx, void *p)
-{
+अटल अंतरभूत व्योम pte_frag_set(mm_context_t *ctx, व्योम *p)
+अणु
 	ctx->pte_frag = p;
-}
-#else
-#define PTE_FRAG_NR		1
-#define PTE_FRAG_SIZE_SHIFT	PAGE_SHIFT
-#define PTE_FRAG_SIZE		(1UL << PTE_FRAG_SIZE_SHIFT)
+पूर्ण
+#अन्यथा
+#घोषणा PTE_FRAG_NR		1
+#घोषणा PTE_FRAG_SIZE_SHIFT	PAGE_SHIFT
+#घोषणा PTE_FRAG_SIZE		(1UL << PTE_FRAG_SIZE_SHIFT)
 
-static inline void *pte_frag_get(mm_context_t *ctx)
-{
-	return NULL;
-}
+अटल अंतरभूत व्योम *pte_frag_get(mm_context_t *ctx)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void pte_frag_set(mm_context_t *ctx, void *p)
-{
-}
-#endif
+अटल अंतरभूत व्योम pte_frag_set(mm_context_t *ctx, व्योम *p)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef pmd_is_leaf
-#define pmd_is_leaf pmd_is_leaf
-static inline bool pmd_is_leaf(pmd_t pmd)
-{
-	return false;
-}
-#endif
+#अगर_अघोषित pmd_is_leaf
+#घोषणा pmd_is_leaf pmd_is_leaf
+अटल अंतरभूत bool pmd_is_leaf(pmd_t pmd)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef pud_is_leaf
-#define pud_is_leaf pud_is_leaf
-static inline bool pud_is_leaf(pud_t pud)
-{
-	return false;
-}
-#endif
+#अगर_अघोषित pud_is_leaf
+#घोषणा pud_is_leaf pud_is_leaf
+अटल अंतरभूत bool pud_is_leaf(pud_t pud)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef p4d_is_leaf
-#define p4d_is_leaf p4d_is_leaf
-static inline bool p4d_is_leaf(p4d_t p4d)
-{
-	return false;
-}
-#endif
+#अगर_अघोषित p4d_is_leaf
+#घोषणा p4d_is_leaf p4d_is_leaf
+अटल अंतरभूत bool p4d_is_leaf(p4d_t p4d)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC64
-#define is_ioremap_addr is_ioremap_addr
-static inline bool is_ioremap_addr(const void *x)
-{
-	unsigned long addr = (unsigned long)x;
+#अगर_घोषित CONFIG_PPC64
+#घोषणा is_ioremap_addr is_ioremap_addr
+अटल अंतरभूत bool is_ioremap_addr(स्थिर व्योम *x)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)x;
 
-	return addr >= IOREMAP_BASE && addr < IOREMAP_END;
-}
+	वापस addr >= IOREMAP_BASE && addr < IOREMAP_END;
+पूर्ण
 
-struct seq_file;
-void arch_report_meminfo(struct seq_file *m);
-#endif /* CONFIG_PPC64 */
+काष्ठा seq_file;
+व्योम arch_report_meminfo(काष्ठा seq_file *m);
+#पूर्ण_अगर /* CONFIG_PPC64 */
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* _ASM_POWERPC_PGTABLE_H */
+#पूर्ण_अगर /* _ASM_POWERPC_PGTABLE_H */

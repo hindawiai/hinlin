@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * cxgb4_ptp.c:Chelsio PTP support for T5/T6
+ * cxgb4_ptp.c:Chelsio PTP support क्रम T5/T6
  *
  * Copyright (c) 2003-2017 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -34,369 +35,369 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
-#include <linux/module.h>
-#include <linux/net_tstamp.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/pps_kernel.h>
-#include <linux/ptp_clock_kernel.h>
-#include <linux/ptp_classify.h>
-#include <linux/udp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/net_tstamp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/pps_kernel.h>
+#समावेश <linux/ptp_घड़ी_kernel.h>
+#समावेश <linux/ptp_classअगरy.h>
+#समावेश <linux/udp.h>
 
-#include "cxgb4.h"
-#include "t4_hw.h"
-#include "t4_regs.h"
-#include "t4_msg.h"
-#include "t4fw_api.h"
-#include "cxgb4_ptp.h"
+#समावेश "cxgb4.h"
+#समावेश "t4_hw.h"
+#समावेश "t4_regs.h"
+#समावेश "t4_msg.h"
+#समावेश "t4fw_api.h"
+#समावेश "cxgb4_ptp.h"
 
 /**
  * cxgb4_ptp_is_ptp_tx - determine whether TX packet is PTP or not
  * @skb: skb of outgoing ptp request
  *
  */
-bool cxgb4_ptp_is_ptp_tx(struct sk_buff *skb)
-{
-	struct udphdr *uh;
+bool cxgb4_ptp_is_ptp_tx(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा udphdr *uh;
 
 	uh = udp_hdr(skb);
-	return skb->len >= PTP_MIN_LENGTH &&
+	वापस skb->len >= PTP_MIN_LENGTH &&
 		skb->len <= PTP_IN_TRANSMIT_PACKET_MAXNUM &&
 		likely(skb->protocol == htons(ETH_P_IP)) &&
 		ip_hdr(skb)->protocol == IPPROTO_UDP &&
 		uh->dest == htons(PTP_EVENT_PORT);
-}
+पूर्ण
 
-bool is_ptp_enabled(struct sk_buff *skb, struct net_device *dev)
-{
-	struct port_info *pi;
+bool is_ptp_enabled(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा port_info *pi;
 
 	pi = netdev_priv(dev);
-	return (pi->ptp_enable && cxgb4_xmit_with_hwtstamp(skb) &&
+	वापस (pi->ptp_enable && cxgb4_xmit_with_hwtstamp(skb) &&
 		cxgb4_ptp_is_ptp_tx(skb));
-}
+पूर्ण
 
 /**
  * cxgb4_ptp_is_ptp_rx - determine whether RX packet is PTP or not
  * @skb: skb of incoming ptp request
  *
  */
-bool cxgb4_ptp_is_ptp_rx(struct sk_buff *skb)
-{
-	struct udphdr *uh = (struct udphdr *)(skb->data + ETH_HLEN +
+bool cxgb4_ptp_is_ptp_rx(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा udphdr *uh = (काष्ठा udphdr *)(skb->data + ETH_HLEN +
 					      IPV4_HLEN(skb->data));
 
-	return  uh->dest == htons(PTP_EVENT_PORT) &&
+	वापस  uh->dest == htons(PTP_EVENT_PORT) &&
 		uh->source == htons(PTP_EVENT_PORT);
-}
+पूर्ण
 
 /**
- * cxgb4_ptp_read_hwstamp - read timestamp for TX event PTP message
- * @adapter: board private structure
- * @pi: port private structure
+ * cxgb4_ptp_पढ़ो_hwstamp - पढ़ो बारtamp क्रम TX event PTP message
+ * @adapter: board निजी काष्ठाure
+ * @pi: port निजी काष्ठाure
  *
  */
-void cxgb4_ptp_read_hwstamp(struct adapter *adapter, struct port_info *pi)
-{
-	struct skb_shared_hwtstamps *skb_ts = NULL;
+व्योम cxgb4_ptp_पढ़ो_hwstamp(काष्ठा adapter *adapter, काष्ठा port_info *pi)
+अणु
+	काष्ठा skb_shared_hwtstamps *skb_ts = शून्य;
 	u64 tx_ts;
 
 	skb_ts = skb_hwtstamps(adapter->ptp_tx_skb);
 
-	tx_ts = t4_read_reg(adapter,
+	tx_ts = t4_पढ़ो_reg(adapter,
 			    T5_PORT_REG(pi->port_id, MAC_PORT_TX_TS_VAL_LO));
 
-	tx_ts |= (u64)t4_read_reg(adapter,
+	tx_ts |= (u64)t4_पढ़ो_reg(adapter,
 				  T5_PORT_REG(pi->port_id,
 					      MAC_PORT_TX_TS_VAL_HI)) << 32;
-	skb_ts->hwtstamp = ns_to_ktime(tx_ts);
+	skb_ts->hwtstamp = ns_to_kसमय(tx_ts);
 	skb_tstamp_tx(adapter->ptp_tx_skb, skb_ts);
-	dev_kfree_skb_any(adapter->ptp_tx_skb);
+	dev_kमुक्त_skb_any(adapter->ptp_tx_skb);
 	spin_lock(&adapter->ptp_lock);
-	adapter->ptp_tx_skb = NULL;
+	adapter->ptp_tx_skb = शून्य;
 	spin_unlock(&adapter->ptp_lock);
-}
+पूर्ण
 
 /**
- * cxgb4_ptprx_timestamping - Enable Timestamp for RX PTP event message
- * @pi: port private structure
+ * cxgb4_ptprx_बारtamping - Enable Timestamp क्रम RX PTP event message
+ * @pi: port निजी काष्ठाure
  * @port: pot number
  * @mode: RX mode
  *
  */
-int cxgb4_ptprx_timestamping(struct port_info *pi, u8 port, u16 mode)
-{
-	struct adapter *adapter = pi->adapter;
-	struct fw_ptp_cmd c;
-	int err;
+पूर्णांक cxgb4_ptprx_बारtamping(काष्ठा port_info *pi, u8 port, u16 mode)
+अणु
+	काष्ठा adapter *adapter = pi->adapter;
+	काष्ठा fw_ptp_cmd c;
+	पूर्णांक err;
 
-	memset(&c, 0, sizeof(c));
+	स_रखो(&c, 0, माप(c));
 	c.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PTP_CMD) |
 				     FW_CMD_REQUEST_F |
 				     FW_CMD_WRITE_F |
 				     FW_PTP_CMD_PORTID_V(port));
-	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(sizeof(c) / 16));
+	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(माप(c) / 16));
 	c.u.init.sc = FW_PTP_SC_RXTIME_STAMP;
 	c.u.init.mode = cpu_to_be16(mode);
 
-	err = t4_wr_mbox(adapter, adapter->mbox, &c, sizeof(c), NULL);
-	if (err < 0)
+	err = t4_wr_mbox(adapter, adapter->mbox, &c, माप(c), शून्य);
+	अगर (err < 0)
 		dev_err(adapter->pdev_dev,
 			"PTP: %s error %d\n", __func__, -err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int cxgb4_ptp_txtype(struct adapter *adapter, u8 port)
-{
-	struct fw_ptp_cmd c;
-	int err;
+पूर्णांक cxgb4_ptp_txtype(काष्ठा adapter *adapter, u8 port)
+अणु
+	काष्ठा fw_ptp_cmd c;
+	पूर्णांक err;
 
-	memset(&c, 0, sizeof(c));
+	स_रखो(&c, 0, माप(c));
 	c.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PTP_CMD) |
 				     FW_CMD_REQUEST_F |
 				     FW_CMD_WRITE_F |
 				     FW_PTP_CMD_PORTID_V(port));
-	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(sizeof(c) / 16));
+	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(माप(c) / 16));
 	c.u.init.sc = FW_PTP_SC_TX_TYPE;
 	c.u.init.mode = cpu_to_be16(PTP_TS_NONE);
 
-	err = t4_wr_mbox(adapter, adapter->mbox, &c, sizeof(c), NULL);
-	if (err < 0)
+	err = t4_wr_mbox(adapter, adapter->mbox, &c, माप(c), शून्य);
+	अगर (err < 0)
 		dev_err(adapter->pdev_dev,
 			"PTP: %s error %d\n", __func__, -err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int cxgb4_ptp_redirect_rx_packet(struct adapter *adapter, struct port_info *pi)
-{
-	struct sge *s = &adapter->sge;
-	struct sge_eth_rxq *receive_q =  &s->ethrxq[pi->first_qset];
-	struct fw_ptp_cmd c;
-	int err;
+पूर्णांक cxgb4_ptp_redirect_rx_packet(काष्ठा adapter *adapter, काष्ठा port_info *pi)
+अणु
+	काष्ठा sge *s = &adapter->sge;
+	काष्ठा sge_eth_rxq *receive_q =  &s->ethrxq[pi->first_qset];
+	काष्ठा fw_ptp_cmd c;
+	पूर्णांक err;
 
-	memset(&c, 0, sizeof(c));
+	स_रखो(&c, 0, माप(c));
 	c.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PTP_CMD) |
 				     FW_CMD_REQUEST_F |
 				     FW_CMD_WRITE_F |
 				     FW_PTP_CMD_PORTID_V(pi->port_id));
 
-	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(sizeof(c) / 16));
+	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(माप(c) / 16));
 	c.u.init.sc = FW_PTP_SC_RDRX_TYPE;
 	c.u.init.txchan = pi->tx_chan;
-	c.u.init.absid = cpu_to_be16(receive_q->rspq.abs_id);
+	c.u.init.असलid = cpu_to_be16(receive_q->rspq.असल_id);
 
-	err = t4_wr_mbox(adapter, adapter->mbox, &c, sizeof(c), NULL);
-	if (err < 0)
+	err = t4_wr_mbox(adapter, adapter->mbox, &c, माप(c), शून्य);
+	अगर (err < 0)
 		dev_err(adapter->pdev_dev,
 			"PTP: %s error %d\n", __func__, -err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * cxgb4_ptp_adjfreq - Adjust frequency of PHC cycle counter
- * @ptp: ptp clock structure
+ * @ptp: ptp घड़ी काष्ठाure
  * @ppb: Desired frequency change in parts per billion
  *
  * Adjust the frequency of the PHC cycle counter by the indicated ppb from
  * the base frequency.
  */
-static int cxgb4_ptp_adjfreq(struct ptp_clock_info *ptp, s32 ppb)
-{
-	struct adapter *adapter = (struct adapter *)container_of(ptp,
-				   struct adapter, ptp_clock_info);
-	struct fw_ptp_cmd c;
-	int err;
+अटल पूर्णांक cxgb4_ptp_adjfreq(काष्ठा ptp_घड़ी_info *ptp, s32 ppb)
+अणु
+	काष्ठा adapter *adapter = (काष्ठा adapter *)container_of(ptp,
+				   काष्ठा adapter, ptp_घड़ी_info);
+	काष्ठा fw_ptp_cmd c;
+	पूर्णांक err;
 
-	memset(&c, 0, sizeof(c));
+	स_रखो(&c, 0, माप(c));
 	c.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PTP_CMD) |
 				     FW_CMD_REQUEST_F |
 				     FW_CMD_WRITE_F |
 				     FW_PTP_CMD_PORTID_V(0));
-	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(sizeof(c) / 16));
+	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(माप(c) / 16));
 	c.u.ts.sc = FW_PTP_SC_ADJ_FREQ;
 	c.u.ts.sign = (ppb < 0) ? 1 : 0;
-	if (ppb < 0)
+	अगर (ppb < 0)
 		ppb = -ppb;
 	c.u.ts.ppb = cpu_to_be32(ppb);
 
-	err = t4_wr_mbox(adapter, adapter->mbox, &c, sizeof(c), NULL);
-	if (err < 0)
+	err = t4_wr_mbox(adapter, adapter->mbox, &c, माप(c), शून्य);
+	अगर (err < 0)
 		dev_err(adapter->pdev_dev,
 			"PTP: %s error %d\n", __func__, -err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * cxgb4_ptp_fineadjtime - Shift the time of the hardware clock
- * @adapter: board private structure
+ * cxgb4_ptp_fineadjसमय - Shअगरt the समय of the hardware घड़ी
+ * @adapter: board निजी काष्ठाure
  * @delta: Desired change in nanoseconds
  *
- * Adjust the timer by resetting the timecounter structure.
+ * Adjust the समयr by resetting the समयcounter काष्ठाure.
  */
-static int  cxgb4_ptp_fineadjtime(struct adapter *adapter, s64 delta)
-{
-	struct fw_ptp_cmd c;
-	int err;
+अटल पूर्णांक  cxgb4_ptp_fineadjसमय(काष्ठा adapter *adapter, s64 delta)
+अणु
+	काष्ठा fw_ptp_cmd c;
+	पूर्णांक err;
 
-	memset(&c, 0, sizeof(c));
+	स_रखो(&c, 0, माप(c));
 	c.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PTP_CMD) |
 			     FW_CMD_REQUEST_F |
 			     FW_CMD_WRITE_F |
 			     FW_PTP_CMD_PORTID_V(0));
-	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(sizeof(c) / 16));
+	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(माप(c) / 16));
 	c.u.ts.sc = FW_PTP_SC_ADJ_FTIME;
 	c.u.ts.sign = (delta < 0) ? 1 : 0;
-	if (delta < 0)
+	अगर (delta < 0)
 		delta = -delta;
-	c.u.ts.tm = cpu_to_be64(delta);
+	c.u.ts.पंचांग = cpu_to_be64(delta);
 
-	err = t4_wr_mbox(adapter, adapter->mbox, &c, sizeof(c), NULL);
-	if (err < 0)
+	err = t4_wr_mbox(adapter, adapter->mbox, &c, माप(c), शून्य);
+	अगर (err < 0)
 		dev_err(adapter->pdev_dev,
 			"PTP: %s error %d\n", __func__, -err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * cxgb4_ptp_adjtime - Shift the time of the hardware clock
- * @ptp: ptp clock structure
+ * cxgb4_ptp_adjसमय - Shअगरt the समय of the hardware घड़ी
+ * @ptp: ptp घड़ी काष्ठाure
  * @delta: Desired change in nanoseconds
  *
- * Adjust the timer by resetting the timecounter structure.
+ * Adjust the समयr by resetting the समयcounter काष्ठाure.
  */
-static int cxgb4_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
-{
-	struct adapter *adapter =
-		(struct adapter *)container_of(ptp, struct adapter,
-					       ptp_clock_info);
-	struct fw_ptp_cmd c;
+अटल पूर्णांक cxgb4_ptp_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
+अणु
+	काष्ठा adapter *adapter =
+		(काष्ठा adapter *)container_of(ptp, काष्ठा adapter,
+					       ptp_घड़ी_info);
+	काष्ठा fw_ptp_cmd c;
 	s64 sign = 1;
-	int err;
+	पूर्णांक err;
 
-	if (delta < 0)
+	अगर (delta < 0)
 		sign = -1;
 
-	if (delta * sign > PTP_CLOCK_MAX_ADJTIME) {
-		memset(&c, 0, sizeof(c));
+	अगर (delta * sign > PTP_CLOCK_MAX_ADJTIME) अणु
+		स_रखो(&c, 0, माप(c));
 		c.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PTP_CMD) |
 					     FW_CMD_REQUEST_F |
 					     FW_CMD_WRITE_F |
 					     FW_PTP_CMD_PORTID_V(0));
-		c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(sizeof(c) / 16));
+		c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(माप(c) / 16));
 		c.u.ts.sc = FW_PTP_SC_ADJ_TIME;
 		c.u.ts.sign = (delta < 0) ? 1 : 0;
-		if (delta < 0)
+		अगर (delta < 0)
 			delta = -delta;
-		c.u.ts.tm = cpu_to_be64(delta);
+		c.u.ts.पंचांग = cpu_to_be64(delta);
 
-		err = t4_wr_mbox(adapter, adapter->mbox, &c, sizeof(c), NULL);
-		if (err < 0)
+		err = t4_wr_mbox(adapter, adapter->mbox, &c, माप(c), शून्य);
+		अगर (err < 0)
 			dev_err(adapter->pdev_dev,
 				"PTP: %s error %d\n", __func__, -err);
-	} else {
-		err = cxgb4_ptp_fineadjtime(adapter, delta);
-	}
+	पूर्ण अन्यथा अणु
+		err = cxgb4_ptp_fineadjसमय(adapter, delta);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * cxgb4_ptp_gettime - Reads the current time from the hardware clock
- * @ptp: ptp clock structure
- * @ts: timespec structure to hold the current time value
+ * cxgb4_ptp_समय_लो - Reads the current समय from the hardware घड़ी
+ * @ptp: ptp घड़ी काष्ठाure
+ * @ts: बारpec काष्ठाure to hold the current समय value
  *
- * Read the timecounter and return the correct value in ns after converting
- * it into a struct timespec.
+ * Read the समयcounter and वापस the correct value in ns after converting
+ * it पूर्णांकo a काष्ठा बारpec.
  */
-static int cxgb4_ptp_gettime(struct ptp_clock_info *ptp, struct timespec64 *ts)
-{
-	struct adapter *adapter = container_of(ptp, struct adapter,
-					       ptp_clock_info);
+अटल पूर्णांक cxgb4_ptp_समय_लो(काष्ठा ptp_घड़ी_info *ptp, काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा adapter *adapter = container_of(ptp, काष्ठा adapter,
+					       ptp_घड़ी_info);
 	u64 ns;
 
-	ns = t4_read_reg(adapter, T5_PORT_REG(0, MAC_PORT_PTP_SUM_LO_A));
-	ns |= (u64)t4_read_reg(adapter,
+	ns = t4_पढ़ो_reg(adapter, T5_PORT_REG(0, MAC_PORT_PTP_SUM_LO_A));
+	ns |= (u64)t4_पढ़ो_reg(adapter,
 			       T5_PORT_REG(0, MAC_PORT_PTP_SUM_HI_A)) << 32;
 
-	/* convert to timespec*/
-	*ts = ns_to_timespec64(ns);
-	return 0;
-}
+	/* convert to बारpec*/
+	*ts = ns_to_बारpec64(ns);
+	वापस 0;
+पूर्ण
 
 /**
- *  cxgb4_ptp_settime - Set the current time on the hardware clock
- *  @ptp: ptp clock structure
- *  @ts: timespec containing the new time for the cycle counter
+ *  cxgb4_ptp_समय_रखो - Set the current समय on the hardware घड़ी
+ *  @ptp: ptp घड़ी काष्ठाure
+ *  @ts: बारpec containing the new समय क्रम the cycle counter
  *
  *  Reset value to new base value instead of the kernel
- *  wall timer value.
+ *  wall समयr value.
  */
-static int cxgb4_ptp_settime(struct ptp_clock_info *ptp,
-			     const struct timespec64 *ts)
-{
-	struct adapter *adapter = (struct adapter *)container_of(ptp,
-				   struct adapter, ptp_clock_info);
-	struct fw_ptp_cmd c;
+अटल पूर्णांक cxgb4_ptp_समय_रखो(काष्ठा ptp_घड़ी_info *ptp,
+			     स्थिर काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा adapter *adapter = (काष्ठा adapter *)container_of(ptp,
+				   काष्ठा adapter, ptp_घड़ी_info);
+	काष्ठा fw_ptp_cmd c;
 	u64 ns;
-	int err;
+	पूर्णांक err;
 
-	memset(&c, 0, sizeof(c));
+	स_रखो(&c, 0, माप(c));
 	c.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PTP_CMD) |
 				     FW_CMD_REQUEST_F |
 				     FW_CMD_WRITE_F |
 				     FW_PTP_CMD_PORTID_V(0));
-	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(sizeof(c) / 16));
+	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(माप(c) / 16));
 	c.u.ts.sc = FW_PTP_SC_SET_TIME;
 
-	ns = timespec64_to_ns(ts);
-	c.u.ts.tm = cpu_to_be64(ns);
+	ns = बारpec64_to_ns(ts);
+	c.u.ts.पंचांग = cpu_to_be64(ns);
 
-	err =  t4_wr_mbox(adapter, adapter->mbox, &c, sizeof(c), NULL);
-	if (err < 0)
+	err =  t4_wr_mbox(adapter, adapter->mbox, &c, माप(c), शून्य);
+	अगर (err < 0)
 		dev_err(adapter->pdev_dev,
 			"PTP: %s error %d\n", __func__, -err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void cxgb4_init_ptp_timer(struct adapter *adapter)
-{
-	struct fw_ptp_cmd c;
-	int err;
+अटल व्योम cxgb4_init_ptp_समयr(काष्ठा adapter *adapter)
+अणु
+	काष्ठा fw_ptp_cmd c;
+	पूर्णांक err;
 
-	memset(&c, 0, sizeof(c));
+	स_रखो(&c, 0, माप(c));
 	c.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PTP_CMD) |
 				     FW_CMD_REQUEST_F |
 				     FW_CMD_WRITE_F |
 				     FW_PTP_CMD_PORTID_V(0));
-	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(sizeof(c) / 16));
+	c.retval_len16 = cpu_to_be32(FW_CMD_LEN16_V(माप(c) / 16));
 	c.u.scmd.sc = FW_PTP_SC_INIT_TIMER;
 
-	err = t4_wr_mbox(adapter, adapter->mbox, &c, sizeof(c), NULL);
-	if (err < 0)
+	err = t4_wr_mbox(adapter, adapter->mbox, &c, माप(c), शून्य);
+	अगर (err < 0)
 		dev_err(adapter->pdev_dev,
 			"PTP: %s error %d\n", __func__, -err);
-}
+पूर्ण
 
 /**
  * cxgb4_ptp_enable - enable or disable an ancillary feature
- * @ptp: ptp clock structure
+ * @ptp: ptp घड़ी काष्ठाure
  * @request: Desired resource to enable or disable
  * @on: Caller passes one to enable or zero to disable
  *
- * Enable (or disable) ancillary features of the PHC subsystem.
+ * Enable (or disable) ancillary features of the PHC subप्रणाली.
  * Currently, no ancillary features are supported.
  */
-static int cxgb4_ptp_enable(struct ptp_clock_info __always_unused *ptp,
-			    struct ptp_clock_request __always_unused *request,
-			    int __always_unused on)
-{
-	return -ENOTSUPP;
-}
+अटल पूर्णांक cxgb4_ptp_enable(काष्ठा ptp_घड़ी_info __always_unused *ptp,
+			    काष्ठा ptp_घड़ी_request __always_unused *request,
+			    पूर्णांक __always_unused on)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static const struct ptp_clock_info cxgb4_ptp_clock_info = {
+अटल स्थिर काष्ठा ptp_घड़ी_info cxgb4_ptp_घड़ी_info = अणु
 	.owner          = THIS_MODULE,
 	.name           = "cxgb4_clock",
 	.max_adj        = MAX_PTP_FREQ_ADJ,
@@ -405,61 +406,61 @@ static const struct ptp_clock_info cxgb4_ptp_clock_info = {
 	.n_per_out      = 0,
 	.pps            = 0,
 	.adjfreq        = cxgb4_ptp_adjfreq,
-	.adjtime        = cxgb4_ptp_adjtime,
-	.gettime64      = cxgb4_ptp_gettime,
-	.settime64      = cxgb4_ptp_settime,
+	.adjसमय        = cxgb4_ptp_adjसमय,
+	.समय_लो64      = cxgb4_ptp_समय_लो,
+	.समय_रखो64      = cxgb4_ptp_समय_रखो,
 	.enable         = cxgb4_ptp_enable,
-};
+पूर्ण;
 
 /**
- * cxgb4_ptp_init - initialize PTP for devices which support it
- * @adapter: board private structure
+ * cxgb4_ptp_init - initialize PTP क्रम devices which support it
+ * @adapter: board निजी काष्ठाure
  *
- * This function performs the required steps for enabling PTP support.
+ * This function perक्रमms the required steps क्रम enabling PTP support.
  */
-void cxgb4_ptp_init(struct adapter *adapter)
-{
-	struct timespec64 now;
-	 /* no need to create a clock device if we already have one */
-	if (!IS_ERR_OR_NULL(adapter->ptp_clock))
-		return;
+व्योम cxgb4_ptp_init(काष्ठा adapter *adapter)
+अणु
+	काष्ठा बारpec64 now;
+	 /* no need to create a घड़ी device अगर we alपढ़ोy have one */
+	अगर (!IS_ERR_OR_शून्य(adapter->ptp_घड़ी))
+		वापस;
 
-	adapter->ptp_tx_skb = NULL;
-	adapter->ptp_clock_info = cxgb4_ptp_clock_info;
+	adapter->ptp_tx_skb = शून्य;
+	adapter->ptp_घड़ी_info = cxgb4_ptp_घड़ी_info;
 	spin_lock_init(&adapter->ptp_lock);
 
-	adapter->ptp_clock = ptp_clock_register(&adapter->ptp_clock_info,
+	adapter->ptp_घड़ी = ptp_घड़ी_रेजिस्टर(&adapter->ptp_घड़ी_info,
 						&adapter->pdev->dev);
-	if (IS_ERR_OR_NULL(adapter->ptp_clock)) {
-		adapter->ptp_clock = NULL;
+	अगर (IS_ERR_OR_शून्य(adapter->ptp_घड़ी)) अणु
+		adapter->ptp_घड़ी = शून्य;
 		dev_err(adapter->pdev_dev,
 			"PTP %s Clock registration has failed\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	now = ktime_to_timespec64(ktime_get_real());
-	cxgb4_init_ptp_timer(adapter);
-	if (cxgb4_ptp_settime(&adapter->ptp_clock_info, &now) < 0) {
-		ptp_clock_unregister(adapter->ptp_clock);
-		adapter->ptp_clock = NULL;
-	}
-}
+	now = kसमय_प्रकारo_बारpec64(kसमय_get_real());
+	cxgb4_init_ptp_समयr(adapter);
+	अगर (cxgb4_ptp_समय_रखो(&adapter->ptp_घड़ी_info, &now) < 0) अणु
+		ptp_घड़ी_unरेजिस्टर(adapter->ptp_घड़ी);
+		adapter->ptp_घड़ी = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- * cxgb4_ptp_remove - disable PTP device and stop the overflow check
- * @adapter: board private structure
+ * cxgb4_ptp_हटाओ - disable PTP device and stop the overflow check
+ * @adapter: board निजी काष्ठाure
  *
  * Stop the PTP support.
  */
-void cxgb4_ptp_stop(struct adapter *adapter)
-{
-	if (adapter->ptp_tx_skb) {
-		dev_kfree_skb_any(adapter->ptp_tx_skb);
-		adapter->ptp_tx_skb = NULL;
-	}
+व्योम cxgb4_ptp_stop(काष्ठा adapter *adapter)
+अणु
+	अगर (adapter->ptp_tx_skb) अणु
+		dev_kमुक्त_skb_any(adapter->ptp_tx_skb);
+		adapter->ptp_tx_skb = शून्य;
+	पूर्ण
 
-	if (adapter->ptp_clock) {
-		ptp_clock_unregister(adapter->ptp_clock);
-		adapter->ptp_clock = NULL;
-	}
-}
+	अगर (adapter->ptp_घड़ी) अणु
+		ptp_घड़ी_unरेजिस्टर(adapter->ptp_घड़ी);
+		adapter->ptp_घड़ी = शून्य;
+	पूर्ण
+पूर्ण

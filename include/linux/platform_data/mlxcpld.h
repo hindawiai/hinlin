@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /*
  * Mellanox I2C multiplexer support in CPLD
  *
  * Copyright (C) 2016-2020 Mellanox Technologies
  */
 
-#ifndef _LINUX_I2C_MLXCPLD_H
-#define _LINUX_I2C_MLXCPLD_H
+#अगर_अघोषित _LINUX_I2C_MLXCPLD_H
+#घोषणा _LINUX_I2C_MLXCPLD_H
 
-/* Platform data for the CPLD I2C multiplexers */
+/* Platक्रमm data क्रम the CPLD I2C multiplexers */
 
-/* mlxcpld_mux_plat_data - per mux data, used with i2c_register_board_info
+/* mlxcpld_mux_plat_data - per mux data, used with i2c_रेजिस्टर_board_info
  * @chan_ids - channels array
  * @num_adaps - number of adapters
- * @sel_reg_addr - mux select register offset in CPLD space
- * @reg_size: register size in bytes
+ * @sel_reg_addr - mux select रेजिस्टर offset in CPLD space
+ * @reg_size: रेजिस्टर size in bytes
  * @handle: handle to be passed by callback
- * @completion_notify: callback to notify when all the adapters are created
+ * @completion_notअगरy: callback to notअगरy when all the adapters are created
  */
-struct mlxcpld_mux_plat_data {
-	int *chan_ids;
-	int num_adaps;
-	int sel_reg_addr;
+काष्ठा mlxcpld_mux_plat_data अणु
+	पूर्णांक *chan_ids;
+	पूर्णांक num_adaps;
+	पूर्णांक sel_reg_addr;
 	u8 reg_size;
-	void *handle;
-	int (*completion_notify)(void *handle, struct i2c_adapter *parent,
-				 struct i2c_adapter *adapters[]);
-};
+	व्योम *handle;
+	पूर्णांक (*completion_notअगरy)(व्योम *handle, काष्ठा i2c_adapter *parent,
+				 काष्ठा i2c_adapter *adapters[]);
+पूर्ण;
 
-#endif /* _LINUX_I2C_MLXCPLD_H */
+#पूर्ण_अगर /* _LINUX_I2C_MLXCPLD_H */

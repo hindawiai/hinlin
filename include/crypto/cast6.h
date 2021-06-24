@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _CRYPTO_CAST6_H
-#define _CRYPTO_CAST6_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _CRYPTO_CAST6_H
+#घोषणा _CRYPTO_CAST6_H
 
-#include <linux/types.h>
-#include <linux/crypto.h>
-#include <crypto/cast_common.h>
+#समावेश <linux/types.h>
+#समावेश <linux/crypto.h>
+#समावेश <crypto/cast_common.h>
 
-#define CAST6_BLOCK_SIZE 16
-#define CAST6_MIN_KEY_SIZE 16
-#define CAST6_MAX_KEY_SIZE 32
+#घोषणा CAST6_BLOCK_SIZE 16
+#घोषणा CAST6_MIN_KEY_SIZE 16
+#घोषणा CAST6_MAX_KEY_SIZE 32
 
-struct cast6_ctx {
+काष्ठा cast6_ctx अणु
 	u32 Km[12][4];
 	u8 Kr[12][4];
-};
+पूर्ण;
 
-int __cast6_setkey(struct cast6_ctx *ctx, const u8 *key, unsigned int keylen);
-int cast6_setkey(struct crypto_tfm *tfm, const u8 *key, unsigned int keylen);
+पूर्णांक __cast6_setkey(काष्ठा cast6_ctx *ctx, स्थिर u8 *key, अचिन्हित पूर्णांक keylen);
+पूर्णांक cast6_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key, अचिन्हित पूर्णांक keylen);
 
-void __cast6_encrypt(const void *ctx, u8 *dst, const u8 *src);
-void __cast6_decrypt(const void *ctx, u8 *dst, const u8 *src);
+व्योम __cast6_encrypt(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
+व्योम __cast6_decrypt(स्थिर व्योम *ctx, u8 *dst, स्थिर u8 *src);
 
-#endif
+#पूर्ण_अगर

@@ -1,56 +1,57 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2007 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2013 Imagination Technologies Ltd.
  *
  * Arbitrary Monitor Interface
  */
-#include <linux/kernel.h>
-#include <linux/smp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/smp.h>
 
-#include <asm/addrspace.h>
-#include <asm/mipsmtregs.h>
-#include <asm/mips-boards/launch.h>
-#include <asm/vpe.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/mipsmtregs.h>
+#समावेश <यंत्र/mips-boards/launch.h>
+#समावेश <यंत्र/vpe.h>
 
-int amon_cpu_avail(int cpu)
-{
-	struct cpulaunch *launch = (struct cpulaunch *)CKSEG0ADDR(CPULAUNCH);
+पूर्णांक amon_cpu_avail(पूर्णांक cpu)
+अणु
+	काष्ठा cpulaunch *launch = (काष्ठा cpulaunch *)CKSEG0ADDR(CPULAUNCH);
 
-	if (cpu < 0 || cpu >= NCPULAUNCH) {
+	अगर (cpu < 0 || cpu >= NCPULAUNCH) अणु
 		pr_debug("avail: cpu%d is out of range\n", cpu);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	launch += cpu;
-	if (!(launch->flags & LAUNCH_FREADY)) {
+	अगर (!(launch->flags & LAUNCH_FREADY)) अणु
 		pr_debug("avail: cpu%d is not ready\n", cpu);
-		return 0;
-	}
-	if (launch->flags & (LAUNCH_FGO|LAUNCH_FGONE)) {
+		वापस 0;
+	पूर्ण
+	अगर (launch->flags & (LAUNCH_FGO|LAUNCH_FGONE)) अणु
 		pr_debug("avail: too late.. cpu%d is already gone\n", cpu);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int amon_cpu_start(int cpu,
-		    unsigned long pc, unsigned long sp,
-		    unsigned long gp, unsigned long a0)
-{
-	volatile struct cpulaunch *launch =
-		(struct cpulaunch  *)CKSEG0ADDR(CPULAUNCH);
+पूर्णांक amon_cpu_start(पूर्णांक cpu,
+		    अचिन्हित दीर्घ pc, अचिन्हित दीर्घ sp,
+		    अचिन्हित दीर्घ gp, अचिन्हित दीर्घ a0)
+अणु
+	अस्थिर काष्ठा cpulaunch *launch =
+		(काष्ठा cpulaunch  *)CKSEG0ADDR(CPULAUNCH);
 
-	if (!amon_cpu_avail(cpu))
-		return -1;
-	if (cpu == smp_processor_id()) {
+	अगर (!amon_cpu_avail(cpu))
+		वापस -1;
+	अगर (cpu == smp_processor_id()) अणु
 		pr_debug("launch: I am cpu%d!\n", cpu);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	launch += cpu;
 
 	pr_debug("launch: starting cpu%d\n", cpu);
@@ -60,29 +61,29 @@ int amon_cpu_start(int cpu,
 	launch->sp = sp;
 	launch->a0 = a0;
 
-	smp_wmb();		/* Target must see parameters before go */
+	smp_wmb();		/* Target must see parameters beक्रमe go */
 	launch->flags |= LAUNCH_FGO;
-	smp_wmb();		/* Target must see go before we poll  */
+	smp_wmb();		/* Target must see go beक्रमe we poll  */
 
-	while ((launch->flags & LAUNCH_FGONE) == 0)
+	जबतक ((launch->flags & LAUNCH_FGONE) == 0)
 		;
 	smp_rmb();	/* Target will be updating flags soon */
 	pr_debug("launch: cpu%d gone!\n", cpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_MIPS_VPE_LOADER_CMP
-int vpe_run(struct vpe *v)
-{
-	struct vpe_notifications *n;
+#अगर_घोषित CONFIG_MIPS_VPE_LOADER_CMP
+पूर्णांक vpe_run(काष्ठा vpe *v)
+अणु
+	काष्ठा vpe_notअगरications *n;
 
-	if (amon_cpu_start(aprp_cpu_index(), v->__start, 0, 0, 0) < 0)
-		return -1;
+	अगर (amon_cpu_start(aprp_cpu_index(), v->__start, 0, 0, 0) < 0)
+		वापस -1;
 
-	list_for_each_entry(n, &v->notify, list)
+	list_क्रम_each_entry(n, &v->notअगरy, list)
 		n->start(VPE_MODULE_MINOR);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर

@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2010-2016, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#include "debug.h"
+#समावेश "debug.h"
 
-#include "hmm.h"
+#समावेश "hmm.h"
 
-#ifndef __INLINE_DEBUG__
-#include "debug_private.h"
-#endif /* __INLINE_DEBUG__ */
+#अगर_अघोषित __INLINE_DEBUG__
+#समावेश "debug_private.h"
+#पूर्ण_अगर /* __INLINE_DEBUG__ */
 
-#define __INLINE_SP__
-#include "sp.h"
+#घोषणा __INLINE_SP__
+#समावेश "sp.h"
 
-#include "assert_support.h"
+#समावेश "assert_support.h"
 
 /* The address of the remote copy */
 hrt_address	debug_buffer_address = (hrt_address) - 1;
 ia_css_ptr	debug_buffer_ddr_address = (ia_css_ptr)-1;
 /* The local copy */
-static debug_data_t		debug_data;
+अटल debug_data_t		debug_data;
 debug_data_t		*debug_data_ptr = &debug_data;
 
-void debug_buffer_init(const hrt_address addr)
-{
+व्योम debug_buffer_init(स्थिर hrt_address addr)
+अणु
 	debug_buffer_address = addr;
 
 	debug_data.head = 0;
 	debug_data.tail = 0;
-}
+पूर्ण
 
-void debug_buffer_ddr_init(const ia_css_ptr addr)
-{
+व्योम debug_buffer_ddr_init(स्थिर ia_css_ptr addr)
+अणु
 	debug_buf_mode_t mode = DEBUG_BUFFER_MODE_LINEAR;
 	u32 enable = 1;
 	u32 head = 0;
@@ -50,23 +51,23 @@ void debug_buffer_ddr_init(const ia_css_ptr addr)
 	/* set the ddr queue */
 	debug_buffer_ddr_address = addr;
 	hmm_store(addr + DEBUG_DATA_BUF_MODE_DDR_ADDR,
-		   &mode, sizeof(debug_buf_mode_t));
+		   &mode, माप(debug_buf_mode_t));
 	hmm_store(addr + DEBUG_DATA_HEAD_DDR_ADDR,
-		   &head, sizeof(uint32_t));
+		   &head, माप(uपूर्णांक32_t));
 	hmm_store(addr + DEBUG_DATA_TAIL_DDR_ADDR,
-		   &tail, sizeof(uint32_t));
+		   &tail, माप(uपूर्णांक32_t));
 	hmm_store(addr + DEBUG_DATA_ENABLE_DDR_ADDR,
-		   &enable, sizeof(uint32_t));
+		   &enable, माप(uपूर्णांक32_t));
 
 	/* set the local copy */
 	debug_data.head = 0;
 	debug_data.tail = 0;
-}
+पूर्ण
 
-void debug_buffer_setmode(const debug_buf_mode_t mode)
-{
-	assert(debug_buffer_address != ((hrt_address)-1));
+व्योम debug_buffer_seपंचांगode(स्थिर debug_buf_mode_t mode)
+अणु
+	निश्चित(debug_buffer_address != ((hrt_address)-1));
 
-	sp_dmem_store_uint32(SP0_ID,
+	sp_dmem_store_uपूर्णांक32(SP0_ID,
 			     debug_buffer_address + DEBUG_DATA_BUF_MODE_ADDR, mode);
-}
+पूर्ण

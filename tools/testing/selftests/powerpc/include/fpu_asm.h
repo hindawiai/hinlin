@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright 2016, Cyril Bur, IBM Corp.
  */
 
-#ifndef _SELFTESTS_POWERPC_FPU_ASM_H
-#define _SELFTESTS_POWERPC_FPU_ASM_H
-#include "basic_asm.h"
+#अगर_अघोषित _SELFTESTS_POWERPC_FPU_ASM_H
+#घोषणा _SELFTESTS_POWERPC_FPU_ASM_H
+#समावेश "basic_asm.h"
 
-#define PUSH_FPU(stack_size) \
+#घोषणा PUSH_FPU(stack_size) \
 	stfd	f31,(stack_size + STACK_FRAME_MIN_SIZE)(%r1); \
 	stfd	f30,(stack_size + STACK_FRAME_MIN_SIZE - 8)(%r1); \
 	stfd	f29,(stack_size + STACK_FRAME_MIN_SIZE - 16)(%r1); \
@@ -27,7 +28,7 @@
 	stfd	f15,(stack_size + STACK_FRAME_MIN_SIZE - 128)(%r1); \
 	stfd	f14,(stack_size + STACK_FRAME_MIN_SIZE - 136)(%r1);
 
-#define POP_FPU(stack_size) \
+#घोषणा POP_FPU(stack_size) \
 	lfd	f31,(stack_size + STACK_FRAME_MIN_SIZE)(%r1); \
 	lfd	f30,(stack_size + STACK_FRAME_MIN_SIZE - 8)(%r1); \
 	lfd	f29,(stack_size + STACK_FRAME_MIN_SIZE - 16)(%r1); \
@@ -73,4 +74,4 @@ FUNC_START(load_fpu)
 	blr
 FUNC_END(load_fpu)
 
-#endif /* _SELFTESTS_POWERPC_FPU_ASM_H */
+#पूर्ण_अगर /* _SELFTESTS_POWERPC_FPU_ASM_H */

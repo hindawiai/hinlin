@@ -1,115 +1,116 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 1999 Cort Dougan <cort@cs.nmt.edu>
  */
-#ifndef _ASM_POWERPC_BARRIER_H
-#define _ASM_POWERPC_BARRIER_H
+#अगर_अघोषित _ASM_POWERPC_BARRIER_H
+#घोषणा _ASM_POWERPC_BARRIER_H
 
-#include <asm/asm-const.h>
+#समावेश <यंत्र/यंत्र-स्थिर.h>
 
-#ifndef __ASSEMBLY__
-#include <asm/ppc-opcode.h>
-#endif
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <यंत्र/ppc-opcode.h>
+#पूर्ण_अगर
 
 /*
  * Memory barrier.
- * The sync instruction guarantees that all memory accesses initiated
- * by this processor have been performed (with respect to all other
- * mechanisms that access memory).  The eieio instruction is a barrier
- * providing an ordering (separately) for (a) cacheable stores and (b)
+ * The sync inकाष्ठाion guarantees that all memory accesses initiated
+ * by this processor have been perक्रमmed (with respect to all other
+ * mechanisms that access memory).  The eieio inकाष्ठाion is a barrier
+ * providing an ordering (separately) क्रम (a) cacheable stores and (b)
  * loads and stores to non-cacheable memory (e.g. I/O devices).
  *
- * mb() prevents loads and stores being reordered across this point.
- * rmb() prevents loads being reordered across this point.
- * wmb() prevents stores being reordered across this point.
+ * mb() prevents loads and stores being reordered across this poपूर्णांक.
+ * rmb() prevents loads being reordered across this poपूर्णांक.
+ * wmb() prevents stores being reordered across this poपूर्णांक.
  *
  * *mb() variants without smp_ prefix must order all types of memory
- * operations with one another. sync is the only instruction sufficient
- * to do this.
+ * operations with one another. sync is the only inकाष्ठाion sufficient
+ * to करो this.
  *
- * For the smp_ barriers, ordering is for cacheable memory operations
- * only. We have to use the sync instruction for smp_mb(), since lwsync
- * doesn't order loads with respect to previous stores.  Lwsync can be
- * used for smp_rmb() and smp_wmb().
+ * For the smp_ barriers, ordering is क्रम cacheable memory operations
+ * only. We have to use the sync inकाष्ठाion क्रम smp_mb(), since lwsync
+ * करोesn't order loads with respect to previous stores.  Lwsync can be
+ * used क्रम smp_rmb() and smp_wmb().
  *
- * However, on CPUs that don't support lwsync, lwsync actually maps to a
+ * However, on CPUs that करोn't support lwsync, lwsync actually maps to a
  * heavy-weight sync, so smp_wmb() can be a lighter-weight eieio.
  */
-#define mb()   __asm__ __volatile__ ("sync" : : : "memory")
-#define rmb()  __asm__ __volatile__ ("sync" : : : "memory")
-#define wmb()  __asm__ __volatile__ ("sync" : : : "memory")
+#घोषणा mb()   __यंत्र__ __अस्थिर__ ("sync" : : : "memory")
+#घोषणा rmb()  __यंत्र__ __अस्थिर__ ("sync" : : : "memory")
+#घोषणा wmb()  __यंत्र__ __अस्थिर__ ("sync" : : : "memory")
 
 /* The sub-arch has lwsync */
-#if defined(CONFIG_PPC64) || defined(CONFIG_PPC_E500MC)
+#अगर defined(CONFIG_PPC64) || defined(CONFIG_PPC_E500MC)
 #    define SMPWMB      LWSYNC
-#else
+#अन्यथा
 #    define SMPWMB      eieio
-#endif
+#पूर्ण_अगर
 
-#define __lwsync()	__asm__ __volatile__ (stringify_in_c(LWSYNC) : : :"memory")
-#define dma_rmb()	__lwsync()
-#define dma_wmb()	__asm__ __volatile__ (stringify_in_c(SMPWMB) : : :"memory")
+#घोषणा __lwsync()	__यंत्र__ __अस्थिर__ (stringअगरy_in_c(LWSYNC) : : :"memory")
+#घोषणा dma_rmb()	__lwsync()
+#घोषणा dma_wmb()	__यंत्र__ __अस्थिर__ (stringअगरy_in_c(SMPWMB) : : :"memory")
 
-#define __smp_lwsync()	__lwsync()
+#घोषणा __smp_lwsync()	__lwsync()
 
-#define __smp_mb()	mb()
-#define __smp_rmb()	__lwsync()
-#define __smp_wmb()	__asm__ __volatile__ (stringify_in_c(SMPWMB) : : :"memory")
+#घोषणा __smp_mb()	mb()
+#घोषणा __smp_rmb()	__lwsync()
+#घोषणा __smp_wmb()	__यंत्र__ __अस्थिर__ (stringअगरy_in_c(SMPWMB) : : :"memory")
 
 /*
- * This is a barrier which prevents following instructions from being
- * started until the value of the argument x is known.  For example, if
+ * This is a barrier which prevents following inकाष्ठाions from being
+ * started until the value of the argument x is known.  For example, अगर
  * x is a variable loaded from memory, this prevents following
- * instructions from being executed until the load has been performed.
+ * inकाष्ठाions from being executed until the load has been perक्रमmed.
  */
-#define data_barrier(x)	\
-	asm volatile("twi 0,%0,0; isync" : : "r" (x) : "memory");
+#घोषणा data_barrier(x)	\
+	यंत्र अस्थिर("twi 0,%0,0; isync" : : "r" (x) : "memory");
 
-#define __smp_store_release(p, v)						\
-do {									\
-	compiletime_assert_atomic_type(*p);				\
+#घोषणा __smp_store_release(p, v)						\
+करो अणु									\
+	compileसमय_निश्चित_atomic_type(*p);				\
 	__smp_lwsync();							\
 	WRITE_ONCE(*p, v);						\
-} while (0)
+पूर्ण जबतक (0)
 
-#define __smp_load_acquire(p)						\
-({									\
+#घोषणा __smp_load_acquire(p)						\
+(अणु									\
 	typeof(*p) ___p1 = READ_ONCE(*p);				\
-	compiletime_assert_atomic_type(*p);				\
+	compileसमय_निश्चित_atomic_type(*p);				\
 	__smp_lwsync();							\
 	___p1;								\
-})
+पूर्ण)
 
-#ifdef CONFIG_PPC_BOOK3S_64
-#define NOSPEC_BARRIER_SLOT   nop
-#elif defined(CONFIG_PPC_FSL_BOOK3E)
-#define NOSPEC_BARRIER_SLOT   nop; nop
-#endif
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+#घोषणा NOSPEC_BARRIER_SLOT   nop
+#या_अगर defined(CONFIG_PPC_FSL_BOOK3E)
+#घोषणा NOSPEC_BARRIER_SLOT   nop; nop
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_BARRIER_NOSPEC
+#अगर_घोषित CONFIG_PPC_BARRIER_NOSPEC
 /*
- * Prevent execution of subsequent instructions until preceding branches have
- * been fully resolved and are no longer executing speculatively.
+ * Prevent execution of subsequent inकाष्ठाions until preceding branches have
+ * been fully resolved and are no दीर्घer executing speculatively.
  */
-#define barrier_nospec_asm NOSPEC_BARRIER_FIXUP_SECTION; NOSPEC_BARRIER_SLOT
+#घोषणा barrier_nospec_यंत्र NOSPEC_BARRIER_FIXUP_SECTION; NOSPEC_BARRIER_SLOT
 
 // This also acts as a compiler barrier due to the memory clobber.
-#define barrier_nospec() asm (stringify_in_c(barrier_nospec_asm) ::: "memory")
+#घोषणा barrier_nospec() यंत्र (stringअगरy_in_c(barrier_nospec_यंत्र) ::: "memory")
 
-#else /* !CONFIG_PPC_BARRIER_NOSPEC */
-#define barrier_nospec_asm
-#define barrier_nospec()
-#endif /* CONFIG_PPC_BARRIER_NOSPEC */
+#अन्यथा /* !CONFIG_PPC_BARRIER_NOSPEC */
+#घोषणा barrier_nospec_यंत्र
+#घोषणा barrier_nospec()
+#पूर्ण_अगर /* CONFIG_PPC_BARRIER_NOSPEC */
 
 /*
- * pmem_wmb() ensures that all stores for which the modification
+ * pmem_wmb() ensures that all stores क्रम which the modअगरication
  * are written to persistent storage by preceding dcbfps/dcbstps
- * instructions have updated persistent storage before any data
- * access or data transfer caused by subsequent instructions is
+ * inकाष्ठाions have updated persistent storage beक्रमe any data
+ * access or data transfer caused by subsequent inकाष्ठाions is
  * initiated.
  */
-#define pmem_wmb() __asm__ __volatile__(PPC_PHWSYNC ::: "memory")
+#घोषणा pmem_wmb() __यंत्र__ __अस्थिर__(PPC_PHWSYNC ::: "memory")
 
-#include <asm-generic/barrier.h>
+#समावेश <यंत्र-generic/barrier.h>
 
-#endif /* _ASM_POWERPC_BARRIER_H */
+#पूर्ण_अगर /* _ASM_POWERPC_BARRIER_H */

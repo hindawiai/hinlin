@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Based on Ocelot Linux port, which is
  * Copyright 2001 MontaVista Software Inc.
@@ -13,41 +14,41 @@
  * Copyright (C) 2009 Lemote Inc.
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
-#include <linux/export.h>
-#include <asm/bootinfo.h>
-#include <asm/fw/fw.h>
-#include <loongson.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/fw/fw.h>
+#समावेश <loongson.h>
 
-u32 cpu_clock_freq;
-EXPORT_SYMBOL(cpu_clock_freq);
+u32 cpu_घड़ी_freq;
+EXPORT_SYMBOL(cpu_घड़ी_freq);
 
-void __init prom_init_env(void)
-{
-	/* pmon passes arguments in 32bit pointers */
-	unsigned int processor_id;
+व्योम __init prom_init_env(व्योम)
+अणु
+	/* pmon passes arguments in 32bit poपूर्णांकers */
+	अचिन्हित पूर्णांक processor_id;
 
-	cpu_clock_freq = fw_getenvl("cpuclock");
-	memsize = fw_getenvl("memsize");
-	highmemsize = fw_getenvl("highmemsize");
+	cpu_घड़ी_freq = fw_दो_पर्याl("cpuclock");
+	memsize = fw_दो_पर्याl("memsize");
+	highmemsize = fw_दो_पर्याl("highmemsize");
 
-	if (memsize == 0)
+	अगर (memsize == 0)
 		memsize = 256;
 
 	pr_info("memsize=%u, highmemsize=%u\n", memsize, highmemsize);
 
-	if (cpu_clock_freq == 0) {
+	अगर (cpu_घड़ी_freq == 0) अणु
 		processor_id = (&current_cpu_data)->processor_id;
-		switch (processor_id & PRID_REV_MASK) {
-		case PRID_REV_LOONGSON2E:
-			cpu_clock_freq = 533080000;
-			break;
-		case PRID_REV_LOONGSON2F:
-			cpu_clock_freq = 797000000;
-			break;
-		default:
-			cpu_clock_freq = 100000000;
-			break;
-		}
-	}
-	pr_info("CpuClock = %u\n", cpu_clock_freq);
-}
+		चयन (processor_id & PRID_REV_MASK) अणु
+		हाल PRID_REV_LOONGSON2E:
+			cpu_घड़ी_freq = 533080000;
+			अवरोध;
+		हाल PRID_REV_LOONGSON2F:
+			cpu_घड़ी_freq = 797000000;
+			अवरोध;
+		शेष:
+			cpu_घड़ी_freq = 100000000;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	pr_info("CpuClock = %u\n", cpu_घड़ी_freq);
+पूर्ण

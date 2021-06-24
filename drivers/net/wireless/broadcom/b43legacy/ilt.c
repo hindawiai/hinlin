@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
   Broadcom B43legacy wireless driver
@@ -12,14 +13,14 @@
 
 */
 
-#include "b43legacy.h"
-#include "ilt.h"
-#include "phy.h"
+#समावेश "b43legacy.h"
+#समावेश "ilt.h"
+#समावेश "phy.h"
 
 
 /**** Initial Internal Lookup Tables ****/
 
-const u32 b43legacy_ilt_rotor[B43legacy_ILT_ROTOR_SIZE] = {
+स्थिर u32 b43legacy_ilt_rotor[B43legacy_ILT_ROTOR_SIZE] = अणु
 	0xFEB93FFD, 0xFEC63FFD, /* 0 */
 	0xFED23FFD, 0xFEDF3FFD,
 	0xFEEC3FFE, 0xFEF83FFE,
@@ -47,9 +48,9 @@ const u32 b43legacy_ilt_rotor[B43legacy_ILT_ROTOR_SIZE] = {
 	0x01143FFE, 0x01213FFD, /* 48 */
 	0x012E3FFD, 0x013A3FFD,
 	0x01473FFD,
-};
+पूर्ण;
 
-const u32 b43legacy_ilt_retard[B43legacy_ILT_RETARD_SIZE] = {
+स्थिर u32 b43legacy_ilt_retard[B43legacy_ILT_RETARD_SIZE] = अणु
 	0xDB93CB87, 0xD666CF64, /* 0 */
 	0xD1FDD358, 0xCDA6D826,
 	0xCA38DD9F, 0xC729E2B4,
@@ -77,9 +78,9 @@ const u32 b43legacy_ilt_retard[B43legacy_ILT_RETARD_SIZE] = {
 	0x35C8DD9F, 0x325AD826, /* 48 */
 	0x2E03D358, 0x299ACF64,
 	0x246DCB87,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_finefreqa[B43legacy_ILT_FINEFREQA_SIZE] = {
+स्थिर u16 b43legacy_ilt_finefreqa[B43legacy_ILT_FINEFREQA_SIZE] = अणु
 	0x0082, 0x0082, 0x0102, 0x0182, /* 0 */
 	0x0202, 0x0282, 0x0302, 0x0382,
 	0x0402, 0x0482, 0x0502, 0x0582,
@@ -144,9 +145,9 @@ const u16 b43legacy_ilt_finefreqa[B43legacy_ILT_FINEFREQA_SIZE] = {
 	0x2A00, 0x2A20, 0x2A20, 0x2A20,
 	0x2A20, 0x2A40, 0x2A40, 0x2A40,
 	0x2A40, 0x2A60, 0x2A60, 0x2A60,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_finefreqg[B43legacy_ILT_FINEFREQG_SIZE] = {
+स्थिर u16 b43legacy_ilt_finefreqg[B43legacy_ILT_FINEFREQG_SIZE] = अणु
 	0x0089, 0x02E9, 0x0409, 0x04E9, /* 0 */
 	0x05A9, 0x0669, 0x0709, 0x0789,
 	0x0829, 0x08A9, 0x0929, 0x0989,
@@ -211,29 +212,29 @@ const u16 b43legacy_ilt_finefreqg[B43legacy_ILT_FINEFREQG_SIZE] = {
 	0x5AA1, 0x5B01, 0x5B81, 0x5BE1,
 	0x5C61, 0x5D01, 0x5D80, 0x5E20,
 	0x5EE0, 0x5FA0, 0x6080, 0x61C0,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_noisea2[B43legacy_ILT_NOISEA2_SIZE] = {
+स्थिर u16 b43legacy_ilt_noisea2[B43legacy_ILT_NOISEA2_SIZE] = अणु
 	0x0001, 0x0001, 0x0001, 0xFFFE,
 	0xFFFE, 0x3FFF, 0x1000, 0x0393,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_noisea3[B43legacy_ILT_NOISEA3_SIZE] = {
+स्थिर u16 b43legacy_ilt_noisea3[B43legacy_ILT_NOISEA3_SIZE] = अणु
 	0x4C4C, 0x4C4C, 0x4C4C, 0x2D36,
 	0x4C4C, 0x4C4C, 0x4C4C, 0x2D36,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_noiseg1[B43legacy_ILT_NOISEG1_SIZE] = {
+स्थिर u16 b43legacy_ilt_noiseg1[B43legacy_ILT_NOISEG1_SIZE] = अणु
 	0x013C, 0x01F5, 0x031A, 0x0631,
 	0x0001, 0x0001, 0x0001, 0x0001,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_noiseg2[B43legacy_ILT_NOISEG2_SIZE] = {
+स्थिर u16 b43legacy_ilt_noiseg2[B43legacy_ILT_NOISEG2_SIZE] = अणु
 	0x5484, 0x3C40, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_noisescaleg1[B43legacy_ILT_NOISESCALEG_SIZE] = {
+स्थिर u16 b43legacy_ilt_noisescaleg1[B43legacy_ILT_NOISESCALEG_SIZE] = अणु
 	0x6C77, 0x5162, 0x3B40, 0x3335, /* 0 */
 	0x2F2D, 0x2A2A, 0x2527, 0x1F21,
 	0x1A1D, 0x1719, 0x1616, 0x1414,
@@ -241,9 +242,9 @@ const u16 b43legacy_ilt_noisescaleg1[B43legacy_ILT_NOISESCALEG_SIZE] = {
 	0x1716, 0x1A19, 0x1F1D, 0x2521, /* 16 */
 	0x2A27, 0x2F2A, 0x332D, 0x3B35,
 	0x5140, 0x6C62, 0x0077,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_noisescaleg2[B43legacy_ILT_NOISESCALEG_SIZE] = {
+स्थिर u16 b43legacy_ilt_noisescaleg2[B43legacy_ILT_NOISESCALEG_SIZE] = अणु
 	0xD8DD, 0xCBD4, 0xBCC0, 0XB6B7, /* 0 */
 	0xB2B0, 0xADAD, 0xA7A9, 0x9FA1,
 	0x969B, 0x9195, 0x8F8F, 0x8A8A,
@@ -251,9 +252,9 @@ const u16 b43legacy_ilt_noisescaleg2[B43legacy_ILT_NOISESCALEG_SIZE] = {
 	0x918F, 0x9695, 0x9F9B, 0xA7A1, /* 16 */
 	0xADA9, 0xB2AD, 0xB6B0, 0xBCB7,
 	0xCBC0, 0xD8D4, 0x00DD,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_noisescaleg3[B43legacy_ILT_NOISESCALEG_SIZE] = {
+स्थिर u16 b43legacy_ilt_noisescaleg3[B43legacy_ILT_NOISESCALEG_SIZE] = अणु
 	0xA4A4, 0xA4A4, 0xA4A4, 0xA4A4, /* 0 */
 	0xA4A4, 0xA4A4, 0xA4A4, 0xA4A4,
 	0xA4A4, 0xA4A4, 0xA4A4, 0xA4A4,
@@ -261,9 +262,9 @@ const u16 b43legacy_ilt_noisescaleg3[B43legacy_ILT_NOISESCALEG_SIZE] = {
 	0xA4A4, 0xA4A4, 0xA4A4, 0xA4A4, /* 16 */
 	0xA4A4, 0xA4A4, 0xA4A4, 0xA4A4,
 	0xA4A4, 0xA4A4, 0x00A4,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_sigmasqr1[B43legacy_ILT_SIGMASQR_SIZE] = {
+स्थिर u16 b43legacy_ilt_sigmasqr1[B43legacy_ILT_SIGMASQR_SIZE] = अणु
 	0x007A, 0x0075, 0x0071, 0x006C, /* 0 */
 	0x0067, 0x0063, 0x005E, 0x0059,
 	0x0054, 0x0050, 0x004B, 0x0046,
@@ -278,9 +279,9 @@ const u16 b43legacy_ilt_sigmasqr1[B43legacy_ILT_SIGMASQR_SIZE] = {
 	0x0054, 0x0059, 0x005E, 0x0063,
 	0x0067, 0x006C, 0x0071, 0x0075, /* 48 */
 	0x007A,
-};
+पूर्ण;
 
-const u16 b43legacy_ilt_sigmasqr2[B43legacy_ILT_SIGMASQR_SIZE] = {
+स्थिर u16 b43legacy_ilt_sigmasqr2[B43legacy_ILT_SIGMASQR_SIZE] = अणु
 	0x00DE, 0x00DC, 0x00DA, 0x00D8, /* 0 */
 	0x00D6, 0x00D4, 0x00D2, 0x00CF,
 	0x00CD, 0x00CA, 0x00C7, 0x00C4,
@@ -295,27 +296,27 @@ const u16 b43legacy_ilt_sigmasqr2[B43legacy_ILT_SIGMASQR_SIZE] = {
 	0x00CD, 0x00CF, 0x00D2, 0x00D4,
 	0x00D6, 0x00D8, 0x00DA, 0x00DC, /* 48 */
 	0x00DE,
-};
+पूर्ण;
 
 /**** Helper functions to access the device Internal Lookup Tables ****/
 
-void b43legacy_ilt_write(struct b43legacy_wldev *dev, u16 offset, u16 val)
-{
-	b43legacy_phy_write(dev, B43legacy_PHY_ILT_G_CTRL, offset);
-	b43legacy_phy_write(dev, B43legacy_PHY_ILT_G_DATA1, val);
-}
+व्योम b43legacy_ilt_ग_लिखो(काष्ठा b43legacy_wldev *dev, u16 offset, u16 val)
+अणु
+	b43legacy_phy_ग_लिखो(dev, B43legacy_PHY_ILT_G_CTRL, offset);
+	b43legacy_phy_ग_लिखो(dev, B43legacy_PHY_ILT_G_DATA1, val);
+पूर्ण
 
-void b43legacy_ilt_write32(struct b43legacy_wldev *dev, u16 offset, u32 val)
-{
-	b43legacy_phy_write(dev, B43legacy_PHY_ILT_G_CTRL, offset);
-	b43legacy_phy_write(dev, B43legacy_PHY_ILT_G_DATA2,
+व्योम b43legacy_ilt_ग_लिखो32(काष्ठा b43legacy_wldev *dev, u16 offset, u32 val)
+अणु
+	b43legacy_phy_ग_लिखो(dev, B43legacy_PHY_ILT_G_CTRL, offset);
+	b43legacy_phy_ग_लिखो(dev, B43legacy_PHY_ILT_G_DATA2,
 			    (val & 0xFFFF0000) >> 16);
-	b43legacy_phy_write(dev, B43legacy_PHY_ILT_G_DATA1,
+	b43legacy_phy_ग_लिखो(dev, B43legacy_PHY_ILT_G_DATA1,
 			    val & 0x0000FFFF);
-}
+पूर्ण
 
-u16 b43legacy_ilt_read(struct b43legacy_wldev *dev, u16 offset)
-{
-	b43legacy_phy_write(dev, B43legacy_PHY_ILT_G_CTRL, offset);
-	return b43legacy_phy_read(dev, B43legacy_PHY_ILT_G_DATA1);
-}
+u16 b43legacy_ilt_पढ़ो(काष्ठा b43legacy_wldev *dev, u16 offset)
+अणु
+	b43legacy_phy_ग_लिखो(dev, B43legacy_PHY_ILT_G_CTRL, offset);
+	वापस b43legacy_phy_पढ़ो(dev, B43legacy_PHY_ILT_G_DATA1);
+पूर्ण

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * ATAPI CD-ROM driver.
  *
@@ -6,10 +7,10 @@
  * Copyright (C) 1998-2000   Jens Axboe <axboe@suse.de>
  * Copyright (C) 2005, 2007-2009  Bartlomiej Zolnierkiewicz
  *
- * May be copied or modified under the terms of the GNU General Public
- * License.  See linux/COPYING for more information.
+ * May be copied or modअगरied under the terms of the GNU General Public
+ * License.  See linux/COPYING क्रम more inक्रमmation.
  *
- * See Documentation/cdrom/ide-cd.rst for usage information.
+ * See Documentation/cdrom/ide-cd.rst क्रम usage inक्रमmation.
  *
  * Suggestions are welcome. Patches that work are more welcome though. ;-)
  *
@@ -20,172 +21,172 @@
  *	Documentation/ide/ChangeLog.ide-cd.1994-2004
  */
 
-#define DRV_NAME "ide-cd"
-#define PFX DRV_NAME ": "
+#घोषणा DRV_NAME "ide-cd"
+#घोषणा PFX DRV_NAME ": "
 
-#define IDECD_VERSION "5.00"
+#घोषणा IDECD_VERSION "5.00"
 
-#include <linux/compat.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/sched/task_stack.h>
-#include <linux/delay.h>
-#include <linux/timer.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/errno.h>
-#include <linux/cdrom.h>
-#include <linux/ide.h>
-#include <linux/completion.h>
-#include <linux/mutex.h>
-#include <linux/bcd.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/cdrom.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/bcd.h>
 
 /* For SCSI -> ATAPI command conversion */
-#include <scsi/scsi.h>
+#समावेश <scsi/scsi.h>
 
-#include <linux/io.h>
-#include <asm/byteorder.h>
-#include <linux/uaccess.h>
-#include <asm/unaligned.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "ide-cd.h"
+#समावेश "ide-cd.h"
 
-static DEFINE_MUTEX(ide_cd_mutex);
-static DEFINE_MUTEX(idecd_ref_mutex);
+अटल DEFINE_MUTEX(ide_cd_mutex);
+अटल DEFINE_MUTEX(idecd_ref_mutex);
 
-static void ide_cd_release(struct device *);
+अटल व्योम ide_cd_release(काष्ठा device *);
 
-static struct cdrom_info *ide_cd_get(struct gendisk *disk)
-{
-	struct cdrom_info *cd = NULL;
+अटल काष्ठा cdrom_info *ide_cd_get(काष्ठा gendisk *disk)
+अणु
+	काष्ठा cdrom_info *cd = शून्य;
 
 	mutex_lock(&idecd_ref_mutex);
 	cd = ide_drv_g(disk, cdrom_info);
-	if (cd) {
-		if (ide_device_get(cd->drive))
-			cd = NULL;
-		else
+	अगर (cd) अणु
+		अगर (ide_device_get(cd->drive))
+			cd = शून्य;
+		अन्यथा
 			get_device(&cd->dev);
 
-	}
+	पूर्ण
 	mutex_unlock(&idecd_ref_mutex);
-	return cd;
-}
+	वापस cd;
+पूर्ण
 
-static void ide_cd_put(struct cdrom_info *cd)
-{
+अटल व्योम ide_cd_put(काष्ठा cdrom_info *cd)
+अणु
 	ide_drive_t *drive = cd->drive;
 
 	mutex_lock(&idecd_ref_mutex);
 	put_device(&cd->dev);
 	ide_device_put(drive);
 	mutex_unlock(&idecd_ref_mutex);
-}
+पूर्ण
 
 /*
  * Generic packet command support and error handling routines.
  */
 
-/* Mark that we've seen a media change and invalidate our internal buffers. */
-static void cdrom_saw_media_change(ide_drive_t *drive)
-{
+/* Mark that we've seen a media change and invalidate our पूर्णांकernal buffers. */
+अटल व्योम cdrom_saw_media_change(ide_drive_t *drive)
+अणु
 	drive->dev_flags |= IDE_DFLAG_MEDIA_CHANGED;
 	drive->atapi_flags &= ~IDE_AFLAG_TOC_VALID;
-}
+पूर्ण
 
-static int cdrom_log_sense(ide_drive_t *drive, struct request *rq)
-{
-	struct request_sense *sense = &drive->sense_data;
-	int log = 0;
+अटल पूर्णांक cdrom_log_sense(ide_drive_t *drive, काष्ठा request *rq)
+अणु
+	काष्ठा request_sense *sense = &drive->sense_data;
+	पूर्णांक log = 0;
 
-	if (!sense || !rq || (rq->rq_flags & RQF_QUIET))
-		return 0;
+	अगर (!sense || !rq || (rq->rq_flags & RQF_QUIET))
+		वापस 0;
 
 	ide_debug_log(IDE_DBG_SENSE, "sense_key: 0x%x", sense->sense_key);
 
-	switch (sense->sense_key) {
-	case NO_SENSE:
-	case RECOVERED_ERROR:
-		break;
-	case NOT_READY:
+	चयन (sense->sense_key) अणु
+	हाल NO_SENSE:
+	हाल RECOVERED_ERROR:
+		अवरोध;
+	हाल NOT_READY:
 		/*
-		 * don't care about tray state messages for e.g. capacity
-		 * commands or in-progress or becoming ready
+		 * करोn't care about tray state messages क्रम e.g. capacity
+		 * commands or in-progress or becoming पढ़ोy
 		 */
-		if (sense->asc == 0x3a || sense->asc == 0x04)
-			break;
+		अगर (sense->asc == 0x3a || sense->asc == 0x04)
+			अवरोध;
 		log = 1;
-		break;
-	case ILLEGAL_REQUEST:
+		अवरोध;
+	हाल ILLEGAL_REQUEST:
 		/*
-		 * don't log START_STOP unit with LoEj set, since we cannot
-		 * reliably check if drive can auto-close
+		 * करोn't log START_STOP unit with LoEj set, since we cannot
+		 * reliably check अगर drive can स्वतः-बंद
 		 */
-		if (scsi_req(rq)->cmd[0] == GPCMD_START_STOP_UNIT && sense->asc == 0x24)
-			break;
+		अगर (scsi_req(rq)->cmd[0] == GPCMD_START_STOP_UNIT && sense->asc == 0x24)
+			अवरोध;
 		log = 1;
-		break;
-	case UNIT_ATTENTION:
+		अवरोध;
+	हाल UNIT_ATTENTION:
 		/*
 		 * Make good and sure we've seen this potential media change.
 		 * Some drives (i.e. Creative) fail to present the correct sense
-		 * key in the error register.
+		 * key in the error रेजिस्टर.
 		 */
 		cdrom_saw_media_change(drive);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		log = 1;
-		break;
-	}
-	return log;
-}
+		अवरोध;
+	पूर्ण
+	वापस log;
+पूर्ण
 
-static void cdrom_analyze_sense_data(ide_drive_t *drive,
-				     struct request *failed_command)
-{
-	struct request_sense *sense = &drive->sense_data;
-	struct cdrom_info *info = drive->driver_data;
-	unsigned long sector;
-	unsigned long bio_sectors;
+अटल व्योम cdrom_analyze_sense_data(ide_drive_t *drive,
+				     काष्ठा request *failed_command)
+अणु
+	काष्ठा request_sense *sense = &drive->sense_data;
+	काष्ठा cdrom_info *info = drive->driver_data;
+	अचिन्हित दीर्घ sector;
+	अचिन्हित दीर्घ bio_sectors;
 
 	ide_debug_log(IDE_DBG_SENSE, "error_code: 0x%x, sense_key: 0x%x",
 				     sense->error_code, sense->sense_key);
 
-	if (failed_command)
+	अगर (failed_command)
 		ide_debug_log(IDE_DBG_SENSE, "failed cmd: 0x%x",
 					     failed_command->cmd[0]);
 
-	if (!cdrom_log_sense(drive, failed_command))
-		return;
+	अगर (!cdrom_log_sense(drive, failed_command))
+		वापस;
 
 	/*
-	 * If a read toc is executed for a CD-R or CD-RW medium where the first
+	 * If a पढ़ो toc is executed क्रम a CD-R or CD-RW medium where the first
 	 * toc has not been recorded yet, it will fail with 05/24/00 (which is a
 	 * confusing error)
 	 */
-	if (failed_command && scsi_req(failed_command)->cmd[0] == GPCMD_READ_TOC_PMA_ATIP)
-		if (sense->sense_key == 0x05 && sense->asc == 0x24)
-			return;
+	अगर (failed_command && scsi_req(failed_command)->cmd[0] == GPCMD_READ_TOC_PMA_ATIP)
+		अगर (sense->sense_key == 0x05 && sense->asc == 0x24)
+			वापस;
 
 	/* current error */
-	if (sense->error_code == 0x70) {
-		switch (sense->sense_key) {
-		case MEDIUM_ERROR:
-		case VOLUME_OVERFLOW:
-		case ILLEGAL_REQUEST:
-			if (!sense->valid)
-				break;
-			if (failed_command == NULL ||
+	अगर (sense->error_code == 0x70) अणु
+		चयन (sense->sense_key) अणु
+		हाल MEDIUM_ERROR:
+		हाल VOLUME_OVERFLOW:
+		हाल ILLEGAL_REQUEST:
+			अगर (!sense->valid)
+				अवरोध;
+			अगर (failed_command == शून्य ||
 			    blk_rq_is_passthrough(failed_command))
-				break;
-			sector = (sense->information[0] << 24) |
-				 (sense->information[1] << 16) |
-				 (sense->information[2] <<  8) |
-				 (sense->information[3]);
+				अवरोध;
+			sector = (sense->inक्रमmation[0] << 24) |
+				 (sense->inक्रमmation[1] << 16) |
+				 (sense->inक्रमmation[2] <<  8) |
+				 (sense->inक्रमmation[3]);
 
-			if (queue_logical_block_size(drive->queue) == 2048)
+			अगर (queue_logical_block_size(drive->queue) == 2048)
 				/* device sector size is 2K */
 				sector <<= 2;
 
@@ -193,352 +194,352 @@ static void cdrom_analyze_sense_data(ide_drive_t *drive,
 			sector &= ~(bio_sectors - 1);
 
 			/*
-			 * The SCSI specification allows for the value
-			 * returned by READ CAPACITY to be up to 75 2K
-			 * sectors past the last readable block.
-			 * Therefore, if we hit a medium error within the
+			 * The SCSI specअगरication allows क्रम the value
+			 * वापसed by READ CAPACITY to be up to 75 2K
+			 * sectors past the last पढ़ोable block.
+			 * Thereक्रमe, अगर we hit a medium error within the
 			 * last 75 2K sectors, we decrease the saved size
 			 * value.
 			 */
-			if (sector < get_capacity(info->disk) &&
+			अगर (sector < get_capacity(info->disk) &&
 			    drive->probed_capacity - sector < 4 * 75)
 				set_capacity(info->disk, sector);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ide_cd_log_error(drive->name, failed_command, sense);
-}
+पूर्ण
 
-static void ide_cd_complete_failed_rq(ide_drive_t *drive, struct request *rq)
-{
+अटल व्योम ide_cd_complete_failed_rq(ide_drive_t *drive, काष्ठा request *rq)
+अणु
 	/*
-	 * For ATA_PRIV_SENSE, "ide_req(rq)->special" points to the original
-	 * failed request.  Also, the sense data should be read
-	 * directly from rq which might be different from the original
-	 * sense buffer if it got copied during mapping.
+	 * For ATA_PRIV_SENSE, "ide_req(rq)->special" poपूर्णांकs to the original
+	 * failed request.  Also, the sense data should be पढ़ो
+	 * directly from rq which might be dअगरferent from the original
+	 * sense buffer अगर it got copied during mapping.
 	 */
-	struct request *failed = ide_req(rq)->special;
-	void *sense = bio_data(rq->bio);
+	काष्ठा request *failed = ide_req(rq)->special;
+	व्योम *sense = bio_data(rq->bio);
 
-	if (failed) {
+	अगर (failed) अणु
 		/*
-		 * Sense is always read into drive->sense_data, copy back to the
+		 * Sense is always पढ़ो पूर्णांकo drive->sense_data, copy back to the
 		 * original request.
 		 */
-		memcpy(scsi_req(failed)->sense, sense, 18);
+		स_नकल(scsi_req(failed)->sense, sense, 18);
 		scsi_req(failed)->sense_len = scsi_req(rq)->sense_len;
 		cdrom_analyze_sense_data(drive, failed);
 
-		if (ide_end_rq(drive, failed, BLK_STS_IOERR, blk_rq_bytes(failed)))
+		अगर (ide_end_rq(drive, failed, BLK_STS_IOERR, blk_rq_bytes(failed)))
 			BUG();
-	} else
-		cdrom_analyze_sense_data(drive, NULL);
-}
+	पूर्ण अन्यथा
+		cdrom_analyze_sense_data(drive, शून्य);
+पूर्ण
 
 
 /*
- * Allow the drive 5 seconds to recover; some devices will return NOT_READY
- * while flushing data from cache.
+ * Allow the drive 5 seconds to recover; some devices will वापस NOT_READY
+ * जबतक flushing data from cache.
  *
- * returns: 0 failed (write timeout expired)
+ * वापसs: 0 failed (ग_लिखो समयout expired)
  *	    1 success
  */
-static int ide_cd_breathe(ide_drive_t *drive, struct request *rq)
-{
+अटल पूर्णांक ide_cd_breathe(ide_drive_t *drive, काष्ठा request *rq)
+अणु
 
-	struct cdrom_info *info = drive->driver_data;
+	काष्ठा cdrom_info *info = drive->driver_data;
 
-	if (!scsi_req(rq)->result)
-		info->write_timeout = jiffies +	ATAPI_WAIT_WRITE_BUSY;
+	अगर (!scsi_req(rq)->result)
+		info->ग_लिखो_समयout = jअगरfies +	ATAPI_WAIT_WRITE_BUSY;
 
 	scsi_req(rq)->result = 1;
 
-	if (time_after(jiffies, info->write_timeout))
-		return 0;
-	else {
+	अगर (समय_after(jअगरfies, info->ग_लिखो_समयout))
+		वापस 0;
+	अन्यथा अणु
 		/*
 		 * take a breather
 		 */
 		blk_mq_requeue_request(rq, false);
 		blk_mq_delay_kick_requeue_list(drive->queue, 1);
-		return 1;
-	}
-}
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-static void ide_cd_free_sense(ide_drive_t *drive)
-{
-	if (!drive->sense_rq)
-		return;
+अटल व्योम ide_cd_मुक्त_sense(ide_drive_t *drive)
+अणु
+	अगर (!drive->sense_rq)
+		वापस;
 
-	blk_mq_free_request(drive->sense_rq);
-	drive->sense_rq = NULL;
+	blk_mq_मुक्त_request(drive->sense_rq);
+	drive->sense_rq = शून्य;
 	drive->sense_rq_armed = false;
-}
+पूर्ण
 
 /**
  * Returns:
- * 0: if the request should be continued.
- * 1: if the request will be going through error recovery.
- * 2: if the request should be ended.
+ * 0: अगर the request should be जारीd.
+ * 1: अगर the request will be going through error recovery.
+ * 2: अगर the request should be ended.
  */
-static int cdrom_decode_status(ide_drive_t *drive, u8 stat)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	struct request *rq = hwif->rq;
-	int err, sense_key, do_end_request = 0;
+अटल पूर्णांक cdrom_decode_status(ide_drive_t *drive, u8 stat)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	काष्ठा request *rq = hwअगर->rq;
+	पूर्णांक err, sense_key, करो_end_request = 0;
 
-	/* get the IDE error register */
-	err = ide_read_error(drive);
+	/* get the IDE error रेजिस्टर */
+	err = ide_पढ़ो_error(drive);
 	sense_key = err >> 4;
 
 	ide_debug_log(IDE_DBG_RQ, "cmd: 0x%x, rq->cmd_type: 0x%x, err: 0x%x, "
 				  "stat 0x%x",
 				  rq->cmd[0], rq->cmd_type, err, stat);
 
-	if (ata_sense_request(rq)) {
+	अगर (ata_sense_request(rq)) अणु
 		/*
 		 * We got an error trying to get sense info from the drive
-		 * (probably while trying to recover from a former error).
+		 * (probably जबतक trying to recover from a क्रमmer error).
 		 * Just give up.
 		 */
 		rq->rq_flags |= RQF_FAILED;
-		return 2;
-	}
+		वापस 2;
+	पूर्ण
 
-	/* if we have an error, pass CHECK_CONDITION as the SCSI status byte */
-	if (blk_rq_is_scsi(rq) && !scsi_req(rq)->result)
+	/* अगर we have an error, pass CHECK_CONDITION as the SCSI status byte */
+	अगर (blk_rq_is_scsi(rq) && !scsi_req(rq)->result)
 		scsi_req(rq)->result = SAM_STAT_CHECK_CONDITION;
 
-	if (blk_noretry_request(rq))
-		do_end_request = 1;
+	अगर (blk_noretry_request(rq))
+		करो_end_request = 1;
 
-	switch (sense_key) {
-	case NOT_READY:
-		if (req_op(rq) == REQ_OP_WRITE) {
-			if (ide_cd_breathe(drive, rq))
-				return 1;
-		} else {
+	चयन (sense_key) अणु
+	हाल NOT_READY:
+		अगर (req_op(rq) == REQ_OP_WRITE) अणु
+			अगर (ide_cd_breathe(drive, rq))
+				वापस 1;
+		पूर्ण अन्यथा अणु
 			cdrom_saw_media_change(drive);
 
-			if (!blk_rq_is_passthrough(rq) &&
+			अगर (!blk_rq_is_passthrough(rq) &&
 			    !(rq->rq_flags & RQF_QUIET))
-				printk(KERN_ERR PFX "%s: tray open\n",
+				prपूर्णांकk(KERN_ERR PFX "%s: tray open\n",
 					drive->name);
-		}
-		do_end_request = 1;
-		break;
-	case UNIT_ATTENTION:
+		पूर्ण
+		करो_end_request = 1;
+		अवरोध;
+	हाल UNIT_ATTENTION:
 		cdrom_saw_media_change(drive);
 
-		if (blk_rq_is_passthrough(rq))
-			return 0;
+		अगर (blk_rq_is_passthrough(rq))
+			वापस 0;
 
 		/*
-		 * Arrange to retry the request but be sure to give up if we've
-		 * retried too many times.
+		 * Arrange to retry the request but be sure to give up अगर we've
+		 * retried too many बार.
 		 */
-		if (++scsi_req(rq)->result > ERROR_MAX)
-			do_end_request = 1;
-		break;
-	case ILLEGAL_REQUEST:
+		अगर (++scsi_req(rq)->result > ERROR_MAX)
+			करो_end_request = 1;
+		अवरोध;
+	हाल ILLEGAL_REQUEST:
 		/*
-		 * Don't print error message for this condition -- SFF8090i
+		 * Don't prपूर्णांक error message क्रम this condition -- SFF8090i
 		 * indicates that 5/24/00 is the correct response to a request
-		 * to close the tray if the drive doesn't have that capability.
+		 * to बंद the tray अगर the drive करोesn't have that capability.
 		 *
 		 * cdrom_log_sense() knows this!
 		 */
-		if (scsi_req(rq)->cmd[0] == GPCMD_START_STOP_UNIT)
-			break;
+		अगर (scsi_req(rq)->cmd[0] == GPCMD_START_STOP_UNIT)
+			अवरोध;
 		fallthrough;
-	case DATA_PROTECT:
+	हाल DATA_PROTECT:
 		/*
-		 * No point in retrying after an illegal request or data
+		 * No poपूर्णांक in retrying after an illegal request or data
 		 * protect error.
 		 */
-		if (!(rq->rq_flags & RQF_QUIET))
+		अगर (!(rq->rq_flags & RQF_QUIET))
 			ide_dump_status(drive, "command error", stat);
-		do_end_request = 1;
-		break;
-	case MEDIUM_ERROR:
+		करो_end_request = 1;
+		अवरोध;
+	हाल MEDIUM_ERROR:
 		/*
-		 * No point in re-trying a zillion times on a bad sector.
+		 * No poपूर्णांक in re-trying a zillion बार on a bad sector.
 		 * If we got here the error is not correctable.
 		 */
-		if (!(rq->rq_flags & RQF_QUIET))
+		अगर (!(rq->rq_flags & RQF_QUIET))
 			ide_dump_status(drive, "media error "
 					"(bad sector)", stat);
-		do_end_request = 1;
-		break;
-	case BLANK_CHECK:
+		करो_end_request = 1;
+		अवरोध;
+	हाल BLANK_CHECK:
 		/* disk appears blank? */
-		if (!(rq->rq_flags & RQF_QUIET))
+		अगर (!(rq->rq_flags & RQF_QUIET))
 			ide_dump_status(drive, "media error (blank)",
 					stat);
-		do_end_request = 1;
-		break;
-	default:
-		if (blk_rq_is_passthrough(rq))
-			break;
-		if (err & ~ATA_ABORTED) {
-			/* go to the default handler for other errors */
+		करो_end_request = 1;
+		अवरोध;
+	शेष:
+		अगर (blk_rq_is_passthrough(rq))
+			अवरोध;
+		अगर (err & ~ATA_ABORTED) अणु
+			/* go to the शेष handler क्रम other errors */
 			ide_error(drive, "cdrom_decode_status", stat);
-			return 1;
-		} else if (++scsi_req(rq)->result > ERROR_MAX)
-			/* we've racked up too many retries, abort */
-			do_end_request = 1;
-	}
+			वापस 1;
+		पूर्ण अन्यथा अगर (++scsi_req(rq)->result > ERROR_MAX)
+			/* we've racked up too many retries, पात */
+			करो_end_request = 1;
+	पूर्ण
 
-	if (blk_rq_is_passthrough(rq)) {
+	अगर (blk_rq_is_passthrough(rq)) अणु
 		rq->rq_flags |= RQF_FAILED;
-		do_end_request = 1;
-	}
+		करो_end_request = 1;
+	पूर्ण
 
 	/*
 	 * End a request through request sense analysis when we have sense data.
-	 * We need this in order to perform end of media processing.
+	 * We need this in order to perक्रमm end of media processing.
 	 */
-	if (do_end_request)
-		goto end_request;
+	अगर (करो_end_request)
+		जाओ end_request;
 
-	/* if we got a CHECK_CONDITION status, queue a request sense command */
-	if (stat & ATA_ERR)
-		return ide_queue_sense_rq(drive, NULL) ? 2 : 1;
-	return 1;
+	/* अगर we got a CHECK_CONDITION status, queue a request sense command */
+	अगर (stat & ATA_ERR)
+		वापस ide_queue_sense_rq(drive, शून्य) ? 2 : 1;
+	वापस 1;
 
 end_request:
-	if (stat & ATA_ERR) {
-		hwif->rq = NULL;
-		return ide_queue_sense_rq(drive, rq) ? 2 : 1;
-	} else
-		return 2;
-}
+	अगर (stat & ATA_ERR) अणु
+		hwअगर->rq = शून्य;
+		वापस ide_queue_sense_rq(drive, rq) ? 2 : 1;
+	पूर्ण अन्यथा
+		वापस 2;
+पूर्ण
 
-static void ide_cd_request_sense_fixup(ide_drive_t *drive, struct ide_cmd *cmd)
-{
-	struct request *rq = cmd->rq;
+अटल व्योम ide_cd_request_sense_fixup(ide_drive_t *drive, काष्ठा ide_cmd *cmd)
+अणु
+	काष्ठा request *rq = cmd->rq;
 
 	ide_debug_log(IDE_DBG_FUNC, "rq->cmd[0]: 0x%x", rq->cmd[0]);
 
 	/*
 	 * Some of the trailing request sense fields are optional,
-	 * and some drives don't send them.  Sigh.
+	 * and some drives करोn't send them.  Sigh.
 	 */
-	if (scsi_req(rq)->cmd[0] == GPCMD_REQUEST_SENSE &&
+	अगर (scsi_req(rq)->cmd[0] == GPCMD_REQUEST_SENSE &&
 	    cmd->nleft > 0 && cmd->nleft <= 5)
 		cmd->nleft = 0;
-}
+पूर्ण
 
-int ide_cd_queue_pc(ide_drive_t *drive, const unsigned char *cmd,
-		    int write, void *buffer, unsigned *bufflen,
-		    struct scsi_sense_hdr *sshdr, int timeout,
+पूर्णांक ide_cd_queue_pc(ide_drive_t *drive, स्थिर अचिन्हित अक्षर *cmd,
+		    पूर्णांक ग_लिखो, व्योम *buffer, अचिन्हित *bufflen,
+		    काष्ठा scsi_sense_hdr *sshdr, पूर्णांक समयout,
 		    req_flags_t rq_flags)
-{
-	struct cdrom_info *info = drive->driver_data;
-	struct scsi_sense_hdr local_sshdr;
-	int retries = 10;
+अणु
+	काष्ठा cdrom_info *info = drive->driver_data;
+	काष्ठा scsi_sense_hdr local_sshdr;
+	पूर्णांक retries = 10;
 	bool failed;
 
 	ide_debug_log(IDE_DBG_PC, "cmd[0]: 0x%x, write: 0x%x, timeout: %d, "
 				  "rq_flags: 0x%x",
-				  cmd[0], write, timeout, rq_flags);
+				  cmd[0], ग_लिखो, समयout, rq_flags);
 
-	if (!sshdr)
+	अगर (!sshdr)
 		sshdr = &local_sshdr;
 
 	/* start of retry loop */
-	do {
-		struct request *rq;
-		int error;
+	करो अणु
+		काष्ठा request *rq;
+		पूर्णांक error;
 		bool delay = false;
 
 		rq = blk_get_request(drive->queue,
-			write ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
-		memcpy(scsi_req(rq)->cmd, cmd, BLK_MAX_CDB);
+			ग_लिखो ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
+		स_नकल(scsi_req(rq)->cmd, cmd, BLK_MAX_CDB);
 		ide_req(rq)->type = ATA_PRIV_PC;
 		rq->rq_flags |= rq_flags;
-		rq->timeout = timeout;
-		if (buffer) {
+		rq->समयout = समयout;
+		अगर (buffer) अणु
 			error = blk_rq_map_kern(drive->queue, rq, buffer,
 						*bufflen, GFP_NOIO);
-			if (error) {
+			अगर (error) अणु
 				blk_put_request(rq);
-				return error;
-			}
-		}
+				वापस error;
+			पूर्ण
+		पूर्ण
 
 		blk_execute_rq(info->disk, rq, 0);
 		error = scsi_req(rq)->result ? -EIO : 0;
 
-		if (buffer)
+		अगर (buffer)
 			*bufflen = scsi_req(rq)->resid_len;
 		scsi_normalize_sense(scsi_req(rq)->sense,
 				     scsi_req(rq)->sense_len, sshdr);
 
 		/*
-		 * FIXME: we should probably abort/retry or something in case of
+		 * FIXME: we should probably पात/retry or something in हाल of
 		 * failure.
 		 */
 		failed = (rq->rq_flags & RQF_FAILED) != 0;
-		if (failed) {
+		अगर (failed) अणु
 			/*
-			 * The request failed.  Retry if it was due to a unit
+			 * The request failed.  Retry अगर it was due to a unit
 			 * attention status (usually means media was changed).
 			 */
-			if (sshdr->sense_key == UNIT_ATTENTION)
+			अगर (sshdr->sense_key == UNIT_ATTENTION)
 				cdrom_saw_media_change(drive);
-			else if (sshdr->sense_key == NOT_READY &&
-				 sshdr->asc == 4 && sshdr->ascq != 4) {
+			अन्यथा अगर (sshdr->sense_key == NOT_READY &&
+				 sshdr->asc == 4 && sshdr->ascq != 4) अणु
 				/*
 				 * The drive is in the process of loading
-				 * a disk.  Retry, but wait a little to give
-				 * the drive time to complete the load.
+				 * a disk.  Retry, but रुको a little to give
+				 * the drive समय to complete the load.
 				 */
 				delay = true;
-			} else {
-				/* otherwise, don't retry */
+			पूर्ण अन्यथा अणु
+				/* otherwise, करोn't retry */
 				retries = 0;
-			}
+			पूर्ण
 			--retries;
-		}
+		पूर्ण
 		blk_put_request(rq);
-		if (delay)
+		अगर (delay)
 			ssleep(2);
-	} while (failed && retries >= 0);
+	पूर्ण जबतक (failed && retries >= 0);
 
-	/* return an error if the command failed */
-	return failed ? -EIO : 0;
-}
+	/* वापस an error अगर the command failed */
+	वापस failed ? -EIO : 0;
+पूर्ण
 
 /*
- * returns true if rq has been completed
+ * वापसs true अगर rq has been completed
  */
-static bool ide_cd_error_cmd(ide_drive_t *drive, struct ide_cmd *cmd)
-{
-	unsigned int nr_bytes = cmd->nbytes - cmd->nleft;
+अटल bool ide_cd_error_cmd(ide_drive_t *drive, काष्ठा ide_cmd *cmd)
+अणु
+	अचिन्हित पूर्णांक nr_bytes = cmd->nbytes - cmd->nleft;
 
-	if (cmd->tf_flags & IDE_TFLAG_WRITE)
+	अगर (cmd->tf_flags & IDE_TFLAG_WRITE)
 		nr_bytes -= cmd->last_xfer_len;
 
-	if (nr_bytes > 0) {
+	अगर (nr_bytes > 0) अणु
 		ide_complete_rq(drive, BLK_STS_OK, nr_bytes);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* standard prep_rq that builds 10 byte cmds */
-static bool ide_cdrom_prep_fs(struct request_queue *q, struct request *rq)
-{
-	int hard_sect = queue_logical_block_size(q);
-	long block = (long)blk_rq_pos(rq) / (hard_sect >> 9);
-	unsigned long blocks = blk_rq_sectors(rq) / (hard_sect >> 9);
-	struct scsi_request *req = scsi_req(rq);
+अटल bool ide_cdrom_prep_fs(काष्ठा request_queue *q, काष्ठा request *rq)
+अणु
+	पूर्णांक hard_sect = queue_logical_block_size(q);
+	दीर्घ block = (दीर्घ)blk_rq_pos(rq) / (hard_sect >> 9);
+	अचिन्हित दीर्घ blocks = blk_rq_sectors(rq) / (hard_sect >> 9);
+	काष्ठा scsi_request *req = scsi_req(rq);
 
-	if (rq_data_dir(rq) == READ)
+	अगर (rq_data_dir(rq) == READ)
 		req->cmd[0] = GPCMD_READ_10;
-	else
+	अन्यथा
 		req->cmd[0] = GPCMD_WRITE_10;
 
 	/*
@@ -555,19 +556,19 @@ static bool ide_cdrom_prep_fs(struct request_queue *q, struct request *rq)
 	req->cmd[7] = (blocks >> 8) & 0xff;
 	req->cmd[8] = blocks & 0xff;
 	req->cmd_len = 10;
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Most of the SCSI commands are supported directly by ATAPI devices.
- * This transform handles the few exceptions.
+ * This transक्रमm handles the few exceptions.
  */
-static bool ide_cdrom_prep_pc(struct request *rq)
-{
+अटल bool ide_cdrom_prep_pc(काष्ठा request *rq)
+अणु
 	u8 *c = scsi_req(rq)->cmd;
 
-	/* transform 6-byte read/write commands to the 10-byte version */
-	if (c[0] == READ_6 || c[0] == WRITE_6) {
+	/* transक्रमm 6-byte पढ़ो/ग_लिखो commands to the 10-byte version */
+	अगर (c[0] == READ_6 || c[0] == WRITE_6) अणु
 		c[8] = c[4];
 		c[5] = c[3];
 		c[4] = c[2];
@@ -576,137 +577,137 @@ static bool ide_cdrom_prep_pc(struct request *rq)
 		c[1] &= 0xe0;
 		c[0] += (READ_10 - READ_6);
 		scsi_req(rq)->cmd_len = 10;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/*
 	 * it's silly to pretend we understand 6-byte sense commands, just
 	 * reject with ILLEGAL_REQUEST and the caller should take the
 	 * appropriate action
 	 */
-	if (c[0] == MODE_SENSE || c[0] == MODE_SELECT) {
+	अगर (c[0] == MODE_SENSE || c[0] == MODE_SELECT) अणु
 		scsi_req(rq)->result = ILLEGAL_REQUEST;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool ide_cdrom_prep_rq(ide_drive_t *drive, struct request *rq)
-{
-	if (!blk_rq_is_passthrough(rq)) {
+अटल bool ide_cdrom_prep_rq(ide_drive_t *drive, काष्ठा request *rq)
+अणु
+	अगर (!blk_rq_is_passthrough(rq)) अणु
 		scsi_req_init(scsi_req(rq));
 
-		return ide_cdrom_prep_fs(drive->queue, rq);
-	} else if (blk_rq_is_scsi(rq))
-		return ide_cdrom_prep_pc(rq);
+		वापस ide_cdrom_prep_fs(drive->queue, rq);
+	पूर्ण अन्यथा अगर (blk_rq_is_scsi(rq))
+		वापस ide_cdrom_prep_pc(rq);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static ide_startstop_t cdrom_newpc_intr(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	struct ide_cmd *cmd = &hwif->cmd;
-	struct request *rq = hwif->rq;
-	ide_expiry_t *expiry = NULL;
-	int dma_error = 0, dma, thislen, uptodate = 0;
-	int write = (rq_data_dir(rq) == WRITE) ? 1 : 0, rc = 0;
-	int sense = ata_sense_request(rq);
-	unsigned int timeout;
+अटल ide_startstop_t cdrom_newpc_पूर्णांकr(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	काष्ठा ide_cmd *cmd = &hwअगर->cmd;
+	काष्ठा request *rq = hwअगर->rq;
+	ide_expiry_t *expiry = शून्य;
+	पूर्णांक dma_error = 0, dma, thislen, uptodate = 0;
+	पूर्णांक ग_लिखो = (rq_data_dir(rq) == WRITE) ? 1 : 0, rc = 0;
+	पूर्णांक sense = ata_sense_request(rq);
+	अचिन्हित पूर्णांक समयout;
 	u16 len;
 	u8 ireason, stat;
 
-	ide_debug_log(IDE_DBG_PC, "cmd: 0x%x, write: 0x%x", rq->cmd[0], write);
+	ide_debug_log(IDE_DBG_PC, "cmd: 0x%x, write: 0x%x", rq->cmd[0], ग_लिखो);
 
-	/* check for errors */
+	/* check क्रम errors */
 	dma = drive->dma;
-	if (dma) {
+	अगर (dma) अणु
 		drive->dma = 0;
-		drive->waiting_for_dma = 0;
-		dma_error = hwif->dma_ops->dma_end(drive);
+		drive->रुकोing_क्रम_dma = 0;
+		dma_error = hwअगर->dma_ops->dma_end(drive);
 		ide_dma_unmap_sg(drive, cmd);
-		if (dma_error) {
-			printk(KERN_ERR PFX "%s: DMA %s error\n", drive->name,
-					write ? "write" : "read");
+		अगर (dma_error) अणु
+			prपूर्णांकk(KERN_ERR PFX "%s: DMA %s error\n", drive->name,
+					ग_लिखो ? "write" : "read");
 			ide_dma_off(drive);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* check status */
-	stat = hwif->tp_ops->read_status(hwif);
+	stat = hwअगर->tp_ops->पढ़ो_status(hwअगर);
 
-	if (!OK_STAT(stat, 0, BAD_R_STAT)) {
+	अगर (!OK_STAT(stat, 0, BAD_R_STAT)) अणु
 		rc = cdrom_decode_status(drive, stat);
-		if (rc) {
-			if (rc == 2)
-				goto out_end;
-			return ide_stopped;
-		}
-	}
+		अगर (rc) अणु
+			अगर (rc == 2)
+				जाओ out_end;
+			वापस ide_stopped;
+		पूर्ण
+	पूर्ण
 
 	/* using dma, transfer is complete now */
-	if (dma) {
-		if (dma_error)
-			return ide_error(drive, "dma error", stat);
+	अगर (dma) अणु
+		अगर (dma_error)
+			वापस ide_error(drive, "dma error", stat);
 		uptodate = 1;
-		goto out_end;
-	}
+		जाओ out_end;
+	पूर्ण
 
-	ide_read_bcount_and_ireason(drive, &len, &ireason);
+	ide_पढ़ो_bcount_and_ireason(drive, &len, &ireason);
 
 	thislen = !blk_rq_is_passthrough(rq) ? len : cmd->nleft;
-	if (thislen > len)
+	अगर (thislen > len)
 		thislen = len;
 
 	ide_debug_log(IDE_DBG_PC, "DRQ: stat: 0x%x, thislen: %d",
 				  stat, thislen);
 
 	/* If DRQ is clear, the command has completed. */
-	if ((stat & ATA_DRQ) == 0) {
-		switch (req_op(rq)) {
-		default:
+	अगर ((stat & ATA_DRQ) == 0) अणु
+		चयन (req_op(rq)) अणु
+		शेष:
 			/*
-			 * If we're not done reading/writing, complain.
+			 * If we're not करोne पढ़ोing/writing, complain.
 			 * Otherwise, complete the command normally.
 			 */
 			uptodate = 1;
-			if (cmd->nleft > 0) {
-				printk(KERN_ERR PFX "%s: %s: data underrun "
+			अगर (cmd->nleft > 0) अणु
+				prपूर्णांकk(KERN_ERR PFX "%s: %s: data underrun "
 					"(%u bytes)\n", drive->name, __func__,
 					cmd->nleft);
-				if (!write)
+				अगर (!ग_लिखो)
 					rq->rq_flags |= RQF_FAILED;
 				uptodate = 0;
-			}
-			goto out_end;
-		case REQ_OP_DRV_IN:
-		case REQ_OP_DRV_OUT:
+			पूर्ण
+			जाओ out_end;
+		हाल REQ_OP_DRV_IN:
+		हाल REQ_OP_DRV_OUT:
 			ide_cd_request_sense_fixup(drive, cmd);
 
 			uptodate = cmd->nleft ? 0 : 1;
 
 			/*
-			 * suck out the remaining bytes from the drive in an
+			 * suck out the reमुख्यing bytes from the drive in an
 			 * attempt to complete the data xfer. (see BZ#13399)
 			 */
-			if (!(stat & ATA_ERR) && !uptodate && thislen) {
-				ide_pio_bytes(drive, cmd, write, thislen);
+			अगर (!(stat & ATA_ERR) && !uptodate && thislen) अणु
+				ide_pio_bytes(drive, cmd, ग_लिखो, thislen);
 				uptodate = cmd->nleft ? 0 : 1;
-			}
+			पूर्ण
 
-			if (!uptodate)
+			अगर (!uptodate)
 				rq->rq_flags |= RQF_FAILED;
-			goto out_end;
-		case REQ_OP_SCSI_IN:
-		case REQ_OP_SCSI_OUT:
-			goto out_end;
-		}
-	}
+			जाओ out_end;
+		हाल REQ_OP_SCSI_IN:
+		हाल REQ_OP_SCSI_OUT:
+			जाओ out_end;
+		पूर्ण
+	पूर्ण
 
-	rc = ide_check_ireason(drive, rq, len, ireason, write);
-	if (rc)
-		goto out_end;
+	rc = ide_check_ireason(drive, rq, len, ireason, ग_लिखो);
+	अगर (rc)
+		जाओ out_end;
 
 	cmd->last_xfer_len = 0;
 
@@ -715,294 +716,294 @@ static ide_startstop_t cdrom_newpc_intr(ide_drive_t *drive)
 				  rq->cmd_type, ireason);
 
 	/* transfer data */
-	while (thislen > 0) {
-		int blen = min_t(int, thislen, cmd->nleft);
+	जबतक (thislen > 0) अणु
+		पूर्णांक blen = min_t(पूर्णांक, thislen, cmd->nleft);
 
-		if (cmd->nleft == 0)
-			break;
+		अगर (cmd->nleft == 0)
+			अवरोध;
 
-		ide_pio_bytes(drive, cmd, write, blen);
+		ide_pio_bytes(drive, cmd, ग_लिखो, blen);
 		cmd->last_xfer_len += blen;
 
 		thislen -= blen;
 		len -= blen;
 
-		if (sense && write == 0)
+		अगर (sense && ग_लिखो == 0)
 			scsi_req(rq)->sense_len += blen;
-	}
+	पूर्ण
 
-	/* pad, if necessary */
-	if (len > 0) {
-		if (blk_rq_is_passthrough(rq) || write == 0)
-			ide_pad_transfer(drive, write, len);
-		else {
-			printk(KERN_ERR PFX "%s: confused, missing data\n",
+	/* pad, अगर necessary */
+	अगर (len > 0) अणु
+		अगर (blk_rq_is_passthrough(rq) || ग_लिखो == 0)
+			ide_pad_transfer(drive, ग_लिखो, len);
+		अन्यथा अणु
+			prपूर्णांकk(KERN_ERR PFX "%s: confused, missing data\n",
 				drive->name);
 			blk_dump_rq_flags(rq, "cdrom_newpc_intr");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	switch (req_op(rq)) {
-	case REQ_OP_SCSI_IN:
-	case REQ_OP_SCSI_OUT:
-		timeout = rq->timeout;
-		break;
-	case REQ_OP_DRV_IN:
-	case REQ_OP_DRV_OUT:
+	चयन (req_op(rq)) अणु
+	हाल REQ_OP_SCSI_IN:
+	हाल REQ_OP_SCSI_OUT:
+		समयout = rq->समयout;
+		अवरोध;
+	हाल REQ_OP_DRV_IN:
+	हाल REQ_OP_DRV_OUT:
 		expiry = ide_cd_expiry;
 		fallthrough;
-	default:
-		timeout = ATAPI_WAIT_PC;
-		break;
-	}
+	शेष:
+		समयout = ATAPI_WAIT_PC;
+		अवरोध;
+	पूर्ण
 
-	hwif->expiry = expiry;
-	ide_set_handler(drive, cdrom_newpc_intr, timeout);
-	return ide_started;
+	hwअगर->expiry = expiry;
+	ide_set_handler(drive, cdrom_newpc_पूर्णांकr, समयout);
+	वापस ide_started;
 
 out_end:
-	if (blk_rq_is_scsi(rq) && rc == 0) {
+	अगर (blk_rq_is_scsi(rq) && rc == 0) अणु
 		scsi_req(rq)->resid_len = 0;
 		blk_mq_end_request(rq, BLK_STS_OK);
-		hwif->rq = NULL;
-	} else {
-		if (sense && uptodate)
+		hwअगर->rq = शून्य;
+	पूर्ण अन्यथा अणु
+		अगर (sense && uptodate)
 			ide_cd_complete_failed_rq(drive, rq);
 
-		if (!blk_rq_is_passthrough(rq)) {
-			if (cmd->nleft == 0)
+		अगर (!blk_rq_is_passthrough(rq)) अणु
+			अगर (cmd->nleft == 0)
 				uptodate = 1;
-		} else {
-			if (uptodate <= 0 && scsi_req(rq)->result == 0)
+		पूर्ण अन्यथा अणु
+			अगर (uptodate <= 0 && scsi_req(rq)->result == 0)
 				scsi_req(rq)->result = -EIO;
-		}
+		पूर्ण
 
-		if (uptodate == 0 && rq->bio)
-			if (ide_cd_error_cmd(drive, cmd))
-				return ide_stopped;
+		अगर (uptodate == 0 && rq->bio)
+			अगर (ide_cd_error_cmd(drive, cmd))
+				वापस ide_stopped;
 
 		/* make sure it's fully ended */
-		if (blk_rq_is_passthrough(rq)) {
+		अगर (blk_rq_is_passthrough(rq)) अणु
 			scsi_req(rq)->resid_len -= cmd->nbytes - cmd->nleft;
-			if (uptodate == 0 && (cmd->tf_flags & IDE_TFLAG_WRITE))
+			अगर (uptodate == 0 && (cmd->tf_flags & IDE_TFLAG_WRITE))
 				scsi_req(rq)->resid_len += cmd->last_xfer_len;
-		}
+		पूर्ण
 
 		ide_complete_rq(drive, uptodate ? BLK_STS_OK : BLK_STS_IOERR, blk_rq_bytes(rq));
 
-		if (sense && rc == 2)
+		अगर (sense && rc == 2)
 			ide_error(drive, "request sense failure", stat);
-	}
+	पूर्ण
 
-	ide_cd_free_sense(drive);
-	return ide_stopped;
-}
+	ide_cd_मुक्त_sense(drive);
+	वापस ide_stopped;
+पूर्ण
 
-static ide_startstop_t cdrom_start_rw(ide_drive_t *drive, struct request *rq)
-{
-	struct cdrom_info *cd = drive->driver_data;
-	struct request_queue *q = drive->queue;
-	int write = rq_data_dir(rq) == WRITE;
-	unsigned short sectors_per_frame =
+अटल ide_startstop_t cdrom_start_rw(ide_drive_t *drive, काष्ठा request *rq)
+अणु
+	काष्ठा cdrom_info *cd = drive->driver_data;
+	काष्ठा request_queue *q = drive->queue;
+	पूर्णांक ग_लिखो = rq_data_dir(rq) == WRITE;
+	अचिन्हित लघु sectors_per_frame =
 		queue_logical_block_size(q) >> SECTOR_SHIFT;
 
 	ide_debug_log(IDE_DBG_RQ, "rq->cmd[0]: 0x%x, rq->cmd_flags: 0x%x, "
 				  "secs_per_frame: %u",
 				  rq->cmd[0], rq->cmd_flags, sectors_per_frame);
 
-	if (write) {
-		/* disk has become write protected */
-		if (get_disk_ro(cd->disk))
-			return ide_stopped;
-	} else {
+	अगर (ग_लिखो) अणु
+		/* disk has become ग_लिखो रक्षित */
+		अगर (get_disk_ro(cd->disk))
+			वापस ide_stopped;
+	पूर्ण अन्यथा अणु
 		/*
 		 * We may be retrying this request after an error.  Fix up any
 		 * weirdness which might be present in the request packet.
 		 */
 		ide_cdrom_prep_rq(drive, rq);
-	}
+	पूर्ण
 
 	/* fs requests *must* be hardware frame aligned */
-	if ((blk_rq_sectors(rq) & (sectors_per_frame - 1)) ||
+	अगर ((blk_rq_sectors(rq) & (sectors_per_frame - 1)) ||
 	    (blk_rq_pos(rq) & (sectors_per_frame - 1)))
-		return ide_stopped;
+		वापस ide_stopped;
 
-	/* use DMA, if possible */
+	/* use DMA, अगर possible */
 	drive->dma = !!(drive->dev_flags & IDE_DFLAG_USING_DMA);
 
-	if (write)
+	अगर (ग_लिखो)
 		cd->devinfo.media_written = 1;
 
-	rq->timeout = ATAPI_WAIT_PC;
+	rq->समयout = ATAPI_WAIT_PC;
 
-	return ide_started;
-}
+	वापस ide_started;
+पूर्ण
 
-static void cdrom_do_block_pc(ide_drive_t *drive, struct request *rq)
-{
+अटल व्योम cdrom_करो_block_pc(ide_drive_t *drive, काष्ठा request *rq)
+अणु
 
 	ide_debug_log(IDE_DBG_PC, "rq->cmd[0]: 0x%x, rq->cmd_type: 0x%x",
 				  rq->cmd[0], rq->cmd_type);
 
-	if (blk_rq_is_scsi(rq))
+	अगर (blk_rq_is_scsi(rq))
 		rq->rq_flags |= RQF_QUIET;
-	else
+	अन्यथा
 		rq->rq_flags &= ~RQF_FAILED;
 
 	drive->dma = 0;
 
 	/* sg request */
-	if (rq->bio) {
-		struct request_queue *q = drive->queue;
-		char *buf = bio_data(rq->bio);
-		unsigned int alignment;
+	अगर (rq->bio) अणु
+		काष्ठा request_queue *q = drive->queue;
+		अक्षर *buf = bio_data(rq->bio);
+		अचिन्हित पूर्णांक alignment;
 
 		drive->dma = !!(drive->dev_flags & IDE_DFLAG_USING_DMA);
 
 		/*
-		 * check if dma is safe
+		 * check अगर dma is safe
 		 *
 		 * NOTE! The "len" and "addr" checks should possibly have
 		 * separate masks.
 		 */
 		alignment = queue_dma_alignment(q) | q->dma_pad_mask;
-		if ((unsigned long)buf & alignment
+		अगर ((अचिन्हित दीर्घ)buf & alignment
 		    || blk_rq_bytes(rq) & q->dma_pad_mask
 		    || object_is_on_stack(buf))
 			drive->dma = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static ide_startstop_t ide_cd_do_request(ide_drive_t *drive, struct request *rq,
+अटल ide_startstop_t ide_cd_करो_request(ide_drive_t *drive, काष्ठा request *rq,
 					sector_t block)
-{
-	struct ide_cmd cmd;
-	int uptodate = 0;
-	unsigned int nsectors;
+अणु
+	काष्ठा ide_cmd cmd;
+	पूर्णांक uptodate = 0;
+	अचिन्हित पूर्णांक nsectors;
 
 	ide_debug_log(IDE_DBG_RQ, "cmd: 0x%x, block: %llu",
-				  rq->cmd[0], (unsigned long long)block);
+				  rq->cmd[0], (अचिन्हित दीर्घ दीर्घ)block);
 
-	if (drive->debug_mask & IDE_DBG_RQ)
+	अगर (drive->debug_mask & IDE_DBG_RQ)
 		blk_dump_rq_flags(rq, "ide_cd_do_request");
 
-	switch (req_op(rq)) {
-	default:
-		if (cdrom_start_rw(drive, rq) == ide_stopped)
-			goto out_end;
-		break;
-	case REQ_OP_SCSI_IN:
-	case REQ_OP_SCSI_OUT:
+	चयन (req_op(rq)) अणु
+	शेष:
+		अगर (cdrom_start_rw(drive, rq) == ide_stopped)
+			जाओ out_end;
+		अवरोध;
+	हाल REQ_OP_SCSI_IN:
+	हाल REQ_OP_SCSI_OUT:
 	handle_pc:
-		if (!rq->timeout)
-			rq->timeout = ATAPI_WAIT_PC;
-		cdrom_do_block_pc(drive, rq);
-		break;
-	case REQ_OP_DRV_IN:
-	case REQ_OP_DRV_OUT:
-		switch (ide_req(rq)->type) {
-		case ATA_PRIV_MISC:
+		अगर (!rq->समयout)
+			rq->समयout = ATAPI_WAIT_PC;
+		cdrom_करो_block_pc(drive, rq);
+		अवरोध;
+	हाल REQ_OP_DRV_IN:
+	हाल REQ_OP_DRV_OUT:
+		चयन (ide_req(rq)->type) अणु
+		हाल ATA_PRIV_MISC:
 			/* right now this can only be a reset... */
 			uptodate = 1;
-			goto out_end;
-		case ATA_PRIV_SENSE:
-		case ATA_PRIV_PC:
-			goto handle_pc;
-		default:
+			जाओ out_end;
+		हाल ATA_PRIV_SENSE:
+		हाल ATA_PRIV_PC:
+			जाओ handle_pc;
+		शेष:
 			BUG();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* prepare sense request for this command */
+	/* prepare sense request क्रम this command */
 	ide_prep_sense(drive, rq);
 
-	memset(&cmd, 0, sizeof(cmd));
+	स_रखो(&cmd, 0, माप(cmd));
 
-	if (rq_data_dir(rq))
+	अगर (rq_data_dir(rq))
 		cmd.tf_flags |= IDE_TFLAG_WRITE;
 
 	cmd.rq = rq;
 
-	if (!blk_rq_is_passthrough(rq) || blk_rq_bytes(rq)) {
+	अगर (!blk_rq_is_passthrough(rq) || blk_rq_bytes(rq)) अणु
 		ide_init_sg_cmd(&cmd, blk_rq_bytes(rq));
 		ide_map_sg(drive, &cmd);
-	}
+	पूर्ण
 
-	return ide_issue_pc(drive, &cmd);
+	वापस ide_issue_pc(drive, &cmd);
 out_end:
 	nsectors = blk_rq_sectors(rq);
 
-	if (nsectors == 0)
+	अगर (nsectors == 0)
 		nsectors = 1;
 
 	ide_complete_rq(drive, uptodate ? BLK_STS_OK : BLK_STS_IOERR, nsectors << 9);
 
-	return ide_stopped;
-}
+	वापस ide_stopped;
+पूर्ण
 
 /*
  * Ioctl handling.
  *
- * Routines which queue packet commands take as a final argument a pointer to a
- * request_sense struct. If execution of the command results in an error with a
- * CHECK CONDITION status, this structure will be filled with the results of the
- * subsequent request sense command. The pointer can also be NULL, in which case
- * no sense information is returned.
+ * Routines which queue packet commands take as a final argument a poपूर्णांकer to a
+ * request_sense काष्ठा. If execution of the command results in an error with a
+ * CHECK CONDITION status, this काष्ठाure will be filled with the results of the
+ * subsequent request sense command. The poपूर्णांकer can also be शून्य, in which हाल
+ * no sense inक्रमmation is वापसed.
  */
-static void msf_from_bcd(struct atapi_msf *msf)
-{
+अटल व्योम msf_from_bcd(काष्ठा atapi_msf *msf)
+अणु
 	msf->minute = bcd2bin(msf->minute);
 	msf->second = bcd2bin(msf->second);
 	msf->frame  = bcd2bin(msf->frame);
-}
+पूर्ण
 
-int cdrom_check_status(ide_drive_t *drive, struct scsi_sense_hdr *sshdr)
-{
-	struct cdrom_info *info = drive->driver_data;
-	struct cdrom_device_info *cdi;
-	unsigned char cmd[BLK_MAX_CDB];
+पूर्णांक cdrom_check_status(ide_drive_t *drive, काष्ठा scsi_sense_hdr *sshdr)
+अणु
+	काष्ठा cdrom_info *info = drive->driver_data;
+	काष्ठा cdrom_device_info *cdi;
+	अचिन्हित अक्षर cmd[BLK_MAX_CDB];
 
 	ide_debug_log(IDE_DBG_FUNC, "enter");
 
-	if (!info)
-		return -EIO;
+	अगर (!info)
+		वापस -EIO;
 
 	cdi = &info->devinfo;
 
-	memset(cmd, 0, BLK_MAX_CDB);
+	स_रखो(cmd, 0, BLK_MAX_CDB);
 	cmd[0] = GPCMD_TEST_UNIT_READY;
 
 	/*
-	 * Sanyo 3 CD changer uses byte 7 of TEST_UNIT_READY to switch CDs
+	 * Sanyo 3 CD changer uses byte 7 of TEST_UNIT_READY to चयन CDs
 	 * instead of supporting the LOAD_UNLOAD opcode.
 	 */
 	cmd[7] = cdi->sanyo_slot % 3;
 
-	return ide_cd_queue_pc(drive, cmd, 0, NULL, NULL, sshdr, 0, RQF_QUIET);
-}
+	वापस ide_cd_queue_pc(drive, cmd, 0, शून्य, शून्य, sshdr, 0, RQF_QUIET);
+पूर्ण
 
-static int cdrom_read_capacity(ide_drive_t *drive, unsigned long *capacity,
-			       unsigned long *sectors_per_frame)
-{
-	struct {
+अटल पूर्णांक cdrom_पढ़ो_capacity(ide_drive_t *drive, अचिन्हित दीर्घ *capacity,
+			       अचिन्हित दीर्घ *sectors_per_frame)
+अणु
+	काष्ठा अणु
 		__be32 lba;
 		__be32 blocklen;
-	} capbuf;
+	पूर्ण capbuf;
 
-	int stat;
-	unsigned char cmd[BLK_MAX_CDB];
-	unsigned len = sizeof(capbuf);
+	पूर्णांक stat;
+	अचिन्हित अक्षर cmd[BLK_MAX_CDB];
+	अचिन्हित len = माप(capbuf);
 	u32 blocklen;
 
 	ide_debug_log(IDE_DBG_FUNC, "enter");
 
-	memset(cmd, 0, BLK_MAX_CDB);
+	स_रखो(cmd, 0, BLK_MAX_CDB);
 	cmd[0] = GPCMD_READ_CDVD_CAPACITY;
 
-	stat = ide_cd_queue_pc(drive, cmd, 0, &capbuf, &len, NULL, 0,
+	stat = ide_cd_queue_pc(drive, cmd, 0, &capbuf, &len, शून्य, 0,
 			       RQF_QUIET);
-	if (stat)
-		return stat;
+	अगर (stat)
+		वापस stat;
 
 	/*
 	 * Sanity check the given block size, in so far as making
@@ -1011,19 +1012,19 @@ static int cdrom_read_capacity(ide_drive_t *drive, unsigned long *capacity,
 	 */
 	blocklen = be32_to_cpu(capbuf.blocklen);
 	blocklen = (blocklen >> SECTOR_SHIFT) << SECTOR_SHIFT;
-	switch (blocklen) {
-	case 512:
-	case 1024:
-	case 2048:
-	case 4096:
-		break;
-	default:
-		printk_once(KERN_ERR PFX "%s: weird block size %u; "
+	चयन (blocklen) अणु
+	हाल 512:
+	हाल 1024:
+	हाल 2048:
+	हाल 4096:
+		अवरोध;
+	शेष:
+		prपूर्णांकk_once(KERN_ERR PFX "%s: weird block size %u; "
 				"setting default block size to 2048\n",
 				drive->name, blocklen);
 		blocklen = 2048;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	*capacity = 1 + be32_to_cpu(capbuf.lba);
 	*sectors_per_frame = blocklen >> SECTOR_SHIFT;
@@ -1031,255 +1032,255 @@ static int cdrom_read_capacity(ide_drive_t *drive, unsigned long *capacity,
 	ide_debug_log(IDE_DBG_PROBE, "cap: %lu, sectors_per_frame: %lu",
 				     *capacity, *sectors_per_frame);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ide_cdrom_read_tocentry(ide_drive_t *drive, int trackno,
-		int msf_flag, int format, char *buf, int buflen)
-{
-	unsigned char cmd[BLK_MAX_CDB];
+अटल पूर्णांक ide_cdrom_पढ़ो_tocentry(ide_drive_t *drive, पूर्णांक trackno,
+		पूर्णांक msf_flag, पूर्णांक क्रमmat, अक्षर *buf, पूर्णांक buflen)
+अणु
+	अचिन्हित अक्षर cmd[BLK_MAX_CDB];
 
 	ide_debug_log(IDE_DBG_FUNC, "enter");
 
-	memset(cmd, 0, BLK_MAX_CDB);
+	स_रखो(cmd, 0, BLK_MAX_CDB);
 
 	cmd[0] = GPCMD_READ_TOC_PMA_ATIP;
 	cmd[6] = trackno;
 	cmd[7] = (buflen >> 8);
 	cmd[8] = (buflen & 0xff);
-	cmd[9] = (format << 6);
+	cmd[9] = (क्रमmat << 6);
 
-	if (msf_flag)
+	अगर (msf_flag)
 		cmd[1] = 2;
 
-	return ide_cd_queue_pc(drive, cmd, 0, buf, &buflen, NULL, 0, RQF_QUIET);
-}
+	वापस ide_cd_queue_pc(drive, cmd, 0, buf, &buflen, शून्य, 0, RQF_QUIET);
+पूर्ण
 
-/* Try to read the entire TOC for the disk into our internal buffer. */
-int ide_cd_read_toc(ide_drive_t *drive)
-{
-	int stat, ntracks, i;
-	struct cdrom_info *info = drive->driver_data;
-	struct cdrom_device_info *cdi = &info->devinfo;
-	struct atapi_toc *toc = info->toc;
-	struct {
-		struct atapi_toc_header hdr;
-		struct atapi_toc_entry  ent;
-	} ms_tmp;
-	long last_written;
-	unsigned long sectors_per_frame = SECTORS_PER_FRAME;
+/* Try to पढ़ो the entire TOC क्रम the disk पूर्णांकo our पूर्णांकernal buffer. */
+पूर्णांक ide_cd_पढ़ो_toc(ide_drive_t *drive)
+अणु
+	पूर्णांक stat, ntracks, i;
+	काष्ठा cdrom_info *info = drive->driver_data;
+	काष्ठा cdrom_device_info *cdi = &info->devinfo;
+	काष्ठा atapi_toc *toc = info->toc;
+	काष्ठा अणु
+		काष्ठा atapi_toc_header hdr;
+		काष्ठा atapi_toc_entry  ent;
+	पूर्ण ms_पंचांगp;
+	दीर्घ last_written;
+	अचिन्हित दीर्घ sectors_per_frame = SECTORS_PER_FRAME;
 
 	ide_debug_log(IDE_DBG_FUNC, "enter");
 
-	if (toc == NULL) {
+	अगर (toc == शून्य) अणु
 		/* try to allocate space */
-		toc = kmalloc(sizeof(struct atapi_toc), GFP_KERNEL);
-		if (toc == NULL) {
-			printk(KERN_ERR PFX "%s: No cdrom TOC buffer!\n",
+		toc = kदो_स्मृति(माप(काष्ठा atapi_toc), GFP_KERNEL);
+		अगर (toc == शून्य) अणु
+			prपूर्णांकk(KERN_ERR PFX "%s: No cdrom TOC buffer!\n",
 					drive->name);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		info->toc = toc;
-	}
+	पूर्ण
 
 	/*
-	 * Check to see if the existing data is still valid. If it is,
-	 * just return.
+	 * Check to see अगर the existing data is still valid. If it is,
+	 * just वापस.
 	 */
-	(void) cdrom_check_status(drive, NULL);
+	(व्योम) cdrom_check_status(drive, शून्य);
 
-	if (drive->atapi_flags & IDE_AFLAG_TOC_VALID)
-		return 0;
+	अगर (drive->atapi_flags & IDE_AFLAG_TOC_VALID)
+		वापस 0;
 
 	/* try to get the total cdrom capacity and sector size */
-	stat = cdrom_read_capacity(drive, &toc->capacity, &sectors_per_frame);
-	if (stat)
+	stat = cdrom_पढ़ो_capacity(drive, &toc->capacity, &sectors_per_frame);
+	अगर (stat)
 		toc->capacity = 0x1fffff;
 
 	set_capacity(info->disk, toc->capacity * sectors_per_frame);
-	/* save a private copy of the TOC capacity for error handling */
+	/* save a निजी copy of the TOC capacity क्रम error handling */
 	drive->probed_capacity = toc->capacity * sectors_per_frame;
 
 	blk_queue_logical_block_size(drive->queue,
 				     sectors_per_frame << SECTOR_SHIFT);
 
-	/* first read just the header, so we know how long the TOC is */
-	stat = ide_cdrom_read_tocentry(drive, 0, 1, 0, (char *) &toc->hdr,
-				    sizeof(struct atapi_toc_header));
-	if (stat)
-		return stat;
+	/* first पढ़ो just the header, so we know how दीर्घ the TOC is */
+	stat = ide_cdrom_पढ़ो_tocentry(drive, 0, 1, 0, (अक्षर *) &toc->hdr,
+				    माप(काष्ठा atapi_toc_header));
+	अगर (stat)
+		वापस stat;
 
-	if (drive->atapi_flags & IDE_AFLAG_TOCTRACKS_AS_BCD) {
+	अगर (drive->atapi_flags & IDE_AFLAG_TOCTRACKS_AS_BCD) अणु
 		toc->hdr.first_track = bcd2bin(toc->hdr.first_track);
 		toc->hdr.last_track  = bcd2bin(toc->hdr.last_track);
-	}
+	पूर्ण
 
 	ntracks = toc->hdr.last_track - toc->hdr.first_track + 1;
-	if (ntracks <= 0)
-		return -EIO;
-	if (ntracks > MAX_TRACKS)
+	अगर (ntracks <= 0)
+		वापस -EIO;
+	अगर (ntracks > MAX_TRACKS)
 		ntracks = MAX_TRACKS;
 
-	/* now read the whole schmeer */
-	stat = ide_cdrom_read_tocentry(drive, toc->hdr.first_track, 1, 0,
-				  (char *)&toc->hdr,
-				   sizeof(struct atapi_toc_header) +
+	/* now पढ़ो the whole schmeer */
+	stat = ide_cdrom_पढ़ो_tocentry(drive, toc->hdr.first_track, 1, 0,
+				  (अक्षर *)&toc->hdr,
+				   माप(काष्ठा atapi_toc_header) +
 				   (ntracks + 1) *
-				   sizeof(struct atapi_toc_entry));
+				   माप(काष्ठा atapi_toc_entry));
 
-	if (stat && toc->hdr.first_track > 1) {
+	अगर (stat && toc->hdr.first_track > 1) अणु
 		/*
-		 * Cds with CDI tracks only don't have any TOC entries, despite
-		 * of this the returned values are
+		 * Cds with CDI tracks only करोn't have any TOC entries, despite
+		 * of this the वापसed values are
 		 * first_track == last_track = number of CDI tracks + 1,
-		 * so that this case is indistinguishable from the same layout
-		 * plus an additional audio track. If we get an error for the
-		 * regular case, we assume a CDI without additional audio
-		 * tracks. In this case the readable TOC is empty (CDI tracks
-		 * are not included) and only holds the Leadout entry.
+		 * so that this हाल is indistinguishable from the same layout
+		 * plus an additional audio track. If we get an error क्रम the
+		 * regular हाल, we assume a CDI without additional audio
+		 * tracks. In this हाल the पढ़ोable TOC is empty (CDI tracks
+		 * are not included) and only holds the Leaकरोut entry.
 		 *
-		 * Heiko Eißfeldt.
+		 * Heiko Eiथfeldt.
 		 */
 		ntracks = 0;
-		stat = ide_cdrom_read_tocentry(drive, CDROM_LEADOUT, 1, 0,
-					   (char *)&toc->hdr,
-					   sizeof(struct atapi_toc_header) +
+		stat = ide_cdrom_पढ़ो_tocentry(drive, CDROM_LEADOUT, 1, 0,
+					   (अक्षर *)&toc->hdr,
+					   माप(काष्ठा atapi_toc_header) +
 					   (ntracks + 1) *
-					   sizeof(struct atapi_toc_entry));
-		if (stat)
-			return stat;
+					   माप(काष्ठा atapi_toc_entry));
+		अगर (stat)
+			वापस stat;
 
-		if (drive->atapi_flags & IDE_AFLAG_TOCTRACKS_AS_BCD) {
+		अगर (drive->atapi_flags & IDE_AFLAG_TOCTRACKS_AS_BCD) अणु
 			toc->hdr.first_track = (u8)bin2bcd(CDROM_LEADOUT);
 			toc->hdr.last_track = (u8)bin2bcd(CDROM_LEADOUT);
-		} else {
+		पूर्ण अन्यथा अणु
 			toc->hdr.first_track = CDROM_LEADOUT;
 			toc->hdr.last_track = CDROM_LEADOUT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (stat)
-		return stat;
+	अगर (stat)
+		वापस stat;
 
 	toc->hdr.toc_length = be16_to_cpu(toc->hdr.toc_length);
 
-	if (drive->atapi_flags & IDE_AFLAG_TOCTRACKS_AS_BCD) {
+	अगर (drive->atapi_flags & IDE_AFLAG_TOCTRACKS_AS_BCD) अणु
 		toc->hdr.first_track = bcd2bin(toc->hdr.first_track);
 		toc->hdr.last_track  = bcd2bin(toc->hdr.last_track);
-	}
+	पूर्ण
 
-	for (i = 0; i <= ntracks; i++) {
-		if (drive->atapi_flags & IDE_AFLAG_TOCADDR_AS_BCD) {
-			if (drive->atapi_flags & IDE_AFLAG_TOCTRACKS_AS_BCD)
+	क्रम (i = 0; i <= ntracks; i++) अणु
+		अगर (drive->atapi_flags & IDE_AFLAG_TOCADDR_AS_BCD) अणु
+			अगर (drive->atapi_flags & IDE_AFLAG_TOCTRACKS_AS_BCD)
 				toc->ent[i].track = bcd2bin(toc->ent[i].track);
 			msf_from_bcd(&toc->ent[i].addr.msf);
-		}
+		पूर्ण
 		toc->ent[i].addr.lba = msf_to_lba(toc->ent[i].addr.msf.minute,
 						  toc->ent[i].addr.msf.second,
 						  toc->ent[i].addr.msf.frame);
-	}
+	पूर्ण
 
-	if (toc->hdr.first_track != CDROM_LEADOUT) {
-		/* read the multisession information */
-		stat = ide_cdrom_read_tocentry(drive, 0, 0, 1, (char *)&ms_tmp,
-					   sizeof(ms_tmp));
-		if (stat)
-			return stat;
+	अगर (toc->hdr.first_track != CDROM_LEADOUT) अणु
+		/* पढ़ो the multisession inक्रमmation */
+		stat = ide_cdrom_पढ़ो_tocentry(drive, 0, 0, 1, (अक्षर *)&ms_पंचांगp,
+					   माप(ms_पंचांगp));
+		अगर (stat)
+			वापस stat;
 
-		toc->last_session_lba = be32_to_cpu(ms_tmp.ent.addr.lba);
-	} else {
-		ms_tmp.hdr.last_track = CDROM_LEADOUT;
-		ms_tmp.hdr.first_track = ms_tmp.hdr.last_track;
+		toc->last_session_lba = be32_to_cpu(ms_पंचांगp.ent.addr.lba);
+	पूर्ण अन्यथा अणु
+		ms_पंचांगp.hdr.last_track = CDROM_LEADOUT;
+		ms_पंचांगp.hdr.first_track = ms_पंचांगp.hdr.last_track;
 		toc->last_session_lba = msf_to_lba(0, 2, 0); /* 0m 2s 0f */
-	}
+	पूर्ण
 
-	if (drive->atapi_flags & IDE_AFLAG_TOCADDR_AS_BCD) {
-		/* re-read multisession information using MSF format */
-		stat = ide_cdrom_read_tocentry(drive, 0, 1, 1, (char *)&ms_tmp,
-					   sizeof(ms_tmp));
-		if (stat)
-			return stat;
+	अगर (drive->atapi_flags & IDE_AFLAG_TOCADDR_AS_BCD) अणु
+		/* re-पढ़ो multisession inक्रमmation using MSF क्रमmat */
+		stat = ide_cdrom_पढ़ो_tocentry(drive, 0, 1, 1, (अक्षर *)&ms_पंचांगp,
+					   माप(ms_पंचांगp));
+		अगर (stat)
+			वापस stat;
 
-		msf_from_bcd(&ms_tmp.ent.addr.msf);
-		toc->last_session_lba = msf_to_lba(ms_tmp.ent.addr.msf.minute,
-						   ms_tmp.ent.addr.msf.second,
-						   ms_tmp.ent.addr.msf.frame);
-	}
+		msf_from_bcd(&ms_पंचांगp.ent.addr.msf);
+		toc->last_session_lba = msf_to_lba(ms_पंचांगp.ent.addr.msf.minute,
+						   ms_पंचांगp.ent.addr.msf.second,
+						   ms_पंचांगp.ent.addr.msf.frame);
+	पूर्ण
 
-	toc->xa_flag = (ms_tmp.hdr.first_track != ms_tmp.hdr.last_track);
+	toc->xa_flag = (ms_पंचांगp.hdr.first_track != ms_पंचांगp.hdr.last_track);
 
 	/* now try to get the total cdrom capacity */
 	stat = cdrom_get_last_written(cdi, &last_written);
-	if (!stat && (last_written > toc->capacity)) {
+	अगर (!stat && (last_written > toc->capacity)) अणु
 		toc->capacity = last_written;
 		set_capacity(info->disk, toc->capacity * sectors_per_frame);
 		drive->probed_capacity = toc->capacity * sectors_per_frame;
-	}
+	पूर्ण
 
-	/* Remember that we've read this stuff. */
+	/* Remember that we've पढ़ो this stuff. */
 	drive->atapi_flags |= IDE_AFLAG_TOC_VALID;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ide_cdrom_get_capabilities(ide_drive_t *drive, u8 *buf)
-{
-	struct cdrom_info *info = drive->driver_data;
-	struct cdrom_device_info *cdi = &info->devinfo;
-	struct packet_command cgc;
-	int stat, attempts = 3, size = ATAPI_CAPABILITIES_PAGE_SIZE;
+पूर्णांक ide_cdrom_get_capabilities(ide_drive_t *drive, u8 *buf)
+अणु
+	काष्ठा cdrom_info *info = drive->driver_data;
+	काष्ठा cdrom_device_info *cdi = &info->devinfo;
+	काष्ठा packet_command cgc;
+	पूर्णांक stat, attempts = 3, size = ATAPI_CAPABILITIES_PAGE_SIZE;
 
 	ide_debug_log(IDE_DBG_FUNC, "enter");
 
-	if ((drive->atapi_flags & IDE_AFLAG_FULL_CAPS_PAGE) == 0)
+	अगर ((drive->atapi_flags & IDE_AFLAG_FULL_CAPS_PAGE) == 0)
 		size -= ATAPI_CAPABILITIES_PAGE_PAD_SIZE;
 
 	init_cdrom_command(&cgc, buf, size, CGC_DATA_UNKNOWN);
-	do {
-		/* we seem to get stat=0x01,err=0x00 the first time (??) */
+	करो अणु
+		/* we seem to get stat=0x01,err=0x00 the first समय (??) */
 		stat = cdrom_mode_sense(cdi, &cgc, GPMODE_CAPABILITIES_PAGE, 0);
-		if (!stat)
-			break;
-	} while (--attempts);
-	return stat;
-}
+		अगर (!stat)
+			अवरोध;
+	पूर्ण जबतक (--attempts);
+	वापस stat;
+पूर्ण
 
-void ide_cdrom_update_speed(ide_drive_t *drive, u8 *buf)
-{
-	struct cdrom_info *cd = drive->driver_data;
+व्योम ide_cdrom_update_speed(ide_drive_t *drive, u8 *buf)
+अणु
+	काष्ठा cdrom_info *cd = drive->driver_data;
 	u16 curspeed, maxspeed;
 
 	ide_debug_log(IDE_DBG_FUNC, "enter");
 
-	if (drive->atapi_flags & IDE_AFLAG_LE_SPEED_FIELDS) {
+	अगर (drive->atapi_flags & IDE_AFLAG_LE_SPEED_FIELDS) अणु
 		curspeed = le16_to_cpup((__le16 *)&buf[8 + 14]);
 		maxspeed = le16_to_cpup((__le16 *)&buf[8 + 8]);
-	} else {
+	पूर्ण अन्यथा अणु
 		curspeed = be16_to_cpup((__be16 *)&buf[8 + 14]);
 		maxspeed = be16_to_cpup((__be16 *)&buf[8 + 8]);
-	}
+	पूर्ण
 
 	ide_debug_log(IDE_DBG_PROBE, "curspeed: %u, maxspeed: %u",
 				     curspeed, maxspeed);
 
 	cd->current_speed = DIV_ROUND_CLOSEST(curspeed, 176);
 	cd->max_speed = DIV_ROUND_CLOSEST(maxspeed, 176);
-}
+पूर्ण
 
-#define IDE_CD_CAPABILITIES \
+#घोषणा IDE_CD_CAPABILITIES \
 	(CDC_CLOSE_TRAY | CDC_OPEN_TRAY | CDC_LOCK | CDC_SELECT_SPEED | \
 	 CDC_SELECT_DISC | CDC_MULTI_SESSION | CDC_MCN | CDC_MEDIA_CHANGED | \
 	 CDC_PLAY_AUDIO | CDC_RESET | CDC_DRIVE_STATUS | CDC_CD_R | \
 	 CDC_CD_RW | CDC_DVD | CDC_DVD_R | CDC_DVD_RAM | CDC_GENERIC_PACKET | \
 	 CDC_MO_DRIVE | CDC_MRW | CDC_MRW_W | CDC_RAM)
 
-static const struct cdrom_device_ops ide_cdrom_dops = {
-	.open			= ide_cdrom_open_real,
+अटल स्थिर काष्ठा cdrom_device_ops ide_cdrom_करोps = अणु
+	.खोलो			= ide_cdrom_खोलो_real,
 	.release		= ide_cdrom_release_real,
 	.drive_status		= ide_cdrom_drive_status,
 	.check_events		= ide_cdrom_check_events_real,
 	.tray_move		= ide_cdrom_tray_move,
-	.lock_door		= ide_cdrom_lock_door,
+	.lock_करोor		= ide_cdrom_lock_करोor,
 	.select_speed		= ide_cdrom_select_speed,
 	.get_last_session	= ide_cdrom_get_last_session,
 	.get_mcn		= ide_cdrom_get_mcn,
@@ -1287,34 +1288,34 @@ static const struct cdrom_device_ops ide_cdrom_dops = {
 	.audio_ioctl		= ide_cdrom_audio_ioctl,
 	.capability		= IDE_CD_CAPABILITIES,
 	.generic_packet		= ide_cdrom_packet,
-};
+पूर्ण;
 
-static int ide_cdrom_register(ide_drive_t *drive, int nslots)
-{
-	struct cdrom_info *info = drive->driver_data;
-	struct cdrom_device_info *devinfo = &info->devinfo;
+अटल पूर्णांक ide_cdrom_रेजिस्टर(ide_drive_t *drive, पूर्णांक nslots)
+अणु
+	काष्ठा cdrom_info *info = drive->driver_data;
+	काष्ठा cdrom_device_info *devinfo = &info->devinfo;
 
 	ide_debug_log(IDE_DBG_PROBE, "nslots: %d", nslots);
 
-	devinfo->ops = &ide_cdrom_dops;
+	devinfo->ops = &ide_cdrom_करोps;
 	devinfo->speed = info->current_speed;
 	devinfo->capacity = nslots;
 	devinfo->handle = drive;
-	strcpy(devinfo->name, drive->name);
+	म_नकल(devinfo->name, drive->name);
 
-	if (drive->atapi_flags & IDE_AFLAG_NO_SPEED_SELECT)
+	अगर (drive->atapi_flags & IDE_AFLAG_NO_SPEED_SELECT)
 		devinfo->mask |= CDC_SELECT_SPEED;
 
-	return register_cdrom(info->disk, devinfo);
-}
+	वापस रेजिस्टर_cdrom(info->disk, devinfo);
+पूर्ण
 
-static int ide_cdrom_probe_capabilities(ide_drive_t *drive)
-{
-	struct cdrom_info *cd = drive->driver_data;
-	struct cdrom_device_info *cdi = &cd->devinfo;
+अटल पूर्णांक ide_cdrom_probe_capabilities(ide_drive_t *drive)
+अणु
+	काष्ठा cdrom_info *cd = drive->driver_data;
+	काष्ठा cdrom_device_info *cdi = &cd->devinfo;
 	u8 buf[ATAPI_CAPABILITIES_PAGE_SIZE];
 	mechtype_t mechtype;
-	int nslots = 1;
+	पूर्णांक nslots = 1;
 
 	ide_debug_log(IDE_DBG_PROBE, "media: 0x%x, atapi_flags: 0x%lx",
 				     drive->media, drive->atapi_flags);
@@ -1323,201 +1324,201 @@ static int ide_cdrom_probe_capabilities(ide_drive_t *drive)
 		     CDC_DVD_RAM | CDC_SELECT_DISC | CDC_PLAY_AUDIO |
 		     CDC_MO_DRIVE | CDC_RAM);
 
-	if (drive->media == ide_optical) {
+	अगर (drive->media == ide_optical) अणु
 		cdi->mask &= ~(CDC_MO_DRIVE | CDC_RAM);
-		printk(KERN_ERR PFX "%s: ATAPI magneto-optical drive\n",
+		prपूर्णांकk(KERN_ERR PFX "%s: ATAPI magneto-optical drive\n",
 				drive->name);
-		return nslots;
-	}
+		वापस nslots;
+	पूर्ण
 
-	if (drive->atapi_flags & IDE_AFLAG_PRE_ATAPI12) {
+	अगर (drive->atapi_flags & IDE_AFLAG_PRE_ATAPI12) अणु
 		drive->atapi_flags &= ~IDE_AFLAG_NO_EJECT;
 		cdi->mask &= ~CDC_PLAY_AUDIO;
-		return nslots;
-	}
+		वापस nslots;
+	पूर्ण
 
 	/*
 	 * We have to cheat a little here. the packet will eventually be queued
 	 * with ide_cdrom_packet(), which extracts the drive from cdi->handle.
-	 * Since this device hasn't been registered with the Uniform layer yet,
-	 * it can't do this. Same goes for cdi->ops.
+	 * Since this device hasn't been रेजिस्टरed with the Unअगरorm layer yet,
+	 * it can't करो this. Same goes क्रम cdi->ops.
 	 */
 	cdi->handle = drive;
-	cdi->ops = &ide_cdrom_dops;
+	cdi->ops = &ide_cdrom_करोps;
 
-	if (ide_cdrom_get_capabilities(drive, buf))
-		return 0;
+	अगर (ide_cdrom_get_capabilities(drive, buf))
+		वापस 0;
 
-	if ((buf[8 + 6] & 0x01) == 0)
+	अगर ((buf[8 + 6] & 0x01) == 0)
 		drive->dev_flags &= ~IDE_DFLAG_DOORLOCKING;
-	if (buf[8 + 6] & 0x08)
+	अगर (buf[8 + 6] & 0x08)
 		drive->atapi_flags &= ~IDE_AFLAG_NO_EJECT;
-	if (buf[8 + 3] & 0x01)
+	अगर (buf[8 + 3] & 0x01)
 		cdi->mask &= ~CDC_CD_R;
-	if (buf[8 + 3] & 0x02)
+	अगर (buf[8 + 3] & 0x02)
 		cdi->mask &= ~(CDC_CD_RW | CDC_RAM);
-	if (buf[8 + 2] & 0x38)
+	अगर (buf[8 + 2] & 0x38)
 		cdi->mask &= ~CDC_DVD;
-	if (buf[8 + 3] & 0x20)
+	अगर (buf[8 + 3] & 0x20)
 		cdi->mask &= ~(CDC_DVD_RAM | CDC_RAM);
-	if (buf[8 + 3] & 0x10)
+	अगर (buf[8 + 3] & 0x10)
 		cdi->mask &= ~CDC_DVD_R;
-	if ((buf[8 + 4] & 0x01) || (drive->atapi_flags & IDE_AFLAG_PLAY_AUDIO_OK))
+	अगर ((buf[8 + 4] & 0x01) || (drive->atapi_flags & IDE_AFLAG_PLAY_AUDIO_OK))
 		cdi->mask &= ~CDC_PLAY_AUDIO;
 
 	mechtype = buf[8 + 6] >> 5;
-	if (mechtype == mechtype_caddy ||
+	अगर (mechtype == mechtype_caddy ||
 	    mechtype == mechtype_popup ||
 	    (drive->atapi_flags & IDE_AFLAG_NO_AUTOCLOSE))
 		cdi->mask |= CDC_CLOSE_TRAY;
 
-	if (cdi->sanyo_slot > 0) {
+	अगर (cdi->sanyo_slot > 0) अणु
 		cdi->mask &= ~CDC_SELECT_DISC;
 		nslots = 3;
-	} else if (mechtype == mechtype_individual_changer ||
-		   mechtype == mechtype_cartridge_changer) {
+	पूर्ण अन्यथा अगर (mechtype == mechtype_inभागidual_changer ||
+		   mechtype == mechtype_cartridge_changer) अणु
 		nslots = cdrom_number_of_slots(cdi);
-		if (nslots > 1)
+		अगर (nslots > 1)
 			cdi->mask &= ~CDC_SELECT_DISC;
-	}
+	पूर्ण
 
 	ide_cdrom_update_speed(drive, buf);
 
-	printk(KERN_INFO PFX "%s: ATAPI", drive->name);
+	prपूर्णांकk(KERN_INFO PFX "%s: ATAPI", drive->name);
 
-	/* don't print speed if the drive reported 0 */
-	if (cd->max_speed)
-		printk(KERN_CONT " %dX", cd->max_speed);
+	/* करोn't prपूर्णांक speed अगर the drive reported 0 */
+	अगर (cd->max_speed)
+		prपूर्णांकk(KERN_CONT " %dX", cd->max_speed);
 
-	printk(KERN_CONT " %s", (cdi->mask & CDC_DVD) ? "CD-ROM" : "DVD-ROM");
+	prपूर्णांकk(KERN_CONT " %s", (cdi->mask & CDC_DVD) ? "CD-ROM" : "DVD-ROM");
 
-	if ((cdi->mask & CDC_DVD_R) == 0 || (cdi->mask & CDC_DVD_RAM) == 0)
-		printk(KERN_CONT " DVD%s%s",
+	अगर ((cdi->mask & CDC_DVD_R) == 0 || (cdi->mask & CDC_DVD_RAM) == 0)
+		prपूर्णांकk(KERN_CONT " DVD%s%s",
 				 (cdi->mask & CDC_DVD_R) ? "" : "-R",
 				 (cdi->mask & CDC_DVD_RAM) ? "" : "/RAM");
 
-	if ((cdi->mask & CDC_CD_R) == 0 || (cdi->mask & CDC_CD_RW) == 0)
-		printk(KERN_CONT " CD%s%s",
+	अगर ((cdi->mask & CDC_CD_R) == 0 || (cdi->mask & CDC_CD_RW) == 0)
+		prपूर्णांकk(KERN_CONT " CD%s%s",
 				 (cdi->mask & CDC_CD_R) ? "" : "-R",
 				 (cdi->mask & CDC_CD_RW) ? "" : "/RW");
 
-	if ((cdi->mask & CDC_SELECT_DISC) == 0)
-		printk(KERN_CONT " changer w/%d slots", nslots);
-	else
-		printk(KERN_CONT " drive");
+	अगर ((cdi->mask & CDC_SELECT_DISC) == 0)
+		prपूर्णांकk(KERN_CONT " changer w/%d slots", nslots);
+	अन्यथा
+		prपूर्णांकk(KERN_CONT " drive");
 
-	printk(KERN_CONT ", %dkB Cache\n",
+	prपूर्णांकk(KERN_CONT ", %dkB Cache\n",
 			 be16_to_cpup((__be16 *)&buf[8 + 12]));
 
-	return nslots;
-}
+	वापस nslots;
+पूर्ण
 
-struct cd_list_entry {
-	const char	*id_model;
-	const char	*id_firmware;
-	unsigned int	cd_flags;
-};
+काष्ठा cd_list_entry अणु
+	स्थिर अक्षर	*id_model;
+	स्थिर अक्षर	*id_firmware;
+	अचिन्हित पूर्णांक	cd_flags;
+पूर्ण;
 
-#ifdef CONFIG_IDE_PROC_FS
-static sector_t ide_cdrom_capacity(ide_drive_t *drive)
-{
-	unsigned long capacity, sectors_per_frame;
+#अगर_घोषित CONFIG_IDE_PROC_FS
+अटल sector_t ide_cdrom_capacity(ide_drive_t *drive)
+अणु
+	अचिन्हित दीर्घ capacity, sectors_per_frame;
 
-	if (cdrom_read_capacity(drive, &capacity, &sectors_per_frame))
-		return 0;
+	अगर (cdrom_पढ़ो_capacity(drive, &capacity, &sectors_per_frame))
+		वापस 0;
 
-	return capacity * sectors_per_frame;
-}
+	वापस capacity * sectors_per_frame;
+पूर्ण
 
-static int idecd_capacity_proc_show(struct seq_file *m, void *v)
-{
-	ide_drive_t *drive = m->private;
+अटल पूर्णांक idecd_capacity_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	ide_drive_t *drive = m->निजी;
 
-	seq_printf(m, "%llu\n", (long long)ide_cdrom_capacity(drive));
-	return 0;
-}
+	seq_म_लिखो(m, "%llu\n", (दीर्घ दीर्घ)ide_cdrom_capacity(drive));
+	वापस 0;
+पूर्ण
 
-static ide_proc_entry_t idecd_proc[] = {
-	{ "capacity", S_IFREG|S_IRUGO, idecd_capacity_proc_show },
-	{}
-};
+अटल ide_proc_entry_t idecd_proc[] = अणु
+	अणु "capacity", S_IFREG|S_IRUGO, idecd_capacity_proc_show पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static ide_proc_entry_t *ide_cd_proc_entries(ide_drive_t *drive)
-{
-	return idecd_proc;
-}
+अटल ide_proc_entry_t *ide_cd_proc_entries(ide_drive_t *drive)
+अणु
+	वापस idecd_proc;
+पूर्ण
 
-static const struct ide_proc_devset *ide_cd_proc_devsets(ide_drive_t *drive)
-{
-	return NULL;
-}
-#endif
+अटल स्थिर काष्ठा ide_proc_devset *ide_cd_proc_devsets(ide_drive_t *drive)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct cd_list_entry ide_cd_quirks_list[] = {
-	/* SCR-3231 doesn't support the SET_CD_SPEED command. */
-	{ "SAMSUNG CD-ROM SCR-3231", NULL,   IDE_AFLAG_NO_SPEED_SELECT	     },
-	/* Old NEC260 (not R) was released before ATAPI 1.2 spec. */
-	{ "NEC CD-ROM DRIVE:260",    "1.01", IDE_AFLAG_TOCADDR_AS_BCD |
-					     IDE_AFLAG_PRE_ATAPI12,	     },
+अटल स्थिर काष्ठा cd_list_entry ide_cd_quirks_list[] = अणु
+	/* SCR-3231 करोesn't support the SET_CD_SPEED command. */
+	अणु "SAMSUNG CD-ROM SCR-3231", शून्य,   IDE_AFLAG_NO_SPEED_SELECT	     पूर्ण,
+	/* Old NEC260 (not R) was released beक्रमe ATAPI 1.2 spec. */
+	अणु "NEC CD-ROM DRIVE:260",    "1.01", IDE_AFLAG_TOCADDR_AS_BCD |
+					     IDE_AFLAG_PRE_ATAPI12,	     पूर्ण,
 	/* Vertos 300, some versions of this drive like to talk BCD. */
-	{ "V003S0DS",		     NULL,   IDE_AFLAG_VERTOS_300_SSD,	     },
+	अणु "V003S0DS",		     शून्य,   IDE_AFLAG_VERTOS_300_SSD,	     पूर्ण,
 	/* Vertos 600 ESD. */
-	{ "V006E0DS",		     NULL,   IDE_AFLAG_VERTOS_600_ESD,	     },
+	अणु "V006E0DS",		     शून्य,   IDE_AFLAG_VERTOS_600_ESD,	     पूर्ण,
 	/*
-	 * Sanyo 3 CD changer uses a non-standard command for CD changing
-	 * (by default standard ATAPI support for CD changers is used).
+	 * Sanyo 3 CD changer uses a non-standard command क्रम CD changing
+	 * (by शेष standard ATAPI support क्रम CD changers is used).
 	 */
-	{ "CD-ROM CDR-C3 G",	     NULL,   IDE_AFLAG_SANYO_3CD	     },
-	{ "CD-ROM CDR-C3G",	     NULL,   IDE_AFLAG_SANYO_3CD	     },
-	{ "CD-ROM CDR_C36",	     NULL,   IDE_AFLAG_SANYO_3CD	     },
+	अणु "CD-ROM CDR-C3 G",	     शून्य,   IDE_AFLAG_SANYO_3CD	     पूर्ण,
+	अणु "CD-ROM CDR-C3G",	     शून्य,   IDE_AFLAG_SANYO_3CD	     पूर्ण,
+	अणु "CD-ROM CDR_C36",	     शून्य,   IDE_AFLAG_SANYO_3CD	     पूर्ण,
 	/* Stingray 8X CD-ROM. */
-	{ "STINGRAY 8422 IDE 8X CD-ROM 7-27-95", NULL, IDE_AFLAG_PRE_ATAPI12 },
+	अणु "STINGRAY 8422 IDE 8X CD-ROM 7-27-95", शून्य, IDE_AFLAG_PRE_ATAPI12 पूर्ण,
 	/*
 	 * ACER 50X CD-ROM and WPI 32X CD-ROM require the full spec length
-	 * mode sense page capabilities size, but older drives break.
+	 * mode sense page capabilities size, but older drives अवरोध.
 	 */
-	{ "ATAPI CD ROM DRIVE 50X MAX",	NULL,	IDE_AFLAG_FULL_CAPS_PAGE     },
-	{ "WPI CDS-32X",		NULL,	IDE_AFLAG_FULL_CAPS_PAGE     },
+	अणु "ATAPI CD ROM DRIVE 50X MAX",	शून्य,	IDE_AFLAG_FULL_CAPS_PAGE     पूर्ण,
+	अणु "WPI CDS-32X",		शून्य,	IDE_AFLAG_FULL_CAPS_PAGE     पूर्ण,
 	/* ACER/AOpen 24X CD-ROM has the speed fields byte-swapped. */
-	{ "",			     "241N", IDE_AFLAG_LE_SPEED_FIELDS       },
+	अणु "",			     "241N", IDE_AFLAG_LE_SPEED_FIELDS       पूर्ण,
 	/*
-	 * Some drives used by Apple don't advertise audio play
-	 * but they do support reading TOC & audio datas.
+	 * Some drives used by Apple करोn't advertise audio play
+	 * but they करो support पढ़ोing TOC & audio datas.
 	 */
-	{ "MATSHITADVD-ROM SR-8187", NULL,   IDE_AFLAG_PLAY_AUDIO_OK	     },
-	{ "MATSHITADVD-ROM SR-8186", NULL,   IDE_AFLAG_PLAY_AUDIO_OK	     },
-	{ "MATSHITADVD-ROM SR-8176", NULL,   IDE_AFLAG_PLAY_AUDIO_OK	     },
-	{ "MATSHITADVD-ROM SR-8174", NULL,   IDE_AFLAG_PLAY_AUDIO_OK	     },
-	{ "Optiarc DVD RW AD-5200A", NULL,   IDE_AFLAG_PLAY_AUDIO_OK	     },
-	{ "Optiarc DVD RW AD-7200A", NULL,   IDE_AFLAG_PLAY_AUDIO_OK	     },
-	{ "Optiarc DVD RW AD-7543A", NULL,   IDE_AFLAG_NO_AUTOCLOSE	     },
-	{ "TEAC CD-ROM CD-224E",     NULL,   IDE_AFLAG_NO_AUTOCLOSE	     },
-	{ NULL, NULL, 0 }
-};
+	अणु "MATSHITADVD-ROM SR-8187", शून्य,   IDE_AFLAG_PLAY_AUDIO_OK	     पूर्ण,
+	अणु "MATSHITADVD-ROM SR-8186", शून्य,   IDE_AFLAG_PLAY_AUDIO_OK	     पूर्ण,
+	अणु "MATSHITADVD-ROM SR-8176", शून्य,   IDE_AFLAG_PLAY_AUDIO_OK	     पूर्ण,
+	अणु "MATSHITADVD-ROM SR-8174", शून्य,   IDE_AFLAG_PLAY_AUDIO_OK	     पूर्ण,
+	अणु "Optiarc DVD RW AD-5200A", शून्य,   IDE_AFLAG_PLAY_AUDIO_OK	     पूर्ण,
+	अणु "Optiarc DVD RW AD-7200A", शून्य,   IDE_AFLAG_PLAY_AUDIO_OK	     पूर्ण,
+	अणु "Optiarc DVD RW AD-7543A", शून्य,   IDE_AFLAG_NO_AUTOCLOSE	     पूर्ण,
+	अणु "TEAC CD-ROM CD-224E",     शून्य,   IDE_AFLAG_NO_AUTOCLOSE	     पूर्ण,
+	अणु शून्य, शून्य, 0 पूर्ण
+पूर्ण;
 
-static unsigned int ide_cd_flags(u16 *id)
-{
-	const struct cd_list_entry *cle = ide_cd_quirks_list;
+अटल अचिन्हित पूर्णांक ide_cd_flags(u16 *id)
+अणु
+	स्थिर काष्ठा cd_list_entry *cle = ide_cd_quirks_list;
 
-	while (cle->id_model) {
-		if (strcmp(cle->id_model, (char *)&id[ATA_ID_PROD]) == 0 &&
-		    (cle->id_firmware == NULL ||
-		     strstr((char *)&id[ATA_ID_FW_REV], cle->id_firmware)))
-			return cle->cd_flags;
+	जबतक (cle->id_model) अणु
+		अगर (म_भेद(cle->id_model, (अक्षर *)&id[ATA_ID_PROD]) == 0 &&
+		    (cle->id_firmware == शून्य ||
+		     म_माला((अक्षर *)&id[ATA_ID_FW_REV], cle->id_firmware)))
+			वापस cle->cd_flags;
 		cle++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ide_cdrom_setup(ide_drive_t *drive)
-{
-	struct cdrom_info *cd = drive->driver_data;
-	struct cdrom_device_info *cdi = &cd->devinfo;
-	struct request_queue *q = drive->queue;
+अटल पूर्णांक ide_cdrom_setup(ide_drive_t *drive)
+अणु
+	काष्ठा cdrom_info *cd = drive->driver_data;
+	काष्ठा cdrom_device_info *cdi = &cd->devinfo;
+	काष्ठा request_queue *q = drive->queue;
 	u16 *id = drive->id;
-	char *fw_rev = (char *)&id[ATA_ID_FW_REV];
-	int nslots;
+	अक्षर *fw_rev = (अक्षर *)&id[ATA_ID_FW_REV];
+	पूर्णांक nslots;
 
 	ide_debug_log(IDE_DBG_PROBE, "enter");
 
@@ -1528,14 +1529,14 @@ static int ide_cdrom_setup(ide_drive_t *drive)
 	drive->dev_flags |= IDE_DFLAG_MEDIA_CHANGED;
 	drive->atapi_flags = IDE_AFLAG_NO_EJECT | ide_cd_flags(id);
 
-	if ((drive->atapi_flags & IDE_AFLAG_VERTOS_300_SSD) &&
+	अगर ((drive->atapi_flags & IDE_AFLAG_VERTOS_300_SSD) &&
 	    fw_rev[4] == '1' && fw_rev[6] <= '2')
 		drive->atapi_flags |= (IDE_AFLAG_TOCTRACKS_AS_BCD |
 				     IDE_AFLAG_TOCADDR_AS_BCD);
-	else if ((drive->atapi_flags & IDE_AFLAG_VERTOS_600_ESD) &&
+	अन्यथा अगर ((drive->atapi_flags & IDE_AFLAG_VERTOS_600_ESD) &&
 		 fw_rev[4] == '1' && fw_rev[6] <= '2')
 		drive->atapi_flags |= IDE_AFLAG_TOCTRACKS_AS_BCD;
-	else if (drive->atapi_flags & IDE_AFLAG_SANYO_3CD)
+	अन्यथा अगर (drive->atapi_flags & IDE_AFLAG_SANYO_3CD)
 		/* 3 => use CD in slot 0 */
 		cdi->sanyo_slot = 3;
 
@@ -1543,263 +1544,263 @@ static int ide_cdrom_setup(ide_drive_t *drive)
 
 	blk_queue_logical_block_size(q, CD_FRAMESIZE);
 
-	if (ide_cdrom_register(drive, nslots)) {
-		printk(KERN_ERR PFX "%s: %s failed to register device with the"
+	अगर (ide_cdrom_रेजिस्टर(drive, nslots)) अणु
+		prपूर्णांकk(KERN_ERR PFX "%s: %s failed to register device with the"
 				" cdrom driver.\n", drive->name, __func__);
-		cd->devinfo.handle = NULL;
-		return 1;
-	}
+		cd->devinfo.handle = शून्य;
+		वापस 1;
+	पूर्ण
 
-	ide_proc_register_driver(drive, cd->driver);
-	return 0;
-}
+	ide_proc_रेजिस्टर_driver(drive, cd->driver);
+	वापस 0;
+पूर्ण
 
-static void ide_cd_remove(ide_drive_t *drive)
-{
-	struct cdrom_info *info = drive->driver_data;
+अटल व्योम ide_cd_हटाओ(ide_drive_t *drive)
+अणु
+	काष्ठा cdrom_info *info = drive->driver_data;
 
 	ide_debug_log(IDE_DBG_FUNC, "enter");
 
-	ide_proc_unregister_driver(drive, info->driver);
+	ide_proc_unरेजिस्टर_driver(drive, info->driver);
 	device_del(&info->dev);
 	del_gendisk(info->disk);
 
 	mutex_lock(&idecd_ref_mutex);
 	put_device(&info->dev);
 	mutex_unlock(&idecd_ref_mutex);
-}
+पूर्ण
 
-static void ide_cd_release(struct device *dev)
-{
-	struct cdrom_info *info = to_ide_drv(dev, cdrom_info);
-	struct cdrom_device_info *devinfo = &info->devinfo;
+अटल व्योम ide_cd_release(काष्ठा device *dev)
+अणु
+	काष्ठा cdrom_info *info = to_ide_drv(dev, cdrom_info);
+	काष्ठा cdrom_device_info *devinfo = &info->devinfo;
 	ide_drive_t *drive = info->drive;
-	struct gendisk *g = info->disk;
+	काष्ठा gendisk *g = info->disk;
 
 	ide_debug_log(IDE_DBG_FUNC, "enter");
 
-	kfree(info->toc);
-	if (devinfo->handle == drive)
-		unregister_cdrom(devinfo);
-	drive->driver_data = NULL;
-	drive->prep_rq = NULL;
-	g->private_data = NULL;
+	kमुक्त(info->toc);
+	अगर (devinfo->handle == drive)
+		unरेजिस्टर_cdrom(devinfo);
+	drive->driver_data = शून्य;
+	drive->prep_rq = शून्य;
+	g->निजी_data = शून्य;
 	put_disk(g);
-	kfree(info);
-}
+	kमुक्त(info);
+पूर्ण
 
-static int ide_cd_probe(ide_drive_t *);
+अटल पूर्णांक ide_cd_probe(ide_drive_t *);
 
-static struct ide_driver ide_cdrom_driver = {
-	.gen_driver = {
+अटल काष्ठा ide_driver ide_cdrom_driver = अणु
+	.gen_driver = अणु
 		.owner		= THIS_MODULE,
 		.name		= "ide-cdrom",
 		.bus		= &ide_bus_type,
-	},
+	पूर्ण,
 	.probe			= ide_cd_probe,
-	.remove			= ide_cd_remove,
+	.हटाओ			= ide_cd_हटाओ,
 	.version		= IDECD_VERSION,
-	.do_request		= ide_cd_do_request,
-#ifdef CONFIG_IDE_PROC_FS
+	.करो_request		= ide_cd_करो_request,
+#अगर_घोषित CONFIG_IDE_PROC_FS
 	.proc_entries		= ide_cd_proc_entries,
 	.proc_devsets		= ide_cd_proc_devsets,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int idecd_open(struct block_device *bdev, fmode_t mode)
-{
-	struct cdrom_info *info;
-	int rc = -ENXIO;
+अटल पूर्णांक idecd_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
+अणु
+	काष्ठा cdrom_info *info;
+	पूर्णांक rc = -ENXIO;
 
-	if (bdev_check_media_change(bdev)) {
+	अगर (bdev_check_media_change(bdev)) अणु
 		info = ide_drv_g(bdev->bd_disk, cdrom_info);
 
-		ide_cd_read_toc(info->drive);
-	}
+		ide_cd_पढ़ो_toc(info->drive);
+	पूर्ण
 
 	mutex_lock(&ide_cd_mutex);
 	info = ide_cd_get(bdev->bd_disk);
-	if (!info)
-		goto out;
+	अगर (!info)
+		जाओ out;
 
-	rc = cdrom_open(&info->devinfo, bdev, mode);
-	if (rc < 0)
+	rc = cdrom_खोलो(&info->devinfo, bdev, mode);
+	अगर (rc < 0)
 		ide_cd_put(info);
 out:
 	mutex_unlock(&ide_cd_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void idecd_release(struct gendisk *disk, fmode_t mode)
-{
-	struct cdrom_info *info = ide_drv_g(disk, cdrom_info);
+अटल व्योम idecd_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
+अणु
+	काष्ठा cdrom_info *info = ide_drv_g(disk, cdrom_info);
 
 	mutex_lock(&ide_cd_mutex);
 	cdrom_release(&info->devinfo, mode);
 
 	ide_cd_put(info);
 	mutex_unlock(&ide_cd_mutex);
-}
+पूर्ण
 
-static int idecd_set_spindown(struct cdrom_device_info *cdi, unsigned long arg)
-{
-	struct packet_command cgc;
-	char buffer[16];
-	int stat;
-	char spindown;
+अटल पूर्णांक idecd_set_spinकरोwn(काष्ठा cdrom_device_info *cdi, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा packet_command cgc;
+	अक्षर buffer[16];
+	पूर्णांक stat;
+	अक्षर spinकरोwn;
 
-	if (copy_from_user(&spindown, (void __user *)arg, sizeof(char)))
-		return -EFAULT;
+	अगर (copy_from_user(&spinकरोwn, (व्योम __user *)arg, माप(अक्षर)))
+		वापस -EFAULT;
 
-	init_cdrom_command(&cgc, buffer, sizeof(buffer), CGC_DATA_UNKNOWN);
-
-	stat = cdrom_mode_sense(cdi, &cgc, GPMODE_CDROM_PAGE, 0);
-	if (stat)
-		return stat;
-
-	buffer[11] = (buffer[11] & 0xf0) | (spindown & 0x0f);
-	return cdrom_mode_select(cdi, &cgc);
-}
-
-static int idecd_get_spindown(struct cdrom_device_info *cdi, unsigned long arg)
-{
-	struct packet_command cgc;
-	char buffer[16];
-	int stat;
-	char spindown;
-
-	init_cdrom_command(&cgc, buffer, sizeof(buffer), CGC_DATA_UNKNOWN);
+	init_cdrom_command(&cgc, buffer, माप(buffer), CGC_DATA_UNKNOWN);
 
 	stat = cdrom_mode_sense(cdi, &cgc, GPMODE_CDROM_PAGE, 0);
-	if (stat)
-		return stat;
+	अगर (stat)
+		वापस stat;
 
-	spindown = buffer[11] & 0x0f;
-	if (copy_to_user((void __user *)arg, &spindown, sizeof(char)))
-		return -EFAULT;
-	return 0;
-}
+	buffer[11] = (buffer[11] & 0xf0) | (spinकरोwn & 0x0f);
+	वापस cdrom_mode_select(cdi, &cgc);
+पूर्ण
 
-static int idecd_locked_ioctl(struct block_device *bdev, fmode_t mode,
-			unsigned int cmd, unsigned long arg)
-{
-	struct cdrom_info *info = ide_drv_g(bdev->bd_disk, cdrom_info);
-	int err;
+अटल पूर्णांक idecd_get_spinकरोwn(काष्ठा cdrom_device_info *cdi, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा packet_command cgc;
+	अक्षर buffer[16];
+	पूर्णांक stat;
+	अक्षर spinकरोwn;
 
-	switch (cmd) {
-	case CDROMSETSPINDOWN:
-		return idecd_set_spindown(&info->devinfo, arg);
-	case CDROMGETSPINDOWN:
-		return idecd_get_spindown(&info->devinfo, arg);
-	default:
-		break;
-	}
+	init_cdrom_command(&cgc, buffer, माप(buffer), CGC_DATA_UNKNOWN);
+
+	stat = cdrom_mode_sense(cdi, &cgc, GPMODE_CDROM_PAGE, 0);
+	अगर (stat)
+		वापस stat;
+
+	spinकरोwn = buffer[11] & 0x0f;
+	अगर (copy_to_user((व्योम __user *)arg, &spinकरोwn, माप(अक्षर)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक idecd_locked_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा cdrom_info *info = ide_drv_g(bdev->bd_disk, cdrom_info);
+	पूर्णांक err;
+
+	चयन (cmd) अणु
+	हाल CDROMSETSPINDOWN:
+		वापस idecd_set_spinकरोwn(&info->devinfo, arg);
+	हाल CDROMGETSPINDOWN:
+		वापस idecd_get_spinकरोwn(&info->devinfo, arg);
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	err = generic_ide_ioctl(info->drive, bdev, cmd, arg);
-	if (err == -EINVAL)
+	अगर (err == -EINVAL)
 		err = cdrom_ioctl(&info->devinfo, bdev, mode, cmd, arg);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int idecd_ioctl(struct block_device *bdev, fmode_t mode,
-			     unsigned int cmd, unsigned long arg)
-{
-	int ret;
+अटल पूर्णांक idecd_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+			     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&ide_cd_mutex);
 	ret = idecd_locked_ioctl(bdev, mode, cmd, arg);
 	mutex_unlock(&ide_cd_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int idecd_locked_compat_ioctl(struct block_device *bdev, fmode_t mode,
-			unsigned int cmd, unsigned long arg)
-{
-	struct cdrom_info *info = ide_drv_g(bdev->bd_disk, cdrom_info);
-	void __user *argp = compat_ptr(arg);
-	int err;
+अटल पूर्णांक idecd_locked_compat_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा cdrom_info *info = ide_drv_g(bdev->bd_disk, cdrom_info);
+	व्योम __user *argp = compat_ptr(arg);
+	पूर्णांक err;
 
-	switch (cmd) {
-	case CDROMSETSPINDOWN:
-		return idecd_set_spindown(&info->devinfo, (unsigned long)argp);
-	case CDROMGETSPINDOWN:
-		return idecd_get_spindown(&info->devinfo, (unsigned long)argp);
-	default:
-		break;
-	}
+	चयन (cmd) अणु
+	हाल CDROMSETSPINDOWN:
+		वापस idecd_set_spinकरोwn(&info->devinfo, (अचिन्हित दीर्घ)argp);
+	हाल CDROMGETSPINDOWN:
+		वापस idecd_get_spinकरोwn(&info->devinfo, (अचिन्हित दीर्घ)argp);
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	err = generic_ide_ioctl(info->drive, bdev, cmd, arg);
-	if (err == -EINVAL)
+	अगर (err == -EINVAL)
 		err = cdrom_ioctl(&info->devinfo, bdev, mode, cmd,
-				  (unsigned long)argp);
+				  (अचिन्हित दीर्घ)argp);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int idecd_compat_ioctl(struct block_device *bdev, fmode_t mode,
-			     unsigned int cmd, unsigned long arg)
-{
-	int ret;
+अटल पूर्णांक idecd_compat_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+			     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&ide_cd_mutex);
 	ret = idecd_locked_compat_ioctl(bdev, mode, cmd, arg);
 	mutex_unlock(&ide_cd_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int idecd_check_events(struct gendisk *disk,
-				       unsigned int clearing)
-{
-	struct cdrom_info *info = ide_drv_g(disk, cdrom_info);
-	return cdrom_check_events(&info->devinfo, clearing);
-}
+अटल अचिन्हित पूर्णांक idecd_check_events(काष्ठा gendisk *disk,
+				       अचिन्हित पूर्णांक clearing)
+अणु
+	काष्ठा cdrom_info *info = ide_drv_g(disk, cdrom_info);
+	वापस cdrom_check_events(&info->devinfo, clearing);
+पूर्ण
 
-static const struct block_device_operations idecd_ops = {
+अटल स्थिर काष्ठा block_device_operations idecd_ops = अणु
 	.owner			= THIS_MODULE,
-	.open			= idecd_open,
+	.खोलो			= idecd_खोलो,
 	.release		= idecd_release,
 	.ioctl			= idecd_ioctl,
 	.compat_ioctl		= IS_ENABLED(CONFIG_COMPAT) ?
-				  idecd_compat_ioctl : NULL,
+				  idecd_compat_ioctl : शून्य,
 	.check_events		= idecd_check_events,
-};
+पूर्ण;
 
 /* module options */
-static unsigned long debug_mask;
-module_param(debug_mask, ulong, 0644);
+अटल अचिन्हित दीर्घ debug_mask;
+module_param(debug_mask, uदीर्घ, 0644);
 
 MODULE_DESCRIPTION("ATAPI CD-ROM Driver");
 
-static int ide_cd_probe(ide_drive_t *drive)
-{
-	struct cdrom_info *info;
-	struct gendisk *g;
+अटल पूर्णांक ide_cd_probe(ide_drive_t *drive)
+अणु
+	काष्ठा cdrom_info *info;
+	काष्ठा gendisk *g;
 
 	ide_debug_log(IDE_DBG_PROBE, "driver_req: %s, media: 0x%x",
 				     drive->driver_req, drive->media);
 
-	if (!strstr("ide-cdrom", drive->driver_req))
-		goto failed;
+	अगर (!म_माला("ide-cdrom", drive->driver_req))
+		जाओ failed;
 
-	if (drive->media != ide_cdrom && drive->media != ide_optical)
-		goto failed;
+	अगर (drive->media != ide_cdrom && drive->media != ide_optical)
+		जाओ failed;
 
 	drive->debug_mask = debug_mask;
-	drive->irq_handler = cdrom_newpc_intr;
+	drive->irq_handler = cdrom_newpc_पूर्णांकr;
 
-	info = kzalloc(sizeof(struct cdrom_info), GFP_KERNEL);
-	if (info == NULL) {
-		printk(KERN_ERR PFX "%s: Can't allocate a cdrom structure\n",
+	info = kzalloc(माप(काष्ठा cdrom_info), GFP_KERNEL);
+	अगर (info == शून्य) अणु
+		prपूर्णांकk(KERN_ERR PFX "%s: Can't allocate a cdrom structure\n",
 				drive->name);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	g = alloc_disk(1 << PARTN_BITS);
-	if (!g)
-		goto out_free_cd;
+	अगर (!g)
+		जाओ out_मुक्त_cd;
 
 	ide_init_disk(g, drive);
 
@@ -1807,52 +1808,52 @@ static int ide_cd_probe(ide_drive_t *drive)
 	info->dev.release = ide_cd_release;
 	dev_set_name(&info->dev, "%s", dev_name(&drive->gendev));
 
-	if (device_register(&info->dev))
-		goto out_free_disk;
+	अगर (device_रेजिस्टर(&info->dev))
+		जाओ out_मुक्त_disk;
 
 	info->drive = drive;
 	info->driver = &ide_cdrom_driver;
 	info->disk = g;
 
-	g->private_data = &info->driver;
+	g->निजी_data = &info->driver;
 
 	drive->driver_data = info;
 
 	g->minors = 1;
 	g->flags = GENHD_FL_CD | GENHD_FL_REMOVABLE;
-	if (ide_cdrom_setup(drive)) {
+	अगर (ide_cdrom_setup(drive)) अणु
 		put_device(&info->dev);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	ide_cd_read_toc(drive);
+	ide_cd_पढ़ो_toc(drive);
 	g->fops = &idecd_ops;
 	g->flags |= GENHD_FL_REMOVABLE | GENHD_FL_BLOCK_EVENTS_ON_EXCL_WRITE;
 	g->events = DISK_EVENT_MEDIA_CHANGE;
-	device_add_disk(&drive->gendev, g, NULL);
-	return 0;
+	device_add_disk(&drive->gendev, g, शून्य);
+	वापस 0;
 
-out_free_disk:
+out_मुक्त_disk:
 	put_disk(g);
-out_free_cd:
-	kfree(info);
+out_मुक्त_cd:
+	kमुक्त(info);
 failed:
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void __exit ide_cdrom_exit(void)
-{
-	driver_unregister(&ide_cdrom_driver.gen_driver);
-}
+अटल व्योम __निकास ide_cdrom_निकास(व्योम)
+अणु
+	driver_unरेजिस्टर(&ide_cdrom_driver.gen_driver);
+पूर्ण
 
-static int __init ide_cdrom_init(void)
-{
-	printk(KERN_INFO DRV_NAME " driver " IDECD_VERSION "\n");
-	return driver_register(&ide_cdrom_driver.gen_driver);
-}
+अटल पूर्णांक __init ide_cdrom_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO DRV_NAME " driver " IDECD_VERSION "\n");
+	वापस driver_रेजिस्टर(&ide_cdrom_driver.gen_driver);
+पूर्ण
 
 MODULE_ALIAS("ide:*m-cdrom*");
 MODULE_ALIAS("ide-cd");
 module_init(ide_cdrom_init);
-module_exit(ide_cdrom_exit);
+module_निकास(ide_cdrom_निकास);
 MODULE_LICENSE("GPL");

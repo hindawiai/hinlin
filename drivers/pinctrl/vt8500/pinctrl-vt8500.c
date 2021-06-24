@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Pinctrl data for VIA VT8500 SoC
+ * Pinctrl data क्रम VIA VT8500 SoC
  *
  * Copyright (c) 2013 Tony Prisk <linux@prisktech.co.nz>
  */
 
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "pinctrl-wmt.h"
+#समावेश "pinctrl-wmt.h"
 
 /*
- * Describe the register offsets within the GPIO memory space
- * The dedicated external GPIO's should always be listed in bank 0
+ * Describe the रेजिस्टर offsets within the GPIO memory space
+ * The dedicated बाह्यal GPIO's should always be listed in bank 0
  * so they are exported in the 0..31 range which is what users
  * expect.
  *
  * Do not reorder these banks as it will change the pin numbering
  */
-static const struct wmt_pinctrl_bank_registers vt8500_banks[] = {
+अटल स्थिर काष्ठा wmt_pinctrl_bank_रेजिस्टरs vt8500_banks[] = अणु
 	WMT_PINCTRL_BANK(NO_REG, 0x3C, 0x5C, 0x7C, NO_REG, NO_REG),	/* 0 */
 	WMT_PINCTRL_BANK(0x00, 0x20, 0x40, 0x60, NO_REG, NO_REG),	/* 1 */
 	WMT_PINCTRL_BANK(0x04, 0x24, 0x44, 0x64, NO_REG, NO_REG),	/* 2 */
@@ -29,146 +30,146 @@ static const struct wmt_pinctrl_bank_registers vt8500_banks[] = {
 	WMT_PINCTRL_BANK(0x0C, 0x2C, 0x4C, 0x6C, NO_REG, NO_REG),	/* 4 */
 	WMT_PINCTRL_BANK(0x10, 0x30, 0x50, 0x70, NO_REG, NO_REG),	/* 5 */
 	WMT_PINCTRL_BANK(0x14, 0x34, 0x54, 0x74, NO_REG, NO_REG),	/* 6 */
-};
+पूर्ण;
 
 /* Please keep sorted by bank/bit */
-#define WMT_PIN_EXTGPIO0	WMT_PIN(0, 0)
-#define WMT_PIN_EXTGPIO1	WMT_PIN(0, 1)
-#define WMT_PIN_EXTGPIO2	WMT_PIN(0, 2)
-#define WMT_PIN_EXTGPIO3	WMT_PIN(0, 3)
-#define WMT_PIN_EXTGPIO4	WMT_PIN(0, 4)
-#define WMT_PIN_EXTGPIO5	WMT_PIN(0, 5)
-#define WMT_PIN_EXTGPIO6	WMT_PIN(0, 6)
-#define WMT_PIN_EXTGPIO7	WMT_PIN(0, 7)
-#define WMT_PIN_EXTGPIO8	WMT_PIN(0, 8)
-#define WMT_PIN_UART0RTS	WMT_PIN(1, 0)
-#define WMT_PIN_UART0TXD	WMT_PIN(1, 1)
-#define WMT_PIN_UART0CTS	WMT_PIN(1, 2)
-#define WMT_PIN_UART0RXD	WMT_PIN(1, 3)
-#define WMT_PIN_UART1RTS	WMT_PIN(1, 4)
-#define WMT_PIN_UART1TXD	WMT_PIN(1, 5)
-#define WMT_PIN_UART1CTS	WMT_PIN(1, 6)
-#define WMT_PIN_UART1RXD	WMT_PIN(1, 7)
-#define WMT_PIN_SPI0CLK		WMT_PIN(1, 8)
-#define WMT_PIN_SPI0SS		WMT_PIN(1, 9)
-#define WMT_PIN_SPI0MISO	WMT_PIN(1, 10)
-#define WMT_PIN_SPI0MOSI	WMT_PIN(1, 11)
-#define WMT_PIN_SPI1CLK		WMT_PIN(1, 12)
-#define WMT_PIN_SPI1SS		WMT_PIN(1, 13)
-#define WMT_PIN_SPI1MISO	WMT_PIN(1, 14)
-#define WMT_PIN_SPI1MOSI	WMT_PIN(1, 15)
-#define WMT_PIN_SPI2CLK		WMT_PIN(1, 16)
-#define WMT_PIN_SPI2SS		WMT_PIN(1, 17)
-#define WMT_PIN_SPI2MISO	WMT_PIN(1, 18)
-#define WMT_PIN_SPI2MOSI	WMT_PIN(1, 19)
-#define WMT_PIN_SDDATA0		WMT_PIN(2, 0)
-#define WMT_PIN_SDDATA1		WMT_PIN(2, 1)
-#define WMT_PIN_SDDATA2		WMT_PIN(2, 2)
-#define WMT_PIN_SDDATA3		WMT_PIN(2, 3)
-#define WMT_PIN_MMCDATA0	WMT_PIN(2, 4)
-#define WMT_PIN_MMCDATA1	WMT_PIN(2, 5)
-#define WMT_PIN_MMCDATA2	WMT_PIN(2, 6)
-#define WMT_PIN_MMCDATA3	WMT_PIN(2, 7)
-#define WMT_PIN_SDCLK		WMT_PIN(2, 8)
-#define WMT_PIN_SDWP		WMT_PIN(2, 9)
-#define WMT_PIN_SDCMD		WMT_PIN(2, 10)
-#define WMT_PIN_MSDATA0		WMT_PIN(2, 16)
-#define WMT_PIN_MSDATA1		WMT_PIN(2, 17)
-#define WMT_PIN_MSDATA2		WMT_PIN(2, 18)
-#define WMT_PIN_MSDATA3		WMT_PIN(2, 19)
-#define WMT_PIN_MSCLK		WMT_PIN(2, 20)
-#define WMT_PIN_MSBS		WMT_PIN(2, 21)
-#define WMT_PIN_MSINS		WMT_PIN(2, 22)
-#define WMT_PIN_I2C0SCL		WMT_PIN(2, 24)
-#define WMT_PIN_I2C0SDA		WMT_PIN(2, 25)
-#define WMT_PIN_I2C1SCL		WMT_PIN(2, 26)
-#define WMT_PIN_I2C1SDA		WMT_PIN(2, 27)
-#define WMT_PIN_MII0RXD0	WMT_PIN(3, 0)
-#define WMT_PIN_MII0RXD1	WMT_PIN(3, 1)
-#define WMT_PIN_MII0RXD2	WMT_PIN(3, 2)
-#define WMT_PIN_MII0RXD3	WMT_PIN(3, 3)
-#define WMT_PIN_MII0RXCLK	WMT_PIN(3, 4)
-#define WMT_PIN_MII0RXDV	WMT_PIN(3, 5)
-#define WMT_PIN_MII0RXERR	WMT_PIN(3, 6)
-#define WMT_PIN_MII0PHYRST	WMT_PIN(3, 7)
-#define WMT_PIN_MII0TXD0	WMT_PIN(3, 8)
-#define WMT_PIN_MII0TXD1	WMT_PIN(3, 9)
-#define WMT_PIN_MII0TXD2	WMT_PIN(3, 10)
-#define WMT_PIN_MII0TXD3	WMT_PIN(3, 11)
-#define WMT_PIN_MII0TXCLK	WMT_PIN(3, 12)
-#define WMT_PIN_MII0TXEN	WMT_PIN(3, 13)
-#define WMT_PIN_MII0TXERR	WMT_PIN(3, 14)
-#define WMT_PIN_MII0PHYPD	WMT_PIN(3, 15)
-#define WMT_PIN_MII0COL		WMT_PIN(3, 16)
-#define WMT_PIN_MII0CRS		WMT_PIN(3, 17)
-#define WMT_PIN_MII0MDIO	WMT_PIN(3, 18)
-#define WMT_PIN_MII0MDC		WMT_PIN(3, 19)
-#define WMT_PIN_SEECS		WMT_PIN(3, 20)
-#define WMT_PIN_SEECK		WMT_PIN(3, 21)
-#define WMT_PIN_SEEDI		WMT_PIN(3, 22)
-#define WMT_PIN_SEEDO		WMT_PIN(3, 23)
-#define WMT_PIN_IDEDREQ0	WMT_PIN(3, 24)
-#define WMT_PIN_IDEDREQ1	WMT_PIN(3, 25)
-#define WMT_PIN_IDEIOW		WMT_PIN(3, 26)
-#define WMT_PIN_IDEIOR		WMT_PIN(3, 27)
-#define WMT_PIN_IDEDACK		WMT_PIN(3, 28)
-#define WMT_PIN_IDEIORDY	WMT_PIN(3, 29)
-#define WMT_PIN_IDEINTRQ	WMT_PIN(3, 30)
-#define WMT_PIN_VDIN0		WMT_PIN(4, 0)
-#define WMT_PIN_VDIN1		WMT_PIN(4, 1)
-#define WMT_PIN_VDIN2		WMT_PIN(4, 2)
-#define WMT_PIN_VDIN3		WMT_PIN(4, 3)
-#define WMT_PIN_VDIN4		WMT_PIN(4, 4)
-#define WMT_PIN_VDIN5		WMT_PIN(4, 5)
-#define WMT_PIN_VDIN6		WMT_PIN(4, 6)
-#define WMT_PIN_VDIN7		WMT_PIN(4, 7)
-#define WMT_PIN_VDOUT0		WMT_PIN(4, 8)
-#define WMT_PIN_VDOUT1		WMT_PIN(4, 9)
-#define WMT_PIN_VDOUT2		WMT_PIN(4, 10)
-#define WMT_PIN_VDOUT3		WMT_PIN(4, 11)
-#define WMT_PIN_VDOUT4		WMT_PIN(4, 12)
-#define WMT_PIN_VDOUT5		WMT_PIN(4, 13)
-#define WMT_PIN_NANDCLE0	WMT_PIN(4, 14)
-#define WMT_PIN_NANDCLE1	WMT_PIN(4, 15)
-#define WMT_PIN_VDOUT6_7	WMT_PIN(4, 16)
-#define WMT_PIN_VHSYNC		WMT_PIN(4, 17)
-#define WMT_PIN_VVSYNC		WMT_PIN(4, 18)
-#define WMT_PIN_TSDIN0		WMT_PIN(5, 8)
-#define WMT_PIN_TSDIN1		WMT_PIN(5, 9)
-#define WMT_PIN_TSDIN2		WMT_PIN(5, 10)
-#define WMT_PIN_TSDIN3		WMT_PIN(5, 11)
-#define WMT_PIN_TSDIN4		WMT_PIN(5, 12)
-#define WMT_PIN_TSDIN5		WMT_PIN(5, 13)
-#define WMT_PIN_TSDIN6		WMT_PIN(5, 14)
-#define WMT_PIN_TSDIN7		WMT_PIN(5, 15)
-#define WMT_PIN_TSSYNC		WMT_PIN(5, 16)
-#define WMT_PIN_TSVALID		WMT_PIN(5, 17)
-#define WMT_PIN_TSCLK		WMT_PIN(5, 18)
-#define WMT_PIN_LCDD0		WMT_PIN(6, 0)
-#define WMT_PIN_LCDD1		WMT_PIN(6, 1)
-#define WMT_PIN_LCDD2		WMT_PIN(6, 2)
-#define WMT_PIN_LCDD3		WMT_PIN(6, 3)
-#define WMT_PIN_LCDD4		WMT_PIN(6, 4)
-#define WMT_PIN_LCDD5		WMT_PIN(6, 5)
-#define WMT_PIN_LCDD6		WMT_PIN(6, 6)
-#define WMT_PIN_LCDD7		WMT_PIN(6, 7)
-#define WMT_PIN_LCDD8		WMT_PIN(6, 8)
-#define WMT_PIN_LCDD9		WMT_PIN(6, 9)
-#define WMT_PIN_LCDD10		WMT_PIN(6, 10)
-#define WMT_PIN_LCDD11		WMT_PIN(6, 11)
-#define WMT_PIN_LCDD12		WMT_PIN(6, 12)
-#define WMT_PIN_LCDD13		WMT_PIN(6, 13)
-#define WMT_PIN_LCDD14		WMT_PIN(6, 14)
-#define WMT_PIN_LCDD15		WMT_PIN(6, 15)
-#define WMT_PIN_LCDD16		WMT_PIN(6, 16)
-#define WMT_PIN_LCDD17		WMT_PIN(6, 17)
-#define WMT_PIN_LCDCLK		WMT_PIN(6, 18)
-#define WMT_PIN_LCDDEN		WMT_PIN(6, 19)
-#define WMT_PIN_LCDLINE		WMT_PIN(6, 20)
-#define WMT_PIN_LCDFRM		WMT_PIN(6, 21)
-#define WMT_PIN_LCDBIAS		WMT_PIN(6, 22)
+#घोषणा WMT_PIN_EXTGPIO0	WMT_PIN(0, 0)
+#घोषणा WMT_PIN_EXTGPIO1	WMT_PIN(0, 1)
+#घोषणा WMT_PIN_EXTGPIO2	WMT_PIN(0, 2)
+#घोषणा WMT_PIN_EXTGPIO3	WMT_PIN(0, 3)
+#घोषणा WMT_PIN_EXTGPIO4	WMT_PIN(0, 4)
+#घोषणा WMT_PIN_EXTGPIO5	WMT_PIN(0, 5)
+#घोषणा WMT_PIN_EXTGPIO6	WMT_PIN(0, 6)
+#घोषणा WMT_PIN_EXTGPIO7	WMT_PIN(0, 7)
+#घोषणा WMT_PIN_EXTGPIO8	WMT_PIN(0, 8)
+#घोषणा WMT_PIN_UART0RTS	WMT_PIN(1, 0)
+#घोषणा WMT_PIN_UART0TXD	WMT_PIN(1, 1)
+#घोषणा WMT_PIN_UART0CTS	WMT_PIN(1, 2)
+#घोषणा WMT_PIN_UART0RXD	WMT_PIN(1, 3)
+#घोषणा WMT_PIN_UART1RTS	WMT_PIN(1, 4)
+#घोषणा WMT_PIN_UART1TXD	WMT_PIN(1, 5)
+#घोषणा WMT_PIN_UART1CTS	WMT_PIN(1, 6)
+#घोषणा WMT_PIN_UART1RXD	WMT_PIN(1, 7)
+#घोषणा WMT_PIN_SPI0CLK		WMT_PIN(1, 8)
+#घोषणा WMT_PIN_SPI0SS		WMT_PIN(1, 9)
+#घोषणा WMT_PIN_SPI0MISO	WMT_PIN(1, 10)
+#घोषणा WMT_PIN_SPI0MOSI	WMT_PIN(1, 11)
+#घोषणा WMT_PIN_SPI1CLK		WMT_PIN(1, 12)
+#घोषणा WMT_PIN_SPI1SS		WMT_PIN(1, 13)
+#घोषणा WMT_PIN_SPI1MISO	WMT_PIN(1, 14)
+#घोषणा WMT_PIN_SPI1MOSI	WMT_PIN(1, 15)
+#घोषणा WMT_PIN_SPI2CLK		WMT_PIN(1, 16)
+#घोषणा WMT_PIN_SPI2SS		WMT_PIN(1, 17)
+#घोषणा WMT_PIN_SPI2MISO	WMT_PIN(1, 18)
+#घोषणा WMT_PIN_SPI2MOSI	WMT_PIN(1, 19)
+#घोषणा WMT_PIN_SDDATA0		WMT_PIN(2, 0)
+#घोषणा WMT_PIN_SDDATA1		WMT_PIN(2, 1)
+#घोषणा WMT_PIN_SDDATA2		WMT_PIN(2, 2)
+#घोषणा WMT_PIN_SDDATA3		WMT_PIN(2, 3)
+#घोषणा WMT_PIN_MMCDATA0	WMT_PIN(2, 4)
+#घोषणा WMT_PIN_MMCDATA1	WMT_PIN(2, 5)
+#घोषणा WMT_PIN_MMCDATA2	WMT_PIN(2, 6)
+#घोषणा WMT_PIN_MMCDATA3	WMT_PIN(2, 7)
+#घोषणा WMT_PIN_SDCLK		WMT_PIN(2, 8)
+#घोषणा WMT_PIN_SDWP		WMT_PIN(2, 9)
+#घोषणा WMT_PIN_SDCMD		WMT_PIN(2, 10)
+#घोषणा WMT_PIN_MSDATA0		WMT_PIN(2, 16)
+#घोषणा WMT_PIN_MSDATA1		WMT_PIN(2, 17)
+#घोषणा WMT_PIN_MSDATA2		WMT_PIN(2, 18)
+#घोषणा WMT_PIN_MSDATA3		WMT_PIN(2, 19)
+#घोषणा WMT_PIN_MSCLK		WMT_PIN(2, 20)
+#घोषणा WMT_PIN_MSBS		WMT_PIN(2, 21)
+#घोषणा WMT_PIN_MSINS		WMT_PIN(2, 22)
+#घोषणा WMT_PIN_I2C0SCL		WMT_PIN(2, 24)
+#घोषणा WMT_PIN_I2C0SDA		WMT_PIN(2, 25)
+#घोषणा WMT_PIN_I2C1SCL		WMT_PIN(2, 26)
+#घोषणा WMT_PIN_I2C1SDA		WMT_PIN(2, 27)
+#घोषणा WMT_PIN_MII0RXD0	WMT_PIN(3, 0)
+#घोषणा WMT_PIN_MII0RXD1	WMT_PIN(3, 1)
+#घोषणा WMT_PIN_MII0RXD2	WMT_PIN(3, 2)
+#घोषणा WMT_PIN_MII0RXD3	WMT_PIN(3, 3)
+#घोषणा WMT_PIN_MII0RXCLK	WMT_PIN(3, 4)
+#घोषणा WMT_PIN_MII0RXDV	WMT_PIN(3, 5)
+#घोषणा WMT_PIN_MII0RXERR	WMT_PIN(3, 6)
+#घोषणा WMT_PIN_MII0PHYRST	WMT_PIN(3, 7)
+#घोषणा WMT_PIN_MII0TXD0	WMT_PIN(3, 8)
+#घोषणा WMT_PIN_MII0TXD1	WMT_PIN(3, 9)
+#घोषणा WMT_PIN_MII0TXD2	WMT_PIN(3, 10)
+#घोषणा WMT_PIN_MII0TXD3	WMT_PIN(3, 11)
+#घोषणा WMT_PIN_MII0TXCLK	WMT_PIN(3, 12)
+#घोषणा WMT_PIN_MII0TXEN	WMT_PIN(3, 13)
+#घोषणा WMT_PIN_MII0TXERR	WMT_PIN(3, 14)
+#घोषणा WMT_PIN_MII0PHYPD	WMT_PIN(3, 15)
+#घोषणा WMT_PIN_MII0COL		WMT_PIN(3, 16)
+#घोषणा WMT_PIN_MII0CRS		WMT_PIN(3, 17)
+#घोषणा WMT_PIN_MII0MDIO	WMT_PIN(3, 18)
+#घोषणा WMT_PIN_MII0MDC		WMT_PIN(3, 19)
+#घोषणा WMT_PIN_SEECS		WMT_PIN(3, 20)
+#घोषणा WMT_PIN_SEECK		WMT_PIN(3, 21)
+#घोषणा WMT_PIN_SEEDI		WMT_PIN(3, 22)
+#घोषणा WMT_PIN_SEEDO		WMT_PIN(3, 23)
+#घोषणा WMT_PIN_IDEDREQ0	WMT_PIN(3, 24)
+#घोषणा WMT_PIN_IDEDREQ1	WMT_PIN(3, 25)
+#घोषणा WMT_PIN_IDEIOW		WMT_PIN(3, 26)
+#घोषणा WMT_PIN_IDEIOR		WMT_PIN(3, 27)
+#घोषणा WMT_PIN_IDEDACK		WMT_PIN(3, 28)
+#घोषणा WMT_PIN_IDEIORDY	WMT_PIN(3, 29)
+#घोषणा WMT_PIN_IDEINTRQ	WMT_PIN(3, 30)
+#घोषणा WMT_PIN_VDIN0		WMT_PIN(4, 0)
+#घोषणा WMT_PIN_VDIN1		WMT_PIN(4, 1)
+#घोषणा WMT_PIN_VDIN2		WMT_PIN(4, 2)
+#घोषणा WMT_PIN_VDIN3		WMT_PIN(4, 3)
+#घोषणा WMT_PIN_VDIN4		WMT_PIN(4, 4)
+#घोषणा WMT_PIN_VDIN5		WMT_PIN(4, 5)
+#घोषणा WMT_PIN_VDIN6		WMT_PIN(4, 6)
+#घोषणा WMT_PIN_VDIN7		WMT_PIN(4, 7)
+#घोषणा WMT_PIN_VDOUT0		WMT_PIN(4, 8)
+#घोषणा WMT_PIN_VDOUT1		WMT_PIN(4, 9)
+#घोषणा WMT_PIN_VDOUT2		WMT_PIN(4, 10)
+#घोषणा WMT_PIN_VDOUT3		WMT_PIN(4, 11)
+#घोषणा WMT_PIN_VDOUT4		WMT_PIN(4, 12)
+#घोषणा WMT_PIN_VDOUT5		WMT_PIN(4, 13)
+#घोषणा WMT_PIN_न_अंकDCLE0	WMT_PIN(4, 14)
+#घोषणा WMT_PIN_न_अंकDCLE1	WMT_PIN(4, 15)
+#घोषणा WMT_PIN_VDOUT6_7	WMT_PIN(4, 16)
+#घोषणा WMT_PIN_VHSYNC		WMT_PIN(4, 17)
+#घोषणा WMT_PIN_VVSYNC		WMT_PIN(4, 18)
+#घोषणा WMT_PIN_TSDIN0		WMT_PIN(5, 8)
+#घोषणा WMT_PIN_TSDIN1		WMT_PIN(5, 9)
+#घोषणा WMT_PIN_TSDIN2		WMT_PIN(5, 10)
+#घोषणा WMT_PIN_TSDIN3		WMT_PIN(5, 11)
+#घोषणा WMT_PIN_TSDIN4		WMT_PIN(5, 12)
+#घोषणा WMT_PIN_TSDIN5		WMT_PIN(5, 13)
+#घोषणा WMT_PIN_TSDIN6		WMT_PIN(5, 14)
+#घोषणा WMT_PIN_TSDIN7		WMT_PIN(5, 15)
+#घोषणा WMT_PIN_TSSYNC		WMT_PIN(5, 16)
+#घोषणा WMT_PIN_TSVALID		WMT_PIN(5, 17)
+#घोषणा WMT_PIN_TSCLK		WMT_PIN(5, 18)
+#घोषणा WMT_PIN_LCDD0		WMT_PIN(6, 0)
+#घोषणा WMT_PIN_LCDD1		WMT_PIN(6, 1)
+#घोषणा WMT_PIN_LCDD2		WMT_PIN(6, 2)
+#घोषणा WMT_PIN_LCDD3		WMT_PIN(6, 3)
+#घोषणा WMT_PIN_LCDD4		WMT_PIN(6, 4)
+#घोषणा WMT_PIN_LCDD5		WMT_PIN(6, 5)
+#घोषणा WMT_PIN_LCDD6		WMT_PIN(6, 6)
+#घोषणा WMT_PIN_LCDD7		WMT_PIN(6, 7)
+#घोषणा WMT_PIN_LCDD8		WMT_PIN(6, 8)
+#घोषणा WMT_PIN_LCDD9		WMT_PIN(6, 9)
+#घोषणा WMT_PIN_LCDD10		WMT_PIN(6, 10)
+#घोषणा WMT_PIN_LCDD11		WMT_PIN(6, 11)
+#घोषणा WMT_PIN_LCDD12		WMT_PIN(6, 12)
+#घोषणा WMT_PIN_LCDD13		WMT_PIN(6, 13)
+#घोषणा WMT_PIN_LCDD14		WMT_PIN(6, 14)
+#घोषणा WMT_PIN_LCDD15		WMT_PIN(6, 15)
+#घोषणा WMT_PIN_LCDD16		WMT_PIN(6, 16)
+#घोषणा WMT_PIN_LCDD17		WMT_PIN(6, 17)
+#घोषणा WMT_PIN_LCDCLK		WMT_PIN(6, 18)
+#घोषणा WMT_PIN_LCDDEN		WMT_PIN(6, 19)
+#घोषणा WMT_PIN_LCDLINE		WMT_PIN(6, 20)
+#घोषणा WMT_PIN_LCDFRM		WMT_PIN(6, 21)
+#घोषणा WMT_PIN_LCDBIAS		WMT_PIN(6, 22)
 
-static const struct pinctrl_pin_desc vt8500_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc vt8500_pins[] = अणु
 	PINCTRL_PIN(WMT_PIN_EXTGPIO0, "extgpio0"),
 	PINCTRL_PIN(WMT_PIN_EXTGPIO1, "extgpio1"),
 	PINCTRL_PIN(WMT_PIN_EXTGPIO2, "extgpio2"),
@@ -265,8 +266,8 @@ static const struct pinctrl_pin_desc vt8500_pins[] = {
 	PINCTRL_PIN(WMT_PIN_VDOUT3, "vdout3"),
 	PINCTRL_PIN(WMT_PIN_VDOUT4, "vdout4"),
 	PINCTRL_PIN(WMT_PIN_VDOUT5, "vdout5"),
-	PINCTRL_PIN(WMT_PIN_NANDCLE0, "nand_cle0"),
-	PINCTRL_PIN(WMT_PIN_NANDCLE1, "nand_cle1"),
+	PINCTRL_PIN(WMT_PIN_न_अंकDCLE0, "nand_cle0"),
+	PINCTRL_PIN(WMT_PIN_न_अंकDCLE1, "nand_cle1"),
 	PINCTRL_PIN(WMT_PIN_VDOUT6_7, "vdout6_7"),
 	PINCTRL_PIN(WMT_PIN_VHSYNC, "vhsync"),
 	PINCTRL_PIN(WMT_PIN_VVSYNC, "vvsync"),
@@ -304,10 +305,10 @@ static const struct pinctrl_pin_desc vt8500_pins[] = {
 	PINCTRL_PIN(WMT_PIN_LCDLINE, "lcd_line"),
 	PINCTRL_PIN(WMT_PIN_LCDFRM, "lcd_frm"),
 	PINCTRL_PIN(WMT_PIN_LCDBIAS, "lcd_bias"),
-};
+पूर्ण;
 
 /* Order of these names must match the above list */
-static const char * const vt8500_groups[] = {
+अटल स्थिर अक्षर * स्थिर vt8500_groups[] = अणु
 	"extgpio0",
 	"extgpio1",
 	"extgpio2",
@@ -443,15 +444,15 @@ static const char * const vt8500_groups[] = {
 	"lcd_line",
 	"lcd_frm",
 	"lcd_bias",
-};
+पूर्ण;
 
-static int vt8500_pinctrl_probe(struct platform_device *pdev)
-{
-	struct wmt_pinctrl_data *data;
+अटल पूर्णांक vt8500_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wmt_pinctrl_data *data;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->banks = vt8500_banks;
 	data->nbanks = ARRAY_SIZE(vt8500_banks);
@@ -460,20 +461,20 @@ static int vt8500_pinctrl_probe(struct platform_device *pdev)
 	data->groups = vt8500_groups;
 	data->ngroups = ARRAY_SIZE(vt8500_groups);
 
-	return wmt_pinctrl_probe(pdev, data);
-}
+	वापस wmt_pinctrl_probe(pdev, data);
+पूर्ण
 
-static const struct of_device_id wmt_pinctrl_of_match[] = {
-	{ .compatible = "via,vt8500-pinctrl" },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id wmt_pinctrl_of_match[] = अणु
+	अणु .compatible = "via,vt8500-pinctrl" पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 
-static struct platform_driver wmt_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver wmt_pinctrl_driver = अणु
 	.probe	= vt8500_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name	= "pinctrl-vt8500",
 		.of_match_table	= wmt_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
-builtin_platform_driver(wmt_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(wmt_pinctrl_driver);

@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/drivers/dma/dma-sysfs.c
  *
- * sysfs interface for SH DMA API
+ * sysfs पूर्णांकerface क्रम SH DMA API
  *
  * Copyright (C) 2004 - 2006  Paul Mundt
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/stat.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/string.h>
-#include <asm/dma.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/dma.h>
 
-static struct bus_type dma_subsys = {
+अटल काष्ठा bus_type dma_subsys = अणु
 	.name = "dma",
 	.dev_name = "dma",
-};
+पूर्ण;
 
-static ssize_t dma_show_devices(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	ssize_t len = 0;
-	int i;
+अटल sमाप_प्रकार dma_show_devices(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	sमाप_प्रकार len = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < 16; i++) {
-		struct dma_info *info = get_dma_info(i);
-		struct dma_channel *channel = get_dma_channel(i);
+	क्रम (i = 0; i < 16; i++) अणु
+		काष्ठा dma_info *info = get_dma_info(i);
+		काष्ठा dma_channel *channel = get_dma_channel(i);
 
-		if (unlikely(!info) || !channel)
-			continue;
+		अगर (unlikely(!info) || !channel)
+			जारी;
 
-		len += sprintf(buf + len, "%2d: %14s    %s\n",
+		len += प्र_लिखो(buf + len, "%2d: %14s    %s\n",
 			       channel->chan, info->name,
 			       channel->dev_id);
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static DEVICE_ATTR(devices, S_IRUGO, dma_show_devices, NULL);
+अटल DEVICE_ATTR(devices, S_IRUGO, dma_show_devices, शून्य);
 
-static int __init dma_subsys_init(void)
-{
-	int ret;
+अटल पूर्णांक __init dma_subsys_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = subsys_system_register(&dma_subsys, NULL);
-	if (unlikely(ret))
-		return ret;
+	ret = subsys_प्रणाली_रेजिस्टर(&dma_subsys, शून्य);
+	अगर (unlikely(ret))
+		वापस ret;
 
-	return device_create_file(dma_subsys.dev_root, &dev_attr_devices);
-}
+	वापस device_create_file(dma_subsys.dev_root, &dev_attr_devices);
+पूर्ण
 postcore_initcall(dma_subsys_init);
 
-static ssize_t dma_show_dev_id(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct dma_channel *channel = to_dma_channel(dev);
-	return sprintf(buf, "%s\n", channel->dev_id);
-}
+अटल sमाप_प्रकार dma_show_dev_id(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dma_channel *channel = to_dma_channel(dev);
+	वापस प्र_लिखो(buf, "%s\n", channel->dev_id);
+पूर्ण
 
-static ssize_t dma_store_dev_id(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct dma_channel *channel = to_dma_channel(dev);
-	strcpy(channel->dev_id, buf);
-	return count;
-}
+अटल sमाप_प्रकार dma_store_dev_id(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा dma_channel *channel = to_dma_channel(dev);
+	म_नकल(channel->dev_id, buf);
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(dev_id, S_IRUGO | S_IWUSR, dma_show_dev_id, dma_store_dev_id);
+अटल DEVICE_ATTR(dev_id, S_IRUGO | S_IWUSR, dma_show_dev_id, dma_store_dev_id);
 
-static ssize_t dma_store_config(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct dma_channel *channel = to_dma_channel(dev);
-	unsigned long config;
+अटल sमाप_प्रकार dma_store_config(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा dma_channel *channel = to_dma_channel(dev);
+	अचिन्हित दीर्घ config;
 
-	config = simple_strtoul(buf, NULL, 0);
+	config = simple_म_से_अदीर्घ(buf, शून्य, 0);
 	dma_configure_channel(channel->vchan, config);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(config, S_IWUSR, NULL, dma_store_config);
+अटल DEVICE_ATTR(config, S_IWUSR, शून्य, dma_store_config);
 
-static ssize_t dma_show_mode(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct dma_channel *channel = to_dma_channel(dev);
-	return sprintf(buf, "0x%08x\n", channel->mode);
-}
+अटल sमाप_प्रकार dma_show_mode(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dma_channel *channel = to_dma_channel(dev);
+	वापस प्र_लिखो(buf, "0x%08x\n", channel->mode);
+पूर्ण
 
-static ssize_t dma_store_mode(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct dma_channel *channel = to_dma_channel(dev);
-	channel->mode = simple_strtoul(buf, NULL, 0);
-	return count;
-}
+अटल sमाप_प्रकार dma_store_mode(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा dma_channel *channel = to_dma_channel(dev);
+	channel->mode = simple_म_से_अदीर्घ(buf, शून्य, 0);
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(mode, S_IRUGO | S_IWUSR, dma_show_mode, dma_store_mode);
+अटल DEVICE_ATTR(mode, S_IRUGO | S_IWUSR, dma_show_mode, dma_store_mode);
 
-#define dma_ro_attr(field, fmt)						\
-static ssize_t dma_show_##field(struct device *dev,		\
-				struct device_attribute *attr, char *buf)\
-{									\
-	struct dma_channel *channel = to_dma_channel(dev);		\
-	return sprintf(buf, fmt, channel->field);			\
-}									\
-static DEVICE_ATTR(field, S_IRUGO, dma_show_##field, NULL);
+#घोषणा dma_ro_attr(field, fmt)						\
+अटल sमाप_प्रकार dma_show_##field(काष्ठा device *dev,		\
+				काष्ठा device_attribute *attr, अक्षर *buf)\
+अणु									\
+	काष्ठा dma_channel *channel = to_dma_channel(dev);		\
+	वापस प्र_लिखो(buf, fmt, channel->field);			\
+पूर्ण									\
+अटल DEVICE_ATTR(field, S_IRUGO, dma_show_##field, शून्य);
 
 dma_ro_attr(count, "0x%08x\n");
 dma_ro_attr(flags, "0x%08lx\n");
 
-int dma_create_sysfs_files(struct dma_channel *chan, struct dma_info *info)
-{
-	struct device *dev = &chan->dev;
-	char name[16];
-	int ret;
+पूर्णांक dma_create_sysfs_files(काष्ठा dma_channel *chan, काष्ठा dma_info *info)
+अणु
+	काष्ठा device *dev = &chan->dev;
+	अक्षर name[16];
+	पूर्णांक ret;
 
 	dev->id  = chan->vchan;
 	dev->bus = &dma_subsys;
 
-	ret = device_register(dev);
-	if (ret)
-		return ret;
+	ret = device_रेजिस्टर(dev);
+	अगर (ret)
+		वापस ret;
 
 	ret |= device_create_file(dev, &dev_attr_dev_id);
 	ret |= device_create_file(dev, &dev_attr_count);
@@ -137,28 +138,28 @@ int dma_create_sysfs_files(struct dma_channel *chan, struct dma_info *info)
 	ret |= device_create_file(dev, &dev_attr_flags);
 	ret |= device_create_file(dev, &dev_attr_config);
 
-	if (unlikely(ret)) {
+	अगर (unlikely(ret)) अणु
 		dev_err(&info->pdev->dev, "Failed creating attrs\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	snprintf(name, sizeof(name), "dma%d", chan->chan);
-	return sysfs_create_link(&info->pdev->dev.kobj, &dev->kobj, name);
-}
+	snम_लिखो(name, माप(name), "dma%d", chan->chan);
+	वापस sysfs_create_link(&info->pdev->dev.kobj, &dev->kobj, name);
+पूर्ण
 
-void dma_remove_sysfs_files(struct dma_channel *chan, struct dma_info *info)
-{
-	struct device *dev = &chan->dev;
-	char name[16];
+व्योम dma_हटाओ_sysfs_files(काष्ठा dma_channel *chan, काष्ठा dma_info *info)
+अणु
+	काष्ठा device *dev = &chan->dev;
+	अक्षर name[16];
 
-	device_remove_file(dev, &dev_attr_dev_id);
-	device_remove_file(dev, &dev_attr_count);
-	device_remove_file(dev, &dev_attr_mode);
-	device_remove_file(dev, &dev_attr_flags);
-	device_remove_file(dev, &dev_attr_config);
+	device_हटाओ_file(dev, &dev_attr_dev_id);
+	device_हटाओ_file(dev, &dev_attr_count);
+	device_हटाओ_file(dev, &dev_attr_mode);
+	device_हटाओ_file(dev, &dev_attr_flags);
+	device_हटाओ_file(dev, &dev_attr_config);
 
-	snprintf(name, sizeof(name), "dma%d", chan->chan);
-	sysfs_remove_link(&info->pdev->dev.kobj, name);
+	snम_लिखो(name, माप(name), "dma%d", chan->chan);
+	sysfs_हटाओ_link(&info->pdev->dev.kobj, name);
 
-	device_unregister(dev);
-}
+	device_unरेजिस्टर(dev);
+पूर्ण

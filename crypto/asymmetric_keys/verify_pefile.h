@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* PE Binary parser bits
  *
  * Copyright (C) 2014 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <crypto/pkcs7.h>
-#include <crypto/hash_info.h>
+#समावेश <crypto/pkcs7.h>
+#समावेश <crypto/hash_info.h>
 
-struct pefile_context {
-	unsigned	header_size;
-	unsigned	image_checksum_offset;
-	unsigned	cert_dirent_offset;
-	unsigned	n_data_dirents;
-	unsigned	n_sections;
-	unsigned	certs_size;
-	unsigned	sig_offset;
-	unsigned	sig_len;
-	const struct section_header *secs;
+काष्ठा pefile_context अणु
+	अचिन्हित	header_size;
+	अचिन्हित	image_checksum_offset;
+	अचिन्हित	cert_dirent_offset;
+	अचिन्हित	n_data_dirents;
+	अचिन्हित	n_sections;
+	अचिन्हित	certs_size;
+	अचिन्हित	sig_offset;
+	अचिन्हित	sig_len;
+	स्थिर काष्ठा section_header *secs;
 
-	/* PKCS#7 MS Individual Code Signing content */
-	const void	*digest;		/* Digest */
-	unsigned	digest_len;		/* Digest length */
-	const char	*digest_algo;		/* Digest algorithm */
-};
+	/* PKCS#7 MS Inभागidual Code Signing content */
+	स्थिर व्योम	*digest;		/* Digest */
+	अचिन्हित	digest_len;		/* Digest length */
+	स्थिर अक्षर	*digest_algo;		/* Digest algorithm */
+पूर्ण;
 
-#define kenter(FMT, ...)					\
+#घोषणा kenter(FMT, ...)					\
 	pr_devel("==> %s("FMT")\n", __func__, ##__VA_ARGS__)
-#define kleave(FMT, ...) \
+#घोषणा kleave(FMT, ...) \
 	pr_devel("<== %s()"FMT"\n", __func__, ##__VA_ARGS__)
 
 /*
  * mscode_parser.c
  */
-extern int mscode_parse(void *_ctx, const void *content_data, size_t data_len,
-			size_t asn1hdrlen);
+बाह्य पूर्णांक mscode_parse(व्योम *_ctx, स्थिर व्योम *content_data, माप_प्रकार data_len,
+			माप_प्रकार asn1hdrlen);

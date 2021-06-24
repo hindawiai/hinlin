@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Nokia RX-51 battery driver
  *
- * Copyright (C) 2012  Pali Rohár <pali@kernel.org>
+ * Copyright (C) 2012  Pali Rohथँr <pali@kernel.org>
  */
 
-#include <linux/module.h>
-#include <linux/param.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/slab.h>
-#include <linux/iio/consumer.h>
-#include <linux/of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/param.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/iio/consumer.h>
+#समावेश <linux/of.h>
 
-struct rx51_device_info {
-	struct device *dev;
-	struct power_supply *bat;
-	struct power_supply_desc bat_desc;
-	struct iio_channel *channel_temp;
-	struct iio_channel *channel_bsi;
-	struct iio_channel *channel_vbat;
-};
+काष्ठा rx51_device_info अणु
+	काष्ठा device *dev;
+	काष्ठा घातer_supply *bat;
+	काष्ठा घातer_supply_desc bat_desc;
+	काष्ठा iio_channel *channel_temp;
+	काष्ठा iio_channel *channel_bsi;
+	काष्ठा iio_channel *channel_vbat;
+पूर्ण;
 
 /*
  * Read ADCIN channel value, code copied from maemo kernel
  */
-static int rx51_battery_read_adc(struct iio_channel *channel)
-{
-	int val, err;
-	err = iio_read_channel_average_raw(channel, &val);
-	if (err < 0)
-		return err;
-	return val;
-}
+अटल पूर्णांक rx51_battery_पढ़ो_adc(काष्ठा iio_channel *channel)
+अणु
+	पूर्णांक val, err;
+	err = iio_पढ़ो_channel_average_raw(channel, &val);
+	अगर (err < 0)
+		वापस err;
+	वापस val;
+पूर्ण
 
 /*
  * Read ADCIN channel 12 (voltage) and convert RAW value to micro voltage
- * This conversion formula was extracted from maemo program bsi-read
+ * This conversion क्रमmula was extracted from maemo program bsi-पढ़ो
  */
-static int rx51_battery_read_voltage(struct rx51_device_info *di)
-{
-	int voltage = rx51_battery_read_adc(di->channel_vbat);
+अटल पूर्णांक rx51_battery_पढ़ो_voltage(काष्ठा rx51_device_info *di)
+अणु
+	पूर्णांक voltage = rx51_battery_पढ़ो_adc(di->channel_vbat);
 
-	if (voltage < 0) {
+	अगर (voltage < 0) अणु
 		dev_err(di->dev, "Could not read ADC: %d\n", voltage);
-		return voltage;
-	}
+		वापस voltage;
+	पूर्ण
 
-	return 1000 * (10000 * voltage / 1705);
-}
+	वापस 1000 * (10000 * voltage / 1705);
+पूर्ण
 
 /*
  * Temperature look-up tables
  * TEMP = (1/(t1 + 1/298) - 273.15)
  * Where t1 = (1/B) * ln((RAW_ADC_U * 2.5)/(R * I * 255))
  * Formula is based on experimental data, RX-51 CAL data, maemo program bme
- * and formula from da9052 driver with values R = 100, B = 3380, I = 0.00671
+ * and क्रमmula from da9052 driver with values R = 100, B = 3380, I = 0.00671
  */
 
 /*
- * Table1 (temperature for first 25 RAW values)
+ * Table1 (temperature क्रम first 25 RAW values)
  * Usage: TEMP = rx51_temp_table1[RAW]
  *   RAW is between 1 and 24
  *   TEMP is between 201 C and 55 C
  */
-static u8 rx51_temp_table1[] = {
+अटल u8 rx51_temp_table1[] = अणु
 	255, 201, 159, 138, 124, 114, 106,  99,  94,  89,  85,  82,  78,  75,
 	 73,  70,  68,  66,  64,  62,  61,  59,  57,  56,  55
-};
+पूर्ण;
 
 /*
- * Table2 (lowest RAW value for temperature)
+ * Table2 (lowest RAW value क्रम temperature)
  * Usage: RAW = rx51_temp_table2[TEMP-rx51_temp_table2_first]
  *   TEMP is between 53 C and -32 C
  *   RAW is between 25 and 993
  */
-#define rx51_temp_table2_first 53
-static u16 rx51_temp_table2[] = {
+#घोषणा rx51_temp_table2_first 53
+अटल u16 rx51_temp_table2[] = अणु
 	 25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  39,
 	 40,  41,  43,  44,  46,  48,  49,  51,  53,  55,  57,  59,  61,  64,
 	 66,  69,  71,  74,  77,  80,  83,  86,  90,  94,  97, 101, 106, 110,
@@ -84,121 +85,121 @@ static u16 rx51_temp_table2[] = {
 	221, 231, 242, 254, 266, 279, 293, 308, 323, 340, 357, 375, 395, 415,
 	437, 460, 485, 511, 539, 568, 600, 633, 669, 706, 747, 790, 836, 885,
 	937, 993, 1024
-};
+पूर्ण;
 
 /*
  * Read ADCIN channel 0 (battery temp) and convert value to tenths of Celsius
- * Use Temperature look-up tables for conversation
+ * Use Temperature look-up tables क्रम conversation
  */
-static int rx51_battery_read_temperature(struct rx51_device_info *di)
-{
-	int min = 0;
-	int max = ARRAY_SIZE(rx51_temp_table2) - 1;
-	int raw = rx51_battery_read_adc(di->channel_temp);
+अटल पूर्णांक rx51_battery_पढ़ो_temperature(काष्ठा rx51_device_info *di)
+अणु
+	पूर्णांक min = 0;
+	पूर्णांक max = ARRAY_SIZE(rx51_temp_table2) - 1;
+	पूर्णांक raw = rx51_battery_पढ़ो_adc(di->channel_temp);
 
-	if (raw < 0)
+	अगर (raw < 0)
 		dev_err(di->dev, "Could not read ADC: %d\n", raw);
 
 	/* Zero and negative values are undefined */
-	if (raw <= 0)
-		return INT_MAX;
+	अगर (raw <= 0)
+		वापस पूर्णांक_उच्च;
 
 	/* ADC channels are 10 bit, higher value are undefined */
-	if (raw >= (1 << 10))
-		return INT_MIN;
+	अगर (raw >= (1 << 10))
+		वापस पूर्णांक_न्यून;
 
-	/* First check for temperature in first direct table */
-	if (raw < ARRAY_SIZE(rx51_temp_table1))
-		return rx51_temp_table1[raw] * 10;
+	/* First check क्रम temperature in first direct table */
+	अगर (raw < ARRAY_SIZE(rx51_temp_table1))
+		वापस rx51_temp_table1[raw] * 10;
 
 	/* Binary search RAW value in second inverse table */
-	while (max - min > 1) {
-		int mid = (max + min) / 2;
-		if (rx51_temp_table2[mid] <= raw)
+	जबतक (max - min > 1) अणु
+		पूर्णांक mid = (max + min) / 2;
+		अगर (rx51_temp_table2[mid] <= raw)
 			min = mid;
-		else if (rx51_temp_table2[mid] > raw)
+		अन्यथा अगर (rx51_temp_table2[mid] > raw)
 			max = mid;
-		if (rx51_temp_table2[mid] == raw)
-			break;
-	}
+		अगर (rx51_temp_table2[mid] == raw)
+			अवरोध;
+	पूर्ण
 
-	return (rx51_temp_table2_first - min) * 10;
-}
+	वापस (rx51_temp_table2_first - min) * 10;
+पूर्ण
 
 /*
  * Read ADCIN channel 4 (BSI) and convert RAW value to micro Ah
- * This conversion formula was extracted from maemo program bsi-read
+ * This conversion क्रमmula was extracted from maemo program bsi-पढ़ो
  */
-static int rx51_battery_read_capacity(struct rx51_device_info *di)
-{
-	int capacity = rx51_battery_read_adc(di->channel_bsi);
+अटल पूर्णांक rx51_battery_पढ़ो_capacity(काष्ठा rx51_device_info *di)
+अणु
+	पूर्णांक capacity = rx51_battery_पढ़ो_adc(di->channel_bsi);
 
-	if (capacity < 0) {
+	अगर (capacity < 0) अणु
 		dev_err(di->dev, "Could not read ADC: %d\n", capacity);
-		return capacity;
-	}
+		वापस capacity;
+	पूर्ण
 
-	return 1280 * (1200 * capacity)/(1024 - capacity);
-}
+	वापस 1280 * (1200 * capacity)/(1024 - capacity);
+पूर्ण
 
 /*
- * Return power_supply property
+ * Return घातer_supply property
  */
-static int rx51_battery_get_property(struct power_supply *psy,
-					enum power_supply_property psp,
-					union power_supply_propval *val)
-{
-	struct rx51_device_info *di = power_supply_get_drvdata(psy);
+अटल पूर्णांक rx51_battery_get_property(काष्ठा घातer_supply *psy,
+					क्रमागत घातer_supply_property psp,
+					जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा rx51_device_info *di = घातer_supply_get_drvdata(psy);
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
-		val->intval = 4200000;
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = rx51_battery_read_voltage(di) ? 1 : 0;
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->intval = rx51_battery_read_voltage(di);
-		break;
-	case POWER_SUPPLY_PROP_TEMP:
-		val->intval = rx51_battery_read_temperature(di);
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		val->intval = rx51_battery_read_capacity(di);
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->पूर्णांकval = POWER_SUPPLY_TECHNOLOGY_LION;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
+		val->पूर्णांकval = 4200000;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		val->पूर्णांकval = rx51_battery_पढ़ो_voltage(di) ? 1 : 0;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		val->पूर्णांकval = rx51_battery_पढ़ो_voltage(di);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TEMP:
+		val->पूर्णांकval = rx51_battery_पढ़ो_temperature(di);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+		val->पूर्णांकval = rx51_battery_पढ़ो_capacity(di);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (val->intval == INT_MAX || val->intval == INT_MIN)
-		return -EINVAL;
+	अगर (val->पूर्णांकval == पूर्णांक_उच्च || val->पूर्णांकval == पूर्णांक_न्यून)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum power_supply_property rx51_battery_props[] = {
+अटल क्रमागत घातer_supply_property rx51_battery_props[] = अणु
 	POWER_SUPPLY_PROP_TECHNOLOGY,
 	POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
-};
+पूर्ण;
 
-static int rx51_battery_probe(struct platform_device *pdev)
-{
-	struct power_supply_config psy_cfg = {};
-	struct rx51_device_info *di;
-	int ret;
+अटल पूर्णांक rx51_battery_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+	काष्ठा rx51_device_info *di;
+	पूर्णांक ret;
 
-	di = devm_kzalloc(&pdev->dev, sizeof(*di), GFP_KERNEL);
-	if (!di)
-		return -ENOMEM;
+	di = devm_kzalloc(&pdev->dev, माप(*di), GFP_KERNEL);
+	अगर (!di)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, di);
+	platक्रमm_set_drvdata(pdev, di);
 
 	di->dev = &pdev->dev;
 	di->bat_desc.name = "rx51-battery";
@@ -210,30 +211,30 @@ static int rx51_battery_probe(struct platform_device *pdev)
 	psy_cfg.drv_data = di;
 
 	di->channel_temp = iio_channel_get(di->dev, "temp");
-	if (IS_ERR(di->channel_temp)) {
+	अगर (IS_ERR(di->channel_temp)) अणु
 		ret = PTR_ERR(di->channel_temp);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	di->channel_bsi  = iio_channel_get(di->dev, "bsi");
-	if (IS_ERR(di->channel_bsi)) {
+	अगर (IS_ERR(di->channel_bsi)) अणु
 		ret = PTR_ERR(di->channel_bsi);
-		goto error_channel_temp;
-	}
+		जाओ error_channel_temp;
+	पूर्ण
 
 	di->channel_vbat = iio_channel_get(di->dev, "vbat");
-	if (IS_ERR(di->channel_vbat)) {
+	अगर (IS_ERR(di->channel_vbat)) अणु
 		ret = PTR_ERR(di->channel_vbat);
-		goto error_channel_bsi;
-	}
+		जाओ error_channel_bsi;
+	पूर्ण
 
-	di->bat = power_supply_register(di->dev, &di->bat_desc, &psy_cfg);
-	if (IS_ERR(di->bat)) {
+	di->bat = घातer_supply_रेजिस्टर(di->dev, &di->bat_desc, &psy_cfg);
+	अगर (IS_ERR(di->bat)) अणु
 		ret = PTR_ERR(di->bat);
-		goto error_channel_vbat;
-	}
+		जाओ error_channel_vbat;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_channel_vbat:
 	iio_channel_release(di->channel_vbat);
@@ -243,41 +244,41 @@ error_channel_temp:
 	iio_channel_release(di->channel_temp);
 error:
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rx51_battery_remove(struct platform_device *pdev)
-{
-	struct rx51_device_info *di = platform_get_drvdata(pdev);
+अटल पूर्णांक rx51_battery_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rx51_device_info *di = platक्रमm_get_drvdata(pdev);
 
-	power_supply_unregister(di->bat);
+	घातer_supply_unरेजिस्टर(di->bat);
 
 	iio_channel_release(di->channel_vbat);
 	iio_channel_release(di->channel_bsi);
 	iio_channel_release(di->channel_temp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id n900_battery_of_match[] = {
-	{.compatible = "nokia,n900-battery", },
-	{ },
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id n900_battery_of_match[] = अणु
+	अणु.compatible = "nokia,n900-battery", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, n900_battery_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver rx51_battery_driver = {
+अटल काष्ठा platक्रमm_driver rx51_battery_driver = अणु
 	.probe = rx51_battery_probe,
-	.remove = rx51_battery_remove,
-	.driver = {
+	.हटाओ = rx51_battery_हटाओ,
+	.driver = अणु
 		.name = "rx51-battery",
 		.of_match_table = of_match_ptr(n900_battery_of_match),
-	},
-};
-module_platform_driver(rx51_battery_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(rx51_battery_driver);
 
 MODULE_ALIAS("platform:rx51-battery");
-MODULE_AUTHOR("Pali Rohár <pali@kernel.org>");
+MODULE_AUTHOR("Pali Rohथँr <pali@kernel.org>");
 MODULE_DESCRIPTION("Nokia RX-51 battery driver");
 MODULE_LICENSE("GPL");

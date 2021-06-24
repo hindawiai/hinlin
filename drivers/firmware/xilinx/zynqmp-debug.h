@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Xilinx Zynq MPSoC Firmware layer
  *
@@ -10,15 +11,15 @@
  *  Rajan Vaja <rajanv@xilinx.com>
  */
 
-#ifndef __FIRMWARE_ZYNQMP_DEBUG_H__
-#define __FIRMWARE_ZYNQMP_DEBUG_H__
+#अगर_अघोषित __FIRMWARE_ZYNQMP_DEBUG_H__
+#घोषणा __FIRMWARE_ZYNQMP_DEBUG_H__
 
-#if IS_REACHABLE(CONFIG_ZYNQMP_FIRMWARE_DEBUG)
-void zynqmp_pm_api_debugfs_init(void);
-void zynqmp_pm_api_debugfs_exit(void);
-#else
-static inline void zynqmp_pm_api_debugfs_init(void) { }
-static inline void zynqmp_pm_api_debugfs_exit(void) { }
-#endif
+#अगर IS_REACHABLE(CONFIG_ZYNQMP_FIRMWARE_DEBUG)
+व्योम zynqmp_pm_api_debugfs_init(व्योम);
+व्योम zynqmp_pm_api_debugfs_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम zynqmp_pm_api_debugfs_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम zynqmp_pm_api_debugfs_निकास(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* __FIRMWARE_ZYNQMP_DEBUG_H__ */
+#पूर्ण_अगर /* __FIRMWARE_ZYNQMP_DEBUG_H__ */

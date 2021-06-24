@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/stddef.h>
-#include <linux/sched.h>
-#include <linux/elf.h>
-#include <linux/crypto.h>
-#include <linux/kbuild.h>
-#include <asm/mman.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/kbuild.h>
+#समावेश <यंत्र/mman.h>
 
-void foo(void)
-{
-#include <common-offsets.h>
-}
+व्योम foo(व्योम)
+अणु
+#समावेश <common-offsets.h>
+पूर्ण

@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_UTS_H
-#define _LINUX_UTS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_UTS_H
+#घोषणा _LINUX_UTS_H
 
 /*
- * Defines for what uname() should return 
+ * Defines क्रम what uname() should वापस 
  */
-#ifndef UTS_SYSNAME
-#define UTS_SYSNAME "Linux"
-#endif
+#अगर_अघोषित UTS_SYSNAME
+#घोषणा UTS_SYSNAME "Linux"
+#पूर्ण_अगर
 
-#ifndef UTS_NODENAME
-#define UTS_NODENAME CONFIG_DEFAULT_HOSTNAME /* set by sethostname() */
-#endif
+#अगर_अघोषित UTS_NODENAME
+#घोषणा UTS_NODENAME CONFIG_DEFAULT_HOSTNAME /* set by sethostname() */
+#पूर्ण_अगर
 
-#ifndef UTS_DOMAINNAME
-#define UTS_DOMAINNAME "(none)"	/* set by setdomainname() */
-#endif
+#अगर_अघोषित UTS_DOMAINNAME
+#घोषणा UTS_DOMAINNAME "(none)"	/* set by setकरोमुख्यname() */
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

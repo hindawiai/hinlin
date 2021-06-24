@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Device driver for the SYMBIOS/LSILOGIC 53C8XX and 53C1010 family 
+ * Device driver क्रम the SYMBIOS/LSILOGIC 53C8XX and 53C1010 family 
  * of PCI-SCSI IO processors.
  *
- * Copyright (C) 1999-2001  Gerard Roudier <groudier@free.fr>
+ * Copyright (C) 1999-2001  Gerard Roudier <groudier@मुक्त.fr>
  *
  * This driver is derived from the Linux sym53c8xx driver.
  * Copyright (C) 1998-2000  Gerard Roudier
@@ -11,90 +12,90 @@
  * The sym53c8xx driver is derived from the ncr53c8xx driver that had been 
  * a port of the FreeBSD ncr driver to Linux-1.2.13.
  *
- * The original ncr driver has been written for 386bsd and FreeBSD by
+ * The original ncr driver has been written क्रम 386bsd and FreeBSD by
  *         Wolfgang Stanglmeier        <wolf@cologne.de>
  *         Stefan Esser                <se@mi.Uni-Koeln.de>
  * Copyright (C) 1994  Wolfgang Stanglmeier
  *
  * Other major contributions:
  *
- * NVRAM detection and reading.
- * Copyright (C) 1997 Richard Waltham <dormouse@farsrobt.demon.co.uk>
+ * NVRAM detection and पढ़ोing.
+ * Copyright (C) 1997 Riअक्षरd Waltham <करोrmouse@farsrobt.demon.co.uk>
  *
  *-----------------------------------------------------------------------------
  */
 
-#ifndef SYM_MISC_H
-#define SYM_MISC_H
+#अगर_अघोषित SYM_MISC_H
+#घोषणा SYM_MISC_H
 
 /*
  *  A la VMS/CAM-3 queue management.
  */
-typedef struct sym_quehead {
-	struct sym_quehead *flink;	/* Forward  pointer */
-	struct sym_quehead *blink;	/* Backward pointer */
-} SYM_QUEHEAD;
+प्रकार काष्ठा sym_quehead अणु
+	काष्ठा sym_quehead *flink;	/* Forward  poपूर्णांकer */
+	काष्ठा sym_quehead *blink;	/* Backward poपूर्णांकer */
+पूर्ण SYM_QUEHEAD;
 
-#define sym_que_init(ptr) do { \
+#घोषणा sym_que_init(ptr) करो अणु \
 	(ptr)->flink = (ptr); (ptr)->blink = (ptr); \
-} while (0)
+पूर्ण जबतक (0)
 
-static inline struct sym_quehead *sym_que_first(struct sym_quehead *head)
-{
-	return (head->flink == head) ? 0 : head->flink;
-}
+अटल अंतरभूत काष्ठा sym_quehead *sym_que_first(काष्ठा sym_quehead *head)
+अणु
+	वापस (head->flink == head) ? 0 : head->flink;
+पूर्ण
 
-static inline struct sym_quehead *sym_que_last(struct sym_quehead *head)
-{
-	return (head->blink == head) ? 0 : head->blink;
-}
+अटल अंतरभूत काष्ठा sym_quehead *sym_que_last(काष्ठा sym_quehead *head)
+अणु
+	वापस (head->blink == head) ? 0 : head->blink;
+पूर्ण
 
-static inline void __sym_que_add(struct sym_quehead * new,
-	struct sym_quehead * blink,
-	struct sym_quehead * flink)
-{
+अटल अंतरभूत व्योम __sym_que_add(काष्ठा sym_quehead * new,
+	काष्ठा sym_quehead * blink,
+	काष्ठा sym_quehead * flink)
+अणु
 	flink->blink	= new;
 	new->flink	= flink;
 	new->blink	= blink;
 	blink->flink	= new;
-}
+पूर्ण
 
-static inline void __sym_que_del(struct sym_quehead * blink,
-	struct sym_quehead * flink)
-{
+अटल अंतरभूत व्योम __sym_que_del(काष्ठा sym_quehead * blink,
+	काष्ठा sym_quehead * flink)
+अणु
 	flink->blink = blink;
 	blink->flink = flink;
-}
+पूर्ण
 
-static inline int sym_que_empty(struct sym_quehead *head)
-{
-	return head->flink == head;
-}
+अटल अंतरभूत पूर्णांक sym_que_empty(काष्ठा sym_quehead *head)
+अणु
+	वापस head->flink == head;
+पूर्ण
 
-static inline void sym_que_splice(struct sym_quehead *list,
-	struct sym_quehead *head)
-{
-	struct sym_quehead *first = list->flink;
+अटल अंतरभूत व्योम sym_que_splice(काष्ठा sym_quehead *list,
+	काष्ठा sym_quehead *head)
+अणु
+	काष्ठा sym_quehead *first = list->flink;
 
-	if (first != list) {
-		struct sym_quehead *last = list->blink;
-		struct sym_quehead *at   = head->flink;
+	अगर (first != list) अणु
+		काष्ठा sym_quehead *last = list->blink;
+		काष्ठा sym_quehead *at   = head->flink;
 
 		first->blink = head;
 		head->flink  = first;
 
 		last->flink = at;
 		at->blink   = last;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void sym_que_move(struct sym_quehead *orig,
-	struct sym_quehead *dest)
-{
-	struct sym_quehead *first, *last;
+अटल अंतरभूत व्योम sym_que_move(काष्ठा sym_quehead *orig,
+	काष्ठा sym_quehead *dest)
+अणु
+	काष्ठा sym_quehead *first, *last;
 
 	first = orig->flink;
-	if (first != orig) {
+	अगर (first != orig) अणु
 		first->blink = dest;
 		dest->flink  = first;
 		last = orig->blink;
@@ -102,76 +103,76 @@ static inline void sym_que_move(struct sym_quehead *orig,
 		dest->blink  = last;
 		orig->flink  = orig;
 		orig->blink  = orig;
-	} else {
+	पूर्ण अन्यथा अणु
 		dest->flink  = dest;
 		dest->blink  = dest;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define sym_que_entry(ptr, type, member) container_of(ptr, type, member)
+#घोषणा sym_que_entry(ptr, type, member) container_of(ptr, type, member)
 
-#define sym_insque(new, pos)		__sym_que_add(new, pos, (pos)->flink)
+#घोषणा sym_insque(new, pos)		__sym_que_add(new, pos, (pos)->flink)
 
-#define sym_remque(el)			__sym_que_del((el)->blink, (el)->flink)
+#घोषणा sym_remque(el)			__sym_que_del((el)->blink, (el)->flink)
 
-#define sym_insque_head(new, head)	__sym_que_add(new, head, (head)->flink)
+#घोषणा sym_insque_head(new, head)	__sym_que_add(new, head, (head)->flink)
 
-static inline struct sym_quehead *sym_remque_head(struct sym_quehead *head)
-{
-	struct sym_quehead *elem = head->flink;
+अटल अंतरभूत काष्ठा sym_quehead *sym_remque_head(काष्ठा sym_quehead *head)
+अणु
+	काष्ठा sym_quehead *elem = head->flink;
 
-	if (elem != head)
+	अगर (elem != head)
 		__sym_que_del(head, elem->flink);
-	else
-		elem = NULL;
-	return elem;
-}
+	अन्यथा
+		elem = शून्य;
+	वापस elem;
+पूर्ण
 
-#define sym_insque_tail(new, head)	__sym_que_add(new, (head)->blink, head)
+#घोषणा sym_insque_tail(new, head)	__sym_que_add(new, (head)->blink, head)
 
-static inline struct sym_quehead *sym_remque_tail(struct sym_quehead *head)
-{
-	struct sym_quehead *elem = head->blink;
+अटल अंतरभूत काष्ठा sym_quehead *sym_remque_tail(काष्ठा sym_quehead *head)
+अणु
+	काष्ठा sym_quehead *elem = head->blink;
 
-	if (elem != head)
+	अगर (elem != head)
 		__sym_que_del(elem->blink, head);
-	else
+	अन्यथा
 		elem = 0;
-	return elem;
-}
+	वापस elem;
+पूर्ण
 
 /*
  *  This one may be useful.
  */
-#define FOR_EACH_QUEUED_ELEMENT(head, qp) \
-	for (qp = (head)->flink; qp != (head); qp = qp->flink)
+#घोषणा FOR_EACH_QUEUED_ELEMENT(head, qp) \
+	क्रम (qp = (head)->flink; qp != (head); qp = qp->flink)
 /*
- *  FreeBSD does not offer our kind of queue in the CAM CCB.
+ *  FreeBSD करोes not offer our kind of queue in the CAM CCB.
  *  So, we have to cast.
  */
-#define sym_qptr(p)	((struct sym_quehead *) (p))
+#घोषणा sym_qptr(p)	((काष्ठा sym_quehead *) (p))
 
 /*
- *  Simple bitmap operations.
+ *  Simple biपंचांगap operations.
  */ 
-#define sym_set_bit(p, n)	(((u32 *)(p))[(n)>>5] |=  (1<<((n)&0x1f)))
-#define sym_clr_bit(p, n)	(((u32 *)(p))[(n)>>5] &= ~(1<<((n)&0x1f)))
-#define sym_is_bit(p, n)	(((u32 *)(p))[(n)>>5] &   (1<<((n)&0x1f)))
+#घोषणा sym_set_bit(p, n)	(((u32 *)(p))[(n)>>5] |=  (1<<((n)&0x1f)))
+#घोषणा sym_clr_bit(p, n)	(((u32 *)(p))[(n)>>5] &= ~(1<<((n)&0x1f)))
+#घोषणा sym_is_bit(p, n)	(((u32 *)(p))[(n)>>5] &   (1<<((n)&0x1f)))
 
 /*
- * The below round up/down macros are to be used with a constant 
- * as argument (sizeof(...) for example), for the compiler to 
+ * The below round up/करोwn macros are to be used with a स्थिरant 
+ * as argument (माप(...) क्रम example), क्रम the compiler to 
  * optimize the whole thing.
  */
-#define _U_(a,m)	(a)<=(1<<m)?m:
+#घोषणा _U_(a,m)	(a)<=(1<<m)?m:
 
 /*
- * Round up logarithm to base 2 of a 16 bit constant.
+ * Round up logarithm to base 2 of a 16 bit स्थिरant.
  */
-#define _LGRU16_(a) \
+#घोषणा _LGRU16_(a) \
 ( \
  _U_(a, 0)_U_(a, 1)_U_(a, 2)_U_(a, 3)_U_(a, 4)_U_(a, 5)_U_(a, 6)_U_(a, 7) \
  _U_(a, 8)_U_(a, 9)_U_(a,10)_U_(a,11)_U_(a,12)_U_(a,13)_U_(a,14)_U_(a,15) \
  16)
 
-#endif /* SYM_MISC_H */
+#पूर्ण_अगर /* SYM_MISC_H */

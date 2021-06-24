@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Export the iSCSI boot info to userland via sysfs.
  *
  * Copyright (C) 2010 Red Hat, Inc.  All rights reserved.
  * Copyright (C) 2010 Mike Christie
  */
-#ifndef _ISCSI_BOOT_SYSFS_
-#define _ISCSI_BOOT_SYSFS_
+#अगर_अघोषित _ISCSI_BOOT_SYSFS_
+#घोषणा _ISCSI_BOOT_SYSFS_
 
 /*
- * The text attributes names for each of the kobjects.
+ * The text attributes names क्रम each of the kobjects.
 */
-enum iscsi_boot_eth_properties_enum {
+क्रमागत iscsi_boot_eth_properties_क्रमागत अणु
 	ISCSI_BOOT_ETH_INDEX,
 	ISCSI_BOOT_ETH_FLAGS,
 	ISCSI_BOOT_ETH_IP_ADDR,
@@ -27,9 +28,9 @@ enum iscsi_boot_eth_properties_enum {
 	/* eth_pci_bdf - this is replaced by link to the device itself. */
 	ISCSI_BOOT_ETH_HOSTNAME,
 	ISCSI_BOOT_ETH_END_MARKER,
-};
+पूर्ण;
 
-enum iscsi_boot_tgt_properties_enum {
+क्रमागत iscsi_boot_tgt_properties_क्रमागत अणु
 	ISCSI_BOOT_TGT_INDEX,
 	ISCSI_BOOT_TGT_FLAGS,
 	ISCSI_BOOT_TGT_IP_ADDR,
@@ -43,9 +44,9 @@ enum iscsi_boot_tgt_properties_enum {
 	ISCSI_BOOT_TGT_REV_CHAP_NAME,
 	ISCSI_BOOT_TGT_REV_CHAP_SECRET,
 	ISCSI_BOOT_TGT_END_MARKER,
-};
+पूर्ण;
 
-enum iscsi_boot_initiator_properties_enum {
+क्रमागत iscsi_boot_initiator_properties_क्रमागत अणु
 	ISCSI_BOOT_INI_INDEX,
 	ISCSI_BOOT_INI_FLAGS,
 	ISCSI_BOOT_INI_ISNS_SERVER,
@@ -54,86 +55,86 @@ enum iscsi_boot_initiator_properties_enum {
 	ISCSI_BOOT_INI_SEC_RADIUS_SERVER,
 	ISCSI_BOOT_INI_INITIATOR_NAME,
 	ISCSI_BOOT_INI_END_MARKER,
-};
+पूर्ण;
 
-enum iscsi_boot_acpitbl_properties_enum {
+क्रमागत iscsi_boot_acpitbl_properties_क्रमागत अणु
 	ISCSI_BOOT_ACPITBL_SIGNATURE,
 	ISCSI_BOOT_ACPITBL_OEM_ID,
 	ISCSI_BOOT_ACPITBL_OEM_TABLE_ID,
-};
+पूर्ण;
 
-struct attribute_group;
+काष्ठा attribute_group;
 
-struct iscsi_boot_kobj {
-	struct kobject kobj;
-	struct attribute_group *attr_group;
-	struct list_head list;
+काष्ठा iscsi_boot_kobj अणु
+	काष्ठा kobject kobj;
+	काष्ठा attribute_group *attr_group;
+	काष्ठा list_head list;
 
 	/*
-	 * Pointer to store driver specific info. If set this will
-	 * be freed for the LLD when the kobj release function is called.
+	 * Poपूर्णांकer to store driver specअगरic info. If set this will
+	 * be मुक्तd क्रम the LLD when the kobj release function is called.
 	 */
-	void *data;
+	व्योम *data;
 	/*
-	 * Driver specific show function.
+	 * Driver specअगरic show function.
 	 *
-	 * The enum of the type. This can be any value of the above
+	 * The क्रमागत of the type. This can be any value of the above
 	 * properties.
 	 */
-	ssize_t (*show) (void *data, int type, char *buf);
+	sमाप_प्रकार (*show) (व्योम *data, पूर्णांक type, अक्षर *buf);
 
 	/*
-	 * Drivers specific visibility function.
-	 * The function should return if they the attr should be readable
+	 * Drivers specअगरic visibility function.
+	 * The function should वापस अगर they the attr should be पढ़ोable
 	 * writable or should not be shown.
 	 *
-	 * The enum of the type. This can be any value of the above
+	 * The क्रमागत of the type. This can be any value of the above
 	 * properties.
 	 */
-	umode_t (*is_visible) (void *data, int type);
+	umode_t (*is_visible) (व्योम *data, पूर्णांक type);
 
 	/*
-	 * Driver specific release function.
+	 * Driver specअगरic release function.
 	 *
-	 * The function should free the data passed in.
+	 * The function should मुक्त the data passed in.
 	 */
-	void (*release) (void *data);
-};
+	व्योम (*release) (व्योम *data);
+पूर्ण;
 
-struct iscsi_boot_kset {
-	struct list_head kobj_list;
-	struct kset *kset;
-};
+काष्ठा iscsi_boot_kset अणु
+	काष्ठा list_head kobj_list;
+	काष्ठा kset *kset;
+पूर्ण;
 
-struct iscsi_boot_kobj *
-iscsi_boot_create_initiator(struct iscsi_boot_kset *boot_kset, int index,
-			    void *data,
-			    ssize_t (*show) (void *data, int type, char *buf),
-			    umode_t (*is_visible) (void *data, int type),
-			    void (*release) (void *data));
+काष्ठा iscsi_boot_kobj *
+iscsi_boot_create_initiator(काष्ठा iscsi_boot_kset *boot_kset, पूर्णांक index,
+			    व्योम *data,
+			    sमाप_प्रकार (*show) (व्योम *data, पूर्णांक type, अक्षर *buf),
+			    umode_t (*is_visible) (व्योम *data, पूर्णांक type),
+			    व्योम (*release) (व्योम *data));
 
-struct iscsi_boot_kobj *
-iscsi_boot_create_ethernet(struct iscsi_boot_kset *boot_kset, int index,
-			   void *data,
-			   ssize_t (*show) (void *data, int type, char *buf),
-			   umode_t (*is_visible) (void *data, int type),
-			   void (*release) (void *data));
-struct iscsi_boot_kobj *
-iscsi_boot_create_target(struct iscsi_boot_kset *boot_kset, int index,
-			 void *data,
-			 ssize_t (*show) (void *data, int type, char *buf),
-			 umode_t (*is_visible) (void *data, int type),
-			 void (*release) (void *data));
+काष्ठा iscsi_boot_kobj *
+iscsi_boot_create_ethernet(काष्ठा iscsi_boot_kset *boot_kset, पूर्णांक index,
+			   व्योम *data,
+			   sमाप_प्रकार (*show) (व्योम *data, पूर्णांक type, अक्षर *buf),
+			   umode_t (*is_visible) (व्योम *data, पूर्णांक type),
+			   व्योम (*release) (व्योम *data));
+काष्ठा iscsi_boot_kobj *
+iscsi_boot_create_target(काष्ठा iscsi_boot_kset *boot_kset, पूर्णांक index,
+			 व्योम *data,
+			 sमाप_प्रकार (*show) (व्योम *data, पूर्णांक type, अक्षर *buf),
+			 umode_t (*is_visible) (व्योम *data, पूर्णांक type),
+			 व्योम (*release) (व्योम *data));
 
-struct iscsi_boot_kobj *
-iscsi_boot_create_acpitbl(struct iscsi_boot_kset *boot_kset, int index,
-			  void *data,
-			  ssize_t (*show)(void *data, int type, char *buf),
-			  umode_t (*is_visible)(void *data, int type),
-			  void (*release)(void *data));
+काष्ठा iscsi_boot_kobj *
+iscsi_boot_create_acpitbl(काष्ठा iscsi_boot_kset *boot_kset, पूर्णांक index,
+			  व्योम *data,
+			  sमाप_प्रकार (*show)(व्योम *data, पूर्णांक type, अक्षर *buf),
+			  umode_t (*is_visible)(व्योम *data, पूर्णांक type),
+			  व्योम (*release)(व्योम *data));
 
-struct iscsi_boot_kset *iscsi_boot_create_kset(const char *set_name);
-struct iscsi_boot_kset *iscsi_boot_create_host_kset(unsigned int hostno);
-void iscsi_boot_destroy_kset(struct iscsi_boot_kset *boot_kset);
+काष्ठा iscsi_boot_kset *iscsi_boot_create_kset(स्थिर अक्षर *set_name);
+काष्ठा iscsi_boot_kset *iscsi_boot_create_host_kset(अचिन्हित पूर्णांक hostno);
+व्योम iscsi_boot_destroy_kset(काष्ठा iscsi_boot_kset *boot_kset);
 
-#endif
+#पूर्ण_अगर

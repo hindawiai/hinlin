@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * kernel/lockdep.c
  *
- * Runtime locking correctness validator
+ * Runसमय locking correctness validator
  *
  * Started by Ingo Molnar:
  *
@@ -16,918 +17,918 @@
  * - circular lock dependencies
  * - hardirq/softirq safe/unsafe locking bugs
  *
- * Bugs are reported even if the current locking scenario does not cause
- * any deadlock at this point.
+ * Bugs are reported even अगर the current locking scenario करोes not cause
+ * any deadlock at this poपूर्णांक.
  *
- * I.e. if anytime in the past two locks were taken in a different order,
- * even if it happened for another task, even if those were different
+ * I.e. अगर anyसमय in the past two locks were taken in a dअगरferent order,
+ * even अगर it happened क्रम another task, even अगर those were dअगरferent
  * locks (but of the same class as this lock), this code will detect it.
  *
- * Thanks to Arjan van de Ven for coming up with the initial idea of
- * mapping lock dependencies runtime.
+ * Thanks to Arjan van de Ven क्रम coming up with the initial idea of
+ * mapping lock dependencies runसमय.
  */
-#define DISABLE_BRANCH_PROFILING
-#include <linux/mutex.h>
-#include <linux/sched.h>
-#include <linux/sched/clock.h>
-#include <linux/sched/task.h>
-#include <linux/sched/mm.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/spinlock.h>
-#include <linux/kallsyms.h>
-#include <linux/interrupt.h>
-#include <linux/stacktrace.h>
-#include <linux/debug_locks.h>
-#include <linux/irqflags.h>
-#include <linux/utsname.h>
-#include <linux/hash.h>
-#include <linux/ftrace.h>
-#include <linux/stringify.h>
-#include <linux/bitmap.h>
-#include <linux/bitops.h>
-#include <linux/gfp.h>
-#include <linux/random.h>
-#include <linux/jhash.h>
-#include <linux/nmi.h>
-#include <linux/rcupdate.h>
-#include <linux/kprobes.h>
-#include <linux/lockdep.h>
+#घोषणा DISABLE_BRANCH_PROFILING
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/debug_locks.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/lockdep.h>
 
-#include <asm/sections.h>
+#समावेश <यंत्र/sections.h>
 
-#include "lockdep_internals.h"
+#समावेश "lockdep_internals.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/lock.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/lock.h>
 
-#ifdef CONFIG_PROVE_LOCKING
-int prove_locking = 1;
-module_param(prove_locking, int, 0644);
-#else
-#define prove_locking 0
-#endif
+#अगर_घोषित CONFIG_PROVE_LOCKING
+पूर्णांक prove_locking = 1;
+module_param(prove_locking, पूर्णांक, 0644);
+#अन्यथा
+#घोषणा prove_locking 0
+#पूर्ण_अगर
 
-#ifdef CONFIG_LOCK_STAT
-int lock_stat = 1;
-module_param(lock_stat, int, 0644);
-#else
-#define lock_stat 0
-#endif
+#अगर_घोषित CONFIG_LOCK_STAT
+पूर्णांक lock_stat = 1;
+module_param(lock_stat, पूर्णांक, 0644);
+#अन्यथा
+#घोषणा lock_stat 0
+#पूर्ण_अगर
 
-DEFINE_PER_CPU(unsigned int, lockdep_recursion);
+DEFINE_PER_CPU(अचिन्हित पूर्णांक, lockdep_recursion);
 EXPORT_PER_CPU_SYMBOL_GPL(lockdep_recursion);
 
-static __always_inline bool lockdep_enabled(void)
-{
-	if (!debug_locks)
-		return false;
+अटल __always_अंतरभूत bool lockdep_enabled(व्योम)
+अणु
+	अगर (!debug_locks)
+		वापस false;
 
-	if (this_cpu_read(lockdep_recursion))
-		return false;
+	अगर (this_cpu_पढ़ो(lockdep_recursion))
+		वापस false;
 
-	if (current->lockdep_recursion)
-		return false;
+	अगर (current->lockdep_recursion)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * lockdep_lock: protects the lockdep graph, the hashes and the
  *               class/list/hash allocators.
  *
- * This is one of the rare exceptions where it's justified
- * to use a raw spinlock - we really dont want the spinlock
- * code to recurse back into the lockdep code...
+ * This is one of the rare exceptions where it's justअगरied
+ * to use a raw spinlock - we really करोnt want the spinlock
+ * code to recurse back पूर्णांकo the lockdep code...
  */
-static arch_spinlock_t __lock = (arch_spinlock_t)__ARCH_SPIN_LOCK_UNLOCKED;
-static struct task_struct *__owner;
+अटल arch_spinlock_t __lock = (arch_spinlock_t)__ARCH_SPIN_LOCK_UNLOCKED;
+अटल काष्ठा task_काष्ठा *__owner;
 
-static inline void lockdep_lock(void)
-{
+अटल अंतरभूत व्योम lockdep_lock(व्योम)
+अणु
 	DEBUG_LOCKS_WARN_ON(!irqs_disabled());
 
 	__this_cpu_inc(lockdep_recursion);
 	arch_spin_lock(&__lock);
 	__owner = current;
-}
+पूर्ण
 
-static inline void lockdep_unlock(void)
-{
+अटल अंतरभूत व्योम lockdep_unlock(व्योम)
+अणु
 	DEBUG_LOCKS_WARN_ON(!irqs_disabled());
 
-	if (debug_locks && DEBUG_LOCKS_WARN_ON(__owner != current))
-		return;
+	अगर (debug_locks && DEBUG_LOCKS_WARN_ON(__owner != current))
+		वापस;
 
-	__owner = NULL;
+	__owner = शून्य;
 	arch_spin_unlock(&__lock);
 	__this_cpu_dec(lockdep_recursion);
-}
+पूर्ण
 
-static inline bool lockdep_assert_locked(void)
-{
-	return DEBUG_LOCKS_WARN_ON(__owner != current);
-}
+अटल अंतरभूत bool lockdep_निश्चित_locked(व्योम)
+अणु
+	वापस DEBUG_LOCKS_WARN_ON(__owner != current);
+पूर्ण
 
-static struct task_struct *lockdep_selftest_task_struct;
+अटल काष्ठा task_काष्ठा *lockdep_selftest_task_काष्ठा;
 
 
-static int graph_lock(void)
-{
+अटल पूर्णांक graph_lock(व्योम)
+अणु
 	lockdep_lock();
 	/*
-	 * Make sure that if another CPU detected a bug while
-	 * walking the graph we dont change it (while the other
-	 * CPU is busy printing out stuff with the graph lock
-	 * dropped already)
+	 * Make sure that अगर another CPU detected a bug जबतक
+	 * walking the graph we करोnt change it (जबतक the other
+	 * CPU is busy prपूर्णांकing out stuff with the graph lock
+	 * dropped alपढ़ोy)
 	 */
-	if (!debug_locks) {
+	अगर (!debug_locks) अणु
 		lockdep_unlock();
-		return 0;
-	}
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static inline void graph_unlock(void)
-{
+अटल अंतरभूत व्योम graph_unlock(व्योम)
+अणु
 	lockdep_unlock();
-}
+पूर्ण
 
 /*
- * Turn lock debugging off and return with 0 if it was off already,
+ * Turn lock debugging off and वापस with 0 अगर it was off alपढ़ोy,
  * and also release the graph lock:
  */
-static inline int debug_locks_off_graph_unlock(void)
-{
-	int ret = debug_locks_off();
+अटल अंतरभूत पूर्णांक debug_locks_off_graph_unlock(व्योम)
+अणु
+	पूर्णांक ret = debug_locks_off();
 
 	lockdep_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-unsigned long nr_list_entries;
-static struct lock_list list_entries[MAX_LOCKDEP_ENTRIES];
-static DECLARE_BITMAP(list_entries_in_use, MAX_LOCKDEP_ENTRIES);
+अचिन्हित दीर्घ nr_list_entries;
+अटल काष्ठा lock_list list_entries[MAX_LOCKDEP_ENTRIES];
+अटल DECLARE_BITMAP(list_entries_in_use, MAX_LOCKDEP_ENTRIES);
 
 /*
- * All data structures here are protected by the global debug_lock.
+ * All data काष्ठाures here are रक्षित by the global debug_lock.
  *
  * nr_lock_classes is the number of elements of lock_classes[] that is
  * in use.
  */
-#define KEYHASH_BITS		(MAX_LOCKDEP_KEYS_BITS - 1)
-#define KEYHASH_SIZE		(1UL << KEYHASH_BITS)
-static struct hlist_head lock_keys_hash[KEYHASH_SIZE];
-unsigned long nr_lock_classes;
-unsigned long nr_zapped_classes;
-#ifndef CONFIG_DEBUG_LOCKDEP
-static
-#endif
-struct lock_class lock_classes[MAX_LOCKDEP_KEYS];
-static DECLARE_BITMAP(lock_classes_in_use, MAX_LOCKDEP_KEYS);
+#घोषणा KEYHASH_BITS		(MAX_LOCKDEP_KEYS_BITS - 1)
+#घोषणा KEYHASH_SIZE		(1UL << KEYHASH_BITS)
+अटल काष्ठा hlist_head lock_keys_hash[KEYHASH_SIZE];
+अचिन्हित दीर्घ nr_lock_classes;
+अचिन्हित दीर्घ nr_zapped_classes;
+#अगर_अघोषित CONFIG_DEBUG_LOCKDEP
+अटल
+#पूर्ण_अगर
+काष्ठा lock_class lock_classes[MAX_LOCKDEP_KEYS];
+अटल DECLARE_BITMAP(lock_classes_in_use, MAX_LOCKDEP_KEYS);
 
-static inline struct lock_class *hlock_class(struct held_lock *hlock)
-{
-	unsigned int class_idx = hlock->class_idx;
+अटल अंतरभूत काष्ठा lock_class *hlock_class(काष्ठा held_lock *hlock)
+अणु
+	अचिन्हित पूर्णांक class_idx = hlock->class_idx;
 
 	/* Don't re-read hlock->class_idx, can't use READ_ONCE() on bitfield */
 	barrier();
 
-	if (!test_bit(class_idx, lock_classes_in_use)) {
+	अगर (!test_bit(class_idx, lock_classes_in_use)) अणु
 		/*
 		 * Someone passed in garbage, we give up.
 		 */
 		DEBUG_LOCKS_WARN_ON(1);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
-	 * At this point, if the passed hlock->class_idx is still garbage,
+	 * At this poपूर्णांक, अगर the passed hlock->class_idx is still garbage,
 	 * we just have to live with it
 	 */
-	return lock_classes + class_idx;
-}
+	वापस lock_classes + class_idx;
+पूर्ण
 
-#ifdef CONFIG_LOCK_STAT
-static DEFINE_PER_CPU(struct lock_class_stats[MAX_LOCKDEP_KEYS], cpu_lock_stats);
+#अगर_घोषित CONFIG_LOCK_STAT
+अटल DEFINE_PER_CPU(काष्ठा lock_class_stats[MAX_LOCKDEP_KEYS], cpu_lock_stats);
 
-static inline u64 lockstat_clock(void)
-{
-	return local_clock();
-}
+अटल अंतरभूत u64 lockstat_घड़ी(व्योम)
+अणु
+	वापस local_घड़ी();
+पूर्ण
 
-static int lock_point(unsigned long points[], unsigned long ip)
-{
-	int i;
+अटल पूर्णांक lock_poपूर्णांक(अचिन्हित दीर्घ poपूर्णांकs[], अचिन्हित दीर्घ ip)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < LOCKSTAT_POINTS; i++) {
-		if (points[i] == 0) {
-			points[i] = ip;
-			break;
-		}
-		if (points[i] == ip)
-			break;
-	}
+	क्रम (i = 0; i < LOCKSTAT_POINTS; i++) अणु
+		अगर (poपूर्णांकs[i] == 0) अणु
+			poपूर्णांकs[i] = ip;
+			अवरोध;
+		पूर्ण
+		अगर (poपूर्णांकs[i] == ip)
+			अवरोध;
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static void lock_time_inc(struct lock_time *lt, u64 time)
-{
-	if (time > lt->max)
-		lt->max = time;
+अटल व्योम lock_समय_inc(काष्ठा lock_समय *lt, u64 समय)
+अणु
+	अगर (समय > lt->max)
+		lt->max = समय;
 
-	if (time < lt->min || !lt->nr)
-		lt->min = time;
+	अगर (समय < lt->min || !lt->nr)
+		lt->min = समय;
 
-	lt->total += time;
+	lt->total += समय;
 	lt->nr++;
-}
+पूर्ण
 
-static inline void lock_time_add(struct lock_time *src, struct lock_time *dst)
-{
-	if (!src->nr)
-		return;
+अटल अंतरभूत व्योम lock_समय_add(काष्ठा lock_समय *src, काष्ठा lock_समय *dst)
+अणु
+	अगर (!src->nr)
+		वापस;
 
-	if (src->max > dst->max)
+	अगर (src->max > dst->max)
 		dst->max = src->max;
 
-	if (src->min < dst->min || !dst->nr)
+	अगर (src->min < dst->min || !dst->nr)
 		dst->min = src->min;
 
 	dst->total += src->total;
 	dst->nr += src->nr;
-}
+पूर्ण
 
-struct lock_class_stats lock_stats(struct lock_class *class)
-{
-	struct lock_class_stats stats;
-	int cpu, i;
+काष्ठा lock_class_stats lock_stats(काष्ठा lock_class *class)
+अणु
+	काष्ठा lock_class_stats stats;
+	पूर्णांक cpu, i;
 
-	memset(&stats, 0, sizeof(struct lock_class_stats));
-	for_each_possible_cpu(cpu) {
-		struct lock_class_stats *pcs =
+	स_रखो(&stats, 0, माप(काष्ठा lock_class_stats));
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा lock_class_stats *pcs =
 			&per_cpu(cpu_lock_stats, cpu)[class - lock_classes];
 
-		for (i = 0; i < ARRAY_SIZE(stats.contention_point); i++)
-			stats.contention_point[i] += pcs->contention_point[i];
+		क्रम (i = 0; i < ARRAY_SIZE(stats.contention_poपूर्णांक); i++)
+			stats.contention_poपूर्णांक[i] += pcs->contention_poपूर्णांक[i];
 
-		for (i = 0; i < ARRAY_SIZE(stats.contending_point); i++)
-			stats.contending_point[i] += pcs->contending_point[i];
+		क्रम (i = 0; i < ARRAY_SIZE(stats.contending_poपूर्णांक); i++)
+			stats.contending_poपूर्णांक[i] += pcs->contending_poपूर्णांक[i];
 
-		lock_time_add(&pcs->read_waittime, &stats.read_waittime);
-		lock_time_add(&pcs->write_waittime, &stats.write_waittime);
+		lock_समय_add(&pcs->पढ़ो_रुकोसमय, &stats.पढ़ो_रुकोसमय);
+		lock_समय_add(&pcs->ग_लिखो_रुकोसमय, &stats.ग_लिखो_रुकोसमय);
 
-		lock_time_add(&pcs->read_holdtime, &stats.read_holdtime);
-		lock_time_add(&pcs->write_holdtime, &stats.write_holdtime);
+		lock_समय_add(&pcs->पढ़ो_holdसमय, &stats.पढ़ो_holdसमय);
+		lock_समय_add(&pcs->ग_लिखो_holdसमय, &stats.ग_लिखो_holdसमय);
 
-		for (i = 0; i < ARRAY_SIZE(stats.bounces); i++)
+		क्रम (i = 0; i < ARRAY_SIZE(stats.bounces); i++)
 			stats.bounces[i] += pcs->bounces[i];
-	}
+	पूर्ण
 
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-void clear_lock_stats(struct lock_class *class)
-{
-	int cpu;
+व्योम clear_lock_stats(काष्ठा lock_class *class)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
-		struct lock_class_stats *cpu_stats =
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा lock_class_stats *cpu_stats =
 			&per_cpu(cpu_lock_stats, cpu)[class - lock_classes];
 
-		memset(cpu_stats, 0, sizeof(struct lock_class_stats));
-	}
-	memset(class->contention_point, 0, sizeof(class->contention_point));
-	memset(class->contending_point, 0, sizeof(class->contending_point));
-}
+		स_रखो(cpu_stats, 0, माप(काष्ठा lock_class_stats));
+	पूर्ण
+	स_रखो(class->contention_poपूर्णांक, 0, माप(class->contention_poपूर्णांक));
+	स_रखो(class->contending_poपूर्णांक, 0, माप(class->contending_poपूर्णांक));
+पूर्ण
 
-static struct lock_class_stats *get_lock_stats(struct lock_class *class)
-{
-	return &this_cpu_ptr(cpu_lock_stats)[class - lock_classes];
-}
+अटल काष्ठा lock_class_stats *get_lock_stats(काष्ठा lock_class *class)
+अणु
+	वापस &this_cpu_ptr(cpu_lock_stats)[class - lock_classes];
+पूर्ण
 
-static void lock_release_holdtime(struct held_lock *hlock)
-{
-	struct lock_class_stats *stats;
-	u64 holdtime;
+अटल व्योम lock_release_holdसमय(काष्ठा held_lock *hlock)
+अणु
+	काष्ठा lock_class_stats *stats;
+	u64 holdसमय;
 
-	if (!lock_stat)
-		return;
+	अगर (!lock_stat)
+		वापस;
 
-	holdtime = lockstat_clock() - hlock->holdtime_stamp;
+	holdसमय = lockstat_घड़ी() - hlock->holdसमय_stamp;
 
 	stats = get_lock_stats(hlock_class(hlock));
-	if (hlock->read)
-		lock_time_inc(&stats->read_holdtime, holdtime);
-	else
-		lock_time_inc(&stats->write_holdtime, holdtime);
-}
-#else
-static inline void lock_release_holdtime(struct held_lock *hlock)
-{
-}
-#endif
+	अगर (hlock->पढ़ो)
+		lock_समय_inc(&stats->पढ़ो_holdसमय, holdसमय);
+	अन्यथा
+		lock_समय_inc(&stats->ग_लिखो_holdसमय, holdसमय);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम lock_release_holdसमय(काष्ठा held_lock *hlock)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * We keep a global list of all lock classes. The list is only accessed with
- * the lockdep spinlock lock held. free_lock_classes is a list with free
+ * the lockdep spinlock lock held. मुक्त_lock_classes is a list with मुक्त
  * elements. These elements are linked together by the lock_entry member in
- * struct lock_class.
+ * काष्ठा lock_class.
  */
 LIST_HEAD(all_lock_classes);
-static LIST_HEAD(free_lock_classes);
+अटल LIST_HEAD(मुक्त_lock_classes);
 
 /**
- * struct pending_free - information about data structures about to be freed
- * @zapped: Head of a list with struct lock_class elements.
- * @lock_chains_being_freed: Bitmap that indicates which lock_chains[] elements
- *	are about to be freed.
+ * काष्ठा pending_मुक्त - inक्रमmation about data काष्ठाures about to be मुक्तd
+ * @zapped: Head of a list with काष्ठा lock_class elements.
+ * @lock_chains_being_मुक्तd: Biपंचांगap that indicates which lock_chains[] elements
+ *	are about to be मुक्तd.
  */
-struct pending_free {
-	struct list_head zapped;
-	DECLARE_BITMAP(lock_chains_being_freed, MAX_LOCKDEP_CHAINS);
-};
+काष्ठा pending_मुक्त अणु
+	काष्ठा list_head zapped;
+	DECLARE_BITMAP(lock_chains_being_मुक्तd, MAX_LOCKDEP_CHAINS);
+पूर्ण;
 
 /**
- * struct delayed_free - data structures used for delayed freeing
+ * काष्ठा delayed_मुक्त - data काष्ठाures used क्रम delayed मुक्तing
  *
- * A data structure for delayed freeing of data structures that may be
- * accessed by RCU readers at the time these were freed.
+ * A data काष्ठाure क्रम delayed मुक्तing of data काष्ठाures that may be
+ * accessed by RCU पढ़ोers at the समय these were मुक्तd.
  *
- * @rcu_head:  Used to schedule an RCU callback for freeing data structures.
- * @index:     Index of @pf to which freed data structures are added.
+ * @rcu_head:  Used to schedule an RCU callback क्रम मुक्तing data काष्ठाures.
+ * @index:     Index of @pf to which मुक्तd data काष्ठाures are added.
  * @scheduled: Whether or not an RCU callback has been scheduled.
- * @pf:        Array with information about data structures about to be freed.
+ * @pf:        Array with inक्रमmation about data काष्ठाures about to be मुक्तd.
  */
-static struct delayed_free {
-	struct rcu_head		rcu_head;
-	int			index;
-	int			scheduled;
-	struct pending_free	pf[2];
-} delayed_free;
+अटल काष्ठा delayed_मुक्त अणु
+	काष्ठा rcu_head		rcu_head;
+	पूर्णांक			index;
+	पूर्णांक			scheduled;
+	काष्ठा pending_मुक्त	pf[2];
+पूर्ण delayed_मुक्त;
 
 /*
- * The lockdep classes are in a hash-table as well, for fast lookup:
+ * The lockdep classes are in a hash-table as well, क्रम fast lookup:
  */
-#define CLASSHASH_BITS		(MAX_LOCKDEP_KEYS_BITS - 1)
-#define CLASSHASH_SIZE		(1UL << CLASSHASH_BITS)
-#define __classhashfn(key)	hash_long((unsigned long)key, CLASSHASH_BITS)
-#define classhashentry(key)	(classhash_table + __classhashfn((key)))
+#घोषणा CLASSHASH_BITS		(MAX_LOCKDEP_KEYS_BITS - 1)
+#घोषणा CLASSHASH_SIZE		(1UL << CLASSHASH_BITS)
+#घोषणा __classhashfn(key)	hash_दीर्घ((अचिन्हित दीर्घ)key, CLASSHASH_BITS)
+#घोषणा classhashentry(key)	(classhash_table + __classhashfn((key)))
 
-static struct hlist_head classhash_table[CLASSHASH_SIZE];
+अटल काष्ठा hlist_head classhash_table[CLASSHASH_SIZE];
 
 /*
- * We put the lock dependency chains into a hash-table as well, to cache
+ * We put the lock dependency chains पूर्णांकo a hash-table as well, to cache
  * their existence:
  */
-#define CHAINHASH_BITS		(MAX_LOCKDEP_CHAINS_BITS-1)
-#define CHAINHASH_SIZE		(1UL << CHAINHASH_BITS)
-#define __chainhashfn(chain)	hash_long(chain, CHAINHASH_BITS)
-#define chainhashentry(chain)	(chainhash_table + __chainhashfn((chain)))
+#घोषणा CHAINHASH_BITS		(MAX_LOCKDEP_CHAINS_BITS-1)
+#घोषणा CHAINHASH_SIZE		(1UL << CHAINHASH_BITS)
+#घोषणा __chainhashfn(chain)	hash_दीर्घ(chain, CHAINHASH_BITS)
+#घोषणा chainhashentry(chain)	(chainhash_table + __chainhashfn((chain)))
 
-static struct hlist_head chainhash_table[CHAINHASH_SIZE];
+अटल काष्ठा hlist_head chainhash_table[CHAINHASH_SIZE];
 
 /*
  * the id of held_lock
  */
-static inline u16 hlock_id(struct held_lock *hlock)
-{
+अटल अंतरभूत u16 hlock_id(काष्ठा held_lock *hlock)
+अणु
 	BUILD_BUG_ON(MAX_LOCKDEP_KEYS_BITS + 2 > 16);
 
-	return (hlock->class_idx | (hlock->read << MAX_LOCKDEP_KEYS_BITS));
-}
+	वापस (hlock->class_idx | (hlock->पढ़ो << MAX_LOCKDEP_KEYS_BITS));
+पूर्ण
 
-static inline unsigned int chain_hlock_class_idx(u16 hlock_id)
-{
-	return hlock_id & (MAX_LOCKDEP_KEYS - 1);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक chain_hlock_class_idx(u16 hlock_id)
+अणु
+	वापस hlock_id & (MAX_LOCKDEP_KEYS - 1);
+पूर्ण
 
 /*
  * The hash key of the lock dependency chains is a hash itself too:
  * it's a hash of all locks taken up to that lock, including that lock.
- * It's a 64-bit hash, because it's important for the keys to be
+ * It's a 64-bit hash, because it's important क्रम the keys to be
  * unique.
  */
-static inline u64 iterate_chain_key(u64 key, u32 idx)
-{
+अटल अंतरभूत u64 iterate_chain_key(u64 key, u32 idx)
+अणु
 	u32 k0 = key, k1 = key >> 32;
 
-	__jhash_mix(idx, k0, k1); /* Macro that modifies arguments! */
+	__jhash_mix(idx, k0, k1); /* Macro that modअगरies arguments! */
 
-	return k0 | (u64)k1 << 32;
-}
+	वापस k0 | (u64)k1 << 32;
+पूर्ण
 
-void lockdep_init_task(struct task_struct *task)
-{
+व्योम lockdep_init_task(काष्ठा task_काष्ठा *task)
+अणु
 	task->lockdep_depth = 0; /* no locks held yet */
 	task->curr_chain_key = INITIAL_CHAIN_KEY;
 	task->lockdep_recursion = 0;
-}
+पूर्ण
 
-static __always_inline void lockdep_recursion_inc(void)
-{
+अटल __always_अंतरभूत व्योम lockdep_recursion_inc(व्योम)
+अणु
 	__this_cpu_inc(lockdep_recursion);
-}
+पूर्ण
 
-static __always_inline void lockdep_recursion_finish(void)
-{
-	if (WARN_ON_ONCE(__this_cpu_dec_return(lockdep_recursion)))
-		__this_cpu_write(lockdep_recursion, 0);
-}
+अटल __always_अंतरभूत व्योम lockdep_recursion_finish(व्योम)
+अणु
+	अगर (WARN_ON_ONCE(__this_cpu_dec_वापस(lockdep_recursion)))
+		__this_cpu_ग_लिखो(lockdep_recursion, 0);
+पूर्ण
 
-void lockdep_set_selftest_task(struct task_struct *task)
-{
-	lockdep_selftest_task_struct = task;
-}
+व्योम lockdep_set_selftest_task(काष्ठा task_काष्ठा *task)
+अणु
+	lockdep_selftest_task_काष्ठा = task;
+पूर्ण
 
 /*
- * Debugging switches:
+ * Debugging चयनes:
  */
 
-#define VERBOSE			0
-#define VERY_VERBOSE		0
+#घोषणा VERBOSE			0
+#घोषणा VERY_VERBOSE		0
 
-#if VERBOSE
-# define HARDIRQ_VERBOSE	1
+#अगर VERBOSE
+# define HARसूचीQ_VERBOSE	1
 # define SOFTIRQ_VERBOSE	1
-#else
-# define HARDIRQ_VERBOSE	0
+#अन्यथा
+# define HARसूचीQ_VERBOSE	0
 # define SOFTIRQ_VERBOSE	0
-#endif
+#पूर्ण_अगर
 
-#if VERBOSE || HARDIRQ_VERBOSE || SOFTIRQ_VERBOSE
+#अगर VERBOSE || HARसूचीQ_VERBOSE || SOFTIRQ_VERBOSE
 /*
- * Quick filtering for interesting events:
+ * Quick filtering क्रम पूर्णांकeresting events:
  */
-static int class_filter(struct lock_class *class)
-{
-#if 0
+अटल पूर्णांक class_filter(काष्ठा lock_class *class)
+अणु
+#अगर 0
 	/* Example */
-	if (class->name_version == 1 &&
-			!strcmp(class->name, "lockname"))
-		return 1;
-	if (class->name_version == 1 &&
-			!strcmp(class->name, "&struct->lockfield"))
-		return 1;
-#endif
-	/* Filter everything else. 1 would be to allow everything else */
-	return 0;
-}
-#endif
+	अगर (class->name_version == 1 &&
+			!म_भेद(class->name, "lockname"))
+		वापस 1;
+	अगर (class->name_version == 1 &&
+			!म_भेद(class->name, "&struct->lockfield"))
+		वापस 1;
+#पूर्ण_अगर
+	/* Filter everything अन्यथा. 1 would be to allow everything अन्यथा */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int verbose(struct lock_class *class)
-{
-#if VERBOSE
-	return class_filter(class);
-#endif
-	return 0;
-}
+अटल पूर्णांक verbose(काष्ठा lock_class *class)
+अणु
+#अगर VERBOSE
+	वापस class_filter(class);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void print_lockdep_off(const char *bug_msg)
-{
-	printk(KERN_DEBUG "%s\n", bug_msg);
-	printk(KERN_DEBUG "turning off the locking correctness validator.\n");
-#ifdef CONFIG_LOCK_STAT
-	printk(KERN_DEBUG "Please attach the output of /proc/lock_stat to the bug report\n");
-#endif
-}
+अटल व्योम prपूर्णांक_lockdep_off(स्थिर अक्षर *bug_msg)
+अणु
+	prपूर्णांकk(KERN_DEBUG "%s\n", bug_msg);
+	prपूर्णांकk(KERN_DEBUG "turning off the locking correctness validator.\n");
+#अगर_घोषित CONFIG_LOCK_STAT
+	prपूर्णांकk(KERN_DEBUG "Please attach the output of /proc/lock_stat to the bug report\n");
+#पूर्ण_अगर
+पूर्ण
 
-unsigned long nr_stack_trace_entries;
+अचिन्हित दीर्घ nr_stack_trace_entries;
 
-#ifdef CONFIG_PROVE_LOCKING
+#अगर_घोषित CONFIG_PROVE_LOCKING
 /**
- * struct lock_trace - single stack backtrace
+ * काष्ठा lock_trace - single stack backtrace
  * @hash_entry:	Entry in a stack_trace_hash[] list.
  * @hash:	jhash() of @entries.
  * @nr_entries:	Number of entries in @entries.
  * @entries:	Actual stack backtrace.
  */
-struct lock_trace {
-	struct hlist_node	hash_entry;
+काष्ठा lock_trace अणु
+	काष्ठा hlist_node	hash_entry;
 	u32			hash;
 	u32			nr_entries;
-	unsigned long		entries[] __aligned(sizeof(unsigned long));
-};
-#define LOCK_TRACE_SIZE_IN_LONGS				\
-	(sizeof(struct lock_trace) / sizeof(unsigned long))
+	अचिन्हित दीर्घ		entries[] __aligned(माप(अचिन्हित दीर्घ));
+पूर्ण;
+#घोषणा LOCK_TRACE_SIZE_IN_LONGS				\
+	(माप(काष्ठा lock_trace) / माप(अचिन्हित दीर्घ))
 /*
- * Stack-trace: sequence of lock_trace structures. Protected by the graph_lock.
+ * Stack-trace: sequence of lock_trace काष्ठाures. Protected by the graph_lock.
  */
-static unsigned long stack_trace[MAX_STACK_TRACE_ENTRIES];
-static struct hlist_head stack_trace_hash[STACK_TRACE_HASH_SIZE];
+अटल अचिन्हित दीर्घ stack_trace[MAX_STACK_TRACE_ENTRIES];
+अटल काष्ठा hlist_head stack_trace_hash[STACK_TRACE_HASH_SIZE];
 
-static bool traces_identical(struct lock_trace *t1, struct lock_trace *t2)
-{
-	return t1->hash == t2->hash && t1->nr_entries == t2->nr_entries &&
-		memcmp(t1->entries, t2->entries,
-		       t1->nr_entries * sizeof(t1->entries[0])) == 0;
-}
+अटल bool traces_identical(काष्ठा lock_trace *t1, काष्ठा lock_trace *t2)
+अणु
+	वापस t1->hash == t2->hash && t1->nr_entries == t2->nr_entries &&
+		स_भेद(t1->entries, t2->entries,
+		       t1->nr_entries * माप(t1->entries[0])) == 0;
+पूर्ण
 
-static struct lock_trace *save_trace(void)
-{
-	struct lock_trace *trace, *t2;
-	struct hlist_head *hash_head;
+अटल काष्ठा lock_trace *save_trace(व्योम)
+अणु
+	काष्ठा lock_trace *trace, *t2;
+	काष्ठा hlist_head *hash_head;
 	u32 hash;
-	int max_entries;
+	पूर्णांक max_entries;
 
 	BUILD_BUG_ON_NOT_POWER_OF_2(STACK_TRACE_HASH_SIZE);
 	BUILD_BUG_ON(LOCK_TRACE_SIZE_IN_LONGS >= MAX_STACK_TRACE_ENTRIES);
 
-	trace = (struct lock_trace *)(stack_trace + nr_stack_trace_entries);
+	trace = (काष्ठा lock_trace *)(stack_trace + nr_stack_trace_entries);
 	max_entries = MAX_STACK_TRACE_ENTRIES - nr_stack_trace_entries -
 		LOCK_TRACE_SIZE_IN_LONGS;
 
-	if (max_entries <= 0) {
-		if (!debug_locks_off_graph_unlock())
-			return NULL;
+	अगर (max_entries <= 0) अणु
+		अगर (!debug_locks_off_graph_unlock())
+			वापस शून्य;
 
-		print_lockdep_off("BUG: MAX_STACK_TRACE_ENTRIES too low!");
+		prपूर्णांक_lockdep_off("BUG: MAX_STACK_TRACE_ENTRIES too low!");
 		dump_stack();
 
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	trace->nr_entries = stack_trace_save(trace->entries, max_entries, 3);
 
 	hash = jhash(trace->entries, trace->nr_entries *
-		     sizeof(trace->entries[0]), 0);
+		     माप(trace->entries[0]), 0);
 	trace->hash = hash;
 	hash_head = stack_trace_hash + (hash & (STACK_TRACE_HASH_SIZE - 1));
-	hlist_for_each_entry(t2, hash_head, hash_entry) {
-		if (traces_identical(trace, t2))
-			return t2;
-	}
+	hlist_क्रम_each_entry(t2, hash_head, hash_entry) अणु
+		अगर (traces_identical(trace, t2))
+			वापस t2;
+	पूर्ण
 	nr_stack_trace_entries += LOCK_TRACE_SIZE_IN_LONGS + trace->nr_entries;
 	hlist_add_head(&trace->hash_entry, hash_head);
 
-	return trace;
-}
+	वापस trace;
+पूर्ण
 
 /* Return the number of stack traces in the stack_trace[] array. */
-u64 lockdep_stack_trace_count(void)
-{
-	struct lock_trace *trace;
+u64 lockdep_stack_trace_count(व्योम)
+अणु
+	काष्ठा lock_trace *trace;
 	u64 c = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(stack_trace_hash); i++) {
-		hlist_for_each_entry(trace, &stack_trace_hash[i], hash_entry) {
+	क्रम (i = 0; i < ARRAY_SIZE(stack_trace_hash); i++) अणु
+		hlist_क्रम_each_entry(trace, &stack_trace_hash[i], hash_entry) अणु
 			c++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
 /* Return the number of stack hash chains that have at least one stack trace. */
-u64 lockdep_stack_hash_count(void)
-{
+u64 lockdep_stack_hash_count(व्योम)
+अणु
 	u64 c = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(stack_trace_hash); i++)
-		if (!hlist_empty(&stack_trace_hash[i]))
+	क्रम (i = 0; i < ARRAY_SIZE(stack_trace_hash); i++)
+		अगर (!hlist_empty(&stack_trace_hash[i]))
 			c++;
 
-	return c;
-}
-#endif
+	वापस c;
+पूर्ण
+#पूर्ण_अगर
 
-unsigned int nr_hardirq_chains;
-unsigned int nr_softirq_chains;
-unsigned int nr_process_chains;
-unsigned int max_lockdep_depth;
+अचिन्हित पूर्णांक nr_hardirq_chains;
+अचिन्हित पूर्णांक nr_softirq_chains;
+अचिन्हित पूर्णांक nr_process_chains;
+अचिन्हित पूर्णांक max_lockdep_depth;
 
-#ifdef CONFIG_DEBUG_LOCKDEP
+#अगर_घोषित CONFIG_DEBUG_LOCKDEP
 /*
  * Various lockdep statistics:
  */
-DEFINE_PER_CPU(struct lockdep_stats, lockdep_stats);
-#endif
+DEFINE_PER_CPU(काष्ठा lockdep_stats, lockdep_stats);
+#पूर्ण_अगर
 
-#ifdef CONFIG_PROVE_LOCKING
+#अगर_घोषित CONFIG_PROVE_LOCKING
 /*
- * Locking printouts:
+ * Locking prपूर्णांकouts:
  */
 
-#define __USAGE(__STATE)						\
-	[LOCK_USED_IN_##__STATE] = "IN-"__stringify(__STATE)"-W",	\
-	[LOCK_ENABLED_##__STATE] = __stringify(__STATE)"-ON-W",		\
-	[LOCK_USED_IN_##__STATE##_READ] = "IN-"__stringify(__STATE)"-R",\
-	[LOCK_ENABLED_##__STATE##_READ] = __stringify(__STATE)"-ON-R",
+#घोषणा __USAGE(__STATE)						\
+	[LOCK_USED_IN_##__STATE] = "IN-"__stringअगरy(__STATE)"-W",	\
+	[LOCK_ENABLED_##__STATE] = __stringअगरy(__STATE)"-ON-W",		\
+	[LOCK_USED_IN_##__STATE##_READ] = "IN-"__stringअगरy(__STATE)"-R",\
+	[LOCK_ENABLED_##__STATE##_READ] = __stringअगरy(__STATE)"-ON-R",
 
-static const char *usage_str[] =
-{
-#define LOCKDEP_STATE(__STATE) __USAGE(__STATE)
-#include "lockdep_states.h"
-#undef LOCKDEP_STATE
+अटल स्थिर अक्षर *usage_str[] =
+अणु
+#घोषणा LOCKDEP_STATE(__STATE) __USAGE(__STATE)
+#समावेश "lockdep_states.h"
+#अघोषित LOCKDEP_STATE
 	[LOCK_USED] = "INITIAL USE",
 	[LOCK_USED_READ] = "INITIAL READ USE",
-	/* abused as string storage for verify_lock_unused() */
+	/* abused as string storage क्रम verअगरy_lock_unused() */
 	[LOCK_USAGE_STATES] = "IN-NMI",
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-const char *__get_key_name(const struct lockdep_subclass_key *key, char *str)
-{
-	return kallsyms_lookup((unsigned long)key, NULL, NULL, NULL, str);
-}
+स्थिर अक्षर *__get_key_name(स्थिर काष्ठा lockdep_subclass_key *key, अक्षर *str)
+अणु
+	वापस kallsyms_lookup((अचिन्हित दीर्घ)key, शून्य, शून्य, शून्य, str);
+पूर्ण
 
-static inline unsigned long lock_flag(enum lock_usage_bit bit)
-{
-	return 1UL << bit;
-}
+अटल अंतरभूत अचिन्हित दीर्घ lock_flag(क्रमागत lock_usage_bit bit)
+अणु
+	वापस 1UL << bit;
+पूर्ण
 
-static char get_usage_char(struct lock_class *class, enum lock_usage_bit bit)
-{
+अटल अक्षर get_usage_अक्षर(काष्ठा lock_class *class, क्रमागत lock_usage_bit bit)
+अणु
 	/*
-	 * The usage character defaults to '.' (i.e., irqs disabled and not in
+	 * The usage अक्षरacter शेषs to '.' (i.e., irqs disabled and not in
 	 * irq context), which is the safest usage category.
 	 */
-	char c = '.';
+	अक्षर c = '.';
 
 	/*
 	 * The order of the following usage checks matters, which will
-	 * result in the outcome character as follows:
+	 * result in the outcome अक्षरacter as follows:
 	 *
 	 * - '+': irq is enabled and not in irq context
 	 * - '-': in irq context and irq is disabled
 	 * - '?': in irq context and irq is enabled
 	 */
-	if (class->usage_mask & lock_flag(bit + LOCK_USAGE_DIR_MASK)) {
+	अगर (class->usage_mask & lock_flag(bit + LOCK_USAGE_सूची_MASK)) अणु
 		c = '+';
-		if (class->usage_mask & lock_flag(bit))
+		अगर (class->usage_mask & lock_flag(bit))
 			c = '?';
-	} else if (class->usage_mask & lock_flag(bit))
+	पूर्ण अन्यथा अगर (class->usage_mask & lock_flag(bit))
 		c = '-';
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-void get_usage_chars(struct lock_class *class, char usage[LOCK_USAGE_CHARS])
-{
-	int i = 0;
+व्योम get_usage_अक्षरs(काष्ठा lock_class *class, अक्षर usage[LOCK_USAGE_CHARS])
+अणु
+	पूर्णांक i = 0;
 
-#define LOCKDEP_STATE(__STATE) 						\
-	usage[i++] = get_usage_char(class, LOCK_USED_IN_##__STATE);	\
-	usage[i++] = get_usage_char(class, LOCK_USED_IN_##__STATE##_READ);
-#include "lockdep_states.h"
-#undef LOCKDEP_STATE
+#घोषणा LOCKDEP_STATE(__STATE) 						\
+	usage[i++] = get_usage_अक्षर(class, LOCK_USED_IN_##__STATE);	\
+	usage[i++] = get_usage_अक्षर(class, LOCK_USED_IN_##__STATE##_READ);
+#समावेश "lockdep_states.h"
+#अघोषित LOCKDEP_STATE
 
 	usage[i] = '\0';
-}
+पूर्ण
 
-static void __print_lock_name(struct lock_class *class)
-{
-	char str[KSYM_NAME_LEN];
-	const char *name;
+अटल व्योम __prपूर्णांक_lock_name(काष्ठा lock_class *class)
+अणु
+	अक्षर str[KSYM_NAME_LEN];
+	स्थिर अक्षर *name;
 
 	name = class->name;
-	if (!name) {
+	अगर (!name) अणु
 		name = __get_key_name(class->key, str);
-		printk(KERN_CONT "%s", name);
-	} else {
-		printk(KERN_CONT "%s", name);
-		if (class->name_version > 1)
-			printk(KERN_CONT "#%d", class->name_version);
-		if (class->subclass)
-			printk(KERN_CONT "/%d", class->subclass);
-	}
-}
+		prपूर्णांकk(KERN_CONT "%s", name);
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_CONT "%s", name);
+		अगर (class->name_version > 1)
+			prपूर्णांकk(KERN_CONT "#%d", class->name_version);
+		अगर (class->subclass)
+			prपूर्णांकk(KERN_CONT "/%d", class->subclass);
+	पूर्ण
+पूर्ण
 
-static void print_lock_name(struct lock_class *class)
-{
-	char usage[LOCK_USAGE_CHARS];
+अटल व्योम prपूर्णांक_lock_name(काष्ठा lock_class *class)
+अणु
+	अक्षर usage[LOCK_USAGE_CHARS];
 
-	get_usage_chars(class, usage);
+	get_usage_अक्षरs(class, usage);
 
-	printk(KERN_CONT " (");
-	__print_lock_name(class);
-	printk(KERN_CONT "){%s}-{%d:%d}", usage,
-			class->wait_type_outer ?: class->wait_type_inner,
-			class->wait_type_inner);
-}
+	prपूर्णांकk(KERN_CONT " (");
+	__prपूर्णांक_lock_name(class);
+	prपूर्णांकk(KERN_CONT "){%s}-{%d:%d}", usage,
+			class->रुको_type_outer ?: class->रुको_type_inner,
+			class->रुको_type_inner);
+पूर्ण
 
-static void print_lockdep_cache(struct lockdep_map *lock)
-{
-	const char *name;
-	char str[KSYM_NAME_LEN];
+अटल व्योम prपूर्णांक_lockdep_cache(काष्ठा lockdep_map *lock)
+अणु
+	स्थिर अक्षर *name;
+	अक्षर str[KSYM_NAME_LEN];
 
 	name = lock->name;
-	if (!name)
+	अगर (!name)
 		name = __get_key_name(lock->key->subkeys, str);
 
-	printk(KERN_CONT "%s", name);
-}
+	prपूर्णांकk(KERN_CONT "%s", name);
+पूर्ण
 
-static void print_lock(struct held_lock *hlock)
-{
+अटल व्योम prपूर्णांक_lock(काष्ठा held_lock *hlock)
+अणु
 	/*
 	 * We can be called locklessly through debug_show_all_locks() so be
 	 * extra careful, the hlock might have been released and cleared.
 	 *
-	 * If this indeed happens, lets pretend it does not hurt to continue
-	 * to print the lock unless the hlock class_idx does not point to a
-	 * registered class. The rationale here is: since we don't attempt
-	 * to distinguish whether we are in this situation, if it just
+	 * If this indeed happens, lets pretend it करोes not hurt to जारी
+	 * to prपूर्णांक the lock unless the hlock class_idx करोes not poपूर्णांक to a
+	 * रेजिस्टरed class. The rationale here is: since we करोn't attempt
+	 * to distinguish whether we are in this situation, अगर it just
 	 * happened we can't count on class_idx to tell either.
 	 */
-	struct lock_class *lock = hlock_class(hlock);
+	काष्ठा lock_class *lock = hlock_class(hlock);
 
-	if (!lock) {
-		printk(KERN_CONT "<RELEASED>\n");
-		return;
-	}
+	अगर (!lock) अणु
+		prपूर्णांकk(KERN_CONT "<RELEASED>\n");
+		वापस;
+	पूर्ण
 
-	printk(KERN_CONT "%px", hlock->instance);
-	print_lock_name(lock);
-	printk(KERN_CONT ", at: %pS\n", (void *)hlock->acquire_ip);
-}
+	prपूर्णांकk(KERN_CONT "%px", hlock->instance);
+	prपूर्णांक_lock_name(lock);
+	prपूर्णांकk(KERN_CONT ", at: %pS\n", (व्योम *)hlock->acquire_ip);
+पूर्ण
 
-static void lockdep_print_held_locks(struct task_struct *p)
-{
-	int i, depth = READ_ONCE(p->lockdep_depth);
+अटल व्योम lockdep_prपूर्णांक_held_locks(काष्ठा task_काष्ठा *p)
+अणु
+	पूर्णांक i, depth = READ_ONCE(p->lockdep_depth);
 
-	if (!depth)
-		printk("no locks held by %s/%d.\n", p->comm, task_pid_nr(p));
-	else
-		printk("%d lock%s held by %s/%d:\n", depth,
+	अगर (!depth)
+		prपूर्णांकk("no locks held by %s/%d.\n", p->comm, task_pid_nr(p));
+	अन्यथा
+		prपूर्णांकk("%d lock%s held by %s/%d:\n", depth,
 		       depth > 1 ? "s" : "", p->comm, task_pid_nr(p));
 	/*
 	 * It's not reliable to print a task's held locks if it's not sleeping
 	 * and it's not the current task.
 	 */
-	if (p->state == TASK_RUNNING && p != current)
-		return;
-	for (i = 0; i < depth; i++) {
-		printk(" #%d: ", i);
-		print_lock(p->held_locks + i);
-	}
-}
+	अगर (p->state == TASK_RUNNING && p != current)
+		वापस;
+	क्रम (i = 0; i < depth; i++) अणु
+		prपूर्णांकk(" #%d: ", i);
+		prपूर्णांक_lock(p->held_locks + i);
+	पूर्ण
+पूर्ण
 
-static void print_kernel_ident(void)
-{
-	printk("%s %.*s %s\n", init_utsname()->release,
-		(int)strcspn(init_utsname()->version, " "),
+अटल व्योम prपूर्णांक_kernel_ident(व्योम)
+अणु
+	prपूर्णांकk("%s %.*s %s\n", init_utsname()->release,
+		(पूर्णांक)म_खोज(init_utsname()->version, " "),
 		init_utsname()->version,
-		print_tainted());
-}
+		prपूर्णांक_taपूर्णांकed());
+पूर्ण
 
-static int very_verbose(struct lock_class *class)
-{
-#if VERY_VERBOSE
-	return class_filter(class);
-#endif
-	return 0;
-}
+अटल पूर्णांक very_verbose(काष्ठा lock_class *class)
+अणु
+#अगर VERY_VERBOSE
+	वापस class_filter(class);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
- * Is this the address of a static object:
+ * Is this the address of a अटल object:
  */
-#ifdef __KERNEL__
-static int static_obj(const void *obj)
-{
-	unsigned long start = (unsigned long) &_stext,
-		      end   = (unsigned long) &_end,
-		      addr  = (unsigned long) obj;
+#अगर_घोषित __KERNEL__
+अटल पूर्णांक अटल_obj(स्थिर व्योम *obj)
+अणु
+	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ) &_stext,
+		      end   = (अचिन्हित दीर्घ) &_end,
+		      addr  = (अचिन्हित दीर्घ) obj;
 
-	if (arch_is_kernel_initmem_freed(addr))
-		return 0;
+	अगर (arch_is_kernel_iniपंचांगem_मुक्तd(addr))
+		वापस 0;
 
 	/*
-	 * static variable?
+	 * अटल variable?
 	 */
-	if ((addr >= start) && (addr < end))
-		return 1;
+	अगर ((addr >= start) && (addr < end))
+		वापस 1;
 
-	if (arch_is_kernel_data(addr))
-		return 1;
+	अगर (arch_is_kernel_data(addr))
+		वापस 1;
 
 	/*
 	 * in-kernel percpu var?
 	 */
-	if (is_kernel_percpu_address(addr))
-		return 1;
+	अगर (is_kernel_percpu_address(addr))
+		वापस 1;
 
 	/*
-	 * module static or percpu var?
+	 * module अटल or percpu var?
 	 */
-	return is_module_address(addr) || is_module_percpu_address(addr);
-}
-#endif
+	वापस is_module_address(addr) || is_module_percpu_address(addr);
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * To make lock name printouts unique, we calculate a unique
+ * To make lock name prपूर्णांकouts unique, we calculate a unique
  * class->name_version generation counter. The caller must hold the graph
  * lock.
  */
-static int count_matching_names(struct lock_class *new_class)
-{
-	struct lock_class *class;
-	int count = 0;
+अटल पूर्णांक count_matching_names(काष्ठा lock_class *new_class)
+अणु
+	काष्ठा lock_class *class;
+	पूर्णांक count = 0;
 
-	if (!new_class->name)
-		return 0;
+	अगर (!new_class->name)
+		वापस 0;
 
-	list_for_each_entry(class, &all_lock_classes, lock_entry) {
-		if (new_class->key - new_class->subclass == class->key)
-			return class->name_version;
-		if (class->name && !strcmp(class->name, new_class->name))
+	list_क्रम_each_entry(class, &all_lock_classes, lock_entry) अणु
+		अगर (new_class->key - new_class->subclass == class->key)
+			वापस class->name_version;
+		अगर (class->name && !म_भेद(class->name, new_class->name))
 			count = max(count, class->name_version);
-	}
+	पूर्ण
 
-	return count + 1;
-}
+	वापस count + 1;
+पूर्ण
 
 /* used from NMI context -- must be lockless */
-static __always_inline struct lock_class *
-look_up_lock_class(const struct lockdep_map *lock, unsigned int subclass)
-{
-	struct lockdep_subclass_key *key;
-	struct hlist_head *hash_head;
-	struct lock_class *class;
+अटल __always_अंतरभूत काष्ठा lock_class *
+look_up_lock_class(स्थिर काष्ठा lockdep_map *lock, अचिन्हित पूर्णांक subclass)
+अणु
+	काष्ठा lockdep_subclass_key *key;
+	काष्ठा hlist_head *hash_head;
+	काष्ठा lock_class *class;
 
-	if (unlikely(subclass >= MAX_LOCKDEP_SUBCLASSES)) {
+	अगर (unlikely(subclass >= MAX_LOCKDEP_SUBCLASSES)) अणु
 		debug_locks_off();
-		printk(KERN_ERR
+		prपूर्णांकk(KERN_ERR
 			"BUG: looking up invalid subclass: %u\n", subclass);
-		printk(KERN_ERR
+		prपूर्णांकk(KERN_ERR
 			"turning off the locking correctness validator.\n");
 		dump_stack();
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
 	 * If it is not initialised then it has never been locked,
 	 * so it won't be present in the hash table.
 	 */
-	if (unlikely(!lock->key))
-		return NULL;
+	अगर (unlikely(!lock->key))
+		वापस शून्य;
 
 	/*
-	 * NOTE: the class-key must be unique. For dynamic locks, a static
+	 * NOTE: the class-key must be unique. For dynamic locks, a अटल
 	 * lock_class_key variable is passed in through the mutex_init()
-	 * (or spin_lock_init()) call - which acts as the key. For static
+	 * (or spin_lock_init()) call - which acts as the key. For अटल
 	 * locks we use the lock object itself as the key.
 	 */
-	BUILD_BUG_ON(sizeof(struct lock_class_key) >
-			sizeof(struct lockdep_map));
+	BUILD_BUG_ON(माप(काष्ठा lock_class_key) >
+			माप(काष्ठा lockdep_map));
 
 	key = lock->key->subkeys + subclass;
 
 	hash_head = classhashentry(key);
 
 	/*
-	 * We do an RCU walk of the hash, see lockdep_free_key_range().
+	 * We करो an RCU walk of the hash, see lockdep_मुक्त_key_range().
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
-		return NULL;
+	अगर (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
+		वापस शून्य;
 
-	hlist_for_each_entry_rcu(class, hash_head, hash_entry) {
-		if (class->key == key) {
+	hlist_क्रम_each_entry_rcu(class, hash_head, hash_entry) अणु
+		अगर (class->key == key) अणु
 			/*
-			 * Huh! same key, different name? Did someone trample
+			 * Huh! same key, dअगरferent name? Did someone trample
 			 * on some memory? We're most confused.
 			 */
 			WARN_ON_ONCE(class->name != lock->name &&
 				     lock->key != &__lockdep_no_validate__);
-			return class;
-		}
-	}
+			वापस class;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Static locks do not have their class-keys yet - for them the key is
+ * Static locks करो not have their class-keys yet - क्रम them the key is
  * the lock object itself. If the lock is in the per cpu area, the
- * canonical address of the lock (per cpu offset removed) is used.
+ * canonical address of the lock (per cpu offset हटाओd) is used.
  */
-static bool assign_lock_key(struct lockdep_map *lock)
-{
-	unsigned long can_addr, addr = (unsigned long)lock;
+अटल bool assign_lock_key(काष्ठा lockdep_map *lock)
+अणु
+	अचिन्हित दीर्घ can_addr, addr = (अचिन्हित दीर्घ)lock;
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 	/*
-	 * lockdep_free_key_range() assumes that struct lock_class_key
-	 * objects do not overlap. Since we use the address of lock
-	 * objects as class key for static objects, check whether the
-	 * size of lock_class_key objects does not exceed the size of
+	 * lockdep_मुक्त_key_range() assumes that काष्ठा lock_class_key
+	 * objects करो not overlap. Since we use the address of lock
+	 * objects as class key क्रम अटल objects, check whether the
+	 * size of lock_class_key objects करोes not exceed the size of
 	 * the smallest lock object.
 	 */
-	BUILD_BUG_ON(sizeof(struct lock_class_key) > sizeof(raw_spinlock_t));
-#endif
+	BUILD_BUG_ON(माप(काष्ठा lock_class_key) > माप(raw_spinlock_t));
+#पूर्ण_अगर
 
-	if (__is_kernel_percpu_address(addr, &can_addr))
-		lock->key = (void *)can_addr;
-	else if (__is_module_percpu_address(addr, &can_addr))
-		lock->key = (void *)can_addr;
-	else if (static_obj(lock))
-		lock->key = (void *)lock;
-	else {
+	अगर (__is_kernel_percpu_address(addr, &can_addr))
+		lock->key = (व्योम *)can_addr;
+	अन्यथा अगर (__is_module_percpu_address(addr, &can_addr))
+		lock->key = (व्योम *)can_addr;
+	अन्यथा अगर (अटल_obj(lock))
+		lock->key = (व्योम *)lock;
+	अन्यथा अणु
 		/* Debug-check: all keys must be persistent! */
 		debug_locks_off();
 		pr_err("INFO: trying to register non-static key.\n");
@@ -935,363 +936,363 @@ static bool assign_lock_key(struct lockdep_map *lock)
 		pr_err("you didn't initialize this object before use?\n");
 		pr_err("turning off the locking correctness validator.\n");
 		dump_stack();
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_LOCKDEP
+#अगर_घोषित CONFIG_DEBUG_LOCKDEP
 
 /* Check whether element @e occurs in list @h */
-static bool in_list(struct list_head *e, struct list_head *h)
-{
-	struct list_head *f;
+अटल bool in_list(काष्ठा list_head *e, काष्ठा list_head *h)
+अणु
+	काष्ठा list_head *f;
 
-	list_for_each(f, h) {
-		if (e == f)
-			return true;
-	}
+	list_क्रम_each(f, h) अणु
+		अगर (e == f)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Check whether entry @e occurs in any of the locks_after or locks_before
+ * Check whether entry @e occurs in any of the locks_after or locks_beक्रमe
  * lists.
  */
-static bool in_any_class_list(struct list_head *e)
-{
-	struct lock_class *class;
-	int i;
+अटल bool in_any_class_list(काष्ठा list_head *e)
+अणु
+	काष्ठा lock_class *class;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(lock_classes); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(lock_classes); i++) अणु
 		class = &lock_classes[i];
-		if (in_list(e, &class->locks_after) ||
-		    in_list(e, &class->locks_before))
-			return true;
-	}
-	return false;
-}
+		अगर (in_list(e, &class->locks_after) ||
+		    in_list(e, &class->locks_beक्रमe))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool class_lock_list_valid(struct lock_class *c, struct list_head *h)
-{
-	struct lock_list *e;
+अटल bool class_lock_list_valid(काष्ठा lock_class *c, काष्ठा list_head *h)
+अणु
+	काष्ठा lock_list *e;
 
-	list_for_each_entry(e, h, entry) {
-		if (e->links_to != c) {
-			printk(KERN_INFO "class %s: mismatch for lock entry %ld; class %s <> %s",
+	list_क्रम_each_entry(e, h, entry) अणु
+		अगर (e->links_to != c) अणु
+			prपूर्णांकk(KERN_INFO "class %s: mismatch for lock entry %ld; class %s <> %s",
 			       c->name ? : "(?)",
-			       (unsigned long)(e - list_entries),
+			       (अचिन्हित दीर्घ)(e - list_entries),
 			       e->links_to && e->links_to->name ?
 			       e->links_to->name : "(?)",
 			       e->class && e->class->name ? e->class->name :
 			       "(?)");
-			return false;
-		}
-	}
-	return true;
-}
+			वापस false;
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 
-#ifdef CONFIG_PROVE_LOCKING
-static u16 chain_hlocks[MAX_LOCKDEP_CHAIN_HLOCKS];
-#endif
+#अगर_घोषित CONFIG_PROVE_LOCKING
+अटल u16 chain_hlocks[MAX_LOCKDEP_CHAIN_HLOCKS];
+#पूर्ण_अगर
 
-static bool check_lock_chain_key(struct lock_chain *chain)
-{
-#ifdef CONFIG_PROVE_LOCKING
+अटल bool check_lock_chain_key(काष्ठा lock_chain *chain)
+अणु
+#अगर_घोषित CONFIG_PROVE_LOCKING
 	u64 chain_key = INITIAL_CHAIN_KEY;
-	int i;
+	पूर्णांक i;
 
-	for (i = chain->base; i < chain->base + chain->depth; i++)
+	क्रम (i = chain->base; i < chain->base + chain->depth; i++)
 		chain_key = iterate_chain_key(chain_key, chain_hlocks[i]);
 	/*
-	 * The 'unsigned long long' casts avoid that a compiler warning
+	 * The 'unsigned long long' casts aव्योम that a compiler warning
 	 * is reported when building tools/lib/lockdep.
 	 */
-	if (chain->chain_key != chain_key) {
-		printk(KERN_INFO "chain %lld: key %#llx <> %#llx\n",
-		       (unsigned long long)(chain - lock_chains),
-		       (unsigned long long)chain->chain_key,
-		       (unsigned long long)chain_key);
-		return false;
-	}
-#endif
-	return true;
-}
+	अगर (chain->chain_key != chain_key) अणु
+		prपूर्णांकk(KERN_INFO "chain %lld: key %#llx <> %#llx\n",
+		       (अचिन्हित दीर्घ दीर्घ)(chain - lock_chains),
+		       (अचिन्हित दीर्घ दीर्घ)chain->chain_key,
+		       (अचिन्हित दीर्घ दीर्घ)chain_key);
+		वापस false;
+	पूर्ण
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-static bool in_any_zapped_class_list(struct lock_class *class)
-{
-	struct pending_free *pf;
-	int i;
+अटल bool in_any_zapped_class_list(काष्ठा lock_class *class)
+अणु
+	काष्ठा pending_मुक्त *pf;
+	पूर्णांक i;
 
-	for (i = 0, pf = delayed_free.pf; i < ARRAY_SIZE(delayed_free.pf); i++, pf++) {
-		if (in_list(&class->lock_entry, &pf->zapped))
-			return true;
-	}
+	क्रम (i = 0, pf = delayed_मुक्त.pf; i < ARRAY_SIZE(delayed_मुक्त.pf); i++, pf++) अणु
+		अगर (in_list(&class->lock_entry, &pf->zapped))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool __check_data_structures(void)
-{
-	struct lock_class *class;
-	struct lock_chain *chain;
-	struct hlist_head *head;
-	struct lock_list *e;
-	int i;
+अटल bool __check_data_काष्ठाures(व्योम)
+अणु
+	काष्ठा lock_class *class;
+	काष्ठा lock_chain *chain;
+	काष्ठा hlist_head *head;
+	काष्ठा lock_list *e;
+	पूर्णांक i;
 
 	/* Check whether all classes occur in a lock list. */
-	for (i = 0; i < ARRAY_SIZE(lock_classes); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(lock_classes); i++) अणु
 		class = &lock_classes[i];
-		if (!in_list(&class->lock_entry, &all_lock_classes) &&
-		    !in_list(&class->lock_entry, &free_lock_classes) &&
-		    !in_any_zapped_class_list(class)) {
-			printk(KERN_INFO "class %px/%s is not in any class list\n",
+		अगर (!in_list(&class->lock_entry, &all_lock_classes) &&
+		    !in_list(&class->lock_entry, &मुक्त_lock_classes) &&
+		    !in_any_zapped_class_list(class)) अणु
+			prपूर्णांकk(KERN_INFO "class %px/%s is not in any class list\n",
 			       class, class->name ? : "(?)");
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
 	/* Check whether all classes have valid lock lists. */
-	for (i = 0; i < ARRAY_SIZE(lock_classes); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(lock_classes); i++) अणु
 		class = &lock_classes[i];
-		if (!class_lock_list_valid(class, &class->locks_before))
-			return false;
-		if (!class_lock_list_valid(class, &class->locks_after))
-			return false;
-	}
+		अगर (!class_lock_list_valid(class, &class->locks_beक्रमe))
+			वापस false;
+		अगर (!class_lock_list_valid(class, &class->locks_after))
+			वापस false;
+	पूर्ण
 
 	/* Check the chain_key of all lock chains. */
-	for (i = 0; i < ARRAY_SIZE(chainhash_table); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(chainhash_table); i++) अणु
 		head = chainhash_table + i;
-		hlist_for_each_entry_rcu(chain, head, entry) {
-			if (!check_lock_chain_key(chain))
-				return false;
-		}
-	}
+		hlist_क्रम_each_entry_rcu(chain, head, entry) अणु
+			अगर (!check_lock_chain_key(chain))
+				वापस false;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Check whether all list entries that are in use occur in a class
 	 * lock list.
 	 */
-	for_each_set_bit(i, list_entries_in_use, ARRAY_SIZE(list_entries)) {
+	क्रम_each_set_bit(i, list_entries_in_use, ARRAY_SIZE(list_entries)) अणु
 		e = list_entries + i;
-		if (!in_any_class_list(&e->entry)) {
-			printk(KERN_INFO "list entry %d is not in any class list; class %s <> %s\n",
-			       (unsigned int)(e - list_entries),
+		अगर (!in_any_class_list(&e->entry)) अणु
+			prपूर्णांकk(KERN_INFO "list entry %d is not in any class list; class %s <> %s\n",
+			       (अचिन्हित पूर्णांक)(e - list_entries),
 			       e->class->name ? : "(?)",
 			       e->links_to->name ? : "(?)");
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Check whether all list entries that are not in use do not occur in
+	 * Check whether all list entries that are not in use करो not occur in
 	 * a class lock list.
 	 */
-	for_each_clear_bit(i, list_entries_in_use, ARRAY_SIZE(list_entries)) {
+	क्रम_each_clear_bit(i, list_entries_in_use, ARRAY_SIZE(list_entries)) अणु
 		e = list_entries + i;
-		if (in_any_class_list(&e->entry)) {
-			printk(KERN_INFO "list entry %d occurs in a class list; class %s <> %s\n",
-			       (unsigned int)(e - list_entries),
+		अगर (in_any_class_list(&e->entry)) अणु
+			prपूर्णांकk(KERN_INFO "list entry %d occurs in a class list; class %s <> %s\n",
+			       (अचिन्हित पूर्णांक)(e - list_entries),
 			       e->class && e->class->name ? e->class->name :
 			       "(?)",
 			       e->links_to && e->links_to->name ?
 			       e->links_to->name : "(?)");
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int check_consistency = 0;
-module_param(check_consistency, int, 0644);
+पूर्णांक check_consistency = 0;
+module_param(check_consistency, पूर्णांक, 0644);
 
-static void check_data_structures(void)
-{
-	static bool once = false;
+अटल व्योम check_data_काष्ठाures(व्योम)
+अणु
+	अटल bool once = false;
 
-	if (check_consistency && !once) {
-		if (!__check_data_structures()) {
+	अगर (check_consistency && !once) अणु
+		अगर (!__check_data_काष्ठाures()) अणु
 			once = true;
 			WARN_ON(once);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#else /* CONFIG_DEBUG_LOCKDEP */
+#अन्यथा /* CONFIG_DEBUG_LOCKDEP */
 
-static inline void check_data_structures(void) { }
+अटल अंतरभूत व्योम check_data_काष्ठाures(व्योम) अणु पूर्ण
 
-#endif /* CONFIG_DEBUG_LOCKDEP */
+#पूर्ण_अगर /* CONFIG_DEBUG_LOCKDEP */
 
-static void init_chain_block_buckets(void);
+अटल व्योम init_chain_block_buckets(व्योम);
 
 /*
- * Initialize the lock_classes[] array elements, the free_lock_classes list
- * and also the delayed_free structure.
+ * Initialize the lock_classes[] array elements, the मुक्त_lock_classes list
+ * and also the delayed_मुक्त काष्ठाure.
  */
-static void init_data_structures_once(void)
-{
-	static bool __read_mostly ds_initialized, rcu_head_initialized;
-	int i;
+अटल व्योम init_data_काष्ठाures_once(व्योम)
+अणु
+	अटल bool __पढ़ो_mostly ds_initialized, rcu_head_initialized;
+	पूर्णांक i;
 
-	if (likely(rcu_head_initialized))
-		return;
+	अगर (likely(rcu_head_initialized))
+		वापस;
 
-	if (system_state >= SYSTEM_SCHEDULING) {
-		init_rcu_head(&delayed_free.rcu_head);
+	अगर (प्रणाली_state >= SYSTEM_SCHEDULING) अणु
+		init_rcu_head(&delayed_मुक्त.rcu_head);
 		rcu_head_initialized = true;
-	}
+	पूर्ण
 
-	if (ds_initialized)
-		return;
+	अगर (ds_initialized)
+		वापस;
 
 	ds_initialized = true;
 
-	INIT_LIST_HEAD(&delayed_free.pf[0].zapped);
-	INIT_LIST_HEAD(&delayed_free.pf[1].zapped);
+	INIT_LIST_HEAD(&delayed_मुक्त.pf[0].zapped);
+	INIT_LIST_HEAD(&delayed_मुक्त.pf[1].zapped);
 
-	for (i = 0; i < ARRAY_SIZE(lock_classes); i++) {
-		list_add_tail(&lock_classes[i].lock_entry, &free_lock_classes);
+	क्रम (i = 0; i < ARRAY_SIZE(lock_classes); i++) अणु
+		list_add_tail(&lock_classes[i].lock_entry, &मुक्त_lock_classes);
 		INIT_LIST_HEAD(&lock_classes[i].locks_after);
-		INIT_LIST_HEAD(&lock_classes[i].locks_before);
-	}
+		INIT_LIST_HEAD(&lock_classes[i].locks_beक्रमe);
+	पूर्ण
 	init_chain_block_buckets();
-}
+पूर्ण
 
-static inline struct hlist_head *keyhashentry(const struct lock_class_key *key)
-{
-	unsigned long hash = hash_long((uintptr_t)key, KEYHASH_BITS);
+अटल अंतरभूत काष्ठा hlist_head *keyhashentry(स्थिर काष्ठा lock_class_key *key)
+अणु
+	अचिन्हित दीर्घ hash = hash_दीर्घ((uपूर्णांकptr_t)key, KEYHASH_BITS);
 
-	return lock_keys_hash + hash;
-}
+	वापस lock_keys_hash + hash;
+पूर्ण
 
 /* Register a dynamically allocated key. */
-void lockdep_register_key(struct lock_class_key *key)
-{
-	struct hlist_head *hash_head;
-	struct lock_class_key *k;
-	unsigned long flags;
+व्योम lockdep_रेजिस्टर_key(काष्ठा lock_class_key *key)
+अणु
+	काष्ठा hlist_head *hash_head;
+	काष्ठा lock_class_key *k;
+	अचिन्हित दीर्घ flags;
 
-	if (WARN_ON_ONCE(static_obj(key)))
-		return;
+	अगर (WARN_ON_ONCE(अटल_obj(key)))
+		वापस;
 	hash_head = keyhashentry(key);
 
 	raw_local_irq_save(flags);
-	if (!graph_lock())
-		goto restore_irqs;
-	hlist_for_each_entry_rcu(k, hash_head, hash_entry) {
-		if (WARN_ON_ONCE(k == key))
-			goto out_unlock;
-	}
+	अगर (!graph_lock())
+		जाओ restore_irqs;
+	hlist_क्रम_each_entry_rcu(k, hash_head, hash_entry) अणु
+		अगर (WARN_ON_ONCE(k == key))
+			जाओ out_unlock;
+	पूर्ण
 	hlist_add_head_rcu(&key->hash_entry, hash_head);
 out_unlock:
 	graph_unlock();
 restore_irqs:
 	raw_local_irq_restore(flags);
-}
-EXPORT_SYMBOL_GPL(lockdep_register_key);
+पूर्ण
+EXPORT_SYMBOL_GPL(lockdep_रेजिस्टर_key);
 
-/* Check whether a key has been registered as a dynamic key. */
-static bool is_dynamic_key(const struct lock_class_key *key)
-{
-	struct hlist_head *hash_head;
-	struct lock_class_key *k;
+/* Check whether a key has been रेजिस्टरed as a dynamic key. */
+अटल bool is_dynamic_key(स्थिर काष्ठा lock_class_key *key)
+अणु
+	काष्ठा hlist_head *hash_head;
+	काष्ठा lock_class_key *k;
 	bool found = false;
 
-	if (WARN_ON_ONCE(static_obj(key)))
-		return false;
+	अगर (WARN_ON_ONCE(अटल_obj(key)))
+		वापस false;
 
 	/*
 	 * If lock debugging is disabled lock_keys_hash[] may contain
-	 * pointers to memory that has already been freed. Avoid triggering
-	 * a use-after-free in that case by returning early.
+	 * poपूर्णांकers to memory that has alपढ़ोy been मुक्तd. Aव्योम triggering
+	 * a use-after-मुक्त in that हाल by वापसing early.
 	 */
-	if (!debug_locks)
-		return true;
+	अगर (!debug_locks)
+		वापस true;
 
 	hash_head = keyhashentry(key);
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(k, hash_head, hash_entry) {
-		if (k == key) {
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(k, hash_head, hash_entry) अणु
+		अगर (k == key) अणु
 			found = true;
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
 /*
- * Register a lock's class in the hash-table, if the class is not present
+ * Register a lock's class in the hash-table, अगर the class is not present
  * yet. Otherwise we look it up. We cache the result in the lock object
  * itself, so actual lookup of the hash should be once per lock object.
  */
-static struct lock_class *
-register_lock_class(struct lockdep_map *lock, unsigned int subclass, int force)
-{
-	struct lockdep_subclass_key *key;
-	struct hlist_head *hash_head;
-	struct lock_class *class;
+अटल काष्ठा lock_class *
+रेजिस्टर_lock_class(काष्ठा lockdep_map *lock, अचिन्हित पूर्णांक subclass, पूर्णांक क्रमce)
+अणु
+	काष्ठा lockdep_subclass_key *key;
+	काष्ठा hlist_head *hash_head;
+	काष्ठा lock_class *class;
 
 	DEBUG_LOCKS_WARN_ON(!irqs_disabled());
 
 	class = look_up_lock_class(lock, subclass);
-	if (likely(class))
-		goto out_set_class_cache;
+	अगर (likely(class))
+		जाओ out_set_class_cache;
 
-	if (!lock->key) {
-		if (!assign_lock_key(lock))
-			return NULL;
-	} else if (!static_obj(lock->key) && !is_dynamic_key(lock->key)) {
-		return NULL;
-	}
+	अगर (!lock->key) अणु
+		अगर (!assign_lock_key(lock))
+			वापस शून्य;
+	पूर्ण अन्यथा अगर (!अटल_obj(lock->key) && !is_dynamic_key(lock->key)) अणु
+		वापस शून्य;
+	पूर्ण
 
 	key = lock->key->subkeys + subclass;
 	hash_head = classhashentry(key);
 
-	if (!graph_lock()) {
-		return NULL;
-	}
+	अगर (!graph_lock()) अणु
+		वापस शून्य;
+	पूर्ण
 	/*
-	 * We have to do the hash-walk again, to avoid races
+	 * We have to करो the hash-walk again, to aव्योम races
 	 * with another CPU:
 	 */
-	hlist_for_each_entry_rcu(class, hash_head, hash_entry) {
-		if (class->key == key)
-			goto out_unlock_set;
-	}
+	hlist_क्रम_each_entry_rcu(class, hash_head, hash_entry) अणु
+		अगर (class->key == key)
+			जाओ out_unlock_set;
+	पूर्ण
 
-	init_data_structures_once();
+	init_data_काष्ठाures_once();
 
 	/* Allocate a new lock class and add it to the hash. */
-	class = list_first_entry_or_null(&free_lock_classes, typeof(*class),
+	class = list_first_entry_or_null(&मुक्त_lock_classes, typeof(*class),
 					 lock_entry);
-	if (!class) {
-		if (!debug_locks_off_graph_unlock()) {
-			return NULL;
-		}
+	अगर (!class) अणु
+		अगर (!debug_locks_off_graph_unlock()) अणु
+			वापस शून्य;
+		पूर्ण
 
-		print_lockdep_off("BUG: MAX_LOCKDEP_KEYS too low!");
+		prपूर्णांक_lockdep_off("BUG: MAX_LOCKDEP_KEYS too low!");
 		dump_stack();
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	nr_lock_classes++;
 	__set_bit(class - lock_classes, lock_classes_in_use);
 	debug_atomic_inc(nr_unused_locks);
 	class->key = key;
 	class->name = lock->name;
 	class->subclass = subclass;
-	WARN_ON_ONCE(!list_empty(&class->locks_before));
+	WARN_ON_ONCE(!list_empty(&class->locks_beक्रमe));
 	WARN_ON_ONCE(!list_empty(&class->locks_after));
 	class->name_version = count_matching_names(class);
-	class->wait_type_inner = lock->wait_type_inner;
-	class->wait_type_outer = lock->wait_type_outer;
+	class->रुको_type_inner = lock->रुको_type_inner;
+	class->रुको_type_outer = lock->रुको_type_outer;
 	class->lock_type = lock->lock_type;
 	/*
 	 * We use RCU's safe list-add method to make
@@ -1299,82 +1300,82 @@ register_lock_class(struct lockdep_map *lock, unsigned int subclass, int force)
 	 */
 	hlist_add_head_rcu(&class->hash_entry, hash_head);
 	/*
-	 * Remove the class from the free list and add it to the global list
+	 * Remove the class from the मुक्त list and add it to the global list
 	 * of classes.
 	 */
 	list_move_tail(&class->lock_entry, &all_lock_classes);
 
-	if (verbose(class)) {
+	अगर (verbose(class)) अणु
 		graph_unlock();
 
-		printk("\nnew class %px: %s", class->key, class->name);
-		if (class->name_version > 1)
-			printk(KERN_CONT "#%d", class->name_version);
-		printk(KERN_CONT "\n");
+		prपूर्णांकk("\nnew class %px: %s", class->key, class->name);
+		अगर (class->name_version > 1)
+			prपूर्णांकk(KERN_CONT "#%d", class->name_version);
+		prपूर्णांकk(KERN_CONT "\n");
 		dump_stack();
 
-		if (!graph_lock()) {
-			return NULL;
-		}
-	}
+		अगर (!graph_lock()) अणु
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 out_unlock_set:
 	graph_unlock();
 
 out_set_class_cache:
-	if (!subclass || force)
+	अगर (!subclass || क्रमce)
 		lock->class_cache[0] = class;
-	else if (subclass < NR_LOCKDEP_CACHING_CLASSES)
+	अन्यथा अगर (subclass < NR_LOCKDEP_CACHING_CLASSES)
 		lock->class_cache[subclass] = class;
 
 	/*
 	 * Hash collision, did we smoke some? We found a class with a matching
 	 * hash but the subclass -- which is hashed in -- didn't match.
 	 */
-	if (DEBUG_LOCKS_WARN_ON(class->subclass != subclass))
-		return NULL;
+	अगर (DEBUG_LOCKS_WARN_ON(class->subclass != subclass))
+		वापस शून्य;
 
-	return class;
-}
+	वापस class;
+पूर्ण
 
-#ifdef CONFIG_PROVE_LOCKING
+#अगर_घोषित CONFIG_PROVE_LOCKING
 /*
- * Allocate a lockdep entry. (assumes the graph_lock held, returns
- * with NULL on failure)
+ * Allocate a lockdep entry. (assumes the graph_lock held, वापसs
+ * with शून्य on failure)
  */
-static struct lock_list *alloc_list_entry(void)
-{
-	int idx = find_first_zero_bit(list_entries_in_use,
+अटल काष्ठा lock_list *alloc_list_entry(व्योम)
+अणु
+	पूर्णांक idx = find_first_zero_bit(list_entries_in_use,
 				      ARRAY_SIZE(list_entries));
 
-	if (idx >= ARRAY_SIZE(list_entries)) {
-		if (!debug_locks_off_graph_unlock())
-			return NULL;
+	अगर (idx >= ARRAY_SIZE(list_entries)) अणु
+		अगर (!debug_locks_off_graph_unlock())
+			वापस शून्य;
 
-		print_lockdep_off("BUG: MAX_LOCKDEP_ENTRIES too low!");
+		prपूर्णांक_lockdep_off("BUG: MAX_LOCKDEP_ENTRIES too low!");
 		dump_stack();
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	nr_list_entries++;
 	__set_bit(idx, list_entries_in_use);
-	return list_entries + idx;
-}
+	वापस list_entries + idx;
+पूर्ण
 
 /*
  * Add a new dependency to the head of the list:
  */
-static int add_lock_to_list(struct lock_class *this,
-			    struct lock_class *links_to, struct list_head *head,
-			    unsigned long ip, u16 distance, u8 dep,
-			    const struct lock_trace *trace)
-{
-	struct lock_list *entry;
+अटल पूर्णांक add_lock_to_list(काष्ठा lock_class *this,
+			    काष्ठा lock_class *links_to, काष्ठा list_head *head,
+			    अचिन्हित दीर्घ ip, u16 distance, u8 dep,
+			    स्थिर काष्ठा lock_trace *trace)
+अणु
+	काष्ठा lock_list *entry;
 	/*
-	 * Lock not present yet - get a new dependency struct and
+	 * Lock not present yet - get a new dependency काष्ठा and
 	 * add it to the list:
 	 */
 	entry = alloc_list_entry();
-	if (!entry)
-		return 0;
+	अगर (!entry)
+		वापस 0;
 
 	entry->class = this;
 	entry->links_to = links_to;
@@ -1382,136 +1383,136 @@ static int add_lock_to_list(struct lock_class *this,
 	entry->distance = distance;
 	entry->trace = trace;
 	/*
-	 * Both allocation and removal are done under the graph lock; but
+	 * Both allocation and removal are करोne under the graph lock; but
 	 * iteration is under RCU-sched; see look_up_lock_class() and
-	 * lockdep_free_key_range().
+	 * lockdep_मुक्त_key_range().
 	 */
 	list_add_tail_rcu(&entry->entry, head);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * For good efficiency of modular, we use power of 2
+ * For good efficiency of modular, we use घातer of 2
  */
-#define MAX_CIRCULAR_QUEUE_SIZE		(1UL << CONFIG_LOCKDEP_CIRCULAR_QUEUE_BITS)
-#define CQ_MASK				(MAX_CIRCULAR_QUEUE_SIZE-1)
+#घोषणा MAX_CIRCULAR_QUEUE_SIZE		(1UL << CONFIG_LOCKDEP_CIRCULAR_QUEUE_BITS)
+#घोषणा CQ_MASK				(MAX_CIRCULAR_QUEUE_SIZE-1)
 
 /*
  * The circular_queue and helpers are used to implement graph
- * breadth-first search (BFS) algorithm, by which we can determine
+ * bपढ़ोth-first search (BFS) algorithm, by which we can determine
  * whether there is a path from a lock to another. In deadlock checks,
  * a path from the next lock to be acquired to a previous held lock
  * indicates that adding the <prev> -> <next> lock dependency will
- * produce a circle in the graph. Breadth-first search instead of
- * depth-first search is used in order to find the shortest (circular)
+ * produce a circle in the graph. Bपढ़ोth-first search instead of
+ * depth-first search is used in order to find the लघुest (circular)
  * path.
  */
-struct circular_queue {
-	struct lock_list *element[MAX_CIRCULAR_QUEUE_SIZE];
-	unsigned int  front, rear;
-};
+काष्ठा circular_queue अणु
+	काष्ठा lock_list *element[MAX_CIRCULAR_QUEUE_SIZE];
+	अचिन्हित पूर्णांक  front, rear;
+पूर्ण;
 
-static struct circular_queue lock_cq;
+अटल काष्ठा circular_queue lock_cq;
 
-unsigned int max_bfs_queue_depth;
+अचिन्हित पूर्णांक max_bfs_queue_depth;
 
-static unsigned int lockdep_dependency_gen_id;
+अटल अचिन्हित पूर्णांक lockdep_dependency_gen_id;
 
-static inline void __cq_init(struct circular_queue *cq)
-{
+अटल अंतरभूत व्योम __cq_init(काष्ठा circular_queue *cq)
+अणु
 	cq->front = cq->rear = 0;
 	lockdep_dependency_gen_id++;
-}
+पूर्ण
 
-static inline int __cq_empty(struct circular_queue *cq)
-{
-	return (cq->front == cq->rear);
-}
+अटल अंतरभूत पूर्णांक __cq_empty(काष्ठा circular_queue *cq)
+अणु
+	वापस (cq->front == cq->rear);
+पूर्ण
 
-static inline int __cq_full(struct circular_queue *cq)
-{
-	return ((cq->rear + 1) & CQ_MASK) == cq->front;
-}
+अटल अंतरभूत पूर्णांक __cq_full(काष्ठा circular_queue *cq)
+अणु
+	वापस ((cq->rear + 1) & CQ_MASK) == cq->front;
+पूर्ण
 
-static inline int __cq_enqueue(struct circular_queue *cq, struct lock_list *elem)
-{
-	if (__cq_full(cq))
-		return -1;
+अटल अंतरभूत पूर्णांक __cq_enqueue(काष्ठा circular_queue *cq, काष्ठा lock_list *elem)
+अणु
+	अगर (__cq_full(cq))
+		वापस -1;
 
 	cq->element[cq->rear] = elem;
 	cq->rear = (cq->rear + 1) & CQ_MASK;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Dequeue an element from the circular_queue, return a lock_list if
- * the queue is not empty, or NULL if otherwise.
+ * Dequeue an element from the circular_queue, वापस a lock_list अगर
+ * the queue is not empty, or शून्य अगर otherwise.
  */
-static inline struct lock_list * __cq_dequeue(struct circular_queue *cq)
-{
-	struct lock_list * lock;
+अटल अंतरभूत काष्ठा lock_list * __cq_dequeue(काष्ठा circular_queue *cq)
+अणु
+	काष्ठा lock_list * lock;
 
-	if (__cq_empty(cq))
-		return NULL;
+	अगर (__cq_empty(cq))
+		वापस शून्य;
 
 	lock = cq->element[cq->front];
 	cq->front = (cq->front + 1) & CQ_MASK;
 
-	return lock;
-}
+	वापस lock;
+पूर्ण
 
-static inline unsigned int  __cq_get_elem_count(struct circular_queue *cq)
-{
-	return (cq->rear - cq->front) & CQ_MASK;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक  __cq_get_elem_count(काष्ठा circular_queue *cq)
+अणु
+	वापस (cq->rear - cq->front) & CQ_MASK;
+पूर्ण
 
-static inline void mark_lock_accessed(struct lock_list *lock)
-{
+अटल अंतरभूत व्योम mark_lock_accessed(काष्ठा lock_list *lock)
+अणु
 	lock->class->dep_gen_id = lockdep_dependency_gen_id;
-}
+पूर्ण
 
-static inline void visit_lock_entry(struct lock_list *lock,
-				    struct lock_list *parent)
-{
+अटल अंतरभूत व्योम visit_lock_entry(काष्ठा lock_list *lock,
+				    काष्ठा lock_list *parent)
+अणु
 	lock->parent = parent;
-}
+पूर्ण
 
-static inline unsigned long lock_accessed(struct lock_list *lock)
-{
-	return lock->class->dep_gen_id == lockdep_dependency_gen_id;
-}
+अटल अंतरभूत अचिन्हित दीर्घ lock_accessed(काष्ठा lock_list *lock)
+अणु
+	वापस lock->class->dep_gen_id == lockdep_dependency_gen_id;
+पूर्ण
 
-static inline struct lock_list *get_lock_parent(struct lock_list *child)
-{
-	return child->parent;
-}
+अटल अंतरभूत काष्ठा lock_list *get_lock_parent(काष्ठा lock_list *child)
+अणु
+	वापस child->parent;
+पूर्ण
 
-static inline int get_lock_depth(struct lock_list *child)
-{
-	int depth = 0;
-	struct lock_list *parent;
+अटल अंतरभूत पूर्णांक get_lock_depth(काष्ठा lock_list *child)
+अणु
+	पूर्णांक depth = 0;
+	काष्ठा lock_list *parent;
 
-	while ((parent = get_lock_parent(child))) {
+	जबतक ((parent = get_lock_parent(child))) अणु
 		child = parent;
 		depth++;
-	}
-	return depth;
-}
+	पूर्ण
+	वापस depth;
+पूर्ण
 
 /*
- * Return the forward or backward dependency list.
+ * Return the क्रमward or backward dependency list.
  *
  * @lock:   the lock_list to get its class's dependency list
- * @offset: the offset to struct lock_class to determine whether it is
- *          locks_after or locks_before
+ * @offset: the offset to काष्ठा lock_class to determine whether it is
+ *          locks_after or locks_beक्रमe
  */
-static inline struct list_head *get_dep_list(struct lock_list *lock, int offset)
-{
-	void *lock_class = lock->class;
+अटल अंतरभूत काष्ठा list_head *get_dep_list(काष्ठा lock_list *lock, पूर्णांक offset)
+अणु
+	व्योम *lock_class = lock->class;
 
-	return lock_class + offset;
-}
+	वापस lock_class + offset;
+पूर्ण
 /*
  * Return values of a bfs search:
  *
@@ -1520,318 +1521,318 @@ static inline struct list_head *get_dep_list(struct lock_list *lock, int offset)
  *
  * BFS_EINVALIDNODE: Find a invalid node in the graph.
  *
- * BFS_EQUEUEFULL: The queue is full while doing the bfs.
+ * BFS_EQUEUEFULL: The queue is full जबतक करोing the bfs.
  *
- * BFS_RMATCH: Find the matched node in the graph, and put that node into
+ * BFS_RMATCH: Find the matched node in the graph, and put that node पूर्णांकo
  *             *@target_entry.
  *
  * BFS_RNOMATCH: Haven't found the matched node and keep *@target_entry
  *               _unchanged_.
  */
-enum bfs_result {
+क्रमागत bfs_result अणु
 	BFS_EINVALIDNODE = -2,
 	BFS_EQUEUEFULL = -1,
 	BFS_RMATCH = 0,
 	BFS_RNOMATCH = 1,
-};
+पूर्ण;
 
 /*
  * bfs_result < 0 means error
  */
-static inline bool bfs_error(enum bfs_result res)
-{
-	return res < 0;
-}
+अटल अंतरभूत bool bfs_error(क्रमागत bfs_result res)
+अणु
+	वापस res < 0;
+पूर्ण
 
 /*
  * DEP_*_BIT in lock_list::dep
  *
  * For dependency @prev -> @next:
  *
- *   SR: @prev is shared reader (->read != 0) and @next is recursive reader
- *       (->read == 2)
- *   ER: @prev is exclusive locker (->read == 0) and @next is recursive reader
- *   SN: @prev is shared reader and @next is non-recursive locker (->read != 2)
+ *   SR: @prev is shared पढ़ोer (->पढ़ो != 0) and @next is recursive पढ़ोer
+ *       (->पढ़ो == 2)
+ *   ER: @prev is exclusive locker (->पढ़ो == 0) and @next is recursive पढ़ोer
+ *   SN: @prev is shared पढ़ोer and @next is non-recursive locker (->पढ़ो != 2)
  *   EN: @prev is exclusive locker and @next is non-recursive locker
  *
  * Note that we define the value of DEP_*_BITs so that:
- *   bit0 is prev->read == 0
- *   bit1 is next->read != 2
+ *   bit0 is prev->पढ़ो == 0
+ *   bit1 is next->पढ़ो != 2
  */
-#define DEP_SR_BIT (0 + (0 << 1)) /* 0 */
-#define DEP_ER_BIT (1 + (0 << 1)) /* 1 */
-#define DEP_SN_BIT (0 + (1 << 1)) /* 2 */
-#define DEP_EN_BIT (1 + (1 << 1)) /* 3 */
+#घोषणा DEP_SR_BIT (0 + (0 << 1)) /* 0 */
+#घोषणा DEP_ER_BIT (1 + (0 << 1)) /* 1 */
+#घोषणा DEP_SN_BIT (0 + (1 << 1)) /* 2 */
+#घोषणा DEP_EN_BIT (1 + (1 << 1)) /* 3 */
 
-#define DEP_SR_MASK (1U << (DEP_SR_BIT))
-#define DEP_ER_MASK (1U << (DEP_ER_BIT))
-#define DEP_SN_MASK (1U << (DEP_SN_BIT))
-#define DEP_EN_MASK (1U << (DEP_EN_BIT))
+#घोषणा DEP_SR_MASK (1U << (DEP_SR_BIT))
+#घोषणा DEP_ER_MASK (1U << (DEP_ER_BIT))
+#घोषणा DEP_SN_MASK (1U << (DEP_SN_BIT))
+#घोषणा DEP_EN_MASK (1U << (DEP_EN_BIT))
 
-static inline unsigned int
-__calc_dep_bit(struct held_lock *prev, struct held_lock *next)
-{
-	return (prev->read == 0) + ((next->read != 2) << 1);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक
+__calc_dep_bit(काष्ठा held_lock *prev, काष्ठा held_lock *next)
+अणु
+	वापस (prev->पढ़ो == 0) + ((next->पढ़ो != 2) << 1);
+पूर्ण
 
-static inline u8 calc_dep(struct held_lock *prev, struct held_lock *next)
-{
-	return 1U << __calc_dep_bit(prev, next);
-}
+अटल अंतरभूत u8 calc_dep(काष्ठा held_lock *prev, काष्ठा held_lock *next)
+अणु
+	वापस 1U << __calc_dep_bit(prev, next);
+पूर्ण
 
 /*
- * calculate the dep_bit for backwards edges. We care about whether @prev is
+ * calculate the dep_bit क्रम backwards edges. We care about whether @prev is
  * shared and whether @next is recursive.
  */
-static inline unsigned int
-__calc_dep_bitb(struct held_lock *prev, struct held_lock *next)
-{
-	return (next->read != 2) + ((prev->read == 0) << 1);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक
+__calc_dep_bitb(काष्ठा held_lock *prev, काष्ठा held_lock *next)
+अणु
+	वापस (next->पढ़ो != 2) + ((prev->पढ़ो == 0) << 1);
+पूर्ण
 
-static inline u8 calc_depb(struct held_lock *prev, struct held_lock *next)
-{
-	return 1U << __calc_dep_bitb(prev, next);
-}
+अटल अंतरभूत u8 calc_depb(काष्ठा held_lock *prev, काष्ठा held_lock *next)
+अणु
+	वापस 1U << __calc_dep_bitb(prev, next);
+पूर्ण
 
 /*
- * Initialize a lock_list entry @lock belonging to @class as the root for a BFS
+ * Initialize a lock_list entry @lock beदीर्घing to @class as the root क्रम a BFS
  * search.
  */
-static inline void __bfs_init_root(struct lock_list *lock,
-				   struct lock_class *class)
-{
+अटल अंतरभूत व्योम __bfs_init_root(काष्ठा lock_list *lock,
+				   काष्ठा lock_class *class)
+अणु
 	lock->class = class;
-	lock->parent = NULL;
+	lock->parent = शून्य;
 	lock->only_xr = 0;
-}
+पूर्ण
 
 /*
  * Initialize a lock_list entry @lock based on a lock acquisition @hlock as the
- * root for a BFS search.
+ * root क्रम a BFS search.
  *
- * ->only_xr of the initial lock node is set to @hlock->read == 2, to make sure
+ * ->only_xr of the initial lock node is set to @hlock->पढ़ो == 2, to make sure
  * that <prev> -> @hlock and @hlock -> <whatever __bfs() found> is not -(*R)->
  * and -(S*)->.
  */
-static inline void bfs_init_root(struct lock_list *lock,
-				 struct held_lock *hlock)
-{
+अटल अंतरभूत व्योम bfs_init_root(काष्ठा lock_list *lock,
+				 काष्ठा held_lock *hlock)
+अणु
 	__bfs_init_root(lock, hlock_class(hlock));
-	lock->only_xr = (hlock->read == 2);
-}
+	lock->only_xr = (hlock->पढ़ो == 2);
+पूर्ण
 
 /*
- * Similar to bfs_init_root() but initialize the root for backwards BFS.
+ * Similar to bfs_init_root() but initialize the root क्रम backwards BFS.
  *
- * ->only_xr of the initial lock node is set to @hlock->read != 0, to make sure
+ * ->only_xr of the initial lock node is set to @hlock->पढ़ो != 0, to make sure
  * that <next> -> @hlock and @hlock -> <whatever backwards BFS found> is not
  * -(*S)-> and -(R*)-> (reverse order of -(*R)-> and -(S*)->).
  */
-static inline void bfs_init_rootb(struct lock_list *lock,
-				  struct held_lock *hlock)
-{
+अटल अंतरभूत व्योम bfs_init_rootb(काष्ठा lock_list *lock,
+				  काष्ठा held_lock *hlock)
+अणु
 	__bfs_init_root(lock, hlock_class(hlock));
-	lock->only_xr = (hlock->read != 0);
-}
+	lock->only_xr = (hlock->पढ़ो != 0);
+पूर्ण
 
-static inline struct lock_list *__bfs_next(struct lock_list *lock, int offset)
-{
-	if (!lock || !lock->parent)
-		return NULL;
+अटल अंतरभूत काष्ठा lock_list *__bfs_next(काष्ठा lock_list *lock, पूर्णांक offset)
+अणु
+	अगर (!lock || !lock->parent)
+		वापस शून्य;
 
-	return list_next_or_null_rcu(get_dep_list(lock->parent, offset),
-				     &lock->entry, struct lock_list, entry);
-}
+	वापस list_next_or_null_rcu(get_dep_list(lock->parent, offset),
+				     &lock->entry, काष्ठा lock_list, entry);
+पूर्ण
 
 /*
- * Breadth-First Search to find a strong path in the dependency graph.
+ * Bपढ़ोth-First Search to find a strong path in the dependency graph.
  *
- * @source_entry: the source of the path we are searching for.
- * @data: data used for the second parameter of @match function
- * @match: match function for the search
- * @target_entry: pointer to the target of a matched path
- * @offset: the offset to struct lock_class to determine whether it is
- *          locks_after or locks_before
+ * @source_entry: the source of the path we are searching क्रम.
+ * @data: data used क्रम the second parameter of @match function
+ * @match: match function क्रम the search
+ * @target_entry: poपूर्णांकer to the target of a matched path
+ * @offset: the offset to काष्ठा lock_class to determine whether it is
+ *          locks_after or locks_beक्रमe
  *
- * We may have multiple edges (considering different kinds of dependencies,
+ * We may have multiple edges (considering dअगरferent kinds of dependencies,
  * e.g. ER and SN) between two nodes in the dependency graph. But
  * only the strong dependency path in the graph is relevant to deadlocks. A
- * strong dependency path is a dependency path that doesn't have two adjacent
+ * strong dependency path is a dependency path that करोesn't have two adjacent
  * dependencies as -(*R)-> -(S*)->, please see:
  *
  *         Documentation/locking/lockdep-design.rst
  *
- * for more explanation of the definition of strong dependency paths
+ * क्रम more explanation of the definition of strong dependency paths
  *
  * In __bfs(), we only traverse in the strong dependency path:
  *
  *     In lock_list::only_xr, we record whether the previous dependency only
- *     has -(*R)-> in the search, and if it does (prev only has -(*R)->), we
+ *     has -(*R)-> in the search, and अगर it करोes (prev only has -(*R)->), we
  *     filter out any -(S*)-> in the current dependency and after that, the
  *     ->only_xr is set according to whether we only have -(*R)-> left.
  */
-static enum bfs_result __bfs(struct lock_list *source_entry,
-			     void *data,
-			     bool (*match)(struct lock_list *entry, void *data),
-			     bool (*skip)(struct lock_list *entry, void *data),
-			     struct lock_list **target_entry,
-			     int offset)
-{
-	struct circular_queue *cq = &lock_cq;
-	struct lock_list *lock = NULL;
-	struct lock_list *entry;
-	struct list_head *head;
-	unsigned int cq_depth;
+अटल क्रमागत bfs_result __bfs(काष्ठा lock_list *source_entry,
+			     व्योम *data,
+			     bool (*match)(काष्ठा lock_list *entry, व्योम *data),
+			     bool (*skip)(काष्ठा lock_list *entry, व्योम *data),
+			     काष्ठा lock_list **target_entry,
+			     पूर्णांक offset)
+अणु
+	काष्ठा circular_queue *cq = &lock_cq;
+	काष्ठा lock_list *lock = शून्य;
+	काष्ठा lock_list *entry;
+	काष्ठा list_head *head;
+	अचिन्हित पूर्णांक cq_depth;
 	bool first;
 
-	lockdep_assert_locked();
+	lockdep_निश्चित_locked();
 
 	__cq_init(cq);
 	__cq_enqueue(cq, source_entry);
 
-	while ((lock = __bfs_next(lock, offset)) || (lock = __cq_dequeue(cq))) {
-		if (!lock->class)
-			return BFS_EINVALIDNODE;
+	जबतक ((lock = __bfs_next(lock, offset)) || (lock = __cq_dequeue(cq))) अणु
+		अगर (!lock->class)
+			वापस BFS_EINVALIDNODE;
 
 		/*
-		 * Step 1: check whether we already finish on this one.
+		 * Step 1: check whether we alपढ़ोy finish on this one.
 		 *
 		 * If we have visited all the dependencies from this @lock to
-		 * others (iow, if we have visited all lock_list entries in
-		 * @lock->class->locks_{after,before}) we skip, otherwise go
+		 * others (iow, अगर we have visited all lock_list entries in
+		 * @lock->class->locks_अणुafter,beक्रमeपूर्ण) we skip, otherwise go
 		 * and visit all the dependencies in the list and mark this
 		 * list accessed.
 		 */
-		if (lock_accessed(lock))
-			continue;
-		else
+		अगर (lock_accessed(lock))
+			जारी;
+		अन्यथा
 			mark_lock_accessed(lock);
 
 		/*
-		 * Step 2: check whether prev dependency and this form a strong
+		 * Step 2: check whether prev dependency and this क्रमm a strong
 		 *         dependency path.
 		 */
-		if (lock->parent) { /* Parent exists, check prev dependency */
+		अगर (lock->parent) अणु /* Parent exists, check prev dependency */
 			u8 dep = lock->dep;
 			bool prev_only_xr = lock->parent->only_xr;
 
 			/*
-			 * Mask out all -(S*)-> if we only have *R in previous
-			 * step, because -(*R)-> -(S*)-> don't make up a strong
+			 * Mask out all -(S*)-> अगर we only have *R in previous
+			 * step, because -(*R)-> -(S*)-> करोn't make up a strong
 			 * dependency.
 			 */
-			if (prev_only_xr)
+			अगर (prev_only_xr)
 				dep &= ~(DEP_SR_MASK | DEP_SN_MASK);
 
 			/* If nothing left, we skip */
-			if (!dep)
-				continue;
+			अगर (!dep)
+				जारी;
 
-			/* If there are only -(*R)-> left, set that for the next step */
+			/* If there are only -(*R)-> left, set that क्रम the next step */
 			lock->only_xr = !(dep & (DEP_SN_MASK | DEP_EN_MASK));
-		}
+		पूर्ण
 
 		/*
 		 * Step 3: we haven't visited this and there is a strong
 		 *         dependency path to this, so check with @match.
-		 *         If @skip is provide and returns true, we skip this
+		 *         If @skip is provide and वापसs true, we skip this
 		 *         lock (and any path this lock is in).
 		 */
-		if (skip && skip(lock, data))
-			continue;
+		अगर (skip && skip(lock, data))
+			जारी;
 
-		if (match(lock, data)) {
+		अगर (match(lock, data)) अणु
 			*target_entry = lock;
-			return BFS_RMATCH;
-		}
+			वापस BFS_RMATCH;
+		पूर्ण
 
 		/*
-		 * Step 4: if not match, expand the path by adding the
-		 *         forward or backwards dependencies in the search
+		 * Step 4: अगर not match, expand the path by adding the
+		 *         क्रमward or backwards dependencies in the search
 		 *
 		 */
 		first = true;
 		head = get_dep_list(lock, offset);
-		list_for_each_entry_rcu(entry, head, entry) {
+		list_क्रम_each_entry_rcu(entry, head, entry) अणु
 			visit_lock_entry(entry, lock);
 
 			/*
-			 * Note we only enqueue the first of the list into the
+			 * Note we only enqueue the first of the list पूर्णांकo the
 			 * queue, because we can always find a sibling
 			 * dependency from one (see __bfs_next()), as a result
 			 * the space of queue is saved.
 			 */
-			if (!first)
-				continue;
+			अगर (!first)
+				जारी;
 
 			first = false;
 
-			if (__cq_enqueue(cq, entry))
-				return BFS_EQUEUEFULL;
+			अगर (__cq_enqueue(cq, entry))
+				वापस BFS_EQUEUEFULL;
 
 			cq_depth = __cq_get_elem_count(cq);
-			if (max_bfs_queue_depth < cq_depth)
+			अगर (max_bfs_queue_depth < cq_depth)
 				max_bfs_queue_depth = cq_depth;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return BFS_RNOMATCH;
-}
+	वापस BFS_RNOMATCH;
+पूर्ण
 
-static inline enum bfs_result
-__bfs_forwards(struct lock_list *src_entry,
-	       void *data,
-	       bool (*match)(struct lock_list *entry, void *data),
-	       bool (*skip)(struct lock_list *entry, void *data),
-	       struct lock_list **target_entry)
-{
-	return __bfs(src_entry, data, match, skip, target_entry,
-		     offsetof(struct lock_class, locks_after));
+अटल अंतरभूत क्रमागत bfs_result
+__bfs_क्रमwards(काष्ठा lock_list *src_entry,
+	       व्योम *data,
+	       bool (*match)(काष्ठा lock_list *entry, व्योम *data),
+	       bool (*skip)(काष्ठा lock_list *entry, व्योम *data),
+	       काष्ठा lock_list **target_entry)
+अणु
+	वापस __bfs(src_entry, data, match, skip, target_entry,
+		     दुरत्व(काष्ठा lock_class, locks_after));
 
-}
+पूर्ण
 
-static inline enum bfs_result
-__bfs_backwards(struct lock_list *src_entry,
-		void *data,
-		bool (*match)(struct lock_list *entry, void *data),
-	       bool (*skip)(struct lock_list *entry, void *data),
-		struct lock_list **target_entry)
-{
-	return __bfs(src_entry, data, match, skip, target_entry,
-		     offsetof(struct lock_class, locks_before));
+अटल अंतरभूत क्रमागत bfs_result
+__bfs_backwards(काष्ठा lock_list *src_entry,
+		व्योम *data,
+		bool (*match)(काष्ठा lock_list *entry, व्योम *data),
+	       bool (*skip)(काष्ठा lock_list *entry, व्योम *data),
+		काष्ठा lock_list **target_entry)
+अणु
+	वापस __bfs(src_entry, data, match, skip, target_entry,
+		     दुरत्व(काष्ठा lock_class, locks_beक्रमe));
 
-}
+पूर्ण
 
-static void print_lock_trace(const struct lock_trace *trace,
-			     unsigned int spaces)
-{
-	stack_trace_print(trace->entries, trace->nr_entries, spaces);
-}
+अटल व्योम prपूर्णांक_lock_trace(स्थिर काष्ठा lock_trace *trace,
+			     अचिन्हित पूर्णांक spaces)
+अणु
+	stack_trace_prपूर्णांक(trace->entries, trace->nr_entries, spaces);
+पूर्ण
 
 /*
- * Print a dependency chain entry (this is only done when a deadlock
+ * Prपूर्णांक a dependency chain entry (this is only करोne when a deadlock
  * has been detected):
  */
-static noinline void
-print_circular_bug_entry(struct lock_list *target, int depth)
-{
-	if (debug_locks_silent)
-		return;
-	printk("\n-> #%u", depth);
-	print_lock_name(target->class);
-	printk(KERN_CONT ":\n");
-	print_lock_trace(target->trace, 6);
-}
+अटल noअंतरभूत व्योम
+prपूर्णांक_circular_bug_entry(काष्ठा lock_list *target, पूर्णांक depth)
+अणु
+	अगर (debug_locks_silent)
+		वापस;
+	prपूर्णांकk("\n-> #%u", depth);
+	prपूर्णांक_lock_name(target->class);
+	prपूर्णांकk(KERN_CONT ":\n");
+	prपूर्णांक_lock_trace(target->trace, 6);
+पूर्ण
 
-static void
-print_circular_lock_scenario(struct held_lock *src,
-			     struct held_lock *tgt,
-			     struct lock_list *prt)
-{
-	struct lock_class *source = hlock_class(src);
-	struct lock_class *target = hlock_class(tgt);
-	struct lock_class *parent = prt->class;
+अटल व्योम
+prपूर्णांक_circular_lock_scenario(काष्ठा held_lock *src,
+			     काष्ठा held_lock *tgt,
+			     काष्ठा lock_list *prt)
+अणु
+	काष्ठा lock_class *source = hlock_class(src);
+	काष्ठा lock_class *target = hlock_class(tgt);
+	काष्ठा lock_class *parent = prt->class;
 
 	/*
 	 * A direct locking problem where unsafe_class lock is taken
@@ -1839,85 +1840,85 @@ print_circular_lock_scenario(struct held_lock *src,
 	 * is the deadlock scenario, as it is obvious that the
 	 * unsafe lock is taken under the safe lock.
 	 *
-	 * But if there is a chain instead, where the safe lock takes
-	 * an intermediate lock (middle_class) where this lock is
+	 * But अगर there is a chain instead, where the safe lock takes
+	 * an पूर्णांकermediate lock (middle_class) where this lock is
 	 * not the same as the safe lock, then the lock chain is
 	 * used to describe the problem. Otherwise we would need
-	 * to show a different CPU case for each link in the chain
+	 * to show a dअगरferent CPU हाल क्रम each link in the chain
 	 * from the safe_class lock to the unsafe_class lock.
 	 */
-	if (parent != source) {
-		printk("Chain exists of:\n  ");
-		__print_lock_name(source);
-		printk(KERN_CONT " --> ");
-		__print_lock_name(parent);
-		printk(KERN_CONT " --> ");
-		__print_lock_name(target);
-		printk(KERN_CONT "\n\n");
-	}
+	अगर (parent != source) अणु
+		prपूर्णांकk("Chain exists of:\n  ");
+		__prपूर्णांक_lock_name(source);
+		prपूर्णांकk(KERN_CONT " --> ");
+		__prपूर्णांक_lock_name(parent);
+		prपूर्णांकk(KERN_CONT " --> ");
+		__prपूर्णांक_lock_name(target);
+		prपूर्णांकk(KERN_CONT "\n\n");
+	पूर्ण
 
-	printk(" Possible unsafe locking scenario:\n\n");
-	printk("       CPU0                    CPU1\n");
-	printk("       ----                    ----\n");
-	printk("  lock(");
-	__print_lock_name(target);
-	printk(KERN_CONT ");\n");
-	printk("                               lock(");
-	__print_lock_name(parent);
-	printk(KERN_CONT ");\n");
-	printk("                               lock(");
-	__print_lock_name(target);
-	printk(KERN_CONT ");\n");
-	printk("  lock(");
-	__print_lock_name(source);
-	printk(KERN_CONT ");\n");
-	printk("\n *** DEADLOCK ***\n\n");
-}
+	prपूर्णांकk(" Possible unsafe locking scenario:\n\n");
+	prपूर्णांकk("       CPU0                    CPU1\n");
+	prपूर्णांकk("       ----                    ----\n");
+	prपूर्णांकk("  lock(");
+	__prपूर्णांक_lock_name(target);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("                               lock(");
+	__prपूर्णांक_lock_name(parent);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("                               lock(");
+	__prपूर्णांक_lock_name(target);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("  lock(");
+	__prपूर्णांक_lock_name(source);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("\n *** DEADLOCK ***\n\n");
+पूर्ण
 
 /*
- * When a circular dependency is detected, print the
+ * When a circular dependency is detected, prपूर्णांक the
  * header first:
  */
-static noinline void
-print_circular_bug_header(struct lock_list *entry, unsigned int depth,
-			struct held_lock *check_src,
-			struct held_lock *check_tgt)
-{
-	struct task_struct *curr = current;
+अटल noअंतरभूत व्योम
+prपूर्णांक_circular_bug_header(काष्ठा lock_list *entry, अचिन्हित पूर्णांक depth,
+			काष्ठा held_lock *check_src,
+			काष्ठा held_lock *check_tgt)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
 
-	if (debug_locks_silent)
-		return;
+	अगर (debug_locks_silent)
+		वापस;
 
 	pr_warn("\n");
 	pr_warn("======================================================\n");
 	pr_warn("WARNING: possible circular locking dependency detected\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("------------------------------------------------------\n");
 	pr_warn("%s/%d is trying to acquire lock:\n",
 		curr->comm, task_pid_nr(curr));
-	print_lock(check_src);
+	prपूर्णांक_lock(check_src);
 
 	pr_warn("\nbut task is already holding lock:\n");
 
-	print_lock(check_tgt);
+	prपूर्णांक_lock(check_tgt);
 	pr_warn("\nwhich lock already depends on the new lock.\n\n");
 	pr_warn("\nthe existing dependency chain (in reverse order) is:\n");
 
-	print_circular_bug_entry(entry, depth);
-}
+	prपूर्णांक_circular_bug_entry(entry, depth);
+पूर्ण
 
 /*
- * We are about to add A -> B into the dependency graph, and in __bfs() a
+ * We are about to add A -> B पूर्णांकo the dependency graph, and in __bfs() a
  * strong dependency path A -> .. -> B is found: hlock_class equals
  * entry->class.
  *
- * If A -> .. -> B can replace A -> B in any __bfs() search (means the former
+ * If A -> .. -> B can replace A -> B in any __bfs() search (means the क्रमmer
  * is _stronger_ than or equal to the latter), we consider A -> B as redundant.
- * For example if A -> .. -> B is -(EN)-> (i.e. A -(E*)-> .. -(*N)-> B), and A
- * -> B is -(ER)-> or -(EN)->, then we don't need to add A -> B into the
+ * For example अगर A -> .. -> B is -(EN)-> (i.e. A -(E*)-> .. -(*N)-> B), and A
+ * -> B is -(ER)-> or -(EN)->, then we करोn't need to add A -> B पूर्णांकo the
  * dependency graph, as any strong path ..-> A -> B ->.. we can get with
- * having dependency A -> B, we could already get a equivalent path ..-> A ->
- * .. -> B -> .. with A -> .. -> B. Therefore A -> B is redundant.
+ * having dependency A -> B, we could alपढ़ोy get a equivalent path ..-> A ->
+ * .. -> B -> .. with A -> .. -> B. Thereक्रमe A -> B is redundant.
  *
  * We need to make sure both the start and the end of A -> .. -> B is not
  * weaker than A -> B. For the start part, please see the comment in
@@ -1932,21 +1933,21 @@ print_circular_bug_header(struct lock_list *entry, unsigned int depth,
  *     b) A -> .. -> B is -(*N)-> (nothing is stronger than this)
  *
  */
-static inline bool hlock_equal(struct lock_list *entry, void *data)
-{
-	struct held_lock *hlock = (struct held_lock *)data;
+अटल अंतरभूत bool hlock_equal(काष्ठा lock_list *entry, व्योम *data)
+अणु
+	काष्ठा held_lock *hlock = (काष्ठा held_lock *)data;
 
-	return hlock_class(hlock) == entry->class && /* Found A -> .. -> B */
-	       (hlock->read == 2 ||  /* A -> B is -(*R)-> */
+	वापस hlock_class(hlock) == entry->class && /* Found A -> .. -> B */
+	       (hlock->पढ़ो == 2 ||  /* A -> B is -(*R)-> */
 		!entry->only_xr); /* A -> .. -> B is -(*N)-> */
-}
+पूर्ण
 
 /*
- * We are about to add B -> A into the dependency graph, and in __bfs() a
+ * We are about to add B -> A पूर्णांकo the dependency graph, and in __bfs() a
  * strong dependency path A -> .. -> B is found: hlock_class equals
  * entry->class.
  *
- * We will have a deadlock case (conflict) if A -> .. -> B -> A is a strong
+ * We will have a deadlock हाल (conflict) अगर A -> .. -> B -> A is a strong
  * dependency cycle, that means:
  *
  * Either
@@ -1957,112 +1958,112 @@ static inline bool hlock_equal(struct lock_list *entry, void *data)
  *
  *     b) A -> .. -> B is -(*N)-> (i.e. A -> .. -(*N)-> B)
  *
- * as then we don't have -(*R)-> -(S*)-> in the cycle.
+ * as then we करोn't have -(*R)-> -(S*)-> in the cycle.
  */
-static inline bool hlock_conflict(struct lock_list *entry, void *data)
-{
-	struct held_lock *hlock = (struct held_lock *)data;
+अटल अंतरभूत bool hlock_conflict(काष्ठा lock_list *entry, व्योम *data)
+अणु
+	काष्ठा held_lock *hlock = (काष्ठा held_lock *)data;
 
-	return hlock_class(hlock) == entry->class && /* Found A -> .. -> B */
-	       (hlock->read == 0 || /* B -> A is -(E*)-> */
+	वापस hlock_class(hlock) == entry->class && /* Found A -> .. -> B */
+	       (hlock->पढ़ो == 0 || /* B -> A is -(E*)-> */
 		!entry->only_xr); /* A -> .. -> B is -(*N)-> */
-}
+पूर्ण
 
-static noinline void print_circular_bug(struct lock_list *this,
-				struct lock_list *target,
-				struct held_lock *check_src,
-				struct held_lock *check_tgt)
-{
-	struct task_struct *curr = current;
-	struct lock_list *parent;
-	struct lock_list *first_parent;
-	int depth;
+अटल noअंतरभूत व्योम prपूर्णांक_circular_bug(काष्ठा lock_list *this,
+				काष्ठा lock_list *target,
+				काष्ठा held_lock *check_src,
+				काष्ठा held_lock *check_tgt)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	काष्ठा lock_list *parent;
+	काष्ठा lock_list *first_parent;
+	पूर्णांक depth;
 
-	if (!debug_locks_off_graph_unlock() || debug_locks_silent)
-		return;
+	अगर (!debug_locks_off_graph_unlock() || debug_locks_silent)
+		वापस;
 
 	this->trace = save_trace();
-	if (!this->trace)
-		return;
+	अगर (!this->trace)
+		वापस;
 
 	depth = get_lock_depth(target);
 
-	print_circular_bug_header(target, depth, check_src, check_tgt);
+	prपूर्णांक_circular_bug_header(target, depth, check_src, check_tgt);
 
 	parent = get_lock_parent(target);
 	first_parent = parent;
 
-	while (parent) {
-		print_circular_bug_entry(parent, --depth);
+	जबतक (parent) अणु
+		prपूर्णांक_circular_bug_entry(parent, --depth);
 		parent = get_lock_parent(parent);
-	}
+	पूर्ण
 
-	printk("\nother info that might help us debug this:\n\n");
-	print_circular_lock_scenario(check_src, check_tgt,
+	prपूर्णांकk("\nother info that might help us debug this:\n\n");
+	prपूर्णांक_circular_lock_scenario(check_src, check_tgt,
 				     first_parent);
 
-	lockdep_print_held_locks(curr);
+	lockdep_prपूर्णांक_held_locks(curr);
 
-	printk("\nstack backtrace:\n");
+	prपूर्णांकk("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 
-static noinline void print_bfs_bug(int ret)
-{
-	if (!debug_locks_off_graph_unlock())
-		return;
+अटल noअंतरभूत व्योम prपूर्णांक_bfs_bug(पूर्णांक ret)
+अणु
+	अगर (!debug_locks_off_graph_unlock())
+		वापस;
 
 	/*
-	 * Breadth-first-search failed, graph got corrupted?
+	 * Bपढ़ोth-first-search failed, graph got corrupted?
 	 */
 	WARN(1, "lockdep bfs error:%d\n", ret);
-}
+पूर्ण
 
-static bool noop_count(struct lock_list *entry, void *data)
-{
-	(*(unsigned long *)data)++;
-	return false;
-}
+अटल bool noop_count(काष्ठा lock_list *entry, व्योम *data)
+अणु
+	(*(अचिन्हित दीर्घ *)data)++;
+	वापस false;
+पूर्ण
 
-static unsigned long __lockdep_count_forward_deps(struct lock_list *this)
-{
-	unsigned long  count = 0;
-	struct lock_list *target_entry;
+अटल अचिन्हित दीर्घ __lockdep_count_क्रमward_deps(काष्ठा lock_list *this)
+अणु
+	अचिन्हित दीर्घ  count = 0;
+	काष्ठा lock_list *target_entry;
 
-	__bfs_forwards(this, (void *)&count, noop_count, NULL, &target_entry);
+	__bfs_क्रमwards(this, (व्योम *)&count, noop_count, शून्य, &target_entry);
 
-	return count;
-}
-unsigned long lockdep_count_forward_deps(struct lock_class *class)
-{
-	unsigned long ret, flags;
-	struct lock_list this;
+	वापस count;
+पूर्ण
+अचिन्हित दीर्घ lockdep_count_क्रमward_deps(काष्ठा lock_class *class)
+अणु
+	अचिन्हित दीर्घ ret, flags;
+	काष्ठा lock_list this;
 
 	__bfs_init_root(&this, class);
 
 	raw_local_irq_save(flags);
 	lockdep_lock();
-	ret = __lockdep_count_forward_deps(&this);
+	ret = __lockdep_count_क्रमward_deps(&this);
 	lockdep_unlock();
 	raw_local_irq_restore(flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned long __lockdep_count_backward_deps(struct lock_list *this)
-{
-	unsigned long  count = 0;
-	struct lock_list *target_entry;
+अटल अचिन्हित दीर्घ __lockdep_count_backward_deps(काष्ठा lock_list *this)
+अणु
+	अचिन्हित दीर्घ  count = 0;
+	काष्ठा lock_list *target_entry;
 
-	__bfs_backwards(this, (void *)&count, noop_count, NULL, &target_entry);
+	__bfs_backwards(this, (व्योम *)&count, noop_count, शून्य, &target_entry);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-unsigned long lockdep_count_backward_deps(struct lock_class *class)
-{
-	unsigned long ret, flags;
-	struct lock_list this;
+अचिन्हित दीर्घ lockdep_count_backward_deps(काष्ठा lock_class *class)
+अणु
+	अचिन्हित दीर्घ ret, flags;
+	काष्ठा lock_list this;
 
 	__bfs_init_root(&this, class);
 
@@ -2072,70 +2073,70 @@ unsigned long lockdep_count_backward_deps(struct lock_class *class)
 	lockdep_unlock();
 	raw_local_irq_restore(flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Check that the dependency graph starting at <src> can lead to
  * <target> or not.
  */
-static noinline enum bfs_result
-check_path(struct held_lock *target, struct lock_list *src_entry,
-	   bool (*match)(struct lock_list *entry, void *data),
-	   bool (*skip)(struct lock_list *entry, void *data),
-	   struct lock_list **target_entry)
-{
-	enum bfs_result ret;
+अटल noअंतरभूत क्रमागत bfs_result
+check_path(काष्ठा held_lock *target, काष्ठा lock_list *src_entry,
+	   bool (*match)(काष्ठा lock_list *entry, व्योम *data),
+	   bool (*skip)(काष्ठा lock_list *entry, व्योम *data),
+	   काष्ठा lock_list **target_entry)
+अणु
+	क्रमागत bfs_result ret;
 
-	ret = __bfs_forwards(src_entry, target, match, skip, target_entry);
+	ret = __bfs_क्रमwards(src_entry, target, match, skip, target_entry);
 
-	if (unlikely(bfs_error(ret)))
-		print_bfs_bug(ret);
+	अगर (unlikely(bfs_error(ret)))
+		prपूर्णांक_bfs_bug(ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Prove that the dependency graph starting at <src> can not
  * lead to <target>. If it can, there is a circle when adding
  * <target> -> <src> dependency.
  *
- * Print an error and return BFS_RMATCH if it does.
+ * Prपूर्णांक an error and वापस BFS_RMATCH अगर it करोes.
  */
-static noinline enum bfs_result
-check_noncircular(struct held_lock *src, struct held_lock *target,
-		  struct lock_trace **const trace)
-{
-	enum bfs_result ret;
-	struct lock_list *target_entry;
-	struct lock_list src_entry;
+अटल noअंतरभूत क्रमागत bfs_result
+check_noncircular(काष्ठा held_lock *src, काष्ठा held_lock *target,
+		  काष्ठा lock_trace **स्थिर trace)
+अणु
+	क्रमागत bfs_result ret;
+	काष्ठा lock_list *target_entry;
+	काष्ठा lock_list src_entry;
 
 	bfs_init_root(&src_entry, src);
 
 	debug_atomic_inc(nr_cyclic_checks);
 
-	ret = check_path(target, &src_entry, hlock_conflict, NULL, &target_entry);
+	ret = check_path(target, &src_entry, hlock_conflict, शून्य, &target_entry);
 
-	if (unlikely(ret == BFS_RMATCH)) {
-		if (!*trace) {
+	अगर (unlikely(ret == BFS_RMATCH)) अणु
+		अगर (!*trace) अणु
 			/*
-			 * If save_trace fails here, the printing might
+			 * If save_trace fails here, the prपूर्णांकing might
 			 * trigger a WARN but because of the !nr_entries it
-			 * should not do bad things.
+			 * should not करो bad things.
 			 */
 			*trace = save_trace();
-		}
+		पूर्ण
 
-		print_circular_bug(&src_entry, target_entry, src, target);
-	}
+		prपूर्णांक_circular_bug(&src_entry, target_entry, src, target);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_TRACE_IRQFLAGS
+#अगर_घोषित CONFIG_TRACE_IRQFLAGS
 
 /*
- * Forwards and backwards subgraph searching, for the purposes of
+ * Forwards and backwards subgraph searching, क्रम the purposes of
  * proving that two subgraphs can be connected by a new dependency
  * without creating any illegal irq-safe -> irq-unsafe lock dependency.
  *
@@ -2143,23 +2144,23 @@ check_noncircular(struct held_lock *src, struct held_lock *target,
  *
  * 1) We have a strong dependency path A -> ... -> B
  *
- * 2) and we have ENABLED_IRQ usage of B and USED_IN_IRQ usage of A, therefore
- *    irq can create a new dependency B -> A (consider the case that a holder
- *    of B gets interrupted by an irq whose handler will try to acquire A).
+ * 2) and we have ENABLED_IRQ usage of B and USED_IN_IRQ usage of A, thereक्रमe
+ *    irq can create a new dependency B -> A (consider the हाल that a holder
+ *    of B माला_लो पूर्णांकerrupted by an irq whose handler will try to acquire A).
  *
  * 3) the dependency circle A -> ... -> B -> A we get from 1) and 2) is a
  *    strong circle:
  *
  *      For the usage bits of B:
- *        a) if A -> B is -(*N)->, then B -> A could be any type, so any
+ *        a) अगर A -> B is -(*N)->, then B -> A could be any type, so any
  *           ENABLED_IRQ usage suffices.
- *        b) if A -> B is -(*R)->, then B -> A must be -(E*)->, so only
+ *        b) अगर A -> B is -(*R)->, then B -> A must be -(E*)->, so only
  *           ENABLED_IRQ_*_READ usage suffices.
  *
  *      For the usage bits of A:
- *        c) if A -> B is -(E*)->, then B -> A could be any type, so any
+ *        c) अगर A -> B is -(E*)->, then B -> A could be any type, so any
  *           USED_IN_IRQ usage suffices.
- *        d) if A -> B is -(S*)->, then B -> A must be -(*N)->, so only
+ *        d) अगर A -> B is -(S*)->, then B -> A must be -(*N)->, so only
  *           USED_IN_IRQ_*_READ usage suffices.
  */
 
@@ -2169,43 +2170,43 @@ check_noncircular(struct held_lock *src, struct held_lock *target,
  * safe->unsafe bugs.
  *
  * Note that usage_accumulate() is used in backwards search, so ->only_xr
- * stands for whether A -> B only has -(S*)-> (in this case ->only_xr is true).
+ * stands क्रम whether A -> B only has -(S*)-> (in this हाल ->only_xr is true).
  *
- * As above, if only_xr is false, which means A -> B has -(E*)-> dependency
+ * As above, अगर only_xr is false, which means A -> B has -(E*)-> dependency
  * path, any usage of A should be considered. Otherwise, we should only
  * consider _READ usage.
  */
-static inline bool usage_accumulate(struct lock_list *entry, void *mask)
-{
-	if (!entry->only_xr)
-		*(unsigned long *)mask |= entry->class->usage_mask;
-	else /* Mask out _READ usage bits */
-		*(unsigned long *)mask |= (entry->class->usage_mask & LOCKF_IRQ);
+अटल अंतरभूत bool usage_accumulate(काष्ठा lock_list *entry, व्योम *mask)
+अणु
+	अगर (!entry->only_xr)
+		*(अचिन्हित दीर्घ *)mask |= entry->class->usage_mask;
+	अन्यथा /* Mask out _READ usage bits */
+		*(अचिन्हित दीर्घ *)mask |= (entry->class->usage_mask & LOCKF_IRQ);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * There is a strong dependency path in the dependency graph: A -> B, and now
  * we need to decide which usage bit of B conflicts with the usage bits of A,
- * i.e. which usage bit of B may introduce safe->unsafe deadlocks.
+ * i.e. which usage bit of B may पूर्णांकroduce safe->unsafe deadlocks.
  *
- * As above, if only_xr is false, which means A -> B has -(*N)-> dependency
+ * As above, अगर only_xr is false, which means A -> B has -(*N)-> dependency
  * path, any usage of B should be considered. Otherwise, we should only
  * consider _READ usage.
  */
-static inline bool usage_match(struct lock_list *entry, void *mask)
-{
-	if (!entry->only_xr)
-		return !!(entry->class->usage_mask & *(unsigned long *)mask);
-	else /* Mask out _READ usage bits */
-		return !!((entry->class->usage_mask & LOCKF_IRQ) & *(unsigned long *)mask);
-}
+अटल अंतरभूत bool usage_match(काष्ठा lock_list *entry, व्योम *mask)
+अणु
+	अगर (!entry->only_xr)
+		वापस !!(entry->class->usage_mask & *(अचिन्हित दीर्घ *)mask);
+	अन्यथा /* Mask out _READ usage bits */
+		वापस !!((entry->class->usage_mask & LOCKF_IRQ) & *(अचिन्हित दीर्घ *)mask);
+पूर्ण
 
-static inline bool usage_skip(struct lock_list *entry, void *mask)
-{
+अटल अंतरभूत bool usage_skip(काष्ठा lock_list *entry, व्योम *mask)
+अणु
 	/*
-	 * Skip local_lock() for irq inversion detection.
+	 * Skip local_lock() क्रम irq inversion detection.
 	 *
 	 * For !RT, local_lock() is not a real lock, so it won't carry any
 	 * dependency.
@@ -2214,135 +2215,135 @@ static inline bool usage_skip(struct lock_list *entry, void *mask)
 	 * some CPU we can have:
 	 *
 	 *	lock(A);
-	 *	<interrupted>
+	 *	<पूर्णांकerrupted>
 	 *	  lock(B);
 	 *
 	 * where lock(B) cannot sleep, and we have a dependency B -> ... -> A.
 	 *
 	 * Now we prove local_lock() cannot exist in that dependency. First we
-	 * have the observation for any lock chain L1 -> ... -> Ln, for any
-	 * 1 <= i <= n, Li.inner_wait_type <= L1.inner_wait_type, otherwise
-	 * wait context check will complain. And since B is not a sleep lock,
-	 * therefore B.inner_wait_type >= 2, and since the inner_wait_type of
-	 * local_lock() is 3, which is greater than 2, therefore there is no
+	 * have the observation क्रम any lock chain L1 -> ... -> Ln, क्रम any
+	 * 1 <= i <= n, Li.inner_रुको_type <= L1.inner_रुको_type, otherwise
+	 * रुको context check will complain. And since B is not a sleep lock,
+	 * thereक्रमe B.inner_रुको_type >= 2, and since the inner_रुको_type of
+	 * local_lock() is 3, which is greater than 2, thereक्रमe there is no
 	 * way the local_lock() exists in the dependency B -> ... -> A.
 	 *
-	 * As a result, we will skip local_lock(), when we search for irq
+	 * As a result, we will skip local_lock(), when we search क्रम irq
 	 * inversion bugs.
 	 */
-	if (entry->class->lock_type == LD_LOCK_PERCPU) {
-		if (DEBUG_LOCKS_WARN_ON(entry->class->wait_type_inner < LD_WAIT_CONFIG))
-			return false;
+	अगर (entry->class->lock_type == LD_LOCK_PERCPU) अणु
+		अगर (DEBUG_LOCKS_WARN_ON(entry->class->रुको_type_inner < LD_WAIT_CONFIG))
+			वापस false;
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Find a node in the forwards-direction dependency sub-graph starting
+ * Find a node in the क्रमwards-direction dependency sub-graph starting
  * at @root->class that matches @bit.
  *
- * Return BFS_MATCH if such a node exists in the subgraph, and put that node
- * into *@target_entry.
+ * Return BFS_MATCH अगर such a node exists in the subgraph, and put that node
+ * पूर्णांकo *@target_entry.
  */
-static enum bfs_result
-find_usage_forwards(struct lock_list *root, unsigned long usage_mask,
-			struct lock_list **target_entry)
-{
-	enum bfs_result result;
+अटल क्रमागत bfs_result
+find_usage_क्रमwards(काष्ठा lock_list *root, अचिन्हित दीर्घ usage_mask,
+			काष्ठा lock_list **target_entry)
+अणु
+	क्रमागत bfs_result result;
 
-	debug_atomic_inc(nr_find_usage_forwards_checks);
+	debug_atomic_inc(nr_find_usage_क्रमwards_checks);
 
-	result = __bfs_forwards(root, &usage_mask, usage_match, usage_skip, target_entry);
+	result = __bfs_क्रमwards(root, &usage_mask, usage_match, usage_skip, target_entry);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
  * Find a node in the backwards-direction dependency sub-graph starting
  * at @root->class that matches @bit.
  */
-static enum bfs_result
-find_usage_backwards(struct lock_list *root, unsigned long usage_mask,
-			struct lock_list **target_entry)
-{
-	enum bfs_result result;
+अटल क्रमागत bfs_result
+find_usage_backwards(काष्ठा lock_list *root, अचिन्हित दीर्घ usage_mask,
+			काष्ठा lock_list **target_entry)
+अणु
+	क्रमागत bfs_result result;
 
 	debug_atomic_inc(nr_find_usage_backwards_checks);
 
 	result = __bfs_backwards(root, &usage_mask, usage_match, usage_skip, target_entry);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void print_lock_class_header(struct lock_class *class, int depth)
-{
-	int bit;
+अटल व्योम prपूर्णांक_lock_class_header(काष्ठा lock_class *class, पूर्णांक depth)
+अणु
+	पूर्णांक bit;
 
-	printk("%*s->", depth, "");
-	print_lock_name(class);
-#ifdef CONFIG_DEBUG_LOCKDEP
-	printk(KERN_CONT " ops: %lu", debug_class_ops_read(class));
-#endif
-	printk(KERN_CONT " {\n");
+	prपूर्णांकk("%*s->", depth, "");
+	prपूर्णांक_lock_name(class);
+#अगर_घोषित CONFIG_DEBUG_LOCKDEP
+	prपूर्णांकk(KERN_CONT " ops: %lu", debug_class_ops_पढ़ो(class));
+#पूर्ण_अगर
+	prपूर्णांकk(KERN_CONT " {\n");
 
-	for (bit = 0; bit < LOCK_TRACE_STATES; bit++) {
-		if (class->usage_mask & (1 << bit)) {
-			int len = depth;
+	क्रम (bit = 0; bit < LOCK_TRACE_STATES; bit++) अणु
+		अगर (class->usage_mask & (1 << bit)) अणु
+			पूर्णांक len = depth;
 
-			len += printk("%*s   %s", depth, "", usage_str[bit]);
-			len += printk(KERN_CONT " at:\n");
-			print_lock_trace(class->usage_traces[bit], len);
-		}
-	}
-	printk("%*s }\n", depth, "");
+			len += prपूर्णांकk("%*s   %s", depth, "", usage_str[bit]);
+			len += prपूर्णांकk(KERN_CONT " at:\n");
+			prपूर्णांक_lock_trace(class->usage_traces[bit], len);
+		पूर्ण
+	पूर्ण
+	prपूर्णांकk("%*s }\n", depth, "");
 
-	printk("%*s ... key      at: [<%px>] %pS\n",
+	prपूर्णांकk("%*s ... key      at: [<%px>] %pS\n",
 		depth, "", class->key, class->key);
-}
+पूर्ण
 
 /*
- * printk the shortest lock dependencies from @start to @end in reverse order:
+ * prपूर्णांकk the लघुest lock dependencies from @start to @end in reverse order:
  */
-static void __used
-print_shortest_lock_dependencies(struct lock_list *leaf,
-				 struct lock_list *root)
-{
-	struct lock_list *entry = leaf;
-	int depth;
+अटल व्योम __used
+prपूर्णांक_लघुest_lock_dependencies(काष्ठा lock_list *leaf,
+				 काष्ठा lock_list *root)
+अणु
+	काष्ठा lock_list *entry = leaf;
+	पूर्णांक depth;
 
 	/*compute depth from generated tree by BFS*/
 	depth = get_lock_depth(leaf);
 
-	do {
-		print_lock_class_header(entry->class, depth);
-		printk("%*s ... acquired at:\n", depth, "");
-		print_lock_trace(entry->trace, 2);
-		printk("\n");
+	करो अणु
+		prपूर्णांक_lock_class_header(entry->class, depth);
+		prपूर्णांकk("%*s ... acquired at:\n", depth, "");
+		prपूर्णांक_lock_trace(entry->trace, 2);
+		prपूर्णांकk("\n");
 
-		if (depth == 0 && (entry != root)) {
-			printk("lockdep:%s bad path found in chain graph\n", __func__);
-			break;
-		}
+		अगर (depth == 0 && (entry != root)) अणु
+			prपूर्णांकk("lockdep:%s bad path found in chain graph\n", __func__);
+			अवरोध;
+		पूर्ण
 
 		entry = get_lock_parent(entry);
 		depth--;
-	} while (entry && (depth >= 0));
-}
+	पूर्ण जबतक (entry && (depth >= 0));
+पूर्ण
 
-static void
-print_irq_lock_scenario(struct lock_list *safe_entry,
-			struct lock_list *unsafe_entry,
-			struct lock_class *prev_class,
-			struct lock_class *next_class)
-{
-	struct lock_class *safe_class = safe_entry->class;
-	struct lock_class *unsafe_class = unsafe_entry->class;
-	struct lock_class *middle_class = prev_class;
+अटल व्योम
+prपूर्णांक_irq_lock_scenario(काष्ठा lock_list *safe_entry,
+			काष्ठा lock_list *unsafe_entry,
+			काष्ठा lock_class *prev_class,
+			काष्ठा lock_class *next_class)
+अणु
+	काष्ठा lock_class *safe_class = safe_entry->class;
+	काष्ठा lock_class *unsafe_class = unsafe_entry->class;
+	काष्ठा lock_class *middle_class = prev_class;
 
-	if (middle_class == safe_class)
+	अगर (middle_class == safe_class)
 		middle_class = next_class;
 
 	/*
@@ -2351,199 +2352,199 @@ print_irq_lock_scenario(struct lock_list *safe_entry,
 	 * is the deadlock scenario, as it is obvious that the
 	 * unsafe lock is taken under the safe lock.
 	 *
-	 * But if there is a chain instead, where the safe lock takes
-	 * an intermediate lock (middle_class) where this lock is
+	 * But अगर there is a chain instead, where the safe lock takes
+	 * an पूर्णांकermediate lock (middle_class) where this lock is
 	 * not the same as the safe lock, then the lock chain is
 	 * used to describe the problem. Otherwise we would need
-	 * to show a different CPU case for each link in the chain
+	 * to show a dअगरferent CPU हाल क्रम each link in the chain
 	 * from the safe_class lock to the unsafe_class lock.
 	 */
-	if (middle_class != unsafe_class) {
-		printk("Chain exists of:\n  ");
-		__print_lock_name(safe_class);
-		printk(KERN_CONT " --> ");
-		__print_lock_name(middle_class);
-		printk(KERN_CONT " --> ");
-		__print_lock_name(unsafe_class);
-		printk(KERN_CONT "\n\n");
-	}
+	अगर (middle_class != unsafe_class) अणु
+		prपूर्णांकk("Chain exists of:\n  ");
+		__prपूर्णांक_lock_name(safe_class);
+		prपूर्णांकk(KERN_CONT " --> ");
+		__prपूर्णांक_lock_name(middle_class);
+		prपूर्णांकk(KERN_CONT " --> ");
+		__prपूर्णांक_lock_name(unsafe_class);
+		prपूर्णांकk(KERN_CONT "\n\n");
+	पूर्ण
 
-	printk(" Possible interrupt unsafe locking scenario:\n\n");
-	printk("       CPU0                    CPU1\n");
-	printk("       ----                    ----\n");
-	printk("  lock(");
-	__print_lock_name(unsafe_class);
-	printk(KERN_CONT ");\n");
-	printk("                               local_irq_disable();\n");
-	printk("                               lock(");
-	__print_lock_name(safe_class);
-	printk(KERN_CONT ");\n");
-	printk("                               lock(");
-	__print_lock_name(middle_class);
-	printk(KERN_CONT ");\n");
-	printk("  <Interrupt>\n");
-	printk("    lock(");
-	__print_lock_name(safe_class);
-	printk(KERN_CONT ");\n");
-	printk("\n *** DEADLOCK ***\n\n");
-}
+	prपूर्णांकk(" Possible interrupt unsafe locking scenario:\n\n");
+	prपूर्णांकk("       CPU0                    CPU1\n");
+	prपूर्णांकk("       ----                    ----\n");
+	prपूर्णांकk("  lock(");
+	__prपूर्णांक_lock_name(unsafe_class);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("                               local_irq_disable();\n");
+	prपूर्णांकk("                               lock(");
+	__prपूर्णांक_lock_name(safe_class);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("                               lock(");
+	__prपूर्णांक_lock_name(middle_class);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("  <Interrupt>\n");
+	prपूर्णांकk("    lock(");
+	__prपूर्णांक_lock_name(safe_class);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("\n *** DEADLOCK ***\n\n");
+पूर्ण
 
-static void
-print_bad_irq_dependency(struct task_struct *curr,
-			 struct lock_list *prev_root,
-			 struct lock_list *next_root,
-			 struct lock_list *backwards_entry,
-			 struct lock_list *forwards_entry,
-			 struct held_lock *prev,
-			 struct held_lock *next,
-			 enum lock_usage_bit bit1,
-			 enum lock_usage_bit bit2,
-			 const char *irqclass)
-{
-	if (!debug_locks_off_graph_unlock() || debug_locks_silent)
-		return;
+अटल व्योम
+prपूर्णांक_bad_irq_dependency(काष्ठा task_काष्ठा *curr,
+			 काष्ठा lock_list *prev_root,
+			 काष्ठा lock_list *next_root,
+			 काष्ठा lock_list *backwards_entry,
+			 काष्ठा lock_list *क्रमwards_entry,
+			 काष्ठा held_lock *prev,
+			 काष्ठा held_lock *next,
+			 क्रमागत lock_usage_bit bit1,
+			 क्रमागत lock_usage_bit bit2,
+			 स्थिर अक्षर *irqclass)
+अणु
+	अगर (!debug_locks_off_graph_unlock() || debug_locks_silent)
+		वापस;
 
 	pr_warn("\n");
 	pr_warn("=====================================================\n");
 	pr_warn("WARNING: %s-safe -> %s-unsafe lock order detected\n",
 		irqclass, irqclass);
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("-----------------------------------------------------\n");
 	pr_warn("%s/%d [HC%u[%lu]:SC%u[%lu]:HE%u:SE%u] is trying to acquire:\n",
 		curr->comm, task_pid_nr(curr),
-		lockdep_hardirq_context(), hardirq_count() >> HARDIRQ_SHIFT,
+		lockdep_hardirq_context(), hardirq_count() >> HARसूचीQ_SHIFT,
 		curr->softirq_context, softirq_count() >> SOFTIRQ_SHIFT,
 		lockdep_hardirqs_enabled(),
 		curr->softirqs_enabled);
-	print_lock(next);
+	prपूर्णांक_lock(next);
 
 	pr_warn("\nand this task is already holding:\n");
-	print_lock(prev);
+	prपूर्णांक_lock(prev);
 	pr_warn("which would create a new lock dependency:\n");
-	print_lock_name(hlock_class(prev));
+	prपूर्णांक_lock_name(hlock_class(prev));
 	pr_cont(" ->");
-	print_lock_name(hlock_class(next));
+	prपूर्णांक_lock_name(hlock_class(next));
 	pr_cont("\n");
 
 	pr_warn("\nbut this new dependency connects a %s-irq-safe lock:\n",
 		irqclass);
-	print_lock_name(backwards_entry->class);
+	prपूर्णांक_lock_name(backwards_entry->class);
 	pr_warn("\n... which became %s-irq-safe at:\n", irqclass);
 
-	print_lock_trace(backwards_entry->class->usage_traces[bit1], 1);
+	prपूर्णांक_lock_trace(backwards_entry->class->usage_traces[bit1], 1);
 
 	pr_warn("\nto a %s-irq-unsafe lock:\n", irqclass);
-	print_lock_name(forwards_entry->class);
+	prपूर्णांक_lock_name(क्रमwards_entry->class);
 	pr_warn("\n... which became %s-irq-unsafe at:\n", irqclass);
 	pr_warn("...");
 
-	print_lock_trace(forwards_entry->class->usage_traces[bit2], 1);
+	prपूर्णांक_lock_trace(क्रमwards_entry->class->usage_traces[bit2], 1);
 
 	pr_warn("\nother info that might help us debug this:\n\n");
-	print_irq_lock_scenario(backwards_entry, forwards_entry,
+	prपूर्णांक_irq_lock_scenario(backwards_entry, क्रमwards_entry,
 				hlock_class(prev), hlock_class(next));
 
-	lockdep_print_held_locks(curr);
+	lockdep_prपूर्णांक_held_locks(curr);
 
 	pr_warn("\nthe dependencies between %s-irq-safe lock and the holding lock:\n", irqclass);
 	prev_root->trace = save_trace();
-	if (!prev_root->trace)
-		return;
-	print_shortest_lock_dependencies(backwards_entry, prev_root);
+	अगर (!prev_root->trace)
+		वापस;
+	prपूर्णांक_लघुest_lock_dependencies(backwards_entry, prev_root);
 
 	pr_warn("\nthe dependencies between the lock to be acquired");
 	pr_warn(" and %s-irq-unsafe lock:\n", irqclass);
 	next_root->trace = save_trace();
-	if (!next_root->trace)
-		return;
-	print_shortest_lock_dependencies(forwards_entry, next_root);
+	अगर (!next_root->trace)
+		वापस;
+	prपूर्णांक_लघुest_lock_dependencies(क्रमwards_entry, next_root);
 
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 
-static const char *state_names[] = {
-#define LOCKDEP_STATE(__STATE) \
-	__stringify(__STATE),
-#include "lockdep_states.h"
-#undef LOCKDEP_STATE
-};
+अटल स्थिर अक्षर *state_names[] = अणु
+#घोषणा LOCKDEP_STATE(__STATE) \
+	__stringअगरy(__STATE),
+#समावेश "lockdep_states.h"
+#अघोषित LOCKDEP_STATE
+पूर्ण;
 
-static const char *state_rnames[] = {
-#define LOCKDEP_STATE(__STATE) \
-	__stringify(__STATE)"-READ",
-#include "lockdep_states.h"
-#undef LOCKDEP_STATE
-};
+अटल स्थिर अक्षर *state_rnames[] = अणु
+#घोषणा LOCKDEP_STATE(__STATE) \
+	__stringअगरy(__STATE)"-READ",
+#समावेश "lockdep_states.h"
+#अघोषित LOCKDEP_STATE
+पूर्ण;
 
-static inline const char *state_name(enum lock_usage_bit bit)
-{
-	if (bit & LOCK_USAGE_READ_MASK)
-		return state_rnames[bit >> LOCK_USAGE_DIR_MASK];
-	else
-		return state_names[bit >> LOCK_USAGE_DIR_MASK];
-}
+अटल अंतरभूत स्थिर अक्षर *state_name(क्रमागत lock_usage_bit bit)
+अणु
+	अगर (bit & LOCK_USAGE_READ_MASK)
+		वापस state_rnames[bit >> LOCK_USAGE_सूची_MASK];
+	अन्यथा
+		वापस state_names[bit >> LOCK_USAGE_सूची_MASK];
+पूर्ण
 
 /*
  * The bit number is encoded like:
  *
- *  bit0: 0 exclusive, 1 read lock
+ *  bit0: 0 exclusive, 1 पढ़ो lock
  *  bit1: 0 used in irq, 1 irq enabled
  *  bit2-n: state
  */
-static int exclusive_bit(int new_bit)
-{
-	int state = new_bit & LOCK_USAGE_STATE_MASK;
-	int dir = new_bit & LOCK_USAGE_DIR_MASK;
+अटल पूर्णांक exclusive_bit(पूर्णांक new_bit)
+अणु
+	पूर्णांक state = new_bit & LOCK_USAGE_STATE_MASK;
+	पूर्णांक dir = new_bit & LOCK_USAGE_सूची_MASK;
 
 	/*
-	 * keep state, bit flip the direction and strip read.
+	 * keep state, bit flip the direction and strip पढ़ो.
 	 */
-	return state | (dir ^ LOCK_USAGE_DIR_MASK);
-}
+	वापस state | (dir ^ LOCK_USAGE_सूची_MASK);
+पूर्ण
 
 /*
- * Observe that when given a bitmask where each bitnr is encoded as above, a
- * right shift of the mask transforms the individual bitnrs as -1 and
- * conversely, a left shift transforms into +1 for the individual bitnrs.
+ * Observe that when given a biपंचांगask where each bitnr is encoded as above, a
+ * right shअगरt of the mask transक्रमms the inभागidual bitnrs as -1 and
+ * conversely, a left shअगरt transक्रमms पूर्णांकo +1 क्रम the inभागidual bitnrs.
  *
- * So for all bits whose number have LOCK_ENABLED_* set (bitnr1 == 1), we can
+ * So क्रम all bits whose number have LOCK_ENABLED_* set (bitnr1 == 1), we can
  * create the mask with those bit numbers using LOCK_USED_IN_* (bitnr1 == 0)
- * instead by subtracting the bit number by 2, or shifting the mask right by 2.
+ * instead by subtracting the bit number by 2, or shअगरting the mask right by 2.
  *
- * Similarly, bitnr1 == 0 becomes bitnr1 == 1 by adding 2, or shifting left 2.
+ * Similarly, bitnr1 == 0 becomes bitnr1 == 1 by adding 2, or shअगरting left 2.
  *
  * So split the mask (note that LOCKF_ENABLED_IRQ_ALL|LOCKF_USED_IN_IRQ_ALL is
  * all bits set) and recompose with bitnr1 flipped.
  */
-static unsigned long invert_dir_mask(unsigned long mask)
-{
-	unsigned long excl = 0;
+अटल अचिन्हित दीर्घ invert_dir_mask(अचिन्हित दीर्घ mask)
+अणु
+	अचिन्हित दीर्घ excl = 0;
 
 	/* Invert dir */
-	excl |= (mask & LOCKF_ENABLED_IRQ_ALL) >> LOCK_USAGE_DIR_MASK;
-	excl |= (mask & LOCKF_USED_IN_IRQ_ALL) << LOCK_USAGE_DIR_MASK;
+	excl |= (mask & LOCKF_ENABLED_IRQ_ALL) >> LOCK_USAGE_सूची_MASK;
+	excl |= (mask & LOCKF_USED_IN_IRQ_ALL) << LOCK_USAGE_सूची_MASK;
 
-	return excl;
-}
+	वापस excl;
+पूर्ण
 
 /*
  * Note that a LOCK_ENABLED_IRQ_*_READ usage and a LOCK_USED_IN_IRQ_*_READ
- * usage may cause deadlock too, for example:
+ * usage may cause deadlock too, क्रम example:
  *
  * P1				P2
  * <irq disabled>
- * write_lock(l1);		<irq enabled>
- *				read_lock(l2);
- * write_lock(l2);
+ * ग_लिखो_lock(l1);		<irq enabled>
+ *				पढ़ो_lock(l2);
+ * ग_लिखो_lock(l2);
  * 				<in irq>
- * 				read_lock(l1);
+ * 				पढ़ो_lock(l1);
  *
- * , in above case, l1 will be marked as LOCK_USED_IN_IRQ_HARDIRQ_READ and l2
- * will marked as LOCK_ENABLE_IRQ_HARDIRQ_READ, and this is a possible
+ * , in above हाल, l1 will be marked as LOCK_USED_IN_IRQ_HARसूचीQ_READ and l2
+ * will marked as LOCK_ENABLE_IRQ_HARसूचीQ_READ, and this is a possible
  * deadlock.
  *
- * In fact, all of the following cases may cause deadlocks:
+ * In fact, all of the following हालs may cause deadlocks:
  *
  * 	 LOCK_USED_IN_IRQ_* -> LOCK_ENABLED_IRQ_*
  * 	 LOCK_USED_IN_IRQ_*_READ -> LOCK_ENABLED_IRQ_*
@@ -2551,85 +2552,85 @@ static unsigned long invert_dir_mask(unsigned long mask)
  * 	 LOCK_USED_IN_IRQ_*_READ -> LOCK_ENABLED_IRQ_*_READ
  *
  * As a result, to calculate the "exclusive mask", first we invert the
- * direction (USED_IN/ENABLED) of the original mask, and 1) for all bits with
- * bitnr0 set (LOCK_*_READ), add those with bitnr0 cleared (LOCK_*). 2) for all
+ * direction (USED_IN/ENABLED) of the original mask, and 1) क्रम all bits with
+ * bitnr0 set (LOCK_*_READ), add those with bitnr0 cleared (LOCK_*). 2) क्रम all
  * bits with bitnr0 cleared (LOCK_*_READ), add those with bitnr0 set (LOCK_*).
  */
-static unsigned long exclusive_mask(unsigned long mask)
-{
-	unsigned long excl = invert_dir_mask(mask);
+अटल अचिन्हित दीर्घ exclusive_mask(अचिन्हित दीर्घ mask)
+अणु
+	अचिन्हित दीर्घ excl = invert_dir_mask(mask);
 
 	excl |= (excl & LOCKF_IRQ_READ) >> LOCK_USAGE_READ_MASK;
 	excl |= (excl & LOCKF_IRQ) << LOCK_USAGE_READ_MASK;
 
-	return excl;
-}
+	वापस excl;
+पूर्ण
 
 /*
  * Retrieve the _possible_ original mask to which @mask is
  * exclusive. Ie: this is the opposite of exclusive_mask().
  * Note that 2 possible original bits can match an exclusive
  * bit: one has LOCK_USAGE_READ_MASK set, the other has it
- * cleared. So both are returned for each exclusive bit.
+ * cleared. So both are वापसed क्रम each exclusive bit.
  */
-static unsigned long original_mask(unsigned long mask)
-{
-	unsigned long excl = invert_dir_mask(mask);
+अटल अचिन्हित दीर्घ original_mask(अचिन्हित दीर्घ mask)
+अणु
+	अचिन्हित दीर्घ excl = invert_dir_mask(mask);
 
-	/* Include read in existing usages */
+	/* Include पढ़ो in existing usages */
 	excl |= (excl & LOCKF_IRQ_READ) >> LOCK_USAGE_READ_MASK;
 	excl |= (excl & LOCKF_IRQ) << LOCK_USAGE_READ_MASK;
 
-	return excl;
-}
+	वापस excl;
+पूर्ण
 
 /*
  * Find the first pair of bit match between an original
  * usage mask and an exclusive usage mask.
  */
-static int find_exclusive_match(unsigned long mask,
-				unsigned long excl_mask,
-				enum lock_usage_bit *bitp,
-				enum lock_usage_bit *excl_bitp)
-{
-	int bit, excl, excl_read;
+अटल पूर्णांक find_exclusive_match(अचिन्हित दीर्घ mask,
+				अचिन्हित दीर्घ excl_mask,
+				क्रमागत lock_usage_bit *bitp,
+				क्रमागत lock_usage_bit *excl_bitp)
+अणु
+	पूर्णांक bit, excl, excl_पढ़ो;
 
-	for_each_set_bit(bit, &mask, LOCK_USED) {
+	क्रम_each_set_bit(bit, &mask, LOCK_USED) अणु
 		/*
-		 * exclusive_bit() strips the read bit, however,
+		 * exclusive_bit() strips the पढ़ो bit, however,
 		 * LOCK_ENABLED_IRQ_*_READ may cause deadlocks too, so we need
 		 * to search excl | LOCK_USAGE_READ_MASK as well.
 		 */
 		excl = exclusive_bit(bit);
-		excl_read = excl | LOCK_USAGE_READ_MASK;
-		if (excl_mask & lock_flag(excl)) {
+		excl_पढ़ो = excl | LOCK_USAGE_READ_MASK;
+		अगर (excl_mask & lock_flag(excl)) अणु
 			*bitp = bit;
 			*excl_bitp = excl;
-			return 0;
-		} else if (excl_mask & lock_flag(excl_read)) {
+			वापस 0;
+		पूर्ण अन्यथा अगर (excl_mask & lock_flag(excl_पढ़ो)) अणु
 			*bitp = bit;
-			*excl_bitp = excl_read;
-			return 0;
-		}
-	}
-	return -1;
-}
+			*excl_bitp = excl_पढ़ो;
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -1;
+पूर्ण
 
 /*
- * Prove that the new dependency does not connect a hardirq-safe(-read)
+ * Prove that the new dependency करोes not connect a hardirq-safe(-पढ़ो)
  * lock with a hardirq-unsafe lock - to achieve this we search
  * the backwards-subgraph starting at <prev>, and the
- * forwards-subgraph starting at <next>:
+ * क्रमwards-subgraph starting at <next>:
  */
-static int check_irq_usage(struct task_struct *curr, struct held_lock *prev,
-			   struct held_lock *next)
-{
-	unsigned long usage_mask = 0, forward_mask, backward_mask;
-	enum lock_usage_bit forward_bit = 0, backward_bit = 0;
-	struct lock_list *target_entry1;
-	struct lock_list *target_entry;
-	struct lock_list this, that;
-	enum bfs_result ret;
+अटल पूर्णांक check_irq_usage(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *prev,
+			   काष्ठा held_lock *next)
+अणु
+	अचिन्हित दीर्घ usage_mask = 0, क्रमward_mask, backward_mask;
+	क्रमागत lock_usage_bit क्रमward_bit = 0, backward_bit = 0;
+	काष्ठा lock_list *target_entry1;
+	काष्ठा lock_list *target_entry;
+	काष्ठा lock_list this, that;
+	क्रमागत bfs_result ret;
 
 	/*
 	 * Step 1: gather all hard/soft IRQs usages backward in an
@@ -2637,245 +2638,245 @@ static int check_irq_usage(struct task_struct *curr, struct held_lock *prev,
 	 */
 	bfs_init_rootb(&this, prev);
 
-	ret = __bfs_backwards(&this, &usage_mask, usage_accumulate, usage_skip, NULL);
-	if (bfs_error(ret)) {
-		print_bfs_bug(ret);
-		return 0;
-	}
+	ret = __bfs_backwards(&this, &usage_mask, usage_accumulate, usage_skip, शून्य);
+	अगर (bfs_error(ret)) अणु
+		prपूर्णांक_bfs_bug(ret);
+		वापस 0;
+	पूर्ण
 
 	usage_mask &= LOCKF_USED_IN_IRQ_ALL;
-	if (!usage_mask)
-		return 1;
+	अगर (!usage_mask)
+		वापस 1;
 
 	/*
-	 * Step 2: find exclusive uses forward that match the previous
+	 * Step 2: find exclusive uses क्रमward that match the previous
 	 * backward accumulated mask.
 	 */
-	forward_mask = exclusive_mask(usage_mask);
+	क्रमward_mask = exclusive_mask(usage_mask);
 
 	bfs_init_root(&that, next);
 
-	ret = find_usage_forwards(&that, forward_mask, &target_entry1);
-	if (bfs_error(ret)) {
-		print_bfs_bug(ret);
-		return 0;
-	}
-	if (ret == BFS_RNOMATCH)
-		return 1;
+	ret = find_usage_क्रमwards(&that, क्रमward_mask, &target_entry1);
+	अगर (bfs_error(ret)) अणु
+		prपूर्णांक_bfs_bug(ret);
+		वापस 0;
+	पूर्ण
+	अगर (ret == BFS_RNOMATCH)
+		वापस 1;
 
 	/*
 	 * Step 3: we found a bad match! Now retrieve a lock from the backward
 	 * list whose usage mask matches the exclusive usage mask from the
-	 * lock found on the forward list.
+	 * lock found on the क्रमward list.
 	 */
 	backward_mask = original_mask(target_entry1->class->usage_mask);
 
 	ret = find_usage_backwards(&this, backward_mask, &target_entry);
-	if (bfs_error(ret)) {
-		print_bfs_bug(ret);
-		return 0;
-	}
-	if (DEBUG_LOCKS_WARN_ON(ret == BFS_RNOMATCH))
-		return 1;
+	अगर (bfs_error(ret)) अणु
+		prपूर्णांक_bfs_bug(ret);
+		वापस 0;
+	पूर्ण
+	अगर (DEBUG_LOCKS_WARN_ON(ret == BFS_RNOMATCH))
+		वापस 1;
 
 	/*
-	 * Step 4: narrow down to a pair of incompatible usage bits
+	 * Step 4: narrow करोwn to a pair of incompatible usage bits
 	 * and report it.
 	 */
 	ret = find_exclusive_match(target_entry->class->usage_mask,
 				   target_entry1->class->usage_mask,
-				   &backward_bit, &forward_bit);
-	if (DEBUG_LOCKS_WARN_ON(ret == -1))
-		return 1;
+				   &backward_bit, &क्रमward_bit);
+	अगर (DEBUG_LOCKS_WARN_ON(ret == -1))
+		वापस 1;
 
-	print_bad_irq_dependency(curr, &this, &that,
+	prपूर्णांक_bad_irq_dependency(curr, &this, &that,
 				 target_entry, target_entry1,
 				 prev, next,
-				 backward_bit, forward_bit,
+				 backward_bit, क्रमward_bit,
 				 state_name(backward_bit));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline int check_irq_usage(struct task_struct *curr,
-				  struct held_lock *prev, struct held_lock *next)
-{
-	return 1;
-}
+अटल अंतरभूत पूर्णांक check_irq_usage(काष्ठा task_काष्ठा *curr,
+				  काष्ठा held_lock *prev, काष्ठा held_lock *next)
+अणु
+	वापस 1;
+पूर्ण
 
-static inline bool usage_skip(struct lock_list *entry, void *mask)
-{
-	return false;
-}
+अटल अंतरभूत bool usage_skip(काष्ठा lock_list *entry, व्योम *mask)
+अणु
+	वापस false;
+पूर्ण
 
-#endif /* CONFIG_TRACE_IRQFLAGS */
+#पूर्ण_अगर /* CONFIG_TRACE_IRQFLAGS */
 
-#ifdef CONFIG_LOCKDEP_SMALL
+#अगर_घोषित CONFIG_LOCKDEP_SMALL
 /*
  * Check that the dependency graph starting at <src> can lead to
- * <target> or not. If it can, <src> -> <target> dependency is already
+ * <target> or not. If it can, <src> -> <target> dependency is alपढ़ोy
  * in the graph.
  *
- * Return BFS_RMATCH if it does, or BFS_RMATCH if it does not, return BFS_E* if
+ * Return BFS_RMATCH अगर it करोes, or BFS_RMATCH अगर it करोes not, वापस BFS_E* अगर
  * any error appears in the bfs search.
  */
-static noinline enum bfs_result
-check_redundant(struct held_lock *src, struct held_lock *target)
-{
-	enum bfs_result ret;
-	struct lock_list *target_entry;
-	struct lock_list src_entry;
+अटल noअंतरभूत क्रमागत bfs_result
+check_redundant(काष्ठा held_lock *src, काष्ठा held_lock *target)
+अणु
+	क्रमागत bfs_result ret;
+	काष्ठा lock_list *target_entry;
+	काष्ठा lock_list src_entry;
 
 	bfs_init_root(&src_entry, src);
 	/*
-	 * Special setup for check_redundant().
+	 * Special setup क्रम check_redundant().
 	 *
 	 * To report redundant, we need to find a strong dependency path that
-	 * is equal to or stronger than <src> -> <target>. So if <src> is E,
-	 * we need to let __bfs() only search for a path starting at a -(E*)->,
+	 * is equal to or stronger than <src> -> <target>. So अगर <src> is E,
+	 * we need to let __bfs() only search क्रम a path starting at a -(E*)->,
 	 * we achieve this by setting the initial node's ->only_xr to true in
-	 * that case. And if <prev> is S, we set initial ->only_xr to false
+	 * that हाल. And अगर <prev> is S, we set initial ->only_xr to false
 	 * because both -(S*)-> (equal) and -(E*)-> (stronger) are redundant.
 	 */
-	src_entry.only_xr = src->read == 0;
+	src_entry.only_xr = src->पढ़ो == 0;
 
 	debug_atomic_inc(nr_redundant_checks);
 
 	/*
-	 * Note: we skip local_lock() for redundant check, because as the
+	 * Note: we skip local_lock() क्रम redundant check, because as the
 	 * comment in usage_skip(), A -> local_lock() -> B and A -> B are not
 	 * the same.
 	 */
 	ret = check_path(target, &src_entry, hlock_equal, usage_skip, &target_entry);
 
-	if (ret == BFS_RMATCH)
+	अगर (ret == BFS_RMATCH)
 		debug_atomic_inc(nr_redundant);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline enum bfs_result
-check_redundant(struct held_lock *src, struct held_lock *target)
-{
-	return BFS_RNOMATCH;
-}
+अटल अंतरभूत क्रमागत bfs_result
+check_redundant(काष्ठा held_lock *src, काष्ठा held_lock *target)
+अणु
+	वापस BFS_RNOMATCH;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static void inc_chains(int irq_context)
-{
-	if (irq_context & LOCK_CHAIN_HARDIRQ_CONTEXT)
+अटल व्योम inc_chains(पूर्णांक irq_context)
+अणु
+	अगर (irq_context & LOCK_CHAIN_HARसूचीQ_CONTEXT)
 		nr_hardirq_chains++;
-	else if (irq_context & LOCK_CHAIN_SOFTIRQ_CONTEXT)
+	अन्यथा अगर (irq_context & LOCK_CHAIN_SOFTIRQ_CONTEXT)
 		nr_softirq_chains++;
-	else
+	अन्यथा
 		nr_process_chains++;
-}
+पूर्ण
 
-static void dec_chains(int irq_context)
-{
-	if (irq_context & LOCK_CHAIN_HARDIRQ_CONTEXT)
+अटल व्योम dec_chains(पूर्णांक irq_context)
+अणु
+	अगर (irq_context & LOCK_CHAIN_HARसूचीQ_CONTEXT)
 		nr_hardirq_chains--;
-	else if (irq_context & LOCK_CHAIN_SOFTIRQ_CONTEXT)
+	अन्यथा अगर (irq_context & LOCK_CHAIN_SOFTIRQ_CONTEXT)
 		nr_softirq_chains--;
-	else
+	अन्यथा
 		nr_process_chains--;
-}
+पूर्ण
 
-static void
-print_deadlock_scenario(struct held_lock *nxt, struct held_lock *prv)
-{
-	struct lock_class *next = hlock_class(nxt);
-	struct lock_class *prev = hlock_class(prv);
+अटल व्योम
+prपूर्णांक_deadlock_scenario(काष्ठा held_lock *nxt, काष्ठा held_lock *prv)
+अणु
+	काष्ठा lock_class *next = hlock_class(nxt);
+	काष्ठा lock_class *prev = hlock_class(prv);
 
-	printk(" Possible unsafe locking scenario:\n\n");
-	printk("       CPU0\n");
-	printk("       ----\n");
-	printk("  lock(");
-	__print_lock_name(prev);
-	printk(KERN_CONT ");\n");
-	printk("  lock(");
-	__print_lock_name(next);
-	printk(KERN_CONT ");\n");
-	printk("\n *** DEADLOCK ***\n\n");
-	printk(" May be due to missing lock nesting notation\n\n");
-}
+	prपूर्णांकk(" Possible unsafe locking scenario:\n\n");
+	prपूर्णांकk("       CPU0\n");
+	prपूर्णांकk("       ----\n");
+	prपूर्णांकk("  lock(");
+	__prपूर्णांक_lock_name(prev);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("  lock(");
+	__prपूर्णांक_lock_name(next);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("\n *** DEADLOCK ***\n\n");
+	prपूर्णांकk(" May be due to missing lock nesting notation\n\n");
+पूर्ण
 
-static void
-print_deadlock_bug(struct task_struct *curr, struct held_lock *prev,
-		   struct held_lock *next)
-{
-	if (!debug_locks_off_graph_unlock() || debug_locks_silent)
-		return;
+अटल व्योम
+prपूर्णांक_deadlock_bug(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *prev,
+		   काष्ठा held_lock *next)
+अणु
+	अगर (!debug_locks_off_graph_unlock() || debug_locks_silent)
+		वापस;
 
 	pr_warn("\n");
 	pr_warn("============================================\n");
 	pr_warn("WARNING: possible recursive locking detected\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("--------------------------------------------\n");
 	pr_warn("%s/%d is trying to acquire lock:\n",
 		curr->comm, task_pid_nr(curr));
-	print_lock(next);
+	prपूर्णांक_lock(next);
 	pr_warn("\nbut task is already holding lock:\n");
-	print_lock(prev);
+	prपूर्णांक_lock(prev);
 
 	pr_warn("\nother info that might help us debug this:\n");
-	print_deadlock_scenario(next, prev);
-	lockdep_print_held_locks(curr);
+	prपूर्णांक_deadlock_scenario(next, prev);
+	lockdep_prपूर्णांक_held_locks(curr);
 
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 
 /*
- * Check whether we are holding such a class already.
+ * Check whether we are holding such a class alपढ़ोy.
  *
- * (Note that this has to be done separately, because the graph cannot
+ * (Note that this has to be करोne separately, because the graph cannot
  * detect such classes of deadlocks.)
  *
- * Returns: 0 on deadlock detected, 1 on OK, 2 if another lock with the same
+ * Returns: 0 on deadlock detected, 1 on OK, 2 अगर another lock with the same
  * lock class is held but nest_lock is also held, i.e. we rely on the
- * nest_lock to avoid the deadlock.
+ * nest_lock to aव्योम the deadlock.
  */
-static int
-check_deadlock(struct task_struct *curr, struct held_lock *next)
-{
-	struct held_lock *prev;
-	struct held_lock *nest = NULL;
-	int i;
+अटल पूर्णांक
+check_deadlock(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *next)
+अणु
+	काष्ठा held_lock *prev;
+	काष्ठा held_lock *nest = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; i < curr->lockdep_depth; i++) {
+	क्रम (i = 0; i < curr->lockdep_depth; i++) अणु
 		prev = curr->held_locks + i;
 
-		if (prev->instance == next->nest_lock)
+		अगर (prev->instance == next->nest_lock)
 			nest = prev;
 
-		if (hlock_class(prev) != hlock_class(next))
-			continue;
+		अगर (hlock_class(prev) != hlock_class(next))
+			जारी;
 
 		/*
-		 * Allow read-after-read recursion of the same
-		 * lock class (i.e. read_lock(lock)+read_lock(lock)):
+		 * Allow पढ़ो-after-पढ़ो recursion of the same
+		 * lock class (i.e. पढ़ो_lock(lock)+पढ़ो_lock(lock)):
 		 */
-		if ((next->read == 2) && prev->read)
-			continue;
+		अगर ((next->पढ़ो == 2) && prev->पढ़ो)
+			जारी;
 
 		/*
 		 * We're holding the nest_lock, which serializes this lock's
 		 * nesting behaviour.
 		 */
-		if (nest)
-			return 2;
+		अगर (nest)
+			वापस 2;
 
-		print_deadlock_bug(curr, prev, next);
-		return 0;
-	}
-	return 1;
-}
+		prपूर्णांक_deadlock_bug(curr, prev, next);
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /*
  * There was a chain-cache miss, and we are about to add a new dependency
@@ -2884,34 +2885,34 @@ check_deadlock(struct task_struct *curr, struct held_lock *next)
  *  - would the adding of the <prev> -> <next> dependency create a
  *    circular dependency in the graph? [== circular deadlock]
  *
- *  - does the new prev->next dependency connect any hardirq-safe lock
+ *  - करोes the new prev->next dependency connect any hardirq-safe lock
  *    (in the full backwards-subgraph starting at <prev>) with any
- *    hardirq-unsafe lock (in the full forwards-subgraph starting at
+ *    hardirq-unsafe lock (in the full क्रमwards-subgraph starting at
  *    <next>)? [== illegal lock inversion with hardirq contexts]
  *
- *  - does the new prev->next dependency connect any softirq-safe lock
+ *  - करोes the new prev->next dependency connect any softirq-safe lock
  *    (in the full backwards-subgraph starting at <prev>) with any
- *    softirq-unsafe lock (in the full forwards-subgraph starting at
+ *    softirq-unsafe lock (in the full क्रमwards-subgraph starting at
  *    <next>)? [== illegal lock inversion with softirq contexts]
  *
  * any of these scenarios could lead to a deadlock.
  *
- * Then if all the validations pass, we add the forwards and backwards
+ * Then अगर all the validations pass, we add the क्रमwards and backwards
  * dependency.
  */
-static int
-check_prev_add(struct task_struct *curr, struct held_lock *prev,
-	       struct held_lock *next, u16 distance,
-	       struct lock_trace **const trace)
-{
-	struct lock_list *entry;
-	enum bfs_result ret;
+अटल पूर्णांक
+check_prev_add(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *prev,
+	       काष्ठा held_lock *next, u16 distance,
+	       काष्ठा lock_trace **स्थिर trace)
+अणु
+	काष्ठा lock_list *entry;
+	क्रमागत bfs_result ret;
 
-	if (!hlock_class(prev)->key || !hlock_class(next)->key) {
+	अगर (!hlock_class(prev)->key || !hlock_class(next)->key) अणु
 		/*
-		 * The warning statements below may trigger a use-after-free
-		 * of the class name. It is better to trigger a use-after free
-		 * and to have the class name most of the time instead of not
+		 * The warning statements below may trigger a use-after-मुक्त
+		 * of the class name. It is better to trigger a use-after मुक्त
+		 * and to have the class name most of the समय instead of not
 		 * having the class name available.
 		 */
 		WARN_ONCE(!debug_locks_silent && !hlock_class(prev)->key,
@@ -2922,84 +2923,84 @@ check_prev_add(struct task_struct *curr, struct held_lock *prev,
 			  "Detected use-after-free of lock class %px/%s\n",
 			  hlock_class(next),
 			  hlock_class(next)->name);
-		return 2;
-	}
+		वापस 2;
+	पूर्ण
 
 	/*
 	 * Prove that the new <prev> -> <next> dependency would not
-	 * create a circular dependency in the graph. (We do this by
-	 * a breadth-first search into the graph starting at <next>,
+	 * create a circular dependency in the graph. (We करो this by
+	 * a bपढ़ोth-first search पूर्णांकo the graph starting at <next>,
 	 * and check whether we can reach <prev>.)
 	 *
 	 * The search is limited by the size of the circular queue (i.e.,
-	 * MAX_CIRCULAR_QUEUE_SIZE) which keeps track of a breadth of nodes
+	 * MAX_CIRCULAR_QUEUE_SIZE) which keeps track of a bपढ़ोth of nodes
 	 * in the graph whose neighbours are to be checked.
 	 */
 	ret = check_noncircular(next, prev, trace);
-	if (unlikely(bfs_error(ret) || ret == BFS_RMATCH))
-		return 0;
+	अगर (unlikely(bfs_error(ret) || ret == BFS_RMATCH))
+		वापस 0;
 
-	if (!check_irq_usage(curr, prev, next))
-		return 0;
+	अगर (!check_irq_usage(curr, prev, next))
+		वापस 0;
 
 	/*
-	 * Is the <prev> -> <next> dependency already present?
+	 * Is the <prev> -> <next> dependency alपढ़ोy present?
 	 *
 	 * (this may occur even though this is a new chain: consider
 	 *  e.g. the L1 -> L2 -> L3 -> L4 and the L5 -> L1 -> L2 -> L3
-	 *  chains - the second one will be new, but L1 already has
+	 *  chains - the second one will be new, but L1 alपढ़ोy has
 	 *  L2 added to its dependency list, due to the first chain.)
 	 */
-	list_for_each_entry(entry, &hlock_class(prev)->locks_after, entry) {
-		if (entry->class == hlock_class(next)) {
-			if (distance == 1)
+	list_क्रम_each_entry(entry, &hlock_class(prev)->locks_after, entry) अणु
+		अगर (entry->class == hlock_class(next)) अणु
+			अगर (distance == 1)
 				entry->distance = 1;
 			entry->dep |= calc_dep(prev, next);
 
 			/*
 			 * Also, update the reverse dependency in @next's
-			 * ->locks_before list.
+			 * ->locks_beक्रमe list.
 			 *
 			 *  Here we reuse @entry as the cursor, which is fine
 			 *  because we won't go to the next iteration of the
 			 *  outer loop:
 			 *
-			 *  For normal cases, we return in the inner loop.
+			 *  For normal हालs, we वापस in the inner loop.
 			 *
-			 *  If we fail to return, we have inconsistency, i.e.
-			 *  <prev>::locks_after contains <next> while
-			 *  <next>::locks_before doesn't contain <prev>. In
-			 *  that case, we return after the inner and indicate
+			 *  If we fail to वापस, we have inconsistency, i.e.
+			 *  <prev>::locks_after contains <next> जबतक
+			 *  <next>::locks_beक्रमe करोesn't contain <prev>. In
+			 *  that हाल, we वापस after the inner and indicate
 			 *  something is wrong.
 			 */
-			list_for_each_entry(entry, &hlock_class(next)->locks_before, entry) {
-				if (entry->class == hlock_class(prev)) {
-					if (distance == 1)
+			list_क्रम_each_entry(entry, &hlock_class(next)->locks_beक्रमe, entry) अणु
+				अगर (entry->class == hlock_class(prev)) अणु
+					अगर (distance == 1)
 						entry->distance = 1;
 					entry->dep |= calc_depb(prev, next);
-					return 1;
-				}
-			}
+					वापस 1;
+				पूर्ण
+			पूर्ण
 
-			/* <prev> is not found in <next>::locks_before */
-			return 0;
-		}
-	}
+			/* <prev> is not found in <next>::locks_beक्रमe */
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Is the <prev> -> <next> link redundant?
 	 */
 	ret = check_redundant(prev, next);
-	if (bfs_error(ret))
-		return 0;
-	else if (ret == BFS_RMATCH)
-		return 2;
+	अगर (bfs_error(ret))
+		वापस 0;
+	अन्यथा अगर (ret == BFS_RMATCH)
+		वापस 2;
 
-	if (!*trace) {
+	अगर (!*trace) अणु
 		*trace = save_trace();
-		if (!*trace)
-			return 0;
-	}
+		अगर (!*trace)
+			वापस 0;
+	पूर्ण
 
 	/*
 	 * Ok, all validations passed, add the new lock
@@ -3011,19 +3012,19 @@ check_prev_add(struct task_struct *curr, struct held_lock *prev,
 			       calc_dep(prev, next),
 			       *trace);
 
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
 	ret = add_lock_to_list(hlock_class(prev), hlock_class(next),
-			       &hlock_class(next)->locks_before,
+			       &hlock_class(next)->locks_beक्रमe,
 			       next->acquire_ip, distance,
 			       calc_depb(prev, next),
 			       *trace);
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
-	return 2;
-}
+	वापस 2;
+पूर्ण
 
 /*
  * Add the dependency to all directly-previous locks that are 'relevant'.
@@ -3031,82 +3032,82 @@ check_prev_add(struct task_struct *curr, struct held_lock *prev,
  * all consecutive trylock entries and the final non-trylock entry - or
  * the end of this context's lock-chain - whichever comes first.
  */
-static int
-check_prevs_add(struct task_struct *curr, struct held_lock *next)
-{
-	struct lock_trace *trace = NULL;
-	int depth = curr->lockdep_depth;
-	struct held_lock *hlock;
+अटल पूर्णांक
+check_prevs_add(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *next)
+अणु
+	काष्ठा lock_trace *trace = शून्य;
+	पूर्णांक depth = curr->lockdep_depth;
+	काष्ठा held_lock *hlock;
 
 	/*
 	 * Debugging checks.
 	 *
-	 * Depth must not be zero for a non-head lock:
+	 * Depth must not be zero क्रम a non-head lock:
 	 */
-	if (!depth)
-		goto out_bug;
+	अगर (!depth)
+		जाओ out_bug;
 	/*
-	 * At least two relevant locks must exist for this
+	 * At least two relevant locks must exist क्रम this
 	 * to be a head:
 	 */
-	if (curr->held_locks[depth].irq_context !=
+	अगर (curr->held_locks[depth].irq_context !=
 			curr->held_locks[depth-1].irq_context)
-		goto out_bug;
+		जाओ out_bug;
 
-	for (;;) {
+	क्रम (;;) अणु
 		u16 distance = curr->lockdep_depth - depth + 1;
 		hlock = curr->held_locks + depth - 1;
 
-		if (hlock->check) {
-			int ret = check_prev_add(curr, hlock, next, distance, &trace);
-			if (!ret)
-				return 0;
+		अगर (hlock->check) अणु
+			पूर्णांक ret = check_prev_add(curr, hlock, next, distance, &trace);
+			अगर (!ret)
+				वापस 0;
 
 			/*
 			 * Stop after the first non-trylock entry,
 			 * as non-trylock entries have added their
-			 * own direct dependencies already, so this
+			 * own direct dependencies alपढ़ोy, so this
 			 * lock is connected to them indirectly:
 			 */
-			if (!hlock->trylock)
-				break;
-		}
+			अगर (!hlock->trylock)
+				अवरोध;
+		पूर्ण
 
 		depth--;
 		/*
 		 * End of lock-stack?
 		 */
-		if (!depth)
-			break;
+		अगर (!depth)
+			अवरोध;
 		/*
-		 * Stop the search if we cross into another context:
+		 * Stop the search अगर we cross पूर्णांकo another context:
 		 */
-		if (curr->held_locks[depth].irq_context !=
+		अगर (curr->held_locks[depth].irq_context !=
 				curr->held_locks[depth-1].irq_context)
-			break;
-	}
-	return 1;
+			अवरोध;
+	पूर्ण
+	वापस 1;
 out_bug:
-	if (!debug_locks_off_graph_unlock())
-		return 0;
+	अगर (!debug_locks_off_graph_unlock())
+		वापस 0;
 
 	/*
 	 * Clearly we all shouldn't be here, but since we made it we
 	 * can reliable say we messed up our state. See the above two
-	 * gotos for reasons why we could possibly end up here.
+	 * जाओs क्रम reasons why we could possibly end up here.
 	 */
 	WARN_ON(1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct lock_chain lock_chains[MAX_LOCKDEP_CHAINS];
-static DECLARE_BITMAP(lock_chains_in_use, MAX_LOCKDEP_CHAINS);
-static u16 chain_hlocks[MAX_LOCKDEP_CHAIN_HLOCKS];
-unsigned long nr_zapped_lock_chains;
-unsigned int nr_free_chain_hlocks;	/* Free chain_hlocks in buckets */
-unsigned int nr_lost_chain_hlocks;	/* Lost chain_hlocks */
-unsigned int nr_large_chain_blocks;	/* size > MAX_CHAIN_BUCKETS */
+काष्ठा lock_chain lock_chains[MAX_LOCKDEP_CHAINS];
+अटल DECLARE_BITMAP(lock_chains_in_use, MAX_LOCKDEP_CHAINS);
+अटल u16 chain_hlocks[MAX_LOCKDEP_CHAIN_HLOCKS];
+अचिन्हित दीर्घ nr_zapped_lock_chains;
+अचिन्हित पूर्णांक nr_मुक्त_chain_hlocks;	/* Free chain_hlocks in buckets */
+अचिन्हित पूर्णांक nr_lost_chain_hlocks;	/* Lost chain_hlocks */
+अचिन्हित पूर्णांक nr_large_chain_blocks;	/* size > MAX_CHAIN_BUCKETS */
 
 /*
  * The first 2 chain_hlocks entries in the chain block in the bucket
@@ -3125,313 +3126,313 @@ unsigned int nr_large_chain_blocks;	/* size > MAX_CHAIN_BUCKETS */
  *   entry[2] - upper 16 bits of the chain block size
  *   entry[3] - lower 16 bits of the chain block size
  */
-#define MAX_CHAIN_BUCKETS	16
-#define CHAIN_BLK_FLAG		(1U << 15)
-#define CHAIN_BLK_LIST_END	0xFFFFU
+#घोषणा MAX_CHAIN_BUCKETS	16
+#घोषणा CHAIN_BLK_FLAG		(1U << 15)
+#घोषणा CHAIN_BLK_LIST_END	0xFFFFU
 
-static int chain_block_buckets[MAX_CHAIN_BUCKETS];
+अटल पूर्णांक chain_block_buckets[MAX_CHAIN_BUCKETS];
 
-static inline int size_to_bucket(int size)
-{
-	if (size > MAX_CHAIN_BUCKETS)
-		return 0;
+अटल अंतरभूत पूर्णांक माप_प्रकारo_bucket(पूर्णांक size)
+अणु
+	अगर (size > MAX_CHAIN_BUCKETS)
+		वापस 0;
 
-	return size - 1;
-}
+	वापस size - 1;
+पूर्ण
 
 /*
  * Iterate all the chain blocks in a bucket.
  */
-#define for_each_chain_block(bucket, prev, curr)		\
-	for ((prev) = -1, (curr) = chain_block_buckets[bucket];	\
+#घोषणा क्रम_each_chain_block(bucket, prev, curr)		\
+	क्रम ((prev) = -1, (curr) = chain_block_buckets[bucket];	\
 	     (curr) >= 0;					\
 	     (prev) = (curr), (curr) = chain_block_next(curr))
 
 /*
  * next block or -1
  */
-static inline int chain_block_next(int offset)
-{
-	int next = chain_hlocks[offset];
+अटल अंतरभूत पूर्णांक chain_block_next(पूर्णांक offset)
+अणु
+	पूर्णांक next = chain_hlocks[offset];
 
 	WARN_ON_ONCE(!(next & CHAIN_BLK_FLAG));
 
-	if (next == CHAIN_BLK_LIST_END)
-		return -1;
+	अगर (next == CHAIN_BLK_LIST_END)
+		वापस -1;
 
 	next &= ~CHAIN_BLK_FLAG;
 	next <<= 16;
 	next |= chain_hlocks[offset + 1];
 
-	return next;
-}
+	वापस next;
+पूर्ण
 
 /*
  * bucket-0 only
  */
-static inline int chain_block_size(int offset)
-{
-	return (chain_hlocks[offset + 2] << 16) | chain_hlocks[offset + 3];
-}
+अटल अंतरभूत पूर्णांक chain_block_size(पूर्णांक offset)
+अणु
+	वापस (chain_hlocks[offset + 2] << 16) | chain_hlocks[offset + 3];
+पूर्ण
 
-static inline void init_chain_block(int offset, int next, int bucket, int size)
-{
+अटल अंतरभूत व्योम init_chain_block(पूर्णांक offset, पूर्णांक next, पूर्णांक bucket, पूर्णांक size)
+अणु
 	chain_hlocks[offset] = (next >> 16) | CHAIN_BLK_FLAG;
 	chain_hlocks[offset + 1] = (u16)next;
 
-	if (size && !bucket) {
+	अगर (size && !bucket) अणु
 		chain_hlocks[offset + 2] = size >> 16;
 		chain_hlocks[offset + 3] = (u16)size;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void add_chain_block(int offset, int size)
-{
-	int bucket = size_to_bucket(size);
-	int next = chain_block_buckets[bucket];
-	int prev, curr;
+अटल अंतरभूत व्योम add_chain_block(पूर्णांक offset, पूर्णांक size)
+अणु
+	पूर्णांक bucket = माप_प्रकारo_bucket(size);
+	पूर्णांक next = chain_block_buckets[bucket];
+	पूर्णांक prev, curr;
 
-	if (unlikely(size < 2)) {
+	अगर (unlikely(size < 2)) अणु
 		/*
-		 * We can't store single entries on the freelist. Leak them.
+		 * We can't store single entries on the मुक्तlist. Leak them.
 		 *
 		 * One possible way out would be to uniquely mark them, other
 		 * than with CHAIN_BLK_FLAG, such that we can recover them when
-		 * the block before it is re-added.
+		 * the block beक्रमe it is re-added.
 		 */
-		if (size)
+		अगर (size)
 			nr_lost_chain_hlocks++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	nr_free_chain_hlocks += size;
-	if (!bucket) {
+	nr_मुक्त_chain_hlocks += size;
+	अगर (!bucket) अणु
 		nr_large_chain_blocks++;
 
 		/*
 		 * Variable sized, sort large to small.
 		 */
-		for_each_chain_block(0, prev, curr) {
-			if (size >= chain_block_size(curr))
-				break;
-		}
+		क्रम_each_chain_block(0, prev, curr) अणु
+			अगर (size >= chain_block_size(curr))
+				अवरोध;
+		पूर्ण
 		init_chain_block(offset, curr, 0, size);
-		if (prev < 0)
+		अगर (prev < 0)
 			chain_block_buckets[0] = offset;
-		else
+		अन्यथा
 			init_chain_block(prev, offset, 0, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/*
 	 * Fixed size, add to head.
 	 */
 	init_chain_block(offset, next, bucket, size);
 	chain_block_buckets[bucket] = offset;
-}
+पूर्ण
 
 /*
  * Only the first block in the list can be deleted.
  *
  * For the variable size bucket[0], the first block (the largest one) is
- * returned, broken up and put back into the pool. So if a chain block of
+ * वापसed, broken up and put back पूर्णांकo the pool. So अगर a chain block of
  * length > MAX_CHAIN_BUCKETS is ever used and zapped, it will just be
  * queued up after the primordial chain block and never be used until the
  * hlock entries in the primordial chain block is almost used up. That
  * causes fragmentation and reduce allocation efficiency. That can be
  * monitored by looking at the "large chain blocks" number in lockdep_stats.
  */
-static inline void del_chain_block(int bucket, int size, int next)
-{
-	nr_free_chain_hlocks -= size;
+अटल अंतरभूत व्योम del_chain_block(पूर्णांक bucket, पूर्णांक size, पूर्णांक next)
+अणु
+	nr_मुक्त_chain_hlocks -= size;
 	chain_block_buckets[bucket] = next;
 
-	if (!bucket)
+	अगर (!bucket)
 		nr_large_chain_blocks--;
-}
+पूर्ण
 
-static void init_chain_block_buckets(void)
-{
-	int i;
+अटल व्योम init_chain_block_buckets(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_CHAIN_BUCKETS; i++)
+	क्रम (i = 0; i < MAX_CHAIN_BUCKETS; i++)
 		chain_block_buckets[i] = -1;
 
 	add_chain_block(0, ARRAY_SIZE(chain_hlocks));
-}
+पूर्ण
 
 /*
- * Return offset of a chain block of the right size or -1 if not found.
+ * Return offset of a chain block of the right size or -1 अगर not found.
  *
  * Fairly simple worst-fit allocator with the addition of a number of size
- * specific free lists.
+ * specअगरic मुक्त lists.
  */
-static int alloc_chain_hlocks(int req)
-{
-	int bucket, curr, size;
+अटल पूर्णांक alloc_chain_hlocks(पूर्णांक req)
+अणु
+	पूर्णांक bucket, curr, size;
 
 	/*
-	 * We rely on the MSB to act as an escape bit to denote freelist
-	 * pointers. Make sure this bit isn't set in 'normal' class_idx usage.
+	 * We rely on the MSB to act as an escape bit to denote मुक्तlist
+	 * poपूर्णांकers. Make sure this bit isn't set in 'normal' class_idx usage.
 	 */
 	BUILD_BUG_ON((MAX_LOCKDEP_KEYS-1) & CHAIN_BLK_FLAG);
 
-	init_data_structures_once();
+	init_data_काष्ठाures_once();
 
-	if (nr_free_chain_hlocks < req)
-		return -1;
+	अगर (nr_मुक्त_chain_hlocks < req)
+		वापस -1;
 
 	/*
-	 * We require a minimum of 2 (u16) entries to encode a freelist
+	 * We require a minimum of 2 (u16) entries to encode a मुक्तlist
 	 * 'pointer'.
 	 */
 	req = max(req, 2);
-	bucket = size_to_bucket(req);
+	bucket = माप_प्रकारo_bucket(req);
 	curr = chain_block_buckets[bucket];
 
-	if (bucket) {
-		if (curr >= 0) {
+	अगर (bucket) अणु
+		अगर (curr >= 0) अणु
 			del_chain_block(bucket, req, chain_block_next(curr));
-			return curr;
-		}
+			वापस curr;
+		पूर्ण
 		/* Try bucket 0 */
 		curr = chain_block_buckets[0];
-	}
+	पूर्ण
 
 	/*
-	 * The variable sized freelist is sorted by size; the first entry is
-	 * the largest. Use it if it fits.
+	 * The variable sized मुक्तlist is sorted by size; the first entry is
+	 * the largest. Use it अगर it fits.
 	 */
-	if (curr >= 0) {
+	अगर (curr >= 0) अणु
 		size = chain_block_size(curr);
-		if (likely(size >= req)) {
+		अगर (likely(size >= req)) अणु
 			del_chain_block(0, size, chain_block_next(curr));
 			add_chain_block(curr + req, size - req);
-			return curr;
-		}
-	}
+			वापस curr;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Last resort, split a block in a larger sized bucket.
 	 */
-	for (size = MAX_CHAIN_BUCKETS; size > req; size--) {
-		bucket = size_to_bucket(size);
+	क्रम (size = MAX_CHAIN_BUCKETS; size > req; size--) अणु
+		bucket = माप_प्रकारo_bucket(size);
 		curr = chain_block_buckets[bucket];
-		if (curr < 0)
-			continue;
+		अगर (curr < 0)
+			जारी;
 
 		del_chain_block(bucket, size, chain_block_next(curr));
 		add_chain_block(curr + req, size - req);
-		return curr;
-	}
+		वापस curr;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static inline void free_chain_hlocks(int base, int size)
-{
+अटल अंतरभूत व्योम मुक्त_chain_hlocks(पूर्णांक base, पूर्णांक size)
+अणु
 	add_chain_block(base, max(size, 2));
-}
+पूर्ण
 
-struct lock_class *lock_chain_get_class(struct lock_chain *chain, int i)
-{
+काष्ठा lock_class *lock_chain_get_class(काष्ठा lock_chain *chain, पूर्णांक i)
+अणु
 	u16 chain_hlock = chain_hlocks[chain->base + i];
-	unsigned int class_idx = chain_hlock_class_idx(chain_hlock);
+	अचिन्हित पूर्णांक class_idx = chain_hlock_class_idx(chain_hlock);
 
-	return lock_classes + class_idx - 1;
-}
+	वापस lock_classes + class_idx - 1;
+पूर्ण
 
 /*
  * Returns the index of the first held_lock of the current chain
  */
-static inline int get_first_held_lock(struct task_struct *curr,
-					struct held_lock *hlock)
-{
-	int i;
-	struct held_lock *hlock_curr;
+अटल अंतरभूत पूर्णांक get_first_held_lock(काष्ठा task_काष्ठा *curr,
+					काष्ठा held_lock *hlock)
+अणु
+	पूर्णांक i;
+	काष्ठा held_lock *hlock_curr;
 
-	for (i = curr->lockdep_depth - 1; i >= 0; i--) {
+	क्रम (i = curr->lockdep_depth - 1; i >= 0; i--) अणु
 		hlock_curr = curr->held_locks + i;
-		if (hlock_curr->irq_context != hlock->irq_context)
-			break;
+		अगर (hlock_curr->irq_context != hlock->irq_context)
+			अवरोध;
 
-	}
+	पूर्ण
 
-	return ++i;
-}
+	वापस ++i;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_LOCKDEP
+#अगर_घोषित CONFIG_DEBUG_LOCKDEP
 /*
  * Returns the next chain_key iteration
  */
-static u64 print_chain_key_iteration(u16 hlock_id, u64 chain_key)
-{
+अटल u64 prपूर्णांक_chain_key_iteration(u16 hlock_id, u64 chain_key)
+अणु
 	u64 new_chain_key = iterate_chain_key(chain_key, hlock_id);
 
-	printk(" hlock_id:%d -> chain_key:%016Lx",
-		(unsigned int)hlock_id,
-		(unsigned long long)new_chain_key);
-	return new_chain_key;
-}
+	prपूर्णांकk(" hlock_id:%d -> chain_key:%016Lx",
+		(अचिन्हित पूर्णांक)hlock_id,
+		(अचिन्हित दीर्घ दीर्घ)new_chain_key);
+	वापस new_chain_key;
+पूर्ण
 
-static void
-print_chain_keys_held_locks(struct task_struct *curr, struct held_lock *hlock_next)
-{
-	struct held_lock *hlock;
+अटल व्योम
+prपूर्णांक_chain_keys_held_locks(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *hlock_next)
+अणु
+	काष्ठा held_lock *hlock;
 	u64 chain_key = INITIAL_CHAIN_KEY;
-	int depth = curr->lockdep_depth;
-	int i = get_first_held_lock(curr, hlock_next);
+	पूर्णांक depth = curr->lockdep_depth;
+	पूर्णांक i = get_first_held_lock(curr, hlock_next);
 
-	printk("depth: %u (irq_context %u)\n", depth - i + 1,
+	prपूर्णांकk("depth: %u (irq_context %u)\n", depth - i + 1,
 		hlock_next->irq_context);
-	for (; i < depth; i++) {
+	क्रम (; i < depth; i++) अणु
 		hlock = curr->held_locks + i;
-		chain_key = print_chain_key_iteration(hlock_id(hlock), chain_key);
+		chain_key = prपूर्णांक_chain_key_iteration(hlock_id(hlock), chain_key);
 
-		print_lock(hlock);
-	}
+		prपूर्णांक_lock(hlock);
+	पूर्ण
 
-	print_chain_key_iteration(hlock_id(hlock_next), chain_key);
-	print_lock(hlock_next);
-}
+	prपूर्णांक_chain_key_iteration(hlock_id(hlock_next), chain_key);
+	prपूर्णांक_lock(hlock_next);
+पूर्ण
 
-static void print_chain_keys_chain(struct lock_chain *chain)
-{
-	int i;
+अटल व्योम prपूर्णांक_chain_keys_chain(काष्ठा lock_chain *chain)
+अणु
+	पूर्णांक i;
 	u64 chain_key = INITIAL_CHAIN_KEY;
 	u16 hlock_id;
 
-	printk("depth: %u\n", chain->depth);
-	for (i = 0; i < chain->depth; i++) {
+	prपूर्णांकk("depth: %u\n", chain->depth);
+	क्रम (i = 0; i < chain->depth; i++) अणु
 		hlock_id = chain_hlocks[chain->base + i];
-		chain_key = print_chain_key_iteration(hlock_id, chain_key);
+		chain_key = prपूर्णांक_chain_key_iteration(hlock_id, chain_key);
 
-		print_lock_name(lock_classes + chain_hlock_class_idx(hlock_id) - 1);
-		printk("\n");
-	}
-}
+		prपूर्णांक_lock_name(lock_classes + chain_hlock_class_idx(hlock_id) - 1);
+		prपूर्णांकk("\n");
+	पूर्ण
+पूर्ण
 
-static void print_collision(struct task_struct *curr,
-			struct held_lock *hlock_next,
-			struct lock_chain *chain)
-{
+अटल व्योम prपूर्णांक_collision(काष्ठा task_काष्ठा *curr,
+			काष्ठा held_lock *hlock_next,
+			काष्ठा lock_chain *chain)
+अणु
 	pr_warn("\n");
 	pr_warn("============================\n");
 	pr_warn("WARNING: chain_key collision\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("----------------------------\n");
 	pr_warn("%s/%d: ", current->comm, task_pid_nr(current));
 	pr_warn("Hash chain already cached but the contents don't match!\n");
 
 	pr_warn("Held locks:");
-	print_chain_keys_held_locks(curr, hlock_next);
+	prपूर्णांक_chain_keys_held_locks(curr, hlock_next);
 
 	pr_warn("Locks in cached chain:");
-	print_chain_keys_chain(chain);
+	prपूर्णांक_chain_keys_chain(chain);
 
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Checks whether the chain and the current held locks are consistent
@@ -3439,91 +3440,91 @@ static void print_collision(struct task_struct *curr,
  * that there was a collision during the calculation of the chain_key.
  * Returns: 0 not passed, 1 passed
  */
-static int check_no_collision(struct task_struct *curr,
-			struct held_lock *hlock,
-			struct lock_chain *chain)
-{
-#ifdef CONFIG_DEBUG_LOCKDEP
-	int i, j, id;
+अटल पूर्णांक check_no_collision(काष्ठा task_काष्ठा *curr,
+			काष्ठा held_lock *hlock,
+			काष्ठा lock_chain *chain)
+अणु
+#अगर_घोषित CONFIG_DEBUG_LOCKDEP
+	पूर्णांक i, j, id;
 
 	i = get_first_held_lock(curr, hlock);
 
-	if (DEBUG_LOCKS_WARN_ON(chain->depth != curr->lockdep_depth - (i - 1))) {
-		print_collision(curr, hlock, chain);
-		return 0;
-	}
+	अगर (DEBUG_LOCKS_WARN_ON(chain->depth != curr->lockdep_depth - (i - 1))) अणु
+		prपूर्णांक_collision(curr, hlock, chain);
+		वापस 0;
+	पूर्ण
 
-	for (j = 0; j < chain->depth - 1; j++, i++) {
+	क्रम (j = 0; j < chain->depth - 1; j++, i++) अणु
 		id = hlock_id(&curr->held_locks[i]);
 
-		if (DEBUG_LOCKS_WARN_ON(chain_hlocks[chain->base + j] != id)) {
-			print_collision(curr, hlock, chain);
-			return 0;
-		}
-	}
-#endif
-	return 1;
-}
+		अगर (DEBUG_LOCKS_WARN_ON(chain_hlocks[chain->base + j] != id)) अणु
+			prपूर्णांक_collision(curr, hlock, chain);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 1;
+पूर्ण
 
 /*
- * Given an index that is >= -1, return the index of the next lock chain.
- * Return -2 if there is no next lock chain.
+ * Given an index that is >= -1, वापस the index of the next lock chain.
+ * Return -2 अगर there is no next lock chain.
  */
-long lockdep_next_lockchain(long i)
-{
+दीर्घ lockdep_next_lockchain(दीर्घ i)
+अणु
 	i = find_next_bit(lock_chains_in_use, ARRAY_SIZE(lock_chains), i + 1);
-	return i < ARRAY_SIZE(lock_chains) ? i : -2;
-}
+	वापस i < ARRAY_SIZE(lock_chains) ? i : -2;
+पूर्ण
 
-unsigned long lock_chain_count(void)
-{
-	return bitmap_weight(lock_chains_in_use, ARRAY_SIZE(lock_chains));
-}
+अचिन्हित दीर्घ lock_chain_count(व्योम)
+अणु
+	वापस biपंचांगap_weight(lock_chains_in_use, ARRAY_SIZE(lock_chains));
+पूर्ण
 
 /* Must be called with the graph lock held. */
-static struct lock_chain *alloc_lock_chain(void)
-{
-	int idx = find_first_zero_bit(lock_chains_in_use,
+अटल काष्ठा lock_chain *alloc_lock_chain(व्योम)
+अणु
+	पूर्णांक idx = find_first_zero_bit(lock_chains_in_use,
 				      ARRAY_SIZE(lock_chains));
 
-	if (unlikely(idx >= ARRAY_SIZE(lock_chains)))
-		return NULL;
+	अगर (unlikely(idx >= ARRAY_SIZE(lock_chains)))
+		वापस शून्य;
 	__set_bit(idx, lock_chains_in_use);
-	return lock_chains + idx;
-}
+	वापस lock_chains + idx;
+पूर्ण
 
 /*
- * Adds a dependency chain into chain hashtable. And must be called with
+ * Adds a dependency chain पूर्णांकo chain hashtable. And must be called with
  * graph_lock held.
  *
- * Return 0 if fail, and graph_lock is released.
- * Return 1 if succeed, with graph_lock held.
+ * Return 0 अगर fail, and graph_lock is released.
+ * Return 1 अगर succeed, with graph_lock held.
  */
-static inline int add_chain_cache(struct task_struct *curr,
-				  struct held_lock *hlock,
+अटल अंतरभूत पूर्णांक add_chain_cache(काष्ठा task_काष्ठा *curr,
+				  काष्ठा held_lock *hlock,
 				  u64 chain_key)
-{
-	struct hlist_head *hash_head = chainhashentry(chain_key);
-	struct lock_chain *chain;
-	int i, j;
+अणु
+	काष्ठा hlist_head *hash_head = chainhashentry(chain_key);
+	काष्ठा lock_chain *chain;
+	पूर्णांक i, j;
 
 	/*
 	 * The caller must hold the graph lock, ensure we've got IRQs
-	 * disabled to make this an IRQ-safe lock.. for recursion reasons
+	 * disabled to make this an IRQ-safe lock.. क्रम recursion reasons
 	 * lockdep won't complain about its own locking errors.
 	 */
-	if (lockdep_assert_locked())
-		return 0;
+	अगर (lockdep_निश्चित_locked())
+		वापस 0;
 
 	chain = alloc_lock_chain();
-	if (!chain) {
-		if (!debug_locks_off_graph_unlock())
-			return 0;
+	अगर (!chain) अणु
+		अगर (!debug_locks_off_graph_unlock())
+			वापस 0;
 
-		print_lockdep_off("BUG: MAX_LOCKDEP_CHAINS too low!");
+		prपूर्णांक_lockdep_off("BUG: MAX_LOCKDEP_CHAINS too low!");
 		dump_stack();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	chain->chain_key = chain_key;
 	chain->irq_context = hlock->irq_context;
 	i = get_first_held_lock(curr, hlock);
@@ -3531,122 +3532,122 @@ static inline int add_chain_cache(struct task_struct *curr,
 
 	BUILD_BUG_ON((1UL << 24) <= ARRAY_SIZE(chain_hlocks));
 	BUILD_BUG_ON((1UL << 6)  <= ARRAY_SIZE(curr->held_locks));
-	BUILD_BUG_ON((1UL << 8*sizeof(chain_hlocks[0])) <= ARRAY_SIZE(lock_classes));
+	BUILD_BUG_ON((1UL << 8*माप(chain_hlocks[0])) <= ARRAY_SIZE(lock_classes));
 
 	j = alloc_chain_hlocks(chain->depth);
-	if (j < 0) {
-		if (!debug_locks_off_graph_unlock())
-			return 0;
+	अगर (j < 0) अणु
+		अगर (!debug_locks_off_graph_unlock())
+			वापस 0;
 
-		print_lockdep_off("BUG: MAX_LOCKDEP_CHAIN_HLOCKS too low!");
+		prपूर्णांक_lockdep_off("BUG: MAX_LOCKDEP_CHAIN_HLOCKS too low!");
 		dump_stack();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	chain->base = j;
-	for (j = 0; j < chain->depth - 1; j++, i++) {
-		int lock_id = hlock_id(curr->held_locks + i);
+	क्रम (j = 0; j < chain->depth - 1; j++, i++) अणु
+		पूर्णांक lock_id = hlock_id(curr->held_locks + i);
 
 		chain_hlocks[chain->base + j] = lock_id;
-	}
+	पूर्ण
 	chain_hlocks[chain->base + j] = hlock_id(hlock);
 	hlist_add_head_rcu(&chain->entry, hash_head);
 	debug_atomic_inc(chain_lookup_misses);
 	inc_chains(chain->irq_context);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Look up a dependency chain. Must be called with either the graph lock or
- * the RCU read lock held.
+ * the RCU पढ़ो lock held.
  */
-static inline struct lock_chain *lookup_chain_cache(u64 chain_key)
-{
-	struct hlist_head *hash_head = chainhashentry(chain_key);
-	struct lock_chain *chain;
+अटल अंतरभूत काष्ठा lock_chain *lookup_chain_cache(u64 chain_key)
+अणु
+	काष्ठा hlist_head *hash_head = chainhashentry(chain_key);
+	काष्ठा lock_chain *chain;
 
-	hlist_for_each_entry_rcu(chain, hash_head, entry) {
-		if (READ_ONCE(chain->chain_key) == chain_key) {
+	hlist_क्रम_each_entry_rcu(chain, hash_head, entry) अणु
+		अगर (READ_ONCE(chain->chain_key) == chain_key) अणु
 			debug_atomic_inc(chain_lookup_hits);
-			return chain;
-		}
-	}
-	return NULL;
-}
+			वापस chain;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * If the key is not present yet in dependency chain cache then
- * add it and return 1 - in this case the new dependency chain is
- * validated. If the key is already hashed, return 0.
- * (On return with 1 graph_lock is held.)
+ * add it and वापस 1 - in this हाल the new dependency chain is
+ * validated. If the key is alपढ़ोy hashed, वापस 0.
+ * (On वापस with 1 graph_lock is held.)
  */
-static inline int lookup_chain_cache_add(struct task_struct *curr,
-					 struct held_lock *hlock,
+अटल अंतरभूत पूर्णांक lookup_chain_cache_add(काष्ठा task_काष्ठा *curr,
+					 काष्ठा held_lock *hlock,
 					 u64 chain_key)
-{
-	struct lock_class *class = hlock_class(hlock);
-	struct lock_chain *chain = lookup_chain_cache(chain_key);
+अणु
+	काष्ठा lock_class *class = hlock_class(hlock);
+	काष्ठा lock_chain *chain = lookup_chain_cache(chain_key);
 
-	if (chain) {
+	अगर (chain) अणु
 cache_hit:
-		if (!check_no_collision(curr, hlock, chain))
-			return 0;
+		अगर (!check_no_collision(curr, hlock, chain))
+			वापस 0;
 
-		if (very_verbose(class)) {
-			printk("\nhash chain already cached, key: "
+		अगर (very_verbose(class)) अणु
+			prपूर्णांकk("\nhash chain already cached, key: "
 					"%016Lx tail class: [%px] %s\n",
-					(unsigned long long)chain_key,
+					(अचिन्हित दीर्घ दीर्घ)chain_key,
 					class->key, class->name);
-		}
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (very_verbose(class)) {
-		printk("\nnew hash chain, key: %016Lx tail class: [%px] %s\n",
-			(unsigned long long)chain_key, class->key, class->name);
-	}
+	अगर (very_verbose(class)) अणु
+		prपूर्णांकk("\nnew hash chain, key: %016Lx tail class: [%px] %s\n",
+			(अचिन्हित दीर्घ दीर्घ)chain_key, class->key, class->name);
+	पूर्ण
 
-	if (!graph_lock())
-		return 0;
+	अगर (!graph_lock())
+		वापस 0;
 
 	/*
-	 * We have to walk the chain again locked - to avoid duplicates:
+	 * We have to walk the chain again locked - to aव्योम duplicates:
 	 */
 	chain = lookup_chain_cache(chain_key);
-	if (chain) {
+	अगर (chain) अणु
 		graph_unlock();
-		goto cache_hit;
-	}
+		जाओ cache_hit;
+	पूर्ण
 
-	if (!add_chain_cache(curr, hlock, chain_key))
-		return 0;
+	अगर (!add_chain_cache(curr, hlock, chain_key))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int validate_chain(struct task_struct *curr,
-			  struct held_lock *hlock,
-			  int chain_head, u64 chain_key)
-{
+अटल पूर्णांक validate_chain(काष्ठा task_काष्ठा *curr,
+			  काष्ठा held_lock *hlock,
+			  पूर्णांक chain_head, u64 chain_key)
+अणु
 	/*
-	 * Trylock needs to maintain the stack of held locks, but it
-	 * does not add new dependencies, because trylock can be done
+	 * Trylock needs to मुख्यtain the stack of held locks, but it
+	 * करोes not add new dependencies, because trylock can be करोne
 	 * in any order.
 	 *
-	 * We look up the chain_key and do the O(N^2) check and update of
-	 * the dependencies only if this is a new dependency chain.
-	 * (If lookup_chain_cache_add() return with 1 it acquires
-	 * graph_lock for us)
+	 * We look up the chain_key and करो the O(N^2) check and update of
+	 * the dependencies only अगर this is a new dependency chain.
+	 * (If lookup_chain_cache_add() वापस with 1 it acquires
+	 * graph_lock क्रम us)
 	 */
-	if (!hlock->trylock && hlock->check &&
-	    lookup_chain_cache_add(curr, hlock, chain_key)) {
+	अगर (!hlock->trylock && hlock->check &&
+	    lookup_chain_cache_add(curr, hlock, chain_key)) अणु
 		/*
 		 * Check whether last held lock:
 		 *
-		 * - is irq-safe, if this lock is irq-unsafe
-		 * - is softirq-safe, if this lock is hardirq-unsafe
+		 * - is irq-safe, अगर this lock is irq-unsafe
+		 * - is softirq-safe, अगर this lock is hardirq-unsafe
 		 *
 		 * And check whether the new lock's dependency graph
 		 * could lead back to the previous lock:
@@ -3657,131 +3658,131 @@ static int validate_chain(struct task_struct *curr,
 		 * any of these scenarios could lead to a deadlock.
 		 */
 		/*
-		 * The simple case: does the current hold the same lock
-		 * already?
+		 * The simple हाल: करोes the current hold the same lock
+		 * alपढ़ोy?
 		 */
-		int ret = check_deadlock(curr, hlock);
+		पूर्णांक ret = check_deadlock(curr, hlock);
 
-		if (!ret)
-			return 0;
+		अगर (!ret)
+			वापस 0;
 		/*
-		 * Add dependency only if this lock is not the head
-		 * of the chain, and if the new lock introduces no more
-		 * lock dependency (because we already hold a lock with the
+		 * Add dependency only अगर this lock is not the head
+		 * of the chain, and अगर the new lock पूर्णांकroduces no more
+		 * lock dependency (because we alपढ़ोy hold a lock with the
 		 * same lock class) nor deadlock (because the nest_lock
-		 * serializes nesting locks), see the comments for
+		 * serializes nesting locks), see the comments क्रम
 		 * check_deadlock().
 		 */
-		if (!chain_head && ret != 2) {
-			if (!check_prevs_add(curr, hlock))
-				return 0;
-		}
+		अगर (!chain_head && ret != 2) अणु
+			अगर (!check_prevs_add(curr, hlock))
+				वापस 0;
+		पूर्ण
 
 		graph_unlock();
-	} else {
+	पूर्ण अन्यथा अणु
 		/* after lookup_chain_cache_add(): */
-		if (unlikely(!debug_locks))
-			return 0;
-	}
+		अगर (unlikely(!debug_locks))
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
-#else
-static inline int validate_chain(struct task_struct *curr,
-				 struct held_lock *hlock,
-				 int chain_head, u64 chain_key)
-{
-	return 1;
-}
+	वापस 1;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक validate_chain(काष्ठा task_काष्ठा *curr,
+				 काष्ठा held_lock *hlock,
+				 पूर्णांक chain_head, u64 chain_key)
+अणु
+	वापस 1;
+पूर्ण
 
-static void init_chain_block_buckets(void)	{ }
-#endif /* CONFIG_PROVE_LOCKING */
+अटल व्योम init_chain_block_buckets(व्योम)	अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_PROVE_LOCKING */
 
 /*
- * We are building curr_chain_key incrementally, so double-check
- * it from scratch, to make sure that it's done correctly:
+ * We are building curr_chain_key incrementally, so द्विगुन-check
+ * it from scratch, to make sure that it's करोne correctly:
  */
-static void check_chain_key(struct task_struct *curr)
-{
-#ifdef CONFIG_DEBUG_LOCKDEP
-	struct held_lock *hlock, *prev_hlock = NULL;
-	unsigned int i;
+अटल व्योम check_chain_key(काष्ठा task_काष्ठा *curr)
+अणु
+#अगर_घोषित CONFIG_DEBUG_LOCKDEP
+	काष्ठा held_lock *hlock, *prev_hlock = शून्य;
+	अचिन्हित पूर्णांक i;
 	u64 chain_key = INITIAL_CHAIN_KEY;
 
-	for (i = 0; i < curr->lockdep_depth; i++) {
+	क्रम (i = 0; i < curr->lockdep_depth; i++) अणु
 		hlock = curr->held_locks + i;
-		if (chain_key != hlock->prev_chain_key) {
+		अगर (chain_key != hlock->prev_chain_key) अणु
 			debug_locks_off();
 			/*
-			 * We got mighty confused, our chain keys don't match
+			 * We got mighty confused, our chain keys करोn't match
 			 * with what we expect, someone trample on our task state?
 			 */
 			WARN(1, "hm#1, depth: %u [%u], %016Lx != %016Lx\n",
 				curr->lockdep_depth, i,
-				(unsigned long long)chain_key,
-				(unsigned long long)hlock->prev_chain_key);
-			return;
-		}
+				(अचिन्हित दीर्घ दीर्घ)chain_key,
+				(अचिन्हित दीर्घ दीर्घ)hlock->prev_chain_key);
+			वापस;
+		पूर्ण
 
 		/*
 		 * hlock->class_idx can't go beyond MAX_LOCKDEP_KEYS, but is
-		 * it registered lock class index?
+		 * it रेजिस्टरed lock class index?
 		 */
-		if (DEBUG_LOCKS_WARN_ON(!test_bit(hlock->class_idx, lock_classes_in_use)))
-			return;
+		अगर (DEBUG_LOCKS_WARN_ON(!test_bit(hlock->class_idx, lock_classes_in_use)))
+			वापस;
 
-		if (prev_hlock && (prev_hlock->irq_context !=
+		अगर (prev_hlock && (prev_hlock->irq_context !=
 							hlock->irq_context))
 			chain_key = INITIAL_CHAIN_KEY;
 		chain_key = iterate_chain_key(chain_key, hlock_id(hlock));
 		prev_hlock = hlock;
-	}
-	if (chain_key != curr->curr_chain_key) {
+	पूर्ण
+	अगर (chain_key != curr->curr_chain_key) अणु
 		debug_locks_off();
 		/*
 		 * More smoking hash instead of calculating it, damn see these
-		 * numbers float.. I bet that a pink elephant stepped on my memory.
+		 * numbers भग्न.. I bet that a pink elephant stepped on my memory.
 		 */
 		WARN(1, "hm#2, depth: %u [%u], %016Lx != %016Lx\n",
 			curr->lockdep_depth, i,
-			(unsigned long long)chain_key,
-			(unsigned long long)curr->curr_chain_key);
-	}
-#endif
-}
+			(अचिन्हित दीर्घ दीर्घ)chain_key,
+			(अचिन्हित दीर्घ दीर्घ)curr->curr_chain_key);
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_PROVE_LOCKING
-static int mark_lock(struct task_struct *curr, struct held_lock *this,
-		     enum lock_usage_bit new_bit);
+#अगर_घोषित CONFIG_PROVE_LOCKING
+अटल पूर्णांक mark_lock(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *this,
+		     क्रमागत lock_usage_bit new_bit);
 
-static void print_usage_bug_scenario(struct held_lock *lock)
-{
-	struct lock_class *class = hlock_class(lock);
+अटल व्योम prपूर्णांक_usage_bug_scenario(काष्ठा held_lock *lock)
+अणु
+	काष्ठा lock_class *class = hlock_class(lock);
 
-	printk(" Possible unsafe locking scenario:\n\n");
-	printk("       CPU0\n");
-	printk("       ----\n");
-	printk("  lock(");
-	__print_lock_name(class);
-	printk(KERN_CONT ");\n");
-	printk("  <Interrupt>\n");
-	printk("    lock(");
-	__print_lock_name(class);
-	printk(KERN_CONT ");\n");
-	printk("\n *** DEADLOCK ***\n\n");
-}
+	prपूर्णांकk(" Possible unsafe locking scenario:\n\n");
+	prपूर्णांकk("       CPU0\n");
+	prपूर्णांकk("       ----\n");
+	prपूर्णांकk("  lock(");
+	__prपूर्णांक_lock_name(class);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("  <Interrupt>\n");
+	prपूर्णांकk("    lock(");
+	__prपूर्णांक_lock_name(class);
+	prपूर्णांकk(KERN_CONT ");\n");
+	prपूर्णांकk("\n *** DEADLOCK ***\n\n");
+पूर्ण
 
-static void
-print_usage_bug(struct task_struct *curr, struct held_lock *this,
-		enum lock_usage_bit prev_bit, enum lock_usage_bit new_bit)
-{
-	if (!debug_locks_off() || debug_locks_silent)
-		return;
+अटल व्योम
+prपूर्णांक_usage_bug(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *this,
+		क्रमागत lock_usage_bit prev_bit, क्रमागत lock_usage_bit new_bit)
+अणु
+	अगर (!debug_locks_off() || debug_locks_silent)
+		वापस;
 
 	pr_warn("\n");
 	pr_warn("================================\n");
 	pr_warn("WARNING: inconsistent lock state\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("--------------------------------\n");
 
 	pr_warn("inconsistent {%s} -> {%s} usage.\n",
@@ -3789,403 +3790,403 @@ print_usage_bug(struct task_struct *curr, struct held_lock *this,
 
 	pr_warn("%s/%d [HC%u[%lu]:SC%u[%lu]:HE%u:SE%u] takes:\n",
 		curr->comm, task_pid_nr(curr),
-		lockdep_hardirq_context(), hardirq_count() >> HARDIRQ_SHIFT,
+		lockdep_hardirq_context(), hardirq_count() >> HARसूचीQ_SHIFT,
 		lockdep_softirq_context(curr), softirq_count() >> SOFTIRQ_SHIFT,
 		lockdep_hardirqs_enabled(),
 		lockdep_softirqs_enabled(curr));
-	print_lock(this);
+	prपूर्णांक_lock(this);
 
 	pr_warn("{%s} state was registered at:\n", usage_str[prev_bit]);
-	print_lock_trace(hlock_class(this)->usage_traces[prev_bit], 1);
+	prपूर्णांक_lock_trace(hlock_class(this)->usage_traces[prev_bit], 1);
 
-	print_irqtrace_events(curr);
+	prपूर्णांक_irqtrace_events(curr);
 	pr_warn("\nother info that might help us debug this:\n");
-	print_usage_bug_scenario(this);
+	prपूर्णांक_usage_bug_scenario(this);
 
-	lockdep_print_held_locks(curr);
+	lockdep_prपूर्णांक_held_locks(curr);
 
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 
 /*
- * Print out an error if an invalid bit is set:
+ * Prपूर्णांक out an error अगर an invalid bit is set:
  */
-static inline int
-valid_state(struct task_struct *curr, struct held_lock *this,
-	    enum lock_usage_bit new_bit, enum lock_usage_bit bad_bit)
-{
-	if (unlikely(hlock_class(this)->usage_mask & (1 << bad_bit))) {
+अटल अंतरभूत पूर्णांक
+valid_state(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *this,
+	    क्रमागत lock_usage_bit new_bit, क्रमागत lock_usage_bit bad_bit)
+अणु
+	अगर (unlikely(hlock_class(this)->usage_mask & (1 << bad_bit))) अणु
 		graph_unlock();
-		print_usage_bug(curr, this, bad_bit, new_bit);
-		return 0;
-	}
-	return 1;
-}
+		prपूर्णांक_usage_bug(curr, this, bad_bit, new_bit);
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 
 /*
- * print irq inversion bug:
+ * prपूर्णांक irq inversion bug:
  */
-static void
-print_irq_inversion_bug(struct task_struct *curr,
-			struct lock_list *root, struct lock_list *other,
-			struct held_lock *this, int forwards,
-			const char *irqclass)
-{
-	struct lock_list *entry = other;
-	struct lock_list *middle = NULL;
-	int depth;
+अटल व्योम
+prपूर्णांक_irq_inversion_bug(काष्ठा task_काष्ठा *curr,
+			काष्ठा lock_list *root, काष्ठा lock_list *other,
+			काष्ठा held_lock *this, पूर्णांक क्रमwards,
+			स्थिर अक्षर *irqclass)
+अणु
+	काष्ठा lock_list *entry = other;
+	काष्ठा lock_list *middle = शून्य;
+	पूर्णांक depth;
 
-	if (!debug_locks_off_graph_unlock() || debug_locks_silent)
-		return;
+	अगर (!debug_locks_off_graph_unlock() || debug_locks_silent)
+		वापस;
 
 	pr_warn("\n");
 	pr_warn("========================================================\n");
 	pr_warn("WARNING: possible irq lock inversion dependency detected\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("--------------------------------------------------------\n");
 	pr_warn("%s/%d just changed the state of lock:\n",
 		curr->comm, task_pid_nr(curr));
-	print_lock(this);
-	if (forwards)
+	prपूर्णांक_lock(this);
+	अगर (क्रमwards)
 		pr_warn("but this lock took another, %s-unsafe lock in the past:\n", irqclass);
-	else
+	अन्यथा
 		pr_warn("but this lock was taken by another, %s-safe lock in the past:\n", irqclass);
-	print_lock_name(other->class);
+	prपूर्णांक_lock_name(other->class);
 	pr_warn("\n\nand interrupts could create inverse lock ordering between them.\n\n");
 
 	pr_warn("\nother info that might help us debug this:\n");
 
-	/* Find a middle lock (if one exists) */
+	/* Find a middle lock (अगर one exists) */
 	depth = get_lock_depth(other);
-	do {
-		if (depth == 0 && (entry != root)) {
+	करो अणु
+		अगर (depth == 0 && (entry != root)) अणु
 			pr_warn("lockdep:%s bad path found in chain graph\n", __func__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		middle = entry;
 		entry = get_lock_parent(entry);
 		depth--;
-	} while (entry && entry != root && (depth >= 0));
-	if (forwards)
-		print_irq_lock_scenario(root, other,
+	पूर्ण जबतक (entry && entry != root && (depth >= 0));
+	अगर (क्रमwards)
+		prपूर्णांक_irq_lock_scenario(root, other,
 			middle ? middle->class : root->class, other->class);
-	else
-		print_irq_lock_scenario(other, root,
+	अन्यथा
+		prपूर्णांक_irq_lock_scenario(other, root,
 			middle ? middle->class : other->class, root->class);
 
-	lockdep_print_held_locks(curr);
+	lockdep_prपूर्णांक_held_locks(curr);
 
 	pr_warn("\nthe shortest dependencies between 2nd lock and 1st lock:\n");
 	root->trace = save_trace();
-	if (!root->trace)
-		return;
-	print_shortest_lock_dependencies(other, root);
+	अगर (!root->trace)
+		वापस;
+	prपूर्णांक_लघुest_lock_dependencies(other, root);
 
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 
 /*
- * Prove that in the forwards-direction subgraph starting at <this>
+ * Prove that in the क्रमwards-direction subgraph starting at <this>
  * there is no lock matching <mask>:
  */
-static int
-check_usage_forwards(struct task_struct *curr, struct held_lock *this,
-		     enum lock_usage_bit bit)
-{
-	enum bfs_result ret;
-	struct lock_list root;
-	struct lock_list *target_entry;
-	enum lock_usage_bit read_bit = bit + LOCK_USAGE_READ_MASK;
-	unsigned usage_mask = lock_flag(bit) | lock_flag(read_bit);
+अटल पूर्णांक
+check_usage_क्रमwards(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *this,
+		     क्रमागत lock_usage_bit bit)
+अणु
+	क्रमागत bfs_result ret;
+	काष्ठा lock_list root;
+	काष्ठा lock_list *target_entry;
+	क्रमागत lock_usage_bit पढ़ो_bit = bit + LOCK_USAGE_READ_MASK;
+	अचिन्हित usage_mask = lock_flag(bit) | lock_flag(पढ़ो_bit);
 
 	bfs_init_root(&root, this);
-	ret = find_usage_forwards(&root, usage_mask, &target_entry);
-	if (bfs_error(ret)) {
-		print_bfs_bug(ret);
-		return 0;
-	}
-	if (ret == BFS_RNOMATCH)
-		return 1;
+	ret = find_usage_क्रमwards(&root, usage_mask, &target_entry);
+	अगर (bfs_error(ret)) अणु
+		prपूर्णांक_bfs_bug(ret);
+		वापस 0;
+	पूर्ण
+	अगर (ret == BFS_RNOMATCH)
+		वापस 1;
 
-	/* Check whether write or read usage is the match */
-	if (target_entry->class->usage_mask & lock_flag(bit)) {
-		print_irq_inversion_bug(curr, &root, target_entry,
+	/* Check whether ग_लिखो or पढ़ो usage is the match */
+	अगर (target_entry->class->usage_mask & lock_flag(bit)) अणु
+		prपूर्णांक_irq_inversion_bug(curr, &root, target_entry,
 					this, 1, state_name(bit));
-	} else {
-		print_irq_inversion_bug(curr, &root, target_entry,
-					this, 1, state_name(read_bit));
-	}
+	पूर्ण अन्यथा अणु
+		prपूर्णांक_irq_inversion_bug(curr, &root, target_entry,
+					this, 1, state_name(पढ़ो_bit));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Prove that in the backwards-direction subgraph starting at <this>
  * there is no lock matching <mask>:
  */
-static int
-check_usage_backwards(struct task_struct *curr, struct held_lock *this,
-		      enum lock_usage_bit bit)
-{
-	enum bfs_result ret;
-	struct lock_list root;
-	struct lock_list *target_entry;
-	enum lock_usage_bit read_bit = bit + LOCK_USAGE_READ_MASK;
-	unsigned usage_mask = lock_flag(bit) | lock_flag(read_bit);
+अटल पूर्णांक
+check_usage_backwards(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *this,
+		      क्रमागत lock_usage_bit bit)
+अणु
+	क्रमागत bfs_result ret;
+	काष्ठा lock_list root;
+	काष्ठा lock_list *target_entry;
+	क्रमागत lock_usage_bit पढ़ो_bit = bit + LOCK_USAGE_READ_MASK;
+	अचिन्हित usage_mask = lock_flag(bit) | lock_flag(पढ़ो_bit);
 
 	bfs_init_rootb(&root, this);
 	ret = find_usage_backwards(&root, usage_mask, &target_entry);
-	if (bfs_error(ret)) {
-		print_bfs_bug(ret);
-		return 0;
-	}
-	if (ret == BFS_RNOMATCH)
-		return 1;
+	अगर (bfs_error(ret)) अणु
+		prपूर्णांक_bfs_bug(ret);
+		वापस 0;
+	पूर्ण
+	अगर (ret == BFS_RNOMATCH)
+		वापस 1;
 
-	/* Check whether write or read usage is the match */
-	if (target_entry->class->usage_mask & lock_flag(bit)) {
-		print_irq_inversion_bug(curr, &root, target_entry,
+	/* Check whether ग_लिखो or पढ़ो usage is the match */
+	अगर (target_entry->class->usage_mask & lock_flag(bit)) अणु
+		prपूर्णांक_irq_inversion_bug(curr, &root, target_entry,
 					this, 0, state_name(bit));
-	} else {
-		print_irq_inversion_bug(curr, &root, target_entry,
-					this, 0, state_name(read_bit));
-	}
+	पूर्ण अन्यथा अणु
+		prपूर्णांक_irq_inversion_bug(curr, &root, target_entry,
+					this, 0, state_name(पढ़ो_bit));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void print_irqtrace_events(struct task_struct *curr)
-{
-	const struct irqtrace_events *trace = &curr->irqtrace;
+व्योम prपूर्णांक_irqtrace_events(काष्ठा task_काष्ठा *curr)
+अणु
+	स्थिर काष्ठा irqtrace_events *trace = &curr->irqtrace;
 
-	printk("irq event stamp: %u\n", trace->irq_events);
-	printk("hardirqs last  enabled at (%u): [<%px>] %pS\n",
-		trace->hardirq_enable_event, (void *)trace->hardirq_enable_ip,
-		(void *)trace->hardirq_enable_ip);
-	printk("hardirqs last disabled at (%u): [<%px>] %pS\n",
-		trace->hardirq_disable_event, (void *)trace->hardirq_disable_ip,
-		(void *)trace->hardirq_disable_ip);
-	printk("softirqs last  enabled at (%u): [<%px>] %pS\n",
-		trace->softirq_enable_event, (void *)trace->softirq_enable_ip,
-		(void *)trace->softirq_enable_ip);
-	printk("softirqs last disabled at (%u): [<%px>] %pS\n",
-		trace->softirq_disable_event, (void *)trace->softirq_disable_ip,
-		(void *)trace->softirq_disable_ip);
-}
+	prपूर्णांकk("irq event stamp: %u\n", trace->irq_events);
+	prपूर्णांकk("hardirqs last  enabled at (%u): [<%px>] %pS\n",
+		trace->hardirq_enable_event, (व्योम *)trace->hardirq_enable_ip,
+		(व्योम *)trace->hardirq_enable_ip);
+	prपूर्णांकk("hardirqs last disabled at (%u): [<%px>] %pS\n",
+		trace->hardirq_disable_event, (व्योम *)trace->hardirq_disable_ip,
+		(व्योम *)trace->hardirq_disable_ip);
+	prपूर्णांकk("softirqs last  enabled at (%u): [<%px>] %pS\n",
+		trace->softirq_enable_event, (व्योम *)trace->softirq_enable_ip,
+		(व्योम *)trace->softirq_enable_ip);
+	prपूर्णांकk("softirqs last disabled at (%u): [<%px>] %pS\n",
+		trace->softirq_disable_event, (व्योम *)trace->softirq_disable_ip,
+		(व्योम *)trace->softirq_disable_ip);
+पूर्ण
 
-static int HARDIRQ_verbose(struct lock_class *class)
-{
-#if HARDIRQ_VERBOSE
-	return class_filter(class);
-#endif
-	return 0;
-}
+अटल पूर्णांक HARसूचीQ_verbose(काष्ठा lock_class *class)
+अणु
+#अगर HARसूचीQ_VERBOSE
+	वापस class_filter(class);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int SOFTIRQ_verbose(struct lock_class *class)
-{
-#if SOFTIRQ_VERBOSE
-	return class_filter(class);
-#endif
-	return 0;
-}
+अटल पूर्णांक SOFTIRQ_verbose(काष्ठा lock_class *class)
+अणु
+#अगर SOFTIRQ_VERBOSE
+	वापस class_filter(class);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int (*state_verbose_f[])(struct lock_class *class) = {
-#define LOCKDEP_STATE(__STATE) \
+अटल पूर्णांक (*state_verbose_f[])(काष्ठा lock_class *class) = अणु
+#घोषणा LOCKDEP_STATE(__STATE) \
 	__STATE##_verbose,
-#include "lockdep_states.h"
-#undef LOCKDEP_STATE
-};
+#समावेश "lockdep_states.h"
+#अघोषित LOCKDEP_STATE
+पूर्ण;
 
-static inline int state_verbose(enum lock_usage_bit bit,
-				struct lock_class *class)
-{
-	return state_verbose_f[bit >> LOCK_USAGE_DIR_MASK](class);
-}
+अटल अंतरभूत पूर्णांक state_verbose(क्रमागत lock_usage_bit bit,
+				काष्ठा lock_class *class)
+अणु
+	वापस state_verbose_f[bit >> LOCK_USAGE_सूची_MASK](class);
+पूर्ण
 
-typedef int (*check_usage_f)(struct task_struct *, struct held_lock *,
-			     enum lock_usage_bit bit, const char *name);
+प्रकार पूर्णांक (*check_usage_f)(काष्ठा task_काष्ठा *, काष्ठा held_lock *,
+			     क्रमागत lock_usage_bit bit, स्थिर अक्षर *name);
 
-static int
-mark_lock_irq(struct task_struct *curr, struct held_lock *this,
-		enum lock_usage_bit new_bit)
-{
-	int excl_bit = exclusive_bit(new_bit);
-	int read = new_bit & LOCK_USAGE_READ_MASK;
-	int dir = new_bit & LOCK_USAGE_DIR_MASK;
+अटल पूर्णांक
+mark_lock_irq(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *this,
+		क्रमागत lock_usage_bit new_bit)
+अणु
+	पूर्णांक excl_bit = exclusive_bit(new_bit);
+	पूर्णांक पढ़ो = new_bit & LOCK_USAGE_READ_MASK;
+	पूर्णांक dir = new_bit & LOCK_USAGE_सूची_MASK;
 
 	/*
-	 * Validate that this particular lock does not have conflicting
+	 * Validate that this particular lock करोes not have conflicting
 	 * usage states.
 	 */
-	if (!valid_state(curr, this, new_bit, excl_bit))
-		return 0;
+	अगर (!valid_state(curr, this, new_bit, excl_bit))
+		वापस 0;
 
 	/*
-	 * Check for read in write conflicts
+	 * Check क्रम पढ़ो in ग_लिखो conflicts
 	 */
-	if (!read && !valid_state(curr, this, new_bit,
+	अगर (!पढ़ो && !valid_state(curr, this, new_bit,
 				  excl_bit + LOCK_USAGE_READ_MASK))
-		return 0;
+		वापस 0;
 
 
 	/*
-	 * Validate that the lock dependencies don't have conflicting usage
+	 * Validate that the lock dependencies करोn't have conflicting usage
 	 * states.
 	 */
-	if (dir) {
+	अगर (dir) अणु
 		/*
 		 * mark ENABLED has to look backwards -- to ensure no dependee
 		 * has USED_IN state, which, again, would allow  recursion deadlocks.
 		 */
-		if (!check_usage_backwards(curr, this, excl_bit))
-			return 0;
-	} else {
+		अगर (!check_usage_backwards(curr, this, excl_bit))
+			वापस 0;
+	पूर्ण अन्यथा अणु
 		/*
-		 * mark USED_IN has to look forwards -- to ensure no dependency
+		 * mark USED_IN has to look क्रमwards -- to ensure no dependency
 		 * has ENABLED state, which would allow recursion deadlocks.
 		 */
-		if (!check_usage_forwards(curr, this, excl_bit))
-			return 0;
-	}
+		अगर (!check_usage_क्रमwards(curr, this, excl_bit))
+			वापस 0;
+	पूर्ण
 
-	if (state_verbose(new_bit, hlock_class(this)))
-		return 2;
+	अगर (state_verbose(new_bit, hlock_class(this)))
+		वापस 2;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Mark all held locks with a usage bit:
  */
-static int
-mark_held_locks(struct task_struct *curr, enum lock_usage_bit base_bit)
-{
-	struct held_lock *hlock;
-	int i;
+अटल पूर्णांक
+mark_held_locks(काष्ठा task_काष्ठा *curr, क्रमागत lock_usage_bit base_bit)
+अणु
+	काष्ठा held_lock *hlock;
+	पूर्णांक i;
 
-	for (i = 0; i < curr->lockdep_depth; i++) {
-		enum lock_usage_bit hlock_bit = base_bit;
+	क्रम (i = 0; i < curr->lockdep_depth; i++) अणु
+		क्रमागत lock_usage_bit hlock_bit = base_bit;
 		hlock = curr->held_locks + i;
 
-		if (hlock->read)
+		अगर (hlock->पढ़ो)
 			hlock_bit += LOCK_USAGE_READ_MASK;
 
 		BUG_ON(hlock_bit >= LOCK_USAGE_STATES);
 
-		if (!hlock->check)
-			continue;
+		अगर (!hlock->check)
+			जारी;
 
-		if (!mark_lock(curr, hlock, hlock_bit))
-			return 0;
-	}
+		अगर (!mark_lock(curr, hlock, hlock_bit))
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Hardirqs will be enabled:
  */
-static void __trace_hardirqs_on_caller(void)
-{
-	struct task_struct *curr = current;
+अटल व्योम __trace_hardirqs_on_caller(व्योम)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
 
 	/*
 	 * We are going to turn hardirqs on, so set the
-	 * usage bit for all held locks:
+	 * usage bit क्रम all held locks:
 	 */
-	if (!mark_held_locks(curr, LOCK_ENABLED_HARDIRQ))
-		return;
+	अगर (!mark_held_locks(curr, LOCK_ENABLED_HARसूचीQ))
+		वापस;
 	/*
 	 * If we have softirqs enabled, then set the usage
-	 * bit for all held locks. (disabled hardirqs prevented
-	 * this bit from being set before)
+	 * bit क्रम all held locks. (disabled hardirqs prevented
+	 * this bit from being set beक्रमe)
 	 */
-	if (curr->softirqs_enabled)
+	अगर (curr->softirqs_enabled)
 		mark_held_locks(curr, LOCK_ENABLED_SOFTIRQ);
-}
+पूर्ण
 
 /**
- * lockdep_hardirqs_on_prepare - Prepare for enabling interrupts
+ * lockdep_hardirqs_on_prepare - Prepare क्रम enabling पूर्णांकerrupts
  * @ip:		Caller address
  *
- * Invoked before a possible transition to RCU idle from exit to user or
- * guest mode. This ensures that all RCU operations are done before RCU
+ * Invoked beक्रमe a possible transition to RCU idle from निकास to user or
+ * guest mode. This ensures that all RCU operations are करोne beक्रमe RCU
  * stops watching. After the RCU transition lockdep_hardirqs_on() has to be
  * invoked to set the final state.
  */
-void lockdep_hardirqs_on_prepare(unsigned long ip)
-{
-	if (unlikely(!debug_locks))
-		return;
+व्योम lockdep_hardirqs_on_prepare(अचिन्हित दीर्घ ip)
+अणु
+	अगर (unlikely(!debug_locks))
+		वापस;
 
 	/*
-	 * NMIs do not (and cannot) track lock dependencies, nothing to do.
+	 * NMIs करो not (and cannot) track lock dependencies, nothing to करो.
 	 */
-	if (unlikely(in_nmi()))
-		return;
+	अगर (unlikely(in_nmi()))
+		वापस;
 
-	if (unlikely(this_cpu_read(lockdep_recursion)))
-		return;
+	अगर (unlikely(this_cpu_पढ़ो(lockdep_recursion)))
+		वापस;
 
-	if (unlikely(lockdep_hardirqs_enabled())) {
+	अगर (unlikely(lockdep_hardirqs_enabled())) अणु
 		/*
 		 * Neither irq nor preemption are disabled here
 		 * so this is racy by nature but losing one hit
 		 * in a stat is not a big deal.
 		 */
 		__debug_atomic_inc(redundant_hardirqs_on);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * We're enabling irqs and according to our state above irqs weren't
-	 * already enabled, yet we find the hardware thinks they are in fact
+	 * alपढ़ोy enabled, yet we find the hardware thinks they are in fact
 	 * enabled.. someone messed up their IRQ state tracing.
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
-		return;
+	अगर (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
+		वापस;
 
 	/*
-	 * See the fine text that goes along with this variable definition.
+	 * See the fine text that goes aदीर्घ with this variable definition.
 	 */
-	if (DEBUG_LOCKS_WARN_ON(early_boot_irqs_disabled))
-		return;
+	अगर (DEBUG_LOCKS_WARN_ON(early_boot_irqs_disabled))
+		वापस;
 
 	/*
-	 * Can't allow enabling interrupts while in an interrupt handler,
-	 * that's general bad form and such. Recursion, limited stack etc..
+	 * Can't allow enabling पूर्णांकerrupts जबतक in an पूर्णांकerrupt handler,
+	 * that's general bad क्रमm and such. Recursion, limited stack etc..
 	 */
-	if (DEBUG_LOCKS_WARN_ON(lockdep_hardirq_context()))
-		return;
+	अगर (DEBUG_LOCKS_WARN_ON(lockdep_hardirq_context()))
+		वापस;
 
 	current->hardirq_chain_key = current->curr_chain_key;
 
 	lockdep_recursion_inc();
 	__trace_hardirqs_on_caller();
 	lockdep_recursion_finish();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lockdep_hardirqs_on_prepare);
 
-void noinstr lockdep_hardirqs_on(unsigned long ip)
-{
-	struct irqtrace_events *trace = &current->irqtrace;
+व्योम noinstr lockdep_hardirqs_on(अचिन्हित दीर्घ ip)
+अणु
+	काष्ठा irqtrace_events *trace = &current->irqtrace;
 
-	if (unlikely(!debug_locks))
-		return;
+	अगर (unlikely(!debug_locks))
+		वापस;
 
 	/*
-	 * NMIs can happen in the middle of local_irq_{en,dis}able() where the
+	 * NMIs can happen in the middle of local_irq_अणुen,disपूर्णable() where the
 	 * tracking state and hardware state are out of sync.
 	 *
 	 * NMIs must save lockdep_hardirqs_enabled() to restore IRQ state from,
-	 * and not rely on hardware state like normal interrupts.
+	 * and not rely on hardware state like normal पूर्णांकerrupts.
 	 */
-	if (unlikely(in_nmi())) {
-		if (!IS_ENABLED(CONFIG_TRACE_IRQFLAGS_NMI))
-			return;
+	अगर (unlikely(in_nmi())) अणु
+		अगर (!IS_ENABLED(CONFIG_TRACE_IRQFLAGS_NMI))
+			वापस;
 
 		/*
 		 * Skip:
@@ -4193,113 +4194,113 @@ void noinstr lockdep_hardirqs_on(unsigned long ip)
 		 *  - hardware state check, because above;
 		 *  - chain_key check, see lockdep_hardirqs_on_prepare().
 		 */
-		goto skip_checks;
-	}
+		जाओ skip_checks;
+	पूर्ण
 
-	if (unlikely(this_cpu_read(lockdep_recursion)))
-		return;
+	अगर (unlikely(this_cpu_पढ़ो(lockdep_recursion)))
+		वापस;
 
-	if (lockdep_hardirqs_enabled()) {
+	अगर (lockdep_hardirqs_enabled()) अणु
 		/*
 		 * Neither irq nor preemption are disabled here
 		 * so this is racy by nature but losing one hit
 		 * in a stat is not a big deal.
 		 */
 		__debug_atomic_inc(redundant_hardirqs_on);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * We're enabling irqs and according to our state above irqs weren't
-	 * already enabled, yet we find the hardware thinks they are in fact
+	 * alपढ़ोy enabled, yet we find the hardware thinks they are in fact
 	 * enabled.. someone messed up their IRQ state tracing.
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
-		return;
+	अगर (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
+		वापस;
 
 	/*
-	 * Ensure the lock stack remained unchanged between
+	 * Ensure the lock stack reमुख्यed unchanged between
 	 * lockdep_hardirqs_on_prepare() and lockdep_hardirqs_on().
 	 */
 	DEBUG_LOCKS_WARN_ON(current->hardirq_chain_key !=
 			    current->curr_chain_key);
 
 skip_checks:
-	/* we'll do an OFF -> ON transition: */
-	__this_cpu_write(hardirqs_enabled, 1);
+	/* we'll करो an OFF -> ON transition: */
+	__this_cpu_ग_लिखो(hardirqs_enabled, 1);
 	trace->hardirq_enable_ip = ip;
 	trace->hardirq_enable_event = ++trace->irq_events;
 	debug_atomic_inc(hardirqs_on_events);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lockdep_hardirqs_on);
 
 /*
  * Hardirqs were disabled:
  */
-void noinstr lockdep_hardirqs_off(unsigned long ip)
-{
-	if (unlikely(!debug_locks))
-		return;
+व्योम noinstr lockdep_hardirqs_off(अचिन्हित दीर्घ ip)
+अणु
+	अगर (unlikely(!debug_locks))
+		वापस;
 
 	/*
 	 * Matching lockdep_hardirqs_on(), allow NMIs in the middle of lockdep;
 	 * they will restore the software state. This ensures the software
 	 * state is consistent inside NMIs as well.
 	 */
-	if (in_nmi()) {
-		if (!IS_ENABLED(CONFIG_TRACE_IRQFLAGS_NMI))
-			return;
-	} else if (__this_cpu_read(lockdep_recursion))
-		return;
+	अगर (in_nmi()) अणु
+		अगर (!IS_ENABLED(CONFIG_TRACE_IRQFLAGS_NMI))
+			वापस;
+	पूर्ण अन्यथा अगर (__this_cpu_पढ़ो(lockdep_recursion))
+		वापस;
 
 	/*
-	 * So we're supposed to get called after you mask local IRQs, but for
-	 * some reason the hardware doesn't quite think you did a proper job.
+	 * So we're supposed to get called after you mask local IRQs, but क्रम
+	 * some reason the hardware करोesn't quite think you did a proper job.
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
-		return;
+	अगर (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
+		वापस;
 
-	if (lockdep_hardirqs_enabled()) {
-		struct irqtrace_events *trace = &current->irqtrace;
+	अगर (lockdep_hardirqs_enabled()) अणु
+		काष्ठा irqtrace_events *trace = &current->irqtrace;
 
 		/*
-		 * We have done an ON -> OFF transition:
+		 * We have करोne an ON -> OFF transition:
 		 */
-		__this_cpu_write(hardirqs_enabled, 0);
+		__this_cpu_ग_लिखो(hardirqs_enabled, 0);
 		trace->hardirq_disable_ip = ip;
 		trace->hardirq_disable_event = ++trace->irq_events;
 		debug_atomic_inc(hardirqs_off_events);
-	} else {
+	पूर्ण अन्यथा अणु
 		debug_atomic_inc(redundant_hardirqs_off);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(lockdep_hardirqs_off);
 
 /*
  * Softirqs will be enabled:
  */
-void lockdep_softirqs_on(unsigned long ip)
-{
-	struct irqtrace_events *trace = &current->irqtrace;
+व्योम lockdep_softirqs_on(अचिन्हित दीर्घ ip)
+अणु
+	काष्ठा irqtrace_events *trace = &current->irqtrace;
 
-	if (unlikely(!lockdep_enabled()))
-		return;
+	अगर (unlikely(!lockdep_enabled()))
+		वापस;
 
 	/*
-	 * We fancy IRQs being disabled here, see softirq.c, avoids
+	 * We fancy IRQs being disabled here, see softirq.c, aव्योमs
 	 * funny state and nesting things.
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
-		return;
+	अगर (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
+		वापस;
 
-	if (current->softirqs_enabled) {
+	अगर (current->softirqs_enabled) अणु
 		debug_atomic_inc(redundant_softirqs_on);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	lockdep_recursion_inc();
 	/*
-	 * We'll do an OFF -> ON transition:
+	 * We'll करो an OFF -> ON transition:
 	 */
 	current->softirqs_enabled = 1;
 	trace->softirq_enable_ip = ip;
@@ -4307,33 +4308,33 @@ void lockdep_softirqs_on(unsigned long ip)
 	debug_atomic_inc(softirqs_on_events);
 	/*
 	 * We are going to turn softirqs on, so set the
-	 * usage bit for all held locks, if hardirqs are
+	 * usage bit क्रम all held locks, अगर hardirqs are
 	 * enabled too:
 	 */
-	if (lockdep_hardirqs_enabled())
+	अगर (lockdep_hardirqs_enabled())
 		mark_held_locks(current, LOCK_ENABLED_SOFTIRQ);
 	lockdep_recursion_finish();
-}
+पूर्ण
 
 /*
  * Softirqs were disabled:
  */
-void lockdep_softirqs_off(unsigned long ip)
-{
-	if (unlikely(!lockdep_enabled()))
-		return;
+व्योम lockdep_softirqs_off(अचिन्हित दीर्घ ip)
+अणु
+	अगर (unlikely(!lockdep_enabled()))
+		वापस;
 
 	/*
 	 * We fancy IRQs being disabled here, see softirq.c
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
-		return;
+	अगर (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
+		वापस;
 
-	if (current->softirqs_enabled) {
-		struct irqtrace_events *trace = &current->irqtrace;
+	अगर (current->softirqs_enabled) अणु
+		काष्ठा irqtrace_events *trace = &current->irqtrace;
 
 		/*
-		 * We have done an ON -> OFF transition:
+		 * We have करोne an ON -> OFF transition:
 		 */
 		current->softirqs_enabled = 0;
 		trace->softirq_disable_ip = ip;
@@ -4343,263 +4344,263 @@ void lockdep_softirqs_off(unsigned long ip)
 		 * Whoops, we wanted softirqs off, so why aren't they?
 		 */
 		DEBUG_LOCKS_WARN_ON(!softirq_count());
-	} else
+	पूर्ण अन्यथा
 		debug_atomic_inc(redundant_softirqs_off);
-}
+पूर्ण
 
-static int
-mark_usage(struct task_struct *curr, struct held_lock *hlock, int check)
-{
-	if (!check)
-		goto lock_used;
+अटल पूर्णांक
+mark_usage(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *hlock, पूर्णांक check)
+अणु
+	अगर (!check)
+		जाओ lock_used;
 
 	/*
 	 * If non-trylock use in a hardirq or softirq context, then
 	 * mark the lock as used in these contexts:
 	 */
-	if (!hlock->trylock) {
-		if (hlock->read) {
-			if (lockdep_hardirq_context())
-				if (!mark_lock(curr, hlock,
-						LOCK_USED_IN_HARDIRQ_READ))
-					return 0;
-			if (curr->softirq_context)
-				if (!mark_lock(curr, hlock,
+	अगर (!hlock->trylock) अणु
+		अगर (hlock->पढ़ो) अणु
+			अगर (lockdep_hardirq_context())
+				अगर (!mark_lock(curr, hlock,
+						LOCK_USED_IN_HARसूचीQ_READ))
+					वापस 0;
+			अगर (curr->softirq_context)
+				अगर (!mark_lock(curr, hlock,
 						LOCK_USED_IN_SOFTIRQ_READ))
-					return 0;
-		} else {
-			if (lockdep_hardirq_context())
-				if (!mark_lock(curr, hlock, LOCK_USED_IN_HARDIRQ))
-					return 0;
-			if (curr->softirq_context)
-				if (!mark_lock(curr, hlock, LOCK_USED_IN_SOFTIRQ))
-					return 0;
-		}
-	}
-	if (!hlock->hardirqs_off) {
-		if (hlock->read) {
-			if (!mark_lock(curr, hlock,
-					LOCK_ENABLED_HARDIRQ_READ))
-				return 0;
-			if (curr->softirqs_enabled)
-				if (!mark_lock(curr, hlock,
+					वापस 0;
+		पूर्ण अन्यथा अणु
+			अगर (lockdep_hardirq_context())
+				अगर (!mark_lock(curr, hlock, LOCK_USED_IN_HARसूचीQ))
+					वापस 0;
+			अगर (curr->softirq_context)
+				अगर (!mark_lock(curr, hlock, LOCK_USED_IN_SOFTIRQ))
+					वापस 0;
+		पूर्ण
+	पूर्ण
+	अगर (!hlock->hardirqs_off) अणु
+		अगर (hlock->पढ़ो) अणु
+			अगर (!mark_lock(curr, hlock,
+					LOCK_ENABLED_HARसूचीQ_READ))
+				वापस 0;
+			अगर (curr->softirqs_enabled)
+				अगर (!mark_lock(curr, hlock,
 						LOCK_ENABLED_SOFTIRQ_READ))
-					return 0;
-		} else {
-			if (!mark_lock(curr, hlock,
-					LOCK_ENABLED_HARDIRQ))
-				return 0;
-			if (curr->softirqs_enabled)
-				if (!mark_lock(curr, hlock,
+					वापस 0;
+		पूर्ण अन्यथा अणु
+			अगर (!mark_lock(curr, hlock,
+					LOCK_ENABLED_HARसूचीQ))
+				वापस 0;
+			अगर (curr->softirqs_enabled)
+				अगर (!mark_lock(curr, hlock,
 						LOCK_ENABLED_SOFTIRQ))
-					return 0;
-		}
-	}
+					वापस 0;
+		पूर्ण
+	पूर्ण
 
 lock_used:
 	/* mark it as used: */
-	if (!mark_lock(curr, hlock, LOCK_USED))
-		return 0;
+	अगर (!mark_lock(curr, hlock, LOCK_USED))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline unsigned int task_irq_context(struct task_struct *task)
-{
-	return LOCK_CHAIN_HARDIRQ_CONTEXT * !!lockdep_hardirq_context() +
+अटल अंतरभूत अचिन्हित पूर्णांक task_irq_context(काष्ठा task_काष्ठा *task)
+अणु
+	वापस LOCK_CHAIN_HARसूचीQ_CONTEXT * !!lockdep_hardirq_context() +
 	       LOCK_CHAIN_SOFTIRQ_CONTEXT * !!task->softirq_context;
-}
+पूर्ण
 
-static int separate_irq_context(struct task_struct *curr,
-		struct held_lock *hlock)
-{
-	unsigned int depth = curr->lockdep_depth;
+अटल पूर्णांक separate_irq_context(काष्ठा task_काष्ठा *curr,
+		काष्ठा held_lock *hlock)
+अणु
+	अचिन्हित पूर्णांक depth = curr->lockdep_depth;
 
 	/*
-	 * Keep track of points where we cross into an interrupt context:
+	 * Keep track of poपूर्णांकs where we cross पूर्णांकo an पूर्णांकerrupt context:
 	 */
-	if (depth) {
-		struct held_lock *prev_hlock;
+	अगर (depth) अणु
+		काष्ठा held_lock *prev_hlock;
 
 		prev_hlock = curr->held_locks + depth-1;
 		/*
-		 * If we cross into another context, reset the
+		 * If we cross पूर्णांकo another context, reset the
 		 * hash key (this also prevents the checking and the
 		 * adding of the dependency to 'prev'):
 		 */
-		if (prev_hlock->irq_context != hlock->irq_context)
-			return 1;
-	}
-	return 0;
-}
+		अगर (prev_hlock->irq_context != hlock->irq_context)
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Mark a lock with a usage bit, and validate the state transition:
  */
-static int mark_lock(struct task_struct *curr, struct held_lock *this,
-			     enum lock_usage_bit new_bit)
-{
-	unsigned int new_mask, ret = 1;
+अटल पूर्णांक mark_lock(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *this,
+			     क्रमागत lock_usage_bit new_bit)
+अणु
+	अचिन्हित पूर्णांक new_mask, ret = 1;
 
-	if (new_bit >= LOCK_USAGE_STATES) {
+	अगर (new_bit >= LOCK_USAGE_STATES) अणु
 		DEBUG_LOCKS_WARN_ON(1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (new_bit == LOCK_USED && this->read)
+	अगर (new_bit == LOCK_USED && this->पढ़ो)
 		new_bit = LOCK_USED_READ;
 
 	new_mask = 1 << new_bit;
 
 	/*
-	 * If already set then do not dirty the cacheline,
-	 * nor do any checks:
+	 * If alपढ़ोy set then करो not dirty the cacheline,
+	 * nor करो any checks:
 	 */
-	if (likely(hlock_class(this)->usage_mask & new_mask))
-		return 1;
+	अगर (likely(hlock_class(this)->usage_mask & new_mask))
+		वापस 1;
 
-	if (!graph_lock())
-		return 0;
+	अगर (!graph_lock())
+		वापस 0;
 	/*
 	 * Make sure we didn't race:
 	 */
-	if (unlikely(hlock_class(this)->usage_mask & new_mask))
-		goto unlock;
+	अगर (unlikely(hlock_class(this)->usage_mask & new_mask))
+		जाओ unlock;
 
-	if (!hlock_class(this)->usage_mask)
+	अगर (!hlock_class(this)->usage_mask)
 		debug_atomic_dec(nr_unused_locks);
 
 	hlock_class(this)->usage_mask |= new_mask;
 
-	if (new_bit < LOCK_TRACE_STATES) {
-		if (!(hlock_class(this)->usage_traces[new_bit] = save_trace()))
-			return 0;
-	}
+	अगर (new_bit < LOCK_TRACE_STATES) अणु
+		अगर (!(hlock_class(this)->usage_traces[new_bit] = save_trace()))
+			वापस 0;
+	पूर्ण
 
-	if (new_bit < LOCK_USED) {
+	अगर (new_bit < LOCK_USED) अणु
 		ret = mark_lock_irq(curr, this, new_bit);
-		if (!ret)
-			return 0;
-	}
+		अगर (!ret)
+			वापस 0;
+	पूर्ण
 
 unlock:
 	graph_unlock();
 
 	/*
-	 * We must printk outside of the graph_lock:
+	 * We must prपूर्णांकk outside of the graph_lock:
 	 */
-	if (ret == 2) {
-		printk("\nmarked lock as {%s}:\n", usage_str[new_bit]);
-		print_lock(this);
-		print_irqtrace_events(curr);
+	अगर (ret == 2) अणु
+		prपूर्णांकk("\nmarked lock as {%s}:\n", usage_str[new_bit]);
+		prपूर्णांक_lock(this);
+		prपूर्णांक_irqtrace_events(curr);
 		dump_stack();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline short task_wait_context(struct task_struct *curr)
-{
+अटल अंतरभूत लघु task_रुको_context(काष्ठा task_काष्ठा *curr)
+अणु
 	/*
-	 * Set appropriate wait type for the context; for IRQs we have to take
-	 * into account force_irqthread as that is implied by PREEMPT_RT.
+	 * Set appropriate रुको type क्रम the context; क्रम IRQs we have to take
+	 * पूर्णांकo account क्रमce_irqthपढ़ो as that is implied by PREEMPT_RT.
 	 */
-	if (lockdep_hardirq_context()) {
+	अगर (lockdep_hardirq_context()) अणु
 		/*
-		 * Check if force_irqthreads will run us threaded.
+		 * Check अगर क्रमce_irqthपढ़ोs will run us thपढ़ोed.
 		 */
-		if (curr->hardirq_threaded || curr->irq_config)
-			return LD_WAIT_CONFIG;
+		अगर (curr->hardirq_thपढ़ोed || curr->irq_config)
+			वापस LD_WAIT_CONFIG;
 
-		return LD_WAIT_SPIN;
-	} else if (curr->softirq_context) {
+		वापस LD_WAIT_SPIN;
+	पूर्ण अन्यथा अगर (curr->softirq_context) अणु
 		/*
-		 * Softirqs are always threaded.
+		 * Softirqs are always thपढ़ोed.
 		 */
-		return LD_WAIT_CONFIG;
-	}
+		वापस LD_WAIT_CONFIG;
+	पूर्ण
 
-	return LD_WAIT_MAX;
-}
+	वापस LD_WAIT_MAX;
+पूर्ण
 
-static int
-print_lock_invalid_wait_context(struct task_struct *curr,
-				struct held_lock *hlock)
-{
-	short curr_inner;
+अटल पूर्णांक
+prपूर्णांक_lock_invalid_रुको_context(काष्ठा task_काष्ठा *curr,
+				काष्ठा held_lock *hlock)
+अणु
+	लघु curr_inner;
 
-	if (!debug_locks_off())
-		return 0;
-	if (debug_locks_silent)
-		return 0;
+	अगर (!debug_locks_off())
+		वापस 0;
+	अगर (debug_locks_silent)
+		वापस 0;
 
 	pr_warn("\n");
 	pr_warn("=============================\n");
 	pr_warn("[ BUG: Invalid wait context ]\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("-----------------------------\n");
 
 	pr_warn("%s/%d is trying to lock:\n", curr->comm, task_pid_nr(curr));
-	print_lock(hlock);
+	prपूर्णांक_lock(hlock);
 
 	pr_warn("other info that might help us debug this:\n");
 
-	curr_inner = task_wait_context(curr);
+	curr_inner = task_रुको_context(curr);
 	pr_warn("context-{%d:%d}\n", curr_inner, curr_inner);
 
-	lockdep_print_held_locks(curr);
+	lockdep_prपूर्णांक_held_locks(curr);
 
 	pr_warn("stack backtrace:\n");
 	dump_stack();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Verify the wait_type context.
+ * Verअगरy the रुको_type context.
  *
- * This check validates we takes locks in the right wait-type order; that is it
- * ensures that we do not take mutexes inside spinlocks and do not attempt to
+ * This check validates we takes locks in the right रुको-type order; that is it
+ * ensures that we करो not take mutexes inside spinlocks and करो not attempt to
  * acquire spinlocks inside raw_spinlocks and the sort.
  *
  * The entire thing is slightly more complex because of RCU, RCU is a lock that
- * can be taken from (pretty much) any context but also has constraints.
- * However when taken in a stricter environment the RCU lock does not loosen
- * the constraints.
+ * can be taken from (pretty much) any context but also has स्थिरraपूर्णांकs.
+ * However when taken in a stricter environment the RCU lock करोes not loosen
+ * the स्थिरraपूर्णांकs.
  *
- * Therefore we must look for the strictest environment in the lock stack and
+ * Thereक्रमe we must look क्रम the strictest environment in the lock stack and
  * compare that to the lock we're trying to acquire.
  */
-static int check_wait_context(struct task_struct *curr, struct held_lock *next)
-{
-	u8 next_inner = hlock_class(next)->wait_type_inner;
-	u8 next_outer = hlock_class(next)->wait_type_outer;
+अटल पूर्णांक check_रुको_context(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *next)
+अणु
+	u8 next_inner = hlock_class(next)->रुको_type_inner;
+	u8 next_outer = hlock_class(next)->रुको_type_outer;
 	u8 curr_inner;
-	int depth;
+	पूर्णांक depth;
 
-	if (!curr->lockdep_depth || !next_inner || next->trylock)
-		return 0;
+	अगर (!curr->lockdep_depth || !next_inner || next->trylock)
+		वापस 0;
 
-	if (!next_outer)
+	अगर (!next_outer)
 		next_outer = next_inner;
 
 	/*
 	 * Find start of current irq_context..
 	 */
-	for (depth = curr->lockdep_depth - 1; depth >= 0; depth--) {
-		struct held_lock *prev = curr->held_locks + depth;
-		if (prev->irq_context != next->irq_context)
-			break;
-	}
+	क्रम (depth = curr->lockdep_depth - 1; depth >= 0; depth--) अणु
+		काष्ठा held_lock *prev = curr->held_locks + depth;
+		अगर (prev->irq_context != next->irq_context)
+			अवरोध;
+	पूर्ण
 	depth++;
 
-	curr_inner = task_wait_context(curr);
+	curr_inner = task_रुको_context(curr);
 
-	for (; depth < curr->lockdep_depth; depth++) {
-		struct held_lock *prev = curr->held_locks + depth;
-		u8 prev_inner = hlock_class(prev)->wait_type_inner;
+	क्रम (; depth < curr->lockdep_depth; depth++) अणु
+		काष्ठा held_lock *prev = curr->held_locks + depth;
+		u8 prev_inner = hlock_class(prev)->रुको_type_inner;
 
-		if (prev_inner) {
+		अगर (prev_inner) अणु
 			/*
 			 * We can have a bigger inner than a previous one
 			 * when outer is smaller than inner, as with RCU.
@@ -4607,128 +4608,128 @@ static int check_wait_context(struct task_struct *curr, struct held_lock *next)
 			 * Also due to trylocks.
 			 */
 			curr_inner = min(curr_inner, prev_inner);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (next_outer > curr_inner)
-		return print_lock_invalid_wait_context(curr, next);
+	अगर (next_outer > curr_inner)
+		वापस prपूर्णांक_lock_invalid_रुको_context(curr, next);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* CONFIG_PROVE_LOCKING */
+#अन्यथा /* CONFIG_PROVE_LOCKING */
 
-static inline int
-mark_usage(struct task_struct *curr, struct held_lock *hlock, int check)
-{
-	return 1;
-}
+अटल अंतरभूत पूर्णांक
+mark_usage(काष्ठा task_काष्ठा *curr, काष्ठा held_lock *hlock, पूर्णांक check)
+अणु
+	वापस 1;
+पूर्ण
 
-static inline unsigned int task_irq_context(struct task_struct *task)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक task_irq_context(काष्ठा task_काष्ठा *task)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int separate_irq_context(struct task_struct *curr,
-		struct held_lock *hlock)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक separate_irq_context(काष्ठा task_काष्ठा *curr,
+		काष्ठा held_lock *hlock)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int check_wait_context(struct task_struct *curr,
-				     struct held_lock *next)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक check_रुको_context(काष्ठा task_काष्ठा *curr,
+				     काष्ठा held_lock *next)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_PROVE_LOCKING */
+#पूर्ण_अगर /* CONFIG_PROVE_LOCKING */
 
 /*
  * Initialize a lock instance's lock-class mapping info:
  */
-void lockdep_init_map_type(struct lockdep_map *lock, const char *name,
-			    struct lock_class_key *key, int subclass,
+व्योम lockdep_init_map_type(काष्ठा lockdep_map *lock, स्थिर अक्षर *name,
+			    काष्ठा lock_class_key *key, पूर्णांक subclass,
 			    u8 inner, u8 outer, u8 lock_type)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NR_LOCKDEP_CACHING_CLASSES; i++)
-		lock->class_cache[i] = NULL;
+	क्रम (i = 0; i < NR_LOCKDEP_CACHING_CLASSES; i++)
+		lock->class_cache[i] = शून्य;
 
-#ifdef CONFIG_LOCK_STAT
+#अगर_घोषित CONFIG_LOCK_STAT
 	lock->cpu = raw_smp_processor_id();
-#endif
+#पूर्ण_अगर
 
 	/*
 	 * Can't be having no nameless bastards around this place!
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!name)) {
+	अगर (DEBUG_LOCKS_WARN_ON(!name)) अणु
 		lock->name = "NULL";
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	lock->name = name;
 
-	lock->wait_type_outer = outer;
-	lock->wait_type_inner = inner;
+	lock->रुको_type_outer = outer;
+	lock->रुको_type_inner = inner;
 	lock->lock_type = lock_type;
 
 	/*
 	 * No key, no joy, we need to hash something.
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!key))
-		return;
+	अगर (DEBUG_LOCKS_WARN_ON(!key))
+		वापस;
 	/*
 	 * Sanity check, the lock-class key must either have been allocated
-	 * statically or must have been registered as a dynamic key.
+	 * अटलally or must have been रेजिस्टरed as a dynamic key.
 	 */
-	if (!static_obj(key) && !is_dynamic_key(key)) {
-		if (debug_locks)
-			printk(KERN_ERR "BUG: key %px has not been registered!\n", key);
+	अगर (!अटल_obj(key) && !is_dynamic_key(key)) अणु
+		अगर (debug_locks)
+			prपूर्णांकk(KERN_ERR "BUG: key %px has not been registered!\n", key);
 		DEBUG_LOCKS_WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 	lock->key = key;
 
-	if (unlikely(!debug_locks))
-		return;
+	अगर (unlikely(!debug_locks))
+		वापस;
 
-	if (subclass) {
-		unsigned long flags;
+	अगर (subclass) अणु
+		अचिन्हित दीर्घ flags;
 
-		if (DEBUG_LOCKS_WARN_ON(!lockdep_enabled()))
-			return;
+		अगर (DEBUG_LOCKS_WARN_ON(!lockdep_enabled()))
+			वापस;
 
 		raw_local_irq_save(flags);
 		lockdep_recursion_inc();
-		register_lock_class(lock, subclass, 1);
+		रेजिस्टर_lock_class(lock, subclass, 1);
 		lockdep_recursion_finish();
 		raw_local_irq_restore(flags);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(lockdep_init_map_type);
 
-struct lock_class_key __lockdep_no_validate__;
+काष्ठा lock_class_key __lockdep_no_validate__;
 EXPORT_SYMBOL_GPL(__lockdep_no_validate__);
 
-static void
-print_lock_nested_lock_not_held(struct task_struct *curr,
-				struct held_lock *hlock,
-				unsigned long ip)
-{
-	if (!debug_locks_off())
-		return;
-	if (debug_locks_silent)
-		return;
+अटल व्योम
+prपूर्णांक_lock_nested_lock_not_held(काष्ठा task_काष्ठा *curr,
+				काष्ठा held_lock *hlock,
+				अचिन्हित दीर्घ ip)
+अणु
+	अगर (!debug_locks_off())
+		वापस;
+	अगर (debug_locks_silent)
+		वापस;
 
 	pr_warn("\n");
 	pr_warn("==================================\n");
 	pr_warn("WARNING: Nested lock was not taken\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("----------------------------------\n");
 
 	pr_warn("%s/%d is trying to lock:\n", curr->comm, task_pid_nr(curr));
-	print_lock(hlock);
+	prपूर्णांक_lock(hlock);
 
 	pr_warn("\nbut this task is not holding:\n");
 	pr_warn("%s\n", hlock->nest_lock->name);
@@ -4737,128 +4738,128 @@ print_lock_nested_lock_not_held(struct task_struct *curr,
 	dump_stack();
 
 	pr_warn("\nother info that might help us debug this:\n");
-	lockdep_print_held_locks(curr);
+	lockdep_prपूर्णांक_held_locks(curr);
 
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 
-static int __lock_is_held(const struct lockdep_map *lock, int read);
+अटल पूर्णांक __lock_is_held(स्थिर काष्ठा lockdep_map *lock, पूर्णांक पढ़ो);
 
 /*
- * This gets called for every mutex_lock*()/spin_lock*() operation.
- * We maintain the dependency maps and validate the locking attempt:
+ * This माला_लो called क्रम every mutex_lock*()/spin_lock*() operation.
+ * We मुख्यtain the dependency maps and validate the locking attempt:
  *
- * The callers must make sure that IRQs are disabled before calling it,
- * otherwise we could get an interrupt which would want to take locks,
+ * The callers must make sure that IRQs are disabled beक्रमe calling it,
+ * otherwise we could get an पूर्णांकerrupt which would want to take locks,
  * which would end up in lockdep again.
  */
-static int __lock_acquire(struct lockdep_map *lock, unsigned int subclass,
-			  int trylock, int read, int check, int hardirqs_off,
-			  struct lockdep_map *nest_lock, unsigned long ip,
-			  int references, int pin_count)
-{
-	struct task_struct *curr = current;
-	struct lock_class *class = NULL;
-	struct held_lock *hlock;
-	unsigned int depth;
-	int chain_head = 0;
-	int class_idx;
+अटल पूर्णांक __lock_acquire(काष्ठा lockdep_map *lock, अचिन्हित पूर्णांक subclass,
+			  पूर्णांक trylock, पूर्णांक पढ़ो, पूर्णांक check, पूर्णांक hardirqs_off,
+			  काष्ठा lockdep_map *nest_lock, अचिन्हित दीर्घ ip,
+			  पूर्णांक references, पूर्णांक pin_count)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	काष्ठा lock_class *class = शून्य;
+	काष्ठा held_lock *hlock;
+	अचिन्हित पूर्णांक depth;
+	पूर्णांक chain_head = 0;
+	पूर्णांक class_idx;
 	u64 chain_key;
 
-	if (unlikely(!debug_locks))
-		return 0;
+	अगर (unlikely(!debug_locks))
+		वापस 0;
 
-	if (!prove_locking || lock->key == &__lockdep_no_validate__)
+	अगर (!prove_locking || lock->key == &__lockdep_no_validate__)
 		check = 0;
 
-	if (subclass < NR_LOCKDEP_CACHING_CLASSES)
+	अगर (subclass < NR_LOCKDEP_CACHING_CLASSES)
 		class = lock->class_cache[subclass];
 	/*
 	 * Not cached?
 	 */
-	if (unlikely(!class)) {
-		class = register_lock_class(lock, subclass, 0);
-		if (!class)
-			return 0;
-	}
+	अगर (unlikely(!class)) अणु
+		class = रेजिस्टर_lock_class(lock, subclass, 0);
+		अगर (!class)
+			वापस 0;
+	पूर्ण
 
 	debug_class_ops_inc(class);
 
-	if (very_verbose(class)) {
-		printk("\nacquire class [%px] %s", class->key, class->name);
-		if (class->name_version > 1)
-			printk(KERN_CONT "#%d", class->name_version);
-		printk(KERN_CONT "\n");
+	अगर (very_verbose(class)) अणु
+		prपूर्णांकk("\nacquire class [%px] %s", class->key, class->name);
+		अगर (class->name_version > 1)
+			prपूर्णांकk(KERN_CONT "#%d", class->name_version);
+		prपूर्णांकk(KERN_CONT "\n");
 		dump_stack();
-	}
+	पूर्ण
 
 	/*
 	 * Add the lock to the list of currently held locks.
-	 * (we dont increase the depth just yet, up until the
-	 * dependency checks are done)
+	 * (we करोnt increase the depth just yet, up until the
+	 * dependency checks are करोne)
 	 */
 	depth = curr->lockdep_depth;
 	/*
-	 * Ran out of static storage for our per-task lock stack again have we?
+	 * Ran out of अटल storage क्रम our per-task lock stack again have we?
 	 */
-	if (DEBUG_LOCKS_WARN_ON(depth >= MAX_LOCK_DEPTH))
-		return 0;
+	अगर (DEBUG_LOCKS_WARN_ON(depth >= MAX_LOCK_DEPTH))
+		वापस 0;
 
 	class_idx = class - lock_classes;
 
-	if (depth) { /* we're holding locks */
+	अगर (depth) अणु /* we're holding locks */
 		hlock = curr->held_locks + depth - 1;
-		if (hlock->class_idx == class_idx && nest_lock) {
-			if (!references)
+		अगर (hlock->class_idx == class_idx && nest_lock) अणु
+			अगर (!references)
 				references++;
 
-			if (!hlock->references)
+			अगर (!hlock->references)
 				hlock->references++;
 
 			hlock->references += references;
 
 			/* Overflow */
-			if (DEBUG_LOCKS_WARN_ON(hlock->references < references))
-				return 0;
+			अगर (DEBUG_LOCKS_WARN_ON(hlock->references < references))
+				वापस 0;
 
-			return 2;
-		}
-	}
+			वापस 2;
+		पूर्ण
+	पूर्ण
 
 	hlock = curr->held_locks + depth;
 	/*
-	 * Plain impossible, we just registered it and checked it weren't no
-	 * NULL like.. I bet this mushroom I ate was good!
+	 * Plain impossible, we just रेजिस्टरed it and checked it weren't no
+	 * शून्य like.. I bet this mushroom I ate was good!
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!class))
-		return 0;
+	अगर (DEBUG_LOCKS_WARN_ON(!class))
+		वापस 0;
 	hlock->class_idx = class_idx;
 	hlock->acquire_ip = ip;
 	hlock->instance = lock;
 	hlock->nest_lock = nest_lock;
 	hlock->irq_context = task_irq_context(curr);
 	hlock->trylock = trylock;
-	hlock->read = read;
+	hlock->पढ़ो = पढ़ो;
 	hlock->check = check;
 	hlock->hardirqs_off = !!hardirqs_off;
 	hlock->references = references;
-#ifdef CONFIG_LOCK_STAT
-	hlock->waittime_stamp = 0;
-	hlock->holdtime_stamp = lockstat_clock();
-#endif
+#अगर_घोषित CONFIG_LOCK_STAT
+	hlock->रुकोसमय_stamp = 0;
+	hlock->holdसमय_stamp = lockstat_घड़ी();
+#पूर्ण_अगर
 	hlock->pin_count = pin_count;
 
-	if (check_wait_context(curr, hlock))
-		return 0;
+	अगर (check_रुको_context(curr, hlock))
+		वापस 0;
 
 	/* Initialize the lock usage bit */
-	if (!mark_usage(curr, hlock, check))
-		return 0;
+	अगर (!mark_usage(curr, hlock, check))
+		वापस 0;
 
 	/*
 	 * Calculate the chain hash: it's the combined hash of all the
-	 * lock keys along the dependency chain. We save the hash value
+	 * lock keys aदीर्घ the dependency chain. We save the hash value
 	 * at every step so that we can get the current hash easily
 	 * after unlock. The chain hash is then used to cache dependency
 	 * results.
@@ -4869,364 +4870,364 @@ static int __lock_acquire(struct lockdep_map *lock, unsigned int subclass,
 	/*
 	 * Whoops, we did it again.. class_idx is invalid.
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!test_bit(class_idx, lock_classes_in_use)))
-		return 0;
+	अगर (DEBUG_LOCKS_WARN_ON(!test_bit(class_idx, lock_classes_in_use)))
+		वापस 0;
 
 	chain_key = curr->curr_chain_key;
-	if (!depth) {
+	अगर (!depth) अणु
 		/*
 		 * How can we have a chain hash when we ain't got no keys?!
 		 */
-		if (DEBUG_LOCKS_WARN_ON(chain_key != INITIAL_CHAIN_KEY))
-			return 0;
+		अगर (DEBUG_LOCKS_WARN_ON(chain_key != INITIAL_CHAIN_KEY))
+			वापस 0;
 		chain_head = 1;
-	}
+	पूर्ण
 
 	hlock->prev_chain_key = chain_key;
-	if (separate_irq_context(curr, hlock)) {
+	अगर (separate_irq_context(curr, hlock)) अणु
 		chain_key = INITIAL_CHAIN_KEY;
 		chain_head = 1;
-	}
+	पूर्ण
 	chain_key = iterate_chain_key(chain_key, hlock_id(hlock));
 
-	if (nest_lock && !__lock_is_held(nest_lock, -1)) {
-		print_lock_nested_lock_not_held(curr, hlock, ip);
-		return 0;
-	}
+	अगर (nest_lock && !__lock_is_held(nest_lock, -1)) अणु
+		prपूर्णांक_lock_nested_lock_not_held(curr, hlock, ip);
+		वापस 0;
+	पूर्ण
 
-	if (!debug_locks_silent) {
+	अगर (!debug_locks_silent) अणु
 		WARN_ON_ONCE(depth && !hlock_class(hlock - 1)->key);
 		WARN_ON_ONCE(!hlock_class(hlock)->key);
-	}
+	पूर्ण
 
-	if (!validate_chain(curr, hlock, chain_head, chain_key))
-		return 0;
+	अगर (!validate_chain(curr, hlock, chain_head, chain_key))
+		वापस 0;
 
 	curr->curr_chain_key = chain_key;
 	curr->lockdep_depth++;
 	check_chain_key(curr);
-#ifdef CONFIG_DEBUG_LOCKDEP
-	if (unlikely(!debug_locks))
-		return 0;
-#endif
-	if (unlikely(curr->lockdep_depth >= MAX_LOCK_DEPTH)) {
+#अगर_घोषित CONFIG_DEBUG_LOCKDEP
+	अगर (unlikely(!debug_locks))
+		वापस 0;
+#पूर्ण_अगर
+	अगर (unlikely(curr->lockdep_depth >= MAX_LOCK_DEPTH)) अणु
 		debug_locks_off();
-		print_lockdep_off("BUG: MAX_LOCK_DEPTH too low!");
-		printk(KERN_DEBUG "depth: %i  max: %lu!\n",
+		prपूर्णांक_lockdep_off("BUG: MAX_LOCK_DEPTH too low!");
+		prपूर्णांकk(KERN_DEBUG "depth: %i  max: %lu!\n",
 		       curr->lockdep_depth, MAX_LOCK_DEPTH);
 
-		lockdep_print_held_locks(current);
+		lockdep_prपूर्णांक_held_locks(current);
 		debug_show_all_locks();
 		dump_stack();
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (unlikely(curr->lockdep_depth > max_lockdep_depth))
+	अगर (unlikely(curr->lockdep_depth > max_lockdep_depth))
 		max_lockdep_depth = curr->lockdep_depth;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void print_unlock_imbalance_bug(struct task_struct *curr,
-				       struct lockdep_map *lock,
-				       unsigned long ip)
-{
-	if (!debug_locks_off())
-		return;
-	if (debug_locks_silent)
-		return;
+अटल व्योम prपूर्णांक_unlock_imbalance_bug(काष्ठा task_काष्ठा *curr,
+				       काष्ठा lockdep_map *lock,
+				       अचिन्हित दीर्घ ip)
+अणु
+	अगर (!debug_locks_off())
+		वापस;
+	अगर (debug_locks_silent)
+		वापस;
 
 	pr_warn("\n");
 	pr_warn("=====================================\n");
 	pr_warn("WARNING: bad unlock balance detected!\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("-------------------------------------\n");
 	pr_warn("%s/%d is trying to release lock (",
 		curr->comm, task_pid_nr(curr));
-	print_lockdep_cache(lock);
+	prपूर्णांक_lockdep_cache(lock);
 	pr_cont(") at:\n");
-	print_ip_sym(KERN_WARNING, ip);
+	prपूर्णांक_ip_sym(KERN_WARNING, ip);
 	pr_warn("but there are no more locks to release!\n");
 	pr_warn("\nother info that might help us debug this:\n");
-	lockdep_print_held_locks(curr);
+	lockdep_prपूर्णांक_held_locks(curr);
 
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 
-static noinstr int match_held_lock(const struct held_lock *hlock,
-				   const struct lockdep_map *lock)
-{
-	if (hlock->instance == lock)
-		return 1;
+अटल noinstr पूर्णांक match_held_lock(स्थिर काष्ठा held_lock *hlock,
+				   स्थिर काष्ठा lockdep_map *lock)
+अणु
+	अगर (hlock->instance == lock)
+		वापस 1;
 
-	if (hlock->references) {
-		const struct lock_class *class = lock->class_cache[0];
+	अगर (hlock->references) अणु
+		स्थिर काष्ठा lock_class *class = lock->class_cache[0];
 
-		if (!class)
+		अगर (!class)
 			class = look_up_lock_class(lock, 0);
 
 		/*
 		 * If look_up_lock_class() failed to find a class, we're trying
-		 * to test if we hold a lock that has never yet been acquired.
-		 * Clearly if the lock hasn't been acquired _ever_, we're not
+		 * to test अगर we hold a lock that has never yet been acquired.
+		 * Clearly अगर the lock hasn't been acquired _ever_, we're not
 		 * holding it either, so report failure.
 		 */
-		if (!class)
-			return 0;
+		अगर (!class)
+			वापस 0;
 
 		/*
 		 * References, but not a lock we're actually ref-counting?
 		 * State got messed up, follow the sites that change ->references
 		 * and try to make sense of it.
 		 */
-		if (DEBUG_LOCKS_WARN_ON(!hlock->nest_lock))
-			return 0;
+		अगर (DEBUG_LOCKS_WARN_ON(!hlock->nest_lock))
+			वापस 0;
 
-		if (hlock->class_idx == class - lock_classes)
-			return 1;
-	}
+		अगर (hlock->class_idx == class - lock_classes)
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* @depth must not be zero */
-static struct held_lock *find_held_lock(struct task_struct *curr,
-					struct lockdep_map *lock,
-					unsigned int depth, int *idx)
-{
-	struct held_lock *ret, *hlock, *prev_hlock;
-	int i;
+अटल काष्ठा held_lock *find_held_lock(काष्ठा task_काष्ठा *curr,
+					काष्ठा lockdep_map *lock,
+					अचिन्हित पूर्णांक depth, पूर्णांक *idx)
+अणु
+	काष्ठा held_lock *ret, *hlock, *prev_hlock;
+	पूर्णांक i;
 
 	i = depth - 1;
 	hlock = curr->held_locks + i;
 	ret = hlock;
-	if (match_held_lock(hlock, lock))
-		goto out;
+	अगर (match_held_lock(hlock, lock))
+		जाओ out;
 
-	ret = NULL;
-	for (i--, prev_hlock = hlock--;
+	ret = शून्य;
+	क्रम (i--, prev_hlock = hlock--;
 	     i >= 0;
-	     i--, prev_hlock = hlock--) {
+	     i--, prev_hlock = hlock--) अणु
 		/*
-		 * We must not cross into another context:
+		 * We must not cross पूर्णांकo another context:
 		 */
-		if (prev_hlock->irq_context != hlock->irq_context) {
-			ret = NULL;
-			break;
-		}
-		if (match_held_lock(hlock, lock)) {
+		अगर (prev_hlock->irq_context != hlock->irq_context) अणु
+			ret = शून्य;
+			अवरोध;
+		पूर्ण
+		अगर (match_held_lock(hlock, lock)) अणु
 			ret = hlock;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
 	*idx = i;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int reacquire_held_locks(struct task_struct *curr, unsigned int depth,
-				int idx, unsigned int *merged)
-{
-	struct held_lock *hlock;
-	int first_idx = idx;
+अटल पूर्णांक reacquire_held_locks(काष्ठा task_काष्ठा *curr, अचिन्हित पूर्णांक depth,
+				पूर्णांक idx, अचिन्हित पूर्णांक *merged)
+अणु
+	काष्ठा held_lock *hlock;
+	पूर्णांक first_idx = idx;
 
-	if (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
-		return 0;
+	अगर (DEBUG_LOCKS_WARN_ON(!irqs_disabled()))
+		वापस 0;
 
-	for (hlock = curr->held_locks + idx; idx < depth; idx++, hlock++) {
-		switch (__lock_acquire(hlock->instance,
+	क्रम (hlock = curr->held_locks + idx; idx < depth; idx++, hlock++) अणु
+		चयन (__lock_acquire(hlock->instance,
 				    hlock_class(hlock)->subclass,
 				    hlock->trylock,
-				    hlock->read, hlock->check,
+				    hlock->पढ़ो, hlock->check,
 				    hlock->hardirqs_off,
 				    hlock->nest_lock, hlock->acquire_ip,
-				    hlock->references, hlock->pin_count)) {
-		case 0:
-			return 1;
-		case 1:
-			break;
-		case 2:
+				    hlock->references, hlock->pin_count)) अणु
+		हाल 0:
+			वापस 1;
+		हाल 1:
+			अवरोध;
+		हाल 2:
 			*merged += (idx == first_idx);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WARN_ON(1);
-			return 0;
-		}
-	}
-	return 0;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-__lock_set_class(struct lockdep_map *lock, const char *name,
-		 struct lock_class_key *key, unsigned int subclass,
-		 unsigned long ip)
-{
-	struct task_struct *curr = current;
-	unsigned int depth, merged = 0;
-	struct held_lock *hlock;
-	struct lock_class *class;
-	int i;
+अटल पूर्णांक
+__lock_set_class(काष्ठा lockdep_map *lock, स्थिर अक्षर *name,
+		 काष्ठा lock_class_key *key, अचिन्हित पूर्णांक subclass,
+		 अचिन्हित दीर्घ ip)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	अचिन्हित पूर्णांक depth, merged = 0;
+	काष्ठा held_lock *hlock;
+	काष्ठा lock_class *class;
+	पूर्णांक i;
 
-	if (unlikely(!debug_locks))
-		return 0;
+	अगर (unlikely(!debug_locks))
+		वापस 0;
 
 	depth = curr->lockdep_depth;
 	/*
 	 * This function is about (re)setting the class of a held lock,
 	 * yet we're not actually holding any locks. Naughty user!
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!depth))
-		return 0;
+	अगर (DEBUG_LOCKS_WARN_ON(!depth))
+		वापस 0;
 
 	hlock = find_held_lock(curr, lock, depth, &i);
-	if (!hlock) {
-		print_unlock_imbalance_bug(curr, lock, ip);
-		return 0;
-	}
+	अगर (!hlock) अणु
+		prपूर्णांक_unlock_imbalance_bug(curr, lock, ip);
+		वापस 0;
+	पूर्ण
 
-	lockdep_init_map_waits(lock, name, key, 0,
-			       lock->wait_type_inner,
-			       lock->wait_type_outer);
-	class = register_lock_class(lock, subclass, 0);
+	lockdep_init_map_रुकोs(lock, name, key, 0,
+			       lock->रुको_type_inner,
+			       lock->रुको_type_outer);
+	class = रेजिस्टर_lock_class(lock, subclass, 0);
 	hlock->class_idx = class - lock_classes;
 
 	curr->lockdep_depth = i;
 	curr->curr_chain_key = hlock->prev_chain_key;
 
-	if (reacquire_held_locks(curr, depth, i, &merged))
-		return 0;
+	अगर (reacquire_held_locks(curr, depth, i, &merged))
+		वापस 0;
 
 	/*
 	 * I took it apart and put it back together again, except now I have
 	 * these 'spare' parts.. where shall I put them.
 	 */
-	if (DEBUG_LOCKS_WARN_ON(curr->lockdep_depth != depth - merged))
-		return 0;
-	return 1;
-}
+	अगर (DEBUG_LOCKS_WARN_ON(curr->lockdep_depth != depth - merged))
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-static int __lock_downgrade(struct lockdep_map *lock, unsigned long ip)
-{
-	struct task_struct *curr = current;
-	unsigned int depth, merged = 0;
-	struct held_lock *hlock;
-	int i;
+अटल पूर्णांक __lock_करोwngrade(काष्ठा lockdep_map *lock, अचिन्हित दीर्घ ip)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	अचिन्हित पूर्णांक depth, merged = 0;
+	काष्ठा held_lock *hlock;
+	पूर्णांक i;
 
-	if (unlikely(!debug_locks))
-		return 0;
+	अगर (unlikely(!debug_locks))
+		वापस 0;
 
 	depth = curr->lockdep_depth;
 	/*
 	 * This function is about (re)setting the class of a held lock,
 	 * yet we're not actually holding any locks. Naughty user!
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!depth))
-		return 0;
+	अगर (DEBUG_LOCKS_WARN_ON(!depth))
+		वापस 0;
 
 	hlock = find_held_lock(curr, lock, depth, &i);
-	if (!hlock) {
-		print_unlock_imbalance_bug(curr, lock, ip);
-		return 0;
-	}
+	अगर (!hlock) अणु
+		prपूर्णांक_unlock_imbalance_bug(curr, lock, ip);
+		वापस 0;
+	पूर्ण
 
 	curr->lockdep_depth = i;
 	curr->curr_chain_key = hlock->prev_chain_key;
 
-	WARN(hlock->read, "downgrading a read lock");
-	hlock->read = 1;
+	WARN(hlock->पढ़ो, "downgrading a read lock");
+	hlock->पढ़ो = 1;
 	hlock->acquire_ip = ip;
 
-	if (reacquire_held_locks(curr, depth, i, &merged))
-		return 0;
+	अगर (reacquire_held_locks(curr, depth, i, &merged))
+		वापस 0;
 
 	/* Merging can't happen with unchanged classes.. */
-	if (DEBUG_LOCKS_WARN_ON(merged))
-		return 0;
+	अगर (DEBUG_LOCKS_WARN_ON(merged))
+		वापस 0;
 
 	/*
 	 * I took it apart and put it back together again, except now I have
 	 * these 'spare' parts.. where shall I put them.
 	 */
-	if (DEBUG_LOCKS_WARN_ON(curr->lockdep_depth != depth))
-		return 0;
+	अगर (DEBUG_LOCKS_WARN_ON(curr->lockdep_depth != depth))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Remove the lock from the list of currently held locks - this gets
+ * Remove the lock from the list of currently held locks - this माला_लो
  * called on mutex_unlock()/spin_unlock*() (or on a failed
- * mutex_lock_interruptible()).
+ * mutex_lock_पूर्णांकerruptible()).
  */
-static int
-__lock_release(struct lockdep_map *lock, unsigned long ip)
-{
-	struct task_struct *curr = current;
-	unsigned int depth, merged = 1;
-	struct held_lock *hlock;
-	int i;
+अटल पूर्णांक
+__lock_release(काष्ठा lockdep_map *lock, अचिन्हित दीर्घ ip)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	अचिन्हित पूर्णांक depth, merged = 1;
+	काष्ठा held_lock *hlock;
+	पूर्णांक i;
 
-	if (unlikely(!debug_locks))
-		return 0;
+	अगर (unlikely(!debug_locks))
+		वापस 0;
 
 	depth = curr->lockdep_depth;
 	/*
 	 * So we're all set to release this lock.. wait what lock? We don't
 	 * own any locks, you've been drinking again?
 	 */
-	if (depth <= 0) {
-		print_unlock_imbalance_bug(curr, lock, ip);
-		return 0;
-	}
+	अगर (depth <= 0) अणु
+		prपूर्णांक_unlock_imbalance_bug(curr, lock, ip);
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * Check whether the lock exists in the current stack
 	 * of held locks:
 	 */
 	hlock = find_held_lock(curr, lock, depth, &i);
-	if (!hlock) {
-		print_unlock_imbalance_bug(curr, lock, ip);
-		return 0;
-	}
+	अगर (!hlock) अणु
+		prपूर्णांक_unlock_imbalance_bug(curr, lock, ip);
+		वापस 0;
+	पूर्ण
 
-	if (hlock->instance == lock)
-		lock_release_holdtime(hlock);
+	अगर (hlock->instance == lock)
+		lock_release_holdसमय(hlock);
 
 	WARN(hlock->pin_count, "releasing a pinned lock\n");
 
-	if (hlock->references) {
+	अगर (hlock->references) अणु
 		hlock->references--;
-		if (hlock->references) {
+		अगर (hlock->references) अणु
 			/*
 			 * We had, and after removing one, still have
 			 * references, the current lock stack is still
-			 * valid. We're done!
+			 * valid. We're करोne!
 			 */
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * We have the right lock to unlock, 'hlock' points to it.
-	 * Now we remove it from the stack, and add back the other
-	 * entries (if any), recalculating the hash along the way:
+	 * We have the right lock to unlock, 'hlock' poपूर्णांकs to it.
+	 * Now we हटाओ it from the stack, and add back the other
+	 * entries (अगर any), recalculating the hash aदीर्घ the way:
 	 */
 
 	curr->lockdep_depth = i;
 	curr->curr_chain_key = hlock->prev_chain_key;
 
 	/*
-	 * The most likely case is when the unlock is on the innermost
-	 * lock. In this case, we are done!
+	 * The most likely हाल is when the unlock is on the innermost
+	 * lock. In this हाल, we are करोne!
 	 */
-	if (i == depth-1)
-		return 1;
+	अगर (i == depth-1)
+		वापस 1;
 
-	if (reacquire_held_locks(curr, depth, i + 1, &merged))
-		return 0;
+	अगर (reacquire_held_locks(curr, depth, i + 1, &merged))
+		वापस 0;
 
 	/*
 	 * We had N bottles of beer on the wall, we drank one, but now
@@ -5237,337 +5238,337 @@ __lock_release(struct lockdep_map *lock, unsigned long ip)
 
 	/*
 	 * Since reacquire_held_locks() would have called check_chain_key()
-	 * indirectly via __lock_acquire(), we don't need to do it again
-	 * on return.
+	 * indirectly via __lock_acquire(), we करोn't need to करो it again
+	 * on वापस.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __always_inline
-int __lock_is_held(const struct lockdep_map *lock, int read)
-{
-	struct task_struct *curr = current;
-	int i;
+अटल __always_अंतरभूत
+पूर्णांक __lock_is_held(स्थिर काष्ठा lockdep_map *lock, पूर्णांक पढ़ो)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	पूर्णांक i;
 
-	for (i = 0; i < curr->lockdep_depth; i++) {
-		struct held_lock *hlock = curr->held_locks + i;
+	क्रम (i = 0; i < curr->lockdep_depth; i++) अणु
+		काष्ठा held_lock *hlock = curr->held_locks + i;
 
-		if (match_held_lock(hlock, lock)) {
-			if (read == -1 || hlock->read == read)
-				return LOCK_STATE_HELD;
+		अगर (match_held_lock(hlock, lock)) अणु
+			अगर (पढ़ो == -1 || hlock->पढ़ो == पढ़ो)
+				वापस LOCK_STATE_HELD;
 
-			return LOCK_STATE_NOT_HELD;
-		}
-	}
+			वापस LOCK_STATE_NOT_HELD;
+		पूर्ण
+	पूर्ण
 
-	return LOCK_STATE_NOT_HELD;
-}
+	वापस LOCK_STATE_NOT_HELD;
+पूर्ण
 
-static struct pin_cookie __lock_pin_lock(struct lockdep_map *lock)
-{
-	struct pin_cookie cookie = NIL_COOKIE;
-	struct task_struct *curr = current;
-	int i;
+अटल काष्ठा pin_cookie __lock_pin_lock(काष्ठा lockdep_map *lock)
+अणु
+	काष्ठा pin_cookie cookie = NIL_COOKIE;
+	काष्ठा task_काष्ठा *curr = current;
+	पूर्णांक i;
 
-	if (unlikely(!debug_locks))
-		return cookie;
+	अगर (unlikely(!debug_locks))
+		वापस cookie;
 
-	for (i = 0; i < curr->lockdep_depth; i++) {
-		struct held_lock *hlock = curr->held_locks + i;
+	क्रम (i = 0; i < curr->lockdep_depth; i++) अणु
+		काष्ठा held_lock *hlock = curr->held_locks + i;
 
-		if (match_held_lock(hlock, lock)) {
+		अगर (match_held_lock(hlock, lock)) अणु
 			/*
-			 * Grab 16bits of randomness; this is sufficient to not
+			 * Grab 16bits of अक्रमomness; this is sufficient to not
 			 * be guessable and still allows some pin nesting in
 			 * our u32 pin_count.
 			 */
-			cookie.val = 1 + (prandom_u32() >> 16);
+			cookie.val = 1 + (pअक्रमom_u32() >> 16);
 			hlock->pin_count += cookie.val;
-			return cookie;
-		}
-	}
+			वापस cookie;
+		पूर्ण
+	पूर्ण
 
 	WARN(1, "pinning an unheld lock\n");
-	return cookie;
-}
+	वापस cookie;
+पूर्ण
 
-static void __lock_repin_lock(struct lockdep_map *lock, struct pin_cookie cookie)
-{
-	struct task_struct *curr = current;
-	int i;
+अटल व्योम __lock_repin_lock(काष्ठा lockdep_map *lock, काष्ठा pin_cookie cookie)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	पूर्णांक i;
 
-	if (unlikely(!debug_locks))
-		return;
+	अगर (unlikely(!debug_locks))
+		वापस;
 
-	for (i = 0; i < curr->lockdep_depth; i++) {
-		struct held_lock *hlock = curr->held_locks + i;
+	क्रम (i = 0; i < curr->lockdep_depth; i++) अणु
+		काष्ठा held_lock *hlock = curr->held_locks + i;
 
-		if (match_held_lock(hlock, lock)) {
+		अगर (match_held_lock(hlock, lock)) अणु
 			hlock->pin_count += cookie.val;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	WARN(1, "pinning an unheld lock\n");
-}
+पूर्ण
 
-static void __lock_unpin_lock(struct lockdep_map *lock, struct pin_cookie cookie)
-{
-	struct task_struct *curr = current;
-	int i;
+अटल व्योम __lock_unpin_lock(काष्ठा lockdep_map *lock, काष्ठा pin_cookie cookie)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	पूर्णांक i;
 
-	if (unlikely(!debug_locks))
-		return;
+	अगर (unlikely(!debug_locks))
+		वापस;
 
-	for (i = 0; i < curr->lockdep_depth; i++) {
-		struct held_lock *hlock = curr->held_locks + i;
+	क्रम (i = 0; i < curr->lockdep_depth; i++) अणु
+		काष्ठा held_lock *hlock = curr->held_locks + i;
 
-		if (match_held_lock(hlock, lock)) {
-			if (WARN(!hlock->pin_count, "unpinning an unpinned lock\n"))
-				return;
+		अगर (match_held_lock(hlock, lock)) अणु
+			अगर (WARN(!hlock->pin_count, "unpinning an unpinned lock\n"))
+				वापस;
 
 			hlock->pin_count -= cookie.val;
 
-			if (WARN((int)hlock->pin_count < 0, "pin count corrupted\n"))
+			अगर (WARN((पूर्णांक)hlock->pin_count < 0, "pin count corrupted\n"))
 				hlock->pin_count = 0;
 
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	WARN(1, "unpinning an unheld lock\n");
-}
+पूर्ण
 
 /*
  * Check whether we follow the irq-flags state precisely:
  */
-static noinstr void check_flags(unsigned long flags)
-{
-#if defined(CONFIG_PROVE_LOCKING) && defined(CONFIG_DEBUG_LOCKDEP)
-	if (!debug_locks)
-		return;
+अटल noinstr व्योम check_flags(अचिन्हित दीर्घ flags)
+अणु
+#अगर defined(CONFIG_PROVE_LOCKING) && defined(CONFIG_DEBUG_LOCKDEP)
+	अगर (!debug_locks)
+		वापस;
 
 	/* Get the warning out..  */
 	instrumentation_begin();
 
-	if (irqs_disabled_flags(flags)) {
-		if (DEBUG_LOCKS_WARN_ON(lockdep_hardirqs_enabled())) {
-			printk("possible reason: unannotated irqs-off.\n");
-		}
-	} else {
-		if (DEBUG_LOCKS_WARN_ON(!lockdep_hardirqs_enabled())) {
-			printk("possible reason: unannotated irqs-on.\n");
-		}
-	}
+	अगर (irqs_disabled_flags(flags)) अणु
+		अगर (DEBUG_LOCKS_WARN_ON(lockdep_hardirqs_enabled())) अणु
+			prपूर्णांकk("possible reason: unannotated irqs-off.\n");
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (DEBUG_LOCKS_WARN_ON(!lockdep_hardirqs_enabled())) अणु
+			prपूर्णांकk("possible reason: unannotated irqs-on.\n");
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * We dont accurately track softirq state in e.g.
+	 * We करोnt accurately track softirq state in e.g.
 	 * hardirq contexts (such as on 4KSTACKS), so only
-	 * check if not in hardirq contexts:
+	 * check अगर not in hardirq contexts:
 	 */
-	if (!hardirq_count()) {
-		if (softirq_count()) {
+	अगर (!hardirq_count()) अणु
+		अगर (softirq_count()) अणु
 			/* like the above, but with softirqs */
 			DEBUG_LOCKS_WARN_ON(current->softirqs_enabled);
-		} else {
-			/* lick the above, does it taste good? */
+		पूर्ण अन्यथा अणु
+			/* lick the above, करोes it taste good? */
 			DEBUG_LOCKS_WARN_ON(!current->softirqs_enabled);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!debug_locks)
-		print_irqtrace_events(current);
+	अगर (!debug_locks)
+		prपूर्णांक_irqtrace_events(current);
 
 	instrumentation_end();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void lock_set_class(struct lockdep_map *lock, const char *name,
-		    struct lock_class_key *key, unsigned int subclass,
-		    unsigned long ip)
-{
-	unsigned long flags;
+व्योम lock_set_class(काष्ठा lockdep_map *lock, स्थिर अक्षर *name,
+		    काष्ठा lock_class_key *key, अचिन्हित पूर्णांक subclass,
+		    अचिन्हित दीर्घ ip)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!lockdep_enabled()))
-		return;
+	अगर (unlikely(!lockdep_enabled()))
+		वापस;
 
 	raw_local_irq_save(flags);
 	lockdep_recursion_inc();
 	check_flags(flags);
-	if (__lock_set_class(lock, name, key, subclass, ip))
+	अगर (__lock_set_class(lock, name, key, subclass, ip))
 		check_chain_key(current);
 	lockdep_recursion_finish();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lock_set_class);
 
-void lock_downgrade(struct lockdep_map *lock, unsigned long ip)
-{
-	unsigned long flags;
+व्योम lock_करोwngrade(काष्ठा lockdep_map *lock, अचिन्हित दीर्घ ip)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!lockdep_enabled()))
-		return;
+	अगर (unlikely(!lockdep_enabled()))
+		वापस;
 
 	raw_local_irq_save(flags);
 	lockdep_recursion_inc();
 	check_flags(flags);
-	if (__lock_downgrade(lock, ip))
+	अगर (__lock_करोwngrade(lock, ip))
 		check_chain_key(current);
 	lockdep_recursion_finish();
 	raw_local_irq_restore(flags);
-}
-EXPORT_SYMBOL_GPL(lock_downgrade);
+पूर्ण
+EXPORT_SYMBOL_GPL(lock_करोwngrade);
 
 /* NMI context !!! */
-static void verify_lock_unused(struct lockdep_map *lock, struct held_lock *hlock, int subclass)
-{
-#ifdef CONFIG_PROVE_LOCKING
-	struct lock_class *class = look_up_lock_class(lock, subclass);
-	unsigned long mask = LOCKF_USED;
+अटल व्योम verअगरy_lock_unused(काष्ठा lockdep_map *lock, काष्ठा held_lock *hlock, पूर्णांक subclass)
+अणु
+#अगर_घोषित CONFIG_PROVE_LOCKING
+	काष्ठा lock_class *class = look_up_lock_class(lock, subclass);
+	अचिन्हित दीर्घ mask = LOCKF_USED;
 
-	/* if it doesn't have a class (yet), it certainly hasn't been used yet */
-	if (!class)
-		return;
+	/* अगर it करोesn't have a class (yet), it certainly hasn't been used yet */
+	अगर (!class)
+		वापस;
 
 	/*
-	 * READ locks only conflict with USED, such that if we only ever use
+	 * READ locks only conflict with USED, such that अगर we only ever use
 	 * READ locks, there is no deadlock possible -- RCU.
 	 */
-	if (!hlock->read)
+	अगर (!hlock->पढ़ो)
 		mask |= LOCKF_USED_READ;
 
-	if (!(class->usage_mask & mask))
-		return;
+	अगर (!(class->usage_mask & mask))
+		वापस;
 
 	hlock->class_idx = class - lock_classes;
 
-	print_usage_bug(current, hlock, LOCK_USED, LOCK_USAGE_STATES);
-#endif
-}
+	prपूर्णांक_usage_bug(current, hlock, LOCK_USED, LOCK_USAGE_STATES);
+#पूर्ण_अगर
+पूर्ण
 
-static bool lockdep_nmi(void)
-{
-	if (raw_cpu_read(lockdep_recursion))
-		return false;
+अटल bool lockdep_nmi(व्योम)
+अणु
+	अगर (raw_cpu_पढ़ो(lockdep_recursion))
+		वापस false;
 
-	if (!in_nmi())
-		return false;
+	अगर (!in_nmi())
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * read_lock() is recursive if:
- * 1. We force lockdep think this way in selftests or
- * 2. The implementation is not queued read/write lock or
- * 3. The locker is at an in_interrupt() context.
+ * पढ़ो_lock() is recursive अगर:
+ * 1. We क्रमce lockdep think this way in selftests or
+ * 2. The implementation is not queued पढ़ो/ग_लिखो lock or
+ * 3. The locker is at an in_पूर्णांकerrupt() context.
  */
-bool read_lock_is_recursive(void)
-{
-	return force_read_lock_recursive ||
+bool पढ़ो_lock_is_recursive(व्योम)
+अणु
+	वापस क्रमce_पढ़ो_lock_recursive ||
 	       !IS_ENABLED(CONFIG_QUEUED_RWLOCKS) ||
-	       in_interrupt();
-}
-EXPORT_SYMBOL_GPL(read_lock_is_recursive);
+	       in_पूर्णांकerrupt();
+पूर्ण
+EXPORT_SYMBOL_GPL(पढ़ो_lock_is_recursive);
 
 /*
- * We are not always called with irqs disabled - do that here,
- * and also avoid lockdep recursion:
+ * We are not always called with irqs disabled - करो that here,
+ * and also aव्योम lockdep recursion:
  */
-void lock_acquire(struct lockdep_map *lock, unsigned int subclass,
-			  int trylock, int read, int check,
-			  struct lockdep_map *nest_lock, unsigned long ip)
-{
-	unsigned long flags;
+व्योम lock_acquire(काष्ठा lockdep_map *lock, अचिन्हित पूर्णांक subclass,
+			  पूर्णांक trylock, पूर्णांक पढ़ो, पूर्णांक check,
+			  काष्ठा lockdep_map *nest_lock, अचिन्हित दीर्घ ip)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	trace_lock_acquire(lock, subclass, trylock, read, check, nest_lock, ip);
+	trace_lock_acquire(lock, subclass, trylock, पढ़ो, check, nest_lock, ip);
 
-	if (!debug_locks)
-		return;
+	अगर (!debug_locks)
+		वापस;
 
-	if (unlikely(!lockdep_enabled())) {
+	अगर (unlikely(!lockdep_enabled())) अणु
 		/* XXX allow trylock from NMI ?!? */
-		if (lockdep_nmi() && !trylock) {
-			struct held_lock hlock;
+		अगर (lockdep_nmi() && !trylock) अणु
+			काष्ठा held_lock hlock;
 
 			hlock.acquire_ip = ip;
 			hlock.instance = lock;
 			hlock.nest_lock = nest_lock;
 			hlock.irq_context = 2; // XXX
 			hlock.trylock = trylock;
-			hlock.read = read;
+			hlock.पढ़ो = पढ़ो;
 			hlock.check = check;
 			hlock.hardirqs_off = true;
 			hlock.references = 0;
 
-			verify_lock_unused(lock, &hlock, subclass);
-		}
-		return;
-	}
+			verअगरy_lock_unused(lock, &hlock, subclass);
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	raw_local_irq_save(flags);
 	check_flags(flags);
 
 	lockdep_recursion_inc();
-	__lock_acquire(lock, subclass, trylock, read, check,
+	__lock_acquire(lock, subclass, trylock, पढ़ो, check,
 		       irqs_disabled_flags(flags), nest_lock, ip, 0, 0);
 	lockdep_recursion_finish();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lock_acquire);
 
-void lock_release(struct lockdep_map *lock, unsigned long ip)
-{
-	unsigned long flags;
+व्योम lock_release(काष्ठा lockdep_map *lock, अचिन्हित दीर्घ ip)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	trace_lock_release(lock, ip);
 
-	if (unlikely(!lockdep_enabled()))
-		return;
+	अगर (unlikely(!lockdep_enabled()))
+		वापस;
 
 	raw_local_irq_save(flags);
 	check_flags(flags);
 
 	lockdep_recursion_inc();
-	if (__lock_release(lock, ip))
+	अगर (__lock_release(lock, ip))
 		check_chain_key(current);
 	lockdep_recursion_finish();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lock_release);
 
-noinstr int lock_is_held_type(const struct lockdep_map *lock, int read)
-{
-	unsigned long flags;
-	int ret = LOCK_STATE_NOT_HELD;
+noinstr पूर्णांक lock_is_held_type(स्थिर काष्ठा lockdep_map *lock, पूर्णांक पढ़ो)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = LOCK_STATE_NOT_HELD;
 
 	/*
-	 * Avoid false negative lockdep_assert_held() and
-	 * lockdep_assert_not_held().
+	 * Aव्योम false negative lockdep_निश्चित_held() and
+	 * lockdep_निश्चित_not_held().
 	 */
-	if (unlikely(!lockdep_enabled()))
-		return LOCK_STATE_UNKNOWN;
+	अगर (unlikely(!lockdep_enabled()))
+		वापस LOCK_STATE_UNKNOWN;
 
 	raw_local_irq_save(flags);
 	check_flags(flags);
 
 	lockdep_recursion_inc();
-	ret = __lock_is_held(lock, read);
+	ret = __lock_is_held(lock, पढ़ो);
 	lockdep_recursion_finish();
 	raw_local_irq_restore(flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(lock_is_held_type);
 NOKPROBE_SYMBOL(lock_is_held_type);
 
-struct pin_cookie lock_pin_lock(struct lockdep_map *lock)
-{
-	struct pin_cookie cookie = NIL_COOKIE;
-	unsigned long flags;
+काष्ठा pin_cookie lock_pin_lock(काष्ठा lockdep_map *lock)
+अणु
+	काष्ठा pin_cookie cookie = NIL_COOKIE;
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!lockdep_enabled()))
-		return cookie;
+	अगर (unlikely(!lockdep_enabled()))
+		वापस cookie;
 
 	raw_local_irq_save(flags);
 	check_flags(flags);
@@ -5577,16 +5578,16 @@ struct pin_cookie lock_pin_lock(struct lockdep_map *lock)
 	lockdep_recursion_finish();
 	raw_local_irq_restore(flags);
 
-	return cookie;
-}
+	वापस cookie;
+पूर्ण
 EXPORT_SYMBOL_GPL(lock_pin_lock);
 
-void lock_repin_lock(struct lockdep_map *lock, struct pin_cookie cookie)
-{
-	unsigned long flags;
+व्योम lock_repin_lock(काष्ठा lockdep_map *lock, काष्ठा pin_cookie cookie)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!lockdep_enabled()))
-		return;
+	अगर (unlikely(!lockdep_enabled()))
+		वापस;
 
 	raw_local_irq_save(flags);
 	check_flags(flags);
@@ -5595,15 +5596,15 @@ void lock_repin_lock(struct lockdep_map *lock, struct pin_cookie cookie)
 	__lock_repin_lock(lock, cookie);
 	lockdep_recursion_finish();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lock_repin_lock);
 
-void lock_unpin_lock(struct lockdep_map *lock, struct pin_cookie cookie)
-{
-	unsigned long flags;
+व्योम lock_unpin_lock(काष्ठा lockdep_map *lock, काष्ठा pin_cookie cookie)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (unlikely(!lockdep_enabled()))
-		return;
+	अगर (unlikely(!lockdep_enabled()))
+		वापस;
 
 	raw_local_irq_save(flags);
 	check_flags(flags);
@@ -5612,134 +5613,134 @@ void lock_unpin_lock(struct lockdep_map *lock, struct pin_cookie cookie)
 	__lock_unpin_lock(lock, cookie);
 	lockdep_recursion_finish();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lock_unpin_lock);
 
-#ifdef CONFIG_LOCK_STAT
-static void print_lock_contention_bug(struct task_struct *curr,
-				      struct lockdep_map *lock,
-				      unsigned long ip)
-{
-	if (!debug_locks_off())
-		return;
-	if (debug_locks_silent)
-		return;
+#अगर_घोषित CONFIG_LOCK_STAT
+अटल व्योम prपूर्णांक_lock_contention_bug(काष्ठा task_काष्ठा *curr,
+				      काष्ठा lockdep_map *lock,
+				      अचिन्हित दीर्घ ip)
+अणु
+	अगर (!debug_locks_off())
+		वापस;
+	अगर (debug_locks_silent)
+		वापस;
 
 	pr_warn("\n");
 	pr_warn("=================================\n");
 	pr_warn("WARNING: bad contention detected!\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("---------------------------------\n");
 	pr_warn("%s/%d is trying to contend lock (",
 		curr->comm, task_pid_nr(curr));
-	print_lockdep_cache(lock);
+	prपूर्णांक_lockdep_cache(lock);
 	pr_cont(") at:\n");
-	print_ip_sym(KERN_WARNING, ip);
+	prपूर्णांक_ip_sym(KERN_WARNING, ip);
 	pr_warn("but there are no locks held!\n");
 	pr_warn("\nother info that might help us debug this:\n");
-	lockdep_print_held_locks(curr);
+	lockdep_prपूर्णांक_held_locks(curr);
 
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 
-static void
-__lock_contended(struct lockdep_map *lock, unsigned long ip)
-{
-	struct task_struct *curr = current;
-	struct held_lock *hlock;
-	struct lock_class_stats *stats;
-	unsigned int depth;
-	int i, contention_point, contending_point;
+अटल व्योम
+__lock_contended(काष्ठा lockdep_map *lock, अचिन्हित दीर्घ ip)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	काष्ठा held_lock *hlock;
+	काष्ठा lock_class_stats *stats;
+	अचिन्हित पूर्णांक depth;
+	पूर्णांक i, contention_poपूर्णांक, contending_poपूर्णांक;
 
 	depth = curr->lockdep_depth;
 	/*
 	 * Whee, we contended on this lock, except it seems we're not
 	 * actually trying to acquire anything much at all..
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!depth))
-		return;
+	अगर (DEBUG_LOCKS_WARN_ON(!depth))
+		वापस;
 
 	hlock = find_held_lock(curr, lock, depth, &i);
-	if (!hlock) {
-		print_lock_contention_bug(curr, lock, ip);
-		return;
-	}
+	अगर (!hlock) अणु
+		prपूर्णांक_lock_contention_bug(curr, lock, ip);
+		वापस;
+	पूर्ण
 
-	if (hlock->instance != lock)
-		return;
+	अगर (hlock->instance != lock)
+		वापस;
 
-	hlock->waittime_stamp = lockstat_clock();
+	hlock->रुकोसमय_stamp = lockstat_घड़ी();
 
-	contention_point = lock_point(hlock_class(hlock)->contention_point, ip);
-	contending_point = lock_point(hlock_class(hlock)->contending_point,
+	contention_poपूर्णांक = lock_poपूर्णांक(hlock_class(hlock)->contention_poपूर्णांक, ip);
+	contending_poपूर्णांक = lock_poपूर्णांक(hlock_class(hlock)->contending_poपूर्णांक,
 				      lock->ip);
 
 	stats = get_lock_stats(hlock_class(hlock));
-	if (contention_point < LOCKSTAT_POINTS)
-		stats->contention_point[contention_point]++;
-	if (contending_point < LOCKSTAT_POINTS)
-		stats->contending_point[contending_point]++;
-	if (lock->cpu != smp_processor_id())
-		stats->bounces[bounce_contended + !!hlock->read]++;
-}
+	अगर (contention_poपूर्णांक < LOCKSTAT_POINTS)
+		stats->contention_poपूर्णांक[contention_poपूर्णांक]++;
+	अगर (contending_poपूर्णांक < LOCKSTAT_POINTS)
+		stats->contending_poपूर्णांक[contending_poपूर्णांक]++;
+	अगर (lock->cpu != smp_processor_id())
+		stats->bounces[bounce_contended + !!hlock->पढ़ो]++;
+पूर्ण
 
-static void
-__lock_acquired(struct lockdep_map *lock, unsigned long ip)
-{
-	struct task_struct *curr = current;
-	struct held_lock *hlock;
-	struct lock_class_stats *stats;
-	unsigned int depth;
-	u64 now, waittime = 0;
-	int i, cpu;
+अटल व्योम
+__lock_acquired(काष्ठा lockdep_map *lock, अचिन्हित दीर्घ ip)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	काष्ठा held_lock *hlock;
+	काष्ठा lock_class_stats *stats;
+	अचिन्हित पूर्णांक depth;
+	u64 now, रुकोसमय = 0;
+	पूर्णांक i, cpu;
 
 	depth = curr->lockdep_depth;
 	/*
 	 * Yay, we acquired ownership of this lock we didn't try to
 	 * acquire, how the heck did that happen?
 	 */
-	if (DEBUG_LOCKS_WARN_ON(!depth))
-		return;
+	अगर (DEBUG_LOCKS_WARN_ON(!depth))
+		वापस;
 
 	hlock = find_held_lock(curr, lock, depth, &i);
-	if (!hlock) {
-		print_lock_contention_bug(curr, lock, _RET_IP_);
-		return;
-	}
+	अगर (!hlock) अणु
+		prपूर्णांक_lock_contention_bug(curr, lock, _RET_IP_);
+		वापस;
+	पूर्ण
 
-	if (hlock->instance != lock)
-		return;
+	अगर (hlock->instance != lock)
+		वापस;
 
 	cpu = smp_processor_id();
-	if (hlock->waittime_stamp) {
-		now = lockstat_clock();
-		waittime = now - hlock->waittime_stamp;
-		hlock->holdtime_stamp = now;
-	}
+	अगर (hlock->रुकोसमय_stamp) अणु
+		now = lockstat_घड़ी();
+		रुकोसमय = now - hlock->रुकोसमय_stamp;
+		hlock->holdसमय_stamp = now;
+	पूर्ण
 
 	stats = get_lock_stats(hlock_class(hlock));
-	if (waittime) {
-		if (hlock->read)
-			lock_time_inc(&stats->read_waittime, waittime);
-		else
-			lock_time_inc(&stats->write_waittime, waittime);
-	}
-	if (lock->cpu != cpu)
-		stats->bounces[bounce_acquired + !!hlock->read]++;
+	अगर (रुकोसमय) अणु
+		अगर (hlock->पढ़ो)
+			lock_समय_inc(&stats->पढ़ो_रुकोसमय, रुकोसमय);
+		अन्यथा
+			lock_समय_inc(&stats->ग_लिखो_रुकोसमय, रुकोसमय);
+	पूर्ण
+	अगर (lock->cpu != cpu)
+		stats->bounces[bounce_acquired + !!hlock->पढ़ो]++;
 
 	lock->cpu = cpu;
 	lock->ip = ip;
-}
+पूर्ण
 
-void lock_contended(struct lockdep_map *lock, unsigned long ip)
-{
-	unsigned long flags;
+व्योम lock_contended(काष्ठा lockdep_map *lock, अचिन्हित दीर्घ ip)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	trace_lock_contended(lock, ip);
 
-	if (unlikely(!lock_stat || !lockdep_enabled()))
-		return;
+	अगर (unlikely(!lock_stat || !lockdep_enabled()))
+		वापस;
 
 	raw_local_irq_save(flags);
 	check_flags(flags);
@@ -5747,17 +5748,17 @@ void lock_contended(struct lockdep_map *lock, unsigned long ip)
 	__lock_contended(lock, ip);
 	lockdep_recursion_finish();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lock_contended);
 
-void lock_acquired(struct lockdep_map *lock, unsigned long ip)
-{
-	unsigned long flags;
+व्योम lock_acquired(काष्ठा lockdep_map *lock, अचिन्हित दीर्घ ip)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	trace_lock_acquired(lock, ip);
 
-	if (unlikely(!lock_stat || !lockdep_enabled()))
-		return;
+	अगर (unlikely(!lock_stat || !lockdep_enabled()))
+		वापस;
 
 	raw_local_irq_save(flags);
 	check_flags(flags);
@@ -5765,91 +5766,91 @@ void lock_acquired(struct lockdep_map *lock, unsigned long ip)
 	__lock_acquired(lock, ip);
 	lockdep_recursion_finish();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lock_acquired);
-#endif
+#पूर्ण_अगर
 
 /*
  * Used by the testsuite, sanitize the validator state
  * after a simulated failure:
  */
 
-void lockdep_reset(void)
-{
-	unsigned long flags;
-	int i;
+व्योम lockdep_reset(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	raw_local_irq_save(flags);
 	lockdep_init_task(current);
-	memset(current->held_locks, 0, MAX_LOCK_DEPTH*sizeof(struct held_lock));
+	स_रखो(current->held_locks, 0, MAX_LOCK_DEPTH*माप(काष्ठा held_lock));
 	nr_hardirq_chains = 0;
 	nr_softirq_chains = 0;
 	nr_process_chains = 0;
 	debug_locks = 1;
-	for (i = 0; i < CHAINHASH_SIZE; i++)
+	क्रम (i = 0; i < CHAINHASH_SIZE; i++)
 		INIT_HLIST_HEAD(chainhash_table + i);
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 
 /* Remove a class from a lock chain. Must be called with the graph lock held. */
-static void remove_class_from_lock_chain(struct pending_free *pf,
-					 struct lock_chain *chain,
-					 struct lock_class *class)
-{
-#ifdef CONFIG_PROVE_LOCKING
-	int i;
+अटल व्योम हटाओ_class_from_lock_chain(काष्ठा pending_मुक्त *pf,
+					 काष्ठा lock_chain *chain,
+					 काष्ठा lock_class *class)
+अणु
+#अगर_घोषित CONFIG_PROVE_LOCKING
+	पूर्णांक i;
 
-	for (i = chain->base; i < chain->base + chain->depth; i++) {
-		if (chain_hlock_class_idx(chain_hlocks[i]) != class - lock_classes)
-			continue;
+	क्रम (i = chain->base; i < chain->base + chain->depth; i++) अणु
+		अगर (chain_hlock_class_idx(chain_hlocks[i]) != class - lock_classes)
+			जारी;
 		/*
 		 * Each lock class occurs at most once in a lock chain so once
-		 * we found a match we can break out of this loop.
+		 * we found a match we can अवरोध out of this loop.
 		 */
-		goto free_lock_chain;
-	}
-	/* Since the chain has not been modified, return. */
-	return;
+		जाओ मुक्त_lock_chain;
+	पूर्ण
+	/* Since the chain has not been modअगरied, वापस. */
+	वापस;
 
-free_lock_chain:
-	free_chain_hlocks(chain->base, chain->depth);
-	/* Overwrite the chain key for concurrent RCU readers. */
+मुक्त_lock_chain:
+	मुक्त_chain_hlocks(chain->base, chain->depth);
+	/* Overग_लिखो the chain key क्रम concurrent RCU पढ़ोers. */
 	WRITE_ONCE(chain->chain_key, INITIAL_CHAIN_KEY);
 	dec_chains(chain->irq_context);
 
 	/*
 	 * Note: calling hlist_del_rcu() from inside a
-	 * hlist_for_each_entry_rcu() loop is safe.
+	 * hlist_क्रम_each_entry_rcu() loop is safe.
 	 */
 	hlist_del_rcu(&chain->entry);
-	__set_bit(chain - lock_chains, pf->lock_chains_being_freed);
+	__set_bit(chain - lock_chains, pf->lock_chains_being_मुक्तd);
 	nr_zapped_lock_chains++;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /* Must be called with the graph lock held. */
-static void remove_class_from_lock_chains(struct pending_free *pf,
-					  struct lock_class *class)
-{
-	struct lock_chain *chain;
-	struct hlist_head *head;
-	int i;
+अटल व्योम हटाओ_class_from_lock_chains(काष्ठा pending_मुक्त *pf,
+					  काष्ठा lock_class *class)
+अणु
+	काष्ठा lock_chain *chain;
+	काष्ठा hlist_head *head;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(chainhash_table); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(chainhash_table); i++) अणु
 		head = chainhash_table + i;
-		hlist_for_each_entry_rcu(chain, head, entry) {
-			remove_class_from_lock_chain(pf, chain, class);
-		}
-	}
-}
+		hlist_क्रम_each_entry_rcu(chain, head, entry) अणु
+			हटाओ_class_from_lock_chain(pf, chain, class);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Remove all references to a lock class. The caller must hold the graph lock.
  */
-static void zap_class(struct pending_free *pf, struct lock_class *class)
-{
-	struct lock_list *entry;
-	int i;
+अटल व्योम zap_class(काष्ठा pending_मुक्त *pf, काष्ठा lock_class *class)
+अणु
+	काष्ठा lock_list *entry;
+	पूर्णांक i;
 
 	WARN_ON_ONCE(!class->key);
 
@@ -5857,128 +5858,128 @@ static void zap_class(struct pending_free *pf, struct lock_class *class)
 	 * Remove all dependencies this lock is
 	 * involved in:
 	 */
-	for_each_set_bit(i, list_entries_in_use, ARRAY_SIZE(list_entries)) {
+	क्रम_each_set_bit(i, list_entries_in_use, ARRAY_SIZE(list_entries)) अणु
 		entry = list_entries + i;
-		if (entry->class != class && entry->links_to != class)
-			continue;
+		अगर (entry->class != class && entry->links_to != class)
+			जारी;
 		__clear_bit(i, list_entries_in_use);
 		nr_list_entries--;
 		list_del_rcu(&entry->entry);
-	}
-	if (list_empty(&class->locks_after) &&
-	    list_empty(&class->locks_before)) {
+	पूर्ण
+	अगर (list_empty(&class->locks_after) &&
+	    list_empty(&class->locks_beक्रमe)) अणु
 		list_move_tail(&class->lock_entry, &pf->zapped);
 		hlist_del_rcu(&class->hash_entry);
-		WRITE_ONCE(class->key, NULL);
-		WRITE_ONCE(class->name, NULL);
+		WRITE_ONCE(class->key, शून्य);
+		WRITE_ONCE(class->name, शून्य);
 		nr_lock_classes--;
 		__clear_bit(class - lock_classes, lock_classes_in_use);
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ONCE(true, "%s() failed for class %s\n", __func__,
 			  class->name);
-	}
+	पूर्ण
 
-	remove_class_from_lock_chains(pf, class);
+	हटाओ_class_from_lock_chains(pf, class);
 	nr_zapped_classes++;
-}
+पूर्ण
 
-static void reinit_class(struct lock_class *class)
-{
-	void *const p = class;
-	const unsigned int offset = offsetof(struct lock_class, key);
+अटल व्योम reinit_class(काष्ठा lock_class *class)
+अणु
+	व्योम *स्थिर p = class;
+	स्थिर अचिन्हित पूर्णांक offset = दुरत्व(काष्ठा lock_class, key);
 
 	WARN_ON_ONCE(!class->lock_entry.next);
 	WARN_ON_ONCE(!list_empty(&class->locks_after));
-	WARN_ON_ONCE(!list_empty(&class->locks_before));
-	memset(p + offset, 0, sizeof(*class) - offset);
+	WARN_ON_ONCE(!list_empty(&class->locks_beक्रमe));
+	स_रखो(p + offset, 0, माप(*class) - offset);
 	WARN_ON_ONCE(!class->lock_entry.next);
 	WARN_ON_ONCE(!list_empty(&class->locks_after));
-	WARN_ON_ONCE(!list_empty(&class->locks_before));
-}
+	WARN_ON_ONCE(!list_empty(&class->locks_beक्रमe));
+पूर्ण
 
-static inline int within(const void *addr, void *start, unsigned long size)
-{
-	return addr >= start && addr < start + size;
-}
+अटल अंतरभूत पूर्णांक within(स्थिर व्योम *addr, व्योम *start, अचिन्हित दीर्घ size)
+अणु
+	वापस addr >= start && addr < start + size;
+पूर्ण
 
-static bool inside_selftest(void)
-{
-	return current == lockdep_selftest_task_struct;
-}
+अटल bool inside_selftest(व्योम)
+अणु
+	वापस current == lockdep_selftest_task_काष्ठा;
+पूर्ण
 
 /* The caller must hold the graph lock. */
-static struct pending_free *get_pending_free(void)
-{
-	return delayed_free.pf + delayed_free.index;
-}
+अटल काष्ठा pending_मुक्त *get_pending_मुक्त(व्योम)
+अणु
+	वापस delayed_मुक्त.pf + delayed_मुक्त.index;
+पूर्ण
 
-static void free_zapped_rcu(struct rcu_head *cb);
+अटल व्योम मुक्त_zapped_rcu(काष्ठा rcu_head *cb);
 
 /*
- * Schedule an RCU callback if no RCU callback is pending. Must be called with
+ * Schedule an RCU callback अगर no RCU callback is pending. Must be called with
  * the graph lock held.
  */
-static void call_rcu_zapped(struct pending_free *pf)
-{
+अटल व्योम call_rcu_zapped(काष्ठा pending_मुक्त *pf)
+अणु
 	WARN_ON_ONCE(inside_selftest());
 
-	if (list_empty(&pf->zapped))
-		return;
+	अगर (list_empty(&pf->zapped))
+		वापस;
 
-	if (delayed_free.scheduled)
-		return;
+	अगर (delayed_मुक्त.scheduled)
+		वापस;
 
-	delayed_free.scheduled = true;
+	delayed_मुक्त.scheduled = true;
 
-	WARN_ON_ONCE(delayed_free.pf + delayed_free.index != pf);
-	delayed_free.index ^= 1;
+	WARN_ON_ONCE(delayed_मुक्त.pf + delayed_मुक्त.index != pf);
+	delayed_मुक्त.index ^= 1;
 
-	call_rcu(&delayed_free.rcu_head, free_zapped_rcu);
-}
+	call_rcu(&delayed_मुक्त.rcu_head, मुक्त_zapped_rcu);
+पूर्ण
 
 /* The caller must hold the graph lock. May be called from RCU context. */
-static void __free_zapped_classes(struct pending_free *pf)
-{
-	struct lock_class *class;
+अटल व्योम __मुक्त_zapped_classes(काष्ठा pending_मुक्त *pf)
+अणु
+	काष्ठा lock_class *class;
 
-	check_data_structures();
+	check_data_काष्ठाures();
 
-	list_for_each_entry(class, &pf->zapped, lock_entry)
+	list_क्रम_each_entry(class, &pf->zapped, lock_entry)
 		reinit_class(class);
 
-	list_splice_init(&pf->zapped, &free_lock_classes);
+	list_splice_init(&pf->zapped, &मुक्त_lock_classes);
 
-#ifdef CONFIG_PROVE_LOCKING
-	bitmap_andnot(lock_chains_in_use, lock_chains_in_use,
-		      pf->lock_chains_being_freed, ARRAY_SIZE(lock_chains));
-	bitmap_clear(pf->lock_chains_being_freed, 0, ARRAY_SIZE(lock_chains));
-#endif
-}
+#अगर_घोषित CONFIG_PROVE_LOCKING
+	biपंचांगap_andnot(lock_chains_in_use, lock_chains_in_use,
+		      pf->lock_chains_being_मुक्तd, ARRAY_SIZE(lock_chains));
+	biपंचांगap_clear(pf->lock_chains_being_मुक्तd, 0, ARRAY_SIZE(lock_chains));
+#पूर्ण_अगर
+पूर्ण
 
-static void free_zapped_rcu(struct rcu_head *ch)
-{
-	struct pending_free *pf;
-	unsigned long flags;
+अटल व्योम मुक्त_zapped_rcu(काष्ठा rcu_head *ch)
+अणु
+	काष्ठा pending_मुक्त *pf;
+	अचिन्हित दीर्घ flags;
 
-	if (WARN_ON_ONCE(ch != &delayed_free.rcu_head))
-		return;
+	अगर (WARN_ON_ONCE(ch != &delayed_मुक्त.rcu_head))
+		वापस;
 
 	raw_local_irq_save(flags);
 	lockdep_lock();
 
-	/* closed head */
-	pf = delayed_free.pf + (delayed_free.index ^ 1);
-	__free_zapped_classes(pf);
-	delayed_free.scheduled = false;
+	/* बंदd head */
+	pf = delayed_मुक्त.pf + (delayed_मुक्त.index ^ 1);
+	__मुक्त_zapped_classes(pf);
+	delayed_मुक्त.scheduled = false;
 
 	/*
-	 * If there's anything on the open list, close and start a new callback.
+	 * If there's anything on the खोलो list, बंद and start a new callback.
 	 */
-	call_rcu_zapped(delayed_free.pf + delayed_free.index);
+	call_rcu_zapped(delayed_मुक्त.pf + delayed_मुक्त.index);
 
 	lockdep_unlock();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 
 /*
  * Remove all lock classes from the class hash table and from the
@@ -5986,211 +5987,211 @@ static void free_zapped_rcu(struct rcu_head *ch)
  * start + size). Move these lock classes to the zapped_classes list. Must
  * be called with the graph lock held.
  */
-static void __lockdep_free_key_range(struct pending_free *pf, void *start,
-				     unsigned long size)
-{
-	struct lock_class *class;
-	struct hlist_head *head;
-	int i;
+अटल व्योम __lockdep_मुक्त_key_range(काष्ठा pending_मुक्त *pf, व्योम *start,
+				     अचिन्हित दीर्घ size)
+अणु
+	काष्ठा lock_class *class;
+	काष्ठा hlist_head *head;
+	पूर्णांक i;
 
 	/* Unhash all classes that were created by a module. */
-	for (i = 0; i < CLASSHASH_SIZE; i++) {
+	क्रम (i = 0; i < CLASSHASH_SIZE; i++) अणु
 		head = classhash_table + i;
-		hlist_for_each_entry_rcu(class, head, hash_entry) {
-			if (!within(class->key, start, size) &&
+		hlist_क्रम_each_entry_rcu(class, head, hash_entry) अणु
+			अगर (!within(class->key, start, size) &&
 			    !within(class->name, start, size))
-				continue;
+				जारी;
 			zap_class(pf, class);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Used in module.c to remove lock classes from memory that is going to be
- * freed; and possibly re-used by other modules.
+ * Used in module.c to हटाओ lock classes from memory that is going to be
+ * मुक्तd; and possibly re-used by other modules.
  *
- * We will have had one synchronize_rcu() before getting here, so we're
+ * We will have had one synchronize_rcu() beक्रमe getting here, so we're
  * guaranteed nobody will look up these exact classes -- they're properly dead
  * but still allocated.
  */
-static void lockdep_free_key_range_reg(void *start, unsigned long size)
-{
-	struct pending_free *pf;
-	unsigned long flags;
+अटल व्योम lockdep_मुक्त_key_range_reg(व्योम *start, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा pending_मुक्त *pf;
+	अचिन्हित दीर्घ flags;
 
-	init_data_structures_once();
+	init_data_काष्ठाures_once();
 
 	raw_local_irq_save(flags);
 	lockdep_lock();
-	pf = get_pending_free();
-	__lockdep_free_key_range(pf, start, size);
+	pf = get_pending_मुक्त();
+	__lockdep_मुक्त_key_range(pf, start, size);
 	call_rcu_zapped(pf);
 	lockdep_unlock();
 	raw_local_irq_restore(flags);
 
 	/*
-	 * Wait for any possible iterators from look_up_lock_class() to pass
-	 * before continuing to free the memory they refer to.
+	 * Wait क्रम any possible iterators from look_up_lock_class() to pass
+	 * beक्रमe continuing to मुक्त the memory they refer to.
 	 */
 	synchronize_rcu();
-}
+पूर्ण
 
 /*
  * Free all lockdep keys in the range [start, start+size). Does not sleep.
  * Ignores debug_locks. Must only be used by the lockdep selftests.
  */
-static void lockdep_free_key_range_imm(void *start, unsigned long size)
-{
-	struct pending_free *pf = delayed_free.pf;
-	unsigned long flags;
+अटल व्योम lockdep_मुक्त_key_range_imm(व्योम *start, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा pending_मुक्त *pf = delayed_मुक्त.pf;
+	अचिन्हित दीर्घ flags;
 
-	init_data_structures_once();
+	init_data_काष्ठाures_once();
 
 	raw_local_irq_save(flags);
 	lockdep_lock();
-	__lockdep_free_key_range(pf, start, size);
-	__free_zapped_classes(pf);
+	__lockdep_मुक्त_key_range(pf, start, size);
+	__मुक्त_zapped_classes(pf);
 	lockdep_unlock();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 
-void lockdep_free_key_range(void *start, unsigned long size)
-{
-	init_data_structures_once();
+व्योम lockdep_मुक्त_key_range(व्योम *start, अचिन्हित दीर्घ size)
+अणु
+	init_data_काष्ठाures_once();
 
-	if (inside_selftest())
-		lockdep_free_key_range_imm(start, size);
-	else
-		lockdep_free_key_range_reg(start, size);
-}
+	अगर (inside_selftest())
+		lockdep_मुक्त_key_range_imm(start, size);
+	अन्यथा
+		lockdep_मुक्त_key_range_reg(start, size);
+पूर्ण
 
 /*
  * Check whether any element of the @lock->class_cache[] array refers to a
- * registered lock class. The caller must hold either the graph lock or the
- * RCU read lock.
+ * रेजिस्टरed lock class. The caller must hold either the graph lock or the
+ * RCU पढ़ो lock.
  */
-static bool lock_class_cache_is_registered(struct lockdep_map *lock)
-{
-	struct lock_class *class;
-	struct hlist_head *head;
-	int i, j;
+अटल bool lock_class_cache_is_रेजिस्टरed(काष्ठा lockdep_map *lock)
+अणु
+	काष्ठा lock_class *class;
+	काष्ठा hlist_head *head;
+	पूर्णांक i, j;
 
-	for (i = 0; i < CLASSHASH_SIZE; i++) {
+	क्रम (i = 0; i < CLASSHASH_SIZE; i++) अणु
 		head = classhash_table + i;
-		hlist_for_each_entry_rcu(class, head, hash_entry) {
-			for (j = 0; j < NR_LOCKDEP_CACHING_CLASSES; j++)
-				if (lock->class_cache[j] == class)
-					return true;
-		}
-	}
-	return false;
-}
+		hlist_क्रम_each_entry_rcu(class, head, hash_entry) अणु
+			क्रम (j = 0; j < NR_LOCKDEP_CACHING_CLASSES; j++)
+				अगर (lock->class_cache[j] == class)
+					वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /* The caller must hold the graph lock. Does not sleep. */
-static void __lockdep_reset_lock(struct pending_free *pf,
-				 struct lockdep_map *lock)
-{
-	struct lock_class *class;
-	int j;
+अटल व्योम __lockdep_reset_lock(काष्ठा pending_मुक्त *pf,
+				 काष्ठा lockdep_map *lock)
+अणु
+	काष्ठा lock_class *class;
+	पूर्णांक j;
 
 	/*
 	 * Remove all classes this lock might have:
 	 */
-	for (j = 0; j < MAX_LOCKDEP_SUBCLASSES; j++) {
+	क्रम (j = 0; j < MAX_LOCKDEP_SUBCLASSES; j++) अणु
 		/*
 		 * If the class exists we look it up and zap it:
 		 */
 		class = look_up_lock_class(lock, j);
-		if (class)
+		अगर (class)
 			zap_class(pf, class);
-	}
+	पूर्ण
 	/*
 	 * Debug check: in the end all mapped classes should
 	 * be gone.
 	 */
-	if (WARN_ON_ONCE(lock_class_cache_is_registered(lock)))
+	अगर (WARN_ON_ONCE(lock_class_cache_is_रेजिस्टरed(lock)))
 		debug_locks_off();
-}
+पूर्ण
 
 /*
- * Remove all information lockdep has about a lock if debug_locks == 1. Free
- * released data structures from RCU context.
+ * Remove all inक्रमmation lockdep has about a lock अगर debug_locks == 1. Free
+ * released data काष्ठाures from RCU context.
  */
-static void lockdep_reset_lock_reg(struct lockdep_map *lock)
-{
-	struct pending_free *pf;
-	unsigned long flags;
-	int locked;
+अटल व्योम lockdep_reset_lock_reg(काष्ठा lockdep_map *lock)
+अणु
+	काष्ठा pending_मुक्त *pf;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक locked;
 
 	raw_local_irq_save(flags);
 	locked = graph_lock();
-	if (!locked)
-		goto out_irq;
+	अगर (!locked)
+		जाओ out_irq;
 
-	pf = get_pending_free();
+	pf = get_pending_मुक्त();
 	__lockdep_reset_lock(pf, lock);
 	call_rcu_zapped(pf);
 
 	graph_unlock();
 out_irq:
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 
 /*
  * Reset a lock. Does not sleep. Ignores debug_locks. Must only be used by the
  * lockdep selftests.
  */
-static void lockdep_reset_lock_imm(struct lockdep_map *lock)
-{
-	struct pending_free *pf = delayed_free.pf;
-	unsigned long flags;
+अटल व्योम lockdep_reset_lock_imm(काष्ठा lockdep_map *lock)
+अणु
+	काष्ठा pending_मुक्त *pf = delayed_मुक्त.pf;
+	अचिन्हित दीर्घ flags;
 
 	raw_local_irq_save(flags);
 	lockdep_lock();
 	__lockdep_reset_lock(pf, lock);
-	__free_zapped_classes(pf);
+	__मुक्त_zapped_classes(pf);
 	lockdep_unlock();
 	raw_local_irq_restore(flags);
-}
+पूर्ण
 
-void lockdep_reset_lock(struct lockdep_map *lock)
-{
-	init_data_structures_once();
+व्योम lockdep_reset_lock(काष्ठा lockdep_map *lock)
+अणु
+	init_data_काष्ठाures_once();
 
-	if (inside_selftest())
+	अगर (inside_selftest())
 		lockdep_reset_lock_imm(lock);
-	else
+	अन्यथा
 		lockdep_reset_lock_reg(lock);
-}
+पूर्ण
 
-/* Unregister a dynamically allocated key. */
-void lockdep_unregister_key(struct lock_class_key *key)
-{
-	struct hlist_head *hash_head = keyhashentry(key);
-	struct lock_class_key *k;
-	struct pending_free *pf;
-	unsigned long flags;
+/* Unरेजिस्टर a dynamically allocated key. */
+व्योम lockdep_unरेजिस्टर_key(काष्ठा lock_class_key *key)
+अणु
+	काष्ठा hlist_head *hash_head = keyhashentry(key);
+	काष्ठा lock_class_key *k;
+	काष्ठा pending_मुक्त *pf;
+	अचिन्हित दीर्घ flags;
 	bool found = false;
 
 	might_sleep();
 
-	if (WARN_ON_ONCE(static_obj(key)))
-		return;
+	अगर (WARN_ON_ONCE(अटल_obj(key)))
+		वापस;
 
 	raw_local_irq_save(flags);
-	if (!graph_lock())
-		goto out_irq;
+	अगर (!graph_lock())
+		जाओ out_irq;
 
-	pf = get_pending_free();
-	hlist_for_each_entry_rcu(k, hash_head, hash_entry) {
-		if (k == key) {
+	pf = get_pending_मुक्त();
+	hlist_क्रम_each_entry_rcu(k, hash_head, hash_entry) अणु
+		अगर (k == key) अणु
 			hlist_del_rcu(&k->hash_entry);
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	WARN_ON_ONCE(!found);
-	__lockdep_free_key_range(pf, key, 1);
+	__lockdep_मुक्त_key_range(pf, key, 1);
 	call_rcu_zapped(pf);
 	graph_unlock();
 out_irq:
@@ -6198,207 +6199,207 @@ out_irq:
 
 	/* Wait until is_dynamic_key() has finished accessing k->hash_entry. */
 	synchronize_rcu();
-}
-EXPORT_SYMBOL_GPL(lockdep_unregister_key);
+पूर्ण
+EXPORT_SYMBOL_GPL(lockdep_unरेजिस्टर_key);
 
-void __init lockdep_init(void)
-{
-	printk("Lock dependency validator: Copyright (c) 2006 Red Hat, Inc., Ingo Molnar\n");
+व्योम __init lockdep_init(व्योम)
+अणु
+	prपूर्णांकk("Lock dependency validator: Copyright (c) 2006 Red Hat, Inc., Ingo Molnar\n");
 
-	printk("... MAX_LOCKDEP_SUBCLASSES:  %lu\n", MAX_LOCKDEP_SUBCLASSES);
-	printk("... MAX_LOCK_DEPTH:          %lu\n", MAX_LOCK_DEPTH);
-	printk("... MAX_LOCKDEP_KEYS:        %lu\n", MAX_LOCKDEP_KEYS);
-	printk("... CLASSHASH_SIZE:          %lu\n", CLASSHASH_SIZE);
-	printk("... MAX_LOCKDEP_ENTRIES:     %lu\n", MAX_LOCKDEP_ENTRIES);
-	printk("... MAX_LOCKDEP_CHAINS:      %lu\n", MAX_LOCKDEP_CHAINS);
-	printk("... CHAINHASH_SIZE:          %lu\n", CHAINHASH_SIZE);
+	prपूर्णांकk("... MAX_LOCKDEP_SUBCLASSES:  %lu\n", MAX_LOCKDEP_SUBCLASSES);
+	prपूर्णांकk("... MAX_LOCK_DEPTH:          %lu\n", MAX_LOCK_DEPTH);
+	prपूर्णांकk("... MAX_LOCKDEP_KEYS:        %lu\n", MAX_LOCKDEP_KEYS);
+	prपूर्णांकk("... CLASSHASH_SIZE:          %lu\n", CLASSHASH_SIZE);
+	prपूर्णांकk("... MAX_LOCKDEP_ENTRIES:     %lu\n", MAX_LOCKDEP_ENTRIES);
+	prपूर्णांकk("... MAX_LOCKDEP_CHAINS:      %lu\n", MAX_LOCKDEP_CHAINS);
+	prपूर्णांकk("... CHAINHASH_SIZE:          %lu\n", CHAINHASH_SIZE);
 
-	printk(" memory used by lock dependency info: %zu kB\n",
-	       (sizeof(lock_classes) +
-		sizeof(lock_classes_in_use) +
-		sizeof(classhash_table) +
-		sizeof(list_entries) +
-		sizeof(list_entries_in_use) +
-		sizeof(chainhash_table) +
-		sizeof(delayed_free)
-#ifdef CONFIG_PROVE_LOCKING
-		+ sizeof(lock_cq)
-		+ sizeof(lock_chains)
-		+ sizeof(lock_chains_in_use)
-		+ sizeof(chain_hlocks)
-#endif
+	prपूर्णांकk(" memory used by lock dependency info: %zu kB\n",
+	       (माप(lock_classes) +
+		माप(lock_classes_in_use) +
+		माप(classhash_table) +
+		माप(list_entries) +
+		माप(list_entries_in_use) +
+		माप(chainhash_table) +
+		माप(delayed_मुक्त)
+#अगर_घोषित CONFIG_PROVE_LOCKING
+		+ माप(lock_cq)
+		+ माप(lock_chains)
+		+ माप(lock_chains_in_use)
+		+ माप(chain_hlocks)
+#पूर्ण_अगर
 		) / 1024
 		);
 
-#if defined(CONFIG_TRACE_IRQFLAGS) && defined(CONFIG_PROVE_LOCKING)
-	printk(" memory used for stack traces: %zu kB\n",
-	       (sizeof(stack_trace) + sizeof(stack_trace_hash)) / 1024
+#अगर defined(CONFIG_TRACE_IRQFLAGS) && defined(CONFIG_PROVE_LOCKING)
+	prपूर्णांकk(" memory used for stack traces: %zu kB\n",
+	       (माप(stack_trace) + माप(stack_trace_hash)) / 1024
 	       );
-#endif
+#पूर्ण_अगर
 
-	printk(" per task-struct memory footprint: %zu bytes\n",
-	       sizeof(((struct task_struct *)NULL)->held_locks));
-}
+	prपूर्णांकk(" per task-struct memory footprint: %zu bytes\n",
+	       माप(((काष्ठा task_काष्ठा *)शून्य)->held_locks));
+पूर्ण
 
-static void
-print_freed_lock_bug(struct task_struct *curr, const void *mem_from,
-		     const void *mem_to, struct held_lock *hlock)
-{
-	if (!debug_locks_off())
-		return;
-	if (debug_locks_silent)
-		return;
+अटल व्योम
+prपूर्णांक_मुक्तd_lock_bug(काष्ठा task_काष्ठा *curr, स्थिर व्योम *mem_from,
+		     स्थिर व्योम *mem_to, काष्ठा held_lock *hlock)
+अणु
+	अगर (!debug_locks_off())
+		वापस;
+	अगर (debug_locks_silent)
+		वापस;
 
 	pr_warn("\n");
 	pr_warn("=========================\n");
 	pr_warn("WARNING: held lock freed!\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("-------------------------\n");
 	pr_warn("%s/%d is freeing memory %px-%px, with a lock still held there!\n",
 		curr->comm, task_pid_nr(curr), mem_from, mem_to-1);
-	print_lock(hlock);
-	lockdep_print_held_locks(curr);
+	prपूर्णांक_lock(hlock);
+	lockdep_prपूर्णांक_held_locks(curr);
 
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 
-static inline int not_in_range(const void* mem_from, unsigned long mem_len,
-				const void* lock_from, unsigned long lock_len)
-{
-	return lock_from + lock_len <= mem_from ||
+अटल अंतरभूत पूर्णांक not_in_range(स्थिर व्योम* mem_from, अचिन्हित दीर्घ mem_len,
+				स्थिर व्योम* lock_from, अचिन्हित दीर्घ lock_len)
+अणु
+	वापस lock_from + lock_len <= mem_from ||
 		mem_from + mem_len <= lock_from;
-}
+पूर्ण
 
 /*
- * Called when kernel memory is freed (or unmapped), or if a lock
+ * Called when kernel memory is मुक्तd (or unmapped), or अगर a lock
  * is destroyed or reinitialized - this code checks whether there is
  * any held lock in the memory range of <from> to <to>:
  */
-void debug_check_no_locks_freed(const void *mem_from, unsigned long mem_len)
-{
-	struct task_struct *curr = current;
-	struct held_lock *hlock;
-	unsigned long flags;
-	int i;
+व्योम debug_check_no_locks_मुक्तd(स्थिर व्योम *mem_from, अचिन्हित दीर्घ mem_len)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
+	काष्ठा held_lock *hlock;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	if (unlikely(!debug_locks))
-		return;
+	अगर (unlikely(!debug_locks))
+		वापस;
 
 	raw_local_irq_save(flags);
-	for (i = 0; i < curr->lockdep_depth; i++) {
+	क्रम (i = 0; i < curr->lockdep_depth; i++) अणु
 		hlock = curr->held_locks + i;
 
-		if (not_in_range(mem_from, mem_len, hlock->instance,
-					sizeof(*hlock->instance)))
-			continue;
+		अगर (not_in_range(mem_from, mem_len, hlock->instance,
+					माप(*hlock->instance)))
+			जारी;
 
-		print_freed_lock_bug(curr, mem_from, mem_from + mem_len, hlock);
-		break;
-	}
+		prपूर्णांक_मुक्तd_lock_bug(curr, mem_from, mem_from + mem_len, hlock);
+		अवरोध;
+	पूर्ण
 	raw_local_irq_restore(flags);
-}
-EXPORT_SYMBOL_GPL(debug_check_no_locks_freed);
+पूर्ण
+EXPORT_SYMBOL_GPL(debug_check_no_locks_मुक्तd);
 
-static void print_held_locks_bug(void)
-{
-	if (!debug_locks_off())
-		return;
-	if (debug_locks_silent)
-		return;
+अटल व्योम prपूर्णांक_held_locks_bug(व्योम)
+अणु
+	अगर (!debug_locks_off())
+		वापस;
+	अगर (debug_locks_silent)
+		वापस;
 
 	pr_warn("\n");
 	pr_warn("====================================\n");
 	pr_warn("WARNING: %s/%d still has locks held!\n",
 	       current->comm, task_pid_nr(current));
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("------------------------------------\n");
-	lockdep_print_held_locks(current);
+	lockdep_prपूर्णांक_held_locks(current);
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 
-void debug_check_no_locks_held(void)
-{
-	if (unlikely(current->lockdep_depth > 0))
-		print_held_locks_bug();
-}
+व्योम debug_check_no_locks_held(व्योम)
+अणु
+	अगर (unlikely(current->lockdep_depth > 0))
+		prपूर्णांक_held_locks_bug();
+पूर्ण
 EXPORT_SYMBOL_GPL(debug_check_no_locks_held);
 
-#ifdef __KERNEL__
-void debug_show_all_locks(void)
-{
-	struct task_struct *g, *p;
+#अगर_घोषित __KERNEL__
+व्योम debug_show_all_locks(व्योम)
+अणु
+	काष्ठा task_काष्ठा *g, *p;
 
-	if (unlikely(!debug_locks)) {
+	अगर (unlikely(!debug_locks)) अणु
 		pr_warn("INFO: lockdep is turned off.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	pr_warn("\nShowing all locks held in the system:\n");
 
-	rcu_read_lock();
-	for_each_process_thread(g, p) {
-		if (!p->lockdep_depth)
-			continue;
-		lockdep_print_held_locks(p);
-		touch_nmi_watchdog();
-		touch_all_softlockup_watchdogs();
-	}
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	क्रम_each_process_thपढ़ो(g, p) अणु
+		अगर (!p->lockdep_depth)
+			जारी;
+		lockdep_prपूर्णांक_held_locks(p);
+		touch_nmi_watchकरोg();
+		touch_all_softlockup_watchकरोgs();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	pr_warn("\n");
 	pr_warn("=============================================\n\n");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(debug_show_all_locks);
-#endif
+#पूर्ण_अगर
 
 /*
- * Careful: only use this function if you are sure that
+ * Careful: only use this function अगर you are sure that
  * the task cannot run in parallel!
  */
-void debug_show_held_locks(struct task_struct *task)
-{
-	if (unlikely(!debug_locks)) {
-		printk("INFO: lockdep is turned off.\n");
-		return;
-	}
-	lockdep_print_held_locks(task);
-}
+व्योम debug_show_held_locks(काष्ठा task_काष्ठा *task)
+अणु
+	अगर (unlikely(!debug_locks)) अणु
+		prपूर्णांकk("INFO: lockdep is turned off.\n");
+		वापस;
+	पूर्ण
+	lockdep_prपूर्णांक_held_locks(task);
+पूर्ण
 EXPORT_SYMBOL_GPL(debug_show_held_locks);
 
-asmlinkage __visible void lockdep_sys_exit(void)
-{
-	struct task_struct *curr = current;
+यंत्रlinkage __visible व्योम lockdep_sys_निकास(व्योम)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
 
-	if (unlikely(curr->lockdep_depth)) {
-		if (!debug_locks_off())
-			return;
+	अगर (unlikely(curr->lockdep_depth)) अणु
+		अगर (!debug_locks_off())
+			वापस;
 		pr_warn("\n");
 		pr_warn("================================================\n");
 		pr_warn("WARNING: lock held when returning to user space!\n");
-		print_kernel_ident();
+		prपूर्णांक_kernel_ident();
 		pr_warn("------------------------------------------------\n");
 		pr_warn("%s/%d is leaving the kernel with locks still held!\n",
 				curr->comm, curr->pid);
-		lockdep_print_held_locks(curr);
-	}
+		lockdep_prपूर्णांक_held_locks(curr);
+	पूर्ण
 
 	/*
-	 * The lock history for each syscall should be independent. So wipe the
-	 * slate clean on return to userspace.
+	 * The lock history क्रम each syscall should be independent. So wipe the
+	 * slate clean on वापस to userspace.
 	 */
 	lockdep_invariant_state(false);
-}
+पूर्ण
 
-void lockdep_rcu_suspicious(const char *file, const int line, const char *s)
-{
-	struct task_struct *curr = current;
+व्योम lockdep_rcu_suspicious(स्थिर अक्षर *file, स्थिर पूर्णांक line, स्थिर अक्षर *s)
+अणु
+	काष्ठा task_काष्ठा *curr = current;
 
 	/* Note: the following can be executed concurrently, so be careful. */
 	pr_warn("\n");
 	pr_warn("=============================\n");
 	pr_warn("WARNING: suspicious RCU usage\n");
-	print_kernel_ident();
+	prपूर्णांक_kernel_ident();
 	pr_warn("-----------------------------\n");
 	pr_warn("%s:%d %s!\n", file, line, s);
 	pr_warn("\nother info that might help us debug this:\n\n");
@@ -6409,28 +6410,28 @@ void lockdep_rcu_suspicious(const char *file, const int line, const char *s)
 	       rcu_scheduler_active, debug_locks);
 
 	/*
-	 * If a CPU is in the RCU-free window in idle (ie: in the section
-	 * between rcu_idle_enter() and rcu_idle_exit(), then RCU
+	 * If a CPU is in the RCU-मुक्त winकरोw in idle (ie: in the section
+	 * between rcu_idle_enter() and rcu_idle_निकास(), then RCU
 	 * considers that CPU to be in an "extended quiescent state",
 	 * which means that RCU will be completely ignoring that CPU.
-	 * Therefore, rcu_read_lock() and friends have absolutely no
-	 * effect on a CPU running in that state. In other words, even if
-	 * such an RCU-idle CPU has called rcu_read_lock(), RCU might well
-	 * delete data structures out from under it.  RCU really has no
-	 * choice here: we need to keep an RCU-free window in idle where
-	 * the CPU may possibly enter into low power mode. This way we can
+	 * Thereक्रमe, rcu_पढ़ो_lock() and मित्रs have असलolutely no
+	 * effect on a CPU running in that state. In other words, even अगर
+	 * such an RCU-idle CPU has called rcu_पढ़ो_lock(), RCU might well
+	 * delete data काष्ठाures out from under it.  RCU really has no
+	 * choice here: we need to keep an RCU-मुक्त winकरोw in idle where
+	 * the CPU may possibly enter पूर्णांकo low घातer mode. This way we can
 	 * notice an extended quiescent state to other CPUs that started a grace
-	 * period. Otherwise we would delay any grace period as long as we run
+	 * period. Otherwise we would delay any grace period as दीर्घ as we run
 	 * in the idle task.
 	 *
-	 * So complain bitterly if someone does call rcu_read_lock(),
-	 * rcu_read_lock_bh() and so on from extended quiescent states.
+	 * So complain bitterly अगर someone करोes call rcu_पढ़ो_lock(),
+	 * rcu_पढ़ो_lock_bh() and so on from extended quiescent states.
 	 */
-	if (!rcu_is_watching())
+	अगर (!rcu_is_watching())
 		pr_warn("RCU used illegally from extended quiescent state!\n");
 
-	lockdep_print_held_locks(curr);
+	lockdep_prपूर्णांक_held_locks(curr);
 	pr_warn("\nstack backtrace:\n");
 	dump_stack();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lockdep_rcu_suspicious);

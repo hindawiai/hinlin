@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Servergy CTS-1000 Setup
  *
- * Maintained by Ben Collins <ben.c@servergy.com>
+ * Maपूर्णांकained by Ben Collins <ben.c@servergy.com>
  *
  * Copyright 2012 by Servergy, Inc.
  */
 
-#include <linux/platform_device.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/of_gpio.h>
-#include <linux/of_irq.h>
-#include <linux/workqueue.h>
-#include <linux/reboot.h>
-#include <linux/interrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <asm/machdep.h>
+#समावेश <यंत्र/machdep.h>
 
-static struct device_node *halt_node;
+अटल काष्ठा device_node *halt_node;
 
-static const struct of_device_id child_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id child_match[] = अणु
+	अणु
 		.compatible = "sgy,gpio-halt",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static void gpio_halt_wfn(struct work_struct *work)
-{
-	/* Likely wont return */
-	orderly_poweroff(true);
-}
-static DECLARE_WORK(gpio_halt_wq, gpio_halt_wfn);
+अटल व्योम gpio_halt_wfn(काष्ठा work_काष्ठा *work)
+अणु
+	/* Likely wont वापस */
+	orderly_घातeroff(true);
+पूर्ण
+अटल DECLARE_WORK(gpio_halt_wq, gpio_halt_wfn);
 
-static void __noreturn gpio_halt_cb(void)
-{
-	enum of_gpio_flags flags;
-	int trigger, gpio;
+अटल व्योम __noवापस gpio_halt_cb(व्योम)
+अणु
+	क्रमागत of_gpio_flags flags;
+	पूर्णांक trigger, gpio;
 
-	if (!halt_node)
+	अगर (!halt_node)
 		panic("No reset GPIO information was provided in DT\n");
 
 	gpio = of_get_gpio_flags(halt_node, 0, &flags);
 
-	if (!gpio_is_valid(gpio))
+	अगर (!gpio_is_valid(gpio))
 		panic("Provided GPIO is invalid\n");
 
 	trigger = (flags == OF_GPIO_ACTIVE_LOW);
 
-	printk(KERN_INFO "gpio-halt: triggering GPIO.\n");
+	prपूर्णांकk(KERN_INFO "gpio-halt: triggering GPIO.\n");
 
-	/* Probably wont return */
+	/* Probably wont वापस */
 	gpio_set_value(gpio, trigger);
 
 	panic("Halt failed\n");
-}
+पूर्ण
 
-/* This IRQ means someone pressed the power button and it is waiting for us
- * to handle the shutdown/poweroff. */
-static irqreturn_t gpio_halt_irq(int irq, void *__data)
-{
-	printk(KERN_INFO "gpio-halt: shutdown due to power button IRQ.\n");
+/* This IRQ means someone pressed the घातer button and it is रुकोing क्रम us
+ * to handle the shutकरोwn/घातeroff. */
+अटल irqवापस_t gpio_halt_irq(पूर्णांक irq, व्योम *__data)
+अणु
+	prपूर्णांकk(KERN_INFO "gpio-halt: shutdown due to power button IRQ.\n");
 	schedule_work(&gpio_halt_wq);
 
-        return IRQ_HANDLED;
-};
+        वापस IRQ_HANDLED;
+पूर्ण;
 
-static int gpio_halt_probe(struct platform_device *pdev)
-{
-	enum of_gpio_flags flags;
-	struct device_node *node = pdev->dev.of_node;
-	int gpio, err, irq;
-	int trigger;
+अटल पूर्णांक gpio_halt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	क्रमागत of_gpio_flags flags;
+	काष्ठा device_node *node = pdev->dev.of_node;
+	पूर्णांक gpio, err, irq;
+	पूर्णांक trigger;
 
-	if (!node)
-		return -ENODEV;
+	अगर (!node)
+		वापस -ENODEV;
 
 	/* If there's no matching child, this isn't really an error */
 	halt_node = of_find_matching_node(node, child_match);
-	if (!halt_node)
-		return 0;
+	अगर (!halt_node)
+		वापस 0;
 
-	/* Technically we could just read the first one, but punish
-	 * DT writers for invalid form. */
-	if (of_gpio_count(halt_node) != 1)
-		return -EINVAL;
+	/* Technically we could just पढ़ो the first one, but punish
+	 * DT ग_लिखोrs क्रम invalid क्रमm. */
+	अगर (of_gpio_count(halt_node) != 1)
+		वापस -EINVAL;
 
 	/* Get the gpio number relative to the dynamic base. */
 	gpio = of_get_gpio_flags(halt_node, 0, &flags);
-	if (!gpio_is_valid(gpio))
-		return -EINVAL;
+	अगर (!gpio_is_valid(gpio))
+		वापस -EINVAL;
 
 	err = gpio_request(gpio, "gpio-halt");
-	if (err) {
-		printk(KERN_ERR "gpio-halt: error requesting GPIO %d.\n",
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "gpio-halt: error requesting GPIO %d.\n",
 		       gpio);
-		halt_node = NULL;
-		return err;
-	}
+		halt_node = शून्य;
+		वापस err;
+	पूर्ण
 
 	trigger = (flags == OF_GPIO_ACTIVE_LOW);
 
 	gpio_direction_output(gpio, !trigger);
 
-	/* Now get the IRQ which tells us when the power button is hit */
+	/* Now get the IRQ which tells us when the घातer button is hit */
 	irq = irq_of_parse_and_map(halt_node, 0);
 	err = request_irq(irq, gpio_halt_irq, IRQF_TRIGGER_RISING |
 			  IRQF_TRIGGER_FALLING, "gpio-halt", halt_node);
-	if (err) {
-		printk(KERN_ERR "gpio-halt: error requesting IRQ %d for "
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "gpio-halt: error requesting IRQ %d for "
 		       "GPIO %d.\n", irq, gpio);
-		gpio_free(gpio);
-		halt_node = NULL;
-		return err;
-	}
+		gpio_मुक्त(gpio);
+		halt_node = शून्य;
+		वापस err;
+	पूर्ण
 
 	/* Register our halt function */
 	ppc_md.halt = gpio_halt_cb;
-	pm_power_off = gpio_halt_cb;
+	pm_घातer_off = gpio_halt_cb;
 
-	printk(KERN_INFO "gpio-halt: registered GPIO %d (%d trigger, %d"
+	prपूर्णांकk(KERN_INFO "gpio-halt: registered GPIO %d (%d trigger, %d"
 	       " irq).\n", gpio, trigger, irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpio_halt_remove(struct platform_device *pdev)
-{
-	if (halt_node) {
-		int gpio = of_get_gpio(halt_node, 0);
-		int irq = irq_of_parse_and_map(halt_node, 0);
+अटल पूर्णांक gpio_halt_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (halt_node) अणु
+		पूर्णांक gpio = of_get_gpio(halt_node, 0);
+		पूर्णांक irq = irq_of_parse_and_map(halt_node, 0);
 
-		free_irq(irq, halt_node);
+		मुक्त_irq(irq, halt_node);
 
-		ppc_md.halt = NULL;
-		pm_power_off = NULL;
+		ppc_md.halt = शून्य;
+		pm_घातer_off = शून्य;
 
-		gpio_free(gpio);
+		gpio_मुक्त(gpio);
 
-		halt_node = NULL;
-	}
+		halt_node = शून्य;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id gpio_halt_match[] = {
+अटल स्थिर काष्ठा of_device_id gpio_halt_match[] = अणु
 	/* We match on the gpio bus itself and scan the children since they
 	 * wont be matched against us. We know the bus wont match until it
-	 * has been registered too. */
-	{
+	 * has been रेजिस्टरed too. */
+	अणु
 		.compatible = "fsl,qoriq-gpio",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, gpio_halt_match);
 
-static struct platform_driver gpio_halt_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver gpio_halt_driver = अणु
+	.driver = अणु
 		.name		= "gpio-halt",
 		.of_match_table = gpio_halt_match,
-	},
+	पूर्ण,
 	.probe		= gpio_halt_probe,
-	.remove		= gpio_halt_remove,
-};
+	.हटाओ		= gpio_halt_हटाओ,
+पूर्ण;
 
-module_platform_driver(gpio_halt_driver);
+module_platक्रमm_driver(gpio_halt_driver);
 
 MODULE_DESCRIPTION("Driver to support GPIO triggered system halt for Servergy CTS-1000 Systems.");
 MODULE_VERSION("1.0");

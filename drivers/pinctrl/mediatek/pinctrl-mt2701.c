@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015 MediaTek Inc.
  * Author: Biao Huang <biao.huang@mediatek.com>
  */
 
-#include <dt-bindings/pinctrl/mt65xx.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/regmap.h>
+#समावेश <dt-bindings/pinctrl/mt65xx.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/regmap.h>
 
-#include "pinctrl-mtk-common.h"
-#include "pinctrl-mtk-mt2701.h"
+#समावेश "pinctrl-mtk-common.h"
+#समावेश "pinctrl-mtk-mt2701.h"
 
 /**
- * struct mtk_spec_pinmux_set
+ * काष्ठा mtk_spec_pinmux_set
  * - For special pins' mode setting
  * @pin: The pin number.
- * @offset: The offset of extra setting register.
- * @bit: The bit of extra setting register.
+ * @offset: The offset of extra setting रेजिस्टर.
+ * @bit: The bit of extra setting रेजिस्टर.
  */
-struct mtk_spec_pinmux_set {
-	unsigned short pin;
-	unsigned short offset;
-	unsigned char bit;
-};
+काष्ठा mtk_spec_pinmux_set अणु
+	अचिन्हित लघु pin;
+	अचिन्हित लघु offset;
+	अचिन्हित अक्षर bit;
+पूर्ण;
 
-#define MTK_PINMUX_SPEC(_pin, _offset, _bit)	\
-	{					\
+#घोषणा MTK_PINMUX_SPEC(_pin, _offset, _bit)	\
+	अणु					\
 		.pin = _pin,			\
 		.offset = _offset,		\
 		.bit = _bit,			\
-	}
+	पूर्ण
 
-static const struct mtk_drv_group_desc mt2701_drv_grp[] =  {
+अटल स्थिर काष्ठा mtk_drv_group_desc mt2701_drv_grp[] =  अणु
 	/* 0E4E8SR 4/8/12/16 */
 	MTK_DRV_GRP(4, 16, 1, 2, 4),
 	/* 0E2E4SR  2/4/6/8 */
 	MTK_DRV_GRP(2, 8, 1, 2, 2),
 	/* E8E4E2  2/4/6/8/10/12/14/16 */
 	MTK_DRV_GRP(2, 16, 0, 2, 2)
-};
+पूर्ण;
 
-static const struct mtk_pin_drv_grp mt2701_pin_drv[] = {
+अटल स्थिर काष्ठा mtk_pin_drv_grp mt2701_pin_drv[] = अणु
 	MTK_PIN_DRV_GRP(0, 0xf50, 0, 1),
 	MTK_PIN_DRV_GRP(1, 0xf50, 0, 1),
 	MTK_PIN_DRV_GRP(2, 0xf50, 0, 1),
@@ -227,9 +228,9 @@ static const struct mtk_pin_drv_grp mt2701_pin_drv[] = {
 	MTK_PIN_DRV_GRP(276, 0xf00, 8, 0),
 	MTK_PIN_DRV_GRP(277, 0xf00, 8, 0),
 	MTK_PIN_DRV_GRP(278, 0xf70, 8, 1),
-};
+पूर्ण;
 
-static const struct mtk_pin_spec_pupd_set_samereg mt2701_spec_pupd[] = {
+अटल स्थिर काष्ठा mtk_pin_spec_pupd_set_samereg mt2701_spec_pupd[] = अणु
 	MTK_PIN_PUPD_SPEC_SR(111, 0xd00, 12, 13, 14),	/* ms0 data7 */
 	MTK_PIN_PUPD_SPEC_SR(112, 0xd00, 8, 9, 10),	/* ms0 data6 */
 	MTK_PIN_PUPD_SPEC_SR(113, 0xd00, 4, 5, 6),	/* ms0 data5 */
@@ -268,16 +269,16 @@ static const struct mtk_pin_spec_pupd_set_samereg mt2701_spec_pupd[] = {
 	MTK_PIN_PUPD_SPEC_SR(258, 0xcb0, 8, 9, 10),	/* ms0e cmd */
 	MTK_PIN_PUPD_SPEC_SR(259, 0xc90, 8, 9, 10),	/* ms0e clk */
 	MTK_PIN_PUPD_SPEC_SR(261, 0x140, 8, 9, 10),	/* ms1 ins */
-};
+पूर्ण;
 
-static int mt2701_spec_pull_set(struct regmap *regmap, unsigned int pin,
-		unsigned char align, bool isup, unsigned int r1r0)
-{
-	return mtk_pctrl_spec_pull_set_samereg(regmap, mt2701_spec_pupd,
+अटल पूर्णांक mt2701_spec_pull_set(काष्ठा regmap *regmap, अचिन्हित पूर्णांक pin,
+		अचिन्हित अक्षर align, bool isup, अचिन्हित पूर्णांक r1r0)
+अणु
+	वापस mtk_pctrl_spec_pull_set_samereg(regmap, mt2701_spec_pupd,
 		ARRAY_SIZE(mt2701_spec_pupd), pin, align, isup, r1r0);
-}
+पूर्ण
 
-static const struct mtk_pin_ies_smt_set mt2701_ies_set[] = {
+अटल स्थिर काष्ठा mtk_pin_ies_smt_set mt2701_ies_set[] = अणु
 	MTK_PIN_IES_SMT_SPEC(0, 6, 0xb20, 0),
 	MTK_PIN_IES_SMT_SPEC(7, 9, 0xb20, 1),
 	MTK_PIN_IES_SMT_SPEC(10, 13, 0xb30, 3),
@@ -344,9 +345,9 @@ static const struct mtk_pin_ies_smt_set mt2701_ies_set[] = {
 	MTK_PIN_IES_SMT_SPEC(261, 261, 0xd50, 4),
 	MTK_PIN_IES_SMT_SPEC(262, 277, 0xb40, 12),
 	MTK_PIN_IES_SMT_SPEC(278, 278, 0xb40, 13),
-};
+पूर्ण;
 
-static const struct mtk_pin_ies_smt_set mt2701_smt_set[] = {
+अटल स्थिर काष्ठा mtk_pin_ies_smt_set mt2701_smt_set[] = अणु
 	MTK_PIN_IES_SMT_SPEC(0, 6, 0xb50, 0),
 	MTK_PIN_IES_SMT_SPEC(7, 9, 0xb50, 1),
 	MTK_PIN_IES_SMT_SPEC(10, 13, 0xb60, 3),
@@ -434,21 +435,21 @@ static const struct mtk_pin_ies_smt_set mt2701_smt_set[] = {
 	MTK_PIN_IES_SMT_SPEC(261, 261, 0x0b0, 3),
 	MTK_PIN_IES_SMT_SPEC(262, 277, 0xb70, 12),
 	MTK_PIN_IES_SMT_SPEC(278, 278, 0xb70, 13),
-};
+पूर्ण;
 
-static int mt2701_ies_smt_set(struct regmap *regmap, unsigned int pin,
-		unsigned char align, int value, enum pin_config_param arg)
-{
-	if (arg == PIN_CONFIG_INPUT_ENABLE)
-		return mtk_pconf_spec_set_ies_smt_range(regmap, mt2701_ies_set,
+अटल पूर्णांक mt2701_ies_smt_set(काष्ठा regmap *regmap, अचिन्हित पूर्णांक pin,
+		अचिन्हित अक्षर align, पूर्णांक value, क्रमागत pin_config_param arg)
+अणु
+	अगर (arg == PIN_CONFIG_INPUT_ENABLE)
+		वापस mtk_pconf_spec_set_ies_smt_range(regmap, mt2701_ies_set,
 			ARRAY_SIZE(mt2701_ies_set), pin, align, value);
-	else if (arg == PIN_CONFIG_INPUT_SCHMITT_ENABLE)
-		return mtk_pconf_spec_set_ies_smt_range(regmap, mt2701_smt_set,
+	अन्यथा अगर (arg == PIN_CONFIG_INPUT_SCHMITT_ENABLE)
+		वापस mtk_pconf_spec_set_ies_smt_range(regmap, mt2701_smt_set,
 			ARRAY_SIZE(mt2701_smt_set), pin, align, value);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct mtk_spec_pinmux_set mt2701_spec_pinmux[] = {
+अटल स्थिर काष्ठा mtk_spec_pinmux_set mt2701_spec_pinmux[] = अणु
 	MTK_PINMUX_SPEC(22, 0xb10, 3),
 	MTK_PINMUX_SPEC(23, 0xb10, 4),
 	MTK_PINMUX_SPEC(24, 0xb10, 5),
@@ -469,39 +470,39 @@ static const struct mtk_spec_pinmux_set mt2701_spec_pinmux[] = {
 	MTK_PINMUX_SPEC(258, 0xef0, 0),
 	MTK_PINMUX_SPEC(259, 0xef0, 0),
 	MTK_PINMUX_SPEC(260, 0xef0, 0),
-};
+पूर्ण;
 
-static void mt2701_spec_pinmux_set(struct regmap *reg, unsigned int pin,
-			unsigned int mode)
-{
-	unsigned int i, value, mask;
-	unsigned int info_num = ARRAY_SIZE(mt2701_spec_pinmux);
-	unsigned int spec_flag;
+अटल व्योम mt2701_spec_pinmux_set(काष्ठा regmap *reg, अचिन्हित पूर्णांक pin,
+			अचिन्हित पूर्णांक mode)
+अणु
+	अचिन्हित पूर्णांक i, value, mask;
+	अचिन्हित पूर्णांक info_num = ARRAY_SIZE(mt2701_spec_pinmux);
+	अचिन्हित पूर्णांक spec_flag;
 
-	for (i = 0; i < info_num; i++) {
-		if (pin == mt2701_spec_pinmux[i].pin)
-			break;
-	}
+	क्रम (i = 0; i < info_num; i++) अणु
+		अगर (pin == mt2701_spec_pinmux[i].pin)
+			अवरोध;
+	पूर्ण
 
-	if (i == info_num)
-		return;
+	अगर (i == info_num)
+		वापस;
 
 	spec_flag = (mode >> 3);
 	mask = BIT(mt2701_spec_pinmux[i].bit);
-	if (!spec_flag)
+	अगर (!spec_flag)
 		value = mask;
-	else
+	अन्यथा
 		value = 0;
 	regmap_update_bits(reg, mt2701_spec_pinmux[i].offset, mask, value);
-}
+पूर्ण
 
-static void mt2701_spec_dir_set(unsigned int *reg_addr, unsigned int pin)
-{
-	if (pin > 175)
+अटल व्योम mt2701_spec_dir_set(अचिन्हित पूर्णांक *reg_addr, अचिन्हित पूर्णांक pin)
+अणु
+	अगर (pin > 175)
 		*reg_addr += 0x10;
-}
+पूर्ण
 
-static const struct mtk_pinctrl_devdata mt2701_pinctrl_data = {
+अटल स्थिर काष्ठा mtk_pinctrl_devdata mt2701_pinctrl_data = अणु
 	.pins = mtk_pins_mt2701,
 	.npins = ARRAY_SIZE(mtk_pins_mt2701),
 	.grp_desc = mt2701_drv_grp,
@@ -515,7 +516,7 @@ static const struct mtk_pinctrl_devdata mt2701_pinctrl_data = {
 	.dir_offset = 0x0000,
 	.pullen_offset = 0x0150,
 	.pullsel_offset = 0x0280,
-	.dout_offset = 0x0500,
+	.करोut_offset = 0x0500,
 	.din_offset = 0x0630,
 	.pinmux_offset = 0x0760,
 	.type1_start = 280,
@@ -523,37 +524,37 @@ static const struct mtk_pinctrl_devdata mt2701_pinctrl_data = {
 	.port_shf = 4,
 	.port_mask = 0x1f,
 	.port_align = 4,
-	.eint_hw = {
+	.eपूर्णांक_hw = अणु
 		.port_mask = 6,
 		.ports     = 6,
 		.ap_num    = 169,
 		.db_cnt    = 16,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int mt2701_pinctrl_probe(struct platform_device *pdev)
-{
-	return mtk_pctrl_init(pdev, &mt2701_pinctrl_data, NULL);
-}
+अटल पूर्णांक mt2701_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस mtk_pctrl_init(pdev, &mt2701_pinctrl_data, शून्य);
+पूर्ण
 
-static const struct of_device_id mt2701_pctrl_match[] = {
-	{ .compatible = "mediatek,mt2701-pinctrl", },
-	{ .compatible = "mediatek,mt7623-pinctrl", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id mt2701_pctrl_match[] = अणु
+	अणु .compatible = "mediatek,mt2701-pinctrl", पूर्ण,
+	अणु .compatible = "mediatek,mt7623-pinctrl", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mt2701_pctrl_match);
 
-static struct platform_driver mtk_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver mtk_pinctrl_driver = अणु
 	.probe = mt2701_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name = "mediatek-mt2701-pinctrl",
 		.of_match_table = mt2701_pctrl_match,
-		.pm = &mtk_eint_pm_ops,
-	},
-};
+		.pm = &mtk_eपूर्णांक_pm_ops,
+	पूर्ण,
+पूर्ण;
 
-static int __init mtk_pinctrl_init(void)
-{
-	return platform_driver_register(&mtk_pinctrl_driver);
-}
+अटल पूर्णांक __init mtk_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mtk_pinctrl_driver);
+पूर्ण
 arch_initcall(mtk_pinctrl_init);

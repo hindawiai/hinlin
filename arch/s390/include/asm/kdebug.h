@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _S390_KDEBUG_H
-#define _S390_KDEBUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _S390_KDEBUG_H
+#घोषणा _S390_KDEBUG_H
 
 /*
  * Feb 2006 Ported to s390 <grundym@us.ibm.com>
  */
 
-struct pt_regs;
+काष्ठा pt_regs;
 
-enum die_val {
+क्रमागत die_val अणु
 	DIE_OOPS = 1,
 	DIE_BPT,
 	DIE_SSTEP,
@@ -21,8 +22,8 @@ enum die_val {
 	DIE_GPF,
 	DIE_CALL,
 	DIE_NMI_IPI,
-};
+पूर्ण;
 
-extern void die(struct pt_regs *, const char *);
+बाह्य व्योम die(काष्ठा pt_regs *, स्थिर अक्षर *);
 
-#endif
+#पूर्ण_अगर

@@ -1,18 +1,19 @@
+<शैली गुरु>
 /*
  * Copied from the kernel sources to tools/:
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2012 Tensilica Inc.
  */
 
-#ifndef _TOOLS_LINUX_XTENSA_SYSTEM_H
-#define _TOOLS_LINUX_XTENSA_SYSTEM_H
+#अगर_अघोषित _TOOLS_LINUX_XTENSA_SYSTEM_H
+#घोषणा _TOOLS_LINUX_XTENSA_SYSTEM_H
 
-#define mb()  ({ __asm__ __volatile__("memw" : : : "memory"); })
-#define rmb() barrier()
-#define wmb() mb()
+#घोषणा mb()  (अणु __यंत्र__ __अस्थिर__("memw" : : : "memory"); पूर्ण)
+#घोषणा rmb() barrier()
+#घोषणा wmb() mb()
 
-#endif /* _TOOLS_LINUX_XTENSA_SYSTEM_H */
+#पूर्ण_अगर /* _TOOLS_LINUX_XTENSA_SYSTEM_H */

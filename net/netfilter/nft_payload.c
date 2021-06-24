@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2008-2009 Patrick McHardy <kaber@trash.net>
  * Copyright (c) 2016 Pablo Neira Ayuso <pablo@netfilter.org>
@@ -6,702 +7,702 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
-#include <linux/kernel.h>
-#include <linux/if_vlan.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_core.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_offload.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_core.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_offload.h>
 /* For layer 4 checksum field offset. */
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/icmpv6.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <net/sctp/checksum.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <net/sctp/checksum.h>
 
-static bool nft_payload_rebuild_vlan_hdr(const struct sk_buff *skb, int mac_off,
-					 struct vlan_ethhdr *veth)
-{
-	if (skb_copy_bits(skb, mac_off, veth, ETH_HLEN))
-		return false;
+अटल bool nft_payload_rebuild_vlan_hdr(स्थिर काष्ठा sk_buff *skb, पूर्णांक mac_off,
+					 काष्ठा vlan_ethhdr *veth)
+अणु
+	अगर (skb_copy_bits(skb, mac_off, veth, ETH_HLEN))
+		वापस false;
 
 	veth->h_vlan_proto = skb->vlan_proto;
 	veth->h_vlan_TCI = htons(skb_vlan_tag_get(skb));
 	veth->h_vlan_encapsulated_proto = skb->protocol;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* add vlan header into the user buffer for if tag was removed by offloads */
-static bool
-nft_payload_copy_vlan(u32 *d, const struct sk_buff *skb, u8 offset, u8 len)
-{
-	int mac_off = skb_mac_header(skb) - skb->data;
+/* add vlan header पूर्णांकo the user buffer क्रम अगर tag was हटाओd by offloads */
+अटल bool
+nft_payload_copy_vlan(u32 *d, स्थिर काष्ठा sk_buff *skb, u8 offset, u8 len)
+अणु
+	पूर्णांक mac_off = skb_mac_header(skb) - skb->data;
 	u8 *vlanh, *dst_u8 = (u8 *) d;
-	struct vlan_ethhdr veth;
+	काष्ठा vlan_ethhdr veth;
 	u8 vlan_hlen = 0;
 
-	if ((skb->protocol == htons(ETH_P_8021AD) ||
+	अगर ((skb->protocol == htons(ETH_P_8021AD) ||
 	     skb->protocol == htons(ETH_P_8021Q)) &&
 	    offset >= VLAN_ETH_HLEN && offset < VLAN_ETH_HLEN + VLAN_HLEN)
 		vlan_hlen += VLAN_HLEN;
 
 	vlanh = (u8 *) &veth;
-	if (offset < VLAN_ETH_HLEN + vlan_hlen) {
+	अगर (offset < VLAN_ETH_HLEN + vlan_hlen) अणु
 		u8 ethlen = len;
 
-		if (vlan_hlen &&
+		अगर (vlan_hlen &&
 		    skb_copy_bits(skb, mac_off, &veth, VLAN_ETH_HLEN) < 0)
-			return false;
-		else if (!nft_payload_rebuild_vlan_hdr(skb, mac_off, &veth))
-			return false;
+			वापस false;
+		अन्यथा अगर (!nft_payload_rebuild_vlan_hdr(skb, mac_off, &veth))
+			वापस false;
 
-		if (offset + len > VLAN_ETH_HLEN + vlan_hlen)
+		अगर (offset + len > VLAN_ETH_HLEN + vlan_hlen)
 			ethlen -= offset + len - VLAN_ETH_HLEN + vlan_hlen;
 
-		memcpy(dst_u8, vlanh + offset - vlan_hlen, ethlen);
+		स_नकल(dst_u8, vlanh + offset - vlan_hlen, ethlen);
 
 		len -= ethlen;
-		if (len == 0)
-			return true;
+		अगर (len == 0)
+			वापस true;
 
 		dst_u8 += ethlen;
 		offset = ETH_HLEN + vlan_hlen;
-	} else {
+	पूर्ण अन्यथा अणु
 		offset -= VLAN_HLEN + vlan_hlen;
-	}
+	पूर्ण
 
-	return skb_copy_bits(skb, offset + mac_off, dst_u8, len) == 0;
-}
+	वापस skb_copy_bits(skb, offset + mac_off, dst_u8, len) == 0;
+पूर्ण
 
-void nft_payload_eval(const struct nft_expr *expr,
-		      struct nft_regs *regs,
-		      const struct nft_pktinfo *pkt)
-{
-	const struct nft_payload *priv = nft_expr_priv(expr);
-	const struct sk_buff *skb = pkt->skb;
+व्योम nft_payload_eval(स्थिर काष्ठा nft_expr *expr,
+		      काष्ठा nft_regs *regs,
+		      स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	स्थिर काष्ठा nft_payload *priv = nft_expr_priv(expr);
+	स्थिर काष्ठा sk_buff *skb = pkt->skb;
 	u32 *dest = &regs->data[priv->dreg];
-	int offset;
+	पूर्णांक offset;
 
-	if (priv->len % NFT_REG32_SIZE)
+	अगर (priv->len % NFT_REG32_SIZE)
 		dest[priv->len / NFT_REG32_SIZE] = 0;
 
-	switch (priv->base) {
-	case NFT_PAYLOAD_LL_HEADER:
-		if (!skb_mac_header_was_set(skb))
-			goto err;
+	चयन (priv->base) अणु
+	हाल NFT_PAYLOAD_LL_HEADER:
+		अगर (!skb_mac_header_was_set(skb))
+			जाओ err;
 
-		if (skb_vlan_tag_present(skb)) {
-			if (!nft_payload_copy_vlan(dest, skb,
+		अगर (skb_vlan_tag_present(skb)) अणु
+			अगर (!nft_payload_copy_vlan(dest, skb,
 						   priv->offset, priv->len))
-				goto err;
-			return;
-		}
+				जाओ err;
+			वापस;
+		पूर्ण
 		offset = skb_mac_header(skb) - skb->data;
-		break;
-	case NFT_PAYLOAD_NETWORK_HEADER:
+		अवरोध;
+	हाल NFT_PAYLOAD_NETWORK_HEADER:
 		offset = skb_network_offset(skb);
-		break;
-	case NFT_PAYLOAD_TRANSPORT_HEADER:
-		if (!pkt->tprot_set)
-			goto err;
+		अवरोध;
+	हाल NFT_PAYLOAD_TRANSPORT_HEADER:
+		अगर (!pkt->tprot_set)
+			जाओ err;
 		offset = pkt->xt.thoff;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 	offset += priv->offset;
 
-	if (skb_copy_bits(skb, offset, dest, priv->len) < 0)
-		goto err;
-	return;
+	अगर (skb_copy_bits(skb, offset, dest, priv->len) < 0)
+		जाओ err;
+	वापस;
 err:
 	regs->verdict.code = NFT_BREAK;
-}
+पूर्ण
 
-static const struct nla_policy nft_payload_policy[NFTA_PAYLOAD_MAX + 1] = {
-	[NFTA_PAYLOAD_SREG]		= { .type = NLA_U32 },
-	[NFTA_PAYLOAD_DREG]		= { .type = NLA_U32 },
-	[NFTA_PAYLOAD_BASE]		= { .type = NLA_U32 },
-	[NFTA_PAYLOAD_OFFSET]		= { .type = NLA_U32 },
-	[NFTA_PAYLOAD_LEN]		= { .type = NLA_U32 },
-	[NFTA_PAYLOAD_CSUM_TYPE]	= { .type = NLA_U32 },
-	[NFTA_PAYLOAD_CSUM_OFFSET]	= { .type = NLA_U32 },
-	[NFTA_PAYLOAD_CSUM_FLAGS]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy nft_payload_policy[NFTA_PAYLOAD_MAX + 1] = अणु
+	[NFTA_PAYLOAD_SREG]		= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_PAYLOAD_DREG]		= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_PAYLOAD_BASE]		= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_PAYLOAD_OFFSET]		= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_PAYLOAD_LEN]		= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_PAYLOAD_CSUM_TYPE]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_PAYLOAD_CSUM_OFFSET]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_PAYLOAD_CSUM_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int nft_payload_init(const struct nft_ctx *ctx,
-			    const struct nft_expr *expr,
-			    const struct nlattr * const tb[])
-{
-	struct nft_payload *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_payload_init(स्थिर काष्ठा nft_ctx *ctx,
+			    स्थिर काष्ठा nft_expr *expr,
+			    स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_payload *priv = nft_expr_priv(expr);
 
 	priv->base   = ntohl(nla_get_be32(tb[NFTA_PAYLOAD_BASE]));
 	priv->offset = ntohl(nla_get_be32(tb[NFTA_PAYLOAD_OFFSET]));
 	priv->len    = ntohl(nla_get_be32(tb[NFTA_PAYLOAD_LEN]));
 
-	return nft_parse_register_store(ctx, tb[NFTA_PAYLOAD_DREG],
-					&priv->dreg, NULL, NFT_DATA_VALUE,
+	वापस nft_parse_रेजिस्टर_store(ctx, tb[NFTA_PAYLOAD_DREG],
+					&priv->dreg, शून्य, NFT_DATA_VALUE,
 					priv->len);
-}
+पूर्ण
 
-static int nft_payload_dump(struct sk_buff *skb, const struct nft_expr *expr)
-{
-	const struct nft_payload *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_payload_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_payload *priv = nft_expr_priv(expr);
 
-	if (nft_dump_register(skb, NFTA_PAYLOAD_DREG, priv->dreg) ||
+	अगर (nft_dump_रेजिस्टर(skb, NFTA_PAYLOAD_DREG, priv->dreg) ||
 	    nla_put_be32(skb, NFTA_PAYLOAD_BASE, htonl(priv->base)) ||
 	    nla_put_be32(skb, NFTA_PAYLOAD_OFFSET, htonl(priv->offset)) ||
 	    nla_put_be32(skb, NFTA_PAYLOAD_LEN, htonl(priv->len)))
-		goto nla_put_failure;
-	return 0;
+		जाओ nla_put_failure;
+	वापस 0;
 
 nla_put_failure:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static bool nft_payload_offload_mask(struct nft_offload_reg *reg,
+अटल bool nft_payload_offload_mask(काष्ठा nft_offload_reg *reg,
 				     u32 priv_len, u32 field_len)
-{
-	unsigned int remainder, delta, k;
-	struct nft_data mask = {};
-	__be32 remainder_mask;
+अणु
+	अचिन्हित पूर्णांक reमुख्यder, delta, k;
+	काष्ठा nft_data mask = अणुपूर्ण;
+	__be32 reमुख्यder_mask;
 
-	if (priv_len == field_len) {
-		memset(&reg->mask, 0xff, priv_len);
-		return true;
-	} else if (priv_len > field_len) {
-		return false;
-	}
+	अगर (priv_len == field_len) अणु
+		स_रखो(&reg->mask, 0xff, priv_len);
+		वापस true;
+	पूर्ण अन्यथा अगर (priv_len > field_len) अणु
+		वापस false;
+	पूर्ण
 
-	memset(&mask, 0xff, field_len);
-	remainder = priv_len % sizeof(u32);
-	if (remainder) {
-		k = priv_len / sizeof(u32);
+	स_रखो(&mask, 0xff, field_len);
+	reमुख्यder = priv_len % माप(u32);
+	अगर (reमुख्यder) अणु
+		k = priv_len / माप(u32);
 		delta = field_len - priv_len;
-		remainder_mask = htonl(~((1 << (delta * BITS_PER_BYTE)) - 1));
-		mask.data[k] = (__force u32)remainder_mask;
-	}
+		reमुख्यder_mask = htonl(~((1 << (delta * BITS_PER_BYTE)) - 1));
+		mask.data[k] = (__क्रमce u32)reमुख्यder_mask;
+	पूर्ण
 
-	memcpy(&reg->mask, &mask, field_len);
+	स_नकल(&reg->mask, &mask, field_len);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int nft_payload_offload_ll(struct nft_offload_ctx *ctx,
-				  struct nft_flow_rule *flow,
-				  const struct nft_payload *priv)
-{
-	struct nft_offload_reg *reg = &ctx->regs[priv->dreg];
+अटल पूर्णांक nft_payload_offload_ll(काष्ठा nft_offload_ctx *ctx,
+				  काष्ठा nft_flow_rule *flow,
+				  स्थिर काष्ठा nft_payload *priv)
+अणु
+	काष्ठा nft_offload_reg *reg = &ctx->regs[priv->dreg];
 
-	switch (priv->offset) {
-	case offsetof(struct ethhdr, h_source):
-		if (!nft_payload_offload_mask(reg, priv->len, ETH_ALEN))
-			return -EOPNOTSUPP;
+	चयन (priv->offset) अणु
+	हाल दुरत्व(काष्ठा ethhdr, h_source):
+		अगर (!nft_payload_offload_mask(reg, priv->len, ETH_ALEN))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_ETH_ADDRS, eth_addrs,
 				  src, ETH_ALEN, reg);
-		break;
-	case offsetof(struct ethhdr, h_dest):
-		if (!nft_payload_offload_mask(reg, priv->len, ETH_ALEN))
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल दुरत्व(काष्ठा ethhdr, h_dest):
+		अगर (!nft_payload_offload_mask(reg, priv->len, ETH_ALEN))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_ETH_ADDRS, eth_addrs,
 				  dst, ETH_ALEN, reg);
-		break;
-	case offsetof(struct ethhdr, h_proto):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__be16)))
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल दुरत्व(काष्ठा ethhdr, h_proto):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__be16)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_BASIC, basic,
-				  n_proto, sizeof(__be16), reg);
+				  n_proto, माप(__be16), reg);
 		nft_offload_set_dependency(ctx, NFT_OFFLOAD_DEP_NETWORK);
-		break;
-	case offsetof(struct vlan_ethhdr, h_vlan_TCI):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__be16)))
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल दुरत्व(काष्ठा vlan_ethhdr, h_vlan_TCI):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__be16)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH_FLAGS(FLOW_DISSECTOR_KEY_VLAN, vlan,
-					vlan_tci, sizeof(__be16), reg,
+					vlan_tci, माप(__be16), reg,
 					NFT_OFFLOAD_F_NETWORK2HOST);
-		break;
-	case offsetof(struct vlan_ethhdr, h_vlan_encapsulated_proto):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__be16)))
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल दुरत्व(काष्ठा vlan_ethhdr, h_vlan_encapsulated_proto):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__be16)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_VLAN, vlan,
-				  vlan_tpid, sizeof(__be16), reg);
+				  vlan_tpid, माप(__be16), reg);
 		nft_offload_set_dependency(ctx, NFT_OFFLOAD_DEP_NETWORK);
-		break;
-	case offsetof(struct vlan_ethhdr, h_vlan_TCI) + sizeof(struct vlan_hdr):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__be16)))
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल दुरत्व(काष्ठा vlan_ethhdr, h_vlan_TCI) + माप(काष्ठा vlan_hdr):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__be16)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH_FLAGS(FLOW_DISSECTOR_KEY_CVLAN, cvlan,
-					vlan_tci, sizeof(__be16), reg,
+					vlan_tci, माप(__be16), reg,
 					NFT_OFFLOAD_F_NETWORK2HOST);
-		break;
-	case offsetof(struct vlan_ethhdr, h_vlan_encapsulated_proto) +
-							sizeof(struct vlan_hdr):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__be16)))
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल दुरत्व(काष्ठा vlan_ethhdr, h_vlan_encapsulated_proto) +
+							माप(काष्ठा vlan_hdr):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__be16)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_CVLAN, cvlan,
-				  vlan_tpid, sizeof(__be16), reg);
+				  vlan_tpid, माप(__be16), reg);
 		nft_offload_set_dependency(ctx, NFT_OFFLOAD_DEP_NETWORK);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_payload_offload_ip(struct nft_offload_ctx *ctx,
-				  struct nft_flow_rule *flow,
-				  const struct nft_payload *priv)
-{
-	struct nft_offload_reg *reg = &ctx->regs[priv->dreg];
+अटल पूर्णांक nft_payload_offload_ip(काष्ठा nft_offload_ctx *ctx,
+				  काष्ठा nft_flow_rule *flow,
+				  स्थिर काष्ठा nft_payload *priv)
+अणु
+	काष्ठा nft_offload_reg *reg = &ctx->regs[priv->dreg];
 
-	switch (priv->offset) {
-	case offsetof(struct iphdr, saddr):
-		if (!nft_payload_offload_mask(reg, priv->len,
-					      sizeof(struct in_addr)))
-			return -EOPNOTSUPP;
+	चयन (priv->offset) अणु
+	हाल दुरत्व(काष्ठा iphdr, saddr):
+		अगर (!nft_payload_offload_mask(reg, priv->len,
+					      माप(काष्ठा in_addr)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_IPV4_ADDRS, ipv4, src,
-				  sizeof(struct in_addr), reg);
+				  माप(काष्ठा in_addr), reg);
 		nft_flow_rule_set_addr_type(flow, FLOW_DISSECTOR_KEY_IPV4_ADDRS);
-		break;
-	case offsetof(struct iphdr, daddr):
-		if (!nft_payload_offload_mask(reg, priv->len,
-					      sizeof(struct in_addr)))
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल दुरत्व(काष्ठा iphdr, daddr):
+		अगर (!nft_payload_offload_mask(reg, priv->len,
+					      माप(काष्ठा in_addr)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_IPV4_ADDRS, ipv4, dst,
-				  sizeof(struct in_addr), reg);
+				  माप(काष्ठा in_addr), reg);
 		nft_flow_rule_set_addr_type(flow, FLOW_DISSECTOR_KEY_IPV4_ADDRS);
-		break;
-	case offsetof(struct iphdr, protocol):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__u8)))
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल दुरत्व(काष्ठा iphdr, protocol):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__u8)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_BASIC, basic, ip_proto,
-				  sizeof(__u8), reg);
+				  माप(__u8), reg);
 		nft_offload_set_dependency(ctx, NFT_OFFLOAD_DEP_TRANSPORT);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_payload_offload_ip6(struct nft_offload_ctx *ctx,
-				  struct nft_flow_rule *flow,
-				  const struct nft_payload *priv)
-{
-	struct nft_offload_reg *reg = &ctx->regs[priv->dreg];
+अटल पूर्णांक nft_payload_offload_ip6(काष्ठा nft_offload_ctx *ctx,
+				  काष्ठा nft_flow_rule *flow,
+				  स्थिर काष्ठा nft_payload *priv)
+अणु
+	काष्ठा nft_offload_reg *reg = &ctx->regs[priv->dreg];
 
-	switch (priv->offset) {
-	case offsetof(struct ipv6hdr, saddr):
-		if (!nft_payload_offload_mask(reg, priv->len,
-					      sizeof(struct in6_addr)))
-			return -EOPNOTSUPP;
+	चयन (priv->offset) अणु
+	हाल दुरत्व(काष्ठा ipv6hdr, saddr):
+		अगर (!nft_payload_offload_mask(reg, priv->len,
+					      माप(काष्ठा in6_addr)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_IPV6_ADDRS, ipv6, src,
-				  sizeof(struct in6_addr), reg);
+				  माप(काष्ठा in6_addr), reg);
 		nft_flow_rule_set_addr_type(flow, FLOW_DISSECTOR_KEY_IPV6_ADDRS);
-		break;
-	case offsetof(struct ipv6hdr, daddr):
-		if (!nft_payload_offload_mask(reg, priv->len,
-					      sizeof(struct in6_addr)))
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल दुरत्व(काष्ठा ipv6hdr, daddr):
+		अगर (!nft_payload_offload_mask(reg, priv->len,
+					      माप(काष्ठा in6_addr)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_IPV6_ADDRS, ipv6, dst,
-				  sizeof(struct in6_addr), reg);
+				  माप(काष्ठा in6_addr), reg);
 		nft_flow_rule_set_addr_type(flow, FLOW_DISSECTOR_KEY_IPV6_ADDRS);
-		break;
-	case offsetof(struct ipv6hdr, nexthdr):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__u8)))
-			return -EOPNOTSUPP;
+		अवरोध;
+	हाल दुरत्व(काष्ठा ipv6hdr, nexthdr):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__u8)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_BASIC, basic, ip_proto,
-				  sizeof(__u8), reg);
+				  माप(__u8), reg);
 		nft_offload_set_dependency(ctx, NFT_OFFLOAD_DEP_TRANSPORT);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_payload_offload_nh(struct nft_offload_ctx *ctx,
-				  struct nft_flow_rule *flow,
-				  const struct nft_payload *priv)
-{
-	int err;
+अटल पूर्णांक nft_payload_offload_nh(काष्ठा nft_offload_ctx *ctx,
+				  काष्ठा nft_flow_rule *flow,
+				  स्थिर काष्ठा nft_payload *priv)
+अणु
+	पूर्णांक err;
 
-	switch (ctx->dep.l3num) {
-	case htons(ETH_P_IP):
+	चयन (ctx->dep.l3num) अणु
+	हाल htons(ETH_P_IP):
 		err = nft_payload_offload_ip(ctx, flow, priv);
-		break;
-	case htons(ETH_P_IPV6):
+		अवरोध;
+	हाल htons(ETH_P_IPV6):
 		err = nft_payload_offload_ip6(ctx, flow, priv);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int nft_payload_offload_tcp(struct nft_offload_ctx *ctx,
-				   struct nft_flow_rule *flow,
-				   const struct nft_payload *priv)
-{
-	struct nft_offload_reg *reg = &ctx->regs[priv->dreg];
+अटल पूर्णांक nft_payload_offload_tcp(काष्ठा nft_offload_ctx *ctx,
+				   काष्ठा nft_flow_rule *flow,
+				   स्थिर काष्ठा nft_payload *priv)
+अणु
+	काष्ठा nft_offload_reg *reg = &ctx->regs[priv->dreg];
 
-	switch (priv->offset) {
-	case offsetof(struct tcphdr, source):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__be16)))
-			return -EOPNOTSUPP;
-
-		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_PORTS, tp, src,
-				  sizeof(__be16), reg);
-		break;
-	case offsetof(struct tcphdr, dest):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__be16)))
-			return -EOPNOTSUPP;
-
-		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_PORTS, tp, dst,
-				  sizeof(__be16), reg);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
-
-	return 0;
-}
-
-static int nft_payload_offload_udp(struct nft_offload_ctx *ctx,
-				   struct nft_flow_rule *flow,
-				   const struct nft_payload *priv)
-{
-	struct nft_offload_reg *reg = &ctx->regs[priv->dreg];
-
-	switch (priv->offset) {
-	case offsetof(struct udphdr, source):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__be16)))
-			return -EOPNOTSUPP;
+	चयन (priv->offset) अणु
+	हाल दुरत्व(काष्ठा tcphdr, source):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__be16)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_PORTS, tp, src,
-				  sizeof(__be16), reg);
-		break;
-	case offsetof(struct udphdr, dest):
-		if (!nft_payload_offload_mask(reg, priv->len, sizeof(__be16)))
-			return -EOPNOTSUPP;
+				  माप(__be16), reg);
+		अवरोध;
+	हाल दुरत्व(काष्ठा tcphdr, dest):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__be16)))
+			वापस -EOPNOTSUPP;
 
 		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_PORTS, tp, dst,
-				  sizeof(__be16), reg);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+				  माप(__be16), reg);
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_payload_offload_th(struct nft_offload_ctx *ctx,
-				  struct nft_flow_rule *flow,
-				  const struct nft_payload *priv)
-{
-	int err;
+अटल पूर्णांक nft_payload_offload_udp(काष्ठा nft_offload_ctx *ctx,
+				   काष्ठा nft_flow_rule *flow,
+				   स्थिर काष्ठा nft_payload *priv)
+अणु
+	काष्ठा nft_offload_reg *reg = &ctx->regs[priv->dreg];
 
-	switch (ctx->dep.protonum) {
-	case IPPROTO_TCP:
+	चयन (priv->offset) अणु
+	हाल दुरत्व(काष्ठा udphdr, source):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__be16)))
+			वापस -EOPNOTSUPP;
+
+		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_PORTS, tp, src,
+				  माप(__be16), reg);
+		अवरोध;
+	हाल दुरत्व(काष्ठा udphdr, dest):
+		अगर (!nft_payload_offload_mask(reg, priv->len, माप(__be16)))
+			वापस -EOPNOTSUPP;
+
+		NFT_OFFLOAD_MATCH(FLOW_DISSECTOR_KEY_PORTS, tp, dst,
+				  माप(__be16), reg);
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक nft_payload_offload_th(काष्ठा nft_offload_ctx *ctx,
+				  काष्ठा nft_flow_rule *flow,
+				  स्थिर काष्ठा nft_payload *priv)
+अणु
+	पूर्णांक err;
+
+	चयन (ctx->dep.protonum) अणु
+	हाल IPPROTO_TCP:
 		err = nft_payload_offload_tcp(ctx, flow, priv);
-		break;
-	case IPPROTO_UDP:
+		अवरोध;
+	हाल IPPROTO_UDP:
 		err = nft_payload_offload_udp(ctx, flow, priv);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int nft_payload_offload(struct nft_offload_ctx *ctx,
-			       struct nft_flow_rule *flow,
-			       const struct nft_expr *expr)
-{
-	const struct nft_payload *priv = nft_expr_priv(expr);
-	int err;
+अटल पूर्णांक nft_payload_offload(काष्ठा nft_offload_ctx *ctx,
+			       काष्ठा nft_flow_rule *flow,
+			       स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_payload *priv = nft_expr_priv(expr);
+	पूर्णांक err;
 
-	switch (priv->base) {
-	case NFT_PAYLOAD_LL_HEADER:
+	चयन (priv->base) अणु
+	हाल NFT_PAYLOAD_LL_HEADER:
 		err = nft_payload_offload_ll(ctx, flow, priv);
-		break;
-	case NFT_PAYLOAD_NETWORK_HEADER:
+		अवरोध;
+	हाल NFT_PAYLOAD_NETWORK_HEADER:
 		err = nft_payload_offload_nh(ctx, flow, priv);
-		break;
-	case NFT_PAYLOAD_TRANSPORT_HEADER:
+		अवरोध;
+	हाल NFT_PAYLOAD_TRANSPORT_HEADER:
 		err = nft_payload_offload_th(ctx, flow, priv);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-		break;
-	}
-	return err;
-}
+		अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static const struct nft_expr_ops nft_payload_ops = {
+अटल स्थिर काष्ठा nft_expr_ops nft_payload_ops = अणु
 	.type		= &nft_payload_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_payload)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_payload)),
 	.eval		= nft_payload_eval,
 	.init		= nft_payload_init,
 	.dump		= nft_payload_dump,
 	.offload	= nft_payload_offload,
-};
+पूर्ण;
 
-const struct nft_expr_ops nft_payload_fast_ops = {
+स्थिर काष्ठा nft_expr_ops nft_payload_fast_ops = अणु
 	.type		= &nft_payload_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_payload)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_payload)),
 	.eval		= nft_payload_eval,
 	.init		= nft_payload_init,
 	.dump		= nft_payload_dump,
 	.offload	= nft_payload_offload,
-};
+पूर्ण;
 
-static inline void nft_csum_replace(__sum16 *sum, __wsum fsum, __wsum tsum)
-{
+अटल अंतरभूत व्योम nft_csum_replace(__sum16 *sum, __wsum fsum, __wsum tsum)
+अणु
 	*sum = csum_fold(csum_add(csum_sub(~csum_unfold(*sum), fsum), tsum));
-	if (*sum == 0)
+	अगर (*sum == 0)
 		*sum = CSUM_MANGLED_0;
-}
+पूर्ण
 
-static bool nft_payload_udp_checksum(struct sk_buff *skb, unsigned int thoff)
-{
-	struct udphdr *uh, _uh;
+अटल bool nft_payload_udp_checksum(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक thoff)
+अणु
+	काष्ठा udphdr *uh, _uh;
 
-	uh = skb_header_pointer(skb, thoff, sizeof(_uh), &_uh);
-	if (!uh)
-		return false;
+	uh = skb_header_poपूर्णांकer(skb, thoff, माप(_uh), &_uh);
+	अगर (!uh)
+		वापस false;
 
-	return (__force bool)uh->check;
-}
+	वापस (__क्रमce bool)uh->check;
+पूर्ण
 
-static int nft_payload_l4csum_offset(const struct nft_pktinfo *pkt,
-				     struct sk_buff *skb,
-				     unsigned int *l4csum_offset)
-{
-	switch (pkt->tprot) {
-	case IPPROTO_TCP:
-		*l4csum_offset = offsetof(struct tcphdr, check);
-		break;
-	case IPPROTO_UDP:
-		if (!nft_payload_udp_checksum(skb, pkt->xt.thoff))
-			return -1;
+अटल पूर्णांक nft_payload_l4csum_offset(स्थिर काष्ठा nft_pktinfo *pkt,
+				     काष्ठा sk_buff *skb,
+				     अचिन्हित पूर्णांक *l4csum_offset)
+अणु
+	चयन (pkt->tprot) अणु
+	हाल IPPROTO_TCP:
+		*l4csum_offset = दुरत्व(काष्ठा tcphdr, check);
+		अवरोध;
+	हाल IPPROTO_UDP:
+		अगर (!nft_payload_udp_checksum(skb, pkt->xt.thoff))
+			वापस -1;
 		fallthrough;
-	case IPPROTO_UDPLITE:
-		*l4csum_offset = offsetof(struct udphdr, check);
-		break;
-	case IPPROTO_ICMPV6:
-		*l4csum_offset = offsetof(struct icmp6hdr, icmp6_cksum);
-		break;
-	default:
-		return -1;
-	}
+	हाल IPPROTO_UDPLITE:
+		*l4csum_offset = दुरत्व(काष्ठा udphdr, check);
+		अवरोध;
+	हाल IPPROTO_ICMPV6:
+		*l4csum_offset = दुरत्व(काष्ठा icmp6hdr, icmp6_cksum);
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
 	*l4csum_offset += pkt->xt.thoff;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_payload_csum_sctp(struct sk_buff *skb, int offset)
-{
-	struct sctphdr *sh;
+अटल पूर्णांक nft_payload_csum_sctp(काष्ठा sk_buff *skb, पूर्णांक offset)
+अणु
+	काष्ठा sctphdr *sh;
 
-	if (skb_ensure_writable(skb, offset + sizeof(*sh)))
-		return -1;
+	अगर (skb_ensure_writable(skb, offset + माप(*sh)))
+		वापस -1;
 
-	sh = (struct sctphdr *)(skb->data + offset);
+	sh = (काष्ठा sctphdr *)(skb->data + offset);
 	sh->checksum = sctp_compute_cksum(skb, offset);
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_payload_l4csum_update(const struct nft_pktinfo *pkt,
-				     struct sk_buff *skb,
+अटल पूर्णांक nft_payload_l4csum_update(स्थिर काष्ठा nft_pktinfo *pkt,
+				     काष्ठा sk_buff *skb,
 				     __wsum fsum, __wsum tsum)
-{
-	int l4csum_offset;
+अणु
+	पूर्णांक l4csum_offset;
 	__sum16 sum;
 
-	/* If we cannot determine layer 4 checksum offset or this packet doesn't
+	/* If we cannot determine layer 4 checksum offset or this packet करोesn't
 	 * require layer 4 checksum recalculation, skip this packet.
 	 */
-	if (nft_payload_l4csum_offset(pkt, skb, &l4csum_offset) < 0)
-		return 0;
+	अगर (nft_payload_l4csum_offset(pkt, skb, &l4csum_offset) < 0)
+		वापस 0;
 
-	if (skb_copy_bits(skb, l4csum_offset, &sum, sizeof(sum)) < 0)
-		return -1;
+	अगर (skb_copy_bits(skb, l4csum_offset, &sum, माप(sum)) < 0)
+		वापस -1;
 
-	/* Checksum mangling for an arbitrary amount of bytes, based on
+	/* Checksum mangling क्रम an arbitrary amount of bytes, based on
 	 * inet_proto_csum_replace*() functions.
 	 */
-	if (skb->ip_summed != CHECKSUM_PARTIAL) {
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL) अणु
 		nft_csum_replace(&sum, fsum, tsum);
-		if (skb->ip_summed == CHECKSUM_COMPLETE) {
+		अगर (skb->ip_summed == CHECKSUM_COMPLETE) अणु
 			skb->csum = ~csum_add(csum_sub(~(skb->csum), fsum),
 					      tsum);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		sum = ~csum_fold(csum_add(csum_sub(csum_unfold(sum), fsum),
 					  tsum));
-	}
+	पूर्ण
 
-	if (skb_ensure_writable(skb, l4csum_offset + sizeof(sum)) ||
-	    skb_store_bits(skb, l4csum_offset, &sum, sizeof(sum)) < 0)
-		return -1;
+	अगर (skb_ensure_writable(skb, l4csum_offset + माप(sum)) ||
+	    skb_store_bits(skb, l4csum_offset, &sum, माप(sum)) < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_payload_csum_inet(struct sk_buff *skb, const u32 *src,
-				 __wsum fsum, __wsum tsum, int csum_offset)
-{
+अटल पूर्णांक nft_payload_csum_inet(काष्ठा sk_buff *skb, स्थिर u32 *src,
+				 __wsum fsum, __wsum tsum, पूर्णांक csum_offset)
+अणु
 	__sum16 sum;
 
-	if (skb_copy_bits(skb, csum_offset, &sum, sizeof(sum)) < 0)
-		return -1;
+	अगर (skb_copy_bits(skb, csum_offset, &sum, माप(sum)) < 0)
+		वापस -1;
 
 	nft_csum_replace(&sum, fsum, tsum);
-	if (skb_ensure_writable(skb, csum_offset + sizeof(sum)) ||
-	    skb_store_bits(skb, csum_offset, &sum, sizeof(sum)) < 0)
-		return -1;
+	अगर (skb_ensure_writable(skb, csum_offset + माप(sum)) ||
+	    skb_store_bits(skb, csum_offset, &sum, माप(sum)) < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nft_payload_set_eval(const struct nft_expr *expr,
-				 struct nft_regs *regs,
-				 const struct nft_pktinfo *pkt)
-{
-	const struct nft_payload_set *priv = nft_expr_priv(expr);
-	struct sk_buff *skb = pkt->skb;
-	const u32 *src = &regs->data[priv->sreg];
-	int offset, csum_offset;
+अटल व्योम nft_payload_set_eval(स्थिर काष्ठा nft_expr *expr,
+				 काष्ठा nft_regs *regs,
+				 स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	स्थिर काष्ठा nft_payload_set *priv = nft_expr_priv(expr);
+	काष्ठा sk_buff *skb = pkt->skb;
+	स्थिर u32 *src = &regs->data[priv->sreg];
+	पूर्णांक offset, csum_offset;
 	__wsum fsum, tsum;
 
-	switch (priv->base) {
-	case NFT_PAYLOAD_LL_HEADER:
-		if (!skb_mac_header_was_set(skb))
-			goto err;
+	चयन (priv->base) अणु
+	हाल NFT_PAYLOAD_LL_HEADER:
+		अगर (!skb_mac_header_was_set(skb))
+			जाओ err;
 		offset = skb_mac_header(skb) - skb->data;
-		break;
-	case NFT_PAYLOAD_NETWORK_HEADER:
+		अवरोध;
+	हाल NFT_PAYLOAD_NETWORK_HEADER:
 		offset = skb_network_offset(skb);
-		break;
-	case NFT_PAYLOAD_TRANSPORT_HEADER:
-		if (!pkt->tprot_set)
-			goto err;
+		अवरोध;
+	हाल NFT_PAYLOAD_TRANSPORT_HEADER:
+		अगर (!pkt->tprot_set)
+			जाओ err;
 		offset = pkt->xt.thoff;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	csum_offset = offset + priv->csum_offset;
 	offset += priv->offset;
 
-	if ((priv->csum_type == NFT_PAYLOAD_CSUM_INET || priv->csum_flags) &&
+	अगर ((priv->csum_type == NFT_PAYLOAD_CSUM_INET || priv->csum_flags) &&
 	    (priv->base != NFT_PAYLOAD_TRANSPORT_HEADER ||
-	     skb->ip_summed != CHECKSUM_PARTIAL)) {
+	     skb->ip_summed != CHECKSUM_PARTIAL)) अणु
 		fsum = skb_checksum(skb, offset, priv->len, 0);
 		tsum = csum_partial(src, priv->len, 0);
 
-		if (priv->csum_type == NFT_PAYLOAD_CSUM_INET &&
+		अगर (priv->csum_type == NFT_PAYLOAD_CSUM_INET &&
 		    nft_payload_csum_inet(skb, src, fsum, tsum, csum_offset))
-			goto err;
+			जाओ err;
 
-		if (priv->csum_flags &&
+		अगर (priv->csum_flags &&
 		    nft_payload_l4csum_update(pkt, skb, fsum, tsum) < 0)
-			goto err;
-	}
+			जाओ err;
+	पूर्ण
 
-	if (skb_ensure_writable(skb, max(offset + priv->len, 0)) ||
+	अगर (skb_ensure_writable(skb, max(offset + priv->len, 0)) ||
 	    skb_store_bits(skb, offset, src, priv->len) < 0)
-		goto err;
+		जाओ err;
 
-	if (priv->csum_type == NFT_PAYLOAD_CSUM_SCTP &&
+	अगर (priv->csum_type == NFT_PAYLOAD_CSUM_SCTP &&
 	    pkt->tprot == IPPROTO_SCTP &&
-	    skb->ip_summed != CHECKSUM_PARTIAL) {
-		if (nft_payload_csum_sctp(skb, pkt->xt.thoff))
-			goto err;
-	}
+	    skb->ip_summed != CHECKSUM_PARTIAL) अणु
+		अगर (nft_payload_csum_sctp(skb, pkt->xt.thoff))
+			जाओ err;
+	पूर्ण
 
-	return;
+	वापस;
 err:
 	regs->verdict.code = NFT_BREAK;
-}
+पूर्ण
 
-static int nft_payload_set_init(const struct nft_ctx *ctx,
-				const struct nft_expr *expr,
-				const struct nlattr * const tb[])
-{
-	struct nft_payload_set *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_payload_set_init(स्थिर काष्ठा nft_ctx *ctx,
+				स्थिर काष्ठा nft_expr *expr,
+				स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_payload_set *priv = nft_expr_priv(expr);
 
 	priv->base        = ntohl(nla_get_be32(tb[NFTA_PAYLOAD_BASE]));
 	priv->offset      = ntohl(nla_get_be32(tb[NFTA_PAYLOAD_OFFSET]));
 	priv->len         = ntohl(nla_get_be32(tb[NFTA_PAYLOAD_LEN]));
 
-	if (tb[NFTA_PAYLOAD_CSUM_TYPE])
+	अगर (tb[NFTA_PAYLOAD_CSUM_TYPE])
 		priv->csum_type =
 			ntohl(nla_get_be32(tb[NFTA_PAYLOAD_CSUM_TYPE]));
-	if (tb[NFTA_PAYLOAD_CSUM_OFFSET])
+	अगर (tb[NFTA_PAYLOAD_CSUM_OFFSET])
 		priv->csum_offset =
 			ntohl(nla_get_be32(tb[NFTA_PAYLOAD_CSUM_OFFSET]));
-	if (tb[NFTA_PAYLOAD_CSUM_FLAGS]) {
+	अगर (tb[NFTA_PAYLOAD_CSUM_FLAGS]) अणु
 		u32 flags;
 
 		flags = ntohl(nla_get_be32(tb[NFTA_PAYLOAD_CSUM_FLAGS]));
-		if (flags & ~NFT_PAYLOAD_L4CSUM_PSEUDOHDR)
-			return -EINVAL;
+		अगर (flags & ~NFT_PAYLOAD_L4CSUM_PSEUDOHDR)
+			वापस -EINVAL;
 
 		priv->csum_flags = flags;
-	}
+	पूर्ण
 
-	switch (priv->csum_type) {
-	case NFT_PAYLOAD_CSUM_NONE:
-	case NFT_PAYLOAD_CSUM_INET:
-		break;
-	case NFT_PAYLOAD_CSUM_SCTP:
-		if (priv->base != NFT_PAYLOAD_TRANSPORT_HEADER)
-			return -EINVAL;
+	चयन (priv->csum_type) अणु
+	हाल NFT_PAYLOAD_CSUM_NONE:
+	हाल NFT_PAYLOAD_CSUM_INET:
+		अवरोध;
+	हाल NFT_PAYLOAD_CSUM_SCTP:
+		अगर (priv->base != NFT_PAYLOAD_TRANSPORT_HEADER)
+			वापस -EINVAL;
 
-		if (priv->csum_offset != offsetof(struct sctphdr, checksum))
-			return -EINVAL;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अगर (priv->csum_offset != दुरत्व(काष्ठा sctphdr, checksum))
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return nft_parse_register_load(tb[NFTA_PAYLOAD_SREG], &priv->sreg,
+	वापस nft_parse_रेजिस्टर_load(tb[NFTA_PAYLOAD_SREG], &priv->sreg,
 				       priv->len);
-}
+पूर्ण
 
-static int nft_payload_set_dump(struct sk_buff *skb, const struct nft_expr *expr)
-{
-	const struct nft_payload_set *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_payload_set_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_payload_set *priv = nft_expr_priv(expr);
 
-	if (nft_dump_register(skb, NFTA_PAYLOAD_SREG, priv->sreg) ||
+	अगर (nft_dump_रेजिस्टर(skb, NFTA_PAYLOAD_SREG, priv->sreg) ||
 	    nla_put_be32(skb, NFTA_PAYLOAD_BASE, htonl(priv->base)) ||
 	    nla_put_be32(skb, NFTA_PAYLOAD_OFFSET, htonl(priv->offset)) ||
 	    nla_put_be32(skb, NFTA_PAYLOAD_LEN, htonl(priv->len)) ||
@@ -709,66 +710,66 @@ static int nft_payload_set_dump(struct sk_buff *skb, const struct nft_expr *expr
 	    nla_put_be32(skb, NFTA_PAYLOAD_CSUM_OFFSET,
 			 htonl(priv->csum_offset)) ||
 	    nla_put_be32(skb, NFTA_PAYLOAD_CSUM_FLAGS, htonl(priv->csum_flags)))
-		goto nla_put_failure;
-	return 0;
+		जाओ nla_put_failure;
+	वापस 0;
 
 nla_put_failure:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static const struct nft_expr_ops nft_payload_set_ops = {
+अटल स्थिर काष्ठा nft_expr_ops nft_payload_set_ops = अणु
 	.type		= &nft_payload_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_payload_set)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_payload_set)),
 	.eval		= nft_payload_set_eval,
 	.init		= nft_payload_set_init,
 	.dump		= nft_payload_set_dump,
-};
+पूर्ण;
 
-static const struct nft_expr_ops *
-nft_payload_select_ops(const struct nft_ctx *ctx,
-		       const struct nlattr * const tb[])
-{
-	enum nft_payload_bases base;
-	unsigned int offset, len;
+अटल स्थिर काष्ठा nft_expr_ops *
+nft_payload_select_ops(स्थिर काष्ठा nft_ctx *ctx,
+		       स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	क्रमागत nft_payload_bases base;
+	अचिन्हित पूर्णांक offset, len;
 
-	if (tb[NFTA_PAYLOAD_BASE] == NULL ||
-	    tb[NFTA_PAYLOAD_OFFSET] == NULL ||
-	    tb[NFTA_PAYLOAD_LEN] == NULL)
-		return ERR_PTR(-EINVAL);
+	अगर (tb[NFTA_PAYLOAD_BASE] == शून्य ||
+	    tb[NFTA_PAYLOAD_OFFSET] == शून्य ||
+	    tb[NFTA_PAYLOAD_LEN] == शून्य)
+		वापस ERR_PTR(-EINVAL);
 
 	base = ntohl(nla_get_be32(tb[NFTA_PAYLOAD_BASE]));
-	switch (base) {
-	case NFT_PAYLOAD_LL_HEADER:
-	case NFT_PAYLOAD_NETWORK_HEADER:
-	case NFT_PAYLOAD_TRANSPORT_HEADER:
-		break;
-	default:
-		return ERR_PTR(-EOPNOTSUPP);
-	}
+	चयन (base) अणु
+	हाल NFT_PAYLOAD_LL_HEADER:
+	हाल NFT_PAYLOAD_NETWORK_HEADER:
+	हाल NFT_PAYLOAD_TRANSPORT_HEADER:
+		अवरोध;
+	शेष:
+		वापस ERR_PTR(-EOPNOTSUPP);
+	पूर्ण
 
-	if (tb[NFTA_PAYLOAD_SREG] != NULL) {
-		if (tb[NFTA_PAYLOAD_DREG] != NULL)
-			return ERR_PTR(-EINVAL);
-		return &nft_payload_set_ops;
-	}
+	अगर (tb[NFTA_PAYLOAD_SREG] != शून्य) अणु
+		अगर (tb[NFTA_PAYLOAD_DREG] != शून्य)
+			वापस ERR_PTR(-EINVAL);
+		वापस &nft_payload_set_ops;
+	पूर्ण
 
-	if (tb[NFTA_PAYLOAD_DREG] == NULL)
-		return ERR_PTR(-EINVAL);
+	अगर (tb[NFTA_PAYLOAD_DREG] == शून्य)
+		वापस ERR_PTR(-EINVAL);
 
 	offset = ntohl(nla_get_be32(tb[NFTA_PAYLOAD_OFFSET]));
 	len    = ntohl(nla_get_be32(tb[NFTA_PAYLOAD_LEN]));
 
-	if (len <= 4 && is_power_of_2(len) && IS_ALIGNED(offset, len) &&
+	अगर (len <= 4 && is_घातer_of_2(len) && IS_ALIGNED(offset, len) &&
 	    base != NFT_PAYLOAD_LL_HEADER)
-		return &nft_payload_fast_ops;
-	else
-		return &nft_payload_ops;
-}
+		वापस &nft_payload_fast_ops;
+	अन्यथा
+		वापस &nft_payload_ops;
+पूर्ण
 
-struct nft_expr_type nft_payload_type __read_mostly = {
+काष्ठा nft_expr_type nft_payload_type __पढ़ो_mostly = अणु
 	.name		= "payload",
 	.select_ops	= nft_payload_select_ops,
 	.policy		= nft_payload_policy,
 	.maxattr	= NFTA_PAYLOAD_MAX,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;

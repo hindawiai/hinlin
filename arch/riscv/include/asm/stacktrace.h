@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _ASM_RISCV_STACKTRACE_H
-#define _ASM_RISCV_STACKTRACE_H
+#अगर_अघोषित _ASM_RISCV_STACKTRACE_H
+#घोषणा _ASM_RISCV_STACKTRACE_H
 
-#include <linux/sched.h>
-#include <asm/ptrace.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/ptrace.h>
 
-struct stackframe {
-	unsigned long fp;
-	unsigned long ra;
-};
+काष्ठा stackframe अणु
+	अचिन्हित दीर्घ fp;
+	अचिन्हित दीर्घ ra;
+पूर्ण;
 
-extern void notrace walk_stackframe(struct task_struct *task, struct pt_regs *regs,
-				    bool (*fn)(void *, unsigned long), void *arg);
-extern void dump_backtrace(struct pt_regs *regs, struct task_struct *task,
-			   const char *loglvl);
+बाह्य व्योम notrace walk_stackframe(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs,
+				    bool (*fn)(व्योम *, अचिन्हित दीर्घ), व्योम *arg);
+बाह्य व्योम dump_backtrace(काष्ठा pt_regs *regs, काष्ठा task_काष्ठा *task,
+			   स्थिर अक्षर *loglvl);
 
-#endif /* _ASM_RISCV_STACKTRACE_H */
+#पूर्ण_अगर /* _ASM_RISCV_STACKTRACE_H */

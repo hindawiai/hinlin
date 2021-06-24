@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __ASM_POLL_H
-#define __ASM_POLL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __ASM_POLL_H
+#घोषणा __ASM_POLL_H
 
-#define POLLWRNORM	POLLOUT
-#define POLLWRBAND	0x0100
+#घोषणा POLLWRNORM	POLLOUT
+#घोषणा POLLWRBAND	0x0100
 
-#include <asm-generic/poll.h>
+#समावेश <यंत्र-generic/poll.h>
 
-#endif /* __ASM_POLL_H */
+#पूर्ण_अगर /* __ASM_POLL_H */

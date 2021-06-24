@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#include <linux/types.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include "qed.h"
-#include "qed_hsi.h"
-#include "qed_hw.h"
-#include "qed_init_ops.h"
-#include "qed_reg_addr.h"
-#include "qed_sriov.h"
+#समावेश <linux/types.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश "qed.h"
+#समावेश "qed_hsi.h"
+#समावेश "qed_hw.h"
+#समावेश "qed_init_ops.h"
+#समावेश "qed_reg_addr.h"
+#समावेश "qed_sriov.h"
 
-#define QED_INIT_MAX_POLL_COUNT 100
-#define QED_INIT_POLL_PERIOD_US 500
+#घोषणा QED_INIT_MAX_POLL_COUNT 100
+#घोषणा QED_INIT_POLL_PERIOD_US 500
 
-static u32 pxp_global_win[] = {
+अटल u32 pxp_global_win[] = अणु
 	0,
 	0,
 	0x1c02, /* win 2: addr=0x1c02000, size=4096 bytes */
@@ -41,10 +42,10 @@ static u32 pxp_global_win[] = {
 	0,
 	0,
 	0,
-};
+पूर्ण;
 
 /* IRO Array */
-static const u32 iro_arr[] = {
+अटल स्थिर u32 iro_arr[] = अणु
 	0x00000000, 0x00000000, 0x00080000,
 	0x00003288, 0x00000088, 0x00880000,
 	0x000058e8, 0x00000020, 0x00200000,
@@ -114,306 +115,306 @@ static const u32 iro_arr[] = {
 	0x000126e8, 0x00000018, 0x00180000,
 	0x0000e608, 0x00500288, 0x00100000,
 	0x00012970, 0x00000138, 0x00280000,
-};
+पूर्ण;
 
-void qed_init_iro_array(struct qed_dev *cdev)
-{
+व्योम qed_init_iro_array(काष्ठा qed_dev *cdev)
+अणु
 	cdev->iro_arr = iro_arr;
-}
+पूर्ण
 
-void qed_init_store_rt_reg(struct qed_hwfn *p_hwfn, u32 rt_offset, u32 val)
-{
+व्योम qed_init_store_rt_reg(काष्ठा qed_hwfn *p_hwfn, u32 rt_offset, u32 val)
+अणु
 	p_hwfn->rt_data.init_val[rt_offset] = val;
 	p_hwfn->rt_data.b_valid[rt_offset] = true;
-}
+पूर्ण
 
-void qed_init_store_rt_agg(struct qed_hwfn *p_hwfn,
-			   u32 rt_offset, u32 *p_val, size_t size)
-{
-	size_t i;
+व्योम qed_init_store_rt_agg(काष्ठा qed_hwfn *p_hwfn,
+			   u32 rt_offset, u32 *p_val, माप_प्रकार size)
+अणु
+	माप_प्रकार i;
 
-	for (i = 0; i < size / sizeof(u32); i++) {
+	क्रम (i = 0; i < size / माप(u32); i++) अणु
 		p_hwfn->rt_data.init_val[rt_offset + i] = p_val[i];
 		p_hwfn->rt_data.b_valid[rt_offset + i]	= true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int qed_init_rt(struct qed_hwfn	*p_hwfn,
-		       struct qed_ptt *p_ptt,
+अटल पूर्णांक qed_init_rt(काष्ठा qed_hwfn	*p_hwfn,
+		       काष्ठा qed_ptt *p_ptt,
 		       u32 addr, u16 rt_offset, u16 size, bool b_must_dmae)
-{
+अणु
 	u32 *p_init_val = &p_hwfn->rt_data.init_val[rt_offset];
 	bool *p_valid = &p_hwfn->rt_data.b_valid[rt_offset];
 	u16 i, j, segment;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	/* Since not all RT entries are initialized, go over the RT and
-	 * for each segment of initialized values use DMA.
+	 * क्रम each segment of initialized values use DMA.
 	 */
-	for (i = 0; i < size; i++) {
-		if (!p_valid[i])
-			continue;
+	क्रम (i = 0; i < size; i++) अणु
+		अगर (!p_valid[i])
+			जारी;
 
-		/* In case there isn't any wide-bus configuration here,
-		 * simply write the data instead of using dmae.
+		/* In हाल there isn't any wide-bus configuration here,
+		 * simply ग_लिखो the data instead of using dmae.
 		 */
-		if (!b_must_dmae) {
+		अगर (!b_must_dmae) अणु
 			qed_wr(p_hwfn, p_ptt, addr + (i << 2), p_init_val[i]);
 			p_valid[i] = false;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Start of a new segment */
-		for (segment = 1; i + segment < size; segment++)
-			if (!p_valid[i + segment])
-				break;
+		क्रम (segment = 1; i + segment < size; segment++)
+			अगर (!p_valid[i + segment])
+				अवरोध;
 
 		rc = qed_dmae_host2grc(p_hwfn, p_ptt,
-				       (uintptr_t)(p_init_val + i),
-				       addr + (i << 2), segment, NULL);
-		if (rc)
-			return rc;
+				       (uपूर्णांकptr_t)(p_init_val + i),
+				       addr + (i << 2), segment, शून्य);
+		अगर (rc)
+			वापस rc;
 
 		/* invalidate after writing */
-		for (j = i; j < i + segment; j++)
+		क्रम (j = i; j < i + segment; j++)
 			p_valid[j] = false;
 
 		/* Jump over the entire segment, including invalid entry */
 		i += segment;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int qed_init_alloc(struct qed_hwfn *p_hwfn)
-{
-	struct qed_rt_data *rt_data = &p_hwfn->rt_data;
+पूर्णांक qed_init_alloc(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	काष्ठा qed_rt_data *rt_data = &p_hwfn->rt_data;
 
-	if (IS_VF(p_hwfn->cdev))
-		return 0;
+	अगर (IS_VF(p_hwfn->cdev))
+		वापस 0;
 
-	rt_data->b_valid = kcalloc(RUNTIME_ARRAY_SIZE, sizeof(bool),
+	rt_data->b_valid = kसुस्मृति(RUNTIME_ARRAY_SIZE, माप(bool),
 				   GFP_KERNEL);
-	if (!rt_data->b_valid)
-		return -ENOMEM;
+	अगर (!rt_data->b_valid)
+		वापस -ENOMEM;
 
-	rt_data->init_val = kcalloc(RUNTIME_ARRAY_SIZE, sizeof(u32),
+	rt_data->init_val = kसुस्मृति(RUNTIME_ARRAY_SIZE, माप(u32),
 				    GFP_KERNEL);
-	if (!rt_data->init_val) {
-		kfree(rt_data->b_valid);
-		rt_data->b_valid = NULL;
-		return -ENOMEM;
-	}
+	अगर (!rt_data->init_val) अणु
+		kमुक्त(rt_data->b_valid);
+		rt_data->b_valid = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void qed_init_free(struct qed_hwfn *p_hwfn)
-{
-	kfree(p_hwfn->rt_data.init_val);
-	p_hwfn->rt_data.init_val = NULL;
-	kfree(p_hwfn->rt_data.b_valid);
-	p_hwfn->rt_data.b_valid = NULL;
-}
+व्योम qed_init_मुक्त(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	kमुक्त(p_hwfn->rt_data.init_val);
+	p_hwfn->rt_data.init_val = शून्य;
+	kमुक्त(p_hwfn->rt_data.b_valid);
+	p_hwfn->rt_data.b_valid = शून्य;
+पूर्ण
 
-static int qed_init_array_dmae(struct qed_hwfn *p_hwfn,
-			       struct qed_ptt *p_ptt,
+अटल पूर्णांक qed_init_array_dmae(काष्ठा qed_hwfn *p_hwfn,
+			       काष्ठा qed_ptt *p_ptt,
 			       u32 addr,
 			       u32 dmae_data_offset,
 			       u32 size,
-			       const u32 *buf,
+			       स्थिर u32 *buf,
 			       bool b_must_dmae,
 			       bool b_can_dmae)
-{
-	int rc = 0;
+अणु
+	पूर्णांक rc = 0;
 
-	/* Perform DMAE only for lengthy enough sections or for wide-bus */
-	if (!b_can_dmae || (!b_must_dmae && (size < 16))) {
-		const u32 *data = buf + dmae_data_offset;
+	/* Perक्रमm DMAE only क्रम lengthy enough sections or क्रम wide-bus */
+	अगर (!b_can_dmae || (!b_must_dmae && (size < 16))) अणु
+		स्थिर u32 *data = buf + dmae_data_offset;
 		u32 i;
 
-		for (i = 0; i < size; i++)
+		क्रम (i = 0; i < size; i++)
 			qed_wr(p_hwfn, p_ptt, addr + (i << 2), data[i]);
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = qed_dmae_host2grc(p_hwfn, p_ptt,
-				       (uintptr_t)(buf + dmae_data_offset),
-				       addr, size, NULL);
-	}
+				       (uपूर्णांकptr_t)(buf + dmae_data_offset),
+				       addr, size, शून्य);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qed_init_fill_dmae(struct qed_hwfn *p_hwfn,
-			      struct qed_ptt *p_ptt,
+अटल पूर्णांक qed_init_fill_dmae(काष्ठा qed_hwfn *p_hwfn,
+			      काष्ठा qed_ptt *p_ptt,
 			      u32 addr, u32 fill, u32 fill_count)
-{
-	static u32 zero_buffer[DMAE_MAX_RW_SIZE];
-	struct qed_dmae_params params = {};
+अणु
+	अटल u32 zero_buffer[DMAE_MAX_RW_SIZE];
+	काष्ठा qed_dmae_params params = अणुपूर्ण;
 
-	memset(zero_buffer, 0, sizeof(u32) * DMAE_MAX_RW_SIZE);
+	स_रखो(zero_buffer, 0, माप(u32) * DMAE_MAX_RW_SIZE);
 
-	/* invoke the DMAE virtual/physical buffer API with
+	/* invoke the DMAE भव/physical buffer API with
 	 * 1. DMAE init channel
 	 * 2. addr,
 	 * 3. p_hwfb->temp_data,
 	 * 4. fill_count
 	 */
 	SET_FIELD(params.flags, QED_DMAE_PARAMS_RW_REPL_SRC, 0x1);
-	return qed_dmae_host2grc(p_hwfn, p_ptt,
-				 (uintptr_t)(&zero_buffer[0]),
+	वापस qed_dmae_host2grc(p_hwfn, p_ptt,
+				 (uपूर्णांकptr_t)(&zero_buffer[0]),
 				 addr, fill_count, &params);
-}
+पूर्ण
 
-static void qed_init_fill(struct qed_hwfn *p_hwfn,
-			  struct qed_ptt *p_ptt,
+अटल व्योम qed_init_fill(काष्ठा qed_hwfn *p_hwfn,
+			  काष्ठा qed_ptt *p_ptt,
 			  u32 addr, u32 fill, u32 fill_count)
-{
+अणु
 	u32 i;
 
-	for (i = 0; i < fill_count; i++, addr += sizeof(u32))
+	क्रम (i = 0; i < fill_count; i++, addr += माप(u32))
 		qed_wr(p_hwfn, p_ptt, addr, fill);
-}
+पूर्ण
 
-static int qed_init_cmd_array(struct qed_hwfn *p_hwfn,
-			      struct qed_ptt *p_ptt,
-			      struct init_write_op *cmd,
+अटल पूर्णांक qed_init_cmd_array(काष्ठा qed_hwfn *p_hwfn,
+			      काष्ठा qed_ptt *p_ptt,
+			      काष्ठा init_ग_लिखो_op *cmd,
 			      bool b_must_dmae, bool b_can_dmae)
-{
+अणु
 	u32 dmae_array_offset = le32_to_cpu(cmd->args.array_offset);
 	u32 data = le32_to_cpu(cmd->data);
 	u32 addr = GET_FIELD(data, INIT_WRITE_OP_ADDRESS) << 2;
 
 	u32 offset, output_len, input_len, max_size;
-	struct qed_dev *cdev = p_hwfn->cdev;
-	union init_array_hdr *hdr;
-	const u32 *array_data;
-	int rc = 0;
+	काष्ठा qed_dev *cdev = p_hwfn->cdev;
+	जोड़ init_array_hdr *hdr;
+	स्थिर u32 *array_data;
+	पूर्णांक rc = 0;
 	u32 size;
 
 	array_data = cdev->fw_data->arr_data;
 
-	hdr = (union init_array_hdr *)(array_data + dmae_array_offset);
+	hdr = (जोड़ init_array_hdr *)(array_data + dmae_array_offset);
 	data = le32_to_cpu(hdr->raw.data);
-	switch (GET_FIELD(data, INIT_ARRAY_RAW_HDR_TYPE)) {
-	case INIT_ARR_ZIPPED:
+	चयन (GET_FIELD(data, INIT_ARRAY_RAW_HDR_TYPE)) अणु
+	हाल INIT_ARR_ZIPPED:
 		offset = dmae_array_offset + 1;
 		input_len = GET_FIELD(data,
 				      INIT_ARRAY_ZIPPED_HDR_ZIPPED_SIZE);
 		max_size = MAX_ZIPPED_SIZE * 4;
-		memset(p_hwfn->unzip_buf, 0, max_size);
+		स_रखो(p_hwfn->unzip_buf, 0, max_size);
 
 		output_len = qed_unzip_data(p_hwfn, input_len,
 					    (u8 *)&array_data[offset],
 					    max_size, (u8 *)p_hwfn->unzip_buf);
-		if (output_len) {
+		अगर (output_len) अणु
 			rc = qed_init_array_dmae(p_hwfn, p_ptt, addr, 0,
 						 output_len,
 						 p_hwfn->unzip_buf,
 						 b_must_dmae, b_can_dmae);
-		} else {
+		पूर्ण अन्यथा अणु
 			DP_NOTICE(p_hwfn, "Failed to unzip dmae data\n");
 			rc = -EINVAL;
-		}
-		break;
-	case INIT_ARR_PATTERN:
-	{
+		पूर्ण
+		अवरोध;
+	हाल INIT_ARR_PATTERN:
+	अणु
 		u32 repeats = GET_FIELD(data,
 					INIT_ARRAY_PATTERN_HDR_REPETITIONS);
 		u32 i;
 
 		size = GET_FIELD(data, INIT_ARRAY_PATTERN_HDR_PATTERN_SIZE);
 
-		for (i = 0; i < repeats; i++, addr += size << 2) {
+		क्रम (i = 0; i < repeats; i++, addr += size << 2) अणु
 			rc = qed_init_array_dmae(p_hwfn, p_ptt, addr,
 						 dmae_array_offset + 1,
 						 size, array_data,
 						 b_must_dmae, b_can_dmae);
-			if (rc)
-				break;
-		}
-		break;
-	}
-	case INIT_ARR_STANDARD:
+			अगर (rc)
+				अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल INIT_ARR_STANDARD:
 		size = GET_FIELD(data, INIT_ARRAY_STANDARD_HDR_SIZE);
 		rc = qed_init_array_dmae(p_hwfn, p_ptt, addr,
 					 dmae_array_offset + 1,
 					 size, array_data,
 					 b_must_dmae, b_can_dmae);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* init_ops write command */
-static int qed_init_cmd_wr(struct qed_hwfn *p_hwfn,
-			   struct qed_ptt *p_ptt,
-			   struct init_write_op *p_cmd, bool b_can_dmae)
-{
+/* init_ops ग_लिखो command */
+अटल पूर्णांक qed_init_cmd_wr(काष्ठा qed_hwfn *p_hwfn,
+			   काष्ठा qed_ptt *p_ptt,
+			   काष्ठा init_ग_लिखो_op *p_cmd, bool b_can_dmae)
+अणु
 	u32 data = le32_to_cpu(p_cmd->data);
 	bool b_must_dmae = GET_FIELD(data, INIT_WRITE_OP_WIDE_BUS);
 	u32 addr = GET_FIELD(data, INIT_WRITE_OP_ADDRESS) << 2;
-	union init_write_args *arg = &p_cmd->args;
-	int rc = 0;
+	जोड़ init_ग_लिखो_args *arg = &p_cmd->args;
+	पूर्णांक rc = 0;
 
 	/* Sanitize */
-	if (b_must_dmae && !b_can_dmae) {
+	अगर (b_must_dmae && !b_can_dmae) अणु
 		DP_NOTICE(p_hwfn,
 			  "Need to write to %08x for Wide-bus but DMAE isn't allowed\n",
 			  addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (GET_FIELD(data, INIT_WRITE_OP_SOURCE)) {
-	case INIT_SRC_INLINE:
-		data = le32_to_cpu(p_cmd->args.inline_val);
+	चयन (GET_FIELD(data, INIT_WRITE_OP_SOURCE)) अणु
+	हाल INIT_SRC_INLINE:
+		data = le32_to_cpu(p_cmd->args.अंतरभूत_val);
 		qed_wr(p_hwfn, p_ptt, addr, data);
-		break;
-	case INIT_SRC_ZEROS:
+		अवरोध;
+	हाल INIT_SRC_ZEROS:
 		data = le32_to_cpu(p_cmd->args.zeros_count);
-		if (b_must_dmae || (b_can_dmae && (data >= 64)))
+		अगर (b_must_dmae || (b_can_dmae && (data >= 64)))
 			rc = qed_init_fill_dmae(p_hwfn, p_ptt, addr, 0, data);
-		else
+		अन्यथा
 			qed_init_fill(p_hwfn, p_ptt, addr, 0, data);
-		break;
-	case INIT_SRC_ARRAY:
+		अवरोध;
+	हाल INIT_SRC_ARRAY:
 		rc = qed_init_cmd_array(p_hwfn, p_ptt, p_cmd,
 					b_must_dmae, b_can_dmae);
-		break;
-	case INIT_SRC_RUNTIME:
+		अवरोध;
+	हाल INIT_SRC_RUNTIME:
 		qed_init_rt(p_hwfn, p_ptt, addr,
-			    le16_to_cpu(arg->runtime.offset),
-			    le16_to_cpu(arg->runtime.size),
+			    le16_to_cpu(arg->runसमय.offset),
+			    le16_to_cpu(arg->runसमय.size),
 			    b_must_dmae);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline bool comp_eq(u32 val, u32 expected_val)
-{
-	return val == expected_val;
-}
+अटल अंतरभूत bool comp_eq(u32 val, u32 expected_val)
+अणु
+	वापस val == expected_val;
+पूर्ण
 
-static inline bool comp_and(u32 val, u32 expected_val)
-{
-	return (val & expected_val) == expected_val;
-}
+अटल अंतरभूत bool comp_and(u32 val, u32 expected_val)
+अणु
+	वापस (val & expected_val) == expected_val;
+पूर्ण
 
-static inline bool comp_or(u32 val, u32 expected_val)
-{
-	return (val | expected_val) > 0;
-}
+अटल अंतरभूत bool comp_or(u32 val, u32 expected_val)
+अणु
+	वापस (val | expected_val) > 0;
+पूर्ण
 
-/* init_ops read/poll commands */
-static void qed_init_cmd_rd(struct qed_hwfn *p_hwfn,
-			    struct qed_ptt *p_ptt, struct init_read_op *cmd)
-{
+/* init_ops पढ़ो/poll commands */
+अटल व्योम qed_init_cmd_rd(काष्ठा qed_hwfn *p_hwfn,
+			    काष्ठा qed_ptt *p_ptt, काष्ठा init_पढ़ो_op *cmd)
+अणु
 	bool (*comp_check)(u32 val, u32 expected_val);
 	u32 delay = QED_INIT_POLL_PERIOD_US, val;
 	u32 data, addr, poll;
-	int i;
+	पूर्णांक i;
 
 	data = le32_to_cpu(cmd->op_data);
 	addr = GET_FIELD(data, INIT_READ_OP_ADDRESS) << 2;
@@ -422,207 +423,207 @@ static void qed_init_cmd_rd(struct qed_hwfn *p_hwfn,
 
 	val = qed_rd(p_hwfn, p_ptt, addr);
 
-	if (poll == INIT_POLL_NONE)
-		return;
+	अगर (poll == INIT_POLL_NONE)
+		वापस;
 
-	switch (poll) {
-	case INIT_POLL_EQ:
+	चयन (poll) अणु
+	हाल INIT_POLL_EQ:
 		comp_check = comp_eq;
-		break;
-	case INIT_POLL_OR:
+		अवरोध;
+	हाल INIT_POLL_OR:
 		comp_check = comp_or;
-		break;
-	case INIT_POLL_AND:
+		अवरोध;
+	हाल INIT_POLL_AND:
 		comp_check = comp_and;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DP_ERR(p_hwfn, "Invalid poll comparison type %08x\n",
 		       cmd->op_data);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	data = le32_to_cpu(cmd->expected_val);
-	for (i = 0;
+	क्रम (i = 0;
 	     i < QED_INIT_MAX_POLL_COUNT && !comp_check(val, data);
-	     i++) {
+	     i++) अणु
 		udelay(delay);
 		val = qed_rd(p_hwfn, p_ptt, addr);
-	}
+	पूर्ण
 
-	if (i == QED_INIT_MAX_POLL_COUNT) {
+	अगर (i == QED_INIT_MAX_POLL_COUNT) अणु
 		DP_ERR(p_hwfn,
 		       "Timeout when polling reg: 0x%08x [ Waiting-for: %08x Got: %08x (comparison %08x)]\n",
 		       addr, le32_to_cpu(cmd->expected_val),
 		       val, le32_to_cpu(cmd->op_data));
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* init_ops callbacks entry point */
-static int qed_init_cmd_cb(struct qed_hwfn *p_hwfn,
-			   struct qed_ptt *p_ptt,
-			   struct init_callback_op *p_cmd)
-{
-	int rc;
+/* init_ops callbacks entry poपूर्णांक */
+अटल पूर्णांक qed_init_cmd_cb(काष्ठा qed_hwfn *p_hwfn,
+			   काष्ठा qed_ptt *p_ptt,
+			   काष्ठा init_callback_op *p_cmd)
+अणु
+	पूर्णांक rc;
 
-	switch (p_cmd->callback_id) {
-	case DMAE_READY_CB:
+	चयन (p_cmd->callback_id) अणु
+	हाल DMAE_READY_CB:
 		rc = qed_dmae_sanity(p_hwfn, p_ptt, "engine_phase");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DP_NOTICE(p_hwfn, "Unexpected init op callback ID %d\n",
 			  p_cmd->callback_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static u8 qed_init_cmd_mode_match(struct qed_hwfn *p_hwfn,
-				  u16 *p_offset, int modes)
-{
-	struct qed_dev *cdev = p_hwfn->cdev;
-	const u8 *modes_tree_buf;
+अटल u8 qed_init_cmd_mode_match(काष्ठा qed_hwfn *p_hwfn,
+				  u16 *p_offset, पूर्णांक modes)
+अणु
+	काष्ठा qed_dev *cdev = p_hwfn->cdev;
+	स्थिर u8 *modes_tree_buf;
 	u8 arg1, arg2, tree_val;
 
 	modes_tree_buf = cdev->fw_data->modes_tree_buf;
 	tree_val = modes_tree_buf[(*p_offset)++];
-	switch (tree_val) {
-	case INIT_MODE_OP_NOT:
-		return qed_init_cmd_mode_match(p_hwfn, p_offset, modes) ^ 1;
-	case INIT_MODE_OP_OR:
+	चयन (tree_val) अणु
+	हाल INIT_MODE_OP_NOT:
+		वापस qed_init_cmd_mode_match(p_hwfn, p_offset, modes) ^ 1;
+	हाल INIT_MODE_OP_OR:
 		arg1 = qed_init_cmd_mode_match(p_hwfn, p_offset, modes);
 		arg2 = qed_init_cmd_mode_match(p_hwfn, p_offset, modes);
-		return arg1 | arg2;
-	case INIT_MODE_OP_AND:
+		वापस arg1 | arg2;
+	हाल INIT_MODE_OP_AND:
 		arg1 = qed_init_cmd_mode_match(p_hwfn, p_offset, modes);
 		arg2 = qed_init_cmd_mode_match(p_hwfn, p_offset, modes);
-		return arg1 & arg2;
-	default:
+		वापस arg1 & arg2;
+	शेष:
 		tree_val -= MAX_INIT_MODE_OPS;
-		return (modes & BIT(tree_val)) ? 1 : 0;
-	}
-}
+		वापस (modes & BIT(tree_val)) ? 1 : 0;
+	पूर्ण
+पूर्ण
 
-static u32 qed_init_cmd_mode(struct qed_hwfn *p_hwfn,
-			     struct init_if_mode_op *p_cmd, int modes)
-{
+अटल u32 qed_init_cmd_mode(काष्ठा qed_hwfn *p_hwfn,
+			     काष्ठा init_अगर_mode_op *p_cmd, पूर्णांक modes)
+अणु
 	u16 offset = le16_to_cpu(p_cmd->modes_buf_offset);
 
-	if (qed_init_cmd_mode_match(p_hwfn, &offset, modes))
-		return 0;
-	else
-		return GET_FIELD(le32_to_cpu(p_cmd->op_data),
+	अगर (qed_init_cmd_mode_match(p_hwfn, &offset, modes))
+		वापस 0;
+	अन्यथा
+		वापस GET_FIELD(le32_to_cpu(p_cmd->op_data),
 				 INIT_IF_MODE_OP_CMD_OFFSET);
-}
+पूर्ण
 
-static u32 qed_init_cmd_phase(struct qed_hwfn *p_hwfn,
-			      struct init_if_phase_op *p_cmd,
+अटल u32 qed_init_cmd_phase(काष्ठा qed_hwfn *p_hwfn,
+			      काष्ठा init_अगर_phase_op *p_cmd,
 			      u32 phase, u32 phase_id)
-{
+अणु
 	u32 data = le32_to_cpu(p_cmd->phase_data);
 	u32 op_data = le32_to_cpu(p_cmd->op_data);
 
-	if (!(GET_FIELD(data, INIT_IF_PHASE_OP_PHASE) == phase &&
+	अगर (!(GET_FIELD(data, INIT_IF_PHASE_OP_PHASE) == phase &&
 	      (GET_FIELD(data, INIT_IF_PHASE_OP_PHASE_ID) == ANY_PHASE_ID ||
 	       GET_FIELD(data, INIT_IF_PHASE_OP_PHASE_ID) == phase_id)))
-		return GET_FIELD(op_data, INIT_IF_PHASE_OP_CMD_OFFSET);
-	else
-		return 0;
-}
+		वापस GET_FIELD(op_data, INIT_IF_PHASE_OP_CMD_OFFSET);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-int qed_init_run(struct qed_hwfn *p_hwfn,
-		 struct qed_ptt *p_ptt, int phase, int phase_id, int modes)
-{
+पूर्णांक qed_init_run(काष्ठा qed_hwfn *p_hwfn,
+		 काष्ठा qed_ptt *p_ptt, पूर्णांक phase, पूर्णांक phase_id, पूर्णांक modes)
+अणु
 	bool b_dmae = (phase != PHASE_ENGINE);
-	struct qed_dev *cdev = p_hwfn->cdev;
+	काष्ठा qed_dev *cdev = p_hwfn->cdev;
 	u32 cmd_num, num_init_ops;
-	union init_op *init_ops;
-	int rc = 0;
+	जोड़ init_op *init_ops;
+	पूर्णांक rc = 0;
 
 	num_init_ops = cdev->fw_data->init_ops_size;
 	init_ops = cdev->fw_data->init_ops;
 
 	p_hwfn->unzip_buf = kzalloc(MAX_ZIPPED_SIZE * 4, GFP_ATOMIC);
-	if (!p_hwfn->unzip_buf)
-		return -ENOMEM;
+	अगर (!p_hwfn->unzip_buf)
+		वापस -ENOMEM;
 
-	for (cmd_num = 0; cmd_num < num_init_ops; cmd_num++) {
-		union init_op *cmd = &init_ops[cmd_num];
+	क्रम (cmd_num = 0; cmd_num < num_init_ops; cmd_num++) अणु
+		जोड़ init_op *cmd = &init_ops[cmd_num];
 		u32 data = le32_to_cpu(cmd->raw.op_data);
 
-		switch (GET_FIELD(data, INIT_CALLBACK_OP_OP)) {
-		case INIT_OP_WRITE:
-			rc = qed_init_cmd_wr(p_hwfn, p_ptt, &cmd->write,
+		चयन (GET_FIELD(data, INIT_CALLBACK_OP_OP)) अणु
+		हाल INIT_OP_WRITE:
+			rc = qed_init_cmd_wr(p_hwfn, p_ptt, &cmd->ग_लिखो,
 					     b_dmae);
-			break;
-		case INIT_OP_READ:
-			qed_init_cmd_rd(p_hwfn, p_ptt, &cmd->read);
-			break;
-		case INIT_OP_IF_MODE:
-			cmd_num += qed_init_cmd_mode(p_hwfn, &cmd->if_mode,
+			अवरोध;
+		हाल INIT_OP_READ:
+			qed_init_cmd_rd(p_hwfn, p_ptt, &cmd->पढ़ो);
+			अवरोध;
+		हाल INIT_OP_IF_MODE:
+			cmd_num += qed_init_cmd_mode(p_hwfn, &cmd->अगर_mode,
 						     modes);
-			break;
-		case INIT_OP_IF_PHASE:
-			cmd_num += qed_init_cmd_phase(p_hwfn, &cmd->if_phase,
+			अवरोध;
+		हाल INIT_OP_IF_PHASE:
+			cmd_num += qed_init_cmd_phase(p_hwfn, &cmd->अगर_phase,
 						      phase, phase_id);
-			break;
-		case INIT_OP_DELAY:
+			अवरोध;
+		हाल INIT_OP_DELAY:
 			/* qed_init_run is always invoked from
 			 * sleep-able context
 			 */
 			udelay(le32_to_cpu(cmd->delay.delay));
-			break;
+			अवरोध;
 
-		case INIT_OP_CALLBACK:
+		हाल INIT_OP_CALLBACK:
 			rc = qed_init_cmd_cb(p_hwfn, p_ptt, &cmd->callback);
-			if (phase == PHASE_ENGINE &&
+			अगर (phase == PHASE_ENGINE &&
 			    cmd->callback.callback_id == DMAE_READY_CB)
 				b_dmae = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (rc)
-			break;
-	}
+		अगर (rc)
+			अवरोध;
+	पूर्ण
 
-	kfree(p_hwfn->unzip_buf);
-	p_hwfn->unzip_buf = NULL;
-	return rc;
-}
+	kमुक्त(p_hwfn->unzip_buf);
+	p_hwfn->unzip_buf = शून्य;
+	वापस rc;
+पूर्ण
 
-void qed_gtt_init(struct qed_hwfn *p_hwfn)
-{
+व्योम qed_gtt_init(काष्ठा qed_hwfn *p_hwfn)
+अणु
 	u32 gtt_base;
 	u32 i;
 
-	/* Set the global windows */
+	/* Set the global winकरोws */
 	gtt_base = PXP_PF_WINDOW_ADMIN_START + PXP_PF_WINDOW_ADMIN_GLOBAL_START;
 
-	for (i = 0; i < ARRAY_SIZE(pxp_global_win); i++)
-		if (pxp_global_win[i])
+	क्रम (i = 0; i < ARRAY_SIZE(pxp_global_win); i++)
+		अगर (pxp_global_win[i])
 			REG_WR(p_hwfn, gtt_base + i * PXP_GLOBAL_ENTRY_SIZE,
 			       pxp_global_win[i]);
-}
+पूर्ण
 
-int qed_init_fw_data(struct qed_dev *cdev, const u8 *data)
-{
-	struct qed_fw_data *fw = cdev->fw_data;
-	struct bin_buffer_hdr *buf_hdr;
+पूर्णांक qed_init_fw_data(काष्ठा qed_dev *cdev, स्थिर u8 *data)
+अणु
+	काष्ठा qed_fw_data *fw = cdev->fw_data;
+	काष्ठा bin_buffer_hdr *buf_hdr;
 	u32 offset, len;
 
-	if (!data) {
+	अगर (!data) अणु
 		DP_NOTICE(cdev, "Invalid fw data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* First Dword contains metadata and should be skipped */
-	buf_hdr = (struct bin_buffer_hdr *)data;
+	buf_hdr = (काष्ठा bin_buffer_hdr *)data;
 
 	offset = buf_hdr[BIN_BUF_INIT_FW_VER_INFO].offset;
-	fw->fw_ver_info = (struct fw_ver_info *)(data + offset);
+	fw->fw_ver_info = (काष्ठा fw_ver_info *)(data + offset);
 
 	offset = buf_hdr[BIN_BUF_INIT_CMD].offset;
-	fw->init_ops = (union init_op *)(data + offset);
+	fw->init_ops = (जोड़ init_op *)(data + offset);
 
 	offset = buf_hdr[BIN_BUF_INIT_VAL].offset;
 	fw->arr_data = (u32 *)(data + offset);
@@ -630,12 +631,12 @@ int qed_init_fw_data(struct qed_dev *cdev, const u8 *data)
 	offset = buf_hdr[BIN_BUF_INIT_MODE_TREE].offset;
 	fw->modes_tree_buf = (u8 *)(data + offset);
 	len = buf_hdr[BIN_BUF_INIT_CMD].length;
-	fw->init_ops_size = len / sizeof(struct init_raw_op);
+	fw->init_ops_size = len / माप(काष्ठा init_raw_op);
 
 	offset = buf_hdr[BIN_BUF_INIT_OVERLAYS].offset;
 	fw->fw_overlays = (u32 *)(data + offset);
 	len = buf_hdr[BIN_BUF_INIT_OVERLAYS].length;
 	fw->fw_overlays_len = len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

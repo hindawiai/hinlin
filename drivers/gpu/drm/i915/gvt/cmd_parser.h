@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,37 +23,37 @@
  *
  * Authors:
  *    Ke Yu
- *    Kevin Tian <kevin.tian@intel.com>
- *    Zhiyuan Lv <zhiyuan.lv@intel.com>
+ *    Kevin Tian <kevin.tian@पूर्णांकel.com>
+ *    Zhiyuan Lv <zhiyuan.lv@पूर्णांकel.com>
  *
  * Contributors:
- *    Min He <min.he@intel.com>
- *    Ping Gao <ping.a.gao@intel.com>
- *    Tina Zhang <tina.zhang@intel.com>
- *    Yulei Zhang <yulei.zhang@intel.com>
- *    Zhi Wang <zhi.a.wang@intel.com>
+ *    Min He <min.he@पूर्णांकel.com>
+ *    Ping Gao <ping.a.gao@पूर्णांकel.com>
+ *    Tina Zhang <tina.zhang@पूर्णांकel.com>
+ *    Yulei Zhang <yulei.zhang@पूर्णांकel.com>
+ *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
  *
  */
-#ifndef _GVT_CMD_PARSER_H_
-#define _GVT_CMD_PARSER_H_
+#अगर_अघोषित _GVT_CMD_PARSER_H_
+#घोषणा _GVT_CMD_PARSER_H_
 
-#define GVT_CMD_HASH_BITS 7
+#घोषणा GVT_CMD_HASH_BITS 7
 
-struct intel_gvt;
-struct intel_shadow_wa_ctx;
-struct intel_vgpu;
-struct intel_vgpu_workload;
+काष्ठा पूर्णांकel_gvt;
+काष्ठा पूर्णांकel_shaकरोw_wa_ctx;
+काष्ठा पूर्णांकel_vgpu;
+काष्ठा पूर्णांकel_vgpu_workload;
 
-void intel_gvt_clean_cmd_parser(struct intel_gvt *gvt);
+व्योम पूर्णांकel_gvt_clean_cmd_parser(काष्ठा पूर्णांकel_gvt *gvt);
 
-int intel_gvt_init_cmd_parser(struct intel_gvt *gvt);
+पूर्णांक पूर्णांकel_gvt_init_cmd_parser(काष्ठा पूर्णांकel_gvt *gvt);
 
-int intel_gvt_scan_and_shadow_ringbuffer(struct intel_vgpu_workload *workload);
+पूर्णांक पूर्णांकel_gvt_scan_and_shaकरोw_ringbuffer(काष्ठा पूर्णांकel_vgpu_workload *workload);
 
-int intel_gvt_scan_and_shadow_wa_ctx(struct intel_shadow_wa_ctx *wa_ctx);
+पूर्णांक पूर्णांकel_gvt_scan_and_shaकरोw_wa_ctx(काष्ठा पूर्णांकel_shaकरोw_wa_ctx *wa_ctx);
 
-void intel_gvt_update_reg_whitelist(struct intel_vgpu *vgpu);
+व्योम पूर्णांकel_gvt_update_reg_whitelist(काष्ठा पूर्णांकel_vgpu *vgpu);
 
-int intel_gvt_scan_engine_context(struct intel_vgpu_workload *workload);
+पूर्णांक पूर्णांकel_gvt_scan_engine_context(काष्ठा पूर्णांकel_vgpu_workload *workload);
 
-#endif
+#पूर्ण_अगर

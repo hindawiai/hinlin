@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MACH_MXC_SDMA_H__
-#define __MACH_MXC_SDMA_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MACH_MXC_SDMA_H__
+#घोषणा __MACH_MXC_SDMA_H__
 
 /**
- * struct sdma_script_start_addrs - SDMA script start pointers
+ * काष्ठा sdma_script_start_addrs - SDMA script start poपूर्णांकers
  *
- * start addresses of the different functions in the physical
+ * start addresses of the dअगरferent functions in the physical
  * address space of the SDMA engine.
  */
-struct sdma_script_start_addrs {
+काष्ठा sdma_script_start_addrs अणु
 	s32 ap_2_ap_addr;
 	s32 ap_2_bp_addr;
 	s32 ap_2_ap_fixed_addr;
 	s32 bp_2_ap_addr;
 	s32 loopback_on_dsp_side_addr;
-	s32 mcu_interrupt_only_addr;
+	s32 mcu_पूर्णांकerrupt_only_addr;
 	s32 firi_2_per_addr;
 	s32 firi_2_mcu_addr;
 	s32 per_2_firi_addr;
@@ -36,8 +37,8 @@ struct sdma_script_start_addrs {
 	s32 shp_2_mcu_addr;
 	s32 mshc_2_mcu_addr;
 	s32 mcu_2_mshc_addr;
-	s32 spdif_2_mcu_addr;
-	s32 mcu_2_spdif_addr;
+	s32 spdअगर_2_mcu_addr;
+	s32 mcu_2_spdअगर_addr;
 	s32 asrc_2_mcu_addr;
 	s32 ext_mem_2_ipu_addr;
 	s32 descrambler_addr;
@@ -55,6 +56,6 @@ struct sdma_script_start_addrs {
 	/* End of v3 array */
 	s32 mcu_2_zqspi_addr;
 	/* End of v4 array */
-};
+पूर्ण;
 
-#endif /* __MACH_MXC_SDMA_H__ */
+#पूर्ण_अगर /* __MACH_MXC_SDMA_H__ */

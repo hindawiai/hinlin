@@ -1,902 +1,903 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Microsemi Switchtec(tm) PCIe Management Driver
+ * Microsemi Switchtec(पंचांग) PCIe Management Driver
  * Copyright (c) 2017, Microsemi Corporation
  */
 
-#include <linux/switchtec.h>
-#include <linux/switchtec_ioctl.h>
+#समावेश <linux/चयनtec.h>
+#समावेश <linux/चयनtec_ioctl.h>
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h>
-#include <linux/poll.h>
-#include <linux/wait.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <linux/nospec.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <linux/nospec.h>
 
 MODULE_DESCRIPTION("Microsemi Switchtec(tm) PCIe Management Driver");
 MODULE_VERSION("0.1");
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Microsemi Corporation");
 
-static int max_devices = 16;
-module_param(max_devices, int, 0644);
+अटल पूर्णांक max_devices = 16;
+module_param(max_devices, पूर्णांक, 0644);
 MODULE_PARM_DESC(max_devices, "max number of switchtec device instances");
 
-static bool use_dma_mrpc = true;
+अटल bool use_dma_mrpc = true;
 module_param(use_dma_mrpc, bool, 0644);
 MODULE_PARM_DESC(use_dma_mrpc,
 		 "Enable the use of the DMA MRPC feature");
 
-static int nirqs = 32;
-module_param(nirqs, int, 0644);
+अटल पूर्णांक nirqs = 32;
+module_param(nirqs, पूर्णांक, 0644);
 MODULE_PARM_DESC(nirqs, "number of interrupts to allocate (more may be useful for NTB applications)");
 
-static dev_t switchtec_devt;
-static DEFINE_IDA(switchtec_minor_ida);
+अटल dev_t चयनtec_devt;
+अटल DEFINE_IDA(चयनtec_minor_ida);
 
-struct class *switchtec_class;
-EXPORT_SYMBOL_GPL(switchtec_class);
+काष्ठा class *चयनtec_class;
+EXPORT_SYMBOL_GPL(चयनtec_class);
 
-enum mrpc_state {
+क्रमागत mrpc_state अणु
 	MRPC_IDLE = 0,
 	MRPC_QUEUED,
 	MRPC_RUNNING,
 	MRPC_DONE,
-};
+पूर्ण;
 
-struct switchtec_user {
-	struct switchtec_dev *stdev;
+काष्ठा चयनtec_user अणु
+	काष्ठा चयनtec_dev *stdev;
 
-	enum mrpc_state state;
+	क्रमागत mrpc_state state;
 
-	wait_queue_head_t cmd_comp;
-	struct kref kref;
-	struct list_head list;
+	रुको_queue_head_t cmd_comp;
+	काष्ठा kref kref;
+	काष्ठा list_head list;
 
-	bool cmd_done;
+	bool cmd_करोne;
 	u32 cmd;
 	u32 status;
-	u32 return_code;
-	size_t data_len;
-	size_t read_len;
-	unsigned char data[SWITCHTEC_MRPC_PAYLOAD_SIZE];
-	int event_cnt;
-};
+	u32 वापस_code;
+	माप_प्रकार data_len;
+	माप_प्रकार पढ़ो_len;
+	अचिन्हित अक्षर data[SWITCHTEC_MRPC_PAYLOAD_SIZE];
+	पूर्णांक event_cnt;
+पूर्ण;
 
-static struct switchtec_user *stuser_create(struct switchtec_dev *stdev)
-{
-	struct switchtec_user *stuser;
+अटल काष्ठा चयनtec_user *stuser_create(काष्ठा चयनtec_dev *stdev)
+अणु
+	काष्ठा चयनtec_user *stuser;
 
-	stuser = kzalloc(sizeof(*stuser), GFP_KERNEL);
-	if (!stuser)
-		return ERR_PTR(-ENOMEM);
+	stuser = kzalloc(माप(*stuser), GFP_KERNEL);
+	अगर (!stuser)
+		वापस ERR_PTR(-ENOMEM);
 
 	get_device(&stdev->dev);
 	stuser->stdev = stdev;
 	kref_init(&stuser->kref);
 	INIT_LIST_HEAD(&stuser->list);
-	init_waitqueue_head(&stuser->cmd_comp);
-	stuser->event_cnt = atomic_read(&stdev->event_cnt);
+	init_रुकोqueue_head(&stuser->cmd_comp);
+	stuser->event_cnt = atomic_पढ़ो(&stdev->event_cnt);
 
 	dev_dbg(&stdev->dev, "%s: %p\n", __func__, stuser);
 
-	return stuser;
-}
+	वापस stuser;
+पूर्ण
 
-static void stuser_free(struct kref *kref)
-{
-	struct switchtec_user *stuser;
+अटल व्योम stuser_मुक्त(काष्ठा kref *kref)
+अणु
+	काष्ठा चयनtec_user *stuser;
 
-	stuser = container_of(kref, struct switchtec_user, kref);
+	stuser = container_of(kref, काष्ठा चयनtec_user, kref);
 
 	dev_dbg(&stuser->stdev->dev, "%s: %p\n", __func__, stuser);
 
 	put_device(&stuser->stdev->dev);
-	kfree(stuser);
-}
+	kमुक्त(stuser);
+पूर्ण
 
-static void stuser_put(struct switchtec_user *stuser)
-{
-	kref_put(&stuser->kref, stuser_free);
-}
+अटल व्योम stuser_put(काष्ठा चयनtec_user *stuser)
+अणु
+	kref_put(&stuser->kref, stuser_मुक्त);
+पूर्ण
 
-static void stuser_set_state(struct switchtec_user *stuser,
-			     enum mrpc_state state)
-{
-	/* requires the mrpc_mutex to already be held when called */
+अटल व्योम stuser_set_state(काष्ठा चयनtec_user *stuser,
+			     क्रमागत mrpc_state state)
+अणु
+	/* requires the mrpc_mutex to alपढ़ोy be held when called */
 
-	const char * const state_names[] = {
+	स्थिर अक्षर * स्थिर state_names[] = अणु
 		[MRPC_IDLE] = "IDLE",
 		[MRPC_QUEUED] = "QUEUED",
 		[MRPC_RUNNING] = "RUNNING",
 		[MRPC_DONE] = "DONE",
-	};
+	पूर्ण;
 
 	stuser->state = state;
 
 	dev_dbg(&stuser->stdev->dev, "stuser state %p -> %s",
 		stuser, state_names[state]);
-}
+पूर्ण
 
-static void mrpc_complete_cmd(struct switchtec_dev *stdev);
+अटल व्योम mrpc_complete_cmd(काष्ठा चयनtec_dev *stdev);
 
-static void flush_wc_buf(struct switchtec_dev *stdev)
-{
-	struct ntb_dbmsg_regs __iomem *mmio_dbmsg;
+अटल व्योम flush_wc_buf(काष्ठा चयनtec_dev *stdev)
+अणु
+	काष्ठा ntb_dbmsg_regs __iomem *mmio_dbmsg;
 
 	/*
-	 * odb (outbound doorbell) register is processed by low latency
+	 * odb (outbound करोorbell) रेजिस्टर is processed by low latency
 	 * hardware and w/o side effect
 	 */
-	mmio_dbmsg = (void __iomem *)stdev->mmio_ntb +
+	mmio_dbmsg = (व्योम __iomem *)stdev->mmio_ntb +
 		SWITCHTEC_NTB_REG_DBMSG_OFFSET;
-	ioread32(&mmio_dbmsg->odb);
-}
+	ioपढ़ो32(&mmio_dbmsg->odb);
+पूर्ण
 
-static void mrpc_cmd_submit(struct switchtec_dev *stdev)
-{
-	/* requires the mrpc_mutex to already be held when called */
+अटल व्योम mrpc_cmd_submit(काष्ठा चयनtec_dev *stdev)
+अणु
+	/* requires the mrpc_mutex to alपढ़ोy be held when called */
 
-	struct switchtec_user *stuser;
+	काष्ठा चयनtec_user *stuser;
 
-	if (stdev->mrpc_busy)
-		return;
+	अगर (stdev->mrpc_busy)
+		वापस;
 
-	if (list_empty(&stdev->mrpc_queue))
-		return;
+	अगर (list_empty(&stdev->mrpc_queue))
+		वापस;
 
-	stuser = list_entry(stdev->mrpc_queue.next, struct switchtec_user,
+	stuser = list_entry(stdev->mrpc_queue.next, काष्ठा चयनtec_user,
 			    list);
 
-	if (stdev->dma_mrpc) {
+	अगर (stdev->dma_mrpc) अणु
 		stdev->dma_mrpc->status = SWITCHTEC_MRPC_STATUS_INPROGRESS;
-		memset(stdev->dma_mrpc->data, 0xFF, SWITCHTEC_MRPC_PAYLOAD_SIZE);
-	}
+		स_रखो(stdev->dma_mrpc->data, 0xFF, SWITCHTEC_MRPC_PAYLOAD_SIZE);
+	पूर्ण
 
 	stuser_set_state(stuser, MRPC_RUNNING);
 	stdev->mrpc_busy = 1;
-	memcpy_toio(&stdev->mmio_mrpc->input_data,
+	स_नकल_toio(&stdev->mmio_mrpc->input_data,
 		    stuser->data, stuser->data_len);
 	flush_wc_buf(stdev);
-	iowrite32(stuser->cmd, &stdev->mmio_mrpc->cmd);
+	ioग_लिखो32(stuser->cmd, &stdev->mmio_mrpc->cmd);
 
-	schedule_delayed_work(&stdev->mrpc_timeout,
-			      msecs_to_jiffies(500));
-}
+	schedule_delayed_work(&stdev->mrpc_समयout,
+			      msecs_to_jअगरfies(500));
+पूर्ण
 
-static int mrpc_queue_cmd(struct switchtec_user *stuser)
-{
-	/* requires the mrpc_mutex to already be held when called */
+अटल पूर्णांक mrpc_queue_cmd(काष्ठा चयनtec_user *stuser)
+अणु
+	/* requires the mrpc_mutex to alपढ़ोy be held when called */
 
-	struct switchtec_dev *stdev = stuser->stdev;
+	काष्ठा चयनtec_dev *stdev = stuser->stdev;
 
 	kref_get(&stuser->kref);
-	stuser->read_len = sizeof(stuser->data);
+	stuser->पढ़ो_len = माप(stuser->data);
 	stuser_set_state(stuser, MRPC_QUEUED);
-	stuser->cmd_done = false;
+	stuser->cmd_करोne = false;
 	list_add_tail(&stuser->list, &stdev->mrpc_queue);
 
 	mrpc_cmd_submit(stdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mrpc_complete_cmd(struct switchtec_dev *stdev)
-{
-	/* requires the mrpc_mutex to already be held when called */
-	struct switchtec_user *stuser;
+अटल व्योम mrpc_complete_cmd(काष्ठा चयनtec_dev *stdev)
+अणु
+	/* requires the mrpc_mutex to alपढ़ोy be held when called */
+	काष्ठा चयनtec_user *stuser;
 
-	if (list_empty(&stdev->mrpc_queue))
-		return;
+	अगर (list_empty(&stdev->mrpc_queue))
+		वापस;
 
-	stuser = list_entry(stdev->mrpc_queue.next, struct switchtec_user,
+	stuser = list_entry(stdev->mrpc_queue.next, काष्ठा चयनtec_user,
 			    list);
 
-	if (stdev->dma_mrpc)
+	अगर (stdev->dma_mrpc)
 		stuser->status = stdev->dma_mrpc->status;
-	else
-		stuser->status = ioread32(&stdev->mmio_mrpc->status);
+	अन्यथा
+		stuser->status = ioपढ़ो32(&stdev->mmio_mrpc->status);
 
-	if (stuser->status == SWITCHTEC_MRPC_STATUS_INPROGRESS)
-		return;
+	अगर (stuser->status == SWITCHTEC_MRPC_STATUS_INPROGRESS)
+		वापस;
 
 	stuser_set_state(stuser, MRPC_DONE);
-	stuser->return_code = 0;
+	stuser->वापस_code = 0;
 
-	if (stuser->status != SWITCHTEC_MRPC_STATUS_DONE)
-		goto out;
+	अगर (stuser->status != SWITCHTEC_MRPC_STATUS_DONE)
+		जाओ out;
 
-	if (stdev->dma_mrpc)
-		stuser->return_code = stdev->dma_mrpc->rtn_code;
-	else
-		stuser->return_code = ioread32(&stdev->mmio_mrpc->ret_value);
-	if (stuser->return_code != 0)
-		goto out;
+	अगर (stdev->dma_mrpc)
+		stuser->वापस_code = stdev->dma_mrpc->rtn_code;
+	अन्यथा
+		stuser->वापस_code = ioपढ़ो32(&stdev->mmio_mrpc->ret_value);
+	अगर (stuser->वापस_code != 0)
+		जाओ out;
 
-	if (stdev->dma_mrpc)
-		memcpy(stuser->data, &stdev->dma_mrpc->data,
-			      stuser->read_len);
-	else
-		memcpy_fromio(stuser->data, &stdev->mmio_mrpc->output_data,
-			      stuser->read_len);
+	अगर (stdev->dma_mrpc)
+		स_नकल(stuser->data, &stdev->dma_mrpc->data,
+			      stuser->पढ़ो_len);
+	अन्यथा
+		स_नकल_fromio(stuser->data, &stdev->mmio_mrpc->output_data,
+			      stuser->पढ़ो_len);
 out:
-	stuser->cmd_done = true;
-	wake_up_interruptible(&stuser->cmd_comp);
+	stuser->cmd_करोne = true;
+	wake_up_पूर्णांकerruptible(&stuser->cmd_comp);
 	list_del_init(&stuser->list);
 	stuser_put(stuser);
 	stdev->mrpc_busy = 0;
 
 	mrpc_cmd_submit(stdev);
-}
+पूर्ण
 
-static void mrpc_event_work(struct work_struct *work)
-{
-	struct switchtec_dev *stdev;
+अटल व्योम mrpc_event_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा चयनtec_dev *stdev;
 
-	stdev = container_of(work, struct switchtec_dev, mrpc_work);
+	stdev = container_of(work, काष्ठा चयनtec_dev, mrpc_work);
 
 	dev_dbg(&stdev->dev, "%s\n", __func__);
 
 	mutex_lock(&stdev->mrpc_mutex);
-	cancel_delayed_work(&stdev->mrpc_timeout);
+	cancel_delayed_work(&stdev->mrpc_समयout);
 	mrpc_complete_cmd(stdev);
 	mutex_unlock(&stdev->mrpc_mutex);
-}
+पूर्ण
 
-static void mrpc_timeout_work(struct work_struct *work)
-{
-	struct switchtec_dev *stdev;
+अटल व्योम mrpc_समयout_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा चयनtec_dev *stdev;
 	u32 status;
 
-	stdev = container_of(work, struct switchtec_dev, mrpc_timeout.work);
+	stdev = container_of(work, काष्ठा चयनtec_dev, mrpc_समयout.work);
 
 	dev_dbg(&stdev->dev, "%s\n", __func__);
 
 	mutex_lock(&stdev->mrpc_mutex);
 
-	if (stdev->dma_mrpc)
+	अगर (stdev->dma_mrpc)
 		status = stdev->dma_mrpc->status;
-	else
-		status = ioread32(&stdev->mmio_mrpc->status);
-	if (status == SWITCHTEC_MRPC_STATUS_INPROGRESS) {
-		schedule_delayed_work(&stdev->mrpc_timeout,
-				      msecs_to_jiffies(500));
-		goto out;
-	}
+	अन्यथा
+		status = ioपढ़ो32(&stdev->mmio_mrpc->status);
+	अगर (status == SWITCHTEC_MRPC_STATUS_INPROGRESS) अणु
+		schedule_delayed_work(&stdev->mrpc_समयout,
+				      msecs_to_jअगरfies(500));
+		जाओ out;
+	पूर्ण
 
 	mrpc_complete_cmd(stdev);
 out:
 	mutex_unlock(&stdev->mrpc_mutex);
-}
+पूर्ण
 
-static ssize_t device_version_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct switchtec_dev *stdev = to_stdev(dev);
+अटल sमाप_प्रकार device_version_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा चयनtec_dev *stdev = to_stdev(dev);
 	u32 ver;
 
-	ver = ioread32(&stdev->mmio_sys_info->device_version);
+	ver = ioपढ़ो32(&stdev->mmio_sys_info->device_version);
 
-	return sprintf(buf, "%x\n", ver);
-}
-static DEVICE_ATTR_RO(device_version);
+	वापस प्र_लिखो(buf, "%x\n", ver);
+पूर्ण
+अटल DEVICE_ATTR_RO(device_version);
 
-static ssize_t fw_version_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct switchtec_dev *stdev = to_stdev(dev);
+अटल sमाप_प्रकार fw_version_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा चयनtec_dev *stdev = to_stdev(dev);
 	u32 ver;
 
-	ver = ioread32(&stdev->mmio_sys_info->firmware_version);
+	ver = ioपढ़ो32(&stdev->mmio_sys_info->firmware_version);
 
-	return sprintf(buf, "%08x\n", ver);
-}
-static DEVICE_ATTR_RO(fw_version);
+	वापस प्र_लिखो(buf, "%08x\n", ver);
+पूर्ण
+अटल DEVICE_ATTR_RO(fw_version);
 
-static ssize_t io_string_show(char *buf, void __iomem *attr, size_t len)
-{
-	int i;
+अटल sमाप_प्रकार io_string_show(अक्षर *buf, व्योम __iomem *attr, माप_प्रकार len)
+अणु
+	पूर्णांक i;
 
-	memcpy_fromio(buf, attr, len);
+	स_नकल_fromio(buf, attr, len);
 	buf[len] = '\n';
 	buf[len + 1] = 0;
 
-	for (i = len - 1; i > 0; i--) {
-		if (buf[i] != ' ')
-			break;
+	क्रम (i = len - 1; i > 0; i--) अणु
+		अगर (buf[i] != ' ')
+			अवरोध;
 		buf[i] = '\n';
 		buf[i + 1] = 0;
-	}
+	पूर्ण
 
-	return strlen(buf);
-}
+	वापस म_माप(buf);
+पूर्ण
 
-#define DEVICE_ATTR_SYS_INFO_STR(field) \
-static ssize_t field ## _show(struct device *dev, \
-	struct device_attribute *attr, char *buf) \
-{ \
-	struct switchtec_dev *stdev = to_stdev(dev); \
-	struct sys_info_regs __iomem *si = stdev->mmio_sys_info; \
-	if (stdev->gen == SWITCHTEC_GEN3) \
-		return io_string_show(buf, &si->gen3.field, \
-				      sizeof(si->gen3.field)); \
-	else if (stdev->gen == SWITCHTEC_GEN4) \
-		return io_string_show(buf, &si->gen4.field, \
-				      sizeof(si->gen4.field)); \
-	else \
-		return -ENOTSUPP; \
-} \
+#घोषणा DEVICE_ATTR_SYS_INFO_STR(field) \
+अटल sमाप_प्रकार field ## _show(काष्ठा device *dev, \
+	काष्ठा device_attribute *attr, अक्षर *buf) \
+अणु \
+	काष्ठा चयनtec_dev *stdev = to_stdev(dev); \
+	काष्ठा sys_info_regs __iomem *si = stdev->mmio_sys_info; \
+	अगर (stdev->gen == SWITCHTEC_GEN3) \
+		वापस io_string_show(buf, &si->gen3.field, \
+				      माप(si->gen3.field)); \
+	अन्यथा अगर (stdev->gen == SWITCHTEC_GEN4) \
+		वापस io_string_show(buf, &si->gen4.field, \
+				      माप(si->gen4.field)); \
+	अन्यथा \
+		वापस -ENOTSUPP; \
+पूर्ण \
 \
-static DEVICE_ATTR_RO(field)
+अटल DEVICE_ATTR_RO(field)
 
-DEVICE_ATTR_SYS_INFO_STR(vendor_id);
+DEVICE_ATTR_SYS_INFO_STR(venकरोr_id);
 DEVICE_ATTR_SYS_INFO_STR(product_id);
 DEVICE_ATTR_SYS_INFO_STR(product_revision);
 
-static ssize_t component_vendor_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct switchtec_dev *stdev = to_stdev(dev);
-	struct sys_info_regs __iomem *si = stdev->mmio_sys_info;
+अटल sमाप_प्रकार component_venकरोr_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा चयनtec_dev *stdev = to_stdev(dev);
+	काष्ठा sys_info_regs __iomem *si = stdev->mmio_sys_info;
 
-	/* component_vendor field not supported after gen3 */
-	if (stdev->gen != SWITCHTEC_GEN3)
-		return sprintf(buf, "none\n");
+	/* component_venकरोr field not supported after gen3 */
+	अगर (stdev->gen != SWITCHTEC_GEN3)
+		वापस प्र_लिखो(buf, "none\n");
 
-	return io_string_show(buf, &si->gen3.component_vendor,
-			      sizeof(si->gen3.component_vendor));
-}
-static DEVICE_ATTR_RO(component_vendor);
+	वापस io_string_show(buf, &si->gen3.component_venकरोr,
+			      माप(si->gen3.component_venकरोr));
+पूर्ण
+अटल DEVICE_ATTR_RO(component_venकरोr);
 
-static ssize_t component_id_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct switchtec_dev *stdev = to_stdev(dev);
-	int id = ioread16(&stdev->mmio_sys_info->gen3.component_id);
+अटल sमाप_प्रकार component_id_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा चयनtec_dev *stdev = to_stdev(dev);
+	पूर्णांक id = ioपढ़ो16(&stdev->mmio_sys_info->gen3.component_id);
 
 	/* component_id field not supported after gen3 */
-	if (stdev->gen != SWITCHTEC_GEN3)
-		return sprintf(buf, "none\n");
+	अगर (stdev->gen != SWITCHTEC_GEN3)
+		वापस प्र_लिखो(buf, "none\n");
 
-	return sprintf(buf, "PM%04X\n", id);
-}
-static DEVICE_ATTR_RO(component_id);
+	वापस प्र_लिखो(buf, "PM%04X\n", id);
+पूर्ण
+अटल DEVICE_ATTR_RO(component_id);
 
-static ssize_t component_revision_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct switchtec_dev *stdev = to_stdev(dev);
-	int rev = ioread8(&stdev->mmio_sys_info->gen3.component_revision);
+अटल sमाप_प्रकार component_revision_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा चयनtec_dev *stdev = to_stdev(dev);
+	पूर्णांक rev = ioपढ़ो8(&stdev->mmio_sys_info->gen3.component_revision);
 
 	/* component_revision field not supported after gen3 */
-	if (stdev->gen != SWITCHTEC_GEN3)
-		return sprintf(buf, "255\n");
+	अगर (stdev->gen != SWITCHTEC_GEN3)
+		वापस प्र_लिखो(buf, "255\n");
 
-	return sprintf(buf, "%d\n", rev);
-}
-static DEVICE_ATTR_RO(component_revision);
+	वापस प्र_लिखो(buf, "%d\n", rev);
+पूर्ण
+अटल DEVICE_ATTR_RO(component_revision);
 
-static ssize_t partition_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct switchtec_dev *stdev = to_stdev(dev);
+अटल sमाप_प्रकार partition_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा चयनtec_dev *stdev = to_stdev(dev);
 
-	return sprintf(buf, "%d\n", stdev->partition);
-}
-static DEVICE_ATTR_RO(partition);
+	वापस प्र_लिखो(buf, "%d\n", stdev->partition);
+पूर्ण
+अटल DEVICE_ATTR_RO(partition);
 
-static ssize_t partition_count_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct switchtec_dev *stdev = to_stdev(dev);
+अटल sमाप_प्रकार partition_count_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा चयनtec_dev *stdev = to_stdev(dev);
 
-	return sprintf(buf, "%d\n", stdev->partition_count);
-}
-static DEVICE_ATTR_RO(partition_count);
+	वापस प्र_लिखो(buf, "%d\n", stdev->partition_count);
+पूर्ण
+अटल DEVICE_ATTR_RO(partition_count);
 
-static struct attribute *switchtec_device_attrs[] = {
+अटल काष्ठा attribute *चयनtec_device_attrs[] = अणु
 	&dev_attr_device_version.attr,
 	&dev_attr_fw_version.attr,
-	&dev_attr_vendor_id.attr,
+	&dev_attr_venकरोr_id.attr,
 	&dev_attr_product_id.attr,
 	&dev_attr_product_revision.attr,
-	&dev_attr_component_vendor.attr,
+	&dev_attr_component_venकरोr.attr,
 	&dev_attr_component_id.attr,
 	&dev_attr_component_revision.attr,
 	&dev_attr_partition.attr,
 	&dev_attr_partition_count.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-ATTRIBUTE_GROUPS(switchtec_device);
+ATTRIBUTE_GROUPS(चयनtec_device);
 
-static int switchtec_dev_open(struct inode *inode, struct file *filp)
-{
-	struct switchtec_dev *stdev;
-	struct switchtec_user *stuser;
+अटल पूर्णांक चयनtec_dev_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा चयनtec_dev *stdev;
+	काष्ठा चयनtec_user *stuser;
 
-	stdev = container_of(inode->i_cdev, struct switchtec_dev, cdev);
+	stdev = container_of(inode->i_cdev, काष्ठा चयनtec_dev, cdev);
 
 	stuser = stuser_create(stdev);
-	if (IS_ERR(stuser))
-		return PTR_ERR(stuser);
+	अगर (IS_ERR(stuser))
+		वापस PTR_ERR(stuser);
 
-	filp->private_data = stuser;
-	stream_open(inode, filp);
+	filp->निजी_data = stuser;
+	stream_खोलो(inode, filp);
 
 	dev_dbg(&stdev->dev, "%s: %p\n", __func__, stuser);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int switchtec_dev_release(struct inode *inode, struct file *filp)
-{
-	struct switchtec_user *stuser = filp->private_data;
+अटल पूर्णांक चयनtec_dev_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा चयनtec_user *stuser = filp->निजी_data;
 
 	stuser_put(stuser);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lock_mutex_and_test_alive(struct switchtec_dev *stdev)
-{
-	if (mutex_lock_interruptible(&stdev->mrpc_mutex))
-		return -EINTR;
+अटल पूर्णांक lock_mutex_and_test_alive(काष्ठा चयनtec_dev *stdev)
+अणु
+	अगर (mutex_lock_पूर्णांकerruptible(&stdev->mrpc_mutex))
+		वापस -EINTR;
 
-	if (!stdev->alive) {
+	अगर (!stdev->alive) अणु
 		mutex_unlock(&stdev->mrpc_mutex);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t switchtec_dev_write(struct file *filp, const char __user *data,
-				   size_t size, loff_t *off)
-{
-	struct switchtec_user *stuser = filp->private_data;
-	struct switchtec_dev *stdev = stuser->stdev;
-	int rc;
+अटल sमाप_प्रकार चयनtec_dev_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *data,
+				   माप_प्रकार size, loff_t *off)
+अणु
+	काष्ठा चयनtec_user *stuser = filp->निजी_data;
+	काष्ठा चयनtec_dev *stdev = stuser->stdev;
+	पूर्णांक rc;
 
-	if (size < sizeof(stuser->cmd) ||
-	    size > sizeof(stuser->cmd) + sizeof(stuser->data))
-		return -EINVAL;
+	अगर (size < माप(stuser->cmd) ||
+	    size > माप(stuser->cmd) + माप(stuser->data))
+		वापस -EINVAL;
 
-	stuser->data_len = size - sizeof(stuser->cmd);
+	stuser->data_len = size - माप(stuser->cmd);
 
 	rc = lock_mutex_and_test_alive(stdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (stuser->state != MRPC_IDLE) {
+	अगर (stuser->state != MRPC_IDLE) अणु
 		rc = -EBADE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rc = copy_from_user(&stuser->cmd, data, sizeof(stuser->cmd));
-	if (rc) {
+	rc = copy_from_user(&stuser->cmd, data, माप(stuser->cmd));
+	अगर (rc) अणु
 		rc = -EFAULT;
-		goto out;
-	}
-	if (((MRPC_CMD_ID(stuser->cmd) == MRPC_GAS_WRITE) ||
+		जाओ out;
+	पूर्ण
+	अगर (((MRPC_CMD_ID(stuser->cmd) == MRPC_GAS_WRITE) ||
 	     (MRPC_CMD_ID(stuser->cmd) == MRPC_GAS_READ)) &&
-	    !capable(CAP_SYS_ADMIN)) {
+	    !capable(CAP_SYS_ADMIN)) अणु
 		rc = -EPERM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	data += sizeof(stuser->cmd);
-	rc = copy_from_user(&stuser->data, data, size - sizeof(stuser->cmd));
-	if (rc) {
+	data += माप(stuser->cmd);
+	rc = copy_from_user(&stuser->data, data, size - माप(stuser->cmd));
+	अगर (rc) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rc = mrpc_queue_cmd(stuser);
 
 out:
 	mutex_unlock(&stdev->mrpc_mutex);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t switchtec_dev_read(struct file *filp, char __user *data,
-				  size_t size, loff_t *off)
-{
-	struct switchtec_user *stuser = filp->private_data;
-	struct switchtec_dev *stdev = stuser->stdev;
-	int rc;
+अटल sमाप_प्रकार चयनtec_dev_पढ़ो(काष्ठा file *filp, अक्षर __user *data,
+				  माप_प्रकार size, loff_t *off)
+अणु
+	काष्ठा चयनtec_user *stuser = filp->निजी_data;
+	काष्ठा चयनtec_dev *stdev = stuser->stdev;
+	पूर्णांक rc;
 
-	if (size < sizeof(stuser->cmd) ||
-	    size > sizeof(stuser->cmd) + sizeof(stuser->data))
-		return -EINVAL;
+	अगर (size < माप(stuser->cmd) ||
+	    size > माप(stuser->cmd) + माप(stuser->data))
+		वापस -EINVAL;
 
 	rc = lock_mutex_and_test_alive(stdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (stuser->state == MRPC_IDLE) {
+	अगर (stuser->state == MRPC_IDLE) अणु
 		mutex_unlock(&stdev->mrpc_mutex);
-		return -EBADE;
-	}
+		वापस -EBADE;
+	पूर्ण
 
-	stuser->read_len = size - sizeof(stuser->return_code);
+	stuser->पढ़ो_len = size - माप(stuser->वापस_code);
 
 	mutex_unlock(&stdev->mrpc_mutex);
 
-	if (filp->f_flags & O_NONBLOCK) {
-		if (!stuser->cmd_done)
-			return -EAGAIN;
-	} else {
-		rc = wait_event_interruptible(stuser->cmd_comp,
-					      stuser->cmd_done);
-		if (rc < 0)
-			return rc;
-	}
+	अगर (filp->f_flags & O_NONBLOCK) अणु
+		अगर (!stuser->cmd_करोne)
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
+		rc = रुको_event_पूर्णांकerruptible(stuser->cmd_comp,
+					      stuser->cmd_करोne);
+		अगर (rc < 0)
+			वापस rc;
+	पूर्ण
 
 	rc = lock_mutex_and_test_alive(stdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (stuser->state != MRPC_DONE) {
+	अगर (stuser->state != MRPC_DONE) अणु
 		mutex_unlock(&stdev->mrpc_mutex);
-		return -EBADE;
-	}
+		वापस -EBADE;
+	पूर्ण
 
-	rc = copy_to_user(data, &stuser->return_code,
-			  sizeof(stuser->return_code));
-	if (rc) {
+	rc = copy_to_user(data, &stuser->वापस_code,
+			  माप(stuser->वापस_code));
+	अगर (rc) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	data += sizeof(stuser->return_code);
+	data += माप(stuser->वापस_code);
 	rc = copy_to_user(data, &stuser->data,
-			  size - sizeof(stuser->return_code));
-	if (rc) {
+			  size - माप(stuser->वापस_code));
+	अगर (rc) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	stuser_set_state(stuser, MRPC_IDLE);
 
 out:
 	mutex_unlock(&stdev->mrpc_mutex);
 
-	if (stuser->status == SWITCHTEC_MRPC_STATUS_DONE)
-		return size;
-	else if (stuser->status == SWITCHTEC_MRPC_STATUS_INTERRUPTED)
-		return -ENXIO;
-	else
-		return -EBADMSG;
-}
+	अगर (stuser->status == SWITCHTEC_MRPC_STATUS_DONE)
+		वापस size;
+	अन्यथा अगर (stuser->status == SWITCHTEC_MRPC_STATUS_INTERRUPTED)
+		वापस -ENXIO;
+	अन्यथा
+		वापस -EBADMSG;
+पूर्ण
 
-static __poll_t switchtec_dev_poll(struct file *filp, poll_table *wait)
-{
-	struct switchtec_user *stuser = filp->private_data;
-	struct switchtec_dev *stdev = stuser->stdev;
+अटल __poll_t चयनtec_dev_poll(काष्ठा file *filp, poll_table *रुको)
+अणु
+	काष्ठा चयनtec_user *stuser = filp->निजी_data;
+	काष्ठा चयनtec_dev *stdev = stuser->stdev;
 	__poll_t ret = 0;
 
-	poll_wait(filp, &stuser->cmd_comp, wait);
-	poll_wait(filp, &stdev->event_wq, wait);
+	poll_रुको(filp, &stuser->cmd_comp, रुको);
+	poll_रुको(filp, &stdev->event_wq, रुको);
 
-	if (lock_mutex_and_test_alive(stdev))
-		return EPOLLIN | EPOLLRDHUP | EPOLLOUT | EPOLLERR | EPOLLHUP;
+	अगर (lock_mutex_and_test_alive(stdev))
+		वापस EPOLLIN | EPOLLRDHUP | EPOLLOUT | EPOLLERR | EPOLLHUP;
 
 	mutex_unlock(&stdev->mrpc_mutex);
 
-	if (stuser->cmd_done)
+	अगर (stuser->cmd_करोne)
 		ret |= EPOLLIN | EPOLLRDNORM;
 
-	if (stuser->event_cnt != atomic_read(&stdev->event_cnt))
+	अगर (stuser->event_cnt != atomic_पढ़ो(&stdev->event_cnt))
 		ret |= EPOLLPRI | EPOLLRDBAND;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ioctl_flash_info(struct switchtec_dev *stdev,
-			    struct switchtec_ioctl_flash_info __user *uinfo)
-{
-	struct switchtec_ioctl_flash_info info = {0};
-	struct flash_info_regs __iomem *fi = stdev->mmio_flash_info;
+अटल पूर्णांक ioctl_flash_info(काष्ठा चयनtec_dev *stdev,
+			    काष्ठा चयनtec_ioctl_flash_info __user *uinfo)
+अणु
+	काष्ठा चयनtec_ioctl_flash_info info = अणु0पूर्ण;
+	काष्ठा flash_info_regs __iomem *fi = stdev->mmio_flash_info;
 
-	if (stdev->gen == SWITCHTEC_GEN3) {
-		info.flash_length = ioread32(&fi->gen3.flash_length);
+	अगर (stdev->gen == SWITCHTEC_GEN3) अणु
+		info.flash_length = ioपढ़ो32(&fi->gen3.flash_length);
 		info.num_partitions = SWITCHTEC_NUM_PARTITIONS_GEN3;
-	} else if (stdev->gen == SWITCHTEC_GEN4) {
-		info.flash_length = ioread32(&fi->gen4.flash_length);
+	पूर्ण अन्यथा अगर (stdev->gen == SWITCHTEC_GEN4) अणु
+		info.flash_length = ioपढ़ो32(&fi->gen4.flash_length);
 		info.num_partitions = SWITCHTEC_NUM_PARTITIONS_GEN4;
-	} else {
-		return -ENOTSUPP;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	if (copy_to_user(uinfo, &info, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_to_user(uinfo, &info, माप(info)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_fw_info_part(struct switchtec_ioctl_flash_part_info *info,
-			     struct partition_info __iomem *pi)
-{
-	info->address = ioread32(&pi->address);
-	info->length = ioread32(&pi->length);
-}
+अटल व्योम set_fw_info_part(काष्ठा चयनtec_ioctl_flash_part_info *info,
+			     काष्ठा partition_info __iomem *pi)
+अणु
+	info->address = ioपढ़ो32(&pi->address);
+	info->length = ioपढ़ो32(&pi->length);
+पूर्ण
 
-static int flash_part_info_gen3(struct switchtec_dev *stdev,
-		struct switchtec_ioctl_flash_part_info *info)
-{
-	struct flash_info_regs_gen3 __iomem *fi =
+अटल पूर्णांक flash_part_info_gen3(काष्ठा चयनtec_dev *stdev,
+		काष्ठा चयनtec_ioctl_flash_part_info *info)
+अणु
+	काष्ठा flash_info_regs_gen3 __iomem *fi =
 		&stdev->mmio_flash_info->gen3;
-	struct sys_info_regs_gen3 __iomem *si = &stdev->mmio_sys_info->gen3;
+	काष्ठा sys_info_regs_gen3 __iomem *si = &stdev->mmio_sys_info->gen3;
 	u32 active_addr = -1;
 
-	switch (info->flash_partition) {
-	case SWITCHTEC_IOCTL_PART_CFG0:
-		active_addr = ioread32(&fi->active_cfg);
+	चयन (info->flash_partition) अणु
+	हाल SWITCHTEC_IOCTL_PART_CFG0:
+		active_addr = ioपढ़ो32(&fi->active_cfg);
 		set_fw_info_part(info, &fi->cfg0);
-		if (ioread16(&si->cfg_running) == SWITCHTEC_GEN3_CFG0_RUNNING)
+		अगर (ioपढ़ो16(&si->cfg_running) == SWITCHTEC_GEN3_CFG0_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_CFG1:
-		active_addr = ioread32(&fi->active_cfg);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_CFG1:
+		active_addr = ioपढ़ो32(&fi->active_cfg);
 		set_fw_info_part(info, &fi->cfg1);
-		if (ioread16(&si->cfg_running) == SWITCHTEC_GEN3_CFG1_RUNNING)
+		अगर (ioपढ़ो16(&si->cfg_running) == SWITCHTEC_GEN3_CFG1_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_IMG0:
-		active_addr = ioread32(&fi->active_img);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_IMG0:
+		active_addr = ioपढ़ो32(&fi->active_img);
 		set_fw_info_part(info, &fi->img0);
-		if (ioread16(&si->img_running) == SWITCHTEC_GEN3_IMG0_RUNNING)
+		अगर (ioपढ़ो16(&si->img_running) == SWITCHTEC_GEN3_IMG0_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_IMG1:
-		active_addr = ioread32(&fi->active_img);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_IMG1:
+		active_addr = ioपढ़ो32(&fi->active_img);
 		set_fw_info_part(info, &fi->img1);
-		if (ioread16(&si->img_running) == SWITCHTEC_GEN3_IMG1_RUNNING)
+		अगर (ioपढ़ो16(&si->img_running) == SWITCHTEC_GEN3_IMG1_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_NVLOG:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_NVLOG:
 		set_fw_info_part(info, &fi->nvlog);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR0:
-		set_fw_info_part(info, &fi->vendor[0]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR1:
-		set_fw_info_part(info, &fi->vendor[1]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR2:
-		set_fw_info_part(info, &fi->vendor[2]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR3:
-		set_fw_info_part(info, &fi->vendor[3]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR4:
-		set_fw_info_part(info, &fi->vendor[4]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR5:
-		set_fw_info_part(info, &fi->vendor[5]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR6:
-		set_fw_info_part(info, &fi->vendor[6]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR7:
-		set_fw_info_part(info, &fi->vendor[7]);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR0:
+		set_fw_info_part(info, &fi->venकरोr[0]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR1:
+		set_fw_info_part(info, &fi->venकरोr[1]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR2:
+		set_fw_info_part(info, &fi->venकरोr[2]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR3:
+		set_fw_info_part(info, &fi->venकरोr[3]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR4:
+		set_fw_info_part(info, &fi->venकरोr[4]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR5:
+		set_fw_info_part(info, &fi->venकरोr[5]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR6:
+		set_fw_info_part(info, &fi->venकरोr[6]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR7:
+		set_fw_info_part(info, &fi->venकरोr[7]);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (info->address == active_addr)
+	अगर (info->address == active_addr)
 		info->active |= SWITCHTEC_IOCTL_PART_ACTIVE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int flash_part_info_gen4(struct switchtec_dev *stdev,
-		struct switchtec_ioctl_flash_part_info *info)
-{
-	struct flash_info_regs_gen4 __iomem *fi = &stdev->mmio_flash_info->gen4;
-	struct sys_info_regs_gen4 __iomem *si = &stdev->mmio_sys_info->gen4;
-	struct active_partition_info_gen4 __iomem *af = &fi->active_flag;
+अटल पूर्णांक flash_part_info_gen4(काष्ठा चयनtec_dev *stdev,
+		काष्ठा चयनtec_ioctl_flash_part_info *info)
+अणु
+	काष्ठा flash_info_regs_gen4 __iomem *fi = &stdev->mmio_flash_info->gen4;
+	काष्ठा sys_info_regs_gen4 __iomem *si = &stdev->mmio_sys_info->gen4;
+	काष्ठा active_partition_info_gen4 __iomem *af = &fi->active_flag;
 
-	switch (info->flash_partition) {
-	case SWITCHTEC_IOCTL_PART_MAP_0:
+	चयन (info->flash_partition) अणु
+	हाल SWITCHTEC_IOCTL_PART_MAP_0:
 		set_fw_info_part(info, &fi->map0);
-		break;
-	case SWITCHTEC_IOCTL_PART_MAP_1:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_MAP_1:
 		set_fw_info_part(info, &fi->map1);
-		break;
-	case SWITCHTEC_IOCTL_PART_KEY_0:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_KEY_0:
 		set_fw_info_part(info, &fi->key0);
-		if (ioread8(&af->key) == SWITCHTEC_GEN4_KEY0_ACTIVE)
+		अगर (ioपढ़ो8(&af->key) == SWITCHTEC_GEN4_KEY0_ACTIVE)
 			info->active |= SWITCHTEC_IOCTL_PART_ACTIVE;
-		if (ioread16(&si->key_running) == SWITCHTEC_GEN4_KEY0_RUNNING)
+		अगर (ioपढ़ो16(&si->key_running) == SWITCHTEC_GEN4_KEY0_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_KEY_1:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_KEY_1:
 		set_fw_info_part(info, &fi->key1);
-		if (ioread8(&af->key) == SWITCHTEC_GEN4_KEY1_ACTIVE)
+		अगर (ioपढ़ो8(&af->key) == SWITCHTEC_GEN4_KEY1_ACTIVE)
 			info->active |= SWITCHTEC_IOCTL_PART_ACTIVE;
-		if (ioread16(&si->key_running) == SWITCHTEC_GEN4_KEY1_RUNNING)
+		अगर (ioपढ़ो16(&si->key_running) == SWITCHTEC_GEN4_KEY1_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_BL2_0:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_BL2_0:
 		set_fw_info_part(info, &fi->bl2_0);
-		if (ioread8(&af->bl2) == SWITCHTEC_GEN4_BL2_0_ACTIVE)
+		अगर (ioपढ़ो8(&af->bl2) == SWITCHTEC_GEN4_BL2_0_ACTIVE)
 			info->active |= SWITCHTEC_IOCTL_PART_ACTIVE;
-		if (ioread16(&si->bl2_running) == SWITCHTEC_GEN4_BL2_0_RUNNING)
+		अगर (ioपढ़ो16(&si->bl2_running) == SWITCHTEC_GEN4_BL2_0_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_BL2_1:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_BL2_1:
 		set_fw_info_part(info, &fi->bl2_1);
-		if (ioread8(&af->bl2) == SWITCHTEC_GEN4_BL2_1_ACTIVE)
+		अगर (ioपढ़ो8(&af->bl2) == SWITCHTEC_GEN4_BL2_1_ACTIVE)
 			info->active |= SWITCHTEC_IOCTL_PART_ACTIVE;
-		if (ioread16(&si->bl2_running) == SWITCHTEC_GEN4_BL2_1_RUNNING)
+		अगर (ioपढ़ो16(&si->bl2_running) == SWITCHTEC_GEN4_BL2_1_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_CFG0:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_CFG0:
 		set_fw_info_part(info, &fi->cfg0);
-		if (ioread8(&af->cfg) == SWITCHTEC_GEN4_CFG0_ACTIVE)
+		अगर (ioपढ़ो8(&af->cfg) == SWITCHTEC_GEN4_CFG0_ACTIVE)
 			info->active |= SWITCHTEC_IOCTL_PART_ACTIVE;
-		if (ioread16(&si->cfg_running) == SWITCHTEC_GEN4_CFG0_RUNNING)
+		अगर (ioपढ़ो16(&si->cfg_running) == SWITCHTEC_GEN4_CFG0_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_CFG1:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_CFG1:
 		set_fw_info_part(info, &fi->cfg1);
-		if (ioread8(&af->cfg) == SWITCHTEC_GEN4_CFG1_ACTIVE)
+		अगर (ioपढ़ो8(&af->cfg) == SWITCHTEC_GEN4_CFG1_ACTIVE)
 			info->active |= SWITCHTEC_IOCTL_PART_ACTIVE;
-		if (ioread16(&si->cfg_running) == SWITCHTEC_GEN4_CFG1_RUNNING)
+		अगर (ioपढ़ो16(&si->cfg_running) == SWITCHTEC_GEN4_CFG1_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_IMG0:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_IMG0:
 		set_fw_info_part(info, &fi->img0);
-		if (ioread8(&af->img) == SWITCHTEC_GEN4_IMG0_ACTIVE)
+		अगर (ioपढ़ो8(&af->img) == SWITCHTEC_GEN4_IMG0_ACTIVE)
 			info->active |= SWITCHTEC_IOCTL_PART_ACTIVE;
-		if (ioread16(&si->img_running) == SWITCHTEC_GEN4_IMG0_RUNNING)
+		अगर (ioपढ़ो16(&si->img_running) == SWITCHTEC_GEN4_IMG0_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_IMG1:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_IMG1:
 		set_fw_info_part(info, &fi->img1);
-		if (ioread8(&af->img) == SWITCHTEC_GEN4_IMG1_ACTIVE)
+		अगर (ioपढ़ो8(&af->img) == SWITCHTEC_GEN4_IMG1_ACTIVE)
 			info->active |= SWITCHTEC_IOCTL_PART_ACTIVE;
-		if (ioread16(&si->img_running) == SWITCHTEC_GEN4_IMG1_RUNNING)
+		अगर (ioपढ़ो16(&si->img_running) == SWITCHTEC_GEN4_IMG1_RUNNING)
 			info->active |= SWITCHTEC_IOCTL_PART_RUNNING;
-		break;
-	case SWITCHTEC_IOCTL_PART_NVLOG:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_NVLOG:
 		set_fw_info_part(info, &fi->nvlog);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR0:
-		set_fw_info_part(info, &fi->vendor[0]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR1:
-		set_fw_info_part(info, &fi->vendor[1]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR2:
-		set_fw_info_part(info, &fi->vendor[2]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR3:
-		set_fw_info_part(info, &fi->vendor[3]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR4:
-		set_fw_info_part(info, &fi->vendor[4]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR5:
-		set_fw_info_part(info, &fi->vendor[5]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR6:
-		set_fw_info_part(info, &fi->vendor[6]);
-		break;
-	case SWITCHTEC_IOCTL_PART_VENDOR7:
-		set_fw_info_part(info, &fi->vendor[7]);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR0:
+		set_fw_info_part(info, &fi->venकरोr[0]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR1:
+		set_fw_info_part(info, &fi->venकरोr[1]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR2:
+		set_fw_info_part(info, &fi->venकरोr[2]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR3:
+		set_fw_info_part(info, &fi->venकरोr[3]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR4:
+		set_fw_info_part(info, &fi->venकरोr[4]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR5:
+		set_fw_info_part(info, &fi->venकरोr[5]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR6:
+		set_fw_info_part(info, &fi->venकरोr[6]);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PART_VENDOR7:
+		set_fw_info_part(info, &fi->venकरोr[7]);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ioctl_flash_part_info(struct switchtec_dev *stdev,
-		struct switchtec_ioctl_flash_part_info __user *uinfo)
-{
-	int ret;
-	struct switchtec_ioctl_flash_part_info info = {0};
+अटल पूर्णांक ioctl_flash_part_info(काष्ठा चयनtec_dev *stdev,
+		काष्ठा चयनtec_ioctl_flash_part_info __user *uinfo)
+अणु
+	पूर्णांक ret;
+	काष्ठा चयनtec_ioctl_flash_part_info info = अणु0पूर्ण;
 
-	if (copy_from_user(&info, uinfo, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_from_user(&info, uinfo, माप(info)))
+		वापस -EFAULT;
 
-	if (stdev->gen == SWITCHTEC_GEN3) {
+	अगर (stdev->gen == SWITCHTEC_GEN3) अणु
 		ret = flash_part_info_gen3(stdev, &info);
-		if (ret)
-			return ret;
-	} else if (stdev->gen == SWITCHTEC_GEN4) {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अगर (stdev->gen == SWITCHTEC_GEN4) अणु
 		ret = flash_part_info_gen4(stdev, &info);
-		if (ret)
-			return ret;
-	} else {
-		return -ENOTSUPP;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	if (copy_to_user(uinfo, &info, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_to_user(uinfo, &info, माप(info)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ioctl_event_summary(struct switchtec_dev *stdev,
-	struct switchtec_user *stuser,
-	struct switchtec_ioctl_event_summary __user *usum,
-	size_t size)
-{
-	struct switchtec_ioctl_event_summary *s;
-	int i;
+अटल पूर्णांक ioctl_event_summary(काष्ठा चयनtec_dev *stdev,
+	काष्ठा चयनtec_user *stuser,
+	काष्ठा चयनtec_ioctl_event_summary __user *usum,
+	माप_प्रकार size)
+अणु
+	काष्ठा चयनtec_ioctl_event_summary *s;
+	पूर्णांक i;
 	u32 reg;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	s = kzalloc(sizeof(*s), GFP_KERNEL);
-	if (!s)
-		return -ENOMEM;
+	s = kzalloc(माप(*s), GFP_KERNEL);
+	अगर (!s)
+		वापस -ENOMEM;
 
-	s->global = ioread32(&stdev->mmio_sw_event->global_summary);
-	s->part_bitmap = ioread64(&stdev->mmio_sw_event->part_event_bitmap);
-	s->local_part = ioread32(&stdev->mmio_part_cfg->part_event_summary);
+	s->global = ioपढ़ो32(&stdev->mmio_sw_event->global_summary);
+	s->part_biपंचांगap = ioपढ़ो64(&stdev->mmio_sw_event->part_event_biपंचांगap);
+	s->local_part = ioपढ़ो32(&stdev->mmio_part_cfg->part_event_summary);
 
-	for (i = 0; i < stdev->partition_count; i++) {
-		reg = ioread32(&stdev->mmio_part_cfg_all[i].part_event_summary);
+	क्रम (i = 0; i < stdev->partition_count; i++) अणु
+		reg = ioपढ़ो32(&stdev->mmio_part_cfg_all[i].part_event_summary);
 		s->part[i] = reg;
-	}
+	पूर्ण
 
-	for (i = 0; i < stdev->pff_csr_count; i++) {
-		reg = ioread32(&stdev->mmio_pff_csr[i].pff_event_summary);
+	क्रम (i = 0; i < stdev->pff_csr_count; i++) अणु
+		reg = ioपढ़ो32(&stdev->mmio_pff_csr[i].pff_event_summary);
 		s->pff[i] = reg;
-	}
+	पूर्ण
 
-	if (copy_to_user(usum, s, size)) {
+	अगर (copy_to_user(usum, s, size)) अणु
 		ret = -EFAULT;
-		goto error_case;
-	}
+		जाओ error_हाल;
+	पूर्ण
 
-	stuser->event_cnt = atomic_read(&stdev->event_cnt);
+	stuser->event_cnt = atomic_पढ़ो(&stdev->event_cnt);
 
-error_case:
-	kfree(s);
-	return ret;
-}
+error_हाल:
+	kमुक्त(s);
+	वापस ret;
+पूर्ण
 
-static u32 __iomem *global_ev_reg(struct switchtec_dev *stdev,
-				  size_t offset, int index)
-{
-	return (void __iomem *)stdev->mmio_sw_event + offset;
-}
+अटल u32 __iomem *global_ev_reg(काष्ठा चयनtec_dev *stdev,
+				  माप_प्रकार offset, पूर्णांक index)
+अणु
+	वापस (व्योम __iomem *)stdev->mmio_sw_event + offset;
+पूर्ण
 
-static u32 __iomem *part_ev_reg(struct switchtec_dev *stdev,
-				size_t offset, int index)
-{
-	return (void __iomem *)&stdev->mmio_part_cfg_all[index] + offset;
-}
+अटल u32 __iomem *part_ev_reg(काष्ठा चयनtec_dev *stdev,
+				माप_प्रकार offset, पूर्णांक index)
+अणु
+	वापस (व्योम __iomem *)&stdev->mmio_part_cfg_all[index] + offset;
+पूर्ण
 
-static u32 __iomem *pff_ev_reg(struct switchtec_dev *stdev,
-			       size_t offset, int index)
-{
-	return (void __iomem *)&stdev->mmio_pff_csr[index] + offset;
-}
+अटल u32 __iomem *pff_ev_reg(काष्ठा चयनtec_dev *stdev,
+			       माप_प्रकार offset, पूर्णांक index)
+अणु
+	वापस (व्योम __iomem *)&stdev->mmio_pff_csr[index] + offset;
+पूर्ण
 
-#define EV_GLB(i, r)[i] = {offsetof(struct sw_event_regs, r), global_ev_reg}
-#define EV_PAR(i, r)[i] = {offsetof(struct part_cfg_regs, r), part_ev_reg}
-#define EV_PFF(i, r)[i] = {offsetof(struct pff_csr_regs, r), pff_ev_reg}
+#घोषणा EV_GLB(i, r)[i] = अणुदुरत्व(काष्ठा sw_event_regs, r), global_ev_regपूर्ण
+#घोषणा EV_PAR(i, r)[i] = अणुदुरत्व(काष्ठा part_cfg_regs, r), part_ev_regपूर्ण
+#घोषणा EV_PFF(i, r)[i] = अणुदुरत्व(काष्ठा pff_csr_regs, r), pff_ev_regपूर्ण
 
-static const struct event_reg {
-	size_t offset;
-	u32 __iomem *(*map_reg)(struct switchtec_dev *stdev,
-				size_t offset, int index);
-} event_regs[] = {
+अटल स्थिर काष्ठा event_reg अणु
+	माप_प्रकार offset;
+	u32 __iomem *(*map_reg)(काष्ठा चयनtec_dev *stdev,
+				माप_प्रकार offset, पूर्णांक index);
+पूर्ण event_regs[] = अणु
 	EV_GLB(SWITCHTEC_IOCTL_EVENT_STACK_ERROR, stack_error_event_hdr),
 	EV_GLB(SWITCHTEC_IOCTL_EVENT_PPU_ERROR, ppu_error_event_hdr),
 	EV_GLB(SWITCHTEC_IOCTL_EVENT_ISP_ERROR, isp_error_event_hdr),
@@ -911,14 +912,14 @@ static const struct event_reg {
 	EV_GLB(SWITCHTEC_IOCTL_EVENT_CLI_MRPC_COMP, cli_mrpc_comp_hdr),
 	EV_GLB(SWITCHTEC_IOCTL_EVENT_CLI_MRPC_COMP_ASYNC,
 	       cli_mrpc_comp_async_hdr),
-	EV_GLB(SWITCHTEC_IOCTL_EVENT_GPIO_INT, gpio_interrupt_hdr),
+	EV_GLB(SWITCHTEC_IOCTL_EVENT_GPIO_INT, gpio_पूर्णांकerrupt_hdr),
 	EV_GLB(SWITCHTEC_IOCTL_EVENT_GFMS, gfms_event_hdr),
 	EV_PAR(SWITCHTEC_IOCTL_EVENT_PART_RESET, part_reset_hdr),
 	EV_PAR(SWITCHTEC_IOCTL_EVENT_MRPC_COMP, mrpc_comp_hdr),
 	EV_PAR(SWITCHTEC_IOCTL_EVENT_MRPC_COMP_ASYNC, mrpc_comp_async_hdr),
 	EV_PAR(SWITCHTEC_IOCTL_EVENT_DYN_PART_BIND_COMP, dyn_binding_hdr),
 	EV_PAR(SWITCHTEC_IOCTL_EVENT_INTERCOMM_REQ_NOTIFY,
-	       intercomm_notify_hdr),
+	       पूर्णांकercomm_notअगरy_hdr),
 	EV_PFF(SWITCHTEC_IOCTL_EVENT_AER_IN_P2P, aer_in_p2p_hdr),
 	EV_PFF(SWITCHTEC_IOCTL_EVENT_AER_IN_VEP, aer_in_vep_hdr),
 	EV_PFF(SWITCHTEC_IOCTL_EVENT_DPC, dpc_hdr),
@@ -927,378 +928,378 @@ static const struct event_reg {
 	EV_PFF(SWITCHTEC_IOCTL_EVENT_HOTPLUG, hotplug_hdr),
 	EV_PFF(SWITCHTEC_IOCTL_EVENT_IER, ier_hdr),
 	EV_PFF(SWITCHTEC_IOCTL_EVENT_THRESH, threshold_hdr),
-	EV_PFF(SWITCHTEC_IOCTL_EVENT_POWER_MGMT, power_mgmt_hdr),
+	EV_PFF(SWITCHTEC_IOCTL_EVENT_POWER_MGMT, घातer_mgmt_hdr),
 	EV_PFF(SWITCHTEC_IOCTL_EVENT_TLP_THROTTLING, tlp_throttling_hdr),
-	EV_PFF(SWITCHTEC_IOCTL_EVENT_FORCE_SPEED, force_speed_hdr),
-	EV_PFF(SWITCHTEC_IOCTL_EVENT_CREDIT_TIMEOUT, credit_timeout_hdr),
+	EV_PFF(SWITCHTEC_IOCTL_EVENT_FORCE_SPEED, क्रमce_speed_hdr),
+	EV_PFF(SWITCHTEC_IOCTL_EVENT_CREDIT_TIMEOUT, credit_समयout_hdr),
 	EV_PFF(SWITCHTEC_IOCTL_EVENT_LINK_STATE, link_state_hdr),
-};
+पूर्ण;
 
-static u32 __iomem *event_hdr_addr(struct switchtec_dev *stdev,
-				   int event_id, int index)
-{
-	size_t off;
+अटल u32 __iomem *event_hdr_addr(काष्ठा चयनtec_dev *stdev,
+				   पूर्णांक event_id, पूर्णांक index)
+अणु
+	माप_प्रकार off;
 
-	if (event_id < 0 || event_id >= SWITCHTEC_IOCTL_MAX_EVENTS)
-		return (u32 __iomem *)ERR_PTR(-EINVAL);
+	अगर (event_id < 0 || event_id >= SWITCHTEC_IOCTL_MAX_EVENTS)
+		वापस (u32 __iomem *)ERR_PTR(-EINVAL);
 
 	off = event_regs[event_id].offset;
 
-	if (event_regs[event_id].map_reg == part_ev_reg) {
-		if (index == SWITCHTEC_IOCTL_EVENT_LOCAL_PART_IDX)
+	अगर (event_regs[event_id].map_reg == part_ev_reg) अणु
+		अगर (index == SWITCHTEC_IOCTL_EVENT_LOCAL_PART_IDX)
 			index = stdev->partition;
-		else if (index < 0 || index >= stdev->partition_count)
-			return (u32 __iomem *)ERR_PTR(-EINVAL);
-	} else if (event_regs[event_id].map_reg == pff_ev_reg) {
-		if (index < 0 || index >= stdev->pff_csr_count)
-			return (u32 __iomem *)ERR_PTR(-EINVAL);
-	}
+		अन्यथा अगर (index < 0 || index >= stdev->partition_count)
+			वापस (u32 __iomem *)ERR_PTR(-EINVAL);
+	पूर्ण अन्यथा अगर (event_regs[event_id].map_reg == pff_ev_reg) अणु
+		अगर (index < 0 || index >= stdev->pff_csr_count)
+			वापस (u32 __iomem *)ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return event_regs[event_id].map_reg(stdev, off, index);
-}
+	वापस event_regs[event_id].map_reg(stdev, off, index);
+पूर्ण
 
-static int event_ctl(struct switchtec_dev *stdev,
-		     struct switchtec_ioctl_event_ctl *ctl)
-{
-	int i;
+अटल पूर्णांक event_ctl(काष्ठा चयनtec_dev *stdev,
+		     काष्ठा चयनtec_ioctl_event_ctl *ctl)
+अणु
+	पूर्णांक i;
 	u32 __iomem *reg;
 	u32 hdr;
 
 	reg = event_hdr_addr(stdev, ctl->event_id, ctl->index);
-	if (IS_ERR(reg))
-		return PTR_ERR(reg);
+	अगर (IS_ERR(reg))
+		वापस PTR_ERR(reg);
 
-	hdr = ioread32(reg);
-	for (i = 0; i < ARRAY_SIZE(ctl->data); i++)
-		ctl->data[i] = ioread32(&reg[i + 1]);
+	hdr = ioपढ़ो32(reg);
+	क्रम (i = 0; i < ARRAY_SIZE(ctl->data); i++)
+		ctl->data[i] = ioपढ़ो32(&reg[i + 1]);
 
 	ctl->occurred = hdr & SWITCHTEC_EVENT_OCCURRED;
 	ctl->count = (hdr >> 5) & 0xFF;
 
-	if (!(ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_CLEAR))
+	अगर (!(ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_CLEAR))
 		hdr &= ~SWITCHTEC_EVENT_CLEAR;
-	if (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_EN_POLL)
+	अगर (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_EN_POLL)
 		hdr |= SWITCHTEC_EVENT_EN_IRQ;
-	if (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_DIS_POLL)
+	अगर (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_DIS_POLL)
 		hdr &= ~SWITCHTEC_EVENT_EN_IRQ;
-	if (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_EN_LOG)
+	अगर (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_EN_LOG)
 		hdr |= SWITCHTEC_EVENT_EN_LOG;
-	if (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_DIS_LOG)
+	अगर (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_DIS_LOG)
 		hdr &= ~SWITCHTEC_EVENT_EN_LOG;
-	if (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_EN_CLI)
+	अगर (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_EN_CLI)
 		hdr |= SWITCHTEC_EVENT_EN_CLI;
-	if (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_DIS_CLI)
+	अगर (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_DIS_CLI)
 		hdr &= ~SWITCHTEC_EVENT_EN_CLI;
-	if (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_EN_FATAL)
+	अगर (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_EN_FATAL)
 		hdr |= SWITCHTEC_EVENT_FATAL;
-	if (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_DIS_FATAL)
+	अगर (ctl->flags & SWITCHTEC_IOCTL_EVENT_FLAG_DIS_FATAL)
 		hdr &= ~SWITCHTEC_EVENT_FATAL;
 
-	if (ctl->flags)
-		iowrite32(hdr, reg);
+	अगर (ctl->flags)
+		ioग_लिखो32(hdr, reg);
 
 	ctl->flags = 0;
-	if (hdr & SWITCHTEC_EVENT_EN_IRQ)
+	अगर (hdr & SWITCHTEC_EVENT_EN_IRQ)
 		ctl->flags |= SWITCHTEC_IOCTL_EVENT_FLAG_EN_POLL;
-	if (hdr & SWITCHTEC_EVENT_EN_LOG)
+	अगर (hdr & SWITCHTEC_EVENT_EN_LOG)
 		ctl->flags |= SWITCHTEC_IOCTL_EVENT_FLAG_EN_LOG;
-	if (hdr & SWITCHTEC_EVENT_EN_CLI)
+	अगर (hdr & SWITCHTEC_EVENT_EN_CLI)
 		ctl->flags |= SWITCHTEC_IOCTL_EVENT_FLAG_EN_CLI;
-	if (hdr & SWITCHTEC_EVENT_FATAL)
+	अगर (hdr & SWITCHTEC_EVENT_FATAL)
 		ctl->flags |= SWITCHTEC_IOCTL_EVENT_FLAG_EN_FATAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ioctl_event_ctl(struct switchtec_dev *stdev,
-	struct switchtec_ioctl_event_ctl __user *uctl)
-{
-	int ret;
-	int nr_idxs;
-	unsigned int event_flags;
-	struct switchtec_ioctl_event_ctl ctl;
+अटल पूर्णांक ioctl_event_ctl(काष्ठा चयनtec_dev *stdev,
+	काष्ठा चयनtec_ioctl_event_ctl __user *uctl)
+अणु
+	पूर्णांक ret;
+	पूर्णांक nr_idxs;
+	अचिन्हित पूर्णांक event_flags;
+	काष्ठा चयनtec_ioctl_event_ctl ctl;
 
-	if (copy_from_user(&ctl, uctl, sizeof(ctl)))
-		return -EFAULT;
+	अगर (copy_from_user(&ctl, uctl, माप(ctl)))
+		वापस -EFAULT;
 
-	if (ctl.event_id >= SWITCHTEC_IOCTL_MAX_EVENTS)
-		return -EINVAL;
+	अगर (ctl.event_id >= SWITCHTEC_IOCTL_MAX_EVENTS)
+		वापस -EINVAL;
 
-	if (ctl.flags & SWITCHTEC_IOCTL_EVENT_FLAG_UNUSED)
-		return -EINVAL;
+	अगर (ctl.flags & SWITCHTEC_IOCTL_EVENT_FLAG_UNUSED)
+		वापस -EINVAL;
 
-	if (ctl.index == SWITCHTEC_IOCTL_EVENT_IDX_ALL) {
-		if (event_regs[ctl.event_id].map_reg == global_ev_reg)
+	अगर (ctl.index == SWITCHTEC_IOCTL_EVENT_IDX_ALL) अणु
+		अगर (event_regs[ctl.event_id].map_reg == global_ev_reg)
 			nr_idxs = 1;
-		else if (event_regs[ctl.event_id].map_reg == part_ev_reg)
+		अन्यथा अगर (event_regs[ctl.event_id].map_reg == part_ev_reg)
 			nr_idxs = stdev->partition_count;
-		else if (event_regs[ctl.event_id].map_reg == pff_ev_reg)
+		अन्यथा अगर (event_regs[ctl.event_id].map_reg == pff_ev_reg)
 			nr_idxs = stdev->pff_csr_count;
-		else
-			return -EINVAL;
+		अन्यथा
+			वापस -EINVAL;
 
 		event_flags = ctl.flags;
-		for (ctl.index = 0; ctl.index < nr_idxs; ctl.index++) {
+		क्रम (ctl.index = 0; ctl.index < nr_idxs; ctl.index++) अणु
 			ctl.flags = event_flags;
 			ret = event_ctl(stdev, &ctl);
-			if (ret < 0)
-				return ret;
-		}
-	} else {
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = event_ctl(stdev, &ctl);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (copy_to_user(uctl, &ctl, sizeof(ctl)))
-		return -EFAULT;
+	अगर (copy_to_user(uctl, &ctl, माप(ctl)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ioctl_pff_to_port(struct switchtec_dev *stdev,
-			     struct switchtec_ioctl_pff_port __user *up)
-{
-	int i, part;
+अटल पूर्णांक ioctl_pff_to_port(काष्ठा चयनtec_dev *stdev,
+			     काष्ठा चयनtec_ioctl_pff_port __user *up)
+अणु
+	पूर्णांक i, part;
 	u32 reg;
-	struct part_cfg_regs __iomem *pcfg;
-	struct switchtec_ioctl_pff_port p;
+	काष्ठा part_cfg_regs __iomem *pcfg;
+	काष्ठा चयनtec_ioctl_pff_port p;
 
-	if (copy_from_user(&p, up, sizeof(p)))
-		return -EFAULT;
+	अगर (copy_from_user(&p, up, माप(p)))
+		वापस -EFAULT;
 
 	p.port = -1;
-	for (part = 0; part < stdev->partition_count; part++) {
+	क्रम (part = 0; part < stdev->partition_count; part++) अणु
 		pcfg = &stdev->mmio_part_cfg_all[part];
 		p.partition = part;
 
-		reg = ioread32(&pcfg->usp_pff_inst_id);
-		if (reg == p.pff) {
+		reg = ioपढ़ो32(&pcfg->usp_pff_inst_id);
+		अगर (reg == p.pff) अणु
 			p.port = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		reg = ioread32(&pcfg->vep_pff_inst_id);
-		if (reg == p.pff) {
+		reg = ioपढ़ो32(&pcfg->vep_pff_inst_id);
+		अगर (reg == p.pff) अणु
 			p.port = SWITCHTEC_IOCTL_PFF_VEP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		for (i = 0; i < ARRAY_SIZE(pcfg->dsp_pff_inst_id); i++) {
-			reg = ioread32(&pcfg->dsp_pff_inst_id[i]);
-			if (reg != p.pff)
-				continue;
+		क्रम (i = 0; i < ARRAY_SIZE(pcfg->dsp_pff_inst_id); i++) अणु
+			reg = ioपढ़ो32(&pcfg->dsp_pff_inst_id[i]);
+			अगर (reg != p.pff)
+				जारी;
 
 			p.port = i + 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (p.port != -1)
-			break;
-	}
+		अगर (p.port != -1)
+			अवरोध;
+	पूर्ण
 
-	if (copy_to_user(up, &p, sizeof(p)))
-		return -EFAULT;
+	अगर (copy_to_user(up, &p, माप(p)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ioctl_port_to_pff(struct switchtec_dev *stdev,
-			     struct switchtec_ioctl_pff_port __user *up)
-{
-	struct switchtec_ioctl_pff_port p;
-	struct part_cfg_regs __iomem *pcfg;
+अटल पूर्णांक ioctl_port_to_pff(काष्ठा चयनtec_dev *stdev,
+			     काष्ठा चयनtec_ioctl_pff_port __user *up)
+अणु
+	काष्ठा चयनtec_ioctl_pff_port p;
+	काष्ठा part_cfg_regs __iomem *pcfg;
 
-	if (copy_from_user(&p, up, sizeof(p)))
-		return -EFAULT;
+	अगर (copy_from_user(&p, up, माप(p)))
+		वापस -EFAULT;
 
-	if (p.partition == SWITCHTEC_IOCTL_EVENT_LOCAL_PART_IDX)
+	अगर (p.partition == SWITCHTEC_IOCTL_EVENT_LOCAL_PART_IDX)
 		pcfg = stdev->mmio_part_cfg;
-	else if (p.partition < stdev->partition_count)
+	अन्यथा अगर (p.partition < stdev->partition_count)
 		pcfg = &stdev->mmio_part_cfg_all[p.partition];
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	switch (p.port) {
-	case 0:
-		p.pff = ioread32(&pcfg->usp_pff_inst_id);
-		break;
-	case SWITCHTEC_IOCTL_PFF_VEP:
-		p.pff = ioread32(&pcfg->vep_pff_inst_id);
-		break;
-	default:
-		if (p.port > ARRAY_SIZE(pcfg->dsp_pff_inst_id))
-			return -EINVAL;
+	चयन (p.port) अणु
+	हाल 0:
+		p.pff = ioपढ़ो32(&pcfg->usp_pff_inst_id);
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PFF_VEP:
+		p.pff = ioपढ़ो32(&pcfg->vep_pff_inst_id);
+		अवरोध;
+	शेष:
+		अगर (p.port > ARRAY_SIZE(pcfg->dsp_pff_inst_id))
+			वापस -EINVAL;
 		p.port = array_index_nospec(p.port,
 					ARRAY_SIZE(pcfg->dsp_pff_inst_id) + 1);
-		p.pff = ioread32(&pcfg->dsp_pff_inst_id[p.port - 1]);
-		break;
-	}
+		p.pff = ioपढ़ो32(&pcfg->dsp_pff_inst_id[p.port - 1]);
+		अवरोध;
+	पूर्ण
 
-	if (copy_to_user(up, &p, sizeof(p)))
-		return -EFAULT;
+	अगर (copy_to_user(up, &p, माप(p)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long switchtec_dev_ioctl(struct file *filp, unsigned int cmd,
-				unsigned long arg)
-{
-	struct switchtec_user *stuser = filp->private_data;
-	struct switchtec_dev *stdev = stuser->stdev;
-	int rc;
-	void __user *argp = (void __user *)arg;
+अटल दीर्घ चयनtec_dev_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
+				अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा चयनtec_user *stuser = filp->निजी_data;
+	काष्ठा चयनtec_dev *stdev = stuser->stdev;
+	पूर्णांक rc;
+	व्योम __user *argp = (व्योम __user *)arg;
 
 	rc = lock_mutex_and_test_alive(stdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	switch (cmd) {
-	case SWITCHTEC_IOCTL_FLASH_INFO:
+	चयन (cmd) अणु
+	हाल SWITCHTEC_IOCTL_FLASH_INFO:
 		rc = ioctl_flash_info(stdev, argp);
-		break;
-	case SWITCHTEC_IOCTL_FLASH_PART_INFO:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_FLASH_PART_INFO:
 		rc = ioctl_flash_part_info(stdev, argp);
-		break;
-	case SWITCHTEC_IOCTL_EVENT_SUMMARY_LEGACY:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_EVENT_SUMMARY_LEGACY:
 		rc = ioctl_event_summary(stdev, stuser, argp,
-					 sizeof(struct switchtec_ioctl_event_summary_legacy));
-		break;
-	case SWITCHTEC_IOCTL_EVENT_CTL:
+					 माप(काष्ठा चयनtec_ioctl_event_summary_legacy));
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_EVENT_CTL:
 		rc = ioctl_event_ctl(stdev, argp);
-		break;
-	case SWITCHTEC_IOCTL_PFF_TO_PORT:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PFF_TO_PORT:
 		rc = ioctl_pff_to_port(stdev, argp);
-		break;
-	case SWITCHTEC_IOCTL_PORT_TO_PFF:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_PORT_TO_PFF:
 		rc = ioctl_port_to_pff(stdev, argp);
-		break;
-	case SWITCHTEC_IOCTL_EVENT_SUMMARY:
+		अवरोध;
+	हाल SWITCHTEC_IOCTL_EVENT_SUMMARY:
 		rc = ioctl_event_summary(stdev, stuser, argp,
-					 sizeof(struct switchtec_ioctl_event_summary));
-		break;
-	default:
+					 माप(काष्ठा चयनtec_ioctl_event_summary));
+		अवरोध;
+	शेष:
 		rc = -ENOTTY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&stdev->mrpc_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct file_operations switchtec_fops = {
+अटल स्थिर काष्ठा file_operations चयनtec_fops = अणु
 	.owner = THIS_MODULE,
-	.open = switchtec_dev_open,
-	.release = switchtec_dev_release,
-	.write = switchtec_dev_write,
-	.read = switchtec_dev_read,
-	.poll = switchtec_dev_poll,
-	.unlocked_ioctl = switchtec_dev_ioctl,
+	.खोलो = चयनtec_dev_खोलो,
+	.release = चयनtec_dev_release,
+	.ग_लिखो = चयनtec_dev_ग_लिखो,
+	.पढ़ो = चयनtec_dev_पढ़ो,
+	.poll = चयनtec_dev_poll,
+	.unlocked_ioctl = चयनtec_dev_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
-};
+पूर्ण;
 
-static void link_event_work(struct work_struct *work)
-{
-	struct switchtec_dev *stdev;
+अटल व्योम link_event_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा चयनtec_dev *stdev;
 
-	stdev = container_of(work, struct switchtec_dev, link_event_work);
+	stdev = container_of(work, काष्ठा चयनtec_dev, link_event_work);
 
-	if (stdev->link_notifier)
-		stdev->link_notifier(stdev);
-}
+	अगर (stdev->link_notअगरier)
+		stdev->link_notअगरier(stdev);
+पूर्ण
 
-static void check_link_state_events(struct switchtec_dev *stdev)
-{
-	int idx;
+अटल व्योम check_link_state_events(काष्ठा चयनtec_dev *stdev)
+अणु
+	पूर्णांक idx;
 	u32 reg;
-	int count;
-	int occurred = 0;
+	पूर्णांक count;
+	पूर्णांक occurred = 0;
 
-	for (idx = 0; idx < stdev->pff_csr_count; idx++) {
-		reg = ioread32(&stdev->mmio_pff_csr[idx].link_state_hdr);
+	क्रम (idx = 0; idx < stdev->pff_csr_count; idx++) अणु
+		reg = ioपढ़ो32(&stdev->mmio_pff_csr[idx].link_state_hdr);
 		dev_dbg(&stdev->dev, "link_state: %d->%08x\n", idx, reg);
 		count = (reg >> 5) & 0xFF;
 
-		if (count != stdev->link_event_count[idx]) {
+		अगर (count != stdev->link_event_count[idx]) अणु
 			occurred = 1;
 			stdev->link_event_count[idx] = count;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (occurred)
+	अगर (occurred)
 		schedule_work(&stdev->link_event_work);
-}
+पूर्ण
 
-static void enable_link_state_events(struct switchtec_dev *stdev)
-{
-	int idx;
+अटल व्योम enable_link_state_events(काष्ठा चयनtec_dev *stdev)
+अणु
+	पूर्णांक idx;
 
-	for (idx = 0; idx < stdev->pff_csr_count; idx++) {
-		iowrite32(SWITCHTEC_EVENT_CLEAR |
+	क्रम (idx = 0; idx < stdev->pff_csr_count; idx++) अणु
+		ioग_लिखो32(SWITCHTEC_EVENT_CLEAR |
 			  SWITCHTEC_EVENT_EN_IRQ,
 			  &stdev->mmio_pff_csr[idx].link_state_hdr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void enable_dma_mrpc(struct switchtec_dev *stdev)
-{
-	writeq(stdev->dma_mrpc_dma_addr, &stdev->mmio_mrpc->dma_addr);
+अटल व्योम enable_dma_mrpc(काष्ठा चयनtec_dev *stdev)
+अणु
+	ग_लिखोq(stdev->dma_mrpc_dma_addr, &stdev->mmio_mrpc->dma_addr);
 	flush_wc_buf(stdev);
-	iowrite32(SWITCHTEC_DMA_MRPC_EN, &stdev->mmio_mrpc->dma_en);
-}
+	ioग_लिखो32(SWITCHTEC_DMA_MRPC_EN, &stdev->mmio_mrpc->dma_en);
+पूर्ण
 
-static void stdev_release(struct device *dev)
-{
-	struct switchtec_dev *stdev = to_stdev(dev);
+अटल व्योम stdev_release(काष्ठा device *dev)
+अणु
+	काष्ठा चयनtec_dev *stdev = to_stdev(dev);
 
-	if (stdev->dma_mrpc) {
-		iowrite32(0, &stdev->mmio_mrpc->dma_en);
+	अगर (stdev->dma_mrpc) अणु
+		ioग_लिखो32(0, &stdev->mmio_mrpc->dma_en);
 		flush_wc_buf(stdev);
-		writeq(0, &stdev->mmio_mrpc->dma_addr);
-		dma_free_coherent(&stdev->pdev->dev, sizeof(*stdev->dma_mrpc),
+		ग_लिखोq(0, &stdev->mmio_mrpc->dma_addr);
+		dma_मुक्त_coherent(&stdev->pdev->dev, माप(*stdev->dma_mrpc),
 				stdev->dma_mrpc, stdev->dma_mrpc_dma_addr);
-	}
-	kfree(stdev);
-}
+	पूर्ण
+	kमुक्त(stdev);
+पूर्ण
 
-static void stdev_kill(struct switchtec_dev *stdev)
-{
-	struct switchtec_user *stuser, *tmpuser;
+अटल व्योम stdev_समाप्त(काष्ठा चयनtec_dev *stdev)
+अणु
+	काष्ठा चयनtec_user *stuser, *पंचांगpuser;
 
 	pci_clear_master(stdev->pdev);
 
-	cancel_delayed_work_sync(&stdev->mrpc_timeout);
+	cancel_delayed_work_sync(&stdev->mrpc_समयout);
 
 	/* Mark the hardware as unavailable and complete all completions */
 	mutex_lock(&stdev->mrpc_mutex);
 	stdev->alive = false;
 
-	/* Wake up and kill any users waiting on an MRPC request */
-	list_for_each_entry_safe(stuser, tmpuser, &stdev->mrpc_queue, list) {
-		stuser->cmd_done = true;
-		wake_up_interruptible(&stuser->cmd_comp);
+	/* Wake up and समाप्त any users रुकोing on an MRPC request */
+	list_क्रम_each_entry_safe(stuser, पंचांगpuser, &stdev->mrpc_queue, list) अणु
+		stuser->cmd_करोne = true;
+		wake_up_पूर्णांकerruptible(&stuser->cmd_comp);
 		list_del_init(&stuser->list);
 		stuser_put(stuser);
-	}
+	पूर्ण
 
 	mutex_unlock(&stdev->mrpc_mutex);
 
-	/* Wake up any users waiting on event_wq */
-	wake_up_interruptible(&stdev->event_wq);
-}
+	/* Wake up any users रुकोing on event_wq */
+	wake_up_पूर्णांकerruptible(&stdev->event_wq);
+पूर्ण
 
-static struct switchtec_dev *stdev_create(struct pci_dev *pdev)
-{
-	struct switchtec_dev *stdev;
-	int minor;
-	struct device *dev;
-	struct cdev *cdev;
-	int rc;
+अटल काष्ठा चयनtec_dev *stdev_create(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा चयनtec_dev *stdev;
+	पूर्णांक minor;
+	काष्ठा device *dev;
+	काष्ठा cdev *cdev;
+	पूर्णांक rc;
 
-	stdev = kzalloc_node(sizeof(*stdev), GFP_KERNEL,
+	stdev = kzalloc_node(माप(*stdev), GFP_KERNEL,
 			     dev_to_node(&pdev->dev));
-	if (!stdev)
-		return ERR_PTR(-ENOMEM);
+	अगर (!stdev)
+		वापस ERR_PTR(-ENOMEM);
 
 	stdev->alive = true;
 	stdev->pdev = pdev;
@@ -1306,244 +1307,244 @@ static struct switchtec_dev *stdev_create(struct pci_dev *pdev)
 	mutex_init(&stdev->mrpc_mutex);
 	stdev->mrpc_busy = 0;
 	INIT_WORK(&stdev->mrpc_work, mrpc_event_work);
-	INIT_DELAYED_WORK(&stdev->mrpc_timeout, mrpc_timeout_work);
+	INIT_DELAYED_WORK(&stdev->mrpc_समयout, mrpc_समयout_work);
 	INIT_WORK(&stdev->link_event_work, link_event_work);
-	init_waitqueue_head(&stdev->event_wq);
+	init_रुकोqueue_head(&stdev->event_wq);
 	atomic_set(&stdev->event_cnt, 0);
 
 	dev = &stdev->dev;
 	device_initialize(dev);
-	dev->class = switchtec_class;
+	dev->class = चयनtec_class;
 	dev->parent = &pdev->dev;
-	dev->groups = switchtec_device_groups;
+	dev->groups = चयनtec_device_groups;
 	dev->release = stdev_release;
 
-	minor = ida_simple_get(&switchtec_minor_ida, 0, 0,
+	minor = ida_simple_get(&चयनtec_minor_ida, 0, 0,
 			       GFP_KERNEL);
-	if (minor < 0) {
+	अगर (minor < 0) अणु
 		rc = minor;
-		goto err_put;
-	}
+		जाओ err_put;
+	पूर्ण
 
-	dev->devt = MKDEV(MAJOR(switchtec_devt), minor);
+	dev->devt = MKDEV(MAJOR(चयनtec_devt), minor);
 	dev_set_name(dev, "switchtec%d", minor);
 
 	cdev = &stdev->cdev;
-	cdev_init(cdev, &switchtec_fops);
+	cdev_init(cdev, &चयनtec_fops);
 	cdev->owner = THIS_MODULE;
 
-	return stdev;
+	वापस stdev;
 
 err_put:
 	put_device(&stdev->dev);
-	return ERR_PTR(rc);
-}
+	वापस ERR_PTR(rc);
+पूर्ण
 
-static int mask_event(struct switchtec_dev *stdev, int eid, int idx)
-{
-	size_t off = event_regs[eid].offset;
+अटल पूर्णांक mask_event(काष्ठा चयनtec_dev *stdev, पूर्णांक eid, पूर्णांक idx)
+अणु
+	माप_प्रकार off = event_regs[eid].offset;
 	u32 __iomem *hdr_reg;
 	u32 hdr;
 
 	hdr_reg = event_regs[eid].map_reg(stdev, off, idx);
-	hdr = ioread32(hdr_reg);
+	hdr = ioपढ़ो32(hdr_reg);
 
-	if (!(hdr & SWITCHTEC_EVENT_OCCURRED && hdr & SWITCHTEC_EVENT_EN_IRQ))
-		return 0;
+	अगर (!(hdr & SWITCHTEC_EVENT_OCCURRED && hdr & SWITCHTEC_EVENT_EN_IRQ))
+		वापस 0;
 
 	dev_dbg(&stdev->dev, "%s: %d %d %x\n", __func__, eid, idx, hdr);
 	hdr &= ~(SWITCHTEC_EVENT_EN_IRQ | SWITCHTEC_EVENT_OCCURRED);
-	iowrite32(hdr, hdr_reg);
+	ioग_लिखो32(hdr, hdr_reg);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int mask_all_events(struct switchtec_dev *stdev, int eid)
-{
-	int idx;
-	int count = 0;
+अटल पूर्णांक mask_all_events(काष्ठा चयनtec_dev *stdev, पूर्णांक eid)
+अणु
+	पूर्णांक idx;
+	पूर्णांक count = 0;
 
-	if (event_regs[eid].map_reg == part_ev_reg) {
-		for (idx = 0; idx < stdev->partition_count; idx++)
+	अगर (event_regs[eid].map_reg == part_ev_reg) अणु
+		क्रम (idx = 0; idx < stdev->partition_count; idx++)
 			count += mask_event(stdev, eid, idx);
-	} else if (event_regs[eid].map_reg == pff_ev_reg) {
-		for (idx = 0; idx < stdev->pff_csr_count; idx++) {
-			if (!stdev->pff_local[idx])
-				continue;
+	पूर्ण अन्यथा अगर (event_regs[eid].map_reg == pff_ev_reg) अणु
+		क्रम (idx = 0; idx < stdev->pff_csr_count; idx++) अणु
+			अगर (!stdev->pff_local[idx])
+				जारी;
 
 			count += mask_event(stdev, eid, idx);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		count += mask_event(stdev, eid, 0);
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static irqreturn_t switchtec_event_isr(int irq, void *dev)
-{
-	struct switchtec_dev *stdev = dev;
+अटल irqवापस_t चयनtec_event_isr(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा चयनtec_dev *stdev = dev;
 	u32 reg;
-	irqreturn_t ret = IRQ_NONE;
-	int eid, event_count = 0;
+	irqवापस_t ret = IRQ_NONE;
+	पूर्णांक eid, event_count = 0;
 
-	reg = ioread32(&stdev->mmio_part_cfg->mrpc_comp_hdr);
-	if (reg & SWITCHTEC_EVENT_OCCURRED) {
+	reg = ioपढ़ो32(&stdev->mmio_part_cfg->mrpc_comp_hdr);
+	अगर (reg & SWITCHTEC_EVENT_OCCURRED) अणु
 		dev_dbg(&stdev->dev, "%s: mrpc comp\n", __func__);
 		ret = IRQ_HANDLED;
 		schedule_work(&stdev->mrpc_work);
-		iowrite32(reg, &stdev->mmio_part_cfg->mrpc_comp_hdr);
-	}
+		ioग_लिखो32(reg, &stdev->mmio_part_cfg->mrpc_comp_hdr);
+	पूर्ण
 
 	check_link_state_events(stdev);
 
-	for (eid = 0; eid < SWITCHTEC_IOCTL_MAX_EVENTS; eid++) {
-		if (eid == SWITCHTEC_IOCTL_EVENT_LINK_STATE ||
+	क्रम (eid = 0; eid < SWITCHTEC_IOCTL_MAX_EVENTS; eid++) अणु
+		अगर (eid == SWITCHTEC_IOCTL_EVENT_LINK_STATE ||
 		    eid == SWITCHTEC_IOCTL_EVENT_MRPC_COMP)
-			continue;
+			जारी;
 
 		event_count += mask_all_events(stdev, eid);
-	}
+	पूर्ण
 
-	if (event_count) {
+	अगर (event_count) अणु
 		atomic_inc(&stdev->event_cnt);
-		wake_up_interruptible(&stdev->event_wq);
+		wake_up_पूर्णांकerruptible(&stdev->event_wq);
 		dev_dbg(&stdev->dev, "%s: %d events\n", __func__,
 			event_count);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static irqreturn_t switchtec_dma_mrpc_isr(int irq, void *dev)
-{
-	struct switchtec_dev *stdev = dev;
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t चयनtec_dma_mrpc_isr(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा चयनtec_dev *stdev = dev;
+	irqवापस_t ret = IRQ_NONE;
 
-	iowrite32(SWITCHTEC_EVENT_CLEAR |
+	ioग_लिखो32(SWITCHTEC_EVENT_CLEAR |
 		  SWITCHTEC_EVENT_EN_IRQ,
 		  &stdev->mmio_part_cfg->mrpc_comp_hdr);
 	schedule_work(&stdev->mrpc_work);
 
 	ret = IRQ_HANDLED;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int switchtec_init_isr(struct switchtec_dev *stdev)
-{
-	int nvecs;
-	int event_irq;
-	int dma_mrpc_irq;
-	int rc;
+अटल पूर्णांक चयनtec_init_isr(काष्ठा चयनtec_dev *stdev)
+अणु
+	पूर्णांक nvecs;
+	पूर्णांक event_irq;
+	पूर्णांक dma_mrpc_irq;
+	पूर्णांक rc;
 
-	if (nirqs < 4)
+	अगर (nirqs < 4)
 		nirqs = 4;
 
 	nvecs = pci_alloc_irq_vectors(stdev->pdev, 1, nirqs,
 				      PCI_IRQ_MSIX | PCI_IRQ_MSI |
 				      PCI_IRQ_VIRTUAL);
-	if (nvecs < 0)
-		return nvecs;
+	अगर (nvecs < 0)
+		वापस nvecs;
 
-	event_irq = ioread16(&stdev->mmio_part_cfg->vep_vector_number);
-	if (event_irq < 0 || event_irq >= nvecs)
-		return -EFAULT;
+	event_irq = ioपढ़ो16(&stdev->mmio_part_cfg->vep_vector_number);
+	अगर (event_irq < 0 || event_irq >= nvecs)
+		वापस -EFAULT;
 
 	event_irq = pci_irq_vector(stdev->pdev, event_irq);
-	if (event_irq < 0)
-		return event_irq;
+	अगर (event_irq < 0)
+		वापस event_irq;
 
 	rc = devm_request_irq(&stdev->pdev->dev, event_irq,
-				switchtec_event_isr, 0,
+				चयनtec_event_isr, 0,
 				KBUILD_MODNAME, stdev);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (!stdev->dma_mrpc)
-		return rc;
+	अगर (!stdev->dma_mrpc)
+		वापस rc;
 
-	dma_mrpc_irq = ioread32(&stdev->mmio_mrpc->dma_vector);
-	if (dma_mrpc_irq < 0 || dma_mrpc_irq >= nvecs)
-		return -EFAULT;
+	dma_mrpc_irq = ioपढ़ो32(&stdev->mmio_mrpc->dma_vector);
+	अगर (dma_mrpc_irq < 0 || dma_mrpc_irq >= nvecs)
+		वापस -EFAULT;
 
 	dma_mrpc_irq  = pci_irq_vector(stdev->pdev, dma_mrpc_irq);
-	if (dma_mrpc_irq < 0)
-		return dma_mrpc_irq;
+	अगर (dma_mrpc_irq < 0)
+		वापस dma_mrpc_irq;
 
 	rc = devm_request_irq(&stdev->pdev->dev, dma_mrpc_irq,
-				switchtec_dma_mrpc_isr, 0,
+				चयनtec_dma_mrpc_isr, 0,
 				KBUILD_MODNAME, stdev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void init_pff(struct switchtec_dev *stdev)
-{
-	int i;
+अटल व्योम init_pff(काष्ठा चयनtec_dev *stdev)
+अणु
+	पूर्णांक i;
 	u32 reg;
-	struct part_cfg_regs __iomem *pcfg = stdev->mmio_part_cfg;
+	काष्ठा part_cfg_regs __iomem *pcfg = stdev->mmio_part_cfg;
 
-	for (i = 0; i < SWITCHTEC_MAX_PFF_CSR; i++) {
-		reg = ioread16(&stdev->mmio_pff_csr[i].vendor_id);
-		if (reg != PCI_VENDOR_ID_MICROSEMI)
-			break;
-	}
+	क्रम (i = 0; i < SWITCHTEC_MAX_PFF_CSR; i++) अणु
+		reg = ioपढ़ो16(&stdev->mmio_pff_csr[i].venकरोr_id);
+		अगर (reg != PCI_VENDOR_ID_MICROSEMI)
+			अवरोध;
+	पूर्ण
 
 	stdev->pff_csr_count = i;
 
-	reg = ioread32(&pcfg->usp_pff_inst_id);
-	if (reg < stdev->pff_csr_count)
+	reg = ioपढ़ो32(&pcfg->usp_pff_inst_id);
+	अगर (reg < stdev->pff_csr_count)
 		stdev->pff_local[reg] = 1;
 
-	reg = ioread32(&pcfg->vep_pff_inst_id);
-	if (reg < stdev->pff_csr_count)
+	reg = ioपढ़ो32(&pcfg->vep_pff_inst_id);
+	अगर (reg < stdev->pff_csr_count)
 		stdev->pff_local[reg] = 1;
 
-	for (i = 0; i < ARRAY_SIZE(pcfg->dsp_pff_inst_id); i++) {
-		reg = ioread32(&pcfg->dsp_pff_inst_id[i]);
-		if (reg < stdev->pff_csr_count)
+	क्रम (i = 0; i < ARRAY_SIZE(pcfg->dsp_pff_inst_id); i++) अणु
+		reg = ioपढ़ो32(&pcfg->dsp_pff_inst_id[i]);
+		अगर (reg < stdev->pff_csr_count)
 			stdev->pff_local[reg] = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int switchtec_init_pci(struct switchtec_dev *stdev,
-			      struct pci_dev *pdev)
-{
-	int rc;
-	void __iomem *map;
-	unsigned long res_start, res_len;
+अटल पूर्णांक चयनtec_init_pci(काष्ठा चयनtec_dev *stdev,
+			      काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक rc;
+	व्योम __iomem *map;
+	अचिन्हित दीर्घ res_start, res_len;
 	u32 __iomem *part_id;
 
 	rc = pcim_enable_device(pdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	pci_set_master(pdev);
 
 	res_start = pci_resource_start(pdev, 0);
 	res_len = pci_resource_len(pdev, 0);
 
-	if (!devm_request_mem_region(&pdev->dev, res_start,
+	अगर (!devm_request_mem_region(&pdev->dev, res_start,
 				     res_len, KBUILD_MODNAME))
-		return -EBUSY;
+		वापस -EBUSY;
 
 	stdev->mmio_mrpc = devm_ioremap_wc(&pdev->dev, res_start,
 					   SWITCHTEC_GAS_TOP_CFG_OFFSET);
-	if (!stdev->mmio_mrpc)
-		return -ENOMEM;
+	अगर (!stdev->mmio_mrpc)
+		वापस -ENOMEM;
 
 	map = devm_ioremap(&pdev->dev,
 			   res_start + SWITCHTEC_GAS_TOP_CFG_OFFSET,
 			   res_len - SWITCHTEC_GAS_TOP_CFG_OFFSET);
-	if (!map)
-		return -ENOMEM;
+	अगर (!map)
+		वापस -ENOMEM;
 
 	stdev->mmio = map - SWITCHTEC_GAS_TOP_CFG_OFFSET;
 	stdev->mmio_sw_event = stdev->mmio + SWITCHTEC_GAS_SW_EVENT_OFFSET;
@@ -1551,125 +1552,125 @@ static int switchtec_init_pci(struct switchtec_dev *stdev,
 	stdev->mmio_flash_info = stdev->mmio + SWITCHTEC_GAS_FLASH_INFO_OFFSET;
 	stdev->mmio_ntb = stdev->mmio + SWITCHTEC_GAS_NTB_OFFSET;
 
-	if (stdev->gen == SWITCHTEC_GEN3)
+	अगर (stdev->gen == SWITCHTEC_GEN3)
 		part_id = &stdev->mmio_sys_info->gen3.partition_id;
-	else if (stdev->gen == SWITCHTEC_GEN4)
+	अन्यथा अगर (stdev->gen == SWITCHTEC_GEN4)
 		part_id = &stdev->mmio_sys_info->gen4.partition_id;
-	else
-		return -ENOTSUPP;
+	अन्यथा
+		वापस -ENOTSUPP;
 
-	stdev->partition = ioread8(part_id);
-	stdev->partition_count = ioread8(&stdev->mmio_ntb->partition_count);
+	stdev->partition = ioपढ़ो8(part_id);
+	stdev->partition_count = ioपढ़ो8(&stdev->mmio_ntb->partition_count);
 	stdev->mmio_part_cfg_all = stdev->mmio + SWITCHTEC_GAS_PART_CFG_OFFSET;
 	stdev->mmio_part_cfg = &stdev->mmio_part_cfg_all[stdev->partition];
 	stdev->mmio_pff_csr = stdev->mmio + SWITCHTEC_GAS_PFF_CSR_OFFSET;
 
-	if (stdev->partition_count < 1)
+	अगर (stdev->partition_count < 1)
 		stdev->partition_count = 1;
 
 	init_pff(stdev);
 
 	pci_set_drvdata(pdev, stdev);
 
-	if (!use_dma_mrpc)
-		return 0;
+	अगर (!use_dma_mrpc)
+		वापस 0;
 
-	if (ioread32(&stdev->mmio_mrpc->dma_ver) == 0)
-		return 0;
+	अगर (ioपढ़ो32(&stdev->mmio_mrpc->dma_ver) == 0)
+		वापस 0;
 
 	stdev->dma_mrpc = dma_alloc_coherent(&stdev->pdev->dev,
-					     sizeof(*stdev->dma_mrpc),
+					     माप(*stdev->dma_mrpc),
 					     &stdev->dma_mrpc_dma_addr,
 					     GFP_KERNEL);
-	if (stdev->dma_mrpc == NULL)
-		return -ENOMEM;
+	अगर (stdev->dma_mrpc == शून्य)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int switchtec_pci_probe(struct pci_dev *pdev,
-			       const struct pci_device_id *id)
-{
-	struct switchtec_dev *stdev;
-	int rc;
+अटल पूर्णांक चयनtec_pci_probe(काष्ठा pci_dev *pdev,
+			       स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा चयनtec_dev *stdev;
+	पूर्णांक rc;
 
-	if (pdev->class == (PCI_CLASS_BRIDGE_OTHER << 8))
-		request_module_nowait("ntb_hw_switchtec");
+	अगर (pdev->class == (PCI_CLASS_BRIDGE_OTHER << 8))
+		request_module_noरुको("ntb_hw_switchtec");
 
 	stdev = stdev_create(pdev);
-	if (IS_ERR(stdev))
-		return PTR_ERR(stdev);
+	अगर (IS_ERR(stdev))
+		वापस PTR_ERR(stdev);
 
 	stdev->gen = id->driver_data;
 
-	rc = switchtec_init_pci(stdev, pdev);
-	if (rc)
-		goto err_put;
+	rc = चयनtec_init_pci(stdev, pdev);
+	अगर (rc)
+		जाओ err_put;
 
-	rc = switchtec_init_isr(stdev);
-	if (rc) {
+	rc = चयनtec_init_isr(stdev);
+	अगर (rc) अणु
 		dev_err(&stdev->dev, "failed to init isr.\n");
-		goto err_put;
-	}
+		जाओ err_put;
+	पूर्ण
 
-	iowrite32(SWITCHTEC_EVENT_CLEAR |
+	ioग_लिखो32(SWITCHTEC_EVENT_CLEAR |
 		  SWITCHTEC_EVENT_EN_IRQ,
 		  &stdev->mmio_part_cfg->mrpc_comp_hdr);
 	enable_link_state_events(stdev);
 
-	if (stdev->dma_mrpc)
+	अगर (stdev->dma_mrpc)
 		enable_dma_mrpc(stdev);
 
 	rc = cdev_device_add(&stdev->cdev, &stdev->dev);
-	if (rc)
-		goto err_devadd;
+	अगर (rc)
+		जाओ err_devadd;
 
 	dev_info(&stdev->dev, "Management device registered.\n");
 
-	return 0;
+	वापस 0;
 
 err_devadd:
-	stdev_kill(stdev);
+	stdev_समाप्त(stdev);
 err_put:
-	ida_simple_remove(&switchtec_minor_ida, MINOR(stdev->dev.devt));
+	ida_simple_हटाओ(&चयनtec_minor_ida, MINOR(stdev->dev.devt));
 	put_device(&stdev->dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void switchtec_pci_remove(struct pci_dev *pdev)
-{
-	struct switchtec_dev *stdev = pci_get_drvdata(pdev);
+अटल व्योम चयनtec_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा चयनtec_dev *stdev = pci_get_drvdata(pdev);
 
-	pci_set_drvdata(pdev, NULL);
+	pci_set_drvdata(pdev, शून्य);
 
 	cdev_device_del(&stdev->cdev, &stdev->dev);
-	ida_simple_remove(&switchtec_minor_ida, MINOR(stdev->dev.devt));
+	ida_simple_हटाओ(&चयनtec_minor_ida, MINOR(stdev->dev.devt));
 	dev_info(&stdev->dev, "unregistered.\n");
-	stdev_kill(stdev);
+	stdev_समाप्त(stdev);
 	put_device(&stdev->dev);
-}
+पूर्ण
 
-#define SWITCHTEC_PCI_DEVICE(device_id, gen) \
-	{ \
-		.vendor     = PCI_VENDOR_ID_MICROSEMI, \
+#घोषणा SWITCHTEC_PCI_DEVICE(device_id, gen) \
+	अणु \
+		.venकरोr     = PCI_VENDOR_ID_MICROSEMI, \
 		.device     = device_id, \
-		.subvendor  = PCI_ANY_ID, \
+		.subvenकरोr  = PCI_ANY_ID, \
 		.subdevice  = PCI_ANY_ID, \
 		.class      = (PCI_CLASS_MEMORY_OTHER << 8), \
 		.class_mask = 0xFFFFFFFF, \
 		.driver_data = gen, \
-	}, \
-	{ \
-		.vendor     = PCI_VENDOR_ID_MICROSEMI, \
+	पूर्ण, \
+	अणु \
+		.venकरोr     = PCI_VENDOR_ID_MICROSEMI, \
 		.device     = device_id, \
-		.subvendor  = PCI_ANY_ID, \
+		.subvenकरोr  = PCI_ANY_ID, \
 		.subdevice  = PCI_ANY_ID, \
 		.class      = (PCI_CLASS_BRIDGE_OTHER << 8), \
 		.class_mask = 0xFFFFFFFF, \
 		.driver_data = gen, \
-	}
+	पूर्ण
 
-static const struct pci_device_id switchtec_pci_tbl[] = {
+अटल स्थिर काष्ठा pci_device_id चयनtec_pci_tbl[] = अणु
 	SWITCHTEC_PCI_DEVICE(0x8531, SWITCHTEC_GEN3),  //PFX 24xG3
 	SWITCHTEC_PCI_DEVICE(0x8532, SWITCHTEC_GEN3),  //PFX 32xG3
 	SWITCHTEC_PCI_DEVICE(0x8533, SWITCHTEC_GEN3),  //PFX 48xG3
@@ -1718,57 +1719,57 @@ static const struct pci_device_id switchtec_pci_tbl[] = {
 	SWITCHTEC_PCI_DEVICE(0x4252, SWITCHTEC_GEN4),  //PAX 52XG4
 	SWITCHTEC_PCI_DEVICE(0x4236, SWITCHTEC_GEN4),  //PAX 36XG4
 	SWITCHTEC_PCI_DEVICE(0x4228, SWITCHTEC_GEN4),  //PAX 28XG4
-	{0}
-};
-MODULE_DEVICE_TABLE(pci, switchtec_pci_tbl);
+	अणु0पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(pci, चयनtec_pci_tbl);
 
-static struct pci_driver switchtec_pci_driver = {
+अटल काष्ठा pci_driver चयनtec_pci_driver = अणु
 	.name		= KBUILD_MODNAME,
-	.id_table	= switchtec_pci_tbl,
-	.probe		= switchtec_pci_probe,
-	.remove		= switchtec_pci_remove,
-};
+	.id_table	= चयनtec_pci_tbl,
+	.probe		= चयनtec_pci_probe,
+	.हटाओ		= चयनtec_pci_हटाओ,
+पूर्ण;
 
-static int __init switchtec_init(void)
-{
-	int rc;
+अटल पूर्णांक __init चयनtec_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = alloc_chrdev_region(&switchtec_devt, 0, max_devices,
+	rc = alloc_chrdev_region(&चयनtec_devt, 0, max_devices,
 				 "switchtec");
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	switchtec_class = class_create(THIS_MODULE, "switchtec");
-	if (IS_ERR(switchtec_class)) {
-		rc = PTR_ERR(switchtec_class);
-		goto err_create_class;
-	}
+	चयनtec_class = class_create(THIS_MODULE, "switchtec");
+	अगर (IS_ERR(चयनtec_class)) अणु
+		rc = PTR_ERR(चयनtec_class);
+		जाओ err_create_class;
+	पूर्ण
 
-	rc = pci_register_driver(&switchtec_pci_driver);
-	if (rc)
-		goto err_pci_register;
+	rc = pci_रेजिस्टर_driver(&चयनtec_pci_driver);
+	अगर (rc)
+		जाओ err_pci_रेजिस्टर;
 
 	pr_info(KBUILD_MODNAME ": loaded.\n");
 
-	return 0;
+	वापस 0;
 
-err_pci_register:
-	class_destroy(switchtec_class);
+err_pci_रेजिस्टर:
+	class_destroy(चयनtec_class);
 
 err_create_class:
-	unregister_chrdev_region(switchtec_devt, max_devices);
+	unरेजिस्टर_chrdev_region(चयनtec_devt, max_devices);
 
-	return rc;
-}
-module_init(switchtec_init);
+	वापस rc;
+पूर्ण
+module_init(चयनtec_init);
 
-static void __exit switchtec_exit(void)
-{
-	pci_unregister_driver(&switchtec_pci_driver);
-	class_destroy(switchtec_class);
-	unregister_chrdev_region(switchtec_devt, max_devices);
-	ida_destroy(&switchtec_minor_ida);
+अटल व्योम __निकास चयनtec_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&चयनtec_pci_driver);
+	class_destroy(चयनtec_class);
+	unरेजिस्टर_chrdev_region(चयनtec_devt, max_devices);
+	ida_destroy(&चयनtec_minor_ida);
 
 	pr_info(KBUILD_MODNAME ": unloaded.\n");
-}
-module_exit(switchtec_exit);
+पूर्ण
+module_निकास(चयनtec_निकास);

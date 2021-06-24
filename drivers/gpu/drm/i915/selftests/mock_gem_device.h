@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MOCK_GEM_DEVICE_H__
-#define __MOCK_GEM_DEVICE_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MOCK_GEM_DEVICE_H__
+#घोषणा __MOCK_GEM_DEVICE_H__
 
-struct drm_i915_private;
+काष्ठा drm_i915_निजी;
 
-struct drm_i915_private *mock_gem_device(void);
-void mock_device_flush(struct drm_i915_private *i915);
+काष्ठा drm_i915_निजी *mock_gem_device(व्योम);
+व्योम mock_device_flush(काष्ठा drm_i915_निजी *i915);
 
-void mock_destroy_device(struct drm_i915_private *i915);
+व्योम mock_destroy_device(काष्ठा drm_i915_निजी *i915);
 
-#endif /* !__MOCK_GEM_DEVICE_H__ */
+#पूर्ण_अगर /* !__MOCK_GEM_DEVICE_H__ */

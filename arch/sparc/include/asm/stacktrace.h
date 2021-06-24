@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC64_STACKTRACE_H
-#define _SPARC64_STACKTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC64_STACKTRACE_H
+#घोषणा _SPARC64_STACKTRACE_H
 
-void stack_trace_flush(void);
+व्योम stack_trace_flush(व्योम);
 
-#endif /* _SPARC64_STACKTRACE_H */
+#पूर्ण_अगर /* _SPARC64_STACKTRACE_H */

@@ -1,300 +1,301 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for Microchip MCP3911, Two-channel Analog Front End
+ * Driver क्रम Microchip MCP3911, Two-channel Analog Front End
  *
  * Copyright (C) 2018 Marcus Folkesson <marcus.folkesson@gmail.com>
  * Copyright (C) 2018 Kent Gustavsson <kent@minoris.se>
  */
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/iio/iio.h>
-#include <linux/module.h>
-#include <linux/regulator/consumer.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/spi/spi.h>
 
-#define MCP3911_REG_CHANNEL0		0x00
-#define MCP3911_REG_CHANNEL1		0x03
-#define MCP3911_REG_MOD			0x06
-#define MCP3911_REG_PHASE		0x07
-#define MCP3911_REG_GAIN		0x09
+#घोषणा MCP3911_REG_CHANNEL0		0x00
+#घोषणा MCP3911_REG_CHANNEL1		0x03
+#घोषणा MCP3911_REG_MOD			0x06
+#घोषणा MCP3911_REG_PHASE		0x07
+#घोषणा MCP3911_REG_GAIN		0x09
 
-#define MCP3911_REG_STATUSCOM		0x0a
-#define MCP3911_STATUSCOM_CH1_24WIDTH	BIT(4)
-#define MCP3911_STATUSCOM_CH0_24WIDTH	BIT(3)
-#define MCP3911_STATUSCOM_EN_OFFCAL	BIT(2)
-#define MCP3911_STATUSCOM_EN_GAINCAL	BIT(1)
+#घोषणा MCP3911_REG_STATUSCOM		0x0a
+#घोषणा MCP3911_STATUSCOM_CH1_24WIDTH	BIT(4)
+#घोषणा MCP3911_STATUSCOM_CH0_24WIDTH	BIT(3)
+#घोषणा MCP3911_STATUSCOM_EN_OFFCAL	BIT(2)
+#घोषणा MCP3911_STATUSCOM_EN_GAINCAL	BIT(1)
 
-#define MCP3911_REG_CONFIG		0x0c
-#define MCP3911_CONFIG_CLKEXT		BIT(1)
-#define MCP3911_CONFIG_VREFEXT		BIT(2)
+#घोषणा MCP3911_REG_CONFIG		0x0c
+#घोषणा MCP3911_CONFIG_CLKEXT		BIT(1)
+#घोषणा MCP3911_CONFIG_VREFEXT		BIT(2)
 
-#define MCP3911_REG_OFFCAL_CH0		0x0e
-#define MCP3911_REG_GAINCAL_CH0		0x11
-#define MCP3911_REG_OFFCAL_CH1		0x14
-#define MCP3911_REG_GAINCAL_CH1		0x17
-#define MCP3911_REG_VREFCAL		0x1a
+#घोषणा MCP3911_REG_OFFCAL_CH0		0x0e
+#घोषणा MCP3911_REG_GAINCAL_CH0		0x11
+#घोषणा MCP3911_REG_OFFCAL_CH1		0x14
+#घोषणा MCP3911_REG_GAINCAL_CH1		0x17
+#घोषणा MCP3911_REG_VREFCAL		0x1a
 
-#define MCP3911_CHANNEL(x)		(MCP3911_REG_CHANNEL0 + x * 3)
-#define MCP3911_OFFCAL(x)		(MCP3911_REG_OFFCAL_CH0 + x * 6)
+#घोषणा MCP3911_CHANNEL(x)		(MCP3911_REG_CHANNEL0 + x * 3)
+#घोषणा MCP3911_OFFCAL(x)		(MCP3911_REG_OFFCAL_CH0 + x * 6)
 
 /* Internal voltage reference in uV */
-#define MCP3911_INT_VREF_UV		1200000
+#घोषणा MCP3911_INT_VREF_UV		1200000
 
-#define MCP3911_REG_READ(reg, id)	((((reg) << 1) | ((id) << 5) | (1 << 0)) & 0xff)
-#define MCP3911_REG_WRITE(reg, id)	((((reg) << 1) | ((id) << 5) | (0 << 0)) & 0xff)
+#घोषणा MCP3911_REG_READ(reg, id)	((((reg) << 1) | ((id) << 5) | (1 << 0)) & 0xff)
+#घोषणा MCP3911_REG_WRITE(reg, id)	((((reg) << 1) | ((id) << 5) | (0 << 0)) & 0xff)
 
-#define MCP3911_NUM_CHANNELS		2
+#घोषणा MCP3911_NUM_CHANNELS		2
 
-struct mcp3911 {
-	struct spi_device *spi;
-	struct mutex lock;
-	struct regulator *vref;
-	struct clk *clki;
+काष्ठा mcp3911 अणु
+	काष्ठा spi_device *spi;
+	काष्ठा mutex lock;
+	काष्ठा regulator *vref;
+	काष्ठा clk *clki;
 	u32 dev_addr;
-};
+पूर्ण;
 
-static int mcp3911_read(struct mcp3911 *adc, u8 reg, u32 *val, u8 len)
-{
-	int ret;
+अटल पूर्णांक mcp3911_पढ़ो(काष्ठा mcp3911 *adc, u8 reg, u32 *val, u8 len)
+अणु
+	पूर्णांक ret;
 
 	reg = MCP3911_REG_READ(reg, adc->dev_addr);
-	ret = spi_write_then_read(adc->spi, &reg, 1, val, len);
-	if (ret < 0)
-		return ret;
+	ret = spi_ग_लिखो_then_पढ़ो(adc->spi, &reg, 1, val, len);
+	अगर (ret < 0)
+		वापस ret;
 
 	be32_to_cpus(val);
 	*val >>= ((4 - len) * 8);
 	dev_dbg(&adc->spi->dev, "reading 0x%x from register 0x%x\n", *val,
 		reg >> 1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcp3911_write(struct mcp3911 *adc, u8 reg, u32 val, u8 len)
-{
+अटल पूर्णांक mcp3911_ग_लिखो(काष्ठा mcp3911 *adc, u8 reg, u32 val, u8 len)
+अणु
 	dev_dbg(&adc->spi->dev, "writing 0x%x to register 0x%x\n", val, reg);
 
 	val <<= (3 - len) * 8;
 	cpu_to_be32s(&val);
 	val |= MCP3911_REG_WRITE(reg, adc->dev_addr);
 
-	return spi_write(adc->spi, &val, len + 1);
-}
+	वापस spi_ग_लिखो(adc->spi, &val, len + 1);
+पूर्ण
 
-static int mcp3911_update(struct mcp3911 *adc, u8 reg, u32 mask,
+अटल पूर्णांक mcp3911_update(काष्ठा mcp3911 *adc, u8 reg, u32 mask,
 		u32 val, u8 len)
-{
-	u32 tmp;
-	int ret;
+अणु
+	u32 पंचांगp;
+	पूर्णांक ret;
 
-	ret = mcp3911_read(adc, reg, &tmp, len);
-	if (ret)
-		return ret;
+	ret = mcp3911_पढ़ो(adc, reg, &पंचांगp, len);
+	अगर (ret)
+		वापस ret;
 
 	val &= mask;
-	val |= tmp & ~mask;
-	return mcp3911_write(adc, reg, val, len);
-}
+	val |= पंचांगp & ~mask;
+	वापस mcp3911_ग_लिखो(adc, reg, val, len);
+पूर्ण
 
-static int mcp3911_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *channel, int *val,
-			    int *val2, long mask)
-{
-	struct mcp3911 *adc = iio_priv(indio_dev);
-	int ret = -EINVAL;
+अटल पूर्णांक mcp3911_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक *val,
+			    पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा mcp3911 *adc = iio_priv(indio_dev);
+	पूर्णांक ret = -EINVAL;
 
 	mutex_lock(&adc->lock);
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		ret = mcp3911_read(adc,
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		ret = mcp3911_पढ़ो(adc,
 				   MCP3911_CHANNEL(channel->channel), val, 3);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		ret = IIO_VAL_INT;
-		break;
+		अवरोध;
 
-	case IIO_CHAN_INFO_OFFSET:
-		ret = mcp3911_read(adc,
+	हाल IIO_CHAN_INFO_OFFSET:
+		ret = mcp3911_पढ़ो(adc,
 				   MCP3911_OFFCAL(channel->channel), val, 3);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		ret = IIO_VAL_INT;
-		break;
+		अवरोध;
 
-	case IIO_CHAN_INFO_SCALE:
-		if (adc->vref) {
+	हाल IIO_CHAN_INFO_SCALE:
+		अगर (adc->vref) अणु
 			ret = regulator_get_voltage(adc->vref);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(indio_dev->dev.parent,
 					"failed to get vref voltage: %d\n",
 				       ret);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			*val = ret / 1000;
-		} else {
+		पूर्ण अन्यथा अणु
 			*val = MCP3911_INT_VREF_UV;
-		}
+		पूर्ण
 
 		*val2 = 24;
 		ret = IIO_VAL_FRACTIONAL_LOG2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
 	mutex_unlock(&adc->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcp3911_write_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *channel, int val,
-			    int val2, long mask)
-{
-	struct mcp3911 *adc = iio_priv(indio_dev);
-	int ret = -EINVAL;
+अटल पूर्णांक mcp3911_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक val,
+			    पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा mcp3911 *adc = iio_priv(indio_dev);
+	पूर्णांक ret = -EINVAL;
 
 	mutex_lock(&adc->lock);
-	switch (mask) {
-	case IIO_CHAN_INFO_OFFSET:
-		if (val2 != 0) {
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_OFFSET:
+		अगर (val2 != 0) अणु
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* Write offset */
-		ret = mcp3911_write(adc, MCP3911_OFFCAL(channel->channel), val,
+		ret = mcp3911_ग_लिखो(adc, MCP3911_OFFCAL(channel->channel), val,
 				    3);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		/* Enable offset*/
 		ret = mcp3911_update(adc, MCP3911_REG_STATUSCOM,
 				MCP3911_STATUSCOM_EN_OFFCAL,
 				MCP3911_STATUSCOM_EN_OFFCAL, 2);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
 	mutex_unlock(&adc->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define MCP3911_CHAN(idx) {					\
+#घोषणा MCP3911_CHAN(idx) अणु					\
 		.type = IIO_VOLTAGE,				\
 		.indexed = 1,					\
 		.channel = idx,					\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |	\
 			BIT(IIO_CHAN_INFO_OFFSET) |		\
 			BIT(IIO_CHAN_INFO_SCALE),		\
-}
+पूर्ण
 
-static const struct iio_chan_spec mcp3911_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec mcp3911_channels[] = अणु
 	MCP3911_CHAN(0),
 	MCP3911_CHAN(1),
-};
+पूर्ण;
 
-static const struct iio_info mcp3911_info = {
-	.read_raw = mcp3911_read_raw,
-	.write_raw = mcp3911_write_raw,
-};
+अटल स्थिर काष्ठा iio_info mcp3911_info = अणु
+	.पढ़ो_raw = mcp3911_पढ़ो_raw,
+	.ग_लिखो_raw = mcp3911_ग_लिखो_raw,
+पूर्ण;
 
-static int mcp3911_config(struct mcp3911 *adc, struct device_node *of_node)
-{
+अटल पूर्णांक mcp3911_config(काष्ठा mcp3911 *adc, काष्ठा device_node *of_node)
+अणु
 	u32 configreg;
-	int ret;
+	पूर्णांक ret;
 
-	of_property_read_u32(of_node, "device-addr", &adc->dev_addr);
-	if (adc->dev_addr > 3) {
+	of_property_पढ़ो_u32(of_node, "device-addr", &adc->dev_addr);
+	अगर (adc->dev_addr > 3) अणु
 		dev_err(&adc->spi->dev,
 			"invalid device address (%i). Must be in range 0-3.\n",
 			adc->dev_addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dev_dbg(&adc->spi->dev, "use device address %i\n", adc->dev_addr);
 
-	ret = mcp3911_read(adc, MCP3911_REG_CONFIG, &configreg, 2);
-	if (ret)
-		return ret;
+	ret = mcp3911_पढ़ो(adc, MCP3911_REG_CONFIG, &configreg, 2);
+	अगर (ret)
+		वापस ret;
 
-	if (adc->vref) {
+	अगर (adc->vref) अणु
 		dev_dbg(&adc->spi->dev, "use external voltage reference\n");
 		configreg |= MCP3911_CONFIG_VREFEXT;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&adc->spi->dev,
 			"use internal voltage reference (1.2V)\n");
 		configreg &= ~MCP3911_CONFIG_VREFEXT;
-	}
+	पूर्ण
 
-	if (adc->clki) {
+	अगर (adc->clki) अणु
 		dev_dbg(&adc->spi->dev, "use external clock as clocksource\n");
 		configreg |= MCP3911_CONFIG_CLKEXT;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&adc->spi->dev,
 			"use crystal oscillator as clocksource\n");
 		configreg &= ~MCP3911_CONFIG_CLKEXT;
-	}
+	पूर्ण
 
-	return  mcp3911_write(adc, MCP3911_REG_CONFIG, configreg, 2);
-}
+	वापस  mcp3911_ग_लिखो(adc, MCP3911_REG_CONFIG, configreg, 2);
+पूर्ण
 
-static int mcp3911_probe(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev;
-	struct mcp3911 *adc;
-	int ret;
+अटल पूर्णांक mcp3911_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा mcp3911 *adc;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*adc));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*adc));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	adc = iio_priv(indio_dev);
 	adc->spi = spi;
 
 	adc->vref = devm_regulator_get_optional(&adc->spi->dev, "vref");
-	if (IS_ERR(adc->vref)) {
-		if (PTR_ERR(adc->vref) == -ENODEV) {
-			adc->vref = NULL;
-		} else {
+	अगर (IS_ERR(adc->vref)) अणु
+		अगर (PTR_ERR(adc->vref) == -ENODEV) अणु
+			adc->vref = शून्य;
+		पूर्ण अन्यथा अणु
 			dev_err(&adc->spi->dev,
 				"failed to get regulator (%ld)\n",
 				PTR_ERR(adc->vref));
-			return PTR_ERR(adc->vref);
-		}
+			वापस PTR_ERR(adc->vref);
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = regulator_enable(adc->vref);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	adc->clki = devm_clk_get(&adc->spi->dev, NULL);
-	if (IS_ERR(adc->clki)) {
-		if (PTR_ERR(adc->clki) == -ENOENT) {
-			adc->clki = NULL;
-		} else {
+	adc->clki = devm_clk_get(&adc->spi->dev, शून्य);
+	अगर (IS_ERR(adc->clki)) अणु
+		अगर (PTR_ERR(adc->clki) == -ENOENT) अणु
+			adc->clki = शून्य;
+		पूर्ण अन्यथा अणु
 			dev_err(&adc->spi->dev,
 				"failed to get adc clk (%ld)\n",
 				PTR_ERR(adc->clki));
 			ret = PTR_ERR(adc->clki);
-			goto reg_disable;
-		}
-	} else {
+			जाओ reg_disable;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = clk_prepare_enable(adc->clki);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&adc->spi->dev,
 				"Failed to enable clki: %d\n", ret);
-			goto reg_disable;
-		}
-	}
+			जाओ reg_disable;
+		पूर्ण
+	पूर्ण
 
 	ret = mcp3911_config(adc, spi->dev.of_node);
-	if (ret)
-		goto clk_disable;
+	अगर (ret)
+		जाओ clk_disable;
 
 	indio_dev->name = spi_get_device_id(spi)->name;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->info = &mcp3911_info;
 	spi_set_drvdata(spi, indio_dev);
 
@@ -303,56 +304,56 @@ static int mcp3911_probe(struct spi_device *spi)
 
 	mutex_init(&adc->lock);
 
-	ret = iio_device_register(indio_dev);
-	if (ret)
-		goto clk_disable;
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret)
+		जाओ clk_disable;
 
-	return ret;
+	वापस ret;
 
 clk_disable:
 	clk_disable_unprepare(adc->clki);
 reg_disable:
-	if (adc->vref)
+	अगर (adc->vref)
 		regulator_disable(adc->vref);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mcp3911_remove(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev = spi_get_drvdata(spi);
-	struct mcp3911 *adc = iio_priv(indio_dev);
+अटल पूर्णांक mcp3911_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
+	काष्ठा mcp3911 *adc = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 
 	clk_disable_unprepare(adc->clki);
-	if (adc->vref)
+	अगर (adc->vref)
 		regulator_disable(adc->vref);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mcp3911_dt_ids[] = {
-	{ .compatible = "microchip,mcp3911" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id mcp3911_dt_ids[] = अणु
+	अणु .compatible = "microchip,mcp3911" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mcp3911_dt_ids);
 
-static const struct spi_device_id mcp3911_id[] = {
-	{ "mcp3911", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा spi_device_id mcp3911_id[] = अणु
+	अणु "mcp3911", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, mcp3911_id);
 
-static struct spi_driver mcp3911_driver = {
-	.driver = {
+अटल काष्ठा spi_driver mcp3911_driver = अणु
+	.driver = अणु
 		.name = "mcp3911",
 		.of_match_table = mcp3911_dt_ids,
-	},
+	पूर्ण,
 	.probe = mcp3911_probe,
-	.remove = mcp3911_remove,
+	.हटाओ = mcp3911_हटाओ,
 	.id_table = mcp3911_id,
-};
+पूर्ण;
 module_spi_driver(mcp3911_driver);
 
 MODULE_AUTHOR("Marcus Folkesson <marcus.folkesson@gmail.com>");

@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ARCH_SPARC_PERCPU__
-#define __ARCH_SPARC_PERCPU__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ARCH_SPARC_PERCPU__
+#घोषणा __ARCH_SPARC_PERCPU__
 
-#include <asm-generic/percpu.h>
+#समावेश <यंत्र-generic/percpu.h>
 
-#endif /* __ARCH_SPARC_PERCPU__ */
+#पूर्ण_अगर /* __ARCH_SPARC_PERCPU__ */

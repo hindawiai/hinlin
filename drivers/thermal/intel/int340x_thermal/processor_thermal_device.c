@@ -1,666 +1,667 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * processor_thermal_device.c
  * Copyright (c) 2014, Intel Corporation.
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/acpi.h>
-#include <linux/thermal.h>
-#include <linux/cpuhotplug.h>
-#include "int340x_thermal_zone.h"
-#include "processor_thermal_device.h"
-#include "../intel_soc_dts_iosf.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/thermal.h>
+#समावेश <linux/cpuhotplug.h>
+#समावेश "int340x_thermal_zone.h"
+#समावेश "processor_thermal_device.h"
+#समावेश "../intel_soc_dts_iosf.h"
 
-#define DRV_NAME "proc_thermal"
+#घोषणा DRV_NAME "proc_thermal"
 
-enum proc_thermal_emum_mode_type {
+क्रमागत proc_thermal_emum_mode_type अणु
 	PROC_THERMAL_NONE,
 	PROC_THERMAL_PCI,
 	PROC_THERMAL_PLATFORM_DEV
-};
+पूर्ण;
 
 /*
- * We can have only one type of enumeration, PCI or Platform,
- * not both. So we don't need instance specific data.
+ * We can have only one type of क्रमागतeration, PCI or Platक्रमm,
+ * not both. So we करोn't need instance specअगरic data.
  */
-static enum proc_thermal_emum_mode_type proc_thermal_emum_mode =
+अटल क्रमागत proc_thermal_emum_mode_type proc_thermal_emum_mode =
 							PROC_THERMAL_NONE;
 
-#define POWER_LIMIT_SHOW(index, suffix) \
-static ssize_t power_limit_##index##_##suffix##_show(struct device *dev, \
-					struct device_attribute *attr, \
-					char *buf) \
-{ \
-	struct proc_thermal_device *proc_dev = dev_get_drvdata(dev); \
+#घोषणा POWER_LIMIT_SHOW(index, suffix) \
+अटल sमाप_प्रकार घातer_limit_##index##_##suffix##_show(काष्ठा device *dev, \
+					काष्ठा device_attribute *attr, \
+					अक्षर *buf) \
+अणु \
+	काष्ठा proc_thermal_device *proc_dev = dev_get_drvdata(dev); \
 	\
-	if (proc_thermal_emum_mode == PROC_THERMAL_NONE) { \
+	अगर (proc_thermal_emum_mode == PROC_THERMAL_NONE) अणु \
 		dev_warn(dev, "Attempted to get power limit before device was initialized!\n"); \
-		return 0; \
-	} \
+		वापस 0; \
+	पूर्ण \
 	\
-	return sprintf(buf, "%lu\n",\
-	(unsigned long)proc_dev->power_limits[index].suffix * 1000); \
-}
+	वापस प्र_लिखो(buf, "%lu\n",\
+	(अचिन्हित दीर्घ)proc_dev->घातer_limits[index].suffix * 1000); \
+पूर्ण
 
 POWER_LIMIT_SHOW(0, min_uw)
 POWER_LIMIT_SHOW(0, max_uw)
 POWER_LIMIT_SHOW(0, step_uw)
-POWER_LIMIT_SHOW(0, tmin_us)
-POWER_LIMIT_SHOW(0, tmax_us)
+POWER_LIMIT_SHOW(0, पंचांगin_us)
+POWER_LIMIT_SHOW(0, पंचांगax_us)
 
 POWER_LIMIT_SHOW(1, min_uw)
 POWER_LIMIT_SHOW(1, max_uw)
 POWER_LIMIT_SHOW(1, step_uw)
-POWER_LIMIT_SHOW(1, tmin_us)
-POWER_LIMIT_SHOW(1, tmax_us)
+POWER_LIMIT_SHOW(1, पंचांगin_us)
+POWER_LIMIT_SHOW(1, पंचांगax_us)
 
-static DEVICE_ATTR_RO(power_limit_0_min_uw);
-static DEVICE_ATTR_RO(power_limit_0_max_uw);
-static DEVICE_ATTR_RO(power_limit_0_step_uw);
-static DEVICE_ATTR_RO(power_limit_0_tmin_us);
-static DEVICE_ATTR_RO(power_limit_0_tmax_us);
+अटल DEVICE_ATTR_RO(घातer_limit_0_min_uw);
+अटल DEVICE_ATTR_RO(घातer_limit_0_max_uw);
+अटल DEVICE_ATTR_RO(घातer_limit_0_step_uw);
+अटल DEVICE_ATTR_RO(घातer_limit_0_पंचांगin_us);
+अटल DEVICE_ATTR_RO(घातer_limit_0_पंचांगax_us);
 
-static DEVICE_ATTR_RO(power_limit_1_min_uw);
-static DEVICE_ATTR_RO(power_limit_1_max_uw);
-static DEVICE_ATTR_RO(power_limit_1_step_uw);
-static DEVICE_ATTR_RO(power_limit_1_tmin_us);
-static DEVICE_ATTR_RO(power_limit_1_tmax_us);
+अटल DEVICE_ATTR_RO(घातer_limit_1_min_uw);
+अटल DEVICE_ATTR_RO(घातer_limit_1_max_uw);
+अटल DEVICE_ATTR_RO(घातer_limit_1_step_uw);
+अटल DEVICE_ATTR_RO(घातer_limit_1_पंचांगin_us);
+अटल DEVICE_ATTR_RO(घातer_limit_1_पंचांगax_us);
 
-static struct attribute *power_limit_attrs[] = {
-	&dev_attr_power_limit_0_min_uw.attr,
-	&dev_attr_power_limit_1_min_uw.attr,
-	&dev_attr_power_limit_0_max_uw.attr,
-	&dev_attr_power_limit_1_max_uw.attr,
-	&dev_attr_power_limit_0_step_uw.attr,
-	&dev_attr_power_limit_1_step_uw.attr,
-	&dev_attr_power_limit_0_tmin_us.attr,
-	&dev_attr_power_limit_1_tmin_us.attr,
-	&dev_attr_power_limit_0_tmax_us.attr,
-	&dev_attr_power_limit_1_tmax_us.attr,
-	NULL
-};
+अटल काष्ठा attribute *घातer_limit_attrs[] = अणु
+	&dev_attr_घातer_limit_0_min_uw.attr,
+	&dev_attr_घातer_limit_1_min_uw.attr,
+	&dev_attr_घातer_limit_0_max_uw.attr,
+	&dev_attr_घातer_limit_1_max_uw.attr,
+	&dev_attr_घातer_limit_0_step_uw.attr,
+	&dev_attr_घातer_limit_1_step_uw.attr,
+	&dev_attr_घातer_limit_0_पंचांगin_us.attr,
+	&dev_attr_घातer_limit_1_पंचांगin_us.attr,
+	&dev_attr_घातer_limit_0_पंचांगax_us.attr,
+	&dev_attr_घातer_limit_1_पंचांगax_us.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group power_limit_attribute_group = {
-	.attrs = power_limit_attrs,
+अटल स्थिर काष्ठा attribute_group घातer_limit_attribute_group = अणु
+	.attrs = घातer_limit_attrs,
 	.name = "power_limits"
-};
+पूर्ण;
 
-static ssize_t tcc_offset_degree_celsius_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार tcc_offset_degree_celsius_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	u64 val;
-	int err;
+	पूर्णांक err;
 
 	err = rdmsrl_safe(MSR_IA32_TEMPERATURE_TARGET, &val);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	val = (val >> 24) & 0xff;
-	return sprintf(buf, "%d\n", (int)val);
-}
+	वापस प्र_लिखो(buf, "%d\n", (पूर्णांक)val);
+पूर्ण
 
-static int tcc_offset_update(int tcc)
-{
+अटल पूर्णांक tcc_offset_update(पूर्णांक tcc)
+अणु
 	u64 val;
-	int err;
+	पूर्णांक err;
 
-	if (!tcc)
-		return -EINVAL;
+	अगर (!tcc)
+		वापस -EINVAL;
 
 	err = rdmsrl_safe(MSR_IA32_TEMPERATURE_TARGET, &val);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	val &= ~GENMASK_ULL(31, 24);
 	val |= (tcc & 0xff) << 24;
 
 	err = wrmsrl_safe(MSR_IA32_TEMPERATURE_TARGET, val);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcc_offset_save;
+अटल पूर्णांक tcc_offset_save;
 
-static ssize_t tcc_offset_degree_celsius_store(struct device *dev,
-				struct device_attribute *attr, const char *buf,
-				size_t count)
-{
+अटल sमाप_प्रकार tcc_offset_degree_celsius_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+				माप_प्रकार count)
+अणु
 	u64 val;
-	int tcc, err;
+	पूर्णांक tcc, err;
 
 	err = rdmsrl_safe(MSR_PLATFORM_INFO, &val);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!(val & BIT(30)))
-		return -EACCES;
+	अगर (!(val & BIT(30)))
+		वापस -EACCES;
 
-	if (kstrtoint(buf, 0, &tcc))
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 0, &tcc))
+		वापस -EINVAL;
 
 	err = tcc_offset_update(tcc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	tcc_offset_save = tcc;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(tcc_offset_degree_celsius);
+अटल DEVICE_ATTR_RW(tcc_offset_degree_celsius);
 
-static int stored_tjmax; /* since it is fixed, we can have local storage */
+अटल पूर्णांक stored_tjmax; /* since it is fixed, we can have local storage */
 
-static int get_tjmax(void)
-{
+अटल पूर्णांक get_tjmax(व्योम)
+अणु
 	u32 eax, edx;
 	u32 val;
-	int err;
+	पूर्णांक err;
 
 	err = rdmsr_safe(MSR_IA32_TEMPERATURE_TARGET, &eax, &edx);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	val = (eax >> 16) & 0xff;
-	if (val)
-		return val;
+	अगर (val)
+		वापस val;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int read_temp_msr(int *temp)
-{
-	int cpu;
+अटल पूर्णांक पढ़ो_temp_msr(पूर्णांक *temp)
+अणु
+	पूर्णांक cpu;
 	u32 eax, edx;
-	int err;
-	unsigned long curr_temp_off = 0;
+	पूर्णांक err;
+	अचिन्हित दीर्घ curr_temp_off = 0;
 
 	*temp = 0;
 
-	for_each_online_cpu(cpu) {
+	क्रम_each_online_cpu(cpu) अणु
 		err = rdmsr_safe_on_cpu(cpu, MSR_IA32_THERM_STATUS, &eax,
 					&edx);
-		if (err)
-			goto err_ret;
-		else {
-			if (eax & 0x80000000) {
+		अगर (err)
+			जाओ err_ret;
+		अन्यथा अणु
+			अगर (eax & 0x80000000) अणु
 				curr_temp_off = (eax >> 16) & 0x7f;
-				if (!*temp || curr_temp_off < *temp)
+				अगर (!*temp || curr_temp_off < *temp)
 					*temp = curr_temp_off;
-			} else {
+			पूर्ण अन्यथा अणु
 				err = -EINVAL;
-				goto err_ret;
-			}
-		}
-	}
+				जाओ err_ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_ret:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int proc_thermal_get_zone_temp(struct thermal_zone_device *zone,
-					 int *temp)
-{
-	int ret;
+अटल पूर्णांक proc_thermal_get_zone_temp(काष्ठा thermal_zone_device *zone,
+					 पूर्णांक *temp)
+अणु
+	पूर्णांक ret;
 
-	ret = read_temp_msr(temp);
-	if (!ret)
+	ret = पढ़ो_temp_msr(temp);
+	अगर (!ret)
 		*temp = (stored_tjmax - *temp) * 1000;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct thermal_zone_device_ops proc_thermal_local_ops = {
+अटल काष्ठा thermal_zone_device_ops proc_thermal_local_ops = अणु
 	.get_temp       = proc_thermal_get_zone_temp,
-};
+पूर्ण;
 
-static int proc_thermal_read_ppcc(struct proc_thermal_device *proc_priv)
-{
-	int i;
+अटल पूर्णांक proc_thermal_पढ़ो_ppcc(काष्ठा proc_thermal_device *proc_priv)
+अणु
+	पूर्णांक i;
 	acpi_status status;
-	struct acpi_buffer buf = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *elements, *ppcc;
-	union acpi_object *p;
-	int ret = 0;
+	काष्ठा acpi_buffer buf = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *elements, *ppcc;
+	जोड़ acpi_object *p;
+	पूर्णांक ret = 0;
 
 	status = acpi_evaluate_object(proc_priv->adev->handle, "PPCC",
-				      NULL, &buf);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+				      शून्य, &buf);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	p = buf.pointer;
-	if (!p || (p->type != ACPI_TYPE_PACKAGE)) {
+	p = buf.poपूर्णांकer;
+	अगर (!p || (p->type != ACPI_TYPE_PACKAGE)) अणु
 		dev_err(proc_priv->dev, "Invalid PPCC data\n");
 		ret = -EFAULT;
-		goto free_buffer;
-	}
+		जाओ मुक्त_buffer;
+	पूर्ण
 
-	if (!p->package.count) {
+	अगर (!p->package.count) अणु
 		dev_err(proc_priv->dev, "Invalid PPCC package size\n");
 		ret = -EFAULT;
-		goto free_buffer;
-	}
+		जाओ मुक्त_buffer;
+	पूर्ण
 
-	for (i = 0; i < min((int)p->package.count - 1, 2); ++i) {
+	क्रम (i = 0; i < min((पूर्णांक)p->package.count - 1, 2); ++i) अणु
 		elements = &(p->package.elements[i+1]);
-		if (elements->type != ACPI_TYPE_PACKAGE ||
-		    elements->package.count != 6) {
+		अगर (elements->type != ACPI_TYPE_PACKAGE ||
+		    elements->package.count != 6) अणु
 			ret = -EFAULT;
-			goto free_buffer;
-		}
+			जाओ मुक्त_buffer;
+		पूर्ण
 		ppcc = elements->package.elements;
-		proc_priv->power_limits[i].index = ppcc[0].integer.value;
-		proc_priv->power_limits[i].min_uw = ppcc[1].integer.value;
-		proc_priv->power_limits[i].max_uw = ppcc[2].integer.value;
-		proc_priv->power_limits[i].tmin_us = ppcc[3].integer.value;
-		proc_priv->power_limits[i].tmax_us = ppcc[4].integer.value;
-		proc_priv->power_limits[i].step_uw = ppcc[5].integer.value;
-	}
+		proc_priv->घातer_limits[i].index = ppcc[0].पूर्णांकeger.value;
+		proc_priv->घातer_limits[i].min_uw = ppcc[1].पूर्णांकeger.value;
+		proc_priv->घातer_limits[i].max_uw = ppcc[2].पूर्णांकeger.value;
+		proc_priv->घातer_limits[i].पंचांगin_us = ppcc[3].पूर्णांकeger.value;
+		proc_priv->घातer_limits[i].पंचांगax_us = ppcc[4].पूर्णांकeger.value;
+		proc_priv->घातer_limits[i].step_uw = ppcc[5].पूर्णांकeger.value;
+	पूर्ण
 
-free_buffer:
-	kfree(buf.pointer);
+मुक्त_buffer:
+	kमुक्त(buf.poपूर्णांकer);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define PROC_POWER_CAPABILITY_CHANGED	0x83
-static void proc_thermal_notify(acpi_handle handle, u32 event, void *data)
-{
-	struct proc_thermal_device *proc_priv = data;
+#घोषणा PROC_POWER_CAPABILITY_CHANGED	0x83
+अटल व्योम proc_thermal_notअगरy(acpi_handle handle, u32 event, व्योम *data)
+अणु
+	काष्ठा proc_thermal_device *proc_priv = data;
 
-	if (!proc_priv)
-		return;
+	अगर (!proc_priv)
+		वापस;
 
-	switch (event) {
-	case PROC_POWER_CAPABILITY_CHANGED:
-		proc_thermal_read_ppcc(proc_priv);
-		int340x_thermal_zone_device_update(proc_priv->int340x_zone,
+	चयन (event) अणु
+	हाल PROC_POWER_CAPABILITY_CHANGED:
+		proc_thermal_पढ़ो_ppcc(proc_priv);
+		पूर्णांक340x_thermal_zone_device_update(proc_priv->पूर्णांक340x_zone,
 				THERMAL_DEVICE_POWER_CAPABILITY_CHANGED);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(proc_priv->dev, "Unsupported event [0x%x]\n", event);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 
-static int proc_thermal_add(struct device *dev,
-			    struct proc_thermal_device **priv)
-{
-	struct proc_thermal_device *proc_priv;
-	struct acpi_device *adev;
+अटल पूर्णांक proc_thermal_add(काष्ठा device *dev,
+			    काष्ठा proc_thermal_device **priv)
+अणु
+	काष्ठा proc_thermal_device *proc_priv;
+	काष्ठा acpi_device *adev;
 	acpi_status status;
-	unsigned long long tmp;
-	struct thermal_zone_device_ops *ops = NULL;
-	int ret;
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	काष्ठा thermal_zone_device_ops *ops = शून्य;
+	पूर्णांक ret;
 
 	adev = ACPI_COMPANION(dev);
-	if (!adev)
-		return -ENODEV;
+	अगर (!adev)
+		वापस -ENODEV;
 
-	proc_priv = devm_kzalloc(dev, sizeof(*proc_priv), GFP_KERNEL);
-	if (!proc_priv)
-		return -ENOMEM;
+	proc_priv = devm_kzalloc(dev, माप(*proc_priv), GFP_KERNEL);
+	अगर (!proc_priv)
+		वापस -ENOMEM;
 
 	proc_priv->dev = dev;
 	proc_priv->adev = adev;
 	*priv = proc_priv;
 
-	ret = proc_thermal_read_ppcc(proc_priv);
-	if (ret)
-		return ret;
+	ret = proc_thermal_पढ़ो_ppcc(proc_priv);
+	अगर (ret)
+		वापस ret;
 
-	status = acpi_evaluate_integer(adev->handle, "_TMP", NULL, &tmp);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_पूर्णांकeger(adev->handle, "_TMP", शून्य, &पंचांगp);
+	अगर (ACPI_FAILURE(status)) अणु
 		/* there is no _TMP method, add local method */
 		stored_tjmax = get_tjmax();
-		if (stored_tjmax > 0)
+		अगर (stored_tjmax > 0)
 			ops = &proc_thermal_local_ops;
-	}
+	पूर्ण
 
-	proc_priv->int340x_zone = int340x_thermal_zone_add(adev, ops);
-	if (IS_ERR(proc_priv->int340x_zone)) {
-		return PTR_ERR(proc_priv->int340x_zone);
-	} else
+	proc_priv->पूर्णांक340x_zone = पूर्णांक340x_thermal_zone_add(adev, ops);
+	अगर (IS_ERR(proc_priv->पूर्णांक340x_zone)) अणु
+		वापस PTR_ERR(proc_priv->पूर्णांक340x_zone);
+	पूर्ण अन्यथा
 		ret = 0;
 
-	ret = acpi_install_notify_handler(adev->handle, ACPI_DEVICE_NOTIFY,
-					  proc_thermal_notify,
-					  (void *)proc_priv);
-	if (ret)
-		goto remove_zone;
+	ret = acpi_install_notअगरy_handler(adev->handle, ACPI_DEVICE_NOTIFY,
+					  proc_thermal_notअगरy,
+					  (व्योम *)proc_priv);
+	अगर (ret)
+		जाओ हटाओ_zone;
 
-	return 0;
+	वापस 0;
 
-remove_zone:
-	int340x_thermal_zone_remove(proc_priv->int340x_zone);
+हटाओ_zone:
+	पूर्णांक340x_thermal_zone_हटाओ(proc_priv->पूर्णांक340x_zone);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void proc_thermal_remove(struct proc_thermal_device *proc_priv)
-{
-	acpi_remove_notify_handler(proc_priv->adev->handle,
-				   ACPI_DEVICE_NOTIFY, proc_thermal_notify);
-	int340x_thermal_zone_remove(proc_priv->int340x_zone);
-	sysfs_remove_file(&proc_priv->dev->kobj, &dev_attr_tcc_offset_degree_celsius.attr);
-	sysfs_remove_group(&proc_priv->dev->kobj,
-			   &power_limit_attribute_group);
-}
+अटल व्योम proc_thermal_हटाओ(काष्ठा proc_thermal_device *proc_priv)
+अणु
+	acpi_हटाओ_notअगरy_handler(proc_priv->adev->handle,
+				   ACPI_DEVICE_NOTIFY, proc_thermal_notअगरy);
+	पूर्णांक340x_thermal_zone_हटाओ(proc_priv->पूर्णांक340x_zone);
+	sysfs_हटाओ_file(&proc_priv->dev->kobj, &dev_attr_tcc_offset_degree_celsius.attr);
+	sysfs_हटाओ_group(&proc_priv->dev->kobj,
+			   &घातer_limit_attribute_group);
+पूर्ण
 
-static int int3401_add(struct platform_device *pdev)
-{
-	struct proc_thermal_device *proc_priv;
-	int ret;
+अटल पूर्णांक पूर्णांक3401_add(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा proc_thermal_device *proc_priv;
+	पूर्णांक ret;
 
-	if (proc_thermal_emum_mode == PROC_THERMAL_PCI) {
+	अगर (proc_thermal_emum_mode == PROC_THERMAL_PCI) अणु
 		dev_err(&pdev->dev, "error: enumerated as PCI dev\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = proc_thermal_add(&pdev->dev, &proc_priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, proc_priv);
+	platक्रमm_set_drvdata(pdev, proc_priv);
 	proc_thermal_emum_mode = PROC_THERMAL_PLATFORM_DEV;
 
 	dev_info(&pdev->dev, "Creating sysfs group for PROC_THERMAL_PLATFORM_DEV\n");
 
 	ret = sysfs_create_file(&pdev->dev.kobj, &dev_attr_tcc_offset_degree_celsius.attr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = sysfs_create_group(&pdev->dev.kobj, &power_limit_attribute_group);
-	if (ret)
-		sysfs_remove_file(&pdev->dev.kobj, &dev_attr_tcc_offset_degree_celsius.attr);
+	ret = sysfs_create_group(&pdev->dev.kobj, &घातer_limit_attribute_group);
+	अगर (ret)
+		sysfs_हटाओ_file(&pdev->dev.kobj, &dev_attr_tcc_offset_degree_celsius.attr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int int3401_remove(struct platform_device *pdev)
-{
-	proc_thermal_remove(platform_get_drvdata(pdev));
+अटल पूर्णांक पूर्णांक3401_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	proc_thermal_हटाओ(platक्रमm_get_drvdata(pdev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t proc_thermal_pci_msi_irq(int irq, void *devid)
-{
-	struct proc_thermal_device *proc_priv;
-	struct pci_dev *pdev = devid;
+अटल irqवापस_t proc_thermal_pci_msi_irq(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा proc_thermal_device *proc_priv;
+	काष्ठा pci_dev *pdev = devid;
 
 	proc_priv = pci_get_drvdata(pdev);
 
-	intel_soc_dts_iosf_interrupt_handler(proc_priv->soc_dts);
+	पूर्णांकel_soc_dts_iosf_पूर्णांकerrupt_handler(proc_priv->soc_dts);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#define MCHBAR 0
+#घोषणा MCHBAR 0
 
-static int proc_thermal_set_mmio_base(struct pci_dev *pdev,
-				      struct proc_thermal_device *proc_priv)
-{
-	int ret;
+अटल पूर्णांक proc_thermal_set_mmio_base(काष्ठा pci_dev *pdev,
+				      काष्ठा proc_thermal_device *proc_priv)
+अणु
+	पूर्णांक ret;
 
 	ret = pcim_iomap_regions(pdev, 1 << MCHBAR, DRV_NAME);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "cannot reserve PCI memory region\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	proc_priv->mmio_base = pcim_iomap_table(pdev)[MCHBAR];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int proc_thermal_mmio_add(struct pci_dev *pdev,
-				 struct proc_thermal_device *proc_priv,
-				 kernel_ulong_t feature_mask)
-{
-	int ret;
+अटल पूर्णांक proc_thermal_mmio_add(काष्ठा pci_dev *pdev,
+				 काष्ठा proc_thermal_device *proc_priv,
+				 kernel_uदीर्घ_t feature_mask)
+अणु
+	पूर्णांक ret;
 
 	proc_priv->mmio_feature_mask = feature_mask;
 
-	if (feature_mask) {
+	अगर (feature_mask) अणु
 		ret = proc_thermal_set_mmio_base(pdev, proc_priv);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (feature_mask & PROC_THERMAL_FEATURE_RAPL) {
+	अगर (feature_mask & PROC_THERMAL_FEATURE_RAPL) अणु
 		ret = proc_thermal_rapl_add(pdev, proc_priv);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to add RAPL MMIO interface\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (feature_mask & PROC_THERMAL_FEATURE_FIVR ||
-	    feature_mask & PROC_THERMAL_FEATURE_DVFS) {
+	अगर (feature_mask & PROC_THERMAL_FEATURE_FIVR ||
+	    feature_mask & PROC_THERMAL_FEATURE_DVFS) अणु
 		ret = proc_thermal_rfim_add(pdev, proc_priv);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to add RFIM interface\n");
-			goto err_rem_rapl;
-		}
-	}
+			जाओ err_rem_rapl;
+		पूर्ण
+	पूर्ण
 
-	if (feature_mask & PROC_THERMAL_FEATURE_MBOX) {
+	अगर (feature_mask & PROC_THERMAL_FEATURE_MBOX) अणु
 		ret = proc_thermal_mbox_add(pdev, proc_priv);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to add MBOX interface\n");
-			goto err_rem_rfim;
-		}
-	}
+			जाओ err_rem_rfim;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_rem_rfim:
-	proc_thermal_rfim_remove(pdev);
+	proc_thermal_rfim_हटाओ(pdev);
 err_rem_rapl:
-	proc_thermal_rapl_remove();
+	proc_thermal_rapl_हटाओ();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void proc_thermal_mmio_remove(struct pci_dev *pdev)
-{
-	struct proc_thermal_device *proc_priv = pci_get_drvdata(pdev);
+अटल व्योम proc_thermal_mmio_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा proc_thermal_device *proc_priv = pci_get_drvdata(pdev);
 
-	if (proc_priv->mmio_feature_mask & PROC_THERMAL_FEATURE_RAPL)
-		proc_thermal_rapl_remove();
+	अगर (proc_priv->mmio_feature_mask & PROC_THERMAL_FEATURE_RAPL)
+		proc_thermal_rapl_हटाओ();
 
-	if (proc_priv->mmio_feature_mask & PROC_THERMAL_FEATURE_FIVR ||
+	अगर (proc_priv->mmio_feature_mask & PROC_THERMAL_FEATURE_FIVR ||
 	    proc_priv->mmio_feature_mask & PROC_THERMAL_FEATURE_DVFS)
-		proc_thermal_rfim_remove(pdev);
+		proc_thermal_rfim_हटाओ(pdev);
 
-	if (proc_priv->mmio_feature_mask & PROC_THERMAL_FEATURE_MBOX)
-		proc_thermal_mbox_remove(pdev);
-}
+	अगर (proc_priv->mmio_feature_mask & PROC_THERMAL_FEATURE_MBOX)
+		proc_thermal_mbox_हटाओ(pdev);
+पूर्ण
 
-static int  proc_thermal_pci_probe(struct pci_dev *pdev,
-				   const struct pci_device_id *id)
-{
-	struct proc_thermal_device *proc_priv;
-	int ret;
+अटल पूर्णांक  proc_thermal_pci_probe(काष्ठा pci_dev *pdev,
+				   स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा proc_thermal_device *proc_priv;
+	पूर्णांक ret;
 
-	if (proc_thermal_emum_mode == PROC_THERMAL_PLATFORM_DEV) {
+	अगर (proc_thermal_emum_mode == PROC_THERMAL_PLATFORM_DEV) अणु
 		dev_err(&pdev->dev, "error: enumerated as platform dev\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = pcim_enable_device(pdev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "error: could not enable device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = proc_thermal_add(&pdev->dev, &proc_priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pci_set_drvdata(pdev, proc_priv);
 	proc_thermal_emum_mode = PROC_THERMAL_PCI;
 
-	if (pdev->device == PCI_DEVICE_ID_INTEL_BSW_THERMAL) {
+	अगर (pdev->device == PCI_DEVICE_ID_INTEL_BSW_THERMAL) अणु
 		/*
 		 * Enumerate additional DTS sensors available via IOSF.
-		 * But we are not treating as a failure condition, if
+		 * But we are not treating as a failure condition, अगर
 		 * there are no aux DTSs enabled or fails. This driver
-		 * already exposes sensors, which can be accessed via
-		 * ACPI/MSR. So we don't want to fail for auxiliary DTSs.
+		 * alपढ़ोy exposes sensors, which can be accessed via
+		 * ACPI/MSR. So we करोn't want to fail क्रम auxiliary DTSs.
 		 */
-		proc_priv->soc_dts = intel_soc_dts_iosf_init(
+		proc_priv->soc_dts = पूर्णांकel_soc_dts_iosf_init(
 					INTEL_SOC_DTS_INTERRUPT_MSI, 2, 0);
 
-		if (!IS_ERR(proc_priv->soc_dts) && pdev->irq) {
+		अगर (!IS_ERR(proc_priv->soc_dts) && pdev->irq) अणु
 			ret = pci_enable_msi(pdev);
-			if (!ret) {
-				ret = request_threaded_irq(pdev->irq, NULL,
+			अगर (!ret) अणु
+				ret = request_thपढ़ोed_irq(pdev->irq, शून्य,
 						proc_thermal_pci_msi_irq,
 						IRQF_ONESHOT, "proc_thermal",
 						pdev);
-				if (ret) {
-					intel_soc_dts_iosf_exit(
+				अगर (ret) अणु
+					पूर्णांकel_soc_dts_iosf_निकास(
 							proc_priv->soc_dts);
 					pci_disable_msi(pdev);
-					proc_priv->soc_dts = NULL;
-				}
-			}
-		} else
+					proc_priv->soc_dts = शून्य;
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा
 			dev_err(&pdev->dev, "No auxiliary DTSs enabled\n");
-	}
+	पूर्ण
 
 	dev_info(&pdev->dev, "Creating sysfs group for PROC_THERMAL_PCI\n");
 
 	ret = sysfs_create_file(&pdev->dev.kobj, &dev_attr_tcc_offset_degree_celsius.attr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = sysfs_create_group(&pdev->dev.kobj, &power_limit_attribute_group);
-	if (ret) {
-		sysfs_remove_file(&pdev->dev.kobj, &dev_attr_tcc_offset_degree_celsius.attr);
-		return ret;
-	}
+	ret = sysfs_create_group(&pdev->dev.kobj, &घातer_limit_attribute_group);
+	अगर (ret) अणु
+		sysfs_हटाओ_file(&pdev->dev.kobj, &dev_attr_tcc_offset_degree_celsius.attr);
+		वापस ret;
+	पूर्ण
 
 	ret = proc_thermal_mmio_add(pdev, proc_priv, id->driver_data);
-	if (ret) {
-		proc_thermal_remove(proc_priv);
-		return ret;
-	}
+	अगर (ret) अणु
+		proc_thermal_हटाओ(proc_priv);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void  proc_thermal_pci_remove(struct pci_dev *pdev)
-{
-	struct proc_thermal_device *proc_priv = pci_get_drvdata(pdev);
+अटल व्योम  proc_thermal_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा proc_thermal_device *proc_priv = pci_get_drvdata(pdev);
 
-	if (proc_priv->soc_dts) {
-		intel_soc_dts_iosf_exit(proc_priv->soc_dts);
-		if (pdev->irq) {
-			free_irq(pdev->irq, pdev);
+	अगर (proc_priv->soc_dts) अणु
+		पूर्णांकel_soc_dts_iosf_निकास(proc_priv->soc_dts);
+		अगर (pdev->irq) अणु
+			मुक्त_irq(pdev->irq, pdev);
 			pci_disable_msi(pdev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	proc_thermal_mmio_remove(pdev);
-	proc_thermal_remove(proc_priv);
-}
+	proc_thermal_mmio_हटाओ(pdev);
+	proc_thermal_हटाओ(proc_priv);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int proc_thermal_resume(struct device *dev)
-{
-	struct proc_thermal_device *proc_dev;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक proc_thermal_resume(काष्ठा device *dev)
+अणु
+	काष्ठा proc_thermal_device *proc_dev;
 
 	proc_dev = dev_get_drvdata(dev);
-	proc_thermal_read_ppcc(proc_dev);
+	proc_thermal_पढ़ो_ppcc(proc_dev);
 
 	tcc_offset_update(tcc_offset_save);
 
-	return 0;
-}
-#else
-#define proc_thermal_resume NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा proc_thermal_resume शून्य
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(proc_thermal_pm, NULL, proc_thermal_resume);
+अटल SIMPLE_DEV_PM_OPS(proc_thermal_pm, शून्य, proc_thermal_resume);
 
-static const struct pci_device_id proc_thermal_pci_ids[] = {
-	{ PCI_DEVICE_DATA(INTEL, ADL_THERMAL, PROC_THERMAL_FEATURE_RAPL | PROC_THERMAL_FEATURE_FIVR | PROC_THERMAL_FEATURE_DVFS | PROC_THERMAL_FEATURE_MBOX) },
-	{ PCI_DEVICE_DATA(INTEL, BDW_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, BSW_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, BXT0_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, BXT1_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, BXTX_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, BXTP_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, CNL_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, CFL_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, GLK_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, HSB_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, ICL_THERMAL, PROC_THERMAL_FEATURE_RAPL) },
-	{ PCI_DEVICE_DATA(INTEL, JSL_THERMAL, 0) },
-	{ PCI_DEVICE_DATA(INTEL, SKL_THERMAL, PROC_THERMAL_FEATURE_RAPL) },
-	{ PCI_DEVICE_DATA(INTEL, TGL_THERMAL, PROC_THERMAL_FEATURE_RAPL | PROC_THERMAL_FEATURE_FIVR | PROC_THERMAL_FEATURE_MBOX) },
-	{ },
-};
+अटल स्थिर काष्ठा pci_device_id proc_thermal_pci_ids[] = अणु
+	अणु PCI_DEVICE_DATA(INTEL, ADL_THERMAL, PROC_THERMAL_FEATURE_RAPL | PROC_THERMAL_FEATURE_FIVR | PROC_THERMAL_FEATURE_DVFS | PROC_THERMAL_FEATURE_MBOX) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, BDW_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, BSW_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, BXT0_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, BXT1_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, BXTX_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, BXTP_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, CNL_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, CFL_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, GLK_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, HSB_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, ICL_THERMAL, PROC_THERMAL_FEATURE_RAPL) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, JSL_THERMAL, 0) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, SKL_THERMAL, PROC_THERMAL_FEATURE_RAPL) पूर्ण,
+	अणु PCI_DEVICE_DATA(INTEL, TGL_THERMAL, PROC_THERMAL_FEATURE_RAPL | PROC_THERMAL_FEATURE_FIVR | PROC_THERMAL_FEATURE_MBOX) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, proc_thermal_pci_ids);
 
-static struct pci_driver proc_thermal_pci_driver = {
+अटल काष्ठा pci_driver proc_thermal_pci_driver = अणु
 	.name		= DRV_NAME,
 	.probe		= proc_thermal_pci_probe,
-	.remove		= proc_thermal_pci_remove,
+	.हटाओ		= proc_thermal_pci_हटाओ,
 	.id_table	= proc_thermal_pci_ids,
 	.driver.pm	= &proc_thermal_pm,
-};
+पूर्ण;
 
-static const struct acpi_device_id int3401_device_ids[] = {
-	{"INT3401", 0},
-	{"", 0},
-};
-MODULE_DEVICE_TABLE(acpi, int3401_device_ids);
+अटल स्थिर काष्ठा acpi_device_id पूर्णांक3401_device_ids[] = अणु
+	अणु"INT3401", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(acpi, पूर्णांक3401_device_ids);
 
-static struct platform_driver int3401_driver = {
-	.probe = int3401_add,
-	.remove = int3401_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver पूर्णांक3401_driver = अणु
+	.probe = पूर्णांक3401_add,
+	.हटाओ = पूर्णांक3401_हटाओ,
+	.driver = अणु
 		.name = "int3401 thermal",
-		.acpi_match_table = int3401_device_ids,
+		.acpi_match_table = पूर्णांक3401_device_ids,
 		.pm = &proc_thermal_pm,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init proc_thermal_init(void)
-{
-	int ret;
+अटल पूर्णांक __init proc_thermal_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&int3401_driver);
-	if (ret)
-		return ret;
+	ret = platक्रमm_driver_रेजिस्टर(&पूर्णांक3401_driver);
+	अगर (ret)
+		वापस ret;
 
-	ret = pci_register_driver(&proc_thermal_pci_driver);
+	ret = pci_रेजिस्टर_driver(&proc_thermal_pci_driver);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit proc_thermal_exit(void)
-{
-	platform_driver_unregister(&int3401_driver);
-	pci_unregister_driver(&proc_thermal_pci_driver);
-}
+अटल व्योम __निकास proc_thermal_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&पूर्णांक3401_driver);
+	pci_unरेजिस्टर_driver(&proc_thermal_pci_driver);
+पूर्ण
 
 module_init(proc_thermal_init);
-module_exit(proc_thermal_exit);
+module_निकास(proc_thermal_निकास);
 
 MODULE_AUTHOR("Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>");
 MODULE_DESCRIPTION("Processor Thermal Reporting Device Driver");

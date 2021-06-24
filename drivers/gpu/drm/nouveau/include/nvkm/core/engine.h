@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_ENGINE_H__
-#define __NVKM_ENGINE_H__
-#define nvkm_engine(p) container_of((p), struct nvkm_engine, subdev)
-#include <core/subdev.h>
-struct nvkm_fifo_chan;
-struct nvkm_fb_tile;
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_ENGINE_H__
+#घोषणा __NVKM_ENGINE_H__
+#घोषणा nvkm_engine(p) container_of((p), काष्ठा nvkm_engine, subdev)
+#समावेश <core/subdev.h>
+काष्ठा nvkm_fअगरo_chan;
+काष्ठा nvkm_fb_tile;
 
-extern const struct nvkm_subdev_func nvkm_engine;
+बाह्य स्थिर काष्ठा nvkm_subdev_func nvkm_engine;
 
-struct nvkm_engine {
-	const struct nvkm_engine_func *func;
-	struct nvkm_subdev subdev;
+काष्ठा nvkm_engine अणु
+	स्थिर काष्ठा nvkm_engine_func *func;
+	काष्ठा nvkm_subdev subdev;
 	spinlock_t lock;
 
-	struct {
+	काष्ठा अणु
 		refcount_t refcount;
-		struct mutex mutex;
+		काष्ठा mutex mutex;
 		bool enabled;
-	} use;
-};
+	पूर्ण use;
+पूर्ण;
 
-struct nvkm_engine_func {
-	void *(*dtor)(struct nvkm_engine *);
-	void (*preinit)(struct nvkm_engine *);
-	int (*oneinit)(struct nvkm_engine *);
-	int (*info)(struct nvkm_engine *, u64 mthd, u64 *data);
-	int (*init)(struct nvkm_engine *);
-	int (*fini)(struct nvkm_engine *, bool suspend);
-	void (*intr)(struct nvkm_engine *);
-	void (*tile)(struct nvkm_engine *, int region, struct nvkm_fb_tile *);
-	bool (*chsw_load)(struct nvkm_engine *);
+काष्ठा nvkm_engine_func अणु
+	व्योम *(*dtor)(काष्ठा nvkm_engine *);
+	व्योम (*preinit)(काष्ठा nvkm_engine *);
+	पूर्णांक (*oneinit)(काष्ठा nvkm_engine *);
+	पूर्णांक (*info)(काष्ठा nvkm_engine *, u64 mthd, u64 *data);
+	पूर्णांक (*init)(काष्ठा nvkm_engine *);
+	पूर्णांक (*fini)(काष्ठा nvkm_engine *, bool suspend);
+	व्योम (*पूर्णांकr)(काष्ठा nvkm_engine *);
+	व्योम (*tile)(काष्ठा nvkm_engine *, पूर्णांक region, काष्ठा nvkm_fb_tile *);
+	bool (*chsw_load)(काष्ठा nvkm_engine *);
 
-	struct {
-		int (*sclass)(struct nvkm_oclass *, int index,
-			      const struct nvkm_device_oclass **);
-	} base;
+	काष्ठा अणु
+		पूर्णांक (*sclass)(काष्ठा nvkm_oclass *, पूर्णांक index,
+			      स्थिर काष्ठा nvkm_device_oclass **);
+	पूर्ण base;
 
-	struct {
-		int (*cclass)(struct nvkm_fifo_chan *,
-			      const struct nvkm_oclass *,
-			      struct nvkm_object **);
-		int (*sclass)(struct nvkm_oclass *, int index);
-	} fifo;
+	काष्ठा अणु
+		पूर्णांक (*cclass)(काष्ठा nvkm_fअगरo_chan *,
+			      स्थिर काष्ठा nvkm_oclass *,
+			      काष्ठा nvkm_object **);
+		पूर्णांक (*sclass)(काष्ठा nvkm_oclass *, पूर्णांक index);
+	पूर्ण fअगरo;
 
-	const struct nvkm_object_func *cclass;
-	struct nvkm_sclass sclass[];
-};
+	स्थिर काष्ठा nvkm_object_func *cclass;
+	काष्ठा nvkm_sclass sclass[];
+पूर्ण;
 
-int nvkm_engine_ctor(const struct nvkm_engine_func *, struct nvkm_device *,
-		     enum nvkm_subdev_type, int inst, bool enable, struct nvkm_engine *);
-int nvkm_engine_new_(const struct nvkm_engine_func *, struct nvkm_device *,
-		     enum nvkm_subdev_type, int, bool enable, struct nvkm_engine **);
+पूर्णांक nvkm_engine_ctor(स्थिर काष्ठा nvkm_engine_func *, काष्ठा nvkm_device *,
+		     क्रमागत nvkm_subdev_type, पूर्णांक inst, bool enable, काष्ठा nvkm_engine *);
+पूर्णांक nvkm_engine_new_(स्थिर काष्ठा nvkm_engine_func *, काष्ठा nvkm_device *,
+		     क्रमागत nvkm_subdev_type, पूर्णांक, bool enable, काष्ठा nvkm_engine **);
 
-struct nvkm_engine *nvkm_engine_ref(struct nvkm_engine *);
-void nvkm_engine_unref(struct nvkm_engine **);
-void nvkm_engine_tile(struct nvkm_engine *, int region);
-bool nvkm_engine_chsw_load(struct nvkm_engine *);
-#endif
+काष्ठा nvkm_engine *nvkm_engine_ref(काष्ठा nvkm_engine *);
+व्योम nvkm_engine_unref(काष्ठा nvkm_engine **);
+व्योम nvkm_engine_tile(काष्ठा nvkm_engine *, पूर्णांक region);
+bool nvkm_engine_chsw_load(काष्ठा nvkm_engine *);
+#पूर्ण_अगर

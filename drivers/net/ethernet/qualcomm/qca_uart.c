@@ -1,85 +1,86 @@
+<शैली गुरु>
 /*
  *   Copyright (c) 2011, 2012, Qualcomm Atheros Communications Inc.
  *   Copyright (c) 2017, I2SE GmbH
  *
- *   Permission to use, copy, modify, and/or distribute this software
- *   for any purpose with or without fee is hereby granted, provided
+ *   Permission to use, copy, modअगरy, and/or distribute this software
+ *   क्रम any purpose with or without fee is hereby granted, provided
  *   that the above copyright notice and this permission notice appear
  *   in all copies.
  *
  *   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
  *   WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
  *   WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- *   THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+ *   THE AUTHOR BE LIABLE FOR ANY SPECIAL, सूचीECT, INसूचीECT, OR
  *   CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
  *   LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
  *   NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  *   CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*   This module implements the Qualcomm Atheros UART protocol for
+/*   This module implements the Qualcomm Atheros UART protocol क्रम
  *   kernel-based UART device; it is essentially an Ethernet-to-UART
  *   serial converter;
  */
 
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/etherdevice.h>
-#include <linux/if_arp.h>
-#include <linux/if_ether.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_net.h>
-#include <linux/sched.h>
-#include <linux/serdev.h>
-#include <linux/skbuff.h>
-#include <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/serdev.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/types.h>
 
-#include "qca_7k_common.h"
+#समावेश "qca_7k_common.h"
 
-#define QCAUART_DRV_VERSION "0.1.0"
-#define QCAUART_DRV_NAME "qcauart"
-#define QCAUART_TX_TIMEOUT (1 * HZ)
+#घोषणा QCAUART_DRV_VERSION "0.1.0"
+#घोषणा QCAUART_DRV_NAME "qcauart"
+#घोषणा QCAUART_TX_TIMEOUT (1 * HZ)
 
-struct qcauart {
-	struct net_device *net_dev;
+काष्ठा qcauart अणु
+	काष्ठा net_device *net_dev;
 	spinlock_t lock;			/* transmit lock */
-	struct work_struct tx_work;		/* Flushes transmit buffer   */
+	काष्ठा work_काष्ठा tx_work;		/* Flushes transmit buffer   */
 
-	struct serdev_device *serdev;
-	struct qcafrm_handle frm_handle;
-	struct sk_buff *rx_skb;
+	काष्ठा serdev_device *serdev;
+	काष्ठा qcafrm_handle frm_handle;
+	काष्ठा sk_buff *rx_skb;
 
-	unsigned char *tx_head;			/* pointer to next XMIT byte */
-	int tx_left;				/* bytes left in XMIT queue  */
-	unsigned char *tx_buffer;
-};
+	अचिन्हित अक्षर *tx_head;			/* poपूर्णांकer to next XMIT byte */
+	पूर्णांक tx_left;				/* bytes left in XMIT queue  */
+	अचिन्हित अक्षर *tx_buffer;
+पूर्ण;
 
-static int
-qca_tty_receive(struct serdev_device *serdev, const unsigned char *data,
-		size_t count)
-{
-	struct qcauart *qca = serdev_device_get_drvdata(serdev);
-	struct net_device *netdev = qca->net_dev;
-	struct net_device_stats *n_stats = &netdev->stats;
-	size_t i;
+अटल पूर्णांक
+qca_tty_receive(काष्ठा serdev_device *serdev, स्थिर अचिन्हित अक्षर *data,
+		माप_प्रकार count)
+अणु
+	काष्ठा qcauart *qca = serdev_device_get_drvdata(serdev);
+	काष्ठा net_device *netdev = qca->net_dev;
+	काष्ठा net_device_stats *n_stats = &netdev->stats;
+	माप_प्रकार i;
 
-	if (!qca->rx_skb) {
+	अगर (!qca->rx_skb) अणु
 		qca->rx_skb = netdev_alloc_skb_ip_align(netdev,
 							netdev->mtu +
 							VLAN_ETH_HLEN);
-		if (!qca->rx_skb) {
+		अगर (!qca->rx_skb) अणु
 			n_stats->rx_errors++;
 			n_stats->rx_dropped++;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		s32 retcode;
 
 		retcode = qcafrm_fsm_decode(&qca->frm_handle,
@@ -87,257 +88,257 @@ qca_tty_receive(struct serdev_device *serdev, const unsigned char *data,
 					    skb_tailroom(qca->rx_skb),
 					    data[i]);
 
-		switch (retcode) {
-		case QCAFRM_GATHER:
-		case QCAFRM_NOHEAD:
-			break;
-		case QCAFRM_NOTAIL:
+		चयन (retcode) अणु
+		हाल QCAFRM_GATHER:
+		हाल QCAFRM_NOHEAD:
+			अवरोध;
+		हाल QCAFRM_NOTAIL:
 			netdev_dbg(netdev, "recv: no RX tail\n");
 			n_stats->rx_errors++;
 			n_stats->rx_dropped++;
-			break;
-		case QCAFRM_INVLEN:
+			अवरोध;
+		हाल QCAFRM_INVLEN:
 			netdev_dbg(netdev, "recv: invalid RX length\n");
 			n_stats->rx_errors++;
 			n_stats->rx_dropped++;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			n_stats->rx_packets++;
 			n_stats->rx_bytes += retcode;
 			skb_put(qca->rx_skb, retcode);
 			qca->rx_skb->protocol = eth_type_trans(
 						qca->rx_skb, qca->rx_skb->dev);
 			qca->rx_skb->ip_summed = CHECKSUM_UNNECESSARY;
-			netif_rx_ni(qca->rx_skb);
+			netअगर_rx_ni(qca->rx_skb);
 			qca->rx_skb = netdev_alloc_skb_ip_align(netdev,
 								netdev->mtu +
 								VLAN_ETH_HLEN);
-			if (!qca->rx_skb) {
+			अगर (!qca->rx_skb) अणु
 				netdev_dbg(netdev, "recv: out of RX resources\n");
 				n_stats->rx_errors++;
-				return i;
-			}
-		}
-	}
+				वापस i;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-/* Write out any remaining transmit buffer. Scheduled when tty is writable */
-static void qcauart_transmit(struct work_struct *work)
-{
-	struct qcauart *qca = container_of(work, struct qcauart, tx_work);
-	struct net_device_stats *n_stats = &qca->net_dev->stats;
-	int written;
+/* Write out any reमुख्यing transmit buffer. Scheduled when tty is writable */
+अटल व्योम qcauart_transmit(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qcauart *qca = container_of(work, काष्ठा qcauart, tx_work);
+	काष्ठा net_device_stats *n_stats = &qca->net_dev->stats;
+	पूर्णांक written;
 
 	spin_lock_bh(&qca->lock);
 
 	/* First make sure we're connected. */
-	if (!netif_running(qca->net_dev)) {
+	अगर (!netअगर_running(qca->net_dev)) अणु
 		spin_unlock_bh(&qca->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (qca->tx_left <= 0)  {
-		/* Now serial buffer is almost free & we can start
+	अगर (qca->tx_left <= 0)  अणु
+		/* Now serial buffer is almost मुक्त & we can start
 		 * transmission of another packet
 		 */
 		n_stats->tx_packets++;
 		spin_unlock_bh(&qca->lock);
-		netif_wake_queue(qca->net_dev);
-		return;
-	}
+		netअगर_wake_queue(qca->net_dev);
+		वापस;
+	पूर्ण
 
-	written = serdev_device_write_buf(qca->serdev, qca->tx_head,
+	written = serdev_device_ग_लिखो_buf(qca->serdev, qca->tx_head,
 					  qca->tx_left);
-	if (written > 0) {
+	अगर (written > 0) अणु
 		qca->tx_left -= written;
 		qca->tx_head += written;
-	}
+	पूर्ण
 	spin_unlock_bh(&qca->lock);
-}
+पूर्ण
 
-/* Called by the driver when there's room for more data.
+/* Called by the driver when there's room क्रम more data.
  * Schedule the transmit.
  */
-static void qca_tty_wakeup(struct serdev_device *serdev)
-{
-	struct qcauart *qca = serdev_device_get_drvdata(serdev);
+अटल व्योम qca_tty_wakeup(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा qcauart *qca = serdev_device_get_drvdata(serdev);
 
 	schedule_work(&qca->tx_work);
-}
+पूर्ण
 
-static const struct serdev_device_ops qca_serdev_ops = {
+अटल स्थिर काष्ठा serdev_device_ops qca_serdev_ops = अणु
 	.receive_buf = qca_tty_receive,
-	.write_wakeup = qca_tty_wakeup,
-};
+	.ग_लिखो_wakeup = qca_tty_wakeup,
+पूर्ण;
 
-static int qcauart_netdev_open(struct net_device *dev)
-{
-	struct qcauart *qca = netdev_priv(dev);
+अटल पूर्णांक qcauart_netdev_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा qcauart *qca = netdev_priv(dev);
 
-	netif_start_queue(qca->net_dev);
+	netअगर_start_queue(qca->net_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcauart_netdev_close(struct net_device *dev)
-{
-	struct qcauart *qca = netdev_priv(dev);
+अटल पूर्णांक qcauart_netdev_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा qcauart *qca = netdev_priv(dev);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	flush_work(&qca->tx_work);
 
 	spin_lock_bh(&qca->lock);
 	qca->tx_left = 0;
 	spin_unlock_bh(&qca->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t
-qcauart_netdev_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct net_device_stats *n_stats = &dev->stats;
-	struct qcauart *qca = netdev_priv(dev);
+अटल netdev_tx_t
+qcauart_netdev_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device_stats *n_stats = &dev->stats;
+	काष्ठा qcauart *qca = netdev_priv(dev);
 	u8 pad_len = 0;
-	int written;
+	पूर्णांक written;
 	u8 *pos;
 
 	spin_lock(&qca->lock);
 
 	WARN_ON(qca->tx_left);
 
-	if (!netif_running(dev))  {
+	अगर (!netअगर_running(dev))  अणु
 		spin_unlock(&qca->lock);
 		netdev_warn(qca->net_dev, "xmit: iface is down\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pos = qca->tx_buffer;
 
-	if (skb->len < QCAFRM_MIN_LEN)
+	अगर (skb->len < QCAFRM_MIN_LEN)
 		pad_len = QCAFRM_MIN_LEN - skb->len;
 
 	pos += qcafrm_create_header(pos, skb->len + pad_len);
 
-	memcpy(pos, skb->data, skb->len);
+	स_नकल(pos, skb->data, skb->len);
 	pos += skb->len;
 
-	if (pad_len) {
-		memset(pos, 0, pad_len);
+	अगर (pad_len) अणु
+		स_रखो(pos, 0, pad_len);
 		pos += pad_len;
-	}
+	पूर्ण
 
 	pos += qcafrm_create_footer(pos);
 
-	netif_stop_queue(qca->net_dev);
+	netअगर_stop_queue(qca->net_dev);
 
-	written = serdev_device_write_buf(qca->serdev, qca->tx_buffer,
+	written = serdev_device_ग_लिखो_buf(qca->serdev, qca->tx_buffer,
 					  pos - qca->tx_buffer);
-	if (written > 0) {
+	अगर (written > 0) अणु
 		qca->tx_left = (pos - qca->tx_buffer) - written;
 		qca->tx_head = qca->tx_buffer + written;
 		n_stats->tx_bytes += written;
-	}
+	पूर्ण
 	spin_unlock(&qca->lock);
 
-	netif_trans_update(dev);
+	netअगर_trans_update(dev);
 out:
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void qcauart_netdev_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct qcauart *qca = netdev_priv(dev);
+अटल व्योम qcauart_netdev_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा qcauart *qca = netdev_priv(dev);
 
 	netdev_info(qca->net_dev, "Transmit timeout at %ld, latency %ld\n",
-		    jiffies, dev_trans_start(dev));
+		    jअगरfies, dev_trans_start(dev));
 	dev->stats.tx_errors++;
 	dev->stats.tx_dropped++;
-}
+पूर्ण
 
-static int qcauart_netdev_init(struct net_device *dev)
-{
-	struct qcauart *qca = netdev_priv(dev);
-	size_t len;
+अटल पूर्णांक qcauart_netdev_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा qcauart *qca = netdev_priv(dev);
+	माप_प्रकार len;
 
 	/* Finish setting up the device info. */
 	dev->mtu = QCAFRM_MAX_MTU;
 	dev->type = ARPHRD_ETHER;
 
 	len = QCAFRM_HEADER_LEN + QCAFRM_MAX_LEN + QCAFRM_FOOTER_LEN;
-	qca->tx_buffer = devm_kmalloc(&qca->serdev->dev, len, GFP_KERNEL);
-	if (!qca->tx_buffer)
-		return -ENOMEM;
+	qca->tx_buffer = devm_kदो_स्मृति(&qca->serdev->dev, len, GFP_KERNEL);
+	अगर (!qca->tx_buffer)
+		वापस -ENOMEM;
 
 	qca->rx_skb = netdev_alloc_skb_ip_align(qca->net_dev,
 						qca->net_dev->mtu +
 						VLAN_ETH_HLEN);
-	if (!qca->rx_skb)
-		return -ENOBUFS;
+	अगर (!qca->rx_skb)
+		वापस -ENOBUFS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qcauart_netdev_uninit(struct net_device *dev)
-{
-	struct qcauart *qca = netdev_priv(dev);
+अटल व्योम qcauart_netdev_uninit(काष्ठा net_device *dev)
+अणु
+	काष्ठा qcauart *qca = netdev_priv(dev);
 
-	dev_kfree_skb(qca->rx_skb);
-}
+	dev_kमुक्त_skb(qca->rx_skb);
+पूर्ण
 
-static const struct net_device_ops qcauart_netdev_ops = {
-	.ndo_init = qcauart_netdev_init,
-	.ndo_uninit = qcauart_netdev_uninit,
-	.ndo_open = qcauart_netdev_open,
-	.ndo_stop = qcauart_netdev_close,
-	.ndo_start_xmit = qcauart_netdev_xmit,
-	.ndo_set_mac_address = eth_mac_addr,
-	.ndo_tx_timeout = qcauart_netdev_tx_timeout,
-	.ndo_validate_addr = eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops qcauart_netdev_ops = अणु
+	.nकरो_init = qcauart_netdev_init,
+	.nकरो_uninit = qcauart_netdev_uninit,
+	.nकरो_खोलो = qcauart_netdev_खोलो,
+	.nकरो_stop = qcauart_netdev_बंद,
+	.nकरो_start_xmit = qcauart_netdev_xmit,
+	.nकरो_set_mac_address = eth_mac_addr,
+	.nकरो_tx_समयout = qcauart_netdev_tx_समयout,
+	.nकरो_validate_addr = eth_validate_addr,
+पूर्ण;
 
-static void qcauart_netdev_setup(struct net_device *dev)
-{
+अटल व्योम qcauart_netdev_setup(काष्ठा net_device *dev)
+अणु
 	dev->netdev_ops = &qcauart_netdev_ops;
-	dev->watchdog_timeo = QCAUART_TX_TIMEOUT;
+	dev->watchकरोg_समयo = QCAUART_TX_TIMEOUT;
 	dev->priv_flags &= ~IFF_TX_SKB_SHARING;
 	dev->tx_queue_len = 100;
 
 	/* MTU range: 46 - 1500 */
 	dev->min_mtu = QCAFRM_MIN_MTU;
 	dev->max_mtu = QCAFRM_MAX_MTU;
-}
+पूर्ण
 
-static const struct of_device_id qca_uart_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id qca_uart_of_match[] = अणु
+	अणु
 	 .compatible = "qca,qca7000",
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qca_uart_of_match);
 
-static int qca_uart_probe(struct serdev_device *serdev)
-{
-	struct net_device *qcauart_dev = alloc_etherdev(sizeof(struct qcauart));
-	struct qcauart *qca;
+अटल पूर्णांक qca_uart_probe(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा net_device *qcauart_dev = alloc_etherdev(माप(काष्ठा qcauart));
+	काष्ठा qcauart *qca;
 	u32 speed = 115200;
-	int ret;
+	पूर्णांक ret;
 
-	if (!qcauart_dev)
-		return -ENOMEM;
+	अगर (!qcauart_dev)
+		वापस -ENOMEM;
 
 	qcauart_netdev_setup(qcauart_dev);
 	SET_NETDEV_DEV(qcauart_dev, &serdev->dev);
 
 	qca = netdev_priv(qcauart_dev);
-	if (!qca) {
+	अगर (!qca) अणु
 		pr_err("qca_uart: Fail to retrieve private structure\n");
 		ret = -ENOMEM;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 	qca->net_dev = qcauart_dev;
 	qca->serdev = serdev;
 	qcafrm_fsm_init_uart(&qca->frm_handle);
@@ -345,68 +346,68 @@ static int qca_uart_probe(struct serdev_device *serdev)
 	spin_lock_init(&qca->lock);
 	INIT_WORK(&qca->tx_work, qcauart_transmit);
 
-	of_property_read_u32(serdev->dev.of_node, "current-speed", &speed);
+	of_property_पढ़ो_u32(serdev->dev.of_node, "current-speed", &speed);
 
 	ret = of_get_mac_address(serdev->dev.of_node, qca->net_dev->dev_addr);
-	if (ret) {
-		eth_hw_addr_random(qca->net_dev);
+	अगर (ret) अणु
+		eth_hw_addr_अक्रमom(qca->net_dev);
 		dev_info(&serdev->dev, "Using random MAC address: %pM\n",
 			 qca->net_dev->dev_addr);
-	}
+	पूर्ण
 
-	netif_carrier_on(qca->net_dev);
+	netअगर_carrier_on(qca->net_dev);
 	serdev_device_set_drvdata(serdev, qca);
 	serdev_device_set_client_ops(serdev, &qca_serdev_ops);
 
-	ret = serdev_device_open(serdev);
-	if (ret) {
+	ret = serdev_device_खोलो(serdev);
+	अगर (ret) अणु
 		dev_err(&serdev->dev, "Unable to open device %s\n",
 			qcauart_dev->name);
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
 	speed = serdev_device_set_baudrate(serdev, speed);
 	dev_info(&serdev->dev, "Using baudrate: %u\n", speed);
 
 	serdev_device_set_flow_control(serdev, false);
 
-	ret = register_netdev(qcauart_dev);
-	if (ret) {
+	ret = रेजिस्टर_netdev(qcauart_dev);
+	अगर (ret) अणु
 		dev_err(&serdev->dev, "Unable to register net device %s\n",
 			qcauart_dev->name);
-		serdev_device_close(serdev);
+		serdev_device_बंद(serdev);
 		cancel_work_sync(&qca->tx_work);
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free:
-	free_netdev(qcauart_dev);
-	return ret;
-}
+मुक्त:
+	मुक्त_netdev(qcauart_dev);
+	वापस ret;
+पूर्ण
 
-static void qca_uart_remove(struct serdev_device *serdev)
-{
-	struct qcauart *qca = serdev_device_get_drvdata(serdev);
+अटल व्योम qca_uart_हटाओ(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा qcauart *qca = serdev_device_get_drvdata(serdev);
 
-	unregister_netdev(qca->net_dev);
+	unरेजिस्टर_netdev(qca->net_dev);
 
-	/* Flush any pending characters in the driver. */
-	serdev_device_close(serdev);
+	/* Flush any pending अक्षरacters in the driver. */
+	serdev_device_बंद(serdev);
 	cancel_work_sync(&qca->tx_work);
 
-	free_netdev(qca->net_dev);
-}
+	मुक्त_netdev(qca->net_dev);
+पूर्ण
 
-static struct serdev_device_driver qca_uart_driver = {
+अटल काष्ठा serdev_device_driver qca_uart_driver = अणु
 	.probe = qca_uart_probe,
-	.remove = qca_uart_remove,
-	.driver = {
+	.हटाओ = qca_uart_हटाओ,
+	.driver = अणु
 		.name = QCAUART_DRV_NAME,
 		.of_match_table = of_match_ptr(qca_uart_of_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_serdev_device_driver(qca_uart_driver);
 

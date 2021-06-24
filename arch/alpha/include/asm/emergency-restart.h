@@ -1,6 +1,7 @@
-#ifndef _ASM_EMERGENCY_RESTART_H
-#define _ASM_EMERGENCY_RESTART_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_EMERGENCY_RESTART_H
+#घोषणा _ASM_EMERGENCY_RESTART_H
 
-#include <asm-generic/emergency-restart.h>
+#समावेश <यंत्र-generic/emergency-restart.h>
 
-#endif /* _ASM_EMERGENCY_RESTART_H */
+#पूर्ण_अगर /* _ASM_EMERGENCY_RESTART_H */

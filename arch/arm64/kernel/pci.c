@@ -1,220 +1,221 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Code borrowed from powerpc/kernel/pci-common.c
+ * Code borrowed from घातerpc/kernel/pci-common.c
  *
- * Copyright (C) 2003 Anton Blanchard <anton@au.ibm.com>, IBM
+ * Copyright (C) 2003 Anton Blanअक्षरd <anton@au.ibm.com>, IBM
  * Copyright (C) 2014 ARM Ltd.
  */
 
-#include <linux/acpi.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/of_pci.h>
-#include <linux/of_platform.h>
-#include <linux/pci.h>
-#include <linux/pci-acpi.h>
-#include <linux/pci-ecam.h>
-#include <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci-acpi.h>
+#समावेश <linux/pci-ecam.h>
+#समावेश <linux/slab.h>
 
-#ifdef CONFIG_ACPI
+#अगर_घोषित CONFIG_ACPI
 /*
  * Try to assign the IRQ number when probing a new device
  */
-int pcibios_alloc_irq(struct pci_dev *dev)
-{
-	if (!acpi_disabled)
+पूर्णांक pcibios_alloc_irq(काष्ठा pci_dev *dev)
+अणु
+	अगर (!acpi_disabled)
 		acpi_pci_irq_enable(dev);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * raw_pci_read/write - Platform-specific PCI config space access.
+ * raw_pci_पढ़ो/ग_लिखो - Platक्रमm-specअगरic PCI config space access.
  */
-int raw_pci_read(unsigned int domain, unsigned int bus,
-		  unsigned int devfn, int reg, int len, u32 *val)
-{
-	struct pci_bus *b = pci_find_bus(domain, bus);
+पूर्णांक raw_pci_पढ़ो(अचिन्हित पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus,
+		  अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 *val)
+अणु
+	काष्ठा pci_bus *b = pci_find_bus(करोमुख्य, bus);
 
-	if (!b)
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	return b->ops->read(b, devfn, reg, len, val);
-}
+	अगर (!b)
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	वापस b->ops->पढ़ो(b, devfn, reg, len, val);
+पूर्ण
 
-int raw_pci_write(unsigned int domain, unsigned int bus,
-		unsigned int devfn, int reg, int len, u32 val)
-{
-	struct pci_bus *b = pci_find_bus(domain, bus);
+पूर्णांक raw_pci_ग_लिखो(अचिन्हित पूर्णांक करोमुख्य, अचिन्हित पूर्णांक bus,
+		अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 val)
+अणु
+	काष्ठा pci_bus *b = pci_find_bus(करोमुख्य, bus);
 
-	if (!b)
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	return b->ops->write(b, devfn, reg, len, val);
-}
+	अगर (!b)
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	वापस b->ops->ग_लिखो(b, devfn, reg, len, val);
+पूर्ण
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 
-int pcibus_to_node(struct pci_bus *bus)
-{
-	return dev_to_node(&bus->dev);
-}
+पूर्णांक pcibus_to_node(काष्ठा pci_bus *bus)
+अणु
+	वापस dev_to_node(&bus->dev);
+पूर्ण
 EXPORT_SYMBOL(pcibus_to_node);
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
+#अगर_घोषित CONFIG_ACPI
 
-struct acpi_pci_generic_root_info {
-	struct acpi_pci_root_info	common;
-	struct pci_config_window	*cfg;	/* config space mapping */
-};
+काष्ठा acpi_pci_generic_root_info अणु
+	काष्ठा acpi_pci_root_info	common;
+	काष्ठा pci_config_winकरोw	*cfg;	/* config space mapping */
+पूर्ण;
 
-int acpi_pci_bus_find_domain_nr(struct pci_bus *bus)
-{
-	struct pci_config_window *cfg = bus->sysdata;
-	struct acpi_device *adev = to_acpi_device(cfg->parent);
-	struct acpi_pci_root *root = acpi_driver_data(adev);
+पूर्णांक acpi_pci_bus_find_करोमुख्य_nr(काष्ठा pci_bus *bus)
+अणु
+	काष्ठा pci_config_winकरोw *cfg = bus->sysdata;
+	काष्ठा acpi_device *adev = to_acpi_device(cfg->parent);
+	काष्ठा acpi_pci_root *root = acpi_driver_data(adev);
 
-	return root->segment;
-}
+	वापस root->segment;
+पूर्ण
 
-int pcibios_root_bridge_prepare(struct pci_host_bridge *bridge)
-{
-	if (!acpi_disabled) {
-		struct pci_config_window *cfg = bridge->bus->sysdata;
-		struct acpi_device *adev = to_acpi_device(cfg->parent);
-		struct device *bus_dev = &bridge->bus->dev;
+पूर्णांक pcibios_root_bridge_prepare(काष्ठा pci_host_bridge *bridge)
+अणु
+	अगर (!acpi_disabled) अणु
+		काष्ठा pci_config_winकरोw *cfg = bridge->bus->sysdata;
+		काष्ठा acpi_device *adev = to_acpi_device(cfg->parent);
+		काष्ठा device *bus_dev = &bridge->bus->dev;
 
 		ACPI_COMPANION_SET(&bridge->dev, adev);
 		set_dev_node(bus_dev, acpi_get_node(acpi_device_handle(adev)));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pci_acpi_root_prepare_resources(struct acpi_pci_root_info *ci)
-{
-	struct resource_entry *entry, *tmp;
-	int status;
+अटल पूर्णांक pci_acpi_root_prepare_resources(काष्ठा acpi_pci_root_info *ci)
+अणु
+	काष्ठा resource_entry *entry, *पंचांगp;
+	पूर्णांक status;
 
 	status = acpi_pci_probe_root_resources(ci);
-	resource_list_for_each_entry_safe(entry, tmp, &ci->resources) {
-		if (!(entry->res->flags & IORESOURCE_WINDOW))
+	resource_list_क्रम_each_entry_safe(entry, पंचांगp, &ci->resources) अणु
+		अगर (!(entry->res->flags & IORESOURCE_WINDOW))
 			resource_list_destroy_entry(entry);
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /*
- * Lookup the bus range for the domain in MCFG, and set up config space
+ * Lookup the bus range क्रम the करोमुख्य in MCFG, and set up config space
  * mapping.
  */
-static struct pci_config_window *
-pci_acpi_setup_ecam_mapping(struct acpi_pci_root *root)
-{
-	struct device *dev = &root->device->dev;
-	struct resource *bus_res = &root->secondary;
+अटल काष्ठा pci_config_winकरोw *
+pci_acpi_setup_ecam_mapping(काष्ठा acpi_pci_root *root)
+अणु
+	काष्ठा device *dev = &root->device->dev;
+	काष्ठा resource *bus_res = &root->secondary;
 	u16 seg = root->segment;
-	const struct pci_ecam_ops *ecam_ops;
-	struct resource cfgres;
-	struct acpi_device *adev;
-	struct pci_config_window *cfg;
-	int ret;
+	स्थिर काष्ठा pci_ecam_ops *ecam_ops;
+	काष्ठा resource cfgres;
+	काष्ठा acpi_device *adev;
+	काष्ठा pci_config_winकरोw *cfg;
+	पूर्णांक ret;
 
 	ret = pci_mcfg_lookup(root, &cfgres, &ecam_ops);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%04x:%pR ECAM region not found\n", seg, bus_res);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	adev = acpi_resource_consumer(&cfgres);
-	if (adev)
+	अगर (adev)
 		dev_info(dev, "ECAM area %pR reserved by %s\n", &cfgres,
 			 dev_name(&adev->dev));
-	else
+	अन्यथा
 		dev_warn(dev, FW_BUG "ECAM area %pR not reserved in ACPI namespace\n",
 			 &cfgres);
 
 	cfg = pci_ecam_create(dev, &cfgres, bus_res, ecam_ops);
-	if (IS_ERR(cfg)) {
+	अगर (IS_ERR(cfg)) अणु
 		dev_err(dev, "%04x:%pR error %ld mapping ECAM\n", seg, bus_res,
 			PTR_ERR(cfg));
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return cfg;
-}
+	वापस cfg;
+पूर्ण
 
-/* release_info: free resources allocated by init_info */
-static void pci_acpi_generic_release_info(struct acpi_pci_root_info *ci)
-{
-	struct acpi_pci_generic_root_info *ri;
+/* release_info: मुक्त resources allocated by init_info */
+अटल व्योम pci_acpi_generic_release_info(काष्ठा acpi_pci_root_info *ci)
+अणु
+	काष्ठा acpi_pci_generic_root_info *ri;
 
-	ri = container_of(ci, struct acpi_pci_generic_root_info, common);
-	pci_ecam_free(ri->cfg);
-	kfree(ci->ops);
-	kfree(ri);
-}
+	ri = container_of(ci, काष्ठा acpi_pci_generic_root_info, common);
+	pci_ecam_मुक्त(ri->cfg);
+	kमुक्त(ci->ops);
+	kमुक्त(ri);
+पूर्ण
 
 /* Interface called from ACPI code to setup PCI host controller */
-struct pci_bus *pci_acpi_scan_root(struct acpi_pci_root *root)
-{
-	struct acpi_pci_generic_root_info *ri;
-	struct pci_bus *bus, *child;
-	struct acpi_pci_root_ops *root_ops;
-	struct pci_host_bridge *host;
+काष्ठा pci_bus *pci_acpi_scan_root(काष्ठा acpi_pci_root *root)
+अणु
+	काष्ठा acpi_pci_generic_root_info *ri;
+	काष्ठा pci_bus *bus, *child;
+	काष्ठा acpi_pci_root_ops *root_ops;
+	काष्ठा pci_host_bridge *host;
 
-	ri = kzalloc(sizeof(*ri), GFP_KERNEL);
-	if (!ri)
-		return NULL;
+	ri = kzalloc(माप(*ri), GFP_KERNEL);
+	अगर (!ri)
+		वापस शून्य;
 
-	root_ops = kzalloc(sizeof(*root_ops), GFP_KERNEL);
-	if (!root_ops) {
-		kfree(ri);
-		return NULL;
-	}
+	root_ops = kzalloc(माप(*root_ops), GFP_KERNEL);
+	अगर (!root_ops) अणु
+		kमुक्त(ri);
+		वापस शून्य;
+	पूर्ण
 
 	ri->cfg = pci_acpi_setup_ecam_mapping(root);
-	if (!ri->cfg) {
-		kfree(ri);
-		kfree(root_ops);
-		return NULL;
-	}
+	अगर (!ri->cfg) अणु
+		kमुक्त(ri);
+		kमुक्त(root_ops);
+		वापस शून्य;
+	पूर्ण
 
 	root_ops->release_info = pci_acpi_generic_release_info;
 	root_ops->prepare_resources = pci_acpi_root_prepare_resources;
-	root_ops->pci_ops = (struct pci_ops *)&ri->cfg->ops->pci_ops;
+	root_ops->pci_ops = (काष्ठा pci_ops *)&ri->cfg->ops->pci_ops;
 	bus = acpi_pci_root_create(root, root_ops, &ri->common, ri->cfg);
-	if (!bus)
-		return NULL;
+	अगर (!bus)
+		वापस शून्य;
 
 	/* If we must preserve the resource configuration, claim now */
 	host = pci_find_host_bridge(bus);
-	if (host->preserve_config)
+	अगर (host->preserve_config)
 		pci_bus_claim_resources(bus);
 
 	/*
-	 * Assign whatever was left unassigned. If we didn't claim above,
+	 * Assign whatever was left unasचिन्हित. If we didn't claim above,
 	 * this will reassign everything.
 	 */
-	pci_assign_unassigned_root_bus_resources(bus);
+	pci_assign_unasचिन्हित_root_bus_resources(bus);
 
-	list_for_each_entry(child, &bus->children, node)
+	list_क्रम_each_entry(child, &bus->children, node)
 		pcie_bus_configure_settings(child);
 
-	return bus;
-}
+	वापस bus;
+पूर्ण
 
-void pcibios_add_bus(struct pci_bus *bus)
-{
+व्योम pcibios_add_bus(काष्ठा pci_bus *bus)
+अणु
 	acpi_pci_add_bus(bus);
-}
+पूर्ण
 
-void pcibios_remove_bus(struct pci_bus *bus)
-{
-	acpi_pci_remove_bus(bus);
-}
+व्योम pcibios_हटाओ_bus(काष्ठा pci_bus *bus)
+अणु
+	acpi_pci_हटाओ_bus(bus);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_BOOK3S_64_PGTABLE_64K_H
-#define _ASM_POWERPC_BOOK3S_64_PGTABLE_64K_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_BOOK3S_64_PGTABLE_64K_H
+#घोषणा _ASM_POWERPC_BOOK3S_64_PGTABLE_64K_H
 
-#ifndef __ASSEMBLY__
-#ifdef CONFIG_HUGETLB_PAGE
+#अगर_अघोषित __ASSEMBLY__
+#अगर_घोषित CONFIG_HUGETLB_PAGE
 /*
  * We have PGD_INDEX_SIZ = 12 and PTE_INDEX_SIZE = 8, so that we can have
  * 16GB hugepage pte in PGD and 16MB hugepage pte at PMD;
  *
- * Defined in such a way that we can optimize away code block at build time
- * if CONFIG_HUGETLB_PAGE=n.
+ * Defined in such a way that we can optimize away code block at build समय
+ * अगर CONFIG_HUGETLB_PAGE=n.
  *
- * returns true for pmd migration entries, THP, devmap, hugetlb
- * But compile time dependent on CONFIG_HUGETLB_PAGE
+ * वापसs true क्रम pmd migration entries, THP, devmap, hugetlb
+ * But compile समय dependent on CONFIG_HUGETLB_PAGE
  */
-static inline int pmd_huge(pmd_t pmd)
-{
+अटल अंतरभूत पूर्णांक pmd_huge(pmd_t pmd)
+अणु
 	/*
-	 * leaf pte for huge page
+	 * leaf pte क्रम huge page
 	 */
-	return !!(pmd_raw(pmd) & cpu_to_be64(_PAGE_PTE));
-}
+	वापस !!(pmd_raw(pmd) & cpu_to_be64(_PAGE_PTE));
+पूर्ण
 
-static inline int pud_huge(pud_t pud)
-{
+अटल अंतरभूत पूर्णांक pud_huge(pud_t pud)
+अणु
 	/*
-	 * leaf pte for huge page
+	 * leaf pte क्रम huge page
 	 */
-	return !!(pud_raw(pud) & cpu_to_be64(_PAGE_PTE));
-}
+	वापस !!(pud_raw(pud) & cpu_to_be64(_PAGE_PTE));
+पूर्ण
 
-static inline int pgd_huge(pgd_t pgd)
-{
+अटल अंतरभूत पूर्णांक pgd_huge(pgd_t pgd)
+अणु
 	/*
-	 * leaf pte for huge page
+	 * leaf pte क्रम huge page
 	 */
-	return !!(pgd_raw(pgd) & cpu_to_be64(_PAGE_PTE));
-}
-#define pgd_huge pgd_huge
+	वापस !!(pgd_raw(pgd) & cpu_to_be64(_PAGE_PTE));
+पूर्ण
+#घोषणा pgd_huge pgd_huge
 
 /*
- * With 64k page size, we have hugepage ptes in the pgd and pmd entries. We don't
- * need to setup hugepage directory for them. Our pte and page directory format
+ * With 64k page size, we have hugepage ptes in the pgd and pmd entries. We करोn't
+ * need to setup hugepage directory क्रम them. Our pte and page directory क्रमmat
  * enable us to have this enabled.
  */
-static inline int hugepd_ok(hugepd_t hpd)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक hugepd_ok(hugepd_t hpd)
+अणु
+	वापस 0;
+पूर्ण
 
-#define is_hugepd(pdep)			0
+#घोषणा is_hugepd(pdep)			0
 
 /*
  * This should never get called
  */
-static inline int get_hugepd_cache_index(int index)
-{
+अटल अंतरभूत पूर्णांक get_hugepd_cache_index(पूर्णांक index)
+अणु
 	BUG();
-}
+पूर्ण
 
-#endif /* CONFIG_HUGETLB_PAGE */
+#पूर्ण_अगर /* CONFIG_HUGETLB_PAGE */
 
-static inline int remap_4k_pfn(struct vm_area_struct *vma, unsigned long addr,
-			       unsigned long pfn, pgprot_t prot)
-{
-	if (radix_enabled())
+अटल अंतरभूत पूर्णांक remap_4k_pfn(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+			       अचिन्हित दीर्घ pfn, pgprot_t prot)
+अणु
+	अगर (radix_enabled())
 		BUG();
-	return hash__remap_4k_pfn(vma, addr, pfn, prot);
-}
-#endif	/* __ASSEMBLY__ */
-#endif /*_ASM_POWERPC_BOOK3S_64_PGTABLE_64K_H */
+	वापस hash__remap_4k_pfn(vma, addr, pfn, prot);
+पूर्ण
+#पूर्ण_अगर	/* __ASSEMBLY__ */
+#पूर्ण_अगर /*_ASM_POWERPC_BOOK3S_64_PGTABLE_64K_H */

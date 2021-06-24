@@ -1,55 +1,56 @@
-#ifndef _IOMMU_H
-#define _IOMMU_H 1
+<शैली गुरु>
+#अगर_अघोषित _IOMMU_H
+#घोषणा _IOMMU_H 1
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-struct parisc_device;
-struct ioc;
+काष्ठा parisc_device;
+काष्ठा ioc;
 
-static inline struct pci_hba_data *parisc_walk_tree(struct device *dev)
-{
-	struct device *otherdev;
+अटल अंतरभूत काष्ठा pci_hba_data *parisc_walk_tree(काष्ठा device *dev)
+अणु
+	काष्ठा device *otherdev;
 
-	if (likely(dev->platform_data))
-		return dev->platform_data;
+	अगर (likely(dev->platक्रमm_data))
+		वापस dev->platक्रमm_data;
 
 	/* OK, just traverse the bus to find it */
-	for (otherdev = dev->parent;
+	क्रम (otherdev = dev->parent;
 	     otherdev;
-	     otherdev = otherdev->parent) {
-		if (otherdev->platform_data) {
-			dev->platform_data = otherdev->platform_data;
-			break;
-		}
-	}
+	     otherdev = otherdev->parent) अणु
+		अगर (otherdev->platक्रमm_data) अणु
+			dev->platक्रमm_data = otherdev->platक्रमm_data;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return dev->platform_data;
-}
+	वापस dev->platक्रमm_data;
+पूर्ण
 
-static inline struct ioc *GET_IOC(struct device *dev)
-{
-	struct pci_hba_data *pdata = parisc_walk_tree(dev);
+अटल अंतरभूत काष्ठा ioc *GET_IOC(काष्ठा device *dev)
+अणु
+	काष्ठा pci_hba_data *pdata = parisc_walk_tree(dev);
 
-	if (!pdata)
-		return NULL;
-	return pdata->iommu;
-}
+	अगर (!pdata)
+		वापस शून्य;
+	वापस pdata->iommu;
+पूर्ण
 
-#ifdef CONFIG_IOMMU_CCIO
-void *ccio_get_iommu(const struct parisc_device *dev);
-int ccio_request_resource(const struct parisc_device *dev,
-		struct resource *res);
-int ccio_allocate_resource(const struct parisc_device *dev,
-		struct resource *res, unsigned long size,
-		unsigned long min, unsigned long max, unsigned long align);
-#else /* !CONFIG_IOMMU_CCIO */
-#define ccio_get_iommu(dev) NULL
-#define ccio_request_resource(dev, res) insert_resource(&iomem_resource, res)
-#define ccio_allocate_resource(dev, res, size, min, max, align) \
+#अगर_घोषित CONFIG_IOMMU_CCIO
+व्योम *ccio_get_iommu(स्थिर काष्ठा parisc_device *dev);
+पूर्णांक ccio_request_resource(स्थिर काष्ठा parisc_device *dev,
+		काष्ठा resource *res);
+पूर्णांक ccio_allocate_resource(स्थिर काष्ठा parisc_device *dev,
+		काष्ठा resource *res, अचिन्हित दीर्घ size,
+		अचिन्हित दीर्घ min, अचिन्हित दीर्घ max, अचिन्हित दीर्घ align);
+#अन्यथा /* !CONFIG_IOMMU_CCIO */
+#घोषणा ccio_get_iommu(dev) शून्य
+#घोषणा ccio_request_resource(dev, res) insert_resource(&iomem_resource, res)
+#घोषणा ccio_allocate_resource(dev, res, size, min, max, align) \
 		allocate_resource(&iomem_resource, res, size, min, max, \
-				align, NULL, NULL)
-#endif /* !CONFIG_IOMMU_CCIO */
+				align, शून्य, शून्य)
+#पूर्ण_अगर /* !CONFIG_IOMMU_CCIO */
 
-void *sba_get_iommu(struct parisc_device *dev);
+व्योम *sba_get_iommu(काष्ठा parisc_device *dev);
 
-#endif /* _IOMMU_H */
+#पूर्ण_अगर /* _IOMMU_H */

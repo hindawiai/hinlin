@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#include <linux/bpf.h>
-#include <stdint.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_core_read.h>
+#समावेश <linux/bpf.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_core_पढ़ो.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-struct {
-	char in[256];
-	char out[256];
-} data = {};
+काष्ठा अणु
+	अक्षर in[256];
+	अक्षर out[256];
+पूर्ण data = अणुपूर्ण;
 
-struct core_reloc_mods_output {
-	int a, b, c, d, e, f, g, h;
-};
+काष्ठा core_reloc_mods_output अणु
+	पूर्णांक a, b, c, d, e, f, g, h;
+पूर्ण;
 
-typedef const int int_t;
-typedef const char *char_ptr_t;
-typedef const int arr_t[7];
+प्रकार स्थिर पूर्णांक पूर्णांक_t;
+प्रकार स्थिर अक्षर *अक्षर_ptr_t;
+प्रकार स्थिर पूर्णांक arr_t[7];
 
-struct core_reloc_mods_substruct {
-	int x;
-	int y;
-};
+काष्ठा core_reloc_mods_subकाष्ठा अणु
+	पूर्णांक x;
+	पूर्णांक y;
+पूर्ण;
 
-typedef struct {
-	int x;
-	int y;
-} core_reloc_mods_substruct_t;
+प्रकार काष्ठा अणु
+	पूर्णांक x;
+	पूर्णांक y;
+पूर्ण core_reloc_mods_subकाष्ठा_t;
 
-struct core_reloc_mods {
-	int a;
-	int_t b;
-	char *c;
-	char_ptr_t d;
-	int e[3];
+काष्ठा core_reloc_mods अणु
+	पूर्णांक a;
+	पूर्णांक_t b;
+	अक्षर *c;
+	अक्षर_ptr_t d;
+	पूर्णांक e[3];
 	arr_t f;
-	struct core_reloc_mods_substruct g;
-	core_reloc_mods_substruct_t h;
-};
+	काष्ठा core_reloc_mods_subकाष्ठा g;
+	core_reloc_mods_subकाष्ठा_t h;
+पूर्ण;
 
-#define CORE_READ(dst, src) bpf_core_read(dst, sizeof(*(dst)), src)
+#घोषणा CORE_READ(dst, src) bpf_core_पढ़ो(dst, माप(*(dst)), src)
 
 SEC("raw_tracepoint/sys_enter")
-int test_core_mods(void *ctx)
-{
-	struct core_reloc_mods *in = (void *)&data.in;
-	struct core_reloc_mods_output *out = (void *)&data.out;
+पूर्णांक test_core_mods(व्योम *ctx)
+अणु
+	काष्ठा core_reloc_mods *in = (व्योम *)&data.in;
+	काष्ठा core_reloc_mods_output *out = (व्योम *)&data.out;
 
-	if (CORE_READ(&out->a, &in->a) ||
+	अगर (CORE_READ(&out->a, &in->a) ||
 	    CORE_READ(&out->b, &in->b) ||
 	    CORE_READ(&out->c, &in->c) ||
 	    CORE_READ(&out->d, &in->d) ||
@@ -58,8 +59,8 @@ int test_core_mods(void *ctx)
 	    CORE_READ(&out->f, &in->f[1]) ||
 	    CORE_READ(&out->g, &in->g.x) ||
 	    CORE_READ(&out->h, &in->h.y))
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

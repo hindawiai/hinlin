@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,37 +22,37 @@
  *
  * Authors: Ben Skeggs
  */
-#include "channv50.h"
+#समावेश "channv50.h"
 
-static const struct nv50_disp_mthd_list
-g94_disp_core_mthd_sor = {
+अटल स्थिर काष्ठा nv50_disp_mthd_list
+g94_disp_core_mthd_sor = अणु
 	.mthd = 0x0040,
 	.addr = 0x000008,
-	.data = {
-		{ 0x0600, 0x610794 },
-		{}
-	}
-};
+	.data = अणु
+		अणु 0x0600, 0x610794 पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-const struct nv50_disp_chan_mthd
-g94_disp_core_mthd = {
+स्थिर काष्ठा nv50_disp_chan_mthd
+g94_disp_core_mthd = अणु
 	.name = "Core",
 	.addr = 0x000000,
 	.prev = 0x000004,
-	.data = {
-		{ "Global", 1, &nv50_disp_core_mthd_base },
-		{    "DAC", 3, &g84_disp_core_mthd_dac },
-		{    "SOR", 4, &g94_disp_core_mthd_sor },
-		{   "PIOR", 3, &nv50_disp_core_mthd_pior },
-		{   "HEAD", 2, &g84_disp_core_mthd_head },
-		{}
-	}
-};
+	.data = अणु
+		अणु "Global", 1, &nv50_disp_core_mthd_base पूर्ण,
+		अणु    "DAC", 3, &g84_disp_core_mthd_dac पूर्ण,
+		अणु    "SOR", 4, &g94_disp_core_mthd_sor पूर्ण,
+		अणु   "PIOR", 3, &nv50_disp_core_mthd_pior पूर्ण,
+		अणु   "HEAD", 2, &g84_disp_core_mthd_head पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-g94_disp_core_new(const struct nvkm_oclass *oclass, void *argv, u32 argc,
-		  struct nv50_disp *disp, struct nvkm_object **pobject)
-{
-	return nv50_disp_core_new_(&nv50_disp_core_func, &g94_disp_core_mthd,
+पूर्णांक
+g94_disp_core_new(स्थिर काष्ठा nvkm_oclass *oclass, व्योम *argv, u32 argc,
+		  काष्ठा nv50_disp *disp, काष्ठा nvkm_object **pobject)
+अणु
+	वापस nv50_disp_core_new_(&nv50_disp_core_func, &g94_disp_core_mthd,
 				   disp, 0, oclass, argv, argc, pobject);
-}
+पूर्ण

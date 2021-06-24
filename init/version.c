@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/init/version.c
  *
- *  Copyright (C) 1992  Theodore Ts'o
+ *  Copyright (C) 1992  Theoकरोre Ts'o
  *
- *  May be freely distributed as part of Linux.
+ *  May be मुक्तly distributed as part of Linux.
  */
 
-#include <generated/compile.h>
-#include <linux/build-salt.h>
-#include <linux/elfnote-lto.h>
-#include <linux/export.h>
-#include <linux/uts.h>
-#include <linux/utsname.h>
-#include <generated/utsrelease.h>
-#include <linux/version.h>
-#include <linux/proc_ns.h>
+#समावेश <generated/compile.h>
+#समावेश <linux/build-salt.h>
+#समावेश <linux/elfnote-lto.h>
+#समावेश <linux/export.h>
+#समावेश <linux/uts.h>
+#समावेश <linux/utsname.h>
+#समावेश <generated/utsrelease.h>
+#समावेश <linux/version.h>
+#समावेश <linux/proc_ns.h>
 
-struct uts_namespace init_uts_ns = {
+काष्ठा uts_namespace init_uts_ns = अणु
 	.ns.count = REFCOUNT_INIT(2),
-	.name = {
+	.name = अणु
 		.sysname	= UTS_SYSNAME,
 		.nodename	= UTS_NODENAME,
 		.release	= UTS_RELEASE,
 		.version	= UTS_VERSION,
 		.machine	= UTS_MACHINE,
-		.domainname	= UTS_DOMAINNAME,
-	},
+		.करोमुख्यname	= UTS_DOMAINNAME,
+	पूर्ण,
 	.user_ns = &init_user_ns,
 	.ns.inum = PROC_UTS_INIT_INO,
-#ifdef CONFIG_UTS_NS
+#अगर_घोषित CONFIG_UTS_NS
 	.ns.ops = &utsns_operations,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 EXPORT_SYMBOL_GPL(init_uts_ns);
 
 /* FIXED STRINGS! Don't touch! */
-const char linux_banner[] =
+स्थिर अक्षर linux_banner[] =
 	"Linux version " UTS_RELEASE " (" LINUX_COMPILE_BY "@"
 	LINUX_COMPILE_HOST ") (" LINUX_COMPILER ") " UTS_VERSION "\n";
 
-const char linux_proc_banner[] =
+स्थिर अक्षर linux_proc_banner[] =
 	"%s version %s"
 	" (" LINUX_COMPILE_BY "@" LINUX_COMPILE_HOST ")"
 	" (" LINUX_COMPILER ") %s\n";

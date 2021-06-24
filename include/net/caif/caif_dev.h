@@ -1,128 +1,129 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#ifndef CAIF_DEV_H_
-#define CAIF_DEV_H_
+#अगर_अघोषित CAIF_DEV_H_
+#घोषणा CAIF_DEV_H_
 
-#include <net/caif/caif_layer.h>
-#include <net/caif/cfcnfg.h>
-#include <net/caif/caif_device.h>
-#include <linux/caif/caif_socket.h>
-#include <linux/if.h>
-#include <linux/net.h>
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/cfcnfg.h>
+#समावेश <net/caअगर/caअगर_device.h>
+#समावेश <linux/caअगर/caअगर_socket.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/net.h>
 
 /**
- * struct caif_param - CAIF parameters.
+ * काष्ठा caअगर_param - CAIF parameters.
  * @size:	Length of data
  * @data:	Binary Data Blob
  */
-struct caif_param {
+काष्ठा caअगर_param अणु
 	u16  size;
 	u8   data[256];
-};
+पूर्ण;
 
 /**
- * struct caif_connect_request - Request data for CAIF channel setup.
+ * काष्ठा caअगर_connect_request - Request data क्रम CAIF channel setup.
  * @protocol:		Type of CAIF protocol to use (at, datagram etc)
  * @sockaddr:		Socket address to connect.
  * @priority:		Priority of the connection.
  * @link_selector:	Link selector (high bandwidth or low latency)
- * @ifindex:		kernel index of the interface.
+ * @अगरindex:		kernel index of the पूर्णांकerface.
  * @param:		Connect Request parameters (CAIF_SO_REQ_PARAM).
  *
- * This struct is used when connecting a CAIF channel.
+ * This काष्ठा is used when connecting a CAIF channel.
  * It contains all CAIF channel configuration options.
  */
-struct caif_connect_request {
-	enum caif_protocol_type protocol;
-	struct sockaddr_caif sockaddr;
-	enum caif_channel_priority priority;
-	enum caif_link_selector link_selector;
-	int ifindex;
-	struct caif_param param;
-};
+काष्ठा caअगर_connect_request अणु
+	क्रमागत caअगर_protocol_type protocol;
+	काष्ठा sockaddr_caअगर sockaddr;
+	क्रमागत caअगर_channel_priority priority;
+	क्रमागत caअगर_link_selector link_selector;
+	पूर्णांक अगरindex;
+	काष्ठा caअगर_param param;
+पूर्ण;
 
 /**
- * caif_connect_client - Connect a client to CAIF Core Stack.
- * @config:		Channel setup parameters, specifying what address
+ * caअगर_connect_client - Connect a client to CAIF Core Stack.
+ * @config:		Channel setup parameters, specअगरying what address
  *			to connect on the Modem.
  * @client_layer:	User implementation of client layer. This layer
  *			MUST have receive and control callback functions
  *			implemented.
- * @ifindex:		Link layer interface index used for this connection.
+ * @अगरindex:		Link layer पूर्णांकerface index used क्रम this connection.
  * @headroom:		Head room needed by CAIF protocol.
  * @tailroom:		Tail room needed by CAIF protocol.
  *
  * This function connects a CAIF channel. The Client must implement
- * the struct cflayer. This layer represents the Client layer and holds
+ * the काष्ठा cflayer. This layer represents the Client layer and holds
  * receive functions and control callback functions. Control callback
- * function will receive information about connect/disconnect responses,
- * flow control etc (see enum caif_control).
- * E.g. CAIF Socket will call this function for each socket it connects
- * and have one client_layer instance for each socket.
+ * function will receive inक्रमmation about connect/disconnect responses,
+ * flow control etc (see क्रमागत caअगर_control).
+ * E.g. CAIF Socket will call this function क्रम each socket it connects
+ * and have one client_layer instance क्रम each socket.
  */
-int caif_connect_client(struct net *net,
-			struct caif_connect_request *conn_req,
-			struct cflayer *client_layer, int *ifindex,
-			int *headroom, int *tailroom);
+पूर्णांक caअगर_connect_client(काष्ठा net *net,
+			काष्ठा caअगर_connect_request *conn_req,
+			काष्ठा cflayer *client_layer, पूर्णांक *अगरindex,
+			पूर्णांक *headroom, पूर्णांक *tailroom);
 
 /**
- * caif_disconnect_client - Disconnects a client from the CAIF stack.
+ * caअगर_disconnect_client - Disconnects a client from the CAIF stack.
  *
  * @client_layer: Client layer to be disconnected.
  */
-int caif_disconnect_client(struct net *net, struct cflayer *client_layer);
+पूर्णांक caअगर_disconnect_client(काष्ठा net *net, काष्ठा cflayer *client_layer);
 
 
 /**
- * caif_client_register_refcnt - register ref-count functions provided by client.
+ * caअगर_client_रेजिस्टर_refcnt - रेजिस्टर ref-count functions provided by client.
  *
  * @adapt_layer: Client layer using CAIF Stack.
  * @hold:	Function provided by client layer increasing ref-count
  * @put:	Function provided by client layer decreasing ref-count
  *
- * Client of the CAIF Stack must register functions for reference counting.
- * These functions are called by the CAIF Stack for every upstream packet,
- * and must therefore be implemented efficiently.
+ * Client of the CAIF Stack must रेजिस्टर functions क्रम reference counting.
+ * These functions are called by the CAIF Stack क्रम every upstream packet,
+ * and must thereक्रमe be implemented efficiently.
  *
- * Client should call caif_free_client when reference count degrease to zero.
+ * Client should call caअगर_मुक्त_client when reference count degrease to zero.
  */
 
-void caif_client_register_refcnt(struct cflayer *adapt_layer,
-					void (*hold)(struct cflayer *lyr),
-					void (*put)(struct cflayer *lyr));
+व्योम caअगर_client_रेजिस्टर_refcnt(काष्ठा cflayer *adapt_layer,
+					व्योम (*hold)(काष्ठा cflayer *lyr),
+					व्योम (*put)(काष्ठा cflayer *lyr));
 /**
- * caif_free_client - Free memory used to manage the client in the CAIF Stack.
+ * caअगर_मुक्त_client - Free memory used to manage the client in the CAIF Stack.
  *
- * @client_layer: Client layer to be removed.
+ * @client_layer: Client layer to be हटाओd.
  *
- * This function must be called from client layer in order to free memory.
+ * This function must be called from client layer in order to मुक्त memory.
  * Caller must guarantee that no packets are in flight upstream when calling
  * this function.
  */
-void caif_free_client(struct cflayer *adap_layer);
+व्योम caअगर_मुक्त_client(काष्ठा cflayer *adap_layer);
 
 /**
- * struct caif_enroll_dev - Enroll a net-device as a CAIF Link layer
+ * काष्ठा caअगर_enroll_dev - Enroll a net-device as a CAIF Link layer
  * @dev:		Network device to enroll.
- * @caifdev:		Configuration information from CAIF Link Layer
+ * @caअगरdev:		Configuration inक्रमmation from CAIF Link Layer
  * @link_support:	Link layer support layer
  * @head_room:		Head room needed by link support layer
  * @layer:		Lowest layer in CAIF stack
- * @rcv_fun:		Receive function for CAIF stack.
+ * @rcv_fun:		Receive function क्रम CAIF stack.
  *
- * This function enroll a CAIF link layer into CAIF Stack and
- * expects the interface to be able to handle CAIF payload.
- * The link_support layer is used to add any Link Layer specific
+ * This function enroll a CAIF link layer पूर्णांकo CAIF Stack and
+ * expects the पूर्णांकerface to be able to handle CAIF payload.
+ * The link_support layer is used to add any Link Layer specअगरic
  * framing.
  */
-int caif_enroll_dev(struct net_device *dev, struct caif_dev_common *caifdev,
-			struct cflayer *link_support, int head_room,
-			struct cflayer **layer, int (**rcv_func)(
-				struct sk_buff *, struct net_device *,
-				struct packet_type *, struct net_device *));
+पूर्णांक caअगर_enroll_dev(काष्ठा net_device *dev, काष्ठा caअगर_dev_common *caअगरdev,
+			काष्ठा cflayer *link_support, पूर्णांक head_room,
+			काष्ठा cflayer **layer, पूर्णांक (**rcv_func)(
+				काष्ठा sk_buff *, काष्ठा net_device *,
+				काष्ठा packet_type *, काष्ठा net_device *));
 
-#endif /* CAIF_DEV_H_ */
+#पूर्ण_अगर /* CAIF_DEV_H_ */

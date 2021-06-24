@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
+ *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
  *
- *	The information in this file is provided "AS IS" without warranty.
+ *	The inक्रमmation in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
@@ -13,126 +14,126 @@
  */
 
 /*
- * typedefs
+ * प्रकारs
  */
 
-typedef	u_long	Counter ;
-typedef u_char	TimeStamp[8] ;
-typedef struct fddi_addr LongAddr ;
-typedef	u_long	Timer_2 ;
-typedef	u_long	Timer ;
-typedef	u_short	ResId ;
-typedef u_short	SMTEnum ;
-typedef	u_char	SMTFlag ;
+प्रकार	u_दीर्घ	Counter ;
+प्रकार u_अक्षर	TimeStamp[8] ;
+प्रकार काष्ठा fddi_addr LongAddr ;
+प्रकार	u_दीर्घ	Timer_2 ;
+प्रकार	u_दीर्घ	Timer ;
+प्रकार	u_लघु	ResId ;
+प्रकार u_लघु	SMTEnum ;
+प्रकार	u_अक्षर	SMTFlag ;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	Counter		count ;
-	TimeStamp	timestamp ;
-} SetCountType ;
+	TimeStamp	बारtamp ;
+पूर्ण SetCountType ;
 
 /*
- * bits for bit string "available_path"
+ * bits क्रम bit string "available_path"
  */
-#define MIB_PATH_P	(1<<0)
-#define MIB_PATH_S	(1<<1)
-#define MIB_PATH_L	(1<<2)
+#घोषणा MIB_PATH_P	(1<<0)
+#घोषणा MIB_PATH_S	(1<<1)
+#घोषणा MIB_PATH_L	(1<<2)
 
 /*
- * bits for bit string PermittedPaths & RequestedPaths (SIZE(8))
+ * bits क्रम bit string PermittedPaths & RequestedPaths (SIZE(8))
  */
-#define MIB_P_PATH_LOCAL	(1<<0)
-#define MIB_P_PATH_SEC_ALTER	(1<<1)
-#define MIB_P_PATH_PRIM_ALTER	(1<<2)
-#define MIB_P_PATH_CON_ALTER	(1<<3)
-#define MIB_P_PATH_SEC_PREFER	(1<<4)
-#define MIB_P_PATH_PRIM_PREFER	(1<<5)
-#define MIB_P_PATH_CON_PREFER	(1<<6)
-#define MIB_P_PATH_THRU		(1<<7)
+#घोषणा MIB_P_PATH_LOCAL	(1<<0)
+#घोषणा MIB_P_PATH_SEC_ALTER	(1<<1)
+#घोषणा MIB_P_PATH_PRIM_ALTER	(1<<2)
+#घोषणा MIB_P_PATH_CON_ALTER	(1<<3)
+#घोषणा MIB_P_PATH_SEC_PREFER	(1<<4)
+#घोषणा MIB_P_PATH_PRIM_PREFER	(1<<5)
+#घोषणा MIB_P_PATH_CON_PREFER	(1<<6)
+#घोषणा MIB_P_PATH_THRU		(1<<7)
 
 /*
- * enum current path
+ * क्रमागत current path
  */
-#define MIB_PATH_ISOLATED	0
-#define MIB_PATH_LOCAL		1
-#define MIB_PATH_SECONDARY	2
-#define MIB_PATH_PRIMARY	3
-#define MIB_PATH_CONCATENATED	4
-#define MIB_PATH_THRU		5
+#घोषणा MIB_PATH_ISOLATED	0
+#घोषणा MIB_PATH_LOCAL		1
+#घोषणा MIB_PATH_SECONDARY	2
+#घोषणा MIB_PATH_PRIMARY	3
+#घोषणा MIB_PATH_CONCATENATED	4
+#घोषणा MIB_PATH_THRU		5
 
 /*
- * enum PMDClass
+ * क्रमागत PMDClass
  */
-#define MIB_PMDCLASS_MULTI	0
-#define MIB_PMDCLASS_SINGLE1	1
-#define MIB_PMDCLASS_SINGLE2	2
-#define MIB_PMDCLASS_SONET	3
-#define MIB_PMDCLASS_LCF	4
-#define MIB_PMDCLASS_TP		5
-#define MIB_PMDCLASS_UNKNOWN	6
-#define MIB_PMDCLASS_UNSPEC	7
+#घोषणा MIB_PMDCLASS_MULTI	0
+#घोषणा MIB_PMDCLASS_SINGLE1	1
+#घोषणा MIB_PMDCLASS_SINGLE2	2
+#घोषणा MIB_PMDCLASS_SONET	3
+#घोषणा MIB_PMDCLASS_LCF	4
+#घोषणा MIB_PMDCLASS_TP		5
+#घोषणा MIB_PMDCLASS_UNKNOWN	6
+#घोषणा MIB_PMDCLASS_UNSPEC	7
 
 /*
- * enum SMTStationStatus
+ * क्रमागत SMTStationStatus
  */
-#define MIB_SMT_STASTA_CON	0
-#define MIB_SMT_STASTA_SEPA	1
-#define MIB_SMT_STASTA_THRU	2
+#घोषणा MIB_SMT_STASTA_CON	0
+#घोषणा MIB_SMT_STASTA_SEPA	1
+#घोषणा MIB_SMT_STASTA_THRU	2
 
 
-struct fddi_mib {
+काष्ठा fddi_mib अणु
 	/*
-	 * private
+	 * निजी
 	 */
-	u_char			fddiPRPMFPasswd[8] ;
-	struct smt_sid		fddiPRPMFStation ;
+	u_अक्षर			fddiPRPMFPasswd[8] ;
+	काष्ठा smt_sid		fddiPRPMFStation ;
 
-#ifdef	ESS
+#अगर_घोषित	ESS
 	/*
-	 * private variables for static allocation of the
+	 * निजी variables क्रम अटल allocation of the
 	 * End Station Support
 	 */
-	u_long	fddiESSPayload ;	/* payload for static alloc */
-	u_long	fddiESSOverhead ;	/* frame ov for static alloc */
-	u_long	fddiESSMaxTNeg ;	/* maximum of T-NEG */
-	u_long	fddiESSMinSegmentSize ;	/* min size of the sync frames */
-	u_long	fddiESSCategory ;	/* category for the Alloc req */
-	short	fddiESSSynchTxMode ;	/* send all LLC frames as sync */
-#endif	/* ESS */
-#ifdef	SBA
+	u_दीर्घ	fddiESSPayload ;	/* payload क्रम अटल alloc */
+	u_दीर्घ	fddiESSOverhead ;	/* frame ov क्रम अटल alloc */
+	u_दीर्घ	fddiESSMaxTNeg ;	/* maximum of T-NEG */
+	u_दीर्घ	fddiESSMinSegmentSize ;	/* min size of the sync frames */
+	u_दीर्घ	fddiESSCategory ;	/* category क्रम the Alloc req */
+	लघु	fddiESSSynchTxMode ;	/* send all LLC frames as sync */
+#पूर्ण_अगर	/* ESS */
+#अगर_घोषित	SBA
 	/*
-	 * private variables for the Synchronous Bandwidth Allocator
+	 * निजी variables क्रम the Synchronous Bandwidth Allocator
 	 */
-	char	fddiSBACommand ;	/* holds the parsed SBA cmd */
-	u_char	fddiSBAAvailable ;	/* SBA allocatable value */
-#endif	/* SBA */
+	अक्षर	fddiSBACommand ;	/* holds the parsed SBA cmd */
+	u_अक्षर	fddiSBAAvailable ;	/* SBA allocatable value */
+#पूर्ण_अगर	/* SBA */
 
 	/*
 	 * SMT standard mib
 	 */
-	struct smt_sid		fddiSMTStationId ;
-	u_short			fddiSMTOpVersionId ;
-	u_short			fddiSMTHiVersionId ;
-	u_short			fddiSMTLoVersionId ;
-	u_char			fddiSMTManufacturerData[32] ;
-	u_char			fddiSMTUserData[32] ;
-	u_short			fddiSMTMIBVersionId ;
+	काष्ठा smt_sid		fddiSMTStationId ;
+	u_लघु			fddiSMTOpVersionId ;
+	u_लघु			fddiSMTHiVersionId ;
+	u_लघु			fddiSMTLoVersionId ;
+	u_अक्षर			fddiSMTManufacturerData[32] ;
+	u_अक्षर			fddiSMTUserData[32] ;
+	u_लघु			fddiSMTMIBVersionId ;
 
 	/*
 	 * ConfigGrp
 	 */
-	u_char			fddiSMTMac_Ct ;
-	u_char			fddiSMTNonMaster_Ct ;
-	u_char			fddiSMTMaster_Ct ;
-	u_char			fddiSMTAvailablePaths ;
-	u_short			fddiSMTConfigCapabilities ;
-	u_short			fddiSMTConfigPolicy ;
-	u_short			fddiSMTConnectionPolicy ;
-	u_short			fddiSMTTT_Notify ;
-	u_char			fddiSMTStatRptPolicy ;
-	u_long			fddiSMTTrace_MaxExpiration ;
-	u_short			fddiSMTPORTIndexes[NUMPHYS] ;
-	u_short			fddiSMTMACIndexes ;
-	u_char			fddiSMTBypassPresent ;
+	u_अक्षर			fddiSMTMac_Ct ;
+	u_अक्षर			fddiSMTNonMaster_Ct ;
+	u_अक्षर			fddiSMTMaster_Ct ;
+	u_अक्षर			fddiSMTAvailablePaths ;
+	u_लघु			fddiSMTConfigCapabilities ;
+	u_लघु			fddiSMTConfigPolicy ;
+	u_लघु			fddiSMTConnectionPolicy ;
+	u_लघु			fddiSMTTT_Notअगरy ;
+	u_अक्षर			fddiSMTStatRptPolicy ;
+	u_दीर्घ			fddiSMTTrace_MaxExpiration ;
+	u_लघु			fddiSMTPORTIndexes[NUMPHYS] ;
+	u_लघु			fddiSMTMACIndexes ;
+	u_अक्षर			fddiSMTBypassPresent ;
 
 	/*
 	 * StatusGrp
@@ -140,8 +141,8 @@ struct fddi_mib {
 	SMTEnum			fddiSMTECMState ;
 	SMTEnum			fddiSMTCF_State ;
 	SMTEnum			fddiSMTStationStatus ;
-	u_char			fddiSMTRemoteDisconnectFlag ;
-	u_char			fddiSMTPeerWrapFlag ;
+	u_अक्षर			fddiSMTRemoteDisconnectFlag ;
+	u_अक्षर			fddiSMTPeerWrapFlag ;
 
 	/*
 	 * MIBOperationGrp
@@ -149,25 +150,25 @@ struct fddi_mib {
 	TimeStamp		fddiSMTTimeStamp ;
 	TimeStamp		fddiSMTTransitionTimeStamp ;
 	SetCountType		fddiSMTSetCount ;
-	struct smt_sid		fddiSMTLastSetStationId ;
+	काष्ठा smt_sid		fddiSMTLastSetStationId ;
 
-	struct fddi_mib_m {
-		u_short		fddiMACFrameStatusFunctions ;
+	काष्ठा fddi_mib_m अणु
+		u_लघु		fddiMACFrameStatusFunctions ;
 		Timer_2		fddiMACT_MaxCapabilitiy ;
 		Timer_2		fddiMACTVXCapabilitiy ;
 
 		/* ConfigGrp */
-		u_char		fddiMACMultiple_N ;	/* private */
-		u_char		fddiMACMultiple_P ;	/* private */
-		u_char		fddiMACDuplicateAddressCond ;/* private */
-		u_char		fddiMACAvailablePaths ;
-		u_short		fddiMACCurrentPath ;
+		u_अक्षर		fddiMACMultiple_N ;	/* निजी */
+		u_अक्षर		fddiMACMultiple_P ;	/* निजी */
+		u_अक्षर		fddiMACDuplicateAddressCond ;/* निजी */
+		u_अक्षर		fddiMACAvailablePaths ;
+		u_लघु		fddiMACCurrentPath ;
 		LongAddr	fddiMACUpstreamNbr ;
 		LongAddr	fddiMACDownstreamNbr ;
 		LongAddr	fddiMACOldUpstreamNbr ;
 		LongAddr	fddiMACOldDownstreamNbr ;
 		SMTEnum		fddiMACDupAddressTest ;
-		u_short		fddiMACRequestedPaths ;
+		u_लघु		fddiMACRequestedPaths ;
 		SMTEnum		fddiMACDownstreamPORTType ;
 		ResId		fddiMACIndex ;
 
@@ -175,14 +176,14 @@ struct fddi_mib {
 		LongAddr	fddiMACSMTAddress ;
 
 		/* OperationGrp */
-		Timer_2		fddiMACT_Min ;	/* private */
+		Timer_2		fddiMACT_Min ;	/* निजी */
 		Timer_2		fddiMACT_ReqMIB ;
-		Timer_2		fddiMACT_Req ;	/* private */
+		Timer_2		fddiMACT_Req ;	/* निजी */
 		Timer_2		fddiMACT_Neg ;
 		Timer_2		fddiMACT_MaxMIB ;
-		Timer_2		fddiMACT_Max ;	/* private */
+		Timer_2		fddiMACT_Max ;	/* निजी */
 		Timer_2		fddiMACTvxValueMIB ;
-		Timer_2		fddiMACTvxValue ; /* private */
+		Timer_2		fddiMACTvxValue ; /* निजी */
 		Timer_2		fddiMACT_Pri0 ;
 		Timer_2		fddiMACT_Pri1 ;
 		Timer_2		fddiMACT_Pri2 ;
@@ -202,10 +203,10 @@ struct fddi_mib {
 		Counter		fddiMACNotCopied_Ct ;
 		Counter		fddiMACRingOp_Ct ;
 
-		Counter		fddiMACSMTCopied_Ct ;		/* private */
-		Counter		fddiMACSMTTransmit_Ct ;		/* private */
+		Counter		fddiMACSMTCopied_Ct ;		/* निजी */
+		Counter		fddiMACSMTTransmit_Ct ;		/* निजी */
 
-		/* private for delta ratio */
+		/* निजी क्रम delta ratio */
 		Counter		fddiMACOld_Frame_Ct ;
 		Counter		fddiMACOld_Copied_Ct ;
 		Counter		fddiMACOld_Error_Ct ;
@@ -213,12 +214,12 @@ struct fddi_mib {
 		Counter		fddiMACOld_NotCopied_Ct ;
 
 		/* FrameErrorConditionGrp */
-		u_short		fddiMACFrameErrorThreshold ;
-		u_short		fddiMACFrameErrorRatio ;
+		u_लघु		fddiMACFrameErrorThreshold ;
+		u_लघु		fddiMACFrameErrorRatio ;
 
 		/* NotCopiedConditionGrp */
-		u_short		fddiMACNotCopiedThreshold ;
-		u_short		fddiMACNotCopiedRatio ;
+		u_लघु		fddiMACNotCopiedThreshold ;
+		u_लघु		fddiMACNotCopiedRatio ;
 
 		/* StatusGrp */
 		SMTEnum		fddiMACRMTState ;
@@ -230,50 +231,50 @@ struct fddi_mib {
 		SMTFlag		fddiMACHardwarePresent ;
 		SMTFlag		fddiMACMA_UnitdataEnable ;
 
-	} m[NUMMACS] ;
-#define MAC0	0
+	पूर्ण m[NUMMACS] ;
+#घोषणा MAC0	0
 
-	struct fddi_mib_a {
+	काष्ठा fddi_mib_a अणु
 		ResId		fddiPATHIndex ;
-		u_long		fddiPATHSbaPayload ;
-		u_long		fddiPATHSbaOverhead ;
+		u_दीर्घ		fddiPATHSbaPayload ;
+		u_दीर्घ		fddiPATHSbaOverhead ;
 		/* fddiPATHConfiguration is built on demand */
-		/* u_long		fddiPATHConfiguration ; */
+		/* u_दीर्घ		fddiPATHConfiguration ; */
 		Timer		fddiPATHT_Rmode ;
-		u_long		fddiPATHSbaAvailable ;
+		u_दीर्घ		fddiPATHSbaAvailable ;
 		Timer_2		fddiPATHTVXLowerBound ;
 		Timer_2		fddiPATHT_MaxLowerBound ;
 		Timer_2		fddiPATHMaxT_Req ;
-	} a[NUMPATHS] ;
-#define PATH0	0
+	पूर्ण a[NUMPATHS] ;
+#घोषणा PATH0	0
 
-	struct fddi_mib_p {
+	काष्ठा fddi_mib_p अणु
 		/* ConfigGrp */
 		SMTEnum		fddiPORTMy_Type ;
 		SMTEnum		fddiPORTNeighborType ;
-		u_char		fddiPORTConnectionPolicies ;
-		struct {
-			u_char	T_val ;
-			u_char	R_val ;
-		} fddiPORTMacIndicated ;
+		u_अक्षर		fddiPORTConnectionPolicies ;
+		काष्ठा अणु
+			u_अक्षर	T_val ;
+			u_अक्षर	R_val ;
+		पूर्ण fddiPORTMacIndicated ;
 		SMTEnum		fddiPORTCurrentPath ;
-		/* must be 4: is 32 bit in SMT format
+		/* must be 4: is 32 bit in SMT क्रमmat
 		 * indices :
 		 *	1	none
 		 *	2	tree
 		 *	3	peer
 		 */
-		u_char		fddiPORTRequestedPaths[4] ;
-		u_short		fddiPORTMACPlacement ;
-		u_char		fddiPORTAvailablePaths ;
-		u_char		fddiPORTConnectionCapabilities ;
+		u_अक्षर		fddiPORTRequestedPaths[4] ;
+		u_लघु		fddiPORTMACPlacement ;
+		u_अक्षर		fddiPORTAvailablePaths ;
+		u_अक्षर		fddiPORTConnectionCapabilities ;
 		SMTEnum		fddiPORTPMDClass ;
 		ResId		fddiPORTIndex ;
 
 		/* OperationGrp */
-		SMTEnum		fddiPORTMaint_LS ;
+		SMTEnum		fddiPORTMaपूर्णांक_LS ;
 		SMTEnum		fddiPORTPC_LS ;
-		u_char		fddiPORTBS_Flag ;
+		u_अक्षर		fddiPORTBS_Flag ;
 
 		/* ErrorCtrsGrp */
 		Counter		fddiPORTLCTFail_Ct ;
@@ -283,23 +284,23 @@ struct fddi_mib {
 		/* LerGrp */
 		Counter		fddiPORTLem_Reject_Ct ;
 		Counter		fddiPORTLem_Ct ;
-		u_char		fddiPORTLer_Estimate ;
-		u_char		fddiPORTLer_Cutoff ;
-		u_char		fddiPORTLer_Alarm ;
+		u_अक्षर		fddiPORTLer_Estimate ;
+		u_अक्षर		fddiPORTLer_Cutoff ;
+		u_अक्षर		fddiPORTLer_Alarm ;
 
 		/* StatusGrp */
 		SMTEnum		fddiPORTConnectState ;
 		SMTEnum		fddiPORTPCMState ;	/* real value */
-		SMTEnum		fddiPORTPCMStateX ;	/* value for MIB */
+		SMTEnum		fddiPORTPCMStateX ;	/* value क्रम MIB */
 		SMTEnum		fddiPORTPC_Withhold ;
 		SMTFlag		fddiPORTHardwarePresent ;
-		u_char		fddiPORTLerFlag ;
+		u_अक्षर		fddiPORTLerFlag ;
 
-		u_char		fddiPORTMultiple_U ;	/* private */
-		u_char		fddiPORTMultiple_P ;	/* private */
-		u_char		fddiPORTEB_Condition ;	/* private */
-	} p[NUMPHYS] ;
-	struct {
+		u_अक्षर		fddiPORTMultiple_U ;	/* निजी */
+		u_अक्षर		fddiPORTMultiple_P ;	/* निजी */
+		u_अक्षर		fddiPORTEB_Condition ;	/* निजी */
+	पूर्ण p[NUMPHYS] ;
+	काष्ठा अणु
 		Counter		fddiPRIVECF_Req_Rx ;	/* ECF req received */
 		Counter		fddiPRIVECF_Reply_Rx ;	/* ECF repl received */
 		Counter		fddiPRIVECF_Req_Tx ;	/* ECF req transm */
@@ -308,38 +309,38 @@ struct fddi_mib {
 		Counter		fddiPRIVPMF_Set_Rx ;	/* PMF Set rec */
 		Counter		fddiPRIVRDF_Rx ;	/* RDF received */
 		Counter		fddiPRIVRDF_Tx ;	/* RDF transmitted */
-	} priv ;
-} ;
+	पूर्ण priv ;
+पूर्ण ;
 
 /*
- * OIDs for statistics
+ * OIDs क्रम statistics
  */
-#define	SMT_OID_CF_STATE	1	/* fddiSMTCF_State */
-#define	SMT_OID_PCM_STATE_A	2	/* fddiPORTPCMState port A */
-#define	SMT_OID_PCM_STATE_B	17	/* fddiPORTPCMState port B */
-#define	SMT_OID_RMT_STATE	3	/* fddiMACRMTState */
-#define	SMT_OID_UNA		4	/* fddiMACUpstreamNbr */
-#define	SMT_OID_DNA		5	/* fddiMACOldDownstreamNbr */
-#define	SMT_OID_ERROR_CT	6	/* fddiMACError_Ct */
-#define	SMT_OID_LOST_CT		7	/* fddiMACLost_Ct */
-#define	SMT_OID_LEM_CT		8	/* fddiPORTLem_Ct */
-#define	SMT_OID_LEM_CT_A	11	/* fddiPORTLem_Ct port A */
-#define	SMT_OID_LEM_CT_B	12	/* fddiPORTLem_Ct port B */
-#define	SMT_OID_LCT_FAIL_CT	9	/* fddiPORTLCTFail_Ct */
-#define	SMT_OID_LCT_FAIL_CT_A	13	/* fddiPORTLCTFail_Ct port A */
-#define	SMT_OID_LCT_FAIL_CT_B	14	/* fddiPORTLCTFail_Ct port B */
-#define	SMT_OID_LEM_REJECT_CT	10	/* fddiPORTLem_Reject_Ct */
-#define	SMT_OID_LEM_REJECT_CT_A	15	/* fddiPORTLem_Reject_Ct port A */
-#define	SMT_OID_LEM_REJECT_CT_B	16	/* fddiPORTLem_Reject_Ct port B */
+#घोषणा	SMT_OID_CF_STATE	1	/* fddiSMTCF_State */
+#घोषणा	SMT_OID_PCM_STATE_A	2	/* fddiPORTPCMState port A */
+#घोषणा	SMT_OID_PCM_STATE_B	17	/* fddiPORTPCMState port B */
+#घोषणा	SMT_OID_RMT_STATE	3	/* fddiMACRMTState */
+#घोषणा	SMT_OID_UNA		4	/* fddiMACUpstreamNbr */
+#घोषणा	SMT_OID_DNA		5	/* fddiMACOldDownstreamNbr */
+#घोषणा	SMT_OID_ERROR_CT	6	/* fddiMACError_Ct */
+#घोषणा	SMT_OID_LOST_CT		7	/* fddiMACLost_Ct */
+#घोषणा	SMT_OID_LEM_CT		8	/* fddiPORTLem_Ct */
+#घोषणा	SMT_OID_LEM_CT_A	11	/* fddiPORTLem_Ct port A */
+#घोषणा	SMT_OID_LEM_CT_B	12	/* fddiPORTLem_Ct port B */
+#घोषणा	SMT_OID_LCT_FAIL_CT	9	/* fddiPORTLCTFail_Ct */
+#घोषणा	SMT_OID_LCT_FAIL_CT_A	13	/* fddiPORTLCTFail_Ct port A */
+#घोषणा	SMT_OID_LCT_FAIL_CT_B	14	/* fddiPORTLCTFail_Ct port B */
+#घोषणा	SMT_OID_LEM_REJECT_CT	10	/* fddiPORTLem_Reject_Ct */
+#घोषणा	SMT_OID_LEM_REJECT_CT_A	15	/* fddiPORTLem_Reject_Ct port A */
+#घोषणा	SMT_OID_LEM_REJECT_CT_B	16	/* fddiPORTLem_Reject_Ct port B */
 
 /*
  * SK MIB
  */
-#define SMT_OID_ECF_REQ_RX	20	/* ECF requests received */
-#define SMT_OID_ECF_REPLY_RX	21	/* ECF replies received */
-#define SMT_OID_ECF_REQ_TX	22	/* ECF requests transmitted */
-#define SMT_OID_ECF_REPLY_TX	23	/* ECF replies transmitted */
-#define SMT_OID_PMF_GET_RX	24	/* PMF get requests received */
-#define SMT_OID_PMF_SET_RX	25	/* PMF set requests received */
-#define SMT_OID_RDF_RX		26	/* RDF received */
-#define SMT_OID_RDF_TX		27	/* RDF transmitted */
+#घोषणा SMT_OID_ECF_REQ_RX	20	/* ECF requests received */
+#घोषणा SMT_OID_ECF_REPLY_RX	21	/* ECF replies received */
+#घोषणा SMT_OID_ECF_REQ_TX	22	/* ECF requests transmitted */
+#घोषणा SMT_OID_ECF_REPLY_TX	23	/* ECF replies transmitted */
+#घोषणा SMT_OID_PMF_GET_RX	24	/* PMF get requests received */
+#घोषणा SMT_OID_PMF_SET_RX	25	/* PMF set requests received */
+#घोषणा SMT_OID_RDF_RX		26	/* RDF received */
+#घोषणा SMT_OID_RDF_TX		27	/* RDF transmitted */

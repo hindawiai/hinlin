@@ -1,40 +1,41 @@
+<शैली गुरु>
 /*
- * videobuf2-memops.h - generic memory handling routines for videobuf2
+ * videobuf2-memops.h - generic memory handling routines क्रम videobuf2
  *
  * Copyright (C) 2010 Samsung Electronics
  *
  * Author: Pawel Osciak <pawel@osciak.com>
  *	   Marek Szyprowski <m.szyprowski@samsung.com>
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#ifndef _MEDIA_VIDEOBUF2_MEMOPS_H
-#define _MEDIA_VIDEOBUF2_MEMOPS_H
+#अगर_अघोषित _MEDIA_VIDEOBUF2_MEMOPS_H
+#घोषणा _MEDIA_VIDEOBUF2_MEMOPS_H
 
-#include <media/videobuf2-v4l2.h>
-#include <linux/mm.h>
-#include <linux/refcount.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/refcount.h>
 
 /**
- * struct vb2_vmarea_handler - common vma refcount tracking handler.
+ * काष्ठा vb2_vmarea_handler - common vma refcount tracking handler.
  *
- * @refcount:	pointer to &refcount_t entry in the buffer.
+ * @refcount:	poपूर्णांकer to &refcount_t entry in the buffer.
  * @put:	callback to function that decreases buffer refcount.
- * @arg:	argument for @put callback.
+ * @arg:	argument क्रम @put callback.
  */
-struct vb2_vmarea_handler {
+काष्ठा vb2_vmarea_handler अणु
 	refcount_t		*refcount;
-	void			(*put)(void *arg);
-	void			*arg;
-};
+	व्योम			(*put)(व्योम *arg);
+	व्योम			*arg;
+पूर्ण;
 
-extern const struct vm_operations_struct vb2_common_vm_ops;
+बाह्य स्थिर काष्ठा vm_operations_काष्ठा vb2_common_vm_ops;
 
-struct frame_vector *vb2_create_framevec(unsigned long start,
-					 unsigned long length);
-void vb2_destroy_framevec(struct frame_vector *vec);
+काष्ठा frame_vector *vb2_create_framevec(अचिन्हित दीर्घ start,
+					 अचिन्हित दीर्घ length);
+व्योम vb2_destroy_framevec(काष्ठा frame_vector *vec);
 
-#endif
+#पूर्ण_अगर

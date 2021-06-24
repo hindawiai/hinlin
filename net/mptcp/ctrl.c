@@ -1,145 +1,146 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Multipath TCP
  *
  * Copyright (c) 2019, Tessares SA.
  */
 
-#include <linux/sysctl.h>
+#समावेश <linux/sysctl.h>
 
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
 
-#include "protocol.h"
+#समावेश "protocol.h"
 
-#define MPTCP_SYSCTL_PATH "net/mptcp"
+#घोषणा MPTCP_SYSCTL_PATH "net/mptcp"
 
-static int mptcp_pernet_id;
-struct mptcp_pernet {
-	struct ctl_table_header *ctl_table_hdr;
+अटल पूर्णांक mptcp_pernet_id;
+काष्ठा mptcp_pernet अणु
+	काष्ठा ctl_table_header *ctl_table_hdr;
 
-	int mptcp_enabled;
-	unsigned int add_addr_timeout;
-};
+	पूर्णांक mptcp_enabled;
+	अचिन्हित पूर्णांक add_addr_समयout;
+पूर्ण;
 
-static struct mptcp_pernet *mptcp_get_pernet(struct net *net)
-{
-	return net_generic(net, mptcp_pernet_id);
-}
+अटल काष्ठा mptcp_pernet *mptcp_get_pernet(काष्ठा net *net)
+अणु
+	वापस net_generic(net, mptcp_pernet_id);
+पूर्ण
 
-int mptcp_is_enabled(struct net *net)
-{
-	return mptcp_get_pernet(net)->mptcp_enabled;
-}
+पूर्णांक mptcp_is_enabled(काष्ठा net *net)
+अणु
+	वापस mptcp_get_pernet(net)->mptcp_enabled;
+पूर्ण
 
-unsigned int mptcp_get_add_addr_timeout(struct net *net)
-{
-	return mptcp_get_pernet(net)->add_addr_timeout;
-}
+अचिन्हित पूर्णांक mptcp_get_add_addr_समयout(काष्ठा net *net)
+अणु
+	वापस mptcp_get_pernet(net)->add_addr_समयout;
+पूर्ण
 
-static struct ctl_table mptcp_sysctl_table[] = {
-	{
+अटल काष्ठा ctl_table mptcp_sysctl_table[] = अणु
+	अणु
 		.procname = "enabled",
-		.maxlen = sizeof(int),
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
 		/* users with CAP_NET_ADMIN or root (not and) can change this
 		 * value, same as other sysctl or the 'net' tree.
 		 */
-		.proc_handler = proc_dointvec,
-	},
-	{
+		.proc_handler = proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणु
 		.procname = "add_addr_timeout",
-		.maxlen = sizeof(unsigned int),
+		.maxlen = माप(अचिन्हित पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_jiffies,
-	},
-	{}
-};
+		.proc_handler = proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void mptcp_pernet_set_defaults(struct mptcp_pernet *pernet)
-{
+अटल व्योम mptcp_pernet_set_शेषs(काष्ठा mptcp_pernet *pernet)
+अणु
 	pernet->mptcp_enabled = 1;
-	pernet->add_addr_timeout = TCP_RTO_MAX;
-}
+	pernet->add_addr_समयout = TCP_RTO_MAX;
+पूर्ण
 
-static int mptcp_pernet_new_table(struct net *net, struct mptcp_pernet *pernet)
-{
-	struct ctl_table_header *hdr;
-	struct ctl_table *table;
+अटल पूर्णांक mptcp_pernet_new_table(काष्ठा net *net, काष्ठा mptcp_pernet *pernet)
+अणु
+	काष्ठा ctl_table_header *hdr;
+	काष्ठा ctl_table *table;
 
 	table = mptcp_sysctl_table;
-	if (!net_eq(net, &init_net)) {
-		table = kmemdup(table, sizeof(mptcp_sysctl_table), GFP_KERNEL);
-		if (!table)
-			goto err_alloc;
-	}
+	अगर (!net_eq(net, &init_net)) अणु
+		table = kmemdup(table, माप(mptcp_sysctl_table), GFP_KERNEL);
+		अगर (!table)
+			जाओ err_alloc;
+	पूर्ण
 
 	table[0].data = &pernet->mptcp_enabled;
-	table[1].data = &pernet->add_addr_timeout;
+	table[1].data = &pernet->add_addr_समयout;
 
-	hdr = register_net_sysctl(net, MPTCP_SYSCTL_PATH, table);
-	if (!hdr)
-		goto err_reg;
+	hdr = रेजिस्टर_net_sysctl(net, MPTCP_SYSCTL_PATH, table);
+	अगर (!hdr)
+		जाओ err_reg;
 
 	pernet->ctl_table_hdr = hdr;
 
-	return 0;
+	वापस 0;
 
 err_reg:
-	if (!net_eq(net, &init_net))
-		kfree(table);
+	अगर (!net_eq(net, &init_net))
+		kमुक्त(table);
 err_alloc:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void mptcp_pernet_del_table(struct mptcp_pernet *pernet)
-{
-	struct ctl_table *table = pernet->ctl_table_hdr->ctl_table_arg;
+अटल व्योम mptcp_pernet_del_table(काष्ठा mptcp_pernet *pernet)
+अणु
+	काष्ठा ctl_table *table = pernet->ctl_table_hdr->ctl_table_arg;
 
-	unregister_net_sysctl_table(pernet->ctl_table_hdr);
+	unरेजिस्टर_net_sysctl_table(pernet->ctl_table_hdr);
 
-	kfree(table);
-}
+	kमुक्त(table);
+पूर्ण
 
-static int __net_init mptcp_net_init(struct net *net)
-{
-	struct mptcp_pernet *pernet = mptcp_get_pernet(net);
+अटल पूर्णांक __net_init mptcp_net_init(काष्ठा net *net)
+अणु
+	काष्ठा mptcp_pernet *pernet = mptcp_get_pernet(net);
 
-	mptcp_pernet_set_defaults(pernet);
+	mptcp_pernet_set_शेषs(pernet);
 
-	return mptcp_pernet_new_table(net, pernet);
-}
+	वापस mptcp_pernet_new_table(net, pernet);
+पूर्ण
 
 /* Note: the callback will only be called per extra netns */
-static void __net_exit mptcp_net_exit(struct net *net)
-{
-	struct mptcp_pernet *pernet = mptcp_get_pernet(net);
+अटल व्योम __net_निकास mptcp_net_निकास(काष्ठा net *net)
+अणु
+	काष्ठा mptcp_pernet *pernet = mptcp_get_pernet(net);
 
 	mptcp_pernet_del_table(pernet);
-}
+पूर्ण
 
-static struct pernet_operations mptcp_pernet_ops = {
+अटल काष्ठा pernet_operations mptcp_pernet_ops = अणु
 	.init = mptcp_net_init,
-	.exit = mptcp_net_exit,
+	.निकास = mptcp_net_निकास,
 	.id = &mptcp_pernet_id,
-	.size = sizeof(struct mptcp_pernet),
-};
+	.size = माप(काष्ठा mptcp_pernet),
+पूर्ण;
 
-void __init mptcp_init(void)
-{
+व्योम __init mptcp_init(व्योम)
+अणु
 	mptcp_join_cookie_init();
 	mptcp_proto_init();
 
-	if (register_pernet_subsys(&mptcp_pernet_ops) < 0)
+	अगर (रेजिस्टर_pernet_subsys(&mptcp_pernet_ops) < 0)
 		panic("Failed to register MPTCP pernet subsystem.\n");
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_MPTCP_IPV6)
-int __init mptcpv6_init(void)
-{
-	int err;
+#अगर IS_ENABLED(CONFIG_MPTCP_IPV6)
+पूर्णांक __init mptcpv6_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = mptcp_proto_v6_init();
 
-	return err;
-}
-#endif
+	वापस err;
+पूर्ण
+#पूर्ण_अगर

@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * An I2C driver for Ricoh RS5C372, R2025S/D and RV5C38[67] RTCs
+ * An I2C driver क्रम Ricoh RS5C372, R2025S/D and RV5C38[67] RTCs
  *
- * Copyright (C) 2005 Pavel Mironchik <pmironchik@optifacio.net>
+ * Copyright (C) 2005 Pavel Mironchik <pmironchik@optअगरacio.net>
  * Copyright (C) 2006 Tower Technologies
  * Copyright (C) 2008 Paul Mundt
  */
 
-#include <linux/i2c.h>
-#include <linux/rtc.h>
-#include <linux/bcd.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
 
 /*
- * Ricoh has a family of I2C based RTCs, which differ only slightly from
- * each other.  Differences center on pinout (e.g. how many interrupts,
- * output clock, etc) and how the control registers are used.  The '372
- * is significant only because that's the one this driver first supported.
+ * Ricoh has a family of I2C based RTCs, which dअगरfer only slightly from
+ * each other.  Dअगरferences center on pinout (e.g. how many पूर्णांकerrupts,
+ * output घड़ी, etc) and how the control रेजिस्टरs are used.  The '372
+ * is signअगरicant only because that's the one this driver first supported.
  */
-#define RS5C372_REG_SECS	0
-#define RS5C372_REG_MINS	1
-#define RS5C372_REG_HOURS	2
-#define RS5C372_REG_WDAY	3
-#define RS5C372_REG_DAY		4
-#define RS5C372_REG_MONTH	5
-#define RS5C372_REG_YEAR	6
-#define RS5C372_REG_TRIM	7
+#घोषणा RS5C372_REG_SECS	0
+#घोषणा RS5C372_REG_MINS	1
+#घोषणा RS5C372_REG_HOURS	2
+#घोषणा RS5C372_REG_WDAY	3
+#घोषणा RS5C372_REG_DAY		4
+#घोषणा RS5C372_REG_MONTH	5
+#घोषणा RS5C372_REG_YEAR	6
+#घोषणा RS5C372_REG_TRIM	7
 #	define RS5C372_TRIM_XSL		0x80
 #	define RS5C372_TRIM_MASK	0x7F
 
-#define RS5C_REG_ALARM_A_MIN	8			/* or ALARM_W */
-#define RS5C_REG_ALARM_A_HOURS	9
-#define RS5C_REG_ALARM_A_WDAY	10
+#घोषणा RS5C_REG_ALARM_A_MIN	8			/* or ALARM_W */
+#घोषणा RS5C_REG_ALARM_A_HOURS	9
+#घोषणा RS5C_REG_ALARM_A_WDAY	10
 
-#define RS5C_REG_ALARM_B_MIN	11			/* or ALARM_D */
-#define RS5C_REG_ALARM_B_HOURS	12
-#define RS5C_REG_ALARM_B_WDAY	13			/* (ALARM_B only) */
+#घोषणा RS5C_REG_ALARM_B_MIN	11			/* or ALARM_D */
+#घोषणा RS5C_REG_ALARM_B_HOURS	12
+#घोषणा RS5C_REG_ALARM_B_WDAY	13			/* (ALARM_B only) */
 
-#define RS5C_REG_CTRL1		14
+#घोषणा RS5C_REG_CTRL1		14
 #	define RS5C_CTRL1_AALE		(1 << 7)	/* or WALE */
 #	define RS5C_CTRL1_BALE		(1 << 6)	/* or DALE */
 #	define RV5C387_CTRL1_24		(1 << 5)
@@ -47,22 +48,22 @@
 #	define RS5C_CTRL1_CT_MASK	(7 << 0)
 #	define RS5C_CTRL1_CT0		(0 << 0)	/* no periodic irq */
 #	define RS5C_CTRL1_CT4		(4 << 0)	/* 1 Hz level irq */
-#define RS5C_REG_CTRL2		15
+#घोषणा RS5C_REG_CTRL2		15
 #	define RS5C372_CTRL2_24		(1 << 5)
-#	define RS5C_CTRL2_XSTP		(1 << 4)	/* only if !R2x2x */
-#	define R2x2x_CTRL2_VDET		(1 << 6)	/* only if  R2x2x */
-#	define R2x2x_CTRL2_XSTP		(1 << 5)	/* only if  R2x2x */
-#	define R2x2x_CTRL2_PON		(1 << 4)	/* only if  R2x2x */
+#	define RS5C_CTRL2_XSTP		(1 << 4)	/* only अगर !R2x2x */
+#	define R2x2x_CTRL2_VDET		(1 << 6)	/* only अगर  R2x2x */
+#	define R2x2x_CTRL2_XSTP		(1 << 5)	/* only अगर  R2x2x */
+#	define R2x2x_CTRL2_PON		(1 << 4)	/* only अगर  R2x2x */
 #	define RS5C_CTRL2_CTFG		(1 << 2)
 #	define RS5C_CTRL2_AAFG		(1 << 1)	/* or WAFG */
 #	define RS5C_CTRL2_BAFG		(1 << 0)	/* or DAFG */
 
 
-/* to read (style 1) or write registers starting at R */
-#define RS5C_ADDR(R)		(((R) << 4) | 0)
+/* to पढ़ो (style 1) or ग_लिखो रेजिस्टरs starting at R */
+#घोषणा RS5C_ADDR(R)		(((R) << 4) | 0)
 
 
-enum rtc_type {
+क्रमागत rtc_type अणु
 	rtc_undef = 0,
 	rtc_r2025sd,
 	rtc_r2221tl,
@@ -70,102 +71,102 @@ enum rtc_type {
 	rtc_rs5c372b,
 	rtc_rv5c386,
 	rtc_rv5c387a,
-};
+पूर्ण;
 
-static const struct i2c_device_id rs5c372_id[] = {
-	{ "r2025sd", rtc_r2025sd },
-	{ "r2221tl", rtc_r2221tl },
-	{ "rs5c372a", rtc_rs5c372a },
-	{ "rs5c372b", rtc_rs5c372b },
-	{ "rv5c386", rtc_rv5c386 },
-	{ "rv5c387a", rtc_rv5c387a },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id rs5c372_id[] = अणु
+	अणु "r2025sd", rtc_r2025sd पूर्ण,
+	अणु "r2221tl", rtc_r2221tl पूर्ण,
+	अणु "rs5c372a", rtc_rs5c372a पूर्ण,
+	अणु "rs5c372b", rtc_rs5c372b पूर्ण,
+	अणु "rv5c386", rtc_rv5c386 पूर्ण,
+	अणु "rv5c387a", rtc_rv5c387a पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, rs5c372_id);
 
-static const __maybe_unused struct of_device_id rs5c372_of_match[] = {
-	{
+अटल स्थिर __maybe_unused काष्ठा of_device_id rs5c372_of_match[] = अणु
+	अणु
 		.compatible = "ricoh,r2025sd",
-		.data = (void *)rtc_r2025sd
-	},
-	{
+		.data = (व्योम *)rtc_r2025sd
+	पूर्ण,
+	अणु
 		.compatible = "ricoh,r2221tl",
-		.data = (void *)rtc_r2221tl
-	},
-	{
+		.data = (व्योम *)rtc_r2221tl
+	पूर्ण,
+	अणु
 		.compatible = "ricoh,rs5c372a",
-		.data = (void *)rtc_rs5c372a
-	},
-	{
+		.data = (व्योम *)rtc_rs5c372a
+	पूर्ण,
+	अणु
 		.compatible = "ricoh,rs5c372b",
-		.data = (void *)rtc_rs5c372b
-	},
-	{
+		.data = (व्योम *)rtc_rs5c372b
+	पूर्ण,
+	अणु
 		.compatible = "ricoh,rv5c386",
-		.data = (void *)rtc_rv5c386
-	},
-	{
+		.data = (व्योम *)rtc_rv5c386
+	पूर्ण,
+	अणु
 		.compatible = "ricoh,rv5c387a",
-		.data = (void *)rtc_rv5c387a
-	},
-	{ }
-};
+		.data = (व्योम *)rtc_rv5c387a
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rs5c372_of_match);
 
 /* REVISIT:  this assumes that:
  *  - we're in the 21st century, so it's safe to ignore the century
- *    bit for rv5c38[67] (REG_MONTH bit 7);
+ *    bit क्रम rv5c38[67] (REG_MONTH bit 7);
  *  - we should use ALARM_A not ALARM_B (may be wrong on some boards)
  */
-struct rs5c372 {
-	struct i2c_client	*client;
-	struct rtc_device	*rtc;
-	enum rtc_type		type;
-	unsigned		time24:1;
-	unsigned		has_irq:1;
-	unsigned		smbus:1;
-	char			buf[17];
-	char			*regs;
-};
+काष्ठा rs5c372 अणु
+	काष्ठा i2c_client	*client;
+	काष्ठा rtc_device	*rtc;
+	क्रमागत rtc_type		type;
+	अचिन्हित		समय24:1;
+	अचिन्हित		has_irq:1;
+	अचिन्हित		smbus:1;
+	अक्षर			buf[17];
+	अक्षर			*regs;
+पूर्ण;
 
-static int rs5c_get_regs(struct rs5c372 *rs5c)
-{
-	struct i2c_client	*client = rs5c->client;
-	struct i2c_msg		msgs[] = {
-		{
+अटल पूर्णांक rs5c_get_regs(काष्ठा rs5c372 *rs5c)
+अणु
+	काष्ठा i2c_client	*client = rs5c->client;
+	काष्ठा i2c_msg		msgs[] = अणु
+		अणु
 			.addr = client->addr,
 			.flags = I2C_M_RD,
-			.len = sizeof(rs5c->buf),
+			.len = माप(rs5c->buf),
 			.buf = rs5c->buf
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
-	/* This implements the third reading method from the datasheet, using
-	 * an internal address that's reset after each transaction (by STOP)
-	 * to 0x0f ... so we read extra registers, and skip the first one.
+	/* This implements the third पढ़ोing method from the datasheet, using
+	 * an पूर्णांकernal address that's reset after each transaction (by STOP)
+	 * to 0x0f ... so we पढ़ो extra रेजिस्टरs, and skip the first one.
 	 *
-	 * The first method doesn't work with the iop3xx adapter driver, on at
+	 * The first method करोesn't work with the iop3xx adapter driver, on at
 	 * least 80219 chips; this works around that bug.
 	 *
-	 * The third method on the other hand doesn't work for the SMBus-only
+	 * The third method on the other hand करोesn't work क्रम the SMBus-only
 	 * configurations, so we use the the first method there, stripping off
-	 * the extra register in the process.
+	 * the extra रेजिस्टर in the process.
 	 */
-	if (rs5c->smbus) {
-		int addr = RS5C_ADDR(RS5C372_REG_SECS);
-		int size = sizeof(rs5c->buf) - 1;
+	अगर (rs5c->smbus) अणु
+		पूर्णांक addr = RS5C_ADDR(RS5C372_REG_SECS);
+		पूर्णांक size = माप(rs5c->buf) - 1;
 
-		if (i2c_smbus_read_i2c_block_data(client, addr, size,
-						  rs5c->buf + 1) != size) {
+		अगर (i2c_smbus_पढ़ो_i2c_block_data(client, addr, size,
+						  rs5c->buf + 1) != size) अणु
 			dev_warn(&client->dev, "can't read registers\n");
-			return -EIO;
-		}
-	} else {
-		if ((i2c_transfer(client->adapter, msgs, 1)) != 1) {
+			वापस -EIO;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर ((i2c_transfer(client->adapter, msgs, 1)) != 1) अणु
 			dev_warn(&client->dev, "can't read registers\n");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	dev_dbg(&client->dev,
 		"%3ph (%02x) %3ph (%02x), %3ph, %3ph; %02x %02x\n",
@@ -174,578 +175,578 @@ static int rs5c_get_regs(struct rs5c372 *rs5c)
 		rs5c->regs + 8, rs5c->regs + 11,
 		rs5c->regs[14], rs5c->regs[15]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned rs5c_reg2hr(struct rs5c372 *rs5c, unsigned reg)
-{
-	unsigned	hour;
+अटल अचिन्हित rs5c_reg2hr(काष्ठा rs5c372 *rs5c, अचिन्हित reg)
+अणु
+	अचिन्हित	hour;
 
-	if (rs5c->time24)
-		return bcd2bin(reg & 0x3f);
+	अगर (rs5c->समय24)
+		वापस bcd2bin(reg & 0x3f);
 
 	hour = bcd2bin(reg & 0x1f);
-	if (hour == 12)
+	अगर (hour == 12)
 		hour = 0;
-	if (reg & 0x20)
+	अगर (reg & 0x20)
 		hour += 12;
-	return hour;
-}
+	वापस hour;
+पूर्ण
 
-static unsigned rs5c_hr2reg(struct rs5c372 *rs5c, unsigned hour)
-{
-	if (rs5c->time24)
-		return bin2bcd(hour);
+अटल अचिन्हित rs5c_hr2reg(काष्ठा rs5c372 *rs5c, अचिन्हित hour)
+अणु
+	अगर (rs5c->समय24)
+		वापस bin2bcd(hour);
 
-	if (hour > 12)
-		return 0x20 | bin2bcd(hour - 12);
-	if (hour == 12)
-		return 0x20 | bin2bcd(12);
-	if (hour == 0)
-		return bin2bcd(12);
-	return bin2bcd(hour);
-}
+	अगर (hour > 12)
+		वापस 0x20 | bin2bcd(hour - 12);
+	अगर (hour == 12)
+		वापस 0x20 | bin2bcd(12);
+	अगर (hour == 0)
+		वापस bin2bcd(12);
+	वापस bin2bcd(hour);
+पूर्ण
 
-static int rs5c372_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rs5c372	*rs5c = i2c_get_clientdata(client);
-	int		status = rs5c_get_regs(rs5c);
-	unsigned char ctrl2 = rs5c->regs[RS5C_REG_CTRL2];
+अटल पूर्णांक rs5c372_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rs5c372	*rs5c = i2c_get_clientdata(client);
+	पूर्णांक		status = rs5c_get_regs(rs5c);
+	अचिन्हित अक्षर ctrl2 = rs5c->regs[RS5C_REG_CTRL2];
 
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
-	switch (rs5c->type) {
-	case rtc_r2025sd:
-	case rtc_r2221tl:
-		if ((rs5c->type == rtc_r2025sd && !(ctrl2 & R2x2x_CTRL2_XSTP)) ||
-		    (rs5c->type == rtc_r2221tl &&  (ctrl2 & R2x2x_CTRL2_XSTP))) {
+	चयन (rs5c->type) अणु
+	हाल rtc_r2025sd:
+	हाल rtc_r2221tl:
+		अगर ((rs5c->type == rtc_r2025sd && !(ctrl2 & R2x2x_CTRL2_XSTP)) ||
+		    (rs5c->type == rtc_r2221tl &&  (ctrl2 & R2x2x_CTRL2_XSTP))) अणु
 			dev_warn(&client->dev, "rtc oscillator interruption detected. Please reset the rtc clock.\n");
-			return -EINVAL;
-		}
-		break;
-	default:
-		if (ctrl2 & RS5C_CTRL2_XSTP) {
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अगर (ctrl2 & RS5C_CTRL2_XSTP) अणु
 			dev_warn(&client->dev, "rtc oscillator interruption detected. Please reset the rtc clock.\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	tm->tm_sec = bcd2bin(rs5c->regs[RS5C372_REG_SECS] & 0x7f);
-	tm->tm_min = bcd2bin(rs5c->regs[RS5C372_REG_MINS] & 0x7f);
-	tm->tm_hour = rs5c_reg2hr(rs5c, rs5c->regs[RS5C372_REG_HOURS]);
+	पंचांग->पंचांग_sec = bcd2bin(rs5c->regs[RS5C372_REG_SECS] & 0x7f);
+	पंचांग->पंचांग_min = bcd2bin(rs5c->regs[RS5C372_REG_MINS] & 0x7f);
+	पंचांग->पंचांग_hour = rs5c_reg2hr(rs5c, rs5c->regs[RS5C372_REG_HOURS]);
 
-	tm->tm_wday = bcd2bin(rs5c->regs[RS5C372_REG_WDAY] & 0x07);
-	tm->tm_mday = bcd2bin(rs5c->regs[RS5C372_REG_DAY] & 0x3f);
+	पंचांग->पंचांग_wday = bcd2bin(rs5c->regs[RS5C372_REG_WDAY] & 0x07);
+	पंचांग->पंचांग_mday = bcd2bin(rs5c->regs[RS5C372_REG_DAY] & 0x3f);
 
-	/* tm->tm_mon is zero-based */
-	tm->tm_mon = bcd2bin(rs5c->regs[RS5C372_REG_MONTH] & 0x1f) - 1;
+	/* पंचांग->पंचांग_mon is zero-based */
+	पंचांग->पंचांग_mon = bcd2bin(rs5c->regs[RS5C372_REG_MONTH] & 0x1f) - 1;
 
-	/* year is 1900 + tm->tm_year */
-	tm->tm_year = bcd2bin(rs5c->regs[RS5C372_REG_YEAR]) + 100;
+	/* year is 1900 + पंचांग->पंचांग_year */
+	पंचांग->पंचांग_year = bcd2bin(rs5c->regs[RS5C372_REG_YEAR]) + 100;
 
 	dev_dbg(&client->dev, "%s: tm is secs=%d, mins=%d, hours=%d, "
 		"mday=%d, mon=%d, year=%d, wday=%d\n",
 		__func__,
-		tm->tm_sec, tm->tm_min, tm->tm_hour,
-		tm->tm_mday, tm->tm_mon, tm->tm_year, tm->tm_wday);
+		पंचांग->पंचांग_sec, पंचांग->पंचांग_min, पंचांग->पंचांग_hour,
+		पंचांग->पंचांग_mday, पंचांग->पंचांग_mon, पंचांग->पंचांग_year, पंचांग->पंचांग_wday);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rs5c372_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rs5c372	*rs5c = i2c_get_clientdata(client);
-	unsigned char	buf[7];
-	unsigned char	ctrl2;
-	int		addr;
+अटल पूर्णांक rs5c372_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rs5c372	*rs5c = i2c_get_clientdata(client);
+	अचिन्हित अक्षर	buf[7];
+	अचिन्हित अक्षर	ctrl2;
+	पूर्णांक		addr;
 
 	dev_dbg(&client->dev, "%s: tm is secs=%d, mins=%d, hours=%d "
 		"mday=%d, mon=%d, year=%d, wday=%d\n",
 		__func__,
-		tm->tm_sec, tm->tm_min, tm->tm_hour,
-		tm->tm_mday, tm->tm_mon, tm->tm_year, tm->tm_wday);
+		पंचांग->पंचांग_sec, पंचांग->पंचांग_min, पंचांग->पंचांग_hour,
+		पंचांग->पंचांग_mday, पंचांग->पंचांग_mon, पंचांग->पंचांग_year, पंचांग->पंचांग_wday);
 
 	addr   = RS5C_ADDR(RS5C372_REG_SECS);
-	buf[0] = bin2bcd(tm->tm_sec);
-	buf[1] = bin2bcd(tm->tm_min);
-	buf[2] = rs5c_hr2reg(rs5c, tm->tm_hour);
-	buf[3] = bin2bcd(tm->tm_wday);
-	buf[4] = bin2bcd(tm->tm_mday);
-	buf[5] = bin2bcd(tm->tm_mon + 1);
-	buf[6] = bin2bcd(tm->tm_year - 100);
+	buf[0] = bin2bcd(पंचांग->पंचांग_sec);
+	buf[1] = bin2bcd(पंचांग->पंचांग_min);
+	buf[2] = rs5c_hr2reg(rs5c, पंचांग->पंचांग_hour);
+	buf[3] = bin2bcd(पंचांग->पंचांग_wday);
+	buf[4] = bin2bcd(पंचांग->पंचांग_mday);
+	buf[5] = bin2bcd(पंचांग->पंचांग_mon + 1);
+	buf[6] = bin2bcd(पंचांग->पंचांग_year - 100);
 
-	if (i2c_smbus_write_i2c_block_data(client, addr, sizeof(buf), buf) < 0) {
+	अगर (i2c_smbus_ग_लिखो_i2c_block_data(client, addr, माप(buf), buf) < 0) अणु
 		dev_dbg(&client->dev, "%s: write error in line %i\n",
 			__func__, __LINE__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	addr = RS5C_ADDR(RS5C_REG_CTRL2);
-	ctrl2 = i2c_smbus_read_byte_data(client, addr);
+	ctrl2 = i2c_smbus_पढ़ो_byte_data(client, addr);
 
 	/* clear rtc warning bits */
-	switch (rs5c->type) {
-	case rtc_r2025sd:
-	case rtc_r2221tl:
+	चयन (rs5c->type) अणु
+	हाल rtc_r2025sd:
+	हाल rtc_r2221tl:
 		ctrl2 &= ~(R2x2x_CTRL2_VDET | R2x2x_CTRL2_PON);
-		if (rs5c->type == rtc_r2025sd)
+		अगर (rs5c->type == rtc_r2025sd)
 			ctrl2 |= R2x2x_CTRL2_XSTP;
-		else
+		अन्यथा
 			ctrl2 &= ~R2x2x_CTRL2_XSTP;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ctrl2 &= ~RS5C_CTRL2_XSTP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (i2c_smbus_write_byte_data(client, addr, ctrl2) < 0) {
+	अगर (i2c_smbus_ग_लिखो_byte_data(client, addr, ctrl2) < 0) अणु
 		dev_dbg(&client->dev, "%s: write error in line %i\n",
 			__func__, __LINE__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_RTC_INTF_PROC)
-#define	NEED_TRIM
-#endif
+#अगर IS_ENABLED(CONFIG_RTC_INTF_PROC)
+#घोषणा	NEED_TRIM
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_RTC_INTF_SYSFS)
-#define	NEED_TRIM
-#endif
+#अगर IS_ENABLED(CONFIG_RTC_INTF_SYSFS)
+#घोषणा	NEED_TRIM
+#पूर्ण_अगर
 
-#ifdef	NEED_TRIM
-static int rs5c372_get_trim(struct i2c_client *client, int *osc, int *trim)
-{
-	struct rs5c372 *rs5c372 = i2c_get_clientdata(client);
-	u8 tmp = rs5c372->regs[RS5C372_REG_TRIM];
+#अगर_घोषित	NEED_TRIM
+अटल पूर्णांक rs5c372_get_trim(काष्ठा i2c_client *client, पूर्णांक *osc, पूर्णांक *trim)
+अणु
+	काष्ठा rs5c372 *rs5c372 = i2c_get_clientdata(client);
+	u8 पंचांगp = rs5c372->regs[RS5C372_REG_TRIM];
 
-	if (osc)
-		*osc = (tmp & RS5C372_TRIM_XSL) ? 32000 : 32768;
+	अगर (osc)
+		*osc = (पंचांगp & RS5C372_TRIM_XSL) ? 32000 : 32768;
 
-	if (trim) {
-		dev_dbg(&client->dev, "%s: raw trim=%x\n", __func__, tmp);
-		tmp &= RS5C372_TRIM_MASK;
-		if (tmp & 0x3e) {
-			int t = tmp & 0x3f;
+	अगर (trim) अणु
+		dev_dbg(&client->dev, "%s: raw trim=%x\n", __func__, पंचांगp);
+		पंचांगp &= RS5C372_TRIM_MASK;
+		अगर (पंचांगp & 0x3e) अणु
+			पूर्णांक t = पंचांगp & 0x3f;
 
-			if (tmp & 0x40)
+			अगर (पंचांगp & 0x40)
 				t = (~t | (s8)0xc0) + 1;
-			else
+			अन्यथा
 				t = t - 1;
 
-			tmp = t * 2;
-		} else
-			tmp = 0;
-		*trim = tmp;
-	}
+			पंचांगp = t * 2;
+		पूर्ण अन्यथा
+			पंचांगp = 0;
+		*trim = पंचांगp;
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int rs5c_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
-{
-	struct i2c_client	*client = to_i2c_client(dev);
-	struct rs5c372		*rs5c = i2c_get_clientdata(client);
-	unsigned char		buf;
-	int			status, addr;
+अटल पूर्णांक rs5c_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा i2c_client	*client = to_i2c_client(dev);
+	काष्ठा rs5c372		*rs5c = i2c_get_clientdata(client);
+	अचिन्हित अक्षर		buf;
+	पूर्णांक			status, addr;
 
 	buf = rs5c->regs[RS5C_REG_CTRL1];
 
-	if (!rs5c->has_irq)
-		return -EINVAL;
+	अगर (!rs5c->has_irq)
+		वापस -EINVAL;
 
 	status = rs5c_get_regs(rs5c);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
 	addr = RS5C_ADDR(RS5C_REG_CTRL1);
-	if (enabled)
+	अगर (enabled)
 		buf |= RS5C_CTRL1_AALE;
-	else
+	अन्यथा
 		buf &= ~RS5C_CTRL1_AALE;
 
-	if (i2c_smbus_write_byte_data(client, addr, buf) < 0) {
+	अगर (i2c_smbus_ग_लिखो_byte_data(client, addr, buf) < 0) अणु
 		dev_warn(dev, "can't update alarm\n");
 		status = -EIO;
-	} else
+	पूर्ण अन्यथा
 		rs5c->regs[RS5C_REG_CTRL1] = buf;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 
-/* NOTE:  Since RTC_WKALM_{RD,SET} were originally defined for EFI,
- * which only exposes a polled programming interface; and since
- * these calls map directly to those EFI requests; we don't demand
- * we have an IRQ for this chip when we go through this API.
+/* NOTE:  Since RTC_WKALM_अणुRD,SETपूर्ण were originally defined क्रम EFI,
+ * which only exposes a polled programming पूर्णांकerface; and since
+ * these calls map directly to those EFI requests; we करोn't demand
+ * we have an IRQ क्रम this chip when we go through this API.
  *
- * The older x86_pc derived RTC_ALM_{READ,SET} calls require irqs
- * though, managed through RTC_AIE_{ON,OFF} requests.
+ * The older x86_pc derived RTC_ALM_अणुREAD,SETपूर्ण calls require irqs
+ * though, managed through RTC_AIE_अणुON,OFFपूर्ण requests.
  */
 
-static int rs5c_read_alarm(struct device *dev, struct rtc_wkalrm *t)
-{
-	struct i2c_client	*client = to_i2c_client(dev);
-	struct rs5c372		*rs5c = i2c_get_clientdata(client);
-	int			status;
+अटल पूर्णांक rs5c_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *t)
+अणु
+	काष्ठा i2c_client	*client = to_i2c_client(dev);
+	काष्ठा rs5c372		*rs5c = i2c_get_clientdata(client);
+	पूर्णांक			status;
 
 	status = rs5c_get_regs(rs5c);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
-	/* report alarm time */
-	t->time.tm_sec = 0;
-	t->time.tm_min = bcd2bin(rs5c->regs[RS5C_REG_ALARM_A_MIN] & 0x7f);
-	t->time.tm_hour = rs5c_reg2hr(rs5c, rs5c->regs[RS5C_REG_ALARM_A_HOURS]);
+	/* report alarm समय */
+	t->समय.पंचांग_sec = 0;
+	t->समय.पंचांग_min = bcd2bin(rs5c->regs[RS5C_REG_ALARM_A_MIN] & 0x7f);
+	t->समय.पंचांग_hour = rs5c_reg2hr(rs5c, rs5c->regs[RS5C_REG_ALARM_A_HOURS]);
 
 	/* ... and status */
 	t->enabled = !!(rs5c->regs[RS5C_REG_CTRL1] & RS5C_CTRL1_AALE);
 	t->pending = !!(rs5c->regs[RS5C_REG_CTRL2] & RS5C_CTRL2_AAFG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rs5c_set_alarm(struct device *dev, struct rtc_wkalrm *t)
-{
-	struct i2c_client	*client = to_i2c_client(dev);
-	struct rs5c372		*rs5c = i2c_get_clientdata(client);
-	int			status, addr, i;
-	unsigned char		buf[3];
+अटल पूर्णांक rs5c_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *t)
+अणु
+	काष्ठा i2c_client	*client = to_i2c_client(dev);
+	काष्ठा rs5c372		*rs5c = i2c_get_clientdata(client);
+	पूर्णांक			status, addr, i;
+	अचिन्हित अक्षर		buf[3];
 
 	/* only handle up to 24 hours in the future, like RTC_ALM_SET */
-	if (t->time.tm_mday != -1
-			|| t->time.tm_mon != -1
-			|| t->time.tm_year != -1)
-		return -EINVAL;
+	अगर (t->समय.पंचांग_mday != -1
+			|| t->समय.पंचांग_mon != -1
+			|| t->समय.पंचांग_year != -1)
+		वापस -EINVAL;
 
-	/* REVISIT: round up tm_sec */
+	/* REVISIT: round up पंचांग_sec */
 
-	/* if needed, disable irq (clears pending status) */
+	/* अगर needed, disable irq (clears pending status) */
 	status = rs5c_get_regs(rs5c);
-	if (status < 0)
-		return status;
-	if (rs5c->regs[RS5C_REG_CTRL1] & RS5C_CTRL1_AALE) {
+	अगर (status < 0)
+		वापस status;
+	अगर (rs5c->regs[RS5C_REG_CTRL1] & RS5C_CTRL1_AALE) अणु
 		addr = RS5C_ADDR(RS5C_REG_CTRL1);
 		buf[0] = rs5c->regs[RS5C_REG_CTRL1] & ~RS5C_CTRL1_AALE;
-		if (i2c_smbus_write_byte_data(client, addr, buf[0]) < 0) {
+		अगर (i2c_smbus_ग_लिखो_byte_data(client, addr, buf[0]) < 0) अणु
 			dev_dbg(dev, "can't disable alarm\n");
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		rs5c->regs[RS5C_REG_CTRL1] = buf[0];
-	}
+	पूर्ण
 
 	/* set alarm */
-	buf[0] = bin2bcd(t->time.tm_min);
-	buf[1] = rs5c_hr2reg(rs5c, t->time.tm_hour);
+	buf[0] = bin2bcd(t->समय.पंचांग_min);
+	buf[1] = rs5c_hr2reg(rs5c, t->समय.पंचांग_hour);
 	buf[2] = 0x7f;	/* any/all days */
 
-	for (i = 0; i < sizeof(buf); i++) {
+	क्रम (i = 0; i < माप(buf); i++) अणु
 		addr = RS5C_ADDR(RS5C_REG_ALARM_A_MIN + i);
-		if (i2c_smbus_write_byte_data(client, addr, buf[i]) < 0) {
+		अगर (i2c_smbus_ग_लिखो_byte_data(client, addr, buf[i]) < 0) अणु
 			dev_dbg(dev, "can't set alarm time\n");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	/* ... and maybe enable its irq */
-	if (t->enabled) {
+	अगर (t->enabled) अणु
 		addr = RS5C_ADDR(RS5C_REG_CTRL1);
 		buf[0] = rs5c->regs[RS5C_REG_CTRL1] | RS5C_CTRL1_AALE;
-		if (i2c_smbus_write_byte_data(client, addr, buf[0]) < 0)
+		अगर (i2c_smbus_ग_लिखो_byte_data(client, addr, buf[0]) < 0)
 			dev_warn(dev, "can't enable alarm\n");
 		rs5c->regs[RS5C_REG_CTRL1] = buf[0];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_RTC_INTF_PROC)
+#अगर IS_ENABLED(CONFIG_RTC_INTF_PROC)
 
-static int rs5c372_rtc_proc(struct device *dev, struct seq_file *seq)
-{
-	int err, osc, trim;
+अटल पूर्णांक rs5c372_rtc_proc(काष्ठा device *dev, काष्ठा seq_file *seq)
+अणु
+	पूर्णांक err, osc, trim;
 
 	err = rs5c372_get_trim(to_i2c_client(dev), &osc, &trim);
-	if (err == 0) {
-		seq_printf(seq, "crystal\t\t: %d.%03d KHz\n",
+	अगर (err == 0) अणु
+		seq_म_लिखो(seq, "crystal\t\t: %d.%03d KHz\n",
 				osc / 1000, osc % 1000);
-		seq_printf(seq, "trim\t\t: %d\n", trim);
-	}
+		seq_म_लिखो(seq, "trim\t\t: %d\n", trim);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else
-#define	rs5c372_rtc_proc	NULL
-#endif
+#अन्यथा
+#घोषणा	rs5c372_rtc_proc	शून्य
+#पूर्ण_अगर
 
-static const struct rtc_class_ops rs5c372_rtc_ops = {
+अटल स्थिर काष्ठा rtc_class_ops rs5c372_rtc_ops = अणु
 	.proc		= rs5c372_rtc_proc,
-	.read_time	= rs5c372_rtc_read_time,
-	.set_time	= rs5c372_rtc_set_time,
-	.read_alarm	= rs5c_read_alarm,
+	.पढ़ो_समय	= rs5c372_rtc_पढ़ो_समय,
+	.set_समय	= rs5c372_rtc_set_समय,
+	.पढ़ो_alarm	= rs5c_पढ़ो_alarm,
 	.set_alarm	= rs5c_set_alarm,
 	.alarm_irq_enable = rs5c_rtc_alarm_irq_enable,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_RTC_INTF_SYSFS)
+#अगर IS_ENABLED(CONFIG_RTC_INTF_SYSFS)
 
-static ssize_t rs5c372_sysfs_show_trim(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	int err, trim;
+अटल sमाप_प्रकार rs5c372_sysfs_show_trim(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक err, trim;
 
-	err = rs5c372_get_trim(to_i2c_client(dev), NULL, &trim);
-	if (err)
-		return err;
+	err = rs5c372_get_trim(to_i2c_client(dev), शून्य, &trim);
+	अगर (err)
+		वापस err;
 
-	return sprintf(buf, "%d\n", trim);
-}
-static DEVICE_ATTR(trim, S_IRUGO, rs5c372_sysfs_show_trim, NULL);
+	वापस प्र_लिखो(buf, "%d\n", trim);
+पूर्ण
+अटल DEVICE_ATTR(trim, S_IRUGO, rs5c372_sysfs_show_trim, शून्य);
 
-static ssize_t rs5c372_sysfs_show_osc(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	int err, osc;
+अटल sमाप_प्रकार rs5c372_sysfs_show_osc(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक err, osc;
 
-	err = rs5c372_get_trim(to_i2c_client(dev), &osc, NULL);
-	if (err)
-		return err;
+	err = rs5c372_get_trim(to_i2c_client(dev), &osc, शून्य);
+	अगर (err)
+		वापस err;
 
-	return sprintf(buf, "%d.%03d KHz\n", osc / 1000, osc % 1000);
-}
-static DEVICE_ATTR(osc, S_IRUGO, rs5c372_sysfs_show_osc, NULL);
+	वापस प्र_लिखो(buf, "%d.%03d KHz\n", osc / 1000, osc % 1000);
+पूर्ण
+अटल DEVICE_ATTR(osc, S_IRUGO, rs5c372_sysfs_show_osc, शून्य);
 
-static int rs5c_sysfs_register(struct device *dev)
-{
-	int err;
+अटल पूर्णांक rs5c_sysfs_रेजिस्टर(काष्ठा device *dev)
+अणु
+	पूर्णांक err;
 
 	err = device_create_file(dev, &dev_attr_trim);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = device_create_file(dev, &dev_attr_osc);
-	if (err)
-		device_remove_file(dev, &dev_attr_trim);
+	अगर (err)
+		device_हटाओ_file(dev, &dev_attr_trim);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rs5c_sysfs_unregister(struct device *dev)
-{
-	device_remove_file(dev, &dev_attr_trim);
-	device_remove_file(dev, &dev_attr_osc);
-}
+अटल व्योम rs5c_sysfs_unरेजिस्टर(काष्ठा device *dev)
+अणु
+	device_हटाओ_file(dev, &dev_attr_trim);
+	device_हटाओ_file(dev, &dev_attr_osc);
+पूर्ण
 
-#else
-static int rs5c_sysfs_register(struct device *dev)
-{
-	return 0;
-}
+#अन्यथा
+अटल पूर्णांक rs5c_sysfs_रेजिस्टर(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static void rs5c_sysfs_unregister(struct device *dev)
-{
+अटल व्योम rs5c_sysfs_unरेजिस्टर(काष्ठा device *dev)
+अणु
 	/* nothing */
-}
-#endif	/* SYSFS */
+पूर्ण
+#पूर्ण_अगर	/* SYSFS */
 
-static struct i2c_driver rs5c372_driver;
+अटल काष्ठा i2c_driver rs5c372_driver;
 
-static int rs5c_oscillator_setup(struct rs5c372 *rs5c372)
-{
-	unsigned char buf[2];
-	int addr, i, ret = 0;
+अटल पूर्णांक rs5c_oscillator_setup(काष्ठा rs5c372 *rs5c372)
+अणु
+	अचिन्हित अक्षर buf[2];
+	पूर्णांक addr, i, ret = 0;
 
 	addr   = RS5C_ADDR(RS5C_REG_CTRL1);
 	buf[0] = rs5c372->regs[RS5C_REG_CTRL1];
 	buf[1] = rs5c372->regs[RS5C_REG_CTRL2];
 
-	switch (rs5c372->type) {
-	case rtc_r2025sd:
-		if (buf[1] & R2x2x_CTRL2_XSTP)
-			return ret;
-		break;
-	case rtc_r2221tl:
-		if (!(buf[1] & R2x2x_CTRL2_XSTP))
-			return ret;
-		break;
-	default:
-		if (!(buf[1] & RS5C_CTRL2_XSTP))
-			return ret;
-		break;
-	}
+	चयन (rs5c372->type) अणु
+	हाल rtc_r2025sd:
+		अगर (buf[1] & R2x2x_CTRL2_XSTP)
+			वापस ret;
+		अवरोध;
+	हाल rtc_r2221tl:
+		अगर (!(buf[1] & R2x2x_CTRL2_XSTP))
+			वापस ret;
+		अवरोध;
+	शेष:
+		अगर (!(buf[1] & RS5C_CTRL2_XSTP))
+			वापस ret;
+		अवरोध;
+	पूर्ण
 
 	/* use 24hr mode */
-	switch (rs5c372->type) {
-	case rtc_rs5c372a:
-	case rtc_rs5c372b:
+	चयन (rs5c372->type) अणु
+	हाल rtc_rs5c372a:
+	हाल rtc_rs5c372b:
 		buf[1] |= RS5C372_CTRL2_24;
-		rs5c372->time24 = 1;
-		break;
-	case rtc_r2025sd:
-	case rtc_r2221tl:
-	case rtc_rv5c386:
-	case rtc_rv5c387a:
+		rs5c372->समय24 = 1;
+		अवरोध;
+	हाल rtc_r2025sd:
+	हाल rtc_r2221tl:
+	हाल rtc_rv5c386:
+	हाल rtc_rv5c387a:
 		buf[0] |= RV5C387_CTRL1_24;
-		rs5c372->time24 = 1;
-		break;
-	default:
+		rs5c372->समय24 = 1;
+		अवरोध;
+	शेष:
 		/* impossible */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	for (i = 0; i < sizeof(buf); i++) {
+	क्रम (i = 0; i < माप(buf); i++) अणु
 		addr = RS5C_ADDR(RS5C_REG_CTRL1 + i);
-		ret = i2c_smbus_write_byte_data(rs5c372->client, addr, buf[i]);
-		if (unlikely(ret < 0))
-			return ret;
-	}
+		ret = i2c_smbus_ग_लिखो_byte_data(rs5c372->client, addr, buf[i]);
+		अगर (unlikely(ret < 0))
+			वापस ret;
+	पूर्ण
 
 	rs5c372->regs[RS5C_REG_CTRL1] = buf[0];
 	rs5c372->regs[RS5C_REG_CTRL2] = buf[1];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rs5c372_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	int err = 0;
-	int smbus_mode = 0;
-	struct rs5c372 *rs5c372;
+अटल पूर्णांक rs5c372_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक smbus_mode = 0;
+	काष्ठा rs5c372 *rs5c372;
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
-			I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_I2C_BLOCK)) {
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
+			I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_I2C_BLOCK)) अणु
 		/*
-		 * If we don't have any master mode adapter, try breaking
-		 * it down in to the barest of capabilities.
+		 * If we करोn't have any master mode adapter, try अवरोधing
+		 * it करोwn in to the barest of capabilities.
 		 */
-		if (i2c_check_functionality(client->adapter,
+		अगर (i2c_check_functionality(client->adapter,
 				I2C_FUNC_SMBUS_BYTE_DATA |
 				I2C_FUNC_SMBUS_I2C_BLOCK))
 			smbus_mode = 1;
-		else {
+		अन्यथा अणु
 			/* Still no good, give up */
 			err = -ENODEV;
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
-	rs5c372 = devm_kzalloc(&client->dev, sizeof(struct rs5c372),
+	rs5c372 = devm_kzalloc(&client->dev, माप(काष्ठा rs5c372),
 				GFP_KERNEL);
-	if (!rs5c372) {
+	अगर (!rs5c372) अणु
 		err = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rs5c372->client = client;
 	i2c_set_clientdata(client, rs5c372);
-	if (client->dev.of_node)
-		rs5c372->type = (enum rtc_type)
+	अगर (client->dev.of_node)
+		rs5c372->type = (क्रमागत rtc_type)
 			of_device_get_match_data(&client->dev);
-	else
+	अन्यथा
 		rs5c372->type = id->driver_data;
 
-	/* we read registers 0x0f then 0x00-0x0f; skip the first one */
+	/* we पढ़ो रेजिस्टरs 0x0f then 0x00-0x0f; skip the first one */
 	rs5c372->regs = &rs5c372->buf[1];
 	rs5c372->smbus = smbus_mode;
 
 	err = rs5c_get_regs(rs5c372);
-	if (err < 0)
-		goto exit;
+	अगर (err < 0)
+		जाओ निकास;
 
-	/* clock may be set for am/pm or 24 hr time */
-	switch (rs5c372->type) {
-	case rtc_rs5c372a:
-	case rtc_rs5c372b:
+	/* घड़ी may be set क्रम am/pm or 24 hr समय */
+	चयन (rs5c372->type) अणु
+	हाल rtc_rs5c372a:
+	हाल rtc_rs5c372b:
 		/* alarm uses ALARM_A; and nINTRA on 372a, nINTR on 372b.
-		 * so does periodic irq, except some 327a modes.
+		 * so करोes periodic irq, except some 327a modes.
 		 */
-		if (rs5c372->regs[RS5C_REG_CTRL2] & RS5C372_CTRL2_24)
-			rs5c372->time24 = 1;
-		break;
-	case rtc_r2025sd:
-	case rtc_r2221tl:
-	case rtc_rv5c386:
-	case rtc_rv5c387a:
-		if (rs5c372->regs[RS5C_REG_CTRL1] & RV5C387_CTRL1_24)
-			rs5c372->time24 = 1;
-		/* alarm uses ALARM_W; and nINTRB for alarm and periodic
+		अगर (rs5c372->regs[RS5C_REG_CTRL2] & RS5C372_CTRL2_24)
+			rs5c372->समय24 = 1;
+		अवरोध;
+	हाल rtc_r2025sd:
+	हाल rtc_r2221tl:
+	हाल rtc_rv5c386:
+	हाल rtc_rv5c387a:
+		अगर (rs5c372->regs[RS5C_REG_CTRL1] & RV5C387_CTRL1_24)
+			rs5c372->समय24 = 1;
+		/* alarm uses ALARM_W; and nINTRB क्रम alarm and periodic
 		 * irq, on both 386 and 387
 		 */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&client->dev, "unknown RTC type\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* if the oscillator lost power and no other software (like
-	 * the bootloader) set it up, do it here.
+	/* अगर the oscillator lost घातer and no other software (like
+	 * the bootloader) set it up, करो it here.
 	 *
-	 * The R2025S/D does this a little differently than the other
-	 * parts, so we special case that..
+	 * The R2025S/D करोes this a little dअगरferently than the other
+	 * parts, so we special हाल that..
 	 */
 	err = rs5c_oscillator_setup(rs5c372);
-	if (unlikely(err < 0)) {
+	अगर (unlikely(err < 0)) अणु
 		dev_err(&client->dev, "setup error\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	dev_info(&client->dev, "%s found, %s\n",
-			({ char *s; switch (rs5c372->type) {
-			case rtc_r2025sd:	s = "r2025sd"; break;
-			case rtc_r2221tl:	s = "r2221tl"; break;
-			case rtc_rs5c372a:	s = "rs5c372a"; break;
-			case rtc_rs5c372b:	s = "rs5c372b"; break;
-			case rtc_rv5c386:	s = "rv5c386"; break;
-			case rtc_rv5c387a:	s = "rv5c387a"; break;
-			default:		s = "chip"; break;
-			}; s;}),
-			rs5c372->time24 ? "24hr" : "am/pm"
+			(अणु अक्षर *s; चयन (rs5c372->type) अणु
+			हाल rtc_r2025sd:	s = "r2025sd"; अवरोध;
+			हाल rtc_r2221tl:	s = "r2221tl"; अवरोध;
+			हाल rtc_rs5c372a:	s = "rs5c372a"; अवरोध;
+			हाल rtc_rs5c372b:	s = "rs5c372b"; अवरोध;
+			हाल rtc_rv5c386:	s = "rv5c386"; अवरोध;
+			हाल rtc_rv5c387a:	s = "rv5c387a"; अवरोध;
+			शेष:		s = "chip"; अवरोध;
+			पूर्ण; s;पूर्ण),
+			rs5c372->समय24 ? "24hr" : "am/pm"
 			);
 
-	/* REVISIT use client->irq to register alarm irq ... */
-	rs5c372->rtc = devm_rtc_device_register(&client->dev,
+	/* REVISIT use client->irq to रेजिस्टर alarm irq ... */
+	rs5c372->rtc = devm_rtc_device_रेजिस्टर(&client->dev,
 					rs5c372_driver.driver.name,
 					&rs5c372_rtc_ops, THIS_MODULE);
 
-	if (IS_ERR(rs5c372->rtc)) {
+	अगर (IS_ERR(rs5c372->rtc)) अणु
 		err = PTR_ERR(rs5c372->rtc);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	err = rs5c_sysfs_register(&client->dev);
-	if (err)
-		goto exit;
+	err = rs5c_sysfs_रेजिस्टर(&client->dev);
+	अगर (err)
+		जाओ निकास;
 
-	return 0;
+	वापस 0;
 
-exit:
-	return err;
-}
+निकास:
+	वापस err;
+पूर्ण
 
-static int rs5c372_remove(struct i2c_client *client)
-{
-	rs5c_sysfs_unregister(&client->dev);
-	return 0;
-}
+अटल पूर्णांक rs5c372_हटाओ(काष्ठा i2c_client *client)
+अणु
+	rs5c_sysfs_unरेजिस्टर(&client->dev);
+	वापस 0;
+पूर्ण
 
-static struct i2c_driver rs5c372_driver = {
-	.driver		= {
+अटल काष्ठा i2c_driver rs5c372_driver = अणु
+	.driver		= अणु
 		.name	= "rtc-rs5c372",
 		.of_match_table = of_match_ptr(rs5c372_of_match),
-	},
+	पूर्ण,
 	.probe		= rs5c372_probe,
-	.remove		= rs5c372_remove,
+	.हटाओ		= rs5c372_हटाओ,
 	.id_table	= rs5c372_id,
-};
+पूर्ण;
 
 module_i2c_driver(rs5c372_driver);
 

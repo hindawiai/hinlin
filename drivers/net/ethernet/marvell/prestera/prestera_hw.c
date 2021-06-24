@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2019-2020 Marvell International Ltd. All rights reserved */
 
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/list.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/list.h>
 
-#include "prestera.h"
-#include "prestera_hw.h"
+#समावेश "prestera.h"
+#समावेश "prestera_hw.h"
 
-#define PRESTERA_SWITCH_INIT_TIMEOUT_MS (30 * 1000)
+#घोषणा PRESTERA_SWITCH_INIT_TIMEOUT_MS (30 * 1000)
 
-#define PRESTERA_MIN_MTU 64
+#घोषणा PRESTERA_MIN_MTU 64
 
-enum prestera_cmd_type_t {
+क्रमागत prestera_cmd_type_t अणु
 	PRESTERA_CMD_TYPE_SWITCH_INIT = 0x1,
 	PRESTERA_CMD_TYPE_SWITCH_ATTR_SET = 0x2,
 
@@ -43,9 +44,9 @@ enum prestera_cmd_type_t {
 
 	PRESTERA_CMD_TYPE_ACK = 0x10000,
 	PRESTERA_CMD_TYPE_MAX
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PRESTERA_CMD_PORT_ATTR_ADMIN_STATE = 1,
 	PRESTERA_CMD_PORT_ATTR_MTU = 3,
 	PRESTERA_CMD_PORT_ATTR_MAC = 4,
@@ -64,28 +65,28 @@ enum {
 	PRESTERA_CMD_PORT_ATTR_STATS = 17,
 	PRESTERA_CMD_PORT_ATTR_MDIX = 18,
 	PRESTERA_CMD_PORT_ATTR_AUTONEG_RESTART = 19,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PRESTERA_CMD_SWITCH_ATTR_MAC = 1,
 	PRESTERA_CMD_SWITCH_ATTR_AGEING = 2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PRESTERA_CMD_ACK_OK,
 	PRESTERA_CMD_ACK_FAILED,
 
 	PRESTERA_CMD_ACK_MAX
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PRESTERA_PORT_TP_NA,
 	PRESTERA_PORT_TP_MDI,
 	PRESTERA_PORT_TP_MDIX,
 	PRESTERA_PORT_TP_AUTO,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PRESTERA_PORT_GOOD_OCTETS_RCV_CNT,
 	PRESTERA_PORT_BAD_OCTETS_RCV_CNT,
 	PRESTERA_PORT_MAC_TRANSMIT_ERR_CNT,
@@ -118,77 +119,77 @@ enum {
 	PRESTERA_PORT_GOOD_OCTETS_SENT_CNT,
 
 	PRESTERA_PORT_CNT_MAX
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PRESTERA_FC_NONE,
 	PRESTERA_FC_SYMMETRIC,
 	PRESTERA_FC_ASYMMETRIC,
 	PRESTERA_FC_SYMM_ASYMM,
-};
+पूर्ण;
 
-struct prestera_fw_event_handler {
-	struct list_head list;
-	struct rcu_head rcu;
-	enum prestera_event_type type;
+काष्ठा prestera_fw_event_handler अणु
+	काष्ठा list_head list;
+	काष्ठा rcu_head rcu;
+	क्रमागत prestera_event_type type;
 	prestera_event_cb_t func;
-	void *arg;
-};
+	व्योम *arg;
+पूर्ण;
 
-struct prestera_msg_cmd {
+काष्ठा prestera_msg_cmd अणु
 	u32 type;
-};
+पूर्ण;
 
-struct prestera_msg_ret {
-	struct prestera_msg_cmd cmd;
+काष्ठा prestera_msg_ret अणु
+	काष्ठा prestera_msg_cmd cmd;
 	u32 status;
-};
+पूर्ण;
 
-struct prestera_msg_common_req {
-	struct prestera_msg_cmd cmd;
-};
+काष्ठा prestera_msg_common_req अणु
+	काष्ठा prestera_msg_cmd cmd;
+पूर्ण;
 
-struct prestera_msg_common_resp {
-	struct prestera_msg_ret ret;
-};
+काष्ठा prestera_msg_common_resp अणु
+	काष्ठा prestera_msg_ret ret;
+पूर्ण;
 
-union prestera_msg_switch_param {
+जोड़ prestera_msg_चयन_param अणु
 	u8 mac[ETH_ALEN];
-	u32 ageing_timeout_ms;
-};
+	u32 ageing_समयout_ms;
+पूर्ण;
 
-struct prestera_msg_switch_attr_req {
-	struct prestera_msg_cmd cmd;
+काष्ठा prestera_msg_चयन_attr_req अणु
+	काष्ठा prestera_msg_cmd cmd;
 	u32 attr;
-	union prestera_msg_switch_param param;
-};
+	जोड़ prestera_msg_चयन_param param;
+पूर्ण;
 
-struct prestera_msg_switch_init_resp {
-	struct prestera_msg_ret ret;
+काष्ठा prestera_msg_चयन_init_resp अणु
+	काष्ठा prestera_msg_ret ret;
 	u32 port_count;
 	u32 mtu_max;
-	u8  switch_id;
-};
+	u8  चयन_id;
+पूर्ण;
 
-struct prestera_msg_port_autoneg_param {
+काष्ठा prestera_msg_port_स्वतःneg_param अणु
 	u64 link_mode;
 	u8  enable;
 	u8  fec;
-};
+पूर्ण;
 
-struct prestera_msg_port_cap_param {
+काष्ठा prestera_msg_port_cap_param अणु
 	u64 link_mode;
 	u8  type;
 	u8  fec;
 	u8  transceiver;
-};
+पूर्ण;
 
-struct prestera_msg_port_mdix_param {
+काष्ठा prestera_msg_port_mdix_param अणु
 	u8 status;
 	u8 admin_mode;
-};
+पूर्ण;
 
-union prestera_msg_port_param {
+जोड़ prestera_msg_port_param अणु
 	u8  admin_state;
 	u8  oper_state;
 	u32 mtu;
@@ -202,52 +203,52 @@ union prestera_msg_port_param {
 	u8  duplex;
 	u8  fec;
 	u8  fc;
-	struct prestera_msg_port_mdix_param mdix;
-	struct prestera_msg_port_autoneg_param autoneg;
-	struct prestera_msg_port_cap_param cap;
-};
+	काष्ठा prestera_msg_port_mdix_param mdix;
+	काष्ठा prestera_msg_port_स्वतःneg_param स्वतःneg;
+	काष्ठा prestera_msg_port_cap_param cap;
+पूर्ण;
 
-struct prestera_msg_port_attr_req {
-	struct prestera_msg_cmd cmd;
+काष्ठा prestera_msg_port_attr_req अणु
+	काष्ठा prestera_msg_cmd cmd;
 	u32 attr;
 	u32 port;
 	u32 dev;
-	union prestera_msg_port_param param;
-};
+	जोड़ prestera_msg_port_param param;
+पूर्ण;
 
-struct prestera_msg_port_attr_resp {
-	struct prestera_msg_ret ret;
-	union prestera_msg_port_param param;
-};
+काष्ठा prestera_msg_port_attr_resp अणु
+	काष्ठा prestera_msg_ret ret;
+	जोड़ prestera_msg_port_param param;
+पूर्ण;
 
-struct prestera_msg_port_stats_resp {
-	struct prestera_msg_ret ret;
+काष्ठा prestera_msg_port_stats_resp अणु
+	काष्ठा prestera_msg_ret ret;
 	u64 stats[PRESTERA_PORT_CNT_MAX];
-};
+पूर्ण;
 
-struct prestera_msg_port_info_req {
-	struct prestera_msg_cmd cmd;
+काष्ठा prestera_msg_port_info_req अणु
+	काष्ठा prestera_msg_cmd cmd;
 	u32 port;
-};
+पूर्ण;
 
-struct prestera_msg_port_info_resp {
-	struct prestera_msg_ret ret;
+काष्ठा prestera_msg_port_info_resp अणु
+	काष्ठा prestera_msg_ret ret;
 	u32 hw_id;
 	u32 dev_id;
 	u16 fp_id;
-};
+पूर्ण;
 
-struct prestera_msg_vlan_req {
-	struct prestera_msg_cmd cmd;
+काष्ठा prestera_msg_vlan_req अणु
+	काष्ठा prestera_msg_cmd cmd;
 	u32 port;
 	u32 dev;
 	u16 vid;
 	u8  is_member;
 	u8  is_tagged;
-};
+पूर्ण;
 
-struct prestera_msg_fdb_req {
-	struct prestera_msg_cmd cmd;
+काष्ठा prestera_msg_fdb_req अणु
+	काष्ठा prestera_msg_cmd cmd;
 	u8 dest_type;
 	u32 port;
 	u32 dev;
@@ -255,689 +256,689 @@ struct prestera_msg_fdb_req {
 	u16 vid;
 	u8  dynamic;
 	u32 flush_mode;
-};
+पूर्ण;
 
-struct prestera_msg_bridge_req {
-	struct prestera_msg_cmd cmd;
+काष्ठा prestera_msg_bridge_req अणु
+	काष्ठा prestera_msg_cmd cmd;
 	u32 port;
 	u32 dev;
 	u16 bridge;
-};
+पूर्ण;
 
-struct prestera_msg_bridge_resp {
-	struct prestera_msg_ret ret;
+काष्ठा prestera_msg_bridge_resp अणु
+	काष्ठा prestera_msg_ret ret;
 	u16 bridge;
-};
+पूर्ण;
 
-struct prestera_msg_stp_req {
-	struct prestera_msg_cmd cmd;
+काष्ठा prestera_msg_stp_req अणु
+	काष्ठा prestera_msg_cmd cmd;
 	u32 port;
 	u32 dev;
 	u16 vid;
 	u8  state;
-};
+पूर्ण;
 
-struct prestera_msg_rxtx_req {
-	struct prestera_msg_cmd cmd;
+काष्ठा prestera_msg_rxtx_req अणु
+	काष्ठा prestera_msg_cmd cmd;
 	u8 use_sdma;
-};
+पूर्ण;
 
-struct prestera_msg_rxtx_resp {
-	struct prestera_msg_ret ret;
+काष्ठा prestera_msg_rxtx_resp अणु
+	काष्ठा prestera_msg_ret ret;
 	u32 map_addr;
-};
+पूर्ण;
 
-struct prestera_msg_rxtx_port_req {
-	struct prestera_msg_cmd cmd;
+काष्ठा prestera_msg_rxtx_port_req अणु
+	काष्ठा prestera_msg_cmd cmd;
 	u32 port;
 	u32 dev;
-};
+पूर्ण;
 
-struct prestera_msg_event {
+काष्ठा prestera_msg_event अणु
 	u16 type;
 	u16 id;
-};
+पूर्ण;
 
-union prestera_msg_event_port_param {
+जोड़ prestera_msg_event_port_param अणु
 	u32 oper_state;
-};
+पूर्ण;
 
-struct prestera_msg_event_port {
-	struct prestera_msg_event id;
+काष्ठा prestera_msg_event_port अणु
+	काष्ठा prestera_msg_event id;
 	u32 port_id;
-	union prestera_msg_event_port_param param;
-};
+	जोड़ prestera_msg_event_port_param param;
+पूर्ण;
 
-union prestera_msg_event_fdb_param {
+जोड़ prestera_msg_event_fdb_param अणु
 	u8 mac[ETH_ALEN];
-};
+पूर्ण;
 
-struct prestera_msg_event_fdb {
-	struct prestera_msg_event id;
+काष्ठा prestera_msg_event_fdb अणु
+	काष्ठा prestera_msg_event id;
 	u8 dest_type;
 	u32 port_id;
 	u32 vid;
-	union prestera_msg_event_fdb_param param;
-};
+	जोड़ prestera_msg_event_fdb_param param;
+पूर्ण;
 
-static int __prestera_cmd_ret(struct prestera_switch *sw,
-			      enum prestera_cmd_type_t type,
-			      struct prestera_msg_cmd *cmd, size_t clen,
-			      struct prestera_msg_ret *ret, size_t rlen,
-			      int waitms)
-{
-	struct prestera_device *dev = sw->dev;
-	int err;
+अटल पूर्णांक __prestera_cmd_ret(काष्ठा prestera_चयन *sw,
+			      क्रमागत prestera_cmd_type_t type,
+			      काष्ठा prestera_msg_cmd *cmd, माप_प्रकार clen,
+			      काष्ठा prestera_msg_ret *ret, माप_प्रकार rlen,
+			      पूर्णांक रुकोms)
+अणु
+	काष्ठा prestera_device *dev = sw->dev;
+	पूर्णांक err;
 
 	cmd->type = type;
 
-	err = dev->send_req(dev, cmd, clen, ret, rlen, waitms);
-	if (err)
-		return err;
+	err = dev->send_req(dev, cmd, clen, ret, rlen, रुकोms);
+	अगर (err)
+		वापस err;
 
-	if (ret->cmd.type != PRESTERA_CMD_TYPE_ACK)
-		return -EBADE;
-	if (ret->status != PRESTERA_CMD_ACK_OK)
-		return -EINVAL;
+	अगर (ret->cmd.type != PRESTERA_CMD_TYPE_ACK)
+		वापस -EBADE;
+	अगर (ret->status != PRESTERA_CMD_ACK_OK)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prestera_cmd_ret(struct prestera_switch *sw,
-			    enum prestera_cmd_type_t type,
-			    struct prestera_msg_cmd *cmd, size_t clen,
-			    struct prestera_msg_ret *ret, size_t rlen)
-{
-	return __prestera_cmd_ret(sw, type, cmd, clen, ret, rlen, 0);
-}
+अटल पूर्णांक prestera_cmd_ret(काष्ठा prestera_चयन *sw,
+			    क्रमागत prestera_cmd_type_t type,
+			    काष्ठा prestera_msg_cmd *cmd, माप_प्रकार clen,
+			    काष्ठा prestera_msg_ret *ret, माप_प्रकार rlen)
+अणु
+	वापस __prestera_cmd_ret(sw, type, cmd, clen, ret, rlen, 0);
+पूर्ण
 
-static int prestera_cmd_ret_wait(struct prestera_switch *sw,
-				 enum prestera_cmd_type_t type,
-				 struct prestera_msg_cmd *cmd, size_t clen,
-				 struct prestera_msg_ret *ret, size_t rlen,
-				 int waitms)
-{
-	return __prestera_cmd_ret(sw, type, cmd, clen, ret, rlen, waitms);
-}
+अटल पूर्णांक prestera_cmd_ret_रुको(काष्ठा prestera_चयन *sw,
+				 क्रमागत prestera_cmd_type_t type,
+				 काष्ठा prestera_msg_cmd *cmd, माप_प्रकार clen,
+				 काष्ठा prestera_msg_ret *ret, माप_प्रकार rlen,
+				 पूर्णांक रुकोms)
+अणु
+	वापस __prestera_cmd_ret(sw, type, cmd, clen, ret, rlen, रुकोms);
+पूर्ण
 
-static int prestera_cmd(struct prestera_switch *sw,
-			enum prestera_cmd_type_t type,
-			struct prestera_msg_cmd *cmd, size_t clen)
-{
-	struct prestera_msg_common_resp resp;
+अटल पूर्णांक prestera_cmd(काष्ठा prestera_चयन *sw,
+			क्रमागत prestera_cmd_type_t type,
+			काष्ठा prestera_msg_cmd *cmd, माप_प्रकार clen)
+अणु
+	काष्ठा prestera_msg_common_resp resp;
 
-	return prestera_cmd_ret(sw, type, cmd, clen, &resp.ret, sizeof(resp));
-}
+	वापस prestera_cmd_ret(sw, type, cmd, clen, &resp.ret, माप(resp));
+पूर्ण
 
-static int prestera_fw_parse_port_evt(void *msg, struct prestera_event *evt)
-{
-	struct prestera_msg_event_port *hw_evt = msg;
+अटल पूर्णांक prestera_fw_parse_port_evt(व्योम *msg, काष्ठा prestera_event *evt)
+अणु
+	काष्ठा prestera_msg_event_port *hw_evt = msg;
 
-	if (evt->id != PRESTERA_PORT_EVENT_STATE_CHANGED)
-		return -EINVAL;
+	अगर (evt->id != PRESTERA_PORT_EVENT_STATE_CHANGED)
+		वापस -EINVAL;
 
 	evt->port_evt.data.oper_state = hw_evt->param.oper_state;
 	evt->port_evt.port_id = hw_evt->port_id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prestera_fw_parse_fdb_evt(void *msg, struct prestera_event *evt)
-{
-	struct prestera_msg_event_fdb *hw_evt = msg;
+अटल पूर्णांक prestera_fw_parse_fdb_evt(व्योम *msg, काष्ठा prestera_event *evt)
+अणु
+	काष्ठा prestera_msg_event_fdb *hw_evt = msg;
 
 	evt->fdb_evt.port_id = hw_evt->port_id;
 	evt->fdb_evt.vid = hw_evt->vid;
 
 	ether_addr_copy(evt->fdb_evt.data.mac, hw_evt->param.mac);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct prestera_fw_evt_parser {
-	int (*func)(void *msg, struct prestera_event *evt);
-} fw_event_parsers[PRESTERA_EVENT_TYPE_MAX] = {
-	[PRESTERA_EVENT_TYPE_PORT] = { .func = prestera_fw_parse_port_evt },
-	[PRESTERA_EVENT_TYPE_FDB] = { .func = prestera_fw_parse_fdb_evt },
-};
+अटल काष्ठा prestera_fw_evt_parser अणु
+	पूर्णांक (*func)(व्योम *msg, काष्ठा prestera_event *evt);
+पूर्ण fw_event_parsers[PRESTERA_EVENT_TYPE_MAX] = अणु
+	[PRESTERA_EVENT_TYPE_PORT] = अणु .func = prestera_fw_parse_port_evt पूर्ण,
+	[PRESTERA_EVENT_TYPE_FDB] = अणु .func = prestera_fw_parse_fdb_evt पूर्ण,
+पूर्ण;
 
-static struct prestera_fw_event_handler *
-__find_event_handler(const struct prestera_switch *sw,
-		     enum prestera_event_type type)
-{
-	struct prestera_fw_event_handler *eh;
+अटल काष्ठा prestera_fw_event_handler *
+__find_event_handler(स्थिर काष्ठा prestera_चयन *sw,
+		     क्रमागत prestera_event_type type)
+अणु
+	काष्ठा prestera_fw_event_handler *eh;
 
-	list_for_each_entry_rcu(eh, &sw->event_handlers, list) {
-		if (eh->type == type)
-			return eh;
-	}
+	list_क्रम_each_entry_rcu(eh, &sw->event_handlers, list) अणु
+		अगर (eh->type == type)
+			वापस eh;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int prestera_find_event_handler(const struct prestera_switch *sw,
-				       enum prestera_event_type type,
-				       struct prestera_fw_event_handler *eh)
-{
-	struct prestera_fw_event_handler *tmp;
-	int err = 0;
+अटल पूर्णांक prestera_find_event_handler(स्थिर काष्ठा prestera_चयन *sw,
+				       क्रमागत prestera_event_type type,
+				       काष्ठा prestera_fw_event_handler *eh)
+अणु
+	काष्ठा prestera_fw_event_handler *पंचांगp;
+	पूर्णांक err = 0;
 
-	rcu_read_lock();
-	tmp = __find_event_handler(sw, type);
-	if (tmp)
-		*eh = *tmp;
-	else
+	rcu_पढ़ो_lock();
+	पंचांगp = __find_event_handler(sw, type);
+	अगर (पंचांगp)
+		*eh = *पंचांगp;
+	अन्यथा
 		err = -ENOENT;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int prestera_evt_recv(struct prestera_device *dev, void *buf, size_t size)
-{
-	struct prestera_switch *sw = dev->priv;
-	struct prestera_msg_event *msg = buf;
-	struct prestera_fw_event_handler eh;
-	struct prestera_event evt;
-	int err;
+अटल पूर्णांक prestera_evt_recv(काष्ठा prestera_device *dev, व्योम *buf, माप_प्रकार size)
+अणु
+	काष्ठा prestera_चयन *sw = dev->priv;
+	काष्ठा prestera_msg_event *msg = buf;
+	काष्ठा prestera_fw_event_handler eh;
+	काष्ठा prestera_event evt;
+	पूर्णांक err;
 
-	if (msg->type >= PRESTERA_EVENT_TYPE_MAX)
-		return -EINVAL;
-	if (!fw_event_parsers[msg->type].func)
-		return -ENOENT;
+	अगर (msg->type >= PRESTERA_EVENT_TYPE_MAX)
+		वापस -EINVAL;
+	अगर (!fw_event_parsers[msg->type].func)
+		वापस -ENOENT;
 
 	err = prestera_find_event_handler(sw, msg->type, &eh);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	evt.id = msg->id;
 
 	err = fw_event_parsers[msg->type].func(buf, &evt);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	eh.func(sw, &evt, eh.arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void prestera_pkt_recv(struct prestera_device *dev)
-{
-	struct prestera_switch *sw = dev->priv;
-	struct prestera_fw_event_handler eh;
-	struct prestera_event ev;
-	int err;
+अटल व्योम prestera_pkt_recv(काष्ठा prestera_device *dev)
+अणु
+	काष्ठा prestera_चयन *sw = dev->priv;
+	काष्ठा prestera_fw_event_handler eh;
+	काष्ठा prestera_event ev;
+	पूर्णांक err;
 
 	ev.id = PRESTERA_RXTX_EVENT_RCV_PKT;
 
 	err = prestera_find_event_handler(sw, PRESTERA_EVENT_TYPE_RXTX, &eh);
-	if (err)
-		return;
+	अगर (err)
+		वापस;
 
 	eh.func(sw, &ev, eh.arg);
-}
+पूर्ण
 
-int prestera_hw_port_info_get(const struct prestera_port *port,
+पूर्णांक prestera_hw_port_info_get(स्थिर काष्ठा prestera_port *port,
 			      u32 *dev_id, u32 *hw_id, u16 *fp_id)
-{
-	struct prestera_msg_port_info_req req = {
+अणु
+	काष्ठा prestera_msg_port_info_req req = अणु
 		.port = port->id,
-	};
-	struct prestera_msg_port_info_resp resp;
-	int err;
+	पूर्ण;
+	काष्ठा prestera_msg_port_info_resp resp;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_INFO_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	*dev_id = resp.dev_id;
 	*hw_id = resp.hw_id;
 	*fp_id = resp.fp_id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_switch_mac_set(struct prestera_switch *sw, const char *mac)
-{
-	struct prestera_msg_switch_attr_req req = {
+पूर्णांक prestera_hw_चयन_mac_set(काष्ठा prestera_चयन *sw, स्थिर अक्षर *mac)
+अणु
+	काष्ठा prestera_msg_चयन_attr_req req = अणु
 		.attr = PRESTERA_CMD_SWITCH_ATTR_MAC,
-	};
+	पूर्ण;
 
 	ether_addr_copy(req.param.mac, mac);
 
-	return prestera_cmd(sw, PRESTERA_CMD_TYPE_SWITCH_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(sw, PRESTERA_CMD_TYPE_SWITCH_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_switch_init(struct prestera_switch *sw)
-{
-	struct prestera_msg_switch_init_resp resp;
-	struct prestera_msg_common_req req;
-	int err;
+पूर्णांक prestera_hw_चयन_init(काष्ठा prestera_चयन *sw)
+अणु
+	काष्ठा prestera_msg_चयन_init_resp resp;
+	काष्ठा prestera_msg_common_req req;
+	पूर्णांक err;
 
 	INIT_LIST_HEAD(&sw->event_handlers);
 
-	err = prestera_cmd_ret_wait(sw, PRESTERA_CMD_TYPE_SWITCH_INIT,
-				    &req.cmd, sizeof(req),
-				    &resp.ret, sizeof(resp),
+	err = prestera_cmd_ret_रुको(sw, PRESTERA_CMD_TYPE_SWITCH_INIT,
+				    &req.cmd, माप(req),
+				    &resp.ret, माप(resp),
 				    PRESTERA_SWITCH_INIT_TIMEOUT_MS);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	sw->dev->recv_msg = prestera_evt_recv;
 	sw->dev->recv_pkt = prestera_pkt_recv;
 	sw->port_count = resp.port_count;
 	sw->mtu_min = PRESTERA_MIN_MTU;
 	sw->mtu_max = resp.mtu_max;
-	sw->id = resp.switch_id;
+	sw->id = resp.चयन_id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void prestera_hw_switch_fini(struct prestera_switch *sw)
-{
+व्योम prestera_hw_चयन_fini(काष्ठा prestera_चयन *sw)
+अणु
 	WARN_ON(!list_empty(&sw->event_handlers));
-}
+पूर्ण
 
-int prestera_hw_switch_ageing_set(struct prestera_switch *sw, u32 ageing_ms)
-{
-	struct prestera_msg_switch_attr_req req = {
+पूर्णांक prestera_hw_चयन_ageing_set(काष्ठा prestera_चयन *sw, u32 ageing_ms)
+अणु
+	काष्ठा prestera_msg_चयन_attr_req req = अणु
 		.attr = PRESTERA_CMD_SWITCH_ATTR_AGEING,
-		.param = {
-			.ageing_timeout_ms = ageing_ms,
-		},
-	};
+		.param = अणु
+			.ageing_समयout_ms = ageing_ms,
+		पूर्ण,
+	पूर्ण;
 
-	return prestera_cmd(sw, PRESTERA_CMD_TYPE_SWITCH_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(sw, PRESTERA_CMD_TYPE_SWITCH_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_port_state_set(const struct prestera_port *port,
+पूर्णांक prestera_hw_port_state_set(स्थिर काष्ठा prestera_port *port,
 			       bool admin_state)
-{
-	struct prestera_msg_port_attr_req req = {
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_ADMIN_STATE,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-		.param = {
+		.param = अणु
 			.admin_state = admin_state,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_port_mtu_set(const struct prestera_port *port, u32 mtu)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_mtu_set(स्थिर काष्ठा prestera_port *port, u32 mtu)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_MTU,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-		.param = {
+		.param = अणु
 			.mtu = mtu,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_port_mac_set(const struct prestera_port *port, const char *mac)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_mac_set(स्थिर काष्ठा prestera_port *port, स्थिर अक्षर *mac)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_MAC,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
+	पूर्ण;
 
 	ether_addr_copy(req.param.mac, mac);
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_port_accept_frm_type(struct prestera_port *port,
-				     enum prestera_accept_frm_type type)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_accept_frm_type(काष्ठा prestera_port *port,
+				     क्रमागत prestera_accept_frm_type type)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_ACCEPT_FRAME_TYPE,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-		.param = {
+		.param = अणु
 			.accept_frm_type = type,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_port_cap_get(const struct prestera_port *port,
-			     struct prestera_port_caps *caps)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_cap_get(स्थिर काष्ठा prestera_port *port,
+			     काष्ठा prestera_port_caps *caps)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_CAPABILITY,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
-	struct prestera_msg_port_attr_resp resp;
-	int err;
+	पूर्ण;
+	काष्ठा prestera_msg_port_attr_resp resp;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	caps->supp_link_modes = resp.param.cap.link_mode;
 	caps->transceiver = resp.param.cap.transceiver;
 	caps->supp_fec = resp.param.cap.fec;
 	caps->type = resp.param.cap.type;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int prestera_hw_port_remote_cap_get(const struct prestera_port *port,
-				    u64 *link_mode_bitmap)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_remote_cap_get(स्थिर काष्ठा prestera_port *port,
+				    u64 *link_mode_biपंचांगap)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_REMOTE_CAPABILITY,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
-	struct prestera_msg_port_attr_resp resp;
-	int err;
+	पूर्ण;
+	काष्ठा prestera_msg_port_attr_resp resp;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
-	*link_mode_bitmap = resp.param.cap.link_mode;
+	*link_mode_biपंचांगap = resp.param.cap.link_mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_port_remote_fc_get(const struct prestera_port *port,
-				   bool *pause, bool *asym_pause)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_remote_fc_get(स्थिर काष्ठा prestera_port *port,
+				   bool *छोड़ो, bool *asym_छोड़ो)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_REMOTE_FC,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
-	struct prestera_msg_port_attr_resp resp;
-	int err;
+	पूर्ण;
+	काष्ठा prestera_msg_port_attr_resp resp;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
-	switch (resp.param.fc) {
-	case PRESTERA_FC_SYMMETRIC:
-		*pause = true;
-		*asym_pause = false;
-		break;
-	case PRESTERA_FC_ASYMMETRIC:
-		*pause = false;
-		*asym_pause = true;
-		break;
-	case PRESTERA_FC_SYMM_ASYMM:
-		*pause = true;
-		*asym_pause = true;
-		break;
-	default:
-		*pause = false;
-		*asym_pause = false;
-	}
+	चयन (resp.param.fc) अणु
+	हाल PRESTERA_FC_SYMMETRIC:
+		*छोड़ो = true;
+		*asym_छोड़ो = false;
+		अवरोध;
+	हाल PRESTERA_FC_ASYMMETRIC:
+		*छोड़ो = false;
+		*asym_छोड़ो = true;
+		अवरोध;
+	हाल PRESTERA_FC_SYMM_ASYMM:
+		*छोड़ो = true;
+		*asym_छोड़ो = true;
+		अवरोध;
+	शेष:
+		*छोड़ो = false;
+		*asym_छोड़ो = false;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_port_type_get(const struct prestera_port *port, u8 *type)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_type_get(स्थिर काष्ठा prestera_port *port, u8 *type)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_TYPE,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
-	struct prestera_msg_port_attr_resp resp;
-	int err;
+	पूर्ण;
+	काष्ठा prestera_msg_port_attr_resp resp;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	*type = resp.param.type;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_port_fec_get(const struct prestera_port *port, u8 *fec)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_fec_get(स्थिर काष्ठा prestera_port *port, u8 *fec)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_FEC,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
-	struct prestera_msg_port_attr_resp resp;
-	int err;
+	पूर्ण;
+	काष्ठा prestera_msg_port_attr_resp resp;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	*fec = resp.param.fec;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_port_fec_set(const struct prestera_port *port, u8 fec)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_fec_set(स्थिर काष्ठा prestera_port *port, u8 fec)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_FEC,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-		.param = {
+		.param = अणु
 			.fec = fec,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-static u8 prestera_hw_mdix_to_eth(u8 mode)
-{
-	switch (mode) {
-	case PRESTERA_PORT_TP_MDI:
-		return ETH_TP_MDI;
-	case PRESTERA_PORT_TP_MDIX:
-		return ETH_TP_MDI_X;
-	case PRESTERA_PORT_TP_AUTO:
-		return ETH_TP_MDI_AUTO;
-	default:
-		return ETH_TP_MDI_INVALID;
-	}
-}
+अटल u8 prestera_hw_mdix_to_eth(u8 mode)
+अणु
+	चयन (mode) अणु
+	हाल PRESTERA_PORT_TP_MDI:
+		वापस ETH_TP_MDI;
+	हाल PRESTERA_PORT_TP_MDIX:
+		वापस ETH_TP_MDI_X;
+	हाल PRESTERA_PORT_TP_AUTO:
+		वापस ETH_TP_MDI_AUTO;
+	शेष:
+		वापस ETH_TP_MDI_INVALID;
+	पूर्ण
+पूर्ण
 
-static u8 prestera_hw_mdix_from_eth(u8 mode)
-{
-	switch (mode) {
-	case ETH_TP_MDI:
-		return PRESTERA_PORT_TP_MDI;
-	case ETH_TP_MDI_X:
-		return PRESTERA_PORT_TP_MDIX;
-	case ETH_TP_MDI_AUTO:
-		return PRESTERA_PORT_TP_AUTO;
-	default:
-		return PRESTERA_PORT_TP_NA;
-	}
-}
+अटल u8 prestera_hw_mdix_from_eth(u8 mode)
+अणु
+	चयन (mode) अणु
+	हाल ETH_TP_MDI:
+		वापस PRESTERA_PORT_TP_MDI;
+	हाल ETH_TP_MDI_X:
+		वापस PRESTERA_PORT_TP_MDIX;
+	हाल ETH_TP_MDI_AUTO:
+		वापस PRESTERA_PORT_TP_AUTO;
+	शेष:
+		वापस PRESTERA_PORT_TP_NA;
+	पूर्ण
+पूर्ण
 
-int prestera_hw_port_mdix_get(const struct prestera_port *port, u8 *status,
+पूर्णांक prestera_hw_port_mdix_get(स्थिर काष्ठा prestera_port *port, u8 *status,
 			      u8 *admin_mode)
-{
-	struct prestera_msg_port_attr_req req = {
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_MDIX,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
-	struct prestera_msg_port_attr_resp resp;
-	int err;
+	पूर्ण;
+	काष्ठा prestera_msg_port_attr_resp resp;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	*status = prestera_hw_mdix_to_eth(resp.param.mdix.status);
 	*admin_mode = prestera_hw_mdix_to_eth(resp.param.mdix.admin_mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_port_mdix_set(const struct prestera_port *port, u8 mode)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_mdix_set(स्थिर काष्ठा prestera_port *port, u8 mode)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_MDIX,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
+	पूर्ण;
 
 	req.param.mdix.admin_mode = prestera_hw_mdix_from_eth(mode);
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_port_link_mode_set(const struct prestera_port *port, u32 mode)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_link_mode_set(स्थिर काष्ठा prestera_port *port, u32 mode)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_LINK_MODE,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-		.param = {
+		.param = अणु
 			.link_mode = mode,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_port_link_mode_get(const struct prestera_port *port, u32 *mode)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_link_mode_get(स्थिर काष्ठा prestera_port *port, u32 *mode)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_LINK_MODE,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
-	struct prestera_msg_port_attr_resp resp;
-	int err;
+	पूर्ण;
+	काष्ठा prestera_msg_port_attr_resp resp;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	*mode = resp.param.link_mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_port_speed_get(const struct prestera_port *port, u32 *speed)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_speed_get(स्थिर काष्ठा prestera_port *port, u32 *speed)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_SPEED,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
-	struct prestera_msg_port_attr_resp resp;
-	int err;
+	पूर्ण;
+	काष्ठा prestera_msg_port_attr_resp resp;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	*speed = resp.param.speed;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_port_autoneg_set(const struct prestera_port *port,
-				 bool autoneg, u64 link_modes, u8 fec)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_स्वतःneg_set(स्थिर काष्ठा prestera_port *port,
+				 bool स्वतःneg, u64 link_modes, u8 fec)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_AUTONEG,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-		.param = {
-			.autoneg = {
+		.param = अणु
+			.स्वतःneg = अणु
 				.link_mode = link_modes,
-				.enable = autoneg,
+				.enable = स्वतःneg,
 				.fec = fec,
-			}
-		}
-	};
+			पूर्ण
+		पूर्ण
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_port_autoneg_restart(struct prestera_port *port)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_स्वतःneg_restart(काष्ठा prestera_port *port)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_AUTONEG_RESTART,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_port_duplex_get(const struct prestera_port *port, u8 *duplex)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_duplex_get(स्थिर काष्ठा prestera_port *port, u8 *duplex)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_DUPLEX,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
-	struct prestera_msg_port_attr_resp resp;
-	int err;
+	पूर्ण;
+	काष्ठा prestera_msg_port_attr_resp resp;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	*duplex = resp.param.duplex;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_port_stats_get(const struct prestera_port *port,
-			       struct prestera_port_stats *st)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_stats_get(स्थिर काष्ठा prestera_port *port,
+			       काष्ठा prestera_port_stats *st)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_STATS,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
-	struct prestera_msg_port_stats_resp resp;
+	पूर्ण;
+	काष्ठा prestera_msg_port_stats_resp resp;
 	u64 *hw = resp.stats;
-	int err;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_GET,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	st->good_octets_received = hw[PRESTERA_PORT_GOOD_OCTETS_RCV_CNT];
 	st->bad_octets_received = hw[PRESTERA_PORT_BAD_OCTETS_RCV_CNT];
@@ -970,262 +971,262 @@ int prestera_hw_port_stats_get(const struct prestera_port *port,
 	st->sent_deferred = hw[PRESTERA_PORT_DEFERRED_PKTS_SENT_CNT];
 	st->good_octets_sent = hw[PRESTERA_PORT_GOOD_OCTETS_SENT_CNT];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_port_learning_set(struct prestera_port *port, bool enable)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_learning_set(काष्ठा prestera_port *port, bool enable)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_LEARNING,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-		.param = {
+		.param = अणु
 			.learning = enable,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_port_flood_set(struct prestera_port *port, bool flood)
-{
-	struct prestera_msg_port_attr_req req = {
+पूर्णांक prestera_hw_port_flood_set(काष्ठा prestera_port *port, bool flood)
+अणु
+	काष्ठा prestera_msg_port_attr_req req = अणु
 		.attr = PRESTERA_CMD_PORT_ATTR_FLOOD,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-		.param = {
+		.param = अणु
 			.flood = flood,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_PORT_ATTR_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_vlan_create(struct prestera_switch *sw, u16 vid)
-{
-	struct prestera_msg_vlan_req req = {
+पूर्णांक prestera_hw_vlan_create(काष्ठा prestera_चयन *sw, u16 vid)
+अणु
+	काष्ठा prestera_msg_vlan_req req = अणु
 		.vid = vid,
-	};
+	पूर्ण;
 
-	return prestera_cmd(sw, PRESTERA_CMD_TYPE_VLAN_CREATE,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(sw, PRESTERA_CMD_TYPE_VLAN_CREATE,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_vlan_delete(struct prestera_switch *sw, u16 vid)
-{
-	struct prestera_msg_vlan_req req = {
+पूर्णांक prestera_hw_vlan_delete(काष्ठा prestera_चयन *sw, u16 vid)
+अणु
+	काष्ठा prestera_msg_vlan_req req = अणु
 		.vid = vid,
-	};
+	पूर्ण;
 
-	return prestera_cmd(sw, PRESTERA_CMD_TYPE_VLAN_DELETE,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(sw, PRESTERA_CMD_TYPE_VLAN_DELETE,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_vlan_port_set(struct prestera_port *port, u16 vid,
+पूर्णांक prestera_hw_vlan_port_set(काष्ठा prestera_port *port, u16 vid,
 			      bool is_member, bool untagged)
-{
-	struct prestera_msg_vlan_req req = {
+अणु
+	काष्ठा prestera_msg_vlan_req req = अणु
 		.port = port->hw_id,
 		.dev = port->dev_id,
 		.vid = vid,
 		.is_member = is_member,
 		.is_tagged = !untagged,
-	};
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_VLAN_PORT_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_VLAN_PORT_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_vlan_port_vid_set(struct prestera_port *port, u16 vid)
-{
-	struct prestera_msg_vlan_req req = {
+पूर्णांक prestera_hw_vlan_port_vid_set(काष्ठा prestera_port *port, u16 vid)
+अणु
+	काष्ठा prestera_msg_vlan_req req = अणु
 		.port = port->hw_id,
 		.dev = port->dev_id,
 		.vid = vid,
-	};
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_VLAN_PVID_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_VLAN_PVID_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_vlan_port_stp_set(struct prestera_port *port, u16 vid, u8 state)
-{
-	struct prestera_msg_stp_req req = {
+पूर्णांक prestera_hw_vlan_port_stp_set(काष्ठा prestera_port *port, u16 vid, u8 state)
+अणु
+	काष्ठा prestera_msg_stp_req req = अणु
 		.port = port->hw_id,
 		.dev = port->dev_id,
 		.vid = vid,
 		.state = state,
-	};
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_STP_PORT_SET,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_STP_PORT_SET,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_fdb_add(struct prestera_port *port, const unsigned char *mac,
+पूर्णांक prestera_hw_fdb_add(काष्ठा prestera_port *port, स्थिर अचिन्हित अक्षर *mac,
 			u16 vid, bool dynamic)
-{
-	struct prestera_msg_fdb_req req = {
+अणु
+	काष्ठा prestera_msg_fdb_req req = अणु
 		.port = port->hw_id,
 		.dev = port->dev_id,
 		.vid = vid,
 		.dynamic = dynamic,
-	};
+	पूर्ण;
 
 	ether_addr_copy(req.mac, mac);
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_FDB_ADD,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_FDB_ADD,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_fdb_del(struct prestera_port *port, const unsigned char *mac,
+पूर्णांक prestera_hw_fdb_del(काष्ठा prestera_port *port, स्थिर अचिन्हित अक्षर *mac,
 			u16 vid)
-{
-	struct prestera_msg_fdb_req req = {
+अणु
+	काष्ठा prestera_msg_fdb_req req = अणु
 		.port = port->hw_id,
 		.dev = port->dev_id,
 		.vid = vid,
-	};
+	पूर्ण;
 
 	ether_addr_copy(req.mac, mac);
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_FDB_DELETE,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_FDB_DELETE,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_fdb_flush_port(struct prestera_port *port, u32 mode)
-{
-	struct prestera_msg_fdb_req req = {
+पूर्णांक prestera_hw_fdb_flush_port(काष्ठा prestera_port *port, u32 mode)
+अणु
+	काष्ठा prestera_msg_fdb_req req = अणु
 		.port = port->hw_id,
 		.dev = port->dev_id,
 		.flush_mode = mode,
-	};
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_FDB_FLUSH_PORT,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_FDB_FLUSH_PORT,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_fdb_flush_vlan(struct prestera_switch *sw, u16 vid, u32 mode)
-{
-	struct prestera_msg_fdb_req req = {
+पूर्णांक prestera_hw_fdb_flush_vlan(काष्ठा prestera_चयन *sw, u16 vid, u32 mode)
+अणु
+	काष्ठा prestera_msg_fdb_req req = अणु
 		.vid = vid,
 		.flush_mode = mode,
-	};
+	पूर्ण;
 
-	return prestera_cmd(sw, PRESTERA_CMD_TYPE_FDB_FLUSH_VLAN,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(sw, PRESTERA_CMD_TYPE_FDB_FLUSH_VLAN,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_fdb_flush_port_vlan(struct prestera_port *port, u16 vid,
+पूर्णांक prestera_hw_fdb_flush_port_vlan(काष्ठा prestera_port *port, u16 vid,
 				    u32 mode)
-{
-	struct prestera_msg_fdb_req req = {
+अणु
+	काष्ठा prestera_msg_fdb_req req = अणु
 		.port = port->hw_id,
 		.dev = port->dev_id,
 		.vid = vid,
 		.flush_mode = mode,
-	};
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_FDB_FLUSH_PORT_VLAN,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_FDB_FLUSH_PORT_VLAN,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_bridge_create(struct prestera_switch *sw, u16 *bridge_id)
-{
-	struct prestera_msg_bridge_resp resp;
-	struct prestera_msg_bridge_req req;
-	int err;
+पूर्णांक prestera_hw_bridge_create(काष्ठा prestera_चयन *sw, u16 *bridge_id)
+अणु
+	काष्ठा prestera_msg_bridge_resp resp;
+	काष्ठा prestera_msg_bridge_req req;
+	पूर्णांक err;
 
 	err = prestera_cmd_ret(sw, PRESTERA_CMD_TYPE_BRIDGE_CREATE,
-			       &req.cmd, sizeof(req),
-			       &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req),
+			       &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	*bridge_id = resp.bridge;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_bridge_delete(struct prestera_switch *sw, u16 bridge_id)
-{
-	struct prestera_msg_bridge_req req = {
+पूर्णांक prestera_hw_bridge_delete(काष्ठा prestera_चयन *sw, u16 bridge_id)
+अणु
+	काष्ठा prestera_msg_bridge_req req = अणु
 		.bridge = bridge_id,
-	};
+	पूर्ण;
 
-	return prestera_cmd(sw, PRESTERA_CMD_TYPE_BRIDGE_DELETE,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(sw, PRESTERA_CMD_TYPE_BRIDGE_DELETE,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_bridge_port_add(struct prestera_port *port, u16 bridge_id)
-{
-	struct prestera_msg_bridge_req req = {
-		.bridge = bridge_id,
-		.port = port->hw_id,
-		.dev = port->dev_id,
-	};
-
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_BRIDGE_PORT_ADD,
-			    &req.cmd, sizeof(req));
-}
-
-int prestera_hw_bridge_port_delete(struct prestera_port *port, u16 bridge_id)
-{
-	struct prestera_msg_bridge_req req = {
+पूर्णांक prestera_hw_bridge_port_add(काष्ठा prestera_port *port, u16 bridge_id)
+अणु
+	काष्ठा prestera_msg_bridge_req req = अणु
 		.bridge = bridge_id,
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_BRIDGE_PORT_DELETE,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_BRIDGE_PORT_ADD,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_rxtx_init(struct prestera_switch *sw,
-			  struct prestera_rxtx_params *params)
-{
-	struct prestera_msg_rxtx_resp resp;
-	struct prestera_msg_rxtx_req req;
-	int err;
+पूर्णांक prestera_hw_bridge_port_delete(काष्ठा prestera_port *port, u16 bridge_id)
+अणु
+	काष्ठा prestera_msg_bridge_req req = अणु
+		.bridge = bridge_id,
+		.port = port->hw_id,
+		.dev = port->dev_id,
+	पूर्ण;
+
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_BRIDGE_PORT_DELETE,
+			    &req.cmd, माप(req));
+पूर्ण
+
+पूर्णांक prestera_hw_rxtx_init(काष्ठा prestera_चयन *sw,
+			  काष्ठा prestera_rxtx_params *params)
+अणु
+	काष्ठा prestera_msg_rxtx_resp resp;
+	काष्ठा prestera_msg_rxtx_req req;
+	पूर्णांक err;
 
 	req.use_sdma = params->use_sdma;
 
 	err = prestera_cmd_ret(sw, PRESTERA_CMD_TYPE_RXTX_INIT,
-			       &req.cmd, sizeof(req), &resp.ret, sizeof(resp));
-	if (err)
-		return err;
+			       &req.cmd, माप(req), &resp.ret, माप(resp));
+	अगर (err)
+		वापस err;
 
 	params->map_addr = resp.map_addr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int prestera_hw_rxtx_port_init(struct prestera_port *port)
-{
-	struct prestera_msg_rxtx_port_req req = {
+पूर्णांक prestera_hw_rxtx_port_init(काष्ठा prestera_port *port)
+अणु
+	काष्ठा prestera_msg_rxtx_port_req req = अणु
 		.port = port->hw_id,
 		.dev = port->dev_id,
-	};
+	पूर्ण;
 
-	return prestera_cmd(port->sw, PRESTERA_CMD_TYPE_RXTX_PORT_INIT,
-			    &req.cmd, sizeof(req));
-}
+	वापस prestera_cmd(port->sw, PRESTERA_CMD_TYPE_RXTX_PORT_INIT,
+			    &req.cmd, माप(req));
+पूर्ण
 
-int prestera_hw_event_handler_register(struct prestera_switch *sw,
-				       enum prestera_event_type type,
+पूर्णांक prestera_hw_event_handler_रेजिस्टर(काष्ठा prestera_चयन *sw,
+				       क्रमागत prestera_event_type type,
 				       prestera_event_cb_t fn,
-				       void *arg)
-{
-	struct prestera_fw_event_handler *eh;
+				       व्योम *arg)
+अणु
+	काष्ठा prestera_fw_event_handler *eh;
 
 	eh = __find_event_handler(sw, type);
-	if (eh)
-		return -EEXIST;
+	अगर (eh)
+		वापस -EEXIST;
 
-	eh = kmalloc(sizeof(*eh), GFP_KERNEL);
-	if (!eh)
-		return -ENOMEM;
+	eh = kदो_स्मृति(माप(*eh), GFP_KERNEL);
+	अगर (!eh)
+		वापस -ENOMEM;
 
 	eh->type = type;
 	eh->func = fn;
@@ -1235,19 +1236,19 @@ int prestera_hw_event_handler_register(struct prestera_switch *sw,
 
 	list_add_rcu(&eh->list, &sw->event_handlers);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void prestera_hw_event_handler_unregister(struct prestera_switch *sw,
-					  enum prestera_event_type type,
+व्योम prestera_hw_event_handler_unरेजिस्टर(काष्ठा prestera_चयन *sw,
+					  क्रमागत prestera_event_type type,
 					  prestera_event_cb_t fn)
-{
-	struct prestera_fw_event_handler *eh;
+अणु
+	काष्ठा prestera_fw_event_handler *eh;
 
 	eh = __find_event_handler(sw, type);
-	if (!eh)
-		return;
+	अगर (!eh)
+		वापस;
 
 	list_del_rcu(&eh->list);
-	kfree_rcu(eh, rcu);
-}
+	kमुक्त_rcu(eh, rcu);
+पूर्ण

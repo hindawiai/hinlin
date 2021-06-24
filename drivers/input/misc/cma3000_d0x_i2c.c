@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Implements I2C interface for VTI CMA300_D0x Accelerometer driver
+ * Implements I2C पूर्णांकerface क्रम VTI CMA300_D0x Accelerometer driver
  *
  * Copyright (C) 2010 Texas Instruments
  * Author: Hemanth V <hemanthv@ti.com>
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/input/cma3000.h>
-#include "cma3000_d0x.h"
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input/cma3000.h>
+#समावेश "cma3000_d0x.h"
 
-static int cma3000_i2c_set(struct device *dev,
-			   u8 reg, u8 val, char *msg)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	int ret;
+अटल पूर्णांक cma3000_i2c_set(काष्ठा device *dev,
+			   u8 reg, u8 val, अक्षर *msg)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(client, reg, val);
-	if (ret < 0)
+	ret = i2c_smbus_ग_लिखो_byte_data(client, reg, val);
+	अगर (ret < 0)
 		dev_err(&client->dev,
 			"%s failed (%s, %d)\n", __func__, msg, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cma3000_i2c_read(struct device *dev, u8 reg, char *msg)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	int ret;
+अटल पूर्णांक cma3000_i2c_पढ़ो(काष्ठा device *dev, u8 reg, अक्षर *msg)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(client, reg);
-	if (ret < 0)
+	ret = i2c_smbus_पढ़ो_byte_data(client, reg);
+	अगर (ret < 0)
 		dev_err(&client->dev,
 			"%s failed (%s, %d)\n", __func__, msg, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct cma3000_bus_ops cma3000_i2c_bops = {
+अटल स्थिर काष्ठा cma3000_bus_ops cma3000_i2c_bops = अणु
 	.bustype	= BUS_I2C,
-#define CMA3000_BUSI2C     (0 << 4)
+#घोषणा CMA3000_BUSI2C     (0 << 4)
 	.ctrl_mod	= CMA3000_BUSI2C,
-	.read		= cma3000_i2c_read,
-	.write		= cma3000_i2c_set,
-};
+	.पढ़ो		= cma3000_i2c_पढ़ो,
+	.ग_लिखो		= cma3000_i2c_set,
+पूर्ण;
 
-static int cma3000_i2c_probe(struct i2c_client *client,
-					const struct i2c_device_id *id)
-{
-	struct cma3000_accl_data *data;
+अटल पूर्णांक cma3000_i2c_probe(काष्ठा i2c_client *client,
+					स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा cma3000_accl_data *data;
 
 	data = cma3000_init(&client->dev, client->irq, &cma3000_i2c_bops);
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	i2c_set_clientdata(client, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cma3000_i2c_remove(struct i2c_client *client)
-{
-	struct cma3000_accl_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक cma3000_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा cma3000_accl_data *data = i2c_get_clientdata(client);
 
-	cma3000_exit(data);
+	cma3000_निकास(data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int cma3000_i2c_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct cma3000_accl_data *data = i2c_get_clientdata(client);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक cma3000_i2c_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा cma3000_accl_data *data = i2c_get_clientdata(client);
 
 	cma3000_suspend(data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cma3000_i2c_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct cma3000_accl_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक cma3000_i2c_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा cma3000_accl_data *data = i2c_get_clientdata(client);
 
 	cma3000_resume(data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops cma3000_i2c_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops cma3000_i2c_pm_ops = अणु
 	.suspend	= cma3000_i2c_suspend,
 	.resume		= cma3000_i2c_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static const struct i2c_device_id cma3000_i2c_id[] = {
-	{ "cma3000_d01", 0 },
-	{ },
-};
+अटल स्थिर काष्ठा i2c_device_id cma3000_i2c_id[] = अणु
+	अणु "cma3000_d01", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, cma3000_i2c_id);
 
-static struct i2c_driver cma3000_i2c_driver = {
+अटल काष्ठा i2c_driver cma3000_i2c_driver = अणु
 	.probe		= cma3000_i2c_probe,
-	.remove		= cma3000_i2c_remove,
+	.हटाओ		= cma3000_i2c_हटाओ,
 	.id_table	= cma3000_i2c_id,
-	.driver = {
+	.driver = अणु
 		.name	= "cma3000_i2c_accl",
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 		.pm	= &cma3000_i2c_pm_ops,
-#endif
-	},
-};
+#पूर्ण_अगर
+	पूर्ण,
+पूर्ण;
 
 module_i2c_driver(cma3000_i2c_driver);
 

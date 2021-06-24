@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Hash Info: Hash algorithms information
+ * Hash Info: Hash algorithms inक्रमmation
  *
  * Copyright (c) 2013 Dmitry Kasatkin <d.kasatkin@samsung.com>
  */
 
-#ifndef _CRYPTO_HASH_INFO_H
-#define _CRYPTO_HASH_INFO_H
+#अगर_अघोषित _CRYPTO_HASH_INFO_H
+#घोषणा _CRYPTO_HASH_INFO_H
 
-#include <crypto/sha1.h>
-#include <crypto/sha2.h>
-#include <crypto/md5.h>
-#include <crypto/streebog.h>
+#समावेश <crypto/sha1.h>
+#समावेश <crypto/sha2.h>
+#समावेश <crypto/md5.h>
+#समावेश <crypto/streebog.h>
 
-#include <uapi/linux/hash_info.h>
-
-/* not defined in include/crypto/ */
-#define RMD128_DIGEST_SIZE      16
-#define RMD160_DIGEST_SIZE	20
-#define RMD256_DIGEST_SIZE      32
-#define RMD320_DIGEST_SIZE      40
+#समावेश <uapi/linux/hash_info.h>
 
 /* not defined in include/crypto/ */
-#define WP512_DIGEST_SIZE	64
-#define WP384_DIGEST_SIZE	48
-#define WP256_DIGEST_SIZE	32
+#घोषणा RMD128_DIGEST_SIZE      16
+#घोषणा RMD160_DIGEST_SIZE	20
+#घोषणा RMD256_DIGEST_SIZE      32
+#घोषणा RMD320_DIGEST_SIZE      40
 
 /* not defined in include/crypto/ */
-#define TGR128_DIGEST_SIZE 16
-#define TGR160_DIGEST_SIZE 20
-#define TGR192_DIGEST_SIZE 24
+#घोषणा WP512_DIGEST_SIZE	64
+#घोषणा WP384_DIGEST_SIZE	48
+#घोषणा WP256_DIGEST_SIZE	32
 
 /* not defined in include/crypto/ */
-#define SM3256_DIGEST_SIZE 32
+#घोषणा TGR128_DIGEST_SIZE 16
+#घोषणा TGR160_DIGEST_SIZE 20
+#घोषणा TGR192_DIGEST_SIZE 24
 
-extern const char *const hash_algo_name[HASH_ALGO__LAST];
-extern const int hash_digest_size[HASH_ALGO__LAST];
+/* not defined in include/crypto/ */
+#घोषणा SM3256_DIGEST_SIZE 32
 
-#endif /* _CRYPTO_HASH_INFO_H */
+बाह्य स्थिर अक्षर *स्थिर hash_algo_name[HASH_ALGO__LAST];
+बाह्य स्थिर पूर्णांक hash_digest_size[HASH_ALGO__LAST];
+
+#पूर्ण_अगर /* _CRYPTO_HASH_INFO_H */

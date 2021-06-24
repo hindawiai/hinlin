@@ -1,387 +1,388 @@
-#include "dso.h"
-#include "symbol.h"
-#include "symsrc.h"
+<शैली गुरु>
+#समावेश "dso.h"
+#समावेश "symbol.h"
+#समावेश "symsrc.h"
 
-#include <errno.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
-#include <byteswap.h>
-#include <sys/stat.h>
-#include <linux/zalloc.h>
-#include <internal/lib.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <मानकपन.स>
+#समावेश <fcntl.h>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <byteswap.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <linux/zभाग.स>
+#समावेश <पूर्णांकernal/lib.h>
 
-static bool check_need_swap(int file_endian)
-{
-	const int data = 1;
+अटल bool check_need_swap(पूर्णांक file_endian)
+अणु
+	स्थिर पूर्णांक data = 1;
 	u8 *check = (u8 *)&data;
-	int host_endian;
+	पूर्णांक host_endian;
 
-	if (check[0] == 1)
+	अगर (check[0] == 1)
 		host_endian = ELFDATA2LSB;
-	else
+	अन्यथा
 		host_endian = ELFDATA2MSB;
 
-	return host_endian != file_endian;
-}
+	वापस host_endian != file_endian;
+पूर्ण
 
-#define NOTE_ALIGN(sz) (((sz) + 3) & ~3)
+#घोषणा NOTE_ALIGN(sz) (((sz) + 3) & ~3)
 
-#define NT_GNU_BUILD_ID	3
+#घोषणा NT_GNU_BUILD_ID	3
 
-static int read_build_id(void *note_data, size_t note_len, struct build_id *bid,
+अटल पूर्णांक पढ़ो_build_id(व्योम *note_data, माप_प्रकार note_len, काष्ठा build_id *bid,
 			 bool need_swap)
-{
-	size_t size = sizeof(bid->data);
-	struct {
+अणु
+	माप_प्रकार size = माप(bid->data);
+	काष्ठा अणु
 		u32 n_namesz;
 		u32 n_descsz;
 		u32 n_type;
-	} *nhdr;
-	void *ptr;
+	पूर्ण *nhdr;
+	व्योम *ptr;
 
 	ptr = note_data;
-	while (ptr < (note_data + note_len)) {
-		const char *name;
-		size_t namesz, descsz;
+	जबतक (ptr < (note_data + note_len)) अणु
+		स्थिर अक्षर *name;
+		माप_प्रकार namesz, descsz;
 
 		nhdr = ptr;
-		if (need_swap) {
+		अगर (need_swap) अणु
 			nhdr->n_namesz = bswap_32(nhdr->n_namesz);
 			nhdr->n_descsz = bswap_32(nhdr->n_descsz);
 			nhdr->n_type = bswap_32(nhdr->n_type);
-		}
+		पूर्ण
 
 		namesz = NOTE_ALIGN(nhdr->n_namesz);
 		descsz = NOTE_ALIGN(nhdr->n_descsz);
 
-		ptr += sizeof(*nhdr);
+		ptr += माप(*nhdr);
 		name = ptr;
 		ptr += namesz;
-		if (nhdr->n_type == NT_GNU_BUILD_ID &&
-		    nhdr->n_namesz == sizeof("GNU")) {
-			if (memcmp(name, "GNU", sizeof("GNU")) == 0) {
-				size_t sz = min(size, descsz);
-				memcpy(bid->data, ptr, sz);
-				memset(bid->data + sz, 0, size - sz);
+		अगर (nhdr->n_type == NT_GNU_BUILD_ID &&
+		    nhdr->n_namesz == माप("GNU")) अणु
+			अगर (स_भेद(name, "GNU", माप("GNU")) == 0) अणु
+				माप_प्रकार sz = min(size, descsz);
+				स_नकल(bid->data, ptr, sz);
+				स_रखो(bid->data + sz, 0, size - sz);
 				bid->size = sz;
-				return 0;
-			}
-		}
+				वापस 0;
+			पूर्ण
+		पूर्ण
 		ptr += descsz;
-	}
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int filename__read_debuglink(const char *filename __maybe_unused,
-			     char *debuglink __maybe_unused,
-			     size_t size __maybe_unused)
-{
-	return -1;
-}
+पूर्णांक filename__पढ़ो_debuglink(स्थिर अक्षर *filename __maybe_unused,
+			     अक्षर *debuglink __maybe_unused,
+			     माप_प्रकार size __maybe_unused)
+अणु
+	वापस -1;
+पूर्ण
 
 /*
  * Just try PT_NOTE header otherwise fails
  */
-int filename__read_build_id(const char *filename, struct build_id *bid)
-{
-	FILE *fp;
-	int ret = -1;
+पूर्णांक filename__पढ़ो_build_id(स्थिर अक्षर *filename, काष्ठा build_id *bid)
+अणु
+	खाता *fp;
+	पूर्णांक ret = -1;
 	bool need_swap = false;
 	u8 e_ident[EI_NIDENT];
-	size_t buf_size;
-	void *buf;
-	int i;
+	माप_प्रकार buf_size;
+	व्योम *buf;
+	पूर्णांक i;
 
-	fp = fopen(filename, "r");
-	if (fp == NULL)
-		return -1;
+	fp = ख_खोलो(filename, "r");
+	अगर (fp == शून्य)
+		वापस -1;
 
-	if (fread(e_ident, sizeof(e_ident), 1, fp) != 1)
-		goto out;
+	अगर (ख_पढ़ो(e_ident, माप(e_ident), 1, fp) != 1)
+		जाओ out;
 
-	if (memcmp(e_ident, ELFMAG, SELFMAG) ||
+	अगर (स_भेद(e_ident, ELFMAG, SELFMAG) ||
 	    e_ident[EI_VERSION] != EV_CURRENT)
-		goto out;
+		जाओ out;
 
 	need_swap = check_need_swap(e_ident[EI_DATA]);
 
-	/* for simplicity */
-	fseek(fp, 0, SEEK_SET);
+	/* क्रम simplicity */
+	ख_जाओ(fp, 0, शुरू_से);
 
-	if (e_ident[EI_CLASS] == ELFCLASS32) {
+	अगर (e_ident[EI_CLASS] == ELFCLASS32) अणु
 		Elf32_Ehdr ehdr;
 		Elf32_Phdr *phdr;
 
-		if (fread(&ehdr, sizeof(ehdr), 1, fp) != 1)
-			goto out;
+		अगर (ख_पढ़ो(&ehdr, माप(ehdr), 1, fp) != 1)
+			जाओ out;
 
-		if (need_swap) {
+		अगर (need_swap) अणु
 			ehdr.e_phoff = bswap_32(ehdr.e_phoff);
 			ehdr.e_phentsize = bswap_16(ehdr.e_phentsize);
 			ehdr.e_phnum = bswap_16(ehdr.e_phnum);
-		}
+		पूर्ण
 
 		buf_size = ehdr.e_phentsize * ehdr.e_phnum;
-		buf = malloc(buf_size);
-		if (buf == NULL)
-			goto out;
+		buf = दो_स्मृति(buf_size);
+		अगर (buf == शून्य)
+			जाओ out;
 
-		fseek(fp, ehdr.e_phoff, SEEK_SET);
-		if (fread(buf, buf_size, 1, fp) != 1)
-			goto out_free;
+		ख_जाओ(fp, ehdr.e_phoff, शुरू_से);
+		अगर (ख_पढ़ो(buf, buf_size, 1, fp) != 1)
+			जाओ out_मुक्त;
 
-		for (i = 0, phdr = buf; i < ehdr.e_phnum; i++, phdr++) {
-			void *tmp;
-			long offset;
+		क्रम (i = 0, phdr = buf; i < ehdr.e_phnum; i++, phdr++) अणु
+			व्योम *पंचांगp;
+			दीर्घ offset;
 
-			if (need_swap) {
+			अगर (need_swap) अणु
 				phdr->p_type = bswap_32(phdr->p_type);
 				phdr->p_offset = bswap_32(phdr->p_offset);
 				phdr->p_filesz = bswap_32(phdr->p_filesz);
-			}
+			पूर्ण
 
-			if (phdr->p_type != PT_NOTE)
-				continue;
+			अगर (phdr->p_type != PT_NOTE)
+				जारी;
 
 			buf_size = phdr->p_filesz;
 			offset = phdr->p_offset;
-			tmp = realloc(buf, buf_size);
-			if (tmp == NULL)
-				goto out_free;
+			पंचांगp = पुनः_स्मृति(buf, buf_size);
+			अगर (पंचांगp == शून्य)
+				जाओ out_मुक्त;
 
-			buf = tmp;
-			fseek(fp, offset, SEEK_SET);
-			if (fread(buf, buf_size, 1, fp) != 1)
-				goto out_free;
+			buf = पंचांगp;
+			ख_जाओ(fp, offset, शुरू_से);
+			अगर (ख_पढ़ो(buf, buf_size, 1, fp) != 1)
+				जाओ out_मुक्त;
 
-			ret = read_build_id(buf, buf_size, bid, need_swap);
-			if (ret == 0)
+			ret = पढ़ो_build_id(buf, buf_size, bid, need_swap);
+			अगर (ret == 0)
 				ret = bid->size;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		Elf64_Ehdr ehdr;
 		Elf64_Phdr *phdr;
 
-		if (fread(&ehdr, sizeof(ehdr), 1, fp) != 1)
-			goto out;
+		अगर (ख_पढ़ो(&ehdr, माप(ehdr), 1, fp) != 1)
+			जाओ out;
 
-		if (need_swap) {
+		अगर (need_swap) अणु
 			ehdr.e_phoff = bswap_64(ehdr.e_phoff);
 			ehdr.e_phentsize = bswap_16(ehdr.e_phentsize);
 			ehdr.e_phnum = bswap_16(ehdr.e_phnum);
-		}
+		पूर्ण
 
 		buf_size = ehdr.e_phentsize * ehdr.e_phnum;
-		buf = malloc(buf_size);
-		if (buf == NULL)
-			goto out;
+		buf = दो_स्मृति(buf_size);
+		अगर (buf == शून्य)
+			जाओ out;
 
-		fseek(fp, ehdr.e_phoff, SEEK_SET);
-		if (fread(buf, buf_size, 1, fp) != 1)
-			goto out_free;
+		ख_जाओ(fp, ehdr.e_phoff, शुरू_से);
+		अगर (ख_पढ़ो(buf, buf_size, 1, fp) != 1)
+			जाओ out_मुक्त;
 
-		for (i = 0, phdr = buf; i < ehdr.e_phnum; i++, phdr++) {
-			void *tmp;
-			long offset;
+		क्रम (i = 0, phdr = buf; i < ehdr.e_phnum; i++, phdr++) अणु
+			व्योम *पंचांगp;
+			दीर्घ offset;
 
-			if (need_swap) {
+			अगर (need_swap) अणु
 				phdr->p_type = bswap_32(phdr->p_type);
 				phdr->p_offset = bswap_64(phdr->p_offset);
 				phdr->p_filesz = bswap_64(phdr->p_filesz);
-			}
+			पूर्ण
 
-			if (phdr->p_type != PT_NOTE)
-				continue;
+			अगर (phdr->p_type != PT_NOTE)
+				जारी;
 
 			buf_size = phdr->p_filesz;
 			offset = phdr->p_offset;
-			tmp = realloc(buf, buf_size);
-			if (tmp == NULL)
-				goto out_free;
+			पंचांगp = पुनः_स्मृति(buf, buf_size);
+			अगर (पंचांगp == शून्य)
+				जाओ out_मुक्त;
 
-			buf = tmp;
-			fseek(fp, offset, SEEK_SET);
-			if (fread(buf, buf_size, 1, fp) != 1)
-				goto out_free;
+			buf = पंचांगp;
+			ख_जाओ(fp, offset, शुरू_से);
+			अगर (ख_पढ़ो(buf, buf_size, 1, fp) != 1)
+				जाओ out_मुक्त;
 
-			ret = read_build_id(buf, buf_size, bid, need_swap);
-			if (ret == 0)
+			ret = पढ़ो_build_id(buf, buf_size, bid, need_swap);
+			अगर (ret == 0)
 				ret = bid->size;
-			break;
-		}
-	}
-out_free:
-	free(buf);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+out_मुक्त:
+	मुक्त(buf);
 out:
-	fclose(fp);
-	return ret;
-}
+	ख_बंद(fp);
+	वापस ret;
+पूर्ण
 
-int sysfs__read_build_id(const char *filename, struct build_id *bid)
-{
-	int fd;
-	int ret = -1;
-	struct stat stbuf;
-	size_t buf_size;
-	void *buf;
+पूर्णांक sysfs__पढ़ो_build_id(स्थिर अक्षर *filename, काष्ठा build_id *bid)
+अणु
+	पूर्णांक fd;
+	पूर्णांक ret = -1;
+	काष्ठा stat stbuf;
+	माप_प्रकार buf_size;
+	व्योम *buf;
 
-	fd = open(filename, O_RDONLY);
-	if (fd < 0)
-		return -1;
+	fd = खोलो(filename, O_RDONLY);
+	अगर (fd < 0)
+		वापस -1;
 
-	if (fstat(fd, &stbuf) < 0)
-		goto out;
+	अगर (ख_स्थिति(fd, &stbuf) < 0)
+		जाओ out;
 
 	buf_size = stbuf.st_size;
-	buf = malloc(buf_size);
-	if (buf == NULL)
-		goto out;
+	buf = दो_स्मृति(buf_size);
+	अगर (buf == शून्य)
+		जाओ out;
 
-	if (read(fd, buf, buf_size) != (ssize_t) buf_size)
-		goto out_free;
+	अगर (पढ़ो(fd, buf, buf_size) != (sमाप_प्रकार) buf_size)
+		जाओ out_मुक्त;
 
-	ret = read_build_id(buf, buf_size, bid, false);
-out_free:
-	free(buf);
+	ret = पढ़ो_build_id(buf, buf_size, bid, false);
+out_मुक्त:
+	मुक्त(buf);
 out:
-	close(fd);
-	return ret;
-}
+	बंद(fd);
+	वापस ret;
+पूर्ण
 
-int symsrc__init(struct symsrc *ss, struct dso *dso, const char *name,
-	         enum dso_binary_type type)
-{
-	int fd = open(name, O_RDONLY);
-	if (fd < 0)
-		goto out_errno;
+पूर्णांक symsrc__init(काष्ठा symsrc *ss, काष्ठा dso *dso, स्थिर अक्षर *name,
+	         क्रमागत dso_binary_type type)
+अणु
+	पूर्णांक fd = खोलो(name, O_RDONLY);
+	अगर (fd < 0)
+		जाओ out_त्रुटि_सं;
 
 	ss->name = strdup(name);
-	if (!ss->name)
-		goto out_close;
+	अगर (!ss->name)
+		जाओ out_बंद;
 
 	ss->fd = fd;
 	ss->type = type;
 
-	return 0;
-out_close:
-	close(fd);
-out_errno:
-	dso->load_errno = errno;
-	return -1;
-}
+	वापस 0;
+out_बंद:
+	बंद(fd);
+out_त्रुटि_सं:
+	dso->load_त्रुटि_सं = त्रुटि_सं;
+	वापस -1;
+पूर्ण
 
-bool symsrc__possibly_runtime(struct symsrc *ss __maybe_unused)
-{
-	/* Assume all sym sources could be a runtime image. */
-	return true;
-}
+bool symsrc__possibly_runसमय(काष्ठा symsrc *ss __maybe_unused)
+अणु
+	/* Assume all sym sources could be a runसमय image. */
+	वापस true;
+पूर्ण
 
-bool symsrc__has_symtab(struct symsrc *ss __maybe_unused)
-{
-	return false;
-}
+bool symsrc__has_symtab(काष्ठा symsrc *ss __maybe_unused)
+अणु
+	वापस false;
+पूर्ण
 
-void symsrc__destroy(struct symsrc *ss)
-{
-	zfree(&ss->name);
-	close(ss->fd);
-}
+व्योम symsrc__destroy(काष्ठा symsrc *ss)
+अणु
+	zमुक्त(&ss->name);
+	बंद(ss->fd);
+पूर्ण
 
-int dso__synthesize_plt_symbols(struct dso *dso __maybe_unused,
-				struct symsrc *ss __maybe_unused)
-{
-	return 0;
-}
+पूर्णांक dso__synthesize_plt_symbols(काष्ठा dso *dso __maybe_unused,
+				काष्ठा symsrc *ss __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static int fd__is_64_bit(int fd)
-{
+अटल पूर्णांक fd__is_64_bit(पूर्णांक fd)
+अणु
 	u8 e_ident[EI_NIDENT];
 
-	if (lseek(fd, 0, SEEK_SET))
-		return -1;
+	अगर (lseek(fd, 0, शुरू_से))
+		वापस -1;
 
-	if (readn(fd, e_ident, sizeof(e_ident)) != sizeof(e_ident))
-		return -1;
+	अगर (पढ़ोn(fd, e_ident, माप(e_ident)) != माप(e_ident))
+		वापस -1;
 
-	if (memcmp(e_ident, ELFMAG, SELFMAG) ||
+	अगर (स_भेद(e_ident, ELFMAG, SELFMAG) ||
 	    e_ident[EI_VERSION] != EV_CURRENT)
-		return -1;
+		वापस -1;
 
-	return e_ident[EI_CLASS] == ELFCLASS64;
-}
+	वापस e_ident[EI_CLASS] == ELFCLASS64;
+पूर्ण
 
-enum dso_type dso__type_fd(int fd)
-{
+क्रमागत dso_type dso__type_fd(पूर्णांक fd)
+अणु
 	Elf64_Ehdr ehdr;
-	int ret;
+	पूर्णांक ret;
 
 	ret = fd__is_64_bit(fd);
-	if (ret < 0)
-		return DSO__TYPE_UNKNOWN;
+	अगर (ret < 0)
+		वापस DSO__TYPE_UNKNOWN;
 
-	if (ret)
-		return DSO__TYPE_64BIT;
+	अगर (ret)
+		वापस DSO__TYPE_64BIT;
 
-	if (readn(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr))
-		return DSO__TYPE_UNKNOWN;
+	अगर (पढ़ोn(fd, &ehdr, माप(ehdr)) != माप(ehdr))
+		वापस DSO__TYPE_UNKNOWN;
 
-	if (ehdr.e_machine == EM_X86_64)
-		return DSO__TYPE_X32BIT;
+	अगर (ehdr.e_machine == EM_X86_64)
+		वापस DSO__TYPE_X32BIT;
 
-	return DSO__TYPE_32BIT;
-}
+	वापस DSO__TYPE_32BIT;
+पूर्ण
 
-int dso__load_sym(struct dso *dso, struct map *map __maybe_unused,
-		  struct symsrc *ss,
-		  struct symsrc *runtime_ss __maybe_unused,
-		  int kmodule __maybe_unused)
-{
-	struct build_id bid;
-	int ret;
+पूर्णांक dso__load_sym(काष्ठा dso *dso, काष्ठा map *map __maybe_unused,
+		  काष्ठा symsrc *ss,
+		  काष्ठा symsrc *runसमय_ss __maybe_unused,
+		  पूर्णांक kmodule __maybe_unused)
+अणु
+	काष्ठा build_id bid;
+	पूर्णांक ret;
 
 	ret = fd__is_64_bit(ss->fd);
-	if (ret >= 0)
+	अगर (ret >= 0)
 		dso->is_64_bit = ret;
 
-	if (filename__read_build_id(ss->name, &bid) > 0)
+	अगर (filename__पढ़ो_build_id(ss->name, &bid) > 0)
 		dso__set_build_id(dso, &bid);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int file__read_maps(int fd __maybe_unused, bool exe __maybe_unused,
-		    mapfn_t mapfn __maybe_unused, void *data __maybe_unused,
+पूर्णांक file__पढ़ो_maps(पूर्णांक fd __maybe_unused, bool exe __maybe_unused,
+		    mapfn_t mapfn __maybe_unused, व्योम *data __maybe_unused,
 		    bool *is_64_bit __maybe_unused)
-{
-	return -1;
-}
+अणु
+	वापस -1;
+पूर्ण
 
-int kcore_extract__create(struct kcore_extract *kce __maybe_unused)
-{
-	return -1;
-}
+पूर्णांक kcore_extract__create(काष्ठा kcore_extract *kce __maybe_unused)
+अणु
+	वापस -1;
+पूर्ण
 
-void kcore_extract__delete(struct kcore_extract *kce __maybe_unused)
-{
-}
+व्योम kcore_extract__delete(काष्ठा kcore_extract *kce __maybe_unused)
+अणु
+पूर्ण
 
-int kcore_copy(const char *from_dir __maybe_unused,
-	       const char *to_dir __maybe_unused)
-{
-	return -1;
-}
+पूर्णांक kcore_copy(स्थिर अक्षर *from_dir __maybe_unused,
+	       स्थिर अक्षर *to_dir __maybe_unused)
+अणु
+	वापस -1;
+पूर्ण
 
-void symbol__elf_init(void)
-{
-}
+व्योम symbol__elf_init(व्योम)
+अणु
+पूर्ण
 
-char *dso__demangle_sym(struct dso *dso __maybe_unused,
-			int kmodule __maybe_unused,
-			const char *elf_name __maybe_unused)
-{
-	return NULL;
-}
+अक्षर *dso__demangle_sym(काष्ठा dso *dso __maybe_unused,
+			पूर्णांक kmodule __maybe_unused,
+			स्थिर अक्षर *elf_name __maybe_unused)
+अणु
+	वापस शून्य;
+पूर्ण

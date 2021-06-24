@@ -1,243 +1,244 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <traceevent/event-parse.h>
-#include "evsel.h"
-#include "util/evsel_fprintf.h"
-#include "util/event.h"
-#include "callchain.h"
-#include "map.h"
-#include "strlist.h"
-#include "symbol.h"
-#include "srcline.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानकपन.स>
+#समावेश <stdbool.h>
+#समावेश <traceevent/event-parse.h>
+#समावेश "evsel.h"
+#समावेश "util/evsel_fprintf.h"
+#समावेश "util/event.h"
+#समावेश "callchain.h"
+#समावेश "map.h"
+#समावेश "strlist.h"
+#समावेश "symbol.h"
+#समावेश "srcline.h"
 
-static int comma_fprintf(FILE *fp, bool *first, const char *fmt, ...)
-{
-	va_list args;
-	int ret = 0;
+अटल पूर्णांक comma_ख_लिखो(खाता *fp, bool *first, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक ret = 0;
 
-	if (!*first) {
-		ret += fprintf(fp, ",");
-	} else {
-		ret += fprintf(fp, ":");
+	अगर (!*first) अणु
+		ret += ख_लिखो(fp, ",");
+	पूर्ण अन्यथा अणु
+		ret += ख_लिखो(fp, ":");
 		*first = false;
-	}
+	पूर्ण
 
-	va_start(args, fmt);
-	ret += vfprintf(fp, fmt, args);
-	va_end(args);
-	return ret;
-}
+	बहु_शुरू(args, fmt);
+	ret += भख_लिखो(fp, fmt, args);
+	बहु_पूर्ण(args);
+	वापस ret;
+पूर्ण
 
-static int __print_attr__fprintf(FILE *fp, const char *name, const char *val, void *priv)
-{
-	return comma_fprintf(fp, (bool *)priv, " %s: %s", name, val);
-}
+अटल पूर्णांक __prपूर्णांक_attr__ख_लिखो(खाता *fp, स्थिर अक्षर *name, स्थिर अक्षर *val, व्योम *priv)
+अणु
+	वापस comma_ख_लिखो(fp, (bool *)priv, " %s: %s", name, val);
+पूर्ण
 
-int evsel__fprintf(struct evsel *evsel, struct perf_attr_details *details, FILE *fp)
-{
+पूर्णांक evsel__ख_लिखो(काष्ठा evsel *evsel, काष्ठा perf_attr_details *details, खाता *fp)
+अणु
 	bool first = true;
-	int printed = 0;
+	पूर्णांक prपूर्णांकed = 0;
 
-	if (details->event_group) {
-		struct evsel *pos;
+	अगर (details->event_group) अणु
+		काष्ठा evsel *pos;
 
-		if (!evsel__is_group_leader(evsel))
-			return 0;
+		अगर (!evsel__is_group_leader(evsel))
+			वापस 0;
 
-		if (evsel->core.nr_members > 1)
-			printed += fprintf(fp, "%s{", evsel->group_name ?: "");
+		अगर (evsel->core.nr_members > 1)
+			prपूर्णांकed += ख_लिखो(fp, "%s{", evsel->group_name ?: "");
 
-		printed += fprintf(fp, "%s", evsel__name(evsel));
-		for_each_group_member(pos, evsel)
-			printed += fprintf(fp, ",%s", evsel__name(pos));
+		prपूर्णांकed += ख_लिखो(fp, "%s", evsel__name(evsel));
+		क्रम_each_group_member(pos, evsel)
+			prपूर्णांकed += ख_लिखो(fp, ",%s", evsel__name(pos));
 
-		if (evsel->core.nr_members > 1)
-			printed += fprintf(fp, "}");
-		goto out;
-	}
+		अगर (evsel->core.nr_members > 1)
+			prपूर्णांकed += ख_लिखो(fp, "}");
+		जाओ out;
+	पूर्ण
 
-	printed += fprintf(fp, "%s", evsel__name(evsel));
+	prपूर्णांकed += ख_लिखो(fp, "%s", evsel__name(evsel));
 
-	if (details->verbose) {
-		printed += perf_event_attr__fprintf(fp, &evsel->core.attr,
-						    __print_attr__fprintf, &first);
-	} else if (details->freq) {
-		const char *term = "sample_freq";
+	अगर (details->verbose) अणु
+		prपूर्णांकed += perf_event_attr__ख_लिखो(fp, &evsel->core.attr,
+						    __prपूर्णांक_attr__ख_लिखो, &first);
+	पूर्ण अन्यथा अगर (details->freq) अणु
+		स्थिर अक्षर *term = "sample_freq";
 
-		if (!evsel->core.attr.freq)
+		अगर (!evsel->core.attr.freq)
 			term = "sample_period";
 
-		printed += comma_fprintf(fp, &first, " %s=%" PRIu64,
+		prपूर्णांकed += comma_ख_लिखो(fp, &first, " %s=%" PRIu64,
 					 term, (u64)evsel->core.attr.sample_freq);
-	}
+	पूर्ण
 
-	if (details->trace_fields) {
-		struct tep_format_field *field;
+	अगर (details->trace_fields) अणु
+		काष्ठा tep_क्रमmat_field *field;
 
-		if (evsel->core.attr.type != PERF_TYPE_TRACEPOINT) {
-			printed += comma_fprintf(fp, &first, " (not a tracepoint)");
-			goto out;
-		}
+		अगर (evsel->core.attr.type != PERF_TYPE_TRACEPOINT) अणु
+			prपूर्णांकed += comma_ख_लिखो(fp, &first, " (not a tracepoint)");
+			जाओ out;
+		पूर्ण
 
-		field = evsel->tp_format->format.fields;
-		if (field == NULL) {
-			printed += comma_fprintf(fp, &first, " (no trace field)");
-			goto out;
-		}
+		field = evsel->tp_क्रमmat->क्रमmat.fields;
+		अगर (field == शून्य) अणु
+			prपूर्णांकed += comma_ख_लिखो(fp, &first, " (no trace field)");
+			जाओ out;
+		पूर्ण
 
-		printed += comma_fprintf(fp, &first, " trace_fields: %s", field->name);
+		prपूर्णांकed += comma_ख_लिखो(fp, &first, " trace_fields: %s", field->name);
 
 		field = field->next;
-		while (field) {
-			printed += comma_fprintf(fp, &first, "%s", field->name);
+		जबतक (field) अणु
+			prपूर्णांकed += comma_ख_लिखो(fp, &first, "%s", field->name);
 			field = field->next;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	fputc('\n', fp);
-	return ++printed;
-}
+	ख_अक्षर_दो('\n', fp);
+	वापस ++prपूर्णांकed;
+पूर्ण
 
-#ifndef PYTHON_PERF
-int sample__fprintf_callchain(struct perf_sample *sample, int left_alignment,
-			      unsigned int print_opts, struct callchain_cursor *cursor,
-			      struct strlist *bt_stop_list, FILE *fp)
-{
-	int printed = 0;
-	struct callchain_cursor_node *node;
-	int print_ip = print_opts & EVSEL__PRINT_IP;
-	int print_sym = print_opts & EVSEL__PRINT_SYM;
-	int print_dso = print_opts & EVSEL__PRINT_DSO;
-	int print_symoffset = print_opts & EVSEL__PRINT_SYMOFFSET;
-	int print_oneline = print_opts & EVSEL__PRINT_ONELINE;
-	int print_srcline = print_opts & EVSEL__PRINT_SRCLINE;
-	int print_unknown_as_addr = print_opts & EVSEL__PRINT_UNKNOWN_AS_ADDR;
-	int print_arrow = print_opts & EVSEL__PRINT_CALLCHAIN_ARROW;
-	int print_skip_ignored = print_opts & EVSEL__PRINT_SKIP_IGNORED;
-	char s = print_oneline ? ' ' : '\t';
+#अगर_अघोषित PYTHON_PERF
+पूर्णांक sample__ख_लिखो_callchain(काष्ठा perf_sample *sample, पूर्णांक left_alignment,
+			      अचिन्हित पूर्णांक prपूर्णांक_opts, काष्ठा callchain_cursor *cursor,
+			      काष्ठा strlist *bt_stop_list, खाता *fp)
+अणु
+	पूर्णांक prपूर्णांकed = 0;
+	काष्ठा callchain_cursor_node *node;
+	पूर्णांक prपूर्णांक_ip = prपूर्णांक_opts & EVSEL__PRINT_IP;
+	पूर्णांक prपूर्णांक_sym = prपूर्णांक_opts & EVSEL__PRINT_SYM;
+	पूर्णांक prपूर्णांक_dso = prपूर्णांक_opts & EVSEL__PRINT_DSO;
+	पूर्णांक prपूर्णांक_symoffset = prपूर्णांक_opts & EVSEL__PRINT_SYMOFFSET;
+	पूर्णांक prपूर्णांक_oneline = prपूर्णांक_opts & EVSEL__PRINT_ONELINE;
+	पूर्णांक prपूर्णांक_srcline = prपूर्णांक_opts & EVSEL__PRINT_SRCLINE;
+	पूर्णांक prपूर्णांक_unknown_as_addr = prपूर्णांक_opts & EVSEL__PRINT_UNKNOWN_AS_ADDR;
+	पूर्णांक prपूर्णांक_arrow = prपूर्णांक_opts & EVSEL__PRINT_CALLCHAIN_ARROW;
+	पूर्णांक prपूर्णांक_skip_ignored = prपूर्णांक_opts & EVSEL__PRINT_SKIP_IGNORED;
+	अक्षर s = prपूर्णांक_oneline ? ' ' : '\t';
 	bool first = true;
 
-	if (sample->callchain) {
-		struct addr_location node_al;
+	अगर (sample->callchain) अणु
+		काष्ठा addr_location node_al;
 
 		callchain_cursor_commit(cursor);
 
-		while (1) {
-			struct symbol *sym;
-			struct map *map;
+		जबतक (1) अणु
+			काष्ठा symbol *sym;
+			काष्ठा map *map;
 			u64 addr = 0;
 
 			node = callchain_cursor_current(cursor);
-			if (!node)
-				break;
+			अगर (!node)
+				अवरोध;
 
 			sym = node->ms.sym;
 			map = node->ms.map;
 
-			if (sym && sym->ignore && print_skip_ignored)
-				goto next;
+			अगर (sym && sym->ignore && prपूर्णांक_skip_ignored)
+				जाओ next;
 
-			printed += fprintf(fp, "%-*.*s", left_alignment, left_alignment, " ");
+			prपूर्णांकed += ख_लिखो(fp, "%-*.*s", left_alignment, left_alignment, " ");
 
-			if (print_arrow && !first)
-				printed += fprintf(fp, " <-");
+			अगर (prपूर्णांक_arrow && !first)
+				prपूर्णांकed += ख_लिखो(fp, " <-");
 
-			if (print_ip)
-				printed += fprintf(fp, "%c%16" PRIx64, s, node->ip);
+			अगर (prपूर्णांक_ip)
+				prपूर्णांकed += ख_लिखो(fp, "%c%16" PRIx64, s, node->ip);
 
-			if (map)
+			अगर (map)
 				addr = map->map_ip(map, node->ip);
 
-			if (print_sym) {
-				printed += fprintf(fp, " ");
+			अगर (prपूर्णांक_sym) अणु
+				prपूर्णांकed += ख_लिखो(fp, " ");
 				node_al.addr = addr;
 				node_al.map  = map;
 
-				if (print_symoffset) {
-					printed += __symbol__fprintf_symname_offs(sym, &node_al,
-										  print_unknown_as_addr,
+				अगर (prपूर्णांक_symoffset) अणु
+					prपूर्णांकed += __symbol__ख_लिखो_symname_offs(sym, &node_al,
+										  prपूर्णांक_unknown_as_addr,
 										  true, fp);
-				} else {
-					printed += __symbol__fprintf_symname(sym, &node_al,
-									     print_unknown_as_addr, fp);
-				}
-			}
+				पूर्ण अन्यथा अणु
+					prपूर्णांकed += __symbol__ख_लिखो_symname(sym, &node_al,
+									     prपूर्णांक_unknown_as_addr, fp);
+				पूर्ण
+			पूर्ण
 
-			if (print_dso && (!sym || !sym->inlined)) {
-				printed += fprintf(fp, " (");
-				printed += map__fprintf_dsoname(map, fp);
-				printed += fprintf(fp, ")");
-			}
+			अगर (prपूर्णांक_dso && (!sym || !sym->अंतरभूतd)) अणु
+				prपूर्णांकed += ख_लिखो(fp, " (");
+				prपूर्णांकed += map__ख_लिखो_dsoname(map, fp);
+				prपूर्णांकed += ख_लिखो(fp, ")");
+			पूर्ण
 
-			if (print_srcline)
-				printed += map__fprintf_srcline(map, addr, "\n  ", fp);
+			अगर (prपूर्णांक_srcline)
+				prपूर्णांकed += map__ख_लिखो_srcline(map, addr, "\n  ", fp);
 
-			if (sym && sym->inlined)
-				printed += fprintf(fp, " (inlined)");
+			अगर (sym && sym->अंतरभूतd)
+				prपूर्णांकed += ख_लिखो(fp, " (inlined)");
 
-			if (!print_oneline)
-				printed += fprintf(fp, "\n");
+			अगर (!prपूर्णांक_oneline)
+				prपूर्णांकed += ख_लिखो(fp, "\n");
 
 			/* Add srccode here too? */
-			if (bt_stop_list && sym &&
-			    strlist__has_entry(bt_stop_list, sym->name)) {
-				break;
-			}
+			अगर (bt_stop_list && sym &&
+			    strlist__has_entry(bt_stop_list, sym->name)) अणु
+				अवरोध;
+			पूर्ण
 
 			first = false;
 next:
 			callchain_cursor_advance(cursor);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-int sample__fprintf_sym(struct perf_sample *sample, struct addr_location *al,
-			int left_alignment, unsigned int print_opts,
-			struct callchain_cursor *cursor, struct strlist *bt_stop_list, FILE *fp)
-{
-	int printed = 0;
-	int print_ip = print_opts & EVSEL__PRINT_IP;
-	int print_sym = print_opts & EVSEL__PRINT_SYM;
-	int print_dso = print_opts & EVSEL__PRINT_DSO;
-	int print_symoffset = print_opts & EVSEL__PRINT_SYMOFFSET;
-	int print_srcline = print_opts & EVSEL__PRINT_SRCLINE;
-	int print_unknown_as_addr = print_opts & EVSEL__PRINT_UNKNOWN_AS_ADDR;
+पूर्णांक sample__ख_लिखो_sym(काष्ठा perf_sample *sample, काष्ठा addr_location *al,
+			पूर्णांक left_alignment, अचिन्हित पूर्णांक prपूर्णांक_opts,
+			काष्ठा callchain_cursor *cursor, काष्ठा strlist *bt_stop_list, खाता *fp)
+अणु
+	पूर्णांक prपूर्णांकed = 0;
+	पूर्णांक prपूर्णांक_ip = prपूर्णांक_opts & EVSEL__PRINT_IP;
+	पूर्णांक prपूर्णांक_sym = prपूर्णांक_opts & EVSEL__PRINT_SYM;
+	पूर्णांक prपूर्णांक_dso = prपूर्णांक_opts & EVSEL__PRINT_DSO;
+	पूर्णांक prपूर्णांक_symoffset = prपूर्णांक_opts & EVSEL__PRINT_SYMOFFSET;
+	पूर्णांक prपूर्णांक_srcline = prपूर्णांक_opts & EVSEL__PRINT_SRCLINE;
+	पूर्णांक prपूर्णांक_unknown_as_addr = prपूर्णांक_opts & EVSEL__PRINT_UNKNOWN_AS_ADDR;
 
-	if (cursor != NULL) {
-		printed += sample__fprintf_callchain(sample, left_alignment, print_opts,
+	अगर (cursor != शून्य) अणु
+		prपूर्णांकed += sample__ख_लिखो_callchain(sample, left_alignment, prपूर्णांक_opts,
 						     cursor, bt_stop_list, fp);
-	} else {
-		printed += fprintf(fp, "%-*.*s", left_alignment, left_alignment, " ");
+	पूर्ण अन्यथा अणु
+		prपूर्णांकed += ख_लिखो(fp, "%-*.*s", left_alignment, left_alignment, " ");
 
-		if (print_ip)
-			printed += fprintf(fp, "%16" PRIx64, sample->ip);
+		अगर (prपूर्णांक_ip)
+			prपूर्णांकed += ख_लिखो(fp, "%16" PRIx64, sample->ip);
 
-		if (print_sym) {
-			printed += fprintf(fp, " ");
-			if (print_symoffset) {
-				printed += __symbol__fprintf_symname_offs(al->sym, al,
-									  print_unknown_as_addr,
+		अगर (prपूर्णांक_sym) अणु
+			prपूर्णांकed += ख_लिखो(fp, " ");
+			अगर (prपूर्णांक_symoffset) अणु
+				prपूर्णांकed += __symbol__ख_लिखो_symname_offs(al->sym, al,
+									  prपूर्णांक_unknown_as_addr,
 									  true, fp);
-			} else {
-				printed += __symbol__fprintf_symname(al->sym, al,
-								     print_unknown_as_addr, fp);
-			}
-		}
+			पूर्ण अन्यथा अणु
+				prपूर्णांकed += __symbol__ख_लिखो_symname(al->sym, al,
+								     prपूर्णांक_unknown_as_addr, fp);
+			पूर्ण
+		पूर्ण
 
-		if (print_dso) {
-			printed += fprintf(fp, " (");
-			printed += map__fprintf_dsoname(al->map, fp);
-			printed += fprintf(fp, ")");
-		}
+		अगर (prपूर्णांक_dso) अणु
+			prपूर्णांकed += ख_लिखो(fp, " (");
+			prपूर्णांकed += map__ख_लिखो_dsoname(al->map, fp);
+			prपूर्णांकed += ख_लिखो(fp, ")");
+		पूर्ण
 
-		if (print_srcline)
-			printed += map__fprintf_srcline(al->map, al->addr, "\n  ", fp);
-	}
+		अगर (prपूर्णांक_srcline)
+			prपूर्णांकed += map__ख_लिखो_srcline(al->map, al->addr, "\n  ", fp);
+	पूर्ण
 
-	return printed;
-}
-#endif /* PYTHON_PERF */
+	वापस prपूर्णांकed;
+पूर्ण
+#पूर्ण_अगर /* PYTHON_PERF */

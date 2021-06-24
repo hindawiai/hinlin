@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  isl29003.c - Linux kernel module for
+ *  isl29003.c - Linux kernel module क्रम
  * 	Intersil ISL29003 ambient light sensor
  *
  *  See file:Documentation/misc-devices/isl29003.rst
@@ -8,385 +9,385 @@
  *  Copyright (c) 2009 Daniel Mack <daniel@caiaq.de>
  *
  *  Based on code written by
- *  	Rodolfo Giometti <giometti@linux.it>
+ *  	Roकरोlfo Giometti <giometti@linux.it>
  *  	Eurotech S.p.A. <info@eurotech.it>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/mutex.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/delay.h>
 
-#define ISL29003_DRV_NAME	"isl29003"
-#define DRIVER_VERSION		"1.0"
+#घोषणा ISL29003_DRV_NAME	"isl29003"
+#घोषणा DRIVER_VERSION		"1.0"
 
-#define ISL29003_REG_COMMAND		0x00
-#define ISL29003_ADC_ENABLED		(1 << 7)
-#define ISL29003_ADC_PD			(1 << 6)
-#define ISL29003_TIMING_INT		(1 << 5)
-#define ISL29003_MODE_SHIFT		(2)
-#define ISL29003_MODE_MASK		(0x3 << ISL29003_MODE_SHIFT)
-#define ISL29003_RES_SHIFT		(0)
-#define ISL29003_RES_MASK		(0x3 << ISL29003_RES_SHIFT)
+#घोषणा ISL29003_REG_COMMAND		0x00
+#घोषणा ISL29003_ADC_ENABLED		(1 << 7)
+#घोषणा ISL29003_ADC_PD			(1 << 6)
+#घोषणा ISL29003_TIMING_INT		(1 << 5)
+#घोषणा ISL29003_MODE_SHIFT		(2)
+#घोषणा ISL29003_MODE_MASK		(0x3 << ISL29003_MODE_SHIFT)
+#घोषणा ISL29003_RES_SHIFT		(0)
+#घोषणा ISL29003_RES_MASK		(0x3 << ISL29003_RES_SHIFT)
 
-#define ISL29003_REG_CONTROL		0x01
-#define ISL29003_INT_FLG		(1 << 5)
-#define ISL29003_RANGE_SHIFT		(2)
-#define ISL29003_RANGE_MASK		(0x3 << ISL29003_RANGE_SHIFT)
-#define ISL29003_INT_PERSISTS_SHIFT	(0)
-#define ISL29003_INT_PERSISTS_MASK	(0xf << ISL29003_INT_PERSISTS_SHIFT)
+#घोषणा ISL29003_REG_CONTROL		0x01
+#घोषणा ISL29003_INT_FLG		(1 << 5)
+#घोषणा ISL29003_RANGE_SHIFT		(2)
+#घोषणा ISL29003_RANGE_MASK		(0x3 << ISL29003_RANGE_SHIFT)
+#घोषणा ISL29003_INT_PERSISTS_SHIFT	(0)
+#घोषणा ISL29003_INT_PERSISTS_MASK	(0xf << ISL29003_INT_PERSISTS_SHIFT)
 
-#define ISL29003_REG_IRQ_THRESH_HI	0x02
-#define ISL29003_REG_IRQ_THRESH_LO	0x03
-#define ISL29003_REG_LSB_SENSOR		0x04
-#define ISL29003_REG_MSB_SENSOR		0x05
-#define ISL29003_REG_LSB_TIMER		0x06
-#define ISL29003_REG_MSB_TIMER		0x07
+#घोषणा ISL29003_REG_IRQ_THRESH_HI	0x02
+#घोषणा ISL29003_REG_IRQ_THRESH_LO	0x03
+#घोषणा ISL29003_REG_LSB_SENSOR		0x04
+#घोषणा ISL29003_REG_MSB_SENSOR		0x05
+#घोषणा ISL29003_REG_LSB_TIMER		0x06
+#घोषणा ISL29003_REG_MSB_TIMER		0x07
 
-#define ISL29003_NUM_CACHABLE_REGS	4
+#घोषणा ISL29003_NUM_CACHABLE_REGS	4
 
-struct isl29003_data {
-	struct i2c_client *client;
-	struct mutex lock;
+काष्ठा isl29003_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा mutex lock;
 	u8 reg_cache[ISL29003_NUM_CACHABLE_REGS];
-	u8 power_state_before_suspend;
-};
+	u8 घातer_state_beक्रमe_suspend;
+पूर्ण;
 
-static int gain_range[] = {
+अटल पूर्णांक gain_range[] = अणु
 	1000, 4000, 16000, 64000
-};
+पूर्ण;
 
 /*
- * register access helpers
+ * रेजिस्टर access helpers
  */
 
-static int __isl29003_read_reg(struct i2c_client *client,
-			       u32 reg, u8 mask, u8 shift)
-{
-	struct isl29003_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक __isl29003_पढ़ो_reg(काष्ठा i2c_client *client,
+			       u32 reg, u8 mask, u8 shअगरt)
+अणु
+	काष्ठा isl29003_data *data = i2c_get_clientdata(client);
 
-	return (data->reg_cache[reg] & mask) >> shift;
-}
+	वापस (data->reg_cache[reg] & mask) >> shअगरt;
+पूर्ण
 
-static int __isl29003_write_reg(struct i2c_client *client,
-				u32 reg, u8 mask, u8 shift, u8 val)
-{
-	struct isl29003_data *data = i2c_get_clientdata(client);
-	int ret = 0;
-	u8 tmp;
+अटल पूर्णांक __isl29003_ग_लिखो_reg(काष्ठा i2c_client *client,
+				u32 reg, u8 mask, u8 shअगरt, u8 val)
+अणु
+	काष्ठा isl29003_data *data = i2c_get_clientdata(client);
+	पूर्णांक ret = 0;
+	u8 पंचांगp;
 
-	if (reg >= ISL29003_NUM_CACHABLE_REGS)
-		return -EINVAL;
+	अगर (reg >= ISL29003_NUM_CACHABLE_REGS)
+		वापस -EINVAL;
 
 	mutex_lock(&data->lock);
 
-	tmp = data->reg_cache[reg];
-	tmp &= ~mask;
-	tmp |= val << shift;
+	पंचांगp = data->reg_cache[reg];
+	पंचांगp &= ~mask;
+	पंचांगp |= val << shअगरt;
 
-	ret = i2c_smbus_write_byte_data(client, reg, tmp);
-	if (!ret)
-		data->reg_cache[reg] = tmp;
+	ret = i2c_smbus_ग_लिखो_byte_data(client, reg, पंचांगp);
+	अगर (!ret)
+		data->reg_cache[reg] = पंचांगp;
 
 	mutex_unlock(&data->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * internally used functions
+ * पूर्णांकernally used functions
  */
 
 /* range */
-static int isl29003_get_range(struct i2c_client *client)
-{
-	return __isl29003_read_reg(client, ISL29003_REG_CONTROL,
+अटल पूर्णांक isl29003_get_range(काष्ठा i2c_client *client)
+अणु
+	वापस __isl29003_पढ़ो_reg(client, ISL29003_REG_CONTROL,
 		ISL29003_RANGE_MASK, ISL29003_RANGE_SHIFT);
-}
+पूर्ण
 
-static int isl29003_set_range(struct i2c_client *client, int range)
-{
-	return __isl29003_write_reg(client, ISL29003_REG_CONTROL,
+अटल पूर्णांक isl29003_set_range(काष्ठा i2c_client *client, पूर्णांक range)
+अणु
+	वापस __isl29003_ग_लिखो_reg(client, ISL29003_REG_CONTROL,
 		ISL29003_RANGE_MASK, ISL29003_RANGE_SHIFT, range);
-}
+पूर्ण
 
 /* resolution */
-static int isl29003_get_resolution(struct i2c_client *client)
-{
-	return __isl29003_read_reg(client, ISL29003_REG_COMMAND,
+अटल पूर्णांक isl29003_get_resolution(काष्ठा i2c_client *client)
+अणु
+	वापस __isl29003_पढ़ो_reg(client, ISL29003_REG_COMMAND,
 		ISL29003_RES_MASK, ISL29003_RES_SHIFT);
-}
+पूर्ण
 
-static int isl29003_set_resolution(struct i2c_client *client, int res)
-{
-	return __isl29003_write_reg(client, ISL29003_REG_COMMAND,
+अटल पूर्णांक isl29003_set_resolution(काष्ठा i2c_client *client, पूर्णांक res)
+अणु
+	वापस __isl29003_ग_लिखो_reg(client, ISL29003_REG_COMMAND,
 		ISL29003_RES_MASK, ISL29003_RES_SHIFT, res);
-}
+पूर्ण
 
 /* mode */
-static int isl29003_get_mode(struct i2c_client *client)
-{
-	return __isl29003_read_reg(client, ISL29003_REG_COMMAND,
+अटल पूर्णांक isl29003_get_mode(काष्ठा i2c_client *client)
+अणु
+	वापस __isl29003_पढ़ो_reg(client, ISL29003_REG_COMMAND,
 		ISL29003_MODE_MASK, ISL29003_MODE_SHIFT);
-}
+पूर्ण
 
-static int isl29003_set_mode(struct i2c_client *client, int mode)
-{
-	return __isl29003_write_reg(client, ISL29003_REG_COMMAND,
+अटल पूर्णांक isl29003_set_mode(काष्ठा i2c_client *client, पूर्णांक mode)
+अणु
+	वापस __isl29003_ग_लिखो_reg(client, ISL29003_REG_COMMAND,
 		ISL29003_MODE_MASK, ISL29003_MODE_SHIFT, mode);
-}
+पूर्ण
 
-/* power_state */
-static int isl29003_set_power_state(struct i2c_client *client, int state)
-{
-	return __isl29003_write_reg(client, ISL29003_REG_COMMAND,
+/* घातer_state */
+अटल पूर्णांक isl29003_set_घातer_state(काष्ठा i2c_client *client, पूर्णांक state)
+अणु
+	वापस __isl29003_ग_लिखो_reg(client, ISL29003_REG_COMMAND,
 				ISL29003_ADC_ENABLED | ISL29003_ADC_PD, 0,
 				state ? ISL29003_ADC_ENABLED : ISL29003_ADC_PD);
-}
+पूर्ण
 
-static int isl29003_get_power_state(struct i2c_client *client)
-{
-	struct isl29003_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक isl29003_get_घातer_state(काष्ठा i2c_client *client)
+अणु
+	काष्ठा isl29003_data *data = i2c_get_clientdata(client);
 	u8 cmdreg = data->reg_cache[ISL29003_REG_COMMAND];
 
-	return ~cmdreg & ISL29003_ADC_PD;
-}
+	वापस ~cmdreg & ISL29003_ADC_PD;
+पूर्ण
 
-static int isl29003_get_adc_value(struct i2c_client *client)
-{
-	struct isl29003_data *data = i2c_get_clientdata(client);
-	int lsb, msb, range, bitdepth;
+अटल पूर्णांक isl29003_get_adc_value(काष्ठा i2c_client *client)
+अणु
+	काष्ठा isl29003_data *data = i2c_get_clientdata(client);
+	पूर्णांक lsb, msb, range, bitdepth;
 
 	mutex_lock(&data->lock);
-	lsb = i2c_smbus_read_byte_data(client, ISL29003_REG_LSB_SENSOR);
+	lsb = i2c_smbus_पढ़ो_byte_data(client, ISL29003_REG_LSB_SENSOR);
 
-	if (lsb < 0) {
+	अगर (lsb < 0) अणु
 		mutex_unlock(&data->lock);
-		return lsb;
-	}
+		वापस lsb;
+	पूर्ण
 
-	msb = i2c_smbus_read_byte_data(client, ISL29003_REG_MSB_SENSOR);
+	msb = i2c_smbus_पढ़ो_byte_data(client, ISL29003_REG_MSB_SENSOR);
 	mutex_unlock(&data->lock);
 
-	if (msb < 0)
-		return msb;
+	अगर (msb < 0)
+		वापस msb;
 
 	range = isl29003_get_range(client);
 	bitdepth = (4 - isl29003_get_resolution(client)) * 4;
-	return (((msb << 8) | lsb) * gain_range[range]) >> bitdepth;
-}
+	वापस (((msb << 8) | lsb) * gain_range[range]) >> bitdepth;
+पूर्ण
 
 /*
  * sysfs layer
  */
 
 /* range */
-static ssize_t isl29003_show_range(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल sमाप_प्रकार isl29003_show_range(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	return sprintf(buf, "%i\n", isl29003_get_range(client));
-}
+	वापस प्र_लिखो(buf, "%i\n", isl29003_get_range(client));
+पूर्ण
 
-static ssize_t isl29003_store_range(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार isl29003_store_range(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val > 3)
-		return -EINVAL;
+	अगर (val > 3)
+		वापस -EINVAL;
 
 	ret = isl29003_set_range(client, val);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(range, S_IWUSR | S_IRUGO,
+अटल DEVICE_ATTR(range, S_IWUSR | S_IRUGO,
 		   isl29003_show_range, isl29003_store_range);
 
 
 /* resolution */
-static ssize_t isl29003_show_resolution(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल sमाप_प्रकार isl29003_show_resolution(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	return sprintf(buf, "%d\n", isl29003_get_resolution(client));
-}
+	वापस प्र_लिखो(buf, "%d\n", isl29003_get_resolution(client));
+पूर्ण
 
-static ssize_t isl29003_store_resolution(struct device *dev,
-					 struct device_attribute *attr,
-					 const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार isl29003_store_resolution(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val > 3)
-		return -EINVAL;
+	अगर (val > 3)
+		वापस -EINVAL;
 
 	ret = isl29003_set_resolution(client, val);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(resolution, S_IWUSR | S_IRUGO,
+अटल DEVICE_ATTR(resolution, S_IWUSR | S_IRUGO,
 		   isl29003_show_resolution, isl29003_store_resolution);
 
 /* mode */
-static ssize_t isl29003_show_mode(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल sमाप_प्रकार isl29003_show_mode(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	return sprintf(buf, "%d\n", isl29003_get_mode(client));
-}
+	वापस प्र_लिखो(buf, "%d\n", isl29003_get_mode(client));
+पूर्ण
 
-static ssize_t isl29003_store_mode(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार isl29003_store_mode(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val > 2)
-		return -EINVAL;
+	अगर (val > 2)
+		वापस -EINVAL;
 
 	ret = isl29003_set_mode(client, val);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(mode, S_IWUSR | S_IRUGO,
+अटल DEVICE_ATTR(mode, S_IWUSR | S_IRUGO,
 		   isl29003_show_mode, isl29003_store_mode);
 
 
-/* power state */
-static ssize_t isl29003_show_power_state(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+/* घातer state */
+अटल sमाप_प्रकार isl29003_show_घातer_state(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	return sprintf(buf, "%d\n", isl29003_get_power_state(client));
-}
+	वापस प्र_लिखो(buf, "%d\n", isl29003_get_घातer_state(client));
+पूर्ण
 
-static ssize_t isl29003_store_power_state(struct device *dev,
-					  struct device_attribute *attr,
-					  const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार isl29003_store_घातer_state(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val > 1)
-		return -EINVAL;
+	अगर (val > 1)
+		वापस -EINVAL;
 
-	ret = isl29003_set_power_state(client, val);
-	return ret ? ret : count;
-}
+	ret = isl29003_set_घातer_state(client, val);
+	वापस ret ? ret : count;
+पूर्ण
 
-static DEVICE_ATTR(power_state, S_IWUSR | S_IRUGO,
-		   isl29003_show_power_state, isl29003_store_power_state);
+अटल DEVICE_ATTR(घातer_state, S_IWUSR | S_IRUGO,
+		   isl29003_show_घातer_state, isl29003_store_घातer_state);
 
 
 /* lux */
-static ssize_t isl29003_show_lux(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल sमाप_प्रकार isl29003_show_lux(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	/* No LUX data if not operational */
-	if (!isl29003_get_power_state(client))
-		return -EBUSY;
+	/* No LUX data अगर not operational */
+	अगर (!isl29003_get_घातer_state(client))
+		वापस -EBUSY;
 
-	return sprintf(buf, "%d\n", isl29003_get_adc_value(client));
-}
+	वापस प्र_लिखो(buf, "%d\n", isl29003_get_adc_value(client));
+पूर्ण
 
-static DEVICE_ATTR(lux, S_IRUGO, isl29003_show_lux, NULL);
+अटल DEVICE_ATTR(lux, S_IRUGO, isl29003_show_lux, शून्य);
 
-static struct attribute *isl29003_attributes[] = {
+अटल काष्ठा attribute *isl29003_attributes[] = अणु
 	&dev_attr_range.attr,
 	&dev_attr_resolution.attr,
 	&dev_attr_mode.attr,
-	&dev_attr_power_state.attr,
+	&dev_attr_घातer_state.attr,
 	&dev_attr_lux.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group isl29003_attr_group = {
+अटल स्थिर काष्ठा attribute_group isl29003_attr_group = अणु
 	.attrs = isl29003_attributes,
-};
+पूर्ण;
 
-static int isl29003_init_client(struct i2c_client *client)
-{
-	struct isl29003_data *data = i2c_get_clientdata(client);
-	int i;
+अटल पूर्णांक isl29003_init_client(काष्ठा i2c_client *client)
+अणु
+	काष्ठा isl29003_data *data = i2c_get_clientdata(client);
+	पूर्णांक i;
 
-	/* read all the registers once to fill the cache.
-	 * if one of the reads fails, we consider the init failed */
-	for (i = 0; i < ARRAY_SIZE(data->reg_cache); i++) {
-		int v = i2c_smbus_read_byte_data(client, i);
+	/* पढ़ो all the रेजिस्टरs once to fill the cache.
+	 * अगर one of the पढ़ोs fails, we consider the init failed */
+	क्रम (i = 0; i < ARRAY_SIZE(data->reg_cache); i++) अणु
+		पूर्णांक v = i2c_smbus_पढ़ो_byte_data(client, i);
 
-		if (v < 0)
-			return -ENODEV;
+		अगर (v < 0)
+			वापस -ENODEV;
 
 		data->reg_cache[i] = v;
-	}
+	पूर्ण
 
-	/* set defaults */
+	/* set शेषs */
 	isl29003_set_range(client, 0);
 	isl29003_set_resolution(client, 0);
 	isl29003_set_mode(client, 0);
-	isl29003_set_power_state(client, 0);
+	isl29003_set_घातer_state(client, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * I2C layer
  */
 
-static int isl29003_probe(struct i2c_client *client,
-				    const struct i2c_device_id *id)
-{
-	struct i2c_adapter *adapter = client->adapter;
-	struct isl29003_data *data;
-	int err = 0;
+अटल पूर्णांक isl29003_probe(काष्ठा i2c_client *client,
+				    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
+	काष्ठा isl29003_data *data;
+	पूर्णांक err = 0;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE))
-		return -EIO;
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE))
+		वापस -EIO;
 
-	data = kzalloc(sizeof(struct isl29003_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kzalloc(माप(काष्ठा isl29003_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->client = client;
 	i2c_set_clientdata(client, data);
@@ -394,77 +395,77 @@ static int isl29003_probe(struct i2c_client *client,
 
 	/* initialize the ISL29003 chip */
 	err = isl29003_init_client(client);
-	if (err)
-		goto exit_kfree;
+	अगर (err)
+		जाओ निकास_kमुक्त;
 
-	/* register sysfs hooks */
+	/* रेजिस्टर sysfs hooks */
 	err = sysfs_create_group(&client->dev.kobj, &isl29003_attr_group);
-	if (err)
-		goto exit_kfree;
+	अगर (err)
+		जाओ निकास_kमुक्त;
 
 	dev_info(&client->dev, "driver version %s enabled\n", DRIVER_VERSION);
-	return 0;
+	वापस 0;
 
-exit_kfree:
-	kfree(data);
-	return err;
-}
+निकास_kमुक्त:
+	kमुक्त(data);
+	वापस err;
+पूर्ण
 
-static int isl29003_remove(struct i2c_client *client)
-{
-	sysfs_remove_group(&client->dev.kobj, &isl29003_attr_group);
-	isl29003_set_power_state(client, 0);
-	kfree(i2c_get_clientdata(client));
-	return 0;
-}
+अटल पूर्णांक isl29003_हटाओ(काष्ठा i2c_client *client)
+अणु
+	sysfs_हटाओ_group(&client->dev.kobj, &isl29003_attr_group);
+	isl29003_set_घातer_state(client, 0);
+	kमुक्त(i2c_get_clientdata(client));
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int isl29003_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct isl29003_data *data = i2c_get_clientdata(client);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक isl29003_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा isl29003_data *data = i2c_get_clientdata(client);
 
-	data->power_state_before_suspend = isl29003_get_power_state(client);
-	return isl29003_set_power_state(client, 0);
-}
+	data->घातer_state_beक्रमe_suspend = isl29003_get_घातer_state(client);
+	वापस isl29003_set_घातer_state(client, 0);
+पूर्ण
 
-static int isl29003_resume(struct device *dev)
-{
-	int i;
-	struct i2c_client *client = to_i2c_client(dev);
-	struct isl29003_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक isl29003_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक i;
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा isl29003_data *data = i2c_get_clientdata(client);
 
-	/* restore registers from cache */
-	for (i = 0; i < ARRAY_SIZE(data->reg_cache); i++)
-		if (i2c_smbus_write_byte_data(client, i, data->reg_cache[i]))
-			return -EIO;
+	/* restore रेजिस्टरs from cache */
+	क्रम (i = 0; i < ARRAY_SIZE(data->reg_cache); i++)
+		अगर (i2c_smbus_ग_लिखो_byte_data(client, i, data->reg_cache[i]))
+			वापस -EIO;
 
-	return isl29003_set_power_state(client,
-		data->power_state_before_suspend);
-}
+	वापस isl29003_set_घातer_state(client,
+		data->घातer_state_beक्रमe_suspend);
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(isl29003_pm_ops, isl29003_suspend, isl29003_resume);
-#define ISL29003_PM_OPS (&isl29003_pm_ops)
+अटल SIMPLE_DEV_PM_OPS(isl29003_pm_ops, isl29003_suspend, isl29003_resume);
+#घोषणा ISL29003_PM_OPS (&isl29003_pm_ops)
 
-#else
-#define ISL29003_PM_OPS NULL
-#endif /* CONFIG_PM_SLEEP */
+#अन्यथा
+#घोषणा ISL29003_PM_OPS शून्य
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static const struct i2c_device_id isl29003_id[] = {
-	{ "isl29003", 0 },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id isl29003_id[] = अणु
+	अणु "isl29003", 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, isl29003_id);
 
-static struct i2c_driver isl29003_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver isl29003_driver = अणु
+	.driver = अणु
 		.name	= ISL29003_DRV_NAME,
 		.pm	= ISL29003_PM_OPS,
-	},
+	पूर्ण,
 	.probe	= isl29003_probe,
-	.remove	= isl29003_remove,
+	.हटाओ	= isl29003_हटाओ,
 	.id_table = isl29003_id,
-};
+पूर्ण;
 
 module_i2c_driver(isl29003_driver);
 

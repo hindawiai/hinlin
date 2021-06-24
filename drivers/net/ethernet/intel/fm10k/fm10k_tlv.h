@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2013 - 2019 Intel Corporation. */
 
-#ifndef _FM10K_TLV_H_
-#define _FM10K_TLV_H_
+#अगर_अघोषित _FM10K_TLV_H_
+#घोषणा _FM10K_TLV_H_
 
-/* forward declaration */
-struct fm10k_msg_data;
+/* क्रमward declaration */
+काष्ठा fm10k_msg_data;
 
-#include "fm10k_type.h"
+#समावेश "fm10k_type.h"
 
-/* Message / Argument header format
+/* Message / Argument header क्रमmat
  *    3			  2		      1			  0
  *  1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |	     Length	   | Flags |	      Type / ID		   |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
- * The message header format described here is used for messages that are
- * passed between the PF and the VF.  To allow for messages larger then
+ * The message header क्रमmat described here is used क्रम messages that are
+ * passed between the PF and the VF.  To allow क्रम messages larger then
  * mailbox size we will provide a message with the above header and it
  * will be segmented and transported to the mailbox to the other side where
  * it is reassembled.  It contains the following fields:
@@ -26,27 +27,27 @@ struct fm10k_msg_data;
  * Type/ID: These will be the message/argument types we pass
  */
 /* message data header */
-#define FM10K_TLV_ID_SHIFT		0
-#define FM10K_TLV_ID_SIZE		16
-#define FM10K_TLV_ID_MASK		((1u << FM10K_TLV_ID_SIZE) - 1)
-#define FM10K_TLV_FLAGS_SHIFT		16
-#define FM10K_TLV_FLAGS_MSG		0x1
-#define FM10K_TLV_FLAGS_SIZE		4
-#define FM10K_TLV_LEN_SHIFT		20
-#define FM10K_TLV_LEN_SIZE		12
+#घोषणा FM10K_TLV_ID_SHIFT		0
+#घोषणा FM10K_TLV_ID_SIZE		16
+#घोषणा FM10K_TLV_ID_MASK		((1u << FM10K_TLV_ID_SIZE) - 1)
+#घोषणा FM10K_TLV_FLAGS_SHIFT		16
+#घोषणा FM10K_TLV_FLAGS_MSG		0x1
+#घोषणा FM10K_TLV_FLAGS_SIZE		4
+#घोषणा FM10K_TLV_LEN_SHIFT		20
+#घोषणा FM10K_TLV_LEN_SIZE		12
 
-#define FM10K_TLV_HDR_LEN		4ul
-#define FM10K_TLV_LEN_ALIGN_MASK \
+#घोषणा FM10K_TLV_HDR_LEN		4ul
+#घोषणा FM10K_TLV_LEN_ALIGN_MASK \
 	((FM10K_TLV_HDR_LEN - 1) << FM10K_TLV_LEN_SHIFT)
-#define FM10K_TLV_LEN_ALIGN(tlv) \
+#घोषणा FM10K_TLV_LEN_ALIGN(tlv) \
 	(((tlv) + FM10K_TLV_LEN_ALIGN_MASK) & ~FM10K_TLV_LEN_ALIGN_MASK)
-#define FM10K_TLV_DWORD_LEN(tlv) \
+#घोषणा FM10K_TLV_DWORD_LEN(tlv) \
 	((u16)((FM10K_TLV_LEN_ALIGN(tlv)) >> (FM10K_TLV_LEN_SHIFT + 2)) + 1)
 
-#define FM10K_TLV_RESULTS_MAX		32
+#घोषणा FM10K_TLV_RESULTS_MAX		32
 
-enum fm10k_tlv_type {
-	FM10K_TLV_NULL_STRING,
+क्रमागत fm10k_tlv_type अणु
+	FM10K_TLV_शून्य_STRING,
 	FM10K_TLV_MAC_ADDR,
 	FM10K_TLV_BOOL,
 	FM10K_TLV_UNSIGNED,
@@ -54,88 +55,88 @@ enum fm10k_tlv_type {
 	FM10K_TLV_LE_STRUCT,
 	FM10K_TLV_NESTED,
 	FM10K_TLV_MAX_TYPE
-};
+पूर्ण;
 
-#define FM10K_TLV_ERROR (~0u)
+#घोषणा FM10K_TLV_ERROR (~0u)
 
-struct fm10k_tlv_attr {
-	unsigned int		id;
-	enum fm10k_tlv_type	type;
+काष्ठा fm10k_tlv_attr अणु
+	अचिन्हित पूर्णांक		id;
+	क्रमागत fm10k_tlv_type	type;
 	u16			len;
-};
+पूर्ण;
 
-#define FM10K_TLV_ATTR_NULL_STRING(id, len) { id, FM10K_TLV_NULL_STRING, len }
-#define FM10K_TLV_ATTR_MAC_ADDR(id)	    { id, FM10K_TLV_MAC_ADDR, 6 }
-#define FM10K_TLV_ATTR_BOOL(id)		    { id, FM10K_TLV_BOOL, 0 }
-#define FM10K_TLV_ATTR_U8(id)		    { id, FM10K_TLV_UNSIGNED, 1 }
-#define FM10K_TLV_ATTR_U16(id)		    { id, FM10K_TLV_UNSIGNED, 2 }
-#define FM10K_TLV_ATTR_U32(id)		    { id, FM10K_TLV_UNSIGNED, 4 }
-#define FM10K_TLV_ATTR_U64(id)		    { id, FM10K_TLV_UNSIGNED, 8 }
-#define FM10K_TLV_ATTR_S8(id)		    { id, FM10K_TLV_SIGNED, 1 }
-#define FM10K_TLV_ATTR_S16(id)		    { id, FM10K_TLV_SIGNED, 2 }
-#define FM10K_TLV_ATTR_S32(id)		    { id, FM10K_TLV_SIGNED, 4 }
-#define FM10K_TLV_ATTR_S64(id)		    { id, FM10K_TLV_SIGNED, 8 }
-#define FM10K_TLV_ATTR_LE_STRUCT(id, len)   { id, FM10K_TLV_LE_STRUCT, len }
-#define FM10K_TLV_ATTR_NESTED(id)	    { id, FM10K_TLV_NESTED, 0 }
-#define FM10K_TLV_ATTR_LAST		    { FM10K_TLV_ERROR, 0, 0 }
+#घोषणा FM10K_TLV_ATTR_शून्य_STRING(id, len) अणु id, FM10K_TLV_शून्य_STRING, len पूर्ण
+#घोषणा FM10K_TLV_ATTR_MAC_ADDR(id)	    अणु id, FM10K_TLV_MAC_ADDR, 6 पूर्ण
+#घोषणा FM10K_TLV_ATTR_BOOL(id)		    अणु id, FM10K_TLV_BOOL, 0 पूर्ण
+#घोषणा FM10K_TLV_ATTR_U8(id)		    अणु id, FM10K_TLV_UNSIGNED, 1 पूर्ण
+#घोषणा FM10K_TLV_ATTR_U16(id)		    अणु id, FM10K_TLV_UNSIGNED, 2 पूर्ण
+#घोषणा FM10K_TLV_ATTR_U32(id)		    अणु id, FM10K_TLV_UNSIGNED, 4 पूर्ण
+#घोषणा FM10K_TLV_ATTR_U64(id)		    अणु id, FM10K_TLV_UNSIGNED, 8 पूर्ण
+#घोषणा FM10K_TLV_ATTR_S8(id)		    अणु id, FM10K_TLV_SIGNED, 1 पूर्ण
+#घोषणा FM10K_TLV_ATTR_S16(id)		    अणु id, FM10K_TLV_SIGNED, 2 पूर्ण
+#घोषणा FM10K_TLV_ATTR_S32(id)		    अणु id, FM10K_TLV_SIGNED, 4 पूर्ण
+#घोषणा FM10K_TLV_ATTR_S64(id)		    अणु id, FM10K_TLV_SIGNED, 8 पूर्ण
+#घोषणा FM10K_TLV_ATTR_LE_STRUCT(id, len)   अणु id, FM10K_TLV_LE_STRUCT, len पूर्ण
+#घोषणा FM10K_TLV_ATTR_NESTED(id)	    अणु id, FM10K_TLV_NESTED, 0 पूर्ण
+#घोषणा FM10K_TLV_ATTR_LAST		    अणु FM10K_TLV_ERROR, 0, 0 पूर्ण
 
-struct fm10k_msg_data {
-	unsigned int		    id;
-	const struct fm10k_tlv_attr *attr;
-	s32			    (*func)(struct fm10k_hw *, u32 **,
-					    struct fm10k_mbx_info *);
-};
+काष्ठा fm10k_msg_data अणु
+	अचिन्हित पूर्णांक		    id;
+	स्थिर काष्ठा fm10k_tlv_attr *attr;
+	s32			    (*func)(काष्ठा fm10k_hw *, u32 **,
+					    काष्ठा fm10k_mbx_info *);
+पूर्ण;
 
-#define FM10K_MSG_HANDLER(id, attr, func) { id, attr, func }
+#घोषणा FM10K_MSG_HANDLER(id, attr, func) अणु id, attr, func पूर्ण
 
 s32 fm10k_tlv_msg_init(u32 *, u16);
-s32 fm10k_tlv_attr_put_mac_vlan(u32 *, u16, const u8 *, u16);
+s32 fm10k_tlv_attr_put_mac_vlan(u32 *, u16, स्थिर u8 *, u16);
 s32 fm10k_tlv_attr_get_mac_vlan(u32 *, u8 *, u16 *);
 s32 fm10k_tlv_attr_put_bool(u32 *, u16);
 s32 fm10k_tlv_attr_put_value(u32 *, u16, s64, u32);
-#define fm10k_tlv_attr_put_u8(msg, attr_id, val) \
+#घोषणा fm10k_tlv_attr_put_u8(msg, attr_id, val) \
 		fm10k_tlv_attr_put_value(msg, attr_id, val, 1)
-#define fm10k_tlv_attr_put_u16(msg, attr_id, val) \
+#घोषणा fm10k_tlv_attr_put_u16(msg, attr_id, val) \
 		fm10k_tlv_attr_put_value(msg, attr_id, val, 2)
-#define fm10k_tlv_attr_put_u32(msg, attr_id, val) \
+#घोषणा fm10k_tlv_attr_put_u32(msg, attr_id, val) \
 		fm10k_tlv_attr_put_value(msg, attr_id, val, 4)
-#define fm10k_tlv_attr_put_u64(msg, attr_id, val) \
+#घोषणा fm10k_tlv_attr_put_u64(msg, attr_id, val) \
 		fm10k_tlv_attr_put_value(msg, attr_id, val, 8)
-#define fm10k_tlv_attr_put_s8(msg, attr_id, val) \
+#घोषणा fm10k_tlv_attr_put_s8(msg, attr_id, val) \
 		fm10k_tlv_attr_put_value(msg, attr_id, val, 1)
-#define fm10k_tlv_attr_put_s16(msg, attr_id, val) \
+#घोषणा fm10k_tlv_attr_put_s16(msg, attr_id, val) \
 		fm10k_tlv_attr_put_value(msg, attr_id, val, 2)
-#define fm10k_tlv_attr_put_s32(msg, attr_id, val) \
+#घोषणा fm10k_tlv_attr_put_s32(msg, attr_id, val) \
 		fm10k_tlv_attr_put_value(msg, attr_id, val, 4)
-#define fm10k_tlv_attr_put_s64(msg, attr_id, val) \
+#घोषणा fm10k_tlv_attr_put_s64(msg, attr_id, val) \
 		fm10k_tlv_attr_put_value(msg, attr_id, val, 8)
-s32 fm10k_tlv_attr_get_value(u32 *, void *, u32);
-#define fm10k_tlv_attr_get_u8(attr, ptr) \
-		fm10k_tlv_attr_get_value(attr, ptr, sizeof(u8))
-#define fm10k_tlv_attr_get_u16(attr, ptr) \
-		fm10k_tlv_attr_get_value(attr, ptr, sizeof(u16))
-#define fm10k_tlv_attr_get_u32(attr, ptr) \
-		fm10k_tlv_attr_get_value(attr, ptr, sizeof(u32))
-#define fm10k_tlv_attr_get_u64(attr, ptr) \
-		fm10k_tlv_attr_get_value(attr, ptr, sizeof(u64))
-#define fm10k_tlv_attr_get_s8(attr, ptr) \
-		fm10k_tlv_attr_get_value(attr, ptr, sizeof(s8))
-#define fm10k_tlv_attr_get_s16(attr, ptr) \
-		fm10k_tlv_attr_get_value(attr, ptr, sizeof(s16))
-#define fm10k_tlv_attr_get_s32(attr, ptr) \
-		fm10k_tlv_attr_get_value(attr, ptr, sizeof(s32))
-#define fm10k_tlv_attr_get_s64(attr, ptr) \
-		fm10k_tlv_attr_get_value(attr, ptr, sizeof(s64))
-s32 fm10k_tlv_attr_put_le_struct(u32 *, u16, const void *, u32);
-s32 fm10k_tlv_attr_get_le_struct(u32 *, void *, u32);
-s32 fm10k_tlv_msg_parse(struct fm10k_hw *, u32 *, struct fm10k_mbx_info *,
-			const struct fm10k_msg_data *);
-s32 fm10k_tlv_msg_error(struct fm10k_hw *hw, u32 **results,
-			struct fm10k_mbx_info *);
+s32 fm10k_tlv_attr_get_value(u32 *, व्योम *, u32);
+#घोषणा fm10k_tlv_attr_get_u8(attr, ptr) \
+		fm10k_tlv_attr_get_value(attr, ptr, माप(u8))
+#घोषणा fm10k_tlv_attr_get_u16(attr, ptr) \
+		fm10k_tlv_attr_get_value(attr, ptr, माप(u16))
+#घोषणा fm10k_tlv_attr_get_u32(attr, ptr) \
+		fm10k_tlv_attr_get_value(attr, ptr, माप(u32))
+#घोषणा fm10k_tlv_attr_get_u64(attr, ptr) \
+		fm10k_tlv_attr_get_value(attr, ptr, माप(u64))
+#घोषणा fm10k_tlv_attr_get_s8(attr, ptr) \
+		fm10k_tlv_attr_get_value(attr, ptr, माप(s8))
+#घोषणा fm10k_tlv_attr_get_s16(attr, ptr) \
+		fm10k_tlv_attr_get_value(attr, ptr, माप(s16))
+#घोषणा fm10k_tlv_attr_get_s32(attr, ptr) \
+		fm10k_tlv_attr_get_value(attr, ptr, माप(s32))
+#घोषणा fm10k_tlv_attr_get_s64(attr, ptr) \
+		fm10k_tlv_attr_get_value(attr, ptr, माप(s64))
+s32 fm10k_tlv_attr_put_le_काष्ठा(u32 *, u16, स्थिर व्योम *, u32);
+s32 fm10k_tlv_attr_get_le_काष्ठा(u32 *, व्योम *, u32);
+s32 fm10k_tlv_msg_parse(काष्ठा fm10k_hw *, u32 *, काष्ठा fm10k_mbx_info *,
+			स्थिर काष्ठा fm10k_msg_data *);
+s32 fm10k_tlv_msg_error(काष्ठा fm10k_hw *hw, u32 **results,
+			काष्ठा fm10k_mbx_info *);
 
-#define FM10K_TLV_MSG_ID_TEST	0
+#घोषणा FM10K_TLV_MSG_ID_TEST	0
 
-enum fm10k_tlv_test_attr_id {
+क्रमागत fm10k_tlv_test_attr_id अणु
 	FM10K_TEST_MSG_UNSET,
 	FM10K_TEST_MSG_STRING,
 	FM10K_TEST_MSG_MAC_ADDR,
@@ -151,14 +152,14 @@ enum fm10k_tlv_test_attr_id {
 	FM10K_TEST_MSG_NESTED,
 	FM10K_TEST_MSG_RESULT,
 	FM10K_TEST_MSG_MAX
-};
+पूर्ण;
 
-extern const struct fm10k_tlv_attr fm10k_tlv_msg_test_attr[];
-void fm10k_tlv_msg_test_create(u32 *, u32);
-s32 fm10k_tlv_msg_test(struct fm10k_hw *, u32 **, struct fm10k_mbx_info *);
+बाह्य स्थिर काष्ठा fm10k_tlv_attr fm10k_tlv_msg_test_attr[];
+व्योम fm10k_tlv_msg_test_create(u32 *, u32);
+s32 fm10k_tlv_msg_test(काष्ठा fm10k_hw *, u32 **, काष्ठा fm10k_mbx_info *);
 
-#define FM10K_TLV_MSG_TEST_HANDLER(func) \
+#घोषणा FM10K_TLV_MSG_TEST_HANDLER(func) \
 	FM10K_MSG_HANDLER(FM10K_TLV_MSG_ID_TEST, fm10k_tlv_msg_test_attr, func)
-#define FM10K_TLV_MSG_ERROR_HANDLER(func) \
-	FM10K_MSG_HANDLER(FM10K_TLV_ERROR, NULL, func)
-#endif /* _FM10K_MSG_H_ */
+#घोषणा FM10K_TLV_MSG_ERROR_HANDLER(func) \
+	FM10K_MSG_HANDLER(FM10K_TLV_ERROR, शून्य, func)
+#पूर्ण_अगर /* _FM10K_MSG_H_ */

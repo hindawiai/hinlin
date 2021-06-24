@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Purna Chandra Mandal,<purna.mandal@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
-#ifndef __MICROCHIP_CLK_PIC32_H_
-#define __MICROCHIP_CLK_PIC32_H_
+#अगर_अघोषित __MICROCHIP_CLK_PIC32_H_
+#घोषणा __MICROCHIP_CLK_PIC32_H_
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-/* PIC32 clock data */
-struct pic32_clk_common {
-	struct device *dev;
-	void __iomem *iobase;
-	spinlock_t reg_lock; /* clock lock */
-};
+/* PIC32 घड़ी data */
+काष्ठा pic32_clk_common अणु
+	काष्ठा device *dev;
+	व्योम __iomem *iobase;
+	spinlock_t reg_lock; /* घड़ी lock */
+पूर्ण;
 
-/* System PLL clock */
-struct pic32_sys_pll_data {
-	struct clk_init_data init_data;
-	const u32 ctrl_reg;
-	const u32 status_reg;
-	const u32 lock_mask;
-};
+/* System PLL घड़ी */
+काष्ठा pic32_sys_pll_data अणु
+	काष्ठा clk_init_data init_data;
+	स्थिर u32 ctrl_reg;
+	स्थिर u32 status_reg;
+	स्थिर u32 lock_mask;
+पूर्ण;
 
-/* System clock */
-struct pic32_sys_clk_data {
-	struct clk_init_data init_data;
-	const u32 mux_reg;
-	const u32 slew_reg;
-	const u32 *parent_map;
-	const u32 slew_div;
-};
+/* System घड़ी */
+काष्ठा pic32_sys_clk_data अणु
+	काष्ठा clk_init_data init_data;
+	स्थिर u32 mux_reg;
+	स्थिर u32 slew_reg;
+	स्थिर u32 *parent_map;
+	स्थिर u32 slew_भाग;
+पूर्ण;
 
-/* Reference Oscillator clock */
-struct pic32_ref_osc_data {
-	struct clk_init_data init_data;
-	const u32 ctrl_reg;
-	const u32 *parent_map;
-};
+/* Reference Oscillator घड़ी */
+काष्ठा pic32_ref_osc_data अणु
+	काष्ठा clk_init_data init_data;
+	स्थिर u32 ctrl_reg;
+	स्थिर u32 *parent_map;
+पूर्ण;
 
-/* Peripheral Bus clock */
-struct pic32_periph_clk_data {
-	struct clk_init_data init_data;
-	const u32 ctrl_reg;
-};
+/* Peripheral Bus घड़ी */
+काष्ठा pic32_periph_clk_data अणु
+	काष्ठा clk_init_data init_data;
+	स्थिर u32 ctrl_reg;
+पूर्ण;
 
-/* External Secondary Oscillator clock  */
-struct pic32_sec_osc_data {
-	struct clk_init_data init_data;
-	const u32 enable_reg;
-	const u32 status_reg;
-	const u32 enable_mask;
-	const u32 status_mask;
-	const unsigned long fixed_rate;
-};
+/* External Secondary Oscillator घड़ी  */
+काष्ठा pic32_sec_osc_data अणु
+	काष्ठा clk_init_data init_data;
+	स्थिर u32 enable_reg;
+	स्थिर u32 status_reg;
+	स्थिर u32 enable_mask;
+	स्थिर u32 status_mask;
+	स्थिर अचिन्हित दीर्घ fixed_rate;
+पूर्ण;
 
-extern const struct clk_ops pic32_pbclk_ops;
-extern const struct clk_ops pic32_sclk_ops;
-extern const struct clk_ops pic32_sclk_no_div_ops;
-extern const struct clk_ops pic32_spll_ops;
-extern const struct clk_ops pic32_roclk_ops;
-extern const struct clk_ops pic32_sosc_ops;
+बाह्य स्थिर काष्ठा clk_ops pic32_pbclk_ops;
+बाह्य स्थिर काष्ठा clk_ops pic32_sclk_ops;
+बाह्य स्थिर काष्ठा clk_ops pic32_sclk_no_भाग_ops;
+बाह्य स्थिर काष्ठा clk_ops pic32_spll_ops;
+बाह्य स्थिर काष्ठा clk_ops pic32_roclk_ops;
+बाह्य स्थिर काष्ठा clk_ops pic32_sosc_ops;
 
-struct clk *pic32_periph_clk_register(const struct pic32_periph_clk_data *data,
-				      struct pic32_clk_common *core);
-struct clk *pic32_refo_clk_register(const struct pic32_ref_osc_data *data,
-				    struct pic32_clk_common *core);
-struct clk *pic32_sys_clk_register(const struct pic32_sys_clk_data *data,
-				   struct pic32_clk_common *core);
-struct clk *pic32_spll_clk_register(const struct pic32_sys_pll_data *data,
-				    struct pic32_clk_common *core);
-struct clk *pic32_sosc_clk_register(const struct pic32_sec_osc_data *data,
-				    struct pic32_clk_common *core);
+काष्ठा clk *pic32_periph_clk_रेजिस्टर(स्थिर काष्ठा pic32_periph_clk_data *data,
+				      काष्ठा pic32_clk_common *core);
+काष्ठा clk *pic32_refo_clk_रेजिस्टर(स्थिर काष्ठा pic32_ref_osc_data *data,
+				    काष्ठा pic32_clk_common *core);
+काष्ठा clk *pic32_sys_clk_रेजिस्टर(स्थिर काष्ठा pic32_sys_clk_data *data,
+				   काष्ठा pic32_clk_common *core);
+काष्ठा clk *pic32_spll_clk_रेजिस्टर(स्थिर काष्ठा pic32_sys_pll_data *data,
+				    काष्ठा pic32_clk_common *core);
+काष्ठा clk *pic32_sosc_clk_रेजिस्टर(स्थिर काष्ठा pic32_sec_osc_data *data,
+				    काष्ठा pic32_clk_common *core);
 
-#endif /* __MICROCHIP_CLK_PIC32_H_*/
+#पूर्ण_अगर /* __MICROCHIP_CLK_PIC32_H_*/

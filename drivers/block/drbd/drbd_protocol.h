@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __DRBD_PROTOCOL_H
-#define __DRBD_PROTOCOL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __DRBD_PROTOCOL_H
+#घोषणा __DRBD_PROTOCOL_H
 
-enum drbd_packet {
+क्रमागत drbd_packet अणु
 	/* receiver (data socket) */
 	P_DATA		      = 0x00,
 	P_DATA_REPLY	      = 0x01, /* Response to P_DATA_REQUEST */
@@ -11,9 +12,9 @@ enum drbd_packet {
 	P_BITMAP	      = 0x04,
 	P_BECOME_SYNC_TARGET  = 0x05,
 	P_BECOME_SYNC_SOURCE  = 0x06,
-	P_UNPLUG_REMOTE	      = 0x07, /* Used at various times to hint the peer */
-	P_DATA_REQUEST	      = 0x08, /* Used to ask for a data block */
-	P_RS_DATA_REQUEST     = 0x09, /* Used to ask for a data block for resync */
+	P_UNPLUG_REMOTE	      = 0x07, /* Used at various बार to hपूर्णांक the peer */
+	P_DATA_REQUEST	      = 0x08, /* Used to ask क्रम a data block */
+	P_RS_DATA_REQUEST     = 0x09, /* Used to ask क्रम a data block क्रम resync */
 	P_SYNC_PARAM	      = 0x0a,
 	P_PROTOCOL	      = 0x0b,
 	P_UUIDS		      = 0x0c,
@@ -31,158 +32,158 @@ enum drbd_packet {
 	P_WRITE_ACK	      = 0x16, /* Used in protocol C */
 	P_RS_WRITE_ACK	      = 0x17, /* Is a P_WRITE_ACK, additionally call set_in_sync(). */
 	P_SUPERSEDED	      = 0x18, /* Used in proto C, two-primaries conflict detection */
-	P_NEG_ACK	      = 0x19, /* Sent if local disk is unusable */
+	P_NEG_ACK	      = 0x19, /* Sent अगर local disk is unusable */
 	P_NEG_DREPLY	      = 0x1a, /* Local disk is broken... */
 	P_NEG_RS_DREPLY	      = 0x1b, /* Local disk is broken... */
 	P_BARRIER_ACK	      = 0x1c,
 	P_STATE_CHG_REPLY     = 0x1d,
 
-	/* "new" commands, no longer fitting into the ordering scheme above */
+	/* "new" commands, no दीर्घer fitting पूर्णांकo the ordering scheme above */
 
 	P_OV_REQUEST	      = 0x1e, /* data socket */
 	P_OV_REPLY	      = 0x1f,
 	P_OV_RESULT	      = 0x20, /* meta socket */
 	P_CSUM_RS_REQUEST     = 0x21, /* data socket */
 	P_RS_IS_IN_SYNC	      = 0x22, /* meta socket */
-	P_SYNC_PARAM89	      = 0x23, /* data socket, protocol version 89 replacement for P_SYNC_PARAM */
-	P_COMPRESSED_BITMAP   = 0x24, /* compressed or otherwise encoded bitmap transfer */
-	/* P_CKPT_FENCE_REQ      = 0x25, * currently reserved for protocol D */
-	/* P_CKPT_DISABLE_REQ    = 0x26, * currently reserved for protocol D */
+	P_SYNC_PARAM89	      = 0x23, /* data socket, protocol version 89 replacement क्रम P_SYNC_PARAM */
+	P_COMPRESSED_BITMAP   = 0x24, /* compressed or otherwise encoded biपंचांगap transfer */
+	/* P_CKPT_FENCE_REQ      = 0x25, * currently reserved क्रम protocol D */
+	/* P_CKPT_DISABLE_REQ    = 0x26, * currently reserved क्रम protocol D */
 	P_DELAY_PROBE         = 0x27, /* is used on BOTH sockets */
 	P_OUT_OF_SYNC         = 0x28, /* Mark as out of sync (Outrunning), data socket */
 	P_RS_CANCEL           = 0x29, /* meta: Used to cancel RS_DATA_REQUEST packet by SyncSource */
 	P_CONN_ST_CHG_REQ     = 0x2a, /* data sock: Connection wide state request */
 	P_CONN_ST_CHG_REPLY   = 0x2b, /* meta sock: Connection side state req reply */
-	P_RETRY_WRITE	      = 0x2c, /* Protocol C: retry conflicting write request */
+	P_RETRY_WRITE	      = 0x2c, /* Protocol C: retry conflicting ग_लिखो request */
 	P_PROTOCOL_UPDATE     = 0x2d, /* data sock: is used in established connections */
         /* 0x2e to 0x30 reserved, used in drbd 9 */
 
-	/* REQ_OP_DISCARD. We used "discard" in different contexts before,
+	/* REQ_OP_DISCARD. We used "discard" in dअगरferent contexts beक्रमe,
 	 * which is why I chose TRIM here, to disambiguate. */
 	P_TRIM                = 0x31,
 
-	/* Only use these two if both support FF_THIN_RESYNC */
-	P_RS_THIN_REQ         = 0x32, /* Request a block for resync or reply P_RS_DEALLOCATED */
+	/* Only use these two अगर both support FF_THIN_RESYNC */
+	P_RS_THIN_REQ         = 0x32, /* Request a block क्रम resync or reply P_RS_DEALLOCATED */
 	P_RS_DEALLOCATED      = 0x33, /* Contains only zeros on sync source node */
 
 	/* REQ_WRITE_SAME.
 	 * On a receiving side without REQ_WRITE_SAME,
-	 * we may fall back to an opencoded loop instead. */
+	 * we may fall back to an खोलोcoded loop instead. */
 	P_WSAME               = 0x34,
 
-	/* 0x35 already claimed in DRBD 9 */
+	/* 0x35 alपढ़ोy claimed in DRBD 9 */
 	P_ZEROES              = 0x36, /* data sock: zero-out, WRITE_ZEROES */
 
-	/* 0x40 .. 0x48 already claimed in DRBD 9 */
+	/* 0x40 .. 0x48 alपढ़ोy claimed in DRBD 9 */
 
-	P_MAY_IGNORE	      = 0x100, /* Flag to test if (cmd > P_MAY_IGNORE) ... */
+	P_MAY_IGNORE	      = 0x100, /* Flag to test अगर (cmd > P_MAY_IGNORE) ... */
 	P_MAX_OPT_CMD	      = 0x101,
 
-	/* special command ids for handshake */
+	/* special command ids क्रम handshake */
 
 	P_INITIAL_META	      = 0xfff1, /* First Packet on the MetaSock */
 	P_INITIAL_DATA	      = 0xfff2, /* First Packet on the Socket */
 
-	P_CONNECTION_FEATURES = 0xfffe	/* FIXED for the next century! */
-};
+	P_CONNECTION_FEATURES = 0xfffe	/* FIXED क्रम the next century! */
+पूर्ण;
 
-#ifndef __packed
-#define __packed __attribute__((packed))
-#endif
+#अगर_अघोषित __packed
+#घोषणा __packed __attribute__((packed))
+#पूर्ण_अगर
 
-/* This is the layout for a packet on the wire.
+/* This is the layout क्रम a packet on the wire.
  * The byteorder is the network byte order.
  *     (except block_id and barrier fields.
- *	these are pointers to local structs
- *	and have no relevance for the partner,
+ *	these are poपूर्णांकers to local काष्ठाs
+ *	and have no relevance क्रम the partner,
  *	which just echoes them as received.)
  *
- * NOTE that the payload starts at a long aligned offset,
+ * NOTE that the payload starts at a दीर्घ aligned offset,
  * regardless of 32 or 64 bit arch!
  */
-struct p_header80 {
+काष्ठा p_header80 अणु
 	u32	  magic;
 	u16	  command;
 	u16	  length;	/* bytes of data after this header */
-} __packed;
+पूर्ण __packed;
 
-/* Header for big packets, Used for data packets exceeding 64kB */
-struct p_header95 {
+/* Header क्रम big packets, Used क्रम data packets exceeding 64kB */
+काष्ठा p_header95 अणु
 	u16	  magic;	/* use DRBD_MAGIC_BIG here */
 	u16	  command;
 	u32	  length;
-} __packed;
+पूर्ण __packed;
 
-struct p_header100 {
+काष्ठा p_header100 अणु
 	u32	  magic;
 	u16	  volume;
 	u16	  command;
 	u32	  length;
 	u32	  pad;
-} __packed;
+पूर्ण __packed;
 
 /* These defines must not be changed without changing the protocol version.
- * New defines may only be introduced together with protocol version bump or
+ * New defines may only be पूर्णांकroduced together with protocol version bump or
  * new protocol feature flags.
  */
-#define DP_HARDBARRIER	      1 /* no longer used */
-#define DP_RW_SYNC	      2 /* equals REQ_SYNC    */
-#define DP_MAY_SET_IN_SYNC    4
-#define DP_UNPLUG             8 /* not used anymore   */
-#define DP_FUA               16 /* equals REQ_FUA     */
-#define DP_FLUSH             32 /* equals REQ_PREFLUSH   */
-#define DP_DISCARD           64 /* equals REQ_OP_DISCARD */
-#define DP_SEND_RECEIVE_ACK 128 /* This is a proto B write request */
-#define DP_SEND_WRITE_ACK   256 /* This is a proto C write request */
-#define DP_WSAME            512 /* equiv. REQ_WRITE_SAME */
-#define DP_ZEROES          1024 /* equiv. REQ_OP_WRITE_ZEROES */
+#घोषणा DP_HARDBARRIER	      1 /* no दीर्घer used */
+#घोषणा DP_RW_SYNC	      2 /* equals REQ_SYNC    */
+#घोषणा DP_MAY_SET_IN_SYNC    4
+#घोषणा DP_UNPLUG             8 /* not used anymore   */
+#घोषणा DP_FUA               16 /* equals REQ_FUA     */
+#घोषणा DP_FLUSH             32 /* equals REQ_PREFLUSH   */
+#घोषणा DP_DISCARD           64 /* equals REQ_OP_DISCARD */
+#घोषणा DP_SEND_RECEIVE_ACK 128 /* This is a proto B ग_लिखो request */
+#घोषणा DP_SEND_WRITE_ACK   256 /* This is a proto C ग_लिखो request */
+#घोषणा DP_WSAME            512 /* equiv. REQ_WRITE_SAME */
+#घोषणा DP_ZEROES          1024 /* equiv. REQ_OP_WRITE_ZEROES */
 
 /* possible combinations:
  * REQ_OP_WRITE_ZEROES:  DP_DISCARD | DP_ZEROES
  * REQ_OP_WRITE_ZEROES + REQ_NOUNMAP: DP_ZEROES
  */
 
-struct p_data {
+काष्ठा p_data अणु
 	u64	    sector;    /* 64 bits sector number */
-	u64	    block_id;  /* to identify the request in protocol B&C */
+	u64	    block_id;  /* to identअगरy the request in protocol B&C */
 	u32	    seq_num;
 	u32	    dp_flags;
-} __packed;
+पूर्ण __packed;
 
-struct p_trim {
-	struct p_data p_data;
+काष्ठा p_trim अणु
+	काष्ठा p_data p_data;
 	u32	    size;	/* == bio->bi_size */
-} __packed;
+पूर्ण __packed;
 
-struct p_wsame {
-	struct p_data p_data;
+काष्ठा p_wsame अणु
+	काष्ठा p_data p_data;
 	u32           size;     /* == bio->bi_size */
-} __packed;
+पूर्ण __packed;
 
 /*
- * commands which share a struct:
+ * commands which share a काष्ठा:
  *  p_block_ack:
  *   P_RECV_ACK (proto B), P_WRITE_ACK (proto C),
  *   P_SUPERSEDED (proto C, two-primaries conflict detection)
  *  p_block_req:
  *   P_DATA_REQUEST, P_RS_DATA_REQUEST
  */
-struct p_block_ack {
+काष्ठा p_block_ack अणु
 	u64	    sector;
 	u64	    block_id;
 	u32	    blksize;
 	u32	    seq_num;
-} __packed;
+पूर्ण __packed;
 
-struct p_block_req {
+काष्ठा p_block_req अणु
 	u64 sector;
 	u64 block_id;
 	u32 blksize;
 	u32 pad;	/* to multiple of 8 Byte */
-} __packed;
+पूर्ण __packed;
 
 /*
- * commands with their own struct for additional fields:
+ * commands with their own काष्ठा क्रम additional fields:
  *   P_CONNECTION_FEATURES
  *   P_BARRIER
  *   P_BARRIER_ACK
@@ -191,112 +192,112 @@ struct p_block_req {
  */
 
 /* supports TRIM/DISCARD on the "wire" protocol */
-#define DRBD_FF_TRIM 1
+#घोषणा DRBD_FF_TRIM 1
 
 /* Detect all-zeros during resync, and rather TRIM/UNMAP/DISCARD those blocks
  * instead of fully allocate a supposedly thin volume on initial resync */
-#define DRBD_FF_THIN_RESYNC 2
+#घोषणा DRBD_FF_THIN_RESYNC 2
 
 /* supports REQ_WRITE_SAME on the "wire" protocol.
  * Note: this flag is overloaded,
  * its presence also
- *   - indicates support for 128 MiB "batch bios",
+ *   - indicates support क्रम 128 MiB "batch bios",
  *     max discard size of 128 MiB
- *     instead of 4M before that.
+ *     instead of 4M beक्रमe that.
  *   - indicates that we exchange additional settings in p_sizes
  *     drbd_send_sizes()/receive_sizes()
  */
-#define DRBD_FF_WSAME 4
+#घोषणा DRBD_FF_WSAME 4
 
 /* supports REQ_OP_WRITE_ZEROES on the "wire" protocol.
  *
- * We used to map that to "discard" on the sending side, and if we cannot
+ * We used to map that to "discard" on the sending side, and अगर we cannot
  * guarantee that discard zeroes data, the receiving side would map discard
  * back to zero-out.
  *
- * With the introduction of REQ_OP_WRITE_ZEROES,
- * we started to use that for both WRITE_ZEROES and DISCARDS,
+ * With the पूर्णांकroduction of REQ_OP_WRITE_ZEROES,
+ * we started to use that क्रम both WRITE_ZEROES and DISCARDS,
  * hoping that WRITE_ZEROES would "do what we want",
- * UNMAP if possible, zero-out the rest.
+ * UNMAP अगर possible, zero-out the rest.
  *
  * The example scenario is some LVM "thin" backend.
  *
- * While an un-allocated block on dm-thin reads as zeroes, on a dm-thin
- * with "skip_block_zeroing=true", after a partial block write allocated
+ * While an un-allocated block on dm-thin पढ़ोs as zeroes, on a dm-thin
+ * with "skip_block_zeroing=true", after a partial block ग_लिखो allocated
  * that block, that same block may well map "undefined old garbage" from
  * the backends on LBAs that have not yet been written to.
  *
  * If we cannot distinguish between zero-out and discard on the receiving
- * side, to avoid "undefined old garbage" to pop up randomly at later times
+ * side, to aव्योम "undefined old garbage" to pop up अक्रमomly at later बार
  * on supposedly zero-initialized blocks, we'd need to map all discards to
- * zero-out on the receiving side.  But that would potentially do a full
+ * zero-out on the receiving side.  But that would potentially करो a full
  * alloc on thinly provisioned backends, even when the expectation was to
  * unmap/trim/discard/de-allocate.
  *
  * We need to distinguish on the protocol level, whether we need to guarantee
- * zeroes (and thus use zero-out, potentially doing the mentioned full-alloc),
- * or if we want to put the emphasis on discard, and only do a "best effort
+ * zeroes (and thus use zero-out, potentially करोing the mentioned full-alloc),
+ * or अगर we want to put the emphasis on discard, and only करो a "best efक्रमt
  * zeroing" (by "discarding" blocks aligned to discard-granularity, and zeroing
  * only potential unaligned head and tail clippings), to at least *try* to
- * avoid "false positives" in an online-verify later, hoping that someone
+ * aव्योम "false positives" in an online-verअगरy later, hoping that someone
  * set skip_block_zeroing=false.
  */
-#define DRBD_FF_WZEROES 8
+#घोषणा DRBD_FF_WZEROES 8
 
 
-struct p_connection_features {
+काष्ठा p_connection_features अणु
 	u32 protocol_min;
 	u32 feature_flags;
 	u32 protocol_max;
 
-	/* should be more than enough for future enhancements
-	 * for now, feature_flags and the reserved array shall be zero.
+	/* should be more than enough क्रम future enhancements
+	 * क्रम now, feature_flags and the reserved array shall be zero.
 	 */
 
 	u32 _pad;
 	u64 reserved[7];
-} __packed;
+पूर्ण __packed;
 
-struct p_barrier {
+काष्ठा p_barrier अणु
 	u32 barrier;	/* barrier number _handle_ only */
 	u32 pad;	/* to multiple of 8 Byte */
-} __packed;
+पूर्ण __packed;
 
-struct p_barrier_ack {
+काष्ठा p_barrier_ack अणु
 	u32 barrier;
 	u32 set_size;
-} __packed;
+पूर्ण __packed;
 
-struct p_rs_param {
+काष्ठा p_rs_param अणु
 	u32 resync_rate;
 
 	      /* Since protocol version 88 and higher. */
-	char verify_alg[];
-} __packed;
+	अक्षर verअगरy_alg[];
+पूर्ण __packed;
 
-struct p_rs_param_89 {
+काष्ठा p_rs_param_89 अणु
 	u32 resync_rate;
 	/* protocol version 89: */
-	char verify_alg[SHARED_SECRET_MAX];
-	char csums_alg[SHARED_SECRET_MAX];
-} __packed;
+	अक्षर verअगरy_alg[SHARED_SECRET_MAX];
+	अक्षर csums_alg[SHARED_SECRET_MAX];
+पूर्ण __packed;
 
-struct p_rs_param_95 {
+काष्ठा p_rs_param_95 अणु
 	u32 resync_rate;
-	char verify_alg[SHARED_SECRET_MAX];
-	char csums_alg[SHARED_SECRET_MAX];
+	अक्षर verअगरy_alg[SHARED_SECRET_MAX];
+	अक्षर csums_alg[SHARED_SECRET_MAX];
 	u32 c_plan_ahead;
 	u32 c_delay_target;
 	u32 c_fill_target;
 	u32 c_max_rate;
-} __packed;
+पूर्ण __packed;
 
-enum drbd_conn_flags {
+क्रमागत drbd_conn_flags अणु
 	CF_DISCARD_MY_DATA = 1,
 	CF_DRY_RUN = 2,
-};
+पूर्ण;
 
-struct p_protocol {
+काष्ठा p_protocol अणु
 	u32 protocol;
 	u32 after_sb_0p;
 	u32 after_sb_1p;
@@ -305,78 +306,78 @@ struct p_protocol {
 	u32 two_primaries;
 
 	/* Since protocol version 87 and higher. */
-	char integrity_alg[];
+	अक्षर पूर्णांकegrity_alg[];
 
-} __packed;
+पूर्ण __packed;
 
-struct p_uuids {
+काष्ठा p_uuids अणु
 	u64 uuid[UI_EXTENDED_SIZE];
-} __packed;
+पूर्ण __packed;
 
-struct p_rs_uuid {
+काष्ठा p_rs_uuid अणु
 	u64	    uuid;
-} __packed;
+पूर्ण __packed;
 
-/* optional queue_limits if (agreed_features & DRBD_FF_WSAME)
- * see also struct queue_limits, as of late 2015 */
-struct o_qlim {
-	/* we don't need it yet, but we may as well communicate it now */
+/* optional queue_limits अगर (agreed_features & DRBD_FF_WSAME)
+ * see also काष्ठा queue_limits, as of late 2015 */
+काष्ठा o_qlim अणु
+	/* we करोn't need it yet, but we may as well communicate it now */
 	u32 physical_block_size;
 
-	/* so the original in struct queue_limits is unsigned short,
+	/* so the original in काष्ठा queue_limits is अचिन्हित लघु,
 	 * but I'd have to put in padding anyways. */
 	u32 logical_block_size;
 
 	/* One incoming bio becomes one DRBD request,
 	 * which may be translated to several bio on the receiving side.
-	 * We don't need to communicate chunk/boundary/segment ... limits.
+	 * We करोn't need to communicate chunk/boundary/segment ... limits.
 	 */
 
-	/* various IO hints may be useful with "diskless client" setups */
+	/* various IO hपूर्णांकs may be useful with "diskless client" setups */
 	u32 alignment_offset;
 	u32 io_min;
 	u32 io_opt;
 
-	/* We may need to communicate integrity stuff at some point,
+	/* We may need to communicate पूर्णांकegrity stuff at some poपूर्णांक,
 	 * but let's not get ahead of ourselves. */
 
 	/* Backend discard capabilities.
 	 * Receiving side uses "blkdev_issue_discard()", no need to communicate
-	 * more specifics.  If the backend cannot do discards, the DRBD peer
+	 * more specअगरics.  If the backend cannot करो discards, the DRBD peer
 	 * may fall back to blkdev_issue_zeroout().
 	 */
 	u8 discard_enabled;
 	u8 discard_zeroes_data;
-	u8 write_same_capable;
+	u8 ग_लिखो_same_capable;
 	u8 _pad;
-} __packed;
+पूर्ण __packed;
 
-struct p_sizes {
+काष्ठा p_sizes अणु
 	u64	    d_size;  /* size of disk */
 	u64	    u_size;  /* user requested size */
 	u64	    c_size;  /* current exported size */
 	u32	    max_bio_size;  /* Maximal size of a BIO */
 	u16	    queue_order_type;  /* not yet implemented in DRBD*/
-	u16	    dds_flags; /* use enum dds_flags here. */
+	u16	    dds_flags; /* use क्रमागत dds_flags here. */
 
-	/* optional queue_limits if (agreed_features & DRBD_FF_WSAME) */
-	struct o_qlim qlim[];
-} __packed;
+	/* optional queue_limits अगर (agreed_features & DRBD_FF_WSAME) */
+	काष्ठा o_qlim qlim[];
+पूर्ण __packed;
 
-struct p_state {
+काष्ठा p_state अणु
 	u32	    state;
-} __packed;
+पूर्ण __packed;
 
-struct p_req_state {
+काष्ठा p_req_state अणु
 	u32	    mask;
 	u32	    val;
-} __packed;
+पूर्ण __packed;
 
-struct p_req_state_reply {
+काष्ठा p_req_state_reply अणु
 	u32	    retcode;
-} __packed;
+पूर्ण __packed;
 
-struct p_drbd06_param {
+काष्ठा p_drbd06_param अणु
 	u64	  size;
 	u32	  state;
 	u32	  blksize;
@@ -384,25 +385,25 @@ struct p_drbd06_param {
 	u32	  version;
 	u32	  gen_cnt[5];
 	u32	  bit_map_gen[5];
-} __packed;
+पूर्ण __packed;
 
-struct p_block_desc {
+काष्ठा p_block_desc अणु
 	u64 sector;
 	u32 blksize;
 	u32 pad;	/* to multiple of 8 Byte */
-} __packed;
+पूर्ण __packed;
 
-/* Valid values for the encoding field.
+/* Valid values क्रम the encoding field.
  * Bump proto version when changing this. */
-enum drbd_bitmap_code {
+क्रमागत drbd_biपंचांगap_code अणु
 	/* RLE_VLI_Bytes = 0,
 	 * and other bit variants had been defined during
 	 * algorithm evaluation. */
 	RLE_VLI_Bits = 2,
-};
+पूर्ण;
 
-struct p_compressed_bm {
-	/* (encoding & 0x0f): actual encoding, see enum drbd_bitmap_code
+काष्ठा p_compressed_bm अणु
+	/* (encoding & 0x0f): actual encoding, see क्रमागत drbd_biपंचांगap_code
 	 * (encoding & 0x80): polarity (set/unset) of first runlength
 	 * ((encoding >> 4) & 0x07): pad_bits, number of trailing zero bits
 	 * used to pad up to head.length bytes
@@ -410,17 +411,17 @@ struct p_compressed_bm {
 	u8 encoding;
 
 	u8 code[];
-} __packed;
+पूर्ण __packed;
 
-struct p_delay_probe93 {
+काष्ठा p_delay_probe93 अणु
 	u32     seq_num; /* sequence number to match the two probe packets */
-	u32     offset;  /* usecs the probe got sent after the reference time point */
-} __packed;
+	u32     offset;  /* usecs the probe got sent after the reference समय poपूर्णांक */
+पूर्ण __packed;
 
 /*
- * Bitmap packets need to fit within a single page on the sender and receiver,
+ * Biपंचांगap packets need to fit within a single page on the sender and receiver,
  * so we are limited to 4 KiB (and not to PAGE_SIZE, which can be bigger).
  */
-#define DRBD_SOCKET_BUFFER_SIZE 4096
+#घोषणा DRBD_SOCKET_BUFFER_SIZE 4096
 
-#endif  /* __DRBD_PROTOCOL_H */
+#पूर्ण_अगर  /* __DRBD_PROTOCOL_H */

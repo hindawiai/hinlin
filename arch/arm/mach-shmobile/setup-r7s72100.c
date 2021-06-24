@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * r7s72100 processor support
  *
@@ -6,16 +7,16 @@
  * Copyright (C) 2013  Magnus Damm
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-static const char *const r7s72100_boards_compat_dt[] __initconst = {
+अटल स्थिर अक्षर *स्थिर r7s72100_boards_compat_dt[] __initस्थिर = अणु
 	"renesas,r7s72100",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(R7S72100_DT, "Generic R7S72100 (Flattened Device Tree)")
 	.l2c_aux_val    = 0,

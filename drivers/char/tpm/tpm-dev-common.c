@@ -1,278 +1,279 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2004 IBM Corporation
  * Authors:
  * Leendert van Doorn <leendert@watson.ibm.com>
- * Dave Safford <safford@watson.ibm.com>
+ * Dave Safक्रमd <safक्रमd@watson.ibm.com>
  * Reiner Sailer <sailer@watson.ibm.com>
  * Kylene Hall <kjhall@us.ibm.com>
  *
  * Copyright (C) 2013 Obsidian Research Corp
  * Jason Gunthorpe <jgunthorpe@obsidianresearch.com>
  *
- * Device file system interface to the TPM
+ * Device file प्रणाली पूर्णांकerface to the TPM
  */
-#include <linux/poll.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/workqueue.h>
-#include "tpm.h"
-#include "tpm-dev.h"
+#समावेश <linux/poll.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/workqueue.h>
+#समावेश "tpm.h"
+#समावेश "tpm-dev.h"
 
-static struct workqueue_struct *tpm_dev_wq;
+अटल काष्ठा workqueue_काष्ठा *tpm_dev_wq;
 
-static ssize_t tpm_dev_transmit(struct tpm_chip *chip, struct tpm_space *space,
-				u8 *buf, size_t bufsiz)
-{
-	struct tpm_header *header = (void *)buf;
-	ssize_t ret, len;
+अटल sमाप_प्रकार tpm_dev_transmit(काष्ठा tpm_chip *chip, काष्ठा tpm_space *space,
+				u8 *buf, माप_प्रकार bufsiz)
+अणु
+	काष्ठा tpm_header *header = (व्योम *)buf;
+	sमाप_प्रकार ret, len;
 
 	ret = tpm2_prepare_space(chip, space, buf, bufsiz);
 	/* If the command is not implemented by the TPM, synthesize a
-	 * response with a TPM2_RC_COMMAND_CODE return for user-space.
+	 * response with a TPM2_RC_COMMAND_CODE वापस क्रम user-space.
 	 */
-	if (ret == -EOPNOTSUPP) {
-		header->length = cpu_to_be32(sizeof(*header));
+	अगर (ret == -EOPNOTSUPP) अणु
+		header->length = cpu_to_be32(माप(*header));
 		header->tag = cpu_to_be16(TPM2_ST_NO_SESSIONS);
-		header->return_code = cpu_to_be32(TPM2_RC_COMMAND_CODE |
+		header->वापस_code = cpu_to_be32(TPM2_RC_COMMAND_CODE |
 						  TSS2_RESMGR_TPM_RC_LAYER);
-		ret = sizeof(*header);
-	}
-	if (ret)
-		goto out_rc;
+		ret = माप(*header);
+	पूर्ण
+	अगर (ret)
+		जाओ out_rc;
 
 	len = tpm_transmit(chip, buf, bufsiz);
-	if (len < 0)
+	अगर (len < 0)
 		ret = len;
 
-	if (!ret)
+	अगर (!ret)
 		ret = tpm2_commit_space(chip, space, buf, &len);
 
 out_rc:
-	return ret ? ret : len;
-}
+	वापस ret ? ret : len;
+पूर्ण
 
-static void tpm_dev_async_work(struct work_struct *work)
-{
-	struct file_priv *priv =
-			container_of(work, struct file_priv, async_work);
-	ssize_t ret;
+अटल व्योम tpm_dev_async_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा file_priv *priv =
+			container_of(work, काष्ठा file_priv, async_work);
+	sमाप_प्रकार ret;
 
 	mutex_lock(&priv->buffer_mutex);
 	priv->command_enqueued = false;
 	ret = tpm_try_get_ops(priv->chip);
-	if (ret) {
+	अगर (ret) अणु
 		priv->response_length = ret;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = tpm_dev_transmit(priv->chip, priv->space, priv->data_buffer,
-			       sizeof(priv->data_buffer));
+			       माप(priv->data_buffer));
 	tpm_put_ops(priv->chip);
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		priv->response_length = ret;
-		mod_timer(&priv->user_read_timer, jiffies + (120 * HZ));
-	}
+		mod_समयr(&priv->user_पढ़ो_समयr, jअगरfies + (120 * HZ));
+	पूर्ण
 out:
 	mutex_unlock(&priv->buffer_mutex);
-	wake_up_interruptible(&priv->async_wait);
-}
+	wake_up_पूर्णांकerruptible(&priv->async_रुको);
+पूर्ण
 
-static void user_reader_timeout(struct timer_list *t)
-{
-	struct file_priv *priv = from_timer(priv, t, user_read_timer);
+अटल व्योम user_पढ़ोer_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा file_priv *priv = from_समयr(priv, t, user_पढ़ो_समयr);
 
 	pr_warn("TPM user space timeout is deprecated (pid=%d)\n",
 		task_tgid_nr(current));
 
-	schedule_work(&priv->timeout_work);
-}
+	schedule_work(&priv->समयout_work);
+पूर्ण
 
-static void tpm_timeout_work(struct work_struct *work)
-{
-	struct file_priv *priv = container_of(work, struct file_priv,
-					      timeout_work);
+अटल व्योम tpm_समयout_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा file_priv *priv = container_of(work, काष्ठा file_priv,
+					      समयout_work);
 
 	mutex_lock(&priv->buffer_mutex);
-	priv->response_read = true;
+	priv->response_पढ़ो = true;
 	priv->response_length = 0;
-	memset(priv->data_buffer, 0, sizeof(priv->data_buffer));
+	स_रखो(priv->data_buffer, 0, माप(priv->data_buffer));
 	mutex_unlock(&priv->buffer_mutex);
-	wake_up_interruptible(&priv->async_wait);
-}
+	wake_up_पूर्णांकerruptible(&priv->async_रुको);
+पूर्ण
 
-void tpm_common_open(struct file *file, struct tpm_chip *chip,
-		     struct file_priv *priv, struct tpm_space *space)
-{
+व्योम tpm_common_खोलो(काष्ठा file *file, काष्ठा tpm_chip *chip,
+		     काष्ठा file_priv *priv, काष्ठा tpm_space *space)
+अणु
 	priv->chip = chip;
 	priv->space = space;
-	priv->response_read = true;
+	priv->response_पढ़ो = true;
 
 	mutex_init(&priv->buffer_mutex);
-	timer_setup(&priv->user_read_timer, user_reader_timeout, 0);
-	INIT_WORK(&priv->timeout_work, tpm_timeout_work);
+	समयr_setup(&priv->user_पढ़ो_समयr, user_पढ़ोer_समयout, 0);
+	INIT_WORK(&priv->समयout_work, tpm_समयout_work);
 	INIT_WORK(&priv->async_work, tpm_dev_async_work);
-	init_waitqueue_head(&priv->async_wait);
-	file->private_data = priv;
-}
+	init_रुकोqueue_head(&priv->async_रुको);
+	file->निजी_data = priv;
+पूर्ण
 
-ssize_t tpm_common_read(struct file *file, char __user *buf,
-			size_t size, loff_t *off)
-{
-	struct file_priv *priv = file->private_data;
-	ssize_t ret_size = 0;
-	int rc;
+sमाप_प्रकार tpm_common_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			माप_प्रकार size, loff_t *off)
+अणु
+	काष्ठा file_priv *priv = file->निजी_data;
+	sमाप_प्रकार ret_size = 0;
+	पूर्णांक rc;
 
 	mutex_lock(&priv->buffer_mutex);
 
-	if (priv->response_length) {
-		priv->response_read = true;
+	अगर (priv->response_length) अणु
+		priv->response_पढ़ो = true;
 
-		ret_size = min_t(ssize_t, size, priv->response_length);
-		if (ret_size <= 0) {
+		ret_size = min_t(sमाप_प्रकार, size, priv->response_length);
+		अगर (ret_size <= 0) अणु
 			priv->response_length = 0;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		rc = copy_to_user(buf, priv->data_buffer + *off, ret_size);
-		if (rc) {
-			memset(priv->data_buffer, 0, TPM_BUFSIZE);
+		अगर (rc) अणु
+			स_रखो(priv->data_buffer, 0, TPM_बफ_मानE);
 			priv->response_length = 0;
 			ret_size = -EFAULT;
-		} else {
-			memset(priv->data_buffer + *off, 0, ret_size);
+		पूर्ण अन्यथा अणु
+			स_रखो(priv->data_buffer + *off, 0, ret_size);
 			priv->response_length -= ret_size;
 			*off += ret_size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	if (!priv->response_length) {
+	अगर (!priv->response_length) अणु
 		*off = 0;
-		del_singleshot_timer_sync(&priv->user_read_timer);
-		flush_work(&priv->timeout_work);
-	}
+		del_singleshot_समयr_sync(&priv->user_पढ़ो_समयr);
+		flush_work(&priv->समयout_work);
+	पूर्ण
 	mutex_unlock(&priv->buffer_mutex);
-	return ret_size;
-}
+	वापस ret_size;
+पूर्ण
 
-ssize_t tpm_common_write(struct file *file, const char __user *buf,
-			 size_t size, loff_t *off)
-{
-	struct file_priv *priv = file->private_data;
-	int ret = 0;
+sमाप_प्रकार tpm_common_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			 माप_प्रकार size, loff_t *off)
+अणु
+	काष्ठा file_priv *priv = file->निजी_data;
+	पूर्णांक ret = 0;
 
-	if (size > TPM_BUFSIZE)
-		return -E2BIG;
+	अगर (size > TPM_बफ_मानE)
+		वापस -E2BIG;
 
 	mutex_lock(&priv->buffer_mutex);
 
-	/* Cannot perform a write until the read has cleared either via
-	 * tpm_read or a user_read_timer timeout. This also prevents split
-	 * buffered writes from blocking here.
+	/* Cannot perक्रमm a ग_लिखो until the पढ़ो has cleared either via
+	 * tpm_पढ़ो or a user_पढ़ो_समयr समयout. This also prevents split
+	 * buffered ग_लिखोs from blocking here.
 	 */
-	if ((!priv->response_read && priv->response_length) ||
-	    priv->command_enqueued) {
+	अगर ((!priv->response_पढ़ो && priv->response_length) ||
+	    priv->command_enqueued) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (copy_from_user(priv->data_buffer, buf, size)) {
+	अगर (copy_from_user(priv->data_buffer, buf, size)) अणु
 		ret = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (size < 6 ||
-	    size < be32_to_cpu(*((__be32 *)(priv->data_buffer + 2)))) {
+	अगर (size < 6 ||
+	    size < be32_to_cpu(*((__be32 *)(priv->data_buffer + 2)))) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	priv->response_length = 0;
-	priv->response_read = false;
+	priv->response_पढ़ो = false;
 	*off = 0;
 
 	/*
 	 * If in nonblocking mode schedule an async job to send
-	 * the command return the size.
-	 * In case of error the err code will be returned in
-	 * the subsequent read call.
+	 * the command वापस the size.
+	 * In हाल of error the err code will be वापसed in
+	 * the subsequent पढ़ो call.
 	 */
-	if (file->f_flags & O_NONBLOCK) {
+	अगर (file->f_flags & O_NONBLOCK) अणु
 		priv->command_enqueued = true;
 		queue_work(tpm_dev_wq, &priv->async_work);
 		mutex_unlock(&priv->buffer_mutex);
-		return size;
-	}
+		वापस size;
+	पूर्ण
 
 	/* atomic tpm command send and result receive. We only hold the ops
-	 * lock during this period so that the tpm can be unregistered even if
-	 * the char dev is held open.
+	 * lock during this period so that the tpm can be unरेजिस्टरed even अगर
+	 * the अक्षर dev is held खोलो.
 	 */
-	if (tpm_try_get_ops(priv->chip)) {
+	अगर (tpm_try_get_ops(priv->chip)) अणु
 		ret = -EPIPE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = tpm_dev_transmit(priv->chip, priv->space, priv->data_buffer,
-			       sizeof(priv->data_buffer));
+			       माप(priv->data_buffer));
 	tpm_put_ops(priv->chip);
 
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		priv->response_length = ret;
-		mod_timer(&priv->user_read_timer, jiffies + (120 * HZ));
+		mod_समयr(&priv->user_पढ़ो_समयr, jअगरfies + (120 * HZ));
 		ret = size;
-	}
+	पूर्ण
 out:
 	mutex_unlock(&priv->buffer_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-__poll_t tpm_common_poll(struct file *file, poll_table *wait)
-{
-	struct file_priv *priv = file->private_data;
+__poll_t tpm_common_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा file_priv *priv = file->निजी_data;
 	__poll_t mask = 0;
 
-	poll_wait(file, &priv->async_wait, wait);
+	poll_रुको(file, &priv->async_रुको, रुको);
 	mutex_lock(&priv->buffer_mutex);
 
 	/*
-	 * The response_length indicates if there is still response
-	 * (or part of it) to be consumed. Partial reads decrease it
-	 * by the number of bytes read, and write resets it the zero.
+	 * The response_length indicates अगर there is still response
+	 * (or part of it) to be consumed. Partial पढ़ोs decrease it
+	 * by the number of bytes पढ़ो, and ग_लिखो resets it the zero.
 	 */
-	if (priv->response_length)
+	अगर (priv->response_length)
 		mask = EPOLLIN | EPOLLRDNORM;
-	else
+	अन्यथा
 		mask = EPOLLOUT | EPOLLWRNORM;
 
 	mutex_unlock(&priv->buffer_mutex);
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 /*
- * Called on file close
+ * Called on file बंद
  */
-void tpm_common_release(struct file *file, struct file_priv *priv)
-{
+व्योम tpm_common_release(काष्ठा file *file, काष्ठा file_priv *priv)
+अणु
 	flush_work(&priv->async_work);
-	del_singleshot_timer_sync(&priv->user_read_timer);
-	flush_work(&priv->timeout_work);
-	file->private_data = NULL;
+	del_singleshot_समयr_sync(&priv->user_पढ़ो_समयr);
+	flush_work(&priv->समयout_work);
+	file->निजी_data = शून्य;
 	priv->response_length = 0;
-}
+पूर्ण
 
-int __init tpm_dev_common_init(void)
-{
+पूर्णांक __init tpm_dev_common_init(व्योम)
+अणु
 	tpm_dev_wq = alloc_workqueue("tpm_dev_wq", WQ_MEM_RECLAIM, 0);
 
-	return !tpm_dev_wq ? -ENOMEM : 0;
-}
+	वापस !tpm_dev_wq ? -ENOMEM : 0;
+पूर्ण
 
-void __exit tpm_dev_common_exit(void)
-{
-	if (tpm_dev_wq) {
+व्योम __निकास tpm_dev_common_निकास(व्योम)
+अणु
+	अगर (tpm_dev_wq) अणु
 		destroy_workqueue(tpm_dev_wq);
-		tpm_dev_wq = NULL;
-	}
-}
+		tpm_dev_wq = शून्य;
+	पूर्ण
+पूर्ण

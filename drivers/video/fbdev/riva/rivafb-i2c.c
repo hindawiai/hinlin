@@ -1,107 +1,108 @@
+<शैली गुरु>
 /*
  * linux/drivers/video/riva/fbdev-i2c.c - nVidia i2c
  *
- * Maintained by Ani Joshi <ajoshi@shell.unixbox.com>
+ * Maपूर्णांकained by Ani Joshi <ajoshi@shell.unixbox.com>
  *
  * Copyright 2004 Antonino A. Daplas <adaplas @pol.net>
  *
  * Based on radeonfb-i2c.c
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/pci.h>
-#include <linux/fb.h>
-#include <linux/jiffies.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/jअगरfies.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#include "rivafb.h"
-#include "../edid.h"
+#समावेश "rivafb.h"
+#समावेश "../edid.h"
 
-static void riva_gpio_setscl(void* data, int state)
-{
-	struct riva_i2c_chan 	*chan = data;
-	struct riva_par 	*par = chan->par;
+अटल व्योम riva_gpio_setscl(व्योम* data, पूर्णांक state)
+अणु
+	काष्ठा riva_i2c_chan 	*chan = data;
+	काष्ठा riva_par 	*par = chan->par;
 	u32			val;
 
 	VGA_WR08(par->riva.PCIO, 0x3d4, chan->ddc_base + 1);
 	val = VGA_RD08(par->riva.PCIO, 0x3d5) & 0xf0;
 
-	if (state)
+	अगर (state)
 		val |= 0x20;
-	else
+	अन्यथा
 		val &= ~0x20;
 
 	VGA_WR08(par->riva.PCIO, 0x3d4, chan->ddc_base + 1);
 	VGA_WR08(par->riva.PCIO, 0x3d5, val | 0x1);
-}
+पूर्ण
 
-static void riva_gpio_setsda(void* data, int state)
-{
-	struct riva_i2c_chan 	*chan = data;
-	struct riva_par 	*par = chan->par;
+अटल व्योम riva_gpio_setsda(व्योम* data, पूर्णांक state)
+अणु
+	काष्ठा riva_i2c_chan 	*chan = data;
+	काष्ठा riva_par 	*par = chan->par;
 	u32			val;
 
 	VGA_WR08(par->riva.PCIO, 0x3d4, chan->ddc_base + 1);
 	val = VGA_RD08(par->riva.PCIO, 0x3d5) & 0xf0;
 
-	if (state)
+	अगर (state)
 		val |= 0x10;
-	else
+	अन्यथा
 		val &= ~0x10;
 
 	VGA_WR08(par->riva.PCIO, 0x3d4, chan->ddc_base + 1);
 	VGA_WR08(par->riva.PCIO, 0x3d5, val | 0x1);
-}
+पूर्ण
 
-static int riva_gpio_getscl(void* data)
-{
-	struct riva_i2c_chan 	*chan = data;
-	struct riva_par 	*par = chan->par;
+अटल पूर्णांक riva_gpio_माला_लोcl(व्योम* data)
+अणु
+	काष्ठा riva_i2c_chan 	*chan = data;
+	काष्ठा riva_par 	*par = chan->par;
 	u32			val = 0;
 
 	VGA_WR08(par->riva.PCIO, 0x3d4, chan->ddc_base);
-	if (VGA_RD08(par->riva.PCIO, 0x3d5) & 0x04)
+	अगर (VGA_RD08(par->riva.PCIO, 0x3d5) & 0x04)
 		val = 1;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int riva_gpio_getsda(void* data)
-{
-	struct riva_i2c_chan 	*chan = data;
-	struct riva_par 	*par = chan->par;
+अटल पूर्णांक riva_gpio_माला_लोda(व्योम* data)
+अणु
+	काष्ठा riva_i2c_chan 	*chan = data;
+	काष्ठा riva_par 	*par = chan->par;
 	u32			val = 0;
 
 	VGA_WR08(par->riva.PCIO, 0x3d4, chan->ddc_base);
-	if (VGA_RD08(par->riva.PCIO, 0x3d5) & 0x08)
+	अगर (VGA_RD08(par->riva.PCIO, 0x3d5) & 0x08)
 		val = 1;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int riva_setup_i2c_bus(struct riva_i2c_chan *chan, const char *name,
-			      unsigned int i2c_class)
-{
-	int rc;
+अटल पूर्णांक riva_setup_i2c_bus(काष्ठा riva_i2c_chan *chan, स्थिर अक्षर *name,
+			      अचिन्हित पूर्णांक i2c_class)
+अणु
+	पूर्णांक rc;
 
-	strcpy(chan->adapter.name, name);
+	म_नकल(chan->adapter.name, name);
 	chan->adapter.owner		= THIS_MODULE;
 	chan->adapter.class		= i2c_class;
 	chan->adapter.algo_data		= &chan->algo;
 	chan->adapter.dev.parent	= &chan->par->pdev->dev;
 	chan->algo.setsda		= riva_gpio_setsda;
 	chan->algo.setscl		= riva_gpio_setscl;
-	chan->algo.getsda		= riva_gpio_getsda;
-	chan->algo.getscl		= riva_gpio_getscl;
+	chan->algo.माला_लोda		= riva_gpio_माला_लोda;
+	chan->algo.माला_लोcl		= riva_gpio_माला_लोcl;
 	chan->algo.udelay		= 40;
-	chan->algo.timeout		= msecs_to_jiffies(2);
+	chan->algo.समयout		= msecs_to_jअगरfies(2);
 	chan->algo.data 		= chan;
 
 	i2c_set_adapdata(&chan->adapter, chan);
@@ -112,19 +113,19 @@ static int riva_setup_i2c_bus(struct riva_i2c_chan *chan, const char *name,
 	udelay(20);
 
 	rc = i2c_bit_add_bus(&chan->adapter);
-	if (rc == 0)
+	अगर (rc == 0)
 		dev_dbg(&chan->par->pdev->dev, "I2C bus %s registered.\n", name);
-	else {
+	अन्यथा अणु
 		dev_warn(&chan->par->pdev->dev,
 			 "Failed to register I2C bus %s.\n", name);
-		chan->par = NULL;
-	}
+		chan->par = शून्य;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void riva_create_i2c_busses(struct riva_par *par)
-{
+व्योम riva_create_i2c_busses(काष्ठा riva_par *par)
+अणु
 	par->chan[0].par	= par;
 	par->chan[1].par	= par;
 	par->chan[2].par        = par;
@@ -135,32 +136,32 @@ void riva_create_i2c_busses(struct riva_par *par)
 	riva_setup_i2c_bus(&par->chan[0], "BUS1", I2C_CLASS_HWMON);
 	riva_setup_i2c_bus(&par->chan[1], "BUS2", 0);
 	riva_setup_i2c_bus(&par->chan[2], "BUS3", 0);
-}
+पूर्ण
 
-void riva_delete_i2c_busses(struct riva_par *par)
-{
-	int i;
+व्योम riva_delete_i2c_busses(काष्ठा riva_par *par)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 3; i++) {
-		if (!par->chan[i].par)
-			continue;
+	क्रम (i = 0; i < 3; i++) अणु
+		अगर (!par->chan[i].par)
+			जारी;
 		i2c_del_adapter(&par->chan[i].adapter);
-		par->chan[i].par = NULL;
-	}
-}
+		par->chan[i].par = शून्य;
+	पूर्ण
+पूर्ण
 
-int riva_probe_i2c_connector(struct riva_par *par, int conn, u8 **out_edid)
-{
-	u8 *edid = NULL;
+पूर्णांक riva_probe_i2c_connector(काष्ठा riva_par *par, पूर्णांक conn, u8 **out_edid)
+अणु
+	u8 *edid = शून्य;
 
-	if (par->chan[conn].par)
-		edid = fb_ddc_read(&par->chan[conn].adapter);
+	अगर (par->chan[conn].par)
+		edid = fb_ddc_पढ़ो(&par->chan[conn].adapter);
 
-	if (out_edid)
+	अगर (out_edid)
 		*out_edid = edid;
-	if (!edid)
-		return 1;
+	अगर (!edid)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

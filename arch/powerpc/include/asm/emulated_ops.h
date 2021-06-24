@@ -1,84 +1,85 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  Copyright 2007 Sony Corporation
  */
 
-#ifndef _ASM_POWERPC_EMULATED_OPS_H
-#define _ASM_POWERPC_EMULATED_OPS_H
+#अगर_अघोषित _ASM_POWERPC_EMULATED_OPS_H
+#घोषणा _ASM_POWERPC_EMULATED_OPS_H
 
-#include <linux/atomic.h>
-#include <linux/perf_event.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/perf_event.h>
 
 
-#ifdef CONFIG_PPC_EMULATED_STATS
+#अगर_घोषित CONFIG_PPC_EMULATED_STATS
 
-struct ppc_emulated_entry {
-	const char *name;
+काष्ठा ppc_emulated_entry अणु
+	स्थिर अक्षर *name;
 	atomic_t val;
-};
+पूर्ण;
 
-extern struct ppc_emulated {
-#ifdef CONFIG_ALTIVEC
-	struct ppc_emulated_entry altivec;
-#endif
-	struct ppc_emulated_entry dcba;
-	struct ppc_emulated_entry dcbz;
-	struct ppc_emulated_entry fp_pair;
-	struct ppc_emulated_entry isel;
-	struct ppc_emulated_entry mcrxr;
-	struct ppc_emulated_entry mfpvr;
-	struct ppc_emulated_entry multiple;
-	struct ppc_emulated_entry popcntb;
-	struct ppc_emulated_entry spe;
-	struct ppc_emulated_entry string;
-	struct ppc_emulated_entry sync;
-	struct ppc_emulated_entry unaligned;
-#ifdef CONFIG_MATH_EMULATION
-	struct ppc_emulated_entry math;
-#endif
-#ifdef CONFIG_VSX
-	struct ppc_emulated_entry vsx;
-#endif
-#ifdef CONFIG_PPC64
-	struct ppc_emulated_entry mfdscr;
-	struct ppc_emulated_entry mtdscr;
-	struct ppc_emulated_entry lq_stq;
-	struct ppc_emulated_entry lxvw4x;
-	struct ppc_emulated_entry lxvh8x;
-	struct ppc_emulated_entry lxvd2x;
-	struct ppc_emulated_entry lxvb16x;
-#endif
-} ppc_emulated;
+बाह्य काष्ठा ppc_emulated अणु
+#अगर_घोषित CONFIG_ALTIVEC
+	काष्ठा ppc_emulated_entry altivec;
+#पूर्ण_अगर
+	काष्ठा ppc_emulated_entry dcba;
+	काष्ठा ppc_emulated_entry dcbz;
+	काष्ठा ppc_emulated_entry fp_pair;
+	काष्ठा ppc_emulated_entry isel;
+	काष्ठा ppc_emulated_entry mcrxr;
+	काष्ठा ppc_emulated_entry mfpvr;
+	काष्ठा ppc_emulated_entry multiple;
+	काष्ठा ppc_emulated_entry popcntb;
+	काष्ठा ppc_emulated_entry spe;
+	काष्ठा ppc_emulated_entry string;
+	काष्ठा ppc_emulated_entry sync;
+	काष्ठा ppc_emulated_entry unaligned;
+#अगर_घोषित CONFIG_MATH_EMULATION
+	काष्ठा ppc_emulated_entry math;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_VSX
+	काष्ठा ppc_emulated_entry vsx;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PPC64
+	काष्ठा ppc_emulated_entry mfdscr;
+	काष्ठा ppc_emulated_entry mtdscr;
+	काष्ठा ppc_emulated_entry lq_stq;
+	काष्ठा ppc_emulated_entry lxvw4x;
+	काष्ठा ppc_emulated_entry lxvh8x;
+	काष्ठा ppc_emulated_entry lxvd2x;
+	काष्ठा ppc_emulated_entry lxvb16x;
+#पूर्ण_अगर
+पूर्ण ppc_emulated;
 
-extern u32 ppc_warn_emulated;
+बाह्य u32 ppc_warn_emulated;
 
-extern void ppc_warn_emulated_print(const char *type);
+बाह्य व्योम ppc_warn_emulated_prपूर्णांक(स्थिर अक्षर *type);
 
-#define __PPC_WARN_EMULATED(type)					 \
-	do {								 \
+#घोषणा __PPC_WARN_EMULATED(type)					 \
+	करो अणु								 \
 		atomic_inc(&ppc_emulated.type.val);			 \
-		if (ppc_warn_emulated)					 \
-			ppc_warn_emulated_print(ppc_emulated.type.name); \
-	} while (0)
+		अगर (ppc_warn_emulated)					 \
+			ppc_warn_emulated_prपूर्णांक(ppc_emulated.type.name); \
+	पूर्ण जबतक (0)
 
-#else /* !CONFIG_PPC_EMULATED_STATS */
+#अन्यथा /* !CONFIG_PPC_EMULATED_STATS */
 
-#define __PPC_WARN_EMULATED(type)	do { } while (0)
+#घोषणा __PPC_WARN_EMULATED(type)	करो अणु पूर्ण जबतक (0)
 
-#endif /* !CONFIG_PPC_EMULATED_STATS */
+#पूर्ण_अगर /* !CONFIG_PPC_EMULATED_STATS */
 
-#define PPC_WARN_EMULATED(type, regs)					\
-	do {								\
+#घोषणा PPC_WARN_EMULATED(type, regs)					\
+	करो अणु								\
 		perf_sw_event(PERF_COUNT_SW_EMULATION_FAULTS,		\
 			1, regs, 0);					\
 		__PPC_WARN_EMULATED(type);				\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define PPC_WARN_ALIGNMENT(type, regs)					\
-	do {								\
+#घोषणा PPC_WARN_ALIGNMENT(type, regs)					\
+	करो अणु								\
 		perf_sw_event(PERF_COUNT_SW_ALIGNMENT_FAULTS,		\
 			1, regs, regs->dar);				\
 		__PPC_WARN_EMULATED(type);				\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#endif /* _ASM_POWERPC_EMULATED_OPS_H */
+#पूर्ण_अगर /* _ASM_POWERPC_EMULATED_OPS_H */

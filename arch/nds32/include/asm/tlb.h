@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#ifndef __ASMNDS32_TLB_H
-#define __ASMNDS32_TLB_H
+#अगर_अघोषित __ASMNDS32_TLB_H
+#घोषणा __ASMNDS32_TLB_H
 
-#include <asm-generic/tlb.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-#define __pte_free_tlb(tlb, pte, addr)	pte_free((tlb)->mm, pte)
+#घोषणा __pte_मुक्त_tlb(tlb, pte, addr)	pte_मुक्त((tlb)->mm, pte)
 
-#endif
+#पूर्ण_अगर

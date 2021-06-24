@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 */
 
-#ifndef __TDA8290_H__
-#define __TDA8290_H__
+#अगर_अघोषित __TDA8290_H__
+#घोषणा __TDA8290_H__
 
-#include <linux/i2c.h>
-#include <media/dvb_frontend.h>
-#include "tda18271.h"
+#समावेश <linux/i2c.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश "tda18271.h"
 
-enum tda8290_lna {
+क्रमागत tda8290_lna अणु
 	TDA8290_LNA_OFF = 0,
 	TDA8290_LNA_GP0_HIGH_ON = 1,
 	TDA8290_LNA_GP0_HIGH_OFF = 2,
 	TDA8290_LNA_ON_BRIDGE = 3,
-};
+पूर्ण;
 
-struct tda829x_config {
-	enum tda8290_lna lna_cfg;
+काष्ठा tda829x_config अणु
+	क्रमागत tda8290_lna lna_cfg;
 
-	unsigned int probe_tuner:1;
-#define TDA829X_PROBE_TUNER 0
-#define TDA829X_DONT_PROBE  1
-	unsigned int no_i2c_gate:1;
-	struct tda18271_std_map *tda18271_std_map;
-};
+	अचिन्हित पूर्णांक probe_tuner:1;
+#घोषणा TDA829X_PROBE_TUNER 0
+#घोषणा TDA829X_DONT_PROBE  1
+	अचिन्हित पूर्णांक no_i2c_gate:1;
+	काष्ठा tda18271_std_map *tda18271_std_map;
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_MEDIA_TUNER_TDA8290)
-extern int tda829x_probe(struct i2c_adapter *i2c_adap, u8 i2c_addr);
+#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_TDA8290)
+बाह्य पूर्णांक tda829x_probe(काष्ठा i2c_adapter *i2c_adap, u8 i2c_addr);
 
-extern struct dvb_frontend *tda829x_attach(struct dvb_frontend *fe,
-					   struct i2c_adapter *i2c_adap,
+बाह्य काष्ठा dvb_frontend *tda829x_attach(काष्ठा dvb_frontend *fe,
+					   काष्ठा i2c_adapter *i2c_adap,
 					   u8 i2c_addr,
-					   struct tda829x_config *cfg);
-#else
-static inline int tda829x_probe(struct i2c_adapter *i2c_adap, u8 i2c_addr)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return -EINVAL;
-}
+					   काष्ठा tda829x_config *cfg);
+#अन्यथा
+अटल अंतरभूत पूर्णांक tda829x_probe(काष्ठा i2c_adapter *i2c_adap, u8 i2c_addr)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस -EINVAL;
+पूर्ण
 
-static inline struct dvb_frontend *tda829x_attach(struct dvb_frontend *fe,
-						  struct i2c_adapter *i2c_adap,
+अटल अंतरभूत काष्ठा dvb_frontend *tda829x_attach(काष्ठा dvb_frontend *fe,
+						  काष्ठा i2c_adapter *i2c_adap,
 						  u8 i2c_addr,
-						  struct tda829x_config *cfg)
-{
-	printk(KERN_INFO "%s: not probed - driver disabled by Kconfig\n",
+						  काष्ठा tda829x_config *cfg)
+अणु
+	prपूर्णांकk(KERN_INFO "%s: not probed - driver disabled by Kconfig\n",
 	       __func__);
-	return NULL;
-}
-#endif
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __TDA8290_H__ */
+#पूर्ण_अगर /* __TDA8290_H__ */

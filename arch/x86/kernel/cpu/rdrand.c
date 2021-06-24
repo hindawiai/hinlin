@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * This file is part of the Linux kernel.
  *
  * Copyright (c) 2011, Intel Corporation
- * Authors: Fenghua Yu <fenghua.yu@intel.com>,
- *          H. Peter Anvin <hpa@linux.intel.com>
+ * Authors: Fenghua Yu <fenghua.yu@पूर्णांकel.com>,
+ *          H. Peter Anvin <hpa@linux.पूर्णांकel.com>
  */
 
-#include <asm/processor.h>
-#include <asm/archrandom.h>
-#include <asm/sections.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/archअक्रमom.h>
+#समावेश <यंत्र/sections.h>
 
-static int __init x86_rdrand_setup(char *s)
-{
+अटल पूर्णांक __init x86_rdअक्रम_setup(अक्षर *s)
+अणु
 	setup_clear_cpu_cap(X86_FEATURE_RDRAND);
 	setup_clear_cpu_cap(X86_FEATURE_RDSEED);
-	return 1;
-}
-__setup("nordrand", x86_rdrand_setup);
+	वापस 1;
+पूर्ण
+__setup("nordrand", x86_rdअक्रम_setup);
 
 /*
  * RDRAND has Built-In-Self-Test (BIST) that runs on every invocation.
- * Run the instruction a few times as a sanity check.
+ * Run the inकाष्ठाion a few बार as a sanity check.
  * If it fails, it is simple to disable RDRAND here.
  */
-#define SANITY_CHECK_LOOPS 8
+#घोषणा SANITY_CHECK_LOOPS 8
 
-#ifdef CONFIG_ARCH_RANDOM
-void x86_init_rdrand(struct cpuinfo_x86 *c)
-{
-	unsigned int changed = 0;
-	unsigned long tmp, prev;
-	int i;
+#अगर_घोषित CONFIG_ARCH_RANDOM
+व्योम x86_init_rdअक्रम(काष्ठा cpuinfo_x86 *c)
+अणु
+	अचिन्हित पूर्णांक changed = 0;
+	अचिन्हित दीर्घ पंचांगp, prev;
+	पूर्णांक i;
 
-	if (!cpu_has(c, X86_FEATURE_RDRAND))
-		return;
+	अगर (!cpu_has(c, X86_FEATURE_RDRAND))
+		वापस;
 
-	for (i = 0; i < SANITY_CHECK_LOOPS; i++) {
-		if (!rdrand_long(&tmp)) {
+	क्रम (i = 0; i < SANITY_CHECK_LOOPS; i++) अणु
+		अगर (!rdअक्रम_दीर्घ(&पंचांगp)) अणु
 			clear_cpu_cap(c, X86_FEATURE_RDRAND);
 			pr_warn_once("rdrand: disabled\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Stupid sanity-check whether RDRAND does *actually* generate
-	 * some at least random-looking data.
+	 * Stupid sanity-check whether RDRAND करोes *actually* generate
+	 * some at least अक्रमom-looking data.
 	 */
-	prev = tmp;
-	for (i = 0; i < SANITY_CHECK_LOOPS; i++) {
-		if (rdrand_long(&tmp)) {
-			if (prev != tmp)
+	prev = पंचांगp;
+	क्रम (i = 0; i < SANITY_CHECK_LOOPS; i++) अणु
+		अगर (rdअक्रम_दीर्घ(&पंचांगp)) अणु
+			अगर (prev != पंचांगp)
 				changed++;
 
-			prev = tmp;
-		}
-	}
+			prev = पंचांगp;
+		पूर्ण
+	पूर्ण
 
-	if (WARN_ON_ONCE(!changed))
+	अगर (WARN_ON_ONCE(!changed))
 		pr_emerg(
 "RDRAND gives funky smelling output, might consider not using it by booting with \"nordrand\"");
 
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

@@ -1,290 +1,291 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for libpfm4 event encoding.
+ * Support क्रम libpfm4 event encoding.
  *
  * Copyright 2020 Google LLC.
  */
-#include "util/cpumap.h"
-#include "util/debug.h"
-#include "util/event.h"
-#include "util/evlist.h"
-#include "util/evsel.h"
-#include "util/parse-events.h"
-#include "util/pmu.h"
-#include "util/pfm.h"
+#समावेश "util/cpumap.h"
+#समावेश "util/debug.h"
+#समावेश "util/event.h"
+#समावेश "util/evlist.h"
+#समावेश "util/evsel.h"
+#समावेश "util/parse-events.h"
+#समावेश "util/pmu.h"
+#समावेश "util/pfm.h"
 
-#include <string.h>
-#include <linux/kernel.h>
-#include <perfmon/pfmlib_perf_event.h>
+#समावेश <माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <perfmon/pfmlib_perf_event.h>
 
-static void libpfm_initialize(void)
-{
-	int ret;
+अटल व्योम libpfm_initialize(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = pfm_initialize();
-	if (ret != PFM_SUCCESS) {
+	अगर (ret != PFM_SUCCESS) अणु
 		ui__warning("libpfm failed to initialize: %s\n",
-			pfm_strerror(ret));
-	}
-}
+			pfm_म_त्रुटि(ret));
+	पूर्ण
+पूर्ण
 
-int parse_libpfm_events_option(const struct option *opt, const char *str,
-			int unset __maybe_unused)
-{
-	struct evlist *evlist = *(struct evlist **)opt->value;
-	struct perf_event_attr attr;
-	struct perf_pmu *pmu;
-	struct evsel *evsel, *grp_leader = NULL;
-	char *p, *q, *p_orig;
-	const char *sep;
-	int grp_evt = -1;
-	int ret;
+पूर्णांक parse_libpfm_events_option(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
+			पूर्णांक unset __maybe_unused)
+अणु
+	काष्ठा evlist *evlist = *(काष्ठा evlist **)opt->value;
+	काष्ठा perf_event_attr attr;
+	काष्ठा perf_pmu *pmu;
+	काष्ठा evsel *evsel, *grp_leader = शून्य;
+	अक्षर *p, *q, *p_orig;
+	स्थिर अक्षर *sep;
+	पूर्णांक grp_evt = -1;
+	पूर्णांक ret;
 
 	libpfm_initialize();
 
 	p_orig = p = strdup(str);
-	if (!p)
-		return -1;
+	अगर (!p)
+		वापस -1;
 	/*
-	 * force loading of the PMU list
+	 * क्रमce loading of the PMU list
 	 */
-	perf_pmu__scan(NULL);
+	perf_pmu__scan(शून्य);
 
-	for (q = p; strsep(&p, ",{}"); q = p) {
+	क्रम (q = p; strsep(&p, ",{}"); q = p) अणु
 		sep = p ? str + (p - p_orig - 1) : "";
-		if (*sep == '{') {
-			if (grp_evt > -1) {
+		अगर (*sep == '{') अणु
+			अगर (grp_evt > -1) अणु
 				ui__error(
 					"nested event groups not supported\n");
-				goto error;
-			}
+				जाओ error;
+			पूर्ण
 			grp_evt++;
-		}
+		पूर्ण
 
 		/* no event */
-		if (*q == '\0') {
-			if (*sep == '}') {
-				if (grp_evt < 0) {
+		अगर (*q == '\0') अणु
+			अगर (*sep == '}') अणु
+				अगर (grp_evt < 0) अणु
 					ui__error("cannot close a non-existing event group\n");
-					goto error;
-				}
+					जाओ error;
+				पूर्ण
 				grp_evt--;
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		memset(&attr, 0, sizeof(attr));
+		स_रखो(&attr, 0, माप(attr));
 		event_attr_init(&attr);
 
 		ret = pfm_get_perf_event_encoding(q, PFM_PLM0|PFM_PLM3,
-						&attr, NULL, NULL);
+						&attr, शून्य, शून्य);
 
-		if (ret != PFM_SUCCESS) {
+		अगर (ret != PFM_SUCCESS) अणु
 			ui__error("failed to parse event %s : %s\n", str,
-				  pfm_strerror(ret));
-			goto error;
-		}
+				  pfm_म_त्रुटि(ret));
+			जाओ error;
+		पूर्ण
 
-		pmu = perf_pmu__find_by_type((unsigned int)attr.type);
+		pmu = perf_pmu__find_by_type((अचिन्हित पूर्णांक)attr.type);
 		evsel = parse_events__add_event(evlist->core.nr_entries,
 						&attr, q, pmu);
-		if (evsel == NULL)
-			goto error;
+		अगर (evsel == शून्य)
+			जाओ error;
 
 		evsel->is_libpfm_event = true;
 
 		evlist__add(evlist, evsel);
 
-		if (grp_evt == 0)
+		अगर (grp_evt == 0)
 			grp_leader = evsel;
 
-		if (grp_evt > -1) {
+		अगर (grp_evt > -1) अणु
 			evsel->leader = grp_leader;
 			grp_leader->core.nr_members++;
 			grp_evt++;
-		}
+		पूर्ण
 
-		if (*sep == '}') {
-			if (grp_evt < 0) {
+		अगर (*sep == '}') अणु
+			अगर (grp_evt < 0) अणु
 				ui__error(
 				   "cannot close a non-existing event group\n");
-				goto error;
-			}
+				जाओ error;
+			पूर्ण
 			evlist->nr_groups++;
-			grp_leader = NULL;
+			grp_leader = शून्य;
 			grp_evt = -1;
-		}
-	}
-	free(p_orig);
-	return 0;
+		पूर्ण
+	पूर्ण
+	मुक्त(p_orig);
+	वापस 0;
 error:
-	free(p_orig);
-	return -1;
-}
+	मुक्त(p_orig);
+	वापस -1;
+पूर्ण
 
-static const char *srcs[PFM_ATTR_CTRL_MAX] = {
+अटल स्थिर अक्षर *srcs[PFM_ATTR_CTRL_MAX] = अणु
 	[PFM_ATTR_CTRL_UNKNOWN] = "???",
 	[PFM_ATTR_CTRL_PMU] = "PMU",
 	[PFM_ATTR_CTRL_PERF_EVENT] = "perf_event",
-};
+पूर्ण;
 
-static void
-print_attr_flags(pfm_event_attr_info_t *info)
-{
-	int n = 0;
+अटल व्योम
+prपूर्णांक_attr_flags(pfm_event_attr_info_t *info)
+अणु
+	पूर्णांक n = 0;
 
-	if (info->is_dfl) {
-		printf("[default] ");
+	अगर (info->is_dfl) अणु
+		म_लिखो("[default] ");
 		n++;
-	}
+	पूर्ण
 
-	if (info->is_precise) {
-		printf("[precise] ");
+	अगर (info->is_precise) अणु
+		म_लिखो("[precise] ");
 		n++;
-	}
+	पूर्ण
 
-	if (!n)
-		printf("- ");
-}
+	अगर (!n)
+		म_लिखो("- ");
+पूर्ण
 
-static void
-print_libpfm_events_detailed(pfm_event_info_t *info, bool long_desc)
-{
+अटल व्योम
+prपूर्णांक_libpfm_events_detailed(pfm_event_info_t *info, bool दीर्घ_desc)
+अणु
 	pfm_event_attr_info_t ainfo;
-	const char *src;
-	int j, ret;
+	स्थिर अक्षर *src;
+	पूर्णांक j, ret;
 
-	ainfo.size = sizeof(ainfo);
+	ainfo.size = माप(ainfo);
 
-	printf("  %s\n", info->name);
-	printf("    [%s]\n", info->desc);
-	if (long_desc) {
-		if (info->equiv)
-			printf("      Equiv: %s\n", info->equiv);
+	म_लिखो("  %s\n", info->name);
+	म_लिखो("    [%s]\n", info->desc);
+	अगर (दीर्घ_desc) अणु
+		अगर (info->equiv)
+			म_लिखो("      Equiv: %s\n", info->equiv);
 
-		printf("      Code  : 0x%"PRIx64"\n", info->code);
-	}
-	pfm_for_each_event_attr(j, info) {
+		म_लिखो("      Code  : 0x%"PRIx64"\n", info->code);
+	पूर्ण
+	pfm_क्रम_each_event_attr(j, info) अणु
 		ret = pfm_get_event_attr_info(info->idx, j,
 					      PFM_OS_PERF_EVENT_EXT, &ainfo);
-		if (ret != PFM_SUCCESS)
-			continue;
+		अगर (ret != PFM_SUCCESS)
+			जारी;
 
-		if (ainfo.type == PFM_ATTR_UMASK) {
-			printf("      %s:%s\n", info->name, ainfo.name);
-			printf("        [%s]\n", ainfo.desc);
-		}
+		अगर (ainfo.type == PFM_ATTR_UMASK) अणु
+			म_लिखो("      %s:%s\n", info->name, ainfo.name);
+			म_लिखो("        [%s]\n", ainfo.desc);
+		पूर्ण
 
-		if (!long_desc)
-			continue;
+		अगर (!दीर्घ_desc)
+			जारी;
 
-		if (ainfo.ctrl >= PFM_ATTR_CTRL_MAX)
+		अगर (ainfo.ctrl >= PFM_ATTR_CTRL_MAX)
 			ainfo.ctrl = PFM_ATTR_CTRL_UNKNOWN;
 
 		src = srcs[ainfo.ctrl];
-		switch (ainfo.type) {
-		case PFM_ATTR_UMASK:
-			printf("        Umask : 0x%02"PRIx64" : %s: ",
+		चयन (ainfo.type) अणु
+		हाल PFM_ATTR_UMASK:
+			म_लिखो("        Umask : 0x%02"PRIx64" : %s: ",
 				ainfo.code, src);
-			print_attr_flags(&ainfo);
-			putchar('\n');
-			break;
-		case PFM_ATTR_MOD_BOOL:
-			printf("      Modif : %s: [%s] : %s (boolean)\n", src,
+			prपूर्णांक_attr_flags(&ainfo);
+			अक्षर_दो('\n');
+			अवरोध;
+		हाल PFM_ATTR_MOD_BOOL:
+			म_लिखो("      Modif : %s: [%s] : %s (boolean)\n", src,
 				ainfo.name, ainfo.desc);
-			break;
-		case PFM_ATTR_MOD_INTEGER:
-			printf("      Modif : %s: [%s] : %s (integer)\n", src,
+			अवरोध;
+		हाल PFM_ATTR_MOD_INTEGER:
+			म_लिखो("      Modif : %s: [%s] : %s (integer)\n", src,
 				ainfo.name, ainfo.desc);
-			break;
-		case PFM_ATTR_NONE:
-		case PFM_ATTR_RAW_UMASK:
-		case PFM_ATTR_MAX:
-		default:
-			printf("      Attr  : %s: [%s] : %s\n", src,
+			अवरोध;
+		हाल PFM_ATTR_NONE:
+		हाल PFM_ATTR_RAW_UMASK:
+		हाल PFM_ATTR_MAX:
+		शेष:
+			म_लिखो("      Attr  : %s: [%s] : %s\n", src,
 				ainfo.name, ainfo.desc);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * list all pmu::event:umask, pmu::event
- * printed events may not be all valid combinations of umask for an event
+ * prपूर्णांकed events may not be all valid combinations of umask क्रम an event
  */
-static void
-print_libpfm_events_raw(pfm_pmu_info_t *pinfo, pfm_event_info_t *info)
-{
+अटल व्योम
+prपूर्णांक_libpfm_events_raw(pfm_pmu_info_t *pinfo, pfm_event_info_t *info)
+अणु
 	pfm_event_attr_info_t ainfo;
-	int j, ret;
+	पूर्णांक j, ret;
 	bool has_umask = false;
 
-	ainfo.size = sizeof(ainfo);
+	ainfo.size = माप(ainfo);
 
-	pfm_for_each_event_attr(j, info) {
+	pfm_क्रम_each_event_attr(j, info) अणु
 		ret = pfm_get_event_attr_info(info->idx, j,
 					      PFM_OS_PERF_EVENT_EXT, &ainfo);
-		if (ret != PFM_SUCCESS)
-			continue;
+		अगर (ret != PFM_SUCCESS)
+			जारी;
 
-		if (ainfo.type != PFM_ATTR_UMASK)
-			continue;
+		अगर (ainfo.type != PFM_ATTR_UMASK)
+			जारी;
 
-		printf("%s::%s:%s\n", pinfo->name, info->name, ainfo.name);
+		म_लिखो("%s::%s:%s\n", pinfo->name, info->name, ainfo.name);
 		has_umask = true;
-	}
-	if (!has_umask)
-		printf("%s::%s\n", pinfo->name, info->name);
-}
+	पूर्ण
+	अगर (!has_umask)
+		म_लिखो("%s::%s\n", pinfo->name, info->name);
+पूर्ण
 
-void print_libpfm_events(bool name_only, bool long_desc)
-{
+व्योम prपूर्णांक_libpfm_events(bool name_only, bool दीर्घ_desc)
+अणु
 	pfm_event_info_t info;
 	pfm_pmu_info_t pinfo;
-	int i, p, ret;
+	पूर्णांक i, p, ret;
 
 	libpfm_initialize();
 
 	/* initialize to zero to indicate ABI version */
-	info.size  = sizeof(info);
-	pinfo.size = sizeof(pinfo);
+	info.size  = माप(info);
+	pinfo.size = माप(pinfo);
 
-	if (!name_only)
-		puts("\nList of pre-defined events (to be used in --pfm-events):\n");
+	अगर (!name_only)
+		माला_दो("\nList of pre-defined events (to be used in --pfm-events):\n");
 
-	pfm_for_all_pmus(p) {
-		bool printed_pmu = false;
+	pfm_क्रम_all_pmus(p) अणु
+		bool prपूर्णांकed_pmu = false;
 
 		ret = pfm_get_pmu_info(p, &pinfo);
-		if (ret != PFM_SUCCESS)
-			continue;
+		अगर (ret != PFM_SUCCESS)
+			जारी;
 
-		/* only print events that are supported by host HW */
-		if (!pinfo.is_present)
-			continue;
+		/* only prपूर्णांक events that are supported by host HW */
+		अगर (!pinfo.is_present)
+			जारी;
 
 		/* handled by perf directly */
-		if (pinfo.pmu == PFM_PMU_PERF_EVENT)
-			continue;
+		अगर (pinfo.pmu == PFM_PMU_PERF_EVENT)
+			जारी;
 
-		for (i = pinfo.first_event; i != -1;
-		     i = pfm_get_event_next(i)) {
+		क्रम (i = pinfo.first_event; i != -1;
+		     i = pfm_get_event_next(i)) अणु
 
 			ret = pfm_get_event_info(i, PFM_OS_PERF_EVENT_EXT,
 						&info);
-			if (ret != PFM_SUCCESS)
-				continue;
+			अगर (ret != PFM_SUCCESS)
+				जारी;
 
-			if (!name_only && !printed_pmu) {
-				printf("%s:\n", pinfo.name);
-				printed_pmu = true;
-			}
+			अगर (!name_only && !prपूर्णांकed_pmu) अणु
+				म_लिखो("%s:\n", pinfo.name);
+				prपूर्णांकed_pmu = true;
+			पूर्ण
 
-			if (!name_only)
-				print_libpfm_events_detailed(&info, long_desc);
-			else
-				print_libpfm_events_raw(&pinfo, &info);
-		}
-		if (!name_only && printed_pmu)
-			putchar('\n');
-	}
-}
+			अगर (!name_only)
+				prपूर्णांक_libpfm_events_detailed(&info, दीर्घ_desc);
+			अन्यथा
+				prपूर्णांक_libpfm_events_raw(&pinfo, &info);
+		पूर्ण
+		अगर (!name_only && prपूर्णांकed_pmu)
+			अक्षर_दो('\n');
+	पूर्ण
+पूर्ण

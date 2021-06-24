@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Support PCI IO workaround
  *
  * (C) Copyright 2007-2008 TOSHIBA CORPORATION
  */
 
-#ifndef _IO_WORKAROUNDS_H
-#define _IO_WORKAROUNDS_H
+#अगर_अघोषित _IO_WORKAROUNDS_H
+#घोषणा _IO_WORKAROUNDS_H
 
-#ifdef CONFIG_PPC_IO_WORKAROUNDS
-#include <linux/io.h>
-#include <asm/pci-bridge.h>
+#अगर_घोषित CONFIG_PPC_IO_WORKAROUNDS
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/pci-bridge.h>
 
 /* Bus info */
-struct iowa_bus {
-	struct pci_controller *phb;
-	struct ppc_pci_io *ops;
-	void   *private;
-};
+काष्ठा iowa_bus अणु
+	काष्ठा pci_controller *phb;
+	काष्ठा ppc_pci_io *ops;
+	व्योम   *निजी;
+पूर्ण;
 
-void iowa_register_bus(struct pci_controller *, struct ppc_pci_io *,
-		       int (*)(struct iowa_bus *, void *), void *);
-struct iowa_bus *iowa_mem_find_bus(const PCI_IO_ADDR);
-struct iowa_bus *iowa_pio_find_bus(unsigned long);
+व्योम iowa_रेजिस्टर_bus(काष्ठा pci_controller *, काष्ठा ppc_pci_io *,
+		       पूर्णांक (*)(काष्ठा iowa_bus *, व्योम *), व्योम *);
+काष्ठा iowa_bus *iowa_mem_find_bus(स्थिर PCI_IO_ADDR);
+काष्ठा iowa_bus *iowa_pio_find_bus(अचिन्हित दीर्घ);
 
-extern struct ppc_pci_io spiderpci_ops;
-extern int spiderpci_iowa_init(struct iowa_bus *, void *);
+बाह्य काष्ठा ppc_pci_io spiderpci_ops;
+बाह्य पूर्णांक spiderpci_iowa_init(काष्ठा iowa_bus *, व्योम *);
 
-#define SPIDER_PCI_REG_BASE		0xd000
-#define SPIDER_PCI_REG_SIZE		0x1000
-#define SPIDER_PCI_VCI_CNTL_STAT	0x0110
-#define SPIDER_PCI_DUMMY_READ		0x0810
-#define SPIDER_PCI_DUMMY_READ_BASE	0x0814
+#घोषणा SPIDER_PCI_REG_BASE		0xd000
+#घोषणा SPIDER_PCI_REG_SIZE		0x1000
+#घोषणा SPIDER_PCI_VCI_CNTL_STAT	0x0110
+#घोषणा SPIDER_PCI_DUMMY_READ		0x0810
+#घोषणा SPIDER_PCI_DUMMY_READ_BASE	0x0814
 
-#endif
+#पूर्ण_अगर
 
-#if defined(CONFIG_PPC_IO_WORKAROUNDS) && defined(CONFIG_PPC_INDIRECT_MMIO)
-extern bool io_workaround_inited;
+#अगर defined(CONFIG_PPC_IO_WORKAROUNDS) && defined(CONFIG_PPC_INसूचीECT_MMIO)
+बाह्य bool io_workaround_inited;
 
-static inline bool iowa_is_active(void)
-{
-	return unlikely(io_workaround_inited);
-}
-#else
-static inline bool iowa_is_active(void)
-{
-	return false;
-}
-#endif
+अटल अंतरभूत bool iowa_is_active(व्योम)
+अणु
+	वापस unlikely(io_workaround_inited);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool iowa_is_active(व्योम)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-void __iomem *iowa_ioremap(phys_addr_t addr, unsigned long size,
-			   pgprot_t prot, void *caller);
+व्योम __iomem *iowa_ioremap(phys_addr_t addr, अचिन्हित दीर्घ size,
+			   pgprot_t prot, व्योम *caller);
 
-#endif /* _IO_WORKAROUNDS_H */
+#पूर्ण_अगर /* _IO_WORKAROUNDS_H */

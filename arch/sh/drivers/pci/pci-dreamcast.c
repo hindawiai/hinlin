@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCI support for the Sega Dreamcast
+ * PCI support क्रम the Sega Dreamcast
  *
  * Copyright (C) 2001, 2002  M. R. Brown
  * Copyright (C) 2002, 2003  Paul Mundt
  *
- * This file originally bore the message (with enclosed-$):
+ * This file originally bore the message (with enबंदd-$):
  *	Id: pci.c,v 1.3 2003/05/04 19:29:46 lethal Exp
  *	Dreamcast PCI: Supports SEGA Broadband Adaptor only.
  */
 
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/param.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <mach/pci.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/param.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <mach/pci.h>
 
-static struct resource gapspci_resources[] = {
-	{
+अटल काष्ठा resource gapspci_resources[] = अणु
+	अणु
 		.name	= "GAPSPCI IO",
 		.start	= GAPSPCI_BBA_CONFIG,
 		.end	= GAPSPCI_BBA_CONFIG + GAPSPCI_BBA_CONFIG_SIZE - 1,
 		.flags	= IORESOURCE_IO,
-	},  {
+	पूर्ण,  अणु
 		.name	= "GAPSPCI mem",
 		.start	= GAPSPCI_DMA_BASE,
 		.end	= GAPSPCI_DMA_BASE + GAPSPCI_DMA_SIZE - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct pci_channel dreamcast_pci_controller = {
+अटल काष्ठा pci_channel dreamcast_pci_controller = अणु
 	.pci_ops	= &gapspci_pci_ops,
 	.resources	= gapspci_resources,
 	.nr_resources	= ARRAY_SIZE(gapspci_resources),
 	.io_offset	= 0x00000000,
 	.mem_offset	= 0x00000000,
-};
+पूर्ण;
 
 /*
  * gapspci init
  */
 
-static int __init gapspci_init(void)
-{
-	char idbuf[16];
-	int i;
+अटल पूर्णांक __init gapspci_init(व्योम)
+अणु
+	अक्षर idbuf[16];
+	पूर्णांक i;
 
 	/*
-	 * FIXME: All of this wants documenting to some degree,
-	 * even some basic register definitions would be nice.
+	 * FIXME: All of this wants करोcumenting to some degree,
+	 * even some basic रेजिस्टर definitions would be nice.
 	 *
 	 * I haven't seen anything this ugly since.. maple.
 	 */
 
-	for (i=0; i<16; i++)
+	क्रम (i=0; i<16; i++)
 		idbuf[i] = inb(GAPSPCI_REGS+i);
 
-	if (strncmp(idbuf, "GAPSPCI_BRIDGE_2", 16))
-		return -ENODEV;
+	अगर (म_भेदन(idbuf, "GAPSPCI_BRIDGE_2", 16))
+		वापस -ENODEV;
 
 	outl(0x5a14a501, GAPSPCI_REGS+0x18);
 
-	for (i=0; i<1000000; i++)
+	क्रम (i=0; i<1000000; i++)
 		cpu_relax();
 
-	if (inl(GAPSPCI_REGS+0x18) != 1)
-		return -EINVAL;
+	अगर (inl(GAPSPCI_REGS+0x18) != 1)
+		वापस -EINVAL;
 
 	outl(0x01000000, GAPSPCI_REGS+0x20);
 	outl(0x01000000, GAPSPCI_REGS+0x24);
@@ -92,6 +93,6 @@ static int __init gapspci_init(void)
 	outl(0x00002001, GAPSPCI_BBA_CONFIG+0x10);
 	outl(0x01000000, GAPSPCI_BBA_CONFIG+0x14);
 
-	return register_pci_controller(&dreamcast_pci_controller);
-}
+	वापस रेजिस्टर_pci_controller(&dreamcast_pci_controller);
+पूर्ण
 arch_initcall(gapspci_init);

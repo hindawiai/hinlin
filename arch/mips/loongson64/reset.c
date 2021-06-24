@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) 2007 Lemote, Inc. & Institute of Computing Technology
@@ -6,167 +7,167 @@
  * Copyright (C) 2009 Lemote, Inc.
  * Author: Zhangjin Wu, wuzhangjin@gmail.com
  */
-#include <linux/cpu.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/kexec.h>
-#include <linux/pm.h>
-#include <linux/slab.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/slab.h>
 
-#include <asm/bootinfo.h>
-#include <asm/idle.h>
-#include <asm/reboot.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/idle.h>
+#समावेश <यंत्र/reboot.h>
 
-#include <loongson.h>
-#include <boot_param.h>
+#समावेश <loongson.h>
+#समावेश <boot_param.h>
 
-static void loongson_restart(char *command)
-{
+अटल व्योम loongson_restart(अक्षर *command)
+अणु
 
-	void (*fw_restart)(void) = (void *)loongson_sysconf.restart_addr;
+	व्योम (*fw_restart)(व्योम) = (व्योम *)loongson_sysconf.restart_addr;
 
 	fw_restart();
-	while (1) {
-		if (cpu_wait)
-			cpu_wait();
-	}
-}
+	जबतक (1) अणु
+		अगर (cpu_रुको)
+			cpu_रुको();
+	पूर्ण
+पूर्ण
 
-static void loongson_poweroff(void)
-{
-	void (*fw_poweroff)(void) = (void *)loongson_sysconf.poweroff_addr;
+अटल व्योम loongson_घातeroff(व्योम)
+अणु
+	व्योम (*fw_घातeroff)(व्योम) = (व्योम *)loongson_sysconf.घातeroff_addr;
 
-	fw_poweroff();
-	while (1) {
-		if (cpu_wait)
-			cpu_wait();
-	}
-}
+	fw_घातeroff();
+	जबतक (1) अणु
+		अगर (cpu_रुको)
+			cpu_रुको();
+	पूर्ण
+पूर्ण
 
-static void loongson_halt(void)
-{
+अटल व्योम loongson_halt(व्योम)
+अणु
 	pr_notice("\n\n** You can safely turn off the power now **\n\n");
-	while (1) {
-		if (cpu_wait)
-			cpu_wait();
-	}
-}
+	जबतक (1) अणु
+		अगर (cpu_रुको)
+			cpu_रुको();
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_KEXEC
+#अगर_घोषित CONFIG_KEXEC
 
 /* 0X80000000~0X80200000 is safe */
-#define MAX_ARGS	64
-#define KEXEC_CTRL_CODE	0xFFFFFFFF80100000UL
-#define KEXEC_ARGV_ADDR	0xFFFFFFFF80108000UL
-#define KEXEC_ARGV_SIZE	COMMAND_LINE_SIZE
-#define KEXEC_ENVP_SIZE	4800
+#घोषणा MAX_ARGS	64
+#घोषणा KEXEC_CTRL_CODE	0xFFFFFFFF80100000UL
+#घोषणा KEXEC_ARGV_ADDR	0xFFFFFFFF80108000UL
+#घोषणा KEXEC_ARGV_SIZE	COMMAND_LINE_SIZE
+#घोषणा KEXEC_ENVP_SIZE	4800
 
-static int kexec_argc;
-static int kdump_argc;
-static void *kexec_argv;
-static void *kdump_argv;
-static void *kexec_envp;
+अटल पूर्णांक kexec_argc;
+अटल पूर्णांक kdump_argc;
+अटल व्योम *kexec_argv;
+अटल व्योम *kdump_argv;
+अटल व्योम *kexec_envp;
 
-static int loongson_kexec_prepare(struct kimage *image)
-{
-	int i, argc = 0;
-	unsigned int *argv;
-	char *str, *ptr, *bootloader = "kexec";
+अटल पूर्णांक loongson_kexec_prepare(काष्ठा kimage *image)
+अणु
+	पूर्णांक i, argc = 0;
+	अचिन्हित पूर्णांक *argv;
+	अक्षर *str, *ptr, *bootloader = "kexec";
 
 	/* argv at offset 0, argv[] at offset KEXEC_ARGV_SIZE/2 */
-	if (image->type == KEXEC_TYPE_DEFAULT)
-		argv = (unsigned int *)kexec_argv;
-	else
-		argv = (unsigned int *)kdump_argv;
+	अगर (image->type == KEXEC_TYPE_DEFAULT)
+		argv = (अचिन्हित पूर्णांक *)kexec_argv;
+	अन्यथा
+		argv = (अचिन्हित पूर्णांक *)kdump_argv;
 
-	argv[argc++] = (unsigned int)(KEXEC_ARGV_ADDR + KEXEC_ARGV_SIZE/2);
+	argv[argc++] = (अचिन्हित पूर्णांक)(KEXEC_ARGV_ADDR + KEXEC_ARGV_SIZE/2);
 
-	for (i = 0; i < image->nr_segments; i++) {
-		if (!strncmp(bootloader, (char *)image->segment[i].buf,
-				strlen(bootloader))) {
+	क्रम (i = 0; i < image->nr_segments; i++) अणु
+		अगर (!म_भेदन(bootloader, (अक्षर *)image->segment[i].buf,
+				म_माप(bootloader))) अणु
 			/*
 			 * convert command line string to array
-			 * of parameters (as bootloader does).
+			 * of parameters (as bootloader करोes).
 			 */
-			int offt;
-			str = (char *)argv + KEXEC_ARGV_SIZE/2;
-			memcpy(str, image->segment[i].buf, KEXEC_ARGV_SIZE/2);
-			ptr = strchr(str, ' ');
+			पूर्णांक offt;
+			str = (अक्षर *)argv + KEXEC_ARGV_SIZE/2;
+			स_नकल(str, image->segment[i].buf, KEXEC_ARGV_SIZE/2);
+			ptr = म_अक्षर(str, ' ');
 
-			while (ptr && (argc < MAX_ARGS)) {
+			जबतक (ptr && (argc < MAX_ARGS)) अणु
 				*ptr = '\0';
-				if (ptr[1] != ' ') {
-					offt = (int)(ptr - str + 1);
+				अगर (ptr[1] != ' ') अणु
+					offt = (पूर्णांक)(ptr - str + 1);
 					argv[argc] = KEXEC_ARGV_ADDR + KEXEC_ARGV_SIZE/2 + offt;
 					argc++;
-				}
-				ptr = strchr(ptr + 1, ' ');
-			}
-			break;
-		}
-	}
+				पूर्ण
+				ptr = म_अक्षर(ptr + 1, ' ');
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (image->type == KEXEC_TYPE_DEFAULT)
+	अगर (image->type == KEXEC_TYPE_DEFAULT)
 		kexec_argc = argc;
-	else
+	अन्यथा
 		kdump_argc = argc;
 
 	/* kexec/kdump need a safe page to save reboot_code_buffer */
-	image->control_code_page = virt_to_page((void *)KEXEC_CTRL_CODE);
+	image->control_code_page = virt_to_page((व्योम *)KEXEC_CTRL_CODE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void loongson_kexec_shutdown(void)
-{
-#ifdef CONFIG_SMP
-	int cpu;
+अटल व्योम loongson_kexec_shutकरोwn(व्योम)
+अणु
+#अगर_घोषित CONFIG_SMP
+	पूर्णांक cpu;
 
 	/* All CPUs go to reboot_code_buffer */
-	for_each_possible_cpu(cpu)
-		if (!cpu_online(cpu))
+	क्रम_each_possible_cpu(cpu)
+		अगर (!cpu_online(cpu))
 			cpu_device_up(get_cpu_device(cpu));
-#endif
+#पूर्ण_अगर
 	kexec_args[0] = kexec_argc;
 	kexec_args[1] = fw_arg1;
 	kexec_args[2] = fw_arg2;
 	secondary_kexec_args[0] = TO_UNCAC(0x3ff01000);
-	memcpy((void *)fw_arg1, kexec_argv, KEXEC_ARGV_SIZE);
-	memcpy((void *)fw_arg2, kexec_envp, KEXEC_ENVP_SIZE);
-}
+	स_नकल((व्योम *)fw_arg1, kexec_argv, KEXEC_ARGV_SIZE);
+	स_नकल((व्योम *)fw_arg2, kexec_envp, KEXEC_ENVP_SIZE);
+पूर्ण
 
-static void loongson_crash_shutdown(struct pt_regs *regs)
-{
-	default_machine_crash_shutdown(regs);
+अटल व्योम loongson_crash_shutकरोwn(काष्ठा pt_regs *regs)
+अणु
+	शेष_machine_crash_shutकरोwn(regs);
 	kexec_args[0] = kdump_argc;
 	kexec_args[1] = fw_arg1;
 	kexec_args[2] = fw_arg2;
 	secondary_kexec_args[0] = TO_UNCAC(0x3ff01000);
-	memcpy((void *)fw_arg1, kdump_argv, KEXEC_ARGV_SIZE);
-	memcpy((void *)fw_arg2, kexec_envp, KEXEC_ENVP_SIZE);
-}
+	स_नकल((व्योम *)fw_arg1, kdump_argv, KEXEC_ARGV_SIZE);
+	स_नकल((व्योम *)fw_arg2, kexec_envp, KEXEC_ENVP_SIZE);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int __init mips_reboot_setup(void)
-{
+अटल पूर्णांक __init mips_reboot_setup(व्योम)
+अणु
 	_machine_restart = loongson_restart;
 	_machine_halt = loongson_halt;
-	pm_power_off = loongson_poweroff;
+	pm_घातer_off = loongson_घातeroff;
 
-#ifdef CONFIG_KEXEC
-	kexec_argv = kmalloc(KEXEC_ARGV_SIZE, GFP_KERNEL);
-	kdump_argv = kmalloc(KEXEC_ARGV_SIZE, GFP_KERNEL);
-	kexec_envp = kmalloc(KEXEC_ENVP_SIZE, GFP_KERNEL);
+#अगर_घोषित CONFIG_KEXEC
+	kexec_argv = kदो_स्मृति(KEXEC_ARGV_SIZE, GFP_KERNEL);
+	kdump_argv = kदो_स्मृति(KEXEC_ARGV_SIZE, GFP_KERNEL);
+	kexec_envp = kदो_स्मृति(KEXEC_ENVP_SIZE, GFP_KERNEL);
 	fw_arg1 = KEXEC_ARGV_ADDR;
-	memcpy(kexec_envp, (void *)fw_arg2, KEXEC_ENVP_SIZE);
+	स_नकल(kexec_envp, (व्योम *)fw_arg2, KEXEC_ENVP_SIZE);
 
 	_machine_kexec_prepare = loongson_kexec_prepare;
-	_machine_kexec_shutdown = loongson_kexec_shutdown;
-	_machine_crash_shutdown = loongson_crash_shutdown;
-#endif
+	_machine_kexec_shutकरोwn = loongson_kexec_shutकरोwn;
+	_machine_crash_shutकरोwn = loongson_crash_shutकरोwn;
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 arch_initcall(mips_reboot_setup);

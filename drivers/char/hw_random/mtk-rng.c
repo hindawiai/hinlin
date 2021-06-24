@@ -1,194 +1,195 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for Mediatek Hardware Random Number Generator
+ * Driver क्रम Mediatek Hardware Ranकरोm Number Generator
  *
  * Copyright (C) 2017 Sean Wang <sean.wang@mediatek.com>
  */
-#define MTK_RNG_DEV KBUILD_MODNAME
+#घोषणा MTK_RNG_DEV KBUILD_MODNAME
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/hw_random.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-/* Runtime PM autosuspend timeout: */
-#define RNG_AUTOSUSPEND_TIMEOUT		100
+/* Runसमय PM स्वतःsuspend समयout: */
+#घोषणा RNG_AUTOSUSPEND_TIMEOUT		100
 
-#define USEC_POLL			2
-#define TIMEOUT_POLL			20
+#घोषणा USEC_POLL			2
+#घोषणा TIMEOUT_POLL			20
 
-#define RNG_CTRL			0x00
-#define RNG_EN				BIT(0)
-#define RNG_READY			BIT(31)
+#घोषणा RNG_CTRL			0x00
+#घोषणा RNG_EN				BIT(0)
+#घोषणा RNG_READY			BIT(31)
 
-#define RNG_DATA			0x08
+#घोषणा RNG_DATA			0x08
 
-#define to_mtk_rng(p)	container_of(p, struct mtk_rng, rng)
+#घोषणा to_mtk_rng(p)	container_of(p, काष्ठा mtk_rng, rng)
 
-struct mtk_rng {
-	void __iomem *base;
-	struct clk *clk;
-	struct hwrng rng;
-};
+काष्ठा mtk_rng अणु
+	व्योम __iomem *base;
+	काष्ठा clk *clk;
+	काष्ठा hwrng rng;
+पूर्ण;
 
-static int mtk_rng_init(struct hwrng *rng)
-{
-	struct mtk_rng *priv = to_mtk_rng(rng);
+अटल पूर्णांक mtk_rng_init(काष्ठा hwrng *rng)
+अणु
+	काष्ठा mtk_rng *priv = to_mtk_rng(rng);
 	u32 val;
-	int err;
+	पूर्णांक err;
 
 	err = clk_prepare_enable(priv->clk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	val = readl(priv->base + RNG_CTRL);
+	val = पढ़ोl(priv->base + RNG_CTRL);
 	val |= RNG_EN;
-	writel(val, priv->base + RNG_CTRL);
+	ग_लिखोl(val, priv->base + RNG_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_rng_cleanup(struct hwrng *rng)
-{
-	struct mtk_rng *priv = to_mtk_rng(rng);
+अटल व्योम mtk_rng_cleanup(काष्ठा hwrng *rng)
+अणु
+	काष्ठा mtk_rng *priv = to_mtk_rng(rng);
 	u32 val;
 
-	val = readl(priv->base + RNG_CTRL);
+	val = पढ़ोl(priv->base + RNG_CTRL);
 	val &= ~RNG_EN;
-	writel(val, priv->base + RNG_CTRL);
+	ग_लिखोl(val, priv->base + RNG_CTRL);
 
 	clk_disable_unprepare(priv->clk);
-}
+पूर्ण
 
-static bool mtk_rng_wait_ready(struct hwrng *rng, bool wait)
-{
-	struct mtk_rng *priv = to_mtk_rng(rng);
-	int ready;
+अटल bool mtk_rng_रुको_पढ़ोy(काष्ठा hwrng *rng, bool रुको)
+अणु
+	काष्ठा mtk_rng *priv = to_mtk_rng(rng);
+	पूर्णांक पढ़ोy;
 
-	ready = readl(priv->base + RNG_CTRL) & RNG_READY;
-	if (!ready && wait)
-		readl_poll_timeout_atomic(priv->base + RNG_CTRL, ready,
-					  ready & RNG_READY, USEC_POLL,
+	पढ़ोy = पढ़ोl(priv->base + RNG_CTRL) & RNG_READY;
+	अगर (!पढ़ोy && रुको)
+		पढ़ोl_poll_समयout_atomic(priv->base + RNG_CTRL, पढ़ोy,
+					  पढ़ोy & RNG_READY, USEC_POLL,
 					  TIMEOUT_POLL);
-	return !!ready;
-}
+	वापस !!पढ़ोy;
+पूर्ण
 
-static int mtk_rng_read(struct hwrng *rng, void *buf, size_t max, bool wait)
-{
-	struct mtk_rng *priv = to_mtk_rng(rng);
-	int retval = 0;
+अटल पूर्णांक mtk_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *buf, माप_प्रकार max, bool रुको)
+अणु
+	काष्ठा mtk_rng *priv = to_mtk_rng(rng);
+	पूर्णांक retval = 0;
 
-	pm_runtime_get_sync((struct device *)priv->rng.priv);
+	pm_runसमय_get_sync((काष्ठा device *)priv->rng.priv);
 
-	while (max >= sizeof(u32)) {
-		if (!mtk_rng_wait_ready(rng, wait))
-			break;
+	जबतक (max >= माप(u32)) अणु
+		अगर (!mtk_rng_रुको_पढ़ोy(rng, रुको))
+			अवरोध;
 
-		*(u32 *)buf = readl(priv->base + RNG_DATA);
-		retval += sizeof(u32);
-		buf += sizeof(u32);
-		max -= sizeof(u32);
-	}
+		*(u32 *)buf = पढ़ोl(priv->base + RNG_DATA);
+		retval += माप(u32);
+		buf += माप(u32);
+		max -= माप(u32);
+	पूर्ण
 
-	pm_runtime_mark_last_busy((struct device *)priv->rng.priv);
-	pm_runtime_put_sync_autosuspend((struct device *)priv->rng.priv);
+	pm_runसमय_mark_last_busy((काष्ठा device *)priv->rng.priv);
+	pm_runसमय_put_sync_स्वतःsuspend((काष्ठा device *)priv->rng.priv);
 
-	return retval || !wait ? retval : -EIO;
-}
+	वापस retval || !रुको ? retval : -EIO;
+पूर्ण
 
-static int mtk_rng_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct mtk_rng *priv;
+अटल पूर्णांक mtk_rng_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा mtk_rng *priv;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->rng.name = pdev->name;
-#ifndef CONFIG_PM
+#अगर_अघोषित CONFIG_PM
 	priv->rng.init = mtk_rng_init;
 	priv->rng.cleanup = mtk_rng_cleanup;
-#endif
-	priv->rng.read = mtk_rng_read;
-	priv->rng.priv = (unsigned long)&pdev->dev;
+#पूर्ण_अगर
+	priv->rng.पढ़ो = mtk_rng_पढ़ो;
+	priv->rng.priv = (अचिन्हित दीर्घ)&pdev->dev;
 	priv->rng.quality = 900;
 
 	priv->clk = devm_clk_get(&pdev->dev, "rng");
-	if (IS_ERR(priv->clk)) {
+	अगर (IS_ERR(priv->clk)) अणु
 		ret = PTR_ERR(priv->clk);
 		dev_err(&pdev->dev, "no clock for device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	priv->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(priv->base))
-		return PTR_ERR(priv->base);
+	priv->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(priv->base))
+		वापस PTR_ERR(priv->base);
 
-	ret = devm_hwrng_register(&pdev->dev, &priv->rng);
-	if (ret) {
+	ret = devm_hwrng_रेजिस्टर(&pdev->dev, &priv->rng);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to register rng device: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_set_drvdata(&pdev->dev, priv);
-	pm_runtime_set_autosuspend_delay(&pdev->dev, RNG_AUTOSUSPEND_TIMEOUT);
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, RNG_AUTOSUSPEND_TIMEOUT);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
 	dev_info(&pdev->dev, "registered RNG driver\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int mtk_rng_runtime_suspend(struct device *dev)
-{
-	struct mtk_rng *priv = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक mtk_rng_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_rng *priv = dev_get_drvdata(dev);
 
 	mtk_rng_cleanup(&priv->rng);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_rng_runtime_resume(struct device *dev)
-{
-	struct mtk_rng *priv = dev_get_drvdata(dev);
+अटल पूर्णांक mtk_rng_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_rng *priv = dev_get_drvdata(dev);
 
-	return mtk_rng_init(&priv->rng);
-}
+	वापस mtk_rng_init(&priv->rng);
+पूर्ण
 
-static UNIVERSAL_DEV_PM_OPS(mtk_rng_pm_ops, mtk_rng_runtime_suspend,
-			    mtk_rng_runtime_resume, NULL);
-#define MTK_RNG_PM_OPS (&mtk_rng_pm_ops)
-#else	/* CONFIG_PM */
-#define MTK_RNG_PM_OPS NULL
-#endif	/* CONFIG_PM */
+अटल UNIVERSAL_DEV_PM_OPS(mtk_rng_pm_ops, mtk_rng_runसमय_suspend,
+			    mtk_rng_runसमय_resume, शून्य);
+#घोषणा MTK_RNG_PM_OPS (&mtk_rng_pm_ops)
+#अन्यथा	/* CONFIG_PM */
+#घोषणा MTK_RNG_PM_OPS शून्य
+#पूर्ण_अगर	/* CONFIG_PM */
 
-static const struct of_device_id mtk_rng_match[] = {
-	{ .compatible = "mediatek,mt7623-rng" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id mtk_rng_match[] = अणु
+	अणु .compatible = "mediatek,mt7623-rng" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk_rng_match);
 
-static struct platform_driver mtk_rng_driver = {
+अटल काष्ठा platक्रमm_driver mtk_rng_driver = अणु
 	.probe          = mtk_rng_probe,
-	.driver = {
+	.driver = अणु
 		.name = MTK_RNG_DEV,
 		.pm = MTK_RNG_PM_OPS,
 		.of_match_table = mtk_rng_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(mtk_rng_driver);
+module_platक्रमm_driver(mtk_rng_driver);
 
 MODULE_DESCRIPTION("Mediatek Random Number Generator Driver");
 MODULE_AUTHOR("Sean Wang <sean.wang@mediatek.com>");

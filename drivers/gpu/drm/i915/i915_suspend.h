@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __I915_SUSPEND_H__
-#define __I915_SUSPEND_H__
+#अगर_अघोषित __I915_SUSPEND_H__
+#घोषणा __I915_SUSPEND_H__
 
-struct drm_i915_private;
+काष्ठा drm_i915_निजी;
 
-void i915_save_display(struct drm_i915_private *i915);
-void i915_restore_display(struct drm_i915_private *i915);
+व्योम i915_save_display(काष्ठा drm_i915_निजी *i915);
+व्योम i915_restore_display(काष्ठा drm_i915_निजी *i915);
 
-#endif /* __I915_SUSPEND_H__ */
+#पूर्ण_अगर /* __I915_SUSPEND_H__ */

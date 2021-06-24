@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
- * Linux driver attachment glue for PCI based controllers.
+ * Linux driver attachment glue क्रम PCI based controllers.
  *
  * Copyright (c) 2000-2001 Adaptec Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    without modअगरication.
+ * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement for further
+ *    including a substantially similar Disclaimer requirement क्रम further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    of any contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -39,14 +40,14 @@
  * $Id: //depot/aic7xxx/linux/drivers/scsi/aic7xxx/aic7xxx_osm_pci.c#47 $
  */
 
-#include "aic7xxx_osm.h"
-#include "aic7xxx_pci.h"
+#समावेश "aic7xxx_osm.h"
+#समावेश "aic7xxx_pci.h"
 
-/* Define the macro locally since it's different for different class of chips.
+/* Define the macro locally since it's dअगरferent क्रम dअगरferent class of chips.
 */
-#define ID(x)	ID_C(x, PCI_CLASS_STORAGE_SCSI)
+#घोषणा ID(x)	ID_C(x, PCI_CLASS_STORAGE_SCSI)
 
-static const struct pci_device_id ahc_linux_pci_id_table[] = {
+अटल स्थिर काष्ठा pci_device_id ahc_linux_pci_id_table[] = अणु
 	/* aic7850 based controllers */
 	ID(ID_AHA_2902_04_10_15_20C_30C),
 	/* aic7860 based controllers */
@@ -102,7 +103,7 @@ static const struct pci_device_id ahc_linux_pci_id_table[] = {
 	ID(ID_AHA_3960D),
 	ID(ID_AHA_3960D_CPQ),
 	ID(ID_AIC7899_ARO),
-	/* Generic chip probes for devices we don't know exactly. */
+	/* Generic chip probes क्रम devices we करोn't know exactly. */
 	ID(ID_AIC7850 & ID_DEV_VENDOR_MASK),
 	ID(ID_AIC7855 & ID_DEV_VENDOR_MASK),
 	ID(ID_AIC7859 & ID_DEV_VENDOR_MASK),
@@ -116,332 +117,332 @@ static const struct pci_device_id ahc_linux_pci_id_table[] = {
 	ID16(ID_AIC7899 & ID_9005_GENERIC_MASK),
 	ID(ID_AIC7810 & ID_DEV_VENDOR_MASK),
 	ID(ID_AIC7815 & ID_DEV_VENDOR_MASK),
-	{ 0 }
-};
+	अणु 0 पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, ahc_linux_pci_id_table);
 
-static int __maybe_unused
-ahc_linux_pci_dev_suspend(struct device *dev)
-{
-	struct ahc_softc *ahc = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused
+ahc_linux_pci_dev_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा ahc_softc *ahc = dev_get_drvdata(dev);
 
-	return ahc_suspend(ahc);
-}
+	वापस ahc_suspend(ahc);
+पूर्ण
 
-static int __maybe_unused
-ahc_linux_pci_dev_resume(struct device *dev)
-{
-	struct ahc_softc *ahc = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused
+ahc_linux_pci_dev_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ahc_softc *ahc = dev_get_drvdata(dev);
 
 	ahc_pci_resume(ahc);
 
-	return (ahc_resume(ahc));
-}
+	वापस (ahc_resume(ahc));
+पूर्ण
 
-static void
-ahc_linux_pci_dev_remove(struct pci_dev *pdev)
-{
-	struct ahc_softc *ahc = pci_get_drvdata(pdev);
-	u_long s;
+अटल व्योम
+ahc_linux_pci_dev_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ahc_softc *ahc = pci_get_drvdata(pdev);
+	u_दीर्घ s;
 
-	if (ahc->platform_data && ahc->platform_data->host)
-			scsi_remove_host(ahc->platform_data->host);
+	अगर (ahc->platक्रमm_data && ahc->platक्रमm_data->host)
+			scsi_हटाओ_host(ahc->platक्रमm_data->host);
 
 	ahc_lock(ahc, &s);
-	ahc_intr_enable(ahc, FALSE);
+	ahc_पूर्णांकr_enable(ahc, FALSE);
 	ahc_unlock(ahc, &s);
-	ahc_free(ahc);
-}
+	ahc_मुक्त(ahc);
+पूर्ण
 
-static void
-ahc_linux_pci_inherit_flags(struct ahc_softc *ahc)
-{
-	struct pci_dev *pdev = ahc->dev_softc, *master_pdev;
-	unsigned int master_devfn = PCI_DEVFN(PCI_SLOT(pdev->devfn), 0);
+अटल व्योम
+ahc_linux_pci_inherit_flags(काष्ठा ahc_softc *ahc)
+अणु
+	काष्ठा pci_dev *pdev = ahc->dev_softc, *master_pdev;
+	अचिन्हित पूर्णांक master_devfn = PCI_DEVFN(PCI_SLOT(pdev->devfn), 0);
 
 	master_pdev = pci_get_slot(pdev->bus, master_devfn);
-	if (master_pdev) {
-		struct ahc_softc *master = pci_get_drvdata(master_pdev);
-		if (master) {
+	अगर (master_pdev) अणु
+		काष्ठा ahc_softc *master = pci_get_drvdata(master_pdev);
+		अगर (master) अणु
 			ahc->flags &= ~AHC_BIOS_ENABLED; 
 			ahc->flags |= master->flags & AHC_BIOS_ENABLED;
 
 			ahc->flags &= ~AHC_PRIMARY_CHANNEL; 
 			ahc->flags |= master->flags & AHC_PRIMARY_CHANNEL;
-		} else
-			printk(KERN_ERR "aic7xxx: no multichannel peer found!\n");
+		पूर्ण अन्यथा
+			prपूर्णांकk(KERN_ERR "aic7xxx: no multichannel peer found!\n");
 		pci_dev_put(master_pdev);
-	} 
-}
+	पूर्ण 
+पूर्ण
 
-static int
-ahc_linux_pci_dev_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	char		 buf[80];
-	const uint64_t	 mask_39bit = 0x7FFFFFFFFFULL;
-	struct		 ahc_softc *ahc;
+अटल पूर्णांक
+ahc_linux_pci_dev_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	अक्षर		 buf[80];
+	स्थिर uपूर्णांक64_t	 mask_39bit = 0x7FFFFFFFFFULL;
+	काष्ठा		 ahc_softc *ahc;
 	ahc_dev_softc_t	 pci;
-	const struct ahc_pci_identity *entry;
-	char		*name;
-	int		 error;
-	struct device	*dev = &pdev->dev;
+	स्थिर काष्ठा ahc_pci_identity *entry;
+	अक्षर		*name;
+	पूर्णांक		 error;
+	काष्ठा device	*dev = &pdev->dev;
 
 	pci = pdev;
 	entry = ahc_find_pci_device(pci);
-	if (entry == NULL)
-		return (-ENODEV);
+	अगर (entry == शून्य)
+		वापस (-ENODEV);
 
 	/*
-	 * Allocate a softc for this card and
-	 * set it up for attachment by our
+	 * Allocate a softc क्रम this card and
+	 * set it up क्रम attachment by our
 	 * common detect routine.
 	 */
-	sprintf(buf, "ahc_pci:%d:%d:%d",
+	प्र_लिखो(buf, "ahc_pci:%d:%d:%d",
 		ahc_get_pci_bus(pci),
 		ahc_get_pci_slot(pci),
 		ahc_get_pci_function(pci));
 	name = kstrdup(buf, GFP_ATOMIC);
-	if (name == NULL)
-		return (-ENOMEM);
-	ahc = ahc_alloc(NULL, name);
-	if (ahc == NULL)
-		return (-ENOMEM);
-	if (pci_enable_device(pdev)) {
-		ahc_free(ahc);
-		return (-ENODEV);
-	}
+	अगर (name == शून्य)
+		वापस (-ENOMEM);
+	ahc = ahc_alloc(शून्य, name);
+	अगर (ahc == शून्य)
+		वापस (-ENOMEM);
+	अगर (pci_enable_device(pdev)) अणु
+		ahc_मुक्त(ahc);
+		वापस (-ENODEV);
+	पूर्ण
 	pci_set_master(pdev);
 
-	if (sizeof(dma_addr_t) > 4
+	अगर (माप(dma_addr_t) > 4
 	    && ahc->features & AHC_LARGE_SCBS
 	    && dma_set_mask(dev, mask_39bit) == 0
-	    && dma_get_required_mask(dev) > DMA_BIT_MASK(32)) {
+	    && dma_get_required_mask(dev) > DMA_BIT_MASK(32)) अणु
 		ahc->flags |= AHC_39BIT_ADDRESSING;
-	} else {
-		if (dma_set_mask(dev, DMA_BIT_MASK(32))) {
-			ahc_free(ahc);
-			printk(KERN_WARNING "aic7xxx: No suitable DMA available.\n");
-                	return (-ENODEV);
-		}
-	}
+	पूर्ण अन्यथा अणु
+		अगर (dma_set_mask(dev, DMA_BIT_MASK(32))) अणु
+			ahc_मुक्त(ahc);
+			prपूर्णांकk(KERN_WARNING "aic7xxx: No suitable DMA available.\n");
+                	वापस (-ENODEV);
+		पूर्ण
+	पूर्ण
 	ahc->dev_softc = pci;
 	ahc->dev = &pci->dev;
 	error = ahc_pci_config(ahc, entry);
-	if (error != 0) {
-		ahc_free(ahc);
-		return (-error);
-	}
+	अगर (error != 0) अणु
+		ahc_मुक्त(ahc);
+		वापस (-error);
+	पूर्ण
 
 	/*
 	 * Second Function PCI devices need to inherit some
 	 * settings from function 0.
 	 */
-	if ((ahc->features & AHC_MULTI_FUNC) && PCI_FUNC(pdev->devfn) != 0)
+	अगर ((ahc->features & AHC_MULTI_FUNC) && PCI_FUNC(pdev->devfn) != 0)
 		ahc_linux_pci_inherit_flags(ahc);
 
 	pci_set_drvdata(pdev, ahc);
-	ahc_linux_register_host(ahc, &aic7xxx_driver_template);
-	return (0);
-}
+	ahc_linux_रेजिस्टर_host(ahc, &aic7xxx_driver_ढाँचा);
+	वापस (0);
+पूर्ण
 
 /******************************* PCI Routines *********************************/
-uint32_t
-ahc_pci_read_config(ahc_dev_softc_t pci, int reg, int width)
-{
-	switch (width) {
-	case 1:
-	{
-		uint8_t retval;
+uपूर्णांक32_t
+ahc_pci_पढ़ो_config(ahc_dev_softc_t pci, पूर्णांक reg, पूर्णांक width)
+अणु
+	चयन (width) अणु
+	हाल 1:
+	अणु
+		uपूर्णांक8_t retval;
 
-		pci_read_config_byte(pci, reg, &retval);
-		return (retval);
-	}
-	case 2:
-	{
-		uint16_t retval;
-		pci_read_config_word(pci, reg, &retval);
-		return (retval);
-	}
-	case 4:
-	{
-		uint32_t retval;
-		pci_read_config_dword(pci, reg, &retval);
-		return (retval);
-	}
-	default:
+		pci_पढ़ो_config_byte(pci, reg, &retval);
+		वापस (retval);
+	पूर्ण
+	हाल 2:
+	अणु
+		uपूर्णांक16_t retval;
+		pci_पढ़ो_config_word(pci, reg, &retval);
+		वापस (retval);
+	पूर्ण
+	हाल 4:
+	अणु
+		uपूर्णांक32_t retval;
+		pci_पढ़ो_config_dword(pci, reg, &retval);
+		वापस (retval);
+	पूर्ण
+	शेष:
 		panic("ahc_pci_read_config: Read size too big");
 		/* NOTREACHED */
-		return (0);
-	}
-}
+		वापस (0);
+	पूर्ण
+पूर्ण
 
-void
-ahc_pci_write_config(ahc_dev_softc_t pci, int reg, uint32_t value, int width)
-{
-	switch (width) {
-	case 1:
-		pci_write_config_byte(pci, reg, value);
-		break;
-	case 2:
-		pci_write_config_word(pci, reg, value);
-		break;
-	case 4:
-		pci_write_config_dword(pci, reg, value);
-		break;
-	default:
+व्योम
+ahc_pci_ग_लिखो_config(ahc_dev_softc_t pci, पूर्णांक reg, uपूर्णांक32_t value, पूर्णांक width)
+अणु
+	चयन (width) अणु
+	हाल 1:
+		pci_ग_लिखो_config_byte(pci, reg, value);
+		अवरोध;
+	हाल 2:
+		pci_ग_लिखो_config_word(pci, reg, value);
+		अवरोध;
+	हाल 4:
+		pci_ग_लिखो_config_dword(pci, reg, value);
+		अवरोध;
+	शेष:
 		panic("ahc_pci_write_config: Write size too big");
 		/* NOTREACHED */
-	}
-}
+	पूर्ण
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(ahc_linux_pci_dev_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(ahc_linux_pci_dev_pm_ops,
 			 ahc_linux_pci_dev_suspend,
 			 ahc_linux_pci_dev_resume);
 
-static struct pci_driver aic7xxx_pci_driver = {
+अटल काष्ठा pci_driver aic7xxx_pci_driver = अणु
 	.name		= "aic7xxx",
 	.probe		= ahc_linux_pci_dev_probe,
 	.driver.pm	= &ahc_linux_pci_dev_pm_ops,
-	.remove		= ahc_linux_pci_dev_remove,
+	.हटाओ		= ahc_linux_pci_dev_हटाओ,
 	.id_table	= ahc_linux_pci_id_table
-};
+पूर्ण;
 
-int
-ahc_linux_pci_init(void)
-{
-	return pci_register_driver(&aic7xxx_pci_driver);
-}
+पूर्णांक
+ahc_linux_pci_init(व्योम)
+अणु
+	वापस pci_रेजिस्टर_driver(&aic7xxx_pci_driver);
+पूर्ण
 
-void
-ahc_linux_pci_exit(void)
-{
-	pci_unregister_driver(&aic7xxx_pci_driver);
-}
+व्योम
+ahc_linux_pci_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&aic7xxx_pci_driver);
+पूर्ण
 
-static int
-ahc_linux_pci_reserve_io_region(struct ahc_softc *ahc, resource_size_t *base)
-{
-	if (aic7xxx_allow_memio == 0)
-		return (ENOMEM);
+अटल पूर्णांक
+ahc_linux_pci_reserve_io_region(काष्ठा ahc_softc *ahc, resource_माप_प्रकार *base)
+अणु
+	अगर (aic7xxx_allow_memio == 0)
+		वापस (ENOMEM);
 
 	*base = pci_resource_start(ahc->dev_softc, 0);
-	if (*base == 0)
-		return (ENOMEM);
-	if (!request_region(*base, 256, "aic7xxx"))
-		return (ENOMEM);
-	return (0);
-}
+	अगर (*base == 0)
+		वापस (ENOMEM);
+	अगर (!request_region(*base, 256, "aic7xxx"))
+		वापस (ENOMEM);
+	वापस (0);
+पूर्ण
 
-static int
-ahc_linux_pci_reserve_mem_region(struct ahc_softc *ahc,
-				 resource_size_t *bus_addr,
-				 uint8_t __iomem **maddr)
-{
-	resource_size_t	start;
-	int	error;
+अटल पूर्णांक
+ahc_linux_pci_reserve_mem_region(काष्ठा ahc_softc *ahc,
+				 resource_माप_प्रकार *bus_addr,
+				 uपूर्णांक8_t __iomem **maddr)
+अणु
+	resource_माप_प्रकार	start;
+	पूर्णांक	error;
 
 	error = 0;
 	start = pci_resource_start(ahc->dev_softc, 1);
-	if (start != 0) {
+	अगर (start != 0) अणु
 		*bus_addr = start;
-		if (!request_mem_region(start, 0x1000, "aic7xxx"))
+		अगर (!request_mem_region(start, 0x1000, "aic7xxx"))
 			error = ENOMEM;
-		if (error == 0) {
+		अगर (error == 0) अणु
 			*maddr = ioremap(start, 256);
-			if (*maddr == NULL) {
+			अगर (*maddr == शून्य) अणु
 				error = ENOMEM;
 				release_mem_region(start, 0x1000);
-			}
-		}
-	} else
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा
 		error = ENOMEM;
-	return (error);
-}
+	वापस (error);
+पूर्ण
 
-int
-ahc_pci_map_registers(struct ahc_softc *ahc)
-{
-	uint32_t command;
-	resource_size_t	base;
-	uint8_t	__iomem *maddr;
-	int	 error;
+पूर्णांक
+ahc_pci_map_रेजिस्टरs(काष्ठा ahc_softc *ahc)
+अणु
+	uपूर्णांक32_t command;
+	resource_माप_प्रकार	base;
+	uपूर्णांक8_t	__iomem *maddr;
+	पूर्णांक	 error;
 
 	/*
 	 * If its allowed, we prefer memory mapped access.
 	 */
-	command = ahc_pci_read_config(ahc->dev_softc, PCIR_COMMAND, 4);
+	command = ahc_pci_पढ़ो_config(ahc->dev_softc, PCIR_COMMAND, 4);
 	command &= ~(PCIM_CMD_PORTEN|PCIM_CMD_MEMEN);
 	base = 0;
-	maddr = NULL;
+	maddr = शून्य;
 	error = ahc_linux_pci_reserve_mem_region(ahc, &base, &maddr);
-	if (error == 0) {
-		ahc->platform_data->mem_busaddr = base;
+	अगर (error == 0) अणु
+		ahc->platक्रमm_data->mem_busaddr = base;
 		ahc->tag = BUS_SPACE_MEMIO;
 		ahc->bsh.maddr = maddr;
-		ahc_pci_write_config(ahc->dev_softc, PCIR_COMMAND,
+		ahc_pci_ग_लिखो_config(ahc->dev_softc, PCIR_COMMAND,
 				     command | PCIM_CMD_MEMEN, 4);
 
 		/*
-		 * Do a quick test to see if memory mapped
+		 * Do a quick test to see अगर memory mapped
 		 * I/O is functioning correctly.
 		 */
-		if (ahc_pci_test_register_access(ahc) != 0) {
+		अगर (ahc_pci_test_रेजिस्टर_access(ahc) != 0) अणु
 
-			printk("aic7xxx: PCI Device %d:%d:%d "
+			prपूर्णांकk("aic7xxx: PCI Device %d:%d:%d "
 			       "failed memory mapped test.  Using PIO.\n",
 			       ahc_get_pci_bus(ahc->dev_softc),
 			       ahc_get_pci_slot(ahc->dev_softc),
 			       ahc_get_pci_function(ahc->dev_softc));
 			iounmap(maddr);
-			release_mem_region(ahc->platform_data->mem_busaddr,
+			release_mem_region(ahc->platक्रमm_data->mem_busaddr,
 					   0x1000);
-			ahc->bsh.maddr = NULL;
-			maddr = NULL;
-		} else
+			ahc->bsh.maddr = शून्य;
+			maddr = शून्य;
+		पूर्ण अन्यथा
 			command |= PCIM_CMD_MEMEN;
-	} else {
-		printk("aic7xxx: PCI%d:%d:%d MEM region 0x%llx "
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk("aic7xxx: PCI%d:%d:%d MEM region 0x%llx "
 		       "unavailable. Cannot memory map device.\n",
 		       ahc_get_pci_bus(ahc->dev_softc),
 		       ahc_get_pci_slot(ahc->dev_softc),
 		       ahc_get_pci_function(ahc->dev_softc),
-		       (unsigned long long)base);
-	}
+		       (अचिन्हित दीर्घ दीर्घ)base);
+	पूर्ण
 
 	/*
 	 * We always prefer memory mapped access.
 	 */
-	if (maddr == NULL) {
+	अगर (maddr == शून्य) अणु
 
 		error = ahc_linux_pci_reserve_io_region(ahc, &base);
-		if (error == 0) {
+		अगर (error == 0) अणु
 			ahc->tag = BUS_SPACE_PIO;
-			ahc->bsh.ioport = (u_long)base;
+			ahc->bsh.ioport = (u_दीर्घ)base;
 			command |= PCIM_CMD_PORTEN;
-		} else {
-			printk("aic7xxx: PCI%d:%d:%d IO region 0x%llx[0..255] "
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk("aic7xxx: PCI%d:%d:%d IO region 0x%llx[0..255] "
 			       "unavailable. Cannot map device.\n",
 			       ahc_get_pci_bus(ahc->dev_softc),
 			       ahc_get_pci_slot(ahc->dev_softc),
 			       ahc_get_pci_function(ahc->dev_softc),
-			       (unsigned long long)base);
-		}
-	}
-	ahc_pci_write_config(ahc->dev_softc, PCIR_COMMAND, command, 4);
-	return (error);
-}
+			       (अचिन्हित दीर्घ दीर्घ)base);
+		पूर्ण
+	पूर्ण
+	ahc_pci_ग_लिखो_config(ahc->dev_softc, PCIR_COMMAND, command, 4);
+	वापस (error);
+पूर्ण
 
-int
-ahc_pci_map_int(struct ahc_softc *ahc)
-{
-	int error;
+पूर्णांक
+ahc_pci_map_पूर्णांक(काष्ठा ahc_softc *ahc)
+अणु
+	पूर्णांक error;
 
 	error = request_irq(ahc->dev_softc->irq, ahc_linux_isr,
 			    IRQF_SHARED, "aic7xxx", ahc);
-	if (error == 0)
-		ahc->platform_data->irq = ahc->dev_softc->irq;
+	अगर (error == 0)
+		ahc->platक्रमm_data->irq = ahc->dev_softc->irq;
 	
-	return (-error);
-}
+	वापस (-error);
+पूर्ण
 

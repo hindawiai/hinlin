@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Programming the mspx4xx sound processor family
  *
@@ -6,498 +7,498 @@
  */
 
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/freezer.h>
-#include <linux/videodev2.h>
-#include <media/v4l2-common.h>
-#include <media/drv-intf/msp3400.h>
-#include <linux/kthread.h>
-#include <linux/suspend.h>
-#include "msp3400-driver.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/videodev2.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/drv-पूर्णांकf/msp3400.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/suspend.h>
+#समावेश "msp3400-driver.h"
 
-/* this one uses the automatic sound standard detection of newer msp34xx
+/* this one uses the स्वतःmatic sound standard detection of newer msp34xx
    chip versions */
-static struct {
-	int retval;
-	int main, second;
-	char *name;
+अटल काष्ठा अणु
+	पूर्णांक retval;
+	पूर्णांक मुख्य, second;
+	अक्षर *name;
 	v4l2_std_id std;
-} msp_stdlist[] = {
-	{ 0x0000, 0, 0, "could not detect sound standard", V4L2_STD_ALL },
-	{ 0x0001, 0, 0, "autodetect start", V4L2_STD_ALL },
-	{ 0x0002, MSP_CARRIER(4.5), MSP_CARRIER(4.72),
-	  "4.5/4.72  M Dual FM-Stereo", V4L2_STD_MN },
-	{ 0x0003, MSP_CARRIER(5.5), MSP_CARRIER(5.7421875),
-	  "5.5/5.74  B/G Dual FM-Stereo", V4L2_STD_BG },
-	{ 0x0004, MSP_CARRIER(6.5), MSP_CARRIER(6.2578125),
-	  "6.5/6.25  D/K1 Dual FM-Stereo", V4L2_STD_DK },
-	{ 0x0005, MSP_CARRIER(6.5), MSP_CARRIER(6.7421875),
-	  "6.5/6.74  D/K2 Dual FM-Stereo", V4L2_STD_DK },
-	{ 0x0006, MSP_CARRIER(6.5), MSP_CARRIER(6.5),
-	  "6.5  D/K FM-Mono (HDEV3)", V4L2_STD_DK },
-	{ 0x0007, MSP_CARRIER(6.5), MSP_CARRIER(5.7421875),
-	  "6.5/5.74  D/K3 Dual FM-Stereo", V4L2_STD_DK },
-	{ 0x0008, MSP_CARRIER(5.5), MSP_CARRIER(5.85),
-	  "5.5/5.85  B/G NICAM FM", V4L2_STD_BG },
-	{ 0x0009, MSP_CARRIER(6.5), MSP_CARRIER(5.85),
-	  "6.5/5.85  L NICAM AM", V4L2_STD_L },
-	{ 0x000a, MSP_CARRIER(6.0), MSP_CARRIER(6.55),
-	  "6.0/6.55  I NICAM FM", V4L2_STD_PAL_I },
-	{ 0x000b, MSP_CARRIER(6.5), MSP_CARRIER(5.85),
-	  "6.5/5.85  D/K NICAM FM", V4L2_STD_DK },
-	{ 0x000c, MSP_CARRIER(6.5), MSP_CARRIER(5.85),
-	  "6.5/5.85  D/K NICAM FM (HDEV2)", V4L2_STD_DK },
-	{ 0x000d, MSP_CARRIER(6.5), MSP_CARRIER(5.85),
-	  "6.5/5.85  D/K NICAM FM (HDEV3)", V4L2_STD_DK },
-	{ 0x0020, MSP_CARRIER(4.5), MSP_CARRIER(4.5),
-	  "4.5  M BTSC-Stereo", V4L2_STD_MTS },
-	{ 0x0021, MSP_CARRIER(4.5), MSP_CARRIER(4.5),
-	  "4.5  M BTSC-Mono + SAP", V4L2_STD_MTS },
-	{ 0x0030, MSP_CARRIER(4.5), MSP_CARRIER(4.5),
-	  "4.5  M EIA-J Japan Stereo", V4L2_STD_NTSC_M_JP },
-	{ 0x0040, MSP_CARRIER(10.7), MSP_CARRIER(10.7),
-	  "10.7  FM-Stereo Radio", V4L2_STD_ALL },
-	{ 0x0050, MSP_CARRIER(6.5), MSP_CARRIER(6.5),
-	  "6.5  SAT-Mono", V4L2_STD_ALL },
-	{ 0x0051, MSP_CARRIER(7.02), MSP_CARRIER(7.20),
-	  "7.02/7.20  SAT-Stereo", V4L2_STD_ALL },
-	{ 0x0060, MSP_CARRIER(7.2), MSP_CARRIER(7.2),
-	  "7.2  SAT ADR", V4L2_STD_ALL },
-	{     -1, 0, 0, NULL, 0 }, /* EOF */
-};
+पूर्ण msp_stdlist[] = अणु
+	अणु 0x0000, 0, 0, "could not detect sound standard", V4L2_STD_ALL पूर्ण,
+	अणु 0x0001, 0, 0, "autodetect start", V4L2_STD_ALL पूर्ण,
+	अणु 0x0002, MSP_CARRIER(4.5), MSP_CARRIER(4.72),
+	  "4.5/4.72  M Dual FM-Stereo", V4L2_STD_MN पूर्ण,
+	अणु 0x0003, MSP_CARRIER(5.5), MSP_CARRIER(5.7421875),
+	  "5.5/5.74  B/G Dual FM-Stereo", V4L2_STD_BG पूर्ण,
+	अणु 0x0004, MSP_CARRIER(6.5), MSP_CARRIER(6.2578125),
+	  "6.5/6.25  D/K1 Dual FM-Stereo", V4L2_STD_DK पूर्ण,
+	अणु 0x0005, MSP_CARRIER(6.5), MSP_CARRIER(6.7421875),
+	  "6.5/6.74  D/K2 Dual FM-Stereo", V4L2_STD_DK पूर्ण,
+	अणु 0x0006, MSP_CARRIER(6.5), MSP_CARRIER(6.5),
+	  "6.5  D/K FM-Mono (HDEV3)", V4L2_STD_DK पूर्ण,
+	अणु 0x0007, MSP_CARRIER(6.5), MSP_CARRIER(5.7421875),
+	  "6.5/5.74  D/K3 Dual FM-Stereo", V4L2_STD_DK पूर्ण,
+	अणु 0x0008, MSP_CARRIER(5.5), MSP_CARRIER(5.85),
+	  "5.5/5.85  B/G NICAM FM", V4L2_STD_BG पूर्ण,
+	अणु 0x0009, MSP_CARRIER(6.5), MSP_CARRIER(5.85),
+	  "6.5/5.85  L NICAM AM", V4L2_STD_L पूर्ण,
+	अणु 0x000a, MSP_CARRIER(6.0), MSP_CARRIER(6.55),
+	  "6.0/6.55  I NICAM FM", V4L2_STD_PAL_I पूर्ण,
+	अणु 0x000b, MSP_CARRIER(6.5), MSP_CARRIER(5.85),
+	  "6.5/5.85  D/K NICAM FM", V4L2_STD_DK पूर्ण,
+	अणु 0x000c, MSP_CARRIER(6.5), MSP_CARRIER(5.85),
+	  "6.5/5.85  D/K NICAM FM (HDEV2)", V4L2_STD_DK पूर्ण,
+	अणु 0x000d, MSP_CARRIER(6.5), MSP_CARRIER(5.85),
+	  "6.5/5.85  D/K NICAM FM (HDEV3)", V4L2_STD_DK पूर्ण,
+	अणु 0x0020, MSP_CARRIER(4.5), MSP_CARRIER(4.5),
+	  "4.5  M BTSC-Stereo", V4L2_STD_MTS पूर्ण,
+	अणु 0x0021, MSP_CARRIER(4.5), MSP_CARRIER(4.5),
+	  "4.5  M BTSC-Mono + SAP", V4L2_STD_MTS पूर्ण,
+	अणु 0x0030, MSP_CARRIER(4.5), MSP_CARRIER(4.5),
+	  "4.5  M EIA-J Japan Stereo", V4L2_STD_NTSC_M_JP पूर्ण,
+	अणु 0x0040, MSP_CARRIER(10.7), MSP_CARRIER(10.7),
+	  "10.7  FM-Stereo Radio", V4L2_STD_ALL पूर्ण,
+	अणु 0x0050, MSP_CARRIER(6.5), MSP_CARRIER(6.5),
+	  "6.5  SAT-Mono", V4L2_STD_ALL पूर्ण,
+	अणु 0x0051, MSP_CARRIER(7.02), MSP_CARRIER(7.20),
+	  "7.02/7.20  SAT-Stereo", V4L2_STD_ALL पूर्ण,
+	अणु 0x0060, MSP_CARRIER(7.2), MSP_CARRIER(7.2),
+	  "7.2  SAT ADR", V4L2_STD_ALL पूर्ण,
+	अणु     -1, 0, 0, शून्य, 0 पूर्ण, /* खातापूर्ण */
+पूर्ण;
 
-static struct msp3400c_init_data_dem {
-	int fir1[6];
-	int fir2[6];
-	int cdo1;
-	int cdo2;
-	int ad_cv;
-	int mode_reg;
-	int dsp_src;
-	int dsp_matrix;
-} msp3400c_init_data[] = {
-	{	/* AM (for carrier detect / msp3400) */
-		{75, 19, 36, 35, 39, 40},
-		{75, 19, 36, 35, 39, 40},
+अटल काष्ठा msp3400c_init_data_dem अणु
+	पूर्णांक fir1[6];
+	पूर्णांक fir2[6];
+	पूर्णांक cकरो1;
+	पूर्णांक cकरो2;
+	पूर्णांक ad_cv;
+	पूर्णांक mode_reg;
+	पूर्णांक dsp_src;
+	पूर्णांक dsp_matrix;
+पूर्ण msp3400c_init_data[] = अणु
+	अणु	/* AM (क्रम carrier detect / msp3400) */
+		अणु75, 19, 36, 35, 39, 40पूर्ण,
+		अणु75, 19, 36, 35, 39, 40पूर्ण,
 		MSP_CARRIER(5.5), MSP_CARRIER(5.5),
 		0x00d0, 0x0500, 0x0020, 0x3000
-	}, {	/* AM (for carrier detect / msp3410) */
-		{-1, -1, -8, 2, 59, 126},
-		{-1, -1, -8, 2, 59, 126},
+	पूर्ण, अणु	/* AM (क्रम carrier detect / msp3410) */
+		अणु-1, -1, -8, 2, 59, 126पूर्ण,
+		अणु-1, -1, -8, 2, 59, 126पूर्ण,
 		MSP_CARRIER(5.5), MSP_CARRIER(5.5),
 		0x00d0, 0x0100, 0x0020, 0x3000
-	}, {	/* FM Radio */
-		{-8, -8, 4, 6, 78, 107},
-		{-8, -8, 4, 6, 78, 107},
+	पूर्ण, अणु	/* FM Radio */
+		अणु-8, -8, 4, 6, 78, 107पूर्ण,
+		अणु-8, -8, 4, 6, 78, 107पूर्ण,
 		MSP_CARRIER(10.7), MSP_CARRIER(10.7),
 		0x00d0, 0x0480, 0x0020, 0x3000
-	}, {	/* Terrestrial FM-mono + FM-stereo */
-		{3, 18, 27, 48, 66, 72},
-		{3, 18, 27, 48, 66, 72},
+	पूर्ण, अणु	/* Terrestrial FM-mono + FM-stereo */
+		अणु3, 18, 27, 48, 66, 72पूर्ण,
+		अणु3, 18, 27, 48, 66, 72पूर्ण,
 		MSP_CARRIER(5.5), MSP_CARRIER(5.5),
 		0x00d0, 0x0480, 0x0030, 0x3000
-	}, {	/* Sat FM-mono */
-		{ 1, 9, 14, 24, 33, 37},
-		{ 3, 18, 27, 48, 66, 72},
+	पूर्ण, अणु	/* Sat FM-mono */
+		अणु 1, 9, 14, 24, 33, 37पूर्ण,
+		अणु 3, 18, 27, 48, 66, 72पूर्ण,
 		MSP_CARRIER(6.5), MSP_CARRIER(6.5),
 		0x00c6, 0x0480, 0x0000, 0x3000
-	}, {	/* NICAM/FM --  B/G (5.5/5.85), D/K (6.5/5.85) */
-		{-2, -8, -10, 10, 50, 86},
-		{3, 18, 27, 48, 66, 72},
+	पूर्ण, अणु	/* NICAM/FM --  B/G (5.5/5.85), D/K (6.5/5.85) */
+		अणु-2, -8, -10, 10, 50, 86पूर्ण,
+		अणु3, 18, 27, 48, 66, 72पूर्ण,
 		MSP_CARRIER(5.5), MSP_CARRIER(5.5),
 		0x00d0, 0x0040, 0x0120, 0x3000
-	}, {	/* NICAM/FM -- I (6.0/6.552) */
-		{2, 4, -6, -4, 40, 94},
-		{3, 18, 27, 48, 66, 72},
+	पूर्ण, अणु	/* NICAM/FM -- I (6.0/6.552) */
+		अणु2, 4, -6, -4, 40, 94पूर्ण,
+		अणु3, 18, 27, 48, 66, 72पूर्ण,
 		MSP_CARRIER(6.0), MSP_CARRIER(6.0),
 		0x00d0, 0x0040, 0x0120, 0x3000
-	}, {	/* NICAM/AM -- L (6.5/5.85) */
-		{-2, -8, -10, 10, 50, 86},
-		{-4, -12, -9, 23, 79, 126},
+	पूर्ण, अणु	/* NICAM/AM -- L (6.5/5.85) */
+		अणु-2, -8, -10, 10, 50, 86पूर्ण,
+		अणु-4, -12, -9, 23, 79, 126पूर्ण,
 		MSP_CARRIER(6.5), MSP_CARRIER(6.5),
 		0x00c6, 0x0140, 0x0120, 0x7c00
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct msp3400c_carrier_detect {
-	int   cdo;
-	char *name;
-};
+काष्ठा msp3400c_carrier_detect अणु
+	पूर्णांक   cकरो;
+	अक्षर *name;
+पूर्ण;
 
-static struct msp3400c_carrier_detect msp3400c_carrier_detect_main[] = {
-	/* main carrier */
-	{ MSP_CARRIER(4.5),        "4.5   NTSC"                   },
-	{ MSP_CARRIER(5.5),        "5.5   PAL B/G"                },
-	{ MSP_CARRIER(6.0),        "6.0   PAL I"                  },
-	{ MSP_CARRIER(6.5),        "6.5   PAL D/K + SAT + SECAM"  }
-};
+अटल काष्ठा msp3400c_carrier_detect msp3400c_carrier_detect_मुख्य[] = अणु
+	/* मुख्य carrier */
+	अणु MSP_CARRIER(4.5),        "4.5   NTSC"                   पूर्ण,
+	अणु MSP_CARRIER(5.5),        "5.5   PAL B/G"                पूर्ण,
+	अणु MSP_CARRIER(6.0),        "6.0   PAL I"                  पूर्ण,
+	अणु MSP_CARRIER(6.5),        "6.5   PAL D/K + SAT + SECAM"  पूर्ण
+पूर्ण;
 
-static struct msp3400c_carrier_detect msp3400c_carrier_detect_55[] = {
+अटल काष्ठा msp3400c_carrier_detect msp3400c_carrier_detect_55[] = अणु
 	/* PAL B/G */
-	{ MSP_CARRIER(5.7421875),  "5.742 PAL B/G FM-stereo"     },
-	{ MSP_CARRIER(5.85),       "5.85  PAL B/G NICAM"         }
-};
+	अणु MSP_CARRIER(5.7421875),  "5.742 PAL B/G FM-stereo"     पूर्ण,
+	अणु MSP_CARRIER(5.85),       "5.85  PAL B/G NICAM"         पूर्ण
+पूर्ण;
 
-static struct msp3400c_carrier_detect msp3400c_carrier_detect_65[] = {
+अटल काष्ठा msp3400c_carrier_detect msp3400c_carrier_detect_65[] = अणु
 	/* PAL SAT / SECAM */
-	{ MSP_CARRIER(5.85),       "5.85  PAL D/K + SECAM NICAM" },
-	{ MSP_CARRIER(6.2578125),  "6.25  PAL D/K1 FM-stereo" },
-	{ MSP_CARRIER(6.7421875),  "6.74  PAL D/K2 FM-stereo" },
-	{ MSP_CARRIER(7.02),       "7.02  PAL SAT FM-stereo s/b" },
-	{ MSP_CARRIER(7.20),       "7.20  PAL SAT FM-stereo s"   },
-	{ MSP_CARRIER(7.38),       "7.38  PAL SAT FM-stereo b"   },
-};
+	अणु MSP_CARRIER(5.85),       "5.85  PAL D/K + SECAM NICAM" पूर्ण,
+	अणु MSP_CARRIER(6.2578125),  "6.25  PAL D/K1 FM-stereo" पूर्ण,
+	अणु MSP_CARRIER(6.7421875),  "6.74  PAL D/K2 FM-stereo" पूर्ण,
+	अणु MSP_CARRIER(7.02),       "7.02  PAL SAT FM-stereo s/b" पूर्ण,
+	अणु MSP_CARRIER(7.20),       "7.20  PAL SAT FM-stereo s"   पूर्ण,
+	अणु MSP_CARRIER(7.38),       "7.38  PAL SAT FM-stereo b"   पूर्ण,
+पूर्ण;
 
 /* ------------------------------------------------------------------------ */
 
-const char *msp_standard_std_name(int std)
-{
-	int i;
+स्थिर अक्षर *msp_standard_std_name(पूर्णांक std)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; msp_stdlist[i].name != NULL; i++)
-		if (msp_stdlist[i].retval == std)
-			return msp_stdlist[i].name;
-	return "unknown";
-}
+	क्रम (i = 0; msp_stdlist[i].name != शून्य; i++)
+		अगर (msp_stdlist[i].retval == std)
+			वापस msp_stdlist[i].name;
+	वापस "unknown";
+पूर्ण
 
-static v4l2_std_id msp_standard_std(int std)
-{
-	int i;
+अटल v4l2_std_id msp_standard_std(पूर्णांक std)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; msp_stdlist[i].name != NULL; i++)
-		if (msp_stdlist[i].retval == std)
-			return msp_stdlist[i].std;
-	return V4L2_STD_ALL;
-}
+	क्रम (i = 0; msp_stdlist[i].name != शून्य; i++)
+		अगर (msp_stdlist[i].retval == std)
+			वापस msp_stdlist[i].std;
+	वापस V4L2_STD_ALL;
+पूर्ण
 
-static void msp_set_source(struct i2c_client *client, u16 src)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
+अटल व्योम msp_set_source(काष्ठा i2c_client *client, u16 src)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
 
-	if (msp_dolby) {
-		msp_write_dsp(client, 0x0008, 0x0520); /* I2S1 */
-		msp_write_dsp(client, 0x0009, 0x0620); /* I2S2 */
-	} else {
-		msp_write_dsp(client, 0x0008, src);
-		msp_write_dsp(client, 0x0009, src);
-	}
-	msp_write_dsp(client, 0x000a, src);
-	msp_write_dsp(client, 0x000b, src);
-	msp_write_dsp(client, 0x000c, src);
-	if (state->has_scart2_out)
-		msp_write_dsp(client, 0x0041, src);
-}
+	अगर (msp_करोlby) अणु
+		msp_ग_लिखो_dsp(client, 0x0008, 0x0520); /* I2S1 */
+		msp_ग_लिखो_dsp(client, 0x0009, 0x0620); /* I2S2 */
+	पूर्ण अन्यथा अणु
+		msp_ग_लिखो_dsp(client, 0x0008, src);
+		msp_ग_लिखो_dsp(client, 0x0009, src);
+	पूर्ण
+	msp_ग_लिखो_dsp(client, 0x000a, src);
+	msp_ग_लिखो_dsp(client, 0x000b, src);
+	msp_ग_लिखो_dsp(client, 0x000c, src);
+	अगर (state->has_scart2_out)
+		msp_ग_लिखो_dsp(client, 0x0041, src);
+पूर्ण
 
-void msp3400c_set_carrier(struct i2c_client *client, int cdo1, int cdo2)
-{
-	msp_write_dem(client, 0x0093, cdo1 & 0xfff);
-	msp_write_dem(client, 0x009b, cdo1 >> 12);
-	msp_write_dem(client, 0x00a3, cdo2 & 0xfff);
-	msp_write_dem(client, 0x00ab, cdo2 >> 12);
-	msp_write_dem(client, 0x0056, 0); /* LOAD_REG_1/2 */
-}
+व्योम msp3400c_set_carrier(काष्ठा i2c_client *client, पूर्णांक cकरो1, पूर्णांक cकरो2)
+अणु
+	msp_ग_लिखो_dem(client, 0x0093, cकरो1 & 0xfff);
+	msp_ग_लिखो_dem(client, 0x009b, cकरो1 >> 12);
+	msp_ग_लिखो_dem(client, 0x00a3, cकरो2 & 0xfff);
+	msp_ग_लिखो_dem(client, 0x00ab, cकरो2 >> 12);
+	msp_ग_लिखो_dem(client, 0x0056, 0); /* LOAD_REG_1/2 */
+पूर्ण
 
-void msp3400c_set_mode(struct i2c_client *client, int mode)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
-	struct msp3400c_init_data_dem *data = &msp3400c_init_data[mode];
-	int tuner = (state->route_in >> 3) & 1;
-	int i;
+व्योम msp3400c_set_mode(काष्ठा i2c_client *client, पूर्णांक mode)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
+	काष्ठा msp3400c_init_data_dem *data = &msp3400c_init_data[mode];
+	पूर्णांक tuner = (state->route_in >> 3) & 1;
+	पूर्णांक i;
 
 	dev_dbg_lvl(&client->dev, 1, msp_debug, "set_mode: %d\n", mode);
 	state->mode = mode;
 	state->rxsubchans = V4L2_TUNER_SUB_MONO;
 
-	msp_write_dem(client, 0x00bb, data->ad_cv | (tuner ? 0x100 : 0));
+	msp_ग_लिखो_dem(client, 0x00bb, data->ad_cv | (tuner ? 0x100 : 0));
 
-	for (i = 5; i >= 0; i--)               /* fir 1 */
-		msp_write_dem(client, 0x0001, data->fir1[i]);
+	क्रम (i = 5; i >= 0; i--)               /* fir 1 */
+		msp_ग_लिखो_dem(client, 0x0001, data->fir1[i]);
 
-	msp_write_dem(client, 0x0005, 0x0004); /* fir 2 */
-	msp_write_dem(client, 0x0005, 0x0040);
-	msp_write_dem(client, 0x0005, 0x0000);
-	for (i = 5; i >= 0; i--)
-		msp_write_dem(client, 0x0005, data->fir2[i]);
+	msp_ग_लिखो_dem(client, 0x0005, 0x0004); /* fir 2 */
+	msp_ग_लिखो_dem(client, 0x0005, 0x0040);
+	msp_ग_लिखो_dem(client, 0x0005, 0x0000);
+	क्रम (i = 5; i >= 0; i--)
+		msp_ग_लिखो_dem(client, 0x0005, data->fir2[i]);
 
-	msp_write_dem(client, 0x0083, data->mode_reg);
+	msp_ग_लिखो_dem(client, 0x0083, data->mode_reg);
 
-	msp3400c_set_carrier(client, data->cdo1, data->cdo2);
+	msp3400c_set_carrier(client, data->cकरो1, data->cकरो2);
 
 	msp_set_source(client, data->dsp_src);
 	/* set prescales */
 
-	/* volume prescale for SCART (AM mono input) */
-	msp_write_dsp(client, 0x000d, 0x1900);
-	msp_write_dsp(client, 0x000e, data->dsp_matrix);
-	if (state->has_nicam) /* nicam prescale */
-		msp_write_dsp(client, 0x0010, 0x5a00);
-}
+	/* volume prescale क्रम SCART (AM mono input) */
+	msp_ग_लिखो_dsp(client, 0x000d, 0x1900);
+	msp_ग_लिखो_dsp(client, 0x000e, data->dsp_matrix);
+	अगर (state->has_nicam) /* nicam prescale */
+		msp_ग_लिखो_dsp(client, 0x0010, 0x5a00);
+पूर्ण
 
-/* Set audio mode. Note that the pre-'G' models do not support BTSC+SAP,
-   nor do they support stereo BTSC. */
-static void msp3400c_set_audmode(struct i2c_client *client)
-{
-	static char *strmode[] = {
+/* Set audio mode. Note that the pre-'G' models करो not support BTSC+SAP,
+   nor करो they support stereo BTSC. */
+अटल व्योम msp3400c_set_audmode(काष्ठा i2c_client *client)
+अणु
+	अटल अक्षर *strmode[] = अणु
 		"mono", "stereo", "lang2", "lang1", "lang1+lang2"
-	};
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
-	char *modestr = (state->audmode >= 0 && state->audmode < 5) ?
+	पूर्ण;
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
+	अक्षर *modestr = (state->audmode >= 0 && state->audmode < 5) ?
 		strmode[state->audmode] : "unknown";
-	int src = 0;	/* channel source: FM/AM, nicam or SCART */
-	int audmode = state->audmode;
+	पूर्णांक src = 0;	/* channel source: FM/AM, nicam or SCART */
+	पूर्णांक audmode = state->audmode;
 
-	if (state->opmode == OPMODE_AUTOSELECT) {
-		/* this method would break everything, let's make sure
+	अगर (state->opmode == OPMODE_AUTOSELECT) अणु
+		/* this method would अवरोध everything, let's make sure
 		 * it's never called
 		 */
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"set_audmode called with mode=%d instead of set_source (ignored)\n",
 			state->audmode);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Note: for the C and D revs no NTSC stereo + SAP is possible as
-	   the hardware does not support SAP. So the rxsubchans combination
-	   of STEREO | LANG2 does not occur. */
+	/* Note: क्रम the C and D revs no NTSC stereo + SAP is possible as
+	   the hardware करोes not support SAP. So the rxsubchans combination
+	   of STEREO | LANG2 करोes not occur. */
 
-	if (state->mode != MSP_MODE_EXTERN) {
-		/* switch to mono if only mono is available */
-		if (state->rxsubchans == V4L2_TUNER_SUB_MONO)
+	अगर (state->mode != MSP_MODE_EXTERN) अणु
+		/* चयन to mono अगर only mono is available */
+		अगर (state->rxsubchans == V4L2_TUNER_SUB_MONO)
 			audmode = V4L2_TUNER_MODE_MONO;
-		/* if bilingual */
-		else if (state->rxsubchans & V4L2_TUNER_SUB_LANG2) {
+		/* अगर bilingual */
+		अन्यथा अगर (state->rxsubchans & V4L2_TUNER_SUB_LANG2) अणु
 			/* and mono or stereo, then fallback to lang1 */
-			if (audmode == V4L2_TUNER_MODE_MONO ||
+			अगर (audmode == V4L2_TUNER_MODE_MONO ||
 			    audmode == V4L2_TUNER_MODE_STEREO)
 				audmode = V4L2_TUNER_MODE_LANG1;
-		}
-		/* if stereo, and audmode is not mono, then switch to stereo */
-		else if (audmode != V4L2_TUNER_MODE_MONO)
+		पूर्ण
+		/* अगर stereo, and audmode is not mono, then चयन to stereo */
+		अन्यथा अगर (audmode != V4L2_TUNER_MODE_MONO)
 			audmode = V4L2_TUNER_MODE_STEREO;
-	}
+	पूर्ण
 
-	/* switch demodulator */
-	switch (state->mode) {
-	case MSP_MODE_FM_TERRA:
+	/* चयन demodulator */
+	चयन (state->mode) अणु
+	हाल MSP_MODE_FM_TERRA:
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "FM set_audmode: %s\n", modestr);
-		switch (audmode) {
-		case V4L2_TUNER_MODE_STEREO:
-			msp_write_dsp(client, 0x000e, 0x3001);
-			break;
-		case V4L2_TUNER_MODE_MONO:
-		case V4L2_TUNER_MODE_LANG1:
-		case V4L2_TUNER_MODE_LANG2:
-		case V4L2_TUNER_MODE_LANG1_LANG2:
-			msp_write_dsp(client, 0x000e, 0x3000);
-			break;
-		}
-		break;
-	case MSP_MODE_FM_SAT:
+		चयन (audmode) अणु
+		हाल V4L2_TUNER_MODE_STEREO:
+			msp_ग_लिखो_dsp(client, 0x000e, 0x3001);
+			अवरोध;
+		हाल V4L2_TUNER_MODE_MONO:
+		हाल V4L2_TUNER_MODE_LANG1:
+		हाल V4L2_TUNER_MODE_LANG2:
+		हाल V4L2_TUNER_MODE_LANG1_LANG2:
+			msp_ग_लिखो_dsp(client, 0x000e, 0x3000);
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल MSP_MODE_FM_SAT:
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "SAT set_audmode: %s\n", modestr);
-		switch (audmode) {
-		case V4L2_TUNER_MODE_MONO:
+		चयन (audmode) अणु
+		हाल V4L2_TUNER_MODE_MONO:
 			msp3400c_set_carrier(client, MSP_CARRIER(6.5), MSP_CARRIER(6.5));
-			break;
-		case V4L2_TUNER_MODE_STEREO:
-		case V4L2_TUNER_MODE_LANG1_LANG2:
+			अवरोध;
+		हाल V4L2_TUNER_MODE_STEREO:
+		हाल V4L2_TUNER_MODE_LANG1_LANG2:
 			msp3400c_set_carrier(client, MSP_CARRIER(7.2), MSP_CARRIER(7.02));
-			break;
-		case V4L2_TUNER_MODE_LANG1:
+			अवरोध;
+		हाल V4L2_TUNER_MODE_LANG1:
 			msp3400c_set_carrier(client, MSP_CARRIER(7.38), MSP_CARRIER(7.02));
-			break;
-		case V4L2_TUNER_MODE_LANG2:
+			अवरोध;
+		हाल V4L2_TUNER_MODE_LANG2:
 			msp3400c_set_carrier(client, MSP_CARRIER(7.38), MSP_CARRIER(7.02));
-			break;
-		}
-		break;
-	case MSP_MODE_FM_NICAM1:
-	case MSP_MODE_FM_NICAM2:
-	case MSP_MODE_AM_NICAM:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल MSP_MODE_FM_NICAM1:
+	हाल MSP_MODE_FM_NICAM2:
+	हाल MSP_MODE_AM_NICAM:
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"NICAM set_audmode: %s\n", modestr);
-		if (state->nicam_on)
+		अगर (state->nicam_on)
 			src = 0x0100;  /* NICAM */
-		break;
-	case MSP_MODE_BTSC:
+		अवरोध;
+	हाल MSP_MODE_BTSC:
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"BTSC set_audmode: %s\n", modestr);
-		break;
-	case MSP_MODE_EXTERN:
+		अवरोध;
+	हाल MSP_MODE_EXTERN:
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"extern set_audmode: %s\n", modestr);
 		src = 0x0200;  /* SCART */
-		break;
-	case MSP_MODE_FM_RADIO:
+		अवरोध;
+	हाल MSP_MODE_FM_RADIO:
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"FM-Radio set_audmode: %s\n", modestr);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "mono set_audmode\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* switch audio */
+	/* चयन audio */
 	dev_dbg_lvl(&client->dev, 1, msp_debug, "set audmode %d\n", audmode);
-	switch (audmode) {
-	case V4L2_TUNER_MODE_STEREO:
-	case V4L2_TUNER_MODE_LANG1_LANG2:
+	चयन (audmode) अणु
+	हाल V4L2_TUNER_MODE_STEREO:
+	हाल V4L2_TUNER_MODE_LANG1_LANG2:
 		src |= 0x0020;
-		break;
-	case V4L2_TUNER_MODE_MONO:
-		if (state->mode == MSP_MODE_AM_NICAM) {
+		अवरोध;
+	हाल V4L2_TUNER_MODE_MONO:
+		अगर (state->mode == MSP_MODE_AM_NICAM) अणु
 			dev_dbg_lvl(&client->dev, 1, msp_debug, "switching to AM mono\n");
 			/* AM mono decoding is handled by tuner, not MSP chip */
-			/* SCART switching control register */
+			/* SCART चयनing control रेजिस्टर */
 			msp_set_scart(client, SCART_MONO, 0);
 			src = 0x0200;
-			break;
-		}
-		if (state->rxsubchans & V4L2_TUNER_SUB_STEREO)
+			अवरोध;
+		पूर्ण
+		अगर (state->rxsubchans & V4L2_TUNER_SUB_STEREO)
 			src = 0x0030;
-		break;
-	case V4L2_TUNER_MODE_LANG1:
-		break;
-	case V4L2_TUNER_MODE_LANG2:
+		अवरोध;
+	हाल V4L2_TUNER_MODE_LANG1:
+		अवरोध;
+	हाल V4L2_TUNER_MODE_LANG2:
 		src |= 0x0010;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	dev_dbg_lvl(&client->dev, 1, msp_debug,
 		"set_audmode final source/matrix = 0x%x\n", src);
 
 	msp_set_source(client, src);
-}
+पूर्ण
 
-static void msp3400c_print_mode(struct i2c_client *client)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
+अटल व्योम msp3400c_prपूर्णांक_mode(काष्ठा i2c_client *client)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
 
-	if (state->main == state->second)
+	अगर (state->मुख्य == state->second)
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"mono sound carrier: %d.%03d MHz\n",
-			state->main / 910000, (state->main / 910) % 1000);
-	else
+			state->मुख्य / 910000, (state->मुख्य / 910) % 1000);
+	अन्यथा
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"main sound carrier: %d.%03d MHz\n",
-			state->main / 910000, (state->main / 910) % 1000);
-	if (state->mode == MSP_MODE_FM_NICAM1 || state->mode == MSP_MODE_FM_NICAM2)
+			state->मुख्य / 910000, (state->मुख्य / 910) % 1000);
+	अगर (state->mode == MSP_MODE_FM_NICAM1 || state->mode == MSP_MODE_FM_NICAM2)
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"NICAM/FM carrier  : %d.%03d MHz\n",
 			state->second / 910000, (state->second/910) % 1000);
-	if (state->mode == MSP_MODE_AM_NICAM)
+	अगर (state->mode == MSP_MODE_AM_NICAM)
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"NICAM/AM carrier  : %d.%03d MHz\n",
 			state->second / 910000, (state->second / 910) % 1000);
-	if (state->mode == MSP_MODE_FM_TERRA && state->main != state->second) {
+	अगर (state->mode == MSP_MODE_FM_TERRA && state->मुख्य != state->second) अणु
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"FM-stereo carrier : %d.%03d MHz\n",
 			state->second / 910000, (state->second / 910) % 1000);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static int msp3400c_detect_stereo(struct i2c_client *client)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
-	int val;
-	int rxsubchans = state->rxsubchans;
-	int newnicam = state->nicam_on;
-	int update = 0;
+अटल पूर्णांक msp3400c_detect_stereo(काष्ठा i2c_client *client)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
+	पूर्णांक val;
+	पूर्णांक rxsubchans = state->rxsubchans;
+	पूर्णांक newnicam = state->nicam_on;
+	पूर्णांक update = 0;
 
-	switch (state->mode) {
-	case MSP_MODE_FM_TERRA:
-		val = msp_read_dsp(client, 0x18);
-		if (val > 32767)
+	चयन (state->mode) अणु
+	हाल MSP_MODE_FM_TERRA:
+		val = msp_पढ़ो_dsp(client, 0x18);
+		अगर (val > 32767)
 			val -= 65536;
 		dev_dbg_lvl(&client->dev, 2, msp_debug,
 			"stereo detect register: %d\n", val);
-		if (val > 8192) {
+		अगर (val > 8192) अणु
 			rxsubchans = V4L2_TUNER_SUB_STEREO;
-		} else if (val < -4096) {
+		पूर्ण अन्यथा अगर (val < -4096) अणु
 			rxsubchans = V4L2_TUNER_SUB_LANG1 | V4L2_TUNER_SUB_LANG2;
-		} else {
+		पूर्ण अन्यथा अणु
 			rxsubchans = V4L2_TUNER_SUB_MONO;
-		}
+		पूर्ण
 		newnicam = 0;
-		break;
-	case MSP_MODE_FM_NICAM1:
-	case MSP_MODE_FM_NICAM2:
-	case MSP_MODE_AM_NICAM:
-		val = msp_read_dem(client, 0x23);
+		अवरोध;
+	हाल MSP_MODE_FM_NICAM1:
+	हाल MSP_MODE_FM_NICAM2:
+	हाल MSP_MODE_AM_NICAM:
+		val = msp_पढ़ो_dem(client, 0x23);
 		dev_dbg_lvl(&client->dev, 2, msp_debug, "nicam sync=%d, mode=%d\n",
 			val & 1, (val & 0x1e) >> 1);
 
-		if (val & 1) {
+		अगर (val & 1) अणु
 			/* nicam synced */
-			switch ((val & 0x1e) >> 1)  {
-			case 0:
-			case 8:
+			चयन ((val & 0x1e) >> 1)  अणु
+			हाल 0:
+			हाल 8:
 				rxsubchans = V4L2_TUNER_SUB_STEREO;
-				break;
-			case 1:
-			case 9:
+				अवरोध;
+			हाल 1:
+			हाल 9:
 				rxsubchans = V4L2_TUNER_SUB_MONO;
-				break;
-			case 2:
-			case 10:
+				अवरोध;
+			हाल 2:
+			हाल 10:
 				rxsubchans = V4L2_TUNER_SUB_LANG1 | V4L2_TUNER_SUB_LANG2;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				rxsubchans = V4L2_TUNER_SUB_MONO;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			newnicam = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			newnicam = 0;
 			rxsubchans = V4L2_TUNER_SUB_MONO;
-		}
-		break;
-	}
-	if (rxsubchans != state->rxsubchans) {
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	अगर (rxsubchans != state->rxsubchans) अणु
 		update = 1;
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"watch: rxsubchans %02x => %02x\n",
 			state->rxsubchans, rxsubchans);
 		state->rxsubchans = rxsubchans;
-	}
-	if (newnicam != state->nicam_on) {
+	पूर्ण
+	अगर (newnicam != state->nicam_on) अणु
 		update = 1;
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "watch: nicam %d => %d\n",
 			state->nicam_on, newnicam);
 		state->nicam_on = newnicam;
-	}
-	return update;
-}
+	पूर्ण
+	वापस update;
+पूर्ण
 
 /*
- * A kernel thread for msp3400 control -- we don't want to block the
- * in the ioctl while doing the sound carrier & stereo detect
+ * A kernel thपढ़ो क्रम msp3400 control -- we करोn't want to block the
+ * in the ioctl जबतक करोing the sound carrier & stereo detect
  */
 /* stereo/multilang monitoring */
-static void watch_stereo(struct i2c_client *client)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
+अटल व्योम watch_stereo(काष्ठा i2c_client *client)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
 
-	if (msp_detect_stereo(client))
+	अगर (msp_detect_stereo(client))
 		msp_set_audmode(client);
 
-	if (msp_once)
+	अगर (msp_once)
 		state->watch_stereo = 0;
-}
+पूर्ण
 
-int msp3400c_thread(void *data)
-{
-	struct i2c_client *client = data;
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
-	struct msp3400c_carrier_detect *cd;
-	int count, max1, max2, val1, val2, val, i;
+पूर्णांक msp3400c_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा i2c_client *client = data;
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
+	काष्ठा msp3400c_carrier_detect *cd;
+	पूर्णांक count, max1, max2, val1, val2, val, i;
 
 	dev_dbg_lvl(&client->dev, 1, msp_debug, "msp3400 daemon started\n");
 	state->detected_std = V4L2_STD_ALL;
-	set_freezable();
-	for (;;) {
+	set_मुक्तzable();
+	क्रम (;;) अणु
 		dev_dbg_lvl(&client->dev, 2, msp_debug, "msp3400 thread: sleep\n");
 		msp_sleep(state, -1);
 		dev_dbg_lvl(&client->dev, 2, msp_debug, "msp3400 thread: wakeup\n");
@@ -505,17 +506,17 @@ int msp3400c_thread(void *data)
 restart:
 		dev_dbg_lvl(&client->dev, 2, msp_debug, "thread: restart scan\n");
 		state->restart = 0;
-		if (kthread_should_stop())
-			break;
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
 
-		if (state->radio || MSP_MODE_EXTERN == state->mode) {
+		अगर (state->radio || MSP_MODE_EXTERN == state->mode) अणु
 			/* no carrier scan, just unmute */
 			dev_dbg_lvl(&client->dev, 1, msp_debug,
 				"thread: no carrier scan\n");
 			state->scan_in_progress = 0;
 			msp_update_volume(state);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* mute audio */
 		state->scan_in_progress = 1;
@@ -527,172 +528,172 @@ restart:
 		state->watch_stereo = 0;
 		state->nicam_on = 0;
 
-		/* wait for tuner to settle down after a channel change */
-		if (msp_sleep(state, 200))
-			goto restart;
+		/* रुको क्रम tuner to settle करोwn after a channel change */
+		अगर (msp_sleep(state, 200))
+			जाओ restart;
 
-		/* carrier detect pass #1 -- main carrier */
-		cd = msp3400c_carrier_detect_main;
-		count = ARRAY_SIZE(msp3400c_carrier_detect_main);
+		/* carrier detect pass #1 -- मुख्य carrier */
+		cd = msp3400c_carrier_detect_मुख्य;
+		count = ARRAY_SIZE(msp3400c_carrier_detect_मुख्य);
 
-		if (msp_amsound && (state->v4l2_std & V4L2_STD_SECAM)) {
-			/* autodetect doesn't work well with AM ... */
+		अगर (msp_amsound && (state->v4l2_std & V4L2_STD_SECAM)) अणु
+			/* स्वतःdetect करोesn't work well with AM ... */
 			max1 = 3;
 			count = 0;
 			dev_dbg_lvl(&client->dev, 1, msp_debug, "AM sound override\n");
-		}
+		पूर्ण
 
-		for (i = 0; i < count; i++) {
-			msp3400c_set_carrier(client, cd[i].cdo, cd[i].cdo);
-			if (msp_sleep(state, 100))
-				goto restart;
-			val = msp_read_dsp(client, 0x1b);
-			if (val > 32767)
+		क्रम (i = 0; i < count; i++) अणु
+			msp3400c_set_carrier(client, cd[i].cकरो, cd[i].cकरो);
+			अगर (msp_sleep(state, 100))
+				जाओ restart;
+			val = msp_पढ़ो_dsp(client, 0x1b);
+			अगर (val > 32767)
 				val -= 65536;
-			if (val1 < val) {
+			अगर (val1 < val) अणु
 				val1 = val;
 				max1 = i;
-			}
+			पूर्ण
 			dev_dbg_lvl(&client->dev, 1, msp_debug,
 				"carrier1 val: %5d / %s\n", val, cd[i].name);
-		}
+		पूर्ण
 
 		/* carrier detect pass #2 -- second (stereo) carrier */
-		switch (max1) {
-		case 1: /* 5.5 */
+		चयन (max1) अणु
+		हाल 1: /* 5.5 */
 			cd = msp3400c_carrier_detect_55;
 			count = ARRAY_SIZE(msp3400c_carrier_detect_55);
-			break;
-		case 3: /* 6.5 */
+			अवरोध;
+		हाल 3: /* 6.5 */
 			cd = msp3400c_carrier_detect_65;
 			count = ARRAY_SIZE(msp3400c_carrier_detect_65);
-			break;
-		case 0: /* 4.5 */
-		case 2: /* 6.0 */
-		default:
-			cd = NULL;
+			अवरोध;
+		हाल 0: /* 4.5 */
+		हाल 2: /* 6.0 */
+		शेष:
+			cd = शून्य;
 			count = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (msp_amsound && (state->v4l2_std & V4L2_STD_SECAM)) {
-			/* autodetect doesn't work well with AM ... */
-			cd = NULL;
+		अगर (msp_amsound && (state->v4l2_std & V4L2_STD_SECAM)) अणु
+			/* स्वतःdetect करोesn't work well with AM ... */
+			cd = शून्य;
 			count = 0;
 			max2 = 0;
-		}
-		for (i = 0; i < count; i++) {
-			msp3400c_set_carrier(client, cd[i].cdo, cd[i].cdo);
-			if (msp_sleep(state, 100))
-				goto restart;
-			val = msp_read_dsp(client, 0x1b);
-			if (val > 32767)
+		पूर्ण
+		क्रम (i = 0; i < count; i++) अणु
+			msp3400c_set_carrier(client, cd[i].cकरो, cd[i].cकरो);
+			अगर (msp_sleep(state, 100))
+				जाओ restart;
+			val = msp_पढ़ो_dsp(client, 0x1b);
+			अगर (val > 32767)
 				val -= 65536;
-			if (val2 < val) {
+			अगर (val2 < val) अणु
 				val2 = val;
 				max2 = i;
-			}
+			पूर्ण
 			dev_dbg_lvl(&client->dev, 1, msp_debug,
 				"carrier2 val: %5d / %s\n", val, cd[i].name);
-		}
+		पूर्ण
 
 		/* program the msp3400 according to the results */
-		state->main = msp3400c_carrier_detect_main[max1].cdo;
-		switch (max1) {
-		case 1: /* 5.5 */
+		state->मुख्य = msp3400c_carrier_detect_मुख्य[max1].cकरो;
+		चयन (max1) अणु
+		हाल 1: /* 5.5 */
 			state->detected_std = V4L2_STD_BG | V4L2_STD_PAL_H;
-			if (max2 == 0) {
+			अगर (max2 == 0) अणु
 				/* B/G FM-stereo */
-				state->second = msp3400c_carrier_detect_55[max2].cdo;
+				state->second = msp3400c_carrier_detect_55[max2].cकरो;
 				msp3400c_set_mode(client, MSP_MODE_FM_TERRA);
 				state->watch_stereo = 1;
-			} else if (max2 == 1 && state->has_nicam) {
+			पूर्ण अन्यथा अगर (max2 == 1 && state->has_nicam) अणु
 				/* B/G NICAM */
-				state->second = msp3400c_carrier_detect_55[max2].cdo;
+				state->second = msp3400c_carrier_detect_55[max2].cकरो;
 				msp3400c_set_mode(client, MSP_MODE_FM_NICAM1);
 				state->nicam_on = 1;
 				state->watch_stereo = 1;
-			} else {
-				goto no_second;
-			}
-			break;
-		case 2: /* 6.0 */
+			पूर्ण अन्यथा अणु
+				जाओ no_second;
+			पूर्ण
+			अवरोध;
+		हाल 2: /* 6.0 */
 			/* PAL I NICAM */
 			state->detected_std = V4L2_STD_PAL_I;
 			state->second = MSP_CARRIER(6.552);
 			msp3400c_set_mode(client, MSP_MODE_FM_NICAM2);
 			state->nicam_on = 1;
 			state->watch_stereo = 1;
-			break;
-		case 3: /* 6.5 */
-			if (max2 == 1 || max2 == 2) {
+			अवरोध;
+		हाल 3: /* 6.5 */
+			अगर (max2 == 1 || max2 == 2) अणु
 				/* D/K FM-stereo */
-				state->second = msp3400c_carrier_detect_65[max2].cdo;
+				state->second = msp3400c_carrier_detect_65[max2].cकरो;
 				msp3400c_set_mode(client, MSP_MODE_FM_TERRA);
 				state->watch_stereo = 1;
 				state->detected_std = V4L2_STD_DK;
-			} else if (max2 == 0 && (state->v4l2_std & V4L2_STD_SECAM)) {
+			पूर्ण अन्यथा अगर (max2 == 0 && (state->v4l2_std & V4L2_STD_SECAM)) अणु
 				/* L NICAM or AM-mono */
-				state->second = msp3400c_carrier_detect_65[max2].cdo;
+				state->second = msp3400c_carrier_detect_65[max2].cकरो;
 				msp3400c_set_mode(client, MSP_MODE_AM_NICAM);
 				state->watch_stereo = 1;
 				state->detected_std = V4L2_STD_L;
-			} else if (max2 == 0 && state->has_nicam) {
+			पूर्ण अन्यथा अगर (max2 == 0 && state->has_nicam) अणु
 				/* D/K NICAM */
-				state->second = msp3400c_carrier_detect_65[max2].cdo;
+				state->second = msp3400c_carrier_detect_65[max2].cकरो;
 				msp3400c_set_mode(client, MSP_MODE_FM_NICAM1);
 				state->nicam_on = 1;
 				state->watch_stereo = 1;
 				state->detected_std = V4L2_STD_DK;
-			} else {
-				goto no_second;
-			}
-			break;
-		case 0: /* 4.5 */
+			पूर्ण अन्यथा अणु
+				जाओ no_second;
+			पूर्ण
+			अवरोध;
+		हाल 0: /* 4.5 */
 			state->detected_std = V4L2_STD_MN;
 			fallthrough;
-		default:
+		शेष:
 no_second:
-			state->second = msp3400c_carrier_detect_main[max1].cdo;
+			state->second = msp3400c_carrier_detect_मुख्य[max1].cकरो;
 			msp3400c_set_mode(client, MSP_MODE_FM_TERRA);
-			break;
-		}
-		msp3400c_set_carrier(client, state->second, state->main);
+			अवरोध;
+		पूर्ण
+		msp3400c_set_carrier(client, state->second, state->मुख्य);
 
 		/* unmute */
 		state->scan_in_progress = 0;
 		msp3400c_set_audmode(client);
 		msp_update_volume(state);
 
-		if (msp_debug)
-			msp3400c_print_mode(client);
+		अगर (msp_debug)
+			msp3400c_prपूर्णांक_mode(client);
 
-		/* monitor tv audio mode, the first time don't wait
-		   so long to get a quick stereo/bilingual result */
+		/* monitor tv audio mode, the first समय करोn't रुको
+		   so दीर्घ to get a quick stereo/bilingual result */
 		count = 3;
-		while (state->watch_stereo) {
-			if (msp_sleep(state, count ? 1000 : 5000))
-				goto restart;
-			if (count)
+		जबतक (state->watch_stereo) अणु
+			अगर (msp_sleep(state, count ? 1000 : 5000))
+				जाओ restart;
+			अगर (count)
 				count--;
 			watch_stereo(client);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	dev_dbg_lvl(&client->dev, 1, msp_debug, "thread: exit\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int msp3410d_thread(void *data)
-{
-	struct i2c_client *client = data;
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
-	int val, i, std, count;
+पूर्णांक msp3410d_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा i2c_client *client = data;
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
+	पूर्णांक val, i, std, count;
 
 	dev_dbg_lvl(&client->dev, 1, msp_debug, "msp3410 daemon started\n");
 	state->detected_std = V4L2_STD_ALL;
-	set_freezable();
-	for (;;) {
+	set_मुक्तzable();
+	क्रम (;;) अणु
 		dev_dbg_lvl(&client->dev, 2, msp_debug, "msp3410 thread: sleep\n");
 		msp_sleep(state, -1);
 		dev_dbg_lvl(&client->dev, 2, msp_debug, "msp3410 thread: wakeup\n");
@@ -700,231 +701,231 @@ int msp3410d_thread(void *data)
 restart:
 		dev_dbg_lvl(&client->dev, 2, msp_debug, "thread: restart scan\n");
 		state->restart = 0;
-		if (kthread_should_stop())
-			break;
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
 
-		if (state->mode == MSP_MODE_EXTERN) {
+		अगर (state->mode == MSP_MODE_EXTERN) अणु
 			/* no carrier scan needed, just unmute */
 			dev_dbg_lvl(&client->dev, 1, msp_debug,
 				"thread: no carrier scan\n");
 			state->scan_in_progress = 0;
 			msp_update_volume(state);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* mute audio */
 		state->scan_in_progress = 1;
 		msp_update_volume(state);
 
-		/* start autodetect. Note: autodetect is not supported for
-		   NTSC-M and radio, hence we force the standard in those
-		   cases. */
-		if (state->radio)
+		/* start स्वतःdetect. Note: स्वतःdetect is not supported क्रम
+		   NTSC-M and radio, hence we क्रमce the standard in those
+		   हालs. */
+		अगर (state->radio)
 			std = 0x40;
-		else
+		अन्यथा
 			std = (state->v4l2_std & V4L2_STD_NTSC) ? 0x20 : 1;
 		state->watch_stereo = 0;
 		state->nicam_on = 0;
 
-		/* wait for tuner to settle down after a channel change */
-		if (msp_sleep(state, 200))
-			goto restart;
+		/* रुको क्रम tuner to settle करोwn after a channel change */
+		अगर (msp_sleep(state, 200))
+			जाओ restart;
 
-		if (msp_debug)
+		अगर (msp_debug)
 			dev_dbg_lvl(&client->dev, 2, msp_debug,
 				"setting standard: %s (0x%04x)\n",
 				msp_standard_std_name(std), std);
 
-		if (std != 1) {
-			/* programmed some specific mode */
+		अगर (std != 1) अणु
+			/* programmed some specअगरic mode */
 			val = std;
-		} else {
-			/* triggered autodetect */
-			msp_write_dem(client, 0x20, std);
-			for (;;) {
-				if (msp_sleep(state, 100))
-					goto restart;
+		पूर्ण अन्यथा अणु
+			/* triggered स्वतःdetect */
+			msp_ग_लिखो_dem(client, 0x20, std);
+			क्रम (;;) अणु
+				अगर (msp_sleep(state, 100))
+					जाओ restart;
 
 				/* check results */
-				val = msp_read_dem(client, 0x7e);
-				if (val < 0x07ff)
-					break;
+				val = msp_पढ़ो_dem(client, 0x7e);
+				अगर (val < 0x07ff)
+					अवरोध;
 				dev_dbg_lvl(&client->dev, 2, msp_debug,
 					"detection still in progress\n");
-			}
-		}
-		for (i = 0; msp_stdlist[i].name != NULL; i++)
-			if (msp_stdlist[i].retval == val)
-				break;
+			पूर्ण
+		पूर्ण
+		क्रम (i = 0; msp_stdlist[i].name != शून्य; i++)
+			अगर (msp_stdlist[i].retval == val)
+				अवरोध;
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "current standard: %s (0x%04x)\n",
 			msp_standard_std_name(val), val);
-		state->main   = msp_stdlist[i].main;
+		state->मुख्य   = msp_stdlist[i].मुख्य;
 		state->second = msp_stdlist[i].second;
 		state->std = val;
 		state->rxsubchans = V4L2_TUNER_SUB_MONO;
 
-		if (msp_amsound && !state->radio &&
-		    (state->v4l2_std & V4L2_STD_SECAM) && (val != 0x0009)) {
-			/* autodetection has failed, let backup */
+		अगर (msp_amsound && !state->radio &&
+		    (state->v4l2_std & V4L2_STD_SECAM) && (val != 0x0009)) अणु
+			/* स्वतःdetection has failed, let backup */
 			dev_dbg_lvl(&client->dev, 1, msp_debug, "autodetection failed, switching to backup standard: %s (0x%04x)\n",
 				msp_stdlist[8].name ?
 					msp_stdlist[8].name : "unknown", val);
 			state->std = val = 0x0009;
-			msp_write_dem(client, 0x20, val);
-		} else {
+			msp_ग_लिखो_dem(client, 0x20, val);
+		पूर्ण अन्यथा अणु
 			state->detected_std = msp_standard_std(state->std);
-		}
+		पूर्ण
 
 		/* set stereo */
-		switch (val) {
-		case 0x0008: /* B/G NICAM */
-		case 0x000a: /* I NICAM */
-		case 0x000b: /* D/K NICAM */
-			if (val == 0x000a)
+		चयन (val) अणु
+		हाल 0x0008: /* B/G NICAM */
+		हाल 0x000a: /* I NICAM */
+		हाल 0x000b: /* D/K NICAM */
+			अगर (val == 0x000a)
 				state->mode = MSP_MODE_FM_NICAM2;
-			else
+			अन्यथा
 				state->mode = MSP_MODE_FM_NICAM1;
 			/* just turn on stereo */
 			state->nicam_on = 1;
 			state->watch_stereo = 1;
-			break;
-		case 0x0009:
+			अवरोध;
+		हाल 0x0009:
 			state->mode = MSP_MODE_AM_NICAM;
 			state->nicam_on = 1;
 			state->watch_stereo = 1;
-			break;
-		case 0x0020: /* BTSC */
+			अवरोध;
+		हाल 0x0020: /* BTSC */
 			/* The pre-'G' models only have BTSC-mono */
 			state->mode = MSP_MODE_BTSC;
-			break;
-		case 0x0040: /* FM radio */
+			अवरोध;
+		हाल 0x0040: /* FM radio */
 			state->mode = MSP_MODE_FM_RADIO;
 			state->rxsubchans = V4L2_TUNER_SUB_STEREO;
-			/* not needed in theory if we have radio, but
-			   short programming enables carrier mute */
+			/* not needed in theory अगर we have radio, but
+			   लघु programming enables carrier mute */
 			msp3400c_set_mode(client, MSP_MODE_FM_RADIO);
 			msp3400c_set_carrier(client, MSP_CARRIER(10.7),
 					    MSP_CARRIER(10.7));
-			break;
-		case 0x0002:
-		case 0x0003:
-		case 0x0004:
-		case 0x0005:
+			अवरोध;
+		हाल 0x0002:
+		हाल 0x0003:
+		हाल 0x0004:
+		हाल 0x0005:
 			state->mode = MSP_MODE_FM_TERRA;
 			state->watch_stereo = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* set various prescales */
-		msp_write_dsp(client, 0x0d, 0x1900); /* scart */
-		msp_write_dsp(client, 0x0e, 0x3000); /* FM */
-		if (state->has_nicam)
-			msp_write_dsp(client, 0x10, 0x5a00); /* nicam */
+		msp_ग_लिखो_dsp(client, 0x0d, 0x1900); /* scart */
+		msp_ग_लिखो_dsp(client, 0x0e, 0x3000); /* FM */
+		अगर (state->has_nicam)
+			msp_ग_लिखो_dsp(client, 0x10, 0x5a00); /* nicam */
 
-		if (state->has_i2s_conf)
-			msp_write_dem(client, 0x40, state->i2s_mode);
+		अगर (state->has_i2s_conf)
+			msp_ग_लिखो_dem(client, 0x40, state->i2s_mode);
 
 		/* unmute */
 		msp3400c_set_audmode(client);
 		state->scan_in_progress = 0;
 		msp_update_volume(state);
 
-		/* monitor tv audio mode, the first time don't wait
-		   so long to get a quick stereo/bilingual result */
+		/* monitor tv audio mode, the first समय करोn't रुको
+		   so दीर्घ to get a quick stereo/bilingual result */
 		count = 3;
-		while (state->watch_stereo) {
-			if (msp_sleep(state, count ? 1000 : 5000))
-				goto restart;
-			if (count)
+		जबतक (state->watch_stereo) अणु
+			अगर (msp_sleep(state, count ? 1000 : 5000))
+				जाओ restart;
+			अगर (count)
 				count--;
 			watch_stereo(client);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	dev_dbg_lvl(&client->dev, 1, msp_debug, "thread: exit\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-/* msp34xxG + (autoselect no-thread)
- * this one uses both automatic standard detection and automatic sound
+/* msp34xxG + (स्वतःselect no-thपढ़ो)
+ * this one uses both स्वतःmatic standard detection and स्वतःmatic sound
  * select which are available in the newer G versions
- * struct msp: only norm, acb and source are really used in this mode
+ * काष्ठा msp: only norm, acb and source are really used in this mode
  */
 
-static int msp34xxg_modus(struct i2c_client *client)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
+अटल पूर्णांक msp34xxg_modus(काष्ठा i2c_client *client)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
 
-	if (state->radio) {
+	अगर (state->radio) अणु
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "selected radio modus\n");
-		return 0x0001;
-	}
-	if (state->v4l2_std == V4L2_STD_NTSC_M_JP) {
+		वापस 0x0001;
+	पूर्ण
+	अगर (state->v4l2_std == V4L2_STD_NTSC_M_JP) अणु
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "selected M (EIA-J) modus\n");
-		return 0x4001;
-	}
-	if (state->v4l2_std == V4L2_STD_NTSC_M_KR) {
+		वापस 0x4001;
+	पूर्ण
+	अगर (state->v4l2_std == V4L2_STD_NTSC_M_KR) अणु
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "selected M (A2) modus\n");
-		return 0x0001;
-	}
-	if (state->v4l2_std == V4L2_STD_SECAM_L) {
+		वापस 0x0001;
+	पूर्ण
+	अगर (state->v4l2_std == V4L2_STD_SECAM_L) अणु
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "selected SECAM-L modus\n");
-		return 0x6001;
-	}
-	if (state->v4l2_std & V4L2_STD_MN) {
+		वापस 0x6001;
+	पूर्ण
+	अगर (state->v4l2_std & V4L2_STD_MN) अणु
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "selected M (BTSC) modus\n");
-		return 0x2001;
-	}
-	return 0x7001;
-}
+		वापस 0x2001;
+	पूर्ण
+	वापस 0x7001;
+पूर्ण
 
-static void msp34xxg_set_source(struct i2c_client *client, u16 reg, int in)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
-	int source, matrix;
+अटल व्योम msp34xxg_set_source(काष्ठा i2c_client *client, u16 reg, पूर्णांक in)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
+	पूर्णांक source, matrix;
 
-	switch (state->audmode) {
-	case V4L2_TUNER_MODE_MONO:
+	चयन (state->audmode) अणु
+	हाल V4L2_TUNER_MODE_MONO:
 		source = 0; /* mono only */
 		matrix = 0x30;
-		break;
-	case V4L2_TUNER_MODE_LANG2:
+		अवरोध;
+	हाल V4L2_TUNER_MODE_LANG2:
 		source = 4; /* stereo or B */
 		matrix = 0x10;
-		break;
-	case V4L2_TUNER_MODE_LANG1_LANG2:
+		अवरोध;
+	हाल V4L2_TUNER_MODE_LANG1_LANG2:
 		source = 1; /* stereo or A|B */
 		matrix = 0x20;
-		break;
-	case V4L2_TUNER_MODE_LANG1:
+		अवरोध;
+	हाल V4L2_TUNER_MODE_LANG1:
 		source = 3; /* stereo or A */
 		matrix = 0x00;
-		break;
-	case V4L2_TUNER_MODE_STEREO:
-	default:
+		अवरोध;
+	हाल V4L2_TUNER_MODE_STEREO:
+	शेष:
 		source = 3; /* stereo or A */
 		matrix = 0x20;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (in == MSP_DSP_IN_TUNER)
+	अगर (in == MSP_DSP_IN_TUNER)
 		source = (source << 8) | 0x20;
-	/* the msp34x2g puts the MAIN_AVC, MAIN and AUX sources in 12, 13, 14
-	   instead of 11, 12, 13. So we add one for that msp version. */
-	else if (in >= MSP_DSP_IN_MAIN_AVC && state->has_dolby_pro_logic)
+	/* the msp34x2g माला_दो the MAIN_AVC, MAIN and AUX sources in 12, 13, 14
+	   instead of 11, 12, 13. So we add one क्रम that msp version. */
+	अन्यथा अगर (in >= MSP_DSP_IN_MAIN_AVC && state->has_करोlby_pro_logic)
 		source = ((in + 1) << 8) | matrix;
-	else
+	अन्यथा
 		source = (in << 8) | matrix;
 
 	dev_dbg_lvl(&client->dev, 1, msp_debug,
 		"set source to %d (0x%x) for output %02x\n", in, source, reg);
-	msp_write_dsp(client, reg, source);
-}
+	msp_ग_लिखो_dsp(client, reg, source);
+पूर्ण
 
-static void msp34xxg_set_sources(struct i2c_client *client)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
+अटल व्योम msp34xxg_set_sources(काष्ठा i2c_client *client)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
 	u32 in = state->route_in;
 
 	msp34xxg_set_source(client, 0x0008, (in >> 4) & 0xf);
@@ -932,64 +933,64 @@ static void msp34xxg_set_sources(struct i2c_client *client)
 	msp34xxg_set_source(client, 0x000c, (in >> 4) & 0xf);
 	msp34xxg_set_source(client, 0x0009, (in >> 8) & 0xf);
 	msp34xxg_set_source(client, 0x000a, (in >> 12) & 0xf);
-	if (state->has_scart2_out)
+	अगर (state->has_scart2_out)
 		msp34xxg_set_source(client, 0x0041, (in >> 16) & 0xf);
 	msp34xxg_set_source(client, 0x000b, (in >> 20) & 0xf);
-}
+पूर्ण
 
 /* (re-)initialize the msp34xxg */
-static void msp34xxg_reset(struct i2c_client *client)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
-	int tuner = (state->route_in >> 3) & 1;
-	int modus;
+अटल व्योम msp34xxg_reset(काष्ठा i2c_client *client)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
+	पूर्णांक tuner = (state->route_in >> 3) & 1;
+	पूर्णांक modus;
 
-	/* initialize std to 1 (autodetect) to signal that no standard is
+	/* initialize std to 1 (स्वतःdetect) to संकेत that no standard is
 	   selected yet. */
 	state->std = 1;
 
 	msp_reset(client);
 
-	if (state->has_i2s_conf)
-		msp_write_dem(client, 0x40, state->i2s_mode);
+	अगर (state->has_i2s_conf)
+		msp_ग_लिखो_dem(client, 0x40, state->i2s_mode);
 
 	/* step-by-step initialisation, as described in the manual */
 	modus = msp34xxg_modus(client);
 	modus |= tuner ? 0x100 : 0;
-	msp_write_dem(client, 0x30, modus);
+	msp_ग_लिखो_dem(client, 0x30, modus);
 
-	/* write the dsps that may have an influence on
-	   standard/audio autodetection right now */
+	/* ग_लिखो the dsps that may have an influence on
+	   standard/audio स्वतःdetection right now */
 	msp34xxg_set_sources(client);
 
-	msp_write_dsp(client, 0x0d, 0x1900); /* scart */
-	msp_write_dsp(client, 0x0e, 0x3000); /* FM */
-	if (state->has_nicam)
-		msp_write_dsp(client, 0x10, 0x5a00); /* nicam */
+	msp_ग_लिखो_dsp(client, 0x0d, 0x1900); /* scart */
+	msp_ग_लिखो_dsp(client, 0x0e, 0x3000); /* FM */
+	अगर (state->has_nicam)
+		msp_ग_लिखो_dsp(client, 0x10, 0x5a00); /* nicam */
 
-	/* set identification threshold. Personally, I
-	 * I set it to a higher value than the default
-	 * of 0x190 to ignore noisy stereo signals.
+	/* set identअगरication threshold. Personally, I
+	 * I set it to a higher value than the शेष
+	 * of 0x190 to ignore noisy stereo संकेतs.
 	 * this needs tuning. (recommended range 0x00a0-0x03c0)
-	 * 0x7f0 = forced mono mode
+	 * 0x7f0 = क्रमced mono mode
 	 *
-	 * a2 threshold for stereo/bilingual.
-	 * Note: this register is part of the Manual/Compatibility mode.
+	 * a2 threshold क्रम stereo/bilingual.
+	 * Note: this रेजिस्टर is part of the Manual/Compatibility mode.
 	 * It is supported by all 'G'-family chips.
 	 */
-	msp_write_dem(client, 0x22, msp_stereo_thresh);
-}
+	msp_ग_लिखो_dem(client, 0x22, msp_stereo_thresh);
+पूर्ण
 
-int msp34xxg_thread(void *data)
-{
-	struct i2c_client *client = data;
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
-	int val, i;
+पूर्णांक msp34xxg_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा i2c_client *client = data;
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
+	पूर्णांक val, i;
 
 	dev_dbg_lvl(&client->dev, 1, msp_debug, "msp34xxg daemon started\n");
 	state->detected_std = V4L2_STD_ALL;
-	set_freezable();
-	for (;;) {
+	set_मुक्तzable();
+	क्रम (;;) अणु
 		dev_dbg_lvl(&client->dev, 2, msp_debug, "msp34xxg thread: sleep\n");
 		msp_sleep(state, -1);
 		dev_dbg_lvl(&client->dev, 2, msp_debug, "msp34xxg thread: wakeup\n");
@@ -997,48 +998,48 @@ int msp34xxg_thread(void *data)
 restart:
 		dev_dbg_lvl(&client->dev, 1, msp_debug, "thread: restart scan\n");
 		state->restart = 0;
-		if (kthread_should_stop())
-			break;
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
 
-		if (state->mode == MSP_MODE_EXTERN) {
+		अगर (state->mode == MSP_MODE_EXTERN) अणु
 			/* no carrier scan needed, just unmute */
 			dev_dbg_lvl(&client->dev, 1, msp_debug,
 				"thread: no carrier scan\n");
 			state->scan_in_progress = 0;
 			msp_update_volume(state);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* setup the chip*/
 		msp34xxg_reset(client);
 		state->std = state->radio ? 0x40 :
-			(state->force_btsc && msp_standard == 1) ? 32 : msp_standard;
-		msp_write_dem(client, 0x20, state->std);
-		/* start autodetect */
-		if (state->std != 1)
-			goto unmute;
+			(state->क्रमce_btsc && msp_standard == 1) ? 32 : msp_standard;
+		msp_ग_लिखो_dem(client, 0x20, state->std);
+		/* start स्वतःdetect */
+		अगर (state->std != 1)
+			जाओ unmute;
 
-		/* watch autodetect */
+		/* watch स्वतःdetect */
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
 			"started autodetect, waiting for result\n");
-		for (i = 0; i < 10; i++) {
-			if (msp_sleep(state, 100))
-				goto restart;
+		क्रम (i = 0; i < 10; i++) अणु
+			अगर (msp_sleep(state, 100))
+				जाओ restart;
 
 			/* check results */
-			val = msp_read_dem(client, 0x7e);
-			if (val < 0x07ff) {
+			val = msp_पढ़ो_dem(client, 0x7e);
+			अगर (val < 0x07ff) अणु
 				state->std = val;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			dev_dbg_lvl(&client->dev, 2, msp_debug,
 				"detection still in progress\n");
-		}
-		if (state->std == 1) {
+		पूर्ण
+		अगर (state->std == 1) अणु
 			dev_dbg_lvl(&client->dev, 1, msp_debug,
 				"detection still in progress after 10 tries. giving up.\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 unmute:
 		dev_dbg_lvl(&client->dev, 1, msp_debug,
@@ -1046,110 +1047,110 @@ unmute:
 			msp_standard_std_name(state->std), state->std);
 		state->detected_std = msp_standard_std(state->std);
 
-		if (state->std == 9) {
+		अगर (state->std == 9) अणु
 			/* AM NICAM mode */
-			msp_write_dsp(client, 0x0e, 0x7c00);
-		}
+			msp_ग_लिखो_dsp(client, 0x0e, 0x7c00);
+		पूर्ण
 
 		/* unmute: dispatch sound to scart output, set scart volume */
 		msp_update_volume(state);
 
 		/* restore ACB */
-		if (msp_write_dsp(client, 0x13, state->acb))
-			return -1;
+		अगर (msp_ग_लिखो_dsp(client, 0x13, state->acb))
+			वापस -1;
 
-		/* the periodic stereo/SAP check is only relevant for
+		/* the periodic stereo/SAP check is only relevant क्रम
 		   the 0x20 standard (BTSC) */
-		if (state->std != 0x20)
-			continue;
+		अगर (state->std != 0x20)
+			जारी;
 
 		state->watch_stereo = 1;
 
-		/* monitor tv audio mode, the first time don't wait
+		/* monitor tv audio mode, the first समय करोn't रुको
 		   in order to get a quick stereo/SAP update */
 		watch_stereo(client);
-		while (state->watch_stereo) {
+		जबतक (state->watch_stereo) अणु
 			watch_stereo(client);
-			if (msp_sleep(state, 5000))
-				goto restart;
-		}
-	}
+			अगर (msp_sleep(state, 5000))
+				जाओ restart;
+		पूर्ण
+	पूर्ण
 	dev_dbg_lvl(&client->dev, 1, msp_debug, "thread: exit\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int msp34xxg_detect_stereo(struct i2c_client *client)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
-	int status = msp_read_dem(client, 0x0200);
-	int is_bilingual = status & 0x100;
-	int is_stereo = status & 0x40;
-	int oldrx = state->rxsubchans;
+अटल पूर्णांक msp34xxg_detect_stereo(काष्ठा i2c_client *client)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
+	पूर्णांक status = msp_पढ़ो_dem(client, 0x0200);
+	पूर्णांक is_bilingual = status & 0x100;
+	पूर्णांक is_stereo = status & 0x40;
+	पूर्णांक oldrx = state->rxsubchans;
 
-	if (state->mode == MSP_MODE_EXTERN)
-		return 0;
+	अगर (state->mode == MSP_MODE_EXTERN)
+		वापस 0;
 
 	state->rxsubchans = 0;
-	if (is_stereo)
+	अगर (is_stereo)
 		state->rxsubchans = V4L2_TUNER_SUB_STEREO;
-	else
+	अन्यथा
 		state->rxsubchans = V4L2_TUNER_SUB_MONO;
-	if (is_bilingual) {
-		if (state->std == 0x20)
+	अगर (is_bilingual) अणु
+		अगर (state->std == 0x20)
 			state->rxsubchans |= V4L2_TUNER_SUB_SAP;
-		else
+		अन्यथा
 			state->rxsubchans =
 				V4L2_TUNER_SUB_LANG1 | V4L2_TUNER_SUB_LANG2;
-	}
+	पूर्ण
 	dev_dbg_lvl(&client->dev, 1, msp_debug,
 		"status=0x%x, stereo=%d, bilingual=%d -> rxsubchans=%d\n",
 		status, is_stereo, is_bilingual, state->rxsubchans);
-	return (oldrx != state->rxsubchans);
-}
+	वापस (oldrx != state->rxsubchans);
+पूर्ण
 
-static void msp34xxg_set_audmode(struct i2c_client *client)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
+अटल व्योम msp34xxg_set_audmode(काष्ठा i2c_client *client)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
 
-	if (state->std == 0x20) {
-	       if ((state->rxsubchans & V4L2_TUNER_SUB_SAP) &&
+	अगर (state->std == 0x20) अणु
+	       अगर ((state->rxsubchans & V4L2_TUNER_SUB_SAP) &&
 		   (state->audmode == V4L2_TUNER_MODE_LANG1_LANG2 ||
-		    state->audmode == V4L2_TUNER_MODE_LANG2)) {
-			msp_write_dem(client, 0x20, 0x21);
-	       } else {
-			msp_write_dem(client, 0x20, 0x20);
-	       }
-	}
+		    state->audmode == V4L2_TUNER_MODE_LANG2)) अणु
+			msp_ग_लिखो_dem(client, 0x20, 0x21);
+	       पूर्ण अन्यथा अणु
+			msp_ग_लिखो_dem(client, 0x20, 0x20);
+	       पूर्ण
+	पूर्ण
 
 	msp34xxg_set_sources(client);
-}
+पूर्ण
 
-void msp_set_audmode(struct i2c_client *client)
-{
-	struct msp_state *state = to_state(i2c_get_clientdata(client));
+व्योम msp_set_audmode(काष्ठा i2c_client *client)
+अणु
+	काष्ठा msp_state *state = to_state(i2c_get_clientdata(client));
 
-	switch (state->opmode) {
-	case OPMODE_MANUAL:
-	case OPMODE_AUTODETECT:
+	चयन (state->opmode) अणु
+	हाल OPMODE_MANUAL:
+	हाल OPMODE_AUTODETECT:
 		msp3400c_set_audmode(client);
-		break;
-	case OPMODE_AUTOSELECT:
+		अवरोध;
+	हाल OPMODE_AUTOSELECT:
 		msp34xxg_set_audmode(client);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-int msp_detect_stereo(struct i2c_client *client)
-{
-	struct msp_state *state  = to_state(i2c_get_clientdata(client));
+पूर्णांक msp_detect_stereo(काष्ठा i2c_client *client)
+अणु
+	काष्ठा msp_state *state  = to_state(i2c_get_clientdata(client));
 
-	switch (state->opmode) {
-	case OPMODE_MANUAL:
-	case OPMODE_AUTODETECT:
-		return msp3400c_detect_stereo(client);
-	case OPMODE_AUTOSELECT:
-		return msp34xxg_detect_stereo(client);
-	}
-	return 0;
-}
+	चयन (state->opmode) अणु
+	हाल OPMODE_MANUAL:
+	हाल OPMODE_AUTODETECT:
+		वापस msp3400c_detect_stereo(client);
+	हाल OPMODE_AUTOSELECT:
+		वापस msp34xxg_detect_stereo(client);
+	पूर्ण
+	वापस 0;
+पूर्ण
 

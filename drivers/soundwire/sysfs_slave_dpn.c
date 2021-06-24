@@ -1,301 +1,302 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 // Copyright(c) 2015-2020 Intel Corporation.
 
-#include <linux/device.h>
-#include <linux/mod_devicetable.h>
-#include <linux/slab.h>
-#include <linux/sysfs.h>
-#include <linux/soundwire/sdw.h>
-#include <linux/soundwire/sdw_type.h>
-#include "bus.h"
-#include "sysfs_local.h"
+#समावेश <linux/device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/soundwire/sdw.h>
+#समावेश <linux/soundwire/sdw_type.h>
+#समावेश "bus.h"
+#समावेश "sysfs_local.h"
 
-struct dpn_attribute {
-	struct device_attribute	dev_attr;
-	int N;
-	int dir;
-	const char *format_string;
-};
+काष्ठा dpn_attribute अणु
+	काष्ठा device_attribute	dev_attr;
+	पूर्णांक N;
+	पूर्णांक dir;
+	स्थिर अक्षर *क्रमmat_string;
+पूर्ण;
 
 /*
  * Since we can't use ARRAY_SIZE, hard-code number of dpN attributes.
  * This needs to be updated when adding new attributes - an error will be
  * flagged on a mismatch.
  */
-#define SDW_DPN_ATTRIBUTES 15
+#घोषणा SDW_DPN_ATTRIBUTES 15
 
-#define sdw_dpn_attribute_alloc(field)					\
-static int field##_attribute_alloc(struct device *dev,			\
-				struct attribute **res,			\
-				int N, int dir,				\
-				const char *format_string)		\
-{									\
-	struct dpn_attribute *dpn_attr;					\
+#घोषणा sdw_dpn_attribute_alloc(field)					\
+अटल पूर्णांक field##_attribute_alloc(काष्ठा device *dev,			\
+				काष्ठा attribute **res,			\
+				पूर्णांक N, पूर्णांक dir,				\
+				स्थिर अक्षर *क्रमmat_string)		\
+अणु									\
+	काष्ठा dpn_attribute *dpn_attr;					\
 									\
-	dpn_attr = devm_kzalloc(dev, sizeof(*dpn_attr), GFP_KERNEL);	\
-	if (!dpn_attr)							\
-		return -ENOMEM;						\
+	dpn_attr = devm_kzalloc(dev, माप(*dpn_attr), GFP_KERNEL);	\
+	अगर (!dpn_attr)							\
+		वापस -ENOMEM;						\
 	dpn_attr->N = N;						\
 	dpn_attr->dir = dir;						\
 	sysfs_attr_init(&dpn_attr->dev_attr.attr);			\
-	dpn_attr->format_string = format_string;			\
-	dpn_attr->dev_attr.attr.name = __stringify(field);		\
+	dpn_attr->क्रमmat_string = क्रमmat_string;			\
+	dpn_attr->dev_attr.attr.name = __stringअगरy(field);		\
 	dpn_attr->dev_attr.attr.mode = 0444;				\
 	dpn_attr->dev_attr.show = field##_show;				\
 									\
 	*res = &dpn_attr->dev_attr.attr;				\
 									\
-	return 0;							\
-}
+	वापस 0;							\
+पूर्ण
 
-#define sdw_dpn_attr(field)						\
+#घोषणा sdw_dpn_attr(field)						\
 									\
-static ssize_t field##_dpn_show(struct sdw_slave *slave,		\
-				int N,					\
-				int dir,				\
-				const char *format_string,		\
-				char *buf)				\
-{									\
-	struct sdw_dpn_prop *dpn;					\
-	unsigned long mask;						\
-	int bit;							\
-	int i;								\
+अटल sमाप_प्रकार field##_dpn_show(काष्ठा sdw_slave *slave,		\
+				पूर्णांक N,					\
+				पूर्णांक dir,				\
+				स्थिर अक्षर *क्रमmat_string,		\
+				अक्षर *buf)				\
+अणु									\
+	काष्ठा sdw_dpn_prop *dpn;					\
+	अचिन्हित दीर्घ mask;						\
+	पूर्णांक bit;							\
+	पूर्णांक i;								\
 									\
-	if (dir) {							\
+	अगर (dir) अणु							\
 		dpn = slave->prop.src_dpn_prop;				\
 		mask = slave->prop.source_ports;			\
-	} else {							\
+	पूर्ण अन्यथा अणु							\
 		dpn = slave->prop.sink_dpn_prop;			\
 		mask = slave->prop.sink_ports;				\
-	}								\
+	पूर्ण								\
 									\
 	i = 0;								\
-	for_each_set_bit(bit, &mask, 32) {				\
-		if (bit == N) {						\
-			return sprintf(buf, format_string,		\
+	क्रम_each_set_bit(bit, &mask, 32) अणु				\
+		अगर (bit == N) अणु						\
+			वापस प्र_लिखो(buf, क्रमmat_string,		\
 				       dpn[i].field);			\
-		}							\
+		पूर्ण							\
 		i++;							\
-	}								\
-	return -EINVAL;							\
-}									\
+	पूर्ण								\
+	वापस -EINVAL;							\
+पूर्ण									\
 									\
-static ssize_t field##_show(struct device *dev,				\
-			    struct device_attribute *attr,		\
-			    char *buf)					\
-{									\
-	struct sdw_slave *slave = dev_to_sdw_dev(dev);			\
-	struct dpn_attribute *dpn_attr =				\
-		container_of(attr, struct dpn_attribute, dev_attr);	\
+अटल sमाप_प्रकार field##_show(काष्ठा device *dev,				\
+			    काष्ठा device_attribute *attr,		\
+			    अक्षर *buf)					\
+अणु									\
+	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);			\
+	काष्ठा dpn_attribute *dpn_attr =				\
+		container_of(attr, काष्ठा dpn_attribute, dev_attr);	\
 									\
-	return field##_dpn_show(slave,					\
+	वापस field##_dpn_show(slave,					\
 				dpn_attr->N, dpn_attr->dir,		\
-				dpn_attr->format_string,		\
+				dpn_attr->क्रमmat_string,		\
 				buf);					\
-}									\
+पूर्ण									\
 sdw_dpn_attribute_alloc(field)
 
-sdw_dpn_attr(imp_def_interrupts);
+sdw_dpn_attr(imp_def_पूर्णांकerrupts);
 sdw_dpn_attr(max_word);
 sdw_dpn_attr(min_word);
 sdw_dpn_attr(type);
 sdw_dpn_attr(max_grouping);
 sdw_dpn_attr(simple_ch_prep_sm);
-sdw_dpn_attr(ch_prep_timeout);
+sdw_dpn_attr(ch_prep_समयout);
 sdw_dpn_attr(max_ch);
 sdw_dpn_attr(min_ch);
 sdw_dpn_attr(max_async_buffer);
 sdw_dpn_attr(block_pack_mode);
 sdw_dpn_attr(port_encoding);
 
-#define sdw_dpn_array_attr(field)					\
+#घोषणा sdw_dpn_array_attr(field)					\
 									\
-static ssize_t field##_dpn_show(struct sdw_slave *slave,		\
-				int N,					\
-				int dir,				\
-				const char *format_string,		\
-				char *buf)				\
-{									\
-	struct sdw_dpn_prop *dpn;					\
-	unsigned long mask;						\
-	ssize_t size = 0;						\
-	int bit;							\
-	int i;								\
-	int j;								\
+अटल sमाप_प्रकार field##_dpn_show(काष्ठा sdw_slave *slave,		\
+				पूर्णांक N,					\
+				पूर्णांक dir,				\
+				स्थिर अक्षर *क्रमmat_string,		\
+				अक्षर *buf)				\
+अणु									\
+	काष्ठा sdw_dpn_prop *dpn;					\
+	अचिन्हित दीर्घ mask;						\
+	sमाप_प्रकार size = 0;						\
+	पूर्णांक bit;							\
+	पूर्णांक i;								\
+	पूर्णांक j;								\
 									\
-	if (dir) {							\
+	अगर (dir) अणु							\
 		dpn = slave->prop.src_dpn_prop;				\
 		mask = slave->prop.source_ports;			\
-	} else {							\
+	पूर्ण अन्यथा अणु							\
 		dpn = slave->prop.sink_dpn_prop;			\
 		mask = slave->prop.sink_ports;				\
-	}								\
+	पूर्ण								\
 									\
 	i = 0;								\
-	for_each_set_bit(bit, &mask, 32) {				\
-		if (bit == N) {						\
-			for (j = 0; j < dpn[i].num_##field; j++)	\
-				size += sprintf(buf + size,		\
-						format_string,		\
+	क्रम_each_set_bit(bit, &mask, 32) अणु				\
+		अगर (bit == N) अणु						\
+			क्रम (j = 0; j < dpn[i].num_##field; j++)	\
+				size += प्र_लिखो(buf + size,		\
+						क्रमmat_string,		\
 						dpn[i].field[j]);	\
-			size += sprintf(buf + size, "\n");		\
-			return size;					\
-		}							\
+			size += प्र_लिखो(buf + size, "\n");		\
+			वापस size;					\
+		पूर्ण							\
 		i++;							\
-	}								\
-	return -EINVAL;							\
-}									\
-static ssize_t field##_show(struct device *dev,				\
-			    struct device_attribute *attr,		\
-			    char *buf)					\
-{									\
-	struct sdw_slave *slave = dev_to_sdw_dev(dev);			\
-	struct dpn_attribute *dpn_attr =				\
-		container_of(attr, struct dpn_attribute, dev_attr);	\
+	पूर्ण								\
+	वापस -EINVAL;							\
+पूर्ण									\
+अटल sमाप_प्रकार field##_show(काष्ठा device *dev,				\
+			    काष्ठा device_attribute *attr,		\
+			    अक्षर *buf)					\
+अणु									\
+	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);			\
+	काष्ठा dpn_attribute *dpn_attr =				\
+		container_of(attr, काष्ठा dpn_attribute, dev_attr);	\
 									\
-	return field##_dpn_show(slave,					\
+	वापस field##_dpn_show(slave,					\
 				dpn_attr->N, dpn_attr->dir,		\
-				dpn_attr->format_string,		\
+				dpn_attr->क्रमmat_string,		\
 				buf);					\
-}									\
+पूर्ण									\
 sdw_dpn_attribute_alloc(field)
 
 sdw_dpn_array_attr(words);
 sdw_dpn_array_attr(ch_combinations);
 sdw_dpn_array_attr(channels);
 
-static int add_all_attributes(struct device *dev, int N, int dir)
-{
-	struct attribute **dpn_attrs;
-	struct attribute_group *dpn_group;
-	int i = 0;
-	int ret;
+अटल पूर्णांक add_all_attributes(काष्ठा device *dev, पूर्णांक N, पूर्णांक dir)
+अणु
+	काष्ठा attribute **dpn_attrs;
+	काष्ठा attribute_group *dpn_group;
+	पूर्णांक i = 0;
+	पूर्णांक ret;
 
-	/* allocate attributes, last one is NULL */
-	dpn_attrs = devm_kcalloc(dev, SDW_DPN_ATTRIBUTES + 1,
-				 sizeof(struct attribute *),
+	/* allocate attributes, last one is शून्य */
+	dpn_attrs = devm_kसुस्मृति(dev, SDW_DPN_ATTRIBUTES + 1,
+				 माप(काष्ठा attribute *),
 				 GFP_KERNEL);
-	if (!dpn_attrs)
-		return -ENOMEM;
+	अगर (!dpn_attrs)
+		वापस -ENOMEM;
 
 	ret = max_word_attribute_alloc(dev, &dpn_attrs[i++],
 				       N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = min_word_attribute_alloc(dev, &dpn_attrs[i++],
 				       N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = words_attribute_alloc(dev, &dpn_attrs[i++],
 				    N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = type_attribute_alloc(dev, &dpn_attrs[i++],
 				   N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = max_grouping_attribute_alloc(dev, &dpn_attrs[i++],
 					   N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = simple_ch_prep_sm_attribute_alloc(dev, &dpn_attrs[i++],
 						N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = ch_prep_timeout_attribute_alloc(dev, &dpn_attrs[i++],
+	ret = ch_prep_समयout_attribute_alloc(dev, &dpn_attrs[i++],
 					      N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = imp_def_interrupts_attribute_alloc(dev, &dpn_attrs[i++],
+	ret = imp_def_पूर्णांकerrupts_attribute_alloc(dev, &dpn_attrs[i++],
 						 N, dir, "0x%x\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = min_ch_attribute_alloc(dev, &dpn_attrs[i++],
 				     N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = max_ch_attribute_alloc(dev, &dpn_attrs[i++],
 				     N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = channels_attribute_alloc(dev, &dpn_attrs[i++],
 				       N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = ch_combinations_attribute_alloc(dev, &dpn_attrs[i++],
 					      N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = max_async_buffer_attribute_alloc(dev, &dpn_attrs[i++],
 					       N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = block_pack_mode_attribute_alloc(dev, &dpn_attrs[i++],
 					      N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = port_encoding_attribute_alloc(dev, &dpn_attrs[i++],
 					    N, dir, "%d\n");
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* paranoia check for editing mistakes */
-	if (i != SDW_DPN_ATTRIBUTES) {
+	/* paranoia check क्रम editing mistakes */
+	अगर (i != SDW_DPN_ATTRIBUTES) अणु
 		dev_err(dev, "mismatch in attributes, allocated %d got %d\n",
 			SDW_DPN_ATTRIBUTES, i);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dpn_group = devm_kzalloc(dev, sizeof(*dpn_group), GFP_KERNEL);
-	if (!dpn_group)
-		return -ENOMEM;
+	dpn_group = devm_kzalloc(dev, माप(*dpn_group), GFP_KERNEL);
+	अगर (!dpn_group)
+		वापस -ENOMEM;
 
 	dpn_group->attrs = dpn_attrs;
-	dpn_group->name = devm_kasprintf(dev, GFP_KERNEL, "dp%d_%s",
+	dpn_group->name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "dp%d_%s",
 					 N, dir ? "src" : "sink");
-	if (!dpn_group->name)
-		return -ENOMEM;
+	अगर (!dpn_group->name)
+		वापस -ENOMEM;
 
 	ret = devm_device_add_group(dev, dpn_group);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sdw_slave_sysfs_dpn_init(struct sdw_slave *slave)
-{
-	unsigned long mask;
-	int ret;
-	int i;
+पूर्णांक sdw_slave_sysfs_dpn_init(काष्ठा sdw_slave *slave)
+अणु
+	अचिन्हित दीर्घ mask;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	mask = slave->prop.source_ports;
-	for_each_set_bit(i, &mask, 32) {
+	क्रम_each_set_bit(i, &mask, 32) अणु
 		ret = add_all_attributes(&slave->dev, i, 1);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	mask = slave->prop.sink_ports;
-	for_each_set_bit(i, &mask, 32) {
+	क्रम_each_set_bit(i, &mask, 32) अणु
 		ret = add_all_attributes(&slave->dev, i, 0);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

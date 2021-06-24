@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __EMU8000_LOCAL_H
-#define __EMU8000_LOCAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __EMU8000_LOCAL_H
+#घोषणा __EMU8000_LOCAL_H
 /*
- *  Local defininitons for the emu8000 (AWE32/64)
+ *  Local defininitons क्रम the emu8000 (AWE32/64)
  *
- *  Copyright (C) 1999 Steve Ratcliffe
+ *  Copyright (C) 1999 Steve Ratclअगरfe
  *  Copyright (C) 1999-2000 Takashi Iwai <tiwai@suse.de>
  */
 
-#include <linux/wait.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <sound/core.h>
-#include <sound/emu8000.h>
-#include <sound/emu8000_reg.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/core.h>
+#समावेश <sound/emu8000.h>
+#समावेश <sound/emu8000_reg.h>
 
 /* emu8000_patch.c */
-int snd_emu8000_sample_new(struct snd_emux *rec, struct snd_sf_sample *sp,
-			   struct snd_util_memhdr *hdr,
-			   const void __user *data, long count);
-int snd_emu8000_sample_free(struct snd_emux *rec, struct snd_sf_sample *sp,
-			    struct snd_util_memhdr *hdr);
-void snd_emu8000_sample_reset(struct snd_emux *rec);
+पूर्णांक snd_emu8000_sample_new(काष्ठा snd_emux *rec, काष्ठा snd_sf_sample *sp,
+			   काष्ठा snd_util_memhdr *hdr,
+			   स्थिर व्योम __user *data, दीर्घ count);
+पूर्णांक snd_emu8000_sample_मुक्त(काष्ठा snd_emux *rec, काष्ठा snd_sf_sample *sp,
+			    काष्ठा snd_util_memhdr *hdr);
+व्योम snd_emu8000_sample_reset(काष्ठा snd_emux *rec);
 
 /* emu8000_callback.c */
-void snd_emu8000_ops_setup(struct snd_emu8000 *emu);
+व्योम snd_emu8000_ops_setup(काष्ठा snd_emu8000 *emu);
 
 /* emu8000_pcm.c */
-int snd_emu8000_pcm_new(struct snd_card *card, struct snd_emu8000 *emu, int index);
+पूर्णांक snd_emu8000_pcm_new(काष्ठा snd_card *card, काष्ठा snd_emu8000 *emu, पूर्णांक index);
 
-#endif	/* __EMU8000_LOCAL_H */
+#पूर्ण_अगर	/* __EMU8000_LOCAL_H */

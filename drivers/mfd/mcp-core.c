@@ -1,235 +1,236 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/drivers/mfd/mcp-core.c
  *
  *  Copyright (C) 2001 Russell King
  *
- *  Generic MCP (Multimedia Communications Port) layer.  All MCP locking
+ *  Generic MCP (Mulसमयdia Communications Port) layer.  All MCP locking
  *  is solely held within this file.
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/smp.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/mfd/mcp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/smp.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mfd/mcp.h>
 
 
-#define to_mcp(d)		container_of(d, struct mcp, attached_device)
-#define to_mcp_driver(d)	container_of(d, struct mcp_driver, drv)
+#घोषणा to_mcp(d)		container_of(d, काष्ठा mcp, attached_device)
+#घोषणा to_mcp_driver(d)	container_of(d, काष्ठा mcp_driver, drv)
 
-static int mcp_bus_match(struct device *dev, struct device_driver *drv)
-{
-	return 1;
-}
+अटल पूर्णांक mcp_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	वापस 1;
+पूर्ण
 
-static int mcp_bus_probe(struct device *dev)
-{
-	struct mcp *mcp = to_mcp(dev);
-	struct mcp_driver *drv = to_mcp_driver(dev->driver);
+अटल पूर्णांक mcp_bus_probe(काष्ठा device *dev)
+अणु
+	काष्ठा mcp *mcp = to_mcp(dev);
+	काष्ठा mcp_driver *drv = to_mcp_driver(dev->driver);
 
-	return drv->probe(mcp);
-}
+	वापस drv->probe(mcp);
+पूर्ण
 
-static int mcp_bus_remove(struct device *dev)
-{
-	struct mcp *mcp = to_mcp(dev);
-	struct mcp_driver *drv = to_mcp_driver(dev->driver);
+अटल पूर्णांक mcp_bus_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा mcp *mcp = to_mcp(dev);
+	काष्ठा mcp_driver *drv = to_mcp_driver(dev->driver);
 
-	drv->remove(mcp);
-	return 0;
-}
+	drv->हटाओ(mcp);
+	वापस 0;
+पूर्ण
 
-static struct bus_type mcp_bus_type = {
+अटल काष्ठा bus_type mcp_bus_type = अणु
 	.name		= "mcp",
 	.match		= mcp_bus_match,
 	.probe		= mcp_bus_probe,
-	.remove		= mcp_bus_remove,
-};
+	.हटाओ		= mcp_bus_हटाओ,
+पूर्ण;
 
 /**
- *	mcp_set_telecom_divisor - set the telecom divisor
- *	@mcp: MCP interface structure
- *	@div: SIB clock divisor
+ *	mcp_set_telecom_भागisor - set the telecom भागisor
+ *	@mcp: MCP पूर्णांकerface काष्ठाure
+ *	@भाग: SIB घड़ी भागisor
  *
- *	Set the telecom divisor on the MCP interface.  The resulting
- *	sample rate is SIBCLOCK/div.
+ *	Set the telecom भागisor on the MCP पूर्णांकerface.  The resulting
+ *	sample rate is SIBCLOCK/भाग.
  */
-void mcp_set_telecom_divisor(struct mcp *mcp, unsigned int div)
-{
-	unsigned long flags;
+व्योम mcp_set_telecom_भागisor(काष्ठा mcp *mcp, अचिन्हित पूर्णांक भाग)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mcp->lock, flags);
-	mcp->ops->set_telecom_divisor(mcp, div);
+	mcp->ops->set_telecom_भागisor(mcp, भाग);
 	spin_unlock_irqrestore(&mcp->lock, flags);
-}
-EXPORT_SYMBOL(mcp_set_telecom_divisor);
+पूर्ण
+EXPORT_SYMBOL(mcp_set_telecom_भागisor);
 
 /**
- *	mcp_set_audio_divisor - set the audio divisor
- *	@mcp: MCP interface structure
- *	@div: SIB clock divisor
+ *	mcp_set_audio_भागisor - set the audio भागisor
+ *	@mcp: MCP पूर्णांकerface काष्ठाure
+ *	@भाग: SIB घड़ी भागisor
  *
- *	Set the audio divisor on the MCP interface.
+ *	Set the audio भागisor on the MCP पूर्णांकerface.
  */
-void mcp_set_audio_divisor(struct mcp *mcp, unsigned int div)
-{
-	unsigned long flags;
+व्योम mcp_set_audio_भागisor(काष्ठा mcp *mcp, अचिन्हित पूर्णांक भाग)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mcp->lock, flags);
-	mcp->ops->set_audio_divisor(mcp, div);
+	mcp->ops->set_audio_भागisor(mcp, भाग);
 	spin_unlock_irqrestore(&mcp->lock, flags);
-}
-EXPORT_SYMBOL(mcp_set_audio_divisor);
+पूर्ण
+EXPORT_SYMBOL(mcp_set_audio_भागisor);
 
 /**
- *	mcp_reg_write - write a device register
- *	@mcp: MCP interface structure
- *	@reg: 4-bit register index
+ *	mcp_reg_ग_लिखो - ग_लिखो a device रेजिस्टर
+ *	@mcp: MCP पूर्णांकerface काष्ठाure
+ *	@reg: 4-bit रेजिस्टर index
  *	@val: 16-bit data value
  *
- *	Write a device register.  The MCP interface must be enabled
+ *	Write a device रेजिस्टर.  The MCP पूर्णांकerface must be enabled
  *	to prevent this function hanging.
  */
-void mcp_reg_write(struct mcp *mcp, unsigned int reg, unsigned int val)
-{
-	unsigned long flags;
+व्योम mcp_reg_ग_लिखो(काष्ठा mcp *mcp, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mcp->lock, flags);
-	mcp->ops->reg_write(mcp, reg, val);
+	mcp->ops->reg_ग_लिखो(mcp, reg, val);
 	spin_unlock_irqrestore(&mcp->lock, flags);
-}
-EXPORT_SYMBOL(mcp_reg_write);
+पूर्ण
+EXPORT_SYMBOL(mcp_reg_ग_लिखो);
 
 /**
- *	mcp_reg_read - read a device register
- *	@mcp: MCP interface structure
- *	@reg: 4-bit register index
+ *	mcp_reg_पढ़ो - पढ़ो a device रेजिस्टर
+ *	@mcp: MCP पूर्णांकerface काष्ठाure
+ *	@reg: 4-bit रेजिस्टर index
  *
- *	Read a device register and return its value.  The MCP interface
+ *	Read a device रेजिस्टर and वापस its value.  The MCP पूर्णांकerface
  *	must be enabled to prevent this function hanging.
  */
-unsigned int mcp_reg_read(struct mcp *mcp, unsigned int reg)
-{
-	unsigned long flags;
-	unsigned int val;
+अचिन्हित पूर्णांक mcp_reg_पढ़ो(काष्ठा mcp *mcp, अचिन्हित पूर्णांक reg)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक val;
 
 	spin_lock_irqsave(&mcp->lock, flags);
-	val = mcp->ops->reg_read(mcp, reg);
+	val = mcp->ops->reg_पढ़ो(mcp, reg);
 	spin_unlock_irqrestore(&mcp->lock, flags);
 
-	return val;
-}
-EXPORT_SYMBOL(mcp_reg_read);
+	वापस val;
+पूर्ण
+EXPORT_SYMBOL(mcp_reg_पढ़ो);
 
 /**
- *	mcp_enable - enable the MCP interface
- *	@mcp: MCP interface to enable
+ *	mcp_enable - enable the MCP पूर्णांकerface
+ *	@mcp: MCP पूर्णांकerface to enable
  *
- *	Enable the MCP interface.  Each call to mcp_enable will need
- *	a corresponding call to mcp_disable to disable the interface.
+ *	Enable the MCP पूर्णांकerface.  Each call to mcp_enable will need
+ *	a corresponding call to mcp_disable to disable the पूर्णांकerface.
  */
-void mcp_enable(struct mcp *mcp)
-{
-	unsigned long flags;
+व्योम mcp_enable(काष्ठा mcp *mcp)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mcp->lock, flags);
-	if (mcp->use_count++ == 0)
+	अगर (mcp->use_count++ == 0)
 		mcp->ops->enable(mcp);
 	spin_unlock_irqrestore(&mcp->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(mcp_enable);
 
 /**
- *	mcp_disable - disable the MCP interface
- *	@mcp: MCP interface to disable
+ *	mcp_disable - disable the MCP पूर्णांकerface
+ *	@mcp: MCP पूर्णांकerface to disable
  *
- *	Disable the MCP interface.  The MCP interface will only be
+ *	Disable the MCP पूर्णांकerface.  The MCP पूर्णांकerface will only be
  *	disabled once the number of calls to mcp_enable matches the
  *	number of calls to mcp_disable.
  */
-void mcp_disable(struct mcp *mcp)
-{
-	unsigned long flags;
+व्योम mcp_disable(काष्ठा mcp *mcp)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mcp->lock, flags);
-	if (--mcp->use_count == 0)
+	अगर (--mcp->use_count == 0)
 		mcp->ops->disable(mcp);
 	spin_unlock_irqrestore(&mcp->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(mcp_disable);
 
-static void mcp_release(struct device *dev)
-{
-	struct mcp *mcp = container_of(dev, struct mcp, attached_device);
+अटल व्योम mcp_release(काष्ठा device *dev)
+अणु
+	काष्ठा mcp *mcp = container_of(dev, काष्ठा mcp, attached_device);
 
-	kfree(mcp);
-}
+	kमुक्त(mcp);
+पूर्ण
 
-struct mcp *mcp_host_alloc(struct device *parent, size_t size)
-{
-	struct mcp *mcp;
+काष्ठा mcp *mcp_host_alloc(काष्ठा device *parent, माप_प्रकार size)
+अणु
+	काष्ठा mcp *mcp;
 
-	mcp = kzalloc(sizeof(struct mcp) + size, GFP_KERNEL);
-	if (mcp) {
+	mcp = kzalloc(माप(काष्ठा mcp) + size, GFP_KERNEL);
+	अगर (mcp) अणु
 		spin_lock_init(&mcp->lock);
 		device_initialize(&mcp->attached_device);
 		mcp->attached_device.parent = parent;
 		mcp->attached_device.bus = &mcp_bus_type;
 		mcp->attached_device.dma_mask = parent->dma_mask;
 		mcp->attached_device.release = mcp_release;
-	}
-	return mcp;
-}
+	पूर्ण
+	वापस mcp;
+पूर्ण
 EXPORT_SYMBOL(mcp_host_alloc);
 
-int mcp_host_add(struct mcp *mcp, void *pdata)
-{
-	mcp->attached_device.platform_data = pdata;
+पूर्णांक mcp_host_add(काष्ठा mcp *mcp, व्योम *pdata)
+अणु
+	mcp->attached_device.platक्रमm_data = pdata;
 	dev_set_name(&mcp->attached_device, "mcp0");
-	return device_add(&mcp->attached_device);
-}
+	वापस device_add(&mcp->attached_device);
+पूर्ण
 EXPORT_SYMBOL(mcp_host_add);
 
-void mcp_host_del(struct mcp *mcp)
-{
+व्योम mcp_host_del(काष्ठा mcp *mcp)
+अणु
 	device_del(&mcp->attached_device);
-}
+पूर्ण
 EXPORT_SYMBOL(mcp_host_del);
 
-void mcp_host_free(struct mcp *mcp)
-{
+व्योम mcp_host_मुक्त(काष्ठा mcp *mcp)
+अणु
 	put_device(&mcp->attached_device);
-}
-EXPORT_SYMBOL(mcp_host_free);
+पूर्ण
+EXPORT_SYMBOL(mcp_host_मुक्त);
 
-int mcp_driver_register(struct mcp_driver *mcpdrv)
-{
+पूर्णांक mcp_driver_रेजिस्टर(काष्ठा mcp_driver *mcpdrv)
+अणु
 	mcpdrv->drv.bus = &mcp_bus_type;
-	return driver_register(&mcpdrv->drv);
-}
-EXPORT_SYMBOL(mcp_driver_register);
+	वापस driver_रेजिस्टर(&mcpdrv->drv);
+पूर्ण
+EXPORT_SYMBOL(mcp_driver_रेजिस्टर);
 
-void mcp_driver_unregister(struct mcp_driver *mcpdrv)
-{
-	driver_unregister(&mcpdrv->drv);
-}
-EXPORT_SYMBOL(mcp_driver_unregister);
+व्योम mcp_driver_unरेजिस्टर(काष्ठा mcp_driver *mcpdrv)
+अणु
+	driver_unरेजिस्टर(&mcpdrv->drv);
+पूर्ण
+EXPORT_SYMBOL(mcp_driver_unरेजिस्टर);
 
-static int __init mcp_init(void)
-{
-	return bus_register(&mcp_bus_type);
-}
+अटल पूर्णांक __init mcp_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&mcp_bus_type);
+पूर्ण
 
-static void __exit mcp_exit(void)
-{
-	bus_unregister(&mcp_bus_type);
-}
+अटल व्योम __निकास mcp_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&mcp_bus_type);
+पूर्ण
 
 module_init(mcp_init);
-module_exit(mcp_exit);
+module_निकास(mcp_निकास);
 
 MODULE_AUTHOR("Russell King <rmk@arm.linux.org.uk>");
 MODULE_DESCRIPTION("Core multimedia communications port driver");

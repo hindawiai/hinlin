@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* mvme147.c  : the  Linux/mvme147/lance ethernet driver
  *
  * Copyright (C) 05/1998 Peter Maydell <pmaydell@chiark.greenend.org.uk>
@@ -6,95 +7,95 @@
  * Uses the generic 7990.c LANCE code.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/gfp.h>
-#include <linux/pgtable.h>
-/* Used for the temporal inet entries and routing */
-#include <linux/socket.h>
-#include <linux/route.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gfp.h>
+#समावेश <linux/pgtable.h>
+/* Used क्रम the temporal inet entries and routing */
+#समावेश <linux/socket.h>
+#समावेश <linux/route.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
 
-#include <asm/io.h>
-#include <asm/mvme147hw.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/mvme147hw.h>
 
-/* We have 32K of RAM for the init block and buffers. This places
+/* We have 32K of RAM क्रम the init block and buffers. This places
  * an upper limit on the number of buffers we can use. NetBSD uses 8 Rx
  * buffers and 2 Tx buffers, it takes (8 + 2) * 1544 bytes.
  */
-#define LANCE_LOG_TX_BUFFERS 1
-#define LANCE_LOG_RX_BUFFERS 3
+#घोषणा LANCE_LOG_TX_BUFFERS 1
+#घोषणा LANCE_LOG_RX_BUFFERS 3
 
-#include "7990.h"                                 /* use generic LANCE code */
+#समावेश "7990.h"                                 /* use generic LANCE code */
 
-/* Our private data structure */
-struct m147lance_private {
-	struct lance_private lance;
-	unsigned long ram;
-};
+/* Our निजी data काष्ठाure */
+काष्ठा m147lance_निजी अणु
+	काष्ठा lance_निजी lance;
+	अचिन्हित दीर्घ ram;
+पूर्ण;
 
 /* function prototypes... This is easy because all the grot is in the
- * generic LANCE support. All we have to support is probing for boards,
- * plus board-specific init, open and close actions.
- * Oh, and we need to tell the generic code how to read and write LANCE registers...
+ * generic LANCE support. All we have to support is probing क्रम boards,
+ * plus board-specअगरic init, खोलो and बंद actions.
+ * Oh, and we need to tell the generic code how to पढ़ो and ग_लिखो LANCE रेजिस्टरs...
  */
-static int m147lance_open(struct net_device *dev);
-static int m147lance_close(struct net_device *dev);
-static void m147lance_writerap(struct lance_private *lp, unsigned short value);
-static void m147lance_writerdp(struct lance_private *lp, unsigned short value);
-static unsigned short m147lance_readrdp(struct lance_private *lp);
+अटल पूर्णांक m147lance_खोलो(काष्ठा net_device *dev);
+अटल पूर्णांक m147lance_बंद(काष्ठा net_device *dev);
+अटल व्योम m147lance_ग_लिखोrap(काष्ठा lance_निजी *lp, अचिन्हित लघु value);
+अटल व्योम m147lance_ग_लिखोrdp(काष्ठा lance_निजी *lp, अचिन्हित लघु value);
+अटल अचिन्हित लघु m147lance_पढ़ोrdp(काष्ठा lance_निजी *lp);
 
-typedef void (*writerap_t)(void *, unsigned short);
-typedef void (*writerdp_t)(void *, unsigned short);
-typedef unsigned short (*readrdp_t)(void *);
+प्रकार व्योम (*ग_लिखोrap_t)(व्योम *, अचिन्हित लघु);
+प्रकार व्योम (*ग_लिखोrdp_t)(व्योम *, अचिन्हित लघु);
+प्रकार अचिन्हित लघु (*पढ़ोrdp_t)(व्योम *);
 
-static const struct net_device_ops lance_netdev_ops = {
-	.ndo_open		= m147lance_open,
-	.ndo_stop		= m147lance_close,
-	.ndo_start_xmit		= lance_start_xmit,
-	.ndo_set_rx_mode	= lance_set_multicast,
-	.ndo_tx_timeout		= lance_tx_timeout,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= eth_mac_addr,
-};
+अटल स्थिर काष्ठा net_device_ops lance_netdev_ops = अणु
+	.nकरो_खोलो		= m147lance_खोलो,
+	.nकरो_stop		= m147lance_बंद,
+	.nकरो_start_xmit		= lance_start_xmit,
+	.nकरो_set_rx_mode	= lance_set_multicast,
+	.nकरो_tx_समयout		= lance_tx_समयout,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= eth_mac_addr,
+पूर्ण;
 
 /* Initialise the one and only on-board 7990 */
-struct net_device * __init mvme147lance_probe(int unit)
-{
-	struct net_device *dev;
-	static int called;
-	static const char name[] = "MVME147 LANCE";
-	struct m147lance_private *lp;
-	u_long *addr;
-	u_long address;
-	int err;
+काष्ठा net_device * __init mvme147lance_probe(पूर्णांक unit)
+अणु
+	काष्ठा net_device *dev;
+	अटल पूर्णांक called;
+	अटल स्थिर अक्षर name[] = "MVME147 LANCE";
+	काष्ठा m147lance_निजी *lp;
+	u_दीर्घ *addr;
+	u_दीर्घ address;
+	पूर्णांक err;
 
-	if (!MACH_IS_MVME147 || called)
-		return ERR_PTR(-ENODEV);
+	अगर (!MACH_IS_MVME147 || called)
+		वापस ERR_PTR(-ENODEV);
 	called++;
 
-	dev = alloc_etherdev(sizeof(struct m147lance_private));
-	if (!dev)
-		return ERR_PTR(-ENOMEM);
+	dev = alloc_etherdev(माप(काष्ठा m147lance_निजी));
+	अगर (!dev)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (unit >= 0)
-		sprintf(dev->name, "eth%d", unit);
+	अगर (unit >= 0)
+		प्र_लिखो(dev->name, "eth%d", unit);
 
 	/* Fill the dev fields */
-	dev->base_addr = (unsigned long)MVME147_LANCE_BASE;
+	dev->base_addr = (अचिन्हित दीर्घ)MVME147_LANCE_BASE;
 	dev->netdev_ops = &lance_netdev_ops;
 	dev->dma = 0;
 
-	addr = (u_long *)ETHERNET_ADDRESS;
+	addr = (u_दीर्घ *)ETHERNET_ADDRESS;
 	address = *addr;
 	dev->dev_addr[0] = 0x08;
 	dev->dev_addr[1] = 0x00;
@@ -106,95 +107,95 @@ struct net_device * __init mvme147lance_probe(int unit)
 	address = address >> 8;
 	dev->dev_addr[3] = address&0xff;
 
-	printk("%s: MVME147 at 0x%08lx, irq %d, Hardware Address %pM\n",
+	prपूर्णांकk("%s: MVME147 at 0x%08lx, irq %d, Hardware Address %pM\n",
 	       dev->name, dev->base_addr, MVME147_LANCE_IRQ,
 	       dev->dev_addr);
 
 	lp = netdev_priv(dev);
 	lp->ram = __get_dma_pages(GFP_ATOMIC, 3);	/* 32K */
-	if (!lp->ram) {
-		printk("%s: No memory for LANCE buffers\n", dev->name);
-		free_netdev(dev);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!lp->ram) अणु
+		prपूर्णांकk("%s: No memory for LANCE buffers\n", dev->name);
+		मुक्त_netdev(dev);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	lp->lance.name = name;
 	lp->lance.base = dev->base_addr;
-	lp->lance.init_block = (struct lance_init_block *)(lp->ram); /* CPU addr */
-	lp->lance.lance_init_block = (struct lance_init_block *)(lp->ram);                 /* LANCE addr of same RAM */
+	lp->lance.init_block = (काष्ठा lance_init_block *)(lp->ram); /* CPU addr */
+	lp->lance.lance_init_block = (काष्ठा lance_init_block *)(lp->ram);                 /* LANCE addr of same RAM */
 	lp->lance.busmaster_regval = LE_C3_BSWP;        /* we're bigendian */
 	lp->lance.irq = MVME147_LANCE_IRQ;
-	lp->lance.writerap = (writerap_t)m147lance_writerap;
-	lp->lance.writerdp = (writerdp_t)m147lance_writerdp;
-	lp->lance.readrdp = (readrdp_t)m147lance_readrdp;
+	lp->lance.ग_लिखोrap = (ग_लिखोrap_t)m147lance_ग_लिखोrap;
+	lp->lance.ग_लिखोrdp = (ग_लिखोrdp_t)m147lance_ग_लिखोrdp;
+	lp->lance.पढ़ोrdp = (पढ़ोrdp_t)m147lance_पढ़ोrdp;
 	lp->lance.lance_log_rx_bufs = LANCE_LOG_RX_BUFFERS;
 	lp->lance.lance_log_tx_bufs = LANCE_LOG_TX_BUFFERS;
 	lp->lance.rx_ring_mod_mask = RX_RING_MOD_MASK;
 	lp->lance.tx_ring_mod_mask = TX_RING_MOD_MASK;
 
-	err = register_netdev(dev);
-	if (err) {
-		free_pages(lp->ram, 3);
-		free_netdev(dev);
-		return ERR_PTR(err);
-	}
+	err = रेजिस्टर_netdev(dev);
+	अगर (err) अणु
+		मुक्त_pages(lp->ram, 3);
+		मुक्त_netdev(dev);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static void m147lance_writerap(struct lance_private *lp, unsigned short value)
-{
+अटल व्योम m147lance_ग_लिखोrap(काष्ठा lance_निजी *lp, अचिन्हित लघु value)
+अणु
 	out_be16(lp->base + LANCE_RAP, value);
-}
+पूर्ण
 
-static void m147lance_writerdp(struct lance_private *lp, unsigned short value)
-{
+अटल व्योम m147lance_ग_लिखोrdp(काष्ठा lance_निजी *lp, अचिन्हित लघु value)
+अणु
 	out_be16(lp->base + LANCE_RDP, value);
-}
+पूर्ण
 
-static unsigned short m147lance_readrdp(struct lance_private *lp)
-{
-	return in_be16(lp->base + LANCE_RDP);
-}
+अटल अचिन्हित लघु m147lance_पढ़ोrdp(काष्ठा lance_निजी *lp)
+अणु
+	वापस in_be16(lp->base + LANCE_RDP);
+पूर्ण
 
-static int m147lance_open(struct net_device *dev)
-{
-	int status;
+अटल पूर्णांक m147lance_खोलो(काष्ठा net_device *dev)
+अणु
+	पूर्णांक status;
 
-	status = lance_open(dev);                 /* call generic lance open code */
-	if (status)
-		return status;
-	/* enable interrupts at board level. */
-	m147_pcc->lan_cntrl = 0;       /* clear the interrupts (if any) */
+	status = lance_खोलो(dev);                 /* call generic lance खोलो code */
+	अगर (status)
+		वापस status;
+	/* enable पूर्णांकerrupts at board level. */
+	m147_pcc->lan_cntrl = 0;       /* clear the पूर्णांकerrupts (अगर any) */
 	m147_pcc->lan_cntrl = 0x08 | 0x04;     /* Enable irq 4 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m147lance_close(struct net_device *dev)
-{
-	/* disable interrupts at boardlevel */
-	m147_pcc->lan_cntrl = 0x0; /* disable interrupts */
-	lance_close(dev);
-	return 0;
-}
+अटल पूर्णांक m147lance_बंद(काष्ठा net_device *dev)
+अणु
+	/* disable पूर्णांकerrupts at boardlevel */
+	m147_pcc->lan_cntrl = 0x0; /* disable पूर्णांकerrupts */
+	lance_बंद(dev);
+	वापस 0;
+पूर्ण
 
-#ifdef MODULE
+#अगर_घोषित MODULE
 MODULE_LICENSE("GPL");
 
-static struct net_device *dev_mvme147_lance;
-int __init init_module(void)
-{
+अटल काष्ठा net_device *dev_mvme147_lance;
+पूर्णांक __init init_module(व्योम)
+अणु
 	dev_mvme147_lance = mvme147lance_probe(-1);
-	return PTR_ERR_OR_ZERO(dev_mvme147_lance);
-}
+	वापस PTR_ERR_OR_ZERO(dev_mvme147_lance);
+पूर्ण
 
-void __exit cleanup_module(void)
-{
-	struct m147lance_private *lp = netdev_priv(dev_mvme147_lance);
-	unregister_netdev(dev_mvme147_lance);
-	free_pages(lp->ram, 3);
-	free_netdev(dev_mvme147_lance);
-}
+व्योम __निकास cleanup_module(व्योम)
+अणु
+	काष्ठा m147lance_निजी *lp = netdev_priv(dev_mvme147_lance);
+	unरेजिस्टर_netdev(dev_mvme147_lance);
+	मुक्त_pages(lp->ram, 3);
+	मुक्त_netdev(dev_mvme147_lance);
+पूर्ण
 
-#endif /* MODULE */
+#पूर्ण_अगर /* MODULE */

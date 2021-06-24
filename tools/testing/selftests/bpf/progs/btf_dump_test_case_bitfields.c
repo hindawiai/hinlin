@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 
 /*
- * BTF-to-C dumper tests for bitfield.
+ * BTF-to-C dumper tests क्रम bitfield.
  *
  * Copyright (c) 2019 Facebook
  */
-#include <stdbool.h>
+#समावेश <stdbool.h>
 
 /* ----- START-EXPECTED-OUTPUT ----- */
 /*
- *struct bitfields_only_mixed_types {
- *	int a: 3;
- *	long int b: 2;
+ *काष्ठा bitfields_only_mixed_types अणु
+ *	पूर्णांक a: 3;
+ *	दीर्घ पूर्णांक b: 2;
  *	_Bool c: 1;
- *	enum {
+ *	क्रमागत अणु
  *		A = 0,
  *		B = 1,
- *	} d: 1;
- *	short e: 5;
- *	int: 20;
- *	unsigned int f: 30;
- *};
+ *	पूर्ण d: 1;
+ *	लघु e: 5;
+ *	पूर्णांक: 20;
+ *	अचिन्हित पूर्णांक f: 30;
+ *पूर्ण;
  *
  */
 /* ------ END-EXPECTED-OUTPUT ------ */
 
-struct bitfields_only_mixed_types {
-	int a: 3;
-	long int b: 2;
+काष्ठा bitfields_only_mixed_types अणु
+	पूर्णांक a: 3;
+	दीर्घ पूर्णांक b: 2;
 	bool c: 1; /* it's really a _Bool type */
-	enum {
+	क्रमागत अणु
 		A, /* A = 0, dumper is very explicit */
 		B, /* B = 1, same */
-	} d: 1;
-	short e: 5;
+	पूर्ण d: 1;
+	लघु e: 5;
 	/* 20-bit padding here */
-	unsigned f: 30; /* this gets aligned on 4-byte boundary */
-};
+	अचिन्हित f: 30; /* this माला_लो aligned on 4-byte boundary */
+पूर्ण;
 
 /* ----- START-EXPECTED-OUTPUT ----- */
 /*
- *struct bitfield_mixed_with_others {
- *	char: 4;
- *	int a: 4;
- *	short b;
- *	long int c;
- *	long int d: 8;
- *	int e;
- *	int f;
- *};
+ *काष्ठा bitfield_mixed_with_others अणु
+ *	अक्षर: 4;
+ *	पूर्णांक a: 4;
+ *	लघु b;
+ *	दीर्घ पूर्णांक c;
+ *	दीर्घ पूर्णांक d: 8;
+ *	पूर्णांक e;
+ *	पूर्णांक f;
+ *पूर्ण;
  *
  */
 /* ------ END-EXPECTED-OUTPUT ------ */
-struct bitfield_mixed_with_others {
-	long: 4; /* char is enough as a backing field */
-	int a: 4;
+काष्ठा bitfield_mixed_with_others अणु
+	दीर्घ: 4; /* अक्षर is enough as a backing field */
+	पूर्णांक a: 4;
 	/* 8-bit implicit padding */
-	short b; /* combined with previous bitfield */
+	लघु b; /* combined with previous bitfield */
 	/* 4 more bytes of implicit padding */
-	long c;
-	long d: 8;
+	दीर्घ c;
+	दीर्घ d: 8;
 	/* 24 bits implicit padding */
-	int e; /* combined with previous bitfield */
-	int f;
+	पूर्णांक e; /* combined with previous bitfield */
+	पूर्णांक f;
 	/* 4 bytes of padding */
-};
+पूर्ण;
 
 /* ----- START-EXPECTED-OUTPUT ----- */
 /*
- *struct bitfield_flushed {
- *	int a: 4;
- *	long: 60;
- *	long int b: 16;
- *};
+ *काष्ठा bitfield_flushed अणु
+ *	पूर्णांक a: 4;
+ *	दीर्घ: 60;
+ *	दीर्घ पूर्णांक b: 16;
+ *पूर्ण;
  *
  */
 /* ------ END-EXPECTED-OUTPUT ------ */
-struct bitfield_flushed {
-	int a: 4;
-	long: 0; /* flush until next natural alignment boundary */
-	long b: 16;
-};
+काष्ठा bitfield_flushed अणु
+	पूर्णांक a: 4;
+	दीर्घ: 0; /* flush until next natural alignment boundary */
+	दीर्घ b: 16;
+पूर्ण;
 
-int f(struct {
-	struct bitfields_only_mixed_types _1;
-	struct bitfield_mixed_with_others _2;
-	struct bitfield_flushed _3;
-} *_)
-{
-	return 0;
-}
+पूर्णांक f(काष्ठा अणु
+	काष्ठा bitfields_only_mixed_types _1;
+	काष्ठा bitfield_mixed_with_others _2;
+	काष्ठा bitfield_flushed _3;
+पूर्ण *_)
+अणु
+	वापस 0;
+पूर्ण

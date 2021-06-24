@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Definitions for PCDP-defined console devices
+ * Definitions क्रम PCDP-defined console devices
  *
  * For DIG64_HCDPv10a_01.pdf and DIG64_PCDPv20.pdf (v1.0a and v2.0 resp.),
- * please see <http://www.dig64.org/specifications/>
+ * please see <http://www.dig64.org/specअगरications/>
  *
  * (c) Copyright 2002, 2004 Hewlett-Packard Development Company, L.P.
  *	Khalid Aziz <khalid.aziz@hp.com>
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
-#define PCDP_CONSOLE			0
-#define PCDP_DEBUG			1
-#define PCDP_CONSOLE_OUTPUT		2
-#define PCDP_CONSOLE_INPUT		3
+#घोषणा PCDP_CONSOLE			0
+#घोषणा PCDP_DEBUG			1
+#घोषणा PCDP_CONSOLE_OUTPUT		2
+#घोषणा PCDP_CONSOLE_INPUT		3
 
-#define PCDP_UART			(0 << 3)
-#define PCDP_VGA			(1 << 3)
-#define PCDP_USB			(2 << 3)
+#घोषणा PCDP_UART			(0 << 3)
+#घोषणा PCDP_VGA			(1 << 3)
+#घोषणा PCDP_USB			(2 << 3)
 
 /* pcdp_uart.type and pcdp_device.type */
-#define PCDP_CONSOLE_UART		(PCDP_UART | PCDP_CONSOLE)
-#define PCDP_DEBUG_UART			(PCDP_UART | PCDP_DEBUG)
-#define PCDP_CONSOLE_VGA		(PCDP_VGA  | PCDP_CONSOLE_OUTPUT)
-#define PCDP_CONSOLE_USB		(PCDP_USB  | PCDP_CONSOLE_INPUT)
+#घोषणा PCDP_CONSOLE_UART		(PCDP_UART | PCDP_CONSOLE)
+#घोषणा PCDP_DEBUG_UART			(PCDP_UART | PCDP_DEBUG)
+#घोषणा PCDP_CONSOLE_VGA		(PCDP_VGA  | PCDP_CONSOLE_OUTPUT)
+#घोषणा PCDP_CONSOLE_USB		(PCDP_USB  | PCDP_CONSOLE_INPUT)
 
 /* pcdp_uart.flags */
-#define PCDP_UART_EDGE_SENSITIVE	(1 << 0)
-#define PCDP_UART_ACTIVE_LOW		(1 << 1)
-#define PCDP_UART_PRIMARY_CONSOLE	(1 << 2)
-#define PCDP_UART_IRQ			(1 << 6) /* in pci_func for rev < 3 */
-#define PCDP_UART_PCI			(1 << 7) /* in pci_func for rev < 3 */
+#घोषणा PCDP_UART_EDGE_SENSITIVE	(1 << 0)
+#घोषणा PCDP_UART_ACTIVE_LOW		(1 << 1)
+#घोषणा PCDP_UART_PRIMARY_CONSOLE	(1 << 2)
+#घोषणा PCDP_UART_IRQ			(1 << 6) /* in pci_func क्रम rev < 3 */
+#घोषणा PCDP_UART_PCI			(1 << 7) /* in pci_func क्रम rev < 3 */
 
-struct pcdp_uart {
+काष्ठा pcdp_uart अणु
 	u8				type;
 	u8				bits;
 	u8				parity;
@@ -42,25 +43,25 @@ struct pcdp_uart {
 	u8				pci_dev;
 	u8				pci_func;
 	u64				baud;
-	struct acpi_generic_address	addr;
+	काष्ठा acpi_generic_address	addr;
 	u16				pci_dev_id;
-	u16				pci_vendor_id;
+	u16				pci_venकरोr_id;
 	u32				gsi;
-	u32				clock_rate;
-	u8				pci_prog_intfc;
+	u32				घड़ी_rate;
+	u8				pci_prog_पूर्णांकfc;
 	u8				flags;
 	u16				conout_index;
 	u32				reserved;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-#define PCDP_IF_PCI	1
+#घोषणा PCDP_IF_PCI	1
 
-/* pcdp_if_pci.trans */
-#define PCDP_PCI_TRANS_IOPORT	0x02
-#define PCDP_PCI_TRANS_MMIO	0x01
+/* pcdp_अगर_pci.trans */
+#घोषणा PCDP_PCI_TRANS_IOPORT	0x02
+#घोषणा PCDP_PCI_TRANS_MMIO	0x01
 
-struct pcdp_if_pci {
-	u8			interconnect;
+काष्ठा pcdp_अगर_pci अणु
+	u8			पूर्णांकerconnect;
 	u8			reserved;
 	u16			length;
 	u8			segment;
@@ -68,31 +69,31 @@ struct pcdp_if_pci {
 	u8			dev;
 	u8			fun;
 	u16			dev_id;
-	u16			vendor_id;
-	u32			acpi_interrupt;
+	u16			venकरोr_id;
+	u32			acpi_पूर्णांकerrupt;
 	u64			mmio_tra;
 	u64			ioport_tra;
 	u8			flags;
 	u8			trans;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct pcdp_vga {
+काष्ठा pcdp_vga अणु
 	u8			count;		/* address space descriptors */
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
 /* pcdp_device.flags */
-#define PCDP_PRIMARY_CONSOLE	1
+#घोषणा PCDP_PRIMARY_CONSOLE	1
 
-struct pcdp_device {
+काष्ठा pcdp_device अणु
 	u8			type;
 	u8			flags;
 	u16			length;
 	u16			efi_index;
-	/* next data is pcdp_if_pci or pcdp_if_acpi (not yet supported) */
-	/* next data is device specific type (currently only pcdp_vga) */
-} __attribute__((packed));
+	/* next data is pcdp_अगर_pci or pcdp_अगर_acpi (not yet supported) */
+	/* next data is device specअगरic type (currently only pcdp_vga) */
+पूर्ण __attribute__((packed));
 
-struct pcdp {
+काष्ठा pcdp अणु
 	u8			signature[4];
 	u32			length;
 	u8			rev;		/* PCDP v2.0 is rev 3 */
@@ -103,6 +104,6 @@ struct pcdp {
 	u8			creator_id[4];
 	u32			creator_rev;
 	u32			num_uarts;
-	struct pcdp_uart	uart[];	/* actual size is num_uarts */
-	/* remainder of table is pcdp_device structures */
-} __attribute__((packed));
+	काष्ठा pcdp_uart	uart[];	/* actual size is num_uarts */
+	/* reमुख्यder of table is pcdp_device काष्ठाures */
+पूर्ण __attribute__((packed));

@@ -1,65 +1,66 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LIST_H
-#define LIST_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LIST_H
+#घोषणा LIST_H
 
 /*
  * Copied from include/linux/...
  */
 
-#undef offsetof
-#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#अघोषित दुरत्व
+#घोषणा दुरत्व(TYPE, MEMBER) ((माप_प्रकार) &((TYPE *)0)->MEMBER)
 
 /**
- * container_of - cast a member of a structure out to the containing structure
- * @ptr:        the pointer to the member.
- * @type:       the type of the container struct this is embedded in.
- * @member:     the name of the member within the struct.
+ * container_of - cast a member of a काष्ठाure out to the containing काष्ठाure
+ * @ptr:        the poपूर्णांकer to the member.
+ * @type:       the type of the container काष्ठा this is embedded in.
+ * @member:     the name of the member within the काष्ठा.
  *
  */
-#define container_of(ptr, type, member) ({                      \
-	const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-	(type *)( (char *)__mptr - offsetof(type,member) );})
+#घोषणा container_of(ptr, type, member) (अणु                      \
+	स्थिर typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+	(type *)( (अक्षर *)__mptr - दुरत्व(type,member) );पूर्ण)
 
 
-struct list_head {
-	struct list_head *next, *prev;
-};
+काष्ठा list_head अणु
+	काष्ठा list_head *next, *prev;
+पूर्ण;
 
 
-#define LIST_HEAD_INIT(name) { &(name), &(name) }
+#घोषणा LIST_HEAD_INIT(name) अणु &(name), &(name) पूर्ण
 
-#define LIST_HEAD(name) \
-	struct list_head name = LIST_HEAD_INIT(name)
+#घोषणा LIST_HEAD(name) \
+	काष्ठा list_head name = LIST_HEAD_INIT(name)
 
 /**
- * list_entry - get the struct for this entry
- * @ptr:	the &struct list_head pointer.
- * @type:	the type of the struct this is embedded in.
- * @member:	the name of the list_head within the struct.
+ * list_entry - get the काष्ठा क्रम this entry
+ * @ptr:	the &काष्ठा list_head poपूर्णांकer.
+ * @type:	the type of the काष्ठा this is embedded in.
+ * @member:	the name of the list_head within the काष्ठा.
  */
-#define list_entry(ptr, type, member) \
+#घोषणा list_entry(ptr, type, member) \
 	container_of(ptr, type, member)
 
 /**
- * list_for_each_entry	-	iterate over list of given type
+ * list_क्रम_each_entry	-	iterate over list of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the list_head within the काष्ठा.
  */
-#define list_for_each_entry(pos, head, member)				\
-	for (pos = list_entry((head)->next, typeof(*pos), member);	\
+#घोषणा list_क्रम_each_entry(pos, head, member)				\
+	क्रम (pos = list_entry((head)->next, typeof(*pos), member);	\
 	     &pos->member != (head); 	\
 	     pos = list_entry(pos->member.next, typeof(*pos), member))
 
 /**
- * list_for_each_entry_safe - iterate over list of given type safe against removal of list entry
+ * list_क्रम_each_entry_safe - iterate over list of given type safe against removal of list entry
  * @pos:	the type * to use as a loop cursor.
  * @n:		another type * to use as temporary storage
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the list_head within the काष्ठा.
  */
-#define list_for_each_entry_safe(pos, n, head, member)			\
-	for (pos = list_entry((head)->next, typeof(*pos), member),	\
+#घोषणा list_क्रम_each_entry_safe(pos, n, head, member)			\
+	क्रम (pos = list_entry((head)->next, typeof(*pos), member),	\
 		n = list_entry(pos->member.next, typeof(*pos), member);	\
 	     &pos->member != (head);					\
 	     pos = n, n = list_entry(n->member.next, typeof(*n), member))
@@ -68,65 +69,65 @@ struct list_head {
  * list_empty - tests whether a list is empty
  * @head: the list to test.
  */
-static inline int list_empty(const struct list_head *head)
-{
-	return head->next == head;
-}
+अटल अंतरभूत पूर्णांक list_empty(स्थिर काष्ठा list_head *head)
+अणु
+	वापस head->next == head;
+पूर्ण
 
 /*
  * Insert a new entry between two known consecutive entries.
  *
- * This is only for internal list manipulation where we know
- * the prev/next entries already!
+ * This is only क्रम पूर्णांकernal list manipulation where we know
+ * the prev/next entries alपढ़ोy!
  */
-static inline void __list_add(struct list_head *_new,
-			      struct list_head *prev,
-			      struct list_head *next)
-{
+अटल अंतरभूत व्योम __list_add(काष्ठा list_head *_new,
+			      काष्ठा list_head *prev,
+			      काष्ठा list_head *next)
+अणु
 	next->prev = _new;
 	_new->next = next;
 	_new->prev = prev;
 	prev->next = _new;
-}
+पूर्ण
 
 /**
  * list_add_tail - add a new entry
  * @new: new entry to be added
- * @head: list head to add it before
+ * @head: list head to add it beक्रमe
  *
- * Insert a new entry before the specified head.
- * This is useful for implementing queues.
+ * Insert a new entry beक्रमe the specअगरied head.
+ * This is useful क्रम implementing queues.
  */
-static inline void list_add_tail(struct list_head *_new, struct list_head *head)
-{
+अटल अंतरभूत व्योम list_add_tail(काष्ठा list_head *_new, काष्ठा list_head *head)
+अणु
 	__list_add(_new, head->prev, head);
-}
+पूर्ण
 
 /*
  * Delete a list entry by making the prev/next entries
- * point to each other.
+ * poपूर्णांक to each other.
  *
- * This is only for internal list manipulation where we know
- * the prev/next entries already!
+ * This is only क्रम पूर्णांकernal list manipulation where we know
+ * the prev/next entries alपढ़ोy!
  */
-static inline void __list_del(struct list_head *prev, struct list_head *next)
-{
+अटल अंतरभूत व्योम __list_del(काष्ठा list_head *prev, काष्ठा list_head *next)
+अणु
 	next->prev = prev;
 	prev->next = next;
-}
+पूर्ण
 
-#define LIST_POISON1  ((void *) 0x00100100)
-#define LIST_POISON2  ((void *) 0x00200200)
+#घोषणा LIST_POISON1  ((व्योम *) 0x00100100)
+#घोषणा LIST_POISON2  ((व्योम *) 0x00200200)
 /**
  * list_del - deletes entry from list.
  * @entry: the element to delete from the list.
- * Note: list_empty() on entry does not return true after this, the entry is
+ * Note: list_empty() on entry करोes not वापस true after this, the entry is
  * in an undefined state.
  */
-static inline void list_del(struct list_head *entry)
-{
+अटल अंतरभूत व्योम list_del(काष्ठा list_head *entry)
+अणु
 	__list_del(entry->prev, entry->next);
-	entry->next = (struct list_head*)LIST_POISON1;
-	entry->prev = (struct list_head*)LIST_POISON2;
-}
-#endif
+	entry->next = (काष्ठा list_head*)LIST_POISON1;
+	entry->prev = (काष्ठा list_head*)LIST_POISON2;
+पूर्ण
+#पूर्ण_अगर

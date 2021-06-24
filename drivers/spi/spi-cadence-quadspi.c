@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 //
-// Driver for Cadence QSPI Controller
+// Driver क्रम Cadence QSPI Controller
 //
 // Copyright Altera Corporation (C) 2012-2014. All rights reserved.
 // Copyright Intel Corporation (C) 2019-2020. All rights reserved.
 // Copyright (C) 2020 Texas Instruments Incorporated - http://www.ti.com
 
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/reset.h>
-#include <linux/sched.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/spi-mem.h>
-#include <linux/timer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/reset.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/spi-स्मृति.स>
+#समावेश <linux/समयr.h>
 
-#define CQSPI_NAME			"cadence-qspi"
-#define CQSPI_MAX_CHIPSELECT		16
+#घोषणा CQSPI_NAME			"cadence-qspi"
+#घोषणा CQSPI_MAX_CHIPSELECT		16
 
 /* Quirks */
-#define CQSPI_NEEDS_WR_DELAY		BIT(0)
-#define CQSPI_DISABLE_DAC_MODE		BIT(1)
+#घोषणा CQSPI_NEEDS_WR_DELAY		BIT(0)
+#घोषणा CQSPI_DISABLE_DAC_MODE		BIT(1)
 
 /* Capabilities */
-#define CQSPI_SUPPORTS_OCTAL		BIT(0)
+#घोषणा CQSPI_SUPPORTS_OCTAL		BIT(0)
 
-struct cqspi_st;
+काष्ठा cqspi_st;
 
-struct cqspi_flash_pdata {
-	struct cqspi_st	*cqspi;
+काष्ठा cqspi_flash_pdata अणु
+	काष्ठा cqspi_st	*cqspi;
 	u32		clk_rate;
-	u32		read_delay;
+	u32		पढ़ो_delay;
 	u32		tshsl_ns;
 	u32		tsd2d_ns;
 	u32		tchsh_ns;
@@ -54,489 +55,489 @@ struct cqspi_flash_pdata {
 	u8		data_width;
 	bool		dtr;
 	u8		cs;
-};
+पूर्ण;
 
-struct cqspi_st {
-	struct platform_device	*pdev;
+काष्ठा cqspi_st अणु
+	काष्ठा platक्रमm_device	*pdev;
 
-	struct clk		*clk;
-	unsigned int		sclk;
+	काष्ठा clk		*clk;
+	अचिन्हित पूर्णांक		sclk;
 
-	void __iomem		*iobase;
-	void __iomem		*ahb_base;
-	resource_size_t		ahb_size;
-	struct completion	transfer_complete;
+	व्योम __iomem		*iobase;
+	व्योम __iomem		*ahb_base;
+	resource_माप_प्रकार		ahb_size;
+	काष्ठा completion	transfer_complete;
 
-	struct dma_chan		*rx_chan;
-	struct completion	rx_dma_complete;
+	काष्ठा dma_chan		*rx_chan;
+	काष्ठा completion	rx_dma_complete;
 	dma_addr_t		mmap_phys_base;
 
-	int			current_cs;
-	unsigned long		master_ref_clk_hz;
+	पूर्णांक			current_cs;
+	अचिन्हित दीर्घ		master_ref_clk_hz;
 	bool			is_decoded_cs;
-	u32			fifo_depth;
-	u32			fifo_width;
+	u32			fअगरo_depth;
+	u32			fअगरo_width;
 	u32			num_chipselect;
 	bool			rclk_en;
 	u32			trigger_address;
 	u32			wr_delay;
 	bool			use_direct_mode;
-	struct cqspi_flash_pdata f_pdata[CQSPI_MAX_CHIPSELECT];
-};
+	काष्ठा cqspi_flash_pdata f_pdata[CQSPI_MAX_CHIPSELECT];
+पूर्ण;
 
-struct cqspi_driver_platdata {
+काष्ठा cqspi_driver_platdata अणु
 	u32 hwcaps_mask;
 	u8 quirks;
-};
+पूर्ण;
 
-/* Operation timeout value */
-#define CQSPI_TIMEOUT_MS			500
-#define CQSPI_READ_TIMEOUT_MS			10
+/* Operation समयout value */
+#घोषणा CQSPI_TIMEOUT_MS			500
+#घोषणा CQSPI_READ_TIMEOUT_MS			10
 
-/* Instruction type */
-#define CQSPI_INST_TYPE_SINGLE			0
-#define CQSPI_INST_TYPE_DUAL			1
-#define CQSPI_INST_TYPE_QUAD			2
-#define CQSPI_INST_TYPE_OCTAL			3
+/* Inकाष्ठाion type */
+#घोषणा CQSPI_INST_TYPE_SINGLE			0
+#घोषणा CQSPI_INST_TYPE_DUAL			1
+#घोषणा CQSPI_INST_TYPE_QUAD			2
+#घोषणा CQSPI_INST_TYPE_OCTAL			3
 
-#define CQSPI_DUMMY_CLKS_PER_BYTE		8
-#define CQSPI_DUMMY_BYTES_MAX			4
-#define CQSPI_DUMMY_CLKS_MAX			31
+#घोषणा CQSPI_DUMMY_CLKS_PER_BYTE		8
+#घोषणा CQSPI_DUMMY_BYTES_MAX			4
+#घोषणा CQSPI_DUMMY_CLKS_MAX			31
 
-#define CQSPI_STIG_DATA_LEN_MAX			8
+#घोषणा CQSPI_STIG_DATA_LEN_MAX			8
 
 /* Register map */
-#define CQSPI_REG_CONFIG			0x00
-#define CQSPI_REG_CONFIG_ENABLE_MASK		BIT(0)
-#define CQSPI_REG_CONFIG_ENB_DIR_ACC_CTRL	BIT(7)
-#define CQSPI_REG_CONFIG_DECODE_MASK		BIT(9)
-#define CQSPI_REG_CONFIG_CHIPSELECT_LSB		10
-#define CQSPI_REG_CONFIG_DMA_MASK		BIT(15)
-#define CQSPI_REG_CONFIG_BAUD_LSB		19
-#define CQSPI_REG_CONFIG_DTR_PROTO		BIT(24)
-#define CQSPI_REG_CONFIG_DUAL_OPCODE		BIT(30)
-#define CQSPI_REG_CONFIG_IDLE_LSB		31
-#define CQSPI_REG_CONFIG_CHIPSELECT_MASK	0xF
-#define CQSPI_REG_CONFIG_BAUD_MASK		0xF
+#घोषणा CQSPI_REG_CONFIG			0x00
+#घोषणा CQSPI_REG_CONFIG_ENABLE_MASK		BIT(0)
+#घोषणा CQSPI_REG_CONFIG_ENB_सूची_ACC_CTRL	BIT(7)
+#घोषणा CQSPI_REG_CONFIG_DECODE_MASK		BIT(9)
+#घोषणा CQSPI_REG_CONFIG_CHIPSELECT_LSB		10
+#घोषणा CQSPI_REG_CONFIG_DMA_MASK		BIT(15)
+#घोषणा CQSPI_REG_CONFIG_BAUD_LSB		19
+#घोषणा CQSPI_REG_CONFIG_DTR_PROTO		BIT(24)
+#घोषणा CQSPI_REG_CONFIG_DUAL_OPCODE		BIT(30)
+#घोषणा CQSPI_REG_CONFIG_IDLE_LSB		31
+#घोषणा CQSPI_REG_CONFIG_CHIPSELECT_MASK	0xF
+#घोषणा CQSPI_REG_CONFIG_BAUD_MASK		0xF
 
-#define CQSPI_REG_RD_INSTR			0x04
-#define CQSPI_REG_RD_INSTR_OPCODE_LSB		0
-#define CQSPI_REG_RD_INSTR_TYPE_INSTR_LSB	8
-#define CQSPI_REG_RD_INSTR_TYPE_ADDR_LSB	12
-#define CQSPI_REG_RD_INSTR_TYPE_DATA_LSB	16
-#define CQSPI_REG_RD_INSTR_MODE_EN_LSB		20
-#define CQSPI_REG_RD_INSTR_DUMMY_LSB		24
-#define CQSPI_REG_RD_INSTR_TYPE_INSTR_MASK	0x3
-#define CQSPI_REG_RD_INSTR_TYPE_ADDR_MASK	0x3
-#define CQSPI_REG_RD_INSTR_TYPE_DATA_MASK	0x3
-#define CQSPI_REG_RD_INSTR_DUMMY_MASK		0x1F
+#घोषणा CQSPI_REG_RD_INSTR			0x04
+#घोषणा CQSPI_REG_RD_INSTR_OPCODE_LSB		0
+#घोषणा CQSPI_REG_RD_INSTR_TYPE_INSTR_LSB	8
+#घोषणा CQSPI_REG_RD_INSTR_TYPE_ADDR_LSB	12
+#घोषणा CQSPI_REG_RD_INSTR_TYPE_DATA_LSB	16
+#घोषणा CQSPI_REG_RD_INSTR_MODE_EN_LSB		20
+#घोषणा CQSPI_REG_RD_INSTR_DUMMY_LSB		24
+#घोषणा CQSPI_REG_RD_INSTR_TYPE_INSTR_MASK	0x3
+#घोषणा CQSPI_REG_RD_INSTR_TYPE_ADDR_MASK	0x3
+#घोषणा CQSPI_REG_RD_INSTR_TYPE_DATA_MASK	0x3
+#घोषणा CQSPI_REG_RD_INSTR_DUMMY_MASK		0x1F
 
-#define CQSPI_REG_WR_INSTR			0x08
-#define CQSPI_REG_WR_INSTR_OPCODE_LSB		0
-#define CQSPI_REG_WR_INSTR_TYPE_ADDR_LSB	12
-#define CQSPI_REG_WR_INSTR_TYPE_DATA_LSB	16
+#घोषणा CQSPI_REG_WR_INSTR			0x08
+#घोषणा CQSPI_REG_WR_INSTR_OPCODE_LSB		0
+#घोषणा CQSPI_REG_WR_INSTR_TYPE_ADDR_LSB	12
+#घोषणा CQSPI_REG_WR_INSTR_TYPE_DATA_LSB	16
 
-#define CQSPI_REG_DELAY				0x0C
-#define CQSPI_REG_DELAY_TSLCH_LSB		0
-#define CQSPI_REG_DELAY_TCHSH_LSB		8
-#define CQSPI_REG_DELAY_TSD2D_LSB		16
-#define CQSPI_REG_DELAY_TSHSL_LSB		24
-#define CQSPI_REG_DELAY_TSLCH_MASK		0xFF
-#define CQSPI_REG_DELAY_TCHSH_MASK		0xFF
-#define CQSPI_REG_DELAY_TSD2D_MASK		0xFF
-#define CQSPI_REG_DELAY_TSHSL_MASK		0xFF
+#घोषणा CQSPI_REG_DELAY				0x0C
+#घोषणा CQSPI_REG_DELAY_TSLCH_LSB		0
+#घोषणा CQSPI_REG_DELAY_TCHSH_LSB		8
+#घोषणा CQSPI_REG_DELAY_TSD2D_LSB		16
+#घोषणा CQSPI_REG_DELAY_TSHSL_LSB		24
+#घोषणा CQSPI_REG_DELAY_TSLCH_MASK		0xFF
+#घोषणा CQSPI_REG_DELAY_TCHSH_MASK		0xFF
+#घोषणा CQSPI_REG_DELAY_TSD2D_MASK		0xFF
+#घोषणा CQSPI_REG_DELAY_TSHSL_MASK		0xFF
 
-#define CQSPI_REG_READCAPTURE			0x10
-#define CQSPI_REG_READCAPTURE_BYPASS_LSB	0
-#define CQSPI_REG_READCAPTURE_DELAY_LSB		1
-#define CQSPI_REG_READCAPTURE_DELAY_MASK	0xF
+#घोषणा CQSPI_REG_READCAPTURE			0x10
+#घोषणा CQSPI_REG_READCAPTURE_BYPASS_LSB	0
+#घोषणा CQSPI_REG_READCAPTURE_DELAY_LSB		1
+#घोषणा CQSPI_REG_READCAPTURE_DELAY_MASK	0xF
 
-#define CQSPI_REG_SIZE				0x14
-#define CQSPI_REG_SIZE_ADDRESS_LSB		0
-#define CQSPI_REG_SIZE_PAGE_LSB			4
-#define CQSPI_REG_SIZE_BLOCK_LSB		16
-#define CQSPI_REG_SIZE_ADDRESS_MASK		0xF
-#define CQSPI_REG_SIZE_PAGE_MASK		0xFFF
-#define CQSPI_REG_SIZE_BLOCK_MASK		0x3F
+#घोषणा CQSPI_REG_SIZE				0x14
+#घोषणा CQSPI_REG_SIZE_ADDRESS_LSB		0
+#घोषणा CQSPI_REG_SIZE_PAGE_LSB			4
+#घोषणा CQSPI_REG_SIZE_BLOCK_LSB		16
+#घोषणा CQSPI_REG_SIZE_ADDRESS_MASK		0xF
+#घोषणा CQSPI_REG_SIZE_PAGE_MASK		0xFFF
+#घोषणा CQSPI_REG_SIZE_BLOCK_MASK		0x3F
 
-#define CQSPI_REG_SRAMPARTITION			0x18
-#define CQSPI_REG_INDIRECTTRIGGER		0x1C
+#घोषणा CQSPI_REG_SRAMPARTITION			0x18
+#घोषणा CQSPI_REG_INसूचीECTTRIGGER		0x1C
 
-#define CQSPI_REG_DMA				0x20
-#define CQSPI_REG_DMA_SINGLE_LSB		0
-#define CQSPI_REG_DMA_BURST_LSB			8
-#define CQSPI_REG_DMA_SINGLE_MASK		0xFF
-#define CQSPI_REG_DMA_BURST_MASK		0xFF
+#घोषणा CQSPI_REG_DMA				0x20
+#घोषणा CQSPI_REG_DMA_SINGLE_LSB		0
+#घोषणा CQSPI_REG_DMA_BURST_LSB			8
+#घोषणा CQSPI_REG_DMA_SINGLE_MASK		0xFF
+#घोषणा CQSPI_REG_DMA_BURST_MASK		0xFF
 
-#define CQSPI_REG_REMAP				0x24
-#define CQSPI_REG_MODE_BIT			0x28
+#घोषणा CQSPI_REG_REMAP				0x24
+#घोषणा CQSPI_REG_MODE_BIT			0x28
 
-#define CQSPI_REG_SDRAMLEVEL			0x2C
-#define CQSPI_REG_SDRAMLEVEL_RD_LSB		0
-#define CQSPI_REG_SDRAMLEVEL_WR_LSB		16
-#define CQSPI_REG_SDRAMLEVEL_RD_MASK		0xFFFF
-#define CQSPI_REG_SDRAMLEVEL_WR_MASK		0xFFFF
+#घोषणा CQSPI_REG_SDRAMLEVEL			0x2C
+#घोषणा CQSPI_REG_SDRAMLEVEL_RD_LSB		0
+#घोषणा CQSPI_REG_SDRAMLEVEL_WR_LSB		16
+#घोषणा CQSPI_REG_SDRAMLEVEL_RD_MASK		0xFFFF
+#घोषणा CQSPI_REG_SDRAMLEVEL_WR_MASK		0xFFFF
 
-#define CQSPI_REG_WR_COMPLETION_CTRL		0x38
-#define CQSPI_REG_WR_DISABLE_AUTO_POLL		BIT(14)
+#घोषणा CQSPI_REG_WR_COMPLETION_CTRL		0x38
+#घोषणा CQSPI_REG_WR_DISABLE_AUTO_POLL		BIT(14)
 
-#define CQSPI_REG_IRQSTATUS			0x40
-#define CQSPI_REG_IRQMASK			0x44
+#घोषणा CQSPI_REG_IRQSTATUS			0x40
+#घोषणा CQSPI_REG_IRQMASK			0x44
 
-#define CQSPI_REG_INDIRECTRD			0x60
-#define CQSPI_REG_INDIRECTRD_START_MASK		BIT(0)
-#define CQSPI_REG_INDIRECTRD_CANCEL_MASK	BIT(1)
-#define CQSPI_REG_INDIRECTRD_DONE_MASK		BIT(5)
+#घोषणा CQSPI_REG_INसूचीECTRD			0x60
+#घोषणा CQSPI_REG_INसूचीECTRD_START_MASK		BIT(0)
+#घोषणा CQSPI_REG_INसूचीECTRD_CANCEL_MASK	BIT(1)
+#घोषणा CQSPI_REG_INसूचीECTRD_DONE_MASK		BIT(5)
 
-#define CQSPI_REG_INDIRECTRDWATERMARK		0x64
-#define CQSPI_REG_INDIRECTRDSTARTADDR		0x68
-#define CQSPI_REG_INDIRECTRDBYTES		0x6C
+#घोषणा CQSPI_REG_INसूचीECTRDWATERMARK		0x64
+#घोषणा CQSPI_REG_INसूचीECTRDSTARTADDR		0x68
+#घोषणा CQSPI_REG_INसूचीECTRDBYTES		0x6C
 
-#define CQSPI_REG_CMDCTRL			0x90
-#define CQSPI_REG_CMDCTRL_EXECUTE_MASK		BIT(0)
-#define CQSPI_REG_CMDCTRL_INPROGRESS_MASK	BIT(1)
-#define CQSPI_REG_CMDCTRL_DUMMY_LSB		7
-#define CQSPI_REG_CMDCTRL_WR_BYTES_LSB		12
-#define CQSPI_REG_CMDCTRL_WR_EN_LSB		15
-#define CQSPI_REG_CMDCTRL_ADD_BYTES_LSB		16
-#define CQSPI_REG_CMDCTRL_ADDR_EN_LSB		19
-#define CQSPI_REG_CMDCTRL_RD_BYTES_LSB		20
-#define CQSPI_REG_CMDCTRL_RD_EN_LSB		23
-#define CQSPI_REG_CMDCTRL_OPCODE_LSB		24
-#define CQSPI_REG_CMDCTRL_WR_BYTES_MASK		0x7
-#define CQSPI_REG_CMDCTRL_ADD_BYTES_MASK	0x3
-#define CQSPI_REG_CMDCTRL_RD_BYTES_MASK		0x7
-#define CQSPI_REG_CMDCTRL_DUMMY_MASK		0x1F
+#घोषणा CQSPI_REG_CMDCTRL			0x90
+#घोषणा CQSPI_REG_CMDCTRL_EXECUTE_MASK		BIT(0)
+#घोषणा CQSPI_REG_CMDCTRL_INPROGRESS_MASK	BIT(1)
+#घोषणा CQSPI_REG_CMDCTRL_DUMMY_LSB		7
+#घोषणा CQSPI_REG_CMDCTRL_WR_BYTES_LSB		12
+#घोषणा CQSPI_REG_CMDCTRL_WR_EN_LSB		15
+#घोषणा CQSPI_REG_CMDCTRL_ADD_BYTES_LSB		16
+#घोषणा CQSPI_REG_CMDCTRL_ADDR_EN_LSB		19
+#घोषणा CQSPI_REG_CMDCTRL_RD_BYTES_LSB		20
+#घोषणा CQSPI_REG_CMDCTRL_RD_EN_LSB		23
+#घोषणा CQSPI_REG_CMDCTRL_OPCODE_LSB		24
+#घोषणा CQSPI_REG_CMDCTRL_WR_BYTES_MASK		0x7
+#घोषणा CQSPI_REG_CMDCTRL_ADD_BYTES_MASK	0x3
+#घोषणा CQSPI_REG_CMDCTRL_RD_BYTES_MASK		0x7
+#घोषणा CQSPI_REG_CMDCTRL_DUMMY_MASK		0x1F
 
-#define CQSPI_REG_INDIRECTWR			0x70
-#define CQSPI_REG_INDIRECTWR_START_MASK		BIT(0)
-#define CQSPI_REG_INDIRECTWR_CANCEL_MASK	BIT(1)
-#define CQSPI_REG_INDIRECTWR_DONE_MASK		BIT(5)
+#घोषणा CQSPI_REG_INसूचीECTWR			0x70
+#घोषणा CQSPI_REG_INसूचीECTWR_START_MASK		BIT(0)
+#घोषणा CQSPI_REG_INसूचीECTWR_CANCEL_MASK	BIT(1)
+#घोषणा CQSPI_REG_INसूचीECTWR_DONE_MASK		BIT(5)
 
-#define CQSPI_REG_INDIRECTWRWATERMARK		0x74
-#define CQSPI_REG_INDIRECTWRSTARTADDR		0x78
-#define CQSPI_REG_INDIRECTWRBYTES		0x7C
+#घोषणा CQSPI_REG_INसूचीECTWRWATERMARK		0x74
+#घोषणा CQSPI_REG_INसूचीECTWRSTARTADDR		0x78
+#घोषणा CQSPI_REG_INसूचीECTWRBYTES		0x7C
 
-#define CQSPI_REG_CMDADDRESS			0x94
-#define CQSPI_REG_CMDREADDATALOWER		0xA0
-#define CQSPI_REG_CMDREADDATAUPPER		0xA4
-#define CQSPI_REG_CMDWRITEDATALOWER		0xA8
-#define CQSPI_REG_CMDWRITEDATAUPPER		0xAC
+#घोषणा CQSPI_REG_CMDADDRESS			0x94
+#घोषणा CQSPI_REG_CMDREADDATALOWER		0xA0
+#घोषणा CQSPI_REG_CMDREADDATAUPPER		0xA4
+#घोषणा CQSPI_REG_CMDWRITEDATALOWER		0xA8
+#घोषणा CQSPI_REG_CMDWRITEDATAUPPER		0xAC
 
-#define CQSPI_REG_POLLING_STATUS		0xB0
-#define CQSPI_REG_POLLING_STATUS_DUMMY_LSB	16
+#घोषणा CQSPI_REG_POLLING_STATUS		0xB0
+#घोषणा CQSPI_REG_POLLING_STATUS_DUMMY_LSB	16
 
-#define CQSPI_REG_OP_EXT_LOWER			0xE0
-#define CQSPI_REG_OP_EXT_READ_LSB		24
-#define CQSPI_REG_OP_EXT_WRITE_LSB		16
-#define CQSPI_REG_OP_EXT_STIG_LSB		0
+#घोषणा CQSPI_REG_OP_EXT_LOWER			0xE0
+#घोषणा CQSPI_REG_OP_EXT_READ_LSB		24
+#घोषणा CQSPI_REG_OP_EXT_WRITE_LSB		16
+#घोषणा CQSPI_REG_OP_EXT_STIG_LSB		0
 
 /* Interrupt status bits */
-#define CQSPI_REG_IRQ_MODE_ERR			BIT(0)
-#define CQSPI_REG_IRQ_UNDERFLOW			BIT(1)
-#define CQSPI_REG_IRQ_IND_COMP			BIT(2)
-#define CQSPI_REG_IRQ_IND_RD_REJECT		BIT(3)
-#define CQSPI_REG_IRQ_WR_PROTECTED_ERR		BIT(4)
-#define CQSPI_REG_IRQ_ILLEGAL_AHB_ERR		BIT(5)
-#define CQSPI_REG_IRQ_WATERMARK			BIT(6)
-#define CQSPI_REG_IRQ_IND_SRAM_FULL		BIT(12)
+#घोषणा CQSPI_REG_IRQ_MODE_ERR			BIT(0)
+#घोषणा CQSPI_REG_IRQ_UNDERFLOW			BIT(1)
+#घोषणा CQSPI_REG_IRQ_IND_COMP			BIT(2)
+#घोषणा CQSPI_REG_IRQ_IND_RD_REJECT		BIT(3)
+#घोषणा CQSPI_REG_IRQ_WR_PROTECTED_ERR		BIT(4)
+#घोषणा CQSPI_REG_IRQ_ILLEGAL_AHB_ERR		BIT(5)
+#घोषणा CQSPI_REG_IRQ_WATERMARK			BIT(6)
+#घोषणा CQSPI_REG_IRQ_IND_SRAM_FULL		BIT(12)
 
-#define CQSPI_IRQ_MASK_RD		(CQSPI_REG_IRQ_WATERMARK	| \
+#घोषणा CQSPI_IRQ_MASK_RD		(CQSPI_REG_IRQ_WATERMARK	| \
 					 CQSPI_REG_IRQ_IND_SRAM_FULL	| \
 					 CQSPI_REG_IRQ_IND_COMP)
 
-#define CQSPI_IRQ_MASK_WR		(CQSPI_REG_IRQ_IND_COMP		| \
+#घोषणा CQSPI_IRQ_MASK_WR		(CQSPI_REG_IRQ_IND_COMP		| \
 					 CQSPI_REG_IRQ_WATERMARK	| \
 					 CQSPI_REG_IRQ_UNDERFLOW)
 
-#define CQSPI_IRQ_STATUS_MASK		0x1FFFF
+#घोषणा CQSPI_IRQ_STATUS_MASK		0x1FFFF
 
-static int cqspi_wait_for_bit(void __iomem *reg, const u32 mask, bool clr)
-{
+अटल पूर्णांक cqspi_रुको_क्रम_bit(व्योम __iomem *reg, स्थिर u32 mask, bool clr)
+अणु
 	u32 val;
 
-	return readl_relaxed_poll_timeout(reg, val,
+	वापस पढ़ोl_relaxed_poll_समयout(reg, val,
 					  (((clr ? ~val : val) & mask) == mask),
 					  10, CQSPI_TIMEOUT_MS * 1000);
-}
+पूर्ण
 
-static bool cqspi_is_idle(struct cqspi_st *cqspi)
-{
-	u32 reg = readl(cqspi->iobase + CQSPI_REG_CONFIG);
+अटल bool cqspi_is_idle(काष्ठा cqspi_st *cqspi)
+अणु
+	u32 reg = पढ़ोl(cqspi->iobase + CQSPI_REG_CONFIG);
 
-	return reg & (1UL << CQSPI_REG_CONFIG_IDLE_LSB);
-}
+	वापस reg & (1UL << CQSPI_REG_CONFIG_IDLE_LSB);
+पूर्ण
 
-static u32 cqspi_get_rd_sram_level(struct cqspi_st *cqspi)
-{
-	u32 reg = readl(cqspi->iobase + CQSPI_REG_SDRAMLEVEL);
+अटल u32 cqspi_get_rd_sram_level(काष्ठा cqspi_st *cqspi)
+अणु
+	u32 reg = पढ़ोl(cqspi->iobase + CQSPI_REG_SDRAMLEVEL);
 
 	reg >>= CQSPI_REG_SDRAMLEVEL_RD_LSB;
-	return reg & CQSPI_REG_SDRAMLEVEL_RD_MASK;
-}
+	वापस reg & CQSPI_REG_SDRAMLEVEL_RD_MASK;
+पूर्ण
 
-static irqreturn_t cqspi_irq_handler(int this_irq, void *dev)
-{
-	struct cqspi_st *cqspi = dev;
-	unsigned int irq_status;
+अटल irqवापस_t cqspi_irq_handler(पूर्णांक this_irq, व्योम *dev)
+अणु
+	काष्ठा cqspi_st *cqspi = dev;
+	अचिन्हित पूर्णांक irq_status;
 
-	/* Read interrupt status */
-	irq_status = readl(cqspi->iobase + CQSPI_REG_IRQSTATUS);
+	/* Read पूर्णांकerrupt status */
+	irq_status = पढ़ोl(cqspi->iobase + CQSPI_REG_IRQSTATUS);
 
-	/* Clear interrupt */
-	writel(irq_status, cqspi->iobase + CQSPI_REG_IRQSTATUS);
+	/* Clear पूर्णांकerrupt */
+	ग_लिखोl(irq_status, cqspi->iobase + CQSPI_REG_IRQSTATUS);
 
 	irq_status &= CQSPI_IRQ_MASK_RD | CQSPI_IRQ_MASK_WR;
 
-	if (irq_status)
+	अगर (irq_status)
 		complete(&cqspi->transfer_complete);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static unsigned int cqspi_calc_rdreg(struct cqspi_flash_pdata *f_pdata)
-{
+अटल अचिन्हित पूर्णांक cqspi_calc_rdreg(काष्ठा cqspi_flash_pdata *f_pdata)
+अणु
 	u32 rdreg = 0;
 
 	rdreg |= f_pdata->inst_width << CQSPI_REG_RD_INSTR_TYPE_INSTR_LSB;
 	rdreg |= f_pdata->addr_width << CQSPI_REG_RD_INSTR_TYPE_ADDR_LSB;
 	rdreg |= f_pdata->data_width << CQSPI_REG_RD_INSTR_TYPE_DATA_LSB;
 
-	return rdreg;
-}
+	वापस rdreg;
+पूर्ण
 
-static unsigned int cqspi_calc_dummy(const struct spi_mem_op *op, bool dtr)
-{
-	unsigned int dummy_clk;
+अटल अचिन्हित पूर्णांक cqspi_calc_dummy(स्थिर काष्ठा spi_mem_op *op, bool dtr)
+अणु
+	अचिन्हित पूर्णांक dummy_clk;
 
 	dummy_clk = op->dummy.nbytes * (8 / op->dummy.buswidth);
-	if (dtr)
+	अगर (dtr)
 		dummy_clk /= 2;
 
-	return dummy_clk;
-}
+	वापस dummy_clk;
+पूर्ण
 
-static int cqspi_set_protocol(struct cqspi_flash_pdata *f_pdata,
-			      const struct spi_mem_op *op)
-{
+अटल पूर्णांक cqspi_set_protocol(काष्ठा cqspi_flash_pdata *f_pdata,
+			      स्थिर काष्ठा spi_mem_op *op)
+अणु
 	f_pdata->inst_width = CQSPI_INST_TYPE_SINGLE;
 	f_pdata->addr_width = CQSPI_INST_TYPE_SINGLE;
 	f_pdata->data_width = CQSPI_INST_TYPE_SINGLE;
 	f_pdata->dtr = op->data.dtr && op->cmd.dtr && op->addr.dtr;
 
-	switch (op->data.buswidth) {
-	case 0:
-		break;
-	case 1:
+	चयन (op->data.buswidth) अणु
+	हाल 0:
+		अवरोध;
+	हाल 1:
 		f_pdata->data_width = CQSPI_INST_TYPE_SINGLE;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		f_pdata->data_width = CQSPI_INST_TYPE_DUAL;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		f_pdata->data_width = CQSPI_INST_TYPE_QUAD;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		f_pdata->data_width = CQSPI_INST_TYPE_OCTAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Right now we only support 8-8-8 DTR mode. */
-	if (f_pdata->dtr) {
-		switch (op->cmd.buswidth) {
-		case 0:
-			break;
-		case 8:
+	अगर (f_pdata->dtr) अणु
+		चयन (op->cmd.buswidth) अणु
+		हाल 0:
+			अवरोध;
+		हाल 8:
 			f_pdata->inst_width = CQSPI_INST_TYPE_OCTAL;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (op->addr.buswidth) {
-		case 0:
-			break;
-		case 8:
+		चयन (op->addr.buswidth) अणु
+		हाल 0:
+			अवरोध;
+		हाल 8:
 			f_pdata->addr_width = CQSPI_INST_TYPE_OCTAL;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (op->data.buswidth) {
-		case 0:
-			break;
-		case 8:
+		चयन (op->data.buswidth) अणु
+		हाल 0:
+			अवरोध;
+		हाल 8:
 			f_pdata->data_width = CQSPI_INST_TYPE_OCTAL;
-			break;
-		default:
-			return -EINVAL;
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cqspi_wait_idle(struct cqspi_st *cqspi)
-{
-	const unsigned int poll_idle_retry = 3;
-	unsigned int count = 0;
-	unsigned long timeout;
+अटल पूर्णांक cqspi_रुको_idle(काष्ठा cqspi_st *cqspi)
+अणु
+	स्थिर अचिन्हित पूर्णांक poll_idle_retry = 3;
+	अचिन्हित पूर्णांक count = 0;
+	अचिन्हित दीर्घ समयout;
 
-	timeout = jiffies + msecs_to_jiffies(CQSPI_TIMEOUT_MS);
-	while (1) {
+	समयout = jअगरfies + msecs_to_jअगरfies(CQSPI_TIMEOUT_MS);
+	जबतक (1) अणु
 		/*
-		 * Read few times in succession to ensure the controller
-		 * is indeed idle, that is, the bit does not transition
+		 * Read few बार in succession to ensure the controller
+		 * is indeed idle, that is, the bit करोes not transition
 		 * low again.
 		 */
-		if (cqspi_is_idle(cqspi))
+		अगर (cqspi_is_idle(cqspi))
 			count++;
-		else
+		अन्यथा
 			count = 0;
 
-		if (count >= poll_idle_retry)
-			return 0;
+		अगर (count >= poll_idle_retry)
+			वापस 0;
 
-		if (time_after(jiffies, timeout)) {
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			/* Timeout, in busy mode. */
 			dev_err(&cqspi->pdev->dev,
 				"QSPI is still busy after %dms timeout.\n",
 				CQSPI_TIMEOUT_MS);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 
 		cpu_relax();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cqspi_exec_flash_cmd(struct cqspi_st *cqspi, unsigned int reg)
-{
-	void __iomem *reg_base = cqspi->iobase;
-	int ret;
+अटल पूर्णांक cqspi_exec_flash_cmd(काष्ठा cqspi_st *cqspi, अचिन्हित पूर्णांक reg)
+अणु
+	व्योम __iomem *reg_base = cqspi->iobase;
+	पूर्णांक ret;
 
 	/* Write the CMDCTRL without start execution. */
-	writel(reg, reg_base + CQSPI_REG_CMDCTRL);
+	ग_लिखोl(reg, reg_base + CQSPI_REG_CMDCTRL);
 	/* Start execute */
 	reg |= CQSPI_REG_CMDCTRL_EXECUTE_MASK;
-	writel(reg, reg_base + CQSPI_REG_CMDCTRL);
+	ग_लिखोl(reg, reg_base + CQSPI_REG_CMDCTRL);
 
-	/* Polling for completion. */
-	ret = cqspi_wait_for_bit(reg_base + CQSPI_REG_CMDCTRL,
+	/* Polling क्रम completion. */
+	ret = cqspi_रुको_क्रम_bit(reg_base + CQSPI_REG_CMDCTRL,
 				 CQSPI_REG_CMDCTRL_INPROGRESS_MASK, 1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&cqspi->pdev->dev,
 			"Flash command execution timed out.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Polling QSPI idle status. */
-	return cqspi_wait_idle(cqspi);
-}
+	वापस cqspi_रुको_idle(cqspi);
+पूर्ण
 
-static int cqspi_setup_opcode_ext(struct cqspi_flash_pdata *f_pdata,
-				  const struct spi_mem_op *op,
-				  unsigned int shift)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	void __iomem *reg_base = cqspi->iobase;
-	unsigned int reg;
+अटल पूर्णांक cqspi_setup_opcode_ext(काष्ठा cqspi_flash_pdata *f_pdata,
+				  स्थिर काष्ठा spi_mem_op *op,
+				  अचिन्हित पूर्णांक shअगरt)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	व्योम __iomem *reg_base = cqspi->iobase;
+	अचिन्हित पूर्णांक reg;
 	u8 ext;
 
-	if (op->cmd.nbytes != 2)
-		return -EINVAL;
+	अगर (op->cmd.nbytes != 2)
+		वापस -EINVAL;
 
 	/* Opcode extension is the LSB. */
 	ext = op->cmd.opcode & 0xff;
 
-	reg = readl(reg_base + CQSPI_REG_OP_EXT_LOWER);
-	reg &= ~(0xff << shift);
-	reg |= ext << shift;
-	writel(reg, reg_base + CQSPI_REG_OP_EXT_LOWER);
+	reg = पढ़ोl(reg_base + CQSPI_REG_OP_EXT_LOWER);
+	reg &= ~(0xff << shअगरt);
+	reg |= ext << shअगरt;
+	ग_लिखोl(reg, reg_base + CQSPI_REG_OP_EXT_LOWER);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cqspi_enable_dtr(struct cqspi_flash_pdata *f_pdata,
-			    const struct spi_mem_op *op, unsigned int shift,
+अटल पूर्णांक cqspi_enable_dtr(काष्ठा cqspi_flash_pdata *f_pdata,
+			    स्थिर काष्ठा spi_mem_op *op, अचिन्हित पूर्णांक shअगरt,
 			    bool enable)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	void __iomem *reg_base = cqspi->iobase;
-	unsigned int reg;
-	int ret;
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	व्योम __iomem *reg_base = cqspi->iobase;
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
 
-	reg = readl(reg_base + CQSPI_REG_CONFIG);
+	reg = पढ़ोl(reg_base + CQSPI_REG_CONFIG);
 
 	/*
 	 * We enable dual byte opcode here. The callers have to set up the
 	 * extension opcode based on which type of operation it is.
 	 */
-	if (enable) {
+	अगर (enable) अणु
 		reg |= CQSPI_REG_CONFIG_DTR_PROTO;
 		reg |= CQSPI_REG_CONFIG_DUAL_OPCODE;
 
 		/* Set up command opcode extension. */
-		ret = cqspi_setup_opcode_ext(f_pdata, op, shift);
-		if (ret)
-			return ret;
-	} else {
+		ret = cqspi_setup_opcode_ext(f_pdata, op, shअगरt);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		reg &= ~CQSPI_REG_CONFIG_DTR_PROTO;
 		reg &= ~CQSPI_REG_CONFIG_DUAL_OPCODE;
-	}
+	पूर्ण
 
-	writel(reg, reg_base + CQSPI_REG_CONFIG);
+	ग_लिखोl(reg, reg_base + CQSPI_REG_CONFIG);
 
-	return cqspi_wait_idle(cqspi);
-}
+	वापस cqspi_रुको_idle(cqspi);
+पूर्ण
 
-static int cqspi_command_read(struct cqspi_flash_pdata *f_pdata,
-			      const struct spi_mem_op *op)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	void __iomem *reg_base = cqspi->iobase;
+अटल पूर्णांक cqspi_command_पढ़ो(काष्ठा cqspi_flash_pdata *f_pdata,
+			      स्थिर काष्ठा spi_mem_op *op)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	व्योम __iomem *reg_base = cqspi->iobase;
 	u8 *rxbuf = op->data.buf.in;
 	u8 opcode;
-	size_t n_rx = op->data.nbytes;
-	unsigned int rdreg;
-	unsigned int reg;
-	unsigned int dummy_clk;
-	size_t read_len;
-	int status;
+	माप_प्रकार n_rx = op->data.nbytes;
+	अचिन्हित पूर्णांक rdreg;
+	अचिन्हित पूर्णांक reg;
+	अचिन्हित पूर्णांक dummy_clk;
+	माप_प्रकार पढ़ो_len;
+	पूर्णांक status;
 
 	status = cqspi_set_protocol(f_pdata, op);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	status = cqspi_enable_dtr(f_pdata, op, CQSPI_REG_OP_EXT_STIG_LSB,
 				  f_pdata->dtr);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (!n_rx || n_rx > CQSPI_STIG_DATA_LEN_MAX || !rxbuf) {
+	अगर (!n_rx || n_rx > CQSPI_STIG_DATA_LEN_MAX || !rxbuf) अणु
 		dev_err(&cqspi->pdev->dev,
 			"Invalid input argument, len %zu rxbuf 0x%p\n",
 			n_rx, rxbuf);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (f_pdata->dtr)
+	अगर (f_pdata->dtr)
 		opcode = op->cmd.opcode >> 8;
-	else
+	अन्यथा
 		opcode = op->cmd.opcode;
 
 	reg = opcode << CQSPI_REG_CMDCTRL_OPCODE_LSB;
 
 	rdreg = cqspi_calc_rdreg(f_pdata);
-	writel(rdreg, reg_base + CQSPI_REG_RD_INSTR);
+	ग_लिखोl(rdreg, reg_base + CQSPI_REG_RD_INSTR);
 
 	dummy_clk = cqspi_calc_dummy(op, f_pdata->dtr);
-	if (dummy_clk > CQSPI_DUMMY_CLKS_MAX)
-		return -EOPNOTSUPP;
+	अगर (dummy_clk > CQSPI_DUMMY_CLKS_MAX)
+		वापस -EOPNOTSUPP;
 
-	if (dummy_clk)
+	अगर (dummy_clk)
 		reg |= (dummy_clk & CQSPI_REG_CMDCTRL_DUMMY_MASK)
 		     << CQSPI_REG_CMDCTRL_DUMMY_LSB;
 
@@ -546,430 +547,430 @@ static int cqspi_command_read(struct cqspi_flash_pdata *f_pdata,
 	reg |= (((n_rx - 1) & CQSPI_REG_CMDCTRL_RD_BYTES_MASK)
 		<< CQSPI_REG_CMDCTRL_RD_BYTES_LSB);
 	status = cqspi_exec_flash_cmd(cqspi, reg);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	reg = readl(reg_base + CQSPI_REG_CMDREADDATALOWER);
+	reg = पढ़ोl(reg_base + CQSPI_REG_CMDREADDATALOWER);
 
-	/* Put the read value into rx_buf */
-	read_len = (n_rx > 4) ? 4 : n_rx;
-	memcpy(rxbuf, &reg, read_len);
-	rxbuf += read_len;
+	/* Put the पढ़ो value पूर्णांकo rx_buf */
+	पढ़ो_len = (n_rx > 4) ? 4 : n_rx;
+	स_नकल(rxbuf, &reg, पढ़ो_len);
+	rxbuf += पढ़ो_len;
 
-	if (n_rx > 4) {
-		reg = readl(reg_base + CQSPI_REG_CMDREADDATAUPPER);
+	अगर (n_rx > 4) अणु
+		reg = पढ़ोl(reg_base + CQSPI_REG_CMDREADDATAUPPER);
 
-		read_len = n_rx - read_len;
-		memcpy(rxbuf, &reg, read_len);
-	}
+		पढ़ो_len = n_rx - पढ़ो_len;
+		स_नकल(rxbuf, &reg, पढ़ो_len);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cqspi_command_write(struct cqspi_flash_pdata *f_pdata,
-			       const struct spi_mem_op *op)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	void __iomem *reg_base = cqspi->iobase;
+अटल पूर्णांक cqspi_command_ग_लिखो(काष्ठा cqspi_flash_pdata *f_pdata,
+			       स्थिर काष्ठा spi_mem_op *op)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	व्योम __iomem *reg_base = cqspi->iobase;
 	u8 opcode;
-	const u8 *txbuf = op->data.buf.out;
-	size_t n_tx = op->data.nbytes;
-	unsigned int reg;
-	unsigned int data;
-	size_t write_len;
-	int ret;
+	स्थिर u8 *txbuf = op->data.buf.out;
+	माप_प्रकार n_tx = op->data.nbytes;
+	अचिन्हित पूर्णांक reg;
+	अचिन्हित पूर्णांक data;
+	माप_प्रकार ग_लिखो_len;
+	पूर्णांक ret;
 
 	ret = cqspi_set_protocol(f_pdata, op);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = cqspi_enable_dtr(f_pdata, op, CQSPI_REG_OP_EXT_STIG_LSB,
 			       f_pdata->dtr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (n_tx > CQSPI_STIG_DATA_LEN_MAX || (n_tx && !txbuf)) {
+	अगर (n_tx > CQSPI_STIG_DATA_LEN_MAX || (n_tx && !txbuf)) अणु
 		dev_err(&cqspi->pdev->dev,
 			"Invalid input argument, cmdlen %zu txbuf 0x%p\n",
 			n_tx, txbuf);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	reg = cqspi_calc_rdreg(f_pdata);
-	writel(reg, reg_base + CQSPI_REG_RD_INSTR);
+	ग_लिखोl(reg, reg_base + CQSPI_REG_RD_INSTR);
 
-	if (f_pdata->dtr)
+	अगर (f_pdata->dtr)
 		opcode = op->cmd.opcode >> 8;
-	else
+	अन्यथा
 		opcode = op->cmd.opcode;
 
 	reg = opcode << CQSPI_REG_CMDCTRL_OPCODE_LSB;
 
-	if (op->addr.nbytes) {
+	अगर (op->addr.nbytes) अणु
 		reg |= (0x1 << CQSPI_REG_CMDCTRL_ADDR_EN_LSB);
 		reg |= ((op->addr.nbytes - 1) &
 			CQSPI_REG_CMDCTRL_ADD_BYTES_MASK)
 			<< CQSPI_REG_CMDCTRL_ADD_BYTES_LSB;
 
-		writel(op->addr.val, reg_base + CQSPI_REG_CMDADDRESS);
-	}
+		ग_लिखोl(op->addr.val, reg_base + CQSPI_REG_CMDADDRESS);
+	पूर्ण
 
-	if (n_tx) {
+	अगर (n_tx) अणु
 		reg |= (0x1 << CQSPI_REG_CMDCTRL_WR_EN_LSB);
 		reg |= ((n_tx - 1) & CQSPI_REG_CMDCTRL_WR_BYTES_MASK)
 			<< CQSPI_REG_CMDCTRL_WR_BYTES_LSB;
 		data = 0;
-		write_len = (n_tx > 4) ? 4 : n_tx;
-		memcpy(&data, txbuf, write_len);
-		txbuf += write_len;
-		writel(data, reg_base + CQSPI_REG_CMDWRITEDATALOWER);
+		ग_लिखो_len = (n_tx > 4) ? 4 : n_tx;
+		स_नकल(&data, txbuf, ग_लिखो_len);
+		txbuf += ग_लिखो_len;
+		ग_लिखोl(data, reg_base + CQSPI_REG_CMDWRITEDATALOWER);
 
-		if (n_tx > 4) {
+		अगर (n_tx > 4) अणु
 			data = 0;
-			write_len = n_tx - 4;
-			memcpy(&data, txbuf, write_len);
-			writel(data, reg_base + CQSPI_REG_CMDWRITEDATAUPPER);
-		}
-	}
+			ग_लिखो_len = n_tx - 4;
+			स_नकल(&data, txbuf, ग_लिखो_len);
+			ग_लिखोl(data, reg_base + CQSPI_REG_CMDWRITEDATAUPPER);
+		पूर्ण
+	पूर्ण
 
-	return cqspi_exec_flash_cmd(cqspi, reg);
-}
+	वापस cqspi_exec_flash_cmd(cqspi, reg);
+पूर्ण
 
-static int cqspi_read_setup(struct cqspi_flash_pdata *f_pdata,
-			    const struct spi_mem_op *op)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	void __iomem *reg_base = cqspi->iobase;
-	unsigned int dummy_clk = 0;
-	unsigned int reg;
-	int ret;
+अटल पूर्णांक cqspi_पढ़ो_setup(काष्ठा cqspi_flash_pdata *f_pdata,
+			    स्थिर काष्ठा spi_mem_op *op)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	व्योम __iomem *reg_base = cqspi->iobase;
+	अचिन्हित पूर्णांक dummy_clk = 0;
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
 	u8 opcode;
 
 	ret = cqspi_enable_dtr(f_pdata, op, CQSPI_REG_OP_EXT_READ_LSB,
 			       f_pdata->dtr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (f_pdata->dtr)
+	अगर (f_pdata->dtr)
 		opcode = op->cmd.opcode >> 8;
-	else
+	अन्यथा
 		opcode = op->cmd.opcode;
 
 	reg = opcode << CQSPI_REG_RD_INSTR_OPCODE_LSB;
 	reg |= cqspi_calc_rdreg(f_pdata);
 
-	/* Setup dummy clock cycles */
+	/* Setup dummy घड़ी cycles */
 	dummy_clk = cqspi_calc_dummy(op, f_pdata->dtr);
 
-	if (dummy_clk > CQSPI_DUMMY_CLKS_MAX)
-		return -EOPNOTSUPP;
+	अगर (dummy_clk > CQSPI_DUMMY_CLKS_MAX)
+		वापस -EOPNOTSUPP;
 
-	if (dummy_clk)
+	अगर (dummy_clk)
 		reg |= (dummy_clk & CQSPI_REG_RD_INSTR_DUMMY_MASK)
 		       << CQSPI_REG_RD_INSTR_DUMMY_LSB;
 
-	writel(reg, reg_base + CQSPI_REG_RD_INSTR);
+	ग_लिखोl(reg, reg_base + CQSPI_REG_RD_INSTR);
 
 	/* Set address width */
-	reg = readl(reg_base + CQSPI_REG_SIZE);
+	reg = पढ़ोl(reg_base + CQSPI_REG_SIZE);
 	reg &= ~CQSPI_REG_SIZE_ADDRESS_MASK;
 	reg |= (op->addr.nbytes - 1);
-	writel(reg, reg_base + CQSPI_REG_SIZE);
-	return 0;
-}
+	ग_लिखोl(reg, reg_base + CQSPI_REG_SIZE);
+	वापस 0;
+पूर्ण
 
-static int cqspi_indirect_read_execute(struct cqspi_flash_pdata *f_pdata,
+अटल पूर्णांक cqspi_indirect_पढ़ो_execute(काष्ठा cqspi_flash_pdata *f_pdata,
 				       u8 *rxbuf, loff_t from_addr,
-				       const size_t n_rx)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	struct device *dev = &cqspi->pdev->dev;
-	void __iomem *reg_base = cqspi->iobase;
-	void __iomem *ahb_base = cqspi->ahb_base;
-	unsigned int remaining = n_rx;
-	unsigned int mod_bytes = n_rx % 4;
-	unsigned int bytes_to_read = 0;
+				       स्थिर माप_प्रकार n_rx)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	काष्ठा device *dev = &cqspi->pdev->dev;
+	व्योम __iomem *reg_base = cqspi->iobase;
+	व्योम __iomem *ahb_base = cqspi->ahb_base;
+	अचिन्हित पूर्णांक reमुख्यing = n_rx;
+	अचिन्हित पूर्णांक mod_bytes = n_rx % 4;
+	अचिन्हित पूर्णांक bytes_to_पढ़ो = 0;
 	u8 *rxbuf_end = rxbuf + n_rx;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	writel(from_addr, reg_base + CQSPI_REG_INDIRECTRDSTARTADDR);
-	writel(remaining, reg_base + CQSPI_REG_INDIRECTRDBYTES);
+	ग_लिखोl(from_addr, reg_base + CQSPI_REG_INसूचीECTRDSTARTADDR);
+	ग_लिखोl(reमुख्यing, reg_base + CQSPI_REG_INसूचीECTRDBYTES);
 
-	/* Clear all interrupts. */
-	writel(CQSPI_IRQ_STATUS_MASK, reg_base + CQSPI_REG_IRQSTATUS);
+	/* Clear all पूर्णांकerrupts. */
+	ग_लिखोl(CQSPI_IRQ_STATUS_MASK, reg_base + CQSPI_REG_IRQSTATUS);
 
-	writel(CQSPI_IRQ_MASK_RD, reg_base + CQSPI_REG_IRQMASK);
+	ग_लिखोl(CQSPI_IRQ_MASK_RD, reg_base + CQSPI_REG_IRQMASK);
 
 	reinit_completion(&cqspi->transfer_complete);
-	writel(CQSPI_REG_INDIRECTRD_START_MASK,
-	       reg_base + CQSPI_REG_INDIRECTRD);
+	ग_लिखोl(CQSPI_REG_INसूचीECTRD_START_MASK,
+	       reg_base + CQSPI_REG_INसूचीECTRD);
 
-	while (remaining > 0) {
-		if (!wait_for_completion_timeout(&cqspi->transfer_complete,
-						 msecs_to_jiffies(CQSPI_READ_TIMEOUT_MS)))
+	जबतक (reमुख्यing > 0) अणु
+		अगर (!रुको_क्रम_completion_समयout(&cqspi->transfer_complete,
+						 msecs_to_jअगरfies(CQSPI_READ_TIMEOUT_MS)))
 			ret = -ETIMEDOUT;
 
-		bytes_to_read = cqspi_get_rd_sram_level(cqspi);
+		bytes_to_पढ़ो = cqspi_get_rd_sram_level(cqspi);
 
-		if (ret && bytes_to_read == 0) {
+		अगर (ret && bytes_to_पढ़ो == 0) अणु
 			dev_err(dev, "Indirect read timeout, no bytes\n");
-			goto failrd;
-		}
+			जाओ failrd;
+		पूर्ण
 
-		while (bytes_to_read != 0) {
-			unsigned int word_remain = round_down(remaining, 4);
+		जबतक (bytes_to_पढ़ो != 0) अणु
+			अचिन्हित पूर्णांक word_reमुख्य = round_करोwn(reमुख्यing, 4);
 
-			bytes_to_read *= cqspi->fifo_width;
-			bytes_to_read = bytes_to_read > remaining ?
-					remaining : bytes_to_read;
-			bytes_to_read = round_down(bytes_to_read, 4);
+			bytes_to_पढ़ो *= cqspi->fअगरo_width;
+			bytes_to_पढ़ो = bytes_to_पढ़ो > reमुख्यing ?
+					reमुख्यing : bytes_to_पढ़ो;
+			bytes_to_पढ़ो = round_करोwn(bytes_to_पढ़ो, 4);
 			/* Read 4 byte word chunks then single bytes */
-			if (bytes_to_read) {
-				ioread32_rep(ahb_base, rxbuf,
-					     (bytes_to_read / 4));
-			} else if (!word_remain && mod_bytes) {
-				unsigned int temp = ioread32(ahb_base);
+			अगर (bytes_to_पढ़ो) अणु
+				ioपढ़ो32_rep(ahb_base, rxbuf,
+					     (bytes_to_पढ़ो / 4));
+			पूर्ण अन्यथा अगर (!word_reमुख्य && mod_bytes) अणु
+				अचिन्हित पूर्णांक temp = ioपढ़ो32(ahb_base);
 
-				bytes_to_read = mod_bytes;
-				memcpy(rxbuf, &temp, min((unsigned int)
+				bytes_to_पढ़ो = mod_bytes;
+				स_नकल(rxbuf, &temp, min((अचिन्हित पूर्णांक)
 							 (rxbuf_end - rxbuf),
-							 bytes_to_read));
-			}
-			rxbuf += bytes_to_read;
-			remaining -= bytes_to_read;
-			bytes_to_read = cqspi_get_rd_sram_level(cqspi);
-		}
+							 bytes_to_पढ़ो));
+			पूर्ण
+			rxbuf += bytes_to_पढ़ो;
+			reमुख्यing -= bytes_to_पढ़ो;
+			bytes_to_पढ़ो = cqspi_get_rd_sram_level(cqspi);
+		पूर्ण
 
-		if (remaining > 0)
+		अगर (reमुख्यing > 0)
 			reinit_completion(&cqspi->transfer_complete);
-	}
+	पूर्ण
 
-	/* Check indirect done status */
-	ret = cqspi_wait_for_bit(reg_base + CQSPI_REG_INDIRECTRD,
-				 CQSPI_REG_INDIRECTRD_DONE_MASK, 0);
-	if (ret) {
+	/* Check indirect करोne status */
+	ret = cqspi_रुको_क्रम_bit(reg_base + CQSPI_REG_INसूचीECTRD,
+				 CQSPI_REG_INसूचीECTRD_DONE_MASK, 0);
+	अगर (ret) अणु
 		dev_err(dev, "Indirect read completion error (%i)\n", ret);
-		goto failrd;
-	}
+		जाओ failrd;
+	पूर्ण
 
-	/* Disable interrupt */
-	writel(0, reg_base + CQSPI_REG_IRQMASK);
+	/* Disable पूर्णांकerrupt */
+	ग_लिखोl(0, reg_base + CQSPI_REG_IRQMASK);
 
 	/* Clear indirect completion status */
-	writel(CQSPI_REG_INDIRECTRD_DONE_MASK, reg_base + CQSPI_REG_INDIRECTRD);
+	ग_लिखोl(CQSPI_REG_INसूचीECTRD_DONE_MASK, reg_base + CQSPI_REG_INसूचीECTRD);
 
-	return 0;
+	वापस 0;
 
 failrd:
-	/* Disable interrupt */
-	writel(0, reg_base + CQSPI_REG_IRQMASK);
+	/* Disable पूर्णांकerrupt */
+	ग_लिखोl(0, reg_base + CQSPI_REG_IRQMASK);
 
-	/* Cancel the indirect read */
-	writel(CQSPI_REG_INDIRECTWR_CANCEL_MASK,
-	       reg_base + CQSPI_REG_INDIRECTRD);
-	return ret;
-}
+	/* Cancel the indirect पढ़ो */
+	ग_लिखोl(CQSPI_REG_INसूचीECTWR_CANCEL_MASK,
+	       reg_base + CQSPI_REG_INसूचीECTRD);
+	वापस ret;
+पूर्ण
 
-static int cqspi_write_setup(struct cqspi_flash_pdata *f_pdata,
-			     const struct spi_mem_op *op)
-{
-	unsigned int reg;
-	int ret;
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	void __iomem *reg_base = cqspi->iobase;
+अटल पूर्णांक cqspi_ग_लिखो_setup(काष्ठा cqspi_flash_pdata *f_pdata,
+			     स्थिर काष्ठा spi_mem_op *op)
+अणु
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	व्योम __iomem *reg_base = cqspi->iobase;
 	u8 opcode;
 
 	ret = cqspi_enable_dtr(f_pdata, op, CQSPI_REG_OP_EXT_WRITE_LSB,
 			       f_pdata->dtr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (f_pdata->dtr)
+	अगर (f_pdata->dtr)
 		opcode = op->cmd.opcode >> 8;
-	else
+	अन्यथा
 		opcode = op->cmd.opcode;
 
 	/* Set opcode. */
 	reg = opcode << CQSPI_REG_WR_INSTR_OPCODE_LSB;
 	reg |= f_pdata->data_width << CQSPI_REG_WR_INSTR_TYPE_DATA_LSB;
 	reg |= f_pdata->addr_width << CQSPI_REG_WR_INSTR_TYPE_ADDR_LSB;
-	writel(reg, reg_base + CQSPI_REG_WR_INSTR);
+	ग_लिखोl(reg, reg_base + CQSPI_REG_WR_INSTR);
 	reg = cqspi_calc_rdreg(f_pdata);
-	writel(reg, reg_base + CQSPI_REG_RD_INSTR);
+	ग_लिखोl(reg, reg_base + CQSPI_REG_RD_INSTR);
 
-	if (f_pdata->dtr) {
+	अगर (f_pdata->dtr) अणु
 		/*
 		 * Some flashes like the cypress Semper flash expect a 4-byte
 		 * dummy address with the Read SR command in DTR mode, but this
-		 * controller does not support sending address with the Read SR
-		 * command. So, disable write completion polling on the
+		 * controller करोes not support sending address with the Read SR
+		 * command. So, disable ग_लिखो completion polling on the
 		 * controller's side. spi-nor will take care of polling the
-		 * status register.
+		 * status रेजिस्टर.
 		 */
-		reg = readl(reg_base + CQSPI_REG_WR_COMPLETION_CTRL);
+		reg = पढ़ोl(reg_base + CQSPI_REG_WR_COMPLETION_CTRL);
 		reg |= CQSPI_REG_WR_DISABLE_AUTO_POLL;
-		writel(reg, reg_base + CQSPI_REG_WR_COMPLETION_CTRL);
-	}
+		ग_लिखोl(reg, reg_base + CQSPI_REG_WR_COMPLETION_CTRL);
+	पूर्ण
 
-	reg = readl(reg_base + CQSPI_REG_SIZE);
+	reg = पढ़ोl(reg_base + CQSPI_REG_SIZE);
 	reg &= ~CQSPI_REG_SIZE_ADDRESS_MASK;
 	reg |= (op->addr.nbytes - 1);
-	writel(reg, reg_base + CQSPI_REG_SIZE);
-	return 0;
-}
+	ग_लिखोl(reg, reg_base + CQSPI_REG_SIZE);
+	वापस 0;
+पूर्ण
 
-static int cqspi_indirect_write_execute(struct cqspi_flash_pdata *f_pdata,
-					loff_t to_addr, const u8 *txbuf,
-					const size_t n_tx)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	struct device *dev = &cqspi->pdev->dev;
-	void __iomem *reg_base = cqspi->iobase;
-	unsigned int remaining = n_tx;
-	unsigned int write_bytes;
-	int ret;
+अटल पूर्णांक cqspi_indirect_ग_लिखो_execute(काष्ठा cqspi_flash_pdata *f_pdata,
+					loff_t to_addr, स्थिर u8 *txbuf,
+					स्थिर माप_प्रकार n_tx)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	काष्ठा device *dev = &cqspi->pdev->dev;
+	व्योम __iomem *reg_base = cqspi->iobase;
+	अचिन्हित पूर्णांक reमुख्यing = n_tx;
+	अचिन्हित पूर्णांक ग_लिखो_bytes;
+	पूर्णांक ret;
 
-	writel(to_addr, reg_base + CQSPI_REG_INDIRECTWRSTARTADDR);
-	writel(remaining, reg_base + CQSPI_REG_INDIRECTWRBYTES);
+	ग_लिखोl(to_addr, reg_base + CQSPI_REG_INसूचीECTWRSTARTADDR);
+	ग_लिखोl(reमुख्यing, reg_base + CQSPI_REG_INसूचीECTWRBYTES);
 
-	/* Clear all interrupts. */
-	writel(CQSPI_IRQ_STATUS_MASK, reg_base + CQSPI_REG_IRQSTATUS);
+	/* Clear all पूर्णांकerrupts. */
+	ग_लिखोl(CQSPI_IRQ_STATUS_MASK, reg_base + CQSPI_REG_IRQSTATUS);
 
-	writel(CQSPI_IRQ_MASK_WR, reg_base + CQSPI_REG_IRQMASK);
+	ग_लिखोl(CQSPI_IRQ_MASK_WR, reg_base + CQSPI_REG_IRQMASK);
 
 	reinit_completion(&cqspi->transfer_complete);
-	writel(CQSPI_REG_INDIRECTWR_START_MASK,
-	       reg_base + CQSPI_REG_INDIRECTWR);
+	ग_लिखोl(CQSPI_REG_INसूचीECTWR_START_MASK,
+	       reg_base + CQSPI_REG_INसूचीECTWR);
 	/*
 	 * As per 66AK2G02 TRM SPRUHY8F section 11.15.5.3 Indirect Access
 	 * Controller programming sequence, couple of cycles of
-	 * QSPI_REF_CLK delay is required for the above bit to
-	 * be internally synchronized by the QSPI module. Provide 5
+	 * QSPI_REF_CLK delay is required क्रम the above bit to
+	 * be पूर्णांकernally synchronized by the QSPI module. Provide 5
 	 * cycles of delay.
 	 */
-	if (cqspi->wr_delay)
+	अगर (cqspi->wr_delay)
 		ndelay(cqspi->wr_delay);
 
-	while (remaining > 0) {
-		size_t write_words, mod_bytes;
+	जबतक (reमुख्यing > 0) अणु
+		माप_प्रकार ग_लिखो_words, mod_bytes;
 
-		write_bytes = remaining;
-		write_words = write_bytes / 4;
-		mod_bytes = write_bytes % 4;
-		/* Write 4 bytes at a time then single bytes. */
-		if (write_words) {
-			iowrite32_rep(cqspi->ahb_base, txbuf, write_words);
-			txbuf += (write_words * 4);
-		}
-		if (mod_bytes) {
-			unsigned int temp = 0xFFFFFFFF;
+		ग_लिखो_bytes = reमुख्यing;
+		ग_लिखो_words = ग_लिखो_bytes / 4;
+		mod_bytes = ग_लिखो_bytes % 4;
+		/* Write 4 bytes at a समय then single bytes. */
+		अगर (ग_लिखो_words) अणु
+			ioग_लिखो32_rep(cqspi->ahb_base, txbuf, ग_लिखो_words);
+			txbuf += (ग_लिखो_words * 4);
+		पूर्ण
+		अगर (mod_bytes) अणु
+			अचिन्हित पूर्णांक temp = 0xFFFFFFFF;
 
-			memcpy(&temp, txbuf, mod_bytes);
-			iowrite32(temp, cqspi->ahb_base);
+			स_नकल(&temp, txbuf, mod_bytes);
+			ioग_लिखो32(temp, cqspi->ahb_base);
 			txbuf += mod_bytes;
-		}
+		पूर्ण
 
-		if (!wait_for_completion_timeout(&cqspi->transfer_complete,
-						 msecs_to_jiffies(CQSPI_TIMEOUT_MS))) {
+		अगर (!रुको_क्रम_completion_समयout(&cqspi->transfer_complete,
+						 msecs_to_jअगरfies(CQSPI_TIMEOUT_MS))) अणु
 			dev_err(dev, "Indirect write timeout\n");
 			ret = -ETIMEDOUT;
-			goto failwr;
-		}
+			जाओ failwr;
+		पूर्ण
 
-		remaining -= write_bytes;
+		reमुख्यing -= ग_लिखो_bytes;
 
-		if (remaining > 0)
+		अगर (reमुख्यing > 0)
 			reinit_completion(&cqspi->transfer_complete);
-	}
+	पूर्ण
 
-	/* Check indirect done status */
-	ret = cqspi_wait_for_bit(reg_base + CQSPI_REG_INDIRECTWR,
-				 CQSPI_REG_INDIRECTWR_DONE_MASK, 0);
-	if (ret) {
+	/* Check indirect करोne status */
+	ret = cqspi_रुको_क्रम_bit(reg_base + CQSPI_REG_INसूचीECTWR,
+				 CQSPI_REG_INसूचीECTWR_DONE_MASK, 0);
+	अगर (ret) अणु
 		dev_err(dev, "Indirect write completion error (%i)\n", ret);
-		goto failwr;
-	}
+		जाओ failwr;
+	पूर्ण
 
-	/* Disable interrupt. */
-	writel(0, reg_base + CQSPI_REG_IRQMASK);
+	/* Disable पूर्णांकerrupt. */
+	ग_लिखोl(0, reg_base + CQSPI_REG_IRQMASK);
 
 	/* Clear indirect completion status */
-	writel(CQSPI_REG_INDIRECTWR_DONE_MASK, reg_base + CQSPI_REG_INDIRECTWR);
+	ग_लिखोl(CQSPI_REG_INसूचीECTWR_DONE_MASK, reg_base + CQSPI_REG_INसूचीECTWR);
 
-	cqspi_wait_idle(cqspi);
+	cqspi_रुको_idle(cqspi);
 
-	return 0;
+	वापस 0;
 
 failwr:
-	/* Disable interrupt. */
-	writel(0, reg_base + CQSPI_REG_IRQMASK);
+	/* Disable पूर्णांकerrupt. */
+	ग_लिखोl(0, reg_base + CQSPI_REG_IRQMASK);
 
-	/* Cancel the indirect write */
-	writel(CQSPI_REG_INDIRECTWR_CANCEL_MASK,
-	       reg_base + CQSPI_REG_INDIRECTWR);
-	return ret;
-}
+	/* Cancel the indirect ग_लिखो */
+	ग_लिखोl(CQSPI_REG_INसूचीECTWR_CANCEL_MASK,
+	       reg_base + CQSPI_REG_INसूचीECTWR);
+	वापस ret;
+पूर्ण
 
-static void cqspi_chipselect(struct cqspi_flash_pdata *f_pdata)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	void __iomem *reg_base = cqspi->iobase;
-	unsigned int chip_select = f_pdata->cs;
-	unsigned int reg;
+अटल व्योम cqspi_chipselect(काष्ठा cqspi_flash_pdata *f_pdata)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	व्योम __iomem *reg_base = cqspi->iobase;
+	अचिन्हित पूर्णांक chip_select = f_pdata->cs;
+	अचिन्हित पूर्णांक reg;
 
-	reg = readl(reg_base + CQSPI_REG_CONFIG);
-	if (cqspi->is_decoded_cs) {
+	reg = पढ़ोl(reg_base + CQSPI_REG_CONFIG);
+	अगर (cqspi->is_decoded_cs) अणु
 		reg |= CQSPI_REG_CONFIG_DECODE_MASK;
-	} else {
+	पूर्ण अन्यथा अणु
 		reg &= ~CQSPI_REG_CONFIG_DECODE_MASK;
 
-		/* Convert CS if without decoder.
+		/* Convert CS अगर without decoder.
 		 * CS0 to 4b'1110
 		 * CS1 to 4b'1101
 		 * CS2 to 4b'1011
 		 * CS3 to 4b'0111
 		 */
 		chip_select = 0xF & ~(1 << chip_select);
-	}
+	पूर्ण
 
 	reg &= ~(CQSPI_REG_CONFIG_CHIPSELECT_MASK
 		 << CQSPI_REG_CONFIG_CHIPSELECT_LSB);
 	reg |= (chip_select & CQSPI_REG_CONFIG_CHIPSELECT_MASK)
 	    << CQSPI_REG_CONFIG_CHIPSELECT_LSB;
-	writel(reg, reg_base + CQSPI_REG_CONFIG);
-}
+	ग_लिखोl(reg, reg_base + CQSPI_REG_CONFIG);
+पूर्ण
 
-static unsigned int calculate_ticks_for_ns(const unsigned int ref_clk_hz,
-					   const unsigned int ns_val)
-{
-	unsigned int ticks;
+अटल अचिन्हित पूर्णांक calculate_ticks_क्रम_ns(स्थिर अचिन्हित पूर्णांक ref_clk_hz,
+					   स्थिर अचिन्हित पूर्णांक ns_val)
+अणु
+	अचिन्हित पूर्णांक ticks;
 
 	ticks = ref_clk_hz / 1000;	/* kHz */
 	ticks = DIV_ROUND_UP(ticks * ns_val, 1000000);
 
-	return ticks;
-}
+	वापस ticks;
+पूर्ण
 
-static void cqspi_delay(struct cqspi_flash_pdata *f_pdata)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	void __iomem *iobase = cqspi->iobase;
-	const unsigned int ref_clk_hz = cqspi->master_ref_clk_hz;
-	unsigned int tshsl, tchsh, tslch, tsd2d;
-	unsigned int reg;
-	unsigned int tsclk;
+अटल व्योम cqspi_delay(काष्ठा cqspi_flash_pdata *f_pdata)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	व्योम __iomem *iobase = cqspi->iobase;
+	स्थिर अचिन्हित पूर्णांक ref_clk_hz = cqspi->master_ref_clk_hz;
+	अचिन्हित पूर्णांक tshsl, tchsh, tslch, tsd2d;
+	अचिन्हित पूर्णांक reg;
+	अचिन्हित पूर्णांक tsclk;
 
-	/* calculate the number of ref ticks for one sclk tick */
+	/* calculate the number of ref ticks क्रम one sclk tick */
 	tsclk = DIV_ROUND_UP(ref_clk_hz, cqspi->sclk);
 
-	tshsl = calculate_ticks_for_ns(ref_clk_hz, f_pdata->tshsl_ns);
+	tshsl = calculate_ticks_क्रम_ns(ref_clk_hz, f_pdata->tshsl_ns);
 	/* this particular value must be at least one sclk */
-	if (tshsl < tsclk)
+	अगर (tshsl < tsclk)
 		tshsl = tsclk;
 
-	tchsh = calculate_ticks_for_ns(ref_clk_hz, f_pdata->tchsh_ns);
-	tslch = calculate_ticks_for_ns(ref_clk_hz, f_pdata->tslch_ns);
-	tsd2d = calculate_ticks_for_ns(ref_clk_hz, f_pdata->tsd2d_ns);
+	tchsh = calculate_ticks_क्रम_ns(ref_clk_hz, f_pdata->tchsh_ns);
+	tslch = calculate_ticks_क्रम_ns(ref_clk_hz, f_pdata->tslch_ns);
+	tsd2d = calculate_ticks_क्रम_ns(ref_clk_hz, f_pdata->tsd2d_ns);
 
 	reg = (tshsl & CQSPI_REG_DELAY_TSHSL_MASK)
 	       << CQSPI_REG_DELAY_TSHSL_LSB;
@@ -979,36 +980,36 @@ static void cqspi_delay(struct cqspi_flash_pdata *f_pdata)
 		<< CQSPI_REG_DELAY_TSLCH_LSB;
 	reg |= (tsd2d & CQSPI_REG_DELAY_TSD2D_MASK)
 		<< CQSPI_REG_DELAY_TSD2D_LSB;
-	writel(reg, iobase + CQSPI_REG_DELAY);
-}
+	ग_लिखोl(reg, iobase + CQSPI_REG_DELAY);
+पूर्ण
 
-static void cqspi_config_baudrate_div(struct cqspi_st *cqspi)
-{
-	const unsigned int ref_clk_hz = cqspi->master_ref_clk_hz;
-	void __iomem *reg_base = cqspi->iobase;
-	u32 reg, div;
+अटल व्योम cqspi_config_baudrate_भाग(काष्ठा cqspi_st *cqspi)
+अणु
+	स्थिर अचिन्हित पूर्णांक ref_clk_hz = cqspi->master_ref_clk_hz;
+	व्योम __iomem *reg_base = cqspi->iobase;
+	u32 reg, भाग;
 
-	/* Recalculate the baudrate divisor based on QSPI specification. */
-	div = DIV_ROUND_UP(ref_clk_hz, 2 * cqspi->sclk) - 1;
+	/* Recalculate the baudrate भागisor based on QSPI specअगरication. */
+	भाग = DIV_ROUND_UP(ref_clk_hz, 2 * cqspi->sclk) - 1;
 
-	reg = readl(reg_base + CQSPI_REG_CONFIG);
+	reg = पढ़ोl(reg_base + CQSPI_REG_CONFIG);
 	reg &= ~(CQSPI_REG_CONFIG_BAUD_MASK << CQSPI_REG_CONFIG_BAUD_LSB);
-	reg |= (div & CQSPI_REG_CONFIG_BAUD_MASK) << CQSPI_REG_CONFIG_BAUD_LSB;
-	writel(reg, reg_base + CQSPI_REG_CONFIG);
-}
+	reg |= (भाग & CQSPI_REG_CONFIG_BAUD_MASK) << CQSPI_REG_CONFIG_BAUD_LSB;
+	ग_लिखोl(reg, reg_base + CQSPI_REG_CONFIG);
+पूर्ण
 
-static void cqspi_readdata_capture(struct cqspi_st *cqspi,
-				   const bool bypass,
-				   const unsigned int delay)
-{
-	void __iomem *reg_base = cqspi->iobase;
-	unsigned int reg;
+अटल व्योम cqspi_पढ़ोdata_capture(काष्ठा cqspi_st *cqspi,
+				   स्थिर bool bypass,
+				   स्थिर अचिन्हित पूर्णांक delay)
+अणु
+	व्योम __iomem *reg_base = cqspi->iobase;
+	अचिन्हित पूर्णांक reg;
 
-	reg = readl(reg_base + CQSPI_REG_READCAPTURE);
+	reg = पढ़ोl(reg_base + CQSPI_REG_READCAPTURE);
 
-	if (bypass)
+	अगर (bypass)
 		reg |= (1 << CQSPI_REG_READCAPTURE_BYPASS_LSB);
-	else
+	अन्यथा
 		reg &= ~(1 << CQSPI_REG_READCAPTURE_BYPASS_LSB);
 
 	reg &= ~(CQSPI_REG_READCAPTURE_DELAY_MASK
@@ -1017,125 +1018,125 @@ static void cqspi_readdata_capture(struct cqspi_st *cqspi,
 	reg |= (delay & CQSPI_REG_READCAPTURE_DELAY_MASK)
 		<< CQSPI_REG_READCAPTURE_DELAY_LSB;
 
-	writel(reg, reg_base + CQSPI_REG_READCAPTURE);
-}
+	ग_लिखोl(reg, reg_base + CQSPI_REG_READCAPTURE);
+पूर्ण
 
-static void cqspi_controller_enable(struct cqspi_st *cqspi, bool enable)
-{
-	void __iomem *reg_base = cqspi->iobase;
-	unsigned int reg;
+अटल व्योम cqspi_controller_enable(काष्ठा cqspi_st *cqspi, bool enable)
+अणु
+	व्योम __iomem *reg_base = cqspi->iobase;
+	अचिन्हित पूर्णांक reg;
 
-	reg = readl(reg_base + CQSPI_REG_CONFIG);
+	reg = पढ़ोl(reg_base + CQSPI_REG_CONFIG);
 
-	if (enable)
+	अगर (enable)
 		reg |= CQSPI_REG_CONFIG_ENABLE_MASK;
-	else
+	अन्यथा
 		reg &= ~CQSPI_REG_CONFIG_ENABLE_MASK;
 
-	writel(reg, reg_base + CQSPI_REG_CONFIG);
-}
+	ग_लिखोl(reg, reg_base + CQSPI_REG_CONFIG);
+पूर्ण
 
-static void cqspi_configure(struct cqspi_flash_pdata *f_pdata,
-			    unsigned long sclk)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	int switch_cs = (cqspi->current_cs != f_pdata->cs);
-	int switch_ck = (cqspi->sclk != sclk);
+अटल व्योम cqspi_configure(काष्ठा cqspi_flash_pdata *f_pdata,
+			    अचिन्हित दीर्घ sclk)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	पूर्णांक चयन_cs = (cqspi->current_cs != f_pdata->cs);
+	पूर्णांक चयन_ck = (cqspi->sclk != sclk);
 
-	if (switch_cs || switch_ck)
+	अगर (चयन_cs || चयन_ck)
 		cqspi_controller_enable(cqspi, 0);
 
 	/* Switch chip select. */
-	if (switch_cs) {
+	अगर (चयन_cs) अणु
 		cqspi->current_cs = f_pdata->cs;
 		cqspi_chipselect(f_pdata);
-	}
+	पूर्ण
 
-	/* Setup baudrate divisor and delays */
-	if (switch_ck) {
+	/* Setup baudrate भागisor and delays */
+	अगर (चयन_ck) अणु
 		cqspi->sclk = sclk;
-		cqspi_config_baudrate_div(cqspi);
+		cqspi_config_baudrate_भाग(cqspi);
 		cqspi_delay(f_pdata);
-		cqspi_readdata_capture(cqspi, !cqspi->rclk_en,
-				       f_pdata->read_delay);
-	}
+		cqspi_पढ़ोdata_capture(cqspi, !cqspi->rclk_en,
+				       f_pdata->पढ़ो_delay);
+	पूर्ण
 
-	if (switch_cs || switch_ck)
+	अगर (चयन_cs || चयन_ck)
 		cqspi_controller_enable(cqspi, 1);
-}
+पूर्ण
 
-static ssize_t cqspi_write(struct cqspi_flash_pdata *f_pdata,
-			   const struct spi_mem_op *op)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
+अटल sमाप_प्रकार cqspi_ग_लिखो(काष्ठा cqspi_flash_pdata *f_pdata,
+			   स्थिर काष्ठा spi_mem_op *op)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
 	loff_t to = op->addr.val;
-	size_t len = op->data.nbytes;
-	const u_char *buf = op->data.buf.out;
-	int ret;
+	माप_प्रकार len = op->data.nbytes;
+	स्थिर u_अक्षर *buf = op->data.buf.out;
+	पूर्णांक ret;
 
 	ret = cqspi_set_protocol(f_pdata, op);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = cqspi_write_setup(f_pdata, op);
-	if (ret)
-		return ret;
+	ret = cqspi_ग_लिखो_setup(f_pdata, op);
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Some flashes like the Cypress Semper flash expect a dummy 4-byte
-	 * address (all 0s) with the read status register command in DTR mode.
-	 * But this controller does not support sending dummy address bytes to
-	 * the flash when it is polling the write completion register in DTR
-	 * mode. So, we can not use direct mode when in DTR mode for writing
+	 * address (all 0s) with the पढ़ो status रेजिस्टर command in DTR mode.
+	 * But this controller करोes not support sending dummy address bytes to
+	 * the flash when it is polling the ग_लिखो completion रेजिस्टर in DTR
+	 * mode. So, we can not use direct mode when in DTR mode क्रम writing
 	 * data.
 	 */
-	if (!f_pdata->dtr && cqspi->use_direct_mode &&
-	    ((to + len) <= cqspi->ahb_size)) {
-		memcpy_toio(cqspi->ahb_base + to, buf, len);
-		return cqspi_wait_idle(cqspi);
-	}
+	अगर (!f_pdata->dtr && cqspi->use_direct_mode &&
+	    ((to + len) <= cqspi->ahb_size)) अणु
+		स_नकल_toio(cqspi->ahb_base + to, buf, len);
+		वापस cqspi_रुको_idle(cqspi);
+	पूर्ण
 
-	return cqspi_indirect_write_execute(f_pdata, to, buf, len);
-}
+	वापस cqspi_indirect_ग_लिखो_execute(f_pdata, to, buf, len);
+पूर्ण
 
-static void cqspi_rx_dma_callback(void *param)
-{
-	struct cqspi_st *cqspi = param;
+अटल व्योम cqspi_rx_dma_callback(व्योम *param)
+अणु
+	काष्ठा cqspi_st *cqspi = param;
 
 	complete(&cqspi->rx_dma_complete);
-}
+पूर्ण
 
-static int cqspi_direct_read_execute(struct cqspi_flash_pdata *f_pdata,
-				     u_char *buf, loff_t from, size_t len)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
-	struct device *dev = &cqspi->pdev->dev;
-	enum dma_ctrl_flags flags = DMA_CTRL_ACK | DMA_PREP_INTERRUPT;
+अटल पूर्णांक cqspi_direct_पढ़ो_execute(काष्ठा cqspi_flash_pdata *f_pdata,
+				     u_अक्षर *buf, loff_t from, माप_प्रकार len)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
+	काष्ठा device *dev = &cqspi->pdev->dev;
+	क्रमागत dma_ctrl_flags flags = DMA_CTRL_ACK | DMA_PREP_INTERRUPT;
 	dma_addr_t dma_src = (dma_addr_t)cqspi->mmap_phys_base + from;
-	int ret = 0;
-	struct dma_async_tx_descriptor *tx;
+	पूर्णांक ret = 0;
+	काष्ठा dma_async_tx_descriptor *tx;
 	dma_cookie_t cookie;
 	dma_addr_t dma_dst;
-	struct device *ddev;
+	काष्ठा device *ddev;
 
-	if (!cqspi->rx_chan || !virt_addr_valid(buf)) {
-		memcpy_fromio(buf, cqspi->ahb_base + from, len);
-		return 0;
-	}
+	अगर (!cqspi->rx_chan || !virt_addr_valid(buf)) अणु
+		स_नकल_fromio(buf, cqspi->ahb_base + from, len);
+		वापस 0;
+	पूर्ण
 
 	ddev = cqspi->rx_chan->device->dev;
 	dma_dst = dma_map_single(ddev, buf, len, DMA_FROM_DEVICE);
-	if (dma_mapping_error(ddev, dma_dst)) {
+	अगर (dma_mapping_error(ddev, dma_dst)) अणु
 		dev_err(dev, "dma mapping failed\n");
-		return -ENOMEM;
-	}
-	tx = dmaengine_prep_dma_memcpy(cqspi->rx_chan, dma_dst, dma_src,
+		वापस -ENOMEM;
+	पूर्ण
+	tx = dmaengine_prep_dma_स_नकल(cqspi->rx_chan, dma_dst, dma_src,
 				       len, flags);
-	if (!tx) {
+	अगर (!tx) अणु
 		dev_err(dev, "device_prep_dma_memcpy error\n");
 		ret = -EIO;
-		goto err_unmap;
-	}
+		जाओ err_unmap;
+	पूर्ण
 
 	tx->callback = cqspi_rx_dma_callback;
 	tx->callback_param = cqspi;
@@ -1143,85 +1144,85 @@ static int cqspi_direct_read_execute(struct cqspi_flash_pdata *f_pdata,
 	reinit_completion(&cqspi->rx_dma_complete);
 
 	ret = dma_submit_error(cookie);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "dma_submit_error %d\n", cookie);
 		ret = -EIO;
-		goto err_unmap;
-	}
+		जाओ err_unmap;
+	पूर्ण
 
 	dma_async_issue_pending(cqspi->rx_chan);
-	if (!wait_for_completion_timeout(&cqspi->rx_dma_complete,
-					 msecs_to_jiffies(max_t(size_t, len, 500)))) {
+	अगर (!रुको_क्रम_completion_समयout(&cqspi->rx_dma_complete,
+					 msecs_to_jअगरfies(max_t(माप_प्रकार, len, 500)))) अणु
 		dmaengine_terminate_sync(cqspi->rx_chan);
 		dev_err(dev, "DMA wait_for_completion_timeout\n");
 		ret = -ETIMEDOUT;
-		goto err_unmap;
-	}
+		जाओ err_unmap;
+	पूर्ण
 
 err_unmap:
 	dma_unmap_single(ddev, dma_dst, len, DMA_FROM_DEVICE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t cqspi_read(struct cqspi_flash_pdata *f_pdata,
-			  const struct spi_mem_op *op)
-{
-	struct cqspi_st *cqspi = f_pdata->cqspi;
+अटल sमाप_प्रकार cqspi_पढ़ो(काष्ठा cqspi_flash_pdata *f_pdata,
+			  स्थिर काष्ठा spi_mem_op *op)
+अणु
+	काष्ठा cqspi_st *cqspi = f_pdata->cqspi;
 	loff_t from = op->addr.val;
-	size_t len = op->data.nbytes;
-	u_char *buf = op->data.buf.in;
-	int ret;
+	माप_प्रकार len = op->data.nbytes;
+	u_अक्षर *buf = op->data.buf.in;
+	पूर्णांक ret;
 
 	ret = cqspi_set_protocol(f_pdata, op);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = cqspi_read_setup(f_pdata, op);
-	if (ret)
-		return ret;
+	ret = cqspi_पढ़ो_setup(f_pdata, op);
+	अगर (ret)
+		वापस ret;
 
-	if (cqspi->use_direct_mode && ((from + len) <= cqspi->ahb_size))
-		return cqspi_direct_read_execute(f_pdata, buf, from, len);
+	अगर (cqspi->use_direct_mode && ((from + len) <= cqspi->ahb_size))
+		वापस cqspi_direct_पढ़ो_execute(f_pdata, buf, from, len);
 
-	return cqspi_indirect_read_execute(f_pdata, buf, from, len);
-}
+	वापस cqspi_indirect_पढ़ो_execute(f_pdata, buf, from, len);
+पूर्ण
 
-static int cqspi_mem_process(struct spi_mem *mem, const struct spi_mem_op *op)
-{
-	struct cqspi_st *cqspi = spi_master_get_devdata(mem->spi->master);
-	struct cqspi_flash_pdata *f_pdata;
+अटल पूर्णांक cqspi_mem_process(काष्ठा spi_mem *mem, स्थिर काष्ठा spi_mem_op *op)
+अणु
+	काष्ठा cqspi_st *cqspi = spi_master_get_devdata(mem->spi->master);
+	काष्ठा cqspi_flash_pdata *f_pdata;
 
 	f_pdata = &cqspi->f_pdata[mem->spi->chip_select];
 	cqspi_configure(f_pdata, mem->spi->max_speed_hz);
 
-	if (op->data.dir == SPI_MEM_DATA_IN && op->data.buf.in) {
-		if (!op->addr.nbytes)
-			return cqspi_command_read(f_pdata, op);
+	अगर (op->data.dir == SPI_MEM_DATA_IN && op->data.buf.in) अणु
+		अगर (!op->addr.nbytes)
+			वापस cqspi_command_पढ़ो(f_pdata, op);
 
-		return cqspi_read(f_pdata, op);
-	}
+		वापस cqspi_पढ़ो(f_pdata, op);
+	पूर्ण
 
-	if (!op->addr.nbytes || !op->data.buf.out)
-		return cqspi_command_write(f_pdata, op);
+	अगर (!op->addr.nbytes || !op->data.buf.out)
+		वापस cqspi_command_ग_लिखो(f_pdata, op);
 
-	return cqspi_write(f_pdata, op);
-}
+	वापस cqspi_ग_लिखो(f_pdata, op);
+पूर्ण
 
-static int cqspi_exec_mem_op(struct spi_mem *mem, const struct spi_mem_op *op)
-{
-	int ret;
+अटल पूर्णांक cqspi_exec_mem_op(काष्ठा spi_mem *mem, स्थिर काष्ठा spi_mem_op *op)
+अणु
+	पूर्णांक ret;
 
 	ret = cqspi_mem_process(mem, op);
-	if (ret)
+	अगर (ret)
 		dev_err(&mem->spi->dev, "operation failed with %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool cqspi_supports_mem_op(struct spi_mem *mem,
-				  const struct spi_mem_op *op)
-{
+अटल bool cqspi_supports_mem_op(काष्ठा spi_mem *mem,
+				  स्थिर काष्ठा spi_mem_op *op)
+अणु
 	bool all_true, all_false;
 
 	all_true = op->cmd.dtr && op->addr.dtr && op->dummy.dtr &&
@@ -1230,206 +1231,206 @@ static bool cqspi_supports_mem_op(struct spi_mem *mem,
 		    !op->data.dtr;
 
 	/* Mixed DTR modes not supported. */
-	if (!(all_true || all_false))
-		return false;
+	अगर (!(all_true || all_false))
+		वापस false;
 
-	if (all_true)
-		return spi_mem_dtr_supports_op(mem, op);
-	else
-		return spi_mem_default_supports_op(mem, op);
-}
+	अगर (all_true)
+		वापस spi_mem_dtr_supports_op(mem, op);
+	अन्यथा
+		वापस spi_mem_शेष_supports_op(mem, op);
+पूर्ण
 
-static int cqspi_of_get_flash_pdata(struct platform_device *pdev,
-				    struct cqspi_flash_pdata *f_pdata,
-				    struct device_node *np)
-{
-	if (of_property_read_u32(np, "cdns,read-delay", &f_pdata->read_delay)) {
+अटल पूर्णांक cqspi_of_get_flash_pdata(काष्ठा platक्रमm_device *pdev,
+				    काष्ठा cqspi_flash_pdata *f_pdata,
+				    काष्ठा device_node *np)
+अणु
+	अगर (of_property_पढ़ो_u32(np, "cdns,read-delay", &f_pdata->पढ़ो_delay)) अणु
 		dev_err(&pdev->dev, "couldn't determine read-delay\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (of_property_read_u32(np, "cdns,tshsl-ns", &f_pdata->tshsl_ns)) {
+	अगर (of_property_पढ़ो_u32(np, "cdns,tshsl-ns", &f_pdata->tshsl_ns)) अणु
 		dev_err(&pdev->dev, "couldn't determine tshsl-ns\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (of_property_read_u32(np, "cdns,tsd2d-ns", &f_pdata->tsd2d_ns)) {
+	अगर (of_property_पढ़ो_u32(np, "cdns,tsd2d-ns", &f_pdata->tsd2d_ns)) अणु
 		dev_err(&pdev->dev, "couldn't determine tsd2d-ns\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (of_property_read_u32(np, "cdns,tchsh-ns", &f_pdata->tchsh_ns)) {
+	अगर (of_property_पढ़ो_u32(np, "cdns,tchsh-ns", &f_pdata->tchsh_ns)) अणु
 		dev_err(&pdev->dev, "couldn't determine tchsh-ns\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (of_property_read_u32(np, "cdns,tslch-ns", &f_pdata->tslch_ns)) {
+	अगर (of_property_पढ़ो_u32(np, "cdns,tslch-ns", &f_pdata->tslch_ns)) अणु
 		dev_err(&pdev->dev, "couldn't determine tslch-ns\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (of_property_read_u32(np, "spi-max-frequency", &f_pdata->clk_rate)) {
+	अगर (of_property_पढ़ो_u32(np, "spi-max-frequency", &f_pdata->clk_rate)) अणु
 		dev_err(&pdev->dev, "couldn't determine spi-max-frequency\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cqspi_of_get_pdata(struct cqspi_st *cqspi)
-{
-	struct device *dev = &cqspi->pdev->dev;
-	struct device_node *np = dev->of_node;
+अटल पूर्णांक cqspi_of_get_pdata(काष्ठा cqspi_st *cqspi)
+अणु
+	काष्ठा device *dev = &cqspi->pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
 
-	cqspi->is_decoded_cs = of_property_read_bool(np, "cdns,is-decoded-cs");
+	cqspi->is_decoded_cs = of_property_पढ़ो_bool(np, "cdns,is-decoded-cs");
 
-	if (of_property_read_u32(np, "cdns,fifo-depth", &cqspi->fifo_depth)) {
+	अगर (of_property_पढ़ो_u32(np, "cdns,fifo-depth", &cqspi->fअगरo_depth)) अणु
 		dev_err(dev, "couldn't determine fifo-depth\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (of_property_read_u32(np, "cdns,fifo-width", &cqspi->fifo_width)) {
+	अगर (of_property_पढ़ो_u32(np, "cdns,fifo-width", &cqspi->fअगरo_width)) अणु
 		dev_err(dev, "couldn't determine fifo-width\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (of_property_read_u32(np, "cdns,trigger-address",
-				 &cqspi->trigger_address)) {
+	अगर (of_property_पढ़ो_u32(np, "cdns,trigger-address",
+				 &cqspi->trigger_address)) अणु
 		dev_err(dev, "couldn't determine trigger-address\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (of_property_read_u32(np, "num-cs", &cqspi->num_chipselect))
+	अगर (of_property_पढ़ो_u32(np, "num-cs", &cqspi->num_chipselect))
 		cqspi->num_chipselect = CQSPI_MAX_CHIPSELECT;
 
-	cqspi->rclk_en = of_property_read_bool(np, "cdns,rclk-en");
+	cqspi->rclk_en = of_property_पढ़ो_bool(np, "cdns,rclk-en");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cqspi_controller_init(struct cqspi_st *cqspi)
-{
+अटल व्योम cqspi_controller_init(काष्ठा cqspi_st *cqspi)
+अणु
 	u32 reg;
 
 	cqspi_controller_enable(cqspi, 0);
 
-	/* Configure the remap address register, no remap */
-	writel(0, cqspi->iobase + CQSPI_REG_REMAP);
+	/* Configure the remap address रेजिस्टर, no remap */
+	ग_लिखोl(0, cqspi->iobase + CQSPI_REG_REMAP);
 
-	/* Disable all interrupts. */
-	writel(0, cqspi->iobase + CQSPI_REG_IRQMASK);
+	/* Disable all पूर्णांकerrupts. */
+	ग_लिखोl(0, cqspi->iobase + CQSPI_REG_IRQMASK);
 
 	/* Configure the SRAM split to 1:1 . */
-	writel(cqspi->fifo_depth / 2, cqspi->iobase + CQSPI_REG_SRAMPARTITION);
+	ग_लिखोl(cqspi->fअगरo_depth / 2, cqspi->iobase + CQSPI_REG_SRAMPARTITION);
 
 	/* Load indirect trigger address. */
-	writel(cqspi->trigger_address,
-	       cqspi->iobase + CQSPI_REG_INDIRECTTRIGGER);
+	ग_लिखोl(cqspi->trigger_address,
+	       cqspi->iobase + CQSPI_REG_INसूचीECTTRIGGER);
 
-	/* Program read watermark -- 1/2 of the FIFO. */
-	writel(cqspi->fifo_depth * cqspi->fifo_width / 2,
-	       cqspi->iobase + CQSPI_REG_INDIRECTRDWATERMARK);
-	/* Program write watermark -- 1/8 of the FIFO. */
-	writel(cqspi->fifo_depth * cqspi->fifo_width / 8,
-	       cqspi->iobase + CQSPI_REG_INDIRECTWRWATERMARK);
+	/* Program पढ़ो watermark -- 1/2 of the FIFO. */
+	ग_लिखोl(cqspi->fअगरo_depth * cqspi->fअगरo_width / 2,
+	       cqspi->iobase + CQSPI_REG_INसूचीECTRDWATERMARK);
+	/* Program ग_लिखो watermark -- 1/8 of the FIFO. */
+	ग_लिखोl(cqspi->fअगरo_depth * cqspi->fअगरo_width / 8,
+	       cqspi->iobase + CQSPI_REG_INसूचीECTWRWATERMARK);
 
 	/* Disable direct access controller */
-	if (!cqspi->use_direct_mode) {
-		reg = readl(cqspi->iobase + CQSPI_REG_CONFIG);
-		reg &= ~CQSPI_REG_CONFIG_ENB_DIR_ACC_CTRL;
-		writel(reg, cqspi->iobase + CQSPI_REG_CONFIG);
-	}
+	अगर (!cqspi->use_direct_mode) अणु
+		reg = पढ़ोl(cqspi->iobase + CQSPI_REG_CONFIG);
+		reg &= ~CQSPI_REG_CONFIG_ENB_सूची_ACC_CTRL;
+		ग_लिखोl(reg, cqspi->iobase + CQSPI_REG_CONFIG);
+	पूर्ण
 
 	cqspi_controller_enable(cqspi, 1);
-}
+पूर्ण
 
-static int cqspi_request_mmap_dma(struct cqspi_st *cqspi)
-{
+अटल पूर्णांक cqspi_request_mmap_dma(काष्ठा cqspi_st *cqspi)
+अणु
 	dma_cap_mask_t mask;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_MEMCPY, mask);
 
 	cqspi->rx_chan = dma_request_chan_by_mask(&mask);
-	if (IS_ERR(cqspi->rx_chan)) {
-		int ret = PTR_ERR(cqspi->rx_chan);
-		cqspi->rx_chan = NULL;
-		return dev_err_probe(&cqspi->pdev->dev, ret, "No Rx DMA available\n");
-	}
+	अगर (IS_ERR(cqspi->rx_chan)) अणु
+		पूर्णांक ret = PTR_ERR(cqspi->rx_chan);
+		cqspi->rx_chan = शून्य;
+		वापस dev_err_probe(&cqspi->pdev->dev, ret, "No Rx DMA available\n");
+	पूर्ण
 	init_completion(&cqspi->rx_dma_complete);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char *cqspi_get_name(struct spi_mem *mem)
-{
-	struct cqspi_st *cqspi = spi_master_get_devdata(mem->spi->master);
-	struct device *dev = &cqspi->pdev->dev;
+अटल स्थिर अक्षर *cqspi_get_name(काष्ठा spi_mem *mem)
+अणु
+	काष्ठा cqspi_st *cqspi = spi_master_get_devdata(mem->spi->master);
+	काष्ठा device *dev = &cqspi->pdev->dev;
 
-	return devm_kasprintf(dev, GFP_KERNEL, "%s.%d", dev_name(dev), mem->spi->chip_select);
-}
+	वापस devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s.%d", dev_name(dev), mem->spi->chip_select);
+पूर्ण
 
-static const struct spi_controller_mem_ops cqspi_mem_ops = {
+अटल स्थिर काष्ठा spi_controller_mem_ops cqspi_mem_ops = अणु
 	.exec_op = cqspi_exec_mem_op,
 	.get_name = cqspi_get_name,
 	.supports_op = cqspi_supports_mem_op,
-};
+पूर्ण;
 
-static int cqspi_setup_flash(struct cqspi_st *cqspi)
-{
-	struct platform_device *pdev = cqspi->pdev;
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct cqspi_flash_pdata *f_pdata;
-	unsigned int cs;
-	int ret;
+अटल पूर्णांक cqspi_setup_flash(काष्ठा cqspi_st *cqspi)
+अणु
+	काष्ठा platक्रमm_device *pdev = cqspi->pdev;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा cqspi_flash_pdata *f_pdata;
+	अचिन्हित पूर्णांक cs;
+	पूर्णांक ret;
 
 	/* Get flash device data */
-	for_each_available_child_of_node(dev->of_node, np) {
-		ret = of_property_read_u32(np, "reg", &cs);
-		if (ret) {
+	क्रम_each_available_child_of_node(dev->of_node, np) अणु
+		ret = of_property_पढ़ो_u32(np, "reg", &cs);
+		अगर (ret) अणु
 			dev_err(dev, "Couldn't determine chip select.\n");
 			of_node_put(np);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (cs >= CQSPI_MAX_CHIPSELECT) {
+		अगर (cs >= CQSPI_MAX_CHIPSELECT) अणु
 			dev_err(dev, "Chip select %d out of range.\n", cs);
 			of_node_put(np);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		f_pdata = &cqspi->f_pdata[cs];
 		f_pdata->cqspi = cqspi;
 		f_pdata->cs = cs;
 
 		ret = cqspi_of_get_flash_pdata(pdev, f_pdata, np);
-		if (ret) {
+		अगर (ret) अणु
 			of_node_put(np);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cqspi_probe(struct platform_device *pdev)
-{
-	const struct cqspi_driver_platdata *ddata;
-	struct reset_control *rstc, *rstc_ocp;
-	struct device *dev = &pdev->dev;
-	struct spi_master *master;
-	struct resource *res_ahb;
-	struct cqspi_st *cqspi;
-	struct resource *res;
-	int ret;
-	int irq;
+अटल पूर्णांक cqspi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा cqspi_driver_platdata *ddata;
+	काष्ठा reset_control *rstc, *rstc_ocp;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा spi_master *master;
+	काष्ठा resource *res_ahb;
+	काष्ठा cqspi_st *cqspi;
+	काष्ठा resource *res;
+	पूर्णांक ret;
+	पूर्णांक irq;
 
-	master = spi_alloc_master(&pdev->dev, sizeof(*cqspi));
-	if (!master) {
+	master = spi_alloc_master(&pdev->dev, माप(*cqspi));
+	अगर (!master) अणु
 		dev_err(&pdev->dev, "spi_alloc_master failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	master->mode_bits = SPI_RX_QUAD | SPI_RX_DUAL;
 	master->mem_ops = &cqspi_mem_ops;
 	master->dev.of_node = pdev->dev.of_node;
@@ -1437,108 +1438,108 @@ static int cqspi_probe(struct platform_device *pdev)
 	cqspi = spi_master_get_devdata(master);
 
 	cqspi->pdev = pdev;
-	platform_set_drvdata(pdev, cqspi);
+	platक्रमm_set_drvdata(pdev, cqspi);
 
 	/* Obtain configuration from OF. */
 	ret = cqspi_of_get_pdata(cqspi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Cannot get mandatory OF data.\n");
 		ret = -ENODEV;
-		goto probe_master_put;
-	}
+		जाओ probe_master_put;
+	पूर्ण
 
-	/* Obtain QSPI clock. */
-	cqspi->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(cqspi->clk)) {
+	/* Obtain QSPI घड़ी. */
+	cqspi->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(cqspi->clk)) अणु
 		dev_err(dev, "Cannot claim QSPI clock.\n");
 		ret = PTR_ERR(cqspi->clk);
-		goto probe_master_put;
-	}
+		जाओ probe_master_put;
+	पूर्ण
 
 	/* Obtain and remap controller address. */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	cqspi->iobase = devm_ioremap_resource(dev, res);
-	if (IS_ERR(cqspi->iobase)) {
+	अगर (IS_ERR(cqspi->iobase)) अणु
 		dev_err(dev, "Cannot remap controller address.\n");
 		ret = PTR_ERR(cqspi->iobase);
-		goto probe_master_put;
-	}
+		जाओ probe_master_put;
+	पूर्ण
 
 	/* Obtain and remap AHB address. */
-	res_ahb = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	res_ahb = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 	cqspi->ahb_base = devm_ioremap_resource(dev, res_ahb);
-	if (IS_ERR(cqspi->ahb_base)) {
+	अगर (IS_ERR(cqspi->ahb_base)) अणु
 		dev_err(dev, "Cannot remap AHB address.\n");
 		ret = PTR_ERR(cqspi->ahb_base);
-		goto probe_master_put;
-	}
+		जाओ probe_master_put;
+	पूर्ण
 	cqspi->mmap_phys_base = (dma_addr_t)res_ahb->start;
 	cqspi->ahb_size = resource_size(res_ahb);
 
 	init_completion(&cqspi->transfer_complete);
 
 	/* Obtain IRQ line. */
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		ret = -ENXIO;
-		goto probe_master_put;
-	}
+		जाओ probe_master_put;
+	पूर्ण
 
-	pm_runtime_enable(dev);
-	ret = pm_runtime_get_sync(dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(dev);
-		goto probe_master_put;
-	}
+	pm_runसमय_enable(dev);
+	ret = pm_runसमय_get_sync(dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(dev);
+		जाओ probe_master_put;
+	पूर्ण
 
 	ret = clk_prepare_enable(cqspi->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Cannot enable QSPI clock.\n");
-		goto probe_clk_failed;
-	}
+		जाओ probe_clk_failed;
+	पूर्ण
 
 	/* Obtain QSPI reset control */
 	rstc = devm_reset_control_get_optional_exclusive(dev, "qspi");
-	if (IS_ERR(rstc)) {
+	अगर (IS_ERR(rstc)) अणु
 		ret = PTR_ERR(rstc);
 		dev_err(dev, "Cannot get QSPI reset.\n");
-		goto probe_reset_failed;
-	}
+		जाओ probe_reset_failed;
+	पूर्ण
 
 	rstc_ocp = devm_reset_control_get_optional_exclusive(dev, "qspi-ocp");
-	if (IS_ERR(rstc_ocp)) {
+	अगर (IS_ERR(rstc_ocp)) अणु
 		ret = PTR_ERR(rstc_ocp);
 		dev_err(dev, "Cannot get QSPI OCP reset.\n");
-		goto probe_reset_failed;
-	}
+		जाओ probe_reset_failed;
+	पूर्ण
 
-	reset_control_assert(rstc);
-	reset_control_deassert(rstc);
+	reset_control_निश्चित(rstc);
+	reset_control_deनिश्चित(rstc);
 
-	reset_control_assert(rstc_ocp);
-	reset_control_deassert(rstc_ocp);
+	reset_control_निश्चित(rstc_ocp);
+	reset_control_deनिश्चित(rstc_ocp);
 
 	cqspi->master_ref_clk_hz = clk_get_rate(cqspi->clk);
 	master->max_speed_hz = cqspi->master_ref_clk_hz;
 	ddata  = of_device_get_match_data(dev);
-	if (ddata) {
-		if (ddata->quirks & CQSPI_NEEDS_WR_DELAY)
+	अगर (ddata) अणु
+		अगर (ddata->quirks & CQSPI_NEEDS_WR_DELAY)
 			cqspi->wr_delay = 50 * DIV_ROUND_UP(NSEC_PER_SEC,
 						cqspi->master_ref_clk_hz);
-		if (ddata->hwcaps_mask & CQSPI_SUPPORTS_OCTAL)
+		अगर (ddata->hwcaps_mask & CQSPI_SUPPORTS_OCTAL)
 			master->mode_bits |= SPI_RX_OCTAL | SPI_TX_OCTAL;
-		if (!(ddata->quirks & CQSPI_DISABLE_DAC_MODE))
+		अगर (!(ddata->quirks & CQSPI_DISABLE_DAC_MODE))
 			cqspi->use_direct_mode = true;
-	}
+	पूर्ण
 
 	ret = devm_request_irq(dev, irq, cqspi_irq_handler, 0,
 			       pdev->name, cqspi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Cannot request IRQ.\n");
-		goto probe_reset_failed;
-	}
+		जाओ probe_reset_failed;
+	पूर्ण
 
-	cqspi_wait_idle(cqspi);
+	cqspi_रुको_idle(cqspi);
 	cqspi_controller_init(cqspi);
 	cqspi->current_cs = -1;
 	cqspi->sclk = 0;
@@ -1546,130 +1547,130 @@ static int cqspi_probe(struct platform_device *pdev)
 	master->num_chipselect = cqspi->num_chipselect;
 
 	ret = cqspi_setup_flash(cqspi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to setup flash parameters %d\n", ret);
-		goto probe_setup_failed;
-	}
+		जाओ probe_setup_failed;
+	पूर्ण
 
-	if (cqspi->use_direct_mode) {
+	अगर (cqspi->use_direct_mode) अणु
 		ret = cqspi_request_mmap_dma(cqspi);
-		if (ret == -EPROBE_DEFER)
-			goto probe_setup_failed;
-	}
+		अगर (ret == -EPROBE_DEFER)
+			जाओ probe_setup_failed;
+	पूर्ण
 
-	ret = devm_spi_register_master(dev, master);
-	if (ret) {
+	ret = devm_spi_रेजिस्टर_master(dev, master);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to register SPI ctlr %d\n", ret);
-		goto probe_setup_failed;
-	}
+		जाओ probe_setup_failed;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 probe_setup_failed:
 	cqspi_controller_enable(cqspi, 0);
 probe_reset_failed:
 	clk_disable_unprepare(cqspi->clk);
 probe_clk_failed:
-	pm_runtime_put_sync(dev);
-	pm_runtime_disable(dev);
+	pm_runसमय_put_sync(dev);
+	pm_runसमय_disable(dev);
 probe_master_put:
 	spi_master_put(master);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cqspi_remove(struct platform_device *pdev)
-{
-	struct cqspi_st *cqspi = platform_get_drvdata(pdev);
+अटल पूर्णांक cqspi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cqspi_st *cqspi = platक्रमm_get_drvdata(pdev);
 
 	cqspi_controller_enable(cqspi, 0);
 
-	if (cqspi->rx_chan)
+	अगर (cqspi->rx_chan)
 		dma_release_channel(cqspi->rx_chan);
 
 	clk_disable_unprepare(cqspi->clk);
 
-	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_put_sync(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int cqspi_suspend(struct device *dev)
-{
-	struct cqspi_st *cqspi = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक cqspi_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा cqspi_st *cqspi = dev_get_drvdata(dev);
 
 	cqspi_controller_enable(cqspi, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cqspi_resume(struct device *dev)
-{
-	struct cqspi_st *cqspi = dev_get_drvdata(dev);
+अटल पूर्णांक cqspi_resume(काष्ठा device *dev)
+अणु
+	काष्ठा cqspi_st *cqspi = dev_get_drvdata(dev);
 
 	cqspi_controller_enable(cqspi, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops cqspi__dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops cqspi__dev_pm_ops = अणु
 	.suspend = cqspi_suspend,
 	.resume = cqspi_resume,
-};
+पूर्ण;
 
-#define CQSPI_DEV_PM_OPS	(&cqspi__dev_pm_ops)
-#else
-#define CQSPI_DEV_PM_OPS	NULL
-#endif
+#घोषणा CQSPI_DEV_PM_OPS	(&cqspi__dev_pm_ops)
+#अन्यथा
+#घोषणा CQSPI_DEV_PM_OPS	शून्य
+#पूर्ण_अगर
 
-static const struct cqspi_driver_platdata cdns_qspi = {
+अटल स्थिर काष्ठा cqspi_driver_platdata cdns_qspi = अणु
 	.quirks = CQSPI_DISABLE_DAC_MODE,
-};
+पूर्ण;
 
-static const struct cqspi_driver_platdata k2g_qspi = {
+अटल स्थिर काष्ठा cqspi_driver_platdata k2g_qspi = अणु
 	.quirks = CQSPI_NEEDS_WR_DELAY,
-};
+पूर्ण;
 
-static const struct cqspi_driver_platdata am654_ospi = {
+अटल स्थिर काष्ठा cqspi_driver_platdata am654_ospi = अणु
 	.hwcaps_mask = CQSPI_SUPPORTS_OCTAL,
 	.quirks = CQSPI_NEEDS_WR_DELAY,
-};
+पूर्ण;
 
-static const struct cqspi_driver_platdata intel_lgm_qspi = {
+अटल स्थिर काष्ठा cqspi_driver_platdata पूर्णांकel_lgm_qspi = अणु
 	.quirks = CQSPI_DISABLE_DAC_MODE,
-};
+पूर्ण;
 
-static const struct of_device_id cqspi_dt_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id cqspi_dt_ids[] = अणु
+	अणु
 		.compatible = "cdns,qspi-nor",
 		.data = &cdns_qspi,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "ti,k2g-qspi",
 		.data = &k2g_qspi,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "ti,am654-ospi",
 		.data = &am654_ospi,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "intel,lgm-qspi",
-		.data = &intel_lgm_qspi,
-	},
-	{ /* end of table */ }
-};
+		.data = &पूर्णांकel_lgm_qspi,
+	पूर्ण,
+	अणु /* end of table */ पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, cqspi_dt_ids);
 
-static struct platform_driver cqspi_platform_driver = {
+अटल काष्ठा platक्रमm_driver cqspi_platक्रमm_driver = अणु
 	.probe = cqspi_probe,
-	.remove = cqspi_remove,
-	.driver = {
+	.हटाओ = cqspi_हटाओ,
+	.driver = अणु
 		.name = CQSPI_NAME,
 		.pm = CQSPI_DEV_PM_OPS,
 		.of_match_table = cqspi_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(cqspi_platform_driver);
+module_platक्रमm_driver(cqspi_platक्रमm_driver);
 
 MODULE_DESCRIPTION("Cadence QSPI Controller Driver");
 MODULE_LICENSE("GPL v2");

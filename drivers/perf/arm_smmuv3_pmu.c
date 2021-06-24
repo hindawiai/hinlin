@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * This driver adds support for perf events to use the Performance
+ * This driver adds support क्रम perf events to use the Perक्रमmance
  * Monitor Counter Groups (PMCG) associated with an SMMUv3 node
  * to monitor that node.
  *
@@ -10,274 +11,274 @@
  * to 4K boundary. For example, the PMCG at 0xff88840000 is named
  * smmuv3_pmcg_ff88840
  *
- * Filtering by stream id is done by specifying filtering parameters
+ * Filtering by stream id is करोne by specअगरying filtering parameters
  * with the event. options are:
  *   filter_enable    - 0 = no filtering, 1 = filtering enabled
  *   filter_span      - 0 = exact match, 1 = pattern match
  *   filter_stream_id - pattern to filter against
  *
- * To match a partial StreamID where the X most-significant bits must match
- * but the Y least-significant bits might differ, STREAMID is programmed
+ * To match a partial StreamID where the X most-signअगरicant bits must match
+ * but the Y least-signअगरicant bits might dअगरfer, STREAMID is programmed
  * with a value that contains:
  *  STREAMID[Y - 1] == 0.
  *  STREAMID[Y - 2:0] == 1 (where Y > 1).
- * The remainder of implemented bits of STREAMID (X bits, from bit Y upwards)
+ * The reमुख्यder of implemented bits of STREAMID (X bits, from bit Y upwards)
  * contain a value to match from the corresponding bits of event StreamID.
  *
  * Example: perf stat -e smmuv3_pmcg_ff88840/transaction,filter_enable=1,
  *                    filter_span=1,filter_stream_id=0x42/ -a netperf
  * Applies filter pattern 0x42 to transaction events, which means events
  * matching stream ids 0x42 and 0x43 are counted. Further filtering
- * information is available in the SMMU documentation.
+ * inक्रमmation is available in the SMMU करोcumentation.
  *
  * SMMU events are not attributable to a CPU, so task mode and sampling
  * are not supported.
  */
 
-#include <linux/acpi.h>
-#include <linux/acpi_iort.h>
-#include <linux/bitfield.h>
-#include <linux/bitops.h>
-#include <linux/cpuhotplug.h>
-#include <linux/cpumask.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/msi.h>
-#include <linux/perf_event.h>
-#include <linux/platform_device.h>
-#include <linux/smp.h>
-#include <linux/sysfs.h>
-#include <linux/types.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/acpi_iort.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/cpuhotplug.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/types.h>
 
-#define SMMU_PMCG_EVCNTR0               0x0
-#define SMMU_PMCG_EVCNTR(n, stride)     (SMMU_PMCG_EVCNTR0 + (n) * (stride))
-#define SMMU_PMCG_EVTYPER0              0x400
-#define SMMU_PMCG_EVTYPER(n)            (SMMU_PMCG_EVTYPER0 + (n) * 4)
-#define SMMU_PMCG_SID_SPAN_SHIFT        29
-#define SMMU_PMCG_SMR0                  0xA00
-#define SMMU_PMCG_SMR(n)                (SMMU_PMCG_SMR0 + (n) * 4)
-#define SMMU_PMCG_CNTENSET0             0xC00
-#define SMMU_PMCG_CNTENCLR0             0xC20
-#define SMMU_PMCG_INTENSET0             0xC40
-#define SMMU_PMCG_INTENCLR0             0xC60
-#define SMMU_PMCG_OVSCLR0               0xC80
-#define SMMU_PMCG_OVSSET0               0xCC0
-#define SMMU_PMCG_CFGR                  0xE00
-#define SMMU_PMCG_CFGR_SID_FILTER_TYPE  BIT(23)
-#define SMMU_PMCG_CFGR_MSI              BIT(21)
-#define SMMU_PMCG_CFGR_RELOC_CTRS       BIT(20)
-#define SMMU_PMCG_CFGR_SIZE             GENMASK(13, 8)
-#define SMMU_PMCG_CFGR_NCTR             GENMASK(5, 0)
-#define SMMU_PMCG_CR                    0xE04
-#define SMMU_PMCG_CR_ENABLE             BIT(0)
-#define SMMU_PMCG_IIDR                  0xE08
-#define SMMU_PMCG_CEID0                 0xE20
-#define SMMU_PMCG_CEID1                 0xE28
-#define SMMU_PMCG_IRQ_CTRL              0xE50
-#define SMMU_PMCG_IRQ_CTRL_IRQEN        BIT(0)
-#define SMMU_PMCG_IRQ_CFG0              0xE58
-#define SMMU_PMCG_IRQ_CFG1              0xE60
-#define SMMU_PMCG_IRQ_CFG2              0xE64
+#घोषणा SMMU_PMCG_EVCNTR0               0x0
+#घोषणा SMMU_PMCG_EVCNTR(n, stride)     (SMMU_PMCG_EVCNTR0 + (n) * (stride))
+#घोषणा SMMU_PMCG_EVTYPER0              0x400
+#घोषणा SMMU_PMCG_EVTYPER(n)            (SMMU_PMCG_EVTYPER0 + (n) * 4)
+#घोषणा SMMU_PMCG_SID_SPAN_SHIFT        29
+#घोषणा SMMU_PMCG_SMR0                  0xA00
+#घोषणा SMMU_PMCG_SMR(n)                (SMMU_PMCG_SMR0 + (n) * 4)
+#घोषणा SMMU_PMCG_CNTENSET0             0xC00
+#घोषणा SMMU_PMCG_CNTENCLR0             0xC20
+#घोषणा SMMU_PMCG_INTENSET0             0xC40
+#घोषणा SMMU_PMCG_INTENCLR0             0xC60
+#घोषणा SMMU_PMCG_OVSCLR0               0xC80
+#घोषणा SMMU_PMCG_OVSSET0               0xCC0
+#घोषणा SMMU_PMCG_CFGR                  0xE00
+#घोषणा SMMU_PMCG_CFGR_SID_FILTER_TYPE  BIT(23)
+#घोषणा SMMU_PMCG_CFGR_MSI              BIT(21)
+#घोषणा SMMU_PMCG_CFGR_RELOC_CTRS       BIT(20)
+#घोषणा SMMU_PMCG_CFGR_SIZE             GENMASK(13, 8)
+#घोषणा SMMU_PMCG_CFGR_NCTR             GENMASK(5, 0)
+#घोषणा SMMU_PMCG_CR                    0xE04
+#घोषणा SMMU_PMCG_CR_ENABLE             BIT(0)
+#घोषणा SMMU_PMCG_IIDR                  0xE08
+#घोषणा SMMU_PMCG_CEID0                 0xE20
+#घोषणा SMMU_PMCG_CEID1                 0xE28
+#घोषणा SMMU_PMCG_IRQ_CTRL              0xE50
+#घोषणा SMMU_PMCG_IRQ_CTRL_IRQEN        BIT(0)
+#घोषणा SMMU_PMCG_IRQ_CFG0              0xE58
+#घोषणा SMMU_PMCG_IRQ_CFG1              0xE60
+#घोषणा SMMU_PMCG_IRQ_CFG2              0xE64
 
 /* MSI config fields */
-#define MSI_CFG0_ADDR_MASK              GENMASK_ULL(51, 2)
-#define MSI_CFG2_MEMATTR_DEVICE_nGnRE   0x1
+#घोषणा MSI_CFG0_ADDR_MASK              GENMASK_ULL(51, 2)
+#घोषणा MSI_CFG2_MEMATTR_DEVICE_nGnRE   0x1
 
-#define SMMU_PMCG_DEFAULT_FILTER_SPAN   1
-#define SMMU_PMCG_DEFAULT_FILTER_SID    GENMASK(31, 0)
+#घोषणा SMMU_PMCG_DEFAULT_FILTER_SPAN   1
+#घोषणा SMMU_PMCG_DEFAULT_FILTER_SID    GENMASK(31, 0)
 
-#define SMMU_PMCG_MAX_COUNTERS          64
-#define SMMU_PMCG_ARCH_MAX_EVENTS       128
+#घोषणा SMMU_PMCG_MAX_COUNTERS          64
+#घोषणा SMMU_PMCG_ARCH_MAX_EVENTS       128
 
-#define SMMU_PMCG_PA_SHIFT              12
+#घोषणा SMMU_PMCG_PA_SHIFT              12
 
-#define SMMU_PMCG_EVCNTR_RDONLY         BIT(0)
+#घोषणा SMMU_PMCG_EVCNTR_RDONLY         BIT(0)
 
-static int cpuhp_state_num;
+अटल पूर्णांक cpuhp_state_num;
 
-struct smmu_pmu {
-	struct hlist_node node;
-	struct perf_event *events[SMMU_PMCG_MAX_COUNTERS];
+काष्ठा smmu_pmu अणु
+	काष्ठा hlist_node node;
+	काष्ठा perf_event *events[SMMU_PMCG_MAX_COUNTERS];
 	DECLARE_BITMAP(used_counters, SMMU_PMCG_MAX_COUNTERS);
 	DECLARE_BITMAP(supported_events, SMMU_PMCG_ARCH_MAX_EVENTS);
-	unsigned int irq;
-	unsigned int on_cpu;
-	struct pmu pmu;
-	unsigned int num_counters;
-	struct device *dev;
-	void __iomem *reg_base;
-	void __iomem *reloc_base;
+	अचिन्हित पूर्णांक irq;
+	अचिन्हित पूर्णांक on_cpu;
+	काष्ठा pmu pmu;
+	अचिन्हित पूर्णांक num_counters;
+	काष्ठा device *dev;
+	व्योम __iomem *reg_base;
+	व्योम __iomem *reloc_base;
 	u64 counter_mask;
 	u32 options;
 	u32 iidr;
 	bool global_filter;
-};
+पूर्ण;
 
-#define to_smmu_pmu(p) (container_of(p, struct smmu_pmu, pmu))
+#घोषणा to_smmu_pmu(p) (container_of(p, काष्ठा smmu_pmu, pmu))
 
-#define SMMU_PMU_EVENT_ATTR_EXTRACTOR(_name, _config, _start, _end)        \
-	static inline u32 get_##_name(struct perf_event *event)            \
-	{                                                                  \
-		return FIELD_GET(GENMASK_ULL(_end, _start),                \
+#घोषणा SMMU_PMU_EVENT_ATTR_EXTRACTOR(_name, _config, _start, _end)        \
+	अटल अंतरभूत u32 get_##_name(काष्ठा perf_event *event)            \
+	अणु                                                                  \
+		वापस FIELD_GET(GENMASK_ULL(_end, _start),                \
 				 event->attr._config);                     \
-	}                                                                  \
+	पूर्ण                                                                  \
 
 SMMU_PMU_EVENT_ATTR_EXTRACTOR(event, config, 0, 15);
 SMMU_PMU_EVENT_ATTR_EXTRACTOR(filter_stream_id, config1, 0, 31);
 SMMU_PMU_EVENT_ATTR_EXTRACTOR(filter_span, config1, 32, 32);
 SMMU_PMU_EVENT_ATTR_EXTRACTOR(filter_enable, config1, 33, 33);
 
-static inline void smmu_pmu_enable(struct pmu *pmu)
-{
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(pmu);
+अटल अंतरभूत व्योम smmu_pmu_enable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(pmu);
 
-	writel(SMMU_PMCG_IRQ_CTRL_IRQEN,
+	ग_लिखोl(SMMU_PMCG_IRQ_CTRL_IRQEN,
 	       smmu_pmu->reg_base + SMMU_PMCG_IRQ_CTRL);
-	writel(SMMU_PMCG_CR_ENABLE, smmu_pmu->reg_base + SMMU_PMCG_CR);
-}
+	ग_लिखोl(SMMU_PMCG_CR_ENABLE, smmu_pmu->reg_base + SMMU_PMCG_CR);
+पूर्ण
 
-static inline void smmu_pmu_disable(struct pmu *pmu)
-{
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(pmu);
+अटल अंतरभूत व्योम smmu_pmu_disable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(pmu);
 
-	writel(0, smmu_pmu->reg_base + SMMU_PMCG_CR);
-	writel(0, smmu_pmu->reg_base + SMMU_PMCG_IRQ_CTRL);
-}
+	ग_लिखोl(0, smmu_pmu->reg_base + SMMU_PMCG_CR);
+	ग_लिखोl(0, smmu_pmu->reg_base + SMMU_PMCG_IRQ_CTRL);
+पूर्ण
 
-static inline void smmu_pmu_counter_set_value(struct smmu_pmu *smmu_pmu,
+अटल अंतरभूत व्योम smmu_pmu_counter_set_value(काष्ठा smmu_pmu *smmu_pmu,
 					      u32 idx, u64 value)
-{
-	if (smmu_pmu->counter_mask & BIT(32))
-		writeq(value, smmu_pmu->reloc_base + SMMU_PMCG_EVCNTR(idx, 8));
-	else
-		writel(value, smmu_pmu->reloc_base + SMMU_PMCG_EVCNTR(idx, 4));
-}
+अणु
+	अगर (smmu_pmu->counter_mask & BIT(32))
+		ग_लिखोq(value, smmu_pmu->reloc_base + SMMU_PMCG_EVCNTR(idx, 8));
+	अन्यथा
+		ग_लिखोl(value, smmu_pmu->reloc_base + SMMU_PMCG_EVCNTR(idx, 4));
+पूर्ण
 
-static inline u64 smmu_pmu_counter_get_value(struct smmu_pmu *smmu_pmu, u32 idx)
-{
+अटल अंतरभूत u64 smmu_pmu_counter_get_value(काष्ठा smmu_pmu *smmu_pmu, u32 idx)
+अणु
 	u64 value;
 
-	if (smmu_pmu->counter_mask & BIT(32))
-		value = readq(smmu_pmu->reloc_base + SMMU_PMCG_EVCNTR(idx, 8));
-	else
-		value = readl(smmu_pmu->reloc_base + SMMU_PMCG_EVCNTR(idx, 4));
+	अगर (smmu_pmu->counter_mask & BIT(32))
+		value = पढ़ोq(smmu_pmu->reloc_base + SMMU_PMCG_EVCNTR(idx, 8));
+	अन्यथा
+		value = पढ़ोl(smmu_pmu->reloc_base + SMMU_PMCG_EVCNTR(idx, 4));
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static inline void smmu_pmu_counter_enable(struct smmu_pmu *smmu_pmu, u32 idx)
-{
-	writeq(BIT(idx), smmu_pmu->reg_base + SMMU_PMCG_CNTENSET0);
-}
+अटल अंतरभूत व्योम smmu_pmu_counter_enable(काष्ठा smmu_pmu *smmu_pmu, u32 idx)
+अणु
+	ग_लिखोq(BIT(idx), smmu_pmu->reg_base + SMMU_PMCG_CNTENSET0);
+पूर्ण
 
-static inline void smmu_pmu_counter_disable(struct smmu_pmu *smmu_pmu, u32 idx)
-{
-	writeq(BIT(idx), smmu_pmu->reg_base + SMMU_PMCG_CNTENCLR0);
-}
+अटल अंतरभूत व्योम smmu_pmu_counter_disable(काष्ठा smmu_pmu *smmu_pmu, u32 idx)
+अणु
+	ग_लिखोq(BIT(idx), smmu_pmu->reg_base + SMMU_PMCG_CNTENCLR0);
+पूर्ण
 
-static inline void smmu_pmu_interrupt_enable(struct smmu_pmu *smmu_pmu, u32 idx)
-{
-	writeq(BIT(idx), smmu_pmu->reg_base + SMMU_PMCG_INTENSET0);
-}
+अटल अंतरभूत व्योम smmu_pmu_पूर्णांकerrupt_enable(काष्ठा smmu_pmu *smmu_pmu, u32 idx)
+अणु
+	ग_लिखोq(BIT(idx), smmu_pmu->reg_base + SMMU_PMCG_INTENSET0);
+पूर्ण
 
-static inline void smmu_pmu_interrupt_disable(struct smmu_pmu *smmu_pmu,
+अटल अंतरभूत व्योम smmu_pmu_पूर्णांकerrupt_disable(काष्ठा smmu_pmu *smmu_pmu,
 					      u32 idx)
-{
-	writeq(BIT(idx), smmu_pmu->reg_base + SMMU_PMCG_INTENCLR0);
-}
+अणु
+	ग_लिखोq(BIT(idx), smmu_pmu->reg_base + SMMU_PMCG_INTENCLR0);
+पूर्ण
 
-static inline void smmu_pmu_set_evtyper(struct smmu_pmu *smmu_pmu, u32 idx,
+अटल अंतरभूत व्योम smmu_pmu_set_evtyper(काष्ठा smmu_pmu *smmu_pmu, u32 idx,
 					u32 val)
-{
-	writel(val, smmu_pmu->reg_base + SMMU_PMCG_EVTYPER(idx));
-}
+अणु
+	ग_लिखोl(val, smmu_pmu->reg_base + SMMU_PMCG_EVTYPER(idx));
+पूर्ण
 
-static inline void smmu_pmu_set_smr(struct smmu_pmu *smmu_pmu, u32 idx, u32 val)
-{
-	writel(val, smmu_pmu->reg_base + SMMU_PMCG_SMR(idx));
-}
+अटल अंतरभूत व्योम smmu_pmu_set_smr(काष्ठा smmu_pmu *smmu_pmu, u32 idx, u32 val)
+अणु
+	ग_लिखोl(val, smmu_pmu->reg_base + SMMU_PMCG_SMR(idx));
+पूर्ण
 
-static void smmu_pmu_event_update(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
+अटल व्योम smmu_pmu_event_update(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
 	u64 delta, prev, now;
 	u32 idx = hwc->idx;
 
-	do {
-		prev = local64_read(&hwc->prev_count);
+	करो अणु
+		prev = local64_पढ़ो(&hwc->prev_count);
 		now = smmu_pmu_counter_get_value(smmu_pmu, idx);
-	} while (local64_cmpxchg(&hwc->prev_count, prev, now) != prev);
+	पूर्ण जबतक (local64_cmpxchg(&hwc->prev_count, prev, now) != prev);
 
 	/* handle overflow. */
 	delta = now - prev;
 	delta &= smmu_pmu->counter_mask;
 
 	local64_add(delta, &event->count);
-}
+पूर्ण
 
-static void smmu_pmu_set_period(struct smmu_pmu *smmu_pmu,
-				struct hw_perf_event *hwc)
-{
+अटल व्योम smmu_pmu_set_period(काष्ठा smmu_pmu *smmu_pmu,
+				काष्ठा hw_perf_event *hwc)
+अणु
 	u32 idx = hwc->idx;
 	u64 new;
 
-	if (smmu_pmu->options & SMMU_PMCG_EVCNTR_RDONLY) {
+	अगर (smmu_pmu->options & SMMU_PMCG_EVCNTR_RDONLY) अणु
 		/*
-		 * On platforms that require this quirk, if the counter starts
+		 * On platक्रमms that require this quirk, अगर the counter starts
 		 * at < half_counter value and wraps, the current logic of
 		 * handling the overflow may not work. It is expected that,
-		 * those platforms will have full 64 counter bits implemented
+		 * those platक्रमms will have full 64 counter bits implemented
 		 * so that such a possibility is remote(eg: HiSilicon HIP08).
 		 */
 		new = smmu_pmu_counter_get_value(smmu_pmu, idx);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * We limit the max period to half the max counter value
-		 * of the counter size, so that even in the case of extreme
-		 * interrupt latency the counter will (hopefully) not wrap
+		 * of the counter size, so that even in the हाल of extreme
+		 * पूर्णांकerrupt latency the counter will (hopefully) not wrap
 		 * past its initial value.
 		 */
 		new = smmu_pmu->counter_mask >> 1;
 		smmu_pmu_counter_set_value(smmu_pmu, idx, new);
-	}
+	पूर्ण
 
 	local64_set(&hwc->prev_count, new);
-}
+पूर्ण
 
-static void smmu_pmu_set_event_filter(struct perf_event *event,
-				      int idx, u32 span, u32 sid)
-{
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
+अटल व्योम smmu_pmu_set_event_filter(काष्ठा perf_event *event,
+				      पूर्णांक idx, u32 span, u32 sid)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
 	u32 evtyper;
 
 	evtyper = get_event(event) | span << SMMU_PMCG_SID_SPAN_SHIFT;
 	smmu_pmu_set_evtyper(smmu_pmu, idx, evtyper);
 	smmu_pmu_set_smr(smmu_pmu, idx, sid);
-}
+पूर्ण
 
-static bool smmu_pmu_check_global_filter(struct perf_event *curr,
-					 struct perf_event *new)
-{
-	if (get_filter_enable(new) != get_filter_enable(curr))
-		return false;
+अटल bool smmu_pmu_check_global_filter(काष्ठा perf_event *curr,
+					 काष्ठा perf_event *new)
+अणु
+	अगर (get_filter_enable(new) != get_filter_enable(curr))
+		वापस false;
 
-	if (!get_filter_enable(new))
-		return true;
+	अगर (!get_filter_enable(new))
+		वापस true;
 
-	return get_filter_span(new) == get_filter_span(curr) &&
+	वापस get_filter_span(new) == get_filter_span(curr) &&
 	       get_filter_stream_id(new) == get_filter_stream_id(curr);
-}
+पूर्ण
 
-static int smmu_pmu_apply_event_filter(struct smmu_pmu *smmu_pmu,
-				       struct perf_event *event, int idx)
-{
+अटल पूर्णांक smmu_pmu_apply_event_filter(काष्ठा smmu_pmu *smmu_pmu,
+				       काष्ठा perf_event *event, पूर्णांक idx)
+अणु
 	u32 span, sid;
-	unsigned int num_ctrs = smmu_pmu->num_counters;
+	अचिन्हित पूर्णांक num_ctrs = smmu_pmu->num_counters;
 	bool filter_en = !!get_filter_enable(event);
 
 	span = filter_en ? get_filter_span(event) :
@@ -285,302 +286,302 @@ static int smmu_pmu_apply_event_filter(struct smmu_pmu *smmu_pmu,
 	sid = filter_en ? get_filter_stream_id(event) :
 			   SMMU_PMCG_DEFAULT_FILTER_SID;
 
-	/* Support individual filter settings */
-	if (!smmu_pmu->global_filter) {
+	/* Support inभागidual filter settings */
+	अगर (!smmu_pmu->global_filter) अणु
 		smmu_pmu_set_event_filter(event, idx, span, sid);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Requested settings same as current global settings*/
 	idx = find_first_bit(smmu_pmu->used_counters, num_ctrs);
-	if (idx == num_ctrs ||
-	    smmu_pmu_check_global_filter(smmu_pmu->events[idx], event)) {
+	अगर (idx == num_ctrs ||
+	    smmu_pmu_check_global_filter(smmu_pmu->events[idx], event)) अणु
 		smmu_pmu_set_event_filter(event, 0, span, sid);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static int smmu_pmu_get_event_idx(struct smmu_pmu *smmu_pmu,
-				  struct perf_event *event)
-{
-	int idx, err;
-	unsigned int num_ctrs = smmu_pmu->num_counters;
+अटल पूर्णांक smmu_pmu_get_event_idx(काष्ठा smmu_pmu *smmu_pmu,
+				  काष्ठा perf_event *event)
+अणु
+	पूर्णांक idx, err;
+	अचिन्हित पूर्णांक num_ctrs = smmu_pmu->num_counters;
 
 	idx = find_first_zero_bit(smmu_pmu->used_counters, num_ctrs);
-	if (idx == num_ctrs)
+	अगर (idx == num_ctrs)
 		/* The counters are all in use. */
-		return -EAGAIN;
+		वापस -EAGAIN;
 
 	err = smmu_pmu_apply_event_filter(smmu_pmu, event, idx);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	set_bit(idx, smmu_pmu->used_counters);
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static bool smmu_pmu_events_compatible(struct perf_event *curr,
-				       struct perf_event *new)
-{
-	if (new->pmu != curr->pmu)
-		return false;
+अटल bool smmu_pmu_events_compatible(काष्ठा perf_event *curr,
+				       काष्ठा perf_event *new)
+अणु
+	अगर (new->pmu != curr->pmu)
+		वापस false;
 
-	if (to_smmu_pmu(new->pmu)->global_filter &&
+	अगर (to_smmu_pmu(new->pmu)->global_filter &&
 	    !smmu_pmu_check_global_filter(curr, new))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Implementation of abstract pmu functionality required by
+ * Implementation of असलtract pmu functionality required by
  * the core perf events code.
  */
 
-static int smmu_pmu_event_init(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
-	struct device *dev = smmu_pmu->dev;
-	struct perf_event *sibling;
-	int group_num_events = 1;
+अटल पूर्णांक smmu_pmu_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
+	काष्ठा device *dev = smmu_pmu->dev;
+	काष्ठा perf_event *sibling;
+	पूर्णांक group_num_events = 1;
 	u16 event_id;
 
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
+	अगर (event->attr.type != event->pmu->type)
+		वापस -ENOENT;
 
-	if (hwc->sample_period) {
+	अगर (hwc->sample_period) अणु
 		dev_dbg(dev, "Sampling not supported\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (event->cpu < 0) {
+	अगर (event->cpu < 0) अणु
 		dev_dbg(dev, "Per-task mode not supported\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	/* Verify specified event is supported on this PMU */
+	/* Verअगरy specअगरied event is supported on this PMU */
 	event_id = get_event(event);
-	if (event_id < SMMU_PMCG_ARCH_MAX_EVENTS &&
-	    (!test_bit(event_id, smmu_pmu->supported_events))) {
+	अगर (event_id < SMMU_PMCG_ARCH_MAX_EVENTS &&
+	    (!test_bit(event_id, smmu_pmu->supported_events))) अणु
 		dev_dbg(dev, "Invalid event %d for this PMU\n", event_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Don't allow groups with mixed PMUs, except for s/w events */
-	if (!is_software_event(event->group_leader)) {
-		if (!smmu_pmu_events_compatible(event->group_leader, event))
-			return -EINVAL;
+	/* Don't allow groups with mixed PMUs, except क्रम s/w events */
+	अगर (!is_software_event(event->group_leader)) अणु
+		अगर (!smmu_pmu_events_compatible(event->group_leader, event))
+			वापस -EINVAL;
 
-		if (++group_num_events > smmu_pmu->num_counters)
-			return -EINVAL;
-	}
+		अगर (++group_num_events > smmu_pmu->num_counters)
+			वापस -EINVAL;
+	पूर्ण
 
-	for_each_sibling_event(sibling, event->group_leader) {
-		if (is_software_event(sibling))
-			continue;
+	क्रम_each_sibling_event(sibling, event->group_leader) अणु
+		अगर (is_software_event(sibling))
+			जारी;
 
-		if (!smmu_pmu_events_compatible(sibling, event))
-			return -EINVAL;
+		अगर (!smmu_pmu_events_compatible(sibling, event))
+			वापस -EINVAL;
 
-		if (++group_num_events > smmu_pmu->num_counters)
-			return -EINVAL;
-	}
+		अगर (++group_num_events > smmu_pmu->num_counters)
+			वापस -EINVAL;
+	पूर्ण
 
 	hwc->idx = -1;
 
 	/*
 	 * Ensure all events are on the same cpu so all events are in the
-	 * same cpu context, to avoid races on pmu_enable etc.
+	 * same cpu context, to aव्योम races on pmu_enable etc.
 	 */
 	event->cpu = smmu_pmu->on_cpu;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void smmu_pmu_event_start(struct perf_event *event, int flags)
-{
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
+अटल व्योम smmu_pmu_event_start(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
 
 	hwc->state = 0;
 
 	smmu_pmu_set_period(smmu_pmu, hwc);
 
 	smmu_pmu_counter_enable(smmu_pmu, idx);
-}
+पूर्ण
 
-static void smmu_pmu_event_stop(struct perf_event *event, int flags)
-{
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
-	int idx = hwc->idx;
+अटल व्योम smmu_pmu_event_stop(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx = hwc->idx;
 
-	if (hwc->state & PERF_HES_STOPPED)
-		return;
+	अगर (hwc->state & PERF_HES_STOPPED)
+		वापस;
 
 	smmu_pmu_counter_disable(smmu_pmu, idx);
-	/* As the counter gets updated on _start, ignore PERF_EF_UPDATE */
+	/* As the counter माला_लो updated on _start, ignore PERF_EF_UPDATE */
 	smmu_pmu_event_update(event);
 	hwc->state |= PERF_HES_STOPPED | PERF_HES_UPTODATE;
-}
+पूर्ण
 
-static int smmu_pmu_event_add(struct perf_event *event, int flags)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	int idx;
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
+अटल पूर्णांक smmu_pmu_event_add(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx;
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
 
 	idx = smmu_pmu_get_event_idx(smmu_pmu, event);
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 
 	hwc->idx = idx;
 	hwc->state = PERF_HES_STOPPED | PERF_HES_UPTODATE;
 	smmu_pmu->events[idx] = event;
 	local64_set(&hwc->prev_count, 0);
 
-	smmu_pmu_interrupt_enable(smmu_pmu, idx);
+	smmu_pmu_पूर्णांकerrupt_enable(smmu_pmu, idx);
 
-	if (flags & PERF_EF_START)
+	अगर (flags & PERF_EF_START)
 		smmu_pmu_event_start(event, flags);
 
 	/* Propagate changes to the userspace mapping. */
 	perf_event_update_userpage(event);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void smmu_pmu_event_del(struct perf_event *event, int flags)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
-	int idx = hwc->idx;
+अटल व्योम smmu_pmu_event_del(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(event->pmu);
+	पूर्णांक idx = hwc->idx;
 
 	smmu_pmu_event_stop(event, flags | PERF_EF_UPDATE);
-	smmu_pmu_interrupt_disable(smmu_pmu, idx);
-	smmu_pmu->events[idx] = NULL;
+	smmu_pmu_पूर्णांकerrupt_disable(smmu_pmu, idx);
+	smmu_pmu->events[idx] = शून्य;
 	clear_bit(idx, smmu_pmu->used_counters);
 
 	perf_event_update_userpage(event);
-}
+पूर्ण
 
-static void smmu_pmu_event_read(struct perf_event *event)
-{
+अटल व्योम smmu_pmu_event_पढ़ो(काष्ठा perf_event *event)
+अणु
 	smmu_pmu_event_update(event);
-}
+पूर्ण
 
 /* cpumask */
 
-static ssize_t smmu_pmu_cpumask_show(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(dev_get_drvdata(dev));
+अटल sमाप_प्रकार smmu_pmu_cpumask_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(dev_get_drvdata(dev));
 
-	return cpumap_print_to_pagebuf(true, buf, cpumask_of(smmu_pmu->on_cpu));
-}
+	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, cpumask_of(smmu_pmu->on_cpu));
+पूर्ण
 
-static struct device_attribute smmu_pmu_cpumask_attr =
-		__ATTR(cpumask, 0444, smmu_pmu_cpumask_show, NULL);
+अटल काष्ठा device_attribute smmu_pmu_cpumask_attr =
+		__ATTR(cpumask, 0444, smmu_pmu_cpumask_show, शून्य);
 
-static struct attribute *smmu_pmu_cpumask_attrs[] = {
+अटल काष्ठा attribute *smmu_pmu_cpumask_attrs[] = अणु
 	&smmu_pmu_cpumask_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group smmu_pmu_cpumask_group = {
+अटल स्थिर काष्ठा attribute_group smmu_pmu_cpumask_group = अणु
 	.attrs = smmu_pmu_cpumask_attrs,
-};
+पूर्ण;
 
 /* Events */
 
-static ssize_t smmu_pmu_event_show(struct device *dev,
-				   struct device_attribute *attr, char *page)
-{
-	struct perf_pmu_events_attr *pmu_attr;
+अटल sमाप_प्रकार smmu_pmu_event_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *page)
+अणु
+	काष्ठा perf_pmu_events_attr *pmu_attr;
 
-	pmu_attr = container_of(attr, struct perf_pmu_events_attr, attr);
+	pmu_attr = container_of(attr, काष्ठा perf_pmu_events_attr, attr);
 
-	return sysfs_emit(page, "event=0x%02llx\n", pmu_attr->id);
-}
+	वापस sysfs_emit(page, "event=0x%02llx\n", pmu_attr->id);
+पूर्ण
 
-#define SMMU_EVENT_ATTR(name, config)					\
-	(&((struct perf_pmu_events_attr) {				\
-		.attr = __ATTR(name, 0444, smmu_pmu_event_show, NULL),	\
+#घोषणा SMMU_EVENT_ATTR(name, config)					\
+	(&((काष्ठा perf_pmu_events_attr) अणु				\
+		.attr = __ATTR(name, 0444, smmu_pmu_event_show, शून्य),	\
 		.id = config,						\
-	}).attr.attr)
+	पूर्ण).attr.attr)
 
-static struct attribute *smmu_pmu_events[] = {
+अटल काष्ठा attribute *smmu_pmu_events[] = अणु
 	SMMU_EVENT_ATTR(cycles, 0),
 	SMMU_EVENT_ATTR(transaction, 1),
 	SMMU_EVENT_ATTR(tlb_miss, 2),
 	SMMU_EVENT_ATTR(config_cache_miss, 3),
 	SMMU_EVENT_ATTR(trans_table_walk_access, 4),
-	SMMU_EVENT_ATTR(config_struct_access, 5),
+	SMMU_EVENT_ATTR(config_काष्ठा_access, 5),
 	SMMU_EVENT_ATTR(pcie_ats_trans_rq, 6),
 	SMMU_EVENT_ATTR(pcie_ats_trans_passed, 7),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t smmu_pmu_event_is_visible(struct kobject *kobj,
-					 struct attribute *attr, int unused)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(dev_get_drvdata(dev));
-	struct perf_pmu_events_attr *pmu_attr;
+अटल umode_t smmu_pmu_event_is_visible(काष्ठा kobject *kobj,
+					 काष्ठा attribute *attr, पूर्णांक unused)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(dev_get_drvdata(dev));
+	काष्ठा perf_pmu_events_attr *pmu_attr;
 
-	pmu_attr = container_of(attr, struct perf_pmu_events_attr, attr.attr);
+	pmu_attr = container_of(attr, काष्ठा perf_pmu_events_attr, attr.attr);
 
-	if (test_bit(pmu_attr->id, smmu_pmu->supported_events))
-		return attr->mode;
+	अगर (test_bit(pmu_attr->id, smmu_pmu->supported_events))
+		वापस attr->mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct attribute_group smmu_pmu_events_group = {
+अटल स्थिर काष्ठा attribute_group smmu_pmu_events_group = अणु
 	.name = "events",
 	.attrs = smmu_pmu_events,
 	.is_visible = smmu_pmu_event_is_visible,
-};
+पूर्ण;
 
-static ssize_t smmu_pmu_identifier_attr_show(struct device *dev,
-					struct device_attribute *attr,
-					char *page)
-{
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(dev_get_drvdata(dev));
+अटल sमाप_प्रकार smmu_pmu_identअगरier_attr_show(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *page)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(dev_get_drvdata(dev));
 
-	return sysfs_emit(page, "0x%08x\n", smmu_pmu->iidr);
-}
+	वापस sysfs_emit(page, "0x%08x\n", smmu_pmu->iidr);
+पूर्ण
 
-static umode_t smmu_pmu_identifier_attr_visible(struct kobject *kobj,
-						struct attribute *attr,
-						int n)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct smmu_pmu *smmu_pmu = to_smmu_pmu(dev_get_drvdata(dev));
+अटल umode_t smmu_pmu_identअगरier_attr_visible(काष्ठा kobject *kobj,
+						काष्ठा attribute *attr,
+						पूर्णांक n)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा smmu_pmu *smmu_pmu = to_smmu_pmu(dev_get_drvdata(dev));
 
-	if (!smmu_pmu->iidr)
-		return 0;
-	return attr->mode;
-}
+	अगर (!smmu_pmu->iidr)
+		वापस 0;
+	वापस attr->mode;
+पूर्ण
 
-static struct device_attribute smmu_pmu_identifier_attr =
-	__ATTR(identifier, 0444, smmu_pmu_identifier_attr_show, NULL);
+अटल काष्ठा device_attribute smmu_pmu_identअगरier_attr =
+	__ATTR(identअगरier, 0444, smmu_pmu_identअगरier_attr_show, शून्य);
 
-static struct attribute *smmu_pmu_identifier_attrs[] = {
-	&smmu_pmu_identifier_attr.attr,
-	NULL
-};
+अटल काष्ठा attribute *smmu_pmu_identअगरier_attrs[] = अणु
+	&smmu_pmu_identअगरier_attr.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group smmu_pmu_identifier_group = {
-	.attrs = smmu_pmu_identifier_attrs,
-	.is_visible = smmu_pmu_identifier_attr_visible,
-};
+अटल स्थिर काष्ठा attribute_group smmu_pmu_identअगरier_group = अणु
+	.attrs = smmu_pmu_identअगरier_attrs,
+	.is_visible = smmu_pmu_identअगरier_attr_visible,
+पूर्ण;
 
 /* Formats */
 PMU_FORMAT_ATTR(event,		   "config:0-15");
@@ -588,191 +589,191 @@ PMU_FORMAT_ATTR(filter_stream_id,  "config1:0-31");
 PMU_FORMAT_ATTR(filter_span,	   "config1:32");
 PMU_FORMAT_ATTR(filter_enable,	   "config1:33");
 
-static struct attribute *smmu_pmu_formats[] = {
-	&format_attr_event.attr,
-	&format_attr_filter_stream_id.attr,
-	&format_attr_filter_span.attr,
-	&format_attr_filter_enable.attr,
-	NULL
-};
+अटल काष्ठा attribute *smmu_pmu_क्रमmats[] = अणु
+	&क्रमmat_attr_event.attr,
+	&क्रमmat_attr_filter_stream_id.attr,
+	&क्रमmat_attr_filter_span.attr,
+	&क्रमmat_attr_filter_enable.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group smmu_pmu_format_group = {
+अटल स्थिर काष्ठा attribute_group smmu_pmu_क्रमmat_group = अणु
 	.name = "format",
-	.attrs = smmu_pmu_formats,
-};
+	.attrs = smmu_pmu_क्रमmats,
+पूर्ण;
 
-static const struct attribute_group *smmu_pmu_attr_grps[] = {
+अटल स्थिर काष्ठा attribute_group *smmu_pmu_attr_grps[] = अणु
 	&smmu_pmu_cpumask_group,
 	&smmu_pmu_events_group,
-	&smmu_pmu_format_group,
-	&smmu_pmu_identifier_group,
-	NULL
-};
+	&smmu_pmu_क्रमmat_group,
+	&smmu_pmu_identअगरier_group,
+	शून्य
+पूर्ण;
 
 /*
  * Generic device handlers
  */
 
-static int smmu_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct smmu_pmu *smmu_pmu;
-	unsigned int target;
+अटल पूर्णांक smmu_pmu_offline_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu;
+	अचिन्हित पूर्णांक target;
 
-	smmu_pmu = hlist_entry_safe(node, struct smmu_pmu, node);
-	if (cpu != smmu_pmu->on_cpu)
-		return 0;
+	smmu_pmu = hlist_entry_safe(node, काष्ठा smmu_pmu, node);
+	अगर (cpu != smmu_pmu->on_cpu)
+		वापस 0;
 
 	target = cpumask_any_but(cpu_online_mask, cpu);
-	if (target >= nr_cpu_ids)
-		return 0;
+	अगर (target >= nr_cpu_ids)
+		वापस 0;
 
 	perf_pmu_migrate_context(&smmu_pmu->pmu, cpu, target);
 	smmu_pmu->on_cpu = target;
-	WARN_ON(irq_set_affinity_hint(smmu_pmu->irq, cpumask_of(target)));
+	WARN_ON(irq_set_affinity_hपूर्णांक(smmu_pmu->irq, cpumask_of(target)));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t smmu_pmu_handle_irq(int irq_num, void *data)
-{
-	struct smmu_pmu *smmu_pmu = data;
+अटल irqवापस_t smmu_pmu_handle_irq(पूर्णांक irq_num, व्योम *data)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu = data;
 	u64 ovsr;
-	unsigned int idx;
+	अचिन्हित पूर्णांक idx;
 
-	ovsr = readq(smmu_pmu->reloc_base + SMMU_PMCG_OVSSET0);
-	if (!ovsr)
-		return IRQ_NONE;
+	ovsr = पढ़ोq(smmu_pmu->reloc_base + SMMU_PMCG_OVSSET0);
+	अगर (!ovsr)
+		वापस IRQ_NONE;
 
-	writeq(ovsr, smmu_pmu->reloc_base + SMMU_PMCG_OVSCLR0);
+	ग_लिखोq(ovsr, smmu_pmu->reloc_base + SMMU_PMCG_OVSCLR0);
 
-	for_each_set_bit(idx, (unsigned long *)&ovsr, smmu_pmu->num_counters) {
-		struct perf_event *event = smmu_pmu->events[idx];
-		struct hw_perf_event *hwc;
+	क्रम_each_set_bit(idx, (अचिन्हित दीर्घ *)&ovsr, smmu_pmu->num_counters) अणु
+		काष्ठा perf_event *event = smmu_pmu->events[idx];
+		काष्ठा hw_perf_event *hwc;
 
-		if (WARN_ON_ONCE(!event))
-			continue;
+		अगर (WARN_ON_ONCE(!event))
+			जारी;
 
 		smmu_pmu_event_update(event);
 		hwc = &event->hw;
 
 		smmu_pmu_set_period(smmu_pmu, hwc);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void smmu_pmu_free_msis(void *data)
-{
-	struct device *dev = data;
+अटल व्योम smmu_pmu_मुक्त_msis(व्योम *data)
+अणु
+	काष्ठा device *dev = data;
 
-	platform_msi_domain_free_irqs(dev);
-}
+	platक्रमm_msi_करोमुख्य_मुक्त_irqs(dev);
+पूर्ण
 
-static void smmu_pmu_write_msi_msg(struct msi_desc *desc, struct msi_msg *msg)
-{
-	phys_addr_t doorbell;
-	struct device *dev = msi_desc_to_dev(desc);
-	struct smmu_pmu *pmu = dev_get_drvdata(dev);
+अटल व्योम smmu_pmu_ग_लिखो_msi_msg(काष्ठा msi_desc *desc, काष्ठा msi_msg *msg)
+अणु
+	phys_addr_t करोorbell;
+	काष्ठा device *dev = msi_desc_to_dev(desc);
+	काष्ठा smmu_pmu *pmu = dev_get_drvdata(dev);
 
-	doorbell = (((u64)msg->address_hi) << 32) | msg->address_lo;
-	doorbell &= MSI_CFG0_ADDR_MASK;
+	करोorbell = (((u64)msg->address_hi) << 32) | msg->address_lo;
+	करोorbell &= MSI_CFG0_ADDR_MASK;
 
-	writeq_relaxed(doorbell, pmu->reg_base + SMMU_PMCG_IRQ_CFG0);
-	writel_relaxed(msg->data, pmu->reg_base + SMMU_PMCG_IRQ_CFG1);
-	writel_relaxed(MSI_CFG2_MEMATTR_DEVICE_nGnRE,
+	ग_लिखोq_relaxed(करोorbell, pmu->reg_base + SMMU_PMCG_IRQ_CFG0);
+	ग_लिखोl_relaxed(msg->data, pmu->reg_base + SMMU_PMCG_IRQ_CFG1);
+	ग_लिखोl_relaxed(MSI_CFG2_MEMATTR_DEVICE_nGnRE,
 		       pmu->reg_base + SMMU_PMCG_IRQ_CFG2);
-}
+पूर्ण
 
-static void smmu_pmu_setup_msi(struct smmu_pmu *pmu)
-{
-	struct msi_desc *desc;
-	struct device *dev = pmu->dev;
-	int ret;
+अटल व्योम smmu_pmu_setup_msi(काष्ठा smmu_pmu *pmu)
+अणु
+	काष्ठा msi_desc *desc;
+	काष्ठा device *dev = pmu->dev;
+	पूर्णांक ret;
 
 	/* Clear MSI address reg */
-	writeq_relaxed(0, pmu->reg_base + SMMU_PMCG_IRQ_CFG0);
+	ग_लिखोq_relaxed(0, pmu->reg_base + SMMU_PMCG_IRQ_CFG0);
 
 	/* MSI supported or not */
-	if (!(readl(pmu->reg_base + SMMU_PMCG_CFGR) & SMMU_PMCG_CFGR_MSI))
-		return;
+	अगर (!(पढ़ोl(pmu->reg_base + SMMU_PMCG_CFGR) & SMMU_PMCG_CFGR_MSI))
+		वापस;
 
-	ret = platform_msi_domain_alloc_irqs(dev, 1, smmu_pmu_write_msi_msg);
-	if (ret) {
+	ret = platक्रमm_msi_करोमुख्य_alloc_irqs(dev, 1, smmu_pmu_ग_लिखो_msi_msg);
+	अगर (ret) अणु
 		dev_warn(dev, "failed to allocate MSIs\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	desc = first_msi_entry(dev);
-	if (desc)
+	अगर (desc)
 		pmu->irq = desc->irq;
 
-	/* Add callback to free MSIs on teardown */
-	devm_add_action(dev, smmu_pmu_free_msis, dev);
-}
+	/* Add callback to मुक्त MSIs on tearकरोwn */
+	devm_add_action(dev, smmu_pmu_मुक्त_msis, dev);
+पूर्ण
 
-static int smmu_pmu_setup_irq(struct smmu_pmu *pmu)
-{
-	unsigned long flags = IRQF_NOBALANCING | IRQF_SHARED | IRQF_NO_THREAD;
-	int irq, ret = -ENXIO;
+अटल पूर्णांक smmu_pmu_setup_irq(काष्ठा smmu_pmu *pmu)
+अणु
+	अचिन्हित दीर्घ flags = IRQF_NOBALANCING | IRQF_SHARED | IRQF_NO_THREAD;
+	पूर्णांक irq, ret = -ENXIO;
 
 	smmu_pmu_setup_msi(pmu);
 
 	irq = pmu->irq;
-	if (irq)
+	अगर (irq)
 		ret = devm_request_irq(pmu->dev, irq, smmu_pmu_handle_irq,
 				       flags, "smmuv3-pmu", pmu);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void smmu_pmu_reset(struct smmu_pmu *smmu_pmu)
-{
+अटल व्योम smmu_pmu_reset(काष्ठा smmu_pmu *smmu_pmu)
+अणु
 	u64 counter_present_mask = GENMASK_ULL(smmu_pmu->num_counters - 1, 0);
 
 	smmu_pmu_disable(&smmu_pmu->pmu);
 
-	/* Disable counter and interrupt */
-	writeq_relaxed(counter_present_mask,
+	/* Disable counter and पूर्णांकerrupt */
+	ग_लिखोq_relaxed(counter_present_mask,
 		       smmu_pmu->reg_base + SMMU_PMCG_CNTENCLR0);
-	writeq_relaxed(counter_present_mask,
+	ग_लिखोq_relaxed(counter_present_mask,
 		       smmu_pmu->reg_base + SMMU_PMCG_INTENCLR0);
-	writeq_relaxed(counter_present_mask,
+	ग_लिखोq_relaxed(counter_present_mask,
 		       smmu_pmu->reloc_base + SMMU_PMCG_OVSCLR0);
-}
+पूर्ण
 
-static void smmu_pmu_get_acpi_options(struct smmu_pmu *smmu_pmu)
-{
+अटल व्योम smmu_pmu_get_acpi_options(काष्ठा smmu_pmu *smmu_pmu)
+अणु
 	u32 model;
 
 	model = *(u32 *)dev_get_platdata(smmu_pmu->dev);
 
-	switch (model) {
-	case IORT_SMMU_V3_PMCG_HISI_HIP08:
+	चयन (model) अणु
+	हाल IORT_SMMU_V3_PMCG_HISI_HIP08:
 		/* HiSilicon Erratum 162001800 */
 		smmu_pmu->options |= SMMU_PMCG_EVCNTR_RDONLY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dev_notice(smmu_pmu->dev, "option mask 0x%x\n", smmu_pmu->options);
-}
+पूर्ण
 
-static int smmu_pmu_probe(struct platform_device *pdev)
-{
-	struct smmu_pmu *smmu_pmu;
-	struct resource *res_0;
+अटल पूर्णांक smmu_pmu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu;
+	काष्ठा resource *res_0;
 	u32 cfgr, reg_size;
 	u64 ceid_64[2];
-	int irq, err;
-	char *name;
-	struct device *dev = &pdev->dev;
+	पूर्णांक irq, err;
+	अक्षर *name;
+	काष्ठा device *dev = &pdev->dev;
 
-	smmu_pmu = devm_kzalloc(dev, sizeof(*smmu_pmu), GFP_KERNEL);
-	if (!smmu_pmu)
-		return -ENOMEM;
+	smmu_pmu = devm_kzalloc(dev, माप(*smmu_pmu), GFP_KERNEL);
+	अगर (!smmu_pmu)
+		वापस -ENOMEM;
 
 	smmu_pmu->dev = dev;
-	platform_set_drvdata(pdev, smmu_pmu);
+	platक्रमm_set_drvdata(pdev, smmu_pmu);
 
-	smmu_pmu->pmu = (struct pmu) {
+	smmu_pmu->pmu = (काष्ठा pmu) अणु
 		.module		= THIS_MODULE,
 		.task_ctx_nr    = perf_invalid_context,
 		.pmu_enable	= smmu_pmu_enable,
@@ -782,33 +783,33 @@ static int smmu_pmu_probe(struct platform_device *pdev)
 		.del		= smmu_pmu_event_del,
 		.start		= smmu_pmu_event_start,
 		.stop		= smmu_pmu_event_stop,
-		.read		= smmu_pmu_event_read,
+		.पढ़ो		= smmu_pmu_event_पढ़ो,
 		.attr_groups	= smmu_pmu_attr_grps,
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
-	};
+	पूर्ण;
 
-	smmu_pmu->reg_base = devm_platform_get_and_ioremap_resource(pdev, 0, &res_0);
-	if (IS_ERR(smmu_pmu->reg_base))
-		return PTR_ERR(smmu_pmu->reg_base);
+	smmu_pmu->reg_base = devm_platक्रमm_get_and_ioremap_resource(pdev, 0, &res_0);
+	अगर (IS_ERR(smmu_pmu->reg_base))
+		वापस PTR_ERR(smmu_pmu->reg_base);
 
-	cfgr = readl_relaxed(smmu_pmu->reg_base + SMMU_PMCG_CFGR);
+	cfgr = पढ़ोl_relaxed(smmu_pmu->reg_base + SMMU_PMCG_CFGR);
 
-	/* Determine if page 1 is present */
-	if (cfgr & SMMU_PMCG_CFGR_RELOC_CTRS) {
-		smmu_pmu->reloc_base = devm_platform_ioremap_resource(pdev, 1);
-		if (IS_ERR(smmu_pmu->reloc_base))
-			return PTR_ERR(smmu_pmu->reloc_base);
-	} else {
+	/* Determine अगर page 1 is present */
+	अगर (cfgr & SMMU_PMCG_CFGR_RELOC_CTRS) अणु
+		smmu_pmu->reloc_base = devm_platक्रमm_ioremap_resource(pdev, 1);
+		अगर (IS_ERR(smmu_pmu->reloc_base))
+			वापस PTR_ERR(smmu_pmu->reloc_base);
+	पूर्ण अन्यथा अणु
 		smmu_pmu->reloc_base = smmu_pmu->reg_base;
-	}
+	पूर्ण
 
-	irq = platform_get_irq_optional(pdev, 0);
-	if (irq > 0)
+	irq = platक्रमm_get_irq_optional(pdev, 0);
+	अगर (irq > 0)
 		smmu_pmu->irq = irq;
 
-	ceid_64[0] = readq_relaxed(smmu_pmu->reg_base + SMMU_PMCG_CEID0);
-	ceid_64[1] = readq_relaxed(smmu_pmu->reg_base + SMMU_PMCG_CEID1);
-	bitmap_from_arr32(smmu_pmu->supported_events, (u32 *)ceid_64,
+	ceid_64[0] = पढ़ोq_relaxed(smmu_pmu->reg_base + SMMU_PMCG_CEID0);
+	ceid_64[1] = पढ़ोq_relaxed(smmu_pmu->reg_base + SMMU_PMCG_CEID1);
+	biपंचांगap_from_arr32(smmu_pmu->supported_events, (u32 *)ceid_64,
 			  SMMU_PMCG_ARCH_MAX_EVENTS);
 
 	smmu_pmu->num_counters = FIELD_GET(SMMU_PMCG_CFGR_NCTR, cfgr) + 1;
@@ -821,104 +822,104 @@ static int smmu_pmu_probe(struct platform_device *pdev)
 	smmu_pmu_reset(smmu_pmu);
 
 	err = smmu_pmu_setup_irq(smmu_pmu);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Setup irq failed, PMU @%pa\n", &res_0->start);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	smmu_pmu->iidr = readl_relaxed(smmu_pmu->reg_base + SMMU_PMCG_IIDR);
+	smmu_pmu->iidr = पढ़ोl_relaxed(smmu_pmu->reg_base + SMMU_PMCG_IIDR);
 
-	name = devm_kasprintf(&pdev->dev, GFP_KERNEL, "smmuv3_pmcg_%llx",
+	name = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL, "smmuv3_pmcg_%llx",
 			      (res_0->start) >> SMMU_PMCG_PA_SHIFT);
-	if (!name) {
+	अगर (!name) अणु
 		dev_err(dev, "Create name failed, PMU @%pa\n", &res_0->start);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	smmu_pmu_get_acpi_options(smmu_pmu);
 
 	/* Pick one CPU to be the preferred one to use */
 	smmu_pmu->on_cpu = raw_smp_processor_id();
-	WARN_ON(irq_set_affinity_hint(smmu_pmu->irq,
+	WARN_ON(irq_set_affinity_hपूर्णांक(smmu_pmu->irq,
 				      cpumask_of(smmu_pmu->on_cpu)));
 
 	err = cpuhp_state_add_instance_nocalls(cpuhp_state_num,
 					       &smmu_pmu->node);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Error %d registering hotplug, PMU @%pa\n",
 			err, &res_0->start);
-		goto out_clear_affinity;
-	}
+		जाओ out_clear_affinity;
+	पूर्ण
 
-	err = perf_pmu_register(&smmu_pmu->pmu, name, -1);
-	if (err) {
+	err = perf_pmu_रेजिस्टर(&smmu_pmu->pmu, name, -1);
+	अगर (err) अणु
 		dev_err(dev, "Error %d registering PMU @%pa\n",
 			err, &res_0->start);
-		goto out_unregister;
-	}
+		जाओ out_unरेजिस्टर;
+	पूर्ण
 
 	dev_info(dev, "Registered PMU @ %pa using %d counters with %s filter settings\n",
 		 &res_0->start, smmu_pmu->num_counters,
 		 smmu_pmu->global_filter ? "Global(Counter0)" :
 		 "Individual");
 
-	return 0;
+	वापस 0;
 
-out_unregister:
-	cpuhp_state_remove_instance_nocalls(cpuhp_state_num, &smmu_pmu->node);
+out_unरेजिस्टर:
+	cpuhp_state_हटाओ_instance_nocalls(cpuhp_state_num, &smmu_pmu->node);
 out_clear_affinity:
-	irq_set_affinity_hint(smmu_pmu->irq, NULL);
-	return err;
-}
+	irq_set_affinity_hपूर्णांक(smmu_pmu->irq, शून्य);
+	वापस err;
+पूर्ण
 
-static int smmu_pmu_remove(struct platform_device *pdev)
-{
-	struct smmu_pmu *smmu_pmu = platform_get_drvdata(pdev);
+अटल पूर्णांक smmu_pmu_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu = platक्रमm_get_drvdata(pdev);
 
-	perf_pmu_unregister(&smmu_pmu->pmu);
-	cpuhp_state_remove_instance_nocalls(cpuhp_state_num, &smmu_pmu->node);
-	irq_set_affinity_hint(smmu_pmu->irq, NULL);
+	perf_pmu_unरेजिस्टर(&smmu_pmu->pmu);
+	cpuhp_state_हटाओ_instance_nocalls(cpuhp_state_num, &smmu_pmu->node);
+	irq_set_affinity_hपूर्णांक(smmu_pmu->irq, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void smmu_pmu_shutdown(struct platform_device *pdev)
-{
-	struct smmu_pmu *smmu_pmu = platform_get_drvdata(pdev);
+अटल व्योम smmu_pmu_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा smmu_pmu *smmu_pmu = platक्रमm_get_drvdata(pdev);
 
 	smmu_pmu_disable(&smmu_pmu->pmu);
-}
+पूर्ण
 
-static struct platform_driver smmu_pmu_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver smmu_pmu_driver = अणु
+	.driver = अणु
 		.name = "arm-smmu-v3-pmcg",
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = smmu_pmu_probe,
-	.remove = smmu_pmu_remove,
-	.shutdown = smmu_pmu_shutdown,
-};
+	.हटाओ = smmu_pmu_हटाओ,
+	.shutकरोwn = smmu_pmu_shutकरोwn,
+पूर्ण;
 
-static int __init arm_smmu_pmu_init(void)
-{
+अटल पूर्णांक __init arm_smmu_pmu_init(व्योम)
+अणु
 	cpuhp_state_num = cpuhp_setup_state_multi(CPUHP_AP_ONLINE_DYN,
 						  "perf/arm/pmcg:online",
-						  NULL,
+						  शून्य,
 						  smmu_pmu_offline_cpu);
-	if (cpuhp_state_num < 0)
-		return cpuhp_state_num;
+	अगर (cpuhp_state_num < 0)
+		वापस cpuhp_state_num;
 
-	return platform_driver_register(&smmu_pmu_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&smmu_pmu_driver);
+पूर्ण
 module_init(arm_smmu_pmu_init);
 
-static void __exit arm_smmu_pmu_exit(void)
-{
-	platform_driver_unregister(&smmu_pmu_driver);
-	cpuhp_remove_multi_state(cpuhp_state_num);
-}
+अटल व्योम __निकास arm_smmu_pmu_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&smmu_pmu_driver);
+	cpuhp_हटाओ_multi_state(cpuhp_state_num);
+पूर्ण
 
-module_exit(arm_smmu_pmu_exit);
+module_निकास(arm_smmu_pmu_निकास);
 
 MODULE_DESCRIPTION("PMU driver for ARM SMMUv3 Performance Monitors Extension");
 MODULE_AUTHOR("Neil Leeder <nleeder@codeaurora.org>");

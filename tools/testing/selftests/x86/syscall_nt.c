@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * syscall_nt.c - checks syscalls with NT set
  * Copyright (c) 2014-2015 Andrew Lutomirski
  *
- * Some obscure user-space code requires the ability to make system calls
+ * Some obscure user-space code requires the ability to make प्रणाली calls
  * with FLAGS.NT set.  Make sure it works.
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <signal.h>
-#include <err.h>
-#include <sys/syscall.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश <err.h>
+#समावेश <sys/syscall.h>
 
-#include "helpers.h"
+#समावेश "helpers.h"
 
-static unsigned int nerrs;
+अटल अचिन्हित पूर्णांक nerrs;
 
-static void sethandler(int sig, void (*handler)(int, siginfo_t *, void *),
-		       int flags)
-{
-	struct sigaction sa;
-	memset(&sa, 0, sizeof(sa));
+अटल व्योम sethandler(पूर्णांक sig, व्योम (*handler)(पूर्णांक, siginfo_t *, व्योम *),
+		       पूर्णांक flags)
+अणु
+	काष्ठा sigaction sa;
+	स_रखो(&sa, 0, माप(sa));
 	sa.sa_sigaction = handler;
 	sa.sa_flags = SA_SIGINFO | flags;
 	sigemptyset(&sa.sa_mask);
-	if (sigaction(sig, &sa, 0))
+	अगर (sigaction(sig, &sa, 0))
 		err(1, "sigaction");
-}
+पूर्ण
 
-static void sigtrap(int sig, siginfo_t *si, void *ctx_void)
-{
-}
+अटल व्योम sigtrap(पूर्णांक sig, siginfo_t *si, व्योम *ctx_व्योम)
+अणु
+पूर्ण
 
-static void do_it(unsigned long extraflags)
-{
-	unsigned long flags;
+अटल व्योम करो_it(अचिन्हित दीर्घ extraflags)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	set_eflags(get_eflags() | extraflags);
 	syscall(SYS_getpid);
 	flags = get_eflags();
 	set_eflags(X86_EFLAGS_IF | X86_EFLAGS_FIXED);
-	if ((flags & extraflags) == extraflags) {
-		printf("[OK]\tThe syscall worked and flags are still set\n");
-	} else {
-		printf("[FAIL]\tThe syscall worked but flags were cleared (flags = 0x%lx but expected 0x%lx set)\n",
+	अगर ((flags & extraflags) == extraflags) अणु
+		म_लिखो("[OK]\tThe syscall worked and flags are still set\n");
+	पूर्ण अन्यथा अणु
+		म_लिखो("[FAIL]\tThe syscall worked but flags were cleared (flags = 0x%lx but expected 0x%lx set)\n",
 		       flags, extraflags);
 		nerrs++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int main(void)
-{
-	printf("[RUN]\tSet NT and issue a syscall\n");
-	do_it(X86_EFLAGS_NT);
+पूर्णांक मुख्य(व्योम)
+अणु
+	म_लिखो("[RUN]\tSet NT and issue a syscall\n");
+	करो_it(X86_EFLAGS_NT);
 
-	printf("[RUN]\tSet AC and issue a syscall\n");
-	do_it(X86_EFLAGS_AC);
+	म_लिखो("[RUN]\tSet AC and issue a syscall\n");
+	करो_it(X86_EFLAGS_AC);
 
-	printf("[RUN]\tSet NT|AC and issue a syscall\n");
-	do_it(X86_EFLAGS_NT | X86_EFLAGS_AC);
+	म_लिखो("[RUN]\tSet NT|AC and issue a syscall\n");
+	करो_it(X86_EFLAGS_NT | X86_EFLAGS_AC);
 
 	/*
-	 * Now try it again with TF set -- TF forces returns via IRET in all
-	 * cases except non-ptregs-using 64-bit full fast path syscalls.
+	 * Now try it again with TF set -- TF क्रमces वापसs via IRET in all
+	 * हालs except non-ptregs-using 64-bit full fast path syscalls.
 	 */
 
 	sethandler(SIGTRAP, sigtrap, 0);
 
-	printf("[RUN]\tSet TF and issue a syscall\n");
-	do_it(X86_EFLAGS_TF);
+	म_लिखो("[RUN]\tSet TF and issue a syscall\n");
+	करो_it(X86_EFLAGS_TF);
 
-	printf("[RUN]\tSet NT|TF and issue a syscall\n");
-	do_it(X86_EFLAGS_NT | X86_EFLAGS_TF);
+	म_लिखो("[RUN]\tSet NT|TF and issue a syscall\n");
+	करो_it(X86_EFLAGS_NT | X86_EFLAGS_TF);
 
-	printf("[RUN]\tSet AC|TF and issue a syscall\n");
-	do_it(X86_EFLAGS_AC | X86_EFLAGS_TF);
+	म_लिखो("[RUN]\tSet AC|TF and issue a syscall\n");
+	करो_it(X86_EFLAGS_AC | X86_EFLAGS_TF);
 
-	printf("[RUN]\tSet NT|AC|TF and issue a syscall\n");
-	do_it(X86_EFLAGS_NT | X86_EFLAGS_AC | X86_EFLAGS_TF);
+	म_लिखो("[RUN]\tSet NT|AC|TF and issue a syscall\n");
+	करो_it(X86_EFLAGS_NT | X86_EFLAGS_AC | X86_EFLAGS_TF);
 
 	/*
 	 * Now try DF.  This is evil and it's plausible that we will crash
-	 * glibc, but glibc would have to do something rather surprising
-	 * for this to happen.
+	 * glibc, but glibc would have to करो something rather surprising
+	 * क्रम this to happen.
 	 */
-	printf("[RUN]\tSet DF and issue a syscall\n");
-	do_it(X86_EFLAGS_DF);
+	म_लिखो("[RUN]\tSet DF and issue a syscall\n");
+	करो_it(X86_EFLAGS_DF);
 
-	printf("[RUN]\tSet TF|DF and issue a syscall\n");
-	do_it(X86_EFLAGS_TF | X86_EFLAGS_DF);
+	म_लिखो("[RUN]\tSet TF|DF and issue a syscall\n");
+	करो_it(X86_EFLAGS_TF | X86_EFLAGS_DF);
 
-	return nerrs == 0 ? 0 : 1;
-}
+	वापस nerrs == 0 ? 0 : 1;
+पूर्ण

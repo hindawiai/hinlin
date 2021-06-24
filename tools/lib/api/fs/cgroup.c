@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/stringify.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "fs.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/stringअगरy.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश "fs.h"
 
-struct cgroupfs_cache_entry {
-	char	subsys[32];
-	char	mountpoint[PATH_MAX];
-};
+काष्ठा cgroupfs_cache_entry अणु
+	अक्षर	subsys[32];
+	अक्षर	mountpoपूर्णांक[PATH_MAX];
+पूर्ण;
 
 /* just cache last used one */
-static struct cgroupfs_cache_entry cached;
+अटल काष्ठा cgroupfs_cache_entry cached;
 
-int cgroupfs_find_mountpoint(char *buf, size_t maxlen, const char *subsys)
-{
-	FILE *fp;
-	char *line = NULL;
-	size_t len = 0;
-	char *p, *path;
-	char mountpoint[PATH_MAX];
+पूर्णांक cgroupfs_find_mountpoपूर्णांक(अक्षर *buf, माप_प्रकार maxlen, स्थिर अक्षर *subsys)
+अणु
+	खाता *fp;
+	अक्षर *line = शून्य;
+	माप_प्रकार len = 0;
+	अक्षर *p, *path;
+	अक्षर mountpoपूर्णांक[PATH_MAX];
 
-	if (!strcmp(cached.subsys, subsys)) {
-		if (strlen(cached.mountpoint) < maxlen) {
-			strcpy(buf, cached.mountpoint);
-			return 0;
-		}
-		return -1;
-	}
+	अगर (!म_भेद(cached.subsys, subsys)) अणु
+		अगर (म_माप(cached.mountpoपूर्णांक) < maxlen) अणु
+			म_नकल(buf, cached.mountpoपूर्णांक);
+			वापस 0;
+		पूर्ण
+		वापस -1;
+	पूर्ण
 
-	fp = fopen("/proc/mounts", "r");
-	if (!fp)
-		return -1;
+	fp = ख_खोलो("/proc/mounts", "r");
+	अगर (!fp)
+		वापस -1;
 
 	/*
 	 * in order to handle split hierarchy, we need to scan /proc/mounts
-	 * and inspect every cgroupfs mount point to find one that has
-	 * the given subsystem.  If we found v1, just use it.  If not we can
+	 * and inspect every cgroupfs mount poपूर्णांक to find one that has
+	 * the given subप्रणाली.  If we found v1, just use it.  If not we can
 	 * use v2 path as a fallback.
 	 */
-	mountpoint[0] = '\0';
+	mountpoपूर्णांक[0] = '\0';
 
 	/*
-	 * The /proc/mounts has the follow format:
+	 * The /proc/mounts has the follow क्रमmat:
 	 *
-	 *   <devname> <mount point> <fs type> <options> ...
+	 *   <devname> <mount poपूर्णांक> <fs type> <options> ...
 	 *
 	 */
-	while (getline(&line, &len, fp) != -1) {
+	जबतक (getline(&line, &len, fp) != -1) अणु
 		/* skip devname */
-		p = strchr(line, ' ');
-		if (p == NULL)
-			continue;
+		p = म_अक्षर(line, ' ');
+		अगर (p == शून्य)
+			जारी;
 
-		/* save the mount point */
+		/* save the mount poपूर्णांक */
 		path = ++p;
-		p = strchr(p, ' ');
-		if (p == NULL)
-			continue;
+		p = म_अक्षर(p, ' ');
+		अगर (p == शून्य)
+			जारी;
 
 		*p++ = '\0';
 
-		/* check filesystem type */
-		if (strncmp(p, "cgroup", 6))
-			continue;
+		/* check fileप्रणाली type */
+		अगर (म_भेदन(p, "cgroup", 6))
+			जारी;
 
-		if (p[6] == '2') {
+		अगर (p[6] == '2') अणु
 			/* save cgroup v2 path */
-			strcpy(mountpoint, path);
-			continue;
-		}
+			म_नकल(mountpoपूर्णांक, path);
+			जारी;
+		पूर्ण
 
-		/* now we have cgroup v1, check the options for subsystem */
+		/* now we have cgroup v1, check the options क्रम subप्रणाली */
 		p += 7;
 
-		p = strstr(p, subsys);
-		if (p == NULL)
-			continue;
+		p = म_माला(p, subsys);
+		अगर (p == शून्य)
+			जारी;
 
 		/* sanity check: it should be separated by a space or a comma */
-		if (!strchr(" ,", p[-1]) || !strchr(" ,", p[strlen(subsys)]))
-			continue;
+		अगर (!म_अक्षर(" ,", p[-1]) || !म_अक्षर(" ,", p[म_माप(subsys)]))
+			जारी;
 
-		strcpy(mountpoint, path);
-		break;
-	}
-	free(line);
-	fclose(fp);
+		म_नकल(mountpoपूर्णांक, path);
+		अवरोध;
+	पूर्ण
+	मुक्त(line);
+	ख_बंद(fp);
 
-	strncpy(cached.subsys, subsys, sizeof(cached.subsys) - 1);
-	strcpy(cached.mountpoint, mountpoint);
+	म_नकलन(cached.subsys, subsys, माप(cached.subsys) - 1);
+	म_नकल(cached.mountpoपूर्णांक, mountpoपूर्णांक);
 
-	if (mountpoint[0] && strlen(mountpoint) < maxlen) {
-		strcpy(buf, mountpoint);
-		return 0;
-	}
-	return -1;
-}
+	अगर (mountpoपूर्णांक[0] && म_माप(mountpoपूर्णांक) < maxlen) अणु
+		म_नकल(buf, mountpoपूर्णांक);
+		वापस 0;
+	पूर्ण
+	वापस -1;
+पूर्ण

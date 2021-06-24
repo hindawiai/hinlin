@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-mmp/mmp2-dt.c
  *
@@ -6,33 +7,33 @@
  *  Author: Haojian Zhuang <haojian.zhuang@marvell.com>
  */
 
-#include <linux/io.h>
-#include <linux/irqchip.h>
-#include <linux/of_platform.h>
-#include <linux/of_clk.h>
-#include <linux/clocksource.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/time.h>
-#include <asm/hardware/cache-tauros2.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_clk.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/समय.स>
+#समावेश <यंत्र/hardware/cache-tauros2.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-static void __init mmp_init_time(void)
-{
-#ifdef CONFIG_CACHE_TAUROS2
+अटल व्योम __init mmp_init_समय(व्योम)
+अणु
+#अगर_घोषित CONFIG_CACHE_TAUROS2
 	tauros2_init(0);
-#endif
-	of_clk_init(NULL);
-	timer_probe();
-}
+#पूर्ण_अगर
+	of_clk_init(शून्य);
+	समयr_probe();
+पूर्ण
 
-static const char *const mmp2_dt_board_compat[] __initconst = {
+अटल स्थिर अक्षर *स्थिर mmp2_dt_board_compat[] __initस्थिर = अणु
 	"mrvl,mmp2",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(MMP2_DT, "Marvell MMP2 (Device Tree Support)")
 	.map_io		= mmp2_map_io,
-	.init_time	= mmp_init_time,
+	.init_समय	= mmp_init_समय,
 	.dt_compat	= mmp2_dt_board_compat,
 MACHINE_END

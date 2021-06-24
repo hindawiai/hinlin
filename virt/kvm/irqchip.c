@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * irqchip.c: Common API for in kernel interrupt controllers
+ * irqchip.c: Common API क्रम in kernel पूर्णांकerrupt controllers
  * Copyright (c) 2007, Intel Corporation.
  * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  * Copyright (c) 2013, Alexander Graf <agraf@suse.de>
@@ -8,50 +9,50 @@
  * This file is derived from virt/kvm/irq_comm.c.
  *
  * Authors:
- *   Yaozu (Eddie) Dong <Eddie.dong@intel.com>
+ *   Yaozu (Eddie) Dong <Eddie.करोng@पूर्णांकel.com>
  *   Alexander Graf <agraf@suse.de>
  */
 
-#include <linux/kvm_host.h>
-#include <linux/slab.h>
-#include <linux/srcu.h>
-#include <linux/export.h>
-#include <trace/events/kvm.h>
-#include "irq.h"
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/srcu.h>
+#समावेश <linux/export.h>
+#समावेश <trace/events/kvm.h>
+#समावेश "irq.h"
 
-int kvm_irq_map_gsi(struct kvm *kvm,
-		    struct kvm_kernel_irq_routing_entry *entries, int gsi)
-{
-	struct kvm_irq_routing_table *irq_rt;
-	struct kvm_kernel_irq_routing_entry *e;
-	int n = 0;
+पूर्णांक kvm_irq_map_gsi(काष्ठा kvm *kvm,
+		    काष्ठा kvm_kernel_irq_routing_entry *entries, पूर्णांक gsi)
+अणु
+	काष्ठा kvm_irq_routing_table *irq_rt;
+	काष्ठा kvm_kernel_irq_routing_entry *e;
+	पूर्णांक n = 0;
 
 	irq_rt = srcu_dereference_check(kvm->irq_routing, &kvm->irq_srcu,
 					lockdep_is_held(&kvm->irq_lock));
-	if (irq_rt && gsi < irq_rt->nr_rt_entries) {
-		hlist_for_each_entry(e, &irq_rt->map[gsi], link) {
+	अगर (irq_rt && gsi < irq_rt->nr_rt_entries) अणु
+		hlist_क्रम_each_entry(e, &irq_rt->map[gsi], link) अणु
 			entries[n] = *e;
 			++n;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-int kvm_irq_map_chip_pin(struct kvm *kvm, unsigned irqchip, unsigned pin)
-{
-	struct kvm_irq_routing_table *irq_rt;
+पूर्णांक kvm_irq_map_chip_pin(काष्ठा kvm *kvm, अचिन्हित irqchip, अचिन्हित pin)
+अणु
+	काष्ठा kvm_irq_routing_table *irq_rt;
 
 	irq_rt = srcu_dereference(kvm->irq_routing, &kvm->irq_srcu);
-	return irq_rt->chip[irqchip][pin];
-}
+	वापस irq_rt->chip[irqchip][pin];
+पूर्ण
 
-int kvm_send_userspace_msi(struct kvm *kvm, struct kvm_msi *msi)
-{
-	struct kvm_kernel_irq_routing_entry route;
+पूर्णांक kvm_send_userspace_msi(काष्ठा kvm *kvm, काष्ठा kvm_msi *msi)
+अणु
+	काष्ठा kvm_kernel_irq_routing_entry route;
 
-	if (!irqchip_in_kernel(kvm) || (msi->flags & ~KVM_MSI_VALID_DEVID))
-		return -EINVAL;
+	अगर (!irqchip_in_kernel(kvm) || (msi->flags & ~KVM_MSI_VALID_DEVID))
+		वापस -EINVAL;
 
 	route.msi.address_lo = msi->address_lo;
 	route.msi.address_hi = msi->address_hi;
@@ -59,166 +60,166 @@ int kvm_send_userspace_msi(struct kvm *kvm, struct kvm_msi *msi)
 	route.msi.flags = msi->flags;
 	route.msi.devid = msi->devid;
 
-	return kvm_set_msi(&route, kvm, KVM_USERSPACE_IRQ_SOURCE_ID, 1, false);
-}
+	वापस kvm_set_msi(&route, kvm, KVM_USERSPACE_IRQ_SOURCE_ID, 1, false);
+पूर्ण
 
 /*
  * Return value:
- *  < 0   Interrupt was ignored (masked or not delivered for other reasons)
+ *  < 0   Interrupt was ignored (masked or not delivered क्रम other reasons)
  *  = 0   Interrupt was coalesced (previous irq is still pending)
- *  > 0   Number of CPUs interrupt was delivered to
+ *  > 0   Number of CPUs पूर्णांकerrupt was delivered to
  */
-int kvm_set_irq(struct kvm *kvm, int irq_source_id, u32 irq, int level,
+पूर्णांक kvm_set_irq(काष्ठा kvm *kvm, पूर्णांक irq_source_id, u32 irq, पूर्णांक level,
 		bool line_status)
-{
-	struct kvm_kernel_irq_routing_entry irq_set[KVM_NR_IRQCHIPS];
-	int ret = -1, i, idx;
+अणु
+	काष्ठा kvm_kernel_irq_routing_entry irq_set[KVM_NR_IRQCHIPS];
+	पूर्णांक ret = -1, i, idx;
 
 	trace_kvm_set_irq(irq, level, irq_source_id);
 
-	/* Not possible to detect if the guest uses the PIC or the
+	/* Not possible to detect अगर the guest uses the PIC or the
 	 * IOAPIC.  So set the bit in both. The guest will ignore
-	 * writes to the unused one.
+	 * ग_लिखोs to the unused one.
 	 */
-	idx = srcu_read_lock(&kvm->irq_srcu);
+	idx = srcu_पढ़ो_lock(&kvm->irq_srcu);
 	i = kvm_irq_map_gsi(kvm, irq_set, irq);
-	srcu_read_unlock(&kvm->irq_srcu, idx);
+	srcu_पढ़ो_unlock(&kvm->irq_srcu, idx);
 
-	while (i--) {
-		int r;
+	जबतक (i--) अणु
+		पूर्णांक r;
 		r = irq_set[i].set(&irq_set[i], kvm, irq_source_id, level,
 				   line_status);
-		if (r < 0)
-			continue;
+		अगर (r < 0)
+			जारी;
 
 		ret = r + ((ret < 0) ? 0 : ret);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void free_irq_routing_table(struct kvm_irq_routing_table *rt)
-{
-	int i;
+अटल व्योम मुक्त_irq_routing_table(काष्ठा kvm_irq_routing_table *rt)
+अणु
+	पूर्णांक i;
 
-	if (!rt)
-		return;
+	अगर (!rt)
+		वापस;
 
-	for (i = 0; i < rt->nr_rt_entries; ++i) {
-		struct kvm_kernel_irq_routing_entry *e;
-		struct hlist_node *n;
+	क्रम (i = 0; i < rt->nr_rt_entries; ++i) अणु
+		काष्ठा kvm_kernel_irq_routing_entry *e;
+		काष्ठा hlist_node *n;
 
-		hlist_for_each_entry_safe(e, n, &rt->map[i], link) {
+		hlist_क्रम_each_entry_safe(e, n, &rt->map[i], link) अणु
 			hlist_del(&e->link);
-			kfree(e);
-		}
-	}
+			kमुक्त(e);
+		पूर्ण
+	पूर्ण
 
-	kfree(rt);
-}
+	kमुक्त(rt);
+पूर्ण
 
-void kvm_free_irq_routing(struct kvm *kvm)
-{
-	/* Called only during vm destruction. Nobody can use the pointer
+व्योम kvm_मुक्त_irq_routing(काष्ठा kvm *kvm)
+अणु
+	/* Called only during vm deकाष्ठाion. Nobody can use the poपूर्णांकer
 	   at this stage */
-	struct kvm_irq_routing_table *rt = rcu_access_pointer(kvm->irq_routing);
-	free_irq_routing_table(rt);
-}
+	काष्ठा kvm_irq_routing_table *rt = rcu_access_poपूर्णांकer(kvm->irq_routing);
+	मुक्त_irq_routing_table(rt);
+पूर्ण
 
-static int setup_routing_entry(struct kvm *kvm,
-			       struct kvm_irq_routing_table *rt,
-			       struct kvm_kernel_irq_routing_entry *e,
-			       const struct kvm_irq_routing_entry *ue)
-{
-	struct kvm_kernel_irq_routing_entry *ei;
-	int r;
+अटल पूर्णांक setup_routing_entry(काष्ठा kvm *kvm,
+			       काष्ठा kvm_irq_routing_table *rt,
+			       काष्ठा kvm_kernel_irq_routing_entry *e,
+			       स्थिर काष्ठा kvm_irq_routing_entry *ue)
+अणु
+	काष्ठा kvm_kernel_irq_routing_entry *ei;
+	पूर्णांक r;
 	u32 gsi = array_index_nospec(ue->gsi, KVM_MAX_IRQ_ROUTES);
 
 	/*
 	 * Do not allow GSI to be mapped to the same irqchip more than once.
 	 * Allow only one to one mapping between GSI and non-irqchip routing.
 	 */
-	hlist_for_each_entry(ei, &rt->map[gsi], link)
-		if (ei->type != KVM_IRQ_ROUTING_IRQCHIP ||
+	hlist_क्रम_each_entry(ei, &rt->map[gsi], link)
+		अगर (ei->type != KVM_IRQ_ROUTING_IRQCHIP ||
 		    ue->type != KVM_IRQ_ROUTING_IRQCHIP ||
 		    ue->u.irqchip.irqchip == ei->irqchip.irqchip)
-			return -EINVAL;
+			वापस -EINVAL;
 
 	e->gsi = gsi;
 	e->type = ue->type;
 	r = kvm_set_routing_entry(kvm, e, ue);
-	if (r)
-		return r;
-	if (e->type == KVM_IRQ_ROUTING_IRQCHIP)
+	अगर (r)
+		वापस r;
+	अगर (e->type == KVM_IRQ_ROUTING_IRQCHIP)
 		rt->chip[e->irqchip.irqchip][e->irqchip.pin] = e->gsi;
 
 	hlist_add_head(&e->link, &rt->map[e->gsi]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __attribute__((weak)) kvm_arch_irq_routing_update(struct kvm *kvm)
-{
-}
+व्योम __attribute__((weak)) kvm_arch_irq_routing_update(काष्ठा kvm *kvm)
+अणु
+पूर्ण
 
-bool __weak kvm_arch_can_set_irq_routing(struct kvm *kvm)
-{
-	return true;
-}
+bool __weak kvm_arch_can_set_irq_routing(काष्ठा kvm *kvm)
+अणु
+	वापस true;
+पूर्ण
 
-int kvm_set_irq_routing(struct kvm *kvm,
-			const struct kvm_irq_routing_entry *ue,
-			unsigned nr,
-			unsigned flags)
-{
-	struct kvm_irq_routing_table *new, *old;
-	struct kvm_kernel_irq_routing_entry *e;
+पूर्णांक kvm_set_irq_routing(काष्ठा kvm *kvm,
+			स्थिर काष्ठा kvm_irq_routing_entry *ue,
+			अचिन्हित nr,
+			अचिन्हित flags)
+अणु
+	काष्ठा kvm_irq_routing_table *new, *old;
+	काष्ठा kvm_kernel_irq_routing_entry *e;
 	u32 i, j, nr_rt_entries = 0;
-	int r;
+	पूर्णांक r;
 
-	for (i = 0; i < nr; ++i) {
-		if (ue[i].gsi >= KVM_MAX_IRQ_ROUTES)
-			return -EINVAL;
+	क्रम (i = 0; i < nr; ++i) अणु
+		अगर (ue[i].gsi >= KVM_MAX_IRQ_ROUTES)
+			वापस -EINVAL;
 		nr_rt_entries = max(nr_rt_entries, ue[i].gsi);
-	}
+	पूर्ण
 
 	nr_rt_entries += 1;
 
-	new = kzalloc(struct_size(new, map, nr_rt_entries), GFP_KERNEL_ACCOUNT);
-	if (!new)
-		return -ENOMEM;
+	new = kzalloc(काष्ठा_size(new, map, nr_rt_entries), GFP_KERNEL_ACCOUNT);
+	अगर (!new)
+		वापस -ENOMEM;
 
 	new->nr_rt_entries = nr_rt_entries;
-	for (i = 0; i < KVM_NR_IRQCHIPS; i++)
-		for (j = 0; j < KVM_IRQCHIP_NUM_PINS; j++)
+	क्रम (i = 0; i < KVM_NR_IRQCHIPS; i++)
+		क्रम (j = 0; j < KVM_IRQCHIP_NUM_PINS; j++)
 			new->chip[i][j] = -1;
 
-	for (i = 0; i < nr; ++i) {
+	क्रम (i = 0; i < nr; ++i) अणु
 		r = -ENOMEM;
-		e = kzalloc(sizeof(*e), GFP_KERNEL_ACCOUNT);
-		if (!e)
-			goto out;
+		e = kzalloc(माप(*e), GFP_KERNEL_ACCOUNT);
+		अगर (!e)
+			जाओ out;
 
 		r = -EINVAL;
-		switch (ue->type) {
-		case KVM_IRQ_ROUTING_MSI:
-			if (ue->flags & ~KVM_MSI_VALID_DEVID)
-				goto free_entry;
-			break;
-		default:
-			if (ue->flags)
-				goto free_entry;
-			break;
-		}
+		चयन (ue->type) अणु
+		हाल KVM_IRQ_ROUTING_MSI:
+			अगर (ue->flags & ~KVM_MSI_VALID_DEVID)
+				जाओ मुक्त_entry;
+			अवरोध;
+		शेष:
+			अगर (ue->flags)
+				जाओ मुक्त_entry;
+			अवरोध;
+		पूर्ण
 		r = setup_routing_entry(kvm, new, e, ue);
-		if (r)
-			goto free_entry;
+		अगर (r)
+			जाओ मुक्त_entry;
 		++ue;
-	}
+	पूर्ण
 
 	mutex_lock(&kvm->irq_lock);
-	old = rcu_dereference_protected(kvm->irq_routing, 1);
-	rcu_assign_pointer(kvm->irq_routing, new);
+	old = rcu_dereference_रक्षित(kvm->irq_routing, 1);
+	rcu_assign_poपूर्णांकer(kvm->irq_routing, new);
 	kvm_irq_routing_update(kvm);
 	kvm_arch_irq_routing_update(kvm);
 	mutex_unlock(&kvm->irq_lock);
@@ -229,12 +230,12 @@ int kvm_set_irq_routing(struct kvm *kvm,
 
 	new = old;
 	r = 0;
-	goto out;
+	जाओ out;
 
-free_entry:
-	kfree(e);
+मुक्त_entry:
+	kमुक्त(e);
 out:
-	free_irq_routing_table(new);
+	मुक्त_irq_routing_table(new);
 
-	return r;
-}
+	वापस r;
+पूर्ण

@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_H8300_BITS_PER_LONG
-#define __ASM_H8300_BITS_PER_LONG
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_H8300_BITS_PER_LONG
+#घोषणा __ASM_H8300_BITS_PER_LONG
 
-#include <asm-generic/bitsperlong.h>
+#समावेश <यंत्र-generic/bitsperदीर्घ.h>
 
-#if !defined(__ASSEMBLY__)
-/* h8300-unknown-linux required long */
-#define __kernel_size_t __kernel_size_t
-typedef unsigned long	__kernel_size_t;
-typedef long		__kernel_ssize_t;
-typedef long		__kernel_ptrdiff_t;
-#endif
+#अगर !defined(__ASSEMBLY__)
+/* h8300-unknown-linux required दीर्घ */
+#घोषणा __kernel_माप_प्रकार __kernel_माप_प्रकार
+प्रकार अचिन्हित दीर्घ	__kernel_माप_प्रकार;
+प्रकार दीर्घ		__kernel_sमाप_प्रकार;
+प्रकार दीर्घ		__kernel_सूचक_भेद_प्रकार;
+#पूर्ण_अगर
 
-#endif /* __ASM_H8300_BITS_PER_LONG */
+#पूर्ण_अगर /* __ASM_H8300_BITS_PER_LONG */

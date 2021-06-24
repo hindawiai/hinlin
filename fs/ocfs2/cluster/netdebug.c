@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * netdebug.c
  *
- * debug functionality for o2net
+ * debug functionality क्रम o2net
  *
  * Copyright (C) 2005, 2008 Oracle.  All rights reserved.
  */
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/idr.h>
-#include <linux/kref.h>
-#include <linux/seq_file.h>
-#include <linux/debugfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/debugfs.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "tcp.h"
-#include "nodemanager.h"
-#define MLOG_MASK_PREFIX ML_TCP
-#include "masklog.h"
+#समावेश "tcp.h"
+#समावेश "nodemanager.h"
+#घोषणा MLOG_MASK_PREFIX ML_TCP
+#समावेश "masklog.h"
 
-#include "tcp_internal.h"
+#समावेश "tcp_internal.h"
 
-#define O2NET_DEBUG_DIR		"o2net"
-#define SC_DEBUG_NAME		"sock_containers"
-#define NST_DEBUG_NAME		"send_tracking"
-#define STATS_DEBUG_NAME	"stats"
-#define NODES_DEBUG_NAME	"connected_nodes"
+#घोषणा O2NET_DEBUG_सूची		"o2net"
+#घोषणा SC_DEBUG_NAME		"sock_containers"
+#घोषणा NST_DEBUG_NAME		"send_tracking"
+#घोषणा STATS_DEBUG_NAME	"stats"
+#घोषणा NODES_DEBUG_NAME	"connected_nodes"
 
-#define SHOW_SOCK_CONTAINERS	0
-#define SHOW_SOCK_STATS		1
+#घोषणा SHOW_SOCK_CONTAINERS	0
+#घोषणा SHOW_SOCK_STATS		1
 
-static struct dentry *o2net_dentry;
+अटल काष्ठा dentry *o2net_dentry;
 
-static DEFINE_SPINLOCK(o2net_debug_lock);
+अटल DEFINE_SPINLOCK(o2net_debug_lock);
 
-static LIST_HEAD(sock_containers);
-static LIST_HEAD(send_tracking);
+अटल LIST_HEAD(sock_containers);
+अटल LIST_HEAD(send_tracking);
 
-void o2net_debug_add_nst(struct o2net_send_tracking *nst)
-{
+व्योम o2net_debug_add_nst(काष्ठा o2net_send_tracking *nst)
+अणु
 	spin_lock(&o2net_debug_lock);
 	list_add(&nst->st_net_debug_item, &send_tracking);
 	spin_unlock(&o2net_debug_lock);
-}
+पूर्ण
 
-void o2net_debug_del_nst(struct o2net_send_tracking *nst)
-{
+व्योम o2net_debug_del_nst(काष्ठा o2net_send_tracking *nst)
+अणु
 	spin_lock(&o2net_debug_lock);
-	if (!list_empty(&nst->st_net_debug_item))
+	अगर (!list_empty(&nst->st_net_debug_item))
 		list_del_init(&nst->st_net_debug_item);
 	spin_unlock(&o2net_debug_lock);
-}
+पूर्ण
 
-static struct o2net_send_tracking
-			*next_nst(struct o2net_send_tracking *nst_start)
-{
-	struct o2net_send_tracking *nst, *ret = NULL;
+अटल काष्ठा o2net_send_tracking
+			*next_nst(काष्ठा o2net_send_tracking *nst_start)
+अणु
+	काष्ठा o2net_send_tracking *nst, *ret = शून्य;
 
-	assert_spin_locked(&o2net_debug_lock);
+	निश्चित_spin_locked(&o2net_debug_lock);
 
-	list_for_each_entry(nst, &nst_start->st_net_debug_item,
-			    st_net_debug_item) {
+	list_क्रम_each_entry(nst, &nst_start->st_net_debug_item,
+			    st_net_debug_item) अणु
 		/* discover the head of the list */
-		if (&nst->st_net_debug_item == &send_tracking)
-			break;
+		अगर (&nst->st_net_debug_item == &send_tracking)
+			अवरोध;
 
 		/* use st_task to detect real nsts in the list */
-		if (nst->st_task != NULL) {
+		अगर (nst->st_task != शून्य) अणु
 			ret = nst;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void *nst_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct o2net_send_tracking *nst, *dummy_nst = seq->private;
+अटल व्योम *nst_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा o2net_send_tracking *nst, *dummy_nst = seq->निजी;
 
 	spin_lock(&o2net_debug_lock);
 	nst = next_nst(dummy_nst);
 	spin_unlock(&o2net_debug_lock);
 
-	return nst;
-}
+	वापस nst;
+पूर्ण
 
-static void *nst_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct o2net_send_tracking *nst, *dummy_nst = seq->private;
+अटल व्योम *nst_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा o2net_send_tracking *nst, *dummy_nst = seq->निजी;
 
 	spin_lock(&o2net_debug_lock);
 	nst = next_nst(dummy_nst);
 	list_del_init(&dummy_nst->st_net_debug_item);
-	if (nst)
+	अगर (nst)
 		list_add(&dummy_nst->st_net_debug_item,
 			 &nst->st_net_debug_item);
 	spin_unlock(&o2net_debug_lock);
 
-	return nst; /* unused, just needs to be null when done */
-}
+	वापस nst; /* unused, just needs to be null when करोne */
+पूर्ण
 
-static int nst_seq_show(struct seq_file *seq, void *v)
-{
-	struct o2net_send_tracking *nst, *dummy_nst = seq->private;
-	ktime_t now;
+अटल पूर्णांक nst_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा o2net_send_tracking *nst, *dummy_nst = seq->निजी;
+	kसमय_प्रकार now;
 	s64 sock, send, status;
 
 	spin_lock(&o2net_debug_lock);
 	nst = next_nst(dummy_nst);
-	if (!nst)
-		goto out;
+	अगर (!nst)
+		जाओ out;
 
-	now = ktime_get();
-	sock = ktime_to_us(ktime_sub(now, nst->st_sock_time));
-	send = ktime_to_us(ktime_sub(now, nst->st_send_time));
-	status = ktime_to_us(ktime_sub(now, nst->st_status_time));
+	now = kसमय_get();
+	sock = kसमय_प्रकारo_us(kसमय_sub(now, nst->st_sock_समय));
+	send = kसमय_प्रकारo_us(kसमय_sub(now, nst->st_send_समय));
+	status = kसमय_प्रकारo_us(kसमय_sub(now, nst->st_status_समय));
 
 	/* get_task_comm isn't exported.  oh well. */
-	seq_printf(seq, "%p:\n"
+	seq_म_लिखो(seq, "%p:\n"
 		   "  pid:          %lu\n"
 		   "  tgid:         %lu\n"
 		   "  process name: %s\n"
@@ -135,184 +136,184 @@ static int nst_seq_show(struct seq_file *seq, void *v)
 		   "  sock acquiry: %lld usecs ago\n"
 		   "  send start:   %lld usecs ago\n"
 		   "  wait start:   %lld usecs ago\n",
-		   nst, (unsigned long)task_pid_nr(nst->st_task),
-		   (unsigned long)nst->st_task->tgid,
+		   nst, (अचिन्हित दीर्घ)task_pid_nr(nst->st_task),
+		   (अचिन्हित दीर्घ)nst->st_task->tgid,
 		   nst->st_task->comm, nst->st_node,
 		   nst->st_sc, nst->st_id, nst->st_msg_type,
 		   nst->st_msg_key,
-		   (long long)sock,
-		   (long long)send,
-		   (long long)status);
+		   (दीर्घ दीर्घ)sock,
+		   (दीर्घ दीर्घ)send,
+		   (दीर्घ दीर्घ)status);
 
 out:
 	spin_unlock(&o2net_debug_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nst_seq_stop(struct seq_file *seq, void *v)
-{
-}
+अटल व्योम nst_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
+पूर्ण
 
-static const struct seq_operations nst_seq_ops = {
+अटल स्थिर काष्ठा seq_operations nst_seq_ops = अणु
 	.start = nst_seq_start,
 	.next = nst_seq_next,
 	.stop = nst_seq_stop,
 	.show = nst_seq_show,
-};
+पूर्ण;
 
-static int nst_fop_open(struct inode *inode, struct file *file)
-{
-	struct o2net_send_tracking *dummy_nst;
+अटल पूर्णांक nst_fop_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा o2net_send_tracking *dummy_nst;
 
-	dummy_nst = __seq_open_private(file, &nst_seq_ops, sizeof(*dummy_nst));
-	if (!dummy_nst)
-		return -ENOMEM;
+	dummy_nst = __seq_खोलो_निजी(file, &nst_seq_ops, माप(*dummy_nst));
+	अगर (!dummy_nst)
+		वापस -ENOMEM;
 	o2net_debug_add_nst(dummy_nst);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nst_fop_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	struct o2net_send_tracking *dummy_nst = seq->private;
+अटल पूर्णांक nst_fop_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा o2net_send_tracking *dummy_nst = seq->निजी;
 
 	o2net_debug_del_nst(dummy_nst);
-	return seq_release_private(inode, file);
-}
+	वापस seq_release_निजी(inode, file);
+पूर्ण
 
-static const struct file_operations nst_seq_fops = {
-	.open = nst_fop_open,
-	.read = seq_read,
+अटल स्थिर काष्ठा file_operations nst_seq_fops = अणु
+	.खोलो = nst_fop_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = nst_fop_release,
-};
+पूर्ण;
 
-void o2net_debug_add_sc(struct o2net_sock_container *sc)
-{
+व्योम o2net_debug_add_sc(काष्ठा o2net_sock_container *sc)
+अणु
 	spin_lock(&o2net_debug_lock);
 	list_add(&sc->sc_net_debug_item, &sock_containers);
 	spin_unlock(&o2net_debug_lock);
-}
+पूर्ण
 
-void o2net_debug_del_sc(struct o2net_sock_container *sc)
-{
+व्योम o2net_debug_del_sc(काष्ठा o2net_sock_container *sc)
+अणु
 	spin_lock(&o2net_debug_lock);
 	list_del_init(&sc->sc_net_debug_item);
 	spin_unlock(&o2net_debug_lock);
-}
+पूर्ण
 
-struct o2net_sock_debug {
-	int dbg_ctxt;
-	struct o2net_sock_container *dbg_sock;
-};
+काष्ठा o2net_sock_debug अणु
+	पूर्णांक dbg_ctxt;
+	काष्ठा o2net_sock_container *dbg_sock;
+पूर्ण;
 
-static struct o2net_sock_container
-			*next_sc(struct o2net_sock_container *sc_start)
-{
-	struct o2net_sock_container *sc, *ret = NULL;
+अटल काष्ठा o2net_sock_container
+			*next_sc(काष्ठा o2net_sock_container *sc_start)
+अणु
+	काष्ठा o2net_sock_container *sc, *ret = शून्य;
 
-	assert_spin_locked(&o2net_debug_lock);
+	निश्चित_spin_locked(&o2net_debug_lock);
 
-	list_for_each_entry(sc, &sc_start->sc_net_debug_item,
-			    sc_net_debug_item) {
+	list_क्रम_each_entry(sc, &sc_start->sc_net_debug_item,
+			    sc_net_debug_item) अणु
 		/* discover the head of the list miscast as a sc */
-		if (&sc->sc_net_debug_item == &sock_containers)
-			break;
+		अगर (&sc->sc_net_debug_item == &sock_containers)
+			अवरोध;
 
 		/* use sc_page to detect real scs in the list */
-		if (sc->sc_page != NULL) {
+		अगर (sc->sc_page != शून्य) अणु
 			ret = sc;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void *sc_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct o2net_sock_debug *sd = seq->private;
-	struct o2net_sock_container *sc, *dummy_sc = sd->dbg_sock;
+अटल व्योम *sc_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा o2net_sock_debug *sd = seq->निजी;
+	काष्ठा o2net_sock_container *sc, *dummy_sc = sd->dbg_sock;
 
 	spin_lock(&o2net_debug_lock);
 	sc = next_sc(dummy_sc);
 	spin_unlock(&o2net_debug_lock);
 
-	return sc;
-}
+	वापस sc;
+पूर्ण
 
-static void *sc_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct o2net_sock_debug *sd = seq->private;
-	struct o2net_sock_container *sc, *dummy_sc = sd->dbg_sock;
+अटल व्योम *sc_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा o2net_sock_debug *sd = seq->निजी;
+	काष्ठा o2net_sock_container *sc, *dummy_sc = sd->dbg_sock;
 
 	spin_lock(&o2net_debug_lock);
 	sc = next_sc(dummy_sc);
 	list_del_init(&dummy_sc->sc_net_debug_item);
-	if (sc)
+	अगर (sc)
 		list_add(&dummy_sc->sc_net_debug_item, &sc->sc_net_debug_item);
 	spin_unlock(&o2net_debug_lock);
 
-	return sc; /* unused, just needs to be null when done */
-}
+	वापस sc; /* unused, just needs to be null when करोne */
+पूर्ण
 
-#ifdef CONFIG_OCFS2_FS_STATS
+#अगर_घोषित CONFIG_OCFS2_FS_STATS
 # define sc_send_count(_s)		((_s)->sc_send_count)
 # define sc_recv_count(_s)		((_s)->sc_recv_count)
-# define sc_tv_acquiry_total_ns(_s)	(ktime_to_ns((_s)->sc_tv_acquiry_total))
-# define sc_tv_send_total_ns(_s)	(ktime_to_ns((_s)->sc_tv_send_total))
-# define sc_tv_status_total_ns(_s)	(ktime_to_ns((_s)->sc_tv_status_total))
-# define sc_tv_process_total_ns(_s)	(ktime_to_ns((_s)->sc_tv_process_total))
-#else
+# define sc_tv_acquiry_total_ns(_s)	(kसमय_प्रकारo_ns((_s)->sc_tv_acquiry_total))
+# define sc_tv_send_total_ns(_s)	(kसमय_प्रकारo_ns((_s)->sc_tv_send_total))
+# define sc_tv_status_total_ns(_s)	(kसमय_प्रकारo_ns((_s)->sc_tv_status_total))
+# define sc_tv_process_total_ns(_s)	(kसमय_प्रकारo_ns((_s)->sc_tv_process_total))
+#अन्यथा
 # define sc_send_count(_s)		(0U)
 # define sc_recv_count(_s)		(0U)
 # define sc_tv_acquiry_total_ns(_s)	(0LL)
 # define sc_tv_send_total_ns(_s)	(0LL)
 # define sc_tv_status_total_ns(_s)	(0LL)
 # define sc_tv_process_total_ns(_s)	(0LL)
-#endif
+#पूर्ण_अगर
 
-/* So that debugfs.ocfs2 can determine which format is being used */
-#define O2NET_STATS_STR_VERSION		1
-static void sc_show_sock_stats(struct seq_file *seq,
-			       struct o2net_sock_container *sc)
-{
-	if (!sc)
-		return;
+/* So that debugfs.ocfs2 can determine which क्रमmat is being used */
+#घोषणा O2NET_STATS_STR_VERSION		1
+अटल व्योम sc_show_sock_stats(काष्ठा seq_file *seq,
+			       काष्ठा o2net_sock_container *sc)
+अणु
+	अगर (!sc)
+		वापस;
 
-	seq_printf(seq, "%d,%u,%lu,%lld,%lld,%lld,%lu,%lld\n", O2NET_STATS_STR_VERSION,
-		   sc->sc_node->nd_num, (unsigned long)sc_send_count(sc),
-		   (long long)sc_tv_acquiry_total_ns(sc),
-		   (long long)sc_tv_send_total_ns(sc),
-		   (long long)sc_tv_status_total_ns(sc),
-		   (unsigned long)sc_recv_count(sc),
-		   (long long)sc_tv_process_total_ns(sc));
-}
+	seq_म_लिखो(seq, "%d,%u,%lu,%lld,%lld,%lld,%lu,%lld\n", O2NET_STATS_STR_VERSION,
+		   sc->sc_node->nd_num, (अचिन्हित दीर्घ)sc_send_count(sc),
+		   (दीर्घ दीर्घ)sc_tv_acquiry_total_ns(sc),
+		   (दीर्घ दीर्घ)sc_tv_send_total_ns(sc),
+		   (दीर्घ दीर्घ)sc_tv_status_total_ns(sc),
+		   (अचिन्हित दीर्घ)sc_recv_count(sc),
+		   (दीर्घ दीर्घ)sc_tv_process_total_ns(sc));
+पूर्ण
 
-static void sc_show_sock_container(struct seq_file *seq,
-				   struct o2net_sock_container *sc)
-{
-	struct inet_sock *inet = NULL;
+अटल व्योम sc_show_sock_container(काष्ठा seq_file *seq,
+				   काष्ठा o2net_sock_container *sc)
+अणु
+	काष्ठा inet_sock *inet = शून्य;
 	__be32 saddr = 0, daddr = 0;
 	__be16 sport = 0, dport = 0;
 
-	if (!sc)
-		return;
+	अगर (!sc)
+		वापस;
 
-	if (sc->sc_sock) {
+	अगर (sc->sc_sock) अणु
 		inet = inet_sk(sc->sc_sock->sk);
 		/* the stack's structs aren't sparse endian clean */
-		saddr = (__force __be32)inet->inet_saddr;
-		daddr = (__force __be32)inet->inet_daddr;
-		sport = (__force __be16)inet->inet_sport;
-		dport = (__force __be16)inet->inet_dport;
-	}
+		saddr = (__क्रमce __be32)inet->inet_saddr;
+		daddr = (__क्रमce __be32)inet->inet_daddr;
+		sport = (__क्रमce __be16)inet->inet_sport;
+		dport = (__क्रमce __be16)inet->inet_dport;
+	पूर्ण
 
-	/* XXX sigh, inet-> doesn't have sparse annotation so any
+	/* XXX sigh, inet-> करोesn't have sparse annotation so any
 	 * use of it here generates a warning with -Wbitwise */
-	seq_printf(seq, "%p:\n"
+	seq_म_लिखो(seq, "%p:\n"
 		   "  krefs:           %d\n"
 		   "  sock:            %pI4:%u -> "
 				      "%pI4:%u\n"
@@ -328,179 +329,179 @@ static void sc_show_sock_container(struct seq_file *seq,
 		   "  func key:        0x%08x\n"
 		   "  func type:       %u\n",
 		   sc,
-		   kref_read(&sc->sc_kref),
+		   kref_पढ़ो(&sc->sc_kref),
 		   &saddr, inet ? ntohs(sport) : 0,
 		   &daddr, inet ? ntohs(dport) : 0,
 		   sc->sc_node->nd_name,
 		   sc->sc_page_off,
 		   sc->sc_handshake_ok,
-		   (long long)ktime_to_us(sc->sc_tv_timer),
-		   (long long)ktime_to_us(sc->sc_tv_data_ready),
-		   (long long)ktime_to_us(sc->sc_tv_advance_start),
-		   (long long)ktime_to_us(sc->sc_tv_advance_stop),
-		   (long long)ktime_to_us(sc->sc_tv_func_start),
-		   (long long)ktime_to_us(sc->sc_tv_func_stop),
+		   (दीर्घ दीर्घ)kसमय_प्रकारo_us(sc->sc_tv_समयr),
+		   (दीर्घ दीर्घ)kसमय_प्रकारo_us(sc->sc_tv_data_पढ़ोy),
+		   (दीर्घ दीर्घ)kसमय_प्रकारo_us(sc->sc_tv_advance_start),
+		   (दीर्घ दीर्घ)kसमय_प्रकारo_us(sc->sc_tv_advance_stop),
+		   (दीर्घ दीर्घ)kसमय_प्रकारo_us(sc->sc_tv_func_start),
+		   (दीर्घ दीर्घ)kसमय_प्रकारo_us(sc->sc_tv_func_stop),
 		   sc->sc_msg_key,
 		   sc->sc_msg_type);
-}
+पूर्ण
 
-static int sc_seq_show(struct seq_file *seq, void *v)
-{
-	struct o2net_sock_debug *sd = seq->private;
-	struct o2net_sock_container *sc, *dummy_sc = sd->dbg_sock;
+अटल पूर्णांक sc_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा o2net_sock_debug *sd = seq->निजी;
+	काष्ठा o2net_sock_container *sc, *dummy_sc = sd->dbg_sock;
 
 	spin_lock(&o2net_debug_lock);
 	sc = next_sc(dummy_sc);
 
-	if (sc) {
-		if (sd->dbg_ctxt == SHOW_SOCK_CONTAINERS)
+	अगर (sc) अणु
+		अगर (sd->dbg_ctxt == SHOW_SOCK_CONTAINERS)
 			sc_show_sock_container(seq, sc);
-		else
+		अन्यथा
 			sc_show_sock_stats(seq, sc);
-	}
+	पूर्ण
 
 	spin_unlock(&o2net_debug_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sc_seq_stop(struct seq_file *seq, void *v)
-{
-}
+अटल व्योम sc_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
+पूर्ण
 
-static const struct seq_operations sc_seq_ops = {
+अटल स्थिर काष्ठा seq_operations sc_seq_ops = अणु
 	.start = sc_seq_start,
 	.next = sc_seq_next,
 	.stop = sc_seq_stop,
 	.show = sc_seq_show,
-};
+पूर्ण;
 
-static int sc_common_open(struct file *file, int ctxt)
-{
-	struct o2net_sock_debug *sd;
-	struct o2net_sock_container *dummy_sc;
+अटल पूर्णांक sc_common_खोलो(काष्ठा file *file, पूर्णांक ctxt)
+अणु
+	काष्ठा o2net_sock_debug *sd;
+	काष्ठा o2net_sock_container *dummy_sc;
 
-	dummy_sc = kzalloc(sizeof(*dummy_sc), GFP_KERNEL);
-	if (!dummy_sc)
-		return -ENOMEM;
+	dummy_sc = kzalloc(माप(*dummy_sc), GFP_KERNEL);
+	अगर (!dummy_sc)
+		वापस -ENOMEM;
 
-	sd = __seq_open_private(file, &sc_seq_ops, sizeof(*sd));
-	if (!sd) {
-		kfree(dummy_sc);
-		return -ENOMEM;
-	}
+	sd = __seq_खोलो_निजी(file, &sc_seq_ops, माप(*sd));
+	अगर (!sd) अणु
+		kमुक्त(dummy_sc);
+		वापस -ENOMEM;
+	पूर्ण
 
 	sd->dbg_ctxt = ctxt;
 	sd->dbg_sock = dummy_sc;
 
 	o2net_debug_add_sc(dummy_sc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sc_fop_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	struct o2net_sock_debug *sd = seq->private;
-	struct o2net_sock_container *dummy_sc = sd->dbg_sock;
+अटल पूर्णांक sc_fop_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा o2net_sock_debug *sd = seq->निजी;
+	काष्ठा o2net_sock_container *dummy_sc = sd->dbg_sock;
 
 	o2net_debug_del_sc(dummy_sc);
-	kfree(dummy_sc);
-	return seq_release_private(inode, file);
-}
+	kमुक्त(dummy_sc);
+	वापस seq_release_निजी(inode, file);
+पूर्ण
 
-static int stats_fop_open(struct inode *inode, struct file *file)
-{
-	return sc_common_open(file, SHOW_SOCK_STATS);
-}
+अटल पूर्णांक stats_fop_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस sc_common_खोलो(file, SHOW_SOCK_STATS);
+पूर्ण
 
-static const struct file_operations stats_seq_fops = {
-	.open = stats_fop_open,
-	.read = seq_read,
+अटल स्थिर काष्ठा file_operations stats_seq_fops = अणु
+	.खोलो = stats_fop_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = sc_fop_release,
-};
+पूर्ण;
 
-static int sc_fop_open(struct inode *inode, struct file *file)
-{
-	return sc_common_open(file, SHOW_SOCK_CONTAINERS);
-}
+अटल पूर्णांक sc_fop_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस sc_common_खोलो(file, SHOW_SOCK_CONTAINERS);
+पूर्ण
 
-static const struct file_operations sc_seq_fops = {
-	.open = sc_fop_open,
-	.read = seq_read,
+अटल स्थिर काष्ठा file_operations sc_seq_fops = अणु
+	.खोलो = sc_fop_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = sc_fop_release,
-};
+पूर्ण;
 
-static int o2net_fill_bitmap(char *buf, int len)
-{
-	unsigned long map[BITS_TO_LONGS(O2NM_MAX_NODES)];
-	int i = -1, out = 0;
+अटल पूर्णांक o2net_fill_biपंचांगap(अक्षर *buf, पूर्णांक len)
+अणु
+	अचिन्हित दीर्घ map[BITS_TO_LONGS(O2NM_MAX_NODES)];
+	पूर्णांक i = -1, out = 0;
 
-	o2net_fill_node_map(map, sizeof(map));
+	o2net_fill_node_map(map, माप(map));
 
-	while ((i = find_next_bit(map, O2NM_MAX_NODES, i + 1)) < O2NM_MAX_NODES)
-		out += scnprintf(buf + out, PAGE_SIZE - out, "%d ", i);
-	out += scnprintf(buf + out, PAGE_SIZE - out, "\n");
+	जबतक ((i = find_next_bit(map, O2NM_MAX_NODES, i + 1)) < O2NM_MAX_NODES)
+		out += scnम_लिखो(buf + out, PAGE_SIZE - out, "%d ", i);
+	out += scnम_लिखो(buf + out, PAGE_SIZE - out, "\n");
 
-	return out;
-}
+	वापस out;
+पूर्ण
 
-static int nodes_fop_open(struct inode *inode, struct file *file)
-{
-	char *buf;
+अटल पूर्णांक nodes_fop_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अक्षर *buf;
 
-	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	i_size_write(inode, o2net_fill_bitmap(buf, PAGE_SIZE));
+	i_size_ग_लिखो(inode, o2net_fill_biपंचांगap(buf, PAGE_SIZE));
 
-	file->private_data = buf;
+	file->निजी_data = buf;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int o2net_debug_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-	return 0;
-}
+अटल पूर्णांक o2net_debug_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	kमुक्त(file->निजी_data);
+	वापस 0;
+पूर्ण
 
-static ssize_t o2net_debug_read(struct file *file, char __user *buf,
-				size_t nbytes, loff_t *ppos)
-{
-	return simple_read_from_buffer(buf, nbytes, ppos, file->private_data,
-				       i_size_read(file->f_mapping->host));
-}
+अटल sमाप_प्रकार o2net_debug_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				माप_प्रकार nbytes, loff_t *ppos)
+अणु
+	वापस simple_पढ़ो_from_buffer(buf, nbytes, ppos, file->निजी_data,
+				       i_size_पढ़ो(file->f_mapping->host));
+पूर्ण
 
-static const struct file_operations nodes_fops = {
-	.open		= nodes_fop_open,
+अटल स्थिर काष्ठा file_operations nodes_fops = अणु
+	.खोलो		= nodes_fop_खोलो,
 	.release	= o2net_debug_release,
-	.read		= o2net_debug_read,
+	.पढ़ो		= o2net_debug_पढ़ो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-void o2net_debugfs_exit(void)
-{
-	debugfs_remove_recursive(o2net_dentry);
-}
+व्योम o2net_debugfs_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(o2net_dentry);
+पूर्ण
 
-void o2net_debugfs_init(void)
-{
+व्योम o2net_debugfs_init(व्योम)
+अणु
 	umode_t mode = S_IFREG|S_IRUSR;
 
-	o2net_dentry = debugfs_create_dir(O2NET_DEBUG_DIR, NULL);
+	o2net_dentry = debugfs_create_dir(O2NET_DEBUG_सूची, शून्य);
 
-	debugfs_create_file(NST_DEBUG_NAME, mode, o2net_dentry, NULL,
+	debugfs_create_file(NST_DEBUG_NAME, mode, o2net_dentry, शून्य,
 			    &nst_seq_fops);
-	debugfs_create_file(SC_DEBUG_NAME, mode, o2net_dentry, NULL,
+	debugfs_create_file(SC_DEBUG_NAME, mode, o2net_dentry, शून्य,
 			    &sc_seq_fops);
-	debugfs_create_file(STATS_DEBUG_NAME, mode, o2net_dentry, NULL,
+	debugfs_create_file(STATS_DEBUG_NAME, mode, o2net_dentry, शून्य,
 			    &stats_seq_fops);
-	debugfs_create_file(NODES_DEBUG_NAME, mode, o2net_dentry, NULL,
+	debugfs_create_file(NODES_DEBUG_NAME, mode, o2net_dentry, शून्य,
 			    &nodes_fops);
-}
+पूर्ण
 
-#endif	/* CONFIG_DEBUG_FS */
+#पूर्ण_अगर	/* CONFIG_DEBUG_FS */

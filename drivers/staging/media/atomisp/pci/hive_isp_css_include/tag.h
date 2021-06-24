@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __TAG_H_INCLUDED__
-#define __TAG_H_INCLUDED__
+#अगर_अघोषित __TAG_H_INCLUDED__
+#घोषणा __TAG_H_INCLUDED__
 
 /*
- * This file is included on every cell {SP,ISP,host} and is system agnostic
+ * This file is included on every cell अणुSP,ISP,hostपूर्ण and is प्रणाली agnostic
  *
- * System and cell specific interfaces and inline code are included
+ * System and cell specअगरic पूर्णांकerfaces and अंतरभूत code are included
  * conditionally through Makefile path settings.
  *
- *  - .        system and cell agnostic interfaces, constants and identifiers
- *	- public:  cell specific interfaces
- *	- private: cell specific inline implementations
- *	- global:  inter cell constants and identifiers
- *	- local:   cell specific constants and identifiers
+ *  - .        प्रणाली and cell agnostic पूर्णांकerfaces, स्थिरants and identअगरiers
+ *	- खुला:  cell specअगरic पूर्णांकerfaces
+ *	- निजी: cell specअगरic अंतरभूत implementations
+ *	- global:  पूर्णांकer cell स्थिरants and identअगरiers
+ *	- local:   cell specअगरic स्थिरants and identअगरiers
  *
  */
 
-#include "tag_local.h"
+#समावेश "tag_local.h"
 
-#ifndef __INLINE_TAG__
-#define STORAGE_CLASS_TAG_H extern
-#define STORAGE_CLASS_TAG_C
-#include "tag_public.h"
-#else  /* __INLINE_TAG__ */
-#define STORAGE_CLASS_TAG_H static inline
-#define STORAGE_CLASS_TAG_C static inline
-#include "tag_private.h"
-#endif /* __INLINE_TAG__ */
+#अगर_अघोषित __INLINE_TAG__
+#घोषणा STORAGE_CLASS_TAG_H बाह्य
+#घोषणा STORAGE_CLASS_TAG_C
+#समावेश "tag_public.h"
+#अन्यथा  /* __INLINE_TAG__ */
+#घोषणा STORAGE_CLASS_TAG_H अटल अंतरभूत
+#घोषणा STORAGE_CLASS_TAG_C अटल अंतरभूत
+#समावेश "tag_private.h"
+#पूर्ण_अगर /* __INLINE_TAG__ */
 
-#endif /* __TAG_H_INCLUDED__ */
+#पूर्ण_अगर /* __TAG_H_INCLUDED__ */

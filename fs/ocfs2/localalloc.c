@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * localalloc.c
  *
@@ -7,80 +8,80 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/highmem.h>
-#include <linux/bitops.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/bitops.h>
 
-#include <cluster/masklog.h>
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
+#समावेश "ocfs2.h"
 
-#include "alloc.h"
-#include "blockcheck.h"
-#include "dlmglue.h"
-#include "inode.h"
-#include "journal.h"
-#include "localalloc.h"
-#include "suballoc.h"
-#include "super.h"
-#include "sysfile.h"
-#include "ocfs2_trace.h"
+#समावेश "alloc.h"
+#समावेश "blockcheck.h"
+#समावेश "dlmglue.h"
+#समावेश "inode.h"
+#समावेश "journal.h"
+#समावेश "localalloc.h"
+#समावेश "suballoc.h"
+#समावेश "super.h"
+#समावेश "sysfile.h"
+#समावेश "ocfs2_trace.h"
 
-#include "buffer_head_io.h"
+#समावेश "buffer_head_io.h"
 
-#define OCFS2_LOCAL_ALLOC(dinode)	(&((dinode)->id2.i_lab))
+#घोषणा OCFS2_LOCAL_ALLOC(dinode)	(&((dinode)->id2.i_lab))
 
-static u32 ocfs2_local_alloc_count_bits(struct ocfs2_dinode *alloc);
+अटल u32 ocfs2_local_alloc_count_bits(काष्ठा ocfs2_dinode *alloc);
 
-static int ocfs2_local_alloc_find_clear_bits(struct ocfs2_super *osb,
-					     struct ocfs2_dinode *alloc,
+अटल पूर्णांक ocfs2_local_alloc_find_clear_bits(काष्ठा ocfs2_super *osb,
+					     काष्ठा ocfs2_dinode *alloc,
 					     u32 *numbits,
-					     struct ocfs2_alloc_reservation *resv);
+					     काष्ठा ocfs2_alloc_reservation *resv);
 
-static void ocfs2_clear_local_alloc(struct ocfs2_dinode *alloc);
+अटल व्योम ocfs2_clear_local_alloc(काष्ठा ocfs2_dinode *alloc);
 
-static int ocfs2_sync_local_to_main(struct ocfs2_super *osb,
+अटल पूर्णांक ocfs2_sync_local_to_मुख्य(काष्ठा ocfs2_super *osb,
 				    handle_t *handle,
-				    struct ocfs2_dinode *alloc,
-				    struct inode *main_bm_inode,
-				    struct buffer_head *main_bm_bh);
+				    काष्ठा ocfs2_dinode *alloc,
+				    काष्ठा inode *मुख्य_bm_inode,
+				    काष्ठा buffer_head *मुख्य_bm_bh);
 
-static int ocfs2_local_alloc_reserve_for_window(struct ocfs2_super *osb,
-						struct ocfs2_alloc_context **ac,
-						struct inode **bitmap_inode,
-						struct buffer_head **bitmap_bh);
+अटल पूर्णांक ocfs2_local_alloc_reserve_क्रम_winकरोw(काष्ठा ocfs2_super *osb,
+						काष्ठा ocfs2_alloc_context **ac,
+						काष्ठा inode **biपंचांगap_inode,
+						काष्ठा buffer_head **biपंचांगap_bh);
 
-static int ocfs2_local_alloc_new_window(struct ocfs2_super *osb,
+अटल पूर्णांक ocfs2_local_alloc_new_winकरोw(काष्ठा ocfs2_super *osb,
 					handle_t *handle,
-					struct ocfs2_alloc_context *ac);
+					काष्ठा ocfs2_alloc_context *ac);
 
-static int ocfs2_local_alloc_slide_window(struct ocfs2_super *osb,
-					  struct inode *local_alloc_inode);
+अटल पूर्णांक ocfs2_local_alloc_slide_winकरोw(काष्ठा ocfs2_super *osb,
+					  काष्ठा inode *local_alloc_inode);
 
 /*
- * ocfs2_la_default_mb() - determine a default size, in megabytes of
+ * ocfs2_la_शेष_mb() - determine a शेष size, in megabytes of
  * the local alloc.
  *
  * Generally, we'd like to pick as large a local alloc as
- * possible. Performance on large workloads tends to scale
+ * possible. Perक्रमmance on large workloads tends to scale
  * proportionally to la size. In addition to that, the reservations
- * code functions more efficiently as it can reserve more windows for
- * write.
+ * code functions more efficiently as it can reserve more winकरोws क्रम
+ * ग_लिखो.
  *
  * Some things work against us when trying to choose a large local alloc:
  *
  * - We need to ensure our sizing is picked to leave enough space in
- *   group descriptors for other allocations (such as block groups,
- *   etc). Picking default sizes which are a multiple of 4 could help
+ *   group descriptors क्रम other allocations (such as block groups,
+ *   etc). Picking शेष sizes which are a multiple of 4 could help
  *   - block groups are allocated in 2mb and 4mb chunks.
  *
- * - Likewise, we don't want to starve other nodes of bits on small
- *   file systems. This can easily be taken care of by limiting our
- *   default to a reasonable size (256M) on larger cluster sizes.
+ * - Likewise, we करोn't want to starve other nodes of bits on small
+ *   file प्रणालीs. This can easily be taken care of by limiting our
+ *   शेष to a reasonable size (256M) on larger cluster sizes.
  *
- * - Some file systems can't support very large sizes - 4k and 8k in
+ * - Some file प्रणालीs can't support very large sizes - 4k and 8k in
  *   particular are limited to less than 128 and 256 megabytes respectively.
  *
  * The following reference table shows group descriptor and local
@@ -96,30 +97,30 @@ static int ocfs2_local_alloc_slide_window(struct ocfs2_super *osb,
  * csize: 512K	group: 16128M	la: 15552M
  * csize: 1024K	group: 32256M	la: 31104M
  */
-#define	OCFS2_LA_MAX_DEFAULT_MB	256
-#define	OCFS2_LA_OLD_DEFAULT	8
-unsigned int ocfs2_la_default_mb(struct ocfs2_super *osb)
-{
-	unsigned int la_mb;
-	unsigned int gd_mb;
-	unsigned int la_max_mb;
-	unsigned int megs_per_slot;
-	struct super_block *sb = osb->sb;
+#घोषणा	OCFS2_LA_MAX_DEFAULT_MB	256
+#घोषणा	OCFS2_LA_OLD_DEFAULT	8
+अचिन्हित पूर्णांक ocfs2_la_शेष_mb(काष्ठा ocfs2_super *osb)
+अणु
+	अचिन्हित पूर्णांक la_mb;
+	अचिन्हित पूर्णांक gd_mb;
+	अचिन्हित पूर्णांक la_max_mb;
+	अचिन्हित पूर्णांक megs_per_slot;
+	काष्ठा super_block *sb = osb->sb;
 
 	gd_mb = ocfs2_clusters_to_megabytes(osb->sb,
-		8 * ocfs2_group_bitmap_size(sb, 0, osb->s_feature_incompat));
+		8 * ocfs2_group_biपंचांगap_size(sb, 0, osb->s_feature_incompat));
 
 	/*
-	 * This takes care of files systems with very small group
+	 * This takes care of files प्रणालीs with very small group
 	 * descriptors - 512 byte blocksize at cluster sizes lower
 	 * than 16K and also 1k blocksize with 4k cluster size.
 	 */
-	if ((sb->s_blocksize == 512 && osb->s_clustersize <= 8192)
+	अगर ((sb->s_blocksize == 512 && osb->s_clustersize <= 8192)
 	    || (sb->s_blocksize == 1024 && osb->s_clustersize == 4096))
-		return OCFS2_LA_OLD_DEFAULT;
+		वापस OCFS2_LA_OLD_DEFAULT;
 
 	/*
-	 * Leave enough room for some block groups and make the final
+	 * Leave enough room क्रम some block groups and make the final
 	 * value we work from a multiple of 4.
 	 */
 	gd_mb -= 16;
@@ -128,565 +129,565 @@ unsigned int ocfs2_la_default_mb(struct ocfs2_super *osb)
 	la_mb = gd_mb;
 
 	/*
-	 * Keep window sizes down to a reasonable default
+	 * Keep winकरोw sizes करोwn to a reasonable शेष
 	 */
-	if (la_mb > OCFS2_LA_MAX_DEFAULT_MB) {
+	अगर (la_mb > OCFS2_LA_MAX_DEFAULT_MB) अणु
 		/*
 		 * Some clustersize / blocksize combinations will have
 		 * given us a larger than OCFS2_LA_MAX_DEFAULT_MB
-		 * default size, but get poor distribution when
+		 * शेष size, but get poor distribution when
 		 * limited to exactly 256 megabytes.
 		 *
 		 * As an example, 16K clustersize at 4K blocksize
 		 * gives us a cluster group size of 504M. Paring the
-		 * local alloc size down to 256 however, would give us
-		 * only one window and around 200MB left in the
+		 * local alloc size करोwn to 256 however, would give us
+		 * only one winकरोw and around 200MB left in the
 		 * cluster group. Instead, find the first size below
 		 * 256 which would give us an even distribution.
 		 *
 		 * Larger cluster group sizes actually work out pretty
-		 * well when pared to 256, so we don't have to do this
-		 * for any group that fits more than two
-		 * OCFS2_LA_MAX_DEFAULT_MB windows.
+		 * well when pared to 256, so we करोn't have to करो this
+		 * क्रम any group that fits more than two
+		 * OCFS2_LA_MAX_DEFAULT_MB winकरोws.
 		 */
-		if (gd_mb > (2 * OCFS2_LA_MAX_DEFAULT_MB))
+		अगर (gd_mb > (2 * OCFS2_LA_MAX_DEFAULT_MB))
 			la_mb = 256;
-		else {
-			unsigned int gd_mult = gd_mb;
+		अन्यथा अणु
+			अचिन्हित पूर्णांक gd_mult = gd_mb;
 
-			while (gd_mult > 256)
+			जबतक (gd_mult > 256)
 				gd_mult = gd_mult >> 1;
 
 			la_mb = gd_mult;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	megs_per_slot = osb->osb_clusters_at_boot / osb->max_slots;
 	megs_per_slot = ocfs2_clusters_to_megabytes(osb->sb, megs_per_slot);
 	/* Too many nodes, too few disk clusters. */
-	if (megs_per_slot < la_mb)
+	अगर (megs_per_slot < la_mb)
 		la_mb = megs_per_slot;
 
 	/* We can't store more bits than we can in a block. */
 	la_max_mb = ocfs2_clusters_to_megabytes(osb->sb,
 						ocfs2_local_alloc_size(sb) * 8);
-	if (la_mb > la_max_mb)
+	अगर (la_mb > la_max_mb)
 		la_mb = la_max_mb;
 
-	return la_mb;
-}
+	वापस la_mb;
+पूर्ण
 
-void ocfs2_la_set_sizes(struct ocfs2_super *osb, int requested_mb)
-{
-	struct super_block *sb = osb->sb;
-	unsigned int la_default_mb = ocfs2_la_default_mb(osb);
-	unsigned int la_max_mb;
+व्योम ocfs2_la_set_sizes(काष्ठा ocfs2_super *osb, पूर्णांक requested_mb)
+अणु
+	काष्ठा super_block *sb = osb->sb;
+	अचिन्हित पूर्णांक la_शेष_mb = ocfs2_la_शेष_mb(osb);
+	अचिन्हित पूर्णांक la_max_mb;
 
 	la_max_mb = ocfs2_clusters_to_megabytes(sb,
 						ocfs2_local_alloc_size(sb) * 8);
 
-	trace_ocfs2_la_set_sizes(requested_mb, la_max_mb, la_default_mb);
+	trace_ocfs2_la_set_sizes(requested_mb, la_max_mb, la_शेष_mb);
 
-	if (requested_mb == -1) {
-		/* No user request - use defaults */
-		osb->local_alloc_default_bits =
-			ocfs2_megabytes_to_clusters(sb, la_default_mb);
-	} else if (requested_mb > la_max_mb) {
+	अगर (requested_mb == -1) अणु
+		/* No user request - use शेषs */
+		osb->local_alloc_शेष_bits =
+			ocfs2_megabytes_to_clusters(sb, la_शेष_mb);
+	पूर्ण अन्यथा अगर (requested_mb > la_max_mb) अणु
 		/* Request is too big, we give the maximum available */
-		osb->local_alloc_default_bits =
+		osb->local_alloc_शेष_bits =
 			ocfs2_megabytes_to_clusters(sb, la_max_mb);
-	} else {
-		osb->local_alloc_default_bits =
+	पूर्ण अन्यथा अणु
+		osb->local_alloc_शेष_bits =
 			ocfs2_megabytes_to_clusters(sb, requested_mb);
-	}
+	पूर्ण
 
-	osb->local_alloc_bits = osb->local_alloc_default_bits;
-}
+	osb->local_alloc_bits = osb->local_alloc_शेष_bits;
+पूर्ण
 
-static inline int ocfs2_la_state_enabled(struct ocfs2_super *osb)
-{
-	return (osb->local_alloc_state == OCFS2_LA_THROTTLED ||
+अटल अंतरभूत पूर्णांक ocfs2_la_state_enabled(काष्ठा ocfs2_super *osb)
+अणु
+	वापस (osb->local_alloc_state == OCFS2_LA_THROTTLED ||
 		osb->local_alloc_state == OCFS2_LA_ENABLED);
-}
+पूर्ण
 
-void ocfs2_local_alloc_seen_free_bits(struct ocfs2_super *osb,
-				      unsigned int num_clusters)
-{
+व्योम ocfs2_local_alloc_seen_मुक्त_bits(काष्ठा ocfs2_super *osb,
+				      अचिन्हित पूर्णांक num_clusters)
+अणु
 	spin_lock(&osb->osb_lock);
-	if (osb->local_alloc_state == OCFS2_LA_DISABLED ||
+	अगर (osb->local_alloc_state == OCFS2_LA_DISABLED ||
 	    osb->local_alloc_state == OCFS2_LA_THROTTLED)
-		if (num_clusters >= osb->local_alloc_default_bits) {
+		अगर (num_clusters >= osb->local_alloc_शेष_bits) अणु
 			cancel_delayed_work(&osb->la_enable_wq);
 			osb->local_alloc_state = OCFS2_LA_ENABLED;
-		}
+		पूर्ण
 	spin_unlock(&osb->osb_lock);
-}
+पूर्ण
 
-void ocfs2_la_enable_worker(struct work_struct *work)
-{
-	struct ocfs2_super *osb =
-		container_of(work, struct ocfs2_super,
+व्योम ocfs2_la_enable_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ocfs2_super *osb =
+		container_of(work, काष्ठा ocfs2_super,
 			     la_enable_wq.work);
 	spin_lock(&osb->osb_lock);
 	osb->local_alloc_state = OCFS2_LA_ENABLED;
 	spin_unlock(&osb->osb_lock);
-}
+पूर्ण
 
 /*
  * Tell us whether a given allocation should use the local alloc
- * file. Otherwise, it has to go to the main bitmap.
+ * file. Otherwise, it has to go to the मुख्य biपंचांगap.
  *
- * This function does semi-dirty reads of local alloc size and state!
+ * This function करोes semi-dirty पढ़ोs of local alloc size and state!
  * This is ok however, as the values are re-checked once under mutex.
  */
-int ocfs2_alloc_should_use_local(struct ocfs2_super *osb, u64 bits)
-{
-	int ret = 0;
-	int la_bits;
+पूर्णांक ocfs2_alloc_should_use_local(काष्ठा ocfs2_super *osb, u64 bits)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक la_bits;
 
 	spin_lock(&osb->osb_lock);
 	la_bits = osb->local_alloc_bits;
 
-	if (!ocfs2_la_state_enabled(osb))
-		goto bail;
+	अगर (!ocfs2_la_state_enabled(osb))
+		जाओ bail;
 
 	/* la_bits should be at least twice the size (in clusters) of
 	 * a new block group. We want to be sure block group
 	 * allocations go through the local alloc, so allow an
-	 * allocation to take up to half the bitmap. */
-	if (bits > (la_bits / 2))
-		goto bail;
+	 * allocation to take up to half the biपंचांगap. */
+	अगर (bits > (la_bits / 2))
+		जाओ bail;
 
 	ret = 1;
 bail:
 	trace_ocfs2_alloc_should_use_local(
-	     (unsigned long long)bits, osb->local_alloc_state, la_bits, ret);
+	     (अचिन्हित दीर्घ दीर्घ)bits, osb->local_alloc_state, la_bits, ret);
 	spin_unlock(&osb->osb_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_load_local_alloc(struct ocfs2_super *osb)
-{
-	int status = 0;
-	struct ocfs2_dinode *alloc = NULL;
-	struct buffer_head *alloc_bh = NULL;
+पूर्णांक ocfs2_load_local_alloc(काष्ठा ocfs2_super *osb)
+अणु
+	पूर्णांक status = 0;
+	काष्ठा ocfs2_dinode *alloc = शून्य;
+	काष्ठा buffer_head *alloc_bh = शून्य;
 	u32 num_used;
-	struct inode *inode = NULL;
-	struct ocfs2_local_alloc *la;
+	काष्ठा inode *inode = शून्य;
+	काष्ठा ocfs2_local_alloc *la;
 
-	if (osb->local_alloc_bits == 0)
-		goto bail;
+	अगर (osb->local_alloc_bits == 0)
+		जाओ bail;
 
-	if (osb->local_alloc_bits >= osb->bitmap_cpg) {
+	अगर (osb->local_alloc_bits >= osb->biपंचांगap_cpg) अणु
 		mlog(ML_NOTICE, "Requested local alloc window %d is larger "
 		     "than max possible %u. Using defaults.\n",
-		     osb->local_alloc_bits, (osb->bitmap_cpg - 1));
+		     osb->local_alloc_bits, (osb->biपंचांगap_cpg - 1));
 		osb->local_alloc_bits =
 			ocfs2_megabytes_to_clusters(osb->sb,
-						    ocfs2_la_default_mb(osb));
-	}
+						    ocfs2_la_शेष_mb(osb));
+	पूर्ण
 
-	/* read the alloc off disk */
-	inode = ocfs2_get_system_file_inode(osb, LOCAL_ALLOC_SYSTEM_INODE,
+	/* पढ़ो the alloc off disk */
+	inode = ocfs2_get_प्रणाली_file_inode(osb, LOCAL_ALLOC_SYSTEM_INODE,
 					    osb->slot_num);
-	if (!inode) {
+	अगर (!inode) अणु
 		status = -EINVAL;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	status = ocfs2_read_inode_block_full(inode, &alloc_bh,
+	status = ocfs2_पढ़ो_inode_block_full(inode, &alloc_bh,
 					     OCFS2_BH_IGNORE_CACHE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	alloc = (struct ocfs2_dinode *) alloc_bh->b_data;
+	alloc = (काष्ठा ocfs2_dinode *) alloc_bh->b_data;
 	la = OCFS2_LOCAL_ALLOC(alloc);
 
-	if (!(le32_to_cpu(alloc->i_flags) &
-	    (OCFS2_LOCAL_ALLOC_FL|OCFS2_BITMAP_FL))) {
+	अगर (!(le32_to_cpu(alloc->i_flags) &
+	    (OCFS2_LOCAL_ALLOC_FL|OCFS2_BITMAP_FL))) अणु
 		mlog(ML_ERROR, "Invalid local alloc inode, %llu\n",
-		     (unsigned long long)OCFS2_I(inode)->ip_blkno);
+		     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if ((la->la_size == 0) ||
-	    (le16_to_cpu(la->la_size) > ocfs2_local_alloc_size(inode->i_sb))) {
+	अगर ((la->la_size == 0) ||
+	    (le16_to_cpu(la->la_size) > ocfs2_local_alloc_size(inode->i_sb))) अणु
 		mlog(ML_ERROR, "Local alloc size is invalid (la_size = %u)\n",
 		     le16_to_cpu(la->la_size));
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	/* do a little verification. */
+	/* करो a little verअगरication. */
 	num_used = ocfs2_local_alloc_count_bits(alloc);
 
-	/* hopefully the local alloc has always been recovered before
+	/* hopefully the local alloc has always been recovered beक्रमe
 	 * we load it. */
-	if (num_used
-	    || alloc->id1.bitmap1.i_used
-	    || alloc->id1.bitmap1.i_total
-	    || la->la_bm_off) {
+	अगर (num_used
+	    || alloc->id1.biपंचांगap1.i_used
+	    || alloc->id1.biपंचांगap1.i_total
+	    || la->la_bm_off) अणु
 		mlog(ML_ERROR, "inconsistent detected, clean journal with"
 		     " unrecovered local alloc, please run fsck.ocfs2!\n"
 		     "found = %u, set = %u, taken = %u, off = %u\n",
-		     num_used, le32_to_cpu(alloc->id1.bitmap1.i_used),
-		     le32_to_cpu(alloc->id1.bitmap1.i_total),
+		     num_used, le32_to_cpu(alloc->id1.biपंचांगap1.i_used),
+		     le32_to_cpu(alloc->id1.biपंचांगap1.i_total),
 		     OCFS2_LOCAL_ALLOC(alloc)->la_bm_off);
 
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	osb->local_alloc_bh = alloc_bh;
 	osb->local_alloc_state = OCFS2_LA_ENABLED;
 
 bail:
-	if (status < 0)
-		brelse(alloc_bh);
+	अगर (status < 0)
+		brअन्यथा(alloc_bh);
 	iput(inode);
 
 	trace_ocfs2_load_local_alloc(osb->local_alloc_bits);
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
 /*
- * return any unused bits to the bitmap and write out a clean
+ * वापस any unused bits to the biपंचांगap and ग_लिखो out a clean
  * local_alloc.
  *
  * local_alloc_bh is optional. If not passed, we will simply use the
- * one off osb. If you do pass it however, be warned that it *will* be
- * returned brelse'd and NULL'd out.*/
-void ocfs2_shutdown_local_alloc(struct ocfs2_super *osb)
-{
-	int status;
+ * one off osb. If you करो pass it however, be warned that it *will* be
+ * वापसed brअन्यथा'd and NULL'd out.*/
+व्योम ocfs2_shutकरोwn_local_alloc(काष्ठा ocfs2_super *osb)
+अणु
+	पूर्णांक status;
 	handle_t *handle;
-	struct inode *local_alloc_inode = NULL;
-	struct buffer_head *bh = NULL;
-	struct buffer_head *main_bm_bh = NULL;
-	struct inode *main_bm_inode = NULL;
-	struct ocfs2_dinode *alloc_copy = NULL;
-	struct ocfs2_dinode *alloc = NULL;
+	काष्ठा inode *local_alloc_inode = शून्य;
+	काष्ठा buffer_head *bh = शून्य;
+	काष्ठा buffer_head *मुख्य_bm_bh = शून्य;
+	काष्ठा inode *मुख्य_bm_inode = शून्य;
+	काष्ठा ocfs2_dinode *alloc_copy = शून्य;
+	काष्ठा ocfs2_dinode *alloc = शून्य;
 
 	cancel_delayed_work(&osb->la_enable_wq);
-	if (osb->ocfs2_wq)
+	अगर (osb->ocfs2_wq)
 		flush_workqueue(osb->ocfs2_wq);
 
-	if (osb->local_alloc_state == OCFS2_LA_UNUSED)
-		goto out;
+	अगर (osb->local_alloc_state == OCFS2_LA_UNUSED)
+		जाओ out;
 
 	local_alloc_inode =
-		ocfs2_get_system_file_inode(osb,
+		ocfs2_get_प्रणाली_file_inode(osb,
 					    LOCAL_ALLOC_SYSTEM_INODE,
 					    osb->slot_num);
-	if (!local_alloc_inode) {
+	अगर (!local_alloc_inode) अणु
 		status = -ENOENT;
-		mlog_errno(status);
-		goto out;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ out;
+	पूर्ण
 
 	osb->local_alloc_state = OCFS2_LA_DISABLED;
 
 	ocfs2_resmap_uninit(&osb->osb_la_resmap);
 
-	main_bm_inode = ocfs2_get_system_file_inode(osb,
+	मुख्य_bm_inode = ocfs2_get_प्रणाली_file_inode(osb,
 						    GLOBAL_BITMAP_SYSTEM_INODE,
 						    OCFS2_INVALID_SLOT);
-	if (!main_bm_inode) {
+	अगर (!मुख्य_bm_inode) अणु
 		status = -EINVAL;
-		mlog_errno(status);
-		goto out;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ out;
+	पूर्ण
 
-	inode_lock(main_bm_inode);
+	inode_lock(मुख्य_bm_inode);
 
-	status = ocfs2_inode_lock(main_bm_inode, &main_bm_bh, 1);
-	if (status < 0) {
-		mlog_errno(status);
-		goto out_mutex;
-	}
+	status = ocfs2_inode_lock(मुख्य_bm_inode, &मुख्य_bm_bh, 1);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ out_mutex;
+	पूर्ण
 
 	/* WINDOW_MOVE_CREDITS is a bit heavy... */
 	handle = ocfs2_start_trans(osb, OCFS2_WINDOW_MOVE_CREDITS);
-	if (IS_ERR(handle)) {
-		mlog_errno(PTR_ERR(handle));
-		handle = NULL;
-		goto out_unlock;
-	}
+	अगर (IS_ERR(handle)) अणु
+		mlog_त्रुटि_सं(PTR_ERR(handle));
+		handle = शून्य;
+		जाओ out_unlock;
+	पूर्ण
 
 	bh = osb->local_alloc_bh;
-	alloc = (struct ocfs2_dinode *) bh->b_data;
+	alloc = (काष्ठा ocfs2_dinode *) bh->b_data;
 
 	alloc_copy = kmemdup(alloc, bh->b_size, GFP_NOFS);
-	if (!alloc_copy) {
+	अगर (!alloc_copy) अणु
 		status = -ENOMEM;
-		goto out_commit;
-	}
+		जाओ out_commit;
+	पूर्ण
 
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(local_alloc_inode),
 					 bh, OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto out_commit;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ out_commit;
+	पूर्ण
 
 	ocfs2_clear_local_alloc(alloc);
 	ocfs2_journal_dirty(handle, bh);
 
-	brelse(bh);
-	osb->local_alloc_bh = NULL;
+	brअन्यथा(bh);
+	osb->local_alloc_bh = शून्य;
 	osb->local_alloc_state = OCFS2_LA_UNUSED;
 
-	status = ocfs2_sync_local_to_main(osb, handle, alloc_copy,
-					  main_bm_inode, main_bm_bh);
-	if (status < 0)
-		mlog_errno(status);
+	status = ocfs2_sync_local_to_मुख्य(osb, handle, alloc_copy,
+					  मुख्य_bm_inode, मुख्य_bm_bh);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
 out_commit:
 	ocfs2_commit_trans(osb, handle);
 
 out_unlock:
-	brelse(main_bm_bh);
+	brअन्यथा(मुख्य_bm_bh);
 
-	ocfs2_inode_unlock(main_bm_inode, 1);
+	ocfs2_inode_unlock(मुख्य_bm_inode, 1);
 
 out_mutex:
-	inode_unlock(main_bm_inode);
-	iput(main_bm_inode);
+	inode_unlock(मुख्य_bm_inode);
+	iput(मुख्य_bm_inode);
 
 out:
 	iput(local_alloc_inode);
 
-	kfree(alloc_copy);
-}
+	kमुक्त(alloc_copy);
+पूर्ण
 
 /*
- * We want to free the bitmap bits outside of any recovery context as
- * we'll need a cluster lock to do so, but we must clear the local
- * alloc before giving up the recovered nodes journal. To solve this,
- * we kmalloc a copy of the local alloc before it's change for the
+ * We want to मुक्त the biपंचांगap bits outside of any recovery context as
+ * we'll need a cluster lock to करो so, but we must clear the local
+ * alloc beक्रमe giving up the recovered nodes journal. To solve this,
+ * we kदो_स्मृति a copy of the local alloc beक्रमe it's change क्रम the
  * caller to process with ocfs2_complete_local_alloc_recovery
  */
-int ocfs2_begin_local_alloc_recovery(struct ocfs2_super *osb,
-				     int slot_num,
-				     struct ocfs2_dinode **alloc_copy)
-{
-	int status = 0;
-	struct buffer_head *alloc_bh = NULL;
-	struct inode *inode = NULL;
-	struct ocfs2_dinode *alloc;
+पूर्णांक ocfs2_begin_local_alloc_recovery(काष्ठा ocfs2_super *osb,
+				     पूर्णांक slot_num,
+				     काष्ठा ocfs2_dinode **alloc_copy)
+अणु
+	पूर्णांक status = 0;
+	काष्ठा buffer_head *alloc_bh = शून्य;
+	काष्ठा inode *inode = शून्य;
+	काष्ठा ocfs2_dinode *alloc;
 
 	trace_ocfs2_begin_local_alloc_recovery(slot_num);
 
-	*alloc_copy = NULL;
+	*alloc_copy = शून्य;
 
-	inode = ocfs2_get_system_file_inode(osb,
+	inode = ocfs2_get_प्रणाली_file_inode(osb,
 					    LOCAL_ALLOC_SYSTEM_INODE,
 					    slot_num);
-	if (!inode) {
+	अगर (!inode) अणु
 		status = -EINVAL;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	inode_lock(inode);
 
-	status = ocfs2_read_inode_block_full(inode, &alloc_bh,
+	status = ocfs2_पढ़ो_inode_block_full(inode, &alloc_bh,
 					     OCFS2_BH_IGNORE_CACHE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	*alloc_copy = kmalloc(alloc_bh->b_size, GFP_KERNEL);
-	if (!(*alloc_copy)) {
+	*alloc_copy = kदो_स्मृति(alloc_bh->b_size, GFP_KERNEL);
+	अगर (!(*alloc_copy)) अणु
 		status = -ENOMEM;
-		goto bail;
-	}
-	memcpy((*alloc_copy), alloc_bh->b_data, alloc_bh->b_size);
+		जाओ bail;
+	पूर्ण
+	स_नकल((*alloc_copy), alloc_bh->b_data, alloc_bh->b_size);
 
-	alloc = (struct ocfs2_dinode *) alloc_bh->b_data;
+	alloc = (काष्ठा ocfs2_dinode *) alloc_bh->b_data;
 	ocfs2_clear_local_alloc(alloc);
 
 	ocfs2_compute_meta_ecc(osb->sb, alloc_bh->b_data, &alloc->i_check);
-	status = ocfs2_write_block(osb, alloc_bh, INODE_CACHE(inode));
-	if (status < 0)
-		mlog_errno(status);
+	status = ocfs2_ग_लिखो_block(osb, alloc_bh, INODE_CACHE(inode));
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
 bail:
-	if (status < 0) {
-		kfree(*alloc_copy);
-		*alloc_copy = NULL;
-	}
+	अगर (status < 0) अणु
+		kमुक्त(*alloc_copy);
+		*alloc_copy = शून्य;
+	पूर्ण
 
-	brelse(alloc_bh);
+	brअन्यथा(alloc_bh);
 
-	if (inode) {
+	अगर (inode) अणु
 		inode_unlock(inode);
 		iput(inode);
-	}
+	पूर्ण
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
 /*
  * Step 2: By now, we've completed the journal recovery, we've stamped
  * a clean local alloc on disk and dropped the node out of the
- * recovery map. Dlm locks will no longer stall, so lets clear out the
- * main bitmap.
+ * recovery map. Dlm locks will no दीर्घer stall, so lets clear out the
+ * मुख्य biपंचांगap.
  */
-int ocfs2_complete_local_alloc_recovery(struct ocfs2_super *osb,
-					struct ocfs2_dinode *alloc)
-{
-	int status;
+पूर्णांक ocfs2_complete_local_alloc_recovery(काष्ठा ocfs2_super *osb,
+					काष्ठा ocfs2_dinode *alloc)
+अणु
+	पूर्णांक status;
 	handle_t *handle;
-	struct buffer_head *main_bm_bh = NULL;
-	struct inode *main_bm_inode;
+	काष्ठा buffer_head *मुख्य_bm_bh = शून्य;
+	काष्ठा inode *मुख्य_bm_inode;
 
-	main_bm_inode = ocfs2_get_system_file_inode(osb,
+	मुख्य_bm_inode = ocfs2_get_प्रणाली_file_inode(osb,
 						    GLOBAL_BITMAP_SYSTEM_INODE,
 						    OCFS2_INVALID_SLOT);
-	if (!main_bm_inode) {
+	अगर (!मुख्य_bm_inode) अणु
 		status = -EINVAL;
-		mlog_errno(status);
-		goto out;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ out;
+	पूर्ण
 
-	inode_lock(main_bm_inode);
+	inode_lock(मुख्य_bm_inode);
 
-	status = ocfs2_inode_lock(main_bm_inode, &main_bm_bh, 1);
-	if (status < 0) {
-		mlog_errno(status);
-		goto out_mutex;
-	}
+	status = ocfs2_inode_lock(मुख्य_bm_inode, &मुख्य_bm_bh, 1);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ out_mutex;
+	पूर्ण
 
 	handle = ocfs2_start_trans(osb, OCFS2_WINDOW_MOVE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		status = PTR_ERR(handle);
-		handle = NULL;
-		mlog_errno(status);
-		goto out_unlock;
-	}
+		handle = शून्य;
+		mlog_त्रुटि_सं(status);
+		जाओ out_unlock;
+	पूर्ण
 
-	/* we want the bitmap change to be recorded on disk asap */
+	/* we want the biपंचांगap change to be recorded on disk asap */
 	handle->h_sync = 1;
 
-	status = ocfs2_sync_local_to_main(osb, handle, alloc,
-					  main_bm_inode, main_bm_bh);
-	if (status < 0)
-		mlog_errno(status);
+	status = ocfs2_sync_local_to_मुख्य(osb, handle, alloc,
+					  मुख्य_bm_inode, मुख्य_bm_bh);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
 	ocfs2_commit_trans(osb, handle);
 
 out_unlock:
-	ocfs2_inode_unlock(main_bm_inode, 1);
+	ocfs2_inode_unlock(मुख्य_bm_inode, 1);
 
 out_mutex:
-	inode_unlock(main_bm_inode);
+	inode_unlock(मुख्य_bm_inode);
 
-	brelse(main_bm_bh);
+	brअन्यथा(मुख्य_bm_bh);
 
-	iput(main_bm_inode);
+	iput(मुख्य_bm_inode);
 
 out:
-	if (!status)
+	अगर (!status)
 		ocfs2_init_steal_slots(osb);
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
 /*
  * make sure we've got at least bits_wanted contiguous bits in the
  * local alloc. You lose them when you drop i_mutex.
  *
  * We will add ourselves to the transaction passed in, but may start
- * our own in order to shift windows.
+ * our own in order to shअगरt winकरोws.
  */
-int ocfs2_reserve_local_alloc_bits(struct ocfs2_super *osb,
+पूर्णांक ocfs2_reserve_local_alloc_bits(काष्ठा ocfs2_super *osb,
 				   u32 bits_wanted,
-				   struct ocfs2_alloc_context *ac)
-{
-	int status;
-	struct ocfs2_dinode *alloc;
-	struct inode *local_alloc_inode;
-	unsigned int free_bits;
+				   काष्ठा ocfs2_alloc_context *ac)
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_dinode *alloc;
+	काष्ठा inode *local_alloc_inode;
+	अचिन्हित पूर्णांक मुक्त_bits;
 
 	BUG_ON(!ac);
 
 	local_alloc_inode =
-		ocfs2_get_system_file_inode(osb,
+		ocfs2_get_प्रणाली_file_inode(osb,
 					    LOCAL_ALLOC_SYSTEM_INODE,
 					    osb->slot_num);
-	if (!local_alloc_inode) {
+	अगर (!local_alloc_inode) अणु
 		status = -ENOENT;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	inode_lock(local_alloc_inode);
 
 	/*
-	 * We must double check state and allocator bits because
-	 * another process may have changed them while holding i_mutex.
+	 * We must द्विगुन check state and allocator bits because
+	 * another process may have changed them जबतक holding i_mutex.
 	 */
 	spin_lock(&osb->osb_lock);
-	if (!ocfs2_la_state_enabled(osb) ||
-	    (bits_wanted > osb->local_alloc_bits)) {
+	अगर (!ocfs2_la_state_enabled(osb) ||
+	    (bits_wanted > osb->local_alloc_bits)) अणु
 		spin_unlock(&osb->osb_lock);
 		status = -ENOSPC;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 	spin_unlock(&osb->osb_lock);
 
-	alloc = (struct ocfs2_dinode *) osb->local_alloc_bh->b_data;
+	alloc = (काष्ठा ocfs2_dinode *) osb->local_alloc_bh->b_data;
 
-#ifdef CONFIG_OCFS2_DEBUG_FS
-	if (le32_to_cpu(alloc->id1.bitmap1.i_used) !=
-	    ocfs2_local_alloc_count_bits(alloc)) {
+#अगर_घोषित CONFIG_OCFS2_DEBUG_FS
+	अगर (le32_to_cpu(alloc->id1.biपंचांगap1.i_used) !=
+	    ocfs2_local_alloc_count_bits(alloc)) अणु
 		status = ocfs2_error(osb->sb, "local alloc inode %llu says it has %u used bits, but a count shows %u\n",
-				(unsigned long long)le64_to_cpu(alloc->i_blkno),
-				le32_to_cpu(alloc->id1.bitmap1.i_used),
+				(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(alloc->i_blkno),
+				le32_to_cpu(alloc->id1.biपंचांगap1.i_used),
 				ocfs2_local_alloc_count_bits(alloc));
-		goto bail;
-	}
-#endif
+		जाओ bail;
+	पूर्ण
+#पूर्ण_अगर
 
-	free_bits = le32_to_cpu(alloc->id1.bitmap1.i_total) -
-		le32_to_cpu(alloc->id1.bitmap1.i_used);
-	if (bits_wanted > free_bits) {
-		/* uhoh, window change time. */
+	मुक्त_bits = le32_to_cpu(alloc->id1.biपंचांगap1.i_total) -
+		le32_to_cpu(alloc->id1.biपंचांगap1.i_used);
+	अगर (bits_wanted > मुक्त_bits) अणु
+		/* uhoh, winकरोw change समय. */
 		status =
-			ocfs2_local_alloc_slide_window(osb, local_alloc_inode);
-		if (status < 0) {
-			if (status != -ENOSPC)
-				mlog_errno(status);
-			goto bail;
-		}
+			ocfs2_local_alloc_slide_winकरोw(osb, local_alloc_inode);
+		अगर (status < 0) अणु
+			अगर (status != -ENOSPC)
+				mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
 
 		/*
-		 * Under certain conditions, the window slide code
+		 * Under certain conditions, the winकरोw slide code
 		 * might have reduced the number of bits available or
 		 * disabled the local alloc entirely. Re-check
-		 * here and return -ENOSPC if necessary.
+		 * here and वापस -ENOSPC अगर necessary.
 		 */
 		status = -ENOSPC;
-		if (!ocfs2_la_state_enabled(osb))
-			goto bail;
+		अगर (!ocfs2_la_state_enabled(osb))
+			जाओ bail;
 
-		free_bits = le32_to_cpu(alloc->id1.bitmap1.i_total) -
-			le32_to_cpu(alloc->id1.bitmap1.i_used);
-		if (bits_wanted > free_bits)
-			goto bail;
-	}
+		मुक्त_bits = le32_to_cpu(alloc->id1.biपंचांगap1.i_total) -
+			le32_to_cpu(alloc->id1.biपंचांगap1.i_used);
+		अगर (bits_wanted > मुक्त_bits)
+			जाओ bail;
+	पूर्ण
 
 	ac->ac_inode = local_alloc_inode;
 	/* We should never use localalloc from another slot */
@@ -696,49 +697,49 @@ int ocfs2_reserve_local_alloc_bits(struct ocfs2_super *osb,
 	ac->ac_bh = osb->local_alloc_bh;
 	status = 0;
 bail:
-	if (status < 0 && local_alloc_inode) {
+	अगर (status < 0 && local_alloc_inode) अणु
 		inode_unlock(local_alloc_inode);
 		iput(local_alloc_inode);
-	}
+	पूर्ण
 
 	trace_ocfs2_reserve_local_alloc_bits(
-		(unsigned long long)ac->ac_max_block,
+		(अचिन्हित दीर्घ दीर्घ)ac->ac_max_block,
 		bits_wanted, osb->slot_num, status);
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-int ocfs2_claim_local_alloc_bits(struct ocfs2_super *osb,
+पूर्णांक ocfs2_claim_local_alloc_bits(काष्ठा ocfs2_super *osb,
 				 handle_t *handle,
-				 struct ocfs2_alloc_context *ac,
+				 काष्ठा ocfs2_alloc_context *ac,
 				 u32 bits_wanted,
 				 u32 *bit_off,
 				 u32 *num_bits)
-{
-	int status, start;
-	struct inode *local_alloc_inode;
-	void *bitmap;
-	struct ocfs2_dinode *alloc;
-	struct ocfs2_local_alloc *la;
+अणु
+	पूर्णांक status, start;
+	काष्ठा inode *local_alloc_inode;
+	व्योम *biपंचांगap;
+	काष्ठा ocfs2_dinode *alloc;
+	काष्ठा ocfs2_local_alloc *la;
 
 	BUG_ON(ac->ac_which != OCFS2_AC_USE_LOCAL);
 
 	local_alloc_inode = ac->ac_inode;
-	alloc = (struct ocfs2_dinode *) osb->local_alloc_bh->b_data;
+	alloc = (काष्ठा ocfs2_dinode *) osb->local_alloc_bh->b_data;
 	la = OCFS2_LOCAL_ALLOC(alloc);
 
 	start = ocfs2_local_alloc_find_clear_bits(osb, alloc, &bits_wanted,
 						  ac->ac_resv);
-	if (start == -1) {
+	अगर (start == -1) अणु
 		/* TODO: Shouldn't we just BUG here? */
 		status = -ENOSPC;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	bitmap = la->la_bitmap;
+	biपंचांगap = la->la_biपंचांगap;
 	*bit_off = le32_to_cpu(la->la_bm_off) + start;
 	*num_bits = bits_wanted;
 
@@ -746,46 +747,46 @@ int ocfs2_claim_local_alloc_bits(struct ocfs2_super *osb,
 					 INODE_CACHE(local_alloc_inode),
 					 osb->local_alloc_bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	ocfs2_resmap_claimed_bits(&osb->osb_la_resmap, ac->ac_resv, start,
 				  bits_wanted);
 
-	while(bits_wanted--)
-		ocfs2_set_bit(start++, bitmap);
+	जबतक(bits_wanted--)
+		ocfs2_set_bit(start++, biपंचांगap);
 
-	le32_add_cpu(&alloc->id1.bitmap1.i_used, *num_bits);
+	le32_add_cpu(&alloc->id1.biपंचांगap1.i_used, *num_bits);
 	ocfs2_journal_dirty(handle, osb->local_alloc_bh);
 
 bail:
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-int ocfs2_free_local_alloc_bits(struct ocfs2_super *osb,
+पूर्णांक ocfs2_मुक्त_local_alloc_bits(काष्ठा ocfs2_super *osb,
 				handle_t *handle,
-				struct ocfs2_alloc_context *ac,
+				काष्ठा ocfs2_alloc_context *ac,
 				u32 bit_off,
 				u32 num_bits)
-{
-	int status, start;
+अणु
+	पूर्णांक status, start;
 	u32 clear_bits;
-	struct inode *local_alloc_inode;
-	void *bitmap;
-	struct ocfs2_dinode *alloc;
-	struct ocfs2_local_alloc *la;
+	काष्ठा inode *local_alloc_inode;
+	व्योम *biपंचांगap;
+	काष्ठा ocfs2_dinode *alloc;
+	काष्ठा ocfs2_local_alloc *la;
 
 	BUG_ON(ac->ac_which != OCFS2_AC_USE_LOCAL);
 
 	local_alloc_inode = ac->ac_inode;
-	alloc = (struct ocfs2_dinode *) osb->local_alloc_bh->b_data;
+	alloc = (काष्ठा ocfs2_dinode *) osb->local_alloc_bh->b_data;
 	la = OCFS2_LOCAL_ALLOC(alloc);
 
-	bitmap = la->la_bitmap;
+	biपंचांगap = la->la_biपंचांगap;
 	start = bit_off - le32_to_cpu(la->la_bm_off);
 	clear_bits = num_bits;
 
@@ -793,61 +794,61 @@ int ocfs2_free_local_alloc_bits(struct ocfs2_super *osb,
 			INODE_CACHE(local_alloc_inode),
 			osb->local_alloc_bh,
 			OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	while (clear_bits--)
-		ocfs2_clear_bit(start++, bitmap);
+	जबतक (clear_bits--)
+		ocfs2_clear_bit(start++, biपंचांगap);
 
-	le32_add_cpu(&alloc->id1.bitmap1.i_used, -num_bits);
+	le32_add_cpu(&alloc->id1.biपंचांगap1.i_used, -num_bits);
 	ocfs2_journal_dirty(handle, osb->local_alloc_bh);
 
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static u32 ocfs2_local_alloc_count_bits(struct ocfs2_dinode *alloc)
-{
+अटल u32 ocfs2_local_alloc_count_bits(काष्ठा ocfs2_dinode *alloc)
+अणु
 	u32 count;
-	struct ocfs2_local_alloc *la = OCFS2_LOCAL_ALLOC(alloc);
+	काष्ठा ocfs2_local_alloc *la = OCFS2_LOCAL_ALLOC(alloc);
 
-	count = memweight(la->la_bitmap, le16_to_cpu(la->la_size));
+	count = memweight(la->la_biपंचांगap, le16_to_cpu(la->la_size));
 
 	trace_ocfs2_local_alloc_count_bits(count);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int ocfs2_local_alloc_find_clear_bits(struct ocfs2_super *osb,
-				     struct ocfs2_dinode *alloc,
+अटल पूर्णांक ocfs2_local_alloc_find_clear_bits(काष्ठा ocfs2_super *osb,
+				     काष्ठा ocfs2_dinode *alloc,
 				     u32 *numbits,
-				     struct ocfs2_alloc_reservation *resv)
-{
-	int numfound = 0, bitoff, left, startoff;
-	int local_resv = 0;
-	struct ocfs2_alloc_reservation r;
-	void *bitmap = NULL;
-	struct ocfs2_reservation_map *resmap = &osb->osb_la_resmap;
+				     काष्ठा ocfs2_alloc_reservation *resv)
+अणु
+	पूर्णांक numfound = 0, bitoff, left, startoff;
+	पूर्णांक local_resv = 0;
+	काष्ठा ocfs2_alloc_reservation r;
+	व्योम *biपंचांगap = शून्य;
+	काष्ठा ocfs2_reservation_map *resmap = &osb->osb_la_resmap;
 
-	if (!alloc->id1.bitmap1.i_total) {
+	अगर (!alloc->id1.biपंचांगap1.i_total) अणु
 		bitoff = -1;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (!resv) {
+	अगर (!resv) अणु
 		local_resv = 1;
 		ocfs2_resv_init_once(&r);
 		ocfs2_resv_set_type(&r, OCFS2_RESV_FLAG_TMP);
 		resv = &r;
-	}
+	पूर्ण
 
 	numfound = *numbits;
-	if (ocfs2_resmap_resv_bits(resmap, resv, &bitoff, &numfound) == 0) {
-		if (numfound < *numbits)
+	अगर (ocfs2_resmap_resv_bits(resmap, resv, &bitoff, &numfound) == 0) अणु
+		अगर (numfound < *numbits)
 			*numbits = numfound;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	/*
 	 * Code error. While reservations are enabled, local
@@ -859,466 +860,466 @@ static int ocfs2_local_alloc_find_clear_bits(struct ocfs2_super *osb,
 	 * Reservations are disabled. Handle this the old way.
 	 */
 
-	bitmap = OCFS2_LOCAL_ALLOC(alloc)->la_bitmap;
+	biपंचांगap = OCFS2_LOCAL_ALLOC(alloc)->la_biपंचांगap;
 
 	numfound = bitoff = startoff = 0;
-	left = le32_to_cpu(alloc->id1.bitmap1.i_total);
-	while ((bitoff = ocfs2_find_next_zero_bit(bitmap, left, startoff)) != -1) {
-		if (bitoff == left) {
+	left = le32_to_cpu(alloc->id1.biपंचांगap1.i_total);
+	जबतक ((bitoff = ocfs2_find_next_zero_bit(biपंचांगap, left, startoff)) != -1) अणु
+		अगर (bitoff == left) अणु
 			/* mlog(0, "bitoff (%d) == left", bitoff); */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/* mlog(0, "Found a zero: bitoff = %d, startoff = %d, "
 		   "numfound = %d\n", bitoff, startoff, numfound);*/
 
-		/* Ok, we found a zero bit... is it contig. or do we
+		/* Ok, we found a zero bit... is it contig. or करो we
 		 * start over?*/
-		if (bitoff == startoff) {
+		अगर (bitoff == startoff) अणु
 			/* we found a zero */
 			numfound++;
 			startoff++;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* got a zero after some ones */
 			numfound = 1;
 			startoff = bitoff+1;
-		}
+		पूर्ण
 		/* we got everything we needed */
-		if (numfound == *numbits) {
+		अगर (numfound == *numbits) अणु
 			/* mlog(0, "Found it all!\n"); */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	trace_ocfs2_local_alloc_find_clear_bits_search_bitmap(bitoff, numfound);
+	trace_ocfs2_local_alloc_find_clear_bits_search_biपंचांगap(bitoff, numfound);
 
-	if (numfound == *numbits)
+	अगर (numfound == *numbits)
 		bitoff = startoff - numfound;
-	else
+	अन्यथा
 		bitoff = -1;
 
 bail:
-	if (local_resv)
+	अगर (local_resv)
 		ocfs2_resv_discard(resmap, resv);
 
 	trace_ocfs2_local_alloc_find_clear_bits(*numbits,
-		le32_to_cpu(alloc->id1.bitmap1.i_total),
+		le32_to_cpu(alloc->id1.biपंचांगap1.i_total),
 		bitoff, numfound);
 
-	return bitoff;
-}
+	वापस bitoff;
+पूर्ण
 
-static void ocfs2_clear_local_alloc(struct ocfs2_dinode *alloc)
-{
-	struct ocfs2_local_alloc *la = OCFS2_LOCAL_ALLOC(alloc);
-	int i;
+अटल व्योम ocfs2_clear_local_alloc(काष्ठा ocfs2_dinode *alloc)
+अणु
+	काष्ठा ocfs2_local_alloc *la = OCFS2_LOCAL_ALLOC(alloc);
+	पूर्णांक i;
 
-	alloc->id1.bitmap1.i_total = 0;
-	alloc->id1.bitmap1.i_used = 0;
+	alloc->id1.biपंचांगap1.i_total = 0;
+	alloc->id1.biपंचांगap1.i_used = 0;
 	la->la_bm_off = 0;
-	for(i = 0; i < le16_to_cpu(la->la_size); i++)
-		la->la_bitmap[i] = 0;
-}
+	क्रम(i = 0; i < le16_to_cpu(la->la_size); i++)
+		la->la_biपंचांगap[i] = 0;
+पूर्ण
 
-#if 0
-/* turn this on and uncomment below to aid debugging window shifts. */
-static void ocfs2_verify_zero_bits(unsigned long *bitmap,
-				   unsigned int start,
-				   unsigned int count)
-{
-	unsigned int tmp = count;
-	while(tmp--) {
-		if (ocfs2_test_bit(start + tmp, bitmap)) {
-			printk("ocfs2_verify_zero_bits: start = %u, count = "
+#अगर 0
+/* turn this on and uncomment below to aid debugging winकरोw shअगरts. */
+अटल व्योम ocfs2_verअगरy_zero_bits(अचिन्हित दीर्घ *biपंचांगap,
+				   अचिन्हित पूर्णांक start,
+				   अचिन्हित पूर्णांक count)
+अणु
+	अचिन्हित पूर्णांक पंचांगp = count;
+	जबतक(पंचांगp--) अणु
+		अगर (ocfs2_test_bit(start + पंचांगp, biपंचांगap)) अणु
+			prपूर्णांकk("ocfs2_verify_zero_bits: start = %u, count = "
 			       "%u\n", start, count);
-			printk("ocfs2_verify_zero_bits: bit %u is set!",
-			       start + tmp);
+			prपूर्णांकk("ocfs2_verify_zero_bits: bit %u is set!",
+			       start + पंचांगp);
 			BUG();
-		}
-	}
-}
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * sync the local alloc to main bitmap.
+ * sync the local alloc to मुख्य biपंचांगap.
  *
- * assumes you've already locked the main bitmap -- the bitmap inode
- * passed is used for caching.
+ * assumes you've alपढ़ोy locked the मुख्य biपंचांगap -- the biपंचांगap inode
+ * passed is used क्रम caching.
  */
-static int ocfs2_sync_local_to_main(struct ocfs2_super *osb,
+अटल पूर्णांक ocfs2_sync_local_to_मुख्य(काष्ठा ocfs2_super *osb,
 				    handle_t *handle,
-				    struct ocfs2_dinode *alloc,
-				    struct inode *main_bm_inode,
-				    struct buffer_head *main_bm_bh)
-{
-	int status = 0;
-	int bit_off, left, count, start;
+				    काष्ठा ocfs2_dinode *alloc,
+				    काष्ठा inode *मुख्य_bm_inode,
+				    काष्ठा buffer_head *मुख्य_bm_bh)
+अणु
+	पूर्णांक status = 0;
+	पूर्णांक bit_off, left, count, start;
 	u64 la_start_blk;
 	u64 blkno;
-	void *bitmap;
-	struct ocfs2_local_alloc *la = OCFS2_LOCAL_ALLOC(alloc);
+	व्योम *biपंचांगap;
+	काष्ठा ocfs2_local_alloc *la = OCFS2_LOCAL_ALLOC(alloc);
 
-	trace_ocfs2_sync_local_to_main(
-	     le32_to_cpu(alloc->id1.bitmap1.i_total),
-	     le32_to_cpu(alloc->id1.bitmap1.i_used));
+	trace_ocfs2_sync_local_to_मुख्य(
+	     le32_to_cpu(alloc->id1.biपंचांगap1.i_total),
+	     le32_to_cpu(alloc->id1.biपंचांगap1.i_used));
 
-	if (!alloc->id1.bitmap1.i_total) {
-		goto bail;
-	}
+	अगर (!alloc->id1.biपंचांगap1.i_total) अणु
+		जाओ bail;
+	पूर्ण
 
-	if (le32_to_cpu(alloc->id1.bitmap1.i_used) ==
-	    le32_to_cpu(alloc->id1.bitmap1.i_total)) {
-		goto bail;
-	}
+	अगर (le32_to_cpu(alloc->id1.biपंचांगap1.i_used) ==
+	    le32_to_cpu(alloc->id1.biपंचांगap1.i_total)) अणु
+		जाओ bail;
+	पूर्ण
 
 	la_start_blk = ocfs2_clusters_to_blocks(osb->sb,
 						le32_to_cpu(la->la_bm_off));
-	bitmap = la->la_bitmap;
+	biपंचांगap = la->la_biपंचांगap;
 	start = count = bit_off = 0;
-	left = le32_to_cpu(alloc->id1.bitmap1.i_total);
+	left = le32_to_cpu(alloc->id1.biपंचांगap1.i_total);
 
-	while ((bit_off = ocfs2_find_next_zero_bit(bitmap, left, start))
-	       != -1) {
-		if ((bit_off < left) && (bit_off == start)) {
+	जबतक ((bit_off = ocfs2_find_next_zero_bit(biपंचांगap, left, start))
+	       != -1) अणु
+		अगर ((bit_off < left) && (bit_off == start)) अणु
 			count++;
 			start++;
-			continue;
-		}
-		if (count) {
+			जारी;
+		पूर्ण
+		अगर (count) अणु
 			blkno = la_start_blk +
 				ocfs2_clusters_to_blocks(osb->sb,
 							 start - count);
 
-			trace_ocfs2_sync_local_to_main_free(
+			trace_ocfs2_sync_local_to_मुख्य_मुक्त(
 			     count, start - count,
-			     (unsigned long long)la_start_blk,
-			     (unsigned long long)blkno);
+			     (अचिन्हित दीर्घ दीर्घ)la_start_blk,
+			     (अचिन्हित दीर्घ दीर्घ)blkno);
 
 			status = ocfs2_release_clusters(handle,
-							main_bm_inode,
-							main_bm_bh, blkno,
+							मुख्य_bm_inode,
+							मुख्य_bm_bh, blkno,
 							count);
-			if (status < 0) {
-				mlog_errno(status);
-				goto bail;
-			}
-		}
-		if (bit_off >= left)
-			break;
+			अगर (status < 0) अणु
+				mlog_त्रुटि_सं(status);
+				जाओ bail;
+			पूर्ण
+		पूर्ण
+		अगर (bit_off >= left)
+			अवरोध;
 		count = 1;
 		start = bit_off + 1;
-	}
+	पूर्ण
 
 bail:
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-enum ocfs2_la_event {
-	OCFS2_LA_EVENT_SLIDE,		/* Normal window slide. */
-	OCFS2_LA_EVENT_FRAGMENTED,	/* The global bitmap has
+क्रमागत ocfs2_la_event अणु
+	OCFS2_LA_EVENT_SLIDE,		/* Normal winकरोw slide. */
+	OCFS2_LA_EVENT_FRAGMENTED,	/* The global biपंचांगap has
 					 * enough bits theoretically
-					 * free, but a contiguous
+					 * मुक्त, but a contiguous
 					 * allocation could not be
 					 * found. */
-	OCFS2_LA_EVENT_ENOSPC,		/* Global bitmap doesn't have
-					 * enough bits free to satisfy
+	OCFS2_LA_EVENT_ENOSPC,		/* Global biपंचांगap करोesn't have
+					 * enough bits मुक्त to satisfy
 					 * our request. */
-};
-#define OCFS2_LA_ENABLE_INTERVAL (30 * HZ)
+पूर्ण;
+#घोषणा OCFS2_LA_ENABLE_INTERVAL (30 * HZ)
 /*
- * Given an event, calculate the size of our next local alloc window.
+ * Given an event, calculate the size of our next local alloc winकरोw.
  *
  * This should always be called under i_mutex of the local alloc inode
- * so that local alloc disabling doesn't race with processes trying to
+ * so that local alloc disabling करोesn't race with processes trying to
  * use the allocator.
  *
  * Returns the state which the local alloc was left in. This value can
  * be ignored by some paths.
  */
-static int ocfs2_recalc_la_window(struct ocfs2_super *osb,
-				  enum ocfs2_la_event event)
-{
-	unsigned int bits;
-	int state;
+अटल पूर्णांक ocfs2_recalc_la_winकरोw(काष्ठा ocfs2_super *osb,
+				  क्रमागत ocfs2_la_event event)
+अणु
+	अचिन्हित पूर्णांक bits;
+	पूर्णांक state;
 
 	spin_lock(&osb->osb_lock);
-	if (osb->local_alloc_state == OCFS2_LA_DISABLED) {
+	अगर (osb->local_alloc_state == OCFS2_LA_DISABLED) अणु
 		WARN_ON_ONCE(osb->local_alloc_state == OCFS2_LA_DISABLED);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/*
-	 * ENOSPC and fragmentation are treated similarly for now.
+	 * ENOSPC and fragmentation are treated similarly क्रम now.
 	 */
-	if (event == OCFS2_LA_EVENT_ENOSPC ||
-	    event == OCFS2_LA_EVENT_FRAGMENTED) {
+	अगर (event == OCFS2_LA_EVENT_ENOSPC ||
+	    event == OCFS2_LA_EVENT_FRAGMENTED) अणु
 		/*
 		 * We ran out of contiguous space in the primary
-		 * bitmap. Drastically reduce the number of bits used
+		 * biपंचांगap. Drastically reduce the number of bits used
 		 * by local alloc until we have to disable it.
 		 */
 		bits = osb->local_alloc_bits >> 1;
-		if (bits > ocfs2_megabytes_to_clusters(osb->sb, 1)) {
+		अगर (bits > ocfs2_megabytes_to_clusters(osb->sb, 1)) अणु
 			/*
 			 * By setting state to THROTTLED, we'll keep
-			 * the number of local alloc bits used down
+			 * the number of local alloc bits used करोwn
 			 * until an event occurs which would give us
-			 * reason to assume the bitmap situation might
+			 * reason to assume the biपंचांगap situation might
 			 * have changed.
 			 */
 			osb->local_alloc_state = OCFS2_LA_THROTTLED;
 			osb->local_alloc_bits = bits;
-		} else {
+		पूर्ण अन्यथा अणु
 			osb->local_alloc_state = OCFS2_LA_DISABLED;
-		}
+		पूर्ण
 		queue_delayed_work(osb->ocfs2_wq, &osb->la_enable_wq,
 				   OCFS2_LA_ENABLE_INTERVAL);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/*
-	 * Don't increase the size of the local alloc window until we
+	 * Don't increase the size of the local alloc winकरोw until we
 	 * know we might be able to fulfill the request. Otherwise, we
-	 * risk bouncing around the global bitmap during periods of
+	 * risk bouncing around the global biपंचांगap during periods of
 	 * low space.
 	 */
-	if (osb->local_alloc_state != OCFS2_LA_THROTTLED)
-		osb->local_alloc_bits = osb->local_alloc_default_bits;
+	अगर (osb->local_alloc_state != OCFS2_LA_THROTTLED)
+		osb->local_alloc_bits = osb->local_alloc_शेष_bits;
 
 out_unlock:
 	state = osb->local_alloc_state;
 	spin_unlock(&osb->osb_lock);
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
-static int ocfs2_local_alloc_reserve_for_window(struct ocfs2_super *osb,
-						struct ocfs2_alloc_context **ac,
-						struct inode **bitmap_inode,
-						struct buffer_head **bitmap_bh)
-{
-	int status;
+अटल पूर्णांक ocfs2_local_alloc_reserve_क्रम_winकरोw(काष्ठा ocfs2_super *osb,
+						काष्ठा ocfs2_alloc_context **ac,
+						काष्ठा inode **biपंचांगap_inode,
+						काष्ठा buffer_head **biपंचांगap_bh)
+अणु
+	पूर्णांक status;
 
-	*ac = kzalloc(sizeof(struct ocfs2_alloc_context), GFP_KERNEL);
-	if (!(*ac)) {
+	*ac = kzalloc(माप(काष्ठा ocfs2_alloc_context), GFP_KERNEL);
+	अगर (!(*ac)) अणु
 		status = -ENOMEM;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 retry_enospc:
 	(*ac)->ac_bits_wanted = osb->local_alloc_bits;
-	status = ocfs2_reserve_cluster_bitmap_bits(osb, *ac);
-	if (status == -ENOSPC) {
-		if (ocfs2_recalc_la_window(osb, OCFS2_LA_EVENT_ENOSPC) ==
+	status = ocfs2_reserve_cluster_biपंचांगap_bits(osb, *ac);
+	अगर (status == -ENOSPC) अणु
+		अगर (ocfs2_recalc_la_winकरोw(osb, OCFS2_LA_EVENT_ENOSPC) ==
 		    OCFS2_LA_DISABLED)
-			goto bail;
+			जाओ bail;
 
-		ocfs2_free_ac_resource(*ac);
-		memset(*ac, 0, sizeof(struct ocfs2_alloc_context));
-		goto retry_enospc;
-	}
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+		ocfs2_मुक्त_ac_resource(*ac);
+		स_रखो(*ac, 0, माप(काष्ठा ocfs2_alloc_context));
+		जाओ retry_enospc;
+	पूर्ण
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	*bitmap_inode = (*ac)->ac_inode;
-	igrab(*bitmap_inode);
-	*bitmap_bh = (*ac)->ac_bh;
-	get_bh(*bitmap_bh);
+	*biपंचांगap_inode = (*ac)->ac_inode;
+	igrab(*biपंचांगap_inode);
+	*biपंचांगap_bh = (*ac)->ac_bh;
+	get_bh(*biपंचांगap_bh);
 	status = 0;
 bail:
-	if ((status < 0) && *ac) {
-		ocfs2_free_alloc_context(*ac);
-		*ac = NULL;
-	}
+	अगर ((status < 0) && *ac) अणु
+		ocfs2_मुक्त_alloc_context(*ac);
+		*ac = शून्य;
+	पूर्ण
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
 /*
- * pass it the bitmap lock in lock_bh if you have it.
+ * pass it the biपंचांगap lock in lock_bh अगर you have it.
  */
-static int ocfs2_local_alloc_new_window(struct ocfs2_super *osb,
+अटल पूर्णांक ocfs2_local_alloc_new_winकरोw(काष्ठा ocfs2_super *osb,
 					handle_t *handle,
-					struct ocfs2_alloc_context *ac)
-{
-	int status = 0;
+					काष्ठा ocfs2_alloc_context *ac)
+अणु
+	पूर्णांक status = 0;
 	u32 cluster_off, cluster_count;
-	struct ocfs2_dinode *alloc = NULL;
-	struct ocfs2_local_alloc *la;
+	काष्ठा ocfs2_dinode *alloc = शून्य;
+	काष्ठा ocfs2_local_alloc *la;
 
-	alloc = (struct ocfs2_dinode *) osb->local_alloc_bh->b_data;
+	alloc = (काष्ठा ocfs2_dinode *) osb->local_alloc_bh->b_data;
 	la = OCFS2_LOCAL_ALLOC(alloc);
 
-	trace_ocfs2_local_alloc_new_window(
-		le32_to_cpu(alloc->id1.bitmap1.i_total),
+	trace_ocfs2_local_alloc_new_winकरोw(
+		le32_to_cpu(alloc->id1.biपंचांगap1.i_total),
 		osb->local_alloc_bits);
 
-	/* Instruct the allocation code to try the most recently used
+	/* Inकाष्ठा the allocation code to try the most recently used
 	 * cluster group. We'll re-record the group used this pass
 	 * below. */
 	ac->ac_last_group = osb->la_last_gd;
 
 	/* we used the generic suballoc reserve function, but we set
 	 * everything up nicely, so there's no reason why we can't use
-	 * the more specific cluster api to claim bits. */
+	 * the more specअगरic cluster api to claim bits. */
 	status = ocfs2_claim_clusters(handle, ac, osb->local_alloc_bits,
 				      &cluster_off, &cluster_count);
-	if (status == -ENOSPC) {
+	अगर (status == -ENOSPC) अणु
 retry_enospc:
 		/*
 		 * Note: We could also try syncing the journal here to
-		 * allow use of any free bits which the current
+		 * allow use of any मुक्त bits which the current
 		 * transaction can't give us access to. --Mark
 		 */
-		if (ocfs2_recalc_la_window(osb, OCFS2_LA_EVENT_FRAGMENTED) ==
+		अगर (ocfs2_recalc_la_winकरोw(osb, OCFS2_LA_EVENT_FRAGMENTED) ==
 		    OCFS2_LA_DISABLED)
-			goto bail;
+			जाओ bail;
 
 		ac->ac_bits_wanted = osb->local_alloc_bits;
 		status = ocfs2_claim_clusters(handle, ac,
 					      osb->local_alloc_bits,
 					      &cluster_off,
 					      &cluster_count);
-		if (status == -ENOSPC)
-			goto retry_enospc;
+		अगर (status == -ENOSPC)
+			जाओ retry_enospc;
 		/*
 		 * We only shrunk the *minimum* number of in our
 		 * request - it's entirely possible that the allocator
-		 * might give us more than we asked for.
+		 * might give us more than we asked क्रम.
 		 */
-		if (status == 0) {
+		अगर (status == 0) अणु
 			spin_lock(&osb->osb_lock);
 			osb->local_alloc_bits = cluster_count;
 			spin_unlock(&osb->osb_lock);
-		}
-	}
-	if (status < 0) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
+		पूर्ण
+	पूर्ण
+	अगर (status < 0) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	osb->la_last_gd = ac->ac_last_group;
 
 	la->la_bm_off = cpu_to_le32(cluster_off);
-	alloc->id1.bitmap1.i_total = cpu_to_le32(cluster_count);
-	/* just in case... In the future when we find space ourselves,
-	 * we don't have to get all contiguous -- but we'll have to
-	 * set all previously used bits in bitmap and update
-	 * la_bits_set before setting the bits in the main bitmap. */
-	alloc->id1.bitmap1.i_used = 0;
-	memset(OCFS2_LOCAL_ALLOC(alloc)->la_bitmap, 0,
+	alloc->id1.biपंचांगap1.i_total = cpu_to_le32(cluster_count);
+	/* just in हाल... In the future when we find space ourselves,
+	 * we करोn't have to get all contiguous -- but we'll have to
+	 * set all previously used bits in biपंचांगap and update
+	 * la_bits_set beक्रमe setting the bits in the मुख्य biपंचांगap. */
+	alloc->id1.biपंचांगap1.i_used = 0;
+	स_रखो(OCFS2_LOCAL_ALLOC(alloc)->la_biपंचांगap, 0,
 	       le16_to_cpu(la->la_size));
 
 	ocfs2_resmap_restart(&osb->osb_la_resmap, cluster_count,
-			     OCFS2_LOCAL_ALLOC(alloc)->la_bitmap);
+			     OCFS2_LOCAL_ALLOC(alloc)->la_biपंचांगap);
 
-	trace_ocfs2_local_alloc_new_window_result(
+	trace_ocfs2_local_alloc_new_winकरोw_result(
 		OCFS2_LOCAL_ALLOC(alloc)->la_bm_off,
-		le32_to_cpu(alloc->id1.bitmap1.i_total));
+		le32_to_cpu(alloc->id1.biपंचांगap1.i_total));
 
 bail:
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-/* Note that we do *NOT* lock the local alloc inode here as
- * it's been locked already for us. */
-static int ocfs2_local_alloc_slide_window(struct ocfs2_super *osb,
-					  struct inode *local_alloc_inode)
-{
-	int status = 0;
-	struct buffer_head *main_bm_bh = NULL;
-	struct inode *main_bm_inode = NULL;
-	handle_t *handle = NULL;
-	struct ocfs2_dinode *alloc;
-	struct ocfs2_dinode *alloc_copy = NULL;
-	struct ocfs2_alloc_context *ac = NULL;
+/* Note that we करो *NOT* lock the local alloc inode here as
+ * it's been locked alपढ़ोy क्रम us. */
+अटल पूर्णांक ocfs2_local_alloc_slide_winकरोw(काष्ठा ocfs2_super *osb,
+					  काष्ठा inode *local_alloc_inode)
+अणु
+	पूर्णांक status = 0;
+	काष्ठा buffer_head *मुख्य_bm_bh = शून्य;
+	काष्ठा inode *मुख्य_bm_inode = शून्य;
+	handle_t *handle = शून्य;
+	काष्ठा ocfs2_dinode *alloc;
+	काष्ठा ocfs2_dinode *alloc_copy = शून्य;
+	काष्ठा ocfs2_alloc_context *ac = शून्य;
 
-	ocfs2_recalc_la_window(osb, OCFS2_LA_EVENT_SLIDE);
+	ocfs2_recalc_la_winकरोw(osb, OCFS2_LA_EVENT_SLIDE);
 
-	/* This will lock the main bitmap for us. */
-	status = ocfs2_local_alloc_reserve_for_window(osb,
+	/* This will lock the मुख्य biपंचांगap क्रम us. */
+	status = ocfs2_local_alloc_reserve_क्रम_winकरोw(osb,
 						      &ac,
-						      &main_bm_inode,
-						      &main_bm_bh);
-	if (status < 0) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
+						      &मुख्य_bm_inode,
+						      &मुख्य_bm_bh);
+	अगर (status < 0) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	handle = ocfs2_start_trans(osb, OCFS2_WINDOW_MOVE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		status = PTR_ERR(handle);
-		handle = NULL;
-		mlog_errno(status);
-		goto bail;
-	}
+		handle = शून्य;
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	alloc = (struct ocfs2_dinode *) osb->local_alloc_bh->b_data;
+	alloc = (काष्ठा ocfs2_dinode *) osb->local_alloc_bh->b_data;
 
-	/* We want to clear the local alloc before doing anything
-	 * else, so that if we error later during this operation,
-	 * local alloc shutdown won't try to double free main bitmap
+	/* We want to clear the local alloc beक्रमe करोing anything
+	 * अन्यथा, so that अगर we error later during this operation,
+	 * local alloc shutकरोwn won't try to द्विगुन मुक्त मुख्य biपंचांगap
 	 * bits. Make a copy so the sync function knows which bits to
-	 * free. */
+	 * मुक्त. */
 	alloc_copy = kmemdup(alloc, osb->local_alloc_bh->b_size, GFP_NOFS);
-	if (!alloc_copy) {
+	अगर (!alloc_copy) अणु
 		status = -ENOMEM;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	status = ocfs2_journal_access_di(handle,
 					 INODE_CACHE(local_alloc_inode),
 					 osb->local_alloc_bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	ocfs2_clear_local_alloc(alloc);
 	ocfs2_journal_dirty(handle, osb->local_alloc_bh);
 
-	status = ocfs2_sync_local_to_main(osb, handle, alloc_copy,
-					  main_bm_inode, main_bm_bh);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	status = ocfs2_sync_local_to_मुख्य(osb, handle, alloc_copy,
+					  मुख्य_bm_inode, मुख्य_bm_bh);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	status = ocfs2_local_alloc_new_window(osb, handle, ac);
-	if (status < 0) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
+	status = ocfs2_local_alloc_new_winकरोw(osb, handle, ac);
+	अगर (status < 0) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	atomic_inc(&osb->alloc_stats.moves);
 
 bail:
-	if (handle)
+	अगर (handle)
 		ocfs2_commit_trans(osb, handle);
 
-	brelse(main_bm_bh);
+	brअन्यथा(मुख्य_bm_bh);
 
-	iput(main_bm_inode);
-	kfree(alloc_copy);
+	iput(मुख्य_bm_inode);
+	kमुक्त(alloc_copy);
 
-	if (ac)
-		ocfs2_free_alloc_context(ac);
+	अगर (ac)
+		ocfs2_मुक्त_alloc_context(ac);
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 

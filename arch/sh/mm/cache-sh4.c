@@ -1,61 +1,62 @@
+<शैली गुरु>
 /*
  * arch/sh/mm/cache-sh4.c
  *
  * Copyright (C) 1999, 2000, 2002  Niibe Yutaka
  * Copyright (C) 2001 - 2009  Paul Mundt
- * Copyright (C) 2003  Richard Curnow
+ * Copyright (C) 2003  Riअक्षरd Curnow
  * Copyright (c) 2007 STMicroelectronics (R&D) Ltd.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/io.h>
-#include <linux/mutex.h>
-#include <linux/fs.h>
-#include <linux/highmem.h>
-#include <linux/pagemap.h>
-#include <asm/mmu_context.h>
-#include <asm/cache_insns.h>
-#include <asm/cacheflush.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/pagemap.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/cache_insns.h>
+#समावेश <यंत्र/cacheflush.h>
 
 /*
- * The maximum number of pages we support up to when doing ranged dcache
+ * The maximum number of pages we support up to when करोing ranged dcache
  * flushing. Anything exceeding this will simply flush the dcache in its
  * entirety.
  */
-#define MAX_ICACHE_PAGES	32
+#घोषणा MAX_ICACHE_PAGES	32
 
-static void __flush_cache_one(unsigned long addr, unsigned long phys,
-			       unsigned long exec_offset);
+अटल व्योम __flush_cache_one(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ phys,
+			       अचिन्हित दीर्घ exec_offset);
 
 /*
  * Write back the range of D-cache, and purge the I-cache.
  *
- * Called from kernel/module.c:sys_init_module and routine for a.out format,
- * signal handler code and kprobes code
+ * Called from kernel/module.c:sys_init_module and routine क्रम a.out क्रमmat,
+ * संकेत handler code and kprobes code
  */
-static void sh4_flush_icache_range(void *args)
-{
-	struct flusher_data *data = args;
-	unsigned long start, end;
-	unsigned long flags, v;
-	int i;
+अटल व्योम sh4_flush_icache_range(व्योम *args)
+अणु
+	काष्ठा flusher_data *data = args;
+	अचिन्हित दीर्घ start, end;
+	अचिन्हित दीर्घ flags, v;
+	पूर्णांक i;
 
 	start = data->addr1;
 	end = data->addr2;
 
 	/* If there are too many pages then just blow away the caches */
-	if (((end - start) >> PAGE_SHIFT) >= MAX_ICACHE_PAGES) {
-		local_flush_cache_all(NULL);
-		return;
-	}
+	अगर (((end - start) >> PAGE_SHIFT) >= MAX_ICACHE_PAGES) अणु
+		local_flush_cache_all(शून्य);
+		वापस;
+	पूर्ण
 
 	/*
 	 * Selectively flush d-cache then invalidate the i-cache.
-	 * This is inefficient, so only use this for small ranges.
+	 * This is inefficient, so only use this क्रम small ranges.
 	 */
 	start &= ~(L1_CACHE_BYTES-1);
 	end += L1_CACHE_BYTES-1;
@@ -64,9 +65,9 @@ static void sh4_flush_icache_range(void *args)
 	local_irq_save(flags);
 	jump_to_uncached();
 
-	for (v = start; v < end; v += L1_CACHE_BYTES) {
-		unsigned long icacheaddr;
-		int j, n;
+	क्रम (v = start; v < end; v += L1_CACHE_BYTES) अणु
+		अचिन्हित दीर्घ icacheaddr;
+		पूर्णांक j, n;
 
 		__ocbwb(v);
 
@@ -75,142 +76,142 @@ static void sh4_flush_icache_range(void *args)
 
 		/* Clear i-cache line valid-bit */
 		n = boot_cpu_data.icache.n_aliases;
-		for (i = 0; i < cpu_data->icache.ways; i++) {
-			for (j = 0; j < n; j++)
-				__raw_writel(0, icacheaddr + (j * PAGE_SIZE));
+		क्रम (i = 0; i < cpu_data->icache.ways; i++) अणु
+			क्रम (j = 0; j < n; j++)
+				__raw_ग_लिखोl(0, icacheaddr + (j * PAGE_SIZE));
 			icacheaddr += cpu_data->icache.way_incr;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	back_to_cached();
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static inline void flush_cache_one(unsigned long start, unsigned long phys)
-{
-	unsigned long flags, exec_offset = 0;
+अटल अंतरभूत व्योम flush_cache_one(अचिन्हित दीर्घ start, अचिन्हित दीर्घ phys)
+अणु
+	अचिन्हित दीर्घ flags, exec_offset = 0;
 
 	/*
 	 * All types of SH-4 require PC to be uncached to operate on the I-cache.
 	 * Some types of SH-4 require PC to be uncached to operate on the D-cache.
 	 */
-	if ((boot_cpu_data.flags & CPU_HAS_P2_FLUSH_BUG) ||
+	अगर ((boot_cpu_data.flags & CPU_HAS_P2_FLUSH_BUG) ||
 	    (start < CACHE_OC_ADDRESS_ARRAY))
 		exec_offset = cached_to_uncached;
 
 	local_irq_save(flags);
 	__flush_cache_one(start, phys, exec_offset);
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /*
  * Write back & invalidate the D-cache of the page.
- * (To avoid "alias" issues)
+ * (To aव्योम "alias" issues)
  */
-static void sh4_flush_dcache_page(void *arg)
-{
-	struct page *page = arg;
-	unsigned long addr = (unsigned long)page_address(page);
-#ifndef CONFIG_SMP
-	struct address_space *mapping = page_mapping_file(page);
+अटल व्योम sh4_flush_dcache_page(व्योम *arg)
+अणु
+	काष्ठा page *page = arg;
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)page_address(page);
+#अगर_अघोषित CONFIG_SMP
+	काष्ठा address_space *mapping = page_mapping_file(page);
 
-	if (mapping && !mapping_mapped(mapping))
+	अगर (mapping && !mapping_mapped(mapping))
 		clear_bit(PG_dcache_clean, &page->flags);
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 		flush_cache_one(CACHE_OC_ADDRESS_ARRAY |
 				(addr & shm_align_mask), page_to_phys(page));
 
 	wmb();
-}
+पूर्ण
 
 /* TODO: Selective icache invalidation through IC address array.. */
-static void flush_icache_all(void)
-{
-	unsigned long flags, ccr;
+अटल व्योम flush_icache_all(व्योम)
+अणु
+	अचिन्हित दीर्घ flags, ccr;
 
 	local_irq_save(flags);
 	jump_to_uncached();
 
 	/* Flush I-cache */
-	ccr = __raw_readl(SH_CCR);
+	ccr = __raw_पढ़ोl(SH_CCR);
 	ccr |= CCR_CACHE_ICI;
-	__raw_writel(ccr, SH_CCR);
+	__raw_ग_लिखोl(ccr, SH_CCR);
 
 	/*
-	 * back_to_cached() will take care of the barrier for us, don't add
+	 * back_to_cached() will take care of the barrier क्रम us, करोn't add
 	 * another one!
 	 */
 
 	back_to_cached();
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static void flush_dcache_all(void)
-{
-	unsigned long addr, end_addr, entry_offset;
+अटल व्योम flush_dcache_all(व्योम)
+अणु
+	अचिन्हित दीर्घ addr, end_addr, entry_offset;
 
 	end_addr = CACHE_OC_ADDRESS_ARRAY +
 		(current_cpu_data.dcache.sets <<
-		 current_cpu_data.dcache.entry_shift) *
+		 current_cpu_data.dcache.entry_shअगरt) *
 			current_cpu_data.dcache.ways;
 
-	entry_offset = 1 << current_cpu_data.dcache.entry_shift;
+	entry_offset = 1 << current_cpu_data.dcache.entry_shअगरt;
 
-	for (addr = CACHE_OC_ADDRESS_ARRAY; addr < end_addr; ) {
-		__raw_writel(0, addr); addr += entry_offset;
-		__raw_writel(0, addr); addr += entry_offset;
-		__raw_writel(0, addr); addr += entry_offset;
-		__raw_writel(0, addr); addr += entry_offset;
-		__raw_writel(0, addr); addr += entry_offset;
-		__raw_writel(0, addr); addr += entry_offset;
-		__raw_writel(0, addr); addr += entry_offset;
-		__raw_writel(0, addr); addr += entry_offset;
-	}
-}
+	क्रम (addr = CACHE_OC_ADDRESS_ARRAY; addr < end_addr; ) अणु
+		__raw_ग_लिखोl(0, addr); addr += entry_offset;
+		__raw_ग_लिखोl(0, addr); addr += entry_offset;
+		__raw_ग_लिखोl(0, addr); addr += entry_offset;
+		__raw_ग_लिखोl(0, addr); addr += entry_offset;
+		__raw_ग_लिखोl(0, addr); addr += entry_offset;
+		__raw_ग_लिखोl(0, addr); addr += entry_offset;
+		__raw_ग_लिखोl(0, addr); addr += entry_offset;
+		__raw_ग_लिखोl(0, addr); addr += entry_offset;
+	पूर्ण
+पूर्ण
 
-static void sh4_flush_cache_all(void *unused)
-{
+अटल व्योम sh4_flush_cache_all(व्योम *unused)
+अणु
 	flush_dcache_all();
 	flush_icache_all();
-}
+पूर्ण
 
 /*
- * Note : (RPC) since the caches are physically tagged, the only point
- * of flush_cache_mm for SH-4 is to get rid of aliases from the
- * D-cache.  The assumption elsewhere, e.g. flush_cache_range, is that
- * lines can stay resident so long as the virtual address they were
+ * Note : (RPC) since the caches are physically tagged, the only poपूर्णांक
+ * of flush_cache_mm क्रम SH-4 is to get rid of aliases from the
+ * D-cache.  The assumption अन्यथाwhere, e.g. flush_cache_range, is that
+ * lines can stay resident so दीर्घ as the भव address they were
  * accessed with (hence cache set) is in accord with the physical
- * address (i.e. tag).  It's no different here.
+ * address (i.e. tag).  It's no dअगरferent here.
  *
  * Caller takes mm->mmap_lock.
  */
-static void sh4_flush_cache_mm(void *arg)
-{
-	struct mm_struct *mm = arg;
+अटल व्योम sh4_flush_cache_mm(व्योम *arg)
+अणु
+	काष्ठा mm_काष्ठा *mm = arg;
 
-	if (cpu_context(smp_processor_id(), mm) == NO_CONTEXT)
-		return;
+	अगर (cpu_context(smp_processor_id(), mm) == NO_CONTEXT)
+		वापस;
 
 	flush_dcache_all();
-}
+पूर्ण
 
 /*
- * Write back and invalidate I/D-caches for the page.
+ * Write back and invalidate I/D-caches क्रम the page.
  *
  * ADDR: Virtual Address (U0 address)
  * PFN: Physical page number
  */
-static void sh4_flush_cache_page(void *args)
-{
-	struct flusher_data *data = args;
-	struct vm_area_struct *vma;
-	struct page *page;
-	unsigned long address, pfn, phys;
-	int map_coherent = 0;
+अटल व्योम sh4_flush_cache_page(व्योम *args)
+अणु
+	काष्ठा flusher_data *data = args;
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ address, pfn, phys;
+	पूर्णांक map_coherent = 0;
 	pmd_t *pmd;
 	pte_t *pte;
-	void *vaddr;
+	व्योम *vaddr;
 
 	vma = data->vma;
 	address = data->addr1 & PAGE_MASK;
@@ -218,47 +219,47 @@ static void sh4_flush_cache_page(void *args)
 	phys = pfn << PAGE_SHIFT;
 	page = pfn_to_page(pfn);
 
-	if (cpu_context(smp_processor_id(), vma->vm_mm) == NO_CONTEXT)
-		return;
+	अगर (cpu_context(smp_processor_id(), vma->vm_mm) == NO_CONTEXT)
+		वापस;
 
 	pmd = pmd_off(vma->vm_mm, address);
 	pte = pte_offset_kernel(pmd, address);
 
-	/* If the page isn't present, there is nothing to do here. */
-	if (!(pte_val(*pte) & _PAGE_PRESENT))
-		return;
+	/* If the page isn't present, there is nothing to करो here. */
+	अगर (!(pte_val(*pte) & _PAGE_PRESENT))
+		वापस;
 
-	if ((vma->vm_mm == current->active_mm))
-		vaddr = NULL;
-	else {
+	अगर ((vma->vm_mm == current->active_mm))
+		vaddr = शून्य;
+	अन्यथा अणु
 		/*
-		 * Use kmap_coherent or kmap_atomic to do flushes for
+		 * Use kmap_coherent or kmap_atomic to करो flushes क्रम
 		 * another ASID than the current one.
 		 */
 		map_coherent = (current_cpu_data.dcache.n_aliases &&
 			test_bit(PG_dcache_clean, &page->flags) &&
 			page_mapcount(page));
-		if (map_coherent)
+		अगर (map_coherent)
 			vaddr = kmap_coherent(page, address);
-		else
+		अन्यथा
 			vaddr = kmap_atomic(page);
 
-		address = (unsigned long)vaddr;
-	}
+		address = (अचिन्हित दीर्घ)vaddr;
+	पूर्ण
 
 	flush_cache_one(CACHE_OC_ADDRESS_ARRAY |
 			(address & shm_align_mask), phys);
 
-	if (vma->vm_flags & VM_EXEC)
+	अगर (vma->vm_flags & VM_EXEC)
 		flush_icache_all();
 
-	if (vaddr) {
-		if (map_coherent)
+	अगर (vaddr) अणु
+		अगर (map_coherent)
 			kunmap_coherent(vaddr);
-		else
+		अन्यथा
 			kunmap_atomic(vaddr);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Write back and invalidate D-caches.
@@ -266,74 +267,74 @@ static void sh4_flush_cache_page(void *args)
  * START, END: Virtual Address (U0 address)
  *
  * NOTE: We need to flush the _physical_ page entry.
- * Flushing the cache lines for U0 only isn't enough.
- * We need to flush for P1 too, which may contain aliases.
+ * Flushing the cache lines क्रम U0 only isn't enough.
+ * We need to flush क्रम P1 too, which may contain aliases.
  */
-static void sh4_flush_cache_range(void *args)
-{
-	struct flusher_data *data = args;
-	struct vm_area_struct *vma;
-	unsigned long start, end;
+अटल व्योम sh4_flush_cache_range(व्योम *args)
+अणु
+	काष्ठा flusher_data *data = args;
+	काष्ठा vm_area_काष्ठा *vma;
+	अचिन्हित दीर्घ start, end;
 
 	vma = data->vma;
 	start = data->addr1;
 	end = data->addr2;
 
-	if (cpu_context(smp_processor_id(), vma->vm_mm) == NO_CONTEXT)
-		return;
+	अगर (cpu_context(smp_processor_id(), vma->vm_mm) == NO_CONTEXT)
+		वापस;
 
 	/*
 	 * If cache is only 4k-per-way, there are never any 'aliases'.  Since
 	 * the cache is physically tagged, the data can just be left in there.
 	 */
-	if (boot_cpu_data.dcache.n_aliases == 0)
-		return;
+	अगर (boot_cpu_data.dcache.n_aliases == 0)
+		वापस;
 
 	flush_dcache_all();
 
-	if (vma->vm_flags & VM_EXEC)
+	अगर (vma->vm_flags & VM_EXEC)
 		flush_icache_all();
-}
+पूर्ण
 
 /**
  * __flush_cache_one
  *
  * @addr:  address in memory mapped cache array
- * @phys:  P1 address to flush (has to match tags if addr has 'A' bit
- *         set i.e. associative write)
- * @exec_offset: set to 0x20000000 if flush has to be executed from P2
- *               region else 0x0
+ * @phys:  P1 address to flush (has to match tags अगर addr has 'A' bit
+ *         set i.e. associative ग_लिखो)
+ * @exec_offset: set to 0x20000000 अगर flush has to be executed from P2
+ *               region अन्यथा 0x0
  *
- * The offset into the cache array implied by 'addr' selects the
- * 'colour' of the virtual address range that will be flushed.  The
- * operation (purge/write-back) is selected by the lower 2 bits of
+ * The offset पूर्णांकo the cache array implied by 'addr' selects the
+ * 'colour' of the भव address range that will be flushed.  The
+ * operation (purge/ग_लिखो-back) is selected by the lower 2 bits of
  * 'phys'.
  */
-static void __flush_cache_one(unsigned long addr, unsigned long phys,
-			       unsigned long exec_offset)
-{
-	int way_count;
-	unsigned long base_addr = addr;
-	struct cache_info *dcache;
-	unsigned long way_incr;
-	unsigned long a, ea, p;
-	unsigned long temp_pc;
+अटल व्योम __flush_cache_one(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ phys,
+			       अचिन्हित दीर्घ exec_offset)
+अणु
+	पूर्णांक way_count;
+	अचिन्हित दीर्घ base_addr = addr;
+	काष्ठा cache_info *dcache;
+	अचिन्हित दीर्घ way_incr;
+	अचिन्हित दीर्घ a, ea, p;
+	अचिन्हित दीर्घ temp_pc;
 
 	dcache = &boot_cpu_data.dcache;
-	/* Write this way for better assembly. */
+	/* Write this way क्रम better assembly. */
 	way_count = dcache->ways;
 	way_incr = dcache->way_incr;
 
 	/*
-	 * Apply exec_offset (i.e. branch to P2 if required.).
+	 * Apply exec_offset (i.e. branch to P2 अगर required.).
 	 *
 	 * FIXME:
 	 *
-	 *	If I write "=r" for the (temp_pc), it puts this in r6 hence
-	 *	trashing exec_offset before it's been added on - why?  Hence
+	 *	If I ग_लिखो "=r" क्रम the (temp_pc), it माला_दो this in r6 hence
+	 *	trashing exec_offset beक्रमe it's been added on - why?  Hence
 	 *	"=&r" as a 'workaround'
 	 */
-	asm volatile("mov.l 1f, %0\n\t"
+	यंत्र अस्थिर("mov.l 1f, %0\n\t"
 		     "add   %1, %0\n\t"
 		     "jmp   @%0\n\t"
 		     "nop\n\t"
@@ -342,41 +343,41 @@ static void __flush_cache_one(unsigned long addr, unsigned long phys,
 		     "2:\n" : "=&r" (temp_pc) : "r" (exec_offset));
 
 	/*
-	 * We know there will be >=1 iteration, so write as do-while to avoid
-	 * pointless nead-of-loop check for 0 iterations.
+	 * We know there will be >=1 iteration, so ग_लिखो as करो-जबतक to aव्योम
+	 * poपूर्णांकless nead-of-loop check क्रम 0 iterations.
 	 */
-	do {
+	करो अणु
 		ea = base_addr + PAGE_SIZE;
 		a = base_addr;
 		p = phys;
 
-		do {
-			*(volatile unsigned long *)a = p;
+		करो अणु
+			*(अस्थिर अचिन्हित दीर्घ *)a = p;
 			/*
-			 * Next line: intentionally not p+32, saves an add, p
-			 * will do since only the cache tag bits need to
+			 * Next line: पूर्णांकentionally not p+32, saves an add, p
+			 * will करो since only the cache tag bits need to
 			 * match.
 			 */
-			*(volatile unsigned long *)(a+32) = p;
+			*(अस्थिर अचिन्हित दीर्घ *)(a+32) = p;
 			a += 64;
 			p += 64;
-		} while (a < ea);
+		पूर्ण जबतक (a < ea);
 
 		base_addr += way_incr;
-	} while (--way_count != 0);
-}
+	पूर्ण जबतक (--way_count != 0);
+पूर्ण
 
-extern void __weak sh4__flush_region_init(void);
+बाह्य व्योम __weak sh4__flush_region_init(व्योम);
 
 /*
- * SH-4 has virtually indexed and physically tagged cache.
+ * SH-4 has भवly indexed and physically tagged cache.
  */
-void __init sh4_cache_init(void)
-{
-	printk("PVR=%08x CVR=%08x PRR=%08x\n",
-		__raw_readl(CCN_PVR),
-		__raw_readl(CCN_CVR),
-		__raw_readl(CCN_PRR));
+व्योम __init sh4_cache_init(व्योम)
+अणु
+	prपूर्णांकk("PVR=%08x CVR=%08x PRR=%08x\n",
+		__raw_पढ़ोl(CCN_PVR),
+		__raw_पढ़ोl(CCN_CVR),
+		__raw_पढ़ोl(CCN_PRR));
 
 	local_flush_icache_range	= sh4_flush_icache_range;
 	local_flush_dcache_page		= sh4_flush_dcache_page;
@@ -387,4 +388,4 @@ void __init sh4_cache_init(void)
 	local_flush_cache_range		= sh4_flush_cache_range;
 
 	sh4__flush_region_init();
-}
+पूर्ण

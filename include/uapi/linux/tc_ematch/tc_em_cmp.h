@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_TC_EM_CMP_H
-#define __LINUX_TC_EM_CMP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_TC_EM_CMP_H
+#घोषणा __LINUX_TC_EM_CMP_H
 
-#include <linux/types.h>
-#include <linux/pkt_cls.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pkt_cls.h>
 
-struct tcf_em_cmp {
+काष्ठा tcf_em_cmp अणु
 	__u32		val;
 	__u32		mask;
 	__u16		off;
@@ -13,14 +14,14 @@ struct tcf_em_cmp {
 	__u8		flags:4;
 	__u8		layer:4;
 	__u8		opnd:4;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCF_EM_ALIGN_U8  = 1,
 	TCF_EM_ALIGN_U16 = 2,
 	TCF_EM_ALIGN_U32 = 4
-};
+पूर्ण;
 
-#define TCF_EM_CMP_TRANS	1
+#घोषणा TCF_EM_CMP_TRANS	1
 
-#endif
+#पूर्ण_अगर

@@ -1,16 +1,17 @@
-#include <uapi/linux/ptrace.h>
-#include <uapi/linux/bpf.h>
-#include <linux/version.h>
-#include <bpf/bpf_helpers.h>
+<शैली गुरु>
+#समावेश <uapi/linux/ptrace.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <linux/version.h>
+#समावेश <bpf/bpf_helpers.h>
 
 SEC("kprobe/open_ctree")
-int bpf_prog1(struct pt_regs *ctx)
-{
-	unsigned long rc = -12;
+पूर्णांक bpf_prog1(काष्ठा pt_regs *ctx)
+अणु
+	अचिन्हित दीर्घ rc = -12;
 
-	bpf_override_return(ctx, rc);
-	return 0;
-}
+	bpf_override_वापस(ctx, rc);
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 u32 _version SEC("version") = LINUX_VERSION_CODE;

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * arch/arm/mach-mv78x00/rd78x00-masa-setup.c
  *
@@ -8,37 +9,37 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/ata_platform.h>
-#include <linux/mv643xx_eth.h>
-#include <linux/ethtool.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include "mv78xx0.h"
-#include "common.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ata_platक्रमm.h>
+#समावेश <linux/mv643xx_eth.h>
+#समावेश <linux/ethtool.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश "mv78xx0.h"
+#समावेश "common.h"
 
-static struct mv643xx_eth_platform_data rd78x00_masa_ge00_data = {
+अटल काष्ठा mv643xx_eth_platक्रमm_data rd78x00_masa_ge00_data = अणु
 	.phy_addr	= MV643XX_ETH_PHY_ADDR(8),
-};
+पूर्ण;
 
-static struct mv643xx_eth_platform_data rd78x00_masa_ge01_data = {
+अटल काष्ठा mv643xx_eth_platक्रमm_data rd78x00_masa_ge01_data = अणु
 	.phy_addr	= MV643XX_ETH_PHY_ADDR(9),
-};
+पूर्ण;
 
-static struct mv643xx_eth_platform_data rd78x00_masa_ge10_data = {
-};
+अटल काष्ठा mv643xx_eth_platक्रमm_data rd78x00_masa_ge10_data = अणु
+पूर्ण;
 
-static struct mv643xx_eth_platform_data rd78x00_masa_ge11_data = {
-};
+अटल काष्ठा mv643xx_eth_platक्रमm_data rd78x00_masa_ge11_data = अणु
+पूर्ण;
 
-static struct mv_sata_platform_data rd78x00_masa_sata_data = {
+अटल काष्ठा mv_sata_platक्रमm_data rd78x00_masa_sata_data = अणु
 	.n_ports	= 2,
-};
+पूर्ण;
 
-static void __init rd78x00_masa_init(void)
-{
+अटल व्योम __init rd78x00_masa_init(व्योम)
+अणु
 	/*
 	 * Basic MV78x00 setup. Needs to be called early.
 	 */
@@ -47,7 +48,7 @@ static void __init rd78x00_masa_init(void)
 	/*
 	 * Partition on-chip peripherals between the two CPU cores.
 	 */
-	if (mv78xx0_core_index() == 0) {
+	अगर (mv78xx0_core_index() == 0) अणु
 		mv78xx0_ehci0_init();
 		mv78xx0_ehci1_init();
 		mv78xx0_ge00_init(&rd78x00_masa_ge00_data);
@@ -55,35 +56,35 @@ static void __init rd78x00_masa_init(void)
 		mv78xx0_sata_init(&rd78x00_masa_sata_data);
 		mv78xx0_uart0_init();
 		mv78xx0_uart2_init();
-	} else {
+	पूर्ण अन्यथा अणु
 		mv78xx0_ehci2_init();
 		mv78xx0_ge01_init(&rd78x00_masa_ge01_data);
 		mv78xx0_ge11_init(&rd78x00_masa_ge11_data);
 		mv78xx0_uart1_init();
 		mv78xx0_uart3_init();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init rd78x00_pci_init(void)
-{
+अटल पूर्णांक __init rd78x00_pci_init(व्योम)
+अणु
 	/*
 	 * Assign all PCIe devices to CPU core #0.
 	 */
-	if (machine_is_rd78x00_masa() && mv78xx0_core_index() == 0)
+	अगर (machine_is_rd78x00_masa() && mv78xx0_core_index() == 0)
 		mv78xx0_pcie_init(1, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(rd78x00_pci_init);
 
 MACHINE_START(RD78X00_MASA, "Marvell RD-78x00-MASA Development Board")
-	/* Maintainer: Lennert Buytenhek <buytenh@marvell.com> */
+	/* Maपूर्णांकainer: Lennert Buytenhek <buytenh@marvell.com> */
 	.atag_offset	= 0x100,
 	.nr_irqs	= MV78XX0_NR_IRQS,
 	.init_machine	= rd78x00_masa_init,
 	.map_io		= mv78xx0_map_io,
 	.init_early	= mv78xx0_init_early,
 	.init_irq	= mv78xx0_init_irq,
-	.init_time	= mv78xx0_timer_init,
+	.init_समय	= mv78xx0_समयr_init,
 	.restart	= mv78xx0_restart,
 MACHINE_END

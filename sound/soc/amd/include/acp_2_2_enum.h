@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
- * ACP_2_2 Register documentation
+ * ACP_2_2 Register करोcumentation
  *
  * Copyright (C) 2014  Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -21,10 +22,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef ACP_2_2_ENUM_H
-#define ACP_2_2_ENUM_H
+#अगर_अघोषित ACP_2_2_ENUM_H
+#घोषणा ACP_2_2_ENUM_H
 
-typedef enum DebugBlockId {
+प्रकार क्रमागत DebugBlockId अणु
 	DBG_BLOCK_ID_RESERVED                            = 0x0,
 	DBG_BLOCK_ID_DBG                                 = 0x1,
 	DBG_BLOCK_ID_VMC                                 = 0x2,
@@ -280,8 +281,8 @@ typedef enum DebugBlockId {
 	DBG_BLOCK_ID_UNUSED44                            = 0xfc,
 	DBG_BLOCK_ID_UNUSED45                            = 0xfd,
 	DBG_BLOCK_ID_UNUSED46                            = 0xfe,
-} DebugBlockId;
-typedef enum DebugBlockId_BY2 {
+पूर्ण DebugBlockId;
+प्रकार क्रमागत DebugBlockId_BY2 अणु
 	DBG_BLOCK_ID_RESERVED_BY2                        = 0x0,
 	DBG_BLOCK_ID_VMC_BY2                             = 0x1,
 	DBG_BLOCK_ID_UNUSED0_BY2                         = 0x2,
@@ -402,8 +403,8 @@ typedef enum DebugBlockId_BY2 {
 	DBG_BLOCK_ID_LDS1A_BY2                           = 0x75,
 	DBG_BLOCK_ID_UNUSED40_BY2                        = 0x76,
 	DBG_BLOCK_ID_UNUSED42_BY2                        = 0x77,
-} DebugBlockId_BY2;
-typedef enum DebugBlockId_BY4 {
+पूर्ण DebugBlockId_BY2;
+प्रकार क्रमागत DebugBlockId_BY4 अणु
 	DBG_BLOCK_ID_RESERVED_BY4                        = 0x0,
 	DBG_BLOCK_ID_UNUSED0_BY4                         = 0x1,
 	DBG_BLOCK_ID_CSC_BY4                             = 0x2,
@@ -464,8 +465,8 @@ typedef enum DebugBlockId_BY4 {
 	DBG_BLOCK_ID_LDS14_BY4                           = 0x39,
 	DBG_BLOCK_ID_LDS18_BY4                           = 0x3a,
 	DBG_BLOCK_ID_UNUSED40_BY4                        = 0x3b,
-} DebugBlockId_BY4;
-typedef enum DebugBlockId_BY8 {
+पूर्ण DebugBlockId_BY4;
+प्रकार क्रमागत DebugBlockId_BY8 अणु
 	DBG_BLOCK_ID_RESERVED_BY8                        = 0x0,
 	DBG_BLOCK_ID_CSC_BY8                             = 0x1,
 	DBG_BLOCK_ID_SDMA0_BY8                           = 0x2,
@@ -496,8 +497,8 @@ typedef enum DebugBlockId_BY8 {
 	DBG_BLOCK_ID_LDS08_BY8                           = 0x1b,
 	DBG_BLOCK_ID_LDS10_BY8                           = 0x1c,
 	DBG_BLOCK_ID_LDS18_BY8                           = 0x1d,
-} DebugBlockId_BY8;
-typedef enum DebugBlockId_BY16 {
+पूर्ण DebugBlockId_BY8;
+प्रकार क्रमागत DebugBlockId_BY16 अणु
 	DBG_BLOCK_ID_RESERVED_BY16                       = 0x0,
 	DBG_BLOCK_ID_SDMA0_BY16                          = 0x1,
 	DBG_BLOCK_ID_SXM_BY16                            = 0x2,
@@ -513,14 +514,14 @@ typedef enum DebugBlockId_BY16 {
 	DBG_BLOCK_ID_TD10_BY16                           = 0xc,
 	DBG_BLOCK_ID_LDS_BY16                            = 0xd,
 	DBG_BLOCK_ID_LDS10_BY16                          = 0xe,
-} DebugBlockId_BY16;
-typedef enum SurfaceEndian {
+पूर्ण DebugBlockId_BY16;
+प्रकार क्रमागत SurfaceEndian अणु
 	ENDIAN_NONE                                      = 0x0,
 	ENDIAN_8IN16                                     = 0x1,
 	ENDIAN_8IN32                                     = 0x2,
 	ENDIAN_8IN64                                     = 0x3,
-} SurfaceEndian;
-typedef enum ArrayMode {
+पूर्ण SurfaceEndian;
+प्रकार क्रमागत ArrayMode अणु
 	ARRAY_LINEAR_GENERAL                             = 0x0,
 	ARRAY_LINEAR_ALIGNED                             = 0x1,
 	ARRAY_1D_TILED_THIN1                             = 0x2,
@@ -537,22 +538,22 @@ typedef enum ArrayMode {
 	ARRAY_3D_TILED_THICK                             = 0xd,
 	ARRAY_3D_TILED_XTHICK                            = 0xe,
 	ARRAY_PRT_3D_TILED_THICK                         = 0xf,
-} ArrayMode;
-typedef enum PipeTiling {
+पूर्ण ArrayMode;
+प्रकार क्रमागत PipeTiling अणु
 	CONFIG_1_PIPE                                    = 0x0,
 	CONFIG_2_PIPE                                    = 0x1,
 	CONFIG_4_PIPE                                    = 0x2,
 	CONFIG_8_PIPE                                    = 0x3,
-} PipeTiling;
-typedef enum BankTiling {
+पूर्ण PipeTiling;
+प्रकार क्रमागत BankTiling अणु
 	CONFIG_4_BANK                                    = 0x0,
 	CONFIG_8_BANK                                    = 0x1,
-} BankTiling;
-typedef enum GroupInterleave {
+पूर्ण BankTiling;
+प्रकार क्रमागत GroupInterleave अणु
 	CONFIG_256B_GROUP                                = 0x0,
 	CONFIG_512B_GROUP                                = 0x1,
-} GroupInterleave;
-typedef enum RowTiling {
+पूर्ण GroupInterleave;
+प्रकार क्रमागत RowTiling अणु
 	CONFIG_1KB_ROW                                   = 0x0,
 	CONFIG_2KB_ROW                                   = 0x1,
 	CONFIG_4KB_ROW                                   = 0x2,
@@ -561,70 +562,70 @@ typedef enum RowTiling {
 	CONFIG_2KB_ROW_OPT                               = 0x5,
 	CONFIG_4KB_ROW_OPT                               = 0x6,
 	CONFIG_8KB_ROW_OPT                               = 0x7,
-} RowTiling;
-typedef enum BankSwapBytes {
+पूर्ण RowTiling;
+प्रकार क्रमागत BankSwapBytes अणु
 	CONFIG_128B_SWAPS                                = 0x0,
 	CONFIG_256B_SWAPS                                = 0x1,
 	CONFIG_512B_SWAPS                                = 0x2,
 	CONFIG_1KB_SWAPS                                 = 0x3,
-} BankSwapBytes;
-typedef enum SampleSplitBytes {
+पूर्ण BankSwapBytes;
+प्रकार क्रमागत SampleSplitBytes अणु
 	CONFIG_1KB_SPLIT                                 = 0x0,
 	CONFIG_2KB_SPLIT                                 = 0x1,
 	CONFIG_4KB_SPLIT                                 = 0x2,
 	CONFIG_8KB_SPLIT                                 = 0x3,
-} SampleSplitBytes;
-typedef enum NumPipes {
+पूर्ण SampleSplitBytes;
+प्रकार क्रमागत NumPipes अणु
 	ADDR_CONFIG_1_PIPE                               = 0x0,
 	ADDR_CONFIG_2_PIPE                               = 0x1,
 	ADDR_CONFIG_4_PIPE                               = 0x2,
 	ADDR_CONFIG_8_PIPE                               = 0x3,
-} NumPipes;
-typedef enum PipeInterleaveSize {
+पूर्ण NumPipes;
+प्रकार क्रमागत PipeInterleaveSize अणु
 	ADDR_CONFIG_PIPE_INTERLEAVE_256B                 = 0x0,
 	ADDR_CONFIG_PIPE_INTERLEAVE_512B                 = 0x1,
-} PipeInterleaveSize;
-typedef enum BankInterleaveSize {
+पूर्ण PipeInterleaveSize;
+प्रकार क्रमागत BankInterleaveSize अणु
 	ADDR_CONFIG_BANK_INTERLEAVE_1                    = 0x0,
 	ADDR_CONFIG_BANK_INTERLEAVE_2                    = 0x1,
 	ADDR_CONFIG_BANK_INTERLEAVE_4                    = 0x2,
 	ADDR_CONFIG_BANK_INTERLEAVE_8                    = 0x3,
-} BankInterleaveSize;
-typedef enum NumShaderEngines {
+पूर्ण BankInterleaveSize;
+प्रकार क्रमागत NumShaderEngines अणु
 	ADDR_CONFIG_1_SHADER_ENGINE                      = 0x0,
 	ADDR_CONFIG_2_SHADER_ENGINE                      = 0x1,
-} NumShaderEngines;
-typedef enum ShaderEngineTileSize {
+पूर्ण NumShaderEngines;
+प्रकार क्रमागत ShaderEngineTileSize अणु
 	ADDR_CONFIG_SE_TILE_16                           = 0x0,
 	ADDR_CONFIG_SE_TILE_32                           = 0x1,
-} ShaderEngineTileSize;
-typedef enum NumGPUs {
+पूर्ण ShaderEngineTileSize;
+प्रकार क्रमागत NumGPUs अणु
 	ADDR_CONFIG_1_GPU                                = 0x0,
 	ADDR_CONFIG_2_GPU                                = 0x1,
 	ADDR_CONFIG_4_GPU                                = 0x2,
-} NumGPUs;
-typedef enum MultiGPUTileSize {
+पूर्ण NumGPUs;
+प्रकार क्रमागत MultiGPUTileSize अणु
 	ADDR_CONFIG_GPU_TILE_16                          = 0x0,
 	ADDR_CONFIG_GPU_TILE_32                          = 0x1,
 	ADDR_CONFIG_GPU_TILE_64                          = 0x2,
 	ADDR_CONFIG_GPU_TILE_128                         = 0x3,
-} MultiGPUTileSize;
-typedef enum RowSize {
+पूर्ण MultiGPUTileSize;
+प्रकार क्रमागत RowSize अणु
 	ADDR_CONFIG_1KB_ROW                              = 0x0,
 	ADDR_CONFIG_2KB_ROW                              = 0x1,
 	ADDR_CONFIG_4KB_ROW                              = 0x2,
-} RowSize;
-typedef enum NumLowerPipes {
+पूर्ण RowSize;
+प्रकार क्रमागत NumLowerPipes अणु
 	ADDR_CONFIG_1_LOWER_PIPES                        = 0x0,
 	ADDR_CONFIG_2_LOWER_PIPES                        = 0x1,
-} NumLowerPipes;
-typedef enum ColorTransform {
+पूर्ण NumLowerPipes;
+प्रकार क्रमागत ColorTransक्रमm अणु
 	DCC_CT_AUTO                                      = 0x0,
 	DCC_CT_NONE                                      = 0x1,
 	ABGR_TO_A_BG_G_RB                                = 0x2,
 	BGRA_TO_BG_G_RB_A                                = 0x3,
-} ColorTransform;
-typedef enum CompareRef {
+पूर्ण ColorTransक्रमm;
+प्रकार क्रमागत CompareRef अणु
 	REF_NEVER                                        = 0x0,
 	REF_LESS                                         = 0x1,
 	REF_EQUAL                                        = 0x2,
@@ -633,12 +634,12 @@ typedef enum CompareRef {
 	REF_NOTEQUAL                                     = 0x5,
 	REF_GEQUAL                                       = 0x6,
 	REF_ALWAYS                                       = 0x7,
-} CompareRef;
-typedef enum ReadSize {
+पूर्ण CompareRef;
+प्रकार क्रमागत ReadSize अणु
 	READ_256_BITS                                    = 0x0,
 	READ_512_BITS                                    = 0x1,
-} ReadSize;
-typedef enum DepthFormat {
+पूर्ण ReadSize;
+प्रकार क्रमागत DepthFormat अणु
 	DEPTH_INVALID                                    = 0x0,
 	DEPTH_16                                         = 0x1,
 	DEPTH_X8_24                                      = 0x2,
@@ -647,18 +648,18 @@ typedef enum DepthFormat {
 	DEPTH_8_24_FLOAT                                 = 0x5,
 	DEPTH_32_FLOAT                                   = 0x6,
 	DEPTH_X24_8_32_FLOAT                             = 0x7,
-} DepthFormat;
-typedef enum ZFormat {
+पूर्ण DepthFormat;
+प्रकार क्रमागत ZFormat अणु
 	Z_INVALID                                        = 0x0,
 	Z_16                                             = 0x1,
 	Z_24                                             = 0x2,
 	Z_32_FLOAT                                       = 0x3,
-} ZFormat;
-typedef enum StencilFormat {
+पूर्ण ZFormat;
+प्रकार क्रमागत StencilFormat अणु
 	STENCIL_INVALID                                  = 0x0,
 	STENCIL_8                                        = 0x1,
-} StencilFormat;
-typedef enum CmaskMode {
+पूर्ण StencilFormat;
+प्रकार क्रमागत CmaskMode अणु
 	CMASK_CLEAR_NONE                                 = 0x0,
 	CMASK_CLEAR_ONE                                  = 0x1,
 	CMASK_CLEAR_ALL                                  = 0x2,
@@ -675,8 +676,8 @@ typedef enum CmaskMode {
 	CMASK_ALPHAX_FRAG2                               = 0xd,
 	CMASK_ALPHAX_FRAG4                               = 0xe,
 	CMASK_ALPHAX_FRAGS                               = 0xf,
-} CmaskMode;
-typedef enum QuadExportFormat {
+पूर्ण CmaskMode;
+प्रकार क्रमागत QuadExportFormat अणु
 	EXPORT_UNUSED                                    = 0x0,
 	EXPORT_32_R                                      = 0x1,
 	EXPORT_32_GR                                     = 0x2,
@@ -685,16 +686,16 @@ typedef enum QuadExportFormat {
 	EXPORT_UNSIGNED16_ABGR                           = 0x5,
 	EXPORT_SIGNED16_ABGR                             = 0x6,
 	EXPORT_32_ABGR                                   = 0x7,
-} QuadExportFormat;
-typedef enum QuadExportFormatOld {
+पूर्ण QuadExportFormat;
+प्रकार क्रमागत QuadExportFormatOld अणु
 	EXPORT_4P_32BPC_ABGR                             = 0x0,
 	EXPORT_4P_16BPC_ABGR                             = 0x1,
 	EXPORT_4P_32BPC_GR                               = 0x2,
 	EXPORT_4P_32BPC_AR                               = 0x3,
 	EXPORT_2P_32BPC_ABGR                             = 0x4,
 	EXPORT_8P_32BPC_R                                = 0x5,
-} QuadExportFormatOld;
-typedef enum ColorFormat {
+पूर्ण QuadExportFormatOld;
+प्रकार क्रमागत ColorFormat अणु
 	COLOR_INVALID                                    = 0x0,
 	COLOR_8                                          = 0x1,
 	COLOR_16                                         = 0x2,
@@ -719,8 +720,8 @@ typedef enum ColorFormat {
 	COLOR_24_8                                       = 0x15,
 	COLOR_X24_8_32_FLOAT                             = 0x16,
 	COLOR_RESERVED_23                                = 0x17,
-} ColorFormat;
-typedef enum SurfaceFormat {
+पूर्ण ColorFormat;
+प्रकार क्रमागत SurfaceFormat अणु
 	FMT_INVALID                                      = 0x0,
 	FMT_8                                            = 0x1,
 	FMT_16                                           = 0x2,
@@ -785,8 +786,8 @@ typedef enum SurfaceFormat {
 	FMT_APC7                                         = 0x3d,
 	FMT_CTX1                                         = 0x3e,
 	FMT_RESERVED_63                                  = 0x3f,
-} SurfaceFormat;
-typedef enum BUF_DATA_FORMAT {
+पूर्ण SurfaceFormat;
+प्रकार क्रमागत BUF_DATA_FORMAT अणु
 	BUF_DATA_FORMAT_INVALID                          = 0x0,
 	BUF_DATA_FORMAT_8                                = 0x1,
 	BUF_DATA_FORMAT_16                               = 0x2,
@@ -803,8 +804,8 @@ typedef enum BUF_DATA_FORMAT {
 	BUF_DATA_FORMAT_32_32_32                         = 0xd,
 	BUF_DATA_FORMAT_32_32_32_32                      = 0xe,
 	BUF_DATA_FORMAT_RESERVED_15                      = 0xf,
-} BUF_DATA_FORMAT;
-typedef enum IMG_DATA_FORMAT {
+पूर्ण BUF_DATA_FORMAT;
+प्रकार क्रमागत IMG_DATA_FORMAT अणु
 	IMG_DATA_FORMAT_INVALID                          = 0x0,
 	IMG_DATA_FORMAT_8                                = 0x1,
 	IMG_DATA_FORMAT_16                               = 0x2,
@@ -869,8 +870,8 @@ typedef enum IMG_DATA_FORMAT {
 	IMG_DATA_FORMAT_32_AS_8                          = 0x3d,
 	IMG_DATA_FORMAT_32_AS_8_8                        = 0x3e,
 	IMG_DATA_FORMAT_32_AS_32_32_32_32                = 0x3f,
-} IMG_DATA_FORMAT;
-typedef enum BUF_NUM_FORMAT {
+पूर्ण IMG_DATA_FORMAT;
+प्रकार क्रमागत BUF_NUM_FORMAT अणु
 	BUF_NUM_FORMAT_UNORM                             = 0x0,
 	BUF_NUM_FORMAT_SNORM                             = 0x1,
 	BUF_NUM_FORMAT_USCALED                           = 0x2,
@@ -879,8 +880,8 @@ typedef enum BUF_NUM_FORMAT {
 	BUF_NUM_FORMAT_SINT                              = 0x5,
 	BUF_NUM_FORMAT_RESERVED_6                        = 0x6,
 	BUF_NUM_FORMAT_FLOAT                             = 0x7,
-} BUF_NUM_FORMAT;
-typedef enum IMG_NUM_FORMAT {
+पूर्ण BUF_NUM_FORMAT;
+प्रकार क्रमागत IMG_NUM_FORMAT अणु
 	IMG_NUM_FORMAT_UNORM                             = 0x0,
 	IMG_NUM_FORMAT_SNORM                             = 0x1,
 	IMG_NUM_FORMAT_USCALED                           = 0x2,
@@ -897,23 +898,23 @@ typedef enum IMG_NUM_FORMAT {
 	IMG_NUM_FORMAT_RESERVED_13                       = 0xd,
 	IMG_NUM_FORMAT_RESERVED_14                       = 0xe,
 	IMG_NUM_FORMAT_RESERVED_15                       = 0xf,
-} IMG_NUM_FORMAT;
-typedef enum TileType {
+पूर्ण IMG_NUM_FORMAT;
+प्रकार क्रमागत TileType अणु
 	ARRAY_COLOR_TILE                                 = 0x0,
 	ARRAY_DEPTH_TILE                                 = 0x1,
-} TileType;
-typedef enum NonDispTilingOrder {
+पूर्ण TileType;
+प्रकार क्रमागत NonDispTilingOrder अणु
 	ADDR_SURF_MICRO_TILING_DISPLAY                   = 0x0,
 	ADDR_SURF_MICRO_TILING_NON_DISPLAY               = 0x1,
-} NonDispTilingOrder;
-typedef enum MicroTileMode {
+पूर्ण NonDispTilingOrder;
+प्रकार क्रमागत MicroTileMode अणु
 	ADDR_SURF_DISPLAY_MICRO_TILING                   = 0x0,
 	ADDR_SURF_THIN_MICRO_TILING                      = 0x1,
 	ADDR_SURF_DEPTH_MICRO_TILING                     = 0x2,
 	ADDR_SURF_ROTATED_MICRO_TILING                   = 0x3,
 	ADDR_SURF_THICK_MICRO_TILING                     = 0x4,
-} MicroTileMode;
-typedef enum TileSplit {
+पूर्ण MicroTileMode;
+प्रकार क्रमागत TileSplit अणु
 	ADDR_SURF_TILE_SPLIT_64B                         = 0x0,
 	ADDR_SURF_TILE_SPLIT_128B                        = 0x1,
 	ADDR_SURF_TILE_SPLIT_256B                        = 0x2,
@@ -921,14 +922,14 @@ typedef enum TileSplit {
 	ADDR_SURF_TILE_SPLIT_1KB                         = 0x4,
 	ADDR_SURF_TILE_SPLIT_2KB                         = 0x5,
 	ADDR_SURF_TILE_SPLIT_4KB                         = 0x6,
-} TileSplit;
-typedef enum SampleSplit {
+पूर्ण TileSplit;
+प्रकार क्रमागत SampleSplit अणु
 	ADDR_SURF_SAMPLE_SPLIT_1                         = 0x0,
 	ADDR_SURF_SAMPLE_SPLIT_2                         = 0x1,
 	ADDR_SURF_SAMPLE_SPLIT_4                         = 0x2,
 	ADDR_SURF_SAMPLE_SPLIT_8                         = 0x3,
-} SampleSplit;
-typedef enum PipeConfig {
+पूर्ण SampleSplit;
+प्रकार क्रमागत PipeConfig अणु
 	ADDR_SURF_P2                                     = 0x0,
 	ADDR_SURF_P2_RESERVED0                           = 0x1,
 	ADDR_SURF_P2_RESERVED1                           = 0x2,
@@ -947,57 +948,57 @@ typedef enum PipeConfig {
 	ADDR_SURF_P8_RESERVED0                           = 0xf,
 	ADDR_SURF_P16_32x32_8x16                         = 0x10,
 	ADDR_SURF_P16_32x32_16x16                        = 0x11,
-} PipeConfig;
-typedef enum NumBanks {
+पूर्ण PipeConfig;
+प्रकार क्रमागत NumBanks अणु
 	ADDR_SURF_2_BANK                                 = 0x0,
 	ADDR_SURF_4_BANK                                 = 0x1,
 	ADDR_SURF_8_BANK                                 = 0x2,
 	ADDR_SURF_16_BANK                                = 0x3,
-} NumBanks;
-typedef enum BankWidth {
+पूर्ण NumBanks;
+प्रकार क्रमागत BankWidth अणु
 	ADDR_SURF_BANK_WIDTH_1                           = 0x0,
 	ADDR_SURF_BANK_WIDTH_2                           = 0x1,
 	ADDR_SURF_BANK_WIDTH_4                           = 0x2,
 	ADDR_SURF_BANK_WIDTH_8                           = 0x3,
-} BankWidth;
-typedef enum BankHeight {
+पूर्ण BankWidth;
+प्रकार क्रमागत BankHeight अणु
 	ADDR_SURF_BANK_HEIGHT_1                          = 0x0,
 	ADDR_SURF_BANK_HEIGHT_2                          = 0x1,
 	ADDR_SURF_BANK_HEIGHT_4                          = 0x2,
 	ADDR_SURF_BANK_HEIGHT_8                          = 0x3,
-} BankHeight;
-typedef enum BankWidthHeight {
+पूर्ण BankHeight;
+प्रकार क्रमागत BankWidthHeight अणु
 	ADDR_SURF_BANK_WH_1                              = 0x0,
 	ADDR_SURF_BANK_WH_2                              = 0x1,
 	ADDR_SURF_BANK_WH_4                              = 0x2,
 	ADDR_SURF_BANK_WH_8                              = 0x3,
-} BankWidthHeight;
-typedef enum MacroTileAspect {
+पूर्ण BankWidthHeight;
+प्रकार क्रमागत MacroTileAspect अणु
 	ADDR_SURF_MACRO_ASPECT_1                         = 0x0,
 	ADDR_SURF_MACRO_ASPECT_2                         = 0x1,
 	ADDR_SURF_MACRO_ASPECT_4                         = 0x2,
 	ADDR_SURF_MACRO_ASPECT_8                         = 0x3,
-} MacroTileAspect;
-typedef enum GATCL1RequestType {
+पूर्ण MacroTileAspect;
+प्रकार क्रमागत GATCL1RequestType अणु
 	GATCL1_TYPE_NORMAL                               = 0x0,
 	GATCL1_TYPE_SHOOTDOWN                            = 0x1,
 	GATCL1_TYPE_BYPASS                               = 0x2,
-} GATCL1RequestType;
-typedef enum TCC_CACHE_POLICIES {
+पूर्ण GATCL1RequestType;
+प्रकार क्रमागत TCC_CACHE_POLICIES अणु
 	TCC_CACHE_POLICY_LRU                             = 0x0,
 	TCC_CACHE_POLICY_STREAM                          = 0x1,
-} TCC_CACHE_POLICIES;
-typedef enum MTYPE {
+पूर्ण TCC_CACHE_POLICIES;
+प्रकार क्रमागत MTYPE अणु
 	MTYPE_NC_NV                                      = 0x0,
 	MTYPE_NC                                         = 0x1,
 	MTYPE_CC                                         = 0x2,
 	MTYPE_UC                                         = 0x3,
-} MTYPE;
-typedef enum PERFMON_COUNTER_MODE {
+पूर्ण MTYPE;
+प्रकार क्रमागत PERFMON_COUNTER_MODE अणु
 	PERFMON_COUNTER_MODE_ACCUM                       = 0x0,
 	PERFMON_COUNTER_MODE_ACTIVE_CYCLES               = 0x1,
 	PERFMON_COUNTER_MODE_MAX                         = 0x2,
-	PERFMON_COUNTER_MODE_DIRTY                       = 0x3,
+	PERFMON_COUNTER_MODE_सूचीTY                       = 0x3,
 	PERFMON_COUNTER_MODE_SAMPLE                      = 0x4,
 	PERFMON_COUNTER_MODE_CYCLES_SINCE_FIRST_EVENT    = 0x5,
 	PERFMON_COUNTER_MODE_CYCLES_SINCE_LAST_EVENT     = 0x6,
@@ -1005,8 +1006,8 @@ typedef enum PERFMON_COUNTER_MODE {
 	PERFMON_COUNTER_MODE_CYCLES_EQ_HI                = 0x8,
 	PERFMON_COUNTER_MODE_INACTIVE_CYCLES             = 0x9,
 	PERFMON_COUNTER_MODE_RESERVED                    = 0xf,
-} PERFMON_COUNTER_MODE;
-typedef enum PERFMON_SPM_MODE {
+पूर्ण PERFMON_COUNTER_MODE;
+प्रकार क्रमागत PERFMON_SPM_MODE अणु
 	PERFMON_SPM_MODE_OFF                             = 0x0,
 	PERFMON_SPM_MODE_16BIT_CLAMP                     = 0x1,
 	PERFMON_SPM_MODE_16BIT_NO_CLAMP                  = 0x2,
@@ -1018,51 +1019,51 @@ typedef enum PERFMON_SPM_MODE {
 	PERFMON_SPM_MODE_TEST_MODE_0                     = 0x8,
 	PERFMON_SPM_MODE_TEST_MODE_1                     = 0x9,
 	PERFMON_SPM_MODE_TEST_MODE_2                     = 0xa,
-} PERFMON_SPM_MODE;
-typedef enum SurfaceTiling {
+पूर्ण PERFMON_SPM_MODE;
+प्रकार क्रमागत SurfaceTiling अणु
 	ARRAY_LINEAR                                     = 0x0,
 	ARRAY_TILED                                      = 0x1,
-} SurfaceTiling;
-typedef enum SurfaceArray {
+पूर्ण SurfaceTiling;
+प्रकार क्रमागत SurfaceArray अणु
 	ARRAY_1D                                         = 0x0,
 	ARRAY_2D                                         = 0x1,
 	ARRAY_3D                                         = 0x2,
 	ARRAY_3D_SLICE                                   = 0x3,
-} SurfaceArray;
-typedef enum ColorArray {
+पूर्ण SurfaceArray;
+प्रकार क्रमागत ColorArray अणु
 	ARRAY_2D_ALT_COLOR                               = 0x0,
 	ARRAY_2D_COLOR                                   = 0x1,
 	ARRAY_3D_SLICE_COLOR                             = 0x3,
-} ColorArray;
-typedef enum DepthArray {
+पूर्ण ColorArray;
+प्रकार क्रमागत DepthArray अणु
 	ARRAY_2D_ALT_DEPTH                               = 0x0,
 	ARRAY_2D_DEPTH                                   = 0x1,
-} DepthArray;
-typedef enum ENUM_NUM_SIMD_PER_CU {
+पूर्ण DepthArray;
+प्रकार क्रमागत ENUM_NUM_SIMD_PER_CU अणु
 	NUM_SIMD_PER_CU                                  = 0x4,
-} ENUM_NUM_SIMD_PER_CU;
-typedef enum MEM_PWR_FORCE_CTRL {
+पूर्ण ENUM_NUM_SIMD_PER_CU;
+प्रकार क्रमागत MEM_PWR_FORCE_CTRL अणु
 	NO_FORCE_REQUEST                                 = 0x0,
 	FORCE_LIGHT_SLEEP_REQUEST                        = 0x1,
 	FORCE_DEEP_SLEEP_REQUEST                         = 0x2,
 	FORCE_SHUT_DOWN_REQUEST                          = 0x3,
-} MEM_PWR_FORCE_CTRL;
-typedef enum MEM_PWR_FORCE_CTRL2 {
+पूर्ण MEM_PWR_FORCE_CTRL;
+प्रकार क्रमागत MEM_PWR_FORCE_CTRL2 अणु
 	NO_FORCE_REQ                                     = 0x0,
 	FORCE_LIGHT_SLEEP_REQ                            = 0x1,
-} MEM_PWR_FORCE_CTRL2;
-typedef enum MEM_PWR_DIS_CTRL {
+पूर्ण MEM_PWR_FORCE_CTRL2;
+प्रकार क्रमागत MEM_PWR_DIS_CTRL अणु
 	ENABLE_MEM_PWR_CTRL                              = 0x0,
 	DISABLE_MEM_PWR_CTRL                             = 0x1,
-} MEM_PWR_DIS_CTRL;
-typedef enum MEM_PWR_SEL_CTRL {
+पूर्ण MEM_PWR_DIS_CTRL;
+प्रकार क्रमागत MEM_PWR_SEL_CTRL अणु
 	DYNAMIC_SHUT_DOWN_ENABLE                         = 0x0,
 	DYNAMIC_DEEP_SLEEP_ENABLE                        = 0x1,
 	DYNAMIC_LIGHT_SLEEP_ENABLE                       = 0x2,
-} MEM_PWR_SEL_CTRL;
-typedef enum MEM_PWR_SEL_CTRL2 {
+पूर्ण MEM_PWR_SEL_CTRL;
+प्रकार क्रमागत MEM_PWR_SEL_CTRL2 अणु
 	DYNAMIC_DEEP_SLEEP_EN                            = 0x0,
 	DYNAMIC_LIGHT_SLEEP_EN                           = 0x1,
-} MEM_PWR_SEL_CTRL2;
+पूर्ण MEM_PWR_SEL_CTRL2;
 
-#endif /* ACP_2_2_ENUM_H */
+#पूर्ण_अगर /* ACP_2_2_ENUM_H */

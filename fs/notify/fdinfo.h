@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __FSNOTIFY_FDINFO_H__
-#define __FSNOTIFY_FDINFO_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __FSNOTIFY_FDINFO_H__
+#घोषणा __FSNOTIFY_FDINFO_H__
 
-#include <linux/errno.h>
-#include <linux/proc_fs.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/proc_fs.h>
 
-struct seq_file;
-struct file;
+काष्ठा seq_file;
+काष्ठा file;
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 
-#ifdef CONFIG_INOTIFY_USER
-void inotify_show_fdinfo(struct seq_file *m, struct file *f);
-#endif
+#अगर_घोषित CONFIG_INOTIFY_USER
+व्योम inotअगरy_show_fdinfo(काष्ठा seq_file *m, काष्ठा file *f);
+#पूर्ण_अगर
 
-#ifdef CONFIG_FANOTIFY
-void fanotify_show_fdinfo(struct seq_file *m, struct file *f);
-#endif
+#अगर_घोषित CONFIG_FANOTIFY
+व्योम fanotअगरy_show_fdinfo(काष्ठा seq_file *m, काष्ठा file *f);
+#पूर्ण_अगर
 
-#else /* CONFIG_PROC_FS */
+#अन्यथा /* CONFIG_PROC_FS */
 
-#define inotify_show_fdinfo	NULL
-#define fanotify_show_fdinfo	NULL
+#घोषणा inotअगरy_show_fdinfo	शून्य
+#घोषणा fanotअगरy_show_fdinfo	शून्य
 
-#endif /* CONFIG_PROC_FS */
+#पूर्ण_अगर /* CONFIG_PROC_FS */
 
-#endif /* __FSNOTIFY_FDINFO_H__ */
+#पूर्ण_अगर /* __FSNOTIFY_FDINFO_H__ */

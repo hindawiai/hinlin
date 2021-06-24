@@ -1,258 +1,259 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *  Derived from arch/i386/kernel/irq.c
  *    Copyright (C) 1992 Linus Torvalds
  *  Adapted from arch/i386 by Gary Thomas
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
- *  Updated and modified by Cort Dougan <cort@fsmlabs.com>
+ *  Updated and modअगरied by Cort Dougan <cort@fsmद_असल.com>
  *    Copyright (C) 1996-2001 Cort Dougan
- *  Adapted for Power Macintosh by Paul Mackerras
+ *  Adapted क्रम Power Macपूर्णांकosh by Paul Mackerras
  *    Copyright (C) 1996 Paul Mackerras (paulus@cs.anu.edu.au)
  *
  * This file contains the code used to make IRQ descriptions in the
- * device tree to actual irq numbers on an interrupt controller
+ * device tree to actual irq numbers on an पूर्णांकerrupt controller
  * driver.
  */
 
-#define pr_fmt(fmt)	"OF: " fmt
+#घोषणा pr_fmt(fmt)	"OF: " fmt
 
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/string.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
 
 /**
- * irq_of_parse_and_map - Parse and map an interrupt into linux virq space
- * @dev: Device node of the device whose interrupt is to be mapped
- * @index: Index of the interrupt to map
+ * irq_of_parse_and_map - Parse and map an पूर्णांकerrupt पूर्णांकo linux virq space
+ * @dev: Device node of the device whose पूर्णांकerrupt is to be mapped
+ * @index: Index of the पूर्णांकerrupt to map
  *
  * This function is a wrapper that chains of_irq_parse_one() and
  * irq_create_of_mapping() to make things easier to callers
  */
-unsigned int irq_of_parse_and_map(struct device_node *dev, int index)
-{
-	struct of_phandle_args oirq;
+अचिन्हित पूर्णांक irq_of_parse_and_map(काष्ठा device_node *dev, पूर्णांक index)
+अणु
+	काष्ठा of_phandle_args oirq;
 
-	if (of_irq_parse_one(dev, index, &oirq))
-		return 0;
+	अगर (of_irq_parse_one(dev, index, &oirq))
+		वापस 0;
 
-	return irq_create_of_mapping(&oirq);
-}
+	वापस irq_create_of_mapping(&oirq);
+पूर्ण
 EXPORT_SYMBOL_GPL(irq_of_parse_and_map);
 
 /**
- * of_irq_find_parent - Given a device node, find its interrupt parent node
- * @child: pointer to device node
+ * of_irq_find_parent - Given a device node, find its पूर्णांकerrupt parent node
+ * @child: poपूर्णांकer to device node
  *
- * Return: A pointer to the interrupt parent node, or NULL if the interrupt
+ * Return: A poपूर्णांकer to the पूर्णांकerrupt parent node, or शून्य अगर the पूर्णांकerrupt
  * parent could not be determined.
  */
-struct device_node *of_irq_find_parent(struct device_node *child)
-{
-	struct device_node *p;
+काष्ठा device_node *of_irq_find_parent(काष्ठा device_node *child)
+अणु
+	काष्ठा device_node *p;
 	phandle parent;
 
-	if (!of_node_get(child))
-		return NULL;
+	अगर (!of_node_get(child))
+		वापस शून्य;
 
-	do {
-		if (of_property_read_u32(child, "interrupt-parent", &parent)) {
+	करो अणु
+		अगर (of_property_पढ़ो_u32(child, "interrupt-parent", &parent)) अणु
 			p = of_get_parent(child);
-		} else	{
-			if (of_irq_workarounds & OF_IMAP_NO_PHANDLE)
+		पूर्ण अन्यथा	अणु
+			अगर (of_irq_workarounds & OF_IMAP_NO_PHANDLE)
 				p = of_node_get(of_irq_dflt_pic);
-			else
+			अन्यथा
 				p = of_find_node_by_phandle(parent);
-		}
+		पूर्ण
 		of_node_put(child);
 		child = p;
-	} while (p && of_get_property(p, "#interrupt-cells", NULL) == NULL);
+	पूर्ण जबतक (p && of_get_property(p, "#interrupt-cells", शून्य) == शून्य);
 
-	return p;
-}
+	वापस p;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_irq_find_parent);
 
 /**
- * of_irq_parse_raw - Low level interrupt tree parsing
- * @addr:	address specifier (start of "reg" property of the device) in be32 format
- * @out_irq:	structure of_phandle_args updated by this function
+ * of_irq_parse_raw - Low level पूर्णांकerrupt tree parsing
+ * @addr:	address specअगरier (start of "reg" property of the device) in be32 क्रमmat
+ * @out_irq:	काष्ठाure of_phandle_args updated by this function
  *
- * This function is a low-level interrupt tree walking function. It
- * can be used to do a partial walk with synthetized reg and interrupts
- * properties, for example when resolving PCI interrupts when no device
- * node exist for the parent. It takes an interrupt specifier structure as
- * input, walks the tree looking for any interrupt-map properties, translates
- * the specifier for each map, and then returns the translated map.
+ * This function is a low-level पूर्णांकerrupt tree walking function. It
+ * can be used to करो a partial walk with synthetized reg and पूर्णांकerrupts
+ * properties, क्रम example when resolving PCI पूर्णांकerrupts when no device
+ * node exist क्रम the parent. It takes an पूर्णांकerrupt specअगरier काष्ठाure as
+ * input, walks the tree looking क्रम any पूर्णांकerrupt-map properties, translates
+ * the specअगरier क्रम each map, and then वापसs the translated map.
  *
  * Return: 0 on success and a negative number on error
  */
-int of_irq_parse_raw(const __be32 *addr, struct of_phandle_args *out_irq)
-{
-	struct device_node *ipar, *tnode, *old = NULL, *newpar = NULL;
+पूर्णांक of_irq_parse_raw(स्थिर __be32 *addr, काष्ठा of_phandle_args *out_irq)
+अणु
+	काष्ठा device_node *ipar, *tnode, *old = शून्य, *newpar = शून्य;
 	__be32 initial_match_array[MAX_PHANDLE_ARGS];
-	const __be32 *match_array = initial_match_array;
-	const __be32 *tmp, *imap, *imask, dummy_imask[] = { [0 ... MAX_PHANDLE_ARGS] = cpu_to_be32(~0) };
-	u32 intsize = 1, addrsize, newintsize = 0, newaddrsize = 0;
-	int imaplen, match, i, rc = -EINVAL;
+	स्थिर __be32 *match_array = initial_match_array;
+	स्थिर __be32 *पंचांगp, *imap, *imask, dummy_imask[] = अणु [0 ... MAX_PHANDLE_ARGS] = cpu_to_be32(~0) पूर्ण;
+	u32 पूर्णांकsize = 1, addrsize, newपूर्णांकsize = 0, newaddrsize = 0;
+	पूर्णांक imaplen, match, i, rc = -EINVAL;
 
-#ifdef DEBUG
-	of_print_phandle_args("of_irq_parse_raw: ", out_irq);
-#endif
+#अगर_घोषित DEBUG
+	of_prपूर्णांक_phandle_args("of_irq_parse_raw: ", out_irq);
+#पूर्ण_अगर
 
 	ipar = of_node_get(out_irq->np);
 
-	/* First get the #interrupt-cells property of the current cursor
-	 * that tells us how to interpret the passed-in intspec. If there
+	/* First get the #पूर्णांकerrupt-cells property of the current cursor
+	 * that tells us how to पूर्णांकerpret the passed-in पूर्णांकspec. If there
 	 * is none, we are nice and just walk up the tree
 	 */
-	do {
-		if (!of_property_read_u32(ipar, "#interrupt-cells", &intsize))
-			break;
+	करो अणु
+		अगर (!of_property_पढ़ो_u32(ipar, "#interrupt-cells", &पूर्णांकsize))
+			अवरोध;
 		tnode = ipar;
 		ipar = of_irq_find_parent(ipar);
 		of_node_put(tnode);
-	} while (ipar);
-	if (ipar == NULL) {
+	पूर्ण जबतक (ipar);
+	अगर (ipar == शून्य) अणु
 		pr_debug(" -> no parent found !\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	pr_debug("of_irq_parse_raw: ipar=%pOF, size=%d\n", ipar, intsize);
+	pr_debug("of_irq_parse_raw: ipar=%pOF, size=%d\n", ipar, पूर्णांकsize);
 
-	if (out_irq->args_count != intsize)
-		goto fail;
+	अगर (out_irq->args_count != पूर्णांकsize)
+		जाओ fail;
 
-	/* Look for this #address-cells. We have to implement the old linux
-	 * trick of looking for the parent here as some device-trees rely on it
+	/* Look क्रम this #address-cells. We have to implement the old linux
+	 * trick of looking क्रम the parent here as some device-trees rely on it
 	 */
 	old = of_node_get(ipar);
-	do {
-		tmp = of_get_property(old, "#address-cells", NULL);
+	करो अणु
+		पंचांगp = of_get_property(old, "#address-cells", शून्य);
 		tnode = of_get_parent(old);
 		of_node_put(old);
 		old = tnode;
-	} while (old && tmp == NULL);
+	पूर्ण जबतक (old && पंचांगp == शून्य);
 	of_node_put(old);
-	old = NULL;
-	addrsize = (tmp == NULL) ? 2 : be32_to_cpu(*tmp);
+	old = शून्य;
+	addrsize = (पंचांगp == शून्य) ? 2 : be32_to_cpu(*पंचांगp);
 
 	pr_debug(" -> addrsize=%d\n", addrsize);
 
-	/* Range check so that the temporary buffer doesn't overflow */
-	if (WARN_ON(addrsize + intsize > MAX_PHANDLE_ARGS)) {
+	/* Range check so that the temporary buffer करोesn't overflow */
+	अगर (WARN_ON(addrsize + पूर्णांकsize > MAX_PHANDLE_ARGS)) अणु
 		rc = -EFAULT;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	/* Precalculate the match array - this simplifies match loop */
-	for (i = 0; i < addrsize; i++)
+	/* Precalculate the match array - this simplअगरies match loop */
+	क्रम (i = 0; i < addrsize; i++)
 		initial_match_array[i] = addr ? addr[i] : 0;
-	for (i = 0; i < intsize; i++)
+	क्रम (i = 0; i < पूर्णांकsize; i++)
 		initial_match_array[addrsize + i] = cpu_to_be32(out_irq->args[i]);
 
-	/* Now start the actual "proper" walk of the interrupt tree */
-	while (ipar != NULL) {
-		/* Now check if cursor is an interrupt-controller and if it is
-		 * then we are done
+	/* Now start the actual "proper" walk of the पूर्णांकerrupt tree */
+	जबतक (ipar != शून्य) अणु
+		/* Now check अगर cursor is an पूर्णांकerrupt-controller and अगर it is
+		 * then we are करोne
 		 */
-		if (of_property_read_bool(ipar, "interrupt-controller")) {
+		अगर (of_property_पढ़ो_bool(ipar, "interrupt-controller")) अणु
 			pr_debug(" -> got it !\n");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/*
-		 * interrupt-map parsing does not work without a reg
+		 * पूर्णांकerrupt-map parsing करोes not work without a reg
 		 * property when #address-cells != 0
 		 */
-		if (addrsize && !addr) {
+		अगर (addrsize && !addr) अणु
 			pr_debug(" -> no reg passed in when needed !\n");
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 
-		/* Now look for an interrupt-map */
+		/* Now look क्रम an पूर्णांकerrupt-map */
 		imap = of_get_property(ipar, "interrupt-map", &imaplen);
-		/* No interrupt map, check for an interrupt parent */
-		if (imap == NULL) {
+		/* No पूर्णांकerrupt map, check क्रम an पूर्णांकerrupt parent */
+		अगर (imap == शून्य) अणु
 			pr_debug(" -> no map, getting parent\n");
 			newpar = of_irq_find_parent(ipar);
-			goto skiplevel;
-		}
-		imaplen /= sizeof(u32);
+			जाओ skiplevel;
+		पूर्ण
+		imaplen /= माप(u32);
 
-		/* Look for a mask */
-		imask = of_get_property(ipar, "interrupt-map-mask", NULL);
-		if (!imask)
+		/* Look क्रम a mask */
+		imask = of_get_property(ipar, "interrupt-map-mask", शून्य);
+		अगर (!imask)
 			imask = dummy_imask;
 
-		/* Parse interrupt-map */
+		/* Parse पूर्णांकerrupt-map */
 		match = 0;
-		while (imaplen > (addrsize + intsize + 1) && !match) {
-			/* Compare specifiers */
+		जबतक (imaplen > (addrsize + पूर्णांकsize + 1) && !match) अणु
+			/* Compare specअगरiers */
 			match = 1;
-			for (i = 0; i < (addrsize + intsize); i++, imaplen--)
+			क्रम (i = 0; i < (addrsize + पूर्णांकsize); i++, imaplen--)
 				match &= !((match_array[i] ^ *imap++) & imask[i]);
 
 			pr_debug(" -> match=%d (imaplen=%d)\n", match, imaplen);
 
-			/* Get the interrupt parent */
-			if (of_irq_workarounds & OF_IMAP_NO_PHANDLE)
+			/* Get the पूर्णांकerrupt parent */
+			अगर (of_irq_workarounds & OF_IMAP_NO_PHANDLE)
 				newpar = of_node_get(of_irq_dflt_pic);
-			else
+			अन्यथा
 				newpar = of_find_node_by_phandle(be32_to_cpup(imap));
 			imap++;
 			--imaplen;
 
-			/* Check if not found */
-			if (newpar == NULL) {
+			/* Check अगर not found */
+			अगर (newpar == शून्य) अणु
 				pr_debug(" -> imap parent not found !\n");
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 
-			if (!of_device_is_available(newpar))
+			अगर (!of_device_is_available(newpar))
 				match = 0;
 
-			/* Get #interrupt-cells and #address-cells of new
+			/* Get #पूर्णांकerrupt-cells and #address-cells of new
 			 * parent
 			 */
-			if (of_property_read_u32(newpar, "#interrupt-cells",
-						 &newintsize)) {
+			अगर (of_property_पढ़ो_u32(newpar, "#interrupt-cells",
+						 &newपूर्णांकsize)) अणु
 				pr_debug(" -> parent lacks #interrupt-cells!\n");
-				goto fail;
-			}
-			if (of_property_read_u32(newpar, "#address-cells",
+				जाओ fail;
+			पूर्ण
+			अगर (of_property_पढ़ो_u32(newpar, "#address-cells",
 						 &newaddrsize))
 				newaddrsize = 0;
 
 			pr_debug(" -> newintsize=%d, newaddrsize=%d\n",
-			    newintsize, newaddrsize);
+			    newपूर्णांकsize, newaddrsize);
 
-			/* Check for malformed properties */
-			if (WARN_ON(newaddrsize + newintsize > MAX_PHANDLE_ARGS)
-			    || (imaplen < (newaddrsize + newintsize))) {
+			/* Check क्रम malक्रमmed properties */
+			अगर (WARN_ON(newaddrsize + newपूर्णांकsize > MAX_PHANDLE_ARGS)
+			    || (imaplen < (newaddrsize + newपूर्णांकsize))) अणु
 				rc = -EFAULT;
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 
-			imap += newaddrsize + newintsize;
-			imaplen -= newaddrsize + newintsize;
+			imap += newaddrsize + newपूर्णांकsize;
+			imaplen -= newaddrsize + newपूर्णांकsize;
 
 			pr_debug(" -> imaplen=%d\n", imaplen);
-		}
-		if (!match)
-			goto fail;
+		पूर्ण
+		अगर (!match)
+			जाओ fail;
 
 		/*
-		 * Successfully parsed an interrrupt-map translation; copy new
-		 * interrupt specifier into the out_irq structure
+		 * Successfully parsed an पूर्णांकerrrupt-map translation; copy new
+		 * पूर्णांकerrupt specअगरier पूर्णांकo the out_irq काष्ठाure
 		 */
-		match_array = imap - newaddrsize - newintsize;
-		for (i = 0; i < newintsize; i++)
-			out_irq->args[i] = be32_to_cpup(imap - newintsize + i);
-		out_irq->args_count = intsize = newintsize;
+		match_array = imap - newaddrsize - newपूर्णांकsize;
+		क्रम (i = 0; i < newपूर्णांकsize; i++)
+			out_irq->args[i] = be32_to_cpup(imap - newपूर्णांकsize + i);
+		out_irq->args_count = पूर्णांकsize = newपूर्णांकsize;
 		addrsize = newaddrsize;
 
 	skiplevel:
@@ -261,274 +262,274 @@ int of_irq_parse_raw(const __be32 *addr, struct of_phandle_args *out_irq)
 		pr_debug(" -> new parent: %pOF\n", newpar);
 		of_node_put(ipar);
 		ipar = newpar;
-		newpar = NULL;
-	}
-	rc = -ENOENT; /* No interrupt-map found */
+		newpar = शून्य;
+	पूर्ण
+	rc = -ENOENT; /* No पूर्णांकerrupt-map found */
 
  fail:
 	of_node_put(ipar);
 	of_node_put(newpar);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_irq_parse_raw);
 
 /**
- * of_irq_parse_one - Resolve an interrupt for a device
- * @device: the device whose interrupt is to be resolved
- * @index: index of the interrupt to resolve
- * @out_irq: structure of_phandle_args filled by this function
+ * of_irq_parse_one - Resolve an पूर्णांकerrupt क्रम a device
+ * @device: the device whose पूर्णांकerrupt is to be resolved
+ * @index: index of the पूर्णांकerrupt to resolve
+ * @out_irq: काष्ठाure of_phandle_args filled by this function
  *
- * This function resolves an interrupt for a node by walking the interrupt tree,
- * finding which interrupt controller node it is attached to, and returning the
- * interrupt specifier that can be used to retrieve a Linux IRQ number.
+ * This function resolves an पूर्णांकerrupt क्रम a node by walking the पूर्णांकerrupt tree,
+ * finding which पूर्णांकerrupt controller node it is attached to, and वापसing the
+ * पूर्णांकerrupt specअगरier that can be used to retrieve a Linux IRQ number.
  */
-int of_irq_parse_one(struct device_node *device, int index, struct of_phandle_args *out_irq)
-{
-	struct device_node *p;
-	const __be32 *addr;
-	u32 intsize;
-	int i, res;
+पूर्णांक of_irq_parse_one(काष्ठा device_node *device, पूर्णांक index, काष्ठा of_phandle_args *out_irq)
+अणु
+	काष्ठा device_node *p;
+	स्थिर __be32 *addr;
+	u32 पूर्णांकsize;
+	पूर्णांक i, res;
 
 	pr_debug("of_irq_parse_one: dev=%pOF, index=%d\n", device, index);
 
 	/* OldWorld mac stuff is "special", handle out of line */
-	if (of_irq_workarounds & OF_IMAP_OLDWORLD_MAC)
-		return of_irq_parse_oldworld(device, index, out_irq);
+	अगर (of_irq_workarounds & OF_IMAP_OLDWORLD_MAC)
+		वापस of_irq_parse_oldworld(device, index, out_irq);
 
-	/* Get the reg property (if any) */
-	addr = of_get_property(device, "reg", NULL);
+	/* Get the reg property (अगर any) */
+	addr = of_get_property(device, "reg", शून्य);
 
-	/* Try the new-style interrupts-extended first */
+	/* Try the new-style पूर्णांकerrupts-extended first */
 	res = of_parse_phandle_with_args(device, "interrupts-extended",
 					"#interrupt-cells", index, out_irq);
-	if (!res)
-		return of_irq_parse_raw(addr, out_irq);
+	अगर (!res)
+		वापस of_irq_parse_raw(addr, out_irq);
 
-	/* Look for the interrupt parent. */
+	/* Look क्रम the पूर्णांकerrupt parent. */
 	p = of_irq_find_parent(device);
-	if (p == NULL)
-		return -EINVAL;
+	अगर (p == शून्य)
+		वापस -EINVAL;
 
-	/* Get size of interrupt specifier */
-	if (of_property_read_u32(p, "#interrupt-cells", &intsize)) {
+	/* Get size of पूर्णांकerrupt specअगरier */
+	अगर (of_property_पढ़ो_u32(p, "#interrupt-cells", &पूर्णांकsize)) अणु
 		res = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	pr_debug(" parent=%pOF, intsize=%d\n", p, intsize);
+	pr_debug(" parent=%pOF, intsize=%d\n", p, पूर्णांकsize);
 
-	/* Copy intspec into irq structure */
+	/* Copy पूर्णांकspec पूर्णांकo irq काष्ठाure */
 	out_irq->np = p;
-	out_irq->args_count = intsize;
-	for (i = 0; i < intsize; i++) {
-		res = of_property_read_u32_index(device, "interrupts",
-						 (index * intsize) + i,
+	out_irq->args_count = पूर्णांकsize;
+	क्रम (i = 0; i < पूर्णांकsize; i++) अणु
+		res = of_property_पढ़ो_u32_index(device, "interrupts",
+						 (index * पूर्णांकsize) + i,
 						 out_irq->args + i);
-		if (res)
-			goto out;
-	}
+		अगर (res)
+			जाओ out;
+	पूर्ण
 
 	pr_debug(" intspec=%d\n", *out_irq->args);
 
 
-	/* Check if there are any interrupt-map translations to process */
+	/* Check अगर there are any पूर्णांकerrupt-map translations to process */
 	res = of_irq_parse_raw(addr, out_irq);
  out:
 	of_node_put(p);
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_irq_parse_one);
 
 /**
- * of_irq_to_resource - Decode a node's IRQ and return it as a resource
- * @dev: pointer to device tree node
+ * of_irq_to_resource - Decode a node's IRQ and वापस it as a resource
+ * @dev: poपूर्णांकer to device tree node
  * @index: zero-based index of the irq
- * @r: pointer to resource structure to return result into.
+ * @r: poपूर्णांकer to resource काष्ठाure to वापस result पूर्णांकo.
  */
-int of_irq_to_resource(struct device_node *dev, int index, struct resource *r)
-{
-	int irq = of_irq_get(dev, index);
+पूर्णांक of_irq_to_resource(काष्ठा device_node *dev, पूर्णांक index, काष्ठा resource *r)
+अणु
+	पूर्णांक irq = of_irq_get(dev, index);
 
-	if (irq < 0)
-		return irq;
+	अगर (irq < 0)
+		वापस irq;
 
-	/* Only dereference the resource if both the
+	/* Only dereference the resource अगर both the
 	 * resource and the irq are valid. */
-	if (r && irq) {
-		const char *name = NULL;
+	अगर (r && irq) अणु
+		स्थिर अक्षर *name = शून्य;
 
-		memset(r, 0, sizeof(*r));
+		स_रखो(r, 0, माप(*r));
 		/*
 		 * Get optional "interrupt-names" property to add a name
 		 * to the resource.
 		 */
-		of_property_read_string_index(dev, "interrupt-names", index,
+		of_property_पढ़ो_string_index(dev, "interrupt-names", index,
 					      &name);
 
 		r->start = r->end = irq;
 		r->flags = IORESOURCE_IRQ | irqd_get_trigger_type(irq_get_irq_data(irq));
 		r->name = name ? name : of_node_full_name(dev);
-	}
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_irq_to_resource);
 
 /**
- * of_irq_get - Decode a node's IRQ and return it as a Linux IRQ number
- * @dev: pointer to device tree node
+ * of_irq_get - Decode a node's IRQ and वापस it as a Linux IRQ number
+ * @dev: poपूर्णांकer to device tree node
  * @index: zero-based index of the IRQ
  *
  * Return: Linux IRQ number on success, or 0 on the IRQ mapping failure, or
- * -EPROBE_DEFER if the IRQ domain is not yet created, or error code in case
+ * -EPROBE_DEFER अगर the IRQ करोमुख्य is not yet created, or error code in हाल
  * of any other failure.
  */
-int of_irq_get(struct device_node *dev, int index)
-{
-	int rc;
-	struct of_phandle_args oirq;
-	struct irq_domain *domain;
+पूर्णांक of_irq_get(काष्ठा device_node *dev, पूर्णांक index)
+अणु
+	पूर्णांक rc;
+	काष्ठा of_phandle_args oirq;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
 
 	rc = of_irq_parse_one(dev, index, &oirq);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	domain = irq_find_host(oirq.np);
-	if (!domain)
-		return -EPROBE_DEFER;
+	करोमुख्य = irq_find_host(oirq.np);
+	अगर (!करोमुख्य)
+		वापस -EPROBE_DEFER;
 
-	return irq_create_of_mapping(&oirq);
-}
+	वापस irq_create_of_mapping(&oirq);
+पूर्ण
 EXPORT_SYMBOL_GPL(of_irq_get);
 
 /**
- * of_irq_get_byname - Decode a node's IRQ and return it as a Linux IRQ number
- * @dev: pointer to device tree node
+ * of_irq_get_byname - Decode a node's IRQ and वापस it as a Linux IRQ number
+ * @dev: poपूर्णांकer to device tree node
  * @name: IRQ name
  *
  * Return: Linux IRQ number on success, or 0 on the IRQ mapping failure, or
- * -EPROBE_DEFER if the IRQ domain is not yet created, or error code in case
+ * -EPROBE_DEFER अगर the IRQ करोमुख्य is not yet created, or error code in हाल
  * of any other failure.
  */
-int of_irq_get_byname(struct device_node *dev, const char *name)
-{
-	int index;
+पूर्णांक of_irq_get_byname(काष्ठा device_node *dev, स्थिर अक्षर *name)
+अणु
+	पूर्णांक index;
 
-	if (unlikely(!name))
-		return -EINVAL;
+	अगर (unlikely(!name))
+		वापस -EINVAL;
 
 	index = of_property_match_string(dev, "interrupt-names", name);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
-	return of_irq_get(dev, index);
-}
+	वापस of_irq_get(dev, index);
+पूर्ण
 EXPORT_SYMBOL_GPL(of_irq_get_byname);
 
 /**
  * of_irq_count - Count the number of IRQs a node uses
- * @dev: pointer to device tree node
+ * @dev: poपूर्णांकer to device tree node
  */
-int of_irq_count(struct device_node *dev)
-{
-	struct of_phandle_args irq;
-	int nr = 0;
+पूर्णांक of_irq_count(काष्ठा device_node *dev)
+अणु
+	काष्ठा of_phandle_args irq;
+	पूर्णांक nr = 0;
 
-	while (of_irq_parse_one(dev, nr, &irq) == 0)
+	जबतक (of_irq_parse_one(dev, nr, &irq) == 0)
 		nr++;
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
 /**
  * of_irq_to_resource_table - Fill in resource table with node's IRQ info
- * @dev: pointer to device tree node
+ * @dev: poपूर्णांकer to device tree node
  * @res: array of resources to fill in
- * @nr_irqs: the number of IRQs (and upper bound for num of @res elements)
+ * @nr_irqs: the number of IRQs (and upper bound क्रम num of @res elements)
  *
  * Return: The size of the filled in table (up to @nr_irqs).
  */
-int of_irq_to_resource_table(struct device_node *dev, struct resource *res,
-		int nr_irqs)
-{
-	int i;
+पूर्णांक of_irq_to_resource_table(काष्ठा device_node *dev, काष्ठा resource *res,
+		पूर्णांक nr_irqs)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < nr_irqs; i++, res++)
-		if (of_irq_to_resource(dev, i, res) <= 0)
-			break;
+	क्रम (i = 0; i < nr_irqs; i++, res++)
+		अगर (of_irq_to_resource(dev, i, res) <= 0)
+			अवरोध;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_irq_to_resource_table);
 
-struct of_intc_desc {
-	struct list_head	list;
+काष्ठा of_पूर्णांकc_desc अणु
+	काष्ठा list_head	list;
 	of_irq_init_cb_t	irq_init_cb;
-	struct device_node	*dev;
-	struct device_node	*interrupt_parent;
-};
+	काष्ठा device_node	*dev;
+	काष्ठा device_node	*पूर्णांकerrupt_parent;
+पूर्ण;
 
 /**
- * of_irq_init - Scan and init matching interrupt controllers in DT
+ * of_irq_init - Scan and init matching पूर्णांकerrupt controllers in DT
  * @matches: 0 terminated array of nodes to match and init function to call
  *
- * This function scans the device tree for matching interrupt controller nodes,
+ * This function scans the device tree क्रम matching पूर्णांकerrupt controller nodes,
  * and calls their initialization functions in order with parents first.
  */
-void __init of_irq_init(const struct of_device_id *matches)
-{
-	const struct of_device_id *match;
-	struct device_node *np, *parent = NULL;
-	struct of_intc_desc *desc, *temp_desc;
-	struct list_head intc_desc_list, intc_parent_list;
+व्योम __init of_irq_init(स्थिर काष्ठा of_device_id *matches)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device_node *np, *parent = शून्य;
+	काष्ठा of_पूर्णांकc_desc *desc, *temp_desc;
+	काष्ठा list_head पूर्णांकc_desc_list, पूर्णांकc_parent_list;
 
-	INIT_LIST_HEAD(&intc_desc_list);
-	INIT_LIST_HEAD(&intc_parent_list);
+	INIT_LIST_HEAD(&पूर्णांकc_desc_list);
+	INIT_LIST_HEAD(&पूर्णांकc_parent_list);
 
-	for_each_matching_node_and_match(np, matches, &match) {
-		if (!of_property_read_bool(np, "interrupt-controller") ||
+	क्रम_each_matching_node_and_match(np, matches, &match) अणु
+		अगर (!of_property_पढ़ो_bool(np, "interrupt-controller") ||
 				!of_device_is_available(np))
-			continue;
+			जारी;
 
-		if (WARN(!match->data, "of_irq_init: no init function for %s\n",
+		अगर (WARN(!match->data, "of_irq_init: no init function for %s\n",
 			 match->compatible))
-			continue;
+			जारी;
 
 		/*
-		 * Here, we allocate and populate an of_intc_desc with the node
-		 * pointer, interrupt-parent device_node etc.
+		 * Here, we allocate and populate an of_पूर्णांकc_desc with the node
+		 * poपूर्णांकer, पूर्णांकerrupt-parent device_node etc.
 		 */
-		desc = kzalloc(sizeof(*desc), GFP_KERNEL);
-		if (!desc) {
+		desc = kzalloc(माप(*desc), GFP_KERNEL);
+		अगर (!desc) अणु
 			of_node_put(np);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		desc->irq_init_cb = match->data;
 		desc->dev = of_node_get(np);
-		desc->interrupt_parent = of_irq_find_parent(np);
-		if (desc->interrupt_parent == np)
-			desc->interrupt_parent = NULL;
-		list_add_tail(&desc->list, &intc_desc_list);
-	}
+		desc->पूर्णांकerrupt_parent = of_irq_find_parent(np);
+		अगर (desc->पूर्णांकerrupt_parent == np)
+			desc->पूर्णांकerrupt_parent = शून्य;
+		list_add_tail(&desc->list, &पूर्णांकc_desc_list);
+	पूर्ण
 
 	/*
-	 * The root irq controller is the one without an interrupt-parent.
+	 * The root irq controller is the one without an पूर्णांकerrupt-parent.
 	 * That one goes first, followed by the controllers that reference it,
 	 * followed by the ones that reference the 2nd level controllers, etc.
 	 */
-	while (!list_empty(&intc_desc_list)) {
+	जबतक (!list_empty(&पूर्णांकc_desc_list)) अणु
 		/*
 		 * Process all controllers with the current 'parent'.
-		 * First pass will be looking for NULL as the parent.
-		 * The assumption is that NULL parent means a root controller.
+		 * First pass will be looking क्रम शून्य as the parent.
+		 * The assumption is that शून्य parent means a root controller.
 		 */
-		list_for_each_entry_safe(desc, temp_desc, &intc_desc_list, list) {
-			int ret;
+		list_क्रम_each_entry_safe(desc, temp_desc, &पूर्णांकc_desc_list, list) अणु
+			पूर्णांक ret;
 
-			if (desc->interrupt_parent != parent)
-				continue;
+			अगर (desc->पूर्णांकerrupt_parent != parent)
+				जारी;
 
 			list_del(&desc->list);
 
@@ -536,154 +537,154 @@ void __init of_irq_init(const struct of_device_id *matches)
 
 			pr_debug("of_irq_init: init %pOF (%p), parent %p\n",
 				 desc->dev,
-				 desc->dev, desc->interrupt_parent);
+				 desc->dev, desc->पूर्णांकerrupt_parent);
 			ret = desc->irq_init_cb(desc->dev,
-						desc->interrupt_parent);
-			if (ret) {
+						desc->पूर्णांकerrupt_parent);
+			अगर (ret) अणु
 				of_node_clear_flag(desc->dev, OF_POPULATED);
-				kfree(desc);
-				continue;
-			}
+				kमुक्त(desc);
+				जारी;
+			पूर्ण
 
 			/*
 			 * This one is now set up; add it to the parent list so
 			 * its children can get processed in a subsequent pass.
 			 */
-			list_add_tail(&desc->list, &intc_parent_list);
-		}
+			list_add_tail(&desc->list, &पूर्णांकc_parent_list);
+		पूर्ण
 
 		/* Get the next pending parent that might have children */
-		desc = list_first_entry_or_null(&intc_parent_list,
+		desc = list_first_entry_or_null(&पूर्णांकc_parent_list,
 						typeof(*desc), list);
-		if (!desc) {
+		अगर (!desc) अणु
 			pr_err("of_irq_init: children remain, but no parents\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		list_del(&desc->list);
 		parent = desc->dev;
-		kfree(desc);
-	}
+		kमुक्त(desc);
+	पूर्ण
 
-	list_for_each_entry_safe(desc, temp_desc, &intc_parent_list, list) {
+	list_क्रम_each_entry_safe(desc, temp_desc, &पूर्णांकc_parent_list, list) अणु
 		list_del(&desc->list);
-		kfree(desc);
-	}
+		kमुक्त(desc);
+	पूर्ण
 err:
-	list_for_each_entry_safe(desc, temp_desc, &intc_desc_list, list) {
+	list_क्रम_each_entry_safe(desc, temp_desc, &पूर्णांकc_desc_list, list) अणु
 		list_del(&desc->list);
 		of_node_put(desc->dev);
-		kfree(desc);
-	}
-}
+		kमुक्त(desc);
+	पूर्ण
+पूर्ण
 
-static u32 __of_msi_map_id(struct device *dev, struct device_node **np,
+अटल u32 __of_msi_map_id(काष्ठा device *dev, काष्ठा device_node **np,
 			    u32 id_in)
-{
-	struct device *parent_dev;
+अणु
+	काष्ठा device *parent_dev;
 	u32 id_out = id_in;
 
 	/*
-	 * Walk up the device parent links looking for one with a
+	 * Walk up the device parent links looking क्रम one with a
 	 * "msi-map" property.
 	 */
-	for (parent_dev = dev; parent_dev; parent_dev = parent_dev->parent)
-		if (!of_map_id(parent_dev->of_node, id_in, "msi-map",
+	क्रम (parent_dev = dev; parent_dev; parent_dev = parent_dev->parent)
+		अगर (!of_map_id(parent_dev->of_node, id_in, "msi-map",
 				"msi-map-mask", np, &id_out))
-			break;
-	return id_out;
-}
+			अवरोध;
+	वापस id_out;
+पूर्ण
 
 /**
- * of_msi_map_id - Map a MSI ID for a device.
- * @dev: device for which the mapping is to be done.
+ * of_msi_map_id - Map a MSI ID क्रम a device.
+ * @dev: device क्रम which the mapping is to be करोne.
  * @msi_np: device node of the expected msi controller.
- * @id_in: unmapped MSI ID for the device.
+ * @id_in: unmapped MSI ID क्रम the device.
  *
- * Walk up the device hierarchy looking for devices with a "msi-map"
+ * Walk up the device hierarchy looking क्रम devices with a "msi-map"
  * property.  If found, apply the mapping to @id_in.
  *
  * Return: The mapped MSI ID.
  */
-u32 of_msi_map_id(struct device *dev, struct device_node *msi_np, u32 id_in)
-{
-	return __of_msi_map_id(dev, &msi_np, id_in);
-}
+u32 of_msi_map_id(काष्ठा device *dev, काष्ठा device_node *msi_np, u32 id_in)
+अणु
+	वापस __of_msi_map_id(dev, &msi_np, id_in);
+पूर्ण
 
 /**
- * of_msi_map_get_device_domain - Use msi-map to find the relevant MSI domain
- * @dev: device for which the mapping is to be done.
+ * of_msi_map_get_device_करोमुख्य - Use msi-map to find the relevant MSI करोमुख्य
+ * @dev: device क्रम which the mapping is to be करोne.
  * @id: Device ID.
  * @bus_token: Bus token
  *
- * Walk up the device hierarchy looking for devices with a "msi-map"
+ * Walk up the device hierarchy looking क्रम devices with a "msi-map"
  * property.
  *
- * Returns: the MSI domain for this device (or NULL on failure)
+ * Returns: the MSI करोमुख्य क्रम this device (or शून्य on failure)
  */
-struct irq_domain *of_msi_map_get_device_domain(struct device *dev, u32 id,
+काष्ठा irq_करोमुख्य *of_msi_map_get_device_करोमुख्य(काष्ठा device *dev, u32 id,
 						u32 bus_token)
-{
-	struct device_node *np = NULL;
+अणु
+	काष्ठा device_node *np = शून्य;
 
 	__of_msi_map_id(dev, &np, id);
-	return irq_find_matching_host(np, bus_token);
-}
+	वापस irq_find_matching_host(np, bus_token);
+पूर्ण
 
 /**
- * of_msi_get_domain - Use msi-parent to find the relevant MSI domain
- * @dev: device for which the domain is requested
- * @np: device node for @dev
- * @token: bus type for this domain
+ * of_msi_get_करोमुख्य - Use msi-parent to find the relevant MSI करोमुख्य
+ * @dev: device क्रम which the करोमुख्य is requested
+ * @np: device node क्रम @dev
+ * @token: bus type क्रम this करोमुख्य
  *
  * Parse the msi-parent property (both the simple and the complex
- * versions), and returns the corresponding MSI domain.
+ * versions), and वापसs the corresponding MSI करोमुख्य.
  *
- * Returns: the MSI domain for this device (or NULL on failure).
+ * Returns: the MSI करोमुख्य क्रम this device (or शून्य on failure).
  */
-struct irq_domain *of_msi_get_domain(struct device *dev,
-				     struct device_node *np,
-				     enum irq_domain_bus_token token)
-{
-	struct device_node *msi_np;
-	struct irq_domain *d;
+काष्ठा irq_करोमुख्य *of_msi_get_करोमुख्य(काष्ठा device *dev,
+				     काष्ठा device_node *np,
+				     क्रमागत irq_करोमुख्य_bus_token token)
+अणु
+	काष्ठा device_node *msi_np;
+	काष्ठा irq_करोमुख्य *d;
 
-	/* Check for a single msi-parent property */
+	/* Check क्रम a single msi-parent property */
 	msi_np = of_parse_phandle(np, "msi-parent", 0);
-	if (msi_np && !of_property_read_bool(msi_np, "#msi-cells")) {
+	अगर (msi_np && !of_property_पढ़ो_bool(msi_np, "#msi-cells")) अणु
 		d = irq_find_matching_host(msi_np, token);
-		if (!d)
+		अगर (!d)
 			of_node_put(msi_np);
-		return d;
-	}
+		वापस d;
+	पूर्ण
 
-	if (token == DOMAIN_BUS_PLATFORM_MSI) {
-		/* Check for the complex msi-parent version */
-		struct of_phandle_args args;
-		int index = 0;
+	अगर (token == DOMAIN_BUS_PLATFORM_MSI) अणु
+		/* Check क्रम the complex msi-parent version */
+		काष्ठा of_phandle_args args;
+		पूर्णांक index = 0;
 
-		while (!of_parse_phandle_with_args(np, "msi-parent",
+		जबतक (!of_parse_phandle_with_args(np, "msi-parent",
 						   "#msi-cells",
-						   index, &args)) {
+						   index, &args)) अणु
 			d = irq_find_matching_host(args.np, token);
-			if (d)
-				return d;
+			अगर (d)
+				वापस d;
 
 			of_node_put(args.np);
 			index++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * of_msi_configure - Set the msi_domain field of a device
- * @dev: device structure to associate with an MSI irq domain
- * @np: device node for that device
+ * of_msi_configure - Set the msi_करोमुख्य field of a device
+ * @dev: device काष्ठाure to associate with an MSI irq करोमुख्य
+ * @np: device node क्रम that device
  */
-void of_msi_configure(struct device *dev, struct device_node *np)
-{
-	dev_set_msi_domain(dev,
-			   of_msi_get_domain(dev, np, DOMAIN_BUS_PLATFORM_MSI));
-}
+व्योम of_msi_configure(काष्ठा device *dev, काष्ठा device_node *np)
+अणु
+	dev_set_msi_करोमुख्य(dev,
+			   of_msi_get_करोमुख्य(dev, np, DOMAIN_BUS_PLATFORM_MSI));
+पूर्ण
 EXPORT_SYMBOL_GPL(of_msi_configure);

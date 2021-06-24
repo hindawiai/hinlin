@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <config.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <config.h>
 
-#include <assert.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <pthread.h>
-#include <stddef.h>
-#include <string.h>
-#include <sys/types.h>
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <मानकघोष.स>
+#समावेश <माला.स>
+#समावेश <sys/types.h>
 
-#include "int_typedefs.h"
+#समावेश "int_typedefs.h"
 
-#include "barriers.h"
-#include "bug_on.h"
-#include "locks.h"
-#include "misc.h"
-#include "preempt.h"
-#include "percpu.h"
-#include "workqueues.h"
+#समावेश "barriers.h"
+#समावेश "bug_on.h"
+#समावेश "locks.h"
+#समावेश "misc.h"
+#समावेश "preempt.h"
+#समावेश "percpu.h"
+#समावेश "workqueues.h"
 
-#include <linux/srcu.h>
+#समावेश <linux/srcu.h>
 
-/* Functions needed from modify_srcu.c */
-bool try_check_zero(struct srcu_struct *sp, int idx, int trycount);
-void srcu_flip(struct srcu_struct *sp);
+/* Functions needed from modअगरy_srcu.c */
+bool try_check_zero(काष्ठा srcu_काष्ठा *sp, पूर्णांक idx, पूर्णांक trycount);
+व्योम srcu_flip(काष्ठा srcu_काष्ठा *sp);
 
 /* Simpler implementation of synchronize_srcu that ignores batching. */
-void synchronize_srcu(struct srcu_struct *sp)
-{
-	int idx;
+व्योम synchronize_srcu(काष्ठा srcu_काष्ठा *sp)
+अणु
+	पूर्णांक idx;
 	/*
 	 * This code assumes that try_check_zero will succeed anyway,
-	 * so there is no point in multiple tries.
+	 * so there is no poपूर्णांक in multiple tries.
 	 */
-	const int trycount = 1;
+	स्थिर पूर्णांक trycount = 1;
 
 	might_sleep();
 
-	/* Ignore the lock, as multiple writers aren't working yet anyway. */
+	/* Ignore the lock, as multiple ग_लिखोrs aren't working yet anyway. */
 
 	idx = 1 ^ (sp->completed & 1);
 
@@ -48,4 +49,4 @@ void synchronize_srcu(struct srcu_struct *sp)
 	srcu_flip(sp);
 
 	assume(try_check_zero(sp, idx^1, trycount));
-}
+पूर्ण

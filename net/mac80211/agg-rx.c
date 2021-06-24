@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * HT handling
  *
@@ -17,12 +18,12 @@
  *
  * Aggregation on the RX side requires only implementing the
  * @ampdu_action callback that is invoked to start/stop any
- * block-ack sessions for RX aggregation.
+ * block-ack sessions क्रम RX aggregation.
  *
  * When RX aggregation is started by the peer, the driver is
- * notified via @ampdu_action function, with the
+ * notअगरied via @ampdu_action function, with the
  * %IEEE80211_AMPDU_RX_START action, and may reject the request
- * in which case a negative response is sent to the peer, if it
+ * in which हाल a negative response is sent to the peer, अगर it
  * accepts it a positive response is sent.
  *
  * While the session is active, the device/driver are required
@@ -31,221 +32,221 @@
  *
  * When the aggregation session is stopped again by the peer or
  * ourselves, the driver's @ampdu_action function will be called
- * with the action %IEEE80211_AMPDU_RX_STOP. In this case, the
+ * with the action %IEEE80211_AMPDU_RX_STOP. In this हाल, the
  * call must not fail.
  */
 
-#include <linux/ieee80211.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <net/mac80211.h>
-#include "ieee80211_i.h"
-#include "driver-ops.h"
+#समावेश <linux/ieee80211.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <net/mac80211.h>
+#समावेश "ieee80211_i.h"
+#समावेश "driver-ops.h"
 
-static void ieee80211_free_tid_rx(struct rcu_head *h)
-{
-	struct tid_ampdu_rx *tid_rx =
-		container_of(h, struct tid_ampdu_rx, rcu_head);
-	int i;
+अटल व्योम ieee80211_मुक्त_tid_rx(काष्ठा rcu_head *h)
+अणु
+	काष्ठा tid_ampdu_rx *tid_rx =
+		container_of(h, काष्ठा tid_ampdu_rx, rcu_head);
+	पूर्णांक i;
 
-	for (i = 0; i < tid_rx->buf_size; i++)
+	क्रम (i = 0; i < tid_rx->buf_size; i++)
 		__skb_queue_purge(&tid_rx->reorder_buf[i]);
-	kfree(tid_rx->reorder_buf);
-	kfree(tid_rx->reorder_time);
-	kfree(tid_rx);
-}
+	kमुक्त(tid_rx->reorder_buf);
+	kमुक्त(tid_rx->reorder_समय);
+	kमुक्त(tid_rx);
+पूर्ण
 
-void ___ieee80211_stop_rx_ba_session(struct sta_info *sta, u16 tid,
+व्योम ___ieee80211_stop_rx_ba_session(काष्ठा sta_info *sta, u16 tid,
 				     u16 initiator, u16 reason, bool tx)
-{
-	struct ieee80211_local *local = sta->local;
-	struct tid_ampdu_rx *tid_rx;
-	struct ieee80211_ampdu_params params = {
+अणु
+	काष्ठा ieee80211_local *local = sta->local;
+	काष्ठा tid_ampdu_rx *tid_rx;
+	काष्ठा ieee80211_ampdu_params params = अणु
 		.sta = &sta->sta,
 		.action = IEEE80211_AMPDU_RX_STOP,
 		.tid = tid,
 		.amsdu = false,
-		.timeout = 0,
+		.समयout = 0,
 		.ssn = 0,
-	};
+	पूर्ण;
 
-	lockdep_assert_held(&sta->ampdu_mlme.mtx);
+	lockdep_निश्चित_held(&sta->ampdu_mlme.mtx);
 
-	tid_rx = rcu_dereference_protected(sta->ampdu_mlme.tid_rx[tid],
+	tid_rx = rcu_dereference_रक्षित(sta->ampdu_mlme.tid_rx[tid],
 					lockdep_is_held(&sta->ampdu_mlme.mtx));
 
-	if (!test_bit(tid, sta->ampdu_mlme.agg_session_valid))
-		return;
+	अगर (!test_bit(tid, sta->ampdu_mlme.agg_session_valid))
+		वापस;
 
-	RCU_INIT_POINTER(sta->ampdu_mlme.tid_rx[tid], NULL);
+	RCU_INIT_POINTER(sta->ampdu_mlme.tid_rx[tid], शून्य);
 	__clear_bit(tid, sta->ampdu_mlme.agg_session_valid);
 
 	ht_dbg(sta->sdata,
 	       "Rx BA session stop requested for %pM tid %u %s reason: %d\n",
 	       sta->sta.addr, tid,
 	       initiator == WLAN_BACK_RECIPIENT ? "recipient" : "initiator",
-	       (int)reason);
+	       (पूर्णांक)reason);
 
-	if (drv_ampdu_action(local, sta->sdata, &params))
+	अगर (drv_ampdu_action(local, sta->sdata, &params))
 		sdata_info(sta->sdata,
 			   "HW problem - can not stop rx aggregation for %pM tid %d\n",
 			   sta->sta.addr, tid);
 
-	/* check if this is a self generated aggregation halt */
-	if (initiator == WLAN_BACK_RECIPIENT && tx)
+	/* check अगर this is a self generated aggregation halt */
+	अगर (initiator == WLAN_BACK_RECIPIENT && tx)
 		ieee80211_send_delba(sta->sdata, sta->sta.addr,
 				     tid, WLAN_BACK_RECIPIENT, reason);
 
 	/*
-	 * return here in case tid_rx is not assigned - which will happen if
+	 * वापस here in हाल tid_rx is not asचिन्हित - which will happen अगर
 	 * IEEE80211_HW_SUPPORTS_REORDERING_BUFFER is set.
 	 */
-	if (!tid_rx)
-		return;
+	अगर (!tid_rx)
+		वापस;
 
-	del_timer_sync(&tid_rx->session_timer);
+	del_समयr_sync(&tid_rx->session_समयr);
 
-	/* make sure ieee80211_sta_reorder_release() doesn't re-arm the timer */
+	/* make sure ieee80211_sta_reorder_release() करोesn't re-arm the समयr */
 	spin_lock_bh(&tid_rx->reorder_lock);
-	tid_rx->removed = true;
+	tid_rx->हटाओd = true;
 	spin_unlock_bh(&tid_rx->reorder_lock);
-	del_timer_sync(&tid_rx->reorder_timer);
+	del_समयr_sync(&tid_rx->reorder_समयr);
 
-	call_rcu(&tid_rx->rcu_head, ieee80211_free_tid_rx);
-}
+	call_rcu(&tid_rx->rcu_head, ieee80211_मुक्त_tid_rx);
+पूर्ण
 
-void __ieee80211_stop_rx_ba_session(struct sta_info *sta, u16 tid,
+व्योम __ieee80211_stop_rx_ba_session(काष्ठा sta_info *sta, u16 tid,
 				    u16 initiator, u16 reason, bool tx)
-{
+अणु
 	mutex_lock(&sta->ampdu_mlme.mtx);
 	___ieee80211_stop_rx_ba_session(sta, tid, initiator, reason, tx);
 	mutex_unlock(&sta->ampdu_mlme.mtx);
-}
+पूर्ण
 
-void ieee80211_stop_rx_ba_session(struct ieee80211_vif *vif, u16 ba_rx_bitmap,
-				  const u8 *addr)
-{
-	struct ieee80211_sub_if_data *sdata = vif_to_sdata(vif);
-	struct sta_info *sta;
-	int i;
+व्योम ieee80211_stop_rx_ba_session(काष्ठा ieee80211_vअगर *vअगर, u16 ba_rx_biपंचांगap,
+				  स्थिर u8 *addr)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = vअगर_to_sdata(vअगर);
+	काष्ठा sta_info *sta;
+	पूर्णांक i;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	sta = sta_info_get_bss(sdata, addr);
-	if (!sta) {
-		rcu_read_unlock();
-		return;
-	}
+	अगर (!sta) अणु
+		rcu_पढ़ो_unlock();
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < IEEE80211_NUM_TIDS; i++)
-		if (ba_rx_bitmap & BIT(i))
+	क्रम (i = 0; i < IEEE80211_NUM_TIDS; i++)
+		अगर (ba_rx_biपंचांगap & BIT(i))
 			set_bit(i, sta->ampdu_mlme.tid_rx_stop_requested);
 
 	ieee80211_queue_work(&sta->local->hw, &sta->ampdu_mlme.work);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL(ieee80211_stop_rx_ba_session);
 
 /*
- * After accepting the AddBA Request we activated a timer,
+ * After accepting the AddBA Request we activated a समयr,
  * resetting it after each frame that arrives from the originator.
  */
-static void sta_rx_agg_session_timer_expired(struct timer_list *t)
-{
-	struct tid_ampdu_rx *tid_rx = from_timer(tid_rx, t, session_timer);
-	struct sta_info *sta = tid_rx->sta;
+अटल व्योम sta_rx_agg_session_समयr_expired(काष्ठा समयr_list *t)
+अणु
+	काष्ठा tid_ampdu_rx *tid_rx = from_समयr(tid_rx, t, session_समयr);
+	काष्ठा sta_info *sta = tid_rx->sta;
 	u8 tid = tid_rx->tid;
-	unsigned long timeout;
+	अचिन्हित दीर्घ समयout;
 
-	timeout = tid_rx->last_rx + TU_TO_JIFFIES(tid_rx->timeout);
-	if (time_is_after_jiffies(timeout)) {
-		mod_timer(&tid_rx->session_timer, timeout);
-		return;
-	}
+	समयout = tid_rx->last_rx + TU_TO_JIFFIES(tid_rx->समयout);
+	अगर (समय_is_after_jअगरfies(समयout)) अणु
+		mod_समयr(&tid_rx->session_समयr, समयout);
+		वापस;
+	पूर्ण
 
 	ht_dbg(sta->sdata, "RX session timer expired on %pM tid %d\n",
 	       sta->sta.addr, tid);
 
-	set_bit(tid, sta->ampdu_mlme.tid_rx_timer_expired);
+	set_bit(tid, sta->ampdu_mlme.tid_rx_समयr_expired);
 	ieee80211_queue_work(&sta->local->hw, &sta->ampdu_mlme.work);
-}
+पूर्ण
 
-static void sta_rx_agg_reorder_timer_expired(struct timer_list *t)
-{
-	struct tid_ampdu_rx *tid_rx = from_timer(tid_rx, t, reorder_timer);
+अटल व्योम sta_rx_agg_reorder_समयr_expired(काष्ठा समयr_list *t)
+अणु
+	काष्ठा tid_ampdu_rx *tid_rx = from_समयr(tid_rx, t, reorder_समयr);
 
-	rcu_read_lock();
-	ieee80211_release_reorder_timeout(tid_rx->sta, tid_rx->tid);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_lock();
+	ieee80211_release_reorder_समयout(tid_rx->sta, tid_rx->tid);
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void ieee80211_add_addbaext(struct ieee80211_sub_if_data *sdata,
-				   struct sk_buff *skb,
-				   const struct ieee80211_addba_ext_ie *req)
-{
-	struct ieee80211_supported_band *sband;
-	struct ieee80211_addba_ext_ie *resp;
-	const struct ieee80211_sta_he_cap *he_cap;
+अटल व्योम ieee80211_add_addbaext(काष्ठा ieee80211_sub_अगर_data *sdata,
+				   काष्ठा sk_buff *skb,
+				   स्थिर काष्ठा ieee80211_addba_ext_ie *req)
+अणु
+	काष्ठा ieee80211_supported_band *sband;
+	काष्ठा ieee80211_addba_ext_ie *resp;
+	स्थिर काष्ठा ieee80211_sta_he_cap *he_cap;
 	u8 frag_level, cap_frag_level;
 	u8 *pos;
 
 	sband = ieee80211_get_sband(sdata);
-	if (!sband)
-		return;
-	he_cap = ieee80211_get_he_iftype_cap(sband, sdata->vif.type);
-	if (!he_cap)
-		return;
+	अगर (!sband)
+		वापस;
+	he_cap = ieee80211_get_he_अगरtype_cap(sband, sdata->vअगर.type);
+	अगर (!he_cap)
+		वापस;
 
-	pos = skb_put_zero(skb, 2 + sizeof(struct ieee80211_addba_ext_ie));
+	pos = skb_put_zero(skb, 2 + माप(काष्ठा ieee80211_addba_ext_ie));
 	*pos++ = WLAN_EID_ADDBA_EXT;
-	*pos++ = sizeof(struct ieee80211_addba_ext_ie);
-	resp = (struct ieee80211_addba_ext_ie *)pos;
+	*pos++ = माप(काष्ठा ieee80211_addba_ext_ie);
+	resp = (काष्ठा ieee80211_addba_ext_ie *)pos;
 	resp->data = req->data & IEEE80211_ADDBA_EXT_NO_FRAG;
 
 	frag_level = u32_get_bits(req->data,
 				  IEEE80211_ADDBA_EXT_FRAG_LEVEL_MASK);
 	cap_frag_level = u32_get_bits(he_cap->he_cap_elem.mac_cap_info[0],
 				      IEEE80211_HE_MAC_CAP0_DYNAMIC_FRAG_MASK);
-	if (frag_level > cap_frag_level)
+	अगर (frag_level > cap_frag_level)
 		frag_level = cap_frag_level;
 	resp->data |= u8_encode_bits(frag_level,
 				     IEEE80211_ADDBA_EXT_FRAG_LEVEL_MASK);
-}
+पूर्ण
 
-static void ieee80211_send_addba_resp(struct sta_info *sta, u8 *da, u16 tid,
+अटल व्योम ieee80211_send_addba_resp(काष्ठा sta_info *sta, u8 *da, u16 tid,
 				      u8 dialog_token, u16 status, u16 policy,
-				      u16 buf_size, u16 timeout,
-				      const struct ieee80211_addba_ext_ie *addbaext)
-{
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	struct ieee80211_local *local = sdata->local;
-	struct sk_buff *skb;
-	struct ieee80211_mgmt *mgmt;
+				      u16 buf_size, u16 समयout,
+				      स्थिर काष्ठा ieee80211_addba_ext_ie *addbaext)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sk_buff *skb;
+	काष्ठा ieee80211_mgmt *mgmt;
 	bool amsdu = ieee80211_hw_check(&local->hw, SUPPORTS_AMSDU_IN_AMPDU);
 	u16 capab;
 
-	skb = dev_alloc_skb(sizeof(*mgmt) +
-		    2 + sizeof(struct ieee80211_addba_ext_ie) +
+	skb = dev_alloc_skb(माप(*mgmt) +
+		    2 + माप(काष्ठा ieee80211_addba_ext_ie) +
 		    local->hw.extra_tx_headroom);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	skb_reserve(skb, local->hw.extra_tx_headroom);
 	mgmt = skb_put_zero(skb, 24);
-	memcpy(mgmt->da, da, ETH_ALEN);
-	memcpy(mgmt->sa, sdata->vif.addr, ETH_ALEN);
-	if (sdata->vif.type == NL80211_IFTYPE_AP ||
-	    sdata->vif.type == NL80211_IFTYPE_AP_VLAN ||
-	    sdata->vif.type == NL80211_IFTYPE_MESH_POINT)
-		memcpy(mgmt->bssid, sdata->vif.addr, ETH_ALEN);
-	else if (sdata->vif.type == NL80211_IFTYPE_STATION)
-		memcpy(mgmt->bssid, sdata->u.mgd.bssid, ETH_ALEN);
-	else if (sdata->vif.type == NL80211_IFTYPE_ADHOC)
-		memcpy(mgmt->bssid, sdata->u.ibss.bssid, ETH_ALEN);
+	स_नकल(mgmt->da, da, ETH_ALEN);
+	स_नकल(mgmt->sa, sdata->vअगर.addr, ETH_ALEN);
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_AP ||
+	    sdata->vअगर.type == NL80211_IFTYPE_AP_VLAN ||
+	    sdata->vअगर.type == NL80211_IFTYPE_MESH_POINT)
+		स_नकल(mgmt->bssid, sdata->vअगर.addr, ETH_ALEN);
+	अन्यथा अगर (sdata->vअगर.type == NL80211_IFTYPE_STATION)
+		स_नकल(mgmt->bssid, sdata->u.mgd.bssid, ETH_ALEN);
+	अन्यथा अगर (sdata->vअगर.type == NL80211_IFTYPE_ADHOC)
+		स_नकल(mgmt->bssid, sdata->u.ibss.bssid, ETH_ALEN);
 
 	mgmt->frame_control = cpu_to_le16(IEEE80211_FTYPE_MGMT |
 					  IEEE80211_STYPE_ACTION);
 
-	skb_put(skb, 1 + sizeof(mgmt->u.action.u.addba_resp));
+	skb_put(skb, 1 + माप(mgmt->u.action.u.addba_resp));
 	mgmt->u.action.category = WLAN_CATEGORY_BACK;
 	mgmt->u.action.u.addba_resp.action_code = WLAN_ACTION_ADDBA_RESP;
 	mgmt->u.action.u.addba_resp.dialog_token = dialog_token;
@@ -256,82 +257,82 @@ static void ieee80211_send_addba_resp(struct sta_info *sta, u8 *da, u16 tid,
 	capab |= u16_encode_bits(buf_size, IEEE80211_ADDBA_PARAM_BUF_SIZE_MASK);
 
 	mgmt->u.action.u.addba_resp.capab = cpu_to_le16(capab);
-	mgmt->u.action.u.addba_resp.timeout = cpu_to_le16(timeout);
+	mgmt->u.action.u.addba_resp.समयout = cpu_to_le16(समयout);
 	mgmt->u.action.u.addba_resp.status = cpu_to_le16(status);
 
-	if (sta->sta.he_cap.has_he && addbaext)
+	अगर (sta->sta.he_cap.has_he && addbaext)
 		ieee80211_add_addbaext(sdata, skb, addbaext);
 
 	ieee80211_tx_skb(sdata, skb);
-}
+पूर्ण
 
-void ___ieee80211_start_rx_ba_session(struct sta_info *sta,
-				      u8 dialog_token, u16 timeout,
+व्योम ___ieee80211_start_rx_ba_session(काष्ठा sta_info *sta,
+				      u8 dialog_token, u16 समयout,
 				      u16 start_seq_num, u16 ba_policy, u16 tid,
-				      u16 buf_size, bool tx, bool auto_seq,
-				      const struct ieee80211_addba_ext_ie *addbaext)
-{
-	struct ieee80211_local *local = sta->sdata->local;
-	struct tid_ampdu_rx *tid_agg_rx;
-	struct ieee80211_ampdu_params params = {
+				      u16 buf_size, bool tx, bool स्वतः_seq,
+				      स्थिर काष्ठा ieee80211_addba_ext_ie *addbaext)
+अणु
+	काष्ठा ieee80211_local *local = sta->sdata->local;
+	काष्ठा tid_ampdu_rx *tid_agg_rx;
+	काष्ठा ieee80211_ampdu_params params = अणु
 		.sta = &sta->sta,
 		.action = IEEE80211_AMPDU_RX_START,
 		.tid = tid,
 		.amsdu = false,
-		.timeout = timeout,
+		.समयout = समयout,
 		.ssn = start_seq_num,
-	};
-	int i, ret = -EOPNOTSUPP;
+	पूर्ण;
+	पूर्णांक i, ret = -EOPNOTSUPP;
 	u16 status = WLAN_STATUS_REQUEST_DECLINED;
 	u16 max_buf_size;
 
-	if (tid >= IEEE80211_FIRST_TSPEC_TSID) {
+	अगर (tid >= IEEE80211_FIRST_TSPEC_TSID) अणु
 		ht_dbg(sta->sdata,
 		       "STA %pM requests BA session on unsupported tid %d\n",
 		       sta->sta.addr, tid);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (!sta->sta.ht_cap.ht_supported &&
-	    sta->sdata->vif.bss_conf.chandef.chan->band != NL80211_BAND_6GHZ) {
+	अगर (!sta->sta.ht_cap.ht_supported &&
+	    sta->sdata->vअगर.bss_conf.chandef.chan->band != NL80211_BAND_6GHZ) अणु
 		ht_dbg(sta->sdata,
 		       "STA %pM erroneously requests BA session on tid %d w/o QoS\n",
 		       sta->sta.addr, tid);
-		/* send a response anyway, it's an error case if we get here */
-		goto end;
-	}
+		/* send a response anyway, it's an error हाल अगर we get here */
+		जाओ end;
+	पूर्ण
 
-	if (test_sta_flag(sta, WLAN_STA_BLOCK_BA)) {
+	अगर (test_sta_flag(sta, WLAN_STA_BLOCK_BA)) अणु
 		ht_dbg(sta->sdata,
 		       "Suspend in progress - Denying ADDBA request (%pM tid %d)\n",
 		       sta->sta.addr, tid);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (sta->sta.he_cap.has_he)
+	अगर (sta->sta.he_cap.has_he)
 		max_buf_size = IEEE80211_MAX_AMPDU_BUF;
-	else
+	अन्यथा
 		max_buf_size = IEEE80211_MAX_AMPDU_BUF_HT;
 
-	/* sanity check for incoming parameters:
-	 * check if configuration can support the BA policy
-	 * and if buffer size does not exceeds max value */
+	/* sanity check क्रम incoming parameters:
+	 * check अगर configuration can support the BA policy
+	 * and अगर buffer size करोes not exceeds max value */
 	/* XXX: check own ht delayed BA capability?? */
-	if (((ba_policy != 1) &&
+	अगर (((ba_policy != 1) &&
 	     (!(sta->sta.ht_cap.cap & IEEE80211_HT_CAP_DELAY_BA))) ||
-	    (buf_size > max_buf_size)) {
+	    (buf_size > max_buf_size)) अणु
 		status = WLAN_STATUS_INVALID_QOS_PARAM;
 		ht_dbg_ratelimited(sta->sdata,
 				   "AddBA Req with bad params from %pM on tid %u. policy %d, buffer size %d\n",
 				   sta->sta.addr, tid, ba_policy, buf_size);
-		goto end;
-	}
-	/* determine default buffer size */
-	if (buf_size == 0)
+		जाओ end;
+	पूर्ण
+	/* determine शेष buffer size */
+	अगर (buf_size == 0)
 		buf_size = max_buf_size;
 
-	/* make sure the size doesn't exceed the maximum supported by the hw */
-	if (buf_size > sta->sta.max_rx_aggregation_subframes)
+	/* make sure the size करोesn't exceed the maximum supported by the hw */
+	अगर (buf_size > sta->sta.max_rx_aggregation_subframes)
 		buf_size = sta->sta.max_rx_aggregation_subframes;
 	params.buf_size = buf_size;
 
@@ -339,29 +340,29 @@ void ___ieee80211_start_rx_ba_session(struct sta_info *sta,
 	       buf_size, sta->sta.addr);
 
 	/* examine state machine */
-	lockdep_assert_held(&sta->ampdu_mlme.mtx);
+	lockdep_निश्चित_held(&sta->ampdu_mlme.mtx);
 
-	if (test_bit(tid, sta->ampdu_mlme.agg_session_valid)) {
-		if (sta->ampdu_mlme.tid_rx_token[tid] == dialog_token) {
-			struct tid_ampdu_rx *tid_rx;
+	अगर (test_bit(tid, sta->ampdu_mlme.agg_session_valid)) अणु
+		अगर (sta->ampdu_mlme.tid_rx_token[tid] == dialog_token) अणु
+			काष्ठा tid_ampdu_rx *tid_rx;
 
 			ht_dbg_ratelimited(sta->sdata,
 					   "updated AddBA Req from %pM on tid %u\n",
 					   sta->sta.addr, tid);
-			/* We have no API to update the timeout value in the
-			 * driver so reject the timeout update if the timeout
+			/* We have no API to update the समयout value in the
+			 * driver so reject the समयout update अगर the समयout
 			 * changed. If it did not change, i.e., no real update,
 			 * just reply with success.
 			 */
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			tid_rx = rcu_dereference(sta->ampdu_mlme.tid_rx[tid]);
-			if (tid_rx && tid_rx->timeout == timeout)
+			अगर (tid_rx && tid_rx->समयout == समयout)
 				status = WLAN_STATUS_SUCCESS;
-			else
+			अन्यथा
 				status = WLAN_STATUS_REQUEST_DECLINED;
-			rcu_read_unlock();
-			goto end;
-		}
+			rcu_पढ़ो_unlock();
+			जाओ end;
+		पूर्ण
 
 		ht_dbg_ratelimited(sta->sdata,
 				   "unexpected AddBA Req from %pM on tid %u\n",
@@ -371,119 +372,119 @@ void ___ieee80211_start_rx_ba_session(struct sta_info *sta,
 		___ieee80211_stop_rx_ba_session(sta, tid, WLAN_BACK_RECIPIENT,
 						WLAN_STATUS_UNSPECIFIED_QOS,
 						false);
-	}
+	पूर्ण
 
-	if (ieee80211_hw_check(&local->hw, SUPPORTS_REORDERING_BUFFER)) {
+	अगर (ieee80211_hw_check(&local->hw, SUPPORTS_REORDERING_BUFFER)) अणु
 		ret = drv_ampdu_action(local, sta->sdata, &params);
 		ht_dbg(sta->sdata,
 		       "Rx A-MPDU request on %pM tid %d result %d\n",
 		       sta->sta.addr, tid, ret);
-		if (!ret)
+		अगर (!ret)
 			status = WLAN_STATUS_SUCCESS;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	/* prepare A-MPDU MLME for Rx aggregation */
-	tid_agg_rx = kzalloc(sizeof(*tid_agg_rx), GFP_KERNEL);
-	if (!tid_agg_rx)
-		goto end;
+	/* prepare A-MPDU MLME क्रम Rx aggregation */
+	tid_agg_rx = kzalloc(माप(*tid_agg_rx), GFP_KERNEL);
+	अगर (!tid_agg_rx)
+		जाओ end;
 
 	spin_lock_init(&tid_agg_rx->reorder_lock);
 
-	/* rx timer */
-	timer_setup(&tid_agg_rx->session_timer,
-		    sta_rx_agg_session_timer_expired, TIMER_DEFERRABLE);
+	/* rx समयr */
+	समयr_setup(&tid_agg_rx->session_समयr,
+		    sta_rx_agg_session_समयr_expired, TIMER_DEFERRABLE);
 
-	/* rx reorder timer */
-	timer_setup(&tid_agg_rx->reorder_timer,
-		    sta_rx_agg_reorder_timer_expired, 0);
+	/* rx reorder समयr */
+	समयr_setup(&tid_agg_rx->reorder_समयr,
+		    sta_rx_agg_reorder_समयr_expired, 0);
 
 	/* prepare reordering buffer */
 	tid_agg_rx->reorder_buf =
-		kcalloc(buf_size, sizeof(struct sk_buff_head), GFP_KERNEL);
-	tid_agg_rx->reorder_time =
-		kcalloc(buf_size, sizeof(unsigned long), GFP_KERNEL);
-	if (!tid_agg_rx->reorder_buf || !tid_agg_rx->reorder_time) {
-		kfree(tid_agg_rx->reorder_buf);
-		kfree(tid_agg_rx->reorder_time);
-		kfree(tid_agg_rx);
-		goto end;
-	}
+		kसुस्मृति(buf_size, माप(काष्ठा sk_buff_head), GFP_KERNEL);
+	tid_agg_rx->reorder_समय =
+		kसुस्मृति(buf_size, माप(अचिन्हित दीर्घ), GFP_KERNEL);
+	अगर (!tid_agg_rx->reorder_buf || !tid_agg_rx->reorder_समय) अणु
+		kमुक्त(tid_agg_rx->reorder_buf);
+		kमुक्त(tid_agg_rx->reorder_समय);
+		kमुक्त(tid_agg_rx);
+		जाओ end;
+	पूर्ण
 
-	for (i = 0; i < buf_size; i++)
+	क्रम (i = 0; i < buf_size; i++)
 		__skb_queue_head_init(&tid_agg_rx->reorder_buf[i]);
 
 	ret = drv_ampdu_action(local, sta->sdata, &params);
 	ht_dbg(sta->sdata, "Rx A-MPDU request on %pM tid %d result %d\n",
 	       sta->sta.addr, tid, ret);
-	if (ret) {
-		kfree(tid_agg_rx->reorder_buf);
-		kfree(tid_agg_rx->reorder_time);
-		kfree(tid_agg_rx);
-		goto end;
-	}
+	अगर (ret) अणु
+		kमुक्त(tid_agg_rx->reorder_buf);
+		kमुक्त(tid_agg_rx->reorder_समय);
+		kमुक्त(tid_agg_rx);
+		जाओ end;
+	पूर्ण
 
 	/* update data */
 	tid_agg_rx->ssn = start_seq_num;
 	tid_agg_rx->head_seq_num = start_seq_num;
 	tid_agg_rx->buf_size = buf_size;
-	tid_agg_rx->timeout = timeout;
+	tid_agg_rx->समयout = समयout;
 	tid_agg_rx->stored_mpdu_num = 0;
-	tid_agg_rx->auto_seq = auto_seq;
+	tid_agg_rx->स्वतः_seq = स्वतः_seq;
 	tid_agg_rx->started = false;
 	tid_agg_rx->reorder_buf_filtered = 0;
 	tid_agg_rx->tid = tid;
 	tid_agg_rx->sta = sta;
 	status = WLAN_STATUS_SUCCESS;
 
-	/* activate it for RX */
-	rcu_assign_pointer(sta->ampdu_mlme.tid_rx[tid], tid_agg_rx);
+	/* activate it क्रम RX */
+	rcu_assign_poपूर्णांकer(sta->ampdu_mlme.tid_rx[tid], tid_agg_rx);
 
-	if (timeout) {
-		mod_timer(&tid_agg_rx->session_timer, TU_TO_EXP_TIME(timeout));
-		tid_agg_rx->last_rx = jiffies;
-	}
+	अगर (समयout) अणु
+		mod_समयr(&tid_agg_rx->session_समयr, TU_TO_EXP_TIME(समयout));
+		tid_agg_rx->last_rx = jअगरfies;
+	पूर्ण
 
 end:
-	if (status == WLAN_STATUS_SUCCESS) {
+	अगर (status == WLAN_STATUS_SUCCESS) अणु
 		__set_bit(tid, sta->ampdu_mlme.agg_session_valid);
 		__clear_bit(tid, sta->ampdu_mlme.unexpected_agg);
 		sta->ampdu_mlme.tid_rx_token[tid] = dialog_token;
-	}
+	पूर्ण
 
-	if (tx)
+	अगर (tx)
 		ieee80211_send_addba_resp(sta, sta->sta.addr, tid,
 					  dialog_token, status, 1, buf_size,
-					  timeout, addbaext);
-}
+					  समयout, addbaext);
+पूर्ण
 
-static void __ieee80211_start_rx_ba_session(struct sta_info *sta,
-					    u8 dialog_token, u16 timeout,
+अटल व्योम __ieee80211_start_rx_ba_session(काष्ठा sta_info *sta,
+					    u8 dialog_token, u16 समयout,
 					    u16 start_seq_num, u16 ba_policy,
 					    u16 tid, u16 buf_size, bool tx,
-					    bool auto_seq,
-					    const struct ieee80211_addba_ext_ie *addbaext)
-{
+					    bool स्वतः_seq,
+					    स्थिर काष्ठा ieee80211_addba_ext_ie *addbaext)
+अणु
 	mutex_lock(&sta->ampdu_mlme.mtx);
-	___ieee80211_start_rx_ba_session(sta, dialog_token, timeout,
+	___ieee80211_start_rx_ba_session(sta, dialog_token, समयout,
 					 start_seq_num, ba_policy, tid,
-					 buf_size, tx, auto_seq, addbaext);
+					 buf_size, tx, स्वतः_seq, addbaext);
 	mutex_unlock(&sta->ampdu_mlme.mtx);
-}
+पूर्ण
 
-void ieee80211_process_addba_request(struct ieee80211_local *local,
-				     struct sta_info *sta,
-				     struct ieee80211_mgmt *mgmt,
-				     size_t len)
-{
-	u16 capab, tid, timeout, ba_policy, buf_size, start_seq_num;
-	struct ieee802_11_elems elems = { };
+व्योम ieee80211_process_addba_request(काष्ठा ieee80211_local *local,
+				     काष्ठा sta_info *sta,
+				     काष्ठा ieee80211_mgmt *mgmt,
+				     माप_प्रकार len)
+अणु
+	u16 capab, tid, समयout, ba_policy, buf_size, start_seq_num;
+	काष्ठा ieee802_11_elems elems = अणु पूर्ण;
 	u8 dialog_token;
-	int ies_len;
+	पूर्णांक ies_len;
 
 	/* extract session parameters from addba request frame */
 	dialog_token = mgmt->u.action.u.addba_req.dialog_token;
-	timeout = le16_to_cpu(mgmt->u.action.u.addba_req.timeout);
+	समयout = le16_to_cpu(mgmt->u.action.u.addba_req.समयout);
 	start_seq_num =
 		le16_to_cpu(mgmt->u.action.u.addba_req.start_seq_num) >> 4;
 
@@ -492,56 +493,56 @@ void ieee80211_process_addba_request(struct ieee80211_local *local,
 	tid = (capab & IEEE80211_ADDBA_PARAM_TID_MASK) >> 2;
 	buf_size = (capab & IEEE80211_ADDBA_PARAM_BUF_SIZE_MASK) >> 6;
 
-	ies_len = len - offsetof(struct ieee80211_mgmt,
+	ies_len = len - दुरत्व(काष्ठा ieee80211_mgmt,
 				 u.action.u.addba_req.variable);
-	if (ies_len) {
+	अगर (ies_len) अणु
 		ieee802_11_parse_elems(mgmt->u.action.u.addba_req.variable,
-                                ies_len, true, &elems, mgmt->bssid, NULL);
-		if (elems.parse_error)
-			return;
-	}
+                                ies_len, true, &elems, mgmt->bssid, शून्य);
+		अगर (elems.parse_error)
+			वापस;
+	पूर्ण
 
-	__ieee80211_start_rx_ba_session(sta, dialog_token, timeout,
+	__ieee80211_start_rx_ba_session(sta, dialog_token, समयout,
 					start_seq_num, ba_policy, tid,
 					buf_size, true, false,
 					elems.addba_ext_ie);
-}
+पूर्ण
 
-void ieee80211_manage_rx_ba_offl(struct ieee80211_vif *vif,
-				 const u8 *addr, unsigned int tid)
-{
-	struct ieee80211_sub_if_data *sdata = vif_to_sdata(vif);
-	struct ieee80211_local *local = sdata->local;
-	struct sta_info *sta;
+व्योम ieee80211_manage_rx_ba_offl(काष्ठा ieee80211_vअगर *vअगर,
+				 स्थिर u8 *addr, अचिन्हित पूर्णांक tid)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = vअगर_to_sdata(vअगर);
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sta_info *sta;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	sta = sta_info_get_bss(sdata, addr);
-	if (!sta)
-		goto unlock;
+	अगर (!sta)
+		जाओ unlock;
 
 	set_bit(tid, sta->ampdu_mlme.tid_rx_manage_offl);
 	ieee80211_queue_work(&local->hw, &sta->ampdu_mlme.work);
  unlock:
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 EXPORT_SYMBOL(ieee80211_manage_rx_ba_offl);
 
-void ieee80211_rx_ba_timer_expired(struct ieee80211_vif *vif,
-				   const u8 *addr, unsigned int tid)
-{
-	struct ieee80211_sub_if_data *sdata = vif_to_sdata(vif);
-	struct ieee80211_local *local = sdata->local;
-	struct sta_info *sta;
+व्योम ieee80211_rx_ba_समयr_expired(काष्ठा ieee80211_vअगर *vअगर,
+				   स्थिर u8 *addr, अचिन्हित पूर्णांक tid)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = vअगर_to_sdata(vअगर);
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sta_info *sta;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	sta = sta_info_get_bss(sdata, addr);
-	if (!sta)
-		goto unlock;
+	अगर (!sta)
+		जाओ unlock;
 
-	set_bit(tid, sta->ampdu_mlme.tid_rx_timer_expired);
+	set_bit(tid, sta->ampdu_mlme.tid_rx_समयr_expired);
 	ieee80211_queue_work(&local->hw, &sta->ampdu_mlme.work);
 
  unlock:
-	rcu_read_unlock();
-}
-EXPORT_SYMBOL(ieee80211_rx_ba_timer_expired);
+	rcu_पढ़ो_unlock();
+पूर्ण
+EXPORT_SYMBOL(ieee80211_rx_ba_समयr_expired);

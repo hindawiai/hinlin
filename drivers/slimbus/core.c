@@ -1,164 +1,165 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2011-2017, The Linux Foundation
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/idr.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/slimbus.h>
-#include "slimbus.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slimbus.h>
+#समावेश "slimbus.h"
 
-static DEFINE_IDA(ctrl_ida);
+अटल DEFINE_IDA(ctrl_ida);
 
-static const struct slim_device_id *slim_match(const struct slim_device_id *id,
-					       const struct slim_device *sbdev)
-{
-	while (id->manf_id != 0 || id->prod_code != 0) {
-		if (id->manf_id == sbdev->e_addr.manf_id &&
+अटल स्थिर काष्ठा slim_device_id *slim_match(स्थिर काष्ठा slim_device_id *id,
+					       स्थिर काष्ठा slim_device *sbdev)
+अणु
+	जबतक (id->manf_id != 0 || id->prod_code != 0) अणु
+		अगर (id->manf_id == sbdev->e_addr.manf_id &&
 		    id->prod_code == sbdev->e_addr.prod_code &&
 		    id->dev_index == sbdev->e_addr.dev_index &&
 		    id->instance == sbdev->e_addr.instance)
-			return id;
+			वापस id;
 		id++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int slim_device_match(struct device *dev, struct device_driver *drv)
-{
-	struct slim_device *sbdev = to_slim_device(dev);
-	struct slim_driver *sbdrv = to_slim_driver(drv);
+अटल पूर्णांक slim_device_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा slim_device *sbdev = to_slim_device(dev);
+	काष्ठा slim_driver *sbdrv = to_slim_driver(drv);
 
 	/* Attempt an OF style match first */
-	if (of_driver_match_device(dev, drv))
-		return 1;
+	अगर (of_driver_match_device(dev, drv))
+		वापस 1;
 
-	return !!slim_match(sbdrv->id_table, sbdev);
-}
+	वापस !!slim_match(sbdrv->id_table, sbdev);
+पूर्ण
 
-static void slim_device_update_status(struct slim_device *sbdev,
-				      enum slim_device_status status)
-{
-	struct slim_driver *sbdrv;
+अटल व्योम slim_device_update_status(काष्ठा slim_device *sbdev,
+				      क्रमागत slim_device_status status)
+अणु
+	काष्ठा slim_driver *sbdrv;
 
-	if (sbdev->status == status)
-		return;
+	अगर (sbdev->status == status)
+		वापस;
 
 	sbdev->status = status;
-	if (!sbdev->dev.driver)
-		return;
+	अगर (!sbdev->dev.driver)
+		वापस;
 
 	sbdrv = to_slim_driver(sbdev->dev.driver);
-	if (sbdrv->device_status)
+	अगर (sbdrv->device_status)
 		sbdrv->device_status(sbdev, sbdev->status);
-}
+पूर्ण
 
-static int slim_device_probe(struct device *dev)
-{
-	struct slim_device	*sbdev = to_slim_device(dev);
-	struct slim_driver	*sbdrv = to_slim_driver(dev->driver);
-	int ret;
+अटल पूर्णांक slim_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा slim_device	*sbdev = to_slim_device(dev);
+	काष्ठा slim_driver	*sbdrv = to_slim_driver(dev->driver);
+	पूर्णांक ret;
 
 	ret = sbdrv->probe(sbdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* try getting the logical address after probe */
 	ret = slim_get_logical_addr(sbdev);
-	if (!ret) {
+	अगर (!ret) अणु
 		slim_device_update_status(sbdev, SLIM_DEVICE_STATUS_UP);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&sbdev->dev, "Failed to get logical address\n");
 		ret = -EPROBE_DEFER;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int slim_device_remove(struct device *dev)
-{
-	struct slim_device *sbdev = to_slim_device(dev);
-	struct slim_driver *sbdrv;
+अटल पूर्णांक slim_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा slim_device *sbdev = to_slim_device(dev);
+	काष्ठा slim_driver *sbdrv;
 
-	if (dev->driver) {
+	अगर (dev->driver) अणु
 		sbdrv = to_slim_driver(dev->driver);
-		if (sbdrv->remove)
-			sbdrv->remove(sbdev);
-	}
+		अगर (sbdrv->हटाओ)
+			sbdrv->हटाओ(sbdev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int slim_device_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct slim_device *sbdev = to_slim_device(dev);
+अटल पूर्णांक slim_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा slim_device *sbdev = to_slim_device(dev);
 
-	return add_uevent_var(env, "MODALIAS=slim:%s", dev_name(&sbdev->dev));
-}
+	वापस add_uevent_var(env, "MODALIAS=slim:%s", dev_name(&sbdev->dev));
+पूर्ण
 
-struct bus_type slimbus_bus = {
+काष्ठा bus_type slimbus_bus = अणु
 	.name		= "slimbus",
 	.match		= slim_device_match,
 	.probe		= slim_device_probe,
-	.remove		= slim_device_remove,
+	.हटाओ		= slim_device_हटाओ,
 	.uevent		= slim_device_uevent,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(slimbus_bus);
 
 /*
- * __slim_driver_register() - Client driver registration with SLIMbus
+ * __slim_driver_रेजिस्टर() - Client driver registration with SLIMbus
  *
  * @drv:Client driver to be associated with client-device.
  * @owner: owning module/driver
  *
- * This API will register the client driver with the SLIMbus
+ * This API will रेजिस्टर the client driver with the SLIMbus
  * It is called from the driver's module-init function.
  */
-int __slim_driver_register(struct slim_driver *drv, struct module *owner)
-{
+पूर्णांक __slim_driver_रेजिस्टर(काष्ठा slim_driver *drv, काष्ठा module *owner)
+अणु
 	/* ID table and probe are mandatory */
-	if (!(drv->driver.of_match_table || drv->id_table) || !drv->probe)
-		return -EINVAL;
+	अगर (!(drv->driver.of_match_table || drv->id_table) || !drv->probe)
+		वापस -EINVAL;
 
 	drv->driver.bus = &slimbus_bus;
 	drv->driver.owner = owner;
 
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(__slim_driver_register);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(__slim_driver_रेजिस्टर);
 
 /*
- * slim_driver_unregister() - Undo effect of slim_driver_register
+ * slim_driver_unरेजिस्टर() - Unकरो effect of slim_driver_रेजिस्टर
  *
- * @drv: Client driver to be unregistered
+ * @drv: Client driver to be unरेजिस्टरed
  */
-void slim_driver_unregister(struct slim_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(slim_driver_unregister);
+व्योम slim_driver_unरेजिस्टर(काष्ठा slim_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(slim_driver_unरेजिस्टर);
 
-static void slim_dev_release(struct device *dev)
-{
-	struct slim_device *sbdev = to_slim_device(dev);
+अटल व्योम slim_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा slim_device *sbdev = to_slim_device(dev);
 
-	kfree(sbdev);
-}
+	kमुक्त(sbdev);
+पूर्ण
 
-static int slim_add_device(struct slim_controller *ctrl,
-			   struct slim_device *sbdev,
-			   struct device_node *node)
-{
+अटल पूर्णांक slim_add_device(काष्ठा slim_controller *ctrl,
+			   काष्ठा slim_device *sbdev,
+			   काष्ठा device_node *node)
+अणु
 	sbdev->dev.bus = &slimbus_bus;
 	sbdev->dev.parent = ctrl->dev;
 	sbdev->dev.release = slim_dev_release;
-	sbdev->dev.driver = NULL;
+	sbdev->dev.driver = शून्य;
 	sbdev->ctrl = ctrl;
 	INIT_LIST_HEAD(&sbdev->stream_list);
 	spin_lock_init(&sbdev->stream_list_lock);
@@ -171,62 +172,62 @@ static int slim_add_device(struct slim_controller *ctrl,
 				  sbdev->e_addr.dev_index,
 				  sbdev->e_addr.instance);
 
-	return device_register(&sbdev->dev);
-}
+	वापस device_रेजिस्टर(&sbdev->dev);
+पूर्ण
 
-static struct slim_device *slim_alloc_device(struct slim_controller *ctrl,
-					     struct slim_eaddr *eaddr,
-					     struct device_node *node)
-{
-	struct slim_device *sbdev;
-	int ret;
+अटल काष्ठा slim_device *slim_alloc_device(काष्ठा slim_controller *ctrl,
+					     काष्ठा slim_eaddr *eaddr,
+					     काष्ठा device_node *node)
+अणु
+	काष्ठा slim_device *sbdev;
+	पूर्णांक ret;
 
-	sbdev = kzalloc(sizeof(*sbdev), GFP_KERNEL);
-	if (!sbdev)
-		return NULL;
+	sbdev = kzalloc(माप(*sbdev), GFP_KERNEL);
+	अगर (!sbdev)
+		वापस शून्य;
 
 	sbdev->e_addr = *eaddr;
 	ret = slim_add_device(ctrl, sbdev, node);
-	if (ret) {
+	अगर (ret) अणु
 		put_device(&sbdev->dev);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return sbdev;
-}
+	वापस sbdev;
+पूर्ण
 
-static void of_register_slim_devices(struct slim_controller *ctrl)
-{
-	struct device *dev = ctrl->dev;
-	struct device_node *node;
+अटल व्योम of_रेजिस्टर_slim_devices(काष्ठा slim_controller *ctrl)
+अणु
+	काष्ठा device *dev = ctrl->dev;
+	काष्ठा device_node *node;
 
-	if (!ctrl->dev->of_node)
-		return;
+	अगर (!ctrl->dev->of_node)
+		वापस;
 
-	for_each_child_of_node(ctrl->dev->of_node, node) {
-		struct slim_device *sbdev;
-		struct slim_eaddr e_addr;
-		const char *compat = NULL;
-		int reg[2], ret;
-		int manf_id, prod_code;
+	क्रम_each_child_of_node(ctrl->dev->of_node, node) अणु
+		काष्ठा slim_device *sbdev;
+		काष्ठा slim_eaddr e_addr;
+		स्थिर अक्षर *compat = शून्य;
+		पूर्णांक reg[2], ret;
+		पूर्णांक manf_id, prod_code;
 
-		compat = of_get_property(node, "compatible", NULL);
-		if (!compat)
-			continue;
+		compat = of_get_property(node, "compatible", शून्य);
+		अगर (!compat)
+			जारी;
 
-		ret = sscanf(compat, "slim%x,%x", &manf_id, &prod_code);
-		if (ret != 2) {
+		ret = माला_पूछो(compat, "slim%x,%x", &manf_id, &prod_code);
+		अगर (ret != 2) अणु
 			dev_err(dev, "Manf ID & Product code not found %s\n",
 				compat);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		ret = of_property_read_u32_array(node, "reg", reg, 2);
-		if (ret) {
+		ret = of_property_पढ़ो_u32_array(node, "reg", reg, 2);
+		अगर (ret) अणु
 			dev_err(dev, "Device and Instance id not found:%d\n",
 				ret);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		e_addr.dev_index = reg[0];
 		e_addr.instance = reg[1];
@@ -234,132 +235,132 @@ static void of_register_slim_devices(struct slim_controller *ctrl)
 		e_addr.prod_code = prod_code;
 
 		sbdev = slim_alloc_device(ctrl, &e_addr, node);
-		if (!sbdev)
-			continue;
-	}
-}
+		अगर (!sbdev)
+			जारी;
+	पूर्ण
+पूर्ण
 
 /*
- * slim_register_controller() - Controller bring-up and registration.
+ * slim_रेजिस्टर_controller() - Controller bring-up and registration.
  *
- * @ctrl: Controller to be registered.
+ * @ctrl: Controller to be रेजिस्टरed.
  *
- * A controller is registered with the framework using this API.
- * If devices on a controller were registered before controller,
+ * A controller is रेजिस्टरed with the framework using this API.
+ * If devices on a controller were रेजिस्टरed beक्रमe controller,
  * this will make sure that they get probed when controller is up
  */
-int slim_register_controller(struct slim_controller *ctrl)
-{
-	int id;
+पूर्णांक slim_रेजिस्टर_controller(काष्ठा slim_controller *ctrl)
+अणु
+	पूर्णांक id;
 
 	id = ida_simple_get(&ctrl_ida, 0, 0, GFP_KERNEL);
-	if (id < 0)
-		return id;
+	अगर (id < 0)
+		वापस id;
 
 	ctrl->id = id;
 
-	if (!ctrl->min_cg)
+	अगर (!ctrl->min_cg)
 		ctrl->min_cg = SLIM_MIN_CLK_GEAR;
-	if (!ctrl->max_cg)
+	अगर (!ctrl->max_cg)
 		ctrl->max_cg = SLIM_MAX_CLK_GEAR;
 
 	ida_init(&ctrl->laddr_ida);
 	idr_init(&ctrl->tid_idr);
 	mutex_init(&ctrl->lock);
 	mutex_init(&ctrl->sched.m_reconf);
-	init_completion(&ctrl->sched.pause_comp);
+	init_completion(&ctrl->sched.छोड़ो_comp);
 	spin_lock_init(&ctrl->txn_lock);
 
 	dev_dbg(ctrl->dev, "Bus [%s] registered:dev:%p\n",
 		ctrl->name, ctrl->dev);
 
-	of_register_slim_devices(ctrl);
+	of_रेजिस्टर_slim_devices(ctrl);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(slim_register_controller);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(slim_रेजिस्टर_controller);
 
-/* slim_remove_device: Remove the effect of slim_add_device() */
-static void slim_remove_device(struct slim_device *sbdev)
-{
+/* slim_हटाओ_device: Remove the effect of slim_add_device() */
+अटल व्योम slim_हटाओ_device(काष्ठा slim_device *sbdev)
+अणु
 	of_node_put(sbdev->dev.of_node);
-	device_unregister(&sbdev->dev);
-}
+	device_unरेजिस्टर(&sbdev->dev);
+पूर्ण
 
-static int slim_ctrl_remove_device(struct device *dev, void *null)
-{
-	slim_remove_device(to_slim_device(dev));
-	return 0;
-}
+अटल पूर्णांक slim_ctrl_हटाओ_device(काष्ठा device *dev, व्योम *null)
+अणु
+	slim_हटाओ_device(to_slim_device(dev));
+	वापस 0;
+पूर्ण
 
 /**
- * slim_unregister_controller() - Controller tear-down.
+ * slim_unरेजिस्टर_controller() - Controller tear-करोwn.
  *
- * @ctrl: Controller to tear-down.
+ * @ctrl: Controller to tear-करोwn.
  */
-int slim_unregister_controller(struct slim_controller *ctrl)
-{
+पूर्णांक slim_unरेजिस्टर_controller(काष्ठा slim_controller *ctrl)
+अणु
 	/* Remove all clients */
-	device_for_each_child(ctrl->dev, NULL, slim_ctrl_remove_device);
-	ida_simple_remove(&ctrl_ida, ctrl->id);
+	device_क्रम_each_child(ctrl->dev, शून्य, slim_ctrl_हटाओ_device);
+	ida_simple_हटाओ(&ctrl_ida, ctrl->id);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(slim_unregister_controller);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(slim_unरेजिस्टर_controller);
 
 /**
- * slim_report_absent() - Controller calls this function when a device
- *	reports absent, OR when the device cannot be communicated with
+ * slim_report_असलent() - Controller calls this function when a device
+ *	reports असलent, OR when the device cannot be communicated with
  *
- * @sbdev: Device that cannot be reached, or sent report absent
+ * @sbdev: Device that cannot be reached, or sent report असलent
  */
-void slim_report_absent(struct slim_device *sbdev)
-{
-	struct slim_controller *ctrl = sbdev->ctrl;
+व्योम slim_report_असलent(काष्ठा slim_device *sbdev)
+अणु
+	काष्ठा slim_controller *ctrl = sbdev->ctrl;
 
-	if (!ctrl)
-		return;
+	अगर (!ctrl)
+		वापस;
 
 	/* invalidate logical addresses */
 	mutex_lock(&ctrl->lock);
 	sbdev->is_laddr_valid = false;
 	mutex_unlock(&ctrl->lock);
-	if (!ctrl->get_laddr)
-		ida_simple_remove(&ctrl->laddr_ida, sbdev->laddr);
+	अगर (!ctrl->get_laddr)
+		ida_simple_हटाओ(&ctrl->laddr_ida, sbdev->laddr);
 	slim_device_update_status(sbdev, SLIM_DEVICE_STATUS_DOWN);
-}
-EXPORT_SYMBOL_GPL(slim_report_absent);
+पूर्ण
+EXPORT_SYMBOL_GPL(slim_report_असलent);
 
-static bool slim_eaddr_equal(struct slim_eaddr *a, struct slim_eaddr *b)
-{
-	return (a->manf_id == b->manf_id &&
+अटल bool slim_eaddr_equal(काष्ठा slim_eaddr *a, काष्ठा slim_eaddr *b)
+अणु
+	वापस (a->manf_id == b->manf_id &&
 		a->prod_code == b->prod_code &&
 		a->dev_index == b->dev_index &&
 		a->instance == b->instance);
-}
+पूर्ण
 
-static int slim_match_dev(struct device *dev, void *data)
-{
-	struct slim_eaddr *e_addr = data;
-	struct slim_device *sbdev = to_slim_device(dev);
+अटल पूर्णांक slim_match_dev(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा slim_eaddr *e_addr = data;
+	काष्ठा slim_device *sbdev = to_slim_device(dev);
 
-	return slim_eaddr_equal(&sbdev->e_addr, e_addr);
-}
+	वापस slim_eaddr_equal(&sbdev->e_addr, e_addr);
+पूर्ण
 
-static struct slim_device *find_slim_device(struct slim_controller *ctrl,
-					    struct slim_eaddr *eaddr)
-{
-	struct slim_device *sbdev;
-	struct device *dev;
+अटल काष्ठा slim_device *find_slim_device(काष्ठा slim_controller *ctrl,
+					    काष्ठा slim_eaddr *eaddr)
+अणु
+	काष्ठा slim_device *sbdev;
+	काष्ठा device *dev;
 
 	dev = device_find_child(ctrl->dev, eaddr, slim_match_dev);
-	if (dev) {
+	अगर (dev) अणु
 		sbdev = to_slim_device(dev);
-		return sbdev;
-	}
+		वापस sbdev;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * slim_get_device() - get handle to a device.
@@ -367,95 +368,95 @@ static struct slim_device *find_slim_device(struct slim_controller *ctrl,
  * @ctrl: Controller on which this device will be added/queried
  * @e_addr: Enumeration address of the device to be queried
  *
- * Return: pointer to a device if it has already reported. Creates a new
- * device and returns pointer to it if the device has not yet enumerated.
+ * Return: poपूर्णांकer to a device अगर it has alपढ़ोy reported. Creates a new
+ * device and वापसs poपूर्णांकer to it अगर the device has not yet क्रमागतerated.
  */
-struct slim_device *slim_get_device(struct slim_controller *ctrl,
-				    struct slim_eaddr *e_addr)
-{
-	struct slim_device *sbdev;
+काष्ठा slim_device *slim_get_device(काष्ठा slim_controller *ctrl,
+				    काष्ठा slim_eaddr *e_addr)
+अणु
+	काष्ठा slim_device *sbdev;
 
 	sbdev = find_slim_device(ctrl, e_addr);
-	if (!sbdev) {
-		sbdev = slim_alloc_device(ctrl, e_addr, NULL);
-		if (!sbdev)
-			return ERR_PTR(-ENOMEM);
-	}
+	अगर (!sbdev) अणु
+		sbdev = slim_alloc_device(ctrl, e_addr, शून्य);
+		अगर (!sbdev)
+			वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	return sbdev;
-}
+	वापस sbdev;
+पूर्ण
 EXPORT_SYMBOL_GPL(slim_get_device);
 
-static int of_slim_match_dev(struct device *dev, void *data)
-{
-	struct device_node *np = data;
-	struct slim_device *sbdev = to_slim_device(dev);
+अटल पूर्णांक of_slim_match_dev(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा device_node *np = data;
+	काष्ठा slim_device *sbdev = to_slim_device(dev);
 
-	return (sbdev->dev.of_node == np);
-}
+	वापस (sbdev->dev.of_node == np);
+पूर्ण
 
-static struct slim_device *of_find_slim_device(struct slim_controller *ctrl,
-					       struct device_node *np)
-{
-	struct slim_device *sbdev;
-	struct device *dev;
+अटल काष्ठा slim_device *of_find_slim_device(काष्ठा slim_controller *ctrl,
+					       काष्ठा device_node *np)
+अणु
+	काष्ठा slim_device *sbdev;
+	काष्ठा device *dev;
 
 	dev = device_find_child(ctrl->dev, np, of_slim_match_dev);
-	if (dev) {
+	अगर (dev) अणु
 		sbdev = to_slim_device(dev);
-		return sbdev;
-	}
+		वापस sbdev;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * of_slim_get_device() - get handle to a device using dt node.
  *
  * @ctrl: Controller on which this device will be added/queried
- * @np: node pointer to device
+ * @np: node poपूर्णांकer to device
  *
- * Return: pointer to a device if it has already reported. Creates a new
- * device and returns pointer to it if the device has not yet enumerated.
+ * Return: poपूर्णांकer to a device अगर it has alपढ़ोy reported. Creates a new
+ * device and वापसs poपूर्णांकer to it अगर the device has not yet क्रमागतerated.
  */
-struct slim_device *of_slim_get_device(struct slim_controller *ctrl,
-				       struct device_node *np)
-{
-	return of_find_slim_device(ctrl, np);
-}
+काष्ठा slim_device *of_slim_get_device(काष्ठा slim_controller *ctrl,
+				       काष्ठा device_node *np)
+अणु
+	वापस of_find_slim_device(ctrl, np);
+पूर्ण
 EXPORT_SYMBOL_GPL(of_slim_get_device);
 
-static int slim_device_alloc_laddr(struct slim_device *sbdev,
+अटल पूर्णांक slim_device_alloc_laddr(काष्ठा slim_device *sbdev,
 				   bool report_present)
-{
-	struct slim_controller *ctrl = sbdev->ctrl;
+अणु
+	काष्ठा slim_controller *ctrl = sbdev->ctrl;
 	u8 laddr;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&ctrl->lock);
-	if (ctrl->get_laddr) {
+	अगर (ctrl->get_laddr) अणु
 		ret = ctrl->get_laddr(ctrl, &sbdev->e_addr, &laddr);
-		if (ret < 0)
-			goto err;
-	} else if (report_present) {
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण अन्यथा अगर (report_present) अणु
 		ret = ida_simple_get(&ctrl->laddr_ida,
 				     0, SLIM_LA_MANAGER - 1, GFP_KERNEL);
-		if (ret < 0)
-			goto err;
+		अगर (ret < 0)
+			जाओ err;
 
 		laddr = ret;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (ctrl->set_laddr) {
+	अगर (ctrl->set_laddr) अणु
 		ret = ctrl->set_laddr(ctrl, &sbdev->e_addr, laddr);
-		if (ret) {
+		अगर (ret) अणु
 			ret = -EINVAL;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	sbdev->laddr = laddr;
 	sbdev->is_laddr_valid = true;
@@ -467,56 +468,56 @@ static int slim_device_alloc_laddr(struct slim_device *sbdev,
 		laddr, sbdev->e_addr.manf_id, sbdev->e_addr.prod_code,
 		sbdev->e_addr.dev_index, sbdev->e_addr.instance);
 
-	return 0;
+	वापस 0;
 
 err:
 	mutex_unlock(&ctrl->lock);
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
 /**
- * slim_device_report_present() - Report enumerated device.
+ * slim_device_report_present() - Report क्रमागतerated device.
  *
- * @ctrl: Controller with which device is enumerated.
+ * @ctrl: Controller with which device is क्रमागतerated.
  * @e_addr: Enumeration address of the device.
- * @laddr: Return logical address (if valid flag is false)
+ * @laddr: Return logical address (अगर valid flag is false)
  *
  * Called by controller in response to REPORT_PRESENT. Framework will assign
- * a logical address to this enumeration address.
- * Function returns -EXFULL to indicate that all logical addresses are already
+ * a logical address to this क्रमागतeration address.
+ * Function वापसs -EXFULL to indicate that all logical addresses are alपढ़ोy
  * taken.
  */
-int slim_device_report_present(struct slim_controller *ctrl,
-			       struct slim_eaddr *e_addr, u8 *laddr)
-{
-	struct slim_device *sbdev;
-	int ret;
+पूर्णांक slim_device_report_present(काष्ठा slim_controller *ctrl,
+			       काष्ठा slim_eaddr *e_addr, u8 *laddr)
+अणु
+	काष्ठा slim_device *sbdev;
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(ctrl->dev);
+	ret = pm_runसमय_get_sync(ctrl->dev);
 
-	if (ctrl->sched.clk_state != SLIM_CLK_ACTIVE) {
+	अगर (ctrl->sched.clk_state != SLIM_CLK_ACTIVE) अणु
 		dev_err(ctrl->dev, "slim ctrl not active,state:%d, ret:%d\n",
 				    ctrl->sched.clk_state, ret);
-		goto slimbus_not_active;
-	}
+		जाओ slimbus_not_active;
+	पूर्ण
 
 	sbdev = slim_get_device(ctrl, e_addr);
-	if (IS_ERR(sbdev))
-		return -ENODEV;
+	अगर (IS_ERR(sbdev))
+		वापस -ENODEV;
 
-	if (sbdev->is_laddr_valid) {
+	अगर (sbdev->is_laddr_valid) अणु
 		*laddr = sbdev->laddr;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = slim_device_alloc_laddr(sbdev, true);
 
 slimbus_not_active:
-	pm_runtime_mark_last_busy(ctrl->dev);
-	pm_runtime_put_autosuspend(ctrl->dev);
-	return ret;
-}
+	pm_runसमय_mark_last_busy(ctrl->dev);
+	pm_runसमय_put_स्वतःsuspend(ctrl->dev);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(slim_device_report_present);
 
 /**
@@ -524,28 +525,28 @@ EXPORT_SYMBOL_GPL(slim_device_report_present);
  *
  * @sbdev: client handle requesting the address.
  *
- * Return: zero if a logical address is valid or a new logical address
- * has been assigned. error code in case of error.
+ * Return: zero अगर a logical address is valid or a new logical address
+ * has been asचिन्हित. error code in हाल of error.
  */
-int slim_get_logical_addr(struct slim_device *sbdev)
-{
-	if (!sbdev->is_laddr_valid)
-		return slim_device_alloc_laddr(sbdev, false);
+पूर्णांक slim_get_logical_addr(काष्ठा slim_device *sbdev)
+अणु
+	अगर (!sbdev->is_laddr_valid)
+		वापस slim_device_alloc_laddr(sbdev, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(slim_get_logical_addr);
 
-static void __exit slimbus_exit(void)
-{
-	bus_unregister(&slimbus_bus);
-}
-module_exit(slimbus_exit);
+अटल व्योम __निकास slimbus_निकास(व्योम)
+अणु
+	bus_unरेजिस्टर(&slimbus_bus);
+पूर्ण
+module_निकास(slimbus_निकास);
 
-static int __init slimbus_init(void)
-{
-	return bus_register(&slimbus_bus);
-}
+अटल पूर्णांक __init slimbus_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&slimbus_bus);
+पूर्ण
 postcore_initcall(slimbus_init);
 
 MODULE_LICENSE("GPL v2");

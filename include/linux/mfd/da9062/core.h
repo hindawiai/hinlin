@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015-2017  Dialog Semiconductor
  */
 
-#ifndef __MFD_DA9062_CORE_H__
-#define __MFD_DA9062_CORE_H__
+#अगर_अघोषित __MFD_DA9062_CORE_H__
+#घोषणा __MFD_DA9062_CORE_H__
 
-#include <linux/interrupt.h>
-#include <linux/mfd/da9062/registers.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mfd/da9062/रेजिस्टरs.h>
 
-enum da9062_compatible_types {
+क्रमागत da9062_compatible_types अणु
 	COMPAT_TYPE_DA9061 = 1,
 	COMPAT_TYPE_DA9062,
-};
+पूर्ण;
 
-enum da9061_irqs {
+क्रमागत da9061_irqs अणु
 	/* IRQ A */
 	DA9061_IRQ_ONKEY,
 	DA9061_IRQ_WDG_WARN,
@@ -32,9 +33,9 @@ enum da9061_irqs {
 	DA9061_IRQ_GPI4,
 
 	DA9061_NUM_IRQ,
-};
+पूर्ण;
 
-enum da9062_irqs {
+क्रमागत da9062_irqs अणु
 	/* IRQ A */
 	DA9062_IRQ_ONKEY,
 	DA9062_IRQ_ALARM,
@@ -54,13 +55,13 @@ enum da9062_irqs {
 	DA9062_IRQ_GPI4,
 
 	DA9062_NUM_IRQ,
-};
+पूर्ण;
 
-struct da9062 {
-	struct device *dev;
-	struct regmap *regmap;
-	struct regmap_irq_chip_data *regmap_irq;
-	enum da9062_compatible_types chip_type;
-};
+काष्ठा da9062 अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	काष्ठा regmap_irq_chip_data *regmap_irq;
+	क्रमागत da9062_compatible_types chip_type;
+पूर्ण;
 
-#endif /* __MFD_DA9062_CORE_H__ */
+#पूर्ण_अगर /* __MFD_DA9062_CORE_H__ */

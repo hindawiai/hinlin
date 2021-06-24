@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * cx20442.h  --  audio driver for CX20442
+ * cx20442.h  --  audio driver क्रम CX20442
  *
  * Copyright 2009 Janusz Krzysztofik <jkrzyszt@tis.icnet.pl>
  */
 
-#ifndef _CX20442_CODEC_H
-#define _CX20442_CODEC_H
+#अगर_अघोषित _CX20442_CODEC_H
+#घोषणा _CX20442_CODEC_H
 
-extern struct tty_ldisc_ops v253_ops;
+बाह्य काष्ठा tty_ldisc_ops v253_ops;
 
-#endif
+#पूर्ण_अगर

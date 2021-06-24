@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  linux/drivers/net/ethernet/ibm/ehea/ehea_qmr.c
  *
- *  eHEA ethernet device driver for IBM eServer System p
+ *  eHEA ethernet device driver क्रम IBM eServer System p
  *
  *  (C) Copyright IBM Corp. 2006
  *
@@ -12,111 +13,111 @@
  *       Thomas Klein <tklein@de.ibm.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include "ehea.h"
-#include "ehea_phyp.h"
-#include "ehea_qmr.h"
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश "ehea.h"
+#समावेश "ehea_phyp.h"
+#समावेश "ehea_qmr.h"
 
-static struct ehea_bmap *ehea_bmap;
+अटल काष्ठा ehea_bmap *ehea_bmap;
 
-static void *hw_qpageit_get_inc(struct hw_queue *queue)
-{
-	void *retvalue = hw_qeit_get(queue);
+अटल व्योम *hw_qpageit_get_inc(काष्ठा hw_queue *queue)
+अणु
+	व्योम *retvalue = hw_qeit_get(queue);
 
 	queue->current_q_offset += queue->pagesize;
-	if (queue->current_q_offset > queue->queue_length) {
+	अगर (queue->current_q_offset > queue->queue_length) अणु
 		queue->current_q_offset -= queue->pagesize;
-		retvalue = NULL;
-	} else if (((u64) retvalue) & (EHEA_PAGESIZE-1)) {
+		retvalue = शून्य;
+	पूर्ण अन्यथा अगर (((u64) retvalue) & (EHEA_PAGESIZE-1)) अणु
 		pr_err("not on pageboundary\n");
-		retvalue = NULL;
-	}
-	return retvalue;
-}
+		retvalue = शून्य;
+	पूर्ण
+	वापस retvalue;
+पूर्ण
 
-static int hw_queue_ctor(struct hw_queue *queue, const u32 nr_of_pages,
-			  const u32 pagesize, const u32 qe_size)
-{
-	int pages_per_kpage = PAGE_SIZE / pagesize;
-	int i, k;
+अटल पूर्णांक hw_queue_ctor(काष्ठा hw_queue *queue, स्थिर u32 nr_of_pages,
+			  स्थिर u32 pagesize, स्थिर u32 qe_size)
+अणु
+	पूर्णांक pages_per_kpage = PAGE_SIZE / pagesize;
+	पूर्णांक i, k;
 
-	if ((pagesize > PAGE_SIZE) || (!pages_per_kpage)) {
+	अगर ((pagesize > PAGE_SIZE) || (!pages_per_kpage)) अणु
 		pr_err("pagesize conflict! kernel pagesize=%d, ehea pagesize=%d\n",
-		       (int)PAGE_SIZE, (int)pagesize);
-		return -EINVAL;
-	}
+		       (पूर्णांक)PAGE_SIZE, (पूर्णांक)pagesize);
+		वापस -EINVAL;
+	पूर्ण
 
 	queue->queue_length = nr_of_pages * pagesize;
-	queue->queue_pages = kmalloc_array(nr_of_pages, sizeof(void *),
+	queue->queue_pages = kदो_स्मृति_array(nr_of_pages, माप(व्योम *),
 					   GFP_KERNEL);
-	if (!queue->queue_pages)
-		return -ENOMEM;
+	अगर (!queue->queue_pages)
+		वापस -ENOMEM;
 
 	/*
-	 * allocate pages for queue:
+	 * allocate pages क्रम queue:
 	 * outer loop allocates whole kernel pages (page aligned) and
-	 * inner loop divides a kernel page into smaller hea queue pages
+	 * inner loop भागides a kernel page पूर्णांकo smaller hea queue pages
 	 */
 	i = 0;
-	while (i < nr_of_pages) {
+	जबतक (i < nr_of_pages) अणु
 		u8 *kpage = (u8 *)get_zeroed_page(GFP_KERNEL);
-		if (!kpage)
-			goto out_nomem;
-		for (k = 0; k < pages_per_kpage && i < nr_of_pages; k++) {
-			(queue->queue_pages)[i] = (struct ehea_page *)kpage;
+		अगर (!kpage)
+			जाओ out_nomem;
+		क्रम (k = 0; k < pages_per_kpage && i < nr_of_pages; k++) अणु
+			(queue->queue_pages)[i] = (काष्ठा ehea_page *)kpage;
 			kpage += pagesize;
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	queue->current_q_offset = 0;
 	queue->qe_size = qe_size;
 	queue->pagesize = pagesize;
 	queue->toggle_state = 1;
 
-	return 0;
+	वापस 0;
 out_nomem:
-	for (i = 0; i < nr_of_pages; i += pages_per_kpage) {
-		if (!(queue->queue_pages)[i])
-			break;
-		free_page((unsigned long)(queue->queue_pages)[i]);
-	}
-	return -ENOMEM;
-}
+	क्रम (i = 0; i < nr_of_pages; i += pages_per_kpage) अणु
+		अगर (!(queue->queue_pages)[i])
+			अवरोध;
+		मुक्त_page((अचिन्हित दीर्घ)(queue->queue_pages)[i]);
+	पूर्ण
+	वापस -ENOMEM;
+पूर्ण
 
-static void hw_queue_dtor(struct hw_queue *queue)
-{
-	int pages_per_kpage;
-	int i, nr_pages;
+अटल व्योम hw_queue_dtor(काष्ठा hw_queue *queue)
+अणु
+	पूर्णांक pages_per_kpage;
+	पूर्णांक i, nr_pages;
 
-	if (!queue || !queue->queue_pages)
-		return;
+	अगर (!queue || !queue->queue_pages)
+		वापस;
 
 	pages_per_kpage = PAGE_SIZE / queue->pagesize;
 
 	nr_pages = queue->queue_length / queue->pagesize;
 
-	for (i = 0; i < nr_pages; i += pages_per_kpage)
-		free_page((unsigned long)(queue->queue_pages)[i]);
+	क्रम (i = 0; i < nr_pages; i += pages_per_kpage)
+		मुक्त_page((अचिन्हित दीर्घ)(queue->queue_pages)[i]);
 
-	kfree(queue->queue_pages);
-}
+	kमुक्त(queue->queue_pages);
+पूर्ण
 
-struct ehea_cq *ehea_create_cq(struct ehea_adapter *adapter,
-			       int nr_of_cqe, u64 eq_handle, u32 cq_token)
-{
-	struct ehea_cq *cq;
+काष्ठा ehea_cq *ehea_create_cq(काष्ठा ehea_adapter *adapter,
+			       पूर्णांक nr_of_cqe, u64 eq_handle, u32 cq_token)
+अणु
+	काष्ठा ehea_cq *cq;
 	u64 hret, rpage;
 	u32 counter;
-	int ret;
-	void *vpage;
+	पूर्णांक ret;
+	व्योम *vpage;
 
-	cq = kzalloc(sizeof(*cq), GFP_KERNEL);
-	if (!cq)
-		goto out_nomem;
+	cq = kzalloc(माप(*cq), GFP_KERNEL);
+	अगर (!cq)
+		जाओ out_nomem;
 
 	cq->attr.max_nr_of_cqes = nr_of_cqe;
 	cq->attr.cq_token = cq_token;
@@ -126,118 +127,118 @@ struct ehea_cq *ehea_create_cq(struct ehea_adapter *adapter,
 
 	hret = ehea_h_alloc_resource_cq(adapter->handle, &cq->attr,
 					&cq->fw_handle, &cq->epas);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("alloc_resource_cq failed\n");
-		goto out_freemem;
-	}
+		जाओ out_मुक्तmem;
+	पूर्ण
 
 	ret = hw_queue_ctor(&cq->hw_queue, cq->attr.nr_pages,
-			    EHEA_PAGESIZE, sizeof(struct ehea_cqe));
-	if (ret)
-		goto out_freeres;
+			    EHEA_PAGESIZE, माप(काष्ठा ehea_cqe));
+	अगर (ret)
+		जाओ out_मुक्तres;
 
-	for (counter = 0; counter < cq->attr.nr_pages; counter++) {
+	क्रम (counter = 0; counter < cq->attr.nr_pages; counter++) अणु
 		vpage = hw_qpageit_get_inc(&cq->hw_queue);
-		if (!vpage) {
+		अगर (!vpage) अणु
 			pr_err("hw_qpageit_get_inc failed\n");
-			goto out_kill_hwq;
-		}
+			जाओ out_समाप्त_hwq;
+		पूर्ण
 
 		rpage = __pa(vpage);
-		hret = ehea_h_register_rpage(adapter->handle,
+		hret = ehea_h_रेजिस्टर_rpage(adapter->handle,
 					     0, EHEA_CQ_REGISTER_ORIG,
 					     cq->fw_handle, rpage, 1);
-		if (hret < H_SUCCESS) {
+		अगर (hret < H_SUCCESS) अणु
 			pr_err("register_rpage_cq failed ehea_cq=%p hret=%llx counter=%i act_pages=%i\n",
 			       cq, hret, counter, cq->attr.nr_pages);
-			goto out_kill_hwq;
-		}
+			जाओ out_समाप्त_hwq;
+		पूर्ण
 
-		if (counter == (cq->attr.nr_pages - 1)) {
+		अगर (counter == (cq->attr.nr_pages - 1)) अणु
 			vpage = hw_qpageit_get_inc(&cq->hw_queue);
 
-			if ((hret != H_SUCCESS) || (vpage)) {
+			अगर ((hret != H_SUCCESS) || (vpage)) अणु
 				pr_err("registration of pages not complete hret=%llx\n",
 				       hret);
-				goto out_kill_hwq;
-			}
-		} else {
-			if (hret != H_PAGE_REGISTERED) {
+				जाओ out_समाप्त_hwq;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (hret != H_PAGE_REGISTERED) अणु
 				pr_err("CQ: registration of page failed hret=%llx\n",
 				       hret);
-				goto out_kill_hwq;
-			}
-		}
-	}
+				जाओ out_समाप्त_hwq;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	hw_qeit_reset(&cq->hw_queue);
 	ehea_reset_cq_ep(cq);
 	ehea_reset_cq_n1(cq);
 
-	return cq;
+	वापस cq;
 
-out_kill_hwq:
+out_समाप्त_hwq:
 	hw_queue_dtor(&cq->hw_queue);
 
-out_freeres:
-	ehea_h_free_resource(adapter->handle, cq->fw_handle, FORCE_FREE);
+out_मुक्तres:
+	ehea_h_मुक्त_resource(adapter->handle, cq->fw_handle, FORCE_FREE);
 
-out_freemem:
-	kfree(cq);
+out_मुक्तmem:
+	kमुक्त(cq);
 
 out_nomem:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static u64 ehea_destroy_cq_res(struct ehea_cq *cq, u64 force)
-{
+अटल u64 ehea_destroy_cq_res(काष्ठा ehea_cq *cq, u64 क्रमce)
+अणु
 	u64 hret;
 	u64 adapter_handle = cq->adapter->handle;
 
-	/* deregister all previous registered pages */
-	hret = ehea_h_free_resource(adapter_handle, cq->fw_handle, force);
-	if (hret != H_SUCCESS)
-		return hret;
+	/* deरेजिस्टर all previous रेजिस्टरed pages */
+	hret = ehea_h_मुक्त_resource(adapter_handle, cq->fw_handle, क्रमce);
+	अगर (hret != H_SUCCESS)
+		वापस hret;
 
 	hw_queue_dtor(&cq->hw_queue);
-	kfree(cq);
+	kमुक्त(cq);
 
-	return hret;
-}
+	वापस hret;
+पूर्ण
 
-int ehea_destroy_cq(struct ehea_cq *cq)
-{
+पूर्णांक ehea_destroy_cq(काष्ठा ehea_cq *cq)
+अणु
 	u64 hret, aer, aerr;
-	if (!cq)
-		return 0;
+	अगर (!cq)
+		वापस 0;
 
 	hcp_epas_dtor(&cq->epas);
 	hret = ehea_destroy_cq_res(cq, NORMAL_FREE);
-	if (hret == H_R_STATE) {
+	अगर (hret == H_R_STATE) अणु
 		ehea_error_data(cq->adapter, cq->fw_handle, &aer, &aerr);
 		hret = ehea_destroy_cq_res(cq, FORCE_FREE);
-	}
+	पूर्ण
 
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("destroy CQ failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct ehea_eq *ehea_create_eq(struct ehea_adapter *adapter,
-			       const enum ehea_eq_type type,
-			       const u32 max_nr_of_eqes, const u8 eqe_gen)
-{
-	int ret, i;
+काष्ठा ehea_eq *ehea_create_eq(काष्ठा ehea_adapter *adapter,
+			       स्थिर क्रमागत ehea_eq_type type,
+			       स्थिर u32 max_nr_of_eqes, स्थिर u8 eqe_gen)
+अणु
+	पूर्णांक ret, i;
 	u64 hret, rpage;
-	void *vpage;
-	struct ehea_eq *eq;
+	व्योम *vpage;
+	काष्ठा ehea_eq *eq;
 
-	eq = kzalloc(sizeof(*eq), GFP_KERNEL);
-	if (!eq)
-		return NULL;
+	eq = kzalloc(माप(*eq), GFP_KERNEL);
+	अगर (!eq)
+		वापस शून्य;
 
 	eq->adapter = adapter;
 	eq->attr.type = type;
@@ -247,753 +248,753 @@ struct ehea_eq *ehea_create_eq(struct ehea_adapter *adapter,
 
 	hret = ehea_h_alloc_resource_eq(adapter->handle,
 					&eq->attr, &eq->fw_handle);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("alloc_resource_eq failed\n");
-		goto out_freemem;
-	}
+		जाओ out_मुक्तmem;
+	पूर्ण
 
 	ret = hw_queue_ctor(&eq->hw_queue, eq->attr.nr_pages,
-			    EHEA_PAGESIZE, sizeof(struct ehea_eqe));
-	if (ret) {
+			    EHEA_PAGESIZE, माप(काष्ठा ehea_eqe));
+	अगर (ret) अणु
 		pr_err("can't allocate eq pages\n");
-		goto out_freeres;
-	}
+		जाओ out_मुक्तres;
+	पूर्ण
 
-	for (i = 0; i < eq->attr.nr_pages; i++) {
+	क्रम (i = 0; i < eq->attr.nr_pages; i++) अणु
 		vpage = hw_qpageit_get_inc(&eq->hw_queue);
-		if (!vpage) {
+		अगर (!vpage) अणु
 			pr_err("hw_qpageit_get_inc failed\n");
 			hret = H_RESOURCE;
-			goto out_kill_hwq;
-		}
+			जाओ out_समाप्त_hwq;
+		पूर्ण
 
 		rpage = __pa(vpage);
 
-		hret = ehea_h_register_rpage(adapter->handle, 0,
+		hret = ehea_h_रेजिस्टर_rpage(adapter->handle, 0,
 					     EHEA_EQ_REGISTER_ORIG,
 					     eq->fw_handle, rpage, 1);
 
-		if (i == (eq->attr.nr_pages - 1)) {
+		अगर (i == (eq->attr.nr_pages - 1)) अणु
 			/* last page */
 			vpage = hw_qpageit_get_inc(&eq->hw_queue);
-			if ((hret != H_SUCCESS) || (vpage))
-				goto out_kill_hwq;
+			अगर ((hret != H_SUCCESS) || (vpage))
+				जाओ out_समाप्त_hwq;
 
-		} else {
-			if (hret != H_PAGE_REGISTERED)
-				goto out_kill_hwq;
+		पूर्ण अन्यथा अणु
+			अगर (hret != H_PAGE_REGISTERED)
+				जाओ out_समाप्त_hwq;
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	hw_qeit_reset(&eq->hw_queue);
-	return eq;
+	वापस eq;
 
-out_kill_hwq:
+out_समाप्त_hwq:
 	hw_queue_dtor(&eq->hw_queue);
 
-out_freeres:
-	ehea_h_free_resource(adapter->handle, eq->fw_handle, FORCE_FREE);
+out_मुक्तres:
+	ehea_h_मुक्त_resource(adapter->handle, eq->fw_handle, FORCE_FREE);
 
-out_freemem:
-	kfree(eq);
-	return NULL;
-}
+out_मुक्तmem:
+	kमुक्त(eq);
+	वापस शून्य;
+पूर्ण
 
-struct ehea_eqe *ehea_poll_eq(struct ehea_eq *eq)
-{
-	struct ehea_eqe *eqe;
-	unsigned long flags;
+काष्ठा ehea_eqe *ehea_poll_eq(काष्ठा ehea_eq *eq)
+अणु
+	काष्ठा ehea_eqe *eqe;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&eq->spinlock, flags);
 	eqe = hw_eqit_eq_get_inc_valid(&eq->hw_queue);
 	spin_unlock_irqrestore(&eq->spinlock, flags);
 
-	return eqe;
-}
+	वापस eqe;
+पूर्ण
 
-static u64 ehea_destroy_eq_res(struct ehea_eq *eq, u64 force)
-{
+अटल u64 ehea_destroy_eq_res(काष्ठा ehea_eq *eq, u64 क्रमce)
+अणु
 	u64 hret;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&eq->spinlock, flags);
 
-	hret = ehea_h_free_resource(eq->adapter->handle, eq->fw_handle, force);
+	hret = ehea_h_मुक्त_resource(eq->adapter->handle, eq->fw_handle, क्रमce);
 	spin_unlock_irqrestore(&eq->spinlock, flags);
 
-	if (hret != H_SUCCESS)
-		return hret;
+	अगर (hret != H_SUCCESS)
+		वापस hret;
 
 	hw_queue_dtor(&eq->hw_queue);
-	kfree(eq);
+	kमुक्त(eq);
 
-	return hret;
-}
+	वापस hret;
+पूर्ण
 
-int ehea_destroy_eq(struct ehea_eq *eq)
-{
+पूर्णांक ehea_destroy_eq(काष्ठा ehea_eq *eq)
+अणु
 	u64 hret, aer, aerr;
-	if (!eq)
-		return 0;
+	अगर (!eq)
+		वापस 0;
 
 	hcp_epas_dtor(&eq->epas);
 
 	hret = ehea_destroy_eq_res(eq, NORMAL_FREE);
-	if (hret == H_R_STATE) {
+	अगर (hret == H_R_STATE) अणु
 		ehea_error_data(eq->adapter, eq->fw_handle, &aer, &aerr);
 		hret = ehea_destroy_eq_res(eq, FORCE_FREE);
-	}
+	पूर्ण
 
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("destroy EQ failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* allocates memory for a queue and registers pages in phyp */
-static int ehea_qp_alloc_register(struct ehea_qp *qp, struct hw_queue *hw_queue,
-			   int nr_pages, int wqe_size, int act_nr_sges,
-			   struct ehea_adapter *adapter, int h_call_q_selector)
-{
+/* allocates memory क्रम a queue and रेजिस्टरs pages in phyp */
+अटल पूर्णांक ehea_qp_alloc_रेजिस्टर(काष्ठा ehea_qp *qp, काष्ठा hw_queue *hw_queue,
+			   पूर्णांक nr_pages, पूर्णांक wqe_size, पूर्णांक act_nr_sges,
+			   काष्ठा ehea_adapter *adapter, पूर्णांक h_call_q_selector)
+अणु
 	u64 hret, rpage;
-	int ret, cnt;
-	void *vpage;
+	पूर्णांक ret, cnt;
+	व्योम *vpage;
 
 	ret = hw_queue_ctor(hw_queue, nr_pages, EHEA_PAGESIZE, wqe_size);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (cnt = 0; cnt < nr_pages; cnt++) {
+	क्रम (cnt = 0; cnt < nr_pages; cnt++) अणु
 		vpage = hw_qpageit_get_inc(hw_queue);
-		if (!vpage) {
+		अगर (!vpage) अणु
 			pr_err("hw_qpageit_get_inc failed\n");
-			goto out_kill_hwq;
-		}
+			जाओ out_समाप्त_hwq;
+		पूर्ण
 		rpage = __pa(vpage);
-		hret = ehea_h_register_rpage(adapter->handle,
+		hret = ehea_h_रेजिस्टर_rpage(adapter->handle,
 					     0, h_call_q_selector,
 					     qp->fw_handle, rpage, 1);
-		if (hret < H_SUCCESS) {
+		अगर (hret < H_SUCCESS) अणु
 			pr_err("register_rpage_qp failed\n");
-			goto out_kill_hwq;
-		}
-	}
+			जाओ out_समाप्त_hwq;
+		पूर्ण
+	पूर्ण
 	hw_qeit_reset(hw_queue);
-	return 0;
+	वापस 0;
 
-out_kill_hwq:
+out_समाप्त_hwq:
 	hw_queue_dtor(hw_queue);
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static inline u32 map_wqe_size(u8 wqe_enc_size)
-{
-	return 128 << wqe_enc_size;
-}
+अटल अंतरभूत u32 map_wqe_size(u8 wqe_enc_size)
+अणु
+	वापस 128 << wqe_enc_size;
+पूर्ण
 
-struct ehea_qp *ehea_create_qp(struct ehea_adapter *adapter,
-			       u32 pd, struct ehea_qp_init_attr *init_attr)
-{
-	int ret;
+काष्ठा ehea_qp *ehea_create_qp(काष्ठा ehea_adapter *adapter,
+			       u32 pd, काष्ठा ehea_qp_init_attr *init_attr)
+अणु
+	पूर्णांक ret;
 	u64 hret;
-	struct ehea_qp *qp;
+	काष्ठा ehea_qp *qp;
 	u32 wqe_size_in_bytes_sq, wqe_size_in_bytes_rq1;
 	u32 wqe_size_in_bytes_rq2, wqe_size_in_bytes_rq3;
 
 
-	qp = kzalloc(sizeof(*qp), GFP_KERNEL);
-	if (!qp)
-		return NULL;
+	qp = kzalloc(माप(*qp), GFP_KERNEL);
+	अगर (!qp)
+		वापस शून्य;
 
 	qp->adapter = adapter;
 
 	hret = ehea_h_alloc_resource_qp(adapter->handle, init_attr, pd,
 					&qp->fw_handle, &qp->epas);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("ehea_h_alloc_resource_qp failed\n");
-		goto out_freemem;
-	}
+		जाओ out_मुक्तmem;
+	पूर्ण
 
 	wqe_size_in_bytes_sq = map_wqe_size(init_attr->act_wqe_size_enc_sq);
 	wqe_size_in_bytes_rq1 = map_wqe_size(init_attr->act_wqe_size_enc_rq1);
 	wqe_size_in_bytes_rq2 = map_wqe_size(init_attr->act_wqe_size_enc_rq2);
 	wqe_size_in_bytes_rq3 = map_wqe_size(init_attr->act_wqe_size_enc_rq3);
 
-	ret = ehea_qp_alloc_register(qp, &qp->hw_squeue, init_attr->nr_sq_pages,
+	ret = ehea_qp_alloc_रेजिस्टर(qp, &qp->hw_squeue, init_attr->nr_sq_pages,
 				     wqe_size_in_bytes_sq,
 				     init_attr->act_wqe_size_enc_sq, adapter,
 				     0);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("can't register for sq ret=%x\n", ret);
-		goto out_freeres;
-	}
+		जाओ out_मुक्तres;
+	पूर्ण
 
-	ret = ehea_qp_alloc_register(qp, &qp->hw_rqueue1,
+	ret = ehea_qp_alloc_रेजिस्टर(qp, &qp->hw_rqueue1,
 				     init_attr->nr_rq1_pages,
 				     wqe_size_in_bytes_rq1,
 				     init_attr->act_wqe_size_enc_rq1,
 				     adapter, 1);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("can't register for rq1 ret=%x\n", ret);
-		goto out_kill_hwsq;
-	}
+		जाओ out_समाप्त_hwsq;
+	पूर्ण
 
-	if (init_attr->rq_count > 1) {
-		ret = ehea_qp_alloc_register(qp, &qp->hw_rqueue2,
+	अगर (init_attr->rq_count > 1) अणु
+		ret = ehea_qp_alloc_रेजिस्टर(qp, &qp->hw_rqueue2,
 					     init_attr->nr_rq2_pages,
 					     wqe_size_in_bytes_rq2,
 					     init_attr->act_wqe_size_enc_rq2,
 					     adapter, 2);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("can't register for rq2 ret=%x\n", ret);
-			goto out_kill_hwr1q;
-		}
-	}
+			जाओ out_समाप्त_hwr1q;
+		पूर्ण
+	पूर्ण
 
-	if (init_attr->rq_count > 2) {
-		ret = ehea_qp_alloc_register(qp, &qp->hw_rqueue3,
+	अगर (init_attr->rq_count > 2) अणु
+		ret = ehea_qp_alloc_रेजिस्टर(qp, &qp->hw_rqueue3,
 					     init_attr->nr_rq3_pages,
 					     wqe_size_in_bytes_rq3,
 					     init_attr->act_wqe_size_enc_rq3,
 					     adapter, 3);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("can't register for rq3 ret=%x\n", ret);
-			goto out_kill_hwr2q;
-		}
-	}
+			जाओ out_समाप्त_hwr2q;
+		पूर्ण
+	पूर्ण
 
 	qp->init_attr = *init_attr;
 
-	return qp;
+	वापस qp;
 
-out_kill_hwr2q:
+out_समाप्त_hwr2q:
 	hw_queue_dtor(&qp->hw_rqueue2);
 
-out_kill_hwr1q:
+out_समाप्त_hwr1q:
 	hw_queue_dtor(&qp->hw_rqueue1);
 
-out_kill_hwsq:
+out_समाप्त_hwsq:
 	hw_queue_dtor(&qp->hw_squeue);
 
-out_freeres:
+out_मुक्तres:
 	ehea_h_disable_and_get_hea(adapter->handle, qp->fw_handle);
-	ehea_h_free_resource(adapter->handle, qp->fw_handle, FORCE_FREE);
+	ehea_h_मुक्त_resource(adapter->handle, qp->fw_handle, FORCE_FREE);
 
-out_freemem:
-	kfree(qp);
-	return NULL;
-}
+out_मुक्तmem:
+	kमुक्त(qp);
+	वापस शून्य;
+पूर्ण
 
-static u64 ehea_destroy_qp_res(struct ehea_qp *qp, u64 force)
-{
+अटल u64 ehea_destroy_qp_res(काष्ठा ehea_qp *qp, u64 क्रमce)
+अणु
 	u64 hret;
-	struct ehea_qp_init_attr *qp_attr = &qp->init_attr;
+	काष्ठा ehea_qp_init_attr *qp_attr = &qp->init_attr;
 
 
 	ehea_h_disable_and_get_hea(qp->adapter->handle, qp->fw_handle);
-	hret = ehea_h_free_resource(qp->adapter->handle, qp->fw_handle, force);
-	if (hret != H_SUCCESS)
-		return hret;
+	hret = ehea_h_मुक्त_resource(qp->adapter->handle, qp->fw_handle, क्रमce);
+	अगर (hret != H_SUCCESS)
+		वापस hret;
 
 	hw_queue_dtor(&qp->hw_squeue);
 	hw_queue_dtor(&qp->hw_rqueue1);
 
-	if (qp_attr->rq_count > 1)
+	अगर (qp_attr->rq_count > 1)
 		hw_queue_dtor(&qp->hw_rqueue2);
-	if (qp_attr->rq_count > 2)
+	अगर (qp_attr->rq_count > 2)
 		hw_queue_dtor(&qp->hw_rqueue3);
-	kfree(qp);
+	kमुक्त(qp);
 
-	return hret;
-}
+	वापस hret;
+पूर्ण
 
-int ehea_destroy_qp(struct ehea_qp *qp)
-{
+पूर्णांक ehea_destroy_qp(काष्ठा ehea_qp *qp)
+अणु
 	u64 hret, aer, aerr;
-	if (!qp)
-		return 0;
+	अगर (!qp)
+		वापस 0;
 
 	hcp_epas_dtor(&qp->epas);
 
 	hret = ehea_destroy_qp_res(qp, NORMAL_FREE);
-	if (hret == H_R_STATE) {
+	अगर (hret == H_R_STATE) अणु
 		ehea_error_data(qp->adapter, qp->fw_handle, &aer, &aerr);
 		hret = ehea_destroy_qp_res(qp, FORCE_FREE);
-	}
+	पूर्ण
 
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("destroy QP failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int ehea_calc_index(unsigned long i, unsigned long s)
-{
-	return (i >> s) & EHEA_INDEX_MASK;
-}
+अटल अंतरभूत पूर्णांक ehea_calc_index(अचिन्हित दीर्घ i, अचिन्हित दीर्घ s)
+अणु
+	वापस (i >> s) & EHEA_INDEX_MASK;
+पूर्ण
 
-static inline int ehea_init_top_bmap(struct ehea_top_bmap *ehea_top_bmap,
-				     int dir)
-{
-	if (!ehea_top_bmap->dir[dir]) {
+अटल अंतरभूत पूर्णांक ehea_init_top_bmap(काष्ठा ehea_top_bmap *ehea_top_bmap,
+				     पूर्णांक dir)
+अणु
+	अगर (!ehea_top_bmap->dir[dir]) अणु
 		ehea_top_bmap->dir[dir] =
-			kzalloc(sizeof(struct ehea_dir_bmap), GFP_KERNEL);
-		if (!ehea_top_bmap->dir[dir])
-			return -ENOMEM;
-	}
-	return 0;
-}
+			kzalloc(माप(काष्ठा ehea_dir_bmap), GFP_KERNEL);
+		अगर (!ehea_top_bmap->dir[dir])
+			वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int ehea_init_bmap(struct ehea_bmap *ehea_bmap, int top, int dir)
-{
-	if (!ehea_bmap->top[top]) {
+अटल अंतरभूत पूर्णांक ehea_init_bmap(काष्ठा ehea_bmap *ehea_bmap, पूर्णांक top, पूर्णांक dir)
+अणु
+	अगर (!ehea_bmap->top[top]) अणु
 		ehea_bmap->top[top] =
-			kzalloc(sizeof(struct ehea_top_bmap), GFP_KERNEL);
-		if (!ehea_bmap->top[top])
-			return -ENOMEM;
-	}
-	return ehea_init_top_bmap(ehea_bmap->top[top], dir);
-}
+			kzalloc(माप(काष्ठा ehea_top_bmap), GFP_KERNEL);
+		अगर (!ehea_bmap->top[top])
+			वापस -ENOMEM;
+	पूर्ण
+	वापस ehea_init_top_bmap(ehea_bmap->top[top], dir);
+पूर्ण
 
-static DEFINE_MUTEX(ehea_busmap_mutex);
-static unsigned long ehea_mr_len;
+अटल DEFINE_MUTEX(ehea_busmap_mutex);
+अटल अचिन्हित दीर्घ ehea_mr_len;
 
-#define EHEA_BUSMAP_ADD_SECT 1
-#define EHEA_BUSMAP_REM_SECT 0
+#घोषणा EHEA_BUSMAP_ADD_SECT 1
+#घोषणा EHEA_BUSMAP_REM_SECT 0
 
-static void ehea_rebuild_busmap(void)
-{
+अटल व्योम ehea_rebuild_busmap(व्योम)
+अणु
 	u64 vaddr = EHEA_BUSMAP_START;
-	int top, dir, idx;
+	पूर्णांक top, dir, idx;
 
-	for (top = 0; top < EHEA_MAP_ENTRIES; top++) {
-		struct ehea_top_bmap *ehea_top;
-		int valid_dir_entries = 0;
+	क्रम (top = 0; top < EHEA_MAP_ENTRIES; top++) अणु
+		काष्ठा ehea_top_bmap *ehea_top;
+		पूर्णांक valid_dir_entries = 0;
 
-		if (!ehea_bmap->top[top])
-			continue;
+		अगर (!ehea_bmap->top[top])
+			जारी;
 		ehea_top = ehea_bmap->top[top];
-		for (dir = 0; dir < EHEA_MAP_ENTRIES; dir++) {
-			struct ehea_dir_bmap *ehea_dir;
-			int valid_entries = 0;
+		क्रम (dir = 0; dir < EHEA_MAP_ENTRIES; dir++) अणु
+			काष्ठा ehea_dir_bmap *ehea_dir;
+			पूर्णांक valid_entries = 0;
 
-			if (!ehea_top->dir[dir])
-				continue;
+			अगर (!ehea_top->dir[dir])
+				जारी;
 			valid_dir_entries++;
 			ehea_dir = ehea_top->dir[dir];
-			for (idx = 0; idx < EHEA_MAP_ENTRIES; idx++) {
-				if (!ehea_dir->ent[idx])
-					continue;
+			क्रम (idx = 0; idx < EHEA_MAP_ENTRIES; idx++) अणु
+				अगर (!ehea_dir->ent[idx])
+					जारी;
 				valid_entries++;
 				ehea_dir->ent[idx] = vaddr;
 				vaddr += EHEA_SECTSIZE;
-			}
-			if (!valid_entries) {
-				ehea_top->dir[dir] = NULL;
-				kfree(ehea_dir);
-			}
-		}
-		if (!valid_dir_entries) {
-			ehea_bmap->top[top] = NULL;
-			kfree(ehea_top);
-		}
-	}
-}
+			पूर्ण
+			अगर (!valid_entries) अणु
+				ehea_top->dir[dir] = शून्य;
+				kमुक्त(ehea_dir);
+			पूर्ण
+		पूर्ण
+		अगर (!valid_dir_entries) अणु
+			ehea_bmap->top[top] = शून्य;
+			kमुक्त(ehea_top);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int ehea_update_busmap(unsigned long pfn, unsigned long nr_pages, int add)
-{
-	unsigned long i, start_section, end_section;
+अटल पूर्णांक ehea_update_busmap(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages, पूर्णांक add)
+अणु
+	अचिन्हित दीर्घ i, start_section, end_section;
 
-	if (!nr_pages)
-		return 0;
+	अगर (!nr_pages)
+		वापस 0;
 
-	if (!ehea_bmap) {
-		ehea_bmap = kzalloc(sizeof(struct ehea_bmap), GFP_KERNEL);
-		if (!ehea_bmap)
-			return -ENOMEM;
-	}
+	अगर (!ehea_bmap) अणु
+		ehea_bmap = kzalloc(माप(काष्ठा ehea_bmap), GFP_KERNEL);
+		अगर (!ehea_bmap)
+			वापस -ENOMEM;
+	पूर्ण
 
 	start_section = (pfn * PAGE_SIZE) / EHEA_SECTSIZE;
 	end_section = start_section + ((nr_pages * PAGE_SIZE) / EHEA_SECTSIZE);
-	/* Mark entries as valid or invalid only; address is assigned later */
-	for (i = start_section; i < end_section; i++) {
+	/* Mark entries as valid or invalid only; address is asचिन्हित later */
+	क्रम (i = start_section; i < end_section; i++) अणु
 		u64 flag;
-		int top = ehea_calc_index(i, EHEA_TOP_INDEX_SHIFT);
-		int dir = ehea_calc_index(i, EHEA_DIR_INDEX_SHIFT);
-		int idx = i & EHEA_INDEX_MASK;
+		पूर्णांक top = ehea_calc_index(i, EHEA_TOP_INDEX_SHIFT);
+		पूर्णांक dir = ehea_calc_index(i, EHEA_सूची_INDEX_SHIFT);
+		पूर्णांक idx = i & EHEA_INDEX_MASK;
 
-		if (add) {
-			int ret = ehea_init_bmap(ehea_bmap, top, dir);
-			if (ret)
-				return ret;
+		अगर (add) अणु
+			पूर्णांक ret = ehea_init_bmap(ehea_bmap, top, dir);
+			अगर (ret)
+				वापस ret;
 			flag = 1; /* valid */
 			ehea_mr_len += EHEA_SECTSIZE;
-		} else {
-			if (!ehea_bmap->top[top])
-				continue;
-			if (!ehea_bmap->top[top]->dir[dir])
-				continue;
+		पूर्ण अन्यथा अणु
+			अगर (!ehea_bmap->top[top])
+				जारी;
+			अगर (!ehea_bmap->top[top]->dir[dir])
+				जारी;
 			flag = 0; /* invalid */
 			ehea_mr_len -= EHEA_SECTSIZE;
-		}
+		पूर्ण
 
 		ehea_bmap->top[top]->dir[dir]->ent[idx] = flag;
-	}
-	ehea_rebuild_busmap(); /* Assign contiguous addresses for mr */
-	return 0;
-}
+	पूर्ण
+	ehea_rebuild_busmap(); /* Assign contiguous addresses क्रम mr */
+	वापस 0;
+पूर्ण
 
-int ehea_add_sect_bmap(unsigned long pfn, unsigned long nr_pages)
-{
-	int ret;
+पूर्णांक ehea_add_sect_bmap(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&ehea_busmap_mutex);
 	ret = ehea_update_busmap(pfn, nr_pages, EHEA_BUSMAP_ADD_SECT);
 	mutex_unlock(&ehea_busmap_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ehea_rem_sect_bmap(unsigned long pfn, unsigned long nr_pages)
-{
-	int ret;
+पूर्णांक ehea_rem_sect_bmap(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&ehea_busmap_mutex);
 	ret = ehea_update_busmap(pfn, nr_pages, EHEA_BUSMAP_REM_SECT);
 	mutex_unlock(&ehea_busmap_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ehea_is_hugepage(unsigned long pfn)
-{
-	if (pfn & EHEA_HUGEPAGE_PFN_MASK)
-		return 0;
+अटल पूर्णांक ehea_is_hugepage(अचिन्हित दीर्घ pfn)
+अणु
+	अगर (pfn & EHEA_HUGEPAGE_PFN_MASK)
+		वापस 0;
 
-	if (page_shift(pfn_to_page(pfn)) != EHEA_HUGEPAGESHIFT)
-		return 0;
+	अगर (page_shअगरt(pfn_to_page(pfn)) != EHEA_HUGEPAGESHIFT)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int ehea_create_busmap_callback(unsigned long initial_pfn,
-				       unsigned long total_nr_pages, void *arg)
-{
-	int ret;
-	unsigned long pfn, start_pfn, end_pfn, nr_pages;
+अटल पूर्णांक ehea_create_busmap_callback(अचिन्हित दीर्घ initial_pfn,
+				       अचिन्हित दीर्घ total_nr_pages, व्योम *arg)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ pfn, start_pfn, end_pfn, nr_pages;
 
-	if ((total_nr_pages * PAGE_SIZE) < EHEA_HUGEPAGE_SIZE)
-		return ehea_update_busmap(initial_pfn, total_nr_pages,
+	अगर ((total_nr_pages * PAGE_SIZE) < EHEA_HUGEPAGE_SIZE)
+		वापस ehea_update_busmap(initial_pfn, total_nr_pages,
 					  EHEA_BUSMAP_ADD_SECT);
 
-	/* Given chunk is >= 16GB -> check for hugepages */
+	/* Given chunk is >= 16GB -> check क्रम hugepages */
 	start_pfn = initial_pfn;
 	end_pfn = initial_pfn + total_nr_pages;
 	pfn = start_pfn;
 
-	while (pfn < end_pfn) {
-		if (ehea_is_hugepage(pfn)) {
+	जबतक (pfn < end_pfn) अणु
+		अगर (ehea_is_hugepage(pfn)) अणु
 			/* Add mem found in front of the hugepage */
 			nr_pages = pfn - start_pfn;
 			ret = ehea_update_busmap(start_pfn, nr_pages,
 						 EHEA_BUSMAP_ADD_SECT);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			/* Skip the hugepage */
 			pfn += (EHEA_HUGEPAGE_SIZE / PAGE_SIZE);
 			start_pfn = pfn;
-		} else
+		पूर्ण अन्यथा
 			pfn += (EHEA_SECTSIZE / PAGE_SIZE);
-	}
+	पूर्ण
 
 	/* Add mem found behind the hugepage(s)  */
 	nr_pages = pfn - start_pfn;
-	return ehea_update_busmap(start_pfn, nr_pages, EHEA_BUSMAP_ADD_SECT);
-}
+	वापस ehea_update_busmap(start_pfn, nr_pages, EHEA_BUSMAP_ADD_SECT);
+पूर्ण
 
-int ehea_create_busmap(void)
-{
-	int ret;
+पूर्णांक ehea_create_busmap(व्योम)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&ehea_busmap_mutex);
 	ehea_mr_len = 0;
-	ret = walk_system_ram_range(0, 1ULL << MAX_PHYSMEM_BITS, NULL,
+	ret = walk_प्रणाली_ram_range(0, 1ULL << MAX_PHYSMEM_BITS, शून्य,
 				   ehea_create_busmap_callback);
 	mutex_unlock(&ehea_busmap_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ehea_destroy_busmap(void)
-{
-	int top, dir;
+व्योम ehea_destroy_busmap(व्योम)
+अणु
+	पूर्णांक top, dir;
 	mutex_lock(&ehea_busmap_mutex);
-	if (!ehea_bmap)
-		goto out_destroy;
+	अगर (!ehea_bmap)
+		जाओ out_destroy;
 
-	for (top = 0; top < EHEA_MAP_ENTRIES; top++) {
-		if (!ehea_bmap->top[top])
-			continue;
+	क्रम (top = 0; top < EHEA_MAP_ENTRIES; top++) अणु
+		अगर (!ehea_bmap->top[top])
+			जारी;
 
-		for (dir = 0; dir < EHEA_MAP_ENTRIES; dir++) {
-			if (!ehea_bmap->top[top]->dir[dir])
-				continue;
+		क्रम (dir = 0; dir < EHEA_MAP_ENTRIES; dir++) अणु
+			अगर (!ehea_bmap->top[top]->dir[dir])
+				जारी;
 
-			kfree(ehea_bmap->top[top]->dir[dir]);
-		}
+			kमुक्त(ehea_bmap->top[top]->dir[dir]);
+		पूर्ण
 
-		kfree(ehea_bmap->top[top]);
-	}
+		kमुक्त(ehea_bmap->top[top]);
+	पूर्ण
 
-	kfree(ehea_bmap);
-	ehea_bmap = NULL;
+	kमुक्त(ehea_bmap);
+	ehea_bmap = शून्य;
 out_destroy:
 	mutex_unlock(&ehea_busmap_mutex);
-}
+पूर्ण
 
-u64 ehea_map_vaddr(void *caddr)
-{
-	int top, dir, idx;
-	unsigned long index, offset;
+u64 ehea_map_vaddr(व्योम *caddr)
+अणु
+	पूर्णांक top, dir, idx;
+	अचिन्हित दीर्घ index, offset;
 
-	if (!ehea_bmap)
-		return EHEA_INVAL_ADDR;
+	अगर (!ehea_bmap)
+		वापस EHEA_INVAL_ADDR;
 
 	index = __pa(caddr) >> SECTION_SIZE_BITS;
 	top = (index >> EHEA_TOP_INDEX_SHIFT) & EHEA_INDEX_MASK;
-	if (!ehea_bmap->top[top])
-		return EHEA_INVAL_ADDR;
+	अगर (!ehea_bmap->top[top])
+		वापस EHEA_INVAL_ADDR;
 
-	dir = (index >> EHEA_DIR_INDEX_SHIFT) & EHEA_INDEX_MASK;
-	if (!ehea_bmap->top[top]->dir[dir])
-		return EHEA_INVAL_ADDR;
+	dir = (index >> EHEA_सूची_INDEX_SHIFT) & EHEA_INDEX_MASK;
+	अगर (!ehea_bmap->top[top]->dir[dir])
+		वापस EHEA_INVAL_ADDR;
 
 	idx = index & EHEA_INDEX_MASK;
-	if (!ehea_bmap->top[top]->dir[dir]->ent[idx])
-		return EHEA_INVAL_ADDR;
+	अगर (!ehea_bmap->top[top]->dir[dir]->ent[idx])
+		वापस EHEA_INVAL_ADDR;
 
-	offset = (unsigned long)caddr & (EHEA_SECTSIZE - 1);
-	return ehea_bmap->top[top]->dir[dir]->ent[idx] | offset;
-}
+	offset = (अचिन्हित दीर्घ)caddr & (EHEA_SECTSIZE - 1);
+	वापस ehea_bmap->top[top]->dir[dir]->ent[idx] | offset;
+पूर्ण
 
-static inline void *ehea_calc_sectbase(int top, int dir, int idx)
-{
-	unsigned long ret = idx;
-	ret |= dir << EHEA_DIR_INDEX_SHIFT;
+अटल अंतरभूत व्योम *ehea_calc_sectbase(पूर्णांक top, पूर्णांक dir, पूर्णांक idx)
+अणु
+	अचिन्हित दीर्घ ret = idx;
+	ret |= dir << EHEA_सूची_INDEX_SHIFT;
 	ret |= top << EHEA_TOP_INDEX_SHIFT;
-	return __va(ret << SECTION_SIZE_BITS);
-}
+	वापस __va(ret << SECTION_SIZE_BITS);
+पूर्ण
 
-static u64 ehea_reg_mr_section(int top, int dir, int idx, u64 *pt,
-			       struct ehea_adapter *adapter,
-			       struct ehea_mr *mr)
-{
-	void *pg;
+अटल u64 ehea_reg_mr_section(पूर्णांक top, पूर्णांक dir, पूर्णांक idx, u64 *pt,
+			       काष्ठा ehea_adapter *adapter,
+			       काष्ठा ehea_mr *mr)
+अणु
+	व्योम *pg;
 	u64 j, m, hret;
-	unsigned long k = 0;
-	u64 pt_abs = __pa(pt);
+	अचिन्हित दीर्घ k = 0;
+	u64 pt_असल = __pa(pt);
 
-	void *sectbase = ehea_calc_sectbase(top, dir, idx);
+	व्योम *sectbase = ehea_calc_sectbase(top, dir, idx);
 
-	for (j = 0; j < (EHEA_PAGES_PER_SECTION / EHEA_MAX_RPAGE); j++) {
+	क्रम (j = 0; j < (EHEA_PAGES_PER_SECTION / EHEA_MAX_RPAGE); j++) अणु
 
-		for (m = 0; m < EHEA_MAX_RPAGE; m++) {
+		क्रम (m = 0; m < EHEA_MAX_RPAGE; m++) अणु
 			pg = sectbase + ((k++) * EHEA_PAGESIZE);
 			pt[m] = __pa(pg);
-		}
-		hret = ehea_h_register_rpage_mr(adapter->handle, mr->handle, 0,
-						0, pt_abs, EHEA_MAX_RPAGE);
+		पूर्ण
+		hret = ehea_h_रेजिस्टर_rpage_mr(adapter->handle, mr->handle, 0,
+						0, pt_असल, EHEA_MAX_RPAGE);
 
-		if ((hret != H_SUCCESS) &&
-		    (hret != H_PAGE_REGISTERED)) {
-			ehea_h_free_resource(adapter->handle, mr->handle,
+		अगर ((hret != H_SUCCESS) &&
+		    (hret != H_PAGE_REGISTERED)) अणु
+			ehea_h_मुक्त_resource(adapter->handle, mr->handle,
 					     FORCE_FREE);
 			pr_err("register_rpage_mr failed\n");
-			return hret;
-		}
-	}
-	return hret;
-}
+			वापस hret;
+		पूर्ण
+	पूर्ण
+	वापस hret;
+पूर्ण
 
-static u64 ehea_reg_mr_sections(int top, int dir, u64 *pt,
-				struct ehea_adapter *adapter,
-				struct ehea_mr *mr)
-{
+अटल u64 ehea_reg_mr_sections(पूर्णांक top, पूर्णांक dir, u64 *pt,
+				काष्ठा ehea_adapter *adapter,
+				काष्ठा ehea_mr *mr)
+अणु
 	u64 hret = H_SUCCESS;
-	int idx;
+	पूर्णांक idx;
 
-	for (idx = 0; idx < EHEA_MAP_ENTRIES; idx++) {
-		if (!ehea_bmap->top[top]->dir[dir]->ent[idx])
-			continue;
+	क्रम (idx = 0; idx < EHEA_MAP_ENTRIES; idx++) अणु
+		अगर (!ehea_bmap->top[top]->dir[dir]->ent[idx])
+			जारी;
 
 		hret = ehea_reg_mr_section(top, dir, idx, pt, adapter, mr);
-		if ((hret != H_SUCCESS) && (hret != H_PAGE_REGISTERED))
-			return hret;
-	}
-	return hret;
-}
+		अगर ((hret != H_SUCCESS) && (hret != H_PAGE_REGISTERED))
+			वापस hret;
+	पूर्ण
+	वापस hret;
+पूर्ण
 
-static u64 ehea_reg_mr_dir_sections(int top, u64 *pt,
-				    struct ehea_adapter *adapter,
-				    struct ehea_mr *mr)
-{
+अटल u64 ehea_reg_mr_dir_sections(पूर्णांक top, u64 *pt,
+				    काष्ठा ehea_adapter *adapter,
+				    काष्ठा ehea_mr *mr)
+अणु
 	u64 hret = H_SUCCESS;
-	int dir;
+	पूर्णांक dir;
 
-	for (dir = 0; dir < EHEA_MAP_ENTRIES; dir++) {
-		if (!ehea_bmap->top[top]->dir[dir])
-			continue;
+	क्रम (dir = 0; dir < EHEA_MAP_ENTRIES; dir++) अणु
+		अगर (!ehea_bmap->top[top]->dir[dir])
+			जारी;
 
 		hret = ehea_reg_mr_sections(top, dir, pt, adapter, mr);
-		if ((hret != H_SUCCESS) && (hret != H_PAGE_REGISTERED))
-			return hret;
-	}
-	return hret;
-}
+		अगर ((hret != H_SUCCESS) && (hret != H_PAGE_REGISTERED))
+			वापस hret;
+	पूर्ण
+	वापस hret;
+पूर्ण
 
-int ehea_reg_kernel_mr(struct ehea_adapter *adapter, struct ehea_mr *mr)
-{
-	int ret;
+पूर्णांक ehea_reg_kernel_mr(काष्ठा ehea_adapter *adapter, काष्ठा ehea_mr *mr)
+अणु
+	पूर्णांक ret;
 	u64 *pt;
 	u64 hret;
 	u32 acc_ctrl = EHEA_MR_ACC_CTRL;
 
-	unsigned long top;
+	अचिन्हित दीर्घ top;
 
-	pt = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!pt) {
+	pt = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!pt) अणु
 		pr_err("no mem\n");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hret = ehea_h_alloc_resource_mr(adapter->handle, EHEA_BUSMAP_START,
 					ehea_mr_len, acc_ctrl, adapter->pd,
 					&mr->handle, &mr->lkey);
 
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("alloc_resource_mr failed\n");
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!ehea_bmap) {
-		ehea_h_free_resource(adapter->handle, mr->handle, FORCE_FREE);
+	अगर (!ehea_bmap) अणु
+		ehea_h_मुक्त_resource(adapter->handle, mr->handle, FORCE_FREE);
 		pr_err("no busmap available\n");
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (top = 0; top < EHEA_MAP_ENTRIES; top++) {
-		if (!ehea_bmap->top[top])
-			continue;
+	क्रम (top = 0; top < EHEA_MAP_ENTRIES; top++) अणु
+		अगर (!ehea_bmap->top[top])
+			जारी;
 
 		hret = ehea_reg_mr_dir_sections(top, pt, adapter, mr);
-		if((hret != H_PAGE_REGISTERED) && (hret != H_SUCCESS))
-			break;
-	}
+		अगर((hret != H_PAGE_REGISTERED) && (hret != H_SUCCESS))
+			अवरोध;
+	पूर्ण
 
-	if (hret != H_SUCCESS) {
-		ehea_h_free_resource(adapter->handle, mr->handle, FORCE_FREE);
+	अगर (hret != H_SUCCESS) अणु
+		ehea_h_मुक्त_resource(adapter->handle, mr->handle, FORCE_FREE);
 		pr_err("registering mr failed\n");
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mr->vaddr = EHEA_BUSMAP_START;
 	mr->adapter = adapter;
 	ret = 0;
 out:
-	free_page((unsigned long)pt);
-	return ret;
-}
+	मुक्त_page((अचिन्हित दीर्घ)pt);
+	वापस ret;
+पूर्ण
 
-int ehea_rem_mr(struct ehea_mr *mr)
-{
+पूर्णांक ehea_rem_mr(काष्ठा ehea_mr *mr)
+अणु
 	u64 hret;
 
-	if (!mr || !mr->adapter)
-		return -EINVAL;
+	अगर (!mr || !mr->adapter)
+		वापस -EINVAL;
 
-	hret = ehea_h_free_resource(mr->adapter->handle, mr->handle,
+	hret = ehea_h_मुक्त_resource(mr->adapter->handle, mr->handle,
 				    FORCE_FREE);
-	if (hret != H_SUCCESS) {
+	अगर (hret != H_SUCCESS) अणु
 		pr_err("destroy MR failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ehea_gen_smr(struct ehea_adapter *adapter, struct ehea_mr *old_mr,
-		 struct ehea_mr *shared_mr)
-{
+पूर्णांक ehea_gen_smr(काष्ठा ehea_adapter *adapter, काष्ठा ehea_mr *old_mr,
+		 काष्ठा ehea_mr *shared_mr)
+अणु
 	u64 hret;
 
-	hret = ehea_h_register_smr(adapter->handle, old_mr->handle,
+	hret = ehea_h_रेजिस्टर_smr(adapter->handle, old_mr->handle,
 				   old_mr->vaddr, EHEA_MR_ACC_CTRL,
 				   adapter->pd, shared_mr);
-	if (hret != H_SUCCESS)
-		return -EIO;
+	अगर (hret != H_SUCCESS)
+		वापस -EIO;
 
 	shared_mr->adapter = adapter;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void print_error_data(u64 *data)
-{
-	int length;
+अटल व्योम prपूर्णांक_error_data(u64 *data)
+अणु
+	पूर्णांक length;
 	u64 type = EHEA_BMASK_GET(ERROR_DATA_TYPE, data[2]);
 	u64 resource = data[1];
 
 	length = EHEA_BMASK_GET(ERROR_DATA_LENGTH, data[0]);
 
-	if (length > EHEA_PAGESIZE)
+	अगर (length > EHEA_PAGESIZE)
 		length = EHEA_PAGESIZE;
 
-	if (type == EHEA_AER_RESTYPE_QP)
+	अगर (type == EHEA_AER_RESTYPE_QP)
 		pr_err("QP (resource=%llX) state: AER=0x%llX, AERR=0x%llX, port=%llX\n",
 		       resource, data[6], data[12], data[22]);
-	else if (type == EHEA_AER_RESTYPE_CQ)
+	अन्यथा अगर (type == EHEA_AER_RESTYPE_CQ)
 		pr_err("CQ (resource=%llX) state: AER=0x%llX\n",
 		       resource, data[6]);
-	else if (type == EHEA_AER_RESTYPE_EQ)
+	अन्यथा अगर (type == EHEA_AER_RESTYPE_EQ)
 		pr_err("EQ (resource=%llX) state: AER=0x%llX\n",
 		       resource, data[6]);
 
 	ehea_dump(data, length, "error data");
-}
+पूर्ण
 
-u64 ehea_error_data(struct ehea_adapter *adapter, u64 res_handle,
+u64 ehea_error_data(काष्ठा ehea_adapter *adapter, u64 res_handle,
 		    u64 *aer, u64 *aerr)
-{
-	unsigned long ret;
+अणु
+	अचिन्हित दीर्घ ret;
 	u64 *rblock;
 	u64 type = 0;
 
-	rblock = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!rblock) {
+	rblock = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!rblock) अणु
 		pr_err("Cannot allocate rblock memory\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = ehea_h_error_data(adapter->handle, res_handle, rblock);
 
-	if (ret == H_SUCCESS) {
+	अगर (ret == H_SUCCESS) अणु
 		type = EHEA_BMASK_GET(ERROR_DATA_TYPE, rblock[2]);
 		*aer = rblock[6];
 		*aerr = rblock[12];
-		print_error_data(rblock);
-	} else if (ret == H_R_STATE) {
+		prपूर्णांक_error_data(rblock);
+	पूर्ण अन्यथा अगर (ret == H_R_STATE) अणु
 		pr_err("No error data available: %llX\n", res_handle);
-	} else
+	पूर्ण अन्यथा
 		pr_err("Error data could not be fetched: %llX\n", res_handle);
 
-	free_page((unsigned long)rblock);
+	मुक्त_page((अचिन्हित दीर्घ)rblock);
 out:
-	return type;
-}
+	वापस type;
+पूर्ण

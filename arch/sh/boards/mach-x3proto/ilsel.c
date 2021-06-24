@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/boards/mach-x3proto/ilsel.c
  *
- * Helper routines for SH-X3 proto board ILSEL.
+ * Helper routines क्रम SH-X3 proto board ILSEL.
  *
  * Copyright (C) 2007 - 2010  Paul Mundt
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/bitmap.h>
-#include <linux/io.h>
-#include <mach/ilsel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/पन.स>
+#समावेश <mach/ilsel.h>
 
 /*
  * ILSEL is split across:
@@ -25,132 +26,132 @@
  *
  * With each level being relative to an ilsel_source_t.
  */
-#define ILSEL_BASE	0xb8100004
-#define ILSEL_LEVELS	15
+#घोषणा ILSEL_BASE	0xb8100004
+#घोषणा ILSEL_LEVELS	15
 
 /*
- * ILSEL level map, in descending order from the highest level down.
+ * ILSEL level map, in descending order from the highest level करोwn.
  *
- * Supported levels are 1 - 15 spread across ILSEL0 - ILSEL4, mapping
+ * Supported levels are 1 - 15 spपढ़ो across ILSEL0 - ILSEL4, mapping
  * directly to IRLs. As the IRQs are numbered in reverse order relative
- * to the interrupt level, the level map is carefully managed to ensure a
+ * to the पूर्णांकerrupt level, the level map is carefully managed to ensure a
  * 1:1 mapping between the bit position and the IRQ number.
  *
- * This careful constructions allows ilsel_enable*() to be referenced
- * directly for hooking up an ILSEL set and getting back an IRQ which can
- * subsequently be used for internal accounting in the (optional) disable
+ * This careful स्थिरructions allows ilsel_enable*() to be referenced
+ * directly क्रम hooking up an ILSEL set and getting back an IRQ which can
+ * subsequently be used क्रम पूर्णांकernal accounting in the (optional) disable
  * path.
  */
-static unsigned long ilsel_level_map;
+अटल अचिन्हित दीर्घ ilsel_level_map;
 
-static inline unsigned int ilsel_offset(unsigned int bit)
-{
-	return ILSEL_LEVELS - bit - 1;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ilsel_offset(अचिन्हित पूर्णांक bit)
+अणु
+	वापस ILSEL_LEVELS - bit - 1;
+पूर्ण
 
-static inline unsigned long mk_ilsel_addr(unsigned int bit)
-{
-	return ILSEL_BASE + ((ilsel_offset(bit) >> 1) & ~0x1);
-}
+अटल अंतरभूत अचिन्हित दीर्घ mk_ilsel_addr(अचिन्हित पूर्णांक bit)
+अणु
+	वापस ILSEL_BASE + ((ilsel_offset(bit) >> 1) & ~0x1);
+पूर्ण
 
-static inline unsigned int mk_ilsel_shift(unsigned int bit)
-{
-	return (ilsel_offset(bit) & 0x3) << 2;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक mk_ilsel_shअगरt(अचिन्हित पूर्णांक bit)
+अणु
+	वापस (ilsel_offset(bit) & 0x3) << 2;
+पूर्ण
 
-static void __ilsel_enable(ilsel_source_t set, unsigned int bit)
-{
-	unsigned int tmp, shift;
-	unsigned long addr;
+अटल व्योम __ilsel_enable(ilsel_source_t set, अचिन्हित पूर्णांक bit)
+अणु
+	अचिन्हित पूर्णांक पंचांगp, shअगरt;
+	अचिन्हित दीर्घ addr;
 
 	pr_notice("enabling ILSEL set %d\n", set);
 
 	addr = mk_ilsel_addr(bit);
-	shift = mk_ilsel_shift(bit);
+	shअगरt = mk_ilsel_shअगरt(bit);
 
 	pr_debug("%s: bit#%d: addr - 0x%08lx (shift %d, set %d)\n",
-		 __func__, bit, addr, shift, set);
+		 __func__, bit, addr, shअगरt, set);
 
-	tmp = __raw_readw(addr);
-	tmp &= ~(0xf << shift);
-	tmp |= set << shift;
-	__raw_writew(tmp, addr);
-}
+	पंचांगp = __raw_पढ़ोw(addr);
+	पंचांगp &= ~(0xf << shअगरt);
+	पंचांगp |= set << shअगरt;
+	__raw_ग_लिखोw(पंचांगp, addr);
+पूर्ण
 
 /**
  * ilsel_enable - Enable an ILSEL set.
- * @set: ILSEL source (see ilsel_source_t enum in include/asm-sh/ilsel.h).
+ * @set: ILSEL source (see ilsel_source_t क्रमागत in include/यंत्र-sh/ilsel.h).
  *
  * Enables a given non-aliased ILSEL source (<= ILSEL_KEY) at the highest
- * available interrupt level. Callers should take care to order callsites
- * noting descending interrupt levels. Aliasing FPGA and external board
+ * available पूर्णांकerrupt level. Callers should take care to order callsites
+ * noting descending पूर्णांकerrupt levels. Aliasing FPGA and बाह्यal board
  * IRQs need to use ilsel_enable_fixed().
  *
- * The return value is an IRQ number that can later be taken down with
+ * The वापस value is an IRQ number that can later be taken करोwn with
  * ilsel_disable().
  */
-int ilsel_enable(ilsel_source_t set)
-{
-	unsigned int bit;
+पूर्णांक ilsel_enable(ilsel_source_t set)
+अणु
+	अचिन्हित पूर्णांक bit;
 
-	if (unlikely(set > ILSEL_KEY)) {
+	अगर (unlikely(set > ILSEL_KEY)) अणु
 		pr_err("Aliased sources must use ilsel_enable_fixed()\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	do {
+	करो अणु
 		bit = find_first_zero_bit(&ilsel_level_map, ILSEL_LEVELS);
-	} while (test_and_set_bit(bit, &ilsel_level_map));
+	पूर्ण जबतक (test_and_set_bit(bit, &ilsel_level_map));
 
 	__ilsel_enable(set, bit);
 
-	return bit;
-}
+	वापस bit;
+पूर्ण
 EXPORT_SYMBOL_GPL(ilsel_enable);
 
 /**
- * ilsel_enable_fixed - Enable an ILSEL set at a fixed interrupt level
- * @set: ILSEL source (see ilsel_source_t enum in include/asm-sh/ilsel.h).
+ * ilsel_enable_fixed - Enable an ILSEL set at a fixed पूर्णांकerrupt level
+ * @set: ILSEL source (see ilsel_source_t क्रमागत in include/यंत्र-sh/ilsel.h).
  * @level: Interrupt level (1 - 15)
  *
- * Enables a given ILSEL source at a fixed interrupt level. Necessary
- * both for level reservation as well as for aliased sources that only
+ * Enables a given ILSEL source at a fixed पूर्णांकerrupt level. Necessary
+ * both क्रम level reservation as well as क्रम aliased sources that only
  * exist on special ILSEL#s.
  *
  * Returns an IRQ number (as ilsel_enable()).
  */
-int ilsel_enable_fixed(ilsel_source_t set, unsigned int level)
-{
-	unsigned int bit = ilsel_offset(level - 1);
+पूर्णांक ilsel_enable_fixed(ilsel_source_t set, अचिन्हित पूर्णांक level)
+अणु
+	अचिन्हित पूर्णांक bit = ilsel_offset(level - 1);
 
-	if (test_and_set_bit(bit, &ilsel_level_map))
-		return -EBUSY;
+	अगर (test_and_set_bit(bit, &ilsel_level_map))
+		वापस -EBUSY;
 
 	__ilsel_enable(set, bit);
 
-	return bit;
-}
+	वापस bit;
+पूर्ण
 EXPORT_SYMBOL_GPL(ilsel_enable_fixed);
 
 /**
  * ilsel_disable - Disable an ILSEL set
- * @irq: Bit position for ILSEL set value (retval from enable routines)
+ * @irq: Bit position क्रम ILSEL set value (retval from enable routines)
  *
  * Disable a previously enabled ILSEL set.
  */
-void ilsel_disable(unsigned int irq)
-{
-	unsigned long addr;
-	unsigned int tmp;
+व्योम ilsel_disable(अचिन्हित पूर्णांक irq)
+अणु
+	अचिन्हित दीर्घ addr;
+	अचिन्हित पूर्णांक पंचांगp;
 
 	pr_notice("disabling ILSEL set %d\n", irq);
 
 	addr = mk_ilsel_addr(irq);
 
-	tmp = __raw_readw(addr);
-	tmp &= ~(0xf << mk_ilsel_shift(irq));
-	__raw_writew(tmp, addr);
+	पंचांगp = __raw_पढ़ोw(addr);
+	पंचांगp &= ~(0xf << mk_ilsel_shअगरt(irq));
+	__raw_ग_लिखोw(पंचांगp, addr);
 
 	clear_bit(irq, &ilsel_level_map);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ilsel_disable);

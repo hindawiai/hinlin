@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2019 Spreadtrum Communications Inc.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2019 Spपढ़ोtrum Communications Inc.
 
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/spinlock.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/spinlock.h>
 
-#include "sprd-mcdt.h"
+#समावेश "sprd-mcdt.h"
 
-/* MCDT registers definition */
-#define MCDT_CH0_TXD		0x0
-#define MCDT_CH0_RXD		0x28
-#define MCDT_DAC0_WTMK		0x60
-#define MCDT_ADC0_WTMK		0x88
-#define MCDT_DMA_EN		0xb0
+/* MCDT रेजिस्टरs definition */
+#घोषणा MCDT_CH0_TXD		0x0
+#घोषणा MCDT_CH0_RXD		0x28
+#घोषणा MCDT_DAC0_WTMK		0x60
+#घोषणा MCDT_ADC0_WTMK		0x88
+#घोषणा MCDT_DMA_EN		0xb0
 
-#define MCDT_INT_EN0		0xb4
-#define MCDT_INT_EN1		0xb8
-#define MCDT_INT_EN2		0xbc
+#घोषणा MCDT_INT_EN0		0xb4
+#घोषणा MCDT_INT_EN1		0xb8
+#घोषणा MCDT_INT_EN2		0xbc
 
-#define MCDT_INT_CLR0		0xc0
-#define MCDT_INT_CLR1		0xc4
-#define MCDT_INT_CLR2		0xc8
+#घोषणा MCDT_INT_CLR0		0xc0
+#घोषणा MCDT_INT_CLR1		0xc4
+#घोषणा MCDT_INT_CLR2		0xc8
 
-#define MCDT_INT_RAW1		0xcc
-#define MCDT_INT_RAW2		0xd0
-#define MCDT_INT_RAW3		0xd4
+#घोषणा MCDT_INT_RAW1		0xcc
+#घोषणा MCDT_INT_RAW2		0xd0
+#घोषणा MCDT_INT_RAW3		0xd4
 
-#define MCDT_INT_MSK1		0xd8
-#define MCDT_INT_MSK2		0xdc
-#define MCDT_INT_MSK3		0xe0
+#घोषणा MCDT_INT_MSK1		0xd8
+#घोषणा MCDT_INT_MSK2		0xdc
+#घोषणा MCDT_INT_MSK3		0xe0
 
-#define MCDT_DAC0_FIFO_ADDR_ST	0xe4
-#define MCDT_ADC0_FIFO_ADDR_ST	0xe8
+#घोषणा MCDT_DAC0_FIFO_ADDR_ST	0xe4
+#घोषणा MCDT_ADC0_FIFO_ADDR_ST	0xe8
 
-#define MCDT_CH_FIFO_ST0	0x134
-#define MCDT_CH_FIFO_ST1	0x138
-#define MCDT_CH_FIFO_ST2	0x13c
+#घोषणा MCDT_CH_FIFO_ST0	0x134
+#घोषणा MCDT_CH_FIFO_ST1	0x138
+#घोषणा MCDT_CH_FIFO_ST2	0x13c
 
-#define MCDT_INT_MSK_CFG0	0x140
-#define MCDT_INT_MSK_CFG1	0x144
+#घोषणा MCDT_INT_MSK_CFG0	0x140
+#घोषणा MCDT_INT_MSK_CFG1	0x144
 
-#define MCDT_DMA_CFG0		0x148
-#define MCDT_FIFO_CLR		0x14c
-#define MCDT_DMA_CFG1		0x150
-#define MCDT_DMA_CFG2		0x154
-#define MCDT_DMA_CFG3		0x158
-#define MCDT_DMA_CFG4		0x15c
-#define MCDT_DMA_CFG5		0x160
+#घोषणा MCDT_DMA_CFG0		0x148
+#घोषणा MCDT_FIFO_CLR		0x14c
+#घोषणा MCDT_DMA_CFG1		0x150
+#घोषणा MCDT_DMA_CFG2		0x154
+#घोषणा MCDT_DMA_CFG3		0x158
+#घोषणा MCDT_DMA_CFG4		0x15c
+#घोषणा MCDT_DMA_CFG5		0x160
 
 /* Channel water mark definition */
-#define MCDT_CH_FIFO_AE_SHIFT	16
-#define MCDT_CH_FIFO_AE_MASK	GENMASK(24, 16)
-#define MCDT_CH_FIFO_AF_MASK	GENMASK(8, 0)
+#घोषणा MCDT_CH_FIFO_AE_SHIFT	16
+#घोषणा MCDT_CH_FIFO_AE_MASK	GENMASK(24, 16)
+#घोषणा MCDT_CH_FIFO_AF_MASK	GENMASK(8, 0)
 
 /* DMA channel select definition */
-#define MCDT_DMA_CH0_SEL_MASK	GENMASK(3, 0)
-#define MCDT_DMA_CH0_SEL_SHIFT	0
-#define MCDT_DMA_CH1_SEL_MASK	GENMASK(7, 4)
-#define MCDT_DMA_CH1_SEL_SHIFT	4
-#define MCDT_DMA_CH2_SEL_MASK	GENMASK(11, 8)
-#define MCDT_DMA_CH2_SEL_SHIFT	8
-#define MCDT_DMA_CH3_SEL_MASK	GENMASK(15, 12)
-#define MCDT_DMA_CH3_SEL_SHIFT	12
-#define MCDT_DMA_CH4_SEL_MASK	GENMASK(19, 16)
-#define MCDT_DMA_CH4_SEL_SHIFT	16
-#define MCDT_DAC_DMA_SHIFT	16
+#घोषणा MCDT_DMA_CH0_SEL_MASK	GENMASK(3, 0)
+#घोषणा MCDT_DMA_CH0_SEL_SHIFT	0
+#घोषणा MCDT_DMA_CH1_SEL_MASK	GENMASK(7, 4)
+#घोषणा MCDT_DMA_CH1_SEL_SHIFT	4
+#घोषणा MCDT_DMA_CH2_SEL_MASK	GENMASK(11, 8)
+#घोषणा MCDT_DMA_CH2_SEL_SHIFT	8
+#घोषणा MCDT_DMA_CH3_SEL_MASK	GENMASK(15, 12)
+#घोषणा MCDT_DMA_CH3_SEL_SHIFT	12
+#घोषणा MCDT_DMA_CH4_SEL_MASK	GENMASK(19, 16)
+#घोषणा MCDT_DMA_CH4_SEL_SHIFT	16
+#घोषणा MCDT_DAC_DMA_SHIFT	16
 
 /* DMA channel ACK select definition */
-#define MCDT_DMA_ACK_SEL_MASK	GENMASK(3, 0)
+#घोषणा MCDT_DMA_ACK_SEL_MASK	GENMASK(3, 0)
 
 /* Channel FIFO definition */
-#define MCDT_CH_FIFO_ADDR_SHIFT	16
-#define MCDT_CH_FIFO_ADDR_MASK	GENMASK(9, 0)
-#define MCDT_ADC_FIFO_SHIFT	16
-#define MCDT_FIFO_LENGTH	512
+#घोषणा MCDT_CH_FIFO_ADDR_SHIFT	16
+#घोषणा MCDT_CH_FIFO_ADDR_MASK	GENMASK(9, 0)
+#घोषणा MCDT_ADC_FIFO_SHIFT	16
+#घोषणा MCDT_FIFO_LENGTH	512
 
-#define MCDT_ADC_CHANNEL_NUM	10
-#define MCDT_DAC_CHANNEL_NUM	10
-#define MCDT_CHANNEL_NUM	(MCDT_ADC_CHANNEL_NUM + MCDT_DAC_CHANNEL_NUM)
+#घोषणा MCDT_ADC_CHANNEL_NUM	10
+#घोषणा MCDT_DAC_CHANNEL_NUM	10
+#घोषणा MCDT_CHANNEL_NUM	(MCDT_ADC_CHANNEL_NUM + MCDT_DAC_CHANNEL_NUM)
 
-enum sprd_mcdt_fifo_int {
+क्रमागत sprd_mcdt_fअगरo_पूर्णांक अणु
 	MCDT_ADC_FIFO_AE_INT,
 	MCDT_ADC_FIFO_AF_INT,
 	MCDT_DAC_FIFO_AE_INT,
 	MCDT_DAC_FIFO_AF_INT,
 	MCDT_ADC_FIFO_OV_INT,
 	MCDT_DAC_FIFO_OV_INT
-};
+पूर्ण;
 
-enum sprd_mcdt_fifo_sts {
+क्रमागत sprd_mcdt_fअगरo_sts अणु
 	MCDT_ADC_FIFO_REAL_FULL,
 	MCDT_ADC_FIFO_REAL_EMPTY,
 	MCDT_ADC_FIFO_AF,
@@ -103,31 +104,31 @@ enum sprd_mcdt_fifo_sts {
 	MCDT_DAC_FIFO_REAL_EMPTY,
 	MCDT_DAC_FIFO_AF,
 	MCDT_DAC_FIFO_AE
-};
+पूर्ण;
 
-struct sprd_mcdt_dev {
-	struct device *dev;
-	void __iomem *base;
+काष्ठा sprd_mcdt_dev अणु
+	काष्ठा device *dev;
+	व्योम __iomem *base;
 	spinlock_t lock;
-	struct sprd_mcdt_chan chan[MCDT_CHANNEL_NUM];
-};
+	काष्ठा sprd_mcdt_chan chan[MCDT_CHANNEL_NUM];
+पूर्ण;
 
-static LIST_HEAD(sprd_mcdt_chan_list);
-static DEFINE_MUTEX(sprd_mcdt_list_mutex);
+अटल LIST_HEAD(sprd_mcdt_chan_list);
+अटल DEFINE_MUTEX(sprd_mcdt_list_mutex);
 
-static void sprd_mcdt_update(struct sprd_mcdt_dev *mcdt, u32 reg, u32 val,
+अटल व्योम sprd_mcdt_update(काष्ठा sprd_mcdt_dev *mcdt, u32 reg, u32 val,
 			     u32 mask)
-{
-	u32 orig = readl_relaxed(mcdt->base + reg);
-	u32 tmp;
+अणु
+	u32 orig = पढ़ोl_relaxed(mcdt->base + reg);
+	u32 पंचांगp;
 
-	tmp = (orig & ~mask) | val;
-	writel_relaxed(tmp, mcdt->base + reg);
-}
+	पंचांगp = (orig & ~mask) | val;
+	ग_लिखोl_relaxed(पंचांगp, mcdt->base + reg);
+पूर्ण
 
-static void sprd_mcdt_dac_set_watermark(struct sprd_mcdt_dev *mcdt, u8 channel,
+अटल व्योम sprd_mcdt_dac_set_watermark(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
 					u32 full, u32 empty)
-{
+अणु
 	u32 reg = MCDT_DAC0_WTMK + channel * 4;
 	u32 water_mark =
 		(empty << MCDT_CH_FIFO_AE_SHIFT) & MCDT_CH_FIFO_AE_MASK;
@@ -135,11 +136,11 @@ static void sprd_mcdt_dac_set_watermark(struct sprd_mcdt_dev *mcdt, u8 channel,
 	water_mark |= full & MCDT_CH_FIFO_AF_MASK;
 	sprd_mcdt_update(mcdt, reg, water_mark,
 			 MCDT_CH_FIFO_AE_MASK | MCDT_CH_FIFO_AF_MASK);
-}
+पूर्ण
 
-static void sprd_mcdt_adc_set_watermark(struct sprd_mcdt_dev *mcdt, u8 channel,
+अटल व्योम sprd_mcdt_adc_set_watermark(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
 					u32 full, u32 empty)
-{
+अणु
 	u32 reg = MCDT_ADC0_WTMK + channel * 4;
 	u32 water_mark =
 		(empty << MCDT_CH_FIFO_AE_SHIFT) & MCDT_CH_FIFO_AE_MASK;
@@ -147,713 +148,713 @@ static void sprd_mcdt_adc_set_watermark(struct sprd_mcdt_dev *mcdt, u8 channel,
 	water_mark |= full & MCDT_CH_FIFO_AF_MASK;
 	sprd_mcdt_update(mcdt, reg, water_mark,
 			 MCDT_CH_FIFO_AE_MASK | MCDT_CH_FIFO_AF_MASK);
-}
+पूर्ण
 
-static void sprd_mcdt_dac_dma_enable(struct sprd_mcdt_dev *mcdt, u8 channel,
+अटल व्योम sprd_mcdt_dac_dma_enable(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
 				     bool enable)
-{
-	u32 shift = MCDT_DAC_DMA_SHIFT + channel;
+अणु
+	u32 shअगरt = MCDT_DAC_DMA_SHIFT + channel;
 
-	if (enable)
-		sprd_mcdt_update(mcdt, MCDT_DMA_EN, BIT(shift), BIT(shift));
-	else
-		sprd_mcdt_update(mcdt, MCDT_DMA_EN, 0, BIT(shift));
-}
+	अगर (enable)
+		sprd_mcdt_update(mcdt, MCDT_DMA_EN, BIT(shअगरt), BIT(shअगरt));
+	अन्यथा
+		sprd_mcdt_update(mcdt, MCDT_DMA_EN, 0, BIT(shअगरt));
+पूर्ण
 
-static void sprd_mcdt_adc_dma_enable(struct sprd_mcdt_dev *mcdt, u8 channel,
+अटल व्योम sprd_mcdt_adc_dma_enable(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
 				     bool enable)
-{
-	if (enable)
+अणु
+	अगर (enable)
 		sprd_mcdt_update(mcdt, MCDT_DMA_EN, BIT(channel), BIT(channel));
-	else
+	अन्यथा
 		sprd_mcdt_update(mcdt, MCDT_DMA_EN, 0, BIT(channel));
-}
+पूर्ण
 
-static void sprd_mcdt_ap_int_enable(struct sprd_mcdt_dev *mcdt, u8 channel,
+अटल व्योम sprd_mcdt_ap_पूर्णांक_enable(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
 				    bool enable)
-{
-	if (enable)
+अणु
+	अगर (enable)
 		sprd_mcdt_update(mcdt, MCDT_INT_MSK_CFG0, BIT(channel),
 				 BIT(channel));
-	else
+	अन्यथा
 		sprd_mcdt_update(mcdt, MCDT_INT_MSK_CFG0, 0, BIT(channel));
-}
+पूर्ण
 
-static void sprd_mcdt_dac_write_fifo(struct sprd_mcdt_dev *mcdt, u8 channel,
+अटल व्योम sprd_mcdt_dac_ग_लिखो_fअगरo(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
 				     u32 val)
-{
+अणु
 	u32 reg = MCDT_CH0_TXD + channel * 4;
 
-	writel_relaxed(val, mcdt->base + reg);
-}
+	ग_लिखोl_relaxed(val, mcdt->base + reg);
+पूर्ण
 
-static void sprd_mcdt_adc_read_fifo(struct sprd_mcdt_dev *mcdt, u8 channel,
+अटल व्योम sprd_mcdt_adc_पढ़ो_fअगरo(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
 				    u32 *val)
-{
+अणु
 	u32 reg = MCDT_CH0_RXD + channel * 4;
 
-	*val = readl_relaxed(mcdt->base + reg);
-}
+	*val = पढ़ोl_relaxed(mcdt->base + reg);
+पूर्ण
 
-static void sprd_mcdt_dac_dma_chn_select(struct sprd_mcdt_dev *mcdt, u8 channel,
-					 enum sprd_mcdt_dma_chan dma_chan)
-{
-	switch (dma_chan) {
-	case SPRD_MCDT_DMA_CH0:
+अटल व्योम sprd_mcdt_dac_dma_chn_select(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
+					 क्रमागत sprd_mcdt_dma_chan dma_chan)
+अणु
+	चयन (dma_chan) अणु
+	हाल SPRD_MCDT_DMA_CH0:
 		sprd_mcdt_update(mcdt, MCDT_DMA_CFG0,
 				 channel << MCDT_DMA_CH0_SEL_SHIFT,
 				 MCDT_DMA_CH0_SEL_MASK);
-		break;
+		अवरोध;
 
-	case SPRD_MCDT_DMA_CH1:
+	हाल SPRD_MCDT_DMA_CH1:
 		sprd_mcdt_update(mcdt, MCDT_DMA_CFG0,
 				 channel << MCDT_DMA_CH1_SEL_SHIFT,
 				 MCDT_DMA_CH1_SEL_MASK);
-		break;
+		अवरोध;
 
-	case SPRD_MCDT_DMA_CH2:
+	हाल SPRD_MCDT_DMA_CH2:
 		sprd_mcdt_update(mcdt, MCDT_DMA_CFG0,
 				 channel << MCDT_DMA_CH2_SEL_SHIFT,
 				 MCDT_DMA_CH2_SEL_MASK);
-		break;
+		अवरोध;
 
-	case SPRD_MCDT_DMA_CH3:
+	हाल SPRD_MCDT_DMA_CH3:
 		sprd_mcdt_update(mcdt, MCDT_DMA_CFG0,
 				 channel << MCDT_DMA_CH3_SEL_SHIFT,
 				 MCDT_DMA_CH3_SEL_MASK);
-		break;
+		अवरोध;
 
-	case SPRD_MCDT_DMA_CH4:
+	हाल SPRD_MCDT_DMA_CH4:
 		sprd_mcdt_update(mcdt, MCDT_DMA_CFG0,
 				 channel << MCDT_DMA_CH4_SEL_SHIFT,
 				 MCDT_DMA_CH4_SEL_MASK);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void sprd_mcdt_adc_dma_chn_select(struct sprd_mcdt_dev *mcdt, u8 channel,
-					 enum sprd_mcdt_dma_chan dma_chan)
-{
-	switch (dma_chan) {
-	case SPRD_MCDT_DMA_CH0:
+अटल व्योम sprd_mcdt_adc_dma_chn_select(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
+					 क्रमागत sprd_mcdt_dma_chan dma_chan)
+अणु
+	चयन (dma_chan) अणु
+	हाल SPRD_MCDT_DMA_CH0:
 		sprd_mcdt_update(mcdt, MCDT_DMA_CFG1,
 				 channel << MCDT_DMA_CH0_SEL_SHIFT,
 				 MCDT_DMA_CH0_SEL_MASK);
-		break;
+		अवरोध;
 
-	case SPRD_MCDT_DMA_CH1:
+	हाल SPRD_MCDT_DMA_CH1:
 		sprd_mcdt_update(mcdt, MCDT_DMA_CFG1,
 				 channel << MCDT_DMA_CH1_SEL_SHIFT,
 				 MCDT_DMA_CH1_SEL_MASK);
-		break;
+		अवरोध;
 
-	case SPRD_MCDT_DMA_CH2:
+	हाल SPRD_MCDT_DMA_CH2:
 		sprd_mcdt_update(mcdt, MCDT_DMA_CFG1,
 				 channel << MCDT_DMA_CH2_SEL_SHIFT,
 				 MCDT_DMA_CH2_SEL_MASK);
-		break;
+		अवरोध;
 
-	case SPRD_MCDT_DMA_CH3:
+	हाल SPRD_MCDT_DMA_CH3:
 		sprd_mcdt_update(mcdt, MCDT_DMA_CFG1,
 				 channel << MCDT_DMA_CH3_SEL_SHIFT,
 				 MCDT_DMA_CH3_SEL_MASK);
-		break;
+		अवरोध;
 
-	case SPRD_MCDT_DMA_CH4:
+	हाल SPRD_MCDT_DMA_CH4:
 		sprd_mcdt_update(mcdt, MCDT_DMA_CFG1,
 				 channel << MCDT_DMA_CH4_SEL_SHIFT,
 				 MCDT_DMA_CH4_SEL_MASK);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static u32 sprd_mcdt_dma_ack_shift(u8 channel)
-{
-	switch (channel) {
-	default:
-	case 0:
-	case 8:
-		return 0;
-	case 1:
-	case 9:
-		return 4;
-	case 2:
-		return 8;
-	case 3:
-		return 12;
-	case 4:
-		return 16;
-	case 5:
-		return 20;
-	case 6:
-		return 24;
-	case 7:
-		return 28;
-	}
-}
+अटल u32 sprd_mcdt_dma_ack_shअगरt(u8 channel)
+अणु
+	चयन (channel) अणु
+	शेष:
+	हाल 0:
+	हाल 8:
+		वापस 0;
+	हाल 1:
+	हाल 9:
+		वापस 4;
+	हाल 2:
+		वापस 8;
+	हाल 3:
+		वापस 12;
+	हाल 4:
+		वापस 16;
+	हाल 5:
+		वापस 20;
+	हाल 6:
+		वापस 24;
+	हाल 7:
+		वापस 28;
+	पूर्ण
+पूर्ण
 
-static void sprd_mcdt_dac_dma_ack_select(struct sprd_mcdt_dev *mcdt, u8 channel,
-					 enum sprd_mcdt_dma_chan dma_chan)
-{
-	u32 reg, shift = sprd_mcdt_dma_ack_shift(channel), ack = dma_chan;
+अटल व्योम sprd_mcdt_dac_dma_ack_select(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
+					 क्रमागत sprd_mcdt_dma_chan dma_chan)
+अणु
+	u32 reg, shअगरt = sprd_mcdt_dma_ack_shअगरt(channel), ack = dma_chan;
 
-	switch (channel) {
-	case 0 ... 7:
+	चयन (channel) अणु
+	हाल 0 ... 7:
 		reg = MCDT_DMA_CFG2;
-		break;
+		अवरोध;
 
-	case 8 ... 9:
+	हाल 8 ... 9:
 		reg = MCDT_DMA_CFG3;
-		break;
+		अवरोध;
 
-	default:
-		return;
-	}
+	शेष:
+		वापस;
+	पूर्ण
 
-	sprd_mcdt_update(mcdt, reg, ack << shift,
-			 MCDT_DMA_ACK_SEL_MASK << shift);
-}
+	sprd_mcdt_update(mcdt, reg, ack << shअगरt,
+			 MCDT_DMA_ACK_SEL_MASK << shअगरt);
+पूर्ण
 
-static void sprd_mcdt_adc_dma_ack_select(struct sprd_mcdt_dev *mcdt, u8 channel,
-					 enum sprd_mcdt_dma_chan dma_chan)
-{
-	u32 reg, shift = sprd_mcdt_dma_ack_shift(channel), ack = dma_chan;
+अटल व्योम sprd_mcdt_adc_dma_ack_select(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
+					 क्रमागत sprd_mcdt_dma_chan dma_chan)
+अणु
+	u32 reg, shअगरt = sprd_mcdt_dma_ack_shअगरt(channel), ack = dma_chan;
 
-	switch (channel) {
-	case 0 ... 7:
+	चयन (channel) अणु
+	हाल 0 ... 7:
 		reg = MCDT_DMA_CFG4;
-		break;
+		अवरोध;
 
-	case 8 ... 9:
+	हाल 8 ... 9:
 		reg = MCDT_DMA_CFG5;
-		break;
+		अवरोध;
 
-	default:
-		return;
-	}
+	शेष:
+		वापस;
+	पूर्ण
 
-	sprd_mcdt_update(mcdt, reg, ack << shift,
-			 MCDT_DMA_ACK_SEL_MASK << shift);
-}
+	sprd_mcdt_update(mcdt, reg, ack << shअगरt,
+			 MCDT_DMA_ACK_SEL_MASK << shअगरt);
+पूर्ण
 
-static bool sprd_mcdt_chan_fifo_sts(struct sprd_mcdt_dev *mcdt, u8 channel,
-				    enum sprd_mcdt_fifo_sts fifo_sts)
-{
-	u32 reg, shift;
+अटल bool sprd_mcdt_chan_fअगरo_sts(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
+				    क्रमागत sprd_mcdt_fअगरo_sts fअगरo_sts)
+अणु
+	u32 reg, shअगरt;
 
-	switch (channel) {
-	case 0 ... 3:
+	चयन (channel) अणु
+	हाल 0 ... 3:
 		reg = MCDT_CH_FIFO_ST0;
-		break;
-	case 4 ... 7:
+		अवरोध;
+	हाल 4 ... 7:
 		reg = MCDT_CH_FIFO_ST1;
-		break;
-	case 8 ... 9:
+		अवरोध;
+	हाल 8 ... 9:
 		reg = MCDT_CH_FIFO_ST2;
-		break;
-	default:
-		return false;
-	}
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	switch (channel) {
-	case 0:
-	case 4:
-	case 8:
-		shift = fifo_sts;
-		break;
+	चयन (channel) अणु
+	हाल 0:
+	हाल 4:
+	हाल 8:
+		shअगरt = fअगरo_sts;
+		अवरोध;
 
-	case 1:
-	case 5:
-	case 9:
-		shift = 8 + fifo_sts;
-		break;
+	हाल 1:
+	हाल 5:
+	हाल 9:
+		shअगरt = 8 + fअगरo_sts;
+		अवरोध;
 
-	case 2:
-	case 6:
-		shift = 16 + fifo_sts;
-		break;
+	हाल 2:
+	हाल 6:
+		shअगरt = 16 + fअगरo_sts;
+		अवरोध;
 
-	case 3:
-	case 7:
-		shift = 24 + fifo_sts;
-		break;
+	हाल 3:
+	हाल 7:
+		shअगरt = 24 + fअगरo_sts;
+		अवरोध;
 
-	default:
-		return false;
-	}
+	शेष:
+		वापस false;
+	पूर्ण
 
-	return !!(readl_relaxed(mcdt->base + reg) & BIT(shift));
-}
+	वापस !!(पढ़ोl_relaxed(mcdt->base + reg) & BIT(shअगरt));
+पूर्ण
 
-static void sprd_mcdt_dac_fifo_clear(struct sprd_mcdt_dev *mcdt, u8 channel)
-{
+अटल व्योम sprd_mcdt_dac_fअगरo_clear(काष्ठा sprd_mcdt_dev *mcdt, u8 channel)
+अणु
 	sprd_mcdt_update(mcdt, MCDT_FIFO_CLR, BIT(channel), BIT(channel));
-}
+पूर्ण
 
-static void sprd_mcdt_adc_fifo_clear(struct sprd_mcdt_dev *mcdt, u8 channel)
-{
-	u32 shift = MCDT_ADC_FIFO_SHIFT + channel;
+अटल व्योम sprd_mcdt_adc_fअगरo_clear(काष्ठा sprd_mcdt_dev *mcdt, u8 channel)
+अणु
+	u32 shअगरt = MCDT_ADC_FIFO_SHIFT + channel;
 
-	sprd_mcdt_update(mcdt, MCDT_FIFO_CLR, BIT(shift), BIT(shift));
-}
+	sprd_mcdt_update(mcdt, MCDT_FIFO_CLR, BIT(shअगरt), BIT(shअगरt));
+पूर्ण
 
-static u32 sprd_mcdt_dac_fifo_avail(struct sprd_mcdt_dev *mcdt, u8 channel)
-{
+अटल u32 sprd_mcdt_dac_fअगरo_avail(काष्ठा sprd_mcdt_dev *mcdt, u8 channel)
+अणु
 	u32 reg = MCDT_DAC0_FIFO_ADDR_ST + channel * 8;
-	u32 r_addr = (readl_relaxed(mcdt->base + reg) >>
+	u32 r_addr = (पढ़ोl_relaxed(mcdt->base + reg) >>
 		      MCDT_CH_FIFO_ADDR_SHIFT) & MCDT_CH_FIFO_ADDR_MASK;
-	u32 w_addr = readl_relaxed(mcdt->base + reg) & MCDT_CH_FIFO_ADDR_MASK;
+	u32 w_addr = पढ़ोl_relaxed(mcdt->base + reg) & MCDT_CH_FIFO_ADDR_MASK;
 
-	if (w_addr >= r_addr)
-		return 4 * (MCDT_FIFO_LENGTH - w_addr + r_addr);
-	else
-		return 4 * (r_addr - w_addr);
-}
+	अगर (w_addr >= r_addr)
+		वापस 4 * (MCDT_FIFO_LENGTH - w_addr + r_addr);
+	अन्यथा
+		वापस 4 * (r_addr - w_addr);
+पूर्ण
 
-static u32 sprd_mcdt_adc_fifo_avail(struct sprd_mcdt_dev *mcdt, u8 channel)
-{
+अटल u32 sprd_mcdt_adc_fअगरo_avail(काष्ठा sprd_mcdt_dev *mcdt, u8 channel)
+अणु
 	u32 reg = MCDT_ADC0_FIFO_ADDR_ST + channel * 8;
-	u32 r_addr = (readl_relaxed(mcdt->base + reg) >>
+	u32 r_addr = (पढ़ोl_relaxed(mcdt->base + reg) >>
 		      MCDT_CH_FIFO_ADDR_SHIFT) & MCDT_CH_FIFO_ADDR_MASK;
-	u32 w_addr = readl_relaxed(mcdt->base + reg) & MCDT_CH_FIFO_ADDR_MASK;
+	u32 w_addr = पढ़ोl_relaxed(mcdt->base + reg) & MCDT_CH_FIFO_ADDR_MASK;
 
-	if (w_addr >= r_addr)
-		return 4 * (w_addr - r_addr);
-	else
-		return 4 * (MCDT_FIFO_LENGTH - r_addr + w_addr);
-}
+	अगर (w_addr >= r_addr)
+		वापस 4 * (w_addr - r_addr);
+	अन्यथा
+		वापस 4 * (MCDT_FIFO_LENGTH - r_addr + w_addr);
+पूर्ण
 
-static u32 sprd_mcdt_int_type_shift(u8 channel,
-				    enum sprd_mcdt_fifo_int int_type)
-{
-	switch (channel) {
-	case 0:
-	case 4:
-	case 8:
-		return int_type;
+अटल u32 sprd_mcdt_पूर्णांक_type_shअगरt(u8 channel,
+				    क्रमागत sprd_mcdt_fअगरo_पूर्णांक पूर्णांक_type)
+अणु
+	चयन (channel) अणु
+	हाल 0:
+	हाल 4:
+	हाल 8:
+		वापस पूर्णांक_type;
 
-	case 1:
-	case 5:
-	case 9:
-		return  8 + int_type;
+	हाल 1:
+	हाल 5:
+	हाल 9:
+		वापस  8 + पूर्णांक_type;
 
-	case 2:
-	case 6:
-		return 16 + int_type;
+	हाल 2:
+	हाल 6:
+		वापस 16 + पूर्णांक_type;
 
-	case 3:
-	case 7:
-		return 24 + int_type;
+	हाल 3:
+	हाल 7:
+		वापस 24 + पूर्णांक_type;
 
-	default:
-		return 0;
-	}
-}
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void sprd_mcdt_chan_int_en(struct sprd_mcdt_dev *mcdt, u8 channel,
-				  enum sprd_mcdt_fifo_int int_type, bool enable)
-{
-	u32 reg, shift = sprd_mcdt_int_type_shift(channel, int_type);
+अटल व्योम sprd_mcdt_chan_पूर्णांक_en(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
+				  क्रमागत sprd_mcdt_fअगरo_पूर्णांक पूर्णांक_type, bool enable)
+अणु
+	u32 reg, shअगरt = sprd_mcdt_पूर्णांक_type_shअगरt(channel, पूर्णांक_type);
 
-	switch (channel) {
-	case 0 ... 3:
+	चयन (channel) अणु
+	हाल 0 ... 3:
 		reg = MCDT_INT_EN0;
-		break;
-	case 4 ... 7:
+		अवरोध;
+	हाल 4 ... 7:
 		reg = MCDT_INT_EN1;
-		break;
-	case 8 ... 9:
+		अवरोध;
+	हाल 8 ... 9:
 		reg = MCDT_INT_EN2;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	if (enable)
-		sprd_mcdt_update(mcdt, reg, BIT(shift), BIT(shift));
-	else
-		sprd_mcdt_update(mcdt, reg, 0, BIT(shift));
-}
+	अगर (enable)
+		sprd_mcdt_update(mcdt, reg, BIT(shअगरt), BIT(shअगरt));
+	अन्यथा
+		sprd_mcdt_update(mcdt, reg, 0, BIT(shअगरt));
+पूर्ण
 
-static void sprd_mcdt_chan_int_clear(struct sprd_mcdt_dev *mcdt, u8 channel,
-				     enum sprd_mcdt_fifo_int int_type)
-{
-	u32 reg, shift = sprd_mcdt_int_type_shift(channel, int_type);
+अटल व्योम sprd_mcdt_chan_पूर्णांक_clear(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
+				     क्रमागत sprd_mcdt_fअगरo_पूर्णांक पूर्णांक_type)
+अणु
+	u32 reg, shअगरt = sprd_mcdt_पूर्णांक_type_shअगरt(channel, पूर्णांक_type);
 
-	switch (channel) {
-	case 0 ... 3:
+	चयन (channel) अणु
+	हाल 0 ... 3:
 		reg = MCDT_INT_CLR0;
-		break;
-	case 4 ... 7:
+		अवरोध;
+	हाल 4 ... 7:
 		reg = MCDT_INT_CLR1;
-		break;
-	case 8 ... 9:
+		अवरोध;
+	हाल 8 ... 9:
 		reg = MCDT_INT_CLR2;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	sprd_mcdt_update(mcdt, reg, BIT(shift), BIT(shift));
-}
+	sprd_mcdt_update(mcdt, reg, BIT(shअगरt), BIT(shअगरt));
+पूर्ण
 
-static bool sprd_mcdt_chan_int_sts(struct sprd_mcdt_dev *mcdt, u8 channel,
-				   enum sprd_mcdt_fifo_int int_type)
-{
-	u32 reg, shift = sprd_mcdt_int_type_shift(channel, int_type);
+अटल bool sprd_mcdt_chan_पूर्णांक_sts(काष्ठा sprd_mcdt_dev *mcdt, u8 channel,
+				   क्रमागत sprd_mcdt_fअगरo_पूर्णांक पूर्णांक_type)
+अणु
+	u32 reg, shअगरt = sprd_mcdt_पूर्णांक_type_shअगरt(channel, पूर्णांक_type);
 
-	switch (channel) {
-	case 0 ... 3:
+	चयन (channel) अणु
+	हाल 0 ... 3:
 		reg = MCDT_INT_MSK1;
-		break;
-	case 4 ... 7:
+		अवरोध;
+	हाल 4 ... 7:
 		reg = MCDT_INT_MSK2;
-		break;
-	case 8 ... 9:
+		अवरोध;
+	हाल 8 ... 9:
 		reg = MCDT_INT_MSK3;
-		break;
-	default:
-		return false;
-	}
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	return !!(readl_relaxed(mcdt->base + reg) & BIT(shift));
-}
+	वापस !!(पढ़ोl_relaxed(mcdt->base + reg) & BIT(shअगरt));
+पूर्ण
 
-static irqreturn_t sprd_mcdt_irq_handler(int irq, void *dev_id)
-{
-	struct sprd_mcdt_dev *mcdt = (struct sprd_mcdt_dev *)dev_id;
-	int i;
+अटल irqवापस_t sprd_mcdt_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sprd_mcdt_dev *mcdt = (काष्ठा sprd_mcdt_dev *)dev_id;
+	पूर्णांक i;
 
 	spin_lock(&mcdt->lock);
 
-	for (i = 0; i < MCDT_ADC_CHANNEL_NUM; i++) {
-		if (sprd_mcdt_chan_int_sts(mcdt, i, MCDT_ADC_FIFO_AF_INT)) {
-			struct sprd_mcdt_chan *chan = &mcdt->chan[i];
+	क्रम (i = 0; i < MCDT_ADC_CHANNEL_NUM; i++) अणु
+		अगर (sprd_mcdt_chan_पूर्णांक_sts(mcdt, i, MCDT_ADC_FIFO_AF_INT)) अणु
+			काष्ठा sprd_mcdt_chan *chan = &mcdt->chan[i];
 
-			sprd_mcdt_chan_int_clear(mcdt, i, MCDT_ADC_FIFO_AF_INT);
-			if (chan->cb)
-				chan->cb->notify(chan->cb->data);
-		}
-	}
+			sprd_mcdt_chan_पूर्णांक_clear(mcdt, i, MCDT_ADC_FIFO_AF_INT);
+			अगर (chan->cb)
+				chan->cb->notअगरy(chan->cb->data);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < MCDT_DAC_CHANNEL_NUM; i++) {
-		if (sprd_mcdt_chan_int_sts(mcdt, i, MCDT_DAC_FIFO_AE_INT)) {
-			struct sprd_mcdt_chan *chan =
+	क्रम (i = 0; i < MCDT_DAC_CHANNEL_NUM; i++) अणु
+		अगर (sprd_mcdt_chan_पूर्णांक_sts(mcdt, i, MCDT_DAC_FIFO_AE_INT)) अणु
+			काष्ठा sprd_mcdt_chan *chan =
 				&mcdt->chan[i + MCDT_ADC_CHANNEL_NUM];
 
-			sprd_mcdt_chan_int_clear(mcdt, i, MCDT_DAC_FIFO_AE_INT);
-			if (chan->cb)
-				chan->cb->notify(chan->cb->data);
-		}
-	}
+			sprd_mcdt_chan_पूर्णांक_clear(mcdt, i, MCDT_DAC_FIFO_AE_INT);
+			अगर (chan->cb)
+				chan->cb->notअगरy(chan->cb->data);
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&mcdt->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * sprd_mcdt_chan_write - write data to the MCDT channel's fifo
+ * sprd_mcdt_chan_ग_लिखो - ग_लिखो data to the MCDT channel's fअगरo
  * @chan: the MCDT channel
  * @tx_buf: send buffer
  * @size: data size
  *
- * Note: We can not write data to the channel fifo when enabling the DMA mode,
- * otherwise the channel fifo data will be invalid.
+ * Note: We can not ग_लिखो data to the channel fअगरo when enabling the DMA mode,
+ * otherwise the channel fअगरo data will be invalid.
  *
- * If there are not enough space of the channel fifo, it will return errors
+ * If there are not enough space of the channel fअगरo, it will वापस errors
  * to users.
  *
  * Returns 0 on success, or an appropriate error code on failure.
  */
-int sprd_mcdt_chan_write(struct sprd_mcdt_chan *chan, char *tx_buf, u32 size)
-{
-	struct sprd_mcdt_dev *mcdt = chan->mcdt;
-	unsigned long flags;
-	int avail, i = 0, words = size / 4;
+पूर्णांक sprd_mcdt_chan_ग_लिखो(काष्ठा sprd_mcdt_chan *chan, अक्षर *tx_buf, u32 size)
+अणु
+	काष्ठा sprd_mcdt_dev *mcdt = chan->mcdt;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक avail, i = 0, words = size / 4;
 	u32 *buf = (u32 *)tx_buf;
 
 	spin_lock_irqsave(&mcdt->lock, flags);
 
-	if (chan->dma_enable) {
+	अगर (chan->dma_enable) अणु
 		dev_err(mcdt->dev,
 			"Can not write data when DMA mode enabled\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sprd_mcdt_chan_fifo_sts(mcdt, chan->id, MCDT_DAC_FIFO_REAL_FULL)) {
+	अगर (sprd_mcdt_chan_fअगरo_sts(mcdt, chan->id, MCDT_DAC_FIFO_REAL_FULL)) अणु
 		dev_err(mcdt->dev, "Channel fifo is full now\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	avail = sprd_mcdt_dac_fifo_avail(mcdt, chan->id);
-	if (size > avail) {
+	avail = sprd_mcdt_dac_fअगरo_avail(mcdt, chan->id);
+	अगर (size > avail) अणु
 		dev_err(mcdt->dev,
 			"Data size is larger than the available fifo size\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	while (i++ < words)
-		sprd_mcdt_dac_write_fifo(mcdt, chan->id, *buf++);
+	जबतक (i++ < words)
+		sprd_mcdt_dac_ग_लिखो_fअगरo(mcdt, chan->id, *buf++);
 
 	spin_unlock_irqrestore(&mcdt->lock, flags);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(sprd_mcdt_chan_write);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(sprd_mcdt_chan_ग_लिखो);
 
 /**
- * sprd_mcdt_chan_read - read data from the MCDT channel's fifo
+ * sprd_mcdt_chan_पढ़ो - पढ़ो data from the MCDT channel's fअगरo
  * @chan: the MCDT channel
  * @rx_buf: receive buffer
  * @size: data size
  *
- * Note: We can not read data from the channel fifo when enabling the DMA mode,
- * otherwise the reading data will be invalid.
+ * Note: We can not पढ़ो data from the channel fअगरo when enabling the DMA mode,
+ * otherwise the पढ़ोing data will be invalid.
  *
- * Usually user need start to read data once receiving the fifo full interrupt.
+ * Usually user need start to पढ़ो data once receiving the fअगरo full पूर्णांकerrupt.
  *
- * Returns data size of reading successfully, or an error code on failure.
+ * Returns data size of पढ़ोing successfully, or an error code on failure.
  */
-int sprd_mcdt_chan_read(struct sprd_mcdt_chan *chan, char *rx_buf, u32 size)
-{
-	struct sprd_mcdt_dev *mcdt = chan->mcdt;
-	unsigned long flags;
-	int i = 0, avail, words = size / 4;
+पूर्णांक sprd_mcdt_chan_पढ़ो(काष्ठा sprd_mcdt_chan *chan, अक्षर *rx_buf, u32 size)
+अणु
+	काष्ठा sprd_mcdt_dev *mcdt = chan->mcdt;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i = 0, avail, words = size / 4;
 	u32 *buf = (u32 *)rx_buf;
 
 	spin_lock_irqsave(&mcdt->lock, flags);
 
-	if (chan->dma_enable) {
+	अगर (chan->dma_enable) अणु
 		dev_err(mcdt->dev, "Can not read data when DMA mode enabled\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sprd_mcdt_chan_fifo_sts(mcdt, chan->id, MCDT_ADC_FIFO_REAL_EMPTY)) {
+	अगर (sprd_mcdt_chan_fअगरo_sts(mcdt, chan->id, MCDT_ADC_FIFO_REAL_EMPTY)) अणु
 		dev_err(mcdt->dev, "Channel fifo is empty\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	avail = sprd_mcdt_adc_fifo_avail(mcdt, chan->id);
-	if (size > avail)
+	avail = sprd_mcdt_adc_fअगरo_avail(mcdt, chan->id);
+	अगर (size > avail)
 		words = avail / 4;
 
-	while (i++ < words)
-		sprd_mcdt_adc_read_fifo(mcdt, chan->id, buf++);
+	जबतक (i++ < words)
+		sprd_mcdt_adc_पढ़ो_fअगरo(mcdt, chan->id, buf++);
 
 	spin_unlock_irqrestore(&mcdt->lock, flags);
-	return words * 4;
-}
-EXPORT_SYMBOL_GPL(sprd_mcdt_chan_read);
+	वापस words * 4;
+पूर्ण
+EXPORT_SYMBOL_GPL(sprd_mcdt_chan_पढ़ो);
 
 /**
- * sprd_mcdt_chan_int_enable - enable the interrupt mode for the MCDT channel
+ * sprd_mcdt_chan_पूर्णांक_enable - enable the पूर्णांकerrupt mode क्रम the MCDT channel
  * @chan: the MCDT channel
- * @water_mark: water mark to trigger a interrupt
- * @cb: callback when a interrupt happened
+ * @water_mark: water mark to trigger a पूर्णांकerrupt
+ * @cb: callback when a पूर्णांकerrupt happened
  *
- * Now it only can enable fifo almost full interrupt for ADC channel and fifo
- * almost empty interrupt for DAC channel. Morevoer for interrupt mode, user
- * should use sprd_mcdt_chan_read() or sprd_mcdt_chan_write() to read or write
+ * Now it only can enable fअगरo almost full पूर्णांकerrupt क्रम ADC channel and fअगरo
+ * almost empty पूर्णांकerrupt क्रम DAC channel. Morevoer क्रम पूर्णांकerrupt mode, user
+ * should use sprd_mcdt_chan_पढ़ो() or sprd_mcdt_chan_ग_लिखो() to पढ़ो or ग_लिखो
  * data manually.
  *
- * For ADC channel, user can start to read data once receiving one fifo full
- * interrupt. For DAC channel, user can start to write data once receiving one
- * fifo empty interrupt or just call sprd_mcdt_chan_write() to write data
+ * For ADC channel, user can start to पढ़ो data once receiving one fअगरo full
+ * पूर्णांकerrupt. For DAC channel, user can start to ग_लिखो data once receiving one
+ * fअगरo empty पूर्णांकerrupt or just call sprd_mcdt_chan_ग_लिखो() to ग_लिखो data
  * directly.
  *
  * Returns 0 on success, or an error code on failure.
  */
-int sprd_mcdt_chan_int_enable(struct sprd_mcdt_chan *chan, u32 water_mark,
-			      struct sprd_mcdt_chan_callback *cb)
-{
-	struct sprd_mcdt_dev *mcdt = chan->mcdt;
-	unsigned long flags;
-	int ret = 0;
+पूर्णांक sprd_mcdt_chan_पूर्णांक_enable(काष्ठा sprd_mcdt_chan *chan, u32 water_mark,
+			      काष्ठा sprd_mcdt_chan_callback *cb)
+अणु
+	काष्ठा sprd_mcdt_dev *mcdt = chan->mcdt;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(&mcdt->lock, flags);
 
-	if (chan->dma_enable || chan->int_enable) {
+	अगर (chan->dma_enable || chan->पूर्णांक_enable) अणु
 		dev_err(mcdt->dev, "Failed to set interrupt mode.\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (chan->type) {
-	case SPRD_MCDT_ADC_CHAN:
-		sprd_mcdt_adc_fifo_clear(mcdt, chan->id);
+	चयन (chan->type) अणु
+	हाल SPRD_MCDT_ADC_CHAN:
+		sprd_mcdt_adc_fअगरo_clear(mcdt, chan->id);
 		sprd_mcdt_adc_set_watermark(mcdt, chan->id, water_mark,
 					    MCDT_FIFO_LENGTH - 1);
-		sprd_mcdt_chan_int_en(mcdt, chan->id,
+		sprd_mcdt_chan_पूर्णांक_en(mcdt, chan->id,
 				      MCDT_ADC_FIFO_AF_INT, true);
-		sprd_mcdt_ap_int_enable(mcdt, chan->id, true);
-		break;
+		sprd_mcdt_ap_पूर्णांक_enable(mcdt, chan->id, true);
+		अवरोध;
 
-	case SPRD_MCDT_DAC_CHAN:
-		sprd_mcdt_dac_fifo_clear(mcdt, chan->id);
+	हाल SPRD_MCDT_DAC_CHAN:
+		sprd_mcdt_dac_fअगरo_clear(mcdt, chan->id);
 		sprd_mcdt_dac_set_watermark(mcdt, chan->id,
 					    MCDT_FIFO_LENGTH - 1, water_mark);
-		sprd_mcdt_chan_int_en(mcdt, chan->id,
+		sprd_mcdt_chan_पूर्णांक_en(mcdt, chan->id,
 				      MCDT_DAC_FIFO_AE_INT, true);
-		sprd_mcdt_ap_int_enable(mcdt, chan->id, true);
-		break;
+		sprd_mcdt_ap_पूर्णांक_enable(mcdt, chan->id, true);
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(mcdt->dev, "Unsupported channel type\n");
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	if (!ret) {
+	अगर (!ret) अणु
 		chan->cb = cb;
-		chan->int_enable = true;
-	}
+		chan->पूर्णांक_enable = true;
+	पूर्ण
 
 	spin_unlock_irqrestore(&mcdt->lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(sprd_mcdt_chan_int_enable);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(sprd_mcdt_chan_पूर्णांक_enable);
 
 /**
- * sprd_mcdt_chan_int_disable - disable the interrupt mode for the MCDT channel
+ * sprd_mcdt_chan_पूर्णांक_disable - disable the पूर्णांकerrupt mode क्रम the MCDT channel
  * @chan: the MCDT channel
  */
-void sprd_mcdt_chan_int_disable(struct sprd_mcdt_chan *chan)
-{
-	struct sprd_mcdt_dev *mcdt = chan->mcdt;
-	unsigned long flags;
+व्योम sprd_mcdt_chan_पूर्णांक_disable(काष्ठा sprd_mcdt_chan *chan)
+अणु
+	काष्ठा sprd_mcdt_dev *mcdt = chan->mcdt;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mcdt->lock, flags);
 
-	if (!chan->int_enable) {
+	अगर (!chan->पूर्णांक_enable) अणु
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (chan->type) {
-	case SPRD_MCDT_ADC_CHAN:
-		sprd_mcdt_chan_int_en(mcdt, chan->id,
+	चयन (chan->type) अणु
+	हाल SPRD_MCDT_ADC_CHAN:
+		sprd_mcdt_chan_पूर्णांक_en(mcdt, chan->id,
 				      MCDT_ADC_FIFO_AF_INT, false);
-		sprd_mcdt_chan_int_clear(mcdt, chan->id, MCDT_ADC_FIFO_AF_INT);
-		sprd_mcdt_ap_int_enable(mcdt, chan->id, false);
-		break;
+		sprd_mcdt_chan_पूर्णांक_clear(mcdt, chan->id, MCDT_ADC_FIFO_AF_INT);
+		sprd_mcdt_ap_पूर्णांक_enable(mcdt, chan->id, false);
+		अवरोध;
 
-	case SPRD_MCDT_DAC_CHAN:
-		sprd_mcdt_chan_int_en(mcdt, chan->id,
+	हाल SPRD_MCDT_DAC_CHAN:
+		sprd_mcdt_chan_पूर्णांक_en(mcdt, chan->id,
 				      MCDT_DAC_FIFO_AE_INT, false);
-		sprd_mcdt_chan_int_clear(mcdt, chan->id, MCDT_DAC_FIFO_AE_INT);
-		sprd_mcdt_ap_int_enable(mcdt, chan->id, false);
-		break;
+		sprd_mcdt_chan_पूर्णांक_clear(mcdt, chan->id, MCDT_DAC_FIFO_AE_INT);
+		sprd_mcdt_ap_पूर्णांक_enable(mcdt, chan->id, false);
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	chan->int_enable = false;
+	chan->पूर्णांक_enable = false;
 	spin_unlock_irqrestore(&mcdt->lock, flags);
-}
-EXPORT_SYMBOL_GPL(sprd_mcdt_chan_int_disable);
+पूर्ण
+EXPORT_SYMBOL_GPL(sprd_mcdt_chan_पूर्णांक_disable);
 
 /**
- * sprd_mcdt_chan_dma_enable - enable the DMA mode for the MCDT channel
+ * sprd_mcdt_chan_dma_enable - enable the DMA mode क्रम the MCDT channel
  * @chan: the MCDT channel
- * @dma_chan: specify which DMA channel will be used for this MCDT channel
+ * @dma_chan: specअगरy which DMA channel will be used क्रम this MCDT channel
  * @water_mark: water mark to trigger a DMA request
  *
- * Enable the DMA mode for the MCDT channel, that means we can use DMA to
- * transfer data to the channel fifo and do not need reading/writing data
+ * Enable the DMA mode क्रम the MCDT channel, that means we can use DMA to
+ * transfer data to the channel fअगरo and करो not need पढ़ोing/writing data
  * manually.
  *
  * Returns 0 on success, or an error code on failure.
  */
-int sprd_mcdt_chan_dma_enable(struct sprd_mcdt_chan *chan,
-			      enum sprd_mcdt_dma_chan dma_chan,
+पूर्णांक sprd_mcdt_chan_dma_enable(काष्ठा sprd_mcdt_chan *chan,
+			      क्रमागत sprd_mcdt_dma_chan dma_chan,
 			      u32 water_mark)
-{
-	struct sprd_mcdt_dev *mcdt = chan->mcdt;
-	unsigned long flags;
-	int ret = 0;
+अणु
+	काष्ठा sprd_mcdt_dev *mcdt = chan->mcdt;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(&mcdt->lock, flags);
 
-	if (chan->dma_enable || chan->int_enable ||
-	    dma_chan > SPRD_MCDT_DMA_CH4) {
+	अगर (chan->dma_enable || chan->पूर्णांक_enable ||
+	    dma_chan > SPRD_MCDT_DMA_CH4) अणु
 		dev_err(mcdt->dev, "Failed to set DMA mode\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (chan->type) {
-	case SPRD_MCDT_ADC_CHAN:
-		sprd_mcdt_adc_fifo_clear(mcdt, chan->id);
+	चयन (chan->type) अणु
+	हाल SPRD_MCDT_ADC_CHAN:
+		sprd_mcdt_adc_fअगरo_clear(mcdt, chan->id);
 		sprd_mcdt_adc_set_watermark(mcdt, chan->id,
 					    water_mark, MCDT_FIFO_LENGTH - 1);
 		sprd_mcdt_adc_dma_enable(mcdt, chan->id, true);
 		sprd_mcdt_adc_dma_chn_select(mcdt, chan->id, dma_chan);
 		sprd_mcdt_adc_dma_ack_select(mcdt, chan->id, dma_chan);
-		break;
+		अवरोध;
 
-	case SPRD_MCDT_DAC_CHAN:
-		sprd_mcdt_dac_fifo_clear(mcdt, chan->id);
+	हाल SPRD_MCDT_DAC_CHAN:
+		sprd_mcdt_dac_fअगरo_clear(mcdt, chan->id);
 		sprd_mcdt_dac_set_watermark(mcdt, chan->id,
 					    MCDT_FIFO_LENGTH - 1, water_mark);
 		sprd_mcdt_dac_dma_enable(mcdt, chan->id, true);
 		sprd_mcdt_dac_dma_chn_select(mcdt, chan->id, dma_chan);
 		sprd_mcdt_dac_dma_ack_select(mcdt, chan->id, dma_chan);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(mcdt->dev, "Unsupported channel type\n");
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		chan->dma_enable = true;
 
 	spin_unlock_irqrestore(&mcdt->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(sprd_mcdt_chan_dma_enable);
 
 /**
- * sprd_mcdt_chan_dma_disable - disable the DMA mode for the MCDT channel
+ * sprd_mcdt_chan_dma_disable - disable the DMA mode क्रम the MCDT channel
  * @chan: the MCDT channel
  */
-void sprd_mcdt_chan_dma_disable(struct sprd_mcdt_chan *chan)
-{
-	struct sprd_mcdt_dev *mcdt = chan->mcdt;
-	unsigned long flags;
+व्योम sprd_mcdt_chan_dma_disable(काष्ठा sprd_mcdt_chan *chan)
+अणु
+	काष्ठा sprd_mcdt_dev *mcdt = chan->mcdt;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mcdt->lock, flags);
 
-	if (!chan->dma_enable) {
+	अगर (!chan->dma_enable) अणु
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (chan->type) {
-	case SPRD_MCDT_ADC_CHAN:
+	चयन (chan->type) अणु
+	हाल SPRD_MCDT_ADC_CHAN:
 		sprd_mcdt_adc_dma_enable(mcdt, chan->id, false);
-		sprd_mcdt_adc_fifo_clear(mcdt, chan->id);
-		break;
+		sprd_mcdt_adc_fअगरo_clear(mcdt, chan->id);
+		अवरोध;
 
-	case SPRD_MCDT_DAC_CHAN:
+	हाल SPRD_MCDT_DAC_CHAN:
 		sprd_mcdt_dac_dma_enable(mcdt, chan->id, false);
-		sprd_mcdt_dac_fifo_clear(mcdt, chan->id);
-		break;
+		sprd_mcdt_dac_fअगरo_clear(mcdt, chan->id);
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	chan->dma_enable = false;
 	spin_unlock_irqrestore(&mcdt->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sprd_mcdt_chan_dma_disable);
 
 /**
@@ -861,74 +862,74 @@ EXPORT_SYMBOL_GPL(sprd_mcdt_chan_dma_disable);
  * @channel: channel id
  * @type: channel type, it can be one ADC channel or DAC channel
  *
- * Rreturn NULL if no available channel.
+ * Rवापस शून्य अगर no available channel.
  */
-struct sprd_mcdt_chan *sprd_mcdt_request_chan(u8 channel,
-					      enum sprd_mcdt_channel_type type)
-{
-	struct sprd_mcdt_chan *temp;
+काष्ठा sprd_mcdt_chan *sprd_mcdt_request_chan(u8 channel,
+					      क्रमागत sprd_mcdt_channel_type type)
+अणु
+	काष्ठा sprd_mcdt_chan *temp;
 
 	mutex_lock(&sprd_mcdt_list_mutex);
 
-	list_for_each_entry(temp, &sprd_mcdt_chan_list, list) {
-		if (temp->type == type && temp->id == channel) {
+	list_क्रम_each_entry(temp, &sprd_mcdt_chan_list, list) अणु
+		अगर (temp->type == type && temp->id == channel) अणु
 			list_del_init(&temp->list);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (list_entry_is_head(temp, &sprd_mcdt_chan_list, list))
-		temp = NULL;
+	अगर (list_entry_is_head(temp, &sprd_mcdt_chan_list, list))
+		temp = शून्य;
 
 	mutex_unlock(&sprd_mcdt_list_mutex);
 
-	return temp;
-}
+	वापस temp;
+पूर्ण
 EXPORT_SYMBOL_GPL(sprd_mcdt_request_chan);
 
 /**
- * sprd_mcdt_free_chan - free one MCDT channel
- * @chan: the channel to be freed
+ * sprd_mcdt_मुक्त_chan - मुक्त one MCDT channel
+ * @chan: the channel to be मुक्तd
  */
-void sprd_mcdt_free_chan(struct sprd_mcdt_chan *chan)
-{
-	struct sprd_mcdt_chan *temp;
+व्योम sprd_mcdt_मुक्त_chan(काष्ठा sprd_mcdt_chan *chan)
+अणु
+	काष्ठा sprd_mcdt_chan *temp;
 
 	sprd_mcdt_chan_dma_disable(chan);
-	sprd_mcdt_chan_int_disable(chan);
+	sprd_mcdt_chan_पूर्णांक_disable(chan);
 
 	mutex_lock(&sprd_mcdt_list_mutex);
 
-	list_for_each_entry(temp, &sprd_mcdt_chan_list, list) {
-		if (temp == chan) {
+	list_क्रम_each_entry(temp, &sprd_mcdt_chan_list, list) अणु
+		अगर (temp == chan) अणु
 			mutex_unlock(&sprd_mcdt_list_mutex);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	list_add_tail(&chan->list, &sprd_mcdt_chan_list);
 	mutex_unlock(&sprd_mcdt_list_mutex);
-}
-EXPORT_SYMBOL_GPL(sprd_mcdt_free_chan);
+पूर्ण
+EXPORT_SYMBOL_GPL(sprd_mcdt_मुक्त_chan);
 
-static void sprd_mcdt_init_chans(struct sprd_mcdt_dev *mcdt,
-				 struct resource *res)
-{
-	int i;
+अटल व्योम sprd_mcdt_init_chans(काष्ठा sprd_mcdt_dev *mcdt,
+				 काष्ठा resource *res)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MCDT_CHANNEL_NUM; i++) {
-		struct sprd_mcdt_chan *chan = &mcdt->chan[i];
+	क्रम (i = 0; i < MCDT_CHANNEL_NUM; i++) अणु
+		काष्ठा sprd_mcdt_chan *chan = &mcdt->chan[i];
 
-		if (i < MCDT_ADC_CHANNEL_NUM) {
+		अगर (i < MCDT_ADC_CHANNEL_NUM) अणु
 			chan->id = i;
 			chan->type = SPRD_MCDT_ADC_CHAN;
-			chan->fifo_phys = res->start + MCDT_CH0_RXD + i * 4;
-		} else {
+			chan->fअगरo_phys = res->start + MCDT_CH0_RXD + i * 4;
+		पूर्ण अन्यथा अणु
 			chan->id = i - MCDT_ADC_CHANNEL_NUM;
 			chan->type = SPRD_MCDT_DAC_CHAN;
-			chan->fifo_phys = res->start + MCDT_CH0_TXD +
+			chan->fअगरo_phys = res->start + MCDT_CH0_TXD +
 				(i - MCDT_ADC_CHANNEL_NUM) * 4;
-		}
+		पूर्ण
 
 		chan->mcdt = mcdt;
 		INIT_LIST_HEAD(&chan->list);
@@ -936,74 +937,74 @@ static void sprd_mcdt_init_chans(struct sprd_mcdt_dev *mcdt,
 		mutex_lock(&sprd_mcdt_list_mutex);
 		list_add_tail(&chan->list, &sprd_mcdt_chan_list);
 		mutex_unlock(&sprd_mcdt_list_mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sprd_mcdt_probe(struct platform_device *pdev)
-{
-	struct sprd_mcdt_dev *mcdt;
-	struct resource *res;
-	int ret, irq;
+अटल पूर्णांक sprd_mcdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sprd_mcdt_dev *mcdt;
+	काष्ठा resource *res;
+	पूर्णांक ret, irq;
 
-	mcdt = devm_kzalloc(&pdev->dev, sizeof(*mcdt), GFP_KERNEL);
-	if (!mcdt)
-		return -ENOMEM;
+	mcdt = devm_kzalloc(&pdev->dev, माप(*mcdt), GFP_KERNEL);
+	अगर (!mcdt)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	mcdt->base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(mcdt->base))
-		return PTR_ERR(mcdt->base);
+	अगर (IS_ERR(mcdt->base))
+		वापस PTR_ERR(mcdt->base);
 
 	mcdt->dev = &pdev->dev;
 	spin_lock_init(&mcdt->lock);
-	platform_set_drvdata(pdev, mcdt);
+	platक्रमm_set_drvdata(pdev, mcdt);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	ret = devm_request_irq(&pdev->dev, irq, sprd_mcdt_irq_handler,
 			       0, "sprd-mcdt", mcdt);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to request MCDT IRQ\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sprd_mcdt_init_chans(mcdt, res);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sprd_mcdt_remove(struct platform_device *pdev)
-{
-	struct sprd_mcdt_chan *chan, *temp;
+अटल पूर्णांक sprd_mcdt_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sprd_mcdt_chan *chan, *temp;
 
 	mutex_lock(&sprd_mcdt_list_mutex);
 
-	list_for_each_entry_safe(chan, temp, &sprd_mcdt_chan_list, list)
+	list_क्रम_each_entry_safe(chan, temp, &sprd_mcdt_chan_list, list)
 		list_del(&chan->list);
 
 	mutex_unlock(&sprd_mcdt_list_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id sprd_mcdt_of_match[] = {
-	{ .compatible = "sprd,sc9860-mcdt", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sprd_mcdt_of_match[] = अणु
+	अणु .compatible = "sprd,sc9860-mcdt", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sprd_mcdt_of_match);
 
-static struct platform_driver sprd_mcdt_driver = {
+अटल काष्ठा platक्रमm_driver sprd_mcdt_driver = अणु
 	.probe = sprd_mcdt_probe,
-	.remove = sprd_mcdt_remove,
-	.driver = {
+	.हटाओ = sprd_mcdt_हटाओ,
+	.driver = अणु
 		.name = "sprd-mcdt",
 		.of_match_table = sprd_mcdt_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(sprd_mcdt_driver);
+module_platक्रमm_driver(sprd_mcdt_driver);
 
 MODULE_DESCRIPTION("Spreadtrum Multi-Channel Data Transfer Driver");
 MODULE_LICENSE("GPL v2");

@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  PS3 virtual uart
+ *  PS3 भव uart
  *
  *  Copyright (C) 2006 Sony Computer Entertainment Inc.
  *  Copyright 2006 Sony Corp.
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/workqueue.h>
-#include <linux/bitops.h>
-#include <asm/ps3.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/bitops.h>
+#समावेश <यंत्र/ps3.h>
 
-#include <asm/firmware.h>
-#include <asm/lv1call.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/lv1call.h>
 
-#include "vuart.h"
+#समावेश "vuart.h"
 
 MODULE_AUTHOR("Sony Corporation");
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("PS3 vuart");
 
 /**
- * vuart - An inter-partition data link service.
+ * vuart - An पूर्णांकer-partition data link service.
  *  port 0: PS3 AV Settings.
  *  port 2: PS3 System Manager.
  *
  * The vuart provides a bi-directional byte stream data link between logical
  * partitions.  Its primary role is as a communications link between the guest
- * OS and the system policy module.  The current HV does not support any
+ * OS and the प्रणाली policy module.  The current HV करोes not support any
  * connections other than those listed.
  */
 
-enum {PORT_COUNT = 3,};
+क्रमागत अणुPORT_COUNT = 3,पूर्ण;
 
-enum vuart_param {
+क्रमागत vuart_param अणु
 	PARAM_TX_TRIGGER = 0,
 	PARAM_RX_TRIGGER = 1,
 	PARAM_INTERRUPT_MASK = 2,
-	PARAM_RX_BUF_SIZE = 3, /* read only */
-	PARAM_RX_BYTES = 4, /* read only */
-	PARAM_TX_BUF_SIZE = 5, /* read only */
-	PARAM_TX_BYTES = 6, /* read only */
-	PARAM_INTERRUPT_STATUS = 7, /* read only */
-};
+	PARAM_RX_BUF_SIZE = 3, /* पढ़ो only */
+	PARAM_RX_BYTES = 4, /* पढ़ो only */
+	PARAM_TX_BUF_SIZE = 5, /* पढ़ो only */
+	PARAM_TX_BYTES = 6, /* पढ़ो only */
+	PARAM_INTERRUPT_STATUS = 7, /* पढ़ो only */
+पूर्ण;
 
-enum vuart_interrupt_bit {
+क्रमागत vuart_पूर्णांकerrupt_bit अणु
 	INTERRUPT_BIT_TX = 0,
 	INTERRUPT_BIT_RX = 1,
 	INTERRUPT_BIT_DISCONNECT = 2,
-};
+पूर्ण;
 
-enum vuart_interrupt_mask {
+क्रमागत vuart_पूर्णांकerrupt_mask अणु
 	INTERRUPT_MASK_TX = 1,
 	INTERRUPT_MASK_RX = 2,
 	INTERRUPT_MASK_DISCONNECT = 4,
-};
+पूर्ण;
 
 /**
- * struct ps3_vuart_port_priv - private vuart device data.
+ * काष्ठा ps3_vuart_port_priv - निजी vuart device data.
  */
 
-struct ps3_vuart_port_priv {
-	u64 interrupt_mask;
+काष्ठा ps3_vuart_port_priv अणु
+	u64 पूर्णांकerrupt_mask;
 
-	struct {
+	काष्ठा अणु
 		spinlock_t lock;
-		struct list_head head;
-	} tx_list;
-	struct {
-		struct ps3_vuart_work work;
-		unsigned long bytes_held;
+		काष्ठा list_head head;
+	पूर्ण tx_list;
+	काष्ठा अणु
+		काष्ठा ps3_vuart_work work;
+		अचिन्हित दीर्घ bytes_held;
 		spinlock_t lock;
-		struct list_head head;
-	} rx_list;
-	struct ps3_vuart_stats stats;
-};
+		काष्ठा list_head head;
+	पूर्ण rx_list;
+	काष्ठा ps3_vuart_stats stats;
+पूर्ण;
 
-static struct ps3_vuart_port_priv *to_port_priv(
-	struct ps3_system_bus_device *dev)
-{
+अटल काष्ठा ps3_vuart_port_priv *to_port_priv(
+	काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
 	BUG_ON(!dev);
 	BUG_ON(!dev->driver_priv);
-	return (struct ps3_vuart_port_priv *)dev->driver_priv;
-}
+	वापस (काष्ठा ps3_vuart_port_priv *)dev->driver_priv;
+पूर्ण
 
 /**
- * struct ports_bmp - bitmap indicating ports needing service.
+ * काष्ठा ports_bmp - biपंचांगap indicating ports needing service.
  *
- * A 256 bit read only bitmap indicating ports needing service.  Do not write
+ * A 256 bit पढ़ो only biपंचांगap indicating ports needing service.  Do not ग_लिखो
  * to these bits.  Must not cross a page boundary.
  */
 
-struct ports_bmp {
+काष्ठा ports_bmp अणु
 	u64 status;
 	u64 unused[3];
-} __attribute__((aligned(32)));
+पूर्ण __attribute__((aligned(32)));
 
-#define dump_ports_bmp(_b) _dump_ports_bmp(_b, __func__, __LINE__)
-static void __maybe_unused _dump_ports_bmp(
-	const struct ports_bmp *bmp, const char *func, int line)
-{
+#घोषणा dump_ports_bmp(_b) _dump_ports_bmp(_b, __func__, __LINE__)
+अटल व्योम __maybe_unused _dump_ports_bmp(
+	स्थिर काष्ठा ports_bmp *bmp, स्थिर अक्षर *func, पूर्णांक line)
+अणु
 	pr_debug("%s:%d: ports_bmp: %016llxh\n", func, line, bmp->status);
-}
+पूर्ण
 
-#define dump_port_params(_b) _dump_port_params(_b, __func__, __LINE__)
-static void __maybe_unused _dump_port_params(unsigned int port_number,
-	const char *func, int line)
-{
-#if defined(DEBUG)
-	static const char *strings[] = {
+#घोषणा dump_port_params(_b) _dump_port_params(_b, __func__, __LINE__)
+अटल व्योम __maybe_unused _dump_port_params(अचिन्हित पूर्णांक port_number,
+	स्थिर अक्षर *func, पूर्णांक line)
+अणु
+#अगर defined(DEBUG)
+	अटल स्थिर अक्षर *strings[] = अणु
 		"tx_trigger      ",
 		"rx_trigger      ",
 		"interrupt_mask  ",
@@ -120,456 +121,456 @@ static void __maybe_unused _dump_port_params(unsigned int port_number,
 		"tx_buf_size     ",
 		"tx_bytes        ",
 		"interrupt_status",
-	};
-	int result;
-	unsigned int i;
+	पूर्ण;
+	पूर्णांक result;
+	अचिन्हित पूर्णांक i;
 	u64 value;
 
-	for (i = 0; i < ARRAY_SIZE(strings); i++) {
-		result = lv1_get_virtual_uart_param(port_number, i, &value);
+	क्रम (i = 0; i < ARRAY_SIZE(strings); i++) अणु
+		result = lv1_get_भव_uart_param(port_number, i, &value);
 
-		if (result) {
+		अगर (result) अणु
 			pr_debug("%s:%d: port_%u: %s failed: %s\n", func, line,
 				port_number, strings[i], ps3_result(result));
-			continue;
-		}
+			जारी;
+		पूर्ण
 		pr_debug("%s:%d: port_%u: %s = %lxh\n",
 			func, line, port_number, strings[i], value);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-int ps3_vuart_get_triggers(struct ps3_system_bus_device *dev,
-	struct vuart_triggers *trig)
-{
-	int result;
+पूर्णांक ps3_vuart_get_triggers(काष्ठा ps3_प्रणाली_bus_device *dev,
+	काष्ठा vuart_triggers *trig)
+अणु
+	पूर्णांक result;
 	u64 size;
 	u64 val;
 	u64 tx;
 
-	result = lv1_get_virtual_uart_param(dev->port_number,
+	result = lv1_get_भव_uart_param(dev->port_number,
 		PARAM_TX_TRIGGER, &tx);
 	trig->tx = tx;
 
-	if (result) {
+	अगर (result) अणु
 		dev_dbg(&dev->core, "%s:%d: tx_trigger failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	result = lv1_get_virtual_uart_param(dev->port_number,
+	result = lv1_get_भव_uart_param(dev->port_number,
 		PARAM_RX_BUF_SIZE, &size);
 
-	if (result) {
+	अगर (result) अणु
 		dev_dbg(&dev->core, "%s:%d: tx_buf_size failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	result = lv1_get_virtual_uart_param(dev->port_number,
+	result = lv1_get_भव_uart_param(dev->port_number,
 		PARAM_RX_TRIGGER, &val);
 
-	if (result) {
+	अगर (result) अणु
 		dev_dbg(&dev->core, "%s:%d: rx_trigger failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	trig->rx = size - val;
 
 	dev_dbg(&dev->core, "%s:%d: tx %lxh, rx %lxh\n", __func__, __LINE__,
 		trig->tx, trig->rx);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-int ps3_vuart_set_triggers(struct ps3_system_bus_device *dev, unsigned int tx,
-	unsigned int rx)
-{
-	int result;
+पूर्णांक ps3_vuart_set_triggers(काष्ठा ps3_प्रणाली_bus_device *dev, अचिन्हित पूर्णांक tx,
+	अचिन्हित पूर्णांक rx)
+अणु
+	पूर्णांक result;
 	u64 size;
 
-	result = lv1_set_virtual_uart_param(dev->port_number,
+	result = lv1_set_भव_uart_param(dev->port_number,
 		PARAM_TX_TRIGGER, tx);
 
-	if (result) {
+	अगर (result) अणु
 		dev_dbg(&dev->core, "%s:%d: tx_trigger failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	result = lv1_get_virtual_uart_param(dev->port_number,
+	result = lv1_get_भव_uart_param(dev->port_number,
 		PARAM_RX_BUF_SIZE, &size);
 
-	if (result) {
+	अगर (result) अणु
 		dev_dbg(&dev->core, "%s:%d: tx_buf_size failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	result = lv1_set_virtual_uart_param(dev->port_number,
+	result = lv1_set_भव_uart_param(dev->port_number,
 		PARAM_RX_TRIGGER, size - rx);
 
-	if (result) {
+	अगर (result) अणु
 		dev_dbg(&dev->core, "%s:%d: rx_trigger failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	dev_dbg(&dev->core, "%s:%d: tx %xh, rx %xh\n", __func__, __LINE__,
 		tx, rx);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int ps3_vuart_get_rx_bytes_waiting(struct ps3_system_bus_device *dev,
-	u64 *bytes_waiting)
-{
-	int result;
+अटल पूर्णांक ps3_vuart_get_rx_bytes_रुकोing(काष्ठा ps3_प्रणाली_bus_device *dev,
+	u64 *bytes_रुकोing)
+अणु
+	पूर्णांक result;
 
-	result = lv1_get_virtual_uart_param(dev->port_number,
-		PARAM_RX_BYTES, bytes_waiting);
+	result = lv1_get_भव_uart_param(dev->port_number,
+		PARAM_RX_BYTES, bytes_रुकोing);
 
-	if (result)
+	अगर (result)
 		dev_dbg(&dev->core, "%s:%d: rx_bytes failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 
 	dev_dbg(&dev->core, "%s:%d: %llxh\n", __func__, __LINE__,
-		*bytes_waiting);
-	return result;
-}
+		*bytes_रुकोing);
+	वापस result;
+पूर्ण
 
 /**
- * ps3_vuart_set_interrupt_mask - Enable/disable the port interrupt sources.
- * @dev: The struct ps3_system_bus_device instance.
- * @bmp: Logical OR of enum vuart_interrupt_mask values. A zero bit disables.
+ * ps3_vuart_set_पूर्णांकerrupt_mask - Enable/disable the port पूर्णांकerrupt sources.
+ * @dev: The काष्ठा ps3_प्रणाली_bus_device instance.
+ * @bmp: Logical OR of क्रमागत vuart_पूर्णांकerrupt_mask values. A zero bit disables.
  */
 
-static int ps3_vuart_set_interrupt_mask(struct ps3_system_bus_device *dev,
-	unsigned long mask)
-{
-	int result;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
+अटल पूर्णांक ps3_vuart_set_पूर्णांकerrupt_mask(काष्ठा ps3_प्रणाली_bus_device *dev,
+	अचिन्हित दीर्घ mask)
+अणु
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
 
 	dev_dbg(&dev->core, "%s:%d: %lxh\n", __func__, __LINE__, mask);
 
-	priv->interrupt_mask = mask;
+	priv->पूर्णांकerrupt_mask = mask;
 
-	result = lv1_set_virtual_uart_param(dev->port_number,
-		PARAM_INTERRUPT_MASK, priv->interrupt_mask);
+	result = lv1_set_भव_uart_param(dev->port_number,
+		PARAM_INTERRUPT_MASK, priv->पूर्णांकerrupt_mask);
 
-	if (result)
+	अगर (result)
 		dev_dbg(&dev->core, "%s:%d: interrupt_mask failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int ps3_vuart_get_interrupt_status(struct ps3_system_bus_device *dev,
-	unsigned long *status)
-{
-	int result;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
-	u64 tmp;
+अटल पूर्णांक ps3_vuart_get_पूर्णांकerrupt_status(काष्ठा ps3_प्रणाली_bus_device *dev,
+	अचिन्हित दीर्घ *status)
+अणु
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
+	u64 पंचांगp;
 
-	result = lv1_get_virtual_uart_param(dev->port_number,
-		PARAM_INTERRUPT_STATUS, &tmp);
+	result = lv1_get_भव_uart_param(dev->port_number,
+		PARAM_INTERRUPT_STATUS, &पंचांगp);
 
-	if (result)
+	अगर (result)
 		dev_dbg(&dev->core, "%s:%d: interrupt_status failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 
-	*status = tmp & priv->interrupt_mask;
+	*status = पंचांगp & priv->पूर्णांकerrupt_mask;
 
 	dev_dbg(&dev->core, "%s:%d: m %llxh, s %llxh, m&s %lxh\n",
-		__func__, __LINE__, priv->interrupt_mask, tmp, *status);
+		__func__, __LINE__, priv->पूर्णांकerrupt_mask, पंचांगp, *status);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-int ps3_vuart_enable_interrupt_tx(struct ps3_system_bus_device *dev)
-{
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
+पूर्णांक ps3_vuart_enable_पूर्णांकerrupt_tx(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
 
-	return (priv->interrupt_mask & INTERRUPT_MASK_TX) ? 0
-		: ps3_vuart_set_interrupt_mask(dev, priv->interrupt_mask
+	वापस (priv->पूर्णांकerrupt_mask & INTERRUPT_MASK_TX) ? 0
+		: ps3_vuart_set_पूर्णांकerrupt_mask(dev, priv->पूर्णांकerrupt_mask
 		| INTERRUPT_MASK_TX);
-}
+पूर्ण
 
-int ps3_vuart_enable_interrupt_rx(struct ps3_system_bus_device *dev)
-{
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
+पूर्णांक ps3_vuart_enable_पूर्णांकerrupt_rx(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
 
-	return (priv->interrupt_mask & INTERRUPT_MASK_RX) ? 0
-		: ps3_vuart_set_interrupt_mask(dev, priv->interrupt_mask
+	वापस (priv->पूर्णांकerrupt_mask & INTERRUPT_MASK_RX) ? 0
+		: ps3_vuart_set_पूर्णांकerrupt_mask(dev, priv->पूर्णांकerrupt_mask
 		| INTERRUPT_MASK_RX);
-}
+पूर्ण
 
-int ps3_vuart_enable_interrupt_disconnect(struct ps3_system_bus_device *dev)
-{
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
+पूर्णांक ps3_vuart_enable_पूर्णांकerrupt_disconnect(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
 
-	return (priv->interrupt_mask & INTERRUPT_MASK_DISCONNECT) ? 0
-		: ps3_vuart_set_interrupt_mask(dev, priv->interrupt_mask
+	वापस (priv->पूर्णांकerrupt_mask & INTERRUPT_MASK_DISCONNECT) ? 0
+		: ps3_vuart_set_पूर्णांकerrupt_mask(dev, priv->पूर्णांकerrupt_mask
 		| INTERRUPT_MASK_DISCONNECT);
-}
+पूर्ण
 
-int ps3_vuart_disable_interrupt_tx(struct ps3_system_bus_device *dev)
-{
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
+पूर्णांक ps3_vuart_disable_पूर्णांकerrupt_tx(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
 
-	return (priv->interrupt_mask & INTERRUPT_MASK_TX)
-		? ps3_vuart_set_interrupt_mask(dev, priv->interrupt_mask
+	वापस (priv->पूर्णांकerrupt_mask & INTERRUPT_MASK_TX)
+		? ps3_vuart_set_पूर्णांकerrupt_mask(dev, priv->पूर्णांकerrupt_mask
 		& ~INTERRUPT_MASK_TX) : 0;
-}
+पूर्ण
 
-int ps3_vuart_disable_interrupt_rx(struct ps3_system_bus_device *dev)
-{
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
+पूर्णांक ps3_vuart_disable_पूर्णांकerrupt_rx(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
 
-	return (priv->interrupt_mask & INTERRUPT_MASK_RX)
-		? ps3_vuart_set_interrupt_mask(dev, priv->interrupt_mask
+	वापस (priv->पूर्णांकerrupt_mask & INTERRUPT_MASK_RX)
+		? ps3_vuart_set_पूर्णांकerrupt_mask(dev, priv->पूर्णांकerrupt_mask
 		& ~INTERRUPT_MASK_RX) : 0;
-}
+पूर्ण
 
-int ps3_vuart_disable_interrupt_disconnect(struct ps3_system_bus_device *dev)
-{
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
+पूर्णांक ps3_vuart_disable_पूर्णांकerrupt_disconnect(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
 
-	return (priv->interrupt_mask & INTERRUPT_MASK_DISCONNECT)
-		? ps3_vuart_set_interrupt_mask(dev, priv->interrupt_mask
+	वापस (priv->पूर्णांकerrupt_mask & INTERRUPT_MASK_DISCONNECT)
+		? ps3_vuart_set_पूर्णांकerrupt_mask(dev, priv->पूर्णांकerrupt_mask
 		& ~INTERRUPT_MASK_DISCONNECT) : 0;
-}
+पूर्ण
 
 /**
- * ps3_vuart_raw_write - Low level write helper.
- * @dev: The struct ps3_system_bus_device instance.
+ * ps3_vuart_raw_ग_लिखो - Low level ग_लिखो helper.
+ * @dev: The काष्ठा ps3_प्रणाली_bus_device instance.
  *
- * Do not call ps3_vuart_raw_write directly, use ps3_vuart_write.
+ * Do not call ps3_vuart_raw_ग_लिखो directly, use ps3_vuart_ग_लिखो.
  */
 
-static int ps3_vuart_raw_write(struct ps3_system_bus_device *dev,
-	const void *buf, unsigned int bytes, u64 *bytes_written)
-{
-	int result;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
+अटल पूर्णांक ps3_vuart_raw_ग_लिखो(काष्ठा ps3_प्रणाली_bus_device *dev,
+	स्थिर व्योम *buf, अचिन्हित पूर्णांक bytes, u64 *bytes_written)
+अणु
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
 
-	result = lv1_write_virtual_uart(dev->port_number,
+	result = lv1_ग_लिखो_भव_uart(dev->port_number,
 		ps3_mm_phys_to_lpar(__pa(buf)), bytes, bytes_written);
 
-	if (result) {
+	अगर (result) अणु
 		dev_dbg(&dev->core, "%s:%d: lv1_write_virtual_uart failed: "
 			"%s\n", __func__, __LINE__, ps3_result(result));
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	priv->stats.bytes_written += *bytes_written;
 
 	dev_dbg(&dev->core, "%s:%d: wrote %llxh/%xh=>%lxh\n", __func__, __LINE__,
 		*bytes_written, bytes, priv->stats.bytes_written);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * ps3_vuart_raw_read - Low level read helper.
- * @dev: The struct ps3_system_bus_device instance.
+ * ps3_vuart_raw_पढ़ो - Low level पढ़ो helper.
+ * @dev: The काष्ठा ps3_प्रणाली_bus_device instance.
  *
- * Do not call ps3_vuart_raw_read directly, use ps3_vuart_read.
+ * Do not call ps3_vuart_raw_पढ़ो directly, use ps3_vuart_पढ़ो.
  */
 
-static int ps3_vuart_raw_read(struct ps3_system_bus_device *dev, void *buf,
-	unsigned int bytes, u64 *bytes_read)
-{
-	int result;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
+अटल पूर्णांक ps3_vuart_raw_पढ़ो(काष्ठा ps3_प्रणाली_bus_device *dev, व्योम *buf,
+	अचिन्हित पूर्णांक bytes, u64 *bytes_पढ़ो)
+अणु
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
 
 	dev_dbg(&dev->core, "%s:%d: %xh\n", __func__, __LINE__, bytes);
 
-	result = lv1_read_virtual_uart(dev->port_number,
-		ps3_mm_phys_to_lpar(__pa(buf)), bytes, bytes_read);
+	result = lv1_पढ़ो_भव_uart(dev->port_number,
+		ps3_mm_phys_to_lpar(__pa(buf)), bytes, bytes_पढ़ो);
 
-	if (result) {
+	अगर (result) अणु
 		dev_dbg(&dev->core, "%s:%d: lv1_read_virtual_uart failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	priv->stats.bytes_read += *bytes_read;
+	priv->stats.bytes_पढ़ो += *bytes_पढ़ो;
 
 	dev_dbg(&dev->core, "%s:%d: read %llxh/%xh=>%lxh\n", __func__, __LINE__,
-		*bytes_read, bytes, priv->stats.bytes_read);
+		*bytes_पढ़ो, bytes, priv->stats.bytes_पढ़ो);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * ps3_vuart_clear_rx_bytes - Discard bytes received.
- * @dev: The struct ps3_system_bus_device instance.
+ * @dev: The काष्ठा ps3_प्रणाली_bus_device instance.
  * @bytes: Max byte count to discard, zero = all pending.
  *
- * Used to clear pending rx interrupt source.  Will not block.
+ * Used to clear pending rx पूर्णांकerrupt source.  Will not block.
  */
 
-void ps3_vuart_clear_rx_bytes(struct ps3_system_bus_device *dev,
-	unsigned int bytes)
-{
-	int result;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
-	u64 bytes_waiting;
-	void *tmp;
+व्योम ps3_vuart_clear_rx_bytes(काष्ठा ps3_प्रणाली_bus_device *dev,
+	अचिन्हित पूर्णांक bytes)
+अणु
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
+	u64 bytes_रुकोing;
+	व्योम *पंचांगp;
 
-	result = ps3_vuart_get_rx_bytes_waiting(dev, &bytes_waiting);
+	result = ps3_vuart_get_rx_bytes_रुकोing(dev, &bytes_रुकोing);
 
 	BUG_ON(result);
 
-	bytes = bytes ? min(bytes, (unsigned int)bytes_waiting) : bytes_waiting;
+	bytes = bytes ? min(bytes, (अचिन्हित पूर्णांक)bytes_रुकोing) : bytes_रुकोing;
 
 	dev_dbg(&dev->core, "%s:%d: %u\n", __func__, __LINE__, bytes);
 
-	if (!bytes)
-		return;
+	अगर (!bytes)
+		वापस;
 
-	/* Add some extra space for recently arrived data. */
+	/* Add some extra space क्रम recently arrived data. */
 
 	bytes += 128;
 
-	tmp = kmalloc(bytes, GFP_KERNEL);
+	पंचांगp = kदो_स्मृति(bytes, GFP_KERNEL);
 
-	if (!tmp)
-		return;
+	अगर (!पंचांगp)
+		वापस;
 
-	ps3_vuart_raw_read(dev, tmp, bytes, &bytes_waiting);
+	ps3_vuart_raw_पढ़ो(dev, पंचांगp, bytes, &bytes_रुकोing);
 
-	kfree(tmp);
+	kमुक्त(पंचांगp);
 
 	/* Don't include these bytes in the stats. */
 
-	priv->stats.bytes_read -= bytes_waiting;
-}
+	priv->stats.bytes_पढ़ो -= bytes_रुकोing;
+पूर्ण
 EXPORT_SYMBOL_GPL(ps3_vuart_clear_rx_bytes);
 
 /**
- * struct list_buffer - An element for a port device fifo buffer list.
+ * काष्ठा list_buffer - An element क्रम a port device fअगरo buffer list.
  */
 
-struct list_buffer {
-	struct list_head link;
-	const unsigned char *head;
-	const unsigned char *tail;
-	unsigned long dbg_number;
-	unsigned char data[];
-};
+काष्ठा list_buffer अणु
+	काष्ठा list_head link;
+	स्थिर अचिन्हित अक्षर *head;
+	स्थिर अचिन्हित अक्षर *tail;
+	अचिन्हित दीर्घ dbg_number;
+	अचिन्हित अक्षर data[];
+पूर्ण;
 
 /**
- * ps3_vuart_write - the entry point for writing data to a port
- * @dev: The struct ps3_system_bus_device instance.
+ * ps3_vuart_ग_लिखो - the entry poपूर्णांक क्रम writing data to a port
+ * @dev: The काष्ठा ps3_प्रणाली_bus_device instance.
  *
  * If the port is idle on entry as much of the incoming data is written to
  * the port as the port will accept.  Otherwise a list buffer is created
  * and any remaning incoming data is copied to that buffer.  The buffer is
- * then enqueued for transmision via the transmit interrupt.
+ * then enqueued क्रम transmision via the transmit पूर्णांकerrupt.
  */
 
-int ps3_vuart_write(struct ps3_system_bus_device *dev, const void *buf,
-	unsigned int bytes)
-{
-	static unsigned long dbg_number;
-	int result;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
-	unsigned long flags;
-	struct list_buffer *lb;
+पूर्णांक ps3_vuart_ग_लिखो(काष्ठा ps3_प्रणाली_bus_device *dev, स्थिर व्योम *buf,
+	अचिन्हित पूर्णांक bytes)
+अणु
+	अटल अचिन्हित दीर्घ dbg_number;
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_buffer *lb;
 
 	dev_dbg(&dev->core, "%s:%d: %u(%xh) bytes\n", __func__, __LINE__,
 		bytes, bytes);
 
 	spin_lock_irqsave(&priv->tx_list.lock, flags);
 
-	if (list_empty(&priv->tx_list.head)) {
+	अगर (list_empty(&priv->tx_list.head)) अणु
 		u64 bytes_written;
 
-		result = ps3_vuart_raw_write(dev, buf, bytes, &bytes_written);
+		result = ps3_vuart_raw_ग_लिखो(dev, buf, bytes, &bytes_written);
 
 		spin_unlock_irqrestore(&priv->tx_list.lock, flags);
 
-		if (result) {
+		अगर (result) अणु
 			dev_dbg(&dev->core,
 				"%s:%d: ps3_vuart_raw_write failed\n",
 				__func__, __LINE__);
-			return result;
-		}
+			वापस result;
+		पूर्ण
 
-		if (bytes_written == bytes) {
+		अगर (bytes_written == bytes) अणु
 			dev_dbg(&dev->core, "%s:%d: wrote %xh bytes\n",
 				__func__, __LINE__, bytes);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		bytes -= bytes_written;
 		buf += bytes_written;
-	} else
+	पूर्ण अन्यथा
 		spin_unlock_irqrestore(&priv->tx_list.lock, flags);
 
-	lb = kmalloc(sizeof(struct list_buffer) + bytes, GFP_KERNEL);
+	lb = kदो_स्मृति(माप(काष्ठा list_buffer) + bytes, GFP_KERNEL);
 
-	if (!lb)
-		return -ENOMEM;
+	अगर (!lb)
+		वापस -ENOMEM;
 
-	memcpy(lb->data, buf, bytes);
+	स_नकल(lb->data, buf, bytes);
 	lb->head = lb->data;
 	lb->tail = lb->data + bytes;
 	lb->dbg_number = ++dbg_number;
 
 	spin_lock_irqsave(&priv->tx_list.lock, flags);
 	list_add_tail(&lb->link, &priv->tx_list.head);
-	ps3_vuart_enable_interrupt_tx(dev);
+	ps3_vuart_enable_पूर्णांकerrupt_tx(dev);
 	spin_unlock_irqrestore(&priv->tx_list.lock, flags);
 
 	dev_dbg(&dev->core, "%s:%d: queued buf_%lu, %xh bytes\n",
 		__func__, __LINE__, lb->dbg_number, bytes);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ps3_vuart_write);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ps3_vuart_ग_लिखो);
 
 /**
- * ps3_vuart_queue_rx_bytes - Queue waiting bytes into the buffer list.
- * @dev: The struct ps3_system_bus_device instance.
+ * ps3_vuart_queue_rx_bytes - Queue रुकोing bytes पूर्णांकo the buffer list.
+ * @dev: The काष्ठा ps3_प्रणाली_bus_device instance.
  * @bytes_queued: Number of bytes queued to the buffer list.
  *
  * Must be called with priv->rx_list.lock held.
  */
 
-static int ps3_vuart_queue_rx_bytes(struct ps3_system_bus_device *dev,
+अटल पूर्णांक ps3_vuart_queue_rx_bytes(काष्ठा ps3_प्रणाली_bus_device *dev,
 	u64 *bytes_queued)
-{
-	static unsigned long dbg_number;
-	int result;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
-	struct list_buffer *lb;
+अणु
+	अटल अचिन्हित दीर्घ dbg_number;
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
+	काष्ठा list_buffer *lb;
 	u64 bytes;
 
 	*bytes_queued = 0;
 
-	result = ps3_vuart_get_rx_bytes_waiting(dev, &bytes);
+	result = ps3_vuart_get_rx_bytes_रुकोing(dev, &bytes);
 	BUG_ON(result);
 
-	if (result)
-		return -EIO;
+	अगर (result)
+		वापस -EIO;
 
-	if (!bytes)
-		return 0;
+	अगर (!bytes)
+		वापस 0;
 
-	/* Add some extra space for recently arrived data. */
+	/* Add some extra space क्रम recently arrived data. */
 
 	bytes += 128;
 
-	lb = kmalloc(sizeof(struct list_buffer) + bytes, GFP_ATOMIC);
+	lb = kदो_स्मृति(माप(काष्ठा list_buffer) + bytes, GFP_ATOMIC);
 
-	if (!lb)
-		return -ENOMEM;
+	अगर (!lb)
+		वापस -ENOMEM;
 
-	ps3_vuart_raw_read(dev, lb->data, bytes, &bytes);
+	ps3_vuart_raw_पढ़ो(dev, lb->data, bytes, &bytes);
 
 	lb->head = lb->data;
 	lb->tail = lb->data + bytes;
@@ -583,113 +584,113 @@ static int ps3_vuart_queue_rx_bytes(struct ps3_system_bus_device *dev,
 
 	*bytes_queued = bytes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ps3_vuart_read - The entry point for reading data from a port.
+ * ps3_vuart_पढ़ो - The entry poपूर्णांक क्रम पढ़ोing data from a port.
  *
- * Queue data waiting at the port, and if enough bytes to satisfy the request
+ * Queue data रुकोing at the port, and अगर enough bytes to satisfy the request
  * are held in the buffer list those bytes are dequeued and copied to the
  * caller's buffer.  Emptied list buffers are retiered.  If the request cannot
- * be statified by bytes held in the list buffers -EAGAIN is returned.
+ * be statअगरied by bytes held in the list buffers -EAGAIN is वापसed.
  */
 
-int ps3_vuart_read(struct ps3_system_bus_device *dev, void *buf,
-	unsigned int bytes)
-{
-	int result;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
-	unsigned long flags;
-	struct list_buffer *lb, *n;
-	unsigned long bytes_read;
+पूर्णांक ps3_vuart_पढ़ो(काष्ठा ps3_प्रणाली_bus_device *dev, व्योम *buf,
+	अचिन्हित पूर्णांक bytes)
+अणु
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_buffer *lb, *n;
+	अचिन्हित दीर्घ bytes_पढ़ो;
 
 	dev_dbg(&dev->core, "%s:%d: %u(%xh) bytes\n", __func__, __LINE__,
 		bytes, bytes);
 
 	spin_lock_irqsave(&priv->rx_list.lock, flags);
 
-	/* Queue rx bytes here for polled reads. */
+	/* Queue rx bytes here क्रम polled पढ़ोs. */
 
-	while (priv->rx_list.bytes_held < bytes) {
-		u64 tmp;
+	जबतक (priv->rx_list.bytes_held < bytes) अणु
+		u64 पंचांगp;
 
-		result = ps3_vuart_queue_rx_bytes(dev, &tmp);
-		if (result || !tmp) {
+		result = ps3_vuart_queue_rx_bytes(dev, &पंचांगp);
+		अगर (result || !पंचांगp) अणु
 			dev_dbg(&dev->core, "%s:%d: starved for %lxh bytes\n",
 				__func__, __LINE__,
 				bytes - priv->rx_list.bytes_held);
 			spin_unlock_irqrestore(&priv->rx_list.lock, flags);
-			return -EAGAIN;
-		}
-	}
+			वापस -EAGAIN;
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry_safe(lb, n, &priv->rx_list.head, link) {
-		bytes_read = min((unsigned int)(lb->tail - lb->head), bytes);
+	list_क्रम_each_entry_safe(lb, n, &priv->rx_list.head, link) अणु
+		bytes_पढ़ो = min((अचिन्हित पूर्णांक)(lb->tail - lb->head), bytes);
 
-		memcpy(buf, lb->head, bytes_read);
-		buf += bytes_read;
-		bytes -= bytes_read;
-		priv->rx_list.bytes_held -= bytes_read;
+		स_नकल(buf, lb->head, bytes_पढ़ो);
+		buf += bytes_पढ़ो;
+		bytes -= bytes_पढ़ो;
+		priv->rx_list.bytes_held -= bytes_पढ़ो;
 
-		if (bytes_read < lb->tail - lb->head) {
-			lb->head += bytes_read;
+		अगर (bytes_पढ़ो < lb->tail - lb->head) अणु
+			lb->head += bytes_पढ़ो;
 			dev_dbg(&dev->core, "%s:%d: buf_%lu: dequeued %lxh "
 				"bytes\n", __func__, __LINE__, lb->dbg_number,
-				bytes_read);
+				bytes_पढ़ो);
 			spin_unlock_irqrestore(&priv->rx_list.lock, flags);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		dev_dbg(&dev->core, "%s:%d: buf_%lu: free, dequeued %lxh "
 			"bytes\n", __func__, __LINE__, lb->dbg_number,
-			bytes_read);
+			bytes_पढ़ो);
 
 		list_del(&lb->link);
-		kfree(lb);
-	}
+		kमुक्त(lb);
+	पूर्ण
 
 	spin_unlock_irqrestore(&priv->rx_list.lock, flags);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ps3_vuart_read);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ps3_vuart_पढ़ो);
 
 /**
- * ps3_vuart_work - Asynchronous read handler.
+ * ps3_vuart_work - Asynchronous पढ़ो handler.
  */
 
-static void ps3_vuart_work(struct work_struct *work)
-{
-	struct ps3_system_bus_device *dev =
-		ps3_vuart_work_to_system_bus_dev(work);
-	struct ps3_vuart_port_driver *drv =
-		ps3_system_bus_dev_to_vuart_drv(dev);
+अटल व्योम ps3_vuart_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ps3_प्रणाली_bus_device *dev =
+		ps3_vuart_work_to_प्रणाली_bus_dev(work);
+	काष्ठा ps3_vuart_port_driver *drv =
+		ps3_प्रणाली_bus_dev_to_vuart_drv(dev);
 
 	BUG_ON(!drv);
 	drv->work(dev);
-}
+पूर्ण
 
-int ps3_vuart_read_async(struct ps3_system_bus_device *dev, unsigned int bytes)
-{
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
-	unsigned long flags;
+पूर्णांक ps3_vuart_पढ़ो_async(काष्ठा ps3_प्रणाली_bus_device *dev, अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
+	अचिन्हित दीर्घ flags;
 
-	if (priv->rx_list.work.trigger) {
+	अगर (priv->rx_list.work.trigger) अणु
 		dev_dbg(&dev->core, "%s:%d: warning, multiple calls\n",
 			__func__, __LINE__);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	BUG_ON(!bytes);
 
 	spin_lock_irqsave(&priv->rx_list.lock, flags);
-	if (priv->rx_list.bytes_held >= bytes) {
+	अगर (priv->rx_list.bytes_held >= bytes) अणु
 		dev_dbg(&dev->core, "%s:%d: schedule_work %xh bytes\n",
 			__func__, __LINE__, bytes);
 		schedule_work(&priv->rx_list.work.work);
 		spin_unlock_irqrestore(&priv->rx_list.lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	priv->rx_list.work.trigger = bytes;
 	spin_unlock_irqrestore(&priv->rx_list.lock, flags);
@@ -697,89 +698,89 @@ int ps3_vuart_read_async(struct ps3_system_bus_device *dev, unsigned int bytes)
 	dev_dbg(&dev->core, "%s:%d: waiting for %u(%xh) bytes\n", __func__,
 		__LINE__, bytes, bytes);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ps3_vuart_read_async);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ps3_vuart_पढ़ो_async);
 
-void ps3_vuart_cancel_async(struct ps3_system_bus_device *dev)
-{
+व्योम ps3_vuart_cancel_async(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
 	to_port_priv(dev)->rx_list.work.trigger = 0;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ps3_vuart_cancel_async);
 
 /**
- * ps3_vuart_handle_interrupt_tx - third stage transmit interrupt handler
+ * ps3_vuart_handle_पूर्णांकerrupt_tx - third stage transmit पूर्णांकerrupt handler
  *
- * Services the transmit interrupt for the port.  Writes as much data from the
+ * Services the transmit पूर्णांकerrupt क्रम the port.  Writes as much data from the
  * buffer list as the port will accept.  Retires any emptied list buffers and
- * adjusts the final list buffer state for a partial write.
+ * adjusts the final list buffer state क्रम a partial ग_लिखो.
  */
 
-static int ps3_vuart_handle_interrupt_tx(struct ps3_system_bus_device *dev)
-{
-	int result = 0;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
-	unsigned long flags;
-	struct list_buffer *lb, *n;
-	unsigned long bytes_total = 0;
+अटल पूर्णांक ps3_vuart_handle_पूर्णांकerrupt_tx(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_buffer *lb, *n;
+	अचिन्हित दीर्घ bytes_total = 0;
 
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
 
 	spin_lock_irqsave(&priv->tx_list.lock, flags);
 
-	list_for_each_entry_safe(lb, n, &priv->tx_list.head, link) {
+	list_क्रम_each_entry_safe(lb, n, &priv->tx_list.head, link) अणु
 
 		u64 bytes_written;
 
-		result = ps3_vuart_raw_write(dev, lb->head, lb->tail - lb->head,
+		result = ps3_vuart_raw_ग_लिखो(dev, lb->head, lb->tail - lb->head,
 			&bytes_written);
 
-		if (result) {
+		अगर (result) अणु
 			dev_dbg(&dev->core,
 				"%s:%d: ps3_vuart_raw_write failed\n",
 				__func__, __LINE__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		bytes_total += bytes_written;
 
-		if (bytes_written < lb->tail - lb->head) {
+		अगर (bytes_written < lb->tail - lb->head) अणु
 			lb->head += bytes_written;
 			dev_dbg(&dev->core,
 				"%s:%d cleared buf_%lu, %llxh bytes\n",
 				__func__, __LINE__, lb->dbg_number,
 				bytes_written);
-			goto port_full;
-		}
+			जाओ port_full;
+		पूर्ण
 
 		dev_dbg(&dev->core, "%s:%d free buf_%lu\n", __func__, __LINE__,
 			lb->dbg_number);
 
 		list_del(&lb->link);
-		kfree(lb);
-	}
+		kमुक्त(lb);
+	पूर्ण
 
-	ps3_vuart_disable_interrupt_tx(dev);
+	ps3_vuart_disable_पूर्णांकerrupt_tx(dev);
 port_full:
 	spin_unlock_irqrestore(&priv->tx_list.lock, flags);
 	dev_dbg(&dev->core, "%s:%d wrote %lxh bytes total\n",
 		__func__, __LINE__, bytes_total);
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * ps3_vuart_handle_interrupt_rx - third stage receive interrupt handler
+ * ps3_vuart_handle_पूर्णांकerrupt_rx - third stage receive पूर्णांकerrupt handler
  *
- * Services the receive interrupt for the port.  Creates a list buffer and
- * copies all waiting port data to that buffer and enqueues the buffer in the
- * buffer list.  Buffer list data is dequeued via ps3_vuart_read.
+ * Services the receive पूर्णांकerrupt क्रम the port.  Creates a list buffer and
+ * copies all रुकोing port data to that buffer and enqueues the buffer in the
+ * buffer list.  Buffer list data is dequeued via ps3_vuart_पढ़ो.
  */
 
-static int ps3_vuart_handle_interrupt_rx(struct ps3_system_bus_device *dev)
-{
-	int result;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
-	unsigned long flags;
+अटल पूर्णांक ps3_vuart_handle_पूर्णांकerrupt_rx(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
+	अचिन्हित दीर्घ flags;
 	u64 bytes;
 
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
@@ -787,121 +788,121 @@ static int ps3_vuart_handle_interrupt_rx(struct ps3_system_bus_device *dev)
 	spin_lock_irqsave(&priv->rx_list.lock, flags);
 	result = ps3_vuart_queue_rx_bytes(dev, &bytes);
 
-	if (result) {
+	अगर (result) अणु
 		spin_unlock_irqrestore(&priv->rx_list.lock, flags);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	if (priv->rx_list.work.trigger && priv->rx_list.bytes_held
-		>= priv->rx_list.work.trigger) {
+	अगर (priv->rx_list.work.trigger && priv->rx_list.bytes_held
+		>= priv->rx_list.work.trigger) अणु
 		dev_dbg(&dev->core, "%s:%d: schedule_work %lxh bytes\n",
 			__func__, __LINE__, priv->rx_list.work.trigger);
 		priv->rx_list.work.trigger = 0;
 		schedule_work(&priv->rx_list.work.work);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&priv->rx_list.lock, flags);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int ps3_vuart_handle_interrupt_disconnect(
-	struct ps3_system_bus_device *dev)
-{
+अटल पूर्णांक ps3_vuart_handle_पूर्णांकerrupt_disconnect(
+	काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
 	BUG_ON("no support");
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /**
- * ps3_vuart_handle_port_interrupt - second stage interrupt handler
+ * ps3_vuart_handle_port_पूर्णांकerrupt - second stage पूर्णांकerrupt handler
  *
- * Services any pending interrupt types for the port.  Passes control to the
- * third stage type specific interrupt handler.  Returns control to the first
+ * Services any pending पूर्णांकerrupt types क्रम the port.  Passes control to the
+ * third stage type specअगरic पूर्णांकerrupt handler.  Returns control to the first
  * stage handler after one iteration.
  */
 
-static int ps3_vuart_handle_port_interrupt(struct ps3_system_bus_device *dev)
-{
-	int result;
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
-	unsigned long status;
+अटल पूर्णांक ps3_vuart_handle_port_पूर्णांकerrupt(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
+	अचिन्हित दीर्घ status;
 
-	result = ps3_vuart_get_interrupt_status(dev, &status);
+	result = ps3_vuart_get_पूर्णांकerrupt_status(dev, &status);
 
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	dev_dbg(&dev->core, "%s:%d: status: %lxh\n", __func__, __LINE__,
 		status);
 
-	if (status & INTERRUPT_MASK_DISCONNECT) {
-		priv->stats.disconnect_interrupts++;
-		result = ps3_vuart_handle_interrupt_disconnect(dev);
-		if (result)
-			ps3_vuart_disable_interrupt_disconnect(dev);
-	}
+	अगर (status & INTERRUPT_MASK_DISCONNECT) अणु
+		priv->stats.disconnect_पूर्णांकerrupts++;
+		result = ps3_vuart_handle_पूर्णांकerrupt_disconnect(dev);
+		अगर (result)
+			ps3_vuart_disable_पूर्णांकerrupt_disconnect(dev);
+	पूर्ण
 
-	if (status & INTERRUPT_MASK_TX) {
-		priv->stats.tx_interrupts++;
-		result = ps3_vuart_handle_interrupt_tx(dev);
-		if (result)
-			ps3_vuart_disable_interrupt_tx(dev);
-	}
+	अगर (status & INTERRUPT_MASK_TX) अणु
+		priv->stats.tx_पूर्णांकerrupts++;
+		result = ps3_vuart_handle_पूर्णांकerrupt_tx(dev);
+		अगर (result)
+			ps3_vuart_disable_पूर्णांकerrupt_tx(dev);
+	पूर्ण
 
-	if (status & INTERRUPT_MASK_RX) {
-		priv->stats.rx_interrupts++;
-		result = ps3_vuart_handle_interrupt_rx(dev);
-		if (result)
-			ps3_vuart_disable_interrupt_rx(dev);
-	}
+	अगर (status & INTERRUPT_MASK_RX) अणु
+		priv->stats.rx_पूर्णांकerrupts++;
+		result = ps3_vuart_handle_पूर्णांकerrupt_rx(dev);
+		अगर (result)
+			ps3_vuart_disable_पूर्णांकerrupt_rx(dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct vuart_bus_priv {
-	struct ports_bmp *bmp;
-	unsigned int virq;
-	struct mutex probe_mutex;
-	int use_count;
-	struct ps3_system_bus_device *devices[PORT_COUNT];
-} vuart_bus_priv;
+अटल काष्ठा vuart_bus_priv अणु
+	काष्ठा ports_bmp *bmp;
+	अचिन्हित पूर्णांक virq;
+	काष्ठा mutex probe_mutex;
+	पूर्णांक use_count;
+	काष्ठा ps3_प्रणाली_bus_device *devices[PORT_COUNT];
+पूर्ण vuart_bus_priv;
 
 /**
- * ps3_vuart_irq_handler - first stage interrupt handler
+ * ps3_vuart_irq_handler - first stage पूर्णांकerrupt handler
  *
- * Loops finding any interrupting port and its associated instance data.
- * Passes control to the second stage port specific interrupt handler.  Loops
- * until all outstanding interrupts are serviced.
+ * Loops finding any पूर्णांकerrupting port and its associated instance data.
+ * Passes control to the second stage port specअगरic पूर्णांकerrupt handler.  Loops
+ * until all outstanding पूर्णांकerrupts are serviced.
  */
 
-static irqreturn_t ps3_vuart_irq_handler(int irq, void *_private)
-{
-	struct vuart_bus_priv *bus_priv = _private;
+अटल irqवापस_t ps3_vuart_irq_handler(पूर्णांक irq, व्योम *_निजी)
+अणु
+	काष्ठा vuart_bus_priv *bus_priv = _निजी;
 
 	BUG_ON(!bus_priv);
 
-	while (1) {
-		unsigned int port;
+	जबतक (1) अणु
+		अचिन्हित पूर्णांक port;
 
 		dump_ports_bmp(bus_priv->bmp);
 
 		port = (BITS_PER_LONG - 1) - __ilog2(bus_priv->bmp->status);
 
-		if (port == BITS_PER_LONG)
-			break;
+		अगर (port == BITS_PER_LONG)
+			अवरोध;
 
 		BUG_ON(port >= PORT_COUNT);
 		BUG_ON(!bus_priv->devices[port]);
 
-		ps3_vuart_handle_port_interrupt(bus_priv->devices[port]);
-	}
+		ps3_vuart_handle_port_पूर्णांकerrupt(bus_priv->devices[port]);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int ps3_vuart_bus_interrupt_get(void)
-{
-	int result;
+अटल पूर्णांक ps3_vuart_bus_पूर्णांकerrupt_get(व्योम)
+अणु
+	पूर्णांक result;
 
 	pr_debug(" -> %s:%d\n", __func__, __LINE__);
 
@@ -909,119 +910,119 @@ static int ps3_vuart_bus_interrupt_get(void)
 
 	BUG_ON(vuart_bus_priv.use_count > 2);
 
-	if (vuart_bus_priv.use_count != 1)
-		return 0;
+	अगर (vuart_bus_priv.use_count != 1)
+		वापस 0;
 
 	BUG_ON(vuart_bus_priv.bmp);
 
-	vuart_bus_priv.bmp = kzalloc(sizeof(struct ports_bmp), GFP_KERNEL);
+	vuart_bus_priv.bmp = kzalloc(माप(काष्ठा ports_bmp), GFP_KERNEL);
 
-	if (!vuart_bus_priv.bmp) {
+	अगर (!vuart_bus_priv.bmp) अणु
 		result = -ENOMEM;
-		goto fail_bmp_malloc;
-	}
+		जाओ fail_bmp_दो_स्मृति;
+	पूर्ण
 
 	result = ps3_vuart_irq_setup(PS3_BINDING_CPU_ANY, vuart_bus_priv.bmp,
 		&vuart_bus_priv.virq);
 
-	if (result) {
+	अगर (result) अणु
 		pr_debug("%s:%d: ps3_vuart_irq_setup failed (%d)\n",
 			__func__, __LINE__, result);
 		result = -EPERM;
-		goto fail_alloc_irq;
-	}
+		जाओ fail_alloc_irq;
+	पूर्ण
 
 	result = request_irq(vuart_bus_priv.virq, ps3_vuart_irq_handler,
 		0, "vuart", &vuart_bus_priv);
 
-	if (result) {
+	अगर (result) अणु
 		pr_debug("%s:%d: request_irq failed (%d)\n",
 			__func__, __LINE__, result);
-		goto fail_request_irq;
-	}
+		जाओ fail_request_irq;
+	पूर्ण
 
 	pr_debug(" <- %s:%d: ok\n", __func__, __LINE__);
-	return result;
+	वापस result;
 
 fail_request_irq:
 	ps3_vuart_irq_destroy(vuart_bus_priv.virq);
 	vuart_bus_priv.virq = 0;
 fail_alloc_irq:
-	kfree(vuart_bus_priv.bmp);
-	vuart_bus_priv.bmp = NULL;
-fail_bmp_malloc:
+	kमुक्त(vuart_bus_priv.bmp);
+	vuart_bus_priv.bmp = शून्य;
+fail_bmp_दो_स्मृति:
 	vuart_bus_priv.use_count--;
 	pr_debug(" <- %s:%d: failed\n", __func__, __LINE__);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int ps3_vuart_bus_interrupt_put(void)
-{
+अटल पूर्णांक ps3_vuart_bus_पूर्णांकerrupt_put(व्योम)
+अणु
 	pr_debug(" -> %s:%d\n", __func__, __LINE__);
 
 	vuart_bus_priv.use_count--;
 
 	BUG_ON(vuart_bus_priv.use_count < 0);
 
-	if (vuart_bus_priv.use_count != 0)
-		return 0;
+	अगर (vuart_bus_priv.use_count != 0)
+		वापस 0;
 
-	free_irq(vuart_bus_priv.virq, &vuart_bus_priv);
+	मुक्त_irq(vuart_bus_priv.virq, &vuart_bus_priv);
 
 	ps3_vuart_irq_destroy(vuart_bus_priv.virq);
 	vuart_bus_priv.virq = 0;
 
-	kfree(vuart_bus_priv.bmp);
-	vuart_bus_priv.bmp = NULL;
+	kमुक्त(vuart_bus_priv.bmp);
+	vuart_bus_priv.bmp = शून्य;
 
 	pr_debug(" <- %s:%d\n", __func__, __LINE__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ps3_vuart_probe(struct ps3_system_bus_device *dev)
-{
-	int result;
-	struct ps3_vuart_port_driver *drv;
-	struct ps3_vuart_port_priv *priv = NULL;
+अटल पूर्णांक ps3_vuart_probe(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	पूर्णांक result;
+	काष्ठा ps3_vuart_port_driver *drv;
+	काष्ठा ps3_vuart_port_priv *priv = शून्य;
 
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
 
-	drv = ps3_system_bus_dev_to_vuart_drv(dev);
+	drv = ps3_प्रणाली_bus_dev_to_vuart_drv(dev);
 	BUG_ON(!drv);
 
 	dev_dbg(&dev->core, "%s:%d: (%s)\n", __func__, __LINE__,
 		drv->core.core.name);
 
-	if (dev->port_number >= PORT_COUNT) {
+	अगर (dev->port_number >= PORT_COUNT) अणु
 		BUG();
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&vuart_bus_priv.probe_mutex);
 
-	result = ps3_vuart_bus_interrupt_get();
+	result = ps3_vuart_bus_पूर्णांकerrupt_get();
 
-	if (result)
-		goto fail_setup_interrupt;
+	अगर (result)
+		जाओ fail_setup_पूर्णांकerrupt;
 
-	if (vuart_bus_priv.devices[dev->port_number]) {
+	अगर (vuart_bus_priv.devices[dev->port_number]) अणु
 		dev_dbg(&dev->core, "%s:%d: port busy (%d)\n", __func__,
 			__LINE__, dev->port_number);
 		result = -EBUSY;
-		goto fail_busy;
-	}
+		जाओ fail_busy;
+	पूर्ण
 
 	vuart_bus_priv.devices[dev->port_number] = dev;
 
 	/* Setup dev->driver_priv. */
 
-	dev->driver_priv = kzalloc(sizeof(struct ps3_vuart_port_priv),
+	dev->driver_priv = kzalloc(माप(काष्ठा ps3_vuart_port_priv),
 		GFP_KERNEL);
 
-	if (!dev->driver_priv) {
+	अगर (!dev->driver_priv) अणु
 		result = -ENOMEM;
-		goto fail_dev_malloc;
-	}
+		जाओ fail_dev_दो_स्मृति;
+	पूर्ण
 
 	priv = to_port_priv(dev);
 
@@ -1035,77 +1036,77 @@ static int ps3_vuart_probe(struct ps3_system_bus_device *dev)
 	priv->rx_list.work.trigger = 0;
 	priv->rx_list.work.dev = dev;
 
-	/* clear stale pending interrupts */
+	/* clear stale pending पूर्णांकerrupts */
 
 	ps3_vuart_clear_rx_bytes(dev, 0);
 
-	ps3_vuart_set_interrupt_mask(dev, INTERRUPT_MASK_RX);
+	ps3_vuart_set_पूर्णांकerrupt_mask(dev, INTERRUPT_MASK_RX);
 
 	ps3_vuart_set_triggers(dev, 1, 1);
 
-	if (drv->probe)
+	अगर (drv->probe)
 		result = drv->probe(dev);
-	else {
+	अन्यथा अणु
 		result = 0;
 		dev_info(&dev->core, "%s:%d: no probe method\n", __func__,
 			__LINE__);
-	}
+	पूर्ण
 
-	if (result) {
+	अगर (result) अणु
 		dev_dbg(&dev->core, "%s:%d: drv->probe failed\n",
 			__func__, __LINE__);
-		goto fail_probe;
-	}
+		जाओ fail_probe;
+	पूर्ण
 
 	mutex_unlock(&vuart_bus_priv.probe_mutex);
 
-	return result;
+	वापस result;
 
 fail_probe:
-	ps3_vuart_set_interrupt_mask(dev, 0);
-	kfree(dev->driver_priv);
-	dev->driver_priv = NULL;
-fail_dev_malloc:
-	vuart_bus_priv.devices[dev->port_number] = NULL;
+	ps3_vuart_set_पूर्णांकerrupt_mask(dev, 0);
+	kमुक्त(dev->driver_priv);
+	dev->driver_priv = शून्य;
+fail_dev_दो_स्मृति:
+	vuart_bus_priv.devices[dev->port_number] = शून्य;
 fail_busy:
-	ps3_vuart_bus_interrupt_put();
-fail_setup_interrupt:
+	ps3_vuart_bus_पूर्णांकerrupt_put();
+fail_setup_पूर्णांकerrupt:
 	mutex_unlock(&vuart_bus_priv.probe_mutex);
 	dev_dbg(&dev->core, "%s:%d: failed\n", __func__, __LINE__);
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * ps3_vuart_cleanup - common cleanup helper.
- * @dev: The struct ps3_system_bus_device instance.
+ * @dev: The काष्ठा ps3_प्रणाली_bus_device instance.
  *
- * Cleans interrupts and HV resources.  Must be called with
- * vuart_bus_priv.probe_mutex held.  Used by ps3_vuart_remove and
- * ps3_vuart_shutdown.  After this call, polled reading will still work.
+ * Cleans पूर्णांकerrupts and HV resources.  Must be called with
+ * vuart_bus_priv.probe_mutex held.  Used by ps3_vuart_हटाओ and
+ * ps3_vuart_shutकरोwn.  After this call, polled पढ़ोing will still work.
  */
 
-static int ps3_vuart_cleanup(struct ps3_system_bus_device *dev)
-{
+अटल पूर्णांक ps3_vuart_cleanup(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
 	dev_dbg(&dev->core, "%s:%d\n", __func__, __LINE__);
 
 	ps3_vuart_cancel_async(dev);
-	ps3_vuart_set_interrupt_mask(dev, 0);
-	ps3_vuart_bus_interrupt_put();
-	return 0;
-}
+	ps3_vuart_set_पूर्णांकerrupt_mask(dev, 0);
+	ps3_vuart_bus_पूर्णांकerrupt_put();
+	वापस 0;
+पूर्ण
 
 /**
- * ps3_vuart_remove - Completely clean the device instance.
- * @dev: The struct ps3_system_bus_device instance.
+ * ps3_vuart_हटाओ - Completely clean the device instance.
+ * @dev: The काष्ठा ps3_प्रणाली_bus_device instance.
  *
- * Cleans all memory, interrupts and HV resources.  After this call the
- * device can no longer be used.
+ * Cleans all memory, पूर्णांकerrupts and HV resources.  After this call the
+ * device can no दीर्घer be used.
  */
 
-static void ps3_vuart_remove(struct ps3_system_bus_device *dev)
-{
-	struct ps3_vuart_port_priv *priv = to_port_priv(dev);
-	struct ps3_vuart_port_driver *drv;
+अटल व्योम ps3_vuart_हटाओ(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3_vuart_port_priv *priv = to_port_priv(dev);
+	काष्ठा ps3_vuart_port_driver *drv;
 
 	BUG_ON(!dev);
 
@@ -1114,48 +1115,48 @@ static void ps3_vuart_remove(struct ps3_system_bus_device *dev)
 	dev_dbg(&dev->core, " -> %s:%d: match_id %d\n", __func__, __LINE__,
 		dev->match_id);
 
-	if (!dev->core.driver) {
+	अगर (!dev->core.driver) अणु
 		dev_dbg(&dev->core, "%s:%d: no driver bound\n", __func__,
 			__LINE__);
 		mutex_unlock(&vuart_bus_priv.probe_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	drv = ps3_system_bus_dev_to_vuart_drv(dev);
+	drv = ps3_प्रणाली_bus_dev_to_vuart_drv(dev);
 
 	BUG_ON(!drv);
 
-	if (drv->remove) {
-		drv->remove(dev);
-	} else {
+	अगर (drv->हटाओ) अणु
+		drv->हटाओ(dev);
+	पूर्ण अन्यथा अणु
 		dev_dbg(&dev->core, "%s:%d: no remove method\n", __func__,
 		__LINE__);
 		BUG();
-	}
+	पूर्ण
 
 	ps3_vuart_cleanup(dev);
 
-	vuart_bus_priv.devices[dev->port_number] = NULL;
-	kfree(priv);
-	priv = NULL;
+	vuart_bus_priv.devices[dev->port_number] = शून्य;
+	kमुक्त(priv);
+	priv = शून्य;
 
 	dev_dbg(&dev->core, " <- %s:%d\n", __func__, __LINE__);
 	mutex_unlock(&vuart_bus_priv.probe_mutex);
-}
+पूर्ण
 
 /**
- * ps3_vuart_shutdown - Cleans interrupts and HV resources.
- * @dev: The struct ps3_system_bus_device instance.
+ * ps3_vuart_shutकरोwn - Cleans पूर्णांकerrupts and HV resources.
+ * @dev: The काष्ठा ps3_प्रणाली_bus_device instance.
  *
- * Cleans interrupts and HV resources.  After this call the
+ * Cleans पूर्णांकerrupts and HV resources.  After this call the
  * device can still be used in polling mode.  This behavior required
- * by sys-manager to be able to complete the device power operation
+ * by sys-manager to be able to complete the device घातer operation
  * sequence.
  */
 
-static void ps3_vuart_shutdown(struct ps3_system_bus_device *dev)
-{
-	struct ps3_vuart_port_driver *drv;
+अटल व्योम ps3_vuart_shutकरोwn(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3_vuart_port_driver *drv;
 
 	BUG_ON(!dev);
 
@@ -1164,63 +1165,63 @@ static void ps3_vuart_shutdown(struct ps3_system_bus_device *dev)
 	dev_dbg(&dev->core, " -> %s:%d: match_id %d\n", __func__, __LINE__,
 		dev->match_id);
 
-	if (!dev->core.driver) {
+	अगर (!dev->core.driver) अणु
 		dev_dbg(&dev->core, "%s:%d: no driver bound\n", __func__,
 			__LINE__);
 		mutex_unlock(&vuart_bus_priv.probe_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	drv = ps3_system_bus_dev_to_vuart_drv(dev);
+	drv = ps3_प्रणाली_bus_dev_to_vuart_drv(dev);
 
 	BUG_ON(!drv);
 
-	if (drv->shutdown)
-		drv->shutdown(dev);
-	else if (drv->remove) {
+	अगर (drv->shutकरोwn)
+		drv->shutकरोwn(dev);
+	अन्यथा अगर (drv->हटाओ) अणु
 		dev_dbg(&dev->core, "%s:%d: no shutdown, calling remove\n",
 			__func__, __LINE__);
-		drv->remove(dev);
-	} else {
+		drv->हटाओ(dev);
+	पूर्ण अन्यथा अणु
 		dev_dbg(&dev->core, "%s:%d: no shutdown method\n", __func__,
 			__LINE__);
 		BUG();
-	}
+	पूर्ण
 
 	ps3_vuart_cleanup(dev);
 
 	dev_dbg(&dev->core, " <- %s:%d\n", __func__, __LINE__);
 
 	mutex_unlock(&vuart_bus_priv.probe_mutex);
-}
+पूर्ण
 
-static int __init ps3_vuart_bus_init(void)
-{
+अटल पूर्णांक __init ps3_vuart_bus_init(व्योम)
+अणु
 	pr_debug("%s:%d:\n", __func__, __LINE__);
 
-	if (!firmware_has_feature(FW_FEATURE_PS3_LV1))
-		return -ENODEV;
+	अगर (!firmware_has_feature(FW_FEATURE_PS3_LV1))
+		वापस -ENODEV;
 
 	mutex_init(&vuart_bus_priv.probe_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit ps3_vuart_bus_exit(void)
-{
+अटल व्योम __निकास ps3_vuart_bus_निकास(व्योम)
+अणु
 	pr_debug("%s:%d:\n", __func__, __LINE__);
-}
+पूर्ण
 
 core_initcall(ps3_vuart_bus_init);
-module_exit(ps3_vuart_bus_exit);
+module_निकास(ps3_vuart_bus_निकास);
 
 /**
- * ps3_vuart_port_driver_register - Add a vuart port device driver.
+ * ps3_vuart_port_driver_रेजिस्टर - Add a vuart port device driver.
  */
 
-int ps3_vuart_port_driver_register(struct ps3_vuart_port_driver *drv)
-{
-	int result;
+पूर्णांक ps3_vuart_port_driver_रेजिस्टर(काष्ठा ps3_vuart_port_driver *drv)
+अणु
+	पूर्णांक result;
 
 	pr_debug("%s:%d: (%s)\n", __func__, __LINE__, drv->core.core.name);
 
@@ -1228,21 +1229,21 @@ int ps3_vuart_port_driver_register(struct ps3_vuart_port_driver *drv)
 	BUG_ON(!drv->core.core.name);
 
 	drv->core.probe = ps3_vuart_probe;
-	drv->core.remove = ps3_vuart_remove;
-	drv->core.shutdown = ps3_vuart_shutdown;
+	drv->core.हटाओ = ps3_vuart_हटाओ;
+	drv->core.shutकरोwn = ps3_vuart_shutकरोwn;
 
-	result = ps3_system_bus_driver_register(&drv->core);
-	return result;
-}
-EXPORT_SYMBOL_GPL(ps3_vuart_port_driver_register);
+	result = ps3_प्रणाली_bus_driver_रेजिस्टर(&drv->core);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL_GPL(ps3_vuart_port_driver_रेजिस्टर);
 
 /**
- * ps3_vuart_port_driver_unregister - Remove a vuart port device driver.
+ * ps3_vuart_port_driver_unरेजिस्टर - Remove a vuart port device driver.
  */
 
-void ps3_vuart_port_driver_unregister(struct ps3_vuart_port_driver *drv)
-{
+व्योम ps3_vuart_port_driver_unरेजिस्टर(काष्ठा ps3_vuart_port_driver *drv)
+अणु
 	pr_debug("%s:%d: (%s)\n", __func__, __LINE__, drv->core.core.name);
-	ps3_system_bus_driver_unregister(&drv->core);
-}
-EXPORT_SYMBOL_GPL(ps3_vuart_port_driver_unregister);
+	ps3_प्रणाली_bus_driver_unरेजिस्टर(&drv->core);
+पूर्ण
+EXPORT_SYMBOL_GPL(ps3_vuart_port_driver_unरेजिस्टर);

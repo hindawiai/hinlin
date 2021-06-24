@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2017 HiSilicon Limited, All Rights Reserved.
  * Author: Gabriele Paoloni <gabriele.paoloni@huawei.com>
@@ -6,298 +7,298 @@
  * Author: John Garry <john.garry@huawei.com>
  */
 
-#define pr_fmt(fmt)	"LOGIC PIO: " fmt
+#घोषणा pr_fmt(fmt)	"LOGIC PIO: " fmt
 
-#include <linux/of.h>
-#include <linux/io.h>
-#include <linux/logic_pio.h>
-#include <linux/mm.h>
-#include <linux/rculist.h>
-#include <linux/sizes.h>
-#include <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/logic_pपन.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/slab.h>
 
 /* The unique hardware address list */
-static LIST_HEAD(io_range_list);
-static DEFINE_MUTEX(io_range_mutex);
+अटल LIST_HEAD(io_range_list);
+अटल DEFINE_MUTEX(io_range_mutex);
 
-/* Consider a kernel general helper for this */
-#define in_range(b, first, len)        ((b) >= (first) && (b) < (first) + (len))
+/* Consider a kernel general helper क्रम this */
+#घोषणा in_range(b, first, len)        ((b) >= (first) && (b) < (first) + (len))
 
 /**
- * logic_pio_register_range - register logical PIO range for a host
- * @new_range: pointer to the IO range to be registered.
+ * logic_pio_रेजिस्टर_range - रेजिस्टर logical PIO range क्रम a host
+ * @new_range: poपूर्णांकer to the IO range to be रेजिस्टरed.
  *
- * Returns 0 on success, the error code in case of failure.
- * If the range already exists, -EEXIST will be returned, which should be
+ * Returns 0 on success, the error code in हाल of failure.
+ * If the range alपढ़ोy exists, -EEXIST will be वापसed, which should be
  * considered a success.
  *
  * Register a new IO range node in the IO range list.
  */
-int logic_pio_register_range(struct logic_pio_hwaddr *new_range)
-{
-	struct logic_pio_hwaddr *range;
-	resource_size_t start;
-	resource_size_t end;
-	resource_size_t mmio_end = 0;
-	resource_size_t iio_sz = MMIO_UPPER_LIMIT;
-	int ret = 0;
+पूर्णांक logic_pio_रेजिस्टर_range(काष्ठा logic_pio_hwaddr *new_range)
+अणु
+	काष्ठा logic_pio_hwaddr *range;
+	resource_माप_प्रकार start;
+	resource_माप_प्रकार end;
+	resource_माप_प्रकार mmio_end = 0;
+	resource_माप_प्रकार iio_sz = MMIO_UPPER_LIMIT;
+	पूर्णांक ret = 0;
 
-	if (!new_range || !new_range->fwnode || !new_range->size ||
-	    (new_range->flags == LOGIC_PIO_INDIRECT && !new_range->ops))
-		return -EINVAL;
+	अगर (!new_range || !new_range->fwnode || !new_range->size ||
+	    (new_range->flags == LOGIC_PIO_INसूचीECT && !new_range->ops))
+		वापस -EINVAL;
 
 	start = new_range->hw_start;
 	end = new_range->hw_start + new_range->size;
 
 	mutex_lock(&io_range_mutex);
-	list_for_each_entry(range, &io_range_list, list) {
-		if (range->fwnode == new_range->fwnode) {
-			/* range already there */
+	list_क्रम_each_entry(range, &io_range_list, list) अणु
+		अगर (range->fwnode == new_range->fwnode) अणु
+			/* range alपढ़ोy there */
 			ret = -EEXIST;
-			goto end_register;
-		}
-		if (range->flags == LOGIC_PIO_CPU_MMIO &&
-		    new_range->flags == LOGIC_PIO_CPU_MMIO) {
-			/* for MMIO ranges we need to check for overlap */
-			if (start >= range->hw_start + range->size ||
-			    end < range->hw_start) {
+			जाओ end_रेजिस्टर;
+		पूर्ण
+		अगर (range->flags == LOGIC_PIO_CPU_MMIO &&
+		    new_range->flags == LOGIC_PIO_CPU_MMIO) अणु
+			/* क्रम MMIO ranges we need to check क्रम overlap */
+			अगर (start >= range->hw_start + range->size ||
+			    end < range->hw_start) अणु
 				mmio_end = range->io_start + range->size;
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = -EFAULT;
-				goto end_register;
-			}
-		} else if (range->flags == LOGIC_PIO_INDIRECT &&
-			   new_range->flags == LOGIC_PIO_INDIRECT) {
+				जाओ end_रेजिस्टर;
+			पूर्ण
+		पूर्ण अन्यथा अगर (range->flags == LOGIC_PIO_INसूचीECT &&
+			   new_range->flags == LOGIC_PIO_INसूचीECT) अणु
 			iio_sz += range->size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* range not registered yet, check for available space */
-	if (new_range->flags == LOGIC_PIO_CPU_MMIO) {
-		if (mmio_end + new_range->size - 1 > MMIO_UPPER_LIMIT) {
-			/* if it's too big check if 64K space can be reserved */
-			if (mmio_end + SZ_64K - 1 > MMIO_UPPER_LIMIT) {
+	/* range not रेजिस्टरed yet, check क्रम available space */
+	अगर (new_range->flags == LOGIC_PIO_CPU_MMIO) अणु
+		अगर (mmio_end + new_range->size - 1 > MMIO_UPPER_LIMIT) अणु
+			/* अगर it's too big check अगर 64K space can be reserved */
+			अगर (mmio_end + SZ_64K - 1 > MMIO_UPPER_LIMIT) अणु
 				ret = -E2BIG;
-				goto end_register;
-			}
+				जाओ end_रेजिस्टर;
+			पूर्ण
 			new_range->size = SZ_64K;
 			pr_warn("Requested IO range too big, new size set to 64K\n");
-		}
+		पूर्ण
 		new_range->io_start = mmio_end;
-	} else if (new_range->flags == LOGIC_PIO_INDIRECT) {
-		if (iio_sz + new_range->size - 1 > IO_SPACE_LIMIT) {
+	पूर्ण अन्यथा अगर (new_range->flags == LOGIC_PIO_INसूचीECT) अणु
+		अगर (iio_sz + new_range->size - 1 > IO_SPACE_LIMIT) अणु
 			ret = -E2BIG;
-			goto end_register;
-		}
+			जाओ end_रेजिस्टर;
+		पूर्ण
 		new_range->io_start = iio_sz;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* invalid flag */
 		ret = -EINVAL;
-		goto end_register;
-	}
+		जाओ end_रेजिस्टर;
+	पूर्ण
 
 	list_add_tail_rcu(&new_range->list, &io_range_list);
 
-end_register:
+end_रेजिस्टर:
 	mutex_unlock(&io_range_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * logic_pio_unregister_range - unregister a logical PIO range for a host
- * @range: pointer to the IO range which has been already registered.
+ * logic_pio_unरेजिस्टर_range - unरेजिस्टर a logical PIO range क्रम a host
+ * @range: poपूर्णांकer to the IO range which has been alपढ़ोy रेजिस्टरed.
  *
- * Unregister a previously-registered IO range node.
+ * Unरेजिस्टर a previously-रेजिस्टरed IO range node.
  */
-void logic_pio_unregister_range(struct logic_pio_hwaddr *range)
-{
+व्योम logic_pio_unरेजिस्टर_range(काष्ठा logic_pio_hwaddr *range)
+अणु
 	mutex_lock(&io_range_mutex);
 	list_del_rcu(&range->list);
 	mutex_unlock(&io_range_mutex);
 	synchronize_rcu();
-}
+पूर्ण
 
 /**
- * find_io_range_by_fwnode - find logical PIO range for given FW node
+ * find_io_range_by_fwnode - find logical PIO range क्रम given FW node
  * @fwnode: FW node handle associated with logical PIO range
  *
- * Returns pointer to node on success, NULL otherwise.
+ * Returns poपूर्णांकer to node on success, शून्य otherwise.
  *
- * Traverse the io_range_list to find the registered node for @fwnode.
+ * Traverse the io_range_list to find the रेजिस्टरed node क्रम @fwnode.
  */
-struct logic_pio_hwaddr *find_io_range_by_fwnode(struct fwnode_handle *fwnode)
-{
-	struct logic_pio_hwaddr *range, *found_range = NULL;
+काष्ठा logic_pio_hwaddr *find_io_range_by_fwnode(काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा logic_pio_hwaddr *range, *found_range = शून्य;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(range, &io_range_list, list) {
-		if (range->fwnode == fwnode) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(range, &io_range_list, list) अणु
+		अगर (range->fwnode == fwnode) अणु
 			found_range = range;
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return found_range;
-}
+	वापस found_range;
+पूर्ण
 
-/* Return a registered range given an input PIO token */
-static struct logic_pio_hwaddr *find_io_range(unsigned long pio)
-{
-	struct logic_pio_hwaddr *range, *found_range = NULL;
+/* Return a रेजिस्टरed range given an input PIO token */
+अटल काष्ठा logic_pio_hwaddr *find_io_range(अचिन्हित दीर्घ pio)
+अणु
+	काष्ठा logic_pio_hwaddr *range, *found_range = शून्य;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(range, &io_range_list, list) {
-		if (in_range(pio, range->io_start, range->size)) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(range, &io_range_list, list) अणु
+		अगर (in_range(pio, range->io_start, range->size)) अणु
 			found_range = range;
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (!found_range)
+	अगर (!found_range)
 		pr_err("PIO entry token 0x%lx invalid\n", pio);
 
-	return found_range;
-}
+	वापस found_range;
+पूर्ण
 
 /**
  * logic_pio_to_hwaddr - translate logical PIO to HW address
  * @pio: logical PIO value
  *
- * Returns HW address if valid, ~0 otherwise.
+ * Returns HW address अगर valid, ~0 otherwise.
  *
  * Translate the input logical PIO to the corresponding hardware address.
  * The input PIO should be unique in the whole logical PIO space.
  */
-resource_size_t logic_pio_to_hwaddr(unsigned long pio)
-{
-	struct logic_pio_hwaddr *range;
+resource_माप_प्रकार logic_pio_to_hwaddr(अचिन्हित दीर्घ pio)
+अणु
+	काष्ठा logic_pio_hwaddr *range;
 
 	range = find_io_range(pio);
-	if (range)
-		return range->hw_start + pio - range->io_start;
+	अगर (range)
+		वापस range->hw_start + pio - range->io_start;
 
-	return (resource_size_t)~0;
-}
+	वापस (resource_माप_प्रकार)~0;
+पूर्ण
 
 /**
  * logic_pio_trans_hwaddr - translate HW address to logical PIO
- * @fwnode: FW node reference for the host
+ * @fwnode: FW node reference क्रम the host
  * @addr: Host-relative HW address
  * @size: size to translate
  *
- * Returns Logical PIO value if successful, ~0UL otherwise
+ * Returns Logical PIO value अगर successful, ~0UL otherwise
  */
-unsigned long logic_pio_trans_hwaddr(struct fwnode_handle *fwnode,
-				     resource_size_t addr, resource_size_t size)
-{
-	struct logic_pio_hwaddr *range;
+अचिन्हित दीर्घ logic_pio_trans_hwaddr(काष्ठा fwnode_handle *fwnode,
+				     resource_माप_प्रकार addr, resource_माप_प्रकार size)
+अणु
+	काष्ठा logic_pio_hwaddr *range;
 
 	range = find_io_range_by_fwnode(fwnode);
-	if (!range || range->flags == LOGIC_PIO_CPU_MMIO) {
+	अगर (!range || range->flags == LOGIC_PIO_CPU_MMIO) अणु
 		pr_err("IO range not found or invalid\n");
-		return ~0UL;
-	}
-	if (range->size < size) {
+		वापस ~0UL;
+	पूर्ण
+	अगर (range->size < size) अणु
 		pr_err("resource size %pa cannot fit in IO range size %pa\n",
 		       &size, &range->size);
-		return ~0UL;
-	}
-	return addr - range->hw_start + range->io_start;
-}
+		वापस ~0UL;
+	पूर्ण
+	वापस addr - range->hw_start + range->io_start;
+पूर्ण
 
-unsigned long logic_pio_trans_cpuaddr(resource_size_t addr)
-{
-	struct logic_pio_hwaddr *range;
+अचिन्हित दीर्घ logic_pio_trans_cpuaddr(resource_माप_प्रकार addr)
+अणु
+	काष्ठा logic_pio_hwaddr *range;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(range, &io_range_list, list) {
-		if (range->flags != LOGIC_PIO_CPU_MMIO)
-			continue;
-		if (in_range(addr, range->hw_start, range->size)) {
-			unsigned long cpuaddr;
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(range, &io_range_list, list) अणु
+		अगर (range->flags != LOGIC_PIO_CPU_MMIO)
+			जारी;
+		अगर (in_range(addr, range->hw_start, range->size)) अणु
+			अचिन्हित दीर्घ cpuaddr;
 
 			cpuaddr = addr - range->hw_start + range->io_start;
 
-			rcu_read_unlock();
-			return cpuaddr;
-		}
-	}
-	rcu_read_unlock();
+			rcu_पढ़ो_unlock();
+			वापस cpuaddr;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	pr_err("addr %pa not registered in io_range_list\n", &addr);
 
-	return ~0UL;
-}
+	वापस ~0UL;
+पूर्ण
 
-#if defined(CONFIG_INDIRECT_PIO) && defined(PCI_IOBASE)
-#define BUILD_LOGIC_IO(bwl, type)					\
-type logic_in##bwl(unsigned long addr)					\
-{									\
+#अगर defined(CONFIG_INसूचीECT_PIO) && defined(PCI_IOBASE)
+#घोषणा BUILD_LOGIC_IO(bwl, type)					\
+type logic_in##bwl(अचिन्हित दीर्घ addr)					\
+अणु									\
 	type ret = (type)~0;						\
 									\
-	if (addr < MMIO_UPPER_LIMIT) {					\
+	अगर (addr < MMIO_UPPER_LIMIT) अणु					\
 		ret = _in##bwl(addr);					\
-	} else if (addr >= MMIO_UPPER_LIMIT && addr < IO_SPACE_LIMIT) { \
-		struct logic_pio_hwaddr *entry = find_io_range(addr);	\
+	पूर्ण अन्यथा अगर (addr >= MMIO_UPPER_LIMIT && addr < IO_SPACE_LIMIT) अणु \
+		काष्ठा logic_pio_hwaddr *entry = find_io_range(addr);	\
 									\
-		if (entry)						\
+		अगर (entry)						\
 			ret = entry->ops->in(entry->hostdata,		\
-					addr, sizeof(type));		\
-		else							\
+					addr, माप(type));		\
+		अन्यथा							\
 			WARN_ON_ONCE(1);				\
-	}								\
-	return ret;							\
-}									\
+	पूर्ण								\
+	वापस ret;							\
+पूर्ण									\
 									\
-void logic_out##bwl(type value, unsigned long addr)			\
-{									\
-	if (addr < MMIO_UPPER_LIMIT) {					\
+व्योम logic_out##bwl(type value, अचिन्हित दीर्घ addr)			\
+अणु									\
+	अगर (addr < MMIO_UPPER_LIMIT) अणु					\
 		_out##bwl(value, addr);				\
-	} else if (addr >= MMIO_UPPER_LIMIT && addr < IO_SPACE_LIMIT) {	\
-		struct logic_pio_hwaddr *entry = find_io_range(addr);	\
+	पूर्ण अन्यथा अगर (addr >= MMIO_UPPER_LIMIT && addr < IO_SPACE_LIMIT) अणु	\
+		काष्ठा logic_pio_hwaddr *entry = find_io_range(addr);	\
 									\
-		if (entry)						\
+		अगर (entry)						\
 			entry->ops->out(entry->hostdata,		\
-					addr, value, sizeof(type));	\
-		else							\
+					addr, value, माप(type));	\
+		अन्यथा							\
 			WARN_ON_ONCE(1);				\
-	}								\
-}									\
+	पूर्ण								\
+पूर्ण									\
 									\
-void logic_ins##bwl(unsigned long addr, void *buffer,			\
-		    unsigned int count)					\
-{									\
-	if (addr < MMIO_UPPER_LIMIT) {					\
-		reads##bwl(PCI_IOBASE + addr, buffer, count);		\
-	} else if (addr >= MMIO_UPPER_LIMIT && addr < IO_SPACE_LIMIT) {	\
-		struct logic_pio_hwaddr *entry = find_io_range(addr);	\
+व्योम logic_ins##bwl(अचिन्हित दीर्घ addr, व्योम *buffer,			\
+		    अचिन्हित पूर्णांक count)					\
+अणु									\
+	अगर (addr < MMIO_UPPER_LIMIT) अणु					\
+		पढ़ोs##bwl(PCI_IOBASE + addr, buffer, count);		\
+	पूर्ण अन्यथा अगर (addr >= MMIO_UPPER_LIMIT && addr < IO_SPACE_LIMIT) अणु	\
+		काष्ठा logic_pio_hwaddr *entry = find_io_range(addr);	\
 									\
-		if (entry)						\
+		अगर (entry)						\
 			entry->ops->ins(entry->hostdata,		\
-				addr, buffer, sizeof(type), count);	\
-		else							\
+				addr, buffer, माप(type), count);	\
+		अन्यथा							\
 			WARN_ON_ONCE(1);				\
-	}								\
+	पूर्ण								\
 									\
-}									\
+पूर्ण									\
 									\
-void logic_outs##bwl(unsigned long addr, const void *buffer,		\
-		     unsigned int count)				\
-{									\
-	if (addr < MMIO_UPPER_LIMIT) {					\
-		writes##bwl(PCI_IOBASE + addr, buffer, count);		\
-	} else if (addr >= MMIO_UPPER_LIMIT && addr < IO_SPACE_LIMIT) {	\
-		struct logic_pio_hwaddr *entry = find_io_range(addr);	\
+व्योम logic_outs##bwl(अचिन्हित दीर्घ addr, स्थिर व्योम *buffer,		\
+		     अचिन्हित पूर्णांक count)				\
+अणु									\
+	अगर (addr < MMIO_UPPER_LIMIT) अणु					\
+		ग_लिखोs##bwl(PCI_IOBASE + addr, buffer, count);		\
+	पूर्ण अन्यथा अगर (addr >= MMIO_UPPER_LIMIT && addr < IO_SPACE_LIMIT) अणु	\
+		काष्ठा logic_pio_hwaddr *entry = find_io_range(addr);	\
 									\
-		if (entry)						\
+		अगर (entry)						\
 			entry->ops->outs(entry->hostdata,		\
-				addr, buffer, sizeof(type), count);	\
-		else							\
+				addr, buffer, माप(type), count);	\
+		अन्यथा							\
 			WARN_ON_ONCE(1);				\
-	}								\
-}
+	पूर्ण								\
+पूर्ण
 
 BUILD_LOGIC_IO(b, u8)
 EXPORT_SYMBOL(logic_inb);
@@ -317,4 +318,4 @@ EXPORT_SYMBOL(logic_insl);
 EXPORT_SYMBOL(logic_outl);
 EXPORT_SYMBOL(logic_outsl);
 
-#endif /* CONFIG_INDIRECT_PIO && PCI_IOBASE */
+#पूर्ण_अगर /* CONFIG_INसूचीECT_PIO && PCI_IOBASE */

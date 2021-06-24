@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_M68K_ZORRO_H
-#define _ASM_M68K_ZORRO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_M68K_ZORRO_H
+#घोषणा _ASM_M68K_ZORRO_H
 
-#include <asm/raw_io.h>
-#include <asm/kmap.h>
+#समावेश <यंत्र/raw_पन.स>
+#समावेश <यंत्र/kmap.h>
 
-#define z_readb raw_inb
-#define z_readw raw_inw
-#define z_readl raw_inl
+#घोषणा z_पढ़ोb raw_inb
+#घोषणा z_पढ़ोw raw_inw
+#घोषणा z_पढ़ोl raw_inl
 
-#define z_writeb raw_outb
-#define z_writew raw_outw
-#define z_writel raw_outl
+#घोषणा z_ग_लिखोb raw_outb
+#घोषणा z_ग_लिखोw raw_outw
+#घोषणा z_ग_लिखोl raw_outl
 
-#define z_memset_io(a,b,c)	memset((void *)(a),(b),(c))
-#define z_memcpy_fromio(a,b,c)	memcpy((a),(void *)(b),(c))
-#define z_memcpy_toio(a,b,c)	memcpy((void *)(a),(b),(c))
+#घोषणा z_स_रखो_io(a,b,c)	स_रखो((व्योम *)(a),(b),(c))
+#घोषणा z_स_नकल_fromio(a,b,c)	स_नकल((a),(व्योम *)(b),(c))
+#घोषणा z_स_नकल_toio(a,b,c)	स_नकल((व्योम *)(a),(b),(c))
 
-static inline void __iomem *z_remap_nocache_ser(unsigned long physaddr,
-					unsigned long size)
-{
-	return __ioremap(physaddr, size, IOMAP_NOCACHE_SER);
-}
+अटल अंतरभूत व्योम __iomem *z_remap_nocache_ser(अचिन्हित दीर्घ physaddr,
+					अचिन्हित दीर्घ size)
+अणु
+	वापस __ioremap(physaddr, size, IOMAP_NOCACHE_SER);
+पूर्ण
 
-static inline void __iomem *z_remap_nocache_nonser(unsigned long physaddr,
-					   unsigned long size)
-{
-	return __ioremap(physaddr, size, IOMAP_NOCACHE_NONSER);
-}
+अटल अंतरभूत व्योम __iomem *z_remap_nocache_nonser(अचिन्हित दीर्घ physaddr,
+					   अचिन्हित दीर्घ size)
+अणु
+	वापस __ioremap(physaddr, size, IOMAP_NOCACHE_NONSER);
+पूर्ण
 
-static inline void __iomem *z_remap_writethrough(unsigned long physaddr,
-					 unsigned long size)
-{
-	return __ioremap(physaddr, size, IOMAP_WRITETHROUGH);
-}
-static inline void __iomem *z_remap_fullcache(unsigned long physaddr,
-				      unsigned long size)
-{
-	return __ioremap(physaddr, size, IOMAP_FULL_CACHING);
-}
+अटल अंतरभूत व्योम __iomem *z_remap_ग_लिखोthrough(अचिन्हित दीर्घ physaddr,
+					 अचिन्हित दीर्घ size)
+अणु
+	वापस __ioremap(physaddr, size, IOMAP_WRITETHROUGH);
+पूर्ण
+अटल अंतरभूत व्योम __iomem *z_remap_fullcache(अचिन्हित दीर्घ physaddr,
+				      अचिन्हित दीर्घ size)
+अणु
+	वापस __ioremap(physaddr, size, IOMAP_FULL_CACHING);
+पूर्ण
 
-#define z_unmap iounmap
-#define z_iounmap iounmap
-#define z_ioremap z_remap_nocache_ser
+#घोषणा z_unmap iounmap
+#घोषणा z_iounmap iounmap
+#घोषणा z_ioremap z_remap_nocache_ser
 
-#endif /* _ASM_M68K_ZORRO_H */
+#पूर्ण_अगर /* _ASM_M68K_ZORRO_H */

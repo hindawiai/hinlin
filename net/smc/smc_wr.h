@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
@@ -9,110 +10,110 @@
  * Author(s):  Steffen Maier <maier@linux.vnet.ibm.com>
  */
 
-#ifndef SMC_WR_H
-#define SMC_WR_H
+#अगर_अघोषित SMC_WR_H
+#घोषणा SMC_WR_H
 
-#include <linux/atomic.h>
-#include <rdma/ib_verbs.h>
-#include <asm/div64.h>
+#समावेश <linux/atomic.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <यंत्र/भाग64.h>
 
-#include "smc.h"
-#include "smc_core.h"
+#समावेश "smc.h"
+#समावेश "smc_core.h"
 
-#define SMC_WR_BUF_CNT 16	/* # of ctrl buffers per link */
+#घोषणा SMC_WR_BUF_CNT 16	/* # of ctrl buffers per link */
 
-#define SMC_WR_TX_WAIT_FREE_SLOT_TIME	(10 * HZ)
-#define SMC_WR_TX_WAIT_PENDING_TIME	(5 * HZ)
+#घोषणा SMC_WR_TX_WAIT_FREE_SLOT_TIME	(10 * HZ)
+#घोषणा SMC_WR_TX_WAIT_PENDING_TIME	(5 * HZ)
 
-#define SMC_WR_TX_SIZE 44 /* actual size of wr_send data (<=SMC_WR_BUF_SIZE) */
+#घोषणा SMC_WR_TX_SIZE 44 /* actual size of wr_send data (<=SMC_WR_BUF_SIZE) */
 
-#define SMC_WR_TX_PEND_PRIV_SIZE 32
+#घोषणा SMC_WR_TX_PEND_PRIV_SIZE 32
 
-struct smc_wr_tx_pend_priv {
+काष्ठा smc_wr_tx_pend_priv अणु
 	u8			priv[SMC_WR_TX_PEND_PRIV_SIZE];
-};
+पूर्ण;
 
-typedef void (*smc_wr_tx_handler)(struct smc_wr_tx_pend_priv *,
-				  struct smc_link *,
-				  enum ib_wc_status);
+प्रकार व्योम (*smc_wr_tx_handler)(काष्ठा smc_wr_tx_pend_priv *,
+				  काष्ठा smc_link *,
+				  क्रमागत ib_wc_status);
 
-typedef bool (*smc_wr_tx_filter)(struct smc_wr_tx_pend_priv *,
-				 unsigned long);
+प्रकार bool (*smc_wr_tx_filter)(काष्ठा smc_wr_tx_pend_priv *,
+				 अचिन्हित दीर्घ);
 
-typedef void (*smc_wr_tx_dismisser)(struct smc_wr_tx_pend_priv *);
+प्रकार व्योम (*smc_wr_tx_dismisser)(काष्ठा smc_wr_tx_pend_priv *);
 
-struct smc_wr_rx_handler {
-	struct hlist_node	list;	/* hash table collision resolution */
-	void			(*handler)(struct ib_wc *, void *);
+काष्ठा smc_wr_rx_handler अणु
+	काष्ठा hlist_node	list;	/* hash table collision resolution */
+	व्योम			(*handler)(काष्ठा ib_wc *, व्योम *);
 	u8			type;
-};
+पूर्ण;
 
-/* Only used by RDMA write WRs.
+/* Only used by RDMA ग_लिखो WRs.
  * All other WRs (CDC/LLC) use smc_wr_tx_send handling WR_ID implicitly
  */
-static inline long smc_wr_tx_get_next_wr_id(struct smc_link *link)
-{
-	return atomic_long_inc_return(&link->wr_tx_id);
-}
+अटल अंतरभूत दीर्घ smc_wr_tx_get_next_wr_id(काष्ठा smc_link *link)
+अणु
+	वापस atomic_दीर्घ_inc_वापस(&link->wr_tx_id);
+पूर्ण
 
-static inline void smc_wr_tx_set_wr_id(atomic_long_t *wr_tx_id, long val)
-{
-	atomic_long_set(wr_tx_id, val);
-}
+अटल अंतरभूत व्योम smc_wr_tx_set_wr_id(atomic_दीर्घ_t *wr_tx_id, दीर्घ val)
+अणु
+	atomic_दीर्घ_set(wr_tx_id, val);
+पूर्ण
 
-static inline void smc_wr_wakeup_tx_wait(struct smc_link *lnk)
-{
-	wake_up_all(&lnk->wr_tx_wait);
-}
+अटल अंतरभूत व्योम smc_wr_wakeup_tx_रुको(काष्ठा smc_link *lnk)
+अणु
+	wake_up_all(&lnk->wr_tx_रुको);
+पूर्ण
 
-static inline void smc_wr_wakeup_reg_wait(struct smc_link *lnk)
-{
-	wake_up(&lnk->wr_reg_wait);
-}
+अटल अंतरभूत व्योम smc_wr_wakeup_reg_रुको(काष्ठा smc_link *lnk)
+अणु
+	wake_up(&lnk->wr_reg_रुको);
+पूर्ण
 
 /* post a new receive work request to fill a completed old work request entry */
-static inline int smc_wr_rx_post(struct smc_link *link)
-{
-	int rc;
+अटल अंतरभूत पूर्णांक smc_wr_rx_post(काष्ठा smc_link *link)
+अणु
+	पूर्णांक rc;
 	u64 wr_id, temp_wr_id;
 	u32 index;
 
 	wr_id = ++link->wr_rx_id; /* tasklet context, thus not atomic */
 	temp_wr_id = wr_id;
-	index = do_div(temp_wr_id, link->wr_rx_cnt);
+	index = करो_भाग(temp_wr_id, link->wr_rx_cnt);
 	link->wr_rx_ibs[index].wr_id = wr_id;
-	rc = ib_post_recv(link->roce_qp, &link->wr_rx_ibs[index], NULL);
-	return rc;
-}
+	rc = ib_post_recv(link->roce_qp, &link->wr_rx_ibs[index], शून्य);
+	वापस rc;
+पूर्ण
 
-int smc_wr_create_link(struct smc_link *lnk);
-int smc_wr_alloc_link_mem(struct smc_link *lnk);
-void smc_wr_free_link(struct smc_link *lnk);
-void smc_wr_free_link_mem(struct smc_link *lnk);
-void smc_wr_remember_qp_attr(struct smc_link *lnk);
-void smc_wr_remove_dev(struct smc_ib_device *smcibdev);
-void smc_wr_add_dev(struct smc_ib_device *smcibdev);
+पूर्णांक smc_wr_create_link(काष्ठा smc_link *lnk);
+पूर्णांक smc_wr_alloc_link_mem(काष्ठा smc_link *lnk);
+व्योम smc_wr_मुक्त_link(काष्ठा smc_link *lnk);
+व्योम smc_wr_मुक्त_link_mem(काष्ठा smc_link *lnk);
+व्योम smc_wr_remember_qp_attr(काष्ठा smc_link *lnk);
+व्योम smc_wr_हटाओ_dev(काष्ठा smc_ib_device *smcibdev);
+व्योम smc_wr_add_dev(काष्ठा smc_ib_device *smcibdev);
 
-int smc_wr_tx_get_free_slot(struct smc_link *link, smc_wr_tx_handler handler,
-			    struct smc_wr_buf **wr_buf,
-			    struct smc_rdma_wr **wrs,
-			    struct smc_wr_tx_pend_priv **wr_pend_priv);
-int smc_wr_tx_put_slot(struct smc_link *link,
-		       struct smc_wr_tx_pend_priv *wr_pend_priv);
-int smc_wr_tx_send(struct smc_link *link,
-		   struct smc_wr_tx_pend_priv *wr_pend_priv);
-int smc_wr_tx_send_wait(struct smc_link *link, struct smc_wr_tx_pend_priv *priv,
-			unsigned long timeout);
-void smc_wr_tx_cq_handler(struct ib_cq *ib_cq, void *cq_context);
-void smc_wr_tx_dismiss_slots(struct smc_link *lnk, u8 wr_rx_hdr_type,
+पूर्णांक smc_wr_tx_get_मुक्त_slot(काष्ठा smc_link *link, smc_wr_tx_handler handler,
+			    काष्ठा smc_wr_buf **wr_buf,
+			    काष्ठा smc_rdma_wr **wrs,
+			    काष्ठा smc_wr_tx_pend_priv **wr_pend_priv);
+पूर्णांक smc_wr_tx_put_slot(काष्ठा smc_link *link,
+		       काष्ठा smc_wr_tx_pend_priv *wr_pend_priv);
+पूर्णांक smc_wr_tx_send(काष्ठा smc_link *link,
+		   काष्ठा smc_wr_tx_pend_priv *wr_pend_priv);
+पूर्णांक smc_wr_tx_send_रुको(काष्ठा smc_link *link, काष्ठा smc_wr_tx_pend_priv *priv,
+			अचिन्हित दीर्घ समयout);
+व्योम smc_wr_tx_cq_handler(काष्ठा ib_cq *ib_cq, व्योम *cq_context);
+व्योम smc_wr_tx_dismiss_slots(काष्ठा smc_link *lnk, u8 wr_rx_hdr_type,
 			     smc_wr_tx_filter filter,
 			     smc_wr_tx_dismisser dismisser,
-			     unsigned long data);
-int smc_wr_tx_wait_no_pending_sends(struct smc_link *link);
+			     अचिन्हित दीर्घ data);
+पूर्णांक smc_wr_tx_रुको_no_pending_sends(काष्ठा smc_link *link);
 
-int smc_wr_rx_register_handler(struct smc_wr_rx_handler *handler);
-int smc_wr_rx_post_init(struct smc_link *link);
-void smc_wr_rx_cq_handler(struct ib_cq *ib_cq, void *cq_context);
-int smc_wr_reg_send(struct smc_link *link, struct ib_mr *mr);
+पूर्णांक smc_wr_rx_रेजिस्टर_handler(काष्ठा smc_wr_rx_handler *handler);
+पूर्णांक smc_wr_rx_post_init(काष्ठा smc_link *link);
+व्योम smc_wr_rx_cq_handler(काष्ठा ib_cq *ib_cq, व्योम *cq_context);
+पूर्णांक smc_wr_reg_send(काष्ठा smc_link *link, काष्ठा ib_mr *mr);
 
-#endif /* SMC_WR_H */
+#पूर्ण_अगर /* SMC_WR_H */

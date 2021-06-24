@@ -1,192 +1,193 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright 2019 Collabora ltd. */
 
-#include <linux/clk.h>
-#include <linux/devfreq.h>
-#include <linux/devfreq_cooling.h>
-#include <linux/platform_device.h>
-#include <linux/pm_opp.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/devfreq.h>
+#समावेश <linux/devfreq_cooling.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_opp.h>
 
-#include "panfrost_device.h"
-#include "panfrost_devfreq.h"
+#समावेश "panfrost_device.h"
+#समावेश "panfrost_devfreq.h"
 
-static void panfrost_devfreq_update_utilization(struct panfrost_devfreq *pfdevfreq)
-{
-	ktime_t now, last;
+अटल व्योम panfrost_devfreq_update_utilization(काष्ठा panfrost_devfreq *pfdevfreq)
+अणु
+	kसमय_प्रकार now, last;
 
-	now = ktime_get();
-	last = pfdevfreq->time_last_update;
+	now = kसमय_get();
+	last = pfdevfreq->समय_last_update;
 
-	if (pfdevfreq->busy_count > 0)
-		pfdevfreq->busy_time += ktime_sub(now, last);
-	else
-		pfdevfreq->idle_time += ktime_sub(now, last);
+	अगर (pfdevfreq->busy_count > 0)
+		pfdevfreq->busy_समय += kसमय_sub(now, last);
+	अन्यथा
+		pfdevfreq->idle_समय += kसमय_sub(now, last);
 
-	pfdevfreq->time_last_update = now;
-}
+	pfdevfreq->समय_last_update = now;
+पूर्ण
 
-static int panfrost_devfreq_target(struct device *dev, unsigned long *freq,
+अटल पूर्णांक panfrost_devfreq_target(काष्ठा device *dev, अचिन्हित दीर्घ *freq,
 				   u32 flags)
-{
-	struct dev_pm_opp *opp;
+अणु
+	काष्ठा dev_pm_opp *opp;
 
 	opp = devfreq_recommended_opp(dev, freq, flags);
-	if (IS_ERR(opp))
-		return PTR_ERR(opp);
+	अगर (IS_ERR(opp))
+		वापस PTR_ERR(opp);
 	dev_pm_opp_put(opp);
 
-	return dev_pm_opp_set_rate(dev, *freq);
-}
+	वापस dev_pm_opp_set_rate(dev, *freq);
+पूर्ण
 
-static void panfrost_devfreq_reset(struct panfrost_devfreq *pfdevfreq)
-{
-	pfdevfreq->busy_time = 0;
-	pfdevfreq->idle_time = 0;
-	pfdevfreq->time_last_update = ktime_get();
-}
+अटल व्योम panfrost_devfreq_reset(काष्ठा panfrost_devfreq *pfdevfreq)
+अणु
+	pfdevfreq->busy_समय = 0;
+	pfdevfreq->idle_समय = 0;
+	pfdevfreq->समय_last_update = kसमय_get();
+पूर्ण
 
-static int panfrost_devfreq_get_dev_status(struct device *dev,
-					   struct devfreq_dev_status *status)
-{
-	struct panfrost_device *pfdev = dev_get_drvdata(dev);
-	struct panfrost_devfreq *pfdevfreq = &pfdev->pfdevfreq;
-	unsigned long irqflags;
+अटल पूर्णांक panfrost_devfreq_get_dev_status(काष्ठा device *dev,
+					   काष्ठा devfreq_dev_status *status)
+अणु
+	काष्ठा panfrost_device *pfdev = dev_get_drvdata(dev);
+	काष्ठा panfrost_devfreq *pfdevfreq = &pfdev->pfdevfreq;
+	अचिन्हित दीर्घ irqflags;
 
-	status->current_frequency = clk_get_rate(pfdev->clock);
+	status->current_frequency = clk_get_rate(pfdev->घड़ी);
 
 	spin_lock_irqsave(&pfdevfreq->lock, irqflags);
 
 	panfrost_devfreq_update_utilization(pfdevfreq);
 
-	status->total_time = ktime_to_ns(ktime_add(pfdevfreq->busy_time,
-						   pfdevfreq->idle_time));
+	status->total_समय = kसमय_प्रकारo_ns(kसमय_add(pfdevfreq->busy_समय,
+						   pfdevfreq->idle_समय));
 
-	status->busy_time = ktime_to_ns(pfdevfreq->busy_time);
+	status->busy_समय = kसमय_प्रकारo_ns(pfdevfreq->busy_समय);
 
 	panfrost_devfreq_reset(pfdevfreq);
 
 	spin_unlock_irqrestore(&pfdevfreq->lock, irqflags);
 
 	dev_dbg(pfdev->dev, "busy %lu total %lu %lu %% freq %lu MHz\n",
-		status->busy_time, status->total_time,
-		status->busy_time / (status->total_time / 100),
+		status->busy_समय, status->total_समय,
+		status->busy_समय / (status->total_समय / 100),
 		status->current_frequency / 1000 / 1000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct devfreq_dev_profile panfrost_devfreq_profile = {
-	.timer = DEVFREQ_TIMER_DELAYED,
+अटल काष्ठा devfreq_dev_profile panfrost_devfreq_profile = अणु
+	.समयr = DEVFREQ_TIMER_DELAYED,
 	.polling_ms = 50, /* ~3 frames */
 	.target = panfrost_devfreq_target,
 	.get_dev_status = panfrost_devfreq_get_dev_status,
-};
+पूर्ण;
 
-int panfrost_devfreq_init(struct panfrost_device *pfdev)
-{
-	int ret;
-	struct dev_pm_opp *opp;
-	unsigned long cur_freq;
-	struct device *dev = &pfdev->pdev->dev;
-	struct devfreq *devfreq;
-	struct thermal_cooling_device *cooling;
-	struct panfrost_devfreq *pfdevfreq = &pfdev->pfdevfreq;
+पूर्णांक panfrost_devfreq_init(काष्ठा panfrost_device *pfdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा dev_pm_opp *opp;
+	अचिन्हित दीर्घ cur_freq;
+	काष्ठा device *dev = &pfdev->pdev->dev;
+	काष्ठा devfreq *devfreq;
+	काष्ठा thermal_cooling_device *cooling;
+	काष्ठा panfrost_devfreq *pfdevfreq = &pfdev->pfdevfreq;
 
 	ret = devm_pm_opp_set_regulators(dev, pfdev->comp->supply_names,
 					 pfdev->comp->num_supplies);
-	if (ret) {
-		/* Continue if the optional regulator is missing */
-		if (ret != -ENODEV) {
+	अगर (ret) अणु
+		/* Continue अगर the optional regulator is missing */
+		अगर (ret != -ENODEV) अणु
 			DRM_DEV_ERROR(dev, "Couldn't set OPP regulators\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = devm_pm_opp_of_add_table(dev);
-	if (ret) {
-		/* Optional, continue without devfreq */
-		if (ret == -ENODEV)
+	अगर (ret) अणु
+		/* Optional, जारी without devfreq */
+		अगर (ret == -ENODEV)
 			ret = 0;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	pfdevfreq->opp_of_table_added = true;
 
 	spin_lock_init(&pfdevfreq->lock);
 
 	panfrost_devfreq_reset(pfdevfreq);
 
-	cur_freq = clk_get_rate(pfdev->clock);
+	cur_freq = clk_get_rate(pfdev->घड़ी);
 
 	opp = devfreq_recommended_opp(dev, &cur_freq, 0);
-	if (IS_ERR(opp))
-		return PTR_ERR(opp);
+	अगर (IS_ERR(opp))
+		वापस PTR_ERR(opp);
 
 	panfrost_devfreq_profile.initial_freq = cur_freq;
 	dev_pm_opp_put(opp);
 
 	/*
-	 * Setup default thresholds for the simple_ondemand governor.
+	 * Setup शेष thresholds क्रम the simple_ondemand governor.
 	 * The values are chosen based on experiments.
 	 */
 	pfdevfreq->gov_data.upthreshold = 45;
-	pfdevfreq->gov_data.downdifferential = 5;
+	pfdevfreq->gov_data.करोwndअगरferential = 5;
 
 	devfreq = devm_devfreq_add_device(dev, &panfrost_devfreq_profile,
 					  DEVFREQ_GOV_SIMPLE_ONDEMAND,
 					  &pfdevfreq->gov_data);
-	if (IS_ERR(devfreq)) {
+	अगर (IS_ERR(devfreq)) अणु
 		DRM_DEV_ERROR(dev, "Couldn't initialize GPU devfreq\n");
-		return PTR_ERR(devfreq);
-	}
+		वापस PTR_ERR(devfreq);
+	पूर्ण
 	pfdevfreq->devfreq = devfreq;
 
-	cooling = devfreq_cooling_em_register(devfreq, NULL);
-	if (IS_ERR(cooling))
+	cooling = devfreq_cooling_em_रेजिस्टर(devfreq, शून्य);
+	अगर (IS_ERR(cooling))
 		DRM_DEV_INFO(dev, "Failed to register cooling device\n");
-	else
+	अन्यथा
 		pfdevfreq->cooling = cooling;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void panfrost_devfreq_fini(struct panfrost_device *pfdev)
-{
-	struct panfrost_devfreq *pfdevfreq = &pfdev->pfdevfreq;
+व्योम panfrost_devfreq_fini(काष्ठा panfrost_device *pfdev)
+अणु
+	काष्ठा panfrost_devfreq *pfdevfreq = &pfdev->pfdevfreq;
 
-	if (pfdevfreq->cooling) {
-		devfreq_cooling_unregister(pfdevfreq->cooling);
-		pfdevfreq->cooling = NULL;
-	}
-}
+	अगर (pfdevfreq->cooling) अणु
+		devfreq_cooling_unरेजिस्टर(pfdevfreq->cooling);
+		pfdevfreq->cooling = शून्य;
+	पूर्ण
+पूर्ण
 
-void panfrost_devfreq_resume(struct panfrost_device *pfdev)
-{
-	struct panfrost_devfreq *pfdevfreq = &pfdev->pfdevfreq;
+व्योम panfrost_devfreq_resume(काष्ठा panfrost_device *pfdev)
+अणु
+	काष्ठा panfrost_devfreq *pfdevfreq = &pfdev->pfdevfreq;
 
-	if (!pfdevfreq->devfreq)
-		return;
+	अगर (!pfdevfreq->devfreq)
+		वापस;
 
 	panfrost_devfreq_reset(pfdevfreq);
 
 	devfreq_resume_device(pfdevfreq->devfreq);
-}
+पूर्ण
 
-void panfrost_devfreq_suspend(struct panfrost_device *pfdev)
-{
-	struct panfrost_devfreq *pfdevfreq = &pfdev->pfdevfreq;
+व्योम panfrost_devfreq_suspend(काष्ठा panfrost_device *pfdev)
+अणु
+	काष्ठा panfrost_devfreq *pfdevfreq = &pfdev->pfdevfreq;
 
-	if (!pfdevfreq->devfreq)
-		return;
+	अगर (!pfdevfreq->devfreq)
+		वापस;
 
 	devfreq_suspend_device(pfdevfreq->devfreq);
-}
+पूर्ण
 
-void panfrost_devfreq_record_busy(struct panfrost_devfreq *pfdevfreq)
-{
-	unsigned long irqflags;
+व्योम panfrost_devfreq_record_busy(काष्ठा panfrost_devfreq *pfdevfreq)
+अणु
+	अचिन्हित दीर्घ irqflags;
 
-	if (!pfdevfreq->devfreq)
-		return;
+	अगर (!pfdevfreq->devfreq)
+		वापस;
 
 	spin_lock_irqsave(&pfdevfreq->lock, irqflags);
 
@@ -195,14 +196,14 @@ void panfrost_devfreq_record_busy(struct panfrost_devfreq *pfdevfreq)
 	pfdevfreq->busy_count++;
 
 	spin_unlock_irqrestore(&pfdevfreq->lock, irqflags);
-}
+पूर्ण
 
-void panfrost_devfreq_record_idle(struct panfrost_devfreq *pfdevfreq)
-{
-	unsigned long irqflags;
+व्योम panfrost_devfreq_record_idle(काष्ठा panfrost_devfreq *pfdevfreq)
+अणु
+	अचिन्हित दीर्घ irqflags;
 
-	if (!pfdevfreq->devfreq)
-		return;
+	अगर (!pfdevfreq->devfreq)
+		वापस;
 
 	spin_lock_irqsave(&pfdevfreq->lock, irqflags);
 
@@ -211,4 +212,4 @@ void panfrost_devfreq_record_idle(struct panfrost_devfreq *pfdevfreq)
 	WARN_ON(--pfdevfreq->busy_count < 0);
 
 	spin_unlock_irqrestore(&pfdevfreq->lock, irqflags);
-}
+पूर्ण

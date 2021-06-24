@@ -1,220 +1,221 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2011-2016 Synaptics Incorporated
  * Copyright (c) 2011 Unixphere
  */
 
-#include <linux/i2c.h>
-#include <linux/rmi.h>
-#include <linux/of.h>
-#include <linux/delay.h>
-#include <linux/regulator/consumer.h>
-#include "rmi_driver.h"
+#समावेश <linux/i2c.h>
+#समावेश <linux/rmi.h>
+#समावेश <linux/of.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश "rmi_driver.h"
 
-#define BUFFER_SIZE_INCREMENT 32
+#घोषणा BUFFER_SIZE_INCREMENT 32
 
 /**
- * struct rmi_i2c_xport - stores information for i2c communication
+ * काष्ठा rmi_i2c_xport - stores inक्रमmation क्रम i2c communication
  *
- * @xport: The transport interface structure
- * @client: The I2C client device structure
+ * @xport: The transport पूर्णांकerface काष्ठाure
+ * @client: The I2C client device काष्ठाure
  *
- * @page_mutex: Locks current page to avoid changing pages in unexpected ways.
- * @page: Keeps track of the current virtual page
+ * @page_mutex: Locks current page to aव्योम changing pages in unexpected ways.
+ * @page: Keeps track of the current भव page
  *
- * @tx_buf: Buffer used for transmitting data to the sensor over i2c.
+ * @tx_buf: Buffer used क्रम transmitting data to the sensor over i2c.
  * @tx_buf_size: Size of the buffer
  *
  * @supplies: Array of voltage regulators
- * @startup_delay: Milliseconds to pause after powering up the regulators
+ * @startup_delay: Milliseconds to छोड़ो after घातering up the regulators
  */
-struct rmi_i2c_xport {
-	struct rmi_transport_dev xport;
-	struct i2c_client *client;
+काष्ठा rmi_i2c_xport अणु
+	काष्ठा rmi_transport_dev xport;
+	काष्ठा i2c_client *client;
 
-	struct mutex page_mutex;
-	int page;
+	काष्ठा mutex page_mutex;
+	पूर्णांक page;
 
 	u8 *tx_buf;
-	size_t tx_buf_size;
+	माप_प्रकार tx_buf_size;
 
-	struct regulator_bulk_data supplies[2];
+	काष्ठा regulator_bulk_data supplies[2];
 	u32 startup_delay;
-};
+पूर्ण;
 
-#define RMI_PAGE_SELECT_REGISTER 0xff
-#define RMI_I2C_PAGE(addr) (((addr) >> 8) & 0xff)
+#घोषणा RMI_PAGE_SELECT_REGISTER 0xff
+#घोषणा RMI_I2C_PAGE(addr) (((addr) >> 8) & 0xff)
 
 /*
  * rmi_set_page - Set RMI page
- * @xport: The pointer to the rmi_transport_dev struct
+ * @xport: The poपूर्णांकer to the rmi_transport_dev काष्ठा
  * @page: The new page address.
  *
  * RMI devices have 16-bit addressing, but some of the transport
  * implementations (like SMBus) only have 8-bit addressing. So RMI implements
  * a page address at 0xff of every page so we can reliable page addresses
- * every 256 registers.
+ * every 256 रेजिस्टरs.
  *
  * The page_mutex lock must be held when this function is entered.
  *
  * Returns zero on success, non-zero on failure.
  */
-static int rmi_set_page(struct rmi_i2c_xport *rmi_i2c, u8 page)
-{
-	struct i2c_client *client = rmi_i2c->client;
-	u8 txbuf[2] = {RMI_PAGE_SELECT_REGISTER, page};
-	int retval;
+अटल पूर्णांक rmi_set_page(काष्ठा rmi_i2c_xport *rmi_i2c, u8 page)
+अणु
+	काष्ठा i2c_client *client = rmi_i2c->client;
+	u8 txbuf[2] = अणुRMI_PAGE_SELECT_REGISTER, pageपूर्ण;
+	पूर्णांक retval;
 
-	retval = i2c_master_send(client, txbuf, sizeof(txbuf));
-	if (retval != sizeof(txbuf)) {
+	retval = i2c_master_send(client, txbuf, माप(txbuf));
+	अगर (retval != माप(txbuf)) अणु
 		dev_err(&client->dev,
 			"%s: set page failed: %d.", __func__, retval);
-		return (retval < 0) ? retval : -EIO;
-	}
+		वापस (retval < 0) ? retval : -EIO;
+	पूर्ण
 
 	rmi_i2c->page = page;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmi_i2c_write_block(struct rmi_transport_dev *xport, u16 addr,
-			       const void *buf, size_t len)
-{
-	struct rmi_i2c_xport *rmi_i2c =
-		container_of(xport, struct rmi_i2c_xport, xport);
-	struct i2c_client *client = rmi_i2c->client;
-	size_t tx_size = len + 1;
-	int retval;
+अटल पूर्णांक rmi_i2c_ग_लिखो_block(काष्ठा rmi_transport_dev *xport, u16 addr,
+			       स्थिर व्योम *buf, माप_प्रकार len)
+अणु
+	काष्ठा rmi_i2c_xport *rmi_i2c =
+		container_of(xport, काष्ठा rmi_i2c_xport, xport);
+	काष्ठा i2c_client *client = rmi_i2c->client;
+	माप_प्रकार tx_size = len + 1;
+	पूर्णांक retval;
 
 	mutex_lock(&rmi_i2c->page_mutex);
 
-	if (!rmi_i2c->tx_buf || rmi_i2c->tx_buf_size < tx_size) {
-		if (rmi_i2c->tx_buf)
-			devm_kfree(&client->dev, rmi_i2c->tx_buf);
+	अगर (!rmi_i2c->tx_buf || rmi_i2c->tx_buf_size < tx_size) अणु
+		अगर (rmi_i2c->tx_buf)
+			devm_kमुक्त(&client->dev, rmi_i2c->tx_buf);
 		rmi_i2c->tx_buf_size = tx_size + BUFFER_SIZE_INCREMENT;
 		rmi_i2c->tx_buf = devm_kzalloc(&client->dev,
 					       rmi_i2c->tx_buf_size,
 					       GFP_KERNEL);
-		if (!rmi_i2c->tx_buf) {
+		अगर (!rmi_i2c->tx_buf) अणु
 			rmi_i2c->tx_buf_size = 0;
 			retval = -ENOMEM;
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 
 	rmi_i2c->tx_buf[0] = addr & 0xff;
-	memcpy(rmi_i2c->tx_buf + 1, buf, len);
+	स_नकल(rmi_i2c->tx_buf + 1, buf, len);
 
-	if (RMI_I2C_PAGE(addr) != rmi_i2c->page) {
+	अगर (RMI_I2C_PAGE(addr) != rmi_i2c->page) अणु
 		retval = rmi_set_page(rmi_i2c, RMI_I2C_PAGE(addr));
-		if (retval)
-			goto exit;
-	}
+		अगर (retval)
+			जाओ निकास;
+	पूर्ण
 
 	retval = i2c_master_send(client, rmi_i2c->tx_buf, tx_size);
-	if (retval == tx_size)
+	अगर (retval == tx_size)
 		retval = 0;
-	else if (retval >= 0)
+	अन्यथा अगर (retval >= 0)
 		retval = -EIO;
 
-exit:
+निकास:
 	rmi_dbg(RMI_DEBUG_XPORT, &client->dev,
 		"write %zd bytes at %#06x: %d (%*ph)\n",
-		len, addr, retval, (int)len, buf);
+		len, addr, retval, (पूर्णांक)len, buf);
 
 	mutex_unlock(&rmi_i2c->page_mutex);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int rmi_i2c_read_block(struct rmi_transport_dev *xport, u16 addr,
-			      void *buf, size_t len)
-{
-	struct rmi_i2c_xport *rmi_i2c =
-		container_of(xport, struct rmi_i2c_xport, xport);
-	struct i2c_client *client = rmi_i2c->client;
+अटल पूर्णांक rmi_i2c_पढ़ो_block(काष्ठा rmi_transport_dev *xport, u16 addr,
+			      व्योम *buf, माप_प्रकार len)
+अणु
+	काष्ठा rmi_i2c_xport *rmi_i2c =
+		container_of(xport, काष्ठा rmi_i2c_xport, xport);
+	काष्ठा i2c_client *client = rmi_i2c->client;
 	u8 addr_offset = addr & 0xff;
-	int retval;
-	struct i2c_msg msgs[] = {
-		{
+	पूर्णांक retval;
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु
 			.addr	= client->addr,
-			.len	= sizeof(addr_offset),
+			.len	= माप(addr_offset),
 			.buf	= &addr_offset,
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr	= client->addr,
 			.flags	= I2C_M_RD,
 			.len	= len,
 			.buf	= buf,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
 	mutex_lock(&rmi_i2c->page_mutex);
 
-	if (RMI_I2C_PAGE(addr) != rmi_i2c->page) {
+	अगर (RMI_I2C_PAGE(addr) != rmi_i2c->page) अणु
 		retval = rmi_set_page(rmi_i2c, RMI_I2C_PAGE(addr));
-		if (retval)
-			goto exit;
-	}
+		अगर (retval)
+			जाओ निकास;
+	पूर्ण
 
 	retval = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	if (retval == ARRAY_SIZE(msgs))
+	अगर (retval == ARRAY_SIZE(msgs))
 		retval = 0; /* success */
-	else if (retval >= 0)
+	अन्यथा अगर (retval >= 0)
 		retval = -EIO;
 
-exit:
+निकास:
 	rmi_dbg(RMI_DEBUG_XPORT, &client->dev,
 		"read %zd bytes at %#06x: %d (%*ph)\n",
-		len, addr, retval, (int)len, buf);
+		len, addr, retval, (पूर्णांक)len, buf);
 
 	mutex_unlock(&rmi_i2c->page_mutex);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static const struct rmi_transport_ops rmi_i2c_ops = {
-	.write_block	= rmi_i2c_write_block,
-	.read_block	= rmi_i2c_read_block,
-};
+अटल स्थिर काष्ठा rmi_transport_ops rmi_i2c_ops = अणु
+	.ग_लिखो_block	= rmi_i2c_ग_लिखो_block,
+	.पढ़ो_block	= rmi_i2c_पढ़ो_block,
+पूर्ण;
 
-#ifdef CONFIG_OF
-static const struct of_device_id rmi_i2c_of_match[] = {
-	{ .compatible = "syna,rmi4-i2c" },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id rmi_i2c_of_match[] = अणु
+	अणु .compatible = "syna,rmi4-i2c" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rmi_i2c_of_match);
-#endif
+#पूर्ण_अगर
 
-static void rmi_i2c_regulator_bulk_disable(void *data)
-{
-	struct rmi_i2c_xport *rmi_i2c = data;
+अटल व्योम rmi_i2c_regulator_bulk_disable(व्योम *data)
+अणु
+	काष्ठा rmi_i2c_xport *rmi_i2c = data;
 
 	regulator_bulk_disable(ARRAY_SIZE(rmi_i2c->supplies),
 			       rmi_i2c->supplies);
-}
+पूर्ण
 
-static void rmi_i2c_unregister_transport(void *data)
-{
-	struct rmi_i2c_xport *rmi_i2c = data;
+अटल व्योम rmi_i2c_unरेजिस्टर_transport(व्योम *data)
+अणु
+	काष्ठा rmi_i2c_xport *rmi_i2c = data;
 
-	rmi_unregister_transport_device(&rmi_i2c->xport);
-}
+	rmi_unरेजिस्टर_transport_device(&rmi_i2c->xport);
+पूर्ण
 
-static int rmi_i2c_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct rmi_device_platform_data *pdata;
-	struct rmi_device_platform_data *client_pdata =
+अटल पूर्णांक rmi_i2c_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा rmi_device_platक्रमm_data *pdata;
+	काष्ठा rmi_device_platक्रमm_data *client_pdata =
 					dev_get_platdata(&client->dev);
-	struct rmi_i2c_xport *rmi_i2c;
-	int error;
+	काष्ठा rmi_i2c_xport *rmi_i2c;
+	पूर्णांक error;
 
-	rmi_i2c = devm_kzalloc(&client->dev, sizeof(struct rmi_i2c_xport),
+	rmi_i2c = devm_kzalloc(&client->dev, माप(काष्ठा rmi_i2c_xport),
 				GFP_KERNEL);
-	if (!rmi_i2c)
-		return -ENOMEM;
+	अगर (!rmi_i2c)
+		वापस -ENOMEM;
 
 	pdata = &rmi_i2c->xport.pdata;
 
-	if (!client->dev.of_node && client_pdata)
+	अगर (!client->dev.of_node && client_pdata)
 		*pdata = *client_pdata;
 
 	pdata->irq = client->irq;
@@ -222,32 +223,32 @@ static int rmi_i2c_probe(struct i2c_client *client,
 	rmi_dbg(RMI_DEBUG_XPORT, &client->dev, "Probing %s.\n",
 			dev_name(&client->dev));
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
 		dev_err(&client->dev,
 			"adapter does not support required functionality\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	rmi_i2c->supplies[0].supply = "vdd";
 	rmi_i2c->supplies[1].supply = "vio";
 	error = devm_regulator_bulk_get(&client->dev,
 					 ARRAY_SIZE(rmi_i2c->supplies),
 					 rmi_i2c->supplies);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
 	error = regulator_bulk_enable(ARRAY_SIZE(rmi_i2c->supplies),
 				       rmi_i2c->supplies);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
 	error = devm_add_action_or_reset(&client->dev,
 					  rmi_i2c_regulator_bulk_disable,
 					  rmi_i2c);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	of_property_read_u32(client->dev.of_node, "syna,startup-delay-ms",
+	of_property_पढ़ो_u32(client->dev.of_node, "syna,startup-delay-ms",
 			     &rmi_i2c->startup_delay);
 
 	msleep(rmi_i2c->startup_delay);
@@ -266,125 +267,125 @@ static int rmi_i2c_probe(struct i2c_client *client,
 	 * known state, and (b) make sure we can talk to the device.
 	 */
 	error = rmi_set_page(rmi_i2c, 0);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "Failed to set page select to 0\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	dev_info(&client->dev, "registering I2C-connected sensor\n");
 
-	error = rmi_register_transport_device(&rmi_i2c->xport);
-	if (error) {
+	error = rmi_रेजिस्टर_transport_device(&rmi_i2c->xport);
+	अगर (error) अणु
 		dev_err(&client->dev, "failed to register sensor: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = devm_add_action_or_reset(&client->dev,
-					  rmi_i2c_unregister_transport,
+					  rmi_i2c_unरेजिस्टर_transport,
 					  rmi_i2c);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int rmi_i2c_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rmi_i2c_xport *rmi_i2c = i2c_get_clientdata(client);
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक rmi_i2c_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rmi_i2c_xport *rmi_i2c = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
 	ret = rmi_driver_suspend(rmi_i2c->xport.rmi_dev, true);
-	if (ret)
+	अगर (ret)
 		dev_warn(dev, "Failed to resume device: %d\n", ret);
 
 	regulator_bulk_disable(ARRAY_SIZE(rmi_i2c->supplies),
 			       rmi_i2c->supplies);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rmi_i2c_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rmi_i2c_xport *rmi_i2c = i2c_get_clientdata(client);
-	int ret;
+अटल पूर्णांक rmi_i2c_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rmi_i2c_xport *rmi_i2c = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(rmi_i2c->supplies),
 				    rmi_i2c->supplies);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	msleep(rmi_i2c->startup_delay);
 
 	ret = rmi_driver_resume(rmi_i2c->xport.rmi_dev, true);
-	if (ret)
+	अगर (ret)
 		dev_warn(dev, "Failed to resume device: %d\n", ret);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
-static int rmi_i2c_runtime_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rmi_i2c_xport *rmi_i2c = i2c_get_clientdata(client);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक rmi_i2c_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rmi_i2c_xport *rmi_i2c = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
 	ret = rmi_driver_suspend(rmi_i2c->xport.rmi_dev, false);
-	if (ret)
+	अगर (ret)
 		dev_warn(dev, "Failed to resume device: %d\n", ret);
 
 	regulator_bulk_disable(ARRAY_SIZE(rmi_i2c->supplies),
 			       rmi_i2c->supplies);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rmi_i2c_runtime_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rmi_i2c_xport *rmi_i2c = i2c_get_clientdata(client);
-	int ret;
+अटल पूर्णांक rmi_i2c_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rmi_i2c_xport *rmi_i2c = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(rmi_i2c->supplies),
 				    rmi_i2c->supplies);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	msleep(rmi_i2c->startup_delay);
 
 	ret = rmi_driver_resume(rmi_i2c->xport.rmi_dev, false);
-	if (ret)
+	अगर (ret)
 		dev_warn(dev, "Failed to resume device: %d\n", ret);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops rmi_i2c_pm = {
+अटल स्थिर काष्ठा dev_pm_ops rmi_i2c_pm = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(rmi_i2c_suspend, rmi_i2c_resume)
-	SET_RUNTIME_PM_OPS(rmi_i2c_runtime_suspend, rmi_i2c_runtime_resume,
-			   NULL)
-};
+	SET_RUNTIME_PM_OPS(rmi_i2c_runसमय_suspend, rmi_i2c_runसमय_resume,
+			   शून्य)
+पूर्ण;
 
-static const struct i2c_device_id rmi_id[] = {
-	{ "rmi4_i2c", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id rmi_id[] = अणु
+	अणु "rmi4_i2c", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, rmi_id);
 
-static struct i2c_driver rmi_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver rmi_i2c_driver = अणु
+	.driver = अणु
 		.name	= "rmi4_i2c",
 		.pm	= &rmi_i2c_pm,
 		.of_match_table = of_match_ptr(rmi_i2c_of_match),
-	},
+	पूर्ण,
 	.id_table	= rmi_id,
 	.probe		= rmi_i2c_probe,
-};
+पूर्ण;
 
 module_i2c_driver(rmi_i2c_driver);
 

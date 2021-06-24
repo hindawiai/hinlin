@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,195 +21,195 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include "qmgr.h"
+#समावेश "qmgr.h"
 
-static bool
-nvkm_falcon_cmdq_has_room(struct nvkm_falcon_cmdq *cmdq, u32 size, bool *rewind)
-{
+अटल bool
+nvkm_falcon_cmdq_has_room(काष्ठा nvkm_falcon_cmdq *cmdq, u32 size, bool *शुरुआत)
+अणु
 	u32 head = nvkm_falcon_rd32(cmdq->qmgr->falcon, cmdq->head_reg);
 	u32 tail = nvkm_falcon_rd32(cmdq->qmgr->falcon, cmdq->tail_reg);
-	u32 free;
+	u32 मुक्त;
 
 	size = ALIGN(size, QUEUE_ALIGNMENT);
 
-	if (head >= tail) {
-		free = cmdq->offset + cmdq->size - head;
-		free -= HDR_SIZE;
+	अगर (head >= tail) अणु
+		मुक्त = cmdq->offset + cmdq->size - head;
+		मुक्त -= HDR_SIZE;
 
-		if (size > free) {
-			*rewind = true;
+		अगर (size > मुक्त) अणु
+			*शुरुआत = true;
 			head = cmdq->offset;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (head < tail)
-		free = tail - head - 1;
+	अगर (head < tail)
+		मुक्त = tail - head - 1;
 
-	return size <= free;
-}
+	वापस size <= मुक्त;
+पूर्ण
 
-static void
-nvkm_falcon_cmdq_push(struct nvkm_falcon_cmdq *cmdq, void *data, u32 size)
-{
-	struct nvkm_falcon *falcon = cmdq->qmgr->falcon;
+अटल व्योम
+nvkm_falcon_cmdq_push(काष्ठा nvkm_falcon_cmdq *cmdq, व्योम *data, u32 size)
+अणु
+	काष्ठा nvkm_falcon *falcon = cmdq->qmgr->falcon;
 	nvkm_falcon_load_dmem(falcon, data, cmdq->position, size, 0);
 	cmdq->position += ALIGN(size, QUEUE_ALIGNMENT);
-}
+पूर्ण
 
-static void
-nvkm_falcon_cmdq_rewind(struct nvkm_falcon_cmdq *cmdq)
-{
-	struct nvfw_falcon_cmd cmd;
+अटल व्योम
+nvkm_falcon_cmdq_शुरुआत(काष्ठा nvkm_falcon_cmdq *cmdq)
+अणु
+	काष्ठा nvfw_falcon_cmd cmd;
 
 	cmd.unit_id = NV_FALCON_CMD_UNIT_ID_REWIND;
-	cmd.size = sizeof(cmd);
+	cmd.size = माप(cmd);
 	nvkm_falcon_cmdq_push(cmdq, &cmd, cmd.size);
 
 	cmdq->position = cmdq->offset;
-}
+पूर्ण
 
-static int
-nvkm_falcon_cmdq_open(struct nvkm_falcon_cmdq *cmdq, u32 size)
-{
-	struct nvkm_falcon *falcon = cmdq->qmgr->falcon;
-	bool rewind = false;
+अटल पूर्णांक
+nvkm_falcon_cmdq_खोलो(काष्ठा nvkm_falcon_cmdq *cmdq, u32 size)
+अणु
+	काष्ठा nvkm_falcon *falcon = cmdq->qmgr->falcon;
+	bool शुरुआत = false;
 
 	mutex_lock(&cmdq->mutex);
 
-	if (!nvkm_falcon_cmdq_has_room(cmdq, size, &rewind)) {
+	अगर (!nvkm_falcon_cmdq_has_room(cmdq, size, &शुरुआत)) अणु
 		FLCNQ_DBG(cmdq, "queue full");
 		mutex_unlock(&cmdq->mutex);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	cmdq->position = nvkm_falcon_rd32(falcon, cmdq->head_reg);
 
-	if (rewind)
-		nvkm_falcon_cmdq_rewind(cmdq);
+	अगर (शुरुआत)
+		nvkm_falcon_cmdq_शुरुआत(cmdq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-nvkm_falcon_cmdq_close(struct nvkm_falcon_cmdq *cmdq)
-{
+अटल व्योम
+nvkm_falcon_cmdq_बंद(काष्ठा nvkm_falcon_cmdq *cmdq)
+अणु
 	nvkm_falcon_wr32(cmdq->qmgr->falcon, cmdq->head_reg, cmdq->position);
 	mutex_unlock(&cmdq->mutex);
-}
+पूर्ण
 
-static int
-nvkm_falcon_cmdq_write(struct nvkm_falcon_cmdq *cmdq, struct nvfw_falcon_cmd *cmd)
-{
-	static unsigned timeout = 2000;
-	unsigned long end_jiffies = jiffies + msecs_to_jiffies(timeout);
-	int ret = -EAGAIN;
+अटल पूर्णांक
+nvkm_falcon_cmdq_ग_लिखो(काष्ठा nvkm_falcon_cmdq *cmdq, काष्ठा nvfw_falcon_cmd *cmd)
+अणु
+	अटल अचिन्हित समयout = 2000;
+	अचिन्हित दीर्घ end_jअगरfies = jअगरfies + msecs_to_jअगरfies(समयout);
+	पूर्णांक ret = -EAGAIN;
 
-	while (ret == -EAGAIN && time_before(jiffies, end_jiffies))
-		ret = nvkm_falcon_cmdq_open(cmdq, cmd->size);
-	if (ret) {
+	जबतक (ret == -EAGAIN && समय_beक्रमe(jअगरfies, end_jअगरfies))
+		ret = nvkm_falcon_cmdq_खोलो(cmdq, cmd->size);
+	अगर (ret) अणु
 		FLCNQ_ERR(cmdq, "timeout waiting for queue space");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	nvkm_falcon_cmdq_push(cmdq, cmd, cmd->size);
-	nvkm_falcon_cmdq_close(cmdq);
-	return ret;
-}
+	nvkm_falcon_cmdq_बंद(cmdq);
+	वापस ret;
+पूर्ण
 
-/* specifies that we want to know the command status in the answer message */
-#define CMD_FLAGS_STATUS BIT(0)
-/* specifies that we want an interrupt when the answer message is queued */
-#define CMD_FLAGS_INTR BIT(1)
+/* specअगरies that we want to know the command status in the answer message */
+#घोषणा CMD_FLAGS_STATUS BIT(0)
+/* specअगरies that we want an पूर्णांकerrupt when the answer message is queued */
+#घोषणा CMD_FLAGS_INTR BIT(1)
 
-int
-nvkm_falcon_cmdq_send(struct nvkm_falcon_cmdq *cmdq, struct nvfw_falcon_cmd *cmd,
-		      nvkm_falcon_qmgr_callback cb, void *priv,
-		      unsigned long timeout)
-{
-	struct nvkm_falcon_qmgr_seq *seq;
-	int ret;
+पूर्णांक
+nvkm_falcon_cmdq_send(काष्ठा nvkm_falcon_cmdq *cmdq, काष्ठा nvfw_falcon_cmd *cmd,
+		      nvkm_falcon_qmgr_callback cb, व्योम *priv,
+		      अचिन्हित दीर्घ समयout)
+अणु
+	काष्ठा nvkm_falcon_qmgr_seq *seq;
+	पूर्णांक ret;
 
-	if (!wait_for_completion_timeout(&cmdq->ready,
-					 msecs_to_jiffies(1000))) {
+	अगर (!रुको_क्रम_completion_समयout(&cmdq->पढ़ोy,
+					 msecs_to_jअगरfies(1000))) अणु
 		FLCNQ_ERR(cmdq, "timeout waiting for queue ready");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	seq = nvkm_falcon_qmgr_seq_acquire(cmdq->qmgr);
-	if (IS_ERR(seq))
-		return PTR_ERR(seq);
+	अगर (IS_ERR(seq))
+		वापस PTR_ERR(seq);
 
 	cmd->seq_id = seq->id;
 	cmd->ctrl_flags = CMD_FLAGS_STATUS | CMD_FLAGS_INTR;
 
 	seq->state = SEQ_STATE_USED;
-	seq->async = !timeout;
+	seq->async = !समयout;
 	seq->callback = cb;
 	seq->priv = priv;
 
-	ret = nvkm_falcon_cmdq_write(cmdq, cmd);
-	if (ret) {
+	ret = nvkm_falcon_cmdq_ग_लिखो(cmdq, cmd);
+	अगर (ret) अणु
 		seq->state = SEQ_STATE_PENDING;
 		nvkm_falcon_qmgr_seq_release(cmdq->qmgr, seq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!seq->async) {
-		if (!wait_for_completion_timeout(&seq->done, timeout)) {
+	अगर (!seq->async) अणु
+		अगर (!रुको_क्रम_completion_समयout(&seq->करोne, समयout)) अणु
 			FLCNQ_ERR(cmdq, "timeout waiting for reply");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		ret = seq->result;
 		nvkm_falcon_qmgr_seq_release(cmdq->qmgr, seq);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-nvkm_falcon_cmdq_fini(struct nvkm_falcon_cmdq *cmdq)
-{
-	reinit_completion(&cmdq->ready);
-}
+व्योम
+nvkm_falcon_cmdq_fini(काष्ठा nvkm_falcon_cmdq *cmdq)
+अणु
+	reinit_completion(&cmdq->पढ़ोy);
+पूर्ण
 
-void
-nvkm_falcon_cmdq_init(struct nvkm_falcon_cmdq *cmdq,
+व्योम
+nvkm_falcon_cmdq_init(काष्ठा nvkm_falcon_cmdq *cmdq,
 		      u32 index, u32 offset, u32 size)
-{
-	const struct nvkm_falcon_func *func = cmdq->qmgr->falcon->func;
+अणु
+	स्थिर काष्ठा nvkm_falcon_func *func = cmdq->qmgr->falcon->func;
 
 	cmdq->head_reg = func->cmdq.head + index * func->cmdq.stride;
 	cmdq->tail_reg = func->cmdq.tail + index * func->cmdq.stride;
 	cmdq->offset = offset;
 	cmdq->size = size;
-	complete_all(&cmdq->ready);
+	complete_all(&cmdq->पढ़ोy);
 
 	FLCNQ_DBG(cmdq, "initialised @ index %d offset 0x%08x size 0x%08x",
 		  index, cmdq->offset, cmdq->size);
-}
+पूर्ण
 
-void
-nvkm_falcon_cmdq_del(struct nvkm_falcon_cmdq **pcmdq)
-{
-	struct nvkm_falcon_cmdq *cmdq = *pcmdq;
-	if (cmdq) {
-		kfree(*pcmdq);
-		*pcmdq = NULL;
-	}
-}
+व्योम
+nvkm_falcon_cmdq_del(काष्ठा nvkm_falcon_cmdq **pcmdq)
+अणु
+	काष्ठा nvkm_falcon_cmdq *cmdq = *pcmdq;
+	अगर (cmdq) अणु
+		kमुक्त(*pcmdq);
+		*pcmdq = शून्य;
+	पूर्ण
+पूर्ण
 
-int
-nvkm_falcon_cmdq_new(struct nvkm_falcon_qmgr *qmgr, const char *name,
-		     struct nvkm_falcon_cmdq **pcmdq)
-{
-	struct nvkm_falcon_cmdq *cmdq = *pcmdq;
+पूर्णांक
+nvkm_falcon_cmdq_new(काष्ठा nvkm_falcon_qmgr *qmgr, स्थिर अक्षर *name,
+		     काष्ठा nvkm_falcon_cmdq **pcmdq)
+अणु
+	काष्ठा nvkm_falcon_cmdq *cmdq = *pcmdq;
 
-	if (!(cmdq = *pcmdq = kzalloc(sizeof(*cmdq), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(cmdq = *pcmdq = kzalloc(माप(*cmdq), GFP_KERNEL)))
+		वापस -ENOMEM;
 
 	cmdq->qmgr = qmgr;
 	cmdq->name = name;
 	mutex_init(&cmdq->mutex);
-	init_completion(&cmdq->ready);
-	return 0;
-}
+	init_completion(&cmdq->पढ़ोy);
+	वापस 0;
+पूर्ण

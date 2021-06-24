@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <asm/trap_pf.h>
-#include <asm/segment.h>
-#include <asm/trapnr.h>
-#include "misc.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <यंत्र/trap_pf.h>
+#समावेश <यंत्र/segment.h>
+#समावेश <यंत्र/trapnr.h>
+#समावेश "misc.h"
 
-static void set_idt_entry(int vector, void (*handler)(void))
-{
-	unsigned long address = (unsigned long)handler;
+अटल व्योम set_idt_entry(पूर्णांक vector, व्योम (*handler)(व्योम))
+अणु
+	अचिन्हित दीर्घ address = (अचिन्हित दीर्घ)handler;
 	gate_desc entry;
 
-	memset(&entry, 0, sizeof(entry));
+	स_रखो(&entry, 0, माप(entry));
 
 	entry.offset_low    = (u16)(address & 0xffff);
 	entry.segment       = __KERNEL_CS;
@@ -18,51 +19,51 @@ static void set_idt_entry(int vector, void (*handler)(void))
 	entry.offset_middle = (u16)((address >> 16) & 0xffff);
 	entry.offset_high   = (u32)(address >> 32);
 
-	memcpy(&boot_idt[vector], &entry, sizeof(entry));
-}
+	स_नकल(&boot_idt[vector], &entry, माप(entry));
+पूर्ण
 
-/* Have this here so we don't need to include <asm/desc.h> */
-static void load_boot_idt(const struct desc_ptr *dtr)
-{
-	asm volatile("lidt %0"::"m" (*dtr));
-}
+/* Have this here so we करोn't need to include <यंत्र/desc.h> */
+अटल व्योम load_boot_idt(स्थिर काष्ठा desc_ptr *dtr)
+अणु
+	यंत्र अस्थिर("lidt %0"::"m" (*dtr));
+पूर्ण
 
-/* Setup IDT before kernel jumping to  .Lrelocated */
-void load_stage1_idt(void)
-{
-	boot_idt_desc.address = (unsigned long)boot_idt;
+/* Setup IDT beक्रमe kernel jumping to  .Lrelocated */
+व्योम load_stage1_idt(व्योम)
+अणु
+	boot_idt_desc.address = (अचिन्हित दीर्घ)boot_idt;
 
 
-	if (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT))
+	अगर (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT))
 		set_idt_entry(X86_TRAP_VC, boot_stage1_vc);
 
 	load_boot_idt(&boot_idt_desc);
-}
+पूर्ण
 
 /* Setup IDT after kernel jumping to  .Lrelocated */
-void load_stage2_idt(void)
-{
-	boot_idt_desc.address = (unsigned long)boot_idt;
+व्योम load_stage2_idt(व्योम)
+अणु
+	boot_idt_desc.address = (अचिन्हित दीर्घ)boot_idt;
 
 	set_idt_entry(X86_TRAP_PF, boot_page_fault);
 
-#ifdef CONFIG_AMD_MEM_ENCRYPT
+#अगर_घोषित CONFIG_AMD_MEM_ENCRYPT
 	set_idt_entry(X86_TRAP_VC, boot_stage2_vc);
-#endif
+#पूर्ण_अगर
 
 	load_boot_idt(&boot_idt_desc);
-}
+पूर्ण
 
-void cleanup_exception_handling(void)
-{
+व्योम cleanup_exception_handling(व्योम)
+अणु
 	/*
 	 * Flush GHCB from cache and map it encrypted again when running as
 	 * SEV-ES guest.
 	 */
-	sev_es_shutdown_ghcb();
+	sev_es_shutकरोwn_ghcb();
 
 	/* Set a null-idt, disabling #PF and #VC handling */
 	boot_idt_desc.size    = 0;
 	boot_idt_desc.address = 0;
 	load_boot_idt(&boot_idt_desc);
-}
+पूर्ण

@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
- *  Copyright (C) 2011 Gabor Juhos <juhosg@openwrt.org>
+ *  Copyright (C) 2011 Gabor Juhos <juhosg@खोलोwrt.org>
  *  Copyright (C) 2013 John Crispin <john@phrozen.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/clkdev.h>
-#include <linux/clk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk.h>
 
-#include <asm/time.h>
+#समावेश <यंत्र/समय.स>
 
-#include "common.h"
+#समावेश "common.h"
 
-struct clk {
-	struct clk_lookup cl;
-	unsigned long rate;
-};
+काष्ठा clk अणु
+	काष्ठा clk_lookup cl;
+	अचिन्हित दीर्घ rate;
+पूर्ण;
 
-void ralink_clk_add(const char *dev, unsigned long rate)
-{
-	struct clk *clk = kzalloc(sizeof(struct clk), GFP_KERNEL);
+व्योम ralink_clk_add(स्थिर अक्षर *dev, अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk *clk = kzalloc(माप(काष्ठा clk), GFP_KERNEL);
 
-	if (!clk)
+	अगर (!clk)
 		panic("failed to add clock");
 
 	clk->cl.dev_id = dev;
@@ -33,69 +34,69 @@ void ralink_clk_add(const char *dev, unsigned long rate)
 	clk->rate = rate;
 
 	clkdev_add(&clk->cl);
-}
+पूर्ण
 
 /*
- * Linux clock API
+ * Linux घड़ी API
  */
-int clk_enable(struct clk *clk)
-{
-	return 0;
-}
+पूर्णांक clk_enable(काष्ठा clk *clk)
+अणु
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_enable);
 
-void clk_disable(struct clk *clk)
-{
-}
+व्योम clk_disable(काष्ठा clk *clk)
+अणु
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_disable);
 
-unsigned long clk_get_rate(struct clk *clk)
-{
-	if (!clk)
-		return 0;
+अचिन्हित दीर्घ clk_get_rate(काष्ठा clk *clk)
+अणु
+	अगर (!clk)
+		वापस 0;
 
-	return clk->rate;
-}
+	वापस clk->rate;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_get_rate);
 
-int clk_set_rate(struct clk *clk, unsigned long rate)
-{
-	return -1;
-}
+पूर्णांक clk_set_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_set_rate);
 
-long clk_round_rate(struct clk *clk, unsigned long rate)
-{
-	return -1;
-}
+दीर्घ clk_round_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_round_rate);
 
-int clk_set_parent(struct clk *clk, struct clk *parent)
-{
+पूर्णांक clk_set_parent(काष्ठा clk *clk, काष्ठा clk *parent)
+अणु
 	WARN_ON(clk);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_set_parent);
 
-struct clk *clk_get_parent(struct clk *clk)
-{
+काष्ठा clk *clk_get_parent(काष्ठा clk *clk)
+अणु
 	WARN_ON(clk);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(clk_get_parent);
 
-void __init plat_time_init(void)
-{
-	struct clk *clk;
+व्योम __init plat_समय_init(व्योम)
+अणु
+	काष्ठा clk *clk;
 
 	ralink_of_remap();
 
 	ralink_clk_init();
-	clk = clk_get_sys("cpu", NULL);
-	if (IS_ERR(clk))
+	clk = clk_get_sys("cpu", शून्य);
+	अगर (IS_ERR(clk))
 		panic("unable to get CPU clock, err=%ld", PTR_ERR(clk));
 	pr_info("CPU Clock: %ldMHz\n", clk_get_rate(clk) / 1000000);
 	mips_hpt_frequency = clk_get_rate(clk) / 2;
 	clk_put(clk);
-	timer_probe();
-}
+	समयr_probe();
+पूर्ण

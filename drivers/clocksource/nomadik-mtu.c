@@ -1,192 +1,193 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008 STMicroelectronics
  * Copyright (C) 2010 Alessandro Rubini
- * Copyright (C) 2010 Linus Walleij for ST-Ericsson
+ * Copyright (C) 2010 Linus Walleij क्रम ST-Ericsson
  */
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/io.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/clk.h>
-#include <linux/jiffies.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/sched_clock.h>
-#include <asm/mach/time.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <यंत्र/mach/समय.स>
 
 /*
- * The MTU device hosts four different counters, with 4 set of
- * registers. These are register names.
+ * The MTU device hosts four dअगरferent counters, with 4 set of
+ * रेजिस्टरs. These are रेजिस्टर names.
  */
 
-#define MTU_IMSC	0x00	/* Interrupt mask set/clear */
-#define MTU_RIS		0x04	/* Raw interrupt status */
-#define MTU_MIS		0x08	/* Masked interrupt status */
-#define MTU_ICR		0x0C	/* Interrupt clear register */
+#घोषणा MTU_IMSC	0x00	/* Interrupt mask set/clear */
+#घोषणा MTU_RIS		0x04	/* Raw पूर्णांकerrupt status */
+#घोषणा MTU_MIS		0x08	/* Masked पूर्णांकerrupt status */
+#घोषणा MTU_ICR		0x0C	/* Interrupt clear रेजिस्टर */
 
-/* per-timer registers take 0..3 as argument */
-#define MTU_LR(x)	(0x10 + 0x10 * (x) + 0x00)	/* Load value */
-#define MTU_VAL(x)	(0x10 + 0x10 * (x) + 0x04)	/* Current value */
-#define MTU_CR(x)	(0x10 + 0x10 * (x) + 0x08)	/* Control reg */
-#define MTU_BGLR(x)	(0x10 + 0x10 * (x) + 0x0c)	/* At next overflow */
+/* per-समयr रेजिस्टरs take 0..3 as argument */
+#घोषणा MTU_LR(x)	(0x10 + 0x10 * (x) + 0x00)	/* Load value */
+#घोषणा MTU_VAL(x)	(0x10 + 0x10 * (x) + 0x04)	/* Current value */
+#घोषणा MTU_CR(x)	(0x10 + 0x10 * (x) + 0x08)	/* Control reg */
+#घोषणा MTU_BGLR(x)	(0x10 + 0x10 * (x) + 0x0c)	/* At next overflow */
 
-/* bits for the control register */
-#define MTU_CRn_ENA		0x80
-#define MTU_CRn_PERIODIC	0x40	/* if 0 = free-running */
-#define MTU_CRn_PRESCALE_MASK	0x0c
-#define MTU_CRn_PRESCALE_1		0x00
-#define MTU_CRn_PRESCALE_16		0x04
-#define MTU_CRn_PRESCALE_256		0x08
-#define MTU_CRn_32BITS		0x02
-#define MTU_CRn_ONESHOT		0x01	/* if 0 = wraps reloading from BGLR*/
+/* bits क्रम the control रेजिस्टर */
+#घोषणा MTU_CRn_ENA		0x80
+#घोषणा MTU_CRn_PERIODIC	0x40	/* अगर 0 = मुक्त-running */
+#घोषणा MTU_CRn_PRESCALE_MASK	0x0c
+#घोषणा MTU_CRn_PRESCALE_1		0x00
+#घोषणा MTU_CRn_PRESCALE_16		0x04
+#घोषणा MTU_CRn_PRESCALE_256		0x08
+#घोषणा MTU_CRn_32BITS		0x02
+#घोषणा MTU_CRn_ONESHOT		0x01	/* अगर 0 = wraps reloading from BGLR*/
 
-/* Other registers are usual amba/primecell registers, currently not used */
-#define MTU_ITCR	0xff0
-#define MTU_ITOP	0xff4
+/* Other रेजिस्टरs are usual amba/primecell रेजिस्टरs, currently not used */
+#घोषणा MTU_ITCR	0xff0
+#घोषणा MTU_ITOP	0xff4
 
-#define MTU_PERIPH_ID0	0xfe0
-#define MTU_PERIPH_ID1	0xfe4
-#define MTU_PERIPH_ID2	0xfe8
-#define MTU_PERIPH_ID3	0xfeC
+#घोषणा MTU_PERIPH_ID0	0xfe0
+#घोषणा MTU_PERIPH_ID1	0xfe4
+#घोषणा MTU_PERIPH_ID2	0xfe8
+#घोषणा MTU_PERIPH_ID3	0xfeC
 
-#define MTU_PCELL0	0xff0
-#define MTU_PCELL1	0xff4
-#define MTU_PCELL2	0xff8
-#define MTU_PCELL3	0xffC
+#घोषणा MTU_PCELL0	0xff0
+#घोषणा MTU_PCELL1	0xff4
+#घोषणा MTU_PCELL2	0xff8
+#घोषणा MTU_PCELL3	0xffC
 
-static void __iomem *mtu_base;
-static bool clkevt_periodic;
-static u32 clk_prescale;
-static u32 nmdk_cycle;		/* write-once */
-static struct delay_timer mtu_delay_timer;
+अटल व्योम __iomem *mtu_base;
+अटल bool clkevt_periodic;
+अटल u32 clk_prescale;
+अटल u32 nmdk_cycle;		/* ग_लिखो-once */
+अटल काष्ठा delay_समयr mtu_delay_समयr;
 
 /*
- * Override the global weak sched_clock symbol with this
- * local implementation which uses the clocksource to get some
+ * Override the global weak sched_घड़ी symbol with this
+ * local implementation which uses the घड़ीsource to get some
  * better resolution when scheduling the kernel.
  */
-static u64 notrace nomadik_read_sched_clock(void)
-{
-	if (unlikely(!mtu_base))
-		return 0;
+अटल u64 notrace nomadik_पढ़ो_sched_घड़ी(व्योम)
+अणु
+	अगर (unlikely(!mtu_base))
+		वापस 0;
 
-	return -readl(mtu_base + MTU_VAL(0));
-}
+	वापस -पढ़ोl(mtu_base + MTU_VAL(0));
+पूर्ण
 
-static unsigned long nmdk_timer_read_current_timer(void)
-{
-	return ~readl_relaxed(mtu_base + MTU_VAL(0));
-}
+अटल अचिन्हित दीर्घ nmdk_समयr_पढ़ो_current_समयr(व्योम)
+अणु
+	वापस ~पढ़ोl_relaxed(mtu_base + MTU_VAL(0));
+पूर्ण
 
 /* Clockevent device: use one-shot mode */
-static int nmdk_clkevt_next(unsigned long evt, struct clock_event_device *ev)
-{
-	writel(1 << 1, mtu_base + MTU_IMSC);
-	writel(evt, mtu_base + MTU_LR(1));
-	/* Load highest value, enable device, enable interrupts */
-	writel(MTU_CRn_ONESHOT | clk_prescale |
+अटल पूर्णांक nmdk_clkevt_next(अचिन्हित दीर्घ evt, काष्ठा घड़ी_event_device *ev)
+अणु
+	ग_लिखोl(1 << 1, mtu_base + MTU_IMSC);
+	ग_लिखोl(evt, mtu_base + MTU_LR(1));
+	/* Load highest value, enable device, enable पूर्णांकerrupts */
+	ग_लिखोl(MTU_CRn_ONESHOT | clk_prescale |
 	       MTU_CRn_32BITS | MTU_CRn_ENA,
 	       mtu_base + MTU_CR(1));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nmdk_clkevt_reset(void)
-{
-	if (clkevt_periodic) {
+अटल व्योम nmdk_clkevt_reset(व्योम)
+अणु
+	अगर (clkevt_periodic) अणु
 		/* Timer: configure load and background-load, and fire it up */
-		writel(nmdk_cycle, mtu_base + MTU_LR(1));
-		writel(nmdk_cycle, mtu_base + MTU_BGLR(1));
+		ग_लिखोl(nmdk_cycle, mtu_base + MTU_LR(1));
+		ग_लिखोl(nmdk_cycle, mtu_base + MTU_BGLR(1));
 
-		writel(MTU_CRn_PERIODIC | clk_prescale |
+		ग_लिखोl(MTU_CRn_PERIODIC | clk_prescale |
 		       MTU_CRn_32BITS | MTU_CRn_ENA,
 		       mtu_base + MTU_CR(1));
-		writel(1 << 1, mtu_base + MTU_IMSC);
-	} else {
-		/* Generate an interrupt to start the clockevent again */
-		(void) nmdk_clkevt_next(nmdk_cycle, NULL);
-	}
-}
+		ग_लिखोl(1 << 1, mtu_base + MTU_IMSC);
+	पूर्ण अन्यथा अणु
+		/* Generate an पूर्णांकerrupt to start the घड़ीevent again */
+		(व्योम) nmdk_clkevt_next(nmdk_cycle, शून्य);
+	पूर्ण
+पूर्ण
 
-static int nmdk_clkevt_shutdown(struct clock_event_device *evt)
-{
-	writel(0, mtu_base + MTU_IMSC);
-	/* disable timer */
-	writel(0, mtu_base + MTU_CR(1));
-	/* load some high default value */
-	writel(0xffffffff, mtu_base + MTU_LR(1));
-	return 0;
-}
+अटल पूर्णांक nmdk_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	ग_लिखोl(0, mtu_base + MTU_IMSC);
+	/* disable समयr */
+	ग_लिखोl(0, mtu_base + MTU_CR(1));
+	/* load some high शेष value */
+	ग_लिखोl(0xffffffff, mtu_base + MTU_LR(1));
+	वापस 0;
+पूर्ण
 
-static int nmdk_clkevt_set_oneshot(struct clock_event_device *evt)
-{
+अटल पूर्णांक nmdk_clkevt_set_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
 	clkevt_periodic = false;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nmdk_clkevt_set_periodic(struct clock_event_device *evt)
-{
+अटल पूर्णांक nmdk_clkevt_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
 	clkevt_periodic = true;
 	nmdk_clkevt_reset();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nmdk_clksrc_reset(void)
-{
+अटल व्योम nmdk_clksrc_reset(व्योम)
+अणु
 	/* Disable */
-	writel(0, mtu_base + MTU_CR(0));
+	ग_लिखोl(0, mtu_base + MTU_CR(0));
 
 	/* ClockSource: configure load and background-load, and fire it up */
-	writel(nmdk_cycle, mtu_base + MTU_LR(0));
-	writel(nmdk_cycle, mtu_base + MTU_BGLR(0));
+	ग_लिखोl(nmdk_cycle, mtu_base + MTU_LR(0));
+	ग_लिखोl(nmdk_cycle, mtu_base + MTU_BGLR(0));
 
-	writel(clk_prescale | MTU_CRn_32BITS | MTU_CRn_ENA,
+	ग_लिखोl(clk_prescale | MTU_CRn_32BITS | MTU_CRn_ENA,
 	       mtu_base + MTU_CR(0));
-}
+पूर्ण
 
-static void nmdk_clkevt_resume(struct clock_event_device *cedev)
-{
+अटल व्योम nmdk_clkevt_resume(काष्ठा घड़ी_event_device *cedev)
+अणु
 	nmdk_clkevt_reset();
 	nmdk_clksrc_reset();
-}
+पूर्ण
 
-static struct clock_event_device nmdk_clkevt = {
+अटल काष्ठा घड़ी_event_device nmdk_clkevt = अणु
 	.name			= "mtu_1",
 	.features		= CLOCK_EVT_FEAT_ONESHOT |
 				  CLOCK_EVT_FEAT_PERIODIC |
 				  CLOCK_EVT_FEAT_DYNIRQ,
 	.rating			= 200,
-	.set_state_shutdown	= nmdk_clkevt_shutdown,
+	.set_state_shutकरोwn	= nmdk_clkevt_shutकरोwn,
 	.set_state_periodic	= nmdk_clkevt_set_periodic,
 	.set_state_oneshot	= nmdk_clkevt_set_oneshot,
 	.set_next_event		= nmdk_clkevt_next,
 	.resume			= nmdk_clkevt_resume,
-};
+पूर्ण;
 
 /*
- * IRQ Handler for timer 1 of the MTU block.
+ * IRQ Handler क्रम समयr 1 of the MTU block.
  */
-static irqreturn_t nmdk_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evdev = dev_id;
+अटल irqवापस_t nmdk_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evdev = dev_id;
 
-	writel(1 << 1, mtu_base + MTU_ICR); /* Interrupt clear reg */
+	ग_लिखोl(1 << 1, mtu_base + MTU_ICR); /* Interrupt clear reg */
 	evdev->event_handler(evdev);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __init nmdk_timer_init(void __iomem *base, int irq,
-				   struct clk *pclk, struct clk *clk)
-{
-	unsigned long rate;
-	int ret;
-	int min_ticks;
+अटल पूर्णांक __init nmdk_समयr_init(व्योम __iomem *base, पूर्णांक irq,
+				   काष्ठा clk *pclk, काष्ठा clk *clk)
+अणु
+	अचिन्हित दीर्घ rate;
+	पूर्णांक ret;
+	पूर्णांक min_ticks;
 
 	mtu_base = base;
 
@@ -194,90 +195,90 @@ static int __init nmdk_timer_init(void __iomem *base, int irq,
 	BUG_ON(clk_prepare_enable(clk));
 
 	/*
-	 * Tick rate is 2.4MHz for Nomadik and 2.4Mhz, 100MHz or 133 MHz
-	 * for ux500, and in one specific Ux500 case 32768 Hz.
+	 * Tick rate is 2.4MHz क्रम Nomadik and 2.4Mhz, 100MHz or 133 MHz
+	 * क्रम ux500, and in one specअगरic Ux500 हाल 32768 Hz.
 	 *
-	 * Use a divide-by-16 counter if the tick rate is more than 32MHz.
-	 * At 32 MHz, the timer (with 32 bit counter) can be programmed
-	 * to wake-up at a max 127s a head in time. Dividing a 2.4 MHz timer
-	 * with 16 gives too low timer resolution.
+	 * Use a भागide-by-16 counter अगर the tick rate is more than 32MHz.
+	 * At 32 MHz, the समयr (with 32 bit counter) can be programmed
+	 * to wake-up at a max 127s a head in समय. Dividing a 2.4 MHz समयr
+	 * with 16 gives too low समयr resolution.
 	 */
 	rate = clk_get_rate(clk);
-	if (rate > 32000000) {
+	अगर (rate > 32000000) अणु
 		rate /= 16;
 		clk_prescale = MTU_CRn_PRESCALE_16;
-	} else {
+	पूर्ण अन्यथा अणु
 		clk_prescale = MTU_CRn_PRESCALE_1;
-	}
+	पूर्ण
 
-	/* Cycles for periodic mode */
+	/* Cycles क्रम periodic mode */
 	nmdk_cycle = DIV_ROUND_CLOSEST(rate, HZ);
 
 
-	/* Timer 0 is the free running clocksource */
+	/* Timer 0 is the मुक्त running घड़ीsource */
 	nmdk_clksrc_reset();
 
-	ret = clocksource_mmio_init(mtu_base + MTU_VAL(0), "mtu_0",
-				    rate, 200, 32, clocksource_mmio_readl_down);
-	if (ret) {
+	ret = घड़ीsource_mmio_init(mtu_base + MTU_VAL(0), "mtu_0",
+				    rate, 200, 32, घड़ीsource_mmio_पढ़ोl_करोwn);
+	अगर (ret) अणु
 		pr_err("timer: failed to initialize clock source %s\n", "mtu_0");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	sched_clock_register(nomadik_read_sched_clock, 32, rate);
+	sched_घड़ी_रेजिस्टर(nomadik_पढ़ो_sched_घड़ी, 32, rate);
 
-	/* Timer 1 is used for events, register irq and clockevents */
-	if (request_irq(irq, nmdk_timer_interrupt, IRQF_TIMER,
+	/* Timer 1 is used क्रम events, रेजिस्टर irq and घड़ीevents */
+	अगर (request_irq(irq, nmdk_समयr_पूर्णांकerrupt, IRQF_TIMER,
 			"Nomadik Timer Tick", &nmdk_clkevt))
 		pr_err("%s: request_irq() failed\n", "Nomadik Timer Tick");
 	nmdk_clkevt.cpumask = cpumask_of(0);
 	nmdk_clkevt.irq = irq;
-	if (rate < 100000)
+	अगर (rate < 100000)
 		min_ticks = 5;
-	else
+	अन्यथा
 		min_ticks = 2;
-	clockevents_config_and_register(&nmdk_clkevt, rate, min_ticks,
+	घड़ीevents_config_and_रेजिस्टर(&nmdk_clkevt, rate, min_ticks,
 					0xffffffffU);
 
-	mtu_delay_timer.read_current_timer = &nmdk_timer_read_current_timer;
-	mtu_delay_timer.freq = rate;
-	register_current_timer_delay(&mtu_delay_timer);
+	mtu_delay_समयr.पढ़ो_current_समयr = &nmdk_समयr_पढ़ो_current_समयr;
+	mtu_delay_समयr.freq = rate;
+	रेजिस्टर_current_समयr_delay(&mtu_delay_समयr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init nmdk_timer_of_init(struct device_node *node)
-{
-	struct clk *pclk;
-	struct clk *clk;
-	void __iomem *base;
-	int irq;
+अटल पूर्णांक __init nmdk_समयr_of_init(काष्ठा device_node *node)
+अणु
+	काष्ठा clk *pclk;
+	काष्ठा clk *clk;
+	व्योम __iomem *base;
+	पूर्णांक irq;
 
 	base = of_iomap(node, 0);
-	if (!base) {
+	अगर (!base) अणु
 		pr_err("Can't remap registers\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	pclk = of_clk_get_by_name(node, "apb_pclk");
-	if (IS_ERR(pclk)) {
+	अगर (IS_ERR(pclk)) अणु
 		pr_err("could not get apb_pclk\n");
-		return PTR_ERR(pclk);
-	}
+		वापस PTR_ERR(pclk);
+	पूर्ण
 
 	clk = of_clk_get_by_name(node, "timclk");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		pr_err("could not get timclk\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	irq = irq_of_parse_and_map(node, 0);
-	if (irq <= 0) {
+	अगर (irq <= 0) अणु
 		pr_err("Can't parse IRQ\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return nmdk_timer_init(base, irq, pclk, clk);
-}
+	वापस nmdk_समयr_init(base, irq, pclk, clk);
+पूर्ण
 TIMER_OF_DECLARE(nomadik_mtu, "st,nomadik-mtu",
-		       nmdk_timer_of_init);
+		       nmdk_समयr_of_init);

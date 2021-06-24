@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * TI Fixed Factor Clock
  *
@@ -5,65 +6,65 @@
  *
  * Tero Kristo <t-kristo@ti.com>
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/clk/ti.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/clk/ti.h>
 
-#include "clock.h"
+#समावेश "clock.h"
 
-#undef pr_fmt
-#define pr_fmt(fmt) "%s: " fmt, __func__
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
 
 /**
- * of_ti_fixed_factor_clk_setup - Setup function for TI fixed factor clock
- * @node: device node for this clock
+ * of_ti_fixed_factor_clk_setup - Setup function क्रम TI fixed factor घड़ी
+ * @node: device node क्रम this घड़ी
  *
- * Sets up a simple fixed factor clock based on device tree info.
+ * Sets up a simple fixed factor घड़ी based on device tree info.
  */
-static void __init of_ti_fixed_factor_clk_setup(struct device_node *node)
-{
-	struct clk *clk;
-	const char *clk_name = node->name;
-	const char *parent_name;
-	u32 div, mult;
+अटल व्योम __init of_ti_fixed_factor_clk_setup(काष्ठा device_node *node)
+अणु
+	काष्ठा clk *clk;
+	स्थिर अक्षर *clk_name = node->name;
+	स्थिर अक्षर *parent_name;
+	u32 भाग, mult;
 	u32 flags = 0;
 
-	if (of_property_read_u32(node, "ti,clock-div", &div)) {
+	अगर (of_property_पढ़ो_u32(node, "ti,clock-div", &भाग)) अणु
 		pr_err("%pOFn must have a clock-div property\n", node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (of_property_read_u32(node, "ti,clock-mult", &mult)) {
+	अगर (of_property_पढ़ो_u32(node, "ti,clock-mult", &mult)) अणु
 		pr_err("%pOFn must have a clock-mult property\n", node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (of_property_read_bool(node, "ti,set-rate-parent"))
+	अगर (of_property_पढ़ो_bool(node, "ti,set-rate-parent"))
 		flags |= CLK_SET_RATE_PARENT;
 
 	parent_name = of_clk_get_parent_name(node, 0);
 
-	clk = clk_register_fixed_factor(NULL, clk_name, parent_name, flags,
-					mult, div);
+	clk = clk_रेजिस्टर_fixed_factor(शून्य, clk_name, parent_name, flags,
+					mult, भाग);
 
-	if (!IS_ERR(clk)) {
+	अगर (!IS_ERR(clk)) अणु
 		of_clk_add_provider(node, of_clk_src_simple_get, clk);
-		of_ti_clk_autoidle_setup(node);
-		ti_clk_add_alias(NULL, clk, clk_name);
-	}
-}
+		of_ti_clk_स्वतःidle_setup(node);
+		ti_clk_add_alias(शून्य, clk, clk_name);
+	पूर्ण
+पूर्ण
 CLK_OF_DECLARE(ti_fixed_factor_clk, "ti,fixed-factor-clock",
 	       of_ti_fixed_factor_clk_setup);

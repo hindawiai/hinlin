@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/export.h>
-#include <linux/if_vlan.h>
-#include <net/ip.h>
-#include <net/tso.h>
-#include <asm/unaligned.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/export.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/ip.h>
+#समावेश <net/tso.h>
+#समावेश <यंत्र/unaligned.h>
 
 /* Calculate expected number of TX descriptors */
-int tso_count_descs(const struct sk_buff *skb)
-{
+पूर्णांक tso_count_descs(स्थिर काष्ठा sk_buff *skb)
+अणु
 	/* The Marvell Way */
-	return skb_shinfo(skb)->gso_segs * 2 + skb_shinfo(skb)->nr_frags;
-}
+	वापस skb_shinfo(skb)->gso_segs * 2 + skb_shinfo(skb)->nr_frags;
+पूर्ण
 EXPORT_SYMBOL(tso_count_descs);
 
-void tso_build_hdr(const struct sk_buff *skb, char *hdr, struct tso_t *tso,
-		   int size, bool is_last)
-{
-	int hdr_len = skb_transport_offset(skb) + tso->tlen;
-	int mac_hdr_len = skb_network_offset(skb);
+व्योम tso_build_hdr(स्थिर काष्ठा sk_buff *skb, अक्षर *hdr, काष्ठा tso_t *tso,
+		   पूर्णांक size, bool is_last)
+अणु
+	पूर्णांक hdr_len = skb_transport_offset(skb) + tso->tlen;
+	पूर्णांक mac_hdr_len = skb_network_offset(skb);
 
-	memcpy(hdr, skb->data, hdr_len);
-	if (!tso->ipv6) {
-		struct iphdr *iph = (void *)(hdr + mac_hdr_len);
+	स_नकल(hdr, skb->data, hdr_len);
+	अगर (!tso->ipv6) अणु
+		काष्ठा iphdr *iph = (व्योम *)(hdr + mac_hdr_len);
 
 		iph->id = htons(tso->ip_id);
 		iph->tot_len = htons(size + hdr_len - mac_hdr_len);
 		tso->ip_id++;
-	} else {
-		struct ipv6hdr *iph = (void *)(hdr + mac_hdr_len);
+	पूर्ण अन्यथा अणु
+		काष्ठा ipv6hdr *iph = (व्योम *)(hdr + mac_hdr_len);
 
 		iph->payload_len = htons(size + tso->tlen);
-	}
+	पूर्ण
 	hdr += skb_transport_offset(skb);
-	if (tso->tlen != sizeof(struct udphdr)) {
-		struct tcphdr *tcph = (struct tcphdr *)hdr;
+	अगर (tso->tlen != माप(काष्ठा udphdr)) अणु
+		काष्ठा tcphdr *tcph = (काष्ठा tcphdr *)hdr;
 
 		put_unaligned_be32(tso->tcp_seq, &tcph->seq);
 
-		if (!is_last) {
-			/* Clear all special flags for not last packet */
+		अगर (!is_last) अणु
+			/* Clear all special flags क्रम not last packet */
 			tcph->psh = 0;
 			tcph->fin = 0;
 			tcph->rst = 0;
-		}
-	} else {
-		struct udphdr *uh = (struct udphdr *)hdr;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा udphdr *uh = (काष्ठा udphdr *)hdr;
 
-		uh->len = htons(sizeof(*uh) + size);
-	}
-}
+		uh->len = htons(माप(*uh) + size);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(tso_build_hdr);
 
-void tso_build_data(const struct sk_buff *skb, struct tso_t *tso, int size)
-{
-	tso->tcp_seq += size; /* not worth avoiding this operation for UDP */
+व्योम tso_build_data(स्थिर काष्ठा sk_buff *skb, काष्ठा tso_t *tso, पूर्णांक size)
+अणु
+	tso->tcp_seq += size; /* not worth aव्योमing this operation क्रम UDP */
 	tso->size -= size;
 	tso->data += size;
 
-	if ((tso->size == 0) &&
-	    (tso->next_frag_idx < skb_shinfo(skb)->nr_frags)) {
+	अगर ((tso->size == 0) &&
+	    (tso->next_frag_idx < skb_shinfo(skb)->nr_frags)) अणु
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[tso->next_frag_idx];
 
 		/* Move to next segment */
 		tso->size = skb_frag_size(frag);
 		tso->data = skb_frag_address(frag);
 		tso->next_frag_idx++;
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(tso_build_data);
 
-int tso_start(struct sk_buff *skb, struct tso_t *tso)
-{
-	int tlen = skb_is_gso_tcp(skb) ? tcp_hdrlen(skb) : sizeof(struct udphdr);
-	int hdr_len = skb_transport_offset(skb) + tlen;
+पूर्णांक tso_start(काष्ठा sk_buff *skb, काष्ठा tso_t *tso)
+अणु
+	पूर्णांक tlen = skb_is_gso_tcp(skb) ? tcp_hdrlen(skb) : माप(काष्ठा udphdr);
+	पूर्णांक hdr_len = skb_transport_offset(skb) + tlen;
 
 	tso->tlen = tlen;
 	tso->ip_id = ntohs(ip_hdr(skb)->id);
-	tso->tcp_seq = (tlen != sizeof(struct udphdr)) ? ntohl(tcp_hdr(skb)->seq) : 0;
+	tso->tcp_seq = (tlen != माप(काष्ठा udphdr)) ? ntohl(tcp_hdr(skb)->seq) : 0;
 	tso->next_frag_idx = 0;
 	tso->ipv6 = vlan_get_protocol(skb) == htons(ETH_P_IPV6);
 
 	/* Build first data */
 	tso->size = skb_headlen(skb) - hdr_len;
 	tso->data = skb->data + hdr_len;
-	if ((tso->size == 0) &&
-	    (tso->next_frag_idx < skb_shinfo(skb)->nr_frags)) {
+	अगर ((tso->size == 0) &&
+	    (tso->next_frag_idx < skb_shinfo(skb)->nr_frags)) अणु
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[tso->next_frag_idx];
 
 		/* Move to next segment */
 		tso->size = skb_frag_size(frag);
 		tso->data = skb_frag_address(frag);
 		tso->next_frag_idx++;
-	}
-	return hdr_len;
-}
+	पूर्ण
+	वापस hdr_len;
+पूर्ण
 EXPORT_SYMBOL(tso_start);

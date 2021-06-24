@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* $Id: plip.c,v 1.3.6.2 1997/04/16 15:07:56 phil Exp $ */
-/* PLIP: A parallel port "network" driver for Linux. */
-/* This driver is for parallel port with 5-bit cable (LapLink (R) cable). */
+/* PLIP: A parallel port "network" driver क्रम Linux. */
+/* This driver is क्रम parallel port with 5-bit cable (LapLink (R) cable). */
 /*
  * Authors:	Donald Becker <becker@scyld.com>
  *		Tommy Thorn <thorn@daimi.aau.dk>
@@ -12,23 +13,23 @@
  *		Nimrod Zimerman <zimerman@mailandnews.com>
  *
  * Enhancements:
- *		Modularization and ifreq/ifmap support by Alan Cox.
+ *		Modularization and अगरreq/अगरmap support by Alan Cox.
  *		Rewritten by Niibe Yutaka.
  *		parport-sharing awareness code by Philip Blundell.
  *		SMP locking by Niibe Yutaka.
- *		Support for parallel ports with no IRQ (poll mode),
- *		Modifications to use the parallel port API
+ *		Support क्रम parallel ports with no IRQ (poll mode),
+ *		Modअगरications to use the parallel port API
  *		by Nimrod Zimerman.
  *
  * Fixes:
  *		Niibe Yutaka
  *		  - Module initialization.
  *		  - MTU fix.
- *		  - Make sure other end is OK, before sending a packet.
- *		  - Fix immediate timer problem.
+ *		  - Make sure other end is OK, beक्रमe sending a packet.
+ *		  - Fix immediate समयr problem.
  *
  *		Al Viro
- *		  - Changed {enable,disable}_irq handling to make it work
+ *		  - Changed अणुenable,disableपूर्ण_irq handling to make it work
  *		    with new ("stack") semantics.
  */
 
@@ -47,26 +48,26 @@
  */
 
 /*
- *     To use with DOS box, please do (Turn on ARP switch):
- *	# ifconfig plip[0-2] arp
+ *     To use with DOS box, please करो (Turn on ARP चयन):
+ *	# अगरconfig plip[0-2] arp
  */
-static const char version[] = "NET3 PLIP version 2.4-parport gniibe@mri.co.jp\n";
+अटल स्थिर अक्षर version[] = "NET3 PLIP version 2.4-parport gniibe@mri.co.jp\n";
 
 /*
   Sources:
 	Ideas and protocols came from Russ Nelson's <nelson@crynwr.com>
 	"parallel.asm" parallel port packet driver.
 
-  The "Crynwr" parallel port standard specifies the following protocol:
-    Trigger by sending nibble '0x8' (this causes interrupt on other end)
+  The "Crynwr" parallel port standard specअगरies the following protocol:
+    Trigger by sending nibble '0x8' (this causes पूर्णांकerrupt on other end)
     count-low octet
     count-high octet
     ... data octets
     checksum octet
-  Each octet is sent as <wait for rx. '0x1?'> <send 0x10+(octet&0x0F)>
-			<wait for rx. '0x0?'> <send 0x00+((octet>>4)&0x0F)>
+  Each octet is sent as <रुको क्रम rx. '0x1?'> <send 0x10+(octet&0x0F)>
+			<रुको क्रम rx. '0x0?'> <send 0x00+((octet>>4)&0x0F)>
 
-  The packet is encapsulated as if it were ethernet.
+  The packet is encapsulated as अगर it were ethernet.
 
   The cable used is a de facto standard parallel null cable -- sold as
   a "LapLink" cable by various places.  You'll need a 12-conductor cable to
@@ -84,210 +85,210 @@ static const char version[] = "NET3 PLIP version 2.4-parport gniibe@mri.co.jp\n"
     extra grounds are 18,19,20,21,22,23,24
 */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/interrupt.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/if_ether.h>
-#include <linux/in.h>
-#include <linux/errno.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/inetdevice.h>
-#include <linux/skbuff.h>
-#include <linux/if_plip.h>
-#include <linux/workqueue.h>
-#include <linux/spinlock.h>
-#include <linux/completion.h>
-#include <linux/parport.h>
-#include <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/in.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/अगर_plip.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/parport.h>
+#समावेश <linux/bitops.h>
 
-#include <net/neighbour.h>
+#समावेश <net/neighbour.h>
 
-#include <asm/irq.h>
-#include <asm/byteorder.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/byteorder.h>
 
 /* Maximum number of devices to support. */
-#define PLIP_MAX  8
+#घोषणा PLIP_MAX  8
 
-/* Use 0 for production, 1 for verification, >2 for debug */
-#ifndef NET_DEBUG
-#define NET_DEBUG 1
-#endif
-static const unsigned int net_debug = NET_DEBUG;
+/* Use 0 क्रम production, 1 क्रम verअगरication, >2 क्रम debug */
+#अगर_अघोषित NET_DEBUG
+#घोषणा NET_DEBUG 1
+#पूर्ण_अगर
+अटल स्थिर अचिन्हित पूर्णांक net_debug = NET_DEBUG;
 
-#define ENABLE(irq)  if (irq != -1) enable_irq(irq)
-#define DISABLE(irq) if (irq != -1) disable_irq(irq)
+#घोषणा ENABLE(irq)  अगर (irq != -1) enable_irq(irq)
+#घोषणा DISABLE(irq) अगर (irq != -1) disable_irq(irq)
 
 /* In micro second */
-#define PLIP_DELAY_UNIT		   1
+#घोषणा PLIP_DELAY_UNIT		   1
 
-/* Connection time out = PLIP_TRIGGER_WAIT * PLIP_DELAY_UNIT usec */
-#define PLIP_TRIGGER_WAIT	 500
+/* Connection समय out = PLIP_TRIGGER_WAIT * PLIP_DELAY_UNIT usec */
+#घोषणा PLIP_TRIGGER_WAIT	 500
 
-/* Nibble time out = PLIP_NIBBLE_WAIT * PLIP_DELAY_UNIT usec */
-#define PLIP_NIBBLE_WAIT        3000
+/* Nibble समय out = PLIP_NIBBLE_WAIT * PLIP_DELAY_UNIT usec */
+#घोषणा PLIP_NIBBLE_WAIT        3000
 
 /* Bottom halves */
-static void plip_kick_bh(struct work_struct *work);
-static void plip_bh(struct work_struct *work);
-static void plip_timer_bh(struct work_struct *work);
+अटल व्योम plip_kick_bh(काष्ठा work_काष्ठा *work);
+अटल व्योम plip_bh(काष्ठा work_काष्ठा *work);
+अटल व्योम plip_समयr_bh(काष्ठा work_काष्ठा *work);
 
 /* Interrupt handler */
-static void plip_interrupt(void *dev_id);
+अटल व्योम plip_पूर्णांकerrupt(व्योम *dev_id);
 
-/* Functions for DEV methods */
-static netdev_tx_t plip_tx_packet(struct sk_buff *skb, struct net_device *dev);
-static int plip_hard_header(struct sk_buff *skb, struct net_device *dev,
-                            unsigned short type, const void *daddr,
-			    const void *saddr, unsigned len);
-static int plip_hard_header_cache(const struct neighbour *neigh,
-                                  struct hh_cache *hh, __be16 type);
-static int plip_open(struct net_device *dev);
-static int plip_close(struct net_device *dev);
-static int plip_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
-static int plip_preempt(void *handle);
-static void plip_wakeup(void *handle);
+/* Functions क्रम DEV methods */
+अटल netdev_tx_t plip_tx_packet(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
+अटल पूर्णांक plip_hard_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+                            अचिन्हित लघु type, स्थिर व्योम *daddr,
+			    स्थिर व्योम *saddr, अचिन्हित len);
+अटल पूर्णांक plip_hard_header_cache(स्थिर काष्ठा neighbour *neigh,
+                                  काष्ठा hh_cache *hh, __be16 type);
+अटल पूर्णांक plip_खोलो(काष्ठा net_device *dev);
+अटल पूर्णांक plip_बंद(काष्ठा net_device *dev);
+अटल पूर्णांक plip_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd);
+अटल पूर्णांक plip_preempt(व्योम *handle);
+अटल व्योम plip_wakeup(व्योम *handle);
 
-enum plip_connection_state {
+क्रमागत plip_connection_state अणु
 	PLIP_CN_NONE=0,
 	PLIP_CN_RECEIVE,
 	PLIP_CN_SEND,
 	PLIP_CN_CLOSING,
 	PLIP_CN_ERROR
-};
+पूर्ण;
 
-enum plip_packet_state {
+क्रमागत plip_packet_state अणु
 	PLIP_PK_DONE=0,
 	PLIP_PK_TRIGGER,
 	PLIP_PK_LENGTH_LSB,
 	PLIP_PK_LENGTH_MSB,
 	PLIP_PK_DATA,
 	PLIP_PK_CHECKSUM
-};
+पूर्ण;
 
-enum plip_nibble_state {
+क्रमागत plip_nibble_state अणु
 	PLIP_NB_BEGIN,
 	PLIP_NB_1,
 	PLIP_NB_2,
-};
+पूर्ण;
 
-struct plip_local {
-	enum plip_packet_state state;
-	enum plip_nibble_state nibble;
-	union {
-		struct {
-#if defined(__LITTLE_ENDIAN)
-			unsigned char lsb;
-			unsigned char msb;
-#elif defined(__BIG_ENDIAN)
-			unsigned char msb;
-			unsigned char lsb;
-#else
-#error	"Please fix the endianness defines in <asm/byteorder.h>"
-#endif
-		} b;
-		unsigned short h;
-	} length;
-	unsigned short byte;
-	unsigned char  checksum;
-	unsigned char  data;
-	struct sk_buff *skb;
-};
+काष्ठा plip_local अणु
+	क्रमागत plip_packet_state state;
+	क्रमागत plip_nibble_state nibble;
+	जोड़ अणु
+		काष्ठा अणु
+#अगर defined(__LITTLE_ENDIAN)
+			अचिन्हित अक्षर lsb;
+			अचिन्हित अक्षर msb;
+#या_अगर defined(__BIG_ENDIAN)
+			अचिन्हित अक्षर msb;
+			अचिन्हित अक्षर lsb;
+#अन्यथा
+#त्रुटि	"Please fix the endianness defines in <asm/byteorder.h>"
+#पूर्ण_अगर
+		पूर्ण b;
+		अचिन्हित लघु h;
+	पूर्ण length;
+	अचिन्हित लघु byte;
+	अचिन्हित अक्षर  checksum;
+	अचिन्हित अक्षर  data;
+	काष्ठा sk_buff *skb;
+पूर्ण;
 
-struct net_local {
-	struct net_device *dev;
-	struct work_struct immediate;
-	struct delayed_work deferred;
-	struct delayed_work timer;
-	struct plip_local snd_data;
-	struct plip_local rcv_data;
-	struct pardevice *pardev;
-	unsigned long  trigger;
-	unsigned long  nibble;
-	enum plip_connection_state connection;
-	unsigned short timeout_count;
-	int is_deferred;
-	int port_owner;
-	int should_relinquish;
+काष्ठा net_local अणु
+	काष्ठा net_device *dev;
+	काष्ठा work_काष्ठा immediate;
+	काष्ठा delayed_work deferred;
+	काष्ठा delayed_work समयr;
+	काष्ठा plip_local snd_data;
+	काष्ठा plip_local rcv_data;
+	काष्ठा pardevice *pardev;
+	अचिन्हित दीर्घ  trigger;
+	अचिन्हित दीर्घ  nibble;
+	क्रमागत plip_connection_state connection;
+	अचिन्हित लघु समयout_count;
+	पूर्णांक is_deferred;
+	पूर्णांक port_owner;
+	पूर्णांक should_relinquish;
 	spinlock_t lock;
-	atomic_t kill_timer;
-	struct completion killed_timer_cmp;
-};
+	atomic_t समाप्त_समयr;
+	काष्ठा completion समाप्तed_समयr_cmp;
+पूर्ण;
 
-static inline void enable_parport_interrupts (struct net_device *dev)
-{
-	if (dev->irq != -1)
-	{
-		struct parport *port =
-		   ((struct net_local *)netdev_priv(dev))->pardev->port;
+अटल अंतरभूत व्योम enable_parport_पूर्णांकerrupts (काष्ठा net_device *dev)
+अणु
+	अगर (dev->irq != -1)
+	अणु
+		काष्ठा parport *port =
+		   ((काष्ठा net_local *)netdev_priv(dev))->pardev->port;
 		port->ops->enable_irq (port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void disable_parport_interrupts (struct net_device *dev)
-{
-	if (dev->irq != -1)
-	{
-		struct parport *port =
-		   ((struct net_local *)netdev_priv(dev))->pardev->port;
+अटल अंतरभूत व्योम disable_parport_पूर्णांकerrupts (काष्ठा net_device *dev)
+अणु
+	अगर (dev->irq != -1)
+	अणु
+		काष्ठा parport *port =
+		   ((काष्ठा net_local *)netdev_priv(dev))->pardev->port;
 		port->ops->disable_irq (port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void write_data (struct net_device *dev, unsigned char data)
-{
-	struct parport *port =
-	   ((struct net_local *)netdev_priv(dev))->pardev->port;
+अटल अंतरभूत व्योम ग_लिखो_data (काष्ठा net_device *dev, अचिन्हित अक्षर data)
+अणु
+	काष्ठा parport *port =
+	   ((काष्ठा net_local *)netdev_priv(dev))->pardev->port;
 
-	port->ops->write_data (port, data);
-}
+	port->ops->ग_लिखो_data (port, data);
+पूर्ण
 
-static inline unsigned char read_status (struct net_device *dev)
-{
-	struct parport *port =
-	   ((struct net_local *)netdev_priv(dev))->pardev->port;
+अटल अंतरभूत अचिन्हित अक्षर पढ़ो_status (काष्ठा net_device *dev)
+अणु
+	काष्ठा parport *port =
+	   ((काष्ठा net_local *)netdev_priv(dev))->pardev->port;
 
-	return port->ops->read_status (port);
-}
+	वापस port->ops->पढ़ो_status (port);
+पूर्ण
 
-static const struct header_ops plip_header_ops = {
+अटल स्थिर काष्ठा header_ops plip_header_ops = अणु
 	.create	= plip_hard_header,
 	.cache  = plip_hard_header_cache,
-};
+पूर्ण;
 
-static const struct net_device_ops plip_netdev_ops = {
-	.ndo_open		 = plip_open,
-	.ndo_stop		 = plip_close,
-	.ndo_start_xmit		 = plip_tx_packet,
-	.ndo_do_ioctl		 = plip_ioctl,
-	.ndo_set_mac_address	 = eth_mac_addr,
-	.ndo_validate_addr	 = eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops plip_netdev_ops = अणु
+	.nकरो_खोलो		 = plip_खोलो,
+	.nकरो_stop		 = plip_बंद,
+	.nकरो_start_xmit		 = plip_tx_packet,
+	.nकरो_करो_ioctl		 = plip_ioctl,
+	.nकरो_set_mac_address	 = eth_mac_addr,
+	.nकरो_validate_addr	 = eth_validate_addr,
+पूर्ण;
 
-/* Entry point of PLIP driver.
-   Probe the hardware, and register/initialize the driver.
+/* Entry poपूर्णांक of PLIP driver.
+   Probe the hardware, and रेजिस्टर/initialize the driver.
 
-   PLIP is rather weird, because of the way it interacts with the parport
-   system.  It is _not_ initialised from Space.c.  Instead, plip_init()
-   is called, and that function makes up a "struct net_device" for each port, and
+   PLIP is rather weird, because of the way it पूर्णांकeracts with the parport
+   प्रणाली.  It is _not_ initialised from Space.c.  Instead, plip_init()
+   is called, and that function makes up a "struct net_device" क्रम each port, and
    then calls us here.
 
    */
-static void
-plip_init_netdev(struct net_device *dev)
-{
-	struct net_local *nl = netdev_priv(dev);
+अटल व्योम
+plip_init_netdev(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_local *nl = netdev_priv(dev);
 
 	/* Then, override parts of it */
 	dev->tx_queue_len 	 = 10;
 	dev->flags	         = IFF_POINTOPOINT|IFF_NOARP;
-	memset(dev->dev_addr, 0xfc, ETH_ALEN);
+	स_रखो(dev->dev_addr, 0xfc, ETH_ALEN);
 
 	dev->netdev_ops		 = &plip_netdev_ops;
 	dev->header_ops          = &plip_header_ops;
@@ -295,111 +296,111 @@ plip_init_netdev(struct net_device *dev)
 
 	nl->port_owner = 0;
 
-	/* Initialize constants */
+	/* Initialize स्थिरants */
 	nl->trigger	= PLIP_TRIGGER_WAIT;
 	nl->nibble	= PLIP_NIBBLE_WAIT;
 
-	/* Initialize task queue structures */
+	/* Initialize task queue काष्ठाures */
 	INIT_WORK(&nl->immediate, plip_bh);
 	INIT_DELAYED_WORK(&nl->deferred, plip_kick_bh);
 
-	if (dev->irq == -1)
-		INIT_DELAYED_WORK(&nl->timer, plip_timer_bh);
+	अगर (dev->irq == -1)
+		INIT_DELAYED_WORK(&nl->समयr, plip_समयr_bh);
 
 	spin_lock_init(&nl->lock);
-}
+पूर्ण
 
-/* Bottom half handler for the delayed request.
-   This routine is kicked by do_timer().
+/* Bottom half handler क्रम the delayed request.
+   This routine is kicked by करो_समयr().
    Request `plip_bh' to be invoked. */
-static void
-plip_kick_bh(struct work_struct *work)
-{
-	struct net_local *nl =
-		container_of(work, struct net_local, deferred.work);
+अटल व्योम
+plip_kick_bh(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा net_local *nl =
+		container_of(work, काष्ठा net_local, deferred.work);
 
-	if (nl->is_deferred)
+	अगर (nl->is_deferred)
 		schedule_work(&nl->immediate);
-}
+पूर्ण
 
-/* Forward declarations of internal routines */
-static int plip_none(struct net_device *, struct net_local *,
-		     struct plip_local *, struct plip_local *);
-static int plip_receive_packet(struct net_device *, struct net_local *,
-			       struct plip_local *, struct plip_local *);
-static int plip_send_packet(struct net_device *, struct net_local *,
-			    struct plip_local *, struct plip_local *);
-static int plip_connection_close(struct net_device *, struct net_local *,
-				 struct plip_local *, struct plip_local *);
-static int plip_error(struct net_device *, struct net_local *,
-		      struct plip_local *, struct plip_local *);
-static int plip_bh_timeout_error(struct net_device *dev, struct net_local *nl,
-				 struct plip_local *snd,
-				 struct plip_local *rcv,
-				 int error);
+/* Forward declarations of पूर्णांकernal routines */
+अटल पूर्णांक plip_none(काष्ठा net_device *, काष्ठा net_local *,
+		     काष्ठा plip_local *, काष्ठा plip_local *);
+अटल पूर्णांक plip_receive_packet(काष्ठा net_device *, काष्ठा net_local *,
+			       काष्ठा plip_local *, काष्ठा plip_local *);
+अटल पूर्णांक plip_send_packet(काष्ठा net_device *, काष्ठा net_local *,
+			    काष्ठा plip_local *, काष्ठा plip_local *);
+अटल पूर्णांक plip_connection_बंद(काष्ठा net_device *, काष्ठा net_local *,
+				 काष्ठा plip_local *, काष्ठा plip_local *);
+अटल पूर्णांक plip_error(काष्ठा net_device *, काष्ठा net_local *,
+		      काष्ठा plip_local *, काष्ठा plip_local *);
+अटल पूर्णांक plip_bh_समयout_error(काष्ठा net_device *dev, काष्ठा net_local *nl,
+				 काष्ठा plip_local *snd,
+				 काष्ठा plip_local *rcv,
+				 पूर्णांक error);
 
-#define OK        0
-#define TIMEOUT   1
-#define ERROR     2
-#define HS_TIMEOUT	3
+#घोषणा OK        0
+#घोषणा TIMEOUT   1
+#घोषणा ERROR     2
+#घोषणा HS_TIMEOUT	3
 
-typedef int (*plip_func)(struct net_device *dev, struct net_local *nl,
-			 struct plip_local *snd, struct plip_local *rcv);
+प्रकार पूर्णांक (*plip_func)(काष्ठा net_device *dev, काष्ठा net_local *nl,
+			 काष्ठा plip_local *snd, काष्ठा plip_local *rcv);
 
-static const plip_func connection_state_table[] =
-{
+अटल स्थिर plip_func connection_state_table[] =
+अणु
 	plip_none,
 	plip_receive_packet,
 	plip_send_packet,
-	plip_connection_close,
+	plip_connection_बंद,
 	plip_error
-};
+पूर्ण;
 
 /* Bottom half handler of PLIP. */
-static void
-plip_bh(struct work_struct *work)
-{
-	struct net_local *nl = container_of(work, struct net_local, immediate);
-	struct plip_local *snd = &nl->snd_data;
-	struct plip_local *rcv = &nl->rcv_data;
+अटल व्योम
+plip_bh(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा net_local *nl = container_of(work, काष्ठा net_local, immediate);
+	काष्ठा plip_local *snd = &nl->snd_data;
+	काष्ठा plip_local *rcv = &nl->rcv_data;
 	plip_func f;
-	int r;
+	पूर्णांक r;
 
 	nl->is_deferred = 0;
 	f = connection_state_table[nl->connection];
-	if ((r = (*f)(nl->dev, nl, snd, rcv)) != OK &&
-	    (r = plip_bh_timeout_error(nl->dev, nl, snd, rcv, r)) != OK) {
+	अगर ((r = (*f)(nl->dev, nl, snd, rcv)) != OK &&
+	    (r = plip_bh_समयout_error(nl->dev, nl, snd, rcv, r)) != OK) अणु
 		nl->is_deferred = 1;
 		schedule_delayed_work(&nl->deferred, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-plip_timer_bh(struct work_struct *work)
-{
-	struct net_local *nl =
-		container_of(work, struct net_local, timer.work);
+अटल व्योम
+plip_समयr_bh(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा net_local *nl =
+		container_of(work, काष्ठा net_local, समयr.work);
 
-	if (!(atomic_read (&nl->kill_timer))) {
-		plip_interrupt (nl->dev);
+	अगर (!(atomic_पढ़ो (&nl->समाप्त_समयr))) अणु
+		plip_पूर्णांकerrupt (nl->dev);
 
-		schedule_delayed_work(&nl->timer, 1);
-	}
-	else {
-		complete(&nl->killed_timer_cmp);
-	}
-}
+		schedule_delayed_work(&nl->समयr, 1);
+	पूर्ण
+	अन्यथा अणु
+		complete(&nl->समाप्तed_समयr_cmp);
+	पूर्ण
+पूर्ण
 
-static int
-plip_bh_timeout_error(struct net_device *dev, struct net_local *nl,
-		      struct plip_local *snd, struct plip_local *rcv,
-		      int error)
-{
-	unsigned char c0;
+अटल पूर्णांक
+plip_bh_समयout_error(काष्ठा net_device *dev, काष्ठा net_local *nl,
+		      काष्ठा plip_local *snd, काष्ठा plip_local *rcv,
+		      पूर्णांक error)
+अणु
+	अचिन्हित अक्षर c0;
 	/*
 	 * This is tricky. If we got here from the beginning of send (either
 	 * with ERROR or HS_TIMEOUT) we have IRQ enabled. Otherwise it's
-	 * already disabled. With the old variant of {enable,disable}_irq()
+	 * alपढ़ोy disabled. With the old variant of अणुenable,disableपूर्ण_irq()
 	 * extra disable_irq() was a no-op. Now it became mortal - it's
 	 * unbalanced and thus we'll never re-enable IRQ (until rmmod plip,
 	 * that is). So we have to treat HS_TIMEOUT and ERROR from send
@@ -407,232 +408,232 @@ plip_bh_timeout_error(struct net_device *dev, struct net_local *nl,
 	 */
 
 	spin_lock_irq(&nl->lock);
-	if (nl->connection == PLIP_CN_SEND) {
+	अगर (nl->connection == PLIP_CN_SEND) अणु
 
-		if (error != ERROR) { /* Timeout */
-			nl->timeout_count++;
-			if ((error == HS_TIMEOUT && nl->timeout_count <= 10) ||
-			    nl->timeout_count <= 3) {
+		अगर (error != ERROR) अणु /* Timeout */
+			nl->समयout_count++;
+			अगर ((error == HS_TIMEOUT && nl->समयout_count <= 10) ||
+			    nl->समयout_count <= 3) अणु
 				spin_unlock_irq(&nl->lock);
 				/* Try again later */
-				return TIMEOUT;
-			}
-			c0 = read_status(dev);
-			printk(KERN_WARNING "%s: transmit timeout(%d,%02x)\n",
+				वापस TIMEOUT;
+			पूर्ण
+			c0 = पढ़ो_status(dev);
+			prपूर्णांकk(KERN_WARNING "%s: transmit timeout(%d,%02x)\n",
 			       dev->name, snd->state, c0);
-		} else
+		पूर्ण अन्यथा
 			error = HS_TIMEOUT;
 		dev->stats.tx_errors++;
-		dev->stats.tx_aborted_errors++;
-	} else if (nl->connection == PLIP_CN_RECEIVE) {
-		if (rcv->state == PLIP_PK_TRIGGER) {
-			/* Transmission was interrupted. */
+		dev->stats.tx_पातed_errors++;
+	पूर्ण अन्यथा अगर (nl->connection == PLIP_CN_RECEIVE) अणु
+		अगर (rcv->state == PLIP_PK_TRIGGER) अणु
+			/* Transmission was पूर्णांकerrupted. */
 			spin_unlock_irq(&nl->lock);
-			return OK;
-		}
-		if (error != ERROR) { /* Timeout */
-			if (++nl->timeout_count <= 3) {
+			वापस OK;
+		पूर्ण
+		अगर (error != ERROR) अणु /* Timeout */
+			अगर (++nl->समयout_count <= 3) अणु
 				spin_unlock_irq(&nl->lock);
 				/* Try again later */
-				return TIMEOUT;
-			}
-			c0 = read_status(dev);
-			printk(KERN_WARNING "%s: receive timeout(%d,%02x)\n",
+				वापस TIMEOUT;
+			पूर्ण
+			c0 = पढ़ो_status(dev);
+			prपूर्णांकk(KERN_WARNING "%s: receive timeout(%d,%02x)\n",
 			       dev->name, rcv->state, c0);
-		}
+		पूर्ण
 		dev->stats.rx_dropped++;
-	}
+	पूर्ण
 	rcv->state = PLIP_PK_DONE;
-	if (rcv->skb) {
-		kfree_skb(rcv->skb);
-		rcv->skb = NULL;
-	}
+	अगर (rcv->skb) अणु
+		kमुक्त_skb(rcv->skb);
+		rcv->skb = शून्य;
+	पूर्ण
 	snd->state = PLIP_PK_DONE;
-	if (snd->skb) {
-		dev_kfree_skb(snd->skb);
-		snd->skb = NULL;
-	}
+	अगर (snd->skb) अणु
+		dev_kमुक्त_skb(snd->skb);
+		snd->skb = शून्य;
+	पूर्ण
 	spin_unlock_irq(&nl->lock);
-	if (error == HS_TIMEOUT) {
+	अगर (error == HS_TIMEOUT) अणु
 		DISABLE(dev->irq);
 		synchronize_irq(dev->irq);
-	}
-	disable_parport_interrupts (dev);
-	netif_stop_queue (dev);
+	पूर्ण
+	disable_parport_पूर्णांकerrupts (dev);
+	netअगर_stop_queue (dev);
 	nl->connection = PLIP_CN_ERROR;
-	write_data (dev, 0x00);
+	ग_लिखो_data (dev, 0x00);
 
-	return TIMEOUT;
-}
+	वापस TIMEOUT;
+पूर्ण
 
-static int
-plip_none(struct net_device *dev, struct net_local *nl,
-	  struct plip_local *snd, struct plip_local *rcv)
-{
-	return OK;
-}
+अटल पूर्णांक
+plip_none(काष्ठा net_device *dev, काष्ठा net_local *nl,
+	  काष्ठा plip_local *snd, काष्ठा plip_local *rcv)
+अणु
+	वापस OK;
+पूर्ण
 
 /* PLIP_RECEIVE --- receive a byte(two nibbles)
-   Returns OK on success, TIMEOUT on timeout */
-static inline int
-plip_receive(unsigned short nibble_timeout, struct net_device *dev,
-	     enum plip_nibble_state *ns_p, unsigned char *data_p)
-{
-	unsigned char c0, c1;
-	unsigned int cx;
+   Returns OK on success, TIMEOUT on समयout */
+अटल अंतरभूत पूर्णांक
+plip_receive(अचिन्हित लघु nibble_समयout, काष्ठा net_device *dev,
+	     क्रमागत plip_nibble_state *ns_p, अचिन्हित अक्षर *data_p)
+अणु
+	अचिन्हित अक्षर c0, c1;
+	अचिन्हित पूर्णांक cx;
 
-	switch (*ns_p) {
-	case PLIP_NB_BEGIN:
-		cx = nibble_timeout;
-		while (1) {
-			c0 = read_status(dev);
+	चयन (*ns_p) अणु
+	हाल PLIP_NB_BEGIN:
+		cx = nibble_समयout;
+		जबतक (1) अणु
+			c0 = पढ़ो_status(dev);
 			udelay(PLIP_DELAY_UNIT);
-			if ((c0 & 0x80) == 0) {
-				c1 = read_status(dev);
-				if (c0 == c1)
-					break;
-			}
-			if (--cx == 0)
-				return TIMEOUT;
-		}
+			अगर ((c0 & 0x80) == 0) अणु
+				c1 = पढ़ो_status(dev);
+				अगर (c0 == c1)
+					अवरोध;
+			पूर्ण
+			अगर (--cx == 0)
+				वापस TIMEOUT;
+		पूर्ण
 		*data_p = (c0 >> 3) & 0x0f;
-		write_data (dev, 0x10); /* send ACK */
+		ग_लिखो_data (dev, 0x10); /* send ACK */
 		*ns_p = PLIP_NB_1;
 		fallthrough;
 
-	case PLIP_NB_1:
-		cx = nibble_timeout;
-		while (1) {
-			c0 = read_status(dev);
+	हाल PLIP_NB_1:
+		cx = nibble_समयout;
+		जबतक (1) अणु
+			c0 = पढ़ो_status(dev);
 			udelay(PLIP_DELAY_UNIT);
-			if (c0 & 0x80) {
-				c1 = read_status(dev);
-				if (c0 == c1)
-					break;
-			}
-			if (--cx == 0)
-				return TIMEOUT;
-		}
+			अगर (c0 & 0x80) अणु
+				c1 = पढ़ो_status(dev);
+				अगर (c0 == c1)
+					अवरोध;
+			पूर्ण
+			अगर (--cx == 0)
+				वापस TIMEOUT;
+		पूर्ण
 		*data_p |= (c0 << 1) & 0xf0;
-		write_data (dev, 0x00); /* send ACK */
+		ग_लिखो_data (dev, 0x00); /* send ACK */
 		*ns_p = PLIP_NB_BEGIN;
-		break;
-	case PLIP_NB_2:
-		break;
-	}
-	return OK;
-}
+		अवरोध;
+	हाल PLIP_NB_2:
+		अवरोध;
+	पूर्ण
+	वापस OK;
+पूर्ण
 
 /*
  *	Determine the packet's protocol ID. The rule here is that we
- *	assume 802.3 if the type field is short enough to be a length.
- *	This is normal practice and works for any 'now in use' protocol.
+ *	assume 802.3 अगर the type field is लघु enough to be a length.
+ *	This is normal practice and works क्रम any 'now in use' protocol.
  *
- *	PLIP is ethernet ish but the daddr might not be valid if unicast.
- *	PLIP fortunately has no bus architecture (its Point-to-point).
+ *	PLIP is ethernet ish but the daddr might not be valid अगर unicast.
+ *	PLIP क्रमtunately has no bus architecture (its Poपूर्णांक-to-poपूर्णांक).
  *
  *	We can't fix the daddr thing as that quirk (more bug) is embedded
- *	in far too many old systems not all even running Linux.
+ *	in far too many old प्रणालीs not all even running Linux.
  */
 
-static __be16 plip_type_trans(struct sk_buff *skb, struct net_device *dev)
-{
-	struct ethhdr *eth;
-	unsigned char *rawp;
+अटल __be16 plip_type_trans(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा ethhdr *eth;
+	अचिन्हित अक्षर *rawp;
 
 	skb_reset_mac_header(skb);
 	skb_pull(skb,dev->hard_header_len);
 	eth = eth_hdr(skb);
 
-	if(is_multicast_ether_addr(eth->h_dest))
-	{
-		if(ether_addr_equal_64bits(eth->h_dest, dev->broadcast))
+	अगर(is_multicast_ether_addr(eth->h_dest))
+	अणु
+		अगर(ether_addr_equal_64bits(eth->h_dest, dev->broadcast))
 			skb->pkt_type=PACKET_BROADCAST;
-		else
+		अन्यथा
 			skb->pkt_type=PACKET_MULTICAST;
-	}
+	पूर्ण
 
 	/*
 	 *	This ALLMULTI check should be redundant by 1.4
-	 *	so don't forget to remove it.
+	 *	so करोn't क्रमget to हटाओ it.
 	 */
 
-	if (ntohs(eth->h_proto) >= ETH_P_802_3_MIN)
-		return eth->h_proto;
+	अगर (ntohs(eth->h_proto) >= ETH_P_802_3_MIN)
+		वापस eth->h_proto;
 
 	rawp = skb->data;
 
 	/*
-	 *	This is a magic hack to spot IPX packets. Older Novell breaks
+	 *	This is a magic hack to spot IPX packets. Older Novell अवरोधs
 	 *	the protocol design and runs IPX over 802.3 without an 802.2 LLC
-	 *	layer. We look for FFFF which isn't a used 802.2 SSAP/DSAP. This
-	 *	won't work for fault tolerant netware but does for the rest.
+	 *	layer. We look क्रम FFFF which isn't a used 802.2 SSAP/DSAP. This
+	 *	won't work क्रम fault tolerant netware but करोes क्रम the rest.
 	 */
-	if (*(unsigned short *)rawp == 0xFFFF)
-		return htons(ETH_P_802_3);
+	अगर (*(अचिन्हित लघु *)rawp == 0xFFFF)
+		वापस htons(ETH_P_802_3);
 
 	/*
 	 *	Real 802.2 LLC
 	 */
-	return htons(ETH_P_802_2);
-}
+	वापस htons(ETH_P_802_2);
+पूर्ण
 
 /* PLIP_RECEIVE_PACKET --- receive a packet */
-static int
-plip_receive_packet(struct net_device *dev, struct net_local *nl,
-		    struct plip_local *snd, struct plip_local *rcv)
-{
-	unsigned short nibble_timeout = nl->nibble;
-	unsigned char *lbuf;
+अटल पूर्णांक
+plip_receive_packet(काष्ठा net_device *dev, काष्ठा net_local *nl,
+		    काष्ठा plip_local *snd, काष्ठा plip_local *rcv)
+अणु
+	अचिन्हित लघु nibble_समयout = nl->nibble;
+	अचिन्हित अक्षर *lbuf;
 
-	switch (rcv->state) {
-	case PLIP_PK_TRIGGER:
+	चयन (rcv->state) अणु
+	हाल PLIP_PK_TRIGGER:
 		DISABLE(dev->irq);
 		/* Don't need to synchronize irq, as we can safely ignore it */
-		disable_parport_interrupts (dev);
-		write_data (dev, 0x01); /* send ACK */
-		if (net_debug > 2)
-			printk(KERN_DEBUG "%s: receive start\n", dev->name);
+		disable_parport_पूर्णांकerrupts (dev);
+		ग_लिखो_data (dev, 0x01); /* send ACK */
+		अगर (net_debug > 2)
+			prपूर्णांकk(KERN_DEBUG "%s: receive start\n", dev->name);
 		rcv->state = PLIP_PK_LENGTH_LSB;
 		rcv->nibble = PLIP_NB_BEGIN;
 		fallthrough;
 
-	case PLIP_PK_LENGTH_LSB:
-		if (snd->state != PLIP_PK_DONE) {
-			if (plip_receive(nl->trigger, dev,
-					 &rcv->nibble, &rcv->length.b.lsb)) {
+	हाल PLIP_PK_LENGTH_LSB:
+		अगर (snd->state != PLIP_PK_DONE) अणु
+			अगर (plip_receive(nl->trigger, dev,
+					 &rcv->nibble, &rcv->length.b.lsb)) अणु
 				/* collision, here dev->tbusy == 1 */
 				rcv->state = PLIP_PK_DONE;
 				nl->is_deferred = 1;
 				nl->connection = PLIP_CN_SEND;
 				schedule_delayed_work(&nl->deferred, 1);
-				enable_parport_interrupts (dev);
+				enable_parport_पूर्णांकerrupts (dev);
 				ENABLE(dev->irq);
-				return OK;
-			}
-		} else {
-			if (plip_receive(nibble_timeout, dev,
+				वापस OK;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (plip_receive(nibble_समयout, dev,
 					 &rcv->nibble, &rcv->length.b.lsb))
-				return TIMEOUT;
-		}
+				वापस TIMEOUT;
+		पूर्ण
 		rcv->state = PLIP_PK_LENGTH_MSB;
 		fallthrough;
 
-	case PLIP_PK_LENGTH_MSB:
-		if (plip_receive(nibble_timeout, dev,
+	हाल PLIP_PK_LENGTH_MSB:
+		अगर (plip_receive(nibble_समयout, dev,
 				 &rcv->nibble, &rcv->length.b.msb))
-			return TIMEOUT;
-		if (rcv->length.h > dev->mtu + dev->hard_header_len ||
-		    rcv->length.h < 8) {
-			printk(KERN_WARNING "%s: bogus packet size %d.\n", dev->name, rcv->length.h);
-			return ERROR;
-		}
+			वापस TIMEOUT;
+		अगर (rcv->length.h > dev->mtu + dev->hard_header_len ||
+		    rcv->length.h < 8) अणु
+			prपूर्णांकk(KERN_WARNING "%s: bogus packet size %d.\n", dev->name, rcv->length.h);
+			वापस ERROR;
+		पूर्ण
 		/* Malloc up new buffer. */
 		rcv->skb = dev_alloc_skb(rcv->length.h + 2);
-		if (rcv->skb == NULL) {
-			printk(KERN_ERR "%s: Memory squeeze.\n", dev->name);
-			return ERROR;
-		}
+		अगर (rcv->skb == शून्य) अणु
+			prपूर्णांकk(KERN_ERR "%s: Memory squeeze.\n", dev->name);
+			वापस ERROR;
+		पूर्ण
 		skb_reserve(rcv->skb, 2);	/* Align IP on 16 byte boundaries */
 		skb_put(rcv->skb,rcv->length.h);
 		rcv->skb->dev = dev;
@@ -641,790 +642,790 @@ plip_receive_packet(struct net_device *dev, struct net_local *nl,
 		rcv->checksum = 0;
 		fallthrough;
 
-	case PLIP_PK_DATA:
+	हाल PLIP_PK_DATA:
 		lbuf = rcv->skb->data;
-		do {
-			if (plip_receive(nibble_timeout, dev,
+		करो अणु
+			अगर (plip_receive(nibble_समयout, dev,
 					 &rcv->nibble, &lbuf[rcv->byte]))
-				return TIMEOUT;
-		} while (++rcv->byte < rcv->length.h);
-		do {
+				वापस TIMEOUT;
+		पूर्ण जबतक (++rcv->byte < rcv->length.h);
+		करो अणु
 			rcv->checksum += lbuf[--rcv->byte];
-		} while (rcv->byte);
+		पूर्ण जबतक (rcv->byte);
 		rcv->state = PLIP_PK_CHECKSUM;
 		fallthrough;
 
-	case PLIP_PK_CHECKSUM:
-		if (plip_receive(nibble_timeout, dev,
+	हाल PLIP_PK_CHECKSUM:
+		अगर (plip_receive(nibble_समयout, dev,
 				 &rcv->nibble, &rcv->data))
-			return TIMEOUT;
-		if (rcv->data != rcv->checksum) {
+			वापस TIMEOUT;
+		अगर (rcv->data != rcv->checksum) अणु
 			dev->stats.rx_crc_errors++;
-			if (net_debug)
-				printk(KERN_DEBUG "%s: checksum error\n", dev->name);
-			return ERROR;
-		}
+			अगर (net_debug)
+				prपूर्णांकk(KERN_DEBUG "%s: checksum error\n", dev->name);
+			वापस ERROR;
+		पूर्ण
 		rcv->state = PLIP_PK_DONE;
 		fallthrough;
 
-	case PLIP_PK_DONE:
-		/* Inform the upper layer for the arrival of a packet. */
+	हाल PLIP_PK_DONE:
+		/* Inक्रमm the upper layer क्रम the arrival of a packet. */
 		rcv->skb->protocol=plip_type_trans(rcv->skb, dev);
-		netif_rx_ni(rcv->skb);
+		netअगर_rx_ni(rcv->skb);
 		dev->stats.rx_bytes += rcv->length.h;
 		dev->stats.rx_packets++;
-		rcv->skb = NULL;
-		if (net_debug > 2)
-			printk(KERN_DEBUG "%s: receive end\n", dev->name);
+		rcv->skb = शून्य;
+		अगर (net_debug > 2)
+			prपूर्णांकk(KERN_DEBUG "%s: receive end\n", dev->name);
 
 		/* Close the connection. */
-		write_data (dev, 0x00);
+		ग_लिखो_data (dev, 0x00);
 		spin_lock_irq(&nl->lock);
-		if (snd->state != PLIP_PK_DONE) {
+		अगर (snd->state != PLIP_PK_DONE) अणु
 			nl->connection = PLIP_CN_SEND;
 			spin_unlock_irq(&nl->lock);
 			schedule_work(&nl->immediate);
-			enable_parport_interrupts (dev);
+			enable_parport_पूर्णांकerrupts (dev);
 			ENABLE(dev->irq);
-			return OK;
-		} else {
+			वापस OK;
+		पूर्ण अन्यथा अणु
 			nl->connection = PLIP_CN_NONE;
 			spin_unlock_irq(&nl->lock);
-			enable_parport_interrupts (dev);
+			enable_parport_पूर्णांकerrupts (dev);
 			ENABLE(dev->irq);
-			return OK;
-		}
-	}
-	return OK;
-}
+			वापस OK;
+		पूर्ण
+	पूर्ण
+	वापस OK;
+पूर्ण
 
 /* PLIP_SEND --- send a byte (two nibbles)
-   Returns OK on success, TIMEOUT when timeout    */
-static inline int
-plip_send(unsigned short nibble_timeout, struct net_device *dev,
-	  enum plip_nibble_state *ns_p, unsigned char data)
-{
-	unsigned char c0;
-	unsigned int cx;
+   Returns OK on success, TIMEOUT when समयout    */
+अटल अंतरभूत पूर्णांक
+plip_send(अचिन्हित लघु nibble_समयout, काष्ठा net_device *dev,
+	  क्रमागत plip_nibble_state *ns_p, अचिन्हित अक्षर data)
+अणु
+	अचिन्हित अक्षर c0;
+	अचिन्हित पूर्णांक cx;
 
-	switch (*ns_p) {
-	case PLIP_NB_BEGIN:
-		write_data (dev, data & 0x0f);
+	चयन (*ns_p) अणु
+	हाल PLIP_NB_BEGIN:
+		ग_लिखो_data (dev, data & 0x0f);
 		*ns_p = PLIP_NB_1;
 		fallthrough;
 
-	case PLIP_NB_1:
-		write_data (dev, 0x10 | (data & 0x0f));
-		cx = nibble_timeout;
-		while (1) {
-			c0 = read_status(dev);
-			if ((c0 & 0x80) == 0)
-				break;
-			if (--cx == 0)
-				return TIMEOUT;
+	हाल PLIP_NB_1:
+		ग_लिखो_data (dev, 0x10 | (data & 0x0f));
+		cx = nibble_समयout;
+		जबतक (1) अणु
+			c0 = पढ़ो_status(dev);
+			अगर ((c0 & 0x80) == 0)
+				अवरोध;
+			अगर (--cx == 0)
+				वापस TIMEOUT;
 			udelay(PLIP_DELAY_UNIT);
-		}
-		write_data (dev, 0x10 | (data >> 4));
+		पूर्ण
+		ग_लिखो_data (dev, 0x10 | (data >> 4));
 		*ns_p = PLIP_NB_2;
 		fallthrough;
 
-	case PLIP_NB_2:
-		write_data (dev, (data >> 4));
-		cx = nibble_timeout;
-		while (1) {
-			c0 = read_status(dev);
-			if (c0 & 0x80)
-				break;
-			if (--cx == 0)
-				return TIMEOUT;
+	हाल PLIP_NB_2:
+		ग_लिखो_data (dev, (data >> 4));
+		cx = nibble_समयout;
+		जबतक (1) अणु
+			c0 = पढ़ो_status(dev);
+			अगर (c0 & 0x80)
+				अवरोध;
+			अगर (--cx == 0)
+				वापस TIMEOUT;
 			udelay(PLIP_DELAY_UNIT);
-		}
+		पूर्ण
 		*ns_p = PLIP_NB_BEGIN;
-		return OK;
-	}
-	return OK;
-}
+		वापस OK;
+	पूर्ण
+	वापस OK;
+पूर्ण
 
 /* PLIP_SEND_PACKET --- send a packet */
-static int
-plip_send_packet(struct net_device *dev, struct net_local *nl,
-		 struct plip_local *snd, struct plip_local *rcv)
-{
-	unsigned short nibble_timeout = nl->nibble;
-	unsigned char *lbuf;
-	unsigned char c0;
-	unsigned int cx;
+अटल पूर्णांक
+plip_send_packet(काष्ठा net_device *dev, काष्ठा net_local *nl,
+		 काष्ठा plip_local *snd, काष्ठा plip_local *rcv)
+अणु
+	अचिन्हित लघु nibble_समयout = nl->nibble;
+	अचिन्हित अक्षर *lbuf;
+	अचिन्हित अक्षर c0;
+	अचिन्हित पूर्णांक cx;
 
-	if (snd->skb == NULL || (lbuf = snd->skb->data) == NULL) {
-		printk(KERN_DEBUG "%s: send skb lost\n", dev->name);
+	अगर (snd->skb == शून्य || (lbuf = snd->skb->data) == शून्य) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: send skb lost\n", dev->name);
 		snd->state = PLIP_PK_DONE;
-		snd->skb = NULL;
-		return ERROR;
-	}
+		snd->skb = शून्य;
+		वापस ERROR;
+	पूर्ण
 
-	switch (snd->state) {
-	case PLIP_PK_TRIGGER:
-		if ((read_status(dev) & 0xf8) != 0x80)
-			return HS_TIMEOUT;
+	चयन (snd->state) अणु
+	हाल PLIP_PK_TRIGGER:
+		अगर ((पढ़ो_status(dev) & 0xf8) != 0x80)
+			वापस HS_TIMEOUT;
 
-		/* Trigger remote rx interrupt. */
-		write_data (dev, 0x08);
+		/* Trigger remote rx पूर्णांकerrupt. */
+		ग_लिखो_data (dev, 0x08);
 		cx = nl->trigger;
-		while (1) {
+		जबतक (1) अणु
 			udelay(PLIP_DELAY_UNIT);
 			spin_lock_irq(&nl->lock);
-			if (nl->connection == PLIP_CN_RECEIVE) {
+			अगर (nl->connection == PLIP_CN_RECEIVE) अणु
 				spin_unlock_irq(&nl->lock);
 				/* Interrupted. */
 				dev->stats.collisions++;
-				return OK;
-			}
-			c0 = read_status(dev);
-			if (c0 & 0x08) {
+				वापस OK;
+			पूर्ण
+			c0 = पढ़ो_status(dev);
+			अगर (c0 & 0x08) अणु
 				spin_unlock_irq(&nl->lock);
 				DISABLE(dev->irq);
 				synchronize_irq(dev->irq);
-				if (nl->connection == PLIP_CN_RECEIVE) {
+				अगर (nl->connection == PLIP_CN_RECEIVE) अणु
 					/* Interrupted.
-					   We don't need to enable irq,
+					   We करोn't need to enable irq,
 					   as it is soon disabled.    */
-					/* Yes, we do. New variant of
-					   {enable,disable}_irq *counts*
+					/* Yes, we करो. New variant of
+					   अणुenable,disableपूर्ण_irq *counts*
 					   them.  -- AV  */
 					ENABLE(dev->irq);
 					dev->stats.collisions++;
-					return OK;
-				}
-				disable_parport_interrupts (dev);
-				if (net_debug > 2)
-					printk(KERN_DEBUG "%s: send start\n", dev->name);
+					वापस OK;
+				पूर्ण
+				disable_parport_पूर्णांकerrupts (dev);
+				अगर (net_debug > 2)
+					prपूर्णांकk(KERN_DEBUG "%s: send start\n", dev->name);
 				snd->state = PLIP_PK_LENGTH_LSB;
 				snd->nibble = PLIP_NB_BEGIN;
-				nl->timeout_count = 0;
-				break;
-			}
+				nl->समयout_count = 0;
+				अवरोध;
+			पूर्ण
 			spin_unlock_irq(&nl->lock);
-			if (--cx == 0) {
-				write_data (dev, 0x00);
-				return HS_TIMEOUT;
-			}
-		}
-		break;
+			अगर (--cx == 0) अणु
+				ग_लिखो_data (dev, 0x00);
+				वापस HS_TIMEOUT;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case PLIP_PK_LENGTH_LSB:
-		if (plip_send(nibble_timeout, dev,
+	हाल PLIP_PK_LENGTH_LSB:
+		अगर (plip_send(nibble_समयout, dev,
 			      &snd->nibble, snd->length.b.lsb))
-			return TIMEOUT;
+			वापस TIMEOUT;
 		snd->state = PLIP_PK_LENGTH_MSB;
 		fallthrough;
 
-	case PLIP_PK_LENGTH_MSB:
-		if (plip_send(nibble_timeout, dev,
+	हाल PLIP_PK_LENGTH_MSB:
+		अगर (plip_send(nibble_समयout, dev,
 			      &snd->nibble, snd->length.b.msb))
-			return TIMEOUT;
+			वापस TIMEOUT;
 		snd->state = PLIP_PK_DATA;
 		snd->byte = 0;
 		snd->checksum = 0;
 		fallthrough;
 
-	case PLIP_PK_DATA:
-		do {
-			if (plip_send(nibble_timeout, dev,
+	हाल PLIP_PK_DATA:
+		करो अणु
+			अगर (plip_send(nibble_समयout, dev,
 				      &snd->nibble, lbuf[snd->byte]))
-				return TIMEOUT;
-		} while (++snd->byte < snd->length.h);
-		do {
+				वापस TIMEOUT;
+		पूर्ण जबतक (++snd->byte < snd->length.h);
+		करो अणु
 			snd->checksum += lbuf[--snd->byte];
-		} while (snd->byte);
+		पूर्ण जबतक (snd->byte);
 		snd->state = PLIP_PK_CHECKSUM;
 		fallthrough;
 
-	case PLIP_PK_CHECKSUM:
-		if (plip_send(nibble_timeout, dev,
+	हाल PLIP_PK_CHECKSUM:
+		अगर (plip_send(nibble_समयout, dev,
 			      &snd->nibble, snd->checksum))
-			return TIMEOUT;
+			वापस TIMEOUT;
 
 		dev->stats.tx_bytes += snd->skb->len;
-		dev_kfree_skb(snd->skb);
+		dev_kमुक्त_skb(snd->skb);
 		dev->stats.tx_packets++;
 		snd->state = PLIP_PK_DONE;
 		fallthrough;
 
-	case PLIP_PK_DONE:
+	हाल PLIP_PK_DONE:
 		/* Close the connection */
-		write_data (dev, 0x00);
-		snd->skb = NULL;
-		if (net_debug > 2)
-			printk(KERN_DEBUG "%s: send end\n", dev->name);
+		ग_लिखो_data (dev, 0x00);
+		snd->skb = शून्य;
+		अगर (net_debug > 2)
+			prपूर्णांकk(KERN_DEBUG "%s: send end\n", dev->name);
 		nl->connection = PLIP_CN_CLOSING;
 		nl->is_deferred = 1;
 		schedule_delayed_work(&nl->deferred, 1);
-		enable_parport_interrupts (dev);
+		enable_parport_पूर्णांकerrupts (dev);
 		ENABLE(dev->irq);
-		return OK;
-	}
-	return OK;
-}
+		वापस OK;
+	पूर्ण
+	वापस OK;
+पूर्ण
 
-static int
-plip_connection_close(struct net_device *dev, struct net_local *nl,
-		      struct plip_local *snd, struct plip_local *rcv)
-{
+अटल पूर्णांक
+plip_connection_बंद(काष्ठा net_device *dev, काष्ठा net_local *nl,
+		      काष्ठा plip_local *snd, काष्ठा plip_local *rcv)
+अणु
 	spin_lock_irq(&nl->lock);
-	if (nl->connection == PLIP_CN_CLOSING) {
+	अगर (nl->connection == PLIP_CN_CLOSING) अणु
 		nl->connection = PLIP_CN_NONE;
-		netif_wake_queue (dev);
-	}
+		netअगर_wake_queue (dev);
+	पूर्ण
 	spin_unlock_irq(&nl->lock);
-	if (nl->should_relinquish) {
+	अगर (nl->should_relinquish) अणु
 		nl->should_relinquish = nl->port_owner = 0;
 		parport_release(nl->pardev);
-	}
-	return OK;
-}
+	पूर्ण
+	वापस OK;
+पूर्ण
 
-/* PLIP_ERROR --- wait till other end settled */
-static int
-plip_error(struct net_device *dev, struct net_local *nl,
-	   struct plip_local *snd, struct plip_local *rcv)
-{
-	unsigned char status;
+/* PLIP_ERROR --- रुको till other end settled */
+अटल पूर्णांक
+plip_error(काष्ठा net_device *dev, काष्ठा net_local *nl,
+	   काष्ठा plip_local *snd, काष्ठा plip_local *rcv)
+अणु
+	अचिन्हित अक्षर status;
 
-	status = read_status(dev);
-	if ((status & 0xf8) == 0x80) {
-		if (net_debug > 2)
-			printk(KERN_DEBUG "%s: reset interface.\n", dev->name);
+	status = पढ़ो_status(dev);
+	अगर ((status & 0xf8) == 0x80) अणु
+		अगर (net_debug > 2)
+			prपूर्णांकk(KERN_DEBUG "%s: reset interface.\n", dev->name);
 		nl->connection = PLIP_CN_NONE;
 		nl->should_relinquish = 0;
-		netif_start_queue (dev);
-		enable_parport_interrupts (dev);
+		netअगर_start_queue (dev);
+		enable_parport_पूर्णांकerrupts (dev);
 		ENABLE(dev->irq);
-		netif_wake_queue (dev);
-	} else {
+		netअगर_wake_queue (dev);
+	पूर्ण अन्यथा अणु
 		nl->is_deferred = 1;
 		schedule_delayed_work(&nl->deferred, 1);
-	}
+	पूर्ण
 
-	return OK;
-}
+	वापस OK;
+पूर्ण
 
-/* Handle the parallel port interrupts. */
-static void
-plip_interrupt(void *dev_id)
-{
-	struct net_device *dev = dev_id;
-	struct net_local *nl;
-	struct plip_local *rcv;
-	unsigned char c0;
-	unsigned long flags;
+/* Handle the parallel port पूर्णांकerrupts. */
+अटल व्योम
+plip_पूर्णांकerrupt(व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा net_local *nl;
+	काष्ठा plip_local *rcv;
+	अचिन्हित अक्षर c0;
+	अचिन्हित दीर्घ flags;
 
 	nl = netdev_priv(dev);
 	rcv = &nl->rcv_data;
 
 	spin_lock_irqsave (&nl->lock, flags);
 
-	c0 = read_status(dev);
-	if ((c0 & 0xf8) != 0xc0) {
-		if ((dev->irq != -1) && (net_debug > 1))
-			printk(KERN_DEBUG "%s: spurious interrupt\n", dev->name);
+	c0 = पढ़ो_status(dev);
+	अगर ((c0 & 0xf8) != 0xc0) अणु
+		अगर ((dev->irq != -1) && (net_debug > 1))
+			prपूर्णांकk(KERN_DEBUG "%s: spurious interrupt\n", dev->name);
 		spin_unlock_irqrestore (&nl->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (net_debug > 3)
-		printk(KERN_DEBUG "%s: interrupt.\n", dev->name);
+	अगर (net_debug > 3)
+		prपूर्णांकk(KERN_DEBUG "%s: interrupt.\n", dev->name);
 
-	switch (nl->connection) {
-	case PLIP_CN_CLOSING:
-		netif_wake_queue (dev);
+	चयन (nl->connection) अणु
+	हाल PLIP_CN_CLOSING:
+		netअगर_wake_queue (dev);
 		fallthrough;
-	case PLIP_CN_NONE:
-	case PLIP_CN_SEND:
+	हाल PLIP_CN_NONE:
+	हाल PLIP_CN_SEND:
 		rcv->state = PLIP_PK_TRIGGER;
 		nl->connection = PLIP_CN_RECEIVE;
-		nl->timeout_count = 0;
+		nl->समयout_count = 0;
 		schedule_work(&nl->immediate);
-		break;
+		अवरोध;
 
-	case PLIP_CN_RECEIVE:
+	हाल PLIP_CN_RECEIVE:
 		/* May occur because there is race condition
-		   around test and set of dev->interrupt.
-		   Ignore this interrupt. */
-		break;
+		   around test and set of dev->पूर्णांकerrupt.
+		   Ignore this पूर्णांकerrupt. */
+		अवरोध;
 
-	case PLIP_CN_ERROR:
-		printk(KERN_ERR "%s: receive interrupt in error state\n", dev->name);
-		break;
-	}
+	हाल PLIP_CN_ERROR:
+		prपूर्णांकk(KERN_ERR "%s: receive interrupt in error state\n", dev->name);
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&nl->lock, flags);
-}
+पूर्ण
 
-static netdev_tx_t
-plip_tx_packet(struct sk_buff *skb, struct net_device *dev)
-{
-	struct net_local *nl = netdev_priv(dev);
-	struct plip_local *snd = &nl->snd_data;
+अटल netdev_tx_t
+plip_tx_packet(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा net_local *nl = netdev_priv(dev);
+	काष्ठा plip_local *snd = &nl->snd_data;
 
-	if (netif_queue_stopped(dev))
-		return NETDEV_TX_BUSY;
+	अगर (netअगर_queue_stopped(dev))
+		वापस NETDEV_TX_BUSY;
 
 	/* We may need to grab the bus */
-	if (!nl->port_owner) {
-		if (parport_claim(nl->pardev))
-			return NETDEV_TX_BUSY;
+	अगर (!nl->port_owner) अणु
+		अगर (parport_claim(nl->pardev))
+			वापस NETDEV_TX_BUSY;
 		nl->port_owner = 1;
-	}
+	पूर्ण
 
-	netif_stop_queue (dev);
+	netअगर_stop_queue (dev);
 
-	if (skb->len > dev->mtu + dev->hard_header_len) {
-		printk(KERN_WARNING "%s: packet too big, %d.\n", dev->name, (int)skb->len);
-		netif_start_queue (dev);
-		return NETDEV_TX_BUSY;
-	}
+	अगर (skb->len > dev->mtu + dev->hard_header_len) अणु
+		prपूर्णांकk(KERN_WARNING "%s: packet too big, %d.\n", dev->name, (पूर्णांक)skb->len);
+		netअगर_start_queue (dev);
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (net_debug > 2)
-		printk(KERN_DEBUG "%s: send request\n", dev->name);
+	अगर (net_debug > 2)
+		prपूर्णांकk(KERN_DEBUG "%s: send request\n", dev->name);
 
 	spin_lock_irq(&nl->lock);
 	snd->skb = skb;
 	snd->length.h = skb->len;
 	snd->state = PLIP_PK_TRIGGER;
-	if (nl->connection == PLIP_CN_NONE) {
+	अगर (nl->connection == PLIP_CN_NONE) अणु
 		nl->connection = PLIP_CN_SEND;
-		nl->timeout_count = 0;
-	}
+		nl->समयout_count = 0;
+	पूर्ण
 	schedule_work(&nl->immediate);
 	spin_unlock_irq(&nl->lock);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void
-plip_rewrite_address(const struct net_device *dev, struct ethhdr *eth)
-{
-	const struct in_device *in_dev;
+अटल व्योम
+plip_reग_लिखो_address(स्थिर काष्ठा net_device *dev, काष्ठा ethhdr *eth)
+अणु
+	स्थिर काष्ठा in_device *in_dev;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	in_dev = __in_dev_get_rcu(dev);
-	if (in_dev) {
-		/* Any address will do - we take the first */
-		const struct in_ifaddr *ifa = rcu_dereference(in_dev->ifa_list);
-		if (ifa) {
-			memcpy(eth->h_source, dev->dev_addr, ETH_ALEN);
-			memset(eth->h_dest, 0xfc, 2);
-			memcpy(eth->h_dest+2, &ifa->ifa_address, 4);
-		}
-	}
-	rcu_read_unlock();
-}
+	अगर (in_dev) अणु
+		/* Any address will करो - we take the first */
+		स्थिर काष्ठा in_अगरaddr *अगरa = rcu_dereference(in_dev->अगरa_list);
+		अगर (अगरa) अणु
+			स_नकल(eth->h_source, dev->dev_addr, ETH_ALEN);
+			स_रखो(eth->h_dest, 0xfc, 2);
+			स_नकल(eth->h_dest+2, &अगरa->अगरa_address, 4);
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int
-plip_hard_header(struct sk_buff *skb, struct net_device *dev,
-		 unsigned short type, const void *daddr,
-		 const void *saddr, unsigned len)
-{
-	int ret;
+अटल पूर्णांक
+plip_hard_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		 अचिन्हित लघु type, स्थिर व्योम *daddr,
+		 स्थिर व्योम *saddr, अचिन्हित len)
+अणु
+	पूर्णांक ret;
 
 	ret = eth_header(skb, dev, type, daddr, saddr, len);
-	if (ret >= 0)
-		plip_rewrite_address (dev, (struct ethhdr *)skb->data);
+	अगर (ret >= 0)
+		plip_reग_लिखो_address (dev, (काष्ठा ethhdr *)skb->data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int plip_hard_header_cache(const struct neighbour *neigh,
-				  struct hh_cache *hh, __be16 type)
-{
-	int ret;
+अटल पूर्णांक plip_hard_header_cache(स्थिर काष्ठा neighbour *neigh,
+				  काष्ठा hh_cache *hh, __be16 type)
+अणु
+	पूर्णांक ret;
 
 	ret = eth_header_cache(neigh, hh, type);
-	if (ret == 0) {
-		struct ethhdr *eth;
+	अगर (ret == 0) अणु
+		काष्ठा ethhdr *eth;
 
-		eth = (struct ethhdr*)(((u8*)hh->hh_data) +
-				       HH_DATA_OFF(sizeof(*eth)));
-		plip_rewrite_address (neigh->dev, eth);
-	}
+		eth = (काष्ठा ethhdr*)(((u8*)hh->hh_data) +
+				       HH_DATA_OFF(माप(*eth)));
+		plip_reग_लिखो_address (neigh->dev, eth);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Open/initialize the board.  This is called (in the current kernel)
-   sometime after booting when the 'ifconfig' program is run.
+   someसमय after booting when the 'ifconfig' program is run.
 
-   This routine gets exclusive access to the parallel port by allocating
+   This routine माला_लो exclusive access to the parallel port by allocating
    its IRQ line.
  */
-static int
-plip_open(struct net_device *dev)
-{
-	struct net_local *nl = netdev_priv(dev);
-	struct in_device *in_dev;
+अटल पूर्णांक
+plip_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_local *nl = netdev_priv(dev);
+	काष्ठा in_device *in_dev;
 
 	/* Grab the port */
-	if (!nl->port_owner) {
-		if (parport_claim(nl->pardev)) return -EAGAIN;
+	अगर (!nl->port_owner) अणु
+		अगर (parport_claim(nl->pardev)) वापस -EAGAIN;
 		nl->port_owner = 1;
-	}
+	पूर्ण
 
 	nl->should_relinquish = 0;
 
 	/* Clear the data port. */
-	write_data (dev, 0x00);
+	ग_लिखो_data (dev, 0x00);
 
-	/* Enable rx interrupt. */
-	enable_parport_interrupts (dev);
-	if (dev->irq == -1)
-	{
-		atomic_set (&nl->kill_timer, 0);
-		schedule_delayed_work(&nl->timer, 1);
-	}
+	/* Enable rx पूर्णांकerrupt. */
+	enable_parport_पूर्णांकerrupts (dev);
+	अगर (dev->irq == -1)
+	अणु
+		atomic_set (&nl->समाप्त_समयr, 0);
+		schedule_delayed_work(&nl->समयr, 1);
+	पूर्ण
 
 	/* Initialize the state machine. */
 	nl->rcv_data.state = nl->snd_data.state = PLIP_PK_DONE;
-	nl->rcv_data.skb = nl->snd_data.skb = NULL;
+	nl->rcv_data.skb = nl->snd_data.skb = शून्य;
 	nl->connection = PLIP_CN_NONE;
 	nl->is_deferred = 0;
 
 	/* Fill in the MAC-level header.
-	   We used to abuse dev->broadcast to store the point-to-point
-	   MAC address, but we no longer do it. Instead, we fetch the
-	   interface address whenever it is needed, which is cheap enough
+	   We used to abuse dev->broadcast to store the poपूर्णांक-to-poपूर्णांक
+	   MAC address, but we no दीर्घer करो it. Instead, we fetch the
+	   पूर्णांकerface address whenever it is needed, which is cheap enough
 	   because we use the hh_cache. Actually, abusing dev->broadcast
-	   didn't work, because when using plip_open the point-to-point
+	   didn't work, because when using plip_खोलो the poपूर्णांक-to-poपूर्णांक
 	   address isn't yet known.
-	   PLIP doesn't have a real MAC address, but we need it to be
+	   PLIP करोesn't have a real MAC address, but we need it to be
 	   DOS compatible, and to properly support taps (otherwise,
 	   when the device address isn't identical to the address of a
 	   received frame, the kernel incorrectly drops it).             */
 
 	in_dev=__in_dev_get_rtnl(dev);
-	if (in_dev) {
-		/* Any address will do - we take the first. We already
+	अगर (in_dev) अणु
+		/* Any address will करो - we take the first. We alपढ़ोy
 		   have the first two bytes filled with 0xfc, from
 		   plip_init_dev(). */
-		const struct in_ifaddr *ifa = rcu_dereference(in_dev->ifa_list);
-		if (ifa != NULL) {
-			memcpy(dev->dev_addr+2, &ifa->ifa_local, 4);
-		}
-	}
+		स्थिर काष्ठा in_अगरaddr *अगरa = rcu_dereference(in_dev->अगरa_list);
+		अगर (अगरa != शून्य) अणु
+			स_नकल(dev->dev_addr+2, &अगरa->अगरa_local, 4);
+		पूर्ण
+	पूर्ण
 
-	netif_start_queue (dev);
+	netअगर_start_queue (dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* The inverse routine to plip_open (). */
-static int
-plip_close(struct net_device *dev)
-{
-	struct net_local *nl = netdev_priv(dev);
-	struct plip_local *snd = &nl->snd_data;
-	struct plip_local *rcv = &nl->rcv_data;
+/* The inverse routine to plip_खोलो (). */
+अटल पूर्णांक
+plip_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_local *nl = netdev_priv(dev);
+	काष्ठा plip_local *snd = &nl->snd_data;
+	काष्ठा plip_local *rcv = &nl->rcv_data;
 
-	netif_stop_queue (dev);
+	netअगर_stop_queue (dev);
 	DISABLE(dev->irq);
 	synchronize_irq(dev->irq);
 
-	if (dev->irq == -1)
-	{
-		init_completion(&nl->killed_timer_cmp);
-		atomic_set (&nl->kill_timer, 1);
-		wait_for_completion(&nl->killed_timer_cmp);
-	}
+	अगर (dev->irq == -1)
+	अणु
+		init_completion(&nl->समाप्तed_समयr_cmp);
+		atomic_set (&nl->समाप्त_समयr, 1);
+		रुको_क्रम_completion(&nl->समाप्तed_समयr_cmp);
+	पूर्ण
 
-#ifdef NOTDEF
+#अगर_घोषित NOTDEF
 	outb(0x00, PAR_DATA(dev));
-#endif
+#पूर्ण_अगर
 	nl->is_deferred = 0;
 	nl->connection = PLIP_CN_NONE;
-	if (nl->port_owner) {
+	अगर (nl->port_owner) अणु
 		parport_release(nl->pardev);
 		nl->port_owner = 0;
-	}
+	पूर्ण
 
 	snd->state = PLIP_PK_DONE;
-	if (snd->skb) {
-		dev_kfree_skb(snd->skb);
-		snd->skb = NULL;
-	}
+	अगर (snd->skb) अणु
+		dev_kमुक्त_skb(snd->skb);
+		snd->skb = शून्य;
+	पूर्ण
 	rcv->state = PLIP_PK_DONE;
-	if (rcv->skb) {
-		kfree_skb(rcv->skb);
-		rcv->skb = NULL;
-	}
+	अगर (rcv->skb) अणु
+		kमुक्त_skb(rcv->skb);
+		rcv->skb = शून्य;
+	पूर्ण
 
-#ifdef NOTDEF
+#अगर_घोषित NOTDEF
 	/* Reset. */
 	outb(0x00, PAR_CONTROL(dev));
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int
-plip_preempt(void *handle)
-{
-	struct net_device *dev = (struct net_device *)handle;
-	struct net_local *nl = netdev_priv(dev);
+अटल पूर्णांक
+plip_preempt(व्योम *handle)
+अणु
+	काष्ठा net_device *dev = (काष्ठा net_device *)handle;
+	काष्ठा net_local *nl = netdev_priv(dev);
 
-	/* Stand our ground if a datagram is on the wire */
-	if (nl->connection != PLIP_CN_NONE) {
+	/* Stand our ground अगर a datagram is on the wire */
+	अगर (nl->connection != PLIP_CN_NONE) अणु
 		nl->should_relinquish = 1;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	nl->port_owner = 0;	/* Remember that we released the bus */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-plip_wakeup(void *handle)
-{
-	struct net_device *dev = (struct net_device *)handle;
-	struct net_local *nl = netdev_priv(dev);
+अटल व्योम
+plip_wakeup(व्योम *handle)
+अणु
+	काष्ठा net_device *dev = (काष्ठा net_device *)handle;
+	काष्ठा net_local *nl = netdev_priv(dev);
 
-	if (nl->port_owner) {
+	अगर (nl->port_owner) अणु
 		/* Why are we being woken up? */
-		printk(KERN_DEBUG "%s: why am I being woken up?\n", dev->name);
-		if (!parport_claim(nl->pardev))
-			/* bus_owner is already set (but why?) */
-			printk(KERN_DEBUG "%s: I'm broken.\n", dev->name);
-		else
-			return;
-	}
+		prपूर्णांकk(KERN_DEBUG "%s: why am I being woken up?\n", dev->name);
+		अगर (!parport_claim(nl->pardev))
+			/* bus_owner is alपढ़ोy set (but why?) */
+			prपूर्णांकk(KERN_DEBUG "%s: I'm broken.\n", dev->name);
+		अन्यथा
+			वापस;
+	पूर्ण
 
-	if (!(dev->flags & IFF_UP))
-		/* Don't need the port when the interface is down */
-		return;
+	अगर (!(dev->flags & IFF_UP))
+		/* Don't need the port when the पूर्णांकerface is करोwn */
+		वापस;
 
-	if (!parport_claim(nl->pardev)) {
+	अगर (!parport_claim(nl->pardev)) अणु
 		nl->port_owner = 1;
 		/* Clear the data port. */
-		write_data (dev, 0x00);
-	}
-}
+		ग_लिखो_data (dev, 0x00);
+	पूर्ण
+पूर्ण
 
-static int
-plip_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-	struct net_local *nl = netdev_priv(dev);
-	struct plipconf *pc = (struct plipconf *) &rq->ifr_ifru;
+अटल पूर्णांक
+plip_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा net_local *nl = netdev_priv(dev);
+	काष्ठा plipconf *pc = (काष्ठा plipconf *) &rq->अगरr_अगरru;
 
-	if (cmd != SIOCDEVPLIP)
-		return -EOPNOTSUPP;
+	अगर (cmd != SIOCDEVPLIP)
+		वापस -EOPNOTSUPP;
 
-	switch(pc->pcmd) {
-	case PLIP_GET_TIMEOUT:
+	चयन(pc->pcmd) अणु
+	हाल PLIP_GET_TIMEOUT:
 		pc->trigger = nl->trigger;
 		pc->nibble  = nl->nibble;
-		break;
-	case PLIP_SET_TIMEOUT:
-		if(!capable(CAP_NET_ADMIN))
-			return -EPERM;
+		अवरोध;
+	हाल PLIP_SET_TIMEOUT:
+		अगर(!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
 		nl->trigger = pc->trigger;
 		nl->nibble  = pc->nibble;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int parport[PLIP_MAX] = { [0 ... PLIP_MAX-1] = -1 };
-static int timid;
+अटल पूर्णांक parport[PLIP_MAX] = अणु [0 ... PLIP_MAX-1] = -1 पूर्ण;
+अटल पूर्णांक timid;
 
-module_param_array(parport, int, NULL, 0);
-module_param(timid, int, 0);
+module_param_array(parport, पूर्णांक, शून्य, 0);
+module_param(timid, पूर्णांक, 0);
 MODULE_PARM_DESC(parport, "List of parport device numbers to use by plip");
 
-static struct net_device *dev_plip[PLIP_MAX] = { NULL, };
+अटल काष्ठा net_device *dev_plip[PLIP_MAX] = अणु शून्य, पूर्ण;
 
-static inline int
-plip_searchfor(int list[], int a)
-{
-	int i;
-	for (i = 0; i < PLIP_MAX && list[i] != -1; i++) {
-		if (list[i] == a) return 1;
-	}
-	return 0;
-}
+अटल अंतरभूत पूर्णांक
+plip_searchक्रम(पूर्णांक list[], पूर्णांक a)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < PLIP_MAX && list[i] != -1; i++) अणु
+		अगर (list[i] == a) वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* plip_attach() is called (by the parport code) when a port is
  * available to use. */
-static void plip_attach (struct parport *port)
-{
-	static int unit;
-	struct net_device *dev;
-	struct net_local *nl;
-	char name[IFNAMSIZ];
-	struct pardev_cb plip_cb;
+अटल व्योम plip_attach (काष्ठा parport *port)
+अणु
+	अटल पूर्णांक unit;
+	काष्ठा net_device *dev;
+	काष्ठा net_local *nl;
+	अक्षर name[IFNAMSIZ];
+	काष्ठा pardev_cb plip_cb;
 
-	if ((parport[0] == -1 && (!timid || !port->devices)) ||
-	    plip_searchfor(parport, port->number)) {
-		if (unit == PLIP_MAX) {
-			printk(KERN_ERR "plip: too many devices\n");
-			return;
-		}
+	अगर ((parport[0] == -1 && (!timid || !port->devices)) ||
+	    plip_searchक्रम(parport, port->number)) अणु
+		अगर (unit == PLIP_MAX) अणु
+			prपूर्णांकk(KERN_ERR "plip: too many devices\n");
+			वापस;
+		पूर्ण
 
-		sprintf(name, "plip%d", unit);
-		dev = alloc_etherdev(sizeof(struct net_local));
-		if (!dev)
-			return;
+		प्र_लिखो(name, "plip%d", unit);
+		dev = alloc_etherdev(माप(काष्ठा net_local));
+		अगर (!dev)
+			वापस;
 
-		strcpy(dev->name, name);
+		म_नकल(dev->name, name);
 
 		dev->irq = port->irq;
 		dev->base_addr = port->base;
-		if (port->irq == -1) {
-			printk(KERN_INFO "plip: %s has no IRQ. Using IRQ-less mode,"
+		अगर (port->irq == -1) अणु
+			prपूर्णांकk(KERN_INFO "plip: %s has no IRQ. Using IRQ-less mode,"
 		                 "which is fairly inefficient!\n", port->name);
-		}
+		पूर्ण
 
 		nl = netdev_priv(dev);
 		nl->dev = dev;
 
-		memset(&plip_cb, 0, sizeof(plip_cb));
-		plip_cb.private = dev;
+		स_रखो(&plip_cb, 0, माप(plip_cb));
+		plip_cb.निजी = dev;
 		plip_cb.preempt = plip_preempt;
 		plip_cb.wakeup = plip_wakeup;
-		plip_cb.irq_func = plip_interrupt;
+		plip_cb.irq_func = plip_पूर्णांकerrupt;
 
-		nl->pardev = parport_register_dev_model(port, dev->name,
+		nl->pardev = parport_रेजिस्टर_dev_model(port, dev->name,
 							&plip_cb, unit);
 
-		if (!nl->pardev) {
-			printk(KERN_ERR "%s: parport_register failed\n", name);
-			goto err_free_dev;
-		}
+		अगर (!nl->pardev) अणु
+			prपूर्णांकk(KERN_ERR "%s: parport_register failed\n", name);
+			जाओ err_मुक्त_dev;
+		पूर्ण
 
 		plip_init_netdev(dev);
 
-		if (register_netdev(dev)) {
-			printk(KERN_ERR "%s: network register failed\n", name);
-			goto err_parport_unregister;
-		}
+		अगर (रेजिस्टर_netdev(dev)) अणु
+			prपूर्णांकk(KERN_ERR "%s: network register failed\n", name);
+			जाओ err_parport_unरेजिस्टर;
+		पूर्ण
 
-		printk(KERN_INFO "%s", version);
-		if (dev->irq != -1)
-			printk(KERN_INFO "%s: Parallel port at %#3lx, "
+		prपूर्णांकk(KERN_INFO "%s", version);
+		अगर (dev->irq != -1)
+			prपूर्णांकk(KERN_INFO "%s: Parallel port at %#3lx, "
 					 "using IRQ %d.\n",
 				         dev->name, dev->base_addr, dev->irq);
-		else
-			printk(KERN_INFO "%s: Parallel port at %#3lx, "
+		अन्यथा
+			prपूर्णांकk(KERN_INFO "%s: Parallel port at %#3lx, "
 					 "not using IRQ.\n",
 					 dev->name, dev->base_addr);
 		dev_plip[unit++] = dev;
-	}
-	return;
+	पूर्ण
+	वापस;
 
-err_parport_unregister:
-	parport_unregister_device(nl->pardev);
-err_free_dev:
-	free_netdev(dev);
-}
+err_parport_unरेजिस्टर:
+	parport_unरेजिस्टर_device(nl->pardev);
+err_मुक्त_dev:
+	मुक्त_netdev(dev);
+पूर्ण
 
 /* plip_detach() is called (by the parport code) when a port is
- * no longer available to use. */
-static void plip_detach (struct parport *port)
-{
-	/* Nothing to do */
-}
+ * no दीर्घer available to use. */
+अटल व्योम plip_detach (काष्ठा parport *port)
+अणु
+	/* Nothing to करो */
+पूर्ण
 
-static int plip_probe(struct pardevice *par_dev)
-{
-	struct device_driver *drv = par_dev->dev.driver;
-	int len = strlen(drv->name);
+अटल पूर्णांक plip_probe(काष्ठा pardevice *par_dev)
+अणु
+	काष्ठा device_driver *drv = par_dev->dev.driver;
+	पूर्णांक len = म_माप(drv->name);
 
-	if (strncmp(par_dev->name, drv->name, len))
-		return -ENODEV;
+	अगर (म_भेदन(par_dev->name, drv->name, len))
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct parport_driver plip_driver = {
+अटल काष्ठा parport_driver plip_driver = अणु
 	.name		= "plip",
 	.probe		= plip_probe,
 	.match_port	= plip_attach,
 	.detach		= plip_detach,
 	.devmodel	= true,
-};
+पूर्ण;
 
-static void __exit plip_cleanup_module (void)
-{
-	struct net_device *dev;
-	int i;
+अटल व्योम __निकास plip_cleanup_module (व्योम)
+अणु
+	काष्ठा net_device *dev;
+	पूर्णांक i;
 
-	for (i=0; i < PLIP_MAX; i++) {
-		if ((dev = dev_plip[i])) {
-			struct net_local *nl = netdev_priv(dev);
-			unregister_netdev(dev);
-			if (nl->port_owner)
+	क्रम (i=0; i < PLIP_MAX; i++) अणु
+		अगर ((dev = dev_plip[i])) अणु
+			काष्ठा net_local *nl = netdev_priv(dev);
+			unरेजिस्टर_netdev(dev);
+			अगर (nl->port_owner)
 				parport_release(nl->pardev);
-			parport_unregister_device(nl->pardev);
-			free_netdev(dev);
-			dev_plip[i] = NULL;
-		}
-	}
+			parport_unरेजिस्टर_device(nl->pardev);
+			मुक्त_netdev(dev);
+			dev_plip[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	parport_unregister_driver(&plip_driver);
-}
+	parport_unरेजिस्टर_driver(&plip_driver);
+पूर्ण
 
-#ifndef MODULE
+#अगर_अघोषित MODULE
 
-static int parport_ptr;
+अटल पूर्णांक parport_ptr;
 
-static int __init plip_setup(char *str)
-{
-	int ints[4];
+अटल पूर्णांक __init plip_setup(अक्षर *str)
+अणु
+	पूर्णांक पूर्णांकs[4];
 
-	str = get_options(str, ARRAY_SIZE(ints), ints);
+	str = get_options(str, ARRAY_SIZE(पूर्णांकs), पूर्णांकs);
 
 	/* Ugh. */
-	if (!strncmp(str, "parport", 7)) {
-		int n = simple_strtoul(str+7, NULL, 10);
-		if (parport_ptr < PLIP_MAX)
+	अगर (!म_भेदन(str, "parport", 7)) अणु
+		पूर्णांक n = simple_म_से_अदीर्घ(str+7, शून्य, 10);
+		अगर (parport_ptr < PLIP_MAX)
 			parport[parport_ptr++] = n;
-		else
-			printk(KERN_INFO "plip: too many ports, %s ignored.\n",
+		अन्यथा
+			prपूर्णांकk(KERN_INFO "plip: too many ports, %s ignored.\n",
 			       str);
-	} else if (!strcmp(str, "timid")) {
+	पूर्ण अन्यथा अगर (!म_भेद(str, "timid")) अणु
 		timid = 1;
-	} else {
-		if (ints[0] == 0 || ints[1] == 0) {
+	पूर्ण अन्यथा अणु
+		अगर (पूर्णांकs[0] == 0 || पूर्णांकs[1] == 0) अणु
 			/* disable driver on "plip=" or "plip=0" */
 			parport[0] = -2;
-		} else {
-			printk(KERN_WARNING "warning: 'plip=0x%x' ignored\n",
-			       ints[1]);
-		}
-	}
-	return 1;
-}
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_WARNING "warning: 'plip=0x%x' ignored\n",
+			       पूर्णांकs[1]);
+		पूर्ण
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 __setup("plip=", plip_setup);
 
-#endif /* !MODULE */
+#पूर्ण_अगर /* !MODULE */
 
-static int __init plip_init (void)
-{
-	if (parport[0] == -2)
-		return 0;
+अटल पूर्णांक __init plip_init (व्योम)
+अणु
+	अगर (parport[0] == -2)
+		वापस 0;
 
-	if (parport[0] != -1 && timid) {
-		printk(KERN_WARNING "plip: warning, ignoring `timid' since specific ports given.\n");
+	अगर (parport[0] != -1 && timid) अणु
+		prपूर्णांकk(KERN_WARNING "plip: warning, ignoring `timid' since specific ports given.\n");
 		timid = 0;
-	}
+	पूर्ण
 
-	if (parport_register_driver (&plip_driver)) {
-		printk (KERN_WARNING "plip: couldn't register driver\n");
-		return 1;
-	}
+	अगर (parport_रेजिस्टर_driver (&plip_driver)) अणु
+		prपूर्णांकk (KERN_WARNING "plip: couldn't register driver\n");
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(plip_init);
-module_exit(plip_cleanup_module);
+module_निकास(plip_cleanup_module);
 MODULE_LICENSE("GPL");

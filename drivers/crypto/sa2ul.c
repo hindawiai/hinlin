@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * K3 SA2UL crypto accelerator driver
  *
@@ -8,68 +9,68 @@
  *		Vitaly Andrianov
  *		Tero Kristo
  */
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/dmapool.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <crypto/aes.h>
-#include <crypto/authenc.h>
-#include <crypto/des.h>
-#include <crypto/internal/aead.h>
-#include <crypto/internal/hash.h>
-#include <crypto/internal/skcipher.h>
-#include <crypto/scatterwalk.h>
-#include <crypto/sha1.h>
-#include <crypto/sha2.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/authenc.h>
+#समावेश <crypto/des.h>
+#समावेश <crypto/पूर्णांकernal/aead.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <crypto/scatterwalk.h>
+#समावेश <crypto/sha1.h>
+#समावेश <crypto/sha2.h>
 
-#include "sa2ul.h"
+#समावेश "sa2ul.h"
 
-/* Byte offset for key in encryption security context */
-#define SC_ENC_KEY_OFFSET (1 + 27 + 4)
-/* Byte offset for Aux-1 in encryption security context */
-#define SC_ENC_AUX1_OFFSET (1 + 27 + 4 + 32)
+/* Byte offset क्रम key in encryption security context */
+#घोषणा SC_ENC_KEY_OFFSET (1 + 27 + 4)
+/* Byte offset क्रम Aux-1 in encryption security context */
+#घोषणा SC_ENC_AUX1_OFFSET (1 + 27 + 4 + 32)
 
-#define SA_CMDL_UPD_ENC         0x0001
-#define SA_CMDL_UPD_AUTH        0x0002
-#define SA_CMDL_UPD_ENC_IV      0x0004
-#define SA_CMDL_UPD_AUTH_IV     0x0008
-#define SA_CMDL_UPD_AUX_KEY     0x0010
+#घोषणा SA_CMDL_UPD_ENC         0x0001
+#घोषणा SA_CMDL_UPD_AUTH        0x0002
+#घोषणा SA_CMDL_UPD_ENC_IV      0x0004
+#घोषणा SA_CMDL_UPD_AUTH_IV     0x0008
+#घोषणा SA_CMDL_UPD_AUX_KEY     0x0010
 
-#define SA_AUTH_SUBKEY_LEN	16
-#define SA_CMDL_PAYLOAD_LENGTH_MASK	0xFFFF
-#define SA_CMDL_SOP_BYPASS_LEN_MASK	0xFF000000
+#घोषणा SA_AUTH_SUBKEY_LEN	16
+#घोषणा SA_CMDL_PAYLOAD_LENGTH_MASK	0xFFFF
+#घोषणा SA_CMDL_SOP_BYPASS_LEN_MASK	0xFF000000
 
-#define MODE_CONTROL_BYTES	27
-#define SA_HASH_PROCESSING	0
-#define SA_CRYPTO_PROCESSING	0
-#define SA_UPLOAD_HASH_TO_TLR	BIT(6)
+#घोषणा MODE_CONTROL_BYTES	27
+#घोषणा SA_HASH_PROCESSING	0
+#घोषणा SA_CRYPTO_PROCESSING	0
+#घोषणा SA_UPLOAD_HASH_TO_TLR	BIT(6)
 
-#define SA_SW0_FLAGS_MASK	0xF0000
-#define SA_SW0_CMDL_INFO_MASK	0x1F00000
-#define SA_SW0_CMDL_PRESENT	BIT(4)
-#define SA_SW0_ENG_ID_MASK	0x3E000000
-#define SA_SW0_DEST_INFO_PRESENT	BIT(30)
-#define SA_SW2_EGRESS_LENGTH		0xFF000000
-#define SA_BASIC_HASH		0x10
+#घोषणा SA_SW0_FLAGS_MASK	0xF0000
+#घोषणा SA_SW0_CMDL_INFO_MASK	0x1F00000
+#घोषणा SA_SW0_CMDL_PRESENT	BIT(4)
+#घोषणा SA_SW0_ENG_ID_MASK	0x3E000000
+#घोषणा SA_SW0_DEST_INFO_PRESENT	BIT(30)
+#घोषणा SA_SW2_EGRESS_LENGTH		0xFF000000
+#घोषणा SA_BASIC_HASH		0x10
 
-#define SHA256_DIGEST_WORDS    8
+#घोषणा SHA256_DIGEST_WORDS    8
 /* Make 32-bit word from 4 bytes */
-#define SA_MK_U32(b0, b1, b2, b3) (((b0) << 24) | ((b1) << 16) | \
+#घोषणा SA_MK_U32(b0, b1, b2, b3) (((b0) << 24) | ((b1) << 16) | \
 				   ((b2) << 8) | (b3))
 
-/* size of SCCTL structure in bytes */
-#define SA_SCCTL_SZ 16
+/* size of SCCTL काष्ठाure in bytes */
+#घोषणा SA_SCCTL_SZ 16
 
 /* Max Authentication tag size */
-#define SA_MAX_AUTH_TAG_SZ 64
+#घोषणा SA_MAX_AUTH_TAG_SZ 64
 
-enum sa_algo_id {
+क्रमागत sa_algo_id अणु
 	SA_ALG_CBC_AES = 0,
 	SA_ALG_EBC_AES,
 	SA_ALG_CBC_DES3,
@@ -79,57 +80,57 @@ enum sa_algo_id {
 	SA_ALG_SHA512,
 	SA_ALG_AUTHENC_SHA1_AES,
 	SA_ALG_AUTHENC_SHA256_AES,
-};
+पूर्ण;
 
-struct sa_match_data {
+काष्ठा sa_match_data अणु
 	u8 priv;
 	u8 priv_id;
 	u32 supported_algos;
 	bool skip_engine_control;
-};
+पूर्ण;
 
-static struct device *sa_k3_dev;
+अटल काष्ठा device *sa_k3_dev;
 
 /**
- * struct sa_cmdl_cfg - Command label configuration descriptor
+ * काष्ठा sa_cmdl_cfg - Command label configuration descriptor
  * @aalg: authentication algorithm ID
  * @enc_eng_id: Encryption Engine ID supported by the SA hardware
  * @auth_eng_id: Authentication Engine ID
  * @iv_size: Initialization Vector size
  * @akey: Authentication key
  * @akey_len: Authentication key length
- * @enc: True, if this is an encode request
+ * @enc: True, अगर this is an encode request
  */
-struct sa_cmdl_cfg {
-	int aalg;
+काष्ठा sa_cmdl_cfg अणु
+	पूर्णांक aalg;
 	u8 enc_eng_id;
 	u8 auth_eng_id;
 	u8 iv_size;
-	const u8 *akey;
+	स्थिर u8 *akey;
 	u16 akey_len;
 	bool enc;
-};
+पूर्ण;
 
 /**
- * struct algo_data - Crypto algorithm specific data
- * @enc_eng: Encryption engine info structure
- * @auth_eng: Authentication engine info structure
+ * काष्ठा algo_data - Crypto algorithm specअगरic data
+ * @enc_eng: Encryption engine info काष्ठाure
+ * @auth_eng: Authentication engine info काष्ठाure
  * @auth_ctrl: Authentication control word
  * @hash_size: Size of digest
  * @iv_idx: iv index in psdata
  * @iv_out_size: iv out size
  * @ealg_id: Encryption Algorithm ID
  * @aalg_id: Authentication algorithm ID
- * @mci_enc: Mode Control Instruction for Encryption algorithm
- * @mci_dec: Mode Control Instruction for Decryption
+ * @mci_enc: Mode Control Inकाष्ठाion क्रम Encryption algorithm
+ * @mci_dec: Mode Control Inकाष्ठाion क्रम Decryption
  * @inv_key: Whether the encryption algorithm demands key inversion
- * @ctx: Pointer to the algorithm context
+ * @ctx: Poपूर्णांकer to the algorithm context
  * @keyed_mac: Whether the authentication algorithm has key
- * @prep_iopad: Function pointer to generate intermediate ipad/opad
+ * @prep_iopad: Function poपूर्णांकer to generate पूर्णांकermediate ipad/opad
  */
-struct algo_data {
-	struct sa_eng_info enc_eng;
-	struct sa_eng_info auth_eng;
+काष्ठा algo_data अणु
+	काष्ठा sa_eng_info enc_eng;
+	काष्ठा sa_eng_info auth_eng;
 	u8 auth_ctrl;
 	u8 hash_size;
 	u8 iv_idx;
@@ -139,66 +140,66 @@ struct algo_data {
 	u8 *mci_enc;
 	u8 *mci_dec;
 	bool inv_key;
-	struct sa_tfm_ctx *ctx;
+	काष्ठा sa_tfm_ctx *ctx;
 	bool keyed_mac;
-	void (*prep_iopad)(struct algo_data *algo, const u8 *key,
+	व्योम (*prep_iopad)(काष्ठा algo_data *algo, स्थिर u8 *key,
 			   u16 key_sz, __be32 *ipad, __be32 *opad);
-};
+पूर्ण;
 
 /**
- * struct sa_alg_tmpl: A generic template encompassing crypto/aead algorithms
+ * काष्ठा sa_alg_पंचांगpl: A generic ढाँचा encompassing crypto/aead algorithms
  * @type: Type of the crypto algorithm.
  * @alg: Union of crypto algorithm definitions.
- * @registered: Flag indicating if the crypto algorithm is already registered
+ * @रेजिस्टरed: Flag indicating अगर the crypto algorithm is alपढ़ोy रेजिस्टरed
  */
-struct sa_alg_tmpl {
+काष्ठा sa_alg_पंचांगpl अणु
 	u32 type;		/* CRYPTO_ALG_TYPE from <linux/crypto.h> */
-	union {
-		struct skcipher_alg skcipher;
-		struct ahash_alg ahash;
-		struct aead_alg aead;
-	} alg;
-	bool registered;
-};
+	जोड़ अणु
+		काष्ठा skcipher_alg skcipher;
+		काष्ठा ahash_alg ahash;
+		काष्ठा aead_alg aead;
+	पूर्ण alg;
+	bool रेजिस्टरed;
+पूर्ण;
 
 /**
- * struct sa_mapped_sg: scatterlist information for tx and rx
- * @mapped: Set to true if the @sgt is mapped
- * @dir: mapping direction used for @sgt
- * @split_sg: Set if the sg is split and needs to be freed up
- * @static_sg: Static scatterlist entry for overriding data
- * @sgt: scatterlist table for DMA API use
+ * काष्ठा sa_mapped_sg: scatterlist inक्रमmation क्रम tx and rx
+ * @mapped: Set to true अगर the @sgt is mapped
+ * @dir: mapping direction used क्रम @sgt
+ * @split_sg: Set अगर the sg is split and needs to be मुक्तd up
+ * @अटल_sg: Static scatterlist entry क्रम overriding data
+ * @sgt: scatterlist table क्रम DMA API use
  */
-struct sa_mapped_sg {
+काष्ठा sa_mapped_sg अणु
 	bool mapped;
-	enum dma_data_direction dir;
-	struct scatterlist static_sg;
-	struct scatterlist *split_sg;
-	struct sg_table sgt;
-};
+	क्रमागत dma_data_direction dir;
+	काष्ठा scatterlist अटल_sg;
+	काष्ठा scatterlist *split_sg;
+	काष्ठा sg_table sgt;
+पूर्ण;
 /**
- * struct sa_rx_data: RX Packet miscellaneous data place holder
- * @req: crypto request data pointer
- * @ddev: pointer to the DMA device
- * @tx_in: dma_async_tx_descriptor pointer for rx channel
- * @mapped_sg: Information on tx (0) and rx (1) scatterlist DMA mapping
+ * काष्ठा sa_rx_data: RX Packet miscellaneous data place holder
+ * @req: crypto request data poपूर्णांकer
+ * @ddev: poपूर्णांकer to the DMA device
+ * @tx_in: dma_async_tx_descriptor poपूर्णांकer क्रम rx channel
+ * @mapped_sg: Inक्रमmation on tx (0) and rx (1) scatterlist DMA mapping
  * @enc: Flag indicating either encryption or decryption
  * @enc_iv_size: Initialisation vector size
  * @iv_idx: Initialisation vector index
  */
-struct sa_rx_data {
-	void *req;
-	struct device *ddev;
-	struct dma_async_tx_descriptor *tx_in;
-	struct sa_mapped_sg mapped_sg[2];
+काष्ठा sa_rx_data अणु
+	व्योम *req;
+	काष्ठा device *ddev;
+	काष्ठा dma_async_tx_descriptor *tx_in;
+	काष्ठा sa_mapped_sg mapped_sg[2];
 	u8 enc;
 	u8 enc_iv_size;
 	u8 iv_idx;
-};
+पूर्ण;
 
 /**
- * struct sa_req: SA request definition
- * @dev: device for the request
+ * काष्ठा sa_req: SA request definition
+ * @dev: device क्रम the request
  * @size: total data to the xmitted via DMA
  * @enc_offset: offset of cipher data
  * @enc_size: data to be passed to cipher engine
@@ -206,18 +207,18 @@ struct sa_rx_data {
  * @auth_offset: offset of the authentication data
  * @auth_size: size of the authentication data
  * @auth_iv: authentication IV
- * @type: algorithm type for the request
- * @cmdl: command label pointer
- * @base: pointer to the base request
- * @ctx: pointer to the algorithm context data
- * @enc: true if this is an encode request
+ * @type: algorithm type क्रम the request
+ * @cmdl: command label poपूर्णांकer
+ * @base: poपूर्णांकer to the base request
+ * @ctx: poपूर्णांकer to the algorithm context data
+ * @enc: true अगर this is an encode request
  * @src: source data
  * @dst: destination data
- * @callback: DMA callback for the request
+ * @callback: DMA callback क्रम the request
  * @mdata_size: metadata size passed to DMA
  */
-struct sa_req {
-	struct device *dev;
+काष्ठा sa_req अणु
+	काष्ठा device *dev;
 	u16 size;
 	u8 enc_offset;
 	u16 enc_size;
@@ -227,221 +228,221 @@ struct sa_req {
 	u8 *auth_iv;
 	u32 type;
 	u32 *cmdl;
-	struct crypto_async_request *base;
-	struct sa_tfm_ctx *ctx;
+	काष्ठा crypto_async_request *base;
+	काष्ठा sa_tfm_ctx *ctx;
 	bool enc;
-	struct scatterlist *src;
-	struct scatterlist *dst;
+	काष्ठा scatterlist *src;
+	काष्ठा scatterlist *dst;
 	dma_async_tx_callback callback;
 	u16 mdata_size;
-};
+पूर्ण;
 
 /*
- * Mode Control Instructions for various Key lengths 128, 192, 256
- * For CBC (Cipher Block Chaining) mode for encryption
+ * Mode Control Inकाष्ठाions क्रम various Key lengths 128, 192, 256
+ * For CBC (Cipher Block Chaining) mode क्रम encryption
  */
-static u8 mci_cbc_enc_array[3][MODE_CONTROL_BYTES] = {
-	{	0x61, 0x00, 0x00, 0x18, 0x88, 0x0a, 0xaa, 0x4b, 0x7e, 0x00,
+अटल u8 mci_cbc_enc_array[3][MODE_CONTROL_BYTES] = अणु
+	अणु	0x61, 0x00, 0x00, 0x18, 0x88, 0x0a, 0xaa, 0x4b, 0x7e, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x61, 0x00, 0x00, 0x18, 0x88, 0x4a, 0xaa, 0x4b, 0x7e, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x61, 0x00, 0x00, 0x18, 0x88, 0x4a, 0xaa, 0x4b, 0x7e, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x61, 0x00, 0x00, 0x18, 0x88, 0x8a, 0xaa, 0x4b, 0x7e, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x61, 0x00, 0x00, 0x18, 0x88, 0x8a, 0xaa, 0x4b, 0x7e, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-};
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+पूर्ण;
 
 /*
- * Mode Control Instructions for various Key lengths 128, 192, 256
- * For CBC (Cipher Block Chaining) mode for decryption
+ * Mode Control Inकाष्ठाions क्रम various Key lengths 128, 192, 256
+ * For CBC (Cipher Block Chaining) mode क्रम decryption
  */
-static u8 mci_cbc_dec_array[3][MODE_CONTROL_BYTES] = {
-	{	0x71, 0x00, 0x00, 0x80, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
+अटल u8 mci_cbc_dec_array[3][MODE_CONTROL_BYTES] = अणु
+	अणु	0x71, 0x00, 0x00, 0x80, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x71, 0x00, 0x00, 0x84, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x71, 0x00, 0x00, 0x84, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x71, 0x00, 0x00, 0x88, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x71, 0x00, 0x00, 0x88, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-};
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+पूर्ण;
 
 /*
- * Mode Control Instructions for various Key lengths 128, 192, 256
- * For CBC (Cipher Block Chaining) mode for encryption
+ * Mode Control Inकाष्ठाions क्रम various Key lengths 128, 192, 256
+ * For CBC (Cipher Block Chaining) mode क्रम encryption
  */
-static u8 mci_cbc_enc_no_iv_array[3][MODE_CONTROL_BYTES] = {
-	{	0x21, 0x00, 0x00, 0x18, 0x88, 0x0a, 0xaa, 0x4b, 0x7e, 0x00,
+अटल u8 mci_cbc_enc_no_iv_array[3][MODE_CONTROL_BYTES] = अणु
+	अणु	0x21, 0x00, 0x00, 0x18, 0x88, 0x0a, 0xaa, 0x4b, 0x7e, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x21, 0x00, 0x00, 0x18, 0x88, 0x4a, 0xaa, 0x4b, 0x7e, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x21, 0x00, 0x00, 0x18, 0x88, 0x4a, 0xaa, 0x4b, 0x7e, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x21, 0x00, 0x00, 0x18, 0x88, 0x8a, 0xaa, 0x4b, 0x7e, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x21, 0x00, 0x00, 0x18, 0x88, 0x8a, 0xaa, 0x4b, 0x7e, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-};
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+पूर्ण;
 
 /*
- * Mode Control Instructions for various Key lengths 128, 192, 256
- * For CBC (Cipher Block Chaining) mode for decryption
+ * Mode Control Inकाष्ठाions क्रम various Key lengths 128, 192, 256
+ * For CBC (Cipher Block Chaining) mode क्रम decryption
  */
-static u8 mci_cbc_dec_no_iv_array[3][MODE_CONTROL_BYTES] = {
-	{	0x31, 0x00, 0x00, 0x80, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
+अटल u8 mci_cbc_dec_no_iv_array[3][MODE_CONTROL_BYTES] = अणु
+	अणु	0x31, 0x00, 0x00, 0x80, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x31, 0x00, 0x00, 0x84, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x31, 0x00, 0x00, 0x84, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x31, 0x00, 0x00, 0x88, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x31, 0x00, 0x00, 0x88, 0x8a, 0xca, 0x98, 0xf4, 0x40, 0xc0,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-};
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+पूर्ण;
 
 /*
- * Mode Control Instructions for various Key lengths 128, 192, 256
- * For ECB (Electronic Code Book) mode for encryption
+ * Mode Control Inकाष्ठाions क्रम various Key lengths 128, 192, 256
+ * For ECB (Electronic Code Book) mode क्रम encryption
  */
-static u8 mci_ecb_enc_array[3][27] = {
-	{	0x21, 0x00, 0x00, 0x80, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
+अटल u8 mci_ecb_enc_array[3][27] = अणु
+	अणु	0x21, 0x00, 0x00, 0x80, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x21, 0x00, 0x00, 0x84, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x21, 0x00, 0x00, 0x84, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x21, 0x00, 0x00, 0x88, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x21, 0x00, 0x00, 0x88, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-};
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+पूर्ण;
 
 /*
- * Mode Control Instructions for various Key lengths 128, 192, 256
- * For ECB (Electronic Code Book) mode for decryption
+ * Mode Control Inकाष्ठाions क्रम various Key lengths 128, 192, 256
+ * For ECB (Electronic Code Book) mode क्रम decryption
  */
-static u8 mci_ecb_dec_array[3][27] = {
-	{	0x31, 0x00, 0x00, 0x80, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
+अटल u8 mci_ecb_dec_array[3][27] = अणु
+	अणु	0x31, 0x00, 0x00, 0x80, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x31, 0x00, 0x00, 0x84, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x31, 0x00, 0x00, 0x84, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-	{	0x31, 0x00, 0x00, 0x88, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+	अणु	0x31, 0x00, 0x00, 0x88, 0x8a, 0x04, 0xb7, 0x90, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	},
-};
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00	पूर्ण,
+पूर्ण;
 
 /*
- * Mode Control Instructions for DES algorithm
+ * Mode Control Inकाष्ठाions क्रम DES algorithm
  * For CBC (Cipher Block Chaining) mode and ECB mode
- * encryption and for decryption respectively
+ * encryption and क्रम decryption respectively
  */
-static u8 mci_cbc_3des_enc_array[MODE_CONTROL_BYTES] = {
+अटल u8 mci_cbc_3des_enc_array[MODE_CONTROL_BYTES] = अणु
 	0x60, 0x00, 0x00, 0x18, 0x88, 0x52, 0xaa, 0x4b, 0x7e, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-static u8 mci_cbc_3des_dec_array[MODE_CONTROL_BYTES] = {
+अटल u8 mci_cbc_3des_dec_array[MODE_CONTROL_BYTES] = अणु
 	0x70, 0x00, 0x00, 0x85, 0x0a, 0xca, 0x98, 0xf4, 0x40, 0xc0, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-static u8 mci_ecb_3des_enc_array[MODE_CONTROL_BYTES] = {
+अटल u8 mci_ecb_3des_enc_array[MODE_CONTROL_BYTES] = अणु
 	0x20, 0x00, 0x00, 0x85, 0x0a, 0x04, 0xb7, 0x90, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-static u8 mci_ecb_3des_dec_array[MODE_CONTROL_BYTES] = {
+अटल u8 mci_ecb_3des_dec_array[MODE_CONTROL_BYTES] = अणु
 	0x30, 0x00, 0x00, 0x85, 0x0a, 0x04, 0xb7, 0x90, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00,
-};
+पूर्ण;
 
 /*
- * Perform 16 byte or 128 bit swizzling
+ * Perक्रमm 16 byte or 128 bit swizzling
  * The SA2UL Expects the security context to
  * be in little Endian and the bus width is 128 bits or 16 bytes
- * Hence swap 16 bytes at a time from higher to lower address
+ * Hence swap 16 bytes at a समय from higher to lower address
  */
-static void sa_swiz_128(u8 *in, u16 len)
-{
+अटल व्योम sa_swiz_128(u8 *in, u16 len)
+अणु
 	u8 data[16];
-	int i, j;
+	पूर्णांक i, j;
 
-	for (i = 0; i < len; i += 16) {
-		memcpy(data, &in[i], 16);
-		for (j = 0; j < 16; j++)
+	क्रम (i = 0; i < len; i += 16) अणु
+		स_नकल(data, &in[i], 16);
+		क्रम (j = 0; j < 16; j++)
 			in[i + j] = data[15 - j];
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Prepare the ipad and opad from key as per SHA algorithm step 1*/
-static void prepare_kipad(u8 *k_ipad, const u8 *key, u16 key_sz)
-{
-	int i;
+अटल व्योम prepare_kipad(u8 *k_ipad, स्थिर u8 *key, u16 key_sz)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < key_sz; i++)
+	क्रम (i = 0; i < key_sz; i++)
 		k_ipad[i] = key[i] ^ 0x36;
 
 	/* Instead of XOR with 0 */
-	for (; i < SHA1_BLOCK_SIZE; i++)
+	क्रम (; i < SHA1_BLOCK_SIZE; i++)
 		k_ipad[i] = 0x36;
-}
+पूर्ण
 
-static void prepare_kopad(u8 *k_opad, const u8 *key, u16 key_sz)
-{
-	int i;
+अटल व्योम prepare_kopad(u8 *k_opad, स्थिर u8 *key, u16 key_sz)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < key_sz; i++)
+	क्रम (i = 0; i < key_sz; i++)
 		k_opad[i] = key[i] ^ 0x5c;
 
 	/* Instead of XOR with 0 */
-	for (; i < SHA1_BLOCK_SIZE; i++)
+	क्रम (; i < SHA1_BLOCK_SIZE; i++)
 		k_opad[i] = 0x5c;
-}
+पूर्ण
 
-static void sa_export_shash(void *state, struct shash_desc *hash,
-			    int digest_size, __be32 *out)
-{
-	struct sha1_state *sha1;
-	struct sha256_state *sha256;
+अटल व्योम sa_export_shash(व्योम *state, काष्ठा shash_desc *hash,
+			    पूर्णांक digest_size, __be32 *out)
+अणु
+	काष्ठा sha1_state *sha1;
+	काष्ठा sha256_state *sha256;
 	u32 *result;
 
-	switch (digest_size) {
-	case SHA1_DIGEST_SIZE:
+	चयन (digest_size) अणु
+	हाल SHA1_DIGEST_SIZE:
 		sha1 = state;
 		result = sha1->state;
-		break;
-	case SHA256_DIGEST_SIZE:
+		अवरोध;
+	हाल SHA256_DIGEST_SIZE:
 		sha256 = state;
 		result = sha256->state;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(sa_k3_dev, "%s: bad digest_size=%d\n", __func__,
 			digest_size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	crypto_shash_export(hash, state);
 
 	cpu_to_be32_array(out, result, digest_size / 4);
-}
+पूर्ण
 
-static void sa_prepare_iopads(struct algo_data *data, const u8 *key,
+अटल व्योम sa_prepare_iopads(काष्ठा algo_data *data, स्थिर u8 *key,
 			      u16 key_sz, __be32 *ipad, __be32 *opad)
-{
+अणु
 	SHASH_DESC_ON_STACK(shash, data->ctx->shash);
-	int block_size = crypto_shash_blocksize(data->ctx->shash);
-	int digest_size = crypto_shash_digestsize(data->ctx->shash);
-	union {
-		struct sha1_state sha1;
-		struct sha256_state sha256;
+	पूर्णांक block_size = crypto_shash_blocksize(data->ctx->shash);
+	पूर्णांक digest_size = crypto_shash_digestsize(data->ctx->shash);
+	जोड़ अणु
+		काष्ठा sha1_state sha1;
+		काष्ठा sha256_state sha256;
 		u8 k_pad[SHA1_BLOCK_SIZE];
-	} sha;
+	पूर्ण sha;
 
 	shash->tfm = data->ctx->shash;
 
@@ -458,81 +459,81 @@ static void sa_prepare_iopads(struct algo_data *data, const u8 *key,
 
 	sa_export_shash(&sha, shash, digest_size, opad);
 
-	memzero_explicit(&sha, sizeof(sha));
-}
+	memzero_explicit(&sha, माप(sha));
+पूर्ण
 
 /* Derive the inverse key used in AES-CBC decryption operation */
-static inline int sa_aes_inv_key(u8 *inv_key, const u8 *key, u16 key_sz)
-{
-	struct crypto_aes_ctx ctx;
-	int key_pos;
+अटल अंतरभूत पूर्णांक sa_aes_inv_key(u8 *inv_key, स्थिर u8 *key, u16 key_sz)
+अणु
+	काष्ठा crypto_aes_ctx ctx;
+	पूर्णांक key_pos;
 
-	if (aes_expandkey(&ctx, key, key_sz)) {
+	अगर (aes_expandkey(&ctx, key, key_sz)) अणु
 		dev_err(sa_k3_dev, "%s: bad key len(%d)\n", __func__, key_sz);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* work around to get the right inverse for AES_KEYSIZE_192 size keys */
-	if (key_sz == AES_KEYSIZE_192) {
+	/* work around to get the right inverse क्रम AES_KEYSIZE_192 size keys */
+	अगर (key_sz == AES_KEYSIZE_192) अणु
 		ctx.key_enc[52] = ctx.key_enc[51] ^ ctx.key_enc[46];
 		ctx.key_enc[53] = ctx.key_enc[52] ^ ctx.key_enc[47];
-	}
+	पूर्ण
 
 	/* Based crypto_aes_expand_key logic */
-	switch (key_sz) {
-	case AES_KEYSIZE_128:
-	case AES_KEYSIZE_192:
+	चयन (key_sz) अणु
+	हाल AES_KEYSIZE_128:
+	हाल AES_KEYSIZE_192:
 		key_pos = key_sz + 24;
-		break;
+		अवरोध;
 
-	case AES_KEYSIZE_256:
+	हाल AES_KEYSIZE_256:
 		key_pos = key_sz + 24 - 4;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(sa_k3_dev, "%s: bad key len(%d)\n", __func__, key_sz);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memcpy(inv_key, &ctx.key_enc[key_pos], key_sz);
-	return 0;
-}
+	स_नकल(inv_key, &ctx.key_enc[key_pos], key_sz);
+	वापस 0;
+पूर्ण
 
-/* Set Security context for the encryption engine */
-static int sa_set_sc_enc(struct algo_data *ad, const u8 *key, u16 key_sz,
+/* Set Security context क्रम the encryption engine */
+अटल पूर्णांक sa_set_sc_enc(काष्ठा algo_data *ad, स्थिर u8 *key, u16 key_sz,
 			 u8 enc, u8 *sc_buf)
-{
-	const u8 *mci = NULL;
+अणु
+	स्थिर u8 *mci = शून्य;
 
 	/* Set Encryption mode selector to crypto processing */
 	sc_buf[0] = SA_CRYPTO_PROCESSING;
 
-	if (enc)
+	अगर (enc)
 		mci = ad->mci_enc;
-	else
+	अन्यथा
 		mci = ad->mci_dec;
-	/* Set the mode control instructions in security context */
-	if (mci)
-		memcpy(&sc_buf[1], mci, MODE_CONTROL_BYTES);
+	/* Set the mode control inकाष्ठाions in security context */
+	अगर (mci)
+		स_नकल(&sc_buf[1], mci, MODE_CONTROL_BYTES);
 
 	/* For AES-CBC decryption get the inverse key */
-	if (ad->inv_key && !enc) {
-		if (sa_aes_inv_key(&sc_buf[SC_ENC_KEY_OFFSET], key, key_sz))
-			return -EINVAL;
-	/* For all other cases: key is used */
-	} else {
-		memcpy(&sc_buf[SC_ENC_KEY_OFFSET], key, key_sz);
-	}
+	अगर (ad->inv_key && !enc) अणु
+		अगर (sa_aes_inv_key(&sc_buf[SC_ENC_KEY_OFFSET], key, key_sz))
+			वापस -EINVAL;
+	/* For all other हालs: key is used */
+	पूर्ण अन्यथा अणु
+		स_नकल(&sc_buf[SC_ENC_KEY_OFFSET], key, key_sz);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Set Security context for the authentication engine */
-static void sa_set_sc_auth(struct algo_data *ad, const u8 *key, u16 key_sz,
+/* Set Security context क्रम the authentication engine */
+अटल व्योम sa_set_sc_auth(काष्ठा algo_data *ad, स्थिर u8 *key, u16 key_sz,
 			   u8 *sc_buf)
-{
-	__be32 *ipad = (void *)(sc_buf + 32);
-	__be32 *opad = (void *)(sc_buf + 64);
+अणु
+	__be32 *ipad = (व्योम *)(sc_buf + 32);
+	__be32 *opad = (व्योम *)(sc_buf + 64);
 
 	/* Set Authentication mode selector to hash processing */
 	sc_buf[0] = SA_HASH_PROCESSING;
@@ -541,55 +542,55 @@ static void sa_set_sc_auth(struct algo_data *ad, const u8 *key, u16 key_sz,
 	sc_buf[1] |= ad->auth_ctrl;
 
 	/* Copy the keys or ipad/opad */
-	if (ad->keyed_mac)
+	अगर (ad->keyed_mac)
 		ad->prep_iopad(ad, key, key_sz, ipad, opad);
-	else {
+	अन्यथा अणु
 		/* basic hash */
 		sc_buf[1] |= SA_BASIC_HASH;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void sa_copy_iv(__be32 *out, const u8 *iv, bool size16)
-{
-	int j;
+अटल अंतरभूत व्योम sa_copy_iv(__be32 *out, स्थिर u8 *iv, bool size16)
+अणु
+	पूर्णांक j;
 
-	for (j = 0; j < ((size16) ? 4 : 2); j++) {
+	क्रम (j = 0; j < ((size16) ? 4 : 2); j++) अणु
 		*out = cpu_to_be32(*((u32 *)iv));
 		iv += 4;
 		out++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Format general command label */
-static int sa_format_cmdl_gen(struct sa_cmdl_cfg *cfg, u8 *cmdl,
-			      struct sa_cmdl_upd_info *upd_info)
-{
+अटल पूर्णांक sa_क्रमmat_cmdl_gen(काष्ठा sa_cmdl_cfg *cfg, u8 *cmdl,
+			      काष्ठा sa_cmdl_upd_info *upd_info)
+अणु
 	u8 enc_offset = 0, auth_offset = 0, total = 0;
 	u8 enc_next_eng = SA_ENG_ID_OUTPORT2;
 	u8 auth_next_eng = SA_ENG_ID_OUTPORT2;
 	u32 *word_ptr = (u32 *)cmdl;
-	int i;
+	पूर्णांक i;
 
 	/* Clear the command label */
-	memzero_explicit(cmdl, (SA_MAX_CMDL_WORDS * sizeof(u32)));
+	memzero_explicit(cmdl, (SA_MAX_CMDL_WORDS * माप(u32)));
 
-	/* Iniialize the command update structure */
-	memzero_explicit(upd_info, sizeof(*upd_info));
+	/* Iniialize the command update काष्ठाure */
+	memzero_explicit(upd_info, माप(*upd_info));
 
-	if (cfg->enc_eng_id && cfg->auth_eng_id) {
-		if (cfg->enc) {
+	अगर (cfg->enc_eng_id && cfg->auth_eng_id) अणु
+		अगर (cfg->enc) अणु
 			auth_offset = SA_CMDL_HEADER_SIZE_BYTES;
 			enc_next_eng = cfg->auth_eng_id;
 
-			if (cfg->iv_size)
+			अगर (cfg->iv_size)
 				auth_offset += cfg->iv_size;
-		} else {
+		पूर्ण अन्यथा अणु
 			enc_offset = SA_CMDL_HEADER_SIZE_BYTES;
 			auth_next_eng = cfg->enc_eng_id;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (cfg->enc_eng_id) {
+	अगर (cfg->enc_eng_id) अणु
 		upd_info->flags |= SA_CMDL_UPD_ENC;
 		upd_info->enc_size.index = enc_offset >> 2;
 		upd_info->enc_offset.index = upd_info->enc_size.index + 1;
@@ -597,7 +598,7 @@ static int sa_format_cmdl_gen(struct sa_cmdl_cfg *cfg, u8 *cmdl,
 		cmdl[enc_offset + SA_CMDL_OFFSET_NESC] = enc_next_eng;
 
 		/* Encryption modes requiring IV */
-		if (cfg->iv_size) {
+		अगर (cfg->iv_size) अणु
 			upd_info->flags |= SA_CMDL_UPD_ENC_IV;
 			upd_info->enc_iv.index =
 				(enc_offset + SA_CMDL_HEADER_SIZE_BYTES) >> 2;
@@ -609,14 +610,14 @@ static int sa_format_cmdl_gen(struct sa_cmdl_cfg *cfg, u8 *cmdl,
 			cmdl[enc_offset + SA_CMDL_OFFSET_OPTION_CTRL1] =
 				(SA_CTX_ENC_AUX2_OFFSET | (cfg->iv_size >> 3));
 			total += SA_CMDL_HEADER_SIZE_BYTES + cfg->iv_size;
-		} else {
+		पूर्ण अन्यथा अणु
 			cmdl[enc_offset + SA_CMDL_OFFSET_LABEL_LEN] =
 						SA_CMDL_HEADER_SIZE_BYTES;
 			total += SA_CMDL_HEADER_SIZE_BYTES;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (cfg->auth_eng_id) {
+	अगर (cfg->auth_eng_id) अणु
 		upd_info->flags |= SA_CMDL_UPD_AUTH;
 		upd_info->auth_size.index = auth_offset >> 2;
 		upd_info->auth_offset.index = upd_info->auth_size.index + 1;
@@ -624,23 +625,23 @@ static int sa_format_cmdl_gen(struct sa_cmdl_cfg *cfg, u8 *cmdl,
 		cmdl[auth_offset + SA_CMDL_OFFSET_LABEL_LEN] =
 			SA_CMDL_HEADER_SIZE_BYTES;
 		total += SA_CMDL_HEADER_SIZE_BYTES;
-	}
+	पूर्ण
 
 	total = roundup(total, 8);
 
-	for (i = 0; i < total / 4; i++)
+	क्रम (i = 0; i < total / 4; i++)
 		word_ptr[i] = swab32(word_ptr[i]);
 
-	return total;
-}
+	वापस total;
+पूर्ण
 
 /* Update Command label */
-static inline void sa_update_cmdl(struct sa_req *req, u32 *cmdl,
-				  struct sa_cmdl_upd_info *upd_info)
-{
-	int i = 0, j;
+अटल अंतरभूत व्योम sa_update_cmdl(काष्ठा sa_req *req, u32 *cmdl,
+				  काष्ठा sa_cmdl_upd_info *upd_info)
+अणु
+	पूर्णांक i = 0, j;
 
-	if (likely(upd_info->flags & SA_CMDL_UPD_ENC)) {
+	अगर (likely(upd_info->flags & SA_CMDL_UPD_ENC)) अणु
 		cmdl[upd_info->enc_size.index] &= ~SA_CMDL_PAYLOAD_LENGTH_MASK;
 		cmdl[upd_info->enc_size.index] |= req->enc_size;
 		cmdl[upd_info->enc_offset.index] &=
@@ -649,18 +650,18 @@ static inline void sa_update_cmdl(struct sa_req *req, u32 *cmdl,
 			((u32)req->enc_offset <<
 			 __ffs(SA_CMDL_SOP_BYPASS_LEN_MASK));
 
-		if (likely(upd_info->flags & SA_CMDL_UPD_ENC_IV)) {
+		अगर (likely(upd_info->flags & SA_CMDL_UPD_ENC_IV)) अणु
 			__be32 *data = (__be32 *)&cmdl[upd_info->enc_iv.index];
 			u32 *enc_iv = (u32 *)req->enc_iv;
 
-			for (j = 0; i < upd_info->enc_iv.size; i += 4, j++) {
+			क्रम (j = 0; i < upd_info->enc_iv.size; i += 4, j++) अणु
 				data[j] = cpu_to_be32(*enc_iv);
 				enc_iv++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (likely(upd_info->flags & SA_CMDL_UPD_AUTH)) {
+	अगर (likely(upd_info->flags & SA_CMDL_UPD_AUTH)) अणु
 		cmdl[upd_info->auth_size.index] &= ~SA_CMDL_PAYLOAD_LENGTH_MASK;
 		cmdl[upd_info->auth_size.index] |= req->auth_size;
 		cmdl[upd_info->auth_offset.index] &=
@@ -668,29 +669,29 @@ static inline void sa_update_cmdl(struct sa_req *req, u32 *cmdl,
 		cmdl[upd_info->auth_offset.index] |=
 			((u32)req->auth_offset <<
 			 __ffs(SA_CMDL_SOP_BYPASS_LEN_MASK));
-		if (upd_info->flags & SA_CMDL_UPD_AUTH_IV) {
-			sa_copy_iv((void *)&cmdl[upd_info->auth_iv.index],
+		अगर (upd_info->flags & SA_CMDL_UPD_AUTH_IV) अणु
+			sa_copy_iv((व्योम *)&cmdl[upd_info->auth_iv.index],
 				   req->auth_iv,
 				   (upd_info->auth_iv.size > 8));
-		}
-		if (upd_info->flags & SA_CMDL_UPD_AUX_KEY) {
-			int offset = (req->auth_size & 0xF) ? 4 : 0;
+		पूर्ण
+		अगर (upd_info->flags & SA_CMDL_UPD_AUX_KEY) अणु
+			पूर्णांक offset = (req->auth_size & 0xF) ? 4 : 0;
 
-			memcpy(&cmdl[upd_info->aux_key_info.index],
+			स_नकल(&cmdl[upd_info->aux_key_info.index],
 			       &upd_info->aux_key[offset], 16);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* Format SWINFO words to be sent to SA */
-static
-void sa_set_swinfo(u8 eng_id, u16 sc_id, dma_addr_t sc_phys,
+अटल
+व्योम sa_set_swinfo(u8 eng_id, u16 sc_id, dma_addr_t sc_phys,
 		   u8 cmdl_present, u8 cmdl_offset, u8 flags,
 		   u8 hash_size, u32 *swinfo)
-{
+अणु
 	swinfo[0] = sc_id;
 	swinfo[0] |= (flags << __ffs(SA_SW0_FLAGS_MASK));
-	if (likely(cmdl_present))
+	अगर (likely(cmdl_present))
 		swinfo[0] |= ((cmdl_offset | SA_SW0_CMDL_PRESENT) <<
 						__ffs(SA_SW0_CMDL_INFO_MASK));
 	swinfo[0] |= (eng_id << __ffs(SA_SW0_ENG_ID_MASK));
@@ -699,69 +700,69 @@ void sa_set_swinfo(u8 eng_id, u16 sc_id, dma_addr_t sc_phys,
 	swinfo[1] = (u32)(sc_phys & 0xFFFFFFFFULL);
 	swinfo[2] = (u32)((sc_phys & 0xFFFFFFFF00000000ULL) >> 32);
 	swinfo[2] |= (hash_size << __ffs(SA_SW2_EGRESS_LENGTH));
-}
+पूर्ण
 
 /* Dump the security context */
-static void sa_dump_sc(u8 *buf, dma_addr_t dma_addr)
-{
-#ifdef DEBUG
+अटल व्योम sa_dump_sc(u8 *buf, dma_addr_t dma_addr)
+अणु
+#अगर_घोषित DEBUG
 	dev_info(sa_k3_dev, "Security context dump:: 0x%pad\n", &dma_addr);
-	print_hex_dump(KERN_CONT, "", DUMP_PREFIX_OFFSET,
+	prपूर्णांक_hex_dump(KERN_CONT, "", DUMP_PREFIX_OFFSET,
 		       16, 1, buf, SA_CTX_MAX_SZ, false);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static
-int sa_init_sc(struct sa_ctx_info *ctx, const struct sa_match_data *match_data,
-	       const u8 *enc_key, u16 enc_key_sz,
-	       const u8 *auth_key, u16 auth_key_sz,
-	       struct algo_data *ad, u8 enc, u32 *swinfo)
-{
-	int enc_sc_offset = 0;
-	int auth_sc_offset = 0;
+अटल
+पूर्णांक sa_init_sc(काष्ठा sa_ctx_info *ctx, स्थिर काष्ठा sa_match_data *match_data,
+	       स्थिर u8 *enc_key, u16 enc_key_sz,
+	       स्थिर u8 *auth_key, u16 auth_key_sz,
+	       काष्ठा algo_data *ad, u8 enc, u32 *swinfo)
+अणु
+	पूर्णांक enc_sc_offset = 0;
+	पूर्णांक auth_sc_offset = 0;
 	u8 *sc_buf = ctx->sc;
 	u16 sc_id = ctx->sc_id;
 	u8 first_engine = 0;
 
 	memzero_explicit(sc_buf, SA_CTX_MAX_SZ);
 
-	if (ad->auth_eng.eng_id) {
-		if (enc)
+	अगर (ad->auth_eng.eng_id) अणु
+		अगर (enc)
 			first_engine = ad->enc_eng.eng_id;
-		else
+		अन्यथा
 			first_engine = ad->auth_eng.eng_id;
 
 		enc_sc_offset = SA_CTX_PHP_PE_CTX_SZ;
 		auth_sc_offset = enc_sc_offset + ad->enc_eng.sc_size;
 		sc_buf[1] = SA_SCCTL_FE_AUTH_ENC;
-		if (!ad->hash_size)
-			return -EINVAL;
+		अगर (!ad->hash_size)
+			वापस -EINVAL;
 		ad->hash_size = roundup(ad->hash_size, 8);
 
-	} else if (ad->enc_eng.eng_id && !ad->auth_eng.eng_id) {
+	पूर्ण अन्यथा अगर (ad->enc_eng.eng_id && !ad->auth_eng.eng_id) अणु
 		enc_sc_offset = SA_CTX_PHP_PE_CTX_SZ;
 		first_engine = ad->enc_eng.eng_id;
 		sc_buf[1] = SA_SCCTL_FE_ENC;
 		ad->hash_size = ad->iv_out_size;
-	}
+	पूर्ण
 
 	/* SCCTL Owner info: 0=host, 1=CP_ACE */
 	sc_buf[SA_CTX_SCCTL_OWNER_OFFSET] = 0;
-	memcpy(&sc_buf[2], &sc_id, 2);
+	स_नकल(&sc_buf[2], &sc_id, 2);
 	sc_buf[4] = 0x0;
 	sc_buf[5] = match_data->priv_id;
 	sc_buf[6] = match_data->priv;
 	sc_buf[7] = 0x0;
 
-	/* Prepare context for encryption engine */
-	if (ad->enc_eng.sc_size) {
-		if (sa_set_sc_enc(ad, enc_key, enc_key_sz, enc,
+	/* Prepare context क्रम encryption engine */
+	अगर (ad->enc_eng.sc_size) अणु
+		अगर (sa_set_sc_enc(ad, enc_key, enc_key_sz, enc,
 				  &sc_buf[enc_sc_offset]))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	/* Prepare context for authentication engine */
-	if (ad->auth_eng.sc_size)
+	/* Prepare context क्रम authentication engine */
+	अगर (ad->auth_eng.sc_size)
 		sa_set_sc_auth(ad, auth_key, auth_key_sz,
 			       &sc_buf[auth_sc_offset]);
 
@@ -776,14 +777,14 @@ int sa_init_sc(struct sa_ctx_info *ctx, const struct sa_match_data *match_data,
 
 	sa_dump_sc(sc_buf, ctx->sc_phys);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Free the per direction context memory */
-static void sa_free_ctx_info(struct sa_ctx_info *ctx,
-			     struct sa_crypto_data *data)
-{
-	unsigned long bn;
+अटल व्योम sa_मुक्त_ctx_info(काष्ठा sa_ctx_info *ctx,
+			     काष्ठा sa_crypto_data *data)
+अणु
+	अचिन्हित दीर्घ bn;
 
 	bn = ctx->sc_id - data->sc_id_start;
 	spin_lock(&data->scid_lock);
@@ -791,17 +792,17 @@ static void sa_free_ctx_info(struct sa_ctx_info *ctx,
 	data->sc_id--;
 	spin_unlock(&data->scid_lock);
 
-	if (ctx->sc) {
-		dma_pool_free(data->sc_pool, ctx->sc, ctx->sc_phys);
-		ctx->sc = NULL;
-	}
-}
+	अगर (ctx->sc) अणु
+		dma_pool_मुक्त(data->sc_pool, ctx->sc, ctx->sc_phys);
+		ctx->sc = शून्य;
+	पूर्ण
+पूर्ण
 
-static int sa_init_ctx_info(struct sa_ctx_info *ctx,
-			    struct sa_crypto_data *data)
-{
-	unsigned long bn;
-	int err;
+अटल पूर्णांक sa_init_ctx_info(काष्ठा sa_ctx_info *ctx,
+			    काष्ठा sa_crypto_data *data)
+अणु
+	अचिन्हित दीर्घ bn;
+	पूर्णांक err;
 
 	spin_lock(&data->scid_lock);
 	bn = find_first_zero_bit(data->ctx_bm, SA_MAX_NUM_CTX);
@@ -812,13 +813,13 @@ static int sa_init_ctx_info(struct sa_ctx_info *ctx,
 	ctx->sc_id = (u16)(data->sc_id_start + bn);
 
 	ctx->sc = dma_pool_alloc(data->sc_pool, GFP_KERNEL, &ctx->sc_phys);
-	if (!ctx->sc) {
+	अगर (!ctx->sc) अणु
 		dev_err(&data->pdev->dev, "Failed to allocate SC memory\n");
 		err = -ENOMEM;
-		goto scid_rollback;
-	}
+		जाओ scid_rollback;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 scid_rollback:
 	spin_lock(&data->scid_lock);
@@ -826,78 +827,78 @@ scid_rollback:
 	data->sc_id--;
 	spin_unlock(&data->scid_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void sa_cipher_cra_exit(struct crypto_skcipher *tfm)
-{
-	struct sa_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
+अटल व्योम sa_cipher_cra_निकास(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा sa_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
 
 	dev_dbg(sa_k3_dev, "%s(0x%p) sc-ids(0x%x(0x%pad), 0x%x(0x%pad))\n",
 		__func__, tfm, ctx->enc.sc_id, &ctx->enc.sc_phys,
 		ctx->dec.sc_id, &ctx->dec.sc_phys);
 
-	sa_free_ctx_info(&ctx->enc, data);
-	sa_free_ctx_info(&ctx->dec, data);
+	sa_मुक्त_ctx_info(&ctx->enc, data);
+	sa_मुक्त_ctx_info(&ctx->dec, data);
 
-	crypto_free_skcipher(ctx->fallback.skcipher);
-}
+	crypto_मुक्त_skcipher(ctx->fallback.skcipher);
+पूर्ण
 
-static int sa_cipher_cra_init(struct crypto_skcipher *tfm)
-{
-	struct sa_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
-	const char *name = crypto_tfm_alg_name(&tfm->base);
-	struct crypto_skcipher *child;
-	int ret;
+अटल पूर्णांक sa_cipher_cra_init(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा sa_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
+	स्थिर अक्षर *name = crypto_tfm_alg_name(&tfm->base);
+	काष्ठा crypto_skcipher *child;
+	पूर्णांक ret;
 
-	memzero_explicit(ctx, sizeof(*ctx));
+	memzero_explicit(ctx, माप(*ctx));
 	ctx->dev_data = data;
 
 	ret = sa_init_ctx_info(&ctx->enc, data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = sa_init_ctx_info(&ctx->dec, data);
-	if (ret) {
-		sa_free_ctx_info(&ctx->enc, data);
-		return ret;
-	}
+	अगर (ret) अणु
+		sa_मुक्त_ctx_info(&ctx->enc, data);
+		वापस ret;
+	पूर्ण
 
 	child = crypto_alloc_skcipher(name, 0, CRYPTO_ALG_NEED_FALLBACK);
 
-	if (IS_ERR(child)) {
+	अगर (IS_ERR(child)) अणु
 		dev_err(sa_k3_dev, "Error allocating fallback algo %s\n", name);
-		return PTR_ERR(child);
-	}
+		वापस PTR_ERR(child);
+	पूर्ण
 
 	ctx->fallback.skcipher = child;
 	crypto_skcipher_set_reqsize(tfm, crypto_skcipher_reqsize(child) +
-					 sizeof(struct skcipher_request));
+					 माप(काष्ठा skcipher_request));
 
 	dev_dbg(sa_k3_dev, "%s(0x%p) sc-ids(0x%x(0x%pad), 0x%x(0x%pad))\n",
 		__func__, tfm, ctx->enc.sc_id, &ctx->enc.sc_phys,
 		ctx->dec.sc_id, &ctx->dec.sc_phys);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sa_cipher_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			    unsigned int keylen, struct algo_data *ad)
-{
-	struct sa_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct crypto_skcipher *child = ctx->fallback.skcipher;
-	int cmdl_len;
-	struct sa_cmdl_cfg cfg;
-	int ret;
+अटल पूर्णांक sa_cipher_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			    अचिन्हित पूर्णांक keylen, काष्ठा algo_data *ad)
+अणु
+	काष्ठा sa_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा crypto_skcipher *child = ctx->fallback.skcipher;
+	पूर्णांक cmdl_len;
+	काष्ठा sa_cmdl_cfg cfg;
+	पूर्णांक ret;
 
-	if (keylen != AES_KEYSIZE_128 && keylen != AES_KEYSIZE_192 &&
+	अगर (keylen != AES_KEYSIZE_128 && keylen != AES_KEYSIZE_192 &&
 	    keylen != AES_KEYSIZE_256)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ad->enc_eng.eng_id = SA_ENG_ID_EM1;
 	ad->enc_eng.sc_size = SA_CTX_ENC_TYPE1_SZ;
 
-	memzero_explicit(&cfg, sizeof(cfg));
+	memzero_explicit(&cfg, माप(cfg));
 	cfg.enc_eng_id = ad->enc_eng.eng_id;
 	cfg.iv_size = crypto_skcipher_ivsize(tfm);
 
@@ -905,53 +906,53 @@ static int sa_cipher_setkey(struct crypto_skcipher *tfm, const u8 *key,
 	crypto_skcipher_set_flags(child, tfm->base.crt_flags &
 					 CRYPTO_TFM_REQ_MASK);
 	ret = crypto_skcipher_setkey(child, key, keylen);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Setup Encryption Security Context & Command label template */
-	if (sa_init_sc(&ctx->enc, ctx->dev_data->match_data, key, keylen, NULL, 0,
+	/* Setup Encryption Security Context & Command label ढाँचा */
+	अगर (sa_init_sc(&ctx->enc, ctx->dev_data->match_data, key, keylen, शून्य, 0,
 		       ad, 1, &ctx->enc.epib[1]))
-		goto badkey;
+		जाओ badkey;
 
-	cmdl_len = sa_format_cmdl_gen(&cfg,
+	cmdl_len = sa_क्रमmat_cmdl_gen(&cfg,
 				      (u8 *)ctx->enc.cmdl,
 				      &ctx->enc.cmdl_upd_info);
-	if (cmdl_len <= 0 || (cmdl_len > SA_MAX_CMDL_WORDS * sizeof(u32)))
-		goto badkey;
+	अगर (cmdl_len <= 0 || (cmdl_len > SA_MAX_CMDL_WORDS * माप(u32)))
+		जाओ badkey;
 
 	ctx->enc.cmdl_size = cmdl_len;
 
-	/* Setup Decryption Security Context & Command label template */
-	if (sa_init_sc(&ctx->dec, ctx->dev_data->match_data, key, keylen, NULL, 0,
+	/* Setup Decryption Security Context & Command label ढाँचा */
+	अगर (sa_init_sc(&ctx->dec, ctx->dev_data->match_data, key, keylen, शून्य, 0,
 		       ad, 0, &ctx->dec.epib[1]))
-		goto badkey;
+		जाओ badkey;
 
 	cfg.enc_eng_id = ad->enc_eng.eng_id;
-	cmdl_len = sa_format_cmdl_gen(&cfg, (u8 *)ctx->dec.cmdl,
+	cmdl_len = sa_क्रमmat_cmdl_gen(&cfg, (u8 *)ctx->dec.cmdl,
 				      &ctx->dec.cmdl_upd_info);
 
-	if (cmdl_len <= 0 || (cmdl_len > SA_MAX_CMDL_WORDS * sizeof(u32)))
-		goto badkey;
+	अगर (cmdl_len <= 0 || (cmdl_len > SA_MAX_CMDL_WORDS * माप(u32)))
+		जाओ badkey;
 
 	ctx->dec.cmdl_size = cmdl_len;
 	ctx->iv_idx = ad->iv_idx;
 
-	return 0;
+	वापस 0;
 
 badkey:
 	dev_err(sa_k3_dev, "%s: badkey\n", __func__);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int sa_aes_cbc_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			     unsigned int keylen)
-{
-	struct algo_data ad = { 0 };
+अटल पूर्णांक sa_aes_cbc_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			     अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा algo_data ad = अणु 0 पूर्ण;
 	/* Convert the key size (16/24/32) to the key size index (0/1/2) */
-	int key_idx = (keylen >> 3) - 2;
+	पूर्णांक key_idx = (keylen >> 3) - 2;
 
-	if (key_idx >= 3)
-		return -EINVAL;
+	अगर (key_idx >= 3)
+		वापस -EINVAL;
 
 	ad.mci_enc = mci_cbc_enc_array[key_idx];
 	ad.mci_dec = mci_cbc_dec_array[key_idx];
@@ -960,31 +961,31 @@ static int sa_aes_cbc_setkey(struct crypto_skcipher *tfm, const u8 *key,
 	ad.iv_idx = 4;
 	ad.iv_out_size = 16;
 
-	return sa_cipher_setkey(tfm, key, keylen, &ad);
-}
+	वापस sa_cipher_setkey(tfm, key, keylen, &ad);
+पूर्ण
 
-static int sa_aes_ecb_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			     unsigned int keylen)
-{
-	struct algo_data ad = { 0 };
+अटल पूर्णांक sa_aes_ecb_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			     अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा algo_data ad = अणु 0 पूर्ण;
 	/* Convert the key size (16/24/32) to the key size index (0/1/2) */
-	int key_idx = (keylen >> 3) - 2;
+	पूर्णांक key_idx = (keylen >> 3) - 2;
 
-	if (key_idx >= 3)
-		return -EINVAL;
+	अगर (key_idx >= 3)
+		वापस -EINVAL;
 
 	ad.mci_enc = mci_ecb_enc_array[key_idx];
 	ad.mci_dec = mci_ecb_dec_array[key_idx];
 	ad.inv_key = true;
 	ad.ealg_id = SA_EALG_ID_AES_ECB;
 
-	return sa_cipher_setkey(tfm, key, keylen, &ad);
-}
+	वापस sa_cipher_setkey(tfm, key, keylen, &ad);
+पूर्ण
 
-static int sa_3des_cbc_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			      unsigned int keylen)
-{
-	struct algo_data ad = { 0 };
+अटल पूर्णांक sa_3des_cbc_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			      अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा algo_data ad = अणु 0 पूर्ण;
 
 	ad.mci_enc = mci_cbc_3des_enc_array;
 	ad.mci_dec = mci_cbc_3des_dec_array;
@@ -992,169 +993,169 @@ static int sa_3des_cbc_setkey(struct crypto_skcipher *tfm, const u8 *key,
 	ad.iv_idx = 6;
 	ad.iv_out_size = 8;
 
-	return sa_cipher_setkey(tfm, key, keylen, &ad);
-}
+	वापस sa_cipher_setkey(tfm, key, keylen, &ad);
+पूर्ण
 
-static int sa_3des_ecb_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			      unsigned int keylen)
-{
-	struct algo_data ad = { 0 };
+अटल पूर्णांक sa_3des_ecb_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			      अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा algo_data ad = अणु 0 पूर्ण;
 
 	ad.mci_enc = mci_ecb_3des_enc_array;
 	ad.mci_dec = mci_ecb_3des_dec_array;
 
-	return sa_cipher_setkey(tfm, key, keylen, &ad);
-}
+	वापस sa_cipher_setkey(tfm, key, keylen, &ad);
+पूर्ण
 
-static void sa_sync_from_device(struct sa_rx_data *rxd)
-{
-	struct sg_table *sgt;
+अटल व्योम sa_sync_from_device(काष्ठा sa_rx_data *rxd)
+अणु
+	काष्ठा sg_table *sgt;
 
-	if (rxd->mapped_sg[0].dir == DMA_BIDIRECTIONAL)
+	अगर (rxd->mapped_sg[0].dir == DMA_BIसूचीECTIONAL)
 		sgt = &rxd->mapped_sg[0].sgt;
-	else
+	अन्यथा
 		sgt = &rxd->mapped_sg[1].sgt;
 
-	dma_sync_sgtable_for_cpu(rxd->ddev, sgt, DMA_FROM_DEVICE);
-}
+	dma_sync_sgtable_क्रम_cpu(rxd->ddev, sgt, DMA_FROM_DEVICE);
+पूर्ण
 
-static void sa_free_sa_rx_data(struct sa_rx_data *rxd)
-{
-	int i;
+अटल व्योम sa_मुक्त_sa_rx_data(काष्ठा sa_rx_data *rxd)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(rxd->mapped_sg); i++) {
-		struct sa_mapped_sg *mapped_sg = &rxd->mapped_sg[i];
+	क्रम (i = 0; i < ARRAY_SIZE(rxd->mapped_sg); i++) अणु
+		काष्ठा sa_mapped_sg *mapped_sg = &rxd->mapped_sg[i];
 
-		if (mapped_sg->mapped) {
+		अगर (mapped_sg->mapped) अणु
 			dma_unmap_sgtable(rxd->ddev, &mapped_sg->sgt,
 					  mapped_sg->dir, 0);
-			kfree(mapped_sg->split_sg);
-		}
-	}
+			kमुक्त(mapped_sg->split_sg);
+		पूर्ण
+	पूर्ण
 
-	kfree(rxd);
-}
+	kमुक्त(rxd);
+पूर्ण
 
-static void sa_aes_dma_in_callback(void *data)
-{
-	struct sa_rx_data *rxd = (struct sa_rx_data *)data;
-	struct skcipher_request *req;
+अटल व्योम sa_aes_dma_in_callback(व्योम *data)
+अणु
+	काष्ठा sa_rx_data *rxd = (काष्ठा sa_rx_data *)data;
+	काष्ठा skcipher_request *req;
 	u32 *result;
 	__be32 *mdptr;
-	size_t ml, pl;
-	int i;
+	माप_प्रकार ml, pl;
+	पूर्णांक i;
 
 	sa_sync_from_device(rxd);
-	req = container_of(rxd->req, struct skcipher_request, base);
+	req = container_of(rxd->req, काष्ठा skcipher_request, base);
 
-	if (req->iv) {
+	अगर (req->iv) अणु
 		mdptr = (__be32 *)dmaengine_desc_get_metadata_ptr(rxd->tx_in, &pl,
 							       &ml);
 		result = (u32 *)req->iv;
 
-		for (i = 0; i < (rxd->enc_iv_size / 4); i++)
+		क्रम (i = 0; i < (rxd->enc_iv_size / 4); i++)
 			result[i] = be32_to_cpu(mdptr[i + rxd->iv_idx]);
-	}
+	पूर्ण
 
-	sa_free_sa_rx_data(rxd);
+	sa_मुक्त_sa_rx_data(rxd);
 
 	skcipher_request_complete(req, 0);
-}
+पूर्ण
 
-static void
+अटल व्योम
 sa_prepare_tx_desc(u32 *mdptr, u32 pslen, u32 *psdata, u32 epiblen, u32 *epib)
-{
+अणु
 	u32 *out, *in;
-	int i;
+	पूर्णांक i;
 
-	for (out = mdptr, in = epib, i = 0; i < epiblen / sizeof(u32); i++)
+	क्रम (out = mdptr, in = epib, i = 0; i < epiblen / माप(u32); i++)
 		*out++ = *in++;
 
 	mdptr[4] = (0xFFFF << 16);
-	for (out = &mdptr[5], in = psdata, i = 0;
-	     i < pslen / sizeof(u32); i++)
+	क्रम (out = &mdptr[5], in = psdata, i = 0;
+	     i < pslen / माप(u32); i++)
 		*out++ = *in++;
-}
+पूर्ण
 
-static int sa_run(struct sa_req *req)
-{
-	struct sa_rx_data *rxd;
+अटल पूर्णांक sa_run(काष्ठा sa_req *req)
+अणु
+	काष्ठा sa_rx_data *rxd;
 	gfp_t gfp_flags;
 	u32 cmdl[SA_MAX_CMDL_WORDS];
-	struct sa_crypto_data *pdata = dev_get_drvdata(sa_k3_dev);
-	struct device *ddev;
-	struct dma_chan *dma_rx;
-	int sg_nents, src_nents, dst_nents;
-	struct scatterlist *src, *dst;
-	size_t pl, ml, split_size;
-	struct sa_ctx_info *sa_ctx = req->enc ? &req->ctx->enc : &req->ctx->dec;
-	int ret;
-	struct dma_async_tx_descriptor *tx_out;
+	काष्ठा sa_crypto_data *pdata = dev_get_drvdata(sa_k3_dev);
+	काष्ठा device *ddev;
+	काष्ठा dma_chan *dma_rx;
+	पूर्णांक sg_nents, src_nents, dst_nents;
+	काष्ठा scatterlist *src, *dst;
+	माप_प्रकार pl, ml, split_size;
+	काष्ठा sa_ctx_info *sa_ctx = req->enc ? &req->ctx->enc : &req->ctx->dec;
+	पूर्णांक ret;
+	काष्ठा dma_async_tx_descriptor *tx_out;
 	u32 *mdptr;
-	bool diff_dst;
-	enum dma_data_direction dir_src;
-	struct sa_mapped_sg *mapped_sg;
+	bool dअगरf_dst;
+	क्रमागत dma_data_direction dir_src;
+	काष्ठा sa_mapped_sg *mapped_sg;
 
 	gfp_flags = req->base->flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
 		GFP_KERNEL : GFP_ATOMIC;
 
-	rxd = kzalloc(sizeof(*rxd), gfp_flags);
-	if (!rxd)
-		return -ENOMEM;
+	rxd = kzalloc(माप(*rxd), gfp_flags);
+	अगर (!rxd)
+		वापस -ENOMEM;
 
-	if (req->src != req->dst) {
-		diff_dst = true;
+	अगर (req->src != req->dst) अणु
+		dअगरf_dst = true;
 		dir_src = DMA_TO_DEVICE;
-	} else {
-		diff_dst = false;
-		dir_src = DMA_BIDIRECTIONAL;
-	}
+	पूर्ण अन्यथा अणु
+		dअगरf_dst = false;
+		dir_src = DMA_BIसूचीECTIONAL;
+	पूर्ण
 
 	/*
-	 * SA2UL has an interesting feature where the receive DMA channel
+	 * SA2UL has an पूर्णांकeresting feature where the receive DMA channel
 	 * is selected based on the data passed to the engine. Within the
 	 * transition range, there is also a space where it is impossible
 	 * to determine where the data will end up, and this should be
-	 * avoided. This will be handled by the SW fallback mechanism by
-	 * the individual algorithm implementations.
+	 * aव्योमed. This will be handled by the SW fallback mechanism by
+	 * the inभागidual algorithm implementations.
 	 */
-	if (req->size >= 256)
+	अगर (req->size >= 256)
 		dma_rx = pdata->dma_rx2;
-	else
+	अन्यथा
 		dma_rx = pdata->dma_rx1;
 
 	ddev = dmaengine_get_dma_device(pdata->dma_tx);
 	rxd->ddev = ddev;
 
-	memcpy(cmdl, sa_ctx->cmdl, sa_ctx->cmdl_size);
+	स_नकल(cmdl, sa_ctx->cmdl, sa_ctx->cmdl_size);
 
 	sa_update_cmdl(req, cmdl, &sa_ctx->cmdl_upd_info);
 
-	if (req->type != CRYPTO_ALG_TYPE_AHASH) {
-		if (req->enc)
+	अगर (req->type != CRYPTO_ALG_TYPE_AHASH) अणु
+		अगर (req->enc)
 			req->type |=
 				(SA_REQ_SUBTYPE_ENC << SA_REQ_SUBTYPE_SHIFT);
-		else
+		अन्यथा
 			req->type |=
 				(SA_REQ_SUBTYPE_DEC << SA_REQ_SUBTYPE_SHIFT);
-	}
+	पूर्ण
 
-	cmdl[sa_ctx->cmdl_size / sizeof(u32)] = req->type;
+	cmdl[sa_ctx->cmdl_size / माप(u32)] = req->type;
 
 	/*
-	 * Map the packets, first we check if the data fits into a single
-	 * sg entry and use that if possible. If it does not fit, we check
-	 * if we need to do sg_split to align the scatterlist data on the
+	 * Map the packets, first we check अगर the data fits पूर्णांकo a single
+	 * sg entry and use that अगर possible. If it करोes not fit, we check
+	 * अगर we need to करो sg_split to align the scatterlist data on the
 	 * actual data size being processed by the crypto engine.
 	 */
 	src = req->src;
-	sg_nents = sg_nents_for_len(src, req->size);
+	sg_nents = sg_nents_क्रम_len(src, req->size);
 
 	split_size = req->size;
 
 	mapped_sg = &rxd->mapped_sg[0];
-	if (sg_nents == 1 && split_size <= req->src->length) {
-		src = &mapped_sg->static_sg;
+	अगर (sg_nents == 1 && split_size <= req->src->length) अणु
+		src = &mapped_sg->अटल_sg;
 		src_nents = 1;
 		sg_init_table(src, 1);
 		sg_set_page(src, sg_page(req->src), split_size,
@@ -1163,46 +1164,46 @@ static int sa_run(struct sa_req *req)
 		mapped_sg->sgt.sgl = src;
 		mapped_sg->sgt.orig_nents = src_nents;
 		ret = dma_map_sgtable(ddev, &mapped_sg->sgt, dir_src, 0);
-		if (ret) {
-			kfree(rxd);
-			return ret;
-		}
+		अगर (ret) अणु
+			kमुक्त(rxd);
+			वापस ret;
+		पूर्ण
 
 		mapped_sg->dir = dir_src;
 		mapped_sg->mapped = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		mapped_sg->sgt.sgl = req->src;
 		mapped_sg->sgt.orig_nents = sg_nents;
 		ret = dma_map_sgtable(ddev, &mapped_sg->sgt, dir_src, 0);
-		if (ret) {
-			kfree(rxd);
-			return ret;
-		}
+		अगर (ret) अणु
+			kमुक्त(rxd);
+			वापस ret;
+		पूर्ण
 
 		mapped_sg->dir = dir_src;
 		mapped_sg->mapped = true;
 
 		ret = sg_split(mapped_sg->sgt.sgl, mapped_sg->sgt.nents, 0, 1,
 			       &split_size, &src, &src_nents, gfp_flags);
-		if (ret) {
+		अगर (ret) अणु
 			src_nents = mapped_sg->sgt.nents;
 			src = mapped_sg->sgt.sgl;
-		} else {
+		पूर्ण अन्यथा अणु
 			mapped_sg->split_sg = src;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	dma_sync_sgtable_for_device(ddev, &mapped_sg->sgt, DMA_TO_DEVICE);
+	dma_sync_sgtable_क्रम_device(ddev, &mapped_sg->sgt, DMA_TO_DEVICE);
 
-	if (!diff_dst) {
+	अगर (!dअगरf_dst) अणु
 		dst_nents = src_nents;
 		dst = src;
-	} else {
-		dst_nents = sg_nents_for_len(req->dst, req->size);
+	पूर्ण अन्यथा अणु
+		dst_nents = sg_nents_क्रम_len(req->dst, req->size);
 		mapped_sg = &rxd->mapped_sg[1];
 
-		if (dst_nents == 1 && split_size <= req->dst->length) {
-			dst = &mapped_sg->static_sg;
+		अगर (dst_nents == 1 && split_size <= req->dst->length) अणु
+			dst = &mapped_sg->अटल_sg;
 			dst_nents = 1;
 			sg_init_table(dst, 1);
 			sg_set_page(dst, sg_page(req->dst), split_size,
@@ -1212,18 +1213,18 @@ static int sa_run(struct sa_req *req)
 			mapped_sg->sgt.orig_nents = dst_nents;
 			ret = dma_map_sgtable(ddev, &mapped_sg->sgt,
 					      DMA_FROM_DEVICE, 0);
-			if (ret)
-				goto err_cleanup;
+			अगर (ret)
+				जाओ err_cleanup;
 
 			mapped_sg->dir = DMA_FROM_DEVICE;
 			mapped_sg->mapped = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			mapped_sg->sgt.sgl = req->dst;
 			mapped_sg->sgt.orig_nents = dst_nents;
 			ret = dma_map_sgtable(ddev, &mapped_sg->sgt,
 					      DMA_FROM_DEVICE, 0);
-			if (ret)
-				goto err_cleanup;
+			अगर (ret)
+				जाओ err_cleanup;
 
 			mapped_sg->dir = DMA_FROM_DEVICE;
 			mapped_sg->mapped = true;
@@ -1231,25 +1232,25 @@ static int sa_run(struct sa_req *req)
 			ret = sg_split(mapped_sg->sgt.sgl, mapped_sg->sgt.nents,
 				       0, 1, &split_size, &dst, &dst_nents,
 				       gfp_flags);
-			if (ret) {
+			अगर (ret) अणु
 				dst_nents = mapped_sg->sgt.nents;
 				dst = mapped_sg->sgt.sgl;
-			} else {
+			पूर्ण अन्यथा अणु
 				mapped_sg->split_sg = dst;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	rxd->tx_in = dmaengine_prep_slave_sg(dma_rx, dst, dst_nents,
 					     DMA_DEV_TO_MEM,
 					     DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!rxd->tx_in) {
+	अगर (!rxd->tx_in) अणु
 		dev_err(pdata->dev, "IN prep_slave_sg() failed\n");
 		ret = -EINVAL;
-		goto err_cleanup;
-	}
+		जाओ err_cleanup;
+	पूर्ण
 
-	rxd->req = (void *)req->base;
+	rxd->req = (व्योम *)req->base;
 	rxd->enc = req->enc;
 	rxd->iv_idx = req->ctx->iv_idx;
 	rxd->enc_iv_size = sa_ctx->cmdl_upd_info.enc_iv.size;
@@ -1260,23 +1261,23 @@ static int sa_run(struct sa_req *req)
 					 src_nents, DMA_MEM_TO_DEV,
 					 DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
 
-	if (!tx_out) {
+	अगर (!tx_out) अणु
 		dev_err(pdata->dev, "OUT prep_slave_sg() failed\n");
 		ret = -EINVAL;
-		goto err_cleanup;
-	}
+		जाओ err_cleanup;
+	पूर्ण
 
 	/*
-	 * Prepare metadata for DMA engine. This essentially describes the
-	 * crypto algorithm to be used, data sizes, different keys etc.
+	 * Prepare metadata क्रम DMA engine. This essentially describes the
+	 * crypto algorithm to be used, data sizes, dअगरferent keys etc.
 	 */
 	mdptr = (u32 *)dmaengine_desc_get_metadata_ptr(tx_out, &pl, &ml);
 
 	sa_prepare_tx_desc(mdptr, (sa_ctx->cmdl_size + (SA_PSDATA_CTX_WORDS *
-				   sizeof(u32))), cmdl, sizeof(sa_ctx->epib),
+				   माप(u32))), cmdl, माप(sa_ctx->epib),
 			   sa_ctx->epib);
 
-	ml = sa_ctx->cmdl_size + (SA_PSDATA_CTX_WORDS * sizeof(u32));
+	ml = sa_ctx->cmdl_size + (SA_PSDATA_CTX_WORDS * माप(u32));
 	dmaengine_desc_set_metadata_len(tx_out, req->mdata_size);
 
 	dmaengine_submit(tx_out);
@@ -1285,32 +1286,32 @@ static int sa_run(struct sa_req *req)
 	dma_async_issue_pending(dma_rx);
 	dma_async_issue_pending(pdata->dma_tx);
 
-	return -EINPROGRESS;
+	वापस -EINPROGRESS;
 
 err_cleanup:
-	sa_free_sa_rx_data(rxd);
+	sa_मुक्त_sa_rx_data(rxd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sa_cipher_run(struct skcipher_request *req, u8 *iv, int enc)
-{
-	struct sa_tfm_ctx *ctx =
+अटल पूर्णांक sa_cipher_run(काष्ठा skcipher_request *req, u8 *iv, पूर्णांक enc)
+अणु
+	काष्ठा sa_tfm_ctx *ctx =
 	    crypto_skcipher_ctx(crypto_skcipher_reqtfm(req));
-	struct crypto_alg *alg = req->base.tfm->__crt_alg;
-	struct sa_req sa_req = { 0 };
+	काष्ठा crypto_alg *alg = req->base.tfm->__crt_alg;
+	काष्ठा sa_req sa_req = अणु 0 पूर्ण;
 
-	if (!req->cryptlen)
-		return 0;
+	अगर (!req->cryptlen)
+		वापस 0;
 
-	if (req->cryptlen % alg->cra_blocksize)
-		return -EINVAL;
+	अगर (req->cryptlen % alg->cra_blocksize)
+		वापस -EINVAL;
 
-	/* Use SW fallback if the data size is not supported */
-	if (req->cryptlen > SA_MAX_DATA_SZ ||
+	/* Use SW fallback अगर the data size is not supported */
+	अगर (req->cryptlen > SA_MAX_DATA_SZ ||
 	    (req->cryptlen >= SA_UNSAFE_DATA_SZ_MIN &&
-	     req->cryptlen <= SA_UNSAFE_DATA_SZ_MAX)) {
-		struct skcipher_request *subreq = skcipher_request_ctx(req);
+	     req->cryptlen <= SA_UNSAFE_DATA_SZ_MAX)) अणु
+		काष्ठा skcipher_request *subreq = skcipher_request_ctx(req);
 
 		skcipher_request_set_tfm(subreq, ctx->fallback.skcipher);
 		skcipher_request_set_callback(subreq, req->base.flags,
@@ -1318,11 +1319,11 @@ static int sa_cipher_run(struct skcipher_request *req, u8 *iv, int enc)
 					      req->base.data);
 		skcipher_request_set_crypt(subreq, req->src, req->dst,
 					   req->cryptlen, req->iv);
-		if (enc)
-			return crypto_skcipher_encrypt(subreq);
-		else
-			return crypto_skcipher_decrypt(subreq);
-	}
+		अगर (enc)
+			वापस crypto_skcipher_encrypt(subreq);
+		अन्यथा
+			वापस crypto_skcipher_decrypt(subreq);
+	पूर्ण
 
 	sa_req.size = req->cryptlen;
 	sa_req.enc_size = req->cryptlen;
@@ -1336,85 +1337,85 @@ static int sa_cipher_run(struct skcipher_request *req, u8 *iv, int enc)
 	sa_req.base = &req->base;
 	sa_req.ctx = ctx;
 
-	return sa_run(&sa_req);
-}
+	वापस sa_run(&sa_req);
+पूर्ण
 
-static int sa_encrypt(struct skcipher_request *req)
-{
-	return sa_cipher_run(req, req->iv, 1);
-}
+अटल पूर्णांक sa_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस sa_cipher_run(req, req->iv, 1);
+पूर्ण
 
-static int sa_decrypt(struct skcipher_request *req)
-{
-	return sa_cipher_run(req, req->iv, 0);
-}
+अटल पूर्णांक sa_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस sa_cipher_run(req, req->iv, 0);
+पूर्ण
 
-static void sa_sha_dma_in_callback(void *data)
-{
-	struct sa_rx_data *rxd = (struct sa_rx_data *)data;
-	struct ahash_request *req;
-	struct crypto_ahash *tfm;
-	unsigned int authsize;
-	int i;
-	size_t ml, pl;
+अटल व्योम sa_sha_dma_in_callback(व्योम *data)
+अणु
+	काष्ठा sa_rx_data *rxd = (काष्ठा sa_rx_data *)data;
+	काष्ठा ahash_request *req;
+	काष्ठा crypto_ahash *tfm;
+	अचिन्हित पूर्णांक authsize;
+	पूर्णांक i;
+	माप_प्रकार ml, pl;
 	u32 *result;
 	__be32 *mdptr;
 
 	sa_sync_from_device(rxd);
-	req = container_of(rxd->req, struct ahash_request, base);
+	req = container_of(rxd->req, काष्ठा ahash_request, base);
 	tfm = crypto_ahash_reqtfm(req);
 	authsize = crypto_ahash_digestsize(tfm);
 
 	mdptr = (__be32 *)dmaengine_desc_get_metadata_ptr(rxd->tx_in, &pl, &ml);
 	result = (u32 *)req->result;
 
-	for (i = 0; i < (authsize / 4); i++)
+	क्रम (i = 0; i < (authsize / 4); i++)
 		result[i] = be32_to_cpu(mdptr[i + 4]);
 
-	sa_free_sa_rx_data(rxd);
+	sa_मुक्त_sa_rx_data(rxd);
 
 	ahash_request_complete(req, 0);
-}
+पूर्ण
 
-static int zero_message_process(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	int sa_digest_size = crypto_ahash_digestsize(tfm);
+अटल पूर्णांक zero_message_process(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	पूर्णांक sa_digest_size = crypto_ahash_digestsize(tfm);
 
-	switch (sa_digest_size) {
-	case SHA1_DIGEST_SIZE:
-		memcpy(req->result, sha1_zero_message_hash, sa_digest_size);
-		break;
-	case SHA256_DIGEST_SIZE:
-		memcpy(req->result, sha256_zero_message_hash, sa_digest_size);
-		break;
-	case SHA512_DIGEST_SIZE:
-		memcpy(req->result, sha512_zero_message_hash, sa_digest_size);
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (sa_digest_size) अणु
+	हाल SHA1_DIGEST_SIZE:
+		स_नकल(req->result, sha1_zero_message_hash, sa_digest_size);
+		अवरोध;
+	हाल SHA256_DIGEST_SIZE:
+		स_नकल(req->result, sha256_zero_message_hash, sa_digest_size);
+		अवरोध;
+	हाल SHA512_DIGEST_SIZE:
+		स_नकल(req->result, sha512_zero_message_hash, sa_digest_size);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sa_sha_run(struct ahash_request *req)
-{
-	struct sa_tfm_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
-	struct sa_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct sa_req sa_req = { 0 };
-	size_t auth_len;
+अटल पूर्णांक sa_sha_run(काष्ठा ahash_request *req)
+अणु
+	काष्ठा sa_tfm_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(req));
+	काष्ठा sa_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा sa_req sa_req = अणु 0 पूर्ण;
+	माप_प्रकार auth_len;
 
 	auth_len = req->nbytes;
 
-	if (!auth_len)
-		return zero_message_process(req);
+	अगर (!auth_len)
+		वापस zero_message_process(req);
 
-	if (auth_len > SA_MAX_DATA_SZ ||
+	अगर (auth_len > SA_MAX_DATA_SZ ||
 	    (auth_len >= SA_UNSAFE_DATA_SZ_MIN &&
-	     auth_len <= SA_UNSAFE_DATA_SZ_MAX)) {
-		struct ahash_request *subreq = &rctx->fallback_req;
-		int ret = 0;
+	     auth_len <= SA_UNSAFE_DATA_SZ_MAX)) अणु
+		काष्ठा ahash_request *subreq = &rctx->fallback_req;
+		पूर्णांक ret = 0;
 
 		ahash_request_set_tfm(subreq, ctx->fallback.ahash);
 		subreq->base.flags = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP;
@@ -1431,8 +1432,8 @@ static int sa_sha_run(struct ahash_request *req)
 
 		ret |= crypto_ahash_final(subreq);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sa_req.size = auth_len;
 	sa_req.auth_size = auth_len;
@@ -1445,101 +1446,101 @@ static int sa_sha_run(struct ahash_request *req)
 	sa_req.ctx = ctx;
 	sa_req.base = &req->base;
 
-	return sa_run(&sa_req);
-}
+	वापस sa_run(&sa_req);
+पूर्ण
 
-static int sa_sha_setup(struct sa_tfm_ctx *ctx, struct  algo_data *ad)
-{
-	int bs = crypto_shash_blocksize(ctx->shash);
-	int cmdl_len;
-	struct sa_cmdl_cfg cfg;
+अटल पूर्णांक sa_sha_setup(काष्ठा sa_tfm_ctx *ctx, काष्ठा  algo_data *ad)
+अणु
+	पूर्णांक bs = crypto_shash_blocksize(ctx->shash);
+	पूर्णांक cmdl_len;
+	काष्ठा sa_cmdl_cfg cfg;
 
 	ad->enc_eng.sc_size = SA_CTX_ENC_TYPE1_SZ;
 	ad->auth_eng.eng_id = SA_ENG_ID_AM1;
 	ad->auth_eng.sc_size = SA_CTX_AUTH_TYPE2_SZ;
 
-	memset(ctx->authkey, 0, bs);
-	memset(&cfg, 0, sizeof(cfg));
+	स_रखो(ctx->authkey, 0, bs);
+	स_रखो(&cfg, 0, माप(cfg));
 	cfg.aalg = ad->aalg_id;
 	cfg.enc_eng_id = ad->enc_eng.eng_id;
 	cfg.auth_eng_id = ad->auth_eng.eng_id;
 	cfg.iv_size = 0;
-	cfg.akey = NULL;
+	cfg.akey = शून्य;
 	cfg.akey_len = 0;
 
 	ctx->dev_data = dev_get_drvdata(sa_k3_dev);
-	/* Setup Encryption Security Context & Command label template */
-	if (sa_init_sc(&ctx->enc, ctx->dev_data->match_data, NULL, 0, NULL, 0,
+	/* Setup Encryption Security Context & Command label ढाँचा */
+	अगर (sa_init_sc(&ctx->enc, ctx->dev_data->match_data, शून्य, 0, शून्य, 0,
 		       ad, 0, &ctx->enc.epib[1]))
-		goto badkey;
+		जाओ badkey;
 
-	cmdl_len = sa_format_cmdl_gen(&cfg,
+	cmdl_len = sa_क्रमmat_cmdl_gen(&cfg,
 				      (u8 *)ctx->enc.cmdl,
 				      &ctx->enc.cmdl_upd_info);
-	if (cmdl_len <= 0 || (cmdl_len > SA_MAX_CMDL_WORDS * sizeof(u32)))
-		goto badkey;
+	अगर (cmdl_len <= 0 || (cmdl_len > SA_MAX_CMDL_WORDS * माप(u32)))
+		जाओ badkey;
 
 	ctx->enc.cmdl_size = cmdl_len;
 
-	return 0;
+	वापस 0;
 
 badkey:
 	dev_err(sa_k3_dev, "%s: badkey\n", __func__);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int sa_sha_cra_init_alg(struct crypto_tfm *tfm, const char *alg_base)
-{
-	struct sa_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
-	struct sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
-	int ret;
+अटल पूर्णांक sa_sha_cra_init_alg(काष्ठा crypto_tfm *tfm, स्थिर अक्षर *alg_base)
+अणु
+	काष्ठा sa_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
+	काष्ठा sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
+	पूर्णांक ret;
 
-	memset(ctx, 0, sizeof(*ctx));
+	स_रखो(ctx, 0, माप(*ctx));
 	ctx->dev_data = data;
 	ret = sa_init_ctx_info(&ctx->enc, data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (alg_base) {
+	अगर (alg_base) अणु
 		ctx->shash = crypto_alloc_shash(alg_base, 0,
 						CRYPTO_ALG_NEED_FALLBACK);
-		if (IS_ERR(ctx->shash)) {
+		अगर (IS_ERR(ctx->shash)) अणु
 			dev_err(sa_k3_dev, "base driver %s couldn't be loaded\n",
 				alg_base);
-			return PTR_ERR(ctx->shash);
-		}
-		/* for fallback */
+			वापस PTR_ERR(ctx->shash);
+		पूर्ण
+		/* क्रम fallback */
 		ctx->fallback.ahash =
 			crypto_alloc_ahash(alg_base, 0,
 					   CRYPTO_ALG_NEED_FALLBACK);
-		if (IS_ERR(ctx->fallback.ahash)) {
+		अगर (IS_ERR(ctx->fallback.ahash)) अणु
 			dev_err(ctx->dev_data->dev,
 				"Could not load fallback driver\n");
-			return PTR_ERR(ctx->fallback.ahash);
-		}
-	}
+			वापस PTR_ERR(ctx->fallback.ahash);
+		पूर्ण
+	पूर्ण
 
 	dev_dbg(sa_k3_dev, "%s(0x%p) sc-ids(0x%x(0x%pad), 0x%x(0x%pad))\n",
 		__func__, tfm, ctx->enc.sc_id, &ctx->enc.sc_phys,
 		ctx->dec.sc_id, &ctx->dec.sc_phys);
 
 	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-				 sizeof(struct sa_sha_req_ctx) +
+				 माप(काष्ठा sa_sha_req_ctx) +
 				 crypto_ahash_reqsize(ctx->fallback.ahash));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sa_sha_digest(struct ahash_request *req)
-{
-	return sa_sha_run(req);
-}
+अटल पूर्णांक sa_sha_digest(काष्ठा ahash_request *req)
+अणु
+	वापस sa_sha_run(req);
+पूर्ण
 
-static int sa_sha_init(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct sa_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक sa_sha_init(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा sa_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	dev_dbg(sa_k3_dev, "init: digest size: %u, rctx=%p\n",
 		crypto_ahash_digestsize(tfm), rctx);
@@ -1548,14 +1549,14 @@ static int sa_sha_init(struct ahash_request *req)
 	rctx->fallback_req.base.flags =
 		req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP;
 
-	return crypto_ahash_init(&rctx->fallback_req);
-}
+	वापस crypto_ahash_init(&rctx->fallback_req);
+पूर्ण
 
-static int sa_sha_update(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct sa_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक sa_sha_update(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा sa_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback.ahash);
 	rctx->fallback_req.base.flags =
@@ -1563,28 +1564,28 @@ static int sa_sha_update(struct ahash_request *req)
 	rctx->fallback_req.nbytes = req->nbytes;
 	rctx->fallback_req.src = req->src;
 
-	return crypto_ahash_update(&rctx->fallback_req);
-}
+	वापस crypto_ahash_update(&rctx->fallback_req);
+पूर्ण
 
-static int sa_sha_final(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct sa_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक sa_sha_final(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा sa_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback.ahash);
 	rctx->fallback_req.base.flags =
 		req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP;
 	rctx->fallback_req.result = req->result;
 
-	return crypto_ahash_final(&rctx->fallback_req);
-}
+	वापस crypto_ahash_final(&rctx->fallback_req);
+पूर्ण
 
-static int sa_sha_finup(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct sa_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक sa_sha_finup(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा sa_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback.ahash);
 	rctx->fallback_req.base.flags =
@@ -1594,39 +1595,39 @@ static int sa_sha_finup(struct ahash_request *req)
 	rctx->fallback_req.src = req->src;
 	rctx->fallback_req.result = req->result;
 
-	return crypto_ahash_finup(&rctx->fallback_req);
-}
+	वापस crypto_ahash_finup(&rctx->fallback_req);
+पूर्ण
 
-static int sa_sha_import(struct ahash_request *req, const void *in)
-{
-	struct sa_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक sa_sha_import(काष्ठा ahash_request *req, स्थिर व्योम *in)
+अणु
+	काष्ठा sa_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback.ahash);
 	rctx->fallback_req.base.flags = req->base.flags &
 		CRYPTO_TFM_REQ_MAY_SLEEP;
 
-	return crypto_ahash_import(&rctx->fallback_req, in);
-}
+	वापस crypto_ahash_import(&rctx->fallback_req, in);
+पूर्ण
 
-static int sa_sha_export(struct ahash_request *req, void *out)
-{
-	struct sa_sha_req_ctx *rctx = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct ahash_request *subreq = &rctx->fallback_req;
+अटल पूर्णांक sa_sha_export(काष्ठा ahash_request *req, व्योम *out)
+अणु
+	काष्ठा sa_sha_req_ctx *rctx = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा sa_tfm_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा ahash_request *subreq = &rctx->fallback_req;
 
 	ahash_request_set_tfm(subreq, ctx->fallback.ahash);
 	subreq->base.flags = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP;
 
-	return crypto_ahash_export(subreq, out);
-}
+	वापस crypto_ahash_export(subreq, out);
+पूर्ण
 
-static int sa_sha1_cra_init(struct crypto_tfm *tfm)
-{
-	struct algo_data ad = { 0 };
-	struct sa_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक sa_sha1_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा algo_data ad = अणु 0 पूर्ण;
+	काष्ठा sa_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	sa_sha_cra_init_alg(tfm, "sha1");
 
@@ -1636,13 +1637,13 @@ static int sa_sha1_cra_init(struct crypto_tfm *tfm)
 
 	sa_sha_setup(ctx, &ad);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sa_sha256_cra_init(struct crypto_tfm *tfm)
-{
-	struct algo_data ad = { 0 };
-	struct sa_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक sa_sha256_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा algo_data ad = अणु 0 पूर्ण;
+	काष्ठा sa_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	sa_sha_cra_init_alg(tfm, "sha256");
 
@@ -1652,13 +1653,13 @@ static int sa_sha256_cra_init(struct crypto_tfm *tfm)
 
 	sa_sha_setup(ctx, &ad);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sa_sha512_cra_init(struct crypto_tfm *tfm)
-{
-	struct algo_data ad = { 0 };
-	struct sa_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक sa_sha512_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा algo_data ad = अणु 0 पूर्ण;
+	काष्ठा sa_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	sa_sha_cra_init_alg(tfm, "sha512");
 
@@ -1668,155 +1669,155 @@ static int sa_sha512_cra_init(struct crypto_tfm *tfm)
 
 	sa_sha_setup(ctx, &ad);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sa_sha_cra_exit(struct crypto_tfm *tfm)
-{
-	struct sa_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
-	struct sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
+अटल व्योम sa_sha_cra_निकास(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा sa_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
+	काष्ठा sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
 
 	dev_dbg(sa_k3_dev, "%s(0x%p) sc-ids(0x%x(0x%pad), 0x%x(0x%pad))\n",
 		__func__, tfm, ctx->enc.sc_id, &ctx->enc.sc_phys,
 		ctx->dec.sc_id, &ctx->dec.sc_phys);
 
-	if (crypto_tfm_alg_type(tfm) == CRYPTO_ALG_TYPE_AHASH)
-		sa_free_ctx_info(&ctx->enc, data);
+	अगर (crypto_tfm_alg_type(tfm) == CRYPTO_ALG_TYPE_AHASH)
+		sa_मुक्त_ctx_info(&ctx->enc, data);
 
-	crypto_free_shash(ctx->shash);
-	crypto_free_ahash(ctx->fallback.ahash);
-}
+	crypto_मुक्त_shash(ctx->shash);
+	crypto_मुक्त_ahash(ctx->fallback.ahash);
+पूर्ण
 
-static void sa_aead_dma_in_callback(void *data)
-{
-	struct sa_rx_data *rxd = (struct sa_rx_data *)data;
-	struct aead_request *req;
-	struct crypto_aead *tfm;
-	unsigned int start;
-	unsigned int authsize;
+अटल व्योम sa_aead_dma_in_callback(व्योम *data)
+अणु
+	काष्ठा sa_rx_data *rxd = (काष्ठा sa_rx_data *)data;
+	काष्ठा aead_request *req;
+	काष्ठा crypto_aead *tfm;
+	अचिन्हित पूर्णांक start;
+	अचिन्हित पूर्णांक authsize;
 	u8 auth_tag[SA_MAX_AUTH_TAG_SZ];
-	size_t pl, ml;
-	int i;
-	int err = 0;
+	माप_प्रकार pl, ml;
+	पूर्णांक i;
+	पूर्णांक err = 0;
 	u16 auth_len;
 	u32 *mdptr;
 
 	sa_sync_from_device(rxd);
-	req = container_of(rxd->req, struct aead_request, base);
+	req = container_of(rxd->req, काष्ठा aead_request, base);
 	tfm = crypto_aead_reqtfm(req);
 	start = req->assoclen + req->cryptlen;
 	authsize = crypto_aead_authsize(tfm);
 
 	mdptr = (u32 *)dmaengine_desc_get_metadata_ptr(rxd->tx_in, &pl, &ml);
-	for (i = 0; i < (authsize / 4); i++)
+	क्रम (i = 0; i < (authsize / 4); i++)
 		mdptr[i + 4] = swab32(mdptr[i + 4]);
 
 	auth_len = req->assoclen + req->cryptlen;
 
-	if (rxd->enc) {
+	अगर (rxd->enc) अणु
 		scatterwalk_map_and_copy(&mdptr[4], req->dst, start, authsize,
 					 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		auth_len -= authsize;
 		start -= authsize;
 		scatterwalk_map_and_copy(auth_tag, req->src, start, authsize,
 					 0);
 
-		err = memcmp(&mdptr[4], auth_tag, authsize) ? -EBADMSG : 0;
-	}
+		err = स_भेद(&mdptr[4], auth_tag, authsize) ? -EBADMSG : 0;
+	पूर्ण
 
-	sa_free_sa_rx_data(rxd);
+	sa_मुक्त_sa_rx_data(rxd);
 
 	aead_request_complete(req, err);
-}
+पूर्ण
 
-static int sa_cra_init_aead(struct crypto_aead *tfm, const char *hash,
-			    const char *fallback)
-{
-	struct sa_tfm_ctx *ctx = crypto_aead_ctx(tfm);
-	struct sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
-	int ret;
+अटल पूर्णांक sa_cra_init_aead(काष्ठा crypto_aead *tfm, स्थिर अक्षर *hash,
+			    स्थिर अक्षर *fallback)
+अणु
+	काष्ठा sa_tfm_ctx *ctx = crypto_aead_ctx(tfm);
+	काष्ठा sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
+	पूर्णांक ret;
 
-	memzero_explicit(ctx, sizeof(*ctx));
+	memzero_explicit(ctx, माप(*ctx));
 	ctx->dev_data = data;
 
 	ctx->shash = crypto_alloc_shash(hash, 0, CRYPTO_ALG_NEED_FALLBACK);
-	if (IS_ERR(ctx->shash)) {
+	अगर (IS_ERR(ctx->shash)) अणु
 		dev_err(sa_k3_dev, "base driver %s couldn't be loaded\n", hash);
-		return PTR_ERR(ctx->shash);
-	}
+		वापस PTR_ERR(ctx->shash);
+	पूर्ण
 
 	ctx->fallback.aead = crypto_alloc_aead(fallback, 0,
 					       CRYPTO_ALG_NEED_FALLBACK);
 
-	if (IS_ERR(ctx->fallback.aead)) {
+	अगर (IS_ERR(ctx->fallback.aead)) अणु
 		dev_err(sa_k3_dev, "fallback driver %s couldn't be loaded\n",
 			fallback);
-		return PTR_ERR(ctx->fallback.aead);
-	}
+		वापस PTR_ERR(ctx->fallback.aead);
+	पूर्ण
 
-	crypto_aead_set_reqsize(tfm, sizeof(struct aead_request) +
+	crypto_aead_set_reqsize(tfm, माप(काष्ठा aead_request) +
 				crypto_aead_reqsize(ctx->fallback.aead));
 
 	ret = sa_init_ctx_info(&ctx->enc, data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = sa_init_ctx_info(&ctx->dec, data);
-	if (ret) {
-		sa_free_ctx_info(&ctx->enc, data);
-		return ret;
-	}
+	अगर (ret) अणु
+		sa_मुक्त_ctx_info(&ctx->enc, data);
+		वापस ret;
+	पूर्ण
 
 	dev_dbg(sa_k3_dev, "%s(0x%p) sc-ids(0x%x(0x%pad), 0x%x(0x%pad))\n",
 		__func__, tfm, ctx->enc.sc_id, &ctx->enc.sc_phys,
 		ctx->dec.sc_id, &ctx->dec.sc_phys);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sa_cra_init_aead_sha1(struct crypto_aead *tfm)
-{
-	return sa_cra_init_aead(tfm, "sha1",
+अटल पूर्णांक sa_cra_init_aead_sha1(काष्ठा crypto_aead *tfm)
+अणु
+	वापस sa_cra_init_aead(tfm, "sha1",
 				"authenc(hmac(sha1-ce),cbc(aes-ce))");
-}
+पूर्ण
 
-static int sa_cra_init_aead_sha256(struct crypto_aead *tfm)
-{
-	return sa_cra_init_aead(tfm, "sha256",
+अटल पूर्णांक sa_cra_init_aead_sha256(काष्ठा crypto_aead *tfm)
+अणु
+	वापस sa_cra_init_aead(tfm, "sha256",
 				"authenc(hmac(sha256-ce),cbc(aes-ce))");
-}
+पूर्ण
 
-static void sa_exit_tfm_aead(struct crypto_aead *tfm)
-{
-	struct sa_tfm_ctx *ctx = crypto_aead_ctx(tfm);
-	struct sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
+अटल व्योम sa_निकास_tfm_aead(काष्ठा crypto_aead *tfm)
+अणु
+	काष्ठा sa_tfm_ctx *ctx = crypto_aead_ctx(tfm);
+	काष्ठा sa_crypto_data *data = dev_get_drvdata(sa_k3_dev);
 
-	crypto_free_shash(ctx->shash);
-	crypto_free_aead(ctx->fallback.aead);
+	crypto_मुक्त_shash(ctx->shash);
+	crypto_मुक्त_aead(ctx->fallback.aead);
 
-	sa_free_ctx_info(&ctx->enc, data);
-	sa_free_ctx_info(&ctx->dec, data);
-}
+	sa_मुक्त_ctx_info(&ctx->enc, data);
+	sa_मुक्त_ctx_info(&ctx->dec, data);
+पूर्ण
 
-/* AEAD algorithm configuration interface function */
-static int sa_aead_setkey(struct crypto_aead *authenc,
-			  const u8 *key, unsigned int keylen,
-			  struct algo_data *ad)
-{
-	struct sa_tfm_ctx *ctx = crypto_aead_ctx(authenc);
-	struct crypto_authenc_keys keys;
-	int cmdl_len;
-	struct sa_cmdl_cfg cfg;
-	int key_idx;
+/* AEAD algorithm configuration पूर्णांकerface function */
+अटल पूर्णांक sa_aead_setkey(काष्ठा crypto_aead *authenc,
+			  स्थिर u8 *key, अचिन्हित पूर्णांक keylen,
+			  काष्ठा algo_data *ad)
+अणु
+	काष्ठा sa_tfm_ctx *ctx = crypto_aead_ctx(authenc);
+	काष्ठा crypto_authenc_keys keys;
+	पूर्णांक cmdl_len;
+	काष्ठा sa_cmdl_cfg cfg;
+	पूर्णांक key_idx;
 
-	if (crypto_authenc_extractkeys(&keys, key, keylen) != 0)
-		return -EINVAL;
+	अगर (crypto_authenc_extractkeys(&keys, key, keylen) != 0)
+		वापस -EINVAL;
 
 	/* Convert the key size (16/24/32) to the key size index (0/1/2) */
 	key_idx = (keys.enckeylen >> 3) - 2;
-	if (key_idx >= 3)
-		return -EINVAL;
+	अगर (key_idx >= 3)
+		वापस -EINVAL;
 
 	ad->ctx = ctx;
 	ad->enc_eng.eng_id = SA_ENG_ID_EM1;
@@ -1830,7 +1831,7 @@ static int sa_aead_setkey(struct crypto_aead *authenc,
 	ad->ealg_id = SA_EALG_ID_AES_CBC;
 	ad->prep_iopad = sa_prepare_iopads;
 
-	memset(&cfg, 0, sizeof(cfg));
+	स_रखो(&cfg, 0, माप(cfg));
 	cfg.enc = true;
 	cfg.aalg = ad->aalg_id;
 	cfg.enc_eng_id = ad->enc_eng.eng_id;
@@ -1839,32 +1840,32 @@ static int sa_aead_setkey(struct crypto_aead *authenc,
 	cfg.akey = keys.authkey;
 	cfg.akey_len = keys.authkeylen;
 
-	/* Setup Encryption Security Context & Command label template */
-	if (sa_init_sc(&ctx->enc, ctx->dev_data->match_data, keys.enckey,
+	/* Setup Encryption Security Context & Command label ढाँचा */
+	अगर (sa_init_sc(&ctx->enc, ctx->dev_data->match_data, keys.enckey,
 		       keys.enckeylen, keys.authkey, keys.authkeylen,
 		       ad, 1, &ctx->enc.epib[1]))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	cmdl_len = sa_format_cmdl_gen(&cfg,
+	cmdl_len = sa_क्रमmat_cmdl_gen(&cfg,
 				      (u8 *)ctx->enc.cmdl,
 				      &ctx->enc.cmdl_upd_info);
-	if (cmdl_len <= 0 || (cmdl_len > SA_MAX_CMDL_WORDS * sizeof(u32)))
-		return -EINVAL;
+	अगर (cmdl_len <= 0 || (cmdl_len > SA_MAX_CMDL_WORDS * माप(u32)))
+		वापस -EINVAL;
 
 	ctx->enc.cmdl_size = cmdl_len;
 
-	/* Setup Decryption Security Context & Command label template */
-	if (sa_init_sc(&ctx->dec, ctx->dev_data->match_data, keys.enckey,
+	/* Setup Decryption Security Context & Command label ढाँचा */
+	अगर (sa_init_sc(&ctx->dec, ctx->dev_data->match_data, keys.enckey,
 		       keys.enckeylen, keys.authkey, keys.authkeylen,
 		       ad, 0, &ctx->dec.epib[1]))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	cfg.enc = false;
-	cmdl_len = sa_format_cmdl_gen(&cfg, (u8 *)ctx->dec.cmdl,
+	cmdl_len = sa_क्रमmat_cmdl_gen(&cfg, (u8 *)ctx->dec.cmdl,
 				      &ctx->dec.cmdl_upd_info);
 
-	if (cmdl_len <= 0 || (cmdl_len > SA_MAX_CMDL_WORDS * sizeof(u32)))
-		return -EINVAL;
+	अगर (cmdl_len <= 0 || (cmdl_len > SA_MAX_CMDL_WORDS * माप(u32)))
+		वापस -EINVAL;
 
 	ctx->dec.cmdl_size = cmdl_len;
 
@@ -1874,62 +1875,62 @@ static int sa_aead_setkey(struct crypto_aead *authenc,
 			      CRYPTO_TFM_REQ_MASK);
 	crypto_aead_setkey(ctx->fallback.aead, key, keylen);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sa_aead_setauthsize(struct crypto_aead *tfm, unsigned int authsize)
-{
-	struct sa_tfm_ctx *ctx = crypto_tfm_ctx(crypto_aead_tfm(tfm));
+अटल पूर्णांक sa_aead_setauthsize(काष्ठा crypto_aead *tfm, अचिन्हित पूर्णांक authsize)
+अणु
+	काष्ठा sa_tfm_ctx *ctx = crypto_tfm_ctx(crypto_aead_tfm(tfm));
 
-	return crypto_aead_setauthsize(ctx->fallback.aead, authsize);
-}
+	वापस crypto_aead_setauthsize(ctx->fallback.aead, authsize);
+पूर्ण
 
-static int sa_aead_cbc_sha1_setkey(struct crypto_aead *authenc,
-				   const u8 *key, unsigned int keylen)
-{
-	struct algo_data ad = { 0 };
+अटल पूर्णांक sa_aead_cbc_sha1_setkey(काष्ठा crypto_aead *authenc,
+				   स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा algo_data ad = अणु 0 पूर्ण;
 
 	ad.ealg_id = SA_EALG_ID_AES_CBC;
 	ad.aalg_id = SA_AALG_ID_HMAC_SHA1;
 	ad.hash_size = SHA1_DIGEST_SIZE;
 	ad.auth_ctrl = SA_AUTH_SW_CTRL_SHA1;
 
-	return sa_aead_setkey(authenc, key, keylen, &ad);
-}
+	वापस sa_aead_setkey(authenc, key, keylen, &ad);
+पूर्ण
 
-static int sa_aead_cbc_sha256_setkey(struct crypto_aead *authenc,
-				     const u8 *key, unsigned int keylen)
-{
-	struct algo_data ad = { 0 };
+अटल पूर्णांक sa_aead_cbc_sha256_setkey(काष्ठा crypto_aead *authenc,
+				     स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा algo_data ad = अणु 0 पूर्ण;
 
 	ad.ealg_id = SA_EALG_ID_AES_CBC;
 	ad.aalg_id = SA_AALG_ID_HMAC_SHA2_256;
 	ad.hash_size = SHA256_DIGEST_SIZE;
 	ad.auth_ctrl = SA_AUTH_SW_CTRL_SHA256;
 
-	return sa_aead_setkey(authenc, key, keylen, &ad);
-}
+	वापस sa_aead_setkey(authenc, key, keylen, &ad);
+पूर्ण
 
-static int sa_aead_run(struct aead_request *req, u8 *iv, int enc)
-{
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	struct sa_tfm_ctx *ctx = crypto_aead_ctx(tfm);
-	struct sa_req sa_req = { 0 };
-	size_t auth_size, enc_size;
+अटल पूर्णांक sa_aead_run(काष्ठा aead_request *req, u8 *iv, पूर्णांक enc)
+अणु
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	काष्ठा sa_tfm_ctx *ctx = crypto_aead_ctx(tfm);
+	काष्ठा sa_req sa_req = अणु 0 पूर्ण;
+	माप_प्रकार auth_size, enc_size;
 
 	enc_size = req->cryptlen;
 	auth_size = req->assoclen + req->cryptlen;
 
-	if (!enc) {
+	अगर (!enc) अणु
 		enc_size -= crypto_aead_authsize(tfm);
 		auth_size -= crypto_aead_authsize(tfm);
-	}
+	पूर्ण
 
-	if (auth_size > SA_MAX_DATA_SZ ||
+	अगर (auth_size > SA_MAX_DATA_SZ ||
 	    (auth_size >= SA_UNSAFE_DATA_SZ_MIN &&
-	     auth_size <= SA_UNSAFE_DATA_SZ_MAX)) {
-		struct aead_request *subreq = aead_request_ctx(req);
-		int ret;
+	     auth_size <= SA_UNSAFE_DATA_SZ_MAX)) अणु
+		काष्ठा aead_request *subreq = aead_request_ctx(req);
+		पूर्णांक ret;
 
 		aead_request_set_tfm(subreq, ctx->fallback.aead);
 		aead_request_set_callback(subreq, req->base.flags,
@@ -1940,8 +1941,8 @@ static int sa_aead_run(struct aead_request *req, u8 *iv, int enc)
 
 		ret = enc ? crypto_aead_encrypt(subreq) :
 			crypto_aead_decrypt(subreq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sa_req.enc_offset = req->assoclen;
 	sa_req.enc_size = enc_size;
@@ -1957,25 +1958,25 @@ static int sa_aead_run(struct aead_request *req, u8 *iv, int enc)
 	sa_req.src = req->src;
 	sa_req.dst = req->dst;
 
-	return sa_run(&sa_req);
-}
+	वापस sa_run(&sa_req);
+पूर्ण
 
-/* AEAD algorithm encrypt interface function */
-static int sa_aead_encrypt(struct aead_request *req)
-{
-	return sa_aead_run(req, req->iv, 1);
-}
+/* AEAD algorithm encrypt पूर्णांकerface function */
+अटल पूर्णांक sa_aead_encrypt(काष्ठा aead_request *req)
+अणु
+	वापस sa_aead_run(req, req->iv, 1);
+पूर्ण
 
-/* AEAD algorithm decrypt interface function */
-static int sa_aead_decrypt(struct aead_request *req)
-{
-	return sa_aead_run(req, req->iv, 0);
-}
+/* AEAD algorithm decrypt पूर्णांकerface function */
+अटल पूर्णांक sa_aead_decrypt(काष्ठा aead_request *req)
+अणु
+	वापस sa_aead_run(req, req->iv, 0);
+पूर्ण
 
-static struct sa_alg_tmpl sa_algs[] = {
-	[SA_ALG_CBC_AES] = {
+अटल काष्ठा sa_alg_पंचांगpl sa_algs[] = अणु
+	[SA_ALG_CBC_AES] = अणु
 		.type = CRYPTO_ALG_TYPE_SKCIPHER,
-		.alg.skcipher = {
+		.alg.skcipher = अणु
 			.base.cra_name		= "cbc(aes)",
 			.base.cra_driver_name	= "cbc-aes-sa2ul",
 			.base.cra_priority	= 30000,
@@ -1984,21 +1985,21 @@ static struct sa_alg_tmpl sa_algs[] = {
 						  CRYPTO_ALG_ASYNC |
 						  CRYPTO_ALG_NEED_FALLBACK,
 			.base.cra_blocksize	= AES_BLOCK_SIZE,
-			.base.cra_ctxsize	= sizeof(struct sa_tfm_ctx),
+			.base.cra_ctxsize	= माप(काष्ठा sa_tfm_ctx),
 			.base.cra_module	= THIS_MODULE,
 			.init			= sa_cipher_cra_init,
-			.exit			= sa_cipher_cra_exit,
+			.निकास			= sa_cipher_cra_निकास,
 			.min_keysize		= AES_MIN_KEY_SIZE,
 			.max_keysize		= AES_MAX_KEY_SIZE,
 			.ivsize			= AES_BLOCK_SIZE,
 			.setkey			= sa_aes_cbc_setkey,
 			.encrypt		= sa_encrypt,
 			.decrypt		= sa_decrypt,
-		}
-	},
-	[SA_ALG_EBC_AES] = {
+		पूर्ण
+	पूर्ण,
+	[SA_ALG_EBC_AES] = अणु
 		.type = CRYPTO_ALG_TYPE_SKCIPHER,
-		.alg.skcipher = {
+		.alg.skcipher = अणु
 			.base.cra_name		= "ecb(aes)",
 			.base.cra_driver_name	= "ecb-aes-sa2ul",
 			.base.cra_priority	= 30000,
@@ -2007,20 +2008,20 @@ static struct sa_alg_tmpl sa_algs[] = {
 						  CRYPTO_ALG_ASYNC |
 						  CRYPTO_ALG_NEED_FALLBACK,
 			.base.cra_blocksize	= AES_BLOCK_SIZE,
-			.base.cra_ctxsize	= sizeof(struct sa_tfm_ctx),
+			.base.cra_ctxsize	= माप(काष्ठा sa_tfm_ctx),
 			.base.cra_module	= THIS_MODULE,
 			.init			= sa_cipher_cra_init,
-			.exit			= sa_cipher_cra_exit,
+			.निकास			= sa_cipher_cra_निकास,
 			.min_keysize		= AES_MIN_KEY_SIZE,
 			.max_keysize		= AES_MAX_KEY_SIZE,
 			.setkey			= sa_aes_ecb_setkey,
 			.encrypt		= sa_encrypt,
 			.decrypt		= sa_decrypt,
-		}
-	},
-	[SA_ALG_CBC_DES3] = {
+		पूर्ण
+	पूर्ण,
+	[SA_ALG_CBC_DES3] = अणु
 		.type = CRYPTO_ALG_TYPE_SKCIPHER,
-		.alg.skcipher = {
+		.alg.skcipher = अणु
 			.base.cra_name		= "cbc(des3_ede)",
 			.base.cra_driver_name	= "cbc-des3-sa2ul",
 			.base.cra_priority	= 30000,
@@ -2029,21 +2030,21 @@ static struct sa_alg_tmpl sa_algs[] = {
 						  CRYPTO_ALG_ASYNC |
 						  CRYPTO_ALG_NEED_FALLBACK,
 			.base.cra_blocksize	= DES_BLOCK_SIZE,
-			.base.cra_ctxsize	= sizeof(struct sa_tfm_ctx),
+			.base.cra_ctxsize	= माप(काष्ठा sa_tfm_ctx),
 			.base.cra_module	= THIS_MODULE,
 			.init			= sa_cipher_cra_init,
-			.exit			= sa_cipher_cra_exit,
+			.निकास			= sa_cipher_cra_निकास,
 			.min_keysize		= 3 * DES_KEY_SIZE,
 			.max_keysize		= 3 * DES_KEY_SIZE,
 			.ivsize			= DES_BLOCK_SIZE,
 			.setkey			= sa_3des_cbc_setkey,
 			.encrypt		= sa_encrypt,
 			.decrypt		= sa_decrypt,
-		}
-	},
-	[SA_ALG_ECB_DES3] = {
+		पूर्ण
+	पूर्ण,
+	[SA_ALG_ECB_DES3] = अणु
 		.type = CRYPTO_ALG_TYPE_SKCIPHER,
-		.alg.skcipher = {
+		.alg.skcipher = अणु
 			.base.cra_name		= "ecb(des3_ede)",
 			.base.cra_driver_name	= "ecb-des3-sa2ul",
 			.base.cra_priority	= 30000,
@@ -2052,21 +2053,21 @@ static struct sa_alg_tmpl sa_algs[] = {
 						  CRYPTO_ALG_ASYNC |
 						  CRYPTO_ALG_NEED_FALLBACK,
 			.base.cra_blocksize	= DES_BLOCK_SIZE,
-			.base.cra_ctxsize	= sizeof(struct sa_tfm_ctx),
+			.base.cra_ctxsize	= माप(काष्ठा sa_tfm_ctx),
 			.base.cra_module	= THIS_MODULE,
 			.init			= sa_cipher_cra_init,
-			.exit			= sa_cipher_cra_exit,
+			.निकास			= sa_cipher_cra_निकास,
 			.min_keysize		= 3 * DES_KEY_SIZE,
 			.max_keysize		= 3 * DES_KEY_SIZE,
 			.setkey			= sa_3des_ecb_setkey,
 			.encrypt		= sa_encrypt,
 			.decrypt		= sa_decrypt,
-		}
-	},
-	[SA_ALG_SHA1] = {
+		पूर्ण
+	पूर्ण,
+	[SA_ALG_SHA1] = अणु
 		.type = CRYPTO_ALG_TYPE_AHASH,
-		.alg.ahash = {
-			.halg.base = {
+		.alg.ahash = अणु
+			.halg.base = अणु
 				.cra_name	= "sha1",
 				.cra_driver_name	= "sha1-sa2ul",
 				.cra_priority	= 400,
@@ -2075,14 +2076,14 @@ static struct sa_alg_tmpl sa_algs[] = {
 						  CRYPTO_ALG_KERN_DRIVER_ONLY |
 						  CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize	= SHA1_BLOCK_SIZE,
-				.cra_ctxsize	= sizeof(struct sa_tfm_ctx),
+				.cra_ctxsize	= माप(काष्ठा sa_tfm_ctx),
 				.cra_module	= THIS_MODULE,
 				.cra_init	= sa_sha1_cra_init,
-				.cra_exit	= sa_sha_cra_exit,
-			},
+				.cra_निकास	= sa_sha_cra_निकास,
+			पूर्ण,
 			.halg.digestsize	= SHA1_DIGEST_SIZE,
-			.halg.statesize		= sizeof(struct sa_sha_req_ctx) +
-						  sizeof(struct sha1_state),
+			.halg.statesize		= माप(काष्ठा sa_sha_req_ctx) +
+						  माप(काष्ठा sha1_state),
 			.init			= sa_sha_init,
 			.update			= sa_sha_update,
 			.final			= sa_sha_final,
@@ -2090,12 +2091,12 @@ static struct sa_alg_tmpl sa_algs[] = {
 			.digest			= sa_sha_digest,
 			.export			= sa_sha_export,
 			.import			= sa_sha_import,
-		},
-	},
-	[SA_ALG_SHA256] = {
+		पूर्ण,
+	पूर्ण,
+	[SA_ALG_SHA256] = अणु
 		.type = CRYPTO_ALG_TYPE_AHASH,
-		.alg.ahash = {
-			.halg.base = {
+		.alg.ahash = अणु
+			.halg.base = अणु
 				.cra_name	= "sha256",
 				.cra_driver_name	= "sha256-sa2ul",
 				.cra_priority	= 400,
@@ -2104,14 +2105,14 @@ static struct sa_alg_tmpl sa_algs[] = {
 						  CRYPTO_ALG_KERN_DRIVER_ONLY |
 						  CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize	= SHA256_BLOCK_SIZE,
-				.cra_ctxsize	= sizeof(struct sa_tfm_ctx),
+				.cra_ctxsize	= माप(काष्ठा sa_tfm_ctx),
 				.cra_module	= THIS_MODULE,
 				.cra_init	= sa_sha256_cra_init,
-				.cra_exit	= sa_sha_cra_exit,
-			},
+				.cra_निकास	= sa_sha_cra_निकास,
+			पूर्ण,
 			.halg.digestsize	= SHA256_DIGEST_SIZE,
-			.halg.statesize		= sizeof(struct sa_sha_req_ctx) +
-						  sizeof(struct sha256_state),
+			.halg.statesize		= माप(काष्ठा sa_sha_req_ctx) +
+						  माप(काष्ठा sha256_state),
 			.init			= sa_sha_init,
 			.update			= sa_sha_update,
 			.final			= sa_sha_final,
@@ -2119,12 +2120,12 @@ static struct sa_alg_tmpl sa_algs[] = {
 			.digest			= sa_sha_digest,
 			.export			= sa_sha_export,
 			.import			= sa_sha_import,
-		},
-	},
-	[SA_ALG_SHA512] = {
+		पूर्ण,
+	पूर्ण,
+	[SA_ALG_SHA512] = अणु
 		.type = CRYPTO_ALG_TYPE_AHASH,
-		.alg.ahash = {
-			.halg.base = {
+		.alg.ahash = अणु
+			.halg.base = अणु
 				.cra_name	= "sha512",
 				.cra_driver_name	= "sha512-sa2ul",
 				.cra_priority	= 400,
@@ -2133,14 +2134,14 @@ static struct sa_alg_tmpl sa_algs[] = {
 						  CRYPTO_ALG_KERN_DRIVER_ONLY |
 						  CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize	= SHA512_BLOCK_SIZE,
-				.cra_ctxsize	= sizeof(struct sa_tfm_ctx),
+				.cra_ctxsize	= माप(काष्ठा sa_tfm_ctx),
 				.cra_module	= THIS_MODULE,
 				.cra_init	= sa_sha512_cra_init,
-				.cra_exit	= sa_sha_cra_exit,
-			},
+				.cra_निकास	= sa_sha_cra_निकास,
+			पूर्ण,
 			.halg.digestsize	= SHA512_DIGEST_SIZE,
-			.halg.statesize		= sizeof(struct sa_sha_req_ctx) +
-						  sizeof(struct sha512_state),
+			.halg.statesize		= माप(काष्ठा sa_sha_req_ctx) +
+						  माप(काष्ठा sha512_state),
 			.init			= sa_sha_init,
 			.update			= sa_sha_update,
 			.final			= sa_sha_final,
@@ -2148,12 +2149,12 @@ static struct sa_alg_tmpl sa_algs[] = {
 			.digest			= sa_sha_digest,
 			.export			= sa_sha_export,
 			.import			= sa_sha_import,
-		},
-	},
-	[SA_ALG_AUTHENC_SHA1_AES] = {
+		पूर्ण,
+	पूर्ण,
+	[SA_ALG_AUTHENC_SHA1_AES] = अणु
 		.type	= CRYPTO_ALG_TYPE_AEAD,
-		.alg.aead = {
-			.base = {
+		.alg.aead = अणु
+			.base = अणु
 				.cra_name = "authenc(hmac(sha1),cbc(aes))",
 				.cra_driver_name =
 					"authenc(hmac(sha1),cbc(aes))-sa2ul",
@@ -2162,25 +2163,25 @@ static struct sa_alg_tmpl sa_algs[] = {
 					CRYPTO_ALG_KERN_DRIVER_ONLY |
 					CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_NEED_FALLBACK,
-				.cra_ctxsize = sizeof(struct sa_tfm_ctx),
+				.cra_ctxsize = माप(काष्ठा sa_tfm_ctx),
 				.cra_module = THIS_MODULE,
 				.cra_priority = 3000,
-			},
+			पूर्ण,
 			.ivsize = AES_BLOCK_SIZE,
 			.maxauthsize = SHA1_DIGEST_SIZE,
 
 			.init = sa_cra_init_aead_sha1,
-			.exit = sa_exit_tfm_aead,
+			.निकास = sa_निकास_tfm_aead,
 			.setkey = sa_aead_cbc_sha1_setkey,
 			.setauthsize = sa_aead_setauthsize,
 			.encrypt = sa_aead_encrypt,
 			.decrypt = sa_aead_decrypt,
-		},
-	},
-	[SA_ALG_AUTHENC_SHA256_AES] = {
+		पूर्ण,
+	पूर्ण,
+	[SA_ALG_AUTHENC_SHA256_AES] = अणु
 		.type	= CRYPTO_ALG_TYPE_AEAD,
-		.alg.aead = {
-			.base = {
+		.alg.aead = अणु
+			.base = अणु
 				.cra_name = "authenc(hmac(sha256),cbc(aes))",
 				.cra_driver_name =
 					"authenc(hmac(sha256),cbc(aes))-sa2ul",
@@ -2189,130 +2190,130 @@ static struct sa_alg_tmpl sa_algs[] = {
 					CRYPTO_ALG_KERN_DRIVER_ONLY |
 					CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_NEED_FALLBACK,
-				.cra_ctxsize = sizeof(struct sa_tfm_ctx),
+				.cra_ctxsize = माप(काष्ठा sa_tfm_ctx),
 				.cra_module = THIS_MODULE,
 				.cra_alignmask = 0,
 				.cra_priority = 3000,
-			},
+			पूर्ण,
 			.ivsize = AES_BLOCK_SIZE,
 			.maxauthsize = SHA256_DIGEST_SIZE,
 
 			.init = sa_cra_init_aead_sha256,
-			.exit = sa_exit_tfm_aead,
+			.निकास = sa_निकास_tfm_aead,
 			.setkey = sa_aead_cbc_sha256_setkey,
 			.setauthsize = sa_aead_setauthsize,
 			.encrypt = sa_aead_encrypt,
 			.decrypt = sa_aead_decrypt,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /* Register the algorithms in crypto framework */
-static void sa_register_algos(struct sa_crypto_data *dev_data)
-{
-	const struct sa_match_data *match_data = dev_data->match_data;
-	struct device *dev = dev_data->dev;
-	char *alg_name;
+अटल व्योम sa_रेजिस्टर_algos(काष्ठा sa_crypto_data *dev_data)
+अणु
+	स्थिर काष्ठा sa_match_data *match_data = dev_data->match_data;
+	काष्ठा device *dev = dev_data->dev;
+	अक्षर *alg_name;
 	u32 type;
-	int i, err;
+	पूर्णांक i, err;
 
-	for (i = 0; i < ARRAY_SIZE(sa_algs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(sa_algs); i++) अणु
 		/* Skip unsupported algos */
-		if (!(match_data->supported_algos & BIT(i)))
-			continue;
+		अगर (!(match_data->supported_algos & BIT(i)))
+			जारी;
 
 		type = sa_algs[i].type;
-		if (type == CRYPTO_ALG_TYPE_SKCIPHER) {
+		अगर (type == CRYPTO_ALG_TYPE_SKCIPHER) अणु
 			alg_name = sa_algs[i].alg.skcipher.base.cra_name;
-			err = crypto_register_skcipher(&sa_algs[i].alg.skcipher);
-		} else if (type == CRYPTO_ALG_TYPE_AHASH) {
+			err = crypto_रेजिस्टर_skcipher(&sa_algs[i].alg.skcipher);
+		पूर्ण अन्यथा अगर (type == CRYPTO_ALG_TYPE_AHASH) अणु
 			alg_name = sa_algs[i].alg.ahash.halg.base.cra_name;
-			err = crypto_register_ahash(&sa_algs[i].alg.ahash);
-		} else if (type == CRYPTO_ALG_TYPE_AEAD) {
+			err = crypto_रेजिस्टर_ahash(&sa_algs[i].alg.ahash);
+		पूर्ण अन्यथा अगर (type == CRYPTO_ALG_TYPE_AEAD) अणु
 			alg_name = sa_algs[i].alg.aead.base.cra_name;
-			err = crypto_register_aead(&sa_algs[i].alg.aead);
-		} else {
+			err = crypto_रेजिस्टर_aead(&sa_algs[i].alg.aead);
+		पूर्ण अन्यथा अणु
 			dev_err(dev,
 				"un-supported crypto algorithm (%d)",
 				sa_algs[i].type);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (err)
+		अगर (err)
 			dev_err(dev, "Failed to register '%s'\n", alg_name);
-		else
-			sa_algs[i].registered = true;
-	}
-}
+		अन्यथा
+			sa_algs[i].रेजिस्टरed = true;
+	पूर्ण
+पूर्ण
 
-/* Unregister the algorithms in crypto framework */
-static void sa_unregister_algos(const struct device *dev)
-{
+/* Unरेजिस्टर the algorithms in crypto framework */
+अटल व्योम sa_unरेजिस्टर_algos(स्थिर काष्ठा device *dev)
+अणु
 	u32 type;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(sa_algs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(sa_algs); i++) अणु
 		type = sa_algs[i].type;
-		if (!sa_algs[i].registered)
-			continue;
-		if (type == CRYPTO_ALG_TYPE_SKCIPHER)
-			crypto_unregister_skcipher(&sa_algs[i].alg.skcipher);
-		else if (type == CRYPTO_ALG_TYPE_AHASH)
-			crypto_unregister_ahash(&sa_algs[i].alg.ahash);
-		else if (type == CRYPTO_ALG_TYPE_AEAD)
-			crypto_unregister_aead(&sa_algs[i].alg.aead);
+		अगर (!sa_algs[i].रेजिस्टरed)
+			जारी;
+		अगर (type == CRYPTO_ALG_TYPE_SKCIPHER)
+			crypto_unरेजिस्टर_skcipher(&sa_algs[i].alg.skcipher);
+		अन्यथा अगर (type == CRYPTO_ALG_TYPE_AHASH)
+			crypto_unरेजिस्टर_ahash(&sa_algs[i].alg.ahash);
+		अन्यथा अगर (type == CRYPTO_ALG_TYPE_AEAD)
+			crypto_unरेजिस्टर_aead(&sa_algs[i].alg.aead);
 
-		sa_algs[i].registered = false;
-	}
-}
+		sa_algs[i].रेजिस्टरed = false;
+	पूर्ण
+पूर्ण
 
-static int sa_init_mem(struct sa_crypto_data *dev_data)
-{
-	struct device *dev = &dev_data->pdev->dev;
-	/* Setup dma pool for security context buffers */
+अटल पूर्णांक sa_init_mem(काष्ठा sa_crypto_data *dev_data)
+अणु
+	काष्ठा device *dev = &dev_data->pdev->dev;
+	/* Setup dma pool क्रम security context buffers */
 	dev_data->sc_pool = dma_pool_create("keystone-sc", dev,
 					    SA_CTX_MAX_SZ, 64, 0);
-	if (!dev_data->sc_pool) {
+	अगर (!dev_data->sc_pool) अणु
 		dev_err(dev, "Failed to create dma pool");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sa_dma_init(struct sa_crypto_data *dd)
-{
-	int ret;
-	struct dma_slave_config cfg;
+अटल पूर्णांक sa_dma_init(काष्ठा sa_crypto_data *dd)
+अणु
+	पूर्णांक ret;
+	काष्ठा dma_slave_config cfg;
 
-	dd->dma_rx1 = NULL;
-	dd->dma_tx = NULL;
-	dd->dma_rx2 = NULL;
+	dd->dma_rx1 = शून्य;
+	dd->dma_tx = शून्य;
+	dd->dma_rx2 = शून्य;
 
 	ret = dma_coerce_mask_and_coherent(dd->dev, DMA_BIT_MASK(48));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dd->dma_rx1 = dma_request_chan(dd->dev, "rx1");
-	if (IS_ERR(dd->dma_rx1))
-		return dev_err_probe(dd->dev, PTR_ERR(dd->dma_rx1),
+	अगर (IS_ERR(dd->dma_rx1))
+		वापस dev_err_probe(dd->dev, PTR_ERR(dd->dma_rx1),
 				     "Unable to request rx1 DMA channel\n");
 
 	dd->dma_rx2 = dma_request_chan(dd->dev, "rx2");
-	if (IS_ERR(dd->dma_rx2)) {
+	अगर (IS_ERR(dd->dma_rx2)) अणु
 		dma_release_channel(dd->dma_rx1);
-		return dev_err_probe(dd->dev, PTR_ERR(dd->dma_rx2),
+		वापस dev_err_probe(dd->dev, PTR_ERR(dd->dma_rx2),
 				     "Unable to request rx2 DMA channel\n");
-	}
+	पूर्ण
 
 	dd->dma_tx = dma_request_chan(dd->dev, "tx");
-	if (IS_ERR(dd->dma_tx)) {
+	अगर (IS_ERR(dd->dma_tx)) अणु
 		ret = dev_err_probe(dd->dev, PTR_ERR(dd->dma_tx),
 				    "Unable to request tx DMA channel\n");
-		goto err_dma_tx;
-	}
+		जाओ err_dma_tx;
+	पूर्ण
 
-	memzero_explicit(&cfg, sizeof(cfg));
+	memzero_explicit(&cfg, माप(cfg));
 
 	cfg.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 	cfg.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
@@ -2320,51 +2321,51 @@ static int sa_dma_init(struct sa_crypto_data *dd)
 	cfg.dst_maxburst = 4;
 
 	ret = dmaengine_slave_config(dd->dma_rx1, &cfg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dd->dev, "can't configure IN dmaengine slave: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = dmaengine_slave_config(dd->dma_rx2, &cfg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dd->dev, "can't configure IN dmaengine slave: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = dmaengine_slave_config(dd->dma_tx, &cfg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dd->dev, "can't configure OUT dmaengine slave: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_dma_tx:
 	dma_release_channel(dd->dma_rx1);
 	dma_release_channel(dd->dma_rx2);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sa_link_child(struct device *dev, void *data)
-{
-	struct device *parent = data;
+अटल पूर्णांक sa_link_child(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा device *parent = data;
 
 	device_link_add(dev, parent, DL_FLAG_AUTOPROBE_CONSUMER);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sa_match_data am654_match_data = {
+अटल काष्ठा sa_match_data am654_match_data = अणु
 	.priv = 1,
 	.priv_id = 1,
 	.supported_algos = GENMASK(SA_ALG_AUTHENC_SHA256_AES, 0),
-};
+पूर्ण;
 
-static struct sa_match_data am64_match_data = {
+अटल काष्ठा sa_match_data am64_match_data = अणु
 	.priv = 0,
 	.priv_id = 0,
 	.supported_algos = BIT(SA_ALG_CBC_AES) |
@@ -2373,82 +2374,82 @@ static struct sa_match_data am64_match_data = {
 			   BIT(SA_ALG_SHA512) |
 			   BIT(SA_ALG_AUTHENC_SHA256_AES),
 	.skip_engine_control = true,
-};
+पूर्ण;
 
-static const struct of_device_id of_match[] = {
-	{ .compatible = "ti,j721e-sa2ul", .data = &am654_match_data, },
-	{ .compatible = "ti,am654-sa2ul", .data = &am654_match_data, },
-	{ .compatible = "ti,am64-sa2ul", .data = &am64_match_data, },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_match[] = अणु
+	अणु .compatible = "ti,j721e-sa2ul", .data = &am654_match_data, पूर्ण,
+	अणु .compatible = "ti,am654-sa2ul", .data = &am654_match_data, पूर्ण,
+	अणु .compatible = "ti,am64-sa2ul", .data = &am64_match_data, पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_match);
 
-static int sa_ul_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *match;
-	struct device *dev = &pdev->dev;
-	struct device_node *node = dev->of_node;
-	struct resource *res;
-	static void __iomem *saul_base;
-	struct sa_crypto_data *dev_data;
-	int ret;
+अटल पूर्णांक sa_ul_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *node = dev->of_node;
+	काष्ठा resource *res;
+	अटल व्योम __iomem *saul_base;
+	काष्ठा sa_crypto_data *dev_data;
+	पूर्णांक ret;
 
-	dev_data = devm_kzalloc(dev, sizeof(*dev_data), GFP_KERNEL);
-	if (!dev_data)
-		return -ENOMEM;
+	dev_data = devm_kzalloc(dev, माप(*dev_data), GFP_KERNEL);
+	अगर (!dev_data)
+		वापस -ENOMEM;
 
 	sa_k3_dev = dev;
 	dev_data->dev = dev;
 	dev_data->pdev = pdev;
-	platform_set_drvdata(pdev, dev_data);
+	platक्रमm_set_drvdata(pdev, dev_data);
 	dev_set_drvdata(sa_k3_dev, dev_data);
 
-	pm_runtime_enable(dev);
-	ret = pm_runtime_resume_and_get(dev);
-	if (ret < 0) {
+	pm_runसमय_enable(dev);
+	ret = pm_runसमय_resume_and_get(dev);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "%s: failed to get sync: %d\n", __func__,
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sa_init_mem(dev_data);
 	ret = sa_dma_init(dev_data);
-	if (ret)
-		goto disable_pm_runtime;
+	अगर (ret)
+		जाओ disable_pm_runसमय;
 
 	match = of_match_node(of_match, dev->of_node);
-	if (!match) {
+	अगर (!match) अणु
 		dev_err(dev, "No compatible match found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	dev_data->match_data = match->data;
 
 	spin_lock_init(&dev_data->scid_lock);
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	saul_base = devm_ioremap_resource(dev, res);
 
 	dev_data->base = saul_base;
 
-	if (!dev_data->match_data->skip_engine_control) {
+	अगर (!dev_data->match_data->skip_engine_control) अणु
 		u32 val = SA_EEC_ENCSS_EN | SA_EEC_AUTHSS_EN | SA_EEC_CTXCACH_EN |
 			  SA_EEC_CPPI_PORT_IN_EN | SA_EEC_CPPI_PORT_OUT_EN |
 			  SA_EEC_TRNG_EN;
 
-		writel_relaxed(val, saul_base + SA_ENGINE_ENABLE_CONTROL);
-	}
+		ग_लिखोl_relaxed(val, saul_base + SA_ENGINE_ENABLE_CONTROL);
+	पूर्ण
 
-	sa_register_algos(dev_data);
+	sa_रेजिस्टर_algos(dev_data);
 
-	ret = of_platform_populate(node, NULL, NULL, &pdev->dev);
-	if (ret)
-		goto release_dma;
+	ret = of_platक्रमm_populate(node, शून्य, शून्य, &pdev->dev);
+	अगर (ret)
+		जाओ release_dma;
 
-	device_for_each_child(&pdev->dev, &pdev->dev, sa_link_child);
+	device_क्रम_each_child(&pdev->dev, &pdev->dev, sa_link_child);
 
-	return 0;
+	वापस 0;
 
 release_dma:
-	sa_unregister_algos(&pdev->dev);
+	sa_unरेजिस्टर_algos(&pdev->dev);
 
 	dma_release_channel(dev_data->dma_rx2);
 	dma_release_channel(dev_data->dma_rx1);
@@ -2456,18 +2457,18 @@ release_dma:
 
 	dma_pool_destroy(dev_data->sc_pool);
 
-disable_pm_runtime:
-	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+disable_pm_runसमय:
+	pm_runसमय_put_sync(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sa_ul_remove(struct platform_device *pdev)
-{
-	struct sa_crypto_data *dev_data = platform_get_drvdata(pdev);
+अटल पूर्णांक sa_ul_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sa_crypto_data *dev_data = platक्रमm_get_drvdata(pdev);
 
-	sa_unregister_algos(&pdev->dev);
+	sa_unरेजिस्टर_algos(&pdev->dev);
 
 	dma_release_channel(dev_data->dma_rx2);
 	dma_release_channel(dev_data->dma_rx1);
@@ -2475,21 +2476,21 @@ static int sa_ul_remove(struct platform_device *pdev)
 
 	dma_pool_destroy(dev_data->sc_pool);
 
-	platform_set_drvdata(pdev, NULL);
+	platक्रमm_set_drvdata(pdev, शून्य);
 
-	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_put_sync(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver sa_ul_driver = {
+अटल काष्ठा platक्रमm_driver sa_ul_driver = अणु
 	.probe = sa_ul_probe,
-	.remove = sa_ul_remove,
-	.driver = {
+	.हटाओ = sa_ul_हटाओ,
+	.driver = अणु
 		   .name = "saul-crypto",
 		   .of_match_table = of_match,
-		   },
-};
-module_platform_driver(sa_ul_driver);
+		   पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(sa_ul_driver);
 MODULE_LICENSE("GPL v2");

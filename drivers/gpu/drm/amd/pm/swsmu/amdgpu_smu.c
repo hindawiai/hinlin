@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,56 +21,56 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#define SWSMU_CODE_LAYER_L1
+#घोषणा SWSMU_CODE_LAYER_L1
 
-#include <linux/firmware.h>
-#include <linux/pci.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/pci.h>
 
-#include "amdgpu.h"
-#include "amdgpu_smu.h"
-#include "smu_internal.h"
-#include "atom.h"
-#include "arcturus_ppt.h"
-#include "navi10_ppt.h"
-#include "sienna_cichlid_ppt.h"
-#include "renoir_ppt.h"
-#include "vangogh_ppt.h"
-#include "aldebaran_ppt.h"
-#include "amd_pcie.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_smu.h"
+#समावेश "smu_internal.h"
+#समावेश "atom.h"
+#समावेश "arcturus_ppt.h"
+#समावेश "navi10_ppt.h"
+#समावेश "sienna_cichlid_ppt.h"
+#समावेश "renoir_ppt.h"
+#समावेश "vangogh_ppt.h"
+#समावेश "aldebaran_ppt.h"
+#समावेश "amd_pcie.h"
 
 /*
- * DO NOT use these for err/warn/info/debug messages.
+ * DO NOT use these क्रम err/warn/info/debug messages.
  * Use dev_err, dev_warn, dev_info and dev_dbg instead.
- * They are more MGPU friendly.
+ * They are more MGPU मित्रly.
  */
-#undef pr_err
-#undef pr_warn
-#undef pr_info
-#undef pr_debug
+#अघोषित pr_err
+#अघोषित pr_warn
+#अघोषित pr_info
+#अघोषित pr_debug
 
-static const struct amd_pm_funcs swsmu_pm_funcs;
-static int smu_force_smuclk_levels(struct smu_context *smu,
-				   enum smu_clk_type clk_type,
-				   uint32_t mask);
-static int smu_handle_task(struct smu_context *smu,
-			   enum amd_dpm_forced_level level,
-			   enum amd_pp_task task_id,
+अटल स्थिर काष्ठा amd_pm_funcs swsmu_pm_funcs;
+अटल पूर्णांक smu_क्रमce_smuclk_levels(काष्ठा smu_context *smu,
+				   क्रमागत smu_clk_type clk_type,
+				   uपूर्णांक32_t mask);
+अटल पूर्णांक smu_handle_task(काष्ठा smu_context *smu,
+			   क्रमागत amd_dpm_क्रमced_level level,
+			   क्रमागत amd_pp_task task_id,
 			   bool lock_needed);
-static int smu_reset(struct smu_context *smu);
-static int smu_set_fan_speed_percent(void *handle, u32 speed);
-static int smu_set_fan_control_mode(struct smu_context *smu, int value);
-static int smu_set_power_limit(void *handle, uint32_t limit);
-static int smu_set_fan_speed_rpm(void *handle, uint32_t speed);
-static int smu_set_gfx_cgpg(struct smu_context *smu, bool enabled);
+अटल पूर्णांक smu_reset(काष्ठा smu_context *smu);
+अटल पूर्णांक smu_set_fan_speed_percent(व्योम *handle, u32 speed);
+अटल पूर्णांक smu_set_fan_control_mode(काष्ठा smu_context *smu, पूर्णांक value);
+अटल पूर्णांक smu_set_घातer_limit(व्योम *handle, uपूर्णांक32_t limit);
+अटल पूर्णांक smu_set_fan_speed_rpm(व्योम *handle, uपूर्णांक32_t speed);
+अटल पूर्णांक smu_set_gfx_cgpg(काष्ठा smu_context *smu, bool enabled);
 
-static int smu_sys_get_pp_feature_mask(void *handle,
-				       char *buf)
-{
-	struct smu_context *smu = handle;
-	int size = 0;
+अटल पूर्णांक smu_sys_get_pp_feature_mask(व्योम *handle,
+				       अक्षर *buf)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक size = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
@@ -77,17 +78,17 @@ static int smu_sys_get_pp_feature_mask(void *handle,
 
 	mutex_unlock(&smu->mutex);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int smu_sys_set_pp_feature_mask(void *handle,
-				       uint64_t new_mask)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_sys_set_pp_feature_mask(व्योम *handle,
+				       uपूर्णांक64_t new_mask)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
@@ -95,32 +96,32 @@ static int smu_sys_set_pp_feature_mask(void *handle,
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_get_status_gfxoff(struct amdgpu_device *adev, uint32_t *value)
-{
-	int ret = 0;
-	struct smu_context *smu = &adev->smu;
+पूर्णांक smu_get_status_gfxoff(काष्ठा amdgpu_device *adev, uपूर्णांक32_t *value)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा smu_context *smu = &adev->smu;
 
-	if (is_support_sw_smu(adev) && smu->ppt_funcs->get_gfx_off_status)
+	अगर (is_support_sw_smu(adev) && smu->ppt_funcs->get_gfx_off_status)
 		*value = smu_get_gfx_off_status(smu);
-	else
+	अन्यथा
 		ret = -EINVAL;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_set_soft_freq_range(struct smu_context *smu,
-			    enum smu_clk_type clk_type,
-			    uint32_t min,
-			    uint32_t max)
-{
-	int ret = 0;
+पूर्णांक smu_set_soft_freq_range(काष्ठा smu_context *smu,
+			    क्रमागत smu_clk_type clk_type,
+			    uपूर्णांक32_t min,
+			    uपूर्णांक32_t max)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->set_soft_freq_limited_range)
+	अगर (smu->ppt_funcs->set_soft_freq_limited_range)
 		ret = smu->ppt_funcs->set_soft_freq_limited_range(smu,
 								  clk_type,
 								  min,
@@ -128,22 +129,22 @@ int smu_set_soft_freq_range(struct smu_context *smu,
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_get_dpm_freq_range(struct smu_context *smu,
-			   enum smu_clk_type clk_type,
-			   uint32_t *min,
-			   uint32_t *max)
-{
-	int ret = 0;
+पूर्णांक smu_get_dpm_freq_range(काष्ठा smu_context *smu,
+			   क्रमागत smu_clk_type clk_type,
+			   uपूर्णांक32_t *min,
+			   uपूर्णांक32_t *max)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!min && !max)
-		return -EINVAL;
+	अगर (!min && !max)
+		वापस -EINVAL;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->get_dpm_ultimate_freq)
+	अगर (smu->ppt_funcs->get_dpm_ultimate_freq)
 		ret = smu->ppt_funcs->get_dpm_ultimate_freq(smu,
 							    clk_type,
 							    min,
@@ -151,449 +152,449 @@ int smu_get_dpm_freq_range(struct smu_context *smu,
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 smu_get_mclk(void *handle, bool low)
-{
-	struct smu_context *smu = handle;
-	uint32_t clk_freq;
-	int ret = 0;
+अटल u32 smu_get_mclk(व्योम *handle, bool low)
+अणु
+	काष्ठा smu_context *smu = handle;
+	uपूर्णांक32_t clk_freq;
+	पूर्णांक ret = 0;
 
 	ret = smu_get_dpm_freq_range(smu, SMU_UCLK,
-				     low ? &clk_freq : NULL,
-				     !low ? &clk_freq : NULL);
-	if (ret)
-		return 0;
-	return clk_freq * 100;
-}
+				     low ? &clk_freq : शून्य,
+				     !low ? &clk_freq : शून्य);
+	अगर (ret)
+		वापस 0;
+	वापस clk_freq * 100;
+पूर्ण
 
-static u32 smu_get_sclk(void *handle, bool low)
-{
-	struct smu_context *smu = handle;
-	uint32_t clk_freq;
-	int ret = 0;
+अटल u32 smu_get_sclk(व्योम *handle, bool low)
+अणु
+	काष्ठा smu_context *smu = handle;
+	uपूर्णांक32_t clk_freq;
+	पूर्णांक ret = 0;
 
 	ret = smu_get_dpm_freq_range(smu, SMU_GFXCLK,
-				     low ? &clk_freq : NULL,
-				     !low ? &clk_freq : NULL);
-	if (ret)
-		return 0;
-	return clk_freq * 100;
-}
+				     low ? &clk_freq : शून्य,
+				     !low ? &clk_freq : शून्य);
+	अगर (ret)
+		वापस 0;
+	वापस clk_freq * 100;
+पूर्ण
 
-static int smu_dpm_set_vcn_enable_locked(struct smu_context *smu,
+अटल पूर्णांक smu_dpm_set_vcn_enable_locked(काष्ठा smu_context *smu,
 					 bool enable)
-{
-	struct smu_power_context *smu_power = &smu->smu_power;
-	struct smu_power_gate *power_gate = &smu_power->power_gate;
-	int ret = 0;
+अणु
+	काष्ठा smu_घातer_context *smu_घातer = &smu->smu_घातer;
+	काष्ठा smu_घातer_gate *घातer_gate = &smu_घातer->घातer_gate;
+	पूर्णांक ret = 0;
 
-	if (!smu->ppt_funcs->dpm_set_vcn_enable)
-		return 0;
+	अगर (!smu->ppt_funcs->dpm_set_vcn_enable)
+		वापस 0;
 
-	if (atomic_read(&power_gate->vcn_gated) ^ enable)
-		return 0;
+	अगर (atomic_पढ़ो(&घातer_gate->vcn_gated) ^ enable)
+		वापस 0;
 
 	ret = smu->ppt_funcs->dpm_set_vcn_enable(smu, enable);
-	if (!ret)
-		atomic_set(&power_gate->vcn_gated, !enable);
+	अगर (!ret)
+		atomic_set(&घातer_gate->vcn_gated, !enable);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_dpm_set_vcn_enable(struct smu_context *smu,
+अटल पूर्णांक smu_dpm_set_vcn_enable(काष्ठा smu_context *smu,
 				  bool enable)
-{
-	struct smu_power_context *smu_power = &smu->smu_power;
-	struct smu_power_gate *power_gate = &smu_power->power_gate;
-	int ret = 0;
+अणु
+	काष्ठा smu_घातer_context *smu_घातer = &smu->smu_घातer;
+	काष्ठा smu_घातer_gate *घातer_gate = &smu_घातer->घातer_gate;
+	पूर्णांक ret = 0;
 
-	mutex_lock(&power_gate->vcn_gate_lock);
+	mutex_lock(&घातer_gate->vcn_gate_lock);
 
 	ret = smu_dpm_set_vcn_enable_locked(smu, enable);
 
-	mutex_unlock(&power_gate->vcn_gate_lock);
+	mutex_unlock(&घातer_gate->vcn_gate_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_dpm_set_jpeg_enable_locked(struct smu_context *smu,
+अटल पूर्णांक smu_dpm_set_jpeg_enable_locked(काष्ठा smu_context *smu,
 					  bool enable)
-{
-	struct smu_power_context *smu_power = &smu->smu_power;
-	struct smu_power_gate *power_gate = &smu_power->power_gate;
-	int ret = 0;
+अणु
+	काष्ठा smu_घातer_context *smu_घातer = &smu->smu_घातer;
+	काष्ठा smu_घातer_gate *घातer_gate = &smu_घातer->घातer_gate;
+	पूर्णांक ret = 0;
 
-	if (!smu->ppt_funcs->dpm_set_jpeg_enable)
-		return 0;
+	अगर (!smu->ppt_funcs->dpm_set_jpeg_enable)
+		वापस 0;
 
-	if (atomic_read(&power_gate->jpeg_gated) ^ enable)
-		return 0;
+	अगर (atomic_पढ़ो(&घातer_gate->jpeg_gated) ^ enable)
+		वापस 0;
 
 	ret = smu->ppt_funcs->dpm_set_jpeg_enable(smu, enable);
-	if (!ret)
-		atomic_set(&power_gate->jpeg_gated, !enable);
+	अगर (!ret)
+		atomic_set(&घातer_gate->jpeg_gated, !enable);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_dpm_set_jpeg_enable(struct smu_context *smu,
+अटल पूर्णांक smu_dpm_set_jpeg_enable(काष्ठा smu_context *smu,
 				   bool enable)
-{
-	struct smu_power_context *smu_power = &smu->smu_power;
-	struct smu_power_gate *power_gate = &smu_power->power_gate;
-	int ret = 0;
+अणु
+	काष्ठा smu_घातer_context *smu_घातer = &smu->smu_घातer;
+	काष्ठा smu_घातer_gate *घातer_gate = &smu_घातer->घातer_gate;
+	पूर्णांक ret = 0;
 
-	mutex_lock(&power_gate->jpeg_gate_lock);
+	mutex_lock(&घातer_gate->jpeg_gate_lock);
 
 	ret = smu_dpm_set_jpeg_enable_locked(smu, enable);
 
-	mutex_unlock(&power_gate->jpeg_gate_lock);
+	mutex_unlock(&घातer_gate->jpeg_gate_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * smu_dpm_set_power_gate - power gate/ungate the specific IP block
+ * smu_dpm_set_घातer_gate - घातer gate/ungate the specअगरic IP block
  *
- * @handle:        smu_context pointer
- * @block_type: the IP block to power gate/ungate
- * @gate:       to power gate if true, ungate otherwise
+ * @handle:        smu_context poपूर्णांकer
+ * @block_type: the IP block to घातer gate/ungate
+ * @gate:       to घातer gate अगर true, ungate otherwise
  *
  * This API uses no smu->mutex lock protection due to:
  * 1. It is either called by other IP block(gfx/sdma/vcn/uvd/vce).
- *    This is guarded to be race condition free by the caller.
- * 2. Or get called on user setting request of power_dpm_force_performance_level.
- *    Under this case, the smu->mutex lock protection is already enforced on
- *    the parent API smu_force_performance_level of the call path.
+ *    This is guarded to be race condition मुक्त by the caller.
+ * 2. Or get called on user setting request of घातer_dpm_क्रमce_perक्रमmance_level.
+ *    Under this हाल, the smu->mutex lock protection is alपढ़ोy enक्रमced on
+ *    the parent API smu_क्रमce_perक्रमmance_level of the call path.
  */
-static int smu_dpm_set_power_gate(void *handle,
-				  uint32_t block_type,
+अटल पूर्णांक smu_dpm_set_घातer_gate(व्योम *handle,
+				  uपूर्णांक32_t block_type,
 				  bool gate)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	switch (block_type) {
+	चयन (block_type) अणु
 	/*
 	 * Some legacy code of amdgpu_vcn.c and vcn_v2*.c still uses
-	 * AMD_IP_BLOCK_TYPE_UVD for VCN. So, here both of them are kept.
+	 * AMD_IP_BLOCK_TYPE_UVD क्रम VCN. So, here both of them are kept.
 	 */
-	case AMD_IP_BLOCK_TYPE_UVD:
-	case AMD_IP_BLOCK_TYPE_VCN:
+	हाल AMD_IP_BLOCK_TYPE_UVD:
+	हाल AMD_IP_BLOCK_TYPE_VCN:
 		ret = smu_dpm_set_vcn_enable(smu, !gate);
-		if (ret)
+		अगर (ret)
 			dev_err(smu->adev->dev, "Failed to power %s VCN!\n",
 				gate ? "gate" : "ungate");
-		break;
-	case AMD_IP_BLOCK_TYPE_GFX:
+		अवरोध;
+	हाल AMD_IP_BLOCK_TYPE_GFX:
 		ret = smu_gfx_off_control(smu, gate);
-		if (ret)
+		अगर (ret)
 			dev_err(smu->adev->dev, "Failed to %s gfxoff!\n",
 				gate ? "enable" : "disable");
-		break;
-	case AMD_IP_BLOCK_TYPE_SDMA:
-		ret = smu_powergate_sdma(smu, gate);
-		if (ret)
+		अवरोध;
+	हाल AMD_IP_BLOCK_TYPE_SDMA:
+		ret = smu_घातergate_sdma(smu, gate);
+		अगर (ret)
 			dev_err(smu->adev->dev, "Failed to power %s SDMA!\n",
 				gate ? "gate" : "ungate");
-		break;
-	case AMD_IP_BLOCK_TYPE_JPEG:
+		अवरोध;
+	हाल AMD_IP_BLOCK_TYPE_JPEG:
 		ret = smu_dpm_set_jpeg_enable(smu, !gate);
-		if (ret)
+		अगर (ret)
 			dev_err(smu->adev->dev, "Failed to power %s JPEG!\n",
 				gate ? "gate" : "ungate");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(smu->adev->dev, "Unsupported block type!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * smu_set_user_clk_dependencies - set user profile clock dependencies
+ * smu_set_user_clk_dependencies - set user profile घड़ी dependencies
  *
- * @smu:	smu_context pointer
- * @clk:	enum smu_clk_type type
+ * @smu:	smu_context poपूर्णांकer
+ * @clk:	क्रमागत smu_clk_type type
  *
- * Enable/Disable the clock dependency for the @clk type.
+ * Enable/Disable the घड़ी dependency क्रम the @clk type.
  */
-static void smu_set_user_clk_dependencies(struct smu_context *smu, enum smu_clk_type clk)
-{
-	if (smu->adev->in_suspend)
-		return;
+अटल व्योम smu_set_user_clk_dependencies(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk)
+अणु
+	अगर (smu->adev->in_suspend)
+		वापस;
 
-	if (clk == SMU_MCLK) {
+	अगर (clk == SMU_MCLK) अणु
 		smu->user_dpm_profile.clk_dependency = 0;
 		smu->user_dpm_profile.clk_dependency = BIT(SMU_FCLK) | BIT(SMU_SOCCLK);
-	} else if (clk == SMU_FCLK) {
+	पूर्ण अन्यथा अगर (clk == SMU_FCLK) अणु
 		/* MCLK takes precedence over FCLK */
-		if (smu->user_dpm_profile.clk_dependency == (BIT(SMU_FCLK) | BIT(SMU_SOCCLK)))
-			return;
+		अगर (smu->user_dpm_profile.clk_dependency == (BIT(SMU_FCLK) | BIT(SMU_SOCCLK)))
+			वापस;
 
 		smu->user_dpm_profile.clk_dependency = 0;
 		smu->user_dpm_profile.clk_dependency = BIT(SMU_MCLK) | BIT(SMU_SOCCLK);
-	} else if (clk == SMU_SOCCLK) {
+	पूर्ण अन्यथा अगर (clk == SMU_SOCCLK) अणु
 		/* MCLK takes precedence over SOCCLK */
-		if (smu->user_dpm_profile.clk_dependency == (BIT(SMU_FCLK) | BIT(SMU_SOCCLK)))
-			return;
+		अगर (smu->user_dpm_profile.clk_dependency == (BIT(SMU_FCLK) | BIT(SMU_SOCCLK)))
+			वापस;
 
 		smu->user_dpm_profile.clk_dependency = 0;
 		smu->user_dpm_profile.clk_dependency = BIT(SMU_MCLK) | BIT(SMU_FCLK);
-	} else
-		/* Add clk dependencies here, if any */
-		return;
-}
+	पूर्ण अन्यथा
+		/* Add clk dependencies here, अगर any */
+		वापस;
+पूर्ण
 
 /**
  * smu_restore_dpm_user_profile - reinstate user dpm profile
  *
- * @smu:	smu_context pointer
+ * @smu:	smu_context poपूर्णांकer
  *
- * Restore the saved user power configurations include power limit,
- * clock frequencies, fan control mode and fan speed.
+ * Restore the saved user घातer configurations include घातer limit,
+ * घड़ी frequencies, fan control mode and fan speed.
  */
-static void smu_restore_dpm_user_profile(struct smu_context *smu)
-{
-	struct smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
-	int ret = 0;
+अटल व्योम smu_restore_dpm_user_profile(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
+	पूर्णांक ret = 0;
 
-	if (!smu->adev->in_suspend)
-		return;
+	अगर (!smu->adev->in_suspend)
+		वापस;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस;
 
 	/* Enable restore flag */
-	smu->user_dpm_profile.flags |= SMU_DPM_USER_PROFILE_RESTORE;
+	smu->user_dpm_profile.flags |= SMU_DPM_USER_PROखाता_RESTORE;
 
-	/* set the user dpm power limit */
-	if (smu->user_dpm_profile.power_limit) {
-		ret = smu_set_power_limit(smu, smu->user_dpm_profile.power_limit);
-		if (ret)
+	/* set the user dpm घातer limit */
+	अगर (smu->user_dpm_profile.घातer_limit) अणु
+		ret = smu_set_घातer_limit(smu, smu->user_dpm_profile.घातer_limit);
+		अगर (ret)
 			dev_err(smu->adev->dev, "Failed to set power limit value\n");
-	}
+	पूर्ण
 
-	/* set the user dpm clock configurations */
-	if (smu_dpm_ctx->dpm_level == AMD_DPM_FORCED_LEVEL_MANUAL) {
-		enum smu_clk_type clk_type;
+	/* set the user dpm घड़ी configurations */
+	अगर (smu_dpm_ctx->dpm_level == AMD_DPM_FORCED_LEVEL_MANUAL) अणु
+		क्रमागत smu_clk_type clk_type;
 
-		for (clk_type = 0; clk_type < SMU_CLK_COUNT; clk_type++) {
+		क्रम (clk_type = 0; clk_type < SMU_CLK_COUNT; clk_type++) अणु
 			/*
-			 * Iterate over smu clk type and force the saved user clk
-			 * configs, skip if clock dependency is enabled
+			 * Iterate over smu clk type and क्रमce the saved user clk
+			 * configs, skip अगर घड़ी dependency is enabled
 			 */
-			if (!(smu->user_dpm_profile.clk_dependency & BIT(clk_type)) &&
-					smu->user_dpm_profile.clk_mask[clk_type]) {
-				ret = smu_force_smuclk_levels(smu, clk_type,
+			अगर (!(smu->user_dpm_profile.clk_dependency & BIT(clk_type)) &&
+					smu->user_dpm_profile.clk_mask[clk_type]) अणु
+				ret = smu_क्रमce_smuclk_levels(smu, clk_type,
 						smu->user_dpm_profile.clk_mask[clk_type]);
-				if (ret)
+				अगर (ret)
 					dev_err(smu->adev->dev,
 						"Failed to set clock type = %d\n", clk_type);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* set the user dpm fan configurations */
-	if (smu->user_dpm_profile.fan_mode == AMD_FAN_CTRL_MANUAL) {
+	अगर (smu->user_dpm_profile.fan_mode == AMD_FAN_CTRL_MANUAL) अणु
 		ret = smu_set_fan_control_mode(smu, smu->user_dpm_profile.fan_mode);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Failed to set manual fan control mode\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (!ret && smu->user_dpm_profile.fan_speed_percent) {
+		अगर (!ret && smu->user_dpm_profile.fan_speed_percent) अणु
 			ret = smu_set_fan_speed_percent(smu, smu->user_dpm_profile.fan_speed_percent);
-			if (ret)
+			अगर (ret)
 				dev_err(smu->adev->dev, "Failed to set manual fan speed\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Disable restore flag */
-	smu->user_dpm_profile.flags &= ~SMU_DPM_USER_PROFILE_RESTORE;
-}
+	smu->user_dpm_profile.flags &= ~SMU_DPM_USER_PROखाता_RESTORE;
+पूर्ण
 
-static int smu_get_power_num_states(void *handle,
-				    struct pp_states_info *state_info)
-{
-	if (!state_info)
-		return -EINVAL;
+अटल पूर्णांक smu_get_घातer_num_states(व्योम *handle,
+				    काष्ठा pp_states_info *state_info)
+अणु
+	अगर (!state_info)
+		वापस -EINVAL;
 
-	/* not support power state */
-	memset(state_info, 0, sizeof(struct pp_states_info));
+	/* not support घातer state */
+	स_रखो(state_info, 0, माप(काष्ठा pp_states_info));
 	state_info->nums = 1;
 	state_info->states[0] = POWER_STATE_TYPE_DEFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool is_support_sw_smu(struct amdgpu_device *adev)
-{
-	if (adev->asic_type >= CHIP_ARCTURUS)
-		return true;
+bool is_support_sw_smu(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (adev->asic_type >= CHIP_ARCTURUS)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool is_support_cclk_dpm(struct amdgpu_device *adev)
-{
-	struct smu_context *smu = &adev->smu;
+bool is_support_cclk_dpm(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा smu_context *smu = &adev->smu;
 
-	if (!is_support_sw_smu(adev))
-		return false;
+	अगर (!is_support_sw_smu(adev))
+		वापस false;
 
-	if (!smu_feature_is_enabled(smu, SMU_FEATURE_CCLK_DPM_BIT))
-		return false;
+	अगर (!smu_feature_is_enabled(smu, SMU_FEATURE_CCLK_DPM_BIT))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
-static int smu_sys_get_pp_table(void *handle,
-				char **table)
-{
-	struct smu_context *smu = handle;
-	struct smu_table_context *smu_table = &smu->smu_table;
-	uint32_t powerplay_table_size;
+अटल पूर्णांक smu_sys_get_pp_table(व्योम *handle,
+				अक्षर **table)
+अणु
+	काष्ठा smu_context *smu = handle;
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	uपूर्णांक32_t घातerplay_table_size;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (!smu_table->power_play_table && !smu_table->hardcode_pptable)
-		return -EINVAL;
+	अगर (!smu_table->घातer_play_table && !smu_table->hardcode_pptable)
+		वापस -EINVAL;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu_table->hardcode_pptable)
+	अगर (smu_table->hardcode_pptable)
 		*table = smu_table->hardcode_pptable;
-	else
-		*table = smu_table->power_play_table;
+	अन्यथा
+		*table = smu_table->घातer_play_table;
 
-	powerplay_table_size = smu_table->power_play_table_size;
+	घातerplay_table_size = smu_table->घातer_play_table_size;
 
 	mutex_unlock(&smu->mutex);
 
-	return powerplay_table_size;
-}
+	वापस घातerplay_table_size;
+पूर्ण
 
-static int smu_sys_set_pp_table(void *handle,
-				const char *buf,
-				size_t size)
-{
-	struct smu_context *smu = handle;
-	struct smu_table_context *smu_table = &smu->smu_table;
+अटल पूर्णांक smu_sys_set_pp_table(व्योम *handle,
+				स्थिर अक्षर *buf,
+				माप_प्रकार size)
+अणु
+	काष्ठा smu_context *smu = handle;
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
 	ATOM_COMMON_TABLE_HEADER *header = (ATOM_COMMON_TABLE_HEADER *)buf;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (header->usStructureSize != size) {
+	अगर (header->usStructureSize != size) अणु
 		dev_err(smu->adev->dev, "pp table size not matched !\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	mutex_lock(&smu->mutex);
-	if (!smu_table->hardcode_pptable)
+	अगर (!smu_table->hardcode_pptable)
 		smu_table->hardcode_pptable = kzalloc(size, GFP_KERNEL);
-	if (!smu_table->hardcode_pptable) {
+	अगर (!smu_table->hardcode_pptable) अणु
 		ret = -ENOMEM;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	memcpy(smu_table->hardcode_pptable, buf, size);
-	smu_table->power_play_table = smu_table->hardcode_pptable;
-	smu_table->power_play_table_size = size;
+	स_नकल(smu_table->hardcode_pptable, buf, size);
+	smu_table->घातer_play_table = smu_table->hardcode_pptable;
+	smu_table->घातer_play_table_size = size;
 
 	/*
-	 * Special hw_fini action(for Navi1x, the DPMs disablement will be
-	 * skipped) may be needed for custom pptable uploading.
+	 * Special hw_fini action(क्रम Navi1x, the DPMs disablement will be
+	 * skipped) may be needed क्रम custom pptable uploading.
 	 */
 	smu->uploading_custom_pp_table = true;
 
 	ret = smu_reset(smu);
-	if (ret)
+	अगर (ret)
 		dev_info(smu->adev->dev, "smu reset failed, ret = %d\n", ret);
 
 	smu->uploading_custom_pp_table = false;
 
 failed:
 	mutex_unlock(&smu->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_get_driver_allowed_feature_mask(struct smu_context *smu)
-{
-	struct smu_feature *feature = &smu->smu_feature;
-	int ret = 0;
-	uint32_t allowed_feature_mask[SMU_FEATURE_MAX/32];
+अटल पूर्णांक smu_get_driver_allowed_feature_mask(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_feature *feature = &smu->smu_feature;
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t allowed_feature_mask[SMU_FEATURE_MAX/32];
 
-	bitmap_zero(feature->allowed, SMU_FEATURE_MAX);
+	biपंचांगap_zero(feature->allowed, SMU_FEATURE_MAX);
 
 	ret = smu_get_allowed_feature_mask(smu, allowed_feature_mask,
 					     SMU_FEATURE_MAX/32);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	bitmap_or(feature->allowed, feature->allowed,
-		      (unsigned long *)allowed_feature_mask,
+	biपंचांगap_or(feature->allowed, feature->allowed,
+		      (अचिन्हित दीर्घ *)allowed_feature_mask,
 		      feature->feature_num);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_set_funcs(struct amdgpu_device *adev)
-{
-	struct smu_context *smu = &adev->smu;
+अटल पूर्णांक smu_set_funcs(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा smu_context *smu = &adev->smu;
 
-	if (adev->pm.pp_feature & PP_OVERDRIVE_MASK)
+	अगर (adev->pm.pp_feature & PP_OVERDRIVE_MASK)
 		smu->od_enabled = true;
 
-	switch (adev->asic_type) {
-	case CHIP_NAVI10:
-	case CHIP_NAVI14:
-	case CHIP_NAVI12:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_NAVI10:
+	हाल CHIP_NAVI14:
+	हाल CHIP_NAVI12:
 		navi10_set_ppt_funcs(smu);
-		break;
-	case CHIP_ARCTURUS:
+		अवरोध;
+	हाल CHIP_ARCTURUS:
 		adev->pm.pp_feature &= ~PP_GFXOFF_MASK;
 		arcturus_set_ppt_funcs(smu);
 		/* OD is not supported on Arcturus */
 		smu->od_enabled =false;
-		break;
-	case CHIP_SIENNA_CICHLID:
-	case CHIP_NAVY_FLOUNDER:
-	case CHIP_DIMGREY_CAVEFISH:
+		अवरोध;
+	हाल CHIP_SIENNA_CICHLID:
+	हाल CHIP_NAVY_FLOUNDER:
+	हाल CHIP_DIMGREY_CAVEFISH:
 		sienna_cichlid_set_ppt_funcs(smu);
-		break;
-	case CHIP_ALDEBARAN:
+		अवरोध;
+	हाल CHIP_ALDEBARAN:
 		aldebaran_set_ppt_funcs(smu);
 		/* Enable pp_od_clk_voltage node */
 		smu->od_enabled = true;
-		break;
-	case CHIP_RENOIR:
+		अवरोध;
+	हाल CHIP_RENOIR:
 		renoir_set_ppt_funcs(smu);
-		break;
-	case CHIP_VANGOGH:
+		अवरोध;
+	हाल CHIP_VANGOGH:
 		vangogh_set_ppt_funcs(smu);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_early_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct smu_context *smu = &adev->smu;
+अटल पूर्णांक smu_early_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा smu_context *smu = &adev->smu;
 
 	smu->adev = adev;
 	smu->pm_enabled = !!amdgpu_dpm;
@@ -601,40 +602,40 @@ static int smu_early_init(void *handle)
 	mutex_init(&smu->mutex);
 	mutex_init(&smu->smu_baco.mutex);
 	smu->smu_baco.state = SMU_BACO_STATE_EXIT;
-	smu->smu_baco.platform_support = false;
+	smu->smu_baco.platक्रमm_support = false;
 
-	adev->powerplay.pp_handle = smu;
-	adev->powerplay.pp_funcs = &swsmu_pm_funcs;
+	adev->घातerplay.pp_handle = smu;
+	adev->घातerplay.pp_funcs = &swsmu_pm_funcs;
 
-	return smu_set_funcs(adev);
-}
+	वापस smu_set_funcs(adev);
+पूर्ण
 
-static int smu_set_default_dpm_table(struct smu_context *smu)
-{
-	struct smu_power_context *smu_power = &smu->smu_power;
-	struct smu_power_gate *power_gate = &smu_power->power_gate;
-	int vcn_gate, jpeg_gate;
-	int ret = 0;
+अटल पूर्णांक smu_set_शेष_dpm_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_घातer_context *smu_घातer = &smu->smu_घातer;
+	काष्ठा smu_घातer_gate *घातer_gate = &smu_घातer->घातer_gate;
+	पूर्णांक vcn_gate, jpeg_gate;
+	पूर्णांक ret = 0;
 
-	if (!smu->ppt_funcs->set_default_dpm_table)
-		return 0;
+	अगर (!smu->ppt_funcs->set_शेष_dpm_table)
+		वापस 0;
 
-	mutex_lock(&power_gate->vcn_gate_lock);
-	mutex_lock(&power_gate->jpeg_gate_lock);
+	mutex_lock(&घातer_gate->vcn_gate_lock);
+	mutex_lock(&घातer_gate->jpeg_gate_lock);
 
-	vcn_gate = atomic_read(&power_gate->vcn_gated);
-	jpeg_gate = atomic_read(&power_gate->jpeg_gated);
+	vcn_gate = atomic_पढ़ो(&घातer_gate->vcn_gated);
+	jpeg_gate = atomic_पढ़ो(&घातer_gate->jpeg_gated);
 
 	ret = smu_dpm_set_vcn_enable_locked(smu, true);
-	if (ret)
-		goto err0_out;
+	अगर (ret)
+		जाओ err0_out;
 
 	ret = smu_dpm_set_jpeg_enable_locked(smu, true);
-	if (ret)
-		goto err1_out;
+	अगर (ret)
+		जाओ err1_out;
 
-	ret = smu->ppt_funcs->set_default_dpm_table(smu);
-	if (ret)
+	ret = smu->ppt_funcs->set_शेष_dpm_table(smu);
+	अगर (ret)
 		dev_err(smu->adev->dev,
 			"Failed to setup default dpm clock tables!\n");
 
@@ -642,49 +643,49 @@ static int smu_set_default_dpm_table(struct smu_context *smu)
 err1_out:
 	smu_dpm_set_vcn_enable_locked(smu, !vcn_gate);
 err0_out:
-	mutex_unlock(&power_gate->jpeg_gate_lock);
-	mutex_unlock(&power_gate->vcn_gate_lock);
+	mutex_unlock(&घातer_gate->jpeg_gate_lock);
+	mutex_unlock(&घातer_gate->vcn_gate_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int smu_late_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct smu_context *smu = &adev->smu;
-	int ret = 0;
+अटल पूर्णांक smu_late_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा smu_context *smu = &adev->smu;
+	पूर्णांक ret = 0;
 
 	smu_set_fine_grain_gfx_freq_parameters(smu);
 
-	if (!smu->pm_enabled)
-		return 0;
+	अगर (!smu->pm_enabled)
+		वापस 0;
 
 	ret = smu_post_init(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to post smu init!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!amdgpu_sriov_vf(adev) || smu->od_enabled) {
-		ret = smu_set_default_od_settings(smu);
-		if (ret) {
+	अगर (!amdgpu_sriov_vf(adev) || smu->od_enabled) अणु
+		ret = smu_set_शेष_od_settings(smu);
+		अगर (ret) अणु
 			dev_err(adev->dev, "Failed to setup default OD settings!\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = smu_populate_umd_state_clk(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to populate UMD state clocks!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smu_get_asic_power_limits(smu);
-	if (ret) {
+	ret = smu_get_asic_घातer_limits(smu);
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to get asic power limits!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	smu_get_unique_id(smu);
 
@@ -697,391 +698,391 @@ static int smu_late_init(void *handle)
 
 	smu_restore_dpm_user_profile(smu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_init_fb_allocations(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct smu_table *tables = smu_table->tables;
-	struct smu_table *driver_table = &(smu_table->driver_table);
-	uint32_t max_table_size = 0;
-	int ret, i;
+अटल पूर्णांक smu_init_fb_allocations(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा smu_table *tables = smu_table->tables;
+	काष्ठा smu_table *driver_table = &(smu_table->driver_table);
+	uपूर्णांक32_t max_table_size = 0;
+	पूर्णांक ret, i;
 
-	/* VRAM allocation for tool table */
-	if (tables[SMU_TABLE_PMSTATUSLOG].size) {
+	/* VRAM allocation क्रम tool table */
+	अगर (tables[SMU_TABLE_PMSTATUSLOG].size) अणु
 		ret = amdgpu_bo_create_kernel(adev,
 					      tables[SMU_TABLE_PMSTATUSLOG].size,
 					      tables[SMU_TABLE_PMSTATUSLOG].align,
-					      tables[SMU_TABLE_PMSTATUSLOG].domain,
+					      tables[SMU_TABLE_PMSTATUSLOG].करोमुख्य,
 					      &tables[SMU_TABLE_PMSTATUSLOG].bo,
 					      &tables[SMU_TABLE_PMSTATUSLOG].mc_address,
 					      &tables[SMU_TABLE_PMSTATUSLOG].cpu_addr);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(adev->dev, "VRAM allocation for tool table failed!\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* VRAM allocation for driver table */
-	for (i = 0; i < SMU_TABLE_COUNT; i++) {
-		if (tables[i].size == 0)
-			continue;
+	/* VRAM allocation क्रम driver table */
+	क्रम (i = 0; i < SMU_TABLE_COUNT; i++) अणु
+		अगर (tables[i].size == 0)
+			जारी;
 
-		if (i == SMU_TABLE_PMSTATUSLOG)
-			continue;
+		अगर (i == SMU_TABLE_PMSTATUSLOG)
+			जारी;
 
-		if (max_table_size < tables[i].size)
+		अगर (max_table_size < tables[i].size)
 			max_table_size = tables[i].size;
-	}
+	पूर्ण
 
 	driver_table->size = max_table_size;
 	driver_table->align = PAGE_SIZE;
-	driver_table->domain = AMDGPU_GEM_DOMAIN_VRAM;
+	driver_table->करोमुख्य = AMDGPU_GEM_DOMAIN_VRAM;
 
 	ret = amdgpu_bo_create_kernel(adev,
 				      driver_table->size,
 				      driver_table->align,
-				      driver_table->domain,
+				      driver_table->करोमुख्य,
 				      &driver_table->bo,
 				      &driver_table->mc_address,
 				      &driver_table->cpu_addr);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "VRAM allocation for driver table failed!\n");
-		if (tables[SMU_TABLE_PMSTATUSLOG].mc_address)
-			amdgpu_bo_free_kernel(&tables[SMU_TABLE_PMSTATUSLOG].bo,
+		अगर (tables[SMU_TABLE_PMSTATUSLOG].mc_address)
+			amdgpu_bo_मुक्त_kernel(&tables[SMU_TABLE_PMSTATUSLOG].bo,
 					      &tables[SMU_TABLE_PMSTATUSLOG].mc_address,
 					      &tables[SMU_TABLE_PMSTATUSLOG].cpu_addr);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_fini_fb_allocations(struct smu_context *smu)
-{
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct smu_table *tables = smu_table->tables;
-	struct smu_table *driver_table = &(smu_table->driver_table);
+अटल पूर्णांक smu_fini_fb_allocations(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा smu_table *tables = smu_table->tables;
+	काष्ठा smu_table *driver_table = &(smu_table->driver_table);
 
-	if (tables[SMU_TABLE_PMSTATUSLOG].mc_address)
-		amdgpu_bo_free_kernel(&tables[SMU_TABLE_PMSTATUSLOG].bo,
+	अगर (tables[SMU_TABLE_PMSTATUSLOG].mc_address)
+		amdgpu_bo_मुक्त_kernel(&tables[SMU_TABLE_PMSTATUSLOG].bo,
 				      &tables[SMU_TABLE_PMSTATUSLOG].mc_address,
 				      &tables[SMU_TABLE_PMSTATUSLOG].cpu_addr);
 
-	amdgpu_bo_free_kernel(&driver_table->bo,
+	amdgpu_bo_मुक्त_kernel(&driver_table->bo,
 			      &driver_table->mc_address,
 			      &driver_table->cpu_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * smu_alloc_memory_pool - allocate memory pool in the system memory
+ * smu_alloc_memory_pool - allocate memory pool in the प्रणाली memory
  *
- * @smu: amdgpu_device pointer
+ * @smu: amdgpu_device poपूर्णांकer
  *
- * This memory pool will be used for SMC use and msg SetSystemVirtualDramAddr
- * and DramLogSetDramAddr can notify it changed.
+ * This memory pool will be used क्रम SMC use and msg SetSystemVirtualDramAddr
+ * and DramLogSetDramAddr can notअगरy it changed.
  *
  * Returns 0 on success, error on failure.
  */
-static int smu_alloc_memory_pool(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct smu_table *memory_pool = &smu_table->memory_pool;
-	uint64_t pool_size = smu->pool_size;
-	int ret = 0;
+अटल पूर्णांक smu_alloc_memory_pool(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा smu_table *memory_pool = &smu_table->memory_pool;
+	uपूर्णांक64_t pool_size = smu->pool_size;
+	पूर्णांक ret = 0;
 
-	if (pool_size == SMU_MEMORY_POOL_SIZE_ZERO)
-		return ret;
+	अगर (pool_size == SMU_MEMORY_POOL_SIZE_ZERO)
+		वापस ret;
 
 	memory_pool->size = pool_size;
 	memory_pool->align = PAGE_SIZE;
-	memory_pool->domain = AMDGPU_GEM_DOMAIN_GTT;
+	memory_pool->करोमुख्य = AMDGPU_GEM_DOMAIN_GTT;
 
-	switch (pool_size) {
-	case SMU_MEMORY_POOL_SIZE_256_MB:
-	case SMU_MEMORY_POOL_SIZE_512_MB:
-	case SMU_MEMORY_POOL_SIZE_1_GB:
-	case SMU_MEMORY_POOL_SIZE_2_GB:
+	चयन (pool_size) अणु
+	हाल SMU_MEMORY_POOL_SIZE_256_MB:
+	हाल SMU_MEMORY_POOL_SIZE_512_MB:
+	हाल SMU_MEMORY_POOL_SIZE_1_GB:
+	हाल SMU_MEMORY_POOL_SIZE_2_GB:
 		ret = amdgpu_bo_create_kernel(adev,
 					      memory_pool->size,
 					      memory_pool->align,
-					      memory_pool->domain,
+					      memory_pool->करोमुख्य,
 					      &memory_pool->bo,
 					      &memory_pool->mc_address,
 					      &memory_pool->cpu_addr);
-		if (ret)
+		अगर (ret)
 			dev_err(adev->dev, "VRAM allocation for dramlog failed!\n");
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_free_memory_pool(struct smu_context *smu)
-{
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct smu_table *memory_pool = &smu_table->memory_pool;
+अटल पूर्णांक smu_मुक्त_memory_pool(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा smu_table *memory_pool = &smu_table->memory_pool;
 
-	if (memory_pool->size == SMU_MEMORY_POOL_SIZE_ZERO)
-		return 0;
+	अगर (memory_pool->size == SMU_MEMORY_POOL_SIZE_ZERO)
+		वापस 0;
 
-	amdgpu_bo_free_kernel(&memory_pool->bo,
+	amdgpu_bo_मुक्त_kernel(&memory_pool->bo,
 			      &memory_pool->mc_address,
 			      &memory_pool->cpu_addr);
 
-	memset(memory_pool, 0, sizeof(struct smu_table));
+	स_रखो(memory_pool, 0, माप(काष्ठा smu_table));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_alloc_dummy_read_table(struct smu_context *smu)
-{
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct smu_table *dummy_read_1_table =
-			&smu_table->dummy_read_1_table;
-	struct amdgpu_device *adev = smu->adev;
-	int ret = 0;
+अटल पूर्णांक smu_alloc_dummy_पढ़ो_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा smu_table *dummy_पढ़ो_1_table =
+			&smu_table->dummy_पढ़ो_1_table;
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret = 0;
 
-	dummy_read_1_table->size = 0x40000;
-	dummy_read_1_table->align = PAGE_SIZE;
-	dummy_read_1_table->domain = AMDGPU_GEM_DOMAIN_VRAM;
+	dummy_पढ़ो_1_table->size = 0x40000;
+	dummy_पढ़ो_1_table->align = PAGE_SIZE;
+	dummy_पढ़ो_1_table->करोमुख्य = AMDGPU_GEM_DOMAIN_VRAM;
 
 	ret = amdgpu_bo_create_kernel(adev,
-				      dummy_read_1_table->size,
-				      dummy_read_1_table->align,
-				      dummy_read_1_table->domain,
-				      &dummy_read_1_table->bo,
-				      &dummy_read_1_table->mc_address,
-				      &dummy_read_1_table->cpu_addr);
-	if (ret)
+				      dummy_पढ़ो_1_table->size,
+				      dummy_पढ़ो_1_table->align,
+				      dummy_पढ़ो_1_table->करोमुख्य,
+				      &dummy_पढ़ो_1_table->bo,
+				      &dummy_पढ़ो_1_table->mc_address,
+				      &dummy_पढ़ो_1_table->cpu_addr);
+	अगर (ret)
 		dev_err(adev->dev, "VRAM allocation for dummy read table failed!\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void smu_free_dummy_read_table(struct smu_context *smu)
-{
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct smu_table *dummy_read_1_table =
-			&smu_table->dummy_read_1_table;
+अटल व्योम smu_मुक्त_dummy_पढ़ो_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा smu_table *dummy_पढ़ो_1_table =
+			&smu_table->dummy_पढ़ो_1_table;
 
 
-	amdgpu_bo_free_kernel(&dummy_read_1_table->bo,
-			      &dummy_read_1_table->mc_address,
-			      &dummy_read_1_table->cpu_addr);
+	amdgpu_bo_मुक्त_kernel(&dummy_पढ़ो_1_table->bo,
+			      &dummy_पढ़ो_1_table->mc_address,
+			      &dummy_पढ़ो_1_table->cpu_addr);
 
-	memset(dummy_read_1_table, 0, sizeof(struct smu_table));
-}
+	स_रखो(dummy_पढ़ो_1_table, 0, माप(काष्ठा smu_table));
+पूर्ण
 
-static int smu_smc_table_sw_init(struct smu_context *smu)
-{
-	int ret;
+अटल पूर्णांक smu_smc_table_sw_init(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret;
 
 	/**
-	 * Create smu_table structure, and init smc tables such as
+	 * Create smu_table काष्ठाure, and init smc tables such as
 	 * TABLE_PPTABLE, TABLE_WATERMARKS, TABLE_SMU_METRICS, and etc.
 	 */
 	ret = smu_init_smc_tables(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Failed to init smc tables!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/**
-	 * Create smu_power_context structure, and allocate smu_dpm_context and
-	 * context size to fill the smu_power_context data.
+	 * Create smu_घातer_context काष्ठाure, and allocate smu_dpm_context and
+	 * context size to fill the smu_घातer_context data.
 	 */
-	ret = smu_init_power(smu);
-	if (ret) {
+	ret = smu_init_घातer(smu);
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Failed to init smu_init_power!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * allocate vram bos to store smc table contents.
 	 */
 	ret = smu_init_fb_allocations(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = smu_alloc_memory_pool(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = smu_alloc_dummy_read_table(smu);
-	if (ret)
-		return ret;
+	ret = smu_alloc_dummy_पढ़ो_table(smu);
+	अगर (ret)
+		वापस ret;
 
 	ret = smu_i2c_init(smu, &smu->adev->pm.smu_i2c);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_smc_table_sw_fini(struct smu_context *smu)
-{
-	int ret;
+अटल पूर्णांक smu_smc_table_sw_fini(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret;
 
 	smu_i2c_fini(smu, &smu->adev->pm.smu_i2c);
 
-	smu_free_dummy_read_table(smu);
+	smu_मुक्त_dummy_पढ़ो_table(smu);
 
-	ret = smu_free_memory_pool(smu);
-	if (ret)
-		return ret;
+	ret = smu_मुक्त_memory_pool(smu);
+	अगर (ret)
+		वापस ret;
 
 	ret = smu_fini_fb_allocations(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = smu_fini_power(smu);
-	if (ret) {
+	ret = smu_fini_घातer(smu);
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Failed to init smu_fini_power!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = smu_fini_smc_tables(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Failed to smu_fini_smc_tables!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void smu_throttling_logging_work_fn(struct work_struct *work)
-{
-	struct smu_context *smu = container_of(work, struct smu_context,
+अटल व्योम smu_throttling_logging_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा smu_context *smu = container_of(work, काष्ठा smu_context,
 					       throttling_logging_work);
 
 	smu_log_thermal_throttling(smu);
-}
+पूर्ण
 
-static void smu_interrupt_work_fn(struct work_struct *work)
-{
-	struct smu_context *smu = container_of(work, struct smu_context,
-					       interrupt_work);
+अटल व्योम smu_पूर्णांकerrupt_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा smu_context *smu = container_of(work, काष्ठा smu_context,
+					       पूर्णांकerrupt_work);
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs && smu->ppt_funcs->interrupt_work)
-		smu->ppt_funcs->interrupt_work(smu);
+	अगर (smu->ppt_funcs && smu->ppt_funcs->पूर्णांकerrupt_work)
+		smu->ppt_funcs->पूर्णांकerrupt_work(smu);
 
 	mutex_unlock(&smu->mutex);
-}
+पूर्ण
 
-static int smu_sw_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct smu_context *smu = &adev->smu;
-	int ret;
+अटल पूर्णांक smu_sw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा smu_context *smu = &adev->smu;
+	पूर्णांक ret;
 
 	smu->pool_size = adev->pm.smu_prv_buffer_size;
 	smu->smu_feature.feature_num = SMU_FEATURE_MAX;
 	mutex_init(&smu->smu_feature.mutex);
-	bitmap_zero(smu->smu_feature.supported, SMU_FEATURE_MAX);
-	bitmap_zero(smu->smu_feature.enabled, SMU_FEATURE_MAX);
-	bitmap_zero(smu->smu_feature.allowed, SMU_FEATURE_MAX);
+	biपंचांगap_zero(smu->smu_feature.supported, SMU_FEATURE_MAX);
+	biपंचांगap_zero(smu->smu_feature.enabled, SMU_FEATURE_MAX);
+	biपंचांगap_zero(smu->smu_feature.allowed, SMU_FEATURE_MAX);
 
 	mutex_init(&smu->sensor_lock);
 	mutex_init(&smu->metrics_lock);
 	mutex_init(&smu->message_lock);
 
 	INIT_WORK(&smu->throttling_logging_work, smu_throttling_logging_work_fn);
-	INIT_WORK(&smu->interrupt_work, smu_interrupt_work_fn);
-	atomic64_set(&smu->throttle_int_counter, 0);
-	smu->watermarks_bitmap = 0;
-	smu->power_profile_mode = PP_SMC_POWER_PROFILE_BOOTUP_DEFAULT;
-	smu->default_power_profile_mode = PP_SMC_POWER_PROFILE_BOOTUP_DEFAULT;
+	INIT_WORK(&smu->पूर्णांकerrupt_work, smu_पूर्णांकerrupt_work_fn);
+	atomic64_set(&smu->throttle_पूर्णांक_counter, 0);
+	smu->watermarks_biपंचांगap = 0;
+	smu->घातer_profile_mode = PP_SMC_POWER_PROखाता_BOOTUP_DEFAULT;
+	smu->शेष_घातer_profile_mode = PP_SMC_POWER_PROखाता_BOOTUP_DEFAULT;
 
-	atomic_set(&smu->smu_power.power_gate.vcn_gated, 1);
-	atomic_set(&smu->smu_power.power_gate.jpeg_gated, 1);
-	mutex_init(&smu->smu_power.power_gate.vcn_gate_lock);
-	mutex_init(&smu->smu_power.power_gate.jpeg_gate_lock);
+	atomic_set(&smu->smu_घातer.घातer_gate.vcn_gated, 1);
+	atomic_set(&smu->smu_घातer.घातer_gate.jpeg_gated, 1);
+	mutex_init(&smu->smu_घातer.घातer_gate.vcn_gate_lock);
+	mutex_init(&smu->smu_घातer.घातer_gate.jpeg_gate_lock);
 
-	smu->workload_mask = 1 << smu->workload_prority[PP_SMC_POWER_PROFILE_BOOTUP_DEFAULT];
-	smu->workload_prority[PP_SMC_POWER_PROFILE_BOOTUP_DEFAULT] = 0;
-	smu->workload_prority[PP_SMC_POWER_PROFILE_FULLSCREEN3D] = 1;
-	smu->workload_prority[PP_SMC_POWER_PROFILE_POWERSAVING] = 2;
-	smu->workload_prority[PP_SMC_POWER_PROFILE_VIDEO] = 3;
-	smu->workload_prority[PP_SMC_POWER_PROFILE_VR] = 4;
-	smu->workload_prority[PP_SMC_POWER_PROFILE_COMPUTE] = 5;
-	smu->workload_prority[PP_SMC_POWER_PROFILE_CUSTOM] = 6;
+	smu->workload_mask = 1 << smu->workload_prority[PP_SMC_POWER_PROखाता_BOOTUP_DEFAULT];
+	smu->workload_prority[PP_SMC_POWER_PROखाता_BOOTUP_DEFAULT] = 0;
+	smu->workload_prority[PP_SMC_POWER_PROखाता_FULLSCREEN3D] = 1;
+	smu->workload_prority[PP_SMC_POWER_PROखाता_POWERSAVING] = 2;
+	smu->workload_prority[PP_SMC_POWER_PROखाता_VIDEO] = 3;
+	smu->workload_prority[PP_SMC_POWER_PROखाता_VR] = 4;
+	smu->workload_prority[PP_SMC_POWER_PROखाता_COMPUTE] = 5;
+	smu->workload_prority[PP_SMC_POWER_PROखाता_CUSTOM] = 6;
 
-	smu->workload_setting[0] = PP_SMC_POWER_PROFILE_BOOTUP_DEFAULT;
-	smu->workload_setting[1] = PP_SMC_POWER_PROFILE_FULLSCREEN3D;
-	smu->workload_setting[2] = PP_SMC_POWER_PROFILE_POWERSAVING;
-	smu->workload_setting[3] = PP_SMC_POWER_PROFILE_VIDEO;
-	smu->workload_setting[4] = PP_SMC_POWER_PROFILE_VR;
-	smu->workload_setting[5] = PP_SMC_POWER_PROFILE_COMPUTE;
-	smu->workload_setting[6] = PP_SMC_POWER_PROFILE_CUSTOM;
+	smu->workload_setting[0] = PP_SMC_POWER_PROखाता_BOOTUP_DEFAULT;
+	smu->workload_setting[1] = PP_SMC_POWER_PROखाता_FULLSCREEN3D;
+	smu->workload_setting[2] = PP_SMC_POWER_PROखाता_POWERSAVING;
+	smu->workload_setting[3] = PP_SMC_POWER_PROखाता_VIDEO;
+	smu->workload_setting[4] = PP_SMC_POWER_PROखाता_VR;
+	smu->workload_setting[5] = PP_SMC_POWER_PROखाता_COMPUTE;
+	smu->workload_setting[6] = PP_SMC_POWER_PROखाता_CUSTOM;
 	smu->display_config = &adev->pm.pm_display_cfg;
 
 	smu->smu_dpm.dpm_level = AMD_DPM_FORCED_LEVEL_AUTO;
 	smu->smu_dpm.requested_dpm_level = AMD_DPM_FORCED_LEVEL_AUTO;
 
 	ret = smu_init_microcode(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to load smu firmware!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = smu_smc_table_sw_init(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to sw init smc table!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smu_register_irq_handler(smu);
-	if (ret) {
+	ret = smu_रेजिस्टर_irq_handler(smu);
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to register smc irq handler!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* If there is no way to query fan control mode, fan control is not supported */
-	if (!smu->ppt_funcs->get_fan_control_mode)
+	अगर (!smu->ppt_funcs->get_fan_control_mode)
 		smu->adev->pm.no_fan = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_sw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct smu_context *smu = &adev->smu;
-	int ret;
+अटल पूर्णांक smu_sw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा smu_context *smu = &adev->smu;
+	पूर्णांक ret;
 
 	ret = smu_smc_table_sw_fini(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to sw fini smc table!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	smu_fini_microcode(smu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_get_thermal_temperature_range(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	struct smu_temperature_range *range =
+अटल पूर्णांक smu_get_thermal_temperature_range(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	काष्ठा smu_temperature_range *range =
 				&smu->thermal_range;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!smu->ppt_funcs->get_thermal_temperature_range)
-		return 0;
+	अगर (!smu->ppt_funcs->get_thermal_temperature_range)
+		वापस 0;
 
 	ret = smu->ppt_funcs->get_thermal_temperature_range(smu, range);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	adev->pm.dpm.thermal.min_temp = range->min;
 	adev->pm.dpm.thermal.max_temp = range->max;
@@ -1093,143 +1094,143 @@ static int smu_get_thermal_temperature_range(struct smu_context *smu)
 	adev->pm.dpm.thermal.max_mem_crit_temp = range->mem_crit_max;
 	adev->pm.dpm.thermal.max_mem_emergency_temp = range->mem_emergency_max;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_smc_hw_setup(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t pcie_gen = 0, pcie_width = 0;
-	int ret = 0;
+अटल पूर्णांक smu_smc_hw_setup(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	uपूर्णांक32_t pcie_gen = 0, pcie_width = 0;
+	पूर्णांक ret = 0;
 
-	if (adev->in_suspend && smu_is_dpm_running(smu)) {
+	अगर (adev->in_suspend && smu_is_dpm_running(smu)) अणु
 		dev_info(adev->dev, "dpm has been enabled\n");
-		/* this is needed specifically */
-		if ((adev->asic_type >= CHIP_SIENNA_CICHLID) &&
+		/* this is needed specअगरically */
+		अगर ((adev->asic_type >= CHIP_SIENNA_CICHLID) &&
 		    (adev->asic_type <= CHIP_DIMGREY_CAVEFISH))
-			ret = smu_system_features_control(smu, true);
-		return ret;
-	}
+			ret = smu_प्रणाली_features_control(smu, true);
+		वापस ret;
+	पूर्ण
 
 	ret = smu_init_display_count(smu, 0);
-	if (ret) {
+	अगर (ret) अणु
 		dev_info(adev->dev, "Failed to pre-set display count as 0!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = smu_set_driver_table_location(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to SetDriverDramAddr!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Set PMSTATUSLOG table bo address with SetToolsDramAddr MSG for tools.
+	 * Set PMSTATUSLOG table bo address with SetToolsDramAddr MSG क्रम tools.
 	 */
 	ret = smu_set_tool_table_location(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to SetToolsDramAddr!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Use msg SetSystemVirtualDramAddr and DramLogSetDramAddr can notify
+	 * Use msg SetSystemVirtualDramAddr and DramLogSetDramAddr can notअगरy
 	 * pool location.
 	 */
-	ret = smu_notify_memory_pool_location(smu);
-	if (ret) {
+	ret = smu_notअगरy_memory_pool_location(smu);
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to SetDramLogDramAddr!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* smu_dump_pptable(smu); */
 	/*
 	 * Copy pptable bo in the vram to smc with SMU MSGs such as
 	 * SetDriverDramAddr and TransferTableDram2Smu.
 	 */
-	ret = smu_write_pptable(smu);
-	if (ret) {
+	ret = smu_ग_लिखो_pptable(smu);
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to transfer pptable to SMC!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* issue Run*Btc msg */
 	ret = smu_run_btc(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = smu_feature_set_allowed_mask(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to set driver allowed features mask!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smu_system_features_control(smu, true);
-	if (ret) {
+	ret = smu_प्रणाली_features_control(smu, true);
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to enable requested dpm features!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!smu_is_dpm_running(smu))
+	अगर (!smu_is_dpm_running(smu))
 		dev_info(adev->dev, "dpm has been disabled\n");
 
-	if (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN4)
+	अगर (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN4)
 		pcie_gen = 3;
-	else if (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3)
+	अन्यथा अगर (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3)
 		pcie_gen = 2;
-	else if (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN2)
+	अन्यथा अगर (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN2)
 		pcie_gen = 1;
-	else if (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN1)
+	अन्यथा अगर (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN1)
 		pcie_gen = 0;
 
 	/* Bit 31:16: LCLK DPM level. 0 is DPM0, and 1 is DPM1
 	 * Bit 15:8:  PCIE GEN, 0 to 3 corresponds to GEN1 to GEN4
 	 * Bit 7:0:   PCIE lane width, 1 to 7 corresponds is x1 to x32
 	 */
-	if (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X16)
+	अगर (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X16)
 		pcie_width = 6;
-	else if (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X12)
+	अन्यथा अगर (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X12)
 		pcie_width = 5;
-	else if (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X8)
+	अन्यथा अगर (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X8)
 		pcie_width = 4;
-	else if (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X4)
+	अन्यथा अगर (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X4)
 		pcie_width = 3;
-	else if (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X2)
+	अन्यथा अगर (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X2)
 		pcie_width = 2;
-	else if (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X1)
+	अन्यथा अगर (adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X1)
 		pcie_width = 1;
 	ret = smu_update_pcie_parameters(smu, pcie_gen, pcie_width);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Attempt to override pcie params failed!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = smu_get_thermal_temperature_range(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to get thermal temperature ranges!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = smu_enable_thermal_alert(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to enable thermal alert!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Set initialized values (get from vbios) to dpm tables context such as
-	 * gfxclk, memclk, dcefclk, and etc. And enable the DPM feature for each
+	 * gfxclk, memclk, dcefclk, and etc. And enable the DPM feature क्रम each
 	 * type of clks.
 	 */
-	ret = smu_set_default_dpm_table(smu);
-	if (ret) {
+	ret = smu_set_शेष_dpm_table(smu);
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to setup default dpm clock tables!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = smu_notify_display_change(smu);
-	if (ret)
-		return ret;
+	ret = smu_notअगरy_display_change(smu);
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Set min deep sleep dce fclk with bootup value from vbios via
@@ -1237,120 +1238,120 @@ static int smu_smc_hw_setup(struct smu_context *smu)
 	 */
 	ret = smu_set_min_dcef_deep_sleep(smu,
 					  smu->smu_table.boot_values.dcefclk / 100);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_start_smc_engine(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	int ret = 0;
+अटल पूर्णांक smu_start_smc_engine(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret = 0;
 
-	if (adev->firmware.load_type != AMDGPU_FW_LOAD_PSP) {
-		if (adev->asic_type < CHIP_NAVI10) {
-			if (smu->ppt_funcs->load_microcode) {
+	अगर (adev->firmware.load_type != AMDGPU_FW_LOAD_PSP) अणु
+		अगर (adev->asic_type < CHIP_NAVI10) अणु
+			अगर (smu->ppt_funcs->load_microcode) अणु
 				ret = smu->ppt_funcs->load_microcode(smu);
-				if (ret)
-					return ret;
-			}
-		}
-	}
+				अगर (ret)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (smu->ppt_funcs->check_fw_status) {
+	अगर (smu->ppt_funcs->check_fw_status) अणु
 		ret = smu->ppt_funcs->check_fw_status(smu);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(adev->dev, "SMC is not ready\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Send msg GetDriverIfVersion to check if the return value is equal
+	 * Send msg GetDriverIfVersion to check अगर the वापस value is equal
 	 * with DRIVER_IF_VERSION of smc header.
 	 */
 	ret = smu_check_fw_version(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_hw_init(void *handle)
-{
-	int ret;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct smu_context *smu = &adev->smu;
+अटल पूर्णांक smu_hw_init(व्योम *handle)
+अणु
+	पूर्णांक ret;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा smu_context *smu = &adev->smu;
 
-	if (amdgpu_sriov_vf(adev) && !amdgpu_sriov_is_pp_one_vf(adev)) {
+	अगर (amdgpu_sriov_vf(adev) && !amdgpu_sriov_is_pp_one_vf(adev)) अणु
 		smu->pm_enabled = false;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = smu_start_smc_engine(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "SMC engine is not correctly up!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (smu->is_apu) {
-		smu_powergate_sdma(&adev->smu, false);
+	अगर (smu->is_apu) अणु
+		smu_घातergate_sdma(&adev->smu, false);
 		smu_dpm_set_vcn_enable(smu, true);
 		smu_dpm_set_jpeg_enable(smu, true);
 		smu_set_gfx_cgpg(&adev->smu, true);
-	}
+	पूर्ण
 
-	if (!smu->pm_enabled)
-		return 0;
+	अगर (!smu->pm_enabled)
+		वापस 0;
 
 	/* get boot_values from vbios to set revision, gfxclk, and etc. */
 	ret = smu_get_vbios_bootup_values(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to get VBIOS boot clock values!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = smu_setup_pptable(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to setup pptable!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = smu_get_driver_allowed_feature_mask(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = smu_smc_hw_setup(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to setup smc hw!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Move maximum sustainable clock retrieving here considering
+	 * Move maximum sustainable घड़ी retrieving here considering
 	 * 1. It is not needed on resume(from S3).
 	 * 2. DAL settings come between .hw_init and .late_init of SMU.
-	 *    And DAL needs to know the maximum sustainable clocks. Thus
+	 *    And DAL needs to know the maximum sustainable घड़ीs. Thus
 	 *    it cannot be put in .late_init().
 	 */
-	ret = smu_init_max_sustainable_clocks(smu);
-	if (ret) {
+	ret = smu_init_max_sustainable_घड़ीs(smu);
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to init max sustainable clocks!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	adev->pm.dpm_enabled = true;
 
 	dev_info(adev->dev, "SMU is initialized successfully!\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_disable_dpms(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	int ret = 0;
+अटल पूर्णांक smu_disable_dpms(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret = 0;
 	bool use_baco = !smu->is_apu &&
 		((amdgpu_in_reset(adev) &&
 		  (amdgpu_asic_reset_method(adev) == AMD_RESET_METHOD_BACO)) ||
@@ -1362,462 +1363,462 @@ static int smu_disable_dpms(struct smu_context *smu)
 	 *   - As the gfx related features are under control of
 	 *     RLC on those ASICs. RLC reinitialization will be
 	 *     needed to reenable them. That will cost much more
-	 *     efforts.
+	 *     efक्रमts.
 	 *
 	 *   - SMU firmware can handle the DPM reenablement
 	 *     properly.
 	 */
-	if (smu->uploading_custom_pp_table &&
+	अगर (smu->uploading_custom_pp_table &&
 	    (adev->asic_type >= CHIP_NAVI10) &&
 	    (adev->asic_type <= CHIP_DIMGREY_CAVEFISH))
-		return 0;
+		वापस 0;
 
 	/*
 	 * For Sienna_Cichlid, PMFW will handle the features disablement properly
 	 * on BACO in. Driver involvement is unnecessary.
 	 */
-	if ((adev->asic_type == CHIP_SIENNA_CICHLID) &&
+	अगर ((adev->asic_type == CHIP_SIENNA_CICHLID) &&
 	     use_baco)
-		return 0;
+		वापस 0;
 
 	/*
 	 * For gpu reset, runpm and hibernation through BACO,
 	 * BACO feature has to be kept enabled.
 	 */
-	if (use_baco && smu_feature_is_enabled(smu, SMU_FEATURE_BACO_BIT)) {
+	अगर (use_baco && smu_feature_is_enabled(smu, SMU_FEATURE_BACO_BIT)) अणु
 		ret = smu_disable_all_features_with_exception(smu,
 							      SMU_FEATURE_BACO_BIT);
-		if (ret)
+		अगर (ret)
 			dev_err(adev->dev, "Failed to disable smu features except BACO.\n");
-	} else {
-		ret = smu_system_features_control(smu, false);
-		if (ret)
+	पूर्ण अन्यथा अणु
+		ret = smu_प्रणाली_features_control(smu, false);
+		अगर (ret)
 			dev_err(adev->dev, "Failed to disable smu features.\n");
-	}
+	पूर्ण
 
-	if (adev->asic_type >= CHIP_NAVI10 &&
+	अगर (adev->asic_type >= CHIP_NAVI10 &&
 	    adev->gfx.rlc.funcs->stop)
 		adev->gfx.rlc.funcs->stop(adev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_smc_hw_cleanup(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	int ret = 0;
+अटल पूर्णांक smu_smc_hw_cleanup(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret = 0;
 
 	cancel_work_sync(&smu->throttling_logging_work);
-	cancel_work_sync(&smu->interrupt_work);
+	cancel_work_sync(&smu->पूर्णांकerrupt_work);
 
 	ret = smu_disable_thermal_alert(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Fail to disable thermal alert!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = smu_disable_dpms(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Fail to disable dpm features!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_hw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct smu_context *smu = &adev->smu;
+अटल पूर्णांक smu_hw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा smu_context *smu = &adev->smu;
 
-	if (amdgpu_sriov_vf(adev)&& !amdgpu_sriov_is_pp_one_vf(adev))
-		return 0;
+	अगर (amdgpu_sriov_vf(adev)&& !amdgpu_sriov_is_pp_one_vf(adev))
+		वापस 0;
 
-	if (smu->is_apu) {
-		smu_powergate_sdma(&adev->smu, true);
+	अगर (smu->is_apu) अणु
+		smu_घातergate_sdma(&adev->smu, true);
 		smu_dpm_set_vcn_enable(smu, false);
 		smu_dpm_set_jpeg_enable(smu, false);
-	}
+	पूर्ण
 
-	if (!smu->pm_enabled)
-		return 0;
+	अगर (!smu->pm_enabled)
+		वापस 0;
 
 	adev->pm.dpm_enabled = false;
 
-	return smu_smc_hw_cleanup(smu);
-}
+	वापस smu_smc_hw_cleanup(smu);
+पूर्ण
 
-static int smu_reset(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	int ret;
+अटल पूर्णांक smu_reset(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret;
 
 	amdgpu_gfx_off_ctrl(smu->adev, false);
 
 	ret = smu_hw_fini(adev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = smu_hw_init(adev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = smu_late_init(adev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	amdgpu_gfx_off_ctrl(smu->adev, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_suspend(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct smu_context *smu = &adev->smu;
-	int ret;
+अटल पूर्णांक smu_suspend(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा smu_context *smu = &adev->smu;
+	पूर्णांक ret;
 
-	if (amdgpu_sriov_vf(adev)&& !amdgpu_sriov_is_pp_one_vf(adev))
-		return 0;
+	अगर (amdgpu_sriov_vf(adev)&& !amdgpu_sriov_is_pp_one_vf(adev))
+		वापस 0;
 
-	if (!smu->pm_enabled)
-		return 0;
+	अगर (!smu->pm_enabled)
+		वापस 0;
 
 	adev->pm.dpm_enabled = false;
 
 	ret = smu_smc_hw_cleanup(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	smu->watermarks_bitmap &= ~(WATERMARKS_LOADED);
+	smu->watermarks_biपंचांगap &= ~(WATERMARKS_LOADED);
 
 	/* skip CGPG when in S0ix */
-	if (smu->is_apu && !adev->in_s0ix)
+	अगर (smu->is_apu && !adev->in_s0ix)
 		smu_set_gfx_cgpg(&adev->smu, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_resume(void *handle)
-{
-	int ret;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct smu_context *smu = &adev->smu;
+अटल पूर्णांक smu_resume(व्योम *handle)
+अणु
+	पूर्णांक ret;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा smu_context *smu = &adev->smu;
 
-	if (amdgpu_sriov_vf(adev)&& !amdgpu_sriov_is_pp_one_vf(adev))
-		return 0;
+	अगर (amdgpu_sriov_vf(adev)&& !amdgpu_sriov_is_pp_one_vf(adev))
+		वापस 0;
 
-	if (!smu->pm_enabled)
-		return 0;
+	अगर (!smu->pm_enabled)
+		वापस 0;
 
 	dev_info(adev->dev, "SMU is resuming...\n");
 
 	ret = smu_start_smc_engine(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "SMC engine is not correctly up!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = smu_smc_hw_setup(smu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "Failed to setup smc hw!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (smu->is_apu)
+	अगर (smu->is_apu)
 		smu_set_gfx_cgpg(&adev->smu, true);
 
-	smu->disable_uclk_switch = 0;
+	smu->disable_uclk_चयन = 0;
 
 	adev->pm.dpm_enabled = true;
 
 	dev_info(adev->dev, "SMU is resumed successfully!\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_display_configuration_change(void *handle,
-					    const struct amd_pp_display_configuration *display_config)
-{
-	struct smu_context *smu = handle;
-	int index = 0;
-	int num_of_active_display = 0;
+अटल पूर्णांक smu_display_configuration_change(व्योम *handle,
+					    स्थिर काष्ठा amd_pp_display_configuration *display_config)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक index = 0;
+	पूर्णांक num_of_active_display = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (!display_config)
-		return -EINVAL;
+	अगर (!display_config)
+		वापस -EINVAL;
 
 	mutex_lock(&smu->mutex);
 
 	smu_set_min_dcef_deep_sleep(smu,
 				    display_config->min_dcef_deep_sleep_set_clk / 100);
 
-	for (index = 0; index < display_config->num_path_including_non_display; index++) {
-		if (display_config->displays[index].controller_id != 0)
+	क्रम (index = 0; index < display_config->num_path_including_non_display; index++) अणु
+		अगर (display_config->displays[index].controller_id != 0)
 			num_of_active_display++;
-	}
+	पूर्ण
 
 	mutex_unlock(&smu->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_set_clockgating_state(void *handle,
-				     enum amd_clockgating_state state)
-{
-	return 0;
-}
+अटल पूर्णांक smu_set_घड़ीgating_state(व्योम *handle,
+				     क्रमागत amd_घड़ीgating_state state)
+अणु
+	वापस 0;
+पूर्ण
 
-static int smu_set_powergating_state(void *handle,
-				     enum amd_powergating_state state)
-{
-	return 0;
-}
+अटल पूर्णांक smu_set_घातergating_state(व्योम *handle,
+				     क्रमागत amd_घातergating_state state)
+अणु
+	वापस 0;
+पूर्ण
 
-static int smu_enable_umd_pstate(void *handle,
-		      enum amd_dpm_forced_level *level)
-{
-	uint32_t profile_mode_mask = AMD_DPM_FORCED_LEVEL_PROFILE_STANDARD |
-					AMD_DPM_FORCED_LEVEL_PROFILE_MIN_SCLK |
-					AMD_DPM_FORCED_LEVEL_PROFILE_MIN_MCLK |
-					AMD_DPM_FORCED_LEVEL_PROFILE_PEAK;
+अटल पूर्णांक smu_enable_umd_pstate(व्योम *handle,
+		      क्रमागत amd_dpm_क्रमced_level *level)
+अणु
+	uपूर्णांक32_t profile_mode_mask = AMD_DPM_FORCED_LEVEL_PROखाता_STANDARD |
+					AMD_DPM_FORCED_LEVEL_PROखाता_MIN_SCLK |
+					AMD_DPM_FORCED_LEVEL_PROखाता_MIN_MCLK |
+					AMD_DPM_FORCED_LEVEL_PROखाता_PEAK;
 
-	struct smu_context *smu = (struct smu_context*)(handle);
-	struct smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
+	काष्ठा smu_context *smu = (काष्ठा smu_context*)(handle);
+	काष्ठा smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
 
-	if (!smu->is_apu && !smu_dpm_ctx->dpm_context)
-		return -EINVAL;
+	अगर (!smu->is_apu && !smu_dpm_ctx->dpm_context)
+		वापस -EINVAL;
 
-	if (!(smu_dpm_ctx->dpm_level & profile_mode_mask)) {
+	अगर (!(smu_dpm_ctx->dpm_level & profile_mode_mask)) अणु
 		/* enter umd pstate, save current level, disable gfx cg*/
-		if (*level & profile_mode_mask) {
+		अगर (*level & profile_mode_mask) अणु
 			smu_dpm_ctx->saved_dpm_level = smu_dpm_ctx->dpm_level;
 			smu_dpm_ctx->enable_umd_pstate = true;
 			smu_gpo_control(smu, false);
-			amdgpu_device_ip_set_powergating_state(smu->adev,
+			amdgpu_device_ip_set_घातergating_state(smu->adev,
 							       AMD_IP_BLOCK_TYPE_GFX,
 							       AMD_PG_STATE_UNGATE);
-			amdgpu_device_ip_set_clockgating_state(smu->adev,
+			amdgpu_device_ip_set_घड़ीgating_state(smu->adev,
 							       AMD_IP_BLOCK_TYPE_GFX,
 							       AMD_CG_STATE_UNGATE);
 			smu_gfx_ulv_control(smu, false);
 			smu_deep_sleep_control(smu, false);
 			amdgpu_asic_update_umd_stable_pstate(smu->adev, true);
-		}
-	} else {
-		/* exit umd pstate, restore level, enable gfx cg*/
-		if (!(*level & profile_mode_mask)) {
-			if (*level == AMD_DPM_FORCED_LEVEL_PROFILE_EXIT)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* निकास umd pstate, restore level, enable gfx cg*/
+		अगर (!(*level & profile_mode_mask)) अणु
+			अगर (*level == AMD_DPM_FORCED_LEVEL_PROखाता_EXIT)
 				*level = smu_dpm_ctx->saved_dpm_level;
 			smu_dpm_ctx->enable_umd_pstate = false;
 			amdgpu_asic_update_umd_stable_pstate(smu->adev, false);
 			smu_deep_sleep_control(smu, true);
 			smu_gfx_ulv_control(smu, true);
-			amdgpu_device_ip_set_clockgating_state(smu->adev,
+			amdgpu_device_ip_set_घड़ीgating_state(smu->adev,
 							       AMD_IP_BLOCK_TYPE_GFX,
 							       AMD_CG_STATE_GATE);
-			amdgpu_device_ip_set_powergating_state(smu->adev,
+			amdgpu_device_ip_set_घातergating_state(smu->adev,
 							       AMD_IP_BLOCK_TYPE_GFX,
 							       AMD_PG_STATE_GATE);
 			smu_gpo_control(smu, true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smu_bump_power_profile_mode(struct smu_context *smu,
-					   long *param,
-					   uint32_t param_size)
-{
-	int ret = 0;
+अटल पूर्णांक smu_bump_घातer_profile_mode(काष्ठा smu_context *smu,
+					   दीर्घ *param,
+					   uपूर्णांक32_t param_size)
+अणु
+	पूर्णांक ret = 0;
 
-	if (smu->ppt_funcs->set_power_profile_mode)
-		ret = smu->ppt_funcs->set_power_profile_mode(smu, param, param_size);
+	अगर (smu->ppt_funcs->set_घातer_profile_mode)
+		ret = smu->ppt_funcs->set_घातer_profile_mode(smu, param, param_size);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_adjust_power_state_dynamic(struct smu_context *smu,
-				   enum amd_dpm_forced_level level,
+अटल पूर्णांक smu_adjust_घातer_state_dynamic(काष्ठा smu_context *smu,
+				   क्रमागत amd_dpm_क्रमced_level level,
 				   bool skip_display_settings)
-{
-	int ret = 0;
-	int index = 0;
-	long workload;
-	struct smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक index = 0;
+	दीर्घ workload;
+	काष्ठा smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
 
-	if (!skip_display_settings) {
+	अगर (!skip_display_settings) अणु
 		ret = smu_display_config_changed(smu);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Failed to change display config!");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	ret = smu_apply_clocks_adjust_rules(smu);
-	if (ret) {
+	ret = smu_apply_घड़ीs_adjust_rules(smu);
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Failed to apply clocks adjust rules!");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!skip_display_settings) {
-		ret = smu_notify_smc_display_config(smu);
-		if (ret) {
+	अगर (!skip_display_settings) अणु
+		ret = smu_notअगरy_smc_display_config(smu);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Failed to notify smc display config!");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (smu_dpm_ctx->dpm_level != level) {
-		ret = smu_asic_set_performance_level(smu, level);
-		if (ret) {
+	अगर (smu_dpm_ctx->dpm_level != level) अणु
+		ret = smu_asic_set_perक्रमmance_level(smu, level);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Failed to set performance level!");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/* update the saved copy */
 		smu_dpm_ctx->dpm_level = level;
-	}
+	पूर्ण
 
-	if (smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL &&
-		smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_PERF_DETERMINISM) {
+	अगर (smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL &&
+		smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_PERF_DETERMINISM) अणु
 		index = fls(smu->workload_mask);
 		index = index > 0 && index <= WORKLOAD_POLICY_MAX ? index - 1 : 0;
 		workload = smu->workload_setting[index];
 
-		if (smu->power_profile_mode != workload)
-			smu_bump_power_profile_mode(smu, &workload, 0);
-	}
+		अगर (smu->घातer_profile_mode != workload)
+			smu_bump_घातer_profile_mode(smu, &workload, 0);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_handle_task(struct smu_context *smu,
-			   enum amd_dpm_forced_level level,
-			   enum amd_pp_task task_id,
+अटल पूर्णांक smu_handle_task(काष्ठा smu_context *smu,
+			   क्रमागत amd_dpm_क्रमced_level level,
+			   क्रमागत amd_pp_task task_id,
 			   bool lock_needed)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (lock_needed)
+	अगर (lock_needed)
 		mutex_lock(&smu->mutex);
 
-	switch (task_id) {
-	case AMD_PP_TASK_DISPLAY_CONFIG_CHANGE:
+	चयन (task_id) अणु
+	हाल AMD_PP_TASK_DISPLAY_CONFIG_CHANGE:
 		ret = smu_pre_display_config_changed(smu);
-		if (ret)
-			goto out;
-		ret = smu_adjust_power_state_dynamic(smu, level, false);
-		break;
-	case AMD_PP_TASK_COMPLETE_INIT:
-	case AMD_PP_TASK_READJUST_POWER_STATE:
-		ret = smu_adjust_power_state_dynamic(smu, level, true);
-		break;
-	default:
-		break;
-	}
+		अगर (ret)
+			जाओ out;
+		ret = smu_adjust_घातer_state_dynamic(smu, level, false);
+		अवरोध;
+	हाल AMD_PP_TASK_COMPLETE_INIT:
+	हाल AMD_PP_TASK_READJUST_POWER_STATE:
+		ret = smu_adjust_घातer_state_dynamic(smu, level, true);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 out:
-	if (lock_needed)
+	अगर (lock_needed)
 		mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_handle_dpm_task(void *handle,
-			       enum amd_pp_task task_id,
-			       enum amd_pm_state_type *user_state)
-{
-	struct smu_context *smu = handle;
-	struct smu_dpm_context *smu_dpm = &smu->smu_dpm;
+अटल पूर्णांक smu_handle_dpm_task(व्योम *handle,
+			       क्रमागत amd_pp_task task_id,
+			       क्रमागत amd_pm_state_type *user_state)
+अणु
+	काष्ठा smu_context *smu = handle;
+	काष्ठा smu_dpm_context *smu_dpm = &smu->smu_dpm;
 
-	return smu_handle_task(smu, smu_dpm->dpm_level, task_id, true);
+	वापस smu_handle_task(smu, smu_dpm->dpm_level, task_id, true);
 
-}
+पूर्ण
 
-static int smu_switch_power_profile(void *handle,
-				    enum PP_SMC_POWER_PROFILE type,
+अटल पूर्णांक smu_चयन_घातer_profile(व्योम *handle,
+				    क्रमागत PP_SMC_POWER_PROखाता type,
 				    bool en)
-{
-	struct smu_context *smu = handle;
-	struct smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
-	long workload;
-	uint32_t index;
+अणु
+	काष्ठा smu_context *smu = handle;
+	काष्ठा smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
+	दीर्घ workload;
+	uपूर्णांक32_t index;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (!(type < PP_SMC_POWER_PROFILE_CUSTOM))
-		return -EINVAL;
+	अगर (!(type < PP_SMC_POWER_PROखाता_CUSTOM))
+		वापस -EINVAL;
 
 	mutex_lock(&smu->mutex);
 
-	if (!en) {
+	अगर (!en) अणु
 		smu->workload_mask &= ~(1 << smu->workload_prority[type]);
 		index = fls(smu->workload_mask);
 		index = index > 0 && index <= WORKLOAD_POLICY_MAX ? index - 1 : 0;
 		workload = smu->workload_setting[index];
-	} else {
+	पूर्ण अन्यथा अणु
 		smu->workload_mask |= (1 << smu->workload_prority[type]);
 		index = fls(smu->workload_mask);
 		index = index <= WORKLOAD_POLICY_MAX ? index - 1 : 0;
 		workload = smu->workload_setting[index];
-	}
+	पूर्ण
 
-	if (smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL &&
+	अगर (smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL &&
 		smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_PERF_DETERMINISM)
-		smu_bump_power_profile_mode(smu, &workload, 0);
+		smu_bump_घातer_profile_mode(smu, &workload, 0);
 
 	mutex_unlock(&smu->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum amd_dpm_forced_level smu_get_performance_level(void *handle)
-{
-	struct smu_context *smu = handle;
-	struct smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
-	enum amd_dpm_forced_level level;
+अटल क्रमागत amd_dpm_क्रमced_level smu_get_perक्रमmance_level(व्योम *handle)
+अणु
+	काष्ठा smu_context *smu = handle;
+	काष्ठा smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
+	क्रमागत amd_dpm_क्रमced_level level;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (!smu->is_apu && !smu_dpm_ctx->dpm_context)
-		return -EINVAL;
+	अगर (!smu->is_apu && !smu_dpm_ctx->dpm_context)
+		वापस -EINVAL;
 
 	mutex_lock(&(smu->mutex));
 	level = smu_dpm_ctx->dpm_level;
 	mutex_unlock(&(smu->mutex));
 
-	return level;
-}
+	वापस level;
+पूर्ण
 
-static int smu_force_performance_level(void *handle,
-				       enum amd_dpm_forced_level level)
-{
-	struct smu_context *smu = handle;
-	struct smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
-	int ret = 0;
+अटल पूर्णांक smu_क्रमce_perक्रमmance_level(व्योम *handle,
+				       क्रमागत amd_dpm_क्रमced_level level)
+अणु
+	काष्ठा smu_context *smu = handle;
+	काष्ठा smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (!smu->is_apu && !smu_dpm_ctx->dpm_context)
-		return -EINVAL;
+	अगर (!smu->is_apu && !smu_dpm_ctx->dpm_context)
+		वापस -EINVAL;
 
 	mutex_lock(&smu->mutex);
 
 	ret = smu_enable_umd_pstate(smu, &level);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&smu->mutex);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = smu_handle_task(smu, level,
 			      AMD_PP_TASK_READJUST_POWER_STATE,
@@ -1825,231 +1826,231 @@ static int smu_force_performance_level(void *handle,
 
 	mutex_unlock(&smu->mutex);
 
-	/* reset user dpm clock state */
-	if (!ret && smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL) {
-		memset(smu->user_dpm_profile.clk_mask, 0, sizeof(smu->user_dpm_profile.clk_mask));
+	/* reset user dpm घड़ी state */
+	अगर (!ret && smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL) अणु
+		स_रखो(smu->user_dpm_profile.clk_mask, 0, माप(smu->user_dpm_profile.clk_mask));
 		smu->user_dpm_profile.clk_dependency = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_set_display_count(void *handle, uint32_t count)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_set_display_count(व्योम *handle, uपूर्णांक32_t count)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 	ret = smu_init_display_count(smu, count);
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_force_smuclk_levels(struct smu_context *smu,
-			 enum smu_clk_type clk_type,
-			 uint32_t mask)
-{
-	struct smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
-	int ret = 0;
+अटल पूर्णांक smu_क्रमce_smuclk_levels(काष्ठा smu_context *smu,
+			 क्रमागत smu_clk_type clk_type,
+			 uपूर्णांक32_t mask)
+अणु
+	काष्ठा smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL) {
+	अगर (smu_dpm_ctx->dpm_level != AMD_DPM_FORCED_LEVEL_MANUAL) अणु
 		dev_dbg(smu->adev->dev, "force clock level is for dpm manual mode only.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs && smu->ppt_funcs->force_clk_levels) {
-		ret = smu->ppt_funcs->force_clk_levels(smu, clk_type, mask);
-		if (!ret && !(smu->user_dpm_profile.flags & SMU_DPM_USER_PROFILE_RESTORE)) {
+	अगर (smu->ppt_funcs && smu->ppt_funcs->क्रमce_clk_levels) अणु
+		ret = smu->ppt_funcs->क्रमce_clk_levels(smu, clk_type, mask);
+		अगर (!ret && !(smu->user_dpm_profile.flags & SMU_DPM_USER_PROखाता_RESTORE)) अणु
 			smu->user_dpm_profile.clk_mask[clk_type] = mask;
 			smu_set_user_clk_dependencies(smu, clk_type);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_force_ppclk_levels(void *handle,
-				  enum pp_clock_type type,
-				  uint32_t mask)
-{
-	struct smu_context *smu = handle;
-	enum smu_clk_type clk_type;
+अटल पूर्णांक smu_क्रमce_ppclk_levels(व्योम *handle,
+				  क्रमागत pp_घड़ी_प्रकारype type,
+				  uपूर्णांक32_t mask)
+अणु
+	काष्ठा smu_context *smu = handle;
+	क्रमागत smu_clk_type clk_type;
 
-	switch (type) {
-	case PP_SCLK:
-		clk_type = SMU_SCLK; break;
-	case PP_MCLK:
-		clk_type = SMU_MCLK; break;
-	case PP_PCIE:
-		clk_type = SMU_PCIE; break;
-	case PP_SOCCLK:
-		clk_type = SMU_SOCCLK; break;
-	case PP_FCLK:
-		clk_type = SMU_FCLK; break;
-	case PP_DCEFCLK:
-		clk_type = SMU_DCEFCLK; break;
-	case PP_VCLK:
-		clk_type = SMU_VCLK; break;
-	case PP_DCLK:
-		clk_type = SMU_DCLK; break;
-	case OD_SCLK:
-		clk_type = SMU_OD_SCLK; break;
-	case OD_MCLK:
-		clk_type = SMU_OD_MCLK; break;
-	case OD_VDDC_CURVE:
-		clk_type = SMU_OD_VDDC_CURVE; break;
-	case OD_RANGE:
-		clk_type = SMU_OD_RANGE; break;
-	default:
-		return -EINVAL;
-	}
+	चयन (type) अणु
+	हाल PP_SCLK:
+		clk_type = SMU_SCLK; अवरोध;
+	हाल PP_MCLK:
+		clk_type = SMU_MCLK; अवरोध;
+	हाल PP_PCIE:
+		clk_type = SMU_PCIE; अवरोध;
+	हाल PP_SOCCLK:
+		clk_type = SMU_SOCCLK; अवरोध;
+	हाल PP_FCLK:
+		clk_type = SMU_FCLK; अवरोध;
+	हाल PP_DCEFCLK:
+		clk_type = SMU_DCEFCLK; अवरोध;
+	हाल PP_VCLK:
+		clk_type = SMU_VCLK; अवरोध;
+	हाल PP_DCLK:
+		clk_type = SMU_DCLK; अवरोध;
+	हाल OD_SCLK:
+		clk_type = SMU_OD_SCLK; अवरोध;
+	हाल OD_MCLK:
+		clk_type = SMU_OD_MCLK; अवरोध;
+	हाल OD_VDDC_CURVE:
+		clk_type = SMU_OD_VDDC_CURVE; अवरोध;
+	हाल OD_RANGE:
+		clk_type = SMU_OD_RANGE; अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return smu_force_smuclk_levels(smu, clk_type, mask);
-}
+	वापस smu_क्रमce_smuclk_levels(smu, clk_type, mask);
+पूर्ण
 
 /*
- * On system suspending or resetting, the dpm_enabled
+ * On प्रणाली suspending or resetting, the dpm_enabled
  * flag will be cleared. So that those SMU services which
  * are not supported will be gated.
  * However, the mp1 state setting should still be granted
- * even if the dpm_enabled cleared.
+ * even अगर the dpm_enabled cleared.
  */
-static int smu_set_mp1_state(void *handle,
-			     enum pp_mp1_state mp1_state)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_set_mp1_state(व्योम *handle,
+			     क्रमागत pp_mp1_state mp1_state)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs &&
+	अगर (smu->ppt_funcs &&
 	    smu->ppt_funcs->set_mp1_state)
 		ret = smu->ppt_funcs->set_mp1_state(smu, mp1_state);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_set_df_cstate(void *handle,
-			     enum pp_df_cstate state)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_set_df_cstate(व्योम *handle,
+			     क्रमागत pp_df_cstate state)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (!smu->ppt_funcs || !smu->ppt_funcs->set_df_cstate)
-		return 0;
+	अगर (!smu->ppt_funcs || !smu->ppt_funcs->set_df_cstate)
+		वापस 0;
 
 	mutex_lock(&smu->mutex);
 
 	ret = smu->ppt_funcs->set_df_cstate(smu, state);
-	if (ret)
+	अगर (ret)
 		dev_err(smu->adev->dev, "[SetDfCstate] failed!\n");
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_allow_xgmi_power_down(struct smu_context *smu, bool en)
-{
-	int ret = 0;
+पूर्णांक smu_allow_xgmi_घातer_करोwn(काष्ठा smu_context *smu, bool en)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (!smu->ppt_funcs || !smu->ppt_funcs->allow_xgmi_power_down)
-		return 0;
+	अगर (!smu->ppt_funcs || !smu->ppt_funcs->allow_xgmi_घातer_करोwn)
+		वापस 0;
 
 	mutex_lock(&smu->mutex);
 
-	ret = smu->ppt_funcs->allow_xgmi_power_down(smu, en);
-	if (ret)
+	ret = smu->ppt_funcs->allow_xgmi_घातer_करोwn(smu, en);
+	अगर (ret)
 		dev_err(smu->adev->dev, "[AllowXgmiPowerDown] failed!\n");
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_write_watermarks_table(struct smu_context *smu)
-{
-	int ret = 0;
+पूर्णांक smu_ग_लिखो_watermarks_table(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
-
-	mutex_lock(&smu->mutex);
-
-	ret = smu_set_watermarks_table(smu, NULL);
-
-	mutex_unlock(&smu->mutex);
-
-	return ret;
-}
-
-static int smu_set_watermarks_for_clock_ranges(void *handle,
-					       struct pp_smu_wm_range_sets *clock_ranges)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
-
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
-
-	if (smu->disable_watermark)
-		return 0;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	ret = smu_set_watermarks_table(smu, clock_ranges);
+	ret = smu_set_watermarks_table(smu, शून्य);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_set_ac_dc(struct smu_context *smu)
-{
-	int ret = 0;
+अटल पूर्णांक smu_set_watermarks_क्रम_घड़ी_ranges(व्योम *handle,
+					       काष्ठा pp_smu_wm_range_sets *घड़ी_ranges)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
+
+	अगर (smu->disable_watermark)
+		वापस 0;
+
+	mutex_lock(&smu->mutex);
+
+	ret = smu_set_watermarks_table(smu, घड़ी_ranges);
+
+	mutex_unlock(&smu->mutex);
+
+	वापस ret;
+पूर्ण
+
+पूर्णांक smu_set_ac_dc(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
+
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	/* controlled by firmware */
-	if (smu->dc_controlled_by_gpio)
-		return 0;
+	अगर (smu->dc_controlled_by_gpio)
+		वापस 0;
 
 	mutex_lock(&smu->mutex);
-	ret = smu_set_power_source(smu,
-				   smu->adev->pm.ac_power ? SMU_POWER_SOURCE_AC :
+	ret = smu_set_घातer_source(smu,
+				   smu->adev->pm.ac_घातer ? SMU_POWER_SOURCE_AC :
 				   SMU_POWER_SOURCE_DC);
-	if (ret)
+	अगर (ret)
 		dev_err(smu->adev->dev, "Failed to switch to %s mode!\n",
-		       smu->adev->pm.ac_power ? "AC" : "DC");
+		       smu->adev->pm.ac_घातer ? "AC" : "DC");
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct amd_ip_funcs smu_ip_funcs = {
+स्थिर काष्ठा amd_ip_funcs smu_ip_funcs = अणु
 	.name = "smu",
 	.early_init = smu_early_init,
 	.late_init = smu_late_init,
@@ -2059,502 +2060,502 @@ const struct amd_ip_funcs smu_ip_funcs = {
 	.hw_fini = smu_hw_fini,
 	.suspend = smu_suspend,
 	.resume = smu_resume,
-	.is_idle = NULL,
-	.check_soft_reset = NULL,
-	.wait_for_idle = NULL,
-	.soft_reset = NULL,
-	.set_clockgating_state = smu_set_clockgating_state,
-	.set_powergating_state = smu_set_powergating_state,
+	.is_idle = शून्य,
+	.check_soft_reset = शून्य,
+	.रुको_क्रम_idle = शून्य,
+	.soft_reset = शून्य,
+	.set_घड़ीgating_state = smu_set_घड़ीgating_state,
+	.set_घातergating_state = smu_set_घातergating_state,
 	.enable_umd_pstate = smu_enable_umd_pstate,
-};
+पूर्ण;
 
-const struct amdgpu_ip_block_version smu_v11_0_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version smu_v11_0_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_SMC,
 	.major = 11,
 	.minor = 0,
 	.rev = 0,
 	.funcs = &smu_ip_funcs,
-};
+पूर्ण;
 
-const struct amdgpu_ip_block_version smu_v12_0_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version smu_v12_0_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_SMC,
 	.major = 12,
 	.minor = 0,
 	.rev = 0,
 	.funcs = &smu_ip_funcs,
-};
+पूर्ण;
 
-const struct amdgpu_ip_block_version smu_v13_0_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version smu_v13_0_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_SMC,
 	.major = 13,
 	.minor = 0,
 	.rev = 0,
 	.funcs = &smu_ip_funcs,
-};
+पूर्ण;
 
-static int smu_load_microcode(void *handle)
-{
-	struct smu_context *smu = handle;
-	struct amdgpu_device *adev = smu->adev;
-	int ret = 0;
+अटल पूर्णांक smu_load_microcode(व्योम *handle)
+अणु
+	काष्ठा smu_context *smu = handle;
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled)
+		वापस -EOPNOTSUPP;
 
-	/* This should be used for non PSP loading */
-	if (adev->firmware.load_type == AMDGPU_FW_LOAD_PSP)
-		return 0;
+	/* This should be used क्रम non PSP loading */
+	अगर (adev->firmware.load_type == AMDGPU_FW_LOAD_PSP)
+		वापस 0;
 
-	if (smu->ppt_funcs->load_microcode) {
+	अगर (smu->ppt_funcs->load_microcode) अणु
 		ret = smu->ppt_funcs->load_microcode(smu);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(adev->dev, "Load microcode failed\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (smu->ppt_funcs->check_fw_status) {
+	अगर (smu->ppt_funcs->check_fw_status) अणु
 		ret = smu->ppt_funcs->check_fw_status(smu);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(adev->dev, "SMC is not ready\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_set_gfx_cgpg(struct smu_context *smu, bool enabled)
-{
-	int ret = 0;
+अटल पूर्णांक smu_set_gfx_cgpg(काष्ठा smu_context *smu, bool enabled)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->set_gfx_cgpg)
+	अगर (smu->ppt_funcs->set_gfx_cgpg)
 		ret = smu->ppt_funcs->set_gfx_cgpg(smu, enabled);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_set_fan_speed_rpm(void *handle, uint32_t speed)
-{
-	struct smu_context *smu = handle;
+अटल पूर्णांक smu_set_fan_speed_rpm(व्योम *handle, uपूर्णांक32_t speed)
+अणु
+	काष्ठा smu_context *smu = handle;
 	u32 percent;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->set_fan_speed_percent) {
+	अगर (smu->ppt_funcs->set_fan_speed_percent) अणु
 		percent = speed * 100 / smu->fan_max_rpm;
 		ret = smu->ppt_funcs->set_fan_speed_percent(smu, percent);
-		if (!ret && !(smu->user_dpm_profile.flags & SMU_DPM_USER_PROFILE_RESTORE))
+		अगर (!ret && !(smu->user_dpm_profile.flags & SMU_DPM_USER_PROखाता_RESTORE))
 			smu->user_dpm_profile.fan_speed_percent = percent;
-	}
+	पूर्ण
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_get_power_limit(struct smu_context *smu,
-			uint32_t *limit,
-			enum smu_ppt_limit_level limit_level)
-{
-	uint32_t limit_type = *limit >> 24;
-	int ret = 0;
+पूर्णांक smu_get_घातer_limit(काष्ठा smu_context *smu,
+			uपूर्णांक32_t *limit,
+			क्रमागत smu_ppt_limit_level limit_level)
+अणु
+	uपूर्णांक32_t limit_type = *limit >> 24;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (limit_type != SMU_DEFAULT_PPT_LIMIT) {
-		if (smu->ppt_funcs->get_ppt_limit)
+	अगर (limit_type != SMU_DEFAULT_PPT_LIMIT) अणु
+		अगर (smu->ppt_funcs->get_ppt_limit)
 			ret = smu->ppt_funcs->get_ppt_limit(smu, limit, limit_type, limit_level);
-	} else {
-		switch (limit_level) {
-		case SMU_PPT_LIMIT_CURRENT:
-			*limit = smu->current_power_limit;
-			break;
-		case SMU_PPT_LIMIT_DEFAULT:
-			*limit = smu->default_power_limit;
-			break;
-		case SMU_PPT_LIMIT_MAX:
-			*limit = smu->max_power_limit;
-			break;
-		default:
-			break;
-		}
-	}
+	पूर्ण अन्यथा अणु
+		चयन (limit_level) अणु
+		हाल SMU_PPT_LIMIT_CURRENT:
+			*limit = smu->current_घातer_limit;
+			अवरोध;
+		हाल SMU_PPT_LIMIT_DEFAULT:
+			*limit = smu->शेष_घातer_limit;
+			अवरोध;
+		हाल SMU_PPT_LIMIT_MAX:
+			*limit = smu->max_घातer_limit;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_set_power_limit(void *handle, uint32_t limit)
-{
-	struct smu_context *smu = handle;
-	uint32_t limit_type = limit >> 24;
-	int ret = 0;
+अटल पूर्णांक smu_set_घातer_limit(व्योम *handle, uपूर्णांक32_t limit)
+अणु
+	काष्ठा smu_context *smu = handle;
+	uपूर्णांक32_t limit_type = limit >> 24;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (limit_type != SMU_DEFAULT_PPT_LIMIT)
-		if (smu->ppt_funcs->set_power_limit) {
-			ret = smu->ppt_funcs->set_power_limit(smu, limit);
-			goto out;
-		}
+	अगर (limit_type != SMU_DEFAULT_PPT_LIMIT)
+		अगर (smu->ppt_funcs->set_घातer_limit) अणु
+			ret = smu->ppt_funcs->set_घातer_limit(smu, limit);
+			जाओ out;
+		पूर्ण
 
-	if (limit > smu->max_power_limit) {
+	अगर (limit > smu->max_घातer_limit) अणु
 		dev_err(smu->adev->dev,
 			"New power limit (%d) is over the max allowed %d\n",
-			limit, smu->max_power_limit);
+			limit, smu->max_घातer_limit);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!limit)
-		limit = smu->current_power_limit;
+	अगर (!limit)
+		limit = smu->current_घातer_limit;
 
-	if (smu->ppt_funcs->set_power_limit) {
-		ret = smu->ppt_funcs->set_power_limit(smu, limit);
-		if (!ret && !(smu->user_dpm_profile.flags & SMU_DPM_USER_PROFILE_RESTORE))
-			smu->user_dpm_profile.power_limit = limit;
-	}
+	अगर (smu->ppt_funcs->set_घातer_limit) अणु
+		ret = smu->ppt_funcs->set_घातer_limit(smu, limit);
+		अगर (!ret && !(smu->user_dpm_profile.flags & SMU_DPM_USER_PROखाता_RESTORE))
+			smu->user_dpm_profile.घातer_limit = limit;
+	पूर्ण
 
 out:
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_print_smuclk_levels(struct smu_context *smu, enum smu_clk_type clk_type, char *buf)
-{
-	int ret = 0;
+अटल पूर्णांक smu_prपूर्णांक_smuclk_levels(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk_type, अक्षर *buf)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->print_clk_levels)
-		ret = smu->ppt_funcs->print_clk_levels(smu, clk_type, buf);
+	अगर (smu->ppt_funcs->prपूर्णांक_clk_levels)
+		ret = smu->ppt_funcs->prपूर्णांक_clk_levels(smu, clk_type, buf);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_print_ppclk_levels(void *handle,
-				  enum pp_clock_type type,
-				  char *buf)
-{
-	struct smu_context *smu = handle;
-	enum smu_clk_type clk_type;
+अटल पूर्णांक smu_prपूर्णांक_ppclk_levels(व्योम *handle,
+				  क्रमागत pp_घड़ी_प्रकारype type,
+				  अक्षर *buf)
+अणु
+	काष्ठा smu_context *smu = handle;
+	क्रमागत smu_clk_type clk_type;
 
-	switch (type) {
-	case PP_SCLK:
-		clk_type = SMU_SCLK; break;
-	case PP_MCLK:
-		clk_type = SMU_MCLK; break;
-	case PP_PCIE:
-		clk_type = SMU_PCIE; break;
-	case PP_SOCCLK:
-		clk_type = SMU_SOCCLK; break;
-	case PP_FCLK:
-		clk_type = SMU_FCLK; break;
-	case PP_DCEFCLK:
-		clk_type = SMU_DCEFCLK; break;
-	case PP_VCLK:
-		clk_type = SMU_VCLK; break;
-	case PP_DCLK:
-		clk_type = SMU_DCLK; break;
-	case OD_SCLK:
-		clk_type = SMU_OD_SCLK; break;
-	case OD_MCLK:
-		clk_type = SMU_OD_MCLK; break;
-	case OD_VDDC_CURVE:
-		clk_type = SMU_OD_VDDC_CURVE; break;
-	case OD_RANGE:
-		clk_type = SMU_OD_RANGE; break;
-	case OD_VDDGFX_OFFSET:
-		clk_type = SMU_OD_VDDGFX_OFFSET; break;
-	case OD_CCLK:
-		clk_type = SMU_OD_CCLK; break;
-	default:
-		return -EINVAL;
-	}
+	चयन (type) अणु
+	हाल PP_SCLK:
+		clk_type = SMU_SCLK; अवरोध;
+	हाल PP_MCLK:
+		clk_type = SMU_MCLK; अवरोध;
+	हाल PP_PCIE:
+		clk_type = SMU_PCIE; अवरोध;
+	हाल PP_SOCCLK:
+		clk_type = SMU_SOCCLK; अवरोध;
+	हाल PP_FCLK:
+		clk_type = SMU_FCLK; अवरोध;
+	हाल PP_DCEFCLK:
+		clk_type = SMU_DCEFCLK; अवरोध;
+	हाल PP_VCLK:
+		clk_type = SMU_VCLK; अवरोध;
+	हाल PP_DCLK:
+		clk_type = SMU_DCLK; अवरोध;
+	हाल OD_SCLK:
+		clk_type = SMU_OD_SCLK; अवरोध;
+	हाल OD_MCLK:
+		clk_type = SMU_OD_MCLK; अवरोध;
+	हाल OD_VDDC_CURVE:
+		clk_type = SMU_OD_VDDC_CURVE; अवरोध;
+	हाल OD_RANGE:
+		clk_type = SMU_OD_RANGE; अवरोध;
+	हाल OD_VDDGFX_OFFSET:
+		clk_type = SMU_OD_VDDGFX_OFFSET; अवरोध;
+	हाल OD_CCLK:
+		clk_type = SMU_OD_CCLK; अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return smu_print_smuclk_levels(smu, clk_type, buf);
-}
+	वापस smu_prपूर्णांक_smuclk_levels(smu, clk_type, buf);
+पूर्ण
 
-static int smu_od_edit_dpm_table(void *handle,
-				 enum PP_OD_DPM_TABLE_COMMAND type,
-				 long *input, uint32_t size)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_od_edit_dpm_table(व्योम *handle,
+				 क्रमागत PP_OD_DPM_TABLE_COMMAND type,
+				 दीर्घ *input, uपूर्णांक32_t size)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->od_edit_dpm_table) {
+	अगर (smu->ppt_funcs->od_edit_dpm_table) अणु
 		ret = smu->ppt_funcs->od_edit_dpm_table(smu, type, input, size);
-	}
+	पूर्ण
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_read_sensor(void *handle,
-			   int sensor,
-			   void *data,
-			   int *size_arg)
-{
-	struct smu_context *smu = handle;
-	struct smu_umd_pstate_table *pstate_table =
+अटल पूर्णांक smu_पढ़ो_sensor(व्योम *handle,
+			   पूर्णांक sensor,
+			   व्योम *data,
+			   पूर्णांक *size_arg)
+अणु
+	काष्ठा smu_context *smu = handle;
+	काष्ठा smu_umd_pstate_table *pstate_table =
 				&smu->pstate_table;
-	int ret = 0;
-	uint32_t *size, size_val;
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t *size, size_val;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (!data || !size_arg)
-		return -EINVAL;
+	अगर (!data || !size_arg)
+		वापस -EINVAL;
 
 	size_val = *size_arg;
 	size = &size_val;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->read_sensor)
-		if (!smu->ppt_funcs->read_sensor(smu, sensor, data, size))
-			goto unlock;
+	अगर (smu->ppt_funcs->पढ़ो_sensor)
+		अगर (!smu->ppt_funcs->पढ़ो_sensor(smu, sensor, data, size))
+			जाओ unlock;
 
-	switch (sensor) {
-	case AMDGPU_PP_SENSOR_STABLE_PSTATE_SCLK:
-		*((uint32_t *)data) = pstate_table->gfxclk_pstate.standard * 100;
+	चयन (sensor) अणु
+	हाल AMDGPU_PP_SENSOR_STABLE_PSTATE_SCLK:
+		*((uपूर्णांक32_t *)data) = pstate_table->gfxclk_pstate.standard * 100;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_STABLE_PSTATE_MCLK:
-		*((uint32_t *)data) = pstate_table->uclk_pstate.standard * 100;
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_STABLE_PSTATE_MCLK:
+		*((uपूर्णांक32_t *)data) = pstate_table->uclk_pstate.standard * 100;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_ENABLED_SMC_FEATURES_MASK:
-		ret = smu_feature_get_enabled_mask(smu, (uint32_t *)data, 2);
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_ENABLED_SMC_FEATURES_MASK:
+		ret = smu_feature_get_enabled_mask(smu, (uपूर्णांक32_t *)data, 2);
 		*size = 8;
-		break;
-	case AMDGPU_PP_SENSOR_UVD_POWER:
-		*(uint32_t *)data = smu_feature_is_enabled(smu, SMU_FEATURE_DPM_UVD_BIT) ? 1 : 0;
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_UVD_POWER:
+		*(uपूर्णांक32_t *)data = smu_feature_is_enabled(smu, SMU_FEATURE_DPM_UVD_BIT) ? 1 : 0;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_VCE_POWER:
-		*(uint32_t *)data = smu_feature_is_enabled(smu, SMU_FEATURE_DPM_VCE_BIT) ? 1 : 0;
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_VCE_POWER:
+		*(uपूर्णांक32_t *)data = smu_feature_is_enabled(smu, SMU_FEATURE_DPM_VCE_BIT) ? 1 : 0;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_VCN_POWER_STATE:
-		*(uint32_t *)data = atomic_read(&smu->smu_power.power_gate.vcn_gated) ? 0: 1;
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_VCN_POWER_STATE:
+		*(uपूर्णांक32_t *)data = atomic_पढ़ो(&smu->smu_घातer.घातer_gate.vcn_gated) ? 0: 1;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_MIN_FAN_RPM:
-		*(uint32_t *)data = 0;
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_MIN_FAN_RPM:
+		*(uपूर्णांक32_t *)data = 0;
 		*size = 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*size = 0;
 		ret = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 unlock:
 	mutex_unlock(&smu->mutex);
 
-	// assign uint32_t to int
+	// assign uपूर्णांक32_t to पूर्णांक
 	*size_arg = size_val;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_get_power_profile_mode(void *handle, char *buf)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_get_घातer_profile_mode(व्योम *handle, अक्षर *buf)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
-
-	mutex_lock(&smu->mutex);
-
-	if (smu->ppt_funcs->get_power_profile_mode)
-		ret = smu->ppt_funcs->get_power_profile_mode(smu, buf);
-
-	mutex_unlock(&smu->mutex);
-
-	return ret;
-}
-
-static int smu_set_power_profile_mode(void *handle,
-				      long *param,
-				      uint32_t param_size)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
-
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	smu_bump_power_profile_mode(smu, param, param_size);
+	अगर (smu->ppt_funcs->get_घातer_profile_mode)
+		ret = smu->ppt_funcs->get_घातer_profile_mode(smu, buf);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
+
+अटल पूर्णांक smu_set_घातer_profile_mode(व्योम *handle,
+				      दीर्घ *param,
+				      uपूर्णांक32_t param_size)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
+
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
+
+	mutex_lock(&smu->mutex);
+
+	smu_bump_घातer_profile_mode(smu, param, param_size);
+
+	mutex_unlock(&smu->mutex);
+
+	वापस ret;
+पूर्ण
 
 
-static u32 smu_get_fan_control_mode(void *handle)
-{
-	struct smu_context *smu = handle;
+अटल u32 smu_get_fan_control_mode(व्योम *handle)
+अणु
+	काष्ठा smu_context *smu = handle;
 	u32 ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return AMD_FAN_CTRL_NONE;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस AMD_FAN_CTRL_NONE;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->get_fan_control_mode)
+	अगर (smu->ppt_funcs->get_fan_control_mode)
 		ret = smu->ppt_funcs->get_fan_control_mode(smu);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_set_fan_control_mode(struct smu_context *smu, int value)
-{
-	int ret = 0;
+अटल पूर्णांक smu_set_fan_control_mode(काष्ठा smu_context *smu, पूर्णांक value)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return  -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस  -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->set_fan_control_mode) {
+	अगर (smu->ppt_funcs->set_fan_control_mode) अणु
 		ret = smu->ppt_funcs->set_fan_control_mode(smu, value);
-		if (!ret && !(smu->user_dpm_profile.flags & SMU_DPM_USER_PROFILE_RESTORE))
+		अगर (!ret && !(smu->user_dpm_profile.flags & SMU_DPM_USER_PROखाता_RESTORE))
 			smu->user_dpm_profile.fan_mode = value;
-	}
+	पूर्ण
 
 	mutex_unlock(&smu->mutex);
 
 	/* reset user dpm fan speed */
-	if (!ret && value != AMD_FAN_CTRL_MANUAL &&
-			!(smu->user_dpm_profile.flags & SMU_DPM_USER_PROFILE_RESTORE))
+	अगर (!ret && value != AMD_FAN_CTRL_MANUAL &&
+			!(smu->user_dpm_profile.flags & SMU_DPM_USER_PROखाता_RESTORE))
 		smu->user_dpm_profile.fan_speed_percent = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void smu_pp_set_fan_control_mode(void *handle, u32 value)
-{
-	struct smu_context *smu = handle;
+अटल व्योम smu_pp_set_fan_control_mode(व्योम *handle, u32 value)
+अणु
+	काष्ठा smu_context *smu = handle;
 
 	smu_set_fan_control_mode(smu, value);
-}
+पूर्ण
 
 
-static int smu_get_fan_speed_percent(void *handle, u32 *speed)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
-	uint32_t percent;
+अटल पूर्णांक smu_get_fan_speed_percent(व्योम *handle, u32 *speed)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t percent;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->get_fan_speed_percent) {
+	अगर (smu->ppt_funcs->get_fan_speed_percent) अणु
 		ret = smu->ppt_funcs->get_fan_speed_percent(smu, &percent);
-		if (!ret) {
+		अगर (!ret) अणु
 			*speed = percent > 100 ? 100 : percent;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&smu->mutex);
 
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_set_fan_speed_percent(void *handle, u32 speed)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_set_fan_speed_percent(व्योम *handle, u32 speed)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->set_fan_speed_percent) {
-		if (speed > 100)
+	अगर (smu->ppt_funcs->set_fan_speed_percent) अणु
+		अगर (speed > 100)
 			speed = 100;
 		ret = smu->ppt_funcs->set_fan_speed_percent(smu, speed);
-		if (!ret && !(smu->user_dpm_profile.flags & SMU_DPM_USER_PROFILE_RESTORE))
+		अगर (!ret && !(smu->user_dpm_profile.flags & SMU_DPM_USER_PROखाता_RESTORE))
 			smu->user_dpm_profile.fan_speed_percent = speed;
-	}
+	पूर्ण
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_get_fan_speed_rpm(void *handle, uint32_t *speed)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_get_fan_speed_rpm(व्योम *handle, uपूर्णांक32_t *speed)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 	u32 percent;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->get_fan_speed_percent) {
+	अगर (smu->ppt_funcs->get_fan_speed_percent) अणु
 		ret = smu->ppt_funcs->get_fan_speed_percent(smu, &percent);
 		*speed = percent * smu->fan_max_rpm / 100;
-	}
+	पूर्ण
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_set_deep_sleep_dcefclk(void *handle, uint32_t clk)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_set_deep_sleep_dcefclk(व्योम *handle, uपूर्णांक32_t clk)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
@@ -2562,323 +2563,323 @@ static int smu_set_deep_sleep_dcefclk(void *handle, uint32_t clk)
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_get_clock_by_type_with_latency(void *handle,
-					      enum amd_pp_clock_type type,
-					      struct pp_clock_levels_with_latency *clocks)
-{
-	struct smu_context *smu = handle;
-	enum smu_clk_type clk_type;
-	int ret = 0;
+अटल पूर्णांक smu_get_घड़ी_by_type_with_latency(व्योम *handle,
+					      क्रमागत amd_pp_घड़ी_प्रकारype type,
+					      काष्ठा pp_घड़ी_levels_with_latency *घड़ीs)
+अणु
+	काष्ठा smu_context *smu = handle;
+	क्रमागत smu_clk_type clk_type;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->get_clock_by_type_with_latency) {
-		switch (type) {
-		case amd_pp_sys_clock:
+	अगर (smu->ppt_funcs->get_घड़ी_by_type_with_latency) अणु
+		चयन (type) अणु
+		हाल amd_pp_sys_घड़ी:
 			clk_type = SMU_GFXCLK;
-			break;
-		case amd_pp_mem_clock:
+			अवरोध;
+		हाल amd_pp_mem_घड़ी:
 			clk_type = SMU_MCLK;
-			break;
-		case amd_pp_dcef_clock:
+			अवरोध;
+		हाल amd_pp_dcef_घड़ी:
 			clk_type = SMU_DCEFCLK;
-			break;
-		case amd_pp_disp_clock:
+			अवरोध;
+		हाल amd_pp_disp_घड़ी:
 			clk_type = SMU_DISPCLK;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(smu->adev->dev, "Invalid clock type!\n");
 			mutex_unlock(&smu->mutex);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		ret = smu->ppt_funcs->get_clock_by_type_with_latency(smu, clk_type, clocks);
-	}
-
-	mutex_unlock(&smu->mutex);
-
-	return ret;
-}
-
-static int smu_display_clock_voltage_request(void *handle,
-					     struct pp_display_clock_request *clock_req)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
-
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
-
-	mutex_lock(&smu->mutex);
-
-	if (smu->ppt_funcs->display_clock_voltage_request)
-		ret = smu->ppt_funcs->display_clock_voltage_request(smu, clock_req);
+		ret = smu->ppt_funcs->get_घड़ी_by_type_with_latency(smu, clk_type, घड़ीs);
+	पूर्ण
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
+अटल पूर्णांक smu_display_घड़ी_voltage_request(व्योम *handle,
+					     काष्ठा pp_display_घड़ी_request *घड़ी_req)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-static int smu_display_disable_memory_clock_switch(void *handle,
-						   bool disable_memory_clock_switch)
-{
-	struct smu_context *smu = handle;
-	int ret = -EINVAL;
-
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->display_disable_memory_clock_switch)
-		ret = smu->ppt_funcs->display_disable_memory_clock_switch(smu, disable_memory_clock_switch);
+	अगर (smu->ppt_funcs->display_घड़ी_voltage_request)
+		ret = smu->ppt_funcs->display_घड़ी_voltage_request(smu, घड़ी_req);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_set_xgmi_pstate(void *handle,
-			       uint32_t pstate)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+अटल पूर्णांक smu_display_disable_memory_घड़ी_चयन(व्योम *handle,
+						   bool disable_memory_घड़ी_चयन)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = -EINVAL;
+
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->set_xgmi_pstate)
+	अगर (smu->ppt_funcs->display_disable_memory_घड़ी_चयन)
+		ret = smu->ppt_funcs->display_disable_memory_घड़ी_चयन(smu, disable_memory_घड़ी_चयन);
+
+	mutex_unlock(&smu->mutex);
+
+	वापस ret;
+पूर्ण
+
+अटल पूर्णांक smu_set_xgmi_pstate(व्योम *handle,
+			       uपूर्णांक32_t pstate)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
+
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
+
+	mutex_lock(&smu->mutex);
+
+	अगर (smu->ppt_funcs->set_xgmi_pstate)
 		ret = smu->ppt_funcs->set_xgmi_pstate(smu, pstate);
 
 	mutex_unlock(&smu->mutex);
 
-	if(ret)
+	अगर(ret)
 		dev_err(smu->adev->dev, "Failed to set XGMI pstate!\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_get_baco_capability(void *handle, bool *cap)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_get_baco_capability(व्योम *handle, bool *cap)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
 	*cap = false;
 
-	if (!smu->pm_enabled)
-		return 0;
+	अगर (!smu->pm_enabled)
+		वापस 0;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs && smu->ppt_funcs->baco_is_support)
+	अगर (smu->ppt_funcs && smu->ppt_funcs->baco_is_support)
 		*cap = smu->ppt_funcs->baco_is_support(smu);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_baco_set_state(void *handle, int state)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_baco_set_state(व्योम *handle, पूर्णांक state)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (state == 0) {
+	अगर (state == 0) अणु
 		mutex_lock(&smu->mutex);
 
-		if (smu->ppt_funcs->baco_exit)
-			ret = smu->ppt_funcs->baco_exit(smu);
+		अगर (smu->ppt_funcs->baco_निकास)
+			ret = smu->ppt_funcs->baco_निकास(smu);
 
 		mutex_unlock(&smu->mutex);
-	} else if (state == 1) {
+	पूर्ण अन्यथा अगर (state == 1) अणु
 		mutex_lock(&smu->mutex);
 
-		if (smu->ppt_funcs->baco_enter)
+		अगर (smu->ppt_funcs->baco_enter)
 			ret = smu->ppt_funcs->baco_enter(smu);
 
 		mutex_unlock(&smu->mutex);
 
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		dev_err(smu->adev->dev, "Failed to %s BACO state!\n",
 				(state)?"enter":"exit");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool smu_mode1_reset_is_support(struct smu_context *smu)
-{
+bool smu_mode1_reset_is_support(काष्ठा smu_context *smu)
+अणु
 	bool ret = false;
 
-	if (!smu->pm_enabled)
-		return false;
+	अगर (!smu->pm_enabled)
+		वापस false;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs && smu->ppt_funcs->mode1_reset_is_support)
+	अगर (smu->ppt_funcs && smu->ppt_funcs->mode1_reset_is_support)
 		ret = smu->ppt_funcs->mode1_reset_is_support(smu);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool smu_mode2_reset_is_support(struct smu_context *smu)
-{
+bool smu_mode2_reset_is_support(काष्ठा smu_context *smu)
+अणु
 	bool ret = false;
 
-	if (!smu->pm_enabled)
-		return false;
+	अगर (!smu->pm_enabled)
+		वापस false;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs && smu->ppt_funcs->mode2_reset_is_support)
+	अगर (smu->ppt_funcs && smu->ppt_funcs->mode2_reset_is_support)
 		ret = smu->ppt_funcs->mode2_reset_is_support(smu);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_mode1_reset(struct smu_context *smu)
-{
-	int ret = 0;
+पूर्णांक smu_mode1_reset(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->mode1_reset)
+	अगर (smu->ppt_funcs->mode1_reset)
 		ret = smu->ppt_funcs->mode1_reset(smu);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_mode2_reset(void *handle)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_mode2_reset(व्योम *handle)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->mode2_reset)
+	अगर (smu->ppt_funcs->mode2_reset)
 		ret = smu->ppt_funcs->mode2_reset(smu);
 
 	mutex_unlock(&smu->mutex);
 
-	if (ret)
+	अगर (ret)
 		dev_err(smu->adev->dev, "Mode2 reset failed!\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_get_max_sustainable_clocks_by_dc(void *handle,
-						struct pp_smu_nv_clock_table *max_clocks)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_get_max_sustainable_घड़ीs_by_dc(व्योम *handle,
+						काष्ठा pp_smu_nv_घड़ी_प्रकारable *max_घड़ीs)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
-
-	mutex_lock(&smu->mutex);
-
-	if (smu->ppt_funcs->get_max_sustainable_clocks_by_dc)
-		ret = smu->ppt_funcs->get_max_sustainable_clocks_by_dc(smu, max_clocks);
-
-	mutex_unlock(&smu->mutex);
-
-	return ret;
-}
-
-static int smu_get_uclk_dpm_states(void *handle,
-				   unsigned int *clock_values_in_khz,
-				   unsigned int *num_states)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
-
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->get_uclk_dpm_states)
-		ret = smu->ppt_funcs->get_uclk_dpm_states(smu, clock_values_in_khz, num_states);
+	अगर (smu->ppt_funcs->get_max_sustainable_घड़ीs_by_dc)
+		ret = smu->ppt_funcs->get_max_sustainable_घड़ीs_by_dc(smu, max_घड़ीs);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum amd_pm_state_type smu_get_current_power_state(void *handle)
-{
-	struct smu_context *smu = handle;
-	enum amd_pm_state_type pm_state = POWER_STATE_TYPE_DEFAULT;
+अटल पूर्णांक smu_get_uclk_dpm_states(व्योम *handle,
+				   अचिन्हित पूर्णांक *घड़ी_values_in_khz,
+				   अचिन्हित पूर्णांक *num_states)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->get_current_power_state)
-		pm_state = smu->ppt_funcs->get_current_power_state(smu);
+	अगर (smu->ppt_funcs->get_uclk_dpm_states)
+		ret = smu->ppt_funcs->get_uclk_dpm_states(smu, घड़ी_values_in_khz, num_states);
 
 	mutex_unlock(&smu->mutex);
 
-	return pm_state;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_get_dpm_clock_table(void *handle,
-				   struct dpm_clocks *clock_table)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल क्रमागत amd_pm_state_type smu_get_current_घातer_state(व्योम *handle)
+अणु
+	काष्ठा smu_context *smu = handle;
+	क्रमागत amd_pm_state_type pm_state = POWER_STATE_TYPE_DEFAULT;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->get_dpm_clock_table)
-		ret = smu->ppt_funcs->get_dpm_clock_table(smu, clock_table);
+	अगर (smu->ppt_funcs->get_current_घातer_state)
+		pm_state = smu->ppt_funcs->get_current_घातer_state(smu);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस pm_state;
+पूर्ण
 
-static ssize_t smu_sys_get_gpu_metrics(void *handle, void **table)
-{
-	struct smu_context *smu = handle;
-	ssize_t size;
+अटल पूर्णांक smu_get_dpm_घड़ी_प्रकारable(व्योम *handle,
+				   काष्ठा dpm_घड़ीs *घड़ी_प्रकारable)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
-	if (!smu->ppt_funcs->get_gpu_metrics)
-		return -EOPNOTSUPP;
+	mutex_lock(&smu->mutex);
+
+	अगर (smu->ppt_funcs->get_dpm_घड़ी_प्रकारable)
+		ret = smu->ppt_funcs->get_dpm_घड़ी_प्रकारable(smu, घड़ी_प्रकारable);
+
+	mutex_unlock(&smu->mutex);
+
+	वापस ret;
+पूर्ण
+
+अटल sमाप_प्रकार smu_sys_get_gpu_metrics(व्योम *handle, व्योम **table)
+अणु
+	काष्ठा smu_context *smu = handle;
+	sमाप_प्रकार size;
+
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
+
+	अगर (!smu->ppt_funcs->get_gpu_metrics)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
@@ -2886,74 +2887,74 @@ static ssize_t smu_sys_get_gpu_metrics(void *handle, void **table)
 
 	mutex_unlock(&smu->mutex);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int smu_enable_mgpu_fan_boost(void *handle)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_enable_mgpu_fan_boost(व्योम *handle)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
-	if (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
-		return -EOPNOTSUPP;
+	अगर (!smu->pm_enabled || !smu->adev->pm.dpm_enabled)
+		वापस -EOPNOTSUPP;
 
 	mutex_lock(&smu->mutex);
 
-	if (smu->ppt_funcs->enable_mgpu_fan_boost)
+	अगर (smu->ppt_funcs->enable_mgpu_fan_boost)
 		ret = smu->ppt_funcs->enable_mgpu_fan_boost(smu);
 
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int smu_gfx_state_change_set(void *handle,
-				    uint32_t state)
-{
-	struct smu_context *smu = handle;
-	int ret = 0;
+अटल पूर्णांक smu_gfx_state_change_set(व्योम *handle,
+				    uपूर्णांक32_t state)
+अणु
+	काष्ठा smu_context *smu = handle;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&smu->mutex);
-	if (smu->ppt_funcs->gfx_state_change_set)
+	अगर (smu->ppt_funcs->gfx_state_change_set)
 		ret = smu->ppt_funcs->gfx_state_change_set(smu, state);
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int smu_set_light_sbr(struct smu_context *smu, bool enable)
-{
-	int ret = 0;
+पूर्णांक smu_set_light_sbr(काष्ठा smu_context *smu, bool enable)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&smu->mutex);
-	if (smu->ppt_funcs->set_light_sbr)
+	अगर (smu->ppt_funcs->set_light_sbr)
 		ret = smu->ppt_funcs->set_light_sbr(smu, enable);
 	mutex_unlock(&smu->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static const struct amd_pm_funcs swsmu_pm_funcs = {
-	/* export for sysfs */
+अटल स्थिर काष्ठा amd_pm_funcs swsmu_pm_funcs = अणु
+	/* export क्रम sysfs */
 	.set_fan_control_mode    = smu_pp_set_fan_control_mode,
 	.get_fan_control_mode    = smu_get_fan_control_mode,
 	.set_fan_speed_percent   = smu_set_fan_speed_percent,
 	.get_fan_speed_percent   = smu_get_fan_speed_percent,
-	.force_performance_level = smu_force_performance_level,
-	.read_sensor             = smu_read_sensor,
-	.get_performance_level   = smu_get_performance_level,
-	.get_current_power_state = smu_get_current_power_state,
+	.क्रमce_perक्रमmance_level = smu_क्रमce_perक्रमmance_level,
+	.पढ़ो_sensor             = smu_पढ़ो_sensor,
+	.get_perक्रमmance_level   = smu_get_perक्रमmance_level,
+	.get_current_घातer_state = smu_get_current_घातer_state,
 	.get_fan_speed_rpm       = smu_get_fan_speed_rpm,
 	.set_fan_speed_rpm       = smu_set_fan_speed_rpm,
-	.get_pp_num_states       = smu_get_power_num_states,
+	.get_pp_num_states       = smu_get_घातer_num_states,
 	.get_pp_table            = smu_sys_get_pp_table,
 	.set_pp_table            = smu_sys_set_pp_table,
-	.switch_power_profile    = smu_switch_power_profile,
+	.चयन_घातer_profile    = smu_चयन_घातer_profile,
 	/* export to amdgpu */
 	.dispatch_tasks          = smu_handle_dpm_task,
-	.set_powergating_by_smu  = smu_dpm_set_power_gate,
-	.set_power_limit         = smu_set_power_limit,
+	.set_घातergating_by_smu  = smu_dpm_set_घातer_gate,
+	.set_घातer_limit         = smu_set_घातer_limit,
 	.odn_edit_dpm_table      = smu_od_edit_dpm_table,
 	.set_mp1_state           = smu_set_mp1_state,
 	/* export to DC */
@@ -2968,35 +2969,35 @@ static const struct amd_pm_funcs swsmu_pm_funcs = {
 	.set_df_cstate           = smu_set_df_cstate,
 	.set_xgmi_pstate         = smu_set_xgmi_pstate,
 	.get_gpu_metrics         = smu_sys_get_gpu_metrics,
-	.set_power_profile_mode  = smu_set_power_profile_mode,
-	.get_power_profile_mode  = smu_get_power_profile_mode,
-	.force_clock_level       = smu_force_ppclk_levels,
-	.print_clock_levels      = smu_print_ppclk_levels,
+	.set_घातer_profile_mode  = smu_set_घातer_profile_mode,
+	.get_घातer_profile_mode  = smu_get_घातer_profile_mode,
+	.क्रमce_घड़ी_level       = smu_क्रमce_ppclk_levels,
+	.prपूर्णांक_घड़ी_levels      = smu_prपूर्णांक_ppclk_levels,
 	.get_uclk_dpm_states     = smu_get_uclk_dpm_states,
-	.get_dpm_clock_table     = smu_get_dpm_clock_table,
+	.get_dpm_घड़ी_प्रकारable     = smu_get_dpm_घड़ी_प्रकारable,
 	.display_configuration_change        = smu_display_configuration_change,
-	.get_clock_by_type_with_latency      = smu_get_clock_by_type_with_latency,
-	.display_clock_voltage_request       = smu_display_clock_voltage_request,
+	.get_घड़ी_by_type_with_latency      = smu_get_घड़ी_by_type_with_latency,
+	.display_घड़ी_voltage_request       = smu_display_घड़ी_voltage_request,
 	.set_active_display_count            = smu_set_display_count,
 	.set_min_deep_sleep_dcefclk          = smu_set_deep_sleep_dcefclk,
-	.set_watermarks_for_clock_ranges     = smu_set_watermarks_for_clock_ranges,
-	.display_disable_memory_clock_switch = smu_display_disable_memory_clock_switch,
-	.get_max_sustainable_clocks_by_dc    = smu_get_max_sustainable_clocks_by_dc,
+	.set_watermarks_क्रम_घड़ी_ranges     = smu_set_watermarks_क्रम_घड़ी_ranges,
+	.display_disable_memory_घड़ी_चयन = smu_display_disable_memory_घड़ी_चयन,
+	.get_max_sustainable_घड़ीs_by_dc    = smu_get_max_sustainable_घड़ीs_by_dc,
 	.load_firmware           = smu_load_microcode,
 	.gfx_state_change_set    = smu_gfx_state_change_set,
-};
+पूर्ण;
 
-int smu_wait_for_event(struct amdgpu_device *adev, enum smu_event_type event,
-		       uint64_t event_arg)
-{
-	int ret = -EINVAL;
-	struct smu_context *smu = &adev->smu;
+पूर्णांक smu_रुको_क्रम_event(काष्ठा amdgpu_device *adev, क्रमागत smu_event_type event,
+		       uपूर्णांक64_t event_arg)
+अणु
+	पूर्णांक ret = -EINVAL;
+	काष्ठा smu_context *smu = &adev->smu;
 
-	if (smu->ppt_funcs->wait_for_event) {
+	अगर (smu->ppt_funcs->रुको_क्रम_event) अणु
 		mutex_lock(&smu->mutex);
-		ret = smu->ppt_funcs->wait_for_event(smu, event, event_arg);
+		ret = smu->ppt_funcs->रुको_क्रम_event(smu, event, event_arg);
 		mutex_unlock(&smu->mutex);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

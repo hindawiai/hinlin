@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Hypervisor filesystem for Linux on s390 - debugfs interface
+ * Hypervisor fileप्रणाली क्रम Linux on s390 - debugfs पूर्णांकerface
  *
  * Copyright IBM Corp. 2010
  * Author(s): Michael Holzheu <holzheu@linux.vnet.ibm.com>
  */
 
-#include <linux/slab.h>
-#include "hypfs.h"
+#समावेश <linux/slab.h>
+#समावेश "hypfs.h"
 
-static struct dentry *dbfs_dir;
+अटल काष्ठा dentry *dbfs_dir;
 
-static struct hypfs_dbfs_data *hypfs_dbfs_data_alloc(struct hypfs_dbfs_file *f)
-{
-	struct hypfs_dbfs_data *data;
+अटल काष्ठा hypfs_dbfs_data *hypfs_dbfs_data_alloc(काष्ठा hypfs_dbfs_file *f)
+अणु
+	काष्ठा hypfs_dbfs_data *data;
 
-	data = kmalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return NULL;
+	data = kदो_स्मृति(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस शून्य;
 	data->dbfs_file = f;
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static void hypfs_dbfs_data_free(struct hypfs_dbfs_data *data)
-{
-	data->dbfs_file->data_free(data->buf_free_ptr);
-	kfree(data);
-}
+अटल व्योम hypfs_dbfs_data_मुक्त(काष्ठा hypfs_dbfs_data *data)
+अणु
+	data->dbfs_file->data_मुक्त(data->buf_मुक्त_ptr);
+	kमुक्त(data);
+पूर्ण
 
-static ssize_t dbfs_read(struct file *file, char __user *buf,
-			 size_t size, loff_t *ppos)
-{
-	struct hypfs_dbfs_data *data;
-	struct hypfs_dbfs_file *df;
-	ssize_t rc;
+अटल sमाप_प्रकार dbfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			 माप_प्रकार size, loff_t *ppos)
+अणु
+	काष्ठा hypfs_dbfs_data *data;
+	काष्ठा hypfs_dbfs_file *df;
+	sमाप_प्रकार rc;
 
-	if (*ppos != 0)
-		return 0;
+	अगर (*ppos != 0)
+		वापस 0;
 
-	df = file_inode(file)->i_private;
+	df = file_inode(file)->i_निजी;
 	mutex_lock(&df->lock);
 	data = hypfs_dbfs_data_alloc(df);
-	if (!data) {
+	अगर (!data) अणु
 		mutex_unlock(&df->lock);
-		return -ENOMEM;
-	}
-	rc = df->data_create(&data->buf, &data->buf_free_ptr, &data->size);
-	if (rc) {
+		वापस -ENOMEM;
+	पूर्ण
+	rc = df->data_create(&data->buf, &data->buf_मुक्त_ptr, &data->size);
+	अगर (rc) अणु
 		mutex_unlock(&df->lock);
-		kfree(data);
-		return rc;
-	}
+		kमुक्त(data);
+		वापस rc;
+	पूर्ण
 	mutex_unlock(&df->lock);
 
-	rc = simple_read_from_buffer(buf, size, ppos, data->buf, data->size);
-	hypfs_dbfs_data_free(data);
-	return rc;
-}
+	rc = simple_पढ़ो_from_buffer(buf, size, ppos, data->buf, data->size);
+	hypfs_dbfs_data_मुक्त(data);
+	वापस rc;
+पूर्ण
 
-static long dbfs_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct hypfs_dbfs_file *df = file_inode(file)->i_private;
-	long rc;
+अटल दीर्घ dbfs_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा hypfs_dbfs_file *df = file_inode(file)->i_निजी;
+	दीर्घ rc;
 
 	mutex_lock(&df->lock);
-	if (df->unlocked_ioctl)
+	अगर (df->unlocked_ioctl)
 		rc = df->unlocked_ioctl(file, cmd, arg);
-	else
+	अन्यथा
 		rc = -ENOTTY;
 	mutex_unlock(&df->lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct file_operations dbfs_ops = {
-	.read		= dbfs_read,
+अटल स्थिर काष्ठा file_operations dbfs_ops = अणु
+	.पढ़ो		= dbfs_पढ़ो,
 	.llseek		= no_llseek,
 	.unlocked_ioctl = dbfs_ioctl,
-};
+पूर्ण;
 
-void hypfs_dbfs_create_file(struct hypfs_dbfs_file *df)
-{
+व्योम hypfs_dbfs_create_file(काष्ठा hypfs_dbfs_file *df)
+अणु
 	df->dentry = debugfs_create_file(df->name, 0400, dbfs_dir, df,
 					 &dbfs_ops);
 	mutex_init(&df->lock);
-}
+पूर्ण
 
-void hypfs_dbfs_remove_file(struct hypfs_dbfs_file *df)
-{
-	debugfs_remove(df->dentry);
-}
+व्योम hypfs_dbfs_हटाओ_file(काष्ठा hypfs_dbfs_file *df)
+अणु
+	debugfs_हटाओ(df->dentry);
+पूर्ण
 
-void hypfs_dbfs_init(void)
-{
-	dbfs_dir = debugfs_create_dir("s390_hypfs", NULL);
-}
+व्योम hypfs_dbfs_init(व्योम)
+अणु
+	dbfs_dir = debugfs_create_dir("s390_hypfs", शून्य);
+पूर्ण
 
-void hypfs_dbfs_exit(void)
-{
-	debugfs_remove(dbfs_dir);
-}
+व्योम hypfs_dbfs_निकास(व्योम)
+अणु
+	debugfs_हटाओ(dbfs_dir);
+पूर्ण

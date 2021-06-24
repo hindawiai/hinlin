@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * u_uvc.h
  *
- * Utility definitions for the uvc function
+ * Utility definitions क्रम the uvc function
  *
  * Copyright (c) 2013-2014 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -10,77 +11,77 @@
  * Author: Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
-#ifndef U_UVC_H
-#define U_UVC_H
+#अगर_अघोषित U_UVC_H
+#घोषणा U_UVC_H
 
-#include <linux/mutex.h>
-#include <linux/usb/composite.h>
-#include <linux/usb/video.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/usb/composite.h>
+#समावेश <linux/usb/video.h>
 
-#define fi_to_f_uvc_opts(f)	container_of(f, struct f_uvc_opts, func_inst)
+#घोषणा fi_to_f_uvc_opts(f)	container_of(f, काष्ठा f_uvc_opts, func_inst)
 
-struct f_uvc_opts {
-	struct usb_function_instance			func_inst;
-	unsigned int					streaming_interval;
-	unsigned int					streaming_maxpacket;
-	unsigned int					streaming_maxburst;
+काष्ठा f_uvc_opts अणु
+	काष्ठा usb_function_instance			func_inst;
+	अचिन्हित पूर्णांक					streaming_पूर्णांकerval;
+	अचिन्हित पूर्णांक					streaming_maxpacket;
+	अचिन्हित पूर्णांक					streaming_maxburst;
 
-	unsigned int					control_interface;
-	unsigned int					streaming_interface;
+	अचिन्हित पूर्णांक					control_पूर्णांकerface;
+	अचिन्हित पूर्णांक					streaming_पूर्णांकerface;
 
 	/*
-	 * Control descriptors array pointers for full-/high-speed and
-	 * super-speed. They point by default to the uvc_fs_control_cls and
-	 * uvc_ss_control_cls arrays respectively. Legacy gadgets must
+	 * Control descriptors array poपूर्णांकers क्रम full-/high-speed and
+	 * super-speed. They poपूर्णांक by शेष to the uvc_fs_control_cls and
+	 * uvc_ss_control_cls arrays respectively. Legacy gadमाला_लो must
 	 * override them in their gadget bind callback.
 	 */
-	const struct uvc_descriptor_header * const	*fs_control;
-	const struct uvc_descriptor_header * const	*ss_control;
+	स्थिर काष्ठा uvc_descriptor_header * स्थिर	*fs_control;
+	स्थिर काष्ठा uvc_descriptor_header * स्थिर	*ss_control;
 
 	/*
-	 * Streaming descriptors array pointers for full-speed, high-speed and
-	 * super-speed. They will point to the uvc_[fhs]s_streaming_cls arrays
-	 * for configfs-based gadgets. Legacy gadgets must initialize them in
+	 * Streaming descriptors array poपूर्णांकers क्रम full-speed, high-speed and
+	 * super-speed. They will poपूर्णांक to the uvc_[fhs]s_streaming_cls arrays
+	 * क्रम configfs-based gadमाला_लो. Legacy gadमाला_लो must initialize them in
 	 * their gadget bind callback.
 	 */
-	const struct uvc_descriptor_header * const	*fs_streaming;
-	const struct uvc_descriptor_header * const	*hs_streaming;
-	const struct uvc_descriptor_header * const	*ss_streaming;
+	स्थिर काष्ठा uvc_descriptor_header * स्थिर	*fs_streaming;
+	स्थिर काष्ठा uvc_descriptor_header * स्थिर	*hs_streaming;
+	स्थिर काष्ठा uvc_descriptor_header * स्थिर	*ss_streaming;
 
-	/* Default control descriptors for configfs-based gadgets. */
-	struct uvc_camera_terminal_descriptor		uvc_camera_terminal;
-	struct uvc_processing_unit_descriptor		uvc_processing;
-	struct uvc_output_terminal_descriptor		uvc_output_terminal;
-	struct uvc_color_matching_descriptor		uvc_color_matching;
+	/* Default control descriptors क्रम configfs-based gadमाला_लो. */
+	काष्ठा uvc_camera_terminal_descriptor		uvc_camera_terminal;
+	काष्ठा uvc_processing_unit_descriptor		uvc_processing;
+	काष्ठा uvc_output_terminal_descriptor		uvc_output_terminal;
+	काष्ठा uvc_color_matching_descriptor		uvc_color_matching;
 
 	/*
-	 * Control descriptors pointers arrays for full-/high-speed and
+	 * Control descriptors poपूर्णांकers arrays क्रम full-/high-speed and
 	 * super-speed. The first element is a configurable control header
-	 * descriptor, the other elements point to the fixed default control
+	 * descriptor, the other elements poपूर्णांक to the fixed शेष control
 	 * descriptors. Used by configfs only, must not be touched by legacy
-	 * gadgets.
+	 * gadमाला_लो.
 	 */
-	struct uvc_descriptor_header			*uvc_fs_control_cls[5];
-	struct uvc_descriptor_header			*uvc_ss_control_cls[5];
+	काष्ठा uvc_descriptor_header			*uvc_fs_control_cls[5];
+	काष्ठा uvc_descriptor_header			*uvc_ss_control_cls[5];
 
 	/*
-	 * Streaming descriptors for full-speed, high-speed and super-speed.
-	 * Used by configfs only, must not be touched by legacy gadgets. The
-	 * arrays are allocated at runtime as the number of descriptors isn't
+	 * Streaming descriptors क्रम full-speed, high-speed and super-speed.
+	 * Used by configfs only, must not be touched by legacy gadमाला_लो. The
+	 * arrays are allocated at runसमय as the number of descriptors isn't
 	 * known in advance.
 	 */
-	struct uvc_descriptor_header			**uvc_fs_streaming_cls;
-	struct uvc_descriptor_header			**uvc_hs_streaming_cls;
-	struct uvc_descriptor_header			**uvc_ss_streaming_cls;
+	काष्ठा uvc_descriptor_header			**uvc_fs_streaming_cls;
+	काष्ठा uvc_descriptor_header			**uvc_hs_streaming_cls;
+	काष्ठा uvc_descriptor_header			**uvc_ss_streaming_cls;
 
 	/*
-	 * Read/write access to configfs attributes is handled by configfs.
+	 * Read/ग_लिखो access to configfs attributes is handled by configfs.
 	 *
 	 * This lock protects the descriptors from concurrent access by
-	 * read/write and symlink creation/removal.
+	 * पढ़ो/ग_लिखो and symlink creation/removal.
 	 */
-	struct mutex			lock;
-	int				refcnt;
-};
+	काष्ठा mutex			lock;
+	पूर्णांक				refcnt;
+पूर्ण;
 
-#endif /* U_UVC_H */
+#पूर्ण_अगर /* U_UVC_H */

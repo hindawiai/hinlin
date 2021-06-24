@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR Linux-OpenIB) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ((GPL-2.0 WITH Linux-syscall-note) OR Linux-OpenIB) */
 /*
  * Copyright (c) 2017-2018, Mellanox Technologies inc.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,24 +32,24 @@
  * SOFTWARE.
  */
 
-#ifndef IB_USER_IOCTL_VERBS_H
-#define IB_USER_IOCTL_VERBS_H
+#अगर_अघोषित IB_USER_IOCTL_VERBS_H
+#घोषणा IB_USER_IOCTL_VERBS_H
 
-#include <linux/types.h>
-#include <rdma/ib_user_verbs.h>
+#समावेश <linux/types.h>
+#समावेश <rdma/ib_user_verbs.h>
 
-#ifndef RDMA_UAPI_PTR
-#define RDMA_UAPI_PTR(_type, _name)	__aligned_u64 _name
-#endif
+#अगर_अघोषित RDMA_UAPI_PTR
+#घोषणा RDMA_UAPI_PTR(_type, _name)	__aligned_u64 _name
+#पूर्ण_अगर
 
-#define IB_UVERBS_ACCESS_OPTIONAL_FIRST (1 << 20)
-#define IB_UVERBS_ACCESS_OPTIONAL_LAST (1 << 29)
+#घोषणा IB_UVERBS_ACCESS_OPTIONAL_FIRST (1 << 20)
+#घोषणा IB_UVERBS_ACCESS_OPTIONAL_LAST (1 << 29)
 
-enum ib_uverbs_core_support {
+क्रमागत ib_uverbs_core_support अणु
 	IB_UVERBS_CORE_SUPPORT_OPTIONAL_MR_ACCESS = 1 << 0,
-};
+पूर्ण;
 
-enum ib_uverbs_access_flags {
+क्रमागत ib_uverbs_access_flags अणु
 	IB_UVERBS_ACCESS_LOCAL_WRITE = 1 << 0,
 	IB_UVERBS_ACCESS_REMOTE_WRITE = 1 << 1,
 	IB_UVERBS_ACCESS_REMOTE_READ = 1 << 2,
@@ -62,26 +63,26 @@ enum ib_uverbs_access_flags {
 	IB_UVERBS_ACCESS_OPTIONAL_RANGE =
 		((IB_UVERBS_ACCESS_OPTIONAL_LAST << 1) - 1) &
 		~(IB_UVERBS_ACCESS_OPTIONAL_FIRST - 1)
-};
+पूर्ण;
 
-enum ib_uverbs_srq_type {
+क्रमागत ib_uverbs_srq_type अणु
 	IB_UVERBS_SRQT_BASIC,
 	IB_UVERBS_SRQT_XRC,
 	IB_UVERBS_SRQT_TM,
-};
+पूर्ण;
 
-enum ib_uverbs_wq_type {
+क्रमागत ib_uverbs_wq_type अणु
 	IB_UVERBS_WQT_RQ,
-};
+पूर्ण;
 
-enum ib_uverbs_wq_flags {
+क्रमागत ib_uverbs_wq_flags अणु
 	IB_UVERBS_WQ_FLAGS_CVLAN_STRIPPING = 1 << 0,
 	IB_UVERBS_WQ_FLAGS_SCATTER_FCS = 1 << 1,
 	IB_UVERBS_WQ_FLAGS_DELAY_DROP = 1 << 2,
 	IB_UVERBS_WQ_FLAGS_PCI_WRITE_END_PADDING = 1 << 3,
-};
+पूर्ण;
 
-enum ib_uverbs_qp_type {
+क्रमागत ib_uverbs_qp_type अणु
 	IB_UVERBS_QPT_RC = 2,
 	IB_UVERBS_QPT_UC,
 	IB_UVERBS_QPT_UD,
@@ -89,17 +90,17 @@ enum ib_uverbs_qp_type {
 	IB_UVERBS_QPT_XRC_INI,
 	IB_UVERBS_QPT_XRC_TGT,
 	IB_UVERBS_QPT_DRIVER = 0xFF,
-};
+पूर्ण;
 
-enum ib_uverbs_qp_create_flags {
+क्रमागत ib_uverbs_qp_create_flags अणु
 	IB_UVERBS_QP_CREATE_BLOCK_MULTICAST_LOOPBACK = 1 << 1,
 	IB_UVERBS_QP_CREATE_SCATTER_FCS = 1 << 8,
 	IB_UVERBS_QP_CREATE_CVLAN_STRIPPING = 1 << 9,
 	IB_UVERBS_QP_CREATE_PCI_WRITE_END_PADDING = 1 << 11,
 	IB_UVERBS_QP_CREATE_SQ_SIG_ALL = 1 << 12,
-};
+पूर्ण;
 
-enum ib_uverbs_query_port_cap_flags {
+क्रमागत ib_uverbs_query_port_cap_flags अणु
 	IB_UVERBS_PCF_SM = 1 << 1,
 	IB_UVERBS_PCF_NOTICE_SUP = 1 << 2,
 	IB_UVERBS_PCF_TRAP_SUP = 1 << 3,
@@ -133,43 +134,43 @@ enum ib_uverbs_query_port_cap_flags {
 	IB_UVERBS_PCF_MCAST_FDB_TOP_SUP = 1 << 30,
 	IB_UVERBS_PCF_HIERARCHY_INFO_SUP = 1ULL << 31,
 
-	/* NOTE this is an internal flag, not an IBA flag */
+	/* NOTE this is an पूर्णांकernal flag, not an IBA flag */
 	IB_UVERBS_PCF_IP_BASED_GIDS = 1 << 26,
-};
+पूर्ण;
 
-enum ib_uverbs_query_port_flags {
+क्रमागत ib_uverbs_query_port_flags अणु
 	IB_UVERBS_QPF_GRH_REQUIRED = 1 << 0,
-};
+पूर्ण;
 
-enum ib_uverbs_flow_action_esp_keymat {
+क्रमागत ib_uverbs_flow_action_esp_keymat अणु
 	IB_UVERBS_FLOW_ACTION_ESP_KEYMAT_AES_GCM,
-};
+पूर्ण;
 
-enum ib_uverbs_flow_action_esp_keymat_aes_gcm_iv_algo {
+क्रमागत ib_uverbs_flow_action_esp_keymat_aes_gcm_iv_algo अणु
 	IB_UVERBS_FLOW_ACTION_IV_ALGO_SEQ,
-};
+पूर्ण;
 
-struct ib_uverbs_flow_action_esp_keymat_aes_gcm {
+काष्ठा ib_uverbs_flow_action_esp_keymat_aes_gcm अणु
 	__aligned_u64	iv;
-	__u32		iv_algo; /* Use enum ib_uverbs_flow_action_esp_keymat_aes_gcm_iv_algo */
+	__u32		iv_algo; /* Use क्रमागत ib_uverbs_flow_action_esp_keymat_aes_gcm_iv_algo */
 
 	__u32		salt;
 	__u32		icv_len;
 
 	__u32		key_len;
 	__u32		aes_key[256 / 32];
-};
+पूर्ण;
 
-enum ib_uverbs_flow_action_esp_replay {
+क्रमागत ib_uverbs_flow_action_esp_replay अणु
 	IB_UVERBS_FLOW_ACTION_ESP_REPLAY_NONE,
 	IB_UVERBS_FLOW_ACTION_ESP_REPLAY_BMP,
-};
+पूर्ण;
 
-struct ib_uverbs_flow_action_esp_replay_bmp {
+काष्ठा ib_uverbs_flow_action_esp_replay_bmp अणु
 	__u32	size;
-};
+पूर्ण;
 
-enum ib_uverbs_flow_action_esp_flags {
+क्रमागत ib_uverbs_flow_action_esp_flags अणु
 	IB_UVERBS_FLOW_ACTION_ESP_FLAGS_INLINE_CRYPTO	= 0UL << 0,	/* Default */
 	IB_UVERBS_FLOW_ACTION_ESP_FLAGS_FULL_OFFLOAD	= 1UL << 0,
 
@@ -180,56 +181,56 @@ enum ib_uverbs_flow_action_esp_flags {
 	IB_UVERBS_FLOW_ACTION_ESP_FLAGS_ENCRYPT		= 1UL << 2,
 
 	IB_UVERBS_FLOW_ACTION_ESP_FLAGS_ESN_NEW_WINDOW	= 1UL << 3,
-};
+पूर्ण;
 
-struct ib_uverbs_flow_action_esp_encap {
-	/* This struct represents a list of pointers to flow_xxxx_filter that
+काष्ठा ib_uverbs_flow_action_esp_encap अणु
+	/* This काष्ठा represents a list of poपूर्णांकers to flow_xxxx_filter that
 	 * encapsulates the payload in ESP tunnel mode.
 	 */
-	RDMA_UAPI_PTR(void *, val_ptr); /* pointer to a flow_xxxx_filter */
-	RDMA_UAPI_PTR(struct ib_uverbs_flow_action_esp_encap *, next_ptr);
-	__u16	len;		/* Len of the filter struct val_ptr points to */
-	__u16	type;		/* Use flow_spec_type enum */
-};
+	RDMA_UAPI_PTR(व्योम *, val_ptr); /* poपूर्णांकer to a flow_xxxx_filter */
+	RDMA_UAPI_PTR(काष्ठा ib_uverbs_flow_action_esp_encap *, next_ptr);
+	__u16	len;		/* Len of the filter काष्ठा val_ptr poपूर्णांकs to */
+	__u16	type;		/* Use flow_spec_type क्रमागत */
+पूर्ण;
 
-struct ib_uverbs_flow_action_esp {
+काष्ठा ib_uverbs_flow_action_esp अणु
 	__u32		spi;
 	__u32		seq;
 	__u32		tfc_pad;
 	__u32		flags;
 	__aligned_u64	hard_limit_pkts;
-};
+पूर्ण;
 
-enum ib_uverbs_read_counters_flags {
-	/* prefer read values from driver cache */
+क्रमागत ib_uverbs_पढ़ो_counters_flags अणु
+	/* prefer पढ़ो values from driver cache */
 	IB_UVERBS_READ_COUNTERS_PREFER_CACHED = 1 << 0,
-};
+पूर्ण;
 
-enum ib_uverbs_advise_mr_advice {
+क्रमागत ib_uverbs_advise_mr_advice अणु
 	IB_UVERBS_ADVISE_MR_ADVICE_PREFETCH,
 	IB_UVERBS_ADVISE_MR_ADVICE_PREFETCH_WRITE,
 	IB_UVERBS_ADVISE_MR_ADVICE_PREFETCH_NO_FAULT,
-};
+पूर्ण;
 
-enum ib_uverbs_advise_mr_flag {
+क्रमागत ib_uverbs_advise_mr_flag अणु
 	IB_UVERBS_ADVISE_MR_FLAG_FLUSH = 1 << 0,
-};
+पूर्ण;
 
-struct ib_uverbs_query_port_resp_ex {
-	struct ib_uverbs_query_port_resp legacy_resp;
+काष्ठा ib_uverbs_query_port_resp_ex अणु
+	काष्ठा ib_uverbs_query_port_resp legacy_resp;
 	__u16 port_cap_flags2;
 	__u8  reserved[6];
-};
+पूर्ण;
 
-struct ib_uverbs_qp_cap {
+काष्ठा ib_uverbs_qp_cap अणु
 	__u32 max_send_wr;
 	__u32 max_recv_wr;
 	__u32 max_send_sge;
 	__u32 max_recv_sge;
-	__u32 max_inline_data;
-};
+	__u32 max_अंतरभूत_data;
+पूर्ण;
 
-enum rdma_driver_id {
+क्रमागत rdma_driver_id अणु
 	RDMA_DRIVER_UNKNOWN,
 	RDMA_DRIVER_MLX5,
 	RDMA_DRIVER_MLX4,
@@ -249,20 +250,20 @@ enum rdma_driver_id {
 	RDMA_DRIVER_QIB,
 	RDMA_DRIVER_EFA,
 	RDMA_DRIVER_SIW,
-};
+पूर्ण;
 
-enum ib_uverbs_gid_type {
+क्रमागत ib_uverbs_gid_type अणु
 	IB_UVERBS_GID_TYPE_IB,
 	IB_UVERBS_GID_TYPE_ROCE_V1,
 	IB_UVERBS_GID_TYPE_ROCE_V2,
-};
+पूर्ण;
 
-struct ib_uverbs_gid_entry {
+काष्ठा ib_uverbs_gid_entry अणु
 	__aligned_u64 gid[2];
 	__u32 gid_index;
 	__u32 port_num;
 	__u32 gid_type;
-	__u32 netdev_ifindex; /* It is 0 if there is no netdev associated with it */
-};
+	__u32 netdev_अगरindex; /* It is 0 अगर there is no netdev associated with it */
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

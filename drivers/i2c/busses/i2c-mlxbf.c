@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Mellanox BlueField I2C bus driver
  *
  *  Copyright (C) 2020 Mellanox Technologies, Ltd.
  */
 
-#include <linux/acpi.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/i2c.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/string.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/माला.स>
 
 /* Defines what functionality is present. */
-#define MLXBF_I2C_FUNC_SMBUS_BLOCK \
+#घोषणा MLXBF_I2C_FUNC_SMBUS_BLOCK \
 	(I2C_FUNC_SMBUS_BLOCK_DATA | I2C_FUNC_SMBUS_BLOCK_PROC_CALL)
 
-#define MLXBF_I2C_FUNC_SMBUS_DEFAULT \
+#घोषणा MLXBF_I2C_FUNC_SMBUS_DEFAULT \
 	(I2C_FUNC_SMBUS_BYTE      | I2C_FUNC_SMBUS_BYTE_DATA | \
 	 I2C_FUNC_SMBUS_WORD_DATA | I2C_FUNC_SMBUS_I2C_BLOCK | \
 	 I2C_FUNC_SMBUS_PROC_CALL)
 
-#define MLXBF_I2C_FUNC_ALL \
+#घोषणा MLXBF_I2C_FUNC_ALL \
 	(MLXBF_I2C_FUNC_SMBUS_DEFAULT | MLXBF_I2C_FUNC_SMBUS_BLOCK | \
 	 I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SLAVE)
 
-#define MLXBF_I2C_SMBUS_MAX        3
+#घोषणा MLXBF_I2C_SMBUS_MAX        3
 
-/* Shared resources info in BlueField platforms. */
+/* Shared resources info in BlueField platक्रमms. */
 
-#define MLXBF_I2C_COALESCE_TYU_ADDR    0x02801300
-#define MLXBF_I2C_COALESCE_TYU_SIZE    0x010
+#घोषणा MLXBF_I2C_COALESCE_TYU_ADDR    0x02801300
+#घोषणा MLXBF_I2C_COALESCE_TYU_SIZE    0x010
 
-#define MLXBF_I2C_GPIO_TYU_ADDR        0x02802000
-#define MLXBF_I2C_GPIO_TYU_SIZE        0x100
+#घोषणा MLXBF_I2C_GPIO_TYU_ADDR        0x02802000
+#घोषणा MLXBF_I2C_GPIO_TYU_SIZE        0x100
 
-#define MLXBF_I2C_COREPLL_TYU_ADDR     0x02800358
-#define MLXBF_I2C_COREPLL_TYU_SIZE     0x008
+#घोषणा MLXBF_I2C_COREPLL_TYU_ADDR     0x02800358
+#घोषणा MLXBF_I2C_COREPLL_TYU_SIZE     0x008
 
-#define MLXBF_I2C_COREPLL_YU_ADDR      0x02800c30
-#define MLXBF_I2C_COREPLL_YU_SIZE      0x00c
+#घोषणा MLXBF_I2C_COREPLL_YU_ADDR      0x02800c30
+#घोषणा MLXBF_I2C_COREPLL_YU_SIZE      0x00c
 
-#define MLXBF_I2C_SHARED_RES_MAX       3
+#घोषणा MLXBF_I2C_SHARED_RES_MAX       3
 
 /*
- * Note that the following SMBus, CAUSE, GPIO and PLL register addresses
+ * Note that the following SMBus, CAUSE, GPIO and PLL रेजिस्टर addresses
  * refer to their respective offsets relative to the corresponding
- * memory-mapped region whose addresses are specified in either the DT or
+ * memory-mapped region whose addresses are specअगरied in either the DT or
  * the ACPI tables or above.
  */
 
 /*
- * SMBus Master core clock frequency. Timing configurations are
- * strongly dependent on the core clock frequency of the SMBus
+ * SMBus Master core घड़ी frequency. Timing configurations are
+ * strongly dependent on the core घड़ी frequency of the SMBus
  * Master. Default value is set to 400MHz.
  */
-#define MLXBF_I2C_TYU_PLL_OUT_FREQ  (400 * 1000 * 1000)
-/* Reference clock for Bluefield - 156 MHz. */
-#define MLXBF_I2C_PLL_IN_FREQ       (156 * 1000 * 1000)
+#घोषणा MLXBF_I2C_TYU_PLL_OUT_FREQ  (400 * 1000 * 1000)
+/* Reference घड़ी क्रम Bluefield - 156 MHz. */
+#घोषणा MLXBF_I2C_PLL_IN_FREQ       (156 * 1000 * 1000)
 
 /* Constant used to determine the PLL frequency. */
-#define MLNXBF_I2C_COREPLL_CONST    16384
+#घोषणा MLNXBF_I2C_COREPLL_CONST    16384
 
-/* PLL registers. */
-#define MLXBF_I2C_CORE_PLL_REG0         0x0
-#define MLXBF_I2C_CORE_PLL_REG1         0x4
-#define MLXBF_I2C_CORE_PLL_REG2         0x8
+/* PLL रेजिस्टरs. */
+#घोषणा MLXBF_I2C_CORE_PLL_REG0         0x0
+#घोषणा MLXBF_I2C_CORE_PLL_REG1         0x4
+#घोषणा MLXBF_I2C_CORE_PLL_REG2         0x8
 
-/* OR cause register. */
-#define MLXBF_I2C_CAUSE_OR_EVTEN0    0x14
-#define MLXBF_I2C_CAUSE_OR_CLEAR     0x18
+/* OR cause रेजिस्टर. */
+#घोषणा MLXBF_I2C_CAUSE_OR_EVTEN0    0x14
+#घोषणा MLXBF_I2C_CAUSE_OR_CLEAR     0x18
 
 /* Arbiter Cause Register. */
-#define MLXBF_I2C_CAUSE_ARBITER      0x1c
+#घोषणा MLXBF_I2C_CAUSE_ARBITER      0x1c
 
 /*
  * Cause Status flags. Note that those bits might be considered
- * as interrupt enabled bits.
+ * as पूर्णांकerrupt enabled bits.
  */
 
 /* Transaction ended with STOP. */
-#define MLXBF_I2C_CAUSE_TRANSACTION_ENDED  BIT(0)
+#घोषणा MLXBF_I2C_CAUSE_TRANSACTION_ENDED  BIT(0)
 /* Master arbitration lost. */
-#define MLXBF_I2C_CAUSE_M_ARBITRATION_LOST BIT(1)
+#घोषणा MLXBF_I2C_CAUSE_M_ARBITRATION_LOST BIT(1)
 /* Unexpected start detected. */
-#define MLXBF_I2C_CAUSE_UNEXPECTED_START   BIT(2)
+#घोषणा MLXBF_I2C_CAUSE_UNEXPECTED_START   BIT(2)
 /* Unexpected stop detected. */
-#define MLXBF_I2C_CAUSE_UNEXPECTED_STOP    BIT(3)
-/* Wait for transfer continuation. */
-#define MLXBF_I2C_CAUSE_WAIT_FOR_FW_DATA   BIT(4)
+#घोषणा MLXBF_I2C_CAUSE_UNEXPECTED_STOP    BIT(3)
+/* Wait क्रम transfer continuation. */
+#घोषणा MLXBF_I2C_CAUSE_WAIT_FOR_FW_DATA   BIT(4)
 /* Failed to generate STOP. */
-#define MLXBF_I2C_CAUSE_PUT_STOP_FAILED    BIT(5)
+#घोषणा MLXBF_I2C_CAUSE_PUT_STOP_FAILED    BIT(5)
 /* Failed to generate START. */
-#define MLXBF_I2C_CAUSE_PUT_START_FAILED   BIT(6)
+#घोषणा MLXBF_I2C_CAUSE_PUT_START_FAILED   BIT(6)
 /* Clock toggle completed. */
-#define MLXBF_I2C_CAUSE_CLK_TOGGLE_DONE    BIT(7)
-/* Transfer timeout occurred. */
-#define MLXBF_I2C_CAUSE_M_FW_TIMEOUT       BIT(8)
+#घोषणा MLXBF_I2C_CAUSE_CLK_TOGGLE_DONE    BIT(7)
+/* Transfer समयout occurred. */
+#घोषणा MLXBF_I2C_CAUSE_M_FW_TIMEOUT       BIT(8)
 /* Master busy bit reset. */
-#define MLXBF_I2C_CAUSE_M_GW_BUSY_FALL     BIT(9)
+#घोषणा MLXBF_I2C_CAUSE_M_GW_BUSY_FALL     BIT(9)
 
-#define MLXBF_I2C_CAUSE_MASTER_ARBITER_BITS_MASK     GENMASK(9, 0)
+#घोषणा MLXBF_I2C_CAUSE_MASTER_ARBITER_BITS_MASK     GENMASK(9, 0)
 
-#define MLXBF_I2C_CAUSE_MASTER_STATUS_ERROR \
+#घोषणा MLXBF_I2C_CAUSE_MASTER_STATUS_ERROR \
 	(MLXBF_I2C_CAUSE_M_ARBITRATION_LOST | \
 	 MLXBF_I2C_CAUSE_UNEXPECTED_START | \
 	 MLXBF_I2C_CAUSE_UNEXPECTED_STOP | \
@@ -119,30 +120,30 @@
 
 /*
  * Slave cause status flags. Note that those bits might be considered
- * as interrupt enabled bits.
+ * as पूर्णांकerrupt enabled bits.
  */
 
 /* Write transaction received successfully. */
-#define MLXBF_I2C_CAUSE_WRITE_SUCCESS         BIT(0)
-/* Read transaction received, waiting for response. */
-#define MLXBF_I2C_CAUSE_READ_WAIT_FW_RESPONSE BIT(13)
+#घोषणा MLXBF_I2C_CAUSE_WRITE_SUCCESS         BIT(0)
+/* Read transaction received, रुकोing क्रम response. */
+#घोषणा MLXBF_I2C_CAUSE_READ_WAIT_FW_RESPONSE BIT(13)
 /* Slave busy bit reset. */
-#define MLXBF_I2C_CAUSE_S_GW_BUSY_FALL        BIT(18)
+#घोषणा MLXBF_I2C_CAUSE_S_GW_BUSY_FALL        BIT(18)
 
-#define MLXBF_I2C_CAUSE_SLAVE_ARBITER_BITS_MASK     GENMASK(20, 0)
+#घोषणा MLXBF_I2C_CAUSE_SLAVE_ARBITER_BITS_MASK     GENMASK(20, 0)
 
-/* Cause coalesce registers. */
-#define MLXBF_I2C_CAUSE_COALESCE_0        0x00
-#define MLXBF_I2C_CAUSE_COALESCE_1        0x04
-#define MLXBF_I2C_CAUSE_COALESCE_2        0x08
+/* Cause coalesce रेजिस्टरs. */
+#घोषणा MLXBF_I2C_CAUSE_COALESCE_0        0x00
+#घोषणा MLXBF_I2C_CAUSE_COALESCE_1        0x04
+#घोषणा MLXBF_I2C_CAUSE_COALESCE_2        0x08
 
-#define MLXBF_I2C_CAUSE_TYU_SLAVE_BIT   MLXBF_I2C_SMBUS_MAX
-#define MLXBF_I2C_CAUSE_YU_SLAVE_BIT    1
+#घोषणा MLXBF_I2C_CAUSE_TYU_SLAVE_BIT   MLXBF_I2C_SMBUS_MAX
+#घोषणा MLXBF_I2C_CAUSE_YU_SLAVE_BIT    1
 
-/* Functional enable register. */
-#define MLXBF_I2C_GPIO_0_FUNC_EN_0    0x28
-/* Force OE enable register. */
-#define MLXBF_I2C_GPIO_0_FORCE_OE_EN  0x30
+/* Functional enable रेजिस्टर. */
+#घोषणा MLXBF_I2C_GPIO_0_FUNC_EN_0    0x28
+/* Force OE enable रेजिस्टर. */
+#घोषणा MLXBF_I2C_GPIO_0_FORCE_OE_EN  0x30
 /*
  * Note that Smbus GWs are on GPIOs 30:25. Two pins are used to control
  * SDA/SCL lines:
@@ -151,187 +152,187 @@
  *  SMBUS GW1 -> bits[28:27]
  *  SMBUS GW2 -> bits[30:29]
  */
-#define MLXBF_I2C_GPIO_SMBUS_GW_PINS(num) (25 + ((num) << 1))
+#घोषणा MLXBF_I2C_GPIO_SMBUS_GW_PINS(num) (25 + ((num) << 1))
 
 /* Note that gw_id can be 0,1 or 2. */
-#define MLXBF_I2C_GPIO_SMBUS_GW_MASK(num) \
+#घोषणा MLXBF_I2C_GPIO_SMBUS_GW_MASK(num) \
 	(0xffffffff & (~(0x3 << MLXBF_I2C_GPIO_SMBUS_GW_PINS(num))))
 
-#define MLXBF_I2C_GPIO_SMBUS_GW_RESET_PINS(num, val) \
+#घोषणा MLXBF_I2C_GPIO_SMBUS_GW_RESET_PINS(num, val) \
 	((val) & MLXBF_I2C_GPIO_SMBUS_GW_MASK(num))
 
-#define MLXBF_I2C_GPIO_SMBUS_GW_ASSERT_PINS(num, val) \
+#घोषणा MLXBF_I2C_GPIO_SMBUS_GW_ASSERT_PINS(num, val) \
 	((val) | (0x3 << MLXBF_I2C_GPIO_SMBUS_GW_PINS(num)))
 
 /* SMBus timing parameters. */
-#define MLXBF_I2C_SMBUS_TIMER_SCL_LOW_SCL_HIGH    0x00
-#define MLXBF_I2C_SMBUS_TIMER_FALL_RISE_SPIKE     0x04
-#define MLXBF_I2C_SMBUS_TIMER_THOLD               0x08
-#define MLXBF_I2C_SMBUS_TIMER_TSETUP_START_STOP   0x0c
-#define MLXBF_I2C_SMBUS_TIMER_TSETUP_DATA         0x10
-#define MLXBF_I2C_SMBUS_THIGH_MAX_TBUF            0x14
-#define MLXBF_I2C_SMBUS_SCL_LOW_TIMEOUT           0x18
+#घोषणा MLXBF_I2C_SMBUS_TIMER_SCL_LOW_SCL_HIGH    0x00
+#घोषणा MLXBF_I2C_SMBUS_TIMER_FALL_RISE_SPIKE     0x04
+#घोषणा MLXBF_I2C_SMBUS_TIMER_THOLD               0x08
+#घोषणा MLXBF_I2C_SMBUS_TIMER_TSETUP_START_STOP   0x0c
+#घोषणा MLXBF_I2C_SMBUS_TIMER_TSETUP_DATA         0x10
+#घोषणा MLXBF_I2C_SMBUS_THIGH_MAX_TBUF            0x14
+#घोषणा MLXBF_I2C_SMBUS_SCL_LOW_TIMEOUT           0x18
 
 /*
- * Defines SMBus operating frequency and core clock frequency.
- * According to ADB files, default values are compliant to 100KHz SMBus
- * @ 400MHz core clock. The driver should be able to calculate core
+ * Defines SMBus operating frequency and core घड़ी frequency.
+ * According to ADB files, शेष values are compliant to 100KHz SMBus
+ * @ 400MHz core घड़ी. The driver should be able to calculate core
  * frequency based on PLL parameters.
  */
-#define MLXBF_I2C_COREPLL_FREQ          MLXBF_I2C_TYU_PLL_OUT_FREQ
+#घोषणा MLXBF_I2C_COREPLL_FREQ          MLXBF_I2C_TYU_PLL_OUT_FREQ
 
 /* Core PLL TYU configuration. */
-#define MLXBF_I2C_COREPLL_CORE_F_TYU_MASK   GENMASK(12, 0)
-#define MLXBF_I2C_COREPLL_CORE_OD_TYU_MASK  GENMASK(3, 0)
-#define MLXBF_I2C_COREPLL_CORE_R_TYU_MASK   GENMASK(5, 0)
+#घोषणा MLXBF_I2C_COREPLL_CORE_F_TYU_MASK   GENMASK(12, 0)
+#घोषणा MLXBF_I2C_COREPLL_CORE_OD_TYU_MASK  GENMASK(3, 0)
+#घोषणा MLXBF_I2C_COREPLL_CORE_R_TYU_MASK   GENMASK(5, 0)
 
-#define MLXBF_I2C_COREPLL_CORE_F_TYU_SHIFT  3
-#define MLXBF_I2C_COREPLL_CORE_OD_TYU_SHIFT 16
-#define MLXBF_I2C_COREPLL_CORE_R_TYU_SHIFT  20
+#घोषणा MLXBF_I2C_COREPLL_CORE_F_TYU_SHIFT  3
+#घोषणा MLXBF_I2C_COREPLL_CORE_OD_TYU_SHIFT 16
+#घोषणा MLXBF_I2C_COREPLL_CORE_R_TYU_SHIFT  20
 
 /* Core PLL YU configuration. */
-#define MLXBF_I2C_COREPLL_CORE_F_YU_MASK    GENMASK(25, 0)
-#define MLXBF_I2C_COREPLL_CORE_OD_YU_MASK   GENMASK(3, 0)
-#define MLXBF_I2C_COREPLL_CORE_R_YU_MASK    GENMASK(5, 0)
+#घोषणा MLXBF_I2C_COREPLL_CORE_F_YU_MASK    GENMASK(25, 0)
+#घोषणा MLXBF_I2C_COREPLL_CORE_OD_YU_MASK   GENMASK(3, 0)
+#घोषणा MLXBF_I2C_COREPLL_CORE_R_YU_MASK    GENMASK(5, 0)
 
-#define MLXBF_I2C_COREPLL_CORE_F_YU_SHIFT   0
-#define MLXBF_I2C_COREPLL_CORE_OD_YU_SHIFT  1
-#define MLXBF_I2C_COREPLL_CORE_R_YU_SHIFT   26
+#घोषणा MLXBF_I2C_COREPLL_CORE_F_YU_SHIFT   0
+#घोषणा MLXBF_I2C_COREPLL_CORE_OD_YU_SHIFT  1
+#घोषणा MLXBF_I2C_COREPLL_CORE_R_YU_SHIFT   26
 
 /* Core PLL frequency. */
-static u64 mlxbf_i2c_corepll_frequency;
+अटल u64 mlxbf_i2c_corepll_frequency;
 
 /* SMBus Master GW. */
-#define MLXBF_I2C_SMBUS_MASTER_GW     0x200
+#घोषणा MLXBF_I2C_SMBUS_MASTER_GW     0x200
 /* Number of bytes received and sent. */
-#define MLXBF_I2C_SMBUS_RS_BYTES      0x300
+#घोषणा MLXBF_I2C_SMBUS_RS_BYTES      0x300
 /* Packet error check (PEC) value. */
-#define MLXBF_I2C_SMBUS_MASTER_PEC    0x304
+#घोषणा MLXBF_I2C_SMBUS_MASTER_PEC    0x304
 /* Status bits (ACK/NACK/FW Timeout). */
-#define MLXBF_I2C_SMBUS_MASTER_STATUS 0x308
+#घोषणा MLXBF_I2C_SMBUS_MASTER_STATUS 0x308
 /* SMbus Master Finite State Machine. */
-#define MLXBF_I2C_SMBUS_MASTER_FSM    0x310
+#घोषणा MLXBF_I2C_SMBUS_MASTER_FSM    0x310
 
 /*
- * When enabled, the master will issue a stop condition in case of
- * timeout while waiting for FW response.
+ * When enabled, the master will issue a stop condition in हाल of
+ * समयout जबतक रुकोing क्रम FW response.
  */
-#define MLXBF_I2C_SMBUS_EN_FW_TIMEOUT 0x31c
+#घोषणा MLXBF_I2C_SMBUS_EN_FW_TIMEOUT 0x31c
 
 /* SMBus master GW control bits offset in MLXBF_I2C_SMBUS_MASTER_GW[31:3]. */
-#define MLXBF_I2C_MASTER_LOCK_BIT         BIT(31) /* Lock bit. */
-#define MLXBF_I2C_MASTER_BUSY_BIT         BIT(30) /* Busy bit. */
-#define MLXBF_I2C_MASTER_START_BIT        BIT(29) /* Control start. */
-#define MLXBF_I2C_MASTER_CTL_WRITE_BIT    BIT(28) /* Control write phase. */
-#define MLXBF_I2C_MASTER_CTL_READ_BIT     BIT(19) /* Control read phase. */
-#define MLXBF_I2C_MASTER_STOP_BIT         BIT(3)  /* Control stop. */
+#घोषणा MLXBF_I2C_MASTER_LOCK_BIT         BIT(31) /* Lock bit. */
+#घोषणा MLXBF_I2C_MASTER_BUSY_BIT         BIT(30) /* Busy bit. */
+#घोषणा MLXBF_I2C_MASTER_START_BIT        BIT(29) /* Control start. */
+#घोषणा MLXBF_I2C_MASTER_CTL_WRITE_BIT    BIT(28) /* Control ग_लिखो phase. */
+#घोषणा MLXBF_I2C_MASTER_CTL_READ_BIT     BIT(19) /* Control पढ़ो phase. */
+#घोषणा MLXBF_I2C_MASTER_STOP_BIT         BIT(3)  /* Control stop. */
 
-#define MLXBF_I2C_MASTER_ENABLE \
+#घोषणा MLXBF_I2C_MASTER_ENABLE \
 	(MLXBF_I2C_MASTER_LOCK_BIT | MLXBF_I2C_MASTER_BUSY_BIT | \
 	 MLXBF_I2C_MASTER_START_BIT | MLXBF_I2C_MASTER_STOP_BIT)
 
-#define MLXBF_I2C_MASTER_ENABLE_WRITE \
+#घोषणा MLXBF_I2C_MASTER_ENABLE_WRITE \
 	(MLXBF_I2C_MASTER_ENABLE | MLXBF_I2C_MASTER_CTL_WRITE_BIT)
 
-#define MLXBF_I2C_MASTER_ENABLE_READ \
+#घोषणा MLXBF_I2C_MASTER_ENABLE_READ \
 	(MLXBF_I2C_MASTER_ENABLE | MLXBF_I2C_MASTER_CTL_READ_BIT)
 
-#define MLXBF_I2C_MASTER_SLV_ADDR_SHIFT   12 /* Slave address shift. */
-#define MLXBF_I2C_MASTER_WRITE_SHIFT      21 /* Control write bytes shift. */
-#define MLXBF_I2C_MASTER_SEND_PEC_SHIFT   20 /* Send PEC byte shift. */
-#define MLXBF_I2C_MASTER_PARSE_EXP_SHIFT  11 /* Parse expected bytes shift. */
-#define MLXBF_I2C_MASTER_READ_SHIFT       4  /* Control read bytes shift. */
+#घोषणा MLXBF_I2C_MASTER_SLV_ADDR_SHIFT   12 /* Slave address shअगरt. */
+#घोषणा MLXBF_I2C_MASTER_WRITE_SHIFT      21 /* Control ग_लिखो bytes shअगरt. */
+#घोषणा MLXBF_I2C_MASTER_SEND_PEC_SHIFT   20 /* Send PEC byte shअगरt. */
+#घोषणा MLXBF_I2C_MASTER_PARSE_EXP_SHIFT  11 /* Parse expected bytes shअगरt. */
+#घोषणा MLXBF_I2C_MASTER_READ_SHIFT       4  /* Control पढ़ो bytes shअगरt. */
 
 /* SMBus master GW Data descriptor. */
-#define MLXBF_I2C_MASTER_DATA_DESC_ADDR   0x280
-#define MLXBF_I2C_MASTER_DATA_DESC_SIZE   0x80 /* Size in bytes. */
+#घोषणा MLXBF_I2C_MASTER_DATA_DESC_ADDR   0x280
+#घोषणा MLXBF_I2C_MASTER_DATA_DESC_SIZE   0x80 /* Size in bytes. */
 
-/* Maximum bytes to read/write per SMBus transaction. */
-#define MLXBF_I2C_MASTER_DATA_R_LENGTH  MLXBF_I2C_MASTER_DATA_DESC_SIZE
-#define MLXBF_I2C_MASTER_DATA_W_LENGTH (MLXBF_I2C_MASTER_DATA_DESC_SIZE - 1)
+/* Maximum bytes to पढ़ो/ग_लिखो per SMBus transaction. */
+#घोषणा MLXBF_I2C_MASTER_DATA_R_LENGTH  MLXBF_I2C_MASTER_DATA_DESC_SIZE
+#घोषणा MLXBF_I2C_MASTER_DATA_W_LENGTH (MLXBF_I2C_MASTER_DATA_DESC_SIZE - 1)
 
 /* All bytes were transmitted. */
-#define MLXBF_I2C_SMBUS_STATUS_BYTE_CNT_DONE      BIT(0)
+#घोषणा MLXBF_I2C_SMBUS_STATUS_BYTE_CNT_DONE      BIT(0)
 /* NACK received. */
-#define MLXBF_I2C_SMBUS_STATUS_NACK_RCV           BIT(1)
+#घोषणा MLXBF_I2C_SMBUS_STATUS_NACK_RCV           BIT(1)
 /* Slave's byte count >128 bytes. */
-#define MLXBF_I2C_SMBUS_STATUS_READ_ERR           BIT(2)
+#घोषणा MLXBF_I2C_SMBUS_STATUS_READ_ERR           BIT(2)
 /* Timeout occurred. */
-#define MLXBF_I2C_SMBUS_STATUS_FW_TIMEOUT         BIT(3)
+#घोषणा MLXBF_I2C_SMBUS_STATUS_FW_TIMEOUT         BIT(3)
 
-#define MLXBF_I2C_SMBUS_MASTER_STATUS_MASK        GENMASK(3, 0)
+#घोषणा MLXBF_I2C_SMBUS_MASTER_STATUS_MASK        GENMASK(3, 0)
 
-#define MLXBF_I2C_SMBUS_MASTER_STATUS_ERROR \
+#घोषणा MLXBF_I2C_SMBUS_MASTER_STATUS_ERROR \
 	(MLXBF_I2C_SMBUS_STATUS_NACK_RCV | \
 	 MLXBF_I2C_SMBUS_STATUS_READ_ERR | \
 	 MLXBF_I2C_SMBUS_STATUS_FW_TIMEOUT)
 
-#define MLXBF_I2C_SMBUS_MASTER_FSM_STOP_MASK      BIT(31)
-#define MLXBF_I2C_SMBUS_MASTER_FSM_PS_STATE_MASK  BIT(15)
+#घोषणा MLXBF_I2C_SMBUS_MASTER_FSM_STOP_MASK      BIT(31)
+#घोषणा MLXBF_I2C_SMBUS_MASTER_FSM_PS_STATE_MASK  BIT(15)
 
 /* SMBus slave GW. */
-#define MLXBF_I2C_SMBUS_SLAVE_GW              0x400
+#घोषणा MLXBF_I2C_SMBUS_SLAVE_GW              0x400
 /* Number of bytes received and sent from/to master. */
-#define MLXBF_I2C_SMBUS_SLAVE_RS_MASTER_BYTES 0x500
+#घोषणा MLXBF_I2C_SMBUS_SLAVE_RS_MASTER_BYTES 0x500
 /* Packet error check (PEC) value. */
-#define MLXBF_I2C_SMBUS_SLAVE_PEC             0x504
+#घोषणा MLXBF_I2C_SMBUS_SLAVE_PEC             0x504
 /* SMBus slave Finite State Machine (FSM). */
-#define MLXBF_I2C_SMBUS_SLAVE_FSM             0x510
+#घोषणा MLXBF_I2C_SMBUS_SLAVE_FSM             0x510
 /*
- * Should be set when all raised causes handled, and cleared by HW on
+ * Should be set when all उठाओd causes handled, and cleared by HW on
  * every new cause.
  */
-#define MLXBF_I2C_SMBUS_SLAVE_READY           0x52c
+#घोषणा MLXBF_I2C_SMBUS_SLAVE_READY           0x52c
 
 /* SMBus slave GW control bits offset in MLXBF_I2C_SMBUS_SLAVE_GW[31:19]. */
-#define MLXBF_I2C_SLAVE_BUSY_BIT         BIT(30) /* Busy bit. */
-#define MLXBF_I2C_SLAVE_WRITE_BIT        BIT(29) /* Control write enable. */
+#घोषणा MLXBF_I2C_SLAVE_BUSY_BIT         BIT(30) /* Busy bit. */
+#घोषणा MLXBF_I2C_SLAVE_WRITE_BIT        BIT(29) /* Control ग_लिखो enable. */
 
-#define MLXBF_I2C_SLAVE_ENABLE \
+#घोषणा MLXBF_I2C_SLAVE_ENABLE \
 	(MLXBF_I2C_SLAVE_BUSY_BIT | MLXBF_I2C_SLAVE_WRITE_BIT)
 
-#define MLXBF_I2C_SLAVE_WRITE_BYTES_SHIFT 22 /* Number of bytes to write. */
-#define MLXBF_I2C_SLAVE_SEND_PEC_SHIFT    21 /* Send PEC byte shift. */
+#घोषणा MLXBF_I2C_SLAVE_WRITE_BYTES_SHIFT 22 /* Number of bytes to ग_लिखो. */
+#घोषणा MLXBF_I2C_SLAVE_SEND_PEC_SHIFT    21 /* Send PEC byte shअगरt. */
 
 /* SMBus slave GW Data descriptor. */
-#define MLXBF_I2C_SLAVE_DATA_DESC_ADDR   0x480
-#define MLXBF_I2C_SLAVE_DATA_DESC_SIZE   0x80 /* Size in bytes. */
+#घोषणा MLXBF_I2C_SLAVE_DATA_DESC_ADDR   0x480
+#घोषणा MLXBF_I2C_SLAVE_DATA_DESC_SIZE   0x80 /* Size in bytes. */
 
-/* SMbus slave configuration registers. */
-#define MLXBF_I2C_SMBUS_SLAVE_ADDR_CFG        0x514
-#define MLXBF_I2C_SMBUS_SLAVE_ADDR_CNT        16
-#define MLXBF_I2C_SMBUS_SLAVE_ADDR_EN_BIT     7
-#define MLXBF_I2C_SMBUS_SLAVE_ADDR_MASK       GENMASK(6, 0)
+/* SMbus slave configuration रेजिस्टरs. */
+#घोषणा MLXBF_I2C_SMBUS_SLAVE_ADDR_CFG        0x514
+#घोषणा MLXBF_I2C_SMBUS_SLAVE_ADDR_CNT        16
+#घोषणा MLXBF_I2C_SMBUS_SLAVE_ADDR_EN_BIT     7
+#घोषणा MLXBF_I2C_SMBUS_SLAVE_ADDR_MASK       GENMASK(6, 0)
 
-#define MLXBF_I2C_SLAVE_ADDR_ENABLED(addr) \
+#घोषणा MLXBF_I2C_SLAVE_ADDR_ENABLED(addr) \
 	((addr) & (1 << MLXBF_I2C_SMBUS_SLAVE_ADDR_EN_BIT))
 
 /*
- * Timeout is given in microsends. Note also that timeout handling is not
+ * Timeout is given in microsends. Note also that समयout handling is not
  * exact.
  */
-#define MLXBF_I2C_SMBUS_TIMEOUT   (300 * 1000) /* 300ms */
+#घोषणा MLXBF_I2C_SMBUS_TIMEOUT   (300 * 1000) /* 300ms */
 
 /* Encapsulates timing parameters. */
-struct mlxbf_i2c_timings {
+काष्ठा mlxbf_i2c_timings अणु
 	u16 scl_high;		/* Clock high period. */
 	u16 scl_low;		/* Clock low period. */
-	u8 sda_rise;		/* Data rise time. */
-	u8 sda_fall;		/* Data fall time. */
-	u8 scl_rise;		/* Clock rise time. */
-	u8 scl_fall;		/* Clock fall time. */
-	u16 hold_start;		/* Hold time after (REPEATED) START. */
-	u16 hold_data;		/* Data hold time. */
-	u16 setup_start;	/* REPEATED START condition setup time. */
-	u16 setup_stop;		/* STOP condition setup time. */
-	u16 setup_data;		/* Data setup time. */
+	u8 sda_rise;		/* Data rise समय. */
+	u8 sda_fall;		/* Data fall समय. */
+	u8 scl_rise;		/* Clock rise समय. */
+	u8 scl_fall;		/* Clock fall समय. */
+	u16 hold_start;		/* Hold समय after (REPEATED) START. */
+	u16 hold_data;		/* Data hold समय. */
+	u16 setup_start;	/* REPEATED START condition setup समय. */
+	u16 setup_stop;		/* STOP condition setup समय. */
+	u16 setup_data;		/* Data setup समय. */
 	u16 pad;		/* Padding. */
-	u16 buf;		/* Bus free time between STOP and START. */
+	u16 buf;		/* Bus मुक्त समय between STOP and START. */
 	u16 thigh_max;		/* Thigh max. */
-	u32 timeout;		/* Detect clock low timeout. */
-};
+	u32 समयout;		/* Detect घड़ी low समयout. */
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLXBF_I2C_F_READ = BIT(0),
 	MLXBF_I2C_F_WRITE = BIT(1),
 	MLXBF_I2C_F_NORESTART = BIT(3),
@@ -339,34 +340,34 @@ enum {
 	MLXBF_I2C_F_SMBUS_BLOCK = BIT(5),
 	MLXBF_I2C_F_SMBUS_PEC = BIT(6),
 	MLXBF_I2C_F_SMBUS_PROCESS_CALL = BIT(7),
-};
+पूर्ण;
 
-struct mlxbf_i2c_smbus_operation {
+काष्ठा mlxbf_i2c_smbus_operation अणु
 	u32 flags;
 	u32 length; /* Buffer length in bytes. */
 	u8 *buffer;
-};
+पूर्ण;
 
-#define MLXBF_I2C_SMBUS_OP_CNT_1	1
-#define MLXBF_I2C_SMBUS_OP_CNT_2	2
-#define MLXBF_I2C_SMBUS_OP_CNT_3	3
-#define MLXBF_I2C_SMBUS_MAX_OP_CNT	MLXBF_I2C_SMBUS_OP_CNT_3
+#घोषणा MLXBF_I2C_SMBUS_OP_CNT_1	1
+#घोषणा MLXBF_I2C_SMBUS_OP_CNT_2	2
+#घोषणा MLXBF_I2C_SMBUS_OP_CNT_3	3
+#घोषणा MLXBF_I2C_SMBUS_MAX_OP_CNT	MLXBF_I2C_SMBUS_OP_CNT_3
 
-struct mlxbf_i2c_smbus_request {
+काष्ठा mlxbf_i2c_smbus_request अणु
 	u8 slave;
 	u8 operation_cnt;
-	struct mlxbf_i2c_smbus_operation operation[MLXBF_I2C_SMBUS_MAX_OP_CNT];
-};
+	काष्ठा mlxbf_i2c_smbus_operation operation[MLXBF_I2C_SMBUS_MAX_OP_CNT];
+पूर्ण;
 
-struct mlxbf_i2c_resource {
-	void __iomem *io;
-	struct resource *params;
-	struct mutex *lock; /* Mutex to protect mlxbf_i2c_resource. */
+काष्ठा mlxbf_i2c_resource अणु
+	व्योम __iomem *io;
+	काष्ठा resource *params;
+	काष्ठा mutex *lock; /* Mutex to protect mlxbf_i2c_resource. */
 	u8 type;
-};
+पूर्ण;
 
 /* List of chip resources that are being accessed by the driver. */
-enum {
+क्रमागत अणु
 	MLXBF_I2C_SMBUS_RES,
 	MLXBF_I2C_MST_CAUSE_RES,
 	MLXBF_I2C_SLV_CAUSE_RES,
@@ -374,188 +375,188 @@ enum {
 	MLXBF_I2C_COREPLL_RES,
 	MLXBF_I2C_GPIO_RES,
 	MLXBF_I2C_END_RES,
-};
+पूर्ण;
 
 /* Helper macro to define an I2C resource parameters. */
-#define MLXBF_I2C_RES_PARAMS(addr, size, str) \
-	{ \
+#घोषणा MLXBF_I2C_RES_PARAMS(addr, size, str) \
+	अणु \
 		.start = (addr), \
 		.end = (addr) + (size) - 1, \
 		.name = (str) \
-	}
+	पूर्ण
 
-static struct resource mlxbf_i2c_coalesce_tyu_params =
+अटल काष्ठा resource mlxbf_i2c_coalesce_tyu_params =
 		MLXBF_I2C_RES_PARAMS(MLXBF_I2C_COALESCE_TYU_ADDR,
 				     MLXBF_I2C_COALESCE_TYU_SIZE,
 				     "COALESCE_MEM");
-static struct resource mlxbf_i2c_corepll_tyu_params =
+अटल काष्ठा resource mlxbf_i2c_corepll_tyu_params =
 		MLXBF_I2C_RES_PARAMS(MLXBF_I2C_COREPLL_TYU_ADDR,
 				     MLXBF_I2C_COREPLL_TYU_SIZE,
 				     "COREPLL_MEM");
-static struct resource mlxbf_i2c_corepll_yu_params =
+अटल काष्ठा resource mlxbf_i2c_corepll_yu_params =
 		MLXBF_I2C_RES_PARAMS(MLXBF_I2C_COREPLL_YU_ADDR,
 				     MLXBF_I2C_COREPLL_YU_SIZE,
 				     "COREPLL_MEM");
-static struct resource mlxbf_i2c_gpio_tyu_params =
+अटल काष्ठा resource mlxbf_i2c_gpio_tyu_params =
 		MLXBF_I2C_RES_PARAMS(MLXBF_I2C_GPIO_TYU_ADDR,
 				     MLXBF_I2C_GPIO_TYU_SIZE,
 				     "GPIO_MEM");
 
-static struct mutex mlxbf_i2c_coalesce_lock;
-static struct mutex mlxbf_i2c_corepll_lock;
-static struct mutex mlxbf_i2c_gpio_lock;
+अटल काष्ठा mutex mlxbf_i2c_coalesce_lock;
+अटल काष्ठा mutex mlxbf_i2c_corepll_lock;
+अटल काष्ठा mutex mlxbf_i2c_gpio_lock;
 
 /* Mellanox BlueField chip type. */
-enum mlxbf_i2c_chip_type {
+क्रमागत mlxbf_i2c_chip_type अणु
 	MLXBF_I2C_CHIP_TYPE_1, /* Mellanox BlueField-1 chip. */
 	MLXBF_I2C_CHIP_TYPE_2, /* Mallanox BlueField-2 chip. */
-};
+पूर्ण;
 
-struct mlxbf_i2c_chip_info {
-	enum mlxbf_i2c_chip_type type;
+काष्ठा mlxbf_i2c_chip_info अणु
+	क्रमागत mlxbf_i2c_chip_type type;
 	/* Chip shared resources that are being used by the I2C controller. */
-	struct mlxbf_i2c_resource *shared_res[MLXBF_I2C_SHARED_RES_MAX];
+	काष्ठा mlxbf_i2c_resource *shared_res[MLXBF_I2C_SHARED_RES_MAX];
 
 	/* Callback to calculate the core PLL frequency. */
-	u64 (*calculate_freq)(struct mlxbf_i2c_resource *corepll_res);
-};
+	u64 (*calculate_freq)(काष्ठा mlxbf_i2c_resource *corepll_res);
+पूर्ण;
 
-struct mlxbf_i2c_priv {
-	const struct mlxbf_i2c_chip_info *chip;
-	struct i2c_adapter adap;
-	struct mlxbf_i2c_resource *smbus;
-	struct mlxbf_i2c_resource *mst_cause;
-	struct mlxbf_i2c_resource *slv_cause;
-	struct mlxbf_i2c_resource *coalesce;
+काष्ठा mlxbf_i2c_priv अणु
+	स्थिर काष्ठा mlxbf_i2c_chip_info *chip;
+	काष्ठा i2c_adapter adap;
+	काष्ठा mlxbf_i2c_resource *smbus;
+	काष्ठा mlxbf_i2c_resource *mst_cause;
+	काष्ठा mlxbf_i2c_resource *slv_cause;
+	काष्ठा mlxbf_i2c_resource *coalesce;
 	u64 frequency; /* Core frequency in Hz. */
-	int bus; /* Physical bus identifier. */
-	int irq;
-	struct i2c_client *slave;
-};
+	पूर्णांक bus; /* Physical bus identअगरier. */
+	पूर्णांक irq;
+	काष्ठा i2c_client *slave;
+पूर्ण;
 
-static struct mlxbf_i2c_resource mlxbf_i2c_coalesce_res[] = {
-	[MLXBF_I2C_CHIP_TYPE_1] = {
+अटल काष्ठा mlxbf_i2c_resource mlxbf_i2c_coalesce_res[] = अणु
+	[MLXBF_I2C_CHIP_TYPE_1] = अणु
 		.params = &mlxbf_i2c_coalesce_tyu_params,
 		.lock = &mlxbf_i2c_coalesce_lock,
 		.type = MLXBF_I2C_COALESCE_RES
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct mlxbf_i2c_resource mlxbf_i2c_corepll_res[] = {
-	[MLXBF_I2C_CHIP_TYPE_1] = {
+अटल काष्ठा mlxbf_i2c_resource mlxbf_i2c_corepll_res[] = अणु
+	[MLXBF_I2C_CHIP_TYPE_1] = अणु
 		.params = &mlxbf_i2c_corepll_tyu_params,
 		.lock = &mlxbf_i2c_corepll_lock,
 		.type = MLXBF_I2C_COREPLL_RES
-	},
-	[MLXBF_I2C_CHIP_TYPE_2] = {
+	पूर्ण,
+	[MLXBF_I2C_CHIP_TYPE_2] = अणु
 		.params = &mlxbf_i2c_corepll_yu_params,
 		.lock = &mlxbf_i2c_corepll_lock,
 		.type = MLXBF_I2C_COREPLL_RES,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct mlxbf_i2c_resource mlxbf_i2c_gpio_res[] = {
-	[MLXBF_I2C_CHIP_TYPE_1] = {
+अटल काष्ठा mlxbf_i2c_resource mlxbf_i2c_gpio_res[] = अणु
+	[MLXBF_I2C_CHIP_TYPE_1] = अणु
 		.params = &mlxbf_i2c_gpio_tyu_params,
 		.lock = &mlxbf_i2c_gpio_lock,
 		.type = MLXBF_I2C_GPIO_RES
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static u8 mlxbf_i2c_bus_count;
+अटल u8 mlxbf_i2c_bus_count;
 
-static struct mutex mlxbf_i2c_bus_lock;
+अटल काष्ठा mutex mlxbf_i2c_bus_lock;
 
 /* Polling frequency in microseconds. */
-#define MLXBF_I2C_POLL_FREQ_IN_USEC        200
+#घोषणा MLXBF_I2C_POLL_FREQ_IN_USEC        200
 
-#define MLXBF_I2C_SHIFT_0   0
-#define MLXBF_I2C_SHIFT_8   8
-#define MLXBF_I2C_SHIFT_16  16
-#define MLXBF_I2C_SHIFT_24  24
+#घोषणा MLXBF_I2C_SHIFT_0   0
+#घोषणा MLXBF_I2C_SHIFT_8   8
+#घोषणा MLXBF_I2C_SHIFT_16  16
+#घोषणा MLXBF_I2C_SHIFT_24  24
 
-#define MLXBF_I2C_MASK_8    GENMASK(7, 0)
-#define MLXBF_I2C_MASK_16   GENMASK(15, 0)
+#घोषणा MLXBF_I2C_MASK_8    GENMASK(7, 0)
+#घोषणा MLXBF_I2C_MASK_16   GENMASK(15, 0)
 
-#define MLXBF_I2C_FREQUENCY_1GHZ  1000000000
+#घोषणा MLXBF_I2C_FREQUENCY_1GHZ  1000000000
 
 /*
- * Function to poll a set of bits at a specific address; it checks whether
+ * Function to poll a set of bits at a specअगरic address; it checks whether
  * the bits are equal to zero when eq_zero is set to 'true', and not equal
  * to zero when eq_zero is set to 'false'.
- * Note that the timeout is given in microseconds.
+ * Note that the समयout is given in microseconds.
  */
-static u32 mlxbf_smbus_poll(void __iomem *io, u32 addr, u32 mask,
-			    bool eq_zero, u32  timeout)
-{
+अटल u32 mlxbf_smbus_poll(व्योम __iomem *io, u32 addr, u32 mask,
+			    bool eq_zero, u32  समयout)
+अणु
 	u32 bits;
 
-	timeout = (timeout / MLXBF_I2C_POLL_FREQ_IN_USEC) + 1;
+	समयout = (समयout / MLXBF_I2C_POLL_FREQ_IN_USEC) + 1;
 
-	do {
-		bits = readl(io + addr) & mask;
-		if (eq_zero ? bits == 0 : bits != 0)
-			return eq_zero ? 1 : bits;
+	करो अणु
+		bits = पढ़ोl(io + addr) & mask;
+		अगर (eq_zero ? bits == 0 : bits != 0)
+			वापस eq_zero ? 1 : bits;
 		udelay(MLXBF_I2C_POLL_FREQ_IN_USEC);
-	} while (timeout-- != 0);
+	पूर्ण जबतक (समयout-- != 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * SW must make sure that the SMBus Master GW is idle before starting
+ * SW must make sure that the SMBus Master GW is idle beक्रमe starting
  * a transaction. Accordingly, this function polls the Master FSM stop
- * bit; it returns false when the bit is asserted, true if not.
+ * bit; it वापसs false when the bit is निश्चितed, true अगर not.
  */
-static bool mlxbf_smbus_master_wait_for_idle(struct mlxbf_i2c_priv *priv)
-{
+अटल bool mlxbf_smbus_master_रुको_क्रम_idle(काष्ठा mlxbf_i2c_priv *priv)
+अणु
 	u32 mask = MLXBF_I2C_SMBUS_MASTER_FSM_STOP_MASK;
 	u32 addr = MLXBF_I2C_SMBUS_MASTER_FSM;
-	u32 timeout = MLXBF_I2C_SMBUS_TIMEOUT;
+	u32 समयout = MLXBF_I2C_SMBUS_TIMEOUT;
 
-	if (mlxbf_smbus_poll(priv->smbus->io, addr, mask, true, timeout))
-		return true;
+	अगर (mlxbf_smbus_poll(priv->smbus->io, addr, mask, true, समयout))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool mlxbf_i2c_smbus_transaction_success(u32 master_status,
+अटल bool mlxbf_i2c_smbus_transaction_success(u32 master_status,
 						u32 cause_status)
-{
+अणु
 	/*
 	 * When transaction ended with STOP, all bytes were transmitted,
 	 * and no NACK received, then the transaction ended successfully.
 	 * On the other hand, when the GW is configured with the stop bit
-	 * de-asserted then the SMBus expects the following GW configuration
-	 * for transfer continuation.
+	 * de-निश्चितed then the SMBus expects the following GW configuration
+	 * क्रम transfer continuation.
 	 */
-	if ((cause_status & MLXBF_I2C_CAUSE_WAIT_FOR_FW_DATA) ||
+	अगर ((cause_status & MLXBF_I2C_CAUSE_WAIT_FOR_FW_DATA) ||
 	    ((cause_status & MLXBF_I2C_CAUSE_TRANSACTION_ENDED) &&
 	     (master_status & MLXBF_I2C_SMBUS_STATUS_BYTE_CNT_DONE) &&
 	     !(master_status & MLXBF_I2C_SMBUS_STATUS_NACK_RCV)))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Poll SMBus master status and return transaction status,
+ * Poll SMBus master status and वापस transaction status,
  * i.e. whether succeeded or failed. I2C and SMBus fault codes
- * are returned as negative numbers from most calls, with zero
- * or some positive number indicating a non-fault return.
+ * are वापसed as negative numbers from most calls, with zero
+ * or some positive number indicating a non-fault वापस.
  */
-static int mlxbf_i2c_smbus_check_status(struct mlxbf_i2c_priv *priv)
-{
+अटल पूर्णांक mlxbf_i2c_smbus_check_status(काष्ठा mlxbf_i2c_priv *priv)
+अणु
 	u32 master_status_bits;
 	u32 cause_status_bits;
 
 	/*
-	 * GW busy bit is raised by the driver and cleared by the HW
+	 * GW busy bit is उठाओd by the driver and cleared by the HW
 	 * when the transaction is completed. The busy bit is a good
 	 * indicator of transaction status. So poll the busy bit, and
-	 * then read the cause and master status bits to determine if
+	 * then पढ़ो the cause and master status bits to determine अगर
 	 * errors occurred during the transaction.
 	 */
 	mlxbf_smbus_poll(priv->smbus->io, MLXBF_I2C_SMBUS_MASTER_GW,
@@ -563,41 +564,41 @@ static int mlxbf_i2c_smbus_check_status(struct mlxbf_i2c_priv *priv)
 			 MLXBF_I2C_SMBUS_TIMEOUT);
 
 	/* Read cause status bits. */
-	cause_status_bits = readl(priv->mst_cause->io +
+	cause_status_bits = पढ़ोl(priv->mst_cause->io +
 					MLXBF_I2C_CAUSE_ARBITER);
 	cause_status_bits &= MLXBF_I2C_CAUSE_MASTER_ARBITER_BITS_MASK;
 
 	/*
-	 * Parse both Cause and Master GW bits, then return transaction status.
+	 * Parse both Cause and Master GW bits, then वापस transaction status.
 	 */
 
-	master_status_bits = readl(priv->smbus->io +
+	master_status_bits = पढ़ोl(priv->smbus->io +
 					MLXBF_I2C_SMBUS_MASTER_STATUS);
 	master_status_bits &= MLXBF_I2C_SMBUS_MASTER_STATUS_MASK;
 
-	if (mlxbf_i2c_smbus_transaction_success(master_status_bits,
+	अगर (mlxbf_i2c_smbus_transaction_success(master_status_bits,
 						cause_status_bits))
-		return 0;
+		वापस 0;
 
 	/*
-	 * In case of timeout on GW busy, the ISR will clear busy bit but
+	 * In हाल of समयout on GW busy, the ISR will clear busy bit but
 	 * transaction ended bits cause will not be set so the transaction
 	 * fails. Then, we must check Master GW status bits.
 	 */
-	if ((master_status_bits & MLXBF_I2C_SMBUS_MASTER_STATUS_ERROR) &&
+	अगर ((master_status_bits & MLXBF_I2C_SMBUS_MASTER_STATUS_ERROR) &&
 	    (cause_status_bits & (MLXBF_I2C_CAUSE_TRANSACTION_ENDED |
 				  MLXBF_I2C_CAUSE_M_GW_BUSY_FALL)))
-		return -EIO;
+		वापस -EIO;
 
-	if (cause_status_bits & MLXBF_I2C_CAUSE_MASTER_STATUS_ERROR)
-		return -EAGAIN;
+	अगर (cause_status_bits & MLXBF_I2C_CAUSE_MASTER_STATUS_ERROR)
+		वापस -EAGAIN;
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static void mlxbf_i2c_smbus_write_data(struct mlxbf_i2c_priv *priv,
-				       const u8 *data, u8 length, u32 addr)
-{
+अटल व्योम mlxbf_i2c_smbus_ग_लिखो_data(काष्ठा mlxbf_i2c_priv *priv,
+				       स्थिर u8 *data, u8 length, u32 addr)
+अणु
 	u8 offset, aligned_length;
 	u32 data32;
 
@@ -605,233 +606,233 @@ static void mlxbf_i2c_smbus_write_data(struct mlxbf_i2c_priv *priv,
 
 	/*
 	 * Copy data bytes from 4-byte aligned source buffer.
-	 * Data copied to the Master GW Data Descriptor MUST be shifted
-	 * left so the data starts at the MSB of the descriptor registers
+	 * Data copied to the Master GW Data Descriptor MUST be shअगरted
+	 * left so the data starts at the MSB of the descriptor रेजिस्टरs
 	 * as required by the underlying hardware. Enable byte swapping
-	 * when writing data bytes to the 32 * 32-bit HW Data registers
+	 * when writing data bytes to the 32 * 32-bit HW Data रेजिस्टरs
 	 * a.k.a Master GW Data Descriptor.
 	 */
-	for (offset = 0; offset < aligned_length; offset += sizeof(u32)) {
+	क्रम (offset = 0; offset < aligned_length; offset += माप(u32)) अणु
 		data32 = *((u32 *)(data + offset));
-		iowrite32be(data32, priv->smbus->io + addr + offset);
-	}
-}
+		ioग_लिखो32be(data32, priv->smbus->io + addr + offset);
+	पूर्ण
+पूर्ण
 
-static void mlxbf_i2c_smbus_read_data(struct mlxbf_i2c_priv *priv,
+अटल व्योम mlxbf_i2c_smbus_पढ़ो_data(काष्ठा mlxbf_i2c_priv *priv,
 				      u8 *data, u8 length, u32 addr)
-{
+अणु
 	u32 data32, mask;
 	u8 byte, offset;
 
-	mask = sizeof(u32) - 1;
+	mask = माप(u32) - 1;
 
 	/*
-	 * Data bytes in the Master GW Data Descriptor are shifted left
-	 * so the data starts at the MSB of the descriptor registers as
-	 * set by the underlying hardware. Enable byte swapping while
-	 * reading data bytes from the 32 * 32-bit HW Data registers
+	 * Data bytes in the Master GW Data Descriptor are shअगरted left
+	 * so the data starts at the MSB of the descriptor रेजिस्टरs as
+	 * set by the underlying hardware. Enable byte swapping जबतक
+	 * पढ़ोing data bytes from the 32 * 32-bit HW Data रेजिस्टरs
 	 * a.k.a Master GW Data Descriptor.
 	 */
 
-	for (offset = 0; offset < (length & ~mask); offset += sizeof(u32)) {
-		data32 = ioread32be(priv->smbus->io + addr + offset);
+	क्रम (offset = 0; offset < (length & ~mask); offset += माप(u32)) अणु
+		data32 = ioपढ़ो32be(priv->smbus->io + addr + offset);
 		*((u32 *)(data + offset)) = data32;
-	}
+	पूर्ण
 
-	if (!(length & mask))
-		return;
+	अगर (!(length & mask))
+		वापस;
 
-	data32 = ioread32be(priv->smbus->io + addr + offset);
+	data32 = ioपढ़ो32be(priv->smbus->io + addr + offset);
 
-	for (byte = 0; byte < (length & mask); byte++) {
+	क्रम (byte = 0; byte < (length & mask); byte++) अणु
 		data[offset + byte] = data32 & GENMASK(7, 0);
 		data32 = ror32(data32, MLXBF_I2C_SHIFT_8);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int mlxbf_i2c_smbus_enable(struct mlxbf_i2c_priv *priv, u8 slave,
-				  u8 len, u8 block_en, u8 pec_en, bool read)
-{
+अटल पूर्णांक mlxbf_i2c_smbus_enable(काष्ठा mlxbf_i2c_priv *priv, u8 slave,
+				  u8 len, u8 block_en, u8 pec_en, bool पढ़ो)
+अणु
 	u32 command;
 
 	/* Set Master GW control word. */
-	if (read) {
+	अगर (पढ़ो) अणु
 		command = MLXBF_I2C_MASTER_ENABLE_READ;
 		command |= rol32(len, MLXBF_I2C_MASTER_READ_SHIFT);
-	} else {
+	पूर्ण अन्यथा अणु
 		command = MLXBF_I2C_MASTER_ENABLE_WRITE;
 		command |= rol32(len, MLXBF_I2C_MASTER_WRITE_SHIFT);
-	}
+	पूर्ण
 	command |= rol32(slave, MLXBF_I2C_MASTER_SLV_ADDR_SHIFT);
 	command |= rol32(block_en, MLXBF_I2C_MASTER_PARSE_EXP_SHIFT);
 	command |= rol32(pec_en, MLXBF_I2C_MASTER_SEND_PEC_SHIFT);
 
 	/* Clear status bits. */
-	writel(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_MASTER_STATUS);
+	ग_लिखोl(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_MASTER_STATUS);
 	/* Set the cause data. */
-	writel(~0x0, priv->smbus->io + MLXBF_I2C_CAUSE_OR_CLEAR);
+	ग_लिखोl(~0x0, priv->smbus->io + MLXBF_I2C_CAUSE_OR_CLEAR);
 	/* Zero PEC byte. */
-	writel(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_MASTER_PEC);
+	ग_लिखोl(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_MASTER_PEC);
 	/* Zero byte count. */
-	writel(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_RS_BYTES);
+	ग_लिखोl(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_RS_BYTES);
 
 	/* GW activation. */
-	writel(command, priv->smbus->io + MLXBF_I2C_SMBUS_MASTER_GW);
+	ग_लिखोl(command, priv->smbus->io + MLXBF_I2C_SMBUS_MASTER_GW);
 
 	/*
 	 * Poll master status and check status bits. An ACK is sent when
 	 * completing writing data to the bus (Master 'byte_count_done' bit
 	 * is set to 1).
 	 */
-	return mlxbf_i2c_smbus_check_status(priv);
-}
+	वापस mlxbf_i2c_smbus_check_status(priv);
+पूर्ण
 
-static int
-mlxbf_i2c_smbus_start_transaction(struct mlxbf_i2c_priv *priv,
-				  struct mlxbf_i2c_smbus_request *request)
-{
-	u8 data_desc[MLXBF_I2C_MASTER_DATA_DESC_SIZE] = { 0 };
-	u8 op_idx, data_idx, data_len, write_len, read_len;
-	struct mlxbf_i2c_smbus_operation *operation;
-	u8 read_en, write_en, block_en, pec_en;
+अटल पूर्णांक
+mlxbf_i2c_smbus_start_transaction(काष्ठा mlxbf_i2c_priv *priv,
+				  काष्ठा mlxbf_i2c_smbus_request *request)
+अणु
+	u8 data_desc[MLXBF_I2C_MASTER_DATA_DESC_SIZE] = अणु 0 पूर्ण;
+	u8 op_idx, data_idx, data_len, ग_लिखो_len, पढ़ो_len;
+	काष्ठा mlxbf_i2c_smbus_operation *operation;
+	u8 पढ़ो_en, ग_लिखो_en, block_en, pec_en;
 	u8 slave, flags, addr;
-	u8 *read_buf;
-	int ret = 0;
+	u8 *पढ़ो_buf;
+	पूर्णांक ret = 0;
 
-	if (request->operation_cnt > MLXBF_I2C_SMBUS_MAX_OP_CNT)
-		return -EINVAL;
+	अगर (request->operation_cnt > MLXBF_I2C_SMBUS_MAX_OP_CNT)
+		वापस -EINVAL;
 
-	read_buf = NULL;
+	पढ़ो_buf = शून्य;
 	data_idx = 0;
-	read_en = 0;
-	write_en = 0;
-	write_len = 0;
-	read_len = 0;
+	पढ़ो_en = 0;
+	ग_लिखो_en = 0;
+	ग_लिखो_len = 0;
+	पढ़ो_len = 0;
 	block_en = 0;
 	pec_en = 0;
 	slave = request->slave & GENMASK(6, 0);
 	addr = slave << 1;
 
 	/* First of all, check whether the HW is idle. */
-	if (WARN_ON(!mlxbf_smbus_master_wait_for_idle(priv)))
-		return -EBUSY;
+	अगर (WARN_ON(!mlxbf_smbus_master_रुको_क्रम_idle(priv)))
+		वापस -EBUSY;
 
 	/* Set first byte. */
 	data_desc[data_idx++] = addr;
 
-	for (op_idx = 0; op_idx < request->operation_cnt; op_idx++) {
+	क्रम (op_idx = 0; op_idx < request->operation_cnt; op_idx++) अणु
 		operation = &request->operation[op_idx];
 		flags = operation->flags;
 
 		/*
-		 * Note that read and write operations might be handled by a
+		 * Note that पढ़ो and ग_लिखो operations might be handled by a
 		 * single command. If the MLXBF_I2C_F_SMBUS_OPERATION is set
-		 * then write command byte and set the optional SMBus specific
+		 * then ग_लिखो command byte and set the optional SMBus specअगरic
 		 * bits such as block_en and pec_en. These bits MUST be
 		 * submitted by the first operation only.
 		 */
-		if (op_idx == 0 && flags & MLXBF_I2C_F_SMBUS_OPERATION) {
+		अगर (op_idx == 0 && flags & MLXBF_I2C_F_SMBUS_OPERATION) अणु
 			block_en = flags & MLXBF_I2C_F_SMBUS_BLOCK;
 			pec_en = flags & MLXBF_I2C_F_SMBUS_PEC;
-		}
+		पूर्ण
 
-		if (flags & MLXBF_I2C_F_WRITE) {
-			write_en = 1;
-			write_len += operation->length;
-			memcpy(data_desc + data_idx,
+		अगर (flags & MLXBF_I2C_F_WRITE) अणु
+			ग_लिखो_en = 1;
+			ग_लिखो_len += operation->length;
+			स_नकल(data_desc + data_idx,
 			       operation->buffer, operation->length);
 			data_idx += operation->length;
-		}
+		पूर्ण
 		/*
-		 * We assume that read operations are performed only once per
+		 * We assume that पढ़ो operations are perक्रमmed only once per
 		 * SMBus transaction. *TBD* protect this statement so it won't
-		 * be executed twice? or return an error if we try to read more
+		 * be executed twice? or वापस an error अगर we try to पढ़ो more
 		 * than once?
 		 */
-		if (flags & MLXBF_I2C_F_READ) {
-			read_en = 1;
+		अगर (flags & MLXBF_I2C_F_READ) अणु
+			पढ़ो_en = 1;
 			/* Subtract 1 as required by HW. */
-			read_len = operation->length - 1;
-			read_buf = operation->buffer;
-		}
-	}
+			पढ़ो_len = operation->length - 1;
+			पढ़ो_buf = operation->buffer;
+		पूर्ण
+	पूर्ण
 
 	/* Set Master GW data descriptor. */
-	data_len = write_len + 1; /* Add one byte of the slave address. */
+	data_len = ग_लिखो_len + 1; /* Add one byte of the slave address. */
 	/*
 	 * Note that data_len cannot be 0. Indeed, the slave address byte
-	 * must be written to the data registers.
+	 * must be written to the data रेजिस्टरs.
 	 */
-	mlxbf_i2c_smbus_write_data(priv, (const u8 *)data_desc, data_len,
+	mlxbf_i2c_smbus_ग_लिखो_data(priv, (स्थिर u8 *)data_desc, data_len,
 				   MLXBF_I2C_MASTER_DATA_DESC_ADDR);
 
-	if (write_en) {
-		ret = mlxbf_i2c_smbus_enable(priv, slave, write_len, block_en,
+	अगर (ग_लिखो_en) अणु
+		ret = mlxbf_i2c_smbus_enable(priv, slave, ग_लिखो_len, block_en,
 					 pec_en, 0);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (read_en) {
+	अगर (पढ़ो_en) अणु
 		/* Write slave address to Master GW data descriptor. */
-		mlxbf_i2c_smbus_write_data(priv, (const u8 *)&addr, 1,
+		mlxbf_i2c_smbus_ग_लिखो_data(priv, (स्थिर u8 *)&addr, 1,
 					   MLXBF_I2C_MASTER_DATA_DESC_ADDR);
-		ret = mlxbf_i2c_smbus_enable(priv, slave, read_len, block_en,
+		ret = mlxbf_i2c_smbus_enable(priv, slave, पढ़ो_len, block_en,
 					 pec_en, 1);
-		if (!ret) {
+		अगर (!ret) अणु
 			/* Get Master GW data descriptor. */
-			mlxbf_i2c_smbus_read_data(priv, data_desc, read_len + 1,
+			mlxbf_i2c_smbus_पढ़ो_data(priv, data_desc, पढ़ो_len + 1,
 					     MLXBF_I2C_MASTER_DATA_DESC_ADDR);
 
 			/* Get data from Master GW data descriptor. */
-			memcpy(read_buf, data_desc, read_len + 1);
-		}
+			स_नकल(पढ़ो_buf, data_desc, पढ़ो_len + 1);
+		पूर्ण
 
 		/*
-		 * After a read operation the SMBus FSM ps (present state)
-		 * needs to be 'manually' reset. This should be removed in
-		 * next tag integration.
+		 * After a पढ़ो operation the SMBus FSM ps (present state)
+		 * needs to be 'manually' reset. This should be हटाओd in
+		 * next tag पूर्णांकegration.
 		 */
-		writel(MLXBF_I2C_SMBUS_MASTER_FSM_PS_STATE_MASK,
+		ग_लिखोl(MLXBF_I2C_SMBUS_MASTER_FSM_PS_STATE_MASK,
 			priv->smbus->io + MLXBF_I2C_SMBUS_MASTER_FSM);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* I2C SMBus protocols. */
 
-static void
-mlxbf_i2c_smbus_quick_command(struct mlxbf_i2c_smbus_request *request,
-			      u8 read)
-{
+अटल व्योम
+mlxbf_i2c_smbus_quick_command(काष्ठा mlxbf_i2c_smbus_request *request,
+			      u8 पढ़ो)
+अणु
 	request->operation_cnt = MLXBF_I2C_SMBUS_OP_CNT_1;
 
 	request->operation[0].length = 0;
 	request->operation[0].flags = MLXBF_I2C_F_WRITE;
-	request->operation[0].flags |= read ? MLXBF_I2C_F_READ : 0;
-}
+	request->operation[0].flags |= पढ़ो ? MLXBF_I2C_F_READ : 0;
+पूर्ण
 
-static void mlxbf_i2c_smbus_byte_func(struct mlxbf_i2c_smbus_request *request,
-				      u8 *data, bool read, bool pec_check)
-{
+अटल व्योम mlxbf_i2c_smbus_byte_func(काष्ठा mlxbf_i2c_smbus_request *request,
+				      u8 *data, bool पढ़ो, bool pec_check)
+अणु
 	request->operation_cnt = MLXBF_I2C_SMBUS_OP_CNT_1;
 
 	request->operation[0].length = 1;
 	request->operation[0].length += pec_check;
 
 	request->operation[0].flags = MLXBF_I2C_F_SMBUS_OPERATION;
-	request->operation[0].flags |= read ?
+	request->operation[0].flags |= पढ़ो ?
 				MLXBF_I2C_F_READ : MLXBF_I2C_F_WRITE;
 	request->operation[0].flags |= pec_check ? MLXBF_I2C_F_SMBUS_PEC : 0;
 
 	request->operation[0].buffer = data;
-}
+पूर्ण
 
-static void
-mlxbf_i2c_smbus_data_byte_func(struct mlxbf_i2c_smbus_request *request,
-			       u8 *command, u8 *data, bool read, bool pec_check)
-{
+अटल व्योम
+mlxbf_i2c_smbus_data_byte_func(काष्ठा mlxbf_i2c_smbus_request *request,
+			       u8 *command, u8 *data, bool पढ़ो, bool pec_check)
+अणु
 	request->operation_cnt = MLXBF_I2C_SMBUS_OP_CNT_2;
 
 	request->operation[0].length = 1;
@@ -842,15 +843,15 @@ mlxbf_i2c_smbus_data_byte_func(struct mlxbf_i2c_smbus_request *request,
 
 	request->operation[1].length = 1;
 	request->operation[1].length += pec_check;
-	request->operation[1].flags = read ?
+	request->operation[1].flags = पढ़ो ?
 				MLXBF_I2C_F_READ : MLXBF_I2C_F_WRITE;
 	request->operation[1].buffer = data;
-}
+पूर्ण
 
-static void
-mlxbf_i2c_smbus_data_word_func(struct mlxbf_i2c_smbus_request *request,
-			       u8 *command, u8 *data, bool read, bool pec_check)
-{
+अटल व्योम
+mlxbf_i2c_smbus_data_word_func(काष्ठा mlxbf_i2c_smbus_request *request,
+			       u8 *command, u8 *data, bool पढ़ो, bool pec_check)
+अणु
 	request->operation_cnt = MLXBF_I2C_SMBUS_OP_CNT_2;
 
 	request->operation[0].length = 1;
@@ -861,16 +862,16 @@ mlxbf_i2c_smbus_data_word_func(struct mlxbf_i2c_smbus_request *request,
 
 	request->operation[1].length = 2;
 	request->operation[1].length += pec_check;
-	request->operation[1].flags = read ?
+	request->operation[1].flags = पढ़ो ?
 				MLXBF_I2C_F_READ : MLXBF_I2C_F_WRITE;
 	request->operation[1].buffer = data;
-}
+पूर्ण
 
-static void
-mlxbf_i2c_smbus_i2c_block_func(struct mlxbf_i2c_smbus_request *request,
-			       u8 *command, u8 *data, u8 *data_len, bool read,
+अटल व्योम
+mlxbf_i2c_smbus_i2c_block_func(काष्ठा mlxbf_i2c_smbus_request *request,
+			       u8 *command, u8 *data, u8 *data_len, bool पढ़ो,
 			       bool pec_check)
-{
+अणु
 	request->operation_cnt = MLXBF_I2C_SMBUS_OP_CNT_2;
 
 	request->operation[0].length = 1;
@@ -880,32 +881,32 @@ mlxbf_i2c_smbus_i2c_block_func(struct mlxbf_i2c_smbus_request *request,
 	request->operation[0].buffer = command;
 
 	/*
-	 * As specified in the standard, the max number of bytes to read/write
+	 * As specअगरied in the standard, the max number of bytes to पढ़ो/ग_लिखो
 	 * per block operation is 32 bytes. In Golan code, the controller can
-	 * read up to 128 bytes and write up to 127 bytes.
+	 * पढ़ो up to 128 bytes and ग_लिखो up to 127 bytes.
 	 */
 	request->operation[1].length =
 	    (*data_len + pec_check > I2C_SMBUS_BLOCK_MAX) ?
 	    I2C_SMBUS_BLOCK_MAX : *data_len + pec_check;
-	request->operation[1].flags = read ?
+	request->operation[1].flags = पढ़ो ?
 				MLXBF_I2C_F_READ : MLXBF_I2C_F_WRITE;
 	/*
 	 * Skip the first data byte, which corresponds to the number of bytes
-	 * to read/write.
+	 * to पढ़ो/ग_लिखो.
 	 */
 	request->operation[1].buffer = data + 1;
 
 	*data_len = request->operation[1].length;
 
-	/* Set the number of byte to read. This will be used by userspace. */
-	if (read)
+	/* Set the number of byte to पढ़ो. This will be used by userspace. */
+	अगर (पढ़ो)
 		data[0] = *data_len;
-}
+पूर्ण
 
-static void mlxbf_i2c_smbus_block_func(struct mlxbf_i2c_smbus_request *request,
+अटल व्योम mlxbf_i2c_smbus_block_func(काष्ठा mlxbf_i2c_smbus_request *request,
 				       u8 *command, u8 *data, u8 *data_len,
-				       bool read, bool pec_check)
-{
+				       bool पढ़ो, bool pec_check)
+अणु
 	request->operation_cnt = MLXBF_I2C_SMBUS_OP_CNT_2;
 
 	request->operation[0].length = 1;
@@ -918,21 +919,21 @@ static void mlxbf_i2c_smbus_block_func(struct mlxbf_i2c_smbus_request *request,
 	request->operation[1].length =
 	    (*data_len + pec_check > I2C_SMBUS_BLOCK_MAX) ?
 	    I2C_SMBUS_BLOCK_MAX : *data_len + pec_check;
-	request->operation[1].flags = read ?
+	request->operation[1].flags = पढ़ो ?
 				MLXBF_I2C_F_READ : MLXBF_I2C_F_WRITE;
 	request->operation[1].buffer = data + 1;
 
 	*data_len = request->operation[1].length;
 
-	/* Set the number of bytes to read. This will be used by userspace. */
-	if (read)
+	/* Set the number of bytes to पढ़ो. This will be used by userspace. */
+	अगर (पढ़ो)
 		data[0] = *data_len;
-}
+पूर्ण
 
-static void
-mlxbf_i2c_smbus_process_call_func(struct mlxbf_i2c_smbus_request *request,
+अटल व्योम
+mlxbf_i2c_smbus_process_call_func(काष्ठा mlxbf_i2c_smbus_request *request,
 				  u8 *command, u8 *data, bool pec_check)
-{
+अणु
 	request->operation_cnt = MLXBF_I2C_SMBUS_OP_CNT_3;
 
 	request->operation[0].length = 1;
@@ -949,13 +950,13 @@ mlxbf_i2c_smbus_process_call_func(struct mlxbf_i2c_smbus_request *request,
 	request->operation[2].length = 3;
 	request->operation[2].flags = MLXBF_I2C_F_READ;
 	request->operation[2].buffer = data;
-}
+पूर्ण
 
-static void
-mlxbf_i2c_smbus_blk_process_call_func(struct mlxbf_i2c_smbus_request *request,
+अटल व्योम
+mlxbf_i2c_smbus_blk_process_call_func(काष्ठा mlxbf_i2c_smbus_request *request,
 				      u8 *command, u8 *data, u8 *data_len,
 				      bool pec_check)
-{
+अणु
 	u32 length;
 
 	request->operation_cnt = MLXBF_I2C_SMBUS_OP_CNT_3;
@@ -979,68 +980,68 @@ mlxbf_i2c_smbus_blk_process_call_func(struct mlxbf_i2c_smbus_request *request,
 	request->operation[2].buffer = data;
 
 	*data_len = length; /* including PEC byte. */
-}
+पूर्ण
 
 /* Initialization functions. */
 
-static bool mlxbf_i2c_has_chip_type(struct mlxbf_i2c_priv *priv, u8 type)
-{
-	return priv->chip->type == type;
-}
+अटल bool mlxbf_i2c_has_chip_type(काष्ठा mlxbf_i2c_priv *priv, u8 type)
+अणु
+	वापस priv->chip->type == type;
+पूर्ण
 
-static struct mlxbf_i2c_resource *
-mlxbf_i2c_get_shared_resource(struct mlxbf_i2c_priv *priv, u8 type)
-{
-	const struct mlxbf_i2c_chip_info *chip = priv->chip;
-	struct mlxbf_i2c_resource *res;
+अटल काष्ठा mlxbf_i2c_resource *
+mlxbf_i2c_get_shared_resource(काष्ठा mlxbf_i2c_priv *priv, u8 type)
+अणु
+	स्थिर काष्ठा mlxbf_i2c_chip_info *chip = priv->chip;
+	काष्ठा mlxbf_i2c_resource *res;
 	u8 res_idx = 0;
 
-	for (res_idx = 0; res_idx < MLXBF_I2C_SHARED_RES_MAX; res_idx++) {
+	क्रम (res_idx = 0; res_idx < MLXBF_I2C_SHARED_RES_MAX; res_idx++) अणु
 		res = chip->shared_res[res_idx];
-		if (res && res->type == type)
-			return res;
-	}
+		अगर (res && res->type == type)
+			वापस res;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int mlxbf_i2c_init_resource(struct platform_device *pdev,
-				   struct mlxbf_i2c_resource **res,
+अटल पूर्णांक mlxbf_i2c_init_resource(काष्ठा platक्रमm_device *pdev,
+				   काष्ठा mlxbf_i2c_resource **res,
 				   u8 type)
-{
-	struct mlxbf_i2c_resource *tmp_res;
-	struct device *dev = &pdev->dev;
+अणु
+	काष्ठा mlxbf_i2c_resource *पंचांगp_res;
+	काष्ठा device *dev = &pdev->dev;
 
-	if (!res || *res || type >= MLXBF_I2C_END_RES)
-		return -EINVAL;
+	अगर (!res || *res || type >= MLXBF_I2C_END_RES)
+		वापस -EINVAL;
 
-	tmp_res = devm_kzalloc(dev, sizeof(struct mlxbf_i2c_resource),
+	पंचांगp_res = devm_kzalloc(dev, माप(काष्ठा mlxbf_i2c_resource),
 			       GFP_KERNEL);
-	if (!tmp_res)
-		return -ENOMEM;
+	अगर (!पंचांगp_res)
+		वापस -ENOMEM;
 
-	tmp_res->params = platform_get_resource(pdev, IORESOURCE_MEM, type);
-	if (!tmp_res->params) {
-		devm_kfree(dev, tmp_res);
-		return -EIO;
-	}
+	पंचांगp_res->params = platक्रमm_get_resource(pdev, IORESOURCE_MEM, type);
+	अगर (!पंचांगp_res->params) अणु
+		devm_kमुक्त(dev, पंचांगp_res);
+		वापस -EIO;
+	पूर्ण
 
-	tmp_res->io = devm_ioremap_resource(dev, tmp_res->params);
-	if (IS_ERR(tmp_res->io)) {
-		devm_kfree(dev, tmp_res);
-		return PTR_ERR(tmp_res->io);
-	}
+	पंचांगp_res->io = devm_ioremap_resource(dev, पंचांगp_res->params);
+	अगर (IS_ERR(पंचांगp_res->io)) अणु
+		devm_kमुक्त(dev, पंचांगp_res);
+		वापस PTR_ERR(पंचांगp_res->io);
+	पूर्ण
 
-	tmp_res->type = type;
+	पंचांगp_res->type = type;
 
-	*res = tmp_res;
+	*res = पंचांगp_res;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 mlxbf_i2c_get_ticks(struct mlxbf_i2c_priv *priv, u64 nanoseconds,
+अटल u32 mlxbf_i2c_get_ticks(काष्ठा mlxbf_i2c_priv *priv, u64 nanoseconds,
 			       bool minimum)
-{
+अणु
 	u64 frequency;
 	u32 ticks;
 
@@ -1054,88 +1055,88 @@ static u32 mlxbf_i2c_get_ticks(struct mlxbf_i2c_priv *priv, u64 nanoseconds,
 	frequency = priv->frequency;
 	ticks = (nanoseconds * frequency) / MLXBF_I2C_FREQUENCY_1GHZ;
 	/*
-	 * The number of ticks is rounded down and if minimum is equal to 1
+	 * The number of ticks is rounded करोwn and अगर minimum is equal to 1
 	 * then add one tick.
 	 */
-	if (minimum)
+	अगर (minimum)
 		ticks++;
 
-	return ticks;
-}
+	वापस ticks;
+पूर्ण
 
-static u32 mlxbf_i2c_set_timer(struct mlxbf_i2c_priv *priv, u64 nsec, bool opt,
-			       u32 mask, u8 shift)
-{
-	u32 val = (mlxbf_i2c_get_ticks(priv, nsec, opt) & mask) << shift;
+अटल u32 mlxbf_i2c_set_समयr(काष्ठा mlxbf_i2c_priv *priv, u64 nsec, bool opt,
+			       u32 mask, u8 shअगरt)
+अणु
+	u32 val = (mlxbf_i2c_get_ticks(priv, nsec, opt) & mask) << shअगरt;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void mlxbf_i2c_set_timings(struct mlxbf_i2c_priv *priv,
-				  const struct mlxbf_i2c_timings *timings)
-{
-	u32 timer;
+अटल व्योम mlxbf_i2c_set_timings(काष्ठा mlxbf_i2c_priv *priv,
+				  स्थिर काष्ठा mlxbf_i2c_timings *timings)
+अणु
+	u32 समयr;
 
-	timer = mlxbf_i2c_set_timer(priv, timings->scl_high,
+	समयr = mlxbf_i2c_set_समयr(priv, timings->scl_high,
 				    false, MLXBF_I2C_MASK_16,
 				    MLXBF_I2C_SHIFT_0);
-	timer |= mlxbf_i2c_set_timer(priv, timings->scl_low,
+	समयr |= mlxbf_i2c_set_समयr(priv, timings->scl_low,
 				     false, MLXBF_I2C_MASK_16,
 				     MLXBF_I2C_SHIFT_16);
-	writel(timer, priv->smbus->io +
+	ग_लिखोl(समयr, priv->smbus->io +
 		MLXBF_I2C_SMBUS_TIMER_SCL_LOW_SCL_HIGH);
 
-	timer = mlxbf_i2c_set_timer(priv, timings->sda_rise, false,
+	समयr = mlxbf_i2c_set_समयr(priv, timings->sda_rise, false,
 				    MLXBF_I2C_MASK_8, MLXBF_I2C_SHIFT_0);
-	timer |= mlxbf_i2c_set_timer(priv, timings->sda_fall, false,
+	समयr |= mlxbf_i2c_set_समयr(priv, timings->sda_fall, false,
 				     MLXBF_I2C_MASK_8, MLXBF_I2C_SHIFT_8);
-	timer |= mlxbf_i2c_set_timer(priv, timings->scl_rise, false,
+	समयr |= mlxbf_i2c_set_समयr(priv, timings->scl_rise, false,
 				     MLXBF_I2C_MASK_8, MLXBF_I2C_SHIFT_16);
-	timer |= mlxbf_i2c_set_timer(priv, timings->scl_fall, false,
+	समयr |= mlxbf_i2c_set_समयr(priv, timings->scl_fall, false,
 				     MLXBF_I2C_MASK_8, MLXBF_I2C_SHIFT_24);
-	writel(timer, priv->smbus->io +
+	ग_लिखोl(समयr, priv->smbus->io +
 		MLXBF_I2C_SMBUS_TIMER_FALL_RISE_SPIKE);
 
-	timer = mlxbf_i2c_set_timer(priv, timings->hold_start, true,
+	समयr = mlxbf_i2c_set_समयr(priv, timings->hold_start, true,
 				    MLXBF_I2C_MASK_16, MLXBF_I2C_SHIFT_0);
-	timer |= mlxbf_i2c_set_timer(priv, timings->hold_data, true,
+	समयr |= mlxbf_i2c_set_समयr(priv, timings->hold_data, true,
 				     MLXBF_I2C_MASK_16, MLXBF_I2C_SHIFT_16);
-	writel(timer, priv->smbus->io + MLXBF_I2C_SMBUS_TIMER_THOLD);
+	ग_लिखोl(समयr, priv->smbus->io + MLXBF_I2C_SMBUS_TIMER_THOLD);
 
-	timer = mlxbf_i2c_set_timer(priv, timings->setup_start, true,
+	समयr = mlxbf_i2c_set_समयr(priv, timings->setup_start, true,
 				    MLXBF_I2C_MASK_16, MLXBF_I2C_SHIFT_0);
-	timer |= mlxbf_i2c_set_timer(priv, timings->setup_stop, true,
+	समयr |= mlxbf_i2c_set_समयr(priv, timings->setup_stop, true,
 				     MLXBF_I2C_MASK_16, MLXBF_I2C_SHIFT_16);
-	writel(timer, priv->smbus->io +
+	ग_लिखोl(समयr, priv->smbus->io +
 		MLXBF_I2C_SMBUS_TIMER_TSETUP_START_STOP);
 
-	timer = mlxbf_i2c_set_timer(priv, timings->setup_data, true,
+	समयr = mlxbf_i2c_set_समयr(priv, timings->setup_data, true,
 				    MLXBF_I2C_MASK_16, MLXBF_I2C_SHIFT_0);
-	writel(timer, priv->smbus->io + MLXBF_I2C_SMBUS_TIMER_TSETUP_DATA);
+	ग_लिखोl(समयr, priv->smbus->io + MLXBF_I2C_SMBUS_TIMER_TSETUP_DATA);
 
-	timer = mlxbf_i2c_set_timer(priv, timings->buf, false,
+	समयr = mlxbf_i2c_set_समयr(priv, timings->buf, false,
 				    MLXBF_I2C_MASK_16, MLXBF_I2C_SHIFT_0);
-	timer |= mlxbf_i2c_set_timer(priv, timings->thigh_max, false,
+	समयr |= mlxbf_i2c_set_समयr(priv, timings->thigh_max, false,
 				     MLXBF_I2C_MASK_16, MLXBF_I2C_SHIFT_16);
-	writel(timer, priv->smbus->io + MLXBF_I2C_SMBUS_THIGH_MAX_TBUF);
+	ग_लिखोl(समयr, priv->smbus->io + MLXBF_I2C_SMBUS_THIGH_MAX_TBUF);
 
-	timer = timings->timeout;
-	writel(timer, priv->smbus->io + MLXBF_I2C_SMBUS_SCL_LOW_TIMEOUT);
-}
+	समयr = timings->समयout;
+	ग_लिखोl(समयr, priv->smbus->io + MLXBF_I2C_SMBUS_SCL_LOW_TIMEOUT);
+पूर्ण
 
-enum mlxbf_i2c_timings_config {
+क्रमागत mlxbf_i2c_timings_config अणु
 	MLXBF_I2C_TIMING_CONFIG_100KHZ,
 	MLXBF_I2C_TIMING_CONFIG_400KHZ,
 	MLXBF_I2C_TIMING_CONFIG_1000KHZ,
-};
+पूर्ण;
 
 /*
- * Note that the mlxbf_i2c_timings->timeout value is not related to the
- * bus frequency, it is impacted by the time it takes the driver to
- * complete data transmission before transaction abort.
+ * Note that the mlxbf_i2c_timings->समयout value is not related to the
+ * bus frequency, it is impacted by the समय it takes the driver to
+ * complete data transmission beक्रमe transaction पात.
  */
-static const struct mlxbf_i2c_timings mlxbf_i2c_timings[] = {
-	[MLXBF_I2C_TIMING_CONFIG_100KHZ] = {
+अटल स्थिर काष्ठा mlxbf_i2c_timings mlxbf_i2c_timings[] = अणु
+	[MLXBF_I2C_TIMING_CONFIG_100KHZ] = अणु
 		.scl_high = 4810,
 		.scl_low = 5000,
 		.hold_start = 4000,
@@ -1149,9 +1150,9 @@ static const struct mlxbf_i2c_timings mlxbf_i2c_timings[] = {
 		.hold_data = 300,
 		.buf = 20000,
 		.thigh_max = 5000,
-		.timeout = 106500
-	},
-	[MLXBF_I2C_TIMING_CONFIG_400KHZ] = {
+		.समयout = 106500
+	पूर्ण,
+	[MLXBF_I2C_TIMING_CONFIG_400KHZ] = अणु
 		.scl_high = 1011,
 		.scl_low = 1300,
 		.hold_start = 600,
@@ -1165,9 +1166,9 @@ static const struct mlxbf_i2c_timings mlxbf_i2c_timings[] = {
 		.hold_data = 300,
 		.buf = 20000,
 		.thigh_max = 5000,
-		.timeout = 106500
-	},
-	[MLXBF_I2C_TIMING_CONFIG_1000KHZ] = {
+		.समयout = 106500
+	पूर्ण,
+	[MLXBF_I2C_TIMING_CONFIG_1000KHZ] = अणु
 		.scl_high = 600,
 		.scl_low = 1300,
 		.hold_start = 600,
@@ -1181,234 +1182,234 @@ static const struct mlxbf_i2c_timings mlxbf_i2c_timings[] = {
 		.hold_data = 300,
 		.buf = 20000,
 		.thigh_max = 5000,
-		.timeout = 106500
-	}
-};
+		.समयout = 106500
+	पूर्ण
+पूर्ण;
 
-static int mlxbf_i2c_init_timings(struct platform_device *pdev,
-				  struct mlxbf_i2c_priv *priv)
-{
-	enum mlxbf_i2c_timings_config config_idx;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक mlxbf_i2c_init_timings(काष्ठा platक्रमm_device *pdev,
+				  काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	क्रमागत mlxbf_i2c_timings_config config_idx;
+	काष्ठा device *dev = &pdev->dev;
 	u32 config_khz;
 
-	int ret;
+	पूर्णांक ret;
 
-	ret = device_property_read_u32(dev, "clock-frequency", &config_khz);
-	if (ret < 0)
+	ret = device_property_पढ़ो_u32(dev, "clock-frequency", &config_khz);
+	अगर (ret < 0)
 		config_khz = I2C_MAX_STANDARD_MODE_FREQ;
 
-	switch (config_khz) {
-	default:
+	चयन (config_khz) अणु
+	शेष:
 		/* Default settings is 100 KHz. */
 		pr_warn("Illegal value %d: defaulting to 100 KHz\n",
 			config_khz);
 		fallthrough;
-	case I2C_MAX_STANDARD_MODE_FREQ:
+	हाल I2C_MAX_STANDARD_MODE_FREQ:
 		config_idx = MLXBF_I2C_TIMING_CONFIG_100KHZ;
-		break;
+		अवरोध;
 
-	case I2C_MAX_FAST_MODE_FREQ:
+	हाल I2C_MAX_FAST_MODE_FREQ:
 		config_idx = MLXBF_I2C_TIMING_CONFIG_400KHZ;
-		break;
+		अवरोध;
 
-	case I2C_MAX_FAST_MODE_PLUS_FREQ:
+	हाल I2C_MAX_FAST_MODE_PLUS_FREQ:
 		config_idx = MLXBF_I2C_TIMING_CONFIG_1000KHZ;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mlxbf_i2c_set_timings(priv, &mlxbf_i2c_timings[config_idx]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_i2c_get_gpio(struct platform_device *pdev,
-			      struct mlxbf_i2c_priv *priv)
-{
-	struct mlxbf_i2c_resource *gpio_res;
-	struct device *dev = &pdev->dev;
-	struct resource	*params;
-	resource_size_t size;
+अटल पूर्णांक mlxbf_i2c_get_gpio(काष्ठा platक्रमm_device *pdev,
+			      काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	काष्ठा mlxbf_i2c_resource *gpio_res;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource	*params;
+	resource_माप_प्रकार size;
 
 	gpio_res = mlxbf_i2c_get_shared_resource(priv, MLXBF_I2C_GPIO_RES);
-	if (!gpio_res)
-		return -EPERM;
+	अगर (!gpio_res)
+		वापस -EPERM;
 
 	/*
 	 * The GPIO region in TYU space is shared among I2C busses.
-	 * This function MUST be serialized to avoid racing when
+	 * This function MUST be serialized to aव्योम racing when
 	 * claiming the memory region and/or setting up the GPIO.
 	 */
-	lockdep_assert_held(gpio_res->lock);
+	lockdep_निश्चित_held(gpio_res->lock);
 
 	/* Check whether the memory map exist. */
-	if (gpio_res->io)
-		return 0;
+	अगर (gpio_res->io)
+		वापस 0;
 
 	params = gpio_res->params;
 	size = resource_size(params);
 
-	if (!devm_request_mem_region(dev, params->start, size, params->name))
-		return -EFAULT;
+	अगर (!devm_request_mem_region(dev, params->start, size, params->name))
+		वापस -EFAULT;
 
 	gpio_res->io = devm_ioremap(dev, params->start, size);
-	if (!gpio_res->io) {
+	अगर (!gpio_res->io) अणु
 		devm_release_mem_region(dev, params->start, size);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_i2c_release_gpio(struct platform_device *pdev,
-				  struct mlxbf_i2c_priv *priv)
-{
-	struct mlxbf_i2c_resource *gpio_res;
-	struct device *dev = &pdev->dev;
-	struct resource	*params;
+अटल पूर्णांक mlxbf_i2c_release_gpio(काष्ठा platक्रमm_device *pdev,
+				  काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	काष्ठा mlxbf_i2c_resource *gpio_res;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource	*params;
 
 	gpio_res = mlxbf_i2c_get_shared_resource(priv, MLXBF_I2C_GPIO_RES);
-	if (!gpio_res)
-		return 0;
+	अगर (!gpio_res)
+		वापस 0;
 
 	mutex_lock(gpio_res->lock);
 
-	if (gpio_res->io) {
+	अगर (gpio_res->io) अणु
 		/* Release the GPIO resource. */
 		params = gpio_res->params;
 		devm_iounmap(dev, gpio_res->io);
 		devm_release_mem_region(dev, params->start,
 					resource_size(params));
-	}
+	पूर्ण
 
 	mutex_unlock(gpio_res->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_i2c_get_corepll(struct platform_device *pdev,
-				 struct mlxbf_i2c_priv *priv)
-{
-	struct mlxbf_i2c_resource *corepll_res;
-	struct device *dev = &pdev->dev;
-	struct resource *params;
-	resource_size_t size;
+अटल पूर्णांक mlxbf_i2c_get_corepll(काष्ठा platक्रमm_device *pdev,
+				 काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	काष्ठा mlxbf_i2c_resource *corepll_res;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *params;
+	resource_माप_प्रकार size;
 
 	corepll_res = mlxbf_i2c_get_shared_resource(priv,
 						    MLXBF_I2C_COREPLL_RES);
-	if (!corepll_res)
-		return -EPERM;
+	अगर (!corepll_res)
+		वापस -EPERM;
 
 	/*
 	 * The COREPLL region in TYU space is shared among I2C busses.
-	 * This function MUST be serialized to avoid racing when
+	 * This function MUST be serialized to aव्योम racing when
 	 * claiming the memory region.
 	 */
-	lockdep_assert_held(corepll_res->lock);
+	lockdep_निश्चित_held(corepll_res->lock);
 
 	/* Check whether the memory map exist. */
-	if (corepll_res->io)
-		return 0;
+	अगर (corepll_res->io)
+		वापस 0;
 
 	params = corepll_res->params;
 	size = resource_size(params);
 
-	if (!devm_request_mem_region(dev, params->start, size, params->name))
-		return -EFAULT;
+	अगर (!devm_request_mem_region(dev, params->start, size, params->name))
+		वापस -EFAULT;
 
 	corepll_res->io = devm_ioremap(dev, params->start, size);
-	if (!corepll_res->io) {
+	अगर (!corepll_res->io) अणु
 		devm_release_mem_region(dev, params->start, size);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_i2c_release_corepll(struct platform_device *pdev,
-				     struct mlxbf_i2c_priv *priv)
-{
-	struct mlxbf_i2c_resource *corepll_res;
-	struct device *dev = &pdev->dev;
-	struct resource *params;
+अटल पूर्णांक mlxbf_i2c_release_corepll(काष्ठा platक्रमm_device *pdev,
+				     काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	काष्ठा mlxbf_i2c_resource *corepll_res;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *params;
 
 	corepll_res = mlxbf_i2c_get_shared_resource(priv,
 						    MLXBF_I2C_COREPLL_RES);
 
 	mutex_lock(corepll_res->lock);
 
-	if (corepll_res->io) {
+	अगर (corepll_res->io) अणु
 		/* Release the CorePLL resource. */
 		params = corepll_res->params;
 		devm_iounmap(dev, corepll_res->io);
 		devm_release_mem_region(dev, params->start,
 					resource_size(params));
-	}
+	पूर्ण
 
 	mutex_unlock(corepll_res->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_i2c_init_master(struct platform_device *pdev,
-				 struct mlxbf_i2c_priv *priv)
-{
-	struct mlxbf_i2c_resource *gpio_res;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक mlxbf_i2c_init_master(काष्ठा platक्रमm_device *pdev,
+				 काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	काष्ठा mlxbf_i2c_resource *gpio_res;
+	काष्ठा device *dev = &pdev->dev;
 	u32 config_reg;
-	int ret;
+	पूर्णांक ret;
 
-	/* This configuration is only needed for BlueField 1. */
-	if (!mlxbf_i2c_has_chip_type(priv, MLXBF_I2C_CHIP_TYPE_1))
-		return 0;
+	/* This configuration is only needed क्रम BlueField 1. */
+	अगर (!mlxbf_i2c_has_chip_type(priv, MLXBF_I2C_CHIP_TYPE_1))
+		वापस 0;
 
 	gpio_res = mlxbf_i2c_get_shared_resource(priv, MLXBF_I2C_GPIO_RES);
-	if (!gpio_res)
-		return -EPERM;
+	अगर (!gpio_res)
+		वापस -EPERM;
 
 	/*
 	 * The GPIO region in TYU space is shared among I2C busses.
-	 * This function MUST be serialized to avoid racing when
+	 * This function MUST be serialized to aव्योम racing when
 	 * claiming the memory region and/or setting up the GPIO.
 	 */
 
 	mutex_lock(gpio_res->lock);
 
 	ret = mlxbf_i2c_get_gpio(pdev, priv);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to get gpio resource");
 		mutex_unlock(gpio_res->lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * TYU - Configuration for GPIO pins. Those pins must be asserted in
+	 * TYU - Configuration क्रम GPIO pins. Those pins must be निश्चितed in
 	 * MLXBF_I2C_GPIO_0_FUNC_EN_0, i.e. GPIO 0 is controlled by HW, and must
 	 * be reset in MLXBF_I2C_GPIO_0_FORCE_OE_EN, i.e. GPIO_OE will be driven
 	 * instead of HW_OE.
-	 * For now, we do not reset the GPIO state when the driver is removed.
+	 * For now, we करो not reset the GPIO state when the driver is हटाओd.
 	 * First, it is not necessary to disable the bus since we are using
 	 * the same busses. Then, some busses might be shared among Linux and
-	 * platform firmware; disabling the bus might compromise the system
+	 * platक्रमm firmware; disabling the bus might compromise the प्रणाली
 	 * functionality.
 	 */
-	config_reg = readl(gpio_res->io + MLXBF_I2C_GPIO_0_FUNC_EN_0);
+	config_reg = पढ़ोl(gpio_res->io + MLXBF_I2C_GPIO_0_FUNC_EN_0);
 	config_reg = MLXBF_I2C_GPIO_SMBUS_GW_ASSERT_PINS(priv->bus,
 							 config_reg);
-	writel(config_reg, gpio_res->io + MLXBF_I2C_GPIO_0_FUNC_EN_0);
+	ग_लिखोl(config_reg, gpio_res->io + MLXBF_I2C_GPIO_0_FUNC_EN_0);
 
-	config_reg = readl(gpio_res->io + MLXBF_I2C_GPIO_0_FORCE_OE_EN);
+	config_reg = पढ़ोl(gpio_res->io + MLXBF_I2C_GPIO_0_FORCE_OE_EN);
 	config_reg = MLXBF_I2C_GPIO_SMBUS_GW_RESET_PINS(priv->bus,
 							config_reg);
-	writel(config_reg, gpio_res->io + MLXBF_I2C_GPIO_0_FORCE_OE_EN);
+	ग_लिखोl(config_reg, gpio_res->io + MLXBF_I2C_GPIO_0_FORCE_OE_EN);
 
 	mutex_unlock(gpio_res->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64 mlxbf_calculate_freq_from_tyu(struct mlxbf_i2c_resource *corepll_res)
-{
+अटल u64 mlxbf_calculate_freq_from_tyu(काष्ठा mlxbf_i2c_resource *corepll_res)
+अणु
 	u64 core_frequency, pad_frequency;
 	u8 core_od, core_r;
 	u32 corepll_val;
@@ -1416,7 +1417,7 @@ static u64 mlxbf_calculate_freq_from_tyu(struct mlxbf_i2c_resource *corepll_res)
 
 	pad_frequency = MLXBF_I2C_PLL_IN_FREQ;
 
-	corepll_val = readl(corepll_res->io + MLXBF_I2C_CORE_PLL_REG1);
+	corepll_val = पढ़ोl(corepll_res->io + MLXBF_I2C_CORE_PLL_REG1);
 
 	/* Get Core PLL configuration bits. */
 	core_f = rol32(corepll_val, MLXBF_I2C_COREPLL_CORE_F_TYU_SHIFT) &
@@ -1439,11 +1440,11 @@ static u64 mlxbf_calculate_freq_from_tyu(struct mlxbf_i2c_resource *corepll_res)
 	core_frequency = pad_frequency * (++core_f);
 	core_frequency /= (++core_r) * (++core_od);
 
-	return core_frequency;
-}
+	वापस core_frequency;
+पूर्ण
 
-static u64 mlxbf_calculate_freq_from_yu(struct mlxbf_i2c_resource *corepll_res)
-{
+अटल u64 mlxbf_calculate_freq_from_yu(काष्ठा mlxbf_i2c_resource *corepll_res)
+अणु
 	u32 corepll_reg1_val, corepll_reg2_val;
 	u64 corepll_frequency, pad_frequency;
 	u8 core_od, core_r;
@@ -1451,8 +1452,8 @@ static u64 mlxbf_calculate_freq_from_yu(struct mlxbf_i2c_resource *corepll_res)
 
 	pad_frequency = MLXBF_I2C_PLL_IN_FREQ;
 
-	corepll_reg1_val = readl(corepll_res->io + MLXBF_I2C_CORE_PLL_REG1);
-	corepll_reg2_val = readl(corepll_res->io + MLXBF_I2C_CORE_PLL_REG2);
+	corepll_reg1_val = पढ़ोl(corepll_res->io + MLXBF_I2C_CORE_PLL_REG1);
+	corepll_reg2_val = पढ़ोl(corepll_res->io + MLXBF_I2C_CORE_PLL_REG2);
 
 	/* Get Core PLL configuration bits */
 	core_f = rol32(corepll_reg1_val, MLXBF_I2C_COREPLL_CORE_F_YU_SHIFT) &
@@ -1475,144 +1476,144 @@ static u64 mlxbf_calculate_freq_from_yu(struct mlxbf_i2c_resource *corepll_res)
 	corepll_frequency = (pad_frequency * core_f) / MLNXBF_I2C_COREPLL_CONST;
 	corepll_frequency /= (++core_r) * (++core_od);
 
-	return corepll_frequency;
-}
+	वापस corepll_frequency;
+पूर्ण
 
-static int mlxbf_i2c_calculate_corepll_freq(struct platform_device *pdev,
-					    struct mlxbf_i2c_priv *priv)
-{
-	const struct mlxbf_i2c_chip_info *chip = priv->chip;
-	struct mlxbf_i2c_resource *corepll_res;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक mlxbf_i2c_calculate_corepll_freq(काष्ठा platक्रमm_device *pdev,
+					    काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	स्थिर काष्ठा mlxbf_i2c_chip_info *chip = priv->chip;
+	काष्ठा mlxbf_i2c_resource *corepll_res;
+	काष्ठा device *dev = &pdev->dev;
 	u64 *freq = &priv->frequency;
-	int ret;
+	पूर्णांक ret;
 
 	corepll_res = mlxbf_i2c_get_shared_resource(priv,
 						    MLXBF_I2C_COREPLL_RES);
-	if (!corepll_res)
-		return -EPERM;
+	अगर (!corepll_res)
+		वापस -EPERM;
 
 	/*
 	 * First, check whether the TYU core Clock frequency is set.
-	 * The TYU core frequency is the same for all I2C busses; when
-	 * the first device gets probed the frequency is determined and
-	 * stored into a globally visible variable. So, first of all,
-	 * check whether the frequency is already set. Here, we assume
+	 * The TYU core frequency is the same क्रम all I2C busses; when
+	 * the first device माला_लो probed the frequency is determined and
+	 * stored पूर्णांकo a globally visible variable. So, first of all,
+	 * check whether the frequency is alपढ़ोy set. Here, we assume
 	 * that the frequency is expected to be greater than 0.
 	 */
 	mutex_lock(corepll_res->lock);
-	if (!mlxbf_i2c_corepll_frequency) {
-		if (!chip->calculate_freq) {
+	अगर (!mlxbf_i2c_corepll_frequency) अणु
+		अगर (!chip->calculate_freq) अणु
 			mutex_unlock(corepll_res->lock);
-			return -EPERM;
-		}
+			वापस -EPERM;
+		पूर्ण
 
 		ret = mlxbf_i2c_get_corepll(pdev, priv);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "Failed to get corePLL resource");
 			mutex_unlock(corepll_res->lock);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		mlxbf_i2c_corepll_frequency = chip->calculate_freq(corepll_res);
-	}
+	पूर्ण
 	mutex_unlock(corepll_res->lock);
 
 	*freq = mlxbf_i2c_corepll_frequency;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_slave_enable(struct mlxbf_i2c_priv *priv, u8 addr)
-{
-	u32 slave_reg, slave_reg_tmp, slave_reg_avail, slave_addr_mask;
-	u8 reg, reg_cnt, byte, addr_tmp, reg_avail, byte_avail;
+अटल पूर्णांक mlxbf_slave_enable(काष्ठा mlxbf_i2c_priv *priv, u8 addr)
+अणु
+	u32 slave_reg, slave_reg_पंचांगp, slave_reg_avail, slave_addr_mask;
+	u8 reg, reg_cnt, byte, addr_पंचांगp, reg_avail, byte_avail;
 	bool avail, disabled;
 
 	disabled = false;
 	avail = false;
 
-	if (!priv)
-		return -EPERM;
+	अगर (!priv)
+		वापस -EPERM;
 
 	reg_cnt = MLXBF_I2C_SMBUS_SLAVE_ADDR_CNT >> 2;
 	slave_addr_mask = MLXBF_I2C_SMBUS_SLAVE_ADDR_MASK;
 
 	/*
-	 * Read the slave registers. There are 4 * 32-bit slave registers.
-	 * Each slave register can hold up to 4 * 8-bit slave configuration
-	 * (7-bit address, 1 status bit (1 if enabled, 0 if not)).
+	 * Read the slave रेजिस्टरs. There are 4 * 32-bit slave रेजिस्टरs.
+	 * Each slave रेजिस्टर can hold up to 4 * 8-bit slave configuration
+	 * (7-bit address, 1 status bit (1 अगर enabled, 0 अगर not)).
 	 */
-	for (reg = 0; reg < reg_cnt; reg++) {
-		slave_reg = readl(priv->smbus->io +
+	क्रम (reg = 0; reg < reg_cnt; reg++) अणु
+		slave_reg = पढ़ोl(priv->smbus->io +
 				MLXBF_I2C_SMBUS_SLAVE_ADDR_CFG + reg * 0x4);
 		/*
-		 * Each register holds 4 slave addresses. So, we have to keep
-		 * the byte order consistent with the value read in order to
-		 * update the register correctly, if needed.
+		 * Each रेजिस्टर holds 4 slave addresses. So, we have to keep
+		 * the byte order consistent with the value पढ़ो in order to
+		 * update the रेजिस्टर correctly, अगर needed.
 		 */
-		slave_reg_tmp = slave_reg;
-		for (byte = 0; byte < 4; byte++) {
-			addr_tmp = slave_reg_tmp & GENMASK(7, 0);
+		slave_reg_पंचांगp = slave_reg;
+		क्रम (byte = 0; byte < 4; byte++) अणु
+			addr_पंचांगp = slave_reg_पंचांगp & GENMASK(7, 0);
 
 			/*
 			 * Mark the first available slave address slot, i.e. its
 			 * enabled bit should be unset. This slot might be used
-			 * later on to register our slave.
+			 * later on to रेजिस्टर our slave.
 			 */
-			if (!avail && !MLXBF_I2C_SLAVE_ADDR_ENABLED(addr_tmp)) {
+			अगर (!avail && !MLXBF_I2C_SLAVE_ADDR_ENABLED(addr_पंचांगp)) अणु
 				avail = true;
 				reg_avail = reg;
 				byte_avail = byte;
 				slave_reg_avail = slave_reg;
-			}
+			पूर्ण
 
 			/*
 			 * Parse slave address bytes and check whether the
-			 * slave address already exists and it's enabled,
-			 * i.e. most significant bit is set.
+			 * slave address alपढ़ोy exists and it's enabled,
+			 * i.e. most signअगरicant bit is set.
 			 */
-			if ((addr_tmp & slave_addr_mask) == addr) {
-				if (MLXBF_I2C_SLAVE_ADDR_ENABLED(addr_tmp))
-					return 0;
+			अगर ((addr_पंचांगp & slave_addr_mask) == addr) अणु
+				अगर (MLXBF_I2C_SLAVE_ADDR_ENABLED(addr_पंचांगp))
+					वापस 0;
 				disabled = true;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Parse next byte. */
-			slave_reg_tmp >>= 8;
-		}
+			slave_reg_पंचांगp >>= 8;
+		पूर्ण
 
-		/* Exit the loop if the slave address is found. */
-		if (disabled)
-			break;
-	}
+		/* Exit the loop अगर the slave address is found. */
+		अगर (disabled)
+			अवरोध;
+	पूर्ण
 
-	if (!avail && !disabled)
-		return -EINVAL; /* No room for a new slave address. */
+	अगर (!avail && !disabled)
+		वापस -EINVAL; /* No room क्रम a new slave address. */
 
-	if (avail && !disabled) {
+	अगर (avail && !disabled) अणु
 		reg = reg_avail;
 		byte = byte_avail;
 		/* Set the slave address. */
 		slave_reg_avail &= ~(slave_addr_mask << (byte * 8));
 		slave_reg_avail |= addr << (byte * 8);
 		slave_reg = slave_reg_avail;
-	}
+	पूर्ण
 
-	/* Enable the slave address and update the register. */
+	/* Enable the slave address and update the रेजिस्टर. */
 	slave_reg |= (1 << MLXBF_I2C_SMBUS_SLAVE_ADDR_EN_BIT) << (byte * 8);
-	writel(slave_reg, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_ADDR_CFG +
+	ग_लिखोl(slave_reg, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_ADDR_CFG +
 		reg * 0x4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_slave_disable(struct mlxbf_i2c_priv *priv)
-{
-	u32 slave_reg, slave_reg_tmp, slave_addr_mask;
-	u8 addr, addr_tmp, reg, reg_cnt, slave_byte;
-	struct i2c_client *client = priv->slave;
+अटल पूर्णांक mlxbf_slave_disable(काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	u32 slave_reg, slave_reg_पंचांगp, slave_addr_mask;
+	u8 addr, addr_पंचांगp, reg, reg_cnt, slave_byte;
+	काष्ठा i2c_client *client = priv->slave;
 	bool exist;
 
 	exist = false;
@@ -1622,713 +1623,713 @@ static int mlxbf_slave_disable(struct mlxbf_i2c_priv *priv)
 	slave_addr_mask = MLXBF_I2C_SMBUS_SLAVE_ADDR_MASK;
 
 	/*
-	 * Read the slave registers. There are 4 * 32-bit slave registers.
-	 * Each slave register can hold up to 4 * 8-bit slave configuration
-	 * (7-bit address, 1 status bit (1 if enabled, 0 if not)).
+	 * Read the slave रेजिस्टरs. There are 4 * 32-bit slave रेजिस्टरs.
+	 * Each slave रेजिस्टर can hold up to 4 * 8-bit slave configuration
+	 * (7-bit address, 1 status bit (1 अगर enabled, 0 अगर not)).
 	 */
-	for (reg = 0; reg < reg_cnt; reg++) {
-		slave_reg = readl(priv->smbus->io +
+	क्रम (reg = 0; reg < reg_cnt; reg++) अणु
+		slave_reg = पढ़ोl(priv->smbus->io +
 				MLXBF_I2C_SMBUS_SLAVE_ADDR_CFG + reg * 0x4);
 
 		/* Check whether the address slots are empty. */
-		if (slave_reg == 0)
-			continue;
+		अगर (slave_reg == 0)
+			जारी;
 
 		/*
-		 * Each register holds 4 slave addresses. So, we have to keep
-		 * the byte order consistent with the value read in order to
-		 * update the register correctly, if needed.
+		 * Each रेजिस्टर holds 4 slave addresses. So, we have to keep
+		 * the byte order consistent with the value पढ़ो in order to
+		 * update the रेजिस्टर correctly, अगर needed.
 		 */
-		slave_reg_tmp = slave_reg;
+		slave_reg_पंचांगp = slave_reg;
 		slave_byte = 0;
-		while (slave_reg_tmp != 0) {
-			addr_tmp = slave_reg_tmp & slave_addr_mask;
+		जबतक (slave_reg_पंचांगp != 0) अणु
+			addr_पंचांगp = slave_reg_पंचांगp & slave_addr_mask;
 			/*
 			 * Parse slave address bytes and check whether the
-			 * slave address already exists.
+			 * slave address alपढ़ोy exists.
 			 */
-			if (addr_tmp == addr) {
+			अगर (addr_पंचांगp == addr) अणु
 				exist = true;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Parse next byte. */
-			slave_reg_tmp >>= 8;
+			slave_reg_पंचांगp >>= 8;
 			slave_byte += 1;
-		}
+		पूर्ण
 
-		/* Exit the loop if the slave address is found. */
-		if (exist)
-			break;
-	}
+		/* Exit the loop अगर the slave address is found. */
+		अगर (exist)
+			अवरोध;
+	पूर्ण
 
-	if (!exist)
-		return 0; /* Slave is not registered, nothing to do. */
+	अगर (!exist)
+		वापस 0; /* Slave is not रेजिस्टरed, nothing to करो. */
 
 	/* Cleanup the slave address slot. */
 	slave_reg &= ~(GENMASK(7, 0) << (slave_byte * 8));
-	writel(slave_reg, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_ADDR_CFG +
+	ग_लिखोl(slave_reg, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_ADDR_CFG +
 		reg * 0x4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_i2c_init_coalesce(struct platform_device *pdev,
-				   struct mlxbf_i2c_priv *priv)
-{
-	struct mlxbf_i2c_resource *coalesce_res;
-	struct resource *params;
-	resource_size_t size;
-	int ret = 0;
+अटल पूर्णांक mlxbf_i2c_init_coalesce(काष्ठा platक्रमm_device *pdev,
+				   काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	काष्ठा mlxbf_i2c_resource *coalesce_res;
+	काष्ठा resource *params;
+	resource_माप_प्रकार size;
+	पूर्णांक ret = 0;
 
 	/*
-	 * Unlike BlueField-1 platform, the coalesce registers is a dedicated
+	 * Unlike BlueField-1 platक्रमm, the coalesce रेजिस्टरs is a dedicated
 	 * resource in the next generations of BlueField.
 	 */
-	if (mlxbf_i2c_has_chip_type(priv, MLXBF_I2C_CHIP_TYPE_1)) {
+	अगर (mlxbf_i2c_has_chip_type(priv, MLXBF_I2C_CHIP_TYPE_1)) अणु
 		coalesce_res = mlxbf_i2c_get_shared_resource(priv,
 						MLXBF_I2C_COALESCE_RES);
-		if (!coalesce_res)
-			return -EPERM;
+		अगर (!coalesce_res)
+			वापस -EPERM;
 
 		/*
 		 * The Cause Coalesce group in TYU space is shared among
-		 * I2C busses. This function MUST be serialized to avoid
+		 * I2C busses. This function MUST be serialized to aव्योम
 		 * racing when claiming the memory region.
 		 */
-		lockdep_assert_held(mlxbf_i2c_gpio_res->lock);
+		lockdep_निश्चित_held(mlxbf_i2c_gpio_res->lock);
 
 		/* Check whether the memory map exist. */
-		if (coalesce_res->io) {
+		अगर (coalesce_res->io) अणु
 			priv->coalesce = coalesce_res;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		params = coalesce_res->params;
 		size = resource_size(params);
 
-		if (!request_mem_region(params->start, size, params->name))
-			return -EFAULT;
+		अगर (!request_mem_region(params->start, size, params->name))
+			वापस -EFAULT;
 
 		coalesce_res->io = ioremap(params->start, size);
-		if (!coalesce_res->io) {
+		अगर (!coalesce_res->io) अणु
 			release_mem_region(params->start, size);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		priv->coalesce = coalesce_res;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = mlxbf_i2c_init_resource(pdev, &priv->coalesce,
 					      MLXBF_I2C_COALESCE_RES);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mlxbf_i2c_release_coalesce(struct platform_device *pdev,
-				      struct mlxbf_i2c_priv *priv)
-{
-	struct mlxbf_i2c_resource *coalesce_res;
-	struct device *dev = &pdev->dev;
-	struct resource *params;
-	resource_size_t size;
+अटल पूर्णांक mlxbf_i2c_release_coalesce(काष्ठा platक्रमm_device *pdev,
+				      काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	काष्ठा mlxbf_i2c_resource *coalesce_res;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *params;
+	resource_माप_प्रकार size;
 
 	coalesce_res = priv->coalesce;
 
-	if (coalesce_res->io) {
+	अगर (coalesce_res->io) अणु
 		params = coalesce_res->params;
 		size = resource_size(params);
-		if (mlxbf_i2c_has_chip_type(priv, MLXBF_I2C_CHIP_TYPE_1)) {
+		अगर (mlxbf_i2c_has_chip_type(priv, MLXBF_I2C_CHIP_TYPE_1)) अणु
 			mutex_lock(coalesce_res->lock);
 			iounmap(coalesce_res->io);
 			release_mem_region(params->start, size);
 			mutex_unlock(coalesce_res->lock);
-		} else {
+		पूर्ण अन्यथा अणु
 			devm_release_mem_region(dev, params->start, size);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_i2c_init_slave(struct platform_device *pdev,
-				struct mlxbf_i2c_priv *priv)
-{
-	struct device *dev = &pdev->dev;
-	u32 int_reg;
-	int ret;
+अटल पूर्णांक mlxbf_i2c_init_slave(काष्ठा platक्रमm_device *pdev,
+				काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	u32 पूर्णांक_reg;
+	पूर्णांक ret;
 
 	/* Reset FSM. */
-	writel(0, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_FSM);
+	ग_लिखोl(0, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_FSM);
 
 	/*
-	 * Enable slave cause interrupt bits. Drive
+	 * Enable slave cause पूर्णांकerrupt bits. Drive
 	 * MLXBF_I2C_CAUSE_READ_WAIT_FW_RESPONSE and
-	 * MLXBF_I2C_CAUSE_WRITE_SUCCESS, these are enabled when an external
+	 * MLXBF_I2C_CAUSE_WRITE_SUCCESS, these are enabled when an बाह्यal
 	 * masters issue a Read and Write, respectively. But, clear all
-	 * interrupts first.
+	 * पूर्णांकerrupts first.
 	 */
-	writel(~0, priv->slv_cause->io + MLXBF_I2C_CAUSE_OR_CLEAR);
-	int_reg = MLXBF_I2C_CAUSE_READ_WAIT_FW_RESPONSE;
-	int_reg |= MLXBF_I2C_CAUSE_WRITE_SUCCESS;
-	writel(int_reg, priv->slv_cause->io + MLXBF_I2C_CAUSE_OR_EVTEN0);
+	ग_लिखोl(~0, priv->slv_cause->io + MLXBF_I2C_CAUSE_OR_CLEAR);
+	पूर्णांक_reg = MLXBF_I2C_CAUSE_READ_WAIT_FW_RESPONSE;
+	पूर्णांक_reg |= MLXBF_I2C_CAUSE_WRITE_SUCCESS;
+	ग_लिखोl(पूर्णांक_reg, priv->slv_cause->io + MLXBF_I2C_CAUSE_OR_EVTEN0);
 
 	/* Finally, set the 'ready' bit to start handling transactions. */
-	writel(0x1, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_READY);
+	ग_लिखोl(0x1, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_READY);
 
 	/* Initialize the cause coalesce resource. */
 	ret = mlxbf_i2c_init_coalesce(pdev, priv);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to initialize cause coalesce\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool mlxbf_i2c_has_coalesce(struct mlxbf_i2c_priv *priv, bool *read,
-				   bool *write)
-{
-	const struct mlxbf_i2c_chip_info *chip = priv->chip;
+अटल bool mlxbf_i2c_has_coalesce(काष्ठा mlxbf_i2c_priv *priv, bool *पढ़ो,
+				   bool *ग_लिखो)
+अणु
+	स्थिर काष्ठा mlxbf_i2c_chip_info *chip = priv->chip;
 	u32 coalesce0_reg, cause_reg;
-	u8 slave_shift, is_set;
+	u8 slave_shअगरt, is_set;
 
-	*write = false;
-	*read = false;
+	*ग_लिखो = false;
+	*पढ़ो = false;
 
-	slave_shift = chip->type != MLXBF_I2C_CHIP_TYPE_1 ?
+	slave_shअगरt = chip->type != MLXBF_I2C_CHIP_TYPE_1 ?
 				MLXBF_I2C_CAUSE_YU_SLAVE_BIT :
 				priv->bus + MLXBF_I2C_CAUSE_TYU_SLAVE_BIT;
 
-	coalesce0_reg = readl(priv->coalesce->io + MLXBF_I2C_CAUSE_COALESCE_0);
-	is_set = coalesce0_reg & (1 << slave_shift);
+	coalesce0_reg = पढ़ोl(priv->coalesce->io + MLXBF_I2C_CAUSE_COALESCE_0);
+	is_set = coalesce0_reg & (1 << slave_shअगरt);
 
-	if (!is_set)
-		return false;
+	अगर (!is_set)
+		वापस false;
 
-	/* Check the source of the interrupt, i.e. whether a Read or Write. */
-	cause_reg = readl(priv->slv_cause->io + MLXBF_I2C_CAUSE_ARBITER);
-	if (cause_reg & MLXBF_I2C_CAUSE_READ_WAIT_FW_RESPONSE)
-		*read = true;
-	else if (cause_reg & MLXBF_I2C_CAUSE_WRITE_SUCCESS)
-		*write = true;
+	/* Check the source of the पूर्णांकerrupt, i.e. whether a Read or Write. */
+	cause_reg = पढ़ोl(priv->slv_cause->io + MLXBF_I2C_CAUSE_ARBITER);
+	अगर (cause_reg & MLXBF_I2C_CAUSE_READ_WAIT_FW_RESPONSE)
+		*पढ़ो = true;
+	अन्यथा अगर (cause_reg & MLXBF_I2C_CAUSE_WRITE_SUCCESS)
+		*ग_लिखो = true;
 
 	/* Clear cause bits. */
-	writel(~0x0, priv->slv_cause->io + MLXBF_I2C_CAUSE_OR_CLEAR);
+	ग_लिखोl(~0x0, priv->slv_cause->io + MLXBF_I2C_CAUSE_OR_CLEAR);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool mlxbf_smbus_slave_wait_for_idle(struct mlxbf_i2c_priv *priv,
-					    u32 timeout)
-{
+अटल bool mlxbf_smbus_slave_रुको_क्रम_idle(काष्ठा mlxbf_i2c_priv *priv,
+					    u32 समयout)
+अणु
 	u32 mask = MLXBF_I2C_CAUSE_S_GW_BUSY_FALL;
 	u32 addr = MLXBF_I2C_CAUSE_ARBITER;
 
-	if (mlxbf_smbus_poll(priv->slv_cause->io, addr, mask, false, timeout))
-		return true;
+	अगर (mlxbf_smbus_poll(priv->slv_cause->io, addr, mask, false, समयout))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* Send byte to 'external' smbus master. */
-static int mlxbf_smbus_irq_send(struct mlxbf_i2c_priv *priv, u8 recv_bytes)
-{
-	u8 data_desc[MLXBF_I2C_SLAVE_DATA_DESC_SIZE] = { 0 };
-	u8 write_size, pec_en, addr, byte, value, byte_cnt, desc_size;
-	struct i2c_client *slave = priv->slave;
+अटल पूर्णांक mlxbf_smbus_irq_send(काष्ठा mlxbf_i2c_priv *priv, u8 recv_bytes)
+अणु
+	u8 data_desc[MLXBF_I2C_SLAVE_DATA_DESC_SIZE] = अणु 0 पूर्ण;
+	u8 ग_लिखो_size, pec_en, addr, byte, value, byte_cnt, desc_size;
+	काष्ठा i2c_client *slave = priv->slave;
 	u32 control32, data32;
-	int ret;
+	पूर्णांक ret;
 
-	if (!slave)
-		return -EINVAL;
+	अगर (!slave)
+		वापस -EINVAL;
 
 	addr = 0;
 	byte = 0;
 	desc_size = MLXBF_I2C_SLAVE_DATA_DESC_SIZE;
 
 	/*
-	 * Read bytes received from the external master. These bytes should
-	 * be located in the first data descriptor register of the slave GW.
-	 * These bytes are the slave address byte and the internal register
-	 * address, if supplied.
+	 * Read bytes received from the बाह्यal master. These bytes should
+	 * be located in the first data descriptor रेजिस्टर of the slave GW.
+	 * These bytes are the slave address byte and the पूर्णांकernal रेजिस्टर
+	 * address, अगर supplied.
 	 */
-	if (recv_bytes > 0) {
-		data32 = ioread32be(priv->smbus->io +
+	अगर (recv_bytes > 0) अणु
+		data32 = ioपढ़ो32be(priv->smbus->io +
 					MLXBF_I2C_SLAVE_DATA_DESC_ADDR);
 
 		/* Parse the received bytes. */
-		switch (recv_bytes) {
-		case 2:
+		चयन (recv_bytes) अणु
+		हाल 2:
 			byte = (data32 >> 8) & GENMASK(7, 0);
 			fallthrough;
-		case 1:
+		हाल 1:
 			addr = (data32 & GENMASK(7, 0)) >> 1;
-		}
+		पूर्ण
 
 		/* Check whether it's our slave address. */
-		if (slave->addr != addr)
-			return -EINVAL;
-	}
+		अगर (slave->addr != addr)
+			वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * I2C read transactions may start by a WRITE followed by a READ.
-	 * Indeed, most slave devices would expect the internal address
-	 * following the slave address byte. So, write that byte first,
+	 * I2C पढ़ो transactions may start by a WRITE followed by a READ.
+	 * Indeed, most slave devices would expect the पूर्णांकernal address
+	 * following the slave address byte. So, ग_लिखो that byte first,
 	 * and then, send the requested data bytes to the master.
 	 */
-	if (recv_bytes > 1) {
+	अगर (recv_bytes > 1) अणु
 		i2c_slave_event(slave, I2C_SLAVE_WRITE_REQUESTED, &value);
 		value = byte;
 		ret = i2c_slave_event(slave, I2C_SLAVE_WRITE_RECEIVED,
 				      &value);
 		i2c_slave_event(slave, I2C_SLAVE_STOP, &value);
 
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	/*
 	 * Now, send data to the master; currently, the driver supports
 	 * READ_BYTE, READ_WORD and BLOCK READ protocols. Note that the
 	 * hardware can send up to 128 bytes per transfer. That is the
-	 * size of its data registers.
+	 * size of its data रेजिस्टरs.
 	 */
 	i2c_slave_event(slave, I2C_SLAVE_READ_REQUESTED, &value);
 
-	for (byte_cnt = 0; byte_cnt < desc_size; byte_cnt++) {
+	क्रम (byte_cnt = 0; byte_cnt < desc_size; byte_cnt++) अणु
 		data_desc[byte_cnt] = value;
 		i2c_slave_event(slave, I2C_SLAVE_READ_PROCESSED, &value);
-	}
+	पूर्ण
 
 	/* Send a stop condition to the backend. */
 	i2c_slave_event(slave, I2C_SLAVE_STOP, &value);
 
 	/* Handle the actual transfer. */
 
-	/* Set the number of bytes to write to master. */
-	write_size = (byte_cnt - 1) & 0x7f;
+	/* Set the number of bytes to ग_लिखो to master. */
+	ग_लिखो_size = (byte_cnt - 1) & 0x7f;
 
 	/* Write data to Slave GW data descriptor. */
-	mlxbf_i2c_smbus_write_data(priv, data_desc, byte_cnt,
+	mlxbf_i2c_smbus_ग_लिखो_data(priv, data_desc, byte_cnt,
 				   MLXBF_I2C_SLAVE_DATA_DESC_ADDR);
 
 	pec_en = 0; /* Disable PEC since it is not supported. */
 
 	/* Prepare control word. */
 	control32 = MLXBF_I2C_SLAVE_ENABLE;
-	control32 |= rol32(write_size, MLXBF_I2C_SLAVE_WRITE_BYTES_SHIFT);
+	control32 |= rol32(ग_लिखो_size, MLXBF_I2C_SLAVE_WRITE_BYTES_SHIFT);
 	control32 |= rol32(pec_en, MLXBF_I2C_SLAVE_SEND_PEC_SHIFT);
 
-	writel(control32, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_GW);
+	ग_लिखोl(control32, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_GW);
 
 	/*
-	 * Wait until the transfer is completed; the driver will wait
+	 * Wait until the transfer is completed; the driver will रुको
 	 * until the GW is idle, a cause will rise on fall of GW busy.
 	 */
-	mlxbf_smbus_slave_wait_for_idle(priv, MLXBF_I2C_SMBUS_TIMEOUT);
+	mlxbf_smbus_slave_रुको_क्रम_idle(priv, MLXBF_I2C_SMBUS_TIMEOUT);
 
 	/* Release the Slave GW. */
-	writel(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_RS_MASTER_BYTES);
-	writel(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_PEC);
-	writel(0x1, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_READY);
+	ग_लिखोl(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_RS_MASTER_BYTES);
+	ग_लिखोl(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_PEC);
+	ग_लिखोl(0x1, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_READY);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Receive bytes from 'external' smbus master. */
-static int mlxbf_smbus_irq_recv(struct mlxbf_i2c_priv *priv, u8 recv_bytes)
-{
-	u8 data_desc[MLXBF_I2C_SLAVE_DATA_DESC_SIZE] = { 0 };
-	struct i2c_client *slave = priv->slave;
+अटल पूर्णांक mlxbf_smbus_irq_recv(काष्ठा mlxbf_i2c_priv *priv, u8 recv_bytes)
+अणु
+	u8 data_desc[MLXBF_I2C_SLAVE_DATA_DESC_SIZE] = अणु 0 पूर्ण;
+	काष्ठा i2c_client *slave = priv->slave;
 	u8 value, byte, addr;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!slave)
-		return -EINVAL;
+	अगर (!slave)
+		वापस -EINVAL;
 
 	/* Read data from Slave GW data descriptor. */
-	mlxbf_i2c_smbus_read_data(priv, data_desc, recv_bytes,
+	mlxbf_i2c_smbus_पढ़ो_data(priv, data_desc, recv_bytes,
 				  MLXBF_I2C_SLAVE_DATA_DESC_ADDR);
 
 	/* Check whether its our slave address. */
 	addr = data_desc[0] >> 1;
-	if (slave->addr != addr)
-		return -EINVAL;
+	अगर (slave->addr != addr)
+		वापस -EINVAL;
 
 	/*
-	 * Notify the slave backend; another I2C master wants to write data
-	 * to us. This event is sent once the slave address and the write bit
+	 * Notअगरy the slave backend; another I2C master wants to ग_लिखो data
+	 * to us. This event is sent once the slave address and the ग_लिखो bit
 	 * is detected.
 	 */
 	i2c_slave_event(slave, I2C_SLAVE_WRITE_REQUESTED, &value);
 
 	/* Send the received data to the slave backend. */
-	for (byte = 1; byte < recv_bytes; byte++) {
+	क्रम (byte = 1; byte < recv_bytes; byte++) अणु
 		value = data_desc[byte];
 		ret = i2c_slave_event(slave, I2C_SLAVE_WRITE_RECEIVED,
 				      &value);
-		if (ret < 0)
-			break;
-	}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
 
 	/* Send a stop condition to the backend. */
 	i2c_slave_event(slave, I2C_SLAVE_STOP, &value);
 
 	/* Release the Slave GW. */
-	writel(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_RS_MASTER_BYTES);
-	writel(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_PEC);
-	writel(0x1, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_READY);
+	ग_लिखोl(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_RS_MASTER_BYTES);
+	ग_लिखोl(0x0, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_PEC);
+	ग_लिखोl(0x1, priv->smbus->io + MLXBF_I2C_SMBUS_SLAVE_READY);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t mlxbf_smbus_irq(int irq, void *ptr)
-{
-	struct mlxbf_i2c_priv *priv = ptr;
-	bool read, write, irq_is_set;
+अटल irqवापस_t mlxbf_smbus_irq(पूर्णांक irq, व्योम *ptr)
+अणु
+	काष्ठा mlxbf_i2c_priv *priv = ptr;
+	bool पढ़ो, ग_लिखो, irq_is_set;
 	u32 rw_bytes_reg;
 	u8 recv_bytes;
 
 	/*
-	 * Read TYU interrupt register and determine the source of the
-	 * interrupt. Based on the source of the interrupt one of the
-	 * following actions are performed:
+	 * Read TYU पूर्णांकerrupt रेजिस्टर and determine the source of the
+	 * पूर्णांकerrupt. Based on the source of the पूर्णांकerrupt one of the
+	 * following actions are perक्रमmed:
 	 *  - Receive data and send response to master.
 	 *  - Send data and release slave GW.
 	 *
-	 * Handle read/write transaction only. CRmaster and Iarp requests
-	 * are ignored for now.
+	 * Handle पढ़ो/ग_लिखो transaction only. CRmaster and Iarp requests
+	 * are ignored क्रम now.
 	 */
-	irq_is_set = mlxbf_i2c_has_coalesce(priv, &read, &write);
-	if (!irq_is_set || (!read && !write)) {
-		/* Nothing to do here, interrupt was not from this device. */
-		return IRQ_NONE;
-	}
+	irq_is_set = mlxbf_i2c_has_coalesce(priv, &पढ़ो, &ग_लिखो);
+	अगर (!irq_is_set || (!पढ़ो && !ग_लिखो)) अणु
+		/* Nothing to करो here, पूर्णांकerrupt was not from this device. */
+		वापस IRQ_NONE;
+	पूर्ण
 
 	/*
 	 * The MLXBF_I2C_SMBUS_SLAVE_RS_MASTER_BYTES includes the number of
 	 * bytes from/to master. These are defined by 8-bits each. If the lower
-	 * 8 bits are set, then the master expect to read N bytes from the
-	 * slave, if the higher 8 bits are sent then the slave expect N bytes
+	 * 8 bits are set, then the master expect to पढ़ो N bytes from the
+	 * slave, अगर the higher 8 bits are sent then the slave expect N bytes
 	 * from the master.
 	 */
-	rw_bytes_reg = readl(priv->smbus->io +
+	rw_bytes_reg = पढ़ोl(priv->smbus->io +
 				MLXBF_I2C_SMBUS_SLAVE_RS_MASTER_BYTES);
 	recv_bytes = (rw_bytes_reg >> 8) & GENMASK(7, 0);
 
 	/*
-	 * For now, the slave supports 128 bytes transfer. Discard remaining
-	 * data bytes if the master wrote more than
+	 * For now, the slave supports 128 bytes transfer. Discard reमुख्यing
+	 * data bytes अगर the master wrote more than
 	 * MLXBF_I2C_SLAVE_DATA_DESC_SIZE, i.e, the actual size of the slave
 	 * data descriptor.
 	 *
 	 * Note that we will never expect to transfer more than 128 bytes; as
-	 * specified in the SMBus standard, block transactions cannot exceed
+	 * specअगरied in the SMBus standard, block transactions cannot exceed
 	 * 32 bytes.
 	 */
 	recv_bytes = recv_bytes > MLXBF_I2C_SLAVE_DATA_DESC_SIZE ?
 		MLXBF_I2C_SLAVE_DATA_DESC_SIZE : recv_bytes;
 
-	if (read)
+	अगर (पढ़ो)
 		mlxbf_smbus_irq_send(priv, recv_bytes);
-	else
+	अन्यथा
 		mlxbf_smbus_irq_recv(priv, recv_bytes);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* Return negative errno on error. */
-static s32 mlxbf_i2c_smbus_xfer(struct i2c_adapter *adap, u16 addr,
-				unsigned short flags, char read_write,
-				u8 command, int size,
-				union i2c_smbus_data *data)
-{
-	struct mlxbf_i2c_smbus_request request = { 0 };
-	struct mlxbf_i2c_priv *priv;
-	bool read, pec;
+/* Return negative त्रुटि_सं on error. */
+अटल s32 mlxbf_i2c_smbus_xfer(काष्ठा i2c_adapter *adap, u16 addr,
+				अचिन्हित लघु flags, अक्षर पढ़ो_ग_लिखो,
+				u8 command, पूर्णांक size,
+				जोड़ i2c_smbus_data *data)
+अणु
+	काष्ठा mlxbf_i2c_smbus_request request = अणु 0 पूर्ण;
+	काष्ठा mlxbf_i2c_priv *priv;
+	bool पढ़ो, pec;
 	u8 byte_cnt;
 
 	request.slave = addr;
 
-	read = (read_write == I2C_SMBUS_READ);
+	पढ़ो = (पढ़ो_ग_लिखो == I2C_SMBUS_READ);
 	pec = flags & I2C_FUNC_SMBUS_PEC;
 
-	switch (size) {
-	case I2C_SMBUS_QUICK:
-		mlxbf_i2c_smbus_quick_command(&request, read);
+	चयन (size) अणु
+	हाल I2C_SMBUS_QUICK:
+		mlxbf_i2c_smbus_quick_command(&request, पढ़ो);
 		dev_dbg(&adap->dev, "smbus quick, slave 0x%02x\n", addr);
-		break;
+		अवरोध;
 
-	case I2C_SMBUS_BYTE:
+	हाल I2C_SMBUS_BYTE:
 		mlxbf_i2c_smbus_byte_func(&request,
-					  read ? &data->byte : &command, read,
+					  पढ़ो ? &data->byte : &command, पढ़ो,
 					  pec);
 		dev_dbg(&adap->dev, "smbus %s byte, slave 0x%02x.\n",
-			read ? "read" : "write", addr);
-		break;
+			पढ़ो ? "read" : "write", addr);
+		अवरोध;
 
-	case I2C_SMBUS_BYTE_DATA:
+	हाल I2C_SMBUS_BYTE_DATA:
 		mlxbf_i2c_smbus_data_byte_func(&request, &command, &data->byte,
-					       read, pec);
+					       पढ़ो, pec);
 		dev_dbg(&adap->dev, "smbus %s byte data at 0x%02x, slave 0x%02x.\n",
-			read ? "read" : "write", command, addr);
-		break;
+			पढ़ो ? "read" : "write", command, addr);
+		अवरोध;
 
-	case I2C_SMBUS_WORD_DATA:
+	हाल I2C_SMBUS_WORD_DATA:
 		mlxbf_i2c_smbus_data_word_func(&request, &command,
-					       (u8 *)&data->word, read, pec);
+					       (u8 *)&data->word, पढ़ो, pec);
 		dev_dbg(&adap->dev, "smbus %s word data at 0x%02x, slave 0x%02x.\n",
-			read ? "read" : "write", command, addr);
-		break;
+			पढ़ो ? "read" : "write", command, addr);
+		अवरोध;
 
-	case I2C_SMBUS_I2C_BLOCK_DATA:
+	हाल I2C_SMBUS_I2C_BLOCK_DATA:
 		byte_cnt = data->block[0];
 		mlxbf_i2c_smbus_i2c_block_func(&request, &command, data->block,
-					       &byte_cnt, read, pec);
+					       &byte_cnt, पढ़ो, pec);
 		dev_dbg(&adap->dev, "i2c %s block data, %d bytes at 0x%02x, slave 0x%02x.\n",
-			read ? "read" : "write", byte_cnt, command, addr);
-		break;
+			पढ़ो ? "read" : "write", byte_cnt, command, addr);
+		अवरोध;
 
-	case I2C_SMBUS_BLOCK_DATA:
-		byte_cnt = read ? I2C_SMBUS_BLOCK_MAX : data->block[0];
+	हाल I2C_SMBUS_BLOCK_DATA:
+		byte_cnt = पढ़ो ? I2C_SMBUS_BLOCK_MAX : data->block[0];
 		mlxbf_i2c_smbus_block_func(&request, &command, data->block,
-					   &byte_cnt, read, pec);
+					   &byte_cnt, पढ़ो, pec);
 		dev_dbg(&adap->dev, "smbus %s block data, %d bytes at 0x%02x, slave 0x%02x.\n",
-			read ? "read" : "write", byte_cnt, command, addr);
-		break;
+			पढ़ो ? "read" : "write", byte_cnt, command, addr);
+		अवरोध;
 
-	case I2C_FUNC_SMBUS_PROC_CALL:
+	हाल I2C_FUNC_SMBUS_PROC_CALL:
 		mlxbf_i2c_smbus_process_call_func(&request, &command,
 						  (u8 *)&data->word, pec);
 		dev_dbg(&adap->dev, "process call, wr/rd at 0x%02x, slave 0x%02x.\n",
 			command, addr);
-		break;
+		अवरोध;
 
-	case I2C_FUNC_SMBUS_BLOCK_PROC_CALL:
+	हाल I2C_FUNC_SMBUS_BLOCK_PROC_CALL:
 		byte_cnt = data->block[0];
 		mlxbf_i2c_smbus_blk_process_call_func(&request, &command,
 						      data->block, &byte_cnt,
 						      pec);
 		dev_dbg(&adap->dev, "block process call, wr/rd %d bytes, slave 0x%02x.\n",
 			byte_cnt, addr);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_dbg(&adap->dev, "Unsupported I2C/SMBus command %d\n",
 			size);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	priv = i2c_get_adapdata(adap);
 
-	return mlxbf_i2c_smbus_start_transaction(priv, &request);
-}
+	वापस mlxbf_i2c_smbus_start_transaction(priv, &request);
+पूर्ण
 
-static int mlxbf_i2c_reg_slave(struct i2c_client *slave)
-{
-	struct mlxbf_i2c_priv *priv = i2c_get_adapdata(slave->adapter);
-	int ret;
+अटल पूर्णांक mlxbf_i2c_reg_slave(काष्ठा i2c_client *slave)
+अणु
+	काष्ठा mlxbf_i2c_priv *priv = i2c_get_adapdata(slave->adapter);
+	पूर्णांक ret;
 
-	if (priv->slave)
-		return -EBUSY;
+	अगर (priv->slave)
+		वापस -EBUSY;
 
 	/*
-	 * Do not support ten bit chip address and do not use Packet Error
+	 * Do not support ten bit chip address and करो not use Packet Error
 	 * Checking (PEC).
 	 */
-	if (slave->flags & (I2C_CLIENT_TEN | I2C_CLIENT_PEC))
-		return -EAFNOSUPPORT;
+	अगर (slave->flags & (I2C_CLIENT_TEN | I2C_CLIENT_PEC))
+		वापस -EAFNOSUPPORT;
 
 	ret = mlxbf_slave_enable(priv, slave->addr);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	priv->slave = slave;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_i2c_unreg_slave(struct i2c_client *slave)
-{
-	struct mlxbf_i2c_priv *priv = i2c_get_adapdata(slave->adapter);
-	int ret;
+अटल पूर्णांक mlxbf_i2c_unreg_slave(काष्ठा i2c_client *slave)
+अणु
+	काष्ठा mlxbf_i2c_priv *priv = i2c_get_adapdata(slave->adapter);
+	पूर्णांक ret;
 
 	WARN_ON(!priv->slave);
 
-	/* Unregister slave, i.e. disable the slave address in hardware. */
+	/* Unरेजिस्टर slave, i.e. disable the slave address in hardware. */
 	ret = mlxbf_slave_disable(priv);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	priv->slave = NULL;
+	priv->slave = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 mlxbf_i2c_functionality(struct i2c_adapter *adap)
-{
-	return MLXBF_I2C_FUNC_ALL;
-}
+अटल u32 mlxbf_i2c_functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस MLXBF_I2C_FUNC_ALL;
+पूर्ण
 
-static struct mlxbf_i2c_chip_info mlxbf_i2c_chip[] = {
-	[MLXBF_I2C_CHIP_TYPE_1] = {
+अटल काष्ठा mlxbf_i2c_chip_info mlxbf_i2c_chip[] = अणु
+	[MLXBF_I2C_CHIP_TYPE_1] = अणु
 		.type = MLXBF_I2C_CHIP_TYPE_1,
-		.shared_res = {
+		.shared_res = अणु
 			[0] = &mlxbf_i2c_coalesce_res[MLXBF_I2C_CHIP_TYPE_1],
 			[1] = &mlxbf_i2c_corepll_res[MLXBF_I2C_CHIP_TYPE_1],
 			[2] = &mlxbf_i2c_gpio_res[MLXBF_I2C_CHIP_TYPE_1]
-		},
+		पूर्ण,
 		.calculate_freq = mlxbf_calculate_freq_from_tyu
-	},
-	[MLXBF_I2C_CHIP_TYPE_2] = {
+	पूर्ण,
+	[MLXBF_I2C_CHIP_TYPE_2] = अणु
 		.type = MLXBF_I2C_CHIP_TYPE_2,
-		.shared_res = {
+		.shared_res = अणु
 			[0] = &mlxbf_i2c_corepll_res[MLXBF_I2C_CHIP_TYPE_2]
-		},
+		पूर्ण,
 		.calculate_freq = mlxbf_calculate_freq_from_yu
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct i2c_algorithm mlxbf_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm mlxbf_i2c_algo = अणु
 	.smbus_xfer = mlxbf_i2c_smbus_xfer,
 	.functionality = mlxbf_i2c_functionality,
 	.reg_slave = mlxbf_i2c_reg_slave,
 	.unreg_slave = mlxbf_i2c_unreg_slave,
-};
+पूर्ण;
 
-static struct i2c_adapter_quirks mlxbf_i2c_quirks = {
-	.max_read_len = MLXBF_I2C_MASTER_DATA_R_LENGTH,
-	.max_write_len = MLXBF_I2C_MASTER_DATA_W_LENGTH,
-};
+अटल काष्ठा i2c_adapter_quirks mlxbf_i2c_quirks = अणु
+	.max_पढ़ो_len = MLXBF_I2C_MASTER_DATA_R_LENGTH,
+	.max_ग_लिखो_len = MLXBF_I2C_MASTER_DATA_W_LENGTH,
+पूर्ण;
 
-static const struct of_device_id mlxbf_i2c_dt_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mlxbf_i2c_dt_ids[] = अणु
+	अणु
 		.compatible = "mellanox,i2c-mlxbf1",
 		.data = &mlxbf_i2c_chip[MLXBF_I2C_CHIP_TYPE_1]
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "mellanox,i2c-mlxbf2",
 		.data = &mlxbf_i2c_chip[MLXBF_I2C_CHIP_TYPE_2]
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, mlxbf_i2c_dt_ids);
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id mlxbf_i2c_acpi_ids[] = {
-	{ "MLNXBF03", (kernel_ulong_t)&mlxbf_i2c_chip[MLXBF_I2C_CHIP_TYPE_1] },
-	{ "MLNXBF23", (kernel_ulong_t)&mlxbf_i2c_chip[MLXBF_I2C_CHIP_TYPE_2] },
-	{},
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id mlxbf_i2c_acpi_ids[] = अणु
+	अणु "MLNXBF03", (kernel_uदीर्घ_t)&mlxbf_i2c_chip[MLXBF_I2C_CHIP_TYPE_1] पूर्ण,
+	अणु "MLNXBF23", (kernel_uदीर्घ_t)&mlxbf_i2c_chip[MLXBF_I2C_CHIP_TYPE_2] पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(acpi, mlxbf_i2c_acpi_ids);
 
-static int mlxbf_i2c_acpi_probe(struct device *dev, struct mlxbf_i2c_priv *priv)
-{
-	const struct acpi_device_id *aid;
-	struct acpi_device *adev;
-	unsigned long bus_id = 0;
-	const char *uid;
-	int ret;
+अटल पूर्णांक mlxbf_i2c_acpi_probe(काष्ठा device *dev, काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	स्थिर काष्ठा acpi_device_id *aid;
+	काष्ठा acpi_device *adev;
+	अचिन्हित दीर्घ bus_id = 0;
+	स्थिर अक्षर *uid;
+	पूर्णांक ret;
 
-	if (acpi_disabled)
-		return -ENOENT;
+	अगर (acpi_disabled)
+		वापस -ENOENT;
 
 	adev = ACPI_COMPANION(dev);
-	if (!adev)
-		return -ENXIO;
+	अगर (!adev)
+		वापस -ENXIO;
 
 	aid = acpi_match_device(mlxbf_i2c_acpi_ids, dev);
-	if (!aid)
-		return -ENODEV;
+	अगर (!aid)
+		वापस -ENODEV;
 
-	priv->chip = (struct mlxbf_i2c_chip_info *)aid->driver_data;
+	priv->chip = (काष्ठा mlxbf_i2c_chip_info *)aid->driver_data;
 
 	uid = acpi_device_uid(adev);
-	if (!uid || !(*uid)) {
+	अगर (!uid || !(*uid)) अणु
 		dev_err(dev, "Cannot retrieve UID\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = kstrtoul(uid, 0, &bus_id);
-	if (!ret)
+	ret = kम_से_अदीर्घ(uid, 0, &bus_id);
+	अगर (!ret)
 		priv->bus = bus_id;
 
-	return ret;
-}
-#else
-static int mlxbf_i2c_acpi_probe(struct device *dev, struct mlxbf_i2c_priv *priv)
-{
-	return -ENOENT;
-}
-#endif /* CONFIG_ACPI */
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक mlxbf_i2c_acpi_probe(काष्ठा device *dev, काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	वापस -ENOENT;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ACPI */
 
-static int mlxbf_i2c_of_probe(struct device *dev, struct mlxbf_i2c_priv *priv)
-{
-	const struct of_device_id *oid;
-	int bus_id = -1;
+अटल पूर्णांक mlxbf_i2c_of_probe(काष्ठा device *dev, काष्ठा mlxbf_i2c_priv *priv)
+अणु
+	स्थिर काष्ठा of_device_id *oid;
+	पूर्णांक bus_id = -1;
 
-	if (IS_ENABLED(CONFIG_OF) && dev->of_node) {
+	अगर (IS_ENABLED(CONFIG_OF) && dev->of_node) अणु
 		oid = of_match_node(mlxbf_i2c_dt_ids, dev->of_node);
-		if (!oid)
-			return -ENODEV;
+		अगर (!oid)
+			वापस -ENODEV;
 
 		priv->chip = oid->data;
 
 		bus_id = of_alias_get_id(dev->of_node, "i2c");
-		if (bus_id >= 0)
+		अगर (bus_id >= 0)
 			priv->bus = bus_id;
-	}
+	पूर्ण
 
-	if (bus_id < 0) {
+	अगर (bus_id < 0) अणु
 		dev_err(dev, "Cannot get bus id");
-		return bus_id;
-	}
+		वापस bus_id;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_i2c_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct mlxbf_i2c_priv *priv;
-	struct i2c_adapter *adap;
-	int irq, ret;
+अटल पूर्णांक mlxbf_i2c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा mlxbf_i2c_priv *priv;
+	काष्ठा i2c_adapter *adap;
+	पूर्णांक irq, ret;
 
-	priv = devm_kzalloc(dev, sizeof(struct mlxbf_i2c_priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(काष्ठा mlxbf_i2c_priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	ret = mlxbf_i2c_acpi_probe(dev, priv);
-	if (ret < 0 && ret != -ENOENT && ret != -ENXIO)
+	अगर (ret < 0 && ret != -ENOENT && ret != -ENXIO)
 		ret = mlxbf_i2c_of_probe(dev, priv);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = mlxbf_i2c_init_resource(pdev, &priv->smbus,
 				      MLXBF_I2C_SMBUS_RES);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Cannot fetch smbus resource info");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = mlxbf_i2c_init_resource(pdev, &priv->mst_cause,
 				      MLXBF_I2C_MST_CAUSE_RES);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Cannot fetch cause master resource info");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = mlxbf_i2c_init_resource(pdev, &priv->slv_cause,
 				      MLXBF_I2C_SLV_CAUSE_RES);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Cannot fetch cause slave resource info");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	adap = &priv->adap;
 	adap->owner = THIS_MODULE;
@@ -2339,67 +2340,67 @@ static int mlxbf_i2c_probe(struct platform_device *pdev)
 	adap->dev.of_node = dev->of_node;
 	adap->nr = priv->bus;
 
-	snprintf(adap->name, sizeof(adap->name), "i2c%d", adap->nr);
+	snम_लिखो(adap->name, माप(adap->name), "i2c%d", adap->nr);
 	i2c_set_adapdata(adap, priv);
 
 	/* Read Core PLL frequency. */
 	ret = mlxbf_i2c_calculate_corepll_freq(pdev, priv);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "cannot get core clock frequency\n");
-		/* Set to default value. */
+		/* Set to शेष value. */
 		priv->frequency = MLXBF_I2C_COREPLL_FREQ;
-	}
+	पूर्ण
 
 	/*
 	 * Initialize master.
 	 * Note that a physical bus might be shared among Linux and firmware
-	 * (e.g., ATF). Thus, the bus should be initialized and ready and
+	 * (e.g., ATF). Thus, the bus should be initialized and पढ़ोy and
 	 * bus initialization would be unnecessary. This requires additional
 	 * knowledge about physical busses. But, since an extra initialization
-	 * does not really hurt, then keep the code as is.
+	 * करोes not really hurt, then keep the code as is.
 	 */
 	ret = mlxbf_i2c_init_master(pdev, priv);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to initialize smbus master %d",
 			priv->bus);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mlxbf_i2c_init_timings(pdev, priv);
 
 	mlxbf_i2c_init_slave(pdev, priv);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 	ret = devm_request_irq(dev, irq, mlxbf_smbus_irq,
 			       IRQF_ONESHOT | IRQF_SHARED | IRQF_PROBE_SHARED,
 			       dev_name(dev), priv);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Cannot get irq %d\n", irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	priv->irq = irq;
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	ret = i2c_add_numbered_adapter(adap);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	mutex_lock(&mlxbf_i2c_bus_lock);
 	mlxbf_i2c_bus_count++;
 	mutex_unlock(&mlxbf_i2c_bus_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxbf_i2c_remove(struct platform_device *pdev)
-{
-	struct mlxbf_i2c_priv *priv = platform_get_drvdata(pdev);
-	struct device *dev = &pdev->dev;
-	struct resource *params;
+अटल पूर्णांक mlxbf_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mlxbf_i2c_priv *priv = platक्रमm_get_drvdata(pdev);
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *params;
 
 	params = priv->smbus->params;
 	devm_release_mem_region(dev, params->start, resource_size(params));
@@ -2411,59 +2412,59 @@ static int mlxbf_i2c_remove(struct platform_device *pdev)
 	devm_release_mem_region(dev, params->start, resource_size(params));
 
 	/*
-	 * Release shared resources. This should be done when releasing
+	 * Release shared resources. This should be करोne when releasing
 	 * the I2C controller.
 	 */
 	mutex_lock(&mlxbf_i2c_bus_lock);
-	if (--mlxbf_i2c_bus_count == 0) {
+	अगर (--mlxbf_i2c_bus_count == 0) अणु
 		mlxbf_i2c_release_coalesce(pdev, priv);
 		mlxbf_i2c_release_corepll(pdev, priv);
 		mlxbf_i2c_release_gpio(pdev, priv);
-	}
+	पूर्ण
 	mutex_unlock(&mlxbf_i2c_bus_lock);
 
-	devm_free_irq(dev, priv->irq, priv);
+	devm_मुक्त_irq(dev, priv->irq, priv);
 
 	i2c_del_adapter(&priv->adap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mlxbf_i2c_driver = {
+अटल काष्ठा platक्रमm_driver mlxbf_i2c_driver = अणु
 	.probe = mlxbf_i2c_probe,
-	.remove = mlxbf_i2c_remove,
-	.driver = {
+	.हटाओ = mlxbf_i2c_हटाओ,
+	.driver = अणु
 		.name = "i2c-mlxbf",
 		.of_match_table = mlxbf_i2c_dt_ids,
-#ifdef CONFIG_ACPI
+#अगर_घोषित CONFIG_ACPI
 		.acpi_match_table = ACPI_PTR(mlxbf_i2c_acpi_ids),
-#endif /* CONFIG_ACPI  */
-	},
-};
+#पूर्ण_अगर /* CONFIG_ACPI  */
+	पूर्ण,
+पूर्ण;
 
-static int __init mlxbf_i2c_init(void)
-{
+अटल पूर्णांक __init mlxbf_i2c_init(व्योम)
+अणु
 	mutex_init(&mlxbf_i2c_coalesce_lock);
 	mutex_init(&mlxbf_i2c_corepll_lock);
 	mutex_init(&mlxbf_i2c_gpio_lock);
 
 	mutex_init(&mlxbf_i2c_bus_lock);
 
-	return platform_driver_register(&mlxbf_i2c_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&mlxbf_i2c_driver);
+पूर्ण
 module_init(mlxbf_i2c_init);
 
-static void __exit mlxbf_i2c_exit(void)
-{
-	platform_driver_unregister(&mlxbf_i2c_driver);
+अटल व्योम __निकास mlxbf_i2c_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&mlxbf_i2c_driver);
 
 	mutex_destroy(&mlxbf_i2c_bus_lock);
 
 	mutex_destroy(&mlxbf_i2c_gpio_lock);
 	mutex_destroy(&mlxbf_i2c_corepll_lock);
 	mutex_destroy(&mlxbf_i2c_coalesce_lock);
-}
-module_exit(mlxbf_i2c_exit);
+पूर्ण
+module_निकास(mlxbf_i2c_निकास);
 
 MODULE_DESCRIPTION("Mellanox BlueField I2C bus driver");
 MODULE_AUTHOR("Khalil Blaiech <kblaiech@nvidia.com>");

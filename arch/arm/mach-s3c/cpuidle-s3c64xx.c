@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2011 Wolfson Microelectronics, plc
 // Copyright (c) 2011 Samsung Electronics Co., Ltd.
 //		http://www.samsung.com
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/cpuidle.h>
-#include <linux/io.h>
-#include <linux/export.h>
-#include <linux/time.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/export.h>
+#समावेश <linux/समय.स>
 
-#include <asm/cpuidle.h>
+#समावेश <यंत्र/cpuidle.h>
 
-#include "cpu.h"
-#include "map.h"
+#समावेश "cpu.h"
+#समावेश "map.h"
 
-#include "regs-sys-s3c64xx.h"
-#include "regs-syscon-power-s3c64xx.h"
+#समावेश "regs-sys-s3c64xx.h"
+#समावेश "regs-syscon-power-s3c64xx.h"
 
-static int s3c64xx_enter_idle(struct cpuidle_device *dev,
-			      struct cpuidle_driver *drv,
-			      int index)
-{
-	unsigned long tmp;
+अटल पूर्णांक s3c64xx_enter_idle(काष्ठा cpuidle_device *dev,
+			      काष्ठा cpuidle_driver *drv,
+			      पूर्णांक index)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
 
 	/* Setup PWRCFG to enter idle mode */
-	tmp = __raw_readl(S3C64XX_PWR_CFG);
-	tmp &= ~S3C64XX_PWRCFG_CFG_WFI_MASK;
-	tmp |= S3C64XX_PWRCFG_CFG_WFI_IDLE;
-	__raw_writel(tmp, S3C64XX_PWR_CFG);
+	पंचांगp = __raw_पढ़ोl(S3C64XX_PWR_CFG);
+	पंचांगp &= ~S3C64XX_PWRCFG_CFG_WFI_MASK;
+	पंचांगp |= S3C64XX_PWRCFG_CFG_WFI_IDLE;
+	__raw_ग_लिखोl(पंचांगp, S3C64XX_PWR_CFG);
 
-	cpu_do_idle();
+	cpu_करो_idle();
 
-	return index;
-}
+	वापस index;
+पूर्ण
 
-static struct cpuidle_driver s3c64xx_cpuidle_driver = {
+अटल काष्ठा cpuidle_driver s3c64xx_cpuidle_driver = अणु
 	.name	= "s3c64xx_cpuidle",
 	.owner  = THIS_MODULE,
-	.states = {
-		{
+	.states = अणु
+		अणु
 			.enter            = s3c64xx_enter_idle,
-			.exit_latency     = 1,
+			.निकास_latency     = 1,
 			.target_residency = 1,
 			.name             = "IDLE",
 			.desc             = "System active, ARM gated",
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.state_count = 1,
-};
+पूर्ण;
 
-static int __init s3c64xx_init_cpuidle(void)
-{
-	if (soc_is_s3c64xx())
-		return cpuidle_register(&s3c64xx_cpuidle_driver, NULL);
-	return 0;
-}
+अटल पूर्णांक __init s3c64xx_init_cpuidle(व्योम)
+अणु
+	अगर (soc_is_s3c64xx())
+		वापस cpuidle_रेजिस्टर(&s3c64xx_cpuidle_driver, शून्य);
+	वापस 0;
+पूर्ण
 device_initcall(s3c64xx_init_cpuidle);

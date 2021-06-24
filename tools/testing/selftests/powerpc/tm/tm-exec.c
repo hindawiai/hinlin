@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2016, Cyril Bur, IBM Corp.
  *
- * Syscalls can be performed provided the transactions are suspended.
+ * Syscalls can be perक्रमmed provided the transactions are suspended.
  * The exec() class of syscall is unique as a new process is loaded.
  *
- * It makes little sense for after an exec() call for the previously
+ * It makes little sense क्रम after an exec() call क्रम the previously
  * suspended transaction to still exist.
  */
 
-#define _GNU_SOURCE
-#include <errno.h>
-#include <inttypes.h>
-#include <libgen.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#घोषणा _GNU_SOURCE
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <libgen.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
 
-#include "utils.h"
-#include "tm.h"
+#समावेश "utils.h"
+#समावेश "tm.h"
 
-static char *path;
+अटल अक्षर *path;
 
-static int test_exec(void)
-{
-	SKIP_IF(!have_htm());
+अटल पूर्णांक test_exec(व्योम)
+अणु
+	SKIP_IF(!have_hपंचांग());
 
-	asm __volatile__(
+	यंत्र __अस्थिर__(
 		"tbegin.;"
 		"blt    1f; "
 		"tsuspend.;"
 		"1: ;"
 		: : : "memory");
 
-	execl(path, "tm-exec", "--child", NULL);
+	execl(path, "tm-exec", "--child", शून्य);
 
 	/* Shouldn't get here */
-	perror("execl() failed");
-	return 1;
-}
+	लिखो_त्रुटि("execl() failed");
+	वापस 1;
+पूर्ण
 
-static int after_exec(void)
-{
-	asm __volatile__(
+अटल पूर्णांक after_exec(व्योम)
+अणु
+	यंत्र __अस्थिर__(
 		"tbegin.;"
 		"blt    1f;"
 		"tsuspend.;"
@@ -52,15 +53,15 @@ static int after_exec(void)
 		: : : "memory");
 
 	FAIL_IF(failure_is_nesting());
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
 	path = argv[0];
 
-	if (argc > 1 && strcmp(argv[1], "--child") == 0)
-		return after_exec();
+	अगर (argc > 1 && म_भेद(argv[1], "--child") == 0)
+		वापस after_exec();
 
-	return test_harness(test_exec, "tm_exec");
-}
+	वापस test_harness(test_exec, "tm_exec");
+पूर्ण

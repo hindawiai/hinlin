@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause) */
 /*
  * Copyright 2014-2016 Freescale Semiconductor Inc.
  * Copyright 2016 NXP
  *
  */
-#ifndef __FSL_DPAA2_GLOBAL_H
-#define __FSL_DPAA2_GLOBAL_H
+#अगर_अघोषित __FSL_DPAA2_GLOBAL_H
+#घोषणा __FSL_DPAA2_GLOBAL_H
 
-#include <linux/types.h>
-#include <linux/cpumask.h>
-#include "dpaa2-fd.h"
+#समावेश <linux/types.h>
+#समावेश <linux/cpumask.h>
+#समावेश "dpaa2-fd.h"
 
-struct dpaa2_dq {
-	union {
-		struct common {
+काष्ठा dpaa2_dq अणु
+	जोड़ अणु
+		काष्ठा common अणु
 			u8 verb;
 			u8 reserved[63];
-		} common;
-		struct dq {
+		पूर्ण common;
+		काष्ठा dq अणु
 			u8 verb;
 			u8 stat;
 			__le16 seqnum;
@@ -30,57 +31,57 @@ struct dpaa2_dq {
 			__le32 fq_frm_cnt;
 			__le64 fqd_ctx;
 			u8 fd[32];
-		} dq;
-		struct scn {
+		पूर्ण dq;
+		काष्ठा scn अणु
 			u8 verb;
 			u8 stat;
 			u8 state;
 			u8 reserved;
 			__le32 rid_tok;
 			__le64 ctx;
-		} scn;
-	};
-};
+		पूर्ण scn;
+	पूर्ण;
+पूर्ण;
 
 /* Parsing frame dequeue results */
 /* FQ empty */
-#define DPAA2_DQ_STAT_FQEMPTY       0x80
+#घोषणा DPAA2_DQ_STAT_FQEMPTY       0x80
 /* FQ held active */
-#define DPAA2_DQ_STAT_HELDACTIVE    0x40
-/* FQ force eligible */
-#define DPAA2_DQ_STAT_FORCEELIGIBLE 0x20
+#घोषणा DPAA2_DQ_STAT_HELDACTIVE    0x40
+/* FQ क्रमce eligible */
+#घोषणा DPAA2_DQ_STAT_FORCEELIGIBLE 0x20
 /* valid frame */
-#define DPAA2_DQ_STAT_VALIDFRAME    0x10
+#घोषणा DPAA2_DQ_STAT_VALIDFRAME    0x10
 /* FQ ODP enable */
-#define DPAA2_DQ_STAT_ODPVALID      0x04
-/* volatile dequeue */
-#define DPAA2_DQ_STAT_VOLATILE      0x02
-/* volatile dequeue command is expired */
-#define DPAA2_DQ_STAT_EXPIRED       0x01
+#घोषणा DPAA2_DQ_STAT_ODPVALID      0x04
+/* अस्थिर dequeue */
+#घोषणा DPAA2_DQ_STAT_VOLATILE      0x02
+/* अस्थिर dequeue command is expired */
+#घोषणा DPAA2_DQ_STAT_EXPIRED       0x01
 
-#define DQ_FQID_MASK		0x00FFFFFF
-#define DQ_FRAME_COUNT_MASK	0x00FFFFFF
+#घोषणा DQ_FQID_MASK		0x00FFFFFF
+#घोषणा DQ_FRAME_COUNT_MASK	0x00FFFFFF
 
 /**
  * dpaa2_dq_flags() - Get the stat field of dequeue response
  * @dq: the dequeue result.
  */
-static inline u32 dpaa2_dq_flags(const struct dpaa2_dq *dq)
-{
-	return dq->dq.stat;
-}
+अटल अंतरभूत u32 dpaa2_dq_flags(स्थिर काष्ठा dpaa2_dq *dq)
+अणु
+	वापस dq->dq.stat;
+पूर्ण
 
 /**
  * dpaa2_dq_is_pull() - Check whether the dq response is from a pull
  *                      command.
  * @dq: the dequeue result
  *
- * Return 1 for volatile(pull) dequeue, 0 for static dequeue.
+ * Return 1 क्रम अस्थिर(pull) dequeue, 0 क्रम अटल dequeue.
  */
-static inline int dpaa2_dq_is_pull(const struct dpaa2_dq *dq)
-{
-	return (int)(dpaa2_dq_flags(dq) & DPAA2_DQ_STAT_VOLATILE);
-}
+अटल अंतरभूत पूर्णांक dpaa2_dq_is_pull(स्थिर काष्ठा dpaa2_dq *dq)
+अणु
+	वापस (पूर्णांक)(dpaa2_dq_flags(dq) & DPAA2_DQ_STAT_VOLATILE);
+पूर्ण
 
 /**
  * dpaa2_dq_is_pull_complete() - Check whether the pull command is completed.
@@ -88,36 +89,36 @@ static inline int dpaa2_dq_is_pull(const struct dpaa2_dq *dq)
  *
  * Return boolean.
  */
-static inline bool dpaa2_dq_is_pull_complete(const struct dpaa2_dq *dq)
-{
-	return !!(dpaa2_dq_flags(dq) & DPAA2_DQ_STAT_EXPIRED);
-}
+अटल अंतरभूत bool dpaa2_dq_is_pull_complete(स्थिर काष्ठा dpaa2_dq *dq)
+अणु
+	वापस !!(dpaa2_dq_flags(dq) & DPAA2_DQ_STAT_EXPIRED);
+पूर्ण
 
 /**
  * dpaa2_dq_seqnum() - Get the seqnum field in dequeue response
  * @dq: the dequeue result
  *
- * seqnum is valid only if VALIDFRAME flag is TRUE
+ * seqnum is valid only अगर VALIDFRAME flag is TRUE
  *
  * Return seqnum.
  */
-static inline u16 dpaa2_dq_seqnum(const struct dpaa2_dq *dq)
-{
-	return le16_to_cpu(dq->dq.seqnum);
-}
+अटल अंतरभूत u16 dpaa2_dq_seqnum(स्थिर काष्ठा dpaa2_dq *dq)
+अणु
+	वापस le16_to_cpu(dq->dq.seqnum);
+पूर्ण
 
 /**
  * dpaa2_dq_odpid() - Get the odpid field in dequeue response
  * @dq: the dequeue result
  *
- * odpid is valid only if ODPVALID flag is TRUE.
+ * odpid is valid only अगर ODPVALID flag is TRUE.
  *
  * Return odpid.
  */
-static inline u16 dpaa2_dq_odpid(const struct dpaa2_dq *dq)
-{
-	return le16_to_cpu(dq->dq.oprid);
-}
+अटल अंतरभूत u16 dpaa2_dq_odpid(स्थिर काष्ठा dpaa2_dq *dq)
+अणु
+	वापस le16_to_cpu(dq->dq.oprid);
+पूर्ण
 
 /**
  * dpaa2_dq_fqid() - Get the fqid in dequeue response
@@ -125,32 +126,32 @@ static inline u16 dpaa2_dq_odpid(const struct dpaa2_dq *dq)
  *
  * Return fqid.
  */
-static inline u32 dpaa2_dq_fqid(const struct dpaa2_dq *dq)
-{
-	return le32_to_cpu(dq->dq.fqid) & DQ_FQID_MASK;
-}
+अटल अंतरभूत u32 dpaa2_dq_fqid(स्थिर काष्ठा dpaa2_dq *dq)
+अणु
+	वापस le32_to_cpu(dq->dq.fqid) & DQ_FQID_MASK;
+पूर्ण
 
 /**
  * dpaa2_dq_byte_count() - Get the byte count in dequeue response
  * @dq: the dequeue result
  *
- * Return the byte count remaining in the FQ.
+ * Return the byte count reमुख्यing in the FQ.
  */
-static inline u32 dpaa2_dq_byte_count(const struct dpaa2_dq *dq)
-{
-	return le32_to_cpu(dq->dq.fq_byte_cnt);
-}
+अटल अंतरभूत u32 dpaa2_dq_byte_count(स्थिर काष्ठा dpaa2_dq *dq)
+अणु
+	वापस le32_to_cpu(dq->dq.fq_byte_cnt);
+पूर्ण
 
 /**
  * dpaa2_dq_frame_count() - Get the frame count in dequeue response
  * @dq: the dequeue result
  *
- * Return the frame count remaining in the FQ.
+ * Return the frame count reमुख्यing in the FQ.
  */
-static inline u32 dpaa2_dq_frame_count(const struct dpaa2_dq *dq)
-{
-	return le32_to_cpu(dq->dq.fq_frm_cnt) & DQ_FRAME_COUNT_MASK;
-}
+अटल अंतरभूत u32 dpaa2_dq_frame_count(स्थिर काष्ठा dpaa2_dq *dq)
+अणु
+	वापस le32_to_cpu(dq->dq.fq_frm_cnt) & DQ_FRAME_COUNT_MASK;
+पूर्ण
 
 /**
  * dpaa2_dq_fd_ctx() - Get the frame queue context in dequeue response
@@ -158,10 +159,10 @@ static inline u32 dpaa2_dq_frame_count(const struct dpaa2_dq *dq)
  *
  * Return the frame queue context.
  */
-static inline u64 dpaa2_dq_fqd_ctx(const struct dpaa2_dq *dq)
-{
-	return le64_to_cpu(dq->dq.fqd_ctx);
-}
+अटल अंतरभूत u64 dpaa2_dq_fqd_ctx(स्थिर काष्ठा dpaa2_dq *dq)
+अणु
+	वापस le64_to_cpu(dq->dq.fqd_ctx);
+पूर्ण
 
 /**
  * dpaa2_dq_fd() - Get the frame descriptor in dequeue response
@@ -169,14 +170,14 @@ static inline u64 dpaa2_dq_fqd_ctx(const struct dpaa2_dq *dq)
  *
  * Return the frame descriptor.
  */
-static inline const struct dpaa2_fd *dpaa2_dq_fd(const struct dpaa2_dq *dq)
-{
-	return (const struct dpaa2_fd *)&dq->dq.fd[0];
-}
+अटल अंतरभूत स्थिर काष्ठा dpaa2_fd *dpaa2_dq_fd(स्थिर काष्ठा dpaa2_dq *dq)
+अणु
+	वापस (स्थिर काष्ठा dpaa2_fd *)&dq->dq.fd[0];
+पूर्ण
 
-#define DPAA2_CSCN_SIZE		sizeof(struct dpaa2_dq)
-#define DPAA2_CSCN_ALIGN	16
-#define DPAA2_CSCN_STATE_CG	BIT(0)
+#घोषणा DPAA2_CSCN_SIZE		माप(काष्ठा dpaa2_dq)
+#घोषणा DPAA2_CSCN_ALIGN	16
+#घोषणा DPAA2_CSCN_STATE_CG	BIT(0)
 
 /**
  * dpaa2_cscn_state_congested() - Check congestion state
@@ -184,9 +185,9 @@ static inline const struct dpaa2_fd *dpaa2_dq_fd(const struct dpaa2_dq *dq)
  *
 i * Return true is congested.
  */
-static inline bool dpaa2_cscn_state_congested(struct dpaa2_dq *cscn)
-{
-	return !!(cscn->scn.state & DPAA2_CSCN_STATE_CG);
-}
+अटल अंतरभूत bool dpaa2_cscn_state_congested(काष्ठा dpaa2_dq *cscn)
+अणु
+	वापस !!(cscn->scn.state & DPAA2_CSCN_STATE_CG);
+पूर्ण
 
-#endif /* __FSL_DPAA2_GLOBAL_H */
+#पूर्ण_अगर /* __FSL_DPAA2_GLOBAL_H */

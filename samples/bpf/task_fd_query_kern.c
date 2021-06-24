@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/version.h>
-#include <linux/ptrace.h>
-#include <uapi/linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/version.h>
+#समावेश <linux/ptrace.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
 SEC("kprobe/blk_mq_start_request")
-int bpf_prog1(struct pt_regs *ctx)
-{
-	return 0;
-}
+पूर्णांक bpf_prog1(काष्ठा pt_regs *ctx)
+अणु
+	वापस 0;
+पूर्ण
 
 SEC("kretprobe/blk_account_io_done")
-int bpf_prog2(struct pt_regs *ctx)
-{
-	return 0;
-}
-char _license[] SEC("license") = "GPL";
+पूर्णांक bpf_prog2(काष्ठा pt_regs *ctx)
+अणु
+	वापस 0;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";
 u32 _version SEC("version") = LINUX_VERSION_CODE;

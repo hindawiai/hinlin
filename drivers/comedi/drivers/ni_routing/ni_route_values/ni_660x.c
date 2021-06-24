@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* vim: set ts=8 sw=8 noet tw=80 nowrap: */
 /*
  *  comedi/drivers/ni_routing/ni_route_values/ni_660x.c
- *  Route information for NI_660X boards.
+ *  Route inक्रमmation क्रम NI_660X boards.
  *
  *  COMEDI - Linux Control and Measurement Device Interface
  *  Copyright (C) 2016 Spencer E. Olson <olsonse@umich.edu>
  *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is मुक्त software; you can redistribute it and/or modअगरy
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -15,110 +16,110 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  GNU General Public License क्रम more details.
  */
 
 /*
- * This file includes a list of all the values of various signals routes
- * available on NI 660x hardware.  In many cases, one does not explicitly make
+ * This file includes a list of all the values of various संकेतs routes
+ * available on NI 660x hardware.  In many हालs, one करोes not explicitly make
  * these routes, rather one might indicate that something is used as the source
  * of one particular trigger or another (using *_src=TRIG_EXT).
  *
  * The contents of this file can be generated using the tools in
- * comedi/drivers/ni_routing/tools.  This file also contains specific notes to
+ * comedi/drivers/ni_routing/tools.  This file also contains specअगरic notes to
  * this family of devices.
  *
- * Please use those tools to help maintain the contents of this file, but be
- * mindful to not lose the notes already made in this file, since these notes
- * are critical to a complete undertsanding of the register values of this
+ * Please use those tools to help मुख्यtain the contents of this file, but be
+ * mindful to not lose the notes alपढ़ोy made in this file, since these notes
+ * are critical to a complete undertsanding of the रेजिस्टर values of this
  * family.
  */
 
-#include "../ni_route_values.h"
-#include "all.h"
+#समावेश "../ni_route_values.h"
+#समावेश "all.h"
 
-const struct family_route_values ni_660x_route_values = {
+स्थिर काष्ठा family_route_values ni_660x_route_values = अणु
 	.family = "ni_660x",
-	.register_values = {
+	.रेजिस्टर_values = अणु
 		/*
-		 * destination = {
-		 *              source          = register value,
+		 * destination = अणु
+		 *              source          = रेजिस्टर value,
 		 *              ...
-		 * }
+		 * पूर्ण
 		 */
-		[B(NI_PFI(8))] = {
+		[B(NI_PFI(8))] = अणु
 			[B(NI_CtrInternalOutput(7))]	= I(1),
-		},
-		[B(NI_PFI(10))] = {
+		पूर्ण,
+		[B(NI_PFI(10))] = अणु
 			[B(NI_CtrGate(7))]	= I(1),
-		},
-		[B(NI_PFI(11))] = {
+		पूर्ण,
+		[B(NI_PFI(11))] = अणु
 			[B(NI_CtrSource(7))]	= I(1),
-		},
-		[B(NI_PFI(12))] = {
+		पूर्ण,
+		[B(NI_PFI(12))] = अणु
 			[B(NI_CtrInternalOutput(6))]	= I(1),
-		},
-		[B(NI_PFI(14))] = {
+		पूर्ण,
+		[B(NI_PFI(14))] = अणु
 			[B(NI_CtrGate(6))]	= I(1),
-		},
-		[B(NI_PFI(15))] = {
+		पूर्ण,
+		[B(NI_PFI(15))] = अणु
 			[B(NI_CtrSource(6))]	= I(1),
-		},
-		[B(NI_PFI(16))] = {
+		पूर्ण,
+		[B(NI_PFI(16))] = अणु
 			[B(NI_CtrInternalOutput(5))]	= I(1),
-		},
-		[B(NI_PFI(18))] = {
+		पूर्ण,
+		[B(NI_PFI(18))] = अणु
 			[B(NI_CtrGate(5))]	= I(1),
-		},
-		[B(NI_PFI(19))] = {
+		पूर्ण,
+		[B(NI_PFI(19))] = अणु
 			[B(NI_CtrSource(5))]	= I(1),
-		},
-		[B(NI_PFI(20))] = {
+		पूर्ण,
+		[B(NI_PFI(20))] = अणु
 			[B(NI_CtrInternalOutput(4))]	= I(1),
-		},
-		[B(NI_PFI(22))] = {
+		पूर्ण,
+		[B(NI_PFI(22))] = अणु
 			[B(NI_CtrGate(4))]	= I(1),
-		},
-		[B(NI_PFI(23))] = {
+		पूर्ण,
+		[B(NI_PFI(23))] = अणु
 			[B(NI_CtrSource(4))]	= I(1),
-		},
-		[B(NI_PFI(24))] = {
+		पूर्ण,
+		[B(NI_PFI(24))] = अणु
 			[B(NI_CtrInternalOutput(3))]	= I(1),
-		},
-		[B(NI_PFI(26))] = {
+		पूर्ण,
+		[B(NI_PFI(26))] = अणु
 			[B(NI_CtrGate(3))]	= I(1),
-		},
-		[B(NI_PFI(27))] = {
+		पूर्ण,
+		[B(NI_PFI(27))] = अणु
 			[B(NI_CtrSource(3))]	= I(1),
-		},
-		[B(NI_PFI(28))] = {
+		पूर्ण,
+		[B(NI_PFI(28))] = अणु
 			[B(NI_CtrInternalOutput(2))]	= I(1),
-		},
-		[B(NI_PFI(30))] = {
+		पूर्ण,
+		[B(NI_PFI(30))] = अणु
 			[B(NI_CtrGate(2))]	= I(1),
-		},
-		[B(NI_PFI(31))] = {
+		पूर्ण,
+		[B(NI_PFI(31))] = अणु
 			[B(NI_CtrSource(2))]	= I(1),
-		},
-		[B(NI_PFI(32))] = {
+		पूर्ण,
+		[B(NI_PFI(32))] = अणु
 			[B(NI_CtrInternalOutput(1))]	= I(1),
-		},
-		[B(NI_PFI(34))] = {
+		पूर्ण,
+		[B(NI_PFI(34))] = अणु
 			[B(NI_CtrGate(1))]	= I(1),
-		},
-		[B(NI_PFI(35))] = {
+		पूर्ण,
+		[B(NI_PFI(35))] = अणु
 			[B(NI_CtrSource(1))]	= I(1),
-		},
-		[B(NI_PFI(36))] = {
+		पूर्ण,
+		[B(NI_PFI(36))] = अणु
 			[B(NI_CtrInternalOutput(0))]	= I(1),
-		},
-		[B(NI_PFI(38))] = {
+		पूर्ण,
+		[B(NI_PFI(38))] = अणु
 			[B(NI_CtrGate(0))]	= I(1),
-		},
-		[B(NI_PFI(39))] = {
+		पूर्ण,
+		[B(NI_PFI(39))] = अणु
 			[B(NI_CtrSource(0))]	= I(1),
-		},
-		[B(NI_CtrSource(0))] = {
+		पूर्ण,
+		[B(NI_CtrSource(0))] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(11))]	= U(9),
 			[B(NI_PFI(15))]	= U(8),
@@ -140,8 +141,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_80MHzTimebase)]	= U(30),
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_CtrSource(1))] = {
+		पूर्ण,
+		[B(NI_CtrSource(1))] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(11))]	= U(9),
 			[B(NI_PFI(15))]	= U(8),
@@ -163,8 +164,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_80MHzTimebase)]	= U(30),
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_CtrSource(2))] = {
+		पूर्ण,
+		[B(NI_CtrSource(2))] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(11))]	= U(9),
 			[B(NI_PFI(15))]	= U(8),
@@ -186,8 +187,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_80MHzTimebase)]	= U(30),
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_CtrSource(3))] = {
+		पूर्ण,
+		[B(NI_CtrSource(3))] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(11))]	= U(9),
 			[B(NI_PFI(15))]	= U(8),
@@ -209,8 +210,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_80MHzTimebase)]	= U(30),
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_CtrSource(4))] = {
+		पूर्ण,
+		[B(NI_CtrSource(4))] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(11))]	= U(9),
 			[B(NI_PFI(15))]	= U(8),
@@ -232,8 +233,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_80MHzTimebase)]	= U(30),
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_CtrSource(5))] = {
+		पूर्ण,
+		[B(NI_CtrSource(5))] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(11))]	= U(9),
 			[B(NI_PFI(15))]	= U(8),
@@ -255,8 +256,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_80MHzTimebase)]	= U(30),
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_CtrSource(6))] = {
+		पूर्ण,
+		[B(NI_CtrSource(6))] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(11))]	= U(9),
 			[B(NI_PFI(15))]	= U(8 /* or 1 */),
@@ -278,8 +279,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_80MHzTimebase)]	= U(30),
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_CtrSource(7))] = {
+		पूर्ण,
+		[B(NI_CtrSource(7))] = अणु
 			/* These are not currently implemented in ni modules */
 			[B(NI_PFI(11))]	= U(9 /* or 1 */),
 			[B(NI_PFI(15))]	= U(8),
@@ -301,8 +302,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_80MHzTimebase)]	= U(30),
 			[B(NI_100kHzTimebase)]	= U(18),
 			[B(NI_LogicLow)]	= U(31),
-		},
-		[B(NI_CtrGate(0))] = {
+		पूर्ण,
+		[B(NI_CtrGate(0))] = अणु
 			[B(NI_PFI(10))]	= I(9),
 			[B(NI_PFI(14))]	= I(8),
 			[B(NI_PFI(18))]	= I(7),
@@ -322,8 +323,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrSource(1))]	= I(10),
 			[B(NI_CtrInternalOutput(1))]	= I(20),
 			[B(NI_LogicLow)]	= I(31 /* or 30 */),
-		},
-		[B(NI_CtrGate(1))] = {
+		पूर्ण,
+		[B(NI_CtrGate(1))] = अणु
 			[B(NI_PFI(10))]	= I(9),
 			[B(NI_PFI(14))]	= I(8),
 			[B(NI_PFI(18))]	= I(7),
@@ -343,8 +344,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrSource(2))]	= I(10),
 			[B(NI_CtrInternalOutput(2))]	= I(20),
 			[B(NI_LogicLow)]	= I(31 /* or 30 */),
-		},
-		[B(NI_CtrGate(2))] = {
+		पूर्ण,
+		[B(NI_CtrGate(2))] = अणु
 			[B(NI_PFI(10))]	= I(9),
 			[B(NI_PFI(14))]	= I(8),
 			[B(NI_PFI(18))]	= I(7),
@@ -364,8 +365,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrSource(3))]	= I(10),
 			[B(NI_CtrInternalOutput(3))]	= I(20),
 			[B(NI_LogicLow)]	= I(31 /* or 30 */),
-		},
-		[B(NI_CtrGate(3))] = {
+		पूर्ण,
+		[B(NI_CtrGate(3))] = अणु
 			[B(NI_PFI(10))]	= I(9),
 			[B(NI_PFI(14))]	= I(8),
 			[B(NI_PFI(18))]	= I(7),
@@ -385,8 +386,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrSource(4))]	= I(10),
 			[B(NI_CtrInternalOutput(4))]	= I(20),
 			[B(NI_LogicLow)]	= I(31 /* or 30 */),
-		},
-		[B(NI_CtrGate(4))] = {
+		पूर्ण,
+		[B(NI_CtrGate(4))] = अणु
 			[B(NI_PFI(10))]	= I(9),
 			[B(NI_PFI(14))]	= I(8),
 			[B(NI_PFI(18))]	= I(7),
@@ -406,8 +407,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrSource(5))]	= I(10),
 			[B(NI_CtrInternalOutput(5))]	= I(20),
 			[B(NI_LogicLow)]	= I(31 /* or 30 */),
-		},
-		[B(NI_CtrGate(5))] = {
+		पूर्ण,
+		[B(NI_CtrGate(5))] = अणु
 			[B(NI_PFI(10))]	= I(9),
 			[B(NI_PFI(14))]	= I(8),
 			[B(NI_PFI(18))]	= I(7 /* or 1 */),
@@ -427,8 +428,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrSource(6))]	= I(10),
 			[B(NI_CtrInternalOutput(6))]	= I(20),
 			[B(NI_LogicLow)]	= I(31 /* or 30 */),
-		},
-		[B(NI_CtrGate(6))] = {
+		पूर्ण,
+		[B(NI_CtrGate(6))] = अणु
 			[B(NI_PFI(10))]	= I(9),
 			[B(NI_PFI(14))]	= I(8 /* or 1 */),
 			[B(NI_PFI(15))]	= I(0),
@@ -448,8 +449,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrSource(7))]	= I(10),
 			[B(NI_CtrInternalOutput(7))]	= I(20),
 			[B(NI_LogicLow)]	= I(31 /* or 30 */),
-		},
-		[B(NI_CtrGate(7))] = {
+		पूर्ण,
+		[B(NI_CtrGate(7))] = अणु
 			[B(NI_PFI(10))]	= I(9 /* or 1 */),
 			[B(NI_PFI(11))]	= I(0),
 			[B(NI_PFI(14))]	= I(8),
@@ -469,8 +470,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrSource(0))]	= I(10),
 			[B(NI_CtrInternalOutput(0))]	= I(20),
 			[B(NI_LogicLow)]	= I(31 /* or 30 */),
-		},
-		[B(NI_CtrAux(0))] = {
+		पूर्ण,
+		[B(NI_CtrAux(0))] = अणु
 			[B(NI_PFI(9))]	= I(9),
 			[B(NI_PFI(13))]	= I(8),
 			[B(NI_PFI(17))]	= I(7),
@@ -491,8 +492,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrGate(1))]	= I(30),
 			[B(NI_CtrInternalOutput(1))]	= I(20),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_CtrAux(1))] = {
+		पूर्ण,
+		[B(NI_CtrAux(1))] = अणु
 			[B(NI_PFI(9))]	= I(9),
 			[B(NI_PFI(13))]	= I(8),
 			[B(NI_PFI(17))]	= I(7),
@@ -513,8 +514,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrGate(2))]	= I(30),
 			[B(NI_CtrInternalOutput(2))]	= I(20),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_CtrAux(2))] = {
+		पूर्ण,
+		[B(NI_CtrAux(2))] = अणु
 			[B(NI_PFI(9))]	= I(9),
 			[B(NI_PFI(13))]	= I(8),
 			[B(NI_PFI(17))]	= I(7),
@@ -535,8 +536,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrGate(3))]	= I(30),
 			[B(NI_CtrInternalOutput(3))]	= I(20),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_CtrAux(3))] = {
+		पूर्ण,
+		[B(NI_CtrAux(3))] = अणु
 			[B(NI_PFI(9))]	= I(9),
 			[B(NI_PFI(13))]	= I(8),
 			[B(NI_PFI(17))]	= I(7),
@@ -557,8 +558,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrGate(4))]	= I(30),
 			[B(NI_CtrInternalOutput(4))]	= I(20),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_CtrAux(4))] = {
+		पूर्ण,
+		[B(NI_CtrAux(4))] = अणु
 			[B(NI_PFI(9))]	= I(9),
 			[B(NI_PFI(13))]	= I(8),
 			[B(NI_PFI(17))]	= I(7),
@@ -579,8 +580,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrGate(5))]	= I(30),
 			[B(NI_CtrInternalOutput(5))]	= I(20),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_CtrAux(5))] = {
+		पूर्ण,
+		[B(NI_CtrAux(5))] = अणु
 			[B(NI_PFI(9))]	= I(9),
 			[B(NI_PFI(13))]	= I(8),
 			[B(NI_PFI(17))]	= I(7 /* or 1 */),
@@ -601,8 +602,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrGate(6))]	= I(30),
 			[B(NI_CtrInternalOutput(6))]	= I(20),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_CtrAux(6))] = {
+		पूर्ण,
+		[B(NI_CtrAux(6))] = अणु
 			[B(NI_PFI(9))]	= I(9),
 			[B(NI_PFI(13))]	= I(8 /* or 1 */),
 			[B(NI_PFI(15))]	= I(0),
@@ -623,8 +624,8 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrGate(7))]	= I(30),
 			[B(NI_CtrInternalOutput(7))]	= I(20),
 			[B(NI_LogicLow)]	= I(31),
-		},
-		[B(NI_CtrAux(7))] = {
+		पूर्ण,
+		[B(NI_CtrAux(7))] = अणु
 			[B(NI_PFI(9))]	= I(9 /* or 1 */),
 			[B(NI_PFI(11))]	= I(0),
 			[B(NI_PFI(13))]	= I(8),
@@ -645,6 +646,6 @@ const struct family_route_values ni_660x_route_values = {
 			[B(NI_CtrGate(0))]	= I(30),
 			[B(NI_CtrInternalOutput(0))]	= I(20),
 			[B(NI_LogicLow)]	= I(31),
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;

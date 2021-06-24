@@ -1,34 +1,35 @@
+<शैली गुरु>
 /*
- *  linux/drivers/scsi/esas2r/esas2r_main.c
+ *  linux/drivers/scsi/esas2r/esas2r_मुख्य.c
  *      For use with ATTO ExpressSAS R6xx SAS/SATA RAID controllers
  *
  *  Copyright (c) 2001-2013 ATTO Technology, Inc.
  *  (mailto:linuxdrivers@attotech.com)
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * NO WARRANTY
  * THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
  * LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
- * solely responsible for determining the appropriateness of using and
+ * solely responsible क्रम determining the appropriateness of using and
  * distributing the Program and assumes all risks associated with its
  * exercise of rights under this Agreement, including but not limited to
  * the risks and costs of program errors, damage to or loss of data,
- * programs or equipment, and unavailability or interruption of operations.
+ * programs or equipment, and unavailability or पूर्णांकerruption of operations.
  *
  * DISCLAIMER OF LIABILITY
  * NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
  * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -36,12 +37,12 @@
  * HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fअगरth Floor, Boston, MA  02110-1301,
  * USA.
  */
 
-#include "esas2r.h"
+#समावेश "esas2r.h"
 
 MODULE_DESCRIPTION(ESAS2R_DRVR_NAME ": " ESAS2R_LONGNAME " driver");
 MODULE_AUTHOR("ATTO Technology, Inc.");
@@ -50,173 +51,173 @@ MODULE_VERSION(ESAS2R_VERSION_STR);
 
 /* global definitions */
 
-static int found_adapters;
-struct esas2r_adapter *esas2r_adapters[MAX_ADAPTERS];
+अटल पूर्णांक found_adapters;
+काष्ठा esas2r_adapter *esas2r_adapters[MAX_ADAPTERS];
 
-#define ESAS2R_VDA_EVENT_PORT1       54414
-#define ESAS2R_VDA_EVENT_PORT2       54415
-#define ESAS2R_VDA_EVENT_SOCK_COUNT  2
+#घोषणा ESAS2R_VDA_EVENT_PORT1       54414
+#घोषणा ESAS2R_VDA_EVENT_PORT2       54415
+#घोषणा ESAS2R_VDA_EVENT_SOCK_COUNT  2
 
-static struct esas2r_adapter *esas2r_adapter_from_kobj(struct kobject *kobj)
-{
-	struct device *dev = container_of(kobj, struct device, kobj);
-	struct Scsi_Host *host = class_to_shost(dev);
+अटल काष्ठा esas2r_adapter *esas2r_adapter_from_kobj(काष्ठा kobject *kobj)
+अणु
+	काष्ठा device *dev = container_of(kobj, काष्ठा device, kobj);
+	काष्ठा Scsi_Host *host = class_to_shost(dev);
 
-	return (struct esas2r_adapter *)host->hostdata;
-}
+	वापस (काष्ठा esas2r_adapter *)host->hostdata;
+पूर्ण
 
-static ssize_t read_fw(struct file *file, struct kobject *kobj,
-		       struct bin_attribute *attr,
-		       char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+अटल sमाप_प्रकार पढ़ो_fw(काष्ठा file *file, काष्ठा kobject *kobj,
+		       काष्ठा bin_attribute *attr,
+		       अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
 
-	return esas2r_read_fw(a, buf, off, count);
-}
+	वापस esas2r_पढ़ो_fw(a, buf, off, count);
+पूर्ण
 
-static ssize_t write_fw(struct file *file, struct kobject *kobj,
-			struct bin_attribute *attr,
-			char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+अटल sमाप_प्रकार ग_लिखो_fw(काष्ठा file *file, काष्ठा kobject *kobj,
+			काष्ठा bin_attribute *attr,
+			अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
 
-	return esas2r_write_fw(a, buf, off, count);
-}
+	वापस esas2r_ग_लिखो_fw(a, buf, off, count);
+पूर्ण
 
-static ssize_t read_fs(struct file *file, struct kobject *kobj,
-		       struct bin_attribute *attr,
-		       char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+अटल sमाप_प्रकार पढ़ो_fs(काष्ठा file *file, काष्ठा kobject *kobj,
+		       काष्ठा bin_attribute *attr,
+		       अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
 
-	return esas2r_read_fs(a, buf, off, count);
-}
+	वापस esas2r_पढ़ो_fs(a, buf, off, count);
+पूर्ण
 
-static ssize_t write_fs(struct file *file, struct kobject *kobj,
-			struct bin_attribute *attr,
-			char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
-	int length = min(sizeof(struct esas2r_ioctl_fs), count);
-	int result = 0;
+अटल sमाप_प्रकार ग_लिखो_fs(काष्ठा file *file, काष्ठा kobject *kobj,
+			काष्ठा bin_attribute *attr,
+			अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+	पूर्णांक length = min(माप(काष्ठा esas2r_ioctl_fs), count);
+	पूर्णांक result = 0;
 
-	result = esas2r_write_fs(a, buf, off, count);
+	result = esas2r_ग_लिखो_fs(a, buf, off, count);
 
-	if (result < 0)
+	अगर (result < 0)
 		result = 0;
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
-static ssize_t read_vda(struct file *file, struct kobject *kobj,
-			struct bin_attribute *attr,
-			char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+अटल sमाप_प्रकार पढ़ो_vda(काष्ठा file *file, काष्ठा kobject *kobj,
+			काष्ठा bin_attribute *attr,
+			अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
 
-	return esas2r_read_vda(a, buf, off, count);
-}
+	वापस esas2r_पढ़ो_vda(a, buf, off, count);
+पूर्ण
 
-static ssize_t write_vda(struct file *file, struct kobject *kobj,
-			 struct bin_attribute *attr,
-			 char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+अटल sमाप_प्रकार ग_लिखो_vda(काष्ठा file *file, काष्ठा kobject *kobj,
+			 काष्ठा bin_attribute *attr,
+			 अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
 
-	return esas2r_write_vda(a, buf, off, count);
-}
+	वापस esas2r_ग_लिखो_vda(a, buf, off, count);
+पूर्ण
 
-static ssize_t read_live_nvram(struct file *file, struct kobject *kobj,
-			       struct bin_attribute *attr,
-			       char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
-	int length = min_t(size_t, sizeof(struct esas2r_sas_nvram), PAGE_SIZE);
+अटल sमाप_प्रकार पढ़ो_live_nvram(काष्ठा file *file, काष्ठा kobject *kobj,
+			       काष्ठा bin_attribute *attr,
+			       अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+	पूर्णांक length = min_t(माप_प्रकार, माप(काष्ठा esas2r_sas_nvram), PAGE_SIZE);
 
-	memcpy(buf, a->nvram, length);
-	return length;
-}
+	स_नकल(buf, a->nvram, length);
+	वापस length;
+पूर्ण
 
-static ssize_t write_live_nvram(struct file *file, struct kobject *kobj,
-				struct bin_attribute *attr,
-				char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
-	struct esas2r_request *rq;
-	int result = -EFAULT;
+अटल sमाप_प्रकार ग_लिखो_live_nvram(काष्ठा file *file, काष्ठा kobject *kobj,
+				काष्ठा bin_attribute *attr,
+				अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+	काष्ठा esas2r_request *rq;
+	पूर्णांक result = -EFAULT;
 
 	rq = esas2r_alloc_request(a);
-	if (rq == NULL)
-		return -ENOMEM;
+	अगर (rq == शून्य)
+		वापस -ENOMEM;
 
-	if (esas2r_write_params(a, rq, (struct esas2r_sas_nvram *)buf))
+	अगर (esas2r_ग_लिखो_params(a, rq, (काष्ठा esas2r_sas_nvram *)buf))
 		result = count;
 
-	esas2r_free_request(a, rq);
+	esas2r_मुक्त_request(a, rq);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static ssize_t read_default_nvram(struct file *file, struct kobject *kobj,
-				  struct bin_attribute *attr,
-				  char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+अटल sमाप_प्रकार पढ़ो_शेष_nvram(काष्ठा file *file, काष्ठा kobject *kobj,
+				  काष्ठा bin_attribute *attr,
+				  अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
 
-	esas2r_nvram_get_defaults(a, (struct esas2r_sas_nvram *)buf);
+	esas2r_nvram_get_शेषs(a, (काष्ठा esas2r_sas_nvram *)buf);
 
-	return sizeof(struct esas2r_sas_nvram);
-}
+	वापस माप(काष्ठा esas2r_sas_nvram);
+पूर्ण
 
-static ssize_t read_hw(struct file *file, struct kobject *kobj,
-		       struct bin_attribute *attr,
-		       char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
-	int length = min_t(size_t, sizeof(struct atto_ioctl), PAGE_SIZE);
+अटल sमाप_प्रकार पढ़ो_hw(काष्ठा file *file, काष्ठा kobject *kobj,
+		       काष्ठा bin_attribute *attr,
+		       अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+	पूर्णांक length = min_t(माप_प्रकार, माप(काष्ठा atto_ioctl), PAGE_SIZE);
 
-	if (!a->local_atto_ioctl)
-		return -ENOMEM;
+	अगर (!a->local_atto_ioctl)
+		वापस -ENOMEM;
 
-	if (handle_hba_ioctl(a, a->local_atto_ioctl) != IOCTL_SUCCESS)
-		return -ENOMEM;
+	अगर (handle_hba_ioctl(a, a->local_atto_ioctl) != IOCTL_SUCCESS)
+		वापस -ENOMEM;
 
-	memcpy(buf, a->local_atto_ioctl, length);
+	स_नकल(buf, a->local_atto_ioctl, length);
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
-static ssize_t write_hw(struct file *file, struct kobject *kobj,
-			struct bin_attribute *attr,
-			char *buf, loff_t off, size_t count)
-{
-	struct esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
-	int length = min(sizeof(struct atto_ioctl), count);
+अटल sमाप_प्रकार ग_लिखो_hw(काष्ठा file *file, काष्ठा kobject *kobj,
+			काष्ठा bin_attribute *attr,
+			अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा esas2r_adapter *a = esas2r_adapter_from_kobj(kobj);
+	पूर्णांक length = min(माप(काष्ठा atto_ioctl), count);
 
-	if (!a->local_atto_ioctl) {
-		a->local_atto_ioctl = kmalloc(sizeof(struct atto_ioctl),
+	अगर (!a->local_atto_ioctl) अणु
+		a->local_atto_ioctl = kदो_स्मृति(माप(काष्ठा atto_ioctl),
 					      GFP_KERNEL);
-		if (a->local_atto_ioctl == NULL) {
+		अगर (a->local_atto_ioctl == शून्य) अणु
 			esas2r_log(ESAS2R_LOG_WARN,
 				   "write_hw kzalloc failed for %zu bytes",
-				   sizeof(struct atto_ioctl));
-			return -ENOMEM;
-		}
-	}
+				   माप(काष्ठा atto_ioctl));
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	memset(a->local_atto_ioctl, 0, sizeof(struct atto_ioctl));
-	memcpy(a->local_atto_ioctl, buf, length);
+	स_रखो(a->local_atto_ioctl, 0, माप(काष्ठा atto_ioctl));
+	स_नकल(a->local_atto_ioctl, buf, length);
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
-#define ESAS2R_RW_BIN_ATTR(_name) \
-	struct bin_attribute bin_attr_ ## _name = { \
+#घोषणा ESAS2R_RW_BIN_ATTR(_name) \
+	काष्ठा bin_attribute bin_attr_ ## _name = अणु \
 		.attr	= \
-		{ .name = __stringify(_name), .mode  = S_IRUSR | S_IWUSR }, \
+		अणु .name = __stringअगरy(_name), .mode  = S_IRUSR | S_IWUSR पूर्ण, \
 		.size	= 0, \
-		.read	= read_ ## _name, \
-		.write	= write_ ## _name }
+		.पढ़ो	= पढ़ो_ ## _name, \
+		.ग_लिखो	= ग_लिखो_ ## _name पूर्ण
 
 ESAS2R_RW_BIN_ATTR(fw);
 ESAS2R_RW_BIN_ATTR(fs);
@@ -224,21 +225,21 @@ ESAS2R_RW_BIN_ATTR(vda);
 ESAS2R_RW_BIN_ATTR(hw);
 ESAS2R_RW_BIN_ATTR(live_nvram);
 
-struct bin_attribute bin_attr_default_nvram = {
-	.attr	= { .name = "default_nvram", .mode = S_IRUGO },
+काष्ठा bin_attribute bin_attr_शेष_nvram = अणु
+	.attr	= अणु .name = "default_nvram", .mode = S_IRUGO पूर्ण,
 	.size	= 0,
-	.read	= read_default_nvram,
-	.write	= NULL
-};
+	.पढ़ो	= पढ़ो_शेष_nvram,
+	.ग_लिखो	= शून्य
+पूर्ण;
 
-static struct scsi_host_template driver_template = {
+अटल काष्ठा scsi_host_ढाँचा driver_ढाँचा = अणु
 	.module				= THIS_MODULE,
 	.show_info			= esas2r_show_info,
 	.name				= ESAS2R_LONGNAME,
 	.info				= esas2r_info,
 	.ioctl				= esas2r_ioctl,
 	.queuecommand			= esas2r_queuecommand,
-	.eh_abort_handler		= esas2r_eh_abort,
+	.eh_पात_handler		= esas2r_eh_पात,
 	.eh_device_reset_handler	= esas2r_device_reset,
 	.eh_bus_reset_handler		= esas2r_bus_reset,
 	.eh_host_reset_handler		= esas2r_host_reset,
@@ -253,118 +254,118 @@ static struct scsi_host_template driver_template = {
 	.proc_name			= ESAS2R_DRVR_NAME,
 	.change_queue_depth		= scsi_change_queue_depth,
 	.max_sectors			= 0xFFFF,
-};
+पूर्ण;
 
-int sgl_page_size = 512;
-module_param(sgl_page_size, int, 0);
+पूर्णांक sgl_page_size = 512;
+module_param(sgl_page_size, पूर्णांक, 0);
 MODULE_PARM_DESC(sgl_page_size,
 		 "Scatter/gather list (SGL) page size in number of S/G "
 		 "entries.  If your application is doing a lot of very large "
 		 "transfers, you may want to increase the SGL page size.  "
 		 "Default 512.");
 
-int num_sg_lists = 1024;
-module_param(num_sg_lists, int, 0);
+पूर्णांक num_sg_lists = 1024;
+module_param(num_sg_lists, पूर्णांक, 0);
 MODULE_PARM_DESC(num_sg_lists,
 		 "Number of scatter/gather lists.  Default 1024.");
 
-int sg_tablesize = SG_CHUNK_SIZE;
-module_param(sg_tablesize, int, 0);
+पूर्णांक sg_tablesize = SG_CHUNK_SIZE;
+module_param(sg_tablesize, पूर्णांक, 0);
 MODULE_PARM_DESC(sg_tablesize,
 		 "Maximum number of entries in a scatter/gather table.");
 
-int num_requests = 256;
-module_param(num_requests, int, 0);
+पूर्णांक num_requests = 256;
+module_param(num_requests, पूर्णांक, 0);
 MODULE_PARM_DESC(num_requests,
 		 "Number of requests.  Default 256.");
 
-int num_ae_requests = 4;
-module_param(num_ae_requests, int, 0);
+पूर्णांक num_ae_requests = 4;
+module_param(num_ae_requests, पूर्णांक, 0);
 MODULE_PARM_DESC(num_ae_requests,
 		 "Number of VDA asynchronous event requests.  Default 4.");
 
-int cmd_per_lun = ESAS2R_DEFAULT_CMD_PER_LUN;
-module_param(cmd_per_lun, int, 0);
+पूर्णांक cmd_per_lun = ESAS2R_DEFAULT_CMD_PER_LUN;
+module_param(cmd_per_lun, पूर्णांक, 0);
 MODULE_PARM_DESC(cmd_per_lun,
 		 "Maximum number of commands per LUN.  Default "
 		 DEFINED_NUM_TO_STR(ESAS2R_DEFAULT_CMD_PER_LUN) ".");
 
-int can_queue = 128;
-module_param(can_queue, int, 0);
+पूर्णांक can_queue = 128;
+module_param(can_queue, पूर्णांक, 0);
 MODULE_PARM_DESC(can_queue,
 		 "Maximum number of commands per adapter.  Default 128.");
 
-int esas2r_max_sectors = 0xFFFF;
-module_param(esas2r_max_sectors, int, 0);
+पूर्णांक esas2r_max_sectors = 0xFFFF;
+module_param(esas2r_max_sectors, पूर्णांक, 0);
 MODULE_PARM_DESC(esas2r_max_sectors,
 		 "Maximum number of disk sectors in a single data transfer.  "
 		 "Default 65535 (largest possible setting).");
 
-int interrupt_mode = 1;
-module_param(interrupt_mode, int, 0);
-MODULE_PARM_DESC(interrupt_mode,
+पूर्णांक पूर्णांकerrupt_mode = 1;
+module_param(पूर्णांकerrupt_mode, पूर्णांक, 0);
+MODULE_PARM_DESC(पूर्णांकerrupt_mode,
 		 "Defines the interrupt mode to use.  0 for legacy"
 		 ", 1 for MSI.  Default is MSI (1).");
 
-static const struct pci_device_id
-	esas2r_pci_table[] = {
-	{ ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x0049,
+अटल स्थिर काष्ठा pci_device_id
+	esas2r_pci_table[] = अणु
+	अणु ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x0049,
 	  0,
-	  0, 0 },
-	{ ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x004A,
+	  0, 0 पूर्ण,
+	अणु ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x004A,
 	  0,
-	  0, 0 },
-	{ ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x004B,
+	  0, 0 पूर्ण,
+	अणु ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x004B,
 	  0,
-	  0, 0 },
-	{ ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x004C,
+	  0, 0 पूर्ण,
+	अणु ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x004C,
 	  0,
-	  0, 0 },
-	{ ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x004D,
+	  0, 0 पूर्ण,
+	अणु ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x004D,
 	  0,
-	  0, 0 },
-	{ ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x004E,
+	  0, 0 पूर्ण,
+	अणु ATTO_VENDOR_ID, 0x0049,	  ATTO_VENDOR_ID, 0x004E,
 	  0,
-	  0, 0 },
-	{ 0,		  0,		  0,		  0,
+	  0, 0 पूर्ण,
+	अणु 0,		  0,		  0,		  0,
 	  0,
-	  0, 0 }
-};
+	  0, 0 पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, esas2r_pci_table);
 
-static int
-esas2r_probe(struct pci_dev *pcid, const struct pci_device_id *id);
+अटल पूर्णांक
+esas2r_probe(काष्ठा pci_dev *pcid, स्थिर काष्ठा pci_device_id *id);
 
-static void
-esas2r_remove(struct pci_dev *pcid);
+अटल व्योम
+esas2r_हटाओ(काष्ठा pci_dev *pcid);
 
-static struct pci_driver
-	esas2r_pci_driver = {
+अटल काष्ठा pci_driver
+	esas2r_pci_driver = अणु
 	.name		= ESAS2R_DRVR_NAME,
 	.id_table	= esas2r_pci_table,
 	.probe		= esas2r_probe,
-	.remove		= esas2r_remove,
+	.हटाओ		= esas2r_हटाओ,
 	.driver.pm	= &esas2r_pm_ops,
-};
+पूर्ण;
 
-static int esas2r_probe(struct pci_dev *pcid,
-			const struct pci_device_id *id)
-{
-	struct Scsi_Host *host = NULL;
-	struct esas2r_adapter *a;
-	int err;
+अटल पूर्णांक esas2r_probe(काष्ठा pci_dev *pcid,
+			स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा Scsi_Host *host = शून्य;
+	काष्ठा esas2r_adapter *a;
+	पूर्णांक err;
 
-	size_t host_alloc_size = sizeof(struct esas2r_adapter)
+	माप_प्रकार host_alloc_size = माप(काष्ठा esas2r_adapter)
 				 + ((num_requests) +
-				    1) * sizeof(struct esas2r_request);
+				    1) * माप(काष्ठा esas2r_request);
 
 	esas2r_log_dev(ESAS2R_LOG_DEBG, &(pcid->dev),
 		       "esas2r_probe() 0x%02x 0x%02x 0x%02x 0x%02x",
-		       pcid->vendor,
+		       pcid->venकरोr,
 		       pcid->device,
-		       pcid->subsystem_vendor,
-		       pcid->subsystem_device);
+		       pcid->subप्रणाली_venकरोr,
+		       pcid->subप्रणाली_device);
 
 	esas2r_log_dev(ESAS2R_LOG_INFO, &(pcid->dev),
 		       "before pci_enable_device() "
@@ -372,12 +373,12 @@ static int esas2r_probe(struct pci_dev *pcid,
 		       pcid->enable_cnt.counter);
 
 	err = pci_enable_device(pcid);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		esas2r_log_dev(ESAS2R_LOG_CRIT, &(pcid->dev),
 			       "pci_enable_device() FAIL (%d)",
 			       err);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	esas2r_log_dev(ESAS2R_LOG_INFO, &(pcid->dev),
 		       "pci_enable_device() OK");
@@ -385,15 +386,15 @@ static int esas2r_probe(struct pci_dev *pcid,
 		       "after pci_enable_device() enable_cnt: %d",
 		       pcid->enable_cnt.counter);
 
-	host = scsi_host_alloc(&driver_template, host_alloc_size);
-	if (host == NULL) {
+	host = scsi_host_alloc(&driver_ढाँचा, host_alloc_size);
+	अगर (host == शून्य) अणु
 		esas2r_log(ESAS2R_LOG_CRIT, "scsi_host_alloc() FAIL");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	memset(host->hostdata, 0, host_alloc_size);
+	स_रखो(host->hostdata, 0, host_alloc_size);
 
-	a = (struct esas2r_adapter *)host->hostdata;
+	a = (काष्ठा esas2r_adapter *)host->hostdata;
 
 	esas2r_log(ESAS2R_LOG_INFO, "scsi_host_alloc() OK host: %p", host);
 
@@ -414,13 +415,13 @@ static int esas2r_probe(struct pci_dev *pcid,
 	host->sg_tablesize = sg_tablesize;
 	host->max_sectors = esas2r_max_sectors;
 
-	/* set to bus master for BIOses that don't do it for us */
+	/* set to bus master क्रम BIOses that करोn't करो it क्रम us */
 
 	esas2r_log(ESAS2R_LOG_INFO, "pci_set_master() called");
 
 	pci_set_master(pcid);
 
-	if (!esas2r_init_adapter(host, pcid, found_adapters)) {
+	अगर (!esas2r_init_adapter(host, pcid, found_adapters)) अणु
 		esas2r_log(ESAS2R_LOG_CRIT,
 			   "unable to initialize device at PCI bus %x:%x",
 			   pcid->bus->number,
@@ -431,9 +432,9 @@ static int esas2r_probe(struct pci_dev *pcid,
 
 		scsi_host_put(host);
 
-		return 0;
+		वापस 0;
 
-	}
+	पूर्ण
 
 	esas2r_log(ESAS2R_LOG_INFO, "pci_set_drvdata(%p, %p) called", pcid,
 		   host->hostdata);
@@ -444,7 +445,7 @@ static int esas2r_probe(struct pci_dev *pcid,
 
 	err = scsi_add_host(host, &pcid->dev);
 
-	if (err) {
+	अगर (err) अणु
 		esas2r_log(ESAS2R_LOG_CRIT, "scsi_add_host returned %d", err);
 		esas2r_log_dev(ESAS2R_LOG_CRIT, &(host->shost_gendev),
 			       "scsi_add_host() FAIL");
@@ -458,10 +459,10 @@ static int esas2r_probe(struct pci_dev *pcid,
 			       "pci_set_drvdata(%p, NULL) called",
 			       pcid);
 
-		pci_set_drvdata(pcid, NULL);
+		pci_set_drvdata(pcid, शून्य);
 
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 
 	esas2r_fw_event_on(a);
@@ -472,195 +473,195 @@ static int esas2r_probe(struct pci_dev *pcid,
 	scsi_scan_host(host);
 
 	/* Add sysfs binary files */
-	if (sysfs_create_bin_file(&host->shost_dev.kobj, &bin_attr_fw))
+	अगर (sysfs_create_bin_file(&host->shost_dev.kobj, &bin_attr_fw))
 		esas2r_log_dev(ESAS2R_LOG_WARN, &(host->shost_gendev),
 			       "Failed to create sysfs binary file: fw");
-	else
+	अन्यथा
 		a->sysfs_fw_created = 1;
 
-	if (sysfs_create_bin_file(&host->shost_dev.kobj, &bin_attr_fs))
+	अगर (sysfs_create_bin_file(&host->shost_dev.kobj, &bin_attr_fs))
 		esas2r_log_dev(ESAS2R_LOG_WARN, &(host->shost_gendev),
 			       "Failed to create sysfs binary file: fs");
-	else
+	अन्यथा
 		a->sysfs_fs_created = 1;
 
-	if (sysfs_create_bin_file(&host->shost_dev.kobj, &bin_attr_vda))
+	अगर (sysfs_create_bin_file(&host->shost_dev.kobj, &bin_attr_vda))
 		esas2r_log_dev(ESAS2R_LOG_WARN, &(host->shost_gendev),
 			       "Failed to create sysfs binary file: vda");
-	else
+	अन्यथा
 		a->sysfs_vda_created = 1;
 
-	if (sysfs_create_bin_file(&host->shost_dev.kobj, &bin_attr_hw))
+	अगर (sysfs_create_bin_file(&host->shost_dev.kobj, &bin_attr_hw))
 		esas2r_log_dev(ESAS2R_LOG_WARN, &(host->shost_gendev),
 			       "Failed to create sysfs binary file: hw");
-	else
+	अन्यथा
 		a->sysfs_hw_created = 1;
 
-	if (sysfs_create_bin_file(&host->shost_dev.kobj, &bin_attr_live_nvram))
+	अगर (sysfs_create_bin_file(&host->shost_dev.kobj, &bin_attr_live_nvram))
 		esas2r_log_dev(ESAS2R_LOG_WARN, &(host->shost_gendev),
 			       "Failed to create sysfs binary file: live_nvram");
-	else
+	अन्यथा
 		a->sysfs_live_nvram_created = 1;
 
-	if (sysfs_create_bin_file(&host->shost_dev.kobj,
-				  &bin_attr_default_nvram))
+	अगर (sysfs_create_bin_file(&host->shost_dev.kobj,
+				  &bin_attr_शेष_nvram))
 		esas2r_log_dev(ESAS2R_LOG_WARN, &(host->shost_gendev),
 			       "Failed to create sysfs binary file: default_nvram");
-	else
-		a->sysfs_default_nvram_created = 1;
+	अन्यथा
+		a->sysfs_शेष_nvram_created = 1;
 
 	found_adapters++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void esas2r_remove(struct pci_dev *pdev)
-{
-	struct Scsi_Host *host = pci_get_drvdata(pdev);
-	struct esas2r_adapter *a = (struct esas2r_adapter *)host->hostdata;
+अटल व्योम esas2r_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा Scsi_Host *host = pci_get_drvdata(pdev);
+	काष्ठा esas2r_adapter *a = (काष्ठा esas2r_adapter *)host->hostdata;
 
 	esas2r_log_dev(ESAS2R_LOG_INFO, &(pdev->dev),
 		       "esas2r_remove(%p) called; "
 		       "host:%p", pdev,
 		       host);
 
-	esas2r_kill_adapter(a->index);
+	esas2r_समाप्त_adapter(a->index);
 	found_adapters--;
-}
+पूर्ण
 
-static int __init esas2r_init(void)
-{
-	int i;
+अटल पूर्णांक __init esas2r_init(व्योम)
+अणु
+	पूर्णांक i;
 
 	esas2r_log(ESAS2R_LOG_INFO, "%s called", __func__);
 
-	/* verify valid parameters */
+	/* verअगरy valid parameters */
 
-	if (can_queue < 1) {
+	अगर (can_queue < 1) अणु
 		esas2r_log(ESAS2R_LOG_WARN,
 			   "warning: can_queue must be at least 1, value "
 			   "forced.");
 		can_queue = 1;
-	} else if (can_queue > 2048) {
+	पूर्ण अन्यथा अगर (can_queue > 2048) अणु
 		esas2r_log(ESAS2R_LOG_WARN,
 			   "warning: can_queue must be no larger than 2048, "
 			   "value forced.");
 		can_queue = 2048;
-	}
+	पूर्ण
 
-	if (cmd_per_lun < 1) {
+	अगर (cmd_per_lun < 1) अणु
 		esas2r_log(ESAS2R_LOG_WARN,
 			   "warning: cmd_per_lun must be at least 1, value "
 			   "forced.");
 		cmd_per_lun = 1;
-	} else if (cmd_per_lun > 2048) {
+	पूर्ण अन्यथा अगर (cmd_per_lun > 2048) अणु
 		esas2r_log(ESAS2R_LOG_WARN,
 			   "warning: cmd_per_lun must be no larger than "
 			   "2048, value forced.");
 		cmd_per_lun = 2048;
-	}
+	पूर्ण
 
-	if (sg_tablesize < 32) {
+	अगर (sg_tablesize < 32) अणु
 		esas2r_log(ESAS2R_LOG_WARN,
 			   "warning: sg_tablesize must be at least 32, "
 			   "value forced.");
 		sg_tablesize = 32;
-	}
+	पूर्ण
 
-	if (esas2r_max_sectors < 1) {
+	अगर (esas2r_max_sectors < 1) अणु
 		esas2r_log(ESAS2R_LOG_WARN,
 			   "warning: esas2r_max_sectors must be at least "
 			   "1, value forced.");
 		esas2r_max_sectors = 1;
-	} else if (esas2r_max_sectors > 0xffff) {
+	पूर्ण अन्यथा अगर (esas2r_max_sectors > 0xffff) अणु
 		esas2r_log(ESAS2R_LOG_WARN,
 			   "warning: esas2r_max_sectors must be no larger "
 			   "than 0xffff, value forced.");
 		esas2r_max_sectors = 0xffff;
-	}
+	पूर्ण
 
 	sgl_page_size &= ~(ESAS2R_SGL_ALIGN - 1);
 
-	if (sgl_page_size < SGL_PG_SZ_MIN)
+	अगर (sgl_page_size < SGL_PG_SZ_MIN)
 		sgl_page_size = SGL_PG_SZ_MIN;
-	else if (sgl_page_size > SGL_PG_SZ_MAX)
+	अन्यथा अगर (sgl_page_size > SGL_PG_SZ_MAX)
 		sgl_page_size = SGL_PG_SZ_MAX;
 
-	if (num_sg_lists < NUM_SGL_MIN)
+	अगर (num_sg_lists < NUM_SGL_MIN)
 		num_sg_lists = NUM_SGL_MIN;
-	else if (num_sg_lists > NUM_SGL_MAX)
+	अन्यथा अगर (num_sg_lists > NUM_SGL_MAX)
 		num_sg_lists = NUM_SGL_MAX;
 
-	if (num_requests < NUM_REQ_MIN)
+	अगर (num_requests < NUM_REQ_MIN)
 		num_requests = NUM_REQ_MIN;
-	else if (num_requests > NUM_REQ_MAX)
+	अन्यथा अगर (num_requests > NUM_REQ_MAX)
 		num_requests = NUM_REQ_MAX;
 
-	if (num_ae_requests < NUM_AE_MIN)
+	अगर (num_ae_requests < NUM_AE_MIN)
 		num_ae_requests = NUM_AE_MIN;
-	else if (num_ae_requests > NUM_AE_MAX)
+	अन्यथा अगर (num_ae_requests > NUM_AE_MAX)
 		num_ae_requests = NUM_AE_MAX;
 
 	/* set up other globals */
 
-	for (i = 0; i < MAX_ADAPTERS; i++)
-		esas2r_adapters[i] = NULL;
+	क्रम (i = 0; i < MAX_ADAPTERS; i++)
+		esas2r_adapters[i] = शून्य;
 
-	return pci_register_driver(&esas2r_pci_driver);
-}
+	वापस pci_रेजिस्टर_driver(&esas2r_pci_driver);
+पूर्ण
 
 /* Handle ioctl calls to "/proc/scsi/esas2r/ATTOnode" */
-static const struct file_operations esas2r_proc_fops = {
+अटल स्थिर काष्ठा file_operations esas2r_proc_fops = अणु
 	.compat_ioctl	= compat_ptr_ioctl,
 	.unlocked_ioctl = esas2r_proc_ioctl,
-};
+पूर्ण;
 
-static const struct proc_ops esas2r_proc_ops = {
-	.proc_lseek		= default_llseek,
+अटल स्थिर काष्ठा proc_ops esas2r_proc_ops = अणु
+	.proc_lseek		= शेष_llseek,
 	.proc_ioctl		= esas2r_proc_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.proc_compat_ioctl	= compat_ptr_ioctl,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static struct Scsi_Host *esas2r_proc_host;
-static int esas2r_proc_major;
+अटल काष्ठा Scsi_Host *esas2r_proc_host;
+अटल पूर्णांक esas2r_proc_major;
 
-long esas2r_proc_ioctl(struct file *fp, unsigned int cmd, unsigned long arg)
-{
-	return esas2r_ioctl_handler(esas2r_proc_host->hostdata,
-				    cmd, (void __user *)arg);
-}
+दीर्घ esas2r_proc_ioctl(काष्ठा file *fp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस esas2r_ioctl_handler(esas2r_proc_host->hostdata,
+				    cmd, (व्योम __user *)arg);
+पूर्ण
 
-static void __exit esas2r_exit(void)
-{
+अटल व्योम __निकास esas2r_निकास(व्योम)
+अणु
 	esas2r_log(ESAS2R_LOG_INFO, "%s called", __func__);
 
-	if (esas2r_proc_major > 0) {
+	अगर (esas2r_proc_major > 0) अणु
 		esas2r_log(ESAS2R_LOG_INFO, "unregister proc");
 
-		remove_proc_entry(ATTONODE_NAME,
+		हटाओ_proc_entry(ATTONODE_NAME,
 				  esas2r_proc_host->hostt->proc_dir);
-		unregister_chrdev(esas2r_proc_major, ESAS2R_DRVR_NAME);
+		unरेजिस्टर_chrdev(esas2r_proc_major, ESAS2R_DRVR_NAME);
 
 		esas2r_proc_major = 0;
-	}
+	पूर्ण
 
 	esas2r_log(ESAS2R_LOG_INFO, "pci_unregister_driver() called");
 
-	pci_unregister_driver(&esas2r_pci_driver);
-}
+	pci_unरेजिस्टर_driver(&esas2r_pci_driver);
+पूर्ण
 
-int esas2r_show_info(struct seq_file *m, struct Scsi_Host *sh)
-{
-	struct esas2r_adapter *a = (struct esas2r_adapter *)sh->hostdata;
+पूर्णांक esas2r_show_info(काष्ठा seq_file *m, काष्ठा Scsi_Host *sh)
+अणु
+	काष्ठा esas2r_adapter *a = (काष्ठा esas2r_adapter *)sh->hostdata;
 
-	struct esas2r_target *t;
-	int dev_count = 0;
+	काष्ठा esas2r_target *t;
+	पूर्णांक dev_count = 0;
 
 	esas2r_log(ESAS2R_LOG_DEBG, "esas2r_show_info (%p,%d)", m, sh->host_no);
 
-	seq_printf(m, ESAS2R_LONGNAME "\n"
+	seq_म_लिखो(m, ESAS2R_LONGNAME "\n"
 		   "Driver version: "ESAS2R_VERSION_STR "\n"
 		   "Flash version: %s\n"
 		   "Firmware version: %s\n"
@@ -671,7 +672,7 @@ int esas2r_show_info(struct seq_file *m, struct Scsi_Host *sh)
 		   a->fw_rev[0] ? a->fw_rev : "(none)");
 
 
-	seq_printf(m, "Adapter information:\n"
+	seq_म_लिखो(m, "Adapter information:\n"
 		   "--------------------\n"
 		   "Model: %s\n"
 		   "SAS address: %02X%02X%02X%02X:%02X%02X%02X%02X\n",
@@ -685,106 +686,106 @@ int esas2r_show_info(struct seq_file *m, struct Scsi_Host *sh)
 		   a->nvram->sas_addr[6],
 		   a->nvram->sas_addr[7]);
 
-	seq_puts(m, "\n"
+	seq_माला_दो(m, "\n"
 		   "Discovered devices:\n"
 		   "\n"
 		   "   #  Target ID\n"
 		   "---------------\n");
 
-	for (t = a->targetdb; t < a->targetdb_end; t++)
-		if (t->buffered_target_state == TS_PRESENT) {
-			seq_printf(m, " %3d   %3d\n",
+	क्रम (t = a->targetdb; t < a->targetdb_end; t++)
+		अगर (t->buffered_target_state == TS_PRESENT) अणु
+			seq_म_लिखो(m, " %3d   %3d\n",
 				   ++dev_count,
-				   (u16)(uintptr_t)(t - a->targetdb));
-		}
+				   (u16)(uपूर्णांकptr_t)(t - a->targetdb));
+		पूर्ण
 
-	if (dev_count == 0)
-		seq_puts(m, "none\n");
+	अगर (dev_count == 0)
+		seq_माला_दो(m, "none\n");
 
-	seq_putc(m, '\n');
-	return 0;
+	seq_अ_दो(m, '\n');
+	वापस 0;
 
-}
+पूर्ण
 
-const char *esas2r_info(struct Scsi_Host *sh)
-{
-	struct esas2r_adapter *a = (struct esas2r_adapter *)sh->hostdata;
-	static char esas2r_info_str[512];
+स्थिर अक्षर *esas2r_info(काष्ठा Scsi_Host *sh)
+अणु
+	काष्ठा esas2r_adapter *a = (काष्ठा esas2r_adapter *)sh->hostdata;
+	अटल अक्षर esas2r_info_str[512];
 
 	esas2r_log_dev(ESAS2R_LOG_INFO, &(sh->shost_gendev),
 		       "esas2r_info() called");
 
 	/*
-	 * if we haven't done so already, register as a char driver
+	 * अगर we haven't करोne so alपढ़ोy, रेजिस्टर as a अक्षर driver
 	 * and stick a node under "/proc/scsi/esas2r/ATTOnode"
 	 */
 
-	if (esas2r_proc_major <= 0) {
+	अगर (esas2r_proc_major <= 0) अणु
 		esas2r_proc_host = sh;
 
-		esas2r_proc_major = register_chrdev(0, ESAS2R_DRVR_NAME,
+		esas2r_proc_major = रेजिस्टर_chrdev(0, ESAS2R_DRVR_NAME,
 						    &esas2r_proc_fops);
 
 		esas2r_log_dev(ESAS2R_LOG_DEBG, &(sh->shost_gendev),
 			       "register_chrdev (major %d)",
 			       esas2r_proc_major);
 
-		if (esas2r_proc_major > 0) {
-			struct proc_dir_entry *pde;
+		अगर (esas2r_proc_major > 0) अणु
+			काष्ठा proc_dir_entry *pde;
 
 			pde = proc_create(ATTONODE_NAME, 0,
 					  sh->hostt->proc_dir,
 					  &esas2r_proc_ops);
 
-			if (!pde) {
+			अगर (!pde) अणु
 				esas2r_log_dev(ESAS2R_LOG_WARN,
 					       &(sh->shost_gendev),
 					       "failed to create_proc_entry");
 				esas2r_proc_major = -1;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	sprintf(esas2r_info_str,
+	प्र_लिखो(esas2r_info_str,
 		ESAS2R_LONGNAME " (bus 0x%02X, device 0x%02X, IRQ 0x%02X)"
 		" driver version: "ESAS2R_VERSION_STR "  firmware version: "
 		"%s\n",
 		a->pcid->bus->number, a->pcid->devfn, a->pcid->irq,
 		a->fw_rev[0] ? a->fw_rev : "(none)");
 
-	return esas2r_info_str;
-}
+	वापस esas2r_info_str;
+पूर्ण
 
-/* Callback for building a request scatter/gather list */
-static u32 get_physaddr_from_sgc(struct esas2r_sg_context *sgc, u64 *addr)
-{
+/* Callback क्रम building a request scatter/gather list */
+अटल u32 get_physaddr_from_sgc(काष्ठा esas2r_sg_context *sgc, u64 *addr)
+अणु
 	u32 len;
 
-	if (likely(sgc->cur_offset == sgc->exp_offset)) {
+	अगर (likely(sgc->cur_offset == sgc->exp_offset)) अणु
 		/*
-		 * the normal case: caller used all bytes from previous call, so
+		 * the normal हाल: caller used all bytes from previous call, so
 		 * expected offset is the same as the current offset.
 		 */
 
-		if (sgc->sgel_count < sgc->num_sgel) {
-			/* retrieve next segment, except for first time */
-			if (sgc->exp_offset > (u8 *)0) {
+		अगर (sgc->sgel_count < sgc->num_sgel) अणु
+			/* retrieve next segment, except क्रम first समय */
+			अगर (sgc->exp_offset > (u8 *)0) अणु
 				/* advance current segment */
 				sgc->cur_sgel = sg_next(sgc->cur_sgel);
 				++(sgc->sgel_count);
-			}
+			पूर्ण
 
 
 			len = sg_dma_len(sgc->cur_sgel);
 			(*addr) = sg_dma_address(sgc->cur_sgel);
 
-			/* save the total # bytes returned to caller so far */
+			/* save the total # bytes वापसed to caller so far */
 			sgc->exp_offset += len;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			len = 0;
-		}
-	} else if (sgc->cur_offset < sgc->exp_offset) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (sgc->cur_offset < sgc->exp_offset) अणु
 		/*
 		 * caller did not use all bytes from previous call. need to
 		 * compute the address based on current segment.
@@ -804,135 +805,135 @@ static u32 get_physaddr_from_sgc(struct esas2r_sg_context *sgc, u64 *addr)
 		/* re-calculate length based on offset */
 		len = lower_32_bits(
 			sgc->exp_offset - sgc->cur_offset);
-	} else {   /* if ( sgc->cur_offset > sgc->exp_offset ) */
+	पूर्ण अन्यथा अणु   /* अगर ( sgc->cur_offset > sgc->exp_offset ) */
 		   /*
-		    * we don't expect the caller to skip ahead.
-		    * cur_offset will never exceed the len we return
+		    * we करोn't expect the caller to skip ahead.
+		    * cur_offset will never exceed the len we वापस
 		    */
 		len = 0;
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-int esas2r_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
-{
-	struct esas2r_adapter *a =
-		(struct esas2r_adapter *)cmd->device->host->hostdata;
-	struct esas2r_request *rq;
-	struct esas2r_sg_context sgc;
-	unsigned bufflen;
+पूर्णांक esas2r_queuecommand(काष्ठा Scsi_Host *host, काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा esas2r_adapter *a =
+		(काष्ठा esas2r_adapter *)cmd->device->host->hostdata;
+	काष्ठा esas2r_request *rq;
+	काष्ठा esas2r_sg_context sgc;
+	अचिन्हित bufflen;
 
-	/* Assume success, if it fails we will fix the result later. */
+	/* Assume success, अगर it fails we will fix the result later. */
 	cmd->result = DID_OK << 16;
 
-	if (unlikely(test_bit(AF_DEGRADED_MODE, &a->flags))) {
+	अगर (unlikely(test_bit(AF_DEGRADED_MODE, &a->flags))) अणु
 		cmd->result = DID_NO_CONNECT << 16;
-		cmd->scsi_done(cmd);
-		return 0;
-	}
+		cmd->scsi_करोne(cmd);
+		वापस 0;
+	पूर्ण
 
 	rq = esas2r_alloc_request(a);
-	if (unlikely(rq == NULL)) {
+	अगर (unlikely(rq == शून्य)) अणु
 		esas2r_debug("esas2r_alloc_request failed");
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
 	rq->cmd = cmd;
 	bufflen = scsi_bufflen(cmd);
 
-	if (likely(bufflen != 0)) {
-		if (cmd->sc_data_direction == DMA_TO_DEVICE)
+	अगर (likely(bufflen != 0)) अणु
+		अगर (cmd->sc_data_direction == DMA_TO_DEVICE)
 			rq->vrq->scsi.flags |= cpu_to_le32(FCP_CMND_WRD);
-		else if (cmd->sc_data_direction == DMA_FROM_DEVICE)
+		अन्यथा अगर (cmd->sc_data_direction == DMA_FROM_DEVICE)
 			rq->vrq->scsi.flags |= cpu_to_le32(FCP_CMND_RDD);
-	}
+	पूर्ण
 
-	memcpy(rq->vrq->scsi.cdb, cmd->cmnd, cmd->cmd_len);
+	स_नकल(rq->vrq->scsi.cdb, cmd->cmnd, cmd->cmd_len);
 	rq->vrq->scsi.length = cpu_to_le32(bufflen);
 	rq->target_id = cmd->device->id;
 	rq->vrq->scsi.flags |= cpu_to_le32(cmd->device->lun);
 	rq->sense_buf = cmd->sense_buffer;
 	rq->sense_len = SCSI_SENSE_BUFFERSIZE;
 
-	esas2r_sgc_init(&sgc, a, rq, NULL);
+	esas2r_sgc_init(&sgc, a, rq, शून्य);
 
 	sgc.length = bufflen;
-	sgc.cur_offset = NULL;
+	sgc.cur_offset = शून्य;
 
 	sgc.cur_sgel = scsi_sglist(cmd);
-	sgc.exp_offset = NULL;
+	sgc.exp_offset = शून्य;
 	sgc.num_sgel = scsi_dma_map(cmd);
 	sgc.sgel_count = 0;
 
-	if (unlikely(sgc.num_sgel < 0)) {
-		esas2r_free_request(a, rq);
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+	अगर (unlikely(sgc.num_sgel < 0)) अणु
+		esas2r_मुक्त_request(a, rq);
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
 	sgc.get_phys_addr = (PGETPHYSADDR)get_physaddr_from_sgc;
 
-	if (unlikely(!esas2r_build_sg_list(a, rq, &sgc))) {
+	अगर (unlikely(!esas2r_build_sg_list(a, rq, &sgc))) अणु
 		scsi_dma_unmap(cmd);
-		esas2r_free_request(a, rq);
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+		esas2r_मुक्त_request(a, rq);
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
-	esas2r_debug("start request %p to %d:%d\n", rq, (int)cmd->device->id,
-		     (int)cmd->device->lun);
+	esas2r_debug("start request %p to %d:%d\n", rq, (पूर्णांक)cmd->device->id,
+		     (पूर्णांक)cmd->device->lun);
 
 	esas2r_start_request(a, rq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void complete_task_management_request(struct esas2r_adapter *a,
-					     struct esas2r_request *rq)
-{
+अटल व्योम complete_task_management_request(काष्ठा esas2r_adapter *a,
+					     काष्ठा esas2r_request *rq)
+अणु
 	(*rq->task_management_status_ptr) = rq->req_stat;
-	esas2r_free_request(a, rq);
-}
+	esas2r_मुक्त_request(a, rq);
+पूर्ण
 
 /*
- * Searches the specified queue for the specified queue for the command
- * to abort.
+ * Searches the specअगरied queue क्रम the specअगरied queue क्रम the command
+ * to पात.
  *
- * Return 0 on failure, 1 if command was not found, 2 if command was found
+ * Return 0 on failure, 1 अगर command was not found, 2 अगर command was found
  */
-static int esas2r_check_active_queue(struct esas2r_adapter *a,
-				     struct esas2r_request **abort_request,
-				     struct scsi_cmnd *cmd,
-				     struct list_head *queue)
-{
+अटल पूर्णांक esas2r_check_active_queue(काष्ठा esas2r_adapter *a,
+				     काष्ठा esas2r_request **पात_request,
+				     काष्ठा scsi_cmnd *cmd,
+				     काष्ठा list_head *queue)
+अणु
 	bool found = false;
-	struct esas2r_request *ar = *abort_request;
-	struct esas2r_request *rq;
-	struct list_head *element, *next;
+	काष्ठा esas2r_request *ar = *पात_request;
+	काष्ठा esas2r_request *rq;
+	काष्ठा list_head *element, *next;
 
-	list_for_each_safe(element, next, queue) {
+	list_क्रम_each_safe(element, next, queue) अणु
 
-		rq = list_entry(element, struct esas2r_request, req_list);
+		rq = list_entry(element, काष्ठा esas2r_request, req_list);
 
-		if (rq->cmd == cmd) {
+		अगर (rq->cmd == cmd) अणु
 
-			/* Found the request.  See what to do with it. */
-			if (queue == &a->active_list) {
+			/* Found the request.  See what to करो with it. */
+			अगर (queue == &a->active_list) अणु
 				/*
 				 * We are searching the active queue, which
-				 * means that we need to send an abort request
+				 * means that we need to send an पात request
 				 * to the firmware.
 				 */
 				ar = esas2r_alloc_request(a);
-				if (ar == NULL) {
+				अगर (ar == शून्य) अणु
 					esas2r_log_dev(ESAS2R_LOG_WARN,
 						       &(a->host->shost_gendev),
 						       "unable to allocate an abort request for cmd %p",
 						       cmd);
-					return 0; /* Failure */
-				}
+					वापस 0; /* Failure */
+				पूर्ण
 
 				/*
-				 * Task management request must be formatted
+				 * Task management request must be क्रमmatted
 				 * with a lock held.
 				 */
 				ar->sense_len = 0;
@@ -941,196 +942,196 @@ static int esas2r_check_active_queue(struct esas2r_adapter *a,
 				ar->vrq->scsi.flags |= cpu_to_le32(
 					(u8)le32_to_cpu(rq->vrq->scsi.flags));
 
-				memset(ar->vrq->scsi.cdb, 0,
-				       sizeof(ar->vrq->scsi.cdb));
+				स_रखो(ar->vrq->scsi.cdb, 0,
+				       माप(ar->vrq->scsi.cdb));
 
 				ar->vrq->scsi.flags |= cpu_to_le32(
 					FCP_CMND_TRM);
-				ar->vrq->scsi.u.abort_handle =
+				ar->vrq->scsi.u.पात_handle =
 					rq->vrq->scsi.handle;
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
 				 * The request is pending but not active on
-				 * the firmware.  Just free it now and we'll
-				 * report the successful abort below.
+				 * the firmware.  Just मुक्त it now and we'll
+				 * report the successful पात below.
 				 */
 				list_del_init(&rq->req_list);
-				esas2r_free_request(a, rq);
-			}
+				esas2r_मुक्त_request(a, rq);
+			पूर्ण
 
 			found = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	}
+	पूर्ण
 
-	if (!found)
-		return 1;       /* Not found */
+	अगर (!found)
+		वापस 1;       /* Not found */
 
-	return 2;               /* found */
+	वापस 2;               /* found */
 
 
-}
+पूर्ण
 
-int esas2r_eh_abort(struct scsi_cmnd *cmd)
-{
-	struct esas2r_adapter *a =
-		(struct esas2r_adapter *)cmd->device->host->hostdata;
-	struct esas2r_request *abort_request = NULL;
-	unsigned long flags;
-	struct list_head *queue;
-	int result;
+पूर्णांक esas2r_eh_पात(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा esas2r_adapter *a =
+		(काष्ठा esas2r_adapter *)cmd->device->host->hostdata;
+	काष्ठा esas2r_request *पात_request = शून्य;
+	अचिन्हित दीर्घ flags;
+	काष्ठा list_head *queue;
+	पूर्णांक result;
 
 	esas2r_log(ESAS2R_LOG_INFO, "eh_abort (%p)", cmd);
 
-	if (test_bit(AF_DEGRADED_MODE, &a->flags)) {
+	अगर (test_bit(AF_DEGRADED_MODE, &a->flags)) अणु
 		cmd->result = DID_ABORT << 16;
 
 		scsi_set_resid(cmd, 0);
 
-		cmd->scsi_done(cmd);
+		cmd->scsi_करोne(cmd);
 
-		return SUCCESS;
-	}
+		वापस SUCCESS;
+	पूर्ण
 
 	spin_lock_irqsave(&a->queue_lock, flags);
 
 	/*
-	 * Run through the defer and active queues looking for the request
-	 * to abort.
+	 * Run through the defer and active queues looking क्रम the request
+	 * to पात.
 	 */
 
 	queue = &a->defer_list;
 
 check_active_queue:
 
-	result = esas2r_check_active_queue(a, &abort_request, cmd, queue);
+	result = esas2r_check_active_queue(a, &पात_request, cmd, queue);
 
-	if (!result) {
+	अगर (!result) अणु
 		spin_unlock_irqrestore(&a->queue_lock, flags);
-		return FAILED;
-	} else if (result == 2 && (queue == &a->defer_list)) {
+		वापस FAILED;
+	पूर्ण अन्यथा अगर (result == 2 && (queue == &a->defer_list)) अणु
 		queue = &a->active_list;
-		goto check_active_queue;
-	}
+		जाओ check_active_queue;
+	पूर्ण
 
 	spin_unlock_irqrestore(&a->queue_lock, flags);
 
-	if (abort_request) {
+	अगर (पात_request) अणु
 		u8 task_management_status = RS_PENDING;
 
 		/*
-		 * the request is already active, so we need to tell
-		 * the firmware to abort it and wait for the response.
+		 * the request is alपढ़ोy active, so we need to tell
+		 * the firmware to पात it and रुको क्रम the response.
 		 */
 
-		abort_request->comp_cb = complete_task_management_request;
-		abort_request->task_management_status_ptr =
+		पात_request->comp_cb = complete_task_management_request;
+		पात_request->task_management_status_ptr =
 			&task_management_status;
 
-		esas2r_start_request(a, abort_request);
+		esas2r_start_request(a, पात_request);
 
-		if (atomic_read(&a->disable_cnt) == 0)
-			esas2r_do_deferred_processes(a);
+		अगर (atomic_पढ़ो(&a->disable_cnt) == 0)
+			esas2r_करो_deferred_processes(a);
 
-		while (task_management_status == RS_PENDING)
+		जबतक (task_management_status == RS_PENDING)
 			msleep(10);
 
 		/*
 		 * Once we get here, the original request will have been
-		 * completed by the firmware and the abort request will have
-		 * been cleaned up.  we're done!
+		 * completed by the firmware and the पात request will have
+		 * been cleaned up.  we're करोne!
 		 */
 
-		return SUCCESS;
-	}
+		वापस SUCCESS;
+	पूर्ण
 
 	/*
 	 * If we get here, either we found the inactive request and
-	 * freed it, or we didn't find it at all.  Either way, success!
+	 * मुक्तd it, or we didn't find it at all.  Either way, success!
 	 */
 
 	cmd->result = DID_ABORT << 16;
 
 	scsi_set_resid(cmd, 0);
 
-	cmd->scsi_done(cmd);
+	cmd->scsi_करोne(cmd);
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
-static int esas2r_host_bus_reset(struct scsi_cmnd *cmd, bool host_reset)
-{
-	struct esas2r_adapter *a =
-		(struct esas2r_adapter *)cmd->device->host->hostdata;
+अटल पूर्णांक esas2r_host_bus_reset(काष्ठा scsi_cmnd *cmd, bool host_reset)
+अणु
+	काष्ठा esas2r_adapter *a =
+		(काष्ठा esas2r_adapter *)cmd->device->host->hostdata;
 
-	if (test_bit(AF_DEGRADED_MODE, &a->flags))
-		return FAILED;
+	अगर (test_bit(AF_DEGRADED_MODE, &a->flags))
+		वापस FAILED;
 
-	if (host_reset)
+	अगर (host_reset)
 		esas2r_reset_adapter(a);
-	else
+	अन्यथा
 		esas2r_reset_bus(a);
 
-	/* above call sets the AF_OS_RESET flag.  wait for it to clear. */
+	/* above call sets the AF_OS_RESET flag.  रुको क्रम it to clear. */
 
-	while (test_bit(AF_OS_RESET, &a->flags)) {
+	जबतक (test_bit(AF_OS_RESET, &a->flags)) अणु
 		msleep(10);
 
-		if (test_bit(AF_DEGRADED_MODE, &a->flags))
-			return FAILED;
-	}
+		अगर (test_bit(AF_DEGRADED_MODE, &a->flags))
+			वापस FAILED;
+	पूर्ण
 
-	if (test_bit(AF_DEGRADED_MODE, &a->flags))
-		return FAILED;
+	अगर (test_bit(AF_DEGRADED_MODE, &a->flags))
+		वापस FAILED;
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
-int esas2r_host_reset(struct scsi_cmnd *cmd)
-{
+पूर्णांक esas2r_host_reset(काष्ठा scsi_cmnd *cmd)
+अणु
 	esas2r_log(ESAS2R_LOG_INFO, "host_reset (%p)", cmd);
 
-	return esas2r_host_bus_reset(cmd, true);
-}
+	वापस esas2r_host_bus_reset(cmd, true);
+पूर्ण
 
-int esas2r_bus_reset(struct scsi_cmnd *cmd)
-{
+पूर्णांक esas2r_bus_reset(काष्ठा scsi_cmnd *cmd)
+अणु
 	esas2r_log(ESAS2R_LOG_INFO, "bus_reset (%p)", cmd);
 
-	return esas2r_host_bus_reset(cmd, false);
-}
+	वापस esas2r_host_bus_reset(cmd, false);
+पूर्ण
 
-static int esas2r_dev_targ_reset(struct scsi_cmnd *cmd, bool target_reset)
-{
-	struct esas2r_adapter *a =
-		(struct esas2r_adapter *)cmd->device->host->hostdata;
-	struct esas2r_request *rq;
+अटल पूर्णांक esas2r_dev_targ_reset(काष्ठा scsi_cmnd *cmd, bool target_reset)
+अणु
+	काष्ठा esas2r_adapter *a =
+		(काष्ठा esas2r_adapter *)cmd->device->host->hostdata;
+	काष्ठा esas2r_request *rq;
 	u8 task_management_status = RS_PENDING;
 	bool completed;
 
-	if (test_bit(AF_DEGRADED_MODE, &a->flags))
-		return FAILED;
+	अगर (test_bit(AF_DEGRADED_MODE, &a->flags))
+		वापस FAILED;
 
 retry:
 	rq = esas2r_alloc_request(a);
-	if (rq == NULL) {
-		if (target_reset) {
+	अगर (rq == शून्य) अणु
+		अगर (target_reset) अणु
 			esas2r_log(ESAS2R_LOG_CRIT,
 				   "unable to allocate a request for a "
 				   "target reset (%d)!",
 				   cmd->device->id);
-		} else {
+		पूर्ण अन्यथा अणु
 			esas2r_log(ESAS2R_LOG_CRIT,
 				   "unable to allocate a request for a "
 				   "device reset (%d:%llu)!",
 				   cmd->device->id,
 				   cmd->device->lun);
-		}
+		पूर्ण
 
 
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
 	rq->target_id = cmd->device->id;
 	rq->vrq->scsi.flags |= cpu_to_le32(cmd->device->lun);
@@ -1139,212 +1140,212 @@ retry:
 	rq->comp_cb = complete_task_management_request;
 	rq->task_management_status_ptr = &task_management_status;
 
-	if (target_reset) {
+	अगर (target_reset) अणु
 		esas2r_debug("issuing target reset (%p) to id %d", rq,
 			     cmd->device->id);
 		completed = esas2r_send_task_mgmt(a, rq, 0x20);
-	} else {
+	पूर्ण अन्यथा अणु
 		esas2r_debug("issuing device reset (%p) to id %d lun %d", rq,
 			     cmd->device->id, cmd->device->lun);
 		completed = esas2r_send_task_mgmt(a, rq, 0x10);
-	}
+	पूर्ण
 
-	if (completed) {
-		/* Task management cmd completed right away, need to free it. */
+	अगर (completed) अणु
+		/* Task management cmd completed right away, need to मुक्त it. */
 
-		esas2r_free_request(a, rq);
-	} else {
+		esas2r_मुक्त_request(a, rq);
+	पूर्ण अन्यथा अणु
 		/*
-		 * Wait for firmware to complete the request.  Completion
-		 * callback will free it.
+		 * Wait क्रम firmware to complete the request.  Completion
+		 * callback will मुक्त it.
 		 */
-		while (task_management_status == RS_PENDING)
+		जबतक (task_management_status == RS_PENDING)
 			msleep(10);
-	}
+	पूर्ण
 
-	if (test_bit(AF_DEGRADED_MODE, &a->flags))
-		return FAILED;
+	अगर (test_bit(AF_DEGRADED_MODE, &a->flags))
+		वापस FAILED;
 
-	if (task_management_status == RS_BUSY) {
+	अगर (task_management_status == RS_BUSY) अणु
 		/*
 		 * Busy, probably because we are flashing.  Wait a bit and
 		 * try again.
 		 */
 		msleep(100);
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
-int esas2r_device_reset(struct scsi_cmnd *cmd)
-{
+पूर्णांक esas2r_device_reset(काष्ठा scsi_cmnd *cmd)
+अणु
 	esas2r_log(ESAS2R_LOG_INFO, "device_reset (%p)", cmd);
 
-	return esas2r_dev_targ_reset(cmd, false);
+	वापस esas2r_dev_targ_reset(cmd, false);
 
-}
+पूर्ण
 
-int esas2r_target_reset(struct scsi_cmnd *cmd)
-{
+पूर्णांक esas2r_target_reset(काष्ठा scsi_cmnd *cmd)
+अणु
 	esas2r_log(ESAS2R_LOG_INFO, "target_reset (%p)", cmd);
 
-	return esas2r_dev_targ_reset(cmd, true);
-}
+	वापस esas2r_dev_targ_reset(cmd, true);
+पूर्ण
 
-void esas2r_log_request_failure(struct esas2r_adapter *a,
-				struct esas2r_request *rq)
-{
+व्योम esas2r_log_request_failure(काष्ठा esas2r_adapter *a,
+				काष्ठा esas2r_request *rq)
+अणु
 	u8 reqstatus = rq->req_stat;
 
-	if (reqstatus == RS_SUCCESS)
-		return;
+	अगर (reqstatus == RS_SUCCESS)
+		वापस;
 
-	if (rq->vrq->scsi.function == VDA_FUNC_SCSI) {
-		if (reqstatus == RS_SCSI_ERROR) {
-			if (rq->func_rsp.scsi_rsp.sense_len >= 13) {
+	अगर (rq->vrq->scsi.function == VDA_FUNC_SCSI) अणु
+		अगर (reqstatus == RS_SCSI_ERROR) अणु
+			अगर (rq->func_rsp.scsi_rsp.sense_len >= 13) अणु
 				esas2r_log(ESAS2R_LOG_WARN,
 					   "request failure - SCSI error %x ASC:%x ASCQ:%x CDB:%x",
 					   rq->sense_buf[2], rq->sense_buf[12],
 					   rq->sense_buf[13],
 					   rq->vrq->scsi.cdb[0]);
-			} else {
+			पूर्ण अन्यथा अणु
 				esas2r_log(ESAS2R_LOG_WARN,
 					   "request failure - SCSI error CDB:%x\n",
 					   rq->vrq->scsi.cdb[0]);
-			}
-		} else if ((rq->vrq->scsi.cdb[0] != INQUIRY
+			पूर्ण
+		पूर्ण अन्यथा अगर ((rq->vrq->scsi.cdb[0] != INQUIRY
 			    && rq->vrq->scsi.cdb[0] != REPORT_LUNS)
 			   || (reqstatus != RS_SEL
-			       && reqstatus != RS_SEL2)) {
-			if ((reqstatus == RS_UNDERRUN) &&
-			    (rq->vrq->scsi.cdb[0] == INQUIRY)) {
+			       && reqstatus != RS_SEL2)) अणु
+			अगर ((reqstatus == RS_UNDERRUN) &&
+			    (rq->vrq->scsi.cdb[0] == INQUIRY)) अणु
 				/* Don't log inquiry underruns */
-			} else {
+			पूर्ण अन्यथा अणु
 				esas2r_log(ESAS2R_LOG_WARN,
 					   "request failure - cdb:%x reqstatus:%d target:%d",
 					   rq->vrq->scsi.cdb[0], reqstatus,
 					   rq->target_id);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void esas2r_wait_request(struct esas2r_adapter *a, struct esas2r_request *rq)
-{
-	u32 starttime;
-	u32 timeout;
+व्योम esas2r_रुको_request(काष्ठा esas2r_adapter *a, काष्ठा esas2r_request *rq)
+अणु
+	u32 startसमय;
+	u32 समयout;
 
-	starttime = jiffies_to_msecs(jiffies);
-	timeout = rq->timeout ? rq->timeout : 5000;
+	startसमय = jअगरfies_to_msecs(jअगरfies);
+	समयout = rq->समयout ? rq->समयout : 5000;
 
-	while (true) {
-		esas2r_polled_interrupt(a);
+	जबतक (true) अणु
+		esas2r_polled_पूर्णांकerrupt(a);
 
-		if (rq->req_stat != RS_STARTED)
-			break;
+		अगर (rq->req_stat != RS_STARTED)
+			अवरोध;
 
-		schedule_timeout_interruptible(msecs_to_jiffies(100));
+		schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(100));
 
-		if ((jiffies_to_msecs(jiffies) - starttime) > timeout) {
+		अगर ((jअगरfies_to_msecs(jअगरfies) - startसमय) > समयout) अणु
 			esas2r_hdebug("request TMO");
 			esas2r_bugon();
 
 			rq->req_stat = RS_TIMEOUT;
 
 			esas2r_local_reset_adapter(a);
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-u32 esas2r_map_data_window(struct esas2r_adapter *a, u32 addr_lo)
-{
+u32 esas2r_map_data_winकरोw(काष्ठा esas2r_adapter *a, u32 addr_lo)
+अणु
 	u32 offset = addr_lo & (MW_DATA_WINDOW_SIZE - 1);
-	u32 base = addr_lo & -(signed int)MW_DATA_WINDOW_SIZE;
+	u32 base = addr_lo & -(चिन्हित पूर्णांक)MW_DATA_WINDOW_SIZE;
 
-	if (a->window_base != base) {
-		esas2r_write_register_dword(a, MVR_PCI_WIN1_REMAP,
+	अगर (a->winकरोw_base != base) अणु
+		esas2r_ग_लिखो_रेजिस्टर_dword(a, MVR_PCI_WIN1_REMAP,
 					    base | MVRPW1R_ENABLE);
-		esas2r_flush_register_dword(a, MVR_PCI_WIN1_REMAP);
-		a->window_base = base;
-	}
+		esas2r_flush_रेजिस्टर_dword(a, MVR_PCI_WIN1_REMAP);
+		a->winकरोw_base = base;
+	पूर्ण
 
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
 /* Read a block of data from chip memory */
-bool esas2r_read_mem_block(struct esas2r_adapter *a,
-			   void *to,
+bool esas2r_पढ़ो_mem_block(काष्ठा esas2r_adapter *a,
+			   व्योम *to,
 			   u32 from,
 			   u32 size)
-{
+अणु
 	u8 *end = (u8 *)to;
 
-	while (size) {
+	जबतक (size) अणु
 		u32 len;
 		u32 offset;
 		u32 iatvr;
 
-		iatvr = (from & -(signed int)MW_DATA_WINDOW_SIZE);
+		iatvr = (from & -(चिन्हित पूर्णांक)MW_DATA_WINDOW_SIZE);
 
-		esas2r_map_data_window(a, iatvr);
+		esas2r_map_data_winकरोw(a, iatvr);
 
 		offset = from & (MW_DATA_WINDOW_SIZE - 1);
 		len = size;
 
-		if (len > MW_DATA_WINDOW_SIZE - offset)
+		अगर (len > MW_DATA_WINDOW_SIZE - offset)
 			len = MW_DATA_WINDOW_SIZE - offset;
 
 		from += len;
 		size -= len;
 
-		while (len--) {
-			*end++ = esas2r_read_data_byte(a, offset);
+		जबतक (len--) अणु
+			*end++ = esas2r_पढ़ो_data_byte(a, offset);
 			offset++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void esas2r_nuxi_mgt_data(u8 function, void *data)
-{
-	struct atto_vda_grp_info *g;
-	struct atto_vda_devinfo *d;
-	struct atto_vdapart_info *p;
-	struct atto_vda_dh_info *h;
-	struct atto_vda_metrics_info *m;
-	struct atto_vda_schedule_info *s;
-	struct atto_vda_buzzer_info *b;
+व्योम esas2r_nuxi_mgt_data(u8 function, व्योम *data)
+अणु
+	काष्ठा atto_vda_grp_info *g;
+	काष्ठा atto_vda_devinfo *d;
+	काष्ठा atto_vdapart_info *p;
+	काष्ठा atto_vda_dh_info *h;
+	काष्ठा atto_vda_metrics_info *m;
+	काष्ठा atto_vda_schedule_info *s;
+	काष्ठा atto_vda_buzzer_info *b;
 	u8 i;
 
-	switch (function) {
-	case VDAMGT_BUZZER_INFO:
-	case VDAMGT_BUZZER_SET:
+	चयन (function) अणु
+	हाल VDAMGT_BUZZER_INFO:
+	हाल VDAMGT_BUZZER_SET:
 
-		b = (struct atto_vda_buzzer_info *)data;
+		b = (काष्ठा atto_vda_buzzer_info *)data;
 
 		b->duration = le32_to_cpu(b->duration);
-		break;
+		अवरोध;
 
-	case VDAMGT_SCHEDULE_INFO:
-	case VDAMGT_SCHEDULE_EVENT:
+	हाल VDAMGT_SCHEDULE_INFO:
+	हाल VDAMGT_SCHEDULE_EVENT:
 
-		s = (struct atto_vda_schedule_info *)data;
+		s = (काष्ठा atto_vda_schedule_info *)data;
 
 		s->id = le32_to_cpu(s->id);
 
-		break;
+		अवरोध;
 
-	case VDAMGT_DEV_INFO:
-	case VDAMGT_DEV_CLEAN:
-	case VDAMGT_DEV_PT_INFO:
-	case VDAMGT_DEV_FEATURES:
-	case VDAMGT_DEV_PT_FEATURES:
-	case VDAMGT_DEV_OPERATION:
+	हाल VDAMGT_DEV_INFO:
+	हाल VDAMGT_DEV_CLEAN:
+	हाल VDAMGT_DEV_PT_INFO:
+	हाल VDAMGT_DEV_FEATURES:
+	हाल VDAMGT_DEV_PT_FEATURES:
+	हाल VDAMGT_DEV_OPERATION:
 
-		d = (struct atto_vda_devinfo *)data;
+		d = (काष्ठा atto_vda_devinfo *)data;
 
 		d->capacity = le64_to_cpu(d->capacity);
 		d->block_size = le32_to_cpu(d->block_size);
@@ -1352,172 +1353,172 @@ void esas2r_nuxi_mgt_data(u8 function, void *data)
 		d->target_id = le16_to_cpu(d->target_id);
 		d->lun = le16_to_cpu(d->lun);
 		d->features = le16_to_cpu(d->features);
-		break;
+		अवरोध;
 
-	case VDAMGT_GRP_INFO:
-	case VDAMGT_GRP_CREATE:
-	case VDAMGT_GRP_DELETE:
-	case VDAMGT_ADD_STORAGE:
-	case VDAMGT_MEMBER_ADD:
-	case VDAMGT_GRP_COMMIT:
-	case VDAMGT_GRP_REBUILD:
-	case VDAMGT_GRP_COMMIT_INIT:
-	case VDAMGT_QUICK_RAID:
-	case VDAMGT_GRP_FEATURES:
-	case VDAMGT_GRP_COMMIT_INIT_AUTOMAP:
-	case VDAMGT_QUICK_RAID_INIT_AUTOMAP:
-	case VDAMGT_SPARE_LIST:
-	case VDAMGT_SPARE_ADD:
-	case VDAMGT_SPARE_REMOVE:
-	case VDAMGT_LOCAL_SPARE_ADD:
-	case VDAMGT_GRP_OPERATION:
+	हाल VDAMGT_GRP_INFO:
+	हाल VDAMGT_GRP_CREATE:
+	हाल VDAMGT_GRP_DELETE:
+	हाल VDAMGT_ADD_STORAGE:
+	हाल VDAMGT_MEMBER_ADD:
+	हाल VDAMGT_GRP_COMMIT:
+	हाल VDAMGT_GRP_REBUILD:
+	हाल VDAMGT_GRP_COMMIT_INIT:
+	हाल VDAMGT_QUICK_RAID:
+	हाल VDAMGT_GRP_FEATURES:
+	हाल VDAMGT_GRP_COMMIT_INIT_AUTOMAP:
+	हाल VDAMGT_QUICK_RAID_INIT_AUTOMAP:
+	हाल VDAMGT_SPARE_LIST:
+	हाल VDAMGT_SPARE_ADD:
+	हाल VDAMGT_SPARE_REMOVE:
+	हाल VDAMGT_LOCAL_SPARE_ADD:
+	हाल VDAMGT_GRP_OPERATION:
 
-		g = (struct atto_vda_grp_info *)data;
+		g = (काष्ठा atto_vda_grp_info *)data;
 
 		g->capacity = le64_to_cpu(g->capacity);
 		g->block_size = le32_to_cpu(g->block_size);
-		g->interleave = le32_to_cpu(g->interleave);
+		g->पूर्णांकerleave = le32_to_cpu(g->पूर्णांकerleave);
 		g->features = le16_to_cpu(g->features);
 
-		for (i = 0; i < 32; i++)
+		क्रम (i = 0; i < 32; i++)
 			g->members[i] = le16_to_cpu(g->members[i]);
 
-		break;
+		अवरोध;
 
-	case VDAMGT_PART_INFO:
-	case VDAMGT_PART_MAP:
-	case VDAMGT_PART_UNMAP:
-	case VDAMGT_PART_AUTOMAP:
-	case VDAMGT_PART_SPLIT:
-	case VDAMGT_PART_MERGE:
+	हाल VDAMGT_PART_INFO:
+	हाल VDAMGT_PART_MAP:
+	हाल VDAMGT_PART_UNMAP:
+	हाल VDAMGT_PART_AUTOMAP:
+	हाल VDAMGT_PART_SPLIT:
+	हाल VDAMGT_PART_MERGE:
 
-		p = (struct atto_vdapart_info *)data;
+		p = (काष्ठा atto_vdapart_info *)data;
 
 		p->part_size = le64_to_cpu(p->part_size);
 		p->start_lba = le32_to_cpu(p->start_lba);
 		p->block_size = le32_to_cpu(p->block_size);
 		p->target_id = le16_to_cpu(p->target_id);
-		break;
+		अवरोध;
 
-	case VDAMGT_DEV_HEALTH_REQ:
+	हाल VDAMGT_DEV_HEALTH_REQ:
 
-		h = (struct atto_vda_dh_info *)data;
+		h = (काष्ठा atto_vda_dh_info *)data;
 
 		h->med_defect_cnt = le32_to_cpu(h->med_defect_cnt);
 		h->info_exc_cnt = le32_to_cpu(h->info_exc_cnt);
-		break;
+		अवरोध;
 
-	case VDAMGT_DEV_METRICS:
+	हाल VDAMGT_DEV_METRICS:
 
-		m = (struct atto_vda_metrics_info *)data;
+		m = (काष्ठा atto_vda_metrics_info *)data;
 
-		for (i = 0; i < 32; i++)
+		क्रम (i = 0; i < 32; i++)
 			m->dev_indexes[i] = le16_to_cpu(m->dev_indexes[i]);
 
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void esas2r_nuxi_cfg_data(u8 function, void *data)
-{
-	struct atto_vda_cfg_init *ci;
+व्योम esas2r_nuxi_cfg_data(u8 function, व्योम *data)
+अणु
+	काष्ठा atto_vda_cfg_init *ci;
 
-	switch (function) {
-	case VDA_CFG_INIT:
-	case VDA_CFG_GET_INIT:
-	case VDA_CFG_GET_INIT2:
+	चयन (function) अणु
+	हाल VDA_CFG_INIT:
+	हाल VDA_CFG_GET_INIT:
+	हाल VDA_CFG_GET_INIT2:
 
-		ci = (struct atto_vda_cfg_init *)data;
+		ci = (काष्ठा atto_vda_cfg_init *)data;
 
-		ci->date_time.year = le16_to_cpu(ci->date_time.year);
+		ci->date_समय.year = le16_to_cpu(ci->date_समय.year);
 		ci->sgl_page_size = le32_to_cpu(ci->sgl_page_size);
 		ci->vda_version = le32_to_cpu(ci->vda_version);
-		ci->epoch_time = le32_to_cpu(ci->epoch_time);
+		ci->epoch_समय = le32_to_cpu(ci->epoch_समय);
 		ci->ioctl_tunnel = le32_to_cpu(ci->ioctl_tunnel);
-		ci->num_targets_backend = le32_to_cpu(ci->num_targets_backend);
-		break;
+		ci->num_tarमाला_लो_backend = le32_to_cpu(ci->num_tarमाला_लो_backend);
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void esas2r_nuxi_ae_data(union atto_vda_ae *ae)
-{
-	struct atto_vda_ae_raid *r = &ae->raid;
-	struct atto_vda_ae_lu *l = &ae->lu;
+व्योम esas2r_nuxi_ae_data(जोड़ atto_vda_ae *ae)
+अणु
+	काष्ठा atto_vda_ae_raid *r = &ae->raid;
+	काष्ठा atto_vda_ae_lu *l = &ae->lu;
 
-	switch (ae->hdr.bytype) {
-	case VDAAE_HDR_TYPE_RAID:
+	चयन (ae->hdr.bytype) अणु
+	हाल VDAAE_HDR_TYPE_RAID:
 
 		r->dwflags = le32_to_cpu(r->dwflags);
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_LU:
+	हाल VDAAE_HDR_TYPE_LU:
 
 		l->dwevent = le32_to_cpu(l->dwevent);
 		l->wphys_target_id = le16_to_cpu(l->wphys_target_id);
 		l->id.tgtlun.wtarget_id = le16_to_cpu(l->id.tgtlun.wtarget_id);
 
-		if (l->hdr.bylength >= offsetof(struct atto_vda_ae_lu, id)
-		    + sizeof(struct atto_vda_ae_lu_tgt_lun_raid)) {
-			l->id.tgtlun_raid.dwinterleave
-				= le32_to_cpu(l->id.tgtlun_raid.dwinterleave);
+		अगर (l->hdr.bylength >= दुरत्व(काष्ठा atto_vda_ae_lu, id)
+		    + माप(काष्ठा atto_vda_ae_lu_tgt_lun_raid)) अणु
+			l->id.tgtlun_raid.dwपूर्णांकerleave
+				= le32_to_cpu(l->id.tgtlun_raid.dwपूर्णांकerleave);
 			l->id.tgtlun_raid.dwblock_size
 				= le32_to_cpu(l->id.tgtlun_raid.dwblock_size);
-		}
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_DISK:
-	default:
-		break;
-	}
-}
+	हाल VDAAE_HDR_TYPE_DISK:
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void esas2r_free_request(struct esas2r_adapter *a, struct esas2r_request *rq)
-{
-	unsigned long flags;
+व्योम esas2r_मुक्त_request(काष्ठा esas2r_adapter *a, काष्ठा esas2r_request *rq)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	esas2r_rq_destroy_request(rq, a);
 	spin_lock_irqsave(&a->request_lock, flags);
 	list_add(&rq->comp_list, &a->avail_request);
 	spin_unlock_irqrestore(&a->request_lock, flags);
-}
+पूर्ण
 
-struct esas2r_request *esas2r_alloc_request(struct esas2r_adapter *a)
-{
-	struct esas2r_request *rq;
-	unsigned long flags;
+काष्ठा esas2r_request *esas2r_alloc_request(काष्ठा esas2r_adapter *a)
+अणु
+	काष्ठा esas2r_request *rq;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&a->request_lock, flags);
 
-	if (unlikely(list_empty(&a->avail_request))) {
+	अगर (unlikely(list_empty(&a->avail_request))) अणु
 		spin_unlock_irqrestore(&a->request_lock, flags);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	rq = list_first_entry(&a->avail_request, struct esas2r_request,
+	rq = list_first_entry(&a->avail_request, काष्ठा esas2r_request,
 			      comp_list);
 	list_del(&rq->comp_list);
 	spin_unlock_irqrestore(&a->request_lock, flags);
 	esas2r_rq_init_request(rq, a);
 
-	return rq;
+	वापस rq;
 
-}
+पूर्ण
 
-void esas2r_complete_request_cb(struct esas2r_adapter *a,
-				struct esas2r_request *rq)
-{
+व्योम esas2r_complete_request_cb(काष्ठा esas2r_adapter *a,
+				काष्ठा esas2r_request *rq)
+अणु
 	esas2r_debug("completing request %p\n", rq);
 
 	scsi_dma_unmap(rq->cmd);
 
-	if (unlikely(rq->req_stat != RS_SUCCESS)) {
+	अगर (unlikely(rq->req_stat != RS_SUCCESS)) अणु
 		esas2r_debug("[%x STATUS %x:%x (%x)]", rq->target_id,
 			     rq->req_stat,
 			     rq->func_rsp.scsi_rsp.scsi_stat,
@@ -1527,115 +1528,115 @@ void esas2r_complete_request_cb(struct esas2r_adapter *a,
 			((esas2r_req_status_to_error(rq->req_stat) << 16)
 			 | (rq->func_rsp.scsi_rsp.scsi_stat & STATUS_MASK));
 
-		if (rq->req_stat == RS_UNDERRUN)
+		अगर (rq->req_stat == RS_UNDERRUN)
 			scsi_set_resid(rq->cmd,
 				       le32_to_cpu(rq->func_rsp.scsi_rsp.
 						   residual_length));
-		else
+		अन्यथा
 			scsi_set_resid(rq->cmd, 0);
-	}
+	पूर्ण
 
-	rq->cmd->scsi_done(rq->cmd);
+	rq->cmd->scsi_करोne(rq->cmd);
 
-	esas2r_free_request(a, rq);
-}
+	esas2r_मुक्त_request(a, rq);
+पूर्ण
 
-/* Run tasklet to handle stuff outside of interrupt context. */
-void esas2r_adapter_tasklet(unsigned long context)
-{
-	struct esas2r_adapter *a = (struct esas2r_adapter *)context;
+/* Run tasklet to handle stuff outside of पूर्णांकerrupt context. */
+व्योम esas2r_adapter_tasklet(अचिन्हित दीर्घ context)
+अणु
+	काष्ठा esas2r_adapter *a = (काष्ठा esas2r_adapter *)context;
 
-	if (unlikely(test_bit(AF2_TIMER_TICK, &a->flags2))) {
+	अगर (unlikely(test_bit(AF2_TIMER_TICK, &a->flags2))) अणु
 		clear_bit(AF2_TIMER_TICK, &a->flags2);
-		esas2r_timer_tick(a);
-	}
+		esas2r_समयr_tick(a);
+	पूर्ण
 
-	if (likely(test_bit(AF2_INT_PENDING, &a->flags2))) {
+	अगर (likely(test_bit(AF2_INT_PENDING, &a->flags2))) अणु
 		clear_bit(AF2_INT_PENDING, &a->flags2);
-		esas2r_adapter_interrupt(a);
-	}
+		esas2r_adapter_पूर्णांकerrupt(a);
+	पूर्ण
 
-	if (esas2r_is_tasklet_pending(a))
-		esas2r_do_tasklet_tasks(a);
+	अगर (esas2r_is_tasklet_pending(a))
+		esas2r_करो_tasklet_tasks(a);
 
-	if (esas2r_is_tasklet_pending(a)
+	अगर (esas2r_is_tasklet_pending(a)
 	    || (test_bit(AF2_INT_PENDING, &a->flags2))
-	    || (test_bit(AF2_TIMER_TICK, &a->flags2))) {
+	    || (test_bit(AF2_TIMER_TICK, &a->flags2))) अणु
 		clear_bit(AF_TASKLET_SCHEDULED, &a->flags);
 		esas2r_schedule_tasklet(a);
-	} else {
+	पूर्ण अन्यथा अणु
 		clear_bit(AF_TASKLET_SCHEDULED, &a->flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void esas2r_timer_callback(struct timer_list *t);
+अटल व्योम esas2r_समयr_callback(काष्ठा समयr_list *t);
 
-void esas2r_kickoff_timer(struct esas2r_adapter *a)
-{
-	timer_setup(&a->timer, esas2r_timer_callback, 0);
+व्योम esas2r_kickoff_समयr(काष्ठा esas2r_adapter *a)
+अणु
+	समयr_setup(&a->समयr, esas2r_समयr_callback, 0);
 
-	a->timer.expires = jiffies +
-			   msecs_to_jiffies(100);
+	a->समयr.expires = jअगरfies +
+			   msecs_to_jअगरfies(100);
 
-	add_timer(&a->timer);
-}
+	add_समयr(&a->समयr);
+पूर्ण
 
-static void esas2r_timer_callback(struct timer_list *t)
-{
-	struct esas2r_adapter *a = from_timer(a, t, timer);
+अटल व्योम esas2r_समयr_callback(काष्ठा समयr_list *t)
+अणु
+	काष्ठा esas2r_adapter *a = from_समयr(a, t, समयr);
 
 	set_bit(AF2_TIMER_TICK, &a->flags2);
 
 	esas2r_schedule_tasklet(a);
 
-	esas2r_kickoff_timer(a);
-}
+	esas2r_kickoff_समयr(a);
+पूर्ण
 
 /*
- * Firmware events need to be handled outside of interrupt context
+ * Firmware events need to be handled outside of पूर्णांकerrupt context
  * so we schedule a delayed_work to handle them.
  */
 
-static void
-esas2r_free_fw_event(struct esas2r_fw_event_work *fw_event)
-{
-	unsigned long flags;
-	struct esas2r_adapter *a = fw_event->a;
+अटल व्योम
+esas2r_मुक्त_fw_event(काष्ठा esas2r_fw_event_work *fw_event)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा esas2r_adapter *a = fw_event->a;
 
 	spin_lock_irqsave(&a->fw_event_lock, flags);
 	list_del(&fw_event->list);
-	kfree(fw_event);
+	kमुक्त(fw_event);
 	spin_unlock_irqrestore(&a->fw_event_lock, flags);
-}
+पूर्ण
 
-void
-esas2r_fw_event_off(struct esas2r_adapter *a)
-{
-	unsigned long flags;
+व्योम
+esas2r_fw_event_off(काष्ठा esas2r_adapter *a)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&a->fw_event_lock, flags);
 	a->fw_events_off = 1;
 	spin_unlock_irqrestore(&a->fw_event_lock, flags);
-}
+पूर्ण
 
-void
-esas2r_fw_event_on(struct esas2r_adapter *a)
-{
-	unsigned long flags;
+व्योम
+esas2r_fw_event_on(काष्ठा esas2r_adapter *a)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&a->fw_event_lock, flags);
 	a->fw_events_off = 0;
 	spin_unlock_irqrestore(&a->fw_event_lock, flags);
-}
+पूर्ण
 
-static void esas2r_add_device(struct esas2r_adapter *a, u16 target_id)
-{
-	int ret;
-	struct scsi_device *scsi_dev;
+अटल व्योम esas2r_add_device(काष्ठा esas2r_adapter *a, u16 target_id)
+अणु
+	पूर्णांक ret;
+	काष्ठा scsi_device *scsi_dev;
 
 	scsi_dev = scsi_device_lookup(a->host, 0, target_id, 0);
 
-	if (scsi_dev) {
+	अगर (scsi_dev) अणु
 		esas2r_log_dev(
 			ESAS2R_LOG_WARN,
 			&(scsi_dev->
@@ -1643,7 +1644,7 @@ static void esas2r_add_device(struct esas2r_adapter *a, u16 target_id)
 			"scsi device already exists at id %d", target_id);
 
 		scsi_device_put(scsi_dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		esas2r_log_dev(
 			ESAS2R_LOG_INFO,
 			&(a->host->
@@ -1652,24 +1653,24 @@ static void esas2r_add_device(struct esas2r_adapter *a, u16 target_id)
 			target_id);
 
 		ret = scsi_add_device(a->host, 0, target_id, 0);
-		if (ret) {
+		अगर (ret) अणु
 			esas2r_log_dev(
 				ESAS2R_LOG_CRIT,
 				&(a->host->
 				  shost_gendev),
 				"scsi_add_device failed with %d for id %d",
 				ret, target_id);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void esas2r_remove_device(struct esas2r_adapter *a, u16 target_id)
-{
-	struct scsi_device *scsi_dev;
+अटल व्योम esas2r_हटाओ_device(काष्ठा esas2r_adapter *a, u16 target_id)
+अणु
+	काष्ठा scsi_device *scsi_dev;
 
 	scsi_dev = scsi_device_lookup(a->host, 0, target_id, 0);
 
-	if (scsi_dev) {
+	अगर (scsi_dev) अणु
 		scsi_device_set_state(scsi_dev, SDEV_OFFLINE);
 
 		esas2r_log_dev(
@@ -1679,7 +1680,7 @@ static void esas2r_remove_device(struct esas2r_adapter *a, u16 target_id)
 			"scsi_remove_device() called for 0:%d:0",
 			target_id);
 
-		scsi_remove_device(scsi_dev);
+		scsi_हटाओ_device(scsi_dev);
 
 		esas2r_log_dev(
 			ESAS2R_LOG_INFO,
@@ -1688,89 +1689,89 @@ static void esas2r_remove_device(struct esas2r_adapter *a, u16 target_id)
 			"scsi_device_put() called");
 
 		scsi_device_put(scsi_dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		esas2r_log_dev(
 			ESAS2R_LOG_WARN,
 			&(a->host->shost_gendev),
 			"no target found at id %d",
 			target_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Sends a firmware asynchronous event to anyone who happens to be
  * listening on the defined ATTO VDA event ports.
  */
-static void esas2r_send_ae_event(struct esas2r_fw_event_work *fw_event)
-{
-	struct esas2r_vda_ae *ae = (struct esas2r_vda_ae *)fw_event->data;
-	char *type;
+अटल व्योम esas2r_send_ae_event(काष्ठा esas2r_fw_event_work *fw_event)
+अणु
+	काष्ठा esas2r_vda_ae *ae = (काष्ठा esas2r_vda_ae *)fw_event->data;
+	अक्षर *type;
 
-	switch (ae->vda_ae.hdr.bytype) {
-	case VDAAE_HDR_TYPE_RAID:
+	चयन (ae->vda_ae.hdr.bytype) अणु
+	हाल VDAAE_HDR_TYPE_RAID:
 		type = "RAID group state change";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_LU:
+	हाल VDAAE_HDR_TYPE_LU:
 		type = "Mapped destination LU change";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_DISK:
+	हाल VDAAE_HDR_TYPE_DISK:
 		type = "Physical disk inventory change";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_RESET:
+	हाल VDAAE_HDR_TYPE_RESET:
 		type = "Firmware reset";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_LOG_INFO:
+	हाल VDAAE_HDR_TYPE_LOG_INFO:
 		type = "Event Log message (INFO level)";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_LOG_WARN:
+	हाल VDAAE_HDR_TYPE_LOG_WARN:
 		type = "Event Log message (WARN level)";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_LOG_CRIT:
+	हाल VDAAE_HDR_TYPE_LOG_CRIT:
 		type = "Event Log message (CRIT level)";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_LOG_FAIL:
+	हाल VDAAE_HDR_TYPE_LOG_FAIL:
 		type = "Event Log message (FAIL level)";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_NVC:
+	हाल VDAAE_HDR_TYPE_NVC:
 		type = "NVCache change";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_TLG_INFO:
+	हाल VDAAE_HDR_TYPE_TLG_INFO:
 		type = "Time stamped log message (INFO level)";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_TLG_WARN:
+	हाल VDAAE_HDR_TYPE_TLG_WARN:
 		type = "Time stamped log message (WARN level)";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_TLG_CRIT:
+	हाल VDAAE_HDR_TYPE_TLG_CRIT:
 		type = "Time stamped log message (CRIT level)";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_PWRMGT:
+	हाल VDAAE_HDR_TYPE_PWRMGT:
 		type = "Power management";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_MUTE:
+	हाल VDAAE_HDR_TYPE_MUTE:
 		type = "Mute button pressed";
-		break;
+		अवरोध;
 
-	case VDAAE_HDR_TYPE_DEV:
+	हाल VDAAE_HDR_TYPE_DEV:
 		type = "Device attribute change";
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		type = "Unknown";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	esas2r_log(ESAS2R_LOG_WARN,
 		   "An async event of type \"%s\" was received from the firmware.  The event contents are:",
@@ -1778,73 +1779,73 @@ static void esas2r_send_ae_event(struct esas2r_fw_event_work *fw_event)
 	esas2r_log_hexdump(ESAS2R_LOG_WARN, &ae->vda_ae,
 			   ae->vda_ae.hdr.bylength);
 
-}
+पूर्ण
 
-static void
-esas2r_firmware_event_work(struct work_struct *work)
-{
-	struct esas2r_fw_event_work *fw_event =
-		container_of(work, struct esas2r_fw_event_work, work.work);
+अटल व्योम
+esas2r_firmware_event_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा esas2r_fw_event_work *fw_event =
+		container_of(work, काष्ठा esas2r_fw_event_work, work.work);
 
-	struct esas2r_adapter *a = fw_event->a;
+	काष्ठा esas2r_adapter *a = fw_event->a;
 
 	u16 target_id = *(u16 *)&fw_event->data[0];
 
-	if (a->fw_events_off)
-		goto done;
+	अगर (a->fw_events_off)
+		जाओ करोne;
 
-	switch (fw_event->type) {
-	case fw_event_null:
-		break; /* do nothing */
+	चयन (fw_event->type) अणु
+	हाल fw_event_null:
+		अवरोध; /* करो nothing */
 
-	case fw_event_lun_change:
-		esas2r_remove_device(a, target_id);
+	हाल fw_event_lun_change:
+		esas2r_हटाओ_device(a, target_id);
 		esas2r_add_device(a, target_id);
-		break;
+		अवरोध;
 
-	case fw_event_present:
+	हाल fw_event_present:
 		esas2r_add_device(a, target_id);
-		break;
+		अवरोध;
 
-	case fw_event_not_present:
-		esas2r_remove_device(a, target_id);
-		break;
+	हाल fw_event_not_present:
+		esas2r_हटाओ_device(a, target_id);
+		अवरोध;
 
-	case fw_event_vda_ae:
+	हाल fw_event_vda_ae:
 		esas2r_send_ae_event(fw_event);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-done:
-	esas2r_free_fw_event(fw_event);
-}
+करोne:
+	esas2r_मुक्त_fw_event(fw_event);
+पूर्ण
 
-void esas2r_queue_fw_event(struct esas2r_adapter *a,
-			   enum fw_event_type type,
-			   void *data,
-			   int data_sz)
-{
-	struct esas2r_fw_event_work *fw_event;
-	unsigned long flags;
+व्योम esas2r_queue_fw_event(काष्ठा esas2r_adapter *a,
+			   क्रमागत fw_event_type type,
+			   व्योम *data,
+			   पूर्णांक data_sz)
+अणु
+	काष्ठा esas2r_fw_event_work *fw_event;
+	अचिन्हित दीर्घ flags;
 
-	fw_event = kzalloc(sizeof(struct esas2r_fw_event_work), GFP_ATOMIC);
-	if (!fw_event) {
+	fw_event = kzalloc(माप(काष्ठा esas2r_fw_event_work), GFP_ATOMIC);
+	अगर (!fw_event) अणु
 		esas2r_log(ESAS2R_LOG_WARN,
 			   "esas2r_queue_fw_event failed to alloc");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (type == fw_event_vda_ae) {
-		struct esas2r_vda_ae *ae =
-			(struct esas2r_vda_ae *)fw_event->data;
+	अगर (type == fw_event_vda_ae) अणु
+		काष्ठा esas2r_vda_ae *ae =
+			(काष्ठा esas2r_vda_ae *)fw_event->data;
 
 		ae->signature = ESAS2R_VDA_EVENT_SIG;
 		ae->bus_number = a->pcid->bus->number;
 		ae->devfn = a->pcid->devfn;
-		memcpy(&ae->vda_ae, data, sizeof(ae->vda_ae));
-	} else {
-		memcpy(fw_event->data, data, data_sz);
-	}
+		स_नकल(&ae->vda_ae, data, माप(ae->vda_ae));
+	पूर्ण अन्यथा अणु
+		स_नकल(fw_event->data, data, data_sz);
+	पूर्ण
 
 	fw_event->type = type;
 	fw_event->a = a;
@@ -1854,56 +1855,56 @@ void esas2r_queue_fw_event(struct esas2r_adapter *a,
 	INIT_DELAYED_WORK(&fw_event->work, esas2r_firmware_event_work);
 	queue_delayed_work_on(
 		smp_processor_id(), a->fw_event_q, &fw_event->work,
-		msecs_to_jiffies(1));
+		msecs_to_jअगरfies(1));
 	spin_unlock_irqrestore(&a->fw_event_lock, flags);
-}
+पूर्ण
 
-void esas2r_target_state_changed(struct esas2r_adapter *a, u16 targ_id,
+व्योम esas2r_target_state_changed(काष्ठा esas2r_adapter *a, u16 targ_id,
 				 u8 state)
-{
-	if (state == TS_LUN_CHANGE)
+अणु
+	अगर (state == TS_LUN_CHANGE)
 		esas2r_queue_fw_event(a, fw_event_lun_change, &targ_id,
-				      sizeof(targ_id));
-	else if (state == TS_PRESENT)
+				      माप(targ_id));
+	अन्यथा अगर (state == TS_PRESENT)
 		esas2r_queue_fw_event(a, fw_event_present, &targ_id,
-				      sizeof(targ_id));
-	else if (state == TS_NOT_PRESENT)
+				      माप(targ_id));
+	अन्यथा अगर (state == TS_NOT_PRESENT)
 		esas2r_queue_fw_event(a, fw_event_not_present, &targ_id,
-				      sizeof(targ_id));
-}
+				      माप(targ_id));
+पूर्ण
 
 /* Translate status to a Linux SCSI mid-layer error code */
-int esas2r_req_status_to_error(u8 req_stat)
-{
-	switch (req_stat) {
-	case RS_OVERRUN:
-	case RS_UNDERRUN:
-	case RS_SUCCESS:
+पूर्णांक esas2r_req_status_to_error(u8 req_stat)
+अणु
+	चयन (req_stat) अणु
+	हाल RS_OVERRUN:
+	हाल RS_UNDERRUN:
+	हाल RS_SUCCESS:
 	/*
-	 * NOTE: SCSI mid-layer wants a good status for a SCSI error, because
+	 * NOTE: SCSI mid-layer wants a good status क्रम a SCSI error, because
 	 *       it will check the scsi_stat value in the completion anyway.
 	 */
-	case RS_SCSI_ERROR:
-		return DID_OK;
+	हाल RS_SCSI_ERROR:
+		वापस DID_OK;
 
-	case RS_SEL:
-	case RS_SEL2:
-		return DID_NO_CONNECT;
+	हाल RS_SEL:
+	हाल RS_SEL2:
+		वापस DID_NO_CONNECT;
 
-	case RS_RESET:
-		return DID_RESET;
+	हाल RS_RESET:
+		वापस DID_RESET;
 
-	case RS_ABORTED:
-		return DID_ABORT;
+	हाल RS_ABORTED:
+		वापस DID_ABORT;
 
-	case RS_BUSY:
-		return DID_BUS_BUSY;
-	}
+	हाल RS_BUSY:
+		वापस DID_BUS_BUSY;
+	पूर्ण
 
-	/* everything else is just an error. */
+	/* everything अन्यथा is just an error. */
 
-	return DID_ERROR;
-}
+	वापस DID_ERROR;
+पूर्ण
 
 module_init(esas2r_init);
-module_exit(esas2r_exit);
+module_निकास(esas2r_निकास);

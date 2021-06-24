@@ -1,287 +1,288 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * MVEBU Core divider clock
+ * MVEBU Core भागider घड़ी
  *
  * Copyright (C) 2013 Marvell
  *
- * Ezequiel Garcia <ezequiel.garcia@free-electrons.com>
+ * Ezequiel Garcia <ezequiel.garcia@मुक्त-electrons.com>
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include "common.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश "common.h"
 
-#define CORE_CLK_DIV_RATIO_MASK		0xff
+#घोषणा CORE_CLK_DIV_RATIO_MASK		0xff
 
 /*
- * This structure describes the hardware details (bit offset and mask)
- * to configure one particular core divider clock. Those hardware
- * details may differ from one SoC to another. This structure is
- * therefore typically instantiated statically to describe the
+ * This काष्ठाure describes the hardware details (bit offset and mask)
+ * to configure one particular core भागider घड़ी. Those hardware
+ * details may dअगरfer from one SoC to another. This काष्ठाure is
+ * thereक्रमe typically instantiated अटलally to describe the
  * hardware details.
  */
-struct clk_corediv_desc {
-	unsigned int mask;
-	unsigned int offset;
-	unsigned int fieldbit;
-};
+काष्ठा clk_coreभाग_desc अणु
+	अचिन्हित पूर्णांक mask;
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक fieldbit;
+पूर्ण;
 
 /*
- * This structure describes the hardware details to configure the core
- * divider clocks on a given SoC. Amongst others, it points to the
- * array of core divider clock descriptors for this SoC, as well as
+ * This काष्ठाure describes the hardware details to configure the core
+ * भागider घड़ीs on a given SoC. Amongst others, it poपूर्णांकs to the
+ * array of core भागider घड़ी descriptors क्रम this SoC, as well as
  * the corresponding operations to manipulate them.
  */
-struct clk_corediv_soc_desc {
-	const struct clk_corediv_desc *descs;
-	unsigned int ndescs;
-	const struct clk_ops ops;
+काष्ठा clk_coreभाग_soc_desc अणु
+	स्थिर काष्ठा clk_coreभाग_desc *descs;
+	अचिन्हित पूर्णांक ndescs;
+	स्थिर काष्ठा clk_ops ops;
 	u32 ratio_reload;
 	u32 enable_bit_offset;
 	u32 ratio_offset;
-};
+पूर्ण;
 
 /*
- * This structure represents one core divider clock for the clock
- * framework, and is dynamically allocated for each core divider clock
+ * This काष्ठाure represents one core भागider घड़ी क्रम the घड़ी
+ * framework, and is dynamically allocated क्रम each core भागider घड़ी
  * existing in the current SoC.
  */
-struct clk_corediv {
-	struct clk_hw hw;
-	void __iomem *reg;
-	const struct clk_corediv_desc *desc;
-	const struct clk_corediv_soc_desc *soc_desc;
+काष्ठा clk_coreभाग अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *reg;
+	स्थिर काष्ठा clk_coreभाग_desc *desc;
+	स्थिर काष्ठा clk_coreभाग_soc_desc *soc_desc;
 	spinlock_t lock;
-};
+पूर्ण;
 
-static struct clk_onecell_data clk_data;
+अटल काष्ठा clk_onecell_data clk_data;
 
 /*
- * Description of the core divider clocks available. For now, we
- * support only NAND, and it is available at the same register
+ * Description of the core भागider घड़ीs available. For now, we
+ * support only न_अंकD, and it is available at the same रेजिस्टर
  * locations regardless of the SoC.
  */
-static const struct clk_corediv_desc mvebu_corediv_desc[] = {
-	{ .mask = 0x3f, .offset = 8, .fieldbit = 1 }, /* NAND clock */
-};
+अटल स्थिर काष्ठा clk_coreभाग_desc mvebu_coreभाग_desc[] = अणु
+	अणु .mask = 0x3f, .offset = 8, .fieldbit = 1 पूर्ण, /* न_अंकD घड़ी */
+पूर्ण;
 
-static const struct clk_corediv_desc mv98dx3236_corediv_desc[] = {
-	{ .mask = 0x0f, .offset = 6, .fieldbit = 27 }, /* NAND clock */
-};
+अटल स्थिर काष्ठा clk_coreभाग_desc mv98dx3236_coreभाग_desc[] = अणु
+	अणु .mask = 0x0f, .offset = 6, .fieldbit = 27 पूर्ण, /* न_अंकD घड़ी */
+पूर्ण;
 
-#define to_corediv_clk(p) container_of(p, struct clk_corediv, hw)
+#घोषणा to_coreभाग_clk(p) container_of(p, काष्ठा clk_coreभाग, hw)
 
-static int clk_corediv_is_enabled(struct clk_hw *hwclk)
-{
-	struct clk_corediv *corediv = to_corediv_clk(hwclk);
-	const struct clk_corediv_soc_desc *soc_desc = corediv->soc_desc;
-	const struct clk_corediv_desc *desc = corediv->desc;
+अटल पूर्णांक clk_coreभाग_is_enabled(काष्ठा clk_hw *hwclk)
+अणु
+	काष्ठा clk_coreभाग *coreभाग = to_coreभाग_clk(hwclk);
+	स्थिर काष्ठा clk_coreभाग_soc_desc *soc_desc = coreभाग->soc_desc;
+	स्थिर काष्ठा clk_coreभाग_desc *desc = coreभाग->desc;
 	u32 enable_mask = BIT(desc->fieldbit) << soc_desc->enable_bit_offset;
 
-	return !!(readl(corediv->reg) & enable_mask);
-}
+	वापस !!(पढ़ोl(coreभाग->reg) & enable_mask);
+पूर्ण
 
-static int clk_corediv_enable(struct clk_hw *hwclk)
-{
-	struct clk_corediv *corediv = to_corediv_clk(hwclk);
-	const struct clk_corediv_soc_desc *soc_desc = corediv->soc_desc;
-	const struct clk_corediv_desc *desc = corediv->desc;
-	unsigned long flags = 0;
+अटल पूर्णांक clk_coreभाग_enable(काष्ठा clk_hw *hwclk)
+अणु
+	काष्ठा clk_coreभाग *coreभाग = to_coreभाग_clk(hwclk);
+	स्थिर काष्ठा clk_coreभाग_soc_desc *soc_desc = coreभाग->soc_desc;
+	स्थिर काष्ठा clk_coreभाग_desc *desc = coreभाग->desc;
+	अचिन्हित दीर्घ flags = 0;
 	u32 reg;
 
-	spin_lock_irqsave(&corediv->lock, flags);
+	spin_lock_irqsave(&coreभाग->lock, flags);
 
-	reg = readl(corediv->reg);
+	reg = पढ़ोl(coreभाग->reg);
 	reg |= (BIT(desc->fieldbit) << soc_desc->enable_bit_offset);
-	writel(reg, corediv->reg);
+	ग_लिखोl(reg, coreभाग->reg);
 
-	spin_unlock_irqrestore(&corediv->lock, flags);
+	spin_unlock_irqrestore(&coreभाग->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_corediv_disable(struct clk_hw *hwclk)
-{
-	struct clk_corediv *corediv = to_corediv_clk(hwclk);
-	const struct clk_corediv_soc_desc *soc_desc = corediv->soc_desc;
-	const struct clk_corediv_desc *desc = corediv->desc;
-	unsigned long flags = 0;
+अटल व्योम clk_coreभाग_disable(काष्ठा clk_hw *hwclk)
+अणु
+	काष्ठा clk_coreभाग *coreभाग = to_coreभाग_clk(hwclk);
+	स्थिर काष्ठा clk_coreभाग_soc_desc *soc_desc = coreभाग->soc_desc;
+	स्थिर काष्ठा clk_coreभाग_desc *desc = coreभाग->desc;
+	अचिन्हित दीर्घ flags = 0;
 	u32 reg;
 
-	spin_lock_irqsave(&corediv->lock, flags);
+	spin_lock_irqsave(&coreभाग->lock, flags);
 
-	reg = readl(corediv->reg);
+	reg = पढ़ोl(coreभाग->reg);
 	reg &= ~(BIT(desc->fieldbit) << soc_desc->enable_bit_offset);
-	writel(reg, corediv->reg);
+	ग_लिखोl(reg, coreभाग->reg);
 
-	spin_unlock_irqrestore(&corediv->lock, flags);
-}
+	spin_unlock_irqrestore(&coreभाग->lock, flags);
+पूर्ण
 
-static unsigned long clk_corediv_recalc_rate(struct clk_hw *hwclk,
-					 unsigned long parent_rate)
-{
-	struct clk_corediv *corediv = to_corediv_clk(hwclk);
-	const struct clk_corediv_soc_desc *soc_desc = corediv->soc_desc;
-	const struct clk_corediv_desc *desc = corediv->desc;
-	u32 reg, div;
+अटल अचिन्हित दीर्घ clk_coreभाग_recalc_rate(काष्ठा clk_hw *hwclk,
+					 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_coreभाग *coreभाग = to_coreभाग_clk(hwclk);
+	स्थिर काष्ठा clk_coreभाग_soc_desc *soc_desc = coreभाग->soc_desc;
+	स्थिर काष्ठा clk_coreभाग_desc *desc = coreभाग->desc;
+	u32 reg, भाग;
 
-	reg = readl(corediv->reg + soc_desc->ratio_offset);
-	div = (reg >> desc->offset) & desc->mask;
-	return parent_rate / div;
-}
+	reg = पढ़ोl(coreभाग->reg + soc_desc->ratio_offset);
+	भाग = (reg >> desc->offset) & desc->mask;
+	वापस parent_rate / भाग;
+पूर्ण
 
-static long clk_corediv_round_rate(struct clk_hw *hwclk, unsigned long rate,
-			       unsigned long *parent_rate)
-{
+अटल दीर्घ clk_coreभाग_round_rate(काष्ठा clk_hw *hwclk, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ *parent_rate)
+अणु
 	/* Valid ratio are 1:4, 1:5, 1:6 and 1:8 */
-	u32 div;
+	u32 भाग;
 
-	div = *parent_rate / rate;
-	if (div < 4)
-		div = 4;
-	else if (div > 6)
-		div = 8;
+	भाग = *parent_rate / rate;
+	अगर (भाग < 4)
+		भाग = 4;
+	अन्यथा अगर (भाग > 6)
+		भाग = 8;
 
-	return *parent_rate / div;
-}
+	वापस *parent_rate / भाग;
+पूर्ण
 
-static int clk_corediv_set_rate(struct clk_hw *hwclk, unsigned long rate,
-			    unsigned long parent_rate)
-{
-	struct clk_corediv *corediv = to_corediv_clk(hwclk);
-	const struct clk_corediv_soc_desc *soc_desc = corediv->soc_desc;
-	const struct clk_corediv_desc *desc = corediv->desc;
-	unsigned long flags = 0;
-	u32 reg, div;
+अटल पूर्णांक clk_coreभाग_set_rate(काष्ठा clk_hw *hwclk, अचिन्हित दीर्घ rate,
+			    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_coreभाग *coreभाग = to_coreभाग_clk(hwclk);
+	स्थिर काष्ठा clk_coreभाग_soc_desc *soc_desc = coreभाग->soc_desc;
+	स्थिर काष्ठा clk_coreभाग_desc *desc = coreभाग->desc;
+	अचिन्हित दीर्घ flags = 0;
+	u32 reg, भाग;
 
-	div = parent_rate / rate;
+	भाग = parent_rate / rate;
 
-	spin_lock_irqsave(&corediv->lock, flags);
+	spin_lock_irqsave(&coreभाग->lock, flags);
 
-	/* Write new divider to the divider ratio register */
-	reg = readl(corediv->reg + soc_desc->ratio_offset);
+	/* Write new भागider to the भागider ratio रेजिस्टर */
+	reg = पढ़ोl(coreभाग->reg + soc_desc->ratio_offset);
 	reg &= ~(desc->mask << desc->offset);
-	reg |= (div & desc->mask) << desc->offset;
-	writel(reg, corediv->reg + soc_desc->ratio_offset);
+	reg |= (भाग & desc->mask) << desc->offset;
+	ग_लिखोl(reg, coreभाग->reg + soc_desc->ratio_offset);
 
-	/* Set reload-force for this clock */
-	reg = readl(corediv->reg) | BIT(desc->fieldbit);
-	writel(reg, corediv->reg);
+	/* Set reload-क्रमce क्रम this घड़ी */
+	reg = पढ़ोl(coreभाग->reg) | BIT(desc->fieldbit);
+	ग_लिखोl(reg, coreभाग->reg);
 
-	/* Now trigger the clock update */
-	reg = readl(corediv->reg) | soc_desc->ratio_reload;
-	writel(reg, corediv->reg);
+	/* Now trigger the घड़ी update */
+	reg = पढ़ोl(coreभाग->reg) | soc_desc->ratio_reload;
+	ग_लिखोl(reg, coreभाग->reg);
 
 	/*
-	 * Wait for clocks to settle down, and then clear all the
+	 * Wait क्रम घड़ीs to settle करोwn, and then clear all the
 	 * ratios request and the reload request.
 	 */
 	udelay(1000);
 	reg &= ~(CORE_CLK_DIV_RATIO_MASK | soc_desc->ratio_reload);
-	writel(reg, corediv->reg);
+	ग_लिखोl(reg, coreभाग->reg);
 	udelay(1000);
 
-	spin_unlock_irqrestore(&corediv->lock, flags);
+	spin_unlock_irqrestore(&coreभाग->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_corediv_soc_desc armada370_corediv_soc = {
-	.descs = mvebu_corediv_desc,
-	.ndescs = ARRAY_SIZE(mvebu_corediv_desc),
-	.ops = {
-		.enable = clk_corediv_enable,
-		.disable = clk_corediv_disable,
-		.is_enabled = clk_corediv_is_enabled,
-		.recalc_rate = clk_corediv_recalc_rate,
-		.round_rate = clk_corediv_round_rate,
-		.set_rate = clk_corediv_set_rate,
-	},
+अटल स्थिर काष्ठा clk_coreभाग_soc_desc armada370_coreभाग_soc = अणु
+	.descs = mvebu_coreभाग_desc,
+	.ndescs = ARRAY_SIZE(mvebu_coreभाग_desc),
+	.ops = अणु
+		.enable = clk_coreभाग_enable,
+		.disable = clk_coreभाग_disable,
+		.is_enabled = clk_coreभाग_is_enabled,
+		.recalc_rate = clk_coreभाग_recalc_rate,
+		.round_rate = clk_coreभाग_round_rate,
+		.set_rate = clk_coreभाग_set_rate,
+	पूर्ण,
 	.ratio_reload = BIT(8),
 	.enable_bit_offset = 24,
 	.ratio_offset = 0x8,
-};
+पूर्ण;
 
-static const struct clk_corediv_soc_desc armada380_corediv_soc = {
-	.descs = mvebu_corediv_desc,
-	.ndescs = ARRAY_SIZE(mvebu_corediv_desc),
-	.ops = {
-		.enable = clk_corediv_enable,
-		.disable = clk_corediv_disable,
-		.is_enabled = clk_corediv_is_enabled,
-		.recalc_rate = clk_corediv_recalc_rate,
-		.round_rate = clk_corediv_round_rate,
-		.set_rate = clk_corediv_set_rate,
-	},
+अटल स्थिर काष्ठा clk_coreभाग_soc_desc armada380_coreभाग_soc = अणु
+	.descs = mvebu_coreभाग_desc,
+	.ndescs = ARRAY_SIZE(mvebu_coreभाग_desc),
+	.ops = अणु
+		.enable = clk_coreभाग_enable,
+		.disable = clk_coreभाग_disable,
+		.is_enabled = clk_coreभाग_is_enabled,
+		.recalc_rate = clk_coreभाग_recalc_rate,
+		.round_rate = clk_coreभाग_round_rate,
+		.set_rate = clk_coreभाग_set_rate,
+	पूर्ण,
 	.ratio_reload = BIT(8),
 	.enable_bit_offset = 16,
 	.ratio_offset = 0x4,
-};
+पूर्ण;
 
-static const struct clk_corediv_soc_desc armada375_corediv_soc = {
-	.descs = mvebu_corediv_desc,
-	.ndescs = ARRAY_SIZE(mvebu_corediv_desc),
-	.ops = {
-		.recalc_rate = clk_corediv_recalc_rate,
-		.round_rate = clk_corediv_round_rate,
-		.set_rate = clk_corediv_set_rate,
-	},
+अटल स्थिर काष्ठा clk_coreभाग_soc_desc armada375_coreभाग_soc = अणु
+	.descs = mvebu_coreभाग_desc,
+	.ndescs = ARRAY_SIZE(mvebu_coreभाग_desc),
+	.ops = अणु
+		.recalc_rate = clk_coreभाग_recalc_rate,
+		.round_rate = clk_coreभाग_round_rate,
+		.set_rate = clk_coreभाग_set_rate,
+	पूर्ण,
 	.ratio_reload = BIT(8),
 	.ratio_offset = 0x4,
-};
+पूर्ण;
 
-static const struct clk_corediv_soc_desc mv98dx3236_corediv_soc = {
-	.descs = mv98dx3236_corediv_desc,
-	.ndescs = ARRAY_SIZE(mv98dx3236_corediv_desc),
-	.ops = {
-		.recalc_rate = clk_corediv_recalc_rate,
-		.round_rate = clk_corediv_round_rate,
-		.set_rate = clk_corediv_set_rate,
-	},
+अटल स्थिर काष्ठा clk_coreभाग_soc_desc mv98dx3236_coreभाग_soc = अणु
+	.descs = mv98dx3236_coreभाग_desc,
+	.ndescs = ARRAY_SIZE(mv98dx3236_coreभाग_desc),
+	.ops = अणु
+		.recalc_rate = clk_coreभाग_recalc_rate,
+		.round_rate = clk_coreभाग_round_rate,
+		.set_rate = clk_coreभाग_set_rate,
+	पूर्ण,
 	.ratio_reload = BIT(10),
 	.ratio_offset = 0x8,
-};
+पूर्ण;
 
-static void __init
-mvebu_corediv_clk_init(struct device_node *node,
-		       const struct clk_corediv_soc_desc *soc_desc)
-{
-	struct clk_init_data init;
-	struct clk_corediv *corediv;
-	struct clk **clks;
-	void __iomem *base;
-	const char *parent_name;
-	const char *clk_name;
-	int i;
+अटल व्योम __init
+mvebu_coreभाग_clk_init(काष्ठा device_node *node,
+		       स्थिर काष्ठा clk_coreभाग_soc_desc *soc_desc)
+अणु
+	काष्ठा clk_init_data init;
+	काष्ठा clk_coreभाग *coreभाग;
+	काष्ठा clk **clks;
+	व्योम __iomem *base;
+	स्थिर अक्षर *parent_name;
+	स्थिर अक्षर *clk_name;
+	पूर्णांक i;
 
 	base = of_iomap(node, 0);
-	if (WARN_ON(!base))
-		return;
+	अगर (WARN_ON(!base))
+		वापस;
 
 	parent_name = of_clk_get_parent_name(node, 0);
 
 	clk_data.clk_num = soc_desc->ndescs;
 
-	/* clks holds the clock array */
-	clks = kcalloc(clk_data.clk_num, sizeof(struct clk *),
+	/* clks holds the घड़ी array */
+	clks = kसुस्मृति(clk_data.clk_num, माप(काष्ठा clk *),
 				GFP_KERNEL);
-	if (WARN_ON(!clks))
-		goto err_unmap;
-	/* corediv holds the clock specific array */
-	corediv = kcalloc(clk_data.clk_num, sizeof(struct clk_corediv),
+	अगर (WARN_ON(!clks))
+		जाओ err_unmap;
+	/* coreभाग holds the घड़ी specअगरic array */
+	coreभाग = kसुस्मृति(clk_data.clk_num, माप(काष्ठा clk_coreभाग),
 				GFP_KERNEL);
-	if (WARN_ON(!corediv))
-		goto err_free_clks;
+	अगर (WARN_ON(!coreभाग))
+		जाओ err_मुक्त_clks;
 
-	spin_lock_init(&corediv->lock);
+	spin_lock_init(&coreभाग->lock);
 
-	for (i = 0; i < clk_data.clk_num; i++) {
-		of_property_read_string_index(node, "clock-output-names",
+	क्रम (i = 0; i < clk_data.clk_num; i++) अणु
+		of_property_पढ़ो_string_index(node, "clock-output-names",
 					      i, &clk_name);
 		init.num_parents = 1;
 		init.parent_names = &parent_name;
@@ -289,49 +290,49 @@ mvebu_corediv_clk_init(struct device_node *node,
 		init.ops = &soc_desc->ops;
 		init.flags = 0;
 
-		corediv[i].soc_desc = soc_desc;
-		corediv[i].desc = soc_desc->descs + i;
-		corediv[i].reg = base;
-		corediv[i].hw.init = &init;
+		coreभाग[i].soc_desc = soc_desc;
+		coreभाग[i].desc = soc_desc->descs + i;
+		coreभाग[i].reg = base;
+		coreभाग[i].hw.init = &init;
 
-		clks[i] = clk_register(NULL, &corediv[i].hw);
+		clks[i] = clk_रेजिस्टर(शून्य, &coreभाग[i].hw);
 		WARN_ON(IS_ERR(clks[i]));
-	}
+	पूर्ण
 
 	clk_data.clks = clks;
 	of_clk_add_provider(node, of_clk_src_onecell_get, &clk_data);
-	return;
+	वापस;
 
-err_free_clks:
-	kfree(clks);
+err_मुक्त_clks:
+	kमुक्त(clks);
 err_unmap:
 	iounmap(base);
-}
+पूर्ण
 
-static void __init armada370_corediv_clk_init(struct device_node *node)
-{
-	return mvebu_corediv_clk_init(node, &armada370_corediv_soc);
-}
-CLK_OF_DECLARE(armada370_corediv_clk, "marvell,armada-370-corediv-clock",
-	       armada370_corediv_clk_init);
+अटल व्योम __init armada370_coreभाग_clk_init(काष्ठा device_node *node)
+अणु
+	वापस mvebu_coreभाग_clk_init(node, &armada370_coreभाग_soc);
+पूर्ण
+CLK_OF_DECLARE(armada370_coreभाग_clk, "marvell,armada-370-corediv-clock",
+	       armada370_coreभाग_clk_init);
 
-static void __init armada375_corediv_clk_init(struct device_node *node)
-{
-	return mvebu_corediv_clk_init(node, &armada375_corediv_soc);
-}
-CLK_OF_DECLARE(armada375_corediv_clk, "marvell,armada-375-corediv-clock",
-	       armada375_corediv_clk_init);
+अटल व्योम __init armada375_coreभाग_clk_init(काष्ठा device_node *node)
+अणु
+	वापस mvebu_coreभाग_clk_init(node, &armada375_coreभाग_soc);
+पूर्ण
+CLK_OF_DECLARE(armada375_coreभाग_clk, "marvell,armada-375-corediv-clock",
+	       armada375_coreभाग_clk_init);
 
-static void __init armada380_corediv_clk_init(struct device_node *node)
-{
-	return mvebu_corediv_clk_init(node, &armada380_corediv_soc);
-}
-CLK_OF_DECLARE(armada380_corediv_clk, "marvell,armada-380-corediv-clock",
-	       armada380_corediv_clk_init);
+अटल व्योम __init armada380_coreभाग_clk_init(काष्ठा device_node *node)
+अणु
+	वापस mvebu_coreभाग_clk_init(node, &armada380_coreभाग_soc);
+पूर्ण
+CLK_OF_DECLARE(armada380_coreभाग_clk, "marvell,armada-380-corediv-clock",
+	       armada380_coreभाग_clk_init);
 
-static void __init mv98dx3236_corediv_clk_init(struct device_node *node)
-{
-	return mvebu_corediv_clk_init(node, &mv98dx3236_corediv_soc);
-}
-CLK_OF_DECLARE(mv98dx3236_corediv_clk, "marvell,mv98dx3236-corediv-clock",
-	       mv98dx3236_corediv_clk_init);
+अटल व्योम __init mv98dx3236_coreभाग_clk_init(काष्ठा device_node *node)
+अणु
+	वापस mvebu_coreभाग_clk_init(node, &mv98dx3236_coreभाग_soc);
+पूर्ण
+CLK_OF_DECLARE(mv98dx3236_coreभाग_clk, "marvell,mv98dx3236-corediv-clock",
+	       mv98dx3236_coreभाग_clk_init);

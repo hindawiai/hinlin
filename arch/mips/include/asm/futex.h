@@ -1,28 +1,29 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (c) 2006  Ralf Baechle (ralf@linux-mips.org)
  */
-#ifndef _ASM_FUTEX_H
-#define _ASM_FUTEX_H
+#अगर_अघोषित _ASM_FUTEX_H
+#घोषणा _ASM_FUTEX_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <linux/futex.h>
-#include <linux/uaccess.h>
-#include <asm/asm-eva.h>
-#include <asm/barrier.h>
-#include <asm/compiler.h>
-#include <asm/errno.h>
-#include <asm/sync.h>
-#include <asm/war.h>
+#समावेश <linux/futex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/यंत्र-eva.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/compiler.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <यंत्र/sync.h>
+#समावेश <यंत्र/war.h>
 
-#define __futex_atomic_op(insn, ret, oldval, uaddr, oparg)		\
-{									\
-	if (cpu_has_llsc && IS_ENABLED(CONFIG_WAR_R10000_LLSC)) {	\
-		__asm__ __volatile__(					\
+#घोषणा __futex_atomic_op(insn, ret, oldval, uaddr, oparg)		\
+अणु									\
+	अगर (cpu_has_llsc && IS_ENABLED(CONFIG_WAR_R10000_LLSC)) अणु	\
+		__यंत्र__ __अस्थिर__(					\
 		"	.set	push				\n"	\
 		"	.set	noat				\n"	\
 		"	.set	push				\n"	\
@@ -33,7 +34,7 @@
 		"	.set	arch=r4000			\n"	\
 		"2:	sc	$1, %2				\n"	\
 		"	beqzl	$1, 1b				\n"	\
-		__stringify(__WEAK_LLSC_MB) "			\n"	\
+		__stringअगरy(__WEAK_LLSC_MB) "			\n"	\
 		"3:						\n"	\
 		"	.insn					\n"	\
 		"	.set	pop				\n"	\
@@ -50,8 +51,8 @@
 		: "0" (0), GCC_OFF_SMALL_ASM() (*uaddr), "Jr" (oparg),	\
 		  "i" (-EFAULT)						\
 		: "memory");						\
-	} else if (cpu_has_llsc) {					\
-		__asm__ __volatile__(					\
+	पूर्ण अन्यथा अगर (cpu_has_llsc) अणु					\
+		__यंत्र__ __अस्थिर__(					\
 		"	.set	push				\n"	\
 		"	.set	noat				\n"	\
 		"	.set	push				\n"	\
@@ -63,7 +64,7 @@
 		"	.set	"MIPS_ISA_ARCH_LEVEL"		\n"	\
 		"2:	"user_sc("$1", "%2")"			\n"	\
 		"	beqz	$1, 1b				\n"	\
-		__stringify(__WEAK_LLSC_MB) "			\n"	\
+		__stringअगरy(__WEAK_LLSC_MB) "			\n"	\
 		"3:						\n"	\
 		"	.insn					\n"	\
 		"	.set	pop				\n"	\
@@ -80,61 +81,61 @@
 		: "0" (0), GCC_OFF_SMALL_ASM() (*uaddr), "Jr" (oparg),	\
 		  "i" (-EFAULT)						\
 		: "memory");						\
-	} else								\
+	पूर्ण अन्यथा								\
 		ret = -ENOSYS;						\
-}
+पूर्ण
 
-static inline int
-arch_futex_atomic_op_inuser(int op, int oparg, int *oval, u32 __user *uaddr)
-{
-	int oldval = 0, ret;
+अटल अंतरभूत पूर्णांक
+arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval, u32 __user *uaddr)
+अणु
+	पूर्णांक oldval = 0, ret;
 
-	if (!access_ok(uaddr, sizeof(u32)))
-		return -EFAULT;
+	अगर (!access_ok(uaddr, माप(u32)))
+		वापस -EFAULT;
 
-	switch (op) {
-	case FUTEX_OP_SET:
+	चयन (op) अणु
+	हाल FUTEX_OP_SET:
 		__futex_atomic_op("move $1, %z5", ret, oldval, uaddr, oparg);
-		break;
+		अवरोध;
 
-	case FUTEX_OP_ADD:
+	हाल FUTEX_OP_ADD:
 		__futex_atomic_op("addu $1, %1, %z5",
 				  ret, oldval, uaddr, oparg);
-		break;
-	case FUTEX_OP_OR:
+		अवरोध;
+	हाल FUTEX_OP_OR:
 		__futex_atomic_op("or	$1, %1, %z5",
 				  ret, oldval, uaddr, oparg);
-		break;
-	case FUTEX_OP_ANDN:
+		अवरोध;
+	हाल FUTEX_OP_ANDN:
 		__futex_atomic_op("and	$1, %1, %z5",
 				  ret, oldval, uaddr, ~oparg);
-		break;
-	case FUTEX_OP_XOR:
+		अवरोध;
+	हाल FUTEX_OP_XOR:
 		__futex_atomic_op("xor	$1, %1, %z5",
 				  ret, oldval, uaddr, oparg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENOSYS;
-	}
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		*oval = oldval;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int
+अटल अंतरभूत पूर्णांक
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 	u32 val;
 
-	if (!access_ok(uaddr, sizeof(u32)))
-		return -EFAULT;
+	अगर (!access_ok(uaddr, माप(u32)))
+		वापस -EFAULT;
 
-	if (cpu_has_llsc && IS_ENABLED(CONFIG_WAR_R10000_LLSC)) {
-		__asm__ __volatile__(
+	अगर (cpu_has_llsc && IS_ENABLED(CONFIG_WAR_R10000_LLSC)) अणु
+		__यंत्र__ __अस्थिर__(
 		"# futex_atomic_cmpxchg_inatomic			\n"
 		"	.set	push					\n"
 		"	.set	noat					\n"
@@ -147,7 +148,7 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 		"	.set	arch=r4000				\n"
 		"2:	sc	$1, %2					\n"
 		"	beqzl	$1, 1b					\n"
-		__stringify(__WEAK_LLSC_MB) "				\n"
+		__stringअगरy(__WEAK_LLSC_MB) "				\n"
 		"3:							\n"
 		"	.insn						\n"
 		"	.set	pop					\n"
@@ -163,8 +164,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 		: GCC_OFF_SMALL_ASM() (*uaddr), "Jr" (oldval), "Jr" (newval),
 		  "i" (-EFAULT)
 		: "memory");
-	} else if (cpu_has_llsc) {
-		__asm__ __volatile__(
+	पूर्ण अन्यथा अगर (cpu_has_llsc) अणु
+		__यंत्र__ __अस्थिर__(
 		"# futex_atomic_cmpxchg_inatomic			\n"
 		"	.set	push					\n"
 		"	.set	noat					\n"
@@ -193,12 +194,12 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 		: GCC_OFF_SMALL_ASM() (*uaddr), "Jr" (oldval), "Jr" (newval),
 		  "i" (-EFAULT)
 		: "memory");
-	} else
-		return -ENOSYS;
+	पूर्ण अन्यथा
+		वापस -ENOSYS;
 
 	*uval = val;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif
-#endif /* _ASM_FUTEX_H */
+#पूर्ण_अगर
+#पूर्ण_अगर /* _ASM_FUTEX_H */

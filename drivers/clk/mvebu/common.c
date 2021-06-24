@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Marvell EBU SoC common clock handling
+ * Marvell EBU SoC common घड़ी handling
  *
  * Copyright (C) 2012 Marvell
  *
- * Gregory CLEMENT <gregory.clement@free-electrons.com>
+ * Gregory CLEMENT <gregory.clement@मुक्त-electrons.com>
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  * Andrew Lunn <andrew@lunn.ch>
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/syscore_ops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/syscore_ops.h>
 
-#include "common.h"
+#समावेश "common.h"
 
 /*
  * Core Clocks
  */
 
-#define SSCG_CONF_MODE(reg)	(((reg) >> 16) & 0x3)
-#define SSCG_SPREAD_DOWN	0x0
-#define SSCG_SPREAD_UP		0x1
-#define SSCG_SPREAD_CENTRAL	0x2
-#define SSCG_CONF_LOW(reg)	(((reg) >> 8) & 0xFF)
-#define SSCG_CONF_HIGH(reg)	((reg) & 0xFF)
+#घोषणा SSCG_CONF_MODE(reg)	(((reg) >> 16) & 0x3)
+#घोषणा SSCG_SPREAD_DOWN	0x0
+#घोषणा SSCG_SPREAD_UP		0x1
+#घोषणा SSCG_SPREAD_CENTRAL	0x2
+#घोषणा SSCG_CONF_LOW(reg)	(((reg) >> 8) & 0xFF)
+#घोषणा SSCG_CONF_HIGH(reg)	((reg) & 0xFF)
 
-static struct clk_onecell_data clk_data;
+अटल काष्ठा clk_onecell_data clk_data;
 
 /*
  * This function can be used by the Kirkwood, the Armada 370, the
@@ -40,147 +41,147 @@ static struct clk_onecell_data clk_data;
  * chosen following the dt convention: using the first known SoC
  * compatible with it.
  */
-u32 kirkwood_fix_sscg_deviation(u32 system_clk)
-{
-	struct device_node *sscg_np = NULL;
-	void __iomem *sscg_map;
+u32 kirkwood_fix_sscg_deviation(u32 प्रणाली_clk)
+अणु
+	काष्ठा device_node *sscg_np = शून्य;
+	व्योम __iomem *sscg_map;
 	u32 sscg_reg;
 	s32 low_bound, high_bound;
 	u64 freq_swing_half;
 
-	sscg_np = of_find_node_by_name(NULL, "sscg");
-	if (sscg_np == NULL) {
+	sscg_np = of_find_node_by_name(शून्य, "sscg");
+	अगर (sscg_np == शून्य) अणु
 		pr_err("cannot get SSCG register node\n");
-		return system_clk;
-	}
+		वापस प्रणाली_clk;
+	पूर्ण
 
 	sscg_map = of_iomap(sscg_np, 0);
-	if (sscg_map == NULL) {
+	अगर (sscg_map == शून्य) अणु
 		pr_err("cannot map SSCG register\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	sscg_reg = readl(sscg_map);
+	sscg_reg = पढ़ोl(sscg_map);
 	high_bound = SSCG_CONF_HIGH(sscg_reg);
 	low_bound = SSCG_CONF_LOW(sscg_reg);
 
-	if ((high_bound - low_bound) <= 0)
-		goto out;
+	अगर ((high_bound - low_bound) <= 0)
+		जाओ out;
 	/*
-	 * From Marvell engineer we got the following formula (when
+	 * From Marvell engineer we got the following क्रमmula (when
 	 * this code was written, the datasheet was erroneous)
-	 * Spread percentage = 1/96 * (H - L) / H
+	 * Spपढ़ो percentage = 1/96 * (H - L) / H
 	 * H = SSCG_High_Boundary
 	 * L = SSCG_Low_Boundary
 	 *
-	 * As the deviation is half of spread then it lead to the
-	 * following formula in the code.
+	 * As the deviation is half of spपढ़ो then it lead to the
+	 * following क्रमmula in the code.
 	 *
-	 * To avoid an overflow and not lose any significant digit in
-	 * the same time we have to use a 64 bit integer.
+	 * To aव्योम an overflow and not lose any signअगरicant digit in
+	 * the same समय we have to use a 64 bit पूर्णांकeger.
 	 */
 
 	freq_swing_half = (((u64)high_bound - (u64)low_bound)
-			* (u64)system_clk);
-	do_div(freq_swing_half, (2 * 96 * high_bound));
+			* (u64)प्रणाली_clk);
+	करो_भाग(freq_swing_half, (2 * 96 * high_bound));
 
-	switch (SSCG_CONF_MODE(sscg_reg)) {
-	case SSCG_SPREAD_DOWN:
-		system_clk -= freq_swing_half;
-		break;
-	case SSCG_SPREAD_UP:
-		system_clk += freq_swing_half;
-		break;
-	case SSCG_SPREAD_CENTRAL:
-	default:
-		break;
-	}
+	चयन (SSCG_CONF_MODE(sscg_reg)) अणु
+	हाल SSCG_SPREAD_DOWN:
+		प्रणाली_clk -= freq_swing_half;
+		अवरोध;
+	हाल SSCG_SPREAD_UP:
+		प्रणाली_clk += freq_swing_half;
+		अवरोध;
+	हाल SSCG_SPREAD_CENTRAL:
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	iounmap(sscg_map);
 
 out:
 	of_node_put(sscg_np);
 
-	return system_clk;
-}
+	वापस प्रणाली_clk;
+पूर्ण
 
-void __init mvebu_coreclk_setup(struct device_node *np,
-				const struct coreclk_soc_desc *desc)
-{
-	const char *tclk_name = "tclk";
-	const char *cpuclk_name = "cpuclk";
-	void __iomem *base;
-	unsigned long rate;
-	int n;
+व्योम __init mvebu_coreclk_setup(काष्ठा device_node *np,
+				स्थिर काष्ठा coreclk_soc_desc *desc)
+अणु
+	स्थिर अक्षर *tclk_name = "tclk";
+	स्थिर अक्षर *cpuclk_name = "cpuclk";
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ rate;
+	पूर्णांक n;
 
 	base = of_iomap(np, 0);
-	if (WARN_ON(!base))
-		return;
+	अगर (WARN_ON(!base))
+		वापस;
 
-	/* Allocate struct for TCLK, cpu clk, and core ratio clocks */
+	/* Allocate काष्ठा क्रम TCLK, cpu clk, and core ratio घड़ीs */
 	clk_data.clk_num = 2 + desc->num_ratios;
 
-	/* One more clock for the optional refclk */
-	if (desc->get_refclk_freq)
+	/* One more घड़ी क्रम the optional refclk */
+	अगर (desc->get_refclk_freq)
 		clk_data.clk_num += 1;
 
-	clk_data.clks = kcalloc(clk_data.clk_num, sizeof(*clk_data.clks),
+	clk_data.clks = kसुस्मृति(clk_data.clk_num, माप(*clk_data.clks),
 				GFP_KERNEL);
-	if (WARN_ON(!clk_data.clks)) {
+	अगर (WARN_ON(!clk_data.clks)) अणु
 		iounmap(base);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Register TCLK */
-	of_property_read_string_index(np, "clock-output-names", 0,
+	of_property_पढ़ो_string_index(np, "clock-output-names", 0,
 				      &tclk_name);
 	rate = desc->get_tclk_freq(base);
-	clk_data.clks[0] = clk_register_fixed_rate(NULL, tclk_name, NULL, 0,
+	clk_data.clks[0] = clk_रेजिस्टर_fixed_rate(शून्य, tclk_name, शून्य, 0,
 						   rate);
 	WARN_ON(IS_ERR(clk_data.clks[0]));
 
-	/* Register CPU clock */
-	of_property_read_string_index(np, "clock-output-names", 1,
+	/* Register CPU घड़ी */
+	of_property_पढ़ो_string_index(np, "clock-output-names", 1,
 				      &cpuclk_name);
 	rate = desc->get_cpu_freq(base);
 
-	if (desc->is_sscg_enabled && desc->fix_sscg_deviation
+	अगर (desc->is_sscg_enabled && desc->fix_sscg_deviation
 		&& desc->is_sscg_enabled(base))
 		rate = desc->fix_sscg_deviation(rate);
 
-	clk_data.clks[1] = clk_register_fixed_rate(NULL, cpuclk_name, NULL, 0,
+	clk_data.clks[1] = clk_रेजिस्टर_fixed_rate(शून्य, cpuclk_name, शून्य, 0,
 						   rate);
 	WARN_ON(IS_ERR(clk_data.clks[1]));
 
-	/* Register fixed-factor clocks derived from CPU clock */
-	for (n = 0; n < desc->num_ratios; n++) {
-		const char *rclk_name = desc->ratios[n].name;
-		int mult, div;
+	/* Register fixed-factor घड़ीs derived from CPU घड़ी */
+	क्रम (n = 0; n < desc->num_ratios; n++) अणु
+		स्थिर अक्षर *rclk_name = desc->ratios[n].name;
+		पूर्णांक mult, भाग;
 
-		of_property_read_string_index(np, "clock-output-names",
+		of_property_पढ़ो_string_index(np, "clock-output-names",
 					      2+n, &rclk_name);
-		desc->get_clk_ratio(base, desc->ratios[n].id, &mult, &div);
-		clk_data.clks[2+n] = clk_register_fixed_factor(NULL, rclk_name,
-				       cpuclk_name, 0, mult, div);
+		desc->get_clk_ratio(base, desc->ratios[n].id, &mult, &भाग);
+		clk_data.clks[2+n] = clk_रेजिस्टर_fixed_factor(शून्य, rclk_name,
+				       cpuclk_name, 0, mult, भाग);
 		WARN_ON(IS_ERR(clk_data.clks[2+n]));
-	}
+	पूर्ण
 
 	/* Register optional refclk */
-	if (desc->get_refclk_freq) {
-		const char *name = "refclk";
-		of_property_read_string_index(np, "clock-output-names",
+	अगर (desc->get_refclk_freq) अणु
+		स्थिर अक्षर *name = "refclk";
+		of_property_पढ़ो_string_index(np, "clock-output-names",
 					      2 + desc->num_ratios, &name);
 		rate = desc->get_refclk_freq(base);
 		clk_data.clks[2 + desc->num_ratios] =
-			clk_register_fixed_rate(NULL, name, NULL, 0, rate);
+			clk_रेजिस्टर_fixed_rate(शून्य, name, शून्य, 0, rate);
 		WARN_ON(IS_ERR(clk_data.clks[2 + desc->num_ratios]));
-	}
+	पूर्ण
 
-	/* SAR register isn't needed anymore */
+	/* SAR रेजिस्टर isn't needed anymore */
 	iounmap(base);
 
 	of_clk_add_provider(np, of_clk_src_onecell_get, &clk_data);
-}
+पूर्ण
 
 /*
  * Clock Gating Control
@@ -188,107 +189,107 @@ void __init mvebu_coreclk_setup(struct device_node *np,
 
 DEFINE_SPINLOCK(ctrl_gating_lock);
 
-struct clk_gating_ctrl {
+काष्ठा clk_gating_ctrl अणु
 	spinlock_t *lock;
-	struct clk **gates;
-	int num_gates;
-	void __iomem *base;
+	काष्ठा clk **gates;
+	पूर्णांक num_gates;
+	व्योम __iomem *base;
 	u32 saved_reg;
-};
+पूर्ण;
 
-static struct clk_gating_ctrl *ctrl;
+अटल काष्ठा clk_gating_ctrl *ctrl;
 
-static struct clk *clk_gating_get_src(
-	struct of_phandle_args *clkspec, void *data)
-{
-	int n;
+अटल काष्ठा clk *clk_gating_get_src(
+	काष्ठा of_phandle_args *clkspec, व्योम *data)
+अणु
+	पूर्णांक n;
 
-	if (clkspec->args_count < 1)
-		return ERR_PTR(-EINVAL);
+	अगर (clkspec->args_count < 1)
+		वापस ERR_PTR(-EINVAL);
 
-	for (n = 0; n < ctrl->num_gates; n++) {
-		struct clk_gate *gate =
+	क्रम (n = 0; n < ctrl->num_gates; n++) अणु
+		काष्ठा clk_gate *gate =
 			to_clk_gate(__clk_get_hw(ctrl->gates[n]));
-		if (clkspec->args[0] == gate->bit_idx)
-			return ctrl->gates[n];
-	}
-	return ERR_PTR(-ENODEV);
-}
+		अगर (clkspec->args[0] == gate->bit_idx)
+			वापस ctrl->gates[n];
+	पूर्ण
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static int mvebu_clk_gating_suspend(void)
-{
-	ctrl->saved_reg = readl(ctrl->base);
-	return 0;
-}
+अटल पूर्णांक mvebu_clk_gating_suspend(व्योम)
+अणु
+	ctrl->saved_reg = पढ़ोl(ctrl->base);
+	वापस 0;
+पूर्ण
 
-static void mvebu_clk_gating_resume(void)
-{
-	writel(ctrl->saved_reg, ctrl->base);
-}
+अटल व्योम mvebu_clk_gating_resume(व्योम)
+अणु
+	ग_लिखोl(ctrl->saved_reg, ctrl->base);
+पूर्ण
 
-static struct syscore_ops clk_gate_syscore_ops = {
+अटल काष्ठा syscore_ops clk_gate_syscore_ops = अणु
 	.suspend = mvebu_clk_gating_suspend,
 	.resume = mvebu_clk_gating_resume,
-};
+पूर्ण;
 
-void __init mvebu_clk_gating_setup(struct device_node *np,
-				   const struct clk_gating_soc_desc *desc)
-{
-	struct clk *clk;
-	void __iomem *base;
-	const char *default_parent = NULL;
-	int n;
+व्योम __init mvebu_clk_gating_setup(काष्ठा device_node *np,
+				   स्थिर काष्ठा clk_gating_soc_desc *desc)
+अणु
+	काष्ठा clk *clk;
+	व्योम __iomem *base;
+	स्थिर अक्षर *शेष_parent = शून्य;
+	पूर्णांक n;
 
-	if (ctrl) {
+	अगर (ctrl) अणु
 		pr_err("mvebu-clk-gating: cannot instantiate more than one gateable clock device\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	base = of_iomap(np, 0);
-	if (WARN_ON(!base))
-		return;
+	अगर (WARN_ON(!base))
+		वापस;
 
 	clk = of_clk_get(np, 0);
-	if (!IS_ERR(clk)) {
-		default_parent = __clk_get_name(clk);
+	अगर (!IS_ERR(clk)) अणु
+		शेष_parent = __clk_get_name(clk);
 		clk_put(clk);
-	}
+	पूर्ण
 
-	ctrl = kzalloc(sizeof(*ctrl), GFP_KERNEL);
-	if (WARN_ON(!ctrl))
-		goto ctrl_out;
+	ctrl = kzalloc(माप(*ctrl), GFP_KERNEL);
+	अगर (WARN_ON(!ctrl))
+		जाओ ctrl_out;
 
-	/* lock must already be initialized */
+	/* lock must alपढ़ोy be initialized */
 	ctrl->lock = &ctrl_gating_lock;
 
 	ctrl->base = base;
 
-	/* Count, allocate, and register clock gates */
-	for (n = 0; desc[n].name;)
+	/* Count, allocate, and रेजिस्टर घड़ी gates */
+	क्रम (n = 0; desc[n].name;)
 		n++;
 
 	ctrl->num_gates = n;
-	ctrl->gates = kcalloc(ctrl->num_gates, sizeof(*ctrl->gates),
+	ctrl->gates = kसुस्मृति(ctrl->num_gates, माप(*ctrl->gates),
 			      GFP_KERNEL);
-	if (WARN_ON(!ctrl->gates))
-		goto gates_out;
+	अगर (WARN_ON(!ctrl->gates))
+		जाओ gates_out;
 
-	for (n = 0; n < ctrl->num_gates; n++) {
-		const char *parent =
-			(desc[n].parent) ? desc[n].parent : default_parent;
-		ctrl->gates[n] = clk_register_gate(NULL, desc[n].name, parent,
+	क्रम (n = 0; n < ctrl->num_gates; n++) अणु
+		स्थिर अक्षर *parent =
+			(desc[n].parent) ? desc[n].parent : शेष_parent;
+		ctrl->gates[n] = clk_रेजिस्टर_gate(शून्य, desc[n].name, parent,
 					desc[n].flags, base, desc[n].bit_idx,
 					0, ctrl->lock);
 		WARN_ON(IS_ERR(ctrl->gates[n]));
-	}
+	पूर्ण
 
 	of_clk_add_provider(np, clk_gating_get_src, ctrl);
 
-	register_syscore_ops(&clk_gate_syscore_ops);
+	रेजिस्टर_syscore_ops(&clk_gate_syscore_ops);
 
-	return;
+	वापस;
 gates_out:
-	kfree(ctrl);
+	kमुक्त(ctrl);
 ctrl_out:
 	iounmap(base);
-}
+पूर्ण

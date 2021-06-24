@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright Intel Corp. 2018 */
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/nd.h>
-#include "pmem.h"
-#include "pfn.h"
-#include "nd.h"
-#include "nd-core.h"
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/nd.h>
+#समावेश "pmem.h"
+#समावेश "pfn.h"
+#समावेश "nd.h"
+#समावेश "nd-core.h"
 
-ssize_t security_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
+sमाप_प्रकार security_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
 
 	/*
 	 * For the test version we need to poll the "hardware" in order
-	 * to get the updated status for unlock testing.
+	 * to get the updated status क्रम unlock testing.
 	 */
 	nvdimm->sec.flags = nvdimm_security_flags(nvdimm, NVDIMM_USER);
 
-	if (test_bit(NVDIMM_SECURITY_DISABLED, &nvdimm->sec.flags))
-		return sprintf(buf, "disabled\n");
-	if (test_bit(NVDIMM_SECURITY_UNLOCKED, &nvdimm->sec.flags))
-		return sprintf(buf, "unlocked\n");
-	if (test_bit(NVDIMM_SECURITY_LOCKED, &nvdimm->sec.flags))
-		return sprintf(buf, "locked\n");
-	return -ENOTTY;
-}
+	अगर (test_bit(NVDIMM_SECURITY_DISABLED, &nvdimm->sec.flags))
+		वापस प्र_लिखो(buf, "disabled\n");
+	अगर (test_bit(NVDIMM_SECURITY_UNLOCKED, &nvdimm->sec.flags))
+		वापस प्र_लिखो(buf, "unlocked\n");
+	अगर (test_bit(NVDIMM_SECURITY_LOCKED, &nvdimm->sec.flags))
+		वापस प्र_लिखो(buf, "locked\n");
+	वापस -ENOTTY;
+पूर्ण

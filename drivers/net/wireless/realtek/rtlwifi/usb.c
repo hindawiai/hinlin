@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#include "wifi.h"
-#include "core.h"
-#include "usb.h"
-#include "base.h"
-#include "ps.h"
-#include "rtl8192c/fw_common.h"
-#include <linux/export.h>
-#include <linux/module.h>
+#समावेश "wifi.h"
+#समावेश "core.h"
+#समावेश "usb.h"
+#समावेश "base.h"
+#समावेश "ps.h"
+#समावेश "rtl8192c/fw_common.h"
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
 
 MODULE_AUTHOR("lizhaoming	<chaoming_li@realsil.com.cn>");
 MODULE_AUTHOR("Realtek WlanFAE	<wlanfae@realtek.com>");
@@ -16,121 +17,121 @@ MODULE_AUTHOR("Larry Finger	<Larry.FInger@lwfinger.net>");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("USB basic driver for rtlwifi");
 
-#define	REALTEK_USB_VENQT_READ			0xC0
-#define	REALTEK_USB_VENQT_WRITE			0x40
-#define REALTEK_USB_VENQT_CMD_REQ		0x05
-#define	REALTEK_USB_VENQT_CMD_IDX		0x00
+#घोषणा	REALTEK_USB_VENQT_READ			0xC0
+#घोषणा	REALTEK_USB_VENQT_WRITE			0x40
+#घोषणा REALTEK_USB_VENQT_CMD_REQ		0x05
+#घोषणा	REALTEK_USB_VENQT_CMD_IDX		0x00
 
-#define MAX_USBCTRL_VENDORREQ_TIMES		10
+#घोषणा MAX_USBCTRL_VENDORREQ_TIMES		10
 
-static void usbctrl_async_callback(struct urb *urb)
-{
-	if (urb) {
-		/* free dr */
-		kfree(urb->setup_packet);
-		/* free databuf */
-		kfree(urb->transfer_buffer);
-	}
-}
+अटल व्योम usbctrl_async_callback(काष्ठा urb *urb)
+अणु
+	अगर (urb) अणु
+		/* मुक्त dr */
+		kमुक्त(urb->setup_packet);
+		/* मुक्त databuf */
+		kमुक्त(urb->transfer_buffer);
+	पूर्ण
+पूर्ण
 
-static int _usbctrl_vendorreq_async_write(struct usb_device *udev, u8 request,
-					  u16 value, u16 index, void *pdata,
+अटल पूर्णांक _usbctrl_venकरोrreq_async_ग_लिखो(काष्ठा usb_device *udev, u8 request,
+					  u16 value, u16 index, व्योम *pdata,
 					  u16 len)
-{
-	int rc;
-	unsigned int pipe;
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक pipe;
 	u8 reqtype;
-	struct usb_ctrlrequest *dr;
-	struct urb *urb;
-	const u16 databuf_maxlen = REALTEK_USB_VENQT_MAX_BUF_SIZE;
+	काष्ठा usb_ctrlrequest *dr;
+	काष्ठा urb *urb;
+	स्थिर u16 databuf_maxlen = REALTEK_USB_VENQT_MAX_BUF_SIZE;
 	u8 *databuf;
 
-	if (WARN_ON_ONCE(len > databuf_maxlen))
+	अगर (WARN_ON_ONCE(len > databuf_maxlen))
 		len = databuf_maxlen;
 
-	pipe = usb_sndctrlpipe(udev, 0); /* write_out */
+	pipe = usb_sndctrlpipe(udev, 0); /* ग_लिखो_out */
 	reqtype =  REALTEK_USB_VENQT_WRITE;
 
-	dr = kzalloc(sizeof(*dr), GFP_ATOMIC);
-	if (!dr)
-		return -ENOMEM;
+	dr = kzalloc(माप(*dr), GFP_ATOMIC);
+	अगर (!dr)
+		वापस -ENOMEM;
 
 	databuf = kzalloc(databuf_maxlen, GFP_ATOMIC);
-	if (!databuf) {
-		kfree(dr);
-		return -ENOMEM;
-	}
+	अगर (!databuf) अणु
+		kमुक्त(dr);
+		वापस -ENOMEM;
+	पूर्ण
 
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	if (!urb) {
-		kfree(databuf);
-		kfree(dr);
-		return -ENOMEM;
-	}
+	अगर (!urb) अणु
+		kमुक्त(databuf);
+		kमुक्त(dr);
+		वापस -ENOMEM;
+	पूर्ण
 
 	dr->bRequestType = reqtype;
 	dr->bRequest = request;
 	dr->wValue = cpu_to_le16(value);
 	dr->wIndex = cpu_to_le16(index);
 	dr->wLength = cpu_to_le16(len);
-	/* data are already in little-endian order */
-	memcpy(databuf, pdata, len);
+	/* data are alपढ़ोy in little-endian order */
+	स_नकल(databuf, pdata, len);
 	usb_fill_control_urb(urb, udev, pipe,
-			     (unsigned char *)dr, databuf, len,
-			     usbctrl_async_callback, NULL);
+			     (अचिन्हित अक्षर *)dr, databuf, len,
+			     usbctrl_async_callback, शून्य);
 	rc = usb_submit_urb(urb, GFP_ATOMIC);
-	if (rc < 0) {
-		kfree(databuf);
-		kfree(dr);
-	}
-	usb_free_urb(urb);
-	return rc;
-}
+	अगर (rc < 0) अणु
+		kमुक्त(databuf);
+		kमुक्त(dr);
+	पूर्ण
+	usb_मुक्त_urb(urb);
+	वापस rc;
+पूर्ण
 
-static int _usbctrl_vendorreq_sync_read(struct usb_device *udev, u8 request,
-					u16 value, u16 index, void *pdata,
+अटल पूर्णांक _usbctrl_venकरोrreq_sync_पढ़ो(काष्ठा usb_device *udev, u8 request,
+					u16 value, u16 index, व्योम *pdata,
 					u16 len)
-{
-	unsigned int pipe;
-	int status;
+अणु
+	अचिन्हित पूर्णांक pipe;
+	पूर्णांक status;
 	u8 reqtype;
-	int vendorreq_times = 0;
-	static int count;
+	पूर्णांक venकरोrreq_बार = 0;
+	अटल पूर्णांक count;
 
-	pipe = usb_rcvctrlpipe(udev, 0); /* read_in */
+	pipe = usb_rcvctrlpipe(udev, 0); /* पढ़ो_in */
 	reqtype =  REALTEK_USB_VENQT_READ;
 
-	do {
+	करो अणु
 		status = usb_control_msg(udev, pipe, request, reqtype, value,
 					 index, pdata, len, 1000);
-		if (status < 0) {
-			/* firmware download is checksumed, don't retry */
-			if ((value >= FW_8192C_START_ADDRESS &&
+		अगर (status < 0) अणु
+			/* firmware करोwnload is checksumed, करोn't retry */
+			अगर ((value >= FW_8192C_START_ADDRESS &&
 			    value <= FW_8192C_END_ADDRESS))
-				break;
-		} else {
-			break;
-		}
-	} while (++vendorreq_times < MAX_USBCTRL_VENDORREQ_TIMES);
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (++venकरोrreq_बार < MAX_USBCTRL_VENDORREQ_TIMES);
 
-	if (status < 0 && count++ < 4)
+	अगर (status < 0 && count++ < 4)
 		pr_err("reg 0x%x, usbctrl_vendorreq TimeOut! status:0x%x value=0x%x\n",
 		       value, status, *(u32 *)pdata);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static u32 _usb_read_sync(struct rtl_priv *rtlpriv, u32 addr, u16 len)
-{
-	struct device *dev = rtlpriv->io.dev;
-	struct usb_device *udev = to_usb_device(dev);
+अटल u32 _usb_पढ़ो_sync(काष्ठा rtl_priv *rtlpriv, u32 addr, u16 len)
+अणु
+	काष्ठा device *dev = rtlpriv->io.dev;
+	काष्ठा usb_device *udev = to_usb_device(dev);
 	u8 request;
 	u16 wvalue;
 	u16 index;
 	__le32 *data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rtlpriv->locks.usb_lock, flags);
-	if (++rtlpriv->usb_data_index >= RTL_USB_MAX_RX_COUNT)
+	अगर (++rtlpriv->usb_data_index >= RTL_USB_MAX_RX_COUNT)
 		rtlpriv->usb_data_index = 0;
 	data = &rtlpriv->usb_data[rtlpriv->usb_data_index];
 	spin_unlock_irqrestore(&rtlpriv->locks.usb_lock, flags);
@@ -138,28 +139,28 @@ static u32 _usb_read_sync(struct rtl_priv *rtlpriv, u32 addr, u16 len)
 	index = REALTEK_USB_VENQT_CMD_IDX; /* n/a */
 
 	wvalue = (u16)addr;
-	_usbctrl_vendorreq_sync_read(udev, request, wvalue, index, data, len);
-	return le32_to_cpu(*data);
-}
+	_usbctrl_venकरोrreq_sync_पढ़ो(udev, request, wvalue, index, data, len);
+	वापस le32_to_cpu(*data);
+पूर्ण
 
-static u8 _usb_read8_sync(struct rtl_priv *rtlpriv, u32 addr)
-{
-	return (u8)_usb_read_sync(rtlpriv, addr, 1);
-}
+अटल u8 _usb_पढ़ो8_sync(काष्ठा rtl_priv *rtlpriv, u32 addr)
+अणु
+	वापस (u8)_usb_पढ़ो_sync(rtlpriv, addr, 1);
+पूर्ण
 
-static u16 _usb_read16_sync(struct rtl_priv *rtlpriv, u32 addr)
-{
-	return (u16)_usb_read_sync(rtlpriv, addr, 2);
-}
+अटल u16 _usb_पढ़ो16_sync(काष्ठा rtl_priv *rtlpriv, u32 addr)
+अणु
+	वापस (u16)_usb_पढ़ो_sync(rtlpriv, addr, 2);
+पूर्ण
 
-static u32 _usb_read32_sync(struct rtl_priv *rtlpriv, u32 addr)
-{
-	return _usb_read_sync(rtlpriv, addr, 4);
-}
+अटल u32 _usb_पढ़ो32_sync(काष्ठा rtl_priv *rtlpriv, u32 addr)
+अणु
+	वापस _usb_पढ़ो_sync(rtlpriv, addr, 4);
+पूर्ण
 
-static void _usb_write_async(struct usb_device *udev, u32 addr, u32 val,
+अटल व्योम _usb_ग_लिखो_async(काष्ठा usb_device *udev, u32 addr, u32 val,
 			     u16 len)
-{
+अणु
 	u8 request;
 	u16 wvalue;
 	u16 index;
@@ -169,91 +170,91 @@ static void _usb_write_async(struct usb_device *udev, u32 addr, u32 val,
 	index = REALTEK_USB_VENQT_CMD_IDX; /* n/a */
 	wvalue = (u16)(addr&0x0000ffff);
 	data = cpu_to_le32(val);
-	_usbctrl_vendorreq_async_write(udev, request, wvalue, index, &data,
+	_usbctrl_venकरोrreq_async_ग_लिखो(udev, request, wvalue, index, &data,
 				       len);
-}
+पूर्ण
 
-static void _usb_write8_async(struct rtl_priv *rtlpriv, u32 addr, u8 val)
-{
-	struct device *dev = rtlpriv->io.dev;
+अटल व्योम _usb_ग_लिखो8_async(काष्ठा rtl_priv *rtlpriv, u32 addr, u8 val)
+अणु
+	काष्ठा device *dev = rtlpriv->io.dev;
 
-	_usb_write_async(to_usb_device(dev), addr, val, 1);
-}
+	_usb_ग_लिखो_async(to_usb_device(dev), addr, val, 1);
+पूर्ण
 
-static void _usb_write16_async(struct rtl_priv *rtlpriv, u32 addr, u16 val)
-{
-	struct device *dev = rtlpriv->io.dev;
+अटल व्योम _usb_ग_लिखो16_async(काष्ठा rtl_priv *rtlpriv, u32 addr, u16 val)
+अणु
+	काष्ठा device *dev = rtlpriv->io.dev;
 
-	_usb_write_async(to_usb_device(dev), addr, val, 2);
-}
+	_usb_ग_लिखो_async(to_usb_device(dev), addr, val, 2);
+पूर्ण
 
-static void _usb_write32_async(struct rtl_priv *rtlpriv, u32 addr, u32 val)
-{
-	struct device *dev = rtlpriv->io.dev;
+अटल व्योम _usb_ग_लिखो32_async(काष्ठा rtl_priv *rtlpriv, u32 addr, u32 val)
+अणु
+	काष्ठा device *dev = rtlpriv->io.dev;
 
-	_usb_write_async(to_usb_device(dev), addr, val, 4);
-}
+	_usb_ग_लिखो_async(to_usb_device(dev), addr, val, 4);
+पूर्ण
 
-static void _usb_writen_sync(struct rtl_priv *rtlpriv, u32 addr, void *data,
+अटल व्योम _usb_ग_लिखोn_sync(काष्ठा rtl_priv *rtlpriv, u32 addr, व्योम *data,
 			     u16 len)
-{
-	struct device *dev = rtlpriv->io.dev;
-	struct usb_device *udev = to_usb_device(dev);
+अणु
+	काष्ठा device *dev = rtlpriv->io.dev;
+	काष्ठा usb_device *udev = to_usb_device(dev);
 	u8 request = REALTEK_USB_VENQT_CMD_REQ;
 	u8 reqtype =  REALTEK_USB_VENQT_WRITE;
 	u16 wvalue;
 	u16 index = REALTEK_USB_VENQT_CMD_IDX;
-	int pipe = usb_sndctrlpipe(udev, 0); /* write_out */
+	पूर्णांक pipe = usb_sndctrlpipe(udev, 0); /* ग_लिखो_out */
 	u8 *buffer;
 
 	wvalue = (u16)(addr & 0x0000ffff);
 	buffer = kmemdup(data, len, GFP_ATOMIC);
-	if (!buffer)
-		return;
+	अगर (!buffer)
+		वापस;
 	usb_control_msg(udev, pipe, request, reqtype, wvalue,
 			index, buffer, len, 50);
 
-	kfree(buffer);
-}
+	kमुक्त(buffer);
+पूर्ण
 
-static void _rtl_usb_io_handler_init(struct device *dev,
-				     struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल व्योम _rtl_usb_io_handler_init(काष्ठा device *dev,
+				     काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
 	rtlpriv->io.dev = dev;
 	mutex_init(&rtlpriv->io.bb_mutex);
-	rtlpriv->io.write8_async	= _usb_write8_async;
-	rtlpriv->io.write16_async	= _usb_write16_async;
-	rtlpriv->io.write32_async	= _usb_write32_async;
-	rtlpriv->io.read8_sync		= _usb_read8_sync;
-	rtlpriv->io.read16_sync		= _usb_read16_sync;
-	rtlpriv->io.read32_sync		= _usb_read32_sync;
-	rtlpriv->io.writen_sync		= _usb_writen_sync;
-}
+	rtlpriv->io.ग_लिखो8_async	= _usb_ग_लिखो8_async;
+	rtlpriv->io.ग_लिखो16_async	= _usb_ग_लिखो16_async;
+	rtlpriv->io.ग_लिखो32_async	= _usb_ग_लिखो32_async;
+	rtlpriv->io.पढ़ो8_sync		= _usb_पढ़ो8_sync;
+	rtlpriv->io.पढ़ो16_sync		= _usb_पढ़ो16_sync;
+	rtlpriv->io.पढ़ो32_sync		= _usb_पढ़ो32_sync;
+	rtlpriv->io.ग_लिखोn_sync		= _usb_ग_लिखोn_sync;
+पूर्ण
 
-static void _rtl_usb_io_handler_release(struct ieee80211_hw *hw)
-{
-	struct rtl_priv __maybe_unused *rtlpriv = rtl_priv(hw);
+अटल व्योम _rtl_usb_io_handler_release(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv __maybe_unused *rtlpriv = rtl_priv(hw);
 
 	mutex_destroy(&rtlpriv->io.bb_mutex);
-}
+पूर्ण
 
-/*	Default aggregation handler. Do nothing and just return the oldest skb.  */
-static struct sk_buff *_none_usb_tx_aggregate_hdl(struct ieee80211_hw *hw,
-						  struct sk_buff_head *list)
-{
-	return skb_dequeue(list);
-}
+/*	Default aggregation handler. Do nothing and just वापस the oldest skb.  */
+अटल काष्ठा sk_buff *_none_usb_tx_aggregate_hdl(काष्ठा ieee80211_hw *hw,
+						  काष्ठा sk_buff_head *list)
+अणु
+	वापस skb_dequeue(list);
+पूर्ण
 
-#define IS_HIGH_SPEED_USB(udev) \
+#घोषणा IS_HIGH_SPEED_USB(udev) \
 		((USB_SPEED_HIGH == (udev)->speed) ? true : false)
 
-static int _rtl_usb_init_tx(struct ieee80211_hw *hw)
-{
+अटल पूर्णांक _rtl_usb_init_tx(काष्ठा ieee80211_hw *hw)
+अणु
 	u32 i;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
 
 	rtlusb->max_bulk_out_size = IS_HIGH_SPEED_USB(rtlusb->udev)
 						    ? USB_HIGH_SPEED_BULK_SIZE
@@ -262,47 +263,47 @@ static int _rtl_usb_init_tx(struct ieee80211_hw *hw)
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG, "USB Max Bulk-out Size=%d\n",
 		rtlusb->max_bulk_out_size);
 
-	for (i = 0; i < __RTL_TXQ_NUM; i++) {
+	क्रम (i = 0; i < __RTL_TXQ_NUM; i++) अणु
 		u32 ep_num = rtlusb->ep_map.ep_mapping[i];
 
-		if (!ep_num) {
+		अगर (!ep_num) अणु
 			rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 				"Invalid endpoint map setting!\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	rtlusb->usb_tx_post_hdl =
-		 rtlpriv->cfg->usb_interface_cfg->usb_tx_post_hdl;
+		 rtlpriv->cfg->usb_पूर्णांकerface_cfg->usb_tx_post_hdl;
 	rtlusb->usb_tx_cleanup	=
-		 rtlpriv->cfg->usb_interface_cfg->usb_tx_cleanup;
+		 rtlpriv->cfg->usb_पूर्णांकerface_cfg->usb_tx_cleanup;
 	rtlusb->usb_tx_aggregate_hdl =
-		 (rtlpriv->cfg->usb_interface_cfg->usb_tx_aggregate_hdl)
-		 ? rtlpriv->cfg->usb_interface_cfg->usb_tx_aggregate_hdl
+		 (rtlpriv->cfg->usb_पूर्णांकerface_cfg->usb_tx_aggregate_hdl)
+		 ? rtlpriv->cfg->usb_पूर्णांकerface_cfg->usb_tx_aggregate_hdl
 		 : &_none_usb_tx_aggregate_hdl;
 
 	init_usb_anchor(&rtlusb->tx_submitted);
-	for (i = 0; i < RTL_USB_MAX_EP_NUM; i++) {
+	क्रम (i = 0; i < RTL_USB_MAX_EP_NUM; i++) अणु
 		skb_queue_head_init(&rtlusb->tx_skb_queue[i]);
 		init_usb_anchor(&rtlusb->tx_pending[i]);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void _rtl_rx_work(struct tasklet_struct *t);
+अटल व्योम _rtl_rx_work(काष्ठा tasklet_काष्ठा *t);
 
-static int _rtl_usb_init_rx(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_usb_priv *usb_priv = rtl_usbpriv(hw);
-	struct rtl_usb *rtlusb = rtl_usbdev(usb_priv);
+अटल पूर्णांक _rtl_usb_init_rx(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_usb_priv *usb_priv = rtl_usbpriv(hw);
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(usb_priv);
 
-	rtlusb->rx_max_size = rtlpriv->cfg->usb_interface_cfg->rx_max_size;
-	rtlusb->rx_urb_num = rtlpriv->cfg->usb_interface_cfg->rx_urb_num;
-	rtlusb->in_ep = rtlpriv->cfg->usb_interface_cfg->in_ep_num;
-	rtlusb->usb_rx_hdl = rtlpriv->cfg->usb_interface_cfg->usb_rx_hdl;
+	rtlusb->rx_max_size = rtlpriv->cfg->usb_पूर्णांकerface_cfg->rx_max_size;
+	rtlusb->rx_urb_num = rtlpriv->cfg->usb_पूर्णांकerface_cfg->rx_urb_num;
+	rtlusb->in_ep = rtlpriv->cfg->usb_पूर्णांकerface_cfg->in_ep_num;
+	rtlusb->usb_rx_hdl = rtlpriv->cfg->usb_पूर्णांकerface_cfg->usb_rx_hdl;
 	rtlusb->usb_rx_segregate_hdl =
-		rtlpriv->cfg->usb_interface_cfg->usb_rx_segregate_hdl;
+		rtlpriv->cfg->usb_पूर्णांकerface_cfg->usb_rx_segregate_hdl;
 
 	pr_info("rx_max_size %d, rx_urb_num %d, in_ep %d\n",
 		rtlusb->rx_max_size, rtlusb->rx_urb_num, rtlusb->in_ep);
@@ -312,74 +313,74 @@ static int _rtl_usb_init_rx(struct ieee80211_hw *hw)
 	skb_queue_head_init(&rtlusb->rx_queue);
 	tasklet_setup(&rtlusb->rx_work_tasklet, _rtl_rx_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _rtl_usb_init(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_usb_priv *usb_priv = rtl_usbpriv(hw);
-	struct rtl_usb *rtlusb = rtl_usbdev(usb_priv);
-	int err;
+अटल पूर्णांक _rtl_usb_init(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_usb_priv *usb_priv = rtl_usbpriv(hw);
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(usb_priv);
+	पूर्णांक err;
 	u8 epidx;
-	struct usb_interface	*usb_intf = rtlusb->intf;
-	u8 epnums = usb_intf->cur_altsetting->desc.bNumEndpoints;
+	काष्ठा usb_पूर्णांकerface	*usb_पूर्णांकf = rtlusb->पूर्णांकf;
+	u8 epnums = usb_पूर्णांकf->cur_altsetting->desc.bNumEndpoपूर्णांकs;
 
 	rtlusb->out_ep_nums = rtlusb->in_ep_nums = 0;
-	for (epidx = 0; epidx < epnums; epidx++) {
-		struct usb_endpoint_descriptor *pep_desc;
+	क्रम (epidx = 0; epidx < epnums; epidx++) अणु
+		काष्ठा usb_endpoपूर्णांक_descriptor *pep_desc;
 
-		pep_desc = &usb_intf->cur_altsetting->endpoint[epidx].desc;
+		pep_desc = &usb_पूर्णांकf->cur_altsetting->endpoपूर्णांक[epidx].desc;
 
-		if (usb_endpoint_dir_in(pep_desc))
+		अगर (usb_endpoपूर्णांक_dir_in(pep_desc))
 			rtlusb->in_ep_nums++;
-		else if (usb_endpoint_dir_out(pep_desc))
+		अन्यथा अगर (usb_endpoपूर्णांक_dir_out(pep_desc))
 			rtlusb->out_ep_nums++;
 
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 			"USB EP(0x%02x), MaxPacketSize=%d, Interval=%d\n",
-			pep_desc->bEndpointAddress, pep_desc->wMaxPacketSize,
+			pep_desc->bEndpoपूर्णांकAddress, pep_desc->wMaxPacketSize,
 			pep_desc->bInterval);
-	}
-	if (rtlusb->in_ep_nums <  rtlpriv->cfg->usb_interface_cfg->in_ep_num) {
+	पूर्ण
+	अगर (rtlusb->in_ep_nums <  rtlpriv->cfg->usb_पूर्णांकerface_cfg->in_ep_num) अणु
 		pr_err("Too few input end points found\n");
-		return -EINVAL;
-	}
-	if (rtlusb->out_ep_nums == 0) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (rtlusb->out_ep_nums == 0) अणु
 		pr_err("No output end points found\n");
-		return -EINVAL;
-	}
-	/* usb endpoint mapping */
-	err = rtlpriv->cfg->usb_interface_cfg->usb_endpoint_mapping(hw);
-	rtlusb->usb_mq_to_hwq =  rtlpriv->cfg->usb_interface_cfg->usb_mq_to_hwq;
+		वापस -EINVAL;
+	पूर्ण
+	/* usb endpoपूर्णांक mapping */
+	err = rtlpriv->cfg->usb_पूर्णांकerface_cfg->usb_endpoपूर्णांक_mapping(hw);
+	rtlusb->usb_mq_to_hwq =  rtlpriv->cfg->usb_पूर्णांकerface_cfg->usb_mq_to_hwq;
 	_rtl_usb_init_tx(hw);
 	_rtl_usb_init_rx(hw);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rtl_usb_init_sw(struct ieee80211_hw *hw)
-{
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+अटल व्योम rtl_usb_init_sw(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
 
 	rtlhal->hw = hw;
 	ppsc->inactiveps = false;
 	ppsc->leisure_ps = false;
 	ppsc->fwctrl_lps = false;
 	ppsc->reg_fwctrl_lps = 3;
-	ppsc->reg_max_lps_awakeintvl = 5;
+	ppsc->reg_max_lps_awakeपूर्णांकvl = 5;
 	ppsc->fwctrl_psmode = FW_PS_DTIM_MODE;
 
 	 /* IBSS */
-	mac->beacon_interval = 100;
+	mac->beacon_पूर्णांकerval = 100;
 
 	 /* AMPDU */
 	mac->min_space_cfg = 0;
 	mac->max_mss_density = 0;
 
-	/* set sane AMPDU defaults */
+	/* set sane AMPDU शेषs */
 	mac->current_ampdu_density = 7;
 	mac->current_ampdu_factor = 3;
 
@@ -392,243 +393,243 @@ static void rtl_usb_init_sw(struct ieee80211_hw *hw)
 	/* HIMR_EX - turn all on */
 	rtlusb->irq_mask[1] = 0xFFFFFFFF;
 	rtlusb->disablehwsm =  true;
-}
+पूर्ण
 
-static void _rtl_rx_completed(struct urb *urb);
+अटल व्योम _rtl_rx_completed(काष्ठा urb *urb);
 
-static int _rtl_prep_rx_urb(struct ieee80211_hw *hw, struct rtl_usb *rtlusb,
-			      struct urb *urb, gfp_t gfp_mask)
-{
-	void *buf;
+अटल पूर्णांक _rtl_prep_rx_urb(काष्ठा ieee80211_hw *hw, काष्ठा rtl_usb *rtlusb,
+			      काष्ठा urb *urb, gfp_t gfp_mask)
+अणु
+	व्योम *buf;
 
 	buf = usb_alloc_coherent(rtlusb->udev, rtlusb->rx_max_size, gfp_mask,
 				 &urb->transfer_dma);
-	if (!buf) {
+	अगर (!buf) अणु
 		pr_err("Failed to usb_alloc_coherent!!\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	usb_fill_bulk_urb(urb, rtlusb->udev,
 			  usb_rcvbulkpipe(rtlusb->udev, rtlusb->in_ep),
 			  buf, rtlusb->rx_max_size, _rtl_rx_completed, rtlusb);
 	urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void _rtl_usb_rx_process_agg(struct ieee80211_hw *hw,
-				    struct sk_buff *skb)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल व्योम _rtl_usb_rx_process_agg(काष्ठा ieee80211_hw *hw,
+				    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	u8 *rxdesc = skb->data;
-	struct ieee80211_hdr *hdr;
+	काष्ठा ieee80211_hdr *hdr;
 	bool unicast = false;
 	__le16 fc;
-	struct ieee80211_rx_status rx_status = {0};
-	struct rtl_stats stats = {
-		.signal = 0,
+	काष्ठा ieee80211_rx_status rx_status = अणु0पूर्ण;
+	काष्ठा rtl_stats stats = अणु
+		.संकेत = 0,
 		.rate = 0,
-	};
+	पूर्ण;
 
 	skb_pull(skb, RTL_RX_DESC_SIZE);
 	rtlpriv->cfg->ops->query_rx_desc(hw, &stats, &rx_status, rxdesc, skb);
-	skb_pull(skb, (stats.rx_drvinfo_size + stats.rx_bufshift));
-	hdr = (struct ieee80211_hdr *)(skb->data);
+	skb_pull(skb, (stats.rx_drvinfo_size + stats.rx_bufshअगरt));
+	hdr = (काष्ठा ieee80211_hdr *)(skb->data);
 	fc = hdr->frame_control;
-	if (!stats.crc) {
-		memcpy(IEEE80211_SKB_RXCB(skb), &rx_status, sizeof(rx_status));
+	अगर (!stats.crc) अणु
+		स_नकल(IEEE80211_SKB_RXCB(skb), &rx_status, माप(rx_status));
 
-		if (is_broadcast_ether_addr(hdr->addr1)) {
+		अगर (is_broadcast_ether_addr(hdr->addr1)) अणु
 			/*TODO*/;
-		} else if (is_multicast_ether_addr(hdr->addr1)) {
+		पूर्ण अन्यथा अगर (is_multicast_ether_addr(hdr->addr1)) अणु
 			/*TODO*/
-		} else {
+		पूर्ण अन्यथा अणु
 			unicast = true;
 			rtlpriv->stats.rxbytesunicast +=  skb->len;
-		}
+		पूर्ण
 
-		if (ieee80211_is_data(fc)) {
+		अगर (ieee80211_is_data(fc)) अणु
 			rtlpriv->cfg->ops->led_control(hw, LED_CTL_RX);
 
-			if (unicast)
+			अगर (unicast)
 				rtlpriv->link_info.num_rx_inperiod++;
-		}
-		/* static bcn for roaming */
+		पूर्ण
+		/* अटल bcn क्रम roaming */
 		rtl_beacon_statistic(hw, skb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void _rtl_usb_rx_process_noagg(struct ieee80211_hw *hw,
-				      struct sk_buff *skb)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल व्योम _rtl_usb_rx_process_noagg(काष्ठा ieee80211_hw *hw,
+				      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	u8 *rxdesc = skb->data;
-	struct ieee80211_hdr *hdr;
+	काष्ठा ieee80211_hdr *hdr;
 	bool unicast = false;
 	__le16 fc;
-	struct ieee80211_rx_status rx_status = {0};
-	struct rtl_stats stats = {
-		.signal = 0,
+	काष्ठा ieee80211_rx_status rx_status = अणु0पूर्ण;
+	काष्ठा rtl_stats stats = अणु
+		.संकेत = 0,
 		.rate = 0,
-	};
+	पूर्ण;
 
 	skb_pull(skb, RTL_RX_DESC_SIZE);
 	rtlpriv->cfg->ops->query_rx_desc(hw, &stats, &rx_status, rxdesc, skb);
-	skb_pull(skb, (stats.rx_drvinfo_size + stats.rx_bufshift));
-	hdr = (struct ieee80211_hdr *)(skb->data);
+	skb_pull(skb, (stats.rx_drvinfo_size + stats.rx_bufshअगरt));
+	hdr = (काष्ठा ieee80211_hdr *)(skb->data);
 	fc = hdr->frame_control;
-	if (!stats.crc) {
-		memcpy(IEEE80211_SKB_RXCB(skb), &rx_status, sizeof(rx_status));
+	अगर (!stats.crc) अणु
+		स_नकल(IEEE80211_SKB_RXCB(skb), &rx_status, माप(rx_status));
 
-		if (is_broadcast_ether_addr(hdr->addr1)) {
+		अगर (is_broadcast_ether_addr(hdr->addr1)) अणु
 			/*TODO*/;
-		} else if (is_multicast_ether_addr(hdr->addr1)) {
+		पूर्ण अन्यथा अगर (is_multicast_ether_addr(hdr->addr1)) अणु
 			/*TODO*/
-		} else {
+		पूर्ण अन्यथा अणु
 			unicast = true;
 			rtlpriv->stats.rxbytesunicast +=  skb->len;
-		}
+		पूर्ण
 
-		if (ieee80211_is_data(fc)) {
+		अगर (ieee80211_is_data(fc)) अणु
 			rtlpriv->cfg->ops->led_control(hw, LED_CTL_RX);
 
-			if (unicast)
+			अगर (unicast)
 				rtlpriv->link_info.num_rx_inperiod++;
-		}
+		पूर्ण
 
-		/* static bcn for roaming */
+		/* अटल bcn क्रम roaming */
 		rtl_beacon_statistic(hw, skb);
 
-		if (likely(rtl_action_proc(hw, skb, false)))
+		अगर (likely(rtl_action_proc(hw, skb, false)))
 			ieee80211_rx(hw, skb);
-		else
-			dev_kfree_skb_any(skb);
-	} else {
-		dev_kfree_skb_any(skb);
-	}
-}
+		अन्यथा
+			dev_kमुक्त_skb_any(skb);
+	पूर्ण अन्यथा अणु
+		dev_kमुक्त_skb_any(skb);
+	पूर्ण
+पूर्ण
 
-static void _rtl_rx_pre_process(struct ieee80211_hw *hw, struct sk_buff *skb)
-{
-	struct sk_buff *_skb;
-	struct sk_buff_head rx_queue;
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+अटल व्योम _rtl_rx_pre_process(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *_skb;
+	काष्ठा sk_buff_head rx_queue;
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
 
 	skb_queue_head_init(&rx_queue);
-	if (rtlusb->usb_rx_segregate_hdl)
+	अगर (rtlusb->usb_rx_segregate_hdl)
 		rtlusb->usb_rx_segregate_hdl(hw, skb, &rx_queue);
 	WARN_ON(skb_queue_empty(&rx_queue));
-	while (!skb_queue_empty(&rx_queue)) {
+	जबतक (!skb_queue_empty(&rx_queue)) अणु
 		_skb = skb_dequeue(&rx_queue);
 		_rtl_usb_rx_process_agg(hw, _skb);
 		ieee80211_rx(hw, _skb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define __RX_SKB_MAX_QUEUED	64
+#घोषणा __RX_SKB_MAX_QUEUED	64
 
-static void _rtl_rx_work(struct tasklet_struct *t)
-{
-	struct rtl_usb *rtlusb = from_tasklet(rtlusb, t, rx_work_tasklet);
-	struct ieee80211_hw *hw = usb_get_intfdata(rtlusb->intf);
-	struct sk_buff *skb;
+अटल व्योम _rtl_rx_work(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा rtl_usb *rtlusb = from_tasklet(rtlusb, t, rx_work_tasklet);
+	काष्ठा ieee80211_hw *hw = usb_get_पूर्णांकfdata(rtlusb->पूर्णांकf);
+	काष्ठा sk_buff *skb;
 
-	while ((skb = skb_dequeue(&rtlusb->rx_queue))) {
-		if (unlikely(IS_USB_STOP(rtlusb))) {
-			dev_kfree_skb_any(skb);
-			continue;
-		}
+	जबतक ((skb = skb_dequeue(&rtlusb->rx_queue))) अणु
+		अगर (unlikely(IS_USB_STOP(rtlusb))) अणु
+			dev_kमुक्त_skb_any(skb);
+			जारी;
+		पूर्ण
 
-		if (likely(!rtlusb->usb_rx_segregate_hdl)) {
+		अगर (likely(!rtlusb->usb_rx_segregate_hdl)) अणु
 			_rtl_usb_rx_process_noagg(hw, skb);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* TO DO */
 			_rtl_rx_pre_process(hw, skb);
 			pr_err("rx agg not supported\n");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static unsigned int _rtl_rx_get_padding(struct ieee80211_hdr *hdr,
-					unsigned int len)
-{
-#if NET_IP_ALIGN != 0
-	unsigned int padding = 0;
-#endif
+अटल अचिन्हित पूर्णांक _rtl_rx_get_padding(काष्ठा ieee80211_hdr *hdr,
+					अचिन्हित पूर्णांक len)
+अणु
+#अगर NET_IP_ALIGN != 0
+	अचिन्हित पूर्णांक padding = 0;
+#पूर्ण_अगर
 
 	/* make function no-op when possible */
-	if (NET_IP_ALIGN == 0 || len < sizeof(*hdr))
-		return 0;
+	अगर (NET_IP_ALIGN == 0 || len < माप(*hdr))
+		वापस 0;
 
-#if NET_IP_ALIGN != 0
+#अगर NET_IP_ALIGN != 0
 	/* alignment calculation as in lbtf_rx() / carl9170_rx_copy_data() */
 	/* TODO: deduplicate common code, define helper function instead? */
 
-	if (ieee80211_is_data_qos(hdr->frame_control)) {
+	अगर (ieee80211_is_data_qos(hdr->frame_control)) अणु
 		u8 *qc = ieee80211_get_qos_ctl(hdr);
 
 		padding ^= NET_IP_ALIGN;
 
-		/* Input might be invalid, avoid accessing memory outside
+		/* Input might be invalid, aव्योम accessing memory outside
 		 * the buffer.
 		 */
-		if ((unsigned long)qc - (unsigned long)hdr < len &&
+		अगर ((अचिन्हित दीर्घ)qc - (अचिन्हित दीर्घ)hdr < len &&
 		    *qc & IEEE80211_QOS_CTL_A_MSDU_PRESENT)
 			padding ^= NET_IP_ALIGN;
-	}
+	पूर्ण
 
-	if (ieee80211_has_a4(hdr->frame_control))
+	अगर (ieee80211_has_a4(hdr->frame_control))
 		padding ^= NET_IP_ALIGN;
 
-	return padding;
-#endif
-}
+	वापस padding;
+#पूर्ण_अगर
+पूर्ण
 
-#define __RADIO_TAP_SIZE_RSV	32
+#घोषणा __RADIO_TAP_SIZE_RSV	32
 
-static void _rtl_rx_completed(struct urb *_urb)
-{
-	struct rtl_usb *rtlusb = (struct rtl_usb *)_urb->context;
-	int err = 0;
+अटल व्योम _rtl_rx_completed(काष्ठा urb *_urb)
+अणु
+	काष्ठा rtl_usb *rtlusb = (काष्ठा rtl_usb *)_urb->context;
+	पूर्णांक err = 0;
 
-	if (unlikely(IS_USB_STOP(rtlusb)))
-		goto free;
+	अगर (unlikely(IS_USB_STOP(rtlusb)))
+		जाओ मुक्त;
 
-	if (likely(0 == _urb->status)) {
-		unsigned int padding;
-		struct sk_buff *skb;
-		unsigned int qlen;
-		unsigned int size = _urb->actual_length;
-		struct ieee80211_hdr *hdr;
+	अगर (likely(0 == _urb->status)) अणु
+		अचिन्हित पूर्णांक padding;
+		काष्ठा sk_buff *skb;
+		अचिन्हित पूर्णांक qlen;
+		अचिन्हित पूर्णांक size = _urb->actual_length;
+		काष्ठा ieee80211_hdr *hdr;
 
-		if (size < RTL_RX_DESC_SIZE + sizeof(struct ieee80211_hdr)) {
+		अगर (size < RTL_RX_DESC_SIZE + माप(काष्ठा ieee80211_hdr)) अणु
 			pr_err("Too short packet from bulk IN! (len: %d)\n",
 			       size);
-			goto resubmit;
-		}
+			जाओ resubmit;
+		पूर्ण
 
 		qlen = skb_queue_len(&rtlusb->rx_queue);
-		if (qlen >= __RX_SKB_MAX_QUEUED) {
+		अगर (qlen >= __RX_SKB_MAX_QUEUED) अणु
 			pr_err("Pending RX skbuff queue full! (qlen: %d)\n",
 			       qlen);
-			goto resubmit;
-		}
+			जाओ resubmit;
+		पूर्ण
 
-		hdr = (void *)(_urb->transfer_buffer + RTL_RX_DESC_SIZE);
+		hdr = (व्योम *)(_urb->transfer_buffer + RTL_RX_DESC_SIZE);
 		padding = _rtl_rx_get_padding(hdr, size - RTL_RX_DESC_SIZE);
 
 		skb = dev_alloc_skb(size + __RADIO_TAP_SIZE_RSV + padding);
-		if (!skb) {
+		अगर (!skb) अणु
 			pr_err("Can't allocate skb for bulk IN!\n");
-			goto resubmit;
-		}
+			जाओ resubmit;
+		पूर्ण
 
 		_rtl_install_trx_info(rtlusb, skb, rtlusb->in_ep);
 
 		/* Make sure the payload data is 4 byte aligned. */
 		skb_reserve(skb, padding);
 
-		/* reserve some space for mac80211's radiotap */
+		/* reserve some space क्रम mac80211's radiotap */
 		skb_reserve(skb, __RADIO_TAP_SIZE_RSV);
 
 		skb_put_data(skb, _urb->transfer_buffer, size);
@@ -636,174 +637,174 @@ static void _rtl_rx_completed(struct urb *_urb)
 		skb_queue_tail(&rtlusb->rx_queue, skb);
 		tasklet_schedule(&rtlusb->rx_work_tasklet);
 
-		goto resubmit;
-	}
+		जाओ resubmit;
+	पूर्ण
 
-	switch (_urb->status) {
+	चयन (_urb->status) अणु
 	/* disconnect */
-	case -ENOENT:
-	case -ECONNRESET:
-	case -ENODEV:
-	case -ESHUTDOWN:
-		goto free;
-	default:
-		break;
-	}
+	हाल -ENOENT:
+	हाल -ECONNRESET:
+	हाल -ENODEV:
+	हाल -ESHUTDOWN:
+		जाओ मुक्त;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 resubmit:
 	usb_anchor_urb(_urb, &rtlusb->rx_submitted);
 	err = usb_submit_urb(_urb, GFP_ATOMIC);
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		usb_unanchor_urb(_urb);
-		goto free;
-	}
-	return;
+		जाओ मुक्त;
+	पूर्ण
+	वापस;
 
-free:
-	/* On some architectures, usb_free_coherent must not be called from
+मुक्त:
+	/* On some architectures, usb_मुक्त_coherent must not be called from
 	 * hardirq context. Queue urb to cleanup list.
 	 */
 	usb_anchor_urb(_urb, &rtlusb->rx_cleanup_urbs);
-}
+पूर्ण
 
-#undef __RADIO_TAP_SIZE_RSV
+#अघोषित __RADIO_TAP_SIZE_RSV
 
-static void _rtl_usb_cleanup_rx(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
-	struct urb *urb;
+अटल व्योम _rtl_usb_cleanup_rx(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+	काष्ठा urb *urb;
 
-	usb_kill_anchored_urbs(&rtlusb->rx_submitted);
+	usb_समाप्त_anchored_urbs(&rtlusb->rx_submitted);
 
-	tasklet_kill(&rtlusb->rx_work_tasklet);
+	tasklet_समाप्त(&rtlusb->rx_work_tasklet);
 	cancel_work_sync(&rtlpriv->works.lps_change_work);
 
-	if (rtlpriv->works.rtl_wq) {
+	अगर (rtlpriv->works.rtl_wq) अणु
 		destroy_workqueue(rtlpriv->works.rtl_wq);
-		rtlpriv->works.rtl_wq = NULL;
-	}
+		rtlpriv->works.rtl_wq = शून्य;
+	पूर्ण
 
 	skb_queue_purge(&rtlusb->rx_queue);
 
-	while ((urb = usb_get_from_anchor(&rtlusb->rx_cleanup_urbs))) {
-		usb_free_coherent(urb->dev, urb->transfer_buffer_length,
+	जबतक ((urb = usb_get_from_anchor(&rtlusb->rx_cleanup_urbs))) अणु
+		usb_मुक्त_coherent(urb->dev, urb->transfer_buffer_length,
 				urb->transfer_buffer, urb->transfer_dma);
-		usb_free_urb(urb);
-	}
-}
+		usb_मुक्त_urb(urb);
+	पूर्ण
+पूर्ण
 
-static int _rtl_usb_receive(struct ieee80211_hw *hw)
-{
-	struct urb *urb;
-	int err;
-	int i;
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+अटल पूर्णांक _rtl_usb_receive(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा urb *urb;
+	पूर्णांक err;
+	पूर्णांक i;
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
 
 	WARN_ON(0 == rtlusb->rx_urb_num);
 	/* 1600 == 1514 + max WLAN header + rtk info */
 	WARN_ON(rtlusb->rx_max_size < 1600);
 
-	for (i = 0; i < rtlusb->rx_urb_num; i++) {
+	क्रम (i = 0; i < rtlusb->rx_urb_num; i++) अणु
 		err = -ENOMEM;
 		urb = usb_alloc_urb(0, GFP_KERNEL);
-		if (!urb)
-			goto err_out;
+		अगर (!urb)
+			जाओ err_out;
 
 		err = _rtl_prep_rx_urb(hw, rtlusb, urb, GFP_KERNEL);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			pr_err("Failed to prep_rx_urb!!\n");
-			usb_free_urb(urb);
-			goto err_out;
-		}
+			usb_मुक्त_urb(urb);
+			जाओ err_out;
+		पूर्ण
 
 		usb_anchor_urb(urb, &rtlusb->rx_submitted);
 		err = usb_submit_urb(urb, GFP_KERNEL);
-		if (err) {
+		अगर (err) अणु
 			usb_unanchor_urb(urb);
-			usb_free_urb(urb);
-			goto err_out;
-		}
-		usb_free_urb(urb);
-	}
-	return 0;
+			usb_मुक्त_urb(urb);
+			जाओ err_out;
+		पूर्ण
+		usb_मुक्त_urb(urb);
+	पूर्ण
+	वापस 0;
 
 err_out:
-	usb_kill_anchored_urbs(&rtlusb->rx_submitted);
-	return err;
-}
+	usb_समाप्त_anchored_urbs(&rtlusb->rx_submitted);
+	वापस err;
+पूर्ण
 
-static int rtl_usb_start(struct ieee80211_hw *hw)
-{
-	int err;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+अटल पूर्णांक rtl_usb_start(काष्ठा ieee80211_hw *hw)
+अणु
+	पूर्णांक err;
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
 
 	err = rtlpriv->cfg->ops->hw_init(hw);
-	if (!err) {
+	अगर (!err) अणु
 		rtl_init_rx_config(hw);
 
 		/* Enable software */
 		SET_USB_START(rtlusb);
-		/* should after adapter start and interrupt enable. */
+		/* should after adapter start and पूर्णांकerrupt enable. */
 		set_hal_start(rtlhal);
 
 		/* Start bulk IN */
 		err = _rtl_usb_receive(hw);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*=======================  tx =========================================*/
-static void rtl_usb_cleanup(struct ieee80211_hw *hw)
-{
+अटल व्योम rtl_usb_cleanup(काष्ठा ieee80211_hw *hw)
+अणु
 	u32 i;
-	struct sk_buff *_skb;
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
-	struct ieee80211_tx_info *txinfo;
+	काष्ठा sk_buff *_skb;
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+	काष्ठा ieee80211_tx_info *txinfo;
 
 	/* clean up rx stuff. */
 	_rtl_usb_cleanup_rx(hw);
 
 	/* clean up tx stuff */
-	for (i = 0; i < RTL_USB_MAX_EP_NUM; i++) {
-		while ((_skb = skb_dequeue(&rtlusb->tx_skb_queue[i]))) {
+	क्रम (i = 0; i < RTL_USB_MAX_EP_NUM; i++) अणु
+		जबतक ((_skb = skb_dequeue(&rtlusb->tx_skb_queue[i]))) अणु
 			rtlusb->usb_tx_cleanup(hw, _skb);
 			txinfo = IEEE80211_SKB_CB(_skb);
 			ieee80211_tx_info_clear_status(txinfo);
 			txinfo->flags |= IEEE80211_TX_STAT_ACK;
 			ieee80211_tx_status_irqsafe(hw, _skb);
-		}
-		usb_kill_anchored_urbs(&rtlusb->tx_pending[i]);
-	}
-	usb_kill_anchored_urbs(&rtlusb->tx_submitted);
-}
+		पूर्ण
+		usb_समाप्त_anchored_urbs(&rtlusb->tx_pending[i]);
+	पूर्ण
+	usb_समाप्त_anchored_urbs(&rtlusb->tx_submitted);
+पूर्ण
 
-/* We may add some struct into struct rtl_usb later. Do deinit here.  */
-static void rtl_usb_deinit(struct ieee80211_hw *hw)
-{
+/* We may add some काष्ठा पूर्णांकo काष्ठा rtl_usb later. Do deinit here.  */
+अटल व्योम rtl_usb_deinit(काष्ठा ieee80211_hw *hw)
+अणु
 	rtl_usb_cleanup(hw);
-}
+पूर्ण
 
-static void rtl_usb_stop(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
-	struct urb *urb;
+अटल व्योम rtl_usb_stop(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+	काष्ठा urb *urb;
 
-	/* should after adapter start and interrupt enable. */
+	/* should after adapter start and पूर्णांकerrupt enable. */
 	set_hal_stop(rtlhal);
 	cancel_work_sync(&rtlpriv->works.fill_h2c_cmd);
 	/* Enable software */
 	SET_USB_STOP(rtlusb);
 
-	/* free pre-allocated URBs from rtl_usb_start() */
-	usb_kill_anchored_urbs(&rtlusb->rx_submitted);
+	/* मुक्त pre-allocated URBs from rtl_usb_start() */
+	usb_समाप्त_anchored_urbs(&rtlusb->rx_submitted);
 
-	tasklet_kill(&rtlusb->rx_work_tasklet);
+	tasklet_समाप्त(&rtlusb->rx_work_tasklet);
 	cancel_work_sync(&rtlpriv->works.lps_change_work);
 	cancel_work_sync(&rtlpriv->works.update_beacon_work);
 
@@ -811,38 +812,38 @@ static void rtl_usb_stop(struct ieee80211_hw *hw)
 
 	skb_queue_purge(&rtlusb->rx_queue);
 
-	while ((urb = usb_get_from_anchor(&rtlusb->rx_cleanup_urbs))) {
-		usb_free_coherent(urb->dev, urb->transfer_buffer_length,
+	जबतक ((urb = usb_get_from_anchor(&rtlusb->rx_cleanup_urbs))) अणु
+		usb_मुक्त_coherent(urb->dev, urb->transfer_buffer_length,
 				urb->transfer_buffer, urb->transfer_dma);
-		usb_free_urb(urb);
-	}
+		usb_मुक्त_urb(urb);
+	पूर्ण
 
 	rtlpriv->cfg->ops->hw_disable(hw);
-}
+पूर्ण
 
-static void _rtl_submit_tx_urb(struct ieee80211_hw *hw, struct urb *_urb)
-{
-	int err;
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+अटल व्योम _rtl_submit_tx_urb(काष्ठा ieee80211_hw *hw, काष्ठा urb *_urb)
+अणु
+	पूर्णांक err;
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
 
 	usb_anchor_urb(_urb, &rtlusb->tx_submitted);
 	err = usb_submit_urb(_urb, GFP_ATOMIC);
-	if (err < 0) {
-		struct sk_buff *skb;
+	अगर (err < 0) अणु
+		काष्ठा sk_buff *skb;
 
 		pr_err("Failed to submit urb\n");
 		usb_unanchor_urb(_urb);
-		skb = (struct sk_buff *)_urb->context;
-		kfree_skb(skb);
-	}
-	usb_free_urb(_urb);
-}
+		skb = (काष्ठा sk_buff *)_urb->context;
+		kमुक्त_skb(skb);
+	पूर्ण
+	usb_मुक्त_urb(_urb);
+पूर्ण
 
-static int _usb_tx_post(struct ieee80211_hw *hw, struct urb *urb,
-			struct sk_buff *skb)
-{
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
-	struct ieee80211_tx_info *txinfo;
+अटल पूर्णांक _usb_tx_post(काष्ठा ieee80211_hw *hw, काष्ठा urb *urb,
+			काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+	काष्ठा ieee80211_tx_info *txinfo;
 
 	rtlusb->usb_tx_post_hdl(hw, urb, skb);
 	skb_pull(skb, RTL_TX_HEADER_SIZE);
@@ -850,181 +851,181 @@ static int _usb_tx_post(struct ieee80211_hw *hw, struct urb *urb,
 	ieee80211_tx_info_clear_status(txinfo);
 	txinfo->flags |= IEEE80211_TX_STAT_ACK;
 
-	if (urb->status) {
+	अगर (urb->status) अणु
 		pr_err("Urb has error status 0x%X\n", urb->status);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/*  TODO:	statistics */
 out:
 	ieee80211_tx_status_irqsafe(hw, skb);
-	return urb->status;
-}
+	वापस urb->status;
+पूर्ण
 
-static void _rtl_tx_complete(struct urb *urb)
-{
-	struct sk_buff *skb = (struct sk_buff *)urb->context;
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	struct rtl_usb *rtlusb = (struct rtl_usb *)info->rate_driver_data[0];
-	struct ieee80211_hw *hw = usb_get_intfdata(rtlusb->intf);
-	int err;
+अटल व्योम _rtl_tx_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा sk_buff *skb = (काष्ठा sk_buff *)urb->context;
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	काष्ठा rtl_usb *rtlusb = (काष्ठा rtl_usb *)info->rate_driver_data[0];
+	काष्ठा ieee80211_hw *hw = usb_get_पूर्णांकfdata(rtlusb->पूर्णांकf);
+	पूर्णांक err;
 
-	if (unlikely(IS_USB_STOP(rtlusb)))
-		return;
+	अगर (unlikely(IS_USB_STOP(rtlusb)))
+		वापस;
 	err = _usb_tx_post(hw, urb, skb);
-	if (err) {
+	अगर (err) अणु
 		/* Ignore error and keep issuiing other urbs */
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static struct urb *_rtl_usb_tx_urb_setup(struct ieee80211_hw *hw,
-				struct sk_buff *skb, u32 ep_num)
-{
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
-	struct urb *_urb;
+अटल काष्ठा urb *_rtl_usb_tx_urb_setup(काष्ठा ieee80211_hw *hw,
+				काष्ठा sk_buff *skb, u32 ep_num)
+अणु
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+	काष्ठा urb *_urb;
 
-	WARN_ON(NULL == skb);
+	WARN_ON(शून्य == skb);
 	_urb = usb_alloc_urb(0, GFP_ATOMIC);
-	if (!_urb)
-		return NULL;
+	अगर (!_urb)
+		वापस शून्य;
 	_rtl_install_trx_info(rtlusb, skb, ep_num);
 	usb_fill_bulk_urb(_urb, rtlusb->udev, usb_sndbulkpipe(rtlusb->udev,
 			  ep_num), skb->data, skb->len, _rtl_tx_complete, skb);
 	_urb->transfer_flags |= URB_ZERO_PACKET;
-	return _urb;
-}
+	वापस _urb;
+पूर्ण
 
-static void _rtl_usb_transmit(struct ieee80211_hw *hw, struct sk_buff *skb,
-		       enum rtl_txq qnum)
-{
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+अटल व्योम _rtl_usb_transmit(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *skb,
+		       क्रमागत rtl_txq qnum)
+अणु
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
 	u32 ep_num;
-	struct urb *_urb = NULL;
+	काष्ठा urb *_urb = शून्य;
 
-	WARN_ON(NULL == rtlusb->usb_tx_aggregate_hdl);
-	if (unlikely(IS_USB_STOP(rtlusb))) {
+	WARN_ON(शून्य == rtlusb->usb_tx_aggregate_hdl);
+	अगर (unlikely(IS_USB_STOP(rtlusb))) अणु
 		pr_err("USB device is stopping...\n");
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 	ep_num = rtlusb->ep_map.ep_mapping[qnum];
 	_urb = _rtl_usb_tx_urb_setup(hw, skb, ep_num);
-	if (unlikely(!_urb)) {
+	अगर (unlikely(!_urb)) अणु
 		pr_err("Can't allocate urb. Drop skb!\n");
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 	_rtl_submit_tx_urb(hw, _urb);
-}
+पूर्ण
 
-static void _rtl_usb_tx_preprocess(struct ieee80211_hw *hw,
-				   struct ieee80211_sta *sta,
-				   struct sk_buff *skb,
+अटल व्योम _rtl_usb_tx_preprocess(काष्ठा ieee80211_hw *hw,
+				   काष्ठा ieee80211_sta *sta,
+				   काष्ठा sk_buff *skb,
 				   u16 hw_queue)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	struct rtl_tx_desc *pdesc = NULL;
-	struct rtl_tcb_desc tcb_desc;
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)(skb->data);
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	काष्ठा rtl_tx_desc *pdesc = शून्य;
+	काष्ठा rtl_tcb_desc tcb_desc;
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)(skb->data);
 	__le16 fc = hdr->frame_control;
 	u8 *pda_addr = hdr->addr1;
 
-	memset(&tcb_desc, 0, sizeof(struct rtl_tcb_desc));
-	if (ieee80211_is_auth(fc)) {
+	स_रखो(&tcb_desc, 0, माप(काष्ठा rtl_tcb_desc));
+	अगर (ieee80211_is_auth(fc)) अणु
 		rtl_dbg(rtlpriv, COMP_SEND, DBG_DMESG, "MAC80211_LINKING\n");
-	}
+	पूर्ण
 
-	if (rtlpriv->psc.sw_ps_enabled) {
-		if (ieee80211_is_data(fc) && !ieee80211_is_nullfunc(fc) &&
+	अगर (rtlpriv->psc.sw_ps_enabled) अणु
+		अगर (ieee80211_is_data(fc) && !ieee80211_is_nullfunc(fc) &&
 		    !ieee80211_has_pm(fc))
 			hdr->frame_control |= cpu_to_le16(IEEE80211_FCTL_PM);
-	}
+	पूर्ण
 
 	rtl_action_proc(hw, skb, true);
-	if (is_multicast_ether_addr(pda_addr))
+	अगर (is_multicast_ether_addr(pda_addr))
 		rtlpriv->stats.txbytesmulticast += skb->len;
-	else if (is_broadcast_ether_addr(pda_addr))
+	अन्यथा अगर (is_broadcast_ether_addr(pda_addr))
 		rtlpriv->stats.txbytesbroadcast += skb->len;
-	else
+	अन्यथा
 		rtlpriv->stats.txbytesunicast += skb->len;
-	rtlpriv->cfg->ops->fill_tx_desc(hw, hdr, (u8 *)pdesc, NULL, info, sta, skb,
+	rtlpriv->cfg->ops->fill_tx_desc(hw, hdr, (u8 *)pdesc, शून्य, info, sta, skb,
 					hw_queue, &tcb_desc);
-	if (ieee80211_is_data(fc))
+	अगर (ieee80211_is_data(fc))
 		rtlpriv->cfg->ops->led_control(hw, LED_CTL_TX);
-}
+पूर्ण
 
-static int rtl_usb_tx(struct ieee80211_hw *hw,
-		      struct ieee80211_sta *sta,
-		      struct sk_buff *skb,
-		      struct rtl_tcb_desc *dummy)
-{
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)(skb->data);
+अटल पूर्णांक rtl_usb_tx(काष्ठा ieee80211_hw *hw,
+		      काष्ठा ieee80211_sta *sta,
+		      काष्ठा sk_buff *skb,
+		      काष्ठा rtl_tcb_desc *dummy)
+अणु
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)(skb->data);
 	__le16 fc = hdr->frame_control;
 	u16 hw_queue;
 
-	if (unlikely(is_hal_stop(rtlhal)))
-		goto err_free;
+	अगर (unlikely(is_hal_stop(rtlhal)))
+		जाओ err_मुक्त;
 	hw_queue = rtlusb->usb_mq_to_hwq(fc, skb_get_queue_mapping(skb));
 	_rtl_usb_tx_preprocess(hw, sta, skb, hw_queue);
 	_rtl_usb_transmit(hw, skb, hw_queue);
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
-err_free:
-	dev_kfree_skb_any(skb);
-	return NETDEV_TX_OK;
-}
+err_मुक्त:
+	dev_kमुक्त_skb_any(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static bool rtl_usb_tx_chk_waitq_insert(struct ieee80211_hw *hw,
-					struct ieee80211_sta *sta,
-					struct sk_buff *skb)
-{
-	return false;
-}
+अटल bool rtl_usb_tx_chk_रुकोq_insert(काष्ठा ieee80211_hw *hw,
+					काष्ठा ieee80211_sta *sta,
+					काष्ठा sk_buff *skb)
+अणु
+	वापस false;
+पूर्ण
 
-static void rtl_fill_h2c_cmd_work_callback(struct work_struct *work)
-{
-	struct rtl_works *rtlworks =
-	    container_of(work, struct rtl_works, fill_h2c_cmd);
-	struct ieee80211_hw *hw = rtlworks->hw;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल व्योम rtl_fill_h2c_cmd_work_callback(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtl_works *rtlworks =
+	    container_of(work, काष्ठा rtl_works, fill_h2c_cmd);
+	काष्ठा ieee80211_hw *hw = rtlworks->hw;
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
 	rtlpriv->cfg->ops->fill_h2c_cmd(hw, H2C_RA_MASK, 5, rtlpriv->rate_mask);
-}
+पूर्ण
 
-static const struct rtl_intf_ops rtl_usb_ops = {
+अटल स्थिर काष्ठा rtl_पूर्णांकf_ops rtl_usb_ops = अणु
 	.adapter_start = rtl_usb_start,
 	.adapter_stop = rtl_usb_stop,
 	.adapter_tx = rtl_usb_tx,
-	.waitq_insert = rtl_usb_tx_chk_waitq_insert,
-};
+	.रुकोq_insert = rtl_usb_tx_chk_रुकोq_insert,
+पूर्ण;
 
-int rtl_usb_probe(struct usb_interface *intf,
-		  const struct usb_device_id *id,
-		  struct rtl_hal_cfg *rtl_hal_cfg)
-{
-	int err;
-	struct ieee80211_hw *hw = NULL;
-	struct rtl_priv *rtlpriv = NULL;
-	struct usb_device	*udev;
-	struct rtl_usb_priv *usb_priv;
+पूर्णांक rtl_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		  स्थिर काष्ठा usb_device_id *id,
+		  काष्ठा rtl_hal_cfg *rtl_hal_cfg)
+अणु
+	पूर्णांक err;
+	काष्ठा ieee80211_hw *hw = शून्य;
+	काष्ठा rtl_priv *rtlpriv = शून्य;
+	काष्ठा usb_device	*udev;
+	काष्ठा rtl_usb_priv *usb_priv;
 
-	hw = ieee80211_alloc_hw(sizeof(struct rtl_priv) +
-				sizeof(struct rtl_usb_priv), &rtl_ops);
-	if (!hw) {
+	hw = ieee80211_alloc_hw(माप(काष्ठा rtl_priv) +
+				माप(काष्ठा rtl_usb_priv), &rtl_ops);
+	अगर (!hw) अणु
 		WARN_ONCE(true, "rtl_usb: ieee80211 alloc failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	rtlpriv = hw->priv;
 	rtlpriv->hw = hw;
-	rtlpriv->usb_data = kcalloc(RTL_USB_MAX_RX_COUNT, sizeof(u32),
+	rtlpriv->usb_data = kसुस्मृति(RTL_USB_MAX_RX_COUNT, माप(u32),
 				    GFP_KERNEL);
-	if (!rtlpriv->usb_data) {
-		ieee80211_free_hw(hw);
-		return -ENOMEM;
-	}
+	अगर (!rtlpriv->usb_data) अणु
+		ieee80211_मुक्त_hw(hw);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* this spin lock must be initialized early */
 	spin_lock_init(&rtlpriv->locks.usb_lock);
@@ -1037,48 +1038,48 @@ int rtl_usb_probe(struct usb_interface *intf,
 
 	rtlpriv->usb_data_index = 0;
 	init_completion(&rtlpriv->firmware_loading_complete);
-	SET_IEEE80211_DEV(hw, &intf->dev);
-	udev = interface_to_usbdev(intf);
+	SET_IEEE80211_DEV(hw, &पूर्णांकf->dev);
+	udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
 	usb_get_dev(udev);
 	usb_priv = rtl_usbpriv(hw);
-	memset(usb_priv, 0, sizeof(*usb_priv));
-	usb_priv->dev.intf = intf;
+	स_रखो(usb_priv, 0, माप(*usb_priv));
+	usb_priv->dev.पूर्णांकf = पूर्णांकf;
 	usb_priv->dev.udev = udev;
-	usb_set_intfdata(intf, hw);
-	/* init cfg & intf_ops */
-	rtlpriv->rtlhal.interface = INTF_USB;
+	usb_set_पूर्णांकfdata(पूर्णांकf, hw);
+	/* init cfg & पूर्णांकf_ops */
+	rtlpriv->rtlhal.पूर्णांकerface = INTF_USB;
 	rtlpriv->cfg = rtl_hal_cfg;
-	rtlpriv->intf_ops = &rtl_usb_ops;
+	rtlpriv->पूर्णांकf_ops = &rtl_usb_ops;
 	/* Init IO handler */
 	_rtl_usb_io_handler_init(&udev->dev, hw);
-	rtlpriv->cfg->ops->read_chip_version(hw);
-	/*like read eeprom and so on */
-	rtlpriv->cfg->ops->read_eeprom_info(hw);
+	rtlpriv->cfg->ops->पढ़ो_chip_version(hw);
+	/*like पढ़ो eeprom and so on */
+	rtlpriv->cfg->ops->पढ़ो_eeprom_info(hw);
 	err = _rtl_usb_init(hw);
-	if (err)
-		goto error_out2;
+	अगर (err)
+		जाओ error_out2;
 	rtl_usb_init_sw(hw);
 	/* Init mac80211 sw */
 	err = rtl_init_core(hw);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Can't allocate sw for mac80211\n");
-		goto error_out2;
-	}
-	if (rtlpriv->cfg->ops->init_sw_vars(hw)) {
+		जाओ error_out2;
+	पूर्ण
+	अगर (rtlpriv->cfg->ops->init_sw_vars(hw)) अणु
 		pr_err("Can't init_sw_vars\n");
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 	rtlpriv->cfg->ops->init_sw_leds(hw);
 
-	err = ieee80211_register_hw(hw);
-	if (err) {
+	err = ieee80211_रेजिस्टर_hw(hw);
+	अगर (err) अणु
 		pr_err("Can't register mac80211 hw.\n");
-		goto error_out;
-	}
-	rtlpriv->mac80211.mac80211_registered = 1;
+		जाओ error_out;
+	पूर्ण
+	rtlpriv->mac80211.mac80211_रेजिस्टरed = 1;
 
 	set_bit(RTL_STATUS_INTERFACE_START, &rtlpriv->status);
-	return 0;
+	वापस 0;
 
 error_out:
 	rtl_deinit_core(hw);
@@ -1086,54 +1087,54 @@ error_out2:
 	_rtl_usb_io_handler_release(hw);
 	usb_put_dev(udev);
 	complete(&rtlpriv->firmware_loading_complete);
-	kfree(rtlpriv->usb_data);
-	ieee80211_free_hw(hw);
-	return -ENODEV;
-}
+	kमुक्त(rtlpriv->usb_data);
+	ieee80211_मुक्त_hw(hw);
+	वापस -ENODEV;
+पूर्ण
 EXPORT_SYMBOL(rtl_usb_probe);
 
-void rtl_usb_disconnect(struct usb_interface *intf)
-{
-	struct ieee80211_hw *hw = usb_get_intfdata(intf);
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *rtlmac = rtl_mac(rtl_priv(hw));
-	struct rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
+व्योम rtl_usb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा ieee80211_hw *hw = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *rtlmac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_usb *rtlusb = rtl_usbdev(rtl_usbpriv(hw));
 
-	if (unlikely(!rtlpriv))
-		return;
-	/* just in case driver is removed before firmware callback */
-	wait_for_completion(&rtlpriv->firmware_loading_complete);
+	अगर (unlikely(!rtlpriv))
+		वापस;
+	/* just in हाल driver is हटाओd beक्रमe firmware callback */
+	रुको_क्रम_completion(&rtlpriv->firmware_loading_complete);
 	clear_bit(RTL_STATUS_INTERFACE_START, &rtlpriv->status);
-	/*ieee80211_unregister_hw will call ops_stop */
-	if (rtlmac->mac80211_registered == 1) {
-		ieee80211_unregister_hw(hw);
-		rtlmac->mac80211_registered = 0;
-	} else {
+	/*ieee80211_unरेजिस्टर_hw will call ops_stop */
+	अगर (rtlmac->mac80211_रेजिस्टरed == 1) अणु
+		ieee80211_unरेजिस्टर_hw(hw);
+		rtlmac->mac80211_रेजिस्टरed = 0;
+	पूर्ण अन्यथा अणु
 		rtl_deinit_deferred_work(hw, false);
-		rtlpriv->intf_ops->adapter_stop(hw);
-	}
-	/*deinit rfkill */
-	/* rtl_deinit_rfkill(hw); */
+		rtlpriv->पूर्णांकf_ops->adapter_stop(hw);
+	पूर्ण
+	/*deinit rfसमाप्त */
+	/* rtl_deinit_rfसमाप्त(hw); */
 	rtl_usb_deinit(hw);
 	rtl_deinit_core(hw);
-	kfree(rtlpriv->usb_data);
+	kमुक्त(rtlpriv->usb_data);
 	rtlpriv->cfg->ops->deinit_sw_leds(hw);
 	rtlpriv->cfg->ops->deinit_sw_vars(hw);
 	_rtl_usb_io_handler_release(hw);
 	usb_put_dev(rtlusb->udev);
-	usb_set_intfdata(intf, NULL);
-	ieee80211_free_hw(hw);
-}
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	ieee80211_मुक्त_hw(hw);
+पूर्ण
 EXPORT_SYMBOL(rtl_usb_disconnect);
 
-int rtl_usb_suspend(struct usb_interface *pusb_intf, pm_message_t message)
-{
-	return 0;
-}
+पूर्णांक rtl_usb_suspend(काष्ठा usb_पूर्णांकerface *pusb_पूर्णांकf, pm_message_t message)
+अणु
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rtl_usb_suspend);
 
-int rtl_usb_resume(struct usb_interface *pusb_intf)
-{
-	return 0;
-}
+पूर्णांक rtl_usb_resume(काष्ठा usb_पूर्णांकerface *pusb_पूर्णांकf)
+अणु
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rtl_usb_resume);

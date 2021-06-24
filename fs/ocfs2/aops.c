@@ -1,111 +1,112 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/highmem.h>
-#include <linux/pagemap.h>
-#include <asm/byteorder.h>
-#include <linux/swap.h>
-#include <linux/mpage.h>
-#include <linux/quotaops.h>
-#include <linux/blkdev.h>
-#include <linux/uio.h>
-#include <linux/mm.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/pagemap.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/mpage.h>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/mm.h>
 
-#include <cluster/masklog.h>
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
+#समावेश "ocfs2.h"
 
-#include "alloc.h"
-#include "aops.h"
-#include "dlmglue.h"
-#include "extent_map.h"
-#include "file.h"
-#include "inode.h"
-#include "journal.h"
-#include "suballoc.h"
-#include "super.h"
-#include "symlink.h"
-#include "refcounttree.h"
-#include "ocfs2_trace.h"
+#समावेश "alloc.h"
+#समावेश "aops.h"
+#समावेश "dlmglue.h"
+#समावेश "extent_map.h"
+#समावेश "file.h"
+#समावेश "inode.h"
+#समावेश "journal.h"
+#समावेश "suballoc.h"
+#समावेश "super.h"
+#समावेश "symlink.h"
+#समावेश "refcounttree.h"
+#समावेश "ocfs2_trace.h"
 
-#include "buffer_head_io.h"
-#include "dir.h"
-#include "namei.h"
-#include "sysfile.h"
+#समावेश "buffer_head_io.h"
+#समावेश "dir.h"
+#समावेश "namei.h"
+#समावेश "sysfile.h"
 
-static int ocfs2_symlink_get_block(struct inode *inode, sector_t iblock,
-				   struct buffer_head *bh_result, int create)
-{
-	int err = -EIO;
-	int status;
-	struct ocfs2_dinode *fe = NULL;
-	struct buffer_head *bh = NULL;
-	struct buffer_head *buffer_cache_bh = NULL;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	void *kaddr;
+अटल पूर्णांक ocfs2_symlink_get_block(काष्ठा inode *inode, sector_t iblock,
+				   काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
+	पूर्णांक err = -EIO;
+	पूर्णांक status;
+	काष्ठा ocfs2_dinode *fe = शून्य;
+	काष्ठा buffer_head *bh = शून्य;
+	काष्ठा buffer_head *buffer_cache_bh = शून्य;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	व्योम *kaddr;
 
 	trace_ocfs2_symlink_get_block(
-			(unsigned long long)OCFS2_I(inode)->ip_blkno,
-			(unsigned long long)iblock, bh_result, create);
+			(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+			(अचिन्हित दीर्घ दीर्घ)iblock, bh_result, create);
 
 	BUG_ON(ocfs2_inode_is_fast_symlink(inode));
 
-	if ((iblock << inode->i_sb->s_blocksize_bits) > PATH_MAX + 1) {
+	अगर ((iblock << inode->i_sb->s_blocksize_bits) > PATH_MAX + 1) अणु
 		mlog(ML_ERROR, "block offset > PATH_MAX: %llu",
-		     (unsigned long long)iblock);
-		goto bail;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)iblock);
+		जाओ bail;
+	पूर्ण
 
-	status = ocfs2_read_inode_block(inode, &bh);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
-	fe = (struct ocfs2_dinode *) bh->b_data;
+	status = ocfs2_पढ़ो_inode_block(inode, &bh);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
+	fe = (काष्ठा ocfs2_dinode *) bh->b_data;
 
-	if ((u64)iblock >= ocfs2_clusters_to_blocks(inode->i_sb,
-						    le32_to_cpu(fe->i_clusters))) {
+	अगर ((u64)iblock >= ocfs2_clusters_to_blocks(inode->i_sb,
+						    le32_to_cpu(fe->i_clusters))) अणु
 		err = -ENOMEM;
 		mlog(ML_ERROR, "block offset is outside the allocated size: "
-		     "%llu\n", (unsigned long long)iblock);
-		goto bail;
-	}
+		     "%llu\n", (अचिन्हित दीर्घ दीर्घ)iblock);
+		जाओ bail;
+	पूर्ण
 
-	/* We don't use the page cache to create symlink data, so if
+	/* We करोn't use the page cache to create symlink data, so अगर
 	 * need be, copy it over from the buffer cache. */
-	if (!buffer_uptodate(bh_result) && ocfs2_inode_is_new(inode)) {
+	अगर (!buffer_uptodate(bh_result) && ocfs2_inode_is_new(inode)) अणु
 		u64 blkno = le64_to_cpu(fe->id2.i_list.l_recs[0].e_blkno) +
 			    iblock;
 		buffer_cache_bh = sb_getblk(osb->sb, blkno);
-		if (!buffer_cache_bh) {
+		अगर (!buffer_cache_bh) अणु
 			err = -ENOMEM;
 			mlog(ML_ERROR, "couldn't getblock for symlink!\n");
-			goto bail;
-		}
+			जाओ bail;
+		पूर्ण
 
 		/* we haven't locked out transactions, so a commit
 		 * could've happened. Since we've got a reference on
-		 * the bh, even if it commits while we're doing the
+		 * the bh, even अगर it commits जबतक we're करोing the
 		 * copy, the data is still good. */
-		if (buffer_jbd(buffer_cache_bh)
-		    && ocfs2_inode_is_new(inode)) {
+		अगर (buffer_jbd(buffer_cache_bh)
+		    && ocfs2_inode_is_new(inode)) अणु
 			kaddr = kmap_atomic(bh_result->b_page);
-			if (!kaddr) {
+			अगर (!kaddr) अणु
 				mlog(ML_ERROR, "couldn't kmap!\n");
-				goto bail;
-			}
-			memcpy(kaddr + (bh_result->b_size * iblock),
+				जाओ bail;
+			पूर्ण
+			स_नकल(kaddr + (bh_result->b_size * iblock),
 			       buffer_cache_bh->b_data,
 			       bh_result->b_size);
 			kunmap_atomic(kaddr);
 			set_buffer_uptodate(bh_result);
-		}
-		brelse(buffer_cache_bh);
-	}
+		पूर्ण
+		brअन्यथा(buffer_cache_bh);
+	पूर्ण
 
 	map_bh(bh_result, inode->i_sb,
 	       le64_to_cpu(fe->id2.i_list.l_recs[0].e_blkno) + iblock);
@@ -113,406 +114,406 @@ static int ocfs2_symlink_get_block(struct inode *inode, sector_t iblock,
 	err = 0;
 
 bail:
-	brelse(bh);
+	brअन्यथा(bh);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ocfs2_lock_get_block(struct inode *inode, sector_t iblock,
-		    struct buffer_head *bh_result, int create)
-{
-	int ret = 0;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+अटल पूर्णांक ocfs2_lock_get_block(काष्ठा inode *inode, sector_t iblock,
+		    काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 
-	down_read(&oi->ip_alloc_sem);
+	करोwn_पढ़ो(&oi->ip_alloc_sem);
 	ret = ocfs2_get_block(inode, iblock, bh_result, create);
-	up_read(&oi->ip_alloc_sem);
+	up_पढ़ो(&oi->ip_alloc_sem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_get_block(struct inode *inode, sector_t iblock,
-		    struct buffer_head *bh_result, int create)
-{
-	int err = 0;
-	unsigned int ext_flags;
+पूर्णांक ocfs2_get_block(काष्ठा inode *inode, sector_t iblock,
+		    काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित पूर्णांक ext_flags;
 	u64 max_blocks = bh_result->b_size >> inode->i_blkbits;
 	u64 p_blkno, count, past_eof;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	trace_ocfs2_get_block((unsigned long long)OCFS2_I(inode)->ip_blkno,
-			      (unsigned long long)iblock, bh_result, create);
+	trace_ocfs2_get_block((अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+			      (अचिन्हित दीर्घ दीर्घ)iblock, bh_result, create);
 
-	if (OCFS2_I(inode)->ip_flags & OCFS2_INODE_SYSTEM_FILE)
+	अगर (OCFS2_I(inode)->ip_flags & OCFS2_INODE_SYSTEM_खाता)
 		mlog(ML_NOTICE, "get_block on system inode 0x%p (%lu)\n",
 		     inode, inode->i_ino);
 
-	if (S_ISLNK(inode->i_mode)) {
-		/* this always does I/O for some reason. */
+	अगर (S_ISLNK(inode->i_mode)) अणु
+		/* this always करोes I/O क्रम some reason. */
 		err = ocfs2_symlink_get_block(inode, iblock, bh_result, create);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	err = ocfs2_extent_map_get_blocks(inode, iblock, &p_blkno, &count,
 					  &ext_flags);
-	if (err) {
+	अगर (err) अणु
 		mlog(ML_ERROR, "Error %d from get_blocks(0x%p, %llu, 1, "
-		     "%llu, NULL)\n", err, inode, (unsigned long long)iblock,
-		     (unsigned long long)p_blkno);
-		goto bail;
-	}
+		     "%llu, NULL)\n", err, inode, (अचिन्हित दीर्घ दीर्घ)iblock,
+		     (अचिन्हित दीर्घ दीर्घ)p_blkno);
+		जाओ bail;
+	पूर्ण
 
-	if (max_blocks < count)
+	अगर (max_blocks < count)
 		count = max_blocks;
 
 	/*
-	 * ocfs2 never allocates in this function - the only time we
+	 * ocfs2 never allocates in this function - the only समय we
 	 * need to use BH_New is when we're extending i_size on a file
-	 * system which doesn't support holes, in which case BH_New
-	 * allows __block_write_begin() to zero.
+	 * प्रणाली which करोesn't support holes, in which हाल BH_New
+	 * allows __block_ग_लिखो_begin() to zero.
 	 *
-	 * If we see this on a sparse file system, then a truncate has
-	 * raced us and removed the cluster. In this case, we clear
+	 * If we see this on a sparse file प्रणाली, then a truncate has
+	 * raced us and हटाओd the cluster. In this हाल, we clear
 	 * the buffers dirty and uptodate bits and let the buffer code
 	 * ignore it as a hole.
 	 */
-	if (create && p_blkno == 0 && ocfs2_sparse_alloc(osb)) {
+	अगर (create && p_blkno == 0 && ocfs2_sparse_alloc(osb)) अणु
 		clear_buffer_dirty(bh_result);
 		clear_buffer_uptodate(bh_result);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	/* Treat the unwritten extent as a hole for zeroing purposes. */
-	if (p_blkno && !(ext_flags & OCFS2_EXT_UNWRITTEN))
+	/* Treat the unwritten extent as a hole क्रम zeroing purposes. */
+	अगर (p_blkno && !(ext_flags & OCFS2_EXT_UNWRITTEN))
 		map_bh(bh_result, inode->i_sb, p_blkno);
 
 	bh_result->b_size = count << inode->i_blkbits;
 
-	if (!ocfs2_sparse_alloc(osb)) {
-		if (p_blkno == 0) {
+	अगर (!ocfs2_sparse_alloc(osb)) अणु
+		अगर (p_blkno == 0) अणु
 			err = -EIO;
 			mlog(ML_ERROR,
 			     "iblock = %llu p_blkno = %llu blkno=(%llu)\n",
-			     (unsigned long long)iblock,
-			     (unsigned long long)p_blkno,
-			     (unsigned long long)OCFS2_I(inode)->ip_blkno);
-			mlog(ML_ERROR, "Size %llu, clusters %u\n", (unsigned long long)i_size_read(inode), OCFS2_I(inode)->ip_clusters);
+			     (अचिन्हित दीर्घ दीर्घ)iblock,
+			     (अचिन्हित दीर्घ दीर्घ)p_blkno,
+			     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
+			mlog(ML_ERROR, "Size %llu, clusters %u\n", (अचिन्हित दीर्घ दीर्घ)i_size_पढ़ो(inode), OCFS2_I(inode)->ip_clusters);
 			dump_stack();
-			goto bail;
-		}
-	}
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
-	past_eof = ocfs2_blocks_for_bytes(inode->i_sb, i_size_read(inode));
+	past_eof = ocfs2_blocks_क्रम_bytes(inode->i_sb, i_size_पढ़ो(inode));
 
-	trace_ocfs2_get_block_end((unsigned long long)OCFS2_I(inode)->ip_blkno,
-				  (unsigned long long)past_eof);
-	if (create && (iblock >= past_eof))
+	trace_ocfs2_get_block_end((अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+				  (अचिन्हित दीर्घ दीर्घ)past_eof);
+	अगर (create && (iblock >= past_eof))
 		set_buffer_new(bh_result);
 
 bail:
-	if (err < 0)
+	अगर (err < 0)
 		err = -EIO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ocfs2_read_inline_data(struct inode *inode, struct page *page,
-			   struct buffer_head *di_bh)
-{
-	void *kaddr;
+पूर्णांक ocfs2_पढ़ो_अंतरभूत_data(काष्ठा inode *inode, काष्ठा page *page,
+			   काष्ठा buffer_head *di_bh)
+अणु
+	व्योम *kaddr;
 	loff_t size;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
 
-	if (!(le16_to_cpu(di->i_dyn_features) & OCFS2_INLINE_DATA_FL)) {
+	अगर (!(le16_to_cpu(di->i_dyn_features) & OCFS2_INLINE_DATA_FL)) अणु
 		ocfs2_error(inode->i_sb, "Inode %llu lost inline data flag\n",
-			    (unsigned long long)OCFS2_I(inode)->ip_blkno);
-		return -EROFS;
-	}
+			    (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
+		वापस -EROFS;
+	पूर्ण
 
-	size = i_size_read(inode);
+	size = i_size_पढ़ो(inode);
 
-	if (size > PAGE_SIZE ||
-	    size > ocfs2_max_inline_data_with_xattr(inode->i_sb, di)) {
+	अगर (size > PAGE_SIZE ||
+	    size > ocfs2_max_अंतरभूत_data_with_xattr(inode->i_sb, di)) अणु
 		ocfs2_error(inode->i_sb,
 			    "Inode %llu has with inline data has bad size: %Lu\n",
-			    (unsigned long long)OCFS2_I(inode)->ip_blkno,
-			    (unsigned long long)size);
-		return -EROFS;
-	}
+			    (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+			    (अचिन्हित दीर्घ दीर्घ)size);
+		वापस -EROFS;
+	पूर्ण
 
 	kaddr = kmap_atomic(page);
-	if (size)
-		memcpy(kaddr, di->id2.i_data.id_data, size);
-	/* Clear the remaining part of the page */
-	memset(kaddr + size, 0, PAGE_SIZE - size);
+	अगर (size)
+		स_नकल(kaddr, di->id2.i_data.id_data, size);
+	/* Clear the reमुख्यing part of the page */
+	स_रखो(kaddr + size, 0, PAGE_SIZE - size);
 	flush_dcache_page(page);
 	kunmap_atomic(kaddr);
 
 	SetPageUptodate(page);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_readpage_inline(struct inode *inode, struct page *page)
-{
-	int ret;
-	struct buffer_head *di_bh = NULL;
+अटल पूर्णांक ocfs2_पढ़ोpage_अंतरभूत(काष्ठा inode *inode, काष्ठा page *page)
+अणु
+	पूर्णांक ret;
+	काष्ठा buffer_head *di_bh = शून्य;
 
 	BUG_ON(!PageLocked(page));
 	BUG_ON(!(OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL));
 
-	ret = ocfs2_read_inode_block(inode, &di_bh);
-	if (ret) {
-		mlog_errno(ret);
-		goto out;
-	}
+	ret = ocfs2_पढ़ो_inode_block(inode, &di_bh);
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	ret = ocfs2_read_inline_data(inode, page, di_bh);
+	ret = ocfs2_पढ़ो_अंतरभूत_data(inode, page, di_bh);
 out:
 	unlock_page(page);
 
-	brelse(di_bh);
-	return ret;
-}
+	brअन्यथा(di_bh);
+	वापस ret;
+पूर्ण
 
-static int ocfs2_readpage(struct file *file, struct page *page)
-{
-	struct inode *inode = page->mapping->host;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+अटल पूर्णांक ocfs2_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 	loff_t start = (loff_t)page->index << PAGE_SHIFT;
-	int ret, unlock = 1;
+	पूर्णांक ret, unlock = 1;
 
-	trace_ocfs2_readpage((unsigned long long)oi->ip_blkno,
+	trace_ocfs2_पढ़ोpage((अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
 			     (page ? page->index : 0));
 
-	ret = ocfs2_inode_lock_with_page(inode, NULL, 0, page);
-	if (ret != 0) {
-		if (ret == AOP_TRUNCATED_PAGE)
+	ret = ocfs2_inode_lock_with_page(inode, शून्य, 0, page);
+	अगर (ret != 0) अणु
+		अगर (ret == AOP_TRUNCATED_PAGE)
 			unlock = 0;
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	if (down_read_trylock(&oi->ip_alloc_sem) == 0) {
+	अगर (करोwn_पढ़ो_trylock(&oi->ip_alloc_sem) == 0) अणु
 		/*
-		 * Unlock the page and cycle ip_alloc_sem so that we don't
-		 * busyloop waiting for ip_alloc_sem to unlock
+		 * Unlock the page and cycle ip_alloc_sem so that we करोn't
+		 * busyloop रुकोing क्रम ip_alloc_sem to unlock
 		 */
 		ret = AOP_TRUNCATED_PAGE;
 		unlock_page(page);
 		unlock = 0;
-		down_read(&oi->ip_alloc_sem);
-		up_read(&oi->ip_alloc_sem);
-		goto out_inode_unlock;
-	}
+		करोwn_पढ़ो(&oi->ip_alloc_sem);
+		up_पढ़ो(&oi->ip_alloc_sem);
+		जाओ out_inode_unlock;
+	पूर्ण
 
 	/*
 	 * i_size might have just been updated as we grabed the meta lock.  We
 	 * might now be discovering a truncate that hit on another node.
-	 * block_read_full_page->get_block freaks out if it is asked to read
+	 * block_पढ़ो_full_page->get_block freaks out अगर it is asked to पढ़ो
 	 * beyond the end of a file, so we check here.  Callers
-	 * (generic_file_read, vm_ops->fault) are clever enough to check i_size
-	 * and notice that the page they just read isn't needed.
+	 * (generic_file_पढ़ो, vm_ops->fault) are clever enough to check i_size
+	 * and notice that the page they just पढ़ो isn't needed.
 	 *
-	 * XXX sys_readahead() seems to get that wrong?
+	 * XXX sys_पढ़ोahead() seems to get that wrong?
 	 */
-	if (start >= i_size_read(inode)) {
+	अगर (start >= i_size_पढ़ो(inode)) अणु
 		zero_user(page, 0, PAGE_SIZE);
 		SetPageUptodate(page);
 		ret = 0;
-		goto out_alloc;
-	}
+		जाओ out_alloc;
+	पूर्ण
 
-	if (oi->ip_dyn_features & OCFS2_INLINE_DATA_FL)
-		ret = ocfs2_readpage_inline(inode, page);
-	else
-		ret = block_read_full_page(page, ocfs2_get_block);
+	अगर (oi->ip_dyn_features & OCFS2_INLINE_DATA_FL)
+		ret = ocfs2_पढ़ोpage_अंतरभूत(inode, page);
+	अन्यथा
+		ret = block_पढ़ो_full_page(page, ocfs2_get_block);
 	unlock = 0;
 
 out_alloc:
-	up_read(&oi->ip_alloc_sem);
+	up_पढ़ो(&oi->ip_alloc_sem);
 out_inode_unlock:
 	ocfs2_inode_unlock(inode, 0);
 out:
-	if (unlock)
+	अगर (unlock)
 		unlock_page(page);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This is used only for read-ahead. Failures or difficult to handle
+ * This is used only क्रम पढ़ो-ahead. Failures or dअगरficult to handle
  * situations are safe to ignore.
  *
- * Right now, we don't bother with BH_Boundary - in-inode extent lists
- * are quite large (243 extents on 4k blocks), so most inodes don't
+ * Right now, we करोn't bother with BH_Boundary - in-inode extent lists
+ * are quite large (243 extents on 4k blocks), so most inodes करोn't
  * grow out to a tree. If need be, detecting boundary extents could
  * trivially be added in a future version of ocfs2_get_block().
  */
-static void ocfs2_readahead(struct readahead_control *rac)
-{
-	int ret;
-	struct inode *inode = rac->mapping->host;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+अटल व्योम ocfs2_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
+अणु
+	पूर्णांक ret;
+	काष्ठा inode *inode = rac->mapping->host;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 
 	/*
-	 * Use the nonblocking flag for the dlm code to avoid page
-	 * lock inversion, but don't bother with retrying.
+	 * Use the nonblocking flag क्रम the dlm code to aव्योम page
+	 * lock inversion, but करोn't bother with retrying.
 	 */
-	ret = ocfs2_inode_lock_full(inode, NULL, 0, OCFS2_LOCK_NONBLOCK);
-	if (ret)
-		return;
+	ret = ocfs2_inode_lock_full(inode, शून्य, 0, OCFS2_LOCK_NONBLOCK);
+	अगर (ret)
+		वापस;
 
-	if (down_read_trylock(&oi->ip_alloc_sem) == 0)
-		goto out_unlock;
+	अगर (करोwn_पढ़ो_trylock(&oi->ip_alloc_sem) == 0)
+		जाओ out_unlock;
 
 	/*
 	 * Don't bother with inline-data. There isn't anything
-	 * to read-ahead in that case anyway...
+	 * to पढ़ो-ahead in that हाल anyway...
 	 */
-	if (oi->ip_dyn_features & OCFS2_INLINE_DATA_FL)
-		goto out_up;
+	अगर (oi->ip_dyn_features & OCFS2_INLINE_DATA_FL)
+		जाओ out_up;
 
 	/*
 	 * Check whether a remote node truncated this file - we just
-	 * drop out in that case as it's not worth handling here.
+	 * drop out in that हाल as it's not worth handling here.
 	 */
-	if (readahead_pos(rac) >= i_size_read(inode))
-		goto out_up;
+	अगर (पढ़ोahead_pos(rac) >= i_size_पढ़ो(inode))
+		जाओ out_up;
 
-	mpage_readahead(rac, ocfs2_get_block);
+	mpage_पढ़ोahead(rac, ocfs2_get_block);
 
 out_up:
-	up_read(&oi->ip_alloc_sem);
+	up_पढ़ो(&oi->ip_alloc_sem);
 out_unlock:
 	ocfs2_inode_unlock(inode, 0);
-}
+पूर्ण
 
-/* Note: Because we don't support holes, our allocation has
- * already happened (allocation writes zeros to the file data)
- * so we don't have to worry about ordered writes in
- * ocfs2_writepage.
+/* Note: Because we करोn't support holes, our allocation has
+ * alपढ़ोy happened (allocation ग_लिखोs zeros to the file data)
+ * so we करोn't have to worry about ordered ग_लिखोs in
+ * ocfs2_ग_लिखोpage.
  *
- * ->writepage is called during the process of invalidating the page cache
+ * ->ग_लिखोpage is called during the process of invalidating the page cache
  * during blocked lock processing.  It can't block on any cluster locks
  * to during block mapping.  It's relying on the fact that the block
  * mapping can't have disappeared under the dirty pages that it is
- * being asked to write back.
+ * being asked to ग_लिखो back.
  */
-static int ocfs2_writepage(struct page *page, struct writeback_control *wbc)
-{
-	trace_ocfs2_writepage(
-		(unsigned long long)OCFS2_I(page->mapping->host)->ip_blkno,
+अटल पूर्णांक ocfs2_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	trace_ocfs2_ग_लिखोpage(
+		(अचिन्हित दीर्घ दीर्घ)OCFS2_I(page->mapping->host)->ip_blkno,
 		page->index);
 
-	return block_write_full_page(page, ocfs2_get_block, wbc);
-}
+	वापस block_ग_लिखो_full_page(page, ocfs2_get_block, wbc);
+पूर्ण
 
-/* Taken from ext3. We don't necessarily need the full blown
+/* Taken from ext3. We करोn't necessarily need the full blown
  * functionality yet, but IMHO it's better to cut and paste the whole
- * thing so we can avoid introducing our own bugs (and easily pick up
+ * thing so we can aव्योम पूर्णांकroducing our own bugs (and easily pick up
  * their fixes when they happen) --Mark */
-int walk_page_buffers(	handle_t *handle,
-			struct buffer_head *head,
-			unsigned from,
-			unsigned to,
-			int *partial,
-			int (*fn)(	handle_t *handle,
-					struct buffer_head *bh))
-{
-	struct buffer_head *bh;
-	unsigned block_start, block_end;
-	unsigned blocksize = head->b_size;
-	int err, ret = 0;
-	struct buffer_head *next;
+पूर्णांक walk_page_buffers(	handle_t *handle,
+			काष्ठा buffer_head *head,
+			अचिन्हित from,
+			अचिन्हित to,
+			पूर्णांक *partial,
+			पूर्णांक (*fn)(	handle_t *handle,
+					काष्ठा buffer_head *bh))
+अणु
+	काष्ठा buffer_head *bh;
+	अचिन्हित block_start, block_end;
+	अचिन्हित blocksize = head->b_size;
+	पूर्णांक err, ret = 0;
+	काष्ठा buffer_head *next;
 
-	for (	bh = head, block_start = 0;
+	क्रम (	bh = head, block_start = 0;
 		ret == 0 && (bh != head || !block_start);
 	    	block_start = block_end, bh = next)
-	{
+	अणु
 		next = bh->b_this_page;
 		block_end = block_start + blocksize;
-		if (block_end <= from || block_start >= to) {
-			if (partial && !buffer_uptodate(bh))
+		अगर (block_end <= from || block_start >= to) अणु
+			अगर (partial && !buffer_uptodate(bh))
 				*partial = 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		err = (*fn)(handle, bh);
-		if (!ret)
+		अगर (!ret)
 			ret = err;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static sector_t ocfs2_bmap(struct address_space *mapping, sector_t block)
-{
+अटल sector_t ocfs2_bmap(काष्ठा address_space *mapping, sector_t block)
+अणु
 	sector_t status;
 	u64 p_blkno = 0;
-	int err = 0;
-	struct inode *inode = mapping->host;
+	पूर्णांक err = 0;
+	काष्ठा inode *inode = mapping->host;
 
-	trace_ocfs2_bmap((unsigned long long)OCFS2_I(inode)->ip_blkno,
-			 (unsigned long long)block);
+	trace_ocfs2_bmap((अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+			 (अचिन्हित दीर्घ दीर्घ)block);
 
 	/*
 	 * The swap code (ab-)uses ->bmap to get a block mapping and then
-	 * bypasseѕ the file system for actual I/O.  We really can't allow
+	 * bypasseल the file प्रणाली क्रम actual I/O.  We really can't allow
 	 * that on refcounted inodes, so we have to skip out here.  And yes,
-	 * 0 is the magic code for a bmap error..
+	 * 0 is the magic code क्रम a bmap error..
 	 */
-	if (ocfs2_is_refcount_inode(inode))
-		return 0;
+	अगर (ocfs2_is_refcount_inode(inode))
+		वापस 0;
 
-	/* We don't need to lock journal system files, since they aren't
+	/* We करोn't need to lock journal system files, since they aren't
 	 * accessed concurrently from multiple nodes.
 	 */
-	if (!INODE_JOURNAL(inode)) {
-		err = ocfs2_inode_lock(inode, NULL, 0);
-		if (err) {
-			if (err != -ENOENT)
-				mlog_errno(err);
-			goto bail;
-		}
-		down_read(&OCFS2_I(inode)->ip_alloc_sem);
-	}
+	अगर (!INODE_JOURNAL(inode)) अणु
+		err = ocfs2_inode_lock(inode, शून्य, 0);
+		अगर (err) अणु
+			अगर (err != -ENOENT)
+				mlog_त्रुटि_सं(err);
+			जाओ bail;
+		पूर्ण
+		करोwn_पढ़ो(&OCFS2_I(inode)->ip_alloc_sem);
+	पूर्ण
 
-	if (!(OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL))
-		err = ocfs2_extent_map_get_blocks(inode, block, &p_blkno, NULL,
-						  NULL);
+	अगर (!(OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL))
+		err = ocfs2_extent_map_get_blocks(inode, block, &p_blkno, शून्य,
+						  शून्य);
 
-	if (!INODE_JOURNAL(inode)) {
-		up_read(&OCFS2_I(inode)->ip_alloc_sem);
+	अगर (!INODE_JOURNAL(inode)) अणु
+		up_पढ़ो(&OCFS2_I(inode)->ip_alloc_sem);
 		ocfs2_inode_unlock(inode, 0);
-	}
+	पूर्ण
 
-	if (err) {
+	अगर (err) अणु
 		mlog(ML_ERROR, "get_blocks() failed, block = %llu\n",
-		     (unsigned long long)block);
-		mlog_errno(err);
-		goto bail;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)block);
+		mlog_त्रुटि_सं(err);
+		जाओ bail;
+	पूर्ण
 
 bail:
 	status = err ? 0 : p_blkno;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_releasepage(struct page *page, gfp_t wait)
-{
-	if (!page_has_buffers(page))
-		return 0;
-	return try_to_free_buffers(page);
-}
+अटल पूर्णांक ocfs2_releasepage(काष्ठा page *page, gfp_t रुको)
+अणु
+	अगर (!page_has_buffers(page))
+		वापस 0;
+	वापस try_to_मुक्त_buffers(page);
+पूर्ण
 
-static void ocfs2_figure_cluster_boundaries(struct ocfs2_super *osb,
+अटल व्योम ocfs2_figure_cluster_boundaries(काष्ठा ocfs2_super *osb,
 					    u32 cpos,
-					    unsigned int *start,
-					    unsigned int *end)
-{
-	unsigned int cluster_start = 0, cluster_end = PAGE_SIZE;
+					    अचिन्हित पूर्णांक *start,
+					    अचिन्हित पूर्णांक *end)
+अणु
+	अचिन्हित पूर्णांक cluster_start = 0, cluster_end = PAGE_SIZE;
 
-	if (unlikely(PAGE_SHIFT > osb->s_clustersize_bits)) {
-		unsigned int cpp;
+	अगर (unlikely(PAGE_SHIFT > osb->s_clustersize_bits)) अणु
+		अचिन्हित पूर्णांक cpp;
 
 		cpp = 1 << (PAGE_SHIFT - osb->s_clustersize_bits);
 
@@ -520,155 +521,155 @@ static void ocfs2_figure_cluster_boundaries(struct ocfs2_super *osb,
 		cluster_start = cluster_start << osb->s_clustersize_bits;
 
 		cluster_end = cluster_start + osb->s_clustersize;
-	}
+	पूर्ण
 
 	BUG_ON(cluster_start > PAGE_SIZE);
 	BUG_ON(cluster_end > PAGE_SIZE);
 
-	if (start)
+	अगर (start)
 		*start = cluster_start;
-	if (end)
+	अगर (end)
 		*end = cluster_end;
-}
+पूर्ण
 
 /*
- * 'from' and 'to' are the region in the page to avoid zeroing.
+ * 'from' and 'to' are the region in the page to aव्योम zeroing.
  *
- * If pagesize > clustersize, this function will avoid zeroing outside
+ * If pagesize > clustersize, this function will aव्योम zeroing outside
  * of the cluster boundary.
  *
- * from == to == 0 is code for "zero the entire cluster region"
+ * from == to == 0 is code क्रम "zero the entire cluster region"
  */
-static void ocfs2_clear_page_regions(struct page *page,
-				     struct ocfs2_super *osb, u32 cpos,
-				     unsigned from, unsigned to)
-{
-	void *kaddr;
-	unsigned int cluster_start, cluster_end;
+अटल व्योम ocfs2_clear_page_regions(काष्ठा page *page,
+				     काष्ठा ocfs2_super *osb, u32 cpos,
+				     अचिन्हित from, अचिन्हित to)
+अणु
+	व्योम *kaddr;
+	अचिन्हित पूर्णांक cluster_start, cluster_end;
 
 	ocfs2_figure_cluster_boundaries(osb, cpos, &cluster_start, &cluster_end);
 
 	kaddr = kmap_atomic(page);
 
-	if (from || to) {
-		if (from > cluster_start)
-			memset(kaddr + cluster_start, 0, from - cluster_start);
-		if (to < cluster_end)
-			memset(kaddr + to, 0, cluster_end - to);
-	} else {
-		memset(kaddr + cluster_start, 0, cluster_end - cluster_start);
-	}
+	अगर (from || to) अणु
+		अगर (from > cluster_start)
+			स_रखो(kaddr + cluster_start, 0, from - cluster_start);
+		अगर (to < cluster_end)
+			स_रखो(kaddr + to, 0, cluster_end - to);
+	पूर्ण अन्यथा अणु
+		स_रखो(kaddr + cluster_start, 0, cluster_end - cluster_start);
+	पूर्ण
 
 	kunmap_atomic(kaddr);
-}
+पूर्ण
 
 /*
- * Nonsparse file systems fully allocate before we get to the write
- * code. This prevents ocfs2_write() from tagging the write as an
+ * Nonsparse file प्रणालीs fully allocate beक्रमe we get to the ग_लिखो
+ * code. This prevents ocfs2_ग_लिखो() from tagging the ग_लिखो as an
  * allocating one, which means ocfs2_map_page_blocks() might try to
- * read-in the blocks at the tail of our file. Avoid reading them by
+ * पढ़ो-in the blocks at the tail of our file. Aव्योम पढ़ोing them by
  * testing i_size against each block offset.
  */
-static int ocfs2_should_read_blk(struct inode *inode, struct page *page,
-				 unsigned int block_start)
-{
+अटल पूर्णांक ocfs2_should_पढ़ो_blk(काष्ठा inode *inode, काष्ठा page *page,
+				 अचिन्हित पूर्णांक block_start)
+अणु
 	u64 offset = page_offset(page) + block_start;
 
-	if (ocfs2_sparse_alloc(OCFS2_SB(inode->i_sb)))
-		return 1;
+	अगर (ocfs2_sparse_alloc(OCFS2_SB(inode->i_sb)))
+		वापस 1;
 
-	if (i_size_read(inode) > offset)
-		return 1;
+	अगर (i_size_पढ़ो(inode) > offset)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Some of this taken from __block_write_begin(). We already have our
- * mapping by now though, and the entire write will be allocating or
+ * Some of this taken from __block_ग_लिखो_begin(). We alपढ़ोy have our
+ * mapping by now though, and the entire ग_लिखो will be allocating or
  * it won't, so not much need to use BH_New.
  *
- * This will also skip zeroing, which is handled externally.
+ * This will also skip zeroing, which is handled बाह्यally.
  */
-int ocfs2_map_page_blocks(struct page *page, u64 *p_blkno,
-			  struct inode *inode, unsigned int from,
-			  unsigned int to, int new)
-{
-	int ret = 0;
-	struct buffer_head *head, *bh, *wait[2], **wait_bh = wait;
-	unsigned int block_end, block_start;
-	unsigned int bsize = i_blocksize(inode);
+पूर्णांक ocfs2_map_page_blocks(काष्ठा page *page, u64 *p_blkno,
+			  काष्ठा inode *inode, अचिन्हित पूर्णांक from,
+			  अचिन्हित पूर्णांक to, पूर्णांक new)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा buffer_head *head, *bh, *रुको[2], **रुको_bh = रुको;
+	अचिन्हित पूर्णांक block_end, block_start;
+	अचिन्हित पूर्णांक bsize = i_blocksize(inode);
 
-	if (!page_has_buffers(page))
+	अगर (!page_has_buffers(page))
 		create_empty_buffers(page, bsize, 0);
 
 	head = page_buffers(page);
-	for (bh = head, block_start = 0; bh != head || !block_start;
-	     bh = bh->b_this_page, block_start += bsize) {
+	क्रम (bh = head, block_start = 0; bh != head || !block_start;
+	     bh = bh->b_this_page, block_start += bsize) अणु
 		block_end = block_start + bsize;
 
 		clear_buffer_new(bh);
 
 		/*
 		 * Ignore blocks outside of our i/o range -
-		 * they may belong to unallocated clusters.
+		 * they may beदीर्घ to unallocated clusters.
 		 */
-		if (block_start >= to || block_end <= from) {
-			if (PageUptodate(page))
+		अगर (block_start >= to || block_end <= from) अणु
+			अगर (PageUptodate(page))
 				set_buffer_uptodate(bh);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * For an allocating write with cluster size >= page
-		 * size, we always write the entire page.
+		 * For an allocating ग_लिखो with cluster size >= page
+		 * size, we always ग_लिखो the entire page.
 		 */
-		if (new)
+		अगर (new)
 			set_buffer_new(bh);
 
-		if (!buffer_mapped(bh)) {
+		अगर (!buffer_mapped(bh)) अणु
 			map_bh(bh, inode->i_sb, *p_blkno);
 			clean_bdev_bh_alias(bh);
-		}
+		पूर्ण
 
-		if (PageUptodate(page)) {
-			if (!buffer_uptodate(bh))
+		अगर (PageUptodate(page)) अणु
+			अगर (!buffer_uptodate(bh))
 				set_buffer_uptodate(bh);
-		} else if (!buffer_uptodate(bh) && !buffer_delay(bh) &&
+		पूर्ण अन्यथा अगर (!buffer_uptodate(bh) && !buffer_delay(bh) &&
 			   !buffer_new(bh) &&
-			   ocfs2_should_read_blk(inode, page, block_start) &&
-			   (block_start < from || block_end > to)) {
+			   ocfs2_should_पढ़ो_blk(inode, page, block_start) &&
+			   (block_start < from || block_end > to)) अणु
 			ll_rw_block(REQ_OP_READ, 0, 1, &bh);
-			*wait_bh++=bh;
-		}
+			*रुको_bh++=bh;
+		पूर्ण
 
 		*p_blkno = *p_blkno + 1;
-	}
+	पूर्ण
 
 	/*
-	 * If we issued read requests - let them complete.
+	 * If we issued पढ़ो requests - let them complete.
 	 */
-	while(wait_bh > wait) {
-		wait_on_buffer(*--wait_bh);
-		if (!buffer_uptodate(*wait_bh))
+	जबतक(रुको_bh > रुको) अणु
+		रुको_on_buffer(*--रुको_bh);
+		अगर (!buffer_uptodate(*रुको_bh))
 			ret = -EIO;
-	}
+	पूर्ण
 
-	if (ret == 0 || !new)
-		return ret;
+	अगर (ret == 0 || !new)
+		वापस ret;
 
 	/*
 	 * If we get -EIO above, zero out any newly allocated blocks
-	 * to avoid exposing stale data.
+	 * to aव्योम exposing stale data.
 	 */
 	bh = head;
 	block_start = 0;
-	do {
+	करो अणु
 		block_end = block_start + bsize;
-		if (block_end <= from)
-			goto next_bh;
-		if (block_start >= to)
-			break;
+		अगर (block_end <= from)
+			जाओ next_bh;
+		अगर (block_start >= to)
+			अवरोध;
 
 		zero_user(page, block_start, bh->b_size);
 		set_buffer_uptodate(bh);
@@ -677,43 +678,43 @@ int ocfs2_map_page_blocks(struct page *page, u64 *p_blkno,
 next_bh:
 		block_start = block_end;
 		bh = bh->b_this_page;
-	} while (bh != head);
+	पूर्ण जबतक (bh != head);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#if (PAGE_SIZE >= OCFS2_MAX_CLUSTERSIZE)
-#define OCFS2_MAX_CTXT_PAGES	1
-#else
-#define OCFS2_MAX_CTXT_PAGES	(OCFS2_MAX_CLUSTERSIZE / PAGE_SIZE)
-#endif
+#अगर (PAGE_SIZE >= OCFS2_MAX_CLUSTERSIZE)
+#घोषणा OCFS2_MAX_CTXT_PAGES	1
+#अन्यथा
+#घोषणा OCFS2_MAX_CTXT_PAGES	(OCFS2_MAX_CLUSTERSIZE / PAGE_SIZE)
+#पूर्ण_अगर
 
-#define OCFS2_MAX_CLUSTERS_PER_PAGE	(PAGE_SIZE / OCFS2_MIN_CLUSTERSIZE)
+#घोषणा OCFS2_MAX_CLUSTERS_PER_PAGE	(PAGE_SIZE / OCFS2_MIN_CLUSTERSIZE)
 
-struct ocfs2_unwritten_extent {
-	struct list_head	ue_node;
-	struct list_head	ue_ip_node;
+काष्ठा ocfs2_unwritten_extent अणु
+	काष्ठा list_head	ue_node;
+	काष्ठा list_head	ue_ip_node;
 	u32			ue_cpos;
 	u32			ue_phys;
-};
+पूर्ण;
 
 /*
  * Describe the state of a single cluster to be written to.
  */
-struct ocfs2_write_cluster_desc {
+काष्ठा ocfs2_ग_लिखो_cluster_desc अणु
 	u32		c_cpos;
 	u32		c_phys;
 	/*
-	 * Give this a unique field because c_phys eventually gets
+	 * Give this a unique field because c_phys eventually माला_लो
 	 * filled.
 	 */
-	unsigned	c_new;
-	unsigned	c_clear_unwritten;
-	unsigned	c_needs_zero;
-};
+	अचिन्हित	c_new;
+	अचिन्हित	c_clear_unwritten;
+	अचिन्हित	c_needs_zero;
+पूर्ण;
 
-struct ocfs2_write_ctxt {
-	/* Logical cluster position / len of write */
+काष्ठा ocfs2_ग_लिखो_ctxt अणु
+	/* Logical cluster position / len of ग_लिखो */
 	u32				w_cpos;
 	u32				w_clen;
 
@@ -721,46 +722,46 @@ struct ocfs2_write_ctxt {
 	u32				w_first_new_cpos;
 
 	/* Type of caller. Must be one of buffer, mmap, direct.  */
-	ocfs2_write_type_t		w_type;
+	ocfs2_ग_लिखो_type_t		w_type;
 
-	struct ocfs2_write_cluster_desc	w_desc[OCFS2_MAX_CLUSTERS_PER_PAGE];
+	काष्ठा ocfs2_ग_लिखो_cluster_desc	w_desc[OCFS2_MAX_CLUSTERS_PER_PAGE];
 
 	/*
-	 * This is true if page_size > cluster_size.
+	 * This is true अगर page_size > cluster_size.
 	 *
-	 * It triggers a set of special cases during write which might
-	 * have to deal with allocating writes to partial pages.
+	 * It triggers a set of special हालs during ग_लिखो which might
+	 * have to deal with allocating ग_लिखोs to partial pages.
 	 */
-	unsigned int			w_large_pages;
+	अचिन्हित पूर्णांक			w_large_pages;
 
 	/*
-	 * Pages involved in this write.
+	 * Pages involved in this ग_लिखो.
 	 *
 	 * w_target_page is the page being written to by the user.
 	 *
 	 * w_pages is an array of pages which always contains
-	 * w_target_page, and in the case of an allocating write with
+	 * w_target_page, and in the हाल of an allocating ग_लिखो with
 	 * page_size < cluster size, it will contain zero'd and mapped
 	 * pages adjacent to w_target_page which need to be written
-	 * out in so that future reads from that region will get
+	 * out in so that future पढ़ोs from that region will get
 	 * zero's.
 	 */
-	unsigned int			w_num_pages;
-	struct page			*w_pages[OCFS2_MAX_CTXT_PAGES];
-	struct page			*w_target_page;
+	अचिन्हित पूर्णांक			w_num_pages;
+	काष्ठा page			*w_pages[OCFS2_MAX_CTXT_PAGES];
+	काष्ठा page			*w_target_page;
 
 	/*
-	 * w_target_locked is used for page_mkwrite path indicating no unlocking
-	 * against w_target_page in ocfs2_write_end_nolock.
+	 * w_target_locked is used क्रम page_mkग_लिखो path indicating no unlocking
+	 * against w_target_page in ocfs2_ग_लिखो_end_nolock.
 	 */
-	unsigned int			w_target_locked:1;
+	अचिन्हित पूर्णांक			w_target_locked:1;
 
 	/*
-	 * ocfs2_write_end() uses this to know what the real range to
-	 * write in the target should be.
+	 * ocfs2_ग_लिखो_end() uses this to know what the real range to
+	 * ग_लिखो in the target should be.
 	 */
-	unsigned int			w_target_from;
-	unsigned int			w_target_to;
+	अचिन्हित पूर्णांक			w_target_from;
+	अचिन्हित पूर्णांक			w_target_to;
 
 	/*
 	 * We could use journal_current_handle() but this is cleaner,
@@ -768,97 +769,97 @@ struct ocfs2_write_ctxt {
 	 */
 	handle_t			*w_handle;
 
-	struct buffer_head		*w_di_bh;
+	काष्ठा buffer_head		*w_di_bh;
 
-	struct ocfs2_cached_dealloc_ctxt w_dealloc;
+	काष्ठा ocfs2_cached_dealloc_ctxt w_dealloc;
 
-	struct list_head		w_unwritten_list;
-	unsigned int			w_unwritten_count;
-};
+	काष्ठा list_head		w_unwritten_list;
+	अचिन्हित पूर्णांक			w_unwritten_count;
+पूर्ण;
 
-void ocfs2_unlock_and_free_pages(struct page **pages, int num_pages)
-{
-	int i;
+व्योम ocfs2_unlock_and_मुक्त_pages(काष्ठा page **pages, पूर्णांक num_pages)
+अणु
+	पूर्णांक i;
 
-	for(i = 0; i < num_pages; i++) {
-		if (pages[i]) {
+	क्रम(i = 0; i < num_pages; i++) अणु
+		अगर (pages[i]) अणु
 			unlock_page(pages[i]);
 			mark_page_accessed(pages[i]);
 			put_page(pages[i]);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ocfs2_unlock_pages(struct ocfs2_write_ctxt *wc)
-{
-	int i;
+अटल व्योम ocfs2_unlock_pages(काष्ठा ocfs2_ग_लिखो_ctxt *wc)
+अणु
+	पूर्णांक i;
 
 	/*
-	 * w_target_locked is only set to true in the page_mkwrite() case.
-	 * The intent is to allow us to lock the target page from write_begin()
-	 * to write_end(). The caller must hold a ref on w_target_page.
+	 * w_target_locked is only set to true in the page_mkग_लिखो() हाल.
+	 * The पूर्णांकent is to allow us to lock the target page from ग_लिखो_begin()
+	 * to ग_लिखो_end(). The caller must hold a ref on w_target_page.
 	 */
-	if (wc->w_target_locked) {
+	अगर (wc->w_target_locked) अणु
 		BUG_ON(!wc->w_target_page);
-		for (i = 0; i < wc->w_num_pages; i++) {
-			if (wc->w_target_page == wc->w_pages[i]) {
-				wc->w_pages[i] = NULL;
-				break;
-			}
-		}
+		क्रम (i = 0; i < wc->w_num_pages; i++) अणु
+			अगर (wc->w_target_page == wc->w_pages[i]) अणु
+				wc->w_pages[i] = शून्य;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		mark_page_accessed(wc->w_target_page);
 		put_page(wc->w_target_page);
-	}
-	ocfs2_unlock_and_free_pages(wc->w_pages, wc->w_num_pages);
-}
+	पूर्ण
+	ocfs2_unlock_and_मुक्त_pages(wc->w_pages, wc->w_num_pages);
+पूर्ण
 
-static void ocfs2_free_unwritten_list(struct inode *inode,
-				 struct list_head *head)
-{
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_unwritten_extent *ue = NULL, *tmp = NULL;
+अटल व्योम ocfs2_मुक्त_unwritten_list(काष्ठा inode *inode,
+				 काष्ठा list_head *head)
+अणु
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_unwritten_extent *ue = शून्य, *पंचांगp = शून्य;
 
-	list_for_each_entry_safe(ue, tmp, head, ue_node) {
+	list_क्रम_each_entry_safe(ue, पंचांगp, head, ue_node) अणु
 		list_del(&ue->ue_node);
 		spin_lock(&oi->ip_lock);
 		list_del(&ue->ue_ip_node);
 		spin_unlock(&oi->ip_lock);
-		kfree(ue);
-	}
-}
+		kमुक्त(ue);
+	पूर्ण
+पूर्ण
 
-static void ocfs2_free_write_ctxt(struct inode *inode,
-				  struct ocfs2_write_ctxt *wc)
-{
-	ocfs2_free_unwritten_list(inode, &wc->w_unwritten_list);
+अटल व्योम ocfs2_मुक्त_ग_लिखो_ctxt(काष्ठा inode *inode,
+				  काष्ठा ocfs2_ग_लिखो_ctxt *wc)
+अणु
+	ocfs2_मुक्त_unwritten_list(inode, &wc->w_unwritten_list);
 	ocfs2_unlock_pages(wc);
-	brelse(wc->w_di_bh);
-	kfree(wc);
-}
+	brअन्यथा(wc->w_di_bh);
+	kमुक्त(wc);
+पूर्ण
 
-static int ocfs2_alloc_write_ctxt(struct ocfs2_write_ctxt **wcp,
-				  struct ocfs2_super *osb, loff_t pos,
-				  unsigned len, ocfs2_write_type_t type,
-				  struct buffer_head *di_bh)
-{
+अटल पूर्णांक ocfs2_alloc_ग_लिखो_ctxt(काष्ठा ocfs2_ग_लिखो_ctxt **wcp,
+				  काष्ठा ocfs2_super *osb, loff_t pos,
+				  अचिन्हित len, ocfs2_ग_लिखो_type_t type,
+				  काष्ठा buffer_head *di_bh)
+अणु
 	u32 cend;
-	struct ocfs2_write_ctxt *wc;
+	काष्ठा ocfs2_ग_लिखो_ctxt *wc;
 
-	wc = kzalloc(sizeof(struct ocfs2_write_ctxt), GFP_NOFS);
-	if (!wc)
-		return -ENOMEM;
+	wc = kzalloc(माप(काष्ठा ocfs2_ग_लिखो_ctxt), GFP_NOFS);
+	अगर (!wc)
+		वापस -ENOMEM;
 
 	wc->w_cpos = pos >> osb->s_clustersize_bits;
-	wc->w_first_new_cpos = UINT_MAX;
+	wc->w_first_new_cpos = अच_पूर्णांक_उच्च;
 	cend = (pos + len - 1) >> osb->s_clustersize_bits;
 	wc->w_clen = cend - wc->w_cpos + 1;
 	get_bh(di_bh);
 	wc->w_di_bh = di_bh;
 	wc->w_type = type;
 
-	if (unlikely(PAGE_SHIFT > osb->s_clustersize_bits))
+	अगर (unlikely(PAGE_SHIFT > osb->s_clustersize_bits))
 		wc->w_large_pages = 1;
-	else
+	अन्यथा
 		wc->w_large_pages = 0;
 
 	ocfs2_init_dealloc_ctxt(&wc->w_dealloc);
@@ -866,122 +867,122 @@ static int ocfs2_alloc_write_ctxt(struct ocfs2_write_ctxt **wcp,
 
 	*wcp = wc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * If a page has any new buffers, zero them out here, and mark them uptodate
  * and dirty so they'll be written out (in order to prevent uninitialised
  * block data from leaking). And clear the new bit.
  */
-static void ocfs2_zero_new_buffers(struct page *page, unsigned from, unsigned to)
-{
-	unsigned int block_start, block_end;
-	struct buffer_head *head, *bh;
+अटल व्योम ocfs2_zero_new_buffers(काष्ठा page *page, अचिन्हित from, अचिन्हित to)
+अणु
+	अचिन्हित पूर्णांक block_start, block_end;
+	काष्ठा buffer_head *head, *bh;
 
 	BUG_ON(!PageLocked(page));
-	if (!page_has_buffers(page))
-		return;
+	अगर (!page_has_buffers(page))
+		वापस;
 
 	bh = head = page_buffers(page);
 	block_start = 0;
-	do {
+	करो अणु
 		block_end = block_start + bh->b_size;
 
-		if (buffer_new(bh)) {
-			if (block_end > from && block_start < to) {
-				if (!PageUptodate(page)) {
-					unsigned start, end;
+		अगर (buffer_new(bh)) अणु
+			अगर (block_end > from && block_start < to) अणु
+				अगर (!PageUptodate(page)) अणु
+					अचिन्हित start, end;
 
 					start = max(from, block_start);
 					end = min(to, block_end);
 
 					zero_user_segment(page, start, end);
 					set_buffer_uptodate(bh);
-				}
+				पूर्ण
 
 				clear_buffer_new(bh);
 				mark_buffer_dirty(bh);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		block_start = block_end;
 		bh = bh->b_this_page;
-	} while (bh != head);
-}
+	पूर्ण जबतक (bh != head);
+पूर्ण
 
 /*
- * Only called when we have a failure during allocating write to write
+ * Only called when we have a failure during allocating ग_लिखो to ग_लिखो
  * zero's to the newly allocated region.
  */
-static void ocfs2_write_failure(struct inode *inode,
-				struct ocfs2_write_ctxt *wc,
-				loff_t user_pos, unsigned user_len)
-{
-	int i;
-	unsigned from = user_pos & (PAGE_SIZE - 1),
+अटल व्योम ocfs2_ग_लिखो_failure(काष्ठा inode *inode,
+				काष्ठा ocfs2_ग_लिखो_ctxt *wc,
+				loff_t user_pos, अचिन्हित user_len)
+अणु
+	पूर्णांक i;
+	अचिन्हित from = user_pos & (PAGE_SIZE - 1),
 		to = user_pos + user_len;
-	struct page *tmppage;
+	काष्ठा page *पंचांगppage;
 
-	if (wc->w_target_page)
+	अगर (wc->w_target_page)
 		ocfs2_zero_new_buffers(wc->w_target_page, from, to);
 
-	for(i = 0; i < wc->w_num_pages; i++) {
-		tmppage = wc->w_pages[i];
+	क्रम(i = 0; i < wc->w_num_pages; i++) अणु
+		पंचांगppage = wc->w_pages[i];
 
-		if (tmppage && page_has_buffers(tmppage)) {
-			if (ocfs2_should_order_data(inode))
-				ocfs2_jbd2_inode_add_write(wc->w_handle, inode,
+		अगर (पंचांगppage && page_has_buffers(पंचांगppage)) अणु
+			अगर (ocfs2_should_order_data(inode))
+				ocfs2_jbd2_inode_add_ग_लिखो(wc->w_handle, inode,
 							   user_pos, user_len);
 
-			block_commit_write(tmppage, from, to);
-		}
-	}
-}
+			block_commit_ग_लिखो(पंचांगppage, from, to);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int ocfs2_prepare_page_for_write(struct inode *inode, u64 *p_blkno,
-					struct ocfs2_write_ctxt *wc,
-					struct page *page, u32 cpos,
-					loff_t user_pos, unsigned user_len,
-					int new)
-{
-	int ret;
-	unsigned int map_from = 0, map_to = 0;
-	unsigned int cluster_start, cluster_end;
-	unsigned int user_data_from = 0, user_data_to = 0;
+अटल पूर्णांक ocfs2_prepare_page_क्रम_ग_लिखो(काष्ठा inode *inode, u64 *p_blkno,
+					काष्ठा ocfs2_ग_लिखो_ctxt *wc,
+					काष्ठा page *page, u32 cpos,
+					loff_t user_pos, अचिन्हित user_len,
+					पूर्णांक new)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक map_from = 0, map_to = 0;
+	अचिन्हित पूर्णांक cluster_start, cluster_end;
+	अचिन्हित पूर्णांक user_data_from = 0, user_data_to = 0;
 
 	ocfs2_figure_cluster_boundaries(OCFS2_SB(inode->i_sb), cpos,
 					&cluster_start, &cluster_end);
 
-	/* treat the write as new if the a hole/lseek spanned across
+	/* treat the ग_लिखो as new अगर the a hole/lseek spanned across
 	 * the page boundary.
 	 */
-	new = new | ((i_size_read(inode) <= page_offset(page)) &&
+	new = new | ((i_size_पढ़ो(inode) <= page_offset(page)) &&
 			(page_offset(page) <= user_pos));
 
-	if (page == wc->w_target_page) {
+	अगर (page == wc->w_target_page) अणु
 		map_from = user_pos & (PAGE_SIZE - 1);
 		map_to = map_from + user_len;
 
-		if (new)
+		अगर (new)
 			ret = ocfs2_map_page_blocks(page, p_blkno, inode,
 						    cluster_start, cluster_end,
 						    new);
-		else
+		अन्यथा
 			ret = ocfs2_map_page_blocks(page, p_blkno, inode,
 						    map_from, map_to, new);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 		user_data_from = map_from;
 		user_data_to = map_to;
-		if (new) {
+		अगर (new) अणु
 			map_from = cluster_start;
 			map_to = cluster_end;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * If we haven't allocated the new page yet, we
 		 * shouldn't be writing it out without copying user
@@ -994,11 +995,11 @@ static int ocfs2_prepare_page_for_write(struct inode *inode, u64 *p_blkno,
 
 		ret = ocfs2_map_page_blocks(page, p_blkno, inode,
 					    cluster_start, cluster_end, new);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
-	}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Parts of newly allocated pages need to be zero'd.
@@ -1007,287 +1008,287 @@ static int ocfs2_prepare_page_for_write(struct inode *inode, u64 *p_blkno,
 	 * the rest of the function is concerned, the entire cluster
 	 * range inside of a page needs to be written.
 	 *
-	 * We can skip this if the page is up to date - it's already
-	 * been zero'd from being read in as a hole.
+	 * We can skip this अगर the page is up to date - it's alपढ़ोy
+	 * been zero'd from being पढ़ो in as a hole.
 	 */
-	if (new && !PageUptodate(page))
+	अगर (new && !PageUptodate(page))
 		ocfs2_clear_page_regions(page, OCFS2_SB(inode->i_sb),
 					 cpos, user_data_from, user_data_to);
 
 	flush_dcache_page(page);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This function will only grab one clusters worth of pages.
  */
-static int ocfs2_grab_pages_for_write(struct address_space *mapping,
-				      struct ocfs2_write_ctxt *wc,
+अटल पूर्णांक ocfs2_grab_pages_क्रम_ग_लिखो(काष्ठा address_space *mapping,
+				      काष्ठा ocfs2_ग_लिखो_ctxt *wc,
 				      u32 cpos, loff_t user_pos,
-				      unsigned user_len, int new,
-				      struct page *mmap_page)
-{
-	int ret = 0, i;
-	unsigned long start, target_index, end_index, index;
-	struct inode *inode = mapping->host;
+				      अचिन्हित user_len, पूर्णांक new,
+				      काष्ठा page *mmap_page)
+अणु
+	पूर्णांक ret = 0, i;
+	अचिन्हित दीर्घ start, target_index, end_index, index;
+	काष्ठा inode *inode = mapping->host;
 	loff_t last_byte;
 
 	target_index = user_pos >> PAGE_SHIFT;
 
 	/*
 	 * Figure out how many pages we'll be manipulating here. For
-	 * non allocating write, we just change the one
+	 * non allocating ग_लिखो, we just change the one
 	 * page. Otherwise, we'll need a whole clusters worth.  If we're
 	 * writing past i_size, we only need enough pages to cover the
-	 * last page of the write.
+	 * last page of the ग_लिखो.
 	 */
-	if (new) {
+	अगर (new) अणु
 		wc->w_num_pages = ocfs2_pages_per_cluster(inode->i_sb);
 		start = ocfs2_align_clusters_to_page_index(inode->i_sb, cpos);
 		/*
 		 * We need the index *past* the last page we could possibly
-		 * touch.  This is the page past the end of the write or
+		 * touch.  This is the page past the end of the ग_लिखो or
 		 * i_size, whichever is greater.
 		 */
-		last_byte = max(user_pos + user_len, i_size_read(inode));
+		last_byte = max(user_pos + user_len, i_size_पढ़ो(inode));
 		BUG_ON(last_byte < 1);
 		end_index = ((last_byte - 1) >> PAGE_SHIFT) + 1;
-		if ((start + wc->w_num_pages) > end_index)
+		अगर ((start + wc->w_num_pages) > end_index)
 			wc->w_num_pages = end_index - start;
-	} else {
+	पूर्ण अन्यथा अणु
 		wc->w_num_pages = 1;
 		start = target_index;
-	}
+	पूर्ण
 	end_index = (user_pos + user_len - 1) >> PAGE_SHIFT;
 
-	for(i = 0; i < wc->w_num_pages; i++) {
+	क्रम(i = 0; i < wc->w_num_pages; i++) अणु
 		index = start + i;
 
-		if (index >= target_index && index <= end_index &&
-		    wc->w_type == OCFS2_WRITE_MMAP) {
+		अगर (index >= target_index && index <= end_index &&
+		    wc->w_type == OCFS2_WRITE_MMAP) अणु
 			/*
-			 * ocfs2_pagemkwrite() is a little different
+			 * ocfs2_pagemkग_लिखो() is a little dअगरferent
 			 * and wants us to directly use the page
 			 * passed in.
 			 */
 			lock_page(mmap_page);
 
 			/* Exit and let the caller retry */
-			if (mmap_page->mapping != mapping) {
+			अगर (mmap_page->mapping != mapping) अणु
 				WARN_ON(mmap_page->mapping);
 				unlock_page(mmap_page);
 				ret = -EAGAIN;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			get_page(mmap_page);
 			wc->w_pages[i] = mmap_page;
 			wc->w_target_locked = true;
-		} else if (index >= target_index && index <= end_index &&
-			   wc->w_type == OCFS2_WRITE_DIRECT) {
-			/* Direct write has no mapping page. */
-			wc->w_pages[i] = NULL;
-			continue;
-		} else {
+		पूर्ण अन्यथा अगर (index >= target_index && index <= end_index &&
+			   wc->w_type == OCFS2_WRITE_सूचीECT) अणु
+			/* Direct ग_लिखो has no mapping page. */
+			wc->w_pages[i] = शून्य;
+			जारी;
+		पूर्ण अन्यथा अणु
 			wc->w_pages[i] = find_or_create_page(mapping, index,
 							     GFP_NOFS);
-			if (!wc->w_pages[i]) {
+			अगर (!wc->w_pages[i]) अणु
 				ret = -ENOMEM;
-				mlog_errno(ret);
-				goto out;
-			}
-		}
-		wait_for_stable_page(wc->w_pages[i]);
+				mlog_त्रुटि_सं(ret);
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		रुको_क्रम_stable_page(wc->w_pages[i]);
 
-		if (index == target_index)
+		अगर (index == target_index)
 			wc->w_target_page = wc->w_pages[i];
-	}
+	पूर्ण
 out:
-	if (ret)
+	अगर (ret)
 		wc->w_target_locked = false;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Prepare a single cluster for write one cluster into the file.
+ * Prepare a single cluster क्रम ग_लिखो one cluster पूर्णांकo the file.
  */
-static int ocfs2_write_cluster(struct address_space *mapping,
-			       u32 *phys, unsigned int new,
-			       unsigned int clear_unwritten,
-			       unsigned int should_zero,
-			       struct ocfs2_alloc_context *data_ac,
-			       struct ocfs2_alloc_context *meta_ac,
-			       struct ocfs2_write_ctxt *wc, u32 cpos,
-			       loff_t user_pos, unsigned user_len)
-{
-	int ret, i;
+अटल पूर्णांक ocfs2_ग_लिखो_cluster(काष्ठा address_space *mapping,
+			       u32 *phys, अचिन्हित पूर्णांक new,
+			       अचिन्हित पूर्णांक clear_unwritten,
+			       अचिन्हित पूर्णांक should_zero,
+			       काष्ठा ocfs2_alloc_context *data_ac,
+			       काष्ठा ocfs2_alloc_context *meta_ac,
+			       काष्ठा ocfs2_ग_लिखो_ctxt *wc, u32 cpos,
+			       loff_t user_pos, अचिन्हित user_len)
+अणु
+	पूर्णांक ret, i;
 	u64 p_blkno;
-	struct inode *inode = mapping->host;
-	struct ocfs2_extent_tree et;
-	int bpc = ocfs2_clusters_to_blocks(inode->i_sb, 1);
+	काष्ठा inode *inode = mapping->host;
+	काष्ठा ocfs2_extent_tree et;
+	पूर्णांक bpc = ocfs2_clusters_to_blocks(inode->i_sb, 1);
 
-	if (new) {
-		u32 tmp_pos;
+	अगर (new) अणु
+		u32 पंचांगp_pos;
 
 		/*
 		 * This is safe to call with the page locks - it won't take
 		 * any additional semaphores or cluster locks.
 		 */
-		tmp_pos = cpos;
+		पंचांगp_pos = cpos;
 		ret = ocfs2_add_inode_data(OCFS2_SB(inode->i_sb), inode,
-					   &tmp_pos, 1, !clear_unwritten,
+					   &पंचांगp_pos, 1, !clear_unwritten,
 					   wc->w_di_bh, wc->w_handle,
-					   data_ac, meta_ac, NULL);
+					   data_ac, meta_ac, शून्य);
 		/*
-		 * This shouldn't happen because we must have already
+		 * This shouldn't happen because we must have alपढ़ोy
 		 * calculated the correct meta data allocation required. The
-		 * internal tree allocation code should know how to increase
+		 * पूर्णांकernal tree allocation code should know how to increase
 		 * transaction credits itself.
 		 *
-		 * If need be, we could handle -EAGAIN for a
+		 * If need be, we could handle -EAGAIN क्रम a
 		 * RESTART_TRANS here.
 		 */
 		mlog_bug_on_msg(ret == -EAGAIN,
 				"Inode %llu: EAGAIN return during allocation.\n",
-				(unsigned long long)OCFS2_I(inode)->ip_blkno);
-		if (ret < 0) {
-			mlog_errno(ret);
-			goto out;
-		}
-	} else if (clear_unwritten) {
+				(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अगर (clear_unwritten) अणु
 		ocfs2_init_dinode_extent_tree(&et, INODE_CACHE(inode),
 					      wc->w_di_bh);
 		ret = ocfs2_mark_extent_written(inode, &et,
 						wc->w_handle, cpos, 1, *phys,
 						meta_ac, &wc->w_dealloc);
-		if (ret < 0) {
-			mlog_errno(ret);
-			goto out;
-		}
-	}
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * The only reason this should fail is due to an inability to
 	 * find the extent added.
 	 */
-	ret = ocfs2_get_clusters(inode, cpos, phys, NULL, NULL);
-	if (ret < 0) {
+	ret = ocfs2_get_clusters(inode, cpos, phys, शून्य, शून्य);
+	अगर (ret < 0) अणु
 		mlog(ML_ERROR, "Get physical blkno failed for inode %llu, "
 			    "at logical cluster %u",
-			    (unsigned long long)OCFS2_I(inode)->ip_blkno, cpos);
-		goto out;
-	}
+			    (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno, cpos);
+		जाओ out;
+	पूर्ण
 
 	BUG_ON(*phys == 0);
 
 	p_blkno = ocfs2_clusters_to_blocks(inode->i_sb, *phys);
-	if (!should_zero)
+	अगर (!should_zero)
 		p_blkno += (user_pos >> inode->i_sb->s_blocksize_bits) & (u64)(bpc - 1);
 
-	for(i = 0; i < wc->w_num_pages; i++) {
-		int tmpret;
+	क्रम(i = 0; i < wc->w_num_pages; i++) अणु
+		पूर्णांक पंचांगpret;
 
 		/* This is the direct io target page. */
-		if (wc->w_pages[i] == NULL) {
+		अगर (wc->w_pages[i] == शून्य) अणु
 			p_blkno++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		tmpret = ocfs2_prepare_page_for_write(inode, &p_blkno, wc,
+		पंचांगpret = ocfs2_prepare_page_क्रम_ग_लिखो(inode, &p_blkno, wc,
 						      wc->w_pages[i], cpos,
 						      user_pos, user_len,
 						      should_zero);
-		if (tmpret) {
-			mlog_errno(tmpret);
-			if (ret == 0)
-				ret = tmpret;
-		}
-	}
+		अगर (पंचांगpret) अणु
+			mlog_त्रुटि_सं(पंचांगpret);
+			अगर (ret == 0)
+				ret = पंचांगpret;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * We only have cleanup to do in case of allocating write.
+	 * We only have cleanup to करो in हाल of allocating ग_लिखो.
 	 */
-	if (ret && new)
-		ocfs2_write_failure(inode, wc, user_pos, user_len);
+	अगर (ret && new)
+		ocfs2_ग_लिखो_failure(inode, wc, user_pos, user_len);
 
 out:
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_write_cluster_by_desc(struct address_space *mapping,
-				       struct ocfs2_alloc_context *data_ac,
-				       struct ocfs2_alloc_context *meta_ac,
-				       struct ocfs2_write_ctxt *wc,
-				       loff_t pos, unsigned len)
-{
-	int ret, i;
+अटल पूर्णांक ocfs2_ग_लिखो_cluster_by_desc(काष्ठा address_space *mapping,
+				       काष्ठा ocfs2_alloc_context *data_ac,
+				       काष्ठा ocfs2_alloc_context *meta_ac,
+				       काष्ठा ocfs2_ग_लिखो_ctxt *wc,
+				       loff_t pos, अचिन्हित len)
+अणु
+	पूर्णांक ret, i;
 	loff_t cluster_off;
-	unsigned int local_len = len;
-	struct ocfs2_write_cluster_desc *desc;
-	struct ocfs2_super *osb = OCFS2_SB(mapping->host->i_sb);
+	अचिन्हित पूर्णांक local_len = len;
+	काष्ठा ocfs2_ग_लिखो_cluster_desc *desc;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(mapping->host->i_sb);
 
-	for (i = 0; i < wc->w_clen; i++) {
+	क्रम (i = 0; i < wc->w_clen; i++) अणु
 		desc = &wc->w_desc[i];
 
 		/*
-		 * We have to make sure that the total write passed in
-		 * doesn't extend past a single cluster.
+		 * We have to make sure that the total ग_लिखो passed in
+		 * करोesn't extend past a single cluster.
 		 */
 		local_len = len;
 		cluster_off = pos & (osb->s_clustersize - 1);
-		if ((cluster_off + local_len) > osb->s_clustersize)
+		अगर ((cluster_off + local_len) > osb->s_clustersize)
 			local_len = osb->s_clustersize - cluster_off;
 
-		ret = ocfs2_write_cluster(mapping, &desc->c_phys,
+		ret = ocfs2_ग_लिखो_cluster(mapping, &desc->c_phys,
 					  desc->c_new,
 					  desc->c_clear_unwritten,
 					  desc->c_needs_zero,
 					  data_ac, meta_ac,
 					  wc, desc->c_cpos, pos, local_len);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 		len -= local_len;
 		pos += local_len;
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * ocfs2_write_end() wants to know which parts of the target page it
- * should complete the write on. It's easiest to compute them ahead of
- * time when a more complete view of the write is available.
+ * ocfs2_ग_लिखो_end() wants to know which parts of the target page it
+ * should complete the ग_लिखो on. It's easiest to compute them ahead of
+ * समय when a more complete view of the ग_लिखो is available.
  */
-static void ocfs2_set_target_boundaries(struct ocfs2_super *osb,
-					struct ocfs2_write_ctxt *wc,
-					loff_t pos, unsigned len, int alloc)
-{
-	struct ocfs2_write_cluster_desc *desc;
+अटल व्योम ocfs2_set_target_boundaries(काष्ठा ocfs2_super *osb,
+					काष्ठा ocfs2_ग_लिखो_ctxt *wc,
+					loff_t pos, अचिन्हित len, पूर्णांक alloc)
+अणु
+	काष्ठा ocfs2_ग_लिखो_cluster_desc *desc;
 
 	wc->w_target_from = pos & (PAGE_SIZE - 1);
 	wc->w_target_to = wc->w_target_from + len;
 
-	if (alloc == 0)
-		return;
+	अगर (alloc == 0)
+		वापस;
 
 	/*
-	 * Allocating write - we may have different boundaries based
+	 * Allocating ग_लिखो - we may have dअगरferent boundaries based
 	 * on page size and cluster size.
 	 *
-	 * NOTE: We can no longer compute one value from the other as
-	 * the actual write length and user provided length may be
-	 * different.
+	 * NOTE: We can no दीर्घer compute one value from the other as
+	 * the actual ग_लिखो length and user provided length may be
+	 * dअगरferent.
 	 */
 
-	if (wc->w_large_pages) {
+	अगर (wc->w_large_pages) अणु
 		/*
 		 * We only care about the 1st and last cluster within
 		 * our range and whether they should be zero'd or not. Either
@@ -1295,829 +1296,829 @@ static void ocfs2_set_target_boundaries(struct ocfs2_super *osb,
 		 * newly allocated cluster.
 		 */
 		desc = &wc->w_desc[0];
-		if (desc->c_needs_zero)
+		अगर (desc->c_needs_zero)
 			ocfs2_figure_cluster_boundaries(osb,
 							desc->c_cpos,
 							&wc->w_target_from,
-							NULL);
+							शून्य);
 
 		desc = &wc->w_desc[wc->w_clen - 1];
-		if (desc->c_needs_zero)
+		अगर (desc->c_needs_zero)
 			ocfs2_figure_cluster_boundaries(osb,
 							desc->c_cpos,
-							NULL,
+							शून्य,
 							&wc->w_target_to);
-	} else {
+	पूर्ण अन्यथा अणु
 		wc->w_target_from = 0;
 		wc->w_target_to = PAGE_SIZE;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Check if this extent is marked UNWRITTEN by direct io. If so, we need not to
- * do the zero work. And should not to clear UNWRITTEN since it will be cleared
+ * Check अगर this extent is marked UNWRITTEN by direct io. If so, we need not to
+ * करो the zero work. And should not to clear UNWRITTEN since it will be cleared
  * by the direct io procedure.
  * If this is a new extent that allocated by direct io, we should mark it in
  * the ip_unwritten_list.
  */
-static int ocfs2_unwritten_check(struct inode *inode,
-				 struct ocfs2_write_ctxt *wc,
-				 struct ocfs2_write_cluster_desc *desc)
-{
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_unwritten_extent *ue = NULL, *new = NULL;
-	int ret = 0;
+अटल पूर्णांक ocfs2_unwritten_check(काष्ठा inode *inode,
+				 काष्ठा ocfs2_ग_लिखो_ctxt *wc,
+				 काष्ठा ocfs2_ग_लिखो_cluster_desc *desc)
+अणु
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_unwritten_extent *ue = शून्य, *new = शून्य;
+	पूर्णांक ret = 0;
 
-	if (!desc->c_needs_zero)
-		return 0;
+	अगर (!desc->c_needs_zero)
+		वापस 0;
 
 retry:
 	spin_lock(&oi->ip_lock);
 	/* Needs not to zero no metter buffer or direct. The one who is zero
-	 * the cluster is doing zero. And he will clear unwritten after all
+	 * the cluster is करोing zero. And he will clear unwritten after all
 	 * cluster io finished. */
-	list_for_each_entry(ue, &oi->ip_unwritten_list, ue_ip_node) {
-		if (desc->c_cpos == ue->ue_cpos) {
+	list_क्रम_each_entry(ue, &oi->ip_unwritten_list, ue_ip_node) अणु
+		अगर (desc->c_cpos == ue->ue_cpos) अणु
 			BUG_ON(desc->c_new);
 			desc->c_needs_zero = 0;
 			desc->c_clear_unwritten = 0;
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
-	if (wc->w_type != OCFS2_WRITE_DIRECT)
-		goto unlock;
+	अगर (wc->w_type != OCFS2_WRITE_सूचीECT)
+		जाओ unlock;
 
-	if (new == NULL) {
+	अगर (new == शून्य) अणु
 		spin_unlock(&oi->ip_lock);
-		new = kmalloc(sizeof(struct ocfs2_unwritten_extent),
+		new = kदो_स्मृति(माप(काष्ठा ocfs2_unwritten_extent),
 			     GFP_NOFS);
-		if (new == NULL) {
+		अगर (new == शून्य) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
-		goto retry;
-	}
-	/* This direct write will doing zero. */
+			जाओ out;
+		पूर्ण
+		जाओ retry;
+	पूर्ण
+	/* This direct ग_लिखो will करोing zero. */
 	new->ue_cpos = desc->c_cpos;
 	new->ue_phys = desc->c_phys;
 	desc->c_clear_unwritten = 0;
 	list_add_tail(&new->ue_ip_node, &oi->ip_unwritten_list);
 	list_add_tail(&new->ue_node, &wc->w_unwritten_list);
 	wc->w_unwritten_count++;
-	new = NULL;
+	new = शून्य;
 unlock:
 	spin_unlock(&oi->ip_lock);
 out:
-	kfree(new);
-	return ret;
-}
+	kमुक्त(new);
+	वापस ret;
+पूर्ण
 
 /*
- * Populate each single-cluster write descriptor in the write context
- * with information about the i/o to be done.
+ * Populate each single-cluster ग_लिखो descriptor in the ग_लिखो context
+ * with inक्रमmation about the i/o to be करोne.
  *
  * Returns the number of clusters that will have to be allocated, as
- * well as a worst case estimate of the number of extent records that
- * would have to be created during a write to an unwritten region.
+ * well as a worst हाल estimate of the number of extent records that
+ * would have to be created during a ग_लिखो to an unwritten region.
  */
-static int ocfs2_populate_write_desc(struct inode *inode,
-				     struct ocfs2_write_ctxt *wc,
-				     unsigned int *clusters_to_alloc,
-				     unsigned int *extents_to_split)
-{
-	int ret;
-	struct ocfs2_write_cluster_desc *desc;
-	unsigned int num_clusters = 0;
-	unsigned int ext_flags = 0;
+अटल पूर्णांक ocfs2_populate_ग_लिखो_desc(काष्ठा inode *inode,
+				     काष्ठा ocfs2_ग_लिखो_ctxt *wc,
+				     अचिन्हित पूर्णांक *clusters_to_alloc,
+				     अचिन्हित पूर्णांक *extents_to_split)
+अणु
+	पूर्णांक ret;
+	काष्ठा ocfs2_ग_लिखो_cluster_desc *desc;
+	अचिन्हित पूर्णांक num_clusters = 0;
+	अचिन्हित पूर्णांक ext_flags = 0;
 	u32 phys = 0;
-	int i;
+	पूर्णांक i;
 
 	*clusters_to_alloc = 0;
 	*extents_to_split = 0;
 
-	for (i = 0; i < wc->w_clen; i++) {
+	क्रम (i = 0; i < wc->w_clen; i++) अणु
 		desc = &wc->w_desc[i];
 		desc->c_cpos = wc->w_cpos + i;
 
-		if (num_clusters == 0) {
+		अगर (num_clusters == 0) अणु
 			/*
 			 * Need to look up the next extent record.
 			 */
 			ret = ocfs2_get_clusters(inode, desc->c_cpos, &phys,
 						 &num_clusters, &ext_flags);
-			if (ret) {
-				mlog_errno(ret);
-				goto out;
-			}
+			अगर (ret) अणु
+				mlog_त्रुटि_सं(ret);
+				जाओ out;
+			पूर्ण
 
-			/* We should already CoW the refcountd extent. */
+			/* We should alपढ़ोy CoW the refcountd extent. */
 			BUG_ON(ext_flags & OCFS2_EXT_REFCOUNTED);
 
 			/*
-			 * Assume worst case - that we're writing in
+			 * Assume worst हाल - that we're writing in
 			 * the middle of the extent.
 			 *
-			 * We can assume that the write proceeds from
-			 * left to right, in which case the extent
+			 * We can assume that the ग_लिखो proceeds from
+			 * left to right, in which हाल the extent
 			 * insert code is smart enough to coalesce the
-			 * next splits into the previous records created.
+			 * next splits पूर्णांकo the previous records created.
 			 */
-			if (ext_flags & OCFS2_EXT_UNWRITTEN)
+			अगर (ext_flags & OCFS2_EXT_UNWRITTEN)
 				*extents_to_split = *extents_to_split + 2;
-		} else if (phys) {
+		पूर्ण अन्यथा अगर (phys) अणु
 			/*
-			 * Only increment phys if it doesn't describe
+			 * Only increment phys अगर it करोesn't describe
 			 * a hole.
 			 */
 			phys++;
-		}
+		पूर्ण
 
 		/*
-		 * If w_first_new_cpos is < UINT_MAX, we have a non-sparse
+		 * If w_first_new_cpos is < अच_पूर्णांक_उच्च, we have a non-sparse
 		 * file that got extended.  w_first_new_cpos tells us
 		 * where the newly allocated clusters are so we can
 		 * zero them.
 		 */
-		if (desc->c_cpos >= wc->w_first_new_cpos) {
+		अगर (desc->c_cpos >= wc->w_first_new_cpos) अणु
 			BUG_ON(phys == 0);
 			desc->c_needs_zero = 1;
-		}
+		पूर्ण
 
 		desc->c_phys = phys;
-		if (phys == 0) {
+		अगर (phys == 0) अणु
 			desc->c_new = 1;
 			desc->c_needs_zero = 1;
 			desc->c_clear_unwritten = 1;
 			*clusters_to_alloc = *clusters_to_alloc + 1;
-		}
+		पूर्ण
 
-		if (ext_flags & OCFS2_EXT_UNWRITTEN) {
+		अगर (ext_flags & OCFS2_EXT_UNWRITTEN) अणु
 			desc->c_clear_unwritten = 1;
 			desc->c_needs_zero = 1;
-		}
+		पूर्ण
 
 		ret = ocfs2_unwritten_check(inode, wc, desc);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
 		num_clusters--;
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_write_begin_inline(struct address_space *mapping,
-				    struct inode *inode,
-				    struct ocfs2_write_ctxt *wc)
-{
-	int ret;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct page *page;
+अटल पूर्णांक ocfs2_ग_लिखो_begin_अंतरभूत(काष्ठा address_space *mapping,
+				    काष्ठा inode *inode,
+				    काष्ठा ocfs2_ग_लिखो_ctxt *wc)
+अणु
+	पूर्णांक ret;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा page *page;
 	handle_t *handle;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)wc->w_di_bh->b_data;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)wc->w_di_bh->b_data;
 
 	handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		ret = PTR_ERR(handle);
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	page = find_or_create_page(mapping, 0, GFP_NOFS);
-	if (!page) {
+	अगर (!page) अणु
 		ocfs2_commit_trans(osb, handle);
 		ret = -ENOMEM;
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 	/*
-	 * If we don't set w_num_pages then this page won't get unlocked
-	 * and freed on cleanup of the write context.
+	 * If we करोn't set w_num_pages then this page won't get unlocked
+	 * and मुक्तd on cleanup of the ग_लिखो context.
 	 */
 	wc->w_pages[0] = wc->w_target_page = page;
 	wc->w_num_pages = 1;
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), wc->w_di_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	if (ret) {
+	अगर (ret) अणु
 		ocfs2_commit_trans(osb, handle);
 
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	if (!(OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL))
-		ocfs2_set_inode_data_inline(inode, di);
+	अगर (!(OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL))
+		ocfs2_set_inode_data_अंतरभूत(inode, di);
 
-	if (!PageUptodate(page)) {
-		ret = ocfs2_read_inline_data(inode, page, wc->w_di_bh);
-		if (ret) {
+	अगर (!PageUptodate(page)) अणु
+		ret = ocfs2_पढ़ो_अंतरभूत_data(inode, page, wc->w_di_bh);
+		अगर (ret) अणु
 			ocfs2_commit_trans(osb, handle);
 
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	wc->w_handle = handle;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_size_fits_inline_data(struct buffer_head *di_bh, u64 new_size)
-{
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)di_bh->b_data;
+पूर्णांक ocfs2_size_fits_अंतरभूत_data(काष्ठा buffer_head *di_bh, u64 new_size)
+अणु
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
 
-	if (new_size <= le16_to_cpu(di->id2.i_data.id_count))
-		return 1;
-	return 0;
-}
+	अगर (new_size <= le16_to_cpu(di->id2.i_data.id_count))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int ocfs2_try_to_write_inline_data(struct address_space *mapping,
-					  struct inode *inode, loff_t pos,
-					  unsigned len, struct page *mmap_page,
-					  struct ocfs2_write_ctxt *wc)
-{
-	int ret, written = 0;
+अटल पूर्णांक ocfs2_try_to_ग_लिखो_अंतरभूत_data(काष्ठा address_space *mapping,
+					  काष्ठा inode *inode, loff_t pos,
+					  अचिन्हित len, काष्ठा page *mmap_page,
+					  काष्ठा ocfs2_ग_लिखो_ctxt *wc)
+अणु
+	पूर्णांक ret, written = 0;
 	loff_t end = pos + len;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_dinode *di = NULL;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_dinode *di = शून्य;
 
-	trace_ocfs2_try_to_write_inline_data((unsigned long long)oi->ip_blkno,
-					     len, (unsigned long long)pos,
+	trace_ocfs2_try_to_ग_लिखो_अंतरभूत_data((अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
+					     len, (अचिन्हित दीर्घ दीर्घ)pos,
 					     oi->ip_dyn_features);
 
 	/*
-	 * Handle inodes which already have inline data 1st.
+	 * Handle inodes which alपढ़ोy have अंतरभूत data 1st.
 	 */
-	if (oi->ip_dyn_features & OCFS2_INLINE_DATA_FL) {
-		if (mmap_page == NULL &&
-		    ocfs2_size_fits_inline_data(wc->w_di_bh, end))
-			goto do_inline_write;
+	अगर (oi->ip_dyn_features & OCFS2_INLINE_DATA_FL) अणु
+		अगर (mmap_page == शून्य &&
+		    ocfs2_size_fits_अंतरभूत_data(wc->w_di_bh, end))
+			जाओ करो_अंतरभूत_ग_लिखो;
 
 		/*
-		 * The write won't fit - we have to give this inode an
-		 * inline extent list now.
+		 * The ग_लिखो won't fit - we have to give this inode an
+		 * अंतरभूत extent list now.
 		 */
-		ret = ocfs2_convert_inline_data_to_extents(inode, wc->w_di_bh);
-		if (ret)
-			mlog_errno(ret);
-		goto out;
-	}
+		ret = ocfs2_convert_अंतरभूत_data_to_extents(inode, wc->w_di_bh);
+		अगर (ret)
+			mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Check whether the inode can accept inline data.
+	 * Check whether the inode can accept अंतरभूत data.
 	 */
-	if (oi->ip_clusters != 0 || i_size_read(inode) != 0)
-		return 0;
+	अगर (oi->ip_clusters != 0 || i_size_पढ़ो(inode) != 0)
+		वापस 0;
 
 	/*
-	 * Check whether the write can fit.
+	 * Check whether the ग_लिखो can fit.
 	 */
-	di = (struct ocfs2_dinode *)wc->w_di_bh->b_data;
-	if (mmap_page ||
-	    end > ocfs2_max_inline_data_with_xattr(inode->i_sb, di))
-		return 0;
+	di = (काष्ठा ocfs2_dinode *)wc->w_di_bh->b_data;
+	अगर (mmap_page ||
+	    end > ocfs2_max_अंतरभूत_data_with_xattr(inode->i_sb, di))
+		वापस 0;
 
-do_inline_write:
-	ret = ocfs2_write_begin_inline(mapping, inode, wc);
-	if (ret) {
-		mlog_errno(ret);
-		goto out;
-	}
+करो_अंतरभूत_ग_लिखो:
+	ret = ocfs2_ग_लिखो_begin_अंतरभूत(mapping, inode, wc);
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * This signals to the caller that the data can be written
-	 * inline.
+	 * This संकेतs to the caller that the data can be written
+	 * अंतरभूत.
 	 */
 	written = 1;
 out:
-	return written ? written : ret;
-}
+	वापस written ? written : ret;
+पूर्ण
 
 /*
- * This function only does anything for file systems which can't
+ * This function only करोes anything क्रम file प्रणालीs which can't
  * handle sparse files.
  *
- * What we want to do here is fill in any hole between the current end
- * of allocation and the end of our write. That way the rest of the
- * write path can treat it as an non-allocating write, which has no
- * special case code for sparse/nonsparse files.
+ * What we want to करो here is fill in any hole between the current end
+ * of allocation and the end of our ग_लिखो. That way the rest of the
+ * ग_लिखो path can treat it as an non-allocating ग_लिखो, which has no
+ * special हाल code क्रम sparse/nonsparse files.
  */
-static int ocfs2_expand_nonsparse_inode(struct inode *inode,
-					struct buffer_head *di_bh,
-					loff_t pos, unsigned len,
-					struct ocfs2_write_ctxt *wc)
-{
-	int ret;
+अटल पूर्णांक ocfs2_expand_nonsparse_inode(काष्ठा inode *inode,
+					काष्ठा buffer_head *di_bh,
+					loff_t pos, अचिन्हित len,
+					काष्ठा ocfs2_ग_लिखो_ctxt *wc)
+अणु
+	पूर्णांक ret;
 	loff_t newsize = pos + len;
 
 	BUG_ON(ocfs2_sparse_alloc(OCFS2_SB(inode->i_sb)));
 
-	if (newsize <= i_size_read(inode))
-		return 0;
+	अगर (newsize <= i_size_पढ़ो(inode))
+		वापस 0;
 
 	ret = ocfs2_extend_no_holes(inode, di_bh, newsize, pos);
-	if (ret)
-		mlog_errno(ret);
+	अगर (ret)
+		mlog_त्रुटि_सं(ret);
 
-	/* There is no wc if this is call from direct. */
-	if (wc)
+	/* There is no wc अगर this is call from direct. */
+	अगर (wc)
 		wc->w_first_new_cpos =
-			ocfs2_clusters_for_bytes(inode->i_sb, i_size_read(inode));
+			ocfs2_clusters_क्रम_bytes(inode->i_sb, i_size_पढ़ो(inode));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_zero_tail(struct inode *inode, struct buffer_head *di_bh,
+अटल पूर्णांक ocfs2_zero_tail(काष्ठा inode *inode, काष्ठा buffer_head *di_bh,
 			   loff_t pos)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 
 	BUG_ON(!ocfs2_sparse_alloc(OCFS2_SB(inode->i_sb)));
-	if (pos > i_size_read(inode))
+	अगर (pos > i_size_पढ़ो(inode))
 		ret = ocfs2_zero_extend(inode, di_bh, pos);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_write_begin_nolock(struct address_space *mapping,
-			     loff_t pos, unsigned len, ocfs2_write_type_t type,
-			     struct page **pagep, void **fsdata,
-			     struct buffer_head *di_bh, struct page *mmap_page)
-{
-	int ret, cluster_of_pages, credits = OCFS2_INODE_UPDATE_CREDITS;
-	unsigned int clusters_to_alloc, extents_to_split, clusters_need = 0;
-	struct ocfs2_write_ctxt *wc;
-	struct inode *inode = mapping->host;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_dinode *di;
-	struct ocfs2_alloc_context *data_ac = NULL;
-	struct ocfs2_alloc_context *meta_ac = NULL;
+पूर्णांक ocfs2_ग_लिखो_begin_nolock(काष्ठा address_space *mapping,
+			     loff_t pos, अचिन्हित len, ocfs2_ग_लिखो_type_t type,
+			     काष्ठा page **pagep, व्योम **fsdata,
+			     काष्ठा buffer_head *di_bh, काष्ठा page *mmap_page)
+अणु
+	पूर्णांक ret, cluster_of_pages, credits = OCFS2_INODE_UPDATE_CREDITS;
+	अचिन्हित पूर्णांक clusters_to_alloc, extents_to_split, clusters_need = 0;
+	काष्ठा ocfs2_ग_लिखो_ctxt *wc;
+	काष्ठा inode *inode = mapping->host;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_dinode *di;
+	काष्ठा ocfs2_alloc_context *data_ac = शून्य;
+	काष्ठा ocfs2_alloc_context *meta_ac = शून्य;
 	handle_t *handle;
-	struct ocfs2_extent_tree et;
-	int try_free = 1, ret1;
+	काष्ठा ocfs2_extent_tree et;
+	पूर्णांक try_मुक्त = 1, ret1;
 
 try_again:
-	ret = ocfs2_alloc_write_ctxt(&wc, osb, pos, len, type, di_bh);
-	if (ret) {
-		mlog_errno(ret);
-		return ret;
-	}
+	ret = ocfs2_alloc_ग_लिखो_ctxt(&wc, osb, pos, len, type, di_bh);
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		वापस ret;
+	पूर्ण
 
-	if (ocfs2_supports_inline_data(osb)) {
-		ret = ocfs2_try_to_write_inline_data(mapping, inode, pos, len,
+	अगर (ocfs2_supports_अंतरभूत_data(osb)) अणु
+		ret = ocfs2_try_to_ग_लिखो_अंतरभूत_data(mapping, inode, pos, len,
 						     mmap_page, wc);
-		if (ret == 1) {
+		अगर (ret == 1) अणु
 			ret = 0;
-			goto success;
-		}
-		if (ret < 0) {
-			mlog_errno(ret);
-			goto out;
-		}
-	}
+			जाओ success;
+		पूर्ण
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Direct io change i_size late, should not zero tail here. */
-	if (type != OCFS2_WRITE_DIRECT) {
-		if (ocfs2_sparse_alloc(osb))
+	अगर (type != OCFS2_WRITE_सूचीECT) अणु
+		अगर (ocfs2_sparse_alloc(osb))
 			ret = ocfs2_zero_tail(inode, di_bh, pos);
-		else
+		अन्यथा
 			ret = ocfs2_expand_nonsparse_inode(inode, di_bh, pos,
 							   len, wc);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
-	}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	ret = ocfs2_check_range_for_refcount(inode, pos, len);
-	if (ret < 0) {
-		mlog_errno(ret);
-		goto out;
-	} else if (ret == 1) {
+	ret = ocfs2_check_range_क्रम_refcount(inode, pos, len);
+	अगर (ret < 0) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण अन्यथा अगर (ret == 1) अणु
 		clusters_need = wc->w_clen;
 		ret = ocfs2_refcount_cow(inode, di_bh,
-					 wc->w_cpos, wc->w_clen, UINT_MAX);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
-	}
+					 wc->w_cpos, wc->w_clen, अच_पूर्णांक_उच्च);
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	ret = ocfs2_populate_write_desc(inode, wc, &clusters_to_alloc,
+	ret = ocfs2_populate_ग_लिखो_desc(inode, wc, &clusters_to_alloc,
 					&extents_to_split);
-	if (ret) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 	clusters_need += clusters_to_alloc;
 
-	di = (struct ocfs2_dinode *)wc->w_di_bh->b_data;
+	di = (काष्ठा ocfs2_dinode *)wc->w_di_bh->b_data;
 
-	trace_ocfs2_write_begin_nolock(
-			(unsigned long long)OCFS2_I(inode)->ip_blkno,
-			(long long)i_size_read(inode),
+	trace_ocfs2_ग_लिखो_begin_nolock(
+			(अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+			(दीर्घ दीर्घ)i_size_पढ़ो(inode),
 			le32_to_cpu(di->i_clusters),
 			pos, len, type, mmap_page,
 			clusters_to_alloc, extents_to_split);
 
 	/*
 	 * We set w_target_from, w_target_to here so that
-	 * ocfs2_write_end() knows which range in the target page to
-	 * write out. An allocation requires that we write the entire
+	 * ocfs2_ग_लिखो_end() knows which range in the target page to
+	 * ग_लिखो out. An allocation requires that we ग_लिखो the entire
 	 * cluster range.
 	 */
-	if (clusters_to_alloc || extents_to_split) {
+	अगर (clusters_to_alloc || extents_to_split) अणु
 		/*
 		 * XXX: We are stretching the limits of
 		 * ocfs2_lock_allocators(). It greatly over-estimates
-		 * the work to be done.
+		 * the work to be करोne.
 		 */
 		ocfs2_init_dinode_extent_tree(&et, INODE_CACHE(inode),
 					      wc->w_di_bh);
 		ret = ocfs2_lock_allocators(inode, &et,
 					    clusters_to_alloc, extents_to_split,
 					    &data_ac, &meta_ac);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
-		if (data_ac)
+		अगर (data_ac)
 			data_ac->ac_resv = &OCFS2_I(inode)->ip_la_data_resv;
 
 		credits = ocfs2_calc_extend_credits(inode->i_sb,
 						    &di->id2.i_list);
-	} else if (type == OCFS2_WRITE_DIRECT)
-		/* direct write needs not to start trans if no extents alloc. */
-		goto success;
+	पूर्ण अन्यथा अगर (type == OCFS2_WRITE_सूचीECT)
+		/* direct ग_लिखो needs not to start trans अगर no extents alloc. */
+		जाओ success;
 
 	/*
 	 * We have to zero sparse allocated clusters, unwritten extent clusters,
-	 * and non-sparse clusters we just extended.  For non-sparse writes,
+	 * and non-sparse clusters we just extended.  For non-sparse ग_लिखोs,
 	 * we know zeros will only be needed in the first and/or last cluster.
 	 */
-	if (wc->w_clen && (wc->w_desc[0].c_needs_zero ||
+	अगर (wc->w_clen && (wc->w_desc[0].c_needs_zero ||
 			   wc->w_desc[wc->w_clen - 1].c_needs_zero))
 		cluster_of_pages = 1;
-	else
+	अन्यथा
 		cluster_of_pages = 0;
 
 	ocfs2_set_target_boundaries(osb, wc, pos, len, cluster_of_pages);
 
 	handle = ocfs2_start_trans(osb, credits);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		ret = PTR_ERR(handle);
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	wc->w_handle = handle;
 
-	if (clusters_to_alloc) {
+	अगर (clusters_to_alloc) अणु
 		ret = dquot_alloc_space_nodirty(inode,
 			ocfs2_clusters_to_bytes(osb->sb, clusters_to_alloc));
-		if (ret)
-			goto out_commit;
-	}
+		अगर (ret)
+			जाओ out_commit;
+	पूर्ण
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), wc->w_di_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	if (ret) {
-		mlog_errno(ret);
-		goto out_quota;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out_quota;
+	पूर्ण
 
 	/*
 	 * Fill our page array first. That way we've grabbed enough so
-	 * that we can zero and flush if we error after adding the
+	 * that we can zero and flush अगर we error after adding the
 	 * extent.
 	 */
-	ret = ocfs2_grab_pages_for_write(mapping, wc, wc->w_cpos, pos, len,
+	ret = ocfs2_grab_pages_क्रम_ग_लिखो(mapping, wc, wc->w_cpos, pos, len,
 					 cluster_of_pages, mmap_page);
-	if (ret && ret != -EAGAIN) {
-		mlog_errno(ret);
-		goto out_quota;
-	}
+	अगर (ret && ret != -EAGAIN) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out_quota;
+	पूर्ण
 
 	/*
-	 * ocfs2_grab_pages_for_write() returns -EAGAIN if it could not lock
-	 * the target page. In this case, we exit with no error and no target
-	 * page. This will trigger the caller, page_mkwrite(), to re-try
+	 * ocfs2_grab_pages_क्रम_ग_लिखो() वापसs -EAGAIN अगर it could not lock
+	 * the target page. In this हाल, we निकास with no error and no target
+	 * page. This will trigger the caller, page_mkग_लिखो(), to re-try
 	 * the operation.
 	 */
-	if (ret == -EAGAIN) {
+	अगर (ret == -EAGAIN) अणु
 		BUG_ON(wc->w_target_page);
 		ret = 0;
-		goto out_quota;
-	}
+		जाओ out_quota;
+	पूर्ण
 
-	ret = ocfs2_write_cluster_by_desc(mapping, data_ac, meta_ac, wc, pos,
+	ret = ocfs2_ग_लिखो_cluster_by_desc(mapping, data_ac, meta_ac, wc, pos,
 					  len);
-	if (ret) {
-		mlog_errno(ret);
-		goto out_quota;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out_quota;
+	पूर्ण
 
-	if (data_ac)
-		ocfs2_free_alloc_context(data_ac);
-	if (meta_ac)
-		ocfs2_free_alloc_context(meta_ac);
+	अगर (data_ac)
+		ocfs2_मुक्त_alloc_context(data_ac);
+	अगर (meta_ac)
+		ocfs2_मुक्त_alloc_context(meta_ac);
 
 success:
-	if (pagep)
+	अगर (pagep)
 		*pagep = wc->w_target_page;
 	*fsdata = wc;
-	return 0;
+	वापस 0;
 out_quota:
-	if (clusters_to_alloc)
-		dquot_free_space(inode,
+	अगर (clusters_to_alloc)
+		dquot_मुक्त_space(inode,
 			  ocfs2_clusters_to_bytes(osb->sb, clusters_to_alloc));
 out_commit:
 	ocfs2_commit_trans(osb, handle);
 
 out:
 	/*
-	 * The mmapped page won't be unlocked in ocfs2_free_write_ctxt(),
-	 * even in case of error here like ENOSPC and ENOMEM. So, we need
+	 * The mmapped page won't be unlocked in ocfs2_मुक्त_ग_लिखो_ctxt(),
+	 * even in हाल of error here like ENOSPC and ENOMEM. So, we need
 	 * to unlock the target page manually to prevent deadlocks when
-	 * retrying again on ENOSPC, or when returning non-VM_FAULT_LOCKED
+	 * retrying again on ENOSPC, or when वापसing non-VM_FAULT_LOCKED
 	 * to VM code.
 	 */
-	if (wc->w_target_locked)
+	अगर (wc->w_target_locked)
 		unlock_page(mmap_page);
 
-	ocfs2_free_write_ctxt(inode, wc);
+	ocfs2_मुक्त_ग_लिखो_ctxt(inode, wc);
 
-	if (data_ac) {
-		ocfs2_free_alloc_context(data_ac);
-		data_ac = NULL;
-	}
-	if (meta_ac) {
-		ocfs2_free_alloc_context(meta_ac);
-		meta_ac = NULL;
-	}
+	अगर (data_ac) अणु
+		ocfs2_मुक्त_alloc_context(data_ac);
+		data_ac = शून्य;
+	पूर्ण
+	अगर (meta_ac) अणु
+		ocfs2_मुक्त_alloc_context(meta_ac);
+		meta_ac = शून्य;
+	पूर्ण
 
-	if (ret == -ENOSPC && try_free) {
+	अगर (ret == -ENOSPC && try_मुक्त) अणु
 		/*
-		 * Try to free some truncate log so that we can have enough
+		 * Try to मुक्त some truncate log so that we can have enough
 		 * clusters to allocate.
 		 */
-		try_free = 0;
+		try_मुक्त = 0;
 
-		ret1 = ocfs2_try_to_free_truncate_log(osb, clusters_need);
-		if (ret1 == 1)
-			goto try_again;
+		ret1 = ocfs2_try_to_मुक्त_truncate_log(osb, clusters_need);
+		अगर (ret1 == 1)
+			जाओ try_again;
 
-		if (ret1 < 0)
-			mlog_errno(ret1);
-	}
+		अगर (ret1 < 0)
+			mlog_त्रुटि_सं(ret1);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_write_begin(struct file *file, struct address_space *mapping,
-			     loff_t pos, unsigned len, unsigned flags,
-			     struct page **pagep, void **fsdata)
-{
-	int ret;
-	struct buffer_head *di_bh = NULL;
-	struct inode *inode = mapping->host;
+अटल पूर्णांक ocfs2_ग_लिखो_begin(काष्ठा file *file, काष्ठा address_space *mapping,
+			     loff_t pos, अचिन्हित len, अचिन्हित flags,
+			     काष्ठा page **pagep, व्योम **fsdata)
+अणु
+	पूर्णांक ret;
+	काष्ठा buffer_head *di_bh = शून्य;
+	काष्ठा inode *inode = mapping->host;
 
 	ret = ocfs2_inode_lock(inode, &di_bh, 1);
-	if (ret) {
-		mlog_errno(ret);
-		return ret;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Take alloc sem here to prevent concurrent lookups. That way
 	 * the mapping, zeroing and tree manipulation within
-	 * ocfs2_write() will be safe against ->readpage(). This
+	 * ocfs2_ग_लिखो() will be safe against ->पढ़ोpage(). This
 	 * should also serve to lock out allocation from a shared
-	 * writeable region.
+	 * ग_लिखोable region.
 	 */
-	down_write(&OCFS2_I(inode)->ip_alloc_sem);
+	करोwn_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
 
-	ret = ocfs2_write_begin_nolock(mapping, pos, len, OCFS2_WRITE_BUFFER,
-				       pagep, fsdata, di_bh, NULL);
-	if (ret) {
-		mlog_errno(ret);
-		goto out_fail;
-	}
+	ret = ocfs2_ग_लिखो_begin_nolock(mapping, pos, len, OCFS2_WRITE_BUFFER,
+				       pagep, fsdata, di_bh, शून्य);
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out_fail;
+	पूर्ण
 
-	brelse(di_bh);
+	brअन्यथा(di_bh);
 
-	return 0;
+	वापस 0;
 
 out_fail:
-	up_write(&OCFS2_I(inode)->ip_alloc_sem);
+	up_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
 
-	brelse(di_bh);
+	brअन्यथा(di_bh);
 	ocfs2_inode_unlock(inode, 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ocfs2_write_end_inline(struct inode *inode, loff_t pos,
-				   unsigned len, unsigned *copied,
-				   struct ocfs2_dinode *di,
-				   struct ocfs2_write_ctxt *wc)
-{
-	void *kaddr;
+अटल व्योम ocfs2_ग_लिखो_end_अंतरभूत(काष्ठा inode *inode, loff_t pos,
+				   अचिन्हित len, अचिन्हित *copied,
+				   काष्ठा ocfs2_dinode *di,
+				   काष्ठा ocfs2_ग_लिखो_ctxt *wc)
+अणु
+	व्योम *kaddr;
 
-	if (unlikely(*copied < len)) {
-		if (!PageUptodate(wc->w_target_page)) {
+	अगर (unlikely(*copied < len)) अणु
+		अगर (!PageUptodate(wc->w_target_page)) अणु
 			*copied = 0;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	kaddr = kmap_atomic(wc->w_target_page);
-	memcpy(di->id2.i_data.id_data + pos, kaddr + pos, *copied);
+	स_नकल(di->id2.i_data.id_data + pos, kaddr + pos, *copied);
 	kunmap_atomic(kaddr);
 
-	trace_ocfs2_write_end_inline(
-	     (unsigned long long)OCFS2_I(inode)->ip_blkno,
-	     (unsigned long long)pos, *copied,
+	trace_ocfs2_ग_लिखो_end_अंतरभूत(
+	     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+	     (अचिन्हित दीर्घ दीर्घ)pos, *copied,
 	     le16_to_cpu(di->id2.i_data.id_count),
 	     le16_to_cpu(di->i_dyn_features));
-}
+पूर्ण
 
-int ocfs2_write_end_nolock(struct address_space *mapping,
-			   loff_t pos, unsigned len, unsigned copied, void *fsdata)
-{
-	int i, ret;
-	unsigned from, to, start = pos & (PAGE_SIZE - 1);
-	struct inode *inode = mapping->host;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_write_ctxt *wc = fsdata;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)wc->w_di_bh->b_data;
+पूर्णांक ocfs2_ग_लिखो_end_nolock(काष्ठा address_space *mapping,
+			   loff_t pos, अचिन्हित len, अचिन्हित copied, व्योम *fsdata)
+अणु
+	पूर्णांक i, ret;
+	अचिन्हित from, to, start = pos & (PAGE_SIZE - 1);
+	काष्ठा inode *inode = mapping->host;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_ग_लिखो_ctxt *wc = fsdata;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)wc->w_di_bh->b_data;
 	handle_t *handle = wc->w_handle;
-	struct page *tmppage;
+	काष्ठा page *पंचांगppage;
 
 	BUG_ON(!list_empty(&wc->w_unwritten_list));
 
-	if (handle) {
+	अगर (handle) अणु
 		ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode),
 				wc->w_di_bh, OCFS2_JOURNAL_ACCESS_WRITE);
-		if (ret) {
+		अगर (ret) अणु
 			copied = ret;
-			mlog_errno(ret);
-			goto out;
-		}
-	}
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) {
-		ocfs2_write_end_inline(inode, pos, len, &copied, di, wc);
-		goto out_write_size;
-	}
+	अगर (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL) अणु
+		ocfs2_ग_लिखो_end_अंतरभूत(inode, pos, len, &copied, di, wc);
+		जाओ out_ग_लिखो_size;
+	पूर्ण
 
-	if (unlikely(copied < len) && wc->w_target_page) {
-		if (!PageUptodate(wc->w_target_page))
+	अगर (unlikely(copied < len) && wc->w_target_page) अणु
+		अगर (!PageUptodate(wc->w_target_page))
 			copied = 0;
 
 		ocfs2_zero_new_buffers(wc->w_target_page, start+copied,
 				       start+len);
-	}
-	if (wc->w_target_page)
+	पूर्ण
+	अगर (wc->w_target_page)
 		flush_dcache_page(wc->w_target_page);
 
-	for(i = 0; i < wc->w_num_pages; i++) {
-		tmppage = wc->w_pages[i];
+	क्रम(i = 0; i < wc->w_num_pages; i++) अणु
+		पंचांगppage = wc->w_pages[i];
 
 		/* This is the direct io target page. */
-		if (tmppage == NULL)
-			continue;
+		अगर (पंचांगppage == शून्य)
+			जारी;
 
-		if (tmppage == wc->w_target_page) {
+		अगर (पंचांगppage == wc->w_target_page) अणु
 			from = wc->w_target_from;
 			to = wc->w_target_to;
 
 			BUG_ON(from > PAGE_SIZE ||
 			       to > PAGE_SIZE ||
 			       to < from);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * Pages adjacent to the target (if any) imply
-			 * a hole-filling write in which case we want
+			 * Pages adjacent to the target (अगर any) imply
+			 * a hole-filling ग_लिखो in which हाल we want
 			 * to flush their entire range.
 			 */
 			from = 0;
 			to = PAGE_SIZE;
-		}
+		पूर्ण
 
-		if (page_has_buffers(tmppage)) {
-			if (handle && ocfs2_should_order_data(inode)) {
+		अगर (page_has_buffers(पंचांगppage)) अणु
+			अगर (handle && ocfs2_should_order_data(inode)) अणु
 				loff_t start_byte =
-					((loff_t)tmppage->index << PAGE_SHIFT) +
+					((loff_t)पंचांगppage->index << PAGE_SHIFT) +
 					from;
 				loff_t length = to - from;
-				ocfs2_jbd2_inode_add_write(handle, inode,
+				ocfs2_jbd2_inode_add_ग_लिखो(handle, inode,
 							   start_byte, length);
-			}
-			block_commit_write(tmppage, from, to);
-		}
-	}
+			पूर्ण
+			block_commit_ग_लिखो(पंचांगppage, from, to);
+		पूर्ण
+	पूर्ण
 
-out_write_size:
-	/* Direct io do not update i_size here. */
-	if (wc->w_type != OCFS2_WRITE_DIRECT) {
+out_ग_लिखो_size:
+	/* Direct io करो not update i_size here. */
+	अगर (wc->w_type != OCFS2_WRITE_सूचीECT) अणु
 		pos += copied;
-		if (pos > i_size_read(inode)) {
-			i_size_write(inode, pos);
+		अगर (pos > i_size_पढ़ो(inode)) अणु
+			i_size_ग_लिखो(inode, pos);
 			mark_inode_dirty(inode);
-		}
+		पूर्ण
 		inode->i_blocks = ocfs2_inode_sector_count(inode);
-		di->i_size = cpu_to_le64((u64)i_size_read(inode));
-		inode->i_mtime = inode->i_ctime = current_time(inode);
-		di->i_mtime = di->i_ctime = cpu_to_le64(inode->i_mtime.tv_sec);
-		di->i_mtime_nsec = di->i_ctime_nsec = cpu_to_le32(inode->i_mtime.tv_nsec);
-		if (handle)
+		di->i_size = cpu_to_le64((u64)i_size_पढ़ो(inode));
+		inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+		di->i_mसमय = di->i_स_समय = cpu_to_le64(inode->i_mसमय.tv_sec);
+		di->i_mसमय_nsec = di->i_स_समय_nsec = cpu_to_le32(inode->i_mसमय.tv_nsec);
+		अगर (handle)
 			ocfs2_update_inode_fsync_trans(handle, inode, 1);
-	}
-	if (handle)
+	पूर्ण
+	अगर (handle)
 		ocfs2_journal_dirty(handle, wc->w_di_bh);
 
 out:
-	/* unlock pages before dealloc since it needs acquiring j_trans_barrier
-	 * lock, or it will cause a deadlock since journal commit threads holds
-	 * this lock and will ask for the page lock when flushing the data.
+	/* unlock pages beक्रमe dealloc since it needs acquiring j_trans_barrier
+	 * lock, or it will cause a deadlock since journal commit thपढ़ोs holds
+	 * this lock and will ask क्रम the page lock when flushing the data.
 	 * put it here to preserve the unlock order.
 	 */
 	ocfs2_unlock_pages(wc);
 
-	if (handle)
+	अगर (handle)
 		ocfs2_commit_trans(osb, handle);
 
 	ocfs2_run_deallocs(osb, &wc->w_dealloc);
 
-	brelse(wc->w_di_bh);
-	kfree(wc);
+	brअन्यथा(wc->w_di_bh);
+	kमुक्त(wc);
 
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
-static int ocfs2_write_end(struct file *file, struct address_space *mapping,
-			   loff_t pos, unsigned len, unsigned copied,
-			   struct page *page, void *fsdata)
-{
-	int ret;
-	struct inode *inode = mapping->host;
+अटल पूर्णांक ocfs2_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
+			   loff_t pos, अचिन्हित len, अचिन्हित copied,
+			   काष्ठा page *page, व्योम *fsdata)
+अणु
+	पूर्णांक ret;
+	काष्ठा inode *inode = mapping->host;
 
-	ret = ocfs2_write_end_nolock(mapping, pos, len, copied, fsdata);
+	ret = ocfs2_ग_लिखो_end_nolock(mapping, pos, len, copied, fsdata);
 
-	up_write(&OCFS2_I(inode)->ip_alloc_sem);
+	up_ग_लिखो(&OCFS2_I(inode)->ip_alloc_sem);
 	ocfs2_inode_unlock(inode, 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct ocfs2_dio_write_ctxt {
-	struct list_head	dw_zero_list;
-	unsigned		dw_zero_count;
-	int			dw_orphaned;
-	pid_t			dw_writer_pid;
-};
+काष्ठा ocfs2_dio_ग_लिखो_ctxt अणु
+	काष्ठा list_head	dw_zero_list;
+	अचिन्हित		dw_zero_count;
+	पूर्णांक			dw_orphaned;
+	pid_t			dw_ग_लिखोr_pid;
+पूर्ण;
 
-static struct ocfs2_dio_write_ctxt *
-ocfs2_dio_alloc_write_ctx(struct buffer_head *bh, int *alloc)
-{
-	struct ocfs2_dio_write_ctxt *dwc = NULL;
+अटल काष्ठा ocfs2_dio_ग_लिखो_ctxt *
+ocfs2_dio_alloc_ग_लिखो_ctx(काष्ठा buffer_head *bh, पूर्णांक *alloc)
+अणु
+	काष्ठा ocfs2_dio_ग_लिखो_ctxt *dwc = शून्य;
 
-	if (bh->b_private)
-		return bh->b_private;
+	अगर (bh->b_निजी)
+		वापस bh->b_निजी;
 
-	dwc = kmalloc(sizeof(struct ocfs2_dio_write_ctxt), GFP_NOFS);
-	if (dwc == NULL)
-		return NULL;
+	dwc = kदो_स्मृति(माप(काष्ठा ocfs2_dio_ग_लिखो_ctxt), GFP_NOFS);
+	अगर (dwc == शून्य)
+		वापस शून्य;
 	INIT_LIST_HEAD(&dwc->dw_zero_list);
 	dwc->dw_zero_count = 0;
 	dwc->dw_orphaned = 0;
-	dwc->dw_writer_pid = task_pid_nr(current);
-	bh->b_private = dwc;
+	dwc->dw_ग_लिखोr_pid = task_pid_nr(current);
+	bh->b_निजी = dwc;
 	*alloc = 1;
 
-	return dwc;
-}
+	वापस dwc;
+पूर्ण
 
-static void ocfs2_dio_free_write_ctx(struct inode *inode,
-				     struct ocfs2_dio_write_ctxt *dwc)
-{
-	ocfs2_free_unwritten_list(inode, &dwc->dw_zero_list);
-	kfree(dwc);
-}
+अटल व्योम ocfs2_dio_मुक्त_ग_लिखो_ctx(काष्ठा inode *inode,
+				     काष्ठा ocfs2_dio_ग_लिखो_ctxt *dwc)
+अणु
+	ocfs2_मुक्त_unwritten_list(inode, &dwc->dw_zero_list);
+	kमुक्त(dwc);
+पूर्ण
 
 /*
- * TODO: Make this into a generic get_blocks function.
+ * TODO: Make this पूर्णांकo a generic get_blocks function.
  *
- * From do_direct_io in direct-io.c:
- *  "So what we do is to permit the ->get_blocks function to populate
+ * From करो_direct_io in direct-io.c:
+ *  "So what we करो is to permit the ->get_blocks function to populate
  *   bh.b_size with the size of IO which is permitted at this offset and
  *   this i_blkbits."
  *
@@ -2126,28 +2127,28 @@ static void ocfs2_dio_free_write_ctx(struct inode *inode,
  * called like this: dio->get_blocks(dio->inode, fs_startblk,
  * 					fs_count, map_bh, dio->rw == WRITE);
  */
-static int ocfs2_dio_wr_get_block(struct inode *inode, sector_t iblock,
-			       struct buffer_head *bh_result, int create)
-{
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_write_ctxt *wc;
-	struct ocfs2_write_cluster_desc *desc = NULL;
-	struct ocfs2_dio_write_ctxt *dwc = NULL;
-	struct buffer_head *di_bh = NULL;
+अटल पूर्णांक ocfs2_dio_wr_get_block(काष्ठा inode *inode, sector_t iblock,
+			       काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_ग_लिखो_ctxt *wc;
+	काष्ठा ocfs2_ग_लिखो_cluster_desc *desc = शून्य;
+	काष्ठा ocfs2_dio_ग_लिखो_ctxt *dwc = शून्य;
+	काष्ठा buffer_head *di_bh = शून्य;
 	u64 p_blkno;
-	unsigned int i_blkbits = inode->i_sb->s_blocksize_bits;
+	अचिन्हित पूर्णांक i_blkbits = inode->i_sb->s_blocksize_bits;
 	loff_t pos = iblock << i_blkbits;
-	sector_t endblk = (i_size_read(inode) - 1) >> i_blkbits;
-	unsigned len, total_len = bh_result->b_size;
-	int ret = 0, first_get_block = 0;
+	sector_t endblk = (i_size_पढ़ो(inode) - 1) >> i_blkbits;
+	अचिन्हित len, total_len = bh_result->b_size;
+	पूर्णांक ret = 0, first_get_block = 0;
 
 	len = osb->s_clustersize - (pos & (osb->s_clustersize - 1));
 	len = min(total_len, len);
 
 	/*
-	 * bh_result->b_size is count in get_more_blocks according to write
-	 * "pos" and "end", we need map twice to return different buffer state:
+	 * bh_result->b_size is count in get_more_blocks according to ग_लिखो
+	 * "pos" and "end", we need map twice to वापस dअगरferent buffer state:
 	 * 1. area in file size, not set NEW;
 	 * 2. area out file size, set  NEW.
 	 *
@@ -2156,7 +2157,7 @@ static int ocfs2_dio_wr_get_block(struct inode *inode, sector_t iblock,
 	 * |<-------area in file------->|
 	 */
 
-	if ((iblock <= endblk) &&
+	अगर ((iblock <= endblk) &&
 	    ((iblock + ((len - 1) >> i_blkbits)) > endblk))
 		len = (endblk - iblock + 1) << i_blkbits;
 
@@ -2164,73 +2165,73 @@ static int ocfs2_dio_wr_get_block(struct inode *inode, sector_t iblock,
 			inode->i_ino, pos, len, total_len);
 
 	/*
-	 * Because we need to change file size in ocfs2_dio_end_io_write(), or
+	 * Because we need to change file size in ocfs2_dio_end_io_ग_लिखो(), or
 	 * we may need to add it to orphan dir. So can not fall to fast path
-	 * while file size will be changed.
+	 * जबतक file size will be changed.
 	 */
-	if (pos + total_len <= i_size_read(inode)) {
+	अगर (pos + total_len <= i_size_पढ़ो(inode)) अणु
 
-		/* This is the fast path for re-write. */
+		/* This is the fast path क्रम re-ग_लिखो. */
 		ret = ocfs2_lock_get_block(inode, iblock, bh_result, create);
-		if (buffer_mapped(bh_result) &&
+		अगर (buffer_mapped(bh_result) &&
 		    !buffer_new(bh_result) &&
 		    ret == 0)
-			goto out;
+			जाओ out;
 
 		/* Clear state set by ocfs2_get_block. */
 		bh_result->b_state = 0;
-	}
+	पूर्ण
 
-	dwc = ocfs2_dio_alloc_write_ctx(bh_result, &first_get_block);
-	if (unlikely(dwc == NULL)) {
+	dwc = ocfs2_dio_alloc_ग_लिखो_ctx(bh_result, &first_get_block);
+	अगर (unlikely(dwc == शून्य)) अणु
 		ret = -ENOMEM;
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	if (ocfs2_clusters_for_bytes(inode->i_sb, pos + total_len) >
-	    ocfs2_clusters_for_bytes(inode->i_sb, i_size_read(inode)) &&
-	    !dwc->dw_orphaned) {
+	अगर (ocfs2_clusters_क्रम_bytes(inode->i_sb, pos + total_len) >
+	    ocfs2_clusters_क्रम_bytes(inode->i_sb, i_size_पढ़ो(inode)) &&
+	    !dwc->dw_orphaned) अणु
 		/*
 		 * when we are going to alloc extents beyond file size, add the
 		 * inode to orphan dir, so we can recall those spaces when
-		 * system crashed during write.
+		 * प्रणाली crashed during ग_लिखो.
 		 */
 		ret = ocfs2_add_inode_to_orphan(osb, inode);
-		if (ret < 0) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 		dwc->dw_orphaned = 1;
-	}
+	पूर्ण
 
 	ret = ocfs2_inode_lock(inode, &di_bh, 1);
-	if (ret) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	down_write(&oi->ip_alloc_sem);
+	करोwn_ग_लिखो(&oi->ip_alloc_sem);
 
-	if (first_get_block) {
-		if (ocfs2_sparse_alloc(osb))
+	अगर (first_get_block) अणु
+		अगर (ocfs2_sparse_alloc(osb))
 			ret = ocfs2_zero_tail(inode, di_bh, pos);
-		else
+		अन्यथा
 			ret = ocfs2_expand_nonsparse_inode(inode, di_bh, pos,
-							   total_len, NULL);
-		if (ret < 0) {
-			mlog_errno(ret);
-			goto unlock;
-		}
-	}
+							   total_len, शून्य);
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
-	ret = ocfs2_write_begin_nolock(inode->i_mapping, pos, len,
-				       OCFS2_WRITE_DIRECT, NULL,
-				       (void **)&wc, di_bh, NULL);
-	if (ret) {
-		mlog_errno(ret);
-		goto unlock;
-	}
+	ret = ocfs2_ग_लिखो_begin_nolock(inode->i_mapping, pos, len,
+				       OCFS2_WRITE_सूचीECT, शून्य,
+				       (व्योम **)&wc, di_bh, शून्य);
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ unlock;
+	पूर्ण
 
 	desc = &wc->w_desc[0];
 
@@ -2240,21 +2241,21 @@ static int ocfs2_dio_wr_get_block(struct inode *inode, sector_t iblock,
 
 	map_bh(bh_result, inode->i_sb, p_blkno);
 	bh_result->b_size = len;
-	if (desc->c_needs_zero)
+	अगर (desc->c_needs_zero)
 		set_buffer_new(bh_result);
 
-	if (iblock > endblk)
+	अगर (iblock > endblk)
 		set_buffer_new(bh_result);
 
 	/* May sleep in end_io. It should not happen in a irq context. So defer
 	 * it to dio work queue. */
 	set_buffer_defer_completion(bh_result);
 
-	if (!list_empty(&wc->w_unwritten_list)) {
-		struct ocfs2_unwritten_extent *ue = NULL;
+	अगर (!list_empty(&wc->w_unwritten_list)) अणु
+		काष्ठा ocfs2_unwritten_extent *ue = शून्य;
 
 		ue = list_first_entry(&wc->w_unwritten_list,
-				      struct ocfs2_unwritten_extent,
+				      काष्ठा ocfs2_unwritten_extent,
 				      ue_node);
 		BUG_ON(ue->ue_cpos != desc->c_cpos);
 		/* The physical address may be 0, fill it. */
@@ -2262,208 +2263,208 @@ static int ocfs2_dio_wr_get_block(struct inode *inode, sector_t iblock,
 
 		list_splice_tail_init(&wc->w_unwritten_list, &dwc->dw_zero_list);
 		dwc->dw_zero_count += wc->w_unwritten_count;
-	}
+	पूर्ण
 
-	ret = ocfs2_write_end_nolock(inode->i_mapping, pos, len, len, wc);
+	ret = ocfs2_ग_लिखो_end_nolock(inode->i_mapping, pos, len, len, wc);
 	BUG_ON(ret != len);
 	ret = 0;
 unlock:
-	up_write(&oi->ip_alloc_sem);
+	up_ग_लिखो(&oi->ip_alloc_sem);
 	ocfs2_inode_unlock(inode, 1);
-	brelse(di_bh);
+	brअन्यथा(di_bh);
 out:
-	if (ret < 0)
+	अगर (ret < 0)
 		ret = -EIO;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_dio_end_io_write(struct inode *inode,
-				  struct ocfs2_dio_write_ctxt *dwc,
+अटल पूर्णांक ocfs2_dio_end_io_ग_लिखो(काष्ठा inode *inode,
+				  काष्ठा ocfs2_dio_ग_लिखो_ctxt *dwc,
 				  loff_t offset,
-				  ssize_t bytes)
-{
-	struct ocfs2_cached_dealloc_ctxt dealloc;
-	struct ocfs2_extent_tree et;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_unwritten_extent *ue = NULL;
-	struct buffer_head *di_bh = NULL;
-	struct ocfs2_dinode *di;
-	struct ocfs2_alloc_context *data_ac = NULL;
-	struct ocfs2_alloc_context *meta_ac = NULL;
-	handle_t *handle = NULL;
+				  sमाप_प्रकार bytes)
+अणु
+	काष्ठा ocfs2_cached_dealloc_ctxt dealloc;
+	काष्ठा ocfs2_extent_tree et;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_unwritten_extent *ue = शून्य;
+	काष्ठा buffer_head *di_bh = शून्य;
+	काष्ठा ocfs2_dinode *di;
+	काष्ठा ocfs2_alloc_context *data_ac = शून्य;
+	काष्ठा ocfs2_alloc_context *meta_ac = शून्य;
+	handle_t *handle = शून्य;
 	loff_t end = offset + bytes;
-	int ret = 0, credits = 0;
+	पूर्णांक ret = 0, credits = 0;
 
 	ocfs2_init_dealloc_ctxt(&dealloc);
 
-	/* We do clear unwritten, delete orphan, change i_size here. If neither
+	/* We करो clear unwritten, delete orphan, change i_size here. If neither
 	 * of these happen, we can skip all this. */
-	if (list_empty(&dwc->dw_zero_list) &&
-	    end <= i_size_read(inode) &&
+	अगर (list_empty(&dwc->dw_zero_list) &&
+	    end <= i_size_पढ़ो(inode) &&
 	    !dwc->dw_orphaned)
-		goto out;
+		जाओ out;
 
 	ret = ocfs2_inode_lock(inode, &di_bh, 1);
-	if (ret < 0) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret < 0) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	down_write(&oi->ip_alloc_sem);
+	करोwn_ग_लिखो(&oi->ip_alloc_sem);
 
-	/* Delete orphan before acquire i_mutex. */
-	if (dwc->dw_orphaned) {
-		BUG_ON(dwc->dw_writer_pid != task_pid_nr(current));
+	/* Delete orphan beक्रमe acquire i_mutex. */
+	अगर (dwc->dw_orphaned) अणु
+		BUG_ON(dwc->dw_ग_लिखोr_pid != task_pid_nr(current));
 
-		end = end > i_size_read(inode) ? end : 0;
+		end = end > i_size_पढ़ो(inode) ? end : 0;
 
 		ret = ocfs2_del_inode_from_orphan(osb, inode, di_bh,
 				!!end, end);
-		if (ret < 0)
-			mlog_errno(ret);
-	}
+		अगर (ret < 0)
+			mlog_त्रुटि_सं(ret);
+	पूर्ण
 
-	di = (struct ocfs2_dinode *)di_bh->b_data;
+	di = (काष्ठा ocfs2_dinode *)di_bh->b_data;
 
 	ocfs2_init_dinode_extent_tree(&et, INODE_CACHE(inode), di_bh);
 
-	/* Attach dealloc with extent tree in case that we may reuse extents
-	 * which are already unlinked from current extent tree due to extent
+	/* Attach dealloc with extent tree in हाल that we may reuse extents
+	 * which are alपढ़ोy unlinked from current extent tree due to extent
 	 * rotation and merging.
 	 */
 	et.et_dealloc = &dealloc;
 
 	ret = ocfs2_lock_allocators(inode, &et, 0, dwc->dw_zero_count*2,
 				    &data_ac, &meta_ac);
-	if (ret) {
-		mlog_errno(ret);
-		goto unlock;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ unlock;
+	पूर्ण
 
 	credits = ocfs2_calc_extend_credits(inode->i_sb, &di->id2.i_list);
 
 	handle = ocfs2_start_trans(osb, credits);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		ret = PTR_ERR(handle);
-		mlog_errno(ret);
-		goto unlock;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ unlock;
+	पूर्ण
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), di_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	if (ret) {
-		mlog_errno(ret);
-		goto commit;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ commit;
+	पूर्ण
 
-	list_for_each_entry(ue, &dwc->dw_zero_list, ue_node) {
+	list_क्रम_each_entry(ue, &dwc->dw_zero_list, ue_node) अणु
 		ret = ocfs2_mark_extent_written(inode, &et, handle,
 						ue->ue_cpos, 1,
 						ue->ue_phys,
 						meta_ac, &dealloc);
-		if (ret < 0) {
-			mlog_errno(ret);
-			break;
-		}
-	}
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (end > i_size_read(inode)) {
+	अगर (end > i_size_पढ़ो(inode)) अणु
 		ret = ocfs2_set_inode_size(handle, inode, di_bh, end);
-		if (ret < 0)
-			mlog_errno(ret);
-	}
+		अगर (ret < 0)
+			mlog_त्रुटि_सं(ret);
+	पूर्ण
 commit:
 	ocfs2_commit_trans(osb, handle);
 unlock:
-	up_write(&oi->ip_alloc_sem);
+	up_ग_लिखो(&oi->ip_alloc_sem);
 	ocfs2_inode_unlock(inode, 1);
-	brelse(di_bh);
+	brअन्यथा(di_bh);
 out:
-	if (data_ac)
-		ocfs2_free_alloc_context(data_ac);
-	if (meta_ac)
-		ocfs2_free_alloc_context(meta_ac);
+	अगर (data_ac)
+		ocfs2_मुक्त_alloc_context(data_ac);
+	अगर (meta_ac)
+		ocfs2_मुक्त_alloc_context(meta_ac);
 	ocfs2_run_deallocs(osb, &dealloc);
-	ocfs2_dio_free_write_ctx(inode, dwc);
+	ocfs2_dio_मुक्त_ग_लिखो_ctx(inode, dwc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * ocfs2_dio_end_io is called by the dio core when a dio is finished.  We're
- * particularly interested in the aio/dio case.  We use the rw_lock DLM lock
+ * particularly पूर्णांकerested in the aio/dio हाल.  We use the rw_lock DLM lock
  * to protect io on one node from truncation on another.
  */
-static int ocfs2_dio_end_io(struct kiocb *iocb,
+अटल पूर्णांक ocfs2_dio_end_io(काष्ठा kiocb *iocb,
 			    loff_t offset,
-			    ssize_t bytes,
-			    void *private)
-{
-	struct inode *inode = file_inode(iocb->ki_filp);
-	int level;
-	int ret = 0;
+			    sमाप_प्रकार bytes,
+			    व्योम *निजी)
+अणु
+	काष्ठा inode *inode = file_inode(iocb->ki_filp);
+	पूर्णांक level;
+	पूर्णांक ret = 0;
 
-	/* this io's submitter should not have unlocked this before we could */
+	/* this io's submitter should not have unlocked this beक्रमe we could */
 	BUG_ON(!ocfs2_iocb_is_rw_locked(iocb));
 
-	if (bytes <= 0)
+	अगर (bytes <= 0)
 		mlog_ratelimited(ML_ERROR, "Direct IO failed, bytes = %lld",
-				 (long long)bytes);
-	if (private) {
-		if (bytes > 0)
-			ret = ocfs2_dio_end_io_write(inode, private, offset,
+				 (दीर्घ दीर्घ)bytes);
+	अगर (निजी) अणु
+		अगर (bytes > 0)
+			ret = ocfs2_dio_end_io_ग_लिखो(inode, निजी, offset,
 						     bytes);
-		else
-			ocfs2_dio_free_write_ctx(inode, private);
-	}
+		अन्यथा
+			ocfs2_dio_मुक्त_ग_लिखो_ctx(inode, निजी);
+	पूर्ण
 
 	ocfs2_iocb_clear_rw_locked(iocb);
 
 	level = ocfs2_iocb_rw_locked_level(iocb);
 	ocfs2_rw_unlock(inode, level);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ocfs2_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
-{
-	struct file *file = iocb->ki_filp;
-	struct inode *inode = file->f_mapping->host;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अटल sमाप_प्रकार ocfs2_direct_IO(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा inode *inode = file->f_mapping->host;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 	get_block_t *get_block;
 
 	/*
-	 * Fallback to buffered I/O if we see an inode without
+	 * Fallback to buffered I/O अगर we see an inode without
 	 * extents.
 	 */
-	if (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL)
-		return 0;
+	अगर (OCFS2_I(inode)->ip_dyn_features & OCFS2_INLINE_DATA_FL)
+		वापस 0;
 
-	/* Fallback to buffered I/O if we do not support append dio. */
-	if (iocb->ki_pos + iter->count > i_size_read(inode) &&
+	/* Fallback to buffered I/O अगर we करो not support append dio. */
+	अगर (iocb->ki_pos + iter->count > i_size_पढ़ो(inode) &&
 	    !ocfs2_supports_append_dio(osb))
-		return 0;
+		वापस 0;
 
-	if (iov_iter_rw(iter) == READ)
+	अगर (iov_iter_rw(iter) == READ)
 		get_block = ocfs2_lock_get_block;
-	else
+	अन्यथा
 		get_block = ocfs2_dio_wr_get_block;
 
-	return __blockdev_direct_IO(iocb, inode, inode->i_sb->s_bdev,
+	वापस __blockdev_direct_IO(iocb, inode, inode->i_sb->s_bdev,
 				    iter, get_block,
-				    ocfs2_dio_end_io, NULL, 0);
-}
+				    ocfs2_dio_end_io, शून्य, 0);
+पूर्ण
 
-const struct address_space_operations ocfs2_aops = {
-	.readpage		= ocfs2_readpage,
-	.readahead		= ocfs2_readahead,
-	.writepage		= ocfs2_writepage,
-	.write_begin		= ocfs2_write_begin,
-	.write_end		= ocfs2_write_end,
+स्थिर काष्ठा address_space_operations ocfs2_aops = अणु
+	.पढ़ोpage		= ocfs2_पढ़ोpage,
+	.पढ़ोahead		= ocfs2_पढ़ोahead,
+	.ग_लिखोpage		= ocfs2_ग_लिखोpage,
+	.ग_लिखो_begin		= ocfs2_ग_लिखो_begin,
+	.ग_लिखो_end		= ocfs2_ग_लिखो_end,
 	.bmap			= ocfs2_bmap,
 	.direct_IO		= ocfs2_direct_IO,
 	.invalidatepage		= block_invalidatepage,
 	.releasepage		= ocfs2_releasepage,
 	.migratepage		= buffer_migrate_page,
 	.is_partially_uptodate	= block_is_partially_uptodate,
-	.error_remove_page	= generic_error_remove_page,
-};
+	.error_हटाओ_page	= generic_error_हटाओ_page,
+पूर्ण;

@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PXA3XX_GCU_H__
-#define __PXA3XX_GCU_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PXA3XX_GCU_H__
+#घोषणा __PXA3XX_GCU_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* Number of 32bit words in display list (ring buffer). */
-#define PXA3XX_GCU_BUFFER_WORDS  ((256 * 1024 - 256) / 4)
+#घोषणा PXA3XX_GCU_BUFFER_WORDS  ((256 * 1024 - 256) / 4)
 
-/* To be increased when breaking the ABI */
-#define PXA3XX_GCU_SHARED_MAGIC  0x30000001
+/* To be increased when अवरोधing the ABI */
+#घोषणा PXA3XX_GCU_SHARED_MAGIC  0x30000001
 
-#define PXA3XX_GCU_BATCH_WORDS   8192
+#घोषणा PXA3XX_GCU_BATCH_WORDS   8192
 
-struct pxa3xx_gcu_shared {
+काष्ठा pxa3xx_gcu_shared अणु
 	u32            buffer[PXA3XX_GCU_BUFFER_WORDS];
 
 	bool           hw_running;
 
-	unsigned long  buffer_phys;
+	अचिन्हित दीर्घ  buffer_phys;
 
-	unsigned int   num_words;
-	unsigned int   num_writes;
-	unsigned int   num_done;
-	unsigned int   num_interrupts;
-	unsigned int   num_wait_idle;
-	unsigned int   num_wait_free;
-	unsigned int   num_idle;
+	अचिन्हित पूर्णांक   num_words;
+	अचिन्हित पूर्णांक   num_ग_लिखोs;
+	अचिन्हित पूर्णांक   num_करोne;
+	अचिन्हित पूर्णांक   num_पूर्णांकerrupts;
+	अचिन्हित पूर्णांक   num_रुको_idle;
+	अचिन्हित पूर्णांक   num_रुको_मुक्त;
+	अचिन्हित पूर्णांक   num_idle;
 
 	u32            magic;
-};
+पूर्ण;
 
 /* Initialization and synchronization.
- * Hardware is started upon write(). */
-#define PXA3XX_GCU_IOCTL_RESET		_IO('G', 0)
-#define PXA3XX_GCU_IOCTL_WAIT_IDLE	_IO('G', 2)
+ * Hardware is started upon ग_लिखो(). */
+#घोषणा PXA3XX_GCU_IOCTL_RESET		_IO('G', 0)
+#घोषणा PXA3XX_GCU_IOCTL_WAIT_IDLE	_IO('G', 2)
 
-#endif /* __PXA3XX_GCU_H__ */
+#पूर्ण_अगर /* __PXA3XX_GCU_H__ */
 

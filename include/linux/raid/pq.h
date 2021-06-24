@@ -1,197 +1,198 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright 2003 H. Peter Anvin - All Rights Reserved
  *
  * ----------------------------------------------------------------------- */
 
-#ifndef LINUX_RAID_RAID6_H
-#define LINUX_RAID_RAID6_H
+#अगर_अघोषित LINUX_RAID_RAID6_H
+#घोषणा LINUX_RAID_RAID6_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
 /* Set to 1 to use kernel-wide empty_zero_page */
-#define RAID6_USE_EMPTY_ZERO_PAGE 0
-#include <linux/blkdev.h>
+#घोषणा RAID6_USE_EMPTY_ZERO_PAGE 0
+#समावेश <linux/blkdev.h>
 
-/* We need a pre-zeroed page... if we don't want to use the kernel-provided
+/* We need a pre-zeroed page... अगर we करोn't want to use the kernel-provided
    one define it here */
-#if RAID6_USE_EMPTY_ZERO_PAGE
+#अगर RAID6_USE_EMPTY_ZERO_PAGE
 # define raid6_empty_zero_page empty_zero_page
-#else
-extern const char raid6_empty_zero_page[PAGE_SIZE];
-#endif
+#अन्यथा
+बाह्य स्थिर अक्षर raid6_empty_zero_page[PAGE_SIZE];
+#पूर्ण_अगर
 
-#else /* ! __KERNEL__ */
-/* Used for testing in user space */
+#अन्यथा /* ! __KERNEL__ */
+/* Used क्रम testing in user space */
 
-#include <errno.h>
-#include <inttypes.h>
-#include <stddef.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/time.h>
-#include <sys/types.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानकघोष.स>
+#समावेश <माला.स>
+#समावेश <sys/mman.h>
+#समावेश <sys/समय.स>
+#समावेश <sys/types.h>
 
 /* Not standard, but glibc defines it */
-#define BITS_PER_LONG __WORDSIZE
+#घोषणा BITS_PER_LONG __WORDSIZE
 
-typedef uint8_t  u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
+प्रकार uपूर्णांक8_t  u8;
+प्रकार uपूर्णांक16_t u16;
+प्रकार uपूर्णांक32_t u32;
+प्रकार uपूर्णांक64_t u64;
 
-#ifndef PAGE_SIZE
+#अगर_अघोषित PAGE_SIZE
 # define PAGE_SIZE 4096
-#endif
-#ifndef PAGE_SHIFT
+#पूर्ण_अगर
+#अगर_अघोषित PAGE_SHIFT
 # define PAGE_SHIFT 12
-#endif
-extern const char raid6_empty_zero_page[PAGE_SIZE];
+#पूर्ण_अगर
+बाह्य स्थिर अक्षर raid6_empty_zero_page[PAGE_SIZE];
 
-#define __init
-#define __exit
-#ifndef __attribute_const__
-# define __attribute_const__ __attribute__((const))
-#endif
-#define noinline __attribute__((noinline))
+#घोषणा __init
+#घोषणा __निकास
+#अगर_अघोषित __attribute_स्थिर__
+# define __attribute_स्थिर__ __attribute__((स्थिर))
+#पूर्ण_अगर
+#घोषणा noअंतरभूत __attribute__((noअंतरभूत))
 
-#define preempt_enable()
-#define preempt_disable()
-#define cpu_has_feature(x) 1
-#define enable_kernel_altivec()
-#define disable_kernel_altivec()
+#घोषणा preempt_enable()
+#घोषणा preempt_disable()
+#घोषणा cpu_has_feature(x) 1
+#घोषणा enable_kernel_altivec()
+#घोषणा disable_kernel_altivec()
 
-#undef	EXPORT_SYMBOL
-#define EXPORT_SYMBOL(sym)
-#undef	EXPORT_SYMBOL_GPL
-#define EXPORT_SYMBOL_GPL(sym)
-#define MODULE_LICENSE(licence)
-#define MODULE_DESCRIPTION(desc)
-#define subsys_initcall(x)
-#define module_exit(x)
+#अघोषित	EXPORT_SYMBOL
+#घोषणा EXPORT_SYMBOL(sym)
+#अघोषित	EXPORT_SYMBOL_GPL
+#घोषणा EXPORT_SYMBOL_GPL(sym)
+#घोषणा MODULE_LICENSE(licence)
+#घोषणा MODULE_DESCRIPTION(desc)
+#घोषणा subsys_initcall(x)
+#घोषणा module_निकास(x)
 
-#define IS_ENABLED(x) (x)
-#define CONFIG_RAID6_PQ_BENCHMARK 1
-#endif /* __KERNEL__ */
+#घोषणा IS_ENABLED(x) (x)
+#घोषणा CONFIG_RAID6_PQ_BENCHMARK 1
+#पूर्ण_अगर /* __KERNEL__ */
 
 /* Routine choices */
-struct raid6_calls {
-	void (*gen_syndrome)(int, size_t, void **);
-	void (*xor_syndrome)(int, int, int, size_t, void **);
-	int  (*valid)(void);	/* Returns 1 if this routine set is usable */
-	const char *name;	/* Name of this routine set */
-	int prefer;		/* Has special performance attribute */
-};
+काष्ठा raid6_calls अणु
+	व्योम (*gen_syndrome)(पूर्णांक, माप_प्रकार, व्योम **);
+	व्योम (*xor_syndrome)(पूर्णांक, पूर्णांक, पूर्णांक, माप_प्रकार, व्योम **);
+	पूर्णांक  (*valid)(व्योम);	/* Returns 1 अगर this routine set is usable */
+	स्थिर अक्षर *name;	/* Name of this routine set */
+	पूर्णांक prefer;		/* Has special perक्रमmance attribute */
+पूर्ण;
 
 /* Selected algorithm */
-extern struct raid6_calls raid6_call;
+बाह्य काष्ठा raid6_calls raid6_call;
 
 /* Various routine sets */
-extern const struct raid6_calls raid6_intx1;
-extern const struct raid6_calls raid6_intx2;
-extern const struct raid6_calls raid6_intx4;
-extern const struct raid6_calls raid6_intx8;
-extern const struct raid6_calls raid6_intx16;
-extern const struct raid6_calls raid6_intx32;
-extern const struct raid6_calls raid6_mmxx1;
-extern const struct raid6_calls raid6_mmxx2;
-extern const struct raid6_calls raid6_sse1x1;
-extern const struct raid6_calls raid6_sse1x2;
-extern const struct raid6_calls raid6_sse2x1;
-extern const struct raid6_calls raid6_sse2x2;
-extern const struct raid6_calls raid6_sse2x4;
-extern const struct raid6_calls raid6_altivec1;
-extern const struct raid6_calls raid6_altivec2;
-extern const struct raid6_calls raid6_altivec4;
-extern const struct raid6_calls raid6_altivec8;
-extern const struct raid6_calls raid6_avx2x1;
-extern const struct raid6_calls raid6_avx2x2;
-extern const struct raid6_calls raid6_avx2x4;
-extern const struct raid6_calls raid6_avx512x1;
-extern const struct raid6_calls raid6_avx512x2;
-extern const struct raid6_calls raid6_avx512x4;
-extern const struct raid6_calls raid6_s390vx8;
-extern const struct raid6_calls raid6_vpermxor1;
-extern const struct raid6_calls raid6_vpermxor2;
-extern const struct raid6_calls raid6_vpermxor4;
-extern const struct raid6_calls raid6_vpermxor8;
+बाह्य स्थिर काष्ठा raid6_calls raid6_पूर्णांकx1;
+बाह्य स्थिर काष्ठा raid6_calls raid6_पूर्णांकx2;
+बाह्य स्थिर काष्ठा raid6_calls raid6_पूर्णांकx4;
+बाह्य स्थिर काष्ठा raid6_calls raid6_पूर्णांकx8;
+बाह्य स्थिर काष्ठा raid6_calls raid6_पूर्णांकx16;
+बाह्य स्थिर काष्ठा raid6_calls raid6_पूर्णांकx32;
+बाह्य स्थिर काष्ठा raid6_calls raid6_mmxx1;
+बाह्य स्थिर काष्ठा raid6_calls raid6_mmxx2;
+बाह्य स्थिर काष्ठा raid6_calls raid6_sse1x1;
+बाह्य स्थिर काष्ठा raid6_calls raid6_sse1x2;
+बाह्य स्थिर काष्ठा raid6_calls raid6_sse2x1;
+बाह्य स्थिर काष्ठा raid6_calls raid6_sse2x2;
+बाह्य स्थिर काष्ठा raid6_calls raid6_sse2x4;
+बाह्य स्थिर काष्ठा raid6_calls raid6_altivec1;
+बाह्य स्थिर काष्ठा raid6_calls raid6_altivec2;
+बाह्य स्थिर काष्ठा raid6_calls raid6_altivec4;
+बाह्य स्थिर काष्ठा raid6_calls raid6_altivec8;
+बाह्य स्थिर काष्ठा raid6_calls raid6_avx2x1;
+बाह्य स्थिर काष्ठा raid6_calls raid6_avx2x2;
+बाह्य स्थिर काष्ठा raid6_calls raid6_avx2x4;
+बाह्य स्थिर काष्ठा raid6_calls raid6_avx512x1;
+बाह्य स्थिर काष्ठा raid6_calls raid6_avx512x2;
+बाह्य स्थिर काष्ठा raid6_calls raid6_avx512x4;
+बाह्य स्थिर काष्ठा raid6_calls raid6_s390vx8;
+बाह्य स्थिर काष्ठा raid6_calls raid6_vpermxor1;
+बाह्य स्थिर काष्ठा raid6_calls raid6_vpermxor2;
+बाह्य स्थिर काष्ठा raid6_calls raid6_vpermxor4;
+बाह्य स्थिर काष्ठा raid6_calls raid6_vpermxor8;
 
-struct raid6_recov_calls {
-	void (*data2)(int, size_t, int, int, void **);
-	void (*datap)(int, size_t, int, void **);
-	int  (*valid)(void);
-	const char *name;
-	int priority;
-};
+काष्ठा raid6_recov_calls अणु
+	व्योम (*data2)(पूर्णांक, माप_प्रकार, पूर्णांक, पूर्णांक, व्योम **);
+	व्योम (*datap)(पूर्णांक, माप_प्रकार, पूर्णांक, व्योम **);
+	पूर्णांक  (*valid)(व्योम);
+	स्थिर अक्षर *name;
+	पूर्णांक priority;
+पूर्ण;
 
-extern const struct raid6_recov_calls raid6_recov_intx1;
-extern const struct raid6_recov_calls raid6_recov_ssse3;
-extern const struct raid6_recov_calls raid6_recov_avx2;
-extern const struct raid6_recov_calls raid6_recov_avx512;
-extern const struct raid6_recov_calls raid6_recov_s390xc;
-extern const struct raid6_recov_calls raid6_recov_neon;
+बाह्य स्थिर काष्ठा raid6_recov_calls raid6_recov_पूर्णांकx1;
+बाह्य स्थिर काष्ठा raid6_recov_calls raid6_recov_ssse3;
+बाह्य स्थिर काष्ठा raid6_recov_calls raid6_recov_avx2;
+बाह्य स्थिर काष्ठा raid6_recov_calls raid6_recov_avx512;
+बाह्य स्थिर काष्ठा raid6_recov_calls raid6_recov_s390xc;
+बाह्य स्थिर काष्ठा raid6_recov_calls raid6_recov_neon;
 
-extern const struct raid6_calls raid6_neonx1;
-extern const struct raid6_calls raid6_neonx2;
-extern const struct raid6_calls raid6_neonx4;
-extern const struct raid6_calls raid6_neonx8;
+बाह्य स्थिर काष्ठा raid6_calls raid6_neonx1;
+बाह्य स्थिर काष्ठा raid6_calls raid6_neonx2;
+बाह्य स्थिर काष्ठा raid6_calls raid6_neonx4;
+बाह्य स्थिर काष्ठा raid6_calls raid6_neonx8;
 
 /* Algorithm list */
-extern const struct raid6_calls * const raid6_algos[];
-extern const struct raid6_recov_calls *const raid6_recov_algos[];
-int raid6_select_algo(void);
+बाह्य स्थिर काष्ठा raid6_calls * स्थिर raid6_algos[];
+बाह्य स्थिर काष्ठा raid6_recov_calls *स्थिर raid6_recov_algos[];
+पूर्णांक raid6_select_algo(व्योम);
 
 /* Return values from chk_syndrome */
-#define RAID6_OK	0
-#define RAID6_P_BAD	1
-#define RAID6_Q_BAD	2
-#define RAID6_PQ_BAD	3
+#घोषणा RAID6_OK	0
+#घोषणा RAID6_P_BAD	1
+#घोषणा RAID6_Q_BAD	2
+#घोषणा RAID6_PQ_BAD	3
 
 /* Galois field tables */
-extern const u8 raid6_gfmul[256][256] __attribute__((aligned(256)));
-extern const u8 raid6_vgfmul[256][32] __attribute__((aligned(256)));
-extern const u8 raid6_gfexp[256]      __attribute__((aligned(256)));
-extern const u8 raid6_gflog[256]      __attribute__((aligned(256)));
-extern const u8 raid6_gfinv[256]      __attribute__((aligned(256)));
-extern const u8 raid6_gfexi[256]      __attribute__((aligned(256)));
+बाह्य स्थिर u8 raid6_gfmul[256][256] __attribute__((aligned(256)));
+बाह्य स्थिर u8 raid6_vgfmul[256][32] __attribute__((aligned(256)));
+बाह्य स्थिर u8 raid6_gfexp[256]      __attribute__((aligned(256)));
+बाह्य स्थिर u8 raid6_gflog[256]      __attribute__((aligned(256)));
+बाह्य स्थिर u8 raid6_gfinv[256]      __attribute__((aligned(256)));
+बाह्य स्थिर u8 raid6_gfexi[256]      __attribute__((aligned(256)));
 
 /* Recovery routines */
-extern void (*raid6_2data_recov)(int disks, size_t bytes, int faila, int failb,
-		       void **ptrs);
-extern void (*raid6_datap_recov)(int disks, size_t bytes, int faila,
-			void **ptrs);
-void raid6_dual_recov(int disks, size_t bytes, int faila, int failb,
-		      void **ptrs);
+बाह्य व्योम (*raid6_2data_recov)(पूर्णांक disks, माप_प्रकार bytes, पूर्णांक faila, पूर्णांक failb,
+		       व्योम **ptrs);
+बाह्य व्योम (*raid6_datap_recov)(पूर्णांक disks, माप_प्रकार bytes, पूर्णांक faila,
+			व्योम **ptrs);
+व्योम raid6_dual_recov(पूर्णांक disks, माप_प्रकार bytes, पूर्णांक faila, पूर्णांक failb,
+		      व्योम **ptrs);
 
-/* Some definitions to allow code to be compiled for testing in userspace */
-#ifndef __KERNEL__
+/* Some definitions to allow code to be compiled क्रम testing in userspace */
+#अगर_अघोषित __KERNEL__
 
-# define jiffies	raid6_jiffies()
-# define printk 	printf
-# define pr_err(format, ...) fprintf(stderr, format, ## __VA_ARGS__)
-# define pr_info(format, ...) fprintf(stdout, format, ## __VA_ARGS__)
+# define jअगरfies	raid6_jअगरfies()
+# define prपूर्णांकk 	म_लिखो
+# define pr_err(क्रमmat, ...) ख_लिखो(मानक_त्रुटि, क्रमmat, ## __VA_ARGS__)
+# define pr_info(क्रमmat, ...) ख_लिखो(मानक_निकास, क्रमmat, ## __VA_ARGS__)
 # define GFP_KERNEL	0
-# define __get_free_pages(x, y)	((unsigned long)mmap(NULL, PAGE_SIZE << (y), \
+# define __get_मुक्त_pages(x, y)	((अचिन्हित दीर्घ)mmap(शून्य, PAGE_SIZE << (y), \
 						     PROT_READ|PROT_WRITE,   \
 						     MAP_PRIVATE|MAP_ANONYMOUS,\
 						     0, 0))
-# define free_pages(x, y)	munmap((void *)(x), PAGE_SIZE << (y))
+# define मुक्त_pages(x, y)	munmap((व्योम *)(x), PAGE_SIZE << (y))
 
-static inline void cpu_relax(void)
-{
+अटल अंतरभूत व्योम cpu_relax(व्योम)
+अणु
 	/* Nothing */
-}
+पूर्ण
 
-#undef  HZ
-#define HZ 1000
-static inline uint32_t raid6_jiffies(void)
-{
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return tv.tv_sec*1000 + tv.tv_usec/1000;
-}
+#अघोषित  HZ
+#घोषणा HZ 1000
+अटल अंतरभूत uपूर्णांक32_t raid6_jअगरfies(व्योम)
+अणु
+	काष्ठा समयval tv;
+	समय_लोofday(&tv, शून्य);
+	वापस tv.tv_sec*1000 + tv.tv_usec/1000;
+पूर्ण
 
-#endif /* ! __KERNEL__ */
+#पूर्ण_अगर /* ! __KERNEL__ */
 
-#endif /* LINUX_RAID_RAID6_H */
+#पूर्ण_अगर /* LINUX_RAID_RAID6_H */

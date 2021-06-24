@@ -1,172 +1,173 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_MPSPEC_DEF_H
-#define _ASM_X86_MPSPEC_DEF_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_MPSPEC_DEF_H
+#घोषणा _ASM_X86_MPSPEC_DEF_H
 
 /*
- * Structure definitions for SMP machines following the
- * Intel Multiprocessing Specification 1.1 and 1.4.
+ * Structure definitions क्रम SMP machines following the
+ * Intel Multiprocessing Specअगरication 1.1 and 1.4.
  */
 
 /*
- * This tag identifies where the SMP configuration
- * information is.
+ * This tag identअगरies where the SMP configuration
+ * inक्रमmation is.
  */
 
-#define SMP_MAGIC_IDENT	(('_'<<24) | ('P'<<16) | ('M'<<8) | '_')
+#घोषणा SMP_MAGIC_IDENT	(('_'<<24) | ('P'<<16) | ('M'<<8) | '_')
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 # define MAX_MPC_ENTRY 1024
-#endif
+#पूर्ण_अगर
 
-/* Intel MP Floating Pointer Structure */
-struct mpf_intel {
-	char signature[4];		/* "_MP_"			*/
-	unsigned int physptr;		/* Configuration table address	*/
-	unsigned char length;		/* Our length (paragraphs)	*/
-	unsigned char specification;	/* Specification version	*/
-	unsigned char checksum;		/* Checksum (makes sum 0)	*/
-	unsigned char feature1;		/* Standard or configuration ?	*/
-	unsigned char feature2;		/* Bit7 set for IMCR|PIC	*/
-	unsigned char feature3;		/* Unused (0)			*/
-	unsigned char feature4;		/* Unused (0)			*/
-	unsigned char feature5;		/* Unused (0)			*/
-};
+/* Intel MP Floating Poपूर्णांकer Structure */
+काष्ठा mpf_पूर्णांकel अणु
+	अक्षर signature[4];		/* "_MP_"			*/
+	अचिन्हित पूर्णांक physptr;		/* Configuration table address	*/
+	अचिन्हित अक्षर length;		/* Our length (paragraphs)	*/
+	अचिन्हित अक्षर specअगरication;	/* Specअगरication version	*/
+	अचिन्हित अक्षर checksum;		/* Checksum (makes sum 0)	*/
+	अचिन्हित अक्षर feature1;		/* Standard or configuration ?	*/
+	अचिन्हित अक्षर feature2;		/* Bit7 set क्रम IMCR|PIC	*/
+	अचिन्हित अक्षर feature3;		/* Unused (0)			*/
+	अचिन्हित अक्षर feature4;		/* Unused (0)			*/
+	अचिन्हित अक्षर feature5;		/* Unused (0)			*/
+पूर्ण;
 
-#define MPC_SIGNATURE "PCMP"
+#घोषणा MPC_SIGNATURE "PCMP"
 
-struct mpc_table {
-	char signature[4];
-	unsigned short length;		/* Size of table */
-	char spec;			/* 0x01 */
-	char checksum;
-	char oem[8];
-	char productid[12];
-	unsigned int oemptr;		/* 0 if not present */
-	unsigned short oemsize;		/* 0 if not present */
-	unsigned short oemcount;
-	unsigned int lapic;		/* APIC address */
-	unsigned int reserved;
-};
+काष्ठा mpc_table अणु
+	अक्षर signature[4];
+	अचिन्हित लघु length;		/* Size of table */
+	अक्षर spec;			/* 0x01 */
+	अक्षर checksum;
+	अक्षर oem[8];
+	अक्षर productid[12];
+	अचिन्हित पूर्णांक oemptr;		/* 0 अगर not present */
+	अचिन्हित लघु oemsize;		/* 0 अगर not present */
+	अचिन्हित लघु oemcount;
+	अचिन्हित पूर्णांक lapic;		/* APIC address */
+	अचिन्हित पूर्णांक reserved;
+पूर्ण;
 
 /* Followed by entries */
 
-#define	MP_PROCESSOR		0
-#define	MP_BUS			1
-#define	MP_IOAPIC		2
-#define	MP_INTSRC		3
-#define	MP_LINTSRC		4
+#घोषणा	MP_PROCESSOR		0
+#घोषणा	MP_BUS			1
+#घोषणा	MP_IOAPIC		2
+#घोषणा	MP_INTSRC		3
+#घोषणा	MP_LINTSRC		4
 /* Used by IBM NUMA-Q to describe node locality */
-#define	MP_TRANSLATION		192
+#घोषणा	MP_TRANSLATION		192
 
-#define CPU_ENABLED		1	/* Processor is available */
-#define CPU_BOOTPROCESSOR	2	/* Processor is the boot CPU */
+#घोषणा CPU_ENABLED		1	/* Processor is available */
+#घोषणा CPU_BOOTPROCESSOR	2	/* Processor is the boot CPU */
 
-#define CPU_STEPPING_MASK	0x000F
-#define CPU_MODEL_MASK		0x00F0
-#define CPU_FAMILY_MASK		0x0F00
+#घोषणा CPU_STEPPING_MASK	0x000F
+#घोषणा CPU_MODEL_MASK		0x00F0
+#घोषणा CPU_FAMILY_MASK		0x0F00
 
-struct mpc_cpu {
-	unsigned char type;
-	unsigned char apicid;		/* Local APIC number */
-	unsigned char apicver;		/* Its versions */
-	unsigned char cpuflag;
-	unsigned int cpufeature;
-	unsigned int featureflag;	/* CPUID feature value */
-	unsigned int reserved[2];
-};
+काष्ठा mpc_cpu अणु
+	अचिन्हित अक्षर type;
+	अचिन्हित अक्षर apicid;		/* Local APIC number */
+	अचिन्हित अक्षर apicver;		/* Its versions */
+	अचिन्हित अक्षर cpuflag;
+	अचिन्हित पूर्णांक cpufeature;
+	अचिन्हित पूर्णांक featureflag;	/* CPUID feature value */
+	अचिन्हित पूर्णांक reserved[2];
+पूर्ण;
 
-struct mpc_bus {
-	unsigned char type;
-	unsigned char busid;
-	unsigned char bustype[6];
-};
+काष्ठा mpc_bus अणु
+	अचिन्हित अक्षर type;
+	अचिन्हित अक्षर busid;
+	अचिन्हित अक्षर bustype[6];
+पूर्ण;
 
 /* List of Bus Type string values, Intel MP Spec. */
-#define BUSTYPE_EISA	"EISA"
-#define BUSTYPE_ISA	"ISA"
-#define BUSTYPE_INTERN	"INTERN"	/* Internal BUS */
-#define BUSTYPE_MCA	"MCA"		/* Obsolete */
-#define BUSTYPE_VL	"VL"		/* Local bus */
-#define BUSTYPE_PCI	"PCI"
-#define BUSTYPE_PCMCIA	"PCMCIA"
-#define BUSTYPE_CBUS	"CBUS"
-#define BUSTYPE_CBUSII	"CBUSII"
-#define BUSTYPE_FUTURE	"FUTURE"
-#define BUSTYPE_MBI	"MBI"
-#define BUSTYPE_MBII	"MBII"
-#define BUSTYPE_MPI	"MPI"
-#define BUSTYPE_MPSA	"MPSA"
-#define BUSTYPE_NUBUS	"NUBUS"
-#define BUSTYPE_TC	"TC"
-#define BUSTYPE_VME	"VME"
-#define BUSTYPE_XPRESS	"XPRESS"
+#घोषणा BUSTYPE_EISA	"EISA"
+#घोषणा BUSTYPE_ISA	"ISA"
+#घोषणा BUSTYPE_INTERN	"INTERN"	/* Internal BUS */
+#घोषणा BUSTYPE_MCA	"MCA"		/* Obsolete */
+#घोषणा BUSTYPE_VL	"VL"		/* Local bus */
+#घोषणा BUSTYPE_PCI	"PCI"
+#घोषणा BUSTYPE_PCMCIA	"PCMCIA"
+#घोषणा BUSTYPE_CBUS	"CBUS"
+#घोषणा BUSTYPE_CBUSII	"CBUSII"
+#घोषणा BUSTYPE_FUTURE	"FUTURE"
+#घोषणा BUSTYPE_MBI	"MBI"
+#घोषणा BUSTYPE_MBII	"MBII"
+#घोषणा BUSTYPE_MPI	"MPI"
+#घोषणा BUSTYPE_MPSA	"MPSA"
+#घोषणा BUSTYPE_NUBUS	"NUBUS"
+#घोषणा BUSTYPE_TC	"TC"
+#घोषणा BUSTYPE_VME	"VME"
+#घोषणा BUSTYPE_XPRESS	"XPRESS"
 
-#define MPC_APIC_USABLE		0x01
+#घोषणा MPC_APIC_USABLE		0x01
 
-struct mpc_ioapic {
-	unsigned char type;
-	unsigned char apicid;
-	unsigned char apicver;
-	unsigned char flags;
-	unsigned int apicaddr;
-};
+काष्ठा mpc_ioapic अणु
+	अचिन्हित अक्षर type;
+	अचिन्हित अक्षर apicid;
+	अचिन्हित अक्षर apicver;
+	अचिन्हित अक्षर flags;
+	अचिन्हित पूर्णांक apicaddr;
+पूर्ण;
 
-struct mpc_intsrc {
-	unsigned char type;
-	unsigned char irqtype;
-	unsigned short irqflag;
-	unsigned char srcbus;
-	unsigned char srcbusirq;
-	unsigned char dstapic;
-	unsigned char dstirq;
-};
+काष्ठा mpc_पूर्णांकsrc अणु
+	अचिन्हित अक्षर type;
+	अचिन्हित अक्षर irqtype;
+	अचिन्हित लघु irqflag;
+	अचिन्हित अक्षर srcbus;
+	अचिन्हित अक्षर srcbusirq;
+	अचिन्हित अक्षर dstapic;
+	अचिन्हित अक्षर dstirq;
+पूर्ण;
 
-enum mp_irq_source_types {
+क्रमागत mp_irq_source_types अणु
 	mp_INT = 0,
 	mp_NMI = 1,
 	mp_SMI = 2,
 	mp_ExtINT = 3
-};
+पूर्ण;
 
-#define MP_IRQPOL_DEFAULT	0x0
-#define MP_IRQPOL_ACTIVE_HIGH	0x1
-#define MP_IRQPOL_RESERVED	0x2
-#define MP_IRQPOL_ACTIVE_LOW	0x3
-#define MP_IRQPOL_MASK		0x3
+#घोषणा MP_IRQPOL_DEFAULT	0x0
+#घोषणा MP_IRQPOL_ACTIVE_HIGH	0x1
+#घोषणा MP_IRQPOL_RESERVED	0x2
+#घोषणा MP_IRQPOL_ACTIVE_LOW	0x3
+#घोषणा MP_IRQPOL_MASK		0x3
 
-#define MP_IRQTRIG_DEFAULT	0x0
-#define MP_IRQTRIG_EDGE		0x4
-#define MP_IRQTRIG_RESERVED	0x8
-#define MP_IRQTRIG_LEVEL	0xc
-#define MP_IRQTRIG_MASK		0xc
+#घोषणा MP_IRQTRIG_DEFAULT	0x0
+#घोषणा MP_IRQTRIG_EDGE		0x4
+#घोषणा MP_IRQTRIG_RESERVED	0x8
+#घोषणा MP_IRQTRIG_LEVEL	0xc
+#घोषणा MP_IRQTRIG_MASK		0xc
 
-#define MP_APIC_ALL	0xFF
+#घोषणा MP_APIC_ALL	0xFF
 
-struct mpc_lintsrc {
-	unsigned char type;
-	unsigned char irqtype;
-	unsigned short irqflag;
-	unsigned char srcbusid;
-	unsigned char srcbusirq;
-	unsigned char destapic;
-	unsigned char destapiclint;
-};
+काष्ठा mpc_lपूर्णांकsrc अणु
+	अचिन्हित अक्षर type;
+	अचिन्हित अक्षर irqtype;
+	अचिन्हित लघु irqflag;
+	अचिन्हित अक्षर srcbusid;
+	अचिन्हित अक्षर srcbusirq;
+	अचिन्हित अक्षर destapic;
+	अचिन्हित अक्षर destapiclपूर्णांक;
+पूर्ण;
 
-#define MPC_OEM_SIGNATURE "_OEM"
+#घोषणा MPC_OEM_SIGNATURE "_OEM"
 
-struct mpc_oemtable {
-	char signature[4];
-	unsigned short length;		/* Size of table */
-	char  rev;			/* 0x01 */
-	char  checksum;
-	char  mpc[8];
-};
+काष्ठा mpc_oemtable अणु
+	अक्षर signature[4];
+	अचिन्हित लघु length;		/* Size of table */
+	अक्षर  rev;			/* 0x01 */
+	अक्षर  checksum;
+	अक्षर  mpc[8];
+पूर्ण;
 
 /*
  *	Default configurations
  *
  *	1	2 CPU ISA 82489DX
- *	2	2 CPU EISA 82489DX neither IRQ 0 timer nor IRQ 13 DMA chaining
+ *	2	2 CPU EISA 82489DX neither IRQ 0 समयr nor IRQ 13 DMA chaining
  *	3	2 CPU EISA 82489DX
  *	4	2 CPU MCA 82489DX
  *	5	2 CPU ISA+PCI
@@ -174,9 +175,9 @@ struct mpc_oemtable {
  *	7	2 CPU MCA+PCI
  */
 
-enum mp_bustype {
+क्रमागत mp_bustype अणु
 	MP_BUS_ISA = 1,
 	MP_BUS_EISA,
 	MP_BUS_PCI,
-};
-#endif /* _ASM_X86_MPSPEC_DEF_H */
+पूर्ण;
+#पूर्ण_अगर /* _ASM_X86_MPSPEC_DEF_H */

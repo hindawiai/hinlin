@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * IMG parallel output controller driver
  *
@@ -7,323 +8,323 @@
  * Author: Damien Horsley <Damien.Horsley@imgtec.com>
  */
 
-#include <linux/clk.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/reset.h>
 
-#include <sound/core.h>
-#include <sound/dmaengine_pcm.h>
-#include <sound/initval.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
+#समावेश <sound/core.h>
+#समावेश <sound/dmaengine_pcm.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
 
-#define IMG_PRL_OUT_TX_FIFO		0
+#घोषणा IMG_PRL_OUT_TX_FIFO		0
 
-#define IMG_PRL_OUT_CTL			0x4
-#define IMG_PRL_OUT_CTL_CH_MASK		BIT(4)
-#define IMG_PRL_OUT_CTL_PACKH_MASK	BIT(3)
-#define IMG_PRL_OUT_CTL_EDGE_MASK	BIT(2)
-#define IMG_PRL_OUT_CTL_ME_MASK		BIT(1)
-#define IMG_PRL_OUT_CTL_SRST_MASK	BIT(0)
+#घोषणा IMG_PRL_OUT_CTL			0x4
+#घोषणा IMG_PRL_OUT_CTL_CH_MASK		BIT(4)
+#घोषणा IMG_PRL_OUT_CTL_PACKH_MASK	BIT(3)
+#घोषणा IMG_PRL_OUT_CTL_EDGE_MASK	BIT(2)
+#घोषणा IMG_PRL_OUT_CTL_ME_MASK		BIT(1)
+#घोषणा IMG_PRL_OUT_CTL_SRST_MASK	BIT(0)
 
-struct img_prl_out {
-	void __iomem *base;
-	struct clk *clk_sys;
-	struct clk *clk_ref;
-	struct snd_dmaengine_dai_dma_data dma_data;
-	struct device *dev;
-	struct reset_control *rst;
-};
+काष्ठा img_prl_out अणु
+	व्योम __iomem *base;
+	काष्ठा clk *clk_sys;
+	काष्ठा clk *clk_ref;
+	काष्ठा snd_dmaengine_dai_dma_data dma_data;
+	काष्ठा device *dev;
+	काष्ठा reset_control *rst;
+पूर्ण;
 
-static int img_prl_out_suspend(struct device *dev)
-{
-	struct img_prl_out *prl = dev_get_drvdata(dev);
+अटल पूर्णांक img_prl_out_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा img_prl_out *prl = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(prl->clk_ref);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int img_prl_out_resume(struct device *dev)
-{
-	struct img_prl_out *prl = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक img_prl_out_resume(काष्ठा device *dev)
+अणु
+	काष्ठा img_prl_out *prl = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(prl->clk_ref);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "clk_enable failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void img_prl_out_writel(struct img_prl_out *prl,
+अटल अंतरभूत व्योम img_prl_out_ग_लिखोl(काष्ठा img_prl_out *prl,
 				u32 val, u32 reg)
-{
-	writel(val, prl->base + reg);
-}
+अणु
+	ग_लिखोl(val, prl->base + reg);
+पूर्ण
 
-static inline u32 img_prl_out_readl(struct img_prl_out *prl, u32 reg)
-{
-	return readl(prl->base + reg);
-}
+अटल अंतरभूत u32 img_prl_out_पढ़ोl(काष्ठा img_prl_out *prl, u32 reg)
+अणु
+	वापस पढ़ोl(prl->base + reg);
+पूर्ण
 
-static void img_prl_out_reset(struct img_prl_out *prl)
-{
+अटल व्योम img_prl_out_reset(काष्ठा img_prl_out *prl)
+अणु
 	u32 ctl;
 
-	ctl = img_prl_out_readl(prl, IMG_PRL_OUT_CTL) &
+	ctl = img_prl_out_पढ़ोl(prl, IMG_PRL_OUT_CTL) &
 			~IMG_PRL_OUT_CTL_ME_MASK;
 
-	reset_control_assert(prl->rst);
-	reset_control_deassert(prl->rst);
+	reset_control_निश्चित(prl->rst);
+	reset_control_deनिश्चित(prl->rst);
 
-	img_prl_out_writel(prl, ctl, IMG_PRL_OUT_CTL);
-}
+	img_prl_out_ग_लिखोl(prl, ctl, IMG_PRL_OUT_CTL);
+पूर्ण
 
-static int img_prl_out_trigger(struct snd_pcm_substream *substream, int cmd,
-			struct snd_soc_dai *dai)
-{
-	struct img_prl_out *prl = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक img_prl_out_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+			काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा img_prl_out *prl = snd_soc_dai_get_drvdata(dai);
 	u32 reg;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		reg = img_prl_out_readl(prl, IMG_PRL_OUT_CTL);
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		reg = img_prl_out_पढ़ोl(prl, IMG_PRL_OUT_CTL);
 		reg |= IMG_PRL_OUT_CTL_ME_MASK;
-		img_prl_out_writel(prl, reg, IMG_PRL_OUT_CTL);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		img_prl_out_ग_लिखोl(prl, reg, IMG_PRL_OUT_CTL);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		img_prl_out_reset(prl);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int img_prl_out_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
-{
-	struct img_prl_out *prl = snd_soc_dai_get_drvdata(dai);
-	unsigned int rate, channels;
+अटल पूर्णांक img_prl_out_hw_params(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_pcm_hw_params *params, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा img_prl_out *prl = snd_soc_dai_get_drvdata(dai);
+	अचिन्हित पूर्णांक rate, channels;
 	u32 reg, control_set = 0;
 
 	rate = params_rate(params);
 	channels = params_channels(params);
 
-	switch (params_format(params)) {
-	case SNDRV_PCM_FORMAT_S32_LE:
+	चयन (params_क्रमmat(params)) अणु
+	हाल SNDRV_PCM_FORMAT_S32_LE:
 		control_set |= IMG_PRL_OUT_CTL_PACKH_MASK;
-		break;
-	case SNDRV_PCM_FORMAT_S24_LE:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S24_LE:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (channels != 2)
-		return -EINVAL;
+	अगर (channels != 2)
+		वापस -EINVAL;
 
 	clk_set_rate(prl->clk_ref, rate * 256);
 
-	reg = img_prl_out_readl(prl, IMG_PRL_OUT_CTL);
+	reg = img_prl_out_पढ़ोl(prl, IMG_PRL_OUT_CTL);
 	reg = (reg & ~IMG_PRL_OUT_CTL_PACKH_MASK) | control_set;
-	img_prl_out_writel(prl, reg, IMG_PRL_OUT_CTL);
+	img_prl_out_ग_लिखोl(prl, reg, IMG_PRL_OUT_CTL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int img_prl_out_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct img_prl_out *prl = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक img_prl_out_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा img_prl_out *prl = snd_soc_dai_get_drvdata(dai);
 	u32 reg, control_set = 0;
-	int ret;
+	पूर्णांक ret;
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF:
 		control_set |= IMG_PRL_OUT_CTL_EDGE_MASK;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = pm_runtime_get_sync(prl->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(prl->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(prl->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(prl->dev);
+		वापस ret;
+	पूर्ण
 
-	reg = img_prl_out_readl(prl, IMG_PRL_OUT_CTL);
+	reg = img_prl_out_पढ़ोl(prl, IMG_PRL_OUT_CTL);
 	reg = (reg & ~IMG_PRL_OUT_CTL_EDGE_MASK) | control_set;
-	img_prl_out_writel(prl, reg, IMG_PRL_OUT_CTL);
-	pm_runtime_put(prl->dev);
+	img_prl_out_ग_लिखोl(prl, reg, IMG_PRL_OUT_CTL);
+	pm_runसमय_put(prl->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops img_prl_out_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops img_prl_out_dai_ops = अणु
 	.trigger = img_prl_out_trigger,
 	.hw_params = img_prl_out_hw_params,
 	.set_fmt = img_prl_out_set_fmt
-};
+पूर्ण;
 
-static int img_prl_out_dai_probe(struct snd_soc_dai *dai)
-{
-	struct img_prl_out *prl = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक img_prl_out_dai_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा img_prl_out *prl = snd_soc_dai_get_drvdata(dai);
 
-	snd_soc_dai_init_dma_data(dai, &prl->dma_data, NULL);
+	snd_soc_dai_init_dma_data(dai, &prl->dma_data, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct snd_soc_dai_driver img_prl_out_dai = {
+अटल काष्ठा snd_soc_dai_driver img_prl_out_dai = अणु
 	.probe = img_prl_out_dai_probe,
-	.playback = {
+	.playback = अणु
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_192000,
-		.formats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S24_LE
-	},
+		.क्रमmats = SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S24_LE
+	पूर्ण,
 	.ops = &img_prl_out_dai_ops
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver img_prl_out_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver img_prl_out_component = अणु
 	.name = "img-prl-out"
-};
+पूर्ण;
 
-static int img_prl_out_probe(struct platform_device *pdev)
-{
-	struct img_prl_out *prl;
-	struct resource *res;
-	void __iomem *base;
-	int ret;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक img_prl_out_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा img_prl_out *prl;
+	काष्ठा resource *res;
+	व्योम __iomem *base;
+	पूर्णांक ret;
+	काष्ठा device *dev = &pdev->dev;
 
-	prl = devm_kzalloc(&pdev->dev, sizeof(*prl), GFP_KERNEL);
-	if (!prl)
-		return -ENOMEM;
+	prl = devm_kzalloc(&pdev->dev, माप(*prl), GFP_KERNEL);
+	अगर (!prl)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, prl);
+	platक्रमm_set_drvdata(pdev, prl);
 
 	prl->dev = &pdev->dev;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	prl->base = base;
 
 	prl->rst = devm_reset_control_get_exclusive(&pdev->dev, "rst");
-	if (IS_ERR(prl->rst)) {
-		if (PTR_ERR(prl->rst) != -EPROBE_DEFER)
+	अगर (IS_ERR(prl->rst)) अणु
+		अगर (PTR_ERR(prl->rst) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "No top level reset found\n");
-		return PTR_ERR(prl->rst);
-	}
+		वापस PTR_ERR(prl->rst);
+	पूर्ण
 
 	prl->clk_sys = devm_clk_get(&pdev->dev, "sys");
-	if (IS_ERR(prl->clk_sys)) {
-		if (PTR_ERR(prl->clk_sys) != -EPROBE_DEFER)
+	अगर (IS_ERR(prl->clk_sys)) अणु
+		अगर (PTR_ERR(prl->clk_sys) != -EPROBE_DEFER)
 			dev_err(dev, "Failed to acquire clock 'sys'\n");
-		return PTR_ERR(prl->clk_sys);
-	}
+		वापस PTR_ERR(prl->clk_sys);
+	पूर्ण
 
 	prl->clk_ref = devm_clk_get(&pdev->dev, "ref");
-	if (IS_ERR(prl->clk_ref)) {
-		if (PTR_ERR(prl->clk_ref) != -EPROBE_DEFER)
+	अगर (IS_ERR(prl->clk_ref)) अणु
+		अगर (PTR_ERR(prl->clk_ref) != -EPROBE_DEFER)
 			dev_err(dev, "Failed to acquire clock 'ref'\n");
-		return PTR_ERR(prl->clk_ref);
-	}
+		वापस PTR_ERR(prl->clk_ref);
+	पूर्ण
 
 	ret = clk_prepare_enable(prl->clk_sys);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	img_prl_out_writel(prl, IMG_PRL_OUT_CTL_EDGE_MASK, IMG_PRL_OUT_CTL);
+	img_prl_out_ग_लिखोl(prl, IMG_PRL_OUT_CTL_EDGE_MASK, IMG_PRL_OUT_CTL);
 	img_prl_out_reset(prl);
 
-	pm_runtime_enable(&pdev->dev);
-	if (!pm_runtime_enabled(&pdev->dev)) {
+	pm_runसमय_enable(&pdev->dev);
+	अगर (!pm_runसमय_enabled(&pdev->dev)) अणु
 		ret = img_prl_out_resume(&pdev->dev);
-		if (ret)
-			goto err_pm_disable;
-	}
+		अगर (ret)
+			जाओ err_pm_disable;
+	पूर्ण
 
 	prl->dma_data.addr = res->start + IMG_PRL_OUT_TX_FIFO;
 	prl->dma_data.addr_width = 4;
 	prl->dma_data.maxburst = 4;
 
-	ret = devm_snd_soc_register_component(&pdev->dev,
+	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
 			&img_prl_out_component,
 			&img_prl_out_dai, 1);
-	if (ret)
-		goto err_suspend;
+	अगर (ret)
+		जाओ err_suspend;
 
-	ret = devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
-	if (ret)
-		goto err_suspend;
+	ret = devm_snd_dmaengine_pcm_रेजिस्टर(&pdev->dev, शून्य, 0);
+	अगर (ret)
+		जाओ err_suspend;
 
-	return 0;
+	वापस 0;
 
 err_suspend:
-	if (!pm_runtime_status_suspended(&pdev->dev))
+	अगर (!pm_runसमय_status_suspended(&pdev->dev))
 		img_prl_out_suspend(&pdev->dev);
 err_pm_disable:
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 	clk_disable_unprepare(prl->clk_sys);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int img_prl_out_dev_remove(struct platform_device *pdev)
-{
-	struct img_prl_out *prl = platform_get_drvdata(pdev);
+अटल पूर्णांक img_prl_out_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा img_prl_out *prl = platक्रमm_get_drvdata(pdev);
 
-	pm_runtime_disable(&pdev->dev);
-	if (!pm_runtime_status_suspended(&pdev->dev))
+	pm_runसमय_disable(&pdev->dev);
+	अगर (!pm_runसमय_status_suspended(&pdev->dev))
 		img_prl_out_suspend(&pdev->dev);
 
 	clk_disable_unprepare(prl->clk_sys);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id img_prl_out_of_match[] = {
-	{ .compatible = "img,parallel-out" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id img_prl_out_of_match[] = अणु
+	अणु .compatible = "img,parallel-out" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, img_prl_out_of_match);
 
-static const struct dev_pm_ops img_prl_out_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops img_prl_out_pm_ops = अणु
 	SET_RUNTIME_PM_OPS(img_prl_out_suspend,
-			   img_prl_out_resume, NULL)
-};
+			   img_prl_out_resume, शून्य)
+पूर्ण;
 
-static struct platform_driver img_prl_out_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver img_prl_out_driver = अणु
+	.driver = अणु
 		.name = "img-parallel-out",
 		.of_match_table = img_prl_out_of_match,
 		.pm = &img_prl_out_pm_ops
-	},
+	पूर्ण,
 	.probe = img_prl_out_probe,
-	.remove = img_prl_out_dev_remove
-};
-module_platform_driver(img_prl_out_driver);
+	.हटाओ = img_prl_out_dev_हटाओ
+पूर्ण;
+module_platक्रमm_driver(img_prl_out_driver);
 
 MODULE_AUTHOR("Damien Horsley <Damien.Horsley@imgtec.com>");
 MODULE_DESCRIPTION("IMG Parallel Output Driver");

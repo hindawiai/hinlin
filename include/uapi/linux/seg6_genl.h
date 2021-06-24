@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_SEG6_GENL_H
-#define _UAPI_LINUX_SEG6_GENL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_SEG6_GENL_H
+#घोषणा _UAPI_LINUX_SEG6_GENL_H
 
-#define SEG6_GENL_NAME		"SEG6"
-#define SEG6_GENL_VERSION	0x1
+#घोषणा SEG6_GENL_NAME		"SEG6"
+#घोषणा SEG6_GENL_VERSION	0x1
 
-enum {
+क्रमागत अणु
 	SEG6_ATTR_UNSPEC,
 	SEG6_ATTR_DST,
 	SEG6_ATTR_DSTLEN,
@@ -15,19 +16,19 @@ enum {
 	SEG6_ATTR_ALGID,
 	SEG6_ATTR_HMACINFO,
 	__SEG6_ATTR_MAX,
-};
+पूर्ण;
 
-#define SEG6_ATTR_MAX (__SEG6_ATTR_MAX - 1)
+#घोषणा SEG6_ATTR_MAX (__SEG6_ATTR_MAX - 1)
 
-enum {
+क्रमागत अणु
 	SEG6_CMD_UNSPEC,
 	SEG6_CMD_SETHMAC,
 	SEG6_CMD_DUMPHMAC,
 	SEG6_CMD_SET_TUNSRC,
 	SEG6_CMD_GET_TUNSRC,
 	__SEG6_CMD_MAX,
-};
+पूर्ण;
 
-#define SEG6_CMD_MAX (__SEG6_CMD_MAX - 1)
+#घोषणा SEG6_CMD_MAX (__SEG6_CMD_MAX - 1)
 
-#endif
+#पूर्ण_अगर

@@ -1,235 +1,236 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_TYPES_H
-#define _LINUX_TYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_TYPES_H
+#घोषणा _LINUX_TYPES_H
 
-#define __EXPORTED_HEADERS__
-#include <uapi/linux/types.h>
+#घोषणा __EXPORTED_HEADERS__
+#समावेश <uapi/linux/types.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#define DECLARE_BITMAP(name,bits) \
-	unsigned long name[BITS_TO_LONGS(bits)]
+#घोषणा DECLARE_BITMAP(name,bits) \
+	अचिन्हित दीर्घ name[BITS_TO_LONGS(bits)]
 
-typedef u32 __kernel_dev_t;
+प्रकार u32 __kernel_dev_t;
 
-typedef __kernel_fd_set		fd_set;
-typedef __kernel_dev_t		dev_t;
-typedef __kernel_ulong_t	ino_t;
-typedef __kernel_mode_t		mode_t;
-typedef unsigned short		umode_t;
-typedef u32			nlink_t;
-typedef __kernel_off_t		off_t;
-typedef __kernel_pid_t		pid_t;
-typedef __kernel_daddr_t	daddr_t;
-typedef __kernel_key_t		key_t;
-typedef __kernel_suseconds_t	suseconds_t;
-typedef __kernel_timer_t	timer_t;
-typedef __kernel_clockid_t	clockid_t;
-typedef __kernel_mqd_t		mqd_t;
+प्रकार __kernel_fd_set		fd_set;
+प्रकार __kernel_dev_t		dev_t;
+प्रकार __kernel_uदीर्घ_t	ino_t;
+प्रकार __kernel_mode_t		mode_t;
+प्रकार अचिन्हित लघु		umode_t;
+प्रकार u32			nlink_t;
+प्रकार __kernel_off_t		off_t;
+प्रकार __kernel_pid_t		pid_t;
+प्रकार __kernel_daddr_t	daddr_t;
+प्रकार __kernel_key_t		key_t;
+प्रकार __kernel_suseconds_t	suseconds_t;
+प्रकार __kernel_समयr_t	समयr_t;
+प्रकार __kernel_घड़ीid_t	घड़ीid_t;
+प्रकार __kernel_mqd_t		mqd_t;
 
-typedef _Bool			bool;
+प्रकार _Bool			bool;
 
-typedef __kernel_uid32_t	uid_t;
-typedef __kernel_gid32_t	gid_t;
-typedef __kernel_uid16_t        uid16_t;
-typedef __kernel_gid16_t        gid16_t;
+प्रकार __kernel_uid32_t	uid_t;
+प्रकार __kernel_gid32_t	gid_t;
+प्रकार __kernel_uid16_t        uid16_t;
+प्रकार __kernel_gid16_t        gid16_t;
 
-typedef unsigned long		uintptr_t;
+प्रकार अचिन्हित दीर्घ		uपूर्णांकptr_t;
 
-#ifdef CONFIG_HAVE_UID16
-/* This is defined by include/asm-{arch}/posix_types.h */
-typedef __kernel_old_uid_t	old_uid_t;
-typedef __kernel_old_gid_t	old_gid_t;
-#endif /* CONFIG_UID16 */
+#अगर_घोषित CONFIG_HAVE_UID16
+/* This is defined by include/यंत्र-अणुarchपूर्ण/posix_types.h */
+प्रकार __kernel_old_uid_t	old_uid_t;
+प्रकार __kernel_old_gid_t	old_gid_t;
+#पूर्ण_अगर /* CONFIG_UID16 */
 
-#if defined(__GNUC__)
-typedef __kernel_loff_t		loff_t;
-#endif
+#अगर defined(__GNUC__)
+प्रकार __kernel_loff_t		loff_t;
+#पूर्ण_अगर
 
 /*
- * The following typedefs are also protected by individual ifdefs for
+ * The following प्रकारs are also रक्षित by inभागidual अगरdefs क्रम
  * historical reasons:
  */
-#ifndef _SIZE_T
-#define _SIZE_T
-typedef __kernel_size_t		size_t;
-#endif
+#अगर_अघोषित _SIZE_T
+#घोषणा _SIZE_T
+प्रकार __kernel_माप_प्रकार		माप_प्रकार;
+#पूर्ण_अगर
 
-#ifndef _SSIZE_T
-#define _SSIZE_T
-typedef __kernel_ssize_t	ssize_t;
-#endif
+#अगर_अघोषित _SSIZE_T
+#घोषणा _SSIZE_T
+प्रकार __kernel_sमाप_प्रकार	sमाप_प्रकार;
+#पूर्ण_अगर
 
-#ifndef _PTRDIFF_T
-#define _PTRDIFF_T
-typedef __kernel_ptrdiff_t	ptrdiff_t;
-#endif
+#अगर_अघोषित _PTRDIFF_T
+#घोषणा _PTRDIFF_T
+प्रकार __kernel_सूचक_भेद_प्रकार	सूचक_भेद_प्रकार;
+#पूर्ण_अगर
 
-#ifndef _CLOCK_T
-#define _CLOCK_T
-typedef __kernel_clock_t	clock_t;
-#endif
+#अगर_अघोषित _CLOCK_T
+#घोषणा _CLOCK_T
+प्रकार __kernel_घड़ी_प्रकार	घड़ी_प्रकार;
+#पूर्ण_अगर
 
-#ifndef _CADDR_T
-#define _CADDR_T
-typedef __kernel_caddr_t	caddr_t;
-#endif
+#अगर_अघोषित _CADDR_T
+#घोषणा _CADDR_T
+प्रकार __kernel_caddr_t	caddr_t;
+#पूर्ण_अगर
 
 /* bsd */
-typedef unsigned char		u_char;
-typedef unsigned short		u_short;
-typedef unsigned int		u_int;
-typedef unsigned long		u_long;
+प्रकार अचिन्हित अक्षर		u_अक्षर;
+प्रकार अचिन्हित लघु		u_लघु;
+प्रकार अचिन्हित पूर्णांक		u_पूर्णांक;
+प्रकार अचिन्हित दीर्घ		u_दीर्घ;
 
 /* sysv */
-typedef unsigned char		unchar;
-typedef unsigned short		ushort;
-typedef unsigned int		uint;
-typedef unsigned long		ulong;
+प्रकार अचिन्हित अक्षर		unअक्षर;
+प्रकार अचिन्हित लघु		uलघु;
+प्रकार अचिन्हित पूर्णांक		uपूर्णांक;
+प्रकार अचिन्हित दीर्घ		uदीर्घ;
 
-#ifndef __BIT_TYPES_DEFINED__
-#define __BIT_TYPES_DEFINED__
+#अगर_अघोषित __BIT_TYPES_DEFINED__
+#घोषणा __BIT_TYPES_DEFINED__
 
-typedef u8			u_int8_t;
-typedef s8			int8_t;
-typedef u16			u_int16_t;
-typedef s16			int16_t;
-typedef u32			u_int32_t;
-typedef s32			int32_t;
+प्रकार u8			u_पूर्णांक8_t;
+प्रकार s8			पूर्णांक8_t;
+प्रकार u16			u_पूर्णांक16_t;
+प्रकार s16			पूर्णांक16_t;
+प्रकार u32			u_पूर्णांक32_t;
+प्रकार s32			पूर्णांक32_t;
 
-#endif /* !(__BIT_TYPES_DEFINED__) */
+#पूर्ण_अगर /* !(__BIT_TYPES_DEFINED__) */
 
-typedef u8			uint8_t;
-typedef u16			uint16_t;
-typedef u32			uint32_t;
+प्रकार u8			uपूर्णांक8_t;
+प्रकार u16			uपूर्णांक16_t;
+प्रकार u32			uपूर्णांक32_t;
 
-#if defined(__GNUC__)
-typedef u64			uint64_t;
-typedef u64			u_int64_t;
-typedef s64			int64_t;
-#endif
+#अगर defined(__GNUC__)
+प्रकार u64			uपूर्णांक64_t;
+प्रकार u64			u_पूर्णांक64_t;
+प्रकार s64			पूर्णांक64_t;
+#पूर्ण_अगर
 
 /* this is a special 64bit data type that is 8-byte aligned */
-#define aligned_u64		__aligned_u64
-#define aligned_be64		__aligned_be64
-#define aligned_le64		__aligned_le64
+#घोषणा aligned_u64		__aligned_u64
+#घोषणा aligned_be64		__aligned_be64
+#घोषणा aligned_le64		__aligned_le64
 
 /**
- * The type used for indexing onto a disc or disc partition.
+ * The type used क्रम indexing onto a disc or disc partition.
  *
- * Linux always considers sectors to be 512 bytes long independently
+ * Linux always considers sectors to be 512 bytes दीर्घ independently
  * of the devices real block size.
  *
  * blkcnt_t is the type of the inode's block count.
  */
-typedef u64 sector_t;
-typedef u64 blkcnt_t;
+प्रकार u64 sector_t;
+प्रकार u64 blkcnt_t;
 
 /*
- * The type of an index into the pagecache.
+ * The type of an index पूर्णांकo the pagecache.
  */
-#define pgoff_t unsigned long
+#घोषणा pgoff_t अचिन्हित दीर्घ
 
 /*
- * A dma_addr_t can hold any valid DMA address, i.e., any address returned
+ * A dma_addr_t can hold any valid DMA address, i.e., any address वापसed
  * by the DMA API.
  *
  * If the DMA API only uses 32-bit addresses, dma_addr_t need only be 32
  * bits wide.  Bus addresses, e.g., PCI BARs, may be wider than 32 bits,
- * but drivers do memory-mapped I/O to ioremapped kernel virtual addresses,
- * so they don't care about the size of the actual bus addresses.
+ * but drivers करो memory-mapped I/O to ioremapped kernel भव addresses,
+ * so they करोn't care about the size of the actual bus addresses.
  */
-#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-typedef u64 dma_addr_t;
-#else
-typedef u32 dma_addr_t;
-#endif
+#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
+प्रकार u64 dma_addr_t;
+#अन्यथा
+प्रकार u32 dma_addr_t;
+#पूर्ण_अगर
 
-typedef unsigned int __bitwise gfp_t;
-typedef unsigned int __bitwise slab_flags_t;
-typedef unsigned int __bitwise fmode_t;
+प्रकार अचिन्हित पूर्णांक __bitwise gfp_t;
+प्रकार अचिन्हित पूर्णांक __bitwise slab_flags_t;
+प्रकार अचिन्हित पूर्णांक __bitwise भ_शेषe_t;
 
-#ifdef CONFIG_PHYS_ADDR_T_64BIT
-typedef u64 phys_addr_t;
-#else
-typedef u32 phys_addr_t;
-#endif
+#अगर_घोषित CONFIG_PHYS_ADDR_T_64BIT
+प्रकार u64 phys_addr_t;
+#अन्यथा
+प्रकार u32 phys_addr_t;
+#पूर्ण_अगर
 
-typedef phys_addr_t resource_size_t;
+प्रकार phys_addr_t resource_माप_प्रकार;
 
 /*
- * This type is the placeholder for a hardware interrupt number. It has to be
- * big enough to enclose whatever representation is used by a given platform.
+ * This type is the placeholder क्रम a hardware पूर्णांकerrupt number. It has to be
+ * big enough to enबंद whatever representation is used by a given platक्रमm.
  */
-typedef unsigned long irq_hw_number_t;
+प्रकार अचिन्हित दीर्घ irq_hw_number_t;
 
-typedef struct {
-	int counter;
-} atomic_t;
+प्रकार काष्ठा अणु
+	पूर्णांक counter;
+पूर्ण atomic_t;
 
-#define ATOMIC_INIT(i) { (i) }
+#घोषणा ATOMIC_INIT(i) अणु (i) पूर्ण
 
-#ifdef CONFIG_64BIT
-typedef struct {
+#अगर_घोषित CONFIG_64BIT
+प्रकार काष्ठा अणु
 	s64 counter;
-} atomic64_t;
-#endif
+पूर्ण atomic64_t;
+#पूर्ण_अगर
 
-struct list_head {
-	struct list_head *next, *prev;
-};
+काष्ठा list_head अणु
+	काष्ठा list_head *next, *prev;
+पूर्ण;
 
-struct hlist_head {
-	struct hlist_node *first;
-};
+काष्ठा hlist_head अणु
+	काष्ठा hlist_node *first;
+पूर्ण;
 
-struct hlist_node {
-	struct hlist_node *next, **pprev;
-};
+काष्ठा hlist_node अणु
+	काष्ठा hlist_node *next, **pprev;
+पूर्ण;
 
-struct ustat {
-	__kernel_daddr_t	f_tfree;
-#ifdef CONFIG_ARCH_32BIT_USTAT_F_TINODE
-	unsigned int		f_tinode;
-#else
-	unsigned long		f_tinode;
-#endif
-	char			f_fname[6];
-	char			f_fpack[6];
-};
+काष्ठा ustat अणु
+	__kernel_daddr_t	f_tमुक्त;
+#अगर_घोषित CONFIG_ARCH_32BIT_USTAT_F_TINODE
+	अचिन्हित पूर्णांक		f_tinode;
+#अन्यथा
+	अचिन्हित दीर्घ		f_tinode;
+#पूर्ण_अगर
+	अक्षर			f_fname[6];
+	अक्षर			f_fpack[6];
+पूर्ण;
 
 /**
- * struct callback_head - callback structure for use with RCU and task_work
+ * काष्ठा callback_head - callback काष्ठाure क्रम use with RCU and task_work
  * @next: next update requests in a list
  * @func: actual update function to call after the grace period.
  *
- * The struct is aligned to size of pointer. On most architectures it happens
+ * The काष्ठा is aligned to size of poपूर्णांकer. On most architectures it happens
  * naturally due ABI requirements, but some architectures (like CRIS) have
  * weird ABI and we need to ask it explicitly.
  *
  * The alignment is required to guarantee that bit 0 of @next will be
- * clear under normal conditions -- as long as we use call_rcu() or
+ * clear under normal conditions -- as दीर्घ as we use call_rcu() or
  * call_srcu() to queue the callback.
  *
- * This guarantee is important for few reasons:
- *  - future call_rcu_lazy() will make use of lower bits in the pointer;
- *  - the structure shares storage space in struct page with @compound_head,
- *    which encode PageTail() in bit 0. The guarantee is needed to avoid
+ * This guarantee is important क्रम few reasons:
+ *  - future call_rcu_lazy() will make use of lower bits in the poपूर्णांकer;
+ *  - the काष्ठाure shares storage space in काष्ठा page with @compound_head,
+ *    which encode PageTail() in bit 0. The guarantee is needed to aव्योम
  *    false-positive PageTail().
  */
-struct callback_head {
-	struct callback_head *next;
-	void (*func)(struct callback_head *head);
-} __attribute__((aligned(sizeof(void *))));
-#define rcu_head callback_head
+काष्ठा callback_head अणु
+	काष्ठा callback_head *next;
+	व्योम (*func)(काष्ठा callback_head *head);
+पूर्ण __attribute__((aligned(माप(व्योम *))));
+#घोषणा rcu_head callback_head
 
-typedef void (*rcu_callback_t)(struct rcu_head *head);
-typedef void (*call_rcu_func_t)(struct rcu_head *head, rcu_callback_t func);
+प्रकार व्योम (*rcu_callback_t)(काष्ठा rcu_head *head);
+प्रकार व्योम (*call_rcu_func_t)(काष्ठा rcu_head *head, rcu_callback_t func);
 
-typedef void (*swap_func_t)(void *a, void *b, int size);
+प्रकार व्योम (*swap_func_t)(व्योम *a, व्योम *b, पूर्णांक size);
 
-typedef int (*cmp_r_func_t)(const void *a, const void *b, const void *priv);
-typedef int (*cmp_func_t)(const void *a, const void *b);
+प्रकार पूर्णांक (*cmp_r_func_t)(स्थिर व्योम *a, स्थिर व्योम *b, स्थिर व्योम *priv);
+प्रकार पूर्णांक (*cmp_func_t)(स्थिर व्योम *a, स्थिर व्योम *b);
 
-#endif /*  __ASSEMBLY__ */
-#endif /* _LINUX_TYPES_H */
+#पूर्ण_अगर /*  __ASSEMBLY__ */
+#पूर्ण_अगर /* _LINUX_TYPES_H */

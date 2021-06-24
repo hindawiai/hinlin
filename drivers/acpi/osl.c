@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  acpi_osl.c - OS-dependent functions ($Revision: 83 $)
  *
  *  Copyright (C) 2000       Andrew Henroid
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
  *  Copyright (c) 2008 Intel Corporation
- *   Author: Matthew Wilcox <willy@linux.intel.com>
+ *   Author: Matthew Wilcox <willy@linux.पूर्णांकel.com>
  */
 
-#define pr_fmt(fmt) "ACPI: OSL: " fmt
+#घोषणा pr_fmt(fmt) "ACPI: OSL: " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/highmem.h>
-#include <linux/lockdep.h>
-#include <linux/pci.h>
-#include <linux/interrupt.h>
-#include <linux/kmod.h>
-#include <linux/delay.h>
-#include <linux/workqueue.h>
-#include <linux/nmi.h>
-#include <linux/acpi.h>
-#include <linux/efi.h>
-#include <linux/ioport.h>
-#include <linux/list.h>
-#include <linux/jiffies.h>
-#include <linux/semaphore.h>
-#include <linux/security.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/list.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/security.h>
 
-#include <asm/io.h>
-#include <linux/uaccess.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
 
-#include "acpica/accommon.h"
-#include "acpica/acnamesp.h"
-#include "internal.h"
+#समावेश "acpica/accommon.h"
+#समावेश "acpica/acnamesp.h"
+#समावेश "internal.h"
 
-/* Definitions for ACPI_DEBUG_PRINT() */
-#define _COMPONENT		ACPI_OS_SERVICES
+/* Definitions क्रम ACPI_DEBUG_PRINT() */
+#घोषणा _COMPONENT		ACPI_OS_SERVICES
 ACPI_MODULE_NAME("osl");
 
-struct acpi_os_dpc {
+काष्ठा acpi_os_dpc अणु
 	acpi_osd_exec_callback function;
-	void *context;
-	struct work_struct work;
-};
+	व्योम *context;
+	काष्ठा work_काष्ठा work;
+पूर्ण;
 
-#ifdef ENABLE_DEBUGGER
-#include <linux/kdb.h>
+#अगर_घोषित ENABLE_DEBUGGER
+#समावेश <linux/kdb.h>
 
-/* stuff for debugger support */
-int acpi_in_debugger;
+/* stuff क्रम debugger support */
+पूर्णांक acpi_in_debugger;
 EXPORT_SYMBOL(acpi_in_debugger);
-#endif				/*ENABLE_DEBUGGER */
+#पूर्ण_अगर				/*ENABLE_DEBUGGER */
 
-static int (*__acpi_os_prepare_sleep)(u8 sleep_state, u32 pm1a_ctrl,
+अटल पूर्णांक (*__acpi_os_prepare_sleep)(u8 sleep_state, u32 pm1a_ctrl,
 				      u32 pm1b_ctrl);
-static int (*__acpi_os_prepare_extended_sleep)(u8 sleep_state, u32 val_a,
+अटल पूर्णांक (*__acpi_os_prepare_extended_sleep)(u8 sleep_state, u32 val_a,
 				      u32 val_b);
 
-static acpi_osd_handler acpi_irq_handler;
-static void *acpi_irq_context;
-static struct workqueue_struct *kacpid_wq;
-static struct workqueue_struct *kacpi_notify_wq;
-static struct workqueue_struct *kacpi_hotplug_wq;
-static bool acpi_os_initialized;
-unsigned int acpi_sci_irq = INVALID_ACPI_IRQ;
+अटल acpi_osd_handler acpi_irq_handler;
+अटल व्योम *acpi_irq_context;
+अटल काष्ठा workqueue_काष्ठा *kacpid_wq;
+अटल काष्ठा workqueue_काष्ठा *kacpi_notअगरy_wq;
+अटल काष्ठा workqueue_काष्ठा *kacpi_hotplug_wq;
+अटल bool acpi_os_initialized;
+अचिन्हित पूर्णांक acpi_sci_irq = INVALID_ACPI_IRQ;
 bool acpi_permanent_mmap = false;
 
 /*
- * This list of permanent mappings is for memory that may be accessed from
- * interrupt context, where we can't do the ioremap().
+ * This list of permanent mappings is क्रम memory that may be accessed from
+ * पूर्णांकerrupt context, where we can't करो the ioremap().
  */
-struct acpi_ioremap {
-	struct list_head list;
-	void __iomem *virt;
+काष्ठा acpi_ioremap अणु
+	काष्ठा list_head list;
+	व्योम __iomem *virt;
 	acpi_physical_address phys;
 	acpi_size size;
-	union {
-		unsigned long refcount;
-		struct rcu_work rwork;
-	} track;
-};
+	जोड़ अणु
+		अचिन्हित दीर्घ refcount;
+		काष्ठा rcu_work rwork;
+	पूर्ण track;
+पूर्ण;
 
-static LIST_HEAD(acpi_ioremaps);
-static DEFINE_MUTEX(acpi_ioremap_lock);
-#define acpi_ioremap_lock_held() lock_is_held(&acpi_ioremap_lock.dep_map)
+अटल LIST_HEAD(acpi_ioremaps);
+अटल DEFINE_MUTEX(acpi_ioremap_lock);
+#घोषणा acpi_ioremap_lock_held() lock_is_held(&acpi_ioremap_lock.dep_map)
 
-static void __init acpi_request_region (struct acpi_generic_address *gas,
-	unsigned int length, char *desc)
-{
+अटल व्योम __init acpi_request_region (काष्ठा acpi_generic_address *gas,
+	अचिन्हित पूर्णांक length, अक्षर *desc)
+अणु
 	u64 addr;
 
 	/* Handle possible alignment issues */
-	memcpy(&addr, &gas->address, sizeof(addr));
-	if (!addr || !length)
-		return;
+	स_नकल(&addr, &gas->address, माप(addr));
+	अगर (!addr || !length)
+		वापस;
 
-	/* Resources are never freed */
-	if (gas->space_id == ACPI_ADR_SPACE_SYSTEM_IO)
+	/* Resources are never मुक्तd */
+	अगर (gas->space_id == ACPI_ADR_SPACE_SYSTEM_IO)
 		request_region(addr, length, desc);
-	else if (gas->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
+	अन्यथा अगर (gas->space_id == ACPI_ADR_SPACE_SYSTEM_MEMORY)
 		request_mem_region(addr, length, desc);
-}
+पूर्ण
 
-static int __init acpi_reserve_resources(void)
-{
+अटल पूर्णांक __init acpi_reserve_resources(व्योम)
+अणु
 	acpi_request_region(&acpi_gbl_FADT.xpm1a_event_block, acpi_gbl_FADT.pm1_event_length,
 		"ACPI PM1a_EVT_BLK");
 
@@ -121,247 +122,247 @@ static int __init acpi_reserve_resources(void)
 	acpi_request_region(&acpi_gbl_FADT.xpm1b_control_block, acpi_gbl_FADT.pm1_control_length,
 		"ACPI PM1b_CNT_BLK");
 
-	if (acpi_gbl_FADT.pm_timer_length == 4)
-		acpi_request_region(&acpi_gbl_FADT.xpm_timer_block, 4, "ACPI PM_TMR");
+	अगर (acpi_gbl_FADT.pm_समयr_length == 4)
+		acpi_request_region(&acpi_gbl_FADT.xpm_समयr_block, 4, "ACPI PM_TMR");
 
 	acpi_request_region(&acpi_gbl_FADT.xpm2_control_block, acpi_gbl_FADT.pm2_control_length,
 		"ACPI PM2_CNT_BLK");
 
 	/* Length of GPE blocks must be a non-negative multiple of 2 */
 
-	if (!(acpi_gbl_FADT.gpe0_block_length & 0x1))
+	अगर (!(acpi_gbl_FADT.gpe0_block_length & 0x1))
 		acpi_request_region(&acpi_gbl_FADT.xgpe0_block,
 			       acpi_gbl_FADT.gpe0_block_length, "ACPI GPE0_BLK");
 
-	if (!(acpi_gbl_FADT.gpe1_block_length & 0x1))
+	अगर (!(acpi_gbl_FADT.gpe1_block_length & 0x1))
 		acpi_request_region(&acpi_gbl_FADT.xgpe1_block,
 			       acpi_gbl_FADT.gpe1_block_length, "ACPI GPE1_BLK");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 fs_initcall_sync(acpi_reserve_resources);
 
-void acpi_os_printf(const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	acpi_os_vprintf(fmt, args);
-	va_end(args);
-}
-EXPORT_SYMBOL(acpi_os_printf);
+व्योम acpi_os_म_लिखो(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	बहु_शुरू(args, fmt);
+	acpi_os_भ_लिखो(fmt, args);
+	बहु_पूर्ण(args);
+पूर्ण
+EXPORT_SYMBOL(acpi_os_म_लिखो);
 
-void acpi_os_vprintf(const char *fmt, va_list args)
-{
-	static char buffer[512];
+व्योम acpi_os_भ_लिखो(स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	अटल अक्षर buffer[512];
 
-	vsprintf(buffer, fmt, args);
+	भम_लिखो(buffer, fmt, args);
 
-#ifdef ENABLE_DEBUGGER
-	if (acpi_in_debugger) {
-		kdb_printf("%s", buffer);
-	} else {
-		if (printk_get_level(buffer))
-			printk("%s", buffer);
-		else
-			printk(KERN_CONT "%s", buffer);
-	}
-#else
-	if (acpi_debugger_write_log(buffer) < 0) {
-		if (printk_get_level(buffer))
-			printk("%s", buffer);
-		else
-			printk(KERN_CONT "%s", buffer);
-	}
-#endif
-}
+#अगर_घोषित ENABLE_DEBUGGER
+	अगर (acpi_in_debugger) अणु
+		kdb_म_लिखो("%s", buffer);
+	पूर्ण अन्यथा अणु
+		अगर (prपूर्णांकk_get_level(buffer))
+			prपूर्णांकk("%s", buffer);
+		अन्यथा
+			prपूर्णांकk(KERN_CONT "%s", buffer);
+	पूर्ण
+#अन्यथा
+	अगर (acpi_debugger_ग_लिखो_log(buffer) < 0) अणु
+		अगर (prपूर्णांकk_get_level(buffer))
+			prपूर्णांकk("%s", buffer);
+		अन्यथा
+			prपूर्णांकk(KERN_CONT "%s", buffer);
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_KEXEC
-static unsigned long acpi_rsdp;
-static int __init setup_acpi_rsdp(char *arg)
-{
-	return kstrtoul(arg, 16, &acpi_rsdp);
-}
+#अगर_घोषित CONFIG_KEXEC
+अटल अचिन्हित दीर्घ acpi_rsdp;
+अटल पूर्णांक __init setup_acpi_rsdp(अक्षर *arg)
+अणु
+	वापस kम_से_अदीर्घ(arg, 16, &acpi_rsdp);
+पूर्ण
 early_param("acpi_rsdp", setup_acpi_rsdp);
-#endif
+#पूर्ण_अगर
 
-acpi_physical_address __init acpi_os_get_root_pointer(void)
-{
+acpi_physical_address __init acpi_os_get_root_poपूर्णांकer(व्योम)
+अणु
 	acpi_physical_address pa;
 
-#ifdef CONFIG_KEXEC
+#अगर_घोषित CONFIG_KEXEC
 	/*
 	 * We may have been provided with an RSDP on the command line,
-	 * but if a malicious user has done so they may be pointing us
-	 * at modified ACPI tables that could alter kernel behaviour -
-	 * so, we check the lockdown status before making use of
+	 * but अगर a malicious user has करोne so they may be poपूर्णांकing us
+	 * at modअगरied ACPI tables that could alter kernel behaviour -
+	 * so, we check the lockकरोwn status beक्रमe making use of
 	 * it. If we trust it then also stash it in an architecture
-	 * specific location (if appropriate) so it can be carried
+	 * specअगरic location (अगर appropriate) so it can be carried
 	 * over further kexec()s.
 	 */
-	if (acpi_rsdp && !security_locked_down(LOCKDOWN_ACPI_TABLES)) {
-		acpi_arch_set_root_pointer(acpi_rsdp);
-		return acpi_rsdp;
-	}
-#endif
-	pa = acpi_arch_get_root_pointer();
-	if (pa)
-		return pa;
+	अगर (acpi_rsdp && !security_locked_करोwn(LOCKDOWN_ACPI_TABLES)) अणु
+		acpi_arch_set_root_poपूर्णांकer(acpi_rsdp);
+		वापस acpi_rsdp;
+	पूर्ण
+#पूर्ण_अगर
+	pa = acpi_arch_get_root_poपूर्णांकer();
+	अगर (pa)
+		वापस pa;
 
-	if (efi_enabled(EFI_CONFIG_TABLES)) {
-		if (efi.acpi20 != EFI_INVALID_TABLE_ADDR)
-			return efi.acpi20;
-		if (efi.acpi != EFI_INVALID_TABLE_ADDR)
-			return efi.acpi;
+	अगर (efi_enabled(EFI_CONFIG_TABLES)) अणु
+		अगर (efi.acpi20 != EFI_INVALID_TABLE_ADDR)
+			वापस efi.acpi20;
+		अगर (efi.acpi != EFI_INVALID_TABLE_ADDR)
+			वापस efi.acpi;
 		pr_err(PREFIX "System description tables not found\n");
-	} else if (IS_ENABLED(CONFIG_ACPI_LEGACY_TABLES_LOOKUP)) {
-		acpi_find_root_pointer(&pa);
-	}
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_ACPI_LEGACY_TABLES_LOOKUP)) अणु
+		acpi_find_root_poपूर्णांकer(&pa);
+	पूर्ण
 
-	return pa;
-}
+	वापस pa;
+पूर्ण
 
-/* Must be called with 'acpi_ioremap_lock' or RCU read lock held. */
-static struct acpi_ioremap *
+/* Must be called with 'acpi_ioremap_lock' or RCU पढ़ो lock held. */
+अटल काष्ठा acpi_ioremap *
 acpi_map_lookup(acpi_physical_address phys, acpi_size size)
-{
-	struct acpi_ioremap *map;
+अणु
+	काष्ठा acpi_ioremap *map;
 
-	list_for_each_entry_rcu(map, &acpi_ioremaps, list, acpi_ioremap_lock_held())
-		if (map->phys <= phys &&
+	list_क्रम_each_entry_rcu(map, &acpi_ioremaps, list, acpi_ioremap_lock_held())
+		अगर (map->phys <= phys &&
 		    phys + size <= map->phys + map->size)
-			return map;
+			वापस map;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* Must be called with 'acpi_ioremap_lock' or RCU read lock held. */
-static void __iomem *
-acpi_map_vaddr_lookup(acpi_physical_address phys, unsigned int size)
-{
-	struct acpi_ioremap *map;
+/* Must be called with 'acpi_ioremap_lock' or RCU पढ़ो lock held. */
+अटल व्योम __iomem *
+acpi_map_vaddr_lookup(acpi_physical_address phys, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा acpi_ioremap *map;
 
 	map = acpi_map_lookup(phys, size);
-	if (map)
-		return map->virt + (phys - map->phys);
+	अगर (map)
+		वापस map->virt + (phys - map->phys);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void __iomem *acpi_os_get_iomem(acpi_physical_address phys, unsigned int size)
-{
-	struct acpi_ioremap *map;
-	void __iomem *virt = NULL;
+व्योम __iomem *acpi_os_get_iomem(acpi_physical_address phys, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा acpi_ioremap *map;
+	व्योम __iomem *virt = शून्य;
 
 	mutex_lock(&acpi_ioremap_lock);
 	map = acpi_map_lookup(phys, size);
-	if (map) {
+	अगर (map) अणु
 		virt = map->virt + (phys - map->phys);
 		map->track.refcount++;
-	}
+	पूर्ण
 	mutex_unlock(&acpi_ioremap_lock);
-	return virt;
-}
+	वापस virt;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_os_get_iomem);
 
-/* Must be called with 'acpi_ioremap_lock' or RCU read lock held. */
-static struct acpi_ioremap *
-acpi_map_lookup_virt(void __iomem *virt, acpi_size size)
-{
-	struct acpi_ioremap *map;
+/* Must be called with 'acpi_ioremap_lock' or RCU पढ़ो lock held. */
+अटल काष्ठा acpi_ioremap *
+acpi_map_lookup_virt(व्योम __iomem *virt, acpi_size size)
+अणु
+	काष्ठा acpi_ioremap *map;
 
-	list_for_each_entry_rcu(map, &acpi_ioremaps, list, acpi_ioremap_lock_held())
-		if (map->virt <= virt &&
+	list_क्रम_each_entry_rcu(map, &acpi_ioremaps, list, acpi_ioremap_lock_held())
+		अगर (map->virt <= virt &&
 		    virt + size <= map->virt + map->size)
-			return map;
+			वापस map;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#if defined(CONFIG_IA64) || defined(CONFIG_ARM64)
+#अगर defined(CONFIG_IA64) || defined(CONFIG_ARM64)
 /* ioremap will take care of cache attributes */
-#define should_use_kmap(pfn)   0
-#else
-#define should_use_kmap(pfn)   page_is_ram(pfn)
-#endif
+#घोषणा should_use_kmap(pfn)   0
+#अन्यथा
+#घोषणा should_use_kmap(pfn)   page_is_ram(pfn)
+#पूर्ण_अगर
 
-static void __iomem *acpi_map(acpi_physical_address pg_off, unsigned long pg_sz)
-{
-	unsigned long pfn;
-
-	pfn = pg_off >> PAGE_SHIFT;
-	if (should_use_kmap(pfn)) {
-		if (pg_sz > PAGE_SIZE)
-			return NULL;
-		return (void __iomem __force *)kmap(pfn_to_page(pfn));
-	} else
-		return acpi_os_ioremap(pg_off, pg_sz);
-}
-
-static void acpi_unmap(acpi_physical_address pg_off, void __iomem *vaddr)
-{
-	unsigned long pfn;
+अटल व्योम __iomem *acpi_map(acpi_physical_address pg_off, अचिन्हित दीर्घ pg_sz)
+अणु
+	अचिन्हित दीर्घ pfn;
 
 	pfn = pg_off >> PAGE_SHIFT;
-	if (should_use_kmap(pfn))
+	अगर (should_use_kmap(pfn)) अणु
+		अगर (pg_sz > PAGE_SIZE)
+			वापस शून्य;
+		वापस (व्योम __iomem __क्रमce *)kmap(pfn_to_page(pfn));
+	पूर्ण अन्यथा
+		वापस acpi_os_ioremap(pg_off, pg_sz);
+पूर्ण
+
+अटल व्योम acpi_unmap(acpi_physical_address pg_off, व्योम __iomem *vaddr)
+अणु
+	अचिन्हित दीर्घ pfn;
+
+	pfn = pg_off >> PAGE_SHIFT;
+	अगर (should_use_kmap(pfn))
 		kunmap(pfn_to_page(pfn));
-	else
+	अन्यथा
 		iounmap(vaddr);
-}
+पूर्ण
 
 /**
- * acpi_os_map_iomem - Get a virtual address for a given physical address range.
+ * acpi_os_map_iomem - Get a भव address क्रम a given physical address range.
  * @phys: Start of the physical address range to map.
  * @size: Size of the physical address range to map.
  *
  * Look up the given physical address range in the list of existing ACPI memory
- * mappings.  If found, get a reference to it and return a pointer to it (its
- * virtual address).  If not found, map it, add it to that list and return a
- * pointer to it.
+ * mappings.  If found, get a reference to it and वापस a poपूर्णांकer to it (its
+ * भव address).  If not found, map it, add it to that list and वापस a
+ * poपूर्णांकer to it.
  *
  * During early init (when acpi_permanent_mmap has not been set yet) this
- * routine simply calls __acpi_map_table() to get the job done.
+ * routine simply calls __acpi_map_table() to get the job करोne.
  */
-void __iomem __ref
+व्योम __iomem __ref
 *acpi_os_map_iomem(acpi_physical_address phys, acpi_size size)
-{
-	struct acpi_ioremap *map;
-	void __iomem *virt;
+अणु
+	काष्ठा acpi_ioremap *map;
+	व्योम __iomem *virt;
 	acpi_physical_address pg_off;
 	acpi_size pg_sz;
 
-	if (phys > ULONG_MAX) {
+	अगर (phys > अच_दीर्घ_उच्च) अणु
 		pr_err("Cannot map memory that high: 0x%llx\n", phys);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!acpi_permanent_mmap)
-		return __acpi_map_table((unsigned long)phys, size);
+	अगर (!acpi_permanent_mmap)
+		वापस __acpi_map_table((अचिन्हित दीर्घ)phys, size);
 
 	mutex_lock(&acpi_ioremap_lock);
-	/* Check if there's a suitable mapping already. */
+	/* Check अगर there's a suitable mapping alपढ़ोy. */
 	map = acpi_map_lookup(phys, size);
-	if (map) {
+	अगर (map) अणु
 		map->track.refcount++;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	map = kzalloc(sizeof(*map), GFP_KERNEL);
-	if (!map) {
+	map = kzalloc(माप(*map), GFP_KERNEL);
+	अगर (!map) अणु
 		mutex_unlock(&acpi_ioremap_lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	pg_off = round_down(phys, PAGE_SIZE);
+	pg_off = round_करोwn(phys, PAGE_SIZE);
 	pg_sz = round_up(phys + size, PAGE_SIZE) - pg_off;
 	virt = acpi_map(phys, size);
-	if (!virt) {
+	अगर (!virt) अणु
 		mutex_unlock(&acpi_ioremap_lock);
-		kfree(map);
-		return NULL;
-	}
+		kमुक्त(map);
+		वापस शून्य;
+	पूर्ण
 
 	INIT_LIST_HEAD(&map->list);
-	map->virt = (void __iomem __force *)((unsigned long)virt & PAGE_MASK);
+	map->virt = (व्योम __iomem __क्रमce *)((अचिन्हित दीर्घ)virt & PAGE_MASK);
 	map->phys = pg_off;
 	map->size = pg_sz;
 	map->track.refcount = 1;
@@ -370,73 +371,73 @@ void __iomem __ref
 
 out:
 	mutex_unlock(&acpi_ioremap_lock);
-	return map->virt + (phys - map->phys);
-}
+	वापस map->virt + (phys - map->phys);
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_os_map_iomem);
 
-void *__ref acpi_os_map_memory(acpi_physical_address phys, acpi_size size)
-{
-	return (void *)acpi_os_map_iomem(phys, size);
-}
+व्योम *__ref acpi_os_map_memory(acpi_physical_address phys, acpi_size size)
+अणु
+	वापस (व्योम *)acpi_os_map_iomem(phys, size);
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_os_map_memory);
 
-static void acpi_os_map_remove(struct work_struct *work)
-{
-	struct acpi_ioremap *map = container_of(to_rcu_work(work),
-						struct acpi_ioremap,
+अटल व्योम acpi_os_map_हटाओ(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा acpi_ioremap *map = container_of(to_rcu_work(work),
+						काष्ठा acpi_ioremap,
 						track.rwork);
 
 	acpi_unmap(map->phys, map->virt);
-	kfree(map);
-}
+	kमुक्त(map);
+पूर्ण
 
 /* Must be called with mutex_lock(&acpi_ioremap_lock) */
-static void acpi_os_drop_map_ref(struct acpi_ioremap *map)
-{
-	if (--map->track.refcount)
-		return;
+अटल व्योम acpi_os_drop_map_ref(काष्ठा acpi_ioremap *map)
+अणु
+	अगर (--map->track.refcount)
+		वापस;
 
 	list_del_rcu(&map->list);
 
-	INIT_RCU_WORK(&map->track.rwork, acpi_os_map_remove);
-	queue_rcu_work(system_wq, &map->track.rwork);
-}
+	INIT_RCU_WORK(&map->track.rwork, acpi_os_map_हटाओ);
+	queue_rcu_work(प्रणाली_wq, &map->track.rwork);
+पूर्ण
 
 /**
  * acpi_os_unmap_iomem - Drop a memory mapping reference.
  * @virt: Start of the address range to drop a reference to.
  * @size: Size of the address range to drop a reference to.
  *
- * Look up the given virtual address range in the list of existing ACPI memory
- * mappings, drop a reference to it and if there are no more active references
- * to it, queue it up for later removal.
+ * Look up the given भव address range in the list of existing ACPI memory
+ * mappings, drop a reference to it and अगर there are no more active references
+ * to it, queue it up क्रम later removal.
  *
  * During early init (when acpi_permanent_mmap has not been set yet) this
- * routine simply calls __acpi_unmap_table() to get the job done.  Since
+ * routine simply calls __acpi_unmap_table() to get the job करोne.  Since
  * __acpi_unmap_table() is an __init function, the __ref annotation is needed
  * here.
  */
-void __ref acpi_os_unmap_iomem(void __iomem *virt, acpi_size size)
-{
-	struct acpi_ioremap *map;
+व्योम __ref acpi_os_unmap_iomem(व्योम __iomem *virt, acpi_size size)
+अणु
+	काष्ठा acpi_ioremap *map;
 
-	if (!acpi_permanent_mmap) {
+	अगर (!acpi_permanent_mmap) अणु
 		__acpi_unmap_table(virt, size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&acpi_ioremap_lock);
 
 	map = acpi_map_lookup_virt(virt, size);
-	if (!map) {
+	अगर (!map) अणु
 		mutex_unlock(&acpi_ioremap_lock);
 		WARN(true, PREFIX "%s: bad address %p\n", __func__, virt);
-		return;
-	}
+		वापस;
+	पूर्ण
 	acpi_os_drop_map_ref(map);
 
 	mutex_unlock(&acpi_ioremap_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_os_unmap_iomem);
 
 /**
@@ -444,464 +445,464 @@ EXPORT_SYMBOL_GPL(acpi_os_unmap_iomem);
  * @virt: Start of the address range to drop a reference to.
  * @size: Size of the address range to drop a reference to.
  */
-void __ref acpi_os_unmap_memory(void *virt, acpi_size size)
-{
-	acpi_os_unmap_iomem((void __iomem *)virt, size);
-}
+व्योम __ref acpi_os_unmap_memory(व्योम *virt, acpi_size size)
+अणु
+	acpi_os_unmap_iomem((व्योम __iomem *)virt, size);
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_os_unmap_memory);
 
-void __iomem *acpi_os_map_generic_address(struct acpi_generic_address *gas)
-{
+व्योम __iomem *acpi_os_map_generic_address(काष्ठा acpi_generic_address *gas)
+अणु
 	u64 addr;
 
-	if (gas->space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY)
-		return NULL;
+	अगर (gas->space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY)
+		वापस शून्य;
 
 	/* Handle possible alignment issues */
-	memcpy(&addr, &gas->address, sizeof(addr));
-	if (!addr || !gas->bit_width)
-		return NULL;
+	स_नकल(&addr, &gas->address, माप(addr));
+	अगर (!addr || !gas->bit_width)
+		वापस शून्य;
 
-	return acpi_os_map_iomem(addr, gas->bit_width / 8);
-}
+	वापस acpi_os_map_iomem(addr, gas->bit_width / 8);
+पूर्ण
 EXPORT_SYMBOL(acpi_os_map_generic_address);
 
-void acpi_os_unmap_generic_address(struct acpi_generic_address *gas)
-{
+व्योम acpi_os_unmap_generic_address(काष्ठा acpi_generic_address *gas)
+अणु
 	u64 addr;
-	struct acpi_ioremap *map;
+	काष्ठा acpi_ioremap *map;
 
-	if (gas->space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY)
-		return;
+	अगर (gas->space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY)
+		वापस;
 
 	/* Handle possible alignment issues */
-	memcpy(&addr, &gas->address, sizeof(addr));
-	if (!addr || !gas->bit_width)
-		return;
+	स_नकल(&addr, &gas->address, माप(addr));
+	अगर (!addr || !gas->bit_width)
+		वापस;
 
 	mutex_lock(&acpi_ioremap_lock);
 
 	map = acpi_map_lookup(addr, gas->bit_width / 8);
-	if (!map) {
+	अगर (!map) अणु
 		mutex_unlock(&acpi_ioremap_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	acpi_os_drop_map_ref(map);
 
 	mutex_unlock(&acpi_ioremap_lock);
-}
+पूर्ण
 EXPORT_SYMBOL(acpi_os_unmap_generic_address);
 
-#ifdef ACPI_FUTURE_USAGE
+#अगर_घोषित ACPI_FUTURE_USAGE
 acpi_status
-acpi_os_get_physical_address(void *virt, acpi_physical_address * phys)
-{
-	if (!phys || !virt)
-		return AE_BAD_PARAMETER;
+acpi_os_get_physical_address(व्योम *virt, acpi_physical_address * phys)
+अणु
+	अगर (!phys || !virt)
+		वापस AE_BAD_PARAMETER;
 
 	*phys = virt_to_phys(virt);
 
-	return AE_OK;
-}
-#endif
+	वापस AE_OK;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_REV_OVERRIDE_POSSIBLE
-static bool acpi_rev_override;
+#अगर_घोषित CONFIG_ACPI_REV_OVERRIDE_POSSIBLE
+अटल bool acpi_rev_override;
 
-int __init acpi_rev_override_setup(char *str)
-{
+पूर्णांक __init acpi_rev_override_setup(अक्षर *str)
+अणु
 	acpi_rev_override = true;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("acpi_rev_override", acpi_rev_override_setup);
-#else
-#define acpi_rev_override	false
-#endif
+#अन्यथा
+#घोषणा acpi_rev_override	false
+#पूर्ण_अगर
 
-#define ACPI_MAX_OVERRIDE_LEN 100
+#घोषणा ACPI_MAX_OVERRIDE_LEN 100
 
-static char acpi_os_name[ACPI_MAX_OVERRIDE_LEN];
+अटल अक्षर acpi_os_name[ACPI_MAX_OVERRIDE_LEN];
 
 acpi_status
-acpi_os_predefined_override(const struct acpi_predefined_names *init_val,
+acpi_os_predefined_override(स्थिर काष्ठा acpi_predefined_names *init_val,
 			    acpi_string *new_val)
-{
-	if (!init_val || !new_val)
-		return AE_BAD_PARAMETER;
+अणु
+	अगर (!init_val || !new_val)
+		वापस AE_BAD_PARAMETER;
 
-	*new_val = NULL;
-	if (!memcmp(init_val->name, "_OS_", 4) && strlen(acpi_os_name)) {
+	*new_val = शून्य;
+	अगर (!स_भेद(init_val->name, "_OS_", 4) && म_माप(acpi_os_name)) अणु
 		pr_info("Overriding _OS definition to '%s'\n", acpi_os_name);
 		*new_val = acpi_os_name;
-	}
+	पूर्ण
 
-	if (!memcmp(init_val->name, "_REV", 4) && acpi_rev_override) {
+	अगर (!स_भेद(init_val->name, "_REV", 4) && acpi_rev_override) अणु
 		pr_info("Overriding _REV return value to 5\n");
-		*new_val = (char *)5;
-	}
+		*new_val = (अक्षर *)5;
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static irqreturn_t acpi_irq(int irq, void *dev_id)
-{
+अटल irqवापस_t acpi_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
 	u32 handled;
 
 	handled = (*acpi_irq_handler) (acpi_irq_context);
 
-	if (handled) {
+	अगर (handled) अणु
 		acpi_irq_handled++;
-		return IRQ_HANDLED;
-	} else {
+		वापस IRQ_HANDLED;
+	पूर्ण अन्यथा अणु
 		acpi_irq_not_handled++;
-		return IRQ_NONE;
-	}
-}
+		वापस IRQ_NONE;
+	पूर्ण
+पूर्ण
 
 acpi_status
-acpi_os_install_interrupt_handler(u32 gsi, acpi_osd_handler handler,
-				  void *context)
-{
-	unsigned int irq;
+acpi_os_install_पूर्णांकerrupt_handler(u32 gsi, acpi_osd_handler handler,
+				  व्योम *context)
+अणु
+	अचिन्हित पूर्णांक irq;
 
 	acpi_irq_stats_init();
 
 	/*
-	 * ACPI interrupts different from the SCI in our copy of the FADT are
+	 * ACPI पूर्णांकerrupts dअगरferent from the SCI in our copy of the FADT are
 	 * not supported.
 	 */
-	if (gsi != acpi_gbl_FADT.sci_interrupt)
-		return AE_BAD_PARAMETER;
+	अगर (gsi != acpi_gbl_FADT.sci_पूर्णांकerrupt)
+		वापस AE_BAD_PARAMETER;
 
-	if (acpi_irq_handler)
-		return AE_ALREADY_ACQUIRED;
+	अगर (acpi_irq_handler)
+		वापस AE_ALREADY_ACQUIRED;
 
-	if (acpi_gsi_to_irq(gsi, &irq) < 0) {
+	अगर (acpi_gsi_to_irq(gsi, &irq) < 0) अणु
 		pr_err("SCI (ACPI GSI %d) not registered\n", gsi);
-		return AE_OK;
-	}
+		वापस AE_OK;
+	पूर्ण
 
 	acpi_irq_handler = handler;
 	acpi_irq_context = context;
-	if (request_irq(irq, acpi_irq, IRQF_SHARED, "acpi", acpi_irq)) {
+	अगर (request_irq(irq, acpi_irq, IRQF_SHARED, "acpi", acpi_irq)) अणु
 		pr_err("SCI (IRQ%d) allocation failed\n", irq);
-		acpi_irq_handler = NULL;
-		return AE_NOT_ACQUIRED;
-	}
+		acpi_irq_handler = शून्य;
+		वापस AE_NOT_ACQUIRED;
+	पूर्ण
 	acpi_sci_irq = irq;
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-acpi_status acpi_os_remove_interrupt_handler(u32 gsi, acpi_osd_handler handler)
-{
-	if (gsi != acpi_gbl_FADT.sci_interrupt || !acpi_sci_irq_valid())
-		return AE_BAD_PARAMETER;
+acpi_status acpi_os_हटाओ_पूर्णांकerrupt_handler(u32 gsi, acpi_osd_handler handler)
+अणु
+	अगर (gsi != acpi_gbl_FADT.sci_पूर्णांकerrupt || !acpi_sci_irq_valid())
+		वापस AE_BAD_PARAMETER;
 
-	free_irq(acpi_sci_irq, acpi_irq);
-	acpi_irq_handler = NULL;
+	मुक्त_irq(acpi_sci_irq, acpi_irq);
+	acpi_irq_handler = शून्य;
 	acpi_sci_irq = INVALID_ACPI_IRQ;
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
 /*
- * Running in interpreter thread context, safe to sleep
+ * Running in पूर्णांकerpreter thपढ़ो context, safe to sleep
  */
 
-void acpi_os_sleep(u64 ms)
-{
+व्योम acpi_os_sleep(u64 ms)
+अणु
 	msleep(ms);
-}
+पूर्ण
 
-void acpi_os_stall(u32 us)
-{
-	while (us) {
+व्योम acpi_os_stall(u32 us)
+अणु
+	जबतक (us) अणु
 		u32 delay = 1000;
 
-		if (delay > us)
+		अगर (delay > us)
 			delay = us;
 		udelay(delay);
-		touch_nmi_watchdog();
+		touch_nmi_watchकरोg();
 		us -= delay;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Support ACPI 3.0 AML Timer operand. Returns a 64-bit free-running,
- * monotonically increasing timer with 100ns granularity. Do not use
- * ktime_get() to implement this function because this function may get
- * called after timekeeping has been suspended. Note: calling this function
- * after timekeeping has been suspended may lead to unexpected results
- * because when timekeeping is suspended the jiffies counter is not
- * incremented. See also timekeeping_suspend().
+ * Support ACPI 3.0 AML Timer opeअक्रम. Returns a 64-bit मुक्त-running,
+ * monotonically increasing समयr with 100ns granularity. Do not use
+ * kसमय_get() to implement this function because this function may get
+ * called after समयkeeping has been suspended. Note: calling this function
+ * after समयkeeping has been suspended may lead to unexpected results
+ * because when समयkeeping is suspended the jअगरfies counter is not
+ * incremented. See also समयkeeping_suspend().
  */
-u64 acpi_os_get_timer(void)
-{
-	return (get_jiffies_64() - INITIAL_JIFFIES) *
+u64 acpi_os_get_समयr(व्योम)
+अणु
+	वापस (get_jअगरfies_64() - INITIAL_JIFFIES) *
 		(ACPI_100NSEC_PER_SEC / HZ);
-}
+पूर्ण
 
-acpi_status acpi_os_read_port(acpi_io_address port, u32 * value, u32 width)
-{
+acpi_status acpi_os_पढ़ो_port(acpi_io_address port, u32 * value, u32 width)
+अणु
 	u32 dummy;
 
-	if (!value)
+	अगर (!value)
 		value = &dummy;
 
 	*value = 0;
-	if (width <= 8) {
+	अगर (width <= 8) अणु
 		*(u8 *) value = inb(port);
-	} else if (width <= 16) {
+	पूर्ण अन्यथा अगर (width <= 16) अणु
 		*(u16 *) value = inw(port);
-	} else if (width <= 32) {
+	पूर्ण अन्यथा अगर (width <= 32) अणु
 		*(u32 *) value = inl(port);
-	} else {
+	पूर्ण अन्यथा अणु
 		BUG();
-	}
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-EXPORT_SYMBOL(acpi_os_read_port);
+EXPORT_SYMBOL(acpi_os_पढ़ो_port);
 
-acpi_status acpi_os_write_port(acpi_io_address port, u32 value, u32 width)
-{
-	if (width <= 8) {
+acpi_status acpi_os_ग_लिखो_port(acpi_io_address port, u32 value, u32 width)
+अणु
+	अगर (width <= 8) अणु
 		outb(value, port);
-	} else if (width <= 16) {
+	पूर्ण अन्यथा अगर (width <= 16) अणु
 		outw(value, port);
-	} else if (width <= 32) {
+	पूर्ण अन्यथा अगर (width <= 32) अणु
 		outl(value, port);
-	} else {
+	पूर्ण अन्यथा अणु
 		BUG();
-	}
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-EXPORT_SYMBOL(acpi_os_write_port);
+EXPORT_SYMBOL(acpi_os_ग_लिखो_port);
 
-int acpi_os_read_iomem(void __iomem *virt_addr, u64 *value, u32 width)
-{
+पूर्णांक acpi_os_पढ़ो_iomem(व्योम __iomem *virt_addr, u64 *value, u32 width)
+अणु
 
-	switch (width) {
-	case 8:
-		*(u8 *) value = readb(virt_addr);
-		break;
-	case 16:
-		*(u16 *) value = readw(virt_addr);
-		break;
-	case 32:
-		*(u32 *) value = readl(virt_addr);
-		break;
-	case 64:
-		*(u64 *) value = readq(virt_addr);
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (width) अणु
+	हाल 8:
+		*(u8 *) value = पढ़ोb(virt_addr);
+		अवरोध;
+	हाल 16:
+		*(u16 *) value = पढ़ोw(virt_addr);
+		अवरोध;
+	हाल 32:
+		*(u32 *) value = पढ़ोl(virt_addr);
+		अवरोध;
+	हाल 64:
+		*(u64 *) value = पढ़ोq(virt_addr);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 acpi_status
-acpi_os_read_memory(acpi_physical_address phys_addr, u64 *value, u32 width)
-{
-	void __iomem *virt_addr;
-	unsigned int size = width / 8;
+acpi_os_पढ़ो_memory(acpi_physical_address phys_addr, u64 *value, u32 width)
+अणु
+	व्योम __iomem *virt_addr;
+	अचिन्हित पूर्णांक size = width / 8;
 	bool unmap = false;
 	u64 dummy;
-	int error;
+	पूर्णांक error;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	virt_addr = acpi_map_vaddr_lookup(phys_addr, size);
-	if (!virt_addr) {
-		rcu_read_unlock();
+	अगर (!virt_addr) अणु
+		rcu_पढ़ो_unlock();
 		virt_addr = acpi_os_ioremap(phys_addr, size);
-		if (!virt_addr)
-			return AE_BAD_ADDRESS;
+		अगर (!virt_addr)
+			वापस AE_BAD_ADDRESS;
 		unmap = true;
-	}
+	पूर्ण
 
-	if (!value)
+	अगर (!value)
 		value = &dummy;
 
-	error = acpi_os_read_iomem(virt_addr, value, width);
+	error = acpi_os_पढ़ो_iomem(virt_addr, value, width);
 	BUG_ON(error);
 
-	if (unmap)
+	अगर (unmap)
 		iounmap(virt_addr);
-	else
-		rcu_read_unlock();
+	अन्यथा
+		rcu_पढ़ो_unlock();
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
 acpi_status
-acpi_os_write_memory(acpi_physical_address phys_addr, u64 value, u32 width)
-{
-	void __iomem *virt_addr;
-	unsigned int size = width / 8;
+acpi_os_ग_लिखो_memory(acpi_physical_address phys_addr, u64 value, u32 width)
+अणु
+	व्योम __iomem *virt_addr;
+	अचिन्हित पूर्णांक size = width / 8;
 	bool unmap = false;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	virt_addr = acpi_map_vaddr_lookup(phys_addr, size);
-	if (!virt_addr) {
-		rcu_read_unlock();
+	अगर (!virt_addr) अणु
+		rcu_पढ़ो_unlock();
 		virt_addr = acpi_os_ioremap(phys_addr, size);
-		if (!virt_addr)
-			return AE_BAD_ADDRESS;
+		अगर (!virt_addr)
+			वापस AE_BAD_ADDRESS;
 		unmap = true;
-	}
+	पूर्ण
 
-	switch (width) {
-	case 8:
-		writeb(value, virt_addr);
-		break;
-	case 16:
-		writew(value, virt_addr);
-		break;
-	case 32:
-		writel(value, virt_addr);
-		break;
-	case 64:
-		writeq(value, virt_addr);
-		break;
-	default:
+	चयन (width) अणु
+	हाल 8:
+		ग_लिखोb(value, virt_addr);
+		अवरोध;
+	हाल 16:
+		ग_लिखोw(value, virt_addr);
+		अवरोध;
+	हाल 32:
+		ग_लिखोl(value, virt_addr);
+		अवरोध;
+	हाल 64:
+		ग_लिखोq(value, virt_addr);
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	if (unmap)
+	अगर (unmap)
 		iounmap(virt_addr);
-	else
-		rcu_read_unlock();
+	अन्यथा
+		rcu_पढ़ो_unlock();
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 acpi_status
-acpi_os_read_pci_configuration(struct acpi_pci_id * pci_id, u32 reg,
+acpi_os_पढ़ो_pci_configuration(काष्ठा acpi_pci_id * pci_id, u32 reg,
 			       u64 *value, u32 width)
-{
-	int result, size;
+अणु
+	पूर्णांक result, size;
 	u32 value32;
 
-	if (!value)
-		return AE_BAD_PARAMETER;
+	अगर (!value)
+		वापस AE_BAD_PARAMETER;
 
-	switch (width) {
-	case 8:
+	चयन (width) अणु
+	हाल 8:
 		size = 1;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		size = 2;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		size = 4;
-		break;
-	default:
-		return AE_ERROR;
-	}
+		अवरोध;
+	शेष:
+		वापस AE_ERROR;
+	पूर्ण
 
-	result = raw_pci_read(pci_id->segment, pci_id->bus,
+	result = raw_pci_पढ़ो(pci_id->segment, pci_id->bus,
 				PCI_DEVFN(pci_id->device, pci_id->function),
 				reg, size, &value32);
 	*value = value32;
 
-	return (result ? AE_ERROR : AE_OK);
-}
+	वापस (result ? AE_ERROR : AE_OK);
+पूर्ण
 
 acpi_status
-acpi_os_write_pci_configuration(struct acpi_pci_id * pci_id, u32 reg,
+acpi_os_ग_लिखो_pci_configuration(काष्ठा acpi_pci_id * pci_id, u32 reg,
 				u64 value, u32 width)
-{
-	int result, size;
+अणु
+	पूर्णांक result, size;
 
-	switch (width) {
-	case 8:
+	चयन (width) अणु
+	हाल 8:
 		size = 1;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		size = 2;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		size = 4;
-		break;
-	default:
-		return AE_ERROR;
-	}
+		अवरोध;
+	शेष:
+		वापस AE_ERROR;
+	पूर्ण
 
-	result = raw_pci_write(pci_id->segment, pci_id->bus,
+	result = raw_pci_ग_लिखो(pci_id->segment, pci_id->bus,
 				PCI_DEVFN(pci_id->device, pci_id->function),
 				reg, size, value);
 
-	return (result ? AE_ERROR : AE_OK);
-}
-#endif
+	वापस (result ? AE_ERROR : AE_OK);
+पूर्ण
+#पूर्ण_अगर
 
-static void acpi_os_execute_deferred(struct work_struct *work)
-{
-	struct acpi_os_dpc *dpc = container_of(work, struct acpi_os_dpc, work);
+अटल व्योम acpi_os_execute_deferred(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा acpi_os_dpc *dpc = container_of(work, काष्ठा acpi_os_dpc, work);
 
 	dpc->function(dpc->context);
-	kfree(dpc);
-}
+	kमुक्त(dpc);
+पूर्ण
 
-#ifdef CONFIG_ACPI_DEBUGGER
-static struct acpi_debugger acpi_debugger;
-static bool acpi_debugger_initialized;
+#अगर_घोषित CONFIG_ACPI_DEBUGGER
+अटल काष्ठा acpi_debugger acpi_debugger;
+अटल bool acpi_debugger_initialized;
 
-int acpi_register_debugger(struct module *owner,
-			   const struct acpi_debugger_ops *ops)
-{
-	int ret = 0;
+पूर्णांक acpi_रेजिस्टर_debugger(काष्ठा module *owner,
+			   स्थिर काष्ठा acpi_debugger_ops *ops)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&acpi_debugger.lock);
-	if (acpi_debugger.ops) {
+	अगर (acpi_debugger.ops) अणु
 		ret = -EBUSY;
-		goto err_lock;
-	}
+		जाओ err_lock;
+	पूर्ण
 
 	acpi_debugger.owner = owner;
 	acpi_debugger.ops = ops;
 
 err_lock:
 	mutex_unlock(&acpi_debugger.lock);
-	return ret;
-}
-EXPORT_SYMBOL(acpi_register_debugger);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(acpi_रेजिस्टर_debugger);
 
-void acpi_unregister_debugger(const struct acpi_debugger_ops *ops)
-{
+व्योम acpi_unरेजिस्टर_debugger(स्थिर काष्ठा acpi_debugger_ops *ops)
+अणु
 	mutex_lock(&acpi_debugger.lock);
-	if (ops == acpi_debugger.ops) {
-		acpi_debugger.ops = NULL;
-		acpi_debugger.owner = NULL;
-	}
+	अगर (ops == acpi_debugger.ops) अणु
+		acpi_debugger.ops = शून्य;
+		acpi_debugger.owner = शून्य;
+	पूर्ण
 	mutex_unlock(&acpi_debugger.lock);
-}
-EXPORT_SYMBOL(acpi_unregister_debugger);
+पूर्ण
+EXPORT_SYMBOL(acpi_unरेजिस्टर_debugger);
 
-int acpi_debugger_create_thread(acpi_osd_exec_callback function, void *context)
-{
-	int ret;
-	int (*func)(acpi_osd_exec_callback, void *);
-	struct module *owner;
+पूर्णांक acpi_debugger_create_thपढ़ो(acpi_osd_exec_callback function, व्योम *context)
+अणु
+	पूर्णांक ret;
+	पूर्णांक (*func)(acpi_osd_exec_callback, व्योम *);
+	काष्ठा module *owner;
 
-	if (!acpi_debugger_initialized)
-		return -ENODEV;
+	अगर (!acpi_debugger_initialized)
+		वापस -ENODEV;
 	mutex_lock(&acpi_debugger.lock);
-	if (!acpi_debugger.ops) {
+	अगर (!acpi_debugger.ops) अणु
 		ret = -ENODEV;
-		goto err_lock;
-	}
-	if (!try_module_get(acpi_debugger.owner)) {
+		जाओ err_lock;
+	पूर्ण
+	अगर (!try_module_get(acpi_debugger.owner)) अणु
 		ret = -ENODEV;
-		goto err_lock;
-	}
-	func = acpi_debugger.ops->create_thread;
+		जाओ err_lock;
+	पूर्ण
+	func = acpi_debugger.ops->create_thपढ़ो;
 	owner = acpi_debugger.owner;
 	mutex_unlock(&acpi_debugger.lock);
 
@@ -911,27 +912,27 @@ int acpi_debugger_create_thread(acpi_osd_exec_callback function, void *context)
 	module_put(owner);
 err_lock:
 	mutex_unlock(&acpi_debugger.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-ssize_t acpi_debugger_write_log(const char *msg)
-{
-	ssize_t ret;
-	ssize_t (*func)(const char *);
-	struct module *owner;
+sमाप_प्रकार acpi_debugger_ग_लिखो_log(स्थिर अक्षर *msg)
+अणु
+	sमाप_प्रकार ret;
+	sमाप_प्रकार (*func)(स्थिर अक्षर *);
+	काष्ठा module *owner;
 
-	if (!acpi_debugger_initialized)
-		return -ENODEV;
+	अगर (!acpi_debugger_initialized)
+		वापस -ENODEV;
 	mutex_lock(&acpi_debugger.lock);
-	if (!acpi_debugger.ops) {
+	अगर (!acpi_debugger.ops) अणु
 		ret = -ENODEV;
-		goto err_lock;
-	}
-	if (!try_module_get(acpi_debugger.owner)) {
+		जाओ err_lock;
+	पूर्ण
+	अगर (!try_module_get(acpi_debugger.owner)) अणु
 		ret = -ENODEV;
-		goto err_lock;
-	}
-	func = acpi_debugger.ops->write_log;
+		जाओ err_lock;
+	पूर्ण
+	func = acpi_debugger.ops->ग_लिखो_log;
 	owner = acpi_debugger.owner;
 	mutex_unlock(&acpi_debugger.lock);
 
@@ -941,27 +942,27 @@ ssize_t acpi_debugger_write_log(const char *msg)
 	module_put(owner);
 err_lock:
 	mutex_unlock(&acpi_debugger.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-ssize_t acpi_debugger_read_cmd(char *buffer, size_t buffer_length)
-{
-	ssize_t ret;
-	ssize_t (*func)(char *, size_t);
-	struct module *owner;
+sमाप_प्रकार acpi_debugger_पढ़ो_cmd(अक्षर *buffer, माप_प्रकार buffer_length)
+अणु
+	sमाप_प्रकार ret;
+	sमाप_प्रकार (*func)(अक्षर *, माप_प्रकार);
+	काष्ठा module *owner;
 
-	if (!acpi_debugger_initialized)
-		return -ENODEV;
+	अगर (!acpi_debugger_initialized)
+		वापस -ENODEV;
 	mutex_lock(&acpi_debugger.lock);
-	if (!acpi_debugger.ops) {
+	अगर (!acpi_debugger.ops) अणु
 		ret = -ENODEV;
-		goto err_lock;
-	}
-	if (!try_module_get(acpi_debugger.owner)) {
+		जाओ err_lock;
+	पूर्ण
+	अगर (!try_module_get(acpi_debugger.owner)) अणु
 		ret = -ENODEV;
-		goto err_lock;
-	}
-	func = acpi_debugger.ops->read_cmd;
+		जाओ err_lock;
+	पूर्ण
+	func = acpi_debugger.ops->पढ़ो_cmd;
 	owner = acpi_debugger.owner;
 	mutex_unlock(&acpi_debugger.lock);
 
@@ -971,27 +972,27 @@ ssize_t acpi_debugger_read_cmd(char *buffer, size_t buffer_length)
 	module_put(owner);
 err_lock:
 	mutex_unlock(&acpi_debugger.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int acpi_debugger_wait_command_ready(void)
-{
-	int ret;
-	int (*func)(bool, char *, size_t);
-	struct module *owner;
+पूर्णांक acpi_debugger_रुको_command_पढ़ोy(व्योम)
+अणु
+	पूर्णांक ret;
+	पूर्णांक (*func)(bool, अक्षर *, माप_प्रकार);
+	काष्ठा module *owner;
 
-	if (!acpi_debugger_initialized)
-		return -ENODEV;
+	अगर (!acpi_debugger_initialized)
+		वापस -ENODEV;
 	mutex_lock(&acpi_debugger.lock);
-	if (!acpi_debugger.ops) {
+	अगर (!acpi_debugger.ops) अणु
 		ret = -ENODEV;
-		goto err_lock;
-	}
-	if (!try_module_get(acpi_debugger.owner)) {
+		जाओ err_lock;
+	पूर्ण
+	अगर (!try_module_get(acpi_debugger.owner)) अणु
 		ret = -ENODEV;
-		goto err_lock;
-	}
-	func = acpi_debugger.ops->wait_command_ready;
+		जाओ err_lock;
+	पूर्ण
+	func = acpi_debugger.ops->रुको_command_पढ़ोy;
 	owner = acpi_debugger.owner;
 	mutex_unlock(&acpi_debugger.lock);
 
@@ -1002,27 +1003,27 @@ int acpi_debugger_wait_command_ready(void)
 	module_put(owner);
 err_lock:
 	mutex_unlock(&acpi_debugger.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int acpi_debugger_notify_command_complete(void)
-{
-	int ret;
-	int (*func)(void);
-	struct module *owner;
+पूर्णांक acpi_debugger_notअगरy_command_complete(व्योम)
+अणु
+	पूर्णांक ret;
+	पूर्णांक (*func)(व्योम);
+	काष्ठा module *owner;
 
-	if (!acpi_debugger_initialized)
-		return -ENODEV;
+	अगर (!acpi_debugger_initialized)
+		वापस -ENODEV;
 	mutex_lock(&acpi_debugger.lock);
-	if (!acpi_debugger.ops) {
+	अगर (!acpi_debugger.ops) अणु
 		ret = -ENODEV;
-		goto err_lock;
-	}
-	if (!try_module_get(acpi_debugger.owner)) {
+		जाओ err_lock;
+	पूर्ण
+	अगर (!try_module_get(acpi_debugger.owner)) अणु
 		ret = -ENODEV;
-		goto err_lock;
-	}
-	func = acpi_debugger.ops->notify_command_complete;
+		जाओ err_lock;
+	पूर्ण
+	func = acpi_debugger.ops->notअगरy_command_complete;
 	owner = acpi_debugger.owner;
 	mutex_unlock(&acpi_debugger.lock);
 
@@ -1032,16 +1033,16 @@ int acpi_debugger_notify_command_complete(void)
 	module_put(owner);
 err_lock:
 	mutex_unlock(&acpi_debugger.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int __init acpi_debugger_init(void)
-{
+पूर्णांक __init acpi_debugger_init(व्योम)
+अणु
 	mutex_init(&acpi_debugger.lock);
 	acpi_debugger_initialized = true;
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*******************************************************************************
  *
@@ -1053,155 +1054,155 @@ int __init acpi_debugger_init(void)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Depending on type, either queues function for deferred execution or
- *              immediately executes function on a separate thread.
+ * DESCRIPTION: Depending on type, either queues function क्रम deferred execution or
+ *              immediately executes function on a separate thपढ़ो.
  *
  ******************************************************************************/
 
 acpi_status acpi_os_execute(acpi_execute_type type,
-			    acpi_osd_exec_callback function, void *context)
-{
+			    acpi_osd_exec_callback function, व्योम *context)
+अणु
 	acpi_status status = AE_OK;
-	struct acpi_os_dpc *dpc;
-	struct workqueue_struct *queue;
-	int ret;
+	काष्ठा acpi_os_dpc *dpc;
+	काष्ठा workqueue_काष्ठा *queue;
+	पूर्णांक ret;
 	ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 			  "Scheduling function [%p(%p)] for deferred execution.\n",
 			  function, context));
 
-	if (type == OSL_DEBUGGER_MAIN_THREAD) {
-		ret = acpi_debugger_create_thread(function, context);
-		if (ret) {
+	अगर (type == OSL_DEBUGGER_MAIN_THREAD) अणु
+		ret = acpi_debugger_create_thपढ़ो(function, context);
+		अगर (ret) अणु
 			pr_err("Kernel thread creation failed\n");
 			status = AE_ERROR;
-		}
-		goto out_thread;
-	}
+		पूर्ण
+		जाओ out_thपढ़ो;
+	पूर्ण
 
 	/*
-	 * Allocate/initialize DPC structure.  Note that this memory will be
-	 * freed by the callee.  The kernel handles the work_struct list  in a
-	 * way that allows us to also free its memory inside the callee.
-	 * Because we may want to schedule several tasks with different
+	 * Allocate/initialize DPC काष्ठाure.  Note that this memory will be
+	 * मुक्तd by the callee.  The kernel handles the work_काष्ठा list  in a
+	 * way that allows us to also मुक्त its memory inside the callee.
+	 * Because we may want to schedule several tasks with dअगरferent
 	 * parameters we can't use the approach some kernel code uses of
-	 * having a static work_struct.
+	 * having a अटल work_काष्ठा.
 	 */
 
-	dpc = kzalloc(sizeof(struct acpi_os_dpc), GFP_ATOMIC);
-	if (!dpc)
-		return AE_NO_MEMORY;
+	dpc = kzalloc(माप(काष्ठा acpi_os_dpc), GFP_ATOMIC);
+	अगर (!dpc)
+		वापस AE_NO_MEMORY;
 
 	dpc->function = function;
 	dpc->context = context;
 
 	/*
 	 * To prevent lockdep from complaining unnecessarily, make sure that
-	 * there is a different static lockdep key for each workqueue by using
-	 * INIT_WORK() for each of them separately.
+	 * there is a dअगरferent अटल lockdep key क्रम each workqueue by using
+	 * INIT_WORK() क्रम each of them separately.
 	 */
-	if (type == OSL_NOTIFY_HANDLER) {
-		queue = kacpi_notify_wq;
+	अगर (type == OSL_NOTIFY_HANDLER) अणु
+		queue = kacpi_notअगरy_wq;
 		INIT_WORK(&dpc->work, acpi_os_execute_deferred);
-	} else if (type == OSL_GPE_HANDLER) {
+	पूर्ण अन्यथा अगर (type == OSL_GPE_HANDLER) अणु
 		queue = kacpid_wq;
 		INIT_WORK(&dpc->work, acpi_os_execute_deferred);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Unsupported os_execute type %d.\n", type);
 		status = AE_ERROR;
-	}
+	पूर्ण
 
-	if (ACPI_FAILURE(status))
-		goto err_workqueue;
+	अगर (ACPI_FAILURE(status))
+		जाओ err_workqueue;
 
 	/*
 	 * On some machines, a software-initiated SMI causes corruption unless
 	 * the SMI runs on CPU 0.  An SMI can be initiated by any AML, but
-	 * typically it's done in GPE-related methods that are run via
-	 * workqueues, so we can avoid the known corruption cases by always
+	 * typically it's करोne in GPE-related methods that are run via
+	 * workqueues, so we can aव्योम the known corruption हालs by always
 	 * queueing on CPU 0.
 	 */
 	ret = queue_work_on(0, queue, &dpc->work);
-	if (!ret) {
+	अगर (!ret) अणु
 		pr_err("Unable to queue work\n");
 		status = AE_ERROR;
-	}
+	पूर्ण
 err_workqueue:
-	if (ACPI_FAILURE(status))
-		kfree(dpc);
-out_thread:
-	return status;
-}
+	अगर (ACPI_FAILURE(status))
+		kमुक्त(dpc);
+out_thपढ़ो:
+	वापस status;
+पूर्ण
 EXPORT_SYMBOL(acpi_os_execute);
 
-void acpi_os_wait_events_complete(void)
-{
+व्योम acpi_os_रुको_events_complete(व्योम)
+अणु
 	/*
 	 * Make sure the GPE handler or the fixed event handler is not used
 	 * on another CPU after removal.
 	 */
-	if (acpi_sci_irq_valid())
+	अगर (acpi_sci_irq_valid())
 		synchronize_hardirq(acpi_sci_irq);
 	flush_workqueue(kacpid_wq);
-	flush_workqueue(kacpi_notify_wq);
-}
-EXPORT_SYMBOL(acpi_os_wait_events_complete);
+	flush_workqueue(kacpi_notअगरy_wq);
+पूर्ण
+EXPORT_SYMBOL(acpi_os_रुको_events_complete);
 
-struct acpi_hp_work {
-	struct work_struct work;
-	struct acpi_device *adev;
+काष्ठा acpi_hp_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा acpi_device *adev;
 	u32 src;
-};
+पूर्ण;
 
-static void acpi_hotplug_work_fn(struct work_struct *work)
-{
-	struct acpi_hp_work *hpw = container_of(work, struct acpi_hp_work, work);
+अटल व्योम acpi_hotplug_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा acpi_hp_work *hpw = container_of(work, काष्ठा acpi_hp_work, work);
 
-	acpi_os_wait_events_complete();
+	acpi_os_रुको_events_complete();
 	acpi_device_hotplug(hpw->adev, hpw->src);
-	kfree(hpw);
-}
+	kमुक्त(hpw);
+पूर्ण
 
-acpi_status acpi_hotplug_schedule(struct acpi_device *adev, u32 src)
-{
-	struct acpi_hp_work *hpw;
+acpi_status acpi_hotplug_schedule(काष्ठा acpi_device *adev, u32 src)
+अणु
+	काष्ठा acpi_hp_work *hpw;
 
 	acpi_handle_debug(adev->handle,
 			  "Scheduling hotplug event %u for deferred handling\n",
 			   src);
 
-	hpw = kmalloc(sizeof(*hpw), GFP_KERNEL);
-	if (!hpw)
-		return AE_NO_MEMORY;
+	hpw = kदो_स्मृति(माप(*hpw), GFP_KERNEL);
+	अगर (!hpw)
+		वापस AE_NO_MEMORY;
 
 	INIT_WORK(&hpw->work, acpi_hotplug_work_fn);
 	hpw->adev = adev;
 	hpw->src = src;
 	/*
-	 * We can't run hotplug code in kacpid_wq/kacpid_notify_wq etc., because
-	 * the hotplug code may call driver .remove() functions, which may
-	 * invoke flush_scheduled_work()/acpi_os_wait_events_complete() to flush
+	 * We can't run hotplug code in kacpid_wq/kacpid_notअगरy_wq etc., because
+	 * the hotplug code may call driver .हटाओ() functions, which may
+	 * invoke flush_scheduled_work()/acpi_os_रुको_events_complete() to flush
 	 * these workqueues.
 	 */
-	if (!queue_work(kacpi_hotplug_wq, &hpw->work)) {
-		kfree(hpw);
-		return AE_ERROR;
-	}
-	return AE_OK;
-}
+	अगर (!queue_work(kacpi_hotplug_wq, &hpw->work)) अणु
+		kमुक्त(hpw);
+		वापस AE_ERROR;
+	पूर्ण
+	वापस AE_OK;
+पूर्ण
 
-bool acpi_queue_hotplug_work(struct work_struct *work)
-{
-	return queue_work(kacpi_hotplug_wq, work);
-}
+bool acpi_queue_hotplug_work(काष्ठा work_काष्ठा *work)
+अणु
+	वापस queue_work(kacpi_hotplug_wq, work);
+पूर्ण
 
 acpi_status
 acpi_os_create_semaphore(u32 max_units, u32 initial_units, acpi_handle * handle)
-{
-	struct semaphore *sem = NULL;
+अणु
+	काष्ठा semaphore *sem = शून्य;
 
-	sem = acpi_os_allocate_zeroed(sizeof(struct semaphore));
-	if (!sem)
-		return AE_NO_MEMORY;
+	sem = acpi_os_allocate_zeroed(माप(काष्ठा semaphore));
+	अगर (!sem)
+		वापस AE_NO_MEMORY;
 
 	sema_init(sem, initial_units);
 
@@ -1210,430 +1211,430 @@ acpi_os_create_semaphore(u32 max_units, u32 initial_units, acpi_handle * handle)
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "Creating semaphore[%p|%d].\n",
 			  *handle, initial_units));
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
 /*
- * TODO: A better way to delete semaphores?  Linux doesn't have a
+ * TODO: A better way to delete semaphores?  Linux करोesn't have a
  * 'delete_semaphore()' function -- may result in an invalid
- * pointer dereference for non-synchronized consumers.	Should
- * we at least check for blocked threads and signal/cancel them?
+ * poपूर्णांकer dereference क्रम non-synchronized consumers.	Should
+ * we at least check क्रम blocked thपढ़ोs and संकेत/cancel them?
  */
 
 acpi_status acpi_os_delete_semaphore(acpi_handle handle)
-{
-	struct semaphore *sem = (struct semaphore *)handle;
+अणु
+	काष्ठा semaphore *sem = (काष्ठा semaphore *)handle;
 
-	if (!sem)
-		return AE_BAD_PARAMETER;
+	अगर (!sem)
+		वापस AE_BAD_PARAMETER;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "Deleting semaphore[%p].\n", handle));
 
-	BUG_ON(!list_empty(&sem->wait_list));
-	kfree(sem);
-	sem = NULL;
+	BUG_ON(!list_empty(&sem->रुको_list));
+	kमुक्त(sem);
+	sem = शून्य;
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
 /*
- * TODO: Support for units > 1?
+ * TODO: Support क्रम units > 1?
  */
-acpi_status acpi_os_wait_semaphore(acpi_handle handle, u32 units, u16 timeout)
-{
+acpi_status acpi_os_रुको_semaphore(acpi_handle handle, u32 units, u16 समयout)
+अणु
 	acpi_status status = AE_OK;
-	struct semaphore *sem = (struct semaphore *)handle;
-	long jiffies;
-	int ret = 0;
+	काष्ठा semaphore *sem = (काष्ठा semaphore *)handle;
+	दीर्घ jअगरfies;
+	पूर्णांक ret = 0;
 
-	if (!acpi_os_initialized)
-		return AE_OK;
+	अगर (!acpi_os_initialized)
+		वापस AE_OK;
 
-	if (!sem || (units < 1))
-		return AE_BAD_PARAMETER;
+	अगर (!sem || (units < 1))
+		वापस AE_BAD_PARAMETER;
 
-	if (units > 1)
-		return AE_SUPPORT;
+	अगर (units > 1)
+		वापस AE_SUPPORT;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "Waiting for semaphore[%p|%d|%d]\n",
-			  handle, units, timeout));
+			  handle, units, समयout));
 
-	if (timeout == ACPI_WAIT_FOREVER)
-		jiffies = MAX_SCHEDULE_TIMEOUT;
-	else
-		jiffies = msecs_to_jiffies(timeout);
+	अगर (समयout == ACPI_WAIT_FOREVER)
+		jअगरfies = MAX_SCHEDULE_TIMEOUT;
+	अन्यथा
+		jअगरfies = msecs_to_jअगरfies(समयout);
 
-	ret = down_timeout(sem, jiffies);
-	if (ret)
+	ret = करोwn_समयout(sem, jअगरfies);
+	अगर (ret)
 		status = AE_TIME;
 
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_MUTEX,
 				  "Failed to acquire semaphore[%p|%d|%d], %s",
-				  handle, units, timeout,
-				  acpi_format_exception(status)));
-	} else {
+				  handle, units, समयout,
+				  acpi_क्रमmat_exception(status)));
+	पूर्ण अन्यथा अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_MUTEX,
 				  "Acquired semaphore[%p|%d|%d]", handle,
-				  units, timeout));
-	}
+				  units, समयout));
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- * TODO: Support for units > 1?
+ * TODO: Support क्रम units > 1?
  */
-acpi_status acpi_os_signal_semaphore(acpi_handle handle, u32 units)
-{
-	struct semaphore *sem = (struct semaphore *)handle;
+acpi_status acpi_os_संकेत_semaphore(acpi_handle handle, u32 units)
+अणु
+	काष्ठा semaphore *sem = (काष्ठा semaphore *)handle;
 
-	if (!acpi_os_initialized)
-		return AE_OK;
+	अगर (!acpi_os_initialized)
+		वापस AE_OK;
 
-	if (!sem || (units < 1))
-		return AE_BAD_PARAMETER;
+	अगर (!sem || (units < 1))
+		वापस AE_BAD_PARAMETER;
 
-	if (units > 1)
-		return AE_SUPPORT;
+	अगर (units > 1)
+		वापस AE_SUPPORT;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "Signaling semaphore[%p|%d]\n", handle,
 			  units));
 
 	up(sem);
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-acpi_status acpi_os_get_line(char *buffer, u32 buffer_length, u32 *bytes_read)
-{
-#ifdef ENABLE_DEBUGGER
-	if (acpi_in_debugger) {
-		u32 chars;
+acpi_status acpi_os_get_line(अक्षर *buffer, u32 buffer_length, u32 *bytes_पढ़ो)
+अणु
+#अगर_घोषित ENABLE_DEBUGGER
+	अगर (acpi_in_debugger) अणु
+		u32 अक्षरs;
 
-		kdb_read(buffer, buffer_length);
+		kdb_पढ़ो(buffer, buffer_length);
 
-		/* remove the CR kdb includes */
-		chars = strlen(buffer) - 1;
-		buffer[chars] = '\0';
-	}
-#else
-	int ret;
+		/* हटाओ the CR kdb includes */
+		अक्षरs = म_माप(buffer) - 1;
+		buffer[अक्षरs] = '\0';
+	पूर्ण
+#अन्यथा
+	पूर्णांक ret;
 
-	ret = acpi_debugger_read_cmd(buffer, buffer_length);
-	if (ret < 0)
-		return AE_ERROR;
-	if (bytes_read)
-		*bytes_read = ret;
-#endif
+	ret = acpi_debugger_पढ़ो_cmd(buffer, buffer_length);
+	अगर (ret < 0)
+		वापस AE_ERROR;
+	अगर (bytes_पढ़ो)
+		*bytes_पढ़ो = ret;
+#पूर्ण_अगर
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 EXPORT_SYMBOL(acpi_os_get_line);
 
-acpi_status acpi_os_wait_command_ready(void)
-{
-	int ret;
+acpi_status acpi_os_रुको_command_पढ़ोy(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = acpi_debugger_wait_command_ready();
-	if (ret < 0)
-		return AE_ERROR;
-	return AE_OK;
-}
+	ret = acpi_debugger_रुको_command_पढ़ोy();
+	अगर (ret < 0)
+		वापस AE_ERROR;
+	वापस AE_OK;
+पूर्ण
 
-acpi_status acpi_os_notify_command_complete(void)
-{
-	int ret;
+acpi_status acpi_os_notअगरy_command_complete(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = acpi_debugger_notify_command_complete();
-	if (ret < 0)
-		return AE_ERROR;
-	return AE_OK;
-}
+	ret = acpi_debugger_notअगरy_command_complete();
+	अगर (ret < 0)
+		वापस AE_ERROR;
+	वापस AE_OK;
+पूर्ण
 
-acpi_status acpi_os_signal(u32 function, void *info)
-{
-	switch (function) {
-	case ACPI_SIGNAL_FATAL:
+acpi_status acpi_os_संकेत(u32 function, व्योम *info)
+अणु
+	चयन (function) अणु
+	हाल ACPI_SIGNAL_FATAL:
 		pr_err("Fatal opcode executed\n");
-		break;
-	case ACPI_SIGNAL_BREAKPOINT:
+		अवरोध;
+	हाल ACPI_SIGNAL_BREAKPOINT:
 		/*
-		 * AML Breakpoint
+		 * AML Breakpoपूर्णांक
 		 * ACPI spec. says to treat it as a NOP unless
-		 * you are debugging.  So if/when we integrate
-		 * AML debugger into the kernel debugger its
+		 * you are debugging.  So अगर/when we पूर्णांकegrate
+		 * AML debugger पूर्णांकo the kernel debugger its
 		 * hook will go here.  But until then it is
-		 * not useful to print anything on breakpoints.
+		 * not useful to prपूर्णांक anything on अवरोधpoपूर्णांकs.
 		 */
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static int __init acpi_os_name_setup(char *str)
-{
-	char *p = acpi_os_name;
-	int count = ACPI_MAX_OVERRIDE_LEN - 1;
+अटल पूर्णांक __init acpi_os_name_setup(अक्षर *str)
+अणु
+	अक्षर *p = acpi_os_name;
+	पूर्णांक count = ACPI_MAX_OVERRIDE_LEN - 1;
 
-	if (!str || !*str)
-		return 0;
+	अगर (!str || !*str)
+		वापस 0;
 
-	for (; count-- && *str; str++) {
-		if (isalnum(*str) || *str == ' ' || *str == ':')
+	क्रम (; count-- && *str; str++) अणु
+		अगर (है_अक्षर_अंक(*str) || *str == ' ' || *str == ':')
 			*p++ = *str;
-		else if (*str == '\'' || *str == '"')
-			continue;
-		else
-			break;
-	}
+		अन्यथा अगर (*str == '\'' || *str == '"')
+			जारी;
+		अन्यथा
+			अवरोध;
+	पूर्ण
 	*p = 0;
 
-	return 1;
+	वापस 1;
 
-}
+पूर्ण
 
 __setup("acpi_os_name=", acpi_os_name_setup);
 
 /*
- * Disable the auto-serialization of named objects creation methods.
+ * Disable the स्वतः-serialization of named objects creation methods.
  *
- * This feature is enabled by default.  It marks the AML control methods
+ * This feature is enabled by शेष.  It marks the AML control methods
  * that contain the opcodes to create named objects as "Serialized".
  */
-static int __init acpi_no_auto_serialize_setup(char *str)
-{
-	acpi_gbl_auto_serialize_methods = FALSE;
+अटल पूर्णांक __init acpi_no_स्वतः_serialize_setup(अक्षर *str)
+अणु
+	acpi_gbl_स्वतः_serialize_methods = FALSE;
 	pr_info("Auto-serialization disabled\n");
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-__setup("acpi_no_auto_serialize", acpi_no_auto_serialize_setup);
+__setup("acpi_no_auto_serialize", acpi_no_स्वतः_serialize_setup);
 
-/* Check of resource interference between native drivers and ACPI
+/* Check of resource पूर्णांकerference between native drivers and ACPI
  * OperationRegions (SystemIO and System Memory only).
- * IO ports and memory declared in ACPI might be used by the ACPI subsystem
- * in arbitrary AML code and can interfere with legacy drivers.
- * acpi_enforce_resources= can be set to:
+ * IO ports and memory declared in ACPI might be used by the ACPI subप्रणाली
+ * in arbitrary AML code and can पूर्णांकerfere with legacy drivers.
+ * acpi_enक्रमce_resources= can be set to:
  *
- *   - strict (default) (2)
+ *   - strict (शेष) (2)
  *     -> further driver trying to access the resources will not load
  *   - lax              (1)
  *     -> further driver trying to access the resources will load, but you
- *     get a system message that something might go wrong...
+ *     get a प्रणाली message that something might go wrong...
  *
  *   - no               (0)
- *     -> ACPI Operation Region resources will not be registered
+ *     -> ACPI Operation Region resources will not be रेजिस्टरed
  *
  */
-#define ENFORCE_RESOURCES_STRICT 2
-#define ENFORCE_RESOURCES_LAX    1
-#define ENFORCE_RESOURCES_NO     0
+#घोषणा ENFORCE_RESOURCES_STRICT 2
+#घोषणा ENFORCE_RESOURCES_LAX    1
+#घोषणा ENFORCE_RESOURCES_NO     0
 
-static unsigned int acpi_enforce_resources = ENFORCE_RESOURCES_STRICT;
+अटल अचिन्हित पूर्णांक acpi_enक्रमce_resources = ENFORCE_RESOURCES_STRICT;
 
-static int __init acpi_enforce_resources_setup(char *str)
-{
-	if (str == NULL || *str == '\0')
-		return 0;
+अटल पूर्णांक __init acpi_enक्रमce_resources_setup(अक्षर *str)
+अणु
+	अगर (str == शून्य || *str == '\0')
+		वापस 0;
 
-	if (!strcmp("strict", str))
-		acpi_enforce_resources = ENFORCE_RESOURCES_STRICT;
-	else if (!strcmp("lax", str))
-		acpi_enforce_resources = ENFORCE_RESOURCES_LAX;
-	else if (!strcmp("no", str))
-		acpi_enforce_resources = ENFORCE_RESOURCES_NO;
+	अगर (!म_भेद("strict", str))
+		acpi_enक्रमce_resources = ENFORCE_RESOURCES_STRICT;
+	अन्यथा अगर (!म_भेद("lax", str))
+		acpi_enक्रमce_resources = ENFORCE_RESOURCES_LAX;
+	अन्यथा अगर (!म_भेद("no", str))
+		acpi_enक्रमce_resources = ENFORCE_RESOURCES_NO;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-__setup("acpi_enforce_resources=", acpi_enforce_resources_setup);
+__setup("acpi_enforce_resources=", acpi_enक्रमce_resources_setup);
 
-/* Check for resource conflicts between ACPI OperationRegions and native
+/* Check क्रम resource conflicts between ACPI OperationRegions and native
  * drivers */
-int acpi_check_resource_conflict(const struct resource *res)
-{
+पूर्णांक acpi_check_resource_conflict(स्थिर काष्ठा resource *res)
+अणु
 	acpi_adr_space_type space_id;
 
-	if (acpi_enforce_resources == ENFORCE_RESOURCES_NO)
-		return 0;
+	अगर (acpi_enक्रमce_resources == ENFORCE_RESOURCES_NO)
+		वापस 0;
 
-	if (res->flags & IORESOURCE_IO)
+	अगर (res->flags & IORESOURCE_IO)
 		space_id = ACPI_ADR_SPACE_SYSTEM_IO;
-	else if (res->flags & IORESOURCE_MEM)
+	अन्यथा अगर (res->flags & IORESOURCE_MEM)
 		space_id = ACPI_ADR_SPACE_SYSTEM_MEMORY;
-	else
-		return 0;
+	अन्यथा
+		वापस 0;
 
-	if (!acpi_check_address_range(space_id, res->start, resource_size(res), 1))
-		return 0;
+	अगर (!acpi_check_address_range(space_id, res->start, resource_size(res), 1))
+		वापस 0;
 
 	pr_info("Resource conflict; ACPI support missing from driver?\n");
 
-	if (acpi_enforce_resources == ENFORCE_RESOURCES_STRICT)
-		return -EBUSY;
+	अगर (acpi_enक्रमce_resources == ENFORCE_RESOURCES_STRICT)
+		वापस -EBUSY;
 
-	if (acpi_enforce_resources == ENFORCE_RESOURCES_LAX)
+	अगर (acpi_enक्रमce_resources == ENFORCE_RESOURCES_LAX)
 		pr_notice("Resource conflict: System may be unstable or behave erratically\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(acpi_check_resource_conflict);
 
-int acpi_check_region(resource_size_t start, resource_size_t n,
-		      const char *name)
-{
-	struct resource res = {
+पूर्णांक acpi_check_region(resource_माप_प्रकार start, resource_माप_प्रकार n,
+		      स्थिर अक्षर *name)
+अणु
+	काष्ठा resource res = अणु
 		.start = start,
 		.end   = start + n - 1,
 		.name  = name,
 		.flags = IORESOURCE_IO,
-	};
+	पूर्ण;
 
-	return acpi_check_resource_conflict(&res);
-}
+	वापस acpi_check_resource_conflict(&res);
+पूर्ण
 EXPORT_SYMBOL(acpi_check_region);
 
-static acpi_status acpi_deactivate_mem_region(acpi_handle handle, u32 level,
-					      void *_res, void **return_value)
-{
-	struct acpi_mem_space_context **mem_ctx;
-	union acpi_operand_object *handler_obj;
-	union acpi_operand_object *region_obj2;
-	union acpi_operand_object *region_obj;
-	struct resource *res = _res;
+अटल acpi_status acpi_deactivate_mem_region(acpi_handle handle, u32 level,
+					      व्योम *_res, व्योम **वापस_value)
+अणु
+	काष्ठा acpi_mem_space_context **mem_ctx;
+	जोड़ acpi_opeअक्रम_object *handler_obj;
+	जोड़ acpi_opeअक्रम_object *region_obj2;
+	जोड़ acpi_opeअक्रम_object *region_obj;
+	काष्ठा resource *res = _res;
 	acpi_status status;
 
 	region_obj = acpi_ns_get_attached_object(handle);
-	if (!region_obj)
-		return AE_OK;
+	अगर (!region_obj)
+		वापस AE_OK;
 
 	handler_obj = region_obj->region.handler;
-	if (!handler_obj)
-		return AE_OK;
+	अगर (!handler_obj)
+		वापस AE_OK;
 
-	if (region_obj->region.space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY)
-		return AE_OK;
+	अगर (region_obj->region.space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY)
+		वापस AE_OK;
 
-	if (!(region_obj->region.flags & AOPOBJ_SETUP_COMPLETE))
-		return AE_OK;
+	अगर (!(region_obj->region.flags & AOPOBJ_SETUP_COMPLETE))
+		वापस AE_OK;
 
 	region_obj2 = acpi_ns_get_secondary_object(region_obj);
-	if (!region_obj2)
-		return AE_OK;
+	अगर (!region_obj2)
+		वापस AE_OK;
 
-	mem_ctx = (void *)&region_obj2->extra.region_context;
+	mem_ctx = (व्योम *)&region_obj2->extra.region_context;
 
-	if (!(mem_ctx[0]->address >= res->start &&
+	अगर (!(mem_ctx[0]->address >= res->start &&
 	      mem_ctx[0]->address < res->end))
-		return AE_OK;
+		वापस AE_OK;
 
 	status = handler_obj->address_space.setup(region_obj,
 						  ACPI_REGION_DEACTIVATE,
-						  NULL, (void **)mem_ctx);
-	if (ACPI_SUCCESS(status))
+						  शून्य, (व्योम **)mem_ctx);
+	अगर (ACPI_SUCCESS(status))
 		region_obj->region.flags &= ~(AOPOBJ_SETUP_COMPLETE);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * acpi_release_memory - Release any mappings done to a memory region
+ * acpi_release_memory - Release any mappings करोne to a memory region
  * @handle: Handle to namespace node
  * @res: Memory resource
  * @level: A level that terminates the search
  *
  * Walks through @handle and unmaps all SystemMemory Operation Regions that
- * overlap with @res and that have already been activated (mapped).
+ * overlap with @res and that have alपढ़ोy been activated (mapped).
  *
  * This is a helper that allows drivers to place special requirements on memory
  * region that may overlap with operation regions, primarily allowing them to
  * safely map the region as non-cached memory.
  *
- * The unmapped Operation Regions will be automatically remapped next time they
- * are called, so the drivers do not need to do anything else.
+ * The unmapped Operation Regions will be स्वतःmatically remapped next समय they
+ * are called, so the drivers करो not need to करो anything अन्यथा.
  */
-acpi_status acpi_release_memory(acpi_handle handle, struct resource *res,
+acpi_status acpi_release_memory(acpi_handle handle, काष्ठा resource *res,
 				u32 level)
-{
+अणु
 	acpi_status status;
 
-	if (!(res->flags & IORESOURCE_MEM))
-		return AE_TYPE;
+	अगर (!(res->flags & IORESOURCE_MEM))
+		वापस AE_TYPE;
 
 	status = acpi_walk_namespace(ACPI_TYPE_REGION, handle, level,
-				     acpi_deactivate_mem_region, NULL,
-				     res, NULL);
-	if (ACPI_FAILURE(status))
-		return status;
+				     acpi_deactivate_mem_region, शून्य,
+				     res, शून्य);
+	अगर (ACPI_FAILURE(status))
+		वापस status;
 
 	/*
-	 * Wait for all of the mappings queued up for removal by
+	 * Wait क्रम all of the mappings queued up क्रम removal by
 	 * acpi_deactivate_mem_region() to actually go away.
 	 */
 	synchronize_rcu();
 	rcu_barrier();
 	flush_scheduled_work();
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_release_memory);
 
 /*
  * Let drivers know whether the resource checks are effective
  */
-int acpi_resources_are_enforced(void)
-{
-	return acpi_enforce_resources == ENFORCE_RESOURCES_STRICT;
-}
-EXPORT_SYMBOL(acpi_resources_are_enforced);
+पूर्णांक acpi_resources_are_enक्रमced(व्योम)
+अणु
+	वापस acpi_enक्रमce_resources == ENFORCE_RESOURCES_STRICT;
+पूर्ण
+EXPORT_SYMBOL(acpi_resources_are_enक्रमced);
 
 /*
- * Deallocate the memory for a spinlock.
+ * Deallocate the memory क्रम a spinlock.
  */
-void acpi_os_delete_lock(acpi_spinlock handle)
-{
+व्योम acpi_os_delete_lock(acpi_spinlock handle)
+अणु
 	ACPI_FREE(handle);
-}
+पूर्ण
 
 /*
  * Acquire a spinlock.
  *
- * handle is a pointer to the spinlock_t.
+ * handle is a poपूर्णांकer to the spinlock_t.
  */
 
 acpi_cpu_flags acpi_os_acquire_lock(acpi_spinlock lockp)
 	__acquires(lockp)
-{
+अणु
 	acpi_cpu_flags flags;
 	spin_lock_irqsave(lockp, flags);
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 /*
  * Release a spinlock. See above.
  */
 
-void acpi_os_release_lock(acpi_spinlock lockp, acpi_cpu_flags flags)
+व्योम acpi_os_release_lock(acpi_spinlock lockp, acpi_cpu_flags flags)
 	__releases(lockp)
-{
+अणु
 	spin_unlock_irqrestore(lockp, flags);
-}
+पूर्ण
 
-#ifndef ACPI_USE_LOCAL_CACHE
+#अगर_अघोषित ACPI_USE_LOCAL_CACHE
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_os_create_cache
  *
- * PARAMETERS:  name      - Ascii name for the cache
+ * PARAMETERS:  name      - Ascii name क्रम the cache
  *              size      - Size of each cached object
  *              depth     - Maximum depth of the cache (in objects) <ignored>
- *              cache     - Where the new cache object is returned
+ *              cache     - Where the new cache object is वापसed
  *
  * RETURN:      status
  *
@@ -1642,14 +1643,14 @@ void acpi_os_release_lock(acpi_spinlock lockp, acpi_cpu_flags flags)
  ******************************************************************************/
 
 acpi_status
-acpi_os_create_cache(char *name, u16 size, u16 depth, acpi_cache_t ** cache)
-{
-	*cache = kmem_cache_create(name, size, 0, 0, NULL);
-	if (*cache == NULL)
-		return AE_ERROR;
-	else
-		return AE_OK;
-}
+acpi_os_create_cache(अक्षर *name, u16 size, u16 depth, acpi_cache_t ** cache)
+अणु
+	*cache = kmem_cache_create(name, size, 0, 0, शून्य);
+	अगर (*cache == शून्य)
+		वापस AE_ERROR;
+	अन्यथा
+		वापस AE_OK;
+पूर्ण
 
 /*******************************************************************************
  *
@@ -1664,10 +1665,10 @@ acpi_os_create_cache(char *name, u16 size, u16 depth, acpi_cache_t ** cache)
  ******************************************************************************/
 
 acpi_status acpi_os_purge_cache(acpi_cache_t * cache)
-{
+अणु
 	kmem_cache_shrink(cache);
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -1683,10 +1684,10 @@ acpi_status acpi_os_purge_cache(acpi_cache_t * cache)
  ******************************************************************************/
 
 acpi_status acpi_os_delete_cache(acpi_cache_t * cache)
-{
+अणु
 	kmem_cache_destroy(cache);
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -1697,82 +1698,82 @@ acpi_status acpi_os_delete_cache(acpi_cache_t * cache)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Release an object to the specified cache.  If cache is full,
+ * DESCRIPTION: Release an object to the specअगरied cache.  If cache is full,
  *              the object is deleted.
  *
  ******************************************************************************/
 
-acpi_status acpi_os_release_object(acpi_cache_t * cache, void *object)
-{
-	kmem_cache_free(cache, object);
-	return (AE_OK);
-}
-#endif
+acpi_status acpi_os_release_object(acpi_cache_t * cache, व्योम *object)
+अणु
+	kmem_cache_मुक्त(cache, object);
+	वापस (AE_OK);
+पूर्ण
+#पूर्ण_अगर
 
-static int __init acpi_no_static_ssdt_setup(char *s)
-{
+अटल पूर्णांक __init acpi_no_अटल_ssdt_setup(अक्षर *s)
+अणु
 	acpi_gbl_disable_ssdt_table_install = TRUE;
 	pr_info("Static SSDT installation disabled\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-early_param("acpi_no_static_ssdt", acpi_no_static_ssdt_setup);
+early_param("acpi_no_static_ssdt", acpi_no_अटल_ssdt_setup);
 
-static int __init acpi_disable_return_repair(char *s)
-{
+अटल पूर्णांक __init acpi_disable_वापस_repair(अक्षर *s)
+अणु
 	pr_notice("Predefined validation mechanism disabled\n");
-	acpi_gbl_disable_auto_repair = TRUE;
+	acpi_gbl_disable_स्वतः_repair = TRUE;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-__setup("acpica_no_return_repair", acpi_disable_return_repair);
+__setup("acpica_no_return_repair", acpi_disable_वापस_repair);
 
-acpi_status __init acpi_os_initialize(void)
-{
+acpi_status __init acpi_os_initialize(व्योम)
+अणु
 	acpi_os_map_generic_address(&acpi_gbl_FADT.xpm1a_event_block);
 	acpi_os_map_generic_address(&acpi_gbl_FADT.xpm1b_event_block);
 
 	acpi_gbl_xgpe0_block_logical_address =
-		(unsigned long)acpi_os_map_generic_address(&acpi_gbl_FADT.xgpe0_block);
+		(अचिन्हित दीर्घ)acpi_os_map_generic_address(&acpi_gbl_FADT.xgpe0_block);
 	acpi_gbl_xgpe1_block_logical_address =
-		(unsigned long)acpi_os_map_generic_address(&acpi_gbl_FADT.xgpe1_block);
+		(अचिन्हित दीर्घ)acpi_os_map_generic_address(&acpi_gbl_FADT.xgpe1_block);
 
-	if (acpi_gbl_FADT.flags & ACPI_FADT_RESET_REGISTER) {
+	अगर (acpi_gbl_FADT.flags & ACPI_FADT_RESET_REGISTER) अणु
 		/*
 		 * Use acpi_os_map_generic_address to pre-map the reset
-		 * register if it's in system memory.
+		 * रेजिस्टर अगर it's in प्रणाली memory.
 		 */
-		void *rv;
+		व्योम *rv;
 
-		rv = acpi_os_map_generic_address(&acpi_gbl_FADT.reset_register);
+		rv = acpi_os_map_generic_address(&acpi_gbl_FADT.reset_रेजिस्टर);
 		pr_debug("%s: Reset register mapping %s\n", __func__,
 			 rv ? "successful" : "failed");
-	}
+	पूर्ण
 	acpi_os_initialized = true;
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-acpi_status __init acpi_os_initialize1(void)
-{
+acpi_status __init acpi_os_initialize1(व्योम)
+अणु
 	kacpid_wq = alloc_workqueue("kacpid", 0, 1);
-	kacpi_notify_wq = alloc_workqueue("kacpi_notify", 0, 1);
+	kacpi_notअगरy_wq = alloc_workqueue("kacpi_notify", 0, 1);
 	kacpi_hotplug_wq = alloc_ordered_workqueue("kacpi_hotplug", 0);
 	BUG_ON(!kacpid_wq);
-	BUG_ON(!kacpi_notify_wq);
+	BUG_ON(!kacpi_notअगरy_wq);
 	BUG_ON(!kacpi_hotplug_wq);
 	acpi_osi_init();
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-acpi_status acpi_os_terminate(void)
-{
-	if (acpi_irq_handler) {
-		acpi_os_remove_interrupt_handler(acpi_gbl_FADT.sci_interrupt,
+acpi_status acpi_os_terminate(व्योम)
+अणु
+	अगर (acpi_irq_handler) अणु
+		acpi_os_हटाओ_पूर्णांकerrupt_handler(acpi_gbl_FADT.sci_पूर्णांकerrupt,
 						 acpi_irq_handler);
-	}
+	पूर्ण
 
 	acpi_os_unmap_generic_address(&acpi_gbl_FADT.xgpe1_block);
 	acpi_os_unmap_generic_address(&acpi_gbl_FADT.xgpe0_block);
@@ -1782,77 +1783,77 @@ acpi_status acpi_os_terminate(void)
 	acpi_os_unmap_generic_address(&acpi_gbl_FADT.xpm1b_event_block);
 	acpi_os_unmap_generic_address(&acpi_gbl_FADT.xpm1a_event_block);
 
-	if (acpi_gbl_FADT.flags & ACPI_FADT_RESET_REGISTER)
-		acpi_os_unmap_generic_address(&acpi_gbl_FADT.reset_register);
+	अगर (acpi_gbl_FADT.flags & ACPI_FADT_RESET_REGISTER)
+		acpi_os_unmap_generic_address(&acpi_gbl_FADT.reset_रेजिस्टर);
 
 	destroy_workqueue(kacpid_wq);
-	destroy_workqueue(kacpi_notify_wq);
+	destroy_workqueue(kacpi_notअगरy_wq);
 	destroy_workqueue(kacpi_hotplug_wq);
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
 acpi_status acpi_os_prepare_sleep(u8 sleep_state, u32 pm1a_control,
 				  u32 pm1b_control)
-{
-	int rc = 0;
-	if (__acpi_os_prepare_sleep)
+अणु
+	पूर्णांक rc = 0;
+	अगर (__acpi_os_prepare_sleep)
 		rc = __acpi_os_prepare_sleep(sleep_state,
 					     pm1a_control, pm1b_control);
-	if (rc < 0)
-		return AE_ERROR;
-	else if (rc > 0)
-		return AE_CTRL_TERMINATE;
+	अगर (rc < 0)
+		वापस AE_ERROR;
+	अन्यथा अगर (rc > 0)
+		वापस AE_CTRL_TERMINATE;
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-void acpi_os_set_prepare_sleep(int (*func)(u8 sleep_state,
+व्योम acpi_os_set_prepare_sleep(पूर्णांक (*func)(u8 sleep_state,
 			       u32 pm1a_ctrl, u32 pm1b_ctrl))
-{
+अणु
 	__acpi_os_prepare_sleep = func;
-}
+पूर्ण
 
-#if (ACPI_REDUCED_HARDWARE)
+#अगर (ACPI_REDUCED_HARDWARE)
 acpi_status acpi_os_prepare_extended_sleep(u8 sleep_state, u32 val_a,
 				  u32 val_b)
-{
-	int rc = 0;
-	if (__acpi_os_prepare_extended_sleep)
+अणु
+	पूर्णांक rc = 0;
+	अगर (__acpi_os_prepare_extended_sleep)
 		rc = __acpi_os_prepare_extended_sleep(sleep_state,
 					     val_a, val_b);
-	if (rc < 0)
-		return AE_ERROR;
-	else if (rc > 0)
-		return AE_CTRL_TERMINATE;
+	अगर (rc < 0)
+		वापस AE_ERROR;
+	अन्यथा अगर (rc > 0)
+		वापस AE_CTRL_TERMINATE;
 
-	return AE_OK;
-}
-#else
+	वापस AE_OK;
+पूर्ण
+#अन्यथा
 acpi_status acpi_os_prepare_extended_sleep(u8 sleep_state, u32 val_a,
 				  u32 val_b)
-{
-	return AE_OK;
-}
-#endif
+अणु
+	वापस AE_OK;
+पूर्ण
+#पूर्ण_अगर
 
-void acpi_os_set_prepare_extended_sleep(int (*func)(u8 sleep_state,
+व्योम acpi_os_set_prepare_extended_sleep(पूर्णांक (*func)(u8 sleep_state,
 			       u32 val_a, u32 val_b))
-{
+अणु
 	__acpi_os_prepare_extended_sleep = func;
-}
+पूर्ण
 
 acpi_status acpi_os_enter_sleep(u8 sleep_state,
 				u32 reg_a_value, u32 reg_b_value)
-{
+अणु
 	acpi_status status;
 
-	if (acpi_gbl_reduced_hardware)
+	अगर (acpi_gbl_reduced_hardware)
 		status = acpi_os_prepare_extended_sleep(sleep_state,
 							reg_a_value,
 							reg_b_value);
-	else
+	अन्यथा
 		status = acpi_os_prepare_sleep(sleep_state,
 					       reg_a_value, reg_b_value);
-	return status;
-}
+	वापस status;
+पूर्ण

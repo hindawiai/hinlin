@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause) */
 /*
  * linux/can/core.h
  *
- * Prototypes and definitions for CAN protocol modules using the PF_CAN core
+ * Prototypes and definitions क्रम CAN protocol modules using the PF_CAN core
  *
  * Authors: Oliver Hartkopp <oliver.hartkopp@volkswagen.de>
  *          Urs Thuermann   <urs.thuermann@volkswagen.de>
@@ -11,53 +12,53 @@
  *
  */
 
-#ifndef _CAN_CORE_H
-#define _CAN_CORE_H
+#अगर_अघोषित _CAN_CORE_H
+#घोषणा _CAN_CORE_H
 
-#include <linux/can.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
+#समावेश <linux/can.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
 
-#define DNAME(dev) ((dev) ? (dev)->name : "any")
+#घोषणा DNAME(dev) ((dev) ? (dev)->name : "any")
 
 /**
- * struct can_proto - CAN protocol structure
+ * काष्ठा can_proto - CAN protocol काष्ठाure
  * @type:       type argument in socket() syscall, e.g. SOCK_DGRAM.
  * @protocol:   protocol number in socket() syscall.
- * @ops:        pointer to struct proto_ops for sock->ops.
- * @prot:       pointer to struct proto structure.
+ * @ops:        poपूर्णांकer to काष्ठा proto_ops क्रम sock->ops.
+ * @prot:       poपूर्णांकer to काष्ठा proto काष्ठाure.
  */
-struct can_proto {
-	int type;
-	int protocol;
-	const struct proto_ops *ops;
-	struct proto *prot;
-};
+काष्ठा can_proto अणु
+	पूर्णांक type;
+	पूर्णांक protocol;
+	स्थिर काष्ठा proto_ops *ops;
+	काष्ठा proto *prot;
+पूर्ण;
 
 /* required_size
- * macro to find the minimum size of a struct
+ * macro to find the minimum size of a काष्ठा
  * that includes a requested member
  */
-#define CAN_REQUIRED_SIZE(struct_type, member) \
-	(offsetof(typeof(struct_type), member) + \
-	 sizeof(((typeof(struct_type) *)(NULL))->member))
+#घोषणा CAN_REQUIRED_SIZE(काष्ठा_type, member) \
+	(दुरत्व(typeof(काष्ठा_type), member) + \
+	 माप(((typeof(काष्ठा_type) *)(शून्य))->member))
 
-/* function prototypes for the CAN networklayer core (af_can.c) */
+/* function prototypes क्रम the CAN networklayer core (af_can.c) */
 
-extern int  can_proto_register(const struct can_proto *cp);
-extern void can_proto_unregister(const struct can_proto *cp);
+बाह्य पूर्णांक  can_proto_रेजिस्टर(स्थिर काष्ठा can_proto *cp);
+बाह्य व्योम can_proto_unरेजिस्टर(स्थिर काष्ठा can_proto *cp);
 
-int can_rx_register(struct net *net, struct net_device *dev,
+पूर्णांक can_rx_रेजिस्टर(काष्ठा net *net, काष्ठा net_device *dev,
 		    canid_t can_id, canid_t mask,
-		    void (*func)(struct sk_buff *, void *),
-		    void *data, char *ident, struct sock *sk);
+		    व्योम (*func)(काष्ठा sk_buff *, व्योम *),
+		    व्योम *data, अक्षर *ident, काष्ठा sock *sk);
 
-extern void can_rx_unregister(struct net *net, struct net_device *dev,
+बाह्य व्योम can_rx_unरेजिस्टर(काष्ठा net *net, काष्ठा net_device *dev,
 			      canid_t can_id, canid_t mask,
-			      void (*func)(struct sk_buff *, void *),
-			      void *data);
+			      व्योम (*func)(काष्ठा sk_buff *, व्योम *),
+			      व्योम *data);
 
-extern int can_send(struct sk_buff *skb, int loop);
-void can_sock_destruct(struct sock *sk);
+बाह्य पूर्णांक can_send(काष्ठा sk_buff *skb, पूर्णांक loop);
+व्योम can_sock_deकाष्ठा(काष्ठा sock *sk);
 
-#endif /* !_CAN_CORE_H */
+#पूर्ण_अगर /* !_CAN_CORE_H */

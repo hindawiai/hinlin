@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *	Access to VGA videoram
  *
  *	(c) 1998 Martin Mares <mj@ucw.cz>
  */
 
-#ifndef _ASM_X86_VGA_H
-#define _ASM_X86_VGA_H
+#अगर_अघोषित _ASM_X86_VGA_H
+#घोषणा _ASM_X86_VGA_H
 
-#include <asm/set_memory.h>
+#समावेश <यंत्र/set_memory.h>
 
 /*
  *	On the PC, we can just recalculate addresses and then
@@ -17,17 +18,17 @@
  *	the videoram as decrypted memory.
  */
 
-#define VGA_MAP_MEM(x, s)					\
-({								\
-	unsigned long start = (unsigned long)phys_to_virt(x);	\
+#घोषणा VGA_MAP_MEM(x, s)					\
+(अणु								\
+	अचिन्हित दीर्घ start = (अचिन्हित दीर्घ)phys_to_virt(x);	\
 								\
-	if (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT))			\
+	अगर (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT))			\
 		set_memory_decrypted(start, (s) >> PAGE_SHIFT);	\
 								\
 	start;							\
-})
+पूर्ण)
 
-#define vga_readb(x) (*(x))
-#define vga_writeb(x, y) (*(y) = (x))
+#घोषणा vga_पढ़ोb(x) (*(x))
+#घोषणा vga_ग_लिखोb(x, y) (*(y) = (x))
 
-#endif /* _ASM_X86_VGA_H */
+#पूर्ण_अगर /* _ASM_X86_VGA_H */

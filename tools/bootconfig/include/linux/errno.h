@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SKC_LINUX_ERRNO_H
-#define _SKC_LINUX_ERRNO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SKC_LINUX_ERRNO_H
+#घोषणा _SKC_LINUX_ERRNO_H
 
-#include <asm/errno.h>
+#समावेश <यंत्र/त्रुटिसं.स>
 
-#endif
+#पूर्ण_अगर

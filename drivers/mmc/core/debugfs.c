@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Debugfs support for hosts and cards
+ * Debugfs support क्रम hosts and cards
  *
- * Copyright (C) 2008 Atmel Corporation
+ * Copyright (C) 2008 Aपंचांगel Corporation
  */
-#include <linux/moduleparam.h>
-#include <linux/export.h>
-#include <linux/debugfs.h>
-#include <linux/fs.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/stat.h>
-#include <linux/fault-inject.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/export.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/fault-inject.h>
 
-#include <linux/mmc/card.h>
-#include <linux/mmc/host.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/host.h>
 
-#include "core.h"
-#include "card.h"
-#include "host.h"
-#include "mmc_ops.h"
+#समावेश "core.h"
+#समावेश "card.h"
+#समावेश "host.h"
+#समावेश "mmc_ops.h"
 
-#ifdef CONFIG_FAIL_MMC_REQUEST
+#अगर_घोषित CONFIG_FAIL_MMC_REQUEST
 
-static DECLARE_FAULT_ATTR(fail_default_attr);
-static char *fail_request;
-module_param(fail_request, charp, 0);
+अटल DECLARE_FAULT_ATTR(fail_शेष_attr);
+अटल अक्षर *fail_request;
+module_param(fail_request, अक्षरp, 0);
 
-#endif /* CONFIG_FAIL_MMC_REQUEST */
+#पूर्ण_अगर /* CONFIG_FAIL_MMC_REQUEST */
 
 /* The debugfs functions are optimized away when CONFIG_DEBUG_FS isn't set. */
-static int mmc_ios_show(struct seq_file *s, void *data)
-{
-	static const char *vdd_str[] = {
+अटल पूर्णांक mmc_ios_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	अटल स्थिर अक्षर *vdd_str[] = अणु
 		[8]	= "2.0",
 		[9]	= "2.1",
 		[10]	= "2.2",
@@ -50,221 +51,221 @@ static int mmc_ios_show(struct seq_file *s, void *data)
 		[22]	= "3.4",
 		[23]	= "3.5",
 		[24]	= "3.6",
-	};
-	struct mmc_host	*host = s->private;
-	struct mmc_ios	*ios = &host->ios;
-	const char *str;
+	पूर्ण;
+	काष्ठा mmc_host	*host = s->निजी;
+	काष्ठा mmc_ios	*ios = &host->ios;
+	स्थिर अक्षर *str;
 
-	seq_printf(s, "clock:\t\t%u Hz\n", ios->clock);
-	if (host->actual_clock)
-		seq_printf(s, "actual clock:\t%u Hz\n", host->actual_clock);
-	seq_printf(s, "vdd:\t\t%u ", ios->vdd);
-	if ((1 << ios->vdd) & MMC_VDD_165_195)
-		seq_printf(s, "(1.65 - 1.95 V)\n");
-	else if (ios->vdd < (ARRAY_SIZE(vdd_str) - 1)
+	seq_म_लिखो(s, "clock:\t\t%u Hz\n", ios->घड़ी);
+	अगर (host->actual_घड़ी)
+		seq_म_लिखो(s, "actual clock:\t%u Hz\n", host->actual_घड़ी);
+	seq_म_लिखो(s, "vdd:\t\t%u ", ios->vdd);
+	अगर ((1 << ios->vdd) & MMC_VDD_165_195)
+		seq_म_लिखो(s, "(1.65 - 1.95 V)\n");
+	अन्यथा अगर (ios->vdd < (ARRAY_SIZE(vdd_str) - 1)
 			&& vdd_str[ios->vdd] && vdd_str[ios->vdd + 1])
-		seq_printf(s, "(%s ~ %s V)\n", vdd_str[ios->vdd],
+		seq_म_लिखो(s, "(%s ~ %s V)\n", vdd_str[ios->vdd],
 				vdd_str[ios->vdd + 1]);
-	else
-		seq_printf(s, "(invalid)\n");
+	अन्यथा
+		seq_म_लिखो(s, "(invalid)\n");
 
-	switch (ios->bus_mode) {
-	case MMC_BUSMODE_OPENDRAIN:
+	चयन (ios->bus_mode) अणु
+	हाल MMC_BUSMODE_OPENDRAIN:
 		str = "open drain";
-		break;
-	case MMC_BUSMODE_PUSHPULL:
+		अवरोध;
+	हाल MMC_BUSMODE_PUSHPULL:
 		str = "push-pull";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		str = "invalid";
-		break;
-	}
-	seq_printf(s, "bus mode:\t%u (%s)\n", ios->bus_mode, str);
+		अवरोध;
+	पूर्ण
+	seq_म_लिखो(s, "bus mode:\t%u (%s)\n", ios->bus_mode, str);
 
-	switch (ios->chip_select) {
-	case MMC_CS_DONTCARE:
+	चयन (ios->chip_select) अणु
+	हाल MMC_CS_DONTCARE:
 		str = "don't care";
-		break;
-	case MMC_CS_HIGH:
+		अवरोध;
+	हाल MMC_CS_HIGH:
 		str = "active high";
-		break;
-	case MMC_CS_LOW:
+		अवरोध;
+	हाल MMC_CS_LOW:
 		str = "active low";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		str = "invalid";
-		break;
-	}
-	seq_printf(s, "chip select:\t%u (%s)\n", ios->chip_select, str);
+		अवरोध;
+	पूर्ण
+	seq_म_लिखो(s, "chip select:\t%u (%s)\n", ios->chip_select, str);
 
-	switch (ios->power_mode) {
-	case MMC_POWER_OFF:
+	चयन (ios->घातer_mode) अणु
+	हाल MMC_POWER_OFF:
 		str = "off";
-		break;
-	case MMC_POWER_UP:
+		अवरोध;
+	हाल MMC_POWER_UP:
 		str = "up";
-		break;
-	case MMC_POWER_ON:
+		अवरोध;
+	हाल MMC_POWER_ON:
 		str = "on";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		str = "invalid";
-		break;
-	}
-	seq_printf(s, "power mode:\t%u (%s)\n", ios->power_mode, str);
-	seq_printf(s, "bus width:\t%u (%u bits)\n",
+		अवरोध;
+	पूर्ण
+	seq_म_लिखो(s, "power mode:\t%u (%s)\n", ios->घातer_mode, str);
+	seq_म_लिखो(s, "bus width:\t%u (%u bits)\n",
 			ios->bus_width, 1 << ios->bus_width);
 
-	switch (ios->timing) {
-	case MMC_TIMING_LEGACY:
+	चयन (ios->timing) अणु
+	हाल MMC_TIMING_LEGACY:
 		str = "legacy";
-		break;
-	case MMC_TIMING_MMC_HS:
+		अवरोध;
+	हाल MMC_TIMING_MMC_HS:
 		str = "mmc high-speed";
-		break;
-	case MMC_TIMING_SD_HS:
+		अवरोध;
+	हाल MMC_TIMING_SD_HS:
 		str = "sd high-speed";
-		break;
-	case MMC_TIMING_UHS_SDR12:
+		अवरोध;
+	हाल MMC_TIMING_UHS_SDR12:
 		str = "sd uhs SDR12";
-		break;
-	case MMC_TIMING_UHS_SDR25:
+		अवरोध;
+	हाल MMC_TIMING_UHS_SDR25:
 		str = "sd uhs SDR25";
-		break;
-	case MMC_TIMING_UHS_SDR50:
+		अवरोध;
+	हाल MMC_TIMING_UHS_SDR50:
 		str = "sd uhs SDR50";
-		break;
-	case MMC_TIMING_UHS_SDR104:
+		अवरोध;
+	हाल MMC_TIMING_UHS_SDR104:
 		str = "sd uhs SDR104";
-		break;
-	case MMC_TIMING_UHS_DDR50:
+		अवरोध;
+	हाल MMC_TIMING_UHS_DDR50:
 		str = "sd uhs DDR50";
-		break;
-	case MMC_TIMING_MMC_DDR52:
+		अवरोध;
+	हाल MMC_TIMING_MMC_DDR52:
 		str = "mmc DDR52";
-		break;
-	case MMC_TIMING_MMC_HS200:
+		अवरोध;
+	हाल MMC_TIMING_MMC_HS200:
 		str = "mmc HS200";
-		break;
-	case MMC_TIMING_MMC_HS400:
+		अवरोध;
+	हाल MMC_TIMING_MMC_HS400:
 		str = mmc_card_hs400es(host->card) ?
 			"mmc HS400 enhanced strobe" : "mmc HS400";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		str = "invalid";
-		break;
-	}
-	seq_printf(s, "timing spec:\t%u (%s)\n", ios->timing, str);
+		अवरोध;
+	पूर्ण
+	seq_म_लिखो(s, "timing spec:\t%u (%s)\n", ios->timing, str);
 
-	switch (ios->signal_voltage) {
-	case MMC_SIGNAL_VOLTAGE_330:
+	चयन (ios->संकेत_voltage) अणु
+	हाल MMC_SIGNAL_VOLTAGE_330:
 		str = "3.30 V";
-		break;
-	case MMC_SIGNAL_VOLTAGE_180:
+		अवरोध;
+	हाल MMC_SIGNAL_VOLTAGE_180:
 		str = "1.80 V";
-		break;
-	case MMC_SIGNAL_VOLTAGE_120:
+		अवरोध;
+	हाल MMC_SIGNAL_VOLTAGE_120:
 		str = "1.20 V";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		str = "invalid";
-		break;
-	}
-	seq_printf(s, "signal voltage:\t%u (%s)\n", ios->signal_voltage, str);
+		अवरोध;
+	पूर्ण
+	seq_म_लिखो(s, "signal voltage:\t%u (%s)\n", ios->संकेत_voltage, str);
 
-	switch (ios->drv_type) {
-	case MMC_SET_DRIVER_TYPE_A:
+	चयन (ios->drv_type) अणु
+	हाल MMC_SET_DRIVER_TYPE_A:
 		str = "driver type A";
-		break;
-	case MMC_SET_DRIVER_TYPE_B:
+		अवरोध;
+	हाल MMC_SET_DRIVER_TYPE_B:
 		str = "driver type B";
-		break;
-	case MMC_SET_DRIVER_TYPE_C:
+		अवरोध;
+	हाल MMC_SET_DRIVER_TYPE_C:
 		str = "driver type C";
-		break;
-	case MMC_SET_DRIVER_TYPE_D:
+		अवरोध;
+	हाल MMC_SET_DRIVER_TYPE_D:
 		str = "driver type D";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		str = "invalid";
-		break;
-	}
-	seq_printf(s, "driver type:\t%u (%s)\n", ios->drv_type, str);
+		अवरोध;
+	पूर्ण
+	seq_म_लिखो(s, "driver type:\t%u (%s)\n", ios->drv_type, str);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(mmc_ios);
 
-static int mmc_clock_opt_get(void *data, u64 *val)
-{
-	struct mmc_host *host = data;
+अटल पूर्णांक mmc_घड़ी_opt_get(व्योम *data, u64 *val)
+अणु
+	काष्ठा mmc_host *host = data;
 
-	*val = host->ios.clock;
+	*val = host->ios.घड़ी;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mmc_clock_opt_set(void *data, u64 val)
-{
-	struct mmc_host *host = data;
+अटल पूर्णांक mmc_घड़ी_opt_set(व्योम *data, u64 val)
+अणु
+	काष्ठा mmc_host *host = data;
 
 	/* We need this check due to input value is u64 */
-	if (val != 0 && (val > host->f_max || val < host->f_min))
-		return -EINVAL;
+	अगर (val != 0 && (val > host->f_max || val < host->f_min))
+		वापस -EINVAL;
 
 	mmc_claim_host(host);
-	mmc_set_clock(host, (unsigned int) val);
+	mmc_set_घड़ी(host, (अचिन्हित पूर्णांक) val);
 	mmc_release_host(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-DEFINE_DEBUGFS_ATTRIBUTE(mmc_clock_fops, mmc_clock_opt_get, mmc_clock_opt_set,
+DEFINE_DEBUGFS_ATTRIBUTE(mmc_घड़ी_fops, mmc_घड़ी_opt_get, mmc_घड़ी_opt_set,
 	"%llu\n");
 
-void mmc_add_host_debugfs(struct mmc_host *host)
-{
-	struct dentry *root;
+व्योम mmc_add_host_debugfs(काष्ठा mmc_host *host)
+अणु
+	काष्ठा dentry *root;
 
-	root = debugfs_create_dir(mmc_hostname(host), NULL);
+	root = debugfs_create_dir(mmc_hostname(host), शून्य);
 	host->debugfs_root = root;
 
 	debugfs_create_file("ios", S_IRUSR, root, host, &mmc_ios_fops);
 	debugfs_create_x32("caps", S_IRUSR, root, &host->caps);
 	debugfs_create_x32("caps2", S_IRUSR, root, &host->caps2);
 	debugfs_create_file_unsafe("clock", S_IRUSR | S_IWUSR, root, host,
-				   &mmc_clock_fops);
+				   &mmc_घड़ी_fops);
 
-#ifdef CONFIG_FAIL_MMC_REQUEST
-	if (fail_request)
-		setup_fault_attr(&fail_default_attr, fail_request);
-	host->fail_mmc_request = fail_default_attr;
+#अगर_घोषित CONFIG_FAIL_MMC_REQUEST
+	अगर (fail_request)
+		setup_fault_attr(&fail_शेष_attr, fail_request);
+	host->fail_mmc_request = fail_शेष_attr;
 	fault_create_debugfs_attr("fail_mmc_request", root,
 				  &host->fail_mmc_request);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void mmc_remove_host_debugfs(struct mmc_host *host)
-{
-	debugfs_remove_recursive(host->debugfs_root);
-}
+व्योम mmc_हटाओ_host_debugfs(काष्ठा mmc_host *host)
+अणु
+	debugfs_हटाओ_recursive(host->debugfs_root);
+पूर्ण
 
-void mmc_add_card_debugfs(struct mmc_card *card)
-{
-	struct mmc_host	*host = card->host;
-	struct dentry	*root;
+व्योम mmc_add_card_debugfs(काष्ठा mmc_card *card)
+अणु
+	काष्ठा mmc_host	*host = card->host;
+	काष्ठा dentry	*root;
 
-	if (!host->debugfs_root)
-		return;
+	अगर (!host->debugfs_root)
+		वापस;
 
 	root = debugfs_create_dir(mmc_card_id(card), host->debugfs_root);
 	card->debugfs_root = root;
 
 	debugfs_create_x32("state", S_IRUSR, root, &card->state);
-}
+पूर्ण
 
-void mmc_remove_card_debugfs(struct mmc_card *card)
-{
-	debugfs_remove_recursive(card->debugfs_root);
-	card->debugfs_root = NULL;
-}
+व्योम mmc_हटाओ_card_debugfs(काष्ठा mmc_card *card)
+अणु
+	debugfs_हटाओ_recursive(card->debugfs_root);
+	card->debugfs_root = शून्य;
+पूर्ण

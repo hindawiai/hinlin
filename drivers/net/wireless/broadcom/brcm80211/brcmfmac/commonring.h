@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
-#ifndef BRCMFMAC_COMMONRING_H
-#define BRCMFMAC_COMMONRING_H
+#अगर_अघोषित BRCMFMAC_COMMONRING_H
+#घोषणा BRCMFMAC_COMMONRING_H
 
 
-struct brcmf_commonring {
+काष्ठा brcmf_commonring अणु
 	u16 r_ptr;
 	u16 w_ptr;
 	u16 f_ptr;
 	u16 depth;
 	u16 item_len;
 
-	void *buf_addr;
+	व्योम *buf_addr;
 
-	int (*cr_ring_bell)(void *ctx);
-	int (*cr_update_rptr)(void *ctx);
-	int (*cr_update_wptr)(void *ctx);
-	int (*cr_write_rptr)(void *ctx);
-	int (*cr_write_wptr)(void *ctx);
+	पूर्णांक (*cr_ring_bell)(व्योम *ctx);
+	पूर्णांक (*cr_update_rptr)(व्योम *ctx);
+	पूर्णांक (*cr_update_wptr)(व्योम *ctx);
+	पूर्णांक (*cr_ग_लिखो_rptr)(व्योम *ctx);
+	पूर्णांक (*cr_ग_लिखो_wptr)(व्योम *ctx);
 
-	void *cr_ctx;
+	व्योम *cr_ctx;
 
 	spinlock_t lock;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	bool inited;
 	bool was_full;
 
 	atomic_t outstanding_tx;
-};
+पूर्ण;
 
 
-void brcmf_commonring_register_cb(struct brcmf_commonring *commonring,
-				  int (*cr_ring_bell)(void *ctx),
-				  int (*cr_update_rptr)(void *ctx),
-				  int (*cr_update_wptr)(void *ctx),
-				  int (*cr_write_rptr)(void *ctx),
-				  int (*cr_write_wptr)(void *ctx), void *ctx);
-void brcmf_commonring_config(struct brcmf_commonring *commonring, u16 depth,
-			     u16 item_len, void *buf_addr);
-void brcmf_commonring_lock(struct brcmf_commonring *commonring);
-void brcmf_commonring_unlock(struct brcmf_commonring *commonring);
-bool brcmf_commonring_write_available(struct brcmf_commonring *commonring);
-void *brcmf_commonring_reserve_for_write(struct brcmf_commonring *commonring);
-void *
-brcmf_commonring_reserve_for_write_multiple(struct brcmf_commonring *commonring,
+व्योम brcmf_commonring_रेजिस्टर_cb(काष्ठा brcmf_commonring *commonring,
+				  पूर्णांक (*cr_ring_bell)(व्योम *ctx),
+				  पूर्णांक (*cr_update_rptr)(व्योम *ctx),
+				  पूर्णांक (*cr_update_wptr)(व्योम *ctx),
+				  पूर्णांक (*cr_ग_लिखो_rptr)(व्योम *ctx),
+				  पूर्णांक (*cr_ग_लिखो_wptr)(व्योम *ctx), व्योम *ctx);
+व्योम brcmf_commonring_config(काष्ठा brcmf_commonring *commonring, u16 depth,
+			     u16 item_len, व्योम *buf_addr);
+व्योम brcmf_commonring_lock(काष्ठा brcmf_commonring *commonring);
+व्योम brcmf_commonring_unlock(काष्ठा brcmf_commonring *commonring);
+bool brcmf_commonring_ग_लिखो_available(काष्ठा brcmf_commonring *commonring);
+व्योम *brcmf_commonring_reserve_क्रम_ग_लिखो(काष्ठा brcmf_commonring *commonring);
+व्योम *
+brcmf_commonring_reserve_क्रम_ग_लिखो_multiple(काष्ठा brcmf_commonring *commonring,
 					    u16 n_items, u16 *alloced);
-int brcmf_commonring_write_complete(struct brcmf_commonring *commonring);
-void brcmf_commonring_write_cancel(struct brcmf_commonring *commonring,
+पूर्णांक brcmf_commonring_ग_लिखो_complete(काष्ठा brcmf_commonring *commonring);
+व्योम brcmf_commonring_ग_लिखो_cancel(काष्ठा brcmf_commonring *commonring,
 				   u16 n_items);
-void *brcmf_commonring_get_read_ptr(struct brcmf_commonring *commonring,
+व्योम *brcmf_commonring_get_पढ़ो_ptr(काष्ठा brcmf_commonring *commonring,
 				    u16 *n_items);
-int brcmf_commonring_read_complete(struct brcmf_commonring *commonring,
+पूर्णांक brcmf_commonring_पढ़ो_complete(काष्ठा brcmf_commonring *commonring,
 				   u16 n_items);
 
-#define brcmf_commonring_n_items(commonring) (commonring->depth)
-#define brcmf_commonring_len_item(commonring) (commonring->item_len)
+#घोषणा brcmf_commonring_n_items(commonring) (commonring->depth)
+#घोषणा brcmf_commonring_len_item(commonring) (commonring->item_len)
 
 
-#endif /* BRCMFMAC_COMMONRING_H */
+#पूर्ण_अगर /* BRCMFMAC_COMMONRING_H */

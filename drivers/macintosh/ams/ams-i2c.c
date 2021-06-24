@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Apple Motion Sensor driver (I2C variant)
  *
@@ -6,45 +7,45 @@
  * Copyright (C) 2006 Michael Hanselmann (linux-kernel@hansmi.ch)
  *
  * Clean room implementation based on the reverse engineered Mac OS X driver by
- * Johannes Berg <johannes@sipsolutions.net>, documentation available at
- * http://johannes.sipsolutions.net/PowerBook/Apple_Motion_Sensor_Specification
+ * Johannes Berg <johannes@sipsolutions.net>, करोcumentation available at
+ * http://johannes.sipsolutions.net/PowerBook/Apple_Motion_Sensor_Specअगरication
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
 
-#include "ams.h"
+#समावेश "ams.h"
 
-/* AMS registers */
-#define AMS_COMMAND	0x00	/* command register */
-#define AMS_STATUS	0x01	/* status register */
-#define AMS_CTRL1	0x02	/* read control 1 (number of values) */
-#define AMS_CTRL2	0x03	/* read control 2 (offset?) */
-#define AMS_CTRL3	0x04	/* read control 3 (size of each value?) */
-#define AMS_DATA1	0x05	/* read data 1 */
-#define AMS_DATA2	0x06	/* read data 2 */
-#define AMS_DATA3	0x07	/* read data 3 */
-#define AMS_DATA4	0x08	/* read data 4 */
-#define AMS_DATAX	0x20	/* data X */
-#define AMS_DATAY	0x21	/* data Y */
-#define AMS_DATAZ	0x22	/* data Z */
-#define AMS_FREEFALL	0x24	/* freefall int control */
-#define AMS_SHOCK	0x25	/* shock int control */
-#define AMS_SENSLOW	0x26	/* sensitivity low limit */
-#define AMS_SENSHIGH	0x27	/* sensitivity high limit */
-#define AMS_CTRLX	0x28	/* control X */
-#define AMS_CTRLY	0x29	/* control Y */
-#define AMS_CTRLZ	0x2A	/* control Z */
-#define AMS_UNKNOWN1	0x2B	/* unknown 1 */
-#define AMS_UNKNOWN2	0x2C	/* unknown 2 */
-#define AMS_UNKNOWN3	0x2D	/* unknown 3 */
-#define AMS_VENDOR	0x2E	/* vendor */
+/* AMS रेजिस्टरs */
+#घोषणा AMS_COMMAND	0x00	/* command रेजिस्टर */
+#घोषणा AMS_STATUS	0x01	/* status रेजिस्टर */
+#घोषणा AMS_CTRL1	0x02	/* पढ़ो control 1 (number of values) */
+#घोषणा AMS_CTRL2	0x03	/* पढ़ो control 2 (offset?) */
+#घोषणा AMS_CTRL3	0x04	/* पढ़ो control 3 (size of each value?) */
+#घोषणा AMS_DATA1	0x05	/* पढ़ो data 1 */
+#घोषणा AMS_DATA2	0x06	/* पढ़ो data 2 */
+#घोषणा AMS_DATA3	0x07	/* पढ़ो data 3 */
+#घोषणा AMS_DATA4	0x08	/* पढ़ो data 4 */
+#घोषणा AMS_DATAX	0x20	/* data X */
+#घोषणा AMS_DATAY	0x21	/* data Y */
+#घोषणा AMS_DATAZ	0x22	/* data Z */
+#घोषणा AMS_FREEFALL	0x24	/* मुक्तfall पूर्णांक control */
+#घोषणा AMS_SHOCK	0x25	/* shock पूर्णांक control */
+#घोषणा AMS_SENSLOW	0x26	/* sensitivity low limit */
+#घोषणा AMS_SENSHIGH	0x27	/* sensitivity high limit */
+#घोषणा AMS_CTRLX	0x28	/* control X */
+#घोषणा AMS_CTRLY	0x29	/* control Y */
+#घोषणा AMS_CTRLZ	0x2A	/* control Z */
+#घोषणा AMS_UNKNOWN1	0x2B	/* unknown 1 */
+#घोषणा AMS_UNKNOWN2	0x2C	/* unknown 2 */
+#घोषणा AMS_UNKNOWN3	0x2D	/* unknown 3 */
+#घोषणा AMS_VENDOR	0x2E	/* venकरोr */
 
-/* AMS commands - use with the AMS_COMMAND register */
-enum ams_i2c_cmd {
+/* AMS commands - use with the AMS_COMMAND रेजिस्टर */
+क्रमागत ams_i2c_cmd अणु
 	AMS_CMD_NOOP = 0,
 	AMS_CMD_VERSION,
 	AMS_CMD_READMEM,
@@ -54,219 +55,219 @@ enum ams_i2c_cmd {
 	AMS_CMD_WRITEEE,
 	AMS_CMD_RESET,
 	AMS_CMD_START,
-};
+पूर्ण;
 
-static int ams_i2c_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id);
-static int ams_i2c_remove(struct i2c_client *client);
+अटल पूर्णांक ams_i2c_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id);
+अटल पूर्णांक ams_i2c_हटाओ(काष्ठा i2c_client *client);
 
-static const struct i2c_device_id ams_id[] = {
-	{ "MAC,accelerometer_1", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id ams_id[] = अणु
+	अणु "MAC,accelerometer_1", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ams_id);
 
-static struct i2c_driver ams_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ams_i2c_driver = अणु
+	.driver = अणु
 		.name   = "ams",
-	},
+	पूर्ण,
 	.probe          = ams_i2c_probe,
-	.remove         = ams_i2c_remove,
+	.हटाओ         = ams_i2c_हटाओ,
 	.id_table       = ams_id,
-};
+पूर्ण;
 
-static s32 ams_i2c_read(u8 reg)
-{
-	return i2c_smbus_read_byte_data(ams_info.i2c_client, reg);
-}
+अटल s32 ams_i2c_पढ़ो(u8 reg)
+अणु
+	वापस i2c_smbus_पढ़ो_byte_data(ams_info.i2c_client, reg);
+पूर्ण
 
-static int ams_i2c_write(u8 reg, u8 value)
-{
-	return i2c_smbus_write_byte_data(ams_info.i2c_client, reg, value);
-}
+अटल पूर्णांक ams_i2c_ग_लिखो(u8 reg, u8 value)
+अणु
+	वापस i2c_smbus_ग_लिखो_byte_data(ams_info.i2c_client, reg, value);
+पूर्ण
 
-static int ams_i2c_cmd(enum ams_i2c_cmd cmd)
-{
+अटल पूर्णांक ams_i2c_cmd(क्रमागत ams_i2c_cmd cmd)
+अणु
 	s32 result;
-	int count = 3;
+	पूर्णांक count = 3;
 
-	ams_i2c_write(AMS_COMMAND, cmd);
+	ams_i2c_ग_लिखो(AMS_COMMAND, cmd);
 	msleep(5);
 
-	while (count--) {
-		result = ams_i2c_read(AMS_COMMAND);
-		if (result == 0 || result & 0x80)
-			return 0;
+	जबतक (count--) अणु
+		result = ams_i2c_पढ़ो(AMS_COMMAND);
+		अगर (result == 0 || result & 0x80)
+			वापस 0;
 
-		schedule_timeout_uninterruptible(HZ / 20);
-	}
+		schedule_समयout_unपूर्णांकerruptible(HZ / 20);
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void ams_i2c_set_irq(enum ams_irq reg, char enable)
-{
-	if (reg & AMS_IRQ_FREEFALL) {
-		u8 val = ams_i2c_read(AMS_CTRLX);
-		if (enable)
+अटल व्योम ams_i2c_set_irq(क्रमागत ams_irq reg, अक्षर enable)
+अणु
+	अगर (reg & AMS_IRQ_FREEFALL) अणु
+		u8 val = ams_i2c_पढ़ो(AMS_CTRLX);
+		अगर (enable)
 			val |= 0x80;
-		else
+		अन्यथा
 			val &= ~0x80;
-		ams_i2c_write(AMS_CTRLX, val);
-	}
+		ams_i2c_ग_लिखो(AMS_CTRLX, val);
+	पूर्ण
 
-	if (reg & AMS_IRQ_SHOCK) {
-		u8 val = ams_i2c_read(AMS_CTRLY);
-		if (enable)
+	अगर (reg & AMS_IRQ_SHOCK) अणु
+		u8 val = ams_i2c_पढ़ो(AMS_CTRLY);
+		अगर (enable)
 			val |= 0x80;
-		else
+		अन्यथा
 			val &= ~0x80;
-		ams_i2c_write(AMS_CTRLY, val);
-	}
+		ams_i2c_ग_लिखो(AMS_CTRLY, val);
+	पूर्ण
 
-	if (reg & AMS_IRQ_GLOBAL) {
-		u8 val = ams_i2c_read(AMS_CTRLZ);
-		if (enable)
+	अगर (reg & AMS_IRQ_GLOBAL) अणु
+		u8 val = ams_i2c_पढ़ो(AMS_CTRLZ);
+		अगर (enable)
 			val |= 0x80;
-		else
+		अन्यथा
 			val &= ~0x80;
-		ams_i2c_write(AMS_CTRLZ, val);
-	}
-}
+		ams_i2c_ग_लिखो(AMS_CTRLZ, val);
+	पूर्ण
+पूर्ण
 
-static void ams_i2c_clear_irq(enum ams_irq reg)
-{
-	if (reg & AMS_IRQ_FREEFALL)
-		ams_i2c_write(AMS_FREEFALL, 0);
+अटल व्योम ams_i2c_clear_irq(क्रमागत ams_irq reg)
+अणु
+	अगर (reg & AMS_IRQ_FREEFALL)
+		ams_i2c_ग_लिखो(AMS_FREEFALL, 0);
 
-	if (reg & AMS_IRQ_SHOCK)
-		ams_i2c_write(AMS_SHOCK, 0);
-}
+	अगर (reg & AMS_IRQ_SHOCK)
+		ams_i2c_ग_लिखो(AMS_SHOCK, 0);
+पूर्ण
 
-static u8 ams_i2c_get_vendor(void)
-{
-	return ams_i2c_read(AMS_VENDOR);
-}
+अटल u8 ams_i2c_get_venकरोr(व्योम)
+अणु
+	वापस ams_i2c_पढ़ो(AMS_VENDOR);
+पूर्ण
 
-static void ams_i2c_get_xyz(s8 *x, s8 *y, s8 *z)
-{
-	*x = ams_i2c_read(AMS_DATAX);
-	*y = ams_i2c_read(AMS_DATAY);
-	*z = ams_i2c_read(AMS_DATAZ);
-}
+अटल व्योम ams_i2c_get_xyz(s8 *x, s8 *y, s8 *z)
+अणु
+	*x = ams_i2c_पढ़ो(AMS_DATAX);
+	*y = ams_i2c_पढ़ो(AMS_DATAY);
+	*z = ams_i2c_पढ़ो(AMS_DATAZ);
+पूर्ण
 
-static int ams_i2c_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	int vmaj, vmin;
-	int result;
+अटल पूर्णांक ams_i2c_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक vmaj, vmin;
+	पूर्णांक result;
 
 	/* There can be only one */
-	if (unlikely(ams_info.has_device))
-		return -ENODEV;
+	अगर (unlikely(ams_info.has_device))
+		वापस -ENODEV;
 
 	ams_info.i2c_client = client;
 
-	if (ams_i2c_cmd(AMS_CMD_RESET)) {
-		printk(KERN_INFO "ams: Failed to reset the device\n");
-		return -ENODEV;
-	}
+	अगर (ams_i2c_cmd(AMS_CMD_RESET)) अणु
+		prपूर्णांकk(KERN_INFO "ams: Failed to reset the device\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	if (ams_i2c_cmd(AMS_CMD_START)) {
-		printk(KERN_INFO "ams: Failed to start the device\n");
-		return -ENODEV;
-	}
+	अगर (ams_i2c_cmd(AMS_CMD_START)) अणु
+		prपूर्णांकk(KERN_INFO "ams: Failed to start the device\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	/* get version/vendor information */
-	ams_i2c_write(AMS_CTRL1, 0x02);
-	ams_i2c_write(AMS_CTRL2, 0x85);
-	ams_i2c_write(AMS_CTRL3, 0x01);
+	/* get version/venकरोr inक्रमmation */
+	ams_i2c_ग_लिखो(AMS_CTRL1, 0x02);
+	ams_i2c_ग_लिखो(AMS_CTRL2, 0x85);
+	ams_i2c_ग_लिखो(AMS_CTRL3, 0x01);
 
 	ams_i2c_cmd(AMS_CMD_READMEM);
 
-	vmaj = ams_i2c_read(AMS_DATA1);
-	vmin = ams_i2c_read(AMS_DATA2);
-	if (vmaj != 1 || vmin != 52) {
-		printk(KERN_INFO "ams: Incorrect device version (%d.%d)\n",
+	vmaj = ams_i2c_पढ़ो(AMS_DATA1);
+	vmin = ams_i2c_पढ़ो(AMS_DATA2);
+	अगर (vmaj != 1 || vmin != 52) अणु
+		prपूर्णांकk(KERN_INFO "ams: Incorrect device version (%d.%d)\n",
 			vmaj, vmin);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ams_i2c_cmd(AMS_CMD_VERSION);
 
-	vmaj = ams_i2c_read(AMS_DATA1);
-	vmin = ams_i2c_read(AMS_DATA2);
-	if (vmaj != 0 || vmin != 1) {
-		printk(KERN_INFO "ams: Incorrect firmware version (%d.%d)\n",
+	vmaj = ams_i2c_पढ़ो(AMS_DATA1);
+	vmin = ams_i2c_पढ़ो(AMS_DATA2);
+	अगर (vmaj != 0 || vmin != 1) अणु
+		prपूर्णांकk(KERN_INFO "ams: Incorrect firmware version (%d.%d)\n",
 			vmaj, vmin);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Disable interrupts */
+	/* Disable पूर्णांकerrupts */
 	ams_i2c_set_irq(AMS_IRQ_ALL, 0);
 
 	result = ams_sensor_attach();
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
-	/* Set default values */
-	ams_i2c_write(AMS_SENSLOW, 0x15);
-	ams_i2c_write(AMS_SENSHIGH, 0x60);
-	ams_i2c_write(AMS_CTRLX, 0x08);
-	ams_i2c_write(AMS_CTRLY, 0x0F);
-	ams_i2c_write(AMS_CTRLZ, 0x4F);
-	ams_i2c_write(AMS_UNKNOWN1, 0x14);
+	/* Set शेष values */
+	ams_i2c_ग_लिखो(AMS_SENSLOW, 0x15);
+	ams_i2c_ग_लिखो(AMS_SENSHIGH, 0x60);
+	ams_i2c_ग_लिखो(AMS_CTRLX, 0x08);
+	ams_i2c_ग_लिखो(AMS_CTRLY, 0x0F);
+	ams_i2c_ग_लिखो(AMS_CTRLZ, 0x4F);
+	ams_i2c_ग_लिखो(AMS_UNKNOWN1, 0x14);
 
-	/* Clear interrupts */
+	/* Clear पूर्णांकerrupts */
 	ams_i2c_clear_irq(AMS_IRQ_ALL);
 
 	ams_info.has_device = 1;
 
-	/* Enable interrupts */
+	/* Enable पूर्णांकerrupts */
 	ams_i2c_set_irq(AMS_IRQ_ALL, 1);
 
-	printk(KERN_INFO "ams: Found I2C based motion sensor\n");
+	prपूर्णांकk(KERN_INFO "ams: Found I2C based motion sensor\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ams_i2c_remove(struct i2c_client *client)
-{
-	if (ams_info.has_device) {
+अटल पूर्णांक ams_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	अगर (ams_info.has_device) अणु
 		ams_sensor_detach();
 
-		/* Disable interrupts */
+		/* Disable पूर्णांकerrupts */
 		ams_i2c_set_irq(AMS_IRQ_ALL, 0);
 
-		/* Clear interrupts */
+		/* Clear पूर्णांकerrupts */
 		ams_i2c_clear_irq(AMS_IRQ_ALL);
 
-		printk(KERN_INFO "ams: Unloading\n");
+		prपूर्णांकk(KERN_INFO "ams: Unloading\n");
 
 		ams_info.has_device = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ams_i2c_exit(void)
-{
+अटल व्योम ams_i2c_निकास(व्योम)
+अणु
 	i2c_del_driver(&ams_i2c_driver);
-}
+पूर्ण
 
-int __init ams_i2c_init(struct device_node *np)
-{
-	int result;
+पूर्णांक __init ams_i2c_init(काष्ठा device_node *np)
+अणु
+	पूर्णांक result;
 
 	/* Set implementation stuff */
 	ams_info.of_node = np;
-	ams_info.exit = ams_i2c_exit;
-	ams_info.get_vendor = ams_i2c_get_vendor;
+	ams_info.निकास = ams_i2c_निकास;
+	ams_info.get_venकरोr = ams_i2c_get_venकरोr;
 	ams_info.get_xyz = ams_i2c_get_xyz;
 	ams_info.clear_irq = ams_i2c_clear_irq;
 	ams_info.bustype = BUS_I2C;
 
 	result = i2c_add_driver(&ams_i2c_driver);
 
-	return result;
-}
+	वापस result;
+पूर्ण

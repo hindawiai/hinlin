@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Handle extern requests for shutdown, reboot and sysrq
+ * Handle बाह्य requests क्रम shutकरोwn, reboot and sysrq
  */
 
-#define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/reboot.h>
-#include <linux/sysrq.h>
-#include <linux/stop_machine.h>
-#include <linux/freezer.h>
-#include <linux/syscore_ops.h>
-#include <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/stop_machine.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/export.h>
 
-#include <xen/xen.h>
-#include <xen/xenbus.h>
-#include <xen/grant_table.h>
-#include <xen/events.h>
-#include <xen/hvc-console.h>
-#include <xen/page.h>
-#include <xen/xen-ops.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/xenbus.h>
+#समावेश <xen/grant_table.h>
+#समावेश <xen/events.h>
+#समावेश <xen/hvc-console.h>
+#समावेश <xen/page.h>
+#समावेश <xen/xen-ops.h>
 
-#include <asm/xen/hypercall.h>
-#include <asm/xen/hypervisor.h>
+#समावेश <यंत्र/xen/hypercall.h>
+#समावेश <यंत्र/xen/hypervisor.h>
 
-enum shutdown_state {
+क्रमागत shutकरोwn_state अणु
 	SHUTDOWN_INVALID = -1,
 	SHUTDOWN_POWEROFF = 0,
 	SHUTDOWN_SUSPEND = 2,
-	/* Code 3 is SHUTDOWN_CRASH, which we don't use because the domain can only
-	   report a crash, not be instructed to crash!
+	/* Code 3 is SHUTDOWN_CRASH, which we करोn't use because the करोमुख्य can only
+	   report a crash, not be inकाष्ठाed to crash!
 	   HALT is the same as POWEROFF, as far as we're concerned.  The tools use
-	   the distinction when we return the reason code to them.  */
+	   the distinction when we वापस the reason code to them.  */
 	 SHUTDOWN_HALT = 4,
-};
+पूर्ण;
 
-/* Ignore multiple shutdown requests. */
-static enum shutdown_state shutting_down = SHUTDOWN_INVALID;
+/* Ignore multiple shutकरोwn requests. */
+अटल क्रमागत shutकरोwn_state shutting_करोwn = SHUTDOWN_INVALID;
 
-struct suspend_info {
-	int cancelled;
-};
+काष्ठा suspend_info अणु
+	पूर्णांक cancelled;
+पूर्ण;
 
-static RAW_NOTIFIER_HEAD(xen_resume_notifier);
+अटल RAW_NOTIFIER_HEAD(xen_resume_notअगरier);
 
-void xen_resume_notifier_register(struct notifier_block *nb)
-{
-	raw_notifier_chain_register(&xen_resume_notifier, nb);
-}
-EXPORT_SYMBOL_GPL(xen_resume_notifier_register);
+व्योम xen_resume_notअगरier_रेजिस्टर(काष्ठा notअगरier_block *nb)
+अणु
+	raw_notअगरier_chain_रेजिस्टर(&xen_resume_notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(xen_resume_notअगरier_रेजिस्टर);
 
-void xen_resume_notifier_unregister(struct notifier_block *nb)
-{
-	raw_notifier_chain_unregister(&xen_resume_notifier, nb);
-}
-EXPORT_SYMBOL_GPL(xen_resume_notifier_unregister);
+व्योम xen_resume_notअगरier_unरेजिस्टर(काष्ठा notअगरier_block *nb)
+अणु
+	raw_notअगरier_chain_unरेजिस्टर(&xen_resume_notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(xen_resume_notअगरier_unरेजिस्टर);
 
-#ifdef CONFIG_HIBERNATE_CALLBACKS
-static int xen_suspend(void *data)
-{
-	struct suspend_info *si = data;
-	int err;
+#अगर_घोषित CONFIG_HIBERNATE_CALLBACKS
+अटल पूर्णांक xen_suspend(व्योम *data)
+अणु
+	काष्ठा suspend_info *si = data;
+	पूर्णांक err;
 
 	BUG_ON(!irqs_disabled());
 
 	err = syscore_suspend();
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: system core suspend failed: %d\n", __func__, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	gnttab_suspend();
-	xen_manage_runstate_time(-1);
+	xen_manage_runstate_समय(-1);
 	xen_arch_pre_suspend();
 
-	si->cancelled = HYPERVISOR_suspend(xen_pv_domain()
+	si->cancelled = HYPERVISOR_suspend(xen_pv_करोमुख्य()
                                            ? virt_to_gfn(xen_start_info)
                                            : 0);
 
 	xen_arch_post_suspend(si->cancelled);
-	xen_manage_runstate_time(si->cancelled ? 1 : 0);
+	xen_manage_runstate_समय(si->cancelled ? 1 : 0);
 	gnttab_resume();
 
-	if (!si->cancelled) {
+	अगर (!si->cancelled) अणु
 		xen_irq_resume();
-		xen_timer_resume();
-	}
+		xen_समयr_resume();
+	पूर्ण
 
 	syscore_resume();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void do_suspend(void)
-{
-	int err;
-	struct suspend_info si;
+अटल व्योम करो_suspend(व्योम)
+अणु
+	पूर्णांक err;
+	काष्ठा suspend_info si;
 
-	shutting_down = SHUTDOWN_SUSPEND;
+	shutting_करोwn = SHUTDOWN_SUSPEND;
 
-	err = freeze_processes();
-	if (err) {
+	err = मुक्तze_processes();
+	अगर (err) अणु
 		pr_err("%s: freeze processes failed %d\n", __func__, err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = freeze_kernel_threads();
-	if (err) {
+	err = मुक्तze_kernel_thपढ़ोs();
+	अगर (err) अणु
 		pr_err("%s: freeze kernel threads failed %d\n", __func__, err);
-		goto out_thaw;
-	}
+		जाओ out_thaw;
+	पूर्ण
 
 	err = dpm_suspend_start(PMSG_FREEZE);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: dpm_suspend_start %d\n", __func__, err);
-		goto out_thaw;
-	}
+		जाओ out_thaw;
+	पूर्ण
 
-	printk(KERN_DEBUG "suspending xenstore...\n");
+	prपूर्णांकk(KERN_DEBUG "suspending xenstore...\n");
 	xs_suspend();
 
 	err = dpm_suspend_end(PMSG_FREEZE);
-	if (err) {
+	अगर (err) अणु
 		pr_err("dpm_suspend_end failed: %d\n", err);
 		si.cancelled = 0;
-		goto out_resume;
-	}
+		जाओ out_resume;
+	पूर्ण
 
 	xen_arch_suspend();
 
@@ -136,24 +137,24 @@ static void do_suspend(void)
 	err = stop_machine(xen_suspend, &si, cpumask_of(0));
 
 	/* Resume console as early as possible. */
-	if (!si.cancelled)
+	अगर (!si.cancelled)
 		xen_console_resume();
 
-	raw_notifier_call_chain(&xen_resume_notifier, 0, NULL);
+	raw_notअगरier_call_chain(&xen_resume_notअगरier, 0, शून्य);
 
 	dpm_resume_start(si.cancelled ? PMSG_THAW : PMSG_RESTORE);
 
-	if (err) {
+	अगर (err) अणु
 		pr_err("failed to start xen_suspend: %d\n", err);
 		si.cancelled = 1;
-	}
+	पूर्ण
 
 	xen_arch_resume();
 
 out_resume:
-	if (!si.cancelled)
+	अगर (!si.cancelled)
 		xs_resume();
-	else
+	अन्यथा
 		xs_suspend_cancel();
 
 	dpm_resume_end(si.cancelled ? PMSG_THAW : PMSG_RESTORE);
@@ -161,230 +162,230 @@ out_resume:
 out_thaw:
 	thaw_processes();
 out:
-	shutting_down = SHUTDOWN_INVALID;
-}
-#endif	/* CONFIG_HIBERNATE_CALLBACKS */
+	shutting_करोwn = SHUTDOWN_INVALID;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_HIBERNATE_CALLBACKS */
 
-struct shutdown_handler {
-#define SHUTDOWN_CMD_SIZE 11
-	const char command[SHUTDOWN_CMD_SIZE];
+काष्ठा shutकरोwn_handler अणु
+#घोषणा SHUTDOWN_CMD_SIZE 11
+	स्थिर अक्षर command[SHUTDOWN_CMD_SIZE];
 	bool flag;
-	void (*cb)(void);
-};
+	व्योम (*cb)(व्योम);
+पूर्ण;
 
-static int poweroff_nb(struct notifier_block *cb, unsigned long code, void *unused)
-{
-	switch (code) {
-	case SYS_DOWN:
-	case SYS_HALT:
-	case SYS_POWER_OFF:
-		shutting_down = SHUTDOWN_POWEROFF;
-		break;
-	default:
-		break;
-	}
-	return NOTIFY_DONE;
-}
-static void do_poweroff(void)
-{
-	switch (system_state) {
-	case SYSTEM_BOOTING:
-	case SYSTEM_SCHEDULING:
-		orderly_poweroff(true);
-		break;
-	case SYSTEM_RUNNING:
-		orderly_poweroff(false);
-		break;
-	default:
-		/* Don't do it when we are halting/rebooting. */
+अटल पूर्णांक घातeroff_nb(काष्ठा notअगरier_block *cb, अचिन्हित दीर्घ code, व्योम *unused)
+अणु
+	चयन (code) अणु
+	हाल SYS_DOWN:
+	हाल SYS_HALT:
+	हाल SYS_POWER_OFF:
+		shutting_करोwn = SHUTDOWN_POWEROFF;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
+अटल व्योम करो_घातeroff(व्योम)
+अणु
+	चयन (प्रणाली_state) अणु
+	हाल SYSTEM_BOOTING:
+	हाल SYSTEM_SCHEDULING:
+		orderly_घातeroff(true);
+		अवरोध;
+	हाल SYSTEM_RUNNING:
+		orderly_घातeroff(false);
+		अवरोध;
+	शेष:
+		/* Don't करो it when we are halting/rebooting. */
 		pr_info("Ignoring Xen toolstack shutdown.\n");
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void do_reboot(void)
-{
-	shutting_down = SHUTDOWN_POWEROFF; /* ? */
+अटल व्योम करो_reboot(व्योम)
+अणु
+	shutting_करोwn = SHUTDOWN_POWEROFF; /* ? */
 	ctrl_alt_del();
-}
+पूर्ण
 
-static struct shutdown_handler shutdown_handlers[] = {
-	{ "poweroff",	true,	do_poweroff },
-	{ "halt",	false,	do_poweroff },
-	{ "reboot",	true,	do_reboot   },
-#ifdef CONFIG_HIBERNATE_CALLBACKS
-	{ "suspend",	true,	do_suspend  },
-#endif
-};
+अटल काष्ठा shutकरोwn_handler shutकरोwn_handlers[] = अणु
+	अणु "poweroff",	true,	करो_घातeroff पूर्ण,
+	अणु "halt",	false,	करो_घातeroff पूर्ण,
+	अणु "reboot",	true,	करो_reboot   पूर्ण,
+#अगर_घोषित CONFIG_HIBERNATE_CALLBACKS
+	अणु "suspend",	true,	करो_suspend  पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static void shutdown_handler(struct xenbus_watch *watch,
-			     const char *path, const char *token)
-{
-	char *str;
-	struct xenbus_transaction xbt;
-	int err;
-	int idx;
+अटल व्योम shutकरोwn_handler(काष्ठा xenbus_watch *watch,
+			     स्थिर अक्षर *path, स्थिर अक्षर *token)
+अणु
+	अक्षर *str;
+	काष्ठा xenbus_transaction xbt;
+	पूर्णांक err;
+	पूर्णांक idx;
 
-	if (shutting_down != SHUTDOWN_INVALID)
-		return;
+	अगर (shutting_करोwn != SHUTDOWN_INVALID)
+		वापस;
 
  again:
 	err = xenbus_transaction_start(&xbt);
-	if (err)
-		return;
+	अगर (err)
+		वापस;
 
-	str = (char *)xenbus_read(xbt, "control", "shutdown", NULL);
-	/* Ignore read errors and empty reads. */
-	if (XENBUS_IS_ERR_READ(str)) {
+	str = (अक्षर *)xenbus_पढ़ो(xbt, "control", "shutdown", शून्य);
+	/* Ignore पढ़ो errors and empty पढ़ोs. */
+	अगर (XENBUS_IS_ERR_READ(str)) अणु
 		xenbus_transaction_end(xbt, 1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (idx = 0; idx < ARRAY_SIZE(shutdown_handlers); idx++) {
-		if (strcmp(str, shutdown_handlers[idx].command) == 0)
-			break;
-	}
+	क्रम (idx = 0; idx < ARRAY_SIZE(shutकरोwn_handlers); idx++) अणु
+		अगर (म_भेद(str, shutकरोwn_handlers[idx].command) == 0)
+			अवरोध;
+	पूर्ण
 
 	/* Only acknowledge commands which we are prepared to handle. */
-	if (idx < ARRAY_SIZE(shutdown_handlers))
-		xenbus_write(xbt, "control", "shutdown", "");
+	अगर (idx < ARRAY_SIZE(shutकरोwn_handlers))
+		xenbus_ग_लिखो(xbt, "control", "shutdown", "");
 
 	err = xenbus_transaction_end(xbt, 0);
-	if (err == -EAGAIN) {
-		kfree(str);
-		goto again;
-	}
+	अगर (err == -EAGAIN) अणु
+		kमुक्त(str);
+		जाओ again;
+	पूर्ण
 
-	if (idx < ARRAY_SIZE(shutdown_handlers)) {
-		shutdown_handlers[idx].cb();
-	} else {
+	अगर (idx < ARRAY_SIZE(shutकरोwn_handlers)) अणु
+		shutकरोwn_handlers[idx].cb();
+	पूर्ण अन्यथा अणु
 		pr_info("Ignoring shutdown request: %s\n", str);
-		shutting_down = SHUTDOWN_INVALID;
-	}
+		shutting_करोwn = SHUTDOWN_INVALID;
+	पूर्ण
 
-	kfree(str);
-}
+	kमुक्त(str);
+पूर्ण
 
-#ifdef CONFIG_MAGIC_SYSRQ
-static void sysrq_handler(struct xenbus_watch *watch, const char *path,
-			  const char *token)
-{
-	char sysrq_key = '\0';
-	struct xenbus_transaction xbt;
-	int err;
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
+अटल व्योम sysrq_handler(काष्ठा xenbus_watch *watch, स्थिर अक्षर *path,
+			  स्थिर अक्षर *token)
+अणु
+	अक्षर sysrq_key = '\0';
+	काष्ठा xenbus_transaction xbt;
+	पूर्णांक err;
 
  again:
 	err = xenbus_transaction_start(&xbt);
-	if (err)
-		return;
-	err = xenbus_scanf(xbt, "control", "sysrq", "%c", &sysrq_key);
-	if (err < 0) {
+	अगर (err)
+		वापस;
+	err = xenbus_म_पूछो(xbt, "control", "sysrq", "%c", &sysrq_key);
+	अगर (err < 0) अणु
 		/*
-		 * The Xenstore watch fires directly after registering it and
+		 * The Xenstore watch fires directly after रेजिस्टरing it and
 		 * after a suspend/resume cycle. So ENOENT is no error but
-		 * might happen in those cases. ERANGE is observed when we get
+		 * might happen in those हालs. दुस्फल is observed when we get
 		 * an empty value (''), this happens when we acknowledge the
 		 * request by writing '\0' below.
 		 */
-		if (err != -ENOENT && err != -ERANGE)
+		अगर (err != -ENOENT && err != -दुस्फल)
 			pr_err("Error %d reading sysrq code in control/sysrq\n",
 			       err);
 		xenbus_transaction_end(xbt, 1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sysrq_key != '\0') {
-		err = xenbus_printf(xbt, "control", "sysrq", "%c", '\0');
-		if (err) {
+	अगर (sysrq_key != '\0') अणु
+		err = xenbus_म_लिखो(xbt, "control", "sysrq", "%c", '\0');
+		अगर (err) अणु
 			pr_err("%s: Error %d writing sysrq in control/sysrq\n",
 			       __func__, err);
 			xenbus_transaction_end(xbt, 1);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	err = xenbus_transaction_end(xbt, 0);
-	if (err == -EAGAIN)
-		goto again;
+	अगर (err == -EAGAIN)
+		जाओ again;
 
-	if (sysrq_key != '\0')
+	अगर (sysrq_key != '\0')
 		handle_sysrq(sysrq_key);
-}
+पूर्ण
 
-static struct xenbus_watch sysrq_watch = {
+अटल काष्ठा xenbus_watch sysrq_watch = अणु
 	.node = "control/sysrq",
 	.callback = sysrq_handler
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static struct xenbus_watch shutdown_watch = {
+अटल काष्ठा xenbus_watch shutकरोwn_watch = अणु
 	.node = "control/shutdown",
-	.callback = shutdown_handler
-};
+	.callback = shutकरोwn_handler
+पूर्ण;
 
-static struct notifier_block xen_reboot_nb = {
-	.notifier_call = poweroff_nb,
-};
+अटल काष्ठा notअगरier_block xen_reboot_nb = अणु
+	.notअगरier_call = घातeroff_nb,
+पूर्ण;
 
-static int setup_shutdown_watcher(void)
-{
-	int err;
-	int idx;
-#define FEATURE_PATH_SIZE (SHUTDOWN_CMD_SIZE + sizeof("feature-"))
-	char node[FEATURE_PATH_SIZE];
+अटल पूर्णांक setup_shutकरोwn_watcher(व्योम)
+अणु
+	पूर्णांक err;
+	पूर्णांक idx;
+#घोषणा FEATURE_PATH_SIZE (SHUTDOWN_CMD_SIZE + माप("feature-"))
+	अक्षर node[FEATURE_PATH_SIZE];
 
-	err = register_xenbus_watch(&shutdown_watch);
-	if (err) {
+	err = रेजिस्टर_xenbus_watch(&shutकरोwn_watch);
+	अगर (err) अणु
 		pr_err("Failed to set shutdown watcher\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 
-#ifdef CONFIG_MAGIC_SYSRQ
-	err = register_xenbus_watch(&sysrq_watch);
-	if (err) {
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
+	err = रेजिस्टर_xenbus_watch(&sysrq_watch);
+	अगर (err) अणु
 		pr_err("Failed to set sysrq watcher\n");
-		return err;
-	}
-#endif
+		वापस err;
+	पूर्ण
+#पूर्ण_अगर
 
-	for (idx = 0; idx < ARRAY_SIZE(shutdown_handlers); idx++) {
-		if (!shutdown_handlers[idx].flag)
-			continue;
-		snprintf(node, FEATURE_PATH_SIZE, "feature-%s",
-			 shutdown_handlers[idx].command);
-		err = xenbus_printf(XBT_NIL, "control", node, "%u", 1);
-		if (err) {
+	क्रम (idx = 0; idx < ARRAY_SIZE(shutकरोwn_handlers); idx++) अणु
+		अगर (!shutकरोwn_handlers[idx].flag)
+			जारी;
+		snम_लिखो(node, FEATURE_PATH_SIZE, "feature-%s",
+			 shutकरोwn_handlers[idx].command);
+		err = xenbus_म_लिखो(XBT_NIL, "control", node, "%u", 1);
+		अगर (err) अणु
 			pr_err("%s: Error %d writing %s\n", __func__,
 				err, node);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int shutdown_event(struct notifier_block *notifier,
-			  unsigned long event,
-			  void *data)
-{
-	setup_shutdown_watcher();
-	return NOTIFY_DONE;
-}
+अटल पूर्णांक shutकरोwn_event(काष्ठा notअगरier_block *notअगरier,
+			  अचिन्हित दीर्घ event,
+			  व्योम *data)
+अणु
+	setup_shutकरोwn_watcher();
+	वापस NOTIFY_DONE;
+पूर्ण
 
-int xen_setup_shutdown_event(void)
-{
-	static struct notifier_block xenstore_notifier = {
-		.notifier_call = shutdown_event
-	};
+पूर्णांक xen_setup_shutकरोwn_event(व्योम)
+अणु
+	अटल काष्ठा notअगरier_block xenstore_notअगरier = अणु
+		.notअगरier_call = shutकरोwn_event
+	पूर्ण;
 
-	if (!xen_domain())
-		return -ENODEV;
-	register_xenstore_notifier(&xenstore_notifier);
-	register_reboot_notifier(&xen_reboot_nb);
+	अगर (!xen_करोमुख्य())
+		वापस -ENODEV;
+	रेजिस्टर_xenstore_notअगरier(&xenstore_notअगरier);
+	रेजिस्टर_reboot_notअगरier(&xen_reboot_nb);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(xen_setup_shutdown_event);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(xen_setup_shutकरोwn_event);
 
-subsys_initcall(xen_setup_shutdown_event);
+subsys_initcall(xen_setup_shutकरोwn_event);

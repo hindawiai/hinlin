@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * drivers/media/i2c/tvp514x.c
  *
@@ -16,33 +17,33 @@
  *     Prabhakar Lad <prabhakar.lad@ti.com>
  */
 
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/videodev2.h>
-#include <linux/module.h>
-#include <linux/v4l2-mediabus.h>
-#include <linux/of.h>
-#include <linux/of_graph.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/module.h>
+#समावेश <linux/v4l2-mediabus.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_graph.h>
 
-#include <media/v4l2-async.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-common.h>
-#include <media/v4l2-mediabus.h>
-#include <media/v4l2-fwnode.h>
-#include <media/v4l2-ctrls.h>
-#include <media/i2c/tvp514x.h>
-#include <media/media-entity.h>
+#समावेश <media/v4l2-async.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-mediabus.h>
+#समावेश <media/v4l2-fwnode.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/i2c/tvp514x.h>
+#समावेश <media/media-entity.h>
 
-#include "tvp514x_regs.h"
+#समावेश "tvp514x_regs.h"
 
-/* Private macros for TVP */
-#define I2C_RETRY_COUNT                 (5)
-#define LOCK_RETRY_COUNT                (5)
-#define LOCK_RETRY_DELAY                (200)
+/* Private macros क्रम TVP */
+#घोषणा I2C_RETRY_COUNT                 (5)
+#घोषणा LOCK_RETRY_COUNT                (5)
+#घोषणा LOCK_RETRY_DELAY                (200)
 
 /* Debug functions */
-static bool debug;
+अटल bool debug;
 module_param(debug, bool, 0644);
 MODULE_PARM_DESC(debug, "Debug level (0-1)");
 
@@ -50,40 +51,40 @@ MODULE_AUTHOR("Texas Instruments");
 MODULE_DESCRIPTION("TVP514X linux decoder driver");
 MODULE_LICENSE("GPL");
 
-/* enum tvp514x_std - enum for supported standards */
-enum tvp514x_std {
+/* क्रमागत tvp514x_std - क्रमागत क्रम supported standards */
+क्रमागत tvp514x_std अणु
 	STD_NTSC_MJ = 0,
 	STD_PAL_BDGHIN,
 	STD_INVALID
-};
+पूर्ण;
 
 /**
- * struct tvp514x_std_info - Structure to store standard information
+ * काष्ठा tvp514x_std_info - Structure to store standard inक्रमmation
  * @width: Line width in pixels
  * @height:Number of active lines
- * @video_std: Value to write in REG_VIDEO_STD register
- * @standard: v4l2 standard structure information
+ * @video_std: Value to ग_लिखो in REG_VIDEO_STD रेजिस्टर
+ * @standard: v4l2 standard काष्ठाure inक्रमmation
  */
-struct tvp514x_std_info {
-	unsigned long width;
-	unsigned long height;
+काष्ठा tvp514x_std_info अणु
+	अचिन्हित दीर्घ width;
+	अचिन्हित दीर्घ height;
 	u8 video_std;
-	struct v4l2_standard standard;
-};
+	काष्ठा v4l2_standard standard;
+पूर्ण;
 
-static struct tvp514x_reg tvp514x_reg_list_default[0x40];
+अटल काष्ठा tvp514x_reg tvp514x_reg_list_शेष[0x40];
 
-static int tvp514x_s_stream(struct v4l2_subdev *sd, int enable);
+अटल पूर्णांक tvp514x_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable);
 /**
- * struct tvp514x_decoder - TVP5146/47 decoder object
+ * काष्ठा tvp514x_decoder - TVP5146/47 decoder object
  * @sd: Subdevice Slave handle
- * @hdl: embedded &struct v4l2_ctrl_handler
+ * @hdl: embedded &काष्ठा v4l2_ctrl_handler
  * @tvp514x_regs: copy of hw's regs with preset values.
- * @pdata: Board specific
+ * @pdata: Board specअगरic
  * @ver: Chip version
  * @streaming: TVP5146/47 decoder streaming - enabled or disabled.
- * @pix: Current pixel format
- * @num_fmts: Number of formats
+ * @pix: Current pixel क्रमmat
+ * @num_fmts: Number of क्रमmats
  * @fmt_list: Format list
  * @current_std: Current standard
  * @num_stds: Number of standards
@@ -91,325 +92,325 @@ static int tvp514x_s_stream(struct v4l2_subdev *sd, int enable);
  * @input: Input routing at chip level
  * @output: Output routing at chip level
  * @pad: subdev media pad associated with the decoder
- * @format: media bus frame format
- * @int_seq: driver's register init sequence
+ * @क्रमmat: media bus frame क्रमmat
+ * @पूर्णांक_seq: driver's रेजिस्टर init sequence
  */
-struct tvp514x_decoder {
-	struct v4l2_subdev sd;
-	struct v4l2_ctrl_handler hdl;
-	struct tvp514x_reg tvp514x_regs[ARRAY_SIZE(tvp514x_reg_list_default)];
-	const struct tvp514x_platform_data *pdata;
+काष्ठा tvp514x_decoder अणु
+	काष्ठा v4l2_subdev sd;
+	काष्ठा v4l2_ctrl_handler hdl;
+	काष्ठा tvp514x_reg tvp514x_regs[ARRAY_SIZE(tvp514x_reg_list_शेष)];
+	स्थिर काष्ठा tvp514x_platक्रमm_data *pdata;
 
-	int ver;
-	int streaming;
+	पूर्णांक ver;
+	पूर्णांक streaming;
 
-	struct v4l2_pix_format pix;
-	int num_fmts;
-	const struct v4l2_fmtdesc *fmt_list;
+	काष्ठा v4l2_pix_क्रमmat pix;
+	पूर्णांक num_fmts;
+	स्थिर काष्ठा v4l2_fmtdesc *fmt_list;
 
-	enum tvp514x_std current_std;
-	int num_stds;
-	const struct tvp514x_std_info *std_list;
+	क्रमागत tvp514x_std current_std;
+	पूर्णांक num_stds;
+	स्थिर काष्ठा tvp514x_std_info *std_list;
 	/* Input and Output Routing parameters */
 	u32 input;
 	u32 output;
 
 	/* mc related members */
-	struct media_pad pad;
-	struct v4l2_mbus_framefmt format;
+	काष्ठा media_pad pad;
+	काष्ठा v4l2_mbus_framefmt क्रमmat;
 
-	struct tvp514x_reg *int_seq;
-};
+	काष्ठा tvp514x_reg *पूर्णांक_seq;
+पूर्ण;
 
-/* TVP514x default register values */
-static struct tvp514x_reg tvp514x_reg_list_default[] = {
+/* TVP514x शेष रेजिस्टर values */
+अटल काष्ठा tvp514x_reg tvp514x_reg_list_शेष[] = अणु
 	/* Composite selected */
-	{TOK_WRITE, REG_INPUT_SEL, 0x05},
-	{TOK_WRITE, REG_AFE_GAIN_CTRL, 0x0F},
+	अणुTOK_WRITE, REG_INPUT_SEL, 0x05पूर्ण,
+	अणुTOK_WRITE, REG_AFE_GAIN_CTRL, 0x0Fपूर्ण,
 	/* Auto mode */
-	{TOK_WRITE, REG_VIDEO_STD, 0x00},
-	{TOK_WRITE, REG_OPERATION_MODE, 0x00},
-	{TOK_SKIP, REG_AUTOSWITCH_MASK, 0x3F},
-	{TOK_WRITE, REG_COLOR_KILLER, 0x10},
-	{TOK_WRITE, REG_LUMA_CONTROL1, 0x00},
-	{TOK_WRITE, REG_LUMA_CONTROL2, 0x00},
-	{TOK_WRITE, REG_LUMA_CONTROL3, 0x02},
-	{TOK_WRITE, REG_BRIGHTNESS, 0x80},
-	{TOK_WRITE, REG_CONTRAST, 0x80},
-	{TOK_WRITE, REG_SATURATION, 0x80},
-	{TOK_WRITE, REG_HUE, 0x00},
-	{TOK_WRITE, REG_CHROMA_CONTROL1, 0x00},
-	{TOK_WRITE, REG_CHROMA_CONTROL2, 0x0E},
+	अणुTOK_WRITE, REG_VIDEO_STD, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_OPERATION_MODE, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_AUTOSWITCH_MASK, 0x3Fपूर्ण,
+	अणुTOK_WRITE, REG_COLOR_KILLER, 0x10पूर्ण,
+	अणुTOK_WRITE, REG_LUMA_CONTROL1, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_LUMA_CONTROL2, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_LUMA_CONTROL3, 0x02पूर्ण,
+	अणुTOK_WRITE, REG_BRIGHTNESS, 0x80पूर्ण,
+	अणुTOK_WRITE, REG_CONTRAST, 0x80पूर्ण,
+	अणुTOK_WRITE, REG_SATURATION, 0x80पूर्ण,
+	अणुTOK_WRITE, REG_HUE, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_CHROMA_CONTROL1, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_CHROMA_CONTROL2, 0x0Eपूर्ण,
 	/* Reserved */
-	{TOK_SKIP, 0x0F, 0x00},
-	{TOK_WRITE, REG_COMP_PR_SATURATION, 0x80},
-	{TOK_WRITE, REG_COMP_Y_CONTRAST, 0x80},
-	{TOK_WRITE, REG_COMP_PB_SATURATION, 0x80},
+	अणुTOK_SKIP, 0x0F, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_COMP_PR_SATURATION, 0x80पूर्ण,
+	अणुTOK_WRITE, REG_COMP_Y_CONTRAST, 0x80पूर्ण,
+	अणुTOK_WRITE, REG_COMP_PB_SATURATION, 0x80पूर्ण,
 	/* Reserved */
-	{TOK_SKIP, 0x13, 0x00},
-	{TOK_WRITE, REG_COMP_Y_BRIGHTNESS, 0x80},
+	अणुTOK_SKIP, 0x13, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_COMP_Y_BRIGHTNESS, 0x80पूर्ण,
 	/* Reserved */
-	{TOK_SKIP, 0x15, 0x00},
+	अणुTOK_SKIP, 0x15, 0x00पूर्ण,
 	/* NTSC timing */
-	{TOK_SKIP, REG_AVID_START_PIXEL_LSB, 0x55},
-	{TOK_SKIP, REG_AVID_START_PIXEL_MSB, 0x00},
-	{TOK_SKIP, REG_AVID_STOP_PIXEL_LSB, 0x25},
-	{TOK_SKIP, REG_AVID_STOP_PIXEL_MSB, 0x03},
+	अणुTOK_SKIP, REG_AVID_START_PIXEL_LSB, 0x55पूर्ण,
+	अणुTOK_SKIP, REG_AVID_START_PIXEL_MSB, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_AVID_STOP_PIXEL_LSB, 0x25पूर्ण,
+	अणुTOK_SKIP, REG_AVID_STOP_PIXEL_MSB, 0x03पूर्ण,
 	/* NTSC timing */
-	{TOK_SKIP, REG_HSYNC_START_PIXEL_LSB, 0x00},
-	{TOK_SKIP, REG_HSYNC_START_PIXEL_MSB, 0x00},
-	{TOK_SKIP, REG_HSYNC_STOP_PIXEL_LSB, 0x40},
-	{TOK_SKIP, REG_HSYNC_STOP_PIXEL_MSB, 0x00},
+	अणुTOK_SKIP, REG_HSYNC_START_PIXEL_LSB, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_HSYNC_START_PIXEL_MSB, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_HSYNC_STOP_PIXEL_LSB, 0x40पूर्ण,
+	अणुTOK_SKIP, REG_HSYNC_STOP_PIXEL_MSB, 0x00पूर्ण,
 	/* NTSC timing */
-	{TOK_SKIP, REG_VSYNC_START_LINE_LSB, 0x04},
-	{TOK_SKIP, REG_VSYNC_START_LINE_MSB, 0x00},
-	{TOK_SKIP, REG_VSYNC_STOP_LINE_LSB, 0x07},
-	{TOK_SKIP, REG_VSYNC_STOP_LINE_MSB, 0x00},
+	अणुTOK_SKIP, REG_VSYNC_START_LINE_LSB, 0x04पूर्ण,
+	अणुTOK_SKIP, REG_VSYNC_START_LINE_MSB, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_VSYNC_STOP_LINE_LSB, 0x07पूर्ण,
+	अणुTOK_SKIP, REG_VSYNC_STOP_LINE_MSB, 0x00पूर्ण,
 	/* NTSC timing */
-	{TOK_SKIP, REG_VBLK_START_LINE_LSB, 0x01},
-	{TOK_SKIP, REG_VBLK_START_LINE_MSB, 0x00},
-	{TOK_SKIP, REG_VBLK_STOP_LINE_LSB, 0x15},
-	{TOK_SKIP, REG_VBLK_STOP_LINE_MSB, 0x00},
+	अणुTOK_SKIP, REG_VBLK_START_LINE_LSB, 0x01पूर्ण,
+	अणुTOK_SKIP, REG_VBLK_START_LINE_MSB, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_VBLK_STOP_LINE_LSB, 0x15पूर्ण,
+	अणुTOK_SKIP, REG_VBLK_STOP_LINE_MSB, 0x00पूर्ण,
 	/* Reserved */
-	{TOK_SKIP, 0x26, 0x00},
+	अणुTOK_SKIP, 0x26, 0x00पूर्ण,
 	/* Reserved */
-	{TOK_SKIP, 0x27, 0x00},
-	{TOK_SKIP, REG_FAST_SWTICH_CONTROL, 0xCC},
+	अणुTOK_SKIP, 0x27, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_FAST_SWTICH_CONTROL, 0xCCपूर्ण,
 	/* Reserved */
-	{TOK_SKIP, 0x29, 0x00},
-	{TOK_SKIP, REG_FAST_SWTICH_SCART_DELAY, 0x00},
+	अणुTOK_SKIP, 0x29, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_FAST_SWTICH_SCART_DELAY, 0x00पूर्ण,
 	/* Reserved */
-	{TOK_SKIP, 0x2B, 0x00},
-	{TOK_SKIP, REG_SCART_DELAY, 0x00},
-	{TOK_SKIP, REG_CTI_DELAY, 0x00},
-	{TOK_SKIP, REG_CTI_CONTROL, 0x00},
+	अणुTOK_SKIP, 0x2B, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_SCART_DELAY, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_CTI_DELAY, 0x00पूर्ण,
+	अणुTOK_SKIP, REG_CTI_CONTROL, 0x00पूर्ण,
 	/* Reserved */
-	{TOK_SKIP, 0x2F, 0x00},
+	अणुTOK_SKIP, 0x2F, 0x00पूर्ण,
 	/* Reserved */
-	{TOK_SKIP, 0x30, 0x00},
+	अणुTOK_SKIP, 0x30, 0x00पूर्ण,
 	/* Reserved */
-	{TOK_SKIP, 0x31, 0x00},
+	अणुTOK_SKIP, 0x31, 0x00पूर्ण,
 	/* HS, VS active high */
-	{TOK_WRITE, REG_SYNC_CONTROL, 0x00},
+	अणुTOK_WRITE, REG_SYNC_CONTROL, 0x00पूर्ण,
 	/* 10-bit BT.656 */
-	{TOK_WRITE, REG_OUTPUT_FORMATTER1, 0x00},
+	अणुTOK_WRITE, REG_OUTPUT_FORMATTER1, 0x00पूर्ण,
 	/* Enable clk & data */
-	{TOK_WRITE, REG_OUTPUT_FORMATTER2, 0x11},
+	अणुTOK_WRITE, REG_OUTPUT_FORMATTER2, 0x11पूर्ण,
 	/* Enable AVID & FLD */
-	{TOK_WRITE, REG_OUTPUT_FORMATTER3, 0xEE},
+	अणुTOK_WRITE, REG_OUTPUT_FORMATTER3, 0xEEपूर्ण,
 	/* Enable VS & HS */
-	{TOK_WRITE, REG_OUTPUT_FORMATTER4, 0xAF},
-	{TOK_WRITE, REG_OUTPUT_FORMATTER5, 0xFF},
-	{TOK_WRITE, REG_OUTPUT_FORMATTER6, 0xFF},
+	अणुTOK_WRITE, REG_OUTPUT_FORMATTER4, 0xAFपूर्ण,
+	अणुTOK_WRITE, REG_OUTPUT_FORMATTER5, 0xFFपूर्ण,
+	अणुTOK_WRITE, REG_OUTPUT_FORMATTER6, 0xFFपूर्ण,
 	/* Clear status */
-	{TOK_WRITE, REG_CLEAR_LOST_LOCK, 0x01},
-	{TOK_TERM, 0, 0},
-};
+	अणुTOK_WRITE, REG_CLEAR_LOST_LOCK, 0x01पूर्ण,
+	अणुTOK_TERM, 0, 0पूर्ण,
+पूर्ण;
 
 /*
- * List of image formats supported by TVP5146/47 decoder
+ * List of image क्रमmats supported by TVP5146/47 decoder
  * Currently we are using 8 bit mode only, but can be
  * extended to 10/20 bit mode.
  */
-static const struct v4l2_fmtdesc tvp514x_fmt_list[] = {
-	{
+अटल स्थिर काष्ठा v4l2_fmtdesc tvp514x_fmt_list[] = अणु
+	अणु
 	 .index		= 0,
 	 .type		= V4L2_BUF_TYPE_VIDEO_CAPTURE,
 	 .flags		= 0,
 	 .description	= "8-bit UYVY 4:2:2 Format",
-	 .pixelformat	= V4L2_PIX_FMT_UYVY,
-	},
-};
+	 .pixelक्रमmat	= V4L2_PIX_FMT_UYVY,
+	पूर्ण,
+पूर्ण;
 
 /*
  * Supported standards -
  *
- * Currently supports two standards only, need to add support for rest of the
+ * Currently supports two standards only, need to add support क्रम rest of the
  * modes, like SECAM, etc...
  */
-static const struct tvp514x_std_info tvp514x_std_list[] = {
+अटल स्थिर काष्ठा tvp514x_std_info tvp514x_std_list[] = अणु
 	/* Standard: STD_NTSC_MJ */
-	[STD_NTSC_MJ] = {
+	[STD_NTSC_MJ] = अणु
 	 .width = NTSC_NUM_ACTIVE_PIXELS,
 	 .height = NTSC_NUM_ACTIVE_LINES,
 	 .video_std = VIDEO_STD_NTSC_MJ_BIT,
-	 .standard = {
+	 .standard = अणु
 		      .index = 0,
 		      .id = V4L2_STD_NTSC,
 		      .name = "NTSC",
-		      .frameperiod = {1001, 30000},
+		      .frameperiod = अणु1001, 30000पूर्ण,
 		      .framelines = 525
-		     },
+		     पूर्ण,
 	/* Standard: STD_PAL_BDGHIN */
-	},
-	[STD_PAL_BDGHIN] = {
+	पूर्ण,
+	[STD_PAL_BDGHIN] = अणु
 	 .width = PAL_NUM_ACTIVE_PIXELS,
 	 .height = PAL_NUM_ACTIVE_LINES,
 	 .video_std = VIDEO_STD_PAL_BDGHIN_BIT,
-	 .standard = {
+	 .standard = अणु
 		      .index = 1,
 		      .id = V4L2_STD_PAL,
 		      .name = "PAL",
-		      .frameperiod = {1, 25},
+		      .frameperiod = अणु1, 25पूर्ण,
 		      .framelines = 625
-		     },
-	},
-	/* Standard: need to add for additional standard */
-};
+		     पूर्ण,
+	पूर्ण,
+	/* Standard: need to add क्रम additional standard */
+पूर्ण;
 
 
-static inline struct tvp514x_decoder *to_decoder(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct tvp514x_decoder, sd);
-}
+अटल अंतरभूत काष्ठा tvp514x_decoder *to_decoder(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा tvp514x_decoder, sd);
+पूर्ण
 
-static inline struct v4l2_subdev *to_sd(struct v4l2_ctrl *ctrl)
-{
-	return &container_of(ctrl->handler, struct tvp514x_decoder, hdl)->sd;
-}
+अटल अंतरभूत काष्ठा v4l2_subdev *to_sd(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	वापस &container_of(ctrl->handler, काष्ठा tvp514x_decoder, hdl)->sd;
+पूर्ण
 
 
 /**
- * tvp514x_read_reg() - Read a value from a register in an TVP5146/47.
- * @sd: ptr to v4l2_subdev struct
- * @reg: TVP5146/47 register address
+ * tvp514x_पढ़ो_reg() - Read a value from a रेजिस्टर in an TVP5146/47.
+ * @sd: ptr to v4l2_subdev काष्ठा
+ * @reg: TVP5146/47 रेजिस्टर address
  *
- * Returns value read if successful, or non-zero (-1) otherwise.
+ * Returns value पढ़ो अगर successful, or non-zero (-1) otherwise.
  */
-static int tvp514x_read_reg(struct v4l2_subdev *sd, u8 reg)
-{
-	int err, retry = 0;
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+अटल पूर्णांक tvp514x_पढ़ो_reg(काष्ठा v4l2_subdev *sd, u8 reg)
+अणु
+	पूर्णांक err, retry = 0;
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 
-read_again:
+पढ़ो_again:
 
-	err = i2c_smbus_read_byte_data(client, reg);
-	if (err < 0) {
-		if (retry <= I2C_RETRY_COUNT) {
+	err = i2c_smbus_पढ़ो_byte_data(client, reg);
+	अगर (err < 0) अणु
+		अगर (retry <= I2C_RETRY_COUNT) अणु
 			v4l2_warn(sd, "Read: retry ... %d\n", retry);
 			retry++;
-			msleep_interruptible(10);
-			goto read_again;
-		}
-	}
+			msleep_पूर्णांकerruptible(10);
+			जाओ पढ़ो_again;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * dump_reg() - dump the register content of TVP5146/47.
- * @sd: ptr to v4l2_subdev struct
- * @reg: TVP5146/47 register address
+ * dump_reg() - dump the रेजिस्टर content of TVP5146/47.
+ * @sd: ptr to v4l2_subdev काष्ठा
+ * @reg: TVP5146/47 रेजिस्टर address
  */
-static void dump_reg(struct v4l2_subdev *sd, u8 reg)
-{
+अटल व्योम dump_reg(काष्ठा v4l2_subdev *sd, u8 reg)
+अणु
 	u32 val;
 
-	val = tvp514x_read_reg(sd, reg);
+	val = tvp514x_पढ़ो_reg(sd, reg);
 	v4l2_info(sd, "Reg(0x%.2X): 0x%.2X\n", reg, val);
-}
+पूर्ण
 
 /**
- * tvp514x_write_reg() - Write a value to a register in TVP5146/47
- * @sd: ptr to v4l2_subdev struct
- * @reg: TVP5146/47 register address
- * @val: value to be written to the register
+ * tvp514x_ग_लिखो_reg() - Write a value to a रेजिस्टर in TVP5146/47
+ * @sd: ptr to v4l2_subdev काष्ठा
+ * @reg: TVP5146/47 रेजिस्टर address
+ * @val: value to be written to the रेजिस्टर
  *
- * Write a value to a register in an TVP5146/47 decoder device.
- * Returns zero if successful, or non-zero otherwise.
+ * Write a value to a रेजिस्टर in an TVP5146/47 decoder device.
+ * Returns zero अगर successful, or non-zero otherwise.
  */
-static int tvp514x_write_reg(struct v4l2_subdev *sd, u8 reg, u8 val)
-{
-	int err, retry = 0;
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+अटल पूर्णांक tvp514x_ग_लिखो_reg(काष्ठा v4l2_subdev *sd, u8 reg, u8 val)
+अणु
+	पूर्णांक err, retry = 0;
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 
-write_again:
+ग_लिखो_again:
 
-	err = i2c_smbus_write_byte_data(client, reg, val);
-	if (err) {
-		if (retry <= I2C_RETRY_COUNT) {
+	err = i2c_smbus_ग_लिखो_byte_data(client, reg, val);
+	अगर (err) अणु
+		अगर (retry <= I2C_RETRY_COUNT) अणु
 			v4l2_warn(sd, "Write: retry ... %d\n", retry);
 			retry++;
-			msleep_interruptible(10);
-			goto write_again;
-		}
-	}
+			msleep_पूर्णांकerruptible(10);
+			जाओ ग_लिखो_again;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * tvp514x_write_regs() : Initializes a list of TVP5146/47 registers
- * @sd: ptr to v4l2_subdev struct
- * @reglist: list of TVP5146/47 registers and values
+ * tvp514x_ग_लिखो_regs() : Initializes a list of TVP5146/47 रेजिस्टरs
+ * @sd: ptr to v4l2_subdev काष्ठा
+ * @reglist: list of TVP5146/47 रेजिस्टरs and values
  *
- * Initializes a list of TVP5146/47 registers:-
- *		if token is TOK_TERM, then entire write operation terminates
- *		if token is TOK_DELAY, then a delay of 'val' msec is introduced
- *		if token is TOK_SKIP, then the register write is skipped
- *		if token is TOK_WRITE, then the register write is performed
- * Returns zero if successful, or non-zero otherwise.
+ * Initializes a list of TVP5146/47 रेजिस्टरs:-
+ *		अगर token is TOK_TERM, then entire ग_लिखो operation terminates
+ *		अगर token is TOK_DELAY, then a delay of 'val' msec is पूर्णांकroduced
+ *		अगर token is TOK_SKIP, then the रेजिस्टर ग_लिखो is skipped
+ *		अगर token is TOK_WRITE, then the रेजिस्टर ग_लिखो is perक्रमmed
+ * Returns zero अगर successful, or non-zero otherwise.
  */
-static int tvp514x_write_regs(struct v4l2_subdev *sd,
-			      const struct tvp514x_reg reglist[])
-{
-	int err;
-	const struct tvp514x_reg *next = reglist;
+अटल पूर्णांक tvp514x_ग_लिखो_regs(काष्ठा v4l2_subdev *sd,
+			      स्थिर काष्ठा tvp514x_reg reglist[])
+अणु
+	पूर्णांक err;
+	स्थिर काष्ठा tvp514x_reg *next = reglist;
 
-	for (; next->token != TOK_TERM; next++) {
-		if (next->token == TOK_DELAY) {
+	क्रम (; next->token != TOK_TERM; next++) अणु
+		अगर (next->token == TOK_DELAY) अणु
 			msleep(next->val);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (next->token == TOK_SKIP)
-			continue;
+		अगर (next->token == TOK_SKIP)
+			जारी;
 
-		err = tvp514x_write_reg(sd, next->reg, (u8) next->val);
-		if (err) {
+		err = tvp514x_ग_लिखो_reg(sd, next->reg, (u8) next->val);
+		अगर (err) अणु
 			v4l2_err(sd, "Write failed. Err[%d]\n", err);
-			return err;
-		}
-	}
-	return 0;
-}
+			वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * tvp514x_query_current_std() : Query the current standard detected by TVP5146/47
- * @sd: ptr to v4l2_subdev struct
+ * @sd: ptr to v4l2_subdev काष्ठा
  *
- * Returns the current standard detected by TVP5146/47, STD_INVALID if there is no
+ * Returns the current standard detected by TVP5146/47, STD_INVALID अगर there is no
  * standard detected.
  */
-static enum tvp514x_std tvp514x_query_current_std(struct v4l2_subdev *sd)
-{
+अटल क्रमागत tvp514x_std tvp514x_query_current_std(काष्ठा v4l2_subdev *sd)
+अणु
 	u8 std, std_status;
 
-	std = tvp514x_read_reg(sd, REG_VIDEO_STD);
-	if ((std & VIDEO_STD_MASK) == VIDEO_STD_AUTO_SWITCH_BIT)
-		/* use the standard status register */
-		std_status = tvp514x_read_reg(sd, REG_VIDEO_STD_STATUS);
-	else
-		/* use the standard register itself */
+	std = tvp514x_पढ़ो_reg(sd, REG_VIDEO_STD);
+	अगर ((std & VIDEO_STD_MASK) == VIDEO_STD_AUTO_SWITCH_BIT)
+		/* use the standard status रेजिस्टर */
+		std_status = tvp514x_पढ़ो_reg(sd, REG_VIDEO_STD_STATUS);
+	अन्यथा
+		/* use the standard रेजिस्टर itself */
 		std_status = std;
 
-	switch (std_status & VIDEO_STD_MASK) {
-	case VIDEO_STD_NTSC_MJ_BIT:
-		return STD_NTSC_MJ;
+	चयन (std_status & VIDEO_STD_MASK) अणु
+	हाल VIDEO_STD_NTSC_MJ_BIT:
+		वापस STD_NTSC_MJ;
 
-	case VIDEO_STD_PAL_BDGHIN_BIT:
-		return STD_PAL_BDGHIN;
+	हाल VIDEO_STD_PAL_BDGHIN_BIT:
+		वापस STD_PAL_BDGHIN;
 
-	default:
-		return STD_INVALID;
-	}
+	शेष:
+		वापस STD_INVALID;
+	पूर्ण
 
-	return STD_INVALID;
-}
+	वापस STD_INVALID;
+पूर्ण
 
-/* TVP5146/47 register dump function */
-static void tvp514x_reg_dump(struct v4l2_subdev *sd)
-{
+/* TVP5146/47 रेजिस्टर dump function */
+अटल व्योम tvp514x_reg_dump(काष्ठा v4l2_subdev *sd)
+अणु
 	dump_reg(sd, REG_INPUT_SEL);
 	dump_reg(sd, REG_AFE_GAIN_CTRL);
 	dump_reg(sd, REG_VIDEO_STD);
@@ -452,181 +453,181 @@ static void tvp514x_reg_dump(struct v4l2_subdev *sd)
 	dump_reg(sd, REG_OUTPUT_FORMATTER5);
 	dump_reg(sd, REG_OUTPUT_FORMATTER6);
 	dump_reg(sd, REG_CLEAR_LOST_LOCK);
-}
+पूर्ण
 
 /**
- * tvp514x_configure() - Configure the TVP5146/47 registers
- * @sd: ptr to v4l2_subdev struct
- * @decoder: ptr to tvp514x_decoder structure
+ * tvp514x_configure() - Configure the TVP5146/47 रेजिस्टरs
+ * @sd: ptr to v4l2_subdev काष्ठा
+ * @decoder: ptr to tvp514x_decoder काष्ठाure
  *
- * Returns zero if successful, or non-zero otherwise.
+ * Returns zero अगर successful, or non-zero otherwise.
  */
-static int tvp514x_configure(struct v4l2_subdev *sd,
-		struct tvp514x_decoder *decoder)
-{
-	int err;
+अटल पूर्णांक tvp514x_configure(काष्ठा v4l2_subdev *sd,
+		काष्ठा tvp514x_decoder *decoder)
+अणु
+	पूर्णांक err;
 
-	/* common register initialization */
+	/* common रेजिस्टर initialization */
 	err =
-	    tvp514x_write_regs(sd, decoder->tvp514x_regs);
-	if (err)
-		return err;
+	    tvp514x_ग_लिखो_regs(sd, decoder->tvp514x_regs);
+	अगर (err)
+		वापस err;
 
-	if (debug)
+	अगर (debug)
 		tvp514x_reg_dump(sd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tvp514x_detect() - Detect if an tvp514x is present, and if so which revision.
- * @sd: pointer to standard V4L2 sub-device structure
- * @decoder: pointer to tvp514x_decoder structure
+ * tvp514x_detect() - Detect अगर an tvp514x is present, and अगर so which revision.
+ * @sd: poपूर्णांकer to standard V4L2 sub-device काष्ठाure
+ * @decoder: poपूर्णांकer to tvp514x_decoder काष्ठाure
  *
- * A device is considered to be detected if the chip ID (LSB and MSB)
- * registers match the expected values.
- * Any value of the rom version register is accepted.
- * Returns ENODEV error number if no device is detected, or zero
- * if a device is detected.
+ * A device is considered to be detected अगर the chip ID (LSB and MSB)
+ * रेजिस्टरs match the expected values.
+ * Any value of the rom version रेजिस्टर is accepted.
+ * Returns ENODEV error number अगर no device is detected, or zero
+ * अगर a device is detected.
  */
-static int tvp514x_detect(struct v4l2_subdev *sd,
-		struct tvp514x_decoder *decoder)
-{
+अटल पूर्णांक tvp514x_detect(काष्ठा v4l2_subdev *sd,
+		काष्ठा tvp514x_decoder *decoder)
+अणु
 	u8 chip_id_msb, chip_id_lsb, rom_ver;
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 
-	chip_id_msb = tvp514x_read_reg(sd, REG_CHIP_ID_MSB);
-	chip_id_lsb = tvp514x_read_reg(sd, REG_CHIP_ID_LSB);
-	rom_ver = tvp514x_read_reg(sd, REG_ROM_VERSION);
+	chip_id_msb = tvp514x_पढ़ो_reg(sd, REG_CHIP_ID_MSB);
+	chip_id_lsb = tvp514x_पढ़ो_reg(sd, REG_CHIP_ID_LSB);
+	rom_ver = tvp514x_पढ़ो_reg(sd, REG_ROM_VERSION);
 
 	v4l2_dbg(1, debug, sd,
 		 "chip id detected msb:0x%x lsb:0x%x rom version:0x%x\n",
 		 chip_id_msb, chip_id_lsb, rom_ver);
-	if ((chip_id_msb != TVP514X_CHIP_ID_MSB)
+	अगर ((chip_id_msb != TVP514X_CHIP_ID_MSB)
 		|| ((chip_id_lsb != TVP5146_CHIP_ID_LSB)
-		&& (chip_id_lsb != TVP5147_CHIP_ID_LSB))) {
-		/* We didn't read the values we expected, so this must not be
+		&& (chip_id_lsb != TVP5147_CHIP_ID_LSB))) अणु
+		/* We didn't पढ़ो the values we expected, so this must not be
 		 * an TVP5146/47.
 		 */
 		v4l2_err(sd, "chip id mismatch msb:0x%x lsb:0x%x\n",
 				chip_id_msb, chip_id_lsb);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	decoder->ver = rom_ver;
 
 	v4l2_info(sd, "%s (Version - 0x%.2x) found at 0x%x (%s)\n",
 			client->name, decoder->ver,
 			client->addr << 1, client->adapter->name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tvp514x_querystd() - V4L2 decoder interface handler for querystd
- * @sd: pointer to standard V4L2 sub-device structure
- * @std_id: standard V4L2 std_id ioctl enum
+ * tvp514x_querystd() - V4L2 decoder पूर्णांकerface handler क्रम querystd
+ * @sd: poपूर्णांकer to standard V4L2 sub-device काष्ठाure
+ * @std_id: standard V4L2 std_id ioctl क्रमागत
  *
  * Returns the current standard detected by TVP5146/47. If no active input is
- * detected then *std_id is set to 0 and the function returns 0.
+ * detected then *std_id is set to 0 and the function वापसs 0.
  */
-static int tvp514x_querystd(struct v4l2_subdev *sd, v4l2_std_id *std_id)
-{
-	struct tvp514x_decoder *decoder = to_decoder(sd);
-	enum tvp514x_std current_std;
-	enum tvp514x_input input_sel;
+अटल पूर्णांक tvp514x_querystd(काष्ठा v4l2_subdev *sd, v4l2_std_id *std_id)
+अणु
+	काष्ठा tvp514x_decoder *decoder = to_decoder(sd);
+	क्रमागत tvp514x_std current_std;
+	क्रमागत tvp514x_input input_sel;
 	u8 sync_lock_status, lock_mask;
 
-	if (std_id == NULL)
-		return -EINVAL;
+	अगर (std_id == शून्य)
+		वापस -EINVAL;
 
-	/* To query the standard the TVP514x must power on the ADCs. */
-	if (!decoder->streaming) {
+	/* To query the standard the TVP514x must घातer on the ADCs. */
+	अगर (!decoder->streaming) अणु
 		tvp514x_s_stream(sd, 1);
 		msleep(LOCK_RETRY_DELAY);
-	}
+	पूर्ण
 
 	/* query the current standard */
 	current_std = tvp514x_query_current_std(sd);
-	if (current_std == STD_INVALID) {
+	अगर (current_std == STD_INVALID) अणु
 		*std_id = V4L2_STD_UNKNOWN;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	input_sel = decoder->input;
 
-	switch (input_sel) {
-	case INPUT_CVBS_VI1A:
-	case INPUT_CVBS_VI1B:
-	case INPUT_CVBS_VI1C:
-	case INPUT_CVBS_VI2A:
-	case INPUT_CVBS_VI2B:
-	case INPUT_CVBS_VI2C:
-	case INPUT_CVBS_VI3A:
-	case INPUT_CVBS_VI3B:
-	case INPUT_CVBS_VI3C:
-	case INPUT_CVBS_VI4A:
+	चयन (input_sel) अणु
+	हाल INPUT_CVBS_VI1A:
+	हाल INPUT_CVBS_VI1B:
+	हाल INPUT_CVBS_VI1C:
+	हाल INPUT_CVBS_VI2A:
+	हाल INPUT_CVBS_VI2B:
+	हाल INPUT_CVBS_VI2C:
+	हाल INPUT_CVBS_VI3A:
+	हाल INPUT_CVBS_VI3B:
+	हाल INPUT_CVBS_VI3C:
+	हाल INPUT_CVBS_VI4A:
 		lock_mask = STATUS_CLR_SUBCAR_LOCK_BIT |
 			STATUS_HORZ_SYNC_LOCK_BIT |
 			STATUS_VIRT_SYNC_LOCK_BIT;
-		break;
+		अवरोध;
 
-	case INPUT_SVIDEO_VI2A_VI1A:
-	case INPUT_SVIDEO_VI2B_VI1B:
-	case INPUT_SVIDEO_VI2C_VI1C:
-	case INPUT_SVIDEO_VI2A_VI3A:
-	case INPUT_SVIDEO_VI2B_VI3B:
-	case INPUT_SVIDEO_VI2C_VI3C:
-	case INPUT_SVIDEO_VI4A_VI1A:
-	case INPUT_SVIDEO_VI4A_VI1B:
-	case INPUT_SVIDEO_VI4A_VI1C:
-	case INPUT_SVIDEO_VI4A_VI3A:
-	case INPUT_SVIDEO_VI4A_VI3B:
-	case INPUT_SVIDEO_VI4A_VI3C:
+	हाल INPUT_SVIDEO_VI2A_VI1A:
+	हाल INPUT_SVIDEO_VI2B_VI1B:
+	हाल INPUT_SVIDEO_VI2C_VI1C:
+	हाल INPUT_SVIDEO_VI2A_VI3A:
+	हाल INPUT_SVIDEO_VI2B_VI3B:
+	हाल INPUT_SVIDEO_VI2C_VI3C:
+	हाल INPUT_SVIDEO_VI4A_VI1A:
+	हाल INPUT_SVIDEO_VI4A_VI1B:
+	हाल INPUT_SVIDEO_VI4A_VI1C:
+	हाल INPUT_SVIDEO_VI4A_VI3A:
+	हाल INPUT_SVIDEO_VI4A_VI3B:
+	हाल INPUT_SVIDEO_VI4A_VI3C:
 		lock_mask = STATUS_HORZ_SYNC_LOCK_BIT |
 			STATUS_VIRT_SYNC_LOCK_BIT;
-		break;
-		/*Need to add other interfaces*/
-	default:
-		return -EINVAL;
-	}
-	/* check whether signal is locked */
-	sync_lock_status = tvp514x_read_reg(sd, REG_STATUS1);
-	if (lock_mask != (sync_lock_status & lock_mask)) {
+		अवरोध;
+		/*Need to add other पूर्णांकerfaces*/
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	/* check whether संकेत is locked */
+	sync_lock_status = tvp514x_पढ़ो_reg(sd, REG_STATUS1);
+	अगर (lock_mask != (sync_lock_status & lock_mask)) अणु
 		*std_id = V4L2_STD_UNKNOWN;
-		return 0;	/* No input detected */
-	}
+		वापस 0;	/* No input detected */
+	पूर्ण
 
 	*std_id &= decoder->std_list[current_std].standard.id;
 
 	v4l2_dbg(1, debug, sd, "Current STD: %s\n",
 			decoder->std_list[current_std].standard.name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tvp514x_s_std() - V4L2 decoder interface handler for s_std
- * @sd: pointer to standard V4L2 sub-device structure
- * @std_id: standard V4L2 v4l2_std_id ioctl enum
+ * tvp514x_s_std() - V4L2 decoder पूर्णांकerface handler क्रम s_std
+ * @sd: poपूर्णांकer to standard V4L2 sub-device काष्ठाure
+ * @std_id: standard V4L2 v4l2_std_id ioctl क्रमागत
  *
- * If std_id is supported, sets the requested standard. Otherwise, returns
+ * If std_id is supported, sets the requested standard. Otherwise, वापसs
  * -EINVAL
  */
-static int tvp514x_s_std(struct v4l2_subdev *sd, v4l2_std_id std_id)
-{
-	struct tvp514x_decoder *decoder = to_decoder(sd);
-	int err, i;
+अटल पूर्णांक tvp514x_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id std_id)
+अणु
+	काष्ठा tvp514x_decoder *decoder = to_decoder(sd);
+	पूर्णांक err, i;
 
-	for (i = 0; i < decoder->num_stds; i++)
-		if (std_id & decoder->std_list[i].standard.id)
-			break;
+	क्रम (i = 0; i < decoder->num_stds; i++)
+		अगर (std_id & decoder->std_list[i].standard.id)
+			अवरोध;
 
-	if ((i == decoder->num_stds) || (i == STD_INVALID))
-		return -EINVAL;
+	अगर ((i == decoder->num_stds) || (i == STD_INVALID))
+		वापस -EINVAL;
 
-	err = tvp514x_write_reg(sd, REG_VIDEO_STD,
+	err = tvp514x_ग_लिखो_reg(sd, REG_VIDEO_STD,
 				decoder->std_list[i].video_std);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	decoder->current_std = i;
 	decoder->tvp514x_regs[REG_VIDEO_STD].val =
@@ -634,46 +635,46 @@ static int tvp514x_s_std(struct v4l2_subdev *sd, v4l2_std_id std_id)
 
 	v4l2_dbg(1, debug, sd, "Standard set to: %s\n",
 			decoder->std_list[i].standard.name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tvp514x_s_routing() - V4L2 decoder interface handler for s_routing
- * @sd: pointer to standard V4L2 sub-device structure
- * @input: input selector for routing the signal
- * @output: output selector for routing the signal
+ * tvp514x_s_routing() - V4L2 decoder पूर्णांकerface handler क्रम s_routing
+ * @sd: poपूर्णांकer to standard V4L2 sub-device काष्ठाure
+ * @input: input selector क्रम routing the संकेत
+ * @output: output selector क्रम routing the संकेत
  * @config: config value. Not used
  *
- * If index is valid, selects the requested input. Otherwise, returns -EINVAL if
- * the input is not supported or there is no active signal present in the
+ * If index is valid, selects the requested input. Otherwise, वापसs -EINVAL अगर
+ * the input is not supported or there is no active संकेत present in the
  * selected input.
  */
-static int tvp514x_s_routing(struct v4l2_subdev *sd,
+अटल पूर्णांक tvp514x_s_routing(काष्ठा v4l2_subdev *sd,
 				u32 input, u32 output, u32 config)
-{
-	struct tvp514x_decoder *decoder = to_decoder(sd);
-	int err;
-	enum tvp514x_input input_sel;
-	enum tvp514x_output output_sel;
+अणु
+	काष्ठा tvp514x_decoder *decoder = to_decoder(sd);
+	पूर्णांक err;
+	क्रमागत tvp514x_input input_sel;
+	क्रमागत tvp514x_output output_sel;
 
-	if ((input >= INPUT_INVALID) ||
+	अगर ((input >= INPUT_INVALID) ||
 			(output >= OUTPUT_INVALID))
 		/* Index out of bound */
-		return -EINVAL;
+		वापस -EINVAL;
 
 	input_sel = input;
 	output_sel = output;
 
-	err = tvp514x_write_reg(sd, REG_INPUT_SEL, input_sel);
-	if (err)
-		return err;
+	err = tvp514x_ग_लिखो_reg(sd, REG_INPUT_SEL, input_sel);
+	अगर (err)
+		वापस err;
 
-	output_sel |= tvp514x_read_reg(sd,
+	output_sel |= tvp514x_पढ़ो_reg(sd,
 			REG_OUTPUT_FORMATTER1) & 0x7;
-	err = tvp514x_write_reg(sd, REG_OUTPUT_FORMATTER1,
+	err = tvp514x_ग_लिखो_reg(sd, REG_OUTPUT_FORMATTER1,
 			output_sel);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	decoder->tvp514x_regs[REG_INPUT_SEL].val = input_sel;
 	decoder->tvp514x_regs[REG_OUTPUT_FORMATTER1].val = output_sel;
@@ -682,389 +683,389 @@ static int tvp514x_s_routing(struct v4l2_subdev *sd,
 
 	v4l2_dbg(1, debug, sd, "Input set to: %d\n", input_sel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tvp514x_s_ctrl() - V4L2 decoder interface handler for s_ctrl
- * @ctrl: pointer to v4l2_ctrl structure
+ * tvp514x_s_ctrl() - V4L2 decoder पूर्णांकerface handler क्रम s_ctrl
+ * @ctrl: poपूर्णांकer to v4l2_ctrl काष्ठाure
  *
  * If the requested control is supported, sets the control's current
- * value in HW. Otherwise, returns -EINVAL if the control is not supported.
+ * value in HW. Otherwise, वापसs -EINVAL अगर the control is not supported.
  */
-static int tvp514x_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct v4l2_subdev *sd = to_sd(ctrl);
-	struct tvp514x_decoder *decoder = to_decoder(sd);
-	int err = -EINVAL, value;
+अटल पूर्णांक tvp514x_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा v4l2_subdev *sd = to_sd(ctrl);
+	काष्ठा tvp514x_decoder *decoder = to_decoder(sd);
+	पूर्णांक err = -EINVAL, value;
 
 	value = ctrl->val;
 
-	switch (ctrl->id) {
-	case V4L2_CID_BRIGHTNESS:
-		err = tvp514x_write_reg(sd, REG_BRIGHTNESS, value);
-		if (!err)
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_BRIGHTNESS:
+		err = tvp514x_ग_लिखो_reg(sd, REG_BRIGHTNESS, value);
+		अगर (!err)
 			decoder->tvp514x_regs[REG_BRIGHTNESS].val = value;
-		break;
-	case V4L2_CID_CONTRAST:
-		err = tvp514x_write_reg(sd, REG_CONTRAST, value);
-		if (!err)
+		अवरोध;
+	हाल V4L2_CID_CONTRAST:
+		err = tvp514x_ग_लिखो_reg(sd, REG_CONTRAST, value);
+		अगर (!err)
 			decoder->tvp514x_regs[REG_CONTRAST].val = value;
-		break;
-	case V4L2_CID_SATURATION:
-		err = tvp514x_write_reg(sd, REG_SATURATION, value);
-		if (!err)
+		अवरोध;
+	हाल V4L2_CID_SATURATION:
+		err = tvp514x_ग_लिखो_reg(sd, REG_SATURATION, value);
+		अगर (!err)
 			decoder->tvp514x_regs[REG_SATURATION].val = value;
-		break;
-	case V4L2_CID_HUE:
-		if (value == 180)
+		अवरोध;
+	हाल V4L2_CID_HUE:
+		अगर (value == 180)
 			value = 0x7F;
-		else if (value == -180)
+		अन्यथा अगर (value == -180)
 			value = 0x80;
-		err = tvp514x_write_reg(sd, REG_HUE, value);
-		if (!err)
+		err = tvp514x_ग_लिखो_reg(sd, REG_HUE, value);
+		अगर (!err)
 			decoder->tvp514x_regs[REG_HUE].val = value;
-		break;
-	case V4L2_CID_AUTOGAIN:
-		err = tvp514x_write_reg(sd, REG_AFE_GAIN_CTRL, value ? 0x0f : 0x0c);
-		if (!err)
+		अवरोध;
+	हाल V4L2_CID_AUTOGAIN:
+		err = tvp514x_ग_लिखो_reg(sd, REG_AFE_GAIN_CTRL, value ? 0x0f : 0x0c);
+		अगर (!err)
 			decoder->tvp514x_regs[REG_AFE_GAIN_CTRL].val = value;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	v4l2_dbg(1, debug, sd, "Set Control: ID - %d - %d\n",
 			ctrl->id, ctrl->val);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * tvp514x_g_frame_interval() - V4L2 decoder interface handler
- * @sd: pointer to standard V4L2 sub-device structure
- * @ival: pointer to a v4l2_subdev_frame_interval structure
+ * tvp514x_g_frame_पूर्णांकerval() - V4L2 decoder पूर्णांकerface handler
+ * @sd: poपूर्णांकer to standard V4L2 sub-device काष्ठाure
+ * @ival: poपूर्णांकer to a v4l2_subdev_frame_पूर्णांकerval काष्ठाure
  *
  * Returns the decoder's video CAPTURE parameters.
  */
-static int
-tvp514x_g_frame_interval(struct v4l2_subdev *sd,
-			 struct v4l2_subdev_frame_interval *ival)
-{
-	struct tvp514x_decoder *decoder = to_decoder(sd);
-	enum tvp514x_std current_std;
+अटल पूर्णांक
+tvp514x_g_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
+			 काष्ठा v4l2_subdev_frame_पूर्णांकerval *ival)
+अणु
+	काष्ठा tvp514x_decoder *decoder = to_decoder(sd);
+	क्रमागत tvp514x_std current_std;
 
 
 	/* get the current standard */
 	current_std = decoder->current_std;
 
-	ival->interval =
+	ival->पूर्णांकerval =
 		decoder->std_list[current_std].standard.frameperiod;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tvp514x_s_frame_interval() - V4L2 decoder interface handler
- * @sd: pointer to standard V4L2 sub-device structure
- * @ival: pointer to a v4l2_subdev_frame_interval structure
+ * tvp514x_s_frame_पूर्णांकerval() - V4L2 decoder पूर्णांकerface handler
+ * @sd: poपूर्णांकer to standard V4L2 sub-device काष्ठाure
+ * @ival: poपूर्णांकer to a v4l2_subdev_frame_पूर्णांकerval काष्ठाure
  *
- * Configures the decoder to use the input parameters, if possible. If
- * not possible, returns the appropriate error code.
+ * Configures the decoder to use the input parameters, अगर possible. If
+ * not possible, वापसs the appropriate error code.
  */
-static int
-tvp514x_s_frame_interval(struct v4l2_subdev *sd,
-			 struct v4l2_subdev_frame_interval *ival)
-{
-	struct tvp514x_decoder *decoder = to_decoder(sd);
-	struct v4l2_fract *timeperframe;
-	enum tvp514x_std current_std;
+अटल पूर्णांक
+tvp514x_s_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
+			 काष्ठा v4l2_subdev_frame_पूर्णांकerval *ival)
+अणु
+	काष्ठा tvp514x_decoder *decoder = to_decoder(sd);
+	काष्ठा v4l2_fract *समयperframe;
+	क्रमागत tvp514x_std current_std;
 
 
-	timeperframe = &ival->interval;
+	समयperframe = &ival->पूर्णांकerval;
 
 	/* get the current standard */
 	current_std = decoder->current_std;
 
-	*timeperframe =
+	*समयperframe =
 	    decoder->std_list[current_std].standard.frameperiod;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tvp514x_s_stream() - V4L2 decoder i/f handler for s_stream
- * @sd: pointer to standard V4L2 sub-device structure
+ * tvp514x_s_stream() - V4L2 decoder i/f handler क्रम s_stream
+ * @sd: poपूर्णांकer to standard V4L2 sub-device काष्ठाure
  * @enable: streaming enable or disable
  *
- * Sets streaming to enable or disable, if possible.
+ * Sets streaming to enable or disable, अगर possible.
  */
-static int tvp514x_s_stream(struct v4l2_subdev *sd, int enable)
-{
-	int err = 0;
-	struct tvp514x_decoder *decoder = to_decoder(sd);
+अटल पूर्णांक tvp514x_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा tvp514x_decoder *decoder = to_decoder(sd);
 
-	if (decoder->streaming == enable)
-		return 0;
+	अगर (decoder->streaming == enable)
+		वापस 0;
 
-	switch (enable) {
-	case 0:
-	{
+	चयन (enable) अणु
+	हाल 0:
+	अणु
 		/* Power Down Sequence */
-		err = tvp514x_write_reg(sd, REG_OPERATION_MODE, 0x01);
-		if (err) {
+		err = tvp514x_ग_लिखो_reg(sd, REG_OPERATION_MODE, 0x01);
+		अगर (err) अणु
 			v4l2_err(sd, "Unable to turn off decoder\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		decoder->streaming = enable;
-		break;
-	}
-	case 1:
-	{
+		अवरोध;
+	पूर्ण
+	हाल 1:
+	अणु
 		/* Power Up Sequence */
-		err = tvp514x_write_regs(sd, decoder->int_seq);
-		if (err) {
+		err = tvp514x_ग_लिखो_regs(sd, decoder->पूर्णांक_seq);
+		अगर (err) अणु
 			v4l2_err(sd, "Unable to turn on decoder\n");
-			return err;
-		}
-		/* Detect if not already detected */
+			वापस err;
+		पूर्ण
+		/* Detect अगर not alपढ़ोy detected */
 		err = tvp514x_detect(sd, decoder);
-		if (err) {
+		अगर (err) अणु
 			v4l2_err(sd, "Unable to detect decoder\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		err = tvp514x_configure(sd, decoder);
-		if (err) {
+		अगर (err) अणु
 			v4l2_err(sd, "Unable to configure decoder\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		decoder->streaming = enable;
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		err = -ENODEV;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct v4l2_ctrl_ops tvp514x_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops tvp514x_ctrl_ops = अणु
 	.s_ctrl = tvp514x_s_ctrl,
-};
+पूर्ण;
 
 /**
- * tvp514x_enum_mbus_code() - V4L2 decoder interface handler for enum_mbus_code
- * @sd: pointer to standard V4L2 sub-device structure
+ * tvp514x_क्रमागत_mbus_code() - V4L2 decoder पूर्णांकerface handler क्रम क्रमागत_mbus_code
+ * @sd: poपूर्णांकer to standard V4L2 sub-device काष्ठाure
  * @cfg: pad configuration
- * @code: pointer to v4l2_subdev_mbus_code_enum structure
+ * @code: poपूर्णांकer to v4l2_subdev_mbus_code_क्रमागत काष्ठाure
  *
  * Enumertaes mbus codes supported
  */
-static int tvp514x_enum_mbus_code(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_pad_config *cfg,
-				  struct v4l2_subdev_mbus_code_enum *code)
-{
+अटल पूर्णांक tvp514x_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_subdev_pad_config *cfg,
+				  काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
+अणु
 	u32 pad = code->pad;
 	u32 index = code->index;
 
-	memset(code, 0, sizeof(*code));
+	स_रखो(code, 0, माप(*code));
 	code->index = index;
 	code->pad = pad;
 
-	if (index != 0)
-		return -EINVAL;
+	अगर (index != 0)
+		वापस -EINVAL;
 
 	code->code = MEDIA_BUS_FMT_UYVY8_2X8;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tvp514x_get_pad_format() - V4L2 decoder interface handler for get pad format
- * @sd: pointer to standard V4L2 sub-device structure
+ * tvp514x_get_pad_क्रमmat() - V4L2 decoder पूर्णांकerface handler क्रम get pad क्रमmat
+ * @sd: poपूर्णांकer to standard V4L2 sub-device काष्ठाure
  * @cfg: pad configuration
- * @format: pointer to v4l2_subdev_format structure
+ * @क्रमmat: poपूर्णांकer to v4l2_subdev_क्रमmat काष्ठाure
  *
- * Retrieves pad format which is active or tried based on requirement
+ * Retrieves pad क्रमmat which is active or tried based on requirement
  */
-static int tvp514x_get_pad_format(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_pad_config *cfg,
-				  struct v4l2_subdev_format *format)
-{
-	struct tvp514x_decoder *decoder = to_decoder(sd);
-	__u32 which = format->which;
+अटल पूर्णांक tvp514x_get_pad_क्रमmat(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_subdev_pad_config *cfg,
+				  काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
+अणु
+	काष्ठा tvp514x_decoder *decoder = to_decoder(sd);
+	__u32 which = क्रमmat->which;
 
-	if (format->pad)
-		return -EINVAL;
+	अगर (क्रमmat->pad)
+		वापस -EINVAL;
 
-	if (which == V4L2_SUBDEV_FORMAT_ACTIVE) {
-		format->format = decoder->format;
-		return 0;
-	}
+	अगर (which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
+		क्रमmat->क्रमmat = decoder->क्रमmat;
+		वापस 0;
+	पूर्ण
 
-	format->format.code = MEDIA_BUS_FMT_UYVY8_2X8;
-	format->format.width = tvp514x_std_list[decoder->current_std].width;
-	format->format.height = tvp514x_std_list[decoder->current_std].height;
-	format->format.colorspace = V4L2_COLORSPACE_SMPTE170M;
-	format->format.field = V4L2_FIELD_INTERLACED;
+	क्रमmat->क्रमmat.code = MEDIA_BUS_FMT_UYVY8_2X8;
+	क्रमmat->क्रमmat.width = tvp514x_std_list[decoder->current_std].width;
+	क्रमmat->क्रमmat.height = tvp514x_std_list[decoder->current_std].height;
+	क्रमmat->क्रमmat.colorspace = V4L2_COLORSPACE_SMPTE170M;
+	क्रमmat->क्रमmat.field = V4L2_FIELD_INTERLACED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tvp514x_set_pad_format() - V4L2 decoder interface handler for set pad format
- * @sd: pointer to standard V4L2 sub-device structure
+ * tvp514x_set_pad_क्रमmat() - V4L2 decoder पूर्णांकerface handler क्रम set pad क्रमmat
+ * @sd: poपूर्णांकer to standard V4L2 sub-device काष्ठाure
  * @cfg: pad configuration
- * @fmt: pointer to v4l2_subdev_format structure
+ * @fmt: poपूर्णांकer to v4l2_subdev_क्रमmat काष्ठाure
  *
- * Set pad format for the output pad
+ * Set pad क्रमmat क्रम the output pad
  */
-static int tvp514x_set_pad_format(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_pad_config *cfg,
-				  struct v4l2_subdev_format *fmt)
-{
-	struct tvp514x_decoder *decoder = to_decoder(sd);
+अटल पूर्णांक tvp514x_set_pad_क्रमmat(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_subdev_pad_config *cfg,
+				  काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा tvp514x_decoder *decoder = to_decoder(sd);
 
-	if (fmt->format.field != V4L2_FIELD_INTERLACED ||
-	    fmt->format.code != MEDIA_BUS_FMT_UYVY8_2X8 ||
-	    fmt->format.colorspace != V4L2_COLORSPACE_SMPTE170M ||
-	    fmt->format.width != tvp514x_std_list[decoder->current_std].width ||
-	    fmt->format.height != tvp514x_std_list[decoder->current_std].height)
-		return -EINVAL;
+	अगर (fmt->क्रमmat.field != V4L2_FIELD_INTERLACED ||
+	    fmt->क्रमmat.code != MEDIA_BUS_FMT_UYVY8_2X8 ||
+	    fmt->क्रमmat.colorspace != V4L2_COLORSPACE_SMPTE170M ||
+	    fmt->क्रमmat.width != tvp514x_std_list[decoder->current_std].width ||
+	    fmt->क्रमmat.height != tvp514x_std_list[decoder->current_std].height)
+		वापस -EINVAL;
 
-	decoder->format = fmt->format;
+	decoder->क्रमmat = fmt->क्रमmat;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_video_ops tvp514x_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops tvp514x_video_ops = अणु
 	.s_std = tvp514x_s_std,
 	.s_routing = tvp514x_s_routing,
 	.querystd = tvp514x_querystd,
-	.g_frame_interval = tvp514x_g_frame_interval,
-	.s_frame_interval = tvp514x_s_frame_interval,
+	.g_frame_पूर्णांकerval = tvp514x_g_frame_पूर्णांकerval,
+	.s_frame_पूर्णांकerval = tvp514x_s_frame_पूर्णांकerval,
 	.s_stream = tvp514x_s_stream,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_pad_ops tvp514x_pad_ops = {
-	.enum_mbus_code = tvp514x_enum_mbus_code,
-	.get_fmt = tvp514x_get_pad_format,
-	.set_fmt = tvp514x_set_pad_format,
-};
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops tvp514x_pad_ops = अणु
+	.क्रमागत_mbus_code = tvp514x_क्रमागत_mbus_code,
+	.get_fmt = tvp514x_get_pad_क्रमmat,
+	.set_fmt = tvp514x_set_pad_क्रमmat,
+पूर्ण;
 
-static const struct v4l2_subdev_ops tvp514x_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops tvp514x_ops = अणु
 	.video = &tvp514x_video_ops,
 	.pad = &tvp514x_pad_ops,
-};
+पूर्ण;
 
-static const struct tvp514x_decoder tvp514x_dev = {
+अटल स्थिर काष्ठा tvp514x_decoder tvp514x_dev = अणु
 	.streaming = 0,
 	.fmt_list = tvp514x_fmt_list,
 	.num_fmts = ARRAY_SIZE(tvp514x_fmt_list),
-	.pix = {
+	.pix = अणु
 		/* Default to NTSC 8-bit YUV 422 */
 		.width		= NTSC_NUM_ACTIVE_PIXELS,
 		.height		= NTSC_NUM_ACTIVE_LINES,
-		.pixelformat	= V4L2_PIX_FMT_UYVY,
+		.pixelक्रमmat	= V4L2_PIX_FMT_UYVY,
 		.field		= V4L2_FIELD_INTERLACED,
 		.bytesperline	= NTSC_NUM_ACTIVE_PIXELS * 2,
 		.sizeimage	= NTSC_NUM_ACTIVE_PIXELS * 2 *
 					NTSC_NUM_ACTIVE_LINES,
 		.colorspace	= V4L2_COLORSPACE_SMPTE170M,
-		},
+		पूर्ण,
 	.current_std = STD_NTSC_MJ,
 	.std_list = tvp514x_std_list,
 	.num_stds = ARRAY_SIZE(tvp514x_std_list),
 
-};
+पूर्ण;
 
-static struct tvp514x_platform_data *
-tvp514x_get_pdata(struct i2c_client *client)
-{
-	struct tvp514x_platform_data *pdata = NULL;
-	struct v4l2_fwnode_endpoint bus_cfg = { .bus_type = 0 };
-	struct device_node *endpoint;
-	unsigned int flags;
+अटल काष्ठा tvp514x_platक्रमm_data *
+tvp514x_get_pdata(काष्ठा i2c_client *client)
+अणु
+	काष्ठा tvp514x_platक्रमm_data *pdata = शून्य;
+	काष्ठा v4l2_fwnode_endpoपूर्णांक bus_cfg = अणु .bus_type = 0 पूर्ण;
+	काष्ठा device_node *endpoपूर्णांक;
+	अचिन्हित पूर्णांक flags;
 
-	if (!IS_ENABLED(CONFIG_OF) || !client->dev.of_node)
-		return client->dev.platform_data;
+	अगर (!IS_ENABLED(CONFIG_OF) || !client->dev.of_node)
+		वापस client->dev.platक्रमm_data;
 
-	endpoint = of_graph_get_next_endpoint(client->dev.of_node, NULL);
-	if (!endpoint)
-		return NULL;
+	endpoपूर्णांक = of_graph_get_next_endpoपूर्णांक(client->dev.of_node, शून्य);
+	अगर (!endpoपूर्णांक)
+		वापस शून्य;
 
-	if (v4l2_fwnode_endpoint_parse(of_fwnode_handle(endpoint), &bus_cfg))
-		goto done;
+	अगर (v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(endpoपूर्णांक), &bus_cfg))
+		जाओ करोne;
 
-	pdata = devm_kzalloc(&client->dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		goto done;
+	pdata = devm_kzalloc(&client->dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		जाओ करोne;
 
 	flags = bus_cfg.bus.parallel.flags;
 
-	if (flags & V4L2_MBUS_HSYNC_ACTIVE_HIGH)
+	अगर (flags & V4L2_MBUS_HSYNC_ACTIVE_HIGH)
 		pdata->hs_polarity = 1;
 
-	if (flags & V4L2_MBUS_VSYNC_ACTIVE_HIGH)
+	अगर (flags & V4L2_MBUS_VSYNC_ACTIVE_HIGH)
 		pdata->vs_polarity = 1;
 
-	if (flags & V4L2_MBUS_PCLK_SAMPLE_RISING)
+	अगर (flags & V4L2_MBUS_PCLK_SAMPLE_RISING)
 		pdata->clk_polarity = 1;
 
-done:
-	of_node_put(endpoint);
-	return pdata;
-}
+करोne:
+	of_node_put(endpoपूर्णांक);
+	वापस pdata;
+पूर्ण
 
 /**
  * tvp514x_probe() - decoder driver i2c probe handler
- * @client: i2c driver client device structure
+ * @client: i2c driver client device काष्ठाure
  * @id: i2c driver id table
  *
  * Register decoder as an i2c client device and V4L2
  * device.
  */
-static int
-tvp514x_probe(struct i2c_client *client, const struct i2c_device_id *id)
-{
-	struct tvp514x_platform_data *pdata = tvp514x_get_pdata(client);
-	struct tvp514x_decoder *decoder;
-	struct v4l2_subdev *sd;
-	int ret;
+अटल पूर्णांक
+tvp514x_probe(काष्ठा i2c_client *client, स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा tvp514x_platक्रमm_data *pdata = tvp514x_get_pdata(client);
+	काष्ठा tvp514x_decoder *decoder;
+	काष्ठा v4l2_subdev *sd;
+	पूर्णांक ret;
 
-	if (pdata == NULL) {
+	अगर (pdata == शून्य) अणु
 		dev_err(&client->dev, "No platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check if the adapter supports the needed features */
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -EIO;
+	/* Check अगर the adapter supports the needed features */
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -EIO;
 
-	decoder = devm_kzalloc(&client->dev, sizeof(*decoder), GFP_KERNEL);
-	if (!decoder)
-		return -ENOMEM;
+	decoder = devm_kzalloc(&client->dev, माप(*decoder), GFP_KERNEL);
+	अगर (!decoder)
+		वापस -ENOMEM;
 
-	/* Initialize the tvp514x_decoder with default configuration */
+	/* Initialize the tvp514x_decoder with शेष configuration */
 	*decoder = tvp514x_dev;
-	/* Copy default register configuration */
-	memcpy(decoder->tvp514x_regs, tvp514x_reg_list_default,
-			sizeof(tvp514x_reg_list_default));
+	/* Copy शेष रेजिस्टर configuration */
+	स_नकल(decoder->tvp514x_regs, tvp514x_reg_list_शेष,
+			माप(tvp514x_reg_list_शेष));
 
-	decoder->int_seq = (struct tvp514x_reg *)id->driver_data;
+	decoder->पूर्णांक_seq = (काष्ठा tvp514x_reg *)id->driver_data;
 
-	/* Copy board specific information here */
+	/* Copy board specअगरic inक्रमmation here */
 	decoder->pdata = pdata;
 
 	/**
-	 * Fetch platform specific data, and configure the
+	 * Fetch platक्रमm specअगरic data, and configure the
 	 * tvp514x_reg_list[] accordingly. Since this is one
-	 * time configuration, no need to preserve.
+	 * समय configuration, no need to preserve.
 	 */
 	decoder->tvp514x_regs[REG_OUTPUT_FORMATTER2].val |=
 		(decoder->pdata->clk_polarity << 1);
 	decoder->tvp514x_regs[REG_SYNC_CONTROL].val |=
 		((decoder->pdata->hs_polarity << 2) |
 		 (decoder->pdata->vs_polarity << 3));
-	/* Set default standard to auto */
+	/* Set शेष standard to स्वतः */
 	decoder->tvp514x_regs[REG_VIDEO_STD].val =
 		VIDEO_STD_AUTO_SWITCH_BIT;
 
@@ -1072,18 +1073,18 @@ tvp514x_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	sd = &decoder->sd;
 	v4l2_i2c_subdev_init(sd, client, &tvp514x_ops);
 
-#if defined(CONFIG_MEDIA_CONTROLLER)
+#अगर defined(CONFIG_MEDIA_CONTROLLER)
 	decoder->pad.flags = MEDIA_PAD_FL_SOURCE;
 	decoder->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 	decoder->sd.entity.function = MEDIA_ENT_F_ATV_DECODER;
 
 	ret = media_entity_pads_init(&decoder->sd.entity, 1, &decoder->pad);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		v4l2_err(sd, "%s decoder driver failed to register !!\n",
 			 sd->name);
-		return ret;
-	}
-#endif
+		वापस ret;
+	पूर्ण
+#पूर्ण_अगर
 	v4l2_ctrl_handler_init(&decoder->hdl, 5);
 	v4l2_ctrl_new_std(&decoder->hdl, &tvp514x_ctrl_ops,
 		V4L2_CID_BRIGHTNESS, 0, 255, 1, 128);
@@ -1096,86 +1097,86 @@ tvp514x_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	v4l2_ctrl_new_std(&decoder->hdl, &tvp514x_ctrl_ops,
 		V4L2_CID_AUTOGAIN, 0, 1, 1, 1);
 	sd->ctrl_handler = &decoder->hdl;
-	if (decoder->hdl.error) {
+	अगर (decoder->hdl.error) अणु
 		ret = decoder->hdl.error;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	v4l2_ctrl_handler_setup(&decoder->hdl);
 
-	ret = v4l2_async_register_subdev(&decoder->sd);
-	if (!ret)
+	ret = v4l2_async_रेजिस्टर_subdev(&decoder->sd);
+	अगर (!ret)
 		v4l2_info(sd, "%s decoder driver registered !!\n", sd->name);
 
-done:
-	if (ret < 0) {
-		v4l2_ctrl_handler_free(&decoder->hdl);
+करोne:
+	अगर (ret < 0) अणु
+		v4l2_ctrl_handler_मुक्त(&decoder->hdl);
 		media_entity_cleanup(&decoder->sd.entity);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
- * tvp514x_remove() - decoder driver i2c remove handler
- * @client: i2c driver client device structure
+ * tvp514x_हटाओ() - decoder driver i2c हटाओ handler
+ * @client: i2c driver client device काष्ठाure
  *
- * Unregister decoder as an i2c client device and V4L2
+ * Unरेजिस्टर decoder as an i2c client device and V4L2
  * device. Complement of tvp514x_probe().
  */
-static int tvp514x_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct tvp514x_decoder *decoder = to_decoder(sd);
+अटल पूर्णांक tvp514x_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा tvp514x_decoder *decoder = to_decoder(sd);
 
-	v4l2_async_unregister_subdev(&decoder->sd);
+	v4l2_async_unरेजिस्टर_subdev(&decoder->sd);
 	media_entity_cleanup(&decoder->sd.entity);
-	v4l2_ctrl_handler_free(&decoder->hdl);
-	return 0;
-}
+	v4l2_ctrl_handler_मुक्त(&decoder->hdl);
+	वापस 0;
+पूर्ण
 /* TVP5146 Init/Power on Sequence */
-static const struct tvp514x_reg tvp5146_init_reg_seq[] = {
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x02},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0x80},
-	{TOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x01},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x60},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0xB0},
-	{TOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x01},
-	{TOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x00},
-	{TOK_WRITE, REG_OPERATION_MODE, 0x01},
-	{TOK_WRITE, REG_OPERATION_MODE, 0x00},
-	{TOK_TERM, 0, 0},
-};
+अटल स्थिर काष्ठा tvp514x_reg tvp5146_init_reg_seq[] = अणु
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x02पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0x80पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x01पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x60पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0xB0पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x01पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_OPERATION_MODE, 0x01पूर्ण,
+	अणुTOK_WRITE, REG_OPERATION_MODE, 0x00पूर्ण,
+	अणुTOK_TERM, 0, 0पूर्ण,
+पूर्ण;
 
 /* TVP5147 Init/Power on Sequence */
-static const struct tvp514x_reg tvp5147_init_reg_seq[] =	{
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x02},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0x80},
-	{TOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x01},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x60},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0xB0},
-	{TOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x01},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x16},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0xA0},
-	{TOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x16},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x60},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00},
-	{TOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0xB0},
-	{TOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x00},
-	{TOK_WRITE, REG_OPERATION_MODE, 0x01},
-	{TOK_WRITE, REG_OPERATION_MODE, 0x00},
-	{TOK_TERM, 0, 0},
-};
+अटल स्थिर काष्ठा tvp514x_reg tvp5147_init_reg_seq[] =	अणु
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x02पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0x80पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x01पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x60पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0xB0पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x01पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x16पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0xA0पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x16पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS1, 0x60पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS2, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_ADDRESS_ACCESS3, 0xB0पूर्ण,
+	अणुTOK_WRITE, REG_VBUS_DATA_ACCESS_NO_VBUS_ADDR_INCR, 0x00पूर्ण,
+	अणुTOK_WRITE, REG_OPERATION_MODE, 0x01पूर्ण,
+	अणुTOK_WRITE, REG_OPERATION_MODE, 0x00पूर्ण,
+	अणुTOK_TERM, 0, 0पूर्ण,
+पूर्ण;
 
 /* TVP5146M2/TVP5147M1 Init/Power on Sequence */
-static const struct tvp514x_reg tvp514xm_init_reg_seq[] = {
-	{TOK_WRITE, REG_OPERATION_MODE, 0x01},
-	{TOK_WRITE, REG_OPERATION_MODE, 0x00},
-	{TOK_TERM, 0, 0},
-};
+अटल स्थिर काष्ठा tvp514x_reg tvp514xm_init_reg_seq[] = अणु
+	अणुTOK_WRITE, REG_OPERATION_MODE, 0x01पूर्ण,
+	अणुTOK_WRITE, REG_OPERATION_MODE, 0x00पूर्ण,
+	अणुTOK_TERM, 0, 0पूर्ण,
+पूर्ण;
 
 /*
  * I2C Device Table -
@@ -1183,35 +1184,35 @@ static const struct tvp514x_reg tvp514xm_init_reg_seq[] = {
  * name - Name of the actual device/chip.
  * driver_data - Driver data
  */
-static const struct i2c_device_id tvp514x_id[] = {
-	{"tvp5146", (unsigned long)tvp5146_init_reg_seq},
-	{"tvp5146m2", (unsigned long)tvp514xm_init_reg_seq},
-	{"tvp5147", (unsigned long)tvp5147_init_reg_seq},
-	{"tvp5147m1", (unsigned long)tvp514xm_init_reg_seq},
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id tvp514x_id[] = अणु
+	अणु"tvp5146", (अचिन्हित दीर्घ)tvp5146_init_reg_seqपूर्ण,
+	अणु"tvp5146m2", (अचिन्हित दीर्घ)tvp514xm_init_reg_seqपूर्ण,
+	अणु"tvp5147", (अचिन्हित दीर्घ)tvp5147_init_reg_seqपूर्ण,
+	अणु"tvp5147m1", (अचिन्हित दीर्घ)tvp514xm_init_reg_seqपूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, tvp514x_id);
 
-#if IS_ENABLED(CONFIG_OF)
-static const struct of_device_id tvp514x_of_match[] = {
-	{ .compatible = "ti,tvp5146", },
-	{ .compatible = "ti,tvp5146m2", },
-	{ .compatible = "ti,tvp5147", },
-	{ .compatible = "ti,tvp5147m1", },
-	{ /* sentinel */ },
-};
+#अगर IS_ENABLED(CONFIG_OF)
+अटल स्थिर काष्ठा of_device_id tvp514x_of_match[] = अणु
+	अणु .compatible = "ti,tvp5146", पूर्ण,
+	अणु .compatible = "ti,tvp5146m2", पूर्ण,
+	अणु .compatible = "ti,tvp5147", पूर्ण,
+	अणु .compatible = "ti,tvp5147m1", पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tvp514x_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver tvp514x_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver tvp514x_driver = अणु
+	.driver = अणु
 		.of_match_table = of_match_ptr(tvp514x_of_match),
 		.name = TVP514X_MODULE_NAME,
-	},
+	पूर्ण,
 	.probe = tvp514x_probe,
-	.remove = tvp514x_remove,
+	.हटाओ = tvp514x_हटाओ,
 	.id_table = tvp514x_id,
-};
+पूर्ण;
 
 module_i2c_driver(tvp514x_driver);

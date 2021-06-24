@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2009-2010  Realtek Corporation.*/
 
-#include "../wifi.h"
-#include "../core.h"
-#include "../pci.h"
-#include "reg.h"
-#include "def.h"
-#include "phy.h"
-#include "dm.h"
-#include "hw.h"
-#include "fw.h"
-#include "trx.h"
-#include "led.h"
-#include "table.h"
-#include "../btcoexist/rtl_btc.h"
+#समावेश "../wifi.h"
+#समावेश "../core.h"
+#समावेश "../pci.h"
+#समावेश "reg.h"
+#समावेश "def.h"
+#समावेश "phy.h"
+#समावेश "dm.h"
+#समावेश "hw.h"
+#समावेश "fw.h"
+#समावेश "trx.h"
+#समावेश "led.h"
+#समावेश "table.h"
+#समावेश "../btcoexist/rtl_btc.h"
 
-#include <linux/vmalloc.h>
-#include <linux/module.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/module.h>
 
-static void rtl8821ae_init_aspm_vars(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+अटल व्योम rtl8821ae_init_aspm_vars(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
-	/*close ASPM for AMD defaultly */
-	rtlpci->const_amdpci_aspm = 0;
+	/*बंद ASPM क्रम AMD शेषly */
+	rtlpci->स्थिर_amdpci_aspm = 0;
 
 	/**
 	 * ASPM PS mode.
@@ -35,13 +36,13 @@ static void rtl8821ae_init_aspm_vars(struct ieee80211_hw *hw)
 	 * 4 - Always Enable ASPM without Clock Req.
 	 * set defult to RTL8192CE:3 RTL8192E:2
 	 */
-	rtlpci->const_pci_aspm = 3;
+	rtlpci->स्थिर_pci_aspm = 3;
 
-	/*Setting for PCI-E device */
-	rtlpci->const_devicepci_aspm_setting = 0x03;
+	/*Setting क्रम PCI-E device */
+	rtlpci->स्थिर_devicepci_aspm_setting = 0x03;
 
-	/*Setting for PCI-E bridge */
-	rtlpci->const_hostpci_aspm_setting = 0x02;
+	/*Setting क्रम PCI-E bridge */
+	rtlpci->स्थिर_hostpci_aspm_setting = 0x02;
 
 	/**
 	 * In Hw/Sw Radio Off situation.
@@ -49,32 +50,32 @@ static void rtl8821ae_init_aspm_vars(struct ieee80211_hw *hw)
 	 * 1 - From ASPM setting without low Mac Pwr,
 	 * 2 - From ASPM setting with low Mac Pwr,
 	 * 3 - Bus D3
-	 * set default to RTL8192CE:0 RTL8192SE:2
+	 * set शेष to RTL8192CE:0 RTL8192SE:2
 	 */
-	rtlpci->const_hwsw_rfoff_d3 = 0;
+	rtlpci->स्थिर_hwsw_rfoff_d3 = 0;
 
 	/**
-	 * This setting works for those device with
-	 * backdoor ASPM setting such as EPHY setting.
+	 * This setting works क्रम those device with
+	 * backकरोor ASPM setting such as EPHY setting.
 	 * 0 - Not support ASPM,
 	 * 1 - Support ASPM,
 	 * 2 - According to chipset.
 	 */
-	rtlpci->const_support_pciaspm = rtlpriv->cfg->mod_params->aspm_support;
-}
+	rtlpci->स्थिर_support_pciaspm = rtlpriv->cfg->mod_params->aspm_support;
+पूर्ण
 
 /*InitializeVariables8812E*/
-static int rtl8821ae_init_sw_vars(struct ieee80211_hw *hw)
-{
-	int err = 0;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	char *fw_name, *wowlan_fw_name;
+अटल पूर्णांक rtl8821ae_init_sw_vars(काष्ठा ieee80211_hw *hw)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	अक्षर *fw_name, *wowlan_fw_name;
 
 	rtl8821ae_bt_reg_init(hw);
-	rtlpriv->btcoexist.btc_ops = rtl_btc_get_ops_pointer();
+	rtlpriv->btcoexist.btc_ops = rtl_btc_get_ops_poपूर्णांकer();
 
 	rtlpriv->dm.dm_initialgain_enable = true;
 	rtlpriv->dm.dm_flag = 0;
@@ -91,7 +92,7 @@ static int rtl8821ae_init_sw_vars(struct ieee80211_hw *hw)
 	mac->vht_stbc_cap = 0;
 
 	rtlpriv->rtlhal.current_bandtype = BAND_ON_2_4G;
-	/*following 2 is for register 5G band, refer to _rtl_init_mac80211()*/
+	/*following 2 is क्रम रेजिस्टर 5G band, refer to _rtl_init_mac80211()*/
 	rtlpriv->rtlhal.bandset = BAND_ON_BOTH;
 	rtlpriv->rtlhal.macphymode = SINGLEMAC_SINGLEPHY;
 
@@ -134,121 +135,121 @@ static int rtl8821ae_init_sw_vars(struct ieee80211_hw *hw)
 	rtlpci->sys_irq_mask = (u32)(HSIMR_PDN_INT_EN	|
 				      HSIMR_RON_INT_EN	|
 				      0);
-	/* for WOWLAN */
+	/* क्रम WOWLAN */
 	rtlpriv->psc.wo_wlan_mode = WAKE_ON_MAGIC_PACKET |
 				    WAKE_ON_PATTERN_MATCH;
 
-	/* for LPS & IPS */
+	/* क्रम LPS & IPS */
 	rtlpriv->psc.inactiveps = rtlpriv->cfg->mod_params->inactiveps;
 	rtlpriv->psc.swctrl_lps = rtlpriv->cfg->mod_params->swctrl_lps;
 	rtlpriv->psc.fwctrl_lps = rtlpriv->cfg->mod_params->fwctrl_lps;
 	rtlpci->msi_support = rtlpriv->cfg->mod_params->msi_support;
-	rtlpci->int_clear = rtlpriv->cfg->mod_params->int_clear;
-	if (rtlpriv->cfg->mod_params->disable_watchdog)
+	rtlpci->पूर्णांक_clear = rtlpriv->cfg->mod_params->पूर्णांक_clear;
+	अगर (rtlpriv->cfg->mod_params->disable_watchकरोg)
 		pr_info("watchdog disabled\n");
 	rtlpriv->psc.reg_fwctrl_lps = 2;
-	rtlpriv->psc.reg_max_lps_awakeintvl = 2;
+	rtlpriv->psc.reg_max_lps_awakeपूर्णांकvl = 2;
 
-	/* for ASPM, you can close aspm through
-	 * set const_support_pciaspm = 0
+	/* क्रम ASPM, you can बंद aspm through
+	 * set स्थिर_support_pciaspm = 0
 	 */
 	rtl8821ae_init_aspm_vars(hw);
 
-	if (rtlpriv->psc.reg_fwctrl_lps == 1)
+	अगर (rtlpriv->psc.reg_fwctrl_lps == 1)
 		rtlpriv->psc.fwctrl_psmode = FW_PS_MIN_MODE;
-	else if (rtlpriv->psc.reg_fwctrl_lps == 2)
+	अन्यथा अगर (rtlpriv->psc.reg_fwctrl_lps == 2)
 		rtlpriv->psc.fwctrl_psmode = FW_PS_MAX_MODE;
-	else if (rtlpriv->psc.reg_fwctrl_lps == 3)
+	अन्यथा अगर (rtlpriv->psc.reg_fwctrl_lps == 3)
 		rtlpriv->psc.fwctrl_psmode = FW_PS_DTIM_MODE;
 
-	/* for firmware buf */
+	/* क्रम firmware buf */
 	rtlpriv->rtlhal.pfirmware = vzalloc(0x8000);
-	if (!rtlpriv->rtlhal.pfirmware) {
+	अगर (!rtlpriv->rtlhal.pfirmware) अणु
 		pr_err("Can't alloc buffer for fw.\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	rtlpriv->rtlhal.wowlan_firmware = vzalloc(0x8000);
-	if (!rtlpriv->rtlhal.wowlan_firmware) {
+	अगर (!rtlpriv->rtlhal.wowlan_firmware) अणु
 		pr_err("Can't alloc buffer for wowlan fw.\n");
-		vfree(rtlpriv->rtlhal.pfirmware);
-		rtlpriv->rtlhal.pfirmware = NULL;
-		return 1;
-	}
+		vमुक्त(rtlpriv->rtlhal.pfirmware);
+		rtlpriv->rtlhal.pfirmware = शून्य;
+		वापस 1;
+	पूर्ण
 
-	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8812AE) {
+	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8812AE) अणु
 		fw_name = "rtlwifi/rtl8812aefw.bin";
 		wowlan_fw_name = "rtlwifi/rtl8812aefw_wowlan.bin";
-	} else {
+	पूर्ण अन्यथा अणु
 		fw_name = "rtlwifi/rtl8821aefw_29.bin";
 		wowlan_fw_name = "rtlwifi/rtl8821aefw_wowlan.bin";
-	}
+	पूर्ण
 
 	rtlpriv->max_fw_size = 0x8000;
 	/*load normal firmware*/
 	pr_info("Using firmware %s\n", fw_name);
-	err = request_firmware_nowait(THIS_MODULE, 1, fw_name,
+	err = request_firmware_noरुको(THIS_MODULE, 1, fw_name,
 				      rtlpriv->io.dev, GFP_KERNEL, hw,
 				      rtl_fw_cb);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed to request normal firmware!\n");
-		vfree(rtlpriv->rtlhal.wowlan_firmware);
-		vfree(rtlpriv->rtlhal.pfirmware);
-		return 1;
-	}
+		vमुक्त(rtlpriv->rtlhal.wowlan_firmware);
+		vमुक्त(rtlpriv->rtlhal.pfirmware);
+		वापस 1;
+	पूर्ण
 	/*load wowlan firmware*/
 	pr_info("Using firmware %s\n", wowlan_fw_name);
-	err = request_firmware_nowait(THIS_MODULE, 1,
+	err = request_firmware_noरुको(THIS_MODULE, 1,
 				      wowlan_fw_name,
 				      rtlpriv->io.dev, GFP_KERNEL, hw,
 				      rtl_wowlan_fw_cb);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed to request wowlan firmware!\n");
-		vfree(rtlpriv->rtlhal.wowlan_firmware);
-		vfree(rtlpriv->rtlhal.pfirmware);
-		return 1;
-	}
-	return 0;
-}
+		vमुक्त(rtlpriv->rtlhal.wowlan_firmware);
+		vमुक्त(rtlpriv->rtlhal.pfirmware);
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void rtl8821ae_deinit_sw_vars(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल व्योम rtl8821ae_deinit_sw_vars(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
-	if (rtlpriv->rtlhal.pfirmware) {
-		vfree(rtlpriv->rtlhal.pfirmware);
-		rtlpriv->rtlhal.pfirmware = NULL;
-	}
-#if (USE_SPECIFIC_FW_TO_SUPPORT_WOWLAN == 1)
-	if (rtlpriv->rtlhal.wowlan_firmware) {
-		vfree(rtlpriv->rtlhal.wowlan_firmware);
-		rtlpriv->rtlhal.wowlan_firmware = NULL;
-	}
-#endif
-}
+	अगर (rtlpriv->rtlhal.pfirmware) अणु
+		vमुक्त(rtlpriv->rtlhal.pfirmware);
+		rtlpriv->rtlhal.pfirmware = शून्य;
+	पूर्ण
+#अगर (USE_SPECIFIC_FW_TO_SUPPORT_WOWLAN == 1)
+	अगर (rtlpriv->rtlhal.wowlan_firmware) अणु
+		vमुक्त(rtlpriv->rtlhal.wowlan_firmware);
+		rtlpriv->rtlhal.wowlan_firmware = शून्य;
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /* get bt coexist status */
-static bool rtl8821ae_get_btc_status(void)
-{
-	return true;
-}
+अटल bool rtl8821ae_get_btc_status(व्योम)
+अणु
+	वापस true;
+पूर्ण
 
-static struct rtl_hal_ops rtl8821ae_hal_ops = {
+अटल काष्ठा rtl_hal_ops rtl8821ae_hal_ops = अणु
 	.init_sw_vars = rtl8821ae_init_sw_vars,
 	.deinit_sw_vars = rtl8821ae_deinit_sw_vars,
-	.read_eeprom_info = rtl8821ae_read_eeprom_info,
-	.interrupt_recognized = rtl8821ae_interrupt_recognized,
+	.पढ़ो_eeprom_info = rtl8821ae_पढ़ो_eeprom_info,
+	.पूर्णांकerrupt_recognized = rtl8821ae_पूर्णांकerrupt_recognized,
 	.hw_init = rtl8821ae_hw_init,
 	.hw_disable = rtl8821ae_card_disable,
 	.hw_suspend = rtl8821ae_suspend,
 	.hw_resume = rtl8821ae_resume,
-	.enable_interrupt = rtl8821ae_enable_interrupt,
-	.disable_interrupt = rtl8821ae_disable_interrupt,
+	.enable_पूर्णांकerrupt = rtl8821ae_enable_पूर्णांकerrupt,
+	.disable_पूर्णांकerrupt = rtl8821ae_disable_पूर्णांकerrupt,
 	.set_network_type = rtl8821ae_set_network_type,
 	.set_chk_bssid = rtl8821ae_set_check_bssid,
 	.set_qos = rtl8821ae_set_qos,
-	.set_bcn_reg = rtl8821ae_set_beacon_related_registers,
-	.set_bcn_intv = rtl8821ae_set_beacon_interval,
-	.update_interrupt_mask = rtl8821ae_update_interrupt_mask,
+	.set_bcn_reg = rtl8821ae_set_beacon_related_रेजिस्टरs,
+	.set_bcn_पूर्णांकv = rtl8821ae_set_beacon_पूर्णांकerval,
+	.update_पूर्णांकerrupt_mask = rtl8821ae_update_पूर्णांकerrupt_mask,
 	.get_hw_reg = rtl8821ae_get_hw_reg,
 	.set_hw_reg = rtl8821ae_set_hw_reg,
 	.update_rate_tbl = rtl8821ae_update_hal_rate_tbl,
@@ -258,14 +259,14 @@ static struct rtl_hal_ops rtl8821ae_hal_ops = {
 	.set_channel_access = rtl8821ae_update_channel_access_setting,
 	.radio_onoff_checking = rtl8821ae_gpio_radio_on_off_checking,
 	.set_bw_mode = rtl8821ae_phy_set_bw_mode,
-	.switch_channel = rtl8821ae_phy_sw_chnl,
-	.dm_watchdog = rtl8821ae_dm_watchdog,
+	.चयन_channel = rtl8821ae_phy_sw_chnl,
+	.dm_watchकरोg = rtl8821ae_dm_watchकरोg,
 	.scan_operation_backup = rtl8821ae_phy_scan_operation_backup,
-	.set_rf_power_state = rtl8821ae_phy_set_rf_power_state,
+	.set_rf_घातer_state = rtl8821ae_phy_set_rf_घातer_state,
 	.led_control = rtl8821ae_led_control,
 	.set_desc = rtl8821ae_set_desc,
 	.get_desc = rtl8821ae_get_desc,
-	.is_tx_desc_closed = rtl8821ae_is_tx_desc_closed,
+	.is_tx_desc_बंदd = rtl8821ae_is_tx_desc_बंदd,
 	.tx_polling = rtl8821ae_tx_polling,
 	.enable_hw_sec = rtl8821ae_enable_hw_security_config,
 	.set_key = rtl8821ae_set_key,
@@ -278,24 +279,24 @@ static struct rtl_hal_ops rtl8821ae_hal_ops = {
 	.get_btc_status = rtl8821ae_get_btc_status,
 	.c2h_ra_report_handler = rtl8821ae_c2h_ra_report_handler,
 	.add_wowlan_pattern = rtl8821ae_add_wowlan_pattern,
-};
+पूर्ण;
 
-static struct rtl_mod_params rtl8821ae_mod_params = {
+अटल काष्ठा rtl_mod_params rtl8821ae_mod_params = अणु
 	.sw_crypto = false,
 	.inactiveps = true,
 	.swctrl_lps = false,
 	.fwctrl_lps = true,
 	.msi_support = true,
 	.aspm_support = 1,
-	.int_clear = true,
+	.पूर्णांक_clear = true,
 	.debug_level = 0,
 	.debug_mask = 0,
-	.disable_watchdog = 0,
-};
+	.disable_watchकरोg = 0,
+पूर्ण;
 
-static const struct rtl_hal_cfg rtl8821ae_hal_cfg = {
+अटल स्थिर काष्ठा rtl_hal_cfg rtl8821ae_hal_cfg = अणु
 	.bar_id = 2,
-	.write_readback = true,
+	.ग_लिखो_पढ़ोback = true,
 	.name = "rtl8821ae_pci",
 	.alt_fw_name = "rtlwifi/rtl8821aefw.bin",
 	.ops = &rtl8821ae_hal_ops,
@@ -396,13 +397,13 @@ static const struct rtl_hal_cfg rtl8821ae_hal_cfg = {
 	.maps[RTL_RC_VHT_RATE_2SS_MCS7] = DESC_RATEVHT2SS_MCS7,
 	.maps[RTL_RC_VHT_RATE_2SS_MCS8] = DESC_RATEVHT2SS_MCS8,
 	.maps[RTL_RC_VHT_RATE_2SS_MCS9] = DESC_RATEVHT2SS_MCS9,
-};
+पूर्ण;
 
-static const struct pci_device_id rtl8821ae_pci_ids[] = {
-	{RTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8812, rtl8821ae_hal_cfg)},
-	{RTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8821, rtl8821ae_hal_cfg)},
-	{},
-};
+अटल स्थिर काष्ठा pci_device_id rtl8821ae_pci_ids[] = अणु
+	अणुRTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8812, rtl8821ae_hal_cfg)पूर्ण,
+	अणुRTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8821, rtl8821ae_hal_cfg)पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, rtl8821ae_pci_ids);
 
@@ -413,16 +414,16 @@ MODULE_FIRMWARE("rtlwifi/rtl8821aefw.bin");
 MODULE_FIRMWARE("rtlwifi/rtl8821aefw_29.bin");
 
 module_param_named(swenc, rtl8821ae_mod_params.sw_crypto, bool, 0444);
-module_param_named(debug_level, rtl8821ae_mod_params.debug_level, int, 0644);
-module_param_named(debug_mask, rtl8821ae_mod_params.debug_mask, ullong, 0644);
+module_param_named(debug_level, rtl8821ae_mod_params.debug_level, पूर्णांक, 0644);
+module_param_named(debug_mask, rtl8821ae_mod_params.debug_mask, ulदीर्घ, 0644);
 module_param_named(ips, rtl8821ae_mod_params.inactiveps, bool, 0444);
 module_param_named(swlps, rtl8821ae_mod_params.swctrl_lps, bool, 0444);
 module_param_named(fwlps, rtl8821ae_mod_params.fwctrl_lps, bool, 0444);
 module_param_named(msi, rtl8821ae_mod_params.msi_support, bool, 0444);
-module_param_named(aspm, rtl8821ae_mod_params.aspm_support, int, 0444);
-module_param_named(disable_watchdog, rtl8821ae_mod_params.disable_watchdog,
+module_param_named(aspm, rtl8821ae_mod_params.aspm_support, पूर्णांक, 0444);
+module_param_named(disable_watchकरोg, rtl8821ae_mod_params.disable_watchकरोg,
 		   bool, 0444);
-module_param_named(int_clear, rtl8821ae_mod_params.int_clear, bool, 0444);
+module_param_named(पूर्णांक_clear, rtl8821ae_mod_params.पूर्णांक_clear, bool, 0444);
 MODULE_PARM_DESC(swenc, "Set to 1 for software crypto (default 0)\n");
 MODULE_PARM_DESC(ips, "Set to 0 to not use link power save (default 1)\n");
 MODULE_PARM_DESC(swlps, "Set to 1 to use SW control power save (default 0)\n");
@@ -431,17 +432,17 @@ MODULE_PARM_DESC(msi, "Set to 1 to use MSI interrupts mode (default 1)\n");
 MODULE_PARM_DESC(aspm, "Set to 1 to enable ASPM (default 1)\n");
 MODULE_PARM_DESC(debug_level, "Set debug level (0-5) (default 0)");
 MODULE_PARM_DESC(debug_mask, "Set debug mask (default 0)");
-MODULE_PARM_DESC(disable_watchdog, "Set to 1 to disable the watchdog (default 0)\n");
-MODULE_PARM_DESC(int_clear, "Set to 0 to disable interrupt clear before set (default 1)\n");
+MODULE_PARM_DESC(disable_watchकरोg, "Set to 1 to disable the watchdog (default 0)\n");
+MODULE_PARM_DESC(पूर्णांक_clear, "Set to 0 to disable interrupt clear before set (default 1)\n");
 
-static SIMPLE_DEV_PM_OPS(rtlwifi_pm_ops, rtl_pci_suspend, rtl_pci_resume);
+अटल SIMPLE_DEV_PM_OPS(rtlwअगरi_pm_ops, rtl_pci_suspend, rtl_pci_resume);
 
-static struct pci_driver rtl8821ae_driver = {
+अटल काष्ठा pci_driver rtl8821ae_driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = rtl8821ae_pci_ids,
 	.probe = rtl_pci_probe,
-	.remove = rtl_pci_disconnect,
-	.driver.pm = &rtlwifi_pm_ops,
-};
+	.हटाओ = rtl_pci_disconnect,
+	.driver.pm = &rtlwअगरi_pm_ops,
+पूर्ण;
 
 module_pci_driver(rtl8821ae_driver);

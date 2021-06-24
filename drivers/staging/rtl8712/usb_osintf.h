@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
  *
- * Modifications for inclusion into the Linux staging tree are
+ * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact information:
+ * Contact inक्रमmation:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
-#ifndef __USB_OSINTF_H
-#define __USB_OSINTF_H
+#अगर_अघोषित __USB_OSINTF_H
+#घोषणा __USB_OSINTF_H
 
-#include "osdep_service.h"
-#include "drv_types.h"
+#समावेश "osdep_service.h"
+#समावेश "drv_types.h"
 
-extern char *r8712_initmac;
+बाह्य अक्षर *r8712_iniपंचांगac;
 
-unsigned int r8712_usb_inirp_init(struct _adapter *padapter);
-unsigned int r8712_usb_inirp_deinit(struct _adapter *padapter);
-uint rtl871x_hal_init(struct _adapter *padapter);
-uint rtl8712_hal_deinit(struct _adapter *padapter);
+अचिन्हित पूर्णांक r8712_usb_inirp_init(काष्ठा _adapter *padapter);
+अचिन्हित पूर्णांक r8712_usb_inirp_deinit(काष्ठा _adapter *padapter);
+uपूर्णांक rtl871x_hal_init(काष्ठा _adapter *padapter);
+uपूर्णांक rtl8712_hal_deinit(काष्ठा _adapter *padapter);
 
-void rtl871x_intf_stop(struct _adapter *padapter);
-void r871x_dev_unload(struct _adapter *padapter);
-void r8712_stop_drv_threads(struct _adapter *padapter);
-void r8712_stop_drv_timers(struct _adapter *padapter);
-int r8712_init_drv_sw(struct _adapter *padapter);
-void r8712_free_drv_sw(struct _adapter *padapter);
-struct net_device *r8712_init_netdev(void);
+व्योम rtl871x_पूर्णांकf_stop(काष्ठा _adapter *padapter);
+व्योम r871x_dev_unload(काष्ठा _adapter *padapter);
+व्योम r8712_stop_drv_thपढ़ोs(काष्ठा _adapter *padapter);
+व्योम r8712_stop_drv_समयrs(काष्ठा _adapter *padapter);
+पूर्णांक r8712_init_drv_sw(काष्ठा _adapter *padapter);
+व्योम r8712_मुक्त_drv_sw(काष्ठा _adapter *padapter);
+काष्ठा net_device *r8712_init_netdev(व्योम);
 
-#endif
+#पूर्ण_अगर

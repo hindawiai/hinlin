@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: LGPL-2.1
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <unistd.h>
 
-/* From include/linux/stat.h */
-#ifndef S_IRWXUGO
-#define S_IRWXUGO	(S_IRWXU|S_IRWXG|S_IRWXO)
-#endif
-#ifndef S_IALLUGO
-#define S_IALLUGO	(S_ISUID|S_ISGID|S_ISVTX|S_IRWXUGO)
-#endif
-#ifndef S_IRUGO
-#define S_IRUGO         (S_IRUSR|S_IRGRP|S_IROTH)
-#endif
-#ifndef S_IWUGO
-#define S_IWUGO         (S_IWUSR|S_IWGRP|S_IWOTH)
-#endif
-#ifndef S_IXUGO
-#define S_IXUGO         (S_IXUSR|S_IXGRP|S_IXOTH)
-#endif
+/* From include/linux/स्थिति.स */
+#अगर_अघोषित S_IRWXUGO
+#घोषणा S_IRWXUGO	(S_IRWXU|S_IRWXG|S_IRWXO)
+#पूर्ण_अगर
+#अगर_अघोषित S_IALLUGO
+#घोषणा S_IALLUGO	(S_ISUID|S_ISGID|S_ISVTX|S_IRWXUGO)
+#पूर्ण_अगर
+#अगर_अघोषित S_IRUGO
+#घोषणा S_IRUGO         (S_IRUSR|S_IRGRP|S_IROTH)
+#पूर्ण_अगर
+#अगर_अघोषित S_IWUGO
+#घोषणा S_IWUGO         (S_IWUSR|S_IWGRP|S_IWOTH)
+#पूर्ण_अगर
+#अगर_अघोषित S_IXUGO
+#घोषणा S_IXUGO         (S_IXUSR|S_IXGRP|S_IXOTH)
+#पूर्ण_अगर
 
-static size_t syscall_arg__scnprintf_mode_t(char *bf, size_t size, struct syscall_arg *arg)
-{
+अटल माप_प्रकार syscall_arg__scnम_लिखो_mode_t(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
+अणु
 	bool show_prefix = arg->show_string_prefix;
-	const char *prefix = "S_";
-	int printed = 0, mode = arg->val;
+	स्थिर अक्षर *prefix = "S_";
+	पूर्णांक prपूर्णांकed = 0, mode = arg->val;
 
-#define	P_MODE(n) \
-	if ((mode & S_##n) == S_##n) { \
-		printed += scnprintf(bf + printed, size - printed, "%s%s%s", printed ? "|" : "", show_prefix ? prefix : "", #n); \
+#घोषणा	P_MODE(n) \
+	अगर ((mode & S_##n) == S_##n) अणु \
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%s%s", prपूर्णांकed ? "|" : "", show_prefix ? prefix : "", #n); \
 		mode &= ~S_##n; \
-	}
+	पूर्ण
 
 	P_MODE(IALLUGO);
 	P_MODE(IRWXUGO);
@@ -42,7 +43,7 @@ static size_t syscall_arg__scnprintf_mode_t(char *bf, size_t size, struct syscal
 	P_MODE(IFLNK);
 	P_MODE(IFREG);
 	P_MODE(IFBLK);
-	P_MODE(IFDIR);
+	P_MODE(IFसूची);
 	P_MODE(IFCHR);
 	P_MODE(IFIFO);
 	P_MODE(ISUID);
@@ -60,12 +61,12 @@ static size_t syscall_arg__scnprintf_mode_t(char *bf, size_t size, struct syscal
 	P_MODE(IROTH);
 	P_MODE(IWOTH);
 	P_MODE(IXOTH);
-#undef P_MODE
+#अघोषित P_MODE
 
-	if (mode)
-		printed += scnprintf(bf + printed, size - printed, "%s%#x", printed ? "|" : "", mode);
+	अगर (mode)
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%#x", prपूर्णांकed ? "|" : "", mode);
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-#define SCA_MODE_T syscall_arg__scnprintf_mode_t
+#घोषणा SCA_MODE_T syscall_arg__scnम_लिखो_mode_t

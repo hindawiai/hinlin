@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  * nmi.h
  *
@@ -7,46 +8,46 @@
  * Copyright (c) 2005, Keir Fraser <keir@xensource.com>
  */
 
-#ifndef __XEN_PUBLIC_NMI_H__
-#define __XEN_PUBLIC_NMI_H__
+#अगर_अघोषित __XEN_PUBLIC_NMI_H__
+#घोषणा __XEN_PUBLIC_NMI_H__
 
-#include <xen/interface/xen.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
 
 /*
  * NMI reason codes:
- * Currently these are x86-specific, stored in arch_shared_info.nmi_reason.
+ * Currently these are x86-specअगरic, stored in arch_shared_info.nmi_reason.
  */
  /* I/O-check error reported via ISA port 0x61, bit 6. */
-#define _XEN_NMIREASON_io_error     0
-#define XEN_NMIREASON_io_error      (1UL << _XEN_NMIREASON_io_error)
+#घोषणा _XEN_NMIREASON_io_error     0
+#घोषणा XEN_NMIREASON_io_error      (1UL << _XEN_NMIREASON_io_error)
  /* PCI SERR reported via ISA port 0x61, bit 7. */
-#define _XEN_NMIREASON_pci_serr     1
-#define XEN_NMIREASON_pci_serr      (1UL << _XEN_NMIREASON_pci_serr)
+#घोषणा _XEN_NMIREASON_pci_serr     1
+#घोषणा XEN_NMIREASON_pci_serr      (1UL << _XEN_NMIREASON_pci_serr)
  /* Unknown hardware-generated NMI. */
-#define _XEN_NMIREASON_unknown      2
-#define XEN_NMIREASON_unknown       (1UL << _XEN_NMIREASON_unknown)
+#घोषणा _XEN_NMIREASON_unknown      2
+#घोषणा XEN_NMIREASON_unknown       (1UL << _XEN_NMIREASON_unknown)
 
 /*
- * long nmi_op(unsigned int cmd, void *arg)
- * NB. All ops return zero on success, else a negative error code.
+ * दीर्घ nmi_op(अचिन्हित पूर्णांक cmd, व्योम *arg)
+ * NB. All ops वापस zero on success, अन्यथा a negative error code.
  */
 
 /*
- * Register NMI callback for this (calling) VCPU. Currently this only makes
- * sense for domain 0, vcpu 0. All other callers will be returned EINVAL.
- * arg == pointer to xennmi_callback structure.
+ * Register NMI callback क्रम this (calling) VCPU. Currently this only makes
+ * sense क्रम करोमुख्य 0, vcpu 0. All other callers will be वापसed EINVAL.
+ * arg == poपूर्णांकer to xennmi_callback काष्ठाure.
  */
-#define XENNMI_register_callback   0
-struct xennmi_callback {
-    unsigned long handler_address;
-    unsigned long pad;
-};
+#घोषणा XENNMI_रेजिस्टर_callback   0
+काष्ठा xennmi_callback अणु
+    अचिन्हित दीर्घ handler_address;
+    अचिन्हित दीर्घ pad;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xennmi_callback);
 
 /*
- * Deregister NMI callback for this (calling) VCPU.
- * arg == NULL.
+ * Deरेजिस्टर NMI callback क्रम this (calling) VCPU.
+ * arg == शून्य.
  */
-#define XENNMI_unregister_callback 1
+#घोषणा XENNMI_unरेजिस्टर_callback 1
 
-#endif /* __XEN_PUBLIC_NMI_H__ */
+#पूर्ण_अगर /* __XEN_PUBLIC_NMI_H__ */

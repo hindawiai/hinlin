@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_SIMPLE_SPINLOCK_TYPES_H
-#define _ASM_POWERPC_SIMPLE_SPINLOCK_TYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_SIMPLE_SPINLOCK_TYPES_H
+#घोषणा _ASM_POWERPC_SIMPLE_SPINLOCK_TYPES_H
 
-#ifndef __LINUX_SPINLOCK_TYPES_H
+#अगर_अघोषित __LINUX_SPINLOCK_TYPES_H
 # error "please don't include this file directly"
-#endif
+#पूर्ण_अगर
 
-typedef struct {
-	volatile unsigned int slock;
-} arch_spinlock_t;
+प्रकार काष्ठा अणु
+	अस्थिर अचिन्हित पूर्णांक slock;
+पूर्ण arch_spinlock_t;
 
-#define __ARCH_SPIN_LOCK_UNLOCKED	{ 0 }
+#घोषणा __ARCH_SPIN_LOCK_UNLOCKED	अणु 0 पूर्ण
 
-typedef struct {
-	volatile signed int lock;
-} arch_rwlock_t;
+प्रकार काष्ठा अणु
+	अस्थिर चिन्हित पूर्णांक lock;
+पूर्ण arch_rwlock_t;
 
-#define __ARCH_RW_LOCK_UNLOCKED		{ 0 }
+#घोषणा __ARCH_RW_LOCK_UNLOCKED		अणु 0 पूर्ण
 
-#endif /* _ASM_POWERPC_SIMPLE_SPINLOCK_TYPES_H */
+#पूर्ण_अगर /* _ASM_POWERPC_SIMPLE_SPINLOCK_TYPES_H */

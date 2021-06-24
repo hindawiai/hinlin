@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (c) 2015, Sony Mobile Communications Inc.
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  * Copyright (c) 2020, Linaro Ltd.
  */
 
-#include <linux/module.h>
-#include <linux/qrtr.h>
-#include <linux/workqueue.h>
-#include <net/sock.h>
+#समावेश <linux/module.h>
+#समावेश <linux/qrtr.h>
+#समावेश <linux/workqueue.h>
+#समावेश <net/sock.h>
 
-#include "qrtr.h"
+#समावेश "qrtr.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/qrtr.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/qrtr.h>
 
-static RADIX_TREE(nodes, GFP_KERNEL);
+अटल RADIX_TREE(nodes, GFP_KERNEL);
 
-static struct {
-	struct socket *sock;
-	struct sockaddr_qrtr bcast_sq;
-	struct list_head lookups;
-	struct workqueue_struct *workqueue;
-	struct work_struct work;
-	int local_node;
-} qrtr_ns;
+अटल काष्ठा अणु
+	काष्ठा socket *sock;
+	काष्ठा sockaddr_qrtr bcast_sq;
+	काष्ठा list_head lookups;
+	काष्ठा workqueue_काष्ठा *workqueue;
+	काष्ठा work_काष्ठा work;
+	पूर्णांक local_node;
+पूर्ण qrtr_ns;
 
-static const char * const qrtr_ctrl_pkt_strings[] = {
+अटल स्थिर अक्षर * स्थिर qrtr_ctrl_pkt_strings[] = अणु
 	[QRTR_TYPE_HELLO]	= "hello",
 	[QRTR_TYPE_BYE]		= "bye",
 	[QRTR_TYPE_NEW_SERVER]	= "new-server",
@@ -37,210 +38,210 @@ static const char * const qrtr_ctrl_pkt_strings[] = {
 	[QRTR_TYPE_PING]	= "ping",
 	[QRTR_TYPE_NEW_LOOKUP]	= "new-lookup",
 	[QRTR_TYPE_DEL_LOOKUP]	= "del-lookup",
-};
+पूर्ण;
 
-struct qrtr_server_filter {
-	unsigned int service;
-	unsigned int instance;
-	unsigned int ifilter;
-};
+काष्ठा qrtr_server_filter अणु
+	अचिन्हित पूर्णांक service;
+	अचिन्हित पूर्णांक instance;
+	अचिन्हित पूर्णांक अगरilter;
+पूर्ण;
 
-struct qrtr_lookup {
-	unsigned int service;
-	unsigned int instance;
+काष्ठा qrtr_lookup अणु
+	अचिन्हित पूर्णांक service;
+	अचिन्हित पूर्णांक instance;
 
-	struct sockaddr_qrtr sq;
-	struct list_head li;
-};
+	काष्ठा sockaddr_qrtr sq;
+	काष्ठा list_head li;
+पूर्ण;
 
-struct qrtr_server {
-	unsigned int service;
-	unsigned int instance;
+काष्ठा qrtr_server अणु
+	अचिन्हित पूर्णांक service;
+	अचिन्हित पूर्णांक instance;
 
-	unsigned int node;
-	unsigned int port;
+	अचिन्हित पूर्णांक node;
+	अचिन्हित पूर्णांक port;
 
-	struct list_head qli;
-};
+	काष्ठा list_head qli;
+पूर्ण;
 
-struct qrtr_node {
-	unsigned int id;
-	struct radix_tree_root servers;
-};
+काष्ठा qrtr_node अणु
+	अचिन्हित पूर्णांक id;
+	काष्ठा radix_tree_root servers;
+पूर्ण;
 
-static struct qrtr_node *node_get(unsigned int node_id)
-{
-	struct qrtr_node *node;
+अटल काष्ठा qrtr_node *node_get(अचिन्हित पूर्णांक node_id)
+अणु
+	काष्ठा qrtr_node *node;
 
 	node = radix_tree_lookup(&nodes, node_id);
-	if (node)
-		return node;
+	अगर (node)
+		वापस node;
 
 	/* If node didn't exist, allocate and insert it to the tree */
-	node = kzalloc(sizeof(*node), GFP_KERNEL);
-	if (!node)
-		return NULL;
+	node = kzalloc(माप(*node), GFP_KERNEL);
+	अगर (!node)
+		वापस शून्य;
 
 	node->id = node_id;
 
 	radix_tree_insert(&nodes, node_id, node);
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
-static int server_match(const struct qrtr_server *srv,
-			const struct qrtr_server_filter *f)
-{
-	unsigned int ifilter = f->ifilter;
+अटल पूर्णांक server_match(स्थिर काष्ठा qrtr_server *srv,
+			स्थिर काष्ठा qrtr_server_filter *f)
+अणु
+	अचिन्हित पूर्णांक अगरilter = f->अगरilter;
 
-	if (f->service != 0 && srv->service != f->service)
-		return 0;
-	if (!ifilter && f->instance)
-		ifilter = ~0;
+	अगर (f->service != 0 && srv->service != f->service)
+		वापस 0;
+	अगर (!अगरilter && f->instance)
+		अगरilter = ~0;
 
-	return (srv->instance & ifilter) == f->instance;
-}
+	वापस (srv->instance & अगरilter) == f->instance;
+पूर्ण
 
-static int service_announce_new(struct sockaddr_qrtr *dest,
-				struct qrtr_server *srv)
-{
-	struct qrtr_ctrl_pkt pkt;
-	struct msghdr msg = { };
-	struct kvec iv;
+अटल पूर्णांक service_announce_new(काष्ठा sockaddr_qrtr *dest,
+				काष्ठा qrtr_server *srv)
+अणु
+	काष्ठा qrtr_ctrl_pkt pkt;
+	काष्ठा msghdr msg = अणु पूर्ण;
+	काष्ठा kvec iv;
 
 	trace_qrtr_ns_service_announce_new(srv->service, srv->instance,
 					   srv->node, srv->port);
 
 	iv.iov_base = &pkt;
-	iv.iov_len = sizeof(pkt);
+	iv.iov_len = माप(pkt);
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 	pkt.cmd = cpu_to_le32(QRTR_TYPE_NEW_SERVER);
 	pkt.server.service = cpu_to_le32(srv->service);
 	pkt.server.instance = cpu_to_le32(srv->instance);
 	pkt.server.node = cpu_to_le32(srv->node);
 	pkt.server.port = cpu_to_le32(srv->port);
 
-	msg.msg_name = (struct sockaddr *)dest;
-	msg.msg_namelen = sizeof(*dest);
+	msg.msg_name = (काष्ठा sockaddr *)dest;
+	msg.msg_namelen = माप(*dest);
 
-	return kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, sizeof(pkt));
-}
+	वापस kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, माप(pkt));
+पूर्ण
 
-static int service_announce_del(struct sockaddr_qrtr *dest,
-				struct qrtr_server *srv)
-{
-	struct qrtr_ctrl_pkt pkt;
-	struct msghdr msg = { };
-	struct kvec iv;
-	int ret;
+अटल पूर्णांक service_announce_del(काष्ठा sockaddr_qrtr *dest,
+				काष्ठा qrtr_server *srv)
+अणु
+	काष्ठा qrtr_ctrl_pkt pkt;
+	काष्ठा msghdr msg = अणु पूर्ण;
+	काष्ठा kvec iv;
+	पूर्णांक ret;
 
 	trace_qrtr_ns_service_announce_del(srv->service, srv->instance,
 					   srv->node, srv->port);
 
 	iv.iov_base = &pkt;
-	iv.iov_len = sizeof(pkt);
+	iv.iov_len = माप(pkt);
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 	pkt.cmd = cpu_to_le32(QRTR_TYPE_DEL_SERVER);
 	pkt.server.service = cpu_to_le32(srv->service);
 	pkt.server.instance = cpu_to_le32(srv->instance);
 	pkt.server.node = cpu_to_le32(srv->node);
 	pkt.server.port = cpu_to_le32(srv->port);
 
-	msg.msg_name = (struct sockaddr *)dest;
-	msg.msg_namelen = sizeof(*dest);
+	msg.msg_name = (काष्ठा sockaddr *)dest;
+	msg.msg_namelen = माप(*dest);
 
-	ret = kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, sizeof(pkt));
-	if (ret < 0)
+	ret = kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, माप(pkt));
+	अगर (ret < 0)
 		pr_err("failed to announce del service\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void lookup_notify(struct sockaddr_qrtr *to, struct qrtr_server *srv,
+अटल व्योम lookup_notअगरy(काष्ठा sockaddr_qrtr *to, काष्ठा qrtr_server *srv,
 			  bool new)
-{
-	struct qrtr_ctrl_pkt pkt;
-	struct msghdr msg = { };
-	struct kvec iv;
-	int ret;
+अणु
+	काष्ठा qrtr_ctrl_pkt pkt;
+	काष्ठा msghdr msg = अणु पूर्ण;
+	काष्ठा kvec iv;
+	पूर्णांक ret;
 
 	iv.iov_base = &pkt;
-	iv.iov_len = sizeof(pkt);
+	iv.iov_len = माप(pkt);
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 	pkt.cmd = new ? cpu_to_le32(QRTR_TYPE_NEW_SERVER) :
 			cpu_to_le32(QRTR_TYPE_DEL_SERVER);
-	if (srv) {
+	अगर (srv) अणु
 		pkt.server.service = cpu_to_le32(srv->service);
 		pkt.server.instance = cpu_to_le32(srv->instance);
 		pkt.server.node = cpu_to_le32(srv->node);
 		pkt.server.port = cpu_to_le32(srv->port);
-	}
+	पूर्ण
 
-	msg.msg_name = (struct sockaddr *)to;
-	msg.msg_namelen = sizeof(*to);
+	msg.msg_name = (काष्ठा sockaddr *)to;
+	msg.msg_namelen = माप(*to);
 
-	ret = kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, sizeof(pkt));
-	if (ret < 0)
+	ret = kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, माप(pkt));
+	अगर (ret < 0)
 		pr_err("failed to send lookup notification\n");
-}
+पूर्ण
 
-static int announce_servers(struct sockaddr_qrtr *sq)
-{
-	struct radix_tree_iter iter;
-	struct qrtr_server *srv;
-	struct qrtr_node *node;
-	void __rcu **slot;
-	int ret;
+अटल पूर्णांक announce_servers(काष्ठा sockaddr_qrtr *sq)
+अणु
+	काष्ठा radix_tree_iter iter;
+	काष्ठा qrtr_server *srv;
+	काष्ठा qrtr_node *node;
+	व्योम __rcu **slot;
+	पूर्णांक ret;
 
 	node = node_get(qrtr_ns.local_node);
-	if (!node)
-		return 0;
+	अगर (!node)
+		वापस 0;
 
-	rcu_read_lock();
-	/* Announce the list of servers registered in this node */
-	radix_tree_for_each_slot(slot, &node->servers, &iter, 0) {
+	rcu_पढ़ो_lock();
+	/* Announce the list of servers रेजिस्टरed in this node */
+	radix_tree_क्रम_each_slot(slot, &node->servers, &iter, 0) अणु
 		srv = radix_tree_deref_slot(slot);
-		if (!srv)
-			continue;
-		if (radix_tree_deref_retry(srv)) {
+		अगर (!srv)
+			जारी;
+		अगर (radix_tree_deref_retry(srv)) अणु
 			slot = radix_tree_iter_retry(&iter);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		slot = radix_tree_iter_resume(slot, &iter);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
 		ret = service_announce_new(sq, srv);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err("failed to announce new service\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		rcu_read_lock();
-	}
+		rcu_पढ़ो_lock();
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct qrtr_server *server_add(unsigned int service,
-				      unsigned int instance,
-				      unsigned int node_id,
-				      unsigned int port)
-{
-	struct qrtr_server *srv;
-	struct qrtr_server *old;
-	struct qrtr_node *node;
+अटल काष्ठा qrtr_server *server_add(अचिन्हित पूर्णांक service,
+				      अचिन्हित पूर्णांक instance,
+				      अचिन्हित पूर्णांक node_id,
+				      अचिन्हित पूर्णांक port)
+अणु
+	काष्ठा qrtr_server *srv;
+	काष्ठा qrtr_server *old;
+	काष्ठा qrtr_node *node;
 
-	if (!service || !port)
-		return NULL;
+	अगर (!service || !port)
+		वापस शून्य;
 
-	srv = kzalloc(sizeof(*srv), GFP_KERNEL);
-	if (!srv)
-		return NULL;
+	srv = kzalloc(माप(*srv), GFP_KERNEL);
+	अगर (!srv)
+		वापस शून्य;
 
 	srv->service = service;
 	srv->instance = instance;
@@ -248,572 +249,572 @@ static struct qrtr_server *server_add(unsigned int service,
 	srv->port = port;
 
 	node = node_get(node_id);
-	if (!node)
-		goto err;
+	अगर (!node)
+		जाओ err;
 
 	/* Delete the old server on the same port */
 	old = radix_tree_lookup(&node->servers, port);
-	if (old) {
+	अगर (old) अणु
 		radix_tree_delete(&node->servers, port);
-		kfree(old);
-	}
+		kमुक्त(old);
+	पूर्ण
 
 	radix_tree_insert(&node->servers, port, srv);
 
 	trace_qrtr_ns_server_add(srv->service, srv->instance,
 				 srv->node, srv->port);
 
-	return srv;
+	वापस srv;
 
 err:
-	kfree(srv);
-	return NULL;
-}
+	kमुक्त(srv);
+	वापस शून्य;
+पूर्ण
 
-static int server_del(struct qrtr_node *node, unsigned int port)
-{
-	struct qrtr_lookup *lookup;
-	struct qrtr_server *srv;
-	struct list_head *li;
+अटल पूर्णांक server_del(काष्ठा qrtr_node *node, अचिन्हित पूर्णांक port)
+अणु
+	काष्ठा qrtr_lookup *lookup;
+	काष्ठा qrtr_server *srv;
+	काष्ठा list_head *li;
 
 	srv = radix_tree_lookup(&node->servers, port);
-	if (!srv)
-		return -ENOENT;
+	अगर (!srv)
+		वापस -ENOENT;
 
 	radix_tree_delete(&node->servers, port);
 
 	/* Broadcast the removal of local servers */
-	if (srv->node == qrtr_ns.local_node)
+	अगर (srv->node == qrtr_ns.local_node)
 		service_announce_del(&qrtr_ns.bcast_sq, srv);
 
 	/* Announce the service's disappearance to observers */
-	list_for_each(li, &qrtr_ns.lookups) {
-		lookup = container_of(li, struct qrtr_lookup, li);
-		if (lookup->service && lookup->service != srv->service)
-			continue;
-		if (lookup->instance && lookup->instance != srv->instance)
-			continue;
+	list_क्रम_each(li, &qrtr_ns.lookups) अणु
+		lookup = container_of(li, काष्ठा qrtr_lookup, li);
+		अगर (lookup->service && lookup->service != srv->service)
+			जारी;
+		अगर (lookup->instance && lookup->instance != srv->instance)
+			जारी;
 
-		lookup_notify(&lookup->sq, srv, false);
-	}
+		lookup_notअगरy(&lookup->sq, srv, false);
+	पूर्ण
 
-	kfree(srv);
+	kमुक्त(srv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int say_hello(struct sockaddr_qrtr *dest)
-{
-	struct qrtr_ctrl_pkt pkt;
-	struct msghdr msg = { };
-	struct kvec iv;
-	int ret;
+अटल पूर्णांक say_hello(काष्ठा sockaddr_qrtr *dest)
+अणु
+	काष्ठा qrtr_ctrl_pkt pkt;
+	काष्ठा msghdr msg = अणु पूर्ण;
+	काष्ठा kvec iv;
+	पूर्णांक ret;
 
 	iv.iov_base = &pkt;
-	iv.iov_len = sizeof(pkt);
+	iv.iov_len = माप(pkt);
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 	pkt.cmd = cpu_to_le32(QRTR_TYPE_HELLO);
 
-	msg.msg_name = (struct sockaddr *)dest;
-	msg.msg_namelen = sizeof(*dest);
+	msg.msg_name = (काष्ठा sockaddr *)dest;
+	msg.msg_namelen = माप(*dest);
 
-	ret = kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, sizeof(pkt));
-	if (ret < 0)
+	ret = kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, माप(pkt));
+	अगर (ret < 0)
 		pr_err("failed to send hello msg\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Announce the list of servers registered on the local node */
-static int ctrl_cmd_hello(struct sockaddr_qrtr *sq)
-{
-	int ret;
+/* Announce the list of servers रेजिस्टरed on the local node */
+अटल पूर्णांक ctrl_cmd_hello(काष्ठा sockaddr_qrtr *sq)
+अणु
+	पूर्णांक ret;
 
 	ret = say_hello(sq);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return announce_servers(sq);
-}
+	वापस announce_servers(sq);
+पूर्ण
 
-static int ctrl_cmd_bye(struct sockaddr_qrtr *from)
-{
-	struct qrtr_node *local_node;
-	struct radix_tree_iter iter;
-	struct qrtr_ctrl_pkt pkt;
-	struct qrtr_server *srv;
-	struct sockaddr_qrtr sq;
-	struct msghdr msg = { };
-	struct qrtr_node *node;
-	void __rcu **slot;
-	struct kvec iv;
-	int ret;
+अटल पूर्णांक ctrl_cmd_bye(काष्ठा sockaddr_qrtr *from)
+अणु
+	काष्ठा qrtr_node *local_node;
+	काष्ठा radix_tree_iter iter;
+	काष्ठा qrtr_ctrl_pkt pkt;
+	काष्ठा qrtr_server *srv;
+	काष्ठा sockaddr_qrtr sq;
+	काष्ठा msghdr msg = अणु पूर्ण;
+	काष्ठा qrtr_node *node;
+	व्योम __rcu **slot;
+	काष्ठा kvec iv;
+	पूर्णांक ret;
 
 	iv.iov_base = &pkt;
-	iv.iov_len = sizeof(pkt);
+	iv.iov_len = माप(pkt);
 
 	node = node_get(from->sq_node);
-	if (!node)
-		return 0;
+	अगर (!node)
+		वापस 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	/* Advertise removal of this client to all servers of remote node */
-	radix_tree_for_each_slot(slot, &node->servers, &iter, 0) {
+	radix_tree_क्रम_each_slot(slot, &node->servers, &iter, 0) अणु
 		srv = radix_tree_deref_slot(slot);
-		if (!srv)
-			continue;
-		if (radix_tree_deref_retry(srv)) {
+		अगर (!srv)
+			जारी;
+		अगर (radix_tree_deref_retry(srv)) अणु
 			slot = radix_tree_iter_retry(&iter);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		slot = radix_tree_iter_resume(slot, &iter);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 		server_del(node, srv->port);
-		rcu_read_lock();
-	}
-	rcu_read_unlock();
+		rcu_पढ़ो_lock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	/* Advertise the removal of this client to all local servers */
 	local_node = node_get(qrtr_ns.local_node);
-	if (!local_node)
-		return 0;
+	अगर (!local_node)
+		वापस 0;
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 	pkt.cmd = cpu_to_le32(QRTR_TYPE_BYE);
 	pkt.client.node = cpu_to_le32(from->sq_node);
 
-	rcu_read_lock();
-	radix_tree_for_each_slot(slot, &local_node->servers, &iter, 0) {
+	rcu_पढ़ो_lock();
+	radix_tree_क्रम_each_slot(slot, &local_node->servers, &iter, 0) अणु
 		srv = radix_tree_deref_slot(slot);
-		if (!srv)
-			continue;
-		if (radix_tree_deref_retry(srv)) {
+		अगर (!srv)
+			जारी;
+		अगर (radix_tree_deref_retry(srv)) अणु
 			slot = radix_tree_iter_retry(&iter);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		slot = radix_tree_iter_resume(slot, &iter);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
 		sq.sq_family = AF_QIPCRTR;
 		sq.sq_node = srv->node;
 		sq.sq_port = srv->port;
 
-		msg.msg_name = (struct sockaddr *)&sq;
-		msg.msg_namelen = sizeof(sq);
+		msg.msg_name = (काष्ठा sockaddr *)&sq;
+		msg.msg_namelen = माप(sq);
 
-		ret = kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, sizeof(pkt));
-		if (ret < 0) {
+		ret = kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, माप(pkt));
+		अगर (ret < 0) अणु
 			pr_err("failed to send bye cmd\n");
-			return ret;
-		}
-		rcu_read_lock();
-	}
+			वापस ret;
+		पूर्ण
+		rcu_पढ़ो_lock();
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ctrl_cmd_del_client(struct sockaddr_qrtr *from,
-			       unsigned int node_id, unsigned int port)
-{
-	struct qrtr_node *local_node;
-	struct radix_tree_iter iter;
-	struct qrtr_lookup *lookup;
-	struct qrtr_ctrl_pkt pkt;
-	struct msghdr msg = { };
-	struct qrtr_server *srv;
-	struct sockaddr_qrtr sq;
-	struct qrtr_node *node;
-	struct list_head *tmp;
-	struct list_head *li;
-	void __rcu **slot;
-	struct kvec iv;
-	int ret;
+अटल पूर्णांक ctrl_cmd_del_client(काष्ठा sockaddr_qrtr *from,
+			       अचिन्हित पूर्णांक node_id, अचिन्हित पूर्णांक port)
+अणु
+	काष्ठा qrtr_node *local_node;
+	काष्ठा radix_tree_iter iter;
+	काष्ठा qrtr_lookup *lookup;
+	काष्ठा qrtr_ctrl_pkt pkt;
+	काष्ठा msghdr msg = अणु पूर्ण;
+	काष्ठा qrtr_server *srv;
+	काष्ठा sockaddr_qrtr sq;
+	काष्ठा qrtr_node *node;
+	काष्ठा list_head *पंचांगp;
+	काष्ठा list_head *li;
+	व्योम __rcu **slot;
+	काष्ठा kvec iv;
+	पूर्णांक ret;
 
 	iv.iov_base = &pkt;
-	iv.iov_len = sizeof(pkt);
+	iv.iov_len = माप(pkt);
 
 	/* Don't accept spoofed messages */
-	if (from->sq_node != node_id)
-		return -EINVAL;
+	अगर (from->sq_node != node_id)
+		वापस -EINVAL;
 
-	/* Local DEL_CLIENT messages comes from the port being closed */
-	if (from->sq_node == qrtr_ns.local_node && from->sq_port != port)
-		return -EINVAL;
+	/* Local DEL_CLIENT messages comes from the port being बंदd */
+	अगर (from->sq_node == qrtr_ns.local_node && from->sq_port != port)
+		वापस -EINVAL;
 
 	/* Remove any lookups by this client */
-	list_for_each_safe(li, tmp, &qrtr_ns.lookups) {
-		lookup = container_of(li, struct qrtr_lookup, li);
-		if (lookup->sq.sq_node != node_id)
-			continue;
-		if (lookup->sq.sq_port != port)
-			continue;
+	list_क्रम_each_safe(li, पंचांगp, &qrtr_ns.lookups) अणु
+		lookup = container_of(li, काष्ठा qrtr_lookup, li);
+		अगर (lookup->sq.sq_node != node_id)
+			जारी;
+		अगर (lookup->sq.sq_port != port)
+			जारी;
 
 		list_del(&lookup->li);
-		kfree(lookup);
-	}
+		kमुक्त(lookup);
+	पूर्ण
 
-	/* Remove the server belonging to this port */
+	/* Remove the server beदीर्घing to this port */
 	node = node_get(node_id);
-	if (node)
+	अगर (node)
 		server_del(node, port);
 
 	/* Advertise the removal of this client to all local servers */
 	local_node = node_get(qrtr_ns.local_node);
-	if (!local_node)
-		return 0;
+	अगर (!local_node)
+		वापस 0;
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 	pkt.cmd = cpu_to_le32(QRTR_TYPE_DEL_CLIENT);
 	pkt.client.node = cpu_to_le32(node_id);
 	pkt.client.port = cpu_to_le32(port);
 
-	rcu_read_lock();
-	radix_tree_for_each_slot(slot, &local_node->servers, &iter, 0) {
+	rcu_पढ़ो_lock();
+	radix_tree_क्रम_each_slot(slot, &local_node->servers, &iter, 0) अणु
 		srv = radix_tree_deref_slot(slot);
-		if (!srv)
-			continue;
-		if (radix_tree_deref_retry(srv)) {
+		अगर (!srv)
+			जारी;
+		अगर (radix_tree_deref_retry(srv)) अणु
 			slot = radix_tree_iter_retry(&iter);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		slot = radix_tree_iter_resume(slot, &iter);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
 		sq.sq_family = AF_QIPCRTR;
 		sq.sq_node = srv->node;
 		sq.sq_port = srv->port;
 
-		msg.msg_name = (struct sockaddr *)&sq;
-		msg.msg_namelen = sizeof(sq);
+		msg.msg_name = (काष्ठा sockaddr *)&sq;
+		msg.msg_namelen = माप(sq);
 
-		ret = kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, sizeof(pkt));
-		if (ret < 0) {
+		ret = kernel_sendmsg(qrtr_ns.sock, &msg, &iv, 1, माप(pkt));
+		अगर (ret < 0) अणु
 			pr_err("failed to send del client cmd\n");
-			return ret;
-		}
-		rcu_read_lock();
-	}
+			वापस ret;
+		पूर्ण
+		rcu_पढ़ो_lock();
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ctrl_cmd_new_server(struct sockaddr_qrtr *from,
-			       unsigned int service, unsigned int instance,
-			       unsigned int node_id, unsigned int port)
-{
-	struct qrtr_lookup *lookup;
-	struct qrtr_server *srv;
-	struct list_head *li;
-	int ret = 0;
+अटल पूर्णांक ctrl_cmd_new_server(काष्ठा sockaddr_qrtr *from,
+			       अचिन्हित पूर्णांक service, अचिन्हित पूर्णांक instance,
+			       अचिन्हित पूर्णांक node_id, अचिन्हित पूर्णांक port)
+अणु
+	काष्ठा qrtr_lookup *lookup;
+	काष्ठा qrtr_server *srv;
+	काष्ठा list_head *li;
+	पूर्णांक ret = 0;
 
-	/* Ignore specified node and port for local servers */
-	if (from->sq_node == qrtr_ns.local_node) {
+	/* Ignore specअगरied node and port क्रम local servers */
+	अगर (from->sq_node == qrtr_ns.local_node) अणु
 		node_id = from->sq_node;
 		port = from->sq_port;
-	}
+	पूर्ण
 
 	srv = server_add(service, instance, node_id, port);
-	if (!srv)
-		return -EINVAL;
+	अगर (!srv)
+		वापस -EINVAL;
 
-	if (srv->node == qrtr_ns.local_node) {
+	अगर (srv->node == qrtr_ns.local_node) अणु
 		ret = service_announce_new(&qrtr_ns.bcast_sq, srv);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err("failed to announce new service\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* Notify any potential lookups about the new server */
-	list_for_each(li, &qrtr_ns.lookups) {
-		lookup = container_of(li, struct qrtr_lookup, li);
-		if (lookup->service && lookup->service != service)
-			continue;
-		if (lookup->instance && lookup->instance != instance)
-			continue;
+	/* Notअगरy any potential lookups about the new server */
+	list_क्रम_each(li, &qrtr_ns.lookups) अणु
+		lookup = container_of(li, काष्ठा qrtr_lookup, li);
+		अगर (lookup->service && lookup->service != service)
+			जारी;
+		अगर (lookup->instance && lookup->instance != instance)
+			जारी;
 
-		lookup_notify(&lookup->sq, srv, true);
-	}
+		lookup_notअगरy(&lookup->sq, srv, true);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ctrl_cmd_del_server(struct sockaddr_qrtr *from,
-			       unsigned int service, unsigned int instance,
-			       unsigned int node_id, unsigned int port)
-{
-	struct qrtr_node *node;
+अटल पूर्णांक ctrl_cmd_del_server(काष्ठा sockaddr_qrtr *from,
+			       अचिन्हित पूर्णांक service, अचिन्हित पूर्णांक instance,
+			       अचिन्हित पूर्णांक node_id, अचिन्हित पूर्णांक port)
+अणु
+	काष्ठा qrtr_node *node;
 
-	/* Ignore specified node and port for local servers*/
-	if (from->sq_node == qrtr_ns.local_node) {
+	/* Ignore specअगरied node and port क्रम local servers*/
+	अगर (from->sq_node == qrtr_ns.local_node) अणु
 		node_id = from->sq_node;
 		port = from->sq_port;
-	}
+	पूर्ण
 
-	/* Local servers may only unregister themselves */
-	if (from->sq_node == qrtr_ns.local_node && from->sq_port != port)
-		return -EINVAL;
+	/* Local servers may only unरेजिस्टर themselves */
+	अगर (from->sq_node == qrtr_ns.local_node && from->sq_port != port)
+		वापस -EINVAL;
 
 	node = node_get(node_id);
-	if (!node)
-		return -ENOENT;
+	अगर (!node)
+		वापस -ENOENT;
 
-	return server_del(node, port);
-}
+	वापस server_del(node, port);
+पूर्ण
 
-static int ctrl_cmd_new_lookup(struct sockaddr_qrtr *from,
-			       unsigned int service, unsigned int instance)
-{
-	struct radix_tree_iter node_iter;
-	struct qrtr_server_filter filter;
-	struct radix_tree_iter srv_iter;
-	struct qrtr_lookup *lookup;
-	struct qrtr_node *node;
-	void __rcu **node_slot;
-	void __rcu **srv_slot;
+अटल पूर्णांक ctrl_cmd_new_lookup(काष्ठा sockaddr_qrtr *from,
+			       अचिन्हित पूर्णांक service, अचिन्हित पूर्णांक instance)
+अणु
+	काष्ठा radix_tree_iter node_iter;
+	काष्ठा qrtr_server_filter filter;
+	काष्ठा radix_tree_iter srv_iter;
+	काष्ठा qrtr_lookup *lookup;
+	काष्ठा qrtr_node *node;
+	व्योम __rcu **node_slot;
+	व्योम __rcu **srv_slot;
 
 	/* Accept only local observers */
-	if (from->sq_node != qrtr_ns.local_node)
-		return -EINVAL;
+	अगर (from->sq_node != qrtr_ns.local_node)
+		वापस -EINVAL;
 
-	lookup = kzalloc(sizeof(*lookup), GFP_KERNEL);
-	if (!lookup)
-		return -ENOMEM;
+	lookup = kzalloc(माप(*lookup), GFP_KERNEL);
+	अगर (!lookup)
+		वापस -ENOMEM;
 
 	lookup->sq = *from;
 	lookup->service = service;
 	lookup->instance = instance;
 	list_add_tail(&lookup->li, &qrtr_ns.lookups);
 
-	memset(&filter, 0, sizeof(filter));
+	स_रखो(&filter, 0, माप(filter));
 	filter.service = service;
 	filter.instance = instance;
 
-	rcu_read_lock();
-	radix_tree_for_each_slot(node_slot, &nodes, &node_iter, 0) {
+	rcu_पढ़ो_lock();
+	radix_tree_क्रम_each_slot(node_slot, &nodes, &node_iter, 0) अणु
 		node = radix_tree_deref_slot(node_slot);
-		if (!node)
-			continue;
-		if (radix_tree_deref_retry(node)) {
+		अगर (!node)
+			जारी;
+		अगर (radix_tree_deref_retry(node)) अणु
 			node_slot = radix_tree_iter_retry(&node_iter);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		node_slot = radix_tree_iter_resume(node_slot, &node_iter);
 
-		radix_tree_for_each_slot(srv_slot, &node->servers,
-					 &srv_iter, 0) {
-			struct qrtr_server *srv;
+		radix_tree_क्रम_each_slot(srv_slot, &node->servers,
+					 &srv_iter, 0) अणु
+			काष्ठा qrtr_server *srv;
 
 			srv = radix_tree_deref_slot(srv_slot);
-			if (!srv)
-				continue;
-			if (radix_tree_deref_retry(srv)) {
+			अगर (!srv)
+				जारी;
+			अगर (radix_tree_deref_retry(srv)) अणु
 				srv_slot = radix_tree_iter_retry(&srv_iter);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (!server_match(srv, &filter))
-				continue;
+			अगर (!server_match(srv, &filter))
+				जारी;
 
 			srv_slot = radix_tree_iter_resume(srv_slot, &srv_iter);
 
-			rcu_read_unlock();
-			lookup_notify(from, srv, true);
-			rcu_read_lock();
-		}
-	}
-	rcu_read_unlock();
+			rcu_पढ़ो_unlock();
+			lookup_notअगरy(from, srv, true);
+			rcu_पढ़ो_lock();
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	/* Empty notification, to indicate end of listing */
-	lookup_notify(from, NULL, true);
+	/* Empty notअगरication, to indicate end of listing */
+	lookup_notअगरy(from, शून्य, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ctrl_cmd_del_lookup(struct sockaddr_qrtr *from,
-				unsigned int service, unsigned int instance)
-{
-	struct qrtr_lookup *lookup;
-	struct list_head *tmp;
-	struct list_head *li;
+अटल व्योम ctrl_cmd_del_lookup(काष्ठा sockaddr_qrtr *from,
+				अचिन्हित पूर्णांक service, अचिन्हित पूर्णांक instance)
+अणु
+	काष्ठा qrtr_lookup *lookup;
+	काष्ठा list_head *पंचांगp;
+	काष्ठा list_head *li;
 
-	list_for_each_safe(li, tmp, &qrtr_ns.lookups) {
-		lookup = container_of(li, struct qrtr_lookup, li);
-		if (lookup->sq.sq_node != from->sq_node)
-			continue;
-		if (lookup->sq.sq_port != from->sq_port)
-			continue;
-		if (lookup->service != service)
-			continue;
-		if (lookup->instance && lookup->instance != instance)
-			continue;
+	list_क्रम_each_safe(li, पंचांगp, &qrtr_ns.lookups) अणु
+		lookup = container_of(li, काष्ठा qrtr_lookup, li);
+		अगर (lookup->sq.sq_node != from->sq_node)
+			जारी;
+		अगर (lookup->sq.sq_port != from->sq_port)
+			जारी;
+		अगर (lookup->service != service)
+			जारी;
+		अगर (lookup->instance && lookup->instance != instance)
+			जारी;
 
 		list_del(&lookup->li);
-		kfree(lookup);
-	}
-}
+		kमुक्त(lookup);
+	पूर्ण
+पूर्ण
 
-static void qrtr_ns_worker(struct work_struct *work)
-{
-	const struct qrtr_ctrl_pkt *pkt;
-	size_t recv_buf_size = 4096;
-	struct sockaddr_qrtr sq;
-	struct msghdr msg = { };
-	unsigned int cmd;
-	ssize_t msglen;
-	void *recv_buf;
-	struct kvec iv;
-	int ret;
+अटल व्योम qrtr_ns_worker(काष्ठा work_काष्ठा *work)
+अणु
+	स्थिर काष्ठा qrtr_ctrl_pkt *pkt;
+	माप_प्रकार recv_buf_size = 4096;
+	काष्ठा sockaddr_qrtr sq;
+	काष्ठा msghdr msg = अणु पूर्ण;
+	अचिन्हित पूर्णांक cmd;
+	sमाप_प्रकार msglen;
+	व्योम *recv_buf;
+	काष्ठा kvec iv;
+	पूर्णांक ret;
 
-	msg.msg_name = (struct sockaddr *)&sq;
-	msg.msg_namelen = sizeof(sq);
+	msg.msg_name = (काष्ठा sockaddr *)&sq;
+	msg.msg_namelen = माप(sq);
 
 	recv_buf = kzalloc(recv_buf_size, GFP_KERNEL);
-	if (!recv_buf)
-		return;
+	अगर (!recv_buf)
+		वापस;
 
-	for (;;) {
+	क्रम (;;) अणु
 		iv.iov_base = recv_buf;
 		iv.iov_len = recv_buf_size;
 
 		msglen = kernel_recvmsg(qrtr_ns.sock, &msg, &iv, 1,
 					iv.iov_len, MSG_DONTWAIT);
 
-		if (msglen == -EAGAIN)
-			break;
+		अगर (msglen == -EAGAIN)
+			अवरोध;
 
-		if (msglen < 0) {
+		अगर (msglen < 0) अणु
 			pr_err("error receiving packet: %zd\n", msglen);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		pkt = recv_buf;
 		cmd = le32_to_cpu(pkt->cmd);
-		if (cmd < ARRAY_SIZE(qrtr_ctrl_pkt_strings) &&
+		अगर (cmd < ARRAY_SIZE(qrtr_ctrl_pkt_strings) &&
 		    qrtr_ctrl_pkt_strings[cmd])
 			trace_qrtr_ns_message(qrtr_ctrl_pkt_strings[cmd],
 					      sq.sq_node, sq.sq_port);
 
 		ret = 0;
-		switch (cmd) {
-		case QRTR_TYPE_HELLO:
+		चयन (cmd) अणु
+		हाल QRTR_TYPE_HELLO:
 			ret = ctrl_cmd_hello(&sq);
-			break;
-		case QRTR_TYPE_BYE:
+			अवरोध;
+		हाल QRTR_TYPE_BYE:
 			ret = ctrl_cmd_bye(&sq);
-			break;
-		case QRTR_TYPE_DEL_CLIENT:
+			अवरोध;
+		हाल QRTR_TYPE_DEL_CLIENT:
 			ret = ctrl_cmd_del_client(&sq,
 					le32_to_cpu(pkt->client.node),
 					le32_to_cpu(pkt->client.port));
-			break;
-		case QRTR_TYPE_NEW_SERVER:
+			अवरोध;
+		हाल QRTR_TYPE_NEW_SERVER:
 			ret = ctrl_cmd_new_server(&sq,
 					le32_to_cpu(pkt->server.service),
 					le32_to_cpu(pkt->server.instance),
 					le32_to_cpu(pkt->server.node),
 					le32_to_cpu(pkt->server.port));
-			break;
-		case QRTR_TYPE_DEL_SERVER:
+			अवरोध;
+		हाल QRTR_TYPE_DEL_SERVER:
 			ret = ctrl_cmd_del_server(&sq,
 					 le32_to_cpu(pkt->server.service),
 					 le32_to_cpu(pkt->server.instance),
 					 le32_to_cpu(pkt->server.node),
 					 le32_to_cpu(pkt->server.port));
-			break;
-		case QRTR_TYPE_EXIT:
-		case QRTR_TYPE_PING:
-		case QRTR_TYPE_RESUME_TX:
-			break;
-		case QRTR_TYPE_NEW_LOOKUP:
+			अवरोध;
+		हाल QRTR_TYPE_EXIT:
+		हाल QRTR_TYPE_PING:
+		हाल QRTR_TYPE_RESUME_TX:
+			अवरोध;
+		हाल QRTR_TYPE_NEW_LOOKUP:
 			ret = ctrl_cmd_new_lookup(&sq,
 					 le32_to_cpu(pkt->server.service),
 					 le32_to_cpu(pkt->server.instance));
-			break;
-		case QRTR_TYPE_DEL_LOOKUP:
+			अवरोध;
+		हाल QRTR_TYPE_DEL_LOOKUP:
 			ctrl_cmd_del_lookup(&sq,
 				    le32_to_cpu(pkt->server.service),
 				    le32_to_cpu(pkt->server.instance));
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (ret < 0)
+		अगर (ret < 0)
 			pr_err("failed while handling packet from %d:%d",
 			       sq.sq_node, sq.sq_port);
-	}
+	पूर्ण
 
-	kfree(recv_buf);
-}
+	kमुक्त(recv_buf);
+पूर्ण
 
-static void qrtr_ns_data_ready(struct sock *sk)
-{
+अटल व्योम qrtr_ns_data_पढ़ोy(काष्ठा sock *sk)
+अणु
 	queue_work(qrtr_ns.workqueue, &qrtr_ns.work);
-}
+पूर्ण
 
-int qrtr_ns_init(void)
-{
-	struct sockaddr_qrtr sq;
-	int ret;
+पूर्णांक qrtr_ns_init(व्योम)
+अणु
+	काष्ठा sockaddr_qrtr sq;
+	पूर्णांक ret;
 
 	INIT_LIST_HEAD(&qrtr_ns.lookups);
 	INIT_WORK(&qrtr_ns.work, qrtr_ns_worker);
 
 	ret = sock_create_kern(&init_net, AF_QIPCRTR, SOCK_DGRAM,
 			       PF_QIPCRTR, &qrtr_ns.sock);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = kernel_getsockname(qrtr_ns.sock, (struct sockaddr *)&sq);
-	if (ret < 0) {
+	ret = kernel_माला_लोockname(qrtr_ns.sock, (काष्ठा sockaddr *)&sq);
+	अगर (ret < 0) अणु
 		pr_err("failed to get socket name\n");
-		goto err_sock;
-	}
+		जाओ err_sock;
+	पूर्ण
 
 	qrtr_ns.workqueue = alloc_workqueue("qrtr_ns_handler", WQ_UNBOUND, 1);
-	if (!qrtr_ns.workqueue)
-		goto err_sock;
+	अगर (!qrtr_ns.workqueue)
+		जाओ err_sock;
 
-	qrtr_ns.sock->sk->sk_data_ready = qrtr_ns_data_ready;
+	qrtr_ns.sock->sk->sk_data_पढ़ोy = qrtr_ns_data_पढ़ोy;
 
 	sq.sq_port = QRTR_PORT_CTRL;
 	qrtr_ns.local_node = sq.sq_node;
 
-	ret = kernel_bind(qrtr_ns.sock, (struct sockaddr *)&sq, sizeof(sq));
-	if (ret < 0) {
+	ret = kernel_bind(qrtr_ns.sock, (काष्ठा sockaddr *)&sq, माप(sq));
+	अगर (ret < 0) अणु
 		pr_err("failed to bind to socket\n");
-		goto err_wq;
-	}
+		जाओ err_wq;
+	पूर्ण
 
 	qrtr_ns.bcast_sq.sq_family = AF_QIPCRTR;
 	qrtr_ns.bcast_sq.sq_node = QRTR_NODE_BCAST;
 	qrtr_ns.bcast_sq.sq_port = QRTR_PORT_CTRL;
 
 	ret = say_hello(&qrtr_ns.bcast_sq);
-	if (ret < 0)
-		goto err_wq;
+	अगर (ret < 0)
+		जाओ err_wq;
 
-	return 0;
+	वापस 0;
 
 err_wq:
 	destroy_workqueue(qrtr_ns.workqueue);
 err_sock:
 	sock_release(qrtr_ns.sock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(qrtr_ns_init);
 
-void qrtr_ns_remove(void)
-{
+व्योम qrtr_ns_हटाओ(व्योम)
+अणु
 	cancel_work_sync(&qrtr_ns.work);
 	destroy_workqueue(qrtr_ns.workqueue);
 	sock_release(qrtr_ns.sock);
-}
-EXPORT_SYMBOL_GPL(qrtr_ns_remove);
+पूर्ण
+EXPORT_SYMBOL_GPL(qrtr_ns_हटाओ);
 
 MODULE_AUTHOR("Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>");
 MODULE_DESCRIPTION("Qualcomm IPC Router Nameservice");

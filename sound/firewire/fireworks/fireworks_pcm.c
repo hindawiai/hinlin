@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * fireworks_pcm.c - a part of driver for Fireworks based devices
+ * fireworks_pcm.c - a part of driver क्रम Fireworks based devices
  *
  * Copyright (c) 2009-2010 Clemens Ladisch
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
-#include "./fireworks.h"
+#समावेश "./fireworks.h"
 
 /*
  * NOTE:
- * Fireworks changes its AMDTP channels for PCM data according to its sampling
+ * Fireworks changes its AMDTP channels क्रम PCM data according to its sampling
  * rate. There are three modes. Here _XX is either _rx or _tx.
  *  0:  32.0- 48.0 kHz then snd_efw_hwinfo.amdtp_XX_pcm_channels applied
  *  1:  88.2- 96.0 kHz then snd_efw_hwinfo.amdtp_XX_pcm_channels_2x applied
  *  2: 176.4-192.0 kHz then snd_efw_hwinfo.amdtp_XX_pcm_channels_4x applied
  *
- * The number of PCM channels for analog input and output are always fixed but
- * the number of PCM channels for digital input and output are differed.
+ * The number of PCM channels क्रम analog input and output are always fixed but
+ * the number of PCM channels क्रम digital input and output are dअगरfered.
  *
  * Additionally, according to "AudioFire Owner's Manual Version 2.2", in some
- * model, the number of PCM channels for digital input has more restriction
- * depending on which digital interface is selected.
+ * model, the number of PCM channels क्रम digital input has more restriction
+ * depending on which digital पूर्णांकerface is selected.
  *  - S/PDIF coaxial and optical	: use input 1-2
  *  - ADAT optical at 32.0-48.0 kHz	: use input 1-8
- *  - ADAT optical at 88.2-96.0 kHz	: use input 1-4 (S/MUX format)
+ *  - ADAT optical at 88.2-96.0 kHz	: use input 1-4 (S/MUX क्रमmat)
  *
- * The data in AMDTP channels for blank PCM channels are zero.
+ * The data in AMDTP channels क्रम blank PCM channels are zero.
  */
-static const unsigned int freq_table[] = {
+अटल स्थिर अचिन्हित पूर्णांक freq_table[] = अणु
 	/* multiplier mode 0 */
 	[0] = 32000,
 	[1] = 44100,
@@ -38,370 +39,370 @@ static const unsigned int freq_table[] = {
 	/* multiplier mode 2 */
 	[5] = 176400,
 	[6] = 192000,
-};
+पूर्ण;
 
-static inline unsigned int
-get_multiplier_mode_with_index(unsigned int index)
-{
-	return ((int)index - 1) / 2;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक
+get_multiplier_mode_with_index(अचिन्हित पूर्णांक index)
+अणु
+	वापस ((पूर्णांक)index - 1) / 2;
+पूर्ण
 
-int snd_efw_get_multiplier_mode(unsigned int sampling_rate, unsigned int *mode)
-{
-	unsigned int i;
+पूर्णांक snd_efw_get_multiplier_mode(अचिन्हित पूर्णांक sampling_rate, अचिन्हित पूर्णांक *mode)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(freq_table); i++) {
-		if (freq_table[i] == sampling_rate) {
+	क्रम (i = 0; i < ARRAY_SIZE(freq_table); i++) अणु
+		अगर (freq_table[i] == sampling_rate) अणु
 			*mode = get_multiplier_mode_with_index(i);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int
-hw_rule_rate(struct snd_pcm_hw_params *params, struct snd_pcm_hw_rule *rule)
-{
-	unsigned int *pcm_channels = rule->private;
-	struct snd_interval *r =
-		hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
-	const struct snd_interval *c =
-		hw_param_interval_c(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	struct snd_interval t = {
-		.min = UINT_MAX, .max = 0, .integer = 1
-	};
-	unsigned int i, mode;
+अटल पूर्णांक
+hw_rule_rate(काष्ठा snd_pcm_hw_params *params, काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	अचिन्हित पूर्णांक *pcm_channels = rule->निजी;
+	काष्ठा snd_पूर्णांकerval *r =
+		hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
+	स्थिर काष्ठा snd_पूर्णांकerval *c =
+		hw_param_पूर्णांकerval_c(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	काष्ठा snd_पूर्णांकerval t = अणु
+		.min = अच_पूर्णांक_उच्च, .max = 0, .पूर्णांकeger = 1
+	पूर्ण;
+	अचिन्हित पूर्णांक i, mode;
 
-	for (i = 0; i < ARRAY_SIZE(freq_table); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(freq_table); i++) अणु
 		mode = get_multiplier_mode_with_index(i);
-		if (!snd_interval_test(c, pcm_channels[mode]))
-			continue;
+		अगर (!snd_पूर्णांकerval_test(c, pcm_channels[mode]))
+			जारी;
 
 		t.min = min(t.min, freq_table[i]);
 		t.max = max(t.max, freq_table[i]);
-	}
+	पूर्ण
 
-	return snd_interval_refine(r, &t);
-}
+	वापस snd_पूर्णांकerval_refine(r, &t);
+पूर्ण
 
-static int
-hw_rule_channels(struct snd_pcm_hw_params *params, struct snd_pcm_hw_rule *rule)
-{
-	unsigned int *pcm_channels = rule->private;
-	struct snd_interval *c =
-		hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	const struct snd_interval *r =
-		hw_param_interval_c(params, SNDRV_PCM_HW_PARAM_RATE);
-	struct snd_interval t = {
-		.min = UINT_MAX, .max = 0, .integer = 1
-	};
-	unsigned int i, mode;
+अटल पूर्णांक
+hw_rule_channels(काष्ठा snd_pcm_hw_params *params, काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	अचिन्हित पूर्णांक *pcm_channels = rule->निजी;
+	काष्ठा snd_पूर्णांकerval *c =
+		hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	स्थिर काष्ठा snd_पूर्णांकerval *r =
+		hw_param_पूर्णांकerval_c(params, SNDRV_PCM_HW_PARAM_RATE);
+	काष्ठा snd_पूर्णांकerval t = अणु
+		.min = अच_पूर्णांक_उच्च, .max = 0, .पूर्णांकeger = 1
+	पूर्ण;
+	अचिन्हित पूर्णांक i, mode;
 
-	for (i = 0; i < ARRAY_SIZE(freq_table); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(freq_table); i++) अणु
 		mode = get_multiplier_mode_with_index(i);
-		if (!snd_interval_test(r, freq_table[i]))
-			continue;
+		अगर (!snd_पूर्णांकerval_test(r, freq_table[i]))
+			जारी;
 
 		t.min = min(t.min, pcm_channels[mode]);
 		t.max = max(t.max, pcm_channels[mode]);
-	}
+	पूर्ण
 
-	return snd_interval_refine(c, &t);
-}
+	वापस snd_पूर्णांकerval_refine(c, &t);
+पूर्ण
 
-static void
-limit_channels(struct snd_pcm_hardware *hw, unsigned int *pcm_channels)
-{
-	unsigned int i, mode;
+अटल व्योम
+limit_channels(काष्ठा snd_pcm_hardware *hw, अचिन्हित पूर्णांक *pcm_channels)
+अणु
+	अचिन्हित पूर्णांक i, mode;
 
-	hw->channels_min = UINT_MAX;
+	hw->channels_min = अच_पूर्णांक_उच्च;
 	hw->channels_max = 0;
 
-	for (i = 0; i < ARRAY_SIZE(freq_table); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(freq_table); i++) अणु
 		mode = get_multiplier_mode_with_index(i);
-		if (pcm_channels[mode] == 0)
-			continue;
+		अगर (pcm_channels[mode] == 0)
+			जारी;
 
 		hw->channels_min = min(hw->channels_min, pcm_channels[mode]);
 		hw->channels_max = max(hw->channels_max, pcm_channels[mode]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-pcm_init_hw_params(struct snd_efw *efw,
-		   struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct amdtp_stream *s;
-	unsigned int *pcm_channels;
-	int err;
+अटल पूर्णांक
+pcm_init_hw_params(काष्ठा snd_efw *efw,
+		   काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा amdtp_stream *s;
+	अचिन्हित पूर्णांक *pcm_channels;
+	पूर्णांक err;
 
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
-		runtime->hw.formats = AM824_IN_PCM_FORMAT_BITS;
+	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
+		runसमय->hw.क्रमmats = AM824_IN_PCM_FORMAT_BITS;
 		s = &efw->tx_stream;
 		pcm_channels = efw->pcm_capture_channels;
-	} else {
-		runtime->hw.formats = AM824_OUT_PCM_FORMAT_BITS;
+	पूर्ण अन्यथा अणु
+		runसमय->hw.क्रमmats = AM824_OUT_PCM_FORMAT_BITS;
 		s = &efw->rx_stream;
 		pcm_channels = efw->pcm_playback_channels;
-	}
+	पूर्ण
 
 	/* limit rates */
-	runtime->hw.rates = efw->supported_sampling_rate;
-	snd_pcm_limit_hw_rates(runtime);
+	runसमय->hw.rates = efw->supported_sampling_rate;
+	snd_pcm_limit_hw_rates(runसमय);
 
-	limit_channels(&runtime->hw, pcm_channels);
+	limit_channels(&runसमय->hw, pcm_channels);
 
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
 				  hw_rule_channels, pcm_channels,
 				  SNDRV_PCM_HW_PARAM_RATE, -1);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE,
 				  hw_rule_rate, pcm_channels,
 				  SNDRV_PCM_HW_PARAM_CHANNELS, -1);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
-	err = amdtp_am824_add_pcm_hw_constraints(s, runtime);
+	err = amdtp_am824_add_pcm_hw_स्थिरraपूर्णांकs(s, runसमय);
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcm_open(struct snd_pcm_substream *substream)
-{
-	struct snd_efw *efw = substream->private_data;
-	struct amdtp_domain *d = &efw->domain;
-	enum snd_efw_clock_source clock_source;
-	int err;
+अटल पूर्णांक pcm_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_efw *efw = substream->निजी_data;
+	काष्ठा amdtp_करोमुख्य *d = &efw->करोमुख्य;
+	क्रमागत snd_efw_घड़ी_source घड़ी_source;
+	पूर्णांक err;
 
 	err = snd_efw_stream_lock_try(efw);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = pcm_init_hw_params(efw, substream);
-	if (err < 0)
-		goto err_locked;
+	अगर (err < 0)
+		जाओ err_locked;
 
-	err = snd_efw_command_get_clock_source(efw, &clock_source);
-	if (err < 0)
-		goto err_locked;
+	err = snd_efw_command_get_घड़ी_source(efw, &घड़ी_source);
+	अगर (err < 0)
+		जाओ err_locked;
 
 	mutex_lock(&efw->mutex);
 
-	// When source of clock is not internal or any stream is reserved for
+	// When source of घड़ी is not पूर्णांकernal or any stream is reserved क्रम
 	// transmission of PCM frames, the available sampling rate is limited
 	// at current one.
-	if ((clock_source != SND_EFW_CLOCK_SOURCE_INTERNAL) ||
-	    (efw->substreams_counter > 0 && d->events_per_period > 0)) {
-		unsigned int frames_per_period = d->events_per_period;
-		unsigned int frames_per_buffer = d->events_per_buffer;
-		unsigned int sampling_rate;
+	अगर ((घड़ी_source != SND_EFW_CLOCK_SOURCE_INTERNAL) ||
+	    (efw->substreams_counter > 0 && d->events_per_period > 0)) अणु
+		अचिन्हित पूर्णांक frames_per_period = d->events_per_period;
+		अचिन्हित पूर्णांक frames_per_buffer = d->events_per_buffer;
+		अचिन्हित पूर्णांक sampling_rate;
 
 		err = snd_efw_command_get_sampling_rate(efw, &sampling_rate);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			mutex_unlock(&efw->mutex);
-			goto err_locked;
-		}
-		substream->runtime->hw.rate_min = sampling_rate;
-		substream->runtime->hw.rate_max = sampling_rate;
+			जाओ err_locked;
+		पूर्ण
+		substream->runसमय->hw.rate_min = sampling_rate;
+		substream->runसमय->hw.rate_max = sampling_rate;
 
-		if (frames_per_period > 0) {
-			err = snd_pcm_hw_constraint_minmax(substream->runtime,
+		अगर (frames_per_period > 0) अणु
+			err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(substream->runसमय,
 					SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
 					frames_per_period, frames_per_period);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				mutex_unlock(&efw->mutex);
-				goto err_locked;
-			}
+				जाओ err_locked;
+			पूर्ण
 
-			err = snd_pcm_hw_constraint_minmax(substream->runtime,
+			err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(substream->runसमय,
 					SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
 					frames_per_buffer, frames_per_buffer);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				mutex_unlock(&efw->mutex);
-				goto err_locked;
-			}
-		}
-	}
+				जाओ err_locked;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&efw->mutex);
 
 	snd_pcm_set_sync(substream);
 
-	return 0;
+	वापस 0;
 err_locked:
 	snd_efw_stream_lock_release(efw);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcm_close(struct snd_pcm_substream *substream)
-{
-	struct snd_efw *efw = substream->private_data;
+अटल पूर्णांक pcm_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_efw *efw = substream->निजी_data;
 	snd_efw_stream_lock_release(efw);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcm_hw_params(struct snd_pcm_substream *substream,
-				 struct snd_pcm_hw_params *hw_params)
-{
-	struct snd_efw *efw = substream->private_data;
-	int err = 0;
+अटल पूर्णांक pcm_hw_params(काष्ठा snd_pcm_substream *substream,
+				 काष्ठा snd_pcm_hw_params *hw_params)
+अणु
+	काष्ठा snd_efw *efw = substream->निजी_data;
+	पूर्णांक err = 0;
 
-	if (substream->runtime->status->state == SNDRV_PCM_STATE_OPEN) {
-		unsigned int rate = params_rate(hw_params);
-		unsigned int frames_per_period = params_period_size(hw_params);
-		unsigned int frames_per_buffer = params_buffer_size(hw_params);
+	अगर (substream->runसमय->status->state == SNDRV_PCM_STATE_OPEN) अणु
+		अचिन्हित पूर्णांक rate = params_rate(hw_params);
+		अचिन्हित पूर्णांक frames_per_period = params_period_size(hw_params);
+		अचिन्हित पूर्णांक frames_per_buffer = params_buffer_size(hw_params);
 
 		mutex_lock(&efw->mutex);
 		err = snd_efw_stream_reserve_duplex(efw, rate,
 					frames_per_period, frames_per_buffer);
-		if (err >= 0)
+		अगर (err >= 0)
 			++efw->substreams_counter;
 		mutex_unlock(&efw->mutex);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcm_hw_free(struct snd_pcm_substream *substream)
-{
-	struct snd_efw *efw = substream->private_data;
+अटल पूर्णांक pcm_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_efw *efw = substream->निजी_data;
 
 	mutex_lock(&efw->mutex);
 
-	if (substream->runtime->status->state != SNDRV_PCM_STATE_OPEN)
+	अगर (substream->runसमय->status->state != SNDRV_PCM_STATE_OPEN)
 		--efw->substreams_counter;
 
 	snd_efw_stream_stop_duplex(efw);
 
 	mutex_unlock(&efw->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcm_capture_prepare(struct snd_pcm_substream *substream)
-{
-	struct snd_efw *efw = substream->private_data;
-	int err;
+अटल पूर्णांक pcm_capture_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_efw *efw = substream->निजी_data;
+	पूर्णांक err;
 
 	err = snd_efw_stream_start_duplex(efw);
-	if (err >= 0)
+	अगर (err >= 0)
 		amdtp_stream_pcm_prepare(&efw->tx_stream);
 
-	return err;
-}
-static int pcm_playback_prepare(struct snd_pcm_substream *substream)
-{
-	struct snd_efw *efw = substream->private_data;
-	int err;
+	वापस err;
+पूर्ण
+अटल पूर्णांक pcm_playback_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_efw *efw = substream->निजी_data;
+	पूर्णांक err;
 
 	err = snd_efw_stream_start_duplex(efw);
-	if (err >= 0)
+	अगर (err >= 0)
 		amdtp_stream_pcm_prepare(&efw->rx_stream);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcm_capture_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct snd_efw *efw = substream->private_data;
+अटल पूर्णांक pcm_capture_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा snd_efw *efw = substream->निजी_data;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		amdtp_stream_pcm_trigger(&efw->tx_stream, substream);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-		amdtp_stream_pcm_trigger(&efw->tx_stream, NULL);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		amdtp_stream_pcm_trigger(&efw->tx_stream, शून्य);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
-static int pcm_playback_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct snd_efw *efw = substream->private_data;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक pcm_playback_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा snd_efw *efw = substream->निजी_data;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		amdtp_stream_pcm_trigger(&efw->rx_stream, substream);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-		amdtp_stream_pcm_trigger(&efw->rx_stream, NULL);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		amdtp_stream_pcm_trigger(&efw->rx_stream, शून्य);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static snd_pcm_uframes_t pcm_capture_pointer(struct snd_pcm_substream *sbstrm)
-{
-	struct snd_efw *efw = sbstrm->private_data;
+अटल snd_pcm_uframes_t pcm_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *sbstrm)
+अणु
+	काष्ठा snd_efw *efw = sbstrm->निजी_data;
 
-	return amdtp_domain_stream_pcm_pointer(&efw->domain, &efw->tx_stream);
-}
-static snd_pcm_uframes_t pcm_playback_pointer(struct snd_pcm_substream *sbstrm)
-{
-	struct snd_efw *efw = sbstrm->private_data;
+	वापस amdtp_करोमुख्य_stream_pcm_poपूर्णांकer(&efw->करोमुख्य, &efw->tx_stream);
+पूर्ण
+अटल snd_pcm_uframes_t pcm_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *sbstrm)
+अणु
+	काष्ठा snd_efw *efw = sbstrm->निजी_data;
 
-	return amdtp_domain_stream_pcm_pointer(&efw->domain, &efw->rx_stream);
-}
+	वापस amdtp_करोमुख्य_stream_pcm_poपूर्णांकer(&efw->करोमुख्य, &efw->rx_stream);
+पूर्ण
 
-static int pcm_capture_ack(struct snd_pcm_substream *substream)
-{
-	struct snd_efw *efw = substream->private_data;
+अटल पूर्णांक pcm_capture_ack(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_efw *efw = substream->निजी_data;
 
-	return amdtp_domain_stream_pcm_ack(&efw->domain, &efw->tx_stream);
-}
+	वापस amdtp_करोमुख्य_stream_pcm_ack(&efw->करोमुख्य, &efw->tx_stream);
+पूर्ण
 
-static int pcm_playback_ack(struct snd_pcm_substream *substream)
-{
-	struct snd_efw *efw = substream->private_data;
+अटल पूर्णांक pcm_playback_ack(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_efw *efw = substream->निजी_data;
 
-	return amdtp_domain_stream_pcm_ack(&efw->domain, &efw->rx_stream);
-}
+	वापस amdtp_करोमुख्य_stream_pcm_ack(&efw->करोमुख्य, &efw->rx_stream);
+पूर्ण
 
-int snd_efw_create_pcm_devices(struct snd_efw *efw)
-{
-	static const struct snd_pcm_ops capture_ops = {
-		.open		= pcm_open,
-		.close		= pcm_close,
+पूर्णांक snd_efw_create_pcm_devices(काष्ठा snd_efw *efw)
+अणु
+	अटल स्थिर काष्ठा snd_pcm_ops capture_ops = अणु
+		.खोलो		= pcm_खोलो,
+		.बंद		= pcm_बंद,
 		.hw_params	= pcm_hw_params,
-		.hw_free	= pcm_hw_free,
+		.hw_मुक्त	= pcm_hw_मुक्त,
 		.prepare	= pcm_capture_prepare,
 		.trigger	= pcm_capture_trigger,
-		.pointer	= pcm_capture_pointer,
+		.poपूर्णांकer	= pcm_capture_poपूर्णांकer,
 		.ack		= pcm_capture_ack,
-	};
-	static const struct snd_pcm_ops playback_ops = {
-		.open		= pcm_open,
-		.close		= pcm_close,
+	पूर्ण;
+	अटल स्थिर काष्ठा snd_pcm_ops playback_ops = अणु
+		.खोलो		= pcm_खोलो,
+		.बंद		= pcm_बंद,
 		.hw_params	= pcm_hw_params,
-		.hw_free	= pcm_hw_free,
+		.hw_मुक्त	= pcm_hw_मुक्त,
 		.prepare	= pcm_playback_prepare,
 		.trigger	= pcm_playback_trigger,
-		.pointer	= pcm_playback_pointer,
+		.poपूर्णांकer	= pcm_playback_poपूर्णांकer,
 		.ack		= pcm_playback_ack,
-	};
-	struct snd_pcm *pcm;
-	int err;
+	पूर्ण;
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक err;
 
 	err = snd_pcm_new(efw->card, efw->card->driver, 0, 1, 1, &pcm);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
-	pcm->private_data = efw;
-	snprintf(pcm->name, sizeof(pcm->name), "%s PCM", efw->card->shortname);
+	pcm->निजी_data = efw;
+	snम_लिखो(pcm->name, माप(pcm->name), "%s PCM", efw->card->लघुname);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &capture_ops);
-	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, NULL, 0, 0);
+	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, शून्य, 0, 0);
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 

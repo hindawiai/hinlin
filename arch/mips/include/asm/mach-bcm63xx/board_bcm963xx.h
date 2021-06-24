@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BOARD_BCM963XX_H_
-#define BOARD_BCM963XX_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BOARD_BCM963XX_H_
+#घोषणा BOARD_BCM963XX_H_
 
-#include <linux/types.h>
-#include <linux/gpio.h>
-#include <linux/leds.h>
-#include <bcm63xx_dev_enet.h>
-#include <bcm63xx_dev_usb_usbd.h>
+#समावेश <linux/types.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/leds.h>
+#समावेश <bcm63xx_dev_enet.h>
+#समावेश <bcm63xx_dev_usb_usbd.h>
 
 /*
  * flash mapping
  */
-#define BCM963XX_CFE_VERSION_OFFSET	0x570
-#define BCM963XX_NVRAM_OFFSET		0x580
+#घोषणा BCM963XX_CFE_VERSION_OFFSET	0x570
+#घोषणा BCM963XX_NVRAM_OFFSET		0x580
 
 /*
  * board definition
  */
-struct board_info {
+काष्ठा board_info अणु
 	u8		name[16];
-	unsigned int	expected_cpu_id;
+	अचिन्हित पूर्णांक	expected_cpu_id;
 
 	/* enabled feature/device */
-	unsigned int	has_enet0:1;
-	unsigned int	has_enet1:1;
-	unsigned int	has_enetsw:1;
-	unsigned int	has_pci:1;
-	unsigned int	has_pccard:1;
-	unsigned int	has_ohci0:1;
-	unsigned int	has_ehci0:1;
-	unsigned int	has_usbd:1;
-	unsigned int	has_uart0:1;
-	unsigned int	has_uart1:1;
+	अचिन्हित पूर्णांक	has_enet0:1;
+	अचिन्हित पूर्णांक	has_enet1:1;
+	अचिन्हित पूर्णांक	has_enetsw:1;
+	अचिन्हित पूर्णांक	has_pci:1;
+	अचिन्हित पूर्णांक	has_pccard:1;
+	अचिन्हित पूर्णांक	has_ohci0:1;
+	अचिन्हित पूर्णांक	has_ehci0:1;
+	अचिन्हित पूर्णांक	has_usbd:1;
+	अचिन्हित पूर्णांक	has_uart0:1;
+	अचिन्हित पूर्णांक	has_uart1:1;
 
 	/* ethernet config */
-	struct bcm63xx_enet_platform_data enet0;
-	struct bcm63xx_enet_platform_data enet1;
-	struct bcm63xx_enetsw_platform_data enetsw;
+	काष्ठा bcm63xx_enet_platक्रमm_data enet0;
+	काष्ठा bcm63xx_enet_platक्रमm_data enet1;
+	काष्ठा bcm63xx_enetsw_platक्रमm_data enetsw;
 
 	/* USB config */
-	struct bcm63xx_usbd_platform_data usbd;
+	काष्ठा bcm63xx_usbd_platक्रमm_data usbd;
 
 	/* GPIO LEDs */
-	struct gpio_led leds[5];
+	काष्ठा gpio_led leds[5];
 
 	/* External PHY reset GPIO */
-	unsigned int ephy_reset_gpio;
+	अचिन्हित पूर्णांक ephy_reset_gpio;
 
-	/* External PHY reset GPIO flags from gpio.h */
-	unsigned long ephy_reset_gpio_flags;
-};
+	/* External PHY reset GPIO flags from gpपन.स */
+	अचिन्हित दीर्घ ephy_reset_gpio_flags;
+पूर्ण;
 
-#endif /* ! BOARD_BCM963XX_H_ */
+#पूर्ण_अगर /* ! BOARD_BCM963XX_H_ */

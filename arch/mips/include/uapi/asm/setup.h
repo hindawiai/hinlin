@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_MIPS_SETUP_H
-#define _UAPI_MIPS_SETUP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_MIPS_SETUP_H
+#घोषणा _UAPI_MIPS_SETUP_H
 
-#define COMMAND_LINE_SIZE	4096
+#घोषणा COMMAND_LINE_SIZE	4096
 
 
-#endif /* _UAPI_MIPS_SETUP_H */
+#पूर्ण_अगर /* _UAPI_MIPS_SETUP_H */

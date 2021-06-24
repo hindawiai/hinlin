@@ -1,54 +1,55 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * rodata_test.c: functional test for mark_rodata_ro function
+ * rodata_test.c: functional test क्रम mark_rodata_ro function
  *
  * (C) Copyright 2008 Intel Corporation
- * Author: Arjan van de Ven <arjan@linux.intel.com>
+ * Author: Arjan van de Ven <arjan@linux.पूर्णांकel.com>
  */
-#define pr_fmt(fmt) "rodata_test: " fmt
+#घोषणा pr_fmt(fmt) "rodata_test: " fmt
 
-#include <linux/rodata_test.h>
-#include <linux/uaccess.h>
-#include <asm/sections.h>
+#समावेश <linux/rodata_test.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/sections.h>
 
-static const int rodata_test_data = 0xC3;
+अटल स्थिर पूर्णांक rodata_test_data = 0xC3;
 
-void rodata_test(void)
-{
-	unsigned long start, end;
-	int zero = 0;
+व्योम rodata_test(व्योम)
+अणु
+	अचिन्हित दीर्घ start, end;
+	पूर्णांक zero = 0;
 
-	/* test 1: read the value */
+	/* test 1: पढ़ो the value */
 	/* If this test fails, some previous testrun has clobbered the state */
-	if (!rodata_test_data) {
+	अगर (!rodata_test_data) अणु
 		pr_err("test 1 fails (start data)\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* test 2: write to the variable; this should fault */
-	if (!copy_to_kernel_nofault((void *)&rodata_test_data,
-				(void *)&zero, sizeof(zero))) {
+	/* test 2: ग_लिखो to the variable; this should fault */
+	अगर (!copy_to_kernel_nofault((व्योम *)&rodata_test_data,
+				(व्योम *)&zero, माप(zero))) अणु
 		pr_err("test data was not read only\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* test 3: check the value hasn't changed */
-	if (rodata_test_data == zero) {
+	अगर (rodata_test_data == zero) अणु
 		pr_err("test data was changed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* test 4: check if the rodata section is PAGE_SIZE aligned */
-	start = (unsigned long)__start_rodata;
-	end = (unsigned long)__end_rodata;
-	if (start & (PAGE_SIZE - 1)) {
+	/* test 4: check अगर the rodata section is PAGE_SIZE aligned */
+	start = (अचिन्हित दीर्घ)__start_rodata;
+	end = (अचिन्हित दीर्घ)__end_rodata;
+	अगर (start & (PAGE_SIZE - 1)) अणु
 		pr_err("start of .rodata is not page size aligned\n");
-		return;
-	}
-	if (end & (PAGE_SIZE - 1)) {
+		वापस;
+	पूर्ण
+	अगर (end & (PAGE_SIZE - 1)) अणु
 		pr_err("end of .rodata is not page size aligned\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pr_info("all tests were successful\n");
-}
+पूर्ण

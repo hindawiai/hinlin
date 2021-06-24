@@ -1,324 +1,325 @@
+<शैली गुरु>
 /*
  * File Name:
  *   defxx.h
  *
- * Copyright Information:
+ * Copyright Inक्रमmation:
  *   Copyright Digital Equipment Corporation 1996.
  *
  *   This software may be used and distributed according to the terms of
  *   the GNU General Public License, incorporated herein by reference.
  *
  * Abstract:
- *   Contains all definitions specified by port specification and required
+ *   Contains all definitions specअगरied by port specअगरication and required
  *   by the defxx.c driver.
  *
  * The original author:
  *   LVS	Lawrence V. Stefani <lstefani@yahoo.com>
  *
- * Maintainers:
+ * Maपूर्णांकainers:
  *   macro	Maciej W. Rozycki <macro@orcam.me.uk>
  *
- * Modification History:
+ * Modअगरication History:
  *		Date		Name	Description
  *		16-Aug-96	LVS		Created.
- *		09-Sep-96	LVS		Added group_prom field.  Moved read/write I/O
+ *		09-Sep-96	LVS		Added group_prom field.  Moved पढ़ो/ग_लिखो I/O
  *							macros to DEFXX.C.
- *		12-Sep-96	LVS		Removed packet request header pointers.
+ *		12-Sep-96	LVS		Removed packet request header poपूर्णांकers.
  *		04 Aug 2003	macro		Converted to the DMA API.
  *		23 Oct 2006	macro		Big-endian host support.
  *		14 Dec 2006	macro		TURBOchannel support.
  *		10 Mar 2021	macro		Dynamic MMIO vs port I/O.
  */
 
-#ifndef _DEFXX_H_
-#define _DEFXX_H_
+#अगर_अघोषित _DEFXX_H_
+#घोषणा _DEFXX_H_
 
-/* Define basic types for unsigned chars, shorts, longs */
+/* Define basic types क्रम अचिन्हित अक्षरs, लघुs, दीर्घs */
 
-typedef u8	PI_UINT8;
-typedef u16	PI_UINT16;
-typedef u32	PI_UINT32;
+प्रकार u8	PI_UINT8;
+प्रकार u16	PI_UINT16;
+प्रकार u32	PI_UINT32;
 
-/* Define general structures */
+/* Define general काष्ठाures */
 
-typedef struct							/* 64-bit counter */
-	{
+प्रकार काष्ठा							/* 64-bit counter */
+	अणु
 	PI_UINT32  ms;
 	PI_UINT32  ls;
-	} PI_CNTR;
+	पूर्ण PI_CNTR;
 
-typedef struct							/* LAN address */
-	{
+प्रकार काष्ठा							/* LAN address */
+	अणु
 	PI_UINT32  lwrd_0;
 	PI_UINT32  lwrd_1;
-	} PI_LAN_ADDR;
+	पूर्ण PI_LAN_ADDR;
 
-typedef struct							/* Station ID address */
-	{
+प्रकार काष्ठा							/* Station ID address */
+	अणु
 	PI_UINT32  octet_7_4;
 	PI_UINT32  octet_3_0;
-	} PI_STATION_ID;
+	पूर्ण PI_STATION_ID;
 
 
-/* Define general constants */
+/* Define general स्थिरants */
 
-#define PI_ALIGN_K_DESC_BLK	  			8192	/* Descriptor block boundary		*/
-#define PI_ALIGN_K_CONS_BLK	  	 		64		/* Consumer block boundary		  	*/
-#define PI_ALIGN_K_CMD_REQ_BUFF  		128	 	/* Xmt Command que buffer alignment */
-#define PI_ALIGN_K_CMD_RSP_BUFF	 		128	 	/* Rcv Command que buffer alignment */
-#define PI_ALIGN_K_UNSOL_BUFF	 		128	 	/* Unsol que buffer alignment	   	*/
-#define PI_ALIGN_K_XMT_DATA_BUFF 		0	   	/* Xmt data que buffer alignment	*/
-#define PI_ALIGN_K_RCV_DATA_BUFF 		128	 	/* Rcv que buffer alignment			*/
+#घोषणा PI_ALIGN_K_DESC_BLK	  			8192	/* Descriptor block boundary		*/
+#घोषणा PI_ALIGN_K_CONS_BLK	  	 		64		/* Consumer block boundary		  	*/
+#घोषणा PI_ALIGN_K_CMD_REQ_BUFF  		128	 	/* Xmt Command que buffer alignment */
+#घोषणा PI_ALIGN_K_CMD_RSP_BUFF	 		128	 	/* Rcv Command que buffer alignment */
+#घोषणा PI_ALIGN_K_UNSOL_BUFF	 		128	 	/* Unsol que buffer alignment	   	*/
+#घोषणा PI_ALIGN_K_XMT_DATA_BUFF 		0	   	/* Xmt data que buffer alignment	*/
+#घोषणा PI_ALIGN_K_RCV_DATA_BUFF 		128	 	/* Rcv que buffer alignment			*/
 
 /* Define PHY index values */
 
-#define PI_PHY_K_S						0		/* Index to S phy */
-#define PI_PHY_K_A						0		/* Index to A phy */
-#define PI_PHY_K_B						1		/* Index to B phy */
-#define PI_PHY_K_MAX					2		/* Max number of phys */
+#घोषणा PI_PHY_K_S						0		/* Index to S phy */
+#घोषणा PI_PHY_K_A						0		/* Index to A phy */
+#घोषणा PI_PHY_K_B						1		/* Index to B phy */
+#घोषणा PI_PHY_K_MAX					2		/* Max number of phys */
 
 /* Define FMC descriptor fields */
 
-#define PI_FMC_DESCR_V_SOP				31
-#define PI_FMC_DESCR_V_EOP				30
-#define PI_FMC_DESCR_V_FSC				27
-#define PI_FMC_DESCR_V_FSB_ERROR		26
-#define PI_FMC_DESCR_V_FSB_ADDR_RECOG	25
-#define PI_FMC_DESCR_V_FSB_ADDR_COPIED	24
-#define PI_FMC_DESCR_V_FSB				22
-#define PI_FMC_DESCR_V_RCC_FLUSH		21
-#define PI_FMC_DESCR_V_RCC_CRC			20
-#define PI_FMC_DESCR_V_RCC_RRR			17
-#define PI_FMC_DESCR_V_RCC_DD			15
-#define PI_FMC_DESCR_V_RCC_SS			13
-#define PI_FMC_DESCR_V_RCC				13
-#define PI_FMC_DESCR_V_LEN				0
+#घोषणा PI_FMC_DESCR_V_SOP				31
+#घोषणा PI_FMC_DESCR_V_EOP				30
+#घोषणा PI_FMC_DESCR_V_FSC				27
+#घोषणा PI_FMC_DESCR_V_FSB_ERROR		26
+#घोषणा PI_FMC_DESCR_V_FSB_ADDR_RECOG	25
+#घोषणा PI_FMC_DESCR_V_FSB_ADDR_COPIED	24
+#घोषणा PI_FMC_DESCR_V_FSB				22
+#घोषणा PI_FMC_DESCR_V_RCC_FLUSH		21
+#घोषणा PI_FMC_DESCR_V_RCC_CRC			20
+#घोषणा PI_FMC_DESCR_V_RCC_RRR			17
+#घोषणा PI_FMC_DESCR_V_RCC_DD			15
+#घोषणा PI_FMC_DESCR_V_RCC_SS			13
+#घोषणा PI_FMC_DESCR_V_RCC				13
+#घोषणा PI_FMC_DESCR_V_LEN				0
 
-#define PI_FMC_DESCR_M_SOP				0x80000000
-#define PI_FMC_DESCR_M_EOP				0x40000000
-#define PI_FMC_DESCR_M_FSC				0x38000000
-#define PI_FMC_DESCR_M_FSB_ERROR		0x04000000
-#define PI_FMC_DESCR_M_FSB_ADDR_RECOG	0x02000000
-#define PI_FMC_DESCR_M_FSB_ADDR_COPIED	0x01000000
-#define PI_FMC_DESCR_M_FSB				0x07C00000
-#define PI_FMC_DESCR_M_RCC_FLUSH		0x00200000
-#define PI_FMC_DESCR_M_RCC_CRC			0x00100000
-#define PI_FMC_DESCR_M_RCC_RRR			0x000E0000
-#define PI_FMC_DESCR_M_RCC_DD			0x00018000
-#define PI_FMC_DESCR_M_RCC_SS			0x00006000
-#define PI_FMC_DESCR_M_RCC				0x003FE000
-#define PI_FMC_DESCR_M_LEN				0x00001FFF
+#घोषणा PI_FMC_DESCR_M_SOP				0x80000000
+#घोषणा PI_FMC_DESCR_M_EOP				0x40000000
+#घोषणा PI_FMC_DESCR_M_FSC				0x38000000
+#घोषणा PI_FMC_DESCR_M_FSB_ERROR		0x04000000
+#घोषणा PI_FMC_DESCR_M_FSB_ADDR_RECOG	0x02000000
+#घोषणा PI_FMC_DESCR_M_FSB_ADDR_COPIED	0x01000000
+#घोषणा PI_FMC_DESCR_M_FSB				0x07C00000
+#घोषणा PI_FMC_DESCR_M_RCC_FLUSH		0x00200000
+#घोषणा PI_FMC_DESCR_M_RCC_CRC			0x00100000
+#घोषणा PI_FMC_DESCR_M_RCC_RRR			0x000E0000
+#घोषणा PI_FMC_DESCR_M_RCC_DD			0x00018000
+#घोषणा PI_FMC_DESCR_M_RCC_SS			0x00006000
+#घोषणा PI_FMC_DESCR_M_RCC				0x003FE000
+#घोषणा PI_FMC_DESCR_M_LEN				0x00001FFF
 
-#define PI_FMC_DESCR_K_RCC_FMC_INT_ERR	0x01AA
+#घोषणा PI_FMC_DESCR_K_RCC_FMC_INT_ERR	0x01AA
 
-#define PI_FMC_DESCR_K_RRR_SUCCESS		0x00
-#define PI_FMC_DESCR_K_RRR_SA_MATCH		0x01
-#define PI_FMC_DESCR_K_RRR_DA_MATCH		0x02
-#define PI_FMC_DESCR_K_RRR_FMC_ABORT	0x03
-#define PI_FMC_DESCR_K_RRR_LENGTH_BAD	0x04
-#define PI_FMC_DESCR_K_RRR_FRAGMENT		0x05
-#define PI_FMC_DESCR_K_RRR_FORMAT_ERR	0x06
-#define PI_FMC_DESCR_K_RRR_MAC_RESET	0x07
+#घोषणा PI_FMC_DESCR_K_RRR_SUCCESS		0x00
+#घोषणा PI_FMC_DESCR_K_RRR_SA_MATCH		0x01
+#घोषणा PI_FMC_DESCR_K_RRR_DA_MATCH		0x02
+#घोषणा PI_FMC_DESCR_K_RRR_FMC_ABORT	0x03
+#घोषणा PI_FMC_DESCR_K_RRR_LENGTH_BAD	0x04
+#घोषणा PI_FMC_DESCR_K_RRR_FRAGMENT		0x05
+#घोषणा PI_FMC_DESCR_K_RRR_FORMAT_ERR	0x06
+#घोषणा PI_FMC_DESCR_K_RRR_MAC_RESET	0x07
 
-#define PI_FMC_DESCR_K_DD_NO_MATCH		0x0
-#define PI_FMC_DESCR_K_DD_PROMISCUOUS	0x1
-#define PI_FMC_DESCR_K_DD_CAM_MATCH		0x2
-#define PI_FMC_DESCR_K_DD_LOCAL_MATCH	0x3
+#घोषणा PI_FMC_DESCR_K_DD_NO_MATCH		0x0
+#घोषणा PI_FMC_DESCR_K_DD_PROMISCUOUS	0x1
+#घोषणा PI_FMC_DESCR_K_DD_CAM_MATCH		0x2
+#घोषणा PI_FMC_DESCR_K_DD_LOCAL_MATCH	0x3
 
-#define PI_FMC_DESCR_K_SS_NO_MATCH		0x0
-#define PI_FMC_DESCR_K_SS_BRIDGE_MATCH	0x1
-#define PI_FMC_DESCR_K_SS_NOT_POSSIBLE	0x2
-#define PI_FMC_DESCR_K_SS_LOCAL_MATCH	0x3
+#घोषणा PI_FMC_DESCR_K_SS_NO_MATCH		0x0
+#घोषणा PI_FMC_DESCR_K_SS_BRIDGE_MATCH	0x1
+#घोषणा PI_FMC_DESCR_K_SS_NOT_POSSIBLE	0x2
+#घोषणा PI_FMC_DESCR_K_SS_LOCAL_MATCH	0x3
 
 /* Define some max buffer sizes */
 
-#define PI_CMD_REQ_K_SIZE_MAX			512
-#define PI_CMD_RSP_K_SIZE_MAX			512
-#define PI_UNSOL_K_SIZE_MAX				512
-#define PI_SMT_HOST_K_SIZE_MAX			4608		/* 4 1/2 K */
-#define PI_RCV_DATA_K_SIZE_MAX			4608		/* 4 1/2 K */
-#define PI_XMT_DATA_K_SIZE_MAX			4608		/* 4 1/2 K */
+#घोषणा PI_CMD_REQ_K_SIZE_MAX			512
+#घोषणा PI_CMD_RSP_K_SIZE_MAX			512
+#घोषणा PI_UNSOL_K_SIZE_MAX				512
+#घोषणा PI_SMT_HOST_K_SIZE_MAX			4608		/* 4 1/2 K */
+#घोषणा PI_RCV_DATA_K_SIZE_MAX			4608		/* 4 1/2 K */
+#घोषणा PI_XMT_DATA_K_SIZE_MAX			4608		/* 4 1/2 K */
 
 /* Define adapter states */
 
-#define PI_STATE_K_RESET				0
-#define PI_STATE_K_UPGRADE		  		1
-#define PI_STATE_K_DMA_UNAVAIL			2
-#define PI_STATE_K_DMA_AVAIL			3
-#define PI_STATE_K_LINK_AVAIL			4
-#define PI_STATE_K_LINK_UNAVAIL	 		5
-#define PI_STATE_K_HALTED		   		6
-#define PI_STATE_K_RING_MEMBER			7
-#define PI_STATE_K_NUMBER				8
+#घोषणा PI_STATE_K_RESET				0
+#घोषणा PI_STATE_K_UPGRADE		  		1
+#घोषणा PI_STATE_K_DMA_UNAVAIL			2
+#घोषणा PI_STATE_K_DMA_AVAIL			3
+#घोषणा PI_STATE_K_LINK_AVAIL			4
+#घोषणा PI_STATE_K_LINK_UNAVAIL	 		5
+#घोषणा PI_STATE_K_HALTED		   		6
+#घोषणा PI_STATE_K_RING_MEMBER			7
+#घोषणा PI_STATE_K_NUMBER				8
 
-/* Define codes for command type */
+/* Define codes क्रम command type */
 
-#define PI_CMD_K_START					0x00
-#define PI_CMD_K_FILTERS_SET			0x01
-#define PI_CMD_K_FILTERS_GET			0x02
-#define PI_CMD_K_CHARS_SET				0x03
-#define PI_CMD_K_STATUS_CHARS_GET		0x04
-#define PI_CMD_K_CNTRS_GET				0x05
-#define PI_CMD_K_CNTRS_SET				0x06
-#define PI_CMD_K_ADDR_FILTER_SET		0x07
-#define PI_CMD_K_ADDR_FILTER_GET		0x08
-#define PI_CMD_K_ERROR_LOG_CLEAR		0x09
-#define PI_CMD_K_ERROR_LOG_GET			0x0A
-#define PI_CMD_K_FDDI_MIB_GET			0x0B
-#define PI_CMD_K_DEC_EXT_MIB_GET		0x0C
-#define PI_CMD_K_DEVICE_SPECIFIC_GET	0x0D
-#define PI_CMD_K_SNMP_SET				0x0E
-#define PI_CMD_K_UNSOL_TEST				0x0F
-#define PI_CMD_K_SMT_MIB_GET			0x10
-#define PI_CMD_K_SMT_MIB_SET			0x11
-#define PI_CMD_K_MAX					0x11	/* Must match last */
+#घोषणा PI_CMD_K_START					0x00
+#घोषणा PI_CMD_K_FILTERS_SET			0x01
+#घोषणा PI_CMD_K_FILTERS_GET			0x02
+#घोषणा PI_CMD_K_CHARS_SET				0x03
+#घोषणा PI_CMD_K_STATUS_CHARS_GET		0x04
+#घोषणा PI_CMD_K_CNTRS_GET				0x05
+#घोषणा PI_CMD_K_CNTRS_SET				0x06
+#घोषणा PI_CMD_K_ADDR_FILTER_SET		0x07
+#घोषणा PI_CMD_K_ADDR_FILTER_GET		0x08
+#घोषणा PI_CMD_K_ERROR_LOG_CLEAR		0x09
+#घोषणा PI_CMD_K_ERROR_LOG_GET			0x0A
+#घोषणा PI_CMD_K_FDDI_MIB_GET			0x0B
+#घोषणा PI_CMD_K_DEC_EXT_MIB_GET		0x0C
+#घोषणा PI_CMD_K_DEVICE_SPECIFIC_GET	0x0D
+#घोषणा PI_CMD_K_SNMP_SET				0x0E
+#घोषणा PI_CMD_K_UNSOL_TEST				0x0F
+#घोषणा PI_CMD_K_SMT_MIB_GET			0x10
+#घोषणा PI_CMD_K_SMT_MIB_SET			0x11
+#घोषणा PI_CMD_K_MAX					0x11	/* Must match last */
 
-/* Define item codes for Chars_Set and Filters_Set commands */
+/* Define item codes क्रम Chars_Set and Filters_Set commands */
 
-#define PI_ITEM_K_EOL					0x00 	/* End-of-Item list 		  */
-#define PI_ITEM_K_T_REQ					0x01 	/* DECnet T_REQ 			  */
-#define PI_ITEM_K_TVX					0x02 	/* DECnet TVX 				  */
-#define PI_ITEM_K_RESTRICTED_TOKEN		0x03 	/* DECnet Restricted Token 	  */
-#define PI_ITEM_K_LEM_THRESHOLD			0x04 	/* DECnet LEM Threshold 	  */
-#define PI_ITEM_K_RING_PURGER			0x05 	/* DECnet Ring Purger Enable  */
-#define PI_ITEM_K_CNTR_INTERVAL			0x06 	/* Chars_Set 				  */
-#define PI_ITEM_K_IND_GROUP_PROM		0x07 	/* Filters_Set 				  */
-#define PI_ITEM_K_GROUP_PROM			0x08 	/* Filters_Set 				  */
-#define PI_ITEM_K_BROADCAST				0x09 	/* Filters_Set 				  */
-#define PI_ITEM_K_SMT_PROM				0x0A 	/* Filters_Set				  */
-#define PI_ITEM_K_SMT_USER				0x0B 	/* Filters_Set 				  */
-#define PI_ITEM_K_RESERVED				0x0C 	/* Filters_Set 				  */
-#define PI_ITEM_K_IMPLEMENTOR			0x0D 	/* Filters_Set 				  */
-#define PI_ITEM_K_LOOPBACK_MODE			0x0E 	/* Chars_Set 				  */
-#define PI_ITEM_K_CONFIG_POLICY			0x10 	/* SMTConfigPolicy 			  */
-#define PI_ITEM_K_CON_POLICY			0x11 	/* SMTConnectionPolicy 		  */
-#define PI_ITEM_K_T_NOTIFY				0x12 	/* SMTTNotify 				  */
-#define PI_ITEM_K_STATION_ACTION		0x13 	/* SMTStationAction			  */
-#define PI_ITEM_K_MAC_PATHS_REQ	   		0x15 	/* MACPathsRequested 		  */
-#define PI_ITEM_K_MAC_ACTION			0x17 	/* MACAction 				  */
-#define PI_ITEM_K_CON_POLICIES			0x18 	/* PORTConnectionPolicies	  */
-#define PI_ITEM_K_PORT_PATHS_REQ		0x19 	/* PORTPathsRequested 		  */
-#define PI_ITEM_K_MAC_LOOP_TIME			0x1A 	/* PORTMACLoopTime 			  */
-#define PI_ITEM_K_TB_MAX				0x1B 	/* PORTTBMax 				  */
-#define PI_ITEM_K_LER_CUTOFF			0x1C 	/* PORTLerCutoff 			  */
-#define PI_ITEM_K_LER_ALARM				0x1D 	/* PORTLerAlarm 			  */
-#define PI_ITEM_K_PORT_ACTION			0x1E 	/* PORTAction 				  */
-#define PI_ITEM_K_FLUSH_TIME			0x20 	/* Chars_Set 				  */
-#define PI_ITEM_K_MAC_T_REQ				0x29 	/* MACTReq 					  */
-#define PI_ITEM_K_EMAC_RING_PURGER		0x2A 	/* eMACRingPurgerEnable		  */
-#define PI_ITEM_K_EMAC_RTOKEN_TIMEOUT	0x2B 	/* eMACRestrictedTokenTimeout */
-#define PI_ITEM_K_FDX_ENB_DIS			0x2C 	/* eFDXEnable				  */
-#define PI_ITEM_K_MAX					0x2C 	/* Must equal high item		  */
+#घोषणा PI_ITEM_K_EOL					0x00 	/* End-of-Item list 		  */
+#घोषणा PI_ITEM_K_T_REQ					0x01 	/* DECnet T_REQ 			  */
+#घोषणा PI_ITEM_K_TVX					0x02 	/* DECnet TVX 				  */
+#घोषणा PI_ITEM_K_RESTRICTED_TOKEN		0x03 	/* DECnet Restricted Token 	  */
+#घोषणा PI_ITEM_K_LEM_THRESHOLD			0x04 	/* DECnet LEM Threshold 	  */
+#घोषणा PI_ITEM_K_RING_PURGER			0x05 	/* DECnet Ring Purger Enable  */
+#घोषणा PI_ITEM_K_CNTR_INTERVAL			0x06 	/* Chars_Set 				  */
+#घोषणा PI_ITEM_K_IND_GROUP_PROM		0x07 	/* Filters_Set 				  */
+#घोषणा PI_ITEM_K_GROUP_PROM			0x08 	/* Filters_Set 				  */
+#घोषणा PI_ITEM_K_BROADCAST				0x09 	/* Filters_Set 				  */
+#घोषणा PI_ITEM_K_SMT_PROM				0x0A 	/* Filters_Set				  */
+#घोषणा PI_ITEM_K_SMT_USER				0x0B 	/* Filters_Set 				  */
+#घोषणा PI_ITEM_K_RESERVED				0x0C 	/* Filters_Set 				  */
+#घोषणा PI_ITEM_K_IMPLEMENTOR			0x0D 	/* Filters_Set 				  */
+#घोषणा PI_ITEM_K_LOOPBACK_MODE			0x0E 	/* Chars_Set 				  */
+#घोषणा PI_ITEM_K_CONFIG_POLICY			0x10 	/* SMTConfigPolicy 			  */
+#घोषणा PI_ITEM_K_CON_POLICY			0x11 	/* SMTConnectionPolicy 		  */
+#घोषणा PI_ITEM_K_T_NOTIFY				0x12 	/* SMTTNotअगरy 				  */
+#घोषणा PI_ITEM_K_STATION_ACTION		0x13 	/* SMTStationAction			  */
+#घोषणा PI_ITEM_K_MAC_PATHS_REQ	   		0x15 	/* MACPathsRequested 		  */
+#घोषणा PI_ITEM_K_MAC_ACTION			0x17 	/* MACAction 				  */
+#घोषणा PI_ITEM_K_CON_POLICIES			0x18 	/* PORTConnectionPolicies	  */
+#घोषणा PI_ITEM_K_PORT_PATHS_REQ		0x19 	/* PORTPathsRequested 		  */
+#घोषणा PI_ITEM_K_MAC_LOOP_TIME			0x1A 	/* PORTMACLoopTime 			  */
+#घोषणा PI_ITEM_K_TB_MAX				0x1B 	/* PORTTBMax 				  */
+#घोषणा PI_ITEM_K_LER_CUTOFF			0x1C 	/* PORTLerCutoff 			  */
+#घोषणा PI_ITEM_K_LER_ALARM				0x1D 	/* PORTLerAlarm 			  */
+#घोषणा PI_ITEM_K_PORT_ACTION			0x1E 	/* PORTAction 				  */
+#घोषणा PI_ITEM_K_FLUSH_TIME			0x20 	/* Chars_Set 				  */
+#घोषणा PI_ITEM_K_MAC_T_REQ				0x29 	/* MACTReq 					  */
+#घोषणा PI_ITEM_K_EMAC_RING_PURGER		0x2A 	/* eMACRingPurgerEnable		  */
+#घोषणा PI_ITEM_K_EMAC_RTOKEN_TIMEOUT	0x2B 	/* eMACRestrictedTokenTimeout */
+#घोषणा PI_ITEM_K_FDX_ENB_DIS			0x2C 	/* eFDXEnable				  */
+#घोषणा PI_ITEM_K_MAX					0x2C 	/* Must equal high item		  */
 
-/* Values for some of the items */
+/* Values क्रम some of the items */
 
-#define PI_K_FALSE						0	   /* Generic false */
-#define PI_K_TRUE						1	   /* Generic true  */
+#घोषणा PI_K_FALSE						0	   /* Generic false */
+#घोषणा PI_K_TRUE						1	   /* Generic true  */
 
-#define PI_SNMP_K_TRUE					1	   /* SNMP true/false values */
-#define PI_SNMP_K_FALSE					2
+#घोषणा PI_SNMP_K_TRUE					1	   /* SNMP true/false values */
+#घोषणा PI_SNMP_K_FALSE					2
 
-#define PI_FSTATE_K_BLOCK				0	   /* Filter State */
-#define PI_FSTATE_K_PASS				1
+#घोषणा PI_FSTATE_K_BLOCK				0	   /* Filter State */
+#घोषणा PI_FSTATE_K_PASS				1
 
-/* Define command return codes */
+/* Define command वापस codes */
 
-#define PI_RSP_K_SUCCESS				0x00
-#define PI_RSP_K_FAILURE				0x01
-#define PI_RSP_K_WARNING				0x02
-#define PI_RSP_K_LOOP_MODE_BAD			0x03
-#define PI_RSP_K_ITEM_CODE_BAD			0x04
-#define PI_RSP_K_TVX_BAD				0x05
-#define PI_RSP_K_TREQ_BAD				0x06
-#define PI_RSP_K_TOKEN_BAD				0x07
-#define PI_RSP_K_NO_EOL					0x0C
-#define PI_RSP_K_FILTER_STATE_BAD		0x0D
-#define PI_RSP_K_CMD_TYPE_BAD			0x0E
-#define PI_RSP_K_ADAPTER_STATE_BAD		0x0F
-#define PI_RSP_K_RING_PURGER_BAD		0x10
-#define PI_RSP_K_LEM_THRESHOLD_BAD		0x11
-#define PI_RSP_K_LOOP_NOT_SUPPORTED		0x12
-#define PI_RSP_K_FLUSH_TIME_BAD			0x13
-#define PI_RSP_K_NOT_IMPLEMENTED		0x14
-#define PI_RSP_K_CONFIG_POLICY_BAD		0x15
-#define PI_RSP_K_STATION_ACTION_BAD		0x16
-#define PI_RSP_K_MAC_ACTION_BAD			0x17
-#define PI_RSP_K_CON_POLICIES_BAD		0x18
-#define PI_RSP_K_MAC_LOOP_TIME_BAD		0x19
-#define PI_RSP_K_TB_MAX_BAD				0x1A
-#define PI_RSP_K_LER_CUTOFF_BAD			0x1B
-#define PI_RSP_K_LER_ALARM_BAD			0x1C
-#define PI_RSP_K_MAC_PATHS_REQ_BAD		0x1D
-#define PI_RSP_K_MAC_T_REQ_BAD			0x1E
-#define PI_RSP_K_EMAC_RING_PURGER_BAD	0x1F
-#define PI_RSP_K_EMAC_RTOKEN_TIME_BAD	0x20
-#define PI_RSP_K_NO_SUCH_ENTRY			0x21
-#define PI_RSP_K_T_NOTIFY_BAD			0x22
-#define PI_RSP_K_TR_MAX_EXP_BAD			0x23
-#define PI_RSP_K_MAC_FRM_ERR_THR_BAD	0x24
-#define PI_RSP_K_MAX_T_REQ_BAD			0x25
-#define PI_RSP_K_FDX_ENB_DIS_BAD		0x26
-#define PI_RSP_K_ITEM_INDEX_BAD			0x27
-#define PI_RSP_K_PORT_ACTION_BAD		0x28
+#घोषणा PI_RSP_K_SUCCESS				0x00
+#घोषणा PI_RSP_K_FAILURE				0x01
+#घोषणा PI_RSP_K_WARNING				0x02
+#घोषणा PI_RSP_K_LOOP_MODE_BAD			0x03
+#घोषणा PI_RSP_K_ITEM_CODE_BAD			0x04
+#घोषणा PI_RSP_K_TVX_BAD				0x05
+#घोषणा PI_RSP_K_TREQ_BAD				0x06
+#घोषणा PI_RSP_K_TOKEN_BAD				0x07
+#घोषणा PI_RSP_K_NO_EOL					0x0C
+#घोषणा PI_RSP_K_FILTER_STATE_BAD		0x0D
+#घोषणा PI_RSP_K_CMD_TYPE_BAD			0x0E
+#घोषणा PI_RSP_K_ADAPTER_STATE_BAD		0x0F
+#घोषणा PI_RSP_K_RING_PURGER_BAD		0x10
+#घोषणा PI_RSP_K_LEM_THRESHOLD_BAD		0x11
+#घोषणा PI_RSP_K_LOOP_NOT_SUPPORTED		0x12
+#घोषणा PI_RSP_K_FLUSH_TIME_BAD			0x13
+#घोषणा PI_RSP_K_NOT_IMPLEMENTED		0x14
+#घोषणा PI_RSP_K_CONFIG_POLICY_BAD		0x15
+#घोषणा PI_RSP_K_STATION_ACTION_BAD		0x16
+#घोषणा PI_RSP_K_MAC_ACTION_BAD			0x17
+#घोषणा PI_RSP_K_CON_POLICIES_BAD		0x18
+#घोषणा PI_RSP_K_MAC_LOOP_TIME_BAD		0x19
+#घोषणा PI_RSP_K_TB_MAX_BAD				0x1A
+#घोषणा PI_RSP_K_LER_CUTOFF_BAD			0x1B
+#घोषणा PI_RSP_K_LER_ALARM_BAD			0x1C
+#घोषणा PI_RSP_K_MAC_PATHS_REQ_BAD		0x1D
+#घोषणा PI_RSP_K_MAC_T_REQ_BAD			0x1E
+#घोषणा PI_RSP_K_EMAC_RING_PURGER_BAD	0x1F
+#घोषणा PI_RSP_K_EMAC_RTOKEN_TIME_BAD	0x20
+#घोषणा PI_RSP_K_NO_SUCH_ENTRY			0x21
+#घोषणा PI_RSP_K_T_NOTIFY_BAD			0x22
+#घोषणा PI_RSP_K_TR_MAX_EXP_BAD			0x23
+#घोषणा PI_RSP_K_MAC_FRM_ERR_THR_BAD	0x24
+#घोषणा PI_RSP_K_MAX_T_REQ_BAD			0x25
+#घोषणा PI_RSP_K_FDX_ENB_DIS_BAD		0x26
+#घोषणा PI_RSP_K_ITEM_INDEX_BAD			0x27
+#घोषणा PI_RSP_K_PORT_ACTION_BAD		0x28
 
-/* Commonly used structures */
+/* Commonly used काष्ठाures */
 
-typedef struct									/* Item list */
-	{
+प्रकार काष्ठा									/* Item list */
+	अणु
 	PI_UINT32  item_code;
 	PI_UINT32  value;
-	} PI_ITEM_LIST;
+	पूर्ण PI_ITEM_LIST;
 
-typedef struct									/* Response header */
-	{
+प्रकार काष्ठा									/* Response header */
+	अणु
 	PI_UINT32  reserved;
 	PI_UINT32  cmd_type;
 	PI_UINT32  status;
-	} PI_RSP_HEADER;
+	पूर्ण PI_RSP_HEADER;
 
 
 /* Start Command */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32  cmd_type;
-	} PI_CMD_START_REQ;
+	पूर्ण PI_CMD_START_REQ;
 
 /* Start Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
-	} PI_CMD_START_RSP;
+	पूर्ण PI_CMD_START_RSP;
 
 /* Filters_Set Request */
 
-#define PI_CMD_FILTERS_SET_K_ITEMS_MAX  63		/* Fits in a 512 byte buffer */
+#घोषणा PI_CMD_FILTERS_SET_K_ITEMS_MAX  63		/* Fits in a 512 byte buffer */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32		cmd_type;
 	PI_ITEM_LIST	item[PI_CMD_FILTERS_SET_K_ITEMS_MAX];
-	} PI_CMD_FILTERS_SET_REQ;
+	पूर्ण PI_CMD_FILTERS_SET_REQ;
 
 /* Filters_Set Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
-	} PI_CMD_FILTERS_SET_RSP;
+	पूर्ण PI_CMD_FILTERS_SET_RSP;
 
 /* Filters_Get Request */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32		cmd_type;
-	} PI_CMD_FILTERS_GET_REQ;
+	पूर्ण PI_CMD_FILTERS_GET_REQ;
 
 /* Filters_Get Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
 	PI_UINT32		ind_group_prom;
 	PI_UINT32		group_prom;
@@ -327,88 +328,88 @@ typedef struct
 	PI_UINT32		smt_user;
 	PI_UINT32		reserved_all;
 	PI_UINT32		implementor_all;
-	} PI_CMD_FILTERS_GET_RSP;
+	पूर्ण PI_CMD_FILTERS_GET_RSP;
 
 
 /* Chars_Set Request */
 
-#define PI_CMD_CHARS_SET_K_ITEMS_MAX 42		/* Fits in a 512 byte buffer */
+#घोषणा PI_CMD_CHARS_SET_K_ITEMS_MAX 42		/* Fits in a 512 byte buffer */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32		cmd_type;
-	struct							  		/* Item list */
-		{
+	काष्ठा							  		/* Item list */
+		अणु
 		PI_UINT32	item_code;
 		PI_UINT32	value;
 		PI_UINT32	item_index;
-		} item[PI_CMD_CHARS_SET_K_ITEMS_MAX];
-	} PI_CMD_CHARS_SET_REQ;
+		पूर्ण item[PI_CMD_CHARS_SET_K_ITEMS_MAX];
+	पूर्ण PI_CMD_CHARS_SET_REQ;
 
 /* Chars_Set Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
-	} PI_CMD_CHARS_SET_RSP;
+	पूर्ण PI_CMD_CHARS_SET_RSP;
 
 
 /* SNMP_Set Request */
 
-#define PI_CMD_SNMP_SET_K_ITEMS_MAX 42	   	/* Fits in a 512 byte buffer */
+#घोषणा PI_CMD_SNMP_SET_K_ITEMS_MAX 42	   	/* Fits in a 512 byte buffer */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32		cmd_type;
-	struct							   		/* Item list */
-		{
+	काष्ठा							   		/* Item list */
+		अणु
 		PI_UINT32	item_code;
 		PI_UINT32	value;
 		PI_UINT32	item_index;
-		} item[PI_CMD_SNMP_SET_K_ITEMS_MAX];
-	} PI_CMD_SNMP_SET_REQ;
+		पूर्ण item[PI_CMD_SNMP_SET_K_ITEMS_MAX];
+	पूर्ण PI_CMD_SNMP_SET_REQ;
 
 /* SNMP_Set Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
-	} PI_CMD_SNMP_SET_RSP;
+	पूर्ण PI_CMD_SNMP_SET_RSP;
 
 
 /* SMT_MIB_Set Request */
 
-#define PI_CMD_SMT_MIB_SET_K_ITEMS_MAX 42	/* Max number of items */
+#घोषणा PI_CMD_SMT_MIB_SET_K_ITEMS_MAX 42	/* Max number of items */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32	cmd_type;
-	struct
-		{
+	काष्ठा
+		अणु
 		PI_UINT32	item_code;
 		PI_UINT32	value;
 		PI_UINT32	item_index;
-		} item[PI_CMD_SMT_MIB_SET_K_ITEMS_MAX];
-	} PI_CMD_SMT_MIB_SET_REQ;
+		पूर्ण item[PI_CMD_SMT_MIB_SET_K_ITEMS_MAX];
+	पूर्ण PI_CMD_SMT_MIB_SET_REQ;
 
 /* SMT_MIB_Set Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
-	} PI_CMD_SMT_MIB_SET_RSP;
+	पूर्ण PI_CMD_SMT_MIB_SET_RSP;
 
 /* SMT_MIB_Get Request */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32  cmd_type;
-	} PI_CMD_SMT_MIB_GET_REQ;
+	पूर्ण PI_CMD_SMT_MIB_GET_REQ;
 
 /* SMT_MIB_Get Response */
 
-typedef struct						  /* Refer to ANSI FDDI SMT Rev. 7.3 */
-	{
+प्रकार काष्ठा						  /* Refer to ANSI FDDI SMT Rev. 7.3 */
+	अणु
 	PI_RSP_HEADER  header;
 
 	/* SMT GROUP */
@@ -426,7 +427,7 @@ typedef struct						  /* Refer to ANSI FDDI SMT Rev. 7.3 */
 	PI_UINT32	   	smt_config_capabilities;
 	PI_UINT32	   	smt_config_policy;
 	PI_UINT32	   	smt_connection_policy;
-	PI_UINT32	   	smt_t_notify;
+	PI_UINT32	   	smt_t_notअगरy;
 	PI_UINT32	   	smt_stat_rpt_policy;
 	PI_UINT32	   	smt_trace_max_expiration;
 	PI_UINT32	   	smt_bypass_present;
@@ -435,8 +436,8 @@ typedef struct						  /* Refer to ANSI FDDI SMT Rev. 7.3 */
 	PI_UINT32	   	smt_remote_disconnect_flag;
 	PI_UINT32	   	smt_station_status;
 	PI_UINT32	   	smt_peer_wrap_flag;
-	PI_CNTR	   		smt_msg_time_stamp;
-	PI_CNTR	  		smt_transition_time_stamp;
+	PI_CNTR	   		smt_msg_समय_stamp;
+	PI_CNTR	  		smt_transition_समय_stamp;
 
 	/* MAC GROUP */
 
@@ -446,12 +447,12 @@ typedef struct						  /* Refer to ANSI FDDI SMT Rev. 7.3 */
 	PI_UINT32		mac_available_paths;
 	PI_UINT32		mac_current_path;
 	PI_LAN_ADDR		mac_upstream_nbr;
-	PI_LAN_ADDR		mac_downstream_nbr;
+	PI_LAN_ADDR		mac_करोwnstream_nbr;
 	PI_LAN_ADDR		mac_old_upstream_nbr;
-	PI_LAN_ADDR		mac_old_downstream_nbr;
+	PI_LAN_ADDR		mac_old_करोwnstream_nbr;
 	PI_UINT32	   	mac_dup_address_test;
 	PI_UINT32	   	mac_requested_paths;
-	PI_UINT32	   	mac_downstream_port_type;
+	PI_UINT32	   	mac_करोwnstream_port_type;
 	PI_LAN_ADDR		mac_smt_address;
 	PI_UINT32		mac_t_req;
 	PI_UINT32		mac_t_neg;
@@ -496,187 +497,187 @@ typedef struct						  /* Refer to ANSI FDDI SMT Rev. 7.3 */
 	PI_UINT32		port_ler_flag[PI_PHY_K_MAX];
 	PI_UINT32		port_hardware_present[PI_PHY_K_MAX];
 
-	/* GROUP for things that were added later, so must be at the end. */
+	/* GROUP क्रम things that were added later, so must be at the end. */
 
 	PI_CNTR	   		path_ring_latency;
 
-	} PI_CMD_SMT_MIB_GET_RSP;
+	पूर्ण PI_CMD_SMT_MIB_GET_RSP;
 
 
 /*
- *  Item and group code definitions for SMT 7.3 mandatory objects.  These
+ *  Item and group code definitions क्रम SMT 7.3 mandatory objects.  These
  *  definitions are to be used as appropriate in SMT_MIB_SET commands and
  *  certain host-sent SMT frames such as PMF Get and Set requests.  The
  *  codes have been taken from the MIB summary section of ANSI SMT 7.3.
  */
 
-#define PI_GRP_K_SMT_STATION_ID			0x100A
-#define PI_ITEM_K_SMT_STATION_ID		0x100B
-#define PI_ITEM_K_SMT_OP_VERS_ID		0x100D
-#define PI_ITEM_K_SMT_HI_VERS_ID		0x100E
-#define PI_ITEM_K_SMT_LO_VERS_ID		0x100F
-#define PI_ITEM_K_SMT_USER_DATA			0x1011
-#define PI_ITEM_K_SMT_MIB_VERS_ID	  	0x1012
+#घोषणा PI_GRP_K_SMT_STATION_ID			0x100A
+#घोषणा PI_ITEM_K_SMT_STATION_ID		0x100B
+#घोषणा PI_ITEM_K_SMT_OP_VERS_ID		0x100D
+#घोषणा PI_ITEM_K_SMT_HI_VERS_ID		0x100E
+#घोषणा PI_ITEM_K_SMT_LO_VERS_ID		0x100F
+#घोषणा PI_ITEM_K_SMT_USER_DATA			0x1011
+#घोषणा PI_ITEM_K_SMT_MIB_VERS_ID	  	0x1012
 
-#define PI_GRP_K_SMT_STATION_CONFIG		0x1014
-#define PI_ITEM_K_SMT_MAC_CT			0x1015
-#define PI_ITEM_K_SMT_NON_MASTER_CT		0x1016
-#define PI_ITEM_K_SMT_MASTER_CT			0x1017
-#define PI_ITEM_K_SMT_AVAIL_PATHS		0x1018
-#define PI_ITEM_K_SMT_CONFIG_CAPS		0x1019
-#define PI_ITEM_K_SMT_CONFIG_POL		0x101A
-#define PI_ITEM_K_SMT_CONN_POL			0x101B
-#define PI_ITEM_K_SMT_T_NOTIFY			0x101D
-#define PI_ITEM_K_SMT_STAT_POL			0x101E
-#define PI_ITEM_K_SMT_TR_MAX_EXP		0x101F
-#define PI_ITEM_K_SMT_PORT_INDEXES		0x1020
-#define PI_ITEM_K_SMT_MAC_INDEXES		0x1021
-#define PI_ITEM_K_SMT_BYPASS_PRESENT	0x1022
+#घोषणा PI_GRP_K_SMT_STATION_CONFIG		0x1014
+#घोषणा PI_ITEM_K_SMT_MAC_CT			0x1015
+#घोषणा PI_ITEM_K_SMT_NON_MASTER_CT		0x1016
+#घोषणा PI_ITEM_K_SMT_MASTER_CT			0x1017
+#घोषणा PI_ITEM_K_SMT_AVAIL_PATHS		0x1018
+#घोषणा PI_ITEM_K_SMT_CONFIG_CAPS		0x1019
+#घोषणा PI_ITEM_K_SMT_CONFIG_POL		0x101A
+#घोषणा PI_ITEM_K_SMT_CONN_POL			0x101B
+#घोषणा PI_ITEM_K_SMT_T_NOTIFY			0x101D
+#घोषणा PI_ITEM_K_SMT_STAT_POL			0x101E
+#घोषणा PI_ITEM_K_SMT_TR_MAX_EXP		0x101F
+#घोषणा PI_ITEM_K_SMT_PORT_INDEXES		0x1020
+#घोषणा PI_ITEM_K_SMT_MAC_INDEXES		0x1021
+#घोषणा PI_ITEM_K_SMT_BYPASS_PRESENT	0x1022
 
-#define PI_GRP_K_SMT_STATUS				0x1028
-#define PI_ITEM_K_SMT_ECM_STATE			0x1029
-#define PI_ITEM_K_SMT_CF_STATE		 	0x102A
-#define PI_ITEM_K_SMT_REM_DISC_FLAG		0x102C
-#define PI_ITEM_K_SMT_STATION_STATUS	0x102D
-#define PI_ITEM_K_SMT_PEER_WRAP_FLAG	0x102E
+#घोषणा PI_GRP_K_SMT_STATUS				0x1028
+#घोषणा PI_ITEM_K_SMT_ECM_STATE			0x1029
+#घोषणा PI_ITEM_K_SMT_CF_STATE		 	0x102A
+#घोषणा PI_ITEM_K_SMT_REM_DISC_FLAG		0x102C
+#घोषणा PI_ITEM_K_SMT_STATION_STATUS	0x102D
+#घोषणा PI_ITEM_K_SMT_PEER_WRAP_FLAG	0x102E
 
-#define PI_GRP_K_SMT_MIB_OPERATION	 	0x1032
-#define PI_ITEM_K_SMT_MSG_TIME_STAMP 	0x1033
-#define PI_ITEM_K_SMT_TRN_TIME_STAMP 	0x1034
+#घोषणा PI_GRP_K_SMT_MIB_OPERATION	 	0x1032
+#घोषणा PI_ITEM_K_SMT_MSG_TIME_STAMP 	0x1033
+#घोषणा PI_ITEM_K_SMT_TRN_TIME_STAMP 	0x1034
 
-#define PI_ITEM_K_SMT_STATION_ACT		0x103C
+#घोषणा PI_ITEM_K_SMT_STATION_ACT		0x103C
 
-#define PI_GRP_K_MAC_CAPABILITIES	  	0x200A
-#define PI_ITEM_K_MAC_FRM_STAT_FUNC		0x200B
-#define PI_ITEM_K_MAC_T_MAX_CAP			0x200D
-#define PI_ITEM_K_MAC_TVX_CAP		  	0x200E
+#घोषणा PI_GRP_K_MAC_CAPABILITIES	  	0x200A
+#घोषणा PI_ITEM_K_MAC_FRM_STAT_FUNC		0x200B
+#घोषणा PI_ITEM_K_MAC_T_MAX_CAP			0x200D
+#घोषणा PI_ITEM_K_MAC_TVX_CAP		  	0x200E
 
-#define PI_GRP_K_MAC_CONFIG				0x2014
-#define PI_ITEM_K_MAC_AVAIL_PATHS	  	0x2016
-#define PI_ITEM_K_MAC_CURRENT_PATH	 	0x2017
-#define PI_ITEM_K_MAC_UP_NBR			0x2018
-#define PI_ITEM_K_MAC_DOWN_NBR			0x2019
-#define PI_ITEM_K_MAC_OLD_UP_NBR	 	0x201A
-#define PI_ITEM_K_MAC_OLD_DOWN_NBR	 	0x201B
-#define PI_ITEM_K_MAC_DUP_ADDR_TEST		0x201D
-#define PI_ITEM_K_MAC_REQ_PATHS			0x2020
-#define PI_ITEM_K_MAC_DOWN_PORT_TYPE   	0x2021
-#define PI_ITEM_K_MAC_INDEX				0x2022
+#घोषणा PI_GRP_K_MAC_CONFIG				0x2014
+#घोषणा PI_ITEM_K_MAC_AVAIL_PATHS	  	0x2016
+#घोषणा PI_ITEM_K_MAC_CURRENT_PATH	 	0x2017
+#घोषणा PI_ITEM_K_MAC_UP_NBR			0x2018
+#घोषणा PI_ITEM_K_MAC_DOWN_NBR			0x2019
+#घोषणा PI_ITEM_K_MAC_OLD_UP_NBR	 	0x201A
+#घोषणा PI_ITEM_K_MAC_OLD_DOWN_NBR	 	0x201B
+#घोषणा PI_ITEM_K_MAC_DUP_ADDR_TEST		0x201D
+#घोषणा PI_ITEM_K_MAC_REQ_PATHS			0x2020
+#घोषणा PI_ITEM_K_MAC_DOWN_PORT_TYPE   	0x2021
+#घोषणा PI_ITEM_K_MAC_INDEX				0x2022
 
-#define PI_GRP_K_MAC_ADDRESS			0x2028
-#define PI_ITEM_K_MAC_SMT_ADDRESS		0x2029
+#घोषणा PI_GRP_K_MAC_ADDRESS			0x2028
+#घोषणा PI_ITEM_K_MAC_SMT_ADDRESS		0x2029
 
-#define PI_GRP_K_MAC_OPERATION			0x2032
-#define PI_ITEM_K_MAC_TREQ				0x2033
-#define PI_ITEM_K_MAC_TNEG				0x2034
-#define PI_ITEM_K_MAC_TMAX				0x2035
-#define PI_ITEM_K_MAC_TVX_VALUE			0x2036
+#घोषणा PI_GRP_K_MAC_OPERATION			0x2032
+#घोषणा PI_ITEM_K_MAC_TREQ				0x2033
+#घोषणा PI_ITEM_K_MAC_TNEG				0x2034
+#घोषणा PI_ITEM_K_MAC_TMAX				0x2035
+#घोषणा PI_ITEM_K_MAC_TVX_VALUE			0x2036
 
-#define PI_GRP_K_MAC_COUNTERS			0x2046
-#define PI_ITEM_K_MAC_FRAME_CT			0x2047
-#define PI_ITEM_K_MAC_COPIED_CT			0x2048
-#define PI_ITEM_K_MAC_TRANSMIT_CT		0x2049
-#define PI_ITEM_K_MAC_ERROR_CT			0x2051
-#define PI_ITEM_K_MAC_LOST_CT			0x2052
+#घोषणा PI_GRP_K_MAC_COUNTERS			0x2046
+#घोषणा PI_ITEM_K_MAC_FRAME_CT			0x2047
+#घोषणा PI_ITEM_K_MAC_COPIED_CT			0x2048
+#घोषणा PI_ITEM_K_MAC_TRANSMIT_CT		0x2049
+#घोषणा PI_ITEM_K_MAC_ERROR_CT			0x2051
+#घोषणा PI_ITEM_K_MAC_LOST_CT			0x2052
 
-#define PI_GRP_K_MAC_FRM_ERR_COND		0x205A
-#define PI_ITEM_K_MAC_FRM_ERR_THR		0x205F
-#define PI_ITEM_K_MAC_FRM_ERR_RAT		0x2060
+#घोषणा PI_GRP_K_MAC_FRM_ERR_COND		0x205A
+#घोषणा PI_ITEM_K_MAC_FRM_ERR_THR		0x205F
+#घोषणा PI_ITEM_K_MAC_FRM_ERR_RAT		0x2060
 
-#define PI_GRP_K_MAC_STATUS				0x206E
-#define PI_ITEM_K_MAC_RMT_STATE			0x206F
-#define PI_ITEM_K_MAC_DA_FLAG			0x2070
-#define PI_ITEM_K_MAC_UNDA_FLAG			0x2071
-#define PI_ITEM_K_MAC_FRM_ERR_FLAG		0x2072
-#define PI_ITEM_K_MAC_MA_UNIT_AVAIL		0x2074
-#define PI_ITEM_K_MAC_HW_PRESENT		0x2075
-#define PI_ITEM_K_MAC_MA_UNIT_ENAB		0x2076
+#घोषणा PI_GRP_K_MAC_STATUS				0x206E
+#घोषणा PI_ITEM_K_MAC_RMT_STATE			0x206F
+#घोषणा PI_ITEM_K_MAC_DA_FLAG			0x2070
+#घोषणा PI_ITEM_K_MAC_UNDA_FLAG			0x2071
+#घोषणा PI_ITEM_K_MAC_FRM_ERR_FLAG		0x2072
+#घोषणा PI_ITEM_K_MAC_MA_UNIT_AVAIL		0x2074
+#घोषणा PI_ITEM_K_MAC_HW_PRESENT		0x2075
+#घोषणा PI_ITEM_K_MAC_MA_UNIT_ENAB		0x2076
 
-#define PI_GRP_K_PATH_CONFIG			0x320A
-#define PI_ITEM_K_PATH_INDEX			0x320B
-#define PI_ITEM_K_PATH_CONFIGURATION 	0x3212
-#define PI_ITEM_K_PATH_TVX_LB			0x3215
-#define PI_ITEM_K_PATH_T_MAX_LB			0x3216
-#define PI_ITEM_K_PATH_MAX_T_REQ		0x3217
+#घोषणा PI_GRP_K_PATH_CONFIG			0x320A
+#घोषणा PI_ITEM_K_PATH_INDEX			0x320B
+#घोषणा PI_ITEM_K_PATH_CONFIGURATION 	0x3212
+#घोषणा PI_ITEM_K_PATH_TVX_LB			0x3215
+#घोषणा PI_ITEM_K_PATH_T_MAX_LB			0x3216
+#घोषणा PI_ITEM_K_PATH_MAX_T_REQ		0x3217
 
-#define PI_GRP_K_PORT_CONFIG			0x400A
-#define PI_ITEM_K_PORT_MY_TYPE			0x400C
-#define PI_ITEM_K_PORT_NBR_TYPE			0x400D
-#define PI_ITEM_K_PORT_CONN_POLS		0x400E
-#define PI_ITEM_K_PORT_MAC_INDICATED  	0x400F
-#define PI_ITEM_K_PORT_CURRENT_PATH		0x4010
-#define PI_ITEM_K_PORT_REQ_PATHS		0x4011
-#define PI_ITEM_K_PORT_MAC_PLACEMENT 	0x4012
-#define PI_ITEM_K_PORT_AVAIL_PATHS		0x4013
-#define PI_ITEM_K_PORT_PMD_CLASS		0x4016
-#define PI_ITEM_K_PORT_CONN_CAPS		0x4017
-#define PI_ITEM_K_PORT_INDEX			0x401D
+#घोषणा PI_GRP_K_PORT_CONFIG			0x400A
+#घोषणा PI_ITEM_K_PORT_MY_TYPE			0x400C
+#घोषणा PI_ITEM_K_PORT_NBR_TYPE			0x400D
+#घोषणा PI_ITEM_K_PORT_CONN_POLS		0x400E
+#घोषणा PI_ITEM_K_PORT_MAC_INDICATED  	0x400F
+#घोषणा PI_ITEM_K_PORT_CURRENT_PATH		0x4010
+#घोषणा PI_ITEM_K_PORT_REQ_PATHS		0x4011
+#घोषणा PI_ITEM_K_PORT_MAC_PLACEMENT 	0x4012
+#घोषणा PI_ITEM_K_PORT_AVAIL_PATHS		0x4013
+#घोषणा PI_ITEM_K_PORT_PMD_CLASS		0x4016
+#घोषणा PI_ITEM_K_PORT_CONN_CAPS		0x4017
+#घोषणा PI_ITEM_K_PORT_INDEX			0x401D
 
-#define PI_GRP_K_PORT_OPERATION			0x401E
-#define PI_ITEM_K_PORT_BS_FLAG		 	0x4021
+#घोषणा PI_GRP_K_PORT_OPERATION			0x401E
+#घोषणा PI_ITEM_K_PORT_BS_FLAG		 	0x4021
 
-#define PI_GRP_K_PORT_ERR_CNTRS			0x4028
-#define PI_ITEM_K_PORT_LCT_FAIL_CT	 	0x402A
+#घोषणा PI_GRP_K_PORT_ERR_CNTRS			0x4028
+#घोषणा PI_ITEM_K_PORT_LCT_FAIL_CT	 	0x402A
 
-#define PI_GRP_K_PORT_LER			  	0x4032
-#define PI_ITEM_K_PORT_LER_ESTIMATE		0x4033
-#define PI_ITEM_K_PORT_LEM_REJ_CT		0x4034
-#define PI_ITEM_K_PORT_LEM_CT			0x4035
-#define PI_ITEM_K_PORT_LER_CUTOFF		0x403A
-#define PI_ITEM_K_PORT_LER_ALARM		0x403B
+#घोषणा PI_GRP_K_PORT_LER			  	0x4032
+#घोषणा PI_ITEM_K_PORT_LER_ESTIMATE		0x4033
+#घोषणा PI_ITEM_K_PORT_LEM_REJ_CT		0x4034
+#घोषणा PI_ITEM_K_PORT_LEM_CT			0x4035
+#घोषणा PI_ITEM_K_PORT_LER_CUTOFF		0x403A
+#घोषणा PI_ITEM_K_PORT_LER_ALARM		0x403B
 
-#define PI_GRP_K_PORT_STATUS			0x403C
-#define PI_ITEM_K_PORT_CONNECT_STATE	0x403D
-#define PI_ITEM_K_PORT_PCM_STATE		0x403E
-#define PI_ITEM_K_PORT_PC_WITHHOLD		0x403F
-#define PI_ITEM_K_PORT_LER_FLAG			0x4040
-#define PI_ITEM_K_PORT_HW_PRESENT		0x4041
+#घोषणा PI_GRP_K_PORT_STATUS			0x403C
+#घोषणा PI_ITEM_K_PORT_CONNECT_STATE	0x403D
+#घोषणा PI_ITEM_K_PORT_PCM_STATE		0x403E
+#घोषणा PI_ITEM_K_PORT_PC_WITHHOLD		0x403F
+#घोषणा PI_ITEM_K_PORT_LER_FLAG			0x4040
+#घोषणा PI_ITEM_K_PORT_HW_PRESENT		0x4041
 
-#define PI_ITEM_K_PORT_ACT				0x4046
+#घोषणा PI_ITEM_K_PORT_ACT				0x4046
 
 /* Addr_Filter_Set Request */
 
-#define PI_CMD_ADDR_FILTER_K_SIZE   62
+#घोषणा PI_CMD_ADDR_FILTER_K_SIZE   62
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32	cmd_type;
 	PI_LAN_ADDR	entry[PI_CMD_ADDR_FILTER_K_SIZE];
-	} PI_CMD_ADDR_FILTER_SET_REQ;
+	पूर्ण PI_CMD_ADDR_FILTER_SET_REQ;
 
 /* Addr_Filter_Set Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
-	} PI_CMD_ADDR_FILTER_SET_RSP;
+	पूर्ण PI_CMD_ADDR_FILTER_SET_RSP;
 
 /* Addr_Filter_Get Request */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32	cmd_type;
-	} PI_CMD_ADDR_FILTER_GET_REQ;
+	पूर्ण PI_CMD_ADDR_FILTER_GET_REQ;
 
 /* Addr_Filter_Get Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
 	PI_LAN_ADDR		entry[PI_CMD_ADDR_FILTER_K_SIZE];
-	} PI_CMD_ADDR_FILTER_GET_RSP;
+	पूर्ण PI_CMD_ADDR_FILTER_GET_RSP;
 
 /* Status_Chars_Get Request */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32  cmd_type;
-	} PI_CMD_STATUS_CHARS_GET_REQ;
+	पूर्ण PI_CMD_STATUS_CHARS_GET_REQ;
 
 /* Status_Chars_Get Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
 	PI_STATION_ID   station_id;						/* Station */
 	PI_UINT32		station_type;
@@ -687,7 +688,7 @@ typedef struct
 	PI_LAN_ADDR		link_addr;						/* Link */
 	PI_UINT32		t_req;
 	PI_UINT32		tvx;
-	PI_UINT32		token_timeout;
+	PI_UINT32		token_समयout;
 	PI_UINT32		purger_enb;
 	PI_UINT32		link_state;
 	PI_UINT32		tneg;
@@ -712,25 +713,25 @@ typedef struct
 	PI_UINT32		link_error_est[PI_PHY_K_MAX];
 	PI_UINT32		broken_reason[PI_PHY_K_MAX];
 	PI_UINT32		reject_reason[PI_PHY_K_MAX];
-	PI_UINT32		cntr_interval;					/* Miscellaneous */
+	PI_UINT32		cntr_पूर्णांकerval;					/* Miscellaneous */
 	PI_UINT32		module_rev;
 	PI_UINT32		firmware_rev;
 	PI_UINT32		mop_device_type;
 	PI_UINT32		phy_led[PI_PHY_K_MAX];
-	PI_UINT32		flush_time;
-	} PI_CMD_STATUS_CHARS_GET_RSP;
+	PI_UINT32		flush_समय;
+	पूर्ण PI_CMD_STATUS_CHARS_GET_RSP;
 
 /* FDDI_MIB_Get Request */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32  cmd_type;
-	} PI_CMD_FDDI_MIB_GET_REQ;
+	पूर्ण PI_CMD_FDDI_MIB_GET_REQ;
 
 /* FDDI_MIB_Get Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
 
 	/* SMT GROUP */
@@ -746,7 +747,7 @@ typedef struct
 	PI_UINT32		smt_config_capabilities;
 	PI_UINT32		smt_config_policy;
 	PI_UINT32		smt_connection_policy;
-	PI_UINT32		smt_t_notify;
+	PI_UINT32		smt_t_notअगरy;
 	PI_UINT32		smt_status_reporting;
 	PI_UINT32		smt_ecm_state;
 	PI_UINT32		smt_cf_state;
@@ -765,7 +766,7 @@ typedef struct
 	PI_LAN_ADDR		mac_old_upstream_nbr;
 	PI_UINT32		mac_dup_addr_test;
 	PI_UINT32		mac_paths_requested;
-	PI_UINT32		mac_downstream_port_type;
+	PI_UINT32		mac_करोwnstream_port_type;
 	PI_LAN_ADDR		mac_smt_address;
 	PI_UINT32		mac_t_req;
 	PI_UINT32		mac_t_neg;
@@ -797,7 +798,7 @@ typedef struct
 	PI_UINT32		port_paths_requested[PI_PHY_K_MAX];
 	PI_UINT32		port_mac_placement[PI_PHY_K_MAX];
 	PI_UINT32		port_available_paths[PI_PHY_K_MAX];
-	PI_UINT32		port_mac_loop_time[PI_PHY_K_MAX];
+	PI_UINT32		port_mac_loop_समय[PI_PHY_K_MAX];
 	PI_UINT32		port_tb_max[PI_PHY_K_MAX];
 	PI_UINT32		port_bs_flag[PI_PHY_K_MAX];
 	/*				port_lct_fail_cts[PI_PHY_K_MAX];	*/
@@ -823,19 +824,19 @@ typedef struct
 
 	/* CHIP SET GROUP => Does not need to be implemented */
 
-	} PI_CMD_FDDI_MIB_GET_RSP;
+	पूर्ण PI_CMD_FDDI_MIB_GET_RSP;
 
 /* DEC_Ext_MIB_Get Request */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32  cmd_type;
-	} PI_CMD_DEC_EXT_MIB_GET_REQ;
+	पूर्ण PI_CMD_DEC_EXT_MIB_GET_REQ;
 
 /* DEC_Ext_MIB_Get (efddi and efdx groups only) Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
 
 	/* SMT GROUP */
@@ -850,7 +851,7 @@ typedef struct
 	PI_UINT32		emac_frame_strip_mode;
 	PI_UINT32		emac_ring_error_reason;
 	PI_UINT32		emac_up_nbr_dup_addr_flag;
-	PI_UINT32		emac_restricted_token_timeout;
+	PI_UINT32		emac_restricted_token_समयout;
 
 	/* PORT GROUP */
 
@@ -864,10 +865,10 @@ typedef struct
 	PI_UINT32		efdx_op;					/* Valid only in SMT 7.3 */
 	PI_UINT32		efdx_state;					/* Valid only in SMT 7.3 */
 
-	} PI_CMD_DEC_EXT_MIB_GET_RSP;
+	पूर्ण PI_CMD_DEC_EXT_MIB_GET_RSP;
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_CNTR		traces_rcvd;					/* Station */
 	PI_CNTR		frame_cnt;						/* Link */
 	PI_CNTR		error_cnt;
@@ -902,146 +903,146 @@ typedef struct
 	PI_CNTR		lem_rejects[PI_PHY_K_MAX];
 	PI_CNTR		link_errors[PI_PHY_K_MAX];
 	PI_CNTR		connections[PI_PHY_K_MAX];
-	PI_CNTR		copied_cnt;			 			/* Valid only if using SMT 7.3 */
-	PI_CNTR		transmit_cnt;					/* Valid only if using SMT 7.3 */
+	PI_CNTR		copied_cnt;			 			/* Valid only अगर using SMT 7.3 */
+	PI_CNTR		transmit_cnt;					/* Valid only अगर using SMT 7.3 */
 	PI_CNTR		tokens;
-	} PI_CNTR_BLK;
+	पूर्ण PI_CNTR_BLK;
 
 /* Counters_Get Request */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32  cmd_type;
-	} PI_CMD_CNTRS_GET_REQ;
+	पूर्ण PI_CMD_CNTRS_GET_REQ;
 
 /* Counters_Get Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
-	PI_CNTR		time_since_reset;
+	PI_CNTR		समय_since_reset;
 	PI_CNTR_BLK		cntrs;
-	} PI_CMD_CNTRS_GET_RSP;
+	पूर्ण PI_CMD_CNTRS_GET_RSP;
 
 /* Counters_Set Request */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32	cmd_type;
 	PI_CNTR_BLK	cntrs;
-	} PI_CMD_CNTRS_SET_REQ;
+	पूर्ण PI_CMD_CNTRS_SET_REQ;
 
 /* Counters_Set Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
-	} PI_CMD_CNTRS_SET_RSP;
+	पूर्ण PI_CMD_CNTRS_SET_RSP;
 
 /* Error_Log_Clear Request */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32  cmd_type;
-	} PI_CMD_ERROR_LOG_CLEAR_REQ;
+	पूर्ण PI_CMD_ERROR_LOG_CLEAR_REQ;
 
 /* Error_Log_Clear Response */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
-	} PI_CMD_ERROR_LOG_CLEAR_RSP;
+	पूर्ण PI_CMD_ERROR_LOG_CLEAR_RSP;
 
 /* Error_Log_Get Request */
 
-#define PI_LOG_ENTRY_K_INDEX_MIN	0		/* Minimum index for entry */
+#घोषणा PI_LOG_ENTRY_K_INDEX_MIN	0		/* Minimum index क्रम entry */
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_UINT32  cmd_type;
 	PI_UINT32  entry_index;
-	} PI_CMD_ERROR_LOG_GET_REQ;
+	पूर्ण PI_CMD_ERROR_LOG_GET_REQ;
 
 /* Error_Log_Get Response */
 
-#define PI_K_LOG_FW_SIZE			111		/* Max number of fw longwords */
-#define PI_K_LOG_DIAG_SIZE	 		6		/* Max number of diag longwords */
+#घोषणा PI_K_LOG_FW_SIZE			111		/* Max number of fw दीर्घwords */
+#घोषणा PI_K_LOG_DIAG_SIZE	 		6		/* Max number of diag दीर्घwords */
 
-typedef struct
-	{
-	struct
-		{
+प्रकार काष्ठा
+	अणु
+	काष्ठा
+		अणु
 		PI_UINT32	fru_imp_mask;
 		PI_UINT32	test_id;
 		PI_UINT32	reserved[PI_K_LOG_DIAG_SIZE];
-		} diag;
+		पूर्ण diag;
 	PI_UINT32		fw[PI_K_LOG_FW_SIZE];
-	} PI_LOG_ENTRY;
+	पूर्ण PI_LOG_ENTRY;
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RSP_HEADER   header;
 	PI_UINT32		event_status;
 	PI_UINT32		caller_id;
-	PI_UINT32		timestamp_l;
-	PI_UINT32		timestamp_h;
-	PI_UINT32		write_count;
+	PI_UINT32		बारtamp_l;
+	PI_UINT32		बारtamp_h;
+	PI_UINT32		ग_लिखो_count;
 	PI_LOG_ENTRY	entry_info;
-	} PI_CMD_ERROR_LOG_GET_RSP;
+	पूर्ण PI_CMD_ERROR_LOG_GET_RSP;
 
-/* Define error log related constants and types.					*/
+/* Define error log related स्थिरants and types.					*/
 /*   Not all of the caller id's can occur.  The only ones currently */
 /*   implemented are: none, selftest, mfg, fw, console				*/
 
-#define PI_LOG_EVENT_STATUS_K_VALID		0	/* Valid Event Status 		*/
-#define PI_LOG_EVENT_STATUS_K_INVALID	1	/* Invalid Event Status 	*/
-#define PI_LOG_CALLER_ID_K_NONE		 	0	/* No caller 				*/
-#define PI_LOG_CALLER_ID_K_SELFTEST	 	1	/* Normal power-up selftest */
-#define PI_LOG_CALLER_ID_K_MFG		 	2	/* Mfg power-up selftest 	*/
-#define PI_LOG_CALLER_ID_K_ONLINE		3	/* On-line diagnostics 		*/
-#define PI_LOG_CALLER_ID_K_HW			4	/* Hardware 				*/
-#define PI_LOG_CALLER_ID_K_FW			5	/* Firmware 				*/
-#define PI_LOG_CALLER_ID_K_CNS_HW		6	/* CNS firmware 			*/
-#define PI_LOG_CALLER_ID_K_CNS_FW		7	/* CNS hardware 			*/
-#define PI_LOG_CALLER_ID_K_CONSOLE	 	8   /* Console Caller Id 		*/
+#घोषणा PI_LOG_EVENT_STATUS_K_VALID		0	/* Valid Event Status 		*/
+#घोषणा PI_LOG_EVENT_STATUS_K_INVALID	1	/* Invalid Event Status 	*/
+#घोषणा PI_LOG_CALLER_ID_K_NONE		 	0	/* No caller 				*/
+#घोषणा PI_LOG_CALLER_ID_K_SELFTEST	 	1	/* Normal घातer-up selftest */
+#घोषणा PI_LOG_CALLER_ID_K_MFG		 	2	/* Mfg घातer-up selftest 	*/
+#घोषणा PI_LOG_CALLER_ID_K_ONLINE		3	/* On-line diagnostics 		*/
+#घोषणा PI_LOG_CALLER_ID_K_HW			4	/* Hardware 				*/
+#घोषणा PI_LOG_CALLER_ID_K_FW			5	/* Firmware 				*/
+#घोषणा PI_LOG_CALLER_ID_K_CNS_HW		6	/* CNS firmware 			*/
+#घोषणा PI_LOG_CALLER_ID_K_CNS_FW		7	/* CNS hardware 			*/
+#घोषणा PI_LOG_CALLER_ID_K_CONSOLE	 	8   /* Console Caller Id 		*/
 
 /*
- *  Place all DMA commands in the following request and response structures
- *  to simplify code.
+ *  Place all DMA commands in the following request and response काष्ठाures
+ *  to simplअगरy code.
  */
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_UINT32					cmd_type;
 	PI_CMD_START_REQ			start;
 	PI_CMD_FILTERS_SET_REQ		filter_set;
 	PI_CMD_FILTERS_GET_REQ		filter_get;
-	PI_CMD_CHARS_SET_REQ		char_set;
+	PI_CMD_CHARS_SET_REQ		अक्षर_set;
 	PI_CMD_ADDR_FILTER_SET_REQ	addr_filter_set;
 	PI_CMD_ADDR_FILTER_GET_REQ	addr_filter_get;
-	PI_CMD_STATUS_CHARS_GET_REQ	stat_char_get;
+	PI_CMD_STATUS_CHARS_GET_REQ	stat_अक्षर_get;
 	PI_CMD_CNTRS_GET_REQ		cntrs_get;
 	PI_CMD_CNTRS_SET_REQ		cntrs_set;
 	PI_CMD_ERROR_LOG_CLEAR_REQ	error_log_clear;
-	PI_CMD_ERROR_LOG_GET_REQ	error_log_read;
+	PI_CMD_ERROR_LOG_GET_REQ	error_log_पढ़ो;
 	PI_CMD_SNMP_SET_REQ			snmp_set;
 	PI_CMD_FDDI_MIB_GET_REQ		fddi_mib_get;
 	PI_CMD_DEC_EXT_MIB_GET_REQ	dec_mib_get;
 	PI_CMD_SMT_MIB_SET_REQ		smt_mib_set;
 	PI_CMD_SMT_MIB_GET_REQ		smt_mib_get;
-	char						pad[PI_CMD_REQ_K_SIZE_MAX];
-	} PI_DMA_CMD_REQ;
+	अक्षर						pad[PI_CMD_REQ_K_SIZE_MAX];
+	पूर्ण PI_DMA_CMD_REQ;
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_RSP_HEADER				header;
 	PI_CMD_START_RSP			start;
 	PI_CMD_FILTERS_SET_RSP		filter_set;
 	PI_CMD_FILTERS_GET_RSP		filter_get;
-	PI_CMD_CHARS_SET_RSP		char_set;
+	PI_CMD_CHARS_SET_RSP		अक्षर_set;
 	PI_CMD_ADDR_FILTER_SET_RSP	addr_filter_set;
 	PI_CMD_ADDR_FILTER_GET_RSP	addr_filter_get;
-	PI_CMD_STATUS_CHARS_GET_RSP	stat_char_get;
+	PI_CMD_STATUS_CHARS_GET_RSP	stat_अक्षर_get;
 	PI_CMD_CNTRS_GET_RSP		cntrs_get;
 	PI_CMD_CNTRS_SET_RSP		cntrs_set;
 	PI_CMD_ERROR_LOG_CLEAR_RSP	error_log_clear;
@@ -1051,693 +1052,693 @@ typedef union
 	PI_CMD_DEC_EXT_MIB_GET_RSP	dec_mib_get;
 	PI_CMD_SMT_MIB_SET_RSP		smt_mib_set;
 	PI_CMD_SMT_MIB_GET_RSP		smt_mib_get;
-	char						pad[PI_CMD_RSP_K_SIZE_MAX];
-	} PI_DMA_CMD_RSP;
+	अक्षर						pad[PI_CMD_RSP_K_SIZE_MAX];
+	पूर्ण PI_DMA_CMD_RSP;
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_DMA_CMD_REQ	request;
 	PI_DMA_CMD_RSP	response;
-	} PI_DMA_CMD_BUFFER;
+	पूर्ण PI_DMA_CMD_BUFFER;
 
 
-/* Define format of Consumer Block (resident in host memory) */
+/* Define क्रमmat of Consumer Block (resident in host memory) */
 
-typedef struct
-	{
-	volatile PI_UINT32	xmt_rcv_data;
-	volatile PI_UINT32	reserved_1;
-	volatile PI_UINT32	smt_host;
-	volatile PI_UINT32	reserved_2;
-	volatile PI_UINT32	unsol;
-	volatile PI_UINT32	reserved_3;
-	volatile PI_UINT32	cmd_rsp;
-	volatile PI_UINT32	reserved_4;
-	volatile PI_UINT32	cmd_req;
-	volatile PI_UINT32	reserved_5;
-	} PI_CONSUMER_BLOCK;
+प्रकार काष्ठा
+	अणु
+	अस्थिर PI_UINT32	xmt_rcv_data;
+	अस्थिर PI_UINT32	reserved_1;
+	अस्थिर PI_UINT32	smt_host;
+	अस्थिर PI_UINT32	reserved_2;
+	अस्थिर PI_UINT32	unsol;
+	अस्थिर PI_UINT32	reserved_3;
+	अस्थिर PI_UINT32	cmd_rsp;
+	अस्थिर PI_UINT32	reserved_4;
+	अस्थिर PI_UINT32	cmd_req;
+	अस्थिर PI_UINT32	reserved_5;
+	पूर्ण PI_CONSUMER_BLOCK;
 
-#define PI_CONS_M_RCV_INDEX			0x000000FF
-#define PI_CONS_M_XMT_INDEX			0x00FF0000
-#define PI_CONS_V_RCV_INDEX			0
-#define PI_CONS_V_XMT_INDEX			16
+#घोषणा PI_CONS_M_RCV_INDEX			0x000000FF
+#घोषणा PI_CONS_M_XMT_INDEX			0x00FF0000
+#घोषणा PI_CONS_V_RCV_INDEX			0
+#घोषणा PI_CONS_V_XMT_INDEX			16
 
-/* Offsets into consumer block */
+/* Offsets पूर्णांकo consumer block */
 
-#define PI_CONS_BLK_K_XMT_RCV		0x00
-#define PI_CONS_BLK_K_SMT_HOST		0x08
-#define PI_CONS_BLK_K_UNSOL			0x10
-#define PI_CONS_BLK_K_CMD_RSP		0x18
-#define PI_CONS_BLK_K_CMD_REQ		0x20
+#घोषणा PI_CONS_BLK_K_XMT_RCV		0x00
+#घोषणा PI_CONS_BLK_K_SMT_HOST		0x08
+#घोषणा PI_CONS_BLK_K_UNSOL			0x10
+#घोषणा PI_CONS_BLK_K_CMD_RSP		0x18
+#घोषणा PI_CONS_BLK_K_CMD_REQ		0x20
 
-/* Offsets into descriptor block */
+/* Offsets पूर्णांकo descriptor block */
 
-#define PI_DESCR_BLK_K_RCV_DATA		0x0000
-#define PI_DESCR_BLK_K_XMT_DATA		0x0800
-#define PI_DESCR_BLK_K_SMT_HOST 	0x1000
-#define PI_DESCR_BLK_K_UNSOL		0x1200
-#define PI_DESCR_BLK_K_CMD_RSP		0x1280
-#define PI_DESCR_BLK_K_CMD_REQ		0x1300
+#घोषणा PI_DESCR_BLK_K_RCV_DATA		0x0000
+#घोषणा PI_DESCR_BLK_K_XMT_DATA		0x0800
+#घोषणा PI_DESCR_BLK_K_SMT_HOST 	0x1000
+#घोषणा PI_DESCR_BLK_K_UNSOL		0x1200
+#घोषणा PI_DESCR_BLK_K_CMD_RSP		0x1280
+#घोषणा PI_DESCR_BLK_K_CMD_REQ		0x1300
 
-/* Define format of a rcv descr (Rcv Data, Cmd Rsp, Unsolicited, SMT Host)   */
-/*   Note a field has been added for later versions of the PDQ to allow for  */
+/* Define क्रमmat of a rcv descr (Rcv Data, Cmd Rsp, Unsolicited, SMT Host)   */
+/*   Note a field has been added क्रम later versions of the PDQ to allow क्रम  */
 /*   finer granularity of the rcv buffer alignment.  For backwards		 	 */
-/*   compatibility, the two bits (which allow the rcv buffer to be longword  */
+/*   compatibility, the two bits (which allow the rcv buffer to be दीर्घword  */
 /*   aligned) have been added at the MBZ bits.  To support previous drivers, */
-/*   the MBZ definition is left intact.									  	 */
+/*   the MBZ definition is left पूर्णांकact.									  	 */
 
-typedef struct
-	{
-	PI_UINT32	long_0;
-	PI_UINT32	long_1;
-	} PI_RCV_DESCR;
+प्रकार काष्ठा
+	अणु
+	PI_UINT32	दीर्घ_0;
+	PI_UINT32	दीर्घ_1;
+	पूर्ण PI_RCV_DESCR;
 
-#define	PI_RCV_DESCR_M_SOP	  		0x80000000
-#define PI_RCV_DESCR_M_SEG_LEN_LO 	0x60000000
-#define PI_RCV_DESCR_M_MBZ	  		0x60000000
-#define PI_RCV_DESCR_M_SEG_LEN		0x1F800000
-#define PI_RCV_DESCR_M_SEG_LEN_HI	0x1FF00000
-#define PI_RCV_DESCR_M_SEG_CNT	  	0x000F0000
-#define PI_RCV_DESCR_M_BUFF_HI	  	0x0000FFFF
+#घोषणा	PI_RCV_DESCR_M_SOP	  		0x80000000
+#घोषणा PI_RCV_DESCR_M_SEG_LEN_LO 	0x60000000
+#घोषणा PI_RCV_DESCR_M_MBZ	  		0x60000000
+#घोषणा PI_RCV_DESCR_M_SEG_LEN		0x1F800000
+#घोषणा PI_RCV_DESCR_M_SEG_LEN_HI	0x1FF00000
+#घोषणा PI_RCV_DESCR_M_SEG_CNT	  	0x000F0000
+#घोषणा PI_RCV_DESCR_M_BUFF_HI	  	0x0000FFFF
 
-#define	PI_RCV_DESCR_V_SOP	  		31
-#define PI_RCV_DESCR_V_SEG_LEN_LO 	29
-#define PI_RCV_DESCR_V_MBZ	  		29
-#define PI_RCV_DESCR_V_SEG_LEN	  	23
-#define PI_RCV_DESCR_V_SEG_LEN_HI 	20
-#define PI_RCV_DESCR_V_SEG_CNT	  	16
-#define PI_RCV_DESCR_V_BUFF_HI	 	0
+#घोषणा	PI_RCV_DESCR_V_SOP	  		31
+#घोषणा PI_RCV_DESCR_V_SEG_LEN_LO 	29
+#घोषणा PI_RCV_DESCR_V_MBZ	  		29
+#घोषणा PI_RCV_DESCR_V_SEG_LEN	  	23
+#घोषणा PI_RCV_DESCR_V_SEG_LEN_HI 	20
+#घोषणा PI_RCV_DESCR_V_SEG_CNT	  	16
+#घोषणा PI_RCV_DESCR_V_BUFF_HI	 	0
 
-/* Define the format of a transmit descriptor (Xmt Data, Cmd Req) */
+/* Define the क्रमmat of a transmit descriptor (Xmt Data, Cmd Req) */
 
-typedef struct
-	{
-	PI_UINT32	long_0;
-	PI_UINT32	long_1;
-	} PI_XMT_DESCR;
+प्रकार काष्ठा
+	अणु
+	PI_UINT32	दीर्घ_0;
+	PI_UINT32	दीर्घ_1;
+	पूर्ण PI_XMT_DESCR;
 
-#define	PI_XMT_DESCR_M_SOP			0x80000000
-#define PI_XMT_DESCR_M_EOP			0x40000000
-#define PI_XMT_DESCR_M_MBZ			0x20000000
-#define PI_XMT_DESCR_M_SEG_LEN		0x1FFF0000
-#define PI_XMT_DESCR_M_BUFF_HI		0x0000FFFF
+#घोषणा	PI_XMT_DESCR_M_SOP			0x80000000
+#घोषणा PI_XMT_DESCR_M_EOP			0x40000000
+#घोषणा PI_XMT_DESCR_M_MBZ			0x20000000
+#घोषणा PI_XMT_DESCR_M_SEG_LEN		0x1FFF0000
+#घोषणा PI_XMT_DESCR_M_BUFF_HI		0x0000FFFF
 
-#define	PI_XMT_DESCR_V_SOP			31
-#define	PI_XMT_DESCR_V_EOP			30
-#define PI_XMT_DESCR_V_MBZ			29
-#define PI_XMT_DESCR_V_SEG_LEN		16
-#define PI_XMT_DESCR_V_BUFF_HI		0
+#घोषणा	PI_XMT_DESCR_V_SOP			31
+#घोषणा	PI_XMT_DESCR_V_EOP			30
+#घोषणा PI_XMT_DESCR_V_MBZ			29
+#घोषणा PI_XMT_DESCR_V_SEG_LEN		16
+#घोषणा PI_XMT_DESCR_V_BUFF_HI		0
 
-/* Define format of the Descriptor Block (resident in host memory) */
+/* Define क्रमmat of the Descriptor Block (resident in host memory) */
 
-#define PI_RCV_DATA_K_NUM_ENTRIES			256
-#define PI_XMT_DATA_K_NUM_ENTRIES			256
-#define PI_SMT_HOST_K_NUM_ENTRIES			64
-#define PI_UNSOL_K_NUM_ENTRIES				16
-#define PI_CMD_RSP_K_NUM_ENTRIES			16
-#define PI_CMD_REQ_K_NUM_ENTRIES			16
+#घोषणा PI_RCV_DATA_K_NUM_ENTRIES			256
+#घोषणा PI_XMT_DATA_K_NUM_ENTRIES			256
+#घोषणा PI_SMT_HOST_K_NUM_ENTRIES			64
+#घोषणा PI_UNSOL_K_NUM_ENTRIES				16
+#घोषणा PI_CMD_RSP_K_NUM_ENTRIES			16
+#घोषणा PI_CMD_REQ_K_NUM_ENTRIES			16
 
-typedef struct
-	{
+प्रकार काष्ठा
+	अणु
 	PI_RCV_DESCR  rcv_data[PI_RCV_DATA_K_NUM_ENTRIES];
 	PI_XMT_DESCR  xmt_data[PI_XMT_DATA_K_NUM_ENTRIES];
 	PI_RCV_DESCR  smt_host[PI_SMT_HOST_K_NUM_ENTRIES];
 	PI_RCV_DESCR  unsol[PI_UNSOL_K_NUM_ENTRIES];
 	PI_RCV_DESCR  cmd_rsp[PI_CMD_RSP_K_NUM_ENTRIES];
 	PI_XMT_DESCR  cmd_req[PI_CMD_REQ_K_NUM_ENTRIES];
-	} PI_DESCR_BLOCK;
+	पूर्ण PI_DESCR_BLOCK;
 
 /* Define Port Registers - offsets from PDQ Base address */
 
-#define PI_PDQ_K_REG_PORT_RESET			0x00000000
-#define PI_PDQ_K_REG_HOST_DATA			0x00000004
-#define PI_PDQ_K_REG_PORT_CTRL			0x00000008
-#define PI_PDQ_K_REG_PORT_DATA_A		0x0000000C
-#define PI_PDQ_K_REG_PORT_DATA_B		0x00000010
-#define PI_PDQ_K_REG_PORT_STATUS		0x00000014
-#define PI_PDQ_K_REG_TYPE_0_STATUS 		0x00000018
-#define PI_PDQ_K_REG_HOST_INT_ENB	  	0x0000001C
-#define PI_PDQ_K_REG_TYPE_2_PROD_NOINT 	0x00000020
-#define PI_PDQ_K_REG_TYPE_2_PROD		0x00000024
-#define PI_PDQ_K_REG_CMD_RSP_PROD		0x00000028
-#define PI_PDQ_K_REG_CMD_REQ_PROD		0x0000002C
-#define PI_PDQ_K_REG_SMT_HOST_PROD   	0x00000030
-#define PI_PDQ_K_REG_UNSOL_PROD			0x00000034
+#घोषणा PI_PDQ_K_REG_PORT_RESET			0x00000000
+#घोषणा PI_PDQ_K_REG_HOST_DATA			0x00000004
+#घोषणा PI_PDQ_K_REG_PORT_CTRL			0x00000008
+#घोषणा PI_PDQ_K_REG_PORT_DATA_A		0x0000000C
+#घोषणा PI_PDQ_K_REG_PORT_DATA_B		0x00000010
+#घोषणा PI_PDQ_K_REG_PORT_STATUS		0x00000014
+#घोषणा PI_PDQ_K_REG_TYPE_0_STATUS 		0x00000018
+#घोषणा PI_PDQ_K_REG_HOST_INT_ENB	  	0x0000001C
+#घोषणा PI_PDQ_K_REG_TYPE_2_PROD_NOINT 	0x00000020
+#घोषणा PI_PDQ_K_REG_TYPE_2_PROD		0x00000024
+#घोषणा PI_PDQ_K_REG_CMD_RSP_PROD		0x00000028
+#घोषणा PI_PDQ_K_REG_CMD_REQ_PROD		0x0000002C
+#घोषणा PI_PDQ_K_REG_SMT_HOST_PROD   	0x00000030
+#घोषणा PI_PDQ_K_REG_UNSOL_PROD			0x00000034
 
-/* Port Control Register - Command codes for primary commands */
+/* Port Control Register - Command codes क्रम primary commands */
 
-#define PI_PCTRL_M_CMD_ERROR			0x8000
-#define PI_PCTRL_M_BLAST_FLASH			0x4000
-#define PI_PCTRL_M_HALT					0x2000
-#define PI_PCTRL_M_COPY_DATA			0x1000
-#define PI_PCTRL_M_ERROR_LOG_START		0x0800
-#define PI_PCTRL_M_ERROR_LOG_READ		0x0400
-#define PI_PCTRL_M_XMT_DATA_FLUSH_DONE	0x0200
-#define PI_PCTRL_M_INIT					0x0100
-#define PI_PCTRL_M_INIT_START		    0x0080
-#define PI_PCTRL_M_CONS_BLOCK			0x0040
-#define PI_PCTRL_M_UNINIT				0x0020
-#define PI_PCTRL_M_RING_MEMBER			0x0010
-#define PI_PCTRL_M_MLA					0x0008
-#define PI_PCTRL_M_FW_REV_READ			0x0004
-#define PI_PCTRL_M_DEV_SPECIFIC			0x0002
-#define PI_PCTRL_M_SUB_CMD				0x0001
+#घोषणा PI_PCTRL_M_CMD_ERROR			0x8000
+#घोषणा PI_PCTRL_M_BLAST_FLASH			0x4000
+#घोषणा PI_PCTRL_M_HALT					0x2000
+#घोषणा PI_PCTRL_M_COPY_DATA			0x1000
+#घोषणा PI_PCTRL_M_ERROR_LOG_START		0x0800
+#घोषणा PI_PCTRL_M_ERROR_LOG_READ		0x0400
+#घोषणा PI_PCTRL_M_XMT_DATA_FLUSH_DONE	0x0200
+#घोषणा PI_PCTRL_M_INIT					0x0100
+#घोषणा PI_PCTRL_M_INIT_START		    0x0080
+#घोषणा PI_PCTRL_M_CONS_BLOCK			0x0040
+#घोषणा PI_PCTRL_M_UNINIT				0x0020
+#घोषणा PI_PCTRL_M_RING_MEMBER			0x0010
+#घोषणा PI_PCTRL_M_MLA					0x0008
+#घोषणा PI_PCTRL_M_FW_REV_READ			0x0004
+#घोषणा PI_PCTRL_M_DEV_SPECIFIC			0x0002
+#घोषणा PI_PCTRL_M_SUB_CMD				0x0001
 
 /* Define sub-commands accessed via the PI_PCTRL_M_SUB_CMD command */
 
-#define PI_SUB_CMD_K_LINK_UNINIT		0x0001
-#define PI_SUB_CMD_K_BURST_SIZE_SET		0x0002
-#define PI_SUB_CMD_K_PDQ_REV_GET		0x0004
-#define PI_SUB_CMD_K_HW_REV_GET			0x0008
+#घोषणा PI_SUB_CMD_K_LINK_UNINIT		0x0001
+#घोषणा PI_SUB_CMD_K_BURST_SIZE_SET		0x0002
+#घोषणा PI_SUB_CMD_K_PDQ_REV_GET		0x0004
+#घोषणा PI_SUB_CMD_K_HW_REV_GET			0x0008
 
 /* Define some Port Data B values */
 
-#define PI_PDATA_B_DMA_BURST_SIZE_4	 	0		/* valid values for command */
-#define PI_PDATA_B_DMA_BURST_SIZE_8	 	1
-#define PI_PDATA_B_DMA_BURST_SIZE_16	2
-#define PI_PDATA_B_DMA_BURST_SIZE_32	3		/* not supported on PCI */
-#define PI_PDATA_B_DMA_BURST_SIZE_DEF	PI_PDATA_B_DMA_BURST_SIZE_16
+#घोषणा PI_PDATA_B_DMA_BURST_SIZE_4	 	0		/* valid values क्रम command */
+#घोषणा PI_PDATA_B_DMA_BURST_SIZE_8	 	1
+#घोषणा PI_PDATA_B_DMA_BURST_SIZE_16	2
+#घोषणा PI_PDATA_B_DMA_BURST_SIZE_32	3		/* not supported on PCI */
+#घोषणा PI_PDATA_B_DMA_BURST_SIZE_DEF	PI_PDATA_B_DMA_BURST_SIZE_16
 
 /* Port Data A Reset state */
 
-#define PI_PDATA_A_RESET_M_UPGRADE		0x00000001
-#define PI_PDATA_A_RESET_M_SOFT_RESET	0x00000002
-#define PI_PDATA_A_RESET_M_SKIP_ST		0x00000004
+#घोषणा PI_PDATA_A_RESET_M_UPGRADE		0x00000001
+#घोषणा PI_PDATA_A_RESET_M_SOFT_RESET	0x00000002
+#घोषणा PI_PDATA_A_RESET_M_SKIP_ST		0x00000004
 
-/* Read adapter MLA address port control command constants */
+/* Read adapter MLA address port control command स्थिरants */
 
-#define PI_PDATA_A_MLA_K_LO				0
-#define PI_PDATA_A_MLA_K_HI				1
+#घोषणा PI_PDATA_A_MLA_K_LO				0
+#घोषणा PI_PDATA_A_MLA_K_HI				1
 
-/* Byte Swap values for init command */
+/* Byte Swap values क्रम init command */
 
-#define PI_PDATA_A_INIT_M_DESC_BLK_ADDR			0x0FFFFE000
-#define PI_PDATA_A_INIT_M_RESERVED				0x000001FFC
-#define PI_PDATA_A_INIT_M_BSWAP_DATA			0x000000002
-#define PI_PDATA_A_INIT_M_BSWAP_LITERAL			0x000000001
+#घोषणा PI_PDATA_A_INIT_M_DESC_BLK_ADDR			0x0FFFFE000
+#घोषणा PI_PDATA_A_INIT_M_RESERVED				0x000001FFC
+#घोषणा PI_PDATA_A_INIT_M_BSWAP_DATA			0x000000002
+#घोषणा PI_PDATA_A_INIT_M_BSWAP_LITERAL			0x000000001
 
-#define PI_PDATA_A_INIT_V_DESC_BLK_ADDR			13
-#define PI_PDATA_A_INIT_V_RESERVED				3
-#define PI_PDATA_A_INIT_V_BSWAP_DATA			1
-#define PI_PDATA_A_INIT_V_BSWAP_LITERAL			0
+#घोषणा PI_PDATA_A_INIT_V_DESC_BLK_ADDR			13
+#घोषणा PI_PDATA_A_INIT_V_RESERVED				3
+#घोषणा PI_PDATA_A_INIT_V_BSWAP_DATA			1
+#घोषणा PI_PDATA_A_INIT_V_BSWAP_LITERAL			0
 
 /* Port Reset Register */
 
-#define PI_RESET_M_ASSERT_RESET			1
+#घोषणा PI_RESET_M_ASSERT_RESET			1
 
-/* Port Status register */
+/* Port Status रेजिस्टर */
 
-#define PI_PSTATUS_V_RCV_DATA_PENDING	31
-#define PI_PSTATUS_V_XMT_DATA_PENDING	30
-#define PI_PSTATUS_V_SMT_HOST_PENDING	29
-#define PI_PSTATUS_V_UNSOL_PENDING		28
-#define PI_PSTATUS_V_CMD_RSP_PENDING	27
-#define PI_PSTATUS_V_CMD_REQ_PENDING	26
-#define PI_PSTATUS_V_TYPE_0_PENDING		25
-#define PI_PSTATUS_V_RESERVED_1			16
-#define PI_PSTATUS_V_RESERVED_2			11
-#define PI_PSTATUS_V_STATE				8
-#define PI_PSTATUS_V_HALT_ID			0
+#घोषणा PI_PSTATUS_V_RCV_DATA_PENDING	31
+#घोषणा PI_PSTATUS_V_XMT_DATA_PENDING	30
+#घोषणा PI_PSTATUS_V_SMT_HOST_PENDING	29
+#घोषणा PI_PSTATUS_V_UNSOL_PENDING		28
+#घोषणा PI_PSTATUS_V_CMD_RSP_PENDING	27
+#घोषणा PI_PSTATUS_V_CMD_REQ_PENDING	26
+#घोषणा PI_PSTATUS_V_TYPE_0_PENDING		25
+#घोषणा PI_PSTATUS_V_RESERVED_1			16
+#घोषणा PI_PSTATUS_V_RESERVED_2			11
+#घोषणा PI_PSTATUS_V_STATE				8
+#घोषणा PI_PSTATUS_V_HALT_ID			0
 
-#define PI_PSTATUS_M_RCV_DATA_PENDING	0x80000000
-#define PI_PSTATUS_M_XMT_DATA_PENDING	0x40000000
-#define PI_PSTATUS_M_SMT_HOST_PENDING	0x20000000
-#define PI_PSTATUS_M_UNSOL_PENDING		0x10000000
-#define PI_PSTATUS_M_CMD_RSP_PENDING	0x08000000
-#define PI_PSTATUS_M_CMD_REQ_PENDING	0x04000000
-#define PI_PSTATUS_M_TYPE_0_PENDING		0x02000000
-#define PI_PSTATUS_M_RESERVED_1			0x01FF0000
-#define PI_PSTATUS_M_RESERVED_2			0x0000F800
-#define PI_PSTATUS_M_STATE				0x00000700
-#define PI_PSTATUS_M_HALT_ID			0x000000FF
+#घोषणा PI_PSTATUS_M_RCV_DATA_PENDING	0x80000000
+#घोषणा PI_PSTATUS_M_XMT_DATA_PENDING	0x40000000
+#घोषणा PI_PSTATUS_M_SMT_HOST_PENDING	0x20000000
+#घोषणा PI_PSTATUS_M_UNSOL_PENDING		0x10000000
+#घोषणा PI_PSTATUS_M_CMD_RSP_PENDING	0x08000000
+#घोषणा PI_PSTATUS_M_CMD_REQ_PENDING	0x04000000
+#घोषणा PI_PSTATUS_M_TYPE_0_PENDING		0x02000000
+#घोषणा PI_PSTATUS_M_RESERVED_1			0x01FF0000
+#घोषणा PI_PSTATUS_M_RESERVED_2			0x0000F800
+#घोषणा PI_PSTATUS_M_STATE				0x00000700
+#घोषणा PI_PSTATUS_M_HALT_ID			0x000000FF
 
 /* Define Halt Id's			 					*/
-/*   Do not insert into this list, only append. */
+/*   Do not insert पूर्णांकo this list, only append. */
 
-#define PI_HALT_ID_K_SELFTEST_TIMEOUT	0
-#define PI_HALT_ID_K_PARITY_ERROR		1
-#define PI_HALT_ID_K_HOST_DIR_HALT		2
-#define PI_HALT_ID_K_SW_FAULT			3
-#define PI_HALT_ID_K_HW_FAULT			4
-#define PI_HALT_ID_K_PC_TRACE			5
-#define PI_HALT_ID_K_DMA_ERROR			6			/* Host Data has error reg */
-#define PI_HALT_ID_K_IMAGE_CRC_ERROR	7   		/* Image is bad, update it */
-#define PI_HALT_ID_K_BUS_EXCEPTION	 	8   		/* 68K bus exception	   */
+#घोषणा PI_HALT_ID_K_SELFTEST_TIMEOUT	0
+#घोषणा PI_HALT_ID_K_PARITY_ERROR		1
+#घोषणा PI_HALT_ID_K_HOST_सूची_HALT		2
+#घोषणा PI_HALT_ID_K_SW_FAULT			3
+#घोषणा PI_HALT_ID_K_HW_FAULT			4
+#घोषणा PI_HALT_ID_K_PC_TRACE			5
+#घोषणा PI_HALT_ID_K_DMA_ERROR			6			/* Host Data has error reg */
+#घोषणा PI_HALT_ID_K_IMAGE_CRC_ERROR	7   		/* Image is bad, update it */
+#घोषणा PI_HALT_ID_K_BUS_EXCEPTION	 	8   		/* 68K bus exception	   */
 
 /* Host Interrupt Enable Register as seen by host */
 
-#define PI_HOST_INT_M_XMT_DATA_ENB		0x80000000	/* Type 2 Enables */
-#define PI_HOST_INT_M_RCV_DATA_ENB		0x40000000
-#define PI_HOST_INT_M_SMT_HOST_ENB		0x10000000	/* Type 1 Enables */
-#define PI_HOST_INT_M_UNSOL_ENB			0x20000000
-#define PI_HOST_INT_M_CMD_RSP_ENB		0x08000000
-#define PI_HOST_INT_M_CMD_REQ_ENB		0x04000000
-#define	PI_HOST_INT_M_TYPE_1_RESERVED	0x00FF0000
-#define	PI_HOST_INT_M_TYPE_0_RESERVED	0x0000FF00	/* Type 0 Enables */
-#define PI_HOST_INT_M_1MS				0x00000080
-#define PI_HOST_INT_M_20MS				0x00000040
-#define PI_HOST_INT_M_CSR_CMD_DONE		0x00000020
-#define PI_HOST_INT_M_STATE_CHANGE		0x00000010
-#define PI_HOST_INT_M_XMT_FLUSH			0x00000008
-#define PI_HOST_INT_M_NXM				0x00000004
-#define PI_HOST_INT_M_PM_PAR_ERR		0x00000002
-#define PI_HOST_INT_M_BUS_PAR_ERR		0x00000001
+#घोषणा PI_HOST_INT_M_XMT_DATA_ENB		0x80000000	/* Type 2 Enables */
+#घोषणा PI_HOST_INT_M_RCV_DATA_ENB		0x40000000
+#घोषणा PI_HOST_INT_M_SMT_HOST_ENB		0x10000000	/* Type 1 Enables */
+#घोषणा PI_HOST_INT_M_UNSOL_ENB			0x20000000
+#घोषणा PI_HOST_INT_M_CMD_RSP_ENB		0x08000000
+#घोषणा PI_HOST_INT_M_CMD_REQ_ENB		0x04000000
+#घोषणा	PI_HOST_INT_M_TYPE_1_RESERVED	0x00FF0000
+#घोषणा	PI_HOST_INT_M_TYPE_0_RESERVED	0x0000FF00	/* Type 0 Enables */
+#घोषणा PI_HOST_INT_M_1MS				0x00000080
+#घोषणा PI_HOST_INT_M_20MS				0x00000040
+#घोषणा PI_HOST_INT_M_CSR_CMD_DONE		0x00000020
+#घोषणा PI_HOST_INT_M_STATE_CHANGE		0x00000010
+#घोषणा PI_HOST_INT_M_XMT_FLUSH			0x00000008
+#घोषणा PI_HOST_INT_M_NXM				0x00000004
+#घोषणा PI_HOST_INT_M_PM_PAR_ERR		0x00000002
+#घोषणा PI_HOST_INT_M_BUS_PAR_ERR		0x00000001
 
-#define PI_HOST_INT_V_XMT_DATA_ENB		31			/* Type 2 Enables */
-#define PI_HOST_INT_V_RCV_DATA_ENB		30
-#define PI_HOST_INT_V_SMT_HOST_ENB		29			/* Type 1 Enables */
-#define PI_HOST_INT_V_UNSOL_ENB			28
-#define PI_HOST_INT_V_CMD_RSP_ENB		27
-#define PI_HOST_INT_V_CMD_REQ_ENB		26
-#define	PI_HOST_INT_V_TYPE_1_RESERVED	16
-#define	PI_HOST_INT_V_TYPE_0_RESERVED   8			/* Type 0 Enables */
-#define PI_HOST_INT_V_1MS_ENB			7
-#define PI_HOST_INT_V_20MS_ENB			6
-#define PI_HOST_INT_V_CSR_CMD_DONE_ENB	5
-#define PI_HOST_INT_V_STATE_CHANGE_ENB	4
-#define PI_HOST_INT_V_XMT_FLUSH_ENB 	3
-#define PI_HOST_INT_V_NXM_ENB			2
-#define PI_HOST_INT_V_PM_PAR_ERR_ENB	1
-#define PI_HOST_INT_V_BUS_PAR_ERR_ENB	0
+#घोषणा PI_HOST_INT_V_XMT_DATA_ENB		31			/* Type 2 Enables */
+#घोषणा PI_HOST_INT_V_RCV_DATA_ENB		30
+#घोषणा PI_HOST_INT_V_SMT_HOST_ENB		29			/* Type 1 Enables */
+#घोषणा PI_HOST_INT_V_UNSOL_ENB			28
+#घोषणा PI_HOST_INT_V_CMD_RSP_ENB		27
+#घोषणा PI_HOST_INT_V_CMD_REQ_ENB		26
+#घोषणा	PI_HOST_INT_V_TYPE_1_RESERVED	16
+#घोषणा	PI_HOST_INT_V_TYPE_0_RESERVED   8			/* Type 0 Enables */
+#घोषणा PI_HOST_INT_V_1MS_ENB			7
+#घोषणा PI_HOST_INT_V_20MS_ENB			6
+#घोषणा PI_HOST_INT_V_CSR_CMD_DONE_ENB	5
+#घोषणा PI_HOST_INT_V_STATE_CHANGE_ENB	4
+#घोषणा PI_HOST_INT_V_XMT_FLUSH_ENB 	3
+#घोषणा PI_HOST_INT_V_NXM_ENB			2
+#घोषणा PI_HOST_INT_V_PM_PAR_ERR_ENB	1
+#घोषणा PI_HOST_INT_V_BUS_PAR_ERR_ENB	0
 
-#define PI_HOST_INT_K_ACK_ALL_TYPE_0	0x000000FF
-#define PI_HOST_INT_K_DISABLE_ALL_INTS	0x00000000
-#define PI_HOST_INT_K_ENABLE_ALL_INTS	0xFFFFFFFF
-#define PI_HOST_INT_K_ENABLE_DEF_INTS	0xC000001F
+#घोषणा PI_HOST_INT_K_ACK_ALL_TYPE_0	0x000000FF
+#घोषणा PI_HOST_INT_K_DISABLE_ALL_INTS	0x00000000
+#घोषणा PI_HOST_INT_K_ENABLE_ALL_INTS	0xFFFFFFFF
+#घोषणा PI_HOST_INT_K_ENABLE_DEF_INTS	0xC000001F
 
 /* Type 0 Interrupt Status Register */
 
-#define PI_TYPE_0_STAT_M_1MS			0x00000080
-#define PI_TYPE_0_STAT_M_20MS			0x00000040
-#define PI_TYPE_0_STAT_M_CSR_CMD_DONE	0x00000020
-#define PI_TYPE_0_STAT_M_STATE_CHANGE	0x00000010
-#define PI_TYPE_0_STAT_M_XMT_FLUSH		0x00000008
-#define PI_TYPE_0_STAT_M_NXM			0x00000004
-#define PI_TYPE_0_STAT_M_PM_PAR_ERR		0x00000002
-#define PI_TYPE_0_STAT_M_BUS_PAR_ERR	0x00000001
+#घोषणा PI_TYPE_0_STAT_M_1MS			0x00000080
+#घोषणा PI_TYPE_0_STAT_M_20MS			0x00000040
+#घोषणा PI_TYPE_0_STAT_M_CSR_CMD_DONE	0x00000020
+#घोषणा PI_TYPE_0_STAT_M_STATE_CHANGE	0x00000010
+#घोषणा PI_TYPE_0_STAT_M_XMT_FLUSH		0x00000008
+#घोषणा PI_TYPE_0_STAT_M_NXM			0x00000004
+#घोषणा PI_TYPE_0_STAT_M_PM_PAR_ERR		0x00000002
+#घोषणा PI_TYPE_0_STAT_M_BUS_PAR_ERR	0x00000001
 
-#define PI_TYPE_0_STAT_V_1MS			7
-#define PI_TYPE_0_STAT_V_20MS			6
-#define PI_TYPE_0_STAT_V_CSR_CMD_DONE	5
-#define PI_TYPE_0_STAT_V_STATE_CHANGE	4
-#define PI_TYPE_0_STAT_V_XMT_FLUSH		3
-#define PI_TYPE_0_STAT_V_NXM			2
-#define PI_TYPE_0_STAT_V_PM_PAR_ERR		1
-#define PI_TYPE_0_STAT_V_BUS_PAR_ERR	0
+#घोषणा PI_TYPE_0_STAT_V_1MS			7
+#घोषणा PI_TYPE_0_STAT_V_20MS			6
+#घोषणा PI_TYPE_0_STAT_V_CSR_CMD_DONE	5
+#घोषणा PI_TYPE_0_STAT_V_STATE_CHANGE	4
+#घोषणा PI_TYPE_0_STAT_V_XMT_FLUSH		3
+#घोषणा PI_TYPE_0_STAT_V_NXM			2
+#घोषणा PI_TYPE_0_STAT_V_PM_PAR_ERR		1
+#घोषणा PI_TYPE_0_STAT_V_BUS_PAR_ERR	0
 
-/* Register definition structures are defined for both big and little endian systems */
+/* Register definition काष्ठाures are defined क्रम both big and little endian प्रणालीs */
 
-#ifndef __BIG_ENDIAN
+#अगर_अघोषित __BIG_ENDIAN
 
-/* Little endian format of Type 1 Producer register */
+/* Little endian क्रमmat of Type 1 Producer रेजिस्टर */
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_UINT32	lword;
-	struct
-		{
+	काष्ठा
+		अणु
 		PI_UINT8	prod;
 		PI_UINT8	comp;
 		PI_UINT8	mbz_1;
 		PI_UINT8	mbz_2;
-		} index;
-	} PI_TYPE_1_PROD_REG;
+		पूर्ण index;
+	पूर्ण PI_TYPE_1_PROD_REG;
 
-/* Little endian format of Type 2 Producer register */
+/* Little endian क्रमmat of Type 2 Producer रेजिस्टर */
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_UINT32	lword;
-	struct
-		{
+	काष्ठा
+		अणु
 		PI_UINT8	rcv_prod;
 		PI_UINT8	xmt_prod;
 		PI_UINT8	rcv_comp;
 		PI_UINT8	xmt_comp;
-		} index;
-	} PI_TYPE_2_PROD_REG;
+		पूर्ण index;
+	पूर्ण PI_TYPE_2_PROD_REG;
 
-/* Little endian format of Type 1 Consumer Block longword */
+/* Little endian क्रमmat of Type 1 Consumer Block दीर्घword */
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_UINT32	lword;
-	struct
-		{
+	काष्ठा
+		अणु
 		PI_UINT8	cons;
 		PI_UINT8	res0;
 		PI_UINT8	res1;
 		PI_UINT8	res2;
-		} index;
-	} PI_TYPE_1_CONSUMER;
+		पूर्ण index;
+	पूर्ण PI_TYPE_1_CONSUMER;
 
-/* Little endian format of Type 2 Consumer Block longword */
+/* Little endian क्रमmat of Type 2 Consumer Block दीर्घword */
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_UINT32	lword;
-	struct
-		{
+	काष्ठा
+		अणु
 		PI_UINT8	rcv_cons;
 		PI_UINT8	res0;
 		PI_UINT8	xmt_cons;
 		PI_UINT8	res1;
-		} index;
-	} PI_TYPE_2_CONSUMER;
+		पूर्ण index;
+	पूर्ण PI_TYPE_2_CONSUMER;
 
 /* Define swapping required by DMA transfers.  */
-#define PI_PDATA_A_INIT_M_BSWAP_INIT	\
+#घोषणा PI_PDATA_A_INIT_M_BSWAP_INIT	\
 	(PI_PDATA_A_INIT_M_BSWAP_DATA)
 
-#else /* __BIG_ENDIAN */
+#अन्यथा /* __BIG_ENDIAN */
 
-/* Big endian format of Type 1 Producer register */
+/* Big endian क्रमmat of Type 1 Producer रेजिस्टर */
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_UINT32	lword;
-	struct
-		{
+	काष्ठा
+		अणु
 		PI_UINT8	mbz_2;
 		PI_UINT8	mbz_1;
 		PI_UINT8	comp;
 		PI_UINT8	prod;
-		} index;
-	} PI_TYPE_1_PROD_REG;
+		पूर्ण index;
+	पूर्ण PI_TYPE_1_PROD_REG;
 
-/* Big endian format of Type 2 Producer register */
+/* Big endian क्रमmat of Type 2 Producer रेजिस्टर */
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_UINT32	lword;
-	struct
-		{
+	काष्ठा
+		अणु
 		PI_UINT8	xmt_comp;
 		PI_UINT8	rcv_comp;
 		PI_UINT8	xmt_prod;
 		PI_UINT8	rcv_prod;
-		} index;
-	} PI_TYPE_2_PROD_REG;
+		पूर्ण index;
+	पूर्ण PI_TYPE_2_PROD_REG;
 
-/* Big endian format of Type 1 Consumer Block longword */
+/* Big endian क्रमmat of Type 1 Consumer Block दीर्घword */
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_UINT32	lword;
-	struct
-		{
+	काष्ठा
+		अणु
 		PI_UINT8	res2;
 		PI_UINT8	res1;
 		PI_UINT8	res0;
 		PI_UINT8	cons;
-		} index;
-	} PI_TYPE_1_CONSUMER;
+		पूर्ण index;
+	पूर्ण PI_TYPE_1_CONSUMER;
 
-/* Big endian format of Type 2 Consumer Block longword */
+/* Big endian क्रमmat of Type 2 Consumer Block दीर्घword */
 
-typedef union
-	{
+प्रकार जोड़
+	अणु
 	PI_UINT32	lword;
-	struct
-		{
+	काष्ठा
+		अणु
 		PI_UINT8	res1;
 		PI_UINT8	xmt_cons;
 		PI_UINT8	res0;
 		PI_UINT8	rcv_cons;
-		} index;
-	} PI_TYPE_2_CONSUMER;
+		पूर्ण index;
+	पूर्ण PI_TYPE_2_CONSUMER;
 
 /* Define swapping required by DMA transfers.  */
-#define PI_PDATA_A_INIT_M_BSWAP_INIT	\
+#घोषणा PI_PDATA_A_INIT_M_BSWAP_INIT	\
 	(PI_PDATA_A_INIT_M_BSWAP_DATA | PI_PDATA_A_INIT_M_BSWAP_LITERAL)
 
-#endif /* __BIG_ENDIAN */
+#पूर्ण_अगर /* __BIG_ENDIAN */
 
 /* Define TC PDQ CSR offset and length */
 
-#define PI_TC_K_CSR_OFFSET		0x100000
-#define PI_TC_K_CSR_LEN			0x40		/* 64 bytes */
+#घोषणा PI_TC_K_CSR_OFFSET		0x100000
+#घोषणा PI_TC_K_CSR_LEN			0x40		/* 64 bytes */
 
-/* Define EISA controller register offsets */
+/* Define EISA controller रेजिस्टर offsets */
 
-#define PI_ESIC_K_CSR_IO_LEN		0x40		/* 64 bytes */
-#define PI_ESIC_K_BURST_HOLDOFF_LEN	0x04		/* 4 bytes */
-#define PI_ESIC_K_ESIC_CSR_LEN		0x40		/* 64 bytes */
+#घोषणा PI_ESIC_K_CSR_IO_LEN		0x40		/* 64 bytes */
+#घोषणा PI_ESIC_K_BURST_HOLDOFF_LEN	0x04		/* 4 bytes */
+#घोषणा PI_ESIC_K_ESIC_CSR_LEN		0x40		/* 64 bytes */
 
-#define PI_DEFEA_K_CSR_IO		0x000
-#define PI_DEFEA_K_BURST_HOLDOFF	0x040
-#define PI_ESIC_K_ESIC_CSR		0xC80
+#घोषणा PI_DEFEA_K_CSR_IO		0x000
+#घोषणा PI_DEFEA_K_BURST_HOLDOFF	0x040
+#घोषणा PI_ESIC_K_ESIC_CSR		0xC80
 
-#define PI_ESIC_K_SLOT_ID            	0xC80
-#define PI_ESIC_K_SLOT_CNTRL		0xC84
-#define PI_ESIC_K_MEM_ADD_CMP_0     	0xC85
-#define PI_ESIC_K_MEM_ADD_CMP_1     	0xC86
-#define PI_ESIC_K_MEM_ADD_CMP_2     	0xC87
-#define PI_ESIC_K_MEM_ADD_HI_CMP_0  	0xC88
-#define PI_ESIC_K_MEM_ADD_HI_CMP_1  	0xC89
-#define PI_ESIC_K_MEM_ADD_HI_CMP_2  	0xC8A
-#define PI_ESIC_K_MEM_ADD_MASK_0     	0xC8B
-#define PI_ESIC_K_MEM_ADD_MASK_1     	0xC8C
-#define PI_ESIC_K_MEM_ADD_MASK_2     	0xC8D
-#define PI_ESIC_K_MEM_ADD_LO_CMP_0  	0xC8E
-#define PI_ESIC_K_MEM_ADD_LO_CMP_1  	0xC8F
-#define PI_ESIC_K_MEM_ADD_LO_CMP_2  	0xC90
-#define PI_ESIC_K_IO_ADD_CMP_0_0	0xC91
-#define PI_ESIC_K_IO_ADD_CMP_0_1	0xC92
-#define PI_ESIC_K_IO_ADD_CMP_1_0	0xC93
-#define PI_ESIC_K_IO_ADD_CMP_1_1	0xC94
-#define PI_ESIC_K_IO_ADD_CMP_2_0	0xC95
-#define PI_ESIC_K_IO_ADD_CMP_2_1	0xC96
-#define PI_ESIC_K_IO_ADD_CMP_3_0	0xC97
-#define PI_ESIC_K_IO_ADD_CMP_3_1	0xC98
-#define PI_ESIC_K_IO_ADD_MASK_0_0    	0xC99
-#define PI_ESIC_K_IO_ADD_MASK_0_1    	0xC9A
-#define PI_ESIC_K_IO_ADD_MASK_1_0    	0xC9B
-#define PI_ESIC_K_IO_ADD_MASK_1_1    	0xC9C
-#define PI_ESIC_K_IO_ADD_MASK_2_0    	0xC9D
-#define PI_ESIC_K_IO_ADD_MASK_2_1    	0xC9E
-#define PI_ESIC_K_IO_ADD_MASK_3_0    	0xC9F
-#define PI_ESIC_K_IO_ADD_MASK_3_1    	0xCA0
-#define PI_ESIC_K_MOD_CONFIG_1		0xCA1
-#define PI_ESIC_K_MOD_CONFIG_2		0xCA2
-#define PI_ESIC_K_MOD_CONFIG_3		0xCA3
-#define PI_ESIC_K_MOD_CONFIG_4		0xCA4
-#define PI_ESIC_K_MOD_CONFIG_5    	0xCA5
-#define PI_ESIC_K_MOD_CONFIG_6		0xCA6
-#define PI_ESIC_K_MOD_CONFIG_7		0xCA7
-#define PI_ESIC_K_DIP_SWITCH         	0xCA8
-#define PI_ESIC_K_IO_CONFIG_STAT_0   	0xCA9
-#define PI_ESIC_K_IO_CONFIG_STAT_1   	0xCAA
-#define PI_ESIC_K_DMA_CONFIG         	0xCAB
-#define PI_ESIC_K_INPUT_PORT         	0xCAC
-#define PI_ESIC_K_OUTPUT_PORT        	0xCAD
-#define PI_ESIC_K_FUNCTION_CNTRL	0xCAE
+#घोषणा PI_ESIC_K_SLOT_ID            	0xC80
+#घोषणा PI_ESIC_K_SLOT_CNTRL		0xC84
+#घोषणा PI_ESIC_K_MEM_ADD_CMP_0     	0xC85
+#घोषणा PI_ESIC_K_MEM_ADD_CMP_1     	0xC86
+#घोषणा PI_ESIC_K_MEM_ADD_CMP_2     	0xC87
+#घोषणा PI_ESIC_K_MEM_ADD_HI_CMP_0  	0xC88
+#घोषणा PI_ESIC_K_MEM_ADD_HI_CMP_1  	0xC89
+#घोषणा PI_ESIC_K_MEM_ADD_HI_CMP_2  	0xC8A
+#घोषणा PI_ESIC_K_MEM_ADD_MASK_0     	0xC8B
+#घोषणा PI_ESIC_K_MEM_ADD_MASK_1     	0xC8C
+#घोषणा PI_ESIC_K_MEM_ADD_MASK_2     	0xC8D
+#घोषणा PI_ESIC_K_MEM_ADD_LO_CMP_0  	0xC8E
+#घोषणा PI_ESIC_K_MEM_ADD_LO_CMP_1  	0xC8F
+#घोषणा PI_ESIC_K_MEM_ADD_LO_CMP_2  	0xC90
+#घोषणा PI_ESIC_K_IO_ADD_CMP_0_0	0xC91
+#घोषणा PI_ESIC_K_IO_ADD_CMP_0_1	0xC92
+#घोषणा PI_ESIC_K_IO_ADD_CMP_1_0	0xC93
+#घोषणा PI_ESIC_K_IO_ADD_CMP_1_1	0xC94
+#घोषणा PI_ESIC_K_IO_ADD_CMP_2_0	0xC95
+#घोषणा PI_ESIC_K_IO_ADD_CMP_2_1	0xC96
+#घोषणा PI_ESIC_K_IO_ADD_CMP_3_0	0xC97
+#घोषणा PI_ESIC_K_IO_ADD_CMP_3_1	0xC98
+#घोषणा PI_ESIC_K_IO_ADD_MASK_0_0    	0xC99
+#घोषणा PI_ESIC_K_IO_ADD_MASK_0_1    	0xC9A
+#घोषणा PI_ESIC_K_IO_ADD_MASK_1_0    	0xC9B
+#घोषणा PI_ESIC_K_IO_ADD_MASK_1_1    	0xC9C
+#घोषणा PI_ESIC_K_IO_ADD_MASK_2_0    	0xC9D
+#घोषणा PI_ESIC_K_IO_ADD_MASK_2_1    	0xC9E
+#घोषणा PI_ESIC_K_IO_ADD_MASK_3_0    	0xC9F
+#घोषणा PI_ESIC_K_IO_ADD_MASK_3_1    	0xCA0
+#घोषणा PI_ESIC_K_MOD_CONFIG_1		0xCA1
+#घोषणा PI_ESIC_K_MOD_CONFIG_2		0xCA2
+#घोषणा PI_ESIC_K_MOD_CONFIG_3		0xCA3
+#घोषणा PI_ESIC_K_MOD_CONFIG_4		0xCA4
+#घोषणा PI_ESIC_K_MOD_CONFIG_5    	0xCA5
+#घोषणा PI_ESIC_K_MOD_CONFIG_6		0xCA6
+#घोषणा PI_ESIC_K_MOD_CONFIG_7		0xCA7
+#घोषणा PI_ESIC_K_DIP_SWITCH         	0xCA8
+#घोषणा PI_ESIC_K_IO_CONFIG_STAT_0   	0xCA9
+#घोषणा PI_ESIC_K_IO_CONFIG_STAT_1   	0xCAA
+#घोषणा PI_ESIC_K_DMA_CONFIG         	0xCAB
+#घोषणा PI_ESIC_K_INPUT_PORT         	0xCAC
+#घोषणा PI_ESIC_K_OUTPUT_PORT        	0xCAD
+#घोषणा PI_ESIC_K_FUNCTION_CNTRL	0xCAE
 
-/* Define the bits in the function control register. */
+/* Define the bits in the function control रेजिस्टर. */
 
-#define PI_FUNCTION_CNTRL_M_IOCS0	0x01
-#define PI_FUNCTION_CNTRL_M_IOCS1	0x02
-#define PI_FUNCTION_CNTRL_M_IOCS2	0x04
-#define PI_FUNCTION_CNTRL_M_IOCS3	0x08
-#define PI_FUNCTION_CNTRL_M_MEMCS0	0x10
-#define PI_FUNCTION_CNTRL_M_MEMCS1	0x20
-#define PI_FUNCTION_CNTRL_M_DMA		0x80
+#घोषणा PI_FUNCTION_CNTRL_M_IOCS0	0x01
+#घोषणा PI_FUNCTION_CNTRL_M_IOCS1	0x02
+#घोषणा PI_FUNCTION_CNTRL_M_IOCS2	0x04
+#घोषणा PI_FUNCTION_CNTRL_M_IOCS3	0x08
+#घोषणा PI_FUNCTION_CNTRL_M_MEMCS0	0x10
+#घोषणा PI_FUNCTION_CNTRL_M_MEMCS1	0x20
+#घोषणा PI_FUNCTION_CNTRL_M_DMA		0x80
 
-/* Define the bits in the slot control register. */
+/* Define the bits in the slot control रेजिस्टर. */
 
-#define PI_SLOT_CNTRL_M_RESET		0x04	/* Don't use.       */
-#define PI_SLOT_CNTRL_M_ERROR		0x02	/* Not implemented. */
-#define PI_SLOT_CNTRL_M_ENB		0x01	/* Must be set.     */
+#घोषणा PI_SLOT_CNTRL_M_RESET		0x04	/* Don't use.       */
+#घोषणा PI_SLOT_CNTRL_M_ERROR		0x02	/* Not implemented. */
+#घोषणा PI_SLOT_CNTRL_M_ENB		0x01	/* Must be set.     */
 
-/* Define the bits in the burst holdoff register. */
+/* Define the bits in the burst holकरोff रेजिस्टर. */
 
-#define PI_BURST_HOLDOFF_M_HOLDOFF	0xFC
-#define PI_BURST_HOLDOFF_M_RESERVED	0x02
-#define PI_BURST_HOLDOFF_M_MEM_MAP	0x01
+#घोषणा PI_BURST_HOLDOFF_M_HOLDOFF	0xFC
+#घोषणा PI_BURST_HOLDOFF_M_RESERVED	0x02
+#घोषणा PI_BURST_HOLDOFF_M_MEM_MAP	0x01
 
-#define PI_BURST_HOLDOFF_V_HOLDOFF	2
-#define PI_BURST_HOLDOFF_V_RESERVED	1
-#define PI_BURST_HOLDOFF_V_MEM_MAP	0
+#घोषणा PI_BURST_HOLDOFF_V_HOLDOFF	2
+#घोषणा PI_BURST_HOLDOFF_V_RESERVED	1
+#घोषणा PI_BURST_HOLDOFF_V_MEM_MAP	0
 
-/* Define the implicit mask of the Memory Address Compare registers.  */
+/* Define the implicit mask of the Memory Address Compare रेजिस्टरs.  */
 
-#define PI_MEM_ADD_MASK_M		0x3ff
+#घोषणा PI_MEM_ADD_MASK_M		0x3ff
 
-/* Define the fields in the I/O Address Compare and Mask registers.  */
+/* Define the fields in the I/O Address Compare and Mask रेजिस्टरs.  */
 
-#define PI_IO_CMP_M_SLOT		0xf0
+#घोषणा PI_IO_CMP_M_SLOT		0xf0
 
-#define PI_IO_CMP_V_SLOT		4
+#घोषणा PI_IO_CMP_V_SLOT		4
 
 /* Define the fields in the Interrupt Channel Configuration and Status reg */
 
-#define PI_CONFIG_STAT_0_M_PEND			0x80
-#define PI_CONFIG_STAT_0_M_RES_1		0x40
-#define PI_CONFIG_STAT_0_M_IREQ_OUT		0x20
-#define PI_CONFIG_STAT_0_M_IREQ_IN		0x10
-#define PI_CONFIG_STAT_0_M_INT_ENB		0x08
-#define PI_CONFIG_STAT_0_M_RES_0		0x04
-#define PI_CONFIG_STAT_0_M_IRQ			0x03
+#घोषणा PI_CONFIG_STAT_0_M_PEND			0x80
+#घोषणा PI_CONFIG_STAT_0_M_RES_1		0x40
+#घोषणा PI_CONFIG_STAT_0_M_IREQ_OUT		0x20
+#घोषणा PI_CONFIG_STAT_0_M_IREQ_IN		0x10
+#घोषणा PI_CONFIG_STAT_0_M_INT_ENB		0x08
+#घोषणा PI_CONFIG_STAT_0_M_RES_0		0x04
+#घोषणा PI_CONFIG_STAT_0_M_IRQ			0x03
 
-#define PI_CONFIG_STAT_0_V_PEND			7
-#define PI_CONFIG_STAT_0_V_RES_1		6
-#define PI_CONFIG_STAT_0_V_IREQ_OUT		5
-#define PI_CONFIG_STAT_0_V_IREQ_IN		4
-#define PI_CONFIG_STAT_0_V_INT_ENB		3
-#define PI_CONFIG_STAT_0_V_RES_0		2
-#define PI_CONFIG_STAT_0_V_IRQ			0
+#घोषणा PI_CONFIG_STAT_0_V_PEND			7
+#घोषणा PI_CONFIG_STAT_0_V_RES_1		6
+#घोषणा PI_CONFIG_STAT_0_V_IREQ_OUT		5
+#घोषणा PI_CONFIG_STAT_0_V_IREQ_IN		4
+#घोषणा PI_CONFIG_STAT_0_V_INT_ENB		3
+#घोषणा PI_CONFIG_STAT_0_V_RES_0		2
+#घोषणा PI_CONFIG_STAT_0_V_IRQ			0
 
-#define PI_CONFIG_STAT_0_IRQ_K_9		0
-#define PI_CONFIG_STAT_0_IRQ_K_10		1
-#define PI_CONFIG_STAT_0_IRQ_K_11		2
-#define PI_CONFIG_STAT_0_IRQ_K_15		3
+#घोषणा PI_CONFIG_STAT_0_IRQ_K_9		0
+#घोषणा PI_CONFIG_STAT_0_IRQ_K_10		1
+#घोषणा PI_CONFIG_STAT_0_IRQ_K_11		2
+#घोषणा PI_CONFIG_STAT_0_IRQ_K_15		3
 
 /* Define DEC FDDIcontroller/EISA (DEFEA) EISA hardware ID's */
 
-#define DEFEA_PRODUCT_ID	0x0030A310		/* DEC product 300 (no rev)	*/
-#define DEFEA_PROD_ID_1		0x0130A310		/* DEC product 300, rev 1	*/
-#define DEFEA_PROD_ID_2		0x0230A310		/* DEC product 300, rev 2	*/
-#define DEFEA_PROD_ID_3		0x0330A310		/* DEC product 300, rev 3	*/
-#define DEFEA_PROD_ID_4		0x0430A310		/* DEC product 300, rev 4	*/
+#घोषणा DEFEA_PRODUCT_ID	0x0030A310		/* DEC product 300 (no rev)	*/
+#घोषणा DEFEA_PROD_ID_1		0x0130A310		/* DEC product 300, rev 1	*/
+#घोषणा DEFEA_PROD_ID_2		0x0230A310		/* DEC product 300, rev 2	*/
+#घोषणा DEFEA_PROD_ID_3		0x0330A310		/* DEC product 300, rev 3	*/
+#घोषणा DEFEA_PROD_ID_4		0x0430A310		/* DEC product 300, rev 4	*/
 
 /**********************************************/
-/* Digital PFI Specification v1.0 Definitions */
+/* Digital PFI Specअगरication v1.0 Definitions */
 /**********************************************/
 
 /* PCI Configuration Space Constants */
 
-#define PFI_K_LAT_TIMER_DEF			0x88	/* def max master latency timer */
-#define PFI_K_LAT_TIMER_MIN			0x20	/* min max master latency timer */
-#define PFI_K_CSR_MEM_LEN			0x80	/* 128 bytes */
-#define PFI_K_CSR_IO_LEN			0x80	/* 128 bytes */
-#define PFI_K_PKT_MEM_LEN			0x10000	/* 64K bytes */
+#घोषणा PFI_K_LAT_TIMER_DEF			0x88	/* def max master latency समयr */
+#घोषणा PFI_K_LAT_TIMER_MIN			0x20	/* min max master latency समयr */
+#घोषणा PFI_K_CSR_MEM_LEN			0x80	/* 128 bytes */
+#घोषणा PFI_K_CSR_IO_LEN			0x80	/* 128 bytes */
+#घोषणा PFI_K_PKT_MEM_LEN			0x10000	/* 64K bytes */
 
 /* PFI Register Offsets (starting at PDQ Register Base Address) */
 
-#define PFI_K_REG_RESERVED_0		 0X00000038
-#define PFI_K_REG_RESERVED_1		 0X0000003C
-#define PFI_K_REG_MODE_CTRL		 0X00000040
-#define PFI_K_REG_STATUS		 0X00000044
-#define PFI_K_REG_FIFO_WRITE		 0X00000048
-#define PFI_K_REG_FIFO_READ		 0X0000004C
+#घोषणा PFI_K_REG_RESERVED_0		 0X00000038
+#घोषणा PFI_K_REG_RESERVED_1		 0X0000003C
+#घोषणा PFI_K_REG_MODE_CTRL		 0X00000040
+#घोषणा PFI_K_REG_STATUS		 0X00000044
+#घोषणा PFI_K_REG_FIFO_WRITE		 0X00000048
+#घोषणा PFI_K_REG_FIFO_READ		 0X0000004C
 
 /* PFI Mode Control Register Constants */
 
-#define PFI_MODE_M_RESERVED		 0XFFFFFFF0
-#define PFI_MODE_M_TGT_ABORT_ENB	 0X00000008
-#define PFI_MODE_M_PDQ_INT_ENB		 0X00000004
-#define PFI_MODE_M_PFI_INT_ENB		 0X00000002
-#define PFI_MODE_M_DMA_ENB		 0X00000001
+#घोषणा PFI_MODE_M_RESERVED		 0XFFFFFFF0
+#घोषणा PFI_MODE_M_TGT_ABORT_ENB	 0X00000008
+#घोषणा PFI_MODE_M_PDQ_INT_ENB		 0X00000004
+#घोषणा PFI_MODE_M_PFI_INT_ENB		 0X00000002
+#घोषणा PFI_MODE_M_DMA_ENB		 0X00000001
 
-#define PFI_MODE_V_RESERVED		 4
-#define PFI_MODE_V_TGT_ABORT_ENB	 3
-#define PFI_MODE_V_PDQ_INT_ENB		 2
-#define PFI_MODE_V_PFI_INT_ENB		 1
-#define PFI_MODE_V_DMA_ENB		 0
+#घोषणा PFI_MODE_V_RESERVED		 4
+#घोषणा PFI_MODE_V_TGT_ABORT_ENB	 3
+#घोषणा PFI_MODE_V_PDQ_INT_ENB		 2
+#घोषणा PFI_MODE_V_PFI_INT_ENB		 1
+#घोषणा PFI_MODE_V_DMA_ENB		 0
 
-#define PFI_MODE_K_ALL_DISABLE		 0X00000000
+#घोषणा PFI_MODE_K_ALL_DISABLE		 0X00000000
 
 /* PFI Status Register Constants */
 
-#define PFI_STATUS_M_RESERVED		 0XFFFFFFC0
-#define PFI_STATUS_M_PFI_ERROR		 0X00000020		/* only valid in rev 1 or later PFI */
-#define PFI_STATUS_M_PDQ_INT		 0X00000010
-#define PFI_STATUS_M_PDQ_DMA_ABORT	 0X00000008
-#define PFI_STATUS_M_FIFO_FULL		 0X00000004
-#define PFI_STATUS_M_FIFO_EMPTY		 0X00000002
-#define PFI_STATUS_M_DMA_IN_PROGRESS	 0X00000001
+#घोषणा PFI_STATUS_M_RESERVED		 0XFFFFFFC0
+#घोषणा PFI_STATUS_M_PFI_ERROR		 0X00000020		/* only valid in rev 1 or later PFI */
+#घोषणा PFI_STATUS_M_PDQ_INT		 0X00000010
+#घोषणा PFI_STATUS_M_PDQ_DMA_ABORT	 0X00000008
+#घोषणा PFI_STATUS_M_FIFO_FULL		 0X00000004
+#घोषणा PFI_STATUS_M_FIFO_EMPTY		 0X00000002
+#घोषणा PFI_STATUS_M_DMA_IN_PROGRESS	 0X00000001
 
-#define PFI_STATUS_V_RESERVED		 6
-#define PFI_STATUS_V_PFI_ERROR		 5			/* only valid in rev 1 or later PFI */
-#define PFI_STATUS_V_PDQ_INT		 4
-#define PFI_STATUS_V_PDQ_DMA_ABORT	 3
-#define PFI_STATUS_V_FIFO_FULL		 2
-#define PFI_STATUS_V_FIFO_EMPTY		 1
-#define PFI_STATUS_V_DMA_IN_PROGRESS 0
+#घोषणा PFI_STATUS_V_RESERVED		 6
+#घोषणा PFI_STATUS_V_PFI_ERROR		 5			/* only valid in rev 1 or later PFI */
+#घोषणा PFI_STATUS_V_PDQ_INT		 4
+#घोषणा PFI_STATUS_V_PDQ_DMA_ABORT	 3
+#घोषणा PFI_STATUS_V_FIFO_FULL		 2
+#घोषणा PFI_STATUS_V_FIFO_EMPTY		 1
+#घोषणा PFI_STATUS_V_DMA_IN_PROGRESS 0
 
-#define DFX_FC_PRH2_PRH1_PRH0		0x54003820	/* Packet Request Header bytes + FC */
-#define DFX_PRH0_BYTE			0x20		/* Packet Request Header byte 0 */
-#define DFX_PRH1_BYTE			0x38		/* Packet Request Header byte 1 */
-#define DFX_PRH2_BYTE			0x00		/* Packet Request Header byte 2 */
+#घोषणा DFX_FC_PRH2_PRH1_PRH0		0x54003820	/* Packet Request Header bytes + FC */
+#घोषणा DFX_PRH0_BYTE			0x20		/* Packet Request Header byte 0 */
+#घोषणा DFX_PRH1_BYTE			0x38		/* Packet Request Header byte 1 */
+#घोषणा DFX_PRH2_BYTE			0x00		/* Packet Request Header byte 2 */
 
-/* Driver routine status (return) codes */
+/* Driver routine status (वापस) codes */
 
-#define DFX_K_SUCCESS			0			/* routine succeeded */
-#define DFX_K_FAILURE			1			/* routine failed */
-#define DFX_K_OUTSTATE			2			/* bad state for command */
-#define DFX_K_HW_TIMEOUT		3			/* command timed out */
+#घोषणा DFX_K_SUCCESS			0			/* routine succeeded */
+#घोषणा DFX_K_FAILURE			1			/* routine failed */
+#घोषणा DFX_K_OUTSTATE			2			/* bad state क्रम command */
+#घोषणा DFX_K_HW_TIMEOUT		3			/* command समयd out */
 
-/* Define LLC host receive buffer min/max/default values */
+/* Define LLC host receive buffer min/max/शेष values */
 
-#define RCV_BUFS_MIN	2					/* minimum pre-allocated receive buffers */
-#define RCV_BUFS_MAX	32					/* maximum pre-allocated receive buffers */
-#define RCV_BUFS_DEF	8					/* default pre-allocated receive buffers */
+#घोषणा RCV_BUFS_MIN	2					/* minimum pre-allocated receive buffers */
+#घोषणा RCV_BUFS_MAX	32					/* maximum pre-allocated receive buffers */
+#घोषणा RCV_BUFS_DEF	8					/* शेष pre-allocated receive buffers */
 
-/* Define offsets into FDDI LLC or SMT receive frame buffers - used when indicating frames */
+/* Define offsets पूर्णांकo FDDI LLC or SMT receive frame buffers - used when indicating frames */
 
-#define RCV_BUFF_K_DESCR	0				/* four byte FMC descriptor */
-#define RCV_BUFF_K_PADDING	4				/* three null bytes */
-#define RCV_BUFF_K_FC		7				/* one byte frame control */
-#define RCV_BUFF_K_DA		8				/* six byte destination address */
-#define RCV_BUFF_K_SA		14				/* six byte source address */
-#define RCV_BUFF_K_DATA		20				/* offset to start of packet data */
+#घोषणा RCV_BUFF_K_DESCR	0				/* four byte FMC descriptor */
+#घोषणा RCV_BUFF_K_PADDING	4				/* three null bytes */
+#घोषणा RCV_BUFF_K_FC		7				/* one byte frame control */
+#घोषणा RCV_BUFF_K_DA		8				/* six byte destination address */
+#घोषणा RCV_BUFF_K_SA		14				/* six byte source address */
+#घोषणा RCV_BUFF_K_DATA		20				/* offset to start of packet data */
 
-/* Define offsets into FDDI LLC transmit frame buffers - used when sending frames */
+/* Define offsets पूर्णांकo FDDI LLC transmit frame buffers - used when sending frames */
 
-#define XMT_BUFF_K_FC		0				/* one byte frame control */
-#define XMT_BUFF_K_DA		1				/* six byte destination address */
-#define XMT_BUFF_K_SA		7				/* six byte source address */
-#define XMT_BUFF_K_DATA		13				/* offset to start of packet data */
+#घोषणा XMT_BUFF_K_FC		0				/* one byte frame control */
+#घोषणा XMT_BUFF_K_DA		1				/* six byte destination address */
+#घोषणा XMT_BUFF_K_SA		7				/* six byte source address */
+#घोषणा XMT_BUFF_K_DATA		13				/* offset to start of packet data */
 
-/* Macro for checking a "value" is within a specific range */
+/* Macro क्रम checking a "value" is within a specअगरic range */
 
-#define IN_RANGE(value,low,high) ((value >= low) && (value <= high))
+#घोषणा IN_RANGE(value,low,high) ((value >= low) && (value <= high))
 
-/* Only execute special print call when debug driver was built */
+/* Only execute special prपूर्णांक call when debug driver was built */
 
-#ifdef DEFXX_DEBUG
-#define DBG_printk(args...) printk(args)
-#else
-#define DBG_printk(args...)
-#endif
+#अगर_घोषित DEFXX_DEBUG
+#घोषणा DBG_prपूर्णांकk(args...) prपूर्णांकk(args)
+#अन्यथा
+#घोषणा DBG_prपूर्णांकk(args...)
+#पूर्ण_अगर
 
-/* Define constants for masking/unmasking interrupts */
+/* Define स्थिरants क्रम masking/unmasking पूर्णांकerrupts */
 
-#define DFX_MASK_INTERRUPTS		1
-#define DFX_UNMASK_INTERRUPTS		0
+#घोषणा DFX_MASK_INTERRUPTS		1
+#घोषणा DFX_UNMASK_INTERRUPTS		0
 
-/* Define structure for driver transmit descriptor block */
+/* Define काष्ठाure क्रम driver transmit descriptor block */
 
-typedef struct
-	{
-	struct sk_buff	*p_skb;					/* ptr to skb */
-	} XMT_DRIVER_DESCR;
+प्रकार काष्ठा
+	अणु
+	काष्ठा sk_buff	*p_skb;					/* ptr to skb */
+	पूर्ण XMT_DRIVER_DESCR;
 
-typedef struct DFX_board_tag
-	{
-	/* Keep virtual and physical pointers to locked, physically contiguous memory */
+प्रकार काष्ठा DFX_board_tag
+	अणु
+	/* Keep भव and physical poपूर्णांकers to locked, physically contiguous memory */
 
-	char				*kmalloced;					/* pci_free_consistent this on unload */
-	dma_addr_t			kmalloced_dma;
-	/* DMA handle for the above */
+	अक्षर				*kदो_स्मृतिed;					/* pci_मुक्त_consistent this on unload */
+	dma_addr_t			kदो_स्मृतिed_dma;
+	/* DMA handle क्रम the above */
 	PI_DESCR_BLOCK			*descr_block_virt;				/* PDQ descriptor block virt address */
 	dma_addr_t			descr_block_phys;				/* PDQ descriptor block phys address */
 	PI_DMA_CMD_REQ			*cmd_req_virt;					/* Command request buffer virt address */
 	dma_addr_t			cmd_req_phys;					/* Command request buffer phys address */
 	PI_DMA_CMD_RSP			*cmd_rsp_virt;					/* Command response buffer virt address */
 	dma_addr_t			cmd_rsp_phys;					/* Command response buffer phys address */
-	char				*rcv_block_virt;				/* LLC host receive queue buf blk virt */
+	अक्षर				*rcv_block_virt;				/* LLC host receive queue buf blk virt */
 	dma_addr_t			rcv_block_phys;					/* LLC host receive queue buf blk phys */
 	PI_CONSUMER_BLOCK		*cons_block_virt;				/* PDQ consumer block virt address */
 	dma_addr_t			cons_block_phys;				/* PDQ consumer block phys address */
 
-	/* Keep local copies of Type 1 and Type 2 register data */
+	/* Keep local copies of Type 1 and Type 2 रेजिस्टर data */
 
-	PI_TYPE_1_PROD_REG		cmd_req_reg;					/* Command Request register */
-	PI_TYPE_1_PROD_REG		cmd_rsp_reg;					/* Command Response register */
-	PI_TYPE_2_PROD_REG		rcv_xmt_reg;					/* Type 2 (RCV/XMT) register */
+	PI_TYPE_1_PROD_REG		cmd_req_reg;					/* Command Request रेजिस्टर */
+	PI_TYPE_1_PROD_REG		cmd_rsp_reg;					/* Command Response रेजिस्टर */
+	PI_TYPE_2_PROD_REG		rcv_xmt_reg;					/* Type 2 (RCV/XMT) रेजिस्टर */
 
-	/* Storage for unicast and multicast address entries in adapter CAM */
+	/* Storage क्रम unicast and multicast address entries in adapter CAM */
 
 	u8				uc_table[1*FDDI_K_ALEN];
 	u32				uc_count;						/* number of unicast addresses */
@@ -1746,7 +1747,7 @@ typedef struct DFX_board_tag
 
 	/* Current packet filter settings */
 
-	u32				ind_group_prom;					/* LLC individual & group frame prom mode */
+	u32				ind_group_prom;					/* LLC inभागidual & group frame prom mode */
 	u32				group_prom;					/* LLC group (multicast) frame prom mode */
 
 	/* Link available flag needed to determine whether to drop outgoing packet requests */
@@ -1757,11 +1758,11 @@ typedef struct DFX_board_tag
 
 	u32				reset_type;					/* skip or rerun diagnostics */
 
-	/* Store pointers to receive buffers for queue processing code */
+	/* Store poपूर्णांकers to receive buffers क्रम queue processing code */
 
-	char				*p_rcv_buff_va[PI_RCV_DATA_K_NUM_ENTRIES];
+	अक्षर				*p_rcv_buff_va[PI_RCV_DATA_K_NUM_ENTRIES];
 
-	/* Store pointers to transmit buffers for transmit completion code */
+	/* Store poपूर्णांकers to transmit buffers क्रम transmit completion code */
 
 	XMT_DRIVER_DESCR		xmt_drv_descr_blk[PI_XMT_DATA_K_NUM_ENTRIES];
 
@@ -1769,25 +1770,25 @@ typedef struct DFX_board_tag
 
 	spinlock_t			lock;
 
-	/* Store device, bus-specific, and parameter information for this adapter */
+	/* Store device, bus-specअगरic, and parameter inक्रमmation क्रम this adapter */
 
-	struct net_device		*dev;						/* pointer to device structure */
-	union {
-		void __iomem *mem;
-		int port;
-	} base;										/* base address */
-	struct device			*bus_dev;
+	काष्ठा net_device		*dev;						/* poपूर्णांकer to device काष्ठाure */
+	जोड़ अणु
+		व्योम __iomem *mem;
+		पूर्णांक port;
+	पूर्ण base;										/* base address */
+	काष्ठा device			*bus_dev;
 	/* Whether to use MMIO or port I/O.  */
 	bool				mmio;
 	u32				full_duplex_enb;				/* FDDI Full Duplex enable (1 == on, 2 == off) */
 	u32				req_ttrt;					/* requested TTRT value (in 80ns units) */
-	u32				burst_size;					/* adapter burst size (enumerated) */
-	u32				rcv_bufs_to_post;				/* receive buffers to post for LLC host queue */
+	u32				burst_size;					/* adapter burst size (क्रमागतerated) */
+	u32				rcv_bufs_to_post;				/* receive buffers to post क्रम LLC host queue */
 	u8				factory_mac_addr[FDDI_K_ALEN];			/* factory (on-board) MAC address */
 
-	/* Common FDDI statistics structure and private counters */
+	/* Common FDDI statistics काष्ठाure and निजी counters */
 
-	struct fddi_statistics	stats;
+	काष्ठा fddi_statistics	stats;
 
 	u32				rcv_discards;
 	u32				rcv_crc_errors;
@@ -1801,6 +1802,6 @@ typedef struct DFX_board_tag
 	u32				xmt_length_errors;
 	u32				xmt_total_frames;
 	u32				xmt_total_bytes;
-	} DFX_board_t;
+	पूर्ण DFX_board_t;
 
-#endif	/* #ifndef _DEFXX_H_ */
+#पूर्ण_अगर	/* #अगर_अघोषित _DEFXX_H_ */

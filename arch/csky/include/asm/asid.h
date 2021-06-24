@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_ASM_ASID_H
-#define __ASM_ASM_ASID_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_ASM_ASID_H
+#घोषणा __ASM_ASM_ASID_H
 
-#include <linux/atomic.h>
-#include <linux/compiler.h>
-#include <linux/cpumask.h>
-#include <linux/percpu.h>
-#include <linux/spinlock.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/spinlock.h>
 
-struct asid_info
-{
+काष्ठा asid_info
+अणु
 	atomic64_t	generation;
-	unsigned long	*map;
+	अचिन्हित दीर्घ	*map;
 	atomic64_t __percpu	*active;
 	u64 __percpu		*reserved;
 	u32			bits;
-	/* Lock protecting the structure */
+	/* Lock protecting the काष्ठाure */
 	raw_spinlock_t		lock;
 	/* Which CPU requires context flush on next call */
 	cpumask_t		flush_pending;
-	/* Number of ASID allocated by context (shift value) */
-	unsigned int		ctxt_shift;
+	/* Number of ASID allocated by context (shअगरt value) */
+	अचिन्हित पूर्णांक		ctxt_shअगरt;
 	/* Callback to locally flush the context. */
-	void			(*flush_cpu_ctxt_cb)(void);
-};
+	व्योम			(*flush_cpu_ctxt_cb)(व्योम);
+पूर्ण;
 
-#define NUM_ASIDS(info)			(1UL << ((info)->bits))
-#define NUM_CTXT_ASIDS(info)		(NUM_ASIDS(info) >> (info)->ctxt_shift)
+#घोषणा NUM_ASIDS(info)			(1UL << ((info)->bits))
+#घोषणा NUM_CTXT_ASIDS(info)		(NUM_ASIDS(info) >> (info)->ctxt_shअगरt)
 
-#define active_asid(info, cpu)	*per_cpu_ptr((info)->active, cpu)
+#घोषणा active_asid(info, cpu)	*per_cpu_ptr((info)->active, cpu)
 
-void asid_new_context(struct asid_info *info, atomic64_t *pasid,
-		      unsigned int cpu, struct mm_struct *mm);
+व्योम asid_new_context(काष्ठा asid_info *info, atomic64_t *pasid,
+		      अचिन्हित पूर्णांक cpu, काष्ठा mm_काष्ठा *mm);
 
 /*
- * Check the ASID is still valid for the context. If not generate a new ASID.
+ * Check the ASID is still valid क्रम the context. If not generate a new ASID.
  *
- * @pasid: Pointer to the current ASID batch
+ * @pasid: Poपूर्णांकer to the current ASID batch
  * @cpu: current CPU ID. Must have been acquired through get_cpu()
  */
-static inline void asid_check_context(struct asid_info *info,
-				      atomic64_t *pasid, unsigned int cpu,
-				      struct mm_struct *mm)
-{
+अटल अंतरभूत व्योम asid_check_context(काष्ठा asid_info *info,
+				      atomic64_t *pasid, अचिन्हित पूर्णांक cpu,
+				      काष्ठा mm_काष्ठा *mm)
+अणु
 	u64 asid, old_active_asid;
 
-	asid = atomic64_read(pasid);
+	asid = atomic64_पढ़ो(pasid);
 
 	/*
 	 * The memory ordering here is subtle.
@@ -53,26 +54,26 @@ static inline void asid_check_context(struct asid_info *info,
 	 * generation, then we update the active_asid entry with a relaxed
 	 * cmpxchg. Racing with a concurrent rollover means that either:
 	 *
-	 * - We get a zero back from the cmpxchg and end up waiting on the
+	 * - We get a zero back from the cmpxchg and end up रुकोing on the
 	 *   lock. Taking the lock synchronises with the rollover and so
-	 *   we are forced to see the updated generation.
+	 *   we are क्रमced to see the updated generation.
 	 *
 	 * - We get a valid ASID back from the cmpxchg, which means the
 	 *   relaxed xchg in flush_context will treat us as reserved
-	 *   because atomic RmWs are totally ordered for a given location.
+	 *   because atomic RmWs are totally ordered क्रम a given location.
 	 */
-	old_active_asid = atomic64_read(&active_asid(info, cpu));
-	if (old_active_asid &&
-	    !((asid ^ atomic64_read(&info->generation)) >> info->bits) &&
+	old_active_asid = atomic64_पढ़ो(&active_asid(info, cpu));
+	अगर (old_active_asid &&
+	    !((asid ^ atomic64_पढ़ो(&info->generation)) >> info->bits) &&
 	    atomic64_cmpxchg_relaxed(&active_asid(info, cpu),
 				     old_active_asid, asid))
-		return;
+		वापस;
 
 	asid_new_context(info, pasid, cpu, mm);
-}
+पूर्ण
 
-int asid_allocator_init(struct asid_info *info,
-			u32 bits, unsigned int asid_per_ctxt,
-			void (*flush_cpu_ctxt_cb)(void));
+पूर्णांक asid_allocator_init(काष्ठा asid_info *info,
+			u32 bits, अचिन्हित पूर्णांक asid_per_ctxt,
+			व्योम (*flush_cpu_ctxt_cb)(व्योम));
 
-#endif
+#पूर्ण_अगर

@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_BITREV_H
-#define __ASM_BITREV_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_BITREV_H
+#घोषणा __ASM_BITREV_H
 
-static __always_inline __attribute_const__ u32 __arch_bitrev32(u32 x)
-{
-	__asm__ ("rbit %0, %1" : "=r" (x) : "r" (x));
-	return x;
-}
+अटल __always_अंतरभूत __attribute_स्थिर__ u32 __arch_bitrev32(u32 x)
+अणु
+	__यंत्र__ ("rbit %0, %1" : "=r" (x) : "r" (x));
+	वापस x;
+पूर्ण
 
-static __always_inline __attribute_const__ u16 __arch_bitrev16(u16 x)
-{
-	return __arch_bitrev32((u32)x) >> 16;
-}
+अटल __always_अंतरभूत __attribute_स्थिर__ u16 __arch_bitrev16(u16 x)
+अणु
+	वापस __arch_bitrev32((u32)x) >> 16;
+पूर्ण
 
-static __always_inline __attribute_const__ u8 __arch_bitrev8(u8 x)
-{
-	return __arch_bitrev32((u32)x) >> 24;
-}
+अटल __always_अंतरभूत __attribute_स्थिर__ u8 __arch_bitrev8(u8 x)
+अणु
+	वापस __arch_bitrev32((u32)x) >> 24;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

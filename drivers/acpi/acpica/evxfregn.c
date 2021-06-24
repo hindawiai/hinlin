@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: evxfregn - External Interfaces, ACPI Operation Regions and
@@ -8,21 +9,21 @@
  *
  *****************************************************************************/
 
-#define EXPORT_ACPI_INTERFACES
+#घोषणा EXPORT_ACPI_INTERFACES
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acnamesp.h"
-#include "acevents.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acnamesp.h"
+#समावेश "acevents.h"
 
-#define _COMPONENT          ACPI_EVENTS
+#घोषणा _COMPONENT          ACPI_EVENTS
 ACPI_MODULE_NAME("evxfregn")
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_install_address_space_handler
  *
- * PARAMETERS:  device          - Handle for the device
+ * PARAMETERS:  device          - Handle क्रम the device
  *              space_id        - The address space ID
  *              handler         - Address of the handler
  *              setup           - Address of the setup function
@@ -30,70 +31,70 @@ ACPI_MODULE_NAME("evxfregn")
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install a handler for all op_regions of a given space_id.
+ * DESCRIPTION: Install a handler क्रम all op_regions of a given space_id.
  *
- * NOTE: This function should only be called after acpi_enable_subsystem has
+ * NOTE: This function should only be called after acpi_enable_subप्रणाली has
  * been called. This is because any _REG methods associated with the Space ID
  * are executed here, and these methods can only be safely executed after
- * the default handlers have been installed and the hardware has been
- * initialized (via acpi_enable_subsystem.)
+ * the शेष handlers have been installed and the hardware has been
+ * initialized (via acpi_enable_subप्रणाली.)
  *
  ******************************************************************************/
 acpi_status
 acpi_install_address_space_handler(acpi_handle device,
 				   acpi_adr_space_type space_id,
 				   acpi_adr_space_handler handler,
-				   acpi_adr_space_setup setup, void *context)
-{
-	struct acpi_namespace_node *node;
+				   acpi_adr_space_setup setup, व्योम *context)
+अणु
+	काष्ठा acpi_namespace_node *node;
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_install_address_space_handler);
 
 	/* Parameter validation */
 
-	if (!device) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (!device) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/* Convert and validate the device handle */
 
 	node = acpi_ns_validate_handle(device);
-	if (!node) {
+	अगर (!node) अणु
 		status = AE_BAD_PARAMETER;
-		goto unlock_and_exit;
-	}
+		जाओ unlock_and_निकास;
+	पूर्ण
 
-	/* Install the handler for all Regions for this Space ID */
+	/* Install the handler क्रम all Regions क्रम this Space ID */
 
 	status =
 	    acpi_ev_install_space_handler(node, space_id, handler, setup,
 					  context);
-	if (ACPI_FAILURE(status)) {
-		goto unlock_and_exit;
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		जाओ unlock_and_निकास;
+	पूर्ण
 
-	/* Run all _REG methods for this address space */
+	/* Run all _REG methods क्रम this address space */
 
 	acpi_ev_execute_reg_methods(node, space_id, ACPI_REG_CONNECT);
 
-unlock_and_exit:
-	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	return_ACPI_STATUS(status);
-}
+unlock_and_निकास:
+	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_install_address_space_handler)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_remove_address_space_handler
+ * FUNCTION:    acpi_हटाओ_address_space_handler
  *
- * PARAMETERS:  device          - Handle for the device
+ * PARAMETERS:  device          - Handle क्रम the device
  *              space_id        - The address space ID
  *              handler         - Address of the handler
  *
@@ -103,66 +104,66 @@ ACPI_EXPORT_SYMBOL(acpi_install_address_space_handler)
  *
  ******************************************************************************/
 acpi_status
-acpi_remove_address_space_handler(acpi_handle device,
+acpi_हटाओ_address_space_handler(acpi_handle device,
 				  acpi_adr_space_type space_id,
 				  acpi_adr_space_handler handler)
-{
-	union acpi_operand_object *obj_desc;
-	union acpi_operand_object *handler_obj;
-	union acpi_operand_object *region_obj;
-	union acpi_operand_object **last_obj_ptr;
-	struct acpi_namespace_node *node;
+अणु
+	जोड़ acpi_opeअक्रम_object *obj_desc;
+	जोड़ acpi_opeअक्रम_object *handler_obj;
+	जोड़ acpi_opeअक्रम_object *region_obj;
+	जोड़ acpi_opeअक्रम_object **last_obj_ptr;
+	काष्ठा acpi_namespace_node *node;
 	acpi_status status;
 
-	ACPI_FUNCTION_TRACE(acpi_remove_address_space_handler);
+	ACPI_FUNCTION_TRACE(acpi_हटाओ_address_space_handler);
 
 	/* Parameter validation */
 
-	if (!device) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (!device) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/* Convert and validate the device handle */
 
 	node = acpi_ns_validate_handle(device);
-	if (!node ||
+	अगर (!node ||
 	    ((node->type != ACPI_TYPE_DEVICE) &&
 	     (node->type != ACPI_TYPE_PROCESSOR) &&
 	     (node->type != ACPI_TYPE_THERMAL) &&
-	     (node != acpi_gbl_root_node))) {
+	     (node != acpi_gbl_root_node))) अणु
 		status = AE_BAD_PARAMETER;
-		goto unlock_and_exit;
-	}
+		जाओ unlock_and_निकास;
+	पूर्ण
 
-	/* Make sure the internal object exists */
+	/* Make sure the पूर्णांकernal object exists */
 
 	obj_desc = acpi_ns_get_attached_object(node);
-	if (!obj_desc) {
+	अगर (!obj_desc) अणु
 		status = AE_NOT_EXIST;
-		goto unlock_and_exit;
-	}
+		जाओ unlock_and_निकास;
+	पूर्ण
 
 	/* Find the address handler the user requested */
 
-	handler_obj = obj_desc->common_notify.handler;
-	last_obj_ptr = &obj_desc->common_notify.handler;
-	while (handler_obj) {
+	handler_obj = obj_desc->common_notअगरy.handler;
+	last_obj_ptr = &obj_desc->common_notअगरy.handler;
+	जबतक (handler_obj) अणु
 
-		/* We have a handler, see if user requested this one */
+		/* We have a handler, see अगर user requested this one */
 
-		if (handler_obj->address_space.space_id == space_id) {
+		अगर (handler_obj->address_space.space_id == space_id) अणु
 
 			/* Handler must be the same as the installed handler */
 
-			if (handler_obj->address_space.handler != handler) {
+			अगर (handler_obj->address_space.handler != handler) अणु
 				status = AE_BAD_PARAMETER;
-				goto unlock_and_exit;
-			}
+				जाओ unlock_and_निकास;
+			पूर्ण
 
 			/* Matched space_id, first dereference this in the Regions */
 
@@ -177,11 +178,11 @@ acpi_remove_address_space_handler(acpi_handle device,
 
 			/* Walk the handler's region list */
 
-			while (region_obj) {
+			जबतक (region_obj) अणु
 				/*
 				 * First disassociate the handler from the region.
 				 *
-				 * NOTE: this doesn't mean that the region goes away
+				 * NOTE: this करोesn't mean that the region goes away
 				 * The region is just inaccessible as indicated to
 				 * the _REG method
 				 */
@@ -189,11 +190,11 @@ acpi_remove_address_space_handler(acpi_handle device,
 
 				/*
 				 * Walk the list: Just grab the head because the
-				 * detach_region removed the previous head.
+				 * detach_region हटाओd the previous head.
 				 */
 				region_obj =
 				    handler_obj->address_space.region_list;
-			}
+			पूर्ण
 
 			/* Remove this Handler object from the list */
 
@@ -203,17 +204,17 @@ acpi_remove_address_space_handler(acpi_handle device,
 
 			acpi_os_release_mutex(handler_obj->address_space.
 					      context_mutex);
-			acpi_ut_remove_reference(handler_obj);
-			goto unlock_and_exit;
-		}
+			acpi_ut_हटाओ_reference(handler_obj);
+			जाओ unlock_and_निकास;
+		पूर्ण
 
 		/* Walk the linked list of handlers */
 
 		last_obj_ptr = &handler_obj->address_space.next;
 		handler_obj = handler_obj->address_space.next;
-	}
+	पूर्ण
 
-	/* The handler does not exist */
+	/* The handler करोes not exist */
 
 	ACPI_DEBUG_PRINT((ACPI_DB_OPREGION,
 			  "Unable to remove address handler %p for %s(%X), DevNode %p, obj %p\n",
@@ -222,9 +223,9 @@ acpi_remove_address_space_handler(acpi_handle device,
 
 	status = AE_NOT_EXIST;
 
-unlock_and_exit:
-	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	return_ACPI_STATUS(status);
-}
+unlock_and_निकास:
+	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_remove_address_space_handler)
+ACPI_EXPORT_SYMBOL(acpi_हटाओ_address_space_handler)

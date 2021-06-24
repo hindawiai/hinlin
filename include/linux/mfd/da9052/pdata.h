@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Platform data declarations for DA9052 PMICs.
+ * Platक्रमm data declarations क्रम DA9052 PMICs.
  *
  * Copyright(c) 2011 Dialog Semiconductor Ltd.
  *
  * Author: David Dajun Chen <dchen@diasemi.com>
  */
 
-#ifndef __MFD_DA9052_PDATA_H__
-#define __MFD_DA9052_PDATA_H__
+#अगर_अघोषित __MFD_DA9052_PDATA_H__
+#घोषणा __MFD_DA9052_PDATA_H__
 
-#define DA9052_MAX_REGULATORS	14
+#घोषणा DA9052_MAX_REGULATORS	14
 
-struct da9052;
+काष्ठा da9052;
 
-struct da9052_pdata {
-	struct led_platform_data *pled;
-	int (*init) (struct da9052 *da9052);
-	int irq_base;
-	int gpio_base;
-	int use_for_apm;
-	struct regulator_init_data *regulators[DA9052_MAX_REGULATORS];
-};
+काष्ठा da9052_pdata अणु
+	काष्ठा led_platक्रमm_data *pled;
+	पूर्णांक (*init) (काष्ठा da9052 *da9052);
+	पूर्णांक irq_base;
+	पूर्णांक gpio_base;
+	पूर्णांक use_क्रम_apm;
+	काष्ठा regulator_init_data *regulators[DA9052_MAX_REGULATORS];
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

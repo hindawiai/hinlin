@@ -1,125 +1,126 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * USB cluster support for Armada 375 platform.
+ * USB cluster support क्रम Armada 375 platक्रमm.
  *
  * Copyright (C) 2014 Marvell
  *
- * Gregory CLEMENT <gregory.clement@free-electrons.com>
+ * Gregory CLEMENT <gregory.clement@मुक्त-electrons.com>
  *
  * Armada 375 comes with an USB2 host and device controller and an
- * USB3 controller. The USB cluster control register allows to manage
+ * USB3 controller. The USB cluster control रेजिस्टर allows to manage
  * common features of both USB controllers.
  */
 
-#include <dt-bindings/phy/phy.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/of_address.h>
-#include <linux/phy/phy.h>
-#include <linux/platform_device.h>
+#समावेश <dt-bindings/phy/phy.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define USB2_PHY_CONFIG_DISABLE BIT(0)
+#घोषणा USB2_PHY_CONFIG_DISABLE BIT(0)
 
-struct armada375_cluster_phy {
-	struct phy *phy;
-	void __iomem *reg;
+काष्ठा armada375_cluster_phy अणु
+	काष्ठा phy *phy;
+	व्योम __iomem *reg;
 	bool use_usb3;
-	int phy_provided;
-};
+	पूर्णांक phy_provided;
+पूर्ण;
 
-static int armada375_usb_phy_init(struct phy *phy)
-{
-	struct armada375_cluster_phy *cluster_phy;
+अटल पूर्णांक armada375_usb_phy_init(काष्ठा phy *phy)
+अणु
+	काष्ठा armada375_cluster_phy *cluster_phy;
 	u32 reg;
 
 	cluster_phy = phy_get_drvdata(phy);
-	if (!cluster_phy)
-		return -ENODEV;
+	अगर (!cluster_phy)
+		वापस -ENODEV;
 
-	reg = readl(cluster_phy->reg);
-	if (cluster_phy->use_usb3)
+	reg = पढ़ोl(cluster_phy->reg);
+	अगर (cluster_phy->use_usb3)
 		reg |= USB2_PHY_CONFIG_DISABLE;
-	else
+	अन्यथा
 		reg &= ~USB2_PHY_CONFIG_DISABLE;
-	writel(reg, cluster_phy->reg);
+	ग_लिखोl(reg, cluster_phy->reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct phy_ops armada375_usb_phy_ops = {
+अटल स्थिर काष्ठा phy_ops armada375_usb_phy_ops = अणु
 	.init = armada375_usb_phy_init,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
 /*
- * Only one controller can use this PHY. We shouldn't have the case
- * when two controllers want to use this PHY. But if this case occurs
- * then we provide a phy to the first one and return an error for the
- * next one. This error has also to be an error returned by
- * devm_phy_optional_get() so different from ENODEV for USB2. In the
- * USB3 case it still optional and we use ENODEV.
+ * Only one controller can use this PHY. We shouldn't have the हाल
+ * when two controllers want to use this PHY. But अगर this हाल occurs
+ * then we provide a phy to the first one and वापस an error क्रम the
+ * next one. This error has also to be an error वापसed by
+ * devm_phy_optional_get() so dअगरferent from ENODEV क्रम USB2. In the
+ * USB3 हाल it still optional and we use ENODEV.
  */
-static struct phy *armada375_usb_phy_xlate(struct device *dev,
-					struct of_phandle_args *args)
-{
-	struct armada375_cluster_phy *cluster_phy = dev_get_drvdata(dev);
+अटल काष्ठा phy *armada375_usb_phy_xlate(काष्ठा device *dev,
+					काष्ठा of_phandle_args *args)
+अणु
+	काष्ठा armada375_cluster_phy *cluster_phy = dev_get_drvdata(dev);
 
-	if (!cluster_phy)
-		return  ERR_PTR(-ENODEV);
+	अगर (!cluster_phy)
+		वापस  ERR_PTR(-ENODEV);
 
 	/*
 	 * Either the phy had never been requested and then the first
-	 * usb claiming it can get it, or it had already been
-	 * requested in this case, we only allow to use it with the
+	 * usb claiming it can get it, or it had alपढ़ोy been
+	 * requested in this हाल, we only allow to use it with the
 	 * same configuration.
 	 */
-	if (WARN_ON((cluster_phy->phy_provided != PHY_NONE) &&
-			(cluster_phy->phy_provided != args->args[0]))) {
+	अगर (WARN_ON((cluster_phy->phy_provided != PHY_NONE) &&
+			(cluster_phy->phy_provided != args->args[0]))) अणु
 		dev_err(dev, "This PHY has already been provided!\n");
 		dev_err(dev, "Check your device tree, only one controller can use it\n.");
-		if (args->args[0] == PHY_TYPE_USB2)
-			return ERR_PTR(-EBUSY);
-		else
-			return ERR_PTR(-ENODEV);
-	}
+		अगर (args->args[0] == PHY_TYPE_USB2)
+			वापस ERR_PTR(-EBUSY);
+		अन्यथा
+			वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
-	if (args->args[0] == PHY_TYPE_USB2)
+	अगर (args->args[0] == PHY_TYPE_USB2)
 		cluster_phy->use_usb3 = false;
-	else if (args->args[0] == PHY_TYPE_USB3)
+	अन्यथा अगर (args->args[0] == PHY_TYPE_USB3)
 		cluster_phy->use_usb3 = true;
-	else {
+	अन्यथा अणु
 		dev_err(dev, "Invalid PHY mode\n");
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
-	/* Store which phy mode is used for next test */
+	/* Store which phy mode is used क्रम next test */
 	cluster_phy->phy_provided = args->args[0];
 
-	return cluster_phy->phy;
-}
+	वापस cluster_phy->phy;
+पूर्ण
 
-static int armada375_usb_phy_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct phy *phy;
-	struct phy_provider *phy_provider;
-	void __iomem *usb_cluster_base;
-	struct armada375_cluster_phy *cluster_phy;
+अटल पूर्णांक armada375_usb_phy_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा phy *phy;
+	काष्ठा phy_provider *phy_provider;
+	व्योम __iomem *usb_cluster_base;
+	काष्ठा armada375_cluster_phy *cluster_phy;
 
-	cluster_phy = devm_kzalloc(dev, sizeof(*cluster_phy), GFP_KERNEL);
-	if (!cluster_phy)
-		return  -ENOMEM;
+	cluster_phy = devm_kzalloc(dev, माप(*cluster_phy), GFP_KERNEL);
+	अगर (!cluster_phy)
+		वापस  -ENOMEM;
 
-	usb_cluster_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(usb_cluster_base))
-		return PTR_ERR(usb_cluster_base);
+	usb_cluster_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(usb_cluster_base))
+		वापस PTR_ERR(usb_cluster_base);
 
-	phy = devm_phy_create(dev, NULL, &armada375_usb_phy_ops);
-	if (IS_ERR(phy)) {
+	phy = devm_phy_create(dev, शून्य, &armada375_usb_phy_ops);
+	अगर (IS_ERR(phy)) अणु
 		dev_err(dev, "failed to create PHY\n");
-		return PTR_ERR(phy);
-	}
+		वापस PTR_ERR(phy);
+	पूर्ण
 
 	cluster_phy->phy = phy;
 	cluster_phy->reg = usb_cluster_base;
@@ -127,21 +128,21 @@ static int armada375_usb_phy_probe(struct platform_device *pdev)
 	dev_set_drvdata(dev, cluster_phy);
 	phy_set_drvdata(phy, cluster_phy);
 
-	phy_provider = devm_of_phy_provider_register(&pdev->dev,
+	phy_provider = devm_of_phy_provider_रेजिस्टर(&pdev->dev,
 						     armada375_usb_phy_xlate);
-	return PTR_ERR_OR_ZERO(phy_provider);
-}
+	वापस PTR_ERR_OR_ZERO(phy_provider);
+पूर्ण
 
-static const struct of_device_id of_usb_cluster_table[] = {
-	{ .compatible = "marvell,armada-375-usb-cluster", },
-	{ /* end of list */ },
-};
+अटल स्थिर काष्ठा of_device_id of_usb_cluster_table[] = अणु
+	अणु .compatible = "marvell,armada-375-usb-cluster", पूर्ण,
+	अणु /* end of list */ पूर्ण,
+पूर्ण;
 
-static struct platform_driver armada375_usb_phy_driver = {
+अटल काष्ठा platक्रमm_driver armada375_usb_phy_driver = अणु
 	.probe	= armada375_usb_phy_probe,
-	.driver = {
+	.driver = अणु
 		.of_match_table	= of_usb_cluster_table,
 		.name  = "armada-375-usb-cluster",
-	}
-};
-builtin_platform_driver(armada375_usb_phy_driver);
+	पूर्ण
+पूर्ण;
+builtin_platक्रमm_driver(armada375_usb_phy_driver);

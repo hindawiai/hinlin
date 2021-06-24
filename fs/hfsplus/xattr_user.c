@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/hfsplus/xattr_user.c
  *
  * Vyacheslav Dubeyko <slava@dubeyko.com>
  *
- * Handler for user extended attributes.
+ * Handler क्रम user extended attributes.
  */
 
-#include <linux/nls.h>
+#समावेश <linux/nls.h>
 
-#include "hfsplus_fs.h"
-#include "xattr.h"
+#समावेश "hfsplus_fs.h"
+#समावेश "xattr.h"
 
-static int hfsplus_user_getxattr(const struct xattr_handler *handler,
-				 struct dentry *unused, struct inode *inode,
-				 const char *name, void *buffer, size_t size)
-{
+अटल पूर्णांक hfsplus_user_getxattr(स्थिर काष्ठा xattr_handler *handler,
+				 काष्ठा dentry *unused, काष्ठा inode *inode,
+				 स्थिर अक्षर *name, व्योम *buffer, माप_प्रकार size)
+अणु
 
-	return hfsplus_getxattr(inode, name, buffer, size,
+	वापस hfsplus_getxattr(inode, name, buffer, size,
 				XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN);
-}
+पूर्ण
 
-static int hfsplus_user_setxattr(const struct xattr_handler *handler,
-				 struct user_namespace *mnt_userns,
-				 struct dentry *unused, struct inode *inode,
-				 const char *name, const void *buffer,
-				 size_t size, int flags)
-{
-	return hfsplus_setxattr(inode, name, buffer, size, flags,
+अटल पूर्णांक hfsplus_user_setxattr(स्थिर काष्ठा xattr_handler *handler,
+				 काष्ठा user_namespace *mnt_userns,
+				 काष्ठा dentry *unused, काष्ठा inode *inode,
+				 स्थिर अक्षर *name, स्थिर व्योम *buffer,
+				 माप_प्रकार size, पूर्णांक flags)
+अणु
+	वापस hfsplus_setxattr(inode, name, buffer, size, flags,
 				XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN);
-}
+पूर्ण
 
-const struct xattr_handler hfsplus_xattr_user_handler = {
+स्थिर काष्ठा xattr_handler hfsplus_xattr_user_handler = अणु
 	.prefix	= XATTR_USER_PREFIX,
 	.get	= hfsplus_user_getxattr,
 	.set	= hfsplus_user_setxattr,
-};
+पूर्ण;

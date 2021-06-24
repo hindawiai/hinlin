@@ -1,204 +1,205 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * GPIO-based I2C Arbitration Using a Challenge & Response Mechanism
  *
  * Copyright (C) 2012 Google, Inc
  */
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/kernel.h>
-#include <linux/i2c.h>
-#include <linux/i2c-mux.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-mux.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
 
 /**
- * struct i2c_arbitrator_data - Driver data for I2C arbitrator
+ * काष्ठा i2c_arbitrator_data - Driver data क्रम I2C arbitrator
  *
  * @our_gpio: GPIO descriptor we'll use to claim.
  * @their_gpio: GPIO descriptor that the other side will use to claim.
- * @slew_delay_us: microseconds to wait for a GPIO to go high.
- * @wait_retry_us: we'll attempt another claim after this many microseconds.
- * @wait_free_us: we'll give up after this many microseconds.
+ * @slew_delay_us: microseconds to रुको क्रम a GPIO to go high.
+ * @रुको_retry_us: we'll attempt another claim after this many microseconds.
+ * @रुको_मुक्त_us: we'll give up after this many microseconds.
  */
 
-struct i2c_arbitrator_data {
-	struct gpio_desc *our_gpio;
-	struct gpio_desc *their_gpio;
-	unsigned int slew_delay_us;
-	unsigned int wait_retry_us;
-	unsigned int wait_free_us;
-};
+काष्ठा i2c_arbitrator_data अणु
+	काष्ठा gpio_desc *our_gpio;
+	काष्ठा gpio_desc *their_gpio;
+	अचिन्हित पूर्णांक slew_delay_us;
+	अचिन्हित पूर्णांक रुको_retry_us;
+	अचिन्हित पूर्णांक रुको_मुक्त_us;
+पूर्ण;
 
 
 /*
  * i2c_arbitrator_select - claim the I2C bus
  *
- * Use the GPIO-based signalling protocol; return -EBUSY if we fail.
+ * Use the GPIO-based संकेतling protocol; वापस -EBUSY अगर we fail.
  */
-static int i2c_arbitrator_select(struct i2c_mux_core *muxc, u32 chan)
-{
-	const struct i2c_arbitrator_data *arb = i2c_mux_priv(muxc);
-	unsigned long stop_retry, stop_time;
+अटल पूर्णांक i2c_arbitrator_select(काष्ठा i2c_mux_core *muxc, u32 chan)
+अणु
+	स्थिर काष्ठा i2c_arbitrator_data *arb = i2c_mux_priv(muxc);
+	अचिन्हित दीर्घ stop_retry, stop_समय;
 
 	/* Start a round of trying to claim the bus */
-	stop_time = jiffies + usecs_to_jiffies(arb->wait_free_us) + 1;
-	do {
+	stop_समय = jअगरfies + usecs_to_jअगरfies(arb->रुको_मुक्त_us) + 1;
+	करो अणु
 		/* Indicate that we want to claim the bus */
 		gpiod_set_value(arb->our_gpio, 1);
 		udelay(arb->slew_delay_us);
 
-		/* Wait for the other master to release it */
-		stop_retry = jiffies + usecs_to_jiffies(arb->wait_retry_us) + 1;
-		while (time_before(jiffies, stop_retry)) {
-			int gpio_val = gpiod_get_value(arb->their_gpio);
+		/* Wait क्रम the other master to release it */
+		stop_retry = jअगरfies + usecs_to_jअगरfies(arb->रुको_retry_us) + 1;
+		जबतक (समय_beक्रमe(jअगरfies, stop_retry)) अणु
+			पूर्णांक gpio_val = gpiod_get_value(arb->their_gpio);
 
-			if (!gpio_val) {
-				/* We got it, so return */
-				return 0;
-			}
+			अगर (!gpio_val) अणु
+				/* We got it, so वापस */
+				वापस 0;
+			पूर्ण
 
 			usleep_range(50, 200);
-		}
+		पूर्ण
 
-		/* It didn't release, so give up, wait, and try again */
+		/* It didn't release, so give up, रुको, and try again */
 		gpiod_set_value(arb->our_gpio, 0);
 
-		usleep_range(arb->wait_retry_us, arb->wait_retry_us * 2);
-	} while (time_before(jiffies, stop_time));
+		usleep_range(arb->रुको_retry_us, arb->रुको_retry_us * 2);
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, stop_समय));
 
 	/* Give up, release our claim */
 	gpiod_set_value(arb->our_gpio, 0);
 	udelay(arb->slew_delay_us);
 	dev_err(muxc->dev, "Could not claim bus, timeout\n");
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
 /*
  * i2c_arbitrator_deselect - release the I2C bus
  *
- * Release the I2C bus using the GPIO-based signalling protocol.
+ * Release the I2C bus using the GPIO-based संकेतling protocol.
  */
-static int i2c_arbitrator_deselect(struct i2c_mux_core *muxc, u32 chan)
-{
-	const struct i2c_arbitrator_data *arb = i2c_mux_priv(muxc);
+अटल पूर्णांक i2c_arbitrator_deselect(काष्ठा i2c_mux_core *muxc, u32 chan)
+अणु
+	स्थिर काष्ठा i2c_arbitrator_data *arb = i2c_mux_priv(muxc);
 
-	/* Release the bus and wait for the other master to notice */
+	/* Release the bus and रुको क्रम the other master to notice */
 	gpiod_set_value(arb->our_gpio, 0);
 	udelay(arb->slew_delay_us);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_arbitrator_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct device_node *parent_np;
-	struct i2c_mux_core *muxc;
-	struct i2c_arbitrator_data *arb;
-	struct gpio_desc *dummy;
-	int ret;
+अटल पूर्णांक i2c_arbitrator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा device_node *parent_np;
+	काष्ठा i2c_mux_core *muxc;
+	काष्ठा i2c_arbitrator_data *arb;
+	काष्ठा gpio_desc *dummy;
+	पूर्णांक ret;
 
-	/* We only support probing from device tree; no platform_data */
-	if (!np) {
+	/* We only support probing from device tree; no platक्रमm_data */
+	अगर (!np) अणु
 		dev_err(dev, "Cannot find device tree node\n");
-		return -ENODEV;
-	}
-	if (dev_get_platdata(dev)) {
+		वापस -ENODEV;
+	पूर्ण
+	अगर (dev_get_platdata(dev)) अणु
 		dev_err(dev, "Platform data is not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	muxc = i2c_mux_alloc(NULL, dev, 1, sizeof(*arb), I2C_MUX_ARBITRATOR,
+	muxc = i2c_mux_alloc(शून्य, dev, 1, माप(*arb), I2C_MUX_ARBITRATOR,
 			     i2c_arbitrator_select, i2c_arbitrator_deselect);
-	if (!muxc)
-		return -ENOMEM;
+	अगर (!muxc)
+		वापस -ENOMEM;
 	arb = i2c_mux_priv(muxc);
 
-	platform_set_drvdata(pdev, muxc);
+	platक्रमm_set_drvdata(pdev, muxc);
 
 	/* Request GPIOs, our GPIO as unclaimed to begin with */
 	arb->our_gpio = devm_gpiod_get(dev, "our-claim", GPIOD_OUT_LOW);
-	if (IS_ERR(arb->our_gpio)) {
+	अगर (IS_ERR(arb->our_gpio)) अणु
 		dev_err(dev, "could not get \"our-claim\" GPIO (%ld)\n",
 			PTR_ERR(arb->our_gpio));
-		return PTR_ERR(arb->our_gpio);
-	}
+		वापस PTR_ERR(arb->our_gpio);
+	पूर्ण
 
 	arb->their_gpio = devm_gpiod_get(dev, "their-claim", GPIOD_IN);
-	if (IS_ERR(arb->their_gpio)) {
+	अगर (IS_ERR(arb->their_gpio)) अणु
 		dev_err(dev, "could not get \"their-claim\" GPIO (%ld)\n",
 			PTR_ERR(arb->their_gpio));
-		return PTR_ERR(arb->their_gpio);
-	}
+		वापस PTR_ERR(arb->their_gpio);
+	पूर्ण
 
 	/* At the moment we only support a single two master (us + 1 other) */
 	dummy = devm_gpiod_get_index(dev, "their-claim", 1, GPIOD_IN);
-	if (!IS_ERR(dummy)) {
+	अगर (!IS_ERR(dummy)) अणु
 		dev_err(dev, "Only one other master is supported\n");
-		return -EINVAL;
-	} else if (PTR_ERR(dummy) == -EPROBE_DEFER) {
-		return -EPROBE_DEFER;
-	}
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (PTR_ERR(dummy) == -EPROBE_DEFER) अणु
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
 	/* Arbitration parameters */
-	if (of_property_read_u32(np, "slew-delay-us", &arb->slew_delay_us))
+	अगर (of_property_पढ़ो_u32(np, "slew-delay-us", &arb->slew_delay_us))
 		arb->slew_delay_us = 10;
-	if (of_property_read_u32(np, "wait-retry-us", &arb->wait_retry_us))
-		arb->wait_retry_us = 3000;
-	if (of_property_read_u32(np, "wait-free-us", &arb->wait_free_us))
-		arb->wait_free_us = 50000;
+	अगर (of_property_पढ़ो_u32(np, "wait-retry-us", &arb->रुको_retry_us))
+		arb->रुको_retry_us = 3000;
+	अगर (of_property_पढ़ो_u32(np, "wait-free-us", &arb->रुको_मुक्त_us))
+		arb->रुको_मुक्त_us = 50000;
 
 	/* Find our parent */
 	parent_np = of_parse_phandle(np, "i2c-parent", 0);
-	if (!parent_np) {
+	अगर (!parent_np) अणु
 		dev_err(dev, "Cannot parse i2c-parent\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	muxc->parent = of_get_i2c_adapter_by_node(parent_np);
 	of_node_put(parent_np);
-	if (!muxc->parent) {
+	अगर (!muxc->parent) अणु
 		dev_err(dev, "Cannot find parent bus\n");
-		return -EPROBE_DEFER;
-	}
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
 	/* Actually add the mux adapter */
 	ret = i2c_mux_add_adapter(muxc, 0, 0, 0);
-	if (ret)
+	अगर (ret)
 		i2c_put_adapter(muxc->parent);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i2c_arbitrator_remove(struct platform_device *pdev)
-{
-	struct i2c_mux_core *muxc = platform_get_drvdata(pdev);
+अटल पूर्णांक i2c_arbitrator_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा i2c_mux_core *muxc = platक्रमm_get_drvdata(pdev);
 
 	i2c_mux_del_adapters(muxc);
 	i2c_put_adapter(muxc->parent);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id i2c_arbitrator_of_match[] = {
-	{ .compatible = "i2c-arb-gpio-challenge", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id i2c_arbitrator_of_match[] = अणु
+	अणु .compatible = "i2c-arb-gpio-challenge", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, i2c_arbitrator_of_match);
 
-static struct platform_driver i2c_arbitrator_driver = {
+अटल काष्ठा platक्रमm_driver i2c_arbitrator_driver = अणु
 	.probe	= i2c_arbitrator_probe,
-	.remove	= i2c_arbitrator_remove,
-	.driver	= {
+	.हटाओ	= i2c_arbitrator_हटाओ,
+	.driver	= अणु
 		.name	= "i2c-arb-gpio-challenge",
 		.of_match_table = i2c_arbitrator_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(i2c_arbitrator_driver);
+module_platक्रमm_driver(i2c_arbitrator_driver);
 
 MODULE_DESCRIPTION("GPIO-based I2C Arbitration");
 MODULE_AUTHOR("Doug Anderson <dianders@chromium.org>");

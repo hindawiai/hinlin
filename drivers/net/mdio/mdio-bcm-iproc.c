@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2015 Broadcom Corporation
  */
 
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/of_mdio.h>
-#include <linux/phy.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
 
-#define IPROC_GPHY_MDCDIV    0x1a
+#घोषणा IPROC_GPHY_MDCDIV    0x1a
 
-#define MII_CTRL_OFFSET      0x000
+#घोषणा MII_CTRL_OFFSET      0x000
 
-#define MII_CTRL_DIV_SHIFT   0
-#define MII_CTRL_PRE_SHIFT   7
-#define MII_CTRL_BUSY_SHIFT  8
+#घोषणा MII_CTRL_DIV_SHIFT   0
+#घोषणा MII_CTRL_PRE_SHIFT   7
+#घोषणा MII_CTRL_BUSY_SHIFT  8
 
-#define MII_DATA_OFFSET      0x004
-#define MII_DATA_MASK        0xffff
-#define MII_DATA_TA_SHIFT    16
-#define MII_DATA_TA_VAL      2
-#define MII_DATA_RA_SHIFT    18
-#define MII_DATA_PA_SHIFT    23
-#define MII_DATA_OP_SHIFT    28
-#define MII_DATA_OP_WRITE    1
-#define MII_DATA_OP_READ     2
-#define MII_DATA_SB_SHIFT    30
+#घोषणा MII_DATA_OFFSET      0x004
+#घोषणा MII_DATA_MASK        0xffff
+#घोषणा MII_DATA_TA_SHIFT    16
+#घोषणा MII_DATA_TA_VAL      2
+#घोषणा MII_DATA_RA_SHIFT    18
+#घोषणा MII_DATA_PA_SHIFT    23
+#घोषणा MII_DATA_OP_SHIFT    28
+#घोषणा MII_DATA_OP_WRITE    1
+#घोषणा MII_DATA_OP_READ     2
+#घोषणा MII_DATA_SB_SHIFT    30
 
-struct iproc_mdio_priv {
-	struct mii_bus *mii_bus;
-	void __iomem *base;
-};
+काष्ठा iproc_mdio_priv अणु
+	काष्ठा mii_bus *mii_bus;
+	व्योम __iomem *base;
+पूर्ण;
 
-static inline int iproc_mdio_wait_for_idle(void __iomem *base)
-{
+अटल अंतरभूत पूर्णांक iproc_mdio_रुको_क्रम_idle(व्योम __iomem *base)
+अणु
 	u32 val;
-	unsigned int timeout = 1000; /* loop for 1s */
+	अचिन्हित पूर्णांक समयout = 1000; /* loop क्रम 1s */
 
-	do {
-		val = readl(base + MII_CTRL_OFFSET);
-		if ((val & BIT(MII_CTRL_BUSY_SHIFT)) == 0)
-			return 0;
+	करो अणु
+		val = पढ़ोl(base + MII_CTRL_OFFSET);
+		अगर ((val & BIT(MII_CTRL_BUSY_SHIFT)) == 0)
+			वापस 0;
 
 		usleep_range(1000, 2000);
-	} while (timeout--);
+	पूर्ण जबतक (समयout--);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static inline void iproc_mdio_config_clk(void __iomem *base)
-{
+अटल अंतरभूत व्योम iproc_mdio_config_clk(व्योम __iomem *base)
+अणु
 	u32 val;
 
 	val = (IPROC_GPHY_MDCDIV << MII_CTRL_DIV_SHIFT) |
 		  BIT(MII_CTRL_PRE_SHIFT);
-	writel(val, base + MII_CTRL_OFFSET);
-}
+	ग_लिखोl(val, base + MII_CTRL_OFFSET);
+पूर्ण
 
-static int iproc_mdio_read(struct mii_bus *bus, int phy_id, int reg)
-{
-	struct iproc_mdio_priv *priv = bus->priv;
+अटल पूर्णांक iproc_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg)
+अणु
+	काष्ठा iproc_mdio_priv *priv = bus->priv;
 	u32 cmd;
-	int rc;
+	पूर्णांक rc;
 
-	rc = iproc_mdio_wait_for_idle(priv->base);
-	if (rc)
-		return rc;
+	rc = iproc_mdio_रुको_क्रम_idle(priv->base);
+	अगर (rc)
+		वापस rc;
 
-	/* Prepare the read operation */
+	/* Prepare the पढ़ो operation */
 	cmd = (MII_DATA_TA_VAL << MII_DATA_TA_SHIFT) |
 		(reg << MII_DATA_RA_SHIFT) |
 		(phy_id << MII_DATA_PA_SHIFT) |
 		BIT(MII_DATA_SB_SHIFT) |
 		(MII_DATA_OP_READ << MII_DATA_OP_SHIFT);
 
-	writel(cmd, priv->base + MII_DATA_OFFSET);
+	ग_लिखोl(cmd, priv->base + MII_DATA_OFFSET);
 
-	rc = iproc_mdio_wait_for_idle(priv->base);
-	if (rc)
-		return rc;
+	rc = iproc_mdio_रुको_क्रम_idle(priv->base);
+	अगर (rc)
+		वापस rc;
 
-	cmd = readl(priv->base + MII_DATA_OFFSET) & MII_DATA_MASK;
+	cmd = पढ़ोl(priv->base + MII_DATA_OFFSET) & MII_DATA_MASK;
 
-	return cmd;
-}
+	वापस cmd;
+पूर्ण
 
-static int iproc_mdio_write(struct mii_bus *bus, int phy_id,
-			    int reg, u16 val)
-{
-	struct iproc_mdio_priv *priv = bus->priv;
+अटल पूर्णांक iproc_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id,
+			    पूर्णांक reg, u16 val)
+अणु
+	काष्ठा iproc_mdio_priv *priv = bus->priv;
 	u32 cmd;
-	int rc;
+	पूर्णांक rc;
 
-	rc = iproc_mdio_wait_for_idle(priv->base);
-	if (rc)
-		return rc;
+	rc = iproc_mdio_रुको_क्रम_idle(priv->base);
+	अगर (rc)
+		वापस rc;
 
-	/* Prepare the write operation */
+	/* Prepare the ग_लिखो operation */
 	cmd = (MII_DATA_TA_VAL << MII_DATA_TA_SHIFT) |
 		(reg << MII_DATA_RA_SHIFT) |
 		(phy_id << MII_DATA_PA_SHIFT) |
@@ -110,110 +111,110 @@ static int iproc_mdio_write(struct mii_bus *bus, int phy_id,
 		(MII_DATA_OP_WRITE << MII_DATA_OP_SHIFT) |
 		((u32)(val) & MII_DATA_MASK);
 
-	writel(cmd, priv->base + MII_DATA_OFFSET);
+	ग_लिखोl(cmd, priv->base + MII_DATA_OFFSET);
 
-	rc = iproc_mdio_wait_for_idle(priv->base);
-	if (rc)
-		return rc;
+	rc = iproc_mdio_रुको_क्रम_idle(priv->base);
+	अगर (rc)
+		वापस rc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iproc_mdio_probe(struct platform_device *pdev)
-{
-	struct iproc_mdio_priv *priv;
-	struct mii_bus *bus;
-	int rc;
+अटल पूर्णांक iproc_mdio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iproc_mdio_priv *priv;
+	काष्ठा mii_bus *bus;
+	पूर्णांक rc;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	priv->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(priv->base)) {
+	priv->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(priv->base)) अणु
 		dev_err(&pdev->dev, "failed to ioremap register\n");
-		return PTR_ERR(priv->base);
-	}
+		वापस PTR_ERR(priv->base);
+	पूर्ण
 
 	priv->mii_bus = mdiobus_alloc();
-	if (!priv->mii_bus) {
+	अगर (!priv->mii_bus) अणु
 		dev_err(&pdev->dev, "MDIO bus alloc failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	bus = priv->mii_bus;
 	bus->priv = priv;
 	bus->name = "iProc MDIO bus";
-	snprintf(bus->id, MII_BUS_ID_SIZE, "%s-%d", pdev->name, pdev->id);
+	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "%s-%d", pdev->name, pdev->id);
 	bus->parent = &pdev->dev;
-	bus->read = iproc_mdio_read;
-	bus->write = iproc_mdio_write;
+	bus->पढ़ो = iproc_mdio_पढ़ो;
+	bus->ग_लिखो = iproc_mdio_ग_लिखो;
 
 	iproc_mdio_config_clk(priv->base);
 
-	rc = of_mdiobus_register(bus, pdev->dev.of_node);
-	if (rc) {
+	rc = of_mdiobus_रेजिस्टर(bus, pdev->dev.of_node);
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "MDIO bus registration failed\n");
-		goto err_iproc_mdio;
-	}
+		जाओ err_iproc_mdio;
+	पूर्ण
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	dev_info(&pdev->dev, "Broadcom iProc MDIO bus registered\n");
 
-	return 0;
+	वापस 0;
 
 err_iproc_mdio:
-	mdiobus_free(bus);
-	return rc;
-}
+	mdiobus_मुक्त(bus);
+	वापस rc;
+पूर्ण
 
-static int iproc_mdio_remove(struct platform_device *pdev)
-{
-	struct iproc_mdio_priv *priv = platform_get_drvdata(pdev);
+अटल पूर्णांक iproc_mdio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iproc_mdio_priv *priv = platक्रमm_get_drvdata(pdev);
 
-	mdiobus_unregister(priv->mii_bus);
-	mdiobus_free(priv->mii_bus);
+	mdiobus_unरेजिस्टर(priv->mii_bus);
+	mdiobus_मुक्त(priv->mii_bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int iproc_mdio_resume(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct iproc_mdio_priv *priv = platform_get_drvdata(pdev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक iproc_mdio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा iproc_mdio_priv *priv = platक्रमm_get_drvdata(pdev);
 
-	/* restore the mii clock configuration */
+	/* restore the mii घड़ी configuration */
 	iproc_mdio_config_clk(priv->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops iproc_mdio_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops iproc_mdio_pm_ops = अणु
 	.resume = iproc_mdio_resume
-};
-#endif /* CONFIG_PM_SLEEP */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static const struct of_device_id iproc_mdio_of_match[] = {
-	{ .compatible = "brcm,iproc-mdio", },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id iproc_mdio_of_match[] = अणु
+	अणु .compatible = "brcm,iproc-mdio", पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, iproc_mdio_of_match);
 
-static struct platform_driver iproc_mdio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver iproc_mdio_driver = अणु
+	.driver = अणु
 		.name = "iproc-mdio",
 		.of_match_table = iproc_mdio_of_match,
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 		.pm = &iproc_mdio_pm_ops,
-#endif
-	},
+#पूर्ण_अगर
+	पूर्ण,
 	.probe = iproc_mdio_probe,
-	.remove = iproc_mdio_remove,
-};
+	.हटाओ = iproc_mdio_हटाओ,
+पूर्ण;
 
-module_platform_driver(iproc_mdio_driver);
+module_platक्रमm_driver(iproc_mdio_driver);
 
 MODULE_AUTHOR("Broadcom Corporation");
 MODULE_DESCRIPTION("Broadcom iProc MDIO bus controller");

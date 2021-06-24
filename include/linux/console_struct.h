@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * console_struct.h
+ * console_काष्ठा.h
  *
- * Data structure describing single virtual console except for data
+ * Data काष्ठाure describing single भव console except क्रम data
  * used by vt.c.
  *
  * Fields marked with [#] must be set by the low-level driver.
@@ -10,57 +11,57 @@
  * to achieve effects such as fast scrolling by changing the origin.
  */
 
-#ifndef _LINUX_CONSOLE_STRUCT_H
-#define _LINUX_CONSOLE_STRUCT_H
+#अगर_अघोषित _LINUX_CONSOLE_STRUCT_H
+#घोषणा _LINUX_CONSOLE_STRUCT_H
 
-#include <linux/wait.h>
-#include <linux/vt.h>
-#include <linux/workqueue.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/vt.h>
+#समावेश <linux/workqueue.h>
 
-struct uni_pagedir;
-struct uni_screen;
+काष्ठा uni_pagedir;
+काष्ठा uni_screen;
 
-#define NPAR 16
-#define VC_TABSTOPS_COUNT	256U
+#घोषणा NPAR 16
+#घोषणा VC_TABSTOPS_COUNT	256U
 
-enum vc_intensity {
+क्रमागत vc_पूर्णांकensity अणु
 	VCI_HALF_BRIGHT,
 	VCI_NORMAL,
 	VCI_BOLD,
 	VCI_MASK = 0x3,
-};
+पूर्ण;
 
 /**
- * struct vc_state -- state of a VC
+ * काष्ठा vc_state -- state of a VC
  * @x: cursor's x-position
  * @y: cursor's y-position
- * @color: foreground & background colors
- * @Gx_charset: what's G0/G1 slot set to (like GRAF_MAP, LAT1_MAP)
- * @charset: what character set to use (0=G0 or 1=G1)
- * @intensity: see enum vc_intensity for values
- * @reverse: reversed foreground/background colors
+ * @color: क्रमeground & background colors
+ * @Gx_अक्षरset: what's G0/G1 slot set to (like GRAF_MAP, LAT1_MAP)
+ * @अक्षरset: what अक्षरacter set to use (0=G0 or 1=G1)
+ * @पूर्णांकensity: see क्रमागत vc_पूर्णांकensity क्रम values
+ * @reverse: reversed क्रमeground/background colors
  *
- * These members are defined separately from struct vc_data as we save &
- * restore them at times.
+ * These members are defined separately from काष्ठा vc_data as we save &
+ * restore them at बार.
  */
-struct vc_state {
-	unsigned int	x, y;
+काष्ठा vc_state अणु
+	अचिन्हित पूर्णांक	x, y;
 
-	unsigned char	color;
+	अचिन्हित अक्षर	color;
 
-	unsigned char	Gx_charset[2];
-	unsigned int	charset		: 1;
+	अचिन्हित अक्षर	Gx_अक्षरset[2];
+	अचिन्हित पूर्णांक	अक्षरset		: 1;
 
 	/* attribute flags */
-	enum vc_intensity intensity;
+	क्रमागत vc_पूर्णांकensity पूर्णांकensity;
 	bool		italic;
 	bool		underline;
 	bool		blink;
 	bool		reverse;
-};
+पूर्ण;
 
 /*
- * Example: vc_data of a console that was scrolled 3 lines down.
+ * Example: vc_data of a console that was scrolled 3 lines करोwn.
  *
  *                              Console buffer
  * vc_screenbuf ---------> +----------------------+-.
@@ -82,101 +83,101 @@ struct vc_state {
  *                         | ~ # cat_             |  /
  * vc_scr_end -----------> +----------------------+-:
  * (vc_origin +            |                      |  \ EMPTY, to be filled by
- *  vc_screenbuf_size)     |                      |  / vc_video_erase_char
+ *  vc_screenbuf_size)     |                      |  / vc_video_erase_अक्षर
  *                         +----------------------+-'
  *                         <---- 2 * vc_cols ----->
  *                         <---- vc_size_row ----->
  *
- * Note that every character in the console buffer is accompanied with an
- * attribute in the buffer right after the character. This is not depicted
+ * Note that every अक्षरacter in the console buffer is accompanied with an
+ * attribute in the buffer right after the अक्षरacter. This is not depicted
  * in the figure.
  */
-struct vc_data {
-	struct tty_port port;			/* Upper level data */
+काष्ठा vc_data अणु
+	काष्ठा tty_port port;			/* Upper level data */
 
-	struct vc_state state, saved_state;
+	काष्ठा vc_state state, saved_state;
 
-	unsigned short	vc_num;			/* Console number */
-	unsigned int	vc_cols;		/* [#] Console size */
-	unsigned int	vc_rows;
-	unsigned int	vc_size_row;		/* Bytes per row */
-	unsigned int	vc_scan_lines;		/* # of scan lines */
-	unsigned int	vc_cell_height;		/* CRTC character cell height */
-	unsigned long	vc_origin;		/* [!] Start of real screen */
-	unsigned long	vc_scr_end;		/* [!] End of real screen */
-	unsigned long	vc_visible_origin;	/* [!] Top of visible window */
-	unsigned int	vc_top, vc_bottom;	/* Scrolling region */
-	const struct consw *vc_sw;
-	unsigned short	*vc_screenbuf;		/* In-memory character/attribute buffer */
-	unsigned int	vc_screenbuf_size;
-	unsigned char	vc_mode;		/* KD_TEXT, ... */
-	/* attributes for all characters on screen */
-	unsigned char	vc_attr;		/* Current attributes */
-	unsigned char	vc_def_color;		/* Default colors */
-	unsigned char	vc_ulcolor;		/* Color for underline mode */
-	unsigned char   vc_itcolor;
-	unsigned char	vc_halfcolor;		/* Color for half intensity mode */
+	अचिन्हित लघु	vc_num;			/* Console number */
+	अचिन्हित पूर्णांक	vc_cols;		/* [#] Console size */
+	अचिन्हित पूर्णांक	vc_rows;
+	अचिन्हित पूर्णांक	vc_size_row;		/* Bytes per row */
+	अचिन्हित पूर्णांक	vc_scan_lines;		/* # of scan lines */
+	अचिन्हित पूर्णांक	vc_cell_height;		/* CRTC अक्षरacter cell height */
+	अचिन्हित दीर्घ	vc_origin;		/* [!] Start of real screen */
+	अचिन्हित दीर्घ	vc_scr_end;		/* [!] End of real screen */
+	अचिन्हित दीर्घ	vc_visible_origin;	/* [!] Top of visible winकरोw */
+	अचिन्हित पूर्णांक	vc_top, vc_bottom;	/* Scrolling region */
+	स्थिर काष्ठा consw *vc_sw;
+	अचिन्हित लघु	*vc_screenbuf;		/* In-memory अक्षरacter/attribute buffer */
+	अचिन्हित पूर्णांक	vc_screenbuf_size;
+	अचिन्हित अक्षर	vc_mode;		/* KD_TEXT, ... */
+	/* attributes क्रम all अक्षरacters on screen */
+	अचिन्हित अक्षर	vc_attr;		/* Current attributes */
+	अचिन्हित अक्षर	vc_def_color;		/* Default colors */
+	अचिन्हित अक्षर	vc_ulcolor;		/* Color क्रम underline mode */
+	अचिन्हित अक्षर   vc_itcolor;
+	अचिन्हित अक्षर	vc_halfcolor;		/* Color क्रम half पूर्णांकensity mode */
 	/* cursor */
-	unsigned int	vc_cursor_type;
-	unsigned short	vc_complement_mask;	/* [#] Xor mask for mouse pointer */
-	unsigned short	vc_s_complement_mask;	/* Saved mouse pointer mask */
-	unsigned long	vc_pos;			/* Cursor address */
+	अचिन्हित पूर्णांक	vc_cursor_type;
+	अचिन्हित लघु	vc_complement_mask;	/* [#] Xor mask क्रम mouse poपूर्णांकer */
+	अचिन्हित लघु	vc_s_complement_mask;	/* Saved mouse poपूर्णांकer mask */
+	अचिन्हित दीर्घ	vc_pos;			/* Cursor address */
 	/* fonts */	
-	unsigned short	vc_hi_font_mask;	/* [#] Attribute set for upper 256 chars of font or 0 if not supported */
-	struct console_font vc_font;		/* Current VC font set */
-	unsigned short	vc_video_erase_char;	/* Background erase character */
+	अचिन्हित लघु	vc_hi_font_mask;	/* [#] Attribute set क्रम upper 256 अक्षरs of font or 0 अगर not supported */
+	काष्ठा console_font vc_font;		/* Current VC font set */
+	अचिन्हित लघु	vc_video_erase_अक्षर;	/* Background erase अक्षरacter */
 	/* VT terminal data */
-	unsigned int	vc_state;		/* Escape sequence parser state */
-	unsigned int	vc_npar,vc_par[NPAR];	/* Parameters of current escape sequence */
-	/* data for manual vt switching */
-	struct vt_mode	vt_mode;
-	struct pid 	*vt_pid;
-	int		vt_newvt;
-	wait_queue_head_t paste_wait;
+	अचिन्हित पूर्णांक	vc_state;		/* Escape sequence parser state */
+	अचिन्हित पूर्णांक	vc_npar,vc_par[NPAR];	/* Parameters of current escape sequence */
+	/* data क्रम manual vt चयनing */
+	काष्ठा vt_mode	vt_mode;
+	काष्ठा pid 	*vt_pid;
+	पूर्णांक		vt_newvt;
+	रुको_queue_head_t paste_रुको;
 	/* mode flags */
-	unsigned int	vc_disp_ctrl	: 1;	/* Display chars < 32? */
-	unsigned int	vc_toggle_meta	: 1;	/* Toggle high bit? */
-	unsigned int	vc_decscnm	: 1;	/* Screen Mode */
-	unsigned int	vc_decom	: 1;	/* Origin Mode */
-	unsigned int	vc_decawm	: 1;	/* Autowrap Mode */
-	unsigned int	vc_deccm	: 1;	/* Cursor Visible */
-	unsigned int	vc_decim	: 1;	/* Insert Mode */
+	अचिन्हित पूर्णांक	vc_disp_ctrl	: 1;	/* Display अक्षरs < 32? */
+	अचिन्हित पूर्णांक	vc_toggle_meta	: 1;	/* Toggle high bit? */
+	अचिन्हित पूर्णांक	vc_decscnm	: 1;	/* Screen Mode */
+	अचिन्हित पूर्णांक	vc_decom	: 1;	/* Origin Mode */
+	अचिन्हित पूर्णांक	vc_decawm	: 1;	/* Autowrap Mode */
+	अचिन्हित पूर्णांक	vc_deccm	: 1;	/* Cursor Visible */
+	अचिन्हित पूर्णांक	vc_decim	: 1;	/* Insert Mode */
 	/* misc */
-	unsigned int	vc_priv		: 3;
-	unsigned int	vc_need_wrap	: 1;
-	unsigned int	vc_can_do_color	: 1;
-	unsigned int	vc_report_mouse : 2;
-	unsigned char	vc_utf		: 1;	/* Unicode UTF-8 encoding */
-	unsigned char	vc_utf_count;
-		 int	vc_utf_char;
+	अचिन्हित पूर्णांक	vc_priv		: 3;
+	अचिन्हित पूर्णांक	vc_need_wrap	: 1;
+	अचिन्हित पूर्णांक	vc_can_करो_color	: 1;
+	अचिन्हित पूर्णांक	vc_report_mouse : 2;
+	अचिन्हित अक्षर	vc_utf		: 1;	/* Unicode UTF-8 encoding */
+	अचिन्हित अक्षर	vc_utf_count;
+		 पूर्णांक	vc_utf_अक्षर;
 	DECLARE_BITMAP(vc_tab_stop, VC_TABSTOPS_COUNT);	/* Tab stops. 256 columns. */
-	unsigned char   vc_palette[16*3];       /* Colour palette for VGA+ */
-	unsigned short * vc_translate;
-	unsigned int    vc_resize_user;         /* resize request from user */
-	unsigned int	vc_bell_pitch;		/* Console bell pitch */
-	unsigned int	vc_bell_duration;	/* Console bell duration */
-	unsigned short	vc_cur_blink_ms;	/* Cursor blink duration */
-	struct vc_data **vc_display_fg;		/* [!] Ptr to var holding fg console for this display */
-	struct uni_pagedir *vc_uni_pagedir;
-	struct uni_pagedir **vc_uni_pagedir_loc; /* [!] Location of uni_pagedir variable for this console */
-	struct uni_screen *vc_uni_screen;	/* unicode screen content */
-	/* additional information is in vt_kern.h */
-};
+	अचिन्हित अक्षर   vc_palette[16*3];       /* Colour palette क्रम VGA+ */
+	अचिन्हित लघु * vc_translate;
+	अचिन्हित पूर्णांक    vc_resize_user;         /* resize request from user */
+	अचिन्हित पूर्णांक	vc_bell_pitch;		/* Console bell pitch */
+	अचिन्हित पूर्णांक	vc_bell_duration;	/* Console bell duration */
+	अचिन्हित लघु	vc_cur_blink_ms;	/* Cursor blink duration */
+	काष्ठा vc_data **vc_display_fg;		/* [!] Ptr to var holding fg console क्रम this display */
+	काष्ठा uni_pagedir *vc_uni_pagedir;
+	काष्ठा uni_pagedir **vc_uni_pagedir_loc; /* [!] Location of uni_pagedir variable क्रम this console */
+	काष्ठा uni_screen *vc_uni_screen;	/* unicode screen content */
+	/* additional inक्रमmation is in vt_kern.h */
+पूर्ण;
 
-struct vc {
-	struct vc_data *d;
-	struct work_struct SAK_work;
+काष्ठा vc अणु
+	काष्ठा vc_data *d;
+	काष्ठा work_काष्ठा SAK_work;
 
-	/* might add  scrmem, kbd  at some time,
+	/* might add  scrmem, kbd  at some समय,
 	   to have everything in one place */
-};
+पूर्ण;
 
-extern struct vc vc_cons [MAX_NR_CONSOLES];
-extern void vc_SAK(struct work_struct *work);
+बाह्य काष्ठा vc vc_cons [MAX_NR_CONSOLES];
+बाह्य व्योम vc_SAK(काष्ठा work_काष्ठा *work);
 
-#define CUR_MAKE(size, change, set)	((size) | ((change) << 8) |	\
+#घोषणा CUR_MAKE(size, change, set)	((size) | ((change) << 8) |	\
 		((set) << 16))
-#define CUR_SIZE(c)		 ((c) & 0x00000f)
+#घोषणा CUR_SIZE(c)		 ((c) & 0x00000f)
 # define CUR_DEF			       0
 # define CUR_NONE			       1
 # define CUR_UNDERLINE			       2
@@ -184,14 +185,14 @@ extern void vc_SAK(struct work_struct *work);
 # define CUR_LOWER_HALF			       4
 # define CUR_TWO_THIRDS			       5
 # define CUR_BLOCK			       6
-#define CUR_SW				0x000010
-#define CUR_ALWAYS_BG			0x000020
-#define CUR_INVERT_FG_BG		0x000040
-#define CUR_FG				0x000700
-#define CUR_BG				0x007000
-#define CUR_CHANGE(c)		 ((c) & 0x00ff00)
-#define CUR_SET(c)		(((c) & 0xff0000) >> 8)
+#घोषणा CUR_SW				0x000010
+#घोषणा CUR_ALWAYS_BG			0x000020
+#घोषणा CUR_INVERT_FG_BG		0x000040
+#घोषणा CUR_FG				0x000700
+#घोषणा CUR_BG				0x007000
+#घोषणा CUR_CHANGE(c)		 ((c) & 0x00ff00)
+#घोषणा CUR_SET(c)		(((c) & 0xff0000) >> 8)
 
-bool con_is_visible(const struct vc_data *vc);
+bool con_is_visible(स्थिर काष्ठा vc_data *vc);
 
-#endif /* _LINUX_CONSOLE_STRUCT_H */
+#पूर्ण_अगर /* _LINUX_CONSOLE_STRUCT_H */

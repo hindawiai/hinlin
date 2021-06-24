@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM regulator
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM regulator
 
-#if !defined(_TRACE_REGULATOR_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_REGULATOR_H
+#अगर !defined(_TRACE_REGULATOR_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_REGULATOR_H
 
-#include <linux/ktime.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 /*
- * Events which just log themselves and the regulator name for enable/disable
+ * Events which just log themselves and the regulator name क्रम enable/disable
  * type tracking.
  */
 DECLARE_EVENT_CLASS(regulator_basic,
 
-	TP_PROTO(const char *name),
+	TP_PROTO(स्थिर अक्षर *name),
 
 	TP_ARGS(name),
 
@@ -26,13 +27,13 @@ DECLARE_EVENT_CLASS(regulator_basic,
 		__assign_str(name, name);
 	),
 
-	TP_printk("name=%s", __get_str(name))
+	TP_prपूर्णांकk("name=%s", __get_str(name))
 
 );
 
 DEFINE_EVENT(regulator_basic, regulator_enable,
 
-	TP_PROTO(const char *name),
+	TP_PROTO(स्थिर अक्षर *name),
 
 	TP_ARGS(name)
 
@@ -40,7 +41,7 @@ DEFINE_EVENT(regulator_basic, regulator_enable,
 
 DEFINE_EVENT(regulator_basic, regulator_enable_delay,
 
-	TP_PROTO(const char *name),
+	TP_PROTO(स्थिर अक्षर *name),
 
 	TP_ARGS(name)
 
@@ -48,7 +49,7 @@ DEFINE_EVENT(regulator_basic, regulator_enable_delay,
 
 DEFINE_EVENT(regulator_basic, regulator_enable_complete,
 
-	TP_PROTO(const char *name),
+	TP_PROTO(स्थिर अक्षर *name),
 
 	TP_ARGS(name)
 
@@ -56,7 +57,7 @@ DEFINE_EVENT(regulator_basic, regulator_enable_complete,
 
 DEFINE_EVENT(regulator_basic, regulator_disable,
 
-	TP_PROTO(const char *name),
+	TP_PROTO(स्थिर अक्षर *name),
 
 	TP_ARGS(name)
 
@@ -64,7 +65,7 @@ DEFINE_EVENT(regulator_basic, regulator_disable,
 
 DEFINE_EVENT(regulator_basic, regulator_disable_complete,
 
-	TP_PROTO(const char *name),
+	TP_PROTO(स्थिर अक्षर *name),
 
 	TP_ARGS(name)
 
@@ -72,7 +73,7 @@ DEFINE_EVENT(regulator_basic, regulator_disable_complete,
 
 DEFINE_EVENT(regulator_basic, regulator_bypass_enable,
 
-	TP_PROTO(const char *name),
+	TP_PROTO(स्थिर अक्षर *name),
 
 	TP_ARGS(name)
 
@@ -80,7 +81,7 @@ DEFINE_EVENT(regulator_basic, regulator_bypass_enable,
 
 DEFINE_EVENT(regulator_basic, regulator_bypass_enable_complete,
 
-	TP_PROTO(const char *name),
+	TP_PROTO(स्थिर अक्षर *name),
 
 	TP_ARGS(name)
 
@@ -88,7 +89,7 @@ DEFINE_EVENT(regulator_basic, regulator_bypass_enable_complete,
 
 DEFINE_EVENT(regulator_basic, regulator_bypass_disable,
 
-	TP_PROTO(const char *name),
+	TP_PROTO(स्थिर अक्षर *name),
 
 	TP_ARGS(name)
 
@@ -96,26 +97,26 @@ DEFINE_EVENT(regulator_basic, regulator_bypass_disable,
 
 DEFINE_EVENT(regulator_basic, regulator_bypass_disable_complete,
 
-	TP_PROTO(const char *name),
+	TP_PROTO(स्थिर अक्षर *name),
 
 	TP_ARGS(name)
 
 );
 
 /*
- * Events that take a range of numerical values, mostly for voltages
+ * Events that take a range of numerical values, mostly क्रम voltages
  * and so on.
  */
 DECLARE_EVENT_CLASS(regulator_range,
 
-	TP_PROTO(const char *name, int min, int max),
+	TP_PROTO(स्थिर अक्षर *name, पूर्णांक min, पूर्णांक max),
 
 	TP_ARGS(name, min, max),
 
 	TP_STRUCT__entry(
 		__string(	name,		name		)
-		__field(        int,            min             )
-		__field(        int,            max             )
+		__field(        पूर्णांक,            min             )
+		__field(        पूर्णांक,            max             )
 	),
 
 	TP_fast_assign(
@@ -124,13 +125,13 @@ DECLARE_EVENT_CLASS(regulator_range,
 		__entry->max  = max;
 	),
 
-	TP_printk("name=%s (%d-%d)", __get_str(name),
-		  (int)__entry->min, (int)__entry->max)
+	TP_prपूर्णांकk("name=%s (%d-%d)", __get_str(name),
+		  (पूर्णांक)__entry->min, (पूर्णांक)__entry->max)
 );
 
 DEFINE_EVENT(regulator_range, regulator_set_voltage,
 
-	TP_PROTO(const char *name, int min, int max),
+	TP_PROTO(स्थिर अक्षर *name, पूर्णांक min, पूर्णांक max),
 
 	TP_ARGS(name, min, max)
 
@@ -138,17 +139,17 @@ DEFINE_EVENT(regulator_range, regulator_set_voltage,
 
 
 /*
- * Events that take a single value, mostly for readback and refcounts.
+ * Events that take a single value, mostly क्रम पढ़ोback and refcounts.
  */
 DECLARE_EVENT_CLASS(regulator_value,
 
-	TP_PROTO(const char *name, unsigned int val),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक val),
 
 	TP_ARGS(name, val),
 
 	TP_STRUCT__entry(
 		__string(	name,		name		)
-		__field(        unsigned int,   val             )
+		__field(        अचिन्हित पूर्णांक,   val             )
 	),
 
 	TP_fast_assign(
@@ -156,19 +157,19 @@ DECLARE_EVENT_CLASS(regulator_value,
 		__entry->val  = val;
 	),
 
-	TP_printk("name=%s, val=%u", __get_str(name),
-		  (int)__entry->val)
+	TP_prपूर्णांकk("name=%s, val=%u", __get_str(name),
+		  (पूर्णांक)__entry->val)
 );
 
 DEFINE_EVENT(regulator_value, regulator_set_voltage_complete,
 
-	TP_PROTO(const char *name, unsigned int value),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक value),
 
 	TP_ARGS(name, value)
 
 );
 
-#endif /* _TRACE_POWER_H */
+#पूर्ण_अगर /* _TRACE_POWER_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

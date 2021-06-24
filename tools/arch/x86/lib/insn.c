@@ -1,134 +1,135 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * x86 instruction analysis
+ * x86 inकाष्ठाion analysis
  *
  * Copyright (C) IBM Corporation, 2002, 2004, 2009
  */
 
-#include <linux/kernel.h>
-#ifdef __KERNEL__
-#include <linux/string.h>
-#else
-#include <string.h>
-#endif
-#include "../include/asm/inat.h" /* __ignore_sync_check__ */
-#include "../include/asm/insn.h" /* __ignore_sync_check__ */
+#समावेश <linux/kernel.h>
+#अगर_घोषित __KERNEL__
+#समावेश <linux/माला.स>
+#अन्यथा
+#समावेश <माला.स>
+#पूर्ण_अगर
+#समावेश "../include/asm/inat.h" /* __ignore_sync_check__ */
+#समावेश "../include/asm/insn.h" /* __ignore_sync_check__ */
 
-#include <linux/errno.h>
-#include <linux/kconfig.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kconfig.h>
 
-#include "../include/asm/emulate_prefix.h" /* __ignore_sync_check__ */
+#समावेश "../include/asm/emulate_prefix.h" /* __ignore_sync_check__ */
 
-#define leXX_to_cpu(t, r)						\
-({									\
+#घोषणा leXX_to_cpu(t, r)						\
+(अणु									\
 	__typeof__(t) v;						\
-	switch (sizeof(t)) {						\
-	case 4: v = le32_to_cpu(r); break;				\
-	case 2: v = le16_to_cpu(r); break;				\
-	case 1:	v = r; break;						\
-	default:							\
-		BUILD_BUG(); break;					\
-	}								\
+	चयन (माप(t)) अणु						\
+	हाल 4: v = le32_to_cpu(r); अवरोध;				\
+	हाल 2: v = le16_to_cpu(r); अवरोध;				\
+	हाल 1:	v = r; अवरोध;						\
+	शेष:							\
+		BUILD_BUG(); अवरोध;					\
+	पूर्ण								\
 	v;								\
-})
+पूर्ण)
 
-/* Verify next sizeof(t) bytes can be on the same instruction */
-#define validate_next(t, insn, n)	\
-	((insn)->next_byte + sizeof(t) + n <= (insn)->end_kaddr)
+/* Verअगरy next माप(t) bytes can be on the same inकाष्ठाion */
+#घोषणा validate_next(t, insn, n)	\
+	((insn)->next_byte + माप(t) + n <= (insn)->end_kaddr)
 
-#define __get_next(t, insn)	\
-	({ t r = *(t*)insn->next_byte; insn->next_byte += sizeof(t); leXX_to_cpu(t, r); })
+#घोषणा __get_next(t, insn)	\
+	(अणु t r = *(t*)insn->next_byte; insn->next_byte += माप(t); leXX_to_cpu(t, r); पूर्ण)
 
-#define __peek_nbyte_next(t, insn, n)	\
-	({ t r = *(t*)((insn)->next_byte + n); leXX_to_cpu(t, r); })
+#घोषणा __peek_nbyte_next(t, insn, n)	\
+	(अणु t r = *(t*)((insn)->next_byte + n); leXX_to_cpu(t, r); पूर्ण)
 
-#define get_next(t, insn)	\
-	({ if (unlikely(!validate_next(t, insn, 0))) goto err_out; __get_next(t, insn); })
+#घोषणा get_next(t, insn)	\
+	(अणु अगर (unlikely(!validate_next(t, insn, 0))) जाओ err_out; __get_next(t, insn); पूर्ण)
 
-#define peek_nbyte_next(t, insn, n)	\
-	({ if (unlikely(!validate_next(t, insn, n))) goto err_out; __peek_nbyte_next(t, insn, n); })
+#घोषणा peek_nbyte_next(t, insn, n)	\
+	(अणु अगर (unlikely(!validate_next(t, insn, n))) जाओ err_out; __peek_nbyte_next(t, insn, n); पूर्ण)
 
-#define peek_next(t, insn)	peek_nbyte_next(t, insn, 0)
+#घोषणा peek_next(t, insn)	peek_nbyte_next(t, insn, 0)
 
 /**
- * insn_init() - initialize struct insn
- * @insn:	&struct insn to be initialized
- * @kaddr:	address (in kernel memory) of instruction (or copy thereof)
+ * insn_init() - initialize काष्ठा insn
+ * @insn:	&काष्ठा insn to be initialized
+ * @kaddr:	address (in kernel memory) of inकाष्ठाion (or copy thereof)
  * @buf_len:	length of the insn buffer at @kaddr
- * @x86_64:	!0 for 64-bit kernel or 64-bit app
+ * @x86_64:	!0 क्रम 64-bit kernel or 64-bit app
  */
-void insn_init(struct insn *insn, const void *kaddr, int buf_len, int x86_64)
-{
+व्योम insn_init(काष्ठा insn *insn, स्थिर व्योम *kaddr, पूर्णांक buf_len, पूर्णांक x86_64)
+अणु
 	/*
-	 * Instructions longer than MAX_INSN_SIZE (15 bytes) are invalid
-	 * even if the input buffer is long enough to hold them.
+	 * Inकाष्ठाions दीर्घer than MAX_INSN_SIZE (15 bytes) are invalid
+	 * even अगर the input buffer is दीर्घ enough to hold them.
 	 */
-	if (buf_len > MAX_INSN_SIZE)
+	अगर (buf_len > MAX_INSN_SIZE)
 		buf_len = MAX_INSN_SIZE;
 
-	memset(insn, 0, sizeof(*insn));
+	स_रखो(insn, 0, माप(*insn));
 	insn->kaddr = kaddr;
 	insn->end_kaddr = kaddr + buf_len;
 	insn->next_byte = kaddr;
 	insn->x86_64 = x86_64 ? 1 : 0;
 	insn->opnd_bytes = 4;
-	if (x86_64)
+	अगर (x86_64)
 		insn->addr_bytes = 8;
-	else
+	अन्यथा
 		insn->addr_bytes = 4;
-}
+पूर्ण
 
-static const insn_byte_t xen_prefix[] = { __XEN_EMULATE_PREFIX };
-static const insn_byte_t kvm_prefix[] = { __KVM_EMULATE_PREFIX };
+अटल स्थिर insn_byte_t xen_prefix[] = अणु __XEN_EMULATE_PREFIX पूर्ण;
+अटल स्थिर insn_byte_t kvm_prefix[] = अणु __KVM_EMULATE_PREFIX पूर्ण;
 
-static int __insn_get_emulate_prefix(struct insn *insn,
-				     const insn_byte_t *prefix, size_t len)
-{
-	size_t i;
+अटल पूर्णांक __insn_get_emulate_prefix(काष्ठा insn *insn,
+				     स्थिर insn_byte_t *prefix, माप_प्रकार len)
+अणु
+	माप_प्रकार i;
 
-	for (i = 0; i < len; i++) {
-		if (peek_nbyte_next(insn_byte_t, insn, i) != prefix[i])
-			goto err_out;
-	}
+	क्रम (i = 0; i < len; i++) अणु
+		अगर (peek_nbyte_next(insn_byte_t, insn, i) != prefix[i])
+			जाओ err_out;
+	पूर्ण
 
 	insn->emulate_prefix_size = len;
 	insn->next_byte += len;
 
-	return 1;
+	वापस 1;
 
 err_out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void insn_get_emulate_prefix(struct insn *insn)
-{
-	if (__insn_get_emulate_prefix(insn, xen_prefix, sizeof(xen_prefix)))
-		return;
+अटल व्योम insn_get_emulate_prefix(काष्ठा insn *insn)
+अणु
+	अगर (__insn_get_emulate_prefix(insn, xen_prefix, माप(xen_prefix)))
+		वापस;
 
-	__insn_get_emulate_prefix(insn, kvm_prefix, sizeof(kvm_prefix));
-}
+	__insn_get_emulate_prefix(insn, kvm_prefix, माप(kvm_prefix));
+पूर्ण
 
 /**
- * insn_get_prefixes - scan x86 instruction prefix bytes
- * @insn:	&struct insn containing instruction
+ * insn_get_prefixes - scan x86 inकाष्ठाion prefix bytes
+ * @insn:	&काष्ठा insn containing inकाष्ठाion
  *
- * Populates the @insn->prefixes bitmap, and updates @insn->next_byte
- * to point to the (first) opcode.  No effect if @insn->prefixes.got
- * is already set.
+ * Populates the @insn->prefixes biपंचांगap, and updates @insn->next_byte
+ * to poपूर्णांक to the (first) opcode.  No effect अगर @insn->prefixes.got
+ * is alपढ़ोy set.
  *
  * * Returns:
  * 0:  on success
  * < 0: on error
  */
-int insn_get_prefixes(struct insn *insn)
-{
-	struct insn_field *prefixes = &insn->prefixes;
+पूर्णांक insn_get_prefixes(काष्ठा insn *insn)
+अणु
+	काष्ठा insn_field *prefixes = &insn->prefixes;
 	insn_attr_t attr;
 	insn_byte_t b, lb;
-	int i, nb;
+	पूर्णांक i, nb;
 
-	if (prefixes->got)
-		return 0;
+	अगर (prefixes->got)
+		वापस 0;
 
 	insn_get_emulate_prefix(insn);
 
@@ -136,93 +137,93 @@ int insn_get_prefixes(struct insn *insn)
 	lb = 0;
 	b = peek_next(insn_byte_t, insn);
 	attr = inat_get_opcode_attribute(b);
-	while (inat_is_legacy_prefix(attr)) {
-		/* Skip if same prefix */
-		for (i = 0; i < nb; i++)
-			if (prefixes->bytes[i] == b)
-				goto found;
-		if (nb == 4)
-			/* Invalid instruction */
-			break;
+	जबतक (inat_is_legacy_prefix(attr)) अणु
+		/* Skip अगर same prefix */
+		क्रम (i = 0; i < nb; i++)
+			अगर (prefixes->bytes[i] == b)
+				जाओ found;
+		अगर (nb == 4)
+			/* Invalid inकाष्ठाion */
+			अवरोध;
 		prefixes->bytes[nb++] = b;
-		if (inat_is_address_size_prefix(attr)) {
-			/* address size switches 2/4 or 4/8 */
-			if (insn->x86_64)
+		अगर (inat_is_address_size_prefix(attr)) अणु
+			/* address size चयनes 2/4 or 4/8 */
+			अगर (insn->x86_64)
 				insn->addr_bytes ^= 12;
-			else
+			अन्यथा
 				insn->addr_bytes ^= 6;
-		} else if (inat_is_operand_size_prefix(attr)) {
-			/* oprand size switches 2/4 */
+		पूर्ण अन्यथा अगर (inat_is_opeअक्रम_size_prefix(attr)) अणु
+			/* opअक्रम size चयनes 2/4 */
 			insn->opnd_bytes ^= 6;
-		}
+		पूर्ण
 found:
 		prefixes->nbytes++;
 		insn->next_byte++;
 		lb = b;
 		b = peek_next(insn_byte_t, insn);
 		attr = inat_get_opcode_attribute(b);
-	}
+	पूर्ण
 	/* Set the last prefix */
-	if (lb && lb != insn->prefixes.bytes[3]) {
-		if (unlikely(insn->prefixes.bytes[3])) {
+	अगर (lb && lb != insn->prefixes.bytes[3]) अणु
+		अगर (unlikely(insn->prefixes.bytes[3])) अणु
 			/* Swap the last prefix */
 			b = insn->prefixes.bytes[3];
-			for (i = 0; i < nb; i++)
-				if (prefixes->bytes[i] == lb)
+			क्रम (i = 0; i < nb; i++)
+				अगर (prefixes->bytes[i] == lb)
 					insn_set_byte(prefixes, i, b);
-		}
+		पूर्ण
 		insn_set_byte(&insn->prefixes, 3, lb);
-	}
+	पूर्ण
 
 	/* Decode REX prefix */
-	if (insn->x86_64) {
+	अगर (insn->x86_64) अणु
 		b = peek_next(insn_byte_t, insn);
 		attr = inat_get_opcode_attribute(b);
-		if (inat_is_rex_prefix(attr)) {
+		अगर (inat_is_rex_prefix(attr)) अणु
 			insn_field_set(&insn->rex_prefix, b, 1);
 			insn->next_byte++;
-			if (X86_REX_W(b))
+			अगर (X86_REX_W(b))
 				/* REX.W overrides opnd_size */
 				insn->opnd_bytes = 8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	insn->rex_prefix.got = 1;
 
 	/* Decode VEX prefix */
 	b = peek_next(insn_byte_t, insn);
 	attr = inat_get_opcode_attribute(b);
-	if (inat_is_vex_prefix(attr)) {
+	अगर (inat_is_vex_prefix(attr)) अणु
 		insn_byte_t b2 = peek_nbyte_next(insn_byte_t, insn, 1);
-		if (!insn->x86_64) {
+		अगर (!insn->x86_64) अणु
 			/*
-			 * In 32-bits mode, if the [7:6] bits (mod bits of
+			 * In 32-bits mode, अगर the [7:6] bits (mod bits of
 			 * ModRM) on the second byte are not 11b, it is
 			 * LDS or LES or BOUND.
 			 */
-			if (X86_MODRM_MOD(b2) != 3)
-				goto vex_end;
-		}
+			अगर (X86_MODRM_MOD(b2) != 3)
+				जाओ vex_end;
+		पूर्ण
 		insn_set_byte(&insn->vex_prefix, 0, b);
 		insn_set_byte(&insn->vex_prefix, 1, b2);
-		if (inat_is_evex_prefix(attr)) {
+		अगर (inat_is_evex_prefix(attr)) अणु
 			b2 = peek_nbyte_next(insn_byte_t, insn, 2);
 			insn_set_byte(&insn->vex_prefix, 2, b2);
 			b2 = peek_nbyte_next(insn_byte_t, insn, 3);
 			insn_set_byte(&insn->vex_prefix, 3, b2);
 			insn->vex_prefix.nbytes = 4;
 			insn->next_byte += 4;
-			if (insn->x86_64 && X86_VEX_W(b2))
+			अगर (insn->x86_64 && X86_VEX_W(b2))
 				/* VEX.W overrides opnd_size */
 				insn->opnd_bytes = 8;
-		} else if (inat_is_vex3_prefix(attr)) {
+		पूर्ण अन्यथा अगर (inat_is_vex3_prefix(attr)) अणु
 			b2 = peek_nbyte_next(insn_byte_t, insn, 2);
 			insn_set_byte(&insn->vex_prefix, 2, b2);
 			insn->vex_prefix.nbytes = 3;
 			insn->next_byte += 3;
-			if (insn->x86_64 && X86_VEX_W(b2))
+			अगर (insn->x86_64 && X86_VEX_W(b2))
 				/* VEX.W overrides opnd_size */
 				insn->opnd_bytes = 8;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * For VEX2, fake VEX3-like byte#2.
 			 * Makes it easier to decode vex.W, vex.vvvv,
@@ -231,248 +232,248 @@ found:
 			insn_set_byte(&insn->vex_prefix, 2, b2 & 0x7f);
 			insn->vex_prefix.nbytes = 2;
 			insn->next_byte += 2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 vex_end:
 	insn->vex_prefix.got = 1;
 
 	prefixes->got = 1;
 
-	return 0;
+	वापस 0;
 
 err_out:
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
 /**
  * insn_get_opcode - collect opcode(s)
- * @insn:	&struct insn containing instruction
+ * @insn:	&काष्ठा insn containing inकाष्ठाion
  *
- * Populates @insn->opcode, updates @insn->next_byte to point past the
- * opcode byte(s), and set @insn->attr (except for groups).
+ * Populates @insn->opcode, updates @insn->next_byte to poपूर्णांक past the
+ * opcode byte(s), and set @insn->attr (except क्रम groups).
  * If necessary, first collects any preceding (prefix) bytes.
- * Sets @insn->opcode.value = opcode1.  No effect if @insn->opcode.got
- * is already 1.
+ * Sets @insn->opcode.value = opcode1.  No effect अगर @insn->opcode.got
+ * is alपढ़ोy 1.
  *
  * Returns:
  * 0:  on success
  * < 0: on error
  */
-int insn_get_opcode(struct insn *insn)
-{
-	struct insn_field *opcode = &insn->opcode;
-	int pfx_id, ret;
+पूर्णांक insn_get_opcode(काष्ठा insn *insn)
+अणु
+	काष्ठा insn_field *opcode = &insn->opcode;
+	पूर्णांक pfx_id, ret;
 	insn_byte_t op;
 
-	if (opcode->got)
-		return 0;
+	अगर (opcode->got)
+		वापस 0;
 
-	if (!insn->prefixes.got) {
+	अगर (!insn->prefixes.got) अणु
 		ret = insn_get_prefixes(insn);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* Get first opcode */
 	op = get_next(insn_byte_t, insn);
 	insn_set_byte(opcode, 0, op);
 	opcode->nbytes = 1;
 
-	/* Check if there is VEX prefix or not */
-	if (insn_is_avx(insn)) {
+	/* Check अगर there is VEX prefix or not */
+	अगर (insn_is_avx(insn)) अणु
 		insn_byte_t m, p;
 		m = insn_vex_m_bits(insn);
 		p = insn_vex_p_bits(insn);
 		insn->attr = inat_get_avx_attribute(op, m, p);
-		if ((inat_must_evex(insn->attr) && !insn_is_evex(insn)) ||
+		अगर ((inat_must_evex(insn->attr) && !insn_is_evex(insn)) ||
 		    (!inat_accept_vex(insn->attr) &&
-		     !inat_is_group(insn->attr))) {
-			/* This instruction is bad */
+		     !inat_is_group(insn->attr))) अणु
+			/* This inकाष्ठाion is bad */
 			insn->attr = 0;
-			return -EINVAL;
-		}
-		/* VEX has only 1 byte for opcode */
-		goto end;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		/* VEX has only 1 byte क्रम opcode */
+		जाओ end;
+	पूर्ण
 
 	insn->attr = inat_get_opcode_attribute(op);
-	while (inat_is_escape(insn->attr)) {
+	जबतक (inat_is_escape(insn->attr)) अणु
 		/* Get escaped opcode */
 		op = get_next(insn_byte_t, insn);
 		opcode->bytes[opcode->nbytes++] = op;
 		pfx_id = insn_last_prefix_id(insn);
 		insn->attr = inat_get_escape_attribute(op, pfx_id, insn->attr);
-	}
+	पूर्ण
 
-	if (inat_must_vex(insn->attr)) {
-		/* This instruction is bad */
+	अगर (inat_must_vex(insn->attr)) अणु
+		/* This inकाष्ठाion is bad */
 		insn->attr = 0;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 end:
 	opcode->got = 1;
-	return 0;
+	वापस 0;
 
 err_out:
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
 /**
- * insn_get_modrm - collect ModRM byte, if any
- * @insn:	&struct insn containing instruction
+ * insn_get_modrm - collect ModRM byte, अगर any
+ * @insn:	&काष्ठा insn containing inकाष्ठाion
  *
- * Populates @insn->modrm and updates @insn->next_byte to point past the
- * ModRM byte, if any.  If necessary, first collects the preceding bytes
- * (prefixes and opcode(s)).  No effect if @insn->modrm.got is already 1.
+ * Populates @insn->modrm and updates @insn->next_byte to poपूर्णांक past the
+ * ModRM byte, अगर any.  If necessary, first collects the preceding bytes
+ * (prefixes and opcode(s)).  No effect अगर @insn->modrm.got is alपढ़ोy 1.
  *
  * Returns:
  * 0:  on success
  * < 0: on error
  */
-int insn_get_modrm(struct insn *insn)
-{
-	struct insn_field *modrm = &insn->modrm;
+पूर्णांक insn_get_modrm(काष्ठा insn *insn)
+अणु
+	काष्ठा insn_field *modrm = &insn->modrm;
 	insn_byte_t pfx_id, mod;
-	int ret;
+	पूर्णांक ret;
 
-	if (modrm->got)
-		return 0;
+	अगर (modrm->got)
+		वापस 0;
 
-	if (!insn->opcode.got) {
+	अगर (!insn->opcode.got) अणु
 		ret = insn_get_opcode(insn);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (inat_has_modrm(insn->attr)) {
+	अगर (inat_has_modrm(insn->attr)) अणु
 		mod = get_next(insn_byte_t, insn);
 		insn_field_set(modrm, mod, 1);
-		if (inat_is_group(insn->attr)) {
+		अगर (inat_is_group(insn->attr)) अणु
 			pfx_id = insn_last_prefix_id(insn);
 			insn->attr = inat_get_group_attribute(mod, pfx_id,
 							      insn->attr);
-			if (insn_is_avx(insn) && !inat_accept_vex(insn->attr)) {
+			अगर (insn_is_avx(insn) && !inat_accept_vex(insn->attr)) अणु
 				/* Bad insn */
 				insn->attr = 0;
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (insn->x86_64 && inat_is_force64(insn->attr))
+	अगर (insn->x86_64 && inat_is_क्रमce64(insn->attr))
 		insn->opnd_bytes = 8;
 
 	modrm->got = 1;
-	return 0;
+	वापस 0;
 
 err_out:
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
 
 /**
- * insn_rip_relative() - Does instruction use RIP-relative addressing mode?
- * @insn:	&struct insn containing instruction
+ * insn_rip_relative() - Does inकाष्ठाion use RIP-relative addressing mode?
+ * @insn:	&काष्ठा insn containing inकाष्ठाion
  *
- * If necessary, first collects the instruction up to and including the
- * ModRM byte.  No effect if @insn->x86_64 is 0.
+ * If necessary, first collects the inकाष्ठाion up to and including the
+ * ModRM byte.  No effect अगर @insn->x86_64 is 0.
  */
-int insn_rip_relative(struct insn *insn)
-{
-	struct insn_field *modrm = &insn->modrm;
-	int ret;
+पूर्णांक insn_rip_relative(काष्ठा insn *insn)
+अणु
+	काष्ठा insn_field *modrm = &insn->modrm;
+	पूर्णांक ret;
 
-	if (!insn->x86_64)
-		return 0;
+	अगर (!insn->x86_64)
+		वापस 0;
 
-	if (!modrm->got) {
+	अगर (!modrm->got) अणु
 		ret = insn_get_modrm(insn);
-		if (ret)
-			return 0;
-	}
+		अगर (ret)
+			वापस 0;
+	पूर्ण
 	/*
-	 * For rip-relative instructions, the mod field (top 2 bits)
+	 * For rip-relative inकाष्ठाions, the mod field (top 2 bits)
 	 * is zero and the r/m field (bottom 3 bits) is 0x5.
 	 */
-	return (modrm->nbytes && (modrm->bytes[0] & 0xc7) == 0x5);
-}
+	वापस (modrm->nbytes && (modrm->bytes[0] & 0xc7) == 0x5);
+पूर्ण
 
 /**
- * insn_get_sib() - Get the SIB byte of instruction
- * @insn:	&struct insn containing instruction
+ * insn_get_sib() - Get the SIB byte of inकाष्ठाion
+ * @insn:	&काष्ठा insn containing inकाष्ठाion
  *
- * If necessary, first collects the instruction up to and including the
+ * If necessary, first collects the inकाष्ठाion up to and including the
  * ModRM byte.
  *
  * Returns:
- * 0: if decoding succeeded
+ * 0: अगर decoding succeeded
  * < 0: otherwise.
  */
-int insn_get_sib(struct insn *insn)
-{
+पूर्णांक insn_get_sib(काष्ठा insn *insn)
+अणु
 	insn_byte_t modrm;
-	int ret;
+	पूर्णांक ret;
 
-	if (insn->sib.got)
-		return 0;
+	अगर (insn->sib.got)
+		वापस 0;
 
-	if (!insn->modrm.got) {
+	अगर (!insn->modrm.got) अणु
 		ret = insn_get_modrm(insn);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (insn->modrm.nbytes) {
+	अगर (insn->modrm.nbytes) अणु
 		modrm = insn->modrm.bytes[0];
-		if (insn->addr_bytes != 2 &&
-		    X86_MODRM_MOD(modrm) != 3 && X86_MODRM_RM(modrm) == 4) {
+		अगर (insn->addr_bytes != 2 &&
+		    X86_MODRM_MOD(modrm) != 3 && X86_MODRM_RM(modrm) == 4) अणु
 			insn_field_set(&insn->sib,
 				       get_next(insn_byte_t, insn), 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	insn->sib.got = 1;
 
-	return 0;
+	वापस 0;
 
 err_out:
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
 
 /**
- * insn_get_displacement() - Get the displacement of instruction
- * @insn:	&struct insn containing instruction
+ * insn_get_displacement() - Get the displacement of inकाष्ठाion
+ * @insn:	&काष्ठा insn containing inकाष्ठाion
  *
- * If necessary, first collects the instruction up to and including the
+ * If necessary, first collects the inकाष्ठाion up to and including the
  * SIB byte.
  * Displacement value is sign-expanded.
  *
  * * Returns:
- * 0: if decoding succeeded
+ * 0: अगर decoding succeeded
  * < 0: otherwise.
  */
-int insn_get_displacement(struct insn *insn)
-{
+पूर्णांक insn_get_displacement(काष्ठा insn *insn)
+अणु
 	insn_byte_t mod, rm, base;
-	int ret;
+	पूर्णांक ret;
 
-	if (insn->displacement.got)
-		return 0;
+	अगर (insn->displacement.got)
+		वापस 0;
 
-	if (!insn->sib.got) {
+	अगर (!insn->sib.got) अणु
 		ret = insn_get_sib(insn);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (insn->modrm.nbytes) {
+	अगर (insn->modrm.nbytes) अणु
 		/*
 		 * Interpreting the modrm byte:
 		 * mod = 00 - no displacement fields (exceptions below)
 		 * mod = 01 - 1-byte displacement field
-		 * mod = 10 - displacement field is 4 bytes, or 2 bytes if
+		 * mod = 10 - displacement field is 4 bytes, or 2 bytes अगर
 		 * 	address size = 2 (0x67 prefix in 32-bit mode)
-		 * mod = 11 - no memory operand
+		 * mod = 11 - no memory opeअक्रम
 		 *
 		 * If address size = 2...
 		 * mod = 00, r/m = 110 - displacement field is 2 bytes
@@ -486,269 +487,269 @@ int insn_get_displacement(struct insn *insn)
 		mod = X86_MODRM_MOD(insn->modrm.value);
 		rm = X86_MODRM_RM(insn->modrm.value);
 		base = X86_SIB_BASE(insn->sib.value);
-		if (mod == 3)
-			goto out;
-		if (mod == 1) {
+		अगर (mod == 3)
+			जाओ out;
+		अगर (mod == 1) अणु
 			insn_field_set(&insn->displacement,
-				       get_next(signed char, insn), 1);
-		} else if (insn->addr_bytes == 2) {
-			if ((mod == 0 && rm == 6) || mod == 2) {
+				       get_next(चिन्हित अक्षर, insn), 1);
+		पूर्ण अन्यथा अगर (insn->addr_bytes == 2) अणु
+			अगर ((mod == 0 && rm == 6) || mod == 2) अणु
 				insn_field_set(&insn->displacement,
-					       get_next(short, insn), 2);
-			}
-		} else {
-			if ((mod == 0 && rm == 5) || mod == 2 ||
-			    (mod == 0 && base == 5)) {
+					       get_next(लघु, insn), 2);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर ((mod == 0 && rm == 5) || mod == 2 ||
+			    (mod == 0 && base == 5)) अणु
 				insn_field_set(&insn->displacement,
-					       get_next(int, insn), 4);
-			}
-		}
-	}
+					       get_next(पूर्णांक, insn), 4);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out:
 	insn->displacement.got = 1;
-	return 0;
+	वापस 0;
 
 err_out:
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
-/* Decode moffset16/32/64. Return 0 if failed */
-static int __get_moffset(struct insn *insn)
-{
-	switch (insn->addr_bytes) {
-	case 2:
-		insn_field_set(&insn->moffset1, get_next(short, insn), 2);
-		break;
-	case 4:
-		insn_field_set(&insn->moffset1, get_next(int, insn), 4);
-		break;
-	case 8:
-		insn_field_set(&insn->moffset1, get_next(int, insn), 4);
-		insn_field_set(&insn->moffset2, get_next(int, insn), 4);
-		break;
-	default:	/* opnd_bytes must be modified manually */
-		goto err_out;
-	}
+/* Decode moffset16/32/64. Return 0 अगर failed */
+अटल पूर्णांक __get_moffset(काष्ठा insn *insn)
+अणु
+	चयन (insn->addr_bytes) अणु
+	हाल 2:
+		insn_field_set(&insn->moffset1, get_next(लघु, insn), 2);
+		अवरोध;
+	हाल 4:
+		insn_field_set(&insn->moffset1, get_next(पूर्णांक, insn), 4);
+		अवरोध;
+	हाल 8:
+		insn_field_set(&insn->moffset1, get_next(पूर्णांक, insn), 4);
+		insn_field_set(&insn->moffset2, get_next(पूर्णांक, insn), 4);
+		अवरोध;
+	शेष:	/* opnd_bytes must be modअगरied manually */
+		जाओ err_out;
+	पूर्ण
 	insn->moffset1.got = insn->moffset2.got = 1;
 
-	return 1;
+	वापस 1;
 
 err_out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Decode imm v32(Iz). Return 0 if failed */
-static int __get_immv32(struct insn *insn)
-{
-	switch (insn->opnd_bytes) {
-	case 2:
-		insn_field_set(&insn->immediate, get_next(short, insn), 2);
-		break;
-	case 4:
-	case 8:
-		insn_field_set(&insn->immediate, get_next(int, insn), 4);
-		break;
-	default:	/* opnd_bytes must be modified manually */
-		goto err_out;
-	}
+/* Decode imm v32(Iz). Return 0 अगर failed */
+अटल पूर्णांक __get_immv32(काष्ठा insn *insn)
+अणु
+	चयन (insn->opnd_bytes) अणु
+	हाल 2:
+		insn_field_set(&insn->immediate, get_next(लघु, insn), 2);
+		अवरोध;
+	हाल 4:
+	हाल 8:
+		insn_field_set(&insn->immediate, get_next(पूर्णांक, insn), 4);
+		अवरोध;
+	शेष:	/* opnd_bytes must be modअगरied manually */
+		जाओ err_out;
+	पूर्ण
 
-	return 1;
+	वापस 1;
 
 err_out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Decode imm v64(Iv/Ov), Return 0 if failed */
-static int __get_immv(struct insn *insn)
-{
-	switch (insn->opnd_bytes) {
-	case 2:
-		insn_field_set(&insn->immediate1, get_next(short, insn), 2);
-		break;
-	case 4:
-		insn_field_set(&insn->immediate1, get_next(int, insn), 4);
+/* Decode imm v64(Iv/Ov), Return 0 अगर failed */
+अटल पूर्णांक __get_immv(काष्ठा insn *insn)
+अणु
+	चयन (insn->opnd_bytes) अणु
+	हाल 2:
+		insn_field_set(&insn->immediate1, get_next(लघु, insn), 2);
+		अवरोध;
+	हाल 4:
+		insn_field_set(&insn->immediate1, get_next(पूर्णांक, insn), 4);
 		insn->immediate1.nbytes = 4;
-		break;
-	case 8:
-		insn_field_set(&insn->immediate1, get_next(int, insn), 4);
-		insn_field_set(&insn->immediate2, get_next(int, insn), 4);
-		break;
-	default:	/* opnd_bytes must be modified manually */
-		goto err_out;
-	}
+		अवरोध;
+	हाल 8:
+		insn_field_set(&insn->immediate1, get_next(पूर्णांक, insn), 4);
+		insn_field_set(&insn->immediate2, get_next(पूर्णांक, insn), 4);
+		अवरोध;
+	शेष:	/* opnd_bytes must be modअगरied manually */
+		जाओ err_out;
+	पूर्ण
 	insn->immediate1.got = insn->immediate2.got = 1;
 
-	return 1;
+	वापस 1;
 err_out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Decode ptr16:16/32(Ap) */
-static int __get_immptr(struct insn *insn)
-{
-	switch (insn->opnd_bytes) {
-	case 2:
-		insn_field_set(&insn->immediate1, get_next(short, insn), 2);
-		break;
-	case 4:
-		insn_field_set(&insn->immediate1, get_next(int, insn), 4);
-		break;
-	case 8:
+अटल पूर्णांक __get_immptr(काष्ठा insn *insn)
+अणु
+	चयन (insn->opnd_bytes) अणु
+	हाल 2:
+		insn_field_set(&insn->immediate1, get_next(लघु, insn), 2);
+		अवरोध;
+	हाल 4:
+		insn_field_set(&insn->immediate1, get_next(पूर्णांक, insn), 4);
+		अवरोध;
+	हाल 8:
 		/* ptr16:64 is not exist (no segment) */
-		return 0;
-	default:	/* opnd_bytes must be modified manually */
-		goto err_out;
-	}
-	insn_field_set(&insn->immediate2, get_next(unsigned short, insn), 2);
+		वापस 0;
+	शेष:	/* opnd_bytes must be modअगरied manually */
+		जाओ err_out;
+	पूर्ण
+	insn_field_set(&insn->immediate2, get_next(अचिन्हित लघु, insn), 2);
 	insn->immediate1.got = insn->immediate2.got = 1;
 
-	return 1;
+	वापस 1;
 err_out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * insn_get_immediate() - Get the immediate in an instruction
- * @insn:	&struct insn containing instruction
+ * insn_get_immediate() - Get the immediate in an inकाष्ठाion
+ * @insn:	&काष्ठा insn containing inकाष्ठाion
  *
- * If necessary, first collects the instruction up to and including the
+ * If necessary, first collects the inकाष्ठाion up to and including the
  * displacement bytes.
- * Basically, most of immediates are sign-expanded. Unsigned-value can be
+ * Basically, most of immediates are sign-expanded. Unचिन्हित-value can be
  * computed by bit masking with ((1 << (nbytes * 8)) - 1)
  *
  * Returns:
  * 0:  on success
  * < 0: on error
  */
-int insn_get_immediate(struct insn *insn)
-{
-	int ret;
+पूर्णांक insn_get_immediate(काष्ठा insn *insn)
+अणु
+	पूर्णांक ret;
 
-	if (insn->immediate.got)
-		return 0;
+	अगर (insn->immediate.got)
+		वापस 0;
 
-	if (!insn->displacement.got) {
+	अगर (!insn->displacement.got) अणु
 		ret = insn_get_displacement(insn);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (inat_has_moffset(insn->attr)) {
-		if (!__get_moffset(insn))
-			goto err_out;
-		goto done;
-	}
+	अगर (inat_has_moffset(insn->attr)) अणु
+		अगर (!__get_moffset(insn))
+			जाओ err_out;
+		जाओ करोne;
+	पूर्ण
 
-	if (!inat_has_immediate(insn->attr))
+	अगर (!inat_has_immediate(insn->attr))
 		/* no immediates */
-		goto done;
+		जाओ करोne;
 
-	switch (inat_immediate_size(insn->attr)) {
-	case INAT_IMM_BYTE:
-		insn_field_set(&insn->immediate, get_next(signed char, insn), 1);
-		break;
-	case INAT_IMM_WORD:
-		insn_field_set(&insn->immediate, get_next(short, insn), 2);
-		break;
-	case INAT_IMM_DWORD:
-		insn_field_set(&insn->immediate, get_next(int, insn), 4);
-		break;
-	case INAT_IMM_QWORD:
-		insn_field_set(&insn->immediate1, get_next(int, insn), 4);
-		insn_field_set(&insn->immediate2, get_next(int, insn), 4);
-		break;
-	case INAT_IMM_PTR:
-		if (!__get_immptr(insn))
-			goto err_out;
-		break;
-	case INAT_IMM_VWORD32:
-		if (!__get_immv32(insn))
-			goto err_out;
-		break;
-	case INAT_IMM_VWORD:
-		if (!__get_immv(insn))
-			goto err_out;
-		break;
-	default:
+	चयन (inat_immediate_size(insn->attr)) अणु
+	हाल INAT_IMM_BYTE:
+		insn_field_set(&insn->immediate, get_next(चिन्हित अक्षर, insn), 1);
+		अवरोध;
+	हाल INAT_IMM_WORD:
+		insn_field_set(&insn->immediate, get_next(लघु, insn), 2);
+		अवरोध;
+	हाल INAT_IMM_DWORD:
+		insn_field_set(&insn->immediate, get_next(पूर्णांक, insn), 4);
+		अवरोध;
+	हाल INAT_IMM_QWORD:
+		insn_field_set(&insn->immediate1, get_next(पूर्णांक, insn), 4);
+		insn_field_set(&insn->immediate2, get_next(पूर्णांक, insn), 4);
+		अवरोध;
+	हाल INAT_IMM_PTR:
+		अगर (!__get_immptr(insn))
+			जाओ err_out;
+		अवरोध;
+	हाल INAT_IMM_VWORD32:
+		अगर (!__get_immv32(insn))
+			जाओ err_out;
+		अवरोध;
+	हाल INAT_IMM_VWORD:
+		अगर (!__get_immv(insn))
+			जाओ err_out;
+		अवरोध;
+	शेष:
 		/* Here, insn must have an immediate, but failed */
-		goto err_out;
-	}
-	if (inat_has_second_immediate(insn->attr)) {
-		insn_field_set(&insn->immediate2, get_next(signed char, insn), 1);
-	}
-done:
+		जाओ err_out;
+	पूर्ण
+	अगर (inat_has_second_immediate(insn->attr)) अणु
+		insn_field_set(&insn->immediate2, get_next(चिन्हित अक्षर, insn), 1);
+	पूर्ण
+करोne:
 	insn->immediate.got = 1;
-	return 0;
+	वापस 0;
 
 err_out:
-	return -ENODATA;
-}
+	वापस -ENODATA;
+पूर्ण
 
 /**
- * insn_get_length() - Get the length of instruction
- * @insn:	&struct insn containing instruction
+ * insn_get_length() - Get the length of inकाष्ठाion
+ * @insn:	&काष्ठा insn containing inकाष्ठाion
  *
- * If necessary, first collects the instruction up to and including the
+ * If necessary, first collects the inकाष्ठाion up to and including the
  * immediates bytes.
  *
  * Returns:
  *  - 0 on success
  *  - < 0 on error
 */
-int insn_get_length(struct insn *insn)
-{
-	int ret;
+पूर्णांक insn_get_length(काष्ठा insn *insn)
+अणु
+	पूर्णांक ret;
 
-	if (insn->length)
-		return 0;
+	अगर (insn->length)
+		वापस 0;
 
-	if (!insn->immediate.got) {
+	अगर (!insn->immediate.got) अणु
 		ret = insn_get_immediate(insn);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	insn->length = (unsigned char)((unsigned long)insn->next_byte
-				     - (unsigned long)insn->kaddr);
+	insn->length = (अचिन्हित अक्षर)((अचिन्हित दीर्घ)insn->next_byte
+				     - (अचिन्हित दीर्घ)insn->kaddr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Ensure this instruction is decoded completely */
-static inline int insn_complete(struct insn *insn)
-{
-	return insn->opcode.got && insn->modrm.got && insn->sib.got &&
+/* Ensure this inकाष्ठाion is decoded completely */
+अटल अंतरभूत पूर्णांक insn_complete(काष्ठा insn *insn)
+अणु
+	वापस insn->opcode.got && insn->modrm.got && insn->sib.got &&
 		insn->displacement.got && insn->immediate.got;
-}
+पूर्ण
 
 /**
- * insn_decode() - Decode an x86 instruction
- * @insn:	&struct insn to be initialized
- * @kaddr:	address (in kernel memory) of instruction (or copy thereof)
+ * insn_decode() - Decode an x86 inकाष्ठाion
+ * @insn:	&काष्ठा insn to be initialized
+ * @kaddr:	address (in kernel memory) of inकाष्ठाion (or copy thereof)
  * @buf_len:	length of the insn buffer at @kaddr
- * @m:		insn mode, see enum insn_mode
+ * @m:		insn mode, see क्रमागत insn_mode
  *
  * Returns:
- * 0: if decoding succeeded
+ * 0: अगर decoding succeeded
  * < 0: otherwise.
  */
-int insn_decode(struct insn *insn, const void *kaddr, int buf_len, enum insn_mode m)
-{
-	int ret;
+पूर्णांक insn_decode(काष्ठा insn *insn, स्थिर व्योम *kaddr, पूर्णांक buf_len, क्रमागत insn_mode m)
+अणु
+	पूर्णांक ret;
 
-#define INSN_MODE_KERN (enum insn_mode)-1 /* __ignore_sync_check__ mode is only valid in the kernel */
+#घोषणा INSN_MODE_KERN (क्रमागत insn_mode)-1 /* __ignore_sync_check__ mode is only valid in the kernel */
 
-	if (m == INSN_MODE_KERN)
+	अगर (m == INSN_MODE_KERN)
 		insn_init(insn, kaddr, buf_len, IS_ENABLED(CONFIG_X86_64));
-	else
+	अन्यथा
 		insn_init(insn, kaddr, buf_len, m == INSN_MODE_64);
 
 	ret = insn_get_length(insn);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (insn_complete(insn))
-		return 0;
+	अगर (insn_complete(insn))
+		वापस 0;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण

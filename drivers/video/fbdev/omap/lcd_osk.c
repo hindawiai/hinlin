@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * LCD panel support for the TI OMAP OSK board
+ * LCD panel support क्रम the TI OMAP OSK board
  *
  * Copyright (C) 2004 Nokia Corporation
  * Author: Imre Deak <imre.deak@nokia.com>
- * Adapted for OSK by <dirk.behme@de.bosch.com>
+ * Adapted क्रम OSK by <dirk.behme@de.bosch.com>
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/gpio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/gpपन.स>
 
-#include <mach/hardware.h>
-#include <mach/mux.h>
+#समावेश <mach/hardware.h>
+#समावेश <mach/mux.h>
 
-#include "omapfb.h"
+#समावेश "omapfb.h"
 
-static int osk_panel_enable(struct lcd_panel *panel)
-{
+अटल पूर्णांक osk_panel_enable(काष्ठा lcd_panel *panel)
+अणु
 	/* configure PWL pin */
 	omap_cfg_reg(PWL);
 
 	/* Enable PWL unit */
-	omap_writeb(0x01, OMAP_PWL_CLK_ENABLE);
+	omap_ग_लिखोb(0x01, OMAP_PWL_CLK_ENABLE);
 
 	/* Set PWL level */
-	omap_writeb(0xFF, OMAP_PWL_ENABLE);
+	omap_ग_लिखोb(0xFF, OMAP_PWL_ENABLE);
 
-	/* set GPIO2 high (lcd power enabled) */
+	/* set GPIO2 high (lcd घातer enabled) */
 	gpio_set_value(2, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void osk_panel_disable(struct lcd_panel *panel)
-{
+अटल व्योम osk_panel_disable(काष्ठा lcd_panel *panel)
+अणु
 	/* Set PWL level to zero */
-	omap_writeb(0x00, OMAP_PWL_ENABLE);
+	omap_ग_लिखोb(0x00, OMAP_PWL_ENABLE);
 
 	/* Disable PWL unit */
-	omap_writeb(0x00, OMAP_PWL_CLK_ENABLE);
+	omap_ग_लिखोb(0x00, OMAP_PWL_CLK_ENABLE);
 
 	/* set GPIO2 low */
 	gpio_set_value(2, 0);
-}
+पूर्ण
 
-static struct lcd_panel osk_panel = {
+अटल काष्ठा lcd_panel osk_panel = अणु
 	.name		= "osk",
 	.config		= OMAP_LCDC_PANEL_TFT,
 
@@ -53,7 +54,7 @@ static struct lcd_panel osk_panel = {
 	.data_lines	= 16,
 	.x_res		= 240,
 	.y_res		= 320,
-	.pixel_clock	= 12500,
+	.pixel_घड़ी	= 12500,
 	.hsw		= 40,
 	.hfp		= 40,
 	.hbp		= 72,
@@ -64,22 +65,22 @@ static struct lcd_panel osk_panel = {
 
 	.enable		= osk_panel_enable,
 	.disable	= osk_panel_disable,
-};
+पूर्ण;
 
-static int osk_panel_probe(struct platform_device *pdev)
-{
-	omapfb_register_panel(&osk_panel);
-	return 0;
-}
+अटल पूर्णांक osk_panel_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	omapfb_रेजिस्टर_panel(&osk_panel);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver osk_panel_driver = {
+अटल काष्ठा platक्रमm_driver osk_panel_driver = अणु
 	.probe		= osk_panel_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "lcd_osk",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(osk_panel_driver);
+module_platक्रमm_driver(osk_panel_driver);
 
 MODULE_AUTHOR("Imre Deak");
 MODULE_DESCRIPTION("LCD panel support for the TI OMAP OSK board");

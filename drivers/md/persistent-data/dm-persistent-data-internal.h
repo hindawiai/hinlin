@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2011 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
 
-#ifndef _DM_PERSISTENT_DATA_INTERNAL_H
-#define _DM_PERSISTENT_DATA_INTERNAL_H
+#अगर_अघोषित _DM_PERSISTENT_DATA_INTERNAL_H
+#घोषणा _DM_PERSISTENT_DATA_INTERNAL_H
 
-#include "dm-block-manager.h"
+#समावेश "dm-block-manager.h"
 
-static inline unsigned dm_hash_block(dm_block_t b, unsigned hash_mask)
-{
-	const unsigned BIG_PRIME = 4294967291UL;
+अटल अंतरभूत अचिन्हित dm_hash_block(dm_block_t b, अचिन्हित hash_mask)
+अणु
+	स्थिर अचिन्हित BIG_PRIME = 4294967291UL;
 
-	return (((unsigned) b) * BIG_PRIME) & hash_mask;
-}
+	वापस (((अचिन्हित) b) * BIG_PRIME) & hash_mask;
+पूर्ण
 
-#endif	/* _PERSISTENT_DATA_INTERNAL_H */
+#पूर्ण_अगर	/* _PERSISTENT_DATA_INTERNAL_H */

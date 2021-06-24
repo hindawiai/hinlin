@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*---------------------------------------------------------------------------+
  |  errors.c                                                                 |
  |                                                                           |
- |  The error handling functions for wm-FPU-emu                              |
+ |  The error handling functions क्रम wm-FPU-emu                              |
  |                                                                           |
  | Copyright (C) 1992,1993,1994,1996                                         |
  |                  W. Metzenthen, 22 Parker St, Ormond, Vic 3163, Australia |
@@ -14,144 +15,144 @@
 /*---------------------------------------------------------------------------+
  | Note:                                                                     |
  |    The file contains code which accesses user memory.                     |
- |    Emulator static data may change when user memory is accessed, due to   |
- |    other processes using the emulator while swapping is in progress.      |
+ |    Emulator अटल data may change when user memory is accessed, due to   |
+ |    other processes using the emulator जबतक swapping is in progress.      |
  +---------------------------------------------------------------------------*/
 
-#include <linux/signal.h>
+#समावेश <linux/संकेत.स>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "fpu_emu.h"
-#include "fpu_system.h"
-#include "exception.h"
-#include "status_w.h"
-#include "control_w.h"
-#include "reg_constant.h"
-#include "version.h"
+#समावेश "fpu_emu.h"
+#समावेश "fpu_system.h"
+#समावेश "exception.h"
+#समावेश "status_w.h"
+#समावेश "control_w.h"
+#समावेश "reg_constant.h"
+#समावेश "version.h"
 
 /* */
-#undef PRINT_MESSAGES
+#अघोषित PRINT_MESSAGES
 /* */
 
-#if 0
-void Un_impl(void)
-{
-	u_char byte1, FPU_modrm;
-	unsigned long address = FPU_ORIG_EIP;
+#अगर 0
+व्योम Un_impl(व्योम)
+अणु
+	u_अक्षर byte1, FPU_modrm;
+	अचिन्हित दीर्घ address = FPU_ORIG_EIP;
 
 	RE_ENTRANT_CHECK_OFF;
 	/* No need to check access_ok(), we have previously fetched these bytes. */
-	printk("Unimplemented FPU Opcode at eip=%p : ", (void __user *)address);
-	if (FPU_CS == __USER_CS) {
-		while (1) {
-			FPU_get_user(byte1, (u_char __user *) address);
-			if ((byte1 & 0xf8) == 0xd8)
-				break;
-			printk("[%02x]", byte1);
+	prपूर्णांकk("Unimplemented FPU Opcode at eip=%p : ", (व्योम __user *)address);
+	अगर (FPU_CS == __USER_CS) अणु
+		जबतक (1) अणु
+			FPU_get_user(byte1, (u_अक्षर __user *) address);
+			अगर ((byte1 & 0xf8) == 0xd8)
+				अवरोध;
+			prपूर्णांकk("[%02x]", byte1);
 			address++;
-		}
-		printk("%02x ", byte1);
-		FPU_get_user(FPU_modrm, 1 + (u_char __user *) address);
+		पूर्ण
+		prपूर्णांकk("%02x ", byte1);
+		FPU_get_user(FPU_modrm, 1 + (u_अक्षर __user *) address);
 
-		if (FPU_modrm >= 0300)
-			printk("%02x (%02x+%d)\n", FPU_modrm, FPU_modrm & 0xf8,
+		अगर (FPU_modrm >= 0300)
+			prपूर्णांकk("%02x (%02x+%d)\n", FPU_modrm, FPU_modrm & 0xf8,
 			       FPU_modrm & 7);
-		else
-			printk("/%d\n", (FPU_modrm >> 3) & 7);
-	} else {
-		printk("cs selector = %04x\n", FPU_CS);
-	}
+		अन्यथा
+			prपूर्णांकk("/%d\n", (FPU_modrm >> 3) & 7);
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk("cs selector = %04x\n", FPU_CS);
+	पूर्ण
 
 	RE_ENTRANT_CHECK_ON;
 
 	EXCEPTION(EX_Invalid);
 
-}
-#endif /*  0  */
+पूर्ण
+#पूर्ण_अगर /*  0  */
 
 /*
-   Called for opcodes which are illegal and which are known to result in a
-   SIGILL with a real 80486.
+   Called क्रम opcodes which are illegal and which are known to result in a
+   संक_अवैध with a real 80486.
    */
-void FPU_illegal(void)
-{
-	math_abort(FPU_info, SIGILL);
-}
+व्योम FPU_illegal(व्योम)
+अणु
+	math_पात(FPU_info, संक_अवैध);
+पूर्ण
 
-void FPU_printall(void)
-{
-	int i;
-	static const char *tag_desc[] = { "Valid", "Zero", "ERROR", "Empty",
+व्योम FPU_prपूर्णांकall(व्योम)
+अणु
+	पूर्णांक i;
+	अटल स्थिर अक्षर *tag_desc[] = अणु "Valid", "Zero", "ERROR", "Empty",
 		"DeNorm", "Inf", "NaN"
-	};
-	u_char byte1, FPU_modrm;
-	unsigned long address = FPU_ORIG_EIP;
+	पूर्ण;
+	u_अक्षर byte1, FPU_modrm;
+	अचिन्हित दीर्घ address = FPU_ORIG_EIP;
 
 	RE_ENTRANT_CHECK_OFF;
 	/* No need to check access_ok(), we have previously fetched these bytes. */
-	printk("At %p:", (void *)address);
-	if (FPU_CS == __USER_CS) {
-#define MAX_PRINTED_BYTES 20
-		for (i = 0; i < MAX_PRINTED_BYTES; i++) {
-			FPU_get_user(byte1, (u_char __user *) address);
-			if ((byte1 & 0xf8) == 0xd8) {
-				printk(" %02x", byte1);
-				break;
-			}
-			printk(" [%02x]", byte1);
+	prपूर्णांकk("At %p:", (व्योम *)address);
+	अगर (FPU_CS == __USER_CS) अणु
+#घोषणा MAX_PRINTED_BYTES 20
+		क्रम (i = 0; i < MAX_PRINTED_BYTES; i++) अणु
+			FPU_get_user(byte1, (u_अक्षर __user *) address);
+			अगर ((byte1 & 0xf8) == 0xd8) अणु
+				prपूर्णांकk(" %02x", byte1);
+				अवरोध;
+			पूर्ण
+			prपूर्णांकk(" [%02x]", byte1);
 			address++;
-		}
-		if (i == MAX_PRINTED_BYTES)
-			printk(" [more..]\n");
-		else {
-			FPU_get_user(FPU_modrm, 1 + (u_char __user *) address);
+		पूर्ण
+		अगर (i == MAX_PRINTED_BYTES)
+			prपूर्णांकk(" [more..]\n");
+		अन्यथा अणु
+			FPU_get_user(FPU_modrm, 1 + (u_अक्षर __user *) address);
 
-			if (FPU_modrm >= 0300)
-				printk(" %02x (%02x+%d)\n", FPU_modrm,
+			अगर (FPU_modrm >= 0300)
+				prपूर्णांकk(" %02x (%02x+%d)\n", FPU_modrm,
 				       FPU_modrm & 0xf8, FPU_modrm & 7);
-			else
-				printk(" /%d, mod=%d rm=%d\n",
+			अन्यथा
+				prपूर्णांकk(" /%d, mod=%d rm=%d\n",
 				       (FPU_modrm >> 3) & 7,
 				       (FPU_modrm >> 6) & 3, FPU_modrm & 7);
-		}
-	} else {
-		printk("%04x\n", FPU_CS);
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk("%04x\n", FPU_CS);
+	पूर्ण
 
 	partial_status = status_word();
 
-#ifdef DEBUGGING
-	if (partial_status & SW_Backward)
-		printk("SW: backward compatibility\n");
-	if (partial_status & SW_C3)
-		printk("SW: condition bit 3\n");
-	if (partial_status & SW_C2)
-		printk("SW: condition bit 2\n");
-	if (partial_status & SW_C1)
-		printk("SW: condition bit 1\n");
-	if (partial_status & SW_C0)
-		printk("SW: condition bit 0\n");
-	if (partial_status & SW_Summary)
-		printk("SW: exception summary\n");
-	if (partial_status & SW_Stack_Fault)
-		printk("SW: stack fault\n");
-	if (partial_status & SW_Precision)
-		printk("SW: loss of precision\n");
-	if (partial_status & SW_Underflow)
-		printk("SW: underflow\n");
-	if (partial_status & SW_Overflow)
-		printk("SW: overflow\n");
-	if (partial_status & SW_Zero_Div)
-		printk("SW: divide by zero\n");
-	if (partial_status & SW_Denorm_Op)
-		printk("SW: denormalized operand\n");
-	if (partial_status & SW_Invalid)
-		printk("SW: invalid operation\n");
-#endif /* DEBUGGING */
+#अगर_घोषित DEBUGGING
+	अगर (partial_status & SW_Backward)
+		prपूर्णांकk("SW: backward compatibility\n");
+	अगर (partial_status & SW_C3)
+		prपूर्णांकk("SW: condition bit 3\n");
+	अगर (partial_status & SW_C2)
+		prपूर्णांकk("SW: condition bit 2\n");
+	अगर (partial_status & SW_C1)
+		prपूर्णांकk("SW: condition bit 1\n");
+	अगर (partial_status & SW_C0)
+		prपूर्णांकk("SW: condition bit 0\n");
+	अगर (partial_status & SW_Summary)
+		prपूर्णांकk("SW: exception summary\n");
+	अगर (partial_status & SW_Stack_Fault)
+		prपूर्णांकk("SW: stack fault\n");
+	अगर (partial_status & SW_Precision)
+		prपूर्णांकk("SW: loss of precision\n");
+	अगर (partial_status & SW_Underflow)
+		prपूर्णांकk("SW: underflow\n");
+	अगर (partial_status & SW_Overflow)
+		prपूर्णांकk("SW: overflow\n");
+	अगर (partial_status & SW_Zero_Div)
+		prपूर्णांकk("SW: divide by zero\n");
+	अगर (partial_status & SW_Denorm_Op)
+		prपूर्णांकk("SW: denormalized operand\n");
+	अगर (partial_status & SW_Invalid)
+		prपूर्णांकk("SW: invalid operation\n");
+#पूर्ण_अगर /* DEBUGGING */
 
-	printk(" SW: b=%d st=%d es=%d sf=%d cc=%d%d%d%d ef=%d%d%d%d%d%d\n", partial_status & 0x8000 ? 1 : 0,	/* busy */
-	       (partial_status & 0x3800) >> 11,	/* stack top pointer */
+	prपूर्णांकk(" SW: b=%d st=%d es=%d sf=%d cc=%d%d%d%d ef=%d%d%d%d%d%d\n", partial_status & 0x8000 ? 1 : 0,	/* busy */
+	       (partial_status & 0x3800) >> 11,	/* stack top poपूर्णांकer */
 	       partial_status & 0x80 ? 1 : 0,	/* Error summary status */
 	       partial_status & 0x40 ? 1 : 0,	/* Stack flag */
 	       partial_status & SW_C3 ? 1 : 0, partial_status & SW_C2 ? 1 : 0,	/* cc */
@@ -163,7 +164,7 @@ void FPU_printall(void)
 	       partial_status & SW_Denorm_Op ? 1 : 0,
 	       partial_status & SW_Invalid ? 1 : 0);
 
-	printk(" CW: ic=%d rc=%d%d pc=%d%d iem=%d     ef=%d%d%d%d%d%d\n",
+	prपूर्णांकk(" CW: ic=%d rc=%d%d pc=%d%d iem=%d     ef=%d%d%d%d%d%d\n",
 	       control_word & 0x1000 ? 1 : 0,
 	       (control_word & 0x800) >> 11, (control_word & 0x400) >> 10,
 	       (control_word & 0x200) >> 9, (control_word & 0x100) >> 8,
@@ -175,55 +176,55 @@ void FPU_printall(void)
 	       control_word & SW_Denorm_Op ? 1 : 0,
 	       control_word & SW_Invalid ? 1 : 0);
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		FPU_REG *r = &st(i);
-		u_char tagi = FPU_gettagi(i);
+		u_अक्षर tagi = FPU_gettagi(i);
 
-		switch (tagi) {
-		case TAG_Empty:
-			continue;
-		case TAG_Zero:
-		case TAG_Special:
-			/* Update tagi for the printk below */
+		चयन (tagi) अणु
+		हाल TAG_Empty:
+			जारी;
+		हाल TAG_Zero:
+		हाल TAG_Special:
+			/* Update tagi क्रम the prपूर्णांकk below */
 			tagi = FPU_Special(r);
 			fallthrough;
-		case TAG_Valid:
-			printk("st(%d)  %c .%04lx %04lx %04lx %04lx e%+-6d ", i,
-			       getsign(r) ? '-' : '+',
-			       (long)(r->sigh >> 16),
-			       (long)(r->sigh & 0xFFFF),
-			       (long)(r->sigl >> 16),
-			       (long)(r->sigl & 0xFFFF),
+		हाल TAG_Valid:
+			prपूर्णांकk("st(%d)  %c .%04lx %04lx %04lx %04lx e%+-6d ", i,
+			       माला_लोign(r) ? '-' : '+',
+			       (दीर्घ)(r->sigh >> 16),
+			       (दीर्घ)(r->sigh & 0xFFFF),
+			       (दीर्घ)(r->sigl >> 16),
+			       (दीर्घ)(r->sigl & 0xFFFF),
 			       exponent(r) - EXP_BIAS + 1);
-			break;
-		default:
-			printk("Whoops! Error in errors.c: tag%d is %d ", i,
+			अवरोध;
+		शेष:
+			prपूर्णांकk("Whoops! Error in errors.c: tag%d is %d ", i,
 			       tagi);
-			continue;
-		}
-		printk("%s\n", tag_desc[(int)(unsigned)tagi]);
-	}
+			जारी;
+		पूर्ण
+		prपूर्णांकk("%s\n", tag_desc[(पूर्णांक)(अचिन्हित)tagi]);
+	पूर्ण
 
 	RE_ENTRANT_CHECK_ON;
 
-}
+पूर्ण
 
-static struct {
-	int type;
-	const char *name;
-} exception_names[] = {
-	{
-	EX_StackOver, "stack overflow"}, {
-	EX_StackUnder, "stack underflow"}, {
-	EX_Precision, "loss of precision"}, {
-	EX_Underflow, "underflow"}, {
-	EX_Overflow, "overflow"}, {
-	EX_ZeroDiv, "divide by zero"}, {
-	EX_Denormal, "denormalized operand"}, {
-	EX_Invalid, "invalid operation"}, {
-	EX_INTERNAL, "INTERNAL BUG in " FPU_VERSION}, {
-	0, NULL}
-};
+अटल काष्ठा अणु
+	पूर्णांक type;
+	स्थिर अक्षर *name;
+पूर्ण exception_names[] = अणु
+	अणु
+	EX_StackOver, "stack overflow"पूर्ण, अणु
+	EX_StackUnder, "stack underflow"पूर्ण, अणु
+	EX_Precision, "loss of precision"पूर्ण, अणु
+	EX_Underflow, "underflow"पूर्ण, अणु
+	EX_Overflow, "overflow"पूर्ण, अणु
+	EX_ZeroDiv, "divide by zero"पूर्ण, अणु
+	EX_Denormal, "denormalized operand"पूर्ण, अणु
+	EX_Invalid, "invalid operation"पूर्ण, अणु
+	EX_INTERNAL, "INTERNAL BUG in " FPU_VERSIONपूर्ण, अणु
+	0, शून्यपूर्ण
+पूर्ण;
 
 /*
  EX_INTERNAL is always given with a code which indicates where the
@@ -276,20 +277,20 @@ static struct {
 	      0x180  in reg_convert.c
        0x2nn  in an *.S file:
               0x201  in reg_u_add.S
-              0x202  in reg_u_div.S
-              0x203  in reg_u_div.S
-              0x204  in reg_u_div.S
+              0x202  in reg_u_भाग.S
+              0x203  in reg_u_भाग.S
+              0x204  in reg_u_भाग.S
               0x205  in reg_u_mul.S
               0x206  in reg_u_sub.S
-              0x207  in wm_sqrt.S
-	      0x208  in reg_div.S
+              0x207  in wm_वर्ग_मूल.S
+	      0x208  in reg_भाग.S
               0x209  in reg_u_sub.S
               0x210  in reg_u_sub.S
               0x211  in reg_u_sub.S
               0x212  in reg_u_sub.S
-	      0x213  in wm_sqrt.S
-	      0x214  in wm_sqrt.S
-	      0x215  in wm_sqrt.S
+	      0x213  in wm_वर्ग_मूल.S
+	      0x214  in wm_वर्ग_मूल.S
+	      0x215  in wm_वर्ग_मूल.S
 	      0x220  in reg_norm.S
 	      0x221  in reg_norm.S
 	      0x230  in reg_round.S
@@ -299,388 +300,388 @@ static struct {
 	      0x234  in reg_round.S
 	      0x235  in reg_round.S
 	      0x236  in reg_round.S
-	      0x240  in div_Xsig.S
-	      0x241  in div_Xsig.S
-	      0x242  in div_Xsig.S
+	      0x240  in भाग_Xsig.S
+	      0x241  in भाग_Xsig.S
+	      0x242  in भाग_Xsig.S
  */
 
-asmlinkage __visible void FPU_exception(int n)
-{
-	int i, int_type;
+यंत्रlinkage __visible व्योम FPU_exception(पूर्णांक n)
+अणु
+	पूर्णांक i, पूर्णांक_type;
 
-	int_type = 0;		/* Needed only to stop compiler warnings */
-	if (n & EX_INTERNAL) {
-		int_type = n - EX_INTERNAL;
+	पूर्णांक_type = 0;		/* Needed only to stop compiler warnings */
+	अगर (n & EX_INTERNAL) अणु
+		पूर्णांक_type = n - EX_INTERNAL;
 		n = EX_INTERNAL;
 		/* Set lots of exception bits! */
 		partial_status |= (SW_Exc_Mask | SW_Summary | SW_Backward);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Extract only the bits which we use to set the status word */
 		n &= (SW_Exc_Mask);
 		/* Set the corresponding exception bit */
 		partial_status |= n;
-		/* Set summary bits iff exception isn't masked */
-		if (partial_status & ~control_word & CW_Exceptions)
+		/* Set summary bits अगरf exception isn't masked */
+		अगर (partial_status & ~control_word & CW_Exceptions)
 			partial_status |= (SW_Summary | SW_Backward);
-		if (n & (SW_Stack_Fault | EX_Precision)) {
-			if (!(n & SW_C1))
-				/* This bit distinguishes over- from underflow for a stack fault,
-				   and roundup from round-down for precision loss. */
+		अगर (n & (SW_Stack_Fault | EX_Precision)) अणु
+			अगर (!(n & SW_C1))
+				/* This bit distinguishes over- from underflow क्रम a stack fault,
+				   and roundup from round-करोwn क्रम precision loss. */
 				partial_status &= ~SW_C1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	RE_ENTRANT_CHECK_OFF;
-	if ((~control_word & n & CW_Exceptions) || (n == EX_INTERNAL)) {
-		/* Get a name string for error reporting */
-		for (i = 0; exception_names[i].type; i++)
-			if ((exception_names[i].type & n) ==
+	अगर ((~control_word & n & CW_Exceptions) || (n == EX_INTERNAL)) अणु
+		/* Get a name string क्रम error reporting */
+		क्रम (i = 0; exception_names[i].type; i++)
+			अगर ((exception_names[i].type & n) ==
 			    exception_names[i].type)
-				break;
+				अवरोध;
 
-		if (exception_names[i].type) {
-#ifdef PRINT_MESSAGES
-			printk("FP Exception: %s!\n", exception_names[i].name);
-#endif /* PRINT_MESSAGES */
-		} else
-			printk("FPU emulator: Unknown Exception: 0x%04x!\n", n);
+		अगर (exception_names[i].type) अणु
+#अगर_घोषित PRINT_MESSAGES
+			prपूर्णांकk("FP Exception: %s!\n", exception_names[i].name);
+#पूर्ण_अगर /* PRINT_MESSAGES */
+		पूर्ण अन्यथा
+			prपूर्णांकk("FPU emulator: Unknown Exception: 0x%04x!\n", n);
 
-		if (n == EX_INTERNAL) {
-			printk("FPU emulator: Internal error type 0x%04x\n",
-			       int_type);
-			FPU_printall();
-		}
-#ifdef PRINT_MESSAGES
-		else
-			FPU_printall();
-#endif /* PRINT_MESSAGES */
+		अगर (n == EX_INTERNAL) अणु
+			prपूर्णांकk("FPU emulator: Internal error type 0x%04x\n",
+			       पूर्णांक_type);
+			FPU_prपूर्णांकall();
+		पूर्ण
+#अगर_घोषित PRINT_MESSAGES
+		अन्यथा
+			FPU_prपूर्णांकall();
+#पूर्ण_अगर /* PRINT_MESSAGES */
 
 		/*
-		 * The 80486 generates an interrupt on the next non-control FPU
-		 * instruction. So we need some means of flagging it.
-		 * We use the ES (Error Summary) bit for this.
+		 * The 80486 generates an पूर्णांकerrupt on the next non-control FPU
+		 * inकाष्ठाion. So we need some means of flagging it.
+		 * We use the ES (Error Summary) bit क्रम this.
 		 */
-	}
+	पूर्ण
 	RE_ENTRANT_CHECK_ON;
 
-#ifdef __DEBUG__
-	math_abort(FPU_info, SIGFPE);
-#endif /* __DEBUG__ */
+#अगर_घोषित __DEBUG__
+	math_पात(FPU_info, संक_भ_त्रुटि);
+#पूर्ण_अगर /* __DEBUG__ */
 
-}
+पूर्ण
 
 /* Real operation attempted on a NaN. */
-/* Returns < 0 if the exception is unmasked */
-int real_1op_NaN(FPU_REG *a)
-{
-	int signalling, isNaN;
+/* Returns < 0 अगर the exception is unmasked */
+पूर्णांक real_1op_NaN(FPU_REG *a)
+अणु
+	पूर्णांक संकेतling, isNaN;
 
 	isNaN = (exponent(a) == EXP_OVER) && (a->sigh & 0x80000000);
 
-	/* The default result for the case of two "equal" NaNs (signs may
-	   differ) is chosen to reproduce 80486 behaviour */
-	signalling = isNaN && !(a->sigh & 0x40000000);
+	/* The शेष result क्रम the हाल of two "equal" NaNs (signs may
+	   dअगरfer) is chosen to reproduce 80486 behaviour */
+	संकेतling = isNaN && !(a->sigh & 0x40000000);
 
-	if (!signalling) {
-		if (!isNaN) {	/* pseudo-NaN, or other unsupported? */
-			if (control_word & CW_Invalid) {
+	अगर (!संकेतling) अणु
+		अगर (!isNaN) अणु	/* pseuकरो-NaN, or other unsupported? */
+			अगर (control_word & CW_Invalid) अणु
 				/* Masked response */
 				reg_copy(&CONST_QNaN, a);
-			}
+			पूर्ण
 			EXCEPTION(EX_Invalid);
-			return (!(control_word & CW_Invalid) ? FPU_Exception :
+			वापस (!(control_word & CW_Invalid) ? FPU_Exception :
 				0) | TAG_Special;
-		}
-		return TAG_Special;
-	}
+		पूर्ण
+		वापस TAG_Special;
+	पूर्ण
 
-	if (control_word & CW_Invalid) {
+	अगर (control_word & CW_Invalid) अणु
 		/* The masked response */
-		if (!(a->sigh & 0x80000000)) {	/* pseudo-NaN ? */
+		अगर (!(a->sigh & 0x80000000)) अणु	/* pseuकरो-NaN ? */
 			reg_copy(&CONST_QNaN, a);
-		}
+		पूर्ण
 		/* ensure a Quiet NaN */
 		a->sigh |= 0x40000000;
-	}
+	पूर्ण
 
 	EXCEPTION(EX_Invalid);
 
-	return (!(control_word & CW_Invalid) ? FPU_Exception : 0) | TAG_Special;
-}
+	वापस (!(control_word & CW_Invalid) ? FPU_Exception : 0) | TAG_Special;
+पूर्ण
 
-/* Real operation attempted on two operands, one a NaN. */
-/* Returns < 0 if the exception is unmasked */
-int real_2op_NaN(FPU_REG const *b, u_char tagb,
-		 int deststnr, FPU_REG const *defaultNaN)
-{
+/* Real operation attempted on two opeअक्रमs, one a NaN. */
+/* Returns < 0 अगर the exception is unmasked */
+पूर्णांक real_2op_NaN(FPU_REG स्थिर *b, u_अक्षर tagb,
+		 पूर्णांक deststnr, FPU_REG स्थिर *शेषNaN)
+अणु
 	FPU_REG *dest = &st(deststnr);
-	FPU_REG const *a = dest;
-	u_char taga = FPU_gettagi(deststnr);
-	FPU_REG const *x;
-	int signalling, unsupported;
+	FPU_REG स्थिर *a = dest;
+	u_अक्षर taga = FPU_gettagi(deststnr);
+	FPU_REG स्थिर *x;
+	पूर्णांक संकेतling, unsupported;
 
-	if (taga == TAG_Special)
+	अगर (taga == TAG_Special)
 		taga = FPU_Special(a);
-	if (tagb == TAG_Special)
+	अगर (tagb == TAG_Special)
 		tagb = FPU_Special(b);
 
-	/* TW_NaN is also used for unsupported data types. */
+	/* TW_NaN is also used क्रम unsupported data types. */
 	unsupported = ((taga == TW_NaN)
 		       && !((exponent(a) == EXP_OVER)
 			    && (a->sigh & 0x80000000)))
 	    || ((tagb == TW_NaN)
 		&& !((exponent(b) == EXP_OVER) && (b->sigh & 0x80000000)));
-	if (unsupported) {
-		if (control_word & CW_Invalid) {
+	अगर (unsupported) अणु
+		अगर (control_word & CW_Invalid) अणु
 			/* Masked response */
 			FPU_copy_to_regi(&CONST_QNaN, TAG_Special, deststnr);
-		}
+		पूर्ण
 		EXCEPTION(EX_Invalid);
-		return (!(control_word & CW_Invalid) ? FPU_Exception : 0) |
+		वापस (!(control_word & CW_Invalid) ? FPU_Exception : 0) |
 		    TAG_Special;
-	}
+	पूर्ण
 
-	if (taga == TW_NaN) {
+	अगर (taga == TW_NaN) अणु
 		x = a;
-		if (tagb == TW_NaN) {
-			signalling = !(a->sigh & b->sigh & 0x40000000);
-			if (significand(b) > significand(a))
+		अगर (tagb == TW_NaN) अणु
+			संकेतling = !(a->sigh & b->sigh & 0x40000000);
+			अगर (signअगरicand(b) > signअगरicand(a))
 				x = b;
-			else if (significand(b) == significand(a)) {
-				/* The default result for the case of two "equal" NaNs (signs may
-				   differ) is chosen to reproduce 80486 behaviour */
-				x = defaultNaN;
-			}
-		} else {
-			/* return the quiet version of the NaN in a */
-			signalling = !(a->sigh & 0x40000000);
-		}
-	} else
-#ifdef PARANOID
-	if (tagb == TW_NaN)
-#endif /* PARANOID */
-	{
-		signalling = !(b->sigh & 0x40000000);
+			अन्यथा अगर (signअगरicand(b) == signअगरicand(a)) अणु
+				/* The शेष result क्रम the हाल of two "equal" NaNs (signs may
+				   dअगरfer) is chosen to reproduce 80486 behaviour */
+				x = शेषNaN;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* वापस the quiet version of the NaN in a */
+			संकेतling = !(a->sigh & 0x40000000);
+		पूर्ण
+	पूर्ण अन्यथा
+#अगर_घोषित PARANOID
+	अगर (tagb == TW_NaN)
+#पूर्ण_अगर /* PARANOID */
+	अणु
+		संकेतling = !(b->sigh & 0x40000000);
 		x = b;
-	}
-#ifdef PARANOID
-	else {
-		signalling = 0;
+	पूर्ण
+#अगर_घोषित PARANOID
+	अन्यथा अणु
+		संकेतling = 0;
 		EXCEPTION(EX_INTERNAL | 0x113);
 		x = &CONST_QNaN;
-	}
-#endif /* PARANOID */
+	पूर्ण
+#पूर्ण_अगर /* PARANOID */
 
-	if ((!signalling) || (control_word & CW_Invalid)) {
-		if (!x)
+	अगर ((!संकेतling) || (control_word & CW_Invalid)) अणु
+		अगर (!x)
 			x = b;
 
-		if (!(x->sigh & 0x80000000))	/* pseudo-NaN ? */
+		अगर (!(x->sigh & 0x80000000))	/* pseuकरो-NaN ? */
 			x = &CONST_QNaN;
 
 		FPU_copy_to_regi(x, TAG_Special, deststnr);
 
-		if (!signalling)
-			return TAG_Special;
+		अगर (!संकेतling)
+			वापस TAG_Special;
 
 		/* ensure a Quiet NaN */
 		dest->sigh |= 0x40000000;
-	}
+	पूर्ण
 
 	EXCEPTION(EX_Invalid);
 
-	return (!(control_word & CW_Invalid) ? FPU_Exception : 0) | TAG_Special;
-}
+	वापस (!(control_word & CW_Invalid) ? FPU_Exception : 0) | TAG_Special;
+पूर्ण
 
-/* Invalid arith operation on Valid registers */
-/* Returns < 0 if the exception is unmasked */
-asmlinkage __visible int arith_invalid(int deststnr)
-{
+/* Invalid arith operation on Valid रेजिस्टरs */
+/* Returns < 0 अगर the exception is unmasked */
+यंत्रlinkage __visible पूर्णांक arith_invalid(पूर्णांक deststnr)
+अणु
 
 	EXCEPTION(EX_Invalid);
 
-	if (control_word & CW_Invalid) {
+	अगर (control_word & CW_Invalid) अणु
 		/* The masked response */
 		FPU_copy_to_regi(&CONST_QNaN, TAG_Special, deststnr);
-	}
+	पूर्ण
 
-	return (!(control_word & CW_Invalid) ? FPU_Exception : 0) | TAG_Valid;
+	वापस (!(control_word & CW_Invalid) ? FPU_Exception : 0) | TAG_Valid;
 
-}
+पूर्ण
 
 /* Divide a finite number by zero */
-asmlinkage __visible int FPU_divide_by_zero(int deststnr, u_char sign)
-{
+यंत्रlinkage __visible पूर्णांक FPU_भागide_by_zero(पूर्णांक deststnr, u_अक्षर sign)
+अणु
 	FPU_REG *dest = &st(deststnr);
-	int tag = TAG_Valid;
+	पूर्णांक tag = TAG_Valid;
 
-	if (control_word & CW_ZeroDiv) {
+	अगर (control_word & CW_ZeroDiv) अणु
 		/* The masked response */
 		FPU_copy_to_regi(&CONST_INF, TAG_Special, deststnr);
 		setsign(dest, sign);
 		tag = TAG_Special;
-	}
+	पूर्ण
 
 	EXCEPTION(EX_ZeroDiv);
 
-	return (!(control_word & CW_ZeroDiv) ? FPU_Exception : 0) | tag;
+	वापस (!(control_word & CW_ZeroDiv) ? FPU_Exception : 0) | tag;
 
-}
+पूर्ण
 
 /* This may be called often, so keep it lean */
-int set_precision_flag(int flags)
-{
-	if (control_word & CW_Precision) {
+पूर्णांक set_precision_flag(पूर्णांक flags)
+अणु
+	अगर (control_word & CW_Precision) अणु
 		partial_status &= ~(SW_C1 & flags);
 		partial_status |= flags;	/* The masked response */
-		return 0;
-	} else {
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		EXCEPTION(flags);
-		return 1;
-	}
-}
+		वापस 1;
+	पूर्ण
+पूर्ण
 
 /* This may be called often, so keep it lean */
-asmlinkage __visible void set_precision_flag_up(void)
-{
-	if (control_word & CW_Precision)
+यंत्रlinkage __visible व्योम set_precision_flag_up(व्योम)
+अणु
+	अगर (control_word & CW_Precision)
 		partial_status |= (SW_Precision | SW_C1);	/* The masked response */
-	else
+	अन्यथा
 		EXCEPTION(EX_Precision | SW_C1);
-}
+पूर्ण
 
 /* This may be called often, so keep it lean */
-asmlinkage __visible void set_precision_flag_down(void)
-{
-	if (control_word & CW_Precision) {	/* The masked response */
+यंत्रlinkage __visible व्योम set_precision_flag_करोwn(व्योम)
+अणु
+	अगर (control_word & CW_Precision) अणु	/* The masked response */
 		partial_status &= ~SW_C1;
 		partial_status |= SW_Precision;
-	} else
+	पूर्ण अन्यथा
 		EXCEPTION(EX_Precision);
-}
+पूर्ण
 
-asmlinkage __visible int denormal_operand(void)
-{
-	if (control_word & CW_Denormal) {	/* The masked response */
+यंत्रlinkage __visible पूर्णांक denormal_opeअक्रम(व्योम)
+अणु
+	अगर (control_word & CW_Denormal) अणु	/* The masked response */
 		partial_status |= SW_Denorm_Op;
-		return TAG_Special;
-	} else {
+		वापस TAG_Special;
+	पूर्ण अन्यथा अणु
 		EXCEPTION(EX_Denormal);
-		return TAG_Special | FPU_Exception;
-	}
-}
+		वापस TAG_Special | FPU_Exception;
+	पूर्ण
+पूर्ण
 
-asmlinkage __visible int arith_overflow(FPU_REG *dest)
-{
-	int tag = TAG_Valid;
+यंत्रlinkage __visible पूर्णांक arith_overflow(FPU_REG *dest)
+अणु
+	पूर्णांक tag = TAG_Valid;
 
-	if (control_word & CW_Overflow) {
+	अगर (control_word & CW_Overflow) अणु
 		/* The masked response */
 /* ###### The response here depends upon the rounding mode */
 		reg_copy(&CONST_INF, dest);
 		tag = TAG_Special;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Subtract the magic number from the exponent */
 		addexponent(dest, (-3 * (1 << 13)));
-	}
+	पूर्ण
 
 	EXCEPTION(EX_Overflow);
-	if (control_word & CW_Overflow) {
+	अगर (control_word & CW_Overflow) अणु
 		/* The overflow exception is masked. */
 		/* By definition, precision is lost.
 		   The roundup bit (C1) is also set because we have
 		   "rounded" upwards to Infinity. */
 		EXCEPTION(EX_Precision | SW_C1);
-		return tag;
-	}
+		वापस tag;
+	पूर्ण
 
-	return tag;
+	वापस tag;
 
-}
+पूर्ण
 
-asmlinkage __visible int arith_underflow(FPU_REG *dest)
-{
-	int tag = TAG_Valid;
+यंत्रlinkage __visible पूर्णांक arith_underflow(FPU_REG *dest)
+अणु
+	पूर्णांक tag = TAG_Valid;
 
-	if (control_word & CW_Underflow) {
+	अगर (control_word & CW_Underflow) अणु
 		/* The masked response */
-		if (exponent16(dest) <= EXP_UNDER - 63) {
+		अगर (exponent16(dest) <= EXP_UNDER - 63) अणु
 			reg_copy(&CONST_Z, dest);
-			partial_status &= ~SW_C1;	/* Round down. */
+			partial_status &= ~SW_C1;	/* Round करोwn. */
 			tag = TAG_Zero;
-		} else {
+		पूर्ण अन्यथा अणु
 			stdexp(dest);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Add the magic number to the exponent. */
 		addexponent(dest, (3 * (1 << 13)) + EXTENDED_Ebias);
-	}
+	पूर्ण
 
 	EXCEPTION(EX_Underflow);
-	if (control_word & CW_Underflow) {
+	अगर (control_word & CW_Underflow) अणु
 		/* The underflow exception is masked. */
 		EXCEPTION(EX_Precision);
-		return tag;
-	}
+		वापस tag;
+	पूर्ण
 
-	return tag;
+	वापस tag;
 
-}
+पूर्ण
 
-void FPU_stack_overflow(void)
-{
+व्योम FPU_stack_overflow(व्योम)
+अणु
 
-	if (control_word & CW_Invalid) {
+	अगर (control_word & CW_Invalid) अणु
 		/* The masked response */
 		top--;
 		FPU_copy_to_reg0(&CONST_QNaN, TAG_Special);
-	}
+	पूर्ण
 
 	EXCEPTION(EX_StackOver);
 
-	return;
+	वापस;
 
-}
+पूर्ण
 
-void FPU_stack_underflow(void)
-{
+व्योम FPU_stack_underflow(व्योम)
+अणु
 
-	if (control_word & CW_Invalid) {
+	अगर (control_word & CW_Invalid) अणु
 		/* The masked response */
 		FPU_copy_to_reg0(&CONST_QNaN, TAG_Special);
-	}
+	पूर्ण
 
 	EXCEPTION(EX_StackUnder);
 
-	return;
+	वापस;
 
-}
+पूर्ण
 
-void FPU_stack_underflow_i(int i)
-{
+व्योम FPU_stack_underflow_i(पूर्णांक i)
+अणु
 
-	if (control_word & CW_Invalid) {
+	अगर (control_word & CW_Invalid) अणु
 		/* The masked response */
 		FPU_copy_to_regi(&CONST_QNaN, TAG_Special, i);
-	}
+	पूर्ण
 
 	EXCEPTION(EX_StackUnder);
 
-	return;
+	वापस;
 
-}
+पूर्ण
 
-void FPU_stack_underflow_pop(int i)
-{
+व्योम FPU_stack_underflow_pop(पूर्णांक i)
+अणु
 
-	if (control_word & CW_Invalid) {
+	अगर (control_word & CW_Invalid) अणु
 		/* The masked response */
 		FPU_copy_to_regi(&CONST_QNaN, TAG_Special, i);
 		FPU_pop();
-	}
+	पूर्ण
 
 	EXCEPTION(EX_StackUnder);
 
-	return;
+	वापस;
 
-}
+पूर्ण

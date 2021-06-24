@@ -1,103 +1,104 @@
+<शैली गुरु>
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright © 2001-2007 Red Hat, Inc.
- * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
- * Copyright © 2004 Ferenc Havasi <havasi@inf.u-szeged.hu>,
+ * Copyright तऊ 2001-2007 Red Hat, Inc.
+ * Copyright तऊ 2004-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 2004 Ferenc Havasi <havasi@inf.u-szeged.hu>,
  *		    University of Szeged, Hungary
  *
  * Created by Arjan van de Ven <arjan@infradead.org>
  *
- * For licensing information, see the file 'LICENCE' in this directory.
+ * For licensing inक्रमmation, see the file 'LICENCE' in this directory.
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include "compr.h"
+#समावेश "compr.h"
 
-static DEFINE_SPINLOCK(jffs2_compressor_list_lock);
+अटल DEFINE_SPINLOCK(jffs2_compressor_list_lock);
 
 /* Available compressors are on this list */
-static LIST_HEAD(jffs2_compressor_list);
+अटल LIST_HEAD(jffs2_compressor_list);
 
 /* Actual compression mode */
-static int jffs2_compression_mode = JFFS2_COMPR_MODE_PRIORITY;
+अटल पूर्णांक jffs2_compression_mode = JFFS2_COMPR_MODE_PRIORITY;
 
-/* Statistics for blocks stored without compression */
-static uint32_t none_stat_compr_blocks=0,none_stat_decompr_blocks=0,none_stat_compr_size=0;
+/* Statistics क्रम blocks stored without compression */
+अटल uपूर्णांक32_t none_stat_compr_blocks=0,none_stat_decompr_blocks=0,none_stat_compr_size=0;
 
 
 /*
  * Return 1 to use this compression
  */
-static int jffs2_is_best_compression(struct jffs2_compressor *this,
-		struct jffs2_compressor *best, uint32_t size, uint32_t bestsize)
-{
-	switch (jffs2_compression_mode) {
-	case JFFS2_COMPR_MODE_SIZE:
-		if (bestsize > size)
-			return 1;
-		return 0;
-	case JFFS2_COMPR_MODE_FAVOURLZO:
-		if ((this->compr == JFFS2_COMPR_LZO) && (bestsize > size))
-			return 1;
-		if ((best->compr != JFFS2_COMPR_LZO) && (bestsize > size))
-			return 1;
-		if ((this->compr == JFFS2_COMPR_LZO) && (bestsize > (size * FAVOUR_LZO_PERCENT / 100)))
-			return 1;
-		if ((bestsize * FAVOUR_LZO_PERCENT / 100) > size)
-			return 1;
+अटल पूर्णांक jffs2_is_best_compression(काष्ठा jffs2_compressor *this,
+		काष्ठा jffs2_compressor *best, uपूर्णांक32_t size, uपूर्णांक32_t bestsize)
+अणु
+	चयन (jffs2_compression_mode) अणु
+	हाल JFFS2_COMPR_MODE_SIZE:
+		अगर (bestsize > size)
+			वापस 1;
+		वापस 0;
+	हाल JFFS2_COMPR_MODE_FAVOURLZO:
+		अगर ((this->compr == JFFS2_COMPR_LZO) && (bestsize > size))
+			वापस 1;
+		अगर ((best->compr != JFFS2_COMPR_LZO) && (bestsize > size))
+			वापस 1;
+		अगर ((this->compr == JFFS2_COMPR_LZO) && (bestsize > (size * FAVOUR_LZO_PERCENT / 100)))
+			वापस 1;
+		अगर ((bestsize * FAVOUR_LZO_PERCENT / 100) > size)
+			वापस 1;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	/* Shouldn't happen */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * jffs2_selected_compress:
  * @compr: Explicit compression type to use (ie, JFFS2_COMPR_ZLIB).
  *	If 0, just take the first available compression mode.
- * @data_in: Pointer to uncompressed data
- * @cpage_out: Pointer to returned pointer to buffer for compressed data
- * @datalen: On entry, holds the amount of data available for compression.
- *	On exit, expected to hold the amount of data actually compressed.
- * @cdatalen: On entry, holds the amount of space available for compressed
- *	data. On exit, expected to hold the actual size of the compressed
+ * @data_in: Poपूर्णांकer to uncompressed data
+ * @cpage_out: Poपूर्णांकer to वापसed poपूर्णांकer to buffer क्रम compressed data
+ * @datalen: On entry, holds the amount of data available क्रम compression.
+ *	On निकास, expected to hold the amount of data actually compressed.
+ * @cdatalen: On entry, holds the amount of space available क्रम compressed
+ *	data. On निकास, expected to hold the actual size of the compressed
  *	data.
  *
  * Returns: the compression type used.  Zero is used to show that the data
  * could not be compressed; probably because we couldn't find the requested
  * compression mode.
  */
-static int jffs2_selected_compress(u8 compr, unsigned char *data_in,
-		unsigned char **cpage_out, u32 *datalen, u32 *cdatalen)
-{
-	struct jffs2_compressor *this;
-	int err, ret = JFFS2_COMPR_NONE;
-	uint32_t orig_slen, orig_dlen;
-	char *output_buf;
+अटल पूर्णांक jffs2_selected_compress(u8 compr, अचिन्हित अक्षर *data_in,
+		अचिन्हित अक्षर **cpage_out, u32 *datalen, u32 *cdatalen)
+अणु
+	काष्ठा jffs2_compressor *this;
+	पूर्णांक err, ret = JFFS2_COMPR_NONE;
+	uपूर्णांक32_t orig_slen, orig_dlen;
+	अक्षर *output_buf;
 
-	output_buf = kmalloc(*cdatalen, GFP_KERNEL);
-	if (!output_buf) {
+	output_buf = kदो_स्मृति(*cdatalen, GFP_KERNEL);
+	अगर (!output_buf) अणु
 		pr_warn("No memory for compressor allocation. Compression failed.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	orig_slen = *datalen;
 	orig_dlen = *cdatalen;
 	spin_lock(&jffs2_compressor_list_lock);
-	list_for_each_entry(this, &jffs2_compressor_list, list) {
+	list_क्रम_each_entry(this, &jffs2_compressor_list, list) अणु
 		/* Skip decompress-only and disabled modules */
-		if (!this->compress || this->disabled)
-			continue;
+		अगर (!this->compress || this->disabled)
+			जारी;
 
-		/* Skip if not the desired compression type */
-		if (compr && (compr != this->compr))
-			continue;
+		/* Skip अगर not the desired compression type */
+		अगर (compr && (compr != this->compr))
+			जारी;
 
 		/*
-		 * Either compression type was unspecified, or we found our
+		 * Either compression type was unspecअगरied, or we found our
 		 * compressor; either way, we're good to go.
 		 */
 		this->usecount++;
@@ -109,31 +110,31 @@ static int jffs2_selected_compress(u8 compr, unsigned char *data_in,
 
 		spin_lock(&jffs2_compressor_list_lock);
 		this->usecount--;
-		if (!err) {
+		अगर (!err) अणु
 			/* Success */
 			ret = this->compr;
 			this->stat_compr_blocks++;
 			this->stat_compr_orig_size += *datalen;
 			this->stat_compr_new_size += *cdatalen;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&jffs2_compressor_list_lock);
-	if (ret == JFFS2_COMPR_NONE)
-		kfree(output_buf);
-	else
+	अगर (ret == JFFS2_COMPR_NONE)
+		kमुक्त(output_buf);
+	अन्यथा
 		*cpage_out = output_buf;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* jffs2_compress:
- * @data_in: Pointer to uncompressed data
- * @cpage_out: Pointer to returned pointer to buffer for compressed data
- * @datalen: On entry, holds the amount of data available for compression.
- *	On exit, expected to hold the amount of data actually compressed.
- * @cdatalen: On entry, holds the amount of space available for compressed
- *	data. On exit, expected to hold the actual size of the compressed
+ * @data_in: Poपूर्णांकer to uncompressed data
+ * @cpage_out: Poपूर्णांकer to वापसed poपूर्णांकer to buffer क्रम compressed data
+ * @datalen: On entry, holds the amount of data available क्रम compression.
+ *	On निकास, expected to hold the amount of data actually compressed.
+ * @cdatalen: On entry, holds the amount of space available क्रम compressed
+ *	data. On निकास, expected to hold the actual size of the compressed
  *	data.
  *
  * Returns: Lower byte to be stored with data indicating compression type used.
@@ -145,60 +146,60 @@ static int jffs2_selected_compress(u8 compr, unsigned char *data_in,
  * jffs2_compress should compress as much as will fit, and should set
  * *datalen accordingly to show the amount of data which were compressed.
  */
-uint16_t jffs2_compress(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
-			unsigned char *data_in, unsigned char **cpage_out,
-			uint32_t *datalen, uint32_t *cdatalen)
-{
-	int ret = JFFS2_COMPR_NONE;
-	int mode, compr_ret;
-	struct jffs2_compressor *this, *best=NULL;
-	unsigned char *output_buf = NULL, *tmp_buf;
-	uint32_t orig_slen, orig_dlen;
-	uint32_t best_slen=0, best_dlen=0;
+uपूर्णांक16_t jffs2_compress(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_info *f,
+			अचिन्हित अक्षर *data_in, अचिन्हित अक्षर **cpage_out,
+			uपूर्णांक32_t *datalen, uपूर्णांक32_t *cdatalen)
+अणु
+	पूर्णांक ret = JFFS2_COMPR_NONE;
+	पूर्णांक mode, compr_ret;
+	काष्ठा jffs2_compressor *this, *best=शून्य;
+	अचिन्हित अक्षर *output_buf = शून्य, *पंचांगp_buf;
+	uपूर्णांक32_t orig_slen, orig_dlen;
+	uपूर्णांक32_t best_slen=0, best_dlen=0;
 
-	if (c->mount_opts.override_compr)
+	अगर (c->mount_opts.override_compr)
 		mode = c->mount_opts.compr;
-	else
+	अन्यथा
 		mode = jffs2_compression_mode;
 
-	switch (mode) {
-	case JFFS2_COMPR_MODE_NONE:
-		break;
-	case JFFS2_COMPR_MODE_PRIORITY:
+	चयन (mode) अणु
+	हाल JFFS2_COMPR_MODE_NONE:
+		अवरोध;
+	हाल JFFS2_COMPR_MODE_PRIORITY:
 		ret = jffs2_selected_compress(0, data_in, cpage_out, datalen,
 				cdatalen);
-		break;
-	case JFFS2_COMPR_MODE_SIZE:
-	case JFFS2_COMPR_MODE_FAVOURLZO:
+		अवरोध;
+	हाल JFFS2_COMPR_MODE_SIZE:
+	हाल JFFS2_COMPR_MODE_FAVOURLZO:
 		orig_slen = *datalen;
 		orig_dlen = *cdatalen;
 		spin_lock(&jffs2_compressor_list_lock);
-		list_for_each_entry(this, &jffs2_compressor_list, list) {
+		list_क्रम_each_entry(this, &jffs2_compressor_list, list) अणु
 			/* Skip decompress-only backwards-compatibility and disabled modules */
-			if ((!this->compress)||(this->disabled))
-				continue;
-			/* Allocating memory for output buffer if necessary */
-			if ((this->compr_buf_size < orig_slen) && (this->compr_buf)) {
+			अगर ((!this->compress)||(this->disabled))
+				जारी;
+			/* Allocating memory क्रम output buffer अगर necessary */
+			अगर ((this->compr_buf_size < orig_slen) && (this->compr_buf)) अणु
 				spin_unlock(&jffs2_compressor_list_lock);
-				kfree(this->compr_buf);
+				kमुक्त(this->compr_buf);
 				spin_lock(&jffs2_compressor_list_lock);
 				this->compr_buf_size=0;
-				this->compr_buf=NULL;
-			}
-			if (!this->compr_buf) {
+				this->compr_buf=शून्य;
+			पूर्ण
+			अगर (!this->compr_buf) अणु
 				spin_unlock(&jffs2_compressor_list_lock);
-				tmp_buf = kmalloc(orig_slen, GFP_KERNEL);
+				पंचांगp_buf = kदो_स्मृति(orig_slen, GFP_KERNEL);
 				spin_lock(&jffs2_compressor_list_lock);
-				if (!tmp_buf) {
+				अगर (!पंचांगp_buf) अणु
 					pr_warn("No memory for compressor allocation. (%d bytes)\n",
 						orig_slen);
-					continue;
-				}
-				else {
-					this->compr_buf = tmp_buf;
+					जारी;
+				पूर्ण
+				अन्यथा अणु
+					this->compr_buf = पंचांगp_buf;
 					this->compr_buf_size = orig_slen;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			this->usecount++;
 			spin_unlock(&jffs2_compressor_list_lock);
 			*datalen  = orig_slen;
@@ -206,108 +207,108 @@ uint16_t jffs2_compress(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
 			compr_ret = this->compress(data_in, this->compr_buf, datalen, cdatalen);
 			spin_lock(&jffs2_compressor_list_lock);
 			this->usecount--;
-			if (!compr_ret) {
-				if (((!best_dlen) || jffs2_is_best_compression(this, best, *cdatalen, best_dlen))
-						&& (*cdatalen < *datalen)) {
+			अगर (!compr_ret) अणु
+				अगर (((!best_dlen) || jffs2_is_best_compression(this, best, *cdatalen, best_dlen))
+						&& (*cdatalen < *datalen)) अणु
 					best_dlen = *cdatalen;
 					best_slen = *datalen;
 					best = this;
-				}
-			}
-		}
-		if (best_dlen) {
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		अगर (best_dlen) अणु
 			*cdatalen = best_dlen;
 			*datalen  = best_slen;
 			output_buf = best->compr_buf;
-			best->compr_buf = NULL;
+			best->compr_buf = शून्य;
 			best->compr_buf_size = 0;
 			best->stat_compr_blocks++;
 			best->stat_compr_orig_size += best_slen;
 			best->stat_compr_new_size  += best_dlen;
 			ret = best->compr;
 			*cpage_out = output_buf;
-		}
+		पूर्ण
 		spin_unlock(&jffs2_compressor_list_lock);
-		break;
-	case JFFS2_COMPR_MODE_FORCELZO:
+		अवरोध;
+	हाल JFFS2_COMPR_MODE_FORCELZO:
 		ret = jffs2_selected_compress(JFFS2_COMPR_LZO, data_in,
 				cpage_out, datalen, cdatalen);
-		break;
-	case JFFS2_COMPR_MODE_FORCEZLIB:
+		अवरोध;
+	हाल JFFS2_COMPR_MODE_FORCEZLIB:
 		ret = jffs2_selected_compress(JFFS2_COMPR_ZLIB, data_in,
 				cpage_out, datalen, cdatalen);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("unknown compression mode\n");
-	}
+	पूर्ण
 
-	if (ret == JFFS2_COMPR_NONE) {
+	अगर (ret == JFFS2_COMPR_NONE) अणु
 		*cpage_out = data_in;
 		*datalen = *cdatalen;
 		none_stat_compr_blocks++;
 		none_stat_compr_size += *datalen;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int jffs2_decompress(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
-		     uint16_t comprtype, unsigned char *cdata_in,
-		     unsigned char *data_out, uint32_t cdatalen, uint32_t datalen)
-{
-	struct jffs2_compressor *this;
-	int ret;
+पूर्णांक jffs2_decompress(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_info *f,
+		     uपूर्णांक16_t comprtype, अचिन्हित अक्षर *cdata_in,
+		     अचिन्हित अक्षर *data_out, uपूर्णांक32_t cdatalen, uपूर्णांक32_t datalen)
+अणु
+	काष्ठा jffs2_compressor *this;
+	पूर्णांक ret;
 
-	/* Older code had a bug where it would write non-zero 'usercompr'
+	/* Older code had a bug where it would ग_लिखो non-zero 'usercompr'
 	   fields. Deal with it. */
-	if ((comprtype & 0xff) <= JFFS2_COMPR_ZLIB)
+	अगर ((comprtype & 0xff) <= JFFS2_COMPR_ZLIB)
 		comprtype &= 0xff;
 
-	switch (comprtype & 0xff) {
-	case JFFS2_COMPR_NONE:
-		/* This should be special-cased elsewhere, but we might as well deal with it */
-		memcpy(data_out, cdata_in, datalen);
+	चयन (comprtype & 0xff) अणु
+	हाल JFFS2_COMPR_NONE:
+		/* This should be special-हालd अन्यथाwhere, but we might as well deal with it */
+		स_नकल(data_out, cdata_in, datalen);
 		none_stat_decompr_blocks++;
-		break;
-	case JFFS2_COMPR_ZERO:
-		memset(data_out, 0, datalen);
-		break;
-	default:
+		अवरोध;
+	हाल JFFS2_COMPR_ZERO:
+		स_रखो(data_out, 0, datalen);
+		अवरोध;
+	शेष:
 		spin_lock(&jffs2_compressor_list_lock);
-		list_for_each_entry(this, &jffs2_compressor_list, list) {
-			if (comprtype == this->compr) {
+		list_क्रम_each_entry(this, &jffs2_compressor_list, list) अणु
+			अगर (comprtype == this->compr) अणु
 				this->usecount++;
 				spin_unlock(&jffs2_compressor_list_lock);
 				ret = this->decompress(cdata_in, data_out, cdatalen, datalen);
 				spin_lock(&jffs2_compressor_list_lock);
-				if (ret) {
+				अगर (ret) अणु
 					pr_warn("Decompressor \"%s\" returned %d\n",
 						this->name, ret);
-				}
-				else {
+				पूर्ण
+				अन्यथा अणु
 					this->stat_decompr_blocks++;
-				}
+				पूर्ण
 				this->usecount--;
 				spin_unlock(&jffs2_compressor_list_lock);
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 		pr_warn("compression type 0x%02x not available\n", comprtype);
 		spin_unlock(&jffs2_compressor_list_lock);
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int jffs2_register_compressor(struct jffs2_compressor *comp)
-{
-	struct jffs2_compressor *this;
+पूर्णांक jffs2_रेजिस्टर_compressor(काष्ठा jffs2_compressor *comp)
+अणु
+	काष्ठा jffs2_compressor *this;
 
-	if (!comp->name) {
+	अगर (!comp->name) अणु
 		pr_warn("NULL compressor name at registering JFFS2 compressor. Failed.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	comp->compr_buf_size=0;
-	comp->compr_buf=NULL;
+	comp->compr_buf=शून्य;
 	comp->usecount=0;
 	comp->stat_compr_orig_size=0;
 	comp->stat_compr_new_size=0;
@@ -317,102 +318,102 @@ int jffs2_register_compressor(struct jffs2_compressor *comp)
 
 	spin_lock(&jffs2_compressor_list_lock);
 
-	list_for_each_entry(this, &jffs2_compressor_list, list) {
-		if (this->priority < comp->priority) {
+	list_क्रम_each_entry(this, &jffs2_compressor_list, list) अणु
+		अगर (this->priority < comp->priority) अणु
 			list_add(&comp->list, this->list.prev);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	list_add_tail(&comp->list, &jffs2_compressor_list);
 out:
-	D2(list_for_each_entry(this, &jffs2_compressor_list, list) {
-		printk(KERN_DEBUG "Compressor \"%s\", prio %d\n", this->name, this->priority);
-	})
+	D2(list_क्रम_each_entry(this, &jffs2_compressor_list, list) अणु
+		prपूर्णांकk(KERN_DEBUG "Compressor \"%s\", prio %d\n", this->name, this->priority);
+	पूर्ण)
 
 	spin_unlock(&jffs2_compressor_list_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int jffs2_unregister_compressor(struct jffs2_compressor *comp)
-{
-	D2(struct jffs2_compressor *this);
+पूर्णांक jffs2_unरेजिस्टर_compressor(काष्ठा jffs2_compressor *comp)
+अणु
+	D2(काष्ठा jffs2_compressor *this);
 
 	jffs2_dbg(1, "Unregistering JFFS2 compressor \"%s\"\n", comp->name);
 
 	spin_lock(&jffs2_compressor_list_lock);
 
-	if (comp->usecount) {
+	अगर (comp->usecount) अणु
 		spin_unlock(&jffs2_compressor_list_lock);
 		pr_warn("Compressor module is in use. Unregister failed.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	list_del(&comp->list);
 
-	D2(list_for_each_entry(this, &jffs2_compressor_list, list) {
-		printk(KERN_DEBUG "Compressor \"%s\", prio %d\n", this->name, this->priority);
-	})
+	D2(list_क्रम_each_entry(this, &jffs2_compressor_list, list) अणु
+		prपूर्णांकk(KERN_DEBUG "Compressor \"%s\", prio %d\n", this->name, this->priority);
+	पूर्ण)
 	spin_unlock(&jffs2_compressor_list_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void jffs2_free_comprbuf(unsigned char *comprbuf, unsigned char *orig)
-{
-	if (orig != comprbuf)
-		kfree(comprbuf);
-}
+व्योम jffs2_मुक्त_comprbuf(अचिन्हित अक्षर *comprbuf, अचिन्हित अक्षर *orig)
+अणु
+	अगर (orig != comprbuf)
+		kमुक्त(comprbuf);
+पूर्ण
 
-int __init jffs2_compressors_init(void)
-{
+पूर्णांक __init jffs2_compressors_init(व्योम)
+अणु
 /* Registering compressors */
-#ifdef CONFIG_JFFS2_ZLIB
+#अगर_घोषित CONFIG_JFFS2_ZLIB
 	jffs2_zlib_init();
-#endif
-#ifdef CONFIG_JFFS2_RTIME
-	jffs2_rtime_init();
-#endif
-#ifdef CONFIG_JFFS2_RUBIN
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_JFFS2_RTIME
+	jffs2_rसमय_init();
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_JFFS2_RUBIN
 	jffs2_rubinmips_init();
 	jffs2_dynrubin_init();
-#endif
-#ifdef CONFIG_JFFS2_LZO
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_JFFS2_LZO
 	jffs2_lzo_init();
-#endif
-/* Setting default compression mode */
-#ifdef CONFIG_JFFS2_CMODE_NONE
+#पूर्ण_अगर
+/* Setting शेष compression mode */
+#अगर_घोषित CONFIG_JFFS2_CMODE_NONE
 	jffs2_compression_mode = JFFS2_COMPR_MODE_NONE;
 	jffs2_dbg(1, "default compression mode: none\n");
-#else
-#ifdef CONFIG_JFFS2_CMODE_SIZE
+#अन्यथा
+#अगर_घोषित CONFIG_JFFS2_CMODE_SIZE
 	jffs2_compression_mode = JFFS2_COMPR_MODE_SIZE;
 	jffs2_dbg(1, "default compression mode: size\n");
-#else
-#ifdef CONFIG_JFFS2_CMODE_FAVOURLZO
+#अन्यथा
+#अगर_घोषित CONFIG_JFFS2_CMODE_FAVOURLZO
 	jffs2_compression_mode = JFFS2_COMPR_MODE_FAVOURLZO;
 	jffs2_dbg(1, "default compression mode: favourlzo\n");
-#else
+#अन्यथा
 	jffs2_dbg(1, "default compression mode: priority\n");
-#endif
-#endif
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+#पूर्ण_अगर
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-int jffs2_compressors_exit(void)
-{
-/* Unregistering compressors */
-#ifdef CONFIG_JFFS2_LZO
-	jffs2_lzo_exit();
-#endif
-#ifdef CONFIG_JFFS2_RUBIN
-	jffs2_dynrubin_exit();
-	jffs2_rubinmips_exit();
-#endif
-#ifdef CONFIG_JFFS2_RTIME
-	jffs2_rtime_exit();
-#endif
-#ifdef CONFIG_JFFS2_ZLIB
-	jffs2_zlib_exit();
-#endif
-	return 0;
-}
+पूर्णांक jffs2_compressors_निकास(व्योम)
+अणु
+/* Unरेजिस्टरing compressors */
+#अगर_घोषित CONFIG_JFFS2_LZO
+	jffs2_lzo_निकास();
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_JFFS2_RUBIN
+	jffs2_dynrubin_निकास();
+	jffs2_rubinmips_निकास();
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_JFFS2_RTIME
+	jffs2_rसमय_निकास();
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_JFFS2_ZLIB
+	jffs2_zlib_निकास();
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण

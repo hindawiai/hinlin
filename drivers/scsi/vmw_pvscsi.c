@@ -1,129 +1,130 @@
+<शैली गुरु>
 /*
- * Linux driver for VMware's para-virtualized SCSI HBA.
+ * Linux driver क्रम VMware's para-भवized SCSI HBA.
  *
  * Copyright (C) 2008-2014, VMware, Inc. All Rights Reserved.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; version 2 of the License and no later version.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
- * NON INFRINGEMENT.  See the GNU General Public License for more
+ * NON INFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA.
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <linux/pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/pci.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_tcq.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_tcq.h>
 
-#include "vmw_pvscsi.h"
+#समावेश "vmw_pvscsi.h"
 
-#define PVSCSI_LINUX_DRIVER_DESC "VMware PVSCSI driver"
+#घोषणा PVSCSI_LINUX_DRIVER_DESC "VMware PVSCSI driver"
 
 MODULE_DESCRIPTION(PVSCSI_LINUX_DRIVER_DESC);
 MODULE_AUTHOR("VMware, Inc.");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(PVSCSI_DRIVER_VERSION_STRING);
 
-#define PVSCSI_DEFAULT_NUM_PAGES_PER_RING	8
-#define PVSCSI_DEFAULT_NUM_PAGES_MSG_RING	1
-#define PVSCSI_DEFAULT_QUEUE_DEPTH		254
-#define SGL_SIZE				PAGE_SIZE
+#घोषणा PVSCSI_DEFAULT_NUM_PAGES_PER_RING	8
+#घोषणा PVSCSI_DEFAULT_NUM_PAGES_MSG_RING	1
+#घोषणा PVSCSI_DEFAULT_QUEUE_DEPTH		254
+#घोषणा SGL_SIZE				PAGE_SIZE
 
-struct pvscsi_sg_list {
-	struct PVSCSISGElement sge[PVSCSI_MAX_NUM_SG_ENTRIES_PER_SEGMENT];
-};
+काष्ठा pvscsi_sg_list अणु
+	काष्ठा PVSCSISGElement sge[PVSCSI_MAX_NUM_SG_ENTRIES_PER_SEGMENT];
+पूर्ण;
 
-struct pvscsi_ctx {
+काष्ठा pvscsi_ctx अणु
 	/*
-	 * The index of the context in cmd_map serves as the context ID for a
+	 * The index of the context in cmd_map serves as the context ID क्रम a
 	 * 1-to-1 mapping completions back to requests.
 	 */
-	struct scsi_cmnd	*cmd;
-	struct pvscsi_sg_list	*sgl;
-	struct list_head	list;
+	काष्ठा scsi_cmnd	*cmd;
+	काष्ठा pvscsi_sg_list	*sgl;
+	काष्ठा list_head	list;
 	dma_addr_t		dataPA;
 	dma_addr_t		sensePA;
 	dma_addr_t		sglPA;
-	struct completion	*abort_cmp;
-};
+	काष्ठा completion	*पात_cmp;
+पूर्ण;
 
-struct pvscsi_adapter {
-	char				*mmioBase;
+काष्ठा pvscsi_adapter अणु
+	अक्षर				*mmioBase;
 	u8				rev;
 	bool				use_msg;
 	bool				use_req_threshold;
 
 	spinlock_t			hw_lock;
 
-	struct workqueue_struct		*workqueue;
-	struct work_struct		work;
+	काष्ठा workqueue_काष्ठा		*workqueue;
+	काष्ठा work_काष्ठा		work;
 
-	struct PVSCSIRingReqDesc	*req_ring;
-	unsigned			req_pages;
-	unsigned			req_depth;
+	काष्ठा PVSCSIRingReqDesc	*req_ring;
+	अचिन्हित			req_pages;
+	अचिन्हित			req_depth;
 	dma_addr_t			reqRingPA;
 
-	struct PVSCSIRingCmpDesc	*cmp_ring;
-	unsigned			cmp_pages;
+	काष्ठा PVSCSIRingCmpDesc	*cmp_ring;
+	अचिन्हित			cmp_pages;
 	dma_addr_t			cmpRingPA;
 
-	struct PVSCSIRingMsgDesc	*msg_ring;
-	unsigned			msg_pages;
+	काष्ठा PVSCSIRingMsgDesc	*msg_ring;
+	अचिन्हित			msg_pages;
 	dma_addr_t			msgRingPA;
 
-	struct PVSCSIRingsState		*rings_state;
+	काष्ठा PVSCSIRingsState		*rings_state;
 	dma_addr_t			ringStatePA;
 
-	struct pci_dev			*dev;
-	struct Scsi_Host		*host;
+	काष्ठा pci_dev			*dev;
+	काष्ठा Scsi_Host		*host;
 
-	struct list_head		cmd_pool;
-	struct pvscsi_ctx		*cmd_map;
-};
+	काष्ठा list_head		cmd_pool;
+	काष्ठा pvscsi_ctx		*cmd_map;
+पूर्ण;
 
 
 /* Command line parameters */
-static int pvscsi_ring_pages;
-static int pvscsi_msg_ring_pages = PVSCSI_DEFAULT_NUM_PAGES_MSG_RING;
-static int pvscsi_cmd_per_lun    = PVSCSI_DEFAULT_QUEUE_DEPTH;
-static bool pvscsi_disable_msi;
-static bool pvscsi_disable_msix;
-static bool pvscsi_use_msg       = true;
-static bool pvscsi_use_req_threshold = true;
+अटल पूर्णांक pvscsi_ring_pages;
+अटल पूर्णांक pvscsi_msg_ring_pages = PVSCSI_DEFAULT_NUM_PAGES_MSG_RING;
+अटल पूर्णांक pvscsi_cmd_per_lun    = PVSCSI_DEFAULT_QUEUE_DEPTH;
+अटल bool pvscsi_disable_msi;
+अटल bool pvscsi_disable_msix;
+अटल bool pvscsi_use_msg       = true;
+अटल bool pvscsi_use_req_threshold = true;
 
-#define PVSCSI_RW (S_IRUSR | S_IWUSR)
+#घोषणा PVSCSI_RW (S_IRUSR | S_IWUSR)
 
-module_param_named(ring_pages, pvscsi_ring_pages, int, PVSCSI_RW);
+module_param_named(ring_pages, pvscsi_ring_pages, पूर्णांक, PVSCSI_RW);
 MODULE_PARM_DESC(ring_pages, "Number of pages per req/cmp ring - (default="
-		 __stringify(PVSCSI_DEFAULT_NUM_PAGES_PER_RING)
+		 __stringअगरy(PVSCSI_DEFAULT_NUM_PAGES_PER_RING)
 		 "[up to 16 targets],"
-		 __stringify(PVSCSI_SETUP_RINGS_MAX_NUM_PAGES)
+		 __stringअगरy(PVSCSI_SETUP_RINGS_MAX_NUM_PAGES)
 		 "[for 16+ targets])");
 
-module_param_named(msg_ring_pages, pvscsi_msg_ring_pages, int, PVSCSI_RW);
+module_param_named(msg_ring_pages, pvscsi_msg_ring_pages, पूर्णांक, PVSCSI_RW);
 MODULE_PARM_DESC(msg_ring_pages, "Number of pages for the msg ring - (default="
-		 __stringify(PVSCSI_DEFAULT_NUM_PAGES_MSG_RING) ")");
+		 __stringअगरy(PVSCSI_DEFAULT_NUM_PAGES_MSG_RING) ")");
 
-module_param_named(cmd_per_lun, pvscsi_cmd_per_lun, int, PVSCSI_RW);
+module_param_named(cmd_per_lun, pvscsi_cmd_per_lun, पूर्णांक, PVSCSI_RW);
 MODULE_PARM_DESC(cmd_per_lun, "Maximum commands per lun - (default="
-		 __stringify(PVSCSI_DEFAULT_QUEUE_DEPTH) ")");
+		 __stringअगरy(PVSCSI_DEFAULT_QUEUE_DEPTH) ")");
 
 module_param_named(disable_msi, pvscsi_disable_msi, bool, PVSCSI_RW);
 MODULE_PARM_DESC(disable_msi, "Disable MSI use in driver - (default=0)");
@@ -138,313 +139,313 @@ module_param_named(use_req_threshold, pvscsi_use_req_threshold,
 		   bool, PVSCSI_RW);
 MODULE_PARM_DESC(use_req_threshold, "Use driver-based request coalescing if configured - (default=1)");
 
-static const struct pci_device_id pvscsi_pci_tbl[] = {
-	{ PCI_VDEVICE(VMWARE, PCI_DEVICE_ID_VMWARE_PVSCSI) },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id pvscsi_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(VMWARE, PCI_DEVICE_ID_VMWARE_PVSCSI) पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, pvscsi_pci_tbl);
 
-static struct device *
-pvscsi_dev(const struct pvscsi_adapter *adapter)
-{
-	return &(adapter->dev->dev);
-}
+अटल काष्ठा device *
+pvscsi_dev(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
+	वापस &(adapter->dev->dev);
+पूर्ण
 
-static struct pvscsi_ctx *
-pvscsi_find_context(const struct pvscsi_adapter *adapter, struct scsi_cmnd *cmd)
-{
-	struct pvscsi_ctx *ctx, *end;
+अटल काष्ठा pvscsi_ctx *
+pvscsi_find_context(स्थिर काष्ठा pvscsi_adapter *adapter, काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा pvscsi_ctx *ctx, *end;
 
 	end = &adapter->cmd_map[adapter->req_depth];
-	for (ctx = adapter->cmd_map; ctx < end; ctx++)
-		if (ctx->cmd == cmd)
-			return ctx;
+	क्रम (ctx = adapter->cmd_map; ctx < end; ctx++)
+		अगर (ctx->cmd == cmd)
+			वापस ctx;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct pvscsi_ctx *
-pvscsi_acquire_context(struct pvscsi_adapter *adapter, struct scsi_cmnd *cmd)
-{
-	struct pvscsi_ctx *ctx;
+अटल काष्ठा pvscsi_ctx *
+pvscsi_acquire_context(काष्ठा pvscsi_adapter *adapter, काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा pvscsi_ctx *ctx;
 
-	if (list_empty(&adapter->cmd_pool))
-		return NULL;
+	अगर (list_empty(&adapter->cmd_pool))
+		वापस शून्य;
 
-	ctx = list_first_entry(&adapter->cmd_pool, struct pvscsi_ctx, list);
+	ctx = list_first_entry(&adapter->cmd_pool, काष्ठा pvscsi_ctx, list);
 	ctx->cmd = cmd;
 	list_del(&ctx->list);
 
-	return ctx;
-}
+	वापस ctx;
+पूर्ण
 
-static void pvscsi_release_context(struct pvscsi_adapter *adapter,
-				   struct pvscsi_ctx *ctx)
-{
-	ctx->cmd = NULL;
-	ctx->abort_cmp = NULL;
+अटल व्योम pvscsi_release_context(काष्ठा pvscsi_adapter *adapter,
+				   काष्ठा pvscsi_ctx *ctx)
+अणु
+	ctx->cmd = शून्य;
+	ctx->पात_cmp = शून्य;
 	list_add(&ctx->list, &adapter->cmd_pool);
-}
+पूर्ण
 
 /*
- * Map a pvscsi_ctx struct to a context ID field value; we map to a simple
- * non-zero integer. ctx always points to an entry in cmd_map array, hence
- * the return value is always >=1.
+ * Map a pvscsi_ctx काष्ठा to a context ID field value; we map to a simple
+ * non-zero पूर्णांकeger. ctx always poपूर्णांकs to an entry in cmd_map array, hence
+ * the वापस value is always >=1.
  */
-static u64 pvscsi_map_context(const struct pvscsi_adapter *adapter,
-			      const struct pvscsi_ctx *ctx)
-{
-	return ctx - adapter->cmd_map + 1;
-}
+अटल u64 pvscsi_map_context(स्थिर काष्ठा pvscsi_adapter *adapter,
+			      स्थिर काष्ठा pvscsi_ctx *ctx)
+अणु
+	वापस ctx - adapter->cmd_map + 1;
+पूर्ण
 
-static struct pvscsi_ctx *
-pvscsi_get_context(const struct pvscsi_adapter *adapter, u64 context)
-{
-	return &adapter->cmd_map[context - 1];
-}
+अटल काष्ठा pvscsi_ctx *
+pvscsi_get_context(स्थिर काष्ठा pvscsi_adapter *adapter, u64 context)
+अणु
+	वापस &adapter->cmd_map[context - 1];
+पूर्ण
 
-static void pvscsi_reg_write(const struct pvscsi_adapter *adapter,
+अटल व्योम pvscsi_reg_ग_लिखो(स्थिर काष्ठा pvscsi_adapter *adapter,
 			     u32 offset, u32 val)
-{
-	writel(val, adapter->mmioBase + offset);
-}
+अणु
+	ग_लिखोl(val, adapter->mmioBase + offset);
+पूर्ण
 
-static u32 pvscsi_reg_read(const struct pvscsi_adapter *adapter, u32 offset)
-{
-	return readl(adapter->mmioBase + offset);
-}
+अटल u32 pvscsi_reg_पढ़ो(स्थिर काष्ठा pvscsi_adapter *adapter, u32 offset)
+अणु
+	वापस पढ़ोl(adapter->mmioBase + offset);
+पूर्ण
 
-static u32 pvscsi_read_intr_status(const struct pvscsi_adapter *adapter)
-{
-	return pvscsi_reg_read(adapter, PVSCSI_REG_OFFSET_INTR_STATUS);
-}
+अटल u32 pvscsi_पढ़ो_पूर्णांकr_status(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
+	वापस pvscsi_reg_पढ़ो(adapter, PVSCSI_REG_OFFSET_INTR_STATUS);
+पूर्ण
 
-static void pvscsi_write_intr_status(const struct pvscsi_adapter *adapter,
+अटल व्योम pvscsi_ग_लिखो_पूर्णांकr_status(स्थिर काष्ठा pvscsi_adapter *adapter,
 				     u32 val)
-{
-	pvscsi_reg_write(adapter, PVSCSI_REG_OFFSET_INTR_STATUS, val);
-}
+अणु
+	pvscsi_reg_ग_लिखो(adapter, PVSCSI_REG_OFFSET_INTR_STATUS, val);
+पूर्ण
 
-static void pvscsi_unmask_intr(const struct pvscsi_adapter *adapter)
-{
-	u32 intr_bits;
+अटल व्योम pvscsi_unmask_पूर्णांकr(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
+	u32 पूर्णांकr_bits;
 
-	intr_bits = PVSCSI_INTR_CMPL_MASK;
-	if (adapter->use_msg)
-		intr_bits |= PVSCSI_INTR_MSG_MASK;
+	पूर्णांकr_bits = PVSCSI_INTR_CMPL_MASK;
+	अगर (adapter->use_msg)
+		पूर्णांकr_bits |= PVSCSI_INTR_MSG_MASK;
 
-	pvscsi_reg_write(adapter, PVSCSI_REG_OFFSET_INTR_MASK, intr_bits);
-}
+	pvscsi_reg_ग_लिखो(adapter, PVSCSI_REG_OFFSET_INTR_MASK, पूर्णांकr_bits);
+पूर्ण
 
-static void pvscsi_mask_intr(const struct pvscsi_adapter *adapter)
-{
-	pvscsi_reg_write(adapter, PVSCSI_REG_OFFSET_INTR_MASK, 0);
-}
+अटल व्योम pvscsi_mask_पूर्णांकr(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
+	pvscsi_reg_ग_लिखो(adapter, PVSCSI_REG_OFFSET_INTR_MASK, 0);
+पूर्ण
 
-static void pvscsi_write_cmd_desc(const struct pvscsi_adapter *adapter,
-				  u32 cmd, const void *desc, size_t len)
-{
-	const u32 *ptr = desc;
-	size_t i;
+अटल व्योम pvscsi_ग_लिखो_cmd_desc(स्थिर काष्ठा pvscsi_adapter *adapter,
+				  u32 cmd, स्थिर व्योम *desc, माप_प्रकार len)
+अणु
+	स्थिर u32 *ptr = desc;
+	माप_प्रकार i;
 
-	len /= sizeof(*ptr);
-	pvscsi_reg_write(adapter, PVSCSI_REG_OFFSET_COMMAND, cmd);
-	for (i = 0; i < len; i++)
-		pvscsi_reg_write(adapter,
+	len /= माप(*ptr);
+	pvscsi_reg_ग_लिखो(adapter, PVSCSI_REG_OFFSET_COMMAND, cmd);
+	क्रम (i = 0; i < len; i++)
+		pvscsi_reg_ग_लिखो(adapter,
 				 PVSCSI_REG_OFFSET_COMMAND_DATA, ptr[i]);
-}
+पूर्ण
 
-static void pvscsi_abort_cmd(const struct pvscsi_adapter *adapter,
-			     const struct pvscsi_ctx *ctx)
-{
-	struct PVSCSICmdDescAbortCmd cmd = { 0 };
+अटल व्योम pvscsi_पात_cmd(स्थिर काष्ठा pvscsi_adapter *adapter,
+			     स्थिर काष्ठा pvscsi_ctx *ctx)
+अणु
+	काष्ठा PVSCSICmdDescAbortCmd cmd = अणु 0 पूर्ण;
 
 	cmd.target = ctx->cmd->device->id;
 	cmd.context = pvscsi_map_context(adapter, ctx);
 
-	pvscsi_write_cmd_desc(adapter, PVSCSI_CMD_ABORT_CMD, &cmd, sizeof(cmd));
-}
+	pvscsi_ग_लिखो_cmd_desc(adapter, PVSCSI_CMD_ABORT_CMD, &cmd, माप(cmd));
+पूर्ण
 
-static void pvscsi_kick_rw_io(const struct pvscsi_adapter *adapter)
-{
-	pvscsi_reg_write(adapter, PVSCSI_REG_OFFSET_KICK_RW_IO, 0);
-}
+अटल व्योम pvscsi_kick_rw_io(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
+	pvscsi_reg_ग_लिखो(adapter, PVSCSI_REG_OFFSET_KICK_RW_IO, 0);
+पूर्ण
 
-static void pvscsi_process_request_ring(const struct pvscsi_adapter *adapter)
-{
-	pvscsi_reg_write(adapter, PVSCSI_REG_OFFSET_KICK_NON_RW_IO, 0);
-}
+अटल व्योम pvscsi_process_request_ring(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
+	pvscsi_reg_ग_लिखो(adapter, PVSCSI_REG_OFFSET_KICK_NON_RW_IO, 0);
+पूर्ण
 
-static int scsi_is_rw(unsigned char op)
-{
-	return op == READ_6  || op == WRITE_6 ||
+अटल पूर्णांक scsi_is_rw(अचिन्हित अक्षर op)
+अणु
+	वापस op == READ_6  || op == WRITE_6 ||
 	       op == READ_10 || op == WRITE_10 ||
 	       op == READ_12 || op == WRITE_12 ||
 	       op == READ_16 || op == WRITE_16;
-}
+पूर्ण
 
-static void pvscsi_kick_io(const struct pvscsi_adapter *adapter,
-			   unsigned char op)
-{
-	if (scsi_is_rw(op)) {
-		struct PVSCSIRingsState *s = adapter->rings_state;
+अटल व्योम pvscsi_kick_io(स्थिर काष्ठा pvscsi_adapter *adapter,
+			   अचिन्हित अक्षर op)
+अणु
+	अगर (scsi_is_rw(op)) अणु
+		काष्ठा PVSCSIRingsState *s = adapter->rings_state;
 
-		if (!adapter->use_req_threshold ||
+		अगर (!adapter->use_req_threshold ||
 		    s->reqProdIdx - s->reqConsIdx >= s->reqCallThreshold)
 			pvscsi_kick_rw_io(adapter);
-	} else {
+	पूर्ण अन्यथा अणु
 		pvscsi_process_request_ring(adapter);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ll_adapter_reset(const struct pvscsi_adapter *adapter)
-{
+अटल व्योम ll_adapter_reset(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
 	dev_dbg(pvscsi_dev(adapter), "Adapter Reset on %p\n", adapter);
 
-	pvscsi_write_cmd_desc(adapter, PVSCSI_CMD_ADAPTER_RESET, NULL, 0);
-}
+	pvscsi_ग_लिखो_cmd_desc(adapter, PVSCSI_CMD_ADAPTER_RESET, शून्य, 0);
+पूर्ण
 
-static void ll_bus_reset(const struct pvscsi_adapter *adapter)
-{
+अटल व्योम ll_bus_reset(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
 	dev_dbg(pvscsi_dev(adapter), "Resetting bus on %p\n", adapter);
 
-	pvscsi_write_cmd_desc(adapter, PVSCSI_CMD_RESET_BUS, NULL, 0);
-}
+	pvscsi_ग_लिखो_cmd_desc(adapter, PVSCSI_CMD_RESET_BUS, शून्य, 0);
+पूर्ण
 
-static void ll_device_reset(const struct pvscsi_adapter *adapter, u32 target)
-{
-	struct PVSCSICmdDescResetDevice cmd = { 0 };
+अटल व्योम ll_device_reset(स्थिर काष्ठा pvscsi_adapter *adapter, u32 target)
+अणु
+	काष्ठा PVSCSICmdDescResetDevice cmd = अणु 0 पूर्ण;
 
 	dev_dbg(pvscsi_dev(adapter), "Resetting device: target=%u\n", target);
 
 	cmd.target = target;
 
-	pvscsi_write_cmd_desc(adapter, PVSCSI_CMD_RESET_DEVICE,
-			      &cmd, sizeof(cmd));
-}
+	pvscsi_ग_लिखो_cmd_desc(adapter, PVSCSI_CMD_RESET_DEVICE,
+			      &cmd, माप(cmd));
+पूर्ण
 
-static void pvscsi_create_sg(struct pvscsi_ctx *ctx,
-			     struct scatterlist *sg, unsigned count)
-{
-	unsigned i;
-	struct PVSCSISGElement *sge;
+अटल व्योम pvscsi_create_sg(काष्ठा pvscsi_ctx *ctx,
+			     काष्ठा scatterlist *sg, अचिन्हित count)
+अणु
+	अचिन्हित i;
+	काष्ठा PVSCSISGElement *sge;
 
 	BUG_ON(count > PVSCSI_MAX_NUM_SG_ENTRIES_PER_SEGMENT);
 
 	sge = &ctx->sgl->sge[0];
-	for (i = 0; i < count; i++, sg = sg_next(sg)) {
+	क्रम (i = 0; i < count; i++, sg = sg_next(sg)) अणु
 		sge[i].addr   = sg_dma_address(sg);
 		sge[i].length = sg_dma_len(sg);
 		sge[i].flags  = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Map all data buffers for a command into PCI space and
- * setup the scatter/gather list if needed.
+ * Map all data buffers क्रम a command पूर्णांकo PCI space and
+ * setup the scatter/gather list अगर needed.
  */
-static int pvscsi_map_buffers(struct pvscsi_adapter *adapter,
-			      struct pvscsi_ctx *ctx, struct scsi_cmnd *cmd,
-			      struct PVSCSIRingReqDesc *e)
-{
-	unsigned count;
-	unsigned bufflen = scsi_bufflen(cmd);
-	struct scatterlist *sg;
+अटल पूर्णांक pvscsi_map_buffers(काष्ठा pvscsi_adapter *adapter,
+			      काष्ठा pvscsi_ctx *ctx, काष्ठा scsi_cmnd *cmd,
+			      काष्ठा PVSCSIRingReqDesc *e)
+अणु
+	अचिन्हित count;
+	अचिन्हित bufflen = scsi_bufflen(cmd);
+	काष्ठा scatterlist *sg;
 
 	e->dataLen = bufflen;
 	e->dataAddr = 0;
-	if (bufflen == 0)
-		return 0;
+	अगर (bufflen == 0)
+		वापस 0;
 
 	sg = scsi_sglist(cmd);
 	count = scsi_sg_count(cmd);
-	if (count != 0) {
-		int segs = scsi_dma_map(cmd);
+	अगर (count != 0) अणु
+		पूर्णांक segs = scsi_dma_map(cmd);
 
-		if (segs == -ENOMEM) {
-			scmd_printk(KERN_DEBUG, cmd,
+		अगर (segs == -ENOMEM) अणु
+			scmd_prपूर्णांकk(KERN_DEBUG, cmd,
 				    "vmw_pvscsi: Failed to map cmd sglist for DMA.\n");
-			return -ENOMEM;
-		} else if (segs > 1) {
+			वापस -ENOMEM;
+		पूर्ण अन्यथा अगर (segs > 1) अणु
 			pvscsi_create_sg(ctx, sg, segs);
 
 			e->flags |= PVSCSI_FLAG_CMD_WITH_SG_LIST;
 			ctx->sglPA = dma_map_single(&adapter->dev->dev,
 					ctx->sgl, SGL_SIZE, DMA_TO_DEVICE);
-			if (dma_mapping_error(&adapter->dev->dev, ctx->sglPA)) {
-				scmd_printk(KERN_ERR, cmd,
+			अगर (dma_mapping_error(&adapter->dev->dev, ctx->sglPA)) अणु
+				scmd_prपूर्णांकk(KERN_ERR, cmd,
 					    "vmw_pvscsi: Failed to map ctx sglist for DMA.\n");
 				scsi_dma_unmap(cmd);
 				ctx->sglPA = 0;
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 			e->dataAddr = ctx->sglPA;
-		} else
+		पूर्ण अन्यथा
 			e->dataAddr = sg_dma_address(sg);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * In case there is no S/G list, scsi_sglist points
+		 * In हाल there is no S/G list, scsi_sglist poपूर्णांकs
 		 * directly to the buffer.
 		 */
 		ctx->dataPA = dma_map_single(&adapter->dev->dev, sg, bufflen,
 					     cmd->sc_data_direction);
-		if (dma_mapping_error(&adapter->dev->dev, ctx->dataPA)) {
-			scmd_printk(KERN_DEBUG, cmd,
+		अगर (dma_mapping_error(&adapter->dev->dev, ctx->dataPA)) अणु
+			scmd_prपूर्णांकk(KERN_DEBUG, cmd,
 				    "vmw_pvscsi: Failed to map direct data buffer for DMA.\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		e->dataAddr = ctx->dataPA;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The device incorrectly doesn't clear the first byte of the sense
- * buffer in some cases. We have to do it ourselves.
- * Otherwise we run into trouble when SWIOTLB is forced.
+ * The device incorrectly करोesn't clear the first byte of the sense
+ * buffer in some हालs. We have to करो it ourselves.
+ * Otherwise we run पूर्णांकo trouble when SWIOTLB is क्रमced.
  */
-static void pvscsi_patch_sense(struct scsi_cmnd *cmd)
-{
-	if (cmd->sense_buffer)
+अटल व्योम pvscsi_patch_sense(काष्ठा scsi_cmnd *cmd)
+अणु
+	अगर (cmd->sense_buffer)
 		cmd->sense_buffer[0] = 0;
-}
+पूर्ण
 
-static void pvscsi_unmap_buffers(const struct pvscsi_adapter *adapter,
-				 struct pvscsi_ctx *ctx)
-{
-	struct scsi_cmnd *cmd;
-	unsigned bufflen;
+अटल व्योम pvscsi_unmap_buffers(स्थिर काष्ठा pvscsi_adapter *adapter,
+				 काष्ठा pvscsi_ctx *ctx)
+अणु
+	काष्ठा scsi_cmnd *cmd;
+	अचिन्हित bufflen;
 
 	cmd = ctx->cmd;
 	bufflen = scsi_bufflen(cmd);
 
-	if (bufflen != 0) {
-		unsigned count = scsi_sg_count(cmd);
+	अगर (bufflen != 0) अणु
+		अचिन्हित count = scsi_sg_count(cmd);
 
-		if (count != 0) {
+		अगर (count != 0) अणु
 			scsi_dma_unmap(cmd);
-			if (ctx->sglPA) {
+			अगर (ctx->sglPA) अणु
 				dma_unmap_single(&adapter->dev->dev, ctx->sglPA,
 						 SGL_SIZE, DMA_TO_DEVICE);
 				ctx->sglPA = 0;
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			dma_unmap_single(&adapter->dev->dev, ctx->dataPA,
 					 bufflen, cmd->sc_data_direction);
-	}
-	if (cmd->sense_buffer)
+	पूर्ण
+	अगर (cmd->sense_buffer)
 		dma_unmap_single(&adapter->dev->dev, ctx->sensePA,
 				 SCSI_SENSE_BUFFERSIZE, DMA_FROM_DEVICE);
-}
+पूर्ण
 
-static int pvscsi_allocate_rings(struct pvscsi_adapter *adapter)
-{
+अटल पूर्णांक pvscsi_allocate_rings(काष्ठा pvscsi_adapter *adapter)
+अणु
 	adapter->rings_state = dma_alloc_coherent(&adapter->dev->dev, PAGE_SIZE,
 			&adapter->ringStatePA, GFP_KERNEL);
-	if (!adapter->rings_state)
-		return -ENOMEM;
+	अगर (!adapter->rings_state)
+		वापस -ENOMEM;
 
 	adapter->req_pages = min(PVSCSI_MAX_NUM_PAGES_REQ_RING,
 				 pvscsi_ring_pages);
@@ -453,249 +454,249 @@ static int pvscsi_allocate_rings(struct pvscsi_adapter *adapter)
 	adapter->req_ring = dma_alloc_coherent(&adapter->dev->dev,
 			adapter->req_pages * PAGE_SIZE, &adapter->reqRingPA,
 			GFP_KERNEL);
-	if (!adapter->req_ring)
-		return -ENOMEM;
+	अगर (!adapter->req_ring)
+		वापस -ENOMEM;
 
 	adapter->cmp_pages = min(PVSCSI_MAX_NUM_PAGES_CMP_RING,
 				 pvscsi_ring_pages);
 	adapter->cmp_ring = dma_alloc_coherent(&adapter->dev->dev,
 			adapter->cmp_pages * PAGE_SIZE, &adapter->cmpRingPA,
 			GFP_KERNEL);
-	if (!adapter->cmp_ring)
-		return -ENOMEM;
+	अगर (!adapter->cmp_ring)
+		वापस -ENOMEM;
 
 	BUG_ON(!IS_ALIGNED(adapter->ringStatePA, PAGE_SIZE));
 	BUG_ON(!IS_ALIGNED(adapter->reqRingPA, PAGE_SIZE));
 	BUG_ON(!IS_ALIGNED(adapter->cmpRingPA, PAGE_SIZE));
 
-	if (!adapter->use_msg)
-		return 0;
+	अगर (!adapter->use_msg)
+		वापस 0;
 
 	adapter->msg_pages = min(PVSCSI_MAX_NUM_PAGES_MSG_RING,
 				 pvscsi_msg_ring_pages);
 	adapter->msg_ring = dma_alloc_coherent(&adapter->dev->dev,
 			adapter->msg_pages * PAGE_SIZE, &adapter->msgRingPA,
 			GFP_KERNEL);
-	if (!adapter->msg_ring)
-		return -ENOMEM;
+	अगर (!adapter->msg_ring)
+		वापस -ENOMEM;
 	BUG_ON(!IS_ALIGNED(adapter->msgRingPA, PAGE_SIZE));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pvscsi_setup_all_rings(const struct pvscsi_adapter *adapter)
-{
-	struct PVSCSICmdDescSetupRings cmd = { 0 };
+अटल व्योम pvscsi_setup_all_rings(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
+	काष्ठा PVSCSICmdDescSetupRings cmd = अणु 0 पूर्ण;
 	dma_addr_t base;
-	unsigned i;
+	अचिन्हित i;
 
 	cmd.ringsStatePPN   = adapter->ringStatePA >> PAGE_SHIFT;
 	cmd.reqRingNumPages = adapter->req_pages;
 	cmd.cmpRingNumPages = adapter->cmp_pages;
 
 	base = adapter->reqRingPA;
-	for (i = 0; i < adapter->req_pages; i++) {
+	क्रम (i = 0; i < adapter->req_pages; i++) अणु
 		cmd.reqRingPPNs[i] = base >> PAGE_SHIFT;
 		base += PAGE_SIZE;
-	}
+	पूर्ण
 
 	base = adapter->cmpRingPA;
-	for (i = 0; i < adapter->cmp_pages; i++) {
+	क्रम (i = 0; i < adapter->cmp_pages; i++) अणु
 		cmd.cmpRingPPNs[i] = base >> PAGE_SHIFT;
 		base += PAGE_SIZE;
-	}
+	पूर्ण
 
-	memset(adapter->rings_state, 0, PAGE_SIZE);
-	memset(adapter->req_ring, 0, adapter->req_pages * PAGE_SIZE);
-	memset(adapter->cmp_ring, 0, adapter->cmp_pages * PAGE_SIZE);
+	स_रखो(adapter->rings_state, 0, PAGE_SIZE);
+	स_रखो(adapter->req_ring, 0, adapter->req_pages * PAGE_SIZE);
+	स_रखो(adapter->cmp_ring, 0, adapter->cmp_pages * PAGE_SIZE);
 
-	pvscsi_write_cmd_desc(adapter, PVSCSI_CMD_SETUP_RINGS,
-			      &cmd, sizeof(cmd));
+	pvscsi_ग_लिखो_cmd_desc(adapter, PVSCSI_CMD_SETUP_RINGS,
+			      &cmd, माप(cmd));
 
-	if (adapter->use_msg) {
-		struct PVSCSICmdDescSetupMsgRing cmd_msg = { 0 };
+	अगर (adapter->use_msg) अणु
+		काष्ठा PVSCSICmdDescSetupMsgRing cmd_msg = अणु 0 पूर्ण;
 
 		cmd_msg.numPages = adapter->msg_pages;
 
 		base = adapter->msgRingPA;
-		for (i = 0; i < adapter->msg_pages; i++) {
+		क्रम (i = 0; i < adapter->msg_pages; i++) अणु
 			cmd_msg.ringPPNs[i] = base >> PAGE_SHIFT;
 			base += PAGE_SIZE;
-		}
-		memset(adapter->msg_ring, 0, adapter->msg_pages * PAGE_SIZE);
+		पूर्ण
+		स_रखो(adapter->msg_ring, 0, adapter->msg_pages * PAGE_SIZE);
 
-		pvscsi_write_cmd_desc(adapter, PVSCSI_CMD_SETUP_MSG_RING,
-				      &cmd_msg, sizeof(cmd_msg));
-	}
-}
+		pvscsi_ग_लिखो_cmd_desc(adapter, PVSCSI_CMD_SETUP_MSG_RING,
+				      &cmd_msg, माप(cmd_msg));
+	पूर्ण
+पूर्ण
 
-static int pvscsi_change_queue_depth(struct scsi_device *sdev, int qdepth)
-{
-	if (!sdev->tagged_supported)
+अटल पूर्णांक pvscsi_change_queue_depth(काष्ठा scsi_device *sdev, पूर्णांक qdepth)
+अणु
+	अगर (!sdev->tagged_supported)
 		qdepth = 1;
-	return scsi_change_queue_depth(sdev, qdepth);
-}
+	वापस scsi_change_queue_depth(sdev, qdepth);
+पूर्ण
 
 /*
  * Pull a completion descriptor off and pass the completion back
  * to the SCSI mid layer.
  */
-static void pvscsi_complete_request(struct pvscsi_adapter *adapter,
-				    const struct PVSCSIRingCmpDesc *e)
-{
-	struct pvscsi_ctx *ctx;
-	struct scsi_cmnd *cmd;
-	struct completion *abort_cmp;
+अटल व्योम pvscsi_complete_request(काष्ठा pvscsi_adapter *adapter,
+				    स्थिर काष्ठा PVSCSIRingCmpDesc *e)
+अणु
+	काष्ठा pvscsi_ctx *ctx;
+	काष्ठा scsi_cmnd *cmd;
+	काष्ठा completion *पात_cmp;
 	u32 btstat = e->hostStatus;
 	u32 sdstat = e->scsiStatus;
 
 	ctx = pvscsi_get_context(adapter, e->context);
 	cmd = ctx->cmd;
-	abort_cmp = ctx->abort_cmp;
+	पात_cmp = ctx->पात_cmp;
 	pvscsi_unmap_buffers(adapter, ctx);
-	if (sdstat != SAM_STAT_CHECK_CONDITION)
+	अगर (sdstat != SAM_STAT_CHECK_CONDITION)
 		pvscsi_patch_sense(cmd);
 	pvscsi_release_context(adapter, ctx);
-	if (abort_cmp) {
+	अगर (पात_cmp) अणु
 		/*
-		 * The command was requested to be aborted. Just signal that
+		 * The command was requested to be पातed. Just संकेत that
 		 * the request completed and swallow the actual cmd completion
-		 * here. The abort handler will post a completion for this
-		 * command indicating that it got successfully aborted.
+		 * here. The पात handler will post a completion क्रम this
+		 * command indicating that it got successfully पातed.
 		 */
-		complete(abort_cmp);
-		return;
-	}
+		complete(पात_cmp);
+		वापस;
+	पूर्ण
 
 	cmd->result = 0;
-	if (sdstat != SAM_STAT_GOOD &&
+	अगर (sdstat != SAM_STAT_GOOD &&
 	    (btstat == BTSTAT_SUCCESS ||
 	     btstat == BTSTAT_LINKED_COMMAND_COMPLETED ||
-	     btstat == BTSTAT_LINKED_COMMAND_COMPLETED_WITH_FLAG)) {
-		if (sdstat == SAM_STAT_COMMAND_TERMINATED) {
+	     btstat == BTSTAT_LINKED_COMMAND_COMPLETED_WITH_FLAG)) अणु
+		अगर (sdstat == SAM_STAT_COMMAND_TERMINATED) अणु
 			cmd->result = (DID_RESET << 16);
-		} else {
+		पूर्ण अन्यथा अणु
 			cmd->result = (DID_OK << 16) | sdstat;
-			if (sdstat == SAM_STAT_CHECK_CONDITION &&
+			अगर (sdstat == SAM_STAT_CHECK_CONDITION &&
 			    cmd->sense_buffer)
 				cmd->result |= (DRIVER_SENSE << 24);
-		}
-	} else
-		switch (btstat) {
-		case BTSTAT_SUCCESS:
-		case BTSTAT_LINKED_COMMAND_COMPLETED:
-		case BTSTAT_LINKED_COMMAND_COMPLETED_WITH_FLAG:
+		पूर्ण
+	पूर्ण अन्यथा
+		चयन (btstat) अणु
+		हाल BTSTAT_SUCCESS:
+		हाल BTSTAT_LINKED_COMMAND_COMPLETED:
+		हाल BTSTAT_LINKED_COMMAND_COMPLETED_WITH_FLAG:
 			/*
 			 * Commands like INQUIRY may transfer less data than
 			 * requested by the initiator via bufflen. Set residual
 			 * count to make upper layer aware of the actual amount
-			 * of data returned.
+			 * of data वापसed.
 			 */
 			scsi_set_resid(cmd, scsi_bufflen(cmd) - e->dataLen);
 			cmd->result = (DID_OK << 16);
-			break;
+			अवरोध;
 
-		case BTSTAT_DATARUN:
-		case BTSTAT_DATA_UNDERRUN:
+		हाल BTSTAT_DATARUN:
+		हाल BTSTAT_DATA_UNDERRUN:
 			/* Report residual data in underruns */
 			scsi_set_resid(cmd, scsi_bufflen(cmd) - e->dataLen);
 			cmd->result = (DID_ERROR << 16);
-			break;
+			अवरोध;
 
-		case BTSTAT_SELTIMEO:
-			/* Our emulation returns this for non-connected devs */
+		हाल BTSTAT_SELTIMEO:
+			/* Our emulation वापसs this क्रम non-connected devs */
 			cmd->result = (DID_BAD_TARGET << 16);
-			break;
+			अवरोध;
 
-		case BTSTAT_LUNMISMATCH:
-		case BTSTAT_TAGREJECT:
-		case BTSTAT_BADMSG:
+		हाल BTSTAT_LUNMISMATCH:
+		हाल BTSTAT_TAGREJECT:
+		हाल BTSTAT_BADMSG:
 			cmd->result = (DRIVER_INVALID << 24);
 			fallthrough;
 
-		case BTSTAT_HAHARDWARE:
-		case BTSTAT_INVPHASE:
-		case BTSTAT_HATIMEOUT:
-		case BTSTAT_NORESPONSE:
-		case BTSTAT_DISCONNECT:
-		case BTSTAT_HASOFTWARE:
-		case BTSTAT_BUSFREE:
-		case BTSTAT_SENSFAILED:
+		हाल BTSTAT_HAHARDWARE:
+		हाल BTSTAT_INVPHASE:
+		हाल BTSTAT_HATIMEOUT:
+		हाल BTSTAT_NORESPONSE:
+		हाल BTSTAT_DISCONNECT:
+		हाल BTSTAT_HASOFTWARE:
+		हाल BTSTAT_BUSFREE:
+		हाल BTSTAT_SENSFAILED:
 			cmd->result |= (DID_ERROR << 16);
-			break;
+			अवरोध;
 
-		case BTSTAT_SENTRST:
-		case BTSTAT_RECVRST:
-		case BTSTAT_BUSRESET:
+		हाल BTSTAT_SENTRST:
+		हाल BTSTAT_RECVRST:
+		हाल BTSTAT_BUSRESET:
 			cmd->result = (DID_RESET << 16);
-			break;
+			अवरोध;
 
-		case BTSTAT_ABORTQUEUE:
+		हाल BTSTAT_ABORTQUEUE:
 			cmd->result = (DID_BUS_BUSY << 16);
-			break;
+			अवरोध;
 
-		case BTSTAT_SCSIPARITY:
+		हाल BTSTAT_SCSIPARITY:
 			cmd->result = (DID_PARITY << 16);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			cmd->result = (DID_ERROR << 16);
-			scmd_printk(KERN_DEBUG, cmd,
+			scmd_prपूर्णांकk(KERN_DEBUG, cmd,
 				    "Unknown completion status: 0x%x\n",
 				    btstat);
-	}
+	पूर्ण
 
 	dev_dbg(&cmd->device->sdev_gendev,
 		"cmd=%p %x ctx=%p result=0x%x status=0x%x,%x\n",
 		cmd, cmd->cmnd[0], ctx, cmd->result, btstat, sdstat);
 
-	cmd->scsi_done(cmd);
-}
+	cmd->scsi_करोne(cmd);
+पूर्ण
 
 /*
- * barrier usage : Since the PVSCSI device is emulated, there could be cases
+ * barrier usage : Since the PVSCSI device is emulated, there could be हालs
  * where we may want to serialize some accesses between the driver and the
  * emulation layer. We use compiler barriers instead of the more expensive
  * memory barriers because PVSCSI is only supported on X86 which has strong
  * memory access ordering.
  */
-static void pvscsi_process_completion_ring(struct pvscsi_adapter *adapter)
-{
-	struct PVSCSIRingsState *s = adapter->rings_state;
-	struct PVSCSIRingCmpDesc *ring = adapter->cmp_ring;
+अटल व्योम pvscsi_process_completion_ring(काष्ठा pvscsi_adapter *adapter)
+अणु
+	काष्ठा PVSCSIRingsState *s = adapter->rings_state;
+	काष्ठा PVSCSIRingCmpDesc *ring = adapter->cmp_ring;
 	u32 cmp_entries = s->cmpNumEntriesLog2;
 
-	while (s->cmpConsIdx != s->cmpProdIdx) {
-		struct PVSCSIRingCmpDesc *e = ring + (s->cmpConsIdx &
+	जबतक (s->cmpConsIdx != s->cmpProdIdx) अणु
+		काष्ठा PVSCSIRingCmpDesc *e = ring + (s->cmpConsIdx &
 						      MASK(cmp_entries));
 		/*
-		 * This barrier() ensures that *e is not dereferenced while
-		 * the device emulation still writes data into the slot.
+		 * This barrier() ensures that *e is not dereferenced जबतक
+		 * the device emulation still ग_लिखोs data पूर्णांकo the slot.
 		 * Since the device emulation advances s->cmpProdIdx only after
 		 * updating the slot we want to check it first.
 		 */
 		barrier();
 		pvscsi_complete_request(adapter, e);
 		/*
-		 * This barrier() ensures that compiler doesn't reorder write
-		 * to s->cmpConsIdx before the read of (*e) inside
+		 * This barrier() ensures that compiler करोesn't reorder ग_लिखो
+		 * to s->cmpConsIdx beक्रमe the पढ़ो of (*e) inside
 		 * pvscsi_complete_request. Otherwise, device emulation may
-		 * overwrite *e before we had a chance to read it.
+		 * overग_लिखो *e beक्रमe we had a chance to पढ़ो it.
 		 */
 		barrier();
 		s->cmpConsIdx++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Translate a Linux SCSI request into a request ring entry.
+ * Translate a Linux SCSI request पूर्णांकo a request ring entry.
  */
-static int pvscsi_queue_ring(struct pvscsi_adapter *adapter,
-			     struct pvscsi_ctx *ctx, struct scsi_cmnd *cmd)
-{
-	struct PVSCSIRingsState *s;
-	struct PVSCSIRingReqDesc *e;
-	struct scsi_device *sdev;
+अटल पूर्णांक pvscsi_queue_ring(काष्ठा pvscsi_adapter *adapter,
+			     काष्ठा pvscsi_ctx *ctx, काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा PVSCSIRingsState *s;
+	काष्ठा PVSCSIRingReqDesc *e;
+	काष्ठा scsi_device *sdev;
 	u32 req_entries;
 
 	s = adapter->rings_state;
@@ -704,66 +705,66 @@ static int pvscsi_queue_ring(struct pvscsi_adapter *adapter,
 
 	/*
 	 * If this condition holds, we might have room on the request ring, but
-	 * we might not have room on the completion ring for the response.
-	 * However, we have already ruled out this possibility - we would not
-	 * have successfully allocated a context if it were true, since we only
-	 * have one context per request entry.  Check for it anyway, since it
+	 * we might not have room on the completion ring क्रम the response.
+	 * However, we have alपढ़ोy ruled out this possibility - we would not
+	 * have successfully allocated a context अगर it were true, since we only
+	 * have one context per request entry.  Check क्रम it anyway, since it
 	 * would be a serious bug.
 	 */
-	if (s->reqProdIdx - s->cmpConsIdx >= 1 << req_entries) {
-		scmd_printk(KERN_ERR, cmd, "vmw_pvscsi: "
+	अगर (s->reqProdIdx - s->cmpConsIdx >= 1 << req_entries) अणु
+		scmd_prपूर्णांकk(KERN_ERR, cmd, "vmw_pvscsi: "
 			    "ring full: reqProdIdx=%d cmpConsIdx=%d\n",
 			    s->reqProdIdx, s->cmpConsIdx);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	e = adapter->req_ring + (s->reqProdIdx & MASK(req_entries));
 
 	e->bus    = sdev->channel;
 	e->target = sdev->id;
-	memset(e->lun, 0, sizeof(e->lun));
+	स_रखो(e->lun, 0, माप(e->lun));
 	e->lun[1] = sdev->lun;
 
-	if (cmd->sense_buffer) {
+	अगर (cmd->sense_buffer) अणु
 		ctx->sensePA = dma_map_single(&adapter->dev->dev,
 				cmd->sense_buffer, SCSI_SENSE_BUFFERSIZE,
 				DMA_FROM_DEVICE);
-		if (dma_mapping_error(&adapter->dev->dev, ctx->sensePA)) {
-			scmd_printk(KERN_DEBUG, cmd,
+		अगर (dma_mapping_error(&adapter->dev->dev, ctx->sensePA)) अणु
+			scmd_prपूर्णांकk(KERN_DEBUG, cmd,
 				    "vmw_pvscsi: Failed to map sense buffer for DMA.\n");
 			ctx->sensePA = 0;
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		e->senseAddr = ctx->sensePA;
 		e->senseLen = SCSI_SENSE_BUFFERSIZE;
-	} else {
+	पूर्ण अन्यथा अणु
 		e->senseLen  = 0;
 		e->senseAddr = 0;
-	}
+	पूर्ण
 	e->cdbLen   = cmd->cmd_len;
-	e->vcpuHint = smp_processor_id();
-	memcpy(e->cdb, cmd->cmnd, e->cdbLen);
+	e->vcpuHपूर्णांक = smp_processor_id();
+	स_नकल(e->cdb, cmd->cmnd, e->cdbLen);
 
 	e->tag = SIMPLE_QUEUE_TAG;
 
-	if (cmd->sc_data_direction == DMA_FROM_DEVICE)
-		e->flags = PVSCSI_FLAG_CMD_DIR_TOHOST;
-	else if (cmd->sc_data_direction == DMA_TO_DEVICE)
-		e->flags = PVSCSI_FLAG_CMD_DIR_TODEVICE;
-	else if (cmd->sc_data_direction == DMA_NONE)
-		e->flags = PVSCSI_FLAG_CMD_DIR_NONE;
-	else
+	अगर (cmd->sc_data_direction == DMA_FROM_DEVICE)
+		e->flags = PVSCSI_FLAG_CMD_सूची_TOHOST;
+	अन्यथा अगर (cmd->sc_data_direction == DMA_TO_DEVICE)
+		e->flags = PVSCSI_FLAG_CMD_सूची_TODEVICE;
+	अन्यथा अगर (cmd->sc_data_direction == DMA_NONE)
+		e->flags = PVSCSI_FLAG_CMD_सूची_NONE;
+	अन्यथा
 		e->flags = 0;
 
-	if (pvscsi_map_buffers(adapter, ctx, cmd, e) != 0) {
-		if (cmd->sense_buffer) {
+	अगर (pvscsi_map_buffers(adapter, ctx, cmd, e) != 0) अणु
+		अगर (cmd->sense_buffer) अणु
 			dma_unmap_single(&adapter->dev->dev, ctx->sensePA,
 					 SCSI_SENSE_BUFFERSIZE,
 					 DMA_FROM_DEVICE);
 			ctx->sensePA = 0;
-		}
-		return -ENOMEM;
-	}
+		पूर्ण
+		वापस -ENOMEM;
+	पूर्ण
 
 	e->context = pvscsi_map_context(adapter, ctx);
 
@@ -771,28 +772,28 @@ static int pvscsi_queue_ring(struct pvscsi_adapter *adapter,
 
 	s->reqProdIdx++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pvscsi_queue_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
-{
-	struct Scsi_Host *host = cmd->device->host;
-	struct pvscsi_adapter *adapter = shost_priv(host);
-	struct pvscsi_ctx *ctx;
-	unsigned long flags;
-	unsigned char op;
+अटल पूर्णांक pvscsi_queue_lck(काष्ठा scsi_cmnd *cmd, व्योम (*करोne)(काष्ठा scsi_cmnd *))
+अणु
+	काष्ठा Scsi_Host *host = cmd->device->host;
+	काष्ठा pvscsi_adapter *adapter = shost_priv(host);
+	काष्ठा pvscsi_ctx *ctx;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर op;
 
 	spin_lock_irqsave(&adapter->hw_lock, flags);
 
 	ctx = pvscsi_acquire_context(adapter, cmd);
-	if (!ctx || pvscsi_queue_ring(adapter, ctx, cmd) != 0) {
-		if (ctx)
+	अगर (!ctx || pvscsi_queue_ring(adapter, ctx, cmd) != 0) अणु
+		अगर (ctx)
 			pvscsi_release_context(adapter, ctx);
 		spin_unlock_irqrestore(&adapter->hw_lock, flags);
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
-	cmd->scsi_done = done;
+	cmd->scsi_करोne = करोne;
 	op = cmd->cmnd[0];
 
 	dev_dbg(&cmd->device->sdev_gendev,
@@ -802,116 +803,116 @@ static int pvscsi_queue_lck(struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd
 
 	pvscsi_kick_io(adapter, op);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static DEF_SCSI_QCMD(pvscsi_queue)
+अटल DEF_SCSI_QCMD(pvscsi_queue)
 
-static int pvscsi_abort(struct scsi_cmnd *cmd)
-{
-	struct pvscsi_adapter *adapter = shost_priv(cmd->device->host);
-	struct pvscsi_ctx *ctx;
-	unsigned long flags;
-	int result = SUCCESS;
-	DECLARE_COMPLETION_ONSTACK(abort_cmp);
-	int done;
+अटल पूर्णांक pvscsi_पात(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा pvscsi_adapter *adapter = shost_priv(cmd->device->host);
+	काष्ठा pvscsi_ctx *ctx;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result = SUCCESS;
+	DECLARE_COMPLETION_ONSTACK(पात_cmp);
+	पूर्णांक करोne;
 
-	scmd_printk(KERN_DEBUG, cmd, "task abort on host %u, %p\n",
+	scmd_prपूर्णांकk(KERN_DEBUG, cmd, "task abort on host %u, %p\n",
 		    adapter->host->host_no, cmd);
 
 	spin_lock_irqsave(&adapter->hw_lock, flags);
 
 	/*
-	 * Poll the completion ring first - we might be trying to abort
-	 * a command that is waiting to be dispatched in the completion ring.
+	 * Poll the completion ring first - we might be trying to पात
+	 * a command that is रुकोing to be dispatched in the completion ring.
 	 */
 	pvscsi_process_completion_ring(adapter);
 
 	/*
-	 * If there is no context for the command, it either already succeeded
-	 * or else was never properly issued.  Not our problem.
+	 * If there is no context क्रम the command, it either alपढ़ोy succeeded
+	 * or अन्यथा was never properly issued.  Not our problem.
 	 */
 	ctx = pvscsi_find_context(adapter, cmd);
-	if (!ctx) {
-		scmd_printk(KERN_DEBUG, cmd, "Failed to abort cmd %p\n", cmd);
-		goto out;
-	}
+	अगर (!ctx) अणु
+		scmd_prपूर्णांकk(KERN_DEBUG, cmd, "Failed to abort cmd %p\n", cmd);
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Mark that the command has been requested to be aborted and issue
-	 * the abort.
+	 * Mark that the command has been requested to be पातed and issue
+	 * the पात.
 	 */
-	ctx->abort_cmp = &abort_cmp;
+	ctx->पात_cmp = &पात_cmp;
 
-	pvscsi_abort_cmd(adapter, ctx);
+	pvscsi_पात_cmd(adapter, ctx);
 	spin_unlock_irqrestore(&adapter->hw_lock, flags);
-	/* Wait for 2 secs for the completion. */
-	done = wait_for_completion_timeout(&abort_cmp, msecs_to_jiffies(2000));
+	/* Wait क्रम 2 secs क्रम the completion. */
+	करोne = रुको_क्रम_completion_समयout(&पात_cmp, msecs_to_jअगरfies(2000));
 	spin_lock_irqsave(&adapter->hw_lock, flags);
 
-	if (!done) {
+	अगर (!करोne) अणु
 		/*
-		 * Failed to abort the command, unmark the fact that it
-		 * was requested to be aborted.
+		 * Failed to पात the command, unmark the fact that it
+		 * was requested to be पातed.
 		 */
-		ctx->abort_cmp = NULL;
+		ctx->पात_cmp = शून्य;
 		result = FAILED;
-		scmd_printk(KERN_DEBUG, cmd,
+		scmd_prपूर्णांकk(KERN_DEBUG, cmd,
 			    "Failed to get completion for aborted cmd %p\n",
 			    cmd);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Successfully aborted the command.
+	 * Successfully पातed the command.
 	 */
 	cmd->result = (DID_ABORT << 16);
-	cmd->scsi_done(cmd);
+	cmd->scsi_करोne(cmd);
 
 out:
 	spin_unlock_irqrestore(&adapter->hw_lock, flags);
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
- * Abort all outstanding requests.  This is only safe to use if the completion
+ * Abort all outstanding requests.  This is only safe to use अगर the completion
  * ring will never be walked again or the device has been reset, because it
  * destroys the 1-1 mapping between context field passed to emulation and our
- * request structure.
+ * request काष्ठाure.
  */
-static void pvscsi_reset_all(struct pvscsi_adapter *adapter)
-{
-	unsigned i;
+अटल व्योम pvscsi_reset_all(काष्ठा pvscsi_adapter *adapter)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < adapter->req_depth; i++) {
-		struct pvscsi_ctx *ctx = &adapter->cmd_map[i];
-		struct scsi_cmnd *cmd = ctx->cmd;
-		if (cmd) {
-			scmd_printk(KERN_ERR, cmd,
+	क्रम (i = 0; i < adapter->req_depth; i++) अणु
+		काष्ठा pvscsi_ctx *ctx = &adapter->cmd_map[i];
+		काष्ठा scsi_cmnd *cmd = ctx->cmd;
+		अगर (cmd) अणु
+			scmd_prपूर्णांकk(KERN_ERR, cmd,
 				    "Forced reset on cmd %p\n", cmd);
 			pvscsi_unmap_buffers(adapter, ctx);
 			pvscsi_patch_sense(cmd);
 			pvscsi_release_context(adapter, ctx);
 			cmd->result = (DID_RESET << 16);
-			cmd->scsi_done(cmd);
-		}
-	}
-}
+			cmd->scsi_करोne(cmd);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int pvscsi_host_reset(struct scsi_cmnd *cmd)
-{
-	struct Scsi_Host *host = cmd->device->host;
-	struct pvscsi_adapter *adapter = shost_priv(host);
-	unsigned long flags;
+अटल पूर्णांक pvscsi_host_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा Scsi_Host *host = cmd->device->host;
+	काष्ठा pvscsi_adapter *adapter = shost_priv(host);
+	अचिन्हित दीर्घ flags;
 	bool use_msg;
 
-	scmd_printk(KERN_INFO, cmd, "SCSI Host reset\n");
+	scmd_prपूर्णांकk(KERN_INFO, cmd, "SCSI Host reset\n");
 
 	spin_lock_irqsave(&adapter->hw_lock, flags);
 
 	use_msg = adapter->use_msg;
 
-	if (use_msg) {
+	अगर (use_msg) अणु
 		adapter->use_msg = false;
 		spin_unlock_irqrestore(&adapter->hw_lock, flags);
 
@@ -921,10 +922,10 @@ static int pvscsi_host_reset(struct scsi_cmnd *cmd)
 		 */
 		flush_workqueue(adapter->workqueue);
 		spin_lock_irqsave(&adapter->hw_lock, flags);
-	}
+	पूर्ण
 
 	/*
-	 * We're going to tear down the entire ring structure and set it back
+	 * We're going to tear करोwn the entire ring काष्ठाure and set it back
 	 * up, so stalling new requests until all completions are flushed and
 	 * the rings are back in place.
 	 */
@@ -934,7 +935,7 @@ static int pvscsi_host_reset(struct scsi_cmnd *cmd)
 	ll_adapter_reset(adapter);
 
 	/*
-	 * Now process any completions.  Note we do this AFTER adapter reset,
+	 * Now process any completions.  Note we करो this AFTER adapter reset,
 	 * which is strange, but stops races where completions get posted
 	 * between processing the ring and issuing the reset.  The backend will
 	 * not touch the ring memory after reset, so the immediately pre-reset
@@ -945,23 +946,23 @@ static int pvscsi_host_reset(struct scsi_cmnd *cmd)
 	pvscsi_reset_all(adapter);
 	adapter->use_msg = use_msg;
 	pvscsi_setup_all_rings(adapter);
-	pvscsi_unmask_intr(adapter);
+	pvscsi_unmask_पूर्णांकr(adapter);
 
 	spin_unlock_irqrestore(&adapter->hw_lock, flags);
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
-static int pvscsi_bus_reset(struct scsi_cmnd *cmd)
-{
-	struct Scsi_Host *host = cmd->device->host;
-	struct pvscsi_adapter *adapter = shost_priv(host);
-	unsigned long flags;
+अटल पूर्णांक pvscsi_bus_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा Scsi_Host *host = cmd->device->host;
+	काष्ठा pvscsi_adapter *adapter = shost_priv(host);
+	अचिन्हित दीर्घ flags;
 
-	scmd_printk(KERN_INFO, cmd, "SCSI Bus reset\n");
+	scmd_prपूर्णांकk(KERN_INFO, cmd, "SCSI Bus reset\n");
 
 	/*
-	 * We don't want to queue new requests for this bus after
+	 * We करोn't want to queue new requests क्रम this bus after
 	 * flushing all pending requests to emulation, since new
 	 * requests could then sneak in during this bus reset phase,
 	 * so take the lock now.
@@ -974,20 +975,20 @@ static int pvscsi_bus_reset(struct scsi_cmnd *cmd)
 
 	spin_unlock_irqrestore(&adapter->hw_lock, flags);
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
-static int pvscsi_device_reset(struct scsi_cmnd *cmd)
-{
-	struct Scsi_Host *host = cmd->device->host;
-	struct pvscsi_adapter *adapter = shost_priv(host);
-	unsigned long flags;
+अटल पूर्णांक pvscsi_device_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा Scsi_Host *host = cmd->device->host;
+	काष्ठा pvscsi_adapter *adapter = shost_priv(host);
+	अचिन्हित दीर्घ flags;
 
-	scmd_printk(KERN_INFO, cmd, "SCSI device reset on scsi%u:%u\n",
+	scmd_prपूर्णांकk(KERN_INFO, cmd, "SCSI device reset on scsi%u:%u\n",
 		    host->host_no, cmd->device->id);
 
 	/*
-	 * We don't want to queue new requests for this device after flushing
+	 * We करोn't want to queue new requests क्रम this device after flushing
 	 * all pending requests to emulation, since new requests could then
 	 * sneak in during this device reset phase, so take the lock now.
 	 */
@@ -999,25 +1000,25 @@ static int pvscsi_device_reset(struct scsi_cmnd *cmd)
 
 	spin_unlock_irqrestore(&adapter->hw_lock, flags);
 
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
-static struct scsi_host_template pvscsi_template;
+अटल काष्ठा scsi_host_ढाँचा pvscsi_ढाँचा;
 
-static const char *pvscsi_info(struct Scsi_Host *host)
-{
-	struct pvscsi_adapter *adapter = shost_priv(host);
-	static char buf[256];
+अटल स्थिर अक्षर *pvscsi_info(काष्ठा Scsi_Host *host)
+अणु
+	काष्ठा pvscsi_adapter *adapter = shost_priv(host);
+	अटल अक्षर buf[256];
 
-	sprintf(buf, "VMware PVSCSI storage adapter rev %d, req/cmp/msg rings: "
+	प्र_लिखो(buf, "VMware PVSCSI storage adapter rev %d, req/cmp/msg rings: "
 		"%u/%u/%u pages, cmd_per_lun=%u", adapter->rev,
 		adapter->req_pages, adapter->cmp_pages, adapter->msg_pages,
-		pvscsi_template.cmd_per_lun);
+		pvscsi_ढाँचा.cmd_per_lun);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static struct scsi_host_template pvscsi_template = {
+अटल काष्ठा scsi_host_ढाँचा pvscsi_ढाँचा = अणु
 	.module				= THIS_MODULE,
 	.name				= "VMware PVSCSI Host Adapter",
 	.proc_name			= "vmw_pvscsi",
@@ -1025,295 +1026,295 @@ static struct scsi_host_template pvscsi_template = {
 	.queuecommand			= pvscsi_queue,
 	.this_id			= -1,
 	.sg_tablesize			= PVSCSI_MAX_NUM_SG_ENTRIES_PER_SEGMENT,
-	.dma_boundary			= UINT_MAX,
+	.dma_boundary			= अच_पूर्णांक_उच्च,
 	.max_sectors			= 0xffff,
 	.change_queue_depth		= pvscsi_change_queue_depth,
-	.eh_abort_handler		= pvscsi_abort,
+	.eh_पात_handler		= pvscsi_पात,
 	.eh_device_reset_handler	= pvscsi_device_reset,
 	.eh_bus_reset_handler		= pvscsi_bus_reset,
 	.eh_host_reset_handler		= pvscsi_host_reset,
-};
+पूर्ण;
 
-static void pvscsi_process_msg(const struct pvscsi_adapter *adapter,
-			       const struct PVSCSIRingMsgDesc *e)
-{
-	struct PVSCSIRingsState *s = adapter->rings_state;
-	struct Scsi_Host *host = adapter->host;
-	struct scsi_device *sdev;
+अटल व्योम pvscsi_process_msg(स्थिर काष्ठा pvscsi_adapter *adapter,
+			       स्थिर काष्ठा PVSCSIRingMsgDesc *e)
+अणु
+	काष्ठा PVSCSIRingsState *s = adapter->rings_state;
+	काष्ठा Scsi_Host *host = adapter->host;
+	काष्ठा scsi_device *sdev;
 
-	printk(KERN_INFO "vmw_pvscsi: msg type: 0x%x - MSG RING: %u/%u (%u) \n",
+	prपूर्णांकk(KERN_INFO "vmw_pvscsi: msg type: 0x%x - MSG RING: %u/%u (%u) \n",
 	       e->type, s->msgProdIdx, s->msgConsIdx, s->msgNumEntriesLog2);
 
 	BUILD_BUG_ON(PVSCSI_MSG_LAST != 2);
 
-	if (e->type == PVSCSI_MSG_DEV_ADDED) {
-		struct PVSCSIMsgDescDevStatusChanged *desc;
-		desc = (struct PVSCSIMsgDescDevStatusChanged *)e;
+	अगर (e->type == PVSCSI_MSG_DEV_ADDED) अणु
+		काष्ठा PVSCSIMsgDescDevStatusChanged *desc;
+		desc = (काष्ठा PVSCSIMsgDescDevStatusChanged *)e;
 
-		printk(KERN_INFO
+		prपूर्णांकk(KERN_INFO
 		       "vmw_pvscsi: msg: device added at scsi%u:%u:%u\n",
 		       desc->bus, desc->target, desc->lun[1]);
 
-		if (!scsi_host_get(host))
-			return;
+		अगर (!scsi_host_get(host))
+			वापस;
 
 		sdev = scsi_device_lookup(host, desc->bus, desc->target,
 					  desc->lun[1]);
-		if (sdev) {
-			printk(KERN_INFO "vmw_pvscsi: device already exists\n");
+		अगर (sdev) अणु
+			prपूर्णांकk(KERN_INFO "vmw_pvscsi: device already exists\n");
 			scsi_device_put(sdev);
-		} else
+		पूर्ण अन्यथा
 			scsi_add_device(adapter->host, desc->bus,
 					desc->target, desc->lun[1]);
 
 		scsi_host_put(host);
-	} else if (e->type == PVSCSI_MSG_DEV_REMOVED) {
-		struct PVSCSIMsgDescDevStatusChanged *desc;
-		desc = (struct PVSCSIMsgDescDevStatusChanged *)e;
+	पूर्ण अन्यथा अगर (e->type == PVSCSI_MSG_DEV_REMOVED) अणु
+		काष्ठा PVSCSIMsgDescDevStatusChanged *desc;
+		desc = (काष्ठा PVSCSIMsgDescDevStatusChanged *)e;
 
-		printk(KERN_INFO
+		prपूर्णांकk(KERN_INFO
 		       "vmw_pvscsi: msg: device removed at scsi%u:%u:%u\n",
 		       desc->bus, desc->target, desc->lun[1]);
 
-		if (!scsi_host_get(host))
-			return;
+		अगर (!scsi_host_get(host))
+			वापस;
 
 		sdev = scsi_device_lookup(host, desc->bus, desc->target,
 					  desc->lun[1]);
-		if (sdev) {
-			scsi_remove_device(sdev);
+		अगर (sdev) अणु
+			scsi_हटाओ_device(sdev);
 			scsi_device_put(sdev);
-		} else
-			printk(KERN_INFO
+		पूर्ण अन्यथा
+			prपूर्णांकk(KERN_INFO
 			       "vmw_pvscsi: failed to lookup scsi%u:%u:%u\n",
 			       desc->bus, desc->target, desc->lun[1]);
 
 		scsi_host_put(host);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pvscsi_msg_pending(const struct pvscsi_adapter *adapter)
-{
-	struct PVSCSIRingsState *s = adapter->rings_state;
+अटल पूर्णांक pvscsi_msg_pending(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
+	काष्ठा PVSCSIRingsState *s = adapter->rings_state;
 
-	return s->msgProdIdx != s->msgConsIdx;
-}
+	वापस s->msgProdIdx != s->msgConsIdx;
+पूर्ण
 
-static void pvscsi_process_msg_ring(const struct pvscsi_adapter *adapter)
-{
-	struct PVSCSIRingsState *s = adapter->rings_state;
-	struct PVSCSIRingMsgDesc *ring = adapter->msg_ring;
+अटल व्योम pvscsi_process_msg_ring(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
+	काष्ठा PVSCSIRingsState *s = adapter->rings_state;
+	काष्ठा PVSCSIRingMsgDesc *ring = adapter->msg_ring;
 	u32 msg_entries = s->msgNumEntriesLog2;
 
-	while (pvscsi_msg_pending(adapter)) {
-		struct PVSCSIRingMsgDesc *e = ring + (s->msgConsIdx &
+	जबतक (pvscsi_msg_pending(adapter)) अणु
+		काष्ठा PVSCSIRingMsgDesc *e = ring + (s->msgConsIdx &
 						      MASK(msg_entries));
 
 		barrier();
 		pvscsi_process_msg(adapter, e);
 		barrier();
 		s->msgConsIdx++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pvscsi_msg_workqueue_handler(struct work_struct *data)
-{
-	struct pvscsi_adapter *adapter;
+अटल व्योम pvscsi_msg_workqueue_handler(काष्ठा work_काष्ठा *data)
+अणु
+	काष्ठा pvscsi_adapter *adapter;
 
-	adapter = container_of(data, struct pvscsi_adapter, work);
+	adapter = container_of(data, काष्ठा pvscsi_adapter, work);
 
 	pvscsi_process_msg_ring(adapter);
-}
+पूर्ण
 
-static int pvscsi_setup_msg_workqueue(struct pvscsi_adapter *adapter)
-{
-	char name[32];
+अटल पूर्णांक pvscsi_setup_msg_workqueue(काष्ठा pvscsi_adapter *adapter)
+अणु
+	अक्षर name[32];
 
-	if (!pvscsi_use_msg)
-		return 0;
+	अगर (!pvscsi_use_msg)
+		वापस 0;
 
-	pvscsi_reg_write(adapter, PVSCSI_REG_OFFSET_COMMAND,
+	pvscsi_reg_ग_लिखो(adapter, PVSCSI_REG_OFFSET_COMMAND,
 			 PVSCSI_CMD_SETUP_MSG_RING);
 
-	if (pvscsi_reg_read(adapter, PVSCSI_REG_OFFSET_COMMAND_STATUS) == -1)
-		return 0;
+	अगर (pvscsi_reg_पढ़ो(adapter, PVSCSI_REG_OFFSET_COMMAND_STATUS) == -1)
+		वापस 0;
 
-	snprintf(name, sizeof(name),
+	snम_लिखो(name, माप(name),
 		 "vmw_pvscsi_wq_%u", adapter->host->host_no);
 
-	adapter->workqueue = create_singlethread_workqueue(name);
-	if (!adapter->workqueue) {
-		printk(KERN_ERR "vmw_pvscsi: failed to create work queue\n");
-		return 0;
-	}
+	adapter->workqueue = create_singlethपढ़ो_workqueue(name);
+	अगर (!adapter->workqueue) अणु
+		prपूर्णांकk(KERN_ERR "vmw_pvscsi: failed to create work queue\n");
+		वापस 0;
+	पूर्ण
 	INIT_WORK(&adapter->work, pvscsi_msg_workqueue_handler);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static bool pvscsi_setup_req_threshold(struct pvscsi_adapter *adapter,
+अटल bool pvscsi_setup_req_threshold(काष्ठा pvscsi_adapter *adapter,
 				      bool enable)
-{
+अणु
 	u32 val;
 
-	if (!pvscsi_use_req_threshold)
-		return false;
+	अगर (!pvscsi_use_req_threshold)
+		वापस false;
 
-	pvscsi_reg_write(adapter, PVSCSI_REG_OFFSET_COMMAND,
+	pvscsi_reg_ग_लिखो(adapter, PVSCSI_REG_OFFSET_COMMAND,
 			 PVSCSI_CMD_SETUP_REQCALLTHRESHOLD);
-	val = pvscsi_reg_read(adapter, PVSCSI_REG_OFFSET_COMMAND_STATUS);
-	if (val == -1) {
-		printk(KERN_INFO "vmw_pvscsi: device does not support req_threshold\n");
-		return false;
-	} else {
-		struct PVSCSICmdDescSetupReqCall cmd_msg = { 0 };
+	val = pvscsi_reg_पढ़ो(adapter, PVSCSI_REG_OFFSET_COMMAND_STATUS);
+	अगर (val == -1) अणु
+		prपूर्णांकk(KERN_INFO "vmw_pvscsi: device does not support req_threshold\n");
+		वापस false;
+	पूर्ण अन्यथा अणु
+		काष्ठा PVSCSICmdDescSetupReqCall cmd_msg = अणु 0 पूर्ण;
 		cmd_msg.enable = enable;
-		printk(KERN_INFO
+		prपूर्णांकk(KERN_INFO
 		       "vmw_pvscsi: %sabling reqCallThreshold\n",
 			enable ? "en" : "dis");
-		pvscsi_write_cmd_desc(adapter,
+		pvscsi_ग_लिखो_cmd_desc(adapter,
 				      PVSCSI_CMD_SETUP_REQCALLTHRESHOLD,
-				      &cmd_msg, sizeof(cmd_msg));
-		return pvscsi_reg_read(adapter,
+				      &cmd_msg, माप(cmd_msg));
+		वापस pvscsi_reg_पढ़ो(adapter,
 				       PVSCSI_REG_OFFSET_COMMAND_STATUS) != 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t pvscsi_isr(int irq, void *devp)
-{
-	struct pvscsi_adapter *adapter = devp;
-	unsigned long flags;
+अटल irqवापस_t pvscsi_isr(पूर्णांक irq, व्योम *devp)
+अणु
+	काष्ठा pvscsi_adapter *adapter = devp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&adapter->hw_lock, flags);
 	pvscsi_process_completion_ring(adapter);
-	if (adapter->use_msg && pvscsi_msg_pending(adapter))
+	अगर (adapter->use_msg && pvscsi_msg_pending(adapter))
 		queue_work(adapter->workqueue, &adapter->work);
 	spin_unlock_irqrestore(&adapter->hw_lock, flags);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t pvscsi_shared_isr(int irq, void *devp)
-{
-	struct pvscsi_adapter *adapter = devp;
-	u32 val = pvscsi_read_intr_status(adapter);
+अटल irqवापस_t pvscsi_shared_isr(पूर्णांक irq, व्योम *devp)
+अणु
+	काष्ठा pvscsi_adapter *adapter = devp;
+	u32 val = pvscsi_पढ़ो_पूर्णांकr_status(adapter);
 
-	if (!(val & PVSCSI_INTR_ALL_SUPPORTED))
-		return IRQ_NONE;
-	pvscsi_write_intr_status(devp, val);
-	return pvscsi_isr(irq, devp);
-}
+	अगर (!(val & PVSCSI_INTR_ALL_SUPPORTED))
+		वापस IRQ_NONE;
+	pvscsi_ग_लिखो_पूर्णांकr_status(devp, val);
+	वापस pvscsi_isr(irq, devp);
+पूर्ण
 
-static void pvscsi_free_sgls(const struct pvscsi_adapter *adapter)
-{
-	struct pvscsi_ctx *ctx = adapter->cmd_map;
-	unsigned i;
+अटल व्योम pvscsi_मुक्त_sgls(स्थिर काष्ठा pvscsi_adapter *adapter)
+अणु
+	काष्ठा pvscsi_ctx *ctx = adapter->cmd_map;
+	अचिन्हित i;
 
-	for (i = 0; i < adapter->req_depth; ++i, ++ctx)
-		free_pages((unsigned long)ctx->sgl, get_order(SGL_SIZE));
-}
+	क्रम (i = 0; i < adapter->req_depth; ++i, ++ctx)
+		मुक्त_pages((अचिन्हित दीर्घ)ctx->sgl, get_order(SGL_SIZE));
+पूर्ण
 
-static void pvscsi_shutdown_intr(struct pvscsi_adapter *adapter)
-{
-	free_irq(pci_irq_vector(adapter->dev, 0), adapter);
-	pci_free_irq_vectors(adapter->dev);
-}
+अटल व्योम pvscsi_shutकरोwn_पूर्णांकr(काष्ठा pvscsi_adapter *adapter)
+अणु
+	मुक्त_irq(pci_irq_vector(adapter->dev, 0), adapter);
+	pci_मुक्त_irq_vectors(adapter->dev);
+पूर्ण
 
-static void pvscsi_release_resources(struct pvscsi_adapter *adapter)
-{
-	if (adapter->workqueue)
+अटल व्योम pvscsi_release_resources(काष्ठा pvscsi_adapter *adapter)
+अणु
+	अगर (adapter->workqueue)
 		destroy_workqueue(adapter->workqueue);
 
-	if (adapter->mmioBase)
+	अगर (adapter->mmioBase)
 		pci_iounmap(adapter->dev, adapter->mmioBase);
 
 	pci_release_regions(adapter->dev);
 
-	if (adapter->cmd_map) {
-		pvscsi_free_sgls(adapter);
-		kfree(adapter->cmd_map);
-	}
+	अगर (adapter->cmd_map) अणु
+		pvscsi_मुक्त_sgls(adapter);
+		kमुक्त(adapter->cmd_map);
+	पूर्ण
 
-	if (adapter->rings_state)
-		dma_free_coherent(&adapter->dev->dev, PAGE_SIZE,
+	अगर (adapter->rings_state)
+		dma_मुक्त_coherent(&adapter->dev->dev, PAGE_SIZE,
 				    adapter->rings_state, adapter->ringStatePA);
 
-	if (adapter->req_ring)
-		dma_free_coherent(&adapter->dev->dev,
+	अगर (adapter->req_ring)
+		dma_मुक्त_coherent(&adapter->dev->dev,
 				    adapter->req_pages * PAGE_SIZE,
 				    adapter->req_ring, adapter->reqRingPA);
 
-	if (adapter->cmp_ring)
-		dma_free_coherent(&adapter->dev->dev,
+	अगर (adapter->cmp_ring)
+		dma_मुक्त_coherent(&adapter->dev->dev,
 				    adapter->cmp_pages * PAGE_SIZE,
 				    adapter->cmp_ring, adapter->cmpRingPA);
 
-	if (adapter->msg_ring)
-		dma_free_coherent(&adapter->dev->dev,
+	अगर (adapter->msg_ring)
+		dma_मुक्त_coherent(&adapter->dev->dev,
 				    adapter->msg_pages * PAGE_SIZE,
 				    adapter->msg_ring, adapter->msgRingPA);
-}
+पूर्ण
 
 /*
  * Allocate scatter gather lists.
  *
- * These are statically allocated.  Trying to be clever was not worth it.
+ * These are अटलally allocated.  Trying to be clever was not worth it.
  *
- * Dynamic allocation can fail, and we can't go deep into the memory
+ * Dynamic allocation can fail, and we can't go deep पूर्णांकo the memory
  * allocator, since we're a SCSI driver, and trying too hard to allocate
- * memory might generate disk I/O.  We also don't want to fail disk I/O
- * in that case because we can't get an allocation - the I/O could be
- * trying to swap out data to free memory.  Since that is pathological,
- * just use a statically allocated scatter list.
+ * memory might generate disk I/O.  We also करोn't want to fail disk I/O
+ * in that हाल because we can't get an allocation - the I/O could be
+ * trying to swap out data to मुक्त memory.  Since that is pathological,
+ * just use a अटलally allocated scatter list.
  *
  */
-static int pvscsi_allocate_sg(struct pvscsi_adapter *adapter)
-{
-	struct pvscsi_ctx *ctx;
-	int i;
+अटल पूर्णांक pvscsi_allocate_sg(काष्ठा pvscsi_adapter *adapter)
+अणु
+	काष्ठा pvscsi_ctx *ctx;
+	पूर्णांक i;
 
 	ctx = adapter->cmd_map;
-	BUILD_BUG_ON(sizeof(struct pvscsi_sg_list) > SGL_SIZE);
+	BUILD_BUG_ON(माप(काष्ठा pvscsi_sg_list) > SGL_SIZE);
 
-	for (i = 0; i < adapter->req_depth; ++i, ++ctx) {
-		ctx->sgl = (void *)__get_free_pages(GFP_KERNEL,
+	क्रम (i = 0; i < adapter->req_depth; ++i, ++ctx) अणु
+		ctx->sgl = (व्योम *)__get_मुक्त_pages(GFP_KERNEL,
 						    get_order(SGL_SIZE));
 		ctx->sglPA = 0;
-		BUG_ON(!IS_ALIGNED(((unsigned long)ctx->sgl), PAGE_SIZE));
-		if (!ctx->sgl) {
-			for (; i >= 0; --i, --ctx) {
-				free_pages((unsigned long)ctx->sgl,
+		BUG_ON(!IS_ALIGNED(((अचिन्हित दीर्घ)ctx->sgl), PAGE_SIZE));
+		अगर (!ctx->sgl) अणु
+			क्रम (; i >= 0; --i, --ctx) अणु
+				मुक्त_pages((अचिन्हित दीर्घ)ctx->sgl,
 					   get_order(SGL_SIZE));
-				ctx->sgl = NULL;
-			}
-			return -ENOMEM;
-		}
-	}
+				ctx->sgl = शून्य;
+			पूर्ण
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Query the device, fetch the config info and return the
- * maximum number of targets on the adapter. In case of
- * failure due to any reason return default i.e. 16.
+ * Query the device, fetch the config info and वापस the
+ * maximum number of tarमाला_लो on the adapter. In हाल of
+ * failure due to any reason वापस शेष i.e. 16.
  */
-static u32 pvscsi_get_max_targets(struct pvscsi_adapter *adapter)
-{
-	struct PVSCSICmdDescConfigCmd cmd;
-	struct PVSCSIConfigPageHeader *header;
-	struct device *dev;
+अटल u32 pvscsi_get_max_tarमाला_लो(काष्ठा pvscsi_adapter *adapter)
+अणु
+	काष्ठा PVSCSICmdDescConfigCmd cmd;
+	काष्ठा PVSCSIConfigPageHeader *header;
+	काष्ठा device *dev;
 	dma_addr_t configPagePA;
-	void *config_page;
+	व्योम *config_page;
 	u32 numPhys = 16;
 
 	dev = pvscsi_dev(adapter);
 	config_page = dma_alloc_coherent(&adapter->dev->dev, PAGE_SIZE,
 			&configPagePA, GFP_KERNEL);
-	if (!config_page) {
+	अगर (!config_page) अणु
 		dev_warn(dev, "vmw_pvscsi: failed to allocate memory for config page\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	BUG_ON(configPagePA & ~PAGE_MASK);
 
 	/* Fetch config info from the device. */
@@ -1328,132 +1329,132 @@ static u32 pvscsi_get_max_targets(struct pvscsi_adapter *adapter)
 	 * indicate success.
 	 */
 	header = config_page;
-	memset(header, 0, sizeof *header);
+	स_रखो(header, 0, माप *header);
 	header->hostStatus = BTSTAT_INVPARAM;
 	header->scsiStatus = SDSTAT_CHECK;
 
-	pvscsi_write_cmd_desc(adapter, PVSCSI_CMD_CONFIG, &cmd, sizeof cmd);
+	pvscsi_ग_लिखो_cmd_desc(adapter, PVSCSI_CMD_CONFIG, &cmd, माप cmd);
 
-	if (header->hostStatus == BTSTAT_SUCCESS &&
-	    header->scsiStatus == SDSTAT_GOOD) {
-		struct PVSCSIConfigPageController *config;
+	अगर (header->hostStatus == BTSTAT_SUCCESS &&
+	    header->scsiStatus == SDSTAT_GOOD) अणु
+		काष्ठा PVSCSIConfigPageController *config;
 
 		config = config_page;
 		numPhys = config->numPhys;
-	} else
+	पूर्ण अन्यथा
 		dev_warn(dev, "vmw_pvscsi: PVSCSI_CMD_CONFIG failed. hostStatus = 0x%x, scsiStatus = 0x%x\n",
 			 header->hostStatus, header->scsiStatus);
-	dma_free_coherent(&adapter->dev->dev, PAGE_SIZE, config_page,
+	dma_मुक्त_coherent(&adapter->dev->dev, PAGE_SIZE, config_page,
 			  configPagePA);
-exit:
-	return numPhys;
-}
+निकास:
+	वापस numPhys;
+पूर्ण
 
-static int pvscsi_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	unsigned int irq_flag = PCI_IRQ_MSIX | PCI_IRQ_MSI | PCI_IRQ_LEGACY;
-	struct pvscsi_adapter *adapter;
-	struct pvscsi_adapter adapter_temp;
-	struct Scsi_Host *host = NULL;
-	unsigned int i;
-	int error;
+अटल पूर्णांक pvscsi_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	अचिन्हित पूर्णांक irq_flag = PCI_IRQ_MSIX | PCI_IRQ_MSI | PCI_IRQ_LEGACY;
+	काष्ठा pvscsi_adapter *adapter;
+	काष्ठा pvscsi_adapter adapter_temp;
+	काष्ठा Scsi_Host *host = शून्य;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक error;
 	u32 max_id;
 
 	error = -ENODEV;
 
-	if (pci_enable_device(pdev))
-		return error;
+	अगर (pci_enable_device(pdev))
+		वापस error;
 
-	if (!dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64))) {
-		printk(KERN_INFO "vmw_pvscsi: using 64bit dma\n");
-	} else if (!dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) {
-		printk(KERN_INFO "vmw_pvscsi: using 32bit dma\n");
-	} else {
-		printk(KERN_ERR "vmw_pvscsi: failed to set DMA mask\n");
-		goto out_disable_device;
-	}
+	अगर (!dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64))) अणु
+		prपूर्णांकk(KERN_INFO "vmw_pvscsi: using 64bit dma\n");
+	पूर्ण अन्यथा अगर (!dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32))) अणु
+		prपूर्णांकk(KERN_INFO "vmw_pvscsi: using 32bit dma\n");
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "vmw_pvscsi: failed to set DMA mask\n");
+		जाओ out_disable_device;
+	पूर्ण
 
 	/*
-	 * Let's use a temp pvscsi_adapter struct until we find the number of
-	 * targets on the adapter, after that we will switch to the real
-	 * allocated struct.
+	 * Let's use a temp pvscsi_adapter काष्ठा until we find the number of
+	 * tarमाला_लो on the adapter, after that we will चयन to the real
+	 * allocated काष्ठा.
 	 */
 	adapter = &adapter_temp;
-	memset(adapter, 0, sizeof(*adapter));
+	स_रखो(adapter, 0, माप(*adapter));
 	adapter->dev  = pdev;
 	adapter->rev = pdev->revision;
 
-	if (pci_request_regions(pdev, "vmw_pvscsi")) {
-		printk(KERN_ERR "vmw_pvscsi: pci memory selection failed\n");
-		goto out_disable_device;
-	}
+	अगर (pci_request_regions(pdev, "vmw_pvscsi")) अणु
+		prपूर्णांकk(KERN_ERR "vmw_pvscsi: pci memory selection failed\n");
+		जाओ out_disable_device;
+	पूर्ण
 
-	for (i = 0; i < DEVICE_COUNT_RESOURCE; i++) {
-		if ((pci_resource_flags(pdev, i) & PCI_BASE_ADDRESS_SPACE_IO))
-			continue;
+	क्रम (i = 0; i < DEVICE_COUNT_RESOURCE; i++) अणु
+		अगर ((pci_resource_flags(pdev, i) & PCI_BASE_ADDRESS_SPACE_IO))
+			जारी;
 
-		if (pci_resource_len(pdev, i) < PVSCSI_MEM_SPACE_SIZE)
-			continue;
+		अगर (pci_resource_len(pdev, i) < PVSCSI_MEM_SPACE_SIZE)
+			जारी;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (i == DEVICE_COUNT_RESOURCE) {
-		printk(KERN_ERR
+	अगर (i == DEVICE_COUNT_RESOURCE) अणु
+		prपूर्णांकk(KERN_ERR
 		       "vmw_pvscsi: adapter has no suitable MMIO region\n");
-		goto out_release_resources_and_disable;
-	}
+		जाओ out_release_resources_and_disable;
+	पूर्ण
 
 	adapter->mmioBase = pci_iomap(pdev, i, PVSCSI_MEM_SPACE_SIZE);
 
-	if (!adapter->mmioBase) {
-		printk(KERN_ERR
+	अगर (!adapter->mmioBase) अणु
+		prपूर्णांकk(KERN_ERR
 		       "vmw_pvscsi: can't iomap for BAR %d memsize %lu\n",
 		       i, PVSCSI_MEM_SPACE_SIZE);
-		goto out_release_resources_and_disable;
-	}
+		जाओ out_release_resources_and_disable;
+	पूर्ण
 
 	pci_set_master(pdev);
 
 	/*
-	 * Ask the device for max number of targets before deciding the
-	 * default pvscsi_ring_pages value.
+	 * Ask the device क्रम max number of tarमाला_लो beक्रमe deciding the
+	 * शेष pvscsi_ring_pages value.
 	 */
-	max_id = pvscsi_get_max_targets(adapter);
-	printk(KERN_INFO "vmw_pvscsi: max_id: %u\n", max_id);
+	max_id = pvscsi_get_max_tarमाला_लो(adapter);
+	prपूर्णांकk(KERN_INFO "vmw_pvscsi: max_id: %u\n", max_id);
 
-	if (pvscsi_ring_pages == 0)
+	अगर (pvscsi_ring_pages == 0)
 		/*
-		 * Set the right default value. Up to 16 it is 8, above it is
+		 * Set the right शेष value. Up to 16 it is 8, above it is
 		 * max.
 		 */
 		pvscsi_ring_pages = (max_id > 16) ?
 			PVSCSI_SETUP_RINGS_MAX_NUM_PAGES :
 			PVSCSI_DEFAULT_NUM_PAGES_PER_RING;
-	printk(KERN_INFO
+	prपूर्णांकk(KERN_INFO
 	       "vmw_pvscsi: setting ring_pages to %d\n",
 	       pvscsi_ring_pages);
 
-	pvscsi_template.can_queue =
+	pvscsi_ढाँचा.can_queue =
 		min(PVSCSI_MAX_NUM_PAGES_REQ_RING, pvscsi_ring_pages) *
 		PVSCSI_MAX_NUM_REQ_ENTRIES_PER_PAGE;
-	pvscsi_template.cmd_per_lun =
-		min(pvscsi_template.can_queue, pvscsi_cmd_per_lun);
-	host = scsi_host_alloc(&pvscsi_template, sizeof(struct pvscsi_adapter));
-	if (!host) {
-		printk(KERN_ERR "vmw_pvscsi: failed to allocate host\n");
-		goto out_release_resources_and_disable;
-	}
+	pvscsi_ढाँचा.cmd_per_lun =
+		min(pvscsi_ढाँचा.can_queue, pvscsi_cmd_per_lun);
+	host = scsi_host_alloc(&pvscsi_ढाँचा, माप(काष्ठा pvscsi_adapter));
+	अगर (!host) अणु
+		prपूर्णांकk(KERN_ERR "vmw_pvscsi: failed to allocate host\n");
+		जाओ out_release_resources_and_disable;
+	पूर्ण
 
 	/*
-	 * Let's use the real pvscsi_adapter struct here onwards.
+	 * Let's use the real pvscsi_adapter काष्ठा here onwards.
 	 */
 	adapter = shost_priv(host);
-	memset(adapter, 0, sizeof(*adapter));
+	स_रखो(adapter, 0, माप(*adapter));
 	adapter->dev  = pdev;
 	adapter->host = host;
 	/*
-	 * Copy back what we already have to the allocated adapter struct.
+	 * Copy back what we alपढ़ोy have to the allocated adapter काष्ठा.
 	 */
 	adapter->rev = adapter_temp.rev;
 	adapter->mmioBase = adapter_temp.mmioBase;
@@ -1471,156 +1472,156 @@ static int pvscsi_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	adapter->use_msg = pvscsi_setup_msg_workqueue(adapter);
 
 	error = pvscsi_allocate_rings(adapter);
-	if (error) {
-		printk(KERN_ERR "vmw_pvscsi: unable to allocate ring memory\n");
-		goto out_release_resources;
-	}
+	अगर (error) अणु
+		prपूर्णांकk(KERN_ERR "vmw_pvscsi: unable to allocate ring memory\n");
+		जाओ out_release_resources;
+	पूर्ण
 
 	/*
-	 * From this point on we should reset the adapter if anything goes
+	 * From this poपूर्णांक on we should reset the adapter अगर anything goes
 	 * wrong.
 	 */
 	pvscsi_setup_all_rings(adapter);
 
-	adapter->cmd_map = kcalloc(adapter->req_depth,
-				   sizeof(struct pvscsi_ctx), GFP_KERNEL);
-	if (!adapter->cmd_map) {
-		printk(KERN_ERR "vmw_pvscsi: failed to allocate memory.\n");
+	adapter->cmd_map = kसुस्मृति(adapter->req_depth,
+				   माप(काष्ठा pvscsi_ctx), GFP_KERNEL);
+	अगर (!adapter->cmd_map) अणु
+		prपूर्णांकk(KERN_ERR "vmw_pvscsi: failed to allocate memory.\n");
 		error = -ENOMEM;
-		goto out_reset_adapter;
-	}
+		जाओ out_reset_adapter;
+	पूर्ण
 
 	INIT_LIST_HEAD(&adapter->cmd_pool);
-	for (i = 0; i < adapter->req_depth; i++) {
-		struct pvscsi_ctx *ctx = adapter->cmd_map + i;
+	क्रम (i = 0; i < adapter->req_depth; i++) अणु
+		काष्ठा pvscsi_ctx *ctx = adapter->cmd_map + i;
 		list_add(&ctx->list, &adapter->cmd_pool);
-	}
+	पूर्ण
 
 	error = pvscsi_allocate_sg(adapter);
-	if (error) {
-		printk(KERN_ERR "vmw_pvscsi: unable to allocate s/g table\n");
-		goto out_reset_adapter;
-	}
+	अगर (error) अणु
+		prपूर्णांकk(KERN_ERR "vmw_pvscsi: unable to allocate s/g table\n");
+		जाओ out_reset_adapter;
+	पूर्ण
 
-	if (pvscsi_disable_msix)
+	अगर (pvscsi_disable_msix)
 		irq_flag &= ~PCI_IRQ_MSIX;
-	if (pvscsi_disable_msi)
+	अगर (pvscsi_disable_msi)
 		irq_flag &= ~PCI_IRQ_MSI;
 
 	error = pci_alloc_irq_vectors(adapter->dev, 1, 1, irq_flag);
-	if (error < 0)
-		goto out_reset_adapter;
+	अगर (error < 0)
+		जाओ out_reset_adapter;
 
 	adapter->use_req_threshold = pvscsi_setup_req_threshold(adapter, true);
-	printk(KERN_DEBUG "vmw_pvscsi: driver-based request coalescing %sabled\n",
+	prपूर्णांकk(KERN_DEBUG "vmw_pvscsi: driver-based request coalescing %sabled\n",
 	       adapter->use_req_threshold ? "en" : "dis");
 
-	if (adapter->dev->msix_enabled || adapter->dev->msi_enabled) {
-		printk(KERN_INFO "vmw_pvscsi: using MSI%s\n",
+	अगर (adapter->dev->msix_enabled || adapter->dev->msi_enabled) अणु
+		prपूर्णांकk(KERN_INFO "vmw_pvscsi: using MSI%s\n",
 			adapter->dev->msix_enabled ? "-X" : "");
 		error = request_irq(pci_irq_vector(pdev, 0), pvscsi_isr,
 				0, "vmw_pvscsi", adapter);
-	} else {
-		printk(KERN_INFO "vmw_pvscsi: using INTx\n");
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_INFO "vmw_pvscsi: using INTx\n");
 		error = request_irq(pci_irq_vector(pdev, 0), pvscsi_shared_isr,
 				IRQF_SHARED, "vmw_pvscsi", adapter);
-	}
+	पूर्ण
 
-	if (error) {
-		printk(KERN_ERR
+	अगर (error) अणु
+		prपूर्णांकk(KERN_ERR
 		       "vmw_pvscsi: unable to request IRQ: %d\n", error);
-		goto out_reset_adapter;
-	}
+		जाओ out_reset_adapter;
+	पूर्ण
 
 	error = scsi_add_host(host, &pdev->dev);
-	if (error) {
-		printk(KERN_ERR
+	अगर (error) अणु
+		prपूर्णांकk(KERN_ERR
 		       "vmw_pvscsi: scsi_add_host failed: %d\n", error);
-		goto out_reset_adapter;
-	}
+		जाओ out_reset_adapter;
+	पूर्ण
 
 	dev_info(&pdev->dev, "VMware PVSCSI rev %d host #%u\n",
 		 adapter->rev, host->host_no);
 
-	pvscsi_unmask_intr(adapter);
+	pvscsi_unmask_पूर्णांकr(adapter);
 
 	scsi_scan_host(host);
 
-	return 0;
+	वापस 0;
 
 out_reset_adapter:
 	ll_adapter_reset(adapter);
 out_release_resources:
-	pvscsi_shutdown_intr(adapter);
+	pvscsi_shutकरोwn_पूर्णांकr(adapter);
 	pvscsi_release_resources(adapter);
 	scsi_host_put(host);
 out_disable_device:
 	pci_disable_device(pdev);
 
-	return error;
+	वापस error;
 
 out_release_resources_and_disable:
-	pvscsi_shutdown_intr(adapter);
+	pvscsi_shutकरोwn_पूर्णांकr(adapter);
 	pvscsi_release_resources(adapter);
-	goto out_disable_device;
-}
+	जाओ out_disable_device;
+पूर्ण
 
-static void __pvscsi_shutdown(struct pvscsi_adapter *adapter)
-{
-	pvscsi_mask_intr(adapter);
+अटल व्योम __pvscsi_shutकरोwn(काष्ठा pvscsi_adapter *adapter)
+अणु
+	pvscsi_mask_पूर्णांकr(adapter);
 
-	if (adapter->workqueue)
+	अगर (adapter->workqueue)
 		flush_workqueue(adapter->workqueue);
 
-	pvscsi_shutdown_intr(adapter);
+	pvscsi_shutकरोwn_पूर्णांकr(adapter);
 
 	pvscsi_process_request_ring(adapter);
 	pvscsi_process_completion_ring(adapter);
 	ll_adapter_reset(adapter);
-}
+पूर्ण
 
-static void pvscsi_shutdown(struct pci_dev *dev)
-{
-	struct Scsi_Host *host = pci_get_drvdata(dev);
-	struct pvscsi_adapter *adapter = shost_priv(host);
+अटल व्योम pvscsi_shutकरोwn(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा Scsi_Host *host = pci_get_drvdata(dev);
+	काष्ठा pvscsi_adapter *adapter = shost_priv(host);
 
-	__pvscsi_shutdown(adapter);
-}
+	__pvscsi_shutकरोwn(adapter);
+पूर्ण
 
-static void pvscsi_remove(struct pci_dev *pdev)
-{
-	struct Scsi_Host *host = pci_get_drvdata(pdev);
-	struct pvscsi_adapter *adapter = shost_priv(host);
+अटल व्योम pvscsi_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा Scsi_Host *host = pci_get_drvdata(pdev);
+	काष्ठा pvscsi_adapter *adapter = shost_priv(host);
 
-	scsi_remove_host(host);
+	scsi_हटाओ_host(host);
 
-	__pvscsi_shutdown(adapter);
+	__pvscsi_shutकरोwn(adapter);
 	pvscsi_release_resources(adapter);
 
 	scsi_host_put(host);
 
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static struct pci_driver pvscsi_pci_driver = {
+अटल काष्ठा pci_driver pvscsi_pci_driver = अणु
 	.name		= "vmw_pvscsi",
 	.id_table	= pvscsi_pci_tbl,
 	.probe		= pvscsi_probe,
-	.remove		= pvscsi_remove,
-	.shutdown       = pvscsi_shutdown,
-};
+	.हटाओ		= pvscsi_हटाओ,
+	.shutकरोwn       = pvscsi_shutकरोwn,
+पूर्ण;
 
-static int __init pvscsi_init(void)
-{
+अटल पूर्णांक __init pvscsi_init(व्योम)
+अणु
 	pr_info("%s - version %s\n",
 		PVSCSI_LINUX_DRIVER_DESC, PVSCSI_DRIVER_VERSION_STRING);
-	return pci_register_driver(&pvscsi_pci_driver);
-}
+	वापस pci_रेजिस्टर_driver(&pvscsi_pci_driver);
+पूर्ण
 
-static void __exit pvscsi_exit(void)
-{
-	pci_unregister_driver(&pvscsi_pci_driver);
-}
+अटल व्योम __निकास pvscsi_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&pvscsi_pci_driver);
+पूर्ण
 
 module_init(pvscsi_init);
-module_exit(pvscsi_exit);
+module_निकास(pvscsi_निकास);

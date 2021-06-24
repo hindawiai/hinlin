@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for Alauda-based card readers
+ * Driver क्रम Alauda-based card पढ़ोers
  *
- * Current development and maintenance by:
+ * Current development and मुख्यtenance by:
  *   (c) 2005 Daniel Drake <dsd@gentoo.org>
  *
- * The 'Alauda' is a chip manufacturered by RATOC for OEM use.
+ * The 'Alauda' is a chip manufacturered by RATOC क्रम OEM use.
  *
- * Alauda implements a vendor-specific command set to access two media reader
+ * Alauda implements a venकरोr-specअगरic command set to access two media पढ़ोer
  * ports (XD, SmartMedia). This driver converts SCSI commands to the commands
  * which are accepted by these devices.
  *
  * The driver was developed through reverse-engineering, with the help of the
  * sddr09 driver which has many similarities, and with some help from the
- * (very old) vendor-supplied GPL sma03 driver.
+ * (very old) venकरोr-supplied GPL sma03 driver.
  *
- * For protocol info, see http://alauda.sourceforge.net
+ * For protocol info, see http://alauda.sourceक्रमge.net
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
 
-#include "usb.h"
-#include "transport.h"
-#include "protocol.h"
-#include "debug.h"
-#include "scsiglue.h"
+#समावेश "usb.h"
+#समावेश "transport.h"
+#समावेश "protocol.h"
+#समावेश "debug.h"
+#समावेश "scsiglue.h"
 
-#define DRV_NAME "ums-alauda"
+#घोषणा DRV_NAME "ums-alauda"
 
 MODULE_DESCRIPTION("Driver for Alauda-based card readers");
 MODULE_AUTHOR("Daniel Drake <dsd@gentoo.org>");
@@ -41,218 +42,218 @@ MODULE_IMPORT_NS(USB_STORAGE);
 /*
  * Status bytes
  */
-#define ALAUDA_STATUS_ERROR		0x01
-#define ALAUDA_STATUS_READY		0x40
+#घोषणा ALAUDA_STATUS_ERROR		0x01
+#घोषणा ALAUDA_STATUS_READY		0x40
 
 /*
- * Control opcodes (for request field)
+ * Control opcodes (क्रम request field)
  */
-#define ALAUDA_GET_XD_MEDIA_STATUS	0x08
-#define ALAUDA_GET_SM_MEDIA_STATUS	0x98
-#define ALAUDA_ACK_XD_MEDIA_CHANGE	0x0a
-#define ALAUDA_ACK_SM_MEDIA_CHANGE	0x9a
-#define ALAUDA_GET_XD_MEDIA_SIG		0x86
-#define ALAUDA_GET_SM_MEDIA_SIG		0x96
+#घोषणा ALAUDA_GET_XD_MEDIA_STATUS	0x08
+#घोषणा ALAUDA_GET_SM_MEDIA_STATUS	0x98
+#घोषणा ALAUDA_ACK_XD_MEDIA_CHANGE	0x0a
+#घोषणा ALAUDA_ACK_SM_MEDIA_CHANGE	0x9a
+#घोषणा ALAUDA_GET_XD_MEDIA_SIG		0x86
+#घोषणा ALAUDA_GET_SM_MEDIA_SIG		0x96
 
 /*
  * Bulk command identity (byte 0)
  */
-#define ALAUDA_BULK_CMD			0x40
+#घोषणा ALAUDA_BULK_CMD			0x40
 
 /*
  * Bulk opcodes (byte 1)
  */
-#define ALAUDA_BULK_GET_REDU_DATA	0x85
-#define ALAUDA_BULK_READ_BLOCK		0x94
-#define ALAUDA_BULK_ERASE_BLOCK		0xa3
-#define ALAUDA_BULK_WRITE_BLOCK		0xb4
-#define ALAUDA_BULK_GET_STATUS2		0xb7
-#define ALAUDA_BULK_RESET_MEDIA		0xe0
+#घोषणा ALAUDA_BULK_GET_REDU_DATA	0x85
+#घोषणा ALAUDA_BULK_READ_BLOCK		0x94
+#घोषणा ALAUDA_BULK_ERASE_BLOCK		0xa3
+#घोषणा ALAUDA_BULK_WRITE_BLOCK		0xb4
+#घोषणा ALAUDA_BULK_GET_STATUS2		0xb7
+#घोषणा ALAUDA_BULK_RESET_MEDIA		0xe0
 
 /*
  * Port to operate on (byte 8)
  */
-#define ALAUDA_PORT_XD			0x00
-#define ALAUDA_PORT_SM			0x01
+#घोषणा ALAUDA_PORT_XD			0x00
+#घोषणा ALAUDA_PORT_SM			0x01
 
 /*
- * LBA and PBA are unsigned ints. Special values.
+ * LBA and PBA are अचिन्हित पूर्णांकs. Special values.
  */
-#define UNDEF    0xffff
-#define SPARE    0xfffe
-#define UNUSABLE 0xfffd
+#घोषणा UNDEF    0xffff
+#घोषणा SPARE    0xfffe
+#घोषणा UNUSABLE 0xfffd
 
-struct alauda_media_info {
-	unsigned long capacity;		/* total media size in bytes */
-	unsigned int pagesize;		/* page size in bytes */
-	unsigned int blocksize;		/* number of pages per block */
-	unsigned int uzonesize;		/* number of usable blocks per zone */
-	unsigned int zonesize;		/* number of blocks per zone */
-	unsigned int blockmask;		/* mask to get page from address */
+काष्ठा alauda_media_info अणु
+	अचिन्हित दीर्घ capacity;		/* total media size in bytes */
+	अचिन्हित पूर्णांक pagesize;		/* page size in bytes */
+	अचिन्हित पूर्णांक blocksize;		/* number of pages per block */
+	अचिन्हित पूर्णांक uzonesize;		/* number of usable blocks per zone */
+	अचिन्हित पूर्णांक zonesize;		/* number of blocks per zone */
+	अचिन्हित पूर्णांक blockmask;		/* mask to get page from address */
 
-	unsigned char pageshift;
-	unsigned char blockshift;
-	unsigned char zoneshift;
+	अचिन्हित अक्षर pageshअगरt;
+	अचिन्हित अक्षर blockshअगरt;
+	अचिन्हित अक्षर zoneshअगरt;
 
 	u16 **lba_to_pba;		/* logical to physical block map */
 	u16 **pba_to_lba;		/* physical to logical block map */
-};
+पूर्ण;
 
-struct alauda_info {
-	struct alauda_media_info port[2];
-	int wr_ep;			/* endpoint to write data out of */
+काष्ठा alauda_info अणु
+	काष्ठा alauda_media_info port[2];
+	पूर्णांक wr_ep;			/* endpoपूर्णांक to ग_लिखो data out of */
 
-	unsigned char sense_key;
-	unsigned long sense_asc;	/* additional sense code */
-	unsigned long sense_ascq;	/* additional sense code qualifier */
-};
+	अचिन्हित अक्षर sense_key;
+	अचिन्हित दीर्घ sense_asc;	/* additional sense code */
+	अचिन्हित दीर्घ sense_ascq;	/* additional sense code qualअगरier */
+पूर्ण;
 
-#define short_pack(lsb,msb) ( ((u16)(lsb)) | ( ((u16)(msb))<<8 ) )
-#define LSB_of(s) ((s)&0xFF)
-#define MSB_of(s) ((s)>>8)
+#घोषणा लघु_pack(lsb,msb) ( ((u16)(lsb)) | ( ((u16)(msb))<<8 ) )
+#घोषणा LSB_of(s) ((s)&0xFF)
+#घोषणा MSB_of(s) ((s)>>8)
 
-#define MEDIA_PORT(us) us->srb->device->lun
-#define MEDIA_INFO(us) ((struct alauda_info *)us->extra)->port[MEDIA_PORT(us)]
+#घोषणा MEDIA_PORT(us) us->srb->device->lun
+#घोषणा MEDIA_INFO(us) ((काष्ठा alauda_info *)us->extra)->port[MEDIA_PORT(us)]
 
-#define PBA_LO(pba) ((pba & 0xF) << 5)
-#define PBA_HI(pba) (pba >> 3)
-#define PBA_ZONE(pba) (pba >> 11)
+#घोषणा PBA_LO(pba) ((pba & 0xF) << 5)
+#घोषणा PBA_HI(pba) (pba >> 3)
+#घोषणा PBA_ZONE(pba) (pba >> 11)
 
-static int init_alauda(struct us_data *us);
+अटल पूर्णांक init_alauda(काष्ठा us_data *us);
 
 
 /*
  * The table of devices
  */
-#define UNUSUAL_DEV(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax, \
-		    vendorName, productName, useProtocol, useTransport, \
+#घोषणा UNUSUAL_DEV(id_venकरोr, id_product, bcdDeviceMin, bcdDeviceMax, \
+		    venकरोrName, productName, useProtocol, useTransport, \
 		    initFunction, flags) \
-{ USB_DEVICE_VER(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax), \
-  .driver_info = (flags) }
+अणु USB_DEVICE_VER(id_venकरोr, id_product, bcdDeviceMin, bcdDeviceMax), \
+  .driver_info = (flags) पूर्ण
 
-static struct usb_device_id alauda_usb_ids[] = {
+अटल काष्ठा usb_device_id alauda_usb_ids[] = अणु
 #	include "unusual_alauda.h"
-	{ }		/* Terminating entry */
-};
+	अणु पूर्ण		/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, alauda_usb_ids);
 
-#undef UNUSUAL_DEV
+#अघोषित UNUSUAL_DEV
 
 /*
  * The flags table
  */
-#define UNUSUAL_DEV(idVendor, idProduct, bcdDeviceMin, bcdDeviceMax, \
-		    vendor_name, product_name, use_protocol, use_transport, \
+#घोषणा UNUSUAL_DEV(idVenकरोr, idProduct, bcdDeviceMin, bcdDeviceMax, \
+		    venकरोr_name, product_name, use_protocol, use_transport, \
 		    init_function, Flags) \
-{ \
-	.vendorName = vendor_name,	\
+अणु \
+	.venकरोrName = venकरोr_name,	\
 	.productName = product_name,	\
 	.useProtocol = use_protocol,	\
 	.useTransport = use_transport,	\
 	.initFunction = init_function,	\
-}
+पूर्ण
 
-static struct us_unusual_dev alauda_unusual_dev_list[] = {
+अटल काष्ठा us_unusual_dev alauda_unusual_dev_list[] = अणु
 #	include "unusual_alauda.h"
-	{ }		/* Terminating entry */
-};
+	अणु पूर्ण		/* Terminating entry */
+पूर्ण;
 
-#undef UNUSUAL_DEV
+#अघोषित UNUSUAL_DEV
 
 
 /*
  * Media handling
  */
 
-struct alauda_card_info {
-	unsigned char id;		/* id byte */
-	unsigned char chipshift;	/* 1<<cs bytes total capacity */
-	unsigned char pageshift;	/* 1<<ps bytes in a page */
-	unsigned char blockshift;	/* 1<<bs pages per block */
-	unsigned char zoneshift;	/* 1<<zs blocks per zone */
-};
+काष्ठा alauda_card_info अणु
+	अचिन्हित अक्षर id;		/* id byte */
+	अचिन्हित अक्षर chipshअगरt;	/* 1<<cs bytes total capacity */
+	अचिन्हित अक्षर pageshअगरt;	/* 1<<ps bytes in a page */
+	अचिन्हित अक्षर blockshअगरt;	/* 1<<bs pages per block */
+	अचिन्हित अक्षर zoneshअगरt;	/* 1<<zs blocks per zone */
+पूर्ण;
 
-static struct alauda_card_info alauda_card_ids[] = {
-	/* NAND flash */
-	{ 0x6e, 20, 8, 4, 8},	/* 1 MB */
-	{ 0xe8, 20, 8, 4, 8},	/* 1 MB */
-	{ 0xec, 20, 8, 4, 8},	/* 1 MB */
-	{ 0x64, 21, 8, 4, 9}, 	/* 2 MB */
-	{ 0xea, 21, 8, 4, 9},	/* 2 MB */
-	{ 0x6b, 22, 9, 4, 9},	/* 4 MB */
-	{ 0xe3, 22, 9, 4, 9},	/* 4 MB */
-	{ 0xe5, 22, 9, 4, 9},	/* 4 MB */
-	{ 0xe6, 23, 9, 4, 10},	/* 8 MB */
-	{ 0x73, 24, 9, 5, 10},	/* 16 MB */
-	{ 0x75, 25, 9, 5, 10},	/* 32 MB */
-	{ 0x76, 26, 9, 5, 10},	/* 64 MB */
-	{ 0x79, 27, 9, 5, 10},	/* 128 MB */
-	{ 0x71, 28, 9, 5, 10},	/* 256 MB */
+अटल काष्ठा alauda_card_info alauda_card_ids[] = अणु
+	/* न_अंकD flash */
+	अणु 0x6e, 20, 8, 4, 8पूर्ण,	/* 1 MB */
+	अणु 0xe8, 20, 8, 4, 8पूर्ण,	/* 1 MB */
+	अणु 0xec, 20, 8, 4, 8पूर्ण,	/* 1 MB */
+	अणु 0x64, 21, 8, 4, 9पूर्ण, 	/* 2 MB */
+	अणु 0xea, 21, 8, 4, 9पूर्ण,	/* 2 MB */
+	अणु 0x6b, 22, 9, 4, 9पूर्ण,	/* 4 MB */
+	अणु 0xe3, 22, 9, 4, 9पूर्ण,	/* 4 MB */
+	अणु 0xe5, 22, 9, 4, 9पूर्ण,	/* 4 MB */
+	अणु 0xe6, 23, 9, 4, 10पूर्ण,	/* 8 MB */
+	अणु 0x73, 24, 9, 5, 10पूर्ण,	/* 16 MB */
+	अणु 0x75, 25, 9, 5, 10पूर्ण,	/* 32 MB */
+	अणु 0x76, 26, 9, 5, 10पूर्ण,	/* 64 MB */
+	अणु 0x79, 27, 9, 5, 10पूर्ण,	/* 128 MB */
+	अणु 0x71, 28, 9, 5, 10पूर्ण,	/* 256 MB */
 
 	/* MASK ROM */
-	{ 0x5d, 21, 9, 4, 8},	/* 2 MB */
-	{ 0xd5, 22, 9, 4, 9},	/* 4 MB */
-	{ 0xd6, 23, 9, 4, 10},	/* 8 MB */
-	{ 0x57, 24, 9, 4, 11},	/* 16 MB */
-	{ 0x58, 25, 9, 4, 12},	/* 32 MB */
-	{ 0,}
-};
+	अणु 0x5d, 21, 9, 4, 8पूर्ण,	/* 2 MB */
+	अणु 0xd5, 22, 9, 4, 9पूर्ण,	/* 4 MB */
+	अणु 0xd6, 23, 9, 4, 10पूर्ण,	/* 8 MB */
+	अणु 0x57, 24, 9, 4, 11पूर्ण,	/* 16 MB */
+	अणु 0x58, 25, 9, 4, 12पूर्ण,	/* 32 MB */
+	अणु 0,पूर्ण
+पूर्ण;
 
-static struct alauda_card_info *alauda_card_find_id(unsigned char id)
-{
-	int i;
+अटल काष्ठा alauda_card_info *alauda_card_find_id(अचिन्हित अक्षर id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; alauda_card_ids[i].id != 0; i++)
-		if (alauda_card_ids[i].id == id)
-			return &(alauda_card_ids[i]);
-	return NULL;
-}
+	क्रम (i = 0; alauda_card_ids[i].id != 0; i++)
+		अगर (alauda_card_ids[i].id == id)
+			वापस &(alauda_card_ids[i]);
+	वापस शून्य;
+पूर्ण
 
 /*
  * ECC computation.
  */
 
-static unsigned char parity[256];
-static unsigned char ecc2[256];
+अटल अचिन्हित अक्षर parity[256];
+अटल अचिन्हित अक्षर ecc2[256];
 
-static void nand_init_ecc(void)
-{
-	int i, j, a;
+अटल व्योम nand_init_ecc(व्योम)
+अणु
+	पूर्णांक i, j, a;
 
 	parity[0] = 0;
-	for (i = 1; i < 256; i++)
+	क्रम (i = 1; i < 256; i++)
 		parity[i] = (parity[i&(i-1)] ^ 1);
 
-	for (i = 0; i < 256; i++) {
+	क्रम (i = 0; i < 256; i++) अणु
 		a = 0;
-		for (j = 0; j < 8; j++) {
-			if (i & (1<<j)) {
-				if ((j & 1) == 0)
+		क्रम (j = 0; j < 8; j++) अणु
+			अगर (i & (1<<j)) अणु
+				अगर ((j & 1) == 0)
 					a ^= 0x04;
-				if ((j & 2) == 0)
+				अगर ((j & 2) == 0)
 					a ^= 0x10;
-				if ((j & 4) == 0)
+				अगर ((j & 4) == 0)
 					a ^= 0x40;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		ecc2[i] = ~(a ^ (a<<1) ^ (parity[i] ? 0xa8 : 0));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* compute 3-byte ecc on 256 bytes */
-static void nand_compute_ecc(unsigned char *data, unsigned char *ecc)
-{
-	int i, j, a;
-	unsigned char par = 0, bit, bits[8] = {0};
+अटल व्योम nand_compute_ecc(अचिन्हित अक्षर *data, अचिन्हित अक्षर *ecc)
+अणु
+	पूर्णांक i, j, a;
+	अचिन्हित अक्षर par = 0, bit, bits[8] = अणु0पूर्ण;
 
 	/* collect 16 checksum bits */
-	for (i = 0; i < 256; i++) {
+	क्रम (i = 0; i < 256; i++) अणु
 		par ^= data[i];
 		bit = parity[data[i]];
-		for (j = 0; j < 8; j++)
-			if ((i & (1<<j)) == 0)
+		क्रम (j = 0; j < 8; j++)
+			अगर ((i & (1<<j)) == 0)
 				bits[j] ^= bit;
-	}
+	पूर्ण
 
 	/* put 4+4+4 = 12 bits in the ecc */
 	a = (bits[3] << 6) + (bits[2] << 4) + (bits[1] << 2) + bits[0];
@@ -262,57 +263,57 @@ static void nand_compute_ecc(unsigned char *data, unsigned char *ecc)
 	ecc[1] = ~(a ^ (a<<1) ^ (parity[par] ? 0xaa : 0));
 
 	ecc[2] = ecc2[par];
-}
+पूर्ण
 
-static int nand_compare_ecc(unsigned char *data, unsigned char *ecc)
-{
-	return (data[0] == ecc[0] && data[1] == ecc[1] && data[2] == ecc[2]);
-}
+अटल पूर्णांक nand_compare_ecc(अचिन्हित अक्षर *data, अचिन्हित अक्षर *ecc)
+अणु
+	वापस (data[0] == ecc[0] && data[1] == ecc[1] && data[2] == ecc[2]);
+पूर्ण
 
-static void nand_store_ecc(unsigned char *data, unsigned char *ecc)
-{
-	memcpy(data, ecc, 3);
-}
+अटल व्योम nand_store_ecc(अचिन्हित अक्षर *data, अचिन्हित अक्षर *ecc)
+अणु
+	स_नकल(data, ecc, 3);
+पूर्ण
 
 /*
  * Alauda driver
  */
 
 /*
- * Forget our PBA <---> LBA mappings for a particular port
+ * Forget our PBA <---> LBA mappings क्रम a particular port
  */
-static void alauda_free_maps (struct alauda_media_info *media_info)
-{
-	unsigned int shift = media_info->zoneshift
-		+ media_info->blockshift + media_info->pageshift;
-	unsigned int num_zones = media_info->capacity >> shift;
-	unsigned int i;
+अटल व्योम alauda_मुक्त_maps (काष्ठा alauda_media_info *media_info)
+अणु
+	अचिन्हित पूर्णांक shअगरt = media_info->zoneshअगरt
+		+ media_info->blockshअगरt + media_info->pageshअगरt;
+	अचिन्हित पूर्णांक num_zones = media_info->capacity >> shअगरt;
+	अचिन्हित पूर्णांक i;
 
-	if (media_info->lba_to_pba != NULL)
-		for (i = 0; i < num_zones; i++) {
-			kfree(media_info->lba_to_pba[i]);
-			media_info->lba_to_pba[i] = NULL;
-		}
+	अगर (media_info->lba_to_pba != शून्य)
+		क्रम (i = 0; i < num_zones; i++) अणु
+			kमुक्त(media_info->lba_to_pba[i]);
+			media_info->lba_to_pba[i] = शून्य;
+		पूर्ण
 
-	if (media_info->pba_to_lba != NULL)
-		for (i = 0; i < num_zones; i++) {
-			kfree(media_info->pba_to_lba[i]);
-			media_info->pba_to_lba[i] = NULL;
-		}
-}
+	अगर (media_info->pba_to_lba != शून्य)
+		क्रम (i = 0; i < num_zones; i++) अणु
+			kमुक्त(media_info->pba_to_lba[i]);
+			media_info->pba_to_lba[i] = शून्य;
+		पूर्ण
+पूर्ण
 
 /*
  * Returns 2 bytes of status data
- * The first byte describes media status, and second byte describes door status
+ * The first byte describes media status, and second byte describes करोor status
  */
-static int alauda_get_media_status(struct us_data *us, unsigned char *data)
-{
-	int rc;
-	unsigned char command;
+अटल पूर्णांक alauda_get_media_status(काष्ठा us_data *us, अचिन्हित अक्षर *data)
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर command;
 
-	if (MEDIA_PORT(us) == ALAUDA_PORT_XD)
+	अगर (MEDIA_PORT(us) == ALAUDA_PORT_XD)
 		command = ALAUDA_GET_XD_MEDIA_STATUS;
-	else
+	अन्यथा
 		command = ALAUDA_GET_SM_MEDIA_STATUS;
 
 	rc = usb_stor_ctrl_transfer(us, us->recv_ctrl_pipe,
@@ -320,316 +321,316 @@ static int alauda_get_media_status(struct us_data *us, unsigned char *data)
 
 	usb_stor_dbg(us, "Media status %02X %02X\n", data[0], data[1]);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * Clears the "media was changed" bit so that we know when it changes again
  * in the future.
  */
-static int alauda_ack_media(struct us_data *us)
-{
-	unsigned char command;
+अटल पूर्णांक alauda_ack_media(काष्ठा us_data *us)
+अणु
+	अचिन्हित अक्षर command;
 
-	if (MEDIA_PORT(us) == ALAUDA_PORT_XD)
+	अगर (MEDIA_PORT(us) == ALAUDA_PORT_XD)
 		command = ALAUDA_ACK_XD_MEDIA_CHANGE;
-	else
+	अन्यथा
 		command = ALAUDA_ACK_SM_MEDIA_CHANGE;
 
-	return usb_stor_ctrl_transfer(us, us->send_ctrl_pipe,
-		command, 0x40, 0, 1, NULL, 0);
-}
+	वापस usb_stor_ctrl_transfer(us, us->send_ctrl_pipe,
+		command, 0x40, 0, 1, शून्य, 0);
+पूर्ण
 
 /*
  * Retrieves a 4-byte media signature, which indicates manufacturer, capacity,
  * and some other details.
  */
-static int alauda_get_media_signature(struct us_data *us, unsigned char *data)
-{
-	unsigned char command;
+अटल पूर्णांक alauda_get_media_signature(काष्ठा us_data *us, अचिन्हित अक्षर *data)
+अणु
+	अचिन्हित अक्षर command;
 
-	if (MEDIA_PORT(us) == ALAUDA_PORT_XD)
+	अगर (MEDIA_PORT(us) == ALAUDA_PORT_XD)
 		command = ALAUDA_GET_XD_MEDIA_SIG;
-	else
+	अन्यथा
 		command = ALAUDA_GET_SM_MEDIA_SIG;
 
-	return usb_stor_ctrl_transfer(us, us->recv_ctrl_pipe,
+	वापस usb_stor_ctrl_transfer(us, us->recv_ctrl_pipe,
 		command, 0xc0, 0, 0, data, 4);
-}
+पूर्ण
 
 /*
  * Resets the media status (but not the whole device?)
  */
-static int alauda_reset_media(struct us_data *us)
-{
-	unsigned char *command = us->iobuf;
+अटल पूर्णांक alauda_reset_media(काष्ठा us_data *us)
+अणु
+	अचिन्हित अक्षर *command = us->iobuf;
 
-	memset(command, 0, 9);
+	स_रखो(command, 0, 9);
 	command[0] = ALAUDA_BULK_CMD;
 	command[1] = ALAUDA_BULK_RESET_MEDIA;
 	command[8] = MEDIA_PORT(us);
 
-	return usb_stor_bulk_transfer_buf(us, us->send_bulk_pipe,
-		command, 9, NULL);
-}
+	वापस usb_stor_bulk_transfer_buf(us, us->send_bulk_pipe,
+		command, 9, शून्य);
+पूर्ण
 
 /*
  * Examines the media and deduces capacity, etc.
  */
-static int alauda_init_media(struct us_data *us)
-{
-	unsigned char *data = us->iobuf;
-	int ready = 0;
-	struct alauda_card_info *media_info;
-	unsigned int num_zones;
+अटल पूर्णांक alauda_init_media(काष्ठा us_data *us)
+अणु
+	अचिन्हित अक्षर *data = us->iobuf;
+	पूर्णांक पढ़ोy = 0;
+	काष्ठा alauda_card_info *media_info;
+	अचिन्हित पूर्णांक num_zones;
 
-	while (ready == 0) {
+	जबतक (पढ़ोy == 0) अणु
 		msleep(20);
 
-		if (alauda_get_media_status(us, data) != USB_STOR_XFER_GOOD)
-			return USB_STOR_TRANSPORT_ERROR;
+		अगर (alauda_get_media_status(us, data) != USB_STOR_XFER_GOOD)
+			वापस USB_STOR_TRANSPORT_ERROR;
 
-		if (data[0] & 0x10)
-			ready = 1;
-	}
+		अगर (data[0] & 0x10)
+			पढ़ोy = 1;
+	पूर्ण
 
 	usb_stor_dbg(us, "We are ready for action!\n");
 
-	if (alauda_ack_media(us) != USB_STOR_XFER_GOOD)
-		return USB_STOR_TRANSPORT_ERROR;
+	अगर (alauda_ack_media(us) != USB_STOR_XFER_GOOD)
+		वापस USB_STOR_TRANSPORT_ERROR;
 
 	msleep(10);
 
-	if (alauda_get_media_status(us, data) != USB_STOR_XFER_GOOD)
-		return USB_STOR_TRANSPORT_ERROR;
+	अगर (alauda_get_media_status(us, data) != USB_STOR_XFER_GOOD)
+		वापस USB_STOR_TRANSPORT_ERROR;
 
-	if (data[0] != 0x14) {
+	अगर (data[0] != 0x14) अणु
 		usb_stor_dbg(us, "Media not ready after ack\n");
-		return USB_STOR_TRANSPORT_ERROR;
-	}
+		वापस USB_STOR_TRANSPORT_ERROR;
+	पूर्ण
 
-	if (alauda_get_media_signature(us, data) != USB_STOR_XFER_GOOD)
-		return USB_STOR_TRANSPORT_ERROR;
+	अगर (alauda_get_media_signature(us, data) != USB_STOR_XFER_GOOD)
+		वापस USB_STOR_TRANSPORT_ERROR;
 
 	usb_stor_dbg(us, "Media signature: %4ph\n", data);
 	media_info = alauda_card_find_id(data[1]);
-	if (media_info == NULL) {
+	अगर (media_info == शून्य) अणु
 		pr_warn("alauda_init_media: Unrecognised media signature: %4ph\n",
 			data);
-		return USB_STOR_TRANSPORT_ERROR;
-	}
+		वापस USB_STOR_TRANSPORT_ERROR;
+	पूर्ण
 
-	MEDIA_INFO(us).capacity = 1 << media_info->chipshift;
+	MEDIA_INFO(us).capacity = 1 << media_info->chipshअगरt;
 	usb_stor_dbg(us, "Found media with capacity: %ldMB\n",
 		     MEDIA_INFO(us).capacity >> 20);
 
-	MEDIA_INFO(us).pageshift = media_info->pageshift;
-	MEDIA_INFO(us).blockshift = media_info->blockshift;
-	MEDIA_INFO(us).zoneshift = media_info->zoneshift;
+	MEDIA_INFO(us).pageshअगरt = media_info->pageshअगरt;
+	MEDIA_INFO(us).blockshअगरt = media_info->blockshअगरt;
+	MEDIA_INFO(us).zoneshअगरt = media_info->zoneshअगरt;
 
-	MEDIA_INFO(us).pagesize = 1 << media_info->pageshift;
-	MEDIA_INFO(us).blocksize = 1 << media_info->blockshift;
-	MEDIA_INFO(us).zonesize = 1 << media_info->zoneshift;
+	MEDIA_INFO(us).pagesize = 1 << media_info->pageshअगरt;
+	MEDIA_INFO(us).blocksize = 1 << media_info->blockshअगरt;
+	MEDIA_INFO(us).zonesize = 1 << media_info->zoneshअगरt;
 
-	MEDIA_INFO(us).uzonesize = ((1 << media_info->zoneshift) / 128) * 125;
+	MEDIA_INFO(us).uzonesize = ((1 << media_info->zoneshअगरt) / 128) * 125;
 	MEDIA_INFO(us).blockmask = MEDIA_INFO(us).blocksize - 1;
 
-	num_zones = MEDIA_INFO(us).capacity >> (MEDIA_INFO(us).zoneshift
-		+ MEDIA_INFO(us).blockshift + MEDIA_INFO(us).pageshift);
-	MEDIA_INFO(us).pba_to_lba = kcalloc(num_zones, sizeof(u16*), GFP_NOIO);
-	MEDIA_INFO(us).lba_to_pba = kcalloc(num_zones, sizeof(u16*), GFP_NOIO);
+	num_zones = MEDIA_INFO(us).capacity >> (MEDIA_INFO(us).zoneshअगरt
+		+ MEDIA_INFO(us).blockshअगरt + MEDIA_INFO(us).pageshअगरt);
+	MEDIA_INFO(us).pba_to_lba = kसुस्मृति(num_zones, माप(u16*), GFP_NOIO);
+	MEDIA_INFO(us).lba_to_pba = kसुस्मृति(num_zones, माप(u16*), GFP_NOIO);
 
-	if (alauda_reset_media(us) != USB_STOR_XFER_GOOD)
-		return USB_STOR_TRANSPORT_ERROR;
+	अगर (alauda_reset_media(us) != USB_STOR_XFER_GOOD)
+		वापस USB_STOR_TRANSPORT_ERROR;
 
-	return USB_STOR_TRANSPORT_GOOD;
-}
+	वापस USB_STOR_TRANSPORT_GOOD;
+पूर्ण
 
 /*
- * Examines the media status and does the right thing when the media has gone,
+ * Examines the media status and करोes the right thing when the media has gone,
  * appeared, or changed.
  */
-static int alauda_check_media(struct us_data *us)
-{
-	struct alauda_info *info = (struct alauda_info *) us->extra;
-	unsigned char status[2];
+अटल पूर्णांक alauda_check_media(काष्ठा us_data *us)
+अणु
+	काष्ठा alauda_info *info = (काष्ठा alauda_info *) us->extra;
+	अचिन्हित अक्षर status[2];
 
 	alauda_get_media_status(us, status);
 
-	/* Check for no media or door open */
-	if ((status[0] & 0x80) || ((status[0] & 0x1F) == 0x10)
-		|| ((status[1] & 0x01) == 0)) {
+	/* Check क्रम no media or करोor खोलो */
+	अगर ((status[0] & 0x80) || ((status[0] & 0x1F) == 0x10)
+		|| ((status[1] & 0x01) == 0)) अणु
 		usb_stor_dbg(us, "No media, or door open\n");
-		alauda_free_maps(&MEDIA_INFO(us));
+		alauda_मुक्त_maps(&MEDIA_INFO(us));
 		info->sense_key = 0x02;
 		info->sense_asc = 0x3A;
 		info->sense_ascq = 0x00;
-		return USB_STOR_TRANSPORT_FAILED;
-	}
+		वापस USB_STOR_TRANSPORT_FAILED;
+	पूर्ण
 
-	/* Check for media change */
-	if (status[0] & 0x08) {
+	/* Check क्रम media change */
+	अगर (status[0] & 0x08) अणु
 		usb_stor_dbg(us, "Media change detected\n");
-		alauda_free_maps(&MEDIA_INFO(us));
+		alauda_मुक्त_maps(&MEDIA_INFO(us));
 		alauda_init_media(us);
 
 		info->sense_key = UNIT_ATTENTION;
 		info->sense_asc = 0x28;
 		info->sense_ascq = 0x00;
-		return USB_STOR_TRANSPORT_FAILED;
-	}
+		वापस USB_STOR_TRANSPORT_FAILED;
+	पूर्ण
 
-	return USB_STOR_TRANSPORT_GOOD;
-}
+	वापस USB_STOR_TRANSPORT_GOOD;
+पूर्ण
 
 /*
- * Checks the status from the 2nd status register
+ * Checks the status from the 2nd status रेजिस्टर
  * Returns 3 bytes of status data, only the first is known
  */
-static int alauda_check_status2(struct us_data *us)
-{
-	int rc;
-	unsigned char command[] = {
+अटल पूर्णांक alauda_check_status2(काष्ठा us_data *us)
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर command[] = अणु
 		ALAUDA_BULK_CMD, ALAUDA_BULK_GET_STATUS2,
 		0, 0, 0, 0, 3, 0, MEDIA_PORT(us)
-	};
-	unsigned char data[3];
+	पूर्ण;
+	अचिन्हित अक्षर data[3];
 
 	rc = usb_stor_bulk_transfer_buf(us, us->send_bulk_pipe,
-		command, 9, NULL);
-	if (rc != USB_STOR_XFER_GOOD)
-		return rc;
+		command, 9, शून्य);
+	अगर (rc != USB_STOR_XFER_GOOD)
+		वापस rc;
 
 	rc = usb_stor_bulk_transfer_buf(us, us->recv_bulk_pipe,
-		data, 3, NULL);
-	if (rc != USB_STOR_XFER_GOOD)
-		return rc;
+		data, 3, शून्य);
+	अगर (rc != USB_STOR_XFER_GOOD)
+		वापस rc;
 
 	usb_stor_dbg(us, "%3ph\n", data);
-	if (data[0] & ALAUDA_STATUS_ERROR)
-		return USB_STOR_XFER_ERROR;
+	अगर (data[0] & ALAUDA_STATUS_ERROR)
+		वापस USB_STOR_XFER_ERROR;
 
-	return USB_STOR_XFER_GOOD;
-}
+	वापस USB_STOR_XFER_GOOD;
+पूर्ण
 
 /*
- * Gets the redundancy data for the first page of a PBA
+ * Gets the redundancy data क्रम the first page of a PBA
  * Returns 16 bytes.
  */
-static int alauda_get_redu_data(struct us_data *us, u16 pba, unsigned char *data)
-{
-	int rc;
-	unsigned char command[] = {
+अटल पूर्णांक alauda_get_redu_data(काष्ठा us_data *us, u16 pba, अचिन्हित अक्षर *data)
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर command[] = अणु
 		ALAUDA_BULK_CMD, ALAUDA_BULK_GET_REDU_DATA,
 		PBA_HI(pba), PBA_ZONE(pba), 0, PBA_LO(pba), 0, 0, MEDIA_PORT(us)
-	};
+	पूर्ण;
 
 	rc = usb_stor_bulk_transfer_buf(us, us->send_bulk_pipe,
-		command, 9, NULL);
-	if (rc != USB_STOR_XFER_GOOD)
-		return rc;
+		command, 9, शून्य);
+	अगर (rc != USB_STOR_XFER_GOOD)
+		वापस rc;
 
-	return usb_stor_bulk_transfer_buf(us, us->recv_bulk_pipe,
-		data, 16, NULL);
-}
+	वापस usb_stor_bulk_transfer_buf(us, us->recv_bulk_pipe,
+		data, 16, शून्य);
+पूर्ण
 
 /*
  * Finds the first unused PBA in a zone
- * Returns the absolute PBA of an unused PBA, or 0 if none found.
+ * Returns the असलolute PBA of an unused PBA, or 0 अगर none found.
  */
-static u16 alauda_find_unused_pba(struct alauda_media_info *info,
-	unsigned int zone)
-{
+अटल u16 alauda_find_unused_pba(काष्ठा alauda_media_info *info,
+	अचिन्हित पूर्णांक zone)
+अणु
 	u16 *pba_to_lba = info->pba_to_lba[zone];
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < info->zonesize; i++)
-		if (pba_to_lba[i] == UNDEF)
-			return (zone << info->zoneshift) + i;
+	क्रम (i = 0; i < info->zonesize; i++)
+		अगर (pba_to_lba[i] == UNDEF)
+			वापस (zone << info->zoneshअगरt) + i;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Reads the redundancy data for all PBA's in a zone
+ * Reads the redundancy data क्रम all PBA's in a zone
  * Produces lba <--> pba mappings
  */
-static int alauda_read_map(struct us_data *us, unsigned int zone)
-{
-	unsigned char *data = us->iobuf;
-	int result;
-	int i, j;
-	unsigned int zonesize = MEDIA_INFO(us).zonesize;
-	unsigned int uzonesize = MEDIA_INFO(us).uzonesize;
-	unsigned int lba_offset, lba_real, blocknum;
-	unsigned int zone_base_lba = zone * uzonesize;
-	unsigned int zone_base_pba = zone * zonesize;
-	u16 *lba_to_pba = kcalloc(zonesize, sizeof(u16), GFP_NOIO);
-	u16 *pba_to_lba = kcalloc(zonesize, sizeof(u16), GFP_NOIO);
-	if (lba_to_pba == NULL || pba_to_lba == NULL) {
+अटल पूर्णांक alauda_पढ़ो_map(काष्ठा us_data *us, अचिन्हित पूर्णांक zone)
+अणु
+	अचिन्हित अक्षर *data = us->iobuf;
+	पूर्णांक result;
+	पूर्णांक i, j;
+	अचिन्हित पूर्णांक zonesize = MEDIA_INFO(us).zonesize;
+	अचिन्हित पूर्णांक uzonesize = MEDIA_INFO(us).uzonesize;
+	अचिन्हित पूर्णांक lba_offset, lba_real, blocknum;
+	अचिन्हित पूर्णांक zone_base_lba = zone * uzonesize;
+	अचिन्हित पूर्णांक zone_base_pba = zone * zonesize;
+	u16 *lba_to_pba = kसुस्मृति(zonesize, माप(u16), GFP_NOIO);
+	u16 *pba_to_lba = kसुस्मृति(zonesize, माप(u16), GFP_NOIO);
+	अगर (lba_to_pba == शून्य || pba_to_lba == शून्य) अणु
 		result = USB_STOR_TRANSPORT_ERROR;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	usb_stor_dbg(us, "Mapping blocks for zone %d\n", zone);
 
 	/* 1024 PBA's per zone */
-	for (i = 0; i < zonesize; i++)
+	क्रम (i = 0; i < zonesize; i++)
 		lba_to_pba[i] = pba_to_lba[i] = UNDEF;
 
-	for (i = 0; i < zonesize; i++) {
+	क्रम (i = 0; i < zonesize; i++) अणु
 		blocknum = zone_base_pba + i;
 
 		result = alauda_get_redu_data(us, blocknum, data);
-		if (result != USB_STOR_XFER_GOOD) {
+		अगर (result != USB_STOR_XFER_GOOD) अणु
 			result = USB_STOR_TRANSPORT_ERROR;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		/* special PBAs have control field 0^16 */
-		for (j = 0; j < 16; j++)
-			if (data[j] != 0)
-				goto nonz;
+		क्रम (j = 0; j < 16; j++)
+			अगर (data[j] != 0)
+				जाओ nonz;
 		pba_to_lba[i] = UNUSABLE;
 		usb_stor_dbg(us, "PBA %d has no logical mapping\n", blocknum);
-		continue;
+		जारी;
 
 	nonz:
 		/* unwritten PBAs have control field FF^16 */
-		for (j = 0; j < 16; j++)
-			if (data[j] != 0xff)
-				goto nonff;
-		continue;
+		क्रम (j = 0; j < 16; j++)
+			अगर (data[j] != 0xff)
+				जाओ nonff;
+		जारी;
 
 	nonff:
 		/* normal PBAs start with six FFs */
-		if (j < 6) {
+		अगर (j < 6) अणु
 			usb_stor_dbg(us, "PBA %d has no logical mapping: reserved area = %02X%02X%02X%02X data status %02X block status %02X\n",
 				     blocknum,
 				     data[0], data[1], data[2], data[3],
 				     data[4], data[5]);
 			pba_to_lba[i] = UNUSABLE;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if ((data[6] >> 4) != 0x01) {
+		अगर ((data[6] >> 4) != 0x01) अणु
 			usb_stor_dbg(us, "PBA %d has invalid address field %02X%02X/%02X%02X\n",
 				     blocknum, data[6], data[7],
 				     data[11], data[12]);
 			pba_to_lba[i] = UNUSABLE;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* check even parity */
-		if (parity[data[6] ^ data[7]]) {
-			printk(KERN_WARNING
+		अगर (parity[data[6] ^ data[7]]) अणु
+			prपूर्णांकk(KERN_WARNING
 			       "alauda_read_map: Bad parity in LBA for block %d"
 			       " (%02X %02X)\n", i, data[6], data[7]);
 			pba_to_lba[i] = UNUSABLE;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		lba_offset = short_pack(data[7], data[6]);
+		lba_offset = लघु_pack(data[7], data[6]);
 		lba_offset = (lba_offset & 0x07FF) >> 1;
 		lba_real = lba_offset + zone_base_lba;
 
@@ -638,104 +639,104 @@ static int alauda_read_map(struct us_data *us, unsigned int zone)
 		 * go back to zero, but are within a higher block of LBA's.
 		 * Also, there is a maximum of 1000 LBA's per zone.
 		 * In other words, in PBA 1024-2047 you will find LBA 0-999
-		 * which are really LBA 1000-1999. This allows for 24 bad
+		 * which are really LBA 1000-1999. This allows क्रम 24 bad
 		 * or special physical blocks per zone.
 		 */
 
-		if (lba_offset >= uzonesize) {
-			printk(KERN_WARNING
+		अगर (lba_offset >= uzonesize) अणु
+			prपूर्णांकk(KERN_WARNING
 			       "alauda_read_map: Bad low LBA %d for block %d\n",
 			       lba_real, blocknum);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (lba_to_pba[lba_offset] != UNDEF) {
-			printk(KERN_WARNING
+		अगर (lba_to_pba[lba_offset] != UNDEF) अणु
+			prपूर्णांकk(KERN_WARNING
 			       "alauda_read_map: "
 			       "LBA %d seen for PBA %d and %d\n",
 			       lba_real, lba_to_pba[lba_offset], blocknum);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		pba_to_lba[i] = lba_real;
 		lba_to_pba[lba_offset] = blocknum;
-		continue;
-	}
+		जारी;
+	पूर्ण
 
 	MEDIA_INFO(us).lba_to_pba[zone] = lba_to_pba;
 	MEDIA_INFO(us).pba_to_lba[zone] = pba_to_lba;
 	result = 0;
-	goto out;
+	जाओ out;
 
 error:
-	kfree(lba_to_pba);
-	kfree(pba_to_lba);
+	kमुक्त(lba_to_pba);
+	kमुक्त(pba_to_lba);
 out:
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
- * Checks to see whether we have already mapped a certain zone
+ * Checks to see whether we have alपढ़ोy mapped a certain zone
  * If we haven't, the map is generated
  */
-static void alauda_ensure_map_for_zone(struct us_data *us, unsigned int zone)
-{
-	if (MEDIA_INFO(us).lba_to_pba[zone] == NULL
-		|| MEDIA_INFO(us).pba_to_lba[zone] == NULL)
-		alauda_read_map(us, zone);
-}
+अटल व्योम alauda_ensure_map_क्रम_zone(काष्ठा us_data *us, अचिन्हित पूर्णांक zone)
+अणु
+	अगर (MEDIA_INFO(us).lba_to_pba[zone] == शून्य
+		|| MEDIA_INFO(us).pba_to_lba[zone] == शून्य)
+		alauda_पढ़ो_map(us, zone);
+पूर्ण
 
 /*
  * Erases an entire block
  */
-static int alauda_erase_block(struct us_data *us, u16 pba)
-{
-	int rc;
-	unsigned char command[] = {
+अटल पूर्णांक alauda_erase_block(काष्ठा us_data *us, u16 pba)
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर command[] = अणु
 		ALAUDA_BULK_CMD, ALAUDA_BULK_ERASE_BLOCK, PBA_HI(pba),
 		PBA_ZONE(pba), 0, PBA_LO(pba), 0x02, 0, MEDIA_PORT(us)
-	};
-	unsigned char buf[2];
+	पूर्ण;
+	अचिन्हित अक्षर buf[2];
 
 	usb_stor_dbg(us, "Erasing PBA %d\n", pba);
 
 	rc = usb_stor_bulk_transfer_buf(us, us->send_bulk_pipe,
-		command, 9, NULL);
-	if (rc != USB_STOR_XFER_GOOD)
-		return rc;
+		command, 9, शून्य);
+	अगर (rc != USB_STOR_XFER_GOOD)
+		वापस rc;
 
 	rc = usb_stor_bulk_transfer_buf(us, us->recv_bulk_pipe,
-		buf, 2, NULL);
-	if (rc != USB_STOR_XFER_GOOD)
-		return rc;
+		buf, 2, शून्य);
+	अगर (rc != USB_STOR_XFER_GOOD)
+		वापस rc;
 
 	usb_stor_dbg(us, "Erase result: %02X %02X\n", buf[0], buf[1]);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Reads data from a certain offset page inside a PBA, including interleaved
+ * Reads data from a certain offset page inside a PBA, including पूर्णांकerleaved
  * redundancy data. Returns (pagesize+64)*pages bytes in data.
  */
-static int alauda_read_block_raw(struct us_data *us, u16 pba,
-		unsigned int page, unsigned int pages, unsigned char *data)
-{
-	int rc;
-	unsigned char command[] = {
+अटल पूर्णांक alauda_पढ़ो_block_raw(काष्ठा us_data *us, u16 pba,
+		अचिन्हित पूर्णांक page, अचिन्हित पूर्णांक pages, अचिन्हित अक्षर *data)
+अणु
+	पूर्णांक rc;
+	अचिन्हित अक्षर command[] = अणु
 		ALAUDA_BULK_CMD, ALAUDA_BULK_READ_BLOCK, PBA_HI(pba),
 		PBA_ZONE(pba), 0, PBA_LO(pba) + page, pages, 0, MEDIA_PORT(us)
-	};
+	पूर्ण;
 
 	usb_stor_dbg(us, "pba %d page %d count %d\n", pba, page, pages);
 
 	rc = usb_stor_bulk_transfer_buf(us, us->send_bulk_pipe,
-		command, 9, NULL);
-	if (rc != USB_STOR_XFER_GOOD)
-		return rc;
+		command, 9, शून्य);
+	अगर (rc != USB_STOR_XFER_GOOD)
+		वापस rc;
 
-	return usb_stor_bulk_transfer_buf(us, us->recv_bulk_pipe,
-		data, (MEDIA_INFO(us).pagesize + 64) * pages, NULL);
-}
+	वापस usb_stor_bulk_transfer_buf(us, us->recv_bulk_pipe,
+		data, (MEDIA_INFO(us).pagesize + 64) * pages, शून्य);
+पूर्ण
 
 /*
  * Reads data from a certain offset page inside a PBA, excluding redundancy
@@ -743,243 +744,243 @@ static int alauda_read_block_raw(struct us_data *us, u16 pba,
  * to hold (pagesize+64)*pages bytes of data, but you can ignore those 'extra'
  * trailing bytes outside this function.
  */
-static int alauda_read_block(struct us_data *us, u16 pba,
-		unsigned int page, unsigned int pages, unsigned char *data)
-{
-	int i, rc;
-	unsigned int pagesize = MEDIA_INFO(us).pagesize;
+अटल पूर्णांक alauda_पढ़ो_block(काष्ठा us_data *us, u16 pba,
+		अचिन्हित पूर्णांक page, अचिन्हित पूर्णांक pages, अचिन्हित अक्षर *data)
+अणु
+	पूर्णांक i, rc;
+	अचिन्हित पूर्णांक pagesize = MEDIA_INFO(us).pagesize;
 
-	rc = alauda_read_block_raw(us, pba, page, pages, data);
-	if (rc != USB_STOR_XFER_GOOD)
-		return rc;
+	rc = alauda_पढ़ो_block_raw(us, pba, page, pages, data);
+	अगर (rc != USB_STOR_XFER_GOOD)
+		वापस rc;
 
 	/* Cut out the redundancy data */
-	for (i = 0; i < pages; i++) {
-		int dest_offset = i * pagesize;
-		int src_offset = i * (pagesize + 64);
-		memmove(data + dest_offset, data + src_offset, pagesize);
-	}
+	क्रम (i = 0; i < pages; i++) अणु
+		पूर्णांक dest_offset = i * pagesize;
+		पूर्णांक src_offset = i * (pagesize + 64);
+		स_हटाओ(data + dest_offset, data + src_offset, pagesize);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Writes an entire block of data and checks status after write.
- * Redundancy data must be already included in data. Data should be
+ * Writes an entire block of data and checks status after ग_लिखो.
+ * Redundancy data must be alपढ़ोy included in data. Data should be
  * (pagesize+64)*blocksize bytes in length.
  */
-static int alauda_write_block(struct us_data *us, u16 pba, unsigned char *data)
-{
-	int rc;
-	struct alauda_info *info = (struct alauda_info *) us->extra;
-	unsigned char command[] = {
+अटल पूर्णांक alauda_ग_लिखो_block(काष्ठा us_data *us, u16 pba, अचिन्हित अक्षर *data)
+अणु
+	पूर्णांक rc;
+	काष्ठा alauda_info *info = (काष्ठा alauda_info *) us->extra;
+	अचिन्हित अक्षर command[] = अणु
 		ALAUDA_BULK_CMD, ALAUDA_BULK_WRITE_BLOCK, PBA_HI(pba),
 		PBA_ZONE(pba), 0, PBA_LO(pba), 32, 0, MEDIA_PORT(us)
-	};
+	पूर्ण;
 
 	usb_stor_dbg(us, "pba %d\n", pba);
 
 	rc = usb_stor_bulk_transfer_buf(us, us->send_bulk_pipe,
-		command, 9, NULL);
-	if (rc != USB_STOR_XFER_GOOD)
-		return rc;
+		command, 9, शून्य);
+	अगर (rc != USB_STOR_XFER_GOOD)
+		वापस rc;
 
 	rc = usb_stor_bulk_transfer_buf(us, info->wr_ep, data,
 		(MEDIA_INFO(us).pagesize + 64) * MEDIA_INFO(us).blocksize,
-		NULL);
-	if (rc != USB_STOR_XFER_GOOD)
-		return rc;
+		शून्य);
+	अगर (rc != USB_STOR_XFER_GOOD)
+		वापस rc;
 
-	return alauda_check_status2(us);
-}
+	वापस alauda_check_status2(us);
+पूर्ण
 
 /*
- * Write some data to a specific LBA.
+ * Write some data to a specअगरic LBA.
  */
-static int alauda_write_lba(struct us_data *us, u16 lba,
-		 unsigned int page, unsigned int pages,
-		 unsigned char *ptr, unsigned char *blockbuffer)
-{
+अटल पूर्णांक alauda_ग_लिखो_lba(काष्ठा us_data *us, u16 lba,
+		 अचिन्हित पूर्णांक page, अचिन्हित पूर्णांक pages,
+		 अचिन्हित अक्षर *ptr, अचिन्हित अक्षर *blockbuffer)
+अणु
 	u16 pba, lbap, new_pba;
-	unsigned char *bptr, *cptr, *xptr;
-	unsigned char ecc[3];
-	int i, result;
-	unsigned int uzonesize = MEDIA_INFO(us).uzonesize;
-	unsigned int zonesize = MEDIA_INFO(us).zonesize;
-	unsigned int pagesize = MEDIA_INFO(us).pagesize;
-	unsigned int blocksize = MEDIA_INFO(us).blocksize;
-	unsigned int lba_offset = lba % uzonesize;
-	unsigned int new_pba_offset;
-	unsigned int zone = lba / uzonesize;
+	अचिन्हित अक्षर *bptr, *cptr, *xptr;
+	अचिन्हित अक्षर ecc[3];
+	पूर्णांक i, result;
+	अचिन्हित पूर्णांक uzonesize = MEDIA_INFO(us).uzonesize;
+	अचिन्हित पूर्णांक zonesize = MEDIA_INFO(us).zonesize;
+	अचिन्हित पूर्णांक pagesize = MEDIA_INFO(us).pagesize;
+	अचिन्हित पूर्णांक blocksize = MEDIA_INFO(us).blocksize;
+	अचिन्हित पूर्णांक lba_offset = lba % uzonesize;
+	अचिन्हित पूर्णांक new_pba_offset;
+	अचिन्हित पूर्णांक zone = lba / uzonesize;
 
-	alauda_ensure_map_for_zone(us, zone);
+	alauda_ensure_map_क्रम_zone(us, zone);
 
 	pba = MEDIA_INFO(us).lba_to_pba[zone][lba_offset];
-	if (pba == 1) {
+	अगर (pba == 1) अणु
 		/*
-		 * Maybe it is impossible to write to PBA 1.
-		 * Fake success, but don't do anything.
+		 * Maybe it is impossible to ग_लिखो to PBA 1.
+		 * Fake success, but करोn't करो anything.
 		 */
-		printk(KERN_WARNING
+		prपूर्णांकk(KERN_WARNING
 		       "alauda_write_lba: avoid writing to pba 1\n");
-		return USB_STOR_TRANSPORT_GOOD;
-	}
+		वापस USB_STOR_TRANSPORT_GOOD;
+	पूर्ण
 
 	new_pba = alauda_find_unused_pba(&MEDIA_INFO(us), zone);
-	if (!new_pba) {
-		printk(KERN_WARNING
+	अगर (!new_pba) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "alauda_write_lba: Out of unused blocks\n");
-		return USB_STOR_TRANSPORT_ERROR;
-	}
+		वापस USB_STOR_TRANSPORT_ERROR;
+	पूर्ण
 
-	/* read old contents */
-	if (pba != UNDEF) {
-		result = alauda_read_block_raw(us, pba, 0,
+	/* पढ़ो old contents */
+	अगर (pba != UNDEF) अणु
+		result = alauda_पढ़ो_block_raw(us, pba, 0,
 			blocksize, blockbuffer);
-		if (result != USB_STOR_XFER_GOOD)
-			return result;
-	} else {
-		memset(blockbuffer, 0, blocksize * (pagesize + 64));
-	}
+		अगर (result != USB_STOR_XFER_GOOD)
+			वापस result;
+	पूर्ण अन्यथा अणु
+		स_रखो(blockbuffer, 0, blocksize * (pagesize + 64));
+	पूर्ण
 
 	lbap = (lba_offset << 1) | 0x1000;
-	if (parity[MSB_of(lbap) ^ LSB_of(lbap)])
+	अगर (parity[MSB_of(lbap) ^ LSB_of(lbap)])
 		lbap ^= 1;
 
 	/* check old contents and fill lba */
-	for (i = 0; i < blocksize; i++) {
+	क्रम (i = 0; i < blocksize; i++) अणु
 		bptr = blockbuffer + (i * (pagesize + 64));
 		cptr = bptr + pagesize;
 		nand_compute_ecc(bptr, ecc);
-		if (!nand_compare_ecc(cptr+13, ecc)) {
+		अगर (!nand_compare_ecc(cptr+13, ecc)) अणु
 			usb_stor_dbg(us, "Warning: bad ecc in page %d- of pba %d\n",
 				     i, pba);
 			nand_store_ecc(cptr+13, ecc);
-		}
+		पूर्ण
 		nand_compute_ecc(bptr + (pagesize / 2), ecc);
-		if (!nand_compare_ecc(cptr+8, ecc)) {
+		अगर (!nand_compare_ecc(cptr+8, ecc)) अणु
 			usb_stor_dbg(us, "Warning: bad ecc in page %d+ of pba %d\n",
 				     i, pba);
 			nand_store_ecc(cptr+8, ecc);
-		}
+		पूर्ण
 		cptr[6] = cptr[11] = MSB_of(lbap);
 		cptr[7] = cptr[12] = LSB_of(lbap);
-	}
+	पूर्ण
 
 	/* copy in new stuff and compute ECC */
 	xptr = ptr;
-	for (i = page; i < page+pages; i++) {
+	क्रम (i = page; i < page+pages; i++) अणु
 		bptr = blockbuffer + (i * (pagesize + 64));
 		cptr = bptr + pagesize;
-		memcpy(bptr, xptr, pagesize);
+		स_नकल(bptr, xptr, pagesize);
 		xptr += pagesize;
 		nand_compute_ecc(bptr, ecc);
 		nand_store_ecc(cptr+13, ecc);
 		nand_compute_ecc(bptr + (pagesize / 2), ecc);
 		nand_store_ecc(cptr+8, ecc);
-	}
+	पूर्ण
 
-	result = alauda_write_block(us, new_pba, blockbuffer);
-	if (result != USB_STOR_XFER_GOOD)
-		return result;
+	result = alauda_ग_लिखो_block(us, new_pba, blockbuffer);
+	अगर (result != USB_STOR_XFER_GOOD)
+		वापस result;
 
 	new_pba_offset = new_pba - (zone * zonesize);
 	MEDIA_INFO(us).pba_to_lba[zone][new_pba_offset] = lba;
 	MEDIA_INFO(us).lba_to_pba[zone][lba_offset] = new_pba;
 	usb_stor_dbg(us, "Remapped LBA %d to PBA %d\n", lba, new_pba);
 
-	if (pba != UNDEF) {
-		unsigned int pba_offset = pba - (zone * zonesize);
+	अगर (pba != UNDEF) अणु
+		अचिन्हित पूर्णांक pba_offset = pba - (zone * zonesize);
 		result = alauda_erase_block(us, pba);
-		if (result != USB_STOR_XFER_GOOD)
-			return result;
+		अगर (result != USB_STOR_XFER_GOOD)
+			वापस result;
 		MEDIA_INFO(us).pba_to_lba[zone][pba_offset] = UNDEF;
-	}
+	पूर्ण
 
-	return USB_STOR_TRANSPORT_GOOD;
-}
+	वापस USB_STOR_TRANSPORT_GOOD;
+पूर्ण
 
 /*
- * Read data from a specific sector address
+ * Read data from a specअगरic sector address
  */
-static int alauda_read_data(struct us_data *us, unsigned long address,
-		unsigned int sectors)
-{
-	unsigned char *buffer;
+अटल पूर्णांक alauda_पढ़ो_data(काष्ठा us_data *us, अचिन्हित दीर्घ address,
+		अचिन्हित पूर्णांक sectors)
+अणु
+	अचिन्हित अक्षर *buffer;
 	u16 lba, max_lba;
-	unsigned int page, len, offset;
-	unsigned int blockshift = MEDIA_INFO(us).blockshift;
-	unsigned int pageshift = MEDIA_INFO(us).pageshift;
-	unsigned int blocksize = MEDIA_INFO(us).blocksize;
-	unsigned int pagesize = MEDIA_INFO(us).pagesize;
-	unsigned int uzonesize = MEDIA_INFO(us).uzonesize;
-	struct scatterlist *sg;
-	int result;
+	अचिन्हित पूर्णांक page, len, offset;
+	अचिन्हित पूर्णांक blockshअगरt = MEDIA_INFO(us).blockshअगरt;
+	अचिन्हित पूर्णांक pageshअगरt = MEDIA_INFO(us).pageshअगरt;
+	अचिन्हित पूर्णांक blocksize = MEDIA_INFO(us).blocksize;
+	अचिन्हित पूर्णांक pagesize = MEDIA_INFO(us).pagesize;
+	अचिन्हित पूर्णांक uzonesize = MEDIA_INFO(us).uzonesize;
+	काष्ठा scatterlist *sg;
+	पूर्णांक result;
 
 	/*
-	 * Since we only read in one block at a time, we have to create
-	 * a bounce buffer and move the data a piece at a time between the
+	 * Since we only पढ़ो in one block at a समय, we have to create
+	 * a bounce buffer and move the data a piece at a समय between the
 	 * bounce buffer and the actual transfer buffer.
 	 * We make this buffer big enough to hold temporary redundancy data,
-	 * which we use when reading the data blocks.
+	 * which we use when पढ़ोing the data blocks.
 	 */
 
 	len = min(sectors, blocksize) * (pagesize + 64);
-	buffer = kmalloc(len, GFP_NOIO);
-	if (!buffer)
-		return USB_STOR_TRANSPORT_ERROR;
+	buffer = kदो_स्मृति(len, GFP_NOIO);
+	अगर (!buffer)
+		वापस USB_STOR_TRANSPORT_ERROR;
 
 	/* Figure out the initial LBA and page */
-	lba = address >> blockshift;
+	lba = address >> blockshअगरt;
 	page = (address & MEDIA_INFO(us).blockmask);
-	max_lba = MEDIA_INFO(us).capacity >> (blockshift + pageshift);
+	max_lba = MEDIA_INFO(us).capacity >> (blockshअगरt + pageshअगरt);
 
 	result = USB_STOR_TRANSPORT_GOOD;
 	offset = 0;
-	sg = NULL;
+	sg = शून्य;
 
-	while (sectors > 0) {
-		unsigned int zone = lba / uzonesize; /* integer division */
-		unsigned int lba_offset = lba - (zone * uzonesize);
-		unsigned int pages;
+	जबतक (sectors > 0) अणु
+		अचिन्हित पूर्णांक zone = lba / uzonesize; /* पूर्णांकeger भागision */
+		अचिन्हित पूर्णांक lba_offset = lba - (zone * uzonesize);
+		अचिन्हित पूर्णांक pages;
 		u16 pba;
-		alauda_ensure_map_for_zone(us, zone);
+		alauda_ensure_map_क्रम_zone(us, zone);
 
 		/* Not overflowing capacity? */
-		if (lba >= max_lba) {
+		अगर (lba >= max_lba) अणु
 			usb_stor_dbg(us, "Error: Requested lba %u exceeds maximum %u\n",
 				     lba, max_lba);
 			result = USB_STOR_TRANSPORT_ERROR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Find number of pages we can read in this block */
+		/* Find number of pages we can पढ़ो in this block */
 		pages = min(sectors, blocksize - page);
-		len = pages << pageshift;
+		len = pages << pageshअगरt;
 
 		/* Find where this lba lives on disk */
 		pba = MEDIA_INFO(us).lba_to_pba[zone][lba_offset];
 
-		if (pba == UNDEF) {	/* this lba was never written */
+		अगर (pba == UNDEF) अणु	/* this lba was never written */
 			usb_stor_dbg(us, "Read %d zero pages (LBA %d) page %d\n",
 				     pages, lba, page);
 
 			/*
 			 * This is not really an error. It just means
 			 * that the block has never been written.
-			 * Instead of returning USB_STOR_TRANSPORT_ERROR
-			 * it is better to return all zero data.
+			 * Instead of वापसing USB_STOR_TRANSPORT_ERROR
+			 * it is better to वापस all zero data.
 			 */
 
-			memset(buffer, 0, len);
-		} else {
+			स_रखो(buffer, 0, len);
+		पूर्ण अन्यथा अणु
 			usb_stor_dbg(us, "Read %d pages, from PBA %d (LBA %d) page %d\n",
 				     pages, pba, lba, page);
 
-			result = alauda_read_block(us, pba, page, pages, buffer);
-			if (result != USB_STOR_TRANSPORT_GOOD)
-				break;
-		}
+			result = alauda_पढ़ो_block(us, pba, page, pages, buffer);
+			अगर (result != USB_STOR_TRANSPORT_GOOD)
+				अवरोध;
+		पूर्ण
 
 		/* Store the data in the transfer buffer */
 		usb_stor_access_xfer_buf(buffer, len, us->srb,
@@ -988,165 +989,165 @@ static int alauda_read_data(struct us_data *us, unsigned long address,
 		page = 0;
 		lba++;
 		sectors -= pages;
-	}
+	पूर्ण
 
-	kfree(buffer);
-	return result;
-}
+	kमुक्त(buffer);
+	वापस result;
+पूर्ण
 
 /*
- * Write data to a specific sector address
+ * Write data to a specअगरic sector address
  */
-static int alauda_write_data(struct us_data *us, unsigned long address,
-		unsigned int sectors)
-{
-	unsigned char *buffer, *blockbuffer;
-	unsigned int page, len, offset;
-	unsigned int blockshift = MEDIA_INFO(us).blockshift;
-	unsigned int pageshift = MEDIA_INFO(us).pageshift;
-	unsigned int blocksize = MEDIA_INFO(us).blocksize;
-	unsigned int pagesize = MEDIA_INFO(us).pagesize;
-	struct scatterlist *sg;
+अटल पूर्णांक alauda_ग_लिखो_data(काष्ठा us_data *us, अचिन्हित दीर्घ address,
+		अचिन्हित पूर्णांक sectors)
+अणु
+	अचिन्हित अक्षर *buffer, *blockbuffer;
+	अचिन्हित पूर्णांक page, len, offset;
+	अचिन्हित पूर्णांक blockshअगरt = MEDIA_INFO(us).blockshअगरt;
+	अचिन्हित पूर्णांक pageshअगरt = MEDIA_INFO(us).pageshअगरt;
+	अचिन्हित पूर्णांक blocksize = MEDIA_INFO(us).blocksize;
+	अचिन्हित पूर्णांक pagesize = MEDIA_INFO(us).pagesize;
+	काष्ठा scatterlist *sg;
 	u16 lba, max_lba;
-	int result;
+	पूर्णांक result;
 
 	/*
-	 * Since we don't write the user data directly to the device,
+	 * Since we करोn't ग_लिखो the user data directly to the device,
 	 * we have to create a bounce buffer and move the data a piece
-	 * at a time between the bounce buffer and the actual transfer buffer.
+	 * at a समय between the bounce buffer and the actual transfer buffer.
 	 */
 
 	len = min(sectors, blocksize) * pagesize;
-	buffer = kmalloc(len, GFP_NOIO);
-	if (!buffer)
-		return USB_STOR_TRANSPORT_ERROR;
+	buffer = kदो_स्मृति(len, GFP_NOIO);
+	अगर (!buffer)
+		वापस USB_STOR_TRANSPORT_ERROR;
 
 	/*
-	 * We also need a temporary block buffer, where we read in the old data,
-	 * overwrite parts with the new data, and manipulate the redundancy data
+	 * We also need a temporary block buffer, where we पढ़ो in the old data,
+	 * overग_लिखो parts with the new data, and manipulate the redundancy data
 	 */
-	blockbuffer = kmalloc_array(pagesize + 64, blocksize, GFP_NOIO);
-	if (!blockbuffer) {
-		kfree(buffer);
-		return USB_STOR_TRANSPORT_ERROR;
-	}
+	blockbuffer = kदो_स्मृति_array(pagesize + 64, blocksize, GFP_NOIO);
+	अगर (!blockbuffer) अणु
+		kमुक्त(buffer);
+		वापस USB_STOR_TRANSPORT_ERROR;
+	पूर्ण
 
 	/* Figure out the initial LBA and page */
-	lba = address >> blockshift;
+	lba = address >> blockshअगरt;
 	page = (address & MEDIA_INFO(us).blockmask);
-	max_lba = MEDIA_INFO(us).capacity >> (pageshift + blockshift);
+	max_lba = MEDIA_INFO(us).capacity >> (pageshअगरt + blockshअगरt);
 
 	result = USB_STOR_TRANSPORT_GOOD;
 	offset = 0;
-	sg = NULL;
+	sg = शून्य;
 
-	while (sectors > 0) {
+	जबतक (sectors > 0) अणु
 		/* Write as many sectors as possible in this block */
-		unsigned int pages = min(sectors, blocksize - page);
-		len = pages << pageshift;
+		अचिन्हित पूर्णांक pages = min(sectors, blocksize - page);
+		len = pages << pageshअगरt;
 
 		/* Not overflowing capacity? */
-		if (lba >= max_lba) {
+		अगर (lba >= max_lba) अणु
 			usb_stor_dbg(us, "Requested lba %u exceeds maximum %u\n",
 				     lba, max_lba);
 			result = USB_STOR_TRANSPORT_ERROR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Get the data from the transfer buffer */
 		usb_stor_access_xfer_buf(buffer, len, us->srb,
 				&sg, &offset, FROM_XFER_BUF);
 
-		result = alauda_write_lba(us, lba, page, pages, buffer,
+		result = alauda_ग_लिखो_lba(us, lba, page, pages, buffer,
 			blockbuffer);
-		if (result != USB_STOR_TRANSPORT_GOOD)
-			break;
+		अगर (result != USB_STOR_TRANSPORT_GOOD)
+			अवरोध;
 
 		page = 0;
 		lba++;
 		sectors -= pages;
-	}
+	पूर्ण
 
-	kfree(buffer);
-	kfree(blockbuffer);
-	return result;
-}
-
-/*
- * Our interface with the rest of the world
- */
-
-static void alauda_info_destructor(void *extra)
-{
-	struct alauda_info *info = (struct alauda_info *) extra;
-	int port;
-
-	if (!info)
-		return;
-
-	for (port = 0; port < 2; port++) {
-		struct alauda_media_info *media_info = &info->port[port];
-
-		alauda_free_maps(media_info);
-		kfree(media_info->lba_to_pba);
-		kfree(media_info->pba_to_lba);
-	}
-}
+	kमुक्त(buffer);
+	kमुक्त(blockbuffer);
+	वापस result;
+पूर्ण
 
 /*
- * Initialize alauda_info struct and find the data-write endpoint
+ * Our पूर्णांकerface with the rest of the world
  */
-static int init_alauda(struct us_data *us)
-{
-	struct alauda_info *info;
-	struct usb_host_interface *altsetting = us->pusb_intf->cur_altsetting;
+
+अटल व्योम alauda_info_deकाष्ठाor(व्योम *extra)
+अणु
+	काष्ठा alauda_info *info = (काष्ठा alauda_info *) extra;
+	पूर्णांक port;
+
+	अगर (!info)
+		वापस;
+
+	क्रम (port = 0; port < 2; port++) अणु
+		काष्ठा alauda_media_info *media_info = &info->port[port];
+
+		alauda_मुक्त_maps(media_info);
+		kमुक्त(media_info->lba_to_pba);
+		kमुक्त(media_info->pba_to_lba);
+	पूर्ण
+पूर्ण
+
+/*
+ * Initialize alauda_info काष्ठा and find the data-ग_लिखो endpoपूर्णांक
+ */
+अटल पूर्णांक init_alauda(काष्ठा us_data *us)
+अणु
+	काष्ठा alauda_info *info;
+	काष्ठा usb_host_पूर्णांकerface *altsetting = us->pusb_पूर्णांकf->cur_altsetting;
 	nand_init_ecc();
 
-	us->extra = kzalloc(sizeof(struct alauda_info), GFP_NOIO);
-	if (!us->extra)
-		return USB_STOR_TRANSPORT_ERROR;
+	us->extra = kzalloc(माप(काष्ठा alauda_info), GFP_NOIO);
+	अगर (!us->extra)
+		वापस USB_STOR_TRANSPORT_ERROR;
 
-	info = (struct alauda_info *) us->extra;
-	us->extra_destructor = alauda_info_destructor;
+	info = (काष्ठा alauda_info *) us->extra;
+	us->extra_deकाष्ठाor = alauda_info_deकाष्ठाor;
 
 	info->wr_ep = usb_sndbulkpipe(us->pusb_dev,
-		altsetting->endpoint[0].desc.bEndpointAddress
+		altsetting->endpoपूर्णांक[0].desc.bEndpoपूर्णांकAddress
 		& USB_ENDPOINT_NUMBER_MASK);
 
-	return USB_STOR_TRANSPORT_GOOD;
-}
+	वापस USB_STOR_TRANSPORT_GOOD;
+पूर्ण
 
-static int alauda_transport(struct scsi_cmnd *srb, struct us_data *us)
-{
-	int rc;
-	struct alauda_info *info = (struct alauda_info *) us->extra;
-	unsigned char *ptr = us->iobuf;
-	static unsigned char inquiry_response[36] = {
+अटल पूर्णांक alauda_transport(काष्ठा scsi_cmnd *srb, काष्ठा us_data *us)
+अणु
+	पूर्णांक rc;
+	काष्ठा alauda_info *info = (काष्ठा alauda_info *) us->extra;
+	अचिन्हित अक्षर *ptr = us->iobuf;
+	अटल अचिन्हित अक्षर inquiry_response[36] = अणु
 		0x00, 0x80, 0x00, 0x01, 0x1F, 0x00, 0x00, 0x00
-	};
+	पूर्ण;
 
-	if (srb->cmnd[0] == INQUIRY) {
+	अगर (srb->cmnd[0] == INQUIRY) अणु
 		usb_stor_dbg(us, "INQUIRY - Returning bogus response\n");
-		memcpy(ptr, inquiry_response, sizeof(inquiry_response));
+		स_नकल(ptr, inquiry_response, माप(inquiry_response));
 		fill_inquiry_response(us, ptr, 36);
-		return USB_STOR_TRANSPORT_GOOD;
-	}
+		वापस USB_STOR_TRANSPORT_GOOD;
+	पूर्ण
 
-	if (srb->cmnd[0] == TEST_UNIT_READY) {
+	अगर (srb->cmnd[0] == TEST_UNIT_READY) अणु
 		usb_stor_dbg(us, "TEST_UNIT_READY\n");
-		return alauda_check_media(us);
-	}
+		वापस alauda_check_media(us);
+	पूर्ण
 
-	if (srb->cmnd[0] == READ_CAPACITY) {
-		unsigned int num_zones;
-		unsigned long capacity;
+	अगर (srb->cmnd[0] == READ_CAPACITY) अणु
+		अचिन्हित पूर्णांक num_zones;
+		अचिन्हित दीर्घ capacity;
 
 		rc = alauda_check_media(us);
-		if (rc != USB_STOR_TRANSPORT_GOOD)
-			return rc;
+		अगर (rc != USB_STOR_TRANSPORT_GOOD)
+			वापस rc;
 
-		num_zones = MEDIA_INFO(us).capacity >> (MEDIA_INFO(us).zoneshift
-			+ MEDIA_INFO(us).blockshift + MEDIA_INFO(us).pageshift);
+		num_zones = MEDIA_INFO(us).capacity >> (MEDIA_INFO(us).zoneshअगरt
+			+ MEDIA_INFO(us).blockshअगरt + MEDIA_INFO(us).pageshअगरt);
 
 		capacity = num_zones * MEDIA_INFO(us).uzonesize
 			* MEDIA_INFO(us).blocksize;
@@ -1156,47 +1157,47 @@ static int alauda_transport(struct scsi_cmnd *srb, struct us_data *us)
 		((__be32 *) ptr)[1] = cpu_to_be32(512);
 
 		usb_stor_set_xfer_buf(ptr, 8, srb);
-		return USB_STOR_TRANSPORT_GOOD;
-	}
+		वापस USB_STOR_TRANSPORT_GOOD;
+	पूर्ण
 
-	if (srb->cmnd[0] == READ_10) {
-		unsigned int page, pages;
+	अगर (srb->cmnd[0] == READ_10) अणु
+		अचिन्हित पूर्णांक page, pages;
 
 		rc = alauda_check_media(us);
-		if (rc != USB_STOR_TRANSPORT_GOOD)
-			return rc;
+		अगर (rc != USB_STOR_TRANSPORT_GOOD)
+			वापस rc;
 
-		page = short_pack(srb->cmnd[3], srb->cmnd[2]);
+		page = लघु_pack(srb->cmnd[3], srb->cmnd[2]);
 		page <<= 16;
-		page |= short_pack(srb->cmnd[5], srb->cmnd[4]);
-		pages = short_pack(srb->cmnd[8], srb->cmnd[7]);
+		page |= लघु_pack(srb->cmnd[5], srb->cmnd[4]);
+		pages = लघु_pack(srb->cmnd[8], srb->cmnd[7]);
 
 		usb_stor_dbg(us, "READ_10: page %d pagect %d\n", page, pages);
 
-		return alauda_read_data(us, page, pages);
-	}
+		वापस alauda_पढ़ो_data(us, page, pages);
+	पूर्ण
 
-	if (srb->cmnd[0] == WRITE_10) {
-		unsigned int page, pages;
+	अगर (srb->cmnd[0] == WRITE_10) अणु
+		अचिन्हित पूर्णांक page, pages;
 
 		rc = alauda_check_media(us);
-		if (rc != USB_STOR_TRANSPORT_GOOD)
-			return rc;
+		अगर (rc != USB_STOR_TRANSPORT_GOOD)
+			वापस rc;
 
-		page = short_pack(srb->cmnd[3], srb->cmnd[2]);
+		page = लघु_pack(srb->cmnd[3], srb->cmnd[2]);
 		page <<= 16;
-		page |= short_pack(srb->cmnd[5], srb->cmnd[4]);
-		pages = short_pack(srb->cmnd[8], srb->cmnd[7]);
+		page |= लघु_pack(srb->cmnd[5], srb->cmnd[4]);
+		pages = लघु_pack(srb->cmnd[8], srb->cmnd[7]);
 
 		usb_stor_dbg(us, "WRITE_10: page %d pagect %d\n", page, pages);
 
-		return alauda_write_data(us, page, pages);
-	}
+		वापस alauda_ग_लिखो_data(us, page, pages);
+	पूर्ण
 
-	if (srb->cmnd[0] == REQUEST_SENSE) {
+	अगर (srb->cmnd[0] == REQUEST_SENSE) अणु
 		usb_stor_dbg(us, "REQUEST_SENSE\n");
 
-		memset(ptr, 0, 18);
+		स_रखो(ptr, 0, 18);
 		ptr[0] = 0xF0;
 		ptr[2] = info->sense_key;
 		ptr[7] = 11;
@@ -1204,38 +1205,38 @@ static int alauda_transport(struct scsi_cmnd *srb, struct us_data *us)
 		ptr[13] = info->sense_ascq;
 		usb_stor_set_xfer_buf(ptr, 18, srb);
 
-		return USB_STOR_TRANSPORT_GOOD;
-	}
+		वापस USB_STOR_TRANSPORT_GOOD;
+	पूर्ण
 
-	if (srb->cmnd[0] == ALLOW_MEDIUM_REMOVAL) {
+	अगर (srb->cmnd[0] == ALLOW_MEDIUM_REMOVAL) अणु
 		/*
 		 * sure.  whatever.  not like we can stop the user from popping
-		 * the media out of the device (no locking doors, etc)
+		 * the media out of the device (no locking करोors, etc)
 		 */
-		return USB_STOR_TRANSPORT_GOOD;
-	}
+		वापस USB_STOR_TRANSPORT_GOOD;
+	पूर्ण
 
 	usb_stor_dbg(us, "Gah! Unknown command: %d (0x%x)\n",
 		     srb->cmnd[0], srb->cmnd[0]);
 	info->sense_key = 0x05;
 	info->sense_asc = 0x20;
 	info->sense_ascq = 0x00;
-	return USB_STOR_TRANSPORT_FAILED;
-}
+	वापस USB_STOR_TRANSPORT_FAILED;
+पूर्ण
 
-static struct scsi_host_template alauda_host_template;
+अटल काष्ठा scsi_host_ढाँचा alauda_host_ढाँचा;
 
-static int alauda_probe(struct usb_interface *intf,
-			 const struct usb_device_id *id)
-{
-	struct us_data *us;
-	int result;
+अटल पूर्णांक alauda_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			 स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा us_data *us;
+	पूर्णांक result;
 
-	result = usb_stor_probe1(&us, intf, id,
+	result = usb_stor_probe1(&us, पूर्णांकf, id,
 			(id - alauda_usb_ids) + alauda_unusual_dev_list,
-			&alauda_host_template);
-	if (result)
-		return result;
+			&alauda_host_ढाँचा);
+	अगर (result)
+		वापस result;
 
 	us->transport_name  = "Alauda Control/Bulk";
 	us->transport = alauda_transport;
@@ -1243,10 +1244,10 @@ static int alauda_probe(struct usb_interface *intf,
 	us->max_lun = 1;
 
 	result = usb_stor_probe2(us);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static struct usb_driver alauda_driver = {
+अटल काष्ठा usb_driver alauda_driver = अणु
 	.name =		DRV_NAME,
 	.probe =	alauda_probe,
 	.disconnect =	usb_stor_disconnect,
@@ -1258,6 +1259,6 @@ static struct usb_driver alauda_driver = {
 	.id_table =	alauda_usb_ids,
 	.soft_unbind =	1,
 	.no_dynamic_id = 1,
-};
+पूर्ण;
 
-module_usb_stor_driver(alauda_driver, alauda_host_template, DRV_NAME);
+module_usb_stor_driver(alauda_driver, alauda_host_ढाँचा, DRV_NAME);

@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (C) 2007, 2011 Wolfgang Grandegger <wg@grandegger.com>
- * Copyright (C) 2012 Stephane Grosjean <s.grosjean@peak-system.com>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* Copyright (C) 2007, 2011 Wolfgang Gअक्रमegger <wg@gअक्रमegger.com>
+ * Copyright (C) 2012 Stephane Grosjean <s.grosjean@peak-प्रणाली.com>
  *
  * Copyright (C) 2016  PEAK System-Technik GmbH
  */
 
-#include <linux/can.h>
-#include <linux/can/dev.h>
+#समावेश <linux/can.h>
+#समावेश <linux/can/dev.h>
 
-#include "peak_canfd_user.h"
+#समावेश "peak_canfd_user.h"
 
-/* internal IP core cache size (used as default echo skbs max number) */
-#define PCANFD_ECHO_SKB_MAX		24
+/* पूर्णांकernal IP core cache size (used as शेष echo skbs max number) */
+#घोषणा PCANFD_ECHO_SKB_MAX		24
 
-/* bittiming ranges of the PEAK-System PC CAN-FD interfaces */
-static const struct can_bittiming_const peak_canfd_nominal_const = {
+/* bittiming ranges of the PEAK-System PC CAN-FD पूर्णांकerfaces */
+अटल स्थिर काष्ठा can_bittiming_स्थिर peak_canfd_nominal_स्थिर = अणु
 	.name = "peak_canfd",
 	.tseg1_min = 1,
 	.tseg1_max = (1 << PUCAN_TSLOW_TSGEG1_BITS),
@@ -24,9 +25,9 @@ static const struct can_bittiming_const peak_canfd_nominal_const = {
 	.brp_min = 1,
 	.brp_max = (1 << PUCAN_TSLOW_BRP_BITS),
 	.brp_inc = 1,
-};
+पूर्ण;
 
-static const struct can_bittiming_const peak_canfd_data_const = {
+अटल स्थिर काष्ठा can_bittiming_स्थिर peak_canfd_data_स्थिर = अणु
 	.name = "peak_canfd",
 	.tseg1_min = 1,
 	.tseg1_max = (1 << PUCAN_TFAST_TSGEG1_BITS),
@@ -36,87 +37,87 @@ static const struct can_bittiming_const peak_canfd_data_const = {
 	.brp_min = 1,
 	.brp_max = (1 << PUCAN_TFAST_BRP_BITS),
 	.brp_inc = 1,
-};
+पूर्ण;
 
-static struct peak_canfd_priv *pucan_init_cmd(struct peak_canfd_priv *priv)
-{
+अटल काष्ठा peak_canfd_priv *pucan_init_cmd(काष्ठा peak_canfd_priv *priv)
+अणु
 	priv->cmd_len = 0;
-	return priv;
-}
+	वापस priv;
+पूर्ण
 
-static void *pucan_add_cmd(struct peak_canfd_priv *priv, int cmd_op)
-{
-	struct pucan_command *cmd;
+अटल व्योम *pucan_add_cmd(काष्ठा peak_canfd_priv *priv, पूर्णांक cmd_op)
+अणु
+	काष्ठा pucan_command *cmd;
 
-	if (priv->cmd_len + sizeof(*cmd) > priv->cmd_maxlen)
-		return NULL;
+	अगर (priv->cmd_len + माप(*cmd) > priv->cmd_maxlen)
+		वापस शून्य;
 
 	cmd = priv->cmd_buffer + priv->cmd_len;
 
-	/* reset all unused bit to default */
-	memset(cmd, 0, sizeof(*cmd));
+	/* reset all unused bit to शेष */
+	स_रखो(cmd, 0, माप(*cmd));
 
 	cmd->opcode_channel = pucan_cmd_opcode_channel(priv->index, cmd_op);
-	priv->cmd_len += sizeof(*cmd);
+	priv->cmd_len += माप(*cmd);
 
-	return cmd;
-}
+	वापस cmd;
+पूर्ण
 
-static int pucan_write_cmd(struct peak_canfd_priv *priv)
-{
-	int err;
+अटल पूर्णांक pucan_ग_लिखो_cmd(काष्ठा peak_canfd_priv *priv)
+अणु
+	पूर्णांक err;
 
-	if (priv->pre_cmd) {
+	अगर (priv->pre_cmd) अणु
 		err = priv->pre_cmd(priv);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	err = priv->write_cmd(priv);
-	if (err)
-		return err;
+	err = priv->ग_लिखो_cmd(priv);
+	अगर (err)
+		वापस err;
 
-	if (priv->post_cmd)
+	अगर (priv->post_cmd)
 		err = priv->post_cmd(priv);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* uCAN commands interface functions */
-static int pucan_set_reset_mode(struct peak_canfd_priv *priv)
-{
+/* uCAN commands पूर्णांकerface functions */
+अटल पूर्णांक pucan_set_reset_mode(काष्ठा peak_canfd_priv *priv)
+अणु
 	pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_RESET_MODE);
-	return pucan_write_cmd(priv);
-}
+	वापस pucan_ग_लिखो_cmd(priv);
+पूर्ण
 
-static int pucan_set_normal_mode(struct peak_canfd_priv *priv)
-{
-	int err;
+अटल पूर्णांक pucan_set_normal_mode(काष्ठा peak_canfd_priv *priv)
+अणु
+	पूर्णांक err;
 
 	pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_NORMAL_MODE);
-	err = pucan_write_cmd(priv);
-	if (!err)
+	err = pucan_ग_लिखो_cmd(priv);
+	अगर (!err)
 		priv->can.state = CAN_STATE_ERROR_ACTIVE;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pucan_set_listen_only_mode(struct peak_canfd_priv *priv)
-{
-	int err;
+अटल पूर्णांक pucan_set_listen_only_mode(काष्ठा peak_canfd_priv *priv)
+अणु
+	पूर्णांक err;
 
 	pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_LISTEN_ONLY_MODE);
-	err = pucan_write_cmd(priv);
-	if (!err)
+	err = pucan_ग_लिखो_cmd(priv);
+	अगर (!err)
 		priv->can.state = CAN_STATE_ERROR_ACTIVE;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pucan_set_timing_slow(struct peak_canfd_priv *priv,
-				 const struct can_bittiming *pbt)
-{
-	struct pucan_timing_slow *cmd;
+अटल पूर्णांक pucan_set_timing_slow(काष्ठा peak_canfd_priv *priv,
+				 स्थिर काष्ठा can_bittiming *pbt)
+अणु
+	काष्ठा pucan_timing_slow *cmd;
 
 	cmd = pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_TIMING_SLOW);
 
@@ -127,19 +128,19 @@ static int pucan_set_timing_slow(struct peak_canfd_priv *priv,
 	cmd->tseg2 = PUCAN_TSLOW_TSEG2(pbt->phase_seg2 - 1);
 	cmd->brp = cpu_to_le16(PUCAN_TSLOW_BRP(pbt->brp - 1));
 
-	cmd->ewl = 96;	/* default */
+	cmd->ewl = 96;	/* शेष */
 
 	netdev_dbg(priv->ndev,
 		   "nominal: brp=%u tseg1=%u tseg2=%u sjw=%u\n",
 		   le16_to_cpu(cmd->brp), cmd->tseg1, cmd->tseg2, cmd->sjw_t);
 
-	return pucan_write_cmd(priv);
-}
+	वापस pucan_ग_लिखो_cmd(priv);
+पूर्ण
 
-static int pucan_set_timing_fast(struct peak_canfd_priv *priv,
-				 const struct can_bittiming *pbt)
-{
-	struct pucan_timing_fast *cmd;
+अटल पूर्णांक pucan_set_timing_fast(काष्ठा peak_canfd_priv *priv,
+				 स्थिर काष्ठा can_bittiming *pbt)
+अणु
+	काष्ठा pucan_timing_fast *cmd;
 
 	cmd = pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_TIMING_FAST);
 
@@ -152,18 +153,18 @@ static int pucan_set_timing_fast(struct peak_canfd_priv *priv,
 		   "data: brp=%u tseg1=%u tseg2=%u sjw=%u\n",
 		   le16_to_cpu(cmd->brp), cmd->tseg1, cmd->tseg2, cmd->sjw);
 
-	return pucan_write_cmd(priv);
-}
+	वापस pucan_ग_लिखो_cmd(priv);
+पूर्ण
 
-static int pucan_set_std_filter(struct peak_canfd_priv *priv, u8 row, u32 mask)
-{
-	struct pucan_std_filter *cmd;
+अटल पूर्णांक pucan_set_std_filter(काष्ठा peak_canfd_priv *priv, u8 row, u32 mask)
+अणु
+	काष्ठा pucan_std_filter *cmd;
 
 	cmd = pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_SET_STD_FILTER);
 
 	/* all the 11-bits CAN ID values are represented by one bit in a
 	 * 64 rows array of 32 bits: the upper 6 bits of the CAN ID select the
-	 * row while the lowest 5 bits select the bit in that row.
+	 * row जबतक the lowest 5 bits select the bit in that row.
 	 *
 	 * bit	filter
 	 * 1	passed
@@ -176,23 +177,23 @@ static int pucan_set_std_filter(struct peak_canfd_priv *priv, u8 row, u32 mask)
 	/* set/unset bits in the row */
 	cmd->mask = cpu_to_le32(mask);
 
-	return pucan_write_cmd(priv);
-}
+	वापस pucan_ग_लिखो_cmd(priv);
+पूर्ण
 
-static int pucan_tx_abort(struct peak_canfd_priv *priv, u16 flags)
-{
-	struct pucan_tx_abort *cmd;
+अटल पूर्णांक pucan_tx_पात(काष्ठा peak_canfd_priv *priv, u16 flags)
+अणु
+	काष्ठा pucan_tx_पात *cmd;
 
 	cmd = pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_TX_ABORT);
 
 	cmd->flags = cpu_to_le16(flags);
 
-	return pucan_write_cmd(priv);
-}
+	वापस pucan_ग_लिखो_cmd(priv);
+पूर्ण
 
-static int pucan_clr_err_counters(struct peak_canfd_priv *priv)
-{
-	struct pucan_wr_err_cnt *cmd;
+अटल पूर्णांक pucan_clr_err_counters(काष्ठा peak_canfd_priv *priv)
+अणु
+	काष्ठा pucan_wr_err_cnt *cmd;
 
 	cmd = pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_WR_ERR_CNT);
 
@@ -200,237 +201,237 @@ static int pucan_clr_err_counters(struct peak_canfd_priv *priv)
 	cmd->tx_counter = 0;
 	cmd->rx_counter = 0;
 
-	return pucan_write_cmd(priv);
-}
+	वापस pucan_ग_लिखो_cmd(priv);
+पूर्ण
 
-static int pucan_set_options(struct peak_canfd_priv *priv, u16 opt_mask)
-{
-	struct pucan_options *cmd;
+अटल पूर्णांक pucan_set_options(काष्ठा peak_canfd_priv *priv, u16 opt_mask)
+अणु
+	काष्ठा pucan_options *cmd;
 
 	cmd = pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_SET_EN_OPTION);
 
 	cmd->options = cpu_to_le16(opt_mask);
 
-	return pucan_write_cmd(priv);
-}
+	वापस pucan_ग_लिखो_cmd(priv);
+पूर्ण
 
-static int pucan_clr_options(struct peak_canfd_priv *priv, u16 opt_mask)
-{
-	struct pucan_options *cmd;
+अटल पूर्णांक pucan_clr_options(काष्ठा peak_canfd_priv *priv, u16 opt_mask)
+अणु
+	काष्ठा pucan_options *cmd;
 
 	cmd = pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_CLR_DIS_OPTION);
 
 	cmd->options = cpu_to_le16(opt_mask);
 
-	return pucan_write_cmd(priv);
-}
+	वापस pucan_ग_लिखो_cmd(priv);
+पूर्ण
 
-static int pucan_setup_rx_barrier(struct peak_canfd_priv *priv)
-{
+अटल पूर्णांक pucan_setup_rx_barrier(काष्ठा peak_canfd_priv *priv)
+अणु
 	pucan_add_cmd(pucan_init_cmd(priv), PUCAN_CMD_RX_BARRIER);
 
-	return pucan_write_cmd(priv);
-}
+	वापस pucan_ग_लिखो_cmd(priv);
+पूर्ण
 
-static int pucan_netif_rx(struct sk_buff *skb, __le32 ts_low, __le32 ts_high)
-{
-	struct skb_shared_hwtstamps *hwts = skb_hwtstamps(skb);
+अटल पूर्णांक pucan_netअगर_rx(काष्ठा sk_buff *skb, __le32 ts_low, __le32 ts_high)
+अणु
+	काष्ठा skb_shared_hwtstamps *hwts = skb_hwtstamps(skb);
 	u64 ts_us;
 
 	ts_us = (u64)le32_to_cpu(ts_high) << 32;
 	ts_us |= le32_to_cpu(ts_low);
 
-	/* IP core timestamps are µs. */
-	hwts->hwtstamp = ns_to_ktime(ts_us * NSEC_PER_USEC);
+	/* IP core बारtamps are तगs. */
+	hwts->hwtstamp = ns_to_kसमय(ts_us * NSEC_PER_USEC);
 
-	return netif_rx(skb);
-}
+	वापस netअगर_rx(skb);
+पूर्ण
 
 /* handle the reception of one CAN frame */
-static int pucan_handle_can_rx(struct peak_canfd_priv *priv,
-			       struct pucan_rx_msg *msg)
-{
-	struct net_device_stats *stats = &priv->ndev->stats;
-	struct canfd_frame *cf;
-	struct sk_buff *skb;
-	const u16 rx_msg_flags = le16_to_cpu(msg->flags);
+अटल पूर्णांक pucan_handle_can_rx(काष्ठा peak_canfd_priv *priv,
+			       काष्ठा pucan_rx_msg *msg)
+अणु
+	काष्ठा net_device_stats *stats = &priv->ndev->stats;
+	काष्ठा canfd_frame *cf;
+	काष्ठा sk_buff *skb;
+	स्थिर u16 rx_msg_flags = le16_to_cpu(msg->flags);
 	u8 cf_len;
 
-	if (rx_msg_flags & PUCAN_MSG_EXT_DATA_LEN)
+	अगर (rx_msg_flags & PUCAN_MSG_EXT_DATA_LEN)
 		cf_len = can_fd_dlc2len(pucan_msg_get_dlc(msg));
-	else
+	अन्यथा
 		cf_len = can_cc_dlc2len(pucan_msg_get_dlc(msg));
 
-	/* if this frame is an echo, */
-	if (rx_msg_flags & PUCAN_MSG_LOOPED_BACK) {
-		unsigned long flags;
+	/* अगर this frame is an echo, */
+	अगर (rx_msg_flags & PUCAN_MSG_LOOPED_BACK) अणु
+		अचिन्हित दीर्घ flags;
 
 		spin_lock_irqsave(&priv->echo_lock, flags);
-		can_get_echo_skb(priv->ndev, msg->client, NULL);
+		can_get_echo_skb(priv->ndev, msg->client, शून्य);
 
 		/* count bytes of the echo instead of skb */
 		stats->tx_bytes += cf_len;
 		stats->tx_packets++;
 
-		/* restart tx queue (a slot is free) */
-		netif_wake_queue(priv->ndev);
+		/* restart tx queue (a slot is मुक्त) */
+		netअगर_wake_queue(priv->ndev);
 
 		spin_unlock_irqrestore(&priv->echo_lock, flags);
 
-		/* if this frame is only an echo, stop here. Otherwise,
-		 * continue to push this application self-received frame into
+		/* अगर this frame is only an echo, stop here. Otherwise,
+		 * जारी to push this application self-received frame पूर्णांकo
 		 * its own rx queue.
 		 */
-		if (!(rx_msg_flags & PUCAN_MSG_SELF_RECEIVE))
-			return 0;
-	}
+		अगर (!(rx_msg_flags & PUCAN_MSG_SELF_RECEIVE))
+			वापस 0;
+	पूर्ण
 
-	/* otherwise, it should be pushed into rx fifo */
-	if (rx_msg_flags & PUCAN_MSG_EXT_DATA_LEN) {
-		/* CANFD frame case */
+	/* otherwise, it should be pushed पूर्णांकo rx fअगरo */
+	अगर (rx_msg_flags & PUCAN_MSG_EXT_DATA_LEN) अणु
+		/* CANFD frame हाल */
 		skb = alloc_canfd_skb(priv->ndev, &cf);
-		if (!skb)
-			return -ENOMEM;
+		अगर (!skb)
+			वापस -ENOMEM;
 
-		if (rx_msg_flags & PUCAN_MSG_BITRATE_SWITCH)
+		अगर (rx_msg_flags & PUCAN_MSG_BITRATE_SWITCH)
 			cf->flags |= CANFD_BRS;
 
-		if (rx_msg_flags & PUCAN_MSG_ERROR_STATE_IND)
+		अगर (rx_msg_flags & PUCAN_MSG_ERROR_STATE_IND)
 			cf->flags |= CANFD_ESI;
-	} else {
-		/* CAN 2.0 frame case */
-		skb = alloc_can_skb(priv->ndev, (struct can_frame **)&cf);
-		if (!skb)
-			return -ENOMEM;
-	}
+	पूर्ण अन्यथा अणु
+		/* CAN 2.0 frame हाल */
+		skb = alloc_can_skb(priv->ndev, (काष्ठा can_frame **)&cf);
+		अगर (!skb)
+			वापस -ENOMEM;
+	पूर्ण
 
 	cf->can_id = le32_to_cpu(msg->can_id);
 	cf->len = cf_len;
 
-	if (rx_msg_flags & PUCAN_MSG_EXT_ID)
+	अगर (rx_msg_flags & PUCAN_MSG_EXT_ID)
 		cf->can_id |= CAN_EFF_FLAG;
 
-	if (rx_msg_flags & PUCAN_MSG_RTR)
+	अगर (rx_msg_flags & PUCAN_MSG_RTR)
 		cf->can_id |= CAN_RTR_FLAG;
-	else
-		memcpy(cf->data, msg->d, cf->len);
+	अन्यथा
+		स_नकल(cf->data, msg->d, cf->len);
 
 	stats->rx_bytes += cf->len;
 	stats->rx_packets++;
 
-	pucan_netif_rx(skb, msg->ts_low, msg->ts_high);
+	pucan_netअगर_rx(skb, msg->ts_low, msg->ts_high);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* handle rx/tx error counters notification */
-static int pucan_handle_error(struct peak_canfd_priv *priv,
-			      struct pucan_error_msg *msg)
-{
+/* handle rx/tx error counters notअगरication */
+अटल पूर्णांक pucan_handle_error(काष्ठा peak_canfd_priv *priv,
+			      काष्ठा pucan_error_msg *msg)
+अणु
 	priv->bec.txerr = msg->tx_err_cnt;
 	priv->bec.rxerr = msg->rx_err_cnt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* handle status notification */
-static int pucan_handle_status(struct peak_canfd_priv *priv,
-			       struct pucan_status_msg *msg)
-{
-	struct net_device *ndev = priv->ndev;
-	struct net_device_stats *stats = &ndev->stats;
-	struct can_frame *cf;
-	struct sk_buff *skb;
+/* handle status notअगरication */
+अटल पूर्णांक pucan_handle_status(काष्ठा peak_canfd_priv *priv,
+			       काष्ठा pucan_status_msg *msg)
+अणु
+	काष्ठा net_device *ndev = priv->ndev;
+	काष्ठा net_device_stats *stats = &ndev->stats;
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
 
 	/* this STATUS is the CNF of the RX_BARRIER: Tx path can be setup */
-	if (pucan_status_is_rx_barrier(msg)) {
-		if (priv->enable_tx_path) {
-			int err = priv->enable_tx_path(priv);
+	अगर (pucan_status_is_rx_barrier(msg)) अणु
+		अगर (priv->enable_tx_path) अणु
+			पूर्णांक err = priv->enable_tx_path(priv);
 
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
 		/* start network queue (echo_skb array is empty) */
-		netif_start_queue(ndev);
+		netअगर_start_queue(ndev);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	skb = alloc_can_err_skb(ndev, &cf);
 
 	/* test state error bits according to their priority */
-	if (pucan_status_is_busoff(msg)) {
+	अगर (pucan_status_is_busoff(msg)) अणु
 		netdev_dbg(ndev, "Bus-off entry status\n");
 		priv->can.state = CAN_STATE_BUS_OFF;
 		priv->can.can_stats.bus_off++;
 		can_bus_off(ndev);
-		if (skb)
+		अगर (skb)
 			cf->can_id |= CAN_ERR_BUSOFF;
 
-	} else if (pucan_status_is_passive(msg)) {
+	पूर्ण अन्यथा अगर (pucan_status_is_passive(msg)) अणु
 		netdev_dbg(ndev, "Error passive status\n");
 		priv->can.state = CAN_STATE_ERROR_PASSIVE;
 		priv->can.can_stats.error_passive++;
-		if (skb) {
+		अगर (skb) अणु
 			cf->can_id |= CAN_ERR_CRTL;
 			cf->data[1] = (priv->bec.txerr > priv->bec.rxerr) ?
 					CAN_ERR_CRTL_TX_PASSIVE :
 					CAN_ERR_CRTL_RX_PASSIVE;
 			cf->data[6] = priv->bec.txerr;
 			cf->data[7] = priv->bec.rxerr;
-		}
+		पूर्ण
 
-	} else if (pucan_status_is_warning(msg)) {
+	पूर्ण अन्यथा अगर (pucan_status_is_warning(msg)) अणु
 		netdev_dbg(ndev, "Error warning status\n");
 		priv->can.state = CAN_STATE_ERROR_WARNING;
 		priv->can.can_stats.error_warning++;
-		if (skb) {
+		अगर (skb) अणु
 			cf->can_id |= CAN_ERR_CRTL;
 			cf->data[1] = (priv->bec.txerr > priv->bec.rxerr) ?
 					CAN_ERR_CRTL_TX_WARNING :
 					CAN_ERR_CRTL_RX_WARNING;
 			cf->data[6] = priv->bec.txerr;
 			cf->data[7] = priv->bec.rxerr;
-		}
+		पूर्ण
 
-	} else if (priv->can.state != CAN_STATE_ERROR_ACTIVE) {
+	पूर्ण अन्यथा अगर (priv->can.state != CAN_STATE_ERROR_ACTIVE) अणु
 		/* back to ERROR_ACTIVE */
 		netdev_dbg(ndev, "Error active status\n");
 		can_change_state(ndev, cf, CAN_STATE_ERROR_ACTIVE,
 				 CAN_STATE_ERROR_ACTIVE);
-	} else {
-		dev_kfree_skb(skb);
-		return 0;
-	}
+	पूर्ण अन्यथा अणु
+		dev_kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
 
-	if (!skb) {
+	अगर (!skb) अणु
 		stats->rx_dropped++;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	stats->rx_packets++;
 	stats->rx_bytes += cf->len;
-	pucan_netif_rx(skb, msg->ts_low, msg->ts_high);
+	pucan_netअगर_rx(skb, msg->ts_low, msg->ts_high);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* handle uCAN Rx overflow notification */
-static int pucan_handle_cache_critical(struct peak_canfd_priv *priv)
-{
-	struct net_device_stats *stats = &priv->ndev->stats;
-	struct can_frame *cf;
-	struct sk_buff *skb;
+/* handle uCAN Rx overflow notअगरication */
+अटल पूर्णांक pucan_handle_cache_critical(काष्ठा peak_canfd_priv *priv)
+अणु
+	काष्ठा net_device_stats *stats = &priv->ndev->stats;
+	काष्ठा can_frame *cf;
+	काष्ठा sk_buff *skb;
 
 	stats->rx_over_errors++;
 	stats->rx_errors++;
 
 	skb = alloc_can_err_skb(priv->ndev, &cf);
-	if (!skb) {
+	अगर (!skb) अणु
 		stats->rx_dropped++;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	cf->can_id |= CAN_ERR_CRTL;
 	cf->data[1] = CAN_ERR_CRTL_RX_OVERFLOW;
@@ -440,345 +441,345 @@ static int pucan_handle_cache_critical(struct peak_canfd_priv *priv)
 
 	stats->rx_bytes += cf->len;
 	stats->rx_packets++;
-	netif_rx(skb);
+	netअगर_rx(skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* handle a single uCAN message */
-int peak_canfd_handle_msg(struct peak_canfd_priv *priv,
-			  struct pucan_rx_msg *msg)
-{
+पूर्णांक peak_canfd_handle_msg(काष्ठा peak_canfd_priv *priv,
+			  काष्ठा pucan_rx_msg *msg)
+अणु
 	u16 msg_type = le16_to_cpu(msg->type);
-	int msg_size = le16_to_cpu(msg->size);
-	int err;
+	पूर्णांक msg_size = le16_to_cpu(msg->size);
+	पूर्णांक err;
 
-	if (!msg_size || !msg_type) {
+	अगर (!msg_size || !msg_type) अणु
 		/* null packet found: end of list */
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	switch (msg_type) {
-	case PUCAN_MSG_CAN_RX:
-		err = pucan_handle_can_rx(priv, (struct pucan_rx_msg *)msg);
-		break;
-	case PUCAN_MSG_ERROR:
-		err = pucan_handle_error(priv, (struct pucan_error_msg *)msg);
-		break;
-	case PUCAN_MSG_STATUS:
-		err = pucan_handle_status(priv, (struct pucan_status_msg *)msg);
-		break;
-	case PUCAN_MSG_CACHE_CRITICAL:
+	चयन (msg_type) अणु
+	हाल PUCAN_MSG_CAN_RX:
+		err = pucan_handle_can_rx(priv, (काष्ठा pucan_rx_msg *)msg);
+		अवरोध;
+	हाल PUCAN_MSG_ERROR:
+		err = pucan_handle_error(priv, (काष्ठा pucan_error_msg *)msg);
+		अवरोध;
+	हाल PUCAN_MSG_STATUS:
+		err = pucan_handle_status(priv, (काष्ठा pucan_status_msg *)msg);
+		अवरोध;
+	हाल PUCAN_MSG_CACHE_CRITICAL:
 		err = pucan_handle_cache_critical(priv);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = 0;
-	}
+	पूर्ण
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-exit:
-	return msg_size;
-}
+निकास:
+	वापस msg_size;
+पूर्ण
 
 /* handle a list of rx_count messages from rx_msg memory address */
-int peak_canfd_handle_msgs_list(struct peak_canfd_priv *priv,
-				struct pucan_rx_msg *msg_list, int msg_count)
-{
-	void *msg_ptr = msg_list;
-	int i, msg_size = 0;
+पूर्णांक peak_canfd_handle_msgs_list(काष्ठा peak_canfd_priv *priv,
+				काष्ठा pucan_rx_msg *msg_list, पूर्णांक msg_count)
+अणु
+	व्योम *msg_ptr = msg_list;
+	पूर्णांक i, msg_size = 0;
 
-	for (i = 0; i < msg_count; i++) {
+	क्रम (i = 0; i < msg_count; i++) अणु
 		msg_size = peak_canfd_handle_msg(priv, msg_ptr);
 
 		/* a null packet can be found at the end of a list */
-		if (msg_size <= 0)
-			break;
+		अगर (msg_size <= 0)
+			अवरोध;
 
 		msg_ptr += ALIGN(msg_size, 4);
-	}
+	पूर्ण
 
-	if (msg_size < 0)
-		return msg_size;
+	अगर (msg_size < 0)
+		वापस msg_size;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int peak_canfd_start(struct peak_canfd_priv *priv)
-{
-	int err;
+अटल पूर्णांक peak_canfd_start(काष्ठा peak_canfd_priv *priv)
+अणु
+	पूर्णांक err;
 
 	err = pucan_clr_err_counters(priv);
-	if (err)
-		goto err_exit;
+	अगर (err)
+		जाओ err_निकास;
 
 	priv->echo_idx = 0;
 
 	priv->bec.txerr = 0;
 	priv->bec.rxerr = 0;
 
-	if (priv->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
+	अगर (priv->can.ctrlmode & CAN_CTRLMODE_LISTENONLY)
 		err = pucan_set_listen_only_mode(priv);
-	else
+	अन्यथा
 		err = pucan_set_normal_mode(priv);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-static void peak_canfd_stop(struct peak_canfd_priv *priv)
-{
-	int err;
+अटल व्योम peak_canfd_stop(काष्ठा peak_canfd_priv *priv)
+अणु
+	पूर्णांक err;
 
 	/* go back to RESET mode */
 	err = pucan_set_reset_mode(priv);
-	if (err) {
+	अगर (err) अणु
 		netdev_err(priv->ndev, "channel %u reset failed\n",
 			   priv->index);
-	} else {
-		/* abort last Tx (MUST be done in RESET mode only!) */
-		pucan_tx_abort(priv, PUCAN_TX_ABORT_FLUSH);
-	}
-}
+	पूर्ण अन्यथा अणु
+		/* पात last Tx (MUST be करोne in RESET mode only!) */
+		pucan_tx_पात(priv, PUCAN_TX_ABORT_FLUSH);
+	पूर्ण
+पूर्ण
 
-static int peak_canfd_set_mode(struct net_device *ndev, enum can_mode mode)
-{
-	struct peak_canfd_priv *priv = netdev_priv(ndev);
+अटल पूर्णांक peak_canfd_set_mode(काष्ठा net_device *ndev, क्रमागत can_mode mode)
+अणु
+	काष्ठा peak_canfd_priv *priv = netdev_priv(ndev);
 
-	switch (mode) {
-	case CAN_MODE_START:
+	चयन (mode) अणु
+	हाल CAN_MODE_START:
 		peak_canfd_start(priv);
-		netif_wake_queue(ndev);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		netअगर_wake_queue(ndev);
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int peak_canfd_get_berr_counter(const struct net_device *ndev,
-				       struct can_berr_counter *bec)
-{
-	struct peak_canfd_priv *priv = netdev_priv(ndev);
+अटल पूर्णांक peak_canfd_get_berr_counter(स्थिर काष्ठा net_device *ndev,
+				       काष्ठा can_berr_counter *bec)
+अणु
+	काष्ठा peak_canfd_priv *priv = netdev_priv(ndev);
 
 	*bec = priv->bec;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int peak_canfd_open(struct net_device *ndev)
-{
-	struct peak_canfd_priv *priv = netdev_priv(ndev);
-	int i, err = 0;
+अटल पूर्णांक peak_canfd_खोलो(काष्ठा net_device *ndev)
+अणु
+	काष्ठा peak_canfd_priv *priv = netdev_priv(ndev);
+	पूर्णांक i, err = 0;
 
-	err = open_candev(ndev);
-	if (err) {
+	err = खोलो_candev(ndev);
+	अगर (err) अणु
 		netdev_err(ndev, "open_candev() failed, error %d\n", err);
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
 	err = pucan_set_reset_mode(priv);
-	if (err)
-		goto err_close;
+	अगर (err)
+		जाओ err_बंद;
 
-	if (priv->can.ctrlmode & CAN_CTRLMODE_FD) {
-		if (priv->can.ctrlmode & CAN_CTRLMODE_FD_NON_ISO)
+	अगर (priv->can.ctrlmode & CAN_CTRLMODE_FD) अणु
+		अगर (priv->can.ctrlmode & CAN_CTRLMODE_FD_NON_ISO)
 			err = pucan_clr_options(priv, PUCAN_OPTION_CANDFDISO);
-		else
+		अन्यथा
 			err = pucan_set_options(priv, PUCAN_OPTION_CANDFDISO);
 
-		if (err)
-			goto err_close;
-	}
+		अगर (err)
+			जाओ err_बंद;
+	पूर्ण
 
 	/* set option: get rx/tx error counters */
 	err = pucan_set_options(priv, PUCAN_OPTION_ERROR);
-	if (err)
-		goto err_close;
+	अगर (err)
+		जाओ err_बंद;
 
 	/* accept all standard CAN ID */
-	for (i = 0; i <= PUCAN_FLTSTD_ROW_IDX_MAX; i++)
+	क्रम (i = 0; i <= PUCAN_FLTSTD_ROW_IDX_MAX; i++)
 		pucan_set_std_filter(priv, i, 0xffffffff);
 
 	err = peak_canfd_start(priv);
-	if (err)
-		goto err_close;
+	अगर (err)
+		जाओ err_बंद;
 
-	/* receiving the RB status says when Tx path is ready */
+	/* receiving the RB status says when Tx path is पढ़ोy */
 	err = pucan_setup_rx_barrier(priv);
-	if (!err)
-		goto err_exit;
+	अगर (!err)
+		जाओ err_निकास;
 
-err_close:
-	close_candev(ndev);
-err_exit:
-	return err;
-}
+err_बंद:
+	बंद_candev(ndev);
+err_निकास:
+	वापस err;
+पूर्ण
 
-static int peak_canfd_set_bittiming(struct net_device *ndev)
-{
-	struct peak_canfd_priv *priv = netdev_priv(ndev);
+अटल पूर्णांक peak_canfd_set_bittiming(काष्ठा net_device *ndev)
+अणु
+	काष्ठा peak_canfd_priv *priv = netdev_priv(ndev);
 
-	return pucan_set_timing_slow(priv, &priv->can.bittiming);
-}
+	वापस pucan_set_timing_slow(priv, &priv->can.bittiming);
+पूर्ण
 
-static int peak_canfd_set_data_bittiming(struct net_device *ndev)
-{
-	struct peak_canfd_priv *priv = netdev_priv(ndev);
+अटल पूर्णांक peak_canfd_set_data_bittiming(काष्ठा net_device *ndev)
+अणु
+	काष्ठा peak_canfd_priv *priv = netdev_priv(ndev);
 
-	return pucan_set_timing_fast(priv, &priv->can.data_bittiming);
-}
+	वापस pucan_set_timing_fast(priv, &priv->can.data_bittiming);
+पूर्ण
 
-static int peak_canfd_close(struct net_device *ndev)
-{
-	struct peak_canfd_priv *priv = netdev_priv(ndev);
+अटल पूर्णांक peak_canfd_बंद(काष्ठा net_device *ndev)
+अणु
+	काष्ठा peak_canfd_priv *priv = netdev_priv(ndev);
 
-	netif_stop_queue(ndev);
+	netअगर_stop_queue(ndev);
 	peak_canfd_stop(priv);
-	close_candev(ndev);
+	बंद_candev(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t peak_canfd_start_xmit(struct sk_buff *skb,
-					 struct net_device *ndev)
-{
-	struct peak_canfd_priv *priv = netdev_priv(ndev);
-	struct net_device_stats *stats = &ndev->stats;
-	struct canfd_frame *cf = (struct canfd_frame *)skb->data;
-	struct pucan_tx_msg *msg;
+अटल netdev_tx_t peak_canfd_start_xmit(काष्ठा sk_buff *skb,
+					 काष्ठा net_device *ndev)
+अणु
+	काष्ठा peak_canfd_priv *priv = netdev_priv(ndev);
+	काष्ठा net_device_stats *stats = &ndev->stats;
+	काष्ठा canfd_frame *cf = (काष्ठा canfd_frame *)skb->data;
+	काष्ठा pucan_tx_msg *msg;
 	u16 msg_size, msg_flags;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	bool should_stop_tx_queue;
-	int room_left;
+	पूर्णांक room_left;
 	u8 len;
 
-	if (can_dropped_invalid_skb(ndev, skb))
-		return NETDEV_TX_OK;
+	अगर (can_dropped_invalid_skb(ndev, skb))
+		वापस NETDEV_TX_OK;
 
-	msg_size = ALIGN(sizeof(*msg) + cf->len, 4);
+	msg_size = ALIGN(माप(*msg) + cf->len, 4);
 	msg = priv->alloc_tx_msg(priv, msg_size, &room_left);
 
-	/* should never happen except under bus-off condition and (auto-)restart
+	/* should never happen except under bus-off condition and (स्वतः-)restart
 	 * mechanism
 	 */
-	if (!msg) {
+	अगर (!msg) अणु
 		stats->tx_dropped++;
-		netif_stop_queue(ndev);
-		return NETDEV_TX_BUSY;
-	}
+		netअगर_stop_queue(ndev);
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	msg->size = cpu_to_le16(msg_size);
 	msg->type = cpu_to_le16(PUCAN_MSG_CAN_TX);
 	msg_flags = 0;
 
-	if (cf->can_id & CAN_EFF_FLAG) {
+	अगर (cf->can_id & CAN_EFF_FLAG) अणु
 		msg_flags |= PUCAN_MSG_EXT_ID;
 		msg->can_id = cpu_to_le32(cf->can_id & CAN_EFF_MASK);
-	} else {
+	पूर्ण अन्यथा अणु
 		msg->can_id = cpu_to_le32(cf->can_id & CAN_SFF_MASK);
-	}
+	पूर्ण
 
-	if (can_is_canfd_skb(skb)) {
-		/* CAN FD frame format */
+	अगर (can_is_canfd_skb(skb)) अणु
+		/* CAN FD frame क्रमmat */
 		len = can_fd_len2dlc(cf->len);
 
 		msg_flags |= PUCAN_MSG_EXT_DATA_LEN;
 
-		if (cf->flags & CANFD_BRS)
+		अगर (cf->flags & CANFD_BRS)
 			msg_flags |= PUCAN_MSG_BITRATE_SWITCH;
 
-		if (cf->flags & CANFD_ESI)
+		अगर (cf->flags & CANFD_ESI)
 			msg_flags |= PUCAN_MSG_ERROR_STATE_IND;
-	} else {
-		/* CAN 2.0 frame format */
+	पूर्ण अन्यथा अणु
+		/* CAN 2.0 frame क्रमmat */
 		len = cf->len;
 
-		if (cf->can_id & CAN_RTR_FLAG)
+		अगर (cf->can_id & CAN_RTR_FLAG)
 			msg_flags |= PUCAN_MSG_RTR;
-	}
+	पूर्ण
 
-	/* always ask loopback for echo management */
+	/* always ask loopback क्रम echo management */
 	msg_flags |= PUCAN_MSG_LOOPED_BACK;
 
-	/* set driver specific bit to differentiate with application loopback */
-	if (priv->can.ctrlmode & CAN_CTRLMODE_LOOPBACK)
+	/* set driver specअगरic bit to dअगरferentiate with application loopback */
+	अगर (priv->can.ctrlmode & CAN_CTRLMODE_LOOPBACK)
 		msg_flags |= PUCAN_MSG_SELF_RECEIVE;
 
 	msg->flags = cpu_to_le16(msg_flags);
 	msg->channel_dlc = PUCAN_MSG_CHANNEL_DLC(priv->index, len);
-	memcpy(msg->d, cf->data, cf->len);
+	स_नकल(msg->d, cf->data, cf->len);
 
-	/* struct msg client field is used as an index in the echo skbs ring */
+	/* काष्ठा msg client field is used as an index in the echo skbs ring */
 	msg->client = priv->echo_idx;
 
 	spin_lock_irqsave(&priv->echo_lock, flags);
 
-	/* prepare and save echo skb in internal slot */
+	/* prepare and save echo skb in पूर्णांकernal slot */
 	can_put_echo_skb(skb, ndev, priv->echo_idx, 0);
 
 	/* move echo index to the next slot */
 	priv->echo_idx = (priv->echo_idx + 1) % priv->can.echo_skb_max;
 
-	/* if next slot is not free, stop network queue (no slot free in echo
-	 * skb ring means that the controller did not write these frames on
-	 * the bus: no need to continue).
+	/* अगर next slot is not मुक्त, stop network queue (no slot मुक्त in echo
+	 * skb ring means that the controller did not ग_लिखो these frames on
+	 * the bus: no need to जारी).
 	 */
 	should_stop_tx_queue = !!(priv->can.echo_skb[priv->echo_idx]);
 
-	/* stop network tx queue if not enough room to save one more msg too */
-	if (priv->can.ctrlmode & CAN_CTRLMODE_FD)
+	/* stop network tx queue अगर not enough room to save one more msg too */
+	अगर (priv->can.ctrlmode & CAN_CTRLMODE_FD)
 		should_stop_tx_queue |= (room_left <
-					(sizeof(*msg) + CANFD_MAX_DLEN));
-	else
+					(माप(*msg) + CANFD_MAX_DLEN));
+	अन्यथा
 		should_stop_tx_queue |= (room_left <
-					(sizeof(*msg) + CAN_MAX_DLEN));
+					(माप(*msg) + CAN_MAX_DLEN));
 
-	if (should_stop_tx_queue)
-		netif_stop_queue(ndev);
+	अगर (should_stop_tx_queue)
+		netअगर_stop_queue(ndev);
 
 	spin_unlock_irqrestore(&priv->echo_lock, flags);
 
-	/* write the skb on the interface */
-	priv->write_tx_msg(priv, msg);
+	/* ग_लिखो the skb on the पूर्णांकerface */
+	priv->ग_लिखो_tx_msg(priv, msg);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static const struct net_device_ops peak_canfd_netdev_ops = {
-	.ndo_open = peak_canfd_open,
-	.ndo_stop = peak_canfd_close,
-	.ndo_start_xmit = peak_canfd_start_xmit,
-	.ndo_change_mtu = can_change_mtu,
-};
+अटल स्थिर काष्ठा net_device_ops peak_canfd_netdev_ops = अणु
+	.nकरो_खोलो = peak_canfd_खोलो,
+	.nकरो_stop = peak_canfd_बंद,
+	.nकरो_start_xmit = peak_canfd_start_xmit,
+	.nकरो_change_mtu = can_change_mtu,
+पूर्ण;
 
-struct net_device *alloc_peak_canfd_dev(int sizeof_priv, int index,
-					int echo_skb_max)
-{
-	struct net_device *ndev;
-	struct peak_canfd_priv *priv;
+काष्ठा net_device *alloc_peak_canfd_dev(पूर्णांक माप_priv, पूर्णांक index,
+					पूर्णांक echo_skb_max)
+अणु
+	काष्ठा net_device *ndev;
+	काष्ठा peak_canfd_priv *priv;
 
 	/* we DO support local echo */
-	if (echo_skb_max < 0)
+	अगर (echo_skb_max < 0)
 		echo_skb_max = PCANFD_ECHO_SKB_MAX;
 
 	/* allocate the candev object */
-	ndev = alloc_candev(sizeof_priv, echo_skb_max);
-	if (!ndev)
-		return NULL;
+	ndev = alloc_candev(माप_priv, echo_skb_max);
+	अगर (!ndev)
+		वापस शून्य;
 
 	priv = netdev_priv(ndev);
 
 	/* complete now socket-can initialization side */
 	priv->can.state = CAN_STATE_STOPPED;
-	priv->can.bittiming_const = &peak_canfd_nominal_const;
-	priv->can.data_bittiming_const = &peak_canfd_data_const;
+	priv->can.bittiming_स्थिर = &peak_canfd_nominal_स्थिर;
+	priv->can.data_bittiming_स्थिर = &peak_canfd_data_स्थिर;
 
-	priv->can.do_set_mode = peak_canfd_set_mode;
-	priv->can.do_get_berr_counter = peak_canfd_get_berr_counter;
-	priv->can.do_set_bittiming = peak_canfd_set_bittiming;
-	priv->can.do_set_data_bittiming = peak_canfd_set_data_bittiming;
+	priv->can.करो_set_mode = peak_canfd_set_mode;
+	priv->can.करो_get_berr_counter = peak_canfd_get_berr_counter;
+	priv->can.करो_set_bittiming = peak_canfd_set_bittiming;
+	priv->can.करो_set_data_bittiming = peak_canfd_set_data_bittiming;
 	priv->can.ctrlmode_supported = CAN_CTRLMODE_LOOPBACK |
 				       CAN_CTRLMODE_LISTENONLY |
 				       CAN_CTRLMODE_3_SAMPLES |
@@ -795,5 +796,5 @@ struct net_device *alloc_peak_canfd_dev(int sizeof_priv, int index,
 	ndev->netdev_ops = &peak_canfd_netdev_ops;
 	ndev->dev_id = index;
 
-	return ndev;
-}
+	वापस ndev;
+पूर्ण

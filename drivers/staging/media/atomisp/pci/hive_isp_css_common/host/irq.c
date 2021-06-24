@@ -1,235 +1,236 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2010-2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#include "assert_support.h"
-#include "irq.h"
+#समावेश "assert_support.h"
+#समावेश "irq.h"
 
-#ifndef __INLINE_GP_DEVICE__
-#define __INLINE_GP_DEVICE__
-#endif
-#include "gp_device.h"	/* _REG_GP_IRQ_REQUEST_ADDR */
+#अगर_अघोषित __INLINE_GP_DEVICE__
+#घोषणा __INLINE_GP_DEVICE__
+#पूर्ण_अगर
+#समावेश "gp_device.h"	/* _REG_GP_IRQ_REQUEST_ADDR */
 
-static inline void irq_wait_for_write_complete(
-    const irq_ID_t		ID);
+अटल अंतरभूत व्योम irq_रुको_क्रम_ग_लिखो_complete(
+    स्थिर irq_ID_t		ID);
 
-static inline bool any_irq_channel_enabled(
-    const irq_ID_t				ID);
+अटल अंतरभूत bool any_irq_channel_enabled(
+    स्थिर irq_ID_t				ID);
 
-static inline irq_ID_t virq_get_irq_id(const enum virq_id irq_ID,
-				       unsigned int *channel_ID);
+अटल अंतरभूत irq_ID_t virq_get_irq_id(स्थिर क्रमागत virq_id irq_ID,
+				       अचिन्हित पूर्णांक *channel_ID);
 
-#ifndef __INLINE_IRQ__
-#include "irq_private.h"
-#endif /* __INLINE_IRQ__ */
+#अगर_अघोषित __INLINE_IRQ__
+#समावेश "irq_private.h"
+#पूर्ण_अगर /* __INLINE_IRQ__ */
 
-static unsigned short IRQ_N_CHANNEL[N_IRQ_ID] = {
+अटल अचिन्हित लघु IRQ_N_CHANNEL[N_IRQ_ID] = अणु
 	IRQ0_ID_N_CHANNEL,
 	IRQ1_ID_N_CHANNEL,
 	IRQ2_ID_N_CHANNEL,
 	IRQ3_ID_N_CHANNEL
-};
+पूर्ण;
 
-static unsigned short IRQ_N_ID_OFFSET[N_IRQ_ID + 1] = {
+अटल अचिन्हित लघु IRQ_N_ID_OFFSET[N_IRQ_ID + 1] = अणु
 	IRQ0_ID_OFFSET,
 	IRQ1_ID_OFFSET,
 	IRQ2_ID_OFFSET,
 	IRQ3_ID_OFFSET,
 	IRQ_END_OFFSET
-};
+पूर्ण;
 
-static enum virq_id IRQ_NESTING_ID[N_IRQ_ID] = {
+अटल क्रमागत virq_id IRQ_NESTING_ID[N_IRQ_ID] = अणु
 	N_virq_id,
-	virq_ifmt,
+	virq_अगरmt,
 	virq_isys,
 	virq_isel
-};
+पूर्ण;
 
-void irq_clear_all(
-    const irq_ID_t				ID)
-{
+व्योम irq_clear_all(
+    स्थिर irq_ID_t				ID)
+अणु
 	hrt_data	mask = 0xFFFFFFFF;
 
-	assert(ID < N_IRQ_ID);
-	assert(IRQ_N_CHANNEL[ID] <= HRT_DATA_WIDTH);
+	निश्चित(ID < N_IRQ_ID);
+	निश्चित(IRQ_N_CHANNEL[ID] <= HRT_DATA_WIDTH);
 
-	if (IRQ_N_CHANNEL[ID] < HRT_DATA_WIDTH) {
+	अगर (IRQ_N_CHANNEL[ID] < HRT_DATA_WIDTH) अणु
 		mask = ~((~(hrt_data)0) >> IRQ_N_CHANNEL[ID]);
-	}
+	पूर्ण
 
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_CLEAR_REG_IDX, mask);
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
- * Do we want the user to be able to set the signalling method ?
+ * Do we want the user to be able to set the संकेतling method ?
  */
-void irq_enable_channel(
-    const irq_ID_t				ID,
-    const unsigned int			irq_id)
-{
-	unsigned int mask = irq_reg_load(ID,
+व्योम irq_enable_channel(
+    स्थिर irq_ID_t				ID,
+    स्थिर अचिन्हित पूर्णांक			irq_id)
+अणु
+	अचिन्हित पूर्णांक mask = irq_reg_load(ID,
 					 _HRT_IRQ_CONTROLLER_MASK_REG_IDX);
-	unsigned int enable = irq_reg_load(ID,
+	अचिन्हित पूर्णांक enable = irq_reg_load(ID,
 					   _HRT_IRQ_CONTROLLER_ENABLE_REG_IDX);
-	unsigned int edge_in = irq_reg_load(ID,
+	अचिन्हित पूर्णांक edge_in = irq_reg_load(ID,
 					    _HRT_IRQ_CONTROLLER_EDGE_REG_IDX);
-	unsigned int me = 1U << irq_id;
+	अचिन्हित पूर्णांक me = 1U << irq_id;
 
-	assert(ID < N_IRQ_ID);
-	assert(irq_id < IRQ_N_CHANNEL[ID]);
+	निश्चित(ID < N_IRQ_ID);
+	निश्चित(irq_id < IRQ_N_CHANNEL[ID]);
 
 	mask |= me;
 	enable |= me;
 	edge_in |= me;	/* rising edge */
 
-	/* to avoid mishaps configuration must follow the following order */
+	/* to aव्योम mishaps configuration must follow the following order */
 
-	/* mask this interrupt */
+	/* mask this पूर्णांकerrupt */
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_MASK_REG_IDX, mask & ~me);
 	/* rising edge at input */
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_EDGE_REG_IDX, edge_in);
-	/* enable interrupt to output */
+	/* enable पूर्णांकerrupt to output */
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_ENABLE_REG_IDX, enable);
 	/* clear current irq only */
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_CLEAR_REG_IDX, me);
-	/* unmask interrupt from input */
+	/* unmask पूर्णांकerrupt from input */
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_MASK_REG_IDX, mask);
 
-	irq_wait_for_write_complete(ID);
+	irq_रुको_क्रम_ग_लिखो_complete(ID);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-void irq_enable_pulse(
-    const irq_ID_t	ID,
+व्योम irq_enable_pulse(
+    स्थिर irq_ID_t	ID,
     bool			pulse)
-{
-	unsigned int edge_out = 0x0;
+अणु
+	अचिन्हित पूर्णांक edge_out = 0x0;
 
-	if (pulse) {
+	अगर (pulse) अणु
 		edge_out = 0xffffffff;
-	}
+	पूर्ण
 	/* output is given as edge, not pulse */
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_EDGE_NOT_PULSE_REG_IDX, edge_out);
-	return;
-}
+	वापस;
+पूर्ण
 
-void irq_disable_channel(
-    const irq_ID_t				ID,
-    const unsigned int			irq_id)
-{
-	unsigned int mask = irq_reg_load(ID,
+व्योम irq_disable_channel(
+    स्थिर irq_ID_t				ID,
+    स्थिर अचिन्हित पूर्णांक			irq_id)
+अणु
+	अचिन्हित पूर्णांक mask = irq_reg_load(ID,
 					 _HRT_IRQ_CONTROLLER_MASK_REG_IDX);
-	unsigned int enable = irq_reg_load(ID,
+	अचिन्हित पूर्णांक enable = irq_reg_load(ID,
 					   _HRT_IRQ_CONTROLLER_ENABLE_REG_IDX);
-	unsigned int me = 1U << irq_id;
+	अचिन्हित पूर्णांक me = 1U << irq_id;
 
-	assert(ID < N_IRQ_ID);
-	assert(irq_id < IRQ_N_CHANNEL[ID]);
+	निश्चित(ID < N_IRQ_ID);
+	निश्चित(irq_id < IRQ_N_CHANNEL[ID]);
 
 	mask &= ~me;
 	enable &= ~me;
 
-	/* enable interrupt to output */
+	/* enable पूर्णांकerrupt to output */
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_ENABLE_REG_IDX, enable);
-	/* unmask interrupt from input */
+	/* unmask पूर्णांकerrupt from input */
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_MASK_REG_IDX, mask);
 	/* clear current irq only */
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_CLEAR_REG_IDX, me);
 
-	irq_wait_for_write_complete(ID);
+	irq_रुको_क्रम_ग_लिखो_complete(ID);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-enum hrt_isp_css_irq_status irq_get_channel_id(
-    const irq_ID_t				ID,
-    unsigned int				*irq_id)
-{
-	unsigned int irq_status = irq_reg_load(ID,
+क्रमागत hrt_isp_css_irq_status irq_get_channel_id(
+    स्थिर irq_ID_t				ID,
+    अचिन्हित पूर्णांक				*irq_id)
+अणु
+	अचिन्हित पूर्णांक irq_status = irq_reg_load(ID,
 					       _HRT_IRQ_CONTROLLER_STATUS_REG_IDX);
-	unsigned int idx;
-	enum hrt_isp_css_irq_status status = hrt_isp_css_irq_status_success;
+	अचिन्हित पूर्णांक idx;
+	क्रमागत hrt_isp_css_irq_status status = hrt_isp_css_irq_status_success;
 
-	assert(ID < N_IRQ_ID);
-	assert(irq_id);
+	निश्चित(ID < N_IRQ_ID);
+	निश्चित(irq_id);
 
 	/* find the first irq bit */
-	for (idx = 0; idx < IRQ_N_CHANNEL[ID]; idx++) {
-		if (irq_status & (1U << idx))
-			break;
-	}
-	if (idx == IRQ_N_CHANNEL[ID])
-		return hrt_isp_css_irq_status_error;
+	क्रम (idx = 0; idx < IRQ_N_CHANNEL[ID]; idx++) अणु
+		अगर (irq_status & (1U << idx))
+			अवरोध;
+	पूर्ण
+	अगर (idx == IRQ_N_CHANNEL[ID])
+		वापस hrt_isp_css_irq_status_error;
 
 	/* now check whether there are more bits set */
-	if (irq_status != (1U << idx))
+	अगर (irq_status != (1U << idx))
 		status = hrt_isp_css_irq_status_more_irqs;
 
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_CLEAR_REG_IDX, 1U << idx);
 
-	irq_wait_for_write_complete(ID);
+	irq_रुको_क्रम_ग_लिखो_complete(ID);
 
-	if (irq_id)
-		*irq_id = (unsigned int)idx;
+	अगर (irq_id)
+		*irq_id = (अचिन्हित पूर्णांक)idx;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static const hrt_address IRQ_REQUEST_ADDR[N_IRQ_SW_CHANNEL_ID] = {
+अटल स्थिर hrt_address IRQ_REQUEST_ADDR[N_IRQ_SW_CHANNEL_ID] = अणु
 	_REG_GP_IRQ_REQUEST0_ADDR,
 	_REG_GP_IRQ_REQUEST1_ADDR
-};
+पूर्ण;
 
-void irq_raise(
-    const irq_ID_t				ID,
-    const irq_sw_channel_id_t	irq_id)
-{
+व्योम irq_उठाओ(
+    स्थिर irq_ID_t				ID,
+    स्थिर irq_sw_channel_id_t	irq_id)
+अणु
 	hrt_address		addr;
 
-	OP___assert(ID == IRQ0_ID);
-	OP___assert(IRQ_BASE[ID] != (hrt_address)-1);
-	OP___assert(irq_id < N_IRQ_SW_CHANNEL_ID);
+	OP___निश्चित(ID == IRQ0_ID);
+	OP___निश्चित(IRQ_BASE[ID] != (hrt_address)-1);
+	OP___निश्चित(irq_id < N_IRQ_SW_CHANNEL_ID);
 
-	(void)ID;
+	(व्योम)ID;
 
 	addr = IRQ_REQUEST_ADDR[irq_id];
 	/* The SW IRQ pins are remapped to offset zero */
 	gp_device_reg_store(GP_DEVICE0_ID,
-			    (unsigned int)addr, 1);
+			    (अचिन्हित पूर्णांक)addr, 1);
 	gp_device_reg_store(GP_DEVICE0_ID,
-			    (unsigned int)addr, 0);
-	return;
-}
+			    (अचिन्हित पूर्णांक)addr, 0);
+	वापस;
+पूर्ण
 
-void irq_controller_get_state(const irq_ID_t ID,
-			      struct irq_controller_state *state)
-{
-	assert(ID < N_IRQ_ID);
-	assert(state);
+व्योम irq_controller_get_state(स्थिर irq_ID_t ID,
+			      काष्ठा irq_controller_state *state)
+अणु
+	निश्चित(ID < N_IRQ_ID);
+	निश्चित(state);
 
 	state->irq_edge = irq_reg_load(ID,
 				       _HRT_IRQ_CONTROLLER_EDGE_REG_IDX);
@@ -241,207 +242,207 @@ void irq_controller_get_state(const irq_ID_t ID,
 					 _HRT_IRQ_CONTROLLER_ENABLE_REG_IDX);
 	state->irq_level_not_pulse = irq_reg_load(ID,
 				     _HRT_IRQ_CONTROLLER_EDGE_NOT_PULSE_REG_IDX);
-	return;
-}
+	वापस;
+पूर्ण
 
-bool any_virq_signal(void)
-{
-	unsigned int irq_status = irq_reg_load(IRQ0_ID,
+bool any_virq_संकेत(व्योम)
+अणु
+	अचिन्हित पूर्णांक irq_status = irq_reg_load(IRQ0_ID,
 					       _HRT_IRQ_CONTROLLER_STATUS_REG_IDX);
 
-	return (irq_status != 0);
-}
+	वापस (irq_status != 0);
+पूर्ण
 
-void cnd_virq_enable_channel(
-    const enum virq_id				irq_ID,
-    const bool					en)
-{
+व्योम cnd_virq_enable_channel(
+    स्थिर क्रमागत virq_id				irq_ID,
+    स्थिर bool					en)
+अणु
 	irq_ID_t		i;
-	unsigned int	channel_ID;
+	अचिन्हित पूर्णांक	channel_ID;
 	irq_ID_t		ID = virq_get_irq_id(irq_ID, &channel_ID);
 
-	assert(ID < N_IRQ_ID);
+	निश्चित(ID < N_IRQ_ID);
 
-	for (i = IRQ1_ID; i < N_IRQ_ID; i++) {
+	क्रम (i = IRQ1_ID; i < N_IRQ_ID; i++) अणु
 		/* It is not allowed to enable the pin of a nested IRQ directly */
-		assert(irq_ID != IRQ_NESTING_ID[i]);
-	}
+		निश्चित(irq_ID != IRQ_NESTING_ID[i]);
+	पूर्ण
 
-	if (en) {
+	अगर (en) अणु
 		irq_enable_channel(ID, channel_ID);
-		if (IRQ_NESTING_ID[ID] != N_virq_id) {
+		अगर (IRQ_NESTING_ID[ID] != N_virq_id) अणु
 			/* Single level nesting, otherwise we'd need to recurse */
 			irq_enable_channel(IRQ0_ID, IRQ_NESTING_ID[ID]);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		irq_disable_channel(ID, channel_ID);
-		if ((IRQ_NESTING_ID[ID] != N_virq_id) && !any_irq_channel_enabled(ID)) {
-			/* Only disable the top if the nested ones are empty */
+		अगर ((IRQ_NESTING_ID[ID] != N_virq_id) && !any_irq_channel_enabled(ID)) अणु
+			/* Only disable the top अगर the nested ones are empty */
 			irq_disable_channel(IRQ0_ID, IRQ_NESTING_ID[ID]);
-		}
-	}
-	return;
-}
+		पूर्ण
+	पूर्ण
+	वापस;
+पूर्ण
 
-void virq_clear_all(void)
-{
+व्योम virq_clear_all(व्योम)
+अणु
 	irq_ID_t	irq_id;
 
-	for (irq_id = (irq_ID_t)0; irq_id < N_IRQ_ID; irq_id++) {
+	क्रम (irq_id = (irq_ID_t)0; irq_id < N_IRQ_ID; irq_id++) अणु
 		irq_clear_all(irq_id);
-	}
-	return;
-}
+	पूर्ण
+	वापस;
+पूर्ण
 
-enum hrt_isp_css_irq_status
-virq_get_channel_signals(struct virq_info *irq_info)
-{
-	enum hrt_isp_css_irq_status irq_status = hrt_isp_css_irq_status_error;
+क्रमागत hrt_isp_css_irq_status
+virq_get_channel_संकेतs(काष्ठा virq_info *irq_info)
+अणु
+	क्रमागत hrt_isp_css_irq_status irq_status = hrt_isp_css_irq_status_error;
 	irq_ID_t ID;
 
-	assert(irq_info);
+	निश्चित(irq_info);
 
-	for (ID = (irq_ID_t)0 ; ID < N_IRQ_ID; ID++) {
-		if (any_irq_channel_enabled(ID)) {
+	क्रम (ID = (irq_ID_t)0 ; ID < N_IRQ_ID; ID++) अणु
+		अगर (any_irq_channel_enabled(ID)) अणु
 			hrt_data	irq_data = irq_reg_load(ID,
 							    _HRT_IRQ_CONTROLLER_STATUS_REG_IDX);
 
-			if (irq_data != 0) {
+			अगर (irq_data != 0) अणु
 				/* The error condition is an IRQ pulse received with no IRQ status written */
 				irq_status = hrt_isp_css_irq_status_success;
-			}
+			पूर्ण
 
 			irq_info->irq_status_reg[ID] |= irq_data;
 
 			irq_reg_store(ID,
 				      _HRT_IRQ_CONTROLLER_CLEAR_REG_IDX, irq_data);
 
-			irq_wait_for_write_complete(ID);
-		}
-	}
+			irq_रुको_क्रम_ग_लिखो_complete(ID);
+		पूर्ण
+	पूर्ण
 
-	return irq_status;
-}
+	वापस irq_status;
+पूर्ण
 
-void virq_clear_info(struct virq_info *irq_info)
-{
+व्योम virq_clear_info(काष्ठा virq_info *irq_info)
+अणु
 	irq_ID_t ID;
 
-	assert(irq_info);
+	निश्चित(irq_info);
 
-	for (ID = (irq_ID_t)0 ; ID < N_IRQ_ID; ID++) {
+	क्रम (ID = (irq_ID_t)0 ; ID < N_IRQ_ID; ID++) अणु
 		irq_info->irq_status_reg[ID] = 0;
-	}
-	return;
-}
+	पूर्ण
+	वापस;
+पूर्ण
 
-enum hrt_isp_css_irq_status virq_get_channel_id(
-    enum virq_id					*irq_id)
-{
-	unsigned int irq_status = irq_reg_load(IRQ0_ID,
+क्रमागत hrt_isp_css_irq_status virq_get_channel_id(
+    क्रमागत virq_id					*irq_id)
+अणु
+	अचिन्हित पूर्णांक irq_status = irq_reg_load(IRQ0_ID,
 					       _HRT_IRQ_CONTROLLER_STATUS_REG_IDX);
-	unsigned int idx;
-	enum hrt_isp_css_irq_status status = hrt_isp_css_irq_status_success;
+	अचिन्हित पूर्णांक idx;
+	क्रमागत hrt_isp_css_irq_status status = hrt_isp_css_irq_status_success;
 	irq_ID_t ID;
 
-	assert(irq_id);
+	निश्चित(irq_id);
 
 	/* find the first irq bit on device 0 */
-	for (idx = 0; idx < IRQ_N_CHANNEL[IRQ0_ID]; idx++) {
-		if (irq_status & (1U << idx))
-			break;
-	}
+	क्रम (idx = 0; idx < IRQ_N_CHANNEL[IRQ0_ID]; idx++) अणु
+		अगर (irq_status & (1U << idx))
+			अवरोध;
+	पूर्ण
 
-	if (idx == IRQ_N_CHANNEL[IRQ0_ID]) {
-		return hrt_isp_css_irq_status_error;
-	}
+	अगर (idx == IRQ_N_CHANNEL[IRQ0_ID]) अणु
+		वापस hrt_isp_css_irq_status_error;
+	पूर्ण
 
 	/* Check whether there are more bits set on device 0 */
-	if (irq_status != (1U << idx)) {
+	अगर (irq_status != (1U << idx)) अणु
 		status = hrt_isp_css_irq_status_more_irqs;
-	}
+	पूर्ण
 
 	/* Check whether we have an IRQ on one of the nested devices */
-	for (ID = N_IRQ_ID - 1 ; ID > (irq_ID_t)0; ID--) {
-		if (IRQ_NESTING_ID[ID] == (enum virq_id)idx) {
-			break;
-		}
-	}
+	क्रम (ID = N_IRQ_ID - 1 ; ID > (irq_ID_t)0; ID--) अणु
+		अगर (IRQ_NESTING_ID[ID] == (क्रमागत virq_id)idx) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* If we have a nested IRQ, load that state, discard the device 0 state */
-	if (ID != IRQ0_ID) {
+	अगर (ID != IRQ0_ID) अणु
 		irq_status = irq_reg_load(ID,
 					  _HRT_IRQ_CONTROLLER_STATUS_REG_IDX);
 		/* find the first irq bit on device "id" */
-		for (idx = 0; idx < IRQ_N_CHANNEL[ID]; idx++) {
-			if (irq_status & (1U << idx))
-				break;
-		}
+		क्रम (idx = 0; idx < IRQ_N_CHANNEL[ID]; idx++) अणु
+			अगर (irq_status & (1U << idx))
+				अवरोध;
+		पूर्ण
 
-		if (idx == IRQ_N_CHANNEL[ID]) {
-			return hrt_isp_css_irq_status_error;
-		}
+		अगर (idx == IRQ_N_CHANNEL[ID]) अणु
+			वापस hrt_isp_css_irq_status_error;
+		पूर्ण
 
 		/* Alternatively check whether there are more bits set on this device */
-		if (irq_status != (1U << idx)) {
+		अगर (irq_status != (1U << idx)) अणु
 			status = hrt_isp_css_irq_status_more_irqs;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* If this device is empty, clear the state on device 0 */
 			irq_reg_store(IRQ0_ID,
 				      _HRT_IRQ_CONTROLLER_CLEAR_REG_IDX, 1U << IRQ_NESTING_ID[ID]);
-		}
-	} /* if (ID != IRQ0_ID) */
+		पूर्ण
+	पूर्ण /* अगर (ID != IRQ0_ID) */
 
-	/* Here we proceed to clear the IRQ on detected device, if no nested IRQ, this is device 0 */
+	/* Here we proceed to clear the IRQ on detected device, अगर no nested IRQ, this is device 0 */
 	irq_reg_store(ID,
 		      _HRT_IRQ_CONTROLLER_CLEAR_REG_IDX, 1U << idx);
 
-	irq_wait_for_write_complete(ID);
+	irq_रुको_क्रम_ग_लिखो_complete(ID);
 
 	idx += IRQ_N_ID_OFFSET[ID];
-	if (irq_id)
-		*irq_id = (enum virq_id)idx;
+	अगर (irq_id)
+		*irq_id = (क्रमागत virq_id)idx;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static inline void irq_wait_for_write_complete(
-    const irq_ID_t		ID)
-{
-	assert(ID < N_IRQ_ID);
-	assert(IRQ_BASE[ID] != (hrt_address)-1);
-	(void)ia_css_device_load_uint32(IRQ_BASE[ID] +
-					_HRT_IRQ_CONTROLLER_ENABLE_REG_IDX * sizeof(hrt_data));
-}
+अटल अंतरभूत व्योम irq_रुको_क्रम_ग_लिखो_complete(
+    स्थिर irq_ID_t		ID)
+अणु
+	निश्चित(ID < N_IRQ_ID);
+	निश्चित(IRQ_BASE[ID] != (hrt_address)-1);
+	(व्योम)ia_css_device_load_uपूर्णांक32(IRQ_BASE[ID] +
+					_HRT_IRQ_CONTROLLER_ENABLE_REG_IDX * माप(hrt_data));
+पूर्ण
 
-static inline bool any_irq_channel_enabled(
-    const irq_ID_t				ID)
-{
+अटल अंतरभूत bool any_irq_channel_enabled(
+    स्थिर irq_ID_t				ID)
+अणु
 	hrt_data	en_reg;
 
-	assert(ID < N_IRQ_ID);
+	निश्चित(ID < N_IRQ_ID);
 
 	en_reg = irq_reg_load(ID,
 			      _HRT_IRQ_CONTROLLER_ENABLE_REG_IDX);
 
-	return (en_reg != 0);
-}
+	वापस (en_reg != 0);
+पूर्ण
 
-static inline irq_ID_t virq_get_irq_id(
-    const enum virq_id		irq_ID,
-    unsigned int		*channel_ID)
-{
+अटल अंतरभूत irq_ID_t virq_get_irq_id(
+    स्थिर क्रमागत virq_id		irq_ID,
+    अचिन्हित पूर्णांक		*channel_ID)
+अणु
 	irq_ID_t ID;
 
-	assert(channel_ID);
+	निश्चित(channel_ID);
 
-	for (ID = (irq_ID_t)0 ; ID < N_IRQ_ID; ID++) {
-		if (irq_ID < IRQ_N_ID_OFFSET[ID + 1]) {
-			break;
-		}
-	}
+	क्रम (ID = (irq_ID_t)0 ; ID < N_IRQ_ID; ID++) अणु
+		अगर (irq_ID < IRQ_N_ID_OFFSET[ID + 1]) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	*channel_ID = (unsigned int)irq_ID - IRQ_N_ID_OFFSET[ID];
+	*channel_ID = (अचिन्हित पूर्णांक)irq_ID - IRQ_N_ID_OFFSET[ID];
 
-	return ID;
-}
+	वापस ID;
+पूर्ण

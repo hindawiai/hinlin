@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * HSM extension and cpu_ops implementation.
  *
  * Copyright (c) 2020 Western Digital Corporation or its affiliates.
  */
 
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <asm/cpu_ops.h>
-#include <asm/sbi.h>
-#include <asm/smp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/cpu_ops.h>
+#समावेश <यंत्र/sbi.h>
+#समावेश <यंत्र/smp.h>
 
-extern char secondary_start_sbi[];
-const struct cpu_operations cpu_ops_sbi;
+बाह्य अक्षर secondary_start_sbi[];
+स्थिर काष्ठा cpu_operations cpu_ops_sbi;
 
-static int sbi_hsm_hart_start(unsigned long hartid, unsigned long saddr,
-			      unsigned long priv)
-{
-	struct sbiret ret;
+अटल पूर्णांक sbi_hsm_hart_start(अचिन्हित दीर्घ hartid, अचिन्हित दीर्घ saddr,
+			      अचिन्हित दीर्घ priv)
+अणु
+	काष्ठा sbiret ret;
 
 	ret = sbi_ecall(SBI_EXT_HSM, SBI_EXT_HSM_HART_START,
 			hartid, saddr, priv, 0, 0, 0);
-	if (ret.error)
-		return sbi_err_map_linux_errno(ret.error);
-	else
-		return 0;
-}
+	अगर (ret.error)
+		वापस sbi_err_map_linux_त्रुटि_सं(ret.error);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static int sbi_hsm_hart_stop(void)
-{
-	struct sbiret ret;
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल पूर्णांक sbi_hsm_hart_stop(व्योम)
+अणु
+	काष्ठा sbiret ret;
 
 	ret = sbi_ecall(SBI_EXT_HSM, SBI_EXT_HSM_HART_STOP, 0, 0, 0, 0, 0, 0);
 
-	if (ret.error)
-		return sbi_err_map_linux_errno(ret.error);
-	else
-		return 0;
-}
+	अगर (ret.error)
+		वापस sbi_err_map_linux_त्रुटि_सं(ret.error);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int sbi_hsm_hart_get_status(unsigned long hartid)
-{
-	struct sbiret ret;
+अटल पूर्णांक sbi_hsm_hart_get_status(अचिन्हित दीर्घ hartid)
+अणु
+	काष्ठा sbiret ret;
 
 	ret = sbi_ecall(SBI_EXT_HSM, SBI_EXT_HSM_HART_STATUS,
 			hartid, 0, 0, 0, 0, 0);
-	if (ret.error)
-		return sbi_err_map_linux_errno(ret.error);
-	else
-		return ret.value;
-}
-#endif
+	अगर (ret.error)
+		वापस sbi_err_map_linux_त्रुटि_सं(ret.error);
+	अन्यथा
+		वापस ret.value;
+पूर्ण
+#पूर्ण_अगर
 
-static int sbi_cpu_start(unsigned int cpuid, struct task_struct *tidle)
-{
-	int rc;
-	unsigned long boot_addr = __pa_symbol(secondary_start_sbi);
-	int hartid = cpuid_to_hartid_map(cpuid);
+अटल पूर्णांक sbi_cpu_start(अचिन्हित पूर्णांक cpuid, काष्ठा task_काष्ठा *tidle)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ boot_addr = __pa_symbol(secondary_start_sbi);
+	पूर्णांक hartid = cpuid_to_hartid_map(cpuid);
 
 	cpu_update_secondary_bootdata(cpuid, tidle);
 	rc = sbi_hsm_hart_start(hartid, boot_addr, 0);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int sbi_cpu_prepare(unsigned int cpuid)
-{
-	if (!cpu_ops_sbi.cpu_start) {
+अटल पूर्णांक sbi_cpu_prepare(अचिन्हित पूर्णांक cpuid)
+अणु
+	अगर (!cpu_ops_sbi.cpu_start) अणु
 		pr_err("cpu start method not defined for CPU [%d]\n", cpuid);
-		return -ENODEV;
-	}
-	return 0;
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static int sbi_cpu_disable(unsigned int cpuid)
-{
-	if (!cpu_ops_sbi.cpu_stop)
-		return -EOPNOTSUPP;
-	return 0;
-}
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल पूर्णांक sbi_cpu_disable(अचिन्हित पूर्णांक cpuid)
+अणु
+	अगर (!cpu_ops_sbi.cpu_stop)
+		वापस -EOPNOTSUPP;
+	वापस 0;
+पूर्ण
 
-static void sbi_cpu_stop(void)
-{
-	int ret;
+अटल व्योम sbi_cpu_stop(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = sbi_hsm_hart_stop();
 	pr_crit("Unable to stop the cpu %u (%d)\n", smp_processor_id(), ret);
-}
+पूर्ण
 
-static int sbi_cpu_is_stopped(unsigned int cpuid)
-{
-	int rc;
-	int hartid = cpuid_to_hartid_map(cpuid);
+अटल पूर्णांक sbi_cpu_is_stopped(अचिन्हित पूर्णांक cpuid)
+अणु
+	पूर्णांक rc;
+	पूर्णांक hartid = cpuid_to_hartid_map(cpuid);
 
 	rc = sbi_hsm_hart_get_status(hartid);
 
-	if (rc == SBI_HSM_HART_STATUS_STOPPED)
-		return 0;
-	return rc;
-}
-#endif
+	अगर (rc == SBI_HSM_HART_STATUS_STOPPED)
+		वापस 0;
+	वापस rc;
+पूर्ण
+#पूर्ण_अगर
 
-const struct cpu_operations cpu_ops_sbi = {
+स्थिर काष्ठा cpu_operations cpu_ops_sbi = अणु
 	.name		= "sbi",
 	.cpu_prepare	= sbi_cpu_prepare,
 	.cpu_start	= sbi_cpu_start,
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 	.cpu_disable	= sbi_cpu_disable,
 	.cpu_stop	= sbi_cpu_stop,
 	.cpu_is_stopped	= sbi_cpu_is_stopped,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

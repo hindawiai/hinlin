@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
@@ -12,224 +13,224 @@
  * @Date 	May 13 2008
  */
 
-#include "ctsrc.h"
-#include "cthardware.h"
-#include <linux/slab.h>
+#समावेश "ctsrc.h"
+#समावेश "cthardware.h"
+#समावेश <linux/slab.h>
 
-#define SRC_RESOURCE_NUM	256
-#define SRCIMP_RESOURCE_NUM	256
+#घोषणा SRC_RESOURCE_NUM	256
+#घोषणा SRCIMP_RESOURCE_NUM	256
 
-static unsigned int conj_mask;
+अटल अचिन्हित पूर्णांक conj_mask;
 
-static int src_default_config_memrd(struct src *src);
-static int src_default_config_memwr(struct src *src);
-static int src_default_config_arcrw(struct src *src);
+अटल पूर्णांक src_शेष_config_memrd(काष्ठा src *src);
+अटल पूर्णांक src_शेष_config_memwr(काष्ठा src *src);
+अटल पूर्णांक src_शेष_config_arcrw(काष्ठा src *src);
 
-static int (*src_default_config[3])(struct src *) = {
-	[MEMRD] = src_default_config_memrd,
-	[MEMWR] = src_default_config_memwr,
-	[ARCRW] = src_default_config_arcrw
-};
+अटल पूर्णांक (*src_शेष_config[3])(काष्ठा src *) = अणु
+	[MEMRD] = src_शेष_config_memrd,
+	[MEMWR] = src_शेष_config_memwr,
+	[ARCRW] = src_शेष_config_arcrw
+पूर्ण;
 
-static int src_set_state(struct src *src, unsigned int state)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_state(काष्ठा src *src, अचिन्हित पूर्णांक state)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_state(src->rsc.ctrl_blk, state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_bm(struct src *src, unsigned int bm)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_bm(काष्ठा src *src, अचिन्हित पूर्णांक bm)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_bm(src->rsc.ctrl_blk, bm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_sf(struct src *src, unsigned int sf)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_sf(काष्ठा src *src, अचिन्हित पूर्णांक sf)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_sf(src->rsc.ctrl_blk, sf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_pm(struct src *src, unsigned int pm)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_pm(काष्ठा src *src, अचिन्हित पूर्णांक pm)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_pm(src->rsc.ctrl_blk, pm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_rom(struct src *src, unsigned int rom)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_rom(काष्ठा src *src, अचिन्हित पूर्णांक rom)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_rom(src->rsc.ctrl_blk, rom);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_vo(struct src *src, unsigned int vo)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_vo(काष्ठा src *src, अचिन्हित पूर्णांक vo)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_vo(src->rsc.ctrl_blk, vo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_st(struct src *src, unsigned int st)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_st(काष्ठा src *src, अचिन्हित पूर्णांक st)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_st(src->rsc.ctrl_blk, st);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_bp(struct src *src, unsigned int bp)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_bp(काष्ठा src *src, अचिन्हित पूर्णांक bp)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_bp(src->rsc.ctrl_blk, bp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_cisz(struct src *src, unsigned int cisz)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_cisz(काष्ठा src *src, अचिन्हित पूर्णांक cisz)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_cisz(src->rsc.ctrl_blk, cisz);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_ca(struct src *src, unsigned int ca)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_ca(काष्ठा src *src, अचिन्हित पूर्णांक ca)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_ca(src->rsc.ctrl_blk, ca);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_sa(struct src *src, unsigned int sa)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_sa(काष्ठा src *src, अचिन्हित पूर्णांक sa)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_sa(src->rsc.ctrl_blk, sa);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_la(struct src *src, unsigned int la)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_la(काष्ठा src *src, अचिन्हित पूर्णांक la)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_la(src->rsc.ctrl_blk, la);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_pitch(struct src *src, unsigned int pitch)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_pitch(काष्ठा src *src, अचिन्हित पूर्णांक pitch)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_pitch(src->rsc.ctrl_blk, pitch);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_set_clear_zbufs(struct src *src)
-{
-	struct hw *hw;
+अटल पूर्णांक src_set_clear_zbufs(काष्ठा src *src)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
 	hw->src_set_clear_zbufs(src->rsc.ctrl_blk, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_commit_write(struct src *src)
-{
-	struct hw *hw;
-	int i;
-	unsigned int dirty = 0;
+अटल पूर्णांक src_commit_ग_लिखो(काष्ठा src *src)
+अणु
+	काष्ठा hw *hw;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक dirty = 0;
 
 	hw = src->rsc.hw;
 	src->rsc.ops->master(&src->rsc);
-	if (src->rsc.msr > 1) {
-		/* Save dirty flags for conjugate resource programming */
+	अगर (src->rsc.msr > 1) अणु
+		/* Save dirty flags क्रम conjugate resource programming */
 		dirty = hw->src_get_dirty(src->rsc.ctrl_blk) & conj_mask;
-	}
-	hw->src_commit_write(hw, src->rsc.ops->index(&src->rsc),
+	पूर्ण
+	hw->src_commit_ग_लिखो(hw, src->rsc.ops->index(&src->rsc),
 						src->rsc.ctrl_blk);
 
 	/* Program conjugate parameter mixer resources */
-	if (MEMWR == src->mode)
-		return 0;
+	अगर (MEMWR == src->mode)
+		वापस 0;
 
-	for (i = 1; i < src->rsc.msr; i++) {
+	क्रम (i = 1; i < src->rsc.msr; i++) अणु
 		src->rsc.ops->next_conj(&src->rsc);
 		hw->src_set_dirty(src->rsc.ctrl_blk, dirty);
-		hw->src_commit_write(hw, src->rsc.ops->index(&src->rsc),
+		hw->src_commit_ग_लिखो(hw, src->rsc.ops->index(&src->rsc),
 							src->rsc.ctrl_blk);
-	}
+	पूर्ण
 	src->rsc.ops->master(&src->rsc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_get_ca(struct src *src)
-{
-	struct hw *hw;
+अटल पूर्णांक src_get_ca(काष्ठा src *src)
+अणु
+	काष्ठा hw *hw;
 
 	hw = src->rsc.hw;
-	return hw->src_get_ca(hw, src->rsc.ops->index(&src->rsc),
+	वापस hw->src_get_ca(hw, src->rsc.ops->index(&src->rsc),
 						src->rsc.ctrl_blk);
-}
+पूर्ण
 
-static int src_init(struct src *src)
-{
-	src_default_config[src->mode](src);
+अटल पूर्णांक src_init(काष्ठा src *src)
+अणु
+	src_शेष_config[src->mode](src);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct src *src_next_interleave(struct src *src)
-{
-	return src->intlv;
-}
+अटल काष्ठा src *src_next_पूर्णांकerleave(काष्ठा src *src)
+अणु
+	वापस src->पूर्णांकlv;
+पूर्ण
 
-static int src_default_config_memrd(struct src *src)
-{
-	struct hw *hw = src->rsc.hw;
-	unsigned int rsr, msr;
+अटल पूर्णांक src_शेष_config_memrd(काष्ठा src *src)
+अणु
+	काष्ठा hw *hw = src->rsc.hw;
+	अचिन्हित पूर्णांक rsr, msr;
 
 	hw->src_set_state(src->rsc.ctrl_blk, SRC_STATE_OFF);
 	hw->src_set_bm(src->rsc.ctrl_blk, 1);
-	for (rsr = 0, msr = src->rsc.msr; msr > 1; msr >>= 1)
+	क्रम (rsr = 0, msr = src->rsc.msr; msr > 1; msr >>= 1)
 		rsr++;
 
 	hw->src_set_rsr(src->rsc.ctrl_blk, rsr);
@@ -248,23 +249,23 @@ static int src_default_config_memrd(struct src *src)
 	hw->src_set_clear_zbufs(src->rsc.ctrl_blk, 1);
 
 	src->rsc.ops->master(&src->rsc);
-	hw->src_commit_write(hw, src->rsc.ops->index(&src->rsc),
+	hw->src_commit_ग_लिखो(hw, src->rsc.ops->index(&src->rsc),
 						src->rsc.ctrl_blk);
 
-	for (msr = 1; msr < src->rsc.msr; msr++) {
+	क्रम (msr = 1; msr < src->rsc.msr; msr++) अणु
 		src->rsc.ops->next_conj(&src->rsc);
 		hw->src_set_pitch(src->rsc.ctrl_blk, 0x1000000);
-		hw->src_commit_write(hw, src->rsc.ops->index(&src->rsc),
+		hw->src_commit_ग_लिखो(hw, src->rsc.ops->index(&src->rsc),
 							src->rsc.ctrl_blk);
-	}
+	पूर्ण
 	src->rsc.ops->master(&src->rsc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_default_config_memwr(struct src *src)
-{
-	struct hw *hw = src->rsc.hw;
+अटल पूर्णांक src_शेष_config_memwr(काष्ठा src *src)
+अणु
+	काष्ठा hw *hw = src->rsc.hw;
 
 	hw->src_set_state(src->rsc.ctrl_blk, SRC_STATE_OFF);
 	hw->src_set_bm(src->rsc.ctrl_blk, 1);
@@ -284,21 +285,21 @@ static int src_default_config_memwr(struct src *src)
 	hw->src_set_clear_zbufs(src->rsc.ctrl_blk, 1);
 
 	src->rsc.ops->master(&src->rsc);
-	hw->src_commit_write(hw, src->rsc.ops->index(&src->rsc),
+	hw->src_commit_ग_लिखो(hw, src->rsc.ops->index(&src->rsc),
 						src->rsc.ctrl_blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_default_config_arcrw(struct src *src)
-{
-	struct hw *hw = src->rsc.hw;
-	unsigned int rsr, msr;
-	unsigned int dirty;
+अटल पूर्णांक src_शेष_config_arcrw(काष्ठा src *src)
+अणु
+	काष्ठा hw *hw = src->rsc.hw;
+	अचिन्हित पूर्णांक rsr, msr;
+	अचिन्हित पूर्णांक dirty;
 
 	hw->src_set_state(src->rsc.ctrl_blk, SRC_STATE_OFF);
 	hw->src_set_bm(src->rsc.ctrl_blk, 0);
-	for (rsr = 0, msr = src->rsc.msr; msr > 1; msr >>= 1)
+	क्रम (rsr = 0, msr = src->rsc.msr; msr > 1; msr >>= 1)
 		rsr++;
 
 	hw->src_set_rsr(src->rsc.ctrl_blk, rsr);
@@ -320,18 +321,18 @@ static int src_default_config_arcrw(struct src *src)
 
 	dirty = hw->src_get_dirty(src->rsc.ctrl_blk);
 	src->rsc.ops->master(&src->rsc);
-	for (msr = 0; msr < src->rsc.msr; msr++) {
+	क्रम (msr = 0; msr < src->rsc.msr; msr++) अणु
 		hw->src_set_dirty(src->rsc.ctrl_blk, dirty);
-		hw->src_commit_write(hw, src->rsc.ops->index(&src->rsc),
+		hw->src_commit_ग_लिखो(hw, src->rsc.ops->index(&src->rsc),
 							src->rsc.ctrl_blk);
 		src->rsc.ops->next_conj(&src->rsc);
-	}
+	पूर्ण
 	src->rsc.ops->master(&src->rsc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct src_rsc_ops src_rsc_ops = {
+अटल स्थिर काष्ठा src_rsc_ops src_rsc_ops = अणु
 	.set_state		= src_set_state,
 	.set_bm			= src_set_bm,
 	.set_sf			= src_set_sf,
@@ -346,213 +347,213 @@ static const struct src_rsc_ops src_rsc_ops = {
 	.set_la			= src_set_la,
 	.set_pitch		= src_set_pitch,
 	.set_clr_zbufs		= src_set_clear_zbufs,
-	.commit_write		= src_commit_write,
+	.commit_ग_लिखो		= src_commit_ग_लिखो,
 	.get_ca			= src_get_ca,
 	.init			= src_init,
-	.next_interleave	= src_next_interleave,
-};
+	.next_पूर्णांकerleave	= src_next_पूर्णांकerleave,
+पूर्ण;
 
-static int
-src_rsc_init(struct src *src, u32 idx,
-	     const struct src_desc *desc, struct src_mgr *mgr)
-{
-	int err;
-	int i, n;
-	struct src *p;
+अटल पूर्णांक
+src_rsc_init(काष्ठा src *src, u32 idx,
+	     स्थिर काष्ठा src_desc *desc, काष्ठा src_mgr *mgr)
+अणु
+	पूर्णांक err;
+	पूर्णांक i, n;
+	काष्ठा src *p;
 
 	n = (MEMRD == desc->mode) ? desc->multi : 1;
-	for (i = 0, p = src; i < n; i++, p++) {
+	क्रम (i = 0, p = src; i < n; i++, p++) अणु
 		err = rsc_init(&p->rsc, idx + i, SRC, desc->msr, mgr->mgr.hw);
-		if (err)
-			goto error1;
+		अगर (err)
+			जाओ error1;
 
-		/* Initialize src specific rsc operations */
+		/* Initialize src specअगरic rsc operations */
 		p->ops = &src_rsc_ops;
 		p->multi = (0 == i) ? desc->multi : 1;
 		p->mode = desc->mode;
-		src_default_config[desc->mode](p);
+		src_शेष_config[desc->mode](p);
 		mgr->src_enable(mgr, p);
-		p->intlv = p + 1;
-	}
-	(--p)->intlv = NULL;	/* Set @intlv of the last SRC to NULL */
+		p->पूर्णांकlv = p + 1;
+	पूर्ण
+	(--p)->पूर्णांकlv = शून्य;	/* Set @पूर्णांकlv of the last SRC to शून्य */
 
-	mgr->commit_write(mgr);
+	mgr->commit_ग_लिखो(mgr);
 
-	return 0;
+	वापस 0;
 
 error1:
-	for (i--, p--; i >= 0; i--, p--) {
+	क्रम (i--, p--; i >= 0; i--, p--) अणु
 		mgr->src_disable(mgr, p);
 		rsc_uninit(&p->rsc);
-	}
-	mgr->commit_write(mgr);
-	return err;
-}
+	पूर्ण
+	mgr->commit_ग_लिखो(mgr);
+	वापस err;
+पूर्ण
 
-static int src_rsc_uninit(struct src *src, struct src_mgr *mgr)
-{
-	int i, n;
-	struct src *p;
+अटल पूर्णांक src_rsc_uninit(काष्ठा src *src, काष्ठा src_mgr *mgr)
+अणु
+	पूर्णांक i, n;
+	काष्ठा src *p;
 
 	n = (MEMRD == src->mode) ? src->multi : 1;
-	for (i = 0, p = src; i < n; i++, p++) {
+	क्रम (i = 0, p = src; i < n; i++, p++) अणु
 		mgr->src_disable(mgr, p);
 		rsc_uninit(&p->rsc);
 		p->multi = 0;
-		p->ops = NULL;
+		p->ops = शून्य;
 		p->mode = NUM_SRCMODES;
-		p->intlv = NULL;
-	}
-	mgr->commit_write(mgr);
+		p->पूर्णांकlv = शून्य;
+	पूर्ण
+	mgr->commit_ग_लिखो(mgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-get_src_rsc(struct src_mgr *mgr, const struct src_desc *desc, struct src **rsrc)
-{
-	unsigned int idx = SRC_RESOURCE_NUM;
-	int err;
-	struct src *src;
-	unsigned long flags;
+अटल पूर्णांक
+get_src_rsc(काष्ठा src_mgr *mgr, स्थिर काष्ठा src_desc *desc, काष्ठा src **rsrc)
+अणु
+	अचिन्हित पूर्णांक idx = SRC_RESOURCE_NUM;
+	पूर्णांक err;
+	काष्ठा src *src;
+	अचिन्हित दीर्घ flags;
 
-	*rsrc = NULL;
+	*rsrc = शून्य;
 
 	/* Check whether there are sufficient src resources to meet request. */
 	spin_lock_irqsave(&mgr->mgr_lock, flags);
-	if (MEMRD == desc->mode)
+	अगर (MEMRD == desc->mode)
 		err = mgr_get_resource(&mgr->mgr, desc->multi, &idx);
-	else
+	अन्यथा
 		err = mgr_get_resource(&mgr->mgr, 1, &idx);
 
 	spin_unlock_irqrestore(&mgr->mgr_lock, flags);
-	if (err) {
+	अगर (err) अणु
 		dev_err(mgr->card->dev,
 			"Can't meet SRC resource request!\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* Allocate mem for master src resource */
-	if (MEMRD == desc->mode)
-		src = kcalloc(desc->multi, sizeof(*src), GFP_KERNEL);
-	else
-		src = kzalloc(sizeof(*src), GFP_KERNEL);
+	/* Allocate mem क्रम master src resource */
+	अगर (MEMRD == desc->mode)
+		src = kसुस्मृति(desc->multi, माप(*src), GFP_KERNEL);
+	अन्यथा
+		src = kzalloc(माप(*src), GFP_KERNEL);
 
-	if (!src) {
+	अगर (!src) अणु
 		err = -ENOMEM;
-		goto error1;
-	}
+		जाओ error1;
+	पूर्ण
 
 	err = src_rsc_init(src, idx, desc, mgr);
-	if (err)
-		goto error2;
+	अगर (err)
+		जाओ error2;
 
 	*rsrc = src;
 
-	return 0;
+	वापस 0;
 
 error2:
-	kfree(src);
+	kमुक्त(src);
 error1:
 	spin_lock_irqsave(&mgr->mgr_lock, flags);
-	if (MEMRD == desc->mode)
+	अगर (MEMRD == desc->mode)
 		mgr_put_resource(&mgr->mgr, desc->multi, idx);
-	else
+	अन्यथा
 		mgr_put_resource(&mgr->mgr, 1, idx);
 
 	spin_unlock_irqrestore(&mgr->mgr_lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int put_src_rsc(struct src_mgr *mgr, struct src *src)
-{
-	unsigned long flags;
+अटल पूर्णांक put_src_rsc(काष्ठा src_mgr *mgr, काष्ठा src *src)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mgr->mgr_lock, flags);
 	src->rsc.ops->master(&src->rsc);
-	if (MEMRD == src->mode)
+	अगर (MEMRD == src->mode)
 		mgr_put_resource(&mgr->mgr, src->multi,
 				 src->rsc.ops->index(&src->rsc));
-	else
+	अन्यथा
 		mgr_put_resource(&mgr->mgr, 1, src->rsc.ops->index(&src->rsc));
 
 	spin_unlock_irqrestore(&mgr->mgr_lock, flags);
 	src_rsc_uninit(src, mgr);
-	kfree(src);
+	kमुक्त(src);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_enable_s(struct src_mgr *mgr, struct src *src)
-{
-	struct hw *hw = mgr->mgr.hw;
-	int i;
+अटल पूर्णांक src_enable_s(काष्ठा src_mgr *mgr, काष्ठा src *src)
+अणु
+	काष्ठा hw *hw = mgr->mgr.hw;
+	पूर्णांक i;
 
 	src->rsc.ops->master(&src->rsc);
-	for (i = 0; i < src->rsc.msr; i++) {
+	क्रम (i = 0; i < src->rsc.msr; i++) अणु
 		hw->src_mgr_enbs_src(mgr->mgr.ctrl_blk,
 				     src->rsc.ops->index(&src->rsc));
 		src->rsc.ops->next_conj(&src->rsc);
-	}
+	पूर्ण
 	src->rsc.ops->master(&src->rsc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_enable(struct src_mgr *mgr, struct src *src)
-{
-	struct hw *hw = mgr->mgr.hw;
-	int i;
+अटल पूर्णांक src_enable(काष्ठा src_mgr *mgr, काष्ठा src *src)
+अणु
+	काष्ठा hw *hw = mgr->mgr.hw;
+	पूर्णांक i;
 
 	src->rsc.ops->master(&src->rsc);
-	for (i = 0; i < src->rsc.msr; i++) {
+	क्रम (i = 0; i < src->rsc.msr; i++) अणु
 		hw->src_mgr_enb_src(mgr->mgr.ctrl_blk,
 				    src->rsc.ops->index(&src->rsc));
 		src->rsc.ops->next_conj(&src->rsc);
-	}
+	पूर्ण
 	src->rsc.ops->master(&src->rsc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_disable(struct src_mgr *mgr, struct src *src)
-{
-	struct hw *hw = mgr->mgr.hw;
-	int i;
+अटल पूर्णांक src_disable(काष्ठा src_mgr *mgr, काष्ठा src *src)
+अणु
+	काष्ठा hw *hw = mgr->mgr.hw;
+	पूर्णांक i;
 
 	src->rsc.ops->master(&src->rsc);
-	for (i = 0; i < src->rsc.msr; i++) {
+	क्रम (i = 0; i < src->rsc.msr; i++) अणु
 		hw->src_mgr_dsb_src(mgr->mgr.ctrl_blk,
 				    src->rsc.ops->index(&src->rsc));
 		src->rsc.ops->next_conj(&src->rsc);
-	}
+	पूर्ण
 	src->rsc.ops->master(&src->rsc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int src_mgr_commit_write(struct src_mgr *mgr)
-{
-	struct hw *hw = mgr->mgr.hw;
+अटल पूर्णांक src_mgr_commit_ग_लिखो(काष्ठा src_mgr *mgr)
+अणु
+	काष्ठा hw *hw = mgr->mgr.hw;
 
-	hw->src_mgr_commit_write(hw, mgr->mgr.ctrl_blk);
+	hw->src_mgr_commit_ग_लिखो(hw, mgr->mgr.ctrl_blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int src_mgr_create(struct hw *hw, struct src_mgr **rsrc_mgr)
-{
-	int err, i;
-	struct src_mgr *src_mgr;
+पूर्णांक src_mgr_create(काष्ठा hw *hw, काष्ठा src_mgr **rsrc_mgr)
+अणु
+	पूर्णांक err, i;
+	काष्ठा src_mgr *src_mgr;
 
-	*rsrc_mgr = NULL;
-	src_mgr = kzalloc(sizeof(*src_mgr), GFP_KERNEL);
-	if (!src_mgr)
-		return -ENOMEM;
+	*rsrc_mgr = शून्य;
+	src_mgr = kzalloc(माप(*src_mgr), GFP_KERNEL);
+	अगर (!src_mgr)
+		वापस -ENOMEM;
 
 	err = rsc_mgr_init(&src_mgr->mgr, SRC, SRC_RESOURCE_NUM, hw);
-	if (err)
-		goto error1;
+	अगर (err)
+		जाओ error1;
 
 	spin_lock_init(&src_mgr->mgr_lock);
 	conj_mask = hw->src_dirty_conj_mask();
@@ -562,69 +563,69 @@ int src_mgr_create(struct hw *hw, struct src_mgr **rsrc_mgr)
 	src_mgr->src_enable_s = src_enable_s;
 	src_mgr->src_enable = src_enable;
 	src_mgr->src_disable = src_disable;
-	src_mgr->commit_write = src_mgr_commit_write;
+	src_mgr->commit_ग_लिखो = src_mgr_commit_ग_लिखो;
 	src_mgr->card = hw->card;
 
 	/* Disable all SRC resources. */
-	for (i = 0; i < 256; i++)
+	क्रम (i = 0; i < 256; i++)
 		hw->src_mgr_dsb_src(src_mgr->mgr.ctrl_blk, i);
 
-	hw->src_mgr_commit_write(hw, src_mgr->mgr.ctrl_blk);
+	hw->src_mgr_commit_ग_लिखो(hw, src_mgr->mgr.ctrl_blk);
 
 	*rsrc_mgr = src_mgr;
 
-	return 0;
+	वापस 0;
 
 error1:
-	kfree(src_mgr);
-	return err;
-}
+	kमुक्त(src_mgr);
+	वापस err;
+पूर्ण
 
-int src_mgr_destroy(struct src_mgr *src_mgr)
-{
+पूर्णांक src_mgr_destroy(काष्ठा src_mgr *src_mgr)
+अणु
 	rsc_mgr_uninit(&src_mgr->mgr);
-	kfree(src_mgr);
+	kमुक्त(src_mgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* SRCIMP resource manager operations */
 
-static int srcimp_master(struct rsc *rsc)
-{
+अटल पूर्णांक srcimp_master(काष्ठा rsc *rsc)
+अणु
 	rsc->conj = 0;
-	return rsc->idx = container_of(rsc, struct srcimp, rsc)->idx[0];
-}
+	वापस rsc->idx = container_of(rsc, काष्ठा srcimp, rsc)->idx[0];
+पूर्ण
 
-static int srcimp_next_conj(struct rsc *rsc)
-{
+अटल पूर्णांक srcimp_next_conj(काष्ठा rsc *rsc)
+अणु
 	rsc->conj++;
-	return container_of(rsc, struct srcimp, rsc)->idx[rsc->conj];
-}
+	वापस container_of(rsc, काष्ठा srcimp, rsc)->idx[rsc->conj];
+पूर्ण
 
-static int srcimp_index(const struct rsc *rsc)
-{
-	return container_of(rsc, struct srcimp, rsc)->idx[rsc->conj];
-}
+अटल पूर्णांक srcimp_index(स्थिर काष्ठा rsc *rsc)
+अणु
+	वापस container_of(rsc, काष्ठा srcimp, rsc)->idx[rsc->conj];
+पूर्ण
 
-static const struct rsc_ops srcimp_basic_rsc_ops = {
+अटल स्थिर काष्ठा rsc_ops srcimp_basic_rsc_ops = अणु
 	.master		= srcimp_master,
 	.next_conj	= srcimp_next_conj,
 	.index		= srcimp_index,
-	.output_slot	= NULL,
-};
+	.output_slot	= शून्य,
+पूर्ण;
 
-static int srcimp_map(struct srcimp *srcimp, struct src *src, struct rsc *input)
-{
-	struct imapper *entry;
-	int i;
+अटल पूर्णांक srcimp_map(काष्ठा srcimp *srcimp, काष्ठा src *src, काष्ठा rsc *input)
+अणु
+	काष्ठा imapper *entry;
+	पूर्णांक i;
 
 	srcimp->rsc.ops->master(&srcimp->rsc);
 	src->rsc.ops->master(&src->rsc);
 	input->ops->master(input);
 
 	/* Program master and conjugate resources */
-	for (i = 0; i < srcimp->rsc.msr; i++) {
+	क्रम (i = 0; i < srcimp->rsc.msr; i++) अणु
 		entry = &srcimp->imappers[i];
 		entry->slot = input->ops->output_slot(input);
 		entry->user = src->rsc.ops->index(&src->rsc);
@@ -634,217 +635,217 @@ static int srcimp_map(struct srcimp *srcimp, struct src *src, struct rsc *input)
 
 		srcimp->rsc.ops->next_conj(&srcimp->rsc);
 		input->ops->next_conj(input);
-	}
+	पूर्ण
 
 	srcimp->rsc.ops->master(&srcimp->rsc);
 	input->ops->master(input);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int srcimp_unmap(struct srcimp *srcimp)
-{
-	int i;
+अटल पूर्णांक srcimp_unmap(काष्ठा srcimp *srcimp)
+अणु
+	पूर्णांक i;
 
 	/* Program master and conjugate resources */
-	for (i = 0; i < srcimp->rsc.msr; i++) {
-		if (srcimp->mapped & (0x1 << i)) {
+	क्रम (i = 0; i < srcimp->rsc.msr; i++) अणु
+		अगर (srcimp->mapped & (0x1 << i)) अणु
 			srcimp->mgr->imap_delete(srcimp->mgr,
 						 &srcimp->imappers[i]);
 			srcimp->mapped &= ~(0x1 << i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct srcimp_rsc_ops srcimp_ops = {
+अटल स्थिर काष्ठा srcimp_rsc_ops srcimp_ops = अणु
 	.map = srcimp_map,
 	.unmap = srcimp_unmap
-};
+पूर्ण;
 
-static int srcimp_rsc_init(struct srcimp *srcimp,
-			   const struct srcimp_desc *desc,
-			   struct srcimp_mgr *mgr)
-{
-	int err;
+अटल पूर्णांक srcimp_rsc_init(काष्ठा srcimp *srcimp,
+			   स्थिर काष्ठा srcimp_desc *desc,
+			   काष्ठा srcimp_mgr *mgr)
+अणु
+	पूर्णांक err;
 
 	err = rsc_init(&srcimp->rsc, srcimp->idx[0],
 		       SRCIMP, desc->msr, mgr->mgr.hw);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* Reserve memory for imapper nodes */
-	srcimp->imappers = kcalloc(desc->msr, sizeof(struct imapper),
+	/* Reserve memory क्रम imapper nodes */
+	srcimp->imappers = kसुस्मृति(desc->msr, माप(काष्ठा imapper),
 				   GFP_KERNEL);
-	if (!srcimp->imappers) {
+	अगर (!srcimp->imappers) अणु
 		err = -ENOMEM;
-		goto error1;
-	}
+		जाओ error1;
+	पूर्ण
 
-	/* Set srcimp specific operations */
+	/* Set srcimp specअगरic operations */
 	srcimp->rsc.ops = &srcimp_basic_rsc_ops;
 	srcimp->ops = &srcimp_ops;
 	srcimp->mgr = mgr;
 
 	srcimp->rsc.ops->master(&srcimp->rsc);
 
-	return 0;
+	वापस 0;
 
 error1:
 	rsc_uninit(&srcimp->rsc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int srcimp_rsc_uninit(struct srcimp *srcimp)
-{
-	kfree(srcimp->imappers);
-	srcimp->imappers = NULL;
-	srcimp->ops = NULL;
-	srcimp->mgr = NULL;
+अटल पूर्णांक srcimp_rsc_uninit(काष्ठा srcimp *srcimp)
+अणु
+	kमुक्त(srcimp->imappers);
+	srcimp->imappers = शून्य;
+	srcimp->ops = शून्य;
+	srcimp->mgr = शून्य;
 	rsc_uninit(&srcimp->rsc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_srcimp_rsc(struct srcimp_mgr *mgr,
-			  const struct srcimp_desc *desc,
-			  struct srcimp **rsrcimp)
-{
-	int err, i;
-	unsigned int idx;
-	struct srcimp *srcimp;
-	unsigned long flags;
+अटल पूर्णांक get_srcimp_rsc(काष्ठा srcimp_mgr *mgr,
+			  स्थिर काष्ठा srcimp_desc *desc,
+			  काष्ठा srcimp **rsrcimp)
+अणु
+	पूर्णांक err, i;
+	अचिन्हित पूर्णांक idx;
+	काष्ठा srcimp *srcimp;
+	अचिन्हित दीर्घ flags;
 
-	*rsrcimp = NULL;
+	*rsrcimp = शून्य;
 
-	/* Allocate mem for SRCIMP resource */
-	srcimp = kzalloc(sizeof(*srcimp), GFP_KERNEL);
-	if (!srcimp)
-		return -ENOMEM;
+	/* Allocate mem क्रम SRCIMP resource */
+	srcimp = kzalloc(माप(*srcimp), GFP_KERNEL);
+	अगर (!srcimp)
+		वापस -ENOMEM;
 
 	/* Check whether there are sufficient SRCIMP resources. */
 	err = 0;
 	spin_lock_irqsave(&mgr->mgr_lock, flags);
-	for (i = 0; i < desc->msr; i++) {
+	क्रम (i = 0; i < desc->msr; i++) अणु
 		err = mgr_get_resource(&mgr->mgr, 1, &idx);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		srcimp->idx[i] = idx;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&mgr->mgr_lock, flags);
-	if (err) {
+	अगर (err) अणु
 		dev_err(mgr->card->dev,
 			"Can't meet SRCIMP resource request!\n");
-		goto error1;
-	}
+		जाओ error1;
+	पूर्ण
 
 	err = srcimp_rsc_init(srcimp, desc, mgr);
-	if (err)
-		goto error1;
+	अगर (err)
+		जाओ error1;
 
 	*rsrcimp = srcimp;
 
-	return 0;
+	वापस 0;
 
 error1:
 	spin_lock_irqsave(&mgr->mgr_lock, flags);
-	for (i--; i >= 0; i--)
+	क्रम (i--; i >= 0; i--)
 		mgr_put_resource(&mgr->mgr, 1, srcimp->idx[i]);
 
 	spin_unlock_irqrestore(&mgr->mgr_lock, flags);
-	kfree(srcimp);
-	return err;
-}
+	kमुक्त(srcimp);
+	वापस err;
+पूर्ण
 
-static int put_srcimp_rsc(struct srcimp_mgr *mgr, struct srcimp *srcimp)
-{
-	unsigned long flags;
-	int i;
+अटल पूर्णांक put_srcimp_rsc(काष्ठा srcimp_mgr *mgr, काष्ठा srcimp *srcimp)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	spin_lock_irqsave(&mgr->mgr_lock, flags);
-	for (i = 0; i < srcimp->rsc.msr; i++)
+	क्रम (i = 0; i < srcimp->rsc.msr; i++)
 		mgr_put_resource(&mgr->mgr, 1, srcimp->idx[i]);
 
 	spin_unlock_irqrestore(&mgr->mgr_lock, flags);
 	srcimp_rsc_uninit(srcimp);
-	kfree(srcimp);
+	kमुक्त(srcimp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int srcimp_map_op(void *data, struct imapper *entry)
-{
-	struct rsc_mgr *mgr = &((struct srcimp_mgr *)data)->mgr;
-	struct hw *hw = mgr->hw;
+अटल पूर्णांक srcimp_map_op(व्योम *data, काष्ठा imapper *entry)
+अणु
+	काष्ठा rsc_mgr *mgr = &((काष्ठा srcimp_mgr *)data)->mgr;
+	काष्ठा hw *hw = mgr->hw;
 
 	hw->srcimp_mgr_set_imaparc(mgr->ctrl_blk, entry->slot);
 	hw->srcimp_mgr_set_imapuser(mgr->ctrl_blk, entry->user);
 	hw->srcimp_mgr_set_imapnxt(mgr->ctrl_blk, entry->next);
 	hw->srcimp_mgr_set_imapaddr(mgr->ctrl_blk, entry->addr);
-	hw->srcimp_mgr_commit_write(mgr->hw, mgr->ctrl_blk);
+	hw->srcimp_mgr_commit_ग_लिखो(mgr->hw, mgr->ctrl_blk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int srcimp_imap_add(struct srcimp_mgr *mgr, struct imapper *entry)
-{
-	unsigned long flags;
-	int err;
+अटल पूर्णांक srcimp_imap_add(काष्ठा srcimp_mgr *mgr, काष्ठा imapper *entry)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	spin_lock_irqsave(&mgr->imap_lock, flags);
-	if ((0 == entry->addr) && (mgr->init_imap_added)) {
+	अगर ((0 == entry->addr) && (mgr->init_imap_added)) अणु
 		input_mapper_delete(&mgr->imappers,
 				    mgr->init_imap, srcimp_map_op, mgr);
 		mgr->init_imap_added = 0;
-	}
+	पूर्ण
 	err = input_mapper_add(&mgr->imappers, entry, srcimp_map_op, mgr);
 	spin_unlock_irqrestore(&mgr->imap_lock, flags);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int srcimp_imap_delete(struct srcimp_mgr *mgr, struct imapper *entry)
-{
-	unsigned long flags;
-	int err;
+अटल पूर्णांक srcimp_imap_delete(काष्ठा srcimp_mgr *mgr, काष्ठा imapper *entry)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err;
 
 	spin_lock_irqsave(&mgr->imap_lock, flags);
 	err = input_mapper_delete(&mgr->imappers, entry, srcimp_map_op, mgr);
-	if (list_empty(&mgr->imappers)) {
+	अगर (list_empty(&mgr->imappers)) अणु
 		input_mapper_add(&mgr->imappers, mgr->init_imap,
 				 srcimp_map_op, mgr);
 		mgr->init_imap_added = 1;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&mgr->imap_lock, flags);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int srcimp_mgr_create(struct hw *hw, struct srcimp_mgr **rsrcimp_mgr)
-{
-	int err;
-	struct srcimp_mgr *srcimp_mgr;
-	struct imapper *entry;
+पूर्णांक srcimp_mgr_create(काष्ठा hw *hw, काष्ठा srcimp_mgr **rsrcimp_mgr)
+अणु
+	पूर्णांक err;
+	काष्ठा srcimp_mgr *srcimp_mgr;
+	काष्ठा imapper *entry;
 
-	*rsrcimp_mgr = NULL;
-	srcimp_mgr = kzalloc(sizeof(*srcimp_mgr), GFP_KERNEL);
-	if (!srcimp_mgr)
-		return -ENOMEM;
+	*rsrcimp_mgr = शून्य;
+	srcimp_mgr = kzalloc(माप(*srcimp_mgr), GFP_KERNEL);
+	अगर (!srcimp_mgr)
+		वापस -ENOMEM;
 
 	err = rsc_mgr_init(&srcimp_mgr->mgr, SRCIMP, SRCIMP_RESOURCE_NUM, hw);
-	if (err)
-		goto error1;
+	अगर (err)
+		जाओ error1;
 
 	spin_lock_init(&srcimp_mgr->mgr_lock);
 	spin_lock_init(&srcimp_mgr->imap_lock);
 	INIT_LIST_HEAD(&srcimp_mgr->imappers);
-	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
-	if (!entry) {
+	entry = kzalloc(माप(*entry), GFP_KERNEL);
+	अगर (!entry) अणु
 		err = -ENOMEM;
-		goto error2;
-	}
+		जाओ error2;
+	पूर्ण
 	entry->slot = entry->addr = entry->next = entry->user = 0;
 	list_add(&entry->list, &srcimp_mgr->imappers);
 	srcimp_mgr->init_imap = entry;
@@ -858,26 +859,26 @@ int srcimp_mgr_create(struct hw *hw, struct srcimp_mgr **rsrcimp_mgr)
 
 	*rsrcimp_mgr = srcimp_mgr;
 
-	return 0;
+	वापस 0;
 
 error2:
 	rsc_mgr_uninit(&srcimp_mgr->mgr);
 error1:
-	kfree(srcimp_mgr);
-	return err;
-}
+	kमुक्त(srcimp_mgr);
+	वापस err;
+पूर्ण
 
-int srcimp_mgr_destroy(struct srcimp_mgr *srcimp_mgr)
-{
-	unsigned long flags;
+पूर्णांक srcimp_mgr_destroy(काष्ठा srcimp_mgr *srcimp_mgr)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	/* free src input mapper list */
+	/* मुक्त src input mapper list */
 	spin_lock_irqsave(&srcimp_mgr->imap_lock, flags);
-	free_input_mapper_list(&srcimp_mgr->imappers);
+	मुक्त_input_mapper_list(&srcimp_mgr->imappers);
 	spin_unlock_irqrestore(&srcimp_mgr->imap_lock, flags);
 
 	rsc_mgr_uninit(&srcimp_mgr->mgr);
-	kfree(srcimp_mgr);
+	kमुक्त(srcimp_mgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

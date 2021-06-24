@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_PM_TRACE_H
-#define _ASM_X86_PM_TRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_PM_TRACE_H
+#घोषणा _ASM_X86_PM_TRACE_H
 
-#include <asm/asm.h>
+#समावेश <यंत्र/यंत्र.h>
 
-#define TRACE_RESUME(user)					\
-do {								\
-	if (pm_trace_enabled) {					\
-		const void *tracedata;				\
-		asm volatile(_ASM_MOV " $1f,%0\n"		\
+#घोषणा TRACE_RESUME(user)					\
+करो अणु								\
+	अगर (pm_trace_enabled) अणु					\
+		स्थिर व्योम *tracedata;				\
+		यंत्र अस्थिर(_ASM_MOV " $1f,%0\n"		\
 			     ".section .tracedata,\"a\"\n"	\
 			     "1:\t.word %c1\n\t"		\
 			     _ASM_PTR " %c2\n"			\
 			     ".previous"			\
 			     :"=r" (tracedata)			\
-			     : "i" (__LINE__), "i" (__FILE__));	\
+			     : "i" (__LINE__), "i" (__खाता__));	\
 		generate_pm_trace(tracedata, user);		\
-	}							\
-} while (0)
+	पूर्ण							\
+पूर्ण जबतक (0)
 
-#define TRACE_SUSPEND(user)	TRACE_RESUME(user)
+#घोषणा TRACE_SUSPEND(user)	TRACE_RESUME(user)
 
-#endif /* _ASM_X86_PM_TRACE_H */
+#पूर्ण_अगर /* _ASM_X86_PM_TRACE_H */

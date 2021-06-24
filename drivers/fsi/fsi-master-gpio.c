@@ -1,175 +1,176 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * A FSI master controller, using a simple GPIO bit-banging interface
+ * A FSI master controller, using a simple GPIO bit-banging पूर्णांकerface
  */
 
-#include <linux/crc4.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/fsi.h>
-#include <linux/gpio/consumer.h>
-#include <linux/io.h>
-#include <linux/irqflags.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/crc4.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fsi.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "fsi-master.h"
+#समावेश "fsi-master.h"
 
-#define	FSI_GPIO_STD_DLY	1	/* Standard pin delay in nS */
-#define LAST_ADDR_INVALID		0x1
+#घोषणा	FSI_GPIO_STD_DLY	1	/* Standard pin delay in nS */
+#घोषणा LAST_ADDR_INVALID		0x1
 
-struct fsi_master_gpio {
-	struct fsi_master	master;
-	struct device		*dev;
-	struct mutex		cmd_lock;	/* mutex for command ordering */
-	struct gpio_desc	*gpio_clk;
-	struct gpio_desc	*gpio_data;
-	struct gpio_desc	*gpio_trans;	/* Voltage translator */
-	struct gpio_desc	*gpio_enable;	/* FSI enable */
-	struct gpio_desc	*gpio_mux;	/* Mux control */
-	bool			external_mode;
+काष्ठा fsi_master_gpio अणु
+	काष्ठा fsi_master	master;
+	काष्ठा device		*dev;
+	काष्ठा mutex		cmd_lock;	/* mutex क्रम command ordering */
+	काष्ठा gpio_desc	*gpio_clk;
+	काष्ठा gpio_desc	*gpio_data;
+	काष्ठा gpio_desc	*gpio_trans;	/* Voltage translator */
+	काष्ठा gpio_desc	*gpio_enable;	/* FSI enable */
+	काष्ठा gpio_desc	*gpio_mux;	/* Mux control */
+	bool			बाह्यal_mode;
 	bool			no_delays;
-	uint32_t		last_addr;
-	uint8_t			t_send_delay;
-	uint8_t			t_echo_delay;
-};
+	uपूर्णांक32_t		last_addr;
+	uपूर्णांक8_t			t_send_delay;
+	uपूर्णांक8_t			t_echo_delay;
+पूर्ण;
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/fsi_master_gpio.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/fsi_master_gpपन.स>
 
-#define to_fsi_master_gpio(m) container_of(m, struct fsi_master_gpio, master)
+#घोषणा to_fsi_master_gpio(m) container_of(m, काष्ठा fsi_master_gpio, master)
 
-struct fsi_gpio_msg {
-	uint64_t	msg;
-	uint8_t		bits;
-};
+काष्ठा fsi_gpio_msg अणु
+	uपूर्णांक64_t	msg;
+	uपूर्णांक8_t		bits;
+पूर्ण;
 
-static void clock_toggle(struct fsi_master_gpio *master, int count)
-{
-	int i;
+अटल व्योम घड़ी_प्रकारoggle(काष्ठा fsi_master_gpio *master, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
-		if (!master->no_delays)
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (!master->no_delays)
 			ndelay(FSI_GPIO_STD_DLY);
 		gpiod_set_value(master->gpio_clk, 0);
-		if (!master->no_delays)
+		अगर (!master->no_delays)
 			ndelay(FSI_GPIO_STD_DLY);
 		gpiod_set_value(master->gpio_clk, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sda_clock_in(struct fsi_master_gpio *master)
-{
-	int in;
+अटल पूर्णांक sda_घड़ी_in(काष्ठा fsi_master_gpio *master)
+अणु
+	पूर्णांक in;
 
-	if (!master->no_delays)
+	अगर (!master->no_delays)
 		ndelay(FSI_GPIO_STD_DLY);
 	gpiod_set_value(master->gpio_clk, 0);
 
-	/* Dummy read to feed the synchronizers */
+	/* Dummy पढ़ो to feed the synchronizers */
 	gpiod_get_value(master->gpio_data);
 
-	/* Actual data read */
+	/* Actual data पढ़ो */
 	in = gpiod_get_value(master->gpio_data);
-	if (!master->no_delays)
+	अगर (!master->no_delays)
 		ndelay(FSI_GPIO_STD_DLY);
 	gpiod_set_value(master->gpio_clk, 1);
-	return in ? 1 : 0;
-}
+	वापस in ? 1 : 0;
+पूर्ण
 
-static void sda_out(struct fsi_master_gpio *master, int value)
-{
+अटल व्योम sda_out(काष्ठा fsi_master_gpio *master, पूर्णांक value)
+अणु
 	gpiod_set_value(master->gpio_data, value);
-}
+पूर्ण
 
-static void set_sda_input(struct fsi_master_gpio *master)
-{
+अटल व्योम set_sda_input(काष्ठा fsi_master_gpio *master)
+अणु
 	gpiod_direction_input(master->gpio_data);
 	gpiod_set_value(master->gpio_trans, 0);
-}
+पूर्ण
 
-static void set_sda_output(struct fsi_master_gpio *master, int value)
-{
+अटल व्योम set_sda_output(काष्ठा fsi_master_gpio *master, पूर्णांक value)
+अणु
 	gpiod_set_value(master->gpio_trans, 1);
 	gpiod_direction_output(master->gpio_data, value);
-}
+पूर्ण
 
-static void clock_zeros(struct fsi_master_gpio *master, int count)
-{
-	trace_fsi_master_gpio_clock_zeros(master, count);
+अटल व्योम घड़ी_zeros(काष्ठा fsi_master_gpio *master, पूर्णांक count)
+अणु
+	trace_fsi_master_gpio_घड़ी_zeros(master, count);
 	set_sda_output(master, 1);
-	clock_toggle(master, count);
-}
+	घड़ी_प्रकारoggle(master, count);
+पूर्ण
 
-static void echo_delay(struct fsi_master_gpio *master)
-{
-	clock_zeros(master, master->t_echo_delay);
-}
+अटल व्योम echo_delay(काष्ठा fsi_master_gpio *master)
+अणु
+	घड़ी_zeros(master, master->t_echo_delay);
+पूर्ण
 
 
-static void serial_in(struct fsi_master_gpio *master, struct fsi_gpio_msg *msg,
-			uint8_t num_bits)
-{
-	uint8_t bit, in_bit;
+अटल व्योम serial_in(काष्ठा fsi_master_gpio *master, काष्ठा fsi_gpio_msg *msg,
+			uपूर्णांक8_t num_bits)
+अणु
+	uपूर्णांक8_t bit, in_bit;
 
 	set_sda_input(master);
 
-	for (bit = 0; bit < num_bits; bit++) {
-		in_bit = sda_clock_in(master);
+	क्रम (bit = 0; bit < num_bits; bit++) अणु
+		in_bit = sda_घड़ी_in(master);
 		msg->msg <<= 1;
 		msg->msg |= ~in_bit & 0x1;	/* Data is active low */
-	}
+	पूर्ण
 	msg->bits += num_bits;
 
 	trace_fsi_master_gpio_in(master, num_bits, msg->msg);
-}
+पूर्ण
 
-static void serial_out(struct fsi_master_gpio *master,
-			const struct fsi_gpio_msg *cmd)
-{
-	uint8_t bit;
-	uint64_t msg = ~cmd->msg;	/* Data is active low */
-	uint64_t sda_mask = 0x1ULL << (cmd->bits - 1);
-	uint64_t last_bit = ~0;
-	int next_bit;
+अटल व्योम serial_out(काष्ठा fsi_master_gpio *master,
+			स्थिर काष्ठा fsi_gpio_msg *cmd)
+अणु
+	uपूर्णांक8_t bit;
+	uपूर्णांक64_t msg = ~cmd->msg;	/* Data is active low */
+	uपूर्णांक64_t sda_mask = 0x1ULL << (cmd->bits - 1);
+	uपूर्णांक64_t last_bit = ~0;
+	पूर्णांक next_bit;
 
 	trace_fsi_master_gpio_out(master, cmd->bits, cmd->msg);
 
-	if (!cmd->bits) {
+	अगर (!cmd->bits) अणु
 		dev_warn(master->dev, "trying to output 0 bits\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	set_sda_output(master, 0);
 
 	/* Send the start bit */
 	sda_out(master, 0);
-	clock_toggle(master, 1);
+	घड़ी_प्रकारoggle(master, 1);
 
 	/* Send the message */
-	for (bit = 0; bit < cmd->bits; bit++) {
+	क्रम (bit = 0; bit < cmd->bits; bit++) अणु
 		next_bit = (msg & sda_mask) >> (cmd->bits - 1);
-		if (last_bit ^ next_bit) {
+		अगर (last_bit ^ next_bit) अणु
 			sda_out(master, next_bit);
 			last_bit = next_bit;
-		}
-		clock_toggle(master, 1);
+		पूर्ण
+		घड़ी_प्रकारoggle(master, 1);
 		msg <<= 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void msg_push_bits(struct fsi_gpio_msg *msg, uint64_t data, int bits)
-{
+अटल व्योम msg_push_bits(काष्ठा fsi_gpio_msg *msg, uपूर्णांक64_t data, पूर्णांक bits)
+अणु
 	msg->msg <<= bits;
 	msg->msg |= data & ((1ull << bits) - 1);
 	msg->bits += bits;
-}
+पूर्ण
 
-static void msg_push_crc(struct fsi_gpio_msg *msg)
-{
-	uint8_t crc;
-	int top;
+अटल व्योम msg_push_crc(काष्ठा fsi_gpio_msg *msg)
+अणु
+	uपूर्णांक8_t crc;
+	पूर्णांक top;
 
 	top = msg->bits & 0x3;
 
@@ -180,65 +181,65 @@ static void msg_push_crc(struct fsi_gpio_msg *msg)
 	crc = crc4(crc, msg->msg, msg->bits - top);
 
 	msg_push_bits(msg, crc, 4);
-}
+पूर्ण
 
-static bool check_same_address(struct fsi_master_gpio *master, int id,
-		uint32_t addr)
-{
+अटल bool check_same_address(काष्ठा fsi_master_gpio *master, पूर्णांक id,
+		uपूर्णांक32_t addr)
+अणु
 	/* this will also handle LAST_ADDR_INVALID */
-	return master->last_addr == (((id & 0x3) << 21) | (addr & ~0x3));
-}
+	वापस master->last_addr == (((id & 0x3) << 21) | (addr & ~0x3));
+पूर्ण
 
-static bool check_relative_address(struct fsi_master_gpio *master, int id,
-		uint32_t addr, uint32_t *rel_addrp)
-{
-	uint32_t last_addr = master->last_addr;
-	int32_t rel_addr;
+अटल bool check_relative_address(काष्ठा fsi_master_gpio *master, पूर्णांक id,
+		uपूर्णांक32_t addr, uपूर्णांक32_t *rel_addrp)
+अणु
+	uपूर्णांक32_t last_addr = master->last_addr;
+	पूर्णांक32_t rel_addr;
 
-	if (last_addr == LAST_ADDR_INVALID)
-		return false;
+	अगर (last_addr == LAST_ADDR_INVALID)
+		वापस false;
 
 	/* We may be in 23-bit addressing mode, which uses the id as the
-	 * top two address bits. So, if we're referencing a different ID,
-	 * use absolute addresses.
+	 * top two address bits. So, अगर we're referencing a dअगरferent ID,
+	 * use असलolute addresses.
 	 */
-	if (((last_addr >> 21) & 0x3) != id)
-		return false;
+	अगर (((last_addr >> 21) & 0x3) != id)
+		वापस false;
 
-	/* remove the top two bits from any 23-bit addressing */
+	/* हटाओ the top two bits from any 23-bit addressing */
 	last_addr &= (1 << 21) - 1;
 
 	/* We know that the addresses are limited to 21 bits, so this won't
-	 * overflow the signed rel_addr */
+	 * overflow the चिन्हित rel_addr */
 	rel_addr = addr - last_addr;
-	if (rel_addr > 255 || rel_addr < -256)
-		return false;
+	अगर (rel_addr > 255 || rel_addr < -256)
+		वापस false;
 
-	*rel_addrp = (uint32_t)rel_addr;
+	*rel_addrp = (uपूर्णांक32_t)rel_addr;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void last_address_update(struct fsi_master_gpio *master,
-		int id, bool valid, uint32_t addr)
-{
-	if (!valid)
+अटल व्योम last_address_update(काष्ठा fsi_master_gpio *master,
+		पूर्णांक id, bool valid, uपूर्णांक32_t addr)
+अणु
+	अगर (!valid)
 		master->last_addr = LAST_ADDR_INVALID;
-	else
+	अन्यथा
 		master->last_addr = ((id & 0x3) << 21) | (addr & ~0x3);
-}
+पूर्ण
 
 /*
  * Encode an Absolute/Relative/Same Address command
  */
-static void build_ar_command(struct fsi_master_gpio *master,
-		struct fsi_gpio_msg *cmd, uint8_t id,
-		uint32_t addr, size_t size, const void *data)
-{
-	int i, addr_bits, opcode_bits;
-	bool write = !!data;
-	uint8_t ds, opcode;
-	uint32_t rel_addr;
+अटल व्योम build_ar_command(काष्ठा fsi_master_gpio *master,
+		काष्ठा fsi_gpio_msg *cmd, uपूर्णांक8_t id,
+		uपूर्णांक32_t addr, माप_प्रकार size, स्थिर व्योम *data)
+अणु
+	पूर्णांक i, addr_bits, opcode_bits;
+	bool ग_लिखो = !!data;
+	uपूर्णांक8_t ds, opcode;
+	uपूर्णांक32_t rel_addr;
 
 	cmd->bits = 0;
 	cmd->msg = 0;
@@ -249,28 +250,28 @@ static void build_ar_command(struct fsi_master_gpio *master,
 	/* cmd opcodes are variable length - SAME_AR is only two bits */
 	opcode_bits = 3;
 
-	if (check_same_address(master, id, addr)) {
+	अगर (check_same_address(master, id, addr)) अणु
 		/* we still address the byte offset within the word */
 		addr_bits = 2;
 		opcode_bits = 2;
 		opcode = FSI_CMD_SAME_AR;
 		trace_fsi_master_gpio_cmd_same_addr(master);
 
-	} else if (check_relative_address(master, id, addr, &rel_addr)) {
+	पूर्ण अन्यथा अगर (check_relative_address(master, id, addr, &rel_addr)) अणु
 		/* 8 bits plus sign */
 		addr_bits = 9;
 		addr = rel_addr;
 		opcode = FSI_CMD_REL_AR;
 		trace_fsi_master_gpio_cmd_rel_addr(master, rel_addr);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		addr_bits = 21;
 		opcode = FSI_CMD_ABS_AR;
-		trace_fsi_master_gpio_cmd_abs_addr(master, addr);
-	}
+		trace_fsi_master_gpio_cmd_असल_addr(master, addr);
+	पूर्ण
 
 	/*
-	 * The read/write size is encoded in the lower bits of the address
+	 * The पढ़ो/ग_लिखो size is encoded in the lower bits of the address
 	 * (as it must be naturally-aligned), and the following ds bit.
 	 *
 	 *	size	addr:1	addr:0	ds
@@ -281,81 +282,81 @@ static void build_ar_command(struct fsi_master_gpio *master,
 	 */
 	ds = size > 1 ? 1 : 0;
 	addr &= ~(size - 1);
-	if (size == 4)
+	अगर (size == 4)
 		addr |= 1;
 
 	msg_push_bits(cmd, id, 2);
 	msg_push_bits(cmd, opcode, opcode_bits);
-	msg_push_bits(cmd, write ? 0 : 1, 1);
+	msg_push_bits(cmd, ग_लिखो ? 0 : 1, 1);
 	msg_push_bits(cmd, addr, addr_bits);
 	msg_push_bits(cmd, ds, 1);
-	for (i = 0; write && i < size; i++)
-		msg_push_bits(cmd, ((uint8_t *)data)[i], 8);
+	क्रम (i = 0; ग_लिखो && i < size; i++)
+		msg_push_bits(cmd, ((uपूर्णांक8_t *)data)[i], 8);
 
 	msg_push_crc(cmd);
-}
+पूर्ण
 
-static void build_dpoll_command(struct fsi_gpio_msg *cmd, uint8_t slave_id)
-{
+अटल व्योम build_dpoll_command(काष्ठा fsi_gpio_msg *cmd, uपूर्णांक8_t slave_id)
+अणु
 	cmd->bits = 0;
 	cmd->msg = 0;
 
 	msg_push_bits(cmd, slave_id, 2);
 	msg_push_bits(cmd, FSI_CMD_DPOLL, 3);
 	msg_push_crc(cmd);
-}
+पूर्ण
 
-static void build_epoll_command(struct fsi_gpio_msg *cmd, uint8_t slave_id)
-{
+अटल व्योम build_epoll_command(काष्ठा fsi_gpio_msg *cmd, uपूर्णांक8_t slave_id)
+अणु
 	cmd->bits = 0;
 	cmd->msg = 0;
 
 	msg_push_bits(cmd, slave_id, 2);
 	msg_push_bits(cmd, FSI_CMD_EPOLL, 3);
 	msg_push_crc(cmd);
-}
+पूर्ण
 
-static void build_term_command(struct fsi_gpio_msg *cmd, uint8_t slave_id)
-{
+अटल व्योम build_term_command(काष्ठा fsi_gpio_msg *cmd, uपूर्णांक8_t slave_id)
+अणु
 	cmd->bits = 0;
 	cmd->msg = 0;
 
 	msg_push_bits(cmd, slave_id, 2);
 	msg_push_bits(cmd, FSI_CMD_TERM, 6);
 	msg_push_crc(cmd);
-}
+पूर्ण
 
 /*
- * Note: callers rely specifically on this returning -EAGAIN for
+ * Note: callers rely specअगरically on this वापसing -EAGAIN क्रम
  * a CRC error detected in the response. Use other error code
- * for other situations. It will be converted to something else
- * higher up the stack before it reaches userspace.
+ * क्रम other situations. It will be converted to something अन्यथा
+ * higher up the stack beक्रमe it reaches userspace.
  */
-static int read_one_response(struct fsi_master_gpio *master,
-		uint8_t data_size, struct fsi_gpio_msg *msgp, uint8_t *tagp)
-{
-	struct fsi_gpio_msg msg;
-	unsigned long flags;
-	uint32_t crc;
-	uint8_t tag;
-	int i;
+अटल पूर्णांक पढ़ो_one_response(काष्ठा fsi_master_gpio *master,
+		uपूर्णांक8_t data_size, काष्ठा fsi_gpio_msg *msgp, uपूर्णांक8_t *tagp)
+अणु
+	काष्ठा fsi_gpio_msg msg;
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक32_t crc;
+	uपूर्णांक8_t tag;
+	पूर्णांक i;
 
 	local_irq_save(flags);
 
-	/* wait for the start bit */
-	for (i = 0; i < FSI_MASTER_MTOE_COUNT; i++) {
+	/* रुको क्रम the start bit */
+	क्रम (i = 0; i < FSI_MASTER_MTOE_COUNT; i++) अणु
 		msg.bits = 0;
 		msg.msg = 0;
 		serial_in(master, &msg, 1);
-		if (msg.msg)
-			break;
-	}
-	if (i == FSI_MASTER_MTOE_COUNT) {
+		अगर (msg.msg)
+			अवरोध;
+	पूर्ण
+	अगर (i == FSI_MASTER_MTOE_COUNT) अणु
 		dev_dbg(master->dev,
 			"Master time out waiting for response\n");
 		local_irq_restore(flags);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	msg.bits = 0;
 	msg.msg = 0;
@@ -365,11 +366,11 @@ static int read_one_response(struct fsi_master_gpio *master,
 
 	tag = msg.msg & 0x3;
 
-	/* If we have an ACK and we're expecting data, clock the data in too */
-	if (tag == FSI_RESP_ACK && data_size)
+	/* If we have an ACK and we're expecting data, घड़ी the data in too */
+	अगर (tag == FSI_RESP_ACK && data_size)
 		serial_in(master, &msg, data_size * 8);
 
-	/* read CRC */
+	/* पढ़ो CRC */
 	serial_in(master, &msg, FSI_CRC_SIZE);
 
 	local_irq_restore(flags);
@@ -377,29 +378,29 @@ static int read_one_response(struct fsi_master_gpio *master,
 	/* we have a whole message now; check CRC */
 	crc = crc4(0, 1, 1);
 	crc = crc4(crc, msg.msg, msg.bits);
-	if (crc) {
-		/* Check if it's all 1's, that probably means the host is off */
-		if (((~msg.msg) & ((1ull << msg.bits) - 1)) == 0)
-			return -ENODEV;
+	अगर (crc) अणु
+		/* Check अगर it's all 1's, that probably means the host is off */
+		अगर (((~msg.msg) & ((1ull << msg.bits) - 1)) == 0)
+			वापस -ENODEV;
 		dev_dbg(master->dev, "ERR response CRC msg: 0x%016llx (%d bits)\n",
 			msg.msg, msg.bits);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (msgp)
+	अगर (msgp)
 		*msgp = msg;
-	if (tagp)
+	अगर (tagp)
 		*tagp = tag;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int issue_term(struct fsi_master_gpio *master, uint8_t slave)
-{
-	struct fsi_gpio_msg cmd;
-	unsigned long flags;
-	uint8_t tag;
-	int rc;
+अटल पूर्णांक issue_term(काष्ठा fsi_master_gpio *master, uपूर्णांक8_t slave)
+अणु
+	काष्ठा fsi_gpio_msg cmd;
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t tag;
+	पूर्णांक rc;
 
 	build_term_command(&cmd, slave);
 
@@ -408,254 +409,254 @@ static int issue_term(struct fsi_master_gpio *master, uint8_t slave)
 	echo_delay(master);
 	local_irq_restore(flags);
 
-	rc = read_one_response(master, 0, NULL, &tag);
-	if (rc < 0) {
+	rc = पढ़ो_one_response(master, 0, शून्य, &tag);
+	अगर (rc < 0) अणु
 		dev_err(master->dev,
 				"TERM failed; lost communication with slave\n");
-		return -EIO;
-	} else if (tag != FSI_RESP_ACK) {
+		वापस -EIO;
+	पूर्ण अन्यथा अगर (tag != FSI_RESP_ACK) अणु
 		dev_err(master->dev, "TERM failed; response %d\n", tag);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int poll_for_response(struct fsi_master_gpio *master,
-		uint8_t slave, uint8_t size, void *data)
-{
-	struct fsi_gpio_msg response, cmd;
-	int busy_count = 0, rc, i;
-	unsigned long flags;
-	uint8_t tag;
-	uint8_t *data_byte = data;
-	int crc_err_retries = 0;
+अटल पूर्णांक poll_क्रम_response(काष्ठा fsi_master_gpio *master,
+		uपूर्णांक8_t slave, uपूर्णांक8_t size, व्योम *data)
+अणु
+	काष्ठा fsi_gpio_msg response, cmd;
+	पूर्णांक busy_count = 0, rc, i;
+	अचिन्हित दीर्घ flags;
+	uपूर्णांक8_t tag;
+	uपूर्णांक8_t *data_byte = data;
+	पूर्णांक crc_err_retries = 0;
 retry:
-	rc = read_one_response(master, size, &response, &tag);
+	rc = पढ़ो_one_response(master, size, &response, &tag);
 
 	/* Handle retries on CRC errors */
-	if (rc == -EAGAIN) {
+	अगर (rc == -EAGAIN) अणु
 		/* Too many retries ? */
-		if (crc_err_retries++ > FSI_CRC_ERR_RETRIES) {
+		अगर (crc_err_retries++ > FSI_CRC_ERR_RETRIES) अणु
 			/*
 			 * Pass it up as a -EIO otherwise upper level will retry
 			 * the whole command which isn't what we want here.
 			 */
 			rc = -EIO;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		dev_dbg(master->dev,
 			 "CRC error retry %d\n", crc_err_retries);
 		trace_fsi_master_gpio_crc_rsp_error(master);
 		build_epoll_command(&cmd, slave);
 		local_irq_save(flags);
-		clock_zeros(master, FSI_MASTER_EPOLL_CLOCKS);
+		घड़ी_zeros(master, FSI_MASTER_EPOLL_CLOCKS);
 		serial_out(master, &cmd);
 		echo_delay(master);
 		local_irq_restore(flags);
-		goto retry;
-	} else if (rc)
-		goto fail;
+		जाओ retry;
+	पूर्ण अन्यथा अगर (rc)
+		जाओ fail;
 
-	switch (tag) {
-	case FSI_RESP_ACK:
-		if (size && data) {
-			uint64_t val = response.msg;
+	चयन (tag) अणु
+	हाल FSI_RESP_ACK:
+		अगर (size && data) अणु
+			uपूर्णांक64_t val = response.msg;
 			/* clear crc & mask */
 			val >>= 4;
 			val &= (1ull << (size * 8)) - 1;
 
-			for (i = 0; i < size; i++) {
+			क्रम (i = 0; i < size; i++) अणु
 				data_byte[size-i-1] = val;
 				val >>= 8;
-			}
-		}
-		break;
-	case FSI_RESP_BUSY:
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल FSI_RESP_BUSY:
 		/*
-		 * Its necessary to clock slave before issuing
+		 * Its necessary to घड़ी slave beक्रमe issuing
 		 * d-poll, not indicated in the hardware protocol
-		 * spec. < 20 clocks causes slave to hang, 21 ok.
+		 * spec. < 20 घड़ीs causes slave to hang, 21 ok.
 		 */
-		if (busy_count++ < FSI_MASTER_MAX_BUSY) {
+		अगर (busy_count++ < FSI_MASTER_MAX_BUSY) अणु
 			build_dpoll_command(&cmd, slave);
 			local_irq_save(flags);
-			clock_zeros(master, FSI_MASTER_DPOLL_CLOCKS);
+			घड़ी_zeros(master, FSI_MASTER_DPOLL_CLOCKS);
 			serial_out(master, &cmd);
 			echo_delay(master);
 			local_irq_restore(flags);
-			goto retry;
-		}
+			जाओ retry;
+		पूर्ण
 		dev_warn(master->dev,
 			"ERR slave is stuck in busy state, issuing TERM\n");
 		local_irq_save(flags);
-		clock_zeros(master, FSI_MASTER_DPOLL_CLOCKS);
+		घड़ी_zeros(master, FSI_MASTER_DPOLL_CLOCKS);
 		local_irq_restore(flags);
 		issue_term(master, slave);
 		rc = -EIO;
-		break;
+		अवरोध;
 
-	case FSI_RESP_ERRA:
-		dev_dbg(master->dev, "ERRA received: 0x%x\n", (int)response.msg);
+	हाल FSI_RESP_ERRA:
+		dev_dbg(master->dev, "ERRA received: 0x%x\n", (पूर्णांक)response.msg);
 		rc = -EIO;
-		break;
-	case FSI_RESP_ERRC:
-		dev_dbg(master->dev, "ERRC received: 0x%x\n", (int)response.msg);
+		अवरोध;
+	हाल FSI_RESP_ERRC:
+		dev_dbg(master->dev, "ERRC received: 0x%x\n", (पूर्णांक)response.msg);
 		trace_fsi_master_gpio_crc_cmd_error(master);
 		rc = -EAGAIN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (busy_count > 0)
+	अगर (busy_count > 0)
 		trace_fsi_master_gpio_poll_response_busy(master, busy_count);
  fail:
 	/*
-	 * tSendDelay clocks, avoids signal reflections when switching
+	 * tSendDelay घड़ीs, aव्योमs संकेत reflections when चयनing
 	 * from receive of response back to send of data.
 	 */
 	local_irq_save(flags);
-	clock_zeros(master, master->t_send_delay);
+	घड़ी_zeros(master, master->t_send_delay);
 	local_irq_restore(flags);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int send_request(struct fsi_master_gpio *master,
-		struct fsi_gpio_msg *cmd)
-{
-	unsigned long flags;
+अटल पूर्णांक send_request(काष्ठा fsi_master_gpio *master,
+		काष्ठा fsi_gpio_msg *cmd)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (master->external_mode)
-		return -EBUSY;
+	अगर (master->बाह्यal_mode)
+		वापस -EBUSY;
 
 	local_irq_save(flags);
 	serial_out(master, cmd);
 	echo_delay(master);
 	local_irq_restore(flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_master_gpio_xfer(struct fsi_master_gpio *master, uint8_t slave,
-		struct fsi_gpio_msg *cmd, size_t resp_len, void *resp)
-{
-	int rc = -EAGAIN, retries = 0;
+अटल पूर्णांक fsi_master_gpio_xfer(काष्ठा fsi_master_gpio *master, uपूर्णांक8_t slave,
+		काष्ठा fsi_gpio_msg *cmd, माप_प्रकार resp_len, व्योम *resp)
+अणु
+	पूर्णांक rc = -EAGAIN, retries = 0;
 
-	while ((retries++) < FSI_CRC_ERR_RETRIES) {
+	जबतक ((retries++) < FSI_CRC_ERR_RETRIES) अणु
 		rc = send_request(master, cmd);
-		if (rc)
-			break;
-		rc = poll_for_response(master, slave, resp_len, resp);
-		if (rc != -EAGAIN)
-			break;
+		अगर (rc)
+			अवरोध;
+		rc = poll_क्रम_response(master, slave, resp_len, resp);
+		अगर (rc != -EAGAIN)
+			अवरोध;
 		rc = -EIO;
 		dev_warn(master->dev, "ECRC retry %d\n", retries);
 
-		/* Pace it a bit before retry */
+		/* Pace it a bit beक्रमe retry */
 		msleep(1);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int fsi_master_gpio_read(struct fsi_master *_master, int link,
-		uint8_t id, uint32_t addr, void *val, size_t size)
-{
-	struct fsi_master_gpio *master = to_fsi_master_gpio(_master);
-	struct fsi_gpio_msg cmd;
-	int rc;
+अटल पूर्णांक fsi_master_gpio_पढ़ो(काष्ठा fsi_master *_master, पूर्णांक link,
+		uपूर्णांक8_t id, uपूर्णांक32_t addr, व्योम *val, माप_प्रकार size)
+अणु
+	काष्ठा fsi_master_gpio *master = to_fsi_master_gpio(_master);
+	काष्ठा fsi_gpio_msg cmd;
+	पूर्णांक rc;
 
-	if (link != 0)
-		return -ENODEV;
+	अगर (link != 0)
+		वापस -ENODEV;
 
 	mutex_lock(&master->cmd_lock);
-	build_ar_command(master, &cmd, id, addr, size, NULL);
+	build_ar_command(master, &cmd, id, addr, size, शून्य);
 	rc = fsi_master_gpio_xfer(master, id, &cmd, size, val);
 	last_address_update(master, id, rc == 0, addr);
 	mutex_unlock(&master->cmd_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int fsi_master_gpio_write(struct fsi_master *_master, int link,
-		uint8_t id, uint32_t addr, const void *val, size_t size)
-{
-	struct fsi_master_gpio *master = to_fsi_master_gpio(_master);
-	struct fsi_gpio_msg cmd;
-	int rc;
+अटल पूर्णांक fsi_master_gpio_ग_लिखो(काष्ठा fsi_master *_master, पूर्णांक link,
+		uपूर्णांक8_t id, uपूर्णांक32_t addr, स्थिर व्योम *val, माप_प्रकार size)
+अणु
+	काष्ठा fsi_master_gpio *master = to_fsi_master_gpio(_master);
+	काष्ठा fsi_gpio_msg cmd;
+	पूर्णांक rc;
 
-	if (link != 0)
-		return -ENODEV;
+	अगर (link != 0)
+		वापस -ENODEV;
 
 	mutex_lock(&master->cmd_lock);
 	build_ar_command(master, &cmd, id, addr, size, val);
-	rc = fsi_master_gpio_xfer(master, id, &cmd, 0, NULL);
+	rc = fsi_master_gpio_xfer(master, id, &cmd, 0, शून्य);
 	last_address_update(master, id, rc == 0, addr);
 	mutex_unlock(&master->cmd_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int fsi_master_gpio_term(struct fsi_master *_master,
-		int link, uint8_t id)
-{
-	struct fsi_master_gpio *master = to_fsi_master_gpio(_master);
-	struct fsi_gpio_msg cmd;
-	int rc;
+अटल पूर्णांक fsi_master_gpio_term(काष्ठा fsi_master *_master,
+		पूर्णांक link, uपूर्णांक8_t id)
+अणु
+	काष्ठा fsi_master_gpio *master = to_fsi_master_gpio(_master);
+	काष्ठा fsi_gpio_msg cmd;
+	पूर्णांक rc;
 
-	if (link != 0)
-		return -ENODEV;
+	अगर (link != 0)
+		वापस -ENODEV;
 
 	mutex_lock(&master->cmd_lock);
 	build_term_command(&cmd, id);
-	rc = fsi_master_gpio_xfer(master, id, &cmd, 0, NULL);
+	rc = fsi_master_gpio_xfer(master, id, &cmd, 0, शून्य);
 	last_address_update(master, id, false, 0);
 	mutex_unlock(&master->cmd_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int fsi_master_gpio_break(struct fsi_master *_master, int link)
-{
-	struct fsi_master_gpio *master = to_fsi_master_gpio(_master);
-	unsigned long flags;
+अटल पूर्णांक fsi_master_gpio_अवरोध(काष्ठा fsi_master *_master, पूर्णांक link)
+अणु
+	काष्ठा fsi_master_gpio *master = to_fsi_master_gpio(_master);
+	अचिन्हित दीर्घ flags;
 
-	if (link != 0)
-		return -ENODEV;
+	अगर (link != 0)
+		वापस -ENODEV;
 
-	trace_fsi_master_gpio_break(master);
+	trace_fsi_master_gpio_अवरोध(master);
 
 	mutex_lock(&master->cmd_lock);
-	if (master->external_mode) {
+	अगर (master->बाह्यal_mode) अणु
 		mutex_unlock(&master->cmd_lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	local_irq_save(flags);
 
 	set_sda_output(master, 1);
 	sda_out(master, 1);
-	clock_toggle(master, FSI_PRE_BREAK_CLOCKS);
+	घड़ी_प्रकारoggle(master, FSI_PRE_BREAK_CLOCKS);
 	sda_out(master, 0);
-	clock_toggle(master, FSI_BREAK_CLOCKS);
+	घड़ी_प्रकारoggle(master, FSI_BREAK_CLOCKS);
 	echo_delay(master);
 	sda_out(master, 1);
-	clock_toggle(master, FSI_POST_BREAK_CLOCKS);
+	घड़ी_प्रकारoggle(master, FSI_POST_BREAK_CLOCKS);
 
 	local_irq_restore(flags);
 
 	last_address_update(master, 0, false, 0);
 	mutex_unlock(&master->cmd_lock);
 
-	/* Wait for logic reset to take effect */
+	/* Wait क्रम logic reset to take effect */
 	udelay(200);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fsi_master_gpio_init(struct fsi_master_gpio *master)
-{
-	unsigned long flags;
+अटल व्योम fsi_master_gpio_init(काष्ठा fsi_master_gpio *master)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	gpiod_direction_output(master->gpio_mux, 1);
 	gpiod_direction_output(master->gpio_trans, 1);
@@ -663,120 +664,120 @@ static void fsi_master_gpio_init(struct fsi_master_gpio *master)
 	gpiod_direction_output(master->gpio_clk, 1);
 	gpiod_direction_output(master->gpio_data, 1);
 
-	/* todo: evaluate if clocks can be reduced */
+	/* toकरो: evaluate अगर घड़ीs can be reduced */
 	local_irq_save(flags);
-	clock_zeros(master, FSI_INIT_CLOCKS);
+	घड़ी_zeros(master, FSI_INIT_CLOCKS);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static void fsi_master_gpio_init_external(struct fsi_master_gpio *master)
-{
+अटल व्योम fsi_master_gpio_init_बाह्यal(काष्ठा fsi_master_gpio *master)
+अणु
 	gpiod_direction_output(master->gpio_mux, 0);
 	gpiod_direction_output(master->gpio_trans, 0);
 	gpiod_direction_output(master->gpio_enable, 1);
 	gpiod_direction_input(master->gpio_clk);
 	gpiod_direction_input(master->gpio_data);
-}
+पूर्ण
 
-static int fsi_master_gpio_link_enable(struct fsi_master *_master, int link,
+अटल पूर्णांक fsi_master_gpio_link_enable(काष्ठा fsi_master *_master, पूर्णांक link,
 				       bool enable)
-{
-	struct fsi_master_gpio *master = to_fsi_master_gpio(_master);
-	int rc = -EBUSY;
+अणु
+	काष्ठा fsi_master_gpio *master = to_fsi_master_gpio(_master);
+	पूर्णांक rc = -EBUSY;
 
-	if (link != 0)
-		return -ENODEV;
+	अगर (link != 0)
+		वापस -ENODEV;
 
 	mutex_lock(&master->cmd_lock);
-	if (!master->external_mode) {
+	अगर (!master->बाह्यal_mode) अणु
 		gpiod_set_value(master->gpio_enable, enable ? 1 : 0);
 		rc = 0;
-	}
+	पूर्ण
 	mutex_unlock(&master->cmd_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int fsi_master_gpio_link_config(struct fsi_master *_master, int link,
+अटल पूर्णांक fsi_master_gpio_link_config(काष्ठा fsi_master *_master, पूर्णांक link,
 				       u8 t_send_delay, u8 t_echo_delay)
-{
-	struct fsi_master_gpio *master = to_fsi_master_gpio(_master);
+अणु
+	काष्ठा fsi_master_gpio *master = to_fsi_master_gpio(_master);
 
-	if (link != 0)
-		return -ENODEV;
+	अगर (link != 0)
+		वापस -ENODEV;
 
 	mutex_lock(&master->cmd_lock);
 	master->t_send_delay = t_send_delay;
 	master->t_echo_delay = t_echo_delay;
 	mutex_unlock(&master->cmd_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t external_mode_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct fsi_master_gpio *master = dev_get_drvdata(dev);
+अटल sमाप_प्रकार बाह्यal_mode_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा fsi_master_gpio *master = dev_get_drvdata(dev);
 
-	return snprintf(buf, PAGE_SIZE - 1, "%u\n",
-			master->external_mode ? 1 : 0);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE - 1, "%u\n",
+			master->बाह्यal_mode ? 1 : 0);
+पूर्ण
 
-static ssize_t external_mode_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct fsi_master_gpio *master = dev_get_drvdata(dev);
-	unsigned long val;
-	bool external_mode;
-	int err;
+अटल sमाप_प्रकार बाह्यal_mode_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा fsi_master_gpio *master = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ val;
+	bool बाह्यal_mode;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 0, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 0, &val);
+	अगर (err)
+		वापस err;
 
-	external_mode = !!val;
+	बाह्यal_mode = !!val;
 
 	mutex_lock(&master->cmd_lock);
 
-	if (external_mode == master->external_mode) {
+	अगर (बाह्यal_mode == master->बाह्यal_mode) अणु
 		mutex_unlock(&master->cmd_lock);
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	master->external_mode = external_mode;
-	if (master->external_mode)
-		fsi_master_gpio_init_external(master);
-	else
+	master->बाह्यal_mode = बाह्यal_mode;
+	अगर (master->बाह्यal_mode)
+		fsi_master_gpio_init_बाह्यal(master);
+	अन्यथा
 		fsi_master_gpio_init(master);
 
 	mutex_unlock(&master->cmd_lock);
 
 	fsi_master_rescan(&master->master);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(external_mode, 0664,
-		external_mode_show, external_mode_store);
+अटल DEVICE_ATTR(बाह्यal_mode, 0664,
+		बाह्यal_mode_show, बाह्यal_mode_store);
 
-static void fsi_master_gpio_release(struct device *dev)
-{
-	struct fsi_master_gpio *master = to_fsi_master_gpio(dev_to_fsi_master(dev));
+अटल व्योम fsi_master_gpio_release(काष्ठा device *dev)
+अणु
+	काष्ठा fsi_master_gpio *master = to_fsi_master_gpio(dev_to_fsi_master(dev));
 
 	of_node_put(dev_of_node(master->dev));
 
-	kfree(master);
-}
+	kमुक्त(master);
+पूर्ण
 
-static int fsi_master_gpio_probe(struct platform_device *pdev)
-{
-	struct fsi_master_gpio *master;
-	struct gpio_desc *gpio;
-	int rc;
+अटल पूर्णांक fsi_master_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fsi_master_gpio *master;
+	काष्ठा gpio_desc *gpio;
+	पूर्णांक rc;
 
-	master = kzalloc(sizeof(*master), GFP_KERNEL);
-	if (!master)
-		return -ENOMEM;
+	master = kzalloc(माप(*master), GFP_KERNEL);
+	अगर (!master)
+		वापस -ENOMEM;
 
 	master->dev = &pdev->dev;
 	master->master.dev.parent = master->dev;
@@ -785,49 +786,49 @@ static int fsi_master_gpio_probe(struct platform_device *pdev)
 	master->last_addr = LAST_ADDR_INVALID;
 
 	gpio = devm_gpiod_get(&pdev->dev, "clock", 0);
-	if (IS_ERR(gpio)) {
+	अगर (IS_ERR(gpio)) अणु
 		dev_err(&pdev->dev, "failed to get clock gpio\n");
 		rc = PTR_ERR(gpio);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 	master->gpio_clk = gpio;
 
 	gpio = devm_gpiod_get(&pdev->dev, "data", 0);
-	if (IS_ERR(gpio)) {
+	अगर (IS_ERR(gpio)) अणु
 		dev_err(&pdev->dev, "failed to get data gpio\n");
 		rc = PTR_ERR(gpio);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 	master->gpio_data = gpio;
 
 	/* Optional GPIOs */
 	gpio = devm_gpiod_get_optional(&pdev->dev, "trans", 0);
-	if (IS_ERR(gpio)) {
+	अगर (IS_ERR(gpio)) अणु
 		dev_err(&pdev->dev, "failed to get trans gpio\n");
 		rc = PTR_ERR(gpio);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 	master->gpio_trans = gpio;
 
 	gpio = devm_gpiod_get_optional(&pdev->dev, "enable", 0);
-	if (IS_ERR(gpio)) {
+	अगर (IS_ERR(gpio)) अणु
 		dev_err(&pdev->dev, "failed to get enable gpio\n");
 		rc = PTR_ERR(gpio);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 	master->gpio_enable = gpio;
 
 	gpio = devm_gpiod_get_optional(&pdev->dev, "mux", 0);
-	if (IS_ERR(gpio)) {
+	अगर (IS_ERR(gpio)) अणु
 		dev_err(&pdev->dev, "failed to get mux gpio\n");
 		rc = PTR_ERR(gpio);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 	master->gpio_mux = gpio;
 
 	/*
-	 * Check if GPIO block is slow enought that no extra delays
-	 * are necessary. This improves performance on ast2500 by
+	 * Check अगर GPIO block is slow enought that no extra delays
+	 * are necessary. This improves perक्रमmance on ast2500 by
 	 * an order of magnitude.
 	 */
 	master->no_delays = device_property_present(&pdev->dev, "no-gpio-delays");
@@ -838,59 +839,59 @@ static int fsi_master_gpio_probe(struct platform_device *pdev)
 
 	master->master.n_links = 1;
 	master->master.flags = FSI_MASTER_FLAG_SWCLOCK;
-	master->master.read = fsi_master_gpio_read;
-	master->master.write = fsi_master_gpio_write;
+	master->master.पढ़ो = fsi_master_gpio_पढ़ो;
+	master->master.ग_लिखो = fsi_master_gpio_ग_लिखो;
 	master->master.term = fsi_master_gpio_term;
-	master->master.send_break = fsi_master_gpio_break;
+	master->master.send_अवरोध = fsi_master_gpio_अवरोध;
 	master->master.link_enable = fsi_master_gpio_link_enable;
 	master->master.link_config = fsi_master_gpio_link_config;
-	platform_set_drvdata(pdev, master);
+	platक्रमm_set_drvdata(pdev, master);
 	mutex_init(&master->cmd_lock);
 
 	fsi_master_gpio_init(master);
 
-	rc = device_create_file(&pdev->dev, &dev_attr_external_mode);
-	if (rc)
-		goto err_free;
+	rc = device_create_file(&pdev->dev, &dev_attr_बाह्यal_mode);
+	अगर (rc)
+		जाओ err_मुक्त;
 
-	rc = fsi_master_register(&master->master);
-	if (rc) {
-		device_remove_file(&pdev->dev, &dev_attr_external_mode);
+	rc = fsi_master_रेजिस्टर(&master->master);
+	अगर (rc) अणु
+		device_हटाओ_file(&pdev->dev, &dev_attr_बाह्यal_mode);
 		put_device(&master->master.dev);
-		return rc;
-	}
-	return 0;
- err_free:
-	kfree(master);
-	return rc;
-}
+		वापस rc;
+	पूर्ण
+	वापस 0;
+ err_मुक्त:
+	kमुक्त(master);
+	वापस rc;
+पूर्ण
 
 
 
-static int fsi_master_gpio_remove(struct platform_device *pdev)
-{
-	struct fsi_master_gpio *master = platform_get_drvdata(pdev);
+अटल पूर्णांक fsi_master_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fsi_master_gpio *master = platक्रमm_get_drvdata(pdev);
 
-	device_remove_file(&pdev->dev, &dev_attr_external_mode);
+	device_हटाओ_file(&pdev->dev, &dev_attr_बाह्यal_mode);
 
-	fsi_master_unregister(&master->master);
+	fsi_master_unरेजिस्टर(&master->master);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id fsi_master_gpio_match[] = {
-	{ .compatible = "fsi-master-gpio" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id fsi_master_gpio_match[] = अणु
+	अणु .compatible = "fsi-master-gpio" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver fsi_master_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver fsi_master_gpio_driver = अणु
+	.driver = अणु
 		.name		= "fsi-master-gpio",
 		.of_match_table	= fsi_master_gpio_match,
-	},
+	पूर्ण,
 	.probe	= fsi_master_gpio_probe,
-	.remove = fsi_master_gpio_remove,
-};
+	.हटाओ = fsi_master_gpio_हटाओ,
+पूर्ण;
 
-module_platform_driver(fsi_master_gpio_driver);
+module_platक्रमm_driver(fsi_master_gpio_driver);
 MODULE_LICENSE("GPL");

@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_EXTABLE_H
-#define _LINUX_EXTABLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_EXTABLE_H
+#घोषणा _LINUX_EXTABLE_H
 
-#include <linux/stddef.h>	/* for NULL */
-#include <linux/types.h>
+#समावेश <linux/मानकघोष.स>	/* क्रम शून्य */
+#समावेश <linux/types.h>
 
-struct module;
-struct exception_table_entry;
+काष्ठा module;
+काष्ठा exception_table_entry;
 
-const struct exception_table_entry *
-search_extable(const struct exception_table_entry *base,
-	       const size_t num,
-	       unsigned long value);
-void sort_extable(struct exception_table_entry *start,
-		  struct exception_table_entry *finish);
-void sort_main_extable(void);
-void trim_init_extable(struct module *m);
+स्थिर काष्ठा exception_table_entry *
+search_extable(स्थिर काष्ठा exception_table_entry *base,
+	       स्थिर माप_प्रकार num,
+	       अचिन्हित दीर्घ value);
+व्योम sort_extable(काष्ठा exception_table_entry *start,
+		  काष्ठा exception_table_entry *finish);
+व्योम sort_मुख्य_extable(व्योम);
+व्योम trim_init_extable(काष्ठा module *m);
 
-/* Given an address, look for it in the exception tables */
-const struct exception_table_entry *search_exception_tables(unsigned long add);
-const struct exception_table_entry *
-search_kernel_exception_table(unsigned long addr);
+/* Given an address, look क्रम it in the exception tables */
+स्थिर काष्ठा exception_table_entry *search_exception_tables(अचिन्हित दीर्घ add);
+स्थिर काष्ठा exception_table_entry *
+search_kernel_exception_table(अचिन्हित दीर्घ addr);
 
-#ifdef CONFIG_MODULES
+#अगर_घोषित CONFIG_MODULES
 /* For extable.c to search modules' exception tables. */
-const struct exception_table_entry *search_module_extables(unsigned long addr);
-#else
-static inline const struct exception_table_entry *
-search_module_extables(unsigned long addr)
-{
-	return NULL;
-}
-#endif /*CONFIG_MODULES*/
+स्थिर काष्ठा exception_table_entry *search_module_extables(अचिन्हित दीर्घ addr);
+#अन्यथा
+अटल अंतरभूत स्थिर काष्ठा exception_table_entry *
+search_module_extables(अचिन्हित दीर्घ addr)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /*CONFIG_MODULES*/
 
-#ifdef CONFIG_BPF_JIT
-const struct exception_table_entry *search_bpf_extables(unsigned long addr);
-#else
-static inline const struct exception_table_entry *
-search_bpf_extables(unsigned long addr)
-{
-	return NULL;
-}
-#endif
+#अगर_घोषित CONFIG_BPF_JIT
+स्थिर काष्ठा exception_table_entry *search_bpf_extables(अचिन्हित दीर्घ addr);
+#अन्यथा
+अटल अंतरभूत स्थिर काष्ठा exception_table_entry *
+search_bpf_extables(अचिन्हित दीर्घ addr)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_EXTABLE_H */
+#पूर्ण_अगर /* _LINUX_EXTABLE_H */

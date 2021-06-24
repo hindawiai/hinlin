@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVBIOS_INIT_H__
-#define __NVBIOS_INIT_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVBIOS_INIT_H__
+#घोषणा __NVBIOS_INIT_H__
 
-struct nvbios_init {
-	struct nvkm_subdev *subdev;
+काष्ठा nvbios_init अणु
+	काष्ठा nvkm_subdev *subdev;
 	u32 offset;
 
-	struct dcb_output *outp;
-	int or;
-	int link;
-	int head;
+	काष्ठा dcb_output *outp;
+	पूर्णांक or;
+	पूर्णांक link;
+	पूर्णांक head;
 
-	/* internal state used during parsing */
+	/* पूर्णांकernal state used during parsing */
 	u8 execute;
 	u32 nested;
 	u32 repeat;
 	u32 repend;
 	u32 ramcfg;
-};
+पूर्ण;
 
-#define nvbios_init(s,o,ARGS...) ({                                            \
-	struct nvbios_init init = {                                            \
+#घोषणा nvbios_init(s,o,ARGS...) (अणु                                            \
+	काष्ठा nvbios_init init = अणु                                            \
 		.subdev = (s),                                                 \
 		.offset = (o),                                                 \
 		.or = -1,                                                      \
 		.link = 0,                                                     \
 		.head = -1,                                                    \
 		.execute = 1,                                                  \
-	};                                                                     \
+	पूर्ण;                                                                     \
 	ARGS                                                                   \
 	nvbios_exec(&init);                                                    \
-})
-int nvbios_exec(struct nvbios_init *);
+पूर्ण)
+पूर्णांक nvbios_exec(काष्ठा nvbios_init *);
 
-int nvbios_post(struct nvkm_subdev *, bool execute);
-#endif
+पूर्णांक nvbios_post(काष्ठा nvkm_subdev *, bool execute);
+#पूर्ण_अगर

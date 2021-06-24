@@ -1,174 +1,175 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2009 Thomas Chou <thomas@wytron.com.tw>
  *
  * This is a collection of several routines from gzip-1.0.3
- * adapted for Linux.
+ * adapted क्रम Linux.
  *
- * malloc by Hannu Savolainen 1993 and Matthias Urlichs 1994
+ * दो_स्मृति by Hannu Savolainen 1993 and Matthias Urlichs 1994
  *
- * Adapted for SH by Stuart Menefy, Aug 1999
+ * Adapted क्रम SH by Stuart Menefy, Aug 1999
  *
- * Modified to use standard LinuxSH BIOS by Greg Banks 7Jul2000
+ * Modअगरied to use standard LinuxSH BIOS by Greg Banks 7Jul2000
  *
  * Based on arch/sh/boot/compressed/misc.c
  */
 
-#include <linux/string.h>
+#समावेश <linux/माला.स>
 
 /*
  * gzip declarations
  */
-#define OF(args)  args
-#define STATIC static
+#घोषणा OF(args)  args
+#घोषणा STATIC अटल
 
-#undef memset
-#undef memcpy
-#define memzero(s, n)		memset((s), 0, (n))
+#अघोषित स_रखो
+#अघोषित स_नकल
+#घोषणा memzero(s, n)		स_रखो((s), 0, (n))
 
-typedef unsigned char  uch;
-typedef unsigned short ush;
-typedef unsigned long  ulg;
-#define WSIZE 0x8000		/* Window size must be at least 32k, */
-				/* and a power of two */
+प्रकार अचिन्हित अक्षर  uch;
+प्रकार अचिन्हित लघु ush;
+प्रकार अचिन्हित दीर्घ  ulg;
+#घोषणा WSIZE 0x8000		/* Winकरोw size must be at least 32k, */
+				/* and a घातer of two */
 
-static uch *inbuf;		/* input buffer */
-static uch window[WSIZE];	/* Sliding window buffer */
+अटल uch *inbuf;		/* input buffer */
+अटल uch winकरोw[WSIZE];	/* Sliding winकरोw buffer */
 
-static unsigned insize;	/* valid bytes in inbuf */
-static unsigned inptr;	/* index of next byte to be processed in inbuf */
-static unsigned outcnt;	/* bytes in output buffer */
+अटल अचिन्हित insize;	/* valid bytes in inbuf */
+अटल अचिन्हित inptr;	/* index of next byte to be processed in inbuf */
+अटल अचिन्हित outcnt;	/* bytes in output buffer */
 
 /* gzip flag byte */
-#define ASCII_FLAG	0x01 /* bit 0 set: file probably ASCII text */
-#define CONTINUATION	0x02 /* bit 1 set: continuation of multi-part gzip
+#घोषणा ASCII_FLAG	0x01 /* bit 0 set: file probably ASCII text */
+#घोषणा CONTINUATION	0x02 /* bit 1 set: continuation of multi-part gzip
 				file */
-#define EXTRA_FIELD	0x04 /* bit 2 set: extra field present */
-#define ORIG_NAME	0x08 /* bit 3 set: original file name present */
-#define COMMENT		0x10 /* bit 4 set: file comment present */
-#define ENCRYPTED	0x20 /* bit 5 set: file is encrypted */
-#define RESERVED	0xC0 /* bit 6,7:   reserved */
+#घोषणा EXTRA_FIELD	0x04 /* bit 2 set: extra field present */
+#घोषणा ORIG_NAME	0x08 /* bit 3 set: original file name present */
+#घोषणा COMMENT		0x10 /* bit 4 set: file comment present */
+#घोषणा ENCRYPTED	0x20 /* bit 5 set: file is encrypted */
+#घोषणा RESERVED	0xC0 /* bit 6,7:   reserved */
 
-#define get_byte()  (inptr < insize ? inbuf[inptr++] : fill_inbuf())
+#घोषणा get_byte()  (inptr < insize ? inbuf[inptr++] : fill_inbuf())
 
-#ifdef DEBUG
-#  define Assert(cond, msg) {if (!(cond)) error(msg); }
-#  define Trace(x) fprintf x
-#  define Tracev(x) {if (verbose) fprintf x ; }
-#  define Tracevv(x) {if (verbose > 1) fprintf x ; }
-#  define Tracec(c, x) {if (verbose && (c)) fprintf x ; }
-#  define Tracecv(c, x) {if (verbose > 1 && (c)) fprintf x ; }
-#else
+#अगर_घोषित DEBUG
+#  define Assert(cond, msg) अणुअगर (!(cond)) error(msg); पूर्ण
+#  define Trace(x) ख_लिखो x
+#  define Tracev(x) अणुअगर (verbose) ख_लिखो x ; पूर्ण
+#  define Tracevv(x) अणुअगर (verbose > 1) ख_लिखो x ; पूर्ण
+#  define Tracec(c, x) अणुअगर (verbose && (c)) ख_लिखो x ; पूर्ण
+#  define Tracecv(c, x) अणुअगर (verbose > 1 && (c)) ख_लिखो x ; पूर्ण
+#अन्यथा
 #  define Assert(cond, msg)
 #  define Trace(x)
 #  define Tracev(x)
 #  define Tracevv(x)
 #  define Tracec(c, x)
 #  define Tracecv(c, x)
-#endif
-static int  fill_inbuf(void);
-static void flush_window(void);
-static void error(char *m);
+#पूर्ण_अगर
+अटल पूर्णांक  fill_inbuf(व्योम);
+अटल व्योम flush_winकरोw(व्योम);
+अटल व्योम error(अक्षर *m);
 
-extern char input_data[];
-extern int input_len;
+बाह्य अक्षर input_data[];
+बाह्य पूर्णांक input_len;
 
-static long bytes_out;
-static uch *output_data;
-static unsigned long output_ptr;
+अटल दीर्घ bytes_out;
+अटल uch *output_data;
+अटल अचिन्हित दीर्घ output_ptr;
 
-#include "console.c"
+#समावेश "console.c"
 
-static void error(char *m);
+अटल व्योम error(अक्षर *m);
 
-int puts(const char *);
+पूर्णांक माला_दो(स्थिर अक्षर *);
 
-extern int _end;
-static unsigned long free_mem_ptr;
-static unsigned long free_mem_end_ptr;
+बाह्य पूर्णांक _end;
+अटल अचिन्हित दीर्घ मुक्त_mem_ptr;
+अटल अचिन्हित दीर्घ मुक्त_mem_end_ptr;
 
-#define HEAP_SIZE			0x10000
+#घोषणा HEAP_SIZE			0x10000
 
-#include "../../../../lib/inflate.c"
+#समावेश "../../../../lib/inflate.c"
 
-void *memset(void *s, int c, size_t n)
-{
-	int i;
-	char *ss = (char *)s;
+व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार n)
+अणु
+	पूर्णांक i;
+	अक्षर *ss = (अक्षर *)s;
 
-	for (i = 0; i < n; i++)
+	क्रम (i = 0; i < n; i++)
 		ss[i] = c;
-	return s;
-}
+	वापस s;
+पूर्ण
 
-void *memcpy(void *__dest, __const void *__src, size_t __n)
-{
-	int i;
-	char *d = (char *)__dest, *s = (char *)__src;
+व्योम *स_नकल(व्योम *__dest, __स्थिर व्योम *__src, माप_प्रकार __n)
+अणु
+	पूर्णांक i;
+	अक्षर *d = (अक्षर *)__dest, *s = (अक्षर *)__src;
 
-	for (i = 0; i < __n; i++)
+	क्रम (i = 0; i < __n; i++)
 		d[i] = s[i];
-	return __dest;
-}
+	वापस __dest;
+पूर्ण
 
 /*
  * Fill the input buffer. This is called only when the buffer is empty
  * and at least one byte is really needed.
  */
-static int fill_inbuf(void)
-{
-	if (insize != 0)
+अटल पूर्णांक fill_inbuf(व्योम)
+अणु
+	अगर (insize != 0)
 		error("ran out of input data");
 
 	inbuf = input_data;
 	insize = input_len;
 	inptr = 1;
-	return inbuf[0];
-}
+	वापस inbuf[0];
+पूर्ण
 
 /*
- * Write the output window window[0..outcnt-1] and update crc and bytes_out.
- * (Used for the decompressed data only.)
+ * Write the output winकरोw winकरोw[0..outcnt-1] and update crc and bytes_out.
+ * (Used क्रम the decompressed data only.)
  */
-static void flush_window(void)
-{
+अटल व्योम flush_winकरोw(व्योम)
+अणु
 	ulg c = crc;	/* temporary variable */
-	unsigned n;
+	अचिन्हित n;
 	uch *in, *out, ch;
 
-	in = window;
+	in = winकरोw;
 	out = &output_data[output_ptr];
-	for (n = 0; n < outcnt; n++) {
+	क्रम (n = 0; n < outcnt; n++) अणु
 		ch = *out++ = *in++;
-		c = crc_32_tab[((int)c ^ ch) & 0xff] ^ (c >> 8);
-	}
+		c = crc_32_tab[((पूर्णांक)c ^ ch) & 0xff] ^ (c >> 8);
+	पूर्ण
 	crc = c;
 	bytes_out += (ulg)outcnt;
 	output_ptr += (ulg)outcnt;
 	outcnt = 0;
-}
+पूर्ण
 
-static void error(char *x)
-{
-	puts("\nERROR\n");
-	puts(x);
-	puts("\n\n -- System halted");
+अटल व्योम error(अक्षर *x)
+अणु
+	माला_दो("\nERROR\n");
+	माला_दो(x);
+	माला_दो("\n\n -- System halted");
 
-	while (1)	/* Halt */
+	जबतक (1)	/* Halt */
 		;
-}
+पूर्ण
 
-void decompress_kernel(void)
-{
-	output_data = (void *) (CONFIG_NIOS2_MEM_BASE |
+व्योम decompress_kernel(व्योम)
+अणु
+	output_data = (व्योम *) (CONFIG_NIOS2_MEM_BASE |
 				CONFIG_NIOS2_KERNEL_REGION_BASE);
 	output_ptr = 0;
-	free_mem_ptr = (unsigned long)&_end;
-	free_mem_end_ptr = free_mem_ptr + HEAP_SIZE;
+	मुक्त_mem_ptr = (अचिन्हित दीर्घ)&_end;
+	मुक्त_mem_end_ptr = मुक्त_mem_ptr + HEAP_SIZE;
 
 	console_init();
 	makecrc();
-	puts("Uncompressing Linux... ");
+	माला_दो("Uncompressing Linux... ");
 	gunzip();
-	puts("Ok, booting the kernel.\n");
-}
+	माला_दो("Ok, booting the kernel.\n");
+पूर्ण

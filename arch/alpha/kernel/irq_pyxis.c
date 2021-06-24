@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/irq_pyxis.c
  *
@@ -7,106 +8,106 @@
  * IRQ Code common to all PYXIS core logic chips.
  */
 
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/irq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/irq.h>
 
-#include <asm/io.h>
-#include <asm/core_cia.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/core_cia.h>
 
-#include "proto.h"
-#include "irq_impl.h"
+#समावेश "proto.h"
+#समावेश "irq_impl.h"
 
 
-/* Note mask bit is true for ENABLED irqs.  */
-static unsigned long cached_irq_mask;
+/* Note mask bit is true क्रम ENABLED irqs.  */
+अटल अचिन्हित दीर्घ cached_irq_mask;
 
-static inline void
-pyxis_update_irq_hw(unsigned long mask)
-{
+अटल अंतरभूत व्योम
+pyxis_update_irq_hw(अचिन्हित दीर्घ mask)
+अणु
 	*(vulp)PYXIS_INT_MASK = mask;
 	mb();
 	*(vulp)PYXIS_INT_MASK;
-}
+पूर्ण
 
-static inline void
-pyxis_enable_irq(struct irq_data *d)
-{
+अटल अंतरभूत व्योम
+pyxis_enable_irq(काष्ठा irq_data *d)
+अणु
 	pyxis_update_irq_hw(cached_irq_mask |= 1UL << (d->irq - 16));
-}
+पूर्ण
 
-static void
-pyxis_disable_irq(struct irq_data *d)
-{
+अटल व्योम
+pyxis_disable_irq(काष्ठा irq_data *d)
+अणु
 	pyxis_update_irq_hw(cached_irq_mask &= ~(1UL << (d->irq - 16)));
-}
+पूर्ण
 
-static void
-pyxis_mask_and_ack_irq(struct irq_data *d)
-{
-	unsigned long bit = 1UL << (d->irq - 16);
-	unsigned long mask = cached_irq_mask &= ~bit;
+अटल व्योम
+pyxis_mask_and_ack_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित दीर्घ bit = 1UL << (d->irq - 16);
+	अचिन्हित दीर्घ mask = cached_irq_mask &= ~bit;
 
-	/* Disable the interrupt.  */
+	/* Disable the पूर्णांकerrupt.  */
 	*(vulp)PYXIS_INT_MASK = mask;
 	wmb();
-	/* Ack PYXIS PCI interrupt.  */
+	/* Ack PYXIS PCI पूर्णांकerrupt.  */
 	*(vulp)PYXIS_INT_REQ = bit;
 	mb();
-	/* Re-read to force both writes.  */
+	/* Re-पढ़ो to क्रमce both ग_लिखोs.  */
 	*(vulp)PYXIS_INT_MASK;
-}
+पूर्ण
 
-static struct irq_chip pyxis_irq_type = {
+अटल काष्ठा irq_chip pyxis_irq_type = अणु
 	.name		= "PYXIS",
 	.irq_mask_ack	= pyxis_mask_and_ack_irq,
 	.irq_mask	= pyxis_disable_irq,
 	.irq_unmask	= pyxis_enable_irq,
-};
+पूर्ण;
 
-void 
-pyxis_device_interrupt(unsigned long vector)
-{
-	unsigned long pld;
-	unsigned int i;
+व्योम 
+pyxis_device_पूर्णांकerrupt(अचिन्हित दीर्घ vector)
+अणु
+	अचिन्हित दीर्घ pld;
+	अचिन्हित पूर्णांक i;
 
-	/* Read the interrupt summary register of PYXIS */
+	/* Read the पूर्णांकerrupt summary रेजिस्टर of PYXIS */
 	pld = *(vulp)PYXIS_INT_REQ;
 	pld &= cached_irq_mask;
 
 	/*
-	 * Now for every possible bit set, work through them and call
-	 * the appropriate interrupt handler.
+	 * Now क्रम every possible bit set, work through them and call
+	 * the appropriate पूर्णांकerrupt handler.
 	 */
-	while (pld) {
+	जबतक (pld) अणु
 		i = ffz(~pld);
 		pld &= pld - 1; /* clear least bit set */
-		if (i == 7)
-			isa_device_interrupt(vector);
-		else
+		अगर (i == 7)
+			isa_device_पूर्णांकerrupt(vector);
+		अन्यथा
 			handle_irq(16+i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init
-init_pyxis_irqs(unsigned long ignore_mask)
-{
-	long i;
+व्योम __init
+init_pyxis_irqs(अचिन्हित दीर्घ ignore_mask)
+अणु
+	दीर्घ i;
 
 	*(vulp)PYXIS_INT_MASK = 0;		/* disable all */
 	*(vulp)PYXIS_INT_REQ  = -1;		/* flush all */
 	mb();
 
-	/* Send -INTA pulses to clear any pending interrupts ...*/
+	/* Send -INTA pulses to clear any pending पूर्णांकerrupts ...*/
 	*(vuip) CIA_IACK_SC;
 
-	for (i = 16; i < 48; ++i) {
-		if ((ignore_mask >> i) & 1)
-			continue;
+	क्रम (i = 16; i < 48; ++i) अणु
+		अगर ((ignore_mask >> i) & 1)
+			जारी;
 		irq_set_chip_and_handler(i, &pyxis_irq_type, handle_level_irq);
 		irq_set_status_flags(i, IRQ_LEVEL);
-	}
+	पूर्ण
 
-	if (request_irq(16 + 7, no_action, 0, "isa-cascade", NULL))
+	अगर (request_irq(16 + 7, no_action, 0, "isa-cascade", शून्य))
 		pr_err("Failed to register isa-cascade interrupt\n");
-}
+पूर्ण

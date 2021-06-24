@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *	ICP Wafer 5823 Single Board Computer WDT driver
  *	http://www.icpamerica.com/wafer_5823.php
@@ -15,306 +16,306 @@
  *						All Rights Reserved.
  *
  *	Neither Alan Cox nor CymruNet Ltd. admit liability nor provide
- *	warranty for any of this software. This material is provided
- *	"AS-IS" and at no charge.
+ *	warranty क्रम any of this software. This material is provided
+ *	"AS-IS" and at no अक्षरge.
  *
  *	(c) Copyright 1995    Alan Cox <alan@lxorguk.ukuu.org.uk>
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/miscdevice.h>
-#include <linux/watchdog.h>
-#include <linux/fs.h>
-#include <linux/ioport.h>
-#include <linux/notifier.h>
-#include <linux/reboot.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/uaccess.h>
 
-#define WATCHDOG_NAME "Wafer 5823 WDT"
-#define PFX WATCHDOG_NAME ": "
-#define WD_TIMO 60			/* 60 sec default timeout */
+#घोषणा WATCHDOG_NAME "Wafer 5823 WDT"
+#घोषणा PFX WATCHDOG_NAME ": "
+#घोषणा WD_TIMO 60			/* 60 sec शेष समयout */
 
-static unsigned long wafwdt_is_open;
-static char expect_close;
-static DEFINE_SPINLOCK(wafwdt_lock);
+अटल अचिन्हित दीर्घ wafwdt_is_खोलो;
+अटल अक्षर expect_बंद;
+अटल DEFINE_SPINLOCK(wafwdt_lock);
 
 /*
- *	You must set these - there is no sane way to probe for this board.
+ *	You must set these - there is no sane way to probe क्रम this board.
  *
- *	To enable, write the timeout value in seconds (1 to 255) to I/O
- *	port WDT_START, then read the port to start the watchdog. To pat
- *	the dog, read port WDT_STOP to stop the timer, then read WDT_START
+ *	To enable, ग_लिखो the समयout value in seconds (1 to 255) to I/O
+ *	port WDT_START, then पढ़ो the port to start the watchकरोg. To pat
+ *	the करोg, पढ़ो port WDT_STOP to stop the समयr, then पढ़ो WDT_START
  *	to restart it again.
  */
 
-static int wdt_stop = 0x843;
-static int wdt_start = 0x443;
+अटल पूर्णांक wdt_stop = 0x843;
+अटल पूर्णांक wdt_start = 0x443;
 
-static int timeout = WD_TIMO;  /* in seconds */
-module_param(timeout, int, 0);
-MODULE_PARM_DESC(timeout,
+अटल पूर्णांक समयout = WD_TIMO;  /* in seconds */
+module_param(समयout, पूर्णांक, 0);
+MODULE_PARM_DESC(समयout,
 		"Watchdog timeout in seconds. 1 <= timeout <= 255, default="
 				__MODULE_STRING(WD_TIMO) ".");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-static void wafwdt_ping(void)
-{
-	/* pat watchdog */
+अटल व्योम wafwdt_ping(व्योम)
+अणु
+	/* pat watchकरोg */
 	spin_lock(&wafwdt_lock);
 	inb_p(wdt_stop);
 	inb_p(wdt_start);
 	spin_unlock(&wafwdt_lock);
-}
+पूर्ण
 
-static void wafwdt_start(void)
-{
-	/* start up watchdog */
-	outb_p(timeout, wdt_start);
+अटल व्योम wafwdt_start(व्योम)
+अणु
+	/* start up watchकरोg */
+	outb_p(समयout, wdt_start);
 	inb_p(wdt_start);
-}
+पूर्ण
 
-static void wafwdt_stop(void)
-{
-	/* stop watchdog */
+अटल व्योम wafwdt_stop(व्योम)
+अणु
+	/* stop watchकरोg */
 	inb_p(wdt_stop);
-}
+पूर्ण
 
-static ssize_t wafwdt_write(struct file *file, const char __user *buf,
-						size_t count, loff_t *ppos)
-{
-	/* See if we got the magic character 'V' and reload the timer */
-	if (count) {
-		if (!nowayout) {
-			size_t i;
+अटल sमाप_प्रकार wafwdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+						माप_प्रकार count, loff_t *ppos)
+अणु
+	/* See अगर we got the magic अक्षरacter 'V' and reload the समयr */
+	अगर (count) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
 
-			/* In case it was set long ago */
-			expect_close = 0;
+			/* In हाल it was set दीर्घ ago */
+			expect_बंद = 0;
 
 			/* scan to see whether or not we got the magic
-			   character */
-			for (i = 0; i != count; i++) {
-				char c;
-				if (get_user(c, buf + i))
-					return -EFAULT;
-				if (c == 'V')
-					expect_close = 42;
-			}
-		}
+			   अक्षरacter */
+			क्रम (i = 0; i != count; i++) अणु
+				अक्षर c;
+				अगर (get_user(c, buf + i))
+					वापस -EFAULT;
+				अगर (c == 'V')
+					expect_बंद = 42;
+			पूर्ण
+		पूर्ण
 		/* Well, anyhow someone wrote to us, we should
-		   return that favour */
+		   वापस that favour */
 		wafwdt_ping();
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static long wafwdt_ioctl(struct file *file, unsigned int cmd,
-							unsigned long arg)
-{
-	int new_timeout;
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	static const struct watchdog_info ident = {
+अटल दीर्घ wafwdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+							अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक new_समयout;
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 		.options = WDIOF_KEEPALIVEPING | WDIOF_SETTIMEOUT |
 							WDIOF_MAGICCLOSE,
 		.firmware_version = 1,
 		.identity = "Wafer 5823 WDT",
-	};
+	पूर्ण;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		if (copy_to_user(argp, &ident, sizeof(ident)))
-			return -EFAULT;
-		break;
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		अगर (copy_to_user(argp, &ident, माप(ident)))
+			वापस -EFAULT;
+		अवरोध;
 
-	case WDIOC_GETSTATUS:
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(0, p);
+	हाल WDIOC_GETSTATUS:
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(0, p);
 
-	case WDIOC_SETOPTIONS:
-	{
-		int options, retval = -EINVAL;
+	हाल WDIOC_SETOPTIONS:
+	अणु
+		पूर्णांक options, retval = -EINVAL;
 
-		if (get_user(options, p))
-			return -EFAULT;
+		अगर (get_user(options, p))
+			वापस -EFAULT;
 
-		if (options & WDIOS_DISABLECARD) {
+		अगर (options & WDIOS_DISABLECARD) अणु
 			wafwdt_stop();
 			retval = 0;
-		}
+		पूर्ण
 
-		if (options & WDIOS_ENABLECARD) {
+		अगर (options & WDIOS_ENABLECARD) अणु
 			wafwdt_start();
 			retval = 0;
-		}
+		पूर्ण
 
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	case WDIOC_KEEPALIVE:
+	हाल WDIOC_KEEPALIVE:
 		wafwdt_ping();
-		break;
+		अवरोध;
 
-	case WDIOC_SETTIMEOUT:
-		if (get_user(new_timeout, p))
-			return -EFAULT;
-		if ((new_timeout < 1) || (new_timeout > 255))
-			return -EINVAL;
-		timeout = new_timeout;
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(new_समयout, p))
+			वापस -EFAULT;
+		अगर ((new_समयout < 1) || (new_समयout > 255))
+			वापस -EINVAL;
+		समयout = new_समयout;
 		wafwdt_stop();
 		wafwdt_start();
 		fallthrough;
-	case WDIOC_GETTIMEOUT:
-		return put_user(timeout, p);
+	हाल WDIOC_GETTIMEOUT:
+		वापस put_user(समयout, p);
 
-	default:
-		return -ENOTTY;
-	}
-	return 0;
-}
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int wafwdt_open(struct inode *inode, struct file *file)
-{
-	if (test_and_set_bit(0, &wafwdt_is_open))
-		return -EBUSY;
+अटल पूर्णांक wafwdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_and_set_bit(0, &wafwdt_is_खोलो))
+		वापस -EBUSY;
 
 	/*
 	 *      Activate
 	 */
 	wafwdt_start();
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int wafwdt_close(struct inode *inode, struct file *file)
-{
-	if (expect_close == 42)
+अटल पूर्णांक wafwdt_बंद(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (expect_बंद == 42)
 		wafwdt_stop();
-	else {
+	अन्यथा अणु
 		pr_crit("WDT device closed unexpectedly.  WDT will not stop!\n");
 		wafwdt_ping();
-	}
-	clear_bit(0, &wafwdt_is_open);
-	expect_close = 0;
-	return 0;
-}
+	पूर्ण
+	clear_bit(0, &wafwdt_is_खोलो);
+	expect_बंद = 0;
+	वापस 0;
+पूर्ण
 
 /*
- *	Notifier for system down
+ *	Notअगरier क्रम प्रणाली करोwn
  */
 
-static int wafwdt_notify_sys(struct notifier_block *this, unsigned long code,
-								void *unused)
-{
-	if (code == SYS_DOWN || code == SYS_HALT)
+अटल पूर्णांक wafwdt_notअगरy_sys(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code,
+								व्योम *unused)
+अणु
+	अगर (code == SYS_DOWN || code == SYS_HALT)
 		wafwdt_stop();
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /*
  *	Kernel Interfaces
  */
 
-static const struct file_operations wafwdt_fops = {
+अटल स्थिर काष्ठा file_operations wafwdt_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.write		= wafwdt_write,
+	.ग_लिखो		= wafwdt_ग_लिखो,
 	.unlocked_ioctl	= wafwdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= wafwdt_open,
-	.release	= wafwdt_close,
-};
+	.खोलो		= wafwdt_खोलो,
+	.release	= wafwdt_बंद,
+पूर्ण;
 
-static struct miscdevice wafwdt_miscdev = {
+अटल काष्ठा miscdevice wafwdt_miscdev = अणु
 	.minor	= WATCHDOG_MINOR,
 	.name	= "watchdog",
 	.fops	= &wafwdt_fops,
-};
+पूर्ण;
 
 /*
- *	The WDT needs to learn about soft shutdowns in order to
- *	turn the timebomb registers off.
+ *	The WDT needs to learn about soft shutकरोwns in order to
+ *	turn the समयbomb रेजिस्टरs off.
  */
 
-static struct notifier_block wafwdt_notifier = {
-	.notifier_call = wafwdt_notify_sys,
-};
+अटल काष्ठा notअगरier_block wafwdt_notअगरier = अणु
+	.notअगरier_call = wafwdt_notअगरy_sys,
+पूर्ण;
 
-static int __init wafwdt_init(void)
-{
-	int ret;
+अटल पूर्णांक __init wafwdt_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	pr_info("WDT driver for Wafer 5823 single board computer initialising\n");
 
-	if (timeout < 1 || timeout > 255) {
-		timeout = WD_TIMO;
+	अगर (समयout < 1 || समयout > 255) अणु
+		समयout = WD_TIMO;
 		pr_info("timeout value must be 1 <= x <= 255, using %d\n",
-			timeout);
-	}
+			समयout);
+	पूर्ण
 
-	if (wdt_stop != wdt_start) {
-		if (!request_region(wdt_stop, 1, "Wafer 5823 WDT")) {
+	अगर (wdt_stop != wdt_start) अणु
+		अगर (!request_region(wdt_stop, 1, "Wafer 5823 WDT")) अणु
 			pr_err("I/O address 0x%04x already in use\n", wdt_stop);
 			ret = -EIO;
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	if (!request_region(wdt_start, 1, "Wafer 5823 WDT")) {
+	अगर (!request_region(wdt_start, 1, "Wafer 5823 WDT")) अणु
 		pr_err("I/O address 0x%04x already in use\n", wdt_start);
 		ret = -EIO;
-		goto error2;
-	}
+		जाओ error2;
+	पूर्ण
 
-	ret = register_reboot_notifier(&wafwdt_notifier);
-	if (ret != 0) {
+	ret = रेजिस्टर_reboot_notअगरier(&wafwdt_notअगरier);
+	अगर (ret != 0) अणु
 		pr_err("cannot register reboot notifier (err=%d)\n", ret);
-		goto error3;
-	}
+		जाओ error3;
+	पूर्ण
 
-	ret = misc_register(&wafwdt_miscdev);
-	if (ret != 0) {
+	ret = misc_रेजिस्टर(&wafwdt_miscdev);
+	अगर (ret != 0) अणु
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       WATCHDOG_MINOR, ret);
-		goto error4;
-	}
+		जाओ error4;
+	पूर्ण
 
 	pr_info("initialized. timeout=%d sec (nowayout=%d)\n",
-		timeout, nowayout);
+		समयout, nowayout);
 
-	return ret;
+	वापस ret;
 error4:
-	unregister_reboot_notifier(&wafwdt_notifier);
+	unरेजिस्टर_reboot_notअगरier(&wafwdt_notअगरier);
 error3:
 	release_region(wdt_start, 1);
 error2:
-	if (wdt_stop != wdt_start)
+	अगर (wdt_stop != wdt_start)
 		release_region(wdt_stop, 1);
 error:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit wafwdt_exit(void)
-{
-	misc_deregister(&wafwdt_miscdev);
-	unregister_reboot_notifier(&wafwdt_notifier);
-	if (wdt_stop != wdt_start)
+अटल व्योम __निकास wafwdt_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&wafwdt_miscdev);
+	unरेजिस्टर_reboot_notअगरier(&wafwdt_notअगरier);
+	अगर (wdt_stop != wdt_start)
 		release_region(wdt_stop, 1);
 	release_region(wdt_start, 1);
-}
+पूर्ण
 
 module_init(wafwdt_init);
-module_exit(wafwdt_exit);
+module_निकास(wafwdt_निकास);
 
 MODULE_AUTHOR("Justin Cormack");
 MODULE_DESCRIPTION("ICP Wafer 5823 Single Board Computer WDT driver");

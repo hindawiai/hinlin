@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright(c) 2014 Intel Corporation.
  */
 
-#ifndef GPIO_DW_APB_H
-#define GPIO_DW_APB_H
+#अगर_अघोषित GPIO_DW_APB_H
+#घोषणा GPIO_DW_APB_H
 
-#define DWAPB_MAX_GPIOS		32
+#घोषणा DWAPB_MAX_GPIOS		32
 
-struct dwapb_port_property {
-	struct fwnode_handle *fwnode;
-	unsigned int	idx;
-	unsigned int	ngpio;
-	unsigned int	gpio_base;
-	int		irq[DWAPB_MAX_GPIOS];
+काष्ठा dwapb_port_property अणु
+	काष्ठा fwnode_handle *fwnode;
+	अचिन्हित पूर्णांक	idx;
+	अचिन्हित पूर्णांक	ngpio;
+	अचिन्हित पूर्णांक	gpio_base;
+	पूर्णांक		irq[DWAPB_MAX_GPIOS];
 	bool		irq_shared;
-};
+पूर्ण;
 
-struct dwapb_platform_data {
-	struct dwapb_port_property *properties;
-	unsigned int nports;
-};
+काष्ठा dwapb_platक्रमm_data अणु
+	काष्ठा dwapb_port_property *properties;
+	अचिन्हित पूर्णांक nports;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

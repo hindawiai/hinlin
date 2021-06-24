@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <asm/mach-au1x00/au1000.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <यंत्र/mach-au1x00/au1000.h>
 
-void putc(char c)
-{
-	alchemy_uart_putchar(AU1000_UART0_PHYS_ADDR, c);
-}
+व्योम अ_दो(अक्षर c)
+अणु
+	alchemy_uart_अक्षर_दो(AU1000_UART0_PHYS_ADDR, c);
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 1999, 2000 Ralf Baechle (ralf@gnu.org)
  * Copyright (C) 1999, 2000 Silcon Graphics, Inc.
@@ -7,66 +8,66 @@
  * Generic XTALK initialization code
  */
 
-#include <linux/kernel.h>
-#include <linux/smp.h>
-#include <linux/platform_device.h>
-#include <linux/platform_data/sgi-w1.h>
-#include <linux/platform_data/xtalk-bridge.h>
-#include <asm/sn/addrs.h>
-#include <asm/sn/types.h>
-#include <asm/sn/klconfig.h>
-#include <asm/pci/bridge.h>
-#include <asm/xtalk/xtalk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_data/sgi-w1.h>
+#समावेश <linux/platक्रमm_data/xtalk-bridge.h>
+#समावेश <यंत्र/sn/addrs.h>
+#समावेश <यंत्र/sn/types.h>
+#समावेश <यंत्र/sn/klconfig.h>
+#समावेश <यंत्र/pci/bridge.h>
+#समावेश <यंत्र/xtalk/xtalk.h>
 
 
-#define XBOW_WIDGET_PART_NUM	0x0
-#define XXBOW_WIDGET_PART_NUM	0xd000	/* Xbow in Xbridge */
-#define BASE_XBOW_PORT		8     /* Lowest external port */
+#घोषणा XBOW_WIDGET_PART_NUM	0x0
+#घोषणा XXBOW_WIDGET_PART_NUM	0xd000	/* Xbow in Xbridge */
+#घोषणा BASE_XBOW_PORT		8     /* Lowest बाह्यal port */
 
-static void bridge_platform_create(nasid_t nasid, int widget, int masterwid)
-{
-	struct xtalk_bridge_platform_data *bd;
-	struct sgi_w1_platform_data *wd;
-	struct platform_device *pdev;
-	struct resource w1_res;
-	unsigned long offset;
+अटल व्योम bridge_platक्रमm_create(nasid_t nasid, पूर्णांक widget, पूर्णांक masterwid)
+अणु
+	काष्ठा xtalk_bridge_platक्रमm_data *bd;
+	काष्ठा sgi_w1_platक्रमm_data *wd;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा resource w1_res;
+	अचिन्हित दीर्घ offset;
 
 	offset = NODE_OFFSET(nasid);
 
-	wd = kzalloc(sizeof(*wd), GFP_KERNEL);
-	if (!wd)
-		goto no_mem;
+	wd = kzalloc(माप(*wd), GFP_KERNEL);
+	अगर (!wd)
+		जाओ no_mem;
 
-	snprintf(wd->dev_id, sizeof(wd->dev_id), "bridge-%012lx",
+	snम_लिखो(wd->dev_id, माप(wd->dev_id), "bridge-%012lx",
 		 offset + (widget << SWIN_SIZE_BITS));
 
-	memset(&w1_res, 0, sizeof(w1_res));
+	स_रखो(&w1_res, 0, माप(w1_res));
 	w1_res.start = offset + (widget << SWIN_SIZE_BITS) +
-				offsetof(struct bridge_regs, b_nic);
+				दुरत्व(काष्ठा bridge_regs, b_nic);
 	w1_res.end = w1_res.start + 3;
 	w1_res.flags = IORESOURCE_MEM;
 
-	pdev = platform_device_alloc("sgi_w1", PLATFORM_DEVID_AUTO);
-	if (!pdev) {
-		kfree(wd);
-		goto no_mem;
-	}
-	platform_device_add_resources(pdev, &w1_res, 1);
-	platform_device_add_data(pdev, wd, sizeof(*wd));
-	platform_device_add(pdev);
+	pdev = platक्रमm_device_alloc("sgi_w1", PLATFORM_DEVID_AUTO);
+	अगर (!pdev) अणु
+		kमुक्त(wd);
+		जाओ no_mem;
+	पूर्ण
+	platक्रमm_device_add_resources(pdev, &w1_res, 1);
+	platक्रमm_device_add_data(pdev, wd, माप(*wd));
+	platक्रमm_device_add(pdev);
 
-	bd = kzalloc(sizeof(*bd), GFP_KERNEL);
-	if (!bd)
-		goto no_mem;
-	pdev = platform_device_alloc("xtalk-bridge", PLATFORM_DEVID_AUTO);
-	if (!pdev) {
-		kfree(bd);
-		goto no_mem;
-	}
+	bd = kzalloc(माप(*bd), GFP_KERNEL);
+	अगर (!bd)
+		जाओ no_mem;
+	pdev = platक्रमm_device_alloc("xtalk-bridge", PLATFORM_DEVID_AUTO);
+	अगर (!pdev) अणु
+		kमुक्त(bd);
+		जाओ no_mem;
+	पूर्ण
 
 
 	bd->bridge_addr = RAW_NODE_SWIN_BASE(nasid, widget);
-	bd->intr_addr	= BIT_ULL(47) + 0x01800000 + PI_INT_PEND_MOD;
+	bd->पूर्णांकr_addr	= BIT_ULL(47) + 0x01800000 + PI_INT_PEND_MOD;
 	bd->nasid	= nasid;
 	bd->masterwid	= masterwid;
 
@@ -82,127 +83,127 @@ static void bridge_platform_create(nasid_t nasid, int widget, int masterwid)
 	bd->io.flags	= IORESOURCE_IO;
 	bd->io_offset	= offset;
 
-	platform_device_add_data(pdev, bd, sizeof(*bd));
-	platform_device_add(pdev);
+	platक्रमm_device_add_data(pdev, bd, माप(*bd));
+	platक्रमm_device_add(pdev);
 	pr_info("xtalk:n%d/%x bridge widget\n", nasid, widget);
-	return;
+	वापस;
 
 no_mem:
 	pr_warn("xtalk:n%d/%x bridge create out of memory\n", nasid, widget);
-}
+पूर्ण
 
-static int probe_one_port(nasid_t nasid, int widget, int masterwid)
-{
+अटल पूर्णांक probe_one_port(nasid_t nasid, पूर्णांक widget, पूर्णांक masterwid)
+अणु
 	widgetreg_t		widget_id;
 	xwidget_part_num_t	partnum;
 
-	widget_id = *(volatile widgetreg_t *)
+	widget_id = *(अस्थिर widgetreg_t *)
 		(RAW_NODE_SWIN_BASE(nasid, widget) + WIDGET_ID);
 	partnum = XWIDGET_PART_NUM(widget_id);
 
-	switch (partnum) {
-	case BRIDGE_WIDGET_PART_NUM:
-	case XBRIDGE_WIDGET_PART_NUM:
-		bridge_platform_create(nasid, widget, masterwid);
-		break;
-	default:
+	चयन (partnum) अणु
+	हाल BRIDGE_WIDGET_PART_NUM:
+	हाल XBRIDGE_WIDGET_PART_NUM:
+		bridge_platक्रमm_create(nasid, widget, masterwid);
+		अवरोध;
+	शेष:
 		pr_info("xtalk:n%d/%d unknown widget (0x%x)\n",
 			nasid, widget, partnum);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xbow_probe(nasid_t nasid)
-{
+अटल पूर्णांक xbow_probe(nasid_t nasid)
+अणु
 	lboard_t *brd;
 	klxbow_t *xbow_p;
-	unsigned masterwid, i;
+	अचिन्हित masterwid, i;
 
 	/*
 	 * found xbow, so may have multiple bridges
 	 * need to probe xbow
 	 */
 	brd = find_lboard((lboard_t *)KL_CONFIG_INFO(nasid), KLTYPE_MIDPLANE8);
-	if (!brd)
-		return -ENODEV;
+	अगर (!brd)
+		वापस -ENODEV;
 
-	xbow_p = (klxbow_t *)find_component(brd, NULL, KLSTRUCT_XBOW);
-	if (!xbow_p)
-		return -ENODEV;
+	xbow_p = (klxbow_t *)find_component(brd, शून्य, KLSTRUCT_XBOW);
+	अगर (!xbow_p)
+		वापस -ENODEV;
 
 	/*
 	 * Okay, here's a xbow. Let's arbitrate and find
-	 * out if we should initialize it. Set enabled
+	 * out अगर we should initialize it. Set enabled
 	 * hub connected at highest or lowest widget as
 	 * master.
 	 */
-#ifdef WIDGET_A
+#अगर_घोषित WIDGET_A
 	i = HUB_WIDGET_ID_MAX + 1;
-	do {
+	करो अणु
 		i--;
-	} while ((!XBOW_PORT_TYPE_HUB(xbow_p, i)) ||
+	पूर्ण जबतक ((!XBOW_PORT_TYPE_HUB(xbow_p, i)) ||
 		 (!XBOW_PORT_IS_ENABLED(xbow_p, i)));
-#else
+#अन्यथा
 	i = HUB_WIDGET_ID_MIN - 1;
-	do {
+	करो अणु
 		i++;
-	} while ((!XBOW_PORT_TYPE_HUB(xbow_p, i)) ||
+	पूर्ण जबतक ((!XBOW_PORT_TYPE_HUB(xbow_p, i)) ||
 		 (!XBOW_PORT_IS_ENABLED(xbow_p, i)));
-#endif
+#पूर्ण_अगर
 
 	masterwid = i;
-	if (nasid != XBOW_PORT_NASID(xbow_p, i))
-		return 1;
+	अगर (nasid != XBOW_PORT_NASID(xbow_p, i))
+		वापस 1;
 
-	for (i = HUB_WIDGET_ID_MIN; i <= HUB_WIDGET_ID_MAX; i++) {
-		if (XBOW_PORT_IS_ENABLED(xbow_p, i) &&
+	क्रम (i = HUB_WIDGET_ID_MIN; i <= HUB_WIDGET_ID_MAX; i++) अणु
+		अगर (XBOW_PORT_IS_ENABLED(xbow_p, i) &&
 		    XBOW_PORT_TYPE_IO(xbow_p, i))
 			probe_one_port(nasid, i, masterwid);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xtalk_probe_node(nasid_t nasid)
-{
-	volatile u64		hubreg;
+अटल व्योम xtalk_probe_node(nasid_t nasid)
+अणु
+	अस्थिर u64		hubreg;
 	xwidget_part_num_t	partnum;
 	widgetreg_t		widget_id;
 
 	hubreg = REMOTE_HUB_L(nasid, IIO_LLP_CSR);
 
 	/* check whether the link is up */
-	if (!(hubreg & IIO_LLP_CSR_IS_UP))
-		return;
+	अगर (!(hubreg & IIO_LLP_CSR_IS_UP))
+		वापस;
 
-	widget_id = *(volatile widgetreg_t *)
+	widget_id = *(अस्थिर widgetreg_t *)
 		       (RAW_NODE_SWIN_BASE(nasid, 0x0) + WIDGET_ID);
 	partnum = XWIDGET_PART_NUM(widget_id);
 
-	switch (partnum) {
-	case BRIDGE_WIDGET_PART_NUM:
-		bridge_platform_create(nasid, 0x8, 0xa);
-		break;
-	case XBOW_WIDGET_PART_NUM:
-	case XXBOW_WIDGET_PART_NUM:
+	चयन (partnum) अणु
+	हाल BRIDGE_WIDGET_PART_NUM:
+		bridge_platक्रमm_create(nasid, 0x8, 0xa);
+		अवरोध;
+	हाल XBOW_WIDGET_PART_NUM:
+	हाल XXBOW_WIDGET_PART_NUM:
 		pr_info("xtalk:n%d/0 xbow widget\n", nasid);
 		xbow_probe(nasid);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_info("xtalk:n%d/0 unknown widget (0x%x)\n", nasid, partnum);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int __init xtalk_init(void)
-{
+अटल पूर्णांक __init xtalk_init(व्योम)
+अणु
 	nasid_t nasid;
 
-	for_each_online_node(nasid)
+	क्रम_each_online_node(nasid)
 		xtalk_probe_node(nasid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(xtalk_init);

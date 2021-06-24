@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Trivial I/O routine definitions, intentionally meant to be included
- * multiple times. Ugly I/O routine concatenation helpers taken from
- * alpha. Must be included _before_ io.h to avoid preprocessor-induced
+ * Trivial I/O routine definitions, पूर्णांकentionally meant to be included
+ * multiple बार. Ugly I/O routine concatenation helpers taken from
+ * alpha. Must be included _beक्रमe_ पन.स to aव्योम preprocessor-induced
  * routine mismatch.
  */
-#define IO_CONCAT(a,b)	_IO_CONCAT(a,b)
-#define _IO_CONCAT(a,b)	a ## _ ## b
+#घोषणा IO_CONCAT(a,b)	_IO_CONCAT(a,b)
+#घोषणा _IO_CONCAT(a,b)	a ## _ ## b
 
-#ifndef __IO_PREFIX
-#error "Don't include this header without a valid system prefix"
-#endif
+#अगर_अघोषित __IO_PREFIX
+#त्रुटि "Don't include this header without a valid system prefix"
+#पूर्ण_अगर
 
-void __iomem *IO_CONCAT(__IO_PREFIX,ioport_map)(unsigned long addr, unsigned int size);
-void IO_CONCAT(__IO_PREFIX,ioport_unmap)(void __iomem *addr);
-void IO_CONCAT(__IO_PREFIX,mem_init)(void);
+व्योम __iomem *IO_CONCAT(__IO_PREFIX,ioport_map)(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक size);
+व्योम IO_CONCAT(__IO_PREFIX,ioport_unmap)(व्योम __iomem *addr);
+व्योम IO_CONCAT(__IO_PREFIX,mem_init)(व्योम);
 
-#undef __IO_PREFIX
+#अघोषित __IO_PREFIX

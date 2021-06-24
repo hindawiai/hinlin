@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdlib.h>
-#include <string.h>
-#include <linux/zalloc.h>
-#include "block-info.h"
-#include "sort.h"
-#include "annotate.h"
-#include "symbol.h"
-#include "dso.h"
-#include "map.h"
-#include "srcline.h"
-#include "evlist.h"
-#include "hist.h"
-#include "ui/browsers/hists.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <linux/zभाग.स>
+#समावेश "block-info.h"
+#समावेश "sort.h"
+#समावेश "annotate.h"
+#समावेश "symbol.h"
+#समावेश "dso.h"
+#समावेश "map.h"
+#समावेश "srcline.h"
+#समावेश "evlist.h"
+#समावेश "hist.h"
+#समावेश "ui/browsers/hists.h"
 
-static struct block_header_column {
-	const char *name;
-	int width;
-} block_columns[PERF_HPP_REPORT__BLOCK_MAX_INDEX] = {
-	[PERF_HPP_REPORT__BLOCK_TOTAL_CYCLES_PCT] = {
+अटल काष्ठा block_header_column अणु
+	स्थिर अक्षर *name;
+	पूर्णांक width;
+पूर्ण block_columns[PERF_HPP_REPORT__BLOCK_MAX_INDEX] = अणु
+	[PERF_HPP_REPORT__BLOCK_TOTAL_CYCLES_PCT] = अणु
 		.name = "Sampled Cycles%",
 		.width = 15,
-	},
-	[PERF_HPP_REPORT__BLOCK_LBR_CYCLES] = {
+	पूर्ण,
+	[PERF_HPP_REPORT__BLOCK_LBR_CYCLES] = अणु
 		.name = "Sampled Cycles",
 		.width = 14,
-	},
-	[PERF_HPP_REPORT__BLOCK_CYCLES_PCT] = {
+	पूर्ण,
+	[PERF_HPP_REPORT__BLOCK_CYCLES_PCT] = अणु
 		.name = "Avg Cycles%",
 		.width = 11,
-	},
-	[PERF_HPP_REPORT__BLOCK_AVG_CYCLES] = {
+	पूर्ण,
+	[PERF_HPP_REPORT__BLOCK_AVG_CYCLES] = अणु
 		.name = "Avg Cycles",
 		.width = 10,
-	},
-	[PERF_HPP_REPORT__BLOCK_RANGE] = {
+	पूर्ण,
+	[PERF_HPP_REPORT__BLOCK_RANGE] = अणु
 		.name = "[Program Block Range]",
 		.width = 70,
-	},
-	[PERF_HPP_REPORT__BLOCK_DSO] = {
+	पूर्ण,
+	[PERF_HPP_REPORT__BLOCK_DSO] = अणु
 		.name = "Shared Object",
 		.width = 20,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-struct block_info *block_info__get(struct block_info *bi)
-{
-	if (bi)
+काष्ठा block_info *block_info__get(काष्ठा block_info *bi)
+अणु
+	अगर (bi)
 		refcount_inc(&bi->refcnt);
-	return bi;
-}
+	वापस bi;
+पूर्ण
 
-void block_info__put(struct block_info *bi)
-{
-	if (bi && refcount_dec_and_test(&bi->refcnt))
-		free(bi);
-}
+व्योम block_info__put(काष्ठा block_info *bi)
+अणु
+	अगर (bi && refcount_dec_and_test(&bi->refcnt))
+		मुक्त(bi);
+पूर्ण
 
-struct block_info *block_info__new(void)
-{
-	struct block_info *bi = zalloc(sizeof(*bi));
+काष्ठा block_info *block_info__new(व्योम)
+अणु
+	काष्ठा block_info *bi = zalloc(माप(*bi));
 
-	if (bi)
+	अगर (bi)
 		refcount_set(&bi->refcnt, 1);
-	return bi;
-}
+	वापस bi;
+पूर्ण
 
-int64_t __block_info__cmp(struct hist_entry *left, struct hist_entry *right)
-{
-	struct block_info *bi_l = left->block_info;
-	struct block_info *bi_r = right->block_info;
-	int cmp;
+पूर्णांक64_t __block_info__cmp(काष्ठा hist_entry *left, काष्ठा hist_entry *right)
+अणु
+	काष्ठा block_info *bi_l = left->block_info;
+	काष्ठा block_info *bi_r = right->block_info;
+	पूर्णांक cmp;
 
-	if (!bi_l->sym || !bi_r->sym) {
-		if (!bi_l->sym && !bi_r->sym)
-			return -1;
-		else if (!bi_l->sym)
-			return -1;
-		else
-			return 1;
-	}
+	अगर (!bi_l->sym || !bi_r->sym) अणु
+		अगर (!bi_l->sym && !bi_r->sym)
+			वापस -1;
+		अन्यथा अगर (!bi_l->sym)
+			वापस -1;
+		अन्यथा
+			वापस 1;
+	पूर्ण
 
-	cmp = strcmp(bi_l->sym->name, bi_r->sym->name);
-	if (cmp)
-		return cmp;
+	cmp = म_भेद(bi_l->sym->name, bi_r->sym->name);
+	अगर (cmp)
+		वापस cmp;
 
-	if (bi_l->start != bi_r->start)
-		return (int64_t)(bi_r->start - bi_l->start);
+	अगर (bi_l->start != bi_r->start)
+		वापस (पूर्णांक64_t)(bi_r->start - bi_l->start);
 
-	return (int64_t)(bi_r->end - bi_l->end);
-}
+	वापस (पूर्णांक64_t)(bi_r->end - bi_l->end);
+पूर्ण
 
-int64_t block_info__cmp(struct perf_hpp_fmt *fmt __maybe_unused,
-			struct hist_entry *left, struct hist_entry *right)
-{
-	return __block_info__cmp(left, right);
-}
+पूर्णांक64_t block_info__cmp(काष्ठा perf_hpp_fmt *fmt __maybe_unused,
+			काष्ठा hist_entry *left, काष्ठा hist_entry *right)
+अणु
+	वापस __block_info__cmp(left, right);
+पूर्ण
 
-static void init_block_info(struct block_info *bi, struct symbol *sym,
-			    struct cyc_hist *ch, int offset,
+अटल व्योम init_block_info(काष्ठा block_info *bi, काष्ठा symbol *sym,
+			    काष्ठा cyc_hist *ch, पूर्णांक offset,
 			    u64 total_cycles)
-{
+अणु
 	bi->sym = sym;
 	bi->start = ch->start;
 	bi->end = offset;
@@ -109,37 +110,37 @@ static void init_block_info(struct block_info *bi, struct symbol *sym,
 	bi->num_aggr = ch->num_aggr;
 	bi->total_cycles = total_cycles;
 
-	memcpy(bi->cycles_spark, ch->cycles_spark,
-	       NUM_SPARKS * sizeof(u64));
-}
+	स_नकल(bi->cycles_spark, ch->cycles_spark,
+	       NUM_SPARKS * माप(u64));
+पूर्ण
 
-int block_info__process_sym(struct hist_entry *he, struct block_hist *bh,
+पूर्णांक block_info__process_sym(काष्ठा hist_entry *he, काष्ठा block_hist *bh,
 			    u64 *block_cycles_aggr, u64 total_cycles)
-{
-	struct annotation *notes;
-	struct cyc_hist *ch;
-	static struct addr_location al;
+अणु
+	काष्ठा annotation *notes;
+	काष्ठा cyc_hist *ch;
+	अटल काष्ठा addr_location al;
 	u64 cycles = 0;
 
-	if (!he->ms.map || !he->ms.sym)
-		return 0;
+	अगर (!he->ms.map || !he->ms.sym)
+		वापस 0;
 
-	memset(&al, 0, sizeof(al));
+	स_रखो(&al, 0, माप(al));
 	al.map = he->ms.map;
 	al.sym = he->ms.sym;
 
 	notes = symbol__annotation(he->ms.sym);
-	if (!notes || !notes->src || !notes->src->cycles_hist)
-		return 0;
+	अगर (!notes || !notes->src || !notes->src->cycles_hist)
+		वापस 0;
 	ch = notes->src->cycles_hist;
-	for (unsigned int i = 0; i < symbol__size(he->ms.sym); i++) {
-		if (ch[i].num_aggr) {
-			struct block_info *bi;
-			struct hist_entry *he_block;
+	क्रम (अचिन्हित पूर्णांक i = 0; i < symbol__size(he->ms.sym); i++) अणु
+		अगर (ch[i].num_aggr) अणु
+			काष्ठा block_info *bi;
+			काष्ठा hist_entry *he_block;
 
 			bi = block_info__new();
-			if (!bi)
-				return -1;
+			अगर (!bi)
+				वापस -1;
 
 			init_block_info(bi, he->ms.sym, &ch[i], i,
 					total_cycles);
@@ -147,146 +148,146 @@ int block_info__process_sym(struct hist_entry *he, struct block_hist *bh,
 
 			he_block = hists__add_entry_block(&bh->block_hists,
 							  &al, bi);
-			if (!he_block) {
+			अगर (!he_block) अणु
 				block_info__put(bi);
-				return -1;
-			}
-		}
-	}
+				वापस -1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (block_cycles_aggr)
+	अगर (block_cycles_aggr)
 		*block_cycles_aggr += cycles;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int block_column_header(struct perf_hpp_fmt *fmt,
-			       struct perf_hpp *hpp,
-			       struct hists *hists __maybe_unused,
-			       int line __maybe_unused,
-			       int *span __maybe_unused)
-{
-	struct block_fmt *block_fmt = container_of(fmt, struct block_fmt, fmt);
+अटल पूर्णांक block_column_header(काष्ठा perf_hpp_fmt *fmt,
+			       काष्ठा perf_hpp *hpp,
+			       काष्ठा hists *hists __maybe_unused,
+			       पूर्णांक line __maybe_unused,
+			       पूर्णांक *span __maybe_unused)
+अणु
+	काष्ठा block_fmt *block_fmt = container_of(fmt, काष्ठा block_fmt, fmt);
 
-	return scnprintf(hpp->buf, hpp->size, "%*s", block_fmt->width,
+	वापस scnम_लिखो(hpp->buf, hpp->size, "%*s", block_fmt->width,
 			 block_fmt->header);
-}
+पूर्ण
 
-static int block_column_width(struct perf_hpp_fmt *fmt,
-			      struct perf_hpp *hpp __maybe_unused,
-			      struct hists *hists __maybe_unused)
-{
-	struct block_fmt *block_fmt = container_of(fmt, struct block_fmt, fmt);
+अटल पूर्णांक block_column_width(काष्ठा perf_hpp_fmt *fmt,
+			      काष्ठा perf_hpp *hpp __maybe_unused,
+			      काष्ठा hists *hists __maybe_unused)
+अणु
+	काष्ठा block_fmt *block_fmt = container_of(fmt, काष्ठा block_fmt, fmt);
 
-	return block_fmt->width;
-}
+	वापस block_fmt->width;
+पूर्ण
 
-static int color_pct(struct perf_hpp *hpp, int width, double pct)
-{
-#ifdef HAVE_SLANG_SUPPORT
-	if (use_browser) {
-		return __hpp__slsmg_color_printf(hpp, "%*.2f%%",
+अटल पूर्णांक color_pct(काष्ठा perf_hpp *hpp, पूर्णांक width, द्विगुन pct)
+अणु
+#अगर_घोषित HAVE_SLANG_SUPPORT
+	अगर (use_browser) अणु
+		वापस __hpp__slsmg_color_म_लिखो(hpp, "%*.2f%%",
 						 width - 1, pct);
-	}
-#endif
-	return hpp_color_scnprintf(hpp, "%*.2f%%", width - 1, pct);
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस hpp_color_scnम_लिखो(hpp, "%*.2f%%", width - 1, pct);
+पूर्ण
 
-static int block_total_cycles_pct_entry(struct perf_hpp_fmt *fmt,
-					struct perf_hpp *hpp,
-					struct hist_entry *he)
-{
-	struct block_fmt *block_fmt = container_of(fmt, struct block_fmt, fmt);
-	struct block_info *bi = he->block_info;
-	double ratio = 0.0;
+अटल पूर्णांक block_total_cycles_pct_entry(काष्ठा perf_hpp_fmt *fmt,
+					काष्ठा perf_hpp *hpp,
+					काष्ठा hist_entry *he)
+अणु
+	काष्ठा block_fmt *block_fmt = container_of(fmt, काष्ठा block_fmt, fmt);
+	काष्ठा block_info *bi = he->block_info;
+	द्विगुन ratio = 0.0;
 
-	if (block_fmt->total_cycles)
-		ratio = (double)bi->cycles_aggr / (double)block_fmt->total_cycles;
+	अगर (block_fmt->total_cycles)
+		ratio = (द्विगुन)bi->cycles_aggr / (द्विगुन)block_fmt->total_cycles;
 
-	return color_pct(hpp, block_fmt->width, 100.0 * ratio);
-}
+	वापस color_pct(hpp, block_fmt->width, 100.0 * ratio);
+पूर्ण
 
-static int64_t block_total_cycles_pct_sort(struct perf_hpp_fmt *fmt,
-					   struct hist_entry *left,
-					   struct hist_entry *right)
-{
-	struct block_fmt *block_fmt = container_of(fmt, struct block_fmt, fmt);
-	struct block_info *bi_l = left->block_info;
-	struct block_info *bi_r = right->block_info;
-	double l, r;
+अटल पूर्णांक64_t block_total_cycles_pct_sort(काष्ठा perf_hpp_fmt *fmt,
+					   काष्ठा hist_entry *left,
+					   काष्ठा hist_entry *right)
+अणु
+	काष्ठा block_fmt *block_fmt = container_of(fmt, काष्ठा block_fmt, fmt);
+	काष्ठा block_info *bi_l = left->block_info;
+	काष्ठा block_info *bi_r = right->block_info;
+	द्विगुन l, r;
 
-	if (block_fmt->total_cycles) {
-		l = ((double)bi_l->cycles_aggr /
-			(double)block_fmt->total_cycles) * 100000.0;
-		r = ((double)bi_r->cycles_aggr /
-			(double)block_fmt->total_cycles) * 100000.0;
-		return (int64_t)l - (int64_t)r;
-	}
+	अगर (block_fmt->total_cycles) अणु
+		l = ((द्विगुन)bi_l->cycles_aggr /
+			(द्विगुन)block_fmt->total_cycles) * 100000.0;
+		r = ((द्विगुन)bi_r->cycles_aggr /
+			(द्विगुन)block_fmt->total_cycles) * 100000.0;
+		वापस (पूर्णांक64_t)l - (पूर्णांक64_t)r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cycles_string(u64 cycles, char *buf, int size)
-{
-	if (cycles >= 1000000)
-		scnprintf(buf, size, "%.1fM", (double)cycles / 1000000.0);
-	else if (cycles >= 1000)
-		scnprintf(buf, size, "%.1fK", (double)cycles / 1000.0);
-	else
-		scnprintf(buf, size, "%1d", cycles);
-}
+अटल व्योम cycles_string(u64 cycles, अक्षर *buf, पूर्णांक size)
+अणु
+	अगर (cycles >= 1000000)
+		scnम_लिखो(buf, size, "%.1fM", (द्विगुन)cycles / 1000000.0);
+	अन्यथा अगर (cycles >= 1000)
+		scnम_लिखो(buf, size, "%.1fK", (द्विगुन)cycles / 1000.0);
+	अन्यथा
+		scnम_लिखो(buf, size, "%1d", cycles);
+पूर्ण
 
-static int block_cycles_lbr_entry(struct perf_hpp_fmt *fmt,
-				  struct perf_hpp *hpp, struct hist_entry *he)
-{
-	struct block_fmt *block_fmt = container_of(fmt, struct block_fmt, fmt);
-	struct block_info *bi = he->block_info;
-	char cycles_buf[16];
+अटल पूर्णांक block_cycles_lbr_entry(काष्ठा perf_hpp_fmt *fmt,
+				  काष्ठा perf_hpp *hpp, काष्ठा hist_entry *he)
+अणु
+	काष्ठा block_fmt *block_fmt = container_of(fmt, काष्ठा block_fmt, fmt);
+	काष्ठा block_info *bi = he->block_info;
+	अक्षर cycles_buf[16];
 
-	cycles_string(bi->cycles_aggr, cycles_buf, sizeof(cycles_buf));
+	cycles_string(bi->cycles_aggr, cycles_buf, माप(cycles_buf));
 
-	return scnprintf(hpp->buf, hpp->size, "%*s", block_fmt->width,
+	वापस scnम_लिखो(hpp->buf, hpp->size, "%*s", block_fmt->width,
 			 cycles_buf);
-}
+पूर्ण
 
-static int block_cycles_pct_entry(struct perf_hpp_fmt *fmt,
-				  struct perf_hpp *hpp, struct hist_entry *he)
-{
-	struct block_fmt *block_fmt = container_of(fmt, struct block_fmt, fmt);
-	struct block_info *bi = he->block_info;
-	double ratio = 0.0;
+अटल पूर्णांक block_cycles_pct_entry(काष्ठा perf_hpp_fmt *fmt,
+				  काष्ठा perf_hpp *hpp, काष्ठा hist_entry *he)
+अणु
+	काष्ठा block_fmt *block_fmt = container_of(fmt, काष्ठा block_fmt, fmt);
+	काष्ठा block_info *bi = he->block_info;
+	द्विगुन ratio = 0.0;
 	u64 avg;
 
-	if (block_fmt->block_cycles && bi->num_aggr) {
+	अगर (block_fmt->block_cycles && bi->num_aggr) अणु
 		avg = bi->cycles_aggr / bi->num_aggr;
-		ratio = (double)avg / (double)block_fmt->block_cycles;
-	}
+		ratio = (द्विगुन)avg / (द्विगुन)block_fmt->block_cycles;
+	पूर्ण
 
-	return color_pct(hpp, block_fmt->width, 100.0 * ratio);
-}
+	वापस color_pct(hpp, block_fmt->width, 100.0 * ratio);
+पूर्ण
 
-static int block_avg_cycles_entry(struct perf_hpp_fmt *fmt,
-				  struct perf_hpp *hpp,
-				  struct hist_entry *he)
-{
-	struct block_fmt *block_fmt = container_of(fmt, struct block_fmt, fmt);
-	struct block_info *bi = he->block_info;
-	char cycles_buf[16];
+अटल पूर्णांक block_avg_cycles_entry(काष्ठा perf_hpp_fmt *fmt,
+				  काष्ठा perf_hpp *hpp,
+				  काष्ठा hist_entry *he)
+अणु
+	काष्ठा block_fmt *block_fmt = container_of(fmt, काष्ठा block_fmt, fmt);
+	काष्ठा block_info *bi = he->block_info;
+	अक्षर cycles_buf[16];
 
 	cycles_string(bi->cycles_aggr / bi->num_aggr, cycles_buf,
-		      sizeof(cycles_buf));
+		      माप(cycles_buf));
 
-	return scnprintf(hpp->buf, hpp->size, "%*s", block_fmt->width,
+	वापस scnम_लिखो(hpp->buf, hpp->size, "%*s", block_fmt->width,
 			 cycles_buf);
-}
+पूर्ण
 
-static int block_range_entry(struct perf_hpp_fmt *fmt, struct perf_hpp *hpp,
-			     struct hist_entry *he)
-{
-	struct block_fmt *block_fmt = container_of(fmt, struct block_fmt, fmt);
-	struct block_info *bi = he->block_info;
-	char buf[128];
-	char *start_line, *end_line;
+अटल पूर्णांक block_range_entry(काष्ठा perf_hpp_fmt *fmt, काष्ठा perf_hpp *hpp,
+			     काष्ठा hist_entry *he)
+अणु
+	काष्ठा block_fmt *block_fmt = container_of(fmt, काष्ठा block_fmt, fmt);
+	काष्ठा block_info *bi = he->block_info;
+	अक्षर buf[128];
+	अक्षर *start_line, *end_line;
 
 	symbol_conf.disable_add2line_warn = true;
 
@@ -296,39 +297,39 @@ static int block_range_entry(struct perf_hpp_fmt *fmt, struct perf_hpp *hpp,
 	end_line = map__srcline(he->ms.map, bi->sym->start + bi->end,
 				he->ms.sym);
 
-	if ((strncmp(start_line, SRCLINE_UNKNOWN, strlen(SRCLINE_UNKNOWN)) != 0) &&
-	    (strncmp(end_line, SRCLINE_UNKNOWN, strlen(SRCLINE_UNKNOWN)) != 0)) {
-		scnprintf(buf, sizeof(buf), "[%s -> %s]",
+	अगर ((म_भेदन(start_line, SRCLINE_UNKNOWN, म_माप(SRCLINE_UNKNOWN)) != 0) &&
+	    (म_भेदन(end_line, SRCLINE_UNKNOWN, म_माप(SRCLINE_UNKNOWN)) != 0)) अणु
+		scnम_लिखो(buf, माप(buf), "[%s -> %s]",
 			  start_line, end_line);
-	} else {
-		scnprintf(buf, sizeof(buf), "[%7lx -> %7lx]",
+	पूर्ण अन्यथा अणु
+		scnम_लिखो(buf, माप(buf), "[%7lx -> %7lx]",
 			  bi->start, bi->end);
-	}
+	पूर्ण
 
-	free_srcline(start_line);
-	free_srcline(end_line);
+	मुक्त_srcline(start_line);
+	मुक्त_srcline(end_line);
 
-	return scnprintf(hpp->buf, hpp->size, "%*s", block_fmt->width, buf);
-}
+	वापस scnम_लिखो(hpp->buf, hpp->size, "%*s", block_fmt->width, buf);
+पूर्ण
 
-static int block_dso_entry(struct perf_hpp_fmt *fmt, struct perf_hpp *hpp,
-			   struct hist_entry *he)
-{
-	struct block_fmt *block_fmt = container_of(fmt, struct block_fmt, fmt);
-	struct map *map = he->ms.map;
+अटल पूर्णांक block_dso_entry(काष्ठा perf_hpp_fmt *fmt, काष्ठा perf_hpp *hpp,
+			   काष्ठा hist_entry *he)
+अणु
+	काष्ठा block_fmt *block_fmt = container_of(fmt, काष्ठा block_fmt, fmt);
+	काष्ठा map *map = he->ms.map;
 
-	if (map && map->dso) {
-		return scnprintf(hpp->buf, hpp->size, "%*s", block_fmt->width,
-				 map->dso->short_name);
-	}
+	अगर (map && map->dso) अणु
+		वापस scnम_लिखो(hpp->buf, hpp->size, "%*s", block_fmt->width,
+				 map->dso->लघु_name);
+	पूर्ण
 
-	return scnprintf(hpp->buf, hpp->size, "%*s", block_fmt->width,
+	वापस scnम_लिखो(hpp->buf, hpp->size, "%*s", block_fmt->width,
 			 "[unknown]");
-}
+पूर्ण
 
-static void init_block_header(struct block_fmt *block_fmt)
-{
-	struct perf_hpp_fmt *fmt = &block_fmt->fmt;
+अटल व्योम init_block_header(काष्ठा block_fmt *block_fmt)
+अणु
+	काष्ठा perf_hpp_fmt *fmt = &block_fmt->fmt;
 
 	BUG_ON(block_fmt->idx >= PERF_HPP_REPORT__BLOCK_MAX_INDEX);
 
@@ -337,162 +338,162 @@ static void init_block_header(struct block_fmt *block_fmt)
 
 	fmt->header = block_column_header;
 	fmt->width = block_column_width;
-}
+पूर्ण
 
-static void hpp_register(struct block_fmt *block_fmt, int idx,
-			 struct perf_hpp_list *hpp_list)
-{
-	struct perf_hpp_fmt *fmt = &block_fmt->fmt;
+अटल व्योम hpp_रेजिस्टर(काष्ठा block_fmt *block_fmt, पूर्णांक idx,
+			 काष्ठा perf_hpp_list *hpp_list)
+अणु
+	काष्ठा perf_hpp_fmt *fmt = &block_fmt->fmt;
 
 	block_fmt->idx = idx;
 	INIT_LIST_HEAD(&fmt->list);
 	INIT_LIST_HEAD(&fmt->sort_list);
 
-	switch (idx) {
-	case PERF_HPP_REPORT__BLOCK_TOTAL_CYCLES_PCT:
+	चयन (idx) अणु
+	हाल PERF_HPP_REPORT__BLOCK_TOTAL_CYCLES_PCT:
 		fmt->color = block_total_cycles_pct_entry;
 		fmt->cmp = block_info__cmp;
 		fmt->sort = block_total_cycles_pct_sort;
-		break;
-	case PERF_HPP_REPORT__BLOCK_LBR_CYCLES:
+		अवरोध;
+	हाल PERF_HPP_REPORT__BLOCK_LBR_CYCLES:
 		fmt->entry = block_cycles_lbr_entry;
-		break;
-	case PERF_HPP_REPORT__BLOCK_CYCLES_PCT:
+		अवरोध;
+	हाल PERF_HPP_REPORT__BLOCK_CYCLES_PCT:
 		fmt->color = block_cycles_pct_entry;
-		break;
-	case PERF_HPP_REPORT__BLOCK_AVG_CYCLES:
+		अवरोध;
+	हाल PERF_HPP_REPORT__BLOCK_AVG_CYCLES:
 		fmt->entry = block_avg_cycles_entry;
-		break;
-	case PERF_HPP_REPORT__BLOCK_RANGE:
+		अवरोध;
+	हाल PERF_HPP_REPORT__BLOCK_RANGE:
 		fmt->entry = block_range_entry;
-		break;
-	case PERF_HPP_REPORT__BLOCK_DSO:
+		अवरोध;
+	हाल PERF_HPP_REPORT__BLOCK_DSO:
 		fmt->entry = block_dso_entry;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	init_block_header(block_fmt);
-	perf_hpp_list__column_register(hpp_list, fmt);
-}
+	perf_hpp_list__column_रेजिस्टर(hpp_list, fmt);
+पूर्ण
 
-static void register_block_columns(struct perf_hpp_list *hpp_list,
-				   struct block_fmt *block_fmts,
-				   int *block_hpps, int nr_hpps)
-{
-	for (int i = 0; i < nr_hpps; i++)
-		hpp_register(&block_fmts[i], block_hpps[i], hpp_list);
-}
+अटल व्योम रेजिस्टर_block_columns(काष्ठा perf_hpp_list *hpp_list,
+				   काष्ठा block_fmt *block_fmts,
+				   पूर्णांक *block_hpps, पूर्णांक nr_hpps)
+अणु
+	क्रम (पूर्णांक i = 0; i < nr_hpps; i++)
+		hpp_रेजिस्टर(&block_fmts[i], block_hpps[i], hpp_list);
+पूर्ण
 
-static void init_block_hist(struct block_hist *bh, struct block_fmt *block_fmts,
-			    int *block_hpps, int nr_hpps)
-{
+अटल व्योम init_block_hist(काष्ठा block_hist *bh, काष्ठा block_fmt *block_fmts,
+			    पूर्णांक *block_hpps, पूर्णांक nr_hpps)
+अणु
 	__hists__init(&bh->block_hists, &bh->block_list);
 	perf_hpp_list__init(&bh->block_list);
 	bh->block_list.nr_header_lines = 1;
 
-	register_block_columns(&bh->block_list, block_fmts,
+	रेजिस्टर_block_columns(&bh->block_list, block_fmts,
 			       block_hpps, nr_hpps);
 
 	/* Sort by the first fmt */
-	perf_hpp_list__register_sort_field(&bh->block_list, &block_fmts[0].fmt);
-}
+	perf_hpp_list__रेजिस्टर_sort_field(&bh->block_list, &block_fmts[0].fmt);
+पूर्ण
 
-static int process_block_report(struct hists *hists,
-				struct block_report *block_report,
-				u64 total_cycles, int *block_hpps,
-				int nr_hpps)
-{
-	struct rb_node *next = rb_first_cached(&hists->entries);
-	struct block_hist *bh = &block_report->hist;
-	struct hist_entry *he;
+अटल पूर्णांक process_block_report(काष्ठा hists *hists,
+				काष्ठा block_report *block_report,
+				u64 total_cycles, पूर्णांक *block_hpps,
+				पूर्णांक nr_hpps)
+अणु
+	काष्ठा rb_node *next = rb_first_cached(&hists->entries);
+	काष्ठा block_hist *bh = &block_report->hist;
+	काष्ठा hist_entry *he;
 
-	if (nr_hpps > PERF_HPP_REPORT__BLOCK_MAX_INDEX)
-		return -1;
+	अगर (nr_hpps > PERF_HPP_REPORT__BLOCK_MAX_INDEX)
+		वापस -1;
 
 	block_report->nr_fmts = nr_hpps;
 	init_block_hist(bh, block_report->fmts, block_hpps, nr_hpps);
 
-	while (next) {
-		he = rb_entry(next, struct hist_entry, rb_node);
+	जबतक (next) अणु
+		he = rb_entry(next, काष्ठा hist_entry, rb_node);
 		block_info__process_sym(he, bh, &block_report->cycles,
 					total_cycles);
 		next = rb_next(&he->rb_node);
-	}
+	पूर्ण
 
-	for (int i = 0; i < nr_hpps; i++) {
+	क्रम (पूर्णांक i = 0; i < nr_hpps; i++) अणु
 		block_report->fmts[i].total_cycles = total_cycles;
 		block_report->fmts[i].block_cycles = block_report->cycles;
-	}
+	पूर्ण
 
-	hists__output_resort(&bh->block_hists, NULL);
-	return 0;
-}
+	hists__output_resort(&bh->block_hists, शून्य);
+	वापस 0;
+पूर्ण
 
-struct block_report *block_info__create_report(struct evlist *evlist,
+काष्ठा block_report *block_info__create_report(काष्ठा evlist *evlist,
 					       u64 total_cycles,
-					       int *block_hpps, int nr_hpps,
-					       int *nr_reps)
-{
-	struct block_report *block_reports;
-	int nr_hists = evlist->core.nr_entries, i = 0;
-	struct evsel *pos;
+					       पूर्णांक *block_hpps, पूर्णांक nr_hpps,
+					       पूर्णांक *nr_reps)
+अणु
+	काष्ठा block_report *block_reports;
+	पूर्णांक nr_hists = evlist->core.nr_entries, i = 0;
+	काष्ठा evsel *pos;
 
-	block_reports = calloc(nr_hists, sizeof(struct block_report));
-	if (!block_reports)
-		return NULL;
+	block_reports = सुस्मृति(nr_hists, माप(काष्ठा block_report));
+	अगर (!block_reports)
+		वापस शून्य;
 
-	evlist__for_each_entry(evlist, pos) {
-		struct hists *hists = evsel__hists(pos);
+	evlist__क्रम_each_entry(evlist, pos) अणु
+		काष्ठा hists *hists = evsel__hists(pos);
 
 		process_block_report(hists, &block_reports[i], total_cycles,
 				     block_hpps, nr_hpps);
 		i++;
-	}
+	पूर्ण
 
 	*nr_reps = nr_hists;
-	return block_reports;
-}
+	वापस block_reports;
+पूर्ण
 
-void block_info__free_report(struct block_report *reps, int nr_reps)
-{
-	for (int i = 0; i < nr_reps; i++)
+व्योम block_info__मुक्त_report(काष्ठा block_report *reps, पूर्णांक nr_reps)
+अणु
+	क्रम (पूर्णांक i = 0; i < nr_reps; i++)
 		hists__delete_entries(&reps[i].hist.block_hists);
 
-	free(reps);
-}
+	मुक्त(reps);
+पूर्ण
 
-int report__browse_block_hists(struct block_hist *bh, float min_percent,
-			       struct evsel *evsel, struct perf_env *env,
-			       struct annotation_options *annotation_opts)
-{
-	int ret;
+पूर्णांक report__browse_block_hists(काष्ठा block_hist *bh, भग्न min_percent,
+			       काष्ठा evsel *evsel, काष्ठा perf_env *env,
+			       काष्ठा annotation_options *annotation_opts)
+अणु
+	पूर्णांक ret;
 
-	switch (use_browser) {
-	case 0:
-		symbol_conf.report_individual_block = true;
-		hists__fprintf(&bh->block_hists, true, 0, 0, min_percent,
-			       stdout, true);
-		return 0;
-	case 1:
-		symbol_conf.report_individual_block = true;
+	चयन (use_browser) अणु
+	हाल 0:
+		symbol_conf.report_inभागidual_block = true;
+		hists__ख_लिखो(&bh->block_hists, true, 0, 0, min_percent,
+			       मानक_निकास, true);
+		वापस 0;
+	हाल 1:
+		symbol_conf.report_inभागidual_block = true;
 		ret = block_hists_tui_browse(bh, evsel, min_percent,
 					     env, annotation_opts);
-		return ret;
-	default:
-		return -1;
-	}
+		वापस ret;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-float block_info__total_cycles_percent(struct hist_entry *he)
-{
-	struct block_info *bi = he->block_info;
+भग्न block_info__total_cycles_percent(काष्ठा hist_entry *he)
+अणु
+	काष्ठा block_info *bi = he->block_info;
 
-	if (bi->total_cycles)
-		return bi->cycles * 100.0 / bi->total_cycles;
+	अगर (bi->total_cycles)
+		वापस bi->cycles * 100.0 / bi->total_cycles;
 
-	return 0.0;
-}
+	वापस 0.0;
+पूर्ण

@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __QCOM_WNCSS_H__
-#define __QCOM_WNCSS_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __QCOM_WNCSS_H__
+#घोषणा __QCOM_WNCSS_H__
 
-struct qcom_iris;
-struct qcom_wcnss;
+काष्ठा qcom_iris;
+काष्ठा qcom_wcnss;
 
-extern struct platform_driver qcom_iris_driver;
+बाह्य काष्ठा platक्रमm_driver qcom_iris_driver;
 
-struct wcnss_vreg_info {
-	const char * const name;
-	int min_voltage;
-	int max_voltage;
+काष्ठा wcnss_vreg_info अणु
+	स्थिर अक्षर * स्थिर name;
+	पूर्णांक min_voltage;
+	पूर्णांक max_voltage;
 
-	int load_uA;
+	पूर्णांक load_uA;
 
 	bool super_turbo;
-};
+पूर्ण;
 
-int qcom_iris_enable(struct qcom_iris *iris);
-void qcom_iris_disable(struct qcom_iris *iris);
+पूर्णांक qcom_iris_enable(काष्ठा qcom_iris *iris);
+व्योम qcom_iris_disable(काष्ठा qcom_iris *iris);
 
-void qcom_wcnss_assign_iris(struct qcom_wcnss *wcnss, struct qcom_iris *iris, bool use_48mhz_xo);
+व्योम qcom_wcnss_assign_iris(काष्ठा qcom_wcnss *wcnss, काष्ठा qcom_iris *iris, bool use_48mhz_xo);
 
-#endif
+#पूर्ण_अगर

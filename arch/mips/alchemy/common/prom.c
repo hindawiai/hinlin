@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *
  * BRIEF MODULE DESCRIPTION
@@ -12,7 +13,7 @@
  * Carsten Langgaard, carstenl@mips.com
  * Copyright (C) 1999,2000 MIPS Technologies, Inc.  All rights reserved.
  *
- *  This program is free software; you can redistribute  it and/or modify it
+ *  This program is मुक्त software; you can redistribute  it and/or modअगरy it
  *  under  the terms of  the GNU General  Public License as published by the
  *  Free Software Foundation;  either version 2 of the  License, or (at your
  *  option) any later version.
@@ -20,7 +21,7 @@
  *  THIS  SOFTWARE  IS PROVIDED   ``AS  IS'' AND   ANY  EXPRESS OR IMPLIED
  *  WARRANTIES,   INCLUDING, BUT NOT  LIMITED  TO, THE IMPLIED WARRANTIES OF
  *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
- *  NO  EVENT  SHALL   THE AUTHOR  BE    LIABLE FOR ANY   DIRECT, INDIRECT,
+ *  NO  EVENT  SHALL   THE AUTHOR  BE    LIABLE FOR ANY   सूचीECT, INसूचीECT,
  *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  *  NOT LIMITED   TO, PROCUREMENT OF  SUBSTITUTE GOODS  OR SERVICES; LOSS OF
  *  USE, DATA,  OR PROFITS; OR  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
@@ -28,118 +29,118 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *  You should have received a copy of the  GNU General Public License along
- *  with this program; if not, write  to the Free Software Foundation, Inc.,
+ *  You should have received a copy of the  GNU General Public License aदीर्घ
+ *  with this program; अगर not, ग_लिखो  to the Free Software Foundation, Inc.,
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/memblock.h>
-#include <linux/sizes.h>
-#include <linux/string.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/माला.स>
 
-#include <asm/bootinfo.h>
+#समावेश <यंत्र/bootinfo.h>
 
-int prom_argc;
-char **prom_argv;
-char **prom_envp;
+पूर्णांक prom_argc;
+अक्षर **prom_argv;
+अक्षर **prom_envp;
 
-void __init prom_init_cmdline(void)
-{
-	int i;
+व्योम __init prom_init_cmdline(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 1; i < prom_argc; i++) {
+	क्रम (i = 1; i < prom_argc; i++) अणु
 		strlcat(arcs_cmdline, prom_argv[i], COMMAND_LINE_SIZE);
-		if (i < (prom_argc - 1))
+		अगर (i < (prom_argc - 1))
 			strlcat(arcs_cmdline, " ", COMMAND_LINE_SIZE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-char *prom_getenv(char *envname)
-{
+अक्षर *prom_दो_पर्या(अक्षर *envname)
+अणु
 	/*
-	 * Return a pointer to the given environment variable.
-	 * YAMON uses "name", "value" pairs, while U-Boot uses "name=value".
+	 * Return a poपूर्णांकer to the given environment variable.
+	 * YAMON uses "name", "value" pairs, जबतक U-Boot uses "name=value".
 	 */
 
-	char **env = prom_envp;
-	int i = strlen(envname);
-	int yamon = (*env && strchr(*env, '=') == NULL);
+	अक्षर **env = prom_envp;
+	पूर्णांक i = म_माप(envname);
+	पूर्णांक yamon = (*env && म_अक्षर(*env, '=') == शून्य);
 
-	while (*env) {
-		if (yamon) {
-			if (strcmp(envname, *env++) == 0)
-				return *env;
-		} else if (strncmp(envname, *env, i) == 0 && (*env)[i] == '=')
-			return *env + i + 1;
+	जबतक (*env) अणु
+		अगर (yamon) अणु
+			अगर (म_भेद(envname, *env++) == 0)
+				वापस *env;
+		पूर्ण अन्यथा अगर (म_भेदन(envname, *env, i) == 0 && (*env)[i] == '=')
+			वापस *env + i + 1;
 		env++;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void __init prom_init(void)
-{
-	unsigned char *memsize_str;
-	unsigned long memsize;
+व्योम __init prom_init(व्योम)
+अणु
+	अचिन्हित अक्षर *memsize_str;
+	अचिन्हित दीर्घ memsize;
 
-	prom_argc = (int)fw_arg0;
-	prom_argv = (char **)fw_arg1;
-	prom_envp = (char **)fw_arg2;
+	prom_argc = (पूर्णांक)fw_arg0;
+	prom_argv = (अक्षर **)fw_arg1;
+	prom_envp = (अक्षर **)fw_arg2;
 
 	prom_init_cmdline();
 
-	memsize_str = prom_getenv("memsize");
-	if (!memsize_str || kstrtoul(memsize_str, 0, &memsize))
+	memsize_str = prom_दो_पर्या("memsize");
+	अगर (!memsize_str || kम_से_अदीर्घ(memsize_str, 0, &memsize))
 		memsize = SZ_64M; /* minimum memsize is 64MB RAM */
 
 	memblock_add(0, memsize);
-}
+पूर्ण
 
-static inline unsigned char str2hexnum(unsigned char c)
-{
-	if (c >= '0' && c <= '9')
-		return c - '0';
-	if (c >= 'a' && c <= 'f')
-		return c - 'a' + 10;
-	if (c >= 'A' && c <= 'F')
-		return c - 'A' + 10;
+अटल अंतरभूत अचिन्हित अक्षर str2hexnum(अचिन्हित अक्षर c)
+अणु
+	अगर (c >= '0' && c <= '9')
+		वापस c - '0';
+	अगर (c >= 'a' && c <= 'f')
+		वापस c - 'a' + 10;
+	अगर (c >= 'A' && c <= 'F')
+		वापस c - 'A' + 10;
 
-	return 0; /* foo */
-}
+	वापस 0; /* foo */
+पूर्ण
 
-static inline void str2eaddr(unsigned char *ea, unsigned char *str)
-{
-	int i;
+अटल अंतरभूत व्योम str2eaddr(अचिन्हित अक्षर *ea, अचिन्हित अक्षर *str)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 6; i++) {
-		unsigned char num;
+	क्रम (i = 0; i < 6; i++) अणु
+		अचिन्हित अक्षर num;
 
-		if ((*str == '.') || (*str == ':'))
+		अगर ((*str == '.') || (*str == ':'))
 			str++;
 		num  = str2hexnum(*str++) << 4;
 		num |= str2hexnum(*str++);
 		ea[i] = num;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int __init prom_get_ethernet_addr(char *ethernet_addr)
-{
-	char *ethaddr_str;
+पूर्णांक __init prom_get_ethernet_addr(अक्षर *ethernet_addr)
+अणु
+	अक्षर *ethaddr_str;
 
 	/* Check the environment variables first */
-	ethaddr_str = prom_getenv("ethaddr");
-	if (!ethaddr_str) {
+	ethaddr_str = prom_दो_पर्या("ethaddr");
+	अगर (!ethaddr_str) अणु
 		/* Check command line */
-		ethaddr_str = strstr(arcs_cmdline, "ethaddr=");
-		if (!ethaddr_str)
-			return -1;
+		ethaddr_str = म_माला(arcs_cmdline, "ethaddr=");
+		अगर (!ethaddr_str)
+			वापस -1;
 
-		ethaddr_str += strlen("ethaddr=");
-	}
+		ethaddr_str += म_माप("ethaddr=");
+	पूर्ण
 
 	str2eaddr(ethernet_addr, ethaddr_str);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

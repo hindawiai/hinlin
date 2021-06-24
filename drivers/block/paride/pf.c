@@ -1,90 +1,91 @@
+<शैली गुरु>
 /* 
         pf.c    (c) 1997-8  Grant R. Guenther <grant@torque.net>
                             Under the terms of the GNU General Public License.
 
-        This is the high-level driver for parallel port ATAPI disk
+        This is the high-level driver क्रम parallel port ATAPI disk
         drives based on chips supported by the paride module.
 
-        By default, the driver will autoprobe for a single parallel
-        port ATAPI disk drive, but if their individual parameters are
-        specified, the driver can handle up to 4 drives.
+        By शेष, the driver will स्वतःprobe क्रम a single parallel
+        port ATAPI disk drive, but अगर their inभागidual parameters are
+        specअगरied, the driver can handle up to 4 drives.
 
         The behaviour of the pf driver can be altered by setting
         some parameters from the insmod command line.  The following
         parameters are adjustable:
 
             drive0      These four arguments can be arrays of       
-            drive1      1-7 integers as follows:
+            drive1      1-7 पूर्णांकegers as follows:
             drive2
             drive3      <prt>,<pro>,<uni>,<mod>,<slv>,<lun>,<dly>
 
                         Where,
 
-                <prt>   is the base of the parallel port address for
+                <prt>   is the base of the parallel port address क्रम
                         the corresponding drive.  (required)
 
-                <pro>   is the protocol number for the adapter that
+                <pro>   is the protocol number क्रम the adapter that
                         supports this drive.  These numbers are
                         logged by 'paride' when the protocol modules
-                        are initialised.  (0 if not given)
+                        are initialised.  (0 अगर not given)
 
-                <uni>   for those adapters that support chained
-                        devices, this is the unit selector for the
+                <uni>   क्रम those adapters that support chained
+                        devices, this is the unit selector क्रम the
                         chain of devices on the given port.  It should
-                        be zero for devices that don't support chaining.
-                        (0 if not given)
+                        be zero क्रम devices that करोn't support chaining.
+                        (0 अगर not given)
 
                 <mod>   this can be -1 to choose the best mode, or one
                         of the mode numbers supported by the adapter.
-                        (-1 if not given)
+                        (-1 अगर not given)
 
                 <slv>   ATAPI CDroms can be jumpered to master or slave.
                         Set this to 0 to choose the master drive, 1 to
-                        choose the slave, -1 (the default) to choose the
+                        choose the slave, -1 (the शेष) to choose the
                         first drive found.
 
 		<lun>   Some ATAPI devices support multiple LUNs.
                         One example is the ATAPI PD/CD drive from
                         Matshita/Panasonic.  This device has a 
                         CD drive on LUN 0 and a PD drive on LUN 1.
-                        By default, the driver will search for the
+                        By शेष, the driver will search क्रम the
                         first LUN with a supported device.  Set 
-                        this parameter to force it to use a specific
-                        LUN.  (default -1)
+                        this parameter to क्रमce it to use a specअगरic
+                        LUN.  (शेष -1)
 
                 <dly>   some parallel ports require the driver to 
-                        go more slowly.  -1 sets a default value that
+                        go more slowly.  -1 sets a शेष value that
                         should work with the chosen protocol.  Otherwise,
-                        set this to a small integer, the larger it is
-                        the slower the port i/o.  In some cases, setting
-                        this to zero will speed up the device. (default -1)
+                        set this to a small पूर्णांकeger, the larger it is
+                        the slower the port i/o.  In some हालs, setting
+                        this to zero will speed up the device. (शेष -1)
 
 	    major	You may use this parameter to override the
-			default major number (47) that this driver
+			शेष major number (47) that this driver
 			will use.  Be sure to change the device
 			name as well.
 
-	    name	This parameter is a character string that
-			contains the name the kernel will use for this
-			device (in /proc output, for instance).
-			(default "pf").
+	    name	This parameter is a अक्षरacter string that
+			contains the name the kernel will use क्रम this
+			device (in /proc output, क्रम instance).
+			(शेष "pf").
 
             cluster     The driver will attempt to aggregate requests
-                        for adjacent blocks into larger multi-block
+                        क्रम adjacent blocks पूर्णांकo larger multi-block
                         clusters.  The maximum cluster size (in 512
                         byte sectors) is set with this parameter.
-                        (default 64)
+                        (शेष 64)
 
             verbose     This parameter controls the amount of logging
-                        that the driver will do.  Set it to 0 for
-                        normal operation, 1 to see autoprobe progress
+                        that the driver will करो.  Set it to 0 क्रम
+                        normal operation, 1 to see स्वतःprobe progress
                         messages, or 2 to see additional debugging
-                        output.  (default 0)
+                        output.  (शेष 0)
  
 	    nice        This parameter controls the driver's use of
-			idle CPU time, at the expense of some speed.
+			idle CPU समय, at the expense of some speed.
 
-        If this driver is built into the kernel, you can use the
+        If this driver is built पूर्णांकo the kernel, you can use the
         following command line parameters, with the same values
         as the corresponding module parameters listed above:
 
@@ -102,8 +103,8 @@
 
 /* Changes:
 
-	1.01	GRG 1998.05.03  Changes for SMP.  Eliminate sti().
-				Fix for drives that don't clear STAT_ERR
+	1.01	GRG 1998.05.03  Changes क्रम SMP.  Eliminate sti().
+				Fix क्रम drives that करोn't clear STAT_ERR
 			        until after next CDB delivered.
 				Small change in pf_completion to round
 				up transfer size.
@@ -113,198 +114,198 @@
 
 */
 
-#define PF_VERSION      "1.04"
-#define PF_MAJOR	47
-#define PF_NAME		"pf"
-#define PF_UNITS	4
+#घोषणा PF_VERSION      "1.04"
+#घोषणा PF_MAJOR	47
+#घोषणा PF_NAME		"pf"
+#घोषणा PF_UNITS	4
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* Here are things one can override from the insmod command.
-   Most are autoprobed by paride unless set here.  Verbose is off
-   by default.
+   Most are स्वतःprobed by paride unless set here.  Verbose is off
+   by शेष.
 
 */
 
-static bool verbose = 0;
-static int major = PF_MAJOR;
-static char *name = PF_NAME;
-static int cluster = 64;
-static int nice = 0;
-static int disable = 0;
+अटल bool verbose = 0;
+अटल पूर्णांक major = PF_MAJOR;
+अटल अक्षर *name = PF_NAME;
+अटल पूर्णांक cluster = 64;
+अटल पूर्णांक nice = 0;
+अटल पूर्णांक disable = 0;
 
-static int drive0[7] = { 0, 0, 0, -1, -1, -1, -1 };
-static int drive1[7] = { 0, 0, 0, -1, -1, -1, -1 };
-static int drive2[7] = { 0, 0, 0, -1, -1, -1, -1 };
-static int drive3[7] = { 0, 0, 0, -1, -1, -1, -1 };
+अटल पूर्णांक drive0[7] = अणु 0, 0, 0, -1, -1, -1, -1 पूर्ण;
+अटल पूर्णांक drive1[7] = अणु 0, 0, 0, -1, -1, -1, -1 पूर्ण;
+अटल पूर्णांक drive2[7] = अणु 0, 0, 0, -1, -1, -1, -1 पूर्ण;
+अटल पूर्णांक drive3[7] = अणु 0, 0, 0, -1, -1, -1, -1 पूर्ण;
 
-static int (*drives[4])[7] = {&drive0, &drive1, &drive2, &drive3};
-static int pf_drive_count;
+अटल पूर्णांक (*drives[4])[7] = अणु&drive0, &drive1, &drive2, &drive3पूर्ण;
+अटल पूर्णांक pf_drive_count;
 
-enum {D_PRT, D_PRO, D_UNI, D_MOD, D_SLV, D_LUN, D_DLY};
+क्रमागत अणुD_PRT, D_PRO, D_UNI, D_MOD, D_SLV, D_LUN, D_DLYपूर्ण;
 
 /* end of parameters */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/delay.h>
-#include <linux/hdreg.h>
-#include <linux/cdrom.h>
-#include <linux/spinlock.h>
-#include <linux/blk-mq.h>
-#include <linux/blkpg.h>
-#include <linux/mutex.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/cdrom.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/blkpg.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/uaccess.h>
 
-static DEFINE_MUTEX(pf_mutex);
-static DEFINE_SPINLOCK(pf_spin_lock);
+अटल DEFINE_MUTEX(pf_mutex);
+अटल DEFINE_SPINLOCK(pf_spin_lock);
 
 module_param(verbose, bool, 0644);
-module_param(major, int, 0);
-module_param(name, charp, 0);
-module_param(cluster, int, 0);
-module_param(nice, int, 0);
-module_param_array(drive0, int, NULL, 0);
-module_param_array(drive1, int, NULL, 0);
-module_param_array(drive2, int, NULL, 0);
-module_param_array(drive3, int, NULL, 0);
+module_param(major, पूर्णांक, 0);
+module_param(name, अक्षरp, 0);
+module_param(cluster, पूर्णांक, 0);
+module_param(nice, पूर्णांक, 0);
+module_param_array(drive0, पूर्णांक, शून्य, 0);
+module_param_array(drive1, पूर्णांक, शून्य, 0);
+module_param_array(drive2, पूर्णांक, शून्य, 0);
+module_param_array(drive3, पूर्णांक, शून्य, 0);
 
-#include "paride.h"
-#include "pseudo.h"
+#समावेश "paride.h"
+#समावेश "pseudo.h"
 
-/* constants for faking geometry numbers */
+/* स्थिरants क्रम faking geometry numbers */
 
-#define PF_FD_MAX	8192	/* use FD geometry under this size */
-#define PF_FD_HDS	2
-#define PF_FD_SPT	18
-#define PF_HD_HDS	64
-#define PF_HD_SPT	32
+#घोषणा PF_FD_MAX	8192	/* use FD geometry under this size */
+#घोषणा PF_FD_HDS	2
+#घोषणा PF_FD_SPT	18
+#घोषणा PF_HD_HDS	64
+#घोषणा PF_HD_SPT	32
 
-#define PF_MAX_RETRIES  5
-#define PF_TMO          800	/* interrupt timeout in jiffies */
-#define PF_SPIN_DEL     50	/* spin delay in micro-seconds  */
+#घोषणा PF_MAX_RETRIES  5
+#घोषणा PF_TMO          800	/* पूर्णांकerrupt समयout in jअगरfies */
+#घोषणा PF_SPIN_DEL     50	/* spin delay in micro-seconds  */
 
-#define PF_SPIN         (1000000*PF_TMO)/(HZ*PF_SPIN_DEL)
+#घोषणा PF_SPIN         (1000000*PF_TMO)/(HZ*PF_SPIN_DEL)
 
-#define STAT_ERR        0x00001
-#define STAT_INDEX      0x00002
-#define STAT_ECC        0x00004
-#define STAT_DRQ        0x00008
-#define STAT_SEEK       0x00010
-#define STAT_WRERR      0x00020
-#define STAT_READY      0x00040
-#define STAT_BUSY       0x00080
+#घोषणा STAT_ERR        0x00001
+#घोषणा STAT_INDEX      0x00002
+#घोषणा STAT_ECC        0x00004
+#घोषणा STAT_DRQ        0x00008
+#घोषणा STAT_SEEK       0x00010
+#घोषणा STAT_WRERR      0x00020
+#घोषणा STAT_READY      0x00040
+#घोषणा STAT_BUSY       0x00080
 
-#define ATAPI_REQ_SENSE		0x03
-#define ATAPI_LOCK		0x1e
-#define ATAPI_DOOR		0x1b
-#define ATAPI_MODE_SENSE	0x5a
-#define ATAPI_CAPACITY		0x25
-#define ATAPI_IDENTIFY		0x12
-#define ATAPI_READ_10		0x28
-#define ATAPI_WRITE_10		0x2a
+#घोषणा ATAPI_REQ_SENSE		0x03
+#घोषणा ATAPI_LOCK		0x1e
+#घोषणा ATAPI_DOOR		0x1b
+#घोषणा ATAPI_MODE_SENSE	0x5a
+#घोषणा ATAPI_CAPACITY		0x25
+#घोषणा ATAPI_IDENTIFY		0x12
+#घोषणा ATAPI_READ_10		0x28
+#घोषणा ATAPI_WRITE_10		0x2a
 
-static int pf_open(struct block_device *bdev, fmode_t mode);
-static blk_status_t pf_queue_rq(struct blk_mq_hw_ctx *hctx,
-				const struct blk_mq_queue_data *bd);
-static int pf_ioctl(struct block_device *bdev, fmode_t mode,
-		    unsigned int cmd, unsigned long arg);
-static int pf_getgeo(struct block_device *bdev, struct hd_geometry *geo);
+अटल पूर्णांक pf_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode);
+अटल blk_status_t pf_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
+				स्थिर काष्ठा blk_mq_queue_data *bd);
+अटल पूर्णांक pf_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+		    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+अटल पूर्णांक pf_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo);
 
-static void pf_release(struct gendisk *disk, fmode_t mode);
+अटल व्योम pf_release(काष्ठा gendisk *disk, भ_शेषe_t mode);
 
-static int pf_detect(void);
-static void do_pf_read(void);
-static void do_pf_read_start(void);
-static void do_pf_write(void);
-static void do_pf_write_start(void);
-static void do_pf_read_drq(void);
-static void do_pf_write_done(void);
+अटल पूर्णांक pf_detect(व्योम);
+अटल व्योम करो_pf_पढ़ो(व्योम);
+अटल व्योम करो_pf_पढ़ो_start(व्योम);
+अटल व्योम करो_pf_ग_लिखो(व्योम);
+अटल व्योम करो_pf_ग_लिखो_start(व्योम);
+अटल व्योम करो_pf_पढ़ो_drq(व्योम);
+अटल व्योम करो_pf_ग_लिखो_करोne(व्योम);
 
-#define PF_NM           0
-#define PF_RO           1
-#define PF_RW           2
+#घोषणा PF_NM           0
+#घोषणा PF_RO           1
+#घोषणा PF_RW           2
 
-#define PF_NAMELEN      8
+#घोषणा PF_NAMELEN      8
 
-struct pf_unit {
-	struct pi_adapter pia;	/* interface to paride layer */
-	struct pi_adapter *pi;
-	int removable;		/* removable media device  ?  */
-	int media_status;	/* media present ?  WP ? */
-	int drive;		/* drive */
-	int lun;
-	int access;		/* count of active opens ... */
-	int present;		/* device present ? */
-	char name[PF_NAMELEN];	/* pf0, pf1, ... */
-	struct gendisk *disk;
-	struct blk_mq_tag_set tag_set;
-	struct list_head rq_list;
-};
+काष्ठा pf_unit अणु
+	काष्ठा pi_adapter pia;	/* पूर्णांकerface to paride layer */
+	काष्ठा pi_adapter *pi;
+	पूर्णांक removable;		/* removable media device  ?  */
+	पूर्णांक media_status;	/* media present ?  WP ? */
+	पूर्णांक drive;		/* drive */
+	पूर्णांक lun;
+	पूर्णांक access;		/* count of active खोलोs ... */
+	पूर्णांक present;		/* device present ? */
+	अक्षर name[PF_NAMELEN];	/* pf0, pf1, ... */
+	काष्ठा gendisk *disk;
+	काष्ठा blk_mq_tag_set tag_set;
+	काष्ठा list_head rq_list;
+पूर्ण;
 
-static struct pf_unit units[PF_UNITS];
+अटल काष्ठा pf_unit units[PF_UNITS];
 
-static int pf_identify(struct pf_unit *pf);
-static void pf_lock(struct pf_unit *pf, int func);
-static void pf_eject(struct pf_unit *pf);
-static unsigned int pf_check_events(struct gendisk *disk,
-				    unsigned int clearing);
+अटल पूर्णांक pf_identअगरy(काष्ठा pf_unit *pf);
+अटल व्योम pf_lock(काष्ठा pf_unit *pf, पूर्णांक func);
+अटल व्योम pf_eject(काष्ठा pf_unit *pf);
+अटल अचिन्हित पूर्णांक pf_check_events(काष्ठा gendisk *disk,
+				    अचिन्हित पूर्णांक clearing);
 
-static char pf_scratch[512];	/* scratch block buffer */
+अटल अक्षर pf_scratch[512];	/* scratch block buffer */
 
-/* the variables below are used mainly in the I/O request engine, which
-   processes only one request at a time.
+/* the variables below are used मुख्यly in the I/O request engine, which
+   processes only one request at a समय.
 */
 
-static int pf_retries = 0;	/* i/o error retry count */
-static int pf_busy = 0;		/* request being processed ? */
-static struct request *pf_req;	/* current request */
-static int pf_block;		/* address of next requested block */
-static int pf_count;		/* number of blocks still to do */
-static int pf_run;		/* sectors in current cluster */
-static int pf_cmd;		/* current command READ/WRITE */
-static struct pf_unit *pf_current;/* unit of current request */
-static int pf_mask;		/* stopper for pseudo-int */
-static char *pf_buf;		/* buffer for request in progress */
-static void *par_drv;		/* reference of parport driver */
+अटल पूर्णांक pf_retries = 0;	/* i/o error retry count */
+अटल पूर्णांक pf_busy = 0;		/* request being processed ? */
+अटल काष्ठा request *pf_req;	/* current request */
+अटल पूर्णांक pf_block;		/* address of next requested block */
+अटल पूर्णांक pf_count;		/* number of blocks still to करो */
+अटल पूर्णांक pf_run;		/* sectors in current cluster */
+अटल पूर्णांक pf_cmd;		/* current command READ/WRITE */
+अटल काष्ठा pf_unit *pf_current;/* unit of current request */
+अटल पूर्णांक pf_mask;		/* stopper क्रम pseuकरो-पूर्णांक */
+अटल अक्षर *pf_buf;		/* buffer क्रम request in progress */
+अटल व्योम *par_drv;		/* reference of parport driver */
 
-/* kernel glue structures */
+/* kernel glue काष्ठाures */
 
-static const struct block_device_operations pf_fops = {
+अटल स्थिर काष्ठा block_device_operations pf_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= pf_open,
+	.खोलो		= pf_खोलो,
 	.release	= pf_release,
 	.ioctl		= pf_ioctl,
 	.compat_ioctl	= pf_ioctl,
 	.getgeo		= pf_getgeo,
 	.check_events	= pf_check_events,
-};
+पूर्ण;
 
-static const struct blk_mq_ops pf_mq_ops = {
+अटल स्थिर काष्ठा blk_mq_ops pf_mq_ops = अणु
 	.queue_rq	= pf_queue_rq,
-};
+पूर्ण;
 
-static void __init pf_init_units(void)
-{
-	struct pf_unit *pf;
-	int unit;
+अटल व्योम __init pf_init_units(व्योम)
+अणु
+	काष्ठा pf_unit *pf;
+	पूर्णांक unit;
 
 	pf_drive_count = 0;
-	for (unit = 0, pf = units; unit < PF_UNITS; unit++, pf++) {
-		struct gendisk *disk;
+	क्रम (unit = 0, pf = units; unit < PF_UNITS; unit++, pf++) अणु
+		काष्ठा gendisk *disk;
 
 		disk = alloc_disk(1);
-		if (!disk)
-			continue;
+		अगर (!disk)
+			जारी;
 
 		disk->queue = blk_mq_init_sq_queue(&pf->tag_set, &pf_mq_ops,
 							1, BLK_MQ_F_SHOULD_MERGE);
-		if (IS_ERR(disk->queue)) {
-			disk->queue = NULL;
+		अगर (IS_ERR(disk->queue)) अणु
+			disk->queue = शून्य;
 			put_disk(disk);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		INIT_LIST_HEAD(&pf->rq_list);
 		disk->queue->queuedata = pf;
@@ -315,357 +316,357 @@ static void __init pf_init_units(void)
 		pf->media_status = PF_NM;
 		pf->drive = (*drives[unit])[D_SLV];
 		pf->lun = (*drives[unit])[D_LUN];
-		snprintf(pf->name, PF_NAMELEN, "%s%d", name, unit);
+		snम_लिखो(pf->name, PF_NAMELEN, "%s%d", name, unit);
 		disk->major = major;
 		disk->first_minor = unit;
-		strcpy(disk->disk_name, pf->name);
+		म_नकल(disk->disk_name, pf->name);
 		disk->fops = &pf_fops;
 		disk->events = DISK_EVENT_MEDIA_CHANGE;
-		if (!(*drives[unit])[D_PRT])
+		अगर (!(*drives[unit])[D_PRT])
 			pf_drive_count++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pf_open(struct block_device *bdev, fmode_t mode)
-{
-	struct pf_unit *pf = bdev->bd_disk->private_data;
-	int ret;
+अटल पूर्णांक pf_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
+अणु
+	काष्ठा pf_unit *pf = bdev->bd_disk->निजी_data;
+	पूर्णांक ret;
 
 	mutex_lock(&pf_mutex);
-	pf_identify(pf);
+	pf_identअगरy(pf);
 
 	ret = -ENODEV;
-	if (pf->media_status == PF_NM)
-		goto out;
+	अगर (pf->media_status == PF_NM)
+		जाओ out;
 
 	ret = -EROFS;
-	if ((pf->media_status == PF_RO) && (mode & FMODE_WRITE))
-		goto out;
+	अगर ((pf->media_status == PF_RO) && (mode & FMODE_WRITE))
+		जाओ out;
 
 	ret = 0;
 	pf->access++;
-	if (pf->removable)
+	अगर (pf->removable)
 		pf_lock(pf, 1);
 out:
 	mutex_unlock(&pf_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pf_getgeo(struct block_device *bdev, struct hd_geometry *geo)
-{
-	struct pf_unit *pf = bdev->bd_disk->private_data;
+अटल पूर्णांक pf_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
+अणु
+	काष्ठा pf_unit *pf = bdev->bd_disk->निजी_data;
 	sector_t capacity = get_capacity(pf->disk);
 
-	if (capacity < PF_FD_MAX) {
-		geo->cylinders = sector_div(capacity, PF_FD_HDS * PF_FD_SPT);
+	अगर (capacity < PF_FD_MAX) अणु
+		geo->cylinders = sector_भाग(capacity, PF_FD_HDS * PF_FD_SPT);
 		geo->heads = PF_FD_HDS;
 		geo->sectors = PF_FD_SPT;
-	} else {
-		geo->cylinders = sector_div(capacity, PF_HD_HDS * PF_HD_SPT);
+	पूर्ण अन्यथा अणु
+		geo->cylinders = sector_भाग(capacity, PF_HD_HDS * PF_HD_SPT);
 		geo->heads = PF_HD_HDS;
 		geo->sectors = PF_HD_SPT;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pf_ioctl(struct block_device *bdev, fmode_t mode, unsigned int cmd, unsigned long arg)
-{
-	struct pf_unit *pf = bdev->bd_disk->private_data;
+अटल पूर्णांक pf_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा pf_unit *pf = bdev->bd_disk->निजी_data;
 
-	if (cmd != CDROMEJECT)
-		return -EINVAL;
+	अगर (cmd != CDROMEJECT)
+		वापस -EINVAL;
 
-	if (pf->access != 1)
-		return -EBUSY;
+	अगर (pf->access != 1)
+		वापस -EBUSY;
 	mutex_lock(&pf_mutex);
 	pf_eject(pf);
 	mutex_unlock(&pf_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pf_release(struct gendisk *disk, fmode_t mode)
-{
-	struct pf_unit *pf = disk->private_data;
+अटल व्योम pf_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
+अणु
+	काष्ठा pf_unit *pf = disk->निजी_data;
 
 	mutex_lock(&pf_mutex);
-	if (pf->access <= 0) {
+	अगर (pf->access <= 0) अणु
 		mutex_unlock(&pf_mutex);
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pf->access--;
 
-	if (!pf->access && pf->removable)
+	अगर (!pf->access && pf->removable)
 		pf_lock(pf, 0);
 
 	mutex_unlock(&pf_mutex);
-}
+पूर्ण
 
-static unsigned int pf_check_events(struct gendisk *disk, unsigned int clearing)
-{
-	return DISK_EVENT_MEDIA_CHANGE;
-}
+अटल अचिन्हित पूर्णांक pf_check_events(काष्ठा gendisk *disk, अचिन्हित पूर्णांक clearing)
+अणु
+	वापस DISK_EVENT_MEDIA_CHANGE;
+पूर्ण
 
-static inline int status_reg(struct pf_unit *pf)
-{
-	return pi_read_regr(pf->pi, 1, 6);
-}
+अटल अंतरभूत पूर्णांक status_reg(काष्ठा pf_unit *pf)
+अणु
+	वापस pi_पढ़ो_regr(pf->pi, 1, 6);
+पूर्ण
 
-static inline int read_reg(struct pf_unit *pf, int reg)
-{
-	return pi_read_regr(pf->pi, 0, reg);
-}
+अटल अंतरभूत पूर्णांक पढ़ो_reg(काष्ठा pf_unit *pf, पूर्णांक reg)
+अणु
+	वापस pi_पढ़ो_regr(pf->pi, 0, reg);
+पूर्ण
 
-static inline void write_reg(struct pf_unit *pf, int reg, int val)
-{
-	pi_write_regr(pf->pi, 0, reg, val);
-}
+अटल अंतरभूत व्योम ग_लिखो_reg(काष्ठा pf_unit *pf, पूर्णांक reg, पूर्णांक val)
+अणु
+	pi_ग_लिखो_regr(pf->pi, 0, reg, val);
+पूर्ण
 
-static int pf_wait(struct pf_unit *pf, int go, int stop, char *fun, char *msg)
-{
-	int j, r, e, s, p;
+अटल पूर्णांक pf_रुको(काष्ठा pf_unit *pf, पूर्णांक go, पूर्णांक stop, अक्षर *fun, अक्षर *msg)
+अणु
+	पूर्णांक j, r, e, s, p;
 
 	j = 0;
-	while ((((r = status_reg(pf)) & go) || (stop && (!(r & stop))))
+	जबतक ((((r = status_reg(pf)) & go) || (stop && (!(r & stop))))
 	       && (j++ < PF_SPIN))
 		udelay(PF_SPIN_DEL);
 
-	if ((r & (STAT_ERR & stop)) || (j > PF_SPIN)) {
-		s = read_reg(pf, 7);
-		e = read_reg(pf, 1);
-		p = read_reg(pf, 2);
-		if (j > PF_SPIN)
+	अगर ((r & (STAT_ERR & stop)) || (j > PF_SPIN)) अणु
+		s = पढ़ो_reg(pf, 7);
+		e = पढ़ो_reg(pf, 1);
+		p = पढ़ो_reg(pf, 2);
+		अगर (j > PF_SPIN)
 			e |= 0x100;
-		if (fun)
-			printk("%s: %s %s: alt=0x%x stat=0x%x err=0x%x"
+		अगर (fun)
+			prपूर्णांकk("%s: %s %s: alt=0x%x stat=0x%x err=0x%x"
 			       " loop=%d phase=%d\n",
 			       pf->name, fun, msg, r, s, e, j, p);
-		return (e << 8) + s;
-	}
-	return 0;
-}
+		वापस (e << 8) + s;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int pf_command(struct pf_unit *pf, char *cmd, int dlen, char *fun)
-{
+अटल पूर्णांक pf_command(काष्ठा pf_unit *pf, अक्षर *cmd, पूर्णांक dlen, अक्षर *fun)
+अणु
 	pi_connect(pf->pi);
 
-	write_reg(pf, 6, 0xa0+0x10*pf->drive);
+	ग_लिखो_reg(pf, 6, 0xa0+0x10*pf->drive);
 
-	if (pf_wait(pf, STAT_BUSY | STAT_DRQ, 0, fun, "before command")) {
+	अगर (pf_रुको(pf, STAT_BUSY | STAT_DRQ, 0, fun, "before command")) अणु
 		pi_disconnect(pf->pi);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	write_reg(pf, 4, dlen % 256);
-	write_reg(pf, 5, dlen / 256);
-	write_reg(pf, 7, 0xa0);	/* ATAPI packet command */
+	ग_लिखो_reg(pf, 4, dlen % 256);
+	ग_लिखो_reg(pf, 5, dlen / 256);
+	ग_लिखो_reg(pf, 7, 0xa0);	/* ATAPI packet command */
 
-	if (pf_wait(pf, STAT_BUSY, STAT_DRQ, fun, "command DRQ")) {
+	अगर (pf_रुको(pf, STAT_BUSY, STAT_DRQ, fun, "command DRQ")) अणु
 		pi_disconnect(pf->pi);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (read_reg(pf, 2) != 1) {
-		printk("%s: %s: command phase error\n", pf->name, fun);
+	अगर (पढ़ो_reg(pf, 2) != 1) अणु
+		prपूर्णांकk("%s: %s: command phase error\n", pf->name, fun);
 		pi_disconnect(pf->pi);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	pi_write_block(pf->pi, cmd, 12);
+	pi_ग_लिखो_block(pf->pi, cmd, 12);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pf_completion(struct pf_unit *pf, char *buf, char *fun)
-{
-	int r, s, n;
+अटल पूर्णांक pf_completion(काष्ठा pf_unit *pf, अक्षर *buf, अक्षर *fun)
+अणु
+	पूर्णांक r, s, n;
 
-	r = pf_wait(pf, STAT_BUSY, STAT_DRQ | STAT_READY | STAT_ERR,
+	r = pf_रुको(pf, STAT_BUSY, STAT_DRQ | STAT_READY | STAT_ERR,
 		    fun, "completion");
 
-	if ((read_reg(pf, 2) & 2) && (read_reg(pf, 7) & STAT_DRQ)) {
-		n = (((read_reg(pf, 4) + 256 * read_reg(pf, 5)) +
+	अगर ((पढ़ो_reg(pf, 2) & 2) && (पढ़ो_reg(pf, 7) & STAT_DRQ)) अणु
+		n = (((पढ़ो_reg(pf, 4) + 256 * पढ़ो_reg(pf, 5)) +
 		      3) & 0xfffc);
-		pi_read_block(pf->pi, buf, n);
-	}
+		pi_पढ़ो_block(pf->pi, buf, n);
+	पूर्ण
 
-	s = pf_wait(pf, STAT_BUSY, STAT_READY | STAT_ERR, fun, "data done");
+	s = pf_रुको(pf, STAT_BUSY, STAT_READY | STAT_ERR, fun, "data done");
 
 	pi_disconnect(pf->pi);
 
-	return (r ? r : s);
-}
+	वापस (r ? r : s);
+पूर्ण
 
-static void pf_req_sense(struct pf_unit *pf, int quiet)
-{
-	char rs_cmd[12] =
-	    { ATAPI_REQ_SENSE, pf->lun << 5, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0 };
-	char buf[16];
-	int r;
+अटल व्योम pf_req_sense(काष्ठा pf_unit *pf, पूर्णांक quiet)
+अणु
+	अक्षर rs_cmd[12] =
+	    अणु ATAPI_REQ_SENSE, pf->lun << 5, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
+	अक्षर buf[16];
+	पूर्णांक r;
 
 	r = pf_command(pf, rs_cmd, 16, "Request sense");
 	mdelay(1);
-	if (!r)
+	अगर (!r)
 		pf_completion(pf, buf, "Request sense");
 
-	if ((!r) && (!quiet))
-		printk("%s: Sense key: %x, ASC: %x, ASQ: %x\n",
+	अगर ((!r) && (!quiet))
+		prपूर्णांकk("%s: Sense key: %x, ASC: %x, ASQ: %x\n",
 		       pf->name, buf[2] & 0xf, buf[12], buf[13]);
-}
+पूर्ण
 
-static int pf_atapi(struct pf_unit *pf, char *cmd, int dlen, char *buf, char *fun)
-{
-	int r;
+अटल पूर्णांक pf_atapi(काष्ठा pf_unit *pf, अक्षर *cmd, पूर्णांक dlen, अक्षर *buf, अक्षर *fun)
+अणु
+	पूर्णांक r;
 
 	r = pf_command(pf, cmd, dlen, fun);
 	mdelay(1);
-	if (!r)
+	अगर (!r)
 		r = pf_completion(pf, buf, fun);
-	if (r)
+	अगर (r)
 		pf_req_sense(pf, !fun);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void pf_lock(struct pf_unit *pf, int func)
-{
-	char lo_cmd[12] = { ATAPI_LOCK, pf->lun << 5, 0, 0, func, 0, 0, 0, 0, 0, 0, 0 };
+अटल व्योम pf_lock(काष्ठा pf_unit *pf, पूर्णांक func)
+अणु
+	अक्षर lo_cmd[12] = अणु ATAPI_LOCK, pf->lun << 5, 0, 0, func, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
 
 	pf_atapi(pf, lo_cmd, 0, pf_scratch, func ? "lock" : "unlock");
-}
+पूर्ण
 
-static void pf_eject(struct pf_unit *pf)
-{
-	char ej_cmd[12] = { ATAPI_DOOR, pf->lun << 5, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0 };
+अटल व्योम pf_eject(काष्ठा pf_unit *pf)
+अणु
+	अक्षर ej_cmd[12] = अणु ATAPI_DOOR, pf->lun << 5, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
 
 	pf_lock(pf, 0);
 	pf_atapi(pf, ej_cmd, 0, pf_scratch, "eject");
-}
+पूर्ण
 
-#define PF_RESET_TMO   30	/* in tenths of a second */
+#घोषणा PF_RESET_TMO   30	/* in tenths of a second */
 
-static void pf_sleep(int cs)
-{
-	schedule_timeout_interruptible(cs);
-}
+अटल व्योम pf_sleep(पूर्णांक cs)
+अणु
+	schedule_समयout_पूर्णांकerruptible(cs);
+पूर्ण
 
-/* the ATAPI standard actually specifies the contents of all 7 registers
-   after a reset, but the specification is ambiguous concerning the last
-   two bytes, and different drives interpret the standard differently.
+/* the ATAPI standard actually specअगरies the contents of all 7 रेजिस्टरs
+   after a reset, but the specअगरication is ambiguous concerning the last
+   two bytes, and dअगरferent drives पूर्णांकerpret the standard dअगरferently.
  */
 
-static int pf_reset(struct pf_unit *pf)
-{
-	int i, k, flg;
-	int expect[5] = { 1, 1, 1, 0x14, 0xeb };
+अटल पूर्णांक pf_reset(काष्ठा pf_unit *pf)
+अणु
+	पूर्णांक i, k, flg;
+	पूर्णांक expect[5] = अणु 1, 1, 1, 0x14, 0xeb पूर्ण;
 
 	pi_connect(pf->pi);
-	write_reg(pf, 6, 0xa0+0x10*pf->drive);
-	write_reg(pf, 7, 8);
+	ग_लिखो_reg(pf, 6, 0xa0+0x10*pf->drive);
+	ग_लिखो_reg(pf, 7, 8);
 
 	pf_sleep(20 * HZ / 1000);
 
 	k = 0;
-	while ((k++ < PF_RESET_TMO) && (status_reg(pf) & STAT_BUSY))
+	जबतक ((k++ < PF_RESET_TMO) && (status_reg(pf) & STAT_BUSY))
 		pf_sleep(HZ / 10);
 
 	flg = 1;
-	for (i = 0; i < 5; i++)
-		flg &= (read_reg(pf, i + 1) == expect[i]);
+	क्रम (i = 0; i < 5; i++)
+		flg &= (पढ़ो_reg(pf, i + 1) == expect[i]);
 
-	if (verbose) {
-		printk("%s: Reset (%d) signature = ", pf->name, k);
-		for (i = 0; i < 5; i++)
-			printk("%3x", read_reg(pf, i + 1));
-		if (!flg)
-			printk(" (incorrect)");
-		printk("\n");
-	}
+	अगर (verbose) अणु
+		prपूर्णांकk("%s: Reset (%d) signature = ", pf->name, k);
+		क्रम (i = 0; i < 5; i++)
+			prपूर्णांकk("%3x", पढ़ो_reg(pf, i + 1));
+		अगर (!flg)
+			prपूर्णांकk(" (incorrect)");
+		prपूर्णांकk("\n");
+	पूर्ण
 
 	pi_disconnect(pf->pi);
-	return flg - 1;
-}
+	वापस flg - 1;
+पूर्ण
 
-static void pf_mode_sense(struct pf_unit *pf)
-{
-	char ms_cmd[12] =
-	    { ATAPI_MODE_SENSE, pf->lun << 5, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0 };
-	char buf[8];
+अटल व्योम pf_mode_sense(काष्ठा pf_unit *pf)
+अणु
+	अक्षर ms_cmd[12] =
+	    अणु ATAPI_MODE_SENSE, pf->lun << 5, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0 पूर्ण;
+	अक्षर buf[8];
 
 	pf_atapi(pf, ms_cmd, 8, buf, "mode sense");
 	pf->media_status = PF_RW;
-	if (buf[3] & 0x80)
+	अगर (buf[3] & 0x80)
 		pf->media_status = PF_RO;
-}
+पूर्ण
 
-static void xs(char *buf, char *targ, int offs, int len)
-{
-	int j, k, l;
+अटल व्योम xs(अक्षर *buf, अक्षर *targ, पूर्णांक offs, पूर्णांक len)
+अणु
+	पूर्णांक j, k, l;
 
 	j = 0;
 	l = 0;
-	for (k = 0; k < len; k++)
-		if ((buf[k + offs] != 0x20) || (buf[k + offs] != l))
+	क्रम (k = 0; k < len; k++)
+		अगर ((buf[k + offs] != 0x20) || (buf[k + offs] != l))
 			l = targ[j++] = buf[k + offs];
-	if (l == 0x20)
+	अगर (l == 0x20)
 		j--;
 	targ[j] = 0;
-}
+पूर्ण
 
-static int xl(char *buf, int offs)
-{
-	int v, k;
+अटल पूर्णांक xl(अक्षर *buf, पूर्णांक offs)
+अणु
+	पूर्णांक v, k;
 
 	v = 0;
-	for (k = 0; k < 4; k++)
+	क्रम (k = 0; k < 4; k++)
 		v = v * 256 + (buf[k + offs] & 0xff);
-	return v;
-}
+	वापस v;
+पूर्ण
 
-static void pf_get_capacity(struct pf_unit *pf)
-{
-	char rc_cmd[12] = { ATAPI_CAPACITY, pf->lun << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	char buf[8];
-	int bs;
+अटल व्योम pf_get_capacity(काष्ठा pf_unit *pf)
+अणु
+	अक्षर rc_cmd[12] = अणु ATAPI_CAPACITY, pf->lun << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
+	अक्षर buf[8];
+	पूर्णांक bs;
 
-	if (pf_atapi(pf, rc_cmd, 8, buf, "get capacity")) {
+	अगर (pf_atapi(pf, rc_cmd, 8, buf, "get capacity")) अणु
 		pf->media_status = PF_NM;
-		return;
-	}
+		वापस;
+	पूर्ण
 	set_capacity(pf->disk, xl(buf, 0) + 1);
 	bs = xl(buf, 4);
-	if (bs != 512) {
+	अगर (bs != 512) अणु
 		set_capacity(pf->disk, 0);
-		if (verbose)
-			printk("%s: Drive %d, LUN %d,"
+		अगर (verbose)
+			prपूर्णांकk("%s: Drive %d, LUN %d,"
 			       " unsupported block size %d\n",
 			       pf->name, pf->drive, pf->lun, bs);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pf_identify(struct pf_unit *pf)
-{
-	int dt, s;
-	char *ms[2] = { "master", "slave" };
-	char mf[10], id[18];
-	char id_cmd[12] =
-	    { ATAPI_IDENTIFY, pf->lun << 5, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0 };
-	char buf[36];
+अटल पूर्णांक pf_identअगरy(काष्ठा pf_unit *pf)
+अणु
+	पूर्णांक dt, s;
+	अक्षर *ms[2] = अणु "master", "slave" पूर्ण;
+	अक्षर mf[10], id[18];
+	अक्षर id_cmd[12] =
+	    अणु ATAPI_IDENTIFY, pf->lun << 5, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
+	अक्षर buf[36];
 
 	s = pf_atapi(pf, id_cmd, 36, buf, "identify");
-	if (s)
-		return -1;
+	अगर (s)
+		वापस -1;
 
 	dt = buf[0] & 0x1f;
-	if ((dt != 0) && (dt != 7)) {
-		if (verbose)
-			printk("%s: Drive %d, LUN %d, unsupported type %d\n",
+	अगर ((dt != 0) && (dt != 7)) अणु
+		अगर (verbose)
+			prपूर्णांकk("%s: Drive %d, LUN %d, unsupported type %d\n",
 			       pf->name, pf->drive, pf->lun, dt);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	xs(buf, mf, 8, 8);
 	xs(buf, id, 16, 16);
@@ -678,114 +679,114 @@ static int pf_identify(struct pf_unit *pf)
 
 	pf_get_capacity(pf);
 
-	printk("%s: %s %s, %s LUN %d, type %d",
+	prपूर्णांकk("%s: %s %s, %s LUN %d, type %d",
 	       pf->name, mf, id, ms[pf->drive], pf->lun, dt);
-	if (pf->removable)
-		printk(", removable");
-	if (pf->media_status == PF_NM)
-		printk(", no media\n");
-	else {
-		if (pf->media_status == PF_RO)
-			printk(", RO");
-		printk(", %llu blocks\n",
-			(unsigned long long)get_capacity(pf->disk));
-	}
-	return 0;
-}
+	अगर (pf->removable)
+		prपूर्णांकk(", removable");
+	अगर (pf->media_status == PF_NM)
+		prपूर्णांकk(", no media\n");
+	अन्यथा अणु
+		अगर (pf->media_status == PF_RO)
+			prपूर्णांकk(", RO");
+		prपूर्णांकk(", %llu blocks\n",
+			(अचिन्हित दीर्घ दीर्घ)get_capacity(pf->disk));
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/*	returns  0, with id set if drive is detected
-	        -1, if drive detection failed
+/*	वापसs  0, with id set अगर drive is detected
+	        -1, अगर drive detection failed
 */
-static int pf_probe(struct pf_unit *pf)
-{
-	if (pf->drive == -1) {
-		for (pf->drive = 0; pf->drive <= 1; pf->drive++)
-			if (!pf_reset(pf)) {
-				if (pf->lun != -1)
-					return pf_identify(pf);
-				else
-					for (pf->lun = 0; pf->lun < 8; pf->lun++)
-						if (!pf_identify(pf))
-							return 0;
-			}
-	} else {
-		if (pf_reset(pf))
-			return -1;
-		if (pf->lun != -1)
-			return pf_identify(pf);
-		for (pf->lun = 0; pf->lun < 8; pf->lun++)
-			if (!pf_identify(pf))
-				return 0;
-	}
-	return -1;
-}
+अटल पूर्णांक pf_probe(काष्ठा pf_unit *pf)
+अणु
+	अगर (pf->drive == -1) अणु
+		क्रम (pf->drive = 0; pf->drive <= 1; pf->drive++)
+			अगर (!pf_reset(pf)) अणु
+				अगर (pf->lun != -1)
+					वापस pf_identअगरy(pf);
+				अन्यथा
+					क्रम (pf->lun = 0; pf->lun < 8; pf->lun++)
+						अगर (!pf_identअगरy(pf))
+							वापस 0;
+			पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (pf_reset(pf))
+			वापस -1;
+		अगर (pf->lun != -1)
+			वापस pf_identअगरy(pf);
+		क्रम (pf->lun = 0; pf->lun < 8; pf->lun++)
+			अगर (!pf_identअगरy(pf))
+				वापस 0;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int pf_detect(void)
-{
-	struct pf_unit *pf = units;
-	int k, unit;
+अटल पूर्णांक pf_detect(व्योम)
+अणु
+	काष्ठा pf_unit *pf = units;
+	पूर्णांक k, unit;
 
-	printk("%s: %s version %s, major %d, cluster %d, nice %d\n",
+	prपूर्णांकk("%s: %s version %s, major %d, cluster %d, nice %d\n",
 	       name, name, PF_VERSION, major, cluster, nice);
 
-	par_drv = pi_register_driver(name);
-	if (!par_drv) {
+	par_drv = pi_रेजिस्टर_driver(name);
+	अगर (!par_drv) अणु
 		pr_err("failed to register %s driver\n", name);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	k = 0;
-	if (pf_drive_count == 0) {
-		if (pi_init(pf->pi, 1, -1, -1, -1, -1, -1, pf_scratch, PI_PF,
-			    verbose, pf->name)) {
-			if (!pf_probe(pf) && pf->disk) {
+	अगर (pf_drive_count == 0) अणु
+		अगर (pi_init(pf->pi, 1, -1, -1, -1, -1, -1, pf_scratch, PI_PF,
+			    verbose, pf->name)) अणु
+			अगर (!pf_probe(pf) && pf->disk) अणु
 				pf->present = 1;
 				k++;
-			} else
+			पूर्ण अन्यथा
 				pi_release(pf->pi);
-		}
+		पूर्ण
 
-	} else
-		for (unit = 0; unit < PF_UNITS; unit++, pf++) {
-			int *conf = *drives[unit];
-			if (!conf[D_PRT])
-				continue;
-			if (pi_init(pf->pi, 0, conf[D_PRT], conf[D_MOD],
+	पूर्ण अन्यथा
+		क्रम (unit = 0; unit < PF_UNITS; unit++, pf++) अणु
+			पूर्णांक *conf = *drives[unit];
+			अगर (!conf[D_PRT])
+				जारी;
+			अगर (pi_init(pf->pi, 0, conf[D_PRT], conf[D_MOD],
 				    conf[D_UNI], conf[D_PRO], conf[D_DLY],
-				    pf_scratch, PI_PF, verbose, pf->name)) {
-				if (pf->disk && !pf_probe(pf)) {
+				    pf_scratch, PI_PF, verbose, pf->name)) अणु
+				अगर (pf->disk && !pf_probe(pf)) अणु
 					pf->present = 1;
 					k++;
-				} else
+				पूर्ण अन्यथा
 					pi_release(pf->pi);
-			}
-		}
-	if (k)
-		return 0;
+			पूर्ण
+		पूर्ण
+	अगर (k)
+		वापस 0;
 
-	printk("%s: No ATAPI disk detected\n", name);
-	for (pf = units, unit = 0; unit < PF_UNITS; pf++, unit++) {
-		if (!pf->disk)
-			continue;
+	prपूर्णांकk("%s: No ATAPI disk detected\n", name);
+	क्रम (pf = units, unit = 0; unit < PF_UNITS; pf++, unit++) अणु
+		अगर (!pf->disk)
+			जारी;
 		blk_cleanup_queue(pf->disk->queue);
-		pf->disk->queue = NULL;
-		blk_mq_free_tag_set(&pf->tag_set);
+		pf->disk->queue = शून्य;
+		blk_mq_मुक्त_tag_set(&pf->tag_set);
 		put_disk(pf->disk);
-	}
-	pi_unregister_driver(par_drv);
-	return -1;
-}
+	पूर्ण
+	pi_unरेजिस्टर_driver(par_drv);
+	वापस -1;
+पूर्ण
 
 /* The i/o request engine */
 
-static int pf_start(struct pf_unit *pf, int cmd, int b, int c)
-{
-	int i;
-	char io_cmd[12] = { cmd, pf->lun << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+अटल पूर्णांक pf_start(काष्ठा pf_unit *pf, पूर्णांक cmd, पूर्णांक b, पूर्णांक c)
+अणु
+	पूर्णांक i;
+	अक्षर io_cmd[12] = अणु cmd, pf->lun << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		io_cmd[5 - i] = b & 0xff;
 		b = b >> 8;
-	}
+	पूर्ण
 
 	io_cmd[8] = c & 0xff;
 	io_cmd[7] = (c >> 8) & 0xff;
@@ -794,287 +795,287 @@ static int pf_start(struct pf_unit *pf, int cmd, int b, int c)
 
 	mdelay(1);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int pf_ready(void)
-{
-	return (((status_reg(pf_current) & (STAT_BUSY | pf_mask)) == pf_mask));
-}
+अटल पूर्णांक pf_पढ़ोy(व्योम)
+अणु
+	वापस (((status_reg(pf_current) & (STAT_BUSY | pf_mask)) == pf_mask));
+पूर्ण
 
-static int pf_queue;
+अटल पूर्णांक pf_queue;
 
-static int set_next_request(void)
-{
-	struct pf_unit *pf;
-	int old_pos = pf_queue;
+अटल पूर्णांक set_next_request(व्योम)
+अणु
+	काष्ठा pf_unit *pf;
+	पूर्णांक old_pos = pf_queue;
 
-	do {
+	करो अणु
 		pf = &units[pf_queue];
-		if (++pf_queue == PF_UNITS)
+		अगर (++pf_queue == PF_UNITS)
 			pf_queue = 0;
-		if (pf->present && !list_empty(&pf->rq_list)) {
-			pf_req = list_first_entry(&pf->rq_list, struct request,
+		अगर (pf->present && !list_empty(&pf->rq_list)) अणु
+			pf_req = list_first_entry(&pf->rq_list, काष्ठा request,
 							queuelist);
 			list_del_init(&pf_req->queuelist);
 			blk_mq_start_request(pf_req);
-			break;
-		}
-	} while (pf_queue != old_pos);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (pf_queue != old_pos);
 
-	return pf_req != NULL;
-}
+	वापस pf_req != शून्य;
+पूर्ण
 
-static void pf_end_request(blk_status_t err)
-{
-	if (!pf_req)
-		return;
-	if (!blk_update_request(pf_req, err, blk_rq_cur_bytes(pf_req))) {
+अटल व्योम pf_end_request(blk_status_t err)
+अणु
+	अगर (!pf_req)
+		वापस;
+	अगर (!blk_update_request(pf_req, err, blk_rq_cur_bytes(pf_req))) अणु
 		__blk_mq_end_request(pf_req, err);
-		pf_req = NULL;
-	}
-}
+		pf_req = शून्य;
+	पूर्ण
+पूर्ण
 
-static void pf_request(void)
-{
-	if (pf_busy)
-		return;
+अटल व्योम pf_request(व्योम)
+अणु
+	अगर (pf_busy)
+		वापस;
 repeat:
-	if (!pf_req && !set_next_request())
-		return;
+	अगर (!pf_req && !set_next_request())
+		वापस;
 
-	pf_current = pf_req->rq_disk->private_data;
+	pf_current = pf_req->rq_disk->निजी_data;
 	pf_block = blk_rq_pos(pf_req);
 	pf_run = blk_rq_sectors(pf_req);
 	pf_count = blk_rq_cur_sectors(pf_req);
 
-	if (pf_block + pf_count > get_capacity(pf_req->rq_disk)) {
+	अगर (pf_block + pf_count > get_capacity(pf_req->rq_disk)) अणु
 		pf_end_request(BLK_STS_IOERR);
-		goto repeat;
-	}
+		जाओ repeat;
+	पूर्ण
 
 	pf_cmd = rq_data_dir(pf_req);
 	pf_buf = bio_data(pf_req->bio);
 	pf_retries = 0;
 
 	pf_busy = 1;
-	if (pf_cmd == READ)
-		pi_do_claimed(pf_current->pi, do_pf_read);
-	else if (pf_cmd == WRITE)
-		pi_do_claimed(pf_current->pi, do_pf_write);
-	else {
+	अगर (pf_cmd == READ)
+		pi_करो_claimed(pf_current->pi, करो_pf_पढ़ो);
+	अन्यथा अगर (pf_cmd == WRITE)
+		pi_करो_claimed(pf_current->pi, करो_pf_ग_लिखो);
+	अन्यथा अणु
 		pf_busy = 0;
 		pf_end_request(BLK_STS_IOERR);
-		goto repeat;
-	}
-}
+		जाओ repeat;
+	पूर्ण
+पूर्ण
 
-static blk_status_t pf_queue_rq(struct blk_mq_hw_ctx *hctx,
-				const struct blk_mq_queue_data *bd)
-{
-	struct pf_unit *pf = hctx->queue->queuedata;
+अटल blk_status_t pf_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
+				स्थिर काष्ठा blk_mq_queue_data *bd)
+अणु
+	काष्ठा pf_unit *pf = hctx->queue->queuedata;
 
 	spin_lock_irq(&pf_spin_lock);
 	list_add_tail(&bd->rq->queuelist, &pf->rq_list);
 	pf_request();
 	spin_unlock_irq(&pf_spin_lock);
 
-	return BLK_STS_OK;
-}
+	वापस BLK_STS_OK;
+पूर्ण
 
-static int pf_next_buf(void)
-{
-	unsigned long saved_flags;
+अटल पूर्णांक pf_next_buf(व्योम)
+अणु
+	अचिन्हित दीर्घ saved_flags;
 
 	pf_count--;
 	pf_run--;
 	pf_buf += 512;
 	pf_block++;
-	if (!pf_run)
-		return 1;
-	if (!pf_count) {
+	अगर (!pf_run)
+		वापस 1;
+	अगर (!pf_count) अणु
 		spin_lock_irqsave(&pf_spin_lock, saved_flags);
 		pf_end_request(0);
 		spin_unlock_irqrestore(&pf_spin_lock, saved_flags);
-		if (!pf_req)
-			return 1;
+		अगर (!pf_req)
+			वापस 1;
 		pf_count = blk_rq_cur_sectors(pf_req);
 		pf_buf = bio_data(pf_req->bio);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline void next_request(blk_status_t err)
-{
-	unsigned long saved_flags;
+अटल अंतरभूत व्योम next_request(blk_status_t err)
+अणु
+	अचिन्हित दीर्घ saved_flags;
 
 	spin_lock_irqsave(&pf_spin_lock, saved_flags);
 	pf_end_request(err);
 	pf_busy = 0;
 	pf_request();
 	spin_unlock_irqrestore(&pf_spin_lock, saved_flags);
-}
+पूर्ण
 
-/* detach from the calling context - in case the spinlock is held */
-static void do_pf_read(void)
-{
-	ps_set_intr(do_pf_read_start, NULL, 0, nice);
-}
+/* detach from the calling context - in हाल the spinlock is held */
+अटल व्योम करो_pf_पढ़ो(व्योम)
+अणु
+	ps_set_पूर्णांकr(करो_pf_पढ़ो_start, शून्य, 0, nice);
+पूर्ण
 
-static void do_pf_read_start(void)
-{
+अटल व्योम करो_pf_पढ़ो_start(व्योम)
+अणु
 	pf_busy = 1;
 
-	if (pf_start(pf_current, ATAPI_READ_10, pf_block, pf_run)) {
+	अगर (pf_start(pf_current, ATAPI_READ_10, pf_block, pf_run)) अणु
 		pi_disconnect(pf_current->pi);
-		if (pf_retries < PF_MAX_RETRIES) {
+		अगर (pf_retries < PF_MAX_RETRIES) अणु
 			pf_retries++;
-			pi_do_claimed(pf_current->pi, do_pf_read_start);
-			return;
-		}
+			pi_करो_claimed(pf_current->pi, करो_pf_पढ़ो_start);
+			वापस;
+		पूर्ण
 		next_request(BLK_STS_IOERR);
-		return;
-	}
+		वापस;
+	पूर्ण
 	pf_mask = STAT_DRQ;
-	ps_set_intr(do_pf_read_drq, pf_ready, PF_TMO, nice);
-}
+	ps_set_पूर्णांकr(करो_pf_पढ़ो_drq, pf_पढ़ोy, PF_TMO, nice);
+पूर्ण
 
-static void do_pf_read_drq(void)
-{
-	while (1) {
-		if (pf_wait(pf_current, STAT_BUSY, STAT_DRQ | STAT_ERR,
-			    "read block", "completion") & STAT_ERR) {
+अटल व्योम करो_pf_पढ़ो_drq(व्योम)
+अणु
+	जबतक (1) अणु
+		अगर (pf_रुको(pf_current, STAT_BUSY, STAT_DRQ | STAT_ERR,
+			    "read block", "completion") & STAT_ERR) अणु
 			pi_disconnect(pf_current->pi);
-			if (pf_retries < PF_MAX_RETRIES) {
+			अगर (pf_retries < PF_MAX_RETRIES) अणु
 				pf_req_sense(pf_current, 0);
 				pf_retries++;
-				pi_do_claimed(pf_current->pi, do_pf_read_start);
-				return;
-			}
+				pi_करो_claimed(pf_current->pi, करो_pf_पढ़ो_start);
+				वापस;
+			पूर्ण
 			next_request(BLK_STS_IOERR);
-			return;
-		}
-		pi_read_block(pf_current->pi, pf_buf, 512);
-		if (pf_next_buf())
-			break;
-	}
+			वापस;
+		पूर्ण
+		pi_पढ़ो_block(pf_current->pi, pf_buf, 512);
+		अगर (pf_next_buf())
+			अवरोध;
+	पूर्ण
 	pi_disconnect(pf_current->pi);
 	next_request(0);
-}
+पूर्ण
 
-static void do_pf_write(void)
-{
-	ps_set_intr(do_pf_write_start, NULL, 0, nice);
-}
+अटल व्योम करो_pf_ग_लिखो(व्योम)
+अणु
+	ps_set_पूर्णांकr(करो_pf_ग_लिखो_start, शून्य, 0, nice);
+पूर्ण
 
-static void do_pf_write_start(void)
-{
+अटल व्योम करो_pf_ग_लिखो_start(व्योम)
+अणु
 	pf_busy = 1;
 
-	if (pf_start(pf_current, ATAPI_WRITE_10, pf_block, pf_run)) {
+	अगर (pf_start(pf_current, ATAPI_WRITE_10, pf_block, pf_run)) अणु
 		pi_disconnect(pf_current->pi);
-		if (pf_retries < PF_MAX_RETRIES) {
+		अगर (pf_retries < PF_MAX_RETRIES) अणु
 			pf_retries++;
-			pi_do_claimed(pf_current->pi, do_pf_write_start);
-			return;
-		}
+			pi_करो_claimed(pf_current->pi, करो_pf_ग_लिखो_start);
+			वापस;
+		पूर्ण
 		next_request(BLK_STS_IOERR);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while (1) {
-		if (pf_wait(pf_current, STAT_BUSY, STAT_DRQ | STAT_ERR,
-			    "write block", "data wait") & STAT_ERR) {
+	जबतक (1) अणु
+		अगर (pf_रुको(pf_current, STAT_BUSY, STAT_DRQ | STAT_ERR,
+			    "write block", "data wait") & STAT_ERR) अणु
 			pi_disconnect(pf_current->pi);
-			if (pf_retries < PF_MAX_RETRIES) {
+			अगर (pf_retries < PF_MAX_RETRIES) अणु
 				pf_retries++;
-				pi_do_claimed(pf_current->pi, do_pf_write_start);
-				return;
-			}
+				pi_करो_claimed(pf_current->pi, करो_pf_ग_लिखो_start);
+				वापस;
+			पूर्ण
 			next_request(BLK_STS_IOERR);
-			return;
-		}
-		pi_write_block(pf_current->pi, pf_buf, 512);
-		if (pf_next_buf())
-			break;
-	}
+			वापस;
+		पूर्ण
+		pi_ग_लिखो_block(pf_current->pi, pf_buf, 512);
+		अगर (pf_next_buf())
+			अवरोध;
+	पूर्ण
 	pf_mask = 0;
-	ps_set_intr(do_pf_write_done, pf_ready, PF_TMO, nice);
-}
+	ps_set_पूर्णांकr(करो_pf_ग_लिखो_करोne, pf_पढ़ोy, PF_TMO, nice);
+पूर्ण
 
-static void do_pf_write_done(void)
-{
-	if (pf_wait(pf_current, STAT_BUSY, 0, "write block", "done") & STAT_ERR) {
+अटल व्योम करो_pf_ग_लिखो_करोne(व्योम)
+अणु
+	अगर (pf_रुको(pf_current, STAT_BUSY, 0, "write block", "done") & STAT_ERR) अणु
 		pi_disconnect(pf_current->pi);
-		if (pf_retries < PF_MAX_RETRIES) {
+		अगर (pf_retries < PF_MAX_RETRIES) अणु
 			pf_retries++;
-			pi_do_claimed(pf_current->pi, do_pf_write_start);
-			return;
-		}
+			pi_करो_claimed(pf_current->pi, करो_pf_ग_लिखो_start);
+			वापस;
+		पूर्ण
 		next_request(BLK_STS_IOERR);
-		return;
-	}
+		वापस;
+	पूर्ण
 	pi_disconnect(pf_current->pi);
 	next_request(0);
-}
+पूर्ण
 
-static int __init pf_init(void)
-{				/* preliminary initialisation */
-	struct pf_unit *pf;
-	int unit;
+अटल पूर्णांक __init pf_init(व्योम)
+अणु				/* preliminary initialisation */
+	काष्ठा pf_unit *pf;
+	पूर्णांक unit;
 
-	if (disable)
-		return -EINVAL;
+	अगर (disable)
+		वापस -EINVAL;
 
 	pf_init_units();
 
-	if (pf_detect())
-		return -ENODEV;
+	अगर (pf_detect())
+		वापस -ENODEV;
 	pf_busy = 0;
 
-	if (register_blkdev(major, name)) {
-		for (pf = units, unit = 0; unit < PF_UNITS; pf++, unit++) {
-			if (!pf->disk)
-				continue;
+	अगर (रेजिस्टर_blkdev(major, name)) अणु
+		क्रम (pf = units, unit = 0; unit < PF_UNITS; pf++, unit++) अणु
+			अगर (!pf->disk)
+				जारी;
 			blk_cleanup_queue(pf->disk->queue);
-			blk_mq_free_tag_set(&pf->tag_set);
+			blk_mq_मुक्त_tag_set(&pf->tag_set);
 			put_disk(pf->disk);
-		}
-		return -EBUSY;
-	}
+		पूर्ण
+		वापस -EBUSY;
+	पूर्ण
 
-	for (pf = units, unit = 0; unit < PF_UNITS; pf++, unit++) {
-		struct gendisk *disk = pf->disk;
+	क्रम (pf = units, unit = 0; unit < PF_UNITS; pf++, unit++) अणु
+		काष्ठा gendisk *disk = pf->disk;
 
-		if (!pf->present)
-			continue;
-		disk->private_data = pf;
+		अगर (!pf->present)
+			जारी;
+		disk->निजी_data = pf;
 		add_disk(disk);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __exit pf_exit(void)
-{
-	struct pf_unit *pf;
-	int unit;
-	unregister_blkdev(major, name);
-	for (pf = units, unit = 0; unit < PF_UNITS; pf++, unit++) {
-		if (!pf->disk)
-			continue;
+अटल व्योम __निकास pf_निकास(व्योम)
+अणु
+	काष्ठा pf_unit *pf;
+	पूर्णांक unit;
+	unरेजिस्टर_blkdev(major, name);
+	क्रम (pf = units, unit = 0; unit < PF_UNITS; pf++, unit++) अणु
+		अगर (!pf->disk)
+			जारी;
 
-		if (pf->present)
+		अगर (pf->present)
 			del_gendisk(pf->disk);
 
 		blk_cleanup_queue(pf->disk->queue);
-		blk_mq_free_tag_set(&pf->tag_set);
+		blk_mq_मुक्त_tag_set(&pf->tag_set);
 		put_disk(pf->disk);
 
-		if (pf->present)
+		अगर (pf->present)
 			pi_release(pf->pi);
-	}
-}
+	पूर्ण
+पूर्ण
 
 MODULE_LICENSE("GPL");
 module_init(pf_init)
-module_exit(pf_exit)
+module_निकास(pf_निकास)

@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Copyright (C) 2019 Hangzhou C-SKY Microsystems co.,ltd. */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Copyright (C) 2019 Hangzhou C-SKY Microप्रणालीs co.,ltd. */
 
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/perf_event.h>
-#include <linux/bug.h>
-#include <asm/perf_regs.h>
-#include <asm/ptrace.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/bug.h>
+#समावेश <यंत्र/perf_regs.h>
+#समावेश <यंत्र/ptrace.h>
 
-u64 perf_reg_value(struct pt_regs *regs, int idx)
-{
-	if (WARN_ON_ONCE((u32)idx >= PERF_REG_RISCV_MAX))
-		return 0;
+u64 perf_reg_value(काष्ठा pt_regs *regs, पूर्णांक idx)
+अणु
+	अगर (WARN_ON_ONCE((u32)idx >= PERF_REG_RISCV_MAX))
+		वापस 0;
 
-	return ((unsigned long *)regs)[idx];
-}
+	वापस ((अचिन्हित दीर्घ *)regs)[idx];
+पूर्ण
 
-#define REG_RESERVED (~((1ULL << PERF_REG_RISCV_MAX) - 1))
+#घोषणा REG_RESERVED (~((1ULL << PERF_REG_RISCV_MAX) - 1))
 
-int perf_reg_validate(u64 mask)
-{
-	if (!mask || mask & REG_RESERVED)
-		return -EINVAL;
+पूर्णांक perf_reg_validate(u64 mask)
+अणु
+	अगर (!mask || mask & REG_RESERVED)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u64 perf_reg_abi(struct task_struct *task)
-{
-#if __riscv_xlen == 64
-	return PERF_SAMPLE_REGS_ABI_64;
-#else
-	return PERF_SAMPLE_REGS_ABI_32;
-#endif
-}
+u64 perf_reg_abi(काष्ठा task_काष्ठा *task)
+अणु
+#अगर __riscv_xlen == 64
+	वापस PERF_SAMPLE_REGS_ABI_64;
+#अन्यथा
+	वापस PERF_SAMPLE_REGS_ABI_32;
+#पूर्ण_अगर
+पूर्ण
 
-void perf_get_regs_user(struct perf_regs *regs_user,
-			struct pt_regs *regs)
-{
+व्योम perf_get_regs_user(काष्ठा perf_regs *regs_user,
+			काष्ठा pt_regs *regs)
+अणु
 	regs_user->regs = task_pt_regs(current);
 	regs_user->abi = perf_reg_abi(current);
-}
+पूर्ण

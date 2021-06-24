@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /***************************************************************************
  *            au88x0_a3ddata.c
  *
  *  Wed Nov 19 21:11:32 2003
  *  Copyright  2003  mjander
- *  mjander@users.sourceforge.org
+ *  mjander@users.sourceक्रमge.org
  ****************************************************************************/
 
 /*
@@ -12,25 +13,25 @@
 
 /* Constant initializer values. */
 
-static const a3d_Hrtf_t A3dHrirZeros = {
+अटल स्थिर a3d_Hrtf_t A3dHrirZeros = अणु
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0,
 	0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0,
 	0, 0, 0
-};
+पूर्ण;
 
-static __maybe_unused const a3d_Hrtf_t A3dHrirImpulse = {
+अटल __maybe_unused स्थिर a3d_Hrtf_t A3dHrirImpulse = अणु
 	0x7fff, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0,
 	0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0,
 	0, 0, 0
-};
+पूर्ण;
 
-static __maybe_unused const a3d_Hrtf_t A3dHrirOnes = {
+अटल __maybe_unused स्थिर a3d_Hrtf_t A3dHrirOnes = अणु
 	0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff,
 	0x7fff,
 	0x7fff,
@@ -45,9 +46,9 @@ static __maybe_unused const a3d_Hrtf_t A3dHrirOnes = {
 	0x7fff,
 	0x7fff,
 	0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff
-};
+पूर्ण;
 
-static __maybe_unused const a3d_Hrtf_t A3dHrirSatTest = {
+अटल __maybe_unused स्थिर a3d_Hrtf_t A3dHrirSatTest = अणु
 	0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff,
 	0x7fff,
 	0x7fff,
@@ -57,23 +58,23 @@ static __maybe_unused const a3d_Hrtf_t A3dHrirSatTest = {
 	0x7fff, 0x0000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
+पूर्ण;
 
-static __maybe_unused const a3d_Hrtf_t A3dHrirDImpulse = {
+अटल __maybe_unused स्थिर a3d_Hrtf_t A3dHrirDImpulse = अणु
 	0, 0x7fff, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0,
 	0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0,
 	0, 0, 0
-};
+पूर्ण;
 
-static const a3d_ItdDline_t A3dItdDlineZeros = {
+अटल स्थिर a3d_ItdDline_t A3dItdDlineZeros = अणु
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
+पूर्ण;
 
-static short const GainTCDefault = 0x300;
-static short const ItdTCDefault = 0x0C8;
-static short const HrtfTCDefault = 0x147;
-static short const CoefTCDefault = 0x300;
+अटल लघु स्थिर GainTCDefault = 0x300;
+अटल लघु स्थिर ItdTCDefault = 0x0C8;
+अटल लघु स्थिर HrtfTCDefault = 0x147;
+अटल लघु स्थिर CoefTCDefault = 0x300;

@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -17,746 +18,746 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Rafał Miłecki <zajec5@gmail.com>
+ * Authors: Rafaध Miधecki <zajec5@gmail.com>
  *          Alex Deucher <alexdeucher@gmail.com>
  */
 
-#include <linux/hwmon-sysfs.h>
-#include <linux/hwmon.h>
-#include <linux/pci.h>
-#include <linux/power_supply.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/घातer_supply.h>
 
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "atom.h"
-#include "avivod.h"
-#include "r600_dpm.h"
-#include "radeon.h"
-#include "radeon_pm.h"
+#समावेश "atom.h"
+#समावेश "avivod.h"
+#समावेश "r600_dpm.h"
+#समावेश "radeon.h"
+#समावेश "radeon_pm.h"
 
-#define RADEON_IDLE_LOOP_MS 100
-#define RADEON_RECLOCK_DELAY_MS 200
-#define RADEON_WAIT_VBLANK_TIMEOUT 200
+#घोषणा RADEON_IDLE_LOOP_MS 100
+#घोषणा RADEON_RECLOCK_DELAY_MS 200
+#घोषणा RADEON_WAIT_VBLANK_TIMEOUT 200
 
-static const char *radeon_pm_state_type_name[5] = {
+अटल स्थिर अक्षर *radeon_pm_state_type_name[5] = अणु
 	"",
 	"Powersave",
 	"Battery",
 	"Balanced",
 	"Performance",
-};
+पूर्ण;
 
-static void radeon_dynpm_idle_work_handler(struct work_struct *work);
-static void radeon_debugfs_pm_init(struct radeon_device *rdev);
-static bool radeon_pm_in_vbl(struct radeon_device *rdev);
-static bool radeon_pm_debug_check_in_vbl(struct radeon_device *rdev, bool finish);
-static void radeon_pm_update_profile(struct radeon_device *rdev);
-static void radeon_pm_set_clocks(struct radeon_device *rdev);
+अटल व्योम radeon_dynpm_idle_work_handler(काष्ठा work_काष्ठा *work);
+अटल व्योम radeon_debugfs_pm_init(काष्ठा radeon_device *rdev);
+अटल bool radeon_pm_in_vbl(काष्ठा radeon_device *rdev);
+अटल bool radeon_pm_debug_check_in_vbl(काष्ठा radeon_device *rdev, bool finish);
+अटल व्योम radeon_pm_update_profile(काष्ठा radeon_device *rdev);
+अटल व्योम radeon_pm_set_घड़ीs(काष्ठा radeon_device *rdev);
 
-int radeon_pm_get_type_index(struct radeon_device *rdev,
-			     enum radeon_pm_state_type ps_type,
-			     int instance)
-{
-	int i;
-	int found_instance = -1;
+पूर्णांक radeon_pm_get_type_index(काष्ठा radeon_device *rdev,
+			     क्रमागत radeon_pm_state_type ps_type,
+			     पूर्णांक instance)
+अणु
+	पूर्णांक i;
+	पूर्णांक found_instance = -1;
 
-	for (i = 0; i < rdev->pm.num_power_states; i++) {
-		if (rdev->pm.power_state[i].type == ps_type) {
+	क्रम (i = 0; i < rdev->pm.num_घातer_states; i++) अणु
+		अगर (rdev->pm.घातer_state[i].type == ps_type) अणु
 			found_instance++;
-			if (found_instance == instance)
-				return i;
-		}
-	}
-	/* return default if no match */
-	return rdev->pm.default_power_state_index;
-}
+			अगर (found_instance == instance)
+				वापस i;
+		पूर्ण
+	पूर्ण
+	/* वापस शेष अगर no match */
+	वापस rdev->pm.शेष_घातer_state_index;
+पूर्ण
 
-void radeon_pm_acpi_event_handler(struct radeon_device *rdev)
-{
-	if ((rdev->pm.pm_method == PM_METHOD_DPM) && rdev->pm.dpm_enabled) {
+व्योम radeon_pm_acpi_event_handler(काष्ठा radeon_device *rdev)
+अणु
+	अगर ((rdev->pm.pm_method == PM_METHOD_DPM) && rdev->pm.dpm_enabled) अणु
 		mutex_lock(&rdev->pm.mutex);
-		if (power_supply_is_system_supplied() > 0)
-			rdev->pm.dpm.ac_power = true;
-		else
-			rdev->pm.dpm.ac_power = false;
-		if (rdev->family == CHIP_ARUBA) {
-			if (rdev->asic->dpm.enable_bapm)
-				radeon_dpm_enable_bapm(rdev, rdev->pm.dpm.ac_power);
-		}
+		अगर (घातer_supply_is_प्रणाली_supplied() > 0)
+			rdev->pm.dpm.ac_घातer = true;
+		अन्यथा
+			rdev->pm.dpm.ac_घातer = false;
+		अगर (rdev->family == CHIP_ARUBA) अणु
+			अगर (rdev->asic->dpm.enable_bapm)
+				radeon_dpm_enable_bapm(rdev, rdev->pm.dpm.ac_घातer);
+		पूर्ण
 		mutex_unlock(&rdev->pm.mutex);
-	} else if (rdev->pm.pm_method == PM_METHOD_PROFILE) {
-		if (rdev->pm.profile == PM_PROFILE_AUTO) {
+	पूर्ण अन्यथा अगर (rdev->pm.pm_method == PM_METHOD_PROखाता) अणु
+		अगर (rdev->pm.profile == PM_PROखाता_AUTO) अणु
 			mutex_lock(&rdev->pm.mutex);
 			radeon_pm_update_profile(rdev);
-			radeon_pm_set_clocks(rdev);
+			radeon_pm_set_घड़ीs(rdev);
 			mutex_unlock(&rdev->pm.mutex);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void radeon_pm_update_profile(struct radeon_device *rdev)
-{
-	switch (rdev->pm.profile) {
-	case PM_PROFILE_DEFAULT:
-		rdev->pm.profile_index = PM_PROFILE_DEFAULT_IDX;
-		break;
-	case PM_PROFILE_AUTO:
-		if (power_supply_is_system_supplied() > 0) {
-			if (rdev->pm.active_crtc_count > 1)
-				rdev->pm.profile_index = PM_PROFILE_HIGH_MH_IDX;
-			else
-				rdev->pm.profile_index = PM_PROFILE_HIGH_SH_IDX;
-		} else {
-			if (rdev->pm.active_crtc_count > 1)
-				rdev->pm.profile_index = PM_PROFILE_MID_MH_IDX;
-			else
-				rdev->pm.profile_index = PM_PROFILE_MID_SH_IDX;
-		}
-		break;
-	case PM_PROFILE_LOW:
-		if (rdev->pm.active_crtc_count > 1)
-			rdev->pm.profile_index = PM_PROFILE_LOW_MH_IDX;
-		else
-			rdev->pm.profile_index = PM_PROFILE_LOW_SH_IDX;
-		break;
-	case PM_PROFILE_MID:
-		if (rdev->pm.active_crtc_count > 1)
-			rdev->pm.profile_index = PM_PROFILE_MID_MH_IDX;
-		else
-			rdev->pm.profile_index = PM_PROFILE_MID_SH_IDX;
-		break;
-	case PM_PROFILE_HIGH:
-		if (rdev->pm.active_crtc_count > 1)
-			rdev->pm.profile_index = PM_PROFILE_HIGH_MH_IDX;
-		else
-			rdev->pm.profile_index = PM_PROFILE_HIGH_SH_IDX;
-		break;
-	}
+अटल व्योम radeon_pm_update_profile(काष्ठा radeon_device *rdev)
+अणु
+	चयन (rdev->pm.profile) अणु
+	हाल PM_PROखाता_DEFAULT:
+		rdev->pm.profile_index = PM_PROखाता_DEFAULT_IDX;
+		अवरोध;
+	हाल PM_PROखाता_AUTO:
+		अगर (घातer_supply_is_प्रणाली_supplied() > 0) अणु
+			अगर (rdev->pm.active_crtc_count > 1)
+				rdev->pm.profile_index = PM_PROखाता_HIGH_MH_IDX;
+			अन्यथा
+				rdev->pm.profile_index = PM_PROखाता_HIGH_SH_IDX;
+		पूर्ण अन्यथा अणु
+			अगर (rdev->pm.active_crtc_count > 1)
+				rdev->pm.profile_index = PM_PROखाता_MID_MH_IDX;
+			अन्यथा
+				rdev->pm.profile_index = PM_PROखाता_MID_SH_IDX;
+		पूर्ण
+		अवरोध;
+	हाल PM_PROखाता_LOW:
+		अगर (rdev->pm.active_crtc_count > 1)
+			rdev->pm.profile_index = PM_PROखाता_LOW_MH_IDX;
+		अन्यथा
+			rdev->pm.profile_index = PM_PROखाता_LOW_SH_IDX;
+		अवरोध;
+	हाल PM_PROखाता_MID:
+		अगर (rdev->pm.active_crtc_count > 1)
+			rdev->pm.profile_index = PM_PROखाता_MID_MH_IDX;
+		अन्यथा
+			rdev->pm.profile_index = PM_PROखाता_MID_SH_IDX;
+		अवरोध;
+	हाल PM_PROखाता_HIGH:
+		अगर (rdev->pm.active_crtc_count > 1)
+			rdev->pm.profile_index = PM_PROखाता_HIGH_MH_IDX;
+		अन्यथा
+			rdev->pm.profile_index = PM_PROखाता_HIGH_SH_IDX;
+		अवरोध;
+	पूर्ण
 
-	if (rdev->pm.active_crtc_count == 0) {
-		rdev->pm.requested_power_state_index =
+	अगर (rdev->pm.active_crtc_count == 0) अणु
+		rdev->pm.requested_घातer_state_index =
 			rdev->pm.profiles[rdev->pm.profile_index].dpms_off_ps_idx;
-		rdev->pm.requested_clock_mode_index =
+		rdev->pm.requested_घड़ी_mode_index =
 			rdev->pm.profiles[rdev->pm.profile_index].dpms_off_cm_idx;
-	} else {
-		rdev->pm.requested_power_state_index =
+	पूर्ण अन्यथा अणु
+		rdev->pm.requested_घातer_state_index =
 			rdev->pm.profiles[rdev->pm.profile_index].dpms_on_ps_idx;
-		rdev->pm.requested_clock_mode_index =
+		rdev->pm.requested_घड़ी_mode_index =
 			rdev->pm.profiles[rdev->pm.profile_index].dpms_on_cm_idx;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void radeon_unmap_vram_bos(struct radeon_device *rdev)
-{
-	struct radeon_bo *bo, *n;
+अटल व्योम radeon_unmap_vram_bos(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_bo *bo, *n;
 
-	if (list_empty(&rdev->gem.objects))
-		return;
+	अगर (list_empty(&rdev->gem.objects))
+		वापस;
 
-	list_for_each_entry_safe(bo, n, &rdev->gem.objects, list) {
-		if (bo->tbo.mem.mem_type == TTM_PL_VRAM)
-			ttm_bo_unmap_virtual(&bo->tbo);
-	}
-}
+	list_क्रम_each_entry_safe(bo, n, &rdev->gem.objects, list) अणु
+		अगर (bo->tbo.mem.mem_type == TTM_PL_VRAM)
+			tपंचांग_bo_unmap_भव(&bo->tbo);
+	पूर्ण
+पूर्ण
 
-static void radeon_sync_with_vblank(struct radeon_device *rdev)
-{
-	if (rdev->pm.active_crtcs) {
+अटल व्योम radeon_sync_with_vblank(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->pm.active_crtcs) अणु
 		rdev->pm.vblank_sync = false;
-		wait_event_timeout(
+		रुको_event_समयout(
 			rdev->irq.vblank_queue, rdev->pm.vblank_sync,
-			msecs_to_jiffies(RADEON_WAIT_VBLANK_TIMEOUT));
-	}
-}
+			msecs_to_jअगरfies(RADEON_WAIT_VBLANK_TIMEOUT));
+	पूर्ण
+पूर्ण
 
-static void radeon_set_power_state(struct radeon_device *rdev)
-{
+अटल व्योम radeon_set_घातer_state(काष्ठा radeon_device *rdev)
+अणु
 	u32 sclk, mclk;
 	bool misc_after = false;
 
-	if ((rdev->pm.requested_clock_mode_index == rdev->pm.current_clock_mode_index) &&
-	    (rdev->pm.requested_power_state_index == rdev->pm.current_power_state_index))
-		return;
+	अगर ((rdev->pm.requested_घड़ी_mode_index == rdev->pm.current_घड़ी_mode_index) &&
+	    (rdev->pm.requested_घातer_state_index == rdev->pm.current_घातer_state_index))
+		वापस;
 
-	if (radeon_gui_idle(rdev)) {
-		sclk = rdev->pm.power_state[rdev->pm.requested_power_state_index].
-			clock_info[rdev->pm.requested_clock_mode_index].sclk;
-		if (sclk > rdev->pm.default_sclk)
-			sclk = rdev->pm.default_sclk;
+	अगर (radeon_gui_idle(rdev)) अणु
+		sclk = rdev->pm.घातer_state[rdev->pm.requested_घातer_state_index].
+			घड़ी_info[rdev->pm.requested_घड़ी_mode_index].sclk;
+		अगर (sclk > rdev->pm.शेष_sclk)
+			sclk = rdev->pm.शेष_sclk;
 
-		/* starting with BTC, there is one state that is used for both
-		 * MH and SH.  Difference is that we always use the high clock index for
+		/* starting with BTC, there is one state that is used क्रम both
+		 * MH and SH.  Dअगरference is that we always use the high घड़ी index क्रम
 		 * mclk and vddci.
 		 */
-		if ((rdev->pm.pm_method == PM_METHOD_PROFILE) &&
+		अगर ((rdev->pm.pm_method == PM_METHOD_PROखाता) &&
 		    (rdev->family >= CHIP_BARTS) &&
 		    rdev->pm.active_crtc_count &&
-		    ((rdev->pm.profile_index == PM_PROFILE_MID_MH_IDX) ||
-		     (rdev->pm.profile_index == PM_PROFILE_LOW_MH_IDX)))
-			mclk = rdev->pm.power_state[rdev->pm.requested_power_state_index].
-				clock_info[rdev->pm.profiles[PM_PROFILE_HIGH_MH_IDX].dpms_on_cm_idx].mclk;
-		else
-			mclk = rdev->pm.power_state[rdev->pm.requested_power_state_index].
-				clock_info[rdev->pm.requested_clock_mode_index].mclk;
+		    ((rdev->pm.profile_index == PM_PROखाता_MID_MH_IDX) ||
+		     (rdev->pm.profile_index == PM_PROखाता_LOW_MH_IDX)))
+			mclk = rdev->pm.घातer_state[rdev->pm.requested_घातer_state_index].
+				घड़ी_info[rdev->pm.profiles[PM_PROखाता_HIGH_MH_IDX].dpms_on_cm_idx].mclk;
+		अन्यथा
+			mclk = rdev->pm.घातer_state[rdev->pm.requested_घातer_state_index].
+				घड़ी_info[rdev->pm.requested_घड़ी_mode_index].mclk;
 
-		if (mclk > rdev->pm.default_mclk)
-			mclk = rdev->pm.default_mclk;
+		अगर (mclk > rdev->pm.शेष_mclk)
+			mclk = rdev->pm.शेष_mclk;
 
-		/* upvolt before raising clocks, downvolt after lowering clocks */
-		if (sclk < rdev->pm.current_sclk)
+		/* upvolt beक्रमe raising घड़ीs, करोwnvolt after lowering घड़ीs */
+		अगर (sclk < rdev->pm.current_sclk)
 			misc_after = true;
 
 		radeon_sync_with_vblank(rdev);
 
-		if (rdev->pm.pm_method == PM_METHOD_DYNPM) {
-			if (!radeon_pm_in_vbl(rdev))
-				return;
-		}
+		अगर (rdev->pm.pm_method == PM_METHOD_DYNPM) अणु
+			अगर (!radeon_pm_in_vbl(rdev))
+				वापस;
+		पूर्ण
 
 		radeon_pm_prepare(rdev);
 
-		if (!misc_after)
+		अगर (!misc_after)
 			/* voltage, pcie lanes, etc.*/
 			radeon_pm_misc(rdev);
 
-		/* set engine clock */
-		if (sclk != rdev->pm.current_sclk) {
+		/* set engine घड़ी */
+		अगर (sclk != rdev->pm.current_sclk) अणु
 			radeon_pm_debug_check_in_vbl(rdev, false);
-			radeon_set_engine_clock(rdev, sclk);
+			radeon_set_engine_घड़ी(rdev, sclk);
 			radeon_pm_debug_check_in_vbl(rdev, true);
 			rdev->pm.current_sclk = sclk;
 			DRM_DEBUG_DRIVER("Setting: e: %d\n", sclk);
-		}
+		पूर्ण
 
-		/* set memory clock */
-		if (rdev->asic->pm.set_memory_clock && (mclk != rdev->pm.current_mclk)) {
+		/* set memory घड़ी */
+		अगर (rdev->asic->pm.set_memory_घड़ी && (mclk != rdev->pm.current_mclk)) अणु
 			radeon_pm_debug_check_in_vbl(rdev, false);
-			radeon_set_memory_clock(rdev, mclk);
+			radeon_set_memory_घड़ी(rdev, mclk);
 			radeon_pm_debug_check_in_vbl(rdev, true);
 			rdev->pm.current_mclk = mclk;
 			DRM_DEBUG_DRIVER("Setting: m: %d\n", mclk);
-		}
+		पूर्ण
 
-		if (misc_after)
+		अगर (misc_after)
 			/* voltage, pcie lanes, etc.*/
 			radeon_pm_misc(rdev);
 
 		radeon_pm_finish(rdev);
 
-		rdev->pm.current_power_state_index = rdev->pm.requested_power_state_index;
-		rdev->pm.current_clock_mode_index = rdev->pm.requested_clock_mode_index;
-	} else
+		rdev->pm.current_घातer_state_index = rdev->pm.requested_घातer_state_index;
+		rdev->pm.current_घड़ी_mode_index = rdev->pm.requested_घड़ी_mode_index;
+	पूर्ण अन्यथा
 		DRM_DEBUG_DRIVER("pm: GUI not idle!!!\n");
-}
+पूर्ण
 
-static void radeon_pm_set_clocks(struct radeon_device *rdev)
-{
-	struct drm_crtc *crtc;
-	int i, r;
+अटल व्योम radeon_pm_set_घड़ीs(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा drm_crtc *crtc;
+	पूर्णांक i, r;
 
-	/* no need to take locks, etc. if nothing's going to change */
-	if ((rdev->pm.requested_clock_mode_index == rdev->pm.current_clock_mode_index) &&
-	    (rdev->pm.requested_power_state_index == rdev->pm.current_power_state_index))
-		return;
+	/* no need to take locks, etc. अगर nothing's going to change */
+	अगर ((rdev->pm.requested_घड़ी_mode_index == rdev->pm.current_घड़ी_mode_index) &&
+	    (rdev->pm.requested_घातer_state_index == rdev->pm.current_घातer_state_index))
+		वापस;
 
-	down_write(&rdev->pm.mclk_lock);
+	करोwn_ग_लिखो(&rdev->pm.mclk_lock);
 	mutex_lock(&rdev->ring_lock);
 
-	/* wait for the rings to drain */
-	for (i = 0; i < RADEON_NUM_RINGS; i++) {
-		struct radeon_ring *ring = &rdev->ring[i];
-		if (!ring->ready) {
-			continue;
-		}
-		r = radeon_fence_wait_empty(rdev, i);
-		if (r) {
-			/* needs a GPU reset dont reset here */
+	/* रुको क्रम the rings to drain */
+	क्रम (i = 0; i < RADEON_NUM_RINGS; i++) अणु
+		काष्ठा radeon_ring *ring = &rdev->ring[i];
+		अगर (!ring->पढ़ोy) अणु
+			जारी;
+		पूर्ण
+		r = radeon_fence_रुको_empty(rdev, i);
+		अगर (r) अणु
+			/* needs a GPU reset करोnt reset here */
 			mutex_unlock(&rdev->ring_lock);
-			up_write(&rdev->pm.mclk_lock);
-			return;
-		}
-	}
+			up_ग_लिखो(&rdev->pm.mclk_lock);
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	radeon_unmap_vram_bos(rdev);
 
-	if (rdev->irq.installed) {
+	अगर (rdev->irq.installed) अणु
 		i = 0;
-		drm_for_each_crtc(crtc, rdev->ddev) {
-			if (rdev->pm.active_crtcs & (1 << i)) {
-				/* This can fail if a modeset is in progress */
-				if (drm_crtc_vblank_get(crtc) == 0)
+		drm_क्रम_each_crtc(crtc, rdev->ddev) अणु
+			अगर (rdev->pm.active_crtcs & (1 << i)) अणु
+				/* This can fail अगर a modeset is in progress */
+				अगर (drm_crtc_vblank_get(crtc) == 0)
 					rdev->pm.req_vblank |= (1 << i);
-				else
+				अन्यथा
 					DRM_DEBUG_DRIVER("crtc %d no vblank, can glitch\n",
 							 i);
-			}
+			पूर्ण
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	radeon_set_power_state(rdev);
+	radeon_set_घातer_state(rdev);
 
-	if (rdev->irq.installed) {
+	अगर (rdev->irq.installed) अणु
 		i = 0;
-		drm_for_each_crtc(crtc, rdev->ddev) {
-			if (rdev->pm.req_vblank & (1 << i)) {
+		drm_क्रम_each_crtc(crtc, rdev->ddev) अणु
+			अगर (rdev->pm.req_vblank & (1 << i)) अणु
 				rdev->pm.req_vblank &= ~(1 << i);
 				drm_crtc_vblank_put(crtc);
-			}
+			पूर्ण
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* update display watermarks based on new power state */
+	/* update display watermarks based on new घातer state */
 	radeon_update_bandwidth_info(rdev);
-	if (rdev->pm.active_crtc_count)
+	अगर (rdev->pm.active_crtc_count)
 		radeon_bandwidth_update(rdev);
 
 	rdev->pm.dynpm_planned_action = DYNPM_ACTION_NONE;
 
 	mutex_unlock(&rdev->ring_lock);
-	up_write(&rdev->pm.mclk_lock);
-}
+	up_ग_लिखो(&rdev->pm.mclk_lock);
+पूर्ण
 
-static void radeon_pm_print_states(struct radeon_device *rdev)
-{
-	int i, j;
-	struct radeon_power_state *power_state;
-	struct radeon_pm_clock_info *clock_info;
+अटल व्योम radeon_pm_prपूर्णांक_states(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक i, j;
+	काष्ठा radeon_घातer_state *घातer_state;
+	काष्ठा radeon_pm_घड़ी_info *घड़ी_info;
 
-	DRM_DEBUG_DRIVER("%d Power State(s)\n", rdev->pm.num_power_states);
-	for (i = 0; i < rdev->pm.num_power_states; i++) {
-		power_state = &rdev->pm.power_state[i];
+	DRM_DEBUG_DRIVER("%d Power State(s)\n", rdev->pm.num_घातer_states);
+	क्रम (i = 0; i < rdev->pm.num_घातer_states; i++) अणु
+		घातer_state = &rdev->pm.घातer_state[i];
 		DRM_DEBUG_DRIVER("State %d: %s\n", i,
-			radeon_pm_state_type_name[power_state->type]);
-		if (i == rdev->pm.default_power_state_index)
+			radeon_pm_state_type_name[घातer_state->type]);
+		अगर (i == rdev->pm.शेष_घातer_state_index)
 			DRM_DEBUG_DRIVER("\tDefault");
-		if ((rdev->flags & RADEON_IS_PCIE) && !(rdev->flags & RADEON_IS_IGP))
-			DRM_DEBUG_DRIVER("\t%d PCIE Lanes\n", power_state->pcie_lanes);
-		if (power_state->flags & RADEON_PM_STATE_SINGLE_DISPLAY_ONLY)
+		अगर ((rdev->flags & RADEON_IS_PCIE) && !(rdev->flags & RADEON_IS_IGP))
+			DRM_DEBUG_DRIVER("\t%d PCIE Lanes\n", घातer_state->pcie_lanes);
+		अगर (घातer_state->flags & RADEON_PM_STATE_SINGLE_DISPLAY_ONLY)
 			DRM_DEBUG_DRIVER("\tSingle display only\n");
-		DRM_DEBUG_DRIVER("\t%d Clock Mode(s)\n", power_state->num_clock_modes);
-		for (j = 0; j < power_state->num_clock_modes; j++) {
-			clock_info = &(power_state->clock_info[j]);
-			if (rdev->flags & RADEON_IS_IGP)
+		DRM_DEBUG_DRIVER("\t%d Clock Mode(s)\n", घातer_state->num_घड़ी_modes);
+		क्रम (j = 0; j < घातer_state->num_घड़ी_modes; j++) अणु
+			घड़ी_info = &(घातer_state->घड़ी_info[j]);
+			अगर (rdev->flags & RADEON_IS_IGP)
 				DRM_DEBUG_DRIVER("\t\t%d e: %d\n",
 						 j,
-						 clock_info->sclk * 10);
-			else
+						 घड़ी_info->sclk * 10);
+			अन्यथा
 				DRM_DEBUG_DRIVER("\t\t%d e: %d\tm: %d\tv: %d\n",
 						 j,
-						 clock_info->sclk * 10,
-						 clock_info->mclk * 10,
-						 clock_info->voltage.voltage);
-		}
-	}
-}
+						 घड़ी_info->sclk * 10,
+						 घड़ी_info->mclk * 10,
+						 घड़ी_info->voltage.voltage);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static ssize_t radeon_get_pm_profile(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct radeon_device *rdev = ddev->dev_private;
-	int cp = rdev->pm.profile;
+अटल sमाप_प्रकार radeon_get_pm_profile(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा radeon_device *rdev = ddev->dev_निजी;
+	पूर्णांक cp = rdev->pm.profile;
 
-	return sysfs_emit(buf, "%s\n", (cp == PM_PROFILE_AUTO) ? "auto" :
-			  (cp == PM_PROFILE_LOW) ? "low" :
-			  (cp == PM_PROFILE_MID) ? "mid" :
-			  (cp == PM_PROFILE_HIGH) ? "high" : "default");
-}
+	वापस sysfs_emit(buf, "%s\n", (cp == PM_PROखाता_AUTO) ? "auto" :
+			  (cp == PM_PROखाता_LOW) ? "low" :
+			  (cp == PM_PROखाता_MID) ? "mid" :
+			  (cp == PM_PROखाता_HIGH) ? "high" : "default");
+पूर्ण
 
-static ssize_t radeon_set_pm_profile(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf,
-				     size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct radeon_device *rdev = ddev->dev_private;
+अटल sमाप_प्रकार radeon_set_pm_profile(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf,
+				     माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा radeon_device *rdev = ddev->dev_निजी;
 
 	/* Can't set profile when the card is off */
-	if  ((rdev->flags & RADEON_IS_PX) &&
-	     (ddev->switch_power_state != DRM_SWITCH_POWER_ON))
-		return -EINVAL;
+	अगर  ((rdev->flags & RADEON_IS_PX) &&
+	     (ddev->चयन_घातer_state != DRM_SWITCH_POWER_ON))
+		वापस -EINVAL;
 
 	mutex_lock(&rdev->pm.mutex);
-	if (rdev->pm.pm_method == PM_METHOD_PROFILE) {
-		if (strncmp("default", buf, strlen("default")) == 0)
-			rdev->pm.profile = PM_PROFILE_DEFAULT;
-		else if (strncmp("auto", buf, strlen("auto")) == 0)
-			rdev->pm.profile = PM_PROFILE_AUTO;
-		else if (strncmp("low", buf, strlen("low")) == 0)
-			rdev->pm.profile = PM_PROFILE_LOW;
-		else if (strncmp("mid", buf, strlen("mid")) == 0)
-			rdev->pm.profile = PM_PROFILE_MID;
-		else if (strncmp("high", buf, strlen("high")) == 0)
-			rdev->pm.profile = PM_PROFILE_HIGH;
-		else {
+	अगर (rdev->pm.pm_method == PM_METHOD_PROखाता) अणु
+		अगर (म_भेदन("default", buf, म_माप("default")) == 0)
+			rdev->pm.profile = PM_PROखाता_DEFAULT;
+		अन्यथा अगर (म_भेदन("auto", buf, म_माप("auto")) == 0)
+			rdev->pm.profile = PM_PROखाता_AUTO;
+		अन्यथा अगर (म_भेदन("low", buf, म_माप("low")) == 0)
+			rdev->pm.profile = PM_PROखाता_LOW;
+		अन्यथा अगर (म_भेदन("mid", buf, म_माप("mid")) == 0)
+			rdev->pm.profile = PM_PROखाता_MID;
+		अन्यथा अगर (म_भेदन("high", buf, म_माप("high")) == 0)
+			rdev->pm.profile = PM_PROखाता_HIGH;
+		अन्यथा अणु
 			count = -EINVAL;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		radeon_pm_update_profile(rdev);
-		radeon_pm_set_clocks(rdev);
-	} else
+		radeon_pm_set_घड़ीs(rdev);
+	पूर्ण अन्यथा
 		count = -EINVAL;
 
 fail:
 	mutex_unlock(&rdev->pm.mutex);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t radeon_get_pm_method(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct radeon_device *rdev = ddev->dev_private;
-	int pm = rdev->pm.pm_method;
+अटल sमाप_प्रकार radeon_get_pm_method(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा radeon_device *rdev = ddev->dev_निजी;
+	पूर्णांक pm = rdev->pm.pm_method;
 
-	return sysfs_emit(buf, "%s\n", (pm == PM_METHOD_DYNPM) ? "dynpm" :
-			  (pm == PM_METHOD_PROFILE) ? "profile" : "dpm");
-}
+	वापस sysfs_emit(buf, "%s\n", (pm == PM_METHOD_DYNPM) ? "dynpm" :
+			  (pm == PM_METHOD_PROखाता) ? "profile" : "dpm");
+पूर्ण
 
-static ssize_t radeon_set_pm_method(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf,
-				    size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct radeon_device *rdev = ddev->dev_private;
+अटल sमाप_प्रकार radeon_set_pm_method(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf,
+				    माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा radeon_device *rdev = ddev->dev_निजी;
 
 	/* Can't set method when the card is off */
-	if  ((rdev->flags & RADEON_IS_PX) &&
-	     (ddev->switch_power_state != DRM_SWITCH_POWER_ON)) {
+	अगर  ((rdev->flags & RADEON_IS_PX) &&
+	     (ddev->चयन_घातer_state != DRM_SWITCH_POWER_ON)) अणु
 		count = -EINVAL;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	/* we don't support the legacy modes with dpm */
-	if (rdev->pm.pm_method == PM_METHOD_DPM) {
+	/* we करोn't support the legacy modes with dpm */
+	अगर (rdev->pm.pm_method == PM_METHOD_DPM) अणु
 		count = -EINVAL;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (strncmp("dynpm", buf, strlen("dynpm")) == 0) {
+	अगर (म_भेदन("dynpm", buf, म_माप("dynpm")) == 0) अणु
 		mutex_lock(&rdev->pm.mutex);
 		rdev->pm.pm_method = PM_METHOD_DYNPM;
 		rdev->pm.dynpm_state = DYNPM_STATE_PAUSED;
 		rdev->pm.dynpm_planned_action = DYNPM_ACTION_DEFAULT;
 		mutex_unlock(&rdev->pm.mutex);
-	} else if (strncmp("profile", buf, strlen("profile")) == 0) {
+	पूर्ण अन्यथा अगर (म_भेदन("profile", buf, म_माप("profile")) == 0) अणु
 		mutex_lock(&rdev->pm.mutex);
 		/* disable dynpm */
 		rdev->pm.dynpm_state = DYNPM_STATE_DISABLED;
 		rdev->pm.dynpm_planned_action = DYNPM_ACTION_NONE;
-		rdev->pm.pm_method = PM_METHOD_PROFILE;
+		rdev->pm.pm_method = PM_METHOD_PROखाता;
 		mutex_unlock(&rdev->pm.mutex);
 		cancel_delayed_work_sync(&rdev->pm.dynpm_idle_work);
-	} else {
+	पूर्ण अन्यथा अणु
 		count = -EINVAL;
-		goto fail;
-	}
-	radeon_pm_compute_clocks(rdev);
+		जाओ fail;
+	पूर्ण
+	radeon_pm_compute_घड़ीs(rdev);
 fail:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t radeon_get_dpm_state(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct radeon_device *rdev = ddev->dev_private;
-	enum radeon_pm_state_type pm = rdev->pm.dpm.user_state;
+अटल sमाप_प्रकार radeon_get_dpm_state(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा radeon_device *rdev = ddev->dev_निजी;
+	क्रमागत radeon_pm_state_type pm = rdev->pm.dpm.user_state;
 
-	return sysfs_emit(buf, "%s\n",
+	वापस sysfs_emit(buf, "%s\n",
 			  (pm == POWER_STATE_TYPE_BATTERY) ? "battery" :
 			  (pm == POWER_STATE_TYPE_BALANCED) ? "balanced" : "performance");
-}
+पूर्ण
 
-static ssize_t radeon_set_dpm_state(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf,
-				    size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct radeon_device *rdev = ddev->dev_private;
+अटल sमाप_प्रकार radeon_set_dpm_state(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf,
+				    माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा radeon_device *rdev = ddev->dev_निजी;
 
 	mutex_lock(&rdev->pm.mutex);
-	if (strncmp("battery", buf, strlen("battery")) == 0)
+	अगर (म_भेदन("battery", buf, म_माप("battery")) == 0)
 		rdev->pm.dpm.user_state = POWER_STATE_TYPE_BATTERY;
-	else if (strncmp("balanced", buf, strlen("balanced")) == 0)
+	अन्यथा अगर (म_भेदन("balanced", buf, म_माप("balanced")) == 0)
 		rdev->pm.dpm.user_state = POWER_STATE_TYPE_BALANCED;
-	else if (strncmp("performance", buf, strlen("performance")) == 0)
+	अन्यथा अगर (म_भेदन("performance", buf, म_माप("performance")) == 0)
 		rdev->pm.dpm.user_state = POWER_STATE_TYPE_PERFORMANCE;
-	else {
+	अन्यथा अणु
 		mutex_unlock(&rdev->pm.mutex);
 		count = -EINVAL;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	mutex_unlock(&rdev->pm.mutex);
 
 	/* Can't set dpm state when the card is off */
-	if (!(rdev->flags & RADEON_IS_PX) ||
-	    (ddev->switch_power_state == DRM_SWITCH_POWER_ON))
-		radeon_pm_compute_clocks(rdev);
+	अगर (!(rdev->flags & RADEON_IS_PX) ||
+	    (ddev->चयन_घातer_state == DRM_SWITCH_POWER_ON))
+		radeon_pm_compute_घड़ीs(rdev);
 
 fail:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t radeon_get_dpm_forced_performance_level(struct device *dev,
-						       struct device_attribute *attr,
-						       char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct radeon_device *rdev = ddev->dev_private;
-	enum radeon_dpm_forced_level level = rdev->pm.dpm.forced_level;
+अटल sमाप_प्रकार radeon_get_dpm_क्रमced_perक्रमmance_level(काष्ठा device *dev,
+						       काष्ठा device_attribute *attr,
+						       अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा radeon_device *rdev = ddev->dev_निजी;
+	क्रमागत radeon_dpm_क्रमced_level level = rdev->pm.dpm.क्रमced_level;
 
-	if  ((rdev->flags & RADEON_IS_PX) &&
-	     (ddev->switch_power_state != DRM_SWITCH_POWER_ON))
-		return sysfs_emit(buf, "off\n");
+	अगर  ((rdev->flags & RADEON_IS_PX) &&
+	     (ddev->चयन_घातer_state != DRM_SWITCH_POWER_ON))
+		वापस sysfs_emit(buf, "off\n");
 
-	return sysfs_emit(buf, "%s\n",
+	वापस sysfs_emit(buf, "%s\n",
 			  (level == RADEON_DPM_FORCED_LEVEL_AUTO) ? "auto" :
 			  (level == RADEON_DPM_FORCED_LEVEL_LOW) ? "low" : "high");
-}
+पूर्ण
 
-static ssize_t radeon_set_dpm_forced_performance_level(struct device *dev,
-						       struct device_attribute *attr,
-						       const char *buf,
-						       size_t count)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct radeon_device *rdev = ddev->dev_private;
-	enum radeon_dpm_forced_level level;
-	int ret = 0;
+अटल sमाप_प्रकार radeon_set_dpm_क्रमced_perक्रमmance_level(काष्ठा device *dev,
+						       काष्ठा device_attribute *attr,
+						       स्थिर अक्षर *buf,
+						       माप_प्रकार count)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा radeon_device *rdev = ddev->dev_निजी;
+	क्रमागत radeon_dpm_क्रमced_level level;
+	पूर्णांक ret = 0;
 
-	/* Can't force performance level when the card is off */
-	if  ((rdev->flags & RADEON_IS_PX) &&
-	     (ddev->switch_power_state != DRM_SWITCH_POWER_ON))
-		return -EINVAL;
+	/* Can't क्रमce perक्रमmance level when the card is off */
+	अगर  ((rdev->flags & RADEON_IS_PX) &&
+	     (ddev->चयन_घातer_state != DRM_SWITCH_POWER_ON))
+		वापस -EINVAL;
 
 	mutex_lock(&rdev->pm.mutex);
-	if (strncmp("low", buf, strlen("low")) == 0) {
+	अगर (म_भेदन("low", buf, म_माप("low")) == 0) अणु
 		level = RADEON_DPM_FORCED_LEVEL_LOW;
-	} else if (strncmp("high", buf, strlen("high")) == 0) {
+	पूर्ण अन्यथा अगर (म_भेदन("high", buf, म_माप("high")) == 0) अणु
 		level = RADEON_DPM_FORCED_LEVEL_HIGH;
-	} else if (strncmp("auto", buf, strlen("auto")) == 0) {
+	पूर्ण अन्यथा अगर (म_भेदन("auto", buf, म_माप("auto")) == 0) अणु
 		level = RADEON_DPM_FORCED_LEVEL_AUTO;
-	} else {
+	पूर्ण अन्यथा अणु
 		count = -EINVAL;
-		goto fail;
-	}
-	if (rdev->asic->dpm.force_performance_level) {
-		if (rdev->pm.dpm.thermal_active) {
+		जाओ fail;
+	पूर्ण
+	अगर (rdev->asic->dpm.क्रमce_perक्रमmance_level) अणु
+		अगर (rdev->pm.dpm.thermal_active) अणु
 			count = -EINVAL;
-			goto fail;
-		}
-		ret = radeon_dpm_force_performance_level(rdev, level);
-		if (ret)
+			जाओ fail;
+		पूर्ण
+		ret = radeon_dpm_क्रमce_perक्रमmance_level(rdev, level);
+		अगर (ret)
 			count = -EINVAL;
-	}
+	पूर्ण
 fail:
 	mutex_unlock(&rdev->pm.mutex);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t radeon_hwmon_get_pwm1_enable(struct device *dev,
-					    struct device_attribute *attr,
-					    char *buf)
-{
-	struct radeon_device *rdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार radeon_hwmon_get_pwm1_enable(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    अक्षर *buf)
+अणु
+	काष्ठा radeon_device *rdev = dev_get_drvdata(dev);
 	u32 pwm_mode = 0;
 
-	if (rdev->asic->dpm.fan_ctrl_get_mode)
+	अगर (rdev->asic->dpm.fan_ctrl_get_mode)
 		pwm_mode = rdev->asic->dpm.fan_ctrl_get_mode(rdev);
 
 	/* never 0 (full-speed), fuse or smc-controlled always */
-	return sprintf(buf, "%i\n", pwm_mode == FDO_PWM_MODE_STATIC ? 1 : 2);
-}
+	वापस प्र_लिखो(buf, "%i\n", pwm_mode == FDO_PWM_MODE_STATIC ? 1 : 2);
+पूर्ण
 
-static ssize_t radeon_hwmon_set_pwm1_enable(struct device *dev,
-					    struct device_attribute *attr,
-					    const char *buf,
-					    size_t count)
-{
-	struct radeon_device *rdev = dev_get_drvdata(dev);
-	int err;
-	int value;
+अटल sमाप_प्रकार radeon_hwmon_set_pwm1_enable(काष्ठा device *dev,
+					    काष्ठा device_attribute *attr,
+					    स्थिर अक्षर *buf,
+					    माप_प्रकार count)
+अणु
+	काष्ठा radeon_device *rdev = dev_get_drvdata(dev);
+	पूर्णांक err;
+	पूर्णांक value;
 
-	if(!rdev->asic->dpm.fan_ctrl_set_mode)
-		return -EINVAL;
+	अगर(!rdev->asic->dpm.fan_ctrl_set_mode)
+		वापस -EINVAL;
 
-	err = kstrtoint(buf, 10, &value);
-	if (err)
-		return err;
+	err = kstrtoपूर्णांक(buf, 10, &value);
+	अगर (err)
+		वापस err;
 
-	switch (value) {
-	case 1: /* manual, percent-based */
+	चयन (value) अणु
+	हाल 1: /* manual, percent-based */
 		rdev->asic->dpm.fan_ctrl_set_mode(rdev, FDO_PWM_MODE_STATIC);
-		break;
-	default: /* disable */
+		अवरोध;
+	शेष: /* disable */
 		rdev->asic->dpm.fan_ctrl_set_mode(rdev, 0);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t radeon_hwmon_get_pwm1_min(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	return sprintf(buf, "%i\n", 0);
-}
+अटल sमाप_प्रकार radeon_hwmon_get_pwm1_min(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%i\n", 0);
+पूर्ण
 
-static ssize_t radeon_hwmon_get_pwm1_max(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buf)
-{
-	return sprintf(buf, "%i\n", 255);
-}
+अटल sमाप_प्रकार radeon_hwmon_get_pwm1_max(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%i\n", 255);
+पूर्ण
 
-static ssize_t radeon_hwmon_set_pwm1(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct radeon_device *rdev = dev_get_drvdata(dev);
-	int err;
+अटल sमाप_प्रकार radeon_hwmon_set_pwm1(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा radeon_device *rdev = dev_get_drvdata(dev);
+	पूर्णांक err;
 	u32 value;
 
 	err = kstrtou32(buf, 10, &value);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	value = (value * 100) / 255;
 
 	err = rdev->asic->dpm.set_fan_speed_percent(rdev, value);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t radeon_hwmon_get_pwm1(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct radeon_device *rdev = dev_get_drvdata(dev);
-	int err;
+अटल sमाप_प्रकार radeon_hwmon_get_pwm1(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा radeon_device *rdev = dev_get_drvdata(dev);
+	पूर्णांक err;
 	u32 speed;
 
 	err = rdev->asic->dpm.get_fan_speed_percent(rdev, &speed);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	speed = (speed * 255) / 100;
 
-	return sprintf(buf, "%i\n", speed);
-}
+	वापस प्र_लिखो(buf, "%i\n", speed);
+पूर्ण
 
-static DEVICE_ATTR(power_profile, S_IRUGO | S_IWUSR, radeon_get_pm_profile, radeon_set_pm_profile);
-static DEVICE_ATTR(power_method, S_IRUGO | S_IWUSR, radeon_get_pm_method, radeon_set_pm_method);
-static DEVICE_ATTR(power_dpm_state, S_IRUGO | S_IWUSR, radeon_get_dpm_state, radeon_set_dpm_state);
-static DEVICE_ATTR(power_dpm_force_performance_level, S_IRUGO | S_IWUSR,
-		   radeon_get_dpm_forced_performance_level,
-		   radeon_set_dpm_forced_performance_level);
+अटल DEVICE_ATTR(घातer_profile, S_IRUGO | S_IWUSR, radeon_get_pm_profile, radeon_set_pm_profile);
+अटल DEVICE_ATTR(घातer_method, S_IRUGO | S_IWUSR, radeon_get_pm_method, radeon_set_pm_method);
+अटल DEVICE_ATTR(घातer_dpm_state, S_IRUGO | S_IWUSR, radeon_get_dpm_state, radeon_set_dpm_state);
+अटल DEVICE_ATTR(घातer_dpm_क्रमce_perक्रमmance_level, S_IRUGO | S_IWUSR,
+		   radeon_get_dpm_क्रमced_perक्रमmance_level,
+		   radeon_set_dpm_क्रमced_perक्रमmance_level);
 
-static ssize_t radeon_hwmon_show_temp(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	struct radeon_device *rdev = dev_get_drvdata(dev);
-	struct drm_device *ddev = rdev->ddev;
-	int temp;
+अटल sमाप_प्रकार radeon_hwmon_show_temp(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	काष्ठा radeon_device *rdev = dev_get_drvdata(dev);
+	काष्ठा drm_device *ddev = rdev->ddev;
+	पूर्णांक temp;
 
 	/* Can't get temperature when the card is off */
-	if  ((rdev->flags & RADEON_IS_PX) &&
-	     (ddev->switch_power_state != DRM_SWITCH_POWER_ON))
-		return -EINVAL;
+	अगर  ((rdev->flags & RADEON_IS_PX) &&
+	     (ddev->चयन_घातer_state != DRM_SWITCH_POWER_ON))
+		वापस -EINVAL;
 
-	if (rdev->asic->pm.get_temperature)
+	अगर (rdev->asic->pm.get_temperature)
 		temp = radeon_get_temperature(rdev);
-	else
+	अन्यथा
 		temp = 0;
 
-	return sysfs_emit(buf, "%d\n", temp);
-}
+	वापस sysfs_emit(buf, "%d\n", temp);
+पूर्ण
 
-static ssize_t radeon_hwmon_show_temp_thresh(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buf)
-{
-	struct radeon_device *rdev = dev_get_drvdata(dev);
-	int hyst = to_sensor_dev_attr(attr)->index;
-	int temp;
+अटल sमाप_प्रकार radeon_hwmon_show_temp_thresh(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buf)
+अणु
+	काष्ठा radeon_device *rdev = dev_get_drvdata(dev);
+	पूर्णांक hyst = to_sensor_dev_attr(attr)->index;
+	पूर्णांक temp;
 
-	if (hyst)
+	अगर (hyst)
 		temp = rdev->pm.dpm.thermal.min_temp;
-	else
+	अन्यथा
 		temp = rdev->pm.dpm.thermal.max_temp;
 
-	return sysfs_emit(buf, "%d\n", temp);
-}
+	वापस sysfs_emit(buf, "%d\n", temp);
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, radeon_hwmon_show_temp, NULL, 0);
-static SENSOR_DEVICE_ATTR(temp1_crit, S_IRUGO, radeon_hwmon_show_temp_thresh, NULL, 0);
-static SENSOR_DEVICE_ATTR(temp1_crit_hyst, S_IRUGO, radeon_hwmon_show_temp_thresh, NULL, 1);
-static SENSOR_DEVICE_ATTR(pwm1, S_IRUGO | S_IWUSR, radeon_hwmon_get_pwm1, radeon_hwmon_set_pwm1, 0);
-static SENSOR_DEVICE_ATTR(pwm1_enable, S_IRUGO | S_IWUSR, radeon_hwmon_get_pwm1_enable, radeon_hwmon_set_pwm1_enable, 0);
-static SENSOR_DEVICE_ATTR(pwm1_min, S_IRUGO, radeon_hwmon_get_pwm1_min, NULL, 0);
-static SENSOR_DEVICE_ATTR(pwm1_max, S_IRUGO, radeon_hwmon_get_pwm1_max, NULL, 0);
+अटल SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, radeon_hwmon_show_temp, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(temp1_crit, S_IRUGO, radeon_hwmon_show_temp_thresh, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(temp1_crit_hyst, S_IRUGO, radeon_hwmon_show_temp_thresh, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(pwm1, S_IRUGO | S_IWUSR, radeon_hwmon_get_pwm1, radeon_hwmon_set_pwm1, 0);
+अटल SENSOR_DEVICE_ATTR(pwm1_enable, S_IRUGO | S_IWUSR, radeon_hwmon_get_pwm1_enable, radeon_hwmon_set_pwm1_enable, 0);
+अटल SENSOR_DEVICE_ATTR(pwm1_min, S_IRUGO, radeon_hwmon_get_pwm1_min, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(pwm1_max, S_IRUGO, radeon_hwmon_get_pwm1_max, शून्य, 0);
 
-static ssize_t radeon_hwmon_show_sclk(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	struct radeon_device *rdev = dev_get_drvdata(dev);
-	struct drm_device *ddev = rdev->ddev;
+अटल sमाप_प्रकार radeon_hwmon_show_sclk(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा radeon_device *rdev = dev_get_drvdata(dev);
+	काष्ठा drm_device *ddev = rdev->ddev;
 	u32 sclk = 0;
 
-	/* Can't get clock frequency when the card is off */
-	if ((rdev->flags & RADEON_IS_PX) &&
-	    (ddev->switch_power_state != DRM_SWITCH_POWER_ON))
-		return -EINVAL;
+	/* Can't get घड़ी frequency when the card is off */
+	अगर ((rdev->flags & RADEON_IS_PX) &&
+	    (ddev->चयन_घातer_state != DRM_SWITCH_POWER_ON))
+		वापस -EINVAL;
 
-	if (rdev->asic->dpm.get_current_sclk)
+	अगर (rdev->asic->dpm.get_current_sclk)
 		sclk = radeon_dpm_get_current_sclk(rdev);
 
-	/* Value returned by dpm is in 10 KHz units, need to convert it into Hz 
-	   for hwmon */
+	/* Value वापसed by dpm is in 10 KHz units, need to convert it पूर्णांकo Hz 
+	   क्रम hwmon */
 	sclk *= 10000;
 
-	return sysfs_emit(buf, "%u\n", sclk);
-}
+	वापस sysfs_emit(buf, "%u\n", sclk);
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(freq1_input, S_IRUGO, radeon_hwmon_show_sclk, NULL,
+अटल SENSOR_DEVICE_ATTR(freq1_input, S_IRUGO, radeon_hwmon_show_sclk, शून्य,
 			  0);
 
-static ssize_t radeon_hwmon_show_vddc(struct device *dev,
-				      struct device_attribute *attr, char *buf)
-{
-	struct radeon_device *rdev = dev_get_drvdata(dev);
-	struct drm_device *ddev = rdev->ddev;
+अटल sमाप_प्रकार radeon_hwmon_show_vddc(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा radeon_device *rdev = dev_get_drvdata(dev);
+	काष्ठा drm_device *ddev = rdev->ddev;
 	u16 vddc = 0;
 
 	/* Can't get vddc when the card is off */
-	if ((rdev->flags & RADEON_IS_PX) &&
-		(ddev->switch_power_state != DRM_SWITCH_POWER_ON))
-		return -EINVAL;
+	अगर ((rdev->flags & RADEON_IS_PX) &&
+		(ddev->चयन_घातer_state != DRM_SWITCH_POWER_ON))
+		वापस -EINVAL;
 
-	if (rdev->asic->dpm.get_current_vddc)
+	अगर (rdev->asic->dpm.get_current_vddc)
 		vddc = rdev->asic->dpm.get_current_vddc(rdev);
 
-	return sysfs_emit(buf, "%u\n", vddc);
-}
+	वापस sysfs_emit(buf, "%u\n", vddc);
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(in0_input, S_IRUGO, radeon_hwmon_show_vddc, NULL,
+अटल SENSOR_DEVICE_ATTR(in0_input, S_IRUGO, radeon_hwmon_show_vddc, शून्य,
 			  0);
 
-static struct attribute *hwmon_attributes[] = {
+अटल काष्ठा attribute *hwmon_attributes[] = अणु
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
 	&sensor_dev_attr_temp1_crit.dev_attr.attr,
 	&sensor_dev_attr_temp1_crit_hyst.dev_attr.attr,
@@ -766,18 +767,18 @@ static struct attribute *hwmon_attributes[] = {
 	&sensor_dev_attr_pwm1_max.dev_attr.attr,
 	&sensor_dev_attr_freq1_input.dev_attr.attr,
 	&sensor_dev_attr_in0_input.dev_attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t hwmon_attributes_visible(struct kobject *kobj,
-					struct attribute *attr, int index)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct radeon_device *rdev = dev_get_drvdata(dev);
+अटल umode_t hwmon_attributes_visible(काष्ठा kobject *kobj,
+					काष्ठा attribute *attr, पूर्णांक index)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा radeon_device *rdev = dev_get_drvdata(dev);
 	umode_t effective_mode = attr->mode;
 
-	/* Skip attributes if DPM is not enabled */
-	if (rdev->pm.pm_method != PM_METHOD_DPM &&
+	/* Skip attributes अगर DPM is not enabled */
+	अगर (rdev->pm.pm_method != PM_METHOD_DPM &&
 	    (attr == &sensor_dev_attr_temp1_crit.dev_attr.attr ||
 	     attr == &sensor_dev_attr_temp1_crit_hyst.dev_attr.attr ||
 	     attr == &sensor_dev_attr_pwm1.dev_attr.attr ||
@@ -786,531 +787,531 @@ static umode_t hwmon_attributes_visible(struct kobject *kobj,
 	     attr == &sensor_dev_attr_pwm1_min.dev_attr.attr ||
 	     attr == &sensor_dev_attr_freq1_input.dev_attr.attr ||
 	     attr == &sensor_dev_attr_in0_input.dev_attr.attr))
-		return 0;
+		वापस 0;
 
-	/* Skip vddc attribute if get_current_vddc is not implemented */
-	if(attr == &sensor_dev_attr_in0_input.dev_attr.attr &&
+	/* Skip vddc attribute अगर get_current_vddc is not implemented */
+	अगर(attr == &sensor_dev_attr_in0_input.dev_attr.attr &&
 		!rdev->asic->dpm.get_current_vddc)
-		return 0;
+		वापस 0;
 
-	/* Skip fan attributes if fan is not present */
-	if (rdev->pm.no_fan &&
+	/* Skip fan attributes अगर fan is not present */
+	अगर (rdev->pm.no_fan &&
 	    (attr == &sensor_dev_attr_pwm1.dev_attr.attr ||
 	     attr == &sensor_dev_attr_pwm1_enable.dev_attr.attr ||
 	     attr == &sensor_dev_attr_pwm1_max.dev_attr.attr ||
 	     attr == &sensor_dev_attr_pwm1_min.dev_attr.attr))
-		return 0;
+		वापस 0;
 
-	/* mask fan attributes if we have no bindings for this asic to expose */
-	if ((!rdev->asic->dpm.get_fan_speed_percent &&
+	/* mask fan attributes अगर we have no bindings क्रम this asic to expose */
+	अगर ((!rdev->asic->dpm.get_fan_speed_percent &&
 	     attr == &sensor_dev_attr_pwm1.dev_attr.attr) || /* can't query fan */
 	    (!rdev->asic->dpm.fan_ctrl_get_mode &&
 	     attr == &sensor_dev_attr_pwm1_enable.dev_attr.attr)) /* can't query state */
 		effective_mode &= ~S_IRUGO;
 
-	if ((!rdev->asic->dpm.set_fan_speed_percent &&
+	अगर ((!rdev->asic->dpm.set_fan_speed_percent &&
 	     attr == &sensor_dev_attr_pwm1.dev_attr.attr) || /* can't manage fan */
 	    (!rdev->asic->dpm.fan_ctrl_set_mode &&
 	     attr == &sensor_dev_attr_pwm1_enable.dev_attr.attr)) /* can't manage state */
 		effective_mode &= ~S_IWUSR;
 
-	/* hide max/min values if we can't both query and manage the fan */
-	if ((!rdev->asic->dpm.set_fan_speed_percent &&
+	/* hide max/min values अगर we can't both query and manage the fan */
+	अगर ((!rdev->asic->dpm.set_fan_speed_percent &&
 	     !rdev->asic->dpm.get_fan_speed_percent) &&
 	    (attr == &sensor_dev_attr_pwm1_max.dev_attr.attr ||
 	     attr == &sensor_dev_attr_pwm1_min.dev_attr.attr))
-		return 0;
+		वापस 0;
 
-	return effective_mode;
-}
+	वापस effective_mode;
+पूर्ण
 
-static const struct attribute_group hwmon_attrgroup = {
+अटल स्थिर काष्ठा attribute_group hwmon_attrgroup = अणु
 	.attrs = hwmon_attributes,
 	.is_visible = hwmon_attributes_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *hwmon_groups[] = {
+अटल स्थिर काष्ठा attribute_group *hwmon_groups[] = अणु
 	&hwmon_attrgroup,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static int radeon_hwmon_init(struct radeon_device *rdev)
-{
-	int err = 0;
+अटल पूर्णांक radeon_hwmon_init(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक err = 0;
 
-	switch (rdev->pm.int_thermal_type) {
-	case THERMAL_TYPE_RV6XX:
-	case THERMAL_TYPE_RV770:
-	case THERMAL_TYPE_EVERGREEN:
-	case THERMAL_TYPE_NI:
-	case THERMAL_TYPE_SUMO:
-	case THERMAL_TYPE_SI:
-	case THERMAL_TYPE_CI:
-	case THERMAL_TYPE_KV:
-		if (rdev->asic->pm.get_temperature == NULL)
-			return err;
-		rdev->pm.int_hwmon_dev = hwmon_device_register_with_groups(rdev->dev,
+	चयन (rdev->pm.पूर्णांक_thermal_type) अणु
+	हाल THERMAL_TYPE_RV6XX:
+	हाल THERMAL_TYPE_RV770:
+	हाल THERMAL_TYPE_EVERGREEN:
+	हाल THERMAL_TYPE_NI:
+	हाल THERMAL_TYPE_SUMO:
+	हाल THERMAL_TYPE_SI:
+	हाल THERMAL_TYPE_CI:
+	हाल THERMAL_TYPE_KV:
+		अगर (rdev->asic->pm.get_temperature == शून्य)
+			वापस err;
+		rdev->pm.पूर्णांक_hwmon_dev = hwmon_device_रेजिस्टर_with_groups(rdev->dev,
 									   "radeon", rdev,
 									   hwmon_groups);
-		if (IS_ERR(rdev->pm.int_hwmon_dev)) {
-			err = PTR_ERR(rdev->pm.int_hwmon_dev);
+		अगर (IS_ERR(rdev->pm.पूर्णांक_hwmon_dev)) अणु
+			err = PTR_ERR(rdev->pm.पूर्णांक_hwmon_dev);
 			dev_err(rdev->dev,
 				"Unable to register hwmon device: %d\n", err);
-		}
-		break;
-	default:
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void radeon_hwmon_fini(struct radeon_device *rdev)
-{
-	if (rdev->pm.int_hwmon_dev)
-		hwmon_device_unregister(rdev->pm.int_hwmon_dev);
-}
+अटल व्योम radeon_hwmon_fini(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->pm.पूर्णांक_hwmon_dev)
+		hwmon_device_unरेजिस्टर(rdev->pm.पूर्णांक_hwmon_dev);
+पूर्ण
 
-static void radeon_dpm_thermal_work_handler(struct work_struct *work)
-{
-	struct radeon_device *rdev =
-		container_of(work, struct radeon_device,
+अटल व्योम radeon_dpm_thermal_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा radeon_device *rdev =
+		container_of(work, काष्ठा radeon_device,
 			     pm.dpm.thermal.work);
-	/* switch to the thermal state */
-	enum radeon_pm_state_type dpm_state = POWER_STATE_TYPE_INTERNAL_THERMAL;
+	/* चयन to the thermal state */
+	क्रमागत radeon_pm_state_type dpm_state = POWER_STATE_TYPE_INTERNAL_THERMAL;
 
-	if (!rdev->pm.dpm_enabled)
-		return;
+	अगर (!rdev->pm.dpm_enabled)
+		वापस;
 
-	if (rdev->asic->pm.get_temperature) {
-		int temp = radeon_get_temperature(rdev);
+	अगर (rdev->asic->pm.get_temperature) अणु
+		पूर्णांक temp = radeon_get_temperature(rdev);
 
-		if (temp < rdev->pm.dpm.thermal.min_temp)
-			/* switch back the user state */
+		अगर (temp < rdev->pm.dpm.thermal.min_temp)
+			/* चयन back the user state */
 			dpm_state = rdev->pm.dpm.user_state;
-	} else {
-		if (rdev->pm.dpm.thermal.high_to_low)
-			/* switch back the user state */
+	पूर्ण अन्यथा अणु
+		अगर (rdev->pm.dpm.thermal.high_to_low)
+			/* चयन back the user state */
 			dpm_state = rdev->pm.dpm.user_state;
-	}
+	पूर्ण
 	mutex_lock(&rdev->pm.mutex);
-	if (dpm_state == POWER_STATE_TYPE_INTERNAL_THERMAL)
+	अगर (dpm_state == POWER_STATE_TYPE_INTERNAL_THERMAL)
 		rdev->pm.dpm.thermal_active = true;
-	else
+	अन्यथा
 		rdev->pm.dpm.thermal_active = false;
 	rdev->pm.dpm.state = dpm_state;
 	mutex_unlock(&rdev->pm.mutex);
 
-	radeon_pm_compute_clocks(rdev);
-}
+	radeon_pm_compute_घड़ीs(rdev);
+पूर्ण
 
-static bool radeon_dpm_single_display(struct radeon_device *rdev)
-{
+अटल bool radeon_dpm_single_display(काष्ठा radeon_device *rdev)
+अणु
 	bool single_display = (rdev->pm.dpm.new_active_crtc_count < 2) ?
 		true : false;
 
-	/* check if the vblank period is too short to adjust the mclk */
-	if (single_display && rdev->asic->dpm.vblank_too_short) {
-		if (radeon_dpm_vblank_too_short(rdev))
+	/* check अगर the vblank period is too लघु to adjust the mclk */
+	अगर (single_display && rdev->asic->dpm.vblank_too_लघु) अणु
+		अगर (radeon_dpm_vblank_too_लघु(rdev))
 			single_display = false;
-	}
+	पूर्ण
 
-	/* 120hz tends to be problematic even if they are under the
+	/* 120hz tends to be problematic even अगर they are under the
 	 * vblank limit.
 	 */
-	if (single_display && (r600_dpm_get_vrefresh(rdev) >= 120))
+	अगर (single_display && (r600_dpm_get_vrefresh(rdev) >= 120))
 		single_display = false;
 
-	return single_display;
-}
+	वापस single_display;
+पूर्ण
 
-static struct radeon_ps *radeon_dpm_pick_power_state(struct radeon_device *rdev,
-						     enum radeon_pm_state_type dpm_state)
-{
-	int i;
-	struct radeon_ps *ps;
+अटल काष्ठा radeon_ps *radeon_dpm_pick_घातer_state(काष्ठा radeon_device *rdev,
+						     क्रमागत radeon_pm_state_type dpm_state)
+अणु
+	पूर्णांक i;
+	काष्ठा radeon_ps *ps;
 	u32 ui_class;
 	bool single_display = radeon_dpm_single_display(rdev);
 
-	/* certain older asics have a separare 3D performance state,
-	 * so try that first if the user selected performance
+	/* certain older asics have a separare 3D perक्रमmance state,
+	 * so try that first अगर the user selected perक्रमmance
 	 */
-	if (dpm_state == POWER_STATE_TYPE_PERFORMANCE)
+	अगर (dpm_state == POWER_STATE_TYPE_PERFORMANCE)
 		dpm_state = POWER_STATE_TYPE_INTERNAL_3DPERF;
-	/* balanced states don't exist at the moment */
-	if (dpm_state == POWER_STATE_TYPE_BALANCED)
+	/* balanced states करोn't exist at the moment */
+	अगर (dpm_state == POWER_STATE_TYPE_BALANCED)
 		dpm_state = POWER_STATE_TYPE_PERFORMANCE;
 
 restart_search:
-	/* Pick the best power state based on current conditions */
-	for (i = 0; i < rdev->pm.dpm.num_ps; i++) {
+	/* Pick the best घातer state based on current conditions */
+	क्रम (i = 0; i < rdev->pm.dpm.num_ps; i++) अणु
 		ps = &rdev->pm.dpm.ps[i];
 		ui_class = ps->class & ATOM_PPLIB_CLASSIFICATION_UI_MASK;
-		switch (dpm_state) {
+		चयन (dpm_state) अणु
 		/* user states */
-		case POWER_STATE_TYPE_BATTERY:
-			if (ui_class == ATOM_PPLIB_CLASSIFICATION_UI_BATTERY) {
-				if (ps->caps & ATOM_PPLIB_SINGLE_DISPLAY_ONLY) {
-					if (single_display)
-						return ps;
-				} else
-					return ps;
-			}
-			break;
-		case POWER_STATE_TYPE_BALANCED:
-			if (ui_class == ATOM_PPLIB_CLASSIFICATION_UI_BALANCED) {
-				if (ps->caps & ATOM_PPLIB_SINGLE_DISPLAY_ONLY) {
-					if (single_display)
-						return ps;
-				} else
-					return ps;
-			}
-			break;
-		case POWER_STATE_TYPE_PERFORMANCE:
-			if (ui_class == ATOM_PPLIB_CLASSIFICATION_UI_PERFORMANCE) {
-				if (ps->caps & ATOM_PPLIB_SINGLE_DISPLAY_ONLY) {
-					if (single_display)
-						return ps;
-				} else
-					return ps;
-			}
-			break;
-		/* internal states */
-		case POWER_STATE_TYPE_INTERNAL_UVD:
-			if (rdev->pm.dpm.uvd_ps)
-				return rdev->pm.dpm.uvd_ps;
-			else
-				break;
-		case POWER_STATE_TYPE_INTERNAL_UVD_SD:
-			if (ps->class & ATOM_PPLIB_CLASSIFICATION_SDSTATE)
-				return ps;
-			break;
-		case POWER_STATE_TYPE_INTERNAL_UVD_HD:
-			if (ps->class & ATOM_PPLIB_CLASSIFICATION_HDSTATE)
-				return ps;
-			break;
-		case POWER_STATE_TYPE_INTERNAL_UVD_HD2:
-			if (ps->class & ATOM_PPLIB_CLASSIFICATION_HD2STATE)
-				return ps;
-			break;
-		case POWER_STATE_TYPE_INTERNAL_UVD_MVC:
-			if (ps->class2 & ATOM_PPLIB_CLASSIFICATION2_MVC)
-				return ps;
-			break;
-		case POWER_STATE_TYPE_INTERNAL_BOOT:
-			return rdev->pm.dpm.boot_ps;
-		case POWER_STATE_TYPE_INTERNAL_THERMAL:
-			if (ps->class & ATOM_PPLIB_CLASSIFICATION_THERMAL)
-				return ps;
-			break;
-		case POWER_STATE_TYPE_INTERNAL_ACPI:
-			if (ps->class & ATOM_PPLIB_CLASSIFICATION_ACPI)
-				return ps;
-			break;
-		case POWER_STATE_TYPE_INTERNAL_ULV:
-			if (ps->class2 & ATOM_PPLIB_CLASSIFICATION2_ULV)
-				return ps;
-			break;
-		case POWER_STATE_TYPE_INTERNAL_3DPERF:
-			if (ps->class & ATOM_PPLIB_CLASSIFICATION_3DPERFORMANCE)
-				return ps;
-			break;
-		default:
-			break;
-		}
-	}
-	/* use a fallback state if we didn't match */
-	switch (dpm_state) {
-	case POWER_STATE_TYPE_INTERNAL_UVD_SD:
+		हाल POWER_STATE_TYPE_BATTERY:
+			अगर (ui_class == ATOM_PPLIB_CLASSIFICATION_UI_BATTERY) अणु
+				अगर (ps->caps & ATOM_PPLIB_SINGLE_DISPLAY_ONLY) अणु
+					अगर (single_display)
+						वापस ps;
+				पूर्ण अन्यथा
+					वापस ps;
+			पूर्ण
+			अवरोध;
+		हाल POWER_STATE_TYPE_BALANCED:
+			अगर (ui_class == ATOM_PPLIB_CLASSIFICATION_UI_BALANCED) अणु
+				अगर (ps->caps & ATOM_PPLIB_SINGLE_DISPLAY_ONLY) अणु
+					अगर (single_display)
+						वापस ps;
+				पूर्ण अन्यथा
+					वापस ps;
+			पूर्ण
+			अवरोध;
+		हाल POWER_STATE_TYPE_PERFORMANCE:
+			अगर (ui_class == ATOM_PPLIB_CLASSIFICATION_UI_PERFORMANCE) अणु
+				अगर (ps->caps & ATOM_PPLIB_SINGLE_DISPLAY_ONLY) अणु
+					अगर (single_display)
+						वापस ps;
+				पूर्ण अन्यथा
+					वापस ps;
+			पूर्ण
+			अवरोध;
+		/* पूर्णांकernal states */
+		हाल POWER_STATE_TYPE_INTERNAL_UVD:
+			अगर (rdev->pm.dpm.uvd_ps)
+				वापस rdev->pm.dpm.uvd_ps;
+			अन्यथा
+				अवरोध;
+		हाल POWER_STATE_TYPE_INTERNAL_UVD_SD:
+			अगर (ps->class & ATOM_PPLIB_CLASSIFICATION_SDSTATE)
+				वापस ps;
+			अवरोध;
+		हाल POWER_STATE_TYPE_INTERNAL_UVD_HD:
+			अगर (ps->class & ATOM_PPLIB_CLASSIFICATION_HDSTATE)
+				वापस ps;
+			अवरोध;
+		हाल POWER_STATE_TYPE_INTERNAL_UVD_HD2:
+			अगर (ps->class & ATOM_PPLIB_CLASSIFICATION_HD2STATE)
+				वापस ps;
+			अवरोध;
+		हाल POWER_STATE_TYPE_INTERNAL_UVD_MVC:
+			अगर (ps->class2 & ATOM_PPLIB_CLASSIFICATION2_MVC)
+				वापस ps;
+			अवरोध;
+		हाल POWER_STATE_TYPE_INTERNAL_BOOT:
+			वापस rdev->pm.dpm.boot_ps;
+		हाल POWER_STATE_TYPE_INTERNAL_THERMAL:
+			अगर (ps->class & ATOM_PPLIB_CLASSIFICATION_THERMAL)
+				वापस ps;
+			अवरोध;
+		हाल POWER_STATE_TYPE_INTERNAL_ACPI:
+			अगर (ps->class & ATOM_PPLIB_CLASSIFICATION_ACPI)
+				वापस ps;
+			अवरोध;
+		हाल POWER_STATE_TYPE_INTERNAL_ULV:
+			अगर (ps->class2 & ATOM_PPLIB_CLASSIFICATION2_ULV)
+				वापस ps;
+			अवरोध;
+		हाल POWER_STATE_TYPE_INTERNAL_3DPERF:
+			अगर (ps->class & ATOM_PPLIB_CLASSIFICATION_3DPERFORMANCE)
+				वापस ps;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	/* use a fallback state अगर we didn't match */
+	चयन (dpm_state) अणु
+	हाल POWER_STATE_TYPE_INTERNAL_UVD_SD:
 		dpm_state = POWER_STATE_TYPE_INTERNAL_UVD_HD;
-		goto restart_search;
-	case POWER_STATE_TYPE_INTERNAL_UVD_HD:
-	case POWER_STATE_TYPE_INTERNAL_UVD_HD2:
-	case POWER_STATE_TYPE_INTERNAL_UVD_MVC:
-		if (rdev->pm.dpm.uvd_ps) {
-			return rdev->pm.dpm.uvd_ps;
-		} else {
+		जाओ restart_search;
+	हाल POWER_STATE_TYPE_INTERNAL_UVD_HD:
+	हाल POWER_STATE_TYPE_INTERNAL_UVD_HD2:
+	हाल POWER_STATE_TYPE_INTERNAL_UVD_MVC:
+		अगर (rdev->pm.dpm.uvd_ps) अणु
+			वापस rdev->pm.dpm.uvd_ps;
+		पूर्ण अन्यथा अणु
 			dpm_state = POWER_STATE_TYPE_PERFORMANCE;
-			goto restart_search;
-		}
-	case POWER_STATE_TYPE_INTERNAL_THERMAL:
+			जाओ restart_search;
+		पूर्ण
+	हाल POWER_STATE_TYPE_INTERNAL_THERMAL:
 		dpm_state = POWER_STATE_TYPE_INTERNAL_ACPI;
-		goto restart_search;
-	case POWER_STATE_TYPE_INTERNAL_ACPI:
+		जाओ restart_search;
+	हाल POWER_STATE_TYPE_INTERNAL_ACPI:
 		dpm_state = POWER_STATE_TYPE_BATTERY;
-		goto restart_search;
-	case POWER_STATE_TYPE_BATTERY:
-	case POWER_STATE_TYPE_BALANCED:
-	case POWER_STATE_TYPE_INTERNAL_3DPERF:
+		जाओ restart_search;
+	हाल POWER_STATE_TYPE_BATTERY:
+	हाल POWER_STATE_TYPE_BALANCED:
+	हाल POWER_STATE_TYPE_INTERNAL_3DPERF:
 		dpm_state = POWER_STATE_TYPE_PERFORMANCE;
-		goto restart_search;
-	default:
-		break;
-	}
+		जाओ restart_search;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void radeon_dpm_change_power_state_locked(struct radeon_device *rdev)
-{
-	int i;
-	struct radeon_ps *ps;
-	enum radeon_pm_state_type dpm_state;
-	int ret;
+अटल व्योम radeon_dpm_change_घातer_state_locked(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक i;
+	काष्ठा radeon_ps *ps;
+	क्रमागत radeon_pm_state_type dpm_state;
+	पूर्णांक ret;
 	bool single_display = radeon_dpm_single_display(rdev);
 
-	/* if dpm init failed */
-	if (!rdev->pm.dpm_enabled)
-		return;
+	/* अगर dpm init failed */
+	अगर (!rdev->pm.dpm_enabled)
+		वापस;
 
-	if (rdev->pm.dpm.user_state != rdev->pm.dpm.state) {
+	अगर (rdev->pm.dpm.user_state != rdev->pm.dpm.state) अणु
 		/* add other state override checks here */
-		if ((!rdev->pm.dpm.thermal_active) &&
+		अगर ((!rdev->pm.dpm.thermal_active) &&
 		    (!rdev->pm.dpm.uvd_active))
 			rdev->pm.dpm.state = rdev->pm.dpm.user_state;
-	}
+	पूर्ण
 	dpm_state = rdev->pm.dpm.state;
 
-	ps = radeon_dpm_pick_power_state(rdev, dpm_state);
-	if (ps)
+	ps = radeon_dpm_pick_घातer_state(rdev, dpm_state);
+	अगर (ps)
 		rdev->pm.dpm.requested_ps = ps;
-	else
-		return;
+	अन्यथा
+		वापस;
 
-	/* no need to reprogram if nothing changed unless we are on BTC+ */
-	if (rdev->pm.dpm.current_ps == rdev->pm.dpm.requested_ps) {
-		/* vce just modifies an existing state so force a change */
-		if (ps->vce_active != rdev->pm.dpm.vce_active)
-			goto force;
+	/* no need to reprogram अगर nothing changed unless we are on BTC+ */
+	अगर (rdev->pm.dpm.current_ps == rdev->pm.dpm.requested_ps) अणु
+		/* vce just modअगरies an existing state so क्रमce a change */
+		अगर (ps->vce_active != rdev->pm.dpm.vce_active)
+			जाओ क्रमce;
 		/* user has made a display change (such as timing) */
-		if (rdev->pm.dpm.single_display != single_display)
-			goto force;
-		if ((rdev->family < CHIP_BARTS) || (rdev->flags & RADEON_IS_IGP)) {
-			/* for pre-BTC and APUs if the num crtcs changed but state is the same,
-			 * all we need to do is update the display configuration.
+		अगर (rdev->pm.dpm.single_display != single_display)
+			जाओ क्रमce;
+		अगर ((rdev->family < CHIP_BARTS) || (rdev->flags & RADEON_IS_IGP)) अणु
+			/* क्रम pre-BTC and APUs अगर the num crtcs changed but state is the same,
+			 * all we need to करो is update the display configuration.
 			 */
-			if (rdev->pm.dpm.new_active_crtcs != rdev->pm.dpm.current_active_crtcs) {
-				/* update display watermarks based on new power state */
+			अगर (rdev->pm.dpm.new_active_crtcs != rdev->pm.dpm.current_active_crtcs) अणु
+				/* update display watermarks based on new घातer state */
 				radeon_bandwidth_update(rdev);
 				/* update displays */
 				radeon_dpm_display_configuration_changed(rdev);
 				rdev->pm.dpm.current_active_crtcs = rdev->pm.dpm.new_active_crtcs;
 				rdev->pm.dpm.current_active_crtc_count = rdev->pm.dpm.new_active_crtc_count;
-			}
-			return;
-		} else {
-			/* for BTC+ if the num crtcs hasn't changed and state is the same,
-			 * nothing to do, if the num crtcs is > 1 and state is the same,
+			पूर्ण
+			वापस;
+		पूर्ण अन्यथा अणु
+			/* क्रम BTC+ अगर the num crtcs hasn't changed and state is the same,
+			 * nothing to करो, अगर the num crtcs is > 1 and state is the same,
 			 * update display configuration.
 			 */
-			if (rdev->pm.dpm.new_active_crtcs ==
-			    rdev->pm.dpm.current_active_crtcs) {
-				return;
-			} else {
-				if ((rdev->pm.dpm.current_active_crtc_count > 1) &&
-				    (rdev->pm.dpm.new_active_crtc_count > 1)) {
-					/* update display watermarks based on new power state */
+			अगर (rdev->pm.dpm.new_active_crtcs ==
+			    rdev->pm.dpm.current_active_crtcs) अणु
+				वापस;
+			पूर्ण अन्यथा अणु
+				अगर ((rdev->pm.dpm.current_active_crtc_count > 1) &&
+				    (rdev->pm.dpm.new_active_crtc_count > 1)) अणु
+					/* update display watermarks based on new घातer state */
 					radeon_bandwidth_update(rdev);
 					/* update displays */
 					radeon_dpm_display_configuration_changed(rdev);
 					rdev->pm.dpm.current_active_crtcs = rdev->pm.dpm.new_active_crtcs;
 					rdev->pm.dpm.current_active_crtc_count = rdev->pm.dpm.new_active_crtc_count;
-					return;
-				}
-			}
-		}
-	}
+					वापस;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-force:
-	if (radeon_dpm == 1) {
-		printk("switching from power state:\n");
-		radeon_dpm_print_power_state(rdev, rdev->pm.dpm.current_ps);
-		printk("switching to power state:\n");
-		radeon_dpm_print_power_state(rdev, rdev->pm.dpm.requested_ps);
-	}
+क्रमce:
+	अगर (radeon_dpm == 1) अणु
+		prपूर्णांकk("switching from power state:\n");
+		radeon_dpm_prपूर्णांक_घातer_state(rdev, rdev->pm.dpm.current_ps);
+		prपूर्णांकk("switching to power state:\n");
+		radeon_dpm_prपूर्णांक_घातer_state(rdev, rdev->pm.dpm.requested_ps);
+	पूर्ण
 
-	down_write(&rdev->pm.mclk_lock);
+	करोwn_ग_लिखो(&rdev->pm.mclk_lock);
 	mutex_lock(&rdev->ring_lock);
 
 	/* update whether vce is active */
 	ps->vce_active = rdev->pm.dpm.vce_active;
 
-	ret = radeon_dpm_pre_set_power_state(rdev);
-	if (ret)
-		goto done;
+	ret = radeon_dpm_pre_set_घातer_state(rdev);
+	अगर (ret)
+		जाओ करोne;
 
-	/* update display watermarks based on new power state */
+	/* update display watermarks based on new घातer state */
 	radeon_bandwidth_update(rdev);
 	/* update displays */
 	radeon_dpm_display_configuration_changed(rdev);
 
-	/* wait for the rings to drain */
-	for (i = 0; i < RADEON_NUM_RINGS; i++) {
-		struct radeon_ring *ring = &rdev->ring[i];
-		if (ring->ready)
-			radeon_fence_wait_empty(rdev, i);
-	}
+	/* रुको क्रम the rings to drain */
+	क्रम (i = 0; i < RADEON_NUM_RINGS; i++) अणु
+		काष्ठा radeon_ring *ring = &rdev->ring[i];
+		अगर (ring->पढ़ोy)
+			radeon_fence_रुको_empty(rdev, i);
+	पूर्ण
 
-	/* program the new power state */
-	radeon_dpm_set_power_state(rdev);
+	/* program the new घातer state */
+	radeon_dpm_set_घातer_state(rdev);
 
-	/* update current power state */
+	/* update current घातer state */
 	rdev->pm.dpm.current_ps = rdev->pm.dpm.requested_ps;
 
-	radeon_dpm_post_set_power_state(rdev);
+	radeon_dpm_post_set_घातer_state(rdev);
 
 	rdev->pm.dpm.current_active_crtcs = rdev->pm.dpm.new_active_crtcs;
 	rdev->pm.dpm.current_active_crtc_count = rdev->pm.dpm.new_active_crtc_count;
 	rdev->pm.dpm.single_display = single_display;
 
-	if (rdev->asic->dpm.force_performance_level) {
-		if (rdev->pm.dpm.thermal_active) {
-			enum radeon_dpm_forced_level level = rdev->pm.dpm.forced_level;
-			/* force low perf level for thermal */
-			radeon_dpm_force_performance_level(rdev, RADEON_DPM_FORCED_LEVEL_LOW);
+	अगर (rdev->asic->dpm.क्रमce_perक्रमmance_level) अणु
+		अगर (rdev->pm.dpm.thermal_active) अणु
+			क्रमागत radeon_dpm_क्रमced_level level = rdev->pm.dpm.क्रमced_level;
+			/* क्रमce low perf level क्रम thermal */
+			radeon_dpm_क्रमce_perक्रमmance_level(rdev, RADEON_DPM_FORCED_LEVEL_LOW);
 			/* save the user's level */
-			rdev->pm.dpm.forced_level = level;
-		} else {
+			rdev->pm.dpm.क्रमced_level = level;
+		पूर्ण अन्यथा अणु
 			/* otherwise, user selected level */
-			radeon_dpm_force_performance_level(rdev, rdev->pm.dpm.forced_level);
-		}
-	}
+			radeon_dpm_क्रमce_perक्रमmance_level(rdev, rdev->pm.dpm.क्रमced_level);
+		पूर्ण
+	पूर्ण
 
-done:
+करोne:
 	mutex_unlock(&rdev->ring_lock);
-	up_write(&rdev->pm.mclk_lock);
-}
+	up_ग_लिखो(&rdev->pm.mclk_lock);
+पूर्ण
 
-void radeon_dpm_enable_uvd(struct radeon_device *rdev, bool enable)
-{
-	enum radeon_pm_state_type dpm_state;
+व्योम radeon_dpm_enable_uvd(काष्ठा radeon_device *rdev, bool enable)
+अणु
+	क्रमागत radeon_pm_state_type dpm_state;
 
-	if (rdev->asic->dpm.powergate_uvd) {
+	अगर (rdev->asic->dpm.घातergate_uvd) अणु
 		mutex_lock(&rdev->pm.mutex);
-		/* don't powergate anything if we
-		   have active but pause streams */
+		/* करोn't घातergate anything अगर we
+		   have active but छोड़ो streams */
 		enable |= rdev->pm.dpm.sd > 0;
 		enable |= rdev->pm.dpm.hd > 0;
 		/* enable/disable UVD */
-		radeon_dpm_powergate_uvd(rdev, !enable);
+		radeon_dpm_घातergate_uvd(rdev, !enable);
 		mutex_unlock(&rdev->pm.mutex);
-	} else {
-		if (enable) {
+	पूर्ण अन्यथा अणु
+		अगर (enable) अणु
 			mutex_lock(&rdev->pm.mutex);
 			rdev->pm.dpm.uvd_active = true;
-			/* disable this for now */
-#if 0
-			if ((rdev->pm.dpm.sd == 1) && (rdev->pm.dpm.hd == 0))
+			/* disable this क्रम now */
+#अगर 0
+			अगर ((rdev->pm.dpm.sd == 1) && (rdev->pm.dpm.hd == 0))
 				dpm_state = POWER_STATE_TYPE_INTERNAL_UVD_SD;
-			else if ((rdev->pm.dpm.sd == 2) && (rdev->pm.dpm.hd == 0))
+			अन्यथा अगर ((rdev->pm.dpm.sd == 2) && (rdev->pm.dpm.hd == 0))
 				dpm_state = POWER_STATE_TYPE_INTERNAL_UVD_HD;
-			else if ((rdev->pm.dpm.sd == 0) && (rdev->pm.dpm.hd == 1))
+			अन्यथा अगर ((rdev->pm.dpm.sd == 0) && (rdev->pm.dpm.hd == 1))
 				dpm_state = POWER_STATE_TYPE_INTERNAL_UVD_HD;
-			else if ((rdev->pm.dpm.sd == 0) && (rdev->pm.dpm.hd == 2))
+			अन्यथा अगर ((rdev->pm.dpm.sd == 0) && (rdev->pm.dpm.hd == 2))
 				dpm_state = POWER_STATE_TYPE_INTERNAL_UVD_HD2;
-			else
-#endif
+			अन्यथा
+#पूर्ण_अगर
 				dpm_state = POWER_STATE_TYPE_INTERNAL_UVD;
 			rdev->pm.dpm.state = dpm_state;
 			mutex_unlock(&rdev->pm.mutex);
-		} else {
+		पूर्ण अन्यथा अणु
 			mutex_lock(&rdev->pm.mutex);
 			rdev->pm.dpm.uvd_active = false;
 			mutex_unlock(&rdev->pm.mutex);
-		}
+		पूर्ण
 
-		radeon_pm_compute_clocks(rdev);
-	}
-}
+		radeon_pm_compute_घड़ीs(rdev);
+	पूर्ण
+पूर्ण
 
-void radeon_dpm_enable_vce(struct radeon_device *rdev, bool enable)
-{
-	if (enable) {
+व्योम radeon_dpm_enable_vce(काष्ठा radeon_device *rdev, bool enable)
+अणु
+	अगर (enable) अणु
 		mutex_lock(&rdev->pm.mutex);
 		rdev->pm.dpm.vce_active = true;
 		/* XXX select vce level based on ring/task */
 		rdev->pm.dpm.vce_level = RADEON_VCE_LEVEL_AC_ALL;
 		mutex_unlock(&rdev->pm.mutex);
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_lock(&rdev->pm.mutex);
 		rdev->pm.dpm.vce_active = false;
 		mutex_unlock(&rdev->pm.mutex);
-	}
+	पूर्ण
 
-	radeon_pm_compute_clocks(rdev);
-}
+	radeon_pm_compute_घड़ीs(rdev);
+पूर्ण
 
-static void radeon_pm_suspend_old(struct radeon_device *rdev)
-{
+अटल व्योम radeon_pm_suspend_old(काष्ठा radeon_device *rdev)
+अणु
 	mutex_lock(&rdev->pm.mutex);
-	if (rdev->pm.pm_method == PM_METHOD_DYNPM) {
-		if (rdev->pm.dynpm_state == DYNPM_STATE_ACTIVE)
+	अगर (rdev->pm.pm_method == PM_METHOD_DYNPM) अणु
+		अगर (rdev->pm.dynpm_state == DYNPM_STATE_ACTIVE)
 			rdev->pm.dynpm_state = DYNPM_STATE_SUSPENDED;
-	}
+	पूर्ण
 	mutex_unlock(&rdev->pm.mutex);
 
 	cancel_delayed_work_sync(&rdev->pm.dynpm_idle_work);
-}
+पूर्ण
 
-static void radeon_pm_suspend_dpm(struct radeon_device *rdev)
-{
+अटल व्योम radeon_pm_suspend_dpm(काष्ठा radeon_device *rdev)
+अणु
 	mutex_lock(&rdev->pm.mutex);
 	/* disable dpm */
 	radeon_dpm_disable(rdev);
-	/* reset the power state */
+	/* reset the घातer state */
 	rdev->pm.dpm.current_ps = rdev->pm.dpm.requested_ps = rdev->pm.dpm.boot_ps;
 	rdev->pm.dpm_enabled = false;
 	mutex_unlock(&rdev->pm.mutex);
-}
+पूर्ण
 
-void radeon_pm_suspend(struct radeon_device *rdev)
-{
-	if (rdev->pm.pm_method == PM_METHOD_DPM)
+व्योम radeon_pm_suspend(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->pm.pm_method == PM_METHOD_DPM)
 		radeon_pm_suspend_dpm(rdev);
-	else
+	अन्यथा
 		radeon_pm_suspend_old(rdev);
-}
+पूर्ण
 
-static void radeon_pm_resume_old(struct radeon_device *rdev)
-{
-	/* set up the default clocks if the MC ucode is loaded */
-	if ((rdev->family >= CHIP_BARTS) &&
+अटल व्योम radeon_pm_resume_old(काष्ठा radeon_device *rdev)
+अणु
+	/* set up the शेष घड़ीs अगर the MC ucode is loaded */
+	अगर ((rdev->family >= CHIP_BARTS) &&
 	    (rdev->family <= CHIP_CAYMAN) &&
-	    rdev->mc_fw) {
-		if (rdev->pm.default_vddc)
-			radeon_atom_set_voltage(rdev, rdev->pm.default_vddc,
+	    rdev->mc_fw) अणु
+		अगर (rdev->pm.शेष_vddc)
+			radeon_atom_set_voltage(rdev, rdev->pm.शेष_vddc,
 						SET_VOLTAGE_TYPE_ASIC_VDDC);
-		if (rdev->pm.default_vddci)
-			radeon_atom_set_voltage(rdev, rdev->pm.default_vddci,
+		अगर (rdev->pm.शेष_vddci)
+			radeon_atom_set_voltage(rdev, rdev->pm.शेष_vddci,
 						SET_VOLTAGE_TYPE_ASIC_VDDCI);
-		if (rdev->pm.default_sclk)
-			radeon_set_engine_clock(rdev, rdev->pm.default_sclk);
-		if (rdev->pm.default_mclk)
-			radeon_set_memory_clock(rdev, rdev->pm.default_mclk);
-	}
-	/* asic init will reset the default power state */
+		अगर (rdev->pm.शेष_sclk)
+			radeon_set_engine_घड़ी(rdev, rdev->pm.शेष_sclk);
+		अगर (rdev->pm.शेष_mclk)
+			radeon_set_memory_घड़ी(rdev, rdev->pm.शेष_mclk);
+	पूर्ण
+	/* asic init will reset the शेष घातer state */
 	mutex_lock(&rdev->pm.mutex);
-	rdev->pm.current_power_state_index = rdev->pm.default_power_state_index;
-	rdev->pm.current_clock_mode_index = 0;
-	rdev->pm.current_sclk = rdev->pm.default_sclk;
-	rdev->pm.current_mclk = rdev->pm.default_mclk;
-	if (rdev->pm.power_state) {
-		rdev->pm.current_vddc = rdev->pm.power_state[rdev->pm.default_power_state_index].clock_info[0].voltage.voltage;
-		rdev->pm.current_vddci = rdev->pm.power_state[rdev->pm.default_power_state_index].clock_info[0].voltage.vddci;
-	}
-	if (rdev->pm.pm_method == PM_METHOD_DYNPM
-	    && rdev->pm.dynpm_state == DYNPM_STATE_SUSPENDED) {
+	rdev->pm.current_घातer_state_index = rdev->pm.शेष_घातer_state_index;
+	rdev->pm.current_घड़ी_mode_index = 0;
+	rdev->pm.current_sclk = rdev->pm.शेष_sclk;
+	rdev->pm.current_mclk = rdev->pm.शेष_mclk;
+	अगर (rdev->pm.घातer_state) अणु
+		rdev->pm.current_vddc = rdev->pm.घातer_state[rdev->pm.शेष_घातer_state_index].घड़ी_info[0].voltage.voltage;
+		rdev->pm.current_vddci = rdev->pm.घातer_state[rdev->pm.शेष_घातer_state_index].घड़ी_info[0].voltage.vddci;
+	पूर्ण
+	अगर (rdev->pm.pm_method == PM_METHOD_DYNPM
+	    && rdev->pm.dynpm_state == DYNPM_STATE_SUSPENDED) अणु
 		rdev->pm.dynpm_state = DYNPM_STATE_ACTIVE;
 		schedule_delayed_work(&rdev->pm.dynpm_idle_work,
-				      msecs_to_jiffies(RADEON_IDLE_LOOP_MS));
-	}
+				      msecs_to_jअगरfies(RADEON_IDLE_LOOP_MS));
+	पूर्ण
 	mutex_unlock(&rdev->pm.mutex);
-	radeon_pm_compute_clocks(rdev);
-}
+	radeon_pm_compute_घड़ीs(rdev);
+पूर्ण
 
-static void radeon_pm_resume_dpm(struct radeon_device *rdev)
-{
-	int ret;
+अटल व्योम radeon_pm_resume_dpm(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक ret;
 
 	/* asic init will reset to the boot state */
 	mutex_lock(&rdev->pm.mutex);
@@ -1318,648 +1319,648 @@ static void radeon_pm_resume_dpm(struct radeon_device *rdev)
 	radeon_dpm_setup_asic(rdev);
 	ret = radeon_dpm_enable(rdev);
 	mutex_unlock(&rdev->pm.mutex);
-	if (ret)
-		goto dpm_resume_fail;
+	अगर (ret)
+		जाओ dpm_resume_fail;
 	rdev->pm.dpm_enabled = true;
-	return;
+	वापस;
 
 dpm_resume_fail:
 	DRM_ERROR("radeon: dpm resume failed\n");
-	if ((rdev->family >= CHIP_BARTS) &&
+	अगर ((rdev->family >= CHIP_BARTS) &&
 	    (rdev->family <= CHIP_CAYMAN) &&
-	    rdev->mc_fw) {
-		if (rdev->pm.default_vddc)
-			radeon_atom_set_voltage(rdev, rdev->pm.default_vddc,
+	    rdev->mc_fw) अणु
+		अगर (rdev->pm.शेष_vddc)
+			radeon_atom_set_voltage(rdev, rdev->pm.शेष_vddc,
 						SET_VOLTAGE_TYPE_ASIC_VDDC);
-		if (rdev->pm.default_vddci)
-			radeon_atom_set_voltage(rdev, rdev->pm.default_vddci,
+		अगर (rdev->pm.शेष_vddci)
+			radeon_atom_set_voltage(rdev, rdev->pm.शेष_vddci,
 						SET_VOLTAGE_TYPE_ASIC_VDDCI);
-		if (rdev->pm.default_sclk)
-			radeon_set_engine_clock(rdev, rdev->pm.default_sclk);
-		if (rdev->pm.default_mclk)
-			radeon_set_memory_clock(rdev, rdev->pm.default_mclk);
-	}
-}
+		अगर (rdev->pm.शेष_sclk)
+			radeon_set_engine_घड़ी(rdev, rdev->pm.शेष_sclk);
+		अगर (rdev->pm.शेष_mclk)
+			radeon_set_memory_घड़ी(rdev, rdev->pm.शेष_mclk);
+	पूर्ण
+पूर्ण
 
-void radeon_pm_resume(struct radeon_device *rdev)
-{
-	if (rdev->pm.pm_method == PM_METHOD_DPM)
+व्योम radeon_pm_resume(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->pm.pm_method == PM_METHOD_DPM)
 		radeon_pm_resume_dpm(rdev);
-	else
+	अन्यथा
 		radeon_pm_resume_old(rdev);
-}
+पूर्ण
 
-static int radeon_pm_init_old(struct radeon_device *rdev)
-{
-	int ret;
+अटल पूर्णांक radeon_pm_init_old(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक ret;
 
-	rdev->pm.profile = PM_PROFILE_DEFAULT;
+	rdev->pm.profile = PM_PROखाता_DEFAULT;
 	rdev->pm.dynpm_state = DYNPM_STATE_DISABLED;
 	rdev->pm.dynpm_planned_action = DYNPM_ACTION_NONE;
-	rdev->pm.dynpm_can_upclock = true;
-	rdev->pm.dynpm_can_downclock = true;
-	rdev->pm.default_sclk = rdev->clock.default_sclk;
-	rdev->pm.default_mclk = rdev->clock.default_mclk;
-	rdev->pm.current_sclk = rdev->clock.default_sclk;
-	rdev->pm.current_mclk = rdev->clock.default_mclk;
-	rdev->pm.int_thermal_type = THERMAL_TYPE_NONE;
+	rdev->pm.dynpm_can_upघड़ी = true;
+	rdev->pm.dynpm_can_करोwnघड़ी = true;
+	rdev->pm.शेष_sclk = rdev->घड़ी.शेष_sclk;
+	rdev->pm.शेष_mclk = rdev->घड़ी.शेष_mclk;
+	rdev->pm.current_sclk = rdev->घड़ी.शेष_sclk;
+	rdev->pm.current_mclk = rdev->घड़ी.शेष_mclk;
+	rdev->pm.पूर्णांक_thermal_type = THERMAL_TYPE_NONE;
 
-	if (rdev->bios) {
-		if (rdev->is_atom_bios)
-			radeon_atombios_get_power_modes(rdev);
-		else
-			radeon_combios_get_power_modes(rdev);
-		radeon_pm_print_states(rdev);
+	अगर (rdev->bios) अणु
+		अगर (rdev->is_atom_bios)
+			radeon_atombios_get_घातer_modes(rdev);
+		अन्यथा
+			radeon_combios_get_घातer_modes(rdev);
+		radeon_pm_prपूर्णांक_states(rdev);
 		radeon_pm_init_profile(rdev);
-		/* set up the default clocks if the MC ucode is loaded */
-		if ((rdev->family >= CHIP_BARTS) &&
+		/* set up the शेष घड़ीs अगर the MC ucode is loaded */
+		अगर ((rdev->family >= CHIP_BARTS) &&
 		    (rdev->family <= CHIP_CAYMAN) &&
-		    rdev->mc_fw) {
-			if (rdev->pm.default_vddc)
-				radeon_atom_set_voltage(rdev, rdev->pm.default_vddc,
+		    rdev->mc_fw) अणु
+			अगर (rdev->pm.शेष_vddc)
+				radeon_atom_set_voltage(rdev, rdev->pm.शेष_vddc,
 							SET_VOLTAGE_TYPE_ASIC_VDDC);
-			if (rdev->pm.default_vddci)
-				radeon_atom_set_voltage(rdev, rdev->pm.default_vddci,
+			अगर (rdev->pm.शेष_vddci)
+				radeon_atom_set_voltage(rdev, rdev->pm.शेष_vddci,
 							SET_VOLTAGE_TYPE_ASIC_VDDCI);
-			if (rdev->pm.default_sclk)
-				radeon_set_engine_clock(rdev, rdev->pm.default_sclk);
-			if (rdev->pm.default_mclk)
-				radeon_set_memory_clock(rdev, rdev->pm.default_mclk);
-		}
-	}
+			अगर (rdev->pm.शेष_sclk)
+				radeon_set_engine_घड़ी(rdev, rdev->pm.शेष_sclk);
+			अगर (rdev->pm.शेष_mclk)
+				radeon_set_memory_घड़ी(rdev, rdev->pm.शेष_mclk);
+		पूर्ण
+	पूर्ण
 
-	/* set up the internal thermal sensor if applicable */
+	/* set up the पूर्णांकernal thermal sensor अगर applicable */
 	ret = radeon_hwmon_init(rdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	INIT_DELAYED_WORK(&rdev->pm.dynpm_idle_work, radeon_dynpm_idle_work_handler);
 
-	if (rdev->pm.num_power_states > 1) {
+	अगर (rdev->pm.num_घातer_states > 1) अणु
 		radeon_debugfs_pm_init(rdev);
 		DRM_INFO("radeon: power management initialized\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void radeon_dpm_print_power_states(struct radeon_device *rdev)
-{
-	int i;
+अटल व्योम radeon_dpm_prपूर्णांक_घातer_states(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < rdev->pm.dpm.num_ps; i++) {
-		printk("== power state %d ==\n", i);
-		radeon_dpm_print_power_state(rdev, &rdev->pm.dpm.ps[i]);
-	}
-}
+	क्रम (i = 0; i < rdev->pm.dpm.num_ps; i++) अणु
+		prपूर्णांकk("== power state %d ==\n", i);
+		radeon_dpm_prपूर्णांक_घातer_state(rdev, &rdev->pm.dpm.ps[i]);
+	पूर्ण
+पूर्ण
 
-static int radeon_pm_init_dpm(struct radeon_device *rdev)
-{
-	int ret;
+अटल पूर्णांक radeon_pm_init_dpm(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक ret;
 
-	/* default to balanced state */
+	/* शेष to balanced state */
 	rdev->pm.dpm.state = POWER_STATE_TYPE_BALANCED;
 	rdev->pm.dpm.user_state = POWER_STATE_TYPE_BALANCED;
-	rdev->pm.dpm.forced_level = RADEON_DPM_FORCED_LEVEL_AUTO;
-	rdev->pm.default_sclk = rdev->clock.default_sclk;
-	rdev->pm.default_mclk = rdev->clock.default_mclk;
-	rdev->pm.current_sclk = rdev->clock.default_sclk;
-	rdev->pm.current_mclk = rdev->clock.default_mclk;
-	rdev->pm.int_thermal_type = THERMAL_TYPE_NONE;
+	rdev->pm.dpm.क्रमced_level = RADEON_DPM_FORCED_LEVEL_AUTO;
+	rdev->pm.शेष_sclk = rdev->घड़ी.शेष_sclk;
+	rdev->pm.शेष_mclk = rdev->घड़ी.शेष_mclk;
+	rdev->pm.current_sclk = rdev->घड़ी.शेष_sclk;
+	rdev->pm.current_mclk = rdev->घड़ी.शेष_mclk;
+	rdev->pm.पूर्णांक_thermal_type = THERMAL_TYPE_NONE;
 
-	if (rdev->bios && rdev->is_atom_bios)
-		radeon_atombios_get_power_modes(rdev);
-	else
-		return -EINVAL;
+	अगर (rdev->bios && rdev->is_atom_bios)
+		radeon_atombios_get_घातer_modes(rdev);
+	अन्यथा
+		वापस -EINVAL;
 
-	/* set up the internal thermal sensor if applicable */
+	/* set up the पूर्णांकernal thermal sensor अगर applicable */
 	ret = radeon_hwmon_init(rdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	INIT_WORK(&rdev->pm.dpm.thermal.work, radeon_dpm_thermal_work_handler);
 	mutex_lock(&rdev->pm.mutex);
 	radeon_dpm_init(rdev);
 	rdev->pm.dpm.current_ps = rdev->pm.dpm.requested_ps = rdev->pm.dpm.boot_ps;
-	if (radeon_dpm == 1)
-		radeon_dpm_print_power_states(rdev);
+	अगर (radeon_dpm == 1)
+		radeon_dpm_prपूर्णांक_घातer_states(rdev);
 	radeon_dpm_setup_asic(rdev);
 	ret = radeon_dpm_enable(rdev);
 	mutex_unlock(&rdev->pm.mutex);
-	if (ret)
-		goto dpm_failed;
+	अगर (ret)
+		जाओ dpm_failed;
 	rdev->pm.dpm_enabled = true;
 
 	radeon_debugfs_pm_init(rdev);
 
 	DRM_INFO("radeon: dpm initialized\n");
 
-	return 0;
+	वापस 0;
 
 dpm_failed:
 	rdev->pm.dpm_enabled = false;
-	if ((rdev->family >= CHIP_BARTS) &&
+	अगर ((rdev->family >= CHIP_BARTS) &&
 	    (rdev->family <= CHIP_CAYMAN) &&
-	    rdev->mc_fw) {
-		if (rdev->pm.default_vddc)
-			radeon_atom_set_voltage(rdev, rdev->pm.default_vddc,
+	    rdev->mc_fw) अणु
+		अगर (rdev->pm.शेष_vddc)
+			radeon_atom_set_voltage(rdev, rdev->pm.शेष_vddc,
 						SET_VOLTAGE_TYPE_ASIC_VDDC);
-		if (rdev->pm.default_vddci)
-			radeon_atom_set_voltage(rdev, rdev->pm.default_vddci,
+		अगर (rdev->pm.शेष_vddci)
+			radeon_atom_set_voltage(rdev, rdev->pm.शेष_vddci,
 						SET_VOLTAGE_TYPE_ASIC_VDDCI);
-		if (rdev->pm.default_sclk)
-			radeon_set_engine_clock(rdev, rdev->pm.default_sclk);
-		if (rdev->pm.default_mclk)
-			radeon_set_memory_clock(rdev, rdev->pm.default_mclk);
-	}
+		अगर (rdev->pm.शेष_sclk)
+			radeon_set_engine_घड़ी(rdev, rdev->pm.शेष_sclk);
+		अगर (rdev->pm.शेष_mclk)
+			radeon_set_memory_घड़ी(rdev, rdev->pm.शेष_mclk);
+	पूर्ण
 	DRM_ERROR("radeon: dpm initialization failed\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct radeon_dpm_quirk {
-	u32 chip_vendor;
+काष्ठा radeon_dpm_quirk अणु
+	u32 chip_venकरोr;
 	u32 chip_device;
-	u32 subsys_vendor;
+	u32 subsys_venकरोr;
 	u32 subsys_device;
-};
+पूर्ण;
 
 /* cards with dpm stability problems */
-static struct radeon_dpm_quirk radeon_dpm_quirk_list[] = {
+अटल काष्ठा radeon_dpm_quirk radeon_dpm_quirk_list[] = अणु
 	/* TURKS - https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1386534 */
-	{ PCI_VENDOR_ID_ATI, 0x6759, 0x1682, 0x3195 },
+	अणु PCI_VENDOR_ID_ATI, 0x6759, 0x1682, 0x3195 पूर्ण,
 	/* TURKS - https://bugzilla.kernel.org/show_bug.cgi?id=83731 */
-	{ PCI_VENDOR_ID_ATI, 0x6840, 0x1179, 0xfb81 },
-	{ 0, 0, 0, 0 },
-};
+	अणु PCI_VENDOR_ID_ATI, 0x6840, 0x1179, 0xfb81 पूर्ण,
+	अणु 0, 0, 0, 0 पूर्ण,
+पूर्ण;
 
-int radeon_pm_init(struct radeon_device *rdev)
-{
-	struct radeon_dpm_quirk *p = radeon_dpm_quirk_list;
+पूर्णांक radeon_pm_init(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा radeon_dpm_quirk *p = radeon_dpm_quirk_list;
 	bool disable_dpm = false;
 
 	/* Apply dpm quirks */
-	while (p && p->chip_device != 0) {
-		if (rdev->pdev->vendor == p->chip_vendor &&
+	जबतक (p && p->chip_device != 0) अणु
+		अगर (rdev->pdev->venकरोr == p->chip_venकरोr &&
 		    rdev->pdev->device == p->chip_device &&
-		    rdev->pdev->subsystem_vendor == p->subsys_vendor &&
-		    rdev->pdev->subsystem_device == p->subsys_device) {
+		    rdev->pdev->subप्रणाली_venकरोr == p->subsys_venकरोr &&
+		    rdev->pdev->subप्रणाली_device == p->subsys_device) अणु
 			disable_dpm = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		++p;
-	}
+	पूर्ण
 
 	/* enable dpm on rv6xx+ */
-	switch (rdev->family) {
-	case CHIP_RV610:
-	case CHIP_RV630:
-	case CHIP_RV620:
-	case CHIP_RV635:
-	case CHIP_RV670:
-	case CHIP_RS780:
-	case CHIP_RS880:
-	case CHIP_RV770:
+	चयन (rdev->family) अणु
+	हाल CHIP_RV610:
+	हाल CHIP_RV630:
+	हाल CHIP_RV620:
+	हाल CHIP_RV635:
+	हाल CHIP_RV670:
+	हाल CHIP_RS780:
+	हाल CHIP_RS880:
+	हाल CHIP_RV770:
 		/* DPM requires the RLC, RV770+ dGPU requires SMC */
-		if (!rdev->rlc_fw)
-			rdev->pm.pm_method = PM_METHOD_PROFILE;
-		else if ((rdev->family >= CHIP_RV770) &&
+		अगर (!rdev->rlc_fw)
+			rdev->pm.pm_method = PM_METHOD_PROखाता;
+		अन्यथा अगर ((rdev->family >= CHIP_RV770) &&
 			 (!(rdev->flags & RADEON_IS_IGP)) &&
 			 (!rdev->smc_fw))
-			rdev->pm.pm_method = PM_METHOD_PROFILE;
-		else if (radeon_dpm == 1)
+			rdev->pm.pm_method = PM_METHOD_PROखाता;
+		अन्यथा अगर (radeon_dpm == 1)
 			rdev->pm.pm_method = PM_METHOD_DPM;
-		else
-			rdev->pm.pm_method = PM_METHOD_PROFILE;
-		break;
-	case CHIP_RV730:
-	case CHIP_RV710:
-	case CHIP_RV740:
-	case CHIP_CEDAR:
-	case CHIP_REDWOOD:
-	case CHIP_JUNIPER:
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
-	case CHIP_PALM:
-	case CHIP_SUMO:
-	case CHIP_SUMO2:
-	case CHIP_BARTS:
-	case CHIP_TURKS:
-	case CHIP_CAICOS:
-	case CHIP_CAYMAN:
-	case CHIP_ARUBA:
-	case CHIP_TAHITI:
-	case CHIP_PITCAIRN:
-	case CHIP_VERDE:
-	case CHIP_OLAND:
-	case CHIP_HAINAN:
-	case CHIP_BONAIRE:
-	case CHIP_KABINI:
-	case CHIP_KAVERI:
-	case CHIP_HAWAII:
-	case CHIP_MULLINS:
+		अन्यथा
+			rdev->pm.pm_method = PM_METHOD_PROखाता;
+		अवरोध;
+	हाल CHIP_RV730:
+	हाल CHIP_RV710:
+	हाल CHIP_RV740:
+	हाल CHIP_CEDAR:
+	हाल CHIP_REDWOOD:
+	हाल CHIP_JUNIPER:
+	हाल CHIP_CYPRESS:
+	हाल CHIP_HEMLOCK:
+	हाल CHIP_PALM:
+	हाल CHIP_SUMO:
+	हाल CHIP_SUMO2:
+	हाल CHIP_BARTS:
+	हाल CHIP_TURKS:
+	हाल CHIP_CAICOS:
+	हाल CHIP_CAYMAN:
+	हाल CHIP_ARUBA:
+	हाल CHIP_TAHITI:
+	हाल CHIP_PITCAIRN:
+	हाल CHIP_VERDE:
+	हाल CHIP_OLAND:
+	हाल CHIP_HAIन_अंक:
+	हाल CHIP_BONAIRE:
+	हाल CHIP_KABINI:
+	हाल CHIP_KAVERI:
+	हाल CHIP_HAWAII:
+	हाल CHIP_MULLINS:
 		/* DPM requires the RLC, RV770+ dGPU requires SMC */
-		if (!rdev->rlc_fw)
-			rdev->pm.pm_method = PM_METHOD_PROFILE;
-		else if ((rdev->family >= CHIP_RV770) &&
+		अगर (!rdev->rlc_fw)
+			rdev->pm.pm_method = PM_METHOD_PROखाता;
+		अन्यथा अगर ((rdev->family >= CHIP_RV770) &&
 			 (!(rdev->flags & RADEON_IS_IGP)) &&
 			 (!rdev->smc_fw))
-			rdev->pm.pm_method = PM_METHOD_PROFILE;
-		else if (disable_dpm && (radeon_dpm == -1))
-			rdev->pm.pm_method = PM_METHOD_PROFILE;
-		else if (radeon_dpm == 0)
-			rdev->pm.pm_method = PM_METHOD_PROFILE;
-		else
+			rdev->pm.pm_method = PM_METHOD_PROखाता;
+		अन्यथा अगर (disable_dpm && (radeon_dpm == -1))
+			rdev->pm.pm_method = PM_METHOD_PROखाता;
+		अन्यथा अगर (radeon_dpm == 0)
+			rdev->pm.pm_method = PM_METHOD_PROखाता;
+		अन्यथा
 			rdev->pm.pm_method = PM_METHOD_DPM;
-		break;
-	default:
-		/* default to profile method */
-		rdev->pm.pm_method = PM_METHOD_PROFILE;
-		break;
-	}
+		अवरोध;
+	शेष:
+		/* शेष to profile method */
+		rdev->pm.pm_method = PM_METHOD_PROखाता;
+		अवरोध;
+	पूर्ण
 
-	if (rdev->pm.pm_method == PM_METHOD_DPM)
-		return radeon_pm_init_dpm(rdev);
-	else
-		return radeon_pm_init_old(rdev);
-}
+	अगर (rdev->pm.pm_method == PM_METHOD_DPM)
+		वापस radeon_pm_init_dpm(rdev);
+	अन्यथा
+		वापस radeon_pm_init_old(rdev);
+पूर्ण
 
-int radeon_pm_late_init(struct radeon_device *rdev)
-{
-	int ret = 0;
+पूर्णांक radeon_pm_late_init(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक ret = 0;
 
-	if (rdev->pm.pm_method == PM_METHOD_DPM) {
-		if (rdev->pm.dpm_enabled) {
-			if (!rdev->pm.sysfs_initialized) {
-				ret = device_create_file(rdev->dev, &dev_attr_power_dpm_state);
-				if (ret)
+	अगर (rdev->pm.pm_method == PM_METHOD_DPM) अणु
+		अगर (rdev->pm.dpm_enabled) अणु
+			अगर (!rdev->pm.sysfs_initialized) अणु
+				ret = device_create_file(rdev->dev, &dev_attr_घातer_dpm_state);
+				अगर (ret)
 					DRM_ERROR("failed to create device file for dpm state\n");
-				ret = device_create_file(rdev->dev, &dev_attr_power_dpm_force_performance_level);
-				if (ret)
+				ret = device_create_file(rdev->dev, &dev_attr_घातer_dpm_क्रमce_perक्रमmance_level);
+				अगर (ret)
 					DRM_ERROR("failed to create device file for dpm state\n");
-				/* XXX: these are noops for dpm but are here for backwards compat */
-				ret = device_create_file(rdev->dev, &dev_attr_power_profile);
-				if (ret)
+				/* XXX: these are noops क्रम dpm but are here क्रम backwards compat */
+				ret = device_create_file(rdev->dev, &dev_attr_घातer_profile);
+				अगर (ret)
 					DRM_ERROR("failed to create device file for power profile\n");
-				ret = device_create_file(rdev->dev, &dev_attr_power_method);
-				if (ret)
+				ret = device_create_file(rdev->dev, &dev_attr_घातer_method);
+				अगर (ret)
 					DRM_ERROR("failed to create device file for power method\n");
 				rdev->pm.sysfs_initialized = true;
-			}
+			पूर्ण
 
 			mutex_lock(&rdev->pm.mutex);
 			ret = radeon_dpm_late_enable(rdev);
 			mutex_unlock(&rdev->pm.mutex);
-			if (ret) {
+			अगर (ret) अणु
 				rdev->pm.dpm_enabled = false;
 				DRM_ERROR("radeon_pm_late_init failed, disabling dpm\n");
-			} else {
-				/* set the dpm state for PX since there won't be
+			पूर्ण अन्यथा अणु
+				/* set the dpm state क्रम PX since there won't be
 				 * a modeset to call this.
 				 */
-				radeon_pm_compute_clocks(rdev);
-			}
-		}
-	} else {
-		if ((rdev->pm.num_power_states > 1) &&
-		    (!rdev->pm.sysfs_initialized)) {
+				radeon_pm_compute_घड़ीs(rdev);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर ((rdev->pm.num_घातer_states > 1) &&
+		    (!rdev->pm.sysfs_initialized)) अणु
 			/* where's the best place to put these? */
-			ret = device_create_file(rdev->dev, &dev_attr_power_profile);
-			if (ret)
+			ret = device_create_file(rdev->dev, &dev_attr_घातer_profile);
+			अगर (ret)
 				DRM_ERROR("failed to create device file for power profile\n");
-			ret = device_create_file(rdev->dev, &dev_attr_power_method);
-			if (ret)
+			ret = device_create_file(rdev->dev, &dev_attr_घातer_method);
+			अगर (ret)
 				DRM_ERROR("failed to create device file for power method\n");
-			if (!ret)
+			अगर (!ret)
 				rdev->pm.sysfs_initialized = true;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void radeon_pm_fini_old(struct radeon_device *rdev)
-{
-	if (rdev->pm.num_power_states > 1) {
+अटल व्योम radeon_pm_fini_old(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->pm.num_घातer_states > 1) अणु
 		mutex_lock(&rdev->pm.mutex);
-		if (rdev->pm.pm_method == PM_METHOD_PROFILE) {
-			rdev->pm.profile = PM_PROFILE_DEFAULT;
+		अगर (rdev->pm.pm_method == PM_METHOD_PROखाता) अणु
+			rdev->pm.profile = PM_PROखाता_DEFAULT;
 			radeon_pm_update_profile(rdev);
-			radeon_pm_set_clocks(rdev);
-		} else if (rdev->pm.pm_method == PM_METHOD_DYNPM) {
-			/* reset default clocks */
+			radeon_pm_set_घड़ीs(rdev);
+		पूर्ण अन्यथा अगर (rdev->pm.pm_method == PM_METHOD_DYNPM) अणु
+			/* reset शेष घड़ीs */
 			rdev->pm.dynpm_state = DYNPM_STATE_DISABLED;
 			rdev->pm.dynpm_planned_action = DYNPM_ACTION_DEFAULT;
-			radeon_pm_set_clocks(rdev);
-		}
+			radeon_pm_set_घड़ीs(rdev);
+		पूर्ण
 		mutex_unlock(&rdev->pm.mutex);
 
 		cancel_delayed_work_sync(&rdev->pm.dynpm_idle_work);
 
-		device_remove_file(rdev->dev, &dev_attr_power_profile);
-		device_remove_file(rdev->dev, &dev_attr_power_method);
-	}
+		device_हटाओ_file(rdev->dev, &dev_attr_घातer_profile);
+		device_हटाओ_file(rdev->dev, &dev_attr_घातer_method);
+	पूर्ण
 
 	radeon_hwmon_fini(rdev);
-	kfree(rdev->pm.power_state);
-}
+	kमुक्त(rdev->pm.घातer_state);
+पूर्ण
 
-static void radeon_pm_fini_dpm(struct radeon_device *rdev)
-{
-	if (rdev->pm.num_power_states > 1) {
+अटल व्योम radeon_pm_fini_dpm(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->pm.num_घातer_states > 1) अणु
 		mutex_lock(&rdev->pm.mutex);
 		radeon_dpm_disable(rdev);
 		mutex_unlock(&rdev->pm.mutex);
 
-		device_remove_file(rdev->dev, &dev_attr_power_dpm_state);
-		device_remove_file(rdev->dev, &dev_attr_power_dpm_force_performance_level);
+		device_हटाओ_file(rdev->dev, &dev_attr_घातer_dpm_state);
+		device_हटाओ_file(rdev->dev, &dev_attr_घातer_dpm_क्रमce_perक्रमmance_level);
 		/* XXX backwards compat */
-		device_remove_file(rdev->dev, &dev_attr_power_profile);
-		device_remove_file(rdev->dev, &dev_attr_power_method);
-	}
+		device_हटाओ_file(rdev->dev, &dev_attr_घातer_profile);
+		device_हटाओ_file(rdev->dev, &dev_attr_घातer_method);
+	पूर्ण
 	radeon_dpm_fini(rdev);
 
 	radeon_hwmon_fini(rdev);
-	kfree(rdev->pm.power_state);
-}
+	kमुक्त(rdev->pm.घातer_state);
+पूर्ण
 
-void radeon_pm_fini(struct radeon_device *rdev)
-{
-	if (rdev->pm.pm_method == PM_METHOD_DPM)
+व्योम radeon_pm_fini(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->pm.pm_method == PM_METHOD_DPM)
 		radeon_pm_fini_dpm(rdev);
-	else
+	अन्यथा
 		radeon_pm_fini_old(rdev);
-}
+पूर्ण
 
-static void radeon_pm_compute_clocks_old(struct radeon_device *rdev)
-{
-	struct drm_device *ddev = rdev->ddev;
-	struct drm_crtc *crtc;
-	struct radeon_crtc *radeon_crtc;
+अटल व्योम radeon_pm_compute_घड़ीs_old(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा drm_device *ddev = rdev->ddev;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा radeon_crtc *radeon_crtc;
 
-	if (rdev->pm.num_power_states < 2)
-		return;
+	अगर (rdev->pm.num_घातer_states < 2)
+		वापस;
 
 	mutex_lock(&rdev->pm.mutex);
 
 	rdev->pm.active_crtcs = 0;
 	rdev->pm.active_crtc_count = 0;
-	if (rdev->num_crtc && rdev->mode_info.mode_config_initialized) {
-		list_for_each_entry(crtc,
-				    &ddev->mode_config.crtc_list, head) {
+	अगर (rdev->num_crtc && rdev->mode_info.mode_config_initialized) अणु
+		list_क्रम_each_entry(crtc,
+				    &ddev->mode_config.crtc_list, head) अणु
 			radeon_crtc = to_radeon_crtc(crtc);
-			if (radeon_crtc->enabled) {
+			अगर (radeon_crtc->enabled) अणु
 				rdev->pm.active_crtcs |= (1 << radeon_crtc->crtc_id);
 				rdev->pm.active_crtc_count++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (rdev->pm.pm_method == PM_METHOD_PROFILE) {
+	अगर (rdev->pm.pm_method == PM_METHOD_PROखाता) अणु
 		radeon_pm_update_profile(rdev);
-		radeon_pm_set_clocks(rdev);
-	} else if (rdev->pm.pm_method == PM_METHOD_DYNPM) {
-		if (rdev->pm.dynpm_state != DYNPM_STATE_DISABLED) {
-			if (rdev->pm.active_crtc_count > 1) {
-				if (rdev->pm.dynpm_state == DYNPM_STATE_ACTIVE) {
+		radeon_pm_set_घड़ीs(rdev);
+	पूर्ण अन्यथा अगर (rdev->pm.pm_method == PM_METHOD_DYNPM) अणु
+		अगर (rdev->pm.dynpm_state != DYNPM_STATE_DISABLED) अणु
+			अगर (rdev->pm.active_crtc_count > 1) अणु
+				अगर (rdev->pm.dynpm_state == DYNPM_STATE_ACTIVE) अणु
 					cancel_delayed_work(&rdev->pm.dynpm_idle_work);
 
 					rdev->pm.dynpm_state = DYNPM_STATE_PAUSED;
 					rdev->pm.dynpm_planned_action = DYNPM_ACTION_DEFAULT;
 					radeon_pm_get_dynpm_state(rdev);
-					radeon_pm_set_clocks(rdev);
+					radeon_pm_set_घड़ीs(rdev);
 
 					DRM_DEBUG_DRIVER("radeon: dynamic power management deactivated\n");
-				}
-			} else if (rdev->pm.active_crtc_count == 1) {
-				/* TODO: Increase clocks if needed for current mode */
+				पूर्ण
+			पूर्ण अन्यथा अगर (rdev->pm.active_crtc_count == 1) अणु
+				/* TODO: Increase घड़ीs अगर needed क्रम current mode */
 
-				if (rdev->pm.dynpm_state == DYNPM_STATE_MINIMUM) {
+				अगर (rdev->pm.dynpm_state == DYNPM_STATE_MINIMUM) अणु
 					rdev->pm.dynpm_state = DYNPM_STATE_ACTIVE;
 					rdev->pm.dynpm_planned_action = DYNPM_ACTION_UPCLOCK;
 					radeon_pm_get_dynpm_state(rdev);
-					radeon_pm_set_clocks(rdev);
+					radeon_pm_set_घड़ीs(rdev);
 
 					schedule_delayed_work(&rdev->pm.dynpm_idle_work,
-							      msecs_to_jiffies(RADEON_IDLE_LOOP_MS));
-				} else if (rdev->pm.dynpm_state == DYNPM_STATE_PAUSED) {
+							      msecs_to_jअगरfies(RADEON_IDLE_LOOP_MS));
+				पूर्ण अन्यथा अगर (rdev->pm.dynpm_state == DYNPM_STATE_PAUSED) अणु
 					rdev->pm.dynpm_state = DYNPM_STATE_ACTIVE;
 					schedule_delayed_work(&rdev->pm.dynpm_idle_work,
-							      msecs_to_jiffies(RADEON_IDLE_LOOP_MS));
+							      msecs_to_jअगरfies(RADEON_IDLE_LOOP_MS));
 					DRM_DEBUG_DRIVER("radeon: dynamic power management activated\n");
-				}
-			} else { /* count == 0 */
-				if (rdev->pm.dynpm_state != DYNPM_STATE_MINIMUM) {
+				पूर्ण
+			पूर्ण अन्यथा अणु /* count == 0 */
+				अगर (rdev->pm.dynpm_state != DYNPM_STATE_MINIMUM) अणु
 					cancel_delayed_work(&rdev->pm.dynpm_idle_work);
 
 					rdev->pm.dynpm_state = DYNPM_STATE_MINIMUM;
 					rdev->pm.dynpm_planned_action = DYNPM_ACTION_MINIMUM;
 					radeon_pm_get_dynpm_state(rdev);
-					radeon_pm_set_clocks(rdev);
-				}
-			}
-		}
-	}
+					radeon_pm_set_घड़ीs(rdev);
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&rdev->pm.mutex);
-}
+पूर्ण
 
-static void radeon_pm_compute_clocks_dpm(struct radeon_device *rdev)
-{
-	struct drm_device *ddev = rdev->ddev;
-	struct drm_crtc *crtc;
-	struct radeon_crtc *radeon_crtc;
-	struct radeon_connector *radeon_connector;
+अटल व्योम radeon_pm_compute_घड़ीs_dpm(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा drm_device *ddev = rdev->ddev;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा radeon_crtc *radeon_crtc;
+	काष्ठा radeon_connector *radeon_connector;
 
-	if (!rdev->pm.dpm_enabled)
-		return;
+	अगर (!rdev->pm.dpm_enabled)
+		वापस;
 
 	mutex_lock(&rdev->pm.mutex);
 
 	/* update active crtc counts */
 	rdev->pm.dpm.new_active_crtcs = 0;
 	rdev->pm.dpm.new_active_crtc_count = 0;
-	rdev->pm.dpm.high_pixelclock_count = 0;
-	if (rdev->num_crtc && rdev->mode_info.mode_config_initialized) {
-		list_for_each_entry(crtc,
-				    &ddev->mode_config.crtc_list, head) {
+	rdev->pm.dpm.high_pixelघड़ी_count = 0;
+	अगर (rdev->num_crtc && rdev->mode_info.mode_config_initialized) अणु
+		list_क्रम_each_entry(crtc,
+				    &ddev->mode_config.crtc_list, head) अणु
 			radeon_crtc = to_radeon_crtc(crtc);
-			if (crtc->enabled) {
+			अगर (crtc->enabled) अणु
 				rdev->pm.dpm.new_active_crtcs |= (1 << radeon_crtc->crtc_id);
 				rdev->pm.dpm.new_active_crtc_count++;
-				if (!radeon_crtc->connector)
-					continue;
+				अगर (!radeon_crtc->connector)
+					जारी;
 
 				radeon_connector = to_radeon_connector(radeon_crtc->connector);
-				if (radeon_connector->pixelclock_for_modeset > 297000)
-					rdev->pm.dpm.high_pixelclock_count++;
-			}
-		}
-	}
+				अगर (radeon_connector->pixelघड़ी_क्रम_modeset > 297000)
+					rdev->pm.dpm.high_pixelघड़ी_count++;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* update battery/ac status */
-	if (power_supply_is_system_supplied() > 0)
-		rdev->pm.dpm.ac_power = true;
-	else
-		rdev->pm.dpm.ac_power = false;
+	अगर (घातer_supply_is_प्रणाली_supplied() > 0)
+		rdev->pm.dpm.ac_घातer = true;
+	अन्यथा
+		rdev->pm.dpm.ac_घातer = false;
 
-	radeon_dpm_change_power_state_locked(rdev);
+	radeon_dpm_change_घातer_state_locked(rdev);
 
 	mutex_unlock(&rdev->pm.mutex);
 
-}
+पूर्ण
 
-void radeon_pm_compute_clocks(struct radeon_device *rdev)
-{
-	if (rdev->pm.pm_method == PM_METHOD_DPM)
-		radeon_pm_compute_clocks_dpm(rdev);
-	else
-		radeon_pm_compute_clocks_old(rdev);
-}
+व्योम radeon_pm_compute_घड़ीs(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->pm.pm_method == PM_METHOD_DPM)
+		radeon_pm_compute_घड़ीs_dpm(rdev);
+	अन्यथा
+		radeon_pm_compute_घड़ीs_old(rdev);
+पूर्ण
 
-static bool radeon_pm_in_vbl(struct radeon_device *rdev)
-{
-	int  crtc, vpos, hpos, vbl_status;
+अटल bool radeon_pm_in_vbl(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक  crtc, vpos, hpos, vbl_status;
 	bool in_vbl = true;
 
 	/* Iterate over all active crtc's. All crtc's must be in vblank,
-	 * otherwise return in_vbl == false.
+	 * otherwise वापस in_vbl == false.
 	 */
-	for (crtc = 0; (crtc < rdev->num_crtc) && in_vbl; crtc++) {
-		if (rdev->pm.active_crtcs & (1 << crtc)) {
+	क्रम (crtc = 0; (crtc < rdev->num_crtc) && in_vbl; crtc++) अणु
+		अगर (rdev->pm.active_crtcs & (1 << crtc)) अणु
 			vbl_status = radeon_get_crtc_scanoutpos(rdev->ddev,
 								crtc,
 								USE_REAL_VBLANKSTART,
-								&vpos, &hpos, NULL, NULL,
+								&vpos, &hpos, शून्य, शून्य,
 								&rdev->mode_info.crtcs[crtc]->base.hwmode);
-			if ((vbl_status & DRM_SCANOUTPOS_VALID) &&
+			अगर ((vbl_status & DRM_SCANOUTPOS_VALID) &&
 			    !(vbl_status & DRM_SCANOUTPOS_IN_VBLANK))
 				in_vbl = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return in_vbl;
-}
+	वापस in_vbl;
+पूर्ण
 
-static bool radeon_pm_debug_check_in_vbl(struct radeon_device *rdev, bool finish)
-{
+अटल bool radeon_pm_debug_check_in_vbl(काष्ठा radeon_device *rdev, bool finish)
+अणु
 	u32 stat_crtc = 0;
 	bool in_vbl = radeon_pm_in_vbl(rdev);
 
-	if (!in_vbl)
+	अगर (!in_vbl)
 		DRM_DEBUG_DRIVER("not in vbl for pm change %08x at %s\n", stat_crtc,
 			 finish ? "exit" : "entry");
-	return in_vbl;
-}
+	वापस in_vbl;
+पूर्ण
 
-static void radeon_dynpm_idle_work_handler(struct work_struct *work)
-{
-	struct radeon_device *rdev;
-	int resched;
-	rdev = container_of(work, struct radeon_device,
+अटल व्योम radeon_dynpm_idle_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा radeon_device *rdev;
+	पूर्णांक resched;
+	rdev = container_of(work, काष्ठा radeon_device,
 				pm.dynpm_idle_work.work);
 
-	resched = ttm_bo_lock_delayed_workqueue(&rdev->mman.bdev);
+	resched = tपंचांग_bo_lock_delayed_workqueue(&rdev->mman.bdev);
 	mutex_lock(&rdev->pm.mutex);
-	if (rdev->pm.dynpm_state == DYNPM_STATE_ACTIVE) {
-		int not_processed = 0;
-		int i;
+	अगर (rdev->pm.dynpm_state == DYNPM_STATE_ACTIVE) अणु
+		पूर्णांक not_processed = 0;
+		पूर्णांक i;
 
-		for (i = 0; i < RADEON_NUM_RINGS; ++i) {
-			struct radeon_ring *ring = &rdev->ring[i];
+		क्रम (i = 0; i < RADEON_NUM_RINGS; ++i) अणु
+			काष्ठा radeon_ring *ring = &rdev->ring[i];
 
-			if (ring->ready) {
+			अगर (ring->पढ़ोy) अणु
 				not_processed += radeon_fence_count_emitted(rdev, i);
-				if (not_processed >= 3)
-					break;
-			}
-		}
+				अगर (not_processed >= 3)
+					अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (not_processed >= 3) { /* should upclock */
-			if (rdev->pm.dynpm_planned_action == DYNPM_ACTION_DOWNCLOCK) {
+		अगर (not_processed >= 3) अणु /* should upघड़ी */
+			अगर (rdev->pm.dynpm_planned_action == DYNPM_ACTION_DOWNCLOCK) अणु
 				rdev->pm.dynpm_planned_action = DYNPM_ACTION_NONE;
-			} else if (rdev->pm.dynpm_planned_action == DYNPM_ACTION_NONE &&
-				   rdev->pm.dynpm_can_upclock) {
+			पूर्ण अन्यथा अगर (rdev->pm.dynpm_planned_action == DYNPM_ACTION_NONE &&
+				   rdev->pm.dynpm_can_upघड़ी) अणु
 				rdev->pm.dynpm_planned_action =
 					DYNPM_ACTION_UPCLOCK;
-				rdev->pm.dynpm_action_timeout = jiffies +
-				msecs_to_jiffies(RADEON_RECLOCK_DELAY_MS);
-			}
-		} else if (not_processed == 0) { /* should downclock */
-			if (rdev->pm.dynpm_planned_action == DYNPM_ACTION_UPCLOCK) {
+				rdev->pm.dynpm_action_समयout = jअगरfies +
+				msecs_to_jअगरfies(RADEON_RECLOCK_DELAY_MS);
+			पूर्ण
+		पूर्ण अन्यथा अगर (not_processed == 0) अणु /* should करोwnघड़ी */
+			अगर (rdev->pm.dynpm_planned_action == DYNPM_ACTION_UPCLOCK) अणु
 				rdev->pm.dynpm_planned_action = DYNPM_ACTION_NONE;
-			} else if (rdev->pm.dynpm_planned_action == DYNPM_ACTION_NONE &&
-				   rdev->pm.dynpm_can_downclock) {
+			पूर्ण अन्यथा अगर (rdev->pm.dynpm_planned_action == DYNPM_ACTION_NONE &&
+				   rdev->pm.dynpm_can_करोwnघड़ी) अणु
 				rdev->pm.dynpm_planned_action =
 					DYNPM_ACTION_DOWNCLOCK;
-				rdev->pm.dynpm_action_timeout = jiffies +
-				msecs_to_jiffies(RADEON_RECLOCK_DELAY_MS);
-			}
-		}
+				rdev->pm.dynpm_action_समयout = jअगरfies +
+				msecs_to_jअगरfies(RADEON_RECLOCK_DELAY_MS);
+			पूर्ण
+		पूर्ण
 
-		/* Note, radeon_pm_set_clocks is called with static_switch set
-		 * to false since we want to wait for vbl to avoid flicker.
+		/* Note, radeon_pm_set_घड़ीs is called with अटल_चयन set
+		 * to false since we want to रुको क्रम vbl to aव्योम flicker.
 		 */
-		if (rdev->pm.dynpm_planned_action != DYNPM_ACTION_NONE &&
-		    jiffies > rdev->pm.dynpm_action_timeout) {
+		अगर (rdev->pm.dynpm_planned_action != DYNPM_ACTION_NONE &&
+		    jअगरfies > rdev->pm.dynpm_action_समयout) अणु
 			radeon_pm_get_dynpm_state(rdev);
-			radeon_pm_set_clocks(rdev);
-		}
+			radeon_pm_set_घड़ीs(rdev);
+		पूर्ण
 
 		schedule_delayed_work(&rdev->pm.dynpm_idle_work,
-				      msecs_to_jiffies(RADEON_IDLE_LOOP_MS));
-	}
+				      msecs_to_jअगरfies(RADEON_IDLE_LOOP_MS));
+	पूर्ण
 	mutex_unlock(&rdev->pm.mutex);
-	ttm_bo_unlock_delayed_workqueue(&rdev->mman.bdev, resched);
-}
+	tपंचांग_bo_unlock_delayed_workqueue(&rdev->mman.bdev, resched);
+पूर्ण
 
 /*
  * Debugfs info
  */
-#if defined(CONFIG_DEBUG_FS)
+#अगर defined(CONFIG_DEBUG_FS)
 
-static int radeon_debugfs_pm_info_show(struct seq_file *m, void *unused)
-{
-	struct radeon_device *rdev = (struct radeon_device *)m->private;
-	struct drm_device *ddev = rdev->ddev;
+अटल पूर्णांक radeon_debugfs_pm_info_show(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा radeon_device *rdev = (काष्ठा radeon_device *)m->निजी;
+	काष्ठा drm_device *ddev = rdev->ddev;
 
-	if  ((rdev->flags & RADEON_IS_PX) &&
-	     (ddev->switch_power_state != DRM_SWITCH_POWER_ON)) {
-		seq_printf(m, "PX asic powered off\n");
-	} else if (rdev->pm.dpm_enabled) {
+	अगर  ((rdev->flags & RADEON_IS_PX) &&
+	     (ddev->चयन_घातer_state != DRM_SWITCH_POWER_ON)) अणु
+		seq_म_लिखो(m, "PX asic powered off\n");
+	पूर्ण अन्यथा अगर (rdev->pm.dpm_enabled) अणु
 		mutex_lock(&rdev->pm.mutex);
-		if (rdev->asic->dpm.debugfs_print_current_performance_level)
-			radeon_dpm_debugfs_print_current_performance_level(rdev, m);
-		else
-			seq_printf(m, "Debugfs support not implemented for this asic\n");
+		अगर (rdev->asic->dpm.debugfs_prपूर्णांक_current_perक्रमmance_level)
+			radeon_dpm_debugfs_prपूर्णांक_current_perक्रमmance_level(rdev, m);
+		अन्यथा
+			seq_म_लिखो(m, "Debugfs support not implemented for this asic\n");
 		mutex_unlock(&rdev->pm.mutex);
-	} else {
-		seq_printf(m, "default engine clock: %u0 kHz\n", rdev->pm.default_sclk);
-		/* radeon_get_engine_clock is not reliable on APUs so just print the current clock */
-		if ((rdev->family >= CHIP_PALM) && (rdev->flags & RADEON_IS_IGP))
-			seq_printf(m, "current engine clock: %u0 kHz\n", rdev->pm.current_sclk);
-		else
-			seq_printf(m, "current engine clock: %u0 kHz\n", radeon_get_engine_clock(rdev));
-		seq_printf(m, "default memory clock: %u0 kHz\n", rdev->pm.default_mclk);
-		if (rdev->asic->pm.get_memory_clock)
-			seq_printf(m, "current memory clock: %u0 kHz\n", radeon_get_memory_clock(rdev));
-		if (rdev->pm.current_vddc)
-			seq_printf(m, "voltage: %u mV\n", rdev->pm.current_vddc);
-		if (rdev->asic->pm.get_pcie_lanes)
-			seq_printf(m, "PCIE lanes: %d\n", radeon_get_pcie_lanes(rdev));
-	}
+	पूर्ण अन्यथा अणु
+		seq_म_लिखो(m, "default engine clock: %u0 kHz\n", rdev->pm.शेष_sclk);
+		/* radeon_get_engine_घड़ी is not reliable on APUs so just prपूर्णांक the current घड़ी */
+		अगर ((rdev->family >= CHIP_PALM) && (rdev->flags & RADEON_IS_IGP))
+			seq_म_लिखो(m, "current engine clock: %u0 kHz\n", rdev->pm.current_sclk);
+		अन्यथा
+			seq_म_लिखो(m, "current engine clock: %u0 kHz\n", radeon_get_engine_घड़ी(rdev));
+		seq_म_लिखो(m, "default memory clock: %u0 kHz\n", rdev->pm.शेष_mclk);
+		अगर (rdev->asic->pm.get_memory_घड़ी)
+			seq_म_लिखो(m, "current memory clock: %u0 kHz\n", radeon_get_memory_घड़ी(rdev));
+		अगर (rdev->pm.current_vddc)
+			seq_म_लिखो(m, "voltage: %u mV\n", rdev->pm.current_vddc);
+		अगर (rdev->asic->pm.get_pcie_lanes)
+			seq_म_लिखो(m, "PCIE lanes: %d\n", radeon_get_pcie_lanes(rdev));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(radeon_debugfs_pm_info);
-#endif
+#पूर्ण_अगर
 
-static void radeon_debugfs_pm_init(struct radeon_device *rdev)
-{
-#if defined(CONFIG_DEBUG_FS)
-	struct dentry *root = rdev->ddev->primary->debugfs_root;
+अटल व्योम radeon_debugfs_pm_init(काष्ठा radeon_device *rdev)
+अणु
+#अगर defined(CONFIG_DEBUG_FS)
+	काष्ठा dentry *root = rdev->ddev->primary->debugfs_root;
 
 	debugfs_create_file("radeon_pm_info", 0444, root, rdev,
 			    &radeon_debugfs_pm_info_fops);
 
-#endif
-}
+#पूर्ण_अगर
+पूर्ण

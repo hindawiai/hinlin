@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,62 +22,62 @@
  * SOFTWARE.
  *
  * Authors:
- *    Eddie Dong <eddie.dong@intel.com>
+ *    Eddie Dong <eddie.करोng@पूर्णांकel.com>
  *    Dexuan Cui
- *    Jike Song <jike.song@intel.com>
+ *    Jike Song <jike.song@पूर्णांकel.com>
  *
  * Contributors:
- *    Zhi Wang <zhi.a.wang@intel.com>
+ *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
  *
  */
 
-#ifndef _GVT_HYPERCALL_H_
-#define _GVT_HYPERCALL_H_
+#अगर_अघोषित _GVT_HYPERCALL_H_
+#घोषणा _GVT_HYPERCALL_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct device;
+काष्ठा device;
 
-enum hypervisor_type {
+क्रमागत hypervisor_type अणु
 	INTEL_GVT_HYPERVISOR_XEN = 0,
 	INTEL_GVT_HYPERVISOR_KVM,
-};
+पूर्ण;
 
 /*
- * Specific GVT-g MPT modules function collections. Currently GVT-g supports
+ * Specअगरic GVT-g MPT modules function collections. Currently GVT-g supports
  * both Xen and KVM by providing dedicated hypervisor-related MPT modules.
  */
-struct intel_gvt_mpt {
-	enum hypervisor_type type;
-	int (*host_init)(struct device *dev, void *gvt, const void *ops);
-	void (*host_exit)(struct device *dev, void *gvt);
-	int (*attach_vgpu)(void *vgpu, unsigned long *handle);
-	void (*detach_vgpu)(void *vgpu);
-	int (*inject_msi)(unsigned long handle, u32 addr, u16 data);
-	unsigned long (*from_virt_to_mfn)(void *p);
-	int (*enable_page_track)(unsigned long handle, u64 gfn);
-	int (*disable_page_track)(unsigned long handle, u64 gfn);
-	int (*read_gpa)(unsigned long handle, unsigned long gpa, void *buf,
-			unsigned long len);
-	int (*write_gpa)(unsigned long handle, unsigned long gpa, void *buf,
-			 unsigned long len);
-	unsigned long (*gfn_to_mfn)(unsigned long handle, unsigned long gfn);
+काष्ठा पूर्णांकel_gvt_mpt अणु
+	क्रमागत hypervisor_type type;
+	पूर्णांक (*host_init)(काष्ठा device *dev, व्योम *gvt, स्थिर व्योम *ops);
+	व्योम (*host_निकास)(काष्ठा device *dev, व्योम *gvt);
+	पूर्णांक (*attach_vgpu)(व्योम *vgpu, अचिन्हित दीर्घ *handle);
+	व्योम (*detach_vgpu)(व्योम *vgpu);
+	पूर्णांक (*inject_msi)(अचिन्हित दीर्घ handle, u32 addr, u16 data);
+	अचिन्हित दीर्घ (*from_virt_to_mfn)(व्योम *p);
+	पूर्णांक (*enable_page_track)(अचिन्हित दीर्घ handle, u64 gfn);
+	पूर्णांक (*disable_page_track)(अचिन्हित दीर्घ handle, u64 gfn);
+	पूर्णांक (*पढ़ो_gpa)(अचिन्हित दीर्घ handle, अचिन्हित दीर्घ gpa, व्योम *buf,
+			अचिन्हित दीर्घ len);
+	पूर्णांक (*ग_लिखो_gpa)(अचिन्हित दीर्घ handle, अचिन्हित दीर्घ gpa, व्योम *buf,
+			 अचिन्हित दीर्घ len);
+	अचिन्हित दीर्घ (*gfn_to_mfn)(अचिन्हित दीर्घ handle, अचिन्हित दीर्घ gfn);
 
-	int (*dma_map_guest_page)(unsigned long handle, unsigned long gfn,
-				  unsigned long size, dma_addr_t *dma_addr);
-	void (*dma_unmap_guest_page)(unsigned long handle, dma_addr_t dma_addr);
+	पूर्णांक (*dma_map_guest_page)(अचिन्हित दीर्घ handle, अचिन्हित दीर्घ gfn,
+				  अचिन्हित दीर्घ size, dma_addr_t *dma_addr);
+	व्योम (*dma_unmap_guest_page)(अचिन्हित दीर्घ handle, dma_addr_t dma_addr);
 
-	int (*dma_pin_guest_page)(unsigned long handle, dma_addr_t dma_addr);
+	पूर्णांक (*dma_pin_guest_page)(अचिन्हित दीर्घ handle, dma_addr_t dma_addr);
 
-	int (*map_gfn_to_mfn)(unsigned long handle, unsigned long gfn,
-			      unsigned long mfn, unsigned int nr, bool map);
-	int (*set_trap_area)(unsigned long handle, u64 start, u64 end,
+	पूर्णांक (*map_gfn_to_mfn)(अचिन्हित दीर्घ handle, अचिन्हित दीर्घ gfn,
+			      अचिन्हित दीर्घ mfn, अचिन्हित पूर्णांक nr, bool map);
+	पूर्णांक (*set_trap_area)(अचिन्हित दीर्घ handle, u64 start, u64 end,
 			     bool map);
-	int (*set_opregion)(void *vgpu);
-	int (*set_edid)(void *vgpu, int port_num);
-	int (*get_vfio_device)(void *vgpu);
-	void (*put_vfio_device)(void *vgpu);
-	bool (*is_valid_gfn)(unsigned long handle, unsigned long gfn);
-};
+	पूर्णांक (*set_opregion)(व्योम *vgpu);
+	पूर्णांक (*set_edid)(व्योम *vgpu, पूर्णांक port_num);
+	पूर्णांक (*get_vfio_device)(व्योम *vgpu);
+	व्योम (*put_vfio_device)(व्योम *vgpu);
+	bool (*is_valid_gfn)(अचिन्हित दीर्घ handle, अचिन्हित दीर्घ gfn);
+पूर्ण;
 
-#endif /* _GVT_HYPERCALL_H_ */
+#पूर्ण_अगर /* _GVT_HYPERCALL_H_ */

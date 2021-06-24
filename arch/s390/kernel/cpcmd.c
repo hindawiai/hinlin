@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999, 2007
@@ -6,45 +7,45 @@
  *               Christian Borntraeger (cborntra@de.ibm.com),
  */
 
-#define KMSG_COMPONENT "cpcmd"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "cpcmd"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/stddef.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <asm/diag.h>
-#include <asm/ebcdic.h>
-#include <asm/cpcmd.h>
-#include <asm/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/diag.h>
+#समावेश <यंत्र/ebcdic.h>
+#समावेश <यंत्र/cpcmd.h>
+#समावेश <यंत्र/पन.स>
 
-static DEFINE_SPINLOCK(cpcmd_lock);
-static char cpcmd_buf[241];
+अटल DEFINE_SPINLOCK(cpcmd_lock);
+अटल अक्षर cpcmd_buf[241];
 
-static int diag8_noresponse(int cmdlen)
-{
-	register unsigned long reg2 asm ("2") = (addr_t) cpcmd_buf;
-	register unsigned long reg3 asm ("3") = cmdlen;
+अटल पूर्णांक diag8_noresponse(पूर्णांक cmdlen)
+अणु
+	रेजिस्टर अचिन्हित दीर्घ reg2 यंत्र ("2") = (addr_t) cpcmd_buf;
+	रेजिस्टर अचिन्हित दीर्घ reg3 यंत्र ("3") = cmdlen;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"	diag	%1,%0,0x8\n"
 		: "+d" (reg3) : "d" (reg2) : "cc");
-	return reg3;
-}
+	वापस reg3;
+पूर्ण
 
-static int diag8_response(int cmdlen, char *response, int *rlen)
-{
-	unsigned long _cmdlen = cmdlen | 0x40000000L;
-	unsigned long _rlen = *rlen;
-	register unsigned long reg2 asm ("2") = (addr_t) cpcmd_buf;
-	register unsigned long reg3 asm ("3") = (addr_t) response;
-	register unsigned long reg4 asm ("4") = _cmdlen;
-	register unsigned long reg5 asm ("5") = _rlen;
+अटल पूर्णांक diag8_response(पूर्णांक cmdlen, अक्षर *response, पूर्णांक *rlen)
+अणु
+	अचिन्हित दीर्घ _cmdlen = cmdlen | 0x40000000L;
+	अचिन्हित दीर्घ _rlen = *rlen;
+	रेजिस्टर अचिन्हित दीर्घ reg2 यंत्र ("2") = (addr_t) cpcmd_buf;
+	रेजिस्टर अचिन्हित दीर्घ reg3 यंत्र ("3") = (addr_t) response;
+	रेजिस्टर अचिन्हित दीर्घ reg4 यंत्र ("4") = _cmdlen;
+	रेजिस्टर अचिन्हित दीर्घ reg5 यंत्र ("5") = _rlen;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"	diag	%2,%0,0x8\n"
 		"	brc	8,1f\n"
 		"	agr	%1,%4\n"
@@ -52,61 +53,61 @@ static int diag8_response(int cmdlen, char *response, int *rlen)
 		: "+d" (reg4), "+d" (reg5)
 		: "d" (reg2), "d" (reg3), "d" (*rlen) : "cc");
 	*rlen = reg5;
-	return reg4;
-}
+	वापस reg4;
+पूर्ण
 
 /*
  * __cpcmd has some restrictions over cpcmd
- *  - __cpcmd is unlocked and therefore not SMP-safe
+ *  - __cpcmd is unlocked and thereक्रमe not SMP-safe
  */
-int  __cpcmd(const char *cmd, char *response, int rlen, int *response_code)
-{
-	int cmdlen;
-	int rc;
-	int response_len;
+पूर्णांक  __cpcmd(स्थिर अक्षर *cmd, अक्षर *response, पूर्णांक rlen, पूर्णांक *response_code)
+अणु
+	पूर्णांक cmdlen;
+	पूर्णांक rc;
+	पूर्णांक response_len;
 
-	cmdlen = strlen(cmd);
+	cmdlen = म_माप(cmd);
 	BUG_ON(cmdlen > 240);
-	memcpy(cpcmd_buf, cmd, cmdlen);
+	स_नकल(cpcmd_buf, cmd, cmdlen);
 	ASCEBC(cpcmd_buf, cmdlen);
 
 	diag_stat_inc(DIAG_STAT_X008);
-	if (response) {
-		memset(response, 0, rlen);
+	अगर (response) अणु
+		स_रखो(response, 0, rlen);
 		response_len = rlen;
 		rc = diag8_response(cmdlen, response, &rlen);
 		EBCASC(response, response_len);
-        } else {
+        पूर्ण अन्यथा अणु
 		rc = diag8_noresponse(cmdlen);
-        }
-	if (response_code)
+        पूर्ण
+	अगर (response_code)
 		*response_code = rc;
-	return rlen;
-}
+	वापस rlen;
+पूर्ण
 EXPORT_SYMBOL(__cpcmd);
 
-int cpcmd(const char *cmd, char *response, int rlen, int *response_code)
-{
-	unsigned long flags;
-	char *lowbuf;
-	int len;
+पूर्णांक cpcmd(स्थिर अक्षर *cmd, अक्षर *response, पूर्णांक rlen, पूर्णांक *response_code)
+अणु
+	अचिन्हित दीर्घ flags;
+	अक्षर *lowbuf;
+	पूर्णांक len;
 
-	if (is_vmalloc_or_module_addr(response)) {
-		lowbuf = kmalloc(rlen, GFP_KERNEL);
-		if (!lowbuf) {
+	अगर (is_vदो_स्मृति_or_module_addr(response)) अणु
+		lowbuf = kदो_स्मृति(rlen, GFP_KERNEL);
+		अगर (!lowbuf) अणु
 			pr_warn("The cpcmd kernel function failed to allocate a response buffer\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		spin_lock_irqsave(&cpcmd_lock, flags);
 		len = __cpcmd(cmd, lowbuf, rlen, response_code);
 		spin_unlock_irqrestore(&cpcmd_lock, flags);
-		memcpy(response, lowbuf, rlen);
-		kfree(lowbuf);
-	} else {
+		स_नकल(response, lowbuf, rlen);
+		kमुक्त(lowbuf);
+	पूर्ण अन्यथा अणु
 		spin_lock_irqsave(&cpcmd_lock, flags);
 		len = __cpcmd(cmd, response, rlen, response_code);
 		spin_unlock_irqrestore(&cpcmd_lock, flags);
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 EXPORT_SYMBOL(cpcmd);

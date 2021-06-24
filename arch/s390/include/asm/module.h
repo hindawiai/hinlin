@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_S390_MODULE_H
-#define _ASM_S390_MODULE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_S390_MODULE_H
+#घोषणा _ASM_S390_MODULE_H
 
-#include <asm-generic/module.h>
+#समावेश <यंत्र-generic/module.h>
 
 /*
- * This file contains the s390 architecture specific module code.
+ * This file contains the s390 architecture specअगरic module code.
  */
 
-struct mod_arch_syminfo
-{
-	unsigned long got_offset;
-	unsigned long plt_offset;
-	int got_initialized;
-	int plt_initialized;
-};
+काष्ठा mod_arch_syminfo
+अणु
+	अचिन्हित दीर्घ got_offset;
+	अचिन्हित दीर्घ plt_offset;
+	पूर्णांक got_initialized;
+	पूर्णांक plt_initialized;
+पूर्ण;
 
-struct mod_arch_specific
-{
+काष्ठा mod_arch_specअगरic
+अणु
 	/* Starting offset of got in the module core memory. */
-	unsigned long got_offset;
+	अचिन्हित दीर्घ got_offset;
 	/* Starting offset of plt in the module core memory. */
-	unsigned long plt_offset;
+	अचिन्हित दीर्घ plt_offset;
 	/* Size of the got. */
-	unsigned long got_size;
+	अचिन्हित दीर्घ got_size;
 	/* Size of the plt. */
-	unsigned long plt_size;
+	अचिन्हित दीर्घ plt_size;
 	/* Number of symbols in syminfo. */
-	int nsyms;
-	/* Additional symbol information (got and plt offsets). */
-	struct mod_arch_syminfo *syminfo;
-};
+	पूर्णांक nsyms;
+	/* Additional symbol inक्रमmation (got and plt offsets). */
+	काष्ठा mod_arch_syminfo *syminfo;
+पूर्ण;
 
-#endif /* _ASM_S390_MODULE_H */
+#पूर्ण_अगर /* _ASM_S390_MODULE_H */

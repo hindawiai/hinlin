@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * EFI support for Xen.
+ * EFI support क्रम Xen.
  *
  * Copyright (C) 1999 VA Linux Systems
  * Copyright (C) 1999 Walt Drummond <drummond@valinux.com>
@@ -8,10 +9,10 @@
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  *	Stephane Eranian <eranian@hpl.hp.com>
  * Copyright (C) 2005-2008 Intel Co.
- *	Fenghua Yu <fenghua.yu@intel.com>
- *	Bibo Mao <bibo.mao@intel.com>
- *	Chandramouli Narayanan <mouli@linux.intel.com>
- *	Huang Ying <ying.huang@intel.com>
+ *	Fenghua Yu <fenghua.yu@पूर्णांकel.com>
+ *	Bibo Mao <bibo.mao@पूर्णांकel.com>
+ *	Chandramouli Narayanan <mouli@linux.पूर्णांकel.com>
+ *	Huang Ying <ying.huang@पूर्णांकel.com>
  * Copyright (C) 2011 Novell Co.
  *	Jan Beulich <JBeulich@suse.com>
  * Copyright (C) 2011-2012 Oracle Co.
@@ -19,268 +20,268 @@
  * Copyright (c) 2014 Oracle Co., Daniel Kiper
  */
 
-#include <linux/bug.h>
-#include <linux/efi.h>
-#include <linux/init.h>
-#include <linux/string.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
 
-#include <xen/interface/xen.h>
-#include <xen/interface/platform.h>
-#include <xen/xen.h>
-#include <xen/xen-ops.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <xen/पूर्णांकerface/platक्रमm.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/xen-ops.h>
 
-#include <asm/page.h>
+#समावेश <यंत्र/page.h>
 
-#include <asm/xen/hypercall.h>
+#समावेश <यंत्र/xen/hypercall.h>
 
-#define INIT_EFI_OP(name) \
-	{.cmd = XENPF_efi_runtime_call, \
-	 .u.efi_runtime_call.function = XEN_EFI_##name, \
-	 .u.efi_runtime_call.misc = 0}
+#घोषणा INIT_EFI_OP(name) \
+	अणु.cmd = XENPF_efi_runसमय_call, \
+	 .u.efi_runसमय_call.function = XEN_EFI_##name, \
+	 .u.efi_runसमय_call.misc = 0पूर्ण
 
-#define efi_data(op)	(op.u.efi_runtime_call)
+#घोषणा efi_data(op)	(op.u.efi_runसमय_call)
 
-static efi_status_t xen_efi_get_time(efi_time_t *tm, efi_time_cap_t *tc)
-{
-	struct xen_platform_op op = INIT_EFI_OP(get_time);
+अटल efi_status_t xen_efi_get_समय(efi_समय_प्रकार *पंचांग, efi_समय_cap_t *tc)
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(get_समय);
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
-	if (tm) {
-		BUILD_BUG_ON(sizeof(*tm) != sizeof(efi_data(op).u.get_time.time));
-		memcpy(tm, &efi_data(op).u.get_time.time, sizeof(*tm));
-	}
+	अगर (पंचांग) अणु
+		BUILD_BUG_ON(माप(*पंचांग) != माप(efi_data(op).u.get_समय.समय));
+		स_नकल(पंचांग, &efi_data(op).u.get_समय.समय, माप(*पंचांग));
+	पूर्ण
 
-	if (tc) {
-		tc->resolution = efi_data(op).u.get_time.resolution;
-		tc->accuracy = efi_data(op).u.get_time.accuracy;
+	अगर (tc) अणु
+		tc->resolution = efi_data(op).u.get_समय.resolution;
+		tc->accuracy = efi_data(op).u.get_समय.accuracy;
 		tc->sets_to_zero = !!(efi_data(op).misc &
 				      XEN_EFI_GET_TIME_SET_CLEARS_NS);
-	}
+	पूर्ण
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static efi_status_t xen_efi_set_time(efi_time_t *tm)
-{
-	struct xen_platform_op op = INIT_EFI_OP(set_time);
+अटल efi_status_t xen_efi_set_समय(efi_समय_प्रकार *पंचांग)
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(set_समय);
 
-	BUILD_BUG_ON(sizeof(*tm) != sizeof(efi_data(op).u.set_time));
-	memcpy(&efi_data(op).u.set_time, tm, sizeof(*tm));
+	BUILD_BUG_ON(माप(*पंचांग) != माप(efi_data(op).u.set_समय));
+	स_नकल(&efi_data(op).u.set_समय, पंचांग, माप(*पंचांग));
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static efi_status_t xen_efi_get_wakeup_time(efi_bool_t *enabled,
+अटल efi_status_t xen_efi_get_wakeup_समय(efi_bool_t *enabled,
 					    efi_bool_t *pending,
-					    efi_time_t *tm)
-{
-	struct xen_platform_op op = INIT_EFI_OP(get_wakeup_time);
+					    efi_समय_प्रकार *पंचांग)
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(get_wakeup_समय);
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
-	if (tm) {
-		BUILD_BUG_ON(sizeof(*tm) != sizeof(efi_data(op).u.get_wakeup_time));
-		memcpy(tm, &efi_data(op).u.get_wakeup_time, sizeof(*tm));
-	}
+	अगर (पंचांग) अणु
+		BUILD_BUG_ON(माप(*पंचांग) != माप(efi_data(op).u.get_wakeup_समय));
+		स_नकल(पंचांग, &efi_data(op).u.get_wakeup_समय, माप(*पंचांग));
+	पूर्ण
 
-	if (enabled)
+	अगर (enabled)
 		*enabled = !!(efi_data(op).misc & XEN_EFI_GET_WAKEUP_TIME_ENABLED);
 
-	if (pending)
+	अगर (pending)
 		*pending = !!(efi_data(op).misc & XEN_EFI_GET_WAKEUP_TIME_PENDING);
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static efi_status_t xen_efi_set_wakeup_time(efi_bool_t enabled, efi_time_t *tm)
-{
-	struct xen_platform_op op = INIT_EFI_OP(set_wakeup_time);
+अटल efi_status_t xen_efi_set_wakeup_समय(efi_bool_t enabled, efi_समय_प्रकार *पंचांग)
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(set_wakeup_समय);
 
-	BUILD_BUG_ON(sizeof(*tm) != sizeof(efi_data(op).u.set_wakeup_time));
-	if (enabled)
+	BUILD_BUG_ON(माप(*पंचांग) != माप(efi_data(op).u.set_wakeup_समय));
+	अगर (enabled)
 		efi_data(op).misc = XEN_EFI_SET_WAKEUP_TIME_ENABLE;
-	if (tm)
-		memcpy(&efi_data(op).u.set_wakeup_time, tm, sizeof(*tm));
-	else
+	अगर (पंचांग)
+		स_नकल(&efi_data(op).u.set_wakeup_समय, पंचांग, माप(*पंचांग));
+	अन्यथा
 		efi_data(op).misc |= XEN_EFI_SET_WAKEUP_TIME_ENABLE_ONLY;
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static efi_status_t xen_efi_get_variable(efi_char16_t *name, efi_guid_t *vendor,
-					 u32 *attr, unsigned long *data_size,
-					 void *data)
-{
-	struct xen_platform_op op = INIT_EFI_OP(get_variable);
+अटल efi_status_t xen_efi_get_variable(efi_अक्षर16_t *name, efi_guid_t *venकरोr,
+					 u32 *attr, अचिन्हित दीर्घ *data_size,
+					 व्योम *data)
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(get_variable);
 
 	set_xen_guest_handle(efi_data(op).u.get_variable.name, name);
-	BUILD_BUG_ON(sizeof(*vendor) !=
-		     sizeof(efi_data(op).u.get_variable.vendor_guid));
-	memcpy(&efi_data(op).u.get_variable.vendor_guid, vendor, sizeof(*vendor));
+	BUILD_BUG_ON(माप(*venकरोr) !=
+		     माप(efi_data(op).u.get_variable.venकरोr_guid));
+	स_नकल(&efi_data(op).u.get_variable.venकरोr_guid, venकरोr, माप(*venकरोr));
 	efi_data(op).u.get_variable.size = *data_size;
 	set_xen_guest_handle(efi_data(op).u.get_variable.data, data);
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
 	*data_size = efi_data(op).u.get_variable.size;
-	if (attr)
+	अगर (attr)
 		*attr = efi_data(op).misc;
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static efi_status_t xen_efi_get_next_variable(unsigned long *name_size,
-					      efi_char16_t *name,
-					      efi_guid_t *vendor)
-{
-	struct xen_platform_op op = INIT_EFI_OP(get_next_variable_name);
+अटल efi_status_t xen_efi_get_next_variable(अचिन्हित दीर्घ *name_size,
+					      efi_अक्षर16_t *name,
+					      efi_guid_t *venकरोr)
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(get_next_variable_name);
 
 	efi_data(op).u.get_next_variable_name.size = *name_size;
 	set_xen_guest_handle(efi_data(op).u.get_next_variable_name.name, name);
-	BUILD_BUG_ON(sizeof(*vendor) !=
-		     sizeof(efi_data(op).u.get_next_variable_name.vendor_guid));
-	memcpy(&efi_data(op).u.get_next_variable_name.vendor_guid, vendor,
-	       sizeof(*vendor));
+	BUILD_BUG_ON(माप(*venकरोr) !=
+		     माप(efi_data(op).u.get_next_variable_name.venकरोr_guid));
+	स_नकल(&efi_data(op).u.get_next_variable_name.venकरोr_guid, venकरोr,
+	       माप(*venकरोr));
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
 	*name_size = efi_data(op).u.get_next_variable_name.size;
-	memcpy(vendor, &efi_data(op).u.get_next_variable_name.vendor_guid,
-	       sizeof(*vendor));
+	स_नकल(venकरोr, &efi_data(op).u.get_next_variable_name.venकरोr_guid,
+	       माप(*venकरोr));
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static efi_status_t xen_efi_set_variable(efi_char16_t *name, efi_guid_t *vendor,
-					 u32 attr, unsigned long data_size,
-					 void *data)
-{
-	struct xen_platform_op op = INIT_EFI_OP(set_variable);
+अटल efi_status_t xen_efi_set_variable(efi_अक्षर16_t *name, efi_guid_t *venकरोr,
+					 u32 attr, अचिन्हित दीर्घ data_size,
+					 व्योम *data)
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(set_variable);
 
 	set_xen_guest_handle(efi_data(op).u.set_variable.name, name);
 	efi_data(op).misc = attr;
-	BUILD_BUG_ON(sizeof(*vendor) !=
-		     sizeof(efi_data(op).u.set_variable.vendor_guid));
-	memcpy(&efi_data(op).u.set_variable.vendor_guid, vendor, sizeof(*vendor));
+	BUILD_BUG_ON(माप(*venकरोr) !=
+		     माप(efi_data(op).u.set_variable.venकरोr_guid));
+	स_नकल(&efi_data(op).u.set_variable.venकरोr_guid, venकरोr, माप(*venकरोr));
 	efi_data(op).u.set_variable.size = data_size;
 	set_xen_guest_handle(efi_data(op).u.set_variable.data, data);
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static efi_status_t xen_efi_query_variable_info(u32 attr, u64 *storage_space,
-						u64 *remaining_space,
+अटल efi_status_t xen_efi_query_variable_info(u32 attr, u64 *storage_space,
+						u64 *reमुख्यing_space,
 						u64 *max_variable_size)
-{
-	struct xen_platform_op op = INIT_EFI_OP(query_variable_info);
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(query_variable_info);
 
-	if (efi.runtime_version < EFI_2_00_SYSTEM_TABLE_REVISION)
-		return EFI_UNSUPPORTED;
+	अगर (efi.runसमय_version < EFI_2_00_SYSTEM_TABLE_REVISION)
+		वापस EFI_UNSUPPORTED;
 
 	efi_data(op).u.query_variable_info.attr = attr;
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
 	*storage_space = efi_data(op).u.query_variable_info.max_store_size;
-	*remaining_space = efi_data(op).u.query_variable_info.remain_store_size;
+	*reमुख्यing_space = efi_data(op).u.query_variable_info.reमुख्य_store_size;
 	*max_variable_size = efi_data(op).u.query_variable_info.max_size;
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static efi_status_t xen_efi_get_next_high_mono_count(u32 *count)
-{
-	struct xen_platform_op op = INIT_EFI_OP(get_next_high_monotonic_count);
+अटल efi_status_t xen_efi_get_next_high_mono_count(u32 *count)
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(get_next_high_monotonic_count);
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
 	*count = efi_data(op).misc;
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static efi_status_t xen_efi_update_capsule(efi_capsule_header_t **capsules,
-				unsigned long count, unsigned long sg_list)
-{
-	struct xen_platform_op op = INIT_EFI_OP(update_capsule);
+अटल efi_status_t xen_efi_update_capsule(efi_capsule_header_t **capsules,
+				अचिन्हित दीर्घ count, अचिन्हित दीर्घ sg_list)
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(update_capsule);
 
-	if (efi.runtime_version < EFI_2_00_SYSTEM_TABLE_REVISION)
-		return EFI_UNSUPPORTED;
+	अगर (efi.runसमय_version < EFI_2_00_SYSTEM_TABLE_REVISION)
+		वापस EFI_UNSUPPORTED;
 
 	set_xen_guest_handle(efi_data(op).u.update_capsule.capsule_header_array,
 			     capsules);
 	efi_data(op).u.update_capsule.capsule_count = count;
 	efi_data(op).u.update_capsule.sg_list = sg_list;
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static efi_status_t xen_efi_query_capsule_caps(efi_capsule_header_t **capsules,
-			unsigned long count, u64 *max_size, int *reset_type)
-{
-	struct xen_platform_op op = INIT_EFI_OP(query_capsule_capabilities);
+अटल efi_status_t xen_efi_query_capsule_caps(efi_capsule_header_t **capsules,
+			अचिन्हित दीर्घ count, u64 *max_size, पूर्णांक *reset_type)
+अणु
+	काष्ठा xen_platक्रमm_op op = INIT_EFI_OP(query_capsule_capabilities);
 
-	if (efi.runtime_version < EFI_2_00_SYSTEM_TABLE_REVISION)
-		return EFI_UNSUPPORTED;
+	अगर (efi.runसमय_version < EFI_2_00_SYSTEM_TABLE_REVISION)
+		वापस EFI_UNSUPPORTED;
 
 	set_xen_guest_handle(efi_data(op).u.query_capsule_capabilities.capsule_header_array,
 					capsules);
 	efi_data(op).u.query_capsule_capabilities.capsule_count = count;
 
-	if (HYPERVISOR_platform_op(&op) < 0)
-		return EFI_UNSUPPORTED;
+	अगर (HYPERVISOR_platक्रमm_op(&op) < 0)
+		वापस EFI_UNSUPPORTED;
 
 	*max_size = efi_data(op).u.query_capsule_capabilities.max_capsule_size;
 	*reset_type = efi_data(op).u.query_capsule_capabilities.reset_type;
 
-	return efi_data(op).status;
-}
+	वापस efi_data(op).status;
+पूर्ण
 
-static void xen_efi_reset_system(int reset_type, efi_status_t status,
-				 unsigned long data_size, efi_char16_t *data)
-{
-	switch (reset_type) {
-	case EFI_RESET_COLD:
-	case EFI_RESET_WARM:
+अटल व्योम xen_efi_reset_प्रणाली(पूर्णांक reset_type, efi_status_t status,
+				 अचिन्हित दीर्घ data_size, efi_अक्षर16_t *data)
+अणु
+	चयन (reset_type) अणु
+	हाल EFI_RESET_COLD:
+	हाल EFI_RESET_WARM:
 		xen_reboot(SHUTDOWN_reboot);
-		break;
-	case EFI_RESET_SHUTDOWN:
-		xen_reboot(SHUTDOWN_poweroff);
-		break;
-	default:
+		अवरोध;
+	हाल EFI_RESET_SHUTDOWN:
+		xen_reboot(SHUTDOWN_घातeroff);
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Set XEN EFI runtime services function pointers. Other fields of struct efi,
+ * Set XEN EFI runसमय services function poपूर्णांकers. Other fields of काष्ठा efi,
  * e.g. efi.systab, will be set like normal EFI.
  */
-void __init xen_efi_runtime_setup(void)
-{
-	efi.get_time			= xen_efi_get_time;
-	efi.set_time			= xen_efi_set_time;
-	efi.get_wakeup_time		= xen_efi_get_wakeup_time;
-	efi.set_wakeup_time		= xen_efi_set_wakeup_time;
+व्योम __init xen_efi_runसमय_setup(व्योम)
+अणु
+	efi.get_समय			= xen_efi_get_समय;
+	efi.set_समय			= xen_efi_set_समय;
+	efi.get_wakeup_समय		= xen_efi_get_wakeup_समय;
+	efi.set_wakeup_समय		= xen_efi_set_wakeup_समय;
 	efi.get_variable		= xen_efi_get_variable;
 	efi.get_next_variable		= xen_efi_get_next_variable;
 	efi.set_variable		= xen_efi_set_variable;
@@ -290,5 +291,5 @@ void __init xen_efi_runtime_setup(void)
 	efi.update_capsule		= xen_efi_update_capsule;
 	efi.query_capsule_caps		= xen_efi_query_capsule_caps;
 	efi.get_next_high_mono_count	= xen_efi_get_next_high_mono_count;
-	efi.reset_system		= xen_efi_reset_system;
-}
+	efi.reset_प्रणाली		= xen_efi_reset_प्रणाली;
+पूर्ण

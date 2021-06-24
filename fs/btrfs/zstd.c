@@ -1,144 +1,145 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2016-present, Facebook, Inc.
  * All rights reserved.
  *
  */
 
-#include <linux/bio.h>
-#include <linux/bitmap.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/sched/mm.h>
-#include <linux/pagemap.h>
-#include <linux/refcount.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/zstd.h>
-#include "misc.h"
-#include "compression.h"
-#include "ctree.h"
+#समावेश <linux/bपन.स>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/zstd.h>
+#समावेश "misc.h"
+#समावेश "compression.h"
+#समावेश "ctree.h"
 
-#define ZSTD_BTRFS_MAX_WINDOWLOG 17
-#define ZSTD_BTRFS_MAX_INPUT (1 << ZSTD_BTRFS_MAX_WINDOWLOG)
-#define ZSTD_BTRFS_DEFAULT_LEVEL 3
-#define ZSTD_BTRFS_MAX_LEVEL 15
-/* 307s to avoid pathologically clashing with transaction commit */
-#define ZSTD_BTRFS_RECLAIM_JIFFIES (307 * HZ)
+#घोषणा ZSTD_BTRFS_MAX_WINDOWLOG 17
+#घोषणा ZSTD_BTRFS_MAX_INPUT (1 << ZSTD_BTRFS_MAX_WINDOWLOG)
+#घोषणा ZSTD_BTRFS_DEFAULT_LEVEL 3
+#घोषणा ZSTD_BTRFS_MAX_LEVEL 15
+/* 307s to aव्योम pathologically clashing with transaction commit */
+#घोषणा ZSTD_BTRFS_RECLAIM_JIFFIES (307 * HZ)
 
-static ZSTD_parameters zstd_get_btrfs_parameters(unsigned int level,
-						 size_t src_len)
-{
+अटल ZSTD_parameters zstd_get_btrfs_parameters(अचिन्हित पूर्णांक level,
+						 माप_प्रकार src_len)
+अणु
 	ZSTD_parameters params = ZSTD_getParams(level, src_len, 0);
 
-	if (params.cParams.windowLog > ZSTD_BTRFS_MAX_WINDOWLOG)
-		params.cParams.windowLog = ZSTD_BTRFS_MAX_WINDOWLOG;
+	अगर (params.cParams.winकरोwLog > ZSTD_BTRFS_MAX_WINDOWLOG)
+		params.cParams.winकरोwLog = ZSTD_BTRFS_MAX_WINDOWLOG;
 	WARN_ON(src_len > ZSTD_BTRFS_MAX_INPUT);
-	return params;
-}
+	वापस params;
+पूर्ण
 
-struct workspace {
-	void *mem;
-	size_t size;
-	char *buf;
-	unsigned int level;
-	unsigned int req_level;
-	unsigned long last_used; /* jiffies */
-	struct list_head list;
-	struct list_head lru_list;
+काष्ठा workspace अणु
+	व्योम *mem;
+	माप_प्रकार size;
+	अक्षर *buf;
+	अचिन्हित पूर्णांक level;
+	अचिन्हित पूर्णांक req_level;
+	अचिन्हित दीर्घ last_used; /* jअगरfies */
+	काष्ठा list_head list;
+	काष्ठा list_head lru_list;
 	ZSTD_inBuffer in_buf;
 	ZSTD_outBuffer out_buf;
-};
+पूर्ण;
 
 /*
  * Zstd Workspace Management
  *
- * Zstd workspaces have different memory requirements depending on the level.
- * The zstd workspaces are managed by having individual lists for each level
- * and a global lru.  Forward progress is maintained by protecting a max level
+ * Zstd workspaces have dअगरferent memory requirements depending on the level.
+ * The zstd workspaces are managed by having inभागidual lists क्रम each level
+ * and a global lru.  Forward progress is मुख्यtained by protecting a max level
  * workspace.
  *
- * Getting a workspace is done by using the bitmap to identify the levels that
+ * Getting a workspace is करोne by using the biपंचांगap to identअगरy the levels that
  * have available workspaces and scans up.  This lets us recycle higher level
  * workspaces because of the monotonic memory guarantee.  A workspace's
- * last_used is only updated if it is being used by the corresponding memory
+ * last_used is only updated अगर it is being used by the corresponding memory
  * level.  Putting a workspace involves adding it back to the appropriate places
- * and adding it back to the lru if necessary.
+ * and adding it back to the lru अगर necessary.
  *
- * A timer is used to reclaim workspaces if they have not been used for
+ * A समयr is used to reclaim workspaces अगर they have not been used क्रम
  * ZSTD_BTRFS_RECLAIM_JIFFIES.  This helps keep only active workspaces around.
  * The upper bound is provided by the workqueue limit which is 2 (percpu limit).
  */
 
-struct zstd_workspace_manager {
-	const struct btrfs_compress_op *ops;
+काष्ठा zstd_workspace_manager अणु
+	स्थिर काष्ठा btrfs_compress_op *ops;
 	spinlock_t lock;
-	struct list_head lru_list;
-	struct list_head idle_ws[ZSTD_BTRFS_MAX_LEVEL];
-	unsigned long active_map;
-	wait_queue_head_t wait;
-	struct timer_list timer;
-};
+	काष्ठा list_head lru_list;
+	काष्ठा list_head idle_ws[ZSTD_BTRFS_MAX_LEVEL];
+	अचिन्हित दीर्घ active_map;
+	रुको_queue_head_t रुको;
+	काष्ठा समयr_list समयr;
+पूर्ण;
 
-static struct zstd_workspace_manager wsm;
+अटल काष्ठा zstd_workspace_manager wsm;
 
-static size_t zstd_ws_mem_sizes[ZSTD_BTRFS_MAX_LEVEL];
+अटल माप_प्रकार zstd_ws_mem_sizes[ZSTD_BTRFS_MAX_LEVEL];
 
-static inline struct workspace *list_to_workspace(struct list_head *list)
-{
-	return container_of(list, struct workspace, list);
-}
+अटल अंतरभूत काष्ठा workspace *list_to_workspace(काष्ठा list_head *list)
+अणु
+	वापस container_of(list, काष्ठा workspace, list);
+पूर्ण
 
-void zstd_free_workspace(struct list_head *ws);
-struct list_head *zstd_alloc_workspace(unsigned int level);
+व्योम zstd_मुक्त_workspace(काष्ठा list_head *ws);
+काष्ठा list_head *zstd_alloc_workspace(अचिन्हित पूर्णांक level);
 /*
- * zstd_reclaim_timer_fn - reclaim timer
- * @t: timer
+ * zstd_reclaim_समयr_fn - reclaim समयr
+ * @t: समयr
  *
  * This scans the lru_list and attempts to reclaim any workspace that hasn't
- * been used for ZSTD_BTRFS_RECLAIM_JIFFIES.
+ * been used क्रम ZSTD_BTRFS_RECLAIM_JIFFIES.
  */
-static void zstd_reclaim_timer_fn(struct timer_list *timer)
-{
-	unsigned long reclaim_threshold = jiffies - ZSTD_BTRFS_RECLAIM_JIFFIES;
-	struct list_head *pos, *next;
+अटल व्योम zstd_reclaim_समयr_fn(काष्ठा समयr_list *समयr)
+अणु
+	अचिन्हित दीर्घ reclaim_threshold = jअगरfies - ZSTD_BTRFS_RECLAIM_JIFFIES;
+	काष्ठा list_head *pos, *next;
 
 	spin_lock_bh(&wsm.lock);
 
-	if (list_empty(&wsm.lru_list)) {
+	अगर (list_empty(&wsm.lru_list)) अणु
 		spin_unlock_bh(&wsm.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	list_for_each_prev_safe(pos, next, &wsm.lru_list) {
-		struct workspace *victim = container_of(pos, struct workspace,
+	list_क्रम_each_prev_safe(pos, next, &wsm.lru_list) अणु
+		काष्ठा workspace *victim = container_of(pos, काष्ठा workspace,
 							lru_list);
-		unsigned int level;
+		अचिन्हित पूर्णांक level;
 
-		if (time_after(victim->last_used, reclaim_threshold))
-			break;
+		अगर (समय_after(victim->last_used, reclaim_threshold))
+			अवरोध;
 
 		/* workspace is in use */
-		if (victim->req_level)
-			continue;
+		अगर (victim->req_level)
+			जारी;
 
 		level = victim->level;
 		list_del(&victim->lru_list);
 		list_del(&victim->list);
-		zstd_free_workspace(&victim->list);
+		zstd_मुक्त_workspace(&victim->list);
 
-		if (list_empty(&wsm.idle_ws[level - 1]))
+		अगर (list_empty(&wsm.idle_ws[level - 1]))
 			clear_bit(level - 1, &wsm.active_map);
 
-	}
+	पूर्ण
 
-	if (!list_empty(&wsm.lru_list))
-		mod_timer(&wsm.timer, jiffies + ZSTD_BTRFS_RECLAIM_JIFFIES);
+	अगर (!list_empty(&wsm.lru_list))
+		mod_समयr(&wsm.समयr, jअगरfies + ZSTD_BTRFS_RECLAIM_JIFFIES);
 
 	spin_unlock_bh(&wsm.lock);
-}
+पूर्ण
 
 /*
  * zstd_calc_ws_mem_sizes - calculate monotonic memory bounds
@@ -146,180 +147,180 @@ static void zstd_reclaim_timer_fn(struct timer_list *timer)
  * It is possible based on the level configurations that a higher level
  * workspace uses less memory than a lower level workspace.  In order to reuse
  * workspaces, this must be made a monotonic relationship.  This precomputes
- * the required memory for each level and enforces the monotonicity between
+ * the required memory क्रम each level and enक्रमces the monotonicity between
  * level and memory required.
  */
-static void zstd_calc_ws_mem_sizes(void)
-{
-	size_t max_size = 0;
-	unsigned int level;
+अटल व्योम zstd_calc_ws_mem_sizes(व्योम)
+अणु
+	माप_प्रकार max_size = 0;
+	अचिन्हित पूर्णांक level;
 
-	for (level = 1; level <= ZSTD_BTRFS_MAX_LEVEL; level++) {
+	क्रम (level = 1; level <= ZSTD_BTRFS_MAX_LEVEL; level++) अणु
 		ZSTD_parameters params =
 			zstd_get_btrfs_parameters(level, ZSTD_BTRFS_MAX_INPUT);
-		size_t level_size =
-			max_t(size_t,
+		माप_प्रकार level_size =
+			max_t(माप_प्रकार,
 			      ZSTD_CStreamWorkspaceBound(params.cParams),
 			      ZSTD_DStreamWorkspaceBound(ZSTD_BTRFS_MAX_INPUT));
 
-		max_size = max_t(size_t, max_size, level_size);
+		max_size = max_t(माप_प्रकार, max_size, level_size);
 		zstd_ws_mem_sizes[level - 1] = max_size;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void zstd_init_workspace_manager(void)
-{
-	struct list_head *ws;
-	int i;
+व्योम zstd_init_workspace_manager(व्योम)
+अणु
+	काष्ठा list_head *ws;
+	पूर्णांक i;
 
 	zstd_calc_ws_mem_sizes();
 
 	wsm.ops = &btrfs_zstd_compress;
 	spin_lock_init(&wsm.lock);
-	init_waitqueue_head(&wsm.wait);
-	timer_setup(&wsm.timer, zstd_reclaim_timer_fn, 0);
+	init_रुकोqueue_head(&wsm.रुको);
+	समयr_setup(&wsm.समयr, zstd_reclaim_समयr_fn, 0);
 
 	INIT_LIST_HEAD(&wsm.lru_list);
-	for (i = 0; i < ZSTD_BTRFS_MAX_LEVEL; i++)
+	क्रम (i = 0; i < ZSTD_BTRFS_MAX_LEVEL; i++)
 		INIT_LIST_HEAD(&wsm.idle_ws[i]);
 
 	ws = zstd_alloc_workspace(ZSTD_BTRFS_MAX_LEVEL);
-	if (IS_ERR(ws)) {
+	अगर (IS_ERR(ws)) अणु
 		pr_warn(
 		"BTRFS: cannot preallocate zstd compression workspace\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		set_bit(ZSTD_BTRFS_MAX_LEVEL - 1, &wsm.active_map);
 		list_add(ws, &wsm.idle_ws[ZSTD_BTRFS_MAX_LEVEL - 1]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void zstd_cleanup_workspace_manager(void)
-{
-	struct workspace *workspace;
-	int i;
+व्योम zstd_cleanup_workspace_manager(व्योम)
+अणु
+	काष्ठा workspace *workspace;
+	पूर्णांक i;
 
 	spin_lock_bh(&wsm.lock);
-	for (i = 0; i < ZSTD_BTRFS_MAX_LEVEL; i++) {
-		while (!list_empty(&wsm.idle_ws[i])) {
+	क्रम (i = 0; i < ZSTD_BTRFS_MAX_LEVEL; i++) अणु
+		जबतक (!list_empty(&wsm.idle_ws[i])) अणु
 			workspace = container_of(wsm.idle_ws[i].next,
-						 struct workspace, list);
+						 काष्ठा workspace, list);
 			list_del(&workspace->list);
 			list_del(&workspace->lru_list);
-			zstd_free_workspace(&workspace->list);
-		}
-	}
+			zstd_मुक्त_workspace(&workspace->list);
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&wsm.lock);
 
-	del_timer_sync(&wsm.timer);
-}
+	del_समयr_sync(&wsm.समयr);
+पूर्ण
 
 /*
  * zstd_find_workspace - find workspace
  * @level: compression level
  *
  * This iterates over the set bits in the active_map beginning at the requested
- * compression level.  This lets us utilize already allocated workspaces before
+ * compression level.  This lets us utilize alपढ़ोy allocated workspaces beक्रमe
  * allocating a new one.  If the workspace is of a larger size, it is used, but
- * the place in the lru_list and last_used times are not updated.  This is to
+ * the place in the lru_list and last_used बार are not updated.  This is to
  * offer the opportunity to reclaim the workspace in favor of allocating an
  * appropriately sized one in the future.
  */
-static struct list_head *zstd_find_workspace(unsigned int level)
-{
-	struct list_head *ws;
-	struct workspace *workspace;
-	int i = level - 1;
+अटल काष्ठा list_head *zstd_find_workspace(अचिन्हित पूर्णांक level)
+अणु
+	काष्ठा list_head *ws;
+	काष्ठा workspace *workspace;
+	पूर्णांक i = level - 1;
 
 	spin_lock_bh(&wsm.lock);
-	for_each_set_bit_from(i, &wsm.active_map, ZSTD_BTRFS_MAX_LEVEL) {
-		if (!list_empty(&wsm.idle_ws[i])) {
+	क्रम_each_set_bit_from(i, &wsm.active_map, ZSTD_BTRFS_MAX_LEVEL) अणु
+		अगर (!list_empty(&wsm.idle_ws[i])) अणु
 			ws = wsm.idle_ws[i].next;
 			workspace = list_to_workspace(ws);
 			list_del_init(ws);
-			/* keep its place if it's a lower level using this */
+			/* keep its place अगर it's a lower level using this */
 			workspace->req_level = level;
-			if (level == workspace->level)
+			अगर (level == workspace->level)
 				list_del(&workspace->lru_list);
-			if (list_empty(&wsm.idle_ws[i]))
+			अगर (list_empty(&wsm.idle_ws[i]))
 				clear_bit(i, &wsm.active_map);
 			spin_unlock_bh(&wsm.lock);
-			return ws;
-		}
-	}
+			वापस ws;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&wsm.lock);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * zstd_get_workspace - zstd's get_workspace
  * @level: compression level
  *
- * If @level is 0, then any compression level can be used.  Therefore, we begin
+ * If @level is 0, then any compression level can be used.  Thereक्रमe, we begin
  * scanning from 1.  We first scan through possible workspaces and then after
  * attempt to allocate a new workspace.  If we fail to allocate one due to
- * memory pressure, go to sleep waiting for the max level workspace to free up.
+ * memory pressure, go to sleep रुकोing क्रम the max level workspace to मुक्त up.
  */
-struct list_head *zstd_get_workspace(unsigned int level)
-{
-	struct list_head *ws;
-	unsigned int nofs_flag;
+काष्ठा list_head *zstd_get_workspace(अचिन्हित पूर्णांक level)
+अणु
+	काष्ठा list_head *ws;
+	अचिन्हित पूर्णांक nofs_flag;
 
 	/* level == 0 means we can use any workspace */
-	if (!level)
+	अगर (!level)
 		level = 1;
 
 again:
 	ws = zstd_find_workspace(level);
-	if (ws)
-		return ws;
+	अगर (ws)
+		वापस ws;
 
-	nofs_flag = memalloc_nofs_save();
+	nofs_flag = meदो_स्मृति_nofs_save();
 	ws = zstd_alloc_workspace(level);
-	memalloc_nofs_restore(nofs_flag);
+	meदो_स्मृति_nofs_restore(nofs_flag);
 
-	if (IS_ERR(ws)) {
-		DEFINE_WAIT(wait);
+	अगर (IS_ERR(ws)) अणु
+		DEFINE_WAIT(रुको);
 
-		prepare_to_wait(&wsm.wait, &wait, TASK_UNINTERRUPTIBLE);
+		prepare_to_रुको(&wsm.रुको, &रुको, TASK_UNINTERRUPTIBLE);
 		schedule();
-		finish_wait(&wsm.wait, &wait);
+		finish_रुको(&wsm.रुको, &रुको);
 
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
-	return ws;
-}
+	वापस ws;
+पूर्ण
 
 /*
  * zstd_put_workspace - zstd put_workspace
- * @ws: list_head for the workspace
+ * @ws: list_head क्रम the workspace
  *
- * When putting back a workspace, we only need to update the LRU if we are of
- * the requested compression level.  Here is where we continue to protect the
- * max level workspace or update last_used accordingly.  If the reclaim timer
+ * When putting back a workspace, we only need to update the LRU अगर we are of
+ * the requested compression level.  Here is where we जारी to protect the
+ * max level workspace or update last_used accordingly.  If the reclaim समयr
  * isn't set, it is also set here.  Only the max level workspace tries and wakes
- * up waiting workspaces.
+ * up रुकोing workspaces.
  */
-void zstd_put_workspace(struct list_head *ws)
-{
-	struct workspace *workspace = list_to_workspace(ws);
+व्योम zstd_put_workspace(काष्ठा list_head *ws)
+अणु
+	काष्ठा workspace *workspace = list_to_workspace(ws);
 
 	spin_lock_bh(&wsm.lock);
 
-	/* A node is only taken off the lru if we are the corresponding level */
-	if (workspace->req_level == workspace->level) {
+	/* A node is only taken off the lru अगर we are the corresponding level */
+	अगर (workspace->req_level == workspace->level) अणु
 		/* Hide a max level workspace from reclaim */
-		if (list_empty(&wsm.idle_ws[ZSTD_BTRFS_MAX_LEVEL - 1])) {
+		अगर (list_empty(&wsm.idle_ws[ZSTD_BTRFS_MAX_LEVEL - 1])) अणु
 			INIT_LIST_HEAD(&workspace->lru_list);
-		} else {
-			workspace->last_used = jiffies;
+		पूर्ण अन्यथा अणु
+			workspace->last_used = jअगरfies;
 			list_add(&workspace->lru_list, &wsm.lru_list);
-			if (!timer_pending(&wsm.timer))
-				mod_timer(&wsm.timer,
-					  jiffies + ZSTD_BTRFS_RECLAIM_JIFFIES);
-		}
-	}
+			अगर (!समयr_pending(&wsm.समयr))
+				mod_समयr(&wsm.समयr,
+					  jअगरfies + ZSTD_BTRFS_RECLAIM_JIFFIES);
+		पूर्ण
+	पूर्ण
 
 	set_bit(workspace->level - 1, &wsm.active_map);
 	list_add(&workspace->list, &wsm.idle_ws[workspace->level - 1]);
@@ -327,60 +328,60 @@ void zstd_put_workspace(struct list_head *ws)
 
 	spin_unlock_bh(&wsm.lock);
 
-	if (workspace->level == ZSTD_BTRFS_MAX_LEVEL)
-		cond_wake_up(&wsm.wait);
-}
+	अगर (workspace->level == ZSTD_BTRFS_MAX_LEVEL)
+		cond_wake_up(&wsm.रुको);
+पूर्ण
 
-void zstd_free_workspace(struct list_head *ws)
-{
-	struct workspace *workspace = list_entry(ws, struct workspace, list);
+व्योम zstd_मुक्त_workspace(काष्ठा list_head *ws)
+अणु
+	काष्ठा workspace *workspace = list_entry(ws, काष्ठा workspace, list);
 
-	kvfree(workspace->mem);
-	kfree(workspace->buf);
-	kfree(workspace);
-}
+	kvमुक्त(workspace->mem);
+	kमुक्त(workspace->buf);
+	kमुक्त(workspace);
+पूर्ण
 
-struct list_head *zstd_alloc_workspace(unsigned int level)
-{
-	struct workspace *workspace;
+काष्ठा list_head *zstd_alloc_workspace(अचिन्हित पूर्णांक level)
+अणु
+	काष्ठा workspace *workspace;
 
-	workspace = kzalloc(sizeof(*workspace), GFP_KERNEL);
-	if (!workspace)
-		return ERR_PTR(-ENOMEM);
+	workspace = kzalloc(माप(*workspace), GFP_KERNEL);
+	अगर (!workspace)
+		वापस ERR_PTR(-ENOMEM);
 
 	workspace->size = zstd_ws_mem_sizes[level - 1];
 	workspace->level = level;
 	workspace->req_level = level;
-	workspace->last_used = jiffies;
-	workspace->mem = kvmalloc(workspace->size, GFP_KERNEL);
-	workspace->buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!workspace->mem || !workspace->buf)
-		goto fail;
+	workspace->last_used = jअगरfies;
+	workspace->mem = kvदो_स्मृति(workspace->size, GFP_KERNEL);
+	workspace->buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!workspace->mem || !workspace->buf)
+		जाओ fail;
 
 	INIT_LIST_HEAD(&workspace->list);
 	INIT_LIST_HEAD(&workspace->lru_list);
 
-	return &workspace->list;
+	वापस &workspace->list;
 fail:
-	zstd_free_workspace(&workspace->list);
-	return ERR_PTR(-ENOMEM);
-}
+	zstd_मुक्त_workspace(&workspace->list);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
-int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
-		u64 start, struct page **pages, unsigned long *out_pages,
-		unsigned long *total_in, unsigned long *total_out)
-{
-	struct workspace *workspace = list_entry(ws, struct workspace, list);
+पूर्णांक zstd_compress_pages(काष्ठा list_head *ws, काष्ठा address_space *mapping,
+		u64 start, काष्ठा page **pages, अचिन्हित दीर्घ *out_pages,
+		अचिन्हित दीर्घ *total_in, अचिन्हित दीर्घ *total_out)
+अणु
+	काष्ठा workspace *workspace = list_entry(ws, काष्ठा workspace, list);
 	ZSTD_CStream *stream;
-	int ret = 0;
-	int nr_pages = 0;
-	struct page *in_page = NULL;  /* The current page to read */
-	struct page *out_page = NULL; /* The current page to write to */
-	unsigned long tot_in = 0;
-	unsigned long tot_out = 0;
-	unsigned long len = *total_out;
-	const unsigned long nr_dest_pages = *out_pages;
-	unsigned long max_out = nr_dest_pages * PAGE_SIZE;
+	पूर्णांक ret = 0;
+	पूर्णांक nr_pages = 0;
+	काष्ठा page *in_page = शून्य;  /* The current page to पढ़ो */
+	काष्ठा page *out_page = शून्य; /* The current page to ग_लिखो to */
+	अचिन्हित दीर्घ tot_in = 0;
+	अचिन्हित दीर्घ tot_out = 0;
+	अचिन्हित दीर्घ len = *total_out;
+	स्थिर अचिन्हित दीर्घ nr_dest_pages = *out_pages;
+	अचिन्हित दीर्घ max_out = nr_dest_pages * PAGE_SIZE;
 	ZSTD_parameters params = zstd_get_btrfs_parameters(workspace->req_level,
 							   len);
 
@@ -391,87 +392,87 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 	/* Initialize the stream */
 	stream = ZSTD_initCStream(params, len, workspace->mem,
 			workspace->size);
-	if (!stream) {
+	अगर (!stream) अणु
 		pr_warn("BTRFS: ZSTD_initCStream failed\n");
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* map in the first page of input data */
 	in_page = find_get_page(mapping, start >> PAGE_SHIFT);
 	workspace->in_buf.src = kmap(in_page);
 	workspace->in_buf.pos = 0;
-	workspace->in_buf.size = min_t(size_t, len, PAGE_SIZE);
+	workspace->in_buf.size = min_t(माप_प्रकार, len, PAGE_SIZE);
 
 
 	/* Allocate and map in the output buffer */
 	out_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-	if (out_page == NULL) {
+	अगर (out_page == शून्य) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pages[nr_pages++] = out_page;
 	workspace->out_buf.dst = kmap(out_page);
 	workspace->out_buf.pos = 0;
-	workspace->out_buf.size = min_t(size_t, max_out, PAGE_SIZE);
+	workspace->out_buf.size = min_t(माप_प्रकार, max_out, PAGE_SIZE);
 
-	while (1) {
-		size_t ret2;
+	जबतक (1) अणु
+		माप_प्रकार ret2;
 
 		ret2 = ZSTD_compressStream(stream, &workspace->out_buf,
 				&workspace->in_buf);
-		if (ZSTD_isError(ret2)) {
+		अगर (ZSTD_isError(ret2)) अणु
 			pr_debug("BTRFS: ZSTD_compressStream returned %d\n",
 					ZSTD_getErrorCode(ret2));
 			ret = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* Check to see if we are making it bigger */
-		if (tot_in + workspace->in_buf.pos > 8192 &&
+		/* Check to see अगर we are making it bigger */
+		अगर (tot_in + workspace->in_buf.pos > 8192 &&
 				tot_in + workspace->in_buf.pos <
-				tot_out + workspace->out_buf.pos) {
+				tot_out + workspace->out_buf.pos) अणु
 			ret = -E2BIG;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* We've reached the end of our output range */
-		if (workspace->out_buf.pos >= max_out) {
+		अगर (workspace->out_buf.pos >= max_out) अणु
 			tot_out += workspace->out_buf.pos;
 			ret = -E2BIG;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* Check if we need more output space */
-		if (workspace->out_buf.pos == workspace->out_buf.size) {
+		/* Check अगर we need more output space */
+		अगर (workspace->out_buf.pos == workspace->out_buf.size) अणु
 			tot_out += PAGE_SIZE;
 			max_out -= PAGE_SIZE;
 			kunmap(out_page);
-			if (nr_pages == nr_dest_pages) {
-				out_page = NULL;
+			अगर (nr_pages == nr_dest_pages) अणु
+				out_page = शून्य;
 				ret = -E2BIG;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			out_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-			if (out_page == NULL) {
+			अगर (out_page == शून्य) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			pages[nr_pages++] = out_page;
 			workspace->out_buf.dst = kmap(out_page);
 			workspace->out_buf.pos = 0;
-			workspace->out_buf.size = min_t(size_t, max_out,
+			workspace->out_buf.size = min_t(माप_प्रकार, max_out,
 							PAGE_SIZE);
-		}
+		पूर्ण
 
 		/* We've reached the end of the input */
-		if (workspace->in_buf.pos >= len) {
+		अगर (workspace->in_buf.pos >= len) अणु
 			tot_in += workspace->in_buf.pos;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Check if we need more input */
-		if (workspace->in_buf.pos == workspace->in_buf.size) {
+		/* Check अगर we need more input */
+		अगर (workspace->in_buf.pos == workspace->in_buf.size) अणु
 			tot_in += PAGE_SIZE;
 			kunmap(in_page);
 			put_page(in_page);
@@ -481,52 +482,52 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 			in_page = find_get_page(mapping, start >> PAGE_SHIFT);
 			workspace->in_buf.src = kmap(in_page);
 			workspace->in_buf.pos = 0;
-			workspace->in_buf.size = min_t(size_t, len, PAGE_SIZE);
-		}
-	}
-	while (1) {
-		size_t ret2;
+			workspace->in_buf.size = min_t(माप_प्रकार, len, PAGE_SIZE);
+		पूर्ण
+	पूर्ण
+	जबतक (1) अणु
+		माप_प्रकार ret2;
 
 		ret2 = ZSTD_endStream(stream, &workspace->out_buf);
-		if (ZSTD_isError(ret2)) {
+		अगर (ZSTD_isError(ret2)) अणु
 			pr_debug("BTRFS: ZSTD_endStream returned %d\n",
 					ZSTD_getErrorCode(ret2));
 			ret = -EIO;
-			goto out;
-		}
-		if (ret2 == 0) {
+			जाओ out;
+		पूर्ण
+		अगर (ret2 == 0) अणु
 			tot_out += workspace->out_buf.pos;
-			break;
-		}
-		if (workspace->out_buf.pos >= max_out) {
+			अवरोध;
+		पूर्ण
+		अगर (workspace->out_buf.pos >= max_out) अणु
 			tot_out += workspace->out_buf.pos;
 			ret = -E2BIG;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		tot_out += PAGE_SIZE;
 		max_out -= PAGE_SIZE;
 		kunmap(out_page);
-		if (nr_pages == nr_dest_pages) {
-			out_page = NULL;
+		अगर (nr_pages == nr_dest_pages) अणु
+			out_page = शून्य;
 			ret = -E2BIG;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		out_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
-		if (out_page == NULL) {
+		अगर (out_page == शून्य) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		pages[nr_pages++] = out_page;
 		workspace->out_buf.dst = kmap(out_page);
 		workspace->out_buf.pos = 0;
-		workspace->out_buf.size = min_t(size_t, max_out, PAGE_SIZE);
-	}
+		workspace->out_buf.size = min_t(माप_प्रकार, max_out, PAGE_SIZE);
+	पूर्ण
 
-	if (tot_out >= tot_in) {
+	अगर (tot_out >= tot_in) अणु
 		ret = -E2BIG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = 0;
 	*total_in = tot_in;
@@ -534,113 +535,113 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 out:
 	*out_pages = nr_pages;
 	/* Cleanup */
-	if (in_page) {
+	अगर (in_page) अणु
 		kunmap(in_page);
 		put_page(in_page);
-	}
-	if (out_page)
+	पूर्ण
+	अगर (out_page)
 		kunmap(out_page);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int zstd_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
-{
-	struct workspace *workspace = list_entry(ws, struct workspace, list);
-	struct page **pages_in = cb->compressed_pages;
+पूर्णांक zstd_decompress_bio(काष्ठा list_head *ws, काष्ठा compressed_bio *cb)
+अणु
+	काष्ठा workspace *workspace = list_entry(ws, काष्ठा workspace, list);
+	काष्ठा page **pages_in = cb->compressed_pages;
 	u64 disk_start = cb->start;
-	struct bio *orig_bio = cb->orig_bio;
-	size_t srclen = cb->compressed_len;
+	काष्ठा bio *orig_bio = cb->orig_bio;
+	माप_प्रकार srclen = cb->compressed_len;
 	ZSTD_DStream *stream;
-	int ret = 0;
-	unsigned long page_in_index = 0;
-	unsigned long total_pages_in = DIV_ROUND_UP(srclen, PAGE_SIZE);
-	unsigned long buf_start;
-	unsigned long total_out = 0;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ page_in_index = 0;
+	अचिन्हित दीर्घ total_pages_in = DIV_ROUND_UP(srclen, PAGE_SIZE);
+	अचिन्हित दीर्घ buf_start;
+	अचिन्हित दीर्घ total_out = 0;
 
 	stream = ZSTD_initDStream(
 			ZSTD_BTRFS_MAX_INPUT, workspace->mem, workspace->size);
-	if (!stream) {
+	अगर (!stream) अणु
 		pr_debug("BTRFS: ZSTD_initDStream failed\n");
 		ret = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	workspace->in_buf.src = kmap(pages_in[page_in_index]);
 	workspace->in_buf.pos = 0;
-	workspace->in_buf.size = min_t(size_t, srclen, PAGE_SIZE);
+	workspace->in_buf.size = min_t(माप_प्रकार, srclen, PAGE_SIZE);
 
 	workspace->out_buf.dst = workspace->buf;
 	workspace->out_buf.pos = 0;
 	workspace->out_buf.size = PAGE_SIZE;
 
-	while (1) {
-		size_t ret2;
+	जबतक (1) अणु
+		माप_प्रकार ret2;
 
 		ret2 = ZSTD_decompressStream(stream, &workspace->out_buf,
 				&workspace->in_buf);
-		if (ZSTD_isError(ret2)) {
+		अगर (ZSTD_isError(ret2)) अणु
 			pr_debug("BTRFS: ZSTD_decompressStream returned %d\n",
 					ZSTD_getErrorCode(ret2));
 			ret = -EIO;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		buf_start = total_out;
 		total_out += workspace->out_buf.pos;
 		workspace->out_buf.pos = 0;
 
 		ret = btrfs_decompress_buf2page(workspace->out_buf.dst,
 				buf_start, total_out, disk_start, orig_bio);
-		if (ret == 0)
-			break;
+		अगर (ret == 0)
+			अवरोध;
 
-		if (workspace->in_buf.pos >= srclen)
-			break;
+		अगर (workspace->in_buf.pos >= srclen)
+			अवरोध;
 
-		/* Check if we've hit the end of a frame */
-		if (ret2 == 0)
-			break;
+		/* Check अगर we've hit the end of a frame */
+		अगर (ret2 == 0)
+			अवरोध;
 
-		if (workspace->in_buf.pos == workspace->in_buf.size) {
+		अगर (workspace->in_buf.pos == workspace->in_buf.size) अणु
 			kunmap(pages_in[page_in_index++]);
-			if (page_in_index >= total_pages_in) {
-				workspace->in_buf.src = NULL;
+			अगर (page_in_index >= total_pages_in) अणु
+				workspace->in_buf.src = शून्य;
 				ret = -EIO;
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 			srclen -= PAGE_SIZE;
 			workspace->in_buf.src = kmap(pages_in[page_in_index]);
 			workspace->in_buf.pos = 0;
-			workspace->in_buf.size = min_t(size_t, srclen, PAGE_SIZE);
-		}
-	}
+			workspace->in_buf.size = min_t(माप_प्रकार, srclen, PAGE_SIZE);
+		पूर्ण
+	पूर्ण
 	ret = 0;
 	zero_fill_bio(orig_bio);
-done:
-	if (workspace->in_buf.src)
+करोne:
+	अगर (workspace->in_buf.src)
 		kunmap(pages_in[page_in_index]);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int zstd_decompress(struct list_head *ws, unsigned char *data_in,
-		struct page *dest_page, unsigned long start_byte, size_t srclen,
-		size_t destlen)
-{
-	struct workspace *workspace = list_entry(ws, struct workspace, list);
+पूर्णांक zstd_decompress(काष्ठा list_head *ws, अचिन्हित अक्षर *data_in,
+		काष्ठा page *dest_page, अचिन्हित दीर्घ start_byte, माप_प्रकार srclen,
+		माप_प्रकार destlen)
+अणु
+	काष्ठा workspace *workspace = list_entry(ws, काष्ठा workspace, list);
 	ZSTD_DStream *stream;
-	int ret = 0;
-	size_t ret2;
-	unsigned long total_out = 0;
-	unsigned long pg_offset = 0;
+	पूर्णांक ret = 0;
+	माप_प्रकार ret2;
+	अचिन्हित दीर्घ total_out = 0;
+	अचिन्हित दीर्घ pg_offset = 0;
 
 	stream = ZSTD_initDStream(
 			ZSTD_BTRFS_MAX_INPUT, workspace->mem, workspace->size);
-	if (!stream) {
+	अगर (!stream) अणु
 		pr_warn("BTRFS: ZSTD_initDStream failed\n");
 		ret = -EIO;
-		goto finish;
-	}
+		जाओ finish;
+	पूर्ण
 
-	destlen = min_t(size_t, destlen, PAGE_SIZE);
+	destlen = min_t(माप_प्रकार, destlen, PAGE_SIZE);
 
 	workspace->in_buf.src = data_in;
 	workspace->in_buf.pos = 0;
@@ -651,58 +652,58 @@ int zstd_decompress(struct list_head *ws, unsigned char *data_in,
 	workspace->out_buf.size = PAGE_SIZE;
 
 	ret2 = 1;
-	while (pg_offset < destlen
-	       && workspace->in_buf.pos < workspace->in_buf.size) {
-		unsigned long buf_start;
-		unsigned long buf_offset;
-		unsigned long bytes;
+	जबतक (pg_offset < destlen
+	       && workspace->in_buf.pos < workspace->in_buf.size) अणु
+		अचिन्हित दीर्घ buf_start;
+		अचिन्हित दीर्घ buf_offset;
+		अचिन्हित दीर्घ bytes;
 
-		/* Check if the frame is over and we still need more input */
-		if (ret2 == 0) {
+		/* Check अगर the frame is over and we still need more input */
+		अगर (ret2 == 0) अणु
 			pr_debug("BTRFS: ZSTD_decompressStream ended early\n");
 			ret = -EIO;
-			goto finish;
-		}
+			जाओ finish;
+		पूर्ण
 		ret2 = ZSTD_decompressStream(stream, &workspace->out_buf,
 				&workspace->in_buf);
-		if (ZSTD_isError(ret2)) {
+		अगर (ZSTD_isError(ret2)) अणु
 			pr_debug("BTRFS: ZSTD_decompressStream returned %d\n",
 					ZSTD_getErrorCode(ret2));
 			ret = -EIO;
-			goto finish;
-		}
+			जाओ finish;
+		पूर्ण
 
 		buf_start = total_out;
 		total_out += workspace->out_buf.pos;
 		workspace->out_buf.pos = 0;
 
-		if (total_out <= start_byte)
-			continue;
+		अगर (total_out <= start_byte)
+			जारी;
 
-		if (total_out > start_byte && buf_start < start_byte)
+		अगर (total_out > start_byte && buf_start < start_byte)
 			buf_offset = start_byte - buf_start;
-		else
+		अन्यथा
 			buf_offset = 0;
 
-		bytes = min_t(unsigned long, destlen - pg_offset,
+		bytes = min_t(अचिन्हित दीर्घ, destlen - pg_offset,
 				workspace->out_buf.size - buf_offset);
 
-		memcpy_to_page(dest_page, pg_offset,
+		स_नकल_to_page(dest_page, pg_offset,
 			       workspace->out_buf.dst + buf_offset, bytes);
 
 		pg_offset += bytes;
-	}
+	पूर्ण
 	ret = 0;
 finish:
-	if (pg_offset < destlen) {
+	अगर (pg_offset < destlen) अणु
 		memzero_page(dest_page, pg_offset, destlen - pg_offset);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-const struct btrfs_compress_op btrfs_zstd_compress = {
+स्थिर काष्ठा btrfs_compress_op btrfs_zstd_compress = अणु
 	/* ZSTD uses own workspace manager */
-	.workspace_manager = NULL,
+	.workspace_manager = शून्य,
 	.max_level	= ZSTD_BTRFS_MAX_LEVEL,
-	.default_level	= ZSTD_BTRFS_DEFAULT_LEVEL,
-};
+	.शेष_level	= ZSTD_BTRFS_DEFAULT_LEVEL,
+पूर्ण;

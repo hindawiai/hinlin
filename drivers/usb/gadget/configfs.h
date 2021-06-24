@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef USB__GADGET__CONFIGFS__H
-#define USB__GADGET__CONFIGFS__H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित USB__GADGET__CONFIGFS__H
+#घोषणा USB__GADGET__CONFIGFS__H
 
-#include <linux/configfs.h>
+#समावेश <linux/configfs.h>
 
-void unregister_gadget_item(struct config_item *item);
+व्योम unरेजिस्टर_gadget_item(काष्ठा config_item *item);
 
-struct config_group *usb_os_desc_prepare_interf_dir(
-		struct config_group *parent,
-		int n_interf,
-		struct usb_os_desc **desc,
-		char **names,
-		struct module *owner);
+काष्ठा config_group *usb_os_desc_prepare_पूर्णांकerf_dir(
+		काष्ठा config_group *parent,
+		पूर्णांक n_पूर्णांकerf,
+		काष्ठा usb_os_desc **desc,
+		अक्षर **names,
+		काष्ठा module *owner);
 
-static inline struct usb_os_desc *to_usb_os_desc(struct config_item *item)
-{
-	return container_of(to_config_group(item), struct usb_os_desc, group);
-}
+अटल अंतरभूत काष्ठा usb_os_desc *to_usb_os_desc(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_config_group(item), काष्ठा usb_os_desc, group);
+पूर्ण
 
-#endif /*  USB__GADGET__CONFIGFS__H */
+#पूर्ण_अगर /*  USB__GADGET__CONFIGFS__H */

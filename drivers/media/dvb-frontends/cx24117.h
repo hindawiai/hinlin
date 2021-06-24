@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
     Conexant cx24117/cx24132 - Dual DVBS/S2 Satellite demod/tuner driver
 
@@ -7,28 +8,28 @@
 
 */
 
-#ifndef CX24117_H
-#define CX24117_H
+#अगर_अघोषित CX24117_H
+#घोषणा CX24117_H
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-struct cx24117_config {
+काष्ठा cx24117_config अणु
 	/* the demodulator's i2c address */
 	u8 demod_address;
-};
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_CX24117)
-extern struct dvb_frontend *cx24117_attach(
-	const struct cx24117_config *config,
-	struct i2c_adapter *i2c);
-#else
-static inline struct dvb_frontend *cx24117_attach(
-	const struct cx24117_config *config,
-	struct i2c_adapter *i2c)
-{
+#अगर IS_REACHABLE(CONFIG_DVB_CX24117)
+बाह्य काष्ठा dvb_frontend *cx24117_attach(
+	स्थिर काष्ठा cx24117_config *config,
+	काष्ठा i2c_adapter *i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *cx24117_attach(
+	स्थिर काष्ठा cx24117_config *config,
+	काष्ठा i2c_adapter *i2c)
+अणु
 	dev_warn(&i2c->dev, "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* CX24117_H */
+#पूर्ण_अगर /* CX24117_H */

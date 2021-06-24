@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
 /*
- * This file provides wrappers with sanitizer instrumentation for non-atomic
+ * This file provides wrappers with sanitizer instrumentation क्रम non-atomic
  * bit operations.
  *
  * To use this functionality, an arch's bitops.h file needs to define each of
  * the below bit operations with an arch_ prefix (e.g. arch_set_bit(),
  * arch___set_bit(), etc.).
  */
-#ifndef _ASM_GENERIC_BITOPS_INSTRUMENTED_NON_ATOMIC_H
-#define _ASM_GENERIC_BITOPS_INSTRUMENTED_NON_ATOMIC_H
+#अगर_अघोषित _ASM_GENERIC_BITOPS_INSTRUMENTED_NON_ATOMIC_H
+#घोषणा _ASM_GENERIC_BITOPS_INSTRUMENTED_NON_ATOMIC_H
 
-#include <linux/instrumented.h>
+#समावेश <linux/instrumented.h>
 
 /**
  * __set_bit - Set a bit in memory
@@ -22,11 +23,11 @@
  * region of memory concurrently, the effect may be that only one operation
  * succeeds.
  */
-static inline void __set_bit(long nr, volatile unsigned long *addr)
-{
-	instrument_write(addr + BIT_WORD(nr), sizeof(long));
+अटल अंतरभूत व्योम __set_bit(दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	instrument_ग_लिखो(addr + BIT_WORD(nr), माप(दीर्घ));
 	arch___set_bit(nr, addr);
-}
+पूर्ण
 
 /**
  * __clear_bit - Clears a bit in memory
@@ -37,11 +38,11 @@ static inline void __set_bit(long nr, volatile unsigned long *addr)
  * region of memory concurrently, the effect may be that only one operation
  * succeeds.
  */
-static inline void __clear_bit(long nr, volatile unsigned long *addr)
-{
-	instrument_write(addr + BIT_WORD(nr), sizeof(long));
+अटल अंतरभूत व्योम __clear_bit(दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	instrument_ग_लिखो(addr + BIT_WORD(nr), माप(दीर्घ));
 	arch___clear_bit(nr, addr);
-}
+पूर्ण
 
 /**
  * __change_bit - Toggle a bit in memory
@@ -52,87 +53,87 @@ static inline void __clear_bit(long nr, volatile unsigned long *addr)
  * region of memory concurrently, the effect may be that only one operation
  * succeeds.
  */
-static inline void __change_bit(long nr, volatile unsigned long *addr)
-{
-	instrument_write(addr + BIT_WORD(nr), sizeof(long));
+अटल अंतरभूत व्योम __change_bit(दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	instrument_ग_लिखो(addr + BIT_WORD(nr), माप(दीर्घ));
 	arch___change_bit(nr, addr);
-}
+पूर्ण
 
-static inline void __instrument_read_write_bitop(long nr, volatile unsigned long *addr)
-{
-	if (IS_ENABLED(CONFIG_KCSAN_ASSUME_PLAIN_WRITES_ATOMIC)) {
+अटल अंतरभूत व्योम __instrument_पढ़ो_ग_लिखो_bitop(दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	अगर (IS_ENABLED(CONFIG_KCSAN_ASSUME_PLAIN_WRITES_ATOMIC)) अणु
 		/*
-		 * We treat non-atomic read-write bitops a little more special.
-		 * Given the operations here only modify a single bit, assuming
-		 * non-atomicity of the writer is sufficient may be reasonable
-		 * for certain usage (and follows the permissible nature of the
-		 * assume-plain-writes-atomic rule):
-		 * 1. report read-modify-write races -> check read;
-		 * 2. do not report races with marked readers, but do report
-		 *    races with unmarked readers -> check "atomic" write.
+		 * We treat non-atomic पढ़ो-ग_लिखो bitops a little more special.
+		 * Given the operations here only modअगरy a single bit, assuming
+		 * non-atomicity of the ग_लिखोr is sufficient may be reasonable
+		 * क्रम certain usage (and follows the permissible nature of the
+		 * assume-plain-ग_लिखोs-atomic rule):
+		 * 1. report पढ़ो-modअगरy-ग_लिखो races -> check पढ़ो;
+		 * 2. करो not report races with marked पढ़ोers, but करो report
+		 *    races with unmarked पढ़ोers -> check "atomic" ग_लिखो.
 		 */
-		kcsan_check_read(addr + BIT_WORD(nr), sizeof(long));
+		kcsan_check_पढ़ो(addr + BIT_WORD(nr), माप(दीर्घ));
 		/*
-		 * Use generic write instrumentation, in case other sanitizers
-		 * or tools are enabled alongside KCSAN.
+		 * Use generic ग_लिखो instrumentation, in हाल other sanitizers
+		 * or tools are enabled aदीर्घside KCSAN.
 		 */
-		instrument_write(addr + BIT_WORD(nr), sizeof(long));
-	} else {
-		instrument_read_write(addr + BIT_WORD(nr), sizeof(long));
-	}
-}
+		instrument_ग_लिखो(addr + BIT_WORD(nr), माप(दीर्घ));
+	पूर्ण अन्यथा अणु
+		instrument_पढ़ो_ग_लिखो(addr + BIT_WORD(nr), माप(दीर्घ));
+	पूर्ण
+पूर्ण
 
 /**
- * __test_and_set_bit - Set a bit and return its old value
+ * __test_and_set_bit - Set a bit and वापस its old value
  * @nr: Bit to set
  * @addr: Address to count from
  *
  * This operation is non-atomic. If two instances of this operation race, one
  * can appear to succeed but actually fail.
  */
-static inline bool __test_and_set_bit(long nr, volatile unsigned long *addr)
-{
-	__instrument_read_write_bitop(nr, addr);
-	return arch___test_and_set_bit(nr, addr);
-}
+अटल अंतरभूत bool __test_and_set_bit(दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	__instrument_पढ़ो_ग_लिखो_bitop(nr, addr);
+	वापस arch___test_and_set_bit(nr, addr);
+पूर्ण
 
 /**
- * __test_and_clear_bit - Clear a bit and return its old value
+ * __test_and_clear_bit - Clear a bit and वापस its old value
  * @nr: Bit to clear
  * @addr: Address to count from
  *
  * This operation is non-atomic. If two instances of this operation race, one
  * can appear to succeed but actually fail.
  */
-static inline bool __test_and_clear_bit(long nr, volatile unsigned long *addr)
-{
-	__instrument_read_write_bitop(nr, addr);
-	return arch___test_and_clear_bit(nr, addr);
-}
+अटल अंतरभूत bool __test_and_clear_bit(दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	__instrument_पढ़ो_ग_लिखो_bitop(nr, addr);
+	वापस arch___test_and_clear_bit(nr, addr);
+पूर्ण
 
 /**
- * __test_and_change_bit - Change a bit and return its old value
+ * __test_and_change_bit - Change a bit and वापस its old value
  * @nr: Bit to change
  * @addr: Address to count from
  *
  * This operation is non-atomic. If two instances of this operation race, one
  * can appear to succeed but actually fail.
  */
-static inline bool __test_and_change_bit(long nr, volatile unsigned long *addr)
-{
-	__instrument_read_write_bitop(nr, addr);
-	return arch___test_and_change_bit(nr, addr);
-}
+अटल अंतरभूत bool __test_and_change_bit(दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	__instrument_पढ़ो_ग_लिखो_bitop(nr, addr);
+	वापस arch___test_and_change_bit(nr, addr);
+पूर्ण
 
 /**
  * test_bit - Determine whether a bit is set
  * @nr: bit number to test
  * @addr: Address to start counting from
  */
-static inline bool test_bit(long nr, const volatile unsigned long *addr)
-{
-	instrument_atomic_read(addr + BIT_WORD(nr), sizeof(long));
-	return arch_test_bit(nr, addr);
-}
+अटल अंतरभूत bool test_bit(दीर्घ nr, स्थिर अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	instrument_atomic_पढ़ो(addr + BIT_WORD(nr), माप(दीर्घ));
+	वापस arch_test_bit(nr, addr);
+पूर्ण
 
-#endif /* _ASM_GENERIC_BITOPS_INSTRUMENTED_NON_ATOMIC_H */
+#पूर्ण_अगर /* _ASM_GENERIC_BITOPS_INSTRUMENTED_NON_ATOMIC_H */

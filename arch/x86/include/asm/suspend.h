@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifdef CONFIG_X86_32
-# include <asm/suspend_32.h>
-#else
-# include <asm/suspend_64.h>
-#endif
-extern unsigned long restore_jump_address __visible;
-extern unsigned long jump_address_phys;
-extern unsigned long restore_cr3 __visible;
-extern unsigned long temp_pgt __visible;
-extern unsigned long relocated_restore_code __visible;
-extern int relocate_restore_code(void);
-/* Defined in hibernate_asm_32/64.S */
-extern asmlinkage __visible int restore_image(void);
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_घोषित CONFIG_X86_32
+# include <यंत्र/suspend_32.h>
+#अन्यथा
+# include <यंत्र/suspend_64.h>
+#पूर्ण_अगर
+बाह्य अचिन्हित दीर्घ restore_jump_address __visible;
+बाह्य अचिन्हित दीर्घ jump_address_phys;
+बाह्य अचिन्हित दीर्घ restore_cr3 __visible;
+बाह्य अचिन्हित दीर्घ temp_pgt __visible;
+बाह्य अचिन्हित दीर्घ relocated_restore_code __visible;
+बाह्य पूर्णांक relocate_restore_code(व्योम);
+/* Defined in hibernate_यंत्र_32/64.S */
+बाह्य यंत्रlinkage __visible पूर्णांक restore_image(व्योम);

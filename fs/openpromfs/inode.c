@@ -1,194 +1,195 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* inode.c: /proc/openprom handling routines
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* inode.c: /proc/खोलोprom handling routines
  *
  * Copyright (C) 1996-1999 Jakub Jelinek  (jakub@redhat.com)
  * Copyright (C) 1998      Eddie C. Dost  (ecd@skynet.be)
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/fs.h>
-#include <linux/fs_context.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/seq_file.h>
-#include <linux/magic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/fs_context.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/magic.h>
 
-#include <asm/openprom.h>
-#include <asm/oplib.h>
-#include <asm/prom.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/खोलोprom.h>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <linux/uaccess.h>
 
-static DEFINE_MUTEX(op_mutex);
+अटल DEFINE_MUTEX(op_mutex);
 
-#define OPENPROM_ROOT_INO	0
+#घोषणा OPENPROM_ROOT_INO	0
 
-enum op_inode_type {
+क्रमागत op_inode_type अणु
 	op_inode_node,
 	op_inode_prop,
-};
+पूर्ण;
 
-union op_inode_data {
-	struct device_node	*node;
-	struct property		*prop;
-};
+जोड़ op_inode_data अणु
+	काष्ठा device_node	*node;
+	काष्ठा property		*prop;
+पूर्ण;
 
-struct op_inode_info {
-	struct inode		vfs_inode;
-	enum op_inode_type	type;
-	union op_inode_data	u;
-};
+काष्ठा op_inode_info अणु
+	काष्ठा inode		vfs_inode;
+	क्रमागत op_inode_type	type;
+	जोड़ op_inode_data	u;
+पूर्ण;
 
-static struct inode *openprom_iget(struct super_block *sb, ino_t ino);
+अटल काष्ठा inode *खोलोprom_iget(काष्ठा super_block *sb, ino_t ino);
 
-static inline struct op_inode_info *OP_I(struct inode *inode)
-{
-	return container_of(inode, struct op_inode_info, vfs_inode);
-}
+अटल अंतरभूत काष्ठा op_inode_info *OP_I(काष्ठा inode *inode)
+अणु
+	वापस container_of(inode, काष्ठा op_inode_info, vfs_inode);
+पूर्ण
 
-static int is_string(unsigned char *p, int len)
-{
-	int i;
+अटल पूर्णांक is_string(अचिन्हित अक्षर *p, पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++) {
-		unsigned char val = p[i];
+	क्रम (i = 0; i < len; i++) अणु
+		अचिन्हित अक्षर val = p[i];
 
-		if ((i && !val) ||
+		अगर ((i && !val) ||
 		    (val >= ' ' && val <= '~'))
-			continue;
+			जारी;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int property_show(struct seq_file *f, void *v)
-{
-	struct property *prop = f->private;
-	void *pval;
-	int len;
+अटल पूर्णांक property_show(काष्ठा seq_file *f, व्योम *v)
+अणु
+	काष्ठा property *prop = f->निजी;
+	व्योम *pval;
+	पूर्णांक len;
 
 	len = prop->length;
 	pval = prop->value;
 
-	if (is_string(pval, len)) {
-		while (len > 0) {
-			int n = strlen(pval);
+	अगर (is_string(pval, len)) अणु
+		जबतक (len > 0) अणु
+			पूर्णांक n = म_माप(pval);
 
-			seq_printf(f, "%s", (char *) pval);
+			seq_म_लिखो(f, "%s", (अक्षर *) pval);
 
-			/* Skip over the NULL byte too.  */
+			/* Skip over the शून्य byte too.  */
 			pval += n + 1;
 			len -= n + 1;
 
-			if (len > 0)
-				seq_printf(f, " + ");
-		}
-	} else {
-		if (len & 3) {
-			while (len) {
+			अगर (len > 0)
+				seq_म_लिखो(f, " + ");
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (len & 3) अणु
+			जबतक (len) अणु
 				len--;
-				if (len)
-					seq_printf(f, "%02x.",
-						   *(unsigned char *) pval);
-				else
-					seq_printf(f, "%02x",
-						   *(unsigned char *) pval);
+				अगर (len)
+					seq_म_लिखो(f, "%02x.",
+						   *(अचिन्हित अक्षर *) pval);
+				अन्यथा
+					seq_म_लिखो(f, "%02x",
+						   *(अचिन्हित अक्षर *) pval);
 				pval++;
-			}
-		} else {
-			while (len >= 4) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			जबतक (len >= 4) अणु
 				len -= 4;
 
-				if (len)
-					seq_printf(f, "%08x.",
-						   *(unsigned int *) pval);
-				else
-					seq_printf(f, "%08x",
-						   *(unsigned int *) pval);
+				अगर (len)
+					seq_म_लिखो(f, "%08x.",
+						   *(अचिन्हित पूर्णांक *) pval);
+				अन्यथा
+					seq_म_लिखो(f, "%08x",
+						   *(अचिन्हित पूर्णांक *) pval);
 				pval += 4;
-			}
-		}
-	}
-	seq_printf(f, "\n");
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	seq_म_लिखो(f, "\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *property_start(struct seq_file *f, loff_t *pos)
-{
-	if (*pos == 0)
-		return pos;
-	return NULL;
-}
+अटल व्योम *property_start(काष्ठा seq_file *f, loff_t *pos)
+अणु
+	अगर (*pos == 0)
+		वापस pos;
+	वापस शून्य;
+पूर्ण
 
-static void *property_next(struct seq_file *f, void *v, loff_t *pos)
-{
+अटल व्योम *property_next(काष्ठा seq_file *f, व्योम *v, loff_t *pos)
+अणु
 	(*pos)++;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void property_stop(struct seq_file *f, void *v)
-{
-	/* Nothing to do */
-}
+अटल व्योम property_stop(काष्ठा seq_file *f, व्योम *v)
+अणु
+	/* Nothing to करो */
+पूर्ण
 
-static const struct seq_operations property_op = {
+अटल स्थिर काष्ठा seq_operations property_op = अणु
 	.start		= property_start,
 	.next		= property_next,
 	.stop		= property_stop,
 	.show		= property_show
-};
+पूर्ण;
 
-static int property_open(struct inode *inode, struct file *file)
-{
-	struct op_inode_info *oi = OP_I(inode);
-	int ret;
+अटल पूर्णांक property_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा op_inode_info *oi = OP_I(inode);
+	पूर्णांक ret;
 
 	BUG_ON(oi->type != op_inode_prop);
 
-	ret = seq_open(file, &property_op);
-	if (!ret) {
-		struct seq_file *m = file->private_data;
-		m->private = oi->u.prop;
-	}
-	return ret;
-}
+	ret = seq_खोलो(file, &property_op);
+	अगर (!ret) अणु
+		काष्ठा seq_file *m = file->निजी_data;
+		m->निजी = oi->u.prop;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct file_operations openpromfs_prop_ops = {
-	.open		= property_open,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations खोलोpromfs_prop_ops = अणु
+	.खोलो		= property_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= seq_release,
-};
+पूर्ण;
 
-static int openpromfs_readdir(struct file *, struct dir_context *);
+अटल पूर्णांक खोलोpromfs_सूची_पढ़ो(काष्ठा file *, काष्ठा dir_context *);
 
-static const struct file_operations openprom_operations = {
-	.read		= generic_read_dir,
-	.iterate_shared	= openpromfs_readdir,
+अटल स्थिर काष्ठा file_operations खोलोprom_operations = अणु
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= खोलोpromfs_सूची_पढ़ो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-static struct dentry *openpromfs_lookup(struct inode *, struct dentry *, unsigned int);
+अटल काष्ठा dentry *खोलोpromfs_lookup(काष्ठा inode *, काष्ठा dentry *, अचिन्हित पूर्णांक);
 
-static const struct inode_operations openprom_inode_operations = {
-	.lookup		= openpromfs_lookup,
-};
+अटल स्थिर काष्ठा inode_operations खोलोprom_inode_operations = अणु
+	.lookup		= खोलोpromfs_lookup,
+पूर्ण;
 
-static struct dentry *openpromfs_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
-{
-	struct op_inode_info *ent_oi, *oi = OP_I(dir);
-	struct device_node *dp, *child;
-	struct property *prop;
-	enum op_inode_type ent_type;
-	union op_inode_data ent_data;
-	const char *name;
-	struct inode *inode;
-	unsigned int ino;
-	int len;
+अटल काष्ठा dentry *खोलोpromfs_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा op_inode_info *ent_oi, *oi = OP_I(dir);
+	काष्ठा device_node *dp, *child;
+	काष्ठा property *prop;
+	क्रमागत op_inode_type ent_type;
+	जोड़ op_inode_data ent_data;
+	स्थिर अक्षर *name;
+	काष्ठा inode *inode;
+	अचिन्हित पूर्णांक ino;
+	पूर्णांक len;
 	
 	BUG_ON(oi->type != op_inode_node);
 
@@ -200,276 +201,276 @@ static struct dentry *openpromfs_lookup(struct inode *dir, struct dentry *dentry
 	mutex_lock(&op_mutex);
 
 	child = dp->child;
-	while (child) {
-		const char *node_name = kbasename(child->full_name);
-		int n = strlen(node_name);
+	जबतक (child) अणु
+		स्थिर अक्षर *node_name = kbasename(child->full_name);
+		पूर्णांक n = म_माप(node_name);
 
-		if (len == n &&
-		    !strncmp(node_name, name, len)) {
+		अगर (len == n &&
+		    !म_भेदन(node_name, name, len)) अणु
 			ent_type = op_inode_node;
 			ent_data.node = child;
 			ino = child->unique_id;
-			goto found;
-		}
+			जाओ found;
+		पूर्ण
 		child = child->sibling;
-	}
+	पूर्ण
 
 	prop = dp->properties;
-	while (prop) {
-		int n = strlen(prop->name);
+	जबतक (prop) अणु
+		पूर्णांक n = म_माप(prop->name);
 
-		if (len == n && !strncmp(prop->name, name, len)) {
+		अगर (len == n && !म_भेदन(prop->name, name, len)) अणु
 			ent_type = op_inode_prop;
 			ent_data.prop = prop;
 			ino = prop->unique_id;
-			goto found;
-		}
+			जाओ found;
+		पूर्ण
 
 		prop = prop->next;
-	}
+	पूर्ण
 
 	mutex_unlock(&op_mutex);
-	return ERR_PTR(-ENOENT);
+	वापस ERR_PTR(-ENOENT);
 
 found:
-	inode = openprom_iget(dir->i_sb, ino);
+	inode = खोलोprom_iget(dir->i_sb, ino);
 	mutex_unlock(&op_mutex);
-	if (IS_ERR(inode))
-		return ERR_CAST(inode);
-	if (inode->i_state & I_NEW) {
-		inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+	अगर (IS_ERR(inode))
+		वापस ERR_CAST(inode);
+	अगर (inode->i_state & I_NEW) अणु
+		inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
 		ent_oi = OP_I(inode);
 		ent_oi->type = ent_type;
 		ent_oi->u = ent_data;
 
-		switch (ent_type) {
-		case op_inode_node:
-			inode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO;
-			inode->i_op = &openprom_inode_operations;
-			inode->i_fop = &openprom_operations;
+		चयन (ent_type) अणु
+		हाल op_inode_node:
+			inode->i_mode = S_IFसूची | S_IRUGO | S_IXUGO;
+			inode->i_op = &खोलोprom_inode_operations;
+			inode->i_fop = &खोलोprom_operations;
 			set_nlink(inode, 2);
-			break;
-		case op_inode_prop:
-			if (of_node_name_eq(dp, "options") && (len == 17) &&
-			    !strncmp (name, "security-password", 17))
+			अवरोध;
+		हाल op_inode_prop:
+			अगर (of_node_name_eq(dp, "options") && (len == 17) &&
+			    !म_भेदन (name, "security-password", 17))
 				inode->i_mode = S_IFREG | S_IRUSR | S_IWUSR;
-			else
+			अन्यथा
 				inode->i_mode = S_IFREG | S_IRUGO;
-			inode->i_fop = &openpromfs_prop_ops;
+			inode->i_fop = &खोलोpromfs_prop_ops;
 			set_nlink(inode, 1);
 			inode->i_size = ent_oi->u.prop->length;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		unlock_new_inode(inode);
-	}
+	पूर्ण
 
-	return d_splice_alias(inode, dentry);
-}
+	वापस d_splice_alias(inode, dentry);
+पूर्ण
 
-static int openpromfs_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct inode *inode = file_inode(file);
-	struct op_inode_info *oi = OP_I(inode);
-	struct device_node *dp = oi->u.node;
-	struct device_node *child;
-	struct property *prop;
-	int i;
+अटल पूर्णांक खोलोpromfs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा op_inode_info *oi = OP_I(inode);
+	काष्ठा device_node *dp = oi->u.node;
+	काष्ठा device_node *child;
+	काष्ठा property *prop;
+	पूर्णांक i;
 
 	mutex_lock(&op_mutex);
 	
-	if (ctx->pos == 0) {
-		if (!dir_emit(ctx, ".", 1, inode->i_ino, DT_DIR))
-			goto out;
+	अगर (ctx->pos == 0) अणु
+		अगर (!dir_emit(ctx, ".", 1, inode->i_ino, DT_सूची))
+			जाओ out;
 		ctx->pos = 1;
-	}
-	if (ctx->pos == 1) {
-		if (!dir_emit(ctx, "..", 2,
-			    (dp->parent == NULL ?
+	पूर्ण
+	अगर (ctx->pos == 1) अणु
+		अगर (!dir_emit(ctx, "..", 2,
+			    (dp->parent == शून्य ?
 			     OPENPROM_ROOT_INO :
-			     dp->parent->unique_id), DT_DIR))
-			goto out;
+			     dp->parent->unique_id), DT_सूची))
+			जाओ out;
 		ctx->pos = 2;
-	}
+	पूर्ण
 	i = ctx->pos - 2;
 
 	/* First, the children nodes as directories.  */
 	child = dp->child;
-	while (i && child) {
+	जबतक (i && child) अणु
 		child = child->sibling;
 		i--;
-	}
-	while (child) {
-		if (!dir_emit(ctx,
+	पूर्ण
+	जबतक (child) अणु
+		अगर (!dir_emit(ctx,
 			    kbasename(child->full_name),
-			    strlen(kbasename(child->full_name)),
-			    child->unique_id, DT_DIR))
-			goto out;
+			    म_माप(kbasename(child->full_name)),
+			    child->unique_id, DT_सूची))
+			जाओ out;
 
 		ctx->pos++;
 		child = child->sibling;
-	}
+	पूर्ण
 
 	/* Next, the properties as files.  */
 	prop = dp->properties;
-	while (i && prop) {
+	जबतक (i && prop) अणु
 		prop = prop->next;
 		i--;
-	}
-	while (prop) {
-		if (!dir_emit(ctx, prop->name, strlen(prop->name),
+	पूर्ण
+	जबतक (prop) अणु
+		अगर (!dir_emit(ctx, prop->name, म_माप(prop->name),
 			    prop->unique_id, DT_REG))
-			goto out;
+			जाओ out;
 
 		ctx->pos++;
 		prop = prop->next;
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&op_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct kmem_cache *op_inode_cachep;
+अटल काष्ठा kmem_cache *op_inode_cachep;
 
-static struct inode *openprom_alloc_inode(struct super_block *sb)
-{
-	struct op_inode_info *oi;
+अटल काष्ठा inode *खोलोprom_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा op_inode_info *oi;
 
 	oi = kmem_cache_alloc(op_inode_cachep, GFP_KERNEL);
-	if (!oi)
-		return NULL;
+	अगर (!oi)
+		वापस शून्य;
 
-	return &oi->vfs_inode;
-}
+	वापस &oi->vfs_inode;
+पूर्ण
 
-static void openprom_free_inode(struct inode *inode)
-{
-	kmem_cache_free(op_inode_cachep, OP_I(inode));
-}
+अटल व्योम खोलोprom_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	kmem_cache_मुक्त(op_inode_cachep, OP_I(inode));
+पूर्ण
 
-static struct inode *openprom_iget(struct super_block *sb, ino_t ino)
-{
-	struct inode *inode = iget_locked(sb, ino);
-	if (!inode)
+अटल काष्ठा inode *खोलोprom_iget(काष्ठा super_block *sb, ino_t ino)
+अणु
+	काष्ठा inode *inode = iget_locked(sb, ino);
+	अगर (!inode)
 		inode = ERR_PTR(-ENOMEM);
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-static int openprom_remount(struct super_block *sb, int *flags, char *data)
-{
-	sync_filesystem(sb);
+अटल पूर्णांक खोलोprom_remount(काष्ठा super_block *sb, पूर्णांक *flags, अक्षर *data)
+अणु
+	sync_fileप्रणाली(sb);
 	*flags |= SB_NOATIME;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct super_operations openprom_sops = {
-	.alloc_inode	= openprom_alloc_inode,
-	.free_inode	= openprom_free_inode,
+अटल स्थिर काष्ठा super_operations खोलोprom_sops = अणु
+	.alloc_inode	= खोलोprom_alloc_inode,
+	.मुक्त_inode	= खोलोprom_मुक्त_inode,
 	.statfs		= simple_statfs,
-	.remount_fs	= openprom_remount,
-};
+	.remount_fs	= खोलोprom_remount,
+पूर्ण;
 
-static int openprom_fill_super(struct super_block *s, struct fs_context *fc)
-{
-	struct inode *root_inode;
-	struct op_inode_info *oi;
-	int ret;
+अटल पूर्णांक खोलोprom_fill_super(काष्ठा super_block *s, काष्ठा fs_context *fc)
+अणु
+	काष्ठा inode *root_inode;
+	काष्ठा op_inode_info *oi;
+	पूर्णांक ret;
 
 	s->s_flags |= SB_NOATIME;
 	s->s_blocksize = 1024;
 	s->s_blocksize_bits = 10;
 	s->s_magic = OPENPROM_SUPER_MAGIC;
-	s->s_op = &openprom_sops;
-	s->s_time_gran = 1;
-	root_inode = openprom_iget(s, OPENPROM_ROOT_INO);
-	if (IS_ERR(root_inode)) {
+	s->s_op = &खोलोprom_sops;
+	s->s_समय_gran = 1;
+	root_inode = खोलोprom_iget(s, OPENPROM_ROOT_INO);
+	अगर (IS_ERR(root_inode)) अणु
 		ret = PTR_ERR(root_inode);
-		goto out_no_root;
-	}
+		जाओ out_no_root;
+	पूर्ण
 
-	root_inode->i_mtime = root_inode->i_atime =
-		root_inode->i_ctime = current_time(root_inode);
-	root_inode->i_op = &openprom_inode_operations;
-	root_inode->i_fop = &openprom_operations;
-	root_inode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO;
+	root_inode->i_mसमय = root_inode->i_aसमय =
+		root_inode->i_स_समय = current_समय(root_inode);
+	root_inode->i_op = &खोलोprom_inode_operations;
+	root_inode->i_fop = &खोलोprom_operations;
+	root_inode->i_mode = S_IFसूची | S_IRUGO | S_IXUGO;
 	oi = OP_I(root_inode);
 	oi->type = op_inode_node;
 	oi->u.node = of_find_node_by_path("/");
 	unlock_new_inode(root_inode);
 
 	s->s_root = d_make_root(root_inode);
-	if (!s->s_root)
-		goto out_no_root_dentry;
-	return 0;
+	अगर (!s->s_root)
+		जाओ out_no_root_dentry;
+	वापस 0;
 
 out_no_root_dentry:
 	ret = -ENOMEM;
 out_no_root:
-	printk("openprom_fill_super: get root inode failed\n");
-	return ret;
-}
+	prपूर्णांकk("openprom_fill_super: get root inode failed\n");
+	वापस ret;
+पूर्ण
 
-static int openpromfs_get_tree(struct fs_context *fc)
-{
-	return get_tree_single(fc, openprom_fill_super);
-}
+अटल पूर्णांक खोलोpromfs_get_tree(काष्ठा fs_context *fc)
+अणु
+	वापस get_tree_single(fc, खोलोprom_fill_super);
+पूर्ण
 
-static const struct fs_context_operations openpromfs_context_ops = {
-	.get_tree	= openpromfs_get_tree,
-};
+अटल स्थिर काष्ठा fs_context_operations खोलोpromfs_context_ops = अणु
+	.get_tree	= खोलोpromfs_get_tree,
+पूर्ण;
 
-static int openpromfs_init_fs_context(struct fs_context *fc)
-{
-	fc->ops = &openpromfs_context_ops;
-	return 0;
-}
+अटल पूर्णांक खोलोpromfs_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	fc->ops = &खोलोpromfs_context_ops;
+	वापस 0;
+पूर्ण
 
-static struct file_system_type openprom_fs_type = {
+अटल काष्ठा file_प्रणाली_type खोलोprom_fs_type = अणु
 	.owner		= THIS_MODULE,
 	.name		= "openpromfs",
-	.init_fs_context = openpromfs_init_fs_context,
-	.kill_sb	= kill_anon_super,
-};
+	.init_fs_context = खोलोpromfs_init_fs_context,
+	.समाप्त_sb	= समाप्त_anon_super,
+पूर्ण;
 MODULE_ALIAS_FS("openpromfs");
 
-static void op_inode_init_once(void *data)
-{
-	struct op_inode_info *oi = (struct op_inode_info *) data;
+अटल व्योम op_inode_init_once(व्योम *data)
+अणु
+	काष्ठा op_inode_info *oi = (काष्ठा op_inode_info *) data;
 
 	inode_init_once(&oi->vfs_inode);
-}
+पूर्ण
 
-static int __init init_openprom_fs(void)
-{
-	int err;
+अटल पूर्णांक __init init_खोलोprom_fs(व्योम)
+अणु
+	पूर्णांक err;
 
 	op_inode_cachep = kmem_cache_create("op_inode_cache",
-					    sizeof(struct op_inode_info),
+					    माप(काष्ठा op_inode_info),
 					    0,
 					    (SLAB_RECLAIM_ACCOUNT |
 					     SLAB_MEM_SPREAD | SLAB_ACCOUNT),
 					    op_inode_init_once);
-	if (!op_inode_cachep)
-		return -ENOMEM;
+	अगर (!op_inode_cachep)
+		वापस -ENOMEM;
 
-	err = register_filesystem(&openprom_fs_type);
-	if (err)
+	err = रेजिस्टर_fileप्रणाली(&खोलोprom_fs_type);
+	अगर (err)
 		kmem_cache_destroy(op_inode_cachep);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit exit_openprom_fs(void)
-{
-	unregister_filesystem(&openprom_fs_type);
+अटल व्योम __निकास निकास_खोलोprom_fs(व्योम)
+अणु
+	unरेजिस्टर_fileप्रणाली(&खोलोprom_fs_type);
 	/*
-	 * Make sure all delayed rcu free inodes are flushed before we
+	 * Make sure all delayed rcu मुक्त inodes are flushed beक्रमe we
 	 * destroy cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(op_inode_cachep);
-}
+पूर्ण
 
-module_init(init_openprom_fs)
-module_exit(exit_openprom_fs)
+module_init(init_खोलोprom_fs)
+module_निकास(निकास_खोलोprom_fs)
 MODULE_LICENSE("GPL");

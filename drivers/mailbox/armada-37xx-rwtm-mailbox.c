@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * rWTM BIU Mailbox driver for Armada 37xx
+ * rWTM BIU Mailbox driver क्रम Armada 37xx
  *
- * Author: Marek Behún <kabel@kernel.org>
+ * Author: Marek Behथजn <kabel@kernel.org>
  */
 
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mailbox_controller.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/armada-37xx-rwtm-mailbox.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mailbox_controller.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/armada-37xx-rwपंचांग-mailbox.h>
 
-#define DRIVER_NAME	"armada-37xx-rwtm-mailbox"
+#घोषणा DRIVER_NAME	"armada-37xx-rwtm-mailbox"
 
 /* relative to rWTM BIU Mailbox Registers */
-#define RWTM_MBOX_PARAM(i)		(0x0 + ((i) << 2))
-#define RWTM_MBOX_COMMAND		0x40
-#define RWTM_MBOX_RETURN_STATUS		0x80
-#define RWTM_MBOX_STATUS(i)		(0x84 + ((i) << 2))
-#define RWTM_MBOX_FIFO_STATUS		0xc4
-#define FIFO_STS_RDY			0x100
-#define FIFO_STS_CNTR_MASK		0x7
-#define FIFO_STS_CNTR_MAX		4
+#घोषणा RWTM_MBOX_PARAM(i)		(0x0 + ((i) << 2))
+#घोषणा RWTM_MBOX_COMMAND		0x40
+#घोषणा RWTM_MBOX_RETURN_STATUS		0x80
+#घोषणा RWTM_MBOX_STATUS(i)		(0x84 + ((i) << 2))
+#घोषणा RWTM_MBOX_FIFO_STATUS		0xc4
+#घोषणा FIFO_STS_RDY			0x100
+#घोषणा FIFO_STS_CNTR_MASK		0x7
+#घोषणा FIFO_STS_CNTR_MAX		4
 
-#define RWTM_HOST_INT_RESET		0xc8
-#define RWTM_HOST_INT_MASK		0xcc
-#define SP_CMD_COMPLETE			BIT(0)
-#define SP_CMD_QUEUE_FULL_ACCESS	BIT(17)
-#define SP_CMD_QUEUE_FULL		BIT(18)
+#घोषणा RWTM_HOST_INT_RESET		0xc8
+#घोषणा RWTM_HOST_INT_MASK		0xcc
+#घोषणा SP_CMD_COMPLETE			BIT(0)
+#घोषणा SP_CMD_QUEUE_FULL_ACCESS	BIT(17)
+#घोषणा SP_CMD_QUEUE_FULL		BIT(18)
 
-struct a37xx_mbox {
-	struct device *dev;
-	struct mbox_controller controller;
-	void __iomem *base;
-	int irq;
-};
+काष्ठा a37xx_mbox अणु
+	काष्ठा device *dev;
+	काष्ठा mbox_controller controller;
+	व्योम __iomem *base;
+	पूर्णांक irq;
+पूर्ण;
 
-static void a37xx_mbox_receive(struct mbox_chan *chan)
-{
-	struct a37xx_mbox *mbox = chan->con_priv;
-	struct armada_37xx_rwtm_rx_msg rx_msg;
-	int i;
+अटल व्योम a37xx_mbox_receive(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा a37xx_mbox *mbox = chan->con_priv;
+	काष्ठा armada_37xx_rwपंचांग_rx_msg rx_msg;
+	पूर्णांक i;
 
-	rx_msg.retval = readl(mbox->base + RWTM_MBOX_RETURN_STATUS);
-	for (i = 0; i < 16; ++i)
-		rx_msg.status[i] = readl(mbox->base + RWTM_MBOX_STATUS(i));
+	rx_msg.retval = पढ़ोl(mbox->base + RWTM_MBOX_RETURN_STATUS);
+	क्रम (i = 0; i < 16; ++i)
+		rx_msg.status[i] = पढ़ोl(mbox->base + RWTM_MBOX_STATUS(i));
 
 	mbox_chan_received_data(chan, &rx_msg);
-}
+पूर्ण
 
-static irqreturn_t a37xx_mbox_irq_handler(int irq, void *data)
-{
-	struct mbox_chan *chan = data;
-	struct a37xx_mbox *mbox = chan->con_priv;
+अटल irqवापस_t a37xx_mbox_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा mbox_chan *chan = data;
+	काष्ठा a37xx_mbox *mbox = chan->con_priv;
 	u32 reg;
 
-	reg = readl(mbox->base + RWTM_HOST_INT_RESET);
+	reg = पढ़ोl(mbox->base + RWTM_HOST_INT_RESET);
 
-	if (reg & SP_CMD_COMPLETE)
+	अगर (reg & SP_CMD_COMPLETE)
 		a37xx_mbox_receive(chan);
 
-	if (reg & (SP_CMD_QUEUE_FULL_ACCESS | SP_CMD_QUEUE_FULL))
+	अगर (reg & (SP_CMD_QUEUE_FULL_ACCESS | SP_CMD_QUEUE_FULL))
 		dev_err(mbox->dev, "Secure processor command queue full\n");
 
-	writel(reg, mbox->base + RWTM_HOST_INT_RESET);
-	if (reg)
-		mbox_chan_txdone(chan, 0);
+	ग_लिखोl(reg, mbox->base + RWTM_HOST_INT_RESET);
+	अगर (reg)
+		mbox_chan_txकरोne(chan, 0);
 
-	return reg ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस reg ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static int a37xx_mbox_send_data(struct mbox_chan *chan, void *data)
-{
-	struct a37xx_mbox *mbox = chan->con_priv;
-	struct armada_37xx_rwtm_tx_msg *msg = data;
-	int i;
+अटल पूर्णांक a37xx_mbox_send_data(काष्ठा mbox_chan *chan, व्योम *data)
+अणु
+	काष्ठा a37xx_mbox *mbox = chan->con_priv;
+	काष्ठा armada_37xx_rwपंचांग_tx_msg *msg = data;
+	पूर्णांक i;
 	u32 reg;
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
-	reg = readl(mbox->base + RWTM_MBOX_FIFO_STATUS);
-	if (!(reg & FIFO_STS_RDY))
+	reg = पढ़ोl(mbox->base + RWTM_MBOX_FIFO_STATUS);
+	अगर (!(reg & FIFO_STS_RDY))
 		dev_warn(mbox->dev, "Secure processor not ready\n");
 
-	if ((reg & FIFO_STS_CNTR_MASK) >= FIFO_STS_CNTR_MAX) {
+	अगर ((reg & FIFO_STS_CNTR_MASK) >= FIFO_STS_CNTR_MAX) अणु
 		dev_err(mbox->dev, "Secure processor command queue full\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	for (i = 0; i < 16; ++i)
-		writel(msg->args[i], mbox->base + RWTM_MBOX_PARAM(i));
-	writel(msg->command, mbox->base + RWTM_MBOX_COMMAND);
+	क्रम (i = 0; i < 16; ++i)
+		ग_लिखोl(msg->args[i], mbox->base + RWTM_MBOX_PARAM(i));
+	ग_लिखोl(msg->command, mbox->base + RWTM_MBOX_COMMAND);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int a37xx_mbox_startup(struct mbox_chan *chan)
-{
-	struct a37xx_mbox *mbox = chan->con_priv;
+अटल पूर्णांक a37xx_mbox_startup(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा a37xx_mbox *mbox = chan->con_priv;
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
 	ret = devm_request_irq(mbox->dev, mbox->irq, a37xx_mbox_irq_handler, 0,
 			       DRIVER_NAME, chan);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(mbox->dev, "Cannot request irq\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* enable IRQ generation */
-	reg = readl(mbox->base + RWTM_HOST_INT_MASK);
+	reg = पढ़ोl(mbox->base + RWTM_HOST_INT_MASK);
 	reg &= ~(SP_CMD_COMPLETE | SP_CMD_QUEUE_FULL_ACCESS | SP_CMD_QUEUE_FULL);
-	writel(reg, mbox->base + RWTM_HOST_INT_MASK);
+	ग_लिखोl(reg, mbox->base + RWTM_HOST_INT_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void a37xx_mbox_shutdown(struct mbox_chan *chan)
-{
+अटल व्योम a37xx_mbox_shutकरोwn(काष्ठा mbox_chan *chan)
+अणु
 	u32 reg;
-	struct a37xx_mbox *mbox = chan->con_priv;
+	काष्ठा a37xx_mbox *mbox = chan->con_priv;
 
-	/* disable interrupt generation */
-	reg = readl(mbox->base + RWTM_HOST_INT_MASK);
+	/* disable पूर्णांकerrupt generation */
+	reg = पढ़ोl(mbox->base + RWTM_HOST_INT_MASK);
 	reg |= SP_CMD_COMPLETE | SP_CMD_QUEUE_FULL_ACCESS | SP_CMD_QUEUE_FULL;
-	writel(reg, mbox->base + RWTM_HOST_INT_MASK);
+	ग_लिखोl(reg, mbox->base + RWTM_HOST_INT_MASK);
 
-	devm_free_irq(mbox->dev, mbox->irq, chan);
-}
+	devm_मुक्त_irq(mbox->dev, mbox->irq, chan);
+पूर्ण
 
-static const struct mbox_chan_ops a37xx_mbox_ops = {
+अटल स्थिर काष्ठा mbox_chan_ops a37xx_mbox_ops = अणु
 	.send_data	= a37xx_mbox_send_data,
 	.startup	= a37xx_mbox_startup,
-	.shutdown	= a37xx_mbox_shutdown,
-};
+	.shutकरोwn	= a37xx_mbox_shutकरोwn,
+पूर्ण;
 
-static int armada_37xx_mbox_probe(struct platform_device *pdev)
-{
-	struct a37xx_mbox *mbox;
-	struct mbox_chan *chans;
-	int ret;
+अटल पूर्णांक armada_37xx_mbox_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा a37xx_mbox *mbox;
+	काष्ठा mbox_chan *chans;
+	पूर्णांक ret;
 
-	mbox = devm_kzalloc(&pdev->dev, sizeof(*mbox), GFP_KERNEL);
-	if (!mbox)
-		return -ENOMEM;
+	mbox = devm_kzalloc(&pdev->dev, माप(*mbox), GFP_KERNEL);
+	अगर (!mbox)
+		वापस -ENOMEM;
 
 	/* Allocated one channel */
-	chans = devm_kzalloc(&pdev->dev, sizeof(*chans), GFP_KERNEL);
-	if (!chans)
-		return -ENOMEM;
+	chans = devm_kzalloc(&pdev->dev, माप(*chans), GFP_KERNEL);
+	अगर (!chans)
+		वापस -ENOMEM;
 
-	mbox->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(mbox->base))
-		return PTR_ERR(mbox->base);
+	mbox->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(mbox->base))
+		वापस PTR_ERR(mbox->base);
 
-	mbox->irq = platform_get_irq(pdev, 0);
-	if (mbox->irq < 0)
-		return mbox->irq;
+	mbox->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (mbox->irq < 0)
+		वापस mbox->irq;
 
 	mbox->dev = &pdev->dev;
 
@@ -171,35 +172,35 @@ static int armada_37xx_mbox_probe(struct platform_device *pdev)
 	mbox->controller.num_chans = 1;
 	mbox->controller.chans = chans;
 	mbox->controller.ops = &a37xx_mbox_ops;
-	mbox->controller.txdone_irq = true;
+	mbox->controller.txकरोne_irq = true;
 
-	ret = devm_mbox_controller_register(mbox->dev, &mbox->controller);
-	if (ret) {
+	ret = devm_mbox_controller_रेजिस्टर(mbox->dev, &mbox->controller);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Could not register mailbox controller\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, mbox);
-	return ret;
-}
+	platक्रमm_set_drvdata(pdev, mbox);
+	वापस ret;
+पूर्ण
 
 
-static const struct of_device_id armada_37xx_mbox_match[] = {
-	{ .compatible = "marvell,armada-3700-rwtm-mailbox" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id armada_37xx_mbox_match[] = अणु
+	अणु .compatible = "marvell,armada-3700-rwtm-mailbox" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, armada_37xx_mbox_match);
 
-static struct platform_driver armada_37xx_mbox_driver = {
+अटल काष्ठा platक्रमm_driver armada_37xx_mbox_driver = अणु
 	.probe	= armada_37xx_mbox_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= DRIVER_NAME,
 		.of_match_table	= armada_37xx_mbox_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(armada_37xx_mbox_driver);
+module_platक्रमm_driver(armada_37xx_mbox_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("rWTM BIU Mailbox driver for Armada 37xx");

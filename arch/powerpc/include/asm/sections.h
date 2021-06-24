@@ -1,106 +1,107 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_SECTIONS_H
-#define _ASM_POWERPC_SECTIONS_H
-#ifdef __KERNEL__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_SECTIONS_H
+#घोषणा _ASM_POWERPC_SECTIONS_H
+#अगर_घोषित __KERNEL__
 
-#include <linux/elf.h>
-#include <linux/uaccess.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/uaccess.h>
 
-#define arch_is_kernel_initmem_freed arch_is_kernel_initmem_freed
+#घोषणा arch_is_kernel_iniपंचांगem_मुक्तd arch_is_kernel_iniपंचांगem_मुक्तd
 
-#include <asm-generic/sections.h>
+#समावेश <यंत्र-generic/sections.h>
 
-extern bool init_mem_is_free;
+बाह्य bool init_mem_is_मुक्त;
 
-static inline int arch_is_kernel_initmem_freed(unsigned long addr)
-{
-	if (!init_mem_is_free)
-		return 0;
+अटल अंतरभूत पूर्णांक arch_is_kernel_iniपंचांगem_मुक्तd(अचिन्हित दीर्घ addr)
+अणु
+	अगर (!init_mem_is_मुक्त)
+		वापस 0;
 
-	return addr >= (unsigned long)__init_begin &&
-		addr < (unsigned long)__init_end;
-}
+	वापस addr >= (अचिन्हित दीर्घ)__init_begin &&
+		addr < (अचिन्हित दीर्घ)__init_end;
+पूर्ण
 
-extern char __head_end[];
+बाह्य अक्षर __head_end[];
 
-#ifdef __powerpc64__
+#अगर_घोषित __घातerpc64__
 
-extern char __start_interrupts[];
-extern char __end_interrupts[];
+बाह्य अक्षर __start_पूर्णांकerrupts[];
+बाह्य अक्षर __end_पूर्णांकerrupts[];
 
-extern char __prom_init_toc_start[];
-extern char __prom_init_toc_end[];
+बाह्य अक्षर __prom_init_toc_start[];
+बाह्य अक्षर __prom_init_toc_end[];
 
-#ifdef CONFIG_PPC_POWERNV
-extern char start_real_trampolines[];
-extern char end_real_trampolines[];
-extern char start_virt_trampolines[];
-extern char end_virt_trampolines[];
-#endif
+#अगर_घोषित CONFIG_PPC_POWERNV
+बाह्य अक्षर start_real_trampolines[];
+बाह्य अक्षर end_real_trampolines[];
+बाह्य अक्षर start_virt_trampolines[];
+बाह्य अक्षर end_virt_trampolines[];
+#पूर्ण_अगर
 
-static inline int in_kernel_text(unsigned long addr)
-{
-	if (addr >= (unsigned long)_stext && addr < (unsigned long)__init_end)
-		return 1;
+अटल अंतरभूत पूर्णांक in_kernel_text(अचिन्हित दीर्घ addr)
+अणु
+	अगर (addr >= (अचिन्हित दीर्घ)_stext && addr < (अचिन्हित दीर्घ)__init_end)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline unsigned long kernel_toc_addr(void)
-{
+अटल अंतरभूत अचिन्हित दीर्घ kernel_toc_addr(व्योम)
+अणु
 	/* Defined by the linker, see vmlinux.lds.S */
-	extern unsigned long __toc_start;
+	बाह्य अचिन्हित दीर्घ __toc_start;
 
 	/*
-	 * The TOC register (r2) points 32kB into the TOC, so that 64kB of
-	 * the TOC can be addressed using a single machine instruction.
+	 * The TOC रेजिस्टर (r2) poपूर्णांकs 32kB पूर्णांकo the TOC, so that 64kB of
+	 * the TOC can be addressed using a single machine inकाष्ठाion.
 	 */
-	return (unsigned long)(&__toc_start) + 0x8000UL;
-}
+	वापस (अचिन्हित दीर्घ)(&__toc_start) + 0x8000UL;
+पूर्ण
 
-static inline int overlaps_interrupt_vector_text(unsigned long start,
-							unsigned long end)
-{
-	unsigned long real_start, real_end;
-	real_start = __start_interrupts - _stext;
-	real_end = __end_interrupts - _stext;
+अटल अंतरभूत पूर्णांक overlaps_पूर्णांकerrupt_vector_text(अचिन्हित दीर्घ start,
+							अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ real_start, real_end;
+	real_start = __start_पूर्णांकerrupts - _stext;
+	real_end = __end_पूर्णांकerrupts - _stext;
 
-	return start < (unsigned long)__va(real_end) &&
-		(unsigned long)__va(real_start) < end;
-}
+	वापस start < (अचिन्हित दीर्घ)__va(real_end) &&
+		(अचिन्हित दीर्घ)__va(real_start) < end;
+पूर्ण
 
-static inline int overlaps_kernel_text(unsigned long start, unsigned long end)
-{
-	return start < (unsigned long)__init_end &&
-		(unsigned long)_stext < end;
-}
+अटल अंतरभूत पूर्णांक overlaps_kernel_text(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	वापस start < (अचिन्हित दीर्घ)__init_end &&
+		(अचिन्हित दीर्घ)_stext < end;
+पूर्ण
 
-#ifdef PPC64_ELF_ABI_v1
+#अगर_घोषित PPC64_ELF_ABI_v1
 
-#define HAVE_DEREFERENCE_FUNCTION_DESCRIPTOR 1
+#घोषणा HAVE_DEREFERENCE_FUNCTION_DESCRIPTOR 1
 
-#undef dereference_function_descriptor
-static inline void *dereference_function_descriptor(void *ptr)
-{
-	struct ppc64_opd_entry *desc = ptr;
-	void *p;
+#अघोषित dereference_function_descriptor
+अटल अंतरभूत व्योम *dereference_function_descriptor(व्योम *ptr)
+अणु
+	काष्ठा ppc64_opd_entry *desc = ptr;
+	व्योम *p;
 
-	if (!get_kernel_nofault(p, (void *)&desc->funcaddr))
+	अगर (!get_kernel_nofault(p, (व्योम *)&desc->funcaddr))
 		ptr = p;
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-#undef dereference_kernel_function_descriptor
-static inline void *dereference_kernel_function_descriptor(void *ptr)
-{
-	if (ptr < (void *)__start_opd || ptr >= (void *)__end_opd)
-		return ptr;
+#अघोषित dereference_kernel_function_descriptor
+अटल अंतरभूत व्योम *dereference_kernel_function_descriptor(व्योम *ptr)
+अणु
+	अगर (ptr < (व्योम *)__start_opd || ptr >= (व्योम *)__end_opd)
+		वापस ptr;
 
-	return dereference_function_descriptor(ptr);
-}
-#endif /* PPC64_ELF_ABI_v1 */
+	वापस dereference_function_descriptor(ptr);
+पूर्ण
+#पूर्ण_अगर /* PPC64_ELF_ABI_v1 */
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __KERNEL__ */
-#endif	/* _ASM_POWERPC_SECTIONS_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर	/* _ASM_POWERPC_SECTIONS_H */

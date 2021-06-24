@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * IPv6 Address Label subsystem
- * for the IPv6 "Default" Source Address Selection
+ * IPv6 Address Label subप्रणाली
+ * क्रम the IPv6 "Default" Source Address Selection
  *
  * Copyright (C)2007 USAGI/WIDE Project
  */
@@ -10,34 +11,34 @@
  *	YOSHIFUJI Hideaki @ USAGI/WIDE Project <yoshfuji@linux-ipv6.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/rcupdate.h>
-#include <linux/in6.h>
-#include <linux/slab.h>
-#include <net/addrconf.h>
-#include <linux/if_addrlabel.h>
-#include <linux/netlink.h>
-#include <linux/rtnetlink.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/slab.h>
+#समावेश <net/addrconf.h>
+#समावेश <linux/अगर_addrlabel.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/rtnetlink.h>
 
-#if 0
-#define ADDRLABEL(x...) printk(x)
-#else
-#define ADDRLABEL(x...) do { ; } while (0)
-#endif
+#अगर 0
+#घोषणा ADDRLABEL(x...) prपूर्णांकk(x)
+#अन्यथा
+#घोषणा ADDRLABEL(x...) करो अणु ; पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /*
  * Policy Table
  */
-struct ip6addrlbl_entry {
-	struct in6_addr prefix;
-	int prefixlen;
-	int ifindex;
-	int addrtype;
+काष्ठा ip6addrlbl_entry अणु
+	काष्ठा in6_addr prefix;
+	पूर्णांक prefixlen;
+	पूर्णांक अगरindex;
+	पूर्णांक addrtype;
 	u32 label;
-	struct hlist_node list;
-	struct rcu_head rcu;
-};
+	काष्ठा hlist_node list;
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
 /*
  * Default policy table (RFC6724 + extensions)
@@ -50,602 +51,602 @@ struct ip6addrlbl_entry {
  * ::/96		COMPATv4	3
  * ::ffff:0:0/96	V4MAPPED	4
  * fc00::/7		N/A		5		ULA (RFC 4193)
- * 2001::/32		N/A		6		Teredo (RFC 4380)
+ * 2001::/32		N/A		6		Tereकरो (RFC 4380)
  * 2001:10::/28		N/A		7		ORCHID (RFC 4843)
  * fec0::/10		N/A		11		Site-local
  *							(deprecated by RFC3879)
  * 3ffe::/16		N/A		12		6bone
  *
- * Note: 0xffffffff is used if we do not have any policies.
- * Note: Labels for ULA and 6to4 are different from labels listed in RFC6724.
+ * Note: 0xffffffff is used अगर we करो not have any policies.
+ * Note: Labels क्रम ULA and 6to4 are dअगरferent from labels listed in RFC6724.
  */
 
-#define IPV6_ADDR_LABEL_DEFAULT	0xffffffffUL
+#घोषणा IPV6_ADDR_LABEL_DEFAULT	0xffffffffUL
 
-static const __net_initconst struct ip6addrlbl_init_table
-{
-	const struct in6_addr *prefix;
-	int prefixlen;
+अटल स्थिर __net_initस्थिर काष्ठा ip6addrlbl_init_table
+अणु
+	स्थिर काष्ठा in6_addr *prefix;
+	पूर्णांक prefixlen;
 	u32 label;
-} ip6addrlbl_init_table[] = {
-	{	/* ::/0 */
+पूर्ण ip6addrlbl_init_table[] = अणु
+	अणु	/* ::/0 */
 		.prefix = &in6addr_any,
 		.label = 1,
-	}, {	/* fc00::/7 */
-		.prefix = &(struct in6_addr){ { { 0xfc } } } ,
+	पूर्ण, अणु	/* fc00::/7 */
+		.prefix = &(काष्ठा in6_addr)अणु अणु अणु 0xfc पूर्ण पूर्ण पूर्ण ,
 		.prefixlen = 7,
 		.label = 5,
-	}, {	/* fec0::/10 */
-		.prefix = &(struct in6_addr){ { { 0xfe, 0xc0 } } },
+	पूर्ण, अणु	/* fec0::/10 */
+		.prefix = &(काष्ठा in6_addr)अणु अणु अणु 0xfe, 0xc0 पूर्ण पूर्ण पूर्ण,
 		.prefixlen = 10,
 		.label = 11,
-	}, {	/* 2002::/16 */
-		.prefix = &(struct in6_addr){ { { 0x20, 0x02 } } },
+	पूर्ण, अणु	/* 2002::/16 */
+		.prefix = &(काष्ठा in6_addr)अणु अणु अणु 0x20, 0x02 पूर्ण पूर्ण पूर्ण,
 		.prefixlen = 16,
 		.label = 2,
-	}, {	/* 3ffe::/16 */
-		.prefix = &(struct in6_addr){ { { 0x3f, 0xfe } } },
+	पूर्ण, अणु	/* 3ffe::/16 */
+		.prefix = &(काष्ठा in6_addr)अणु अणु अणु 0x3f, 0xfe पूर्ण पूर्ण पूर्ण,
 		.prefixlen = 16,
 		.label = 12,
-	}, {	/* 2001::/32 */
-		.prefix = &(struct in6_addr){ { { 0x20, 0x01 } } },
+	पूर्ण, अणु	/* 2001::/32 */
+		.prefix = &(काष्ठा in6_addr)अणु अणु अणु 0x20, 0x01 पूर्ण पूर्ण पूर्ण,
 		.prefixlen = 32,
 		.label = 6,
-	}, {	/* 2001:10::/28 */
-		.prefix = &(struct in6_addr){ { { 0x20, 0x01, 0x00, 0x10 } } },
+	पूर्ण, अणु	/* 2001:10::/28 */
+		.prefix = &(काष्ठा in6_addr)अणु अणु अणु 0x20, 0x01, 0x00, 0x10 पूर्ण पूर्ण पूर्ण,
 		.prefixlen = 28,
 		.label = 7,
-	}, {	/* ::ffff:0:0 */
-		.prefix = &(struct in6_addr){ { { [10] = 0xff, [11] = 0xff } } },
+	पूर्ण, अणु	/* ::ffff:0:0 */
+		.prefix = &(काष्ठा in6_addr)अणु अणु अणु [10] = 0xff, [11] = 0xff पूर्ण पूर्ण पूर्ण,
 		.prefixlen = 96,
 		.label = 4,
-	}, {	/* ::/96 */
+	पूर्ण, अणु	/* ::/96 */
 		.prefix = &in6addr_any,
 		.prefixlen = 96,
 		.label = 3,
-	}, {	/* ::1/128 */
+	पूर्ण, अणु	/* ::1/128 */
 		.prefix = &in6addr_loopback,
 		.prefixlen = 128,
 		.label = 0,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /* Find label */
-static bool __ip6addrlbl_match(const struct ip6addrlbl_entry *p,
-			       const struct in6_addr *addr,
-			       int addrtype, int ifindex)
-{
-	if (p->ifindex && p->ifindex != ifindex)
-		return false;
-	if (p->addrtype && p->addrtype != addrtype)
-		return false;
-	if (!ipv6_prefix_equal(addr, &p->prefix, p->prefixlen))
-		return false;
-	return true;
-}
+अटल bool __ip6addrlbl_match(स्थिर काष्ठा ip6addrlbl_entry *p,
+			       स्थिर काष्ठा in6_addr *addr,
+			       पूर्णांक addrtype, पूर्णांक अगरindex)
+अणु
+	अगर (p->अगरindex && p->अगरindex != अगरindex)
+		वापस false;
+	अगर (p->addrtype && p->addrtype != addrtype)
+		वापस false;
+	अगर (!ipv6_prefix_equal(addr, &p->prefix, p->prefixlen))
+		वापस false;
+	वापस true;
+पूर्ण
 
-static struct ip6addrlbl_entry *__ipv6_addr_label(struct net *net,
-						  const struct in6_addr *addr,
-						  int type, int ifindex)
-{
-	struct ip6addrlbl_entry *p;
+अटल काष्ठा ip6addrlbl_entry *__ipv6_addr_label(काष्ठा net *net,
+						  स्थिर काष्ठा in6_addr *addr,
+						  पूर्णांक type, पूर्णांक अगरindex)
+अणु
+	काष्ठा ip6addrlbl_entry *p;
 
-	hlist_for_each_entry_rcu(p, &net->ipv6.ip6addrlbl_table.head, list) {
-		if (__ip6addrlbl_match(p, addr, type, ifindex))
-			return p;
-	}
-	return NULL;
-}
+	hlist_क्रम_each_entry_rcu(p, &net->ipv6.ip6addrlbl_table.head, list) अणु
+		अगर (__ip6addrlbl_match(p, addr, type, अगरindex))
+			वापस p;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-u32 ipv6_addr_label(struct net *net,
-		    const struct in6_addr *addr, int type, int ifindex)
-{
+u32 ipv6_addr_label(काष्ठा net *net,
+		    स्थिर काष्ठा in6_addr *addr, पूर्णांक type, पूर्णांक अगरindex)
+अणु
 	u32 label;
-	struct ip6addrlbl_entry *p;
+	काष्ठा ip6addrlbl_entry *p;
 
 	type &= IPV6_ADDR_MAPPED | IPV6_ADDR_COMPATv4 | IPV6_ADDR_LOOPBACK;
 
-	rcu_read_lock();
-	p = __ipv6_addr_label(net, addr, type, ifindex);
+	rcu_पढ़ो_lock();
+	p = __ipv6_addr_label(net, addr, type, अगरindex);
 	label = p ? p->label : IPV6_ADDR_LABEL_DEFAULT;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	ADDRLABEL(KERN_DEBUG "%s(addr=%pI6, type=%d, ifindex=%d) => %08x\n",
-		  __func__, addr, type, ifindex, label);
+		  __func__, addr, type, अगरindex, label);
 
-	return label;
-}
+	वापस label;
+पूर्ण
 
 /* allocate one entry */
-static struct ip6addrlbl_entry *ip6addrlbl_alloc(const struct in6_addr *prefix,
-						 int prefixlen, int ifindex,
+अटल काष्ठा ip6addrlbl_entry *ip6addrlbl_alloc(स्थिर काष्ठा in6_addr *prefix,
+						 पूर्णांक prefixlen, पूर्णांक अगरindex,
 						 u32 label)
-{
-	struct ip6addrlbl_entry *newp;
-	int addrtype;
+अणु
+	काष्ठा ip6addrlbl_entry *newp;
+	पूर्णांक addrtype;
 
 	ADDRLABEL(KERN_DEBUG "%s(prefix=%pI6, prefixlen=%d, ifindex=%d, label=%u)\n",
-		  __func__, prefix, prefixlen, ifindex, (unsigned int)label);
+		  __func__, prefix, prefixlen, अगरindex, (अचिन्हित पूर्णांक)label);
 
 	addrtype = ipv6_addr_type(prefix) & (IPV6_ADDR_MAPPED | IPV6_ADDR_COMPATv4 | IPV6_ADDR_LOOPBACK);
 
-	switch (addrtype) {
-	case IPV6_ADDR_MAPPED:
-		if (prefixlen > 96)
-			return ERR_PTR(-EINVAL);
-		if (prefixlen < 96)
+	चयन (addrtype) अणु
+	हाल IPV6_ADDR_MAPPED:
+		अगर (prefixlen > 96)
+			वापस ERR_PTR(-EINVAL);
+		अगर (prefixlen < 96)
 			addrtype = 0;
-		break;
-	case IPV6_ADDR_COMPATv4:
-		if (prefixlen != 96)
+		अवरोध;
+	हाल IPV6_ADDR_COMPATv4:
+		अगर (prefixlen != 96)
 			addrtype = 0;
-		break;
-	case IPV6_ADDR_LOOPBACK:
-		if (prefixlen != 128)
+		अवरोध;
+	हाल IPV6_ADDR_LOOPBACK:
+		अगर (prefixlen != 128)
 			addrtype = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	newp = kmalloc(sizeof(*newp), GFP_KERNEL);
-	if (!newp)
-		return ERR_PTR(-ENOMEM);
+	newp = kदो_स्मृति(माप(*newp), GFP_KERNEL);
+	अगर (!newp)
+		वापस ERR_PTR(-ENOMEM);
 
 	ipv6_addr_prefix(&newp->prefix, prefix, prefixlen);
 	newp->prefixlen = prefixlen;
-	newp->ifindex = ifindex;
+	newp->अगरindex = अगरindex;
 	newp->addrtype = addrtype;
 	newp->label = label;
 	INIT_HLIST_NODE(&newp->list);
-	return newp;
-}
+	वापस newp;
+पूर्ण
 
 /* add a label */
-static int __ip6addrlbl_add(struct net *net, struct ip6addrlbl_entry *newp,
-			    int replace)
-{
-	struct ip6addrlbl_entry *last = NULL, *p = NULL;
-	struct hlist_node *n;
-	int ret = 0;
+अटल पूर्णांक __ip6addrlbl_add(काष्ठा net *net, काष्ठा ip6addrlbl_entry *newp,
+			    पूर्णांक replace)
+अणु
+	काष्ठा ip6addrlbl_entry *last = शून्य, *p = शून्य;
+	काष्ठा hlist_node *n;
+	पूर्णांक ret = 0;
 
 	ADDRLABEL(KERN_DEBUG "%s(newp=%p, replace=%d)\n", __func__, newp,
 		  replace);
 
-	hlist_for_each_entry_safe(p, n,	&net->ipv6.ip6addrlbl_table.head, list) {
-		if (p->prefixlen == newp->prefixlen &&
-		    p->ifindex == newp->ifindex &&
-		    ipv6_addr_equal(&p->prefix, &newp->prefix)) {
-			if (!replace) {
+	hlist_क्रम_each_entry_safe(p, n,	&net->ipv6.ip6addrlbl_table.head, list) अणु
+		अगर (p->prefixlen == newp->prefixlen &&
+		    p->अगरindex == newp->अगरindex &&
+		    ipv6_addr_equal(&p->prefix, &newp->prefix)) अणु
+			अगर (!replace) अणु
 				ret = -EEXIST;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			hlist_replace_rcu(&p->list, &newp->list);
-			kfree_rcu(p, rcu);
-			goto out;
-		} else if ((p->prefixlen == newp->prefixlen && !p->ifindex) ||
-			   (p->prefixlen < newp->prefixlen)) {
-			hlist_add_before_rcu(&newp->list, &p->list);
-			goto out;
-		}
+			kमुक्त_rcu(p, rcu);
+			जाओ out;
+		पूर्ण अन्यथा अगर ((p->prefixlen == newp->prefixlen && !p->अगरindex) ||
+			   (p->prefixlen < newp->prefixlen)) अणु
+			hlist_add_beक्रमe_rcu(&newp->list, &p->list);
+			जाओ out;
+		पूर्ण
 		last = p;
-	}
-	if (last)
+	पूर्ण
+	अगर (last)
 		hlist_add_behind_rcu(&newp->list, &last->list);
-	else
+	अन्यथा
 		hlist_add_head_rcu(&newp->list, &net->ipv6.ip6addrlbl_table.head);
 out:
-	if (!ret)
+	अगर (!ret)
 		net->ipv6.ip6addrlbl_table.seq++;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* add a label */
-static int ip6addrlbl_add(struct net *net,
-			  const struct in6_addr *prefix, int prefixlen,
-			  int ifindex, u32 label, int replace)
-{
-	struct ip6addrlbl_entry *newp;
-	int ret = 0;
+अटल पूर्णांक ip6addrlbl_add(काष्ठा net *net,
+			  स्थिर काष्ठा in6_addr *prefix, पूर्णांक prefixlen,
+			  पूर्णांक अगरindex, u32 label, पूर्णांक replace)
+अणु
+	काष्ठा ip6addrlbl_entry *newp;
+	पूर्णांक ret = 0;
 
 	ADDRLABEL(KERN_DEBUG "%s(prefix=%pI6, prefixlen=%d, ifindex=%d, label=%u, replace=%d)\n",
-		  __func__, prefix, prefixlen, ifindex, (unsigned int)label,
+		  __func__, prefix, prefixlen, अगरindex, (अचिन्हित पूर्णांक)label,
 		  replace);
 
-	newp = ip6addrlbl_alloc(prefix, prefixlen, ifindex, label);
-	if (IS_ERR(newp))
-		return PTR_ERR(newp);
+	newp = ip6addrlbl_alloc(prefix, prefixlen, अगरindex, label);
+	अगर (IS_ERR(newp))
+		वापस PTR_ERR(newp);
 	spin_lock(&net->ipv6.ip6addrlbl_table.lock);
 	ret = __ip6addrlbl_add(net, newp, replace);
 	spin_unlock(&net->ipv6.ip6addrlbl_table.lock);
-	if (ret)
-		kfree(newp);
-	return ret;
-}
+	अगर (ret)
+		kमुक्त(newp);
+	वापस ret;
+पूर्ण
 
-/* remove a label */
-static int __ip6addrlbl_del(struct net *net,
-			    const struct in6_addr *prefix, int prefixlen,
-			    int ifindex)
-{
-	struct ip6addrlbl_entry *p = NULL;
-	struct hlist_node *n;
-	int ret = -ESRCH;
+/* हटाओ a label */
+अटल पूर्णांक __ip6addrlbl_del(काष्ठा net *net,
+			    स्थिर काष्ठा in6_addr *prefix, पूर्णांक prefixlen,
+			    पूर्णांक अगरindex)
+अणु
+	काष्ठा ip6addrlbl_entry *p = शून्य;
+	काष्ठा hlist_node *n;
+	पूर्णांक ret = -ESRCH;
 
 	ADDRLABEL(KERN_DEBUG "%s(prefix=%pI6, prefixlen=%d, ifindex=%d)\n",
-		  __func__, prefix, prefixlen, ifindex);
+		  __func__, prefix, prefixlen, अगरindex);
 
-	hlist_for_each_entry_safe(p, n, &net->ipv6.ip6addrlbl_table.head, list) {
-		if (p->prefixlen == prefixlen &&
-		    p->ifindex == ifindex &&
-		    ipv6_addr_equal(&p->prefix, prefix)) {
+	hlist_क्रम_each_entry_safe(p, n, &net->ipv6.ip6addrlbl_table.head, list) अणु
+		अगर (p->prefixlen == prefixlen &&
+		    p->अगरindex == अगरindex &&
+		    ipv6_addr_equal(&p->prefix, prefix)) अणु
 			hlist_del_rcu(&p->list);
-			kfree_rcu(p, rcu);
+			kमुक्त_rcu(p, rcu);
 			ret = 0;
-			break;
-		}
-	}
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ip6addrlbl_del(struct net *net,
-			  const struct in6_addr *prefix, int prefixlen,
-			  int ifindex)
-{
-	struct in6_addr prefix_buf;
-	int ret;
+अटल पूर्णांक ip6addrlbl_del(काष्ठा net *net,
+			  स्थिर काष्ठा in6_addr *prefix, पूर्णांक prefixlen,
+			  पूर्णांक अगरindex)
+अणु
+	काष्ठा in6_addr prefix_buf;
+	पूर्णांक ret;
 
 	ADDRLABEL(KERN_DEBUG "%s(prefix=%pI6, prefixlen=%d, ifindex=%d)\n",
-		  __func__, prefix, prefixlen, ifindex);
+		  __func__, prefix, prefixlen, अगरindex);
 
 	ipv6_addr_prefix(&prefix_buf, prefix, prefixlen);
 	spin_lock(&net->ipv6.ip6addrlbl_table.lock);
-	ret = __ip6addrlbl_del(net, &prefix_buf, prefixlen, ifindex);
+	ret = __ip6addrlbl_del(net, &prefix_buf, prefixlen, अगरindex);
 	spin_unlock(&net->ipv6.ip6addrlbl_table.lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* add default label */
-static int __net_init ip6addrlbl_net_init(struct net *net)
-{
-	struct ip6addrlbl_entry *p = NULL;
-	struct hlist_node *n;
-	int err;
-	int i;
+/* add शेष label */
+अटल पूर्णांक __net_init ip6addrlbl_net_init(काष्ठा net *net)
+अणु
+	काष्ठा ip6addrlbl_entry *p = शून्य;
+	काष्ठा hlist_node *n;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	ADDRLABEL(KERN_DEBUG "%s\n", __func__);
 
 	spin_lock_init(&net->ipv6.ip6addrlbl_table.lock);
 	INIT_HLIST_HEAD(&net->ipv6.ip6addrlbl_table.head);
 
-	for (i = 0; i < ARRAY_SIZE(ip6addrlbl_init_table); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(ip6addrlbl_init_table); i++) अणु
 		err = ip6addrlbl_add(net,
 				     ip6addrlbl_init_table[i].prefix,
 				     ip6addrlbl_init_table[i].prefixlen,
 				     0,
 				     ip6addrlbl_init_table[i].label, 0);
-		if (err)
-			goto err_ip6addrlbl_add;
-	}
-	return 0;
+		अगर (err)
+			जाओ err_ip6addrlbl_add;
+	पूर्ण
+	वापस 0;
 
 err_ip6addrlbl_add:
-	hlist_for_each_entry_safe(p, n, &net->ipv6.ip6addrlbl_table.head, list) {
+	hlist_क्रम_each_entry_safe(p, n, &net->ipv6.ip6addrlbl_table.head, list) अणु
 		hlist_del_rcu(&p->list);
-		kfree_rcu(p, rcu);
-	}
-	return err;
-}
+		kमुक्त_rcu(p, rcu);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void __net_exit ip6addrlbl_net_exit(struct net *net)
-{
-	struct ip6addrlbl_entry *p = NULL;
-	struct hlist_node *n;
+अटल व्योम __net_निकास ip6addrlbl_net_निकास(काष्ठा net *net)
+अणु
+	काष्ठा ip6addrlbl_entry *p = शून्य;
+	काष्ठा hlist_node *n;
 
-	/* Remove all labels belonging to the exiting net */
+	/* Remove all labels beदीर्घing to the निकासing net */
 	spin_lock(&net->ipv6.ip6addrlbl_table.lock);
-	hlist_for_each_entry_safe(p, n, &net->ipv6.ip6addrlbl_table.head, list) {
+	hlist_क्रम_each_entry_safe(p, n, &net->ipv6.ip6addrlbl_table.head, list) अणु
 		hlist_del_rcu(&p->list);
-		kfree_rcu(p, rcu);
-	}
+		kमुक्त_rcu(p, rcu);
+	पूर्ण
 	spin_unlock(&net->ipv6.ip6addrlbl_table.lock);
-}
+पूर्ण
 
-static struct pernet_operations ipv6_addr_label_ops = {
+अटल काष्ठा pernet_operations ipv6_addr_label_ops = अणु
 	.init = ip6addrlbl_net_init,
-	.exit = ip6addrlbl_net_exit,
-};
+	.निकास = ip6addrlbl_net_निकास,
+पूर्ण;
 
-int __init ipv6_addr_label_init(void)
-{
-	return register_pernet_subsys(&ipv6_addr_label_ops);
-}
+पूर्णांक __init ipv6_addr_label_init(व्योम)
+अणु
+	वापस रेजिस्टर_pernet_subsys(&ipv6_addr_label_ops);
+पूर्ण
 
-void ipv6_addr_label_cleanup(void)
-{
-	unregister_pernet_subsys(&ipv6_addr_label_ops);
-}
+व्योम ipv6_addr_label_cleanup(व्योम)
+अणु
+	unरेजिस्टर_pernet_subsys(&ipv6_addr_label_ops);
+पूर्ण
 
-static const struct nla_policy ifal_policy[IFAL_MAX+1] = {
-	[IFAL_ADDRESS]		= { .len = sizeof(struct in6_addr), },
-	[IFAL_LABEL]		= { .len = sizeof(u32), },
-};
+अटल स्थिर काष्ठा nla_policy अगरal_policy[IFAL_MAX+1] = अणु
+	[IFAL_ADDRESS]		= अणु .len = माप(काष्ठा in6_addr), पूर्ण,
+	[IFAL_LABEL]		= अणु .len = माप(u32), पूर्ण,
+पूर्ण;
 
-static bool addrlbl_ifindex_exists(struct net *net, int ifindex)
-{
+अटल bool addrlbl_अगरindex_exists(काष्ठा net *net, पूर्णांक अगरindex)
+अणु
 
-	struct net_device *dev;
+	काष्ठा net_device *dev;
 
-	rcu_read_lock();
-	dev = dev_get_by_index_rcu(net, ifindex);
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	dev = dev_get_by_index_rcu(net, अगरindex);
+	rcu_पढ़ो_unlock();
 
-	return dev != NULL;
-}
+	वापस dev != शून्य;
+पूर्ण
 
-static int ip6addrlbl_newdel(struct sk_buff *skb, struct nlmsghdr *nlh,
-			     struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct ifaddrlblmsg *ifal;
-	struct nlattr *tb[IFAL_MAX+1];
-	struct in6_addr *pfx;
+अटल पूर्णांक ip6addrlbl_newdel(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा अगरaddrlblmsg *अगरal;
+	काष्ठा nlattr *tb[IFAL_MAX+1];
+	काष्ठा in6_addr *pfx;
 	u32 label;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*ifal), tb, IFAL_MAX,
-				     ifal_policy, extack);
-	if (err < 0)
-		return err;
+	err = nlmsg_parse_deprecated(nlh, माप(*अगरal), tb, IFAL_MAX,
+				     अगरal_policy, extack);
+	अगर (err < 0)
+		वापस err;
 
-	ifal = nlmsg_data(nlh);
+	अगरal = nlmsg_data(nlh);
 
-	if (ifal->ifal_family != AF_INET6 ||
-	    ifal->ifal_prefixlen > 128)
-		return -EINVAL;
+	अगर (अगरal->अगरal_family != AF_INET6 ||
+	    अगरal->अगरal_prefixlen > 128)
+		वापस -EINVAL;
 
-	if (!tb[IFAL_ADDRESS])
-		return -EINVAL;
+	अगर (!tb[IFAL_ADDRESS])
+		वापस -EINVAL;
 	pfx = nla_data(tb[IFAL_ADDRESS]);
 
-	if (!tb[IFAL_LABEL])
-		return -EINVAL;
+	अगर (!tb[IFAL_LABEL])
+		वापस -EINVAL;
 	label = nla_get_u32(tb[IFAL_LABEL]);
-	if (label == IPV6_ADDR_LABEL_DEFAULT)
-		return -EINVAL;
+	अगर (label == IPV6_ADDR_LABEL_DEFAULT)
+		वापस -EINVAL;
 
-	switch (nlh->nlmsg_type) {
-	case RTM_NEWADDRLABEL:
-		if (ifal->ifal_index &&
-		    !addrlbl_ifindex_exists(net, ifal->ifal_index))
-			return -EINVAL;
+	चयन (nlh->nlmsg_type) अणु
+	हाल RTM_NEWADDRLABEL:
+		अगर (अगरal->अगरal_index &&
+		    !addrlbl_अगरindex_exists(net, अगरal->अगरal_index))
+			वापस -EINVAL;
 
-		err = ip6addrlbl_add(net, pfx, ifal->ifal_prefixlen,
-				     ifal->ifal_index, label,
+		err = ip6addrlbl_add(net, pfx, अगरal->अगरal_prefixlen,
+				     अगरal->अगरal_index, label,
 				     nlh->nlmsg_flags & NLM_F_REPLACE);
-		break;
-	case RTM_DELADDRLABEL:
-		err = ip6addrlbl_del(net, pfx, ifal->ifal_prefixlen,
-				     ifal->ifal_index);
-		break;
-	default:
+		अवरोध;
+	हाल RTM_DELADDRLABEL:
+		err = ip6addrlbl_del(net, pfx, अगरal->अगरal_prefixlen,
+				     अगरal->अगरal_index);
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void ip6addrlbl_putmsg(struct nlmsghdr *nlh,
-			      int prefixlen, int ifindex, u32 lseq)
-{
-	struct ifaddrlblmsg *ifal = nlmsg_data(nlh);
-	ifal->ifal_family = AF_INET6;
-	ifal->ifal_prefixlen = prefixlen;
-	ifal->ifal_flags = 0;
-	ifal->ifal_index = ifindex;
-	ifal->ifal_seq = lseq;
-};
+अटल व्योम ip6addrlbl_puपंचांगsg(काष्ठा nlmsghdr *nlh,
+			      पूर्णांक prefixlen, पूर्णांक अगरindex, u32 lseq)
+अणु
+	काष्ठा अगरaddrlblmsg *अगरal = nlmsg_data(nlh);
+	अगरal->अगरal_family = AF_INET6;
+	अगरal->अगरal_prefixlen = prefixlen;
+	अगरal->अगरal_flags = 0;
+	अगरal->अगरal_index = अगरindex;
+	अगरal->अगरal_seq = lseq;
+पूर्ण;
 
-static int ip6addrlbl_fill(struct sk_buff *skb,
-			   struct ip6addrlbl_entry *p,
+अटल पूर्णांक ip6addrlbl_fill(काष्ठा sk_buff *skb,
+			   काष्ठा ip6addrlbl_entry *p,
 			   u32 lseq,
-			   u32 portid, u32 seq, int event,
-			   unsigned int flags)
-{
-	struct nlmsghdr *nlh = nlmsg_put(skb, portid, seq, event,
-					 sizeof(struct ifaddrlblmsg), flags);
-	if (!nlh)
-		return -EMSGSIZE;
+			   u32 portid, u32 seq, पूर्णांक event,
+			   अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा nlmsghdr *nlh = nlmsg_put(skb, portid, seq, event,
+					 माप(काष्ठा अगरaddrlblmsg), flags);
+	अगर (!nlh)
+		वापस -EMSGSIZE;
 
-	ip6addrlbl_putmsg(nlh, p->prefixlen, p->ifindex, lseq);
+	ip6addrlbl_puपंचांगsg(nlh, p->prefixlen, p->अगरindex, lseq);
 
-	if (nla_put_in6_addr(skb, IFAL_ADDRESS, &p->prefix) < 0 ||
-	    nla_put_u32(skb, IFAL_LABEL, p->label) < 0) {
+	अगर (nla_put_in6_addr(skb, IFAL_ADDRESS, &p->prefix) < 0 ||
+	    nla_put_u32(skb, IFAL_LABEL, p->label) < 0) अणु
 		nlmsg_cancel(skb, nlh);
-		return -EMSGSIZE;
-	}
+		वापस -EMSGSIZE;
+	पूर्ण
 
 	nlmsg_end(skb, nlh);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip6addrlbl_valid_dump_req(const struct nlmsghdr *nlh,
-				     struct netlink_ext_ack *extack)
-{
-	struct ifaddrlblmsg *ifal;
+अटल पूर्णांक ip6addrlbl_valid_dump_req(स्थिर काष्ठा nlmsghdr *nlh,
+				     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा अगरaddrlblmsg *अगरal;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifal))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरal))) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for address label dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ifal = nlmsg_data(nlh);
-	if (ifal->__ifal_reserved || ifal->ifal_prefixlen ||
-	    ifal->ifal_flags || ifal->ifal_index || ifal->ifal_seq) {
+	अगरal = nlmsg_data(nlh);
+	अगर (अगरal->__अगरal_reserved || अगरal->अगरal_prefixlen ||
+	    अगरal->अगरal_flags || अगरal->अगरal_index || अगरal->अगरal_seq) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for address label dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (nlmsg_attrlen(nlh, sizeof(*ifal))) {
+	अगर (nlmsg_attrlen(nlh, माप(*अगरal))) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Invalid data after header for address label dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip6addrlbl_dump(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	const struct nlmsghdr *nlh = cb->nlh;
-	struct net *net = sock_net(skb->sk);
-	struct ip6addrlbl_entry *p;
-	int idx = 0, s_idx = cb->args[0];
-	int err;
+अटल पूर्णांक ip6addrlbl_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा ip6addrlbl_entry *p;
+	पूर्णांक idx = 0, s_idx = cb->args[0];
+	पूर्णांक err;
 
-	if (cb->strict_check) {
+	अगर (cb->strict_check) अणु
 		err = ip6addrlbl_valid_dump_req(nlh, cb->extack);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(p, &net->ipv6.ip6addrlbl_table.head, list) {
-		if (idx >= s_idx) {
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(p, &net->ipv6.ip6addrlbl_table.head, list) अणु
+		अगर (idx >= s_idx) अणु
 			err = ip6addrlbl_fill(skb, p,
 					      net->ipv6.ip6addrlbl_table.seq,
 					      NETLINK_CB(cb->skb).portid,
 					      nlh->nlmsg_seq,
 					      RTM_NEWADDRLABEL,
 					      NLM_F_MULTI);
-			if (err < 0)
-				break;
-		}
+			अगर (err < 0)
+				अवरोध;
+		पूर्ण
 		idx++;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 	cb->args[0] = idx;
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static inline int ip6addrlbl_msgsize(void)
-{
-	return NLMSG_ALIGN(sizeof(struct ifaddrlblmsg))
+अटल अंतरभूत पूर्णांक ip6addrlbl_msgsize(व्योम)
+अणु
+	वापस NLMSG_ALIGN(माप(काष्ठा अगरaddrlblmsg))
 		+ nla_total_size(16)	/* IFAL_ADDRESS */
 		+ nla_total_size(4);	/* IFAL_LABEL */
-}
+पूर्ण
 
-static int ip6addrlbl_valid_get_req(struct sk_buff *skb,
-				    const struct nlmsghdr *nlh,
-				    struct nlattr **tb,
-				    struct netlink_ext_ack *extack)
-{
-	struct ifaddrlblmsg *ifal;
-	int i, err;
+अटल पूर्णांक ip6addrlbl_valid_get_req(काष्ठा sk_buff *skb,
+				    स्थिर काष्ठा nlmsghdr *nlh,
+				    काष्ठा nlattr **tb,
+				    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा अगरaddrlblmsg *अगरal;
+	पूर्णांक i, err;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifal))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरal))) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for addrlabel get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!netlink_strict_get_check(skb))
-		return nlmsg_parse_deprecated(nlh, sizeof(*ifal), tb,
-					      IFAL_MAX, ifal_policy, extack);
+	अगर (!netlink_strict_get_check(skb))
+		वापस nlmsg_parse_deprecated(nlh, माप(*अगरal), tb,
+					      IFAL_MAX, अगरal_policy, extack);
 
-	ifal = nlmsg_data(nlh);
-	if (ifal->__ifal_reserved || ifal->ifal_flags || ifal->ifal_seq) {
+	अगरal = nlmsg_data(nlh);
+	अगर (अगरal->__अगरal_reserved || अगरal->अगरal_flags || अगरal->अगरal_seq) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for addrlabel get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*ifal), tb, IFAL_MAX,
-					    ifal_policy, extack);
-	if (err)
-		return err;
+	err = nlmsg_parse_deprecated_strict(nlh, माप(*अगरal), tb, IFAL_MAX,
+					    अगरal_policy, extack);
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i <= IFAL_MAX; i++) {
-		if (!tb[i])
-			continue;
+	क्रम (i = 0; i <= IFAL_MAX; i++) अणु
+		अगर (!tb[i])
+			जारी;
 
-		switch (i) {
-		case IFAL_ADDRESS:
-			break;
-		default:
+		चयन (i) अणु
+		हाल IFAL_ADDRESS:
+			अवरोध;
+		शेष:
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in addrlabel get request");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip6addrlbl_get(struct sk_buff *in_skb, struct nlmsghdr *nlh,
-			  struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(in_skb->sk);
-	struct ifaddrlblmsg *ifal;
-	struct nlattr *tb[IFAL_MAX+1];
-	struct in6_addr *addr;
+अटल पूर्णांक ip6addrlbl_get(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *nlh,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(in_skb->sk);
+	काष्ठा अगरaddrlblmsg *अगरal;
+	काष्ठा nlattr *tb[IFAL_MAX+1];
+	काष्ठा in6_addr *addr;
 	u32 lseq;
-	int err = 0;
-	struct ip6addrlbl_entry *p;
-	struct sk_buff *skb;
+	पूर्णांक err = 0;
+	काष्ठा ip6addrlbl_entry *p;
+	काष्ठा sk_buff *skb;
 
 	err = ip6addrlbl_valid_get_req(in_skb, nlh, tb, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	ifal = nlmsg_data(nlh);
+	अगरal = nlmsg_data(nlh);
 
-	if (ifal->ifal_family != AF_INET6 ||
-	    ifal->ifal_prefixlen != 128)
-		return -EINVAL;
+	अगर (अगरal->अगरal_family != AF_INET6 ||
+	    अगरal->अगरal_prefixlen != 128)
+		वापस -EINVAL;
 
-	if (ifal->ifal_index &&
-	    !addrlbl_ifindex_exists(net, ifal->ifal_index))
-		return -EINVAL;
+	अगर (अगरal->अगरal_index &&
+	    !addrlbl_अगरindex_exists(net, अगरal->अगरal_index))
+		वापस -EINVAL;
 
-	if (!tb[IFAL_ADDRESS])
-		return -EINVAL;
+	अगर (!tb[IFAL_ADDRESS])
+		वापस -EINVAL;
 	addr = nla_data(tb[IFAL_ADDRESS]);
 
 	skb = nlmsg_new(ip6addrlbl_msgsize(), GFP_KERNEL);
-	if (!skb)
-		return -ENOBUFS;
+	अगर (!skb)
+		वापस -ENOBUFS;
 
 	err = -ESRCH;
 
-	rcu_read_lock();
-	p = __ipv6_addr_label(net, addr, ipv6_addr_type(addr), ifal->ifal_index);
+	rcu_पढ़ो_lock();
+	p = __ipv6_addr_label(net, addr, ipv6_addr_type(addr), अगरal->अगरal_index);
 	lseq = net->ipv6.ip6addrlbl_table.seq;
-	if (p)
+	अगर (p)
 		err = ip6addrlbl_fill(skb, p, lseq,
 				      NETLINK_CB(in_skb).portid,
 				      nlh->nlmsg_seq,
 				      RTM_NEWADDRLABEL, 0);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (err < 0) {
+	अगर (err < 0) अणु
 		WARN_ON(err == -EMSGSIZE);
-		kfree_skb(skb);
-	} else {
+		kमुक्त_skb(skb);
+	पूर्ण अन्यथा अणु
 		err = rtnl_unicast(skb, net, NETLINK_CB(in_skb).portid);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-int __init ipv6_addr_label_rtnl_register(void)
-{
-	int ret;
+पूर्णांक __init ipv6_addr_label_rtnl_रेजिस्टर(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = rtnl_register_module(THIS_MODULE, PF_INET6, RTM_NEWADDRLABEL,
+	ret = rtnl_रेजिस्टर_module(THIS_MODULE, PF_INET6, RTM_NEWADDRLABEL,
 				   ip6addrlbl_newdel,
-				   NULL, RTNL_FLAG_DOIT_UNLOCKED);
-	if (ret < 0)
-		return ret;
-	ret = rtnl_register_module(THIS_MODULE, PF_INET6, RTM_DELADDRLABEL,
+				   शून्य, RTNL_FLAG_DOIT_UNLOCKED);
+	अगर (ret < 0)
+		वापस ret;
+	ret = rtnl_रेजिस्टर_module(THIS_MODULE, PF_INET6, RTM_DELADDRLABEL,
 				   ip6addrlbl_newdel,
-				   NULL, RTNL_FLAG_DOIT_UNLOCKED);
-	if (ret < 0)
-		return ret;
-	ret = rtnl_register_module(THIS_MODULE, PF_INET6, RTM_GETADDRLABEL,
+				   शून्य, RTNL_FLAG_DOIT_UNLOCKED);
+	अगर (ret < 0)
+		वापस ret;
+	ret = rtnl_रेजिस्टर_module(THIS_MODULE, PF_INET6, RTM_GETADDRLABEL,
 				   ip6addrlbl_get,
 				   ip6addrlbl_dump, RTNL_FLAG_DOIT_UNLOCKED);
-	return ret;
-}
+	वापस ret;
+पूर्ण

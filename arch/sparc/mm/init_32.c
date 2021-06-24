@@ -1,177 +1,178 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/arch/sparc/mm/init.c
  *
  *  Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  *  Copyright (C) 1995 Eddie C. Dost (ecd@skynet.be)
  *  Copyright (C) 1998 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
- *  Copyright (C) 2000 Anton Blanchard (anton@samba.org)
+ *  Copyright (C) 2000 Anton Blanअक्षरd (anton@samba.org)
  */
 
-#include <linux/module.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/ptrace.h>
-#include <linux/mman.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/initrd.h>
-#include <linux/init.h>
-#include <linux/highmem.h>
-#include <linux/memblock.h>
-#include <linux/pagemap.h>
-#include <linux/poison.h>
-#include <linux/gfp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/init.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/memblock.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/poison.h>
+#समावेश <linux/gfp.h>
 
-#include <asm/sections.h>
-#include <asm/page.h>
-#include <asm/vaddrs.h>
-#include <asm/setup.h>
-#include <asm/tlb.h>
-#include <asm/prom.h>
-#include <asm/leon.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/vaddrs.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/leon.h>
 
-#include "mm_32.h"
+#समावेश "mm_32.h"
 
-unsigned long *sparc_valid_addr_bitmap;
-EXPORT_SYMBOL(sparc_valid_addr_bitmap);
+अचिन्हित दीर्घ *sparc_valid_addr_biपंचांगap;
+EXPORT_SYMBOL(sparc_valid_addr_biपंचांगap);
 
-unsigned long phys_base;
+अचिन्हित दीर्घ phys_base;
 EXPORT_SYMBOL(phys_base);
 
-unsigned long pfn_base;
+अचिन्हित दीर्घ pfn_base;
 EXPORT_SYMBOL(pfn_base);
 
-struct sparc_phys_banks sp_banks[SPARC_PHYS_BANKS+1];
+काष्ठा sparc_phys_banks sp_banks[SPARC_PHYS_BANKS+1];
 
 /* Initial ramdisk setup */
-extern unsigned int sparc_ramdisk_image;
-extern unsigned int sparc_ramdisk_size;
+बाह्य अचिन्हित पूर्णांक sparc_ramdisk_image;
+बाह्य अचिन्हित पूर्णांक sparc_ramdisk_size;
 
-unsigned long highstart_pfn, highend_pfn;
+अचिन्हित दीर्घ highstart_pfn, highend_pfn;
 
-unsigned long last_valid_pfn;
+अचिन्हित दीर्घ last_valid_pfn;
 
-unsigned long calc_highpages(void)
-{
-	int i;
-	int nr = 0;
+अचिन्हित दीर्घ calc_highpages(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक nr = 0;
 
-	for (i = 0; sp_banks[i].num_bytes != 0; i++) {
-		unsigned long start_pfn = sp_banks[i].base_addr >> PAGE_SHIFT;
-		unsigned long end_pfn = (sp_banks[i].base_addr + sp_banks[i].num_bytes) >> PAGE_SHIFT;
+	क्रम (i = 0; sp_banks[i].num_bytes != 0; i++) अणु
+		अचिन्हित दीर्घ start_pfn = sp_banks[i].base_addr >> PAGE_SHIFT;
+		अचिन्हित दीर्घ end_pfn = (sp_banks[i].base_addr + sp_banks[i].num_bytes) >> PAGE_SHIFT;
 
-		if (end_pfn <= max_low_pfn)
-			continue;
+		अगर (end_pfn <= max_low_pfn)
+			जारी;
 
-		if (start_pfn < max_low_pfn)
+		अगर (start_pfn < max_low_pfn)
 			start_pfn = max_low_pfn;
 
 		nr += end_pfn - start_pfn;
-	}
+	पूर्ण
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-static unsigned long calc_max_low_pfn(void)
-{
-	int i;
-	unsigned long tmp = pfn_base + (SRMMU_MAXMEM >> PAGE_SHIFT);
-	unsigned long curr_pfn, last_pfn;
+अटल अचिन्हित दीर्घ calc_max_low_pfn(व्योम)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ पंचांगp = pfn_base + (SRMMU_MAXMEM >> PAGE_SHIFT);
+	अचिन्हित दीर्घ curr_pfn, last_pfn;
 
 	last_pfn = (sp_banks[0].base_addr + sp_banks[0].num_bytes) >> PAGE_SHIFT;
-	for (i = 1; sp_banks[i].num_bytes != 0; i++) {
+	क्रम (i = 1; sp_banks[i].num_bytes != 0; i++) अणु
 		curr_pfn = sp_banks[i].base_addr >> PAGE_SHIFT;
 
-		if (curr_pfn >= tmp) {
-			if (last_pfn < tmp)
-				tmp = last_pfn;
-			break;
-		}
+		अगर (curr_pfn >= पंचांगp) अणु
+			अगर (last_pfn < पंचांगp)
+				पंचांगp = last_pfn;
+			अवरोध;
+		पूर्ण
 
 		last_pfn = (sp_banks[i].base_addr + sp_banks[i].num_bytes) >> PAGE_SHIFT;
-	}
+	पूर्ण
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static void __init find_ramdisk(unsigned long end_of_phys_memory)
-{
-#ifdef CONFIG_BLK_DEV_INITRD
-	unsigned long size;
+अटल व्योम __init find_ramdisk(अचिन्हित दीर्घ end_of_phys_memory)
+अणु
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+	अचिन्हित दीर्घ size;
 
 	/* Now have to check initial ramdisk, so that it won't pass
 	 * the end of memory
 	 */
-	if (sparc_ramdisk_image) {
-		if (sparc_ramdisk_image >= (unsigned long)&_end - 2 * PAGE_SIZE)
+	अगर (sparc_ramdisk_image) अणु
+		अगर (sparc_ramdisk_image >= (अचिन्हित दीर्घ)&_end - 2 * PAGE_SIZE)
 			sparc_ramdisk_image -= KERNBASE;
 		initrd_start = sparc_ramdisk_image + phys_base;
 		initrd_end = initrd_start + sparc_ramdisk_size;
-		if (initrd_end > end_of_phys_memory) {
-			printk(KERN_CRIT "initrd extends beyond end of memory "
+		अगर (initrd_end > end_of_phys_memory) अणु
+			prपूर्णांकk(KERN_CRIT "initrd extends beyond end of memory "
 			       "(0x%016lx > 0x%016lx)\ndisabling initrd\n",
 			       initrd_end, end_of_phys_memory);
 			initrd_start = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Reserve the initrd image area. */
 			size = initrd_end - initrd_start;
 			memblock_reserve(initrd_start, size);
 
 			initrd_start = (initrd_start - phys_base) + PAGE_OFFSET;
 			initrd_end = (initrd_end - phys_base) + PAGE_OFFSET;
-		}
-	}
-#endif
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-unsigned long __init bootmem_init(unsigned long *pages_avail)
-{
-	unsigned long start_pfn, bytes_avail, size;
-	unsigned long end_of_phys_memory = 0;
-	unsigned long high_pages = 0;
-	int i;
+अचिन्हित दीर्घ __init booपंचांगem_init(अचिन्हित दीर्घ *pages_avail)
+अणु
+	अचिन्हित दीर्घ start_pfn, bytes_avail, size;
+	अचिन्हित दीर्घ end_of_phys_memory = 0;
+	अचिन्हित दीर्घ high_pages = 0;
+	पूर्णांक i;
 
 	memblock_set_bottom_up(true);
 	memblock_allow_resize();
 
 	bytes_avail = 0UL;
-	for (i = 0; sp_banks[i].num_bytes != 0; i++) {
+	क्रम (i = 0; sp_banks[i].num_bytes != 0; i++) अणु
 		end_of_phys_memory = sp_banks[i].base_addr +
 			sp_banks[i].num_bytes;
 		bytes_avail += sp_banks[i].num_bytes;
-		if (cmdline_memory_size) {
-			if (bytes_avail > cmdline_memory_size) {
-				unsigned long slack = bytes_avail - cmdline_memory_size;
+		अगर (cmdline_memory_size) अणु
+			अगर (bytes_avail > cmdline_memory_size) अणु
+				अचिन्हित दीर्घ slack = bytes_avail - cmdline_memory_size;
 
 				bytes_avail -= slack;
 				end_of_phys_memory -= slack;
 
 				sp_banks[i].num_bytes -= slack;
-				if (sp_banks[i].num_bytes == 0) {
+				अगर (sp_banks[i].num_bytes == 0) अणु
 					sp_banks[i].base_addr = 0xdeadbeef;
-				} else {
+				पूर्ण अन्यथा अणु
 					memblock_add(sp_banks[i].base_addr,
 						     sp_banks[i].num_bytes);
 					sp_banks[i+1].num_bytes = 0;
 					sp_banks[i+1].base_addr = 0xdeadbeef;
-				}
-				break;
-			}
-		}
+				पूर्ण
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		memblock_add(sp_banks[i].base_addr, sp_banks[i].num_bytes);
-	}
+	पूर्ण
 
 	/* Start with page aligned address of last symbol in kernel
 	 * image.
 	 */
-	start_pfn  = (unsigned long)__pa(PAGE_ALIGN((unsigned long) &_end));
+	start_pfn  = (अचिन्हित दीर्घ)__pa(PAGE_ALIGN((अचिन्हित दीर्घ) &_end));
 
-	/* Now shift down to get the real physical page frame number. */
+	/* Now shअगरt करोwn to get the real physical page frame number. */
 	start_pfn >>= PAGE_SHIFT;
 
 	max_pfn = end_of_phys_memory >> PAGE_SHIFT;
@@ -179,13 +180,13 @@ unsigned long __init bootmem_init(unsigned long *pages_avail)
 	max_low_pfn = max_pfn;
 	highstart_pfn = highend_pfn = max_pfn;
 
-	if (max_low_pfn > pfn_base + (SRMMU_MAXMEM >> PAGE_SHIFT)) {
+	अगर (max_low_pfn > pfn_base + (SRMMU_MAXMEM >> PAGE_SHIFT)) अणु
 		highstart_pfn = pfn_base + (SRMMU_MAXMEM >> PAGE_SHIFT);
 		max_low_pfn = calc_max_low_pfn();
 		high_pages = calc_highpages();
-		printk(KERN_NOTICE "%ldMB HIGHMEM available.\n",
+		prपूर्णांकk(KERN_NOTICE "%ldMB HIGHMEM available.\n",
 		    high_pages >> (20 - PAGE_SHIFT));
-	}
+	पूर्ण
 
 	find_ramdisk(end_of_phys_memory);
 
@@ -200,105 +201,105 @@ unsigned long __init bootmem_init(unsigned long *pages_avail)
 	/* Only allow low memory to be allocated via memblock allocation */
 	memblock_set_current_limit(max_low_pfn << PAGE_SHIFT);
 
-	return max_pfn;
-}
+	वापस max_pfn;
+पूर्ण
 
 /*
- * paging_init() sets up the page tables: We call the MMU specific
+ * paging_init() sets up the page tables: We call the MMU specअगरic
  * init routine based upon the Sun model type on the Sparc.
  *
  */
-void __init paging_init(void)
-{
+व्योम __init paging_init(व्योम)
+अणु
 	srmmu_paging_init();
 	prom_build_devicetree();
 	of_fill_in_cpu_data();
 	device_scan();
-}
+पूर्ण
 
-static void __init taint_real_pages(void)
-{
-	int i;
+अटल व्योम __init taपूर्णांक_real_pages(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; sp_banks[i].num_bytes; i++) {
-		unsigned long start, end;
+	क्रम (i = 0; sp_banks[i].num_bytes; i++) अणु
+		अचिन्हित दीर्घ start, end;
 
 		start = sp_banks[i].base_addr;
 		end = start + sp_banks[i].num_bytes;
 
-		while (start < end) {
-			set_bit(start >> 20, sparc_valid_addr_bitmap);
+		जबतक (start < end) अणु
+			set_bit(start >> 20, sparc_valid_addr_biपंचांगap);
 			start += PAGE_SIZE;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void map_high_region(unsigned long start_pfn, unsigned long end_pfn)
-{
-	unsigned long tmp;
+अटल व्योम map_high_region(अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ end_pfn)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
 
-#ifdef CONFIG_DEBUG_HIGHMEM
-	printk("mapping high region %08lx - %08lx\n", start_pfn, end_pfn);
-#endif
+#अगर_घोषित CONFIG_DEBUG_HIGHMEM
+	prपूर्णांकk("mapping high region %08lx - %08lx\n", start_pfn, end_pfn);
+#पूर्ण_अगर
 
-	for (tmp = start_pfn; tmp < end_pfn; tmp++)
-		free_highmem_page(pfn_to_page(tmp));
-}
+	क्रम (पंचांगp = start_pfn; पंचांगp < end_pfn; पंचांगp++)
+		मुक्त_highmem_page(pfn_to_page(पंचांगp));
+पूर्ण
 
-void __init mem_init(void)
-{
-	int i;
+व्योम __init mem_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (PKMAP_BASE+LAST_PKMAP*PAGE_SIZE >= FIXADDR_START) {
-		prom_printf("BUG: fixmap and pkmap areas overlap\n");
-		prom_printf("pkbase: 0x%lx pkend: 0x%lx fixstart 0x%lx\n",
+	अगर (PKMAP_BASE+LAST_PKMAP*PAGE_SIZE >= FIXADDR_START) अणु
+		prom_म_लिखो("BUG: fixmap and pkmap areas overlap\n");
+		prom_म_लिखो("pkbase: 0x%lx pkend: 0x%lx fixstart 0x%lx\n",
 		       PKMAP_BASE,
-		       (unsigned long)PKMAP_BASE+LAST_PKMAP*PAGE_SIZE,
+		       (अचिन्हित दीर्घ)PKMAP_BASE+LAST_PKMAP*PAGE_SIZE,
 		       FIXADDR_START);
-		prom_printf("Please mail sparclinux@vger.kernel.org.\n");
+		prom_म_लिखो("Please mail sparclinux@vger.kernel.org.\n");
 		prom_halt();
-	}
+	पूर्ण
 
 
 	/* Saves us work later. */
-	memset((void *)empty_zero_page, 0, PAGE_SIZE);
+	स_रखो((व्योम *)empty_zero_page, 0, PAGE_SIZE);
 
 	i = last_valid_pfn >> ((20 - PAGE_SHIFT) + 5);
 	i += 1;
-	sparc_valid_addr_bitmap = (unsigned long *)
+	sparc_valid_addr_biपंचांगap = (अचिन्हित दीर्घ *)
 		memblock_alloc(i << 2, SMP_CACHE_BYTES);
 
-	if (sparc_valid_addr_bitmap == NULL) {
-		prom_printf("mem_init: Cannot alloc valid_addr_bitmap.\n");
+	अगर (sparc_valid_addr_biपंचांगap == शून्य) अणु
+		prom_म_लिखो("mem_init: Cannot alloc valid_addr_bitmap.\n");
 		prom_halt();
-	}
-	memset(sparc_valid_addr_bitmap, 0, i << 2);
+	पूर्ण
+	स_रखो(sparc_valid_addr_biपंचांगap, 0, i << 2);
 
-	taint_real_pages();
+	taपूर्णांक_real_pages();
 
 	max_mapnr = last_valid_pfn - pfn_base;
 	high_memory = __va(max_low_pfn << PAGE_SHIFT);
-	memblock_free_all();
+	memblock_मुक्त_all();
 
-	for (i = 0; sp_banks[i].num_bytes != 0; i++) {
-		unsigned long start_pfn = sp_banks[i].base_addr >> PAGE_SHIFT;
-		unsigned long end_pfn = (sp_banks[i].base_addr + sp_banks[i].num_bytes) >> PAGE_SHIFT;
+	क्रम (i = 0; sp_banks[i].num_bytes != 0; i++) अणु
+		अचिन्हित दीर्घ start_pfn = sp_banks[i].base_addr >> PAGE_SHIFT;
+		अचिन्हित दीर्घ end_pfn = (sp_banks[i].base_addr + sp_banks[i].num_bytes) >> PAGE_SHIFT;
 
-		if (end_pfn <= highstart_pfn)
-			continue;
+		अगर (end_pfn <= highstart_pfn)
+			जारी;
 
-		if (start_pfn < highstart_pfn)
+		अगर (start_pfn < highstart_pfn)
 			start_pfn = highstart_pfn;
 
 		map_high_region(start_pfn, end_pfn);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void sparc_flush_page_to_ram(struct page *page)
-{
-	unsigned long vaddr = (unsigned long)page_address(page);
+व्योम sparc_flush_page_to_ram(काष्ठा page *page)
+अणु
+	अचिन्हित दीर्घ vaddr = (अचिन्हित दीर्घ)page_address(page);
 
-	if (vaddr)
+	अगर (vaddr)
 		__flush_page_to_ram(vaddr);
-}
+पूर्ण
 EXPORT_SYMBOL(sparc_flush_page_to_ram);

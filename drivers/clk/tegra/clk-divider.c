@@ -1,186 +1,187 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/clk-provider.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk-provider.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-#define pll_out_override(p) (BIT((p->shift - 6)))
-#define div_mask(d) ((1 << (d->width)) - 1)
-#define get_mul(d) (1 << d->frac_width)
-#define get_max_div(d) div_mask(d)
+#घोषणा pll_out_override(p) (BIT((p->shअगरt - 6)))
+#घोषणा भाग_mask(d) ((1 << (d->width)) - 1)
+#घोषणा get_mul(d) (1 << d->frac_width)
+#घोषणा get_max_भाग(d) भाग_mask(d)
 
-#define PERIPH_CLK_UART_DIV_ENB BIT(24)
+#घोषणा PERIPH_CLK_UART_DIV_ENB BIT(24)
 
-static int get_div(struct tegra_clk_frac_div *divider, unsigned long rate,
-		   unsigned long parent_rate)
-{
-	int div;
+अटल पूर्णांक get_भाग(काष्ठा tegra_clk_frac_भाग *भागider, अचिन्हित दीर्घ rate,
+		   अचिन्हित दीर्घ parent_rate)
+अणु
+	पूर्णांक भाग;
 
-	div = div_frac_get(rate, parent_rate, divider->width,
-			   divider->frac_width, divider->flags);
+	भाग = भाग_frac_get(rate, parent_rate, भागider->width,
+			   भागider->frac_width, भागider->flags);
 
-	if (div < 0)
-		return 0;
+	अगर (भाग < 0)
+		वापस 0;
 
-	return div;
-}
+	वापस भाग;
+पूर्ण
 
-static unsigned long clk_frac_div_recalc_rate(struct clk_hw *hw,
-					     unsigned long parent_rate)
-{
-	struct tegra_clk_frac_div *divider = to_clk_frac_div(hw);
+अटल अचिन्हित दीर्घ clk_frac_भाग_recalc_rate(काष्ठा clk_hw *hw,
+					     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा tegra_clk_frac_भाग *भागider = to_clk_frac_भाग(hw);
 	u32 reg;
-	int div, mul;
+	पूर्णांक भाग, mul;
 	u64 rate = parent_rate;
 
-	reg = readl_relaxed(divider->reg);
+	reg = पढ़ोl_relaxed(भागider->reg);
 
-	if ((divider->flags & TEGRA_DIVIDER_UART) &&
+	अगर ((भागider->flags & TEGRA_DIVIDER_UART) &&
 	    !(reg & PERIPH_CLK_UART_DIV_ENB))
-		return rate;
+		वापस rate;
 
-	div = (reg >> divider->shift) & div_mask(divider);
+	भाग = (reg >> भागider->shअगरt) & भाग_mask(भागider);
 
-	mul = get_mul(divider);
-	div += mul;
+	mul = get_mul(भागider);
+	भाग += mul;
 
 	rate *= mul;
-	rate += div - 1;
-	do_div(rate, div);
+	rate += भाग - 1;
+	करो_भाग(rate, भाग);
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static long clk_frac_div_round_rate(struct clk_hw *hw, unsigned long rate,
-				   unsigned long *prate)
-{
-	struct tegra_clk_frac_div *divider = to_clk_frac_div(hw);
-	int div, mul;
-	unsigned long output_rate = *prate;
+अटल दीर्घ clk_frac_भाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				   अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा tegra_clk_frac_भाग *भागider = to_clk_frac_भाग(hw);
+	पूर्णांक भाग, mul;
+	अचिन्हित दीर्घ output_rate = *prate;
 
-	if (!rate)
-		return output_rate;
+	अगर (!rate)
+		वापस output_rate;
 
-	div = get_div(divider, rate, output_rate);
-	if (div < 0)
-		return *prate;
+	भाग = get_भाग(भागider, rate, output_rate);
+	अगर (भाग < 0)
+		वापस *prate;
 
-	mul = get_mul(divider);
+	mul = get_mul(भागider);
 
-	return DIV_ROUND_UP(output_rate * mul, div + mul);
-}
+	वापस DIV_ROUND_UP(output_rate * mul, भाग + mul);
+पूर्ण
 
-static int clk_frac_div_set_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long parent_rate)
-{
-	struct tegra_clk_frac_div *divider = to_clk_frac_div(hw);
-	int div;
-	unsigned long flags = 0;
+अटल पूर्णांक clk_frac_भाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा tegra_clk_frac_भाग *भागider = to_clk_frac_भाग(hw);
+	पूर्णांक भाग;
+	अचिन्हित दीर्घ flags = 0;
 	u32 val;
 
-	div = get_div(divider, rate, parent_rate);
-	if (div < 0)
-		return div;
+	भाग = get_भाग(भागider, rate, parent_rate);
+	अगर (भाग < 0)
+		वापस भाग;
 
-	if (divider->lock)
-		spin_lock_irqsave(divider->lock, flags);
+	अगर (भागider->lock)
+		spin_lock_irqsave(भागider->lock, flags);
 
-	val = readl_relaxed(divider->reg);
-	val &= ~(div_mask(divider) << divider->shift);
-	val |= div << divider->shift;
+	val = पढ़ोl_relaxed(भागider->reg);
+	val &= ~(भाग_mask(भागider) << भागider->shअगरt);
+	val |= भाग << भागider->shअगरt;
 
-	if (divider->flags & TEGRA_DIVIDER_UART) {
-		if (div)
+	अगर (भागider->flags & TEGRA_DIVIDER_UART) अणु
+		अगर (भाग)
 			val |= PERIPH_CLK_UART_DIV_ENB;
-		else
+		अन्यथा
 			val &= ~PERIPH_CLK_UART_DIV_ENB;
-	}
+	पूर्ण
 
-	if (divider->flags & TEGRA_DIVIDER_FIXED)
-		val |= pll_out_override(divider);
+	अगर (भागider->flags & TEGRA_DIVIDER_FIXED)
+		val |= pll_out_override(भागider);
 
-	writel_relaxed(val, divider->reg);
+	ग_लिखोl_relaxed(val, भागider->reg);
 
-	if (divider->lock)
-		spin_unlock_irqrestore(divider->lock, flags);
+	अगर (भागider->lock)
+		spin_unlock_irqrestore(भागider->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_divider_restore_context(struct clk_hw *hw)
-{
-	struct clk_hw *parent = clk_hw_get_parent(hw);
-	unsigned long parent_rate = clk_hw_get_rate(parent);
-	unsigned long rate = clk_hw_get_rate(hw);
+अटल व्योम clk_भागider_restore_context(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_hw *parent = clk_hw_get_parent(hw);
+	अचिन्हित दीर्घ parent_rate = clk_hw_get_rate(parent);
+	अचिन्हित दीर्घ rate = clk_hw_get_rate(hw);
 
-	if (clk_frac_div_set_rate(hw, rate, parent_rate) < 0)
+	अगर (clk_frac_भाग_set_rate(hw, rate, parent_rate) < 0)
 		WARN_ON(1);
-}
+पूर्ण
 
-const struct clk_ops tegra_clk_frac_div_ops = {
-	.recalc_rate = clk_frac_div_recalc_rate,
-	.set_rate = clk_frac_div_set_rate,
-	.round_rate = clk_frac_div_round_rate,
-	.restore_context = clk_divider_restore_context,
-};
+स्थिर काष्ठा clk_ops tegra_clk_frac_भाग_ops = अणु
+	.recalc_rate = clk_frac_भाग_recalc_rate,
+	.set_rate = clk_frac_भाग_set_rate,
+	.round_rate = clk_frac_भाग_round_rate,
+	.restore_context = clk_भागider_restore_context,
+पूर्ण;
 
-struct clk *tegra_clk_register_divider(const char *name,
-		const char *parent_name, void __iomem *reg,
-		unsigned long flags, u8 clk_divider_flags, u8 shift, u8 width,
+काष्ठा clk *tegra_clk_रेजिस्टर_भागider(स्थिर अक्षर *name,
+		स्थिर अक्षर *parent_name, व्योम __iomem *reg,
+		अचिन्हित दीर्घ flags, u8 clk_भागider_flags, u8 shअगरt, u8 width,
 		u8 frac_width, spinlock_t *lock)
-{
-	struct tegra_clk_frac_div *divider;
-	struct clk *clk;
-	struct clk_init_data init;
+अणु
+	काष्ठा tegra_clk_frac_भाग *भागider;
+	काष्ठा clk *clk;
+	काष्ठा clk_init_data init;
 
-	divider = kzalloc(sizeof(*divider), GFP_KERNEL);
-	if (!divider) {
+	भागider = kzalloc(माप(*भागider), GFP_KERNEL);
+	अगर (!भागider) अणु
 		pr_err("%s: could not allocate fractional divider clk\n",
 		       __func__);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	init.name = name;
-	init.ops = &tegra_clk_frac_div_ops;
+	init.ops = &tegra_clk_frac_भाग_ops;
 	init.flags = flags;
-	init.parent_names = parent_name ? &parent_name : NULL;
+	init.parent_names = parent_name ? &parent_name : शून्य;
 	init.num_parents = parent_name ? 1 : 0;
 
-	divider->reg = reg;
-	divider->shift = shift;
-	divider->width = width;
-	divider->frac_width = frac_width;
-	divider->lock = lock;
-	divider->flags = clk_divider_flags;
+	भागider->reg = reg;
+	भागider->shअगरt = shअगरt;
+	भागider->width = width;
+	भागider->frac_width = frac_width;
+	भागider->lock = lock;
+	भागider->flags = clk_भागider_flags;
 
-	/* Data in .init is copied by clk_register(), so stack variable OK */
-	divider->hw.init = &init;
+	/* Data in .init is copied by clk_रेजिस्टर(), so stack variable OK */
+	भागider->hw.init = &init;
 
-	clk = clk_register(NULL, &divider->hw);
-	if (IS_ERR(clk))
-		kfree(divider);
+	clk = clk_रेजिस्टर(शून्य, &भागider->hw);
+	अगर (IS_ERR(clk))
+		kमुक्त(भागider);
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
-static const struct clk_div_table mc_div_table[] = {
-	{ .val = 0, .div = 2 },
-	{ .val = 1, .div = 1 },
-	{ .val = 0, .div = 0 },
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable mc_भाग_प्रकारable[] = अणु
+	अणु .val = 0, .भाग = 2 पूर्ण,
+	अणु .val = 1, .भाग = 1 पूर्ण,
+	अणु .val = 0, .भाग = 0 पूर्ण,
+पूर्ण;
 
-struct clk *tegra_clk_register_mc(const char *name, const char *parent_name,
-				  void __iomem *reg, spinlock_t *lock)
-{
-	return clk_register_divider_table(NULL, name, parent_name,
+काष्ठा clk *tegra_clk_रेजिस्टर_mc(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+				  व्योम __iomem *reg, spinlock_t *lock)
+अणु
+	वापस clk_रेजिस्टर_भागider_table(शून्य, name, parent_name,
 					  CLK_IS_CRITICAL,
 					  reg, 16, 1, CLK_DIVIDER_READ_ONLY,
-					  mc_div_table, lock);
-}
+					  mc_भाग_प्रकारable, lock);
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AppArmor security module
  *
@@ -7,72 +8,72 @@
  * Copyright 2017 Canonical Ltd.
  *
  * TODO
- * If a task uses change_hat it currently does not return to the old
+ * If a task uses change_hat it currently करोes not वापस to the old
  * cred or task context but instead creates a new one.  Ideally the task
- * should return to the previous cred if it has not been modified.
+ * should वापस to the previous cred अगर it has not been modअगरied.
  */
 
-#include "include/cred.h"
-#include "include/task.h"
+#समावेश "include/cred.h"
+#समावेश "include/task.h"
 
 /**
  * aa_get_task_label - Get another task's label
- * @task: task to query  (NOT NULL)
+ * @task: task to query  (NOT शून्य)
  *
  * Returns: counted reference to @task's label
  */
-struct aa_label *aa_get_task_label(struct task_struct *task)
-{
-	struct aa_label *p;
+काष्ठा aa_label *aa_get_task_label(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा aa_label *p;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	p = aa_get_newest_label(__aa_task_raw_label(task));
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
 /**
  * aa_replace_current_label - replace the current tasks label
- * @label: new label  (NOT NULL)
+ * @label: new label  (NOT शून्य)
  *
  * Returns: 0 or error on failure
  */
-int aa_replace_current_label(struct aa_label *label)
-{
-	struct aa_label *old = aa_current_raw_label();
-	struct aa_task_ctx *ctx = task_ctx(current);
-	struct cred *new;
+पूर्णांक aa_replace_current_label(काष्ठा aa_label *label)
+अणु
+	काष्ठा aa_label *old = aa_current_raw_label();
+	काष्ठा aa_task_ctx *ctx = task_ctx(current);
+	काष्ठा cred *new;
 
 	AA_BUG(!label);
 
-	if (old == label)
-		return 0;
+	अगर (old == label)
+		वापस 0;
 
-	if (current_cred() != current_real_cred())
-		return -EBUSY;
+	अगर (current_cred() != current_real_cred())
+		वापस -EBUSY;
 
 	new  = prepare_creds();
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 
-	if (ctx->nnp && label_is_stale(ctx->nnp)) {
-		struct aa_label *tmp = ctx->nnp;
+	अगर (ctx->nnp && label_is_stale(ctx->nnp)) अणु
+		काष्ठा aa_label *पंचांगp = ctx->nnp;
 
-		ctx->nnp = aa_get_newest_label(tmp);
-		aa_put_label(tmp);
-	}
-	if (unconfined(label) || (labels_ns(old) != labels_ns(label)))
+		ctx->nnp = aa_get_newest_label(पंचांगp);
+		aa_put_label(पंचांगp);
+	पूर्ण
+	अगर (unconfined(label) || (labels_ns(old) != labels_ns(label)))
 		/*
-		 * if switching to unconfined or a different label namespace
+		 * अगर चयनing to unconfined or a dअगरferent label namespace
 		 * clear out context state
 		 */
 		aa_clear_task_ctx_trans(task_ctx(current));
 
 	/*
-	 * be careful switching cred label, when racing replacement it
+	 * be careful चयनing cred label, when racing replacement it
 	 * is possible that the cred labels's->proxy->label is the reference
-	 * keeping @label valid, so make sure to get its reference before
+	 * keeping @label valid, so make sure to get its reference beक्रमe
 	 * dropping the reference on the cred's label
 	 */
 	aa_get_label(label);
@@ -80,100 +81,100 @@ int aa_replace_current_label(struct aa_label *label)
 	set_cred_label(new, label);
 
 	commit_creds(new);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
  * aa_set_current_onexec - set the tasks change_profile to happen onexec
- * @label: system label to set at exec  (MAYBE NULL to clear value)
- * @stack: whether stacking should be done
+ * @label: प्रणाली label to set at exec  (MAYBE शून्य to clear value)
+ * @stack: whether stacking should be करोne
  * Returns: 0 or error on failure
  */
-int aa_set_current_onexec(struct aa_label *label, bool stack)
-{
-	struct aa_task_ctx *ctx = task_ctx(current);
+पूर्णांक aa_set_current_onexec(काष्ठा aa_label *label, bool stack)
+अणु
+	काष्ठा aa_task_ctx *ctx = task_ctx(current);
 
 	aa_get_label(label);
 	aa_put_label(ctx->onexec);
 	ctx->onexec = label;
 	ctx->token = stack;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * aa_set_current_hat - set the current tasks hat
- * @label: label to set as the current hat  (NOT NULL)
- * @token: token value that must be specified to change from the hat
+ * @label: label to set as the current hat  (NOT शून्य)
+ * @token: token value that must be specअगरied to change from the hat
  *
- * Do switch of tasks hat.  If the task is currently in a hat
+ * Do चयन of tasks hat.  If the task is currently in a hat
  * validate the token to match.
  *
  * Returns: 0 or error on failure
  */
-int aa_set_current_hat(struct aa_label *label, u64 token)
-{
-	struct aa_task_ctx *ctx = task_ctx(current);
-	struct cred *new;
+पूर्णांक aa_set_current_hat(काष्ठा aa_label *label, u64 token)
+अणु
+	काष्ठा aa_task_ctx *ctx = task_ctx(current);
+	काष्ठा cred *new;
 
 	new = prepare_creds();
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 	AA_BUG(!label);
 
-	if (!ctx->previous) {
+	अगर (!ctx->previous) अणु
 		/* transfer refcount */
 		ctx->previous = cred_label(new);
 		ctx->token = token;
-	} else if (ctx->token == token) {
+	पूर्ण अन्यथा अगर (ctx->token == token) अणु
 		aa_put_label(cred_label(new));
-	} else {
+	पूर्ण अन्यथा अणु
 		/* previous_profile && ctx->token != token */
-		abort_creds(new);
-		return -EACCES;
-	}
+		पात_creds(new);
+		वापस -EACCES;
+	पूर्ण
 
 	set_cred_label(new, aa_get_newest_label(label));
-	/* clear exec on switching context */
+	/* clear exec on चयनing context */
 	aa_put_label(ctx->onexec);
-	ctx->onexec = NULL;
+	ctx->onexec = शून्य;
 
 	commit_creds(new);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * aa_restore_previous_label - exit from hat context restoring previous label
- * @token: the token that must be matched to exit hat context
+ * aa_restore_previous_label - निकास from hat context restoring previous label
+ * @token: the token that must be matched to निकास hat context
  *
- * Attempt to return out of a hat to the previous label.  The token
+ * Attempt to वापस out of a hat to the previous label.  The token
  * must match the stored token value.
  *
  * Returns: 0 or error of failure
  */
-int aa_restore_previous_label(u64 token)
-{
-	struct aa_task_ctx *ctx = task_ctx(current);
-	struct cred *new;
+पूर्णांक aa_restore_previous_label(u64 token)
+अणु
+	काष्ठा aa_task_ctx *ctx = task_ctx(current);
+	काष्ठा cred *new;
 
-	if (ctx->token != token)
-		return -EACCES;
+	अगर (ctx->token != token)
+		वापस -EACCES;
 	/* ignore restores when there is no saved label */
-	if (!ctx->previous)
-		return 0;
+	अगर (!ctx->previous)
+		वापस 0;
 
 	new = prepare_creds();
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 
 	aa_put_label(cred_label(new));
 	set_cred_label(new, aa_get_newest_label(ctx->previous));
 	AA_BUG(!cred_label(new));
-	/* clear exec && prev information when restoring to previous context */
+	/* clear exec && prev inक्रमmation when restoring to previous context */
 	aa_clear_task_ctx_trans(ctx);
 
 	commit_creds(new);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

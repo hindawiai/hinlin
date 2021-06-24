@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __HID_LG_H
-#define __HID_LG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __HID_LG_H
+#घोषणा __HID_LG_H
 
-struct lg_drv_data {
-	unsigned long quirks;
-	void *device_props;	/* Device specific properties */
-};
+काष्ठा lg_drv_data अणु
+	अचिन्हित दीर्घ quirks;
+	व्योम *device_props;	/* Device specअगरic properties */
+पूर्ण;
 
-#ifdef CONFIG_LOGITECH_FF
-int lgff_init(struct hid_device *hdev);
-#else
-static inline int lgff_init(struct hid_device *hdev) { return -1; }
-#endif
+#अगर_घोषित CONFIG_LOGITECH_FF
+पूर्णांक lgff_init(काष्ठा hid_device *hdev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक lgff_init(काष्ठा hid_device *hdev) अणु वापस -1; पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_LOGIRUMBLEPAD2_FF
-int lg2ff_init(struct hid_device *hdev);
-#else
-static inline int lg2ff_init(struct hid_device *hdev) { return -1; }
-#endif
+#अगर_घोषित CONFIG_LOGIRUMBLEPAD2_FF
+पूर्णांक lg2ff_init(काष्ठा hid_device *hdev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक lg2ff_init(काष्ठा hid_device *hdev) अणु वापस -1; पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_LOGIG940_FF
-int lg3ff_init(struct hid_device *hdev);
-#else
-static inline int lg3ff_init(struct hid_device *hdev) { return -1; }
-#endif
+#अगर_घोषित CONFIG_LOGIG940_FF
+पूर्णांक lg3ff_init(काष्ठा hid_device *hdev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक lg3ff_init(काष्ठा hid_device *hdev) अणु वापस -1; पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  *  Copyright IBM Corp. 2001, 2018
  *  Author(s): Robert Burroughs
@@ -6,13 +7,13 @@
  *
  *  Hotplug & misc device support: Jochen Roehrig (roehrig@de.ibm.com)
  *  Major cleanup & driver split: Martin Schwidefsky <schwidefsky@de.ibm.com>
- *  MSGTYPE restruct:		  Holger Dengler <hd@linux.vnet.ibm.com>
+ *  MSGTYPE reकाष्ठा:		  Holger Dengler <hd@linux.vnet.ibm.com>
  */
 
-#ifndef _ZCRYPT_CEX2C_H_
-#define _ZCRYPT_CEX2C_H_
+#अगर_अघोषित _ZCRYPT_CEX2C_H_
+#घोषणा _ZCRYPT_CEX2C_H_
 
-int zcrypt_cex2c_init(void);
-void zcrypt_cex2c_exit(void);
+पूर्णांक zcrypt_cex2c_init(व्योम);
+व्योम zcrypt_cex2c_निकास(व्योम);
 
-#endif /* _ZCRYPT_CEX2C_H_ */
+#पूर्ण_अगर /* _ZCRYPT_CEX2C_H_ */

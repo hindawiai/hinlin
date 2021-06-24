@@ -1,574 +1,575 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#define _HAL_INIT_C_
+#घोषणा _HAL_INIT_C_
 
-#include <linux/firmware.h>
-#include <linux/vmalloc.h>
-#include <drv_types.h>
-#include <rtw_efuse.h>
-#include <phy.h>
-#include <rtl8188e_hal.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <drv_types.h>
+#समावेश <rtw_efuse.h>
+#समावेश <phy.h>
+#समावेश <rtl8188e_hal.h>
 
-#include <rtw_iol.h>
+#समावेश <rtw_iol.h>
 
-void iol_mode_enable(struct adapter *padapter, u8 enable)
-{
+व्योम iol_mode_enable(काष्ठा adapter *padapter, u8 enable)
+अणु
 	u8 reg_0xf0 = 0;
 
-	if (enable) {
+	अगर (enable) अणु
 		/* Enable initial offload */
-		reg_0xf0 = usb_read8(padapter, REG_SYS_CFG);
-		usb_write8(padapter, REG_SYS_CFG, reg_0xf0 | SW_OFFLOAD_EN);
+		reg_0xf0 = usb_पढ़ो8(padapter, REG_SYS_CFG);
+		usb_ग_लिखो8(padapter, REG_SYS_CFG, reg_0xf0 | SW_OFFLOAD_EN);
 
-		if (!padapter->bFWReady) {
+		अगर (!padapter->bFWReady) अणु
 			DBG_88E("bFWReady == false call reset 8051...\n");
 			_8051Reset88E(padapter);
-		}
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* disable initial offload */
-		reg_0xf0 = usb_read8(padapter, REG_SYS_CFG);
-		usb_write8(padapter, REG_SYS_CFG, reg_0xf0 & ~SW_OFFLOAD_EN);
-	}
-}
+		reg_0xf0 = usb_पढ़ो8(padapter, REG_SYS_CFG);
+		usb_ग_लिखो8(padapter, REG_SYS_CFG, reg_0xf0 & ~SW_OFFLOAD_EN);
+	पूर्ण
+पूर्ण
 
-s32 iol_execute(struct adapter *padapter, u8 control)
-{
+s32 iol_execute(काष्ठा adapter *padapter, u8 control)
+अणु
 	s32 status = _FAIL;
 	u8 reg_0x88 = 0;
-	unsigned long start = 0;
+	अचिन्हित दीर्घ start = 0;
 
 	control = control & 0x0f;
-	reg_0x88 = usb_read8(padapter, REG_HMEBOX_E0);
-	usb_write8(padapter, REG_HMEBOX_E0,  reg_0x88 | control);
+	reg_0x88 = usb_पढ़ो8(padapter, REG_HMEBOX_E0);
+	usb_ग_लिखो8(padapter, REG_HMEBOX_E0,  reg_0x88 | control);
 
-	start = jiffies;
-	while ((reg_0x88 = usb_read8(padapter, REG_HMEBOX_E0)) & control &&
-	       jiffies_to_msecs(jiffies - start) < 1000) {
+	start = jअगरfies;
+	जबतक ((reg_0x88 = usb_पढ़ो8(padapter, REG_HMEBOX_E0)) & control &&
+	       jअगरfies_to_msecs(jअगरfies - start) < 1000) अणु
 		udelay(5);
-	}
+	पूर्ण
 
-	reg_0x88 = usb_read8(padapter, REG_HMEBOX_E0);
+	reg_0x88 = usb_पढ़ो8(padapter, REG_HMEBOX_E0);
 	status = (reg_0x88 & control) ? _FAIL : _SUCCESS;
-	if (reg_0x88 & control << 4)
+	अगर (reg_0x88 & control << 4)
 		status = _FAIL;
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static s32 iol_InitLLTTable(struct adapter *padapter, u8 txpktbuf_bndy)
-{
+अटल s32 iol_InitLLTTable(काष्ठा adapter *padapter, u8 txpktbuf_bndy)
+अणु
 	s32 rst = _SUCCESS;
 
 	iol_mode_enable(padapter, 1);
-	usb_write8(padapter, REG_TDECTRL + 1, txpktbuf_bndy);
+	usb_ग_लिखो8(padapter, REG_TDECTRL + 1, txpktbuf_bndy);
 	rst = iol_execute(padapter, CMD_INIT_LLT);
 	iol_mode_enable(padapter, 0);
-	return rst;
-}
+	वापस rst;
+पूर्ण
 
-s32 rtl8188e_iol_efuse_patch(struct adapter *padapter)
-{
+s32 rtl8188e_iol_efuse_patch(काष्ठा adapter *padapter)
+अणु
 	s32	result = _SUCCESS;
 
 	DBG_88E("==> %s\n", __func__);
-	if (rtw_iol_applied(padapter)) {
+	अगर (rtw_iol_applied(padapter)) अणु
 		iol_mode_enable(padapter, 1);
 		result = iol_execute(padapter, CMD_READ_EFUSE_MAP);
-		if (result == _SUCCESS)
+		अगर (result == _SUCCESS)
 			result = iol_execute(padapter, CMD_EFUSE_PATCH);
 
 		iol_mode_enable(padapter, 0);
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
-#define MAX_REG_BOLCK_SIZE	196
+#घोषणा MAX_REG_BOLCK_SIZE	196
 
-void _8051Reset88E(struct adapter *padapter)
-{
+व्योम _8051Reset88E(काष्ठा adapter *padapter)
+अणु
 	u8 u1bTmp;
 
-	u1bTmp = usb_read8(padapter, REG_SYS_FUNC_EN + 1);
-	usb_write8(padapter, REG_SYS_FUNC_EN + 1, u1bTmp & (~BIT(2)));
-	usb_write8(padapter, REG_SYS_FUNC_EN + 1, u1bTmp | (BIT(2)));
+	u1bTmp = usb_पढ़ो8(padapter, REG_SYS_FUNC_EN + 1);
+	usb_ग_लिखो8(padapter, REG_SYS_FUNC_EN + 1, u1bTmp & (~BIT(2)));
+	usb_ग_लिखो8(padapter, REG_SYS_FUNC_EN + 1, u1bTmp | (BIT(2)));
 	DBG_88E("=====> %s(): 8051 reset success .\n", __func__);
-}
+पूर्ण
 
-void rtl8188e_InitializeFirmwareVars(struct adapter *padapter)
-{
+व्योम rtl8188e_InitializeFirmwareVars(काष्ठा adapter *padapter)
+अणु
 	/*  Init Fw LPS related. */
 	padapter->pwrctrlpriv.bFwCurrentInPSMode = false;
 
 	/*  Init H2C counter. by tynli. 2009.12.09. */
 	padapter->HalData->LastHMEBoxNum = 0;
-}
+पूर्ण
 
-void rtw_hal_free_data(struct adapter *padapter)
-{
-	kfree(padapter->HalData);
-	padapter->HalData = NULL;
-}
+व्योम rtw_hal_मुक्त_data(काष्ठा adapter *padapter)
+अणु
+	kमुक्त(padapter->HalData);
+	padapter->HalData = शून्य;
+पूर्ण
 
-void rtw_hal_read_chip_version(struct adapter *padapter)
-{
+व्योम rtw_hal_पढ़ो_chip_version(काष्ठा adapter *padapter)
+अणु
 	u32				value32;
-	struct HAL_VERSION		ChipVersion;
-	struct hal_data_8188e *pHalData = padapter->HalData;
+	काष्ठा HAL_VERSION		ChipVersion;
+	काष्ठा hal_data_8188e *pHalData = padapter->HalData;
 
-	value32 = usb_read32(padapter, REG_SYS_CFG);
+	value32 = usb_पढ़ो32(padapter, REG_SYS_CFG);
 	ChipVersion.ChipType = ((value32 & RTL_ID) ? TEST_CHIP : NORMAL_CHIP);
-	ChipVersion.VendorType = ((value32 & VENDOR_ID) ? CHIP_VENDOR_UMC : CHIP_VENDOR_TSMC);
+	ChipVersion.VenकरोrType = ((value32 & VENDOR_ID) ? CHIP_VENDOR_UMC : CHIP_VENDOR_TSMC);
 	ChipVersion.CUTVersion = (value32 & CHIP_VER_RTL_MASK) >> CHIP_VER_RTL_SHIFT; /*  IC version (CUT) */
 
 	dump_chip_info(ChipVersion);
 
 	pHalData->VersionID = ChipVersion;
-}
+पूर्ण
 
-void rtw_hal_set_odm_var(struct adapter *Adapter, enum hal_odm_variable eVariable, void *pValue1, bool bSet)
-{
-	struct odm_dm_struct *podmpriv = &Adapter->HalData->odmpriv;
+व्योम rtw_hal_set_odm_var(काष्ठा adapter *Adapter, क्रमागत hal_odm_variable eVariable, व्योम *pValue1, bool bSet)
+अणु
+	काष्ठा odm_dm_काष्ठा *podmpriv = &Adapter->HalData->odmpriv;
 
-	switch (eVariable) {
-	case HAL_ODM_STA_INFO:
-		{
-			struct sta_info *psta = pValue1;
+	चयन (eVariable) अणु
+	हाल HAL_ODM_STA_INFO:
+		अणु
+			काष्ठा sta_info *psta = pValue1;
 
-			if (bSet) {
+			अगर (bSet) अणु
 				DBG_88E("### Set STA_(%d) info\n", psta->mac_id);
 				ODM_CmnInfoPtrArrayHook(podmpriv, ODM_CMNINFO_STA_STATUS, psta->mac_id, psta);
 				ODM_RAInfo_Init(podmpriv, psta->mac_id);
-			} else {
+			पूर्ण अन्यथा अणु
 				DBG_88E("### Clean STA_(%d) info\n", psta->mac_id);
-				ODM_CmnInfoPtrArrayHook(podmpriv, ODM_CMNINFO_STA_STATUS, psta->mac_id, NULL);
-			}
-		}
-		break;
-	case HAL_ODM_P2P_STATE:
+				ODM_CmnInfoPtrArrayHook(podmpriv, ODM_CMNINFO_STA_STATUS, psta->mac_id, शून्य);
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल HAL_ODM_P2P_STATE:
 		podmpriv->bWIFI_Direct = bSet;
-		break;
-	case HAL_ODM_WIFI_DISPLAY_STATE:
+		अवरोध;
+	हाल HAL_ODM_WIFI_DISPLAY_STATE:
 		podmpriv->bWIFI_Display = bSet;
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void rtw_hal_notch_filter(struct adapter *adapter, bool enable)
-{
-	if (enable) {
+व्योम rtw_hal_notch_filter(काष्ठा adapter *adapter, bool enable)
+अणु
+	अगर (enable) अणु
 		DBG_88E("Enable notch filter\n");
-		usb_write8(adapter, rOFDM0_RxDSP + 1, usb_read8(adapter, rOFDM0_RxDSP + 1) | BIT(1));
-	} else {
+		usb_ग_लिखो8(adapter, rOFDM0_RxDSP + 1, usb_पढ़ो8(adapter, rOFDM0_RxDSP + 1) | BIT(1));
+	पूर्ण अन्यथा अणु
 		DBG_88E("Disable notch filter\n");
-		usb_write8(adapter, rOFDM0_RxDSP + 1, usb_read8(adapter, rOFDM0_RxDSP + 1) & ~BIT(1));
-	}
-}
+		usb_ग_लिखो8(adapter, rOFDM0_RxDSP + 1, usb_पढ़ो8(adapter, rOFDM0_RxDSP + 1) & ~BIT(1));
+	पूर्ण
+पूर्ण
 
 /*  */
 /*  */
 /*  LLT R/W/Init function */
 /*  */
 /*  */
-static s32 _LLTWrite(struct adapter *padapter, u32 address, u32 data)
-{
+अटल s32 _LLTWrite(काष्ठा adapter *padapter, u32 address, u32 data)
+अणु
 	s32	status = _SUCCESS;
 	s32	count = 0;
 	u32	value = _LLT_INIT_ADDR(address) | _LLT_INIT_DATA(data) | _LLT_OP(_LLT_WRITE_ACCESS);
 	u16	LLTReg = REG_LLT_INIT;
 
-	usb_write32(padapter, LLTReg, value);
+	usb_ग_लिखो32(padapter, LLTReg, value);
 
 	/* polling */
-	do {
-		value = usb_read32(padapter, LLTReg);
-		if (_LLT_OP_VALUE(value) == _LLT_NO_ACTIVE)
-			break;
+	करो अणु
+		value = usb_पढ़ो32(padapter, LLTReg);
+		अगर (_LLT_OP_VALUE(value) == _LLT_NO_ACTIVE)
+			अवरोध;
 
-		if (count > POLLING_LLT_THRESHOLD) {
+		अगर (count > POLLING_LLT_THRESHOLD) अणु
 			RT_TRACE(_module_hal_init_c_, _drv_err_, ("Failed to polling write LLT done at address %d!\n", address));
 			status = _FAIL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		udelay(5);
-	} while (count++);
+	पूर्ण जबतक (count++);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-s32 InitLLTTable(struct adapter *padapter, u8 txpktbuf_bndy)
-{
+s32 InitLLTTable(काष्ठा adapter *padapter, u8 txpktbuf_bndy)
+अणु
 	s32	status = _FAIL;
 	u32	i;
 	u32	Last_Entry_Of_TxPktBuf = LAST_ENTRY_OF_TX_PKT_BUFFER;/*  176, 22k */
 
-	if (rtw_iol_applied(padapter)) {
+	अगर (rtw_iol_applied(padapter)) अणु
 		status = iol_InitLLTTable(padapter, txpktbuf_bndy);
-	} else {
-		for (i = 0; i < (txpktbuf_bndy - 1); i++) {
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < (txpktbuf_bndy - 1); i++) अणु
 			status = _LLTWrite(padapter, i, i + 1);
-			if (status != _SUCCESS)
-				return status;
-		}
+			अगर (status != _SUCCESS)
+				वापस status;
+		पूर्ण
 
 		/*  end of list */
 		status = _LLTWrite(padapter, (txpktbuf_bndy - 1), 0xFF);
-		if (status != _SUCCESS)
-			return status;
+		अगर (status != _SUCCESS)
+			वापस status;
 
 		/*  Make the other pages as ring buffer */
-		/*  This ring buffer is used as beacon buffer if we config this MAC as two MAC transfer. */
+		/*  This ring buffer is used as beacon buffer अगर we config this MAC as two MAC transfer. */
 		/*  Otherwise used as local loopback buffer. */
-		for (i = txpktbuf_bndy; i < Last_Entry_Of_TxPktBuf; i++) {
+		क्रम (i = txpktbuf_bndy; i < Last_Entry_Of_TxPktBuf; i++) अणु
 			status = _LLTWrite(padapter, i, (i + 1));
-			if (status != _SUCCESS)
-				return status;
-		}
+			अगर (status != _SUCCESS)
+				वापस status;
+		पूर्ण
 
-		/*  Let last entry point to the start entry of ring buffer */
+		/*  Let last entry poपूर्णांक to the start entry of ring buffer */
 		status = _LLTWrite(padapter, Last_Entry_Of_TxPktBuf, txpktbuf_bndy);
-		if (status != _SUCCESS)
-			return status;
-	}
+		अगर (status != _SUCCESS)
+			वापस status;
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void Hal_InitPGData88E(struct adapter *padapter)
-{
-	struct eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
+व्योम Hal_InitPGData88E(काष्ठा adapter *padapter)
+अणु
+	काष्ठा eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
 
-	if (!pEEPROM->bautoload_fail_flag) { /*  autoload OK. */
-		if (!is_boot_from_eeprom(padapter)) {
-			/*  Read EFUSE real map to shadow. */
-			EFUSE_ShadowMapUpdate(padapter, EFUSE_WIFI);
-		}
-	} else {/* autoload fail */
+	अगर (!pEEPROM->bस्वतःload_fail_flag) अणु /*  स्वतःload OK. */
+		अगर (!is_boot_from_eeprom(padapter)) अणु
+			/*  Read EFUSE real map to shaकरोw. */
+			EFUSE_ShaकरोwMapUpdate(padapter, EFUSE_WIFI);
+		पूर्ण
+	पूर्ण अन्यथा अणु/* स्वतःload fail */
 		RT_TRACE(_module_hci_hal_init_c_, _drv_notice_, ("AutoLoad Fail reported from CR9346!!\n"));
-		/* update to default value 0xFF */
-		if (!is_boot_from_eeprom(padapter))
-			EFUSE_ShadowMapUpdate(padapter, EFUSE_WIFI);
-	}
-}
+		/* update to शेष value 0xFF */
+		अगर (!is_boot_from_eeprom(padapter))
+			EFUSE_ShaकरोwMapUpdate(padapter, EFUSE_WIFI);
+	पूर्ण
+पूर्ण
 
-void Hal_EfuseParseIDCode88E(struct adapter *padapter, u8 *hwinfo)
-{
-	struct eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
+व्योम Hal_EfuseParseIDCode88E(काष्ठा adapter *padapter, u8 *hwinfo)
+अणु
+	काष्ठा eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(padapter);
 	u16			EEPROMId;
 
-	/*  Checl 0x8129 again for making sure autoload status!! */
+	/*  Checl 0x8129 again क्रम making sure स्वतःload status!! */
 	EEPROMId = le16_to_cpu(*((__le16 *)hwinfo));
-	if (EEPROMId != RTL_EEPROM_ID) {
+	अगर (EEPROMId != RTL_EEPROM_ID) अणु
 		DBG_88E("EEPROM ID(%#x) is invalid!!\n", EEPROMId);
-		pEEPROM->bautoload_fail_flag = true;
-	} else {
-		pEEPROM->bautoload_fail_flag = false;
-	}
+		pEEPROM->bस्वतःload_fail_flag = true;
+	पूर्ण अन्यथा अणु
+		pEEPROM->bस्वतःload_fail_flag = false;
+	पूर्ण
 
 	DBG_88E("EEPROM ID = 0x%04x\n", EEPROMId);
-}
+पूर्ण
 
-static void Hal_ReadPowerValueFromPROM_8188E(struct txpowerinfo24g *pwrInfo24G, u8 *PROMContent, bool AutoLoadFail)
-{
+अटल व्योम Hal_ReadPowerValueFromPROM_8188E(काष्ठा txघातerinfo24g *pwrInfo24G, u8 *PROMContent, bool AutoLoadFail)
+अणु
 	u32 rfPath, eeAddr = EEPROM_TX_PWR_INX_88E, group, TxCount = 0;
 
-	memset(pwrInfo24G, 0, sizeof(struct txpowerinfo24g));
+	स_रखो(pwrInfo24G, 0, माप(काष्ठा txघातerinfo24g));
 
-	if (AutoLoadFail) {
-		for (rfPath = 0; rfPath < MAX_RF_PATH; rfPath++) {
-			/* 2.4G default value */
-			for (group = 0; group < MAX_CHNL_GROUP_24G; group++) {
+	अगर (AutoLoadFail) अणु
+		क्रम (rfPath = 0; rfPath < MAX_RF_PATH; rfPath++) अणु
+			/* 2.4G शेष value */
+			क्रम (group = 0; group < MAX_CHNL_GROUP_24G; group++) अणु
 				pwrInfo24G->IndexCCK_Base[rfPath][group] =	EEPROM_DEFAULT_24G_INDEX;
 				pwrInfo24G->IndexBW40_Base[rfPath][group] =	EEPROM_DEFAULT_24G_INDEX;
-			}
-			for (TxCount = 0; TxCount < MAX_TX_COUNT; TxCount++) {
-				if (TxCount == 0) {
-					pwrInfo24G->BW20_Diff[rfPath][0] = EEPROM_DEFAULT_24G_HT20_DIFF;
-					pwrInfo24G->OFDM_Diff[rfPath][0] = EEPROM_DEFAULT_24G_OFDM_DIFF;
-				} else {
-					pwrInfo24G->BW20_Diff[rfPath][TxCount] = EEPROM_DEFAULT_DIFF;
-					pwrInfo24G->BW40_Diff[rfPath][TxCount] = EEPROM_DEFAULT_DIFF;
-					pwrInfo24G->CCK_Diff[rfPath][TxCount] =	EEPROM_DEFAULT_DIFF;
-					pwrInfo24G->OFDM_Diff[rfPath][TxCount] = EEPROM_DEFAULT_DIFF;
-				}
-			}
-		}
-		return;
-	}
+			पूर्ण
+			क्रम (TxCount = 0; TxCount < MAX_TX_COUNT; TxCount++) अणु
+				अगर (TxCount == 0) अणु
+					pwrInfo24G->BW20_Dअगरf[rfPath][0] = EEPROM_DEFAULT_24G_HT20_DIFF;
+					pwrInfo24G->OFDM_Dअगरf[rfPath][0] = EEPROM_DEFAULT_24G_OFDM_DIFF;
+				पूर्ण अन्यथा अणु
+					pwrInfo24G->BW20_Dअगरf[rfPath][TxCount] = EEPROM_DEFAULT_DIFF;
+					pwrInfo24G->BW40_Dअगरf[rfPath][TxCount] = EEPROM_DEFAULT_DIFF;
+					pwrInfo24G->CCK_Dअगरf[rfPath][TxCount] =	EEPROM_DEFAULT_DIFF;
+					pwrInfo24G->OFDM_Dअगरf[rfPath][TxCount] = EEPROM_DEFAULT_DIFF;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	for (rfPath = 0; rfPath < MAX_RF_PATH; rfPath++) {
-		/* 2.4G default value */
-		for (group = 0; group < MAX_CHNL_GROUP_24G; group++) {
+	क्रम (rfPath = 0; rfPath < MAX_RF_PATH; rfPath++) अणु
+		/* 2.4G शेष value */
+		क्रम (group = 0; group < MAX_CHNL_GROUP_24G; group++) अणु
 			pwrInfo24G->IndexCCK_Base[rfPath][group] =	PROMContent[eeAddr++];
-			if (pwrInfo24G->IndexCCK_Base[rfPath][group] == 0xFF)
+			अगर (pwrInfo24G->IndexCCK_Base[rfPath][group] == 0xFF)
 				pwrInfo24G->IndexCCK_Base[rfPath][group] = EEPROM_DEFAULT_24G_INDEX;
-		}
-		for (group = 0; group < MAX_CHNL_GROUP_24G - 1; group++) {
+		पूर्ण
+		क्रम (group = 0; group < MAX_CHNL_GROUP_24G - 1; group++) अणु
 			pwrInfo24G->IndexBW40_Base[rfPath][group] =	PROMContent[eeAddr++];
-			if (pwrInfo24G->IndexBW40_Base[rfPath][group] == 0xFF)
+			अगर (pwrInfo24G->IndexBW40_Base[rfPath][group] == 0xFF)
 				pwrInfo24G->IndexBW40_Base[rfPath][group] =	EEPROM_DEFAULT_24G_INDEX;
-		}
-		for (TxCount = 0; TxCount < MAX_TX_COUNT; TxCount++) {
-			if (TxCount == 0) {
-				pwrInfo24G->BW40_Diff[rfPath][TxCount] = 0;
-				if (PROMContent[eeAddr] == 0xFF) {
-					pwrInfo24G->BW20_Diff[rfPath][TxCount] = EEPROM_DEFAULT_24G_HT20_DIFF;
-				} else {
-					pwrInfo24G->BW20_Diff[rfPath][TxCount] = (PROMContent[eeAddr] & 0xf0) >> 4;
-					if (pwrInfo24G->BW20_Diff[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
-						pwrInfo24G->BW20_Diff[rfPath][TxCount] |= 0xF0;
-				}
+		पूर्ण
+		क्रम (TxCount = 0; TxCount < MAX_TX_COUNT; TxCount++) अणु
+			अगर (TxCount == 0) अणु
+				pwrInfo24G->BW40_Dअगरf[rfPath][TxCount] = 0;
+				अगर (PROMContent[eeAddr] == 0xFF) अणु
+					pwrInfo24G->BW20_Dअगरf[rfPath][TxCount] = EEPROM_DEFAULT_24G_HT20_DIFF;
+				पूर्ण अन्यथा अणु
+					pwrInfo24G->BW20_Dअगरf[rfPath][TxCount] = (PROMContent[eeAddr] & 0xf0) >> 4;
+					अगर (pwrInfo24G->BW20_Dअगरf[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
+						pwrInfo24G->BW20_Dअगरf[rfPath][TxCount] |= 0xF0;
+				पूर्ण
 
-				if (PROMContent[eeAddr] == 0xFF) {
-					pwrInfo24G->OFDM_Diff[rfPath][TxCount] =	EEPROM_DEFAULT_24G_OFDM_DIFF;
-				} else {
-					pwrInfo24G->OFDM_Diff[rfPath][TxCount] =	(PROMContent[eeAddr] & 0x0f);
-					if (pwrInfo24G->OFDM_Diff[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
-						pwrInfo24G->OFDM_Diff[rfPath][TxCount] |= 0xF0;
-				}
-				pwrInfo24G->CCK_Diff[rfPath][TxCount] = 0;
+				अगर (PROMContent[eeAddr] == 0xFF) अणु
+					pwrInfo24G->OFDM_Dअगरf[rfPath][TxCount] =	EEPROM_DEFAULT_24G_OFDM_DIFF;
+				पूर्ण अन्यथा अणु
+					pwrInfo24G->OFDM_Dअगरf[rfPath][TxCount] =	(PROMContent[eeAddr] & 0x0f);
+					अगर (pwrInfo24G->OFDM_Dअगरf[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
+						pwrInfo24G->OFDM_Dअगरf[rfPath][TxCount] |= 0xF0;
+				पूर्ण
+				pwrInfo24G->CCK_Dअगरf[rfPath][TxCount] = 0;
 				eeAddr++;
-			} else {
-				if (PROMContent[eeAddr] == 0xFF) {
-					pwrInfo24G->BW40_Diff[rfPath][TxCount] =	EEPROM_DEFAULT_DIFF;
-				} else {
-					pwrInfo24G->BW40_Diff[rfPath][TxCount] =	(PROMContent[eeAddr] & 0xf0) >> 4;
-					if (pwrInfo24G->BW40_Diff[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
-						pwrInfo24G->BW40_Diff[rfPath][TxCount] |= 0xF0;
-				}
+			पूर्ण अन्यथा अणु
+				अगर (PROMContent[eeAddr] == 0xFF) अणु
+					pwrInfo24G->BW40_Dअगरf[rfPath][TxCount] =	EEPROM_DEFAULT_DIFF;
+				पूर्ण अन्यथा अणु
+					pwrInfo24G->BW40_Dअगरf[rfPath][TxCount] =	(PROMContent[eeAddr] & 0xf0) >> 4;
+					अगर (pwrInfo24G->BW40_Dअगरf[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
+						pwrInfo24G->BW40_Dअगरf[rfPath][TxCount] |= 0xF0;
+				पूर्ण
 
-				if (PROMContent[eeAddr] == 0xFF) {
-					pwrInfo24G->BW20_Diff[rfPath][TxCount] =	EEPROM_DEFAULT_DIFF;
-				} else {
-					pwrInfo24G->BW20_Diff[rfPath][TxCount] =	(PROMContent[eeAddr] & 0x0f);
-					if (pwrInfo24G->BW20_Diff[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
-						pwrInfo24G->BW20_Diff[rfPath][TxCount] |= 0xF0;
-				}
+				अगर (PROMContent[eeAddr] == 0xFF) अणु
+					pwrInfo24G->BW20_Dअगरf[rfPath][TxCount] =	EEPROM_DEFAULT_DIFF;
+				पूर्ण अन्यथा अणु
+					pwrInfo24G->BW20_Dअगरf[rfPath][TxCount] =	(PROMContent[eeAddr] & 0x0f);
+					अगर (pwrInfo24G->BW20_Dअगरf[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
+						pwrInfo24G->BW20_Dअगरf[rfPath][TxCount] |= 0xF0;
+				पूर्ण
 				eeAddr++;
 
-				if (PROMContent[eeAddr] == 0xFF) {
-					pwrInfo24G->OFDM_Diff[rfPath][TxCount] = EEPROM_DEFAULT_DIFF;
-				} else {
-					pwrInfo24G->OFDM_Diff[rfPath][TxCount] =	(PROMContent[eeAddr] & 0xf0) >> 4;
-					if (pwrInfo24G->OFDM_Diff[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
-						pwrInfo24G->OFDM_Diff[rfPath][TxCount] |= 0xF0;
-				}
+				अगर (PROMContent[eeAddr] == 0xFF) अणु
+					pwrInfo24G->OFDM_Dअगरf[rfPath][TxCount] = EEPROM_DEFAULT_DIFF;
+				पूर्ण अन्यथा अणु
+					pwrInfo24G->OFDM_Dअगरf[rfPath][TxCount] =	(PROMContent[eeAddr] & 0xf0) >> 4;
+					अगर (pwrInfo24G->OFDM_Dअगरf[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
+						pwrInfo24G->OFDM_Dअगरf[rfPath][TxCount] |= 0xF0;
+				पूर्ण
 
-				if (PROMContent[eeAddr] == 0xFF) {
-					pwrInfo24G->CCK_Diff[rfPath][TxCount] =	EEPROM_DEFAULT_DIFF;
-				} else {
-					pwrInfo24G->CCK_Diff[rfPath][TxCount] =	(PROMContent[eeAddr] & 0x0f);
-					if (pwrInfo24G->CCK_Diff[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
-						pwrInfo24G->CCK_Diff[rfPath][TxCount] |= 0xF0;
-				}
+				अगर (PROMContent[eeAddr] == 0xFF) अणु
+					pwrInfo24G->CCK_Dअगरf[rfPath][TxCount] =	EEPROM_DEFAULT_DIFF;
+				पूर्ण अन्यथा अणु
+					pwrInfo24G->CCK_Dअगरf[rfPath][TxCount] =	(PROMContent[eeAddr] & 0x0f);
+					अगर (pwrInfo24G->CCK_Dअगरf[rfPath][TxCount] & BIT(3))		/* 4bit sign number to 8 bit sign number */
+						pwrInfo24G->CCK_Dअगरf[rfPath][TxCount] |= 0xF0;
+				पूर्ण
 				eeAddr++;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void Hal_GetChnlGroup88E(u8 chnl, u8 *group)
-{
-	if (chnl < 3)			/*  Channel 1-2 */
+व्योम Hal_GetChnlGroup88E(u8 chnl, u8 *group)
+अणु
+	अगर (chnl < 3)			/*  Channel 1-2 */
 		*group = 0;
-	else if (chnl < 6)		/*  Channel 3-5 */
+	अन्यथा अगर (chnl < 6)		/*  Channel 3-5 */
 		*group = 1;
-	else if (chnl < 9)		/*  Channel 6-8 */
+	अन्यथा अगर (chnl < 9)		/*  Channel 6-8 */
 		*group = 2;
-	else if (chnl < 12)		/*  Channel 9-11 */
+	अन्यथा अगर (chnl < 12)		/*  Channel 9-11 */
 		*group = 3;
-	else if (chnl < 14)		/*  Channel 12-13 */
+	अन्यथा अगर (chnl < 14)		/*  Channel 12-13 */
 		*group = 4;
-	else if (chnl == 14)		/*  Channel 14 */
+	अन्यथा अगर (chnl == 14)		/*  Channel 14 */
 		*group = 5;
-}
+पूर्ण
 
-void Hal_ReadPowerSavingMode88E(struct adapter *padapter, u8 *hwinfo, bool AutoLoadFail)
-{
-	if (AutoLoadFail) {
-		padapter->pwrctrlpriv.bHWPowerdown = false;
+व्योम Hal_ReadPowerSavingMode88E(काष्ठा adapter *padapter, u8 *hwinfo, bool AutoLoadFail)
+अणु
+	अगर (AutoLoadFail) अणु
+		padapter->pwrctrlpriv.bHWPowerकरोwn = false;
 		padapter->pwrctrlpriv.bSupportRemoteWakeup = false;
-	} else {
-		/* hw power down mode selection , 0:rf-off / 1:power down */
+	पूर्ण अन्यथा अणु
+		/* hw घातer करोwn mode selection , 0:rf-off / 1:घातer करोwn */
 
-		if (padapter->registrypriv.hwpdn_mode == 2)
-			padapter->pwrctrlpriv.bHWPowerdown = (hwinfo[EEPROM_RF_FEATURE_OPTION_88E] & BIT(4));
-		else
-			padapter->pwrctrlpriv.bHWPowerdown = padapter->registrypriv.hwpdn_mode;
+		अगर (padapter->registrypriv.hwpdn_mode == 2)
+			padapter->pwrctrlpriv.bHWPowerकरोwn = (hwinfo[EEPROM_RF_FEATURE_OPTION_88E] & BIT(4));
+		अन्यथा
+			padapter->pwrctrlpriv.bHWPowerकरोwn = padapter->registrypriv.hwpdn_mode;
 
-		/*  decide hw if support remote wakeup function */
-		/*  if hw supported, 8051 (SIE) will generate WeakUP signal(D+/D- toggle) when autoresume */
+		/*  decide hw अगर support remote wakeup function */
+		/*  अगर hw supported, 8051 (SIE) will generate WeakUP संकेत(D+/D- toggle) when स्वतःresume */
 		padapter->pwrctrlpriv.bSupportRemoteWakeup = (hwinfo[EEPROM_USB_OPTIONAL_FUNCTION0] & BIT(1)) ? true : false;
 
 		DBG_88E("%s...bHWPwrPindetect(%x)-bHWPowerdown(%x) , bSupportRemoteWakeup(%x)\n", __func__,
-			padapter->pwrctrlpriv.bHWPwrPindetect, padapter->pwrctrlpriv.bHWPowerdown, padapter->pwrctrlpriv.bSupportRemoteWakeup);
+			padapter->pwrctrlpriv.bHWPwrPindetect, padapter->pwrctrlpriv.bHWPowerकरोwn, padapter->pwrctrlpriv.bSupportRemoteWakeup);
 
-		DBG_88E("### PS params =>  power_mgnt(%x), usbss_enable(%x) ###\n", padapter->registrypriv.power_mgnt, padapter->registrypriv.usbss_enable);
-	}
-}
+		DBG_88E("### PS params =>  power_mgnt(%x), usbss_enable(%x) ###\n", padapter->registrypriv.घातer_mgnt, padapter->registrypriv.usbss_enable);
+	पूर्ण
+पूर्ण
 
-void Hal_ReadTxPowerInfo88E(struct adapter *padapter, u8 *PROMContent, bool AutoLoadFail)
-{
-	struct hal_data_8188e *pHalData = padapter->HalData;
-	struct txpowerinfo24g pwrInfo24G;
+व्योम Hal_ReadTxPowerInfo88E(काष्ठा adapter *padapter, u8 *PROMContent, bool AutoLoadFail)
+अणु
+	काष्ठा hal_data_8188e *pHalData = padapter->HalData;
+	काष्ठा txघातerinfo24g pwrInfo24G;
 	u8 ch, group;
 	u8 TxCount;
 
 	Hal_ReadPowerValueFromPROM_8188E(&pwrInfo24G, PROMContent, AutoLoadFail);
 
-	if (!AutoLoadFail)
+	अगर (!AutoLoadFail)
 		pHalData->bTXPowerDataReadFromEEPORM = true;
 
-	for (ch = 0; ch < CHANNEL_MAX_NUMBER; ch++) {
+	क्रम (ch = 0; ch < CHANNEL_MAX_NUMBER; ch++) अणु
 		Hal_GetChnlGroup88E(ch, &group);
 		pHalData->Index24G_CCK_Base[0][ch] = pwrInfo24G.IndexCCK_Base[0][group];
-		if (ch == 14)
+		अगर (ch == 14)
 			pHalData->Index24G_BW40_Base[0][ch] = pwrInfo24G.IndexBW40_Base[0][4];
-		else
+		अन्यथा
 			pHalData->Index24G_BW40_Base[0][ch] = pwrInfo24G.IndexBW40_Base[0][group];
 
 		DBG_88E("======= Path %d, Channel %d =======\n", 0, ch);
 		DBG_88E("Index24G_CCK_Base[%d][%d] = 0x%x\n", 0, ch, pHalData->Index24G_CCK_Base[0][ch]);
 		DBG_88E("Index24G_BW40_Base[%d][%d] = 0x%x\n", 0, ch, pHalData->Index24G_BW40_Base[0][ch]);
-	}
-	for (TxCount = 0; TxCount < MAX_TX_COUNT; TxCount++) {
-		pHalData->CCK_24G_Diff[0][TxCount] = pwrInfo24G.CCK_Diff[0][TxCount];
-		pHalData->OFDM_24G_Diff[0][TxCount] = pwrInfo24G.OFDM_Diff[0][TxCount];
-		pHalData->BW20_24G_Diff[0][TxCount] = pwrInfo24G.BW20_Diff[0][TxCount];
-		pHalData->BW40_24G_Diff[0][TxCount] = pwrInfo24G.BW40_Diff[0][TxCount];
+	पूर्ण
+	क्रम (TxCount = 0; TxCount < MAX_TX_COUNT; TxCount++) अणु
+		pHalData->CCK_24G_Dअगरf[0][TxCount] = pwrInfo24G.CCK_Dअगरf[0][TxCount];
+		pHalData->OFDM_24G_Dअगरf[0][TxCount] = pwrInfo24G.OFDM_Dअगरf[0][TxCount];
+		pHalData->BW20_24G_Dअगरf[0][TxCount] = pwrInfo24G.BW20_Dअगरf[0][TxCount];
+		pHalData->BW40_24G_Dअगरf[0][TxCount] = pwrInfo24G.BW40_Dअगरf[0][TxCount];
 		DBG_88E("======= TxCount %d =======\n", TxCount);
-		DBG_88E("CCK_24G_Diff[%d][%d] = %d\n", 0, TxCount, pHalData->CCK_24G_Diff[0][TxCount]);
-		DBG_88E("OFDM_24G_Diff[%d][%d] = %d\n", 0, TxCount, pHalData->OFDM_24G_Diff[0][TxCount]);
-		DBG_88E("BW20_24G_Diff[%d][%d] = %d\n", 0, TxCount, pHalData->BW20_24G_Diff[0][TxCount]);
-		DBG_88E("BW40_24G_Diff[%d][%d] = %d\n", 0, TxCount, pHalData->BW40_24G_Diff[0][TxCount]);
-	}
+		DBG_88E("CCK_24G_Diff[%d][%d] = %d\n", 0, TxCount, pHalData->CCK_24G_Dअगरf[0][TxCount]);
+		DBG_88E("OFDM_24G_Diff[%d][%d] = %d\n", 0, TxCount, pHalData->OFDM_24G_Dअगरf[0][TxCount]);
+		DBG_88E("BW20_24G_Diff[%d][%d] = %d\n", 0, TxCount, pHalData->BW20_24G_Dअगरf[0][TxCount]);
+		DBG_88E("BW40_24G_Diff[%d][%d] = %d\n", 0, TxCount, pHalData->BW40_24G_Dअगरf[0][TxCount]);
+	पूर्ण
 
-	/*  2010/10/19 MH Add Regulator recognize for CU. */
-	if (!AutoLoadFail) {
+	/*  2010/10/19 MH Add Regulator recognize क्रम CU. */
+	अगर (!AutoLoadFail) अणु
 		pHalData->EEPROMRegulatory = (PROMContent[EEPROM_RF_BOARD_OPTION_88E] & 0x7);	/* bit0~2 */
-		if (PROMContent[EEPROM_RF_BOARD_OPTION_88E] == 0xFF)
+		अगर (PROMContent[EEPROM_RF_BOARD_OPTION_88E] == 0xFF)
 			pHalData->EEPROMRegulatory = (EEPROM_DEFAULT_BOARD_OPTION & 0x7);	/* bit0~2 */
-	} else {
+	पूर्ण अन्यथा अणु
 		pHalData->EEPROMRegulatory = 0;
-	}
+	पूर्ण
 	DBG_88E("EEPROMRegulatory = 0x%x\n", pHalData->EEPROMRegulatory);
-}
+पूर्ण
 
-void Hal_EfuseParseXtal_8188E(struct adapter *pAdapter, u8 *hwinfo, bool AutoLoadFail)
-{
-	struct hal_data_8188e *pHalData = pAdapter->HalData;
+व्योम Hal_EfuseParseXtal_8188E(काष्ठा adapter *pAdapter, u8 *hwinfo, bool AutoLoadFail)
+अणु
+	काष्ठा hal_data_8188e *pHalData = pAdapter->HalData;
 
-	if (!AutoLoadFail) {
+	अगर (!AutoLoadFail) अणु
 		pHalData->CrystalCap = hwinfo[EEPROM_XTAL_88E];
-		if (pHalData->CrystalCap == 0xFF)
+		अगर (pHalData->CrystalCap == 0xFF)
 			pHalData->CrystalCap = EEPROM_Default_CrystalCap_88E;
-	} else {
+	पूर्ण अन्यथा अणु
 		pHalData->CrystalCap = EEPROM_Default_CrystalCap_88E;
-	}
+	पूर्ण
 	DBG_88E("CrystalCap: 0x%2x\n", pHalData->CrystalCap);
-}
+पूर्ण
 
-void Hal_EfuseParseBoardType88E(struct adapter *pAdapter, u8 *hwinfo, bool AutoLoadFail)
-{
-	struct hal_data_8188e *pHalData = pAdapter->HalData;
+व्योम Hal_EfuseParseBoardType88E(काष्ठा adapter *pAdapter, u8 *hwinfo, bool AutoLoadFail)
+अणु
+	काष्ठा hal_data_8188e *pHalData = pAdapter->HalData;
 
-	if (!AutoLoadFail)
+	अगर (!AutoLoadFail)
 		pHalData->BoardType = (hwinfo[EEPROM_RF_BOARD_OPTION_88E]
 					& 0xE0) >> 5;
-	else
+	अन्यथा
 		pHalData->BoardType = 0;
 	DBG_88E("Board Type: 0x%2x\n", pHalData->BoardType);
-}
+पूर्ण
 
-void Hal_EfuseParseEEPROMVer88E(struct adapter *padapter, u8 *hwinfo, bool AutoLoadFail)
-{
-	struct hal_data_8188e *pHalData = padapter->HalData;
+व्योम Hal_EfuseParseEEPROMVer88E(काष्ठा adapter *padapter, u8 *hwinfo, bool AutoLoadFail)
+अणु
+	काष्ठा hal_data_8188e *pHalData = padapter->HalData;
 
-	if (!AutoLoadFail) {
+	अगर (!AutoLoadFail) अणु
 		pHalData->EEPROMVersion = hwinfo[EEPROM_VERSION_88E];
-		if (pHalData->EEPROMVersion == 0xFF)
+		अगर (pHalData->EEPROMVersion == 0xFF)
 			pHalData->EEPROMVersion = EEPROM_Default_Version;
-	} else {
+	पूर्ण अन्यथा अणु
 		pHalData->EEPROMVersion = 1;
-	}
+	पूर्ण
 	RT_TRACE(_module_hci_hal_init_c_, _drv_info_,
 		 ("Hal_EfuseParseEEPROMVer(), EEVer = %d\n",
 		 pHalData->EEPROMVersion));
-}
+पूर्ण
 
-void rtl8188e_EfuseParseChnlPlan(struct adapter *padapter, u8 *hwinfo, bool AutoLoadFail)
-{
+व्योम rtl8188e_EfuseParseChnlPlan(काष्ठा adapter *padapter, u8 *hwinfo, bool AutoLoadFail)
+अणु
 	padapter->mlmepriv.ChannelPlan =
 		 hal_com_get_channel_plan(hwinfo ? hwinfo[EEPROM_ChannelPlan_88E] : 0xFF,
 					  padapter->registrypriv.channel_plan,
 					  RT_CHANNEL_DOMAIN_WORLD_WIDE_13, AutoLoadFail);
 
 	DBG_88E("mlmepriv.ChannelPlan = 0x%02x\n", padapter->mlmepriv.ChannelPlan);
-}
+पूर्ण
 
-void Hal_EfuseParseCustomerID88E(struct adapter *padapter, u8 *hwinfo, bool AutoLoadFail)
-{
-	struct hal_data_8188e	*pHalData = padapter->HalData;
+व्योम Hal_EfuseParseCustomerID88E(काष्ठा adapter *padapter, u8 *hwinfo, bool AutoLoadFail)
+अणु
+	काष्ठा hal_data_8188e	*pHalData = padapter->HalData;
 
-	if (!AutoLoadFail) {
+	अगर (!AutoLoadFail) अणु
 		pHalData->EEPROMCustomerID = hwinfo[EEPROM_CUSTOMERID_88E];
-	} else {
+	पूर्ण अन्यथा अणु
 		pHalData->EEPROMCustomerID = 0;
 		pHalData->EEPROMSubCustomerID = 0;
-	}
+	पूर्ण
 	DBG_88E("EEPROM Customer ID: 0x%2x\n", pHalData->EEPROMCustomerID);
-}
+पूर्ण
 
-void Hal_ReadAntennaDiversity88E(struct adapter *pAdapter, u8 *PROMContent, bool AutoLoadFail)
-{
-	struct hal_data_8188e *pHalData = pAdapter->HalData;
-	struct registry_priv	*registry_par = &pAdapter->registrypriv;
+व्योम Hal_ReadAntennaDiversity88E(काष्ठा adapter *pAdapter, u8 *PROMContent, bool AutoLoadFail)
+अणु
+	काष्ठा hal_data_8188e *pHalData = pAdapter->HalData;
+	काष्ठा registry_priv	*registry_par = &pAdapter->registrypriv;
 
-	if (!AutoLoadFail) {
+	अगर (!AutoLoadFail) अणु
 		/*  Antenna Diversity setting. */
-		if (registry_par->antdiv_cfg == 2) { /*  2:By EFUSE */
+		अगर (registry_par->antभाग_cfg == 2) अणु /*  2:By EFUSE */
 			pHalData->AntDivCfg = (PROMContent[EEPROM_RF_BOARD_OPTION_88E] & 0x18) >> 3;
-			if (PROMContent[EEPROM_RF_BOARD_OPTION_88E] == 0xFF)
+			अगर (PROMContent[EEPROM_RF_BOARD_OPTION_88E] == 0xFF)
 				pHalData->AntDivCfg = (EEPROM_DEFAULT_BOARD_OPTION & 0x18) >> 3;
-		} else {
-			pHalData->AntDivCfg = registry_par->antdiv_cfg;  /*  0:OFF , 1:ON, 2:By EFUSE */
-		}
+		पूर्ण अन्यथा अणु
+			pHalData->AntDivCfg = registry_par->antभाग_cfg;  /*  0:OFF , 1:ON, 2:By EFUSE */
+		पूर्ण
 
-		if (registry_par->antdiv_type == 0) {
+		अगर (registry_par->antभाग_प्रकारype == 0) अणु
 			/* If TRxAntDivType is AUTO in advanced setting, use EFUSE value instead. */
 			pHalData->TRxAntDivType = PROMContent[EEPROM_RF_ANTENNA_OPT_88E];
-			if (pHalData->TRxAntDivType == 0xFF)
+			अगर (pHalData->TRxAntDivType == 0xFF)
 				pHalData->TRxAntDivType = CG_TRX_HW_ANTDIV; /*  For 88EE, 1Tx and 1RxCG are fixed.(1Ant, Tx and RxCG are both on aux port) */
-		} else {
-			pHalData->TRxAntDivType = registry_par->antdiv_type;
-		}
+		पूर्ण अन्यथा अणु
+			pHalData->TRxAntDivType = registry_par->antभाग_प्रकारype;
+		पूर्ण
 
-		if (pHalData->TRxAntDivType == CG_TRX_HW_ANTDIV || pHalData->TRxAntDivType == CGCS_RX_HW_ANTDIV)
+		अगर (pHalData->TRxAntDivType == CG_TRX_HW_ANTDIV || pHalData->TRxAntDivType == CGCS_RX_HW_ANTDIV)
 			pHalData->AntDivCfg = 1; /*  0xC1[3] is ignored. */
-	} else {
+	पूर्ण अन्यथा अणु
 		pHalData->AntDivCfg = 0;
-	}
+	पूर्ण
 	DBG_88E("EEPROM : AntDivCfg = %x, TRxAntDivType = %x\n", pHalData->AntDivCfg, pHalData->TRxAntDivType);
-}
+पूर्ण
 
-void Hal_ReadThermalMeter_88E(struct adapter *Adapter, u8 *PROMContent, bool AutoloadFail)
-{
-	struct hal_data_8188e *pHalData = Adapter->HalData;
+व्योम Hal_ReadThermalMeter_88E(काष्ठा adapter *Adapter, u8 *PROMContent, bool AutoloadFail)
+अणु
+	काष्ठा hal_data_8188e *pHalData = Adapter->HalData;
 
 	/*  ThermalMeter from EEPROM */
-	if (!AutoloadFail)
+	अगर (!AutoloadFail)
 		pHalData->EEPROMThermalMeter = PROMContent[EEPROM_THERMAL_METER_88E];
-	else
+	अन्यथा
 		pHalData->EEPROMThermalMeter = EEPROM_Default_ThermalMeter_88E;
 
-	if (pHalData->EEPROMThermalMeter == 0xff || AutoloadFail) {
+	अगर (pHalData->EEPROMThermalMeter == 0xff || AutoloadFail) अणु
 		pHalData->bAPKThermalMeterIgnore = true;
 		pHalData->EEPROMThermalMeter = EEPROM_Default_ThermalMeter_88E;
-	}
+	पूर्ण
 	DBG_88E("ThermalMeter = 0x%x\n", pHalData->EEPROMThermalMeter);
-}
+पूर्ण

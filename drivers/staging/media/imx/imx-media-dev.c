@@ -1,144 +1,145 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * V4L2 Media Controller Driver for Freescale i.MX5/6 SOC
+ * V4L2 Media Controller Driver क्रम Freescale i.MX5/6 SOC
  *
  * Copyright (c) 2016-2019 Mentor Graphics Inc.
  */
-#include <linux/fs.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <media/v4l2-async.h>
-#include <media/v4l2-event.h>
-#include <media/imx.h>
-#include "imx-media.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <media/v4l2-async.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/imx.h>
+#समावेश "imx-media.h"
 
-static inline struct imx_media_dev *notifier2dev(struct v4l2_async_notifier *n)
-{
-	return container_of(n, struct imx_media_dev, notifier);
-}
+अटल अंतरभूत काष्ठा imx_media_dev *notअगरier2dev(काष्ठा v4l2_async_notअगरier *n)
+अणु
+	वापस container_of(n, काष्ठा imx_media_dev, notअगरier);
+पूर्ण
 
-/* async subdev bound notifier */
-static int imx_media_subdev_bound(struct v4l2_async_notifier *notifier,
-				  struct v4l2_subdev *sd,
-				  struct v4l2_async_subdev *asd)
-{
-	struct imx_media_dev *imxmd = notifier2dev(notifier);
-	int ret;
+/* async subdev bound notअगरier */
+अटल पूर्णांक imx_media_subdev_bound(काष्ठा v4l2_async_notअगरier *notअगरier,
+				  काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_async_subdev *asd)
+अणु
+	काष्ठा imx_media_dev *imxmd = notअगरier2dev(notअगरier);
+	पूर्णांक ret;
 
-	if (sd->grp_id & IMX_MEDIA_GRP_ID_IPU_CSI) {
-		/* register the IPU internal subdevs */
-		ret = imx_media_register_ipu_internal_subdevs(imxmd, sd);
-		if (ret)
-			return ret;
-	}
+	अगर (sd->grp_id & IMX_MEDIA_GRP_ID_IPU_CSI) अणु
+		/* रेजिस्टर the IPU पूर्णांकernal subdevs */
+		ret = imx_media_रेजिस्टर_ipu_पूर्णांकernal_subdevs(imxmd, sd);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	dev_dbg(imxmd->md.dev, "subdev %s bound\n", sd->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* async subdev complete notifier */
-static int imx6_media_probe_complete(struct v4l2_async_notifier *notifier)
-{
-	struct imx_media_dev *imxmd = notifier2dev(notifier);
-	int ret;
+/* async subdev complete notअगरier */
+अटल पूर्णांक imx6_media_probe_complete(काष्ठा v4l2_async_notअगरier *notअगरier)
+अणु
+	काष्ठा imx_media_dev *imxmd = notअगरier2dev(notअगरier);
+	पूर्णांक ret;
 
 	/* call the imx5/6/7 common probe completion handler */
-	ret = imx_media_probe_complete(notifier);
-	if (ret)
-		return ret;
+	ret = imx_media_probe_complete(notअगरier);
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&imxmd->mutex);
 
 	imxmd->m2m_vdev = imx_media_csc_scaler_device_init(imxmd);
-	if (IS_ERR(imxmd->m2m_vdev)) {
+	अगर (IS_ERR(imxmd->m2m_vdev)) अणु
 		ret = PTR_ERR(imxmd->m2m_vdev);
-		imxmd->m2m_vdev = NULL;
-		goto unlock;
-	}
+		imxmd->m2m_vdev = शून्य;
+		जाओ unlock;
+	पूर्ण
 
-	ret = imx_media_csc_scaler_device_register(imxmd->m2m_vdev);
+	ret = imx_media_csc_scaler_device_रेजिस्टर(imxmd->m2m_vdev);
 unlock:
 	mutex_unlock(&imxmd->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* async subdev complete notifier */
-static const struct v4l2_async_notifier_operations imx_media_notifier_ops = {
+/* async subdev complete notअगरier */
+अटल स्थिर काष्ठा v4l2_async_notअगरier_operations imx_media_notअगरier_ops = अणु
 	.bound = imx_media_subdev_bound,
 	.complete = imx6_media_probe_complete,
-};
+पूर्ण;
 
-static int imx_media_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *node = dev->of_node;
-	struct imx_media_dev *imxmd;
-	int ret;
+अटल पूर्णांक imx_media_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *node = dev->of_node;
+	काष्ठा imx_media_dev *imxmd;
+	पूर्णांक ret;
 
-	imxmd = imx_media_dev_init(dev, NULL);
-	if (IS_ERR(imxmd))
-		return PTR_ERR(imxmd);
+	imxmd = imx_media_dev_init(dev, शून्य);
+	अगर (IS_ERR(imxmd))
+		वापस PTR_ERR(imxmd);
 
 	ret = imx_media_add_of_subdevs(imxmd, node);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&imxmd->v4l2_dev,
 			 "add_of_subdevs failed with %d\n", ret);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	ret = imx_media_dev_notifier_register(imxmd, &imx_media_notifier_ops);
-	if (ret)
-		goto cleanup;
+	ret = imx_media_dev_notअगरier_रेजिस्टर(imxmd, &imx_media_notअगरier_ops);
+	अगर (ret)
+		जाओ cleanup;
 
-	return 0;
+	वापस 0;
 
 cleanup:
-	v4l2_async_notifier_cleanup(&imxmd->notifier);
-	v4l2_device_unregister(&imxmd->v4l2_dev);
+	v4l2_async_notअगरier_cleanup(&imxmd->notअगरier);
+	v4l2_device_unरेजिस्टर(&imxmd->v4l2_dev);
 	media_device_cleanup(&imxmd->md);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int imx_media_remove(struct platform_device *pdev)
-{
-	struct imx_media_dev *imxmd =
-		(struct imx_media_dev *)platform_get_drvdata(pdev);
+अटल पूर्णांक imx_media_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा imx_media_dev *imxmd =
+		(काष्ठा imx_media_dev *)platक्रमm_get_drvdata(pdev);
 
 	v4l2_info(&imxmd->v4l2_dev, "Removing imx-media\n");
 
-	if (imxmd->m2m_vdev) {
-		imx_media_csc_scaler_device_unregister(imxmd->m2m_vdev);
-		imxmd->m2m_vdev = NULL;
-	}
+	अगर (imxmd->m2m_vdev) अणु
+		imx_media_csc_scaler_device_unरेजिस्टर(imxmd->m2m_vdev);
+		imxmd->m2m_vdev = शून्य;
+	पूर्ण
 
-	v4l2_async_notifier_unregister(&imxmd->notifier);
-	imx_media_unregister_ipu_internal_subdevs(imxmd);
-	v4l2_async_notifier_cleanup(&imxmd->notifier);
-	media_device_unregister(&imxmd->md);
-	v4l2_device_unregister(&imxmd->v4l2_dev);
+	v4l2_async_notअगरier_unरेजिस्टर(&imxmd->notअगरier);
+	imx_media_unरेजिस्टर_ipu_पूर्णांकernal_subdevs(imxmd);
+	v4l2_async_notअगरier_cleanup(&imxmd->notअगरier);
+	media_device_unरेजिस्टर(&imxmd->md);
+	v4l2_device_unरेजिस्टर(&imxmd->v4l2_dev);
 	media_device_cleanup(&imxmd->md);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id imx_media_dt_ids[] = {
-	{ .compatible = "fsl,imx-capture-subsystem" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx_media_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx-capture-subsystem" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, imx_media_dt_ids);
 
-static struct platform_driver imx_media_pdrv = {
+अटल काष्ठा platक्रमm_driver imx_media_pdrv = अणु
 	.probe		= imx_media_probe,
-	.remove		= imx_media_remove,
-	.driver		= {
+	.हटाओ		= imx_media_हटाओ,
+	.driver		= अणु
 		.name	= "imx-media",
 		.of_match_table	= imx_media_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(imx_media_pdrv);
+module_platक्रमm_driver(imx_media_pdrv);
 
 MODULE_DESCRIPTION("i.MX5/6 v4l2 media controller driver");
 MODULE_AUTHOR("Steve Longerbeam <steve_longerbeam@mentor.com>");

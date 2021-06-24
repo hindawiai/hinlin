@@ -1,264 +1,265 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * oxfw-scs1x.c - a part of driver for OXFW970/971 based devices
+ * oxfw-scs1x.c - a part of driver क्रम OXFW970/971 based devices
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  * Copyright (c) 2015 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
-#include "oxfw.h"
+#समावेश "oxfw.h"
 
-#define HSS1394_ADDRESS			0xc007dedadadaULL
-#define HSS1394_MAX_PACKET_SIZE		64
-#define HSS1394_TAG_USER_DATA		0x00
-#define HSS1394_TAG_CHANGE_ADDRESS	0xf1
+#घोषणा HSS1394_ADDRESS			0xc007dedadadaULL
+#घोषणा HSS1394_MAX_PACKET_SIZE		64
+#घोषणा HSS1394_TAG_USER_DATA		0x00
+#घोषणा HSS1394_TAG_CHANGE_ADDRESS	0xf1
 
-struct fw_scs1x {
-	struct fw_address_handler hss_handler;
+काष्ठा fw_scs1x अणु
+	काष्ठा fw_address_handler hss_handler;
 	u8 input_escape_count;
-	struct snd_rawmidi_substream *input;
+	काष्ठा snd_rawmidi_substream *input;
 
 	/* For MIDI playback. */
-	struct snd_rawmidi_substream *output;
+	काष्ठा snd_rawmidi_substream *output;
 	bool output_idle;
 	u8 output_status;
 	u8 output_bytes;
 	bool output_escaped;
 	bool output_escape_high_nibble;
-	struct work_struct work;
-	wait_queue_head_t idle_wait;
+	काष्ठा work_काष्ठा work;
+	रुको_queue_head_t idle_रुको;
 	u8 buffer[HSS1394_MAX_PACKET_SIZE];
 	bool transaction_running;
-	struct fw_transaction transaction;
-	unsigned int transaction_bytes;
+	काष्ठा fw_transaction transaction;
+	अचिन्हित पूर्णांक transaction_bytes;
 	bool error;
-	struct fw_device *fw_dev;
-};
+	काष्ठा fw_device *fw_dev;
+पूर्ण;
 
-static const u8 sysex_escape_prefix[] = {
+अटल स्थिर u8 sysex_escape_prefix[] = अणु
 	0xf0,			/* SysEx begin */
 	0x00, 0x01, 0x60,	/* Stanton DJ */
 	0x48, 0x53, 0x53,	/* "HSS" */
-};
+पूर्ण;
 
-static void midi_input_escaped_byte(struct snd_rawmidi_substream *stream,
+अटल व्योम midi_input_escaped_byte(काष्ठा snd_rawmidi_substream *stream,
 				    u8 byte)
-{
+अणु
 	u8 nibbles[2];
 
 	nibbles[0] = byte >> 4;
 	nibbles[1] = byte & 0x0f;
 	snd_rawmidi_receive(stream, nibbles, 2);
-}
+पूर्ण
 
-static void midi_input_byte(struct fw_scs1x *scs,
-			    struct snd_rawmidi_substream *stream, u8 byte)
-{
-	const u8 eox = 0xf7;
+अटल व्योम midi_input_byte(काष्ठा fw_scs1x *scs,
+			    काष्ठा snd_rawmidi_substream *stream, u8 byte)
+अणु
+	स्थिर u8 eox = 0xf7;
 
-	if (scs->input_escape_count > 0) {
+	अगर (scs->input_escape_count > 0) अणु
 		midi_input_escaped_byte(stream, byte);
 		scs->input_escape_count--;
-		if (scs->input_escape_count == 0)
-			snd_rawmidi_receive(stream, &eox, sizeof(eox));
-	} else if (byte == 0xf9) {
+		अगर (scs->input_escape_count == 0)
+			snd_rawmidi_receive(stream, &eox, माप(eox));
+	पूर्ण अन्यथा अगर (byte == 0xf9) अणु
 		snd_rawmidi_receive(stream, sysex_escape_prefix,
 				    ARRAY_SIZE(sysex_escape_prefix));
 		midi_input_escaped_byte(stream, 0x00);
 		midi_input_escaped_byte(stream, 0xf9);
 		scs->input_escape_count = 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		snd_rawmidi_receive(stream, &byte, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void midi_input_packet(struct fw_scs1x *scs,
-			      struct snd_rawmidi_substream *stream,
-			      const u8 *data, unsigned int bytes)
-{
-	unsigned int i;
-	const u8 eox = 0xf7;
+अटल व्योम midi_input_packet(काष्ठा fw_scs1x *scs,
+			      काष्ठा snd_rawmidi_substream *stream,
+			      स्थिर u8 *data, अचिन्हित पूर्णांक bytes)
+अणु
+	अचिन्हित पूर्णांक i;
+	स्थिर u8 eox = 0xf7;
 
-	if (data[0] == HSS1394_TAG_USER_DATA) {
-		for (i = 1; i < bytes; ++i)
+	अगर (data[0] == HSS1394_TAG_USER_DATA) अणु
+		क्रम (i = 1; i < bytes; ++i)
 			midi_input_byte(scs, stream, data[i]);
-	} else {
+	पूर्ण अन्यथा अणु
 		snd_rawmidi_receive(stream, sysex_escape_prefix,
 				    ARRAY_SIZE(sysex_escape_prefix));
-		for (i = 0; i < bytes; ++i)
+		क्रम (i = 0; i < bytes; ++i)
 			midi_input_escaped_byte(stream, data[i]);
-		snd_rawmidi_receive(stream, &eox, sizeof(eox));
-	}
-}
+		snd_rawmidi_receive(stream, &eox, माप(eox));
+	पूर्ण
+पूर्ण
 
-static void handle_hss(struct fw_card *card, struct fw_request *request,
-		       int tcode, int destination, int source, int generation,
-		       unsigned long long offset, void *data, size_t length,
-		       void *callback_data)
-{
-	struct fw_scs1x *scs = callback_data;
-	struct snd_rawmidi_substream *stream;
-	int rcode;
+अटल व्योम handle_hss(काष्ठा fw_card *card, काष्ठा fw_request *request,
+		       पूर्णांक tcode, पूर्णांक destination, पूर्णांक source, पूर्णांक generation,
+		       अचिन्हित दीर्घ दीर्घ offset, व्योम *data, माप_प्रकार length,
+		       व्योम *callback_data)
+अणु
+	काष्ठा fw_scs1x *scs = callback_data;
+	काष्ठा snd_rawmidi_substream *stream;
+	पूर्णांक rcode;
 
-	if (offset != scs->hss_handler.offset) {
+	अगर (offset != scs->hss_handler.offset) अणु
 		rcode = RCODE_ADDRESS_ERROR;
-		goto end;
-	}
-	if (tcode != TCODE_WRITE_QUADLET_REQUEST &&
-	    tcode != TCODE_WRITE_BLOCK_REQUEST) {
+		जाओ end;
+	पूर्ण
+	अगर (tcode != TCODE_WRITE_QUADLET_REQUEST &&
+	    tcode != TCODE_WRITE_BLOCK_REQUEST) अणु
 		rcode = RCODE_TYPE_ERROR;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (length >= 1) {
+	अगर (length >= 1) अणु
 		stream = READ_ONCE(scs->input);
-		if (stream)
+		अगर (stream)
 			midi_input_packet(scs, stream, data, length);
-	}
+	पूर्ण
 
 	rcode = RCODE_COMPLETE;
 end:
 	fw_send_response(card, request, rcode);
-}
+पूर्ण
 
-static void scs_write_callback(struct fw_card *card, int rcode,
-			       void *data, size_t length, void *callback_data)
-{
-	struct fw_scs1x *scs = callback_data;
+अटल व्योम scs_ग_लिखो_callback(काष्ठा fw_card *card, पूर्णांक rcode,
+			       व्योम *data, माप_प्रकार length, व्योम *callback_data)
+अणु
+	काष्ठा fw_scs1x *scs = callback_data;
 
-	if (!rcode_is_permanent_error(rcode)) {
-		/* Don't retry for this data. */
-		if (rcode == RCODE_COMPLETE)
+	अगर (!rcode_is_permanent_error(rcode)) अणु
+		/* Don't retry क्रम this data. */
+		अगर (rcode == RCODE_COMPLETE)
 			scs->transaction_bytes = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		scs->error = true;
-	}
+	पूर्ण
 
 	scs->transaction_running = false;
 	schedule_work(&scs->work);
-}
+पूर्ण
 
-static bool is_valid_running_status(u8 status)
-{
-	return status >= 0x80 && status <= 0xef;
-}
+अटल bool is_valid_running_status(u8 status)
+अणु
+	वापस status >= 0x80 && status <= 0xef;
+पूर्ण
 
-static bool is_one_byte_cmd(u8 status)
-{
-	return status == 0xf6 ||
+अटल bool is_one_byte_cmd(u8 status)
+अणु
+	वापस status == 0xf6 ||
 	       status >= 0xf8;
-}
+पूर्ण
 
-static bool is_two_bytes_cmd(u8 status)
-{
-	return (status >= 0xc0 && status <= 0xdf) ||
+अटल bool is_two_bytes_cmd(u8 status)
+अणु
+	वापस (status >= 0xc0 && status <= 0xdf) ||
 	       status == 0xf1 ||
 	       status == 0xf3;
-}
+पूर्ण
 
-static bool is_three_bytes_cmd(u8 status)
-{
-	return (status >= 0x80 && status <= 0xbf) ||
+अटल bool is_three_bytes_cmd(u8 status)
+अणु
+	वापस (status >= 0x80 && status <= 0xbf) ||
 	       (status >= 0xe0 && status <= 0xef) ||
 	       status == 0xf2;
-}
+पूर्ण
 
-static bool is_invalid_cmd(u8 status)
-{
-	return status == 0xf4 ||
+अटल bool is_invalid_cmd(u8 status)
+अणु
+	वापस status == 0xf4 ||
 	       status == 0xf5 ||
 	       status == 0xf9 ||
 	       status == 0xfd;
-}
+पूर्ण
 
-static void scs_output_work(struct work_struct *work)
-{
-	struct fw_scs1x *scs = container_of(work, struct fw_scs1x, work);
-	struct snd_rawmidi_substream *stream;
-	unsigned int i;
+अटल व्योम scs_output_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fw_scs1x *scs = container_of(work, काष्ठा fw_scs1x, work);
+	काष्ठा snd_rawmidi_substream *stream;
+	अचिन्हित पूर्णांक i;
 	u8 byte;
-	int generation;
+	पूर्णांक generation;
 
-	if (scs->transaction_running)
-		return;
+	अगर (scs->transaction_running)
+		वापस;
 
 	stream = READ_ONCE(scs->output);
-	if (!stream || scs->error) {
+	अगर (!stream || scs->error) अणु
 		scs->output_idle = true;
-		wake_up(&scs->idle_wait);
-		return;
-	}
+		wake_up(&scs->idle_रुको);
+		वापस;
+	पूर्ण
 
-	if (scs->transaction_bytes > 0)
-		goto retry;
+	अगर (scs->transaction_bytes > 0)
+		जाओ retry;
 
 	i = scs->output_bytes;
-	for (;;) {
-		if (snd_rawmidi_transmit(stream, &byte, 1) != 1) {
+	क्रम (;;) अणु
+		अगर (snd_rawmidi_transmit(stream, &byte, 1) != 1) अणु
 			scs->output_bytes = i;
 			scs->output_idle = true;
-			wake_up(&scs->idle_wait);
-			return;
-		}
+			wake_up(&scs->idle_रुको);
+			वापस;
+		पूर्ण
 		/*
 		 * Convert from real MIDI to what I think the device expects (no
 		 * running status, one command per packet, unescaped SysExs).
 		 */
-		if (scs->output_escaped && byte < 0x80) {
-			if (scs->output_escape_high_nibble) {
-				if (i < HSS1394_MAX_PACKET_SIZE) {
+		अगर (scs->output_escaped && byte < 0x80) अणु
+			अगर (scs->output_escape_high_nibble) अणु
+				अगर (i < HSS1394_MAX_PACKET_SIZE) अणु
 					scs->buffer[i] = byte << 4;
 					scs->output_escape_high_nibble = false;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				scs->buffer[i++] |= byte & 0x0f;
 				scs->output_escape_high_nibble = true;
-			}
-		} else if (byte < 0x80) {
-			if (i == 1) {
-				if (!is_valid_running_status(
+			पूर्ण
+		पूर्ण अन्यथा अगर (byte < 0x80) अणु
+			अगर (i == 1) अणु
+				अगर (!is_valid_running_status(
 							scs->output_status))
-					continue;
+					जारी;
 				scs->buffer[0] = HSS1394_TAG_USER_DATA;
 				scs->buffer[i++] = scs->output_status;
-			}
+			पूर्ण
 			scs->buffer[i++] = byte;
-			if ((i == 3 && is_two_bytes_cmd(scs->output_status)) ||
+			अगर ((i == 3 && is_two_bytes_cmd(scs->output_status)) ||
 			    (i == 4 && is_three_bytes_cmd(scs->output_status)))
-				break;
-			if (i == 1 + ARRAY_SIZE(sysex_escape_prefix) &&
-			    !memcmp(scs->buffer + 1, sysex_escape_prefix,
-				    ARRAY_SIZE(sysex_escape_prefix))) {
+				अवरोध;
+			अगर (i == 1 + ARRAY_SIZE(sysex_escape_prefix) &&
+			    !स_भेद(scs->buffer + 1, sysex_escape_prefix,
+				    ARRAY_SIZE(sysex_escape_prefix))) अणु
 				scs->output_escaped = true;
 				scs->output_escape_high_nibble = true;
 				i = 0;
-			}
-			if (i >= HSS1394_MAX_PACKET_SIZE)
+			पूर्ण
+			अगर (i >= HSS1394_MAX_PACKET_SIZE)
 				i = 1;
-		} else if (byte == 0xf7) {
-			if (scs->output_escaped) {
-				if (i >= 1 && scs->output_escape_high_nibble &&
+		पूर्ण अन्यथा अगर (byte == 0xf7) अणु
+			अगर (scs->output_escaped) अणु
+				अगर (i >= 1 && scs->output_escape_high_nibble &&
 				    scs->buffer[0] !=
 						HSS1394_TAG_CHANGE_ADDRESS)
-					break;
-			} else {
-				if (i > 1 && scs->output_status == 0xf0) {
+					अवरोध;
+			पूर्ण अन्यथा अणु
+				अगर (i > 1 && scs->output_status == 0xf0) अणु
 					scs->buffer[i++] = 0xf7;
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 			i = 1;
 			scs->output_escaped = false;
-		} else if (!is_invalid_cmd(byte) && byte < 0xf8) {
+		पूर्ण अन्यथा अगर (!is_invalid_cmd(byte) && byte < 0xf8) अणु
 			i = 1;
 			scs->buffer[0] = HSS1394_TAG_USER_DATA;
 			scs->buffer[i++] = byte;
 			scs->output_status = byte;
 			scs->output_escaped = false;
-			if (is_one_byte_cmd(byte))
-				break;
-		}
-	}
+			अगर (is_one_byte_cmd(byte))
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	scs->output_bytes = 1;
 	scs->output_escaped = false;
 
@@ -271,46 +272,46 @@ retry:
 			TCODE_WRITE_BLOCK_REQUEST, scs->fw_dev->node_id,
 			generation, scs->fw_dev->max_speed, HSS1394_ADDRESS,
 			scs->buffer, scs->transaction_bytes,
-			scs_write_callback, scs);
-}
+			scs_ग_लिखो_callback, scs);
+पूर्ण
 
-static int midi_capture_open(struct snd_rawmidi_substream *stream)
-{
-	return 0;
-}
+अटल पूर्णांक midi_capture_खोलो(काष्ठा snd_rawmidi_substream *stream)
+अणु
+	वापस 0;
+पूर्ण
 
-static int midi_capture_close(struct snd_rawmidi_substream *stream)
-{
-	return 0;
-}
+अटल पूर्णांक midi_capture_बंद(काष्ठा snd_rawmidi_substream *stream)
+अणु
+	वापस 0;
+पूर्ण
 
-static void midi_capture_trigger(struct snd_rawmidi_substream *stream, int up)
-{
-	struct fw_scs1x *scs = stream->rmidi->private_data;
+अटल व्योम midi_capture_trigger(काष्ठा snd_rawmidi_substream *stream, पूर्णांक up)
+अणु
+	काष्ठा fw_scs1x *scs = stream->rmidi->निजी_data;
 
-	if (up) {
+	अगर (up) अणु
 		scs->input_escape_count = 0;
 		WRITE_ONCE(scs->input, stream);
-	} else {
-		WRITE_ONCE(scs->input, NULL);
-	}
-}
+	पूर्ण अन्यथा अणु
+		WRITE_ONCE(scs->input, शून्य);
+	पूर्ण
+पूर्ण
 
-static int midi_playback_open(struct snd_rawmidi_substream *stream)
-{
-	return 0;
-}
+अटल पूर्णांक midi_playback_खोलो(काष्ठा snd_rawmidi_substream *stream)
+अणु
+	वापस 0;
+पूर्ण
 
-static int midi_playback_close(struct snd_rawmidi_substream *stream)
-{
-	return 0;
-}
+अटल पूर्णांक midi_playback_बंद(काष्ठा snd_rawmidi_substream *stream)
+अणु
+	वापस 0;
+पूर्ण
 
-static void midi_playback_trigger(struct snd_rawmidi_substream *stream, int up)
-{
-	struct fw_scs1x *scs = stream->rmidi->private_data;
+अटल व्योम midi_playback_trigger(काष्ठा snd_rawmidi_substream *stream, पूर्णांक up)
+अणु
+	काष्ठा fw_scs1x *scs = stream->rmidi->निजी_data;
 
-	if (up) {
+	अगर (up) अणु
 		scs->output_status = 0;
 		scs->output_bytes = 1;
 		scs->output_escaped = false;
@@ -320,86 +321,86 @@ static void midi_playback_trigger(struct snd_rawmidi_substream *stream, int up)
 
 		WRITE_ONCE(scs->output, stream);
 		schedule_work(&scs->work);
-	} else {
-		WRITE_ONCE(scs->output, NULL);
-	}
-}
-static void midi_playback_drain(struct snd_rawmidi_substream *stream)
-{
-	struct fw_scs1x *scs = stream->rmidi->private_data;
+	पूर्ण अन्यथा अणु
+		WRITE_ONCE(scs->output, शून्य);
+	पूर्ण
+पूर्ण
+अटल व्योम midi_playback_drain(काष्ठा snd_rawmidi_substream *stream)
+अणु
+	काष्ठा fw_scs1x *scs = stream->rmidi->निजी_data;
 
-	wait_event(scs->idle_wait, scs->output_idle);
-}
+	रुको_event(scs->idle_रुको, scs->output_idle);
+पूर्ण
 
-static int register_address(struct snd_oxfw *oxfw)
-{
-	struct fw_scs1x *scs = oxfw->spec;
+अटल पूर्णांक रेजिस्टर_address(काष्ठा snd_oxfw *oxfw)
+अणु
+	काष्ठा fw_scs1x *scs = oxfw->spec;
 	__be64 data;
 
 	data = cpu_to_be64(((u64)HSS1394_TAG_CHANGE_ADDRESS << 56) |
 			    scs->hss_handler.offset);
-	return snd_fw_transaction(oxfw->unit, TCODE_WRITE_BLOCK_REQUEST,
-				  HSS1394_ADDRESS, &data, sizeof(data), 0);
-}
+	वापस snd_fw_transaction(oxfw->unit, TCODE_WRITE_BLOCK_REQUEST,
+				  HSS1394_ADDRESS, &data, माप(data), 0);
+पूर्ण
 
-static void remove_scs1x(struct snd_rawmidi *rmidi)
-{
-	struct fw_scs1x *scs = rmidi->private_data;
+अटल व्योम हटाओ_scs1x(काष्ठा snd_rawmidi *rmidi)
+अणु
+	काष्ठा fw_scs1x *scs = rmidi->निजी_data;
 
-	fw_core_remove_address_handler(&scs->hss_handler);
-}
+	fw_core_हटाओ_address_handler(&scs->hss_handler);
+पूर्ण
 
-void snd_oxfw_scs1x_update(struct snd_oxfw *oxfw)
-{
-	register_address(oxfw);
-}
+व्योम snd_oxfw_scs1x_update(काष्ठा snd_oxfw *oxfw)
+अणु
+	रेजिस्टर_address(oxfw);
+पूर्ण
 
-int snd_oxfw_scs1x_add(struct snd_oxfw *oxfw)
-{
-	static const struct snd_rawmidi_ops midi_capture_ops = {
-		.open    = midi_capture_open,
-		.close   = midi_capture_close,
+पूर्णांक snd_oxfw_scs1x_add(काष्ठा snd_oxfw *oxfw)
+अणु
+	अटल स्थिर काष्ठा snd_rawmidi_ops midi_capture_ops = अणु
+		.खोलो    = midi_capture_खोलो,
+		.बंद   = midi_capture_बंद,
 		.trigger = midi_capture_trigger,
-	};
-	static const struct snd_rawmidi_ops midi_playback_ops = {
-		.open    = midi_playback_open,
-		.close   = midi_playback_close,
+	पूर्ण;
+	अटल स्थिर काष्ठा snd_rawmidi_ops midi_playback_ops = अणु
+		.खोलो    = midi_playback_खोलो,
+		.बंद   = midi_playback_बंद,
 		.trigger = midi_playback_trigger,
 		.drain   = midi_playback_drain,
-	};
-	struct snd_rawmidi *rmidi;
-	struct fw_scs1x *scs;
-	int err;
+	पूर्ण;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा fw_scs1x *scs;
+	पूर्णांक err;
 
-	scs = devm_kzalloc(&oxfw->card->card_dev, sizeof(struct fw_scs1x),
+	scs = devm_kzalloc(&oxfw->card->card_dev, माप(काष्ठा fw_scs1x),
 			   GFP_KERNEL);
-	if (!scs)
-		return -ENOMEM;
+	अगर (!scs)
+		वापस -ENOMEM;
 	scs->fw_dev = fw_parent_device(oxfw->unit);
 	oxfw->spec = scs;
 
-	/* Allocate own handler for imcoming asynchronous transaction. */
+	/* Allocate own handler क्रम imcoming asynchronous transaction. */
 	scs->hss_handler.length = HSS1394_MAX_PACKET_SIZE;
 	scs->hss_handler.address_callback = handle_hss;
 	scs->hss_handler.callback_data = scs;
 	err = fw_core_add_address_handler(&scs->hss_handler,
 					  &fw_high_memory_region);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = register_address(oxfw);
-	if (err < 0)
-		goto err_allocated;
+	err = रेजिस्टर_address(oxfw);
+	अगर (err < 0)
+		जाओ err_allocated;
 
-	/* Use unique name for backward compatibility to scs1x module. */
+	/* Use unique name क्रम backward compatibility to scs1x module. */
 	err = snd_rawmidi_new(oxfw->card, "SCS.1x", 0, 1, 1, &rmidi);
-	if (err < 0)
-		goto err_allocated;
-	rmidi->private_data = scs;
-	rmidi->private_free = remove_scs1x;
+	अगर (err < 0)
+		जाओ err_allocated;
+	rmidi->निजी_data = scs;
+	rmidi->निजी_मुक्त = हटाओ_scs1x;
 
-	snprintf(rmidi->name, sizeof(rmidi->name),
-		 "%s MIDI", oxfw->card->shortname);
+	snम_लिखो(rmidi->name, माप(rmidi->name),
+		 "%s MIDI", oxfw->card->लघुname);
 
 	rmidi->info_flags = SNDRV_RAWMIDI_INFO_INPUT |
 			    SNDRV_RAWMIDI_INFO_OUTPUT |
@@ -410,11 +411,11 @@ int snd_oxfw_scs1x_add(struct snd_oxfw *oxfw)
 			    &midi_playback_ops);
 
 	INIT_WORK(&scs->work, scs_output_work);
-	init_waitqueue_head(&scs->idle_wait);
+	init_रुकोqueue_head(&scs->idle_रुको);
 	scs->output_idle = true;
 
-	return 0;
+	वापस 0;
 err_allocated:
-	fw_core_remove_address_handler(&scs->hss_handler);
-	return err;
-}
+	fw_core_हटाओ_address_handler(&scs->hss_handler);
+	वापस err;
+पूर्ण

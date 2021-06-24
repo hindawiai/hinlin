@@ -1,137 +1,138 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright 2012 Simon Arlott
  */
 
-#include <linux/bitops.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/interrupt.h>
-#include <linux/irqreturn.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/sched_clock.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sched_घड़ी.h>
 
-#include <asm/irq.h>
+#समावेश <यंत्र/irq.h>
 
-#define REG_CONTROL	0x00
-#define REG_COUNTER_LO	0x04
-#define REG_COUNTER_HI	0x08
-#define REG_COMPARE(n)	(0x0c + (n) * 4)
-#define MAX_TIMER	3
-#define DEFAULT_TIMER	3
+#घोषणा REG_CONTROL	0x00
+#घोषणा REG_COUNTER_LO	0x04
+#घोषणा REG_COUNTER_HI	0x08
+#घोषणा REG_COMPARE(n)	(0x0c + (n) * 4)
+#घोषणा MAX_TIMER	3
+#घोषणा DEFAULT_TIMER	3
 
-struct bcm2835_timer {
-	void __iomem *control;
-	void __iomem *compare;
-	int match_mask;
-	struct clock_event_device evt;
-};
+काष्ठा bcm2835_समयr अणु
+	व्योम __iomem *control;
+	व्योम __iomem *compare;
+	पूर्णांक match_mask;
+	काष्ठा घड़ी_event_device evt;
+पूर्ण;
 
-static void __iomem *system_clock __read_mostly;
+अटल व्योम __iomem *प्रणाली_घड़ी __पढ़ो_mostly;
 
-static u64 notrace bcm2835_sched_read(void)
-{
-	return readl_relaxed(system_clock);
-}
+अटल u64 notrace bcm2835_sched_पढ़ो(व्योम)
+अणु
+	वापस पढ़ोl_relaxed(प्रणाली_घड़ी);
+पूर्ण
 
-static int bcm2835_time_set_next_event(unsigned long event,
-	struct clock_event_device *evt_dev)
-{
-	struct bcm2835_timer *timer = container_of(evt_dev,
-		struct bcm2835_timer, evt);
-	writel_relaxed(readl_relaxed(system_clock) + event,
-		timer->compare);
-	return 0;
-}
+अटल पूर्णांक bcm2835_समय_set_next_event(अचिन्हित दीर्घ event,
+	काष्ठा घड़ी_event_device *evt_dev)
+अणु
+	काष्ठा bcm2835_समयr *समयr = container_of(evt_dev,
+		काष्ठा bcm2835_समयr, evt);
+	ग_लिखोl_relaxed(पढ़ोl_relaxed(प्रणाली_घड़ी) + event,
+		समयr->compare);
+	वापस 0;
+पूर्ण
 
-static irqreturn_t bcm2835_time_interrupt(int irq, void *dev_id)
-{
-	struct bcm2835_timer *timer = dev_id;
-	void (*event_handler)(struct clock_event_device *);
-	if (readl_relaxed(timer->control) & timer->match_mask) {
-		writel_relaxed(timer->match_mask, timer->control);
+अटल irqवापस_t bcm2835_समय_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा bcm2835_समयr *समयr = dev_id;
+	व्योम (*event_handler)(काष्ठा घड़ी_event_device *);
+	अगर (पढ़ोl_relaxed(समयr->control) & समयr->match_mask) अणु
+		ग_लिखोl_relaxed(समयr->match_mask, समयr->control);
 
-		event_handler = READ_ONCE(timer->evt.event_handler);
-		if (event_handler)
-			event_handler(&timer->evt);
-		return IRQ_HANDLED;
-	} else {
-		return IRQ_NONE;
-	}
-}
+		event_handler = READ_ONCE(समयr->evt.event_handler);
+		अगर (event_handler)
+			event_handler(&समयr->evt);
+		वापस IRQ_HANDLED;
+	पूर्ण अन्यथा अणु
+		वापस IRQ_NONE;
+	पूर्ण
+पूर्ण
 
-static int __init bcm2835_timer_init(struct device_node *node)
-{
-	void __iomem *base;
+अटल पूर्णांक __init bcm2835_समयr_init(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *base;
 	u32 freq;
-	int irq, ret;
-	struct bcm2835_timer *timer;
+	पूर्णांक irq, ret;
+	काष्ठा bcm2835_समयr *समयr;
 
 	base = of_iomap(node, 0);
-	if (!base) {
+	अगर (!base) अणु
 		pr_err("Can't remap registers\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	ret = of_property_read_u32(node, "clock-frequency", &freq);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(node, "clock-frequency", &freq);
+	अगर (ret) अणु
 		pr_err("Can't read clock-frequency\n");
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	system_clock = base + REG_COUNTER_LO;
-	sched_clock_register(bcm2835_sched_read, 32, freq);
+	प्रणाली_घड़ी = base + REG_COUNTER_LO;
+	sched_घड़ी_रेजिस्टर(bcm2835_sched_पढ़ो, 32, freq);
 
-	clocksource_mmio_init(base + REG_COUNTER_LO, node->name,
-		freq, 300, 32, clocksource_mmio_readl_up);
+	घड़ीsource_mmio_init(base + REG_COUNTER_LO, node->name,
+		freq, 300, 32, घड़ीsource_mmio_पढ़ोl_up);
 
 	irq = irq_of_parse_and_map(node, DEFAULT_TIMER);
-	if (irq <= 0) {
+	अगर (irq <= 0) अणु
 		pr_err("Can't parse IRQ\n");
 		ret = -EINVAL;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	timer = kzalloc(sizeof(*timer), GFP_KERNEL);
-	if (!timer) {
+	समयr = kzalloc(माप(*समयr), GFP_KERNEL);
+	अगर (!समयr) अणु
 		ret = -ENOMEM;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	timer->control = base + REG_CONTROL;
-	timer->compare = base + REG_COMPARE(DEFAULT_TIMER);
-	timer->match_mask = BIT(DEFAULT_TIMER);
-	timer->evt.name = node->name;
-	timer->evt.rating = 300;
-	timer->evt.features = CLOCK_EVT_FEAT_ONESHOT;
-	timer->evt.set_next_event = bcm2835_time_set_next_event;
-	timer->evt.cpumask = cpumask_of(0);
+	समयr->control = base + REG_CONTROL;
+	समयr->compare = base + REG_COMPARE(DEFAULT_TIMER);
+	समयr->match_mask = BIT(DEFAULT_TIMER);
+	समयr->evt.name = node->name;
+	समयr->evt.rating = 300;
+	समयr->evt.features = CLOCK_EVT_FEAT_ONESHOT;
+	समयr->evt.set_next_event = bcm2835_समय_set_next_event;
+	समयr->evt.cpumask = cpumask_of(0);
 
-	ret = request_irq(irq, bcm2835_time_interrupt, IRQF_TIMER | IRQF_SHARED,
-			  node->name, timer);
-	if (ret) {
+	ret = request_irq(irq, bcm2835_समय_पूर्णांकerrupt, IRQF_TIMER | IRQF_SHARED,
+			  node->name, समयr);
+	अगर (ret) अणु
 		pr_err("Can't set up timer IRQ\n");
-		goto err_timer_free;
-	}
+		जाओ err_समयr_मुक्त;
+	पूर्ण
 
-	clockevents_config_and_register(&timer->evt, freq, 0xf, 0xffffffff);
+	घड़ीevents_config_and_रेजिस्टर(&समयr->evt, freq, 0xf, 0xffffffff);
 
 	pr_info("bcm2835: system timer (irq = %d)\n", irq);
 
-	return 0;
+	वापस 0;
 
-err_timer_free:
-	kfree(timer);
+err_समयr_मुक्त:
+	kमुक्त(समयr);
 
 err_iounmap:
 	iounmap(base);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 TIMER_OF_DECLARE(bcm2835, "brcm,bcm2835-system-timer",
-			bcm2835_timer_init);
+			bcm2835_समयr_init);

@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * collate.h - Defines for NTFS kernel collation handling.  Part of the
+ * collate.h - Defines क्रम NTFS kernel collation handling.  Part of the
  *	       Linux-NTFS project.
  *
  * Copyright (c) 2004 Anton Altaparmakov
  */
 
-#ifndef _LINUX_NTFS_COLLATE_H
-#define _LINUX_NTFS_COLLATE_H
+#अगर_अघोषित _LINUX_NTFS_COLLATE_H
+#घोषणा _LINUX_NTFS_COLLATE_H
 
-#include "types.h"
-#include "volume.h"
+#समावेश "types.h"
+#समावेश "volume.h"
 
-static inline bool ntfs_is_collation_rule_supported(COLLATION_RULE cr) {
-	int i;
+अटल अंतरभूत bool ntfs_is_collation_rule_supported(COLLATION_RULE cr) अणु
+	पूर्णांक i;
 
 	/*
 	 * FIXME:  At the moment we only support COLLATION_BINARY and
-	 * COLLATION_NTOFS_ULONG, so we return false for everything else for
+	 * COLLATION_NTOFS_ULONG, so we वापस false क्रम everything अन्यथा क्रम
 	 * now.
 	 */
-	if (unlikely(cr != COLLATION_BINARY && cr != COLLATION_NTOFS_ULONG))
-		return false;
+	अगर (unlikely(cr != COLLATION_BINARY && cr != COLLATION_NTOFS_ULONG))
+		वापस false;
 	i = le32_to_cpu(cr);
-	if (likely(((i >= 0) && (i <= 0x02)) ||
+	अगर (likely(((i >= 0) && (i <= 0x02)) ||
 			((i >= 0x10) && (i <= 0x13))))
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
-extern int ntfs_collate(ntfs_volume *vol, COLLATION_RULE cr,
-		const void *data1, const int data1_len,
-		const void *data2, const int data2_len);
+बाह्य पूर्णांक ntfs_collate(ntfs_volume *vol, COLLATION_RULE cr,
+		स्थिर व्योम *data1, स्थिर पूर्णांक data1_len,
+		स्थिर व्योम *data2, स्थिर पूर्णांक data2_len);
 
-#endif /* _LINUX_NTFS_COLLATE_H */
+#पूर्ण_अगर /* _LINUX_NTFS_COLLATE_H */

@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) 1998-2002 by Paul Davis <pbd@op.net>
  */
 
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/time.h>
-#include <linux/wait.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/firmware.h>
-#include <sound/core.h>
-#include <sound/snd_wavefront.h>
-#include <sound/initval.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/firmware.h>
+#समावेश <sound/core.h>
+#समावेश <sound/snd_wavefront.h>
+#समावेश <sound/initval.h>
 
-/* Control bits for the Load Control Register
+/* Control bits क्रम the Load Control Register
  */
 
-#define FX_LSB_TRANSFER 0x01    /* transfer after DSP LSB byte written */
-#define FX_MSB_TRANSFER 0x02    /* transfer after DSP MSB byte written */
-#define FX_AUTO_INCR    0x04    /* auto-increment DSP address after transfer */
+#घोषणा FX_LSB_TRANSFER 0x01    /* transfer after DSP LSB byte written */
+#घोषणा FX_MSB_TRANSFER 0x02    /* transfer after DSP MSB byte written */
+#घोषणा FX_AUTO_INCR    0x04    /* स्वतः-increment DSP address after transfer */
 
-#define WAIT_IDLE	0xff
+#घोषणा WAIT_IDLE	0xff
 
-static int
+अटल पूर्णांक
 wavefront_fx_idle (snd_wavefront_t *dev)
 
-{
-	int i;
-	unsigned int x = 0x80;
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक x = 0x80;
 
-	for (i = 0; i < 1000; i++) {
+	क्रम (i = 0; i < 1000; i++) अणु
 		x = inb (dev->fx_status);
-		if ((x & 0x80) == 0) {
-			break;
-		}
-	}
+		अगर ((x & 0x80) == 0) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (x & 0x80) {
-		snd_printk ("FX device never idle.\n");
-		return 0;
-	}
+	अगर (x & 0x80) अणु
+		snd_prपूर्णांकk ("FX device never idle.\n");
+		वापस 0;
+	पूर्ण
 
-	return (1);
-}
+	वापस (1);
+पूर्ण
 
-static void
-wavefront_fx_mute (snd_wavefront_t *dev, int onoff)
+अटल व्योम
+wavefront_fx_mute (snd_wavefront_t *dev, पूर्णांक onoff)
 
-{
-	if (!wavefront_fx_idle(dev)) {
-		return;
-	}
+अणु
+	अगर (!wavefront_fx_idle(dev)) अणु
+		वापस;
+	पूर्ण
 
 	outb (onoff ? 0x02 : 0x00, dev->fx_op);
-}
+पूर्ण
 
-static int
-wavefront_fx_memset (snd_wavefront_t *dev,
-		     int page,
-		     int addr,
-		     int cnt,
-		     unsigned short *data)
-{
-	if (page < 0 || page > 7) {
-		snd_printk ("FX memset: "
+अटल पूर्णांक
+wavefront_fx_स_रखो (snd_wavefront_t *dev,
+		     पूर्णांक page,
+		     पूर्णांक addr,
+		     पूर्णांक cnt,
+		     अचिन्हित लघु *data)
+अणु
+	अगर (page < 0 || page > 7) अणु
+		snd_prपूर्णांकk ("FX memset: "
 			"page must be >= 0 and <= 7\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (addr < 0 || addr > 0x7f) {
-		snd_printk ("FX memset: "
+	अगर (addr < 0 || addr > 0x7f) अणु
+		snd_prपूर्णांकk ("FX memset: "
 			"addr must be >= 0 and <= 7f\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cnt == 1) {
+	अगर (cnt == 1) अणु
 
 		outb (FX_LSB_TRANSFER, dev->fx_lcr);
 		outb (page, dev->fx_dsp_page);
@@ -83,190 +84,190 @@ wavefront_fx_memset (snd_wavefront_t *dev,
 		outb ((data[0] >> 8), dev->fx_dsp_msb);
 		outb ((data[0] & 0xff), dev->fx_dsp_lsb);
 
-		snd_printk ("FX: addr %d:%x set to 0x%x\n",
+		snd_prपूर्णांकk ("FX: addr %d:%x set to 0x%x\n",
 			page, addr, data[0]);
 
-	} else {
-		int i;
+	पूर्ण अन्यथा अणु
+		पूर्णांक i;
 
 		outb (FX_AUTO_INCR|FX_LSB_TRANSFER, dev->fx_lcr);
 		outb (page, dev->fx_dsp_page);
 		outb (addr, dev->fx_dsp_addr);
 
-		for (i = 0; i < cnt; i++) {
+		क्रम (i = 0; i < cnt; i++) अणु
 			outb ((data[i] >> 8), dev->fx_dsp_msb);
 			outb ((data[i] & 0xff), dev->fx_dsp_lsb);
-			if (!wavefront_fx_idle (dev)) {
-				break;
-			}
-		}
+			अगर (!wavefront_fx_idle (dev)) अणु
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (i != cnt) {
-			snd_printk ("FX memset "
+		अगर (i != cnt) अणु
+			snd_prपूर्णांकk ("FX memset "
 				    "(0x%x, 0x%x, 0x%lx, %d) incomplete\n",
-				    page, addr, (unsigned long) data, cnt);
-			return -EIO;
-		}
-	}
+				    page, addr, (अचिन्हित दीर्घ) data, cnt);
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
+पूर्णांक
 snd_wavefront_fx_detect (snd_wavefront_t *dev)
 
-{
-	/* This is a crude check, but its the best one I have for now.
+अणु
+	/* This is a crude check, but its the best one I have क्रम now.
 	   Certainly on the Maui and the Tropez, wavefront_fx_idle() will
 	   report "never idle", which suggests that this test should
 	   work OK.
 	*/
 
-	if (inb (dev->fx_status) & 0x80) {
-		snd_printk ("Hmm, probably a Maui or Tropez.\n");
-		return -1;
-	}
+	अगर (inb (dev->fx_status) & 0x80) अणु
+		snd_prपूर्णांकk ("Hmm, probably a Maui or Tropez.\n");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-snd_wavefront_fx_open (struct snd_hwdep *hw, struct file *file)
+पूर्णांक
+snd_wavefront_fx_खोलो (काष्ठा snd_hwdep *hw, काष्ठा file *file)
 
-{
-	if (!try_module_get(hw->card->module))
-		return -EFAULT;
-	file->private_data = hw;
-	return 0;
-}
+अणु
+	अगर (!try_module_get(hw->card->module))
+		वापस -EFAULT;
+	file->निजी_data = hw;
+	वापस 0;
+पूर्ण
 
-int 
-snd_wavefront_fx_release (struct snd_hwdep *hw, struct file *file)
+पूर्णांक 
+snd_wavefront_fx_release (काष्ठा snd_hwdep *hw, काष्ठा file *file)
 
-{
+अणु
 	module_put(hw->card->module);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-snd_wavefront_fx_ioctl (struct snd_hwdep *sdev, struct file *file,
-			unsigned int cmd, unsigned long arg)
+पूर्णांक
+snd_wavefront_fx_ioctl (काष्ठा snd_hwdep *sdev, काष्ठा file *file,
+			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
 
-{
-	struct snd_card *card;
+अणु
+	काष्ठा snd_card *card;
 	snd_wavefront_card_t *acard;
 	snd_wavefront_t *dev;
 	wavefront_fx_info r;
-	unsigned short *page_data = NULL;
-	unsigned short *pd;
-	int err = 0;
+	अचिन्हित लघु *page_data = शून्य;
+	अचिन्हित लघु *pd;
+	पूर्णांक err = 0;
 
 	card = sdev->card;
-	if (snd_BUG_ON(!card))
-		return -ENODEV;
-	if (snd_BUG_ON(!card->private_data))
-		return -ENODEV;
+	अगर (snd_BUG_ON(!card))
+		वापस -ENODEV;
+	अगर (snd_BUG_ON(!card->निजी_data))
+		वापस -ENODEV;
 
-	acard = card->private_data;
+	acard = card->निजी_data;
 	dev = &acard->wavefront;
 
-	if (copy_from_user (&r, (void __user *)arg, sizeof (wavefront_fx_info)))
-		return -EFAULT;
+	अगर (copy_from_user (&r, (व्योम __user *)arg, माप (wavefront_fx_info)))
+		वापस -EFAULT;
 
-	switch (r.request) {
-	case WFFX_MUTE:
+	चयन (r.request) अणु
+	हाल WFFX_MUTE:
 		wavefront_fx_mute (dev, r.data[0]);
-		return -EIO;
+		वापस -EIO;
 
-	case WFFX_MEMSET:
-		if (r.data[2] <= 0) {
-			snd_printk ("cannot write "
+	हाल WFFX_MEMSET:
+		अगर (r.data[2] <= 0) अणु
+			snd_prपूर्णांकk ("cannot write "
 				"<= 0 bytes to FX\n");
-			return -EIO;
-		} else if (r.data[2] == 1) {
-			pd = (unsigned short *) &r.data[3];
-		} else {
-			if (r.data[2] > 256) {
-				snd_printk ("cannot write "
+			वापस -EIO;
+		पूर्ण अन्यथा अगर (r.data[2] == 1) अणु
+			pd = (अचिन्हित लघु *) &r.data[3];
+		पूर्ण अन्यथा अणु
+			अगर (r.data[2] > 256) अणु
+				snd_prपूर्णांकk ("cannot write "
 					    "> 512 bytes to FX\n");
-				return -EIO;
-			}
-			page_data = memdup_user((unsigned char __user *)
+				वापस -EIO;
+			पूर्ण
+			page_data = memdup_user((अचिन्हित अक्षर __user *)
 						r.data[3],
-						r.data[2] * sizeof(short));
-			if (IS_ERR(page_data))
-				return PTR_ERR(page_data);
+						r.data[2] * माप(लघु));
+			अगर (IS_ERR(page_data))
+				वापस PTR_ERR(page_data);
 			pd = page_data;
-		}
+		पूर्ण
 
-		err = wavefront_fx_memset (dev,
+		err = wavefront_fx_स_रखो (dev,
 			     r.data[0], /* page */
 			     r.data[1], /* addr */
 			     r.data[2], /* cnt */
 			     pd);
-		kfree(page_data);
-		break;
+		kमुक्त(page_data);
+		अवरोध;
 
-	default:
-		snd_printk ("FX: ioctl %d not yet supported\n",
+	शेष:
+		snd_prपूर्णांकk ("FX: ioctl %d not yet supported\n",
 			    r.request);
-		return -ENOTTY;
-	}
-	return err;
-}
+		वापस -ENOTTY;
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /* YSS225 initialization.
 
    This code was developed using DOSEMU. The Turtle Beach SETUPSND
-   utility was run with I/O tracing in DOSEMU enabled, and a reconstruction
-   of the port I/O done, using the Yamaha faxback document as a guide
+   utility was run with I/O tracing in DOSEMU enabled, and a reस्थिरruction
+   of the port I/O करोne, using the Yamaha faxback करोcument as a guide
    to add more logic to the code. Its really pretty weird.
 
    This is the approach of just dumping the whole I/O
    sequence as a series of port/value pairs and a simple loop
-   that outputs it.
+   that outमाला_दो it.
 */
 
-int
+पूर्णांक
 snd_wavefront_fx_start (snd_wavefront_t *dev)
-{
-	unsigned int i;
-	int err;
-	const struct firmware *firmware = NULL;
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
+	स्थिर काष्ठा firmware *firmware = शून्य;
 
-	if (dev->fx_initialized)
-		return 0;
+	अगर (dev->fx_initialized)
+		वापस 0;
 
 	err = request_firmware(&firmware, "yamaha/yss225_registers.bin",
 			       dev->card->dev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		err = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i + 1 < firmware->size; i += 2) {
-		if (firmware->data[i] >= 8 && firmware->data[i] < 16) {
+	क्रम (i = 0; i + 1 < firmware->size; i += 2) अणु
+		अगर (firmware->data[i] >= 8 && firmware->data[i] < 16) अणु
 			outb(firmware->data[i + 1],
 			     dev->base + firmware->data[i]);
-		} else if (firmware->data[i] == WAIT_IDLE) {
-			if (!wavefront_fx_idle(dev)) {
+		पूर्ण अन्यथा अगर (firmware->data[i] == WAIT_IDLE) अणु
+			अगर (!wavefront_fx_idle(dev)) अणु
 				err = -1;
-				goto out;
-			}
-		} else {
-			snd_printk(KERN_ERR "invalid address"
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			snd_prपूर्णांकk(KERN_ERR "invalid address"
 				   " in register data\n");
 			err = -1;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	dev->fx_initialized = 1;
 	err = 0;
 
 out:
 	release_firmware(firmware);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 MODULE_FIRMWARE("yamaha/yss225_registers.bin");

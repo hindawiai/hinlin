@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Interface of Maxim max8649
  *
@@ -6,18 +7,18 @@
  *      Haojian Zhuang <haojian.zhuang@marvell.com>
  */
 
-#ifndef __LINUX_REGULATOR_MAX8649_H
-#define	__LINUX_REGULATOR_MAX8649_H
+#अगर_अघोषित __LINUX_REGULATOR_MAX8649_H
+#घोषणा	__LINUX_REGULATOR_MAX8649_H
 
-#include <linux/regulator/machine.h>
+#समावेश <linux/regulator/machine.h>
 
-enum {
+क्रमागत अणु
 	MAX8649_EXTCLK_26MHZ = 0,
 	MAX8649_EXTCLK_13MHZ,
 	MAX8649_EXTCLK_19MHZ,	/* 19.2MHz */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MAX8649_RAMP_32MV = 0,
 	MAX8649_RAMP_16MV,
 	MAX8649_RAMP_8MV,
@@ -26,16 +27,16 @@ enum {
 	MAX8649_RAMP_1MV,
 	MAX8649_RAMP_0_5MV,
 	MAX8649_RAMP_0_25MV,
-};
+पूर्ण;
 
-struct max8649_platform_data {
-	struct regulator_init_data *regulator;
+काष्ठा max8649_platक्रमm_data अणु
+	काष्ठा regulator_init_data *regulator;
 
-	unsigned	mode:2;		/* bit[1:0] = VID1,VID0 */
-	unsigned	extclk_freq:2;
-	unsigned	extclk:1;
-	unsigned	ramp_timing:3;
-	unsigned	ramp_down:1;
-};
+	अचिन्हित	mode:2;		/* bit[1:0] = VID1,VID0 */
+	अचिन्हित	extclk_freq:2;
+	अचिन्हित	extclk:1;
+	अचिन्हित	ramp_timing:3;
+	अचिन्हित	ramp_करोwn:1;
+पूर्ण;
 
-#endif	/* __LINUX_REGULATOR_MAX8649_H */
+#पूर्ण_अगर	/* __LINUX_REGULATOR_MAX8649_H */

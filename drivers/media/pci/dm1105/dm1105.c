@@ -1,736 +1,737 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * dm1105.c - driver for DVB cards based on SDMC DM1105 PCI chip
+ * dm1105.c - driver क्रम DVB cards based on SDMC DM1105 PCI chip
  *
  * Copyright (C) 2008 Igor M. Liplianin <liplianin@me.by>
  */
 
-#include <linux/i2c.h>
-#include <linux/i2c-algo-bit.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <media/rc-core.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-algo-bit.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
+#समावेश <media/rc-core.h>
 
-#include <media/demux.h>
-#include <media/dmxdev.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
-#include <media/dvb_net.h>
-#include <media/dvbdev.h>
-#include "dvb-pll.h"
+#समावेश <media/demux.h>
+#समावेश <media/dmxdev.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_net.h>
+#समावेश <media/dvbdev.h>
+#समावेश "dvb-pll.h"
 
-#include "stv0299.h"
-#include "stv0288.h"
-#include "stb6000.h"
-#include "si21xx.h"
-#include "cx24116.h"
-#include "z0194a.h"
-#include "ts2020.h"
-#include "ds3000.h"
+#समावेश "stv0299.h"
+#समावेश "stv0288.h"
+#समावेश "stb6000.h"
+#समावेश "si21xx.h"
+#समावेश "cx24116.h"
+#समावेश "z0194a.h"
+#समावेश "ts2020.h"
+#समावेश "ds3000.h"
 
-#define MODULE_NAME "dm1105"
+#घोषणा MODULE_NAME "dm1105"
 
-#define UNSET (-1U)
+#घोषणा UNSET (-1U)
 
-#define DM1105_BOARD_NOAUTO			UNSET
-#define DM1105_BOARD_UNKNOWN			0
-#define DM1105_BOARD_DVBWORLD_2002		1
-#define DM1105_BOARD_DVBWORLD_2004		2
-#define DM1105_BOARD_AXESS_DM05			3
-#define DM1105_BOARD_UNBRANDED_I2C_ON_GPIO	4
+#घोषणा DM1105_BOARD_NOAUTO			UNSET
+#घोषणा DM1105_BOARD_UNKNOWN			0
+#घोषणा DM1105_BOARD_DVBWORLD_2002		1
+#घोषणा DM1105_BOARD_DVBWORLD_2004		2
+#घोषणा DM1105_BOARD_AXESS_DM05			3
+#घोषणा DM1105_BOARD_UNBRANDED_I2C_ON_GPIO	4
 
 /* ----------------------------------------------- */
 /*
  * PCI ID's
  */
-#ifndef PCI_VENDOR_ID_TRIGEM
-#define PCI_VENDOR_ID_TRIGEM	0x109f
-#endif
-#ifndef PCI_VENDOR_ID_AXESS
-#define PCI_VENDOR_ID_AXESS	0x195d
-#endif
-#ifndef PCI_DEVICE_ID_DM1105
-#define PCI_DEVICE_ID_DM1105	0x036f
-#endif
-#ifndef PCI_DEVICE_ID_DW2002
-#define PCI_DEVICE_ID_DW2002	0x2002
-#endif
-#ifndef PCI_DEVICE_ID_DW2004
-#define PCI_DEVICE_ID_DW2004	0x2004
-#endif
-#ifndef PCI_DEVICE_ID_DM05
-#define PCI_DEVICE_ID_DM05	0x1105
-#endif
+#अगर_अघोषित PCI_VENDOR_ID_TRIGEM
+#घोषणा PCI_VENDOR_ID_TRIGEM	0x109f
+#पूर्ण_अगर
+#अगर_अघोषित PCI_VENDOR_ID_AXESS
+#घोषणा PCI_VENDOR_ID_AXESS	0x195d
+#पूर्ण_अगर
+#अगर_अघोषित PCI_DEVICE_ID_DM1105
+#घोषणा PCI_DEVICE_ID_DM1105	0x036f
+#पूर्ण_अगर
+#अगर_अघोषित PCI_DEVICE_ID_DW2002
+#घोषणा PCI_DEVICE_ID_DW2002	0x2002
+#पूर्ण_अगर
+#अगर_अघोषित PCI_DEVICE_ID_DW2004
+#घोषणा PCI_DEVICE_ID_DW2004	0x2004
+#पूर्ण_अगर
+#अगर_अघोषित PCI_DEVICE_ID_DM05
+#घोषणा PCI_DEVICE_ID_DM05	0x1105
+#पूर्ण_अगर
 /* ----------------------------------------------- */
-/* sdmc dm1105 registers */
+/* sdmc dm1105 रेजिस्टरs */
 
 /* TS Control */
-#define DM1105_TSCTR				0x00
-#define DM1105_DTALENTH				0x04
+#घोषणा DM1105_TSCTR				0x00
+#घोषणा DM1105_DTALENTH				0x04
 
 /* GPIO Interface */
-#define DM1105_GPIOVAL				0x08
-#define DM1105_GPIOCTR				0x0c
+#घोषणा DM1105_GPIOVAL				0x08
+#घोषणा DM1105_GPIOCTR				0x0c
 
 /* PID serial number */
-#define DM1105_PIDN				0x10
+#घोषणा DM1105_PIDN				0x10
 
 /* Odd-even secret key select */
-#define DM1105_CWSEL				0x14
+#घोषणा DM1105_CWSEL				0x14
 
 /* Host Command Interface */
-#define DM1105_HOST_CTR				0x18
-#define DM1105_HOST_AD				0x1c
+#घोषणा DM1105_HOST_CTR				0x18
+#घोषणा DM1105_HOST_AD				0x1c
 
 /* PCI Interface */
-#define DM1105_CR				0x30
-#define DM1105_RST				0x34
-#define DM1105_STADR				0x38
-#define DM1105_RLEN				0x3c
-#define DM1105_WRP				0x40
-#define DM1105_INTCNT				0x44
-#define DM1105_INTMAK				0x48
-#define DM1105_INTSTS				0x4c
+#घोषणा DM1105_CR				0x30
+#घोषणा DM1105_RST				0x34
+#घोषणा DM1105_STADR				0x38
+#घोषणा DM1105_RLEN				0x3c
+#घोषणा DM1105_WRP				0x40
+#घोषणा DM1105_INTCNT				0x44
+#घोषणा DM1105_INTMAK				0x48
+#घोषणा DM1105_INTSTS				0x4c
 
 /* CW Value */
-#define DM1105_ODD				0x50
-#define DM1105_EVEN				0x58
+#घोषणा DM1105_ODD				0x50
+#घोषणा DM1105_EVEN				0x58
 
 /* PID Value */
-#define DM1105_PID				0x60
+#घोषणा DM1105_PID				0x60
 
 /* IR Control */
-#define DM1105_IRCTR				0x64
-#define DM1105_IRMODE				0x68
-#define DM1105_SYSTEMCODE			0x6c
-#define DM1105_IRCODE				0x70
+#घोषणा DM1105_IRCTR				0x64
+#घोषणा DM1105_IRMODE				0x68
+#घोषणा DM1105_SYSTEMCODE			0x6c
+#घोषणा DM1105_IRCODE				0x70
 
 /* Unknown Values */
-#define DM1105_ENCRYPT				0x74
-#define DM1105_VER				0x7c
+#घोषणा DM1105_ENCRYPT				0x74
+#घोषणा DM1105_VER				0x7c
 
 /* I2C Interface */
-#define DM1105_I2CCTR				0x80
-#define DM1105_I2CSTS				0x81
-#define DM1105_I2CDAT				0x82
-#define DM1105_I2C_RA				0x83
+#घोषणा DM1105_I2CCTR				0x80
+#घोषणा DM1105_I2CSTS				0x81
+#घोषणा DM1105_I2CDAT				0x82
+#घोषणा DM1105_I2C_RA				0x83
 /* ----------------------------------------------- */
 /* Interrupt Mask Bits */
 
-#define INTMAK_TSIRQM				0x01
-#define INTMAK_HIRQM				0x04
-#define INTMAK_IRM				0x08
-#define INTMAK_ALLMASK				(INTMAK_TSIRQM | \
+#घोषणा INTMAK_TSIRQM				0x01
+#घोषणा INTMAK_HIRQM				0x04
+#घोषणा INTMAK_IRM				0x08
+#घोषणा INTMAK_ALLMASK				(INTMAK_TSIRQM | \
 						INTMAK_HIRQM | \
 						INTMAK_IRM)
-#define INTMAK_NONEMASK				0x00
+#घोषणा INTMAK_NONEMASK				0x00
 
 /* Interrupt Status Bits */
-#define INTSTS_TSIRQ				0x01
-#define INTSTS_HIRQ				0x04
-#define INTSTS_IR				0x08
+#घोषणा INTSTS_TSIRQ				0x01
+#घोषणा INTSTS_HIRQ				0x04
+#घोषणा INTSTS_IR				0x08
 
 /* IR Control Bits */
-#define DM1105_IR_EN				0x01
-#define DM1105_SYS_CHK				0x02
-#define DM1105_REP_FLG				0x08
+#घोषणा DM1105_IR_EN				0x01
+#घोषणा DM1105_SYS_CHK				0x02
+#घोषणा DM1105_REP_FLG				0x08
 
 /* EEPROM addr */
-#define IIC_24C01_addr				0xa0
+#घोषणा IIC_24C01_addr				0xa0
 /* Max board count */
-#define DM1105_MAX				0x04
+#घोषणा DM1105_MAX				0x04
 
-#define DRIVER_NAME				"dm1105"
-#define DM1105_I2C_GPIO_NAME			"dm1105-gpio"
+#घोषणा DRIVER_NAME				"dm1105"
+#घोषणा DM1105_I2C_GPIO_NAME			"dm1105-gpio"
 
-#define DM1105_DMA_PACKETS			47
-#define DM1105_DMA_PACKET_LENGTH		(128*4)
-#define DM1105_DMA_BYTES			(128 * 4 * DM1105_DMA_PACKETS)
+#घोषणा DM1105_DMA_PACKETS			47
+#घोषणा DM1105_DMA_PACKET_LENGTH		(128*4)
+#घोषणा DM1105_DMA_BYTES			(128 * 4 * DM1105_DMA_PACKETS)
 
 /*  */
-#define GPIO08					(1 << 8)
-#define GPIO13					(1 << 13)
-#define GPIO14					(1 << 14)
-#define GPIO15					(1 << 15)
-#define GPIO16					(1 << 16)
-#define GPIO17					(1 << 17)
-#define GPIO_ALL				0x03ffff
+#घोषणा GPIO08					(1 << 8)
+#घोषणा GPIO13					(1 << 13)
+#घोषणा GPIO14					(1 << 14)
+#घोषणा GPIO15					(1 << 15)
+#घोषणा GPIO16					(1 << 16)
+#घोषणा GPIO17					(1 << 17)
+#घोषणा GPIO_ALL				0x03ffff
 
-/* GPIO's for LNB power control */
-#define DM1105_LNB_MASK				(GPIO_ALL & ~(GPIO14 | GPIO13))
-#define DM1105_LNB_OFF				GPIO17
-#define DM1105_LNB_13V				(GPIO16 | GPIO08)
-#define DM1105_LNB_18V				GPIO08
+/* GPIO's क्रम LNB घातer control */
+#घोषणा DM1105_LNB_MASK				(GPIO_ALL & ~(GPIO14 | GPIO13))
+#घोषणा DM1105_LNB_OFF				GPIO17
+#घोषणा DM1105_LNB_13V				(GPIO16 | GPIO08)
+#घोषणा DM1105_LNB_18V				GPIO08
 
-/* GPIO's for LNB power control for Axess DM05 */
-#define DM05_LNB_MASK				(GPIO_ALL & ~(GPIO14 | GPIO13))
-#define DM05_LNB_OFF				GPIO17/* actually 13v */
-#define DM05_LNB_13V				GPIO17
-#define DM05_LNB_18V				(GPIO17 | GPIO16)
+/* GPIO's क्रम LNB घातer control क्रम Axess DM05 */
+#घोषणा DM05_LNB_MASK				(GPIO_ALL & ~(GPIO14 | GPIO13))
+#घोषणा DM05_LNB_OFF				GPIO17/* actually 13v */
+#घोषणा DM05_LNB_13V				GPIO17
+#घोषणा DM05_LNB_18V				(GPIO17 | GPIO16)
 
-/* GPIO's for LNB power control for unbranded with I2C on GPIO */
-#define UNBR_LNB_MASK				(GPIO17 | GPIO16)
-#define UNBR_LNB_OFF				0
-#define UNBR_LNB_13V				GPIO17
-#define UNBR_LNB_18V				(GPIO17 | GPIO16)
+/* GPIO's क्रम LNB घातer control क्रम unbअक्रमed with I2C on GPIO */
+#घोषणा UNBR_LNB_MASK				(GPIO17 | GPIO16)
+#घोषणा UNBR_LNB_OFF				0
+#घोषणा UNBR_LNB_13V				GPIO17
+#घोषणा UNBR_LNB_18V				(GPIO17 | GPIO16)
 
-static unsigned int card[]  = {[0 ... 3] = UNSET };
-module_param_array(card,  int, NULL, 0444);
+अटल अचिन्हित पूर्णांक card[]  = अणु[0 ... 3] = UNSET पूर्ण;
+module_param_array(card,  पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(card, "card type");
 
-static int ir_debug;
-module_param(ir_debug, int, 0644);
+अटल पूर्णांक ir_debug;
+module_param(ir_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(ir_debug, "enable debugging information for IR decoding");
 
-static unsigned int dm1105_devcount;
+अटल अचिन्हित पूर्णांक dm1105_devcount;
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-struct dm1105_board {
-	char	*name;
-	struct	{
+काष्ठा dm1105_board अणु
+	अक्षर	*name;
+	काष्ठा	अणु
 		u32	mask, off, v13, v18;
-	} lnb;
+	पूर्ण lnb;
 	u32	gpio_scl, gpio_sda;
-};
+पूर्ण;
 
-struct dm1105_subid {
-	u16     subvendor;
+काष्ठा dm1105_subid अणु
+	u16     subvenकरोr;
 	u16     subdevice;
 	u32     card;
-};
+पूर्ण;
 
-static const struct dm1105_board dm1105_boards[] = {
-	[DM1105_BOARD_UNKNOWN] = {
+अटल स्थिर काष्ठा dm1105_board dm1105_boards[] = अणु
+	[DM1105_BOARD_UNKNOWN] = अणु
 		.name		= "UNKNOWN/GENERIC",
-		.lnb = {
+		.lnb = अणु
 			.mask = DM1105_LNB_MASK,
 			.off = DM1105_LNB_OFF,
 			.v13 = DM1105_LNB_13V,
 			.v18 = DM1105_LNB_18V,
-		},
-	},
-	[DM1105_BOARD_DVBWORLD_2002] = {
+		पूर्ण,
+	पूर्ण,
+	[DM1105_BOARD_DVBWORLD_2002] = अणु
 		.name		= "DVBWorld PCI 2002",
-		.lnb = {
+		.lnb = अणु
 			.mask = DM1105_LNB_MASK,
 			.off = DM1105_LNB_OFF,
 			.v13 = DM1105_LNB_13V,
 			.v18 = DM1105_LNB_18V,
-		},
-	},
-	[DM1105_BOARD_DVBWORLD_2004] = {
+		पूर्ण,
+	पूर्ण,
+	[DM1105_BOARD_DVBWORLD_2004] = अणु
 		.name		= "DVBWorld PCI 2004",
-		.lnb = {
+		.lnb = अणु
 			.mask = DM1105_LNB_MASK,
 			.off = DM1105_LNB_OFF,
 			.v13 = DM1105_LNB_13V,
 			.v18 = DM1105_LNB_18V,
-		},
-	},
-	[DM1105_BOARD_AXESS_DM05] = {
+		पूर्ण,
+	पूर्ण,
+	[DM1105_BOARD_AXESS_DM05] = अणु
 		.name		= "Axess/EasyTv DM05",
-		.lnb = {
+		.lnb = अणु
 			.mask = DM05_LNB_MASK,
 			.off = DM05_LNB_OFF,
 			.v13 = DM05_LNB_13V,
 			.v18 = DM05_LNB_18V,
-		},
-	},
-	[DM1105_BOARD_UNBRANDED_I2C_ON_GPIO] = {
+		पूर्ण,
+	पूर्ण,
+	[DM1105_BOARD_UNBRANDED_I2C_ON_GPIO] = अणु
 		.name		= "Unbranded DM1105 with i2c on GPIOs",
-		.lnb = {
+		.lnb = अणु
 			.mask = UNBR_LNB_MASK,
 			.off = UNBR_LNB_OFF,
 			.v13 = UNBR_LNB_13V,
 			.v18 = UNBR_LNB_18V,
-		},
+		पूर्ण,
 		.gpio_scl	= GPIO14,
 		.gpio_sda	= GPIO13,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct dm1105_subid dm1105_subids[] = {
-	{
-		.subvendor = 0x0000,
+अटल स्थिर काष्ठा dm1105_subid dm1105_subids[] = अणु
+	अणु
+		.subvenकरोr = 0x0000,
 		.subdevice = 0x2002,
 		.card      = DM1105_BOARD_DVBWORLD_2002,
-	}, {
-		.subvendor = 0x0001,
+	पूर्ण, अणु
+		.subvenकरोr = 0x0001,
 		.subdevice = 0x2002,
 		.card      = DM1105_BOARD_DVBWORLD_2002,
-	}, {
-		.subvendor = 0x0000,
+	पूर्ण, अणु
+		.subvenकरोr = 0x0000,
 		.subdevice = 0x2004,
 		.card      = DM1105_BOARD_DVBWORLD_2004,
-	}, {
-		.subvendor = 0x0001,
+	पूर्ण, अणु
+		.subvenकरोr = 0x0001,
 		.subdevice = 0x2004,
 		.card      = DM1105_BOARD_DVBWORLD_2004,
-	}, {
-		.subvendor = 0x195d,
+	पूर्ण, अणु
+		.subvenकरोr = 0x195d,
 		.subdevice = 0x1105,
 		.card      = DM1105_BOARD_AXESS_DM05,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void dm1105_card_list(struct pci_dev *pci)
-{
-	int i;
+अटल व्योम dm1105_card_list(काष्ठा pci_dev *pci)
+अणु
+	पूर्णांक i;
 
-	if (0 == pci->subsystem_vendor &&
-			0 == pci->subsystem_device) {
-		printk(KERN_ERR
+	अगर (0 == pci->subप्रणाली_venकरोr &&
+			0 == pci->subप्रणाली_device) अणु
+		prपूर्णांकk(KERN_ERR
 			"dm1105: Your board has no valid PCI Subsystem ID\n"
 			"dm1105: and thus can't be autodetected\n"
 			"dm1105: Please pass card=<n> insmod option to\n"
 			"dm1105: workaround that.  Redirect complaints to\n"
 			"dm1105: the vendor of the TV card.  Best regards,\n"
 			"dm1105: -- tux\n");
-	} else {
-		printk(KERN_ERR
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR
 			"dm1105: Your board isn't known (yet) to the driver.\n"
 			"dm1105: You can try to pick one of the existing\n"
 			"dm1105: card configs via card=<n> insmod option.\n"
 			"dm1105: Updating to the latest version might help\n"
 			"dm1105: as well.\n");
-	}
-	printk(KERN_ERR "Here is a list of valid choices for the card=<n> insmod option:\n");
-	for (i = 0; i < ARRAY_SIZE(dm1105_boards); i++)
-		printk(KERN_ERR "dm1105:    card=%d -> %s\n",
+	पूर्ण
+	prपूर्णांकk(KERN_ERR "Here is a list of valid choices for the card=<n> insmod option:\n");
+	क्रम (i = 0; i < ARRAY_SIZE(dm1105_boards); i++)
+		prपूर्णांकk(KERN_ERR "dm1105:    card=%d -> %s\n",
 				i, dm1105_boards[i].name);
-}
+पूर्ण
 
 /* infrared remote control */
-struct infrared {
-	struct rc_dev		*dev;
-	char			input_phys[32];
-	struct work_struct	work;
+काष्ठा infrared अणु
+	काष्ठा rc_dev		*dev;
+	अक्षर			input_phys[32];
+	काष्ठा work_काष्ठा	work;
 	u32			ir_command;
-};
+पूर्ण;
 
-struct dm1105_dev {
+काष्ठा dm1105_dev अणु
 	/* pci */
-	struct pci_dev *pdev;
+	काष्ठा pci_dev *pdev;
 	u8 __iomem *io_mem;
 
 	/* ir */
-	struct infrared ir;
+	काष्ठा infrared ir;
 
 	/* dvb */
-	struct dmx_frontend hw_frontend;
-	struct dmx_frontend mem_frontend;
-	struct dmxdev dmxdev;
-	struct dvb_adapter dvb_adapter;
-	struct dvb_demux demux;
-	struct dvb_frontend *fe;
-	struct dvb_net dvbnet;
-	unsigned int full_ts_users;
-	unsigned int boardnr;
-	int nr;
+	काष्ठा dmx_frontend hw_frontend;
+	काष्ठा dmx_frontend mem_frontend;
+	काष्ठा dmxdev dmxdev;
+	काष्ठा dvb_adapter dvb_adapter;
+	काष्ठा dvb_demux demux;
+	काष्ठा dvb_frontend *fe;
+	काष्ठा dvb_net dvbnet;
+	अचिन्हित पूर्णांक full_ts_users;
+	अचिन्हित पूर्णांक boardnr;
+	पूर्णांक nr;
 
 	/* i2c */
-	struct i2c_adapter i2c_adap;
-	struct i2c_adapter i2c_bb_adap;
-	struct i2c_algo_bit_data i2c_bit;
+	काष्ठा i2c_adapter i2c_adap;
+	काष्ठा i2c_adapter i2c_bb_adap;
+	काष्ठा i2c_algo_bit_data i2c_bit;
 
 	/* irq */
-	struct work_struct work;
-	struct workqueue_struct *wq;
-	char wqn[16];
+	काष्ठा work_काष्ठा work;
+	काष्ठा workqueue_काष्ठा *wq;
+	अक्षर wqn[16];
 
 	/* dma */
 	dma_addr_t dma_addr;
-	unsigned char *ts_buf;
+	अचिन्हित अक्षर *ts_buf;
 	u32 wrp;
 	u32 nextwrp;
 	u32 buffer_size;
-	unsigned int	PacketErrorCount;
-	unsigned int dmarst;
+	अचिन्हित पूर्णांक	PacketErrorCount;
+	अचिन्हित पूर्णांक dmarst;
 	spinlock_t lock;
-};
+पूर्ण;
 
-#define dm_io_mem(reg)	((unsigned long)(&dev->io_mem[reg]))
+#घोषणा dm_io_mem(reg)	((अचिन्हित दीर्घ)(&dev->io_mem[reg]))
 
-#define dm_readb(reg)		inb(dm_io_mem(reg))
-#define dm_writeb(reg, value)	outb((value), (dm_io_mem(reg)))
+#घोषणा dm_पढ़ोb(reg)		inb(dm_io_mem(reg))
+#घोषणा dm_ग_लिखोb(reg, value)	outb((value), (dm_io_mem(reg)))
 
-#define dm_readw(reg)		inw(dm_io_mem(reg))
-#define dm_writew(reg, value)	outw((value), (dm_io_mem(reg)))
+#घोषणा dm_पढ़ोw(reg)		inw(dm_io_mem(reg))
+#घोषणा dm_ग_लिखोw(reg, value)	outw((value), (dm_io_mem(reg)))
 
-#define dm_readl(reg)		inl(dm_io_mem(reg))
-#define dm_writel(reg, value)	outl((value), (dm_io_mem(reg)))
+#घोषणा dm_पढ़ोl(reg)		inl(dm_io_mem(reg))
+#घोषणा dm_ग_लिखोl(reg, value)	outl((value), (dm_io_mem(reg)))
 
-#define dm_andorl(reg, mask, value) \
+#घोषणा dm_anकरोrl(reg, mask, value) \
 	outl((inl(dm_io_mem(reg)) & ~(mask)) |\
 		((value) & (mask)), (dm_io_mem(reg)))
 
-#define dm_setl(reg, bit)	dm_andorl((reg), (bit), (bit))
-#define dm_clearl(reg, bit)	dm_andorl((reg), (bit), 0)
+#घोषणा dm_setl(reg, bit)	dm_anकरोrl((reg), (bit), (bit))
+#घोषणा dm_clearl(reg, bit)	dm_anकरोrl((reg), (bit), 0)
 
 /* The chip has 18 GPIOs. In HOST mode GPIO's used as 15 bit address lines,
  so we can use only 3 GPIO's from GPIO15 to GPIO17.
- Here I don't check whether HOST is enebled as it is not implemented yet.
+ Here I करोn't check whether HOST is enebled as it is not implemented yet.
  */
-static void dm1105_gpio_set(struct dm1105_dev *dev, u32 mask)
-{
-	if (mask & 0xfffc0000)
-		printk(KERN_ERR "%s: Only 18 GPIO's are allowed\n", __func__);
+अटल व्योम dm1105_gpio_set(काष्ठा dm1105_dev *dev, u32 mask)
+अणु
+	अगर (mask & 0xfffc0000)
+		prपूर्णांकk(KERN_ERR "%s: Only 18 GPIO's are allowed\n", __func__);
 
-	if (mask & 0x0003ffff)
+	अगर (mask & 0x0003ffff)
 		dm_setl(DM1105_GPIOVAL, mask & 0x0003ffff);
 
-}
+पूर्ण
 
-static void dm1105_gpio_clear(struct dm1105_dev *dev, u32 mask)
-{
-	if (mask & 0xfffc0000)
-		printk(KERN_ERR "%s: Only 18 GPIO's are allowed\n", __func__);
+अटल व्योम dm1105_gpio_clear(काष्ठा dm1105_dev *dev, u32 mask)
+अणु
+	अगर (mask & 0xfffc0000)
+		prपूर्णांकk(KERN_ERR "%s: Only 18 GPIO's are allowed\n", __func__);
 
-	if (mask & 0x0003ffff)
+	अगर (mask & 0x0003ffff)
 		dm_clearl(DM1105_GPIOVAL, mask & 0x0003ffff);
 
-}
+पूर्ण
 
-static void dm1105_gpio_andor(struct dm1105_dev *dev, u32 mask, u32 val)
-{
-	if (mask & 0xfffc0000)
-		printk(KERN_ERR "%s: Only 18 GPIO's are allowed\n", __func__);
+अटल व्योम dm1105_gpio_anकरोr(काष्ठा dm1105_dev *dev, u32 mask, u32 val)
+अणु
+	अगर (mask & 0xfffc0000)
+		prपूर्णांकk(KERN_ERR "%s: Only 18 GPIO's are allowed\n", __func__);
 
-	if (mask & 0x0003ffff)
-		dm_andorl(DM1105_GPIOVAL, mask & 0x0003ffff, val);
+	अगर (mask & 0x0003ffff)
+		dm_anकरोrl(DM1105_GPIOVAL, mask & 0x0003ffff, val);
 
-}
+पूर्ण
 
-static u32 dm1105_gpio_get(struct dm1105_dev *dev, u32 mask)
-{
-	if (mask & 0xfffc0000)
-		printk(KERN_ERR "%s: Only 18 GPIO's are allowed\n", __func__);
+अटल u32 dm1105_gpio_get(काष्ठा dm1105_dev *dev, u32 mask)
+अणु
+	अगर (mask & 0xfffc0000)
+		prपूर्णांकk(KERN_ERR "%s: Only 18 GPIO's are allowed\n", __func__);
 
-	if (mask & 0x0003ffff)
-		return dm_readl(DM1105_GPIOVAL) & mask & 0x0003ffff;
+	अगर (mask & 0x0003ffff)
+		वापस dm_पढ़ोl(DM1105_GPIOVAL) & mask & 0x0003ffff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dm1105_gpio_enable(struct dm1105_dev *dev, u32 mask, int asoutput)
-{
-	if (mask & 0xfffc0000)
-		printk(KERN_ERR "%s: Only 18 GPIO's are allowed\n", __func__);
+अटल व्योम dm1105_gpio_enable(काष्ठा dm1105_dev *dev, u32 mask, पूर्णांक asoutput)
+अणु
+	अगर (mask & 0xfffc0000)
+		prपूर्णांकk(KERN_ERR "%s: Only 18 GPIO's are allowed\n", __func__);
 
-	if ((mask & 0x0003ffff) && asoutput)
+	अगर ((mask & 0x0003ffff) && asoutput)
 		dm_clearl(DM1105_GPIOCTR, mask & 0x0003ffff);
-	else if ((mask & 0x0003ffff) && !asoutput)
+	अन्यथा अगर ((mask & 0x0003ffff) && !asoutput)
 		dm_setl(DM1105_GPIOCTR, mask & 0x0003ffff);
 
-}
+पूर्ण
 
-static void dm1105_setline(struct dm1105_dev *dev, u32 line, int state)
-{
-	if (state)
+अटल व्योम dm1105_setline(काष्ठा dm1105_dev *dev, u32 line, पूर्णांक state)
+अणु
+	अगर (state)
 		dm1105_gpio_enable(dev, line, 0);
-	else {
+	अन्यथा अणु
 		dm1105_gpio_enable(dev, line, 1);
 		dm1105_gpio_clear(dev, line);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dm1105_setsda(void *data, int state)
-{
-	struct dm1105_dev *dev = data;
+अटल व्योम dm1105_setsda(व्योम *data, पूर्णांक state)
+अणु
+	काष्ठा dm1105_dev *dev = data;
 
 	dm1105_setline(dev, dm1105_boards[dev->boardnr].gpio_sda, state);
-}
+पूर्ण
 
-static void dm1105_setscl(void *data, int state)
-{
-	struct dm1105_dev *dev = data;
+अटल व्योम dm1105_setscl(व्योम *data, पूर्णांक state)
+अणु
+	काष्ठा dm1105_dev *dev = data;
 
 	dm1105_setline(dev, dm1105_boards[dev->boardnr].gpio_scl, state);
-}
+पूर्ण
 
-static int dm1105_getsda(void *data)
-{
-	struct dm1105_dev *dev = data;
+अटल पूर्णांक dm1105_माला_लोda(व्योम *data)
+अणु
+	काष्ठा dm1105_dev *dev = data;
 
-	return dm1105_gpio_get(dev, dm1105_boards[dev->boardnr].gpio_sda)
+	वापस dm1105_gpio_get(dev, dm1105_boards[dev->boardnr].gpio_sda)
 									? 1 : 0;
-}
+पूर्ण
 
-static int dm1105_getscl(void *data)
-{
-	struct dm1105_dev *dev = data;
+अटल पूर्णांक dm1105_माला_लोcl(व्योम *data)
+अणु
+	काष्ठा dm1105_dev *dev = data;
 
-	return dm1105_gpio_get(dev, dm1105_boards[dev->boardnr].gpio_scl)
+	वापस dm1105_gpio_get(dev, dm1105_boards[dev->boardnr].gpio_scl)
 									? 1 : 0;
-}
+पूर्ण
 
-static int dm1105_i2c_xfer(struct i2c_adapter *i2c_adap,
-			    struct i2c_msg *msgs, int num)
-{
-	struct dm1105_dev *dev ;
+अटल पूर्णांक dm1105_i2c_xfer(काष्ठा i2c_adapter *i2c_adap,
+			    काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा dm1105_dev *dev ;
 
-	int addr, rc, i, j, k, len, byte, data;
+	पूर्णांक addr, rc, i, j, k, len, byte, data;
 	u8 status;
 
 	dev = i2c_adap->algo_data;
-	for (i = 0; i < num; i++) {
-		dm_writeb(DM1105_I2CCTR, 0x00);
-		if (msgs[i].flags & I2C_M_RD) {
-			/* read bytes */
+	क्रम (i = 0; i < num; i++) अणु
+		dm_ग_लिखोb(DM1105_I2CCTR, 0x00);
+		अगर (msgs[i].flags & I2C_M_RD) अणु
+			/* पढ़ो bytes */
 			addr  = msgs[i].addr << 1;
 			addr |= 1;
-			dm_writeb(DM1105_I2CDAT, addr);
-			for (byte = 0; byte < msgs[i].len; byte++)
-				dm_writeb(DM1105_I2CDAT + byte + 1, 0);
+			dm_ग_लिखोb(DM1105_I2CDAT, addr);
+			क्रम (byte = 0; byte < msgs[i].len; byte++)
+				dm_ग_लिखोb(DM1105_I2CDAT + byte + 1, 0);
 
-			dm_writeb(DM1105_I2CCTR, 0x81 + msgs[i].len);
-			for (j = 0; j < 55; j++) {
+			dm_ग_लिखोb(DM1105_I2CCTR, 0x81 + msgs[i].len);
+			क्रम (j = 0; j < 55; j++) अणु
 				mdelay(10);
-				status = dm_readb(DM1105_I2CSTS);
-				if ((status & 0xc0) == 0x40)
-					break;
-			}
-			if (j >= 55)
-				return -1;
+				status = dm_पढ़ोb(DM1105_I2CSTS);
+				अगर ((status & 0xc0) == 0x40)
+					अवरोध;
+			पूर्ण
+			अगर (j >= 55)
+				वापस -1;
 
-			for (byte = 0; byte < msgs[i].len; byte++) {
-				rc = dm_readb(DM1105_I2CDAT + byte + 1);
-				if (rc < 0)
-					goto err;
+			क्रम (byte = 0; byte < msgs[i].len; byte++) अणु
+				rc = dm_पढ़ोb(DM1105_I2CDAT + byte + 1);
+				अगर (rc < 0)
+					जाओ err;
 				msgs[i].buf[byte] = rc;
-			}
-		} else if ((msgs[i].buf[0] == 0xf7) && (msgs[i].addr == 0x55)) {
-			/* prepared for cx24116 firmware */
+			पूर्ण
+		पूर्ण अन्यथा अगर ((msgs[i].buf[0] == 0xf7) && (msgs[i].addr == 0x55)) अणु
+			/* prepared क्रम cx24116 firmware */
 			/* Write in small blocks */
 			len = msgs[i].len - 1;
 			k = 1;
-			do {
-				dm_writeb(DM1105_I2CDAT, msgs[i].addr << 1);
-				dm_writeb(DM1105_I2CDAT + 1, 0xf7);
-				for (byte = 0; byte < (len > 48 ? 48 : len); byte++) {
+			करो अणु
+				dm_ग_लिखोb(DM1105_I2CDAT, msgs[i].addr << 1);
+				dm_ग_लिखोb(DM1105_I2CDAT + 1, 0xf7);
+				क्रम (byte = 0; byte < (len > 48 ? 48 : len); byte++) अणु
 					data = msgs[i].buf[k + byte];
-					dm_writeb(DM1105_I2CDAT + byte + 2, data);
-				}
-				dm_writeb(DM1105_I2CCTR, 0x82 + (len > 48 ? 48 : len));
-				for (j = 0; j < 25; j++) {
+					dm_ग_लिखोb(DM1105_I2CDAT + byte + 2, data);
+				पूर्ण
+				dm_ग_लिखोb(DM1105_I2CCTR, 0x82 + (len > 48 ? 48 : len));
+				क्रम (j = 0; j < 25; j++) अणु
 					mdelay(10);
-					status = dm_readb(DM1105_I2CSTS);
-					if ((status & 0xc0) == 0x40)
-						break;
-				}
+					status = dm_पढ़ोb(DM1105_I2CSTS);
+					अगर ((status & 0xc0) == 0x40)
+						अवरोध;
+				पूर्ण
 
-				if (j >= 25)
-					return -1;
+				अगर (j >= 25)
+					वापस -1;
 
 				k += 48;
 				len -= 48;
-			} while (len > 0);
-		} else {
-			/* write bytes */
-			dm_writeb(DM1105_I2CDAT, msgs[i].addr << 1);
-			for (byte = 0; byte < msgs[i].len; byte++) {
+			पूर्ण जबतक (len > 0);
+		पूर्ण अन्यथा अणु
+			/* ग_लिखो bytes */
+			dm_ग_लिखोb(DM1105_I2CDAT, msgs[i].addr << 1);
+			क्रम (byte = 0; byte < msgs[i].len; byte++) अणु
 				data = msgs[i].buf[byte];
-				dm_writeb(DM1105_I2CDAT + byte + 1, data);
-			}
-			dm_writeb(DM1105_I2CCTR, 0x81 + msgs[i].len);
-			for (j = 0; j < 25; j++) {
+				dm_ग_लिखोb(DM1105_I2CDAT + byte + 1, data);
+			पूर्ण
+			dm_ग_लिखोb(DM1105_I2CCTR, 0x81 + msgs[i].len);
+			क्रम (j = 0; j < 25; j++) अणु
 				mdelay(10);
-				status = dm_readb(DM1105_I2CSTS);
-				if ((status & 0xc0) == 0x40)
-					break;
-			}
+				status = dm_पढ़ोb(DM1105_I2CSTS);
+				अगर ((status & 0xc0) == 0x40)
+					अवरोध;
+			पूर्ण
 
-			if (j >= 25)
-				return -1;
-		}
-	}
-	return num;
+			अगर (j >= 25)
+				वापस -1;
+		पूर्ण
+	पूर्ण
+	वापस num;
  err:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static u32 functionality(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C;
-}
+अटल u32 functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C;
+पूर्ण
 
-static const struct i2c_algorithm dm1105_algo = {
+अटल स्थिर काष्ठा i2c_algorithm dm1105_algo = अणु
 	.master_xfer   = dm1105_i2c_xfer,
 	.functionality = functionality,
-};
+पूर्ण;
 
-static inline struct dm1105_dev *feed_to_dm1105_dev(struct dvb_demux_feed *feed)
-{
-	return container_of(feed->demux, struct dm1105_dev, demux);
-}
+अटल अंतरभूत काष्ठा dm1105_dev *feed_to_dm1105_dev(काष्ठा dvb_demux_feed *feed)
+अणु
+	वापस container_of(feed->demux, काष्ठा dm1105_dev, demux);
+पूर्ण
 
-static inline struct dm1105_dev *frontend_to_dm1105_dev(struct dvb_frontend *fe)
-{
-	return container_of(fe->dvb, struct dm1105_dev, dvb_adapter);
-}
+अटल अंतरभूत काष्ठा dm1105_dev *frontend_to_dm1105_dev(काष्ठा dvb_frontend *fe)
+अणु
+	वापस container_of(fe->dvb, काष्ठा dm1105_dev, dvb_adapter);
+पूर्ण
 
-static int dm1105_set_voltage(struct dvb_frontend *fe,
-			      enum fe_sec_voltage voltage)
-{
-	struct dm1105_dev *dev = frontend_to_dm1105_dev(fe);
+अटल पूर्णांक dm1105_set_voltage(काष्ठा dvb_frontend *fe,
+			      क्रमागत fe_sec_voltage voltage)
+अणु
+	काष्ठा dm1105_dev *dev = frontend_to_dm1105_dev(fe);
 
 	dm1105_gpio_enable(dev, dm1105_boards[dev->boardnr].lnb.mask, 1);
-	if (voltage == SEC_VOLTAGE_18)
-		dm1105_gpio_andor(dev,
+	अगर (voltage == SEC_VOLTAGE_18)
+		dm1105_gpio_anकरोr(dev,
 				dm1105_boards[dev->boardnr].lnb.mask,
 				dm1105_boards[dev->boardnr].lnb.v18);
-	else if (voltage == SEC_VOLTAGE_13)
-		dm1105_gpio_andor(dev,
+	अन्यथा अगर (voltage == SEC_VOLTAGE_13)
+		dm1105_gpio_anकरोr(dev,
 				dm1105_boards[dev->boardnr].lnb.mask,
 				dm1105_boards[dev->boardnr].lnb.v13);
-	else
-		dm1105_gpio_andor(dev,
+	अन्यथा
+		dm1105_gpio_anकरोr(dev,
 				dm1105_boards[dev->boardnr].lnb.mask,
 				dm1105_boards[dev->boardnr].lnb.off);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dm1105_set_dma_addr(struct dm1105_dev *dev)
-{
-	dm_writel(DM1105_STADR, (__force u32)cpu_to_le32(dev->dma_addr));
-}
+अटल व्योम dm1105_set_dma_addr(काष्ठा dm1105_dev *dev)
+अणु
+	dm_ग_लिखोl(DM1105_STADR, (__क्रमce u32)cpu_to_le32(dev->dma_addr));
+पूर्ण
 
-static int dm1105_dma_map(struct dm1105_dev *dev)
-{
+अटल पूर्णांक dm1105_dma_map(काष्ठा dm1105_dev *dev)
+अणु
 	dev->ts_buf = dma_alloc_coherent(&dev->pdev->dev,
 					 6 * DM1105_DMA_BYTES, &dev->dma_addr,
 					 GFP_KERNEL);
 
-	return !dev->ts_buf;
-}
+	वापस !dev->ts_buf;
+पूर्ण
 
-static void dm1105_dma_unmap(struct dm1105_dev *dev)
-{
-	dma_free_coherent(&dev->pdev->dev, 6 * DM1105_DMA_BYTES, dev->ts_buf,
+अटल व्योम dm1105_dma_unmap(काष्ठा dm1105_dev *dev)
+अणु
+	dma_मुक्त_coherent(&dev->pdev->dev, 6 * DM1105_DMA_BYTES, dev->ts_buf,
 			  dev->dma_addr);
-}
+पूर्ण
 
-static void dm1105_enable_irqs(struct dm1105_dev *dev)
-{
-	dm_writeb(DM1105_INTMAK, INTMAK_ALLMASK);
-	dm_writeb(DM1105_CR, 1);
-}
+अटल व्योम dm1105_enable_irqs(काष्ठा dm1105_dev *dev)
+अणु
+	dm_ग_लिखोb(DM1105_INTMAK, INTMAK_ALLMASK);
+	dm_ग_लिखोb(DM1105_CR, 1);
+पूर्ण
 
-static void dm1105_disable_irqs(struct dm1105_dev *dev)
-{
-	dm_writeb(DM1105_INTMAK, INTMAK_IRM);
-	dm_writeb(DM1105_CR, 0);
-}
+अटल व्योम dm1105_disable_irqs(काष्ठा dm1105_dev *dev)
+अणु
+	dm_ग_लिखोb(DM1105_INTMAK, INTMAK_IRM);
+	dm_ग_लिखोb(DM1105_CR, 0);
+पूर्ण
 
-static int dm1105_start_feed(struct dvb_demux_feed *f)
-{
-	struct dm1105_dev *dev = feed_to_dm1105_dev(f);
+अटल पूर्णांक dm1105_start_feed(काष्ठा dvb_demux_feed *f)
+अणु
+	काष्ठा dm1105_dev *dev = feed_to_dm1105_dev(f);
 
-	if (dev->full_ts_users++ == 0)
+	अगर (dev->full_ts_users++ == 0)
 		dm1105_enable_irqs(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dm1105_stop_feed(struct dvb_demux_feed *f)
-{
-	struct dm1105_dev *dev = feed_to_dm1105_dev(f);
+अटल पूर्णांक dm1105_stop_feed(काष्ठा dvb_demux_feed *f)
+अणु
+	काष्ठा dm1105_dev *dev = feed_to_dm1105_dev(f);
 
-	if (--dev->full_ts_users == 0)
+	अगर (--dev->full_ts_users == 0)
 		dm1105_disable_irqs(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ir work handler */
-static void dm1105_emit_key(struct work_struct *work)
-{
-	struct infrared *ir = container_of(work, struct infrared, work);
+अटल व्योम dm1105_emit_key(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा infrared *ir = container_of(work, काष्ठा infrared, work);
 	u32 ircom = ir->ir_command;
 	u8 data;
 
-	if (ir_debug)
-		printk(KERN_INFO "%s: received byte 0x%04x\n", __func__, ircom);
+	अगर (ir_debug)
+		prपूर्णांकk(KERN_INFO "%s: received byte 0x%04x\n", __func__, ircom);
 
 	data = (ircom >> 8) & 0x7f;
 
-	/* FIXME: UNKNOWN because we don't generate a full NEC scancode (yet?) */
-	rc_keydown(ir->dev, RC_PROTO_UNKNOWN, data, 0);
-}
+	/* FIXME: UNKNOWN because we करोn't generate a full NEC scancode (yet?) */
+	rc_keyकरोwn(ir->dev, RC_PROTO_UNKNOWN, data, 0);
+पूर्ण
 
 /* work handler */
-static void dm1105_dmx_buffer(struct work_struct *work)
-{
-	struct dm1105_dev *dev = container_of(work, struct dm1105_dev, work);
-	unsigned int nbpackets;
+अटल व्योम dm1105_dmx_buffer(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dm1105_dev *dev = container_of(work, काष्ठा dm1105_dev, work);
+	अचिन्हित पूर्णांक nbpackets;
 	u32 oldwrp = dev->wrp;
 	u32 nextwrp = dev->nextwrp;
 
-	if (!((dev->ts_buf[oldwrp] == 0x47) &&
+	अगर (!((dev->ts_buf[oldwrp] == 0x47) &&
 			(dev->ts_buf[oldwrp + 188] == 0x47) &&
-			(dev->ts_buf[oldwrp + 188 * 2] == 0x47))) {
+			(dev->ts_buf[oldwrp + 188 * 2] == 0x47))) अणु
 		dev->PacketErrorCount++;
 		/* bad packet found */
-		if ((dev->PacketErrorCount >= 2) &&
-				(dev->dmarst == 0)) {
-			dm_writeb(DM1105_RST, 1);
+		अगर ((dev->PacketErrorCount >= 2) &&
+				(dev->dmarst == 0)) अणु
+			dm_ग_लिखोb(DM1105_RST, 1);
 			dev->wrp = 0;
 			dev->PacketErrorCount = 0;
 			dev->dmarst = 0;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (nextwrp < oldwrp) {
-		memcpy(dev->ts_buf + dev->buffer_size, dev->ts_buf, nextwrp);
+	अगर (nextwrp < oldwrp) अणु
+		स_नकल(dev->ts_buf + dev->buffer_size, dev->ts_buf, nextwrp);
 		nbpackets = ((dev->buffer_size - oldwrp) + nextwrp) / 188;
-	} else
+	पूर्ण अन्यथा
 		nbpackets = (nextwrp - oldwrp) / 188;
 
 	dev->wrp = nextwrp;
 	dvb_dmx_swfilter_packets(&dev->demux, &dev->ts_buf[oldwrp], nbpackets);
-}
+पूर्ण
 
-static irqreturn_t dm1105_irq(int irq, void *dev_id)
-{
-	struct dm1105_dev *dev = dev_id;
+अटल irqवापस_t dm1105_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा dm1105_dev *dev = dev_id;
 
-	/* Read-Write INSTS Ack's Interrupt for DM1105 chip 16.03.2008 */
-	unsigned int intsts = dm_readb(DM1105_INTSTS);
-	dm_writeb(DM1105_INTSTS, intsts);
+	/* Read-Write INSTS Ack's Interrupt क्रम DM1105 chip 16.03.2008 */
+	अचिन्हित पूर्णांक पूर्णांकsts = dm_पढ़ोb(DM1105_INTSTS);
+	dm_ग_लिखोb(DM1105_INTSTS, पूर्णांकsts);
 
-	switch (intsts) {
-	case INTSTS_TSIRQ:
-	case (INTSTS_TSIRQ | INTSTS_IR):
-		dev->nextwrp = dm_readl(DM1105_WRP) - dm_readl(DM1105_STADR);
+	चयन (पूर्णांकsts) अणु
+	हाल INTSTS_TSIRQ:
+	हाल (INTSTS_TSIRQ | INTSTS_IR):
+		dev->nextwrp = dm_पढ़ोl(DM1105_WRP) - dm_पढ़ोl(DM1105_STADR);
 		queue_work(dev->wq, &dev->work);
-		break;
-	case INTSTS_IR:
-		dev->ir.ir_command = dm_readl(DM1105_IRCODE);
+		अवरोध;
+	हाल INTSTS_IR:
+		dev->ir.ir_command = dm_पढ़ोl(DM1105_IRCODE);
 		schedule_work(&dev->ir.work);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int dm1105_ir_init(struct dm1105_dev *dm1105)
-{
-	struct rc_dev *dev;
-	int err = -ENOMEM;
+अटल पूर्णांक dm1105_ir_init(काष्ठा dm1105_dev *dm1105)
+अणु
+	काष्ठा rc_dev *dev;
+	पूर्णांक err = -ENOMEM;
 
 	dev = rc_allocate_device(RC_DRIVER_SCANCODE);
-	if (!dev)
-		return -ENOMEM;
+	अगर (!dev)
+		वापस -ENOMEM;
 
-	snprintf(dm1105->ir.input_phys, sizeof(dm1105->ir.input_phys),
+	snम_लिखो(dm1105->ir.input_phys, माप(dm1105->ir.input_phys),
 		"pci-%s/ir0", pci_name(dm1105->pdev));
 
 	dev->driver_name = MODULE_NAME;
@@ -739,70 +740,70 @@ static int dm1105_ir_init(struct dm1105_dev *dm1105)
 	dev->input_phys = dm1105->ir.input_phys;
 	dev->input_id.bustype = BUS_PCI;
 	dev->input_id.version = 1;
-	if (dm1105->pdev->subsystem_vendor) {
-		dev->input_id.vendor = dm1105->pdev->subsystem_vendor;
-		dev->input_id.product = dm1105->pdev->subsystem_device;
-	} else {
-		dev->input_id.vendor = dm1105->pdev->vendor;
+	अगर (dm1105->pdev->subप्रणाली_venकरोr) अणु
+		dev->input_id.venकरोr = dm1105->pdev->subप्रणाली_venकरोr;
+		dev->input_id.product = dm1105->pdev->subप्रणाली_device;
+	पूर्ण अन्यथा अणु
+		dev->input_id.venकरोr = dm1105->pdev->venकरोr;
 		dev->input_id.product = dm1105->pdev->device;
-	}
+	पूर्ण
 	dev->dev.parent = &dm1105->pdev->dev;
 
 	INIT_WORK(&dm1105->ir.work, dm1105_emit_key);
 
-	err = rc_register_device(dev);
-	if (err < 0) {
-		rc_free_device(dev);
-		return err;
-	}
+	err = rc_रेजिस्टर_device(dev);
+	अगर (err < 0) अणु
+		rc_मुक्त_device(dev);
+		वापस err;
+	पूर्ण
 
 	dm1105->ir.dev = dev;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dm1105_ir_exit(struct dm1105_dev *dm1105)
-{
-	rc_unregister_device(dm1105->ir.dev);
-}
+अटल व्योम dm1105_ir_निकास(काष्ठा dm1105_dev *dm1105)
+अणु
+	rc_unरेजिस्टर_device(dm1105->ir.dev);
+पूर्ण
 
-static int dm1105_hw_init(struct dm1105_dev *dev)
-{
+अटल पूर्णांक dm1105_hw_init(काष्ठा dm1105_dev *dev)
+अणु
 	dm1105_disable_irqs(dev);
 
-	dm_writeb(DM1105_HOST_CTR, 0);
+	dm_ग_लिखोb(DM1105_HOST_CTR, 0);
 
 	/*DATALEN 188,*/
-	dm_writeb(DM1105_DTALENTH, 188);
+	dm_ग_लिखोb(DM1105_DTALENTH, 188);
 	/*TS_STRT TS_VALP MSBFIRST TS_MODE ALPAS TSPES*/
-	dm_writew(DM1105_TSCTR, 0xc10a);
+	dm_ग_लिखोw(DM1105_TSCTR, 0xc10a);
 
 	/* map DMA and set address */
 	dm1105_dma_map(dev);
 	dm1105_set_dma_addr(dev);
 	/* big buffer */
-	dm_writel(DM1105_RLEN, 5 * DM1105_DMA_BYTES);
-	dm_writeb(DM1105_INTCNT, 47);
+	dm_ग_लिखोl(DM1105_RLEN, 5 * DM1105_DMA_BYTES);
+	dm_ग_लिखोb(DM1105_INTCNT, 47);
 
 	/* IR NEC mode enable */
-	dm_writeb(DM1105_IRCTR, (DM1105_IR_EN | DM1105_SYS_CHK));
-	dm_writeb(DM1105_IRMODE, 0);
-	dm_writew(DM1105_SYSTEMCODE, 0);
+	dm_ग_लिखोb(DM1105_IRCTR, (DM1105_IR_EN | DM1105_SYS_CHK));
+	dm_ग_लिखोb(DM1105_IRMODE, 0);
+	dm_ग_लिखोw(DM1105_SYSTEMCODE, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dm1105_hw_exit(struct dm1105_dev *dev)
-{
+अटल व्योम dm1105_hw_निकास(काष्ठा dm1105_dev *dev)
+अणु
 	dm1105_disable_irqs(dev);
 
 	/* IR disable */
-	dm_writeb(DM1105_IRCTR, 0);
-	dm_writeb(DM1105_INTMAK, INTMAK_NONEMASK);
+	dm_ग_लिखोb(DM1105_IRCTR, 0);
+	dm_ग_लिखोb(DM1105_INTMAK, INTMAK_NONEMASK);
 
 	dm1105_dma_unmap(dev);
-}
+पूर्ण
 
-static const struct stv0299_config sharp_z0194a_config = {
+अटल स्थिर काष्ठा stv0299_config sharp_z0194a_config = अणु
 	.demod_address = 0x68,
 	.inittab = sharp_z0194a_inittab,
 	.mclk = 88000000UL,
@@ -812,38 +813,38 @@ static const struct stv0299_config sharp_z0194a_config = {
 	.volt13_op0_op1 = STV0299_VOLT13_OP1,
 	.min_delay_ms = 100,
 	.set_symbol_rate = sharp_z0194a_set_symbol_rate,
-};
+पूर्ण;
 
-static struct stv0288_config earda_config = {
+अटल काष्ठा stv0288_config earda_config = अणु
 	.demod_address = 0x68,
 	.min_delay_ms = 100,
-};
+पूर्ण;
 
-static struct si21xx_config serit_config = {
+अटल काष्ठा si21xx_config serit_config = अणु
 	.demod_address = 0x68,
 	.min_delay_ms = 100,
 
-};
+पूर्ण;
 
-static struct cx24116_config serit_sp2633_config = {
+अटल काष्ठा cx24116_config serit_sp2633_config = अणु
 	.demod_address = 0x55,
-};
+पूर्ण;
 
-static struct ds3000_config dvbworld_ds3000_config = {
+अटल काष्ठा ds3000_config dvbworld_ds3000_config = अणु
 	.demod_address = 0x68,
-};
+पूर्ण;
 
-static struct ts2020_config dvbworld_ts2020_config  = {
+अटल काष्ठा ts2020_config dvbworld_ts2020_config  = अणु
 	.tuner_address = 0x60,
-	.clk_out_div = 1,
-};
+	.clk_out_भाग = 1,
+पूर्ण;
 
-static int frontend_init(struct dm1105_dev *dev)
-{
-	int ret;
+अटल पूर्णांक frontend_init(काष्ठा dm1105_dev *dev)
+अणु
+	पूर्णांक ret;
 
-	switch (dev->boardnr) {
-	case DM1105_BOARD_UNBRANDED_I2C_ON_GPIO:
+	चयन (dev->boardnr) अणु
+	हाल DM1105_BOARD_UNBRANDED_I2C_ON_GPIO:
 		dm1105_gpio_enable(dev, GPIO15, 1);
 		dm1105_gpio_clear(dev, GPIO15);
 		msleep(100);
@@ -852,151 +853,151 @@ static int frontend_init(struct dm1105_dev *dev)
 		dev->fe = dvb_attach(
 			stv0299_attach, &sharp_z0194a_config,
 			&dev->i2c_bb_adap);
-		if (dev->fe) {
+		अगर (dev->fe) अणु
 			dev->fe->ops.set_voltage = dm1105_set_voltage;
 			dvb_attach(dvb_pll_attach, dev->fe, 0x60,
 					&dev->i2c_bb_adap, DVB_PLL_OPERA1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dev->fe = dvb_attach(
 			stv0288_attach, &earda_config,
 			&dev->i2c_bb_adap);
-		if (dev->fe) {
+		अगर (dev->fe) अणु
 			dev->fe->ops.set_voltage = dm1105_set_voltage;
 			dvb_attach(stb6000_attach, dev->fe, 0x61,
 					&dev->i2c_bb_adap);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dev->fe = dvb_attach(
 			si21xx_attach, &serit_config,
 			&dev->i2c_bb_adap);
-		if (dev->fe)
+		अगर (dev->fe)
 			dev->fe->ops.set_voltage = dm1105_set_voltage;
-		break;
-	case DM1105_BOARD_DVBWORLD_2004:
+		अवरोध;
+	हाल DM1105_BOARD_DVBWORLD_2004:
 		dev->fe = dvb_attach(
 			cx24116_attach, &serit_sp2633_config,
 			&dev->i2c_adap);
-		if (dev->fe) {
+		अगर (dev->fe) अणु
 			dev->fe->ops.set_voltage = dm1105_set_voltage;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dev->fe = dvb_attach(
 			ds3000_attach, &dvbworld_ds3000_config,
 			&dev->i2c_adap);
-		if (dev->fe) {
+		अगर (dev->fe) अणु
 			dvb_attach(ts2020_attach, dev->fe,
 				&dvbworld_ts2020_config, &dev->i2c_adap);
 			dev->fe->ops.set_voltage = dm1105_set_voltage;
-		}
+		पूर्ण
 
-		break;
-	case DM1105_BOARD_DVBWORLD_2002:
-	case DM1105_BOARD_AXESS_DM05:
-	default:
+		अवरोध;
+	हाल DM1105_BOARD_DVBWORLD_2002:
+	हाल DM1105_BOARD_AXESS_DM05:
+	शेष:
 		dev->fe = dvb_attach(
 			stv0299_attach, &sharp_z0194a_config,
 			&dev->i2c_adap);
-		if (dev->fe) {
+		अगर (dev->fe) अणु
 			dev->fe->ops.set_voltage = dm1105_set_voltage;
 			dvb_attach(dvb_pll_attach, dev->fe, 0x60,
 					&dev->i2c_adap, DVB_PLL_OPERA1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dev->fe = dvb_attach(
 			stv0288_attach, &earda_config,
 			&dev->i2c_adap);
-		if (dev->fe) {
+		अगर (dev->fe) अणु
 			dev->fe->ops.set_voltage = dm1105_set_voltage;
 			dvb_attach(stb6000_attach, dev->fe, 0x61,
 					&dev->i2c_adap);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dev->fe = dvb_attach(
 			si21xx_attach, &serit_config,
 			&dev->i2c_adap);
-		if (dev->fe)
+		अगर (dev->fe)
 			dev->fe->ops.set_voltage = dm1105_set_voltage;
 
-	}
+	पूर्ण
 
-	if (!dev->fe) {
+	अगर (!dev->fe) अणु
 		dev_err(&dev->pdev->dev, "could not attach frontend\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = dvb_register_frontend(&dev->dvb_adapter, dev->fe);
-	if (ret < 0) {
-		if (dev->fe->ops.release)
+	ret = dvb_रेजिस्टर_frontend(&dev->dvb_adapter, dev->fe);
+	अगर (ret < 0) अणु
+		अगर (dev->fe->ops.release)
 			dev->fe->ops.release(dev->fe);
-		dev->fe = NULL;
-		return ret;
-	}
+		dev->fe = शून्य;
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dm1105_read_mac(struct dm1105_dev *dev, u8 *mac)
-{
-	static u8 command[1] = { 0x28 };
+अटल व्योम dm1105_पढ़ो_mac(काष्ठा dm1105_dev *dev, u8 *mac)
+अणु
+	अटल u8 command[1] = अणु 0x28 पूर्ण;
 
-	struct i2c_msg msg[] = {
-		{
+	काष्ठा i2c_msg msg[] = अणु
+		अणु
 			.addr = IIC_24C01_addr >> 1,
 			.flags = 0,
 			.buf = command,
 			.len = 1
-		}, {
+		पूर्ण, अणु
 			.addr = IIC_24C01_addr >> 1,
 			.flags = I2C_M_RD,
 			.buf = mac,
 			.len = 6
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
 	dm1105_i2c_xfer(&dev->i2c_adap, msg , 2);
 	dev_info(&dev->pdev->dev, "MAC %pM\n", mac);
-}
+पूर्ण
 
-static int dm1105_probe(struct pci_dev *pdev,
-				  const struct pci_device_id *ent)
-{
-	struct dm1105_dev *dev;
-	struct dvb_adapter *dvb_adapter;
-	struct dvb_demux *dvbdemux;
-	struct dmx_demux *dmx;
-	int ret = -ENOMEM;
-	int i;
+अटल पूर्णांक dm1105_probe(काष्ठा pci_dev *pdev,
+				  स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा dm1105_dev *dev;
+	काष्ठा dvb_adapter *dvb_adapter;
+	काष्ठा dvb_demux *dvbdemux;
+	काष्ठा dmx_demux *dmx;
+	पूर्णांक ret = -ENOMEM;
+	पूर्णांक i;
 
-	if (dm1105_devcount >= ARRAY_SIZE(card))
-		return -ENODEV;
+	अगर (dm1105_devcount >= ARRAY_SIZE(card))
+		वापस -ENODEV;
 
-	dev = kzalloc(sizeof(struct dm1105_dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	dev = kzalloc(माप(काष्ठा dm1105_dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	/* board config */
 	dev->nr = dm1105_devcount;
 	dev->boardnr = UNSET;
-	if (card[dev->nr] < ARRAY_SIZE(dm1105_boards))
+	अगर (card[dev->nr] < ARRAY_SIZE(dm1105_boards))
 		dev->boardnr = card[dev->nr];
-	for (i = 0; UNSET == dev->boardnr &&
+	क्रम (i = 0; UNSET == dev->boardnr &&
 				i < ARRAY_SIZE(dm1105_subids); i++)
-		if (pdev->subsystem_vendor ==
-			dm1105_subids[i].subvendor &&
-				pdev->subsystem_device ==
+		अगर (pdev->subप्रणाली_venकरोr ==
+			dm1105_subids[i].subvenकरोr &&
+				pdev->subप्रणाली_device ==
 					dm1105_subids[i].subdevice)
 			dev->boardnr = dm1105_subids[i].card;
 
-	if (UNSET == dev->boardnr) {
+	अगर (UNSET == dev->boardnr) अणु
 		dev->boardnr = DM1105_BOARD_UNKNOWN;
 		dm1105_card_list(pdev);
-	}
+	पूर्ण
 
 	dm1105_devcount++;
 	dev->pdev = pdev;
@@ -1005,75 +1006,75 @@ static int dm1105_probe(struct pci_dev *pdev,
 	dev->dmarst = 0;
 
 	ret = pci_enable_device(pdev);
-	if (ret < 0)
-		goto err_kfree;
+	अगर (ret < 0)
+		जाओ err_kमुक्त;
 
 	ret = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-	if (ret < 0)
-		goto err_pci_disable_device;
+	अगर (ret < 0)
+		जाओ err_pci_disable_device;
 
 	pci_set_master(pdev);
 
 	ret = pci_request_regions(pdev, DRIVER_NAME);
-	if (ret < 0)
-		goto err_pci_disable_device;
+	अगर (ret < 0)
+		जाओ err_pci_disable_device;
 
 	dev->io_mem = pci_iomap(pdev, 0, pci_resource_len(pdev, 0));
-	if (!dev->io_mem) {
+	अगर (!dev->io_mem) अणु
 		ret = -EIO;
-		goto err_pci_release_regions;
-	}
+		जाओ err_pci_release_regions;
+	पूर्ण
 
 	spin_lock_init(&dev->lock);
 	pci_set_drvdata(pdev, dev);
 
 	ret = dm1105_hw_init(dev);
-	if (ret < 0)
-		goto err_pci_iounmap;
+	अगर (ret < 0)
+		जाओ err_pci_iounmap;
 
 	/* i2c */
 	i2c_set_adapdata(&dev->i2c_adap, dev);
-	strscpy(dev->i2c_adap.name, DRIVER_NAME, sizeof(dev->i2c_adap.name));
+	strscpy(dev->i2c_adap.name, DRIVER_NAME, माप(dev->i2c_adap.name));
 	dev->i2c_adap.owner = THIS_MODULE;
 	dev->i2c_adap.dev.parent = &pdev->dev;
 	dev->i2c_adap.algo = &dm1105_algo;
 	dev->i2c_adap.algo_data = dev;
 	ret = i2c_add_adapter(&dev->i2c_adap);
 
-	if (ret < 0)
-		goto err_dm1105_hw_exit;
+	अगर (ret < 0)
+		जाओ err_dm1105_hw_निकास;
 
 	i2c_set_adapdata(&dev->i2c_bb_adap, dev);
 	strscpy(dev->i2c_bb_adap.name, DM1105_I2C_GPIO_NAME,
-		sizeof(dev->i2c_bb_adap.name));
+		माप(dev->i2c_bb_adap.name));
 	dev->i2c_bb_adap.owner = THIS_MODULE;
 	dev->i2c_bb_adap.dev.parent = &pdev->dev;
 	dev->i2c_bb_adap.algo_data = &dev->i2c_bit;
 	dev->i2c_bit.data = dev;
 	dev->i2c_bit.setsda = dm1105_setsda;
 	dev->i2c_bit.setscl = dm1105_setscl;
-	dev->i2c_bit.getsda = dm1105_getsda;
-	dev->i2c_bit.getscl = dm1105_getscl;
+	dev->i2c_bit.माला_लोda = dm1105_माला_लोda;
+	dev->i2c_bit.माला_लोcl = dm1105_माला_लोcl;
 	dev->i2c_bit.udelay = 10;
-	dev->i2c_bit.timeout = 10;
+	dev->i2c_bit.समयout = 10;
 
 	/* Raise SCL and SDA */
 	dm1105_setsda(dev, 1);
 	dm1105_setscl(dev, 1);
 
 	ret = i2c_bit_add_bus(&dev->i2c_bb_adap);
-	if (ret < 0)
-		goto err_i2c_del_adapter;
+	अगर (ret < 0)
+		जाओ err_i2c_del_adapter;
 
 	/* dvb */
-	ret = dvb_register_adapter(&dev->dvb_adapter, DRIVER_NAME,
+	ret = dvb_रेजिस्टर_adapter(&dev->dvb_adapter, DRIVER_NAME,
 					THIS_MODULE, &pdev->dev, adapter_nr);
-	if (ret < 0)
-		goto err_i2c_del_adapters;
+	अगर (ret < 0)
+		जाओ err_i2c_del_adapters;
 
 	dvb_adapter = &dev->dvb_adapter;
 
-	dm1105_read_mac(dev, dvb_adapter->proposed_mac);
+	dm1105_पढ़ो_mac(dev, dvb_adapter->proposed_mac);
 
 	dvbdemux = &dev->demux;
 	dvbdemux->filternum = 256;
@@ -1083,8 +1084,8 @@ static int dm1105_probe(struct pci_dev *pdev,
 	dvbdemux->dmx.capabilities = (DMX_TS_FILTERING |
 			DMX_SECTION_FILTERING | DMX_MEMORY_BASED_FILTERING);
 	ret = dvb_dmx_init(dvbdemux);
-	if (ret < 0)
-		goto err_dvb_unregister_adapter;
+	अगर (ret < 0)
+		जाओ err_dvb_unरेजिस्टर_adapter;
 
 	dmx = &dvbdemux->dmx;
 	dev->dmxdev.filternum = 256;
@@ -1092,49 +1093,49 @@ static int dm1105_probe(struct pci_dev *pdev,
 	dev->dmxdev.capabilities = 0;
 
 	ret = dvb_dmxdev_init(&dev->dmxdev, dvb_adapter);
-	if (ret < 0)
-		goto err_dvb_dmx_release;
+	अगर (ret < 0)
+		जाओ err_dvb_dmx_release;
 
 	dev->hw_frontend.source = DMX_FRONTEND_0;
 
 	ret = dmx->add_frontend(dmx, &dev->hw_frontend);
-	if (ret < 0)
-		goto err_dvb_dmxdev_release;
+	अगर (ret < 0)
+		जाओ err_dvb_dmxdev_release;
 
 	dev->mem_frontend.source = DMX_MEMORY_FE;
 
 	ret = dmx->add_frontend(dmx, &dev->mem_frontend);
-	if (ret < 0)
-		goto err_remove_hw_frontend;
+	अगर (ret < 0)
+		जाओ err_हटाओ_hw_frontend;
 
 	ret = dmx->connect_frontend(dmx, &dev->hw_frontend);
-	if (ret < 0)
-		goto err_remove_mem_frontend;
+	अगर (ret < 0)
+		जाओ err_हटाओ_mem_frontend;
 
 	ret = dvb_net_init(dvb_adapter, &dev->dvbnet, dmx);
-	if (ret < 0)
-		goto err_disconnect_frontend;
+	अगर (ret < 0)
+		जाओ err_disconnect_frontend;
 
 	ret = frontend_init(dev);
-	if (ret < 0)
-		goto err_dvb_net;
+	अगर (ret < 0)
+		जाओ err_dvb_net;
 
 	dm1105_ir_init(dev);
 
 	INIT_WORK(&dev->work, dm1105_dmx_buffer);
-	sprintf(dev->wqn, "%s/%d", dvb_adapter->name, dvb_adapter->num);
-	dev->wq = create_singlethread_workqueue(dev->wqn);
-	if (!dev->wq) {
+	प्र_लिखो(dev->wqn, "%s/%d", dvb_adapter->name, dvb_adapter->num);
+	dev->wq = create_singlethपढ़ो_workqueue(dev->wqn);
+	अगर (!dev->wq) अणु
 		ret = -ENOMEM;
-		goto err_dvb_net;
-	}
+		जाओ err_dvb_net;
+	पूर्ण
 
 	ret = request_irq(pdev->irq, dm1105_irq, IRQF_SHARED,
 						DRIVER_NAME, dev);
-	if (ret < 0)
-		goto err_workqueue;
+	अगर (ret < 0)
+		जाओ err_workqueue;
 
-	return 0;
+	वापस 0;
 
 err_workqueue:
 	destroy_workqueue(dev->wq);
@@ -1142,87 +1143,87 @@ err_dvb_net:
 	dvb_net_release(&dev->dvbnet);
 err_disconnect_frontend:
 	dmx->disconnect_frontend(dmx);
-err_remove_mem_frontend:
-	dmx->remove_frontend(dmx, &dev->mem_frontend);
-err_remove_hw_frontend:
-	dmx->remove_frontend(dmx, &dev->hw_frontend);
+err_हटाओ_mem_frontend:
+	dmx->हटाओ_frontend(dmx, &dev->mem_frontend);
+err_हटाओ_hw_frontend:
+	dmx->हटाओ_frontend(dmx, &dev->hw_frontend);
 err_dvb_dmxdev_release:
 	dvb_dmxdev_release(&dev->dmxdev);
 err_dvb_dmx_release:
 	dvb_dmx_release(dvbdemux);
-err_dvb_unregister_adapter:
-	dvb_unregister_adapter(dvb_adapter);
+err_dvb_unरेजिस्टर_adapter:
+	dvb_unरेजिस्टर_adapter(dvb_adapter);
 err_i2c_del_adapters:
 	i2c_del_adapter(&dev->i2c_bb_adap);
 err_i2c_del_adapter:
 	i2c_del_adapter(&dev->i2c_adap);
-err_dm1105_hw_exit:
-	dm1105_hw_exit(dev);
+err_dm1105_hw_निकास:
+	dm1105_hw_निकास(dev);
 err_pci_iounmap:
 	pci_iounmap(pdev, dev->io_mem);
 err_pci_release_regions:
 	pci_release_regions(pdev);
 err_pci_disable_device:
 	pci_disable_device(pdev);
-err_kfree:
-	kfree(dev);
-	return ret;
-}
+err_kमुक्त:
+	kमुक्त(dev);
+	वापस ret;
+पूर्ण
 
-static void dm1105_remove(struct pci_dev *pdev)
-{
-	struct dm1105_dev *dev = pci_get_drvdata(pdev);
-	struct dvb_adapter *dvb_adapter = &dev->dvb_adapter;
-	struct dvb_demux *dvbdemux = &dev->demux;
-	struct dmx_demux *dmx = &dvbdemux->dmx;
+अटल व्योम dm1105_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा dm1105_dev *dev = pci_get_drvdata(pdev);
+	काष्ठा dvb_adapter *dvb_adapter = &dev->dvb_adapter;
+	काष्ठा dvb_demux *dvbdemux = &dev->demux;
+	काष्ठा dmx_demux *dmx = &dvbdemux->dmx;
 
-	dm1105_ir_exit(dev);
-	dmx->close(dmx);
+	dm1105_ir_निकास(dev);
+	dmx->बंद(dmx);
 	dvb_net_release(&dev->dvbnet);
-	if (dev->fe)
-		dvb_unregister_frontend(dev->fe);
+	अगर (dev->fe)
+		dvb_unरेजिस्टर_frontend(dev->fe);
 
 	dmx->disconnect_frontend(dmx);
-	dmx->remove_frontend(dmx, &dev->mem_frontend);
-	dmx->remove_frontend(dmx, &dev->hw_frontend);
+	dmx->हटाओ_frontend(dmx, &dev->mem_frontend);
+	dmx->हटाओ_frontend(dmx, &dev->hw_frontend);
 	dvb_dmxdev_release(&dev->dmxdev);
 	dvb_dmx_release(dvbdemux);
-	dvb_unregister_adapter(dvb_adapter);
+	dvb_unरेजिस्टर_adapter(dvb_adapter);
 	i2c_del_adapter(&dev->i2c_adap);
 
-	dm1105_hw_exit(dev);
-	free_irq(pdev->irq, dev);
+	dm1105_hw_निकास(dev);
+	मुक्त_irq(pdev->irq, dev);
 	pci_iounmap(pdev, dev->io_mem);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
 	dm1105_devcount--;
-	kfree(dev);
-}
+	kमुक्त(dev);
+पूर्ण
 
-static const struct pci_device_id dm1105_id_table[] = {
-	{
-		.vendor = PCI_VENDOR_ID_TRIGEM,
+अटल स्थिर काष्ठा pci_device_id dm1105_id_table[] = अणु
+	अणु
+		.venकरोr = PCI_VENDOR_ID_TRIGEM,
 		.device = PCI_DEVICE_ID_DM1105,
-		.subvendor = PCI_ANY_ID,
+		.subvenकरोr = PCI_ANY_ID,
 		.subdevice = PCI_ANY_ID,
-	}, {
-		.vendor = PCI_VENDOR_ID_AXESS,
+	पूर्ण, अणु
+		.venकरोr = PCI_VENDOR_ID_AXESS,
 		.device = PCI_DEVICE_ID_DM05,
-		.subvendor = PCI_ANY_ID,
+		.subvenकरोr = PCI_ANY_ID,
 		.subdevice = PCI_ANY_ID,
-	}, {
+	पूर्ण, अणु
 		/* empty */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, dm1105_id_table);
 
-static struct pci_driver dm1105_driver = {
+अटल काष्ठा pci_driver dm1105_driver = अणु
 	.name = DRIVER_NAME,
 	.id_table = dm1105_id_table,
 	.probe = dm1105_probe,
-	.remove = dm1105_remove,
-};
+	.हटाओ = dm1105_हटाओ,
+पूर्ण;
 
 module_pci_driver(dm1105_driver);
 

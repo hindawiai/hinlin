@@ -1,178 +1,179 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2008-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ATH9K_H
-#define ATH9K_H
+#अगर_अघोषित ATH9K_H
+#घोषणा ATH9K_H
 
-#include <linux/etherdevice.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/leds.h>
-#include <linux/completion.h>
-#include <linux/time.h>
-#include <linux/hw_random.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/hw_अक्रमom.h>
 
-#include "common.h"
-#include "debug.h"
-#include "mci.h"
-#include "dfs.h"
+#समावेश "common.h"
+#समावेश "debug.h"
+#समावेश "mci.h"
+#समावेश "dfs.h"
 
-struct ath_node;
-struct ath_vif;
+काष्ठा ath_node;
+काष्ठा ath_vअगर;
 
-extern struct ieee80211_ops ath9k_ops;
-extern int ath9k_modparam_nohwcrypt;
-extern int ath9k_led_blink;
-extern bool is_ath9k_unloaded;
-extern int ath9k_use_chanctx;
+बाह्य काष्ठा ieee80211_ops ath9k_ops;
+बाह्य पूर्णांक ath9k_modparam_nohwcrypt;
+बाह्य पूर्णांक ath9k_led_blink;
+बाह्य bool is_ath9k_unloaded;
+बाह्य पूर्णांक ath9k_use_chanctx;
 
 /*************************/
 /* Descriptor Management */
 /*************************/
 
-#define ATH_TXSTATUS_RING_SIZE 512
+#घोषणा ATH_TXSTATUS_RING_SIZE 512
 
 /* Macro to expand scalars to 64-bit objects */
-#define	ito64(x) (sizeof(x) == 1) ?			\
-	(((unsigned long long int)(x)) & (0xff)) :	\
-	(sizeof(x) == 2) ?				\
-	(((unsigned long long int)(x)) & 0xffff) :	\
-	((sizeof(x) == 4) ?				\
-	 (((unsigned long long int)(x)) & 0xffffffff) : \
-	 (unsigned long long int)(x))
+#घोषणा	ito64(x) (माप(x) == 1) ?			\
+	(((अचिन्हित दीर्घ दीर्घ पूर्णांक)(x)) & (0xff)) :	\
+	(माप(x) == 2) ?				\
+	(((अचिन्हित दीर्घ दीर्घ पूर्णांक)(x)) & 0xffff) :	\
+	((माप(x) == 4) ?				\
+	 (((अचिन्हित दीर्घ दीर्घ पूर्णांक)(x)) & 0xffffffff) : \
+	 (अचिन्हित दीर्घ दीर्घ पूर्णांक)(x))
 
-#define ATH_TXBUF_RESET(_bf) do {				\
-		(_bf)->bf_lastbf = NULL;			\
-		(_bf)->bf_next = NULL;				\
-		memset(&((_bf)->bf_state), 0,			\
-		       sizeof(struct ath_buf_state));		\
-	} while (0)
+#घोषणा ATH_TXBUF_RESET(_bf) करो अणु				\
+		(_bf)->bf_lastbf = शून्य;			\
+		(_bf)->bf_next = शून्य;				\
+		स_रखो(&((_bf)->bf_state), 0,			\
+		       माप(काष्ठा ath_buf_state));		\
+	पूर्ण जबतक (0)
 
-#define	DS2PHYS(_dd, _ds)						\
+#घोषणा	DS2PHYS(_dd, _ds)						\
 	((_dd)->dd_desc_paddr + ((caddr_t)(_ds) - (caddr_t)(_dd)->dd_desc))
-#define ATH_DESC_4KB_BOUND_CHECK(_daddr) ((((_daddr) & 0xFFF) > 0xF7F) ? 1 : 0)
-#define ATH_DESC_4KB_BOUND_NUM_SKIPPED(_len) ((_len) / 4096)
+#घोषणा ATH_DESC_4KB_BOUND_CHECK(_daddr) ((((_daddr) & 0xFFF) > 0xF7F) ? 1 : 0)
+#घोषणा ATH_DESC_4KB_BOUND_NUM_SKIPPED(_len) ((_len) / 4096)
 
-struct ath_descdma {
-	void *dd_desc;
+काष्ठा ath_descdma अणु
+	व्योम *dd_desc;
 	dma_addr_t dd_desc_paddr;
 	u32 dd_desc_len;
-};
+पूर्ण;
 
-int ath_descdma_setup(struct ath_softc *sc, struct ath_descdma *dd,
-		      struct list_head *head, const char *name,
-		      int nbuf, int ndesc, bool is_tx);
+पूर्णांक ath_descdma_setup(काष्ठा ath_softc *sc, काष्ठा ath_descdma *dd,
+		      काष्ठा list_head *head, स्थिर अक्षर *name,
+		      पूर्णांक nbuf, पूर्णांक ndesc, bool is_tx);
 
 /***********/
 /* RX / TX */
 /***********/
 
-#define	ATH_TXQ_SETUP(sc, i) ((sc)->tx.txqsetup & (1<<i))
+#घोषणा	ATH_TXQ_SETUP(sc, i) ((sc)->tx.txqsetup & (1<<i))
 
 /* increment with wrap-around */
-#define INCR(_l, _sz)   do {			\
+#घोषणा INCR(_l, _sz)   करो अणु			\
 		(_l)++;				\
 		(_l) &= ((_sz) - 1);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define ATH_RXBUF               512
-#define ATH_TXBUF               512
-#define ATH_TXBUF_RESERVE       5
-#define ATH_TXMAXTRY            13
-#define ATH_MAX_SW_RETRIES      30
+#घोषणा ATH_RXBUF               512
+#घोषणा ATH_TXBUF               512
+#घोषणा ATH_TXBUF_RESERVE       5
+#घोषणा ATH_TXMAXTRY            13
+#घोषणा ATH_MAX_SW_RETRIES      30
 
-#define TID_TO_WME_AC(_tid)				\
+#घोषणा TID_TO_WME_AC(_tid)				\
 	((((_tid) == 0) || ((_tid) == 3)) ? IEEE80211_AC_BE :	\
 	 (((_tid) == 1) || ((_tid) == 2)) ? IEEE80211_AC_BK :	\
 	 (((_tid) == 4) || ((_tid) == 5)) ? IEEE80211_AC_VI :	\
 	 IEEE80211_AC_VO)
 
-#define ATH_AGGR_DELIM_SZ          4
-#define ATH_AGGR_MINPLEN           256 /* in bytes, minimum packet length */
-/* number of delimiters for encryption padding */
-#define ATH_AGGR_ENCRYPTDELIM      10
+#घोषणा ATH_AGGR_DELIM_SZ          4
+#घोषणा ATH_AGGR_MINPLEN           256 /* in bytes, minimum packet length */
+/* number of delimiters क्रम encryption padding */
+#घोषणा ATH_AGGR_ENCRYPTDELIM      10
 /* minimum h/w qdepth to be sustained to maximize aggregation */
-#define ATH_AGGR_MIN_QDEPTH        2
-/* minimum h/w qdepth for non-aggregated traffic */
-#define ATH_NON_AGGR_MIN_QDEPTH    8
-#define ATH_HW_CHECK_POLL_INT      1000
-#define ATH_TXFIFO_DEPTH           8
-#define ATH_TX_ERROR               0x01
+#घोषणा ATH_AGGR_MIN_QDEPTH        2
+/* minimum h/w qdepth क्रम non-aggregated traffic */
+#घोषणा ATH_NON_AGGR_MIN_QDEPTH    8
+#घोषणा ATH_HW_CHECK_POLL_INT      1000
+#घोषणा ATH_TXFIFO_DEPTH           8
+#घोषणा ATH_TX_ERROR               0x01
 
-/* Stop tx traffic 1ms before the GO goes away */
-#define ATH_P2P_PS_STOP_TIME       1000
+/* Stop tx traffic 1ms beक्रमe the GO goes away */
+#घोषणा ATH_P2P_PS_STOP_TIME       1000
 
-#define IEEE80211_SEQ_SEQ_SHIFT    4
-#define IEEE80211_SEQ_MAX          4096
-#define IEEE80211_WEP_IVLEN        3
-#define IEEE80211_WEP_KIDLEN       1
-#define IEEE80211_WEP_CRCLEN       4
-#define IEEE80211_MAX_MPDU_LEN     (3840 + FCS_LEN +		\
+#घोषणा IEEE80211_SEQ_SEQ_SHIFT    4
+#घोषणा IEEE80211_SEQ_MAX          4096
+#घोषणा IEEE80211_WEP_IVLEN        3
+#घोषणा IEEE80211_WEP_KIDLEN       1
+#घोषणा IEEE80211_WEP_CRCLEN       4
+#घोषणा IEEE80211_MAX_MPDU_LEN     (3840 + FCS_LEN +		\
 				    (IEEE80211_WEP_IVLEN +	\
 				     IEEE80211_WEP_KIDLEN +	\
 				     IEEE80211_WEP_CRCLEN))
 
-/* return whether a bit at index _n in bitmap _bm is set
- * _sz is the size of the bitmap  */
-#define ATH_BA_ISSET(_bm, _n)  (((_n) < (WME_BA_BMP_SIZE)) &&		\
+/* वापस whether a bit at index _n in biपंचांगap _bm is set
+ * _sz is the size of the biपंचांगap  */
+#घोषणा ATH_BA_ISSET(_bm, _n)  (((_n) < (WME_BA_BMP_SIZE)) &&		\
 				((_bm)[(_n) >> 5] & (1 << ((_n) & 31))))
 
-/* return block-ack bitmap index given sequence and starting sequence */
-#define ATH_BA_INDEX(_st, _seq) (((_seq) - (_st)) & (IEEE80211_SEQ_MAX - 1))
+/* वापस block-ack biपंचांगap index given sequence and starting sequence */
+#घोषणा ATH_BA_INDEX(_st, _seq) (((_seq) - (_st)) & (IEEE80211_SEQ_MAX - 1))
 
-/* return the seqno for _start + _offset */
-#define ATH_BA_INDEX2SEQ(_seq, _offset) (((_seq) + (_offset)) & (IEEE80211_SEQ_MAX - 1))
+/* वापस the seqno क्रम _start + _offset */
+#घोषणा ATH_BA_INDEX2SEQ(_seq, _offset) (((_seq) + (_offset)) & (IEEE80211_SEQ_MAX - 1))
 
-/* returns delimiter padding required given the packet length */
-#define ATH_AGGR_GET_NDELIM(_len)					\
+/* वापसs delimiter padding required given the packet length */
+#घोषणा ATH_AGGR_GET_NDELIM(_len)					\
        (((_len) >= ATH_AGGR_MINPLEN) ? 0 :                             \
         DIV_ROUND_UP(ATH_AGGR_MINPLEN - (_len), ATH_AGGR_DELIM_SZ))
 
-#define BAW_WITHIN(_start, _bawsz, _seqno) \
+#घोषणा BAW_WITHIN(_start, _bawsz, _seqno) \
 	((((_seqno) - (_start)) & 4095) < (_bawsz))
 
-#define ATH_AN_2_TID(_an, _tidno) ath_node_to_tid(_an, _tidno)
+#घोषणा ATH_AN_2_TID(_an, _tidno) ath_node_to_tid(_an, _tidno)
 
-#define IS_HT_RATE(rate)   (rate & 0x80)
-#define IS_CCK_RATE(rate)  ((rate >= 0x18) && (rate <= 0x1e))
-#define IS_OFDM_RATE(rate) ((rate >= 0x8) && (rate <= 0xf))
+#घोषणा IS_HT_RATE(rate)   (rate & 0x80)
+#घोषणा IS_CCK_RATE(rate)  ((rate >= 0x18) && (rate <= 0x1e))
+#घोषणा IS_OFDM_RATE(rate) ((rate >= 0x8) && (rate <= 0xf))
 
-enum {
+क्रमागत अणु
        WLAN_RC_PHY_OFDM,
        WLAN_RC_PHY_CCK,
-};
+पूर्ण;
 
-struct ath_txq {
-	int mac80211_qnum; /* mac80211 queue number, -1 means not mac80211 Q */
+काष्ठा ath_txq अणु
+	पूर्णांक mac80211_qnum; /* mac80211 queue number, -1 means not mac80211 Q */
 	u32 axq_qnum; /* ath9k hardware queue number */
-	void *axq_link;
-	struct list_head axq_q;
+	व्योम *axq_link;
+	काष्ठा list_head axq_q;
 	spinlock_t axq_lock;
 	u32 axq_depth;
 	u32 axq_ampdu_depth;
 	bool axq_tx_inprogress;
-	struct list_head txq_fifo[ATH_TXFIFO_DEPTH];
+	काष्ठा list_head txq_fअगरo[ATH_TXFIFO_DEPTH];
 	u8 txq_headidx;
 	u8 txq_tailidx;
-	int pending_frames;
-	struct sk_buff_head complete_q;
-};
+	पूर्णांक pending_frames;
+	काष्ठा sk_buff_head complete_q;
+पूर्ण;
 
-struct ath_frame_info {
-	struct ath_buf *bf;
+काष्ठा ath_frame_info अणु
+	काष्ठा ath_buf *bf;
 	u16 framelen;
 	s8 txq;
 	u8 keyix;
@@ -180,79 +181,79 @@ struct ath_frame_info {
 	u8 retries : 6;
 	u8 dyn_smps : 1;
 	u8 baw_tracked : 1;
-	u8 tx_power;
-	enum ath9k_key_type keytype:2;
-};
+	u8 tx_घातer;
+	क्रमागत ath9k_key_type keytype:2;
+पूर्ण;
 
-struct ath_rxbuf {
-	struct list_head list;
-	struct sk_buff *bf_mpdu;
-	void *bf_desc;
+काष्ठा ath_rxbuf अणु
+	काष्ठा list_head list;
+	काष्ठा sk_buff *bf_mpdu;
+	व्योम *bf_desc;
 	dma_addr_t bf_daddr;
 	dma_addr_t bf_buf_addr;
-};
+पूर्ण;
 
 /**
- * enum buffer_type - Buffer type flags
+ * क्रमागत buffer_type - Buffer type flags
  *
  * @BUF_AMPDU: This buffer is an ampdu, as part of an aggregate (during TX)
  * @BUF_AGGR: Indicates whether the buffer can be aggregated
  *	(used in aggregation scheduling)
  */
-enum buffer_type {
+क्रमागत buffer_type अणु
 	BUF_AMPDU		= BIT(0),
 	BUF_AGGR		= BIT(1),
-};
+पूर्ण;
 
-#define bf_isampdu(bf)		(bf->bf_state.bf_type & BUF_AMPDU)
-#define bf_isaggr(bf)		(bf->bf_state.bf_type & BUF_AGGR)
+#घोषणा bf_isampdu(bf)		(bf->bf_state.bf_type & BUF_AMPDU)
+#घोषणा bf_isaggr(bf)		(bf->bf_state.bf_type & BUF_AGGR)
 
-struct ath_buf_state {
+काष्ठा ath_buf_state अणु
 	u8 bf_type;
 	u8 bfs_paprd;
 	u8 ndelim;
 	bool stale;
 	u16 seqno;
-	unsigned long bfs_paprd_timestamp;
-};
+	अचिन्हित दीर्घ bfs_paprd_बारtamp;
+पूर्ण;
 
-struct ath_buf {
-	struct list_head list;
-	struct ath_buf *bf_lastbf;	/* last buf of this unit (a frame or
+काष्ठा ath_buf अणु
+	काष्ठा list_head list;
+	काष्ठा ath_buf *bf_lastbf;	/* last buf of this unit (a frame or
 					   an aggregate) */
-	struct ath_buf *bf_next;	/* next subframe in the aggregate */
-	struct sk_buff *bf_mpdu;	/* enclosing frame structure */
-	void *bf_desc;			/* virtual addr of desc */
+	काष्ठा ath_buf *bf_next;	/* next subframe in the aggregate */
+	काष्ठा sk_buff *bf_mpdu;	/* enclosing frame काष्ठाure */
+	व्योम *bf_desc;			/* भव addr of desc */
 	dma_addr_t bf_daddr;		/* physical addr of desc */
-	dma_addr_t bf_buf_addr;	/* physical addr of data buffer, for DMA */
-	struct ieee80211_tx_rate rates[4];
-	struct ath_buf_state bf_state;
-};
+	dma_addr_t bf_buf_addr;	/* physical addr of data buffer, क्रम DMA */
+	काष्ठा ieee80211_tx_rate rates[4];
+	काष्ठा ath_buf_state bf_state;
+पूर्ण;
 
-struct ath_atx_tid {
-	struct list_head list;
-	struct sk_buff_head retry_q;
-	struct ath_node *an;
-	struct ath_txq *txq;
-	unsigned long tx_buf[BITS_TO_LONGS(ATH_TID_MAX_BUFS)];
+काष्ठा ath_atx_tid अणु
+	काष्ठा list_head list;
+	काष्ठा sk_buff_head retry_q;
+	काष्ठा ath_node *an;
+	काष्ठा ath_txq *txq;
+	अचिन्हित दीर्घ tx_buf[BITS_TO_LONGS(ATH_TID_MAX_BUFS)];
 	u16 seq_start;
 	u16 seq_next;
 	u16 baw_size;
 	u8 tidno;
-	int baw_head;   /* first un-acked tx buffer */
-	int baw_tail;   /* next unused tx buffer slot */
+	पूर्णांक baw_head;   /* first un-acked tx buffer */
+	पूर्णांक baw_tail;   /* next unused tx buffer slot */
 
 	s8 bar_index;
 	bool active;
 	bool clear_ps_filter;
-};
+पूर्ण;
 
-void ath_tx_queue_tid(struct ath_softc *sc, struct ath_atx_tid *tid);
+व्योम ath_tx_queue_tid(काष्ठा ath_softc *sc, काष्ठा ath_atx_tid *tid);
 
-struct ath_node {
-	struct ath_softc *sc;
-	struct ieee80211_sta *sta; /* station struct we're part of */
-	struct ieee80211_vif *vif; /* interface with which we're associated */
+काष्ठा ath_node अणु
+	काष्ठा ath_softc *sc;
+	काष्ठा ieee80211_sta *sta; /* station काष्ठा we're part of */
+	काष्ठा ieee80211_vअगर *vअगर; /* पूर्णांकerface with which we're associated */
 
 	u16 maxampdu;
 	u8 mpdudensity;
@@ -261,21 +262,21 @@ struct ath_node {
 	bool sleeping;
 	bool no_ps_filter;
 
-#ifdef CONFIG_ATH9K_STATION_STATISTICS
-	struct ath_rx_rate_stats rx_rate_stats;
-#endif
+#अगर_घोषित CONFIG_ATH9K_STATION_STATISTICS
+	काष्ठा ath_rx_rate_stats rx_rate_stats;
+#पूर्ण_अगर
 	u8 key_idx[4];
 
-	int ackto;
-	struct list_head list;
-};
+	पूर्णांक ackto;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct ath_tx_control {
-	struct ath_txq *txq;
-	struct ath_node *an;
-	struct ieee80211_sta *sta;
+काष्ठा ath_tx_control अणु
+	काष्ठा ath_txq *txq;
+	काष्ठा ath_node *an;
+	काष्ठा ieee80211_sta *sta;
 	u8 paprd;
-};
+पूर्ण;
 
 
 /**
@@ -283,78 +284,78 @@ struct ath_tx_control {
  *  not necessarily the same as the hardware queue number
  *  (axq_qnum).
  */
-struct ath_tx {
+काष्ठा ath_tx अणु
 	u32 txqsetup;
 	spinlock_t txbuflock;
-	struct list_head txbuf;
-	struct ath_txq txq[ATH9K_NUM_TX_QUEUES];
-	struct ath_descdma txdma;
-	struct ath_txq *txq_map[IEEE80211_NUM_ACS];
-	struct ath_txq *uapsdq;
+	काष्ठा list_head txbuf;
+	काष्ठा ath_txq txq[ATH9K_NUM_TX_QUEUES];
+	काष्ठा ath_descdma txdma;
+	काष्ठा ath_txq *txq_map[IEEE80211_NUM_ACS];
+	काष्ठा ath_txq *uapsdq;
 	u16 max_aggr_framelen[IEEE80211_NUM_ACS][4][32];
-};
+पूर्ण;
 
-struct ath_rx_edma {
-	struct sk_buff_head rx_fifo;
-	u32 rx_fifo_hwsize;
-};
+काष्ठा ath_rx_edma अणु
+	काष्ठा sk_buff_head rx_fअगरo;
+	u32 rx_fअगरo_hwsize;
+पूर्ण;
 
-struct ath_rx {
+काष्ठा ath_rx अणु
 	u8 defant;
 	u8 rxotherant;
 	bool discard_next;
 	u32 *rxlink;
 	u32 num_pkts;
-	struct list_head rxbuf;
-	struct ath_descdma rxdma;
-	struct ath_rx_edma rx_edma[ATH9K_RX_QUEUE_MAX];
+	काष्ठा list_head rxbuf;
+	काष्ठा ath_descdma rxdma;
+	काष्ठा ath_rx_edma rx_edma[ATH9K_RX_QUEUE_MAX];
 
-	struct ath_rxbuf *buf_hold;
-	struct sk_buff *frag;
+	काष्ठा ath_rxbuf *buf_hold;
+	काष्ठा sk_buff *frag;
 
 	u32 ampdu_ref;
-};
+पूर्ण;
 
 /*******************/
 /* Channel Context */
 /*******************/
 
-struct ath_acq {
-	struct list_head acq_new;
-	struct list_head acq_old;
+काष्ठा ath_acq अणु
+	काष्ठा list_head acq_new;
+	काष्ठा list_head acq_old;
 	spinlock_t lock;
-};
+पूर्ण;
 
-struct ath_chanctx {
-	struct cfg80211_chan_def chandef;
-	struct list_head vifs;
-	struct ath_acq acq[IEEE80211_NUM_ACS];
-	int hw_queue_base;
+काष्ठा ath_chanctx अणु
+	काष्ठा cfg80211_chan_def chandef;
+	काष्ठा list_head vअगरs;
+	काष्ठा ath_acq acq[IEEE80211_NUM_ACS];
+	पूर्णांक hw_queue_base;
 
-	/* do not dereference, use for comparison only */
-	struct ieee80211_vif *primary_sta;
+	/* करो not dereference, use क्रम comparison only */
+	काष्ठा ieee80211_vअगर *primary_sta;
 
-	struct ath_beacon_config beacon;
-	struct ath9k_hw_cal_data caldata;
-	struct timespec64 tsf_ts;
+	काष्ठा ath_beacon_config beacon;
+	काष्ठा ath9k_hw_cal_data caldata;
+	काष्ठा बारpec64 tsf_ts;
 	u64 tsf_val;
 	u32 last_beacon;
 
-	int flush_timeout;
-	u16 txpower;
-	u16 cur_txpower;
+	पूर्णांक flush_समयout;
+	u16 txघातer;
+	u16 cur_txघातer;
 	bool offchannel;
 	bool stopped;
 	bool active;
-	bool assigned;
-	bool switch_after_beacon;
+	bool asचिन्हित;
+	bool चयन_after_beacon;
 
-	short nvifs;
-	short nvifs_assigned;
-	unsigned int rxfilter;
-};
+	लघु nvअगरs;
+	लघु nvअगरs_asचिन्हित;
+	अचिन्हित पूर्णांक rxfilter;
+पूर्ण;
 
-enum ath_chanctx_event {
+क्रमागत ath_chanctx_event अणु
 	ATH_CHANCTX_EVENT_BEACON_PREPARE,
 	ATH_CHANCTX_EVENT_BEACON_SENT,
 	ATH_CHANCTX_EVENT_TSF_TIMER,
@@ -365,37 +366,37 @@ enum ath_chanctx_event {
 	ATH_CHANCTX_EVENT_UNASSIGN,
 	ATH_CHANCTX_EVENT_CHANGE,
 	ATH_CHANCTX_EVENT_ENABLE_MULTICHANNEL,
-};
+पूर्ण;
 
-enum ath_chanctx_state {
+क्रमागत ath_chanctx_state अणु
 	ATH_CHANCTX_STATE_IDLE,
 	ATH_CHANCTX_STATE_WAIT_FOR_BEACON,
 	ATH_CHANCTX_STATE_WAIT_FOR_TIMER,
 	ATH_CHANCTX_STATE_SWITCH,
 	ATH_CHANCTX_STATE_FORCE_ACTIVE,
-};
+पूर्ण;
 
-struct ath_chanctx_sched {
+काष्ठा ath_chanctx_sched अणु
 	bool beacon_pending;
 	bool beacon_adjust;
 	bool offchannel_pending;
-	bool wait_switch;
-	bool force_noa_update;
-	bool extend_absence;
+	bool रुको_चयन;
+	bool क्रमce_noa_update;
+	bool extend_असलence;
 	bool mgd_prepare_tx;
-	enum ath_chanctx_state state;
+	क्रमागत ath_chanctx_state state;
 	u8 beacon_miss;
 
 	u32 next_tbtt;
-	u32 switch_start_time;
-	unsigned int offchannel_duration;
-	unsigned int channel_switch_time;
+	u32 चयन_start_समय;
+	अचिन्हित पूर्णांक offchannel_duration;
+	अचिन्हित पूर्णांक channel_चयन_समय;
 
-	/* backup, in case the hardware timer fails */
-	struct timer_list timer;
-};
+	/* backup, in हाल the hardware समयr fails */
+	काष्ठा समयr_list समयr;
+पूर्ण;
 
-enum ath_offchannel_state {
+क्रमागत ath_offchannel_state अणु
 	ATH_OFFCHANNEL_IDLE,
 	ATH_OFFCHANNEL_PROBE_SEND,
 	ATH_OFFCHANNEL_PROBE_WAIT,
@@ -403,225 +404,225 @@ enum ath_offchannel_state {
 	ATH_OFFCHANNEL_ROC_START,
 	ATH_OFFCHANNEL_ROC_WAIT,
 	ATH_OFFCHANNEL_ROC_DONE,
-};
+पूर्ण;
 
-enum ath_roc_complete_reason {
+क्रमागत ath_roc_complete_reason अणु
 	ATH_ROC_COMPLETE_EXPIRE,
 	ATH_ROC_COMPLETE_ABORT,
 	ATH_ROC_COMPLETE_CANCEL,
-};
+पूर्ण;
 
-struct ath_offchannel {
-	struct ath_chanctx chan;
-	struct timer_list timer;
-	struct cfg80211_scan_request *scan_req;
-	struct ieee80211_vif *scan_vif;
-	int scan_idx;
-	enum ath_offchannel_state state;
-	struct ieee80211_channel *roc_chan;
-	struct ieee80211_vif *roc_vif;
-	int roc_duration;
-	int duration;
-};
+काष्ठा ath_offchannel अणु
+	काष्ठा ath_chanctx chan;
+	काष्ठा समयr_list समयr;
+	काष्ठा cfg80211_scan_request *scan_req;
+	काष्ठा ieee80211_vअगर *scan_vअगर;
+	पूर्णांक scan_idx;
+	क्रमागत ath_offchannel_state state;
+	काष्ठा ieee80211_channel *roc_chan;
+	काष्ठा ieee80211_vअगर *roc_vअगर;
+	पूर्णांक roc_duration;
+	पूर्णांक duration;
+पूर्ण;
 
-static inline struct ath_atx_tid *
-ath_node_to_tid(struct ath_node *an, u8 tidno)
-{
-	struct ieee80211_sta *sta = an->sta;
-	struct ieee80211_vif *vif = an->vif;
-	struct ieee80211_txq *txq;
+अटल अंतरभूत काष्ठा ath_atx_tid *
+ath_node_to_tid(काष्ठा ath_node *an, u8 tidno)
+अणु
+	काष्ठा ieee80211_sta *sta = an->sta;
+	काष्ठा ieee80211_vअगर *vअगर = an->vअगर;
+	काष्ठा ieee80211_txq *txq;
 
-	BUG_ON(!vif);
-	if (sta)
+	BUG_ON(!vअगर);
+	अगर (sta)
 		txq = sta->txq[tidno % ARRAY_SIZE(sta->txq)];
-	else
-		txq = vif->txq;
+	अन्यथा
+		txq = vअगर->txq;
 
-	return (struct ath_atx_tid *) txq->drv_priv;
-}
+	वापस (काष्ठा ath_atx_tid *) txq->drv_priv;
+पूर्ण
 
-#define case_rtn_string(val) case val: return #val
+#घोषणा हाल_rtn_string(val) हाल val: वापस #val
 
-#define ath_for_each_chanctx(_sc, _ctx)                             \
-	for (ctx = &sc->chanctx[0];                                 \
+#घोषणा ath_क्रम_each_chanctx(_sc, _ctx)                             \
+	क्रम (ctx = &sc->chanctx[0];                                 \
 	     ctx <= &sc->chanctx[ARRAY_SIZE(sc->chanctx) - 1];      \
 	     ctx++)
 
-void ath_chanctx_init(struct ath_softc *sc);
-void ath_chanctx_set_channel(struct ath_softc *sc, struct ath_chanctx *ctx,
-			     struct cfg80211_chan_def *chandef);
+व्योम ath_chanctx_init(काष्ठा ath_softc *sc);
+व्योम ath_chanctx_set_channel(काष्ठा ath_softc *sc, काष्ठा ath_chanctx *ctx,
+			     काष्ठा cfg80211_chan_def *chandef);
 
-#ifdef CONFIG_ATH9K_CHANNEL_CONTEXT
+#अगर_घोषित CONFIG_ATH9K_CHANNEL_CONTEXT
 
-static inline struct ath_chanctx *
-ath_chanctx_get(struct ieee80211_chanctx_conf *ctx)
-{
-	struct ath_chanctx **ptr = (void *) ctx->drv_priv;
-	return *ptr;
-}
+अटल अंतरभूत काष्ठा ath_chanctx *
+ath_chanctx_get(काष्ठा ieee80211_chanctx_conf *ctx)
+अणु
+	काष्ठा ath_chanctx **ptr = (व्योम *) ctx->drv_priv;
+	वापस *ptr;
+पूर्ण
 
-bool ath9k_is_chanctx_enabled(void);
-void ath9k_fill_chanctx_ops(void);
-void ath9k_init_channel_context(struct ath_softc *sc);
-void ath9k_offchannel_init(struct ath_softc *sc);
-void ath9k_deinit_channel_context(struct ath_softc *sc);
-int ath9k_init_p2p(struct ath_softc *sc);
-void ath9k_deinit_p2p(struct ath_softc *sc);
-void ath9k_p2p_remove_vif(struct ath_softc *sc,
-			  struct ieee80211_vif *vif);
-void ath9k_p2p_beacon_sync(struct ath_softc *sc);
-void ath9k_p2p_bss_info_changed(struct ath_softc *sc,
-				struct ieee80211_vif *vif);
-void ath9k_beacon_add_noa(struct ath_softc *sc, struct ath_vif *avp,
-			  struct sk_buff *skb);
-void ath9k_p2p_ps_timer(void *priv);
-void ath9k_chanctx_wake_queues(struct ath_softc *sc, struct ath_chanctx *ctx);
-void ath9k_chanctx_stop_queues(struct ath_softc *sc, struct ath_chanctx *ctx);
-void ath_chanctx_check_active(struct ath_softc *sc, struct ath_chanctx *ctx);
+bool ath9k_is_chanctx_enabled(व्योम);
+व्योम ath9k_fill_chanctx_ops(व्योम);
+व्योम ath9k_init_channel_context(काष्ठा ath_softc *sc);
+व्योम ath9k_offchannel_init(काष्ठा ath_softc *sc);
+व्योम ath9k_deinit_channel_context(काष्ठा ath_softc *sc);
+पूर्णांक ath9k_init_p2p(काष्ठा ath_softc *sc);
+व्योम ath9k_deinit_p2p(काष्ठा ath_softc *sc);
+व्योम ath9k_p2p_हटाओ_vअगर(काष्ठा ath_softc *sc,
+			  काष्ठा ieee80211_vअगर *vअगर);
+व्योम ath9k_p2p_beacon_sync(काष्ठा ath_softc *sc);
+व्योम ath9k_p2p_bss_info_changed(काष्ठा ath_softc *sc,
+				काष्ठा ieee80211_vअगर *vअगर);
+व्योम ath9k_beacon_add_noa(काष्ठा ath_softc *sc, काष्ठा ath_vअगर *avp,
+			  काष्ठा sk_buff *skb);
+व्योम ath9k_p2p_ps_समयr(व्योम *priv);
+व्योम ath9k_chanctx_wake_queues(काष्ठा ath_softc *sc, काष्ठा ath_chanctx *ctx);
+व्योम ath9k_chanctx_stop_queues(काष्ठा ath_softc *sc, काष्ठा ath_chanctx *ctx);
+व्योम ath_chanctx_check_active(काष्ठा ath_softc *sc, काष्ठा ath_chanctx *ctx);
 
-void ath_chanctx_beacon_recv_ev(struct ath_softc *sc,
-				enum ath_chanctx_event ev);
-void ath_chanctx_beacon_sent_ev(struct ath_softc *sc,
-				enum ath_chanctx_event ev);
-void ath_chanctx_event(struct ath_softc *sc, struct ieee80211_vif *vif,
-		       enum ath_chanctx_event ev);
-void ath_chanctx_set_next(struct ath_softc *sc, bool force);
-void ath_offchannel_next(struct ath_softc *sc);
-void ath_scan_complete(struct ath_softc *sc, bool abort);
-void ath_roc_complete(struct ath_softc *sc,
-		      enum ath_roc_complete_reason reason);
-struct ath_chanctx* ath_is_go_chanctx_present(struct ath_softc *sc);
+व्योम ath_chanctx_beacon_recv_ev(काष्ठा ath_softc *sc,
+				क्रमागत ath_chanctx_event ev);
+व्योम ath_chanctx_beacon_sent_ev(काष्ठा ath_softc *sc,
+				क्रमागत ath_chanctx_event ev);
+व्योम ath_chanctx_event(काष्ठा ath_softc *sc, काष्ठा ieee80211_vअगर *vअगर,
+		       क्रमागत ath_chanctx_event ev);
+व्योम ath_chanctx_set_next(काष्ठा ath_softc *sc, bool क्रमce);
+व्योम ath_offchannel_next(काष्ठा ath_softc *sc);
+व्योम ath_scan_complete(काष्ठा ath_softc *sc, bool पात);
+व्योम ath_roc_complete(काष्ठा ath_softc *sc,
+		      क्रमागत ath_roc_complete_reason reason);
+काष्ठा ath_chanctx* ath_is_go_chanctx_present(काष्ठा ath_softc *sc);
 
-#else
+#अन्यथा
 
-static inline bool ath9k_is_chanctx_enabled(void)
-{
-	return false;
-}
-static inline void ath9k_fill_chanctx_ops(void)
-{
-}
-static inline void ath9k_init_channel_context(struct ath_softc *sc)
-{
-}
-static inline void ath9k_offchannel_init(struct ath_softc *sc)
-{
-}
-static inline void ath9k_deinit_channel_context(struct ath_softc *sc)
-{
-}
-static inline void ath_chanctx_beacon_recv_ev(struct ath_softc *sc,
-					      enum ath_chanctx_event ev)
-{
-}
-static inline void ath_chanctx_beacon_sent_ev(struct ath_softc *sc,
-					      enum ath_chanctx_event ev)
-{
-}
-static inline void ath_chanctx_event(struct ath_softc *sc,
-				     struct ieee80211_vif *vif,
-				     enum ath_chanctx_event ev)
-{
-}
-static inline int ath9k_init_p2p(struct ath_softc *sc)
-{
-	return 0;
-}
-static inline void ath9k_deinit_p2p(struct ath_softc *sc)
-{
-}
-static inline void ath9k_p2p_remove_vif(struct ath_softc *sc,
-					struct ieee80211_vif *vif)
-{
-}
-static inline void ath9k_p2p_beacon_sync(struct ath_softc *sc)
-{
-}
-static inline void ath9k_p2p_bss_info_changed(struct ath_softc *sc,
-					      struct ieee80211_vif *vif)
-{
-}
-static inline void ath9k_beacon_add_noa(struct ath_softc *sc, struct ath_vif *avp,
-					struct sk_buff *skb)
-{
-}
-static inline void ath9k_p2p_ps_timer(struct ath_softc *sc)
-{
-}
-static inline void ath9k_chanctx_wake_queues(struct ath_softc *sc,
-					     struct ath_chanctx *ctx)
-{
-}
-static inline void ath9k_chanctx_stop_queues(struct ath_softc *sc,
-					     struct ath_chanctx *ctx)
-{
-}
-static inline void ath_chanctx_check_active(struct ath_softc *sc,
-					    struct ath_chanctx *ctx)
-{
-}
+अटल अंतरभूत bool ath9k_is_chanctx_enabled(व्योम)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत व्योम ath9k_fill_chanctx_ops(व्योम)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_init_channel_context(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_offchannel_init(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_deinit_channel_context(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath_chanctx_beacon_recv_ev(काष्ठा ath_softc *sc,
+					      क्रमागत ath_chanctx_event ev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath_chanctx_beacon_sent_ev(काष्ठा ath_softc *sc,
+					      क्रमागत ath_chanctx_event ev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath_chanctx_event(काष्ठा ath_softc *sc,
+				     काष्ठा ieee80211_vअगर *vअगर,
+				     क्रमागत ath_chanctx_event ev)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक ath9k_init_p2p(काष्ठा ath_softc *sc)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम ath9k_deinit_p2p(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_p2p_हटाओ_vअगर(काष्ठा ath_softc *sc,
+					काष्ठा ieee80211_vअगर *vअगर)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_p2p_beacon_sync(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_p2p_bss_info_changed(काष्ठा ath_softc *sc,
+					      काष्ठा ieee80211_vअगर *vअगर)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_beacon_add_noa(काष्ठा ath_softc *sc, काष्ठा ath_vअगर *avp,
+					काष्ठा sk_buff *skb)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_p2p_ps_समयr(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_chanctx_wake_queues(काष्ठा ath_softc *sc,
+					     काष्ठा ath_chanctx *ctx)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_chanctx_stop_queues(काष्ठा ath_softc *sc,
+					     काष्ठा ath_chanctx *ctx)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath_chanctx_check_active(काष्ठा ath_softc *sc,
+					    काष्ठा ath_chanctx *ctx)
+अणु
+पूर्ण
 
-#endif /* CONFIG_ATH9K_CHANNEL_CONTEXT */
+#पूर्ण_अगर /* CONFIG_ATH9K_CHANNEL_CONTEXT */
 
-static inline void ath_txq_lock(struct ath_softc *sc, struct ath_txq *txq)
-{
+अटल अंतरभूत व्योम ath_txq_lock(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq)
+अणु
 	spin_lock_bh(&txq->axq_lock);
-}
-static inline void ath_txq_unlock(struct ath_softc *sc, struct ath_txq *txq)
-{
+पूर्ण
+अटल अंतरभूत व्योम ath_txq_unlock(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq)
+अणु
 	spin_unlock_bh(&txq->axq_lock);
-}
+पूर्ण
 
-void ath_startrecv(struct ath_softc *sc);
-bool ath_stoprecv(struct ath_softc *sc);
-u32 ath_calcrxfilter(struct ath_softc *sc);
-int ath_rx_init(struct ath_softc *sc, int nbufs);
-void ath_rx_cleanup(struct ath_softc *sc);
-int ath_rx_tasklet(struct ath_softc *sc, int flush, bool hp);
-struct ath_txq *ath_txq_setup(struct ath_softc *sc, int qtype, int subtype);
-void ath_txq_unlock_complete(struct ath_softc *sc, struct ath_txq *txq);
-void ath_tx_cleanupq(struct ath_softc *sc, struct ath_txq *txq);
-bool ath_drain_all_txq(struct ath_softc *sc);
-void ath_draintxq(struct ath_softc *sc, struct ath_txq *txq);
-void ath_tx_node_init(struct ath_softc *sc, struct ath_node *an);
-void ath_tx_node_cleanup(struct ath_softc *sc, struct ath_node *an);
-void ath_txq_schedule(struct ath_softc *sc, struct ath_txq *txq);
-void ath_txq_schedule_all(struct ath_softc *sc);
-int ath_tx_init(struct ath_softc *sc, int nbufs);
-int ath_txq_update(struct ath_softc *sc, int qnum,
-		   struct ath9k_tx_queue_info *q);
-u32 ath_pkt_duration(struct ath_softc *sc, u8 rix, int pktlen,
-		     int width, int half_gi, bool shortPreamble);
-void ath_update_max_aggr_framelen(struct ath_softc *sc, int queue, int txop);
-void ath_assign_seq(struct ath_common *common, struct sk_buff *skb);
-int ath_tx_start(struct ieee80211_hw *hw, struct sk_buff *skb,
-		 struct ath_tx_control *txctl);
-void ath_tx_cabq(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		 struct sk_buff *skb);
-void ath_tx_tasklet(struct ath_softc *sc);
-void ath_tx_edma_tasklet(struct ath_softc *sc);
-int ath_tx_aggr_start(struct ath_softc *sc, struct ieee80211_sta *sta,
+व्योम ath_startrecv(काष्ठा ath_softc *sc);
+bool ath_stoprecv(काष्ठा ath_softc *sc);
+u32 ath_calcrxfilter(काष्ठा ath_softc *sc);
+पूर्णांक ath_rx_init(काष्ठा ath_softc *sc, पूर्णांक nbufs);
+व्योम ath_rx_cleanup(काष्ठा ath_softc *sc);
+पूर्णांक ath_rx_tasklet(काष्ठा ath_softc *sc, पूर्णांक flush, bool hp);
+काष्ठा ath_txq *ath_txq_setup(काष्ठा ath_softc *sc, पूर्णांक qtype, पूर्णांक subtype);
+व्योम ath_txq_unlock_complete(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq);
+व्योम ath_tx_cleanupq(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq);
+bool ath_drain_all_txq(काष्ठा ath_softc *sc);
+व्योम ath_draपूर्णांकxq(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq);
+व्योम ath_tx_node_init(काष्ठा ath_softc *sc, काष्ठा ath_node *an);
+व्योम ath_tx_node_cleanup(काष्ठा ath_softc *sc, काष्ठा ath_node *an);
+व्योम ath_txq_schedule(काष्ठा ath_softc *sc, काष्ठा ath_txq *txq);
+व्योम ath_txq_schedule_all(काष्ठा ath_softc *sc);
+पूर्णांक ath_tx_init(काष्ठा ath_softc *sc, पूर्णांक nbufs);
+पूर्णांक ath_txq_update(काष्ठा ath_softc *sc, पूर्णांक qnum,
+		   काष्ठा ath9k_tx_queue_info *q);
+u32 ath_pkt_duration(काष्ठा ath_softc *sc, u8 rix, पूर्णांक pktlen,
+		     पूर्णांक width, पूर्णांक half_gi, bool लघुPreamble);
+व्योम ath_update_max_aggr_framelen(काष्ठा ath_softc *sc, पूर्णांक queue, पूर्णांक txop);
+व्योम ath_assign_seq(काष्ठा ath_common *common, काष्ठा sk_buff *skb);
+पूर्णांक ath_tx_start(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *skb,
+		 काष्ठा ath_tx_control *txctl);
+व्योम ath_tx_cabq(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+		 काष्ठा sk_buff *skb);
+व्योम ath_tx_tasklet(काष्ठा ath_softc *sc);
+व्योम ath_tx_edma_tasklet(काष्ठा ath_softc *sc);
+पूर्णांक ath_tx_aggr_start(काष्ठा ath_softc *sc, काष्ठा ieee80211_sta *sta,
 		      u16 tid, u16 *ssn);
-void ath_tx_aggr_stop(struct ath_softc *sc, struct ieee80211_sta *sta, u16 tid);
+व्योम ath_tx_aggr_stop(काष्ठा ath_softc *sc, काष्ठा ieee80211_sta *sta, u16 tid);
 
-void ath_tx_aggr_wakeup(struct ath_softc *sc, struct ath_node *an);
-void ath_tx_aggr_sleep(struct ieee80211_sta *sta, struct ath_softc *sc,
-		       struct ath_node *an);
-void ath9k_release_buffered_frames(struct ieee80211_hw *hw,
-				   struct ieee80211_sta *sta,
-				   u16 tids, int nframes,
-				   enum ieee80211_frame_release_type reason,
+व्योम ath_tx_aggr_wakeup(काष्ठा ath_softc *sc, काष्ठा ath_node *an);
+व्योम ath_tx_aggr_sleep(काष्ठा ieee80211_sta *sta, काष्ठा ath_softc *sc,
+		       काष्ठा ath_node *an);
+व्योम ath9k_release_buffered_frames(काष्ठा ieee80211_hw *hw,
+				   काष्ठा ieee80211_sta *sta,
+				   u16 tids, पूर्णांक nframes,
+				   क्रमागत ieee80211_frame_release_type reason,
 				   bool more_data);
-void ath9k_wake_tx_queue(struct ieee80211_hw *hw, struct ieee80211_txq *queue);
+व्योम ath9k_wake_tx_queue(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_txq *queue);
 
 /********/
 /* VIFs */
 /********/
 
-#define P2P_DEFAULT_CTWIN 10
+#घोषणा P2P_DEFAULT_CTWIN 10
 
-struct ath_vif {
-	struct list_head list;
+काष्ठा ath_vअगर अणु
+	काष्ठा list_head list;
 
 	u16 seq_no;
 
@@ -630,51 +631,51 @@ struct ath_vif {
 	u16 aid;
 	bool assoc;
 
-	struct ieee80211_vif *vif;
-	struct ath_node mcast_node;
-	int av_bslot;
-	__le64 tsf_adjust; /* TSF adjustment for staggered beacons */
-	struct ath_buf *av_bcbuf;
-	struct ath_chanctx *chanctx;
+	काष्ठा ieee80211_vअगर *vअगर;
+	काष्ठा ath_node mcast_node;
+	पूर्णांक av_bslot;
+	__le64 tsf_adjust; /* TSF adjusपंचांगent क्रम staggered beacons */
+	काष्ठा ath_buf *av_bcbuf;
+	काष्ठा ath_chanctx *chanctx;
 
 	/* P2P Client */
-	struct ieee80211_noa_data noa;
+	काष्ठा ieee80211_noa_data noa;
 
 	/* P2P GO */
 	u8 noa_index;
 	u32 offchannel_start;
 	u32 offchannel_duration;
 
-	/* These are used for both periodic and one-shot */
+	/* These are used क्रम both periodic and one-shot */
 	u32 noa_start;
 	u32 noa_duration;
 	bool periodic_noa;
 	bool oneshot_noa;
-};
+पूर्ण;
 
-struct ath9k_vif_iter_data {
-	u8 hw_macaddr[ETH_ALEN]; /* address of the first vif */
+काष्ठा ath9k_vअगर_iter_data अणु
+	u8 hw_macaddr[ETH_ALEN]; /* address of the first vअगर */
 	u8 mask[ETH_ALEN]; /* bssid mask */
 	bool has_hw_macaddr;
-	u8 slottime;
+	u8 slotसमय;
 	bool beacons;
 
-	int naps;      /* number of AP vifs */
-	int nmeshes;   /* number of mesh vifs */
-	int nstations; /* number of station vifs */
-	int nadhocs;   /* number of adhoc vifs */
-	int nocbs;     /* number of OCB vifs */
-	int nbcnvifs;  /* number of beaconing vifs */
-	struct ieee80211_vif *primary_beacon_vif;
-	struct ieee80211_vif *primary_sta;
-};
+	पूर्णांक naps;      /* number of AP vअगरs */
+	पूर्णांक nmeshes;   /* number of mesh vअगरs */
+	पूर्णांक nstations; /* number of station vअगरs */
+	पूर्णांक nadhocs;   /* number of adhoc vअगरs */
+	पूर्णांक nocbs;     /* number of OCB vअगरs */
+	पूर्णांक nbcnvअगरs;  /* number of beaconing vअगरs */
+	काष्ठा ieee80211_vअगर *primary_beacon_vअगर;
+	काष्ठा ieee80211_vअगर *primary_sta;
+पूर्ण;
 
-void ath9k_calculate_iter_data(struct ath_softc *sc,
-			       struct ath_chanctx *ctx,
-			       struct ath9k_vif_iter_data *iter_data);
-void ath9k_calculate_summary_state(struct ath_softc *sc,
-				   struct ath_chanctx *ctx);
-void ath9k_set_txpower(struct ath_softc *sc, struct ieee80211_vif *vif);
+व्योम ath9k_calculate_iter_data(काष्ठा ath_softc *sc,
+			       काष्ठा ath_chanctx *ctx,
+			       काष्ठा ath9k_vअगर_iter_data *iter_data);
+व्योम ath9k_calculate_summary_state(काष्ठा ath_softc *sc,
+				   काष्ठा ath_chanctx *ctx);
+व्योम ath9k_set_txघातer(काष्ठा ath_softc *sc, काष्ठा ieee80211_vअगर *vअगर);
 
 /*******************/
 /* Beacon Handling */
@@ -682,472 +683,472 @@ void ath9k_set_txpower(struct ath_softc *sc, struct ieee80211_vif *vif);
 
 /*
  * Regardless of the number of beacons we stagger, (i.e. regardless of the
- * number of BSSIDs) if a given beacon does not go out even after waiting this
- * number of beacon intervals, the game's up.
+ * number of BSSIDs) अगर a given beacon करोes not go out even after रुकोing this
+ * number of beacon पूर्णांकervals, the game's up.
  */
-#define BSTUCK_THRESH           	9
-#define	ATH_BCBUF               	8
-#define ATH_DEFAULT_BINTVAL     	100 /* TU */
-#define ATH_DEFAULT_BMISS_LIMIT 	10
+#घोषणा BSTUCK_THRESH           	9
+#घोषणा	ATH_BCBUF               	8
+#घोषणा ATH_DEFAULT_BINTVAL     	100 /* TU */
+#घोषणा ATH_DEFAULT_BMISS_LIMIT 	10
 
-#define TSF_TO_TU(_h,_l) \
+#घोषणा TSF_TO_TU(_h,_l) \
 	((((u32)(_h)) << 22) | (((u32)(_l)) >> 10))
 
-struct ath_beacon {
-	enum {
+काष्ठा ath_beacon अणु
+	क्रमागत अणु
 		OK,		/* no change needed */
 		UPDATE,		/* update pending */
 		COMMIT		/* beacon sent, commit change */
-	} updateslot;		/* slot time update fsm */
+	पूर्ण updateslot;		/* slot समय update fsm */
 
 	u32 beaconq;
 	u32 bmisscnt;
-	struct ieee80211_vif *bslot[ATH_BCBUF];
-	int slottime;
-	int slotupdate;
-	struct ath_descdma bdma;
-	struct ath_txq *cabq;
-	struct list_head bbuf;
+	काष्ठा ieee80211_vअगर *bslot[ATH_BCBUF];
+	पूर्णांक slotसमय;
+	पूर्णांक slotupdate;
+	काष्ठा ath_descdma bdma;
+	काष्ठा ath_txq *cabq;
+	काष्ठा list_head bbuf;
 
 	bool tx_processed;
 	bool tx_last;
-};
+पूर्ण;
 
-void ath9k_beacon_tasklet(struct tasklet_struct *t);
-void ath9k_beacon_config(struct ath_softc *sc, struct ieee80211_vif *main_vif,
+व्योम ath9k_beacon_tasklet(काष्ठा tasklet_काष्ठा *t);
+व्योम ath9k_beacon_config(काष्ठा ath_softc *sc, काष्ठा ieee80211_vअगर *मुख्य_vअगर,
 			 bool beacons);
-void ath9k_beacon_assign_slot(struct ath_softc *sc, struct ieee80211_vif *vif);
-void ath9k_beacon_remove_slot(struct ath_softc *sc, struct ieee80211_vif *vif);
-void ath9k_beacon_ensure_primary_slot(struct ath_softc *sc);
-void ath9k_set_beacon(struct ath_softc *sc);
-bool ath9k_csa_is_finished(struct ath_softc *sc, struct ieee80211_vif *vif);
-void ath9k_csa_update(struct ath_softc *sc);
+व्योम ath9k_beacon_assign_slot(काष्ठा ath_softc *sc, काष्ठा ieee80211_vअगर *vअगर);
+व्योम ath9k_beacon_हटाओ_slot(काष्ठा ath_softc *sc, काष्ठा ieee80211_vअगर *vअगर);
+व्योम ath9k_beacon_ensure_primary_slot(काष्ठा ath_softc *sc);
+व्योम ath9k_set_beacon(काष्ठा ath_softc *sc);
+bool ath9k_csa_is_finished(काष्ठा ath_softc *sc, काष्ठा ieee80211_vअगर *vअगर);
+व्योम ath9k_csa_update(काष्ठा ath_softc *sc);
 
 /*******************/
 /* Link Monitoring */
 /*******************/
 
-#define ATH_STA_SHORT_CALINTERVAL 1000    /* 1 second */
-#define ATH_AP_SHORT_CALINTERVAL  100     /* 100 ms */
-#define ATH_ANI_POLLINTERVAL_OLD  100     /* 100 ms */
-#define ATH_ANI_POLLINTERVAL_NEW  1000    /* 1000 ms */
-#define ATH_LONG_CALINTERVAL_INT  1000    /* 1000 ms */
-#define ATH_LONG_CALINTERVAL      30000   /* 30 seconds */
-#define ATH_RESTART_CALINTERVAL   1200000 /* 20 minutes */
-#define ATH_ANI_MAX_SKIP_COUNT    10
-#define ATH_PAPRD_TIMEOUT         100 /* msecs */
-#define ATH_PLL_WORK_INTERVAL     100
+#घोषणा ATH_STA_SHORT_CALINTERVAL 1000    /* 1 second */
+#घोषणा ATH_AP_SHORT_CALINTERVAL  100     /* 100 ms */
+#घोषणा ATH_ANI_POLLINTERVAL_OLD  100     /* 100 ms */
+#घोषणा ATH_ANI_POLLINTERVAL_NEW  1000    /* 1000 ms */
+#घोषणा ATH_LONG_CALINTERVAL_INT  1000    /* 1000 ms */
+#घोषणा ATH_LONG_CALINTERVAL      30000   /* 30 seconds */
+#घोषणा ATH_RESTART_CALINTERVAL   1200000 /* 20 minutes */
+#घोषणा ATH_ANI_MAX_SKIP_COUNT    10
+#घोषणा ATH_PAPRD_TIMEOUT         100 /* msecs */
+#घोषणा ATH_PLL_WORK_INTERVAL     100
 
-void ath_hw_check_work(struct work_struct *work);
-void ath_reset_work(struct work_struct *work);
-bool ath_hw_check(struct ath_softc *sc);
-void ath_hw_pll_work(struct work_struct *work);
-void ath_paprd_calibrate(struct work_struct *work);
-void ath_ani_calibrate(struct timer_list *t);
-void ath_start_ani(struct ath_softc *sc);
-void ath_stop_ani(struct ath_softc *sc);
-void ath_check_ani(struct ath_softc *sc);
-int ath_update_survey_stats(struct ath_softc *sc);
-void ath_update_survey_nf(struct ath_softc *sc, int channel);
-void ath9k_queue_reset(struct ath_softc *sc, enum ath_reset_type type);
-void ath_ps_full_sleep(struct timer_list *t);
-void __ath9k_flush(struct ieee80211_hw *hw, u32 queues, bool drop,
-		   bool sw_pending, bool timeout_override);
+व्योम ath_hw_check_work(काष्ठा work_काष्ठा *work);
+व्योम ath_reset_work(काष्ठा work_काष्ठा *work);
+bool ath_hw_check(काष्ठा ath_softc *sc);
+व्योम ath_hw_pll_work(काष्ठा work_काष्ठा *work);
+व्योम ath_paprd_calibrate(काष्ठा work_काष्ठा *work);
+व्योम ath_ani_calibrate(काष्ठा समयr_list *t);
+व्योम ath_start_ani(काष्ठा ath_softc *sc);
+व्योम ath_stop_ani(काष्ठा ath_softc *sc);
+व्योम ath_check_ani(काष्ठा ath_softc *sc);
+पूर्णांक ath_update_survey_stats(काष्ठा ath_softc *sc);
+व्योम ath_update_survey_nf(काष्ठा ath_softc *sc, पूर्णांक channel);
+व्योम ath9k_queue_reset(काष्ठा ath_softc *sc, क्रमागत ath_reset_type type);
+व्योम ath_ps_full_sleep(काष्ठा समयr_list *t);
+व्योम __ath9k_flush(काष्ठा ieee80211_hw *hw, u32 queues, bool drop,
+		   bool sw_pending, bool समयout_override);
 
 /**********/
 /* BTCOEX */
 /**********/
 
-#define ATH_DUMP_BTCOEX(_s, _val)				\
-	do {							\
-		len += scnprintf(buf + len, size - len,		\
+#घोषणा ATH_DUMP_BTCOEX(_s, _val)				\
+	करो अणु							\
+		len += scnम_लिखो(buf + len, size - len,		\
 				 "%20s : %10d\n", _s, (_val));	\
-	} while (0)
+	पूर्ण जबतक (0)
 
-enum bt_op_flags {
+क्रमागत bt_op_flags अणु
 	BT_OP_PRIORITY_DETECTED,
 	BT_OP_SCAN,
-};
+पूर्ण;
 
-struct ath_btcoex {
+काष्ठा ath_btcoex अणु
 	spinlock_t btcoex_lock;
-	struct timer_list period_timer; /* Timer for BT period */
-	struct timer_list no_stomp_timer;
+	काष्ठा समयr_list period_समयr; /* Timer क्रम BT period */
+	काष्ठा समयr_list no_stomp_समयr;
 	u32 bt_priority_cnt;
-	unsigned long bt_priority_time;
-	unsigned long op_flags;
-	int bt_stomp_type; /* Types of BT stomping */
+	अचिन्हित दीर्घ bt_priority_समय;
+	अचिन्हित दीर्घ op_flags;
+	पूर्णांक bt_stomp_type; /* Types of BT stomping */
 	u32 btcoex_no_stomp; /* in msec */
 	u32 btcoex_period; /* in msec */
 	u32 btscan_no_stomp; /* in msec */
 	u32 duty_cycle;
-	u32 bt_wait_time;
-	int rssi_count;
-	struct ath_mci_profile mci;
+	u32 bt_रुको_समय;
+	पूर्णांक rssi_count;
+	काष्ठा ath_mci_profile mci;
 	u8 stomp_audio;
-};
+पूर्ण;
 
-#ifdef CONFIG_ATH9K_BTCOEX_SUPPORT
-int ath9k_init_btcoex(struct ath_softc *sc);
-void ath9k_deinit_btcoex(struct ath_softc *sc);
-void ath9k_start_btcoex(struct ath_softc *sc);
-void ath9k_stop_btcoex(struct ath_softc *sc);
-void ath9k_btcoex_timer_resume(struct ath_softc *sc);
-void ath9k_btcoex_timer_pause(struct ath_softc *sc);
-void ath9k_btcoex_handle_interrupt(struct ath_softc *sc, u32 status);
-u16 ath9k_btcoex_aggr_limit(struct ath_softc *sc, u32 max_4ms_framelen);
-void ath9k_btcoex_stop_gen_timer(struct ath_softc *sc);
-int ath9k_dump_btcoex(struct ath_softc *sc, u8 *buf, u32 size);
-#else
-static inline int ath9k_init_btcoex(struct ath_softc *sc)
-{
-	return 0;
-}
-static inline void ath9k_deinit_btcoex(struct ath_softc *sc)
-{
-}
-static inline void ath9k_start_btcoex(struct ath_softc *sc)
-{
-}
-static inline void ath9k_stop_btcoex(struct ath_softc *sc)
-{
-}
-static inline void ath9k_btcoex_handle_interrupt(struct ath_softc *sc,
+#अगर_घोषित CONFIG_ATH9K_BTCOEX_SUPPORT
+पूर्णांक ath9k_init_btcoex(काष्ठा ath_softc *sc);
+व्योम ath9k_deinit_btcoex(काष्ठा ath_softc *sc);
+व्योम ath9k_start_btcoex(काष्ठा ath_softc *sc);
+व्योम ath9k_stop_btcoex(काष्ठा ath_softc *sc);
+व्योम ath9k_btcoex_समयr_resume(काष्ठा ath_softc *sc);
+व्योम ath9k_btcoex_समयr_छोड़ो(काष्ठा ath_softc *sc);
+व्योम ath9k_btcoex_handle_पूर्णांकerrupt(काष्ठा ath_softc *sc, u32 status);
+u16 ath9k_btcoex_aggr_limit(काष्ठा ath_softc *sc, u32 max_4ms_framelen);
+व्योम ath9k_btcoex_stop_gen_समयr(काष्ठा ath_softc *sc);
+पूर्णांक ath9k_dump_btcoex(काष्ठा ath_softc *sc, u8 *buf, u32 size);
+#अन्यथा
+अटल अंतरभूत पूर्णांक ath9k_init_btcoex(काष्ठा ath_softc *sc)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम ath9k_deinit_btcoex(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_start_btcoex(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_stop_btcoex(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_btcoex_handle_पूर्णांकerrupt(काष्ठा ath_softc *sc,
 						 u32 status)
-{
-}
-static inline u16 ath9k_btcoex_aggr_limit(struct ath_softc *sc,
+अणु
+पूर्ण
+अटल अंतरभूत u16 ath9k_btcoex_aggr_limit(काष्ठा ath_softc *sc,
 					  u32 max_4ms_framelen)
-{
-	return 0;
-}
-static inline void ath9k_btcoex_stop_gen_timer(struct ath_softc *sc)
-{
-}
-static inline int ath9k_dump_btcoex(struct ath_softc *sc, u8 *buf, u32 size)
-{
-	return 0;
-}
-#endif /* CONFIG_ATH9K_BTCOEX_SUPPORT */
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम ath9k_btcoex_stop_gen_समयr(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक ath9k_dump_btcoex(काष्ठा ath_softc *sc, u8 *buf, u32 size)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ATH9K_BTCOEX_SUPPORT */
 
 /********************/
 /*   LED Control    */
 /********************/
 
-#define ATH_LED_PIN_DEF 		1
-#define ATH_LED_PIN_9287		8
-#define ATH_LED_PIN_9300		10
-#define ATH_LED_PIN_9485		6
-#define ATH_LED_PIN_9462		4
+#घोषणा ATH_LED_PIN_DEF 		1
+#घोषणा ATH_LED_PIN_9287		8
+#घोषणा ATH_LED_PIN_9300		10
+#घोषणा ATH_LED_PIN_9485		6
+#घोषणा ATH_LED_PIN_9462		4
 
-#ifdef CONFIG_MAC80211_LEDS
-void ath_init_leds(struct ath_softc *sc);
-void ath_deinit_leds(struct ath_softc *sc);
-#else
-static inline void ath_init_leds(struct ath_softc *sc)
-{
-}
+#अगर_घोषित CONFIG_MAC80211_LEDS
+व्योम ath_init_leds(काष्ठा ath_softc *sc);
+व्योम ath_deinit_leds(काष्ठा ath_softc *sc);
+#अन्यथा
+अटल अंतरभूत व्योम ath_init_leds(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
 
-static inline void ath_deinit_leds(struct ath_softc *sc)
-{
-}
-#endif
+अटल अंतरभूत व्योम ath_deinit_leds(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /************************/
 /* Wake on Wireless LAN */
 /************************/
 
-#ifdef CONFIG_ATH9K_WOW
-void ath9k_init_wow(struct ieee80211_hw *hw);
-void ath9k_deinit_wow(struct ieee80211_hw *hw);
-int ath9k_suspend(struct ieee80211_hw *hw,
-		  struct cfg80211_wowlan *wowlan);
-int ath9k_resume(struct ieee80211_hw *hw);
-void ath9k_set_wakeup(struct ieee80211_hw *hw, bool enabled);
-#else
-static inline void ath9k_init_wow(struct ieee80211_hw *hw)
-{
-}
-static inline void ath9k_deinit_wow(struct ieee80211_hw *hw)
-{
-}
-static inline int ath9k_suspend(struct ieee80211_hw *hw,
-				struct cfg80211_wowlan *wowlan)
-{
-	return 0;
-}
-static inline int ath9k_resume(struct ieee80211_hw *hw)
-{
-	return 0;
-}
-static inline void ath9k_set_wakeup(struct ieee80211_hw *hw, bool enabled)
-{
-}
-#endif /* CONFIG_ATH9K_WOW */
+#अगर_घोषित CONFIG_ATH9K_WOW
+व्योम ath9k_init_wow(काष्ठा ieee80211_hw *hw);
+व्योम ath9k_deinit_wow(काष्ठा ieee80211_hw *hw);
+पूर्णांक ath9k_suspend(काष्ठा ieee80211_hw *hw,
+		  काष्ठा cfg80211_wowlan *wowlan);
+पूर्णांक ath9k_resume(काष्ठा ieee80211_hw *hw);
+व्योम ath9k_set_wakeup(काष्ठा ieee80211_hw *hw, bool enabled);
+#अन्यथा
+अटल अंतरभूत व्योम ath9k_init_wow(काष्ठा ieee80211_hw *hw)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ath9k_deinit_wow(काष्ठा ieee80211_hw *hw)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक ath9k_suspend(काष्ठा ieee80211_hw *hw,
+				काष्ठा cfg80211_wowlan *wowlan)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक ath9k_resume(काष्ठा ieee80211_hw *hw)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम ath9k_set_wakeup(काष्ठा ieee80211_hw *hw, bool enabled)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ATH9K_WOW */
 
 /*******************************/
-/* Antenna diversity/combining */
+/* Antenna भागersity/combining */
 /*******************************/
 
-#define ATH_ANT_RX_CURRENT_SHIFT 4
-#define ATH_ANT_RX_MAIN_SHIFT 2
-#define ATH_ANT_RX_MASK 0x3
+#घोषणा ATH_ANT_RX_CURRENT_SHIFT 4
+#घोषणा ATH_ANT_RX_MAIN_SHIFT 2
+#घोषणा ATH_ANT_RX_MASK 0x3
 
-#define ATH_ANT_DIV_COMB_SHORT_SCAN_INTR 50
-#define ATH_ANT_DIV_COMB_SHORT_SCAN_PKTCOUNT 0x100
-#define ATH_ANT_DIV_COMB_MAX_PKTCOUNT 0x200
-#define ATH_ANT_DIV_COMB_INIT_COUNT 95
-#define ATH_ANT_DIV_COMB_MAX_COUNT 100
-#define ATH_ANT_DIV_COMB_ALT_ANT_RATIO 30
-#define ATH_ANT_DIV_COMB_ALT_ANT_RATIO2 20
-#define ATH_ANT_DIV_COMB_ALT_ANT_RATIO_LOW_RSSI 50
-#define ATH_ANT_DIV_COMB_ALT_ANT_RATIO2_LOW_RSSI 50
+#घोषणा ATH_ANT_DIV_COMB_SHORT_SCAN_INTR 50
+#घोषणा ATH_ANT_DIV_COMB_SHORT_SCAN_PKTCOUNT 0x100
+#घोषणा ATH_ANT_DIV_COMB_MAX_PKTCOUNT 0x200
+#घोषणा ATH_ANT_DIV_COMB_INIT_COUNT 95
+#घोषणा ATH_ANT_DIV_COMB_MAX_COUNT 100
+#घोषणा ATH_ANT_DIV_COMB_ALT_ANT_RATIO 30
+#घोषणा ATH_ANT_DIV_COMB_ALT_ANT_RATIO2 20
+#घोषणा ATH_ANT_DIV_COMB_ALT_ANT_RATIO_LOW_RSSI 50
+#घोषणा ATH_ANT_DIV_COMB_ALT_ANT_RATIO2_LOW_RSSI 50
 
-#define ATH_ANT_DIV_COMB_LNA1_DELTA_HI -4
-#define ATH_ANT_DIV_COMB_LNA1_DELTA_MID -2
-#define ATH_ANT_DIV_COMB_LNA1_DELTA_LOW 2
+#घोषणा ATH_ANT_DIV_COMB_LNA1_DELTA_HI -4
+#घोषणा ATH_ANT_DIV_COMB_LNA1_DELTA_MID -2
+#घोषणा ATH_ANT_DIV_COMB_LNA1_DELTA_LOW 2
 
-struct ath_ant_comb {
+काष्ठा ath_ant_comb अणु
 	u16 count;
 	u16 total_pkt_count;
 	bool scan;
 	bool scan_not_start;
-	int main_total_rssi;
-	int alt_total_rssi;
-	int alt_recv_cnt;
-	int main_recv_cnt;
-	int rssi_lna1;
-	int rssi_lna2;
-	int rssi_add;
-	int rssi_sub;
-	int rssi_first;
-	int rssi_second;
-	int rssi_third;
-	int ant_ratio;
-	int ant_ratio2;
+	पूर्णांक मुख्य_total_rssi;
+	पूर्णांक alt_total_rssi;
+	पूर्णांक alt_recv_cnt;
+	पूर्णांक मुख्य_recv_cnt;
+	पूर्णांक rssi_lna1;
+	पूर्णांक rssi_lna2;
+	पूर्णांक rssi_add;
+	पूर्णांक rssi_sub;
+	पूर्णांक rssi_first;
+	पूर्णांक rssi_second;
+	पूर्णांक rssi_third;
+	पूर्णांक ant_ratio;
+	पूर्णांक ant_ratio2;
 	bool alt_good;
-	int quick_scan_cnt;
-	enum ath9k_ant_div_comb_lna_conf main_conf;
-	enum ath9k_ant_div_comb_lna_conf first_quick_scan_conf;
-	enum ath9k_ant_div_comb_lna_conf second_quick_scan_conf;
+	पूर्णांक quick_scan_cnt;
+	क्रमागत ath9k_ant_भाग_comb_lna_conf मुख्य_conf;
+	क्रमागत ath9k_ant_भाग_comb_lna_conf first_quick_scan_conf;
+	क्रमागत ath9k_ant_भाग_comb_lna_conf second_quick_scan_conf;
 	bool first_ratio;
 	bool second_ratio;
-	unsigned long scan_start_time;
+	अचिन्हित दीर्घ scan_start_समय;
 
 	/*
-	 * Card-specific config values.
+	 * Card-specअगरic config values.
 	 */
-	int low_rssi_thresh;
-	int fast_div_bias;
-};
+	पूर्णांक low_rssi_thresh;
+	पूर्णांक fast_भाग_bias;
+पूर्ण;
 
-void ath_ant_comb_scan(struct ath_softc *sc, struct ath_rx_status *rs);
+व्योम ath_ant_comb_scan(काष्ठा ath_softc *sc, काष्ठा ath_rx_status *rs);
 
 /********************/
 /* Main driver core */
 /********************/
 
-#define ATH9K_PCI_CUS198          0x0001
-#define ATH9K_PCI_CUS230          0x0002
-#define ATH9K_PCI_CUS217          0x0004
-#define ATH9K_PCI_CUS252          0x0008
-#define ATH9K_PCI_WOW             0x0010
-#define ATH9K_PCI_BT_ANT_DIV      0x0020
-#define ATH9K_PCI_D3_L1_WAR       0x0040
-#define ATH9K_PCI_AR9565_1ANT     0x0080
-#define ATH9K_PCI_AR9565_2ANT     0x0100
-#define ATH9K_PCI_NO_PLL_PWRSAVE  0x0200
-#define ATH9K_PCI_KILLER          0x0400
-#define ATH9K_PCI_LED_ACT_HI      0x0800
+#घोषणा ATH9K_PCI_CUS198          0x0001
+#घोषणा ATH9K_PCI_CUS230          0x0002
+#घोषणा ATH9K_PCI_CUS217          0x0004
+#घोषणा ATH9K_PCI_CUS252          0x0008
+#घोषणा ATH9K_PCI_WOW             0x0010
+#घोषणा ATH9K_PCI_BT_ANT_DIV      0x0020
+#घोषणा ATH9K_PCI_D3_L1_WAR       0x0040
+#घोषणा ATH9K_PCI_AR9565_1ANT     0x0080
+#घोषणा ATH9K_PCI_AR9565_2ANT     0x0100
+#घोषणा ATH9K_PCI_NO_PLL_PWRSAVE  0x0200
+#घोषणा ATH9K_PCI_KILLER          0x0400
+#घोषणा ATH9K_PCI_LED_ACT_HI      0x0800
 
 /*
  * Default cache line size, in bytes.
  * Used when PCI device not fully initialized by bootrom/BIOS
 */
-#define DEFAULT_CACHELINE       32
-#define ATH_CABQ_READY_TIME     80      /* % of beacon interval */
-#define ATH_TXPOWER_MAX         100     /* .5 dBm units */
-#define MAX_GTT_CNT             5
+#घोषणा DEFAULT_CACHELINE       32
+#घोषणा ATH_CABQ_READY_TIME     80      /* % of beacon पूर्णांकerval */
+#घोषणा ATH_TXPOWER_MAX         100     /* .5 dBm units */
+#घोषणा MAX_GTT_CNT             5
 
 /* Powersave flags */
-#define PS_WAIT_FOR_BEACON        BIT(0)
-#define PS_WAIT_FOR_CAB           BIT(1)
-#define PS_WAIT_FOR_PSPOLL_DATA   BIT(2)
-#define PS_WAIT_FOR_TX_ACK        BIT(3)
-#define PS_BEACON_SYNC            BIT(4)
-#define PS_WAIT_FOR_ANI           BIT(5)
+#घोषणा PS_WAIT_FOR_BEACON        BIT(0)
+#घोषणा PS_WAIT_FOR_CAB           BIT(1)
+#घोषणा PS_WAIT_FOR_PSPOLL_DATA   BIT(2)
+#घोषणा PS_WAIT_FOR_TX_ACK        BIT(3)
+#घोषणा PS_BEACON_SYNC            BIT(4)
+#घोषणा PS_WAIT_FOR_ANI           BIT(5)
 
-#define ATH9K_NUM_CHANCTX  2 /* supports 2 operating channels */
+#घोषणा ATH9K_NUM_CHANCTX  2 /* supports 2 operating channels */
 
-struct ath_softc {
-	struct ieee80211_hw *hw;
-	struct device *dev;
+काष्ठा ath_softc अणु
+	काष्ठा ieee80211_hw *hw;
+	काष्ठा device *dev;
 
-	struct survey_info *cur_survey;
-	struct survey_info survey[ATH9K_NUM_CHANNELS];
+	काष्ठा survey_info *cur_survey;
+	काष्ठा survey_info survey[ATH9K_NUM_CHANNELS];
 
-	spinlock_t intr_lock;
-	struct tasklet_struct intr_tq;
-	struct tasklet_struct bcon_tasklet;
-	struct ath_hw *sc_ah;
-	void __iomem *mem;
-	int irq;
+	spinlock_t पूर्णांकr_lock;
+	काष्ठा tasklet_काष्ठा पूर्णांकr_tq;
+	काष्ठा tasklet_काष्ठा bcon_tasklet;
+	काष्ठा ath_hw *sc_ah;
+	व्योम __iomem *mem;
+	पूर्णांक irq;
 	spinlock_t sc_serial_rw;
 	spinlock_t sc_pm_lock;
 	spinlock_t sc_pcu_lock;
-	struct mutex mutex;
-	struct work_struct paprd_work;
-	struct work_struct hw_reset_work;
-	struct completion paprd_complete;
-	wait_queue_head_t tx_wait;
+	काष्ठा mutex mutex;
+	काष्ठा work_काष्ठा paprd_work;
+	काष्ठा work_काष्ठा hw_reset_work;
+	काष्ठा completion paprd_complete;
+	रुको_queue_head_t tx_रुको;
 
-#ifdef CONFIG_ATH9K_CHANNEL_CONTEXT
-	struct work_struct chanctx_work;
-	struct ath_gen_timer *p2p_ps_timer;
-	struct ath_vif *p2p_ps_vif;
-	struct ath_chanctx_sched sched;
-	struct ath_offchannel offchannel;
-	struct ath_chanctx *next_chan;
-	struct completion go_beacon;
-	struct timespec64 last_event_time;
-#endif
+#अगर_घोषित CONFIG_ATH9K_CHANNEL_CONTEXT
+	काष्ठा work_काष्ठा chanctx_work;
+	काष्ठा ath_gen_समयr *p2p_ps_समयr;
+	काष्ठा ath_vअगर *p2p_ps_vअगर;
+	काष्ठा ath_chanctx_sched sched;
+	काष्ठा ath_offchannel offchannel;
+	काष्ठा ath_chanctx *next_chan;
+	काष्ठा completion go_beacon;
+	काष्ठा बारpec64 last_event_समय;
+#पूर्ण_अगर
 
-	unsigned long driver_data;
+	अचिन्हित दीर्घ driver_data;
 
 	u8 gtt_cnt;
-	u32 intrstatus;
+	u32 पूर्णांकrstatus;
 	u16 ps_flags; /* PS_* */
 	bool ps_enabled;
 	bool ps_idle;
-	short nbcnvifs;
-	unsigned long ps_usecount;
+	लघु nbcnvअगरs;
+	अचिन्हित दीर्घ ps_usecount;
 
-	struct ath_rx rx;
-	struct ath_tx tx;
-	struct ath_beacon beacon;
+	काष्ठा ath_rx rx;
+	काष्ठा ath_tx tx;
+	काष्ठा ath_beacon beacon;
 
-	struct cfg80211_chan_def cur_chandef;
-	struct ath_chanctx chanctx[ATH9K_NUM_CHANCTX];
-	struct ath_chanctx *cur_chan;
+	काष्ठा cfg80211_chan_def cur_chandef;
+	काष्ठा ath_chanctx chanctx[ATH9K_NUM_CHANCTX];
+	काष्ठा ath_chanctx *cur_chan;
 	spinlock_t chan_lock;
 
-#ifdef CONFIG_MAC80211_LEDS
-	bool led_registered;
-	char led_name[32];
-	struct led_classdev led_cdev;
-#endif
+#अगर_घोषित CONFIG_MAC80211_LEDS
+	bool led_रेजिस्टरed;
+	अक्षर led_name[32];
+	काष्ठा led_classdev led_cdev;
+#पूर्ण_अगर
 
-#ifdef CONFIG_ATH9K_DEBUGFS
-	struct ath9k_debug debug;
-#endif
-	struct delayed_work hw_check_work;
-	struct delayed_work hw_pll_work;
-	struct timer_list sleep_timer;
+#अगर_घोषित CONFIG_ATH9K_DEBUGFS
+	काष्ठा ath9k_debug debug;
+#पूर्ण_अगर
+	काष्ठा delayed_work hw_check_work;
+	काष्ठा delayed_work hw_pll_work;
+	काष्ठा समयr_list sleep_समयr;
 
-#ifdef CONFIG_ATH9K_BTCOEX_SUPPORT
-	struct ath_btcoex btcoex;
-	struct ath_mci_coex mci_coex;
-	struct work_struct mci_work;
-#endif
+#अगर_घोषित CONFIG_ATH9K_BTCOEX_SUPPORT
+	काष्ठा ath_btcoex btcoex;
+	काष्ठा ath_mci_coex mci_coex;
+	काष्ठा work_काष्ठा mci_work;
+#पूर्ण_अगर
 
-	struct ath_descdma txsdma;
+	काष्ठा ath_descdma txsdma;
 
-	struct ath_ant_comb ant_comb;
+	काष्ठा ath_ant_comb ant_comb;
 	u8 ant_tx, ant_rx;
-	struct dfs_pattern_detector *dfs_detector;
+	काष्ठा dfs_pattern_detector *dfs_detector;
 	u64 dfs_prev_pulse_ts;
 	u32 wow_enabled;
 
-	struct ath_spec_scan_priv spec_priv;
+	काष्ठा ath_spec_scan_priv spec_priv;
 
-	struct ieee80211_vif *tx99_vif;
-	struct sk_buff *tx99_skb;
+	काष्ठा ieee80211_vअगर *tx99_vअगर;
+	काष्ठा sk_buff *tx99_skb;
 	bool tx99_state;
-	s16 tx99_power;
+	s16 tx99_घातer;
 
-#ifdef CONFIG_ATH9K_WOW
-	u32 wow_intr_before_sleep;
-	bool force_wow;
-#endif
+#अगर_घोषित CONFIG_ATH9K_WOW
+	u32 wow_पूर्णांकr_beक्रमe_sleep;
+	bool क्रमce_wow;
+#पूर्ण_अगर
 
-#ifdef CONFIG_ATH9K_HWRNG
+#अगर_घोषित CONFIG_ATH9K_HWRNG
 	u32 rng_last;
-	struct task_struct *rng_task;
-#endif
-};
+	काष्ठा task_काष्ठा *rng_task;
+#पूर्ण_अगर
+पूर्ण;
 
 /********/
 /* TX99 */
 /********/
 
-#ifdef CONFIG_ATH9K_TX99
-void ath9k_tx99_init_debug(struct ath_softc *sc);
-int ath9k_tx99_send(struct ath_softc *sc, struct sk_buff *skb,
-		    struct ath_tx_control *txctl);
-#else
-static inline void ath9k_tx99_init_debug(struct ath_softc *sc)
-{
-}
-static inline int ath9k_tx99_send(struct ath_softc *sc,
-				  struct sk_buff *skb,
-				  struct ath_tx_control *txctl)
-{
-	return 0;
-}
-#endif /* CONFIG_ATH9K_TX99 */
+#अगर_घोषित CONFIG_ATH9K_TX99
+व्योम ath9k_tx99_init_debug(काष्ठा ath_softc *sc);
+पूर्णांक ath9k_tx99_send(काष्ठा ath_softc *sc, काष्ठा sk_buff *skb,
+		    काष्ठा ath_tx_control *txctl);
+#अन्यथा
+अटल अंतरभूत व्योम ath9k_tx99_init_debug(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक ath9k_tx99_send(काष्ठा ath_softc *sc,
+				  काष्ठा sk_buff *skb,
+				  काष्ठा ath_tx_control *txctl)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ATH9K_TX99 */
 
 /***************************/
-/* Random Number Generator */
+/* Ranकरोm Number Generator */
 /***************************/
-#ifdef CONFIG_ATH9K_HWRNG
-void ath9k_rng_start(struct ath_softc *sc);
-void ath9k_rng_stop(struct ath_softc *sc);
-#else
-static inline void ath9k_rng_start(struct ath_softc *sc)
-{
-}
+#अगर_घोषित CONFIG_ATH9K_HWRNG
+व्योम ath9k_rng_start(काष्ठा ath_softc *sc);
+व्योम ath9k_rng_stop(काष्ठा ath_softc *sc);
+#अन्यथा
+अटल अंतरभूत व्योम ath9k_rng_start(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
 
-static inline void ath9k_rng_stop(struct ath_softc *sc)
-{
-}
-#endif
+अटल अंतरभूत व्योम ath9k_rng_stop(काष्ठा ath_softc *sc)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static inline void ath_read_cachesize(struct ath_common *common, int *csz)
-{
-	common->bus_ops->read_cachesize(common, csz);
-}
+अटल अंतरभूत व्योम ath_पढ़ो_cachesize(काष्ठा ath_common *common, पूर्णांक *csz)
+अणु
+	common->bus_ops->पढ़ो_cachesize(common, csz);
+पूर्ण
 
-void ath9k_tasklet(struct tasklet_struct *t);
-int ath_cabq_update(struct ath_softc *);
+व्योम ath9k_tasklet(काष्ठा tasklet_काष्ठा *t);
+पूर्णांक ath_cabq_update(काष्ठा ath_softc *);
 u8 ath9k_parse_mpdudensity(u8 mpdudensity);
-irqreturn_t ath_isr(int irq, void *dev);
-int ath_reset(struct ath_softc *sc, struct ath9k_channel *hchan);
-void ath_cancel_work(struct ath_softc *sc);
-void ath_restart_work(struct ath_softc *sc);
-int ath9k_init_device(u16 devid, struct ath_softc *sc,
-		    const struct ath_bus_ops *bus_ops);
-void ath9k_deinit_device(struct ath_softc *sc);
-void ath9k_reload_chainmask_settings(struct ath_softc *sc);
-u8 ath_txchainmask_reduction(struct ath_softc *sc, u8 chainmask, u32 rate);
-void ath_start_rfkill_poll(struct ath_softc *sc);
-void ath9k_rfkill_poll_state(struct ieee80211_hw *hw);
-void ath9k_ps_wakeup(struct ath_softc *sc);
-void ath9k_ps_restore(struct ath_softc *sc);
+irqवापस_t ath_isr(पूर्णांक irq, व्योम *dev);
+पूर्णांक ath_reset(काष्ठा ath_softc *sc, काष्ठा ath9k_channel *hchan);
+व्योम ath_cancel_work(काष्ठा ath_softc *sc);
+व्योम ath_restart_work(काष्ठा ath_softc *sc);
+पूर्णांक ath9k_init_device(u16 devid, काष्ठा ath_softc *sc,
+		    स्थिर काष्ठा ath_bus_ops *bus_ops);
+व्योम ath9k_deinit_device(काष्ठा ath_softc *sc);
+व्योम ath9k_reload_chainmask_settings(काष्ठा ath_softc *sc);
+u8 ath_txchainmask_reduction(काष्ठा ath_softc *sc, u8 chainmask, u32 rate);
+व्योम ath_start_rfसमाप्त_poll(काष्ठा ath_softc *sc);
+व्योम ath9k_rfसमाप्त_poll_state(काष्ठा ieee80211_hw *hw);
+व्योम ath9k_ps_wakeup(काष्ठा ath_softc *sc);
+व्योम ath9k_ps_restore(काष्ठा ath_softc *sc);
 
-#ifdef CONFIG_ATH9K_PCI
-int ath_pci_init(void);
-void ath_pci_exit(void);
-#else
-static inline int ath_pci_init(void) { return 0; };
-static inline void ath_pci_exit(void) {};
-#endif
+#अगर_घोषित CONFIG_ATH9K_PCI
+पूर्णांक ath_pci_init(व्योम);
+व्योम ath_pci_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक ath_pci_init(व्योम) अणु वापस 0; पूर्ण;
+अटल अंतरभूत व्योम ath_pci_निकास(व्योम) अणुपूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_ATH9K_AHB
-int ath_ahb_init(void);
-void ath_ahb_exit(void);
-#else
-static inline int ath_ahb_init(void) { return 0; };
-static inline void ath_ahb_exit(void) {};
-#endif
+#अगर_घोषित CONFIG_ATH9K_AHB
+पूर्णांक ath_ahb_init(व्योम);
+व्योम ath_ahb_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक ath_ahb_init(व्योम) अणु वापस 0; पूर्ण;
+अटल अंतरभूत व्योम ath_ahb_निकास(व्योम) अणुपूर्ण;
+#पूर्ण_अगर
 
-#endif /* ATH9K_H */
+#पूर्ण_अगर /* ATH9K_H */

@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/memblock.h>
-#include <linux/mmdebug.h>
-#include <linux/export.h>
-#include <linux/mm.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/memblock.h>
+#समावेश <linux/mmdebug.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mm.h>
 
-#include <asm/page.h>
-#include <linux/vmalloc.h>
+#समावेश <यंत्र/page.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "physaddr.h"
+#समावेश "physaddr.h"
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 
-#ifdef CONFIG_DEBUG_VIRTUAL
-unsigned long __phys_addr(unsigned long x)
-{
-	unsigned long y = x - __START_KERNEL_map;
+#अगर_घोषित CONFIG_DEBUG_VIRTUAL
+अचिन्हित दीर्घ __phys_addr(अचिन्हित दीर्घ x)
+अणु
+	अचिन्हित दीर्घ y = x - __START_KERNEL_map;
 
-	/* use the carry flag to determine if x was < __START_KERNEL_map */
-	if (unlikely(x > y)) {
+	/* use the carry flag to determine अगर x was < __START_KERNEL_map */
+	अगर (unlikely(x > y)) अणु
 		x = y + phys_base;
 
 		VIRTUAL_BUG_ON(y >= KERNEL_IMAGE_SIZE);
-	} else {
+	पूर्ण अन्यथा अणु
 		x = y + (__START_KERNEL_map - PAGE_OFFSET);
 
-		/* carry flag will be set if starting x was >= PAGE_OFFSET */
+		/* carry flag will be set अगर starting x was >= PAGE_OFFSET */
 		VIRTUAL_BUG_ON((x > y) || !phys_addr_valid(x));
-	}
+	पूर्ण
 
-	return x;
-}
+	वापस x;
+पूर्ण
 EXPORT_SYMBOL(__phys_addr);
 
-unsigned long __phys_addr_symbol(unsigned long x)
-{
-	unsigned long y = x - __START_KERNEL_map;
+अचिन्हित दीर्घ __phys_addr_symbol(अचिन्हित दीर्घ x)
+अणु
+	अचिन्हित दीर्घ y = x - __START_KERNEL_map;
 
 	/* only check upper bounds since lower bounds will trigger carry */
 	VIRTUAL_BUG_ON(y >= KERNEL_IMAGE_SIZE);
 
-	return y + phys_base;
-}
+	वापस y + phys_base;
+पूर्ण
 EXPORT_SYMBOL(__phys_addr_symbol);
-#endif
+#पूर्ण_अगर
 
-bool __virt_addr_valid(unsigned long x)
-{
-	unsigned long y = x - __START_KERNEL_map;
+bool __virt_addr_valid(अचिन्हित दीर्घ x)
+अणु
+	अचिन्हित दीर्घ y = x - __START_KERNEL_map;
 
-	/* use the carry flag to determine if x was < __START_KERNEL_map */
-	if (unlikely(x > y)) {
+	/* use the carry flag to determine अगर x was < __START_KERNEL_map */
+	अगर (unlikely(x > y)) अणु
 		x = y + phys_base;
 
-		if (y >= KERNEL_IMAGE_SIZE)
-			return false;
-	} else {
+		अगर (y >= KERNEL_IMAGE_SIZE)
+			वापस false;
+	पूर्ण अन्यथा अणु
 		x = y + (__START_KERNEL_map - PAGE_OFFSET);
 
-		/* carry flag will be set if starting x was >= PAGE_OFFSET */
-		if ((x > y) || !phys_addr_valid(x))
-			return false;
-	}
+		/* carry flag will be set अगर starting x was >= PAGE_OFFSET */
+		अगर ((x > y) || !phys_addr_valid(x))
+			वापस false;
+	पूर्ण
 
-	return pfn_valid(x >> PAGE_SHIFT);
-}
+	वापस pfn_valid(x >> PAGE_SHIFT);
+पूर्ण
 EXPORT_SYMBOL(__virt_addr_valid);
 
-#else
+#अन्यथा
 
-#ifdef CONFIG_DEBUG_VIRTUAL
-unsigned long __phys_addr(unsigned long x)
-{
-	unsigned long phys_addr = x - PAGE_OFFSET;
-	/* VMALLOC_* aren't constants  */
+#अगर_घोषित CONFIG_DEBUG_VIRTUAL
+अचिन्हित दीर्घ __phys_addr(अचिन्हित दीर्घ x)
+अणु
+	अचिन्हित दीर्घ phys_addr = x - PAGE_OFFSET;
+	/* VMALLOC_* aren't स्थिरants  */
 	VIRTUAL_BUG_ON(x < PAGE_OFFSET);
-	VIRTUAL_BUG_ON(__vmalloc_start_set && is_vmalloc_addr((void *) x));
+	VIRTUAL_BUG_ON(__vदो_स्मृति_start_set && is_vदो_स्मृति_addr((व्योम *) x));
 	/* max_low_pfn is set early, but not _that_ early */
-	if (max_low_pfn) {
+	अगर (max_low_pfn) अणु
 		VIRTUAL_BUG_ON((phys_addr >> PAGE_SHIFT) > max_low_pfn);
-		BUG_ON(slow_virt_to_phys((void *)x) != phys_addr);
-	}
-	return phys_addr;
-}
+		BUG_ON(slow_virt_to_phys((व्योम *)x) != phys_addr);
+	पूर्ण
+	वापस phys_addr;
+पूर्ण
 EXPORT_SYMBOL(__phys_addr);
-#endif
+#पूर्ण_अगर
 
-bool __virt_addr_valid(unsigned long x)
-{
-	if (x < PAGE_OFFSET)
-		return false;
-	if (__vmalloc_start_set && is_vmalloc_addr((void *) x))
-		return false;
-	if (x >= FIXADDR_START)
-		return false;
-	return pfn_valid((x - PAGE_OFFSET) >> PAGE_SHIFT);
-}
+bool __virt_addr_valid(अचिन्हित दीर्घ x)
+अणु
+	अगर (x < PAGE_OFFSET)
+		वापस false;
+	अगर (__vदो_स्मृति_start_set && is_vदो_स्मृति_addr((व्योम *) x))
+		वापस false;
+	अगर (x >= FIXADDR_START)
+		वापस false;
+	वापस pfn_valid((x - PAGE_OFFSET) >> PAGE_SHIFT);
+पूर्ण
 EXPORT_SYMBOL(__virt_addr_valid);
 
-#endif	/* CONFIG_X86_64 */
+#पूर्ण_अगर	/* CONFIG_X86_64 */

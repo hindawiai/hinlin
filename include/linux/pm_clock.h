@@ -1,98 +1,99 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * pm_clock.h - Definitions and headers related to device clocks.
+ * pm_घड़ी.h - Definitions and headers related to device घड़ीs.
  *
  * Copyright (C) 2011 Rafael J. Wysocki <rjw@sisk.pl>, Renesas Electronics Corp.
  */
 
-#ifndef _LINUX_PM_CLOCK_H
-#define _LINUX_PM_CLOCK_H
+#अगर_अघोषित _LINUX_PM_CLOCK_H
+#घोषणा _LINUX_PM_CLOCK_H
 
-#include <linux/device.h>
-#include <linux/notifier.h>
+#समावेश <linux/device.h>
+#समावेश <linux/notअगरier.h>
 
-struct pm_clk_notifier_block {
-	struct notifier_block nb;
-	struct dev_pm_domain *pm_domain;
-	char *con_ids[];
-};
+काष्ठा pm_clk_notअगरier_block अणु
+	काष्ठा notअगरier_block nb;
+	काष्ठा dev_pm_करोमुख्य *pm_करोमुख्य;
+	अक्षर *con_ids[];
+पूर्ण;
 
-struct clk;
+काष्ठा clk;
 
-#ifdef CONFIG_PM
-extern int pm_clk_runtime_suspend(struct device *dev);
-extern int pm_clk_runtime_resume(struct device *dev);
-#define USE_PM_CLK_RUNTIME_OPS \
-	.runtime_suspend = pm_clk_runtime_suspend, \
-	.runtime_resume = pm_clk_runtime_resume,
-#else
-#define USE_PM_CLK_RUNTIME_OPS
-#endif
+#अगर_घोषित CONFIG_PM
+बाह्य पूर्णांक pm_clk_runसमय_suspend(काष्ठा device *dev);
+बाह्य पूर्णांक pm_clk_runसमय_resume(काष्ठा device *dev);
+#घोषणा USE_PM_CLK_RUNTIME_OPS \
+	.runसमय_suspend = pm_clk_runसमय_suspend, \
+	.runसमय_resume = pm_clk_runसमय_resume,
+#अन्यथा
+#घोषणा USE_PM_CLK_RUNTIME_OPS
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_CLK
-static inline bool pm_clk_no_clocks(struct device *dev)
-{
-	return dev && dev->power.subsys_data
-		&& list_empty(&dev->power.subsys_data->clock_list);
-}
+#अगर_घोषित CONFIG_PM_CLK
+अटल अंतरभूत bool pm_clk_no_घड़ीs(काष्ठा device *dev)
+अणु
+	वापस dev && dev->घातer.subsys_data
+		&& list_empty(&dev->घातer.subsys_data->घड़ी_list);
+पूर्ण
 
-extern void pm_clk_init(struct device *dev);
-extern int pm_clk_create(struct device *dev);
-extern void pm_clk_destroy(struct device *dev);
-extern int pm_clk_add(struct device *dev, const char *con_id);
-extern int pm_clk_add_clk(struct device *dev, struct clk *clk);
-extern int of_pm_clk_add_clk(struct device *dev, const char *name);
-extern int of_pm_clk_add_clks(struct device *dev);
-extern void pm_clk_remove(struct device *dev, const char *con_id);
-extern void pm_clk_remove_clk(struct device *dev, struct clk *clk);
-extern int pm_clk_suspend(struct device *dev);
-extern int pm_clk_resume(struct device *dev);
-#else
-static inline bool pm_clk_no_clocks(struct device *dev)
-{
-	return true;
-}
-static inline void pm_clk_init(struct device *dev)
-{
-}
-static inline int pm_clk_create(struct device *dev)
-{
-	return -EINVAL;
-}
-static inline void pm_clk_destroy(struct device *dev)
-{
-}
-static inline int pm_clk_add(struct device *dev, const char *con_id)
-{
-	return -EINVAL;
-}
+बाह्य व्योम pm_clk_init(काष्ठा device *dev);
+बाह्य पूर्णांक pm_clk_create(काष्ठा device *dev);
+बाह्य व्योम pm_clk_destroy(काष्ठा device *dev);
+बाह्य पूर्णांक pm_clk_add(काष्ठा device *dev, स्थिर अक्षर *con_id);
+बाह्य पूर्णांक pm_clk_add_clk(काष्ठा device *dev, काष्ठा clk *clk);
+बाह्य पूर्णांक of_pm_clk_add_clk(काष्ठा device *dev, स्थिर अक्षर *name);
+बाह्य पूर्णांक of_pm_clk_add_clks(काष्ठा device *dev);
+बाह्य व्योम pm_clk_हटाओ(काष्ठा device *dev, स्थिर अक्षर *con_id);
+बाह्य व्योम pm_clk_हटाओ_clk(काष्ठा device *dev, काष्ठा clk *clk);
+बाह्य पूर्णांक pm_clk_suspend(काष्ठा device *dev);
+बाह्य पूर्णांक pm_clk_resume(काष्ठा device *dev);
+#अन्यथा
+अटल अंतरभूत bool pm_clk_no_घड़ीs(काष्ठा device *dev)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत व्योम pm_clk_init(काष्ठा device *dev)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक pm_clk_create(काष्ठा device *dev)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत व्योम pm_clk_destroy(काष्ठा device *dev)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक pm_clk_add(काष्ठा device *dev, स्थिर अक्षर *con_id)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int pm_clk_add_clk(struct device *dev, struct clk *clk)
-{
-	return -EINVAL;
-}
-static inline int of_pm_clk_add_clks(struct device *dev)
-{
-	return -EINVAL;
-}
-static inline void pm_clk_remove(struct device *dev, const char *con_id)
-{
-}
-#define pm_clk_suspend	NULL
-#define pm_clk_resume	NULL
-static inline void pm_clk_remove_clk(struct device *dev, struct clk *clk)
-{
-}
-#endif
+अटल अंतरभूत पूर्णांक pm_clk_add_clk(काष्ठा device *dev, काष्ठा clk *clk)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक of_pm_clk_add_clks(काष्ठा device *dev)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत व्योम pm_clk_हटाओ(काष्ठा device *dev, स्थिर अक्षर *con_id)
+अणु
+पूर्ण
+#घोषणा pm_clk_suspend	शून्य
+#घोषणा pm_clk_resume	शून्य
+अटल अंतरभूत व्योम pm_clk_हटाओ_clk(काष्ठा device *dev, काष्ठा clk *clk)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_HAVE_CLK
-extern void pm_clk_add_notifier(struct bus_type *bus,
-					struct pm_clk_notifier_block *clknb);
-#else
-static inline void pm_clk_add_notifier(struct bus_type *bus,
-					struct pm_clk_notifier_block *clknb)
-{
-}
-#endif
+#अगर_घोषित CONFIG_HAVE_CLK
+बाह्य व्योम pm_clk_add_notअगरier(काष्ठा bus_type *bus,
+					काष्ठा pm_clk_notअगरier_block *clknb);
+#अन्यथा
+अटल अंतरभूत व्योम pm_clk_add_notअगरier(काष्ठा bus_type *bus,
+					काष्ठा pm_clk_notअगरier_block *clknb)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

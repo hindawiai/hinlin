@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Check for extended topology enumeration cpuid leaf 0xb and if it
- * exists, use it for populating initial_apicid and cpu topology
+ * Check क्रम extended topology क्रमागतeration cpuid leaf 0xb and अगर it
+ * exists, use it क्रम populating initial_apicid and cpu topology
  * detection.
  */
 
-#include <linux/cpu.h>
-#include <asm/apic.h>
-#include <asm/memtype.h>
-#include <asm/processor.h>
+#समावेश <linux/cpu.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/memtype.h>
+#समावेश <यंत्र/processor.h>
 
-#include "cpu.h"
+#समावेश "cpu.h"
 
 /* leaf 0xb SMT level */
-#define SMT_LEVEL	0
+#घोषणा SMT_LEVEL	0
 
 /* extended topology sub-leaf types */
-#define INVALID_TYPE	0
-#define SMT_TYPE	1
-#define CORE_TYPE	2
-#define DIE_TYPE	5
+#घोषणा INVALID_TYPE	0
+#घोषणा SMT_TYPE	1
+#घोषणा CORE_TYPE	2
+#घोषणा DIE_TYPE	5
 
-#define LEAFB_SUBTYPE(ecx)		(((ecx) >> 8) & 0xff)
-#define BITS_SHIFT_NEXT_LEVEL(eax)	((eax) & 0x1f)
-#define LEVEL_MAX_SIBLINGS(ebx)		((ebx) & 0xffff)
+#घोषणा LEAFB_SUBTYPE(ecx)		(((ecx) >> 8) & 0xff)
+#घोषणा BITS_SHIFT_NEXT_LEVEL(eax)	((eax) & 0x1f)
+#घोषणा LEVEL_MAX_SIBLINGS(ebx)		((ebx) & 0xffff)
 
-unsigned int __max_die_per_package __read_mostly = 1;
+अचिन्हित पूर्णांक __max_die_per_package __पढ़ो_mostly = 1;
 EXPORT_SYMBOL(__max_die_per_package);
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 /*
- * Check if given CPUID extended topology "leaf" is implemented
+ * Check अगर given CPUID extended topology "leaf" is implemented
  */
-static int check_extended_topology_leaf(int leaf)
-{
-	unsigned int eax, ebx, ecx, edx;
+अटल पूर्णांक check_extended_topology_leaf(पूर्णांक leaf)
+अणु
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
 
 	cpuid_count(leaf, SMT_LEVEL, &eax, &ebx, &ecx, &edx);
 
-	if (ebx == 0 || (LEAFB_SUBTYPE(ecx) != SMT_TYPE))
-		return -1;
+	अगर (ebx == 0 || (LEAFB_SUBTYPE(ecx) != SMT_TYPE))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /*
  * Return best CPUID Extended Topology Leaf supported
  */
-static int detect_extended_topology_leaf(struct cpuinfo_x86 *c)
-{
-	if (c->cpuid_level >= 0x1f) {
-		if (check_extended_topology_leaf(0x1f) == 0)
-			return 0x1f;
-	}
+अटल पूर्णांक detect_extended_topology_leaf(काष्ठा cpuinfo_x86 *c)
+अणु
+	अगर (c->cpuid_level >= 0x1f) अणु
+		अगर (check_extended_topology_leaf(0x1f) == 0)
+			वापस 0x1f;
+	पूर्ण
 
-	if (c->cpuid_level >= 0xb) {
-		if (check_extended_topology_leaf(0xb) == 0)
-			return 0xb;
-	}
+	अगर (c->cpuid_level >= 0xb) अणु
+		अगर (check_extended_topology_leaf(0xb) == 0)
+			वापस 0xb;
+	पूर्ण
 
-	return -1;
-}
-#endif
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
 
-int detect_extended_topology_early(struct cpuinfo_x86 *c)
-{
-#ifdef CONFIG_SMP
-	unsigned int eax, ebx, ecx, edx;
-	int leaf;
+पूर्णांक detect_extended_topology_early(काष्ठा cpuinfo_x86 *c)
+अणु
+#अगर_घोषित CONFIG_SMP
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
+	पूर्णांक leaf;
 
 	leaf = detect_extended_topology_leaf(c);
-	if (leaf < 0)
-		return -1;
+	अगर (leaf < 0)
+		वापस -1;
 
 	set_cpu_cap(c, X86_FEATURE_XTOPOLOGY);
 
@@ -80,31 +81,31 @@ int detect_extended_topology_early(struct cpuinfo_x86 *c)
 	 */
 	c->initial_apicid = edx;
 	smp_num_siblings = LEVEL_MAX_SIBLINGS(ebx);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
- * Check for extended topology enumeration cpuid leaf, and if it
- * exists, use it for populating initial_apicid and cpu topology
+ * Check क्रम extended topology क्रमागतeration cpuid leaf, and अगर it
+ * exists, use it क्रम populating initial_apicid and cpu topology
  * detection.
  */
-int detect_extended_topology(struct cpuinfo_x86 *c)
-{
-#ifdef CONFIG_SMP
-	unsigned int eax, ebx, ecx, edx, sub_index;
-	unsigned int ht_mask_width, core_plus_mask_width, die_plus_mask_width;
-	unsigned int core_select_mask, core_level_siblings;
-	unsigned int die_select_mask, die_level_siblings;
+पूर्णांक detect_extended_topology(काष्ठा cpuinfo_x86 *c)
+अणु
+#अगर_घोषित CONFIG_SMP
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx, sub_index;
+	अचिन्हित पूर्णांक ht_mask_width, core_plus_mask_width, die_plus_mask_width;
+	अचिन्हित पूर्णांक core_select_mask, core_level_siblings;
+	अचिन्हित पूर्णांक die_select_mask, die_level_siblings;
 	bool die_level_present = false;
-	int leaf;
+	पूर्णांक leaf;
 
 	leaf = detect_extended_topology_leaf(c);
-	if (leaf < 0)
-		return -1;
+	अगर (leaf < 0)
+		वापस -1;
 
 	/*
-	 * Populate HT related information from sub-leaf level 0.
+	 * Populate HT related inक्रमmation from sub-leaf level 0.
 	 */
 	cpuid_count(leaf, SMT_LEVEL, &eax, &ebx, &ecx, &edx);
 	c->initial_apicid = edx;
@@ -114,26 +115,26 @@ int detect_extended_topology(struct cpuinfo_x86 *c)
 	die_plus_mask_width = BITS_SHIFT_NEXT_LEVEL(eax);
 
 	sub_index = 1;
-	do {
+	करो अणु
 		cpuid_count(leaf, sub_index, &eax, &ebx, &ecx, &edx);
 
 		/*
-		 * Check for the Core type in the implemented sub leaves.
+		 * Check क्रम the Core type in the implemented sub leaves.
 		 */
-		if (LEAFB_SUBTYPE(ecx) == CORE_TYPE) {
+		अगर (LEAFB_SUBTYPE(ecx) == CORE_TYPE) अणु
 			core_level_siblings = LEVEL_MAX_SIBLINGS(ebx);
 			core_plus_mask_width = BITS_SHIFT_NEXT_LEVEL(eax);
 			die_level_siblings = core_level_siblings;
 			die_plus_mask_width = BITS_SHIFT_NEXT_LEVEL(eax);
-		}
-		if (LEAFB_SUBTYPE(ecx) == DIE_TYPE) {
+		पूर्ण
+		अगर (LEAFB_SUBTYPE(ecx) == DIE_TYPE) अणु
 			die_level_present = true;
 			die_level_siblings = LEVEL_MAX_SIBLINGS(ebx);
 			die_plus_mask_width = BITS_SHIFT_NEXT_LEVEL(eax);
-		}
+		पूर्ण
 
 		sub_index++;
-	} while (LEAFB_SUBTYPE(ecx) != INVALID_TYPE);
+	पूर्ण जबतक (LEAFB_SUBTYPE(ecx) != INVALID_TYPE);
 
 	core_select_mask = (~(-1 << core_plus_mask_width)) >> ht_mask_width;
 	die_select_mask = (~(-1 << die_plus_mask_width)) >>
@@ -142,10 +143,10 @@ int detect_extended_topology(struct cpuinfo_x86 *c)
 	c->cpu_core_id = apic->phys_pkg_id(c->initial_apicid,
 				ht_mask_width) & core_select_mask;
 
-	if (die_level_present) {
+	अगर (die_level_present) अणु
 		c->cpu_die_id = apic->phys_pkg_id(c->initial_apicid,
 					core_plus_mask_width) & die_select_mask;
-	}
+	पूर्ण
 
 	c->phys_proc_id = apic->phys_pkg_id(c->initial_apicid,
 				die_plus_mask_width);
@@ -156,6 +157,6 @@ int detect_extended_topology(struct cpuinfo_x86 *c)
 
 	c->x86_max_cores = (core_level_siblings / smp_num_siblings);
 	__max_die_per_package = (die_level_siblings / core_level_siblings);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण

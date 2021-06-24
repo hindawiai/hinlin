@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,48 +22,48 @@
  * SOFTWARE.
  *
  * Authors:
- *    Zhiyuan Lv <zhiyuan.lv@intel.com>
- *    Zhi Wang <zhi.a.wang@intel.com>
+ *    Zhiyuan Lv <zhiyuan.lv@पूर्णांकel.com>
+ *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
  *
  * Contributors:
- *    Min He <min.he@intel.com>
- *    Bing Niu <bing.niu@intel.com>
- *    Ping Gao <ping.a.gao@intel.com>
- *    Tina Zhang <tina.zhang@intel.com>
+ *    Min He <min.he@पूर्णांकel.com>
+ *    Bing Niu <bing.niu@पूर्णांकel.com>
+ *    Ping Gao <ping.a.gao@पूर्णांकel.com>
+ *    Tina Zhang <tina.zhang@पूर्णांकel.com>
  *
  */
 
-#include "i915_drv.h"
-#include "gvt.h"
+#समावेश "i915_drv.h"
+#समावेश "gvt.h"
 
-#define _EL_OFFSET_STATUS       0x234
-#define _EL_OFFSET_STATUS_BUF   0x370
-#define _EL_OFFSET_STATUS_PTR   0x3A0
+#घोषणा _EL_OFFSET_STATUS       0x234
+#घोषणा _EL_OFFSET_STATUS_BUF   0x370
+#घोषणा _EL_OFFSET_STATUS_PTR   0x3A0
 
-#define execlist_ring_mmio(e, offset) ((e)->mmio_base + (offset))
+#घोषणा execlist_ring_mmio(e, offset) ((e)->mmio_base + (offset))
 
-#define valid_context(ctx) ((ctx)->valid)
-#define same_context(a, b) (((a)->context_id == (b)->context_id) && \
+#घोषणा valid_context(ctx) ((ctx)->valid)
+#घोषणा same_context(a, b) (((a)->context_id == (b)->context_id) && \
 		((a)->lrca == (b)->lrca))
 
-static int context_switch_events[] = {
+अटल पूर्णांक context_चयन_events[] = अणु
 	[RCS0]  = RCS_AS_CONTEXT_SWITCH,
 	[BCS0]  = BCS_AS_CONTEXT_SWITCH,
 	[VCS0]  = VCS_AS_CONTEXT_SWITCH,
 	[VCS1]  = VCS2_AS_CONTEXT_SWITCH,
 	[VECS0] = VECS_AS_CONTEXT_SWITCH,
-};
+पूर्ण;
 
-static int to_context_switch_event(const struct intel_engine_cs *engine)
-{
-	if (WARN_ON(engine->id >= ARRAY_SIZE(context_switch_events)))
-		return -EINVAL;
+अटल पूर्णांक to_context_चयन_event(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (WARN_ON(engine->id >= ARRAY_SIZE(context_चयन_events)))
+		वापस -EINVAL;
 
-	return context_switch_events[engine->id];
-}
+	वापस context_चयन_events[engine->id];
+पूर्ण
 
-static void switch_virtual_execlist_slot(struct intel_vgpu_execlist *execlist)
-{
+अटल व्योम चयन_भव_execlist_slot(काष्ठा पूर्णांकel_vgpu_execlist *execlist)
+अणु
 	gvt_dbg_el("[before] running slot %d/context %x pending slot %d\n",
 			execlist->running_slot ?
 			execlist->running_slot->index : -1,
@@ -72,9 +73,9 @@ static void switch_virtual_execlist_slot(struct intel_vgpu_execlist *execlist)
 			execlist->pending_slot->index : -1);
 
 	execlist->running_slot = execlist->pending_slot;
-	execlist->pending_slot = NULL;
+	execlist->pending_slot = शून्य;
 	execlist->running_context = execlist->running_context ?
-		&execlist->running_slot->ctx[0] : NULL;
+		&execlist->running_slot->ctx[0] : शून्य;
 
 	gvt_dbg_el("[after] running slot %d/context %x pending slot %d\n",
 			execlist->running_slot ?
@@ -83,33 +84,33 @@ static void switch_virtual_execlist_slot(struct intel_vgpu_execlist *execlist)
 			execlist->running_context->context_id : 0,
 			execlist->pending_slot ?
 			execlist->pending_slot->index : -1);
-}
+पूर्ण
 
-static void emulate_execlist_status(struct intel_vgpu_execlist *execlist)
-{
-	struct intel_vgpu_execlist_slot *running = execlist->running_slot;
-	struct intel_vgpu_execlist_slot *pending = execlist->pending_slot;
-	struct execlist_ctx_descriptor_format *desc = execlist->running_context;
-	struct intel_vgpu *vgpu = execlist->vgpu;
-	struct execlist_status_format status;
+अटल व्योम emulate_execlist_status(काष्ठा पूर्णांकel_vgpu_execlist *execlist)
+अणु
+	काष्ठा पूर्णांकel_vgpu_execlist_slot *running = execlist->running_slot;
+	काष्ठा पूर्णांकel_vgpu_execlist_slot *pending = execlist->pending_slot;
+	काष्ठा execlist_ctx_descriptor_क्रमmat *desc = execlist->running_context;
+	काष्ठा पूर्णांकel_vgpu *vgpu = execlist->vgpu;
+	काष्ठा execlist_status_क्रमmat status;
 	u32 status_reg =
 		execlist_ring_mmio(execlist->engine, _EL_OFFSET_STATUS);
 
 	status.ldw = vgpu_vreg(vgpu, status_reg);
 	status.udw = vgpu_vreg(vgpu, status_reg + 4);
 
-	if (running) {
-		status.current_execlist_pointer = !!running->index;
-		status.execlist_write_pointer = !!!running->index;
+	अगर (running) अणु
+		status.current_execlist_poपूर्णांकer = !!running->index;
+		status.execlist_ग_लिखो_poपूर्णांकer = !!!running->index;
 		status.execlist_0_active = status.execlist_0_valid =
 			!!!(running->index);
 		status.execlist_1_active = status.execlist_1_valid =
 			!!(running->index);
-	} else {
+	पूर्ण अन्यथा अणु
 		status.context_id = 0;
 		status.execlist_0_active = status.execlist_0_valid = 0;
 		status.execlist_1_active = status.execlist_1_valid = 0;
-	}
+	पूर्ण
 
 	status.context_id = desc ? desc->context_id : 0;
 	status.execlist_queue_full = !!(pending);
@@ -119,17 +120,17 @@ static void emulate_execlist_status(struct intel_vgpu_execlist *execlist)
 
 	gvt_dbg_el("vgpu%d: status reg offset %x ldw %x udw %x\n",
 		vgpu->id, status_reg, status.ldw, status.udw);
-}
+पूर्ण
 
-static void emulate_csb_update(struct intel_vgpu_execlist *execlist,
-			       struct execlist_context_status_format *status,
-			       bool trigger_interrupt_later)
-{
-	struct intel_vgpu *vgpu = execlist->vgpu;
-	struct execlist_context_status_pointer_format ctx_status_ptr;
-	u32 write_pointer;
+अटल व्योम emulate_csb_update(काष्ठा पूर्णांकel_vgpu_execlist *execlist,
+			       काष्ठा execlist_context_status_क्रमmat *status,
+			       bool trigger_पूर्णांकerrupt_later)
+अणु
+	काष्ठा पूर्णांकel_vgpu *vgpu = execlist->vgpu;
+	काष्ठा execlist_context_status_poपूर्णांकer_क्रमmat ctx_status_ptr;
+	u32 ग_लिखो_poपूर्णांकer;
 	u32 ctx_status_ptr_reg, ctx_status_buf_reg, offset;
-	unsigned long hwsp_gpa;
+	अचिन्हित दीर्घ hwsp_gpa;
 
 	ctx_status_ptr_reg =
 		execlist_ring_mmio(execlist->engine, _EL_OFFSET_STATUS_PTR);
@@ -138,77 +139,77 @@ static void emulate_csb_update(struct intel_vgpu_execlist *execlist,
 
 	ctx_status_ptr.dw = vgpu_vreg(vgpu, ctx_status_ptr_reg);
 
-	write_pointer = ctx_status_ptr.write_ptr;
+	ग_लिखो_poपूर्णांकer = ctx_status_ptr.ग_लिखो_ptr;
 
-	if (write_pointer == 0x7)
-		write_pointer = 0;
-	else {
-		++write_pointer;
-		write_pointer %= 0x6;
-	}
+	अगर (ग_लिखो_poपूर्णांकer == 0x7)
+		ग_लिखो_poपूर्णांकer = 0;
+	अन्यथा अणु
+		++ग_लिखो_poपूर्णांकer;
+		ग_लिखो_poपूर्णांकer %= 0x6;
+	पूर्ण
 
-	offset = ctx_status_buf_reg + write_pointer * 8;
+	offset = ctx_status_buf_reg + ग_लिखो_poपूर्णांकer * 8;
 
 	vgpu_vreg(vgpu, offset) = status->ldw;
 	vgpu_vreg(vgpu, offset + 4) = status->udw;
 
-	ctx_status_ptr.write_ptr = write_pointer;
+	ctx_status_ptr.ग_लिखो_ptr = ग_लिखो_poपूर्णांकer;
 	vgpu_vreg(vgpu, ctx_status_ptr_reg) = ctx_status_ptr.dw;
 
-	/* Update the CSB and CSB write pointer in HWSP */
-	hwsp_gpa = intel_vgpu_gma_to_gpa(vgpu->gtt.ggtt_mm,
+	/* Update the CSB and CSB ग_लिखो poपूर्णांकer in HWSP */
+	hwsp_gpa = पूर्णांकel_vgpu_gma_to_gpa(vgpu->gtt.ggtt_mm,
 					 vgpu->hws_pga[execlist->engine->id]);
-	if (hwsp_gpa != INTEL_GVT_INVALID_ADDR) {
-		intel_gvt_hypervisor_write_gpa(vgpu,
-					       hwsp_gpa + I915_HWS_CSB_BUF0_INDEX * 4 + write_pointer * 8,
+	अगर (hwsp_gpa != INTEL_GVT_INVALID_ADDR) अणु
+		पूर्णांकel_gvt_hypervisor_ग_लिखो_gpa(vgpu,
+					       hwsp_gpa + I915_HWS_CSB_BUF0_INDEX * 4 + ग_लिखो_poपूर्णांकer * 8,
 					       status, 8);
-		intel_gvt_hypervisor_write_gpa(vgpu,
-					       hwsp_gpa + intel_hws_csb_write_index(execlist->engine->i915) * 4,
-					       &write_pointer, 4);
-	}
+		पूर्णांकel_gvt_hypervisor_ग_लिखो_gpa(vgpu,
+					       hwsp_gpa + पूर्णांकel_hws_csb_ग_लिखो_index(execlist->engine->i915) * 4,
+					       &ग_लिखो_poपूर्णांकer, 4);
+	पूर्ण
 
 	gvt_dbg_el("vgpu%d: w pointer %u reg %x csb l %x csb h %x\n",
-		   vgpu->id, write_pointer, offset, status->ldw, status->udw);
+		   vgpu->id, ग_लिखो_poपूर्णांकer, offset, status->ldw, status->udw);
 
-	if (trigger_interrupt_later)
-		return;
+	अगर (trigger_पूर्णांकerrupt_later)
+		वापस;
 
-	intel_vgpu_trigger_virtual_event(vgpu,
-					 to_context_switch_event(execlist->engine));
-}
+	पूर्णांकel_vgpu_trigger_भव_event(vgpu,
+					 to_context_चयन_event(execlist->engine));
+पूर्ण
 
-static int emulate_execlist_ctx_schedule_out(
-		struct intel_vgpu_execlist *execlist,
-		struct execlist_ctx_descriptor_format *ctx)
-{
-	struct intel_vgpu *vgpu = execlist->vgpu;
-	struct intel_vgpu_execlist_slot *running = execlist->running_slot;
-	struct intel_vgpu_execlist_slot *pending = execlist->pending_slot;
-	struct execlist_ctx_descriptor_format *ctx0 = &running->ctx[0];
-	struct execlist_ctx_descriptor_format *ctx1 = &running->ctx[1];
-	struct execlist_context_status_format status;
+अटल पूर्णांक emulate_execlist_ctx_schedule_out(
+		काष्ठा पूर्णांकel_vgpu_execlist *execlist,
+		काष्ठा execlist_ctx_descriptor_क्रमmat *ctx)
+अणु
+	काष्ठा पूर्णांकel_vgpu *vgpu = execlist->vgpu;
+	काष्ठा पूर्णांकel_vgpu_execlist_slot *running = execlist->running_slot;
+	काष्ठा पूर्णांकel_vgpu_execlist_slot *pending = execlist->pending_slot;
+	काष्ठा execlist_ctx_descriptor_क्रमmat *ctx0 = &running->ctx[0];
+	काष्ठा execlist_ctx_descriptor_क्रमmat *ctx1 = &running->ctx[1];
+	काष्ठा execlist_context_status_क्रमmat status;
 
-	memset(&status, 0, sizeof(status));
+	स_रखो(&status, 0, माप(status));
 
 	gvt_dbg_el("schedule out context id %x\n", ctx->context_id);
 
-	if (WARN_ON(!same_context(ctx, execlist->running_context))) {
+	अगर (WARN_ON(!same_context(ctx, execlist->running_context))) अणु
 		gvt_vgpu_err("schedule out context is not running context,"
 				"ctx id %x running ctx id %x\n",
 				ctx->context_id,
 				execlist->running_context->context_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* ctx1 is valid, ctx0/ctx is scheduled-out -> element switch */
-	if (valid_context(ctx1) && same_context(ctx0, ctx)) {
+	/* ctx1 is valid, ctx0/ctx is scheduled-out -> element चयन */
+	अगर (valid_context(ctx1) && same_context(ctx0, ctx)) अणु
 		gvt_dbg_el("ctx 1 valid, ctx/ctx 0 is scheduled-out\n");
 
 		execlist->running_context = ctx1;
 
 		emulate_execlist_status(execlist);
 
-		status.context_complete = status.element_switch = 1;
+		status.context_complete = status.element_चयन = 1;
 		status.context_id = ctx->context_id;
 
 		emulate_csb_update(execlist, &status, false);
@@ -217,79 +218,79 @@ static int emulate_execlist_ctx_schedule_out(
 		 * ctx1 is valid, ctx1 == ctx
 		 *	--> last element is finished
 		 * emulate:
-		 *	active-to-idle if there is *no* pending execlist
-		 *	context-complete if there *is* pending execlist
+		 *	active-to-idle अगर there is *no* pending execlist
+		 *	context-complete अगर there *is* pending execlist
 		 */
-	} else if ((!valid_context(ctx1) && same_context(ctx0, ctx))
-			|| (valid_context(ctx1) && same_context(ctx1, ctx))) {
+	पूर्ण अन्यथा अगर ((!valid_context(ctx1) && same_context(ctx0, ctx))
+			|| (valid_context(ctx1) && same_context(ctx1, ctx))) अणु
 		gvt_dbg_el("need to switch virtual execlist slot\n");
 
-		switch_virtual_execlist_slot(execlist);
+		चयन_भव_execlist_slot(execlist);
 
 		emulate_execlist_status(execlist);
 
 		status.context_complete = status.active_to_idle = 1;
 		status.context_id = ctx->context_id;
 
-		if (!pending) {
+		अगर (!pending) अणु
 			emulate_csb_update(execlist, &status, false);
-		} else {
+		पूर्ण अन्यथा अणु
 			emulate_csb_update(execlist, &status, true);
 
-			memset(&status, 0, sizeof(status));
+			स_रखो(&status, 0, माप(status));
 
 			status.idle_to_active = 1;
 			status.context_id = 0;
 
 			emulate_csb_update(execlist, &status, false);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		WARN_ON(1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct intel_vgpu_execlist_slot *get_next_execlist_slot(
-		struct intel_vgpu_execlist *execlist)
-{
-	struct intel_vgpu *vgpu = execlist->vgpu;
+अटल काष्ठा पूर्णांकel_vgpu_execlist_slot *get_next_execlist_slot(
+		काष्ठा पूर्णांकel_vgpu_execlist *execlist)
+अणु
+	काष्ठा पूर्णांकel_vgpu *vgpu = execlist->vgpu;
 	u32 status_reg =
 		execlist_ring_mmio(execlist->engine, _EL_OFFSET_STATUS);
-	struct execlist_status_format status;
+	काष्ठा execlist_status_क्रमmat status;
 
 	status.ldw = vgpu_vreg(vgpu, status_reg);
 	status.udw = vgpu_vreg(vgpu, status_reg + 4);
 
-	if (status.execlist_queue_full) {
+	अगर (status.execlist_queue_full) अणु
 		gvt_vgpu_err("virtual execlist slots are full\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return &execlist->slot[status.execlist_write_pointer];
-}
+	वापस &execlist->slot[status.execlist_ग_लिखो_poपूर्णांकer];
+पूर्ण
 
-static int emulate_execlist_schedule_in(struct intel_vgpu_execlist *execlist,
-		struct execlist_ctx_descriptor_format ctx[2])
-{
-	struct intel_vgpu_execlist_slot *running = execlist->running_slot;
-	struct intel_vgpu_execlist_slot *slot =
+अटल पूर्णांक emulate_execlist_schedule_in(काष्ठा पूर्णांकel_vgpu_execlist *execlist,
+		काष्ठा execlist_ctx_descriptor_क्रमmat ctx[2])
+अणु
+	काष्ठा पूर्णांकel_vgpu_execlist_slot *running = execlist->running_slot;
+	काष्ठा पूर्णांकel_vgpu_execlist_slot *slot =
 		get_next_execlist_slot(execlist);
 
-	struct execlist_ctx_descriptor_format *ctx0, *ctx1;
-	struct execlist_context_status_format status;
-	struct intel_vgpu *vgpu = execlist->vgpu;
+	काष्ठा execlist_ctx_descriptor_क्रमmat *ctx0, *ctx1;
+	काष्ठा execlist_context_status_क्रमmat status;
+	काष्ठा पूर्णांकel_vgpu *vgpu = execlist->vgpu;
 
 	gvt_dbg_el("emulate schedule-in\n");
 
-	if (!slot) {
+	अगर (!slot) अणु
 		gvt_vgpu_err("no available execlist slot\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&status, 0, sizeof(status));
-	memset(slot->ctx, 0, sizeof(slot->ctx));
+	स_रखो(&status, 0, माप(status));
+	स_रखो(slot->ctx, 0, माप(slot->ctx));
 
 	slot->ctx[0] = ctx[0];
 	slot->ctx[1] = ctx[1];
@@ -299,14 +300,14 @@ static int emulate_execlist_schedule_in(struct intel_vgpu_execlist *execlist,
 			ctx[1].context_id);
 
 	/*
-	 * no running execlist, make this write bundle as running execlist
+	 * no running execlist, make this ग_लिखो bundle as running execlist
 	 * -> idle-to-active
 	 */
-	if (!running) {
+	अगर (!running) अणु
 		gvt_dbg_el("no current running execlist\n");
 
 		execlist->running_slot = slot;
-		execlist->pending_slot = NULL;
+		execlist->pending_slot = शून्य;
 		execlist->running_context = &slot->ctx[0];
 
 		gvt_dbg_el("running slot index %d running context %x\n",
@@ -319,8 +320,8 @@ static int emulate_execlist_schedule_in(struct intel_vgpu_execlist *execlist,
 		status.context_id = 0;
 
 		emulate_csb_update(execlist, &status, false);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ctx0 = &running->ctx[0];
 	ctx1 = &running->ctx[1];
@@ -329,22 +330,22 @@ static int emulate_execlist_schedule_in(struct intel_vgpu_execlist *execlist,
 		running->index, ctx0->context_id, ctx1->context_id);
 
 	/*
-	 * already has an running execlist
+	 * alपढ़ोy has an running execlist
 	 *	a. running ctx1 is valid,
 	 *	   ctx0 is finished, and running ctx1 == new execlist ctx[0]
 	 *	b. running ctx1 is not valid,
 	 *	   ctx0 == new execlist ctx[0]
 	 * ----> lite-restore + preempted
 	 */
-	if ((valid_context(ctx1) && same_context(ctx1, &slot->ctx[0]) &&
+	अगर ((valid_context(ctx1) && same_context(ctx1, &slot->ctx[0]) &&
 		/* condition a */
 		(!same_context(ctx0, execlist->running_context))) ||
 			(!valid_context(ctx1) &&
-			 same_context(ctx0, &slot->ctx[0]))) { /* condition b */
+			 same_context(ctx0, &slot->ctx[0]))) अणु /* condition b */
 		gvt_dbg_el("need to switch virtual execlist slot\n");
 
 		execlist->pending_slot = slot;
-		switch_virtual_execlist_slot(execlist);
+		चयन_भव_execlist_slot(execlist);
 
 		emulate_execlist_status(execlist);
 
@@ -352,160 +353,160 @@ static int emulate_execlist_schedule_in(struct intel_vgpu_execlist *execlist,
 		status.context_id = ctx[0].context_id;
 
 		emulate_csb_update(execlist, &status, false);
-	} else {
+	पूर्ण अन्यथा अणु
 		gvt_dbg_el("emulate as pending slot\n");
 		/*
 		 * otherwise
-		 * --> emulate pending execlist exist + but no preemption case
+		 * --> emulate pending execlist exist + but no preemption हाल
 		 */
 		execlist->pending_slot = slot;
 		emulate_execlist_status(execlist);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define get_desc_from_elsp_dwords(ed, i) \
-	((struct execlist_ctx_descriptor_format *)&((ed)->data[i * 2]))
+#घोषणा get_desc_from_elsp_dwords(ed, i) \
+	((काष्ठा execlist_ctx_descriptor_क्रमmat *)&((ed)->data[i * 2]))
 
-static int prepare_execlist_workload(struct intel_vgpu_workload *workload)
-{
-	struct intel_vgpu *vgpu = workload->vgpu;
-	struct intel_vgpu_submission *s = &vgpu->submission;
-	struct execlist_ctx_descriptor_format ctx[2];
-	int ret;
+अटल पूर्णांक prepare_execlist_workload(काष्ठा पूर्णांकel_vgpu_workload *workload)
+अणु
+	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
+	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
+	काष्ठा execlist_ctx_descriptor_क्रमmat ctx[2];
+	पूर्णांक ret;
 
-	if (!workload->emulate_schedule_in)
-		return 0;
+	अगर (!workload->emulate_schedule_in)
+		वापस 0;
 
 	ctx[0] = *get_desc_from_elsp_dwords(&workload->elsp_dwords, 0);
 	ctx[1] = *get_desc_from_elsp_dwords(&workload->elsp_dwords, 1);
 
 	ret = emulate_execlist_schedule_in(&s->execlist[workload->engine->id],
 					   ctx);
-	if (ret) {
+	अगर (ret) अणु
 		gvt_vgpu_err("fail to emulate execlist schedule in\n");
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int complete_execlist_workload(struct intel_vgpu_workload *workload)
-{
-	struct intel_vgpu *vgpu = workload->vgpu;
-	struct intel_vgpu_submission *s = &vgpu->submission;
-	struct intel_vgpu_execlist *execlist =
+अटल पूर्णांक complete_execlist_workload(काष्ठा पूर्णांकel_vgpu_workload *workload)
+अणु
+	काष्ठा पूर्णांकel_vgpu *vgpu = workload->vgpu;
+	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
+	काष्ठा पूर्णांकel_vgpu_execlist *execlist =
 		&s->execlist[workload->engine->id];
-	struct intel_vgpu_workload *next_workload;
-	struct list_head *next = workload_q_head(vgpu, workload->engine)->next;
+	काष्ठा पूर्णांकel_vgpu_workload *next_workload;
+	काष्ठा list_head *next = workload_q_head(vgpu, workload->engine)->next;
 	bool lite_restore = false;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	gvt_dbg_el("complete workload %p status %d\n",
 		   workload, workload->status);
 
-	if (workload->status || vgpu->resetting_eng & workload->engine->mask)
-		goto out;
+	अगर (workload->status || vgpu->resetting_eng & workload->engine->mask)
+		जाओ out;
 
-	if (!list_empty(workload_q_head(vgpu, workload->engine))) {
-		struct execlist_ctx_descriptor_format *this_desc, *next_desc;
+	अगर (!list_empty(workload_q_head(vgpu, workload->engine))) अणु
+		काष्ठा execlist_ctx_descriptor_क्रमmat *this_desc, *next_desc;
 
 		next_workload = container_of(next,
-				struct intel_vgpu_workload, list);
+				काष्ठा पूर्णांकel_vgpu_workload, list);
 		this_desc = &workload->ctx_desc;
 		next_desc = &next_workload->ctx_desc;
 
 		lite_restore = same_context(this_desc, next_desc);
-	}
+	पूर्ण
 
-	if (lite_restore) {
+	अगर (lite_restore) अणु
 		gvt_dbg_el("next context == current - no schedule-out\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = emulate_execlist_ctx_schedule_out(execlist, &workload->ctx_desc);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int submit_context(struct intel_vgpu *vgpu,
-			  const struct intel_engine_cs *engine,
-			  struct execlist_ctx_descriptor_format *desc,
+अटल पूर्णांक submit_context(काष्ठा पूर्णांकel_vgpu *vgpu,
+			  स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
+			  काष्ठा execlist_ctx_descriptor_क्रमmat *desc,
 			  bool emulate_schedule_in)
-{
-	struct intel_vgpu_submission *s = &vgpu->submission;
-	struct intel_vgpu_workload *workload = NULL;
+अणु
+	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
+	काष्ठा पूर्णांकel_vgpu_workload *workload = शून्य;
 
-	workload = intel_vgpu_create_workload(vgpu, engine, desc);
-	if (IS_ERR(workload))
-		return PTR_ERR(workload);
+	workload = पूर्णांकel_vgpu_create_workload(vgpu, engine, desc);
+	अगर (IS_ERR(workload))
+		वापस PTR_ERR(workload);
 
 	workload->prepare = prepare_execlist_workload;
 	workload->complete = complete_execlist_workload;
 	workload->emulate_schedule_in = emulate_schedule_in;
 
-	if (emulate_schedule_in)
+	अगर (emulate_schedule_in)
 		workload->elsp_dwords = s->execlist[engine->id].elsp_dwords;
 
 	gvt_dbg_el("workload %p emulate schedule_in %d\n", workload,
 		   emulate_schedule_in);
 
-	intel_vgpu_queue_workload(workload);
-	return 0;
-}
+	पूर्णांकel_vgpu_queue_workload(workload);
+	वापस 0;
+पूर्ण
 
-int intel_vgpu_submit_execlist(struct intel_vgpu *vgpu,
-			       const struct intel_engine_cs *engine)
-{
-	struct intel_vgpu_submission *s = &vgpu->submission;
-	struct intel_vgpu_execlist *execlist = &s->execlist[engine->id];
-	struct execlist_ctx_descriptor_format *desc[2];
-	int i, ret;
+पूर्णांक पूर्णांकel_vgpu_submit_execlist(काष्ठा पूर्णांकel_vgpu *vgpu,
+			       स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
+	काष्ठा पूर्णांकel_vgpu_execlist *execlist = &s->execlist[engine->id];
+	काष्ठा execlist_ctx_descriptor_क्रमmat *desc[2];
+	पूर्णांक i, ret;
 
 	desc[0] = get_desc_from_elsp_dwords(&execlist->elsp_dwords, 0);
 	desc[1] = get_desc_from_elsp_dwords(&execlist->elsp_dwords, 1);
 
-	if (!desc[0]->valid) {
+	अगर (!desc[0]->valid) अणु
 		gvt_vgpu_err("invalid elsp submission, desc0 is invalid\n");
-		goto inv_desc;
-	}
+		जाओ inv_desc;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(desc); i++) {
-		if (!desc[i]->valid)
-			continue;
-		if (!desc[i]->privilege_access) {
+	क्रम (i = 0; i < ARRAY_SIZE(desc); i++) अणु
+		अगर (!desc[i]->valid)
+			जारी;
+		अगर (!desc[i]->privilege_access) अणु
 			gvt_vgpu_err("unexpected GGTT elsp submission\n");
-			goto inv_desc;
-		}
-	}
+			जाओ inv_desc;
+		पूर्ण
+	पूर्ण
 
 	/* submit workload */
-	for (i = 0; i < ARRAY_SIZE(desc); i++) {
-		if (!desc[i]->valid)
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(desc); i++) अणु
+		अगर (!desc[i]->valid)
+			जारी;
 		ret = submit_context(vgpu, engine, desc[i], i == 0);
-		if (ret) {
+		अगर (ret) अणु
 			gvt_vgpu_err("failed to submit desc %d\n", i);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 inv_desc:
 	gvt_vgpu_err("descriptors content: desc0 %08x %08x desc1 %08x %08x\n",
 		     desc[0]->udw, desc[0]->ldw, desc[1]->udw, desc[1]->ldw);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void init_vgpu_execlist(struct intel_vgpu *vgpu,
-			       const struct intel_engine_cs *engine)
-{
-	struct intel_vgpu_submission *s = &vgpu->submission;
-	struct intel_vgpu_execlist *execlist = &s->execlist[engine->id];
-	struct execlist_context_status_pointer_format ctx_status_ptr;
+अटल व्योम init_vgpu_execlist(काष्ठा पूर्णांकel_vgpu *vgpu,
+			       स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
+	काष्ठा पूर्णांकel_vgpu_execlist *execlist = &s->execlist[engine->id];
+	काष्ठा execlist_context_status_poपूर्णांकer_क्रमmat ctx_status_ptr;
 	u32 ctx_status_ptr_reg;
 
-	memset(execlist, 0, sizeof(*execlist));
+	स_रखो(execlist, 0, माप(*execlist));
 
 	execlist->vgpu = vgpu;
 	execlist->engine = engine;
@@ -514,45 +515,45 @@ static void init_vgpu_execlist(struct intel_vgpu *vgpu,
 
 	ctx_status_ptr_reg = execlist_ring_mmio(engine, _EL_OFFSET_STATUS_PTR);
 	ctx_status_ptr.dw = vgpu_vreg(vgpu, ctx_status_ptr_reg);
-	ctx_status_ptr.read_ptr = 0;
-	ctx_status_ptr.write_ptr = 0x7;
+	ctx_status_ptr.पढ़ो_ptr = 0;
+	ctx_status_ptr.ग_लिखो_ptr = 0x7;
 	vgpu_vreg(vgpu, ctx_status_ptr_reg) = ctx_status_ptr.dw;
-}
+पूर्ण
 
-static void clean_execlist(struct intel_vgpu *vgpu,
-			   intel_engine_mask_t engine_mask)
-{
-	struct intel_vgpu_submission *s = &vgpu->submission;
-	struct intel_engine_cs *engine;
-	intel_engine_mask_t tmp;
+अटल व्योम clean_execlist(काष्ठा पूर्णांकel_vgpu *vgpu,
+			   पूर्णांकel_engine_mask_t engine_mask)
+अणु
+	काष्ठा पूर्णांकel_vgpu_submission *s = &vgpu->submission;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	पूर्णांकel_engine_mask_t पंचांगp;
 
-	for_each_engine_masked(engine, vgpu->gvt->gt, engine_mask, tmp) {
-		kfree(s->ring_scan_buffer[engine->id]);
-		s->ring_scan_buffer[engine->id] = NULL;
+	क्रम_each_engine_masked(engine, vgpu->gvt->gt, engine_mask, पंचांगp) अणु
+		kमुक्त(s->ring_scan_buffer[engine->id]);
+		s->ring_scan_buffer[engine->id] = शून्य;
 		s->ring_scan_buffer_size[engine->id] = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void reset_execlist(struct intel_vgpu *vgpu,
-			   intel_engine_mask_t engine_mask)
-{
-	struct intel_engine_cs *engine;
-	intel_engine_mask_t tmp;
+अटल व्योम reset_execlist(काष्ठा पूर्णांकel_vgpu *vgpu,
+			   पूर्णांकel_engine_mask_t engine_mask)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	पूर्णांकel_engine_mask_t पंचांगp;
 
-	for_each_engine_masked(engine, vgpu->gvt->gt, engine_mask, tmp)
+	क्रम_each_engine_masked(engine, vgpu->gvt->gt, engine_mask, पंचांगp)
 		init_vgpu_execlist(vgpu, engine);
-}
+पूर्ण
 
-static int init_execlist(struct intel_vgpu *vgpu,
-			 intel_engine_mask_t engine_mask)
-{
+अटल पूर्णांक init_execlist(काष्ठा पूर्णांकel_vgpu *vgpu,
+			 पूर्णांकel_engine_mask_t engine_mask)
+अणु
 	reset_execlist(vgpu, engine_mask);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct intel_vgpu_submission_ops intel_vgpu_execlist_submission_ops = {
+स्थिर काष्ठा पूर्णांकel_vgpu_submission_ops पूर्णांकel_vgpu_execlist_submission_ops = अणु
 	.name = "execlist",
 	.init = init_execlist,
 	.reset = reset_execlist,
 	.clean = clean_execlist,
-};
+पूर्ण;

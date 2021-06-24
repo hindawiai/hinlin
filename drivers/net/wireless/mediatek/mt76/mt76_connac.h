@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /* Copyright (C) 2020 MediaTek Inc. */
 
-#ifndef __MT76_CONNAC_H
-#define __MT76_CONNAC_H
+#अगर_अघोषित __MT76_CONNAC_H
+#घोषणा __MT76_CONNAC_H
 
-#include "mt76.h"
+#समावेश "mt76.h"
 
-#define MT76_CONNAC_SCAN_IE_LEN			600
-#define MT76_CONNAC_MAX_SCHED_SCAN_INTERVAL	10
-#define MT76_CONNAC_MAX_SCHED_SCAN_SSID		10
-#define MT76_CONNAC_MAX_SCAN_MATCH		16
+#घोषणा MT76_CONNAC_SCAN_IE_LEN			600
+#घोषणा MT76_CONNAC_MAX_SCHED_SCAN_INTERVAL	10
+#घोषणा MT76_CONNAC_MAX_SCHED_SCAN_SSID		10
+#घोषणा MT76_CONNAC_MAX_SCAN_MATCH		16
 
-#define MT76_CONNAC_COREDUMP_TIMEOUT		(HZ / 20)
-#define MT76_CONNAC_COREDUMP_SZ			(128 * 1024)
+#घोषणा MT76_CONNAC_COREDUMP_TIMEOUT		(HZ / 20)
+#घोषणा MT76_CONNAC_COREDUMP_SZ			(128 * 1024)
 
-enum {
+क्रमागत अणु
 	CMD_CBW_20MHZ = IEEE80211_STA_RX_BW_20,
 	CMD_CBW_40MHZ = IEEE80211_STA_RX_BW_40,
 	CMD_CBW_80MHZ = IEEE80211_STA_RX_BW_80,
@@ -27,9 +28,9 @@ enum {
 	CMD_HE_MCS_BW160,
 	CMD_HE_MCS_BW8080,
 	CMD_HE_MCS_BW_NUM
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	HW_BSSID_0 = 0x0,
 	HW_BSSID_1,
 	HW_BSSID_2,
@@ -41,122 +42,122 @@ enum {
 	EXT_BSSID_MAX = EXT_BSSID_15,
 	REPEATER_BSSID_START = 0x20,
 	REPEATER_BSSID_MAX = 0x3f,
-};
+पूर्ण;
 
-struct mt76_connac_pm {
+काष्ठा mt76_connac_pm अणु
 	bool enable;
 
 	spinlock_t txq_lock;
-	struct {
-		struct mt76_wcid *wcid;
-		struct sk_buff *skb;
-	} tx_q[IEEE80211_NUM_ACS];
+	काष्ठा अणु
+		काष्ठा mt76_wcid *wcid;
+		काष्ठा sk_buff *skb;
+	पूर्ण tx_q[IEEE80211_NUM_ACS];
 
-	struct work_struct wake_work;
-	wait_queue_head_t wait;
+	काष्ठा work_काष्ठा wake_work;
+	रुको_queue_head_t रुको;
 
-	struct {
+	काष्ठा अणु
 		spinlock_t lock;
 		u32 count;
-	} wake;
-	struct mutex mutex;
+	पूर्ण wake;
+	काष्ठा mutex mutex;
 
-	struct delayed_work ps_work;
-	unsigned long last_activity;
-	unsigned long idle_timeout;
+	काष्ठा delayed_work ps_work;
+	अचिन्हित दीर्घ last_activity;
+	अचिन्हित दीर्घ idle_समयout;
 
-	struct {
-		unsigned long last_wake_event;
-		unsigned long awake_time;
-		unsigned long last_doze_event;
-		unsigned long doze_time;
-		unsigned int lp_wake;
-	} stats;
-};
+	काष्ठा अणु
+		अचिन्हित दीर्घ last_wake_event;
+		अचिन्हित दीर्घ awake_समय;
+		अचिन्हित दीर्घ last_करोze_event;
+		अचिन्हित दीर्घ करोze_समय;
+		अचिन्हित पूर्णांक lp_wake;
+	पूर्ण stats;
+पूर्ण;
 
-struct mt76_connac_coredump {
-	struct sk_buff_head msg_list;
-	struct delayed_work work;
-	unsigned long last_activity;
-};
+काष्ठा mt76_connac_coredump अणु
+	काष्ठा sk_buff_head msg_list;
+	काष्ठा delayed_work work;
+	अचिन्हित दीर्घ last_activity;
+पूर्ण;
 
-extern const struct wiphy_wowlan_support mt76_connac_wowlan_support;
+बाह्य स्थिर काष्ठा wiphy_wowlan_support mt76_connac_wowlan_support;
 
-static inline bool is_mt7921(struct mt76_dev *dev)
-{
-	return mt76_chip(dev) == 0x7961;
-}
+अटल अंतरभूत bool is_mt7921(काष्ठा mt76_dev *dev)
+अणु
+	वापस mt76_chip(dev) == 0x7961;
+पूर्ण
 
-static inline bool is_mt7663(struct mt76_dev *dev)
-{
-	return mt76_chip(dev) == 0x7663;
-}
+अटल अंतरभूत bool is_mt7663(काष्ठा mt76_dev *dev)
+अणु
+	वापस mt76_chip(dev) == 0x7663;
+पूर्ण
 
-int mt76_connac_pm_wake(struct mt76_phy *phy, struct mt76_connac_pm *pm);
-void mt76_connac_power_save_sched(struct mt76_phy *phy,
-				  struct mt76_connac_pm *pm);
-void mt76_connac_free_pending_tx_skbs(struct mt76_connac_pm *pm,
-				      struct mt76_wcid *wcid);
+पूर्णांक mt76_connac_pm_wake(काष्ठा mt76_phy *phy, काष्ठा mt76_connac_pm *pm);
+व्योम mt76_connac_घातer_save_sched(काष्ठा mt76_phy *phy,
+				  काष्ठा mt76_connac_pm *pm);
+व्योम mt76_connac_मुक्त_pending_tx_skbs(काष्ठा mt76_connac_pm *pm,
+				      काष्ठा mt76_wcid *wcid);
 
-static inline bool
-mt76_connac_pm_ref(struct mt76_phy *phy, struct mt76_connac_pm *pm)
-{
+अटल अंतरभूत bool
+mt76_connac_pm_ref(काष्ठा mt76_phy *phy, काष्ठा mt76_connac_pm *pm)
+अणु
 	bool ret = false;
 
 	spin_lock_bh(&pm->wake.lock);
-	if (test_bit(MT76_STATE_PM, &phy->state))
-		goto out;
+	अगर (test_bit(MT76_STATE_PM, &phy->state))
+		जाओ out;
 
 	pm->wake.count++;
 	ret = true;
 out:
 	spin_unlock_bh(&pm->wake.lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void
-mt76_connac_pm_unref(struct mt76_connac_pm *pm)
-{
+अटल अंतरभूत व्योम
+mt76_connac_pm_unref(काष्ठा mt76_connac_pm *pm)
+अणु
 	spin_lock_bh(&pm->wake.lock);
 	pm->wake.count--;
-	pm->last_activity = jiffies;
+	pm->last_activity = jअगरfies;
 	spin_unlock_bh(&pm->wake.lock);
-}
+पूर्ण
 
-static inline bool
-mt76_connac_skip_fw_pmctrl(struct mt76_phy *phy, struct mt76_connac_pm *pm)
-{
+अटल अंतरभूत bool
+mt76_connac_skip_fw_pmctrl(काष्ठा mt76_phy *phy, काष्ठा mt76_connac_pm *pm)
+अणु
 	bool ret;
 
 	spin_lock_bh(&pm->wake.lock);
 	ret = pm->wake.count || test_and_set_bit(MT76_STATE_PM, &phy->state);
 	spin_unlock_bh(&pm->wake.lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void
-mt76_connac_mutex_acquire(struct mt76_dev *dev, struct mt76_connac_pm *pm)
+अटल अंतरभूत व्योम
+mt76_connac_mutex_acquire(काष्ठा mt76_dev *dev, काष्ठा mt76_connac_pm *pm)
 	__acquires(&dev->mutex)
-{
+अणु
 	mutex_lock(&dev->mutex);
 	mt76_connac_pm_wake(&dev->phy, pm);
-}
+पूर्ण
 
-static inline void
-mt76_connac_mutex_release(struct mt76_dev *dev, struct mt76_connac_pm *pm)
+अटल अंतरभूत व्योम
+mt76_connac_mutex_release(काष्ठा mt76_dev *dev, काष्ठा mt76_connac_pm *pm)
 	__releases(&dev->mutex)
-{
-	mt76_connac_power_save_sched(&dev->phy, pm);
+अणु
+	mt76_connac_घातer_save_sched(&dev->phy, pm);
 	mutex_unlock(&dev->mutex);
-}
+पूर्ण
 
-void mt76_connac_pm_queue_skb(struct ieee80211_hw *hw,
-			      struct mt76_connac_pm *pm,
-			      struct mt76_wcid *wcid,
-			      struct sk_buff *skb);
-void mt76_connac_pm_dequeue_skbs(struct mt76_phy *phy,
-				 struct mt76_connac_pm *pm);
+व्योम mt76_connac_pm_queue_skb(काष्ठा ieee80211_hw *hw,
+			      काष्ठा mt76_connac_pm *pm,
+			      काष्ठा mt76_wcid *wcid,
+			      काष्ठा sk_buff *skb);
+व्योम mt76_connac_pm_dequeue_skbs(काष्ठा mt76_phy *phy,
+				 काष्ठा mt76_connac_pm *pm);
 
-#endif /* __MT76_CONNAC_H */
+#पूर्ण_अगर /* __MT76_CONNAC_H */

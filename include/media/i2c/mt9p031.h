@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef MT9P031_H
-#define MT9P031_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित MT9P031_H
+#घोषणा MT9P031_H
 
-struct v4l2_subdev;
+काष्ठा v4l2_subdev;
 
 /*
- * struct mt9p031_platform_data - MT9P031 platform data
- * @ext_freq: Input clock frequency
- * @target_freq: Pixel clock frequency
+ * काष्ठा mt9p031_platक्रमm_data - MT9P031 platक्रमm data
+ * @ext_freq: Input घड़ी frequency
+ * @target_freq: Pixel घड़ी frequency
  */
-struct mt9p031_platform_data {
-	int ext_freq;
-	int target_freq;
-};
+काष्ठा mt9p031_platक्रमm_data अणु
+	पूर्णांक ext_freq;
+	पूर्णांक target_freq;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

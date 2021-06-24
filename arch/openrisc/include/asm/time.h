@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
- * OpenRISC timer API
+ * OpenRISC समयr API
  *
- * Copyright (C) 2017 by Stafford Horne (shorne@gmail.com)
+ * Copyright (C) 2017 by Stafक्रमd Horne (shorne@gmail.com)
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#ifndef __ASM_OR1K_TIME_H
-#define __ASM_OR1K_TIME_H
+#अगर_अघोषित __ASM_OR1K_TIME_H
+#घोषणा __ASM_OR1K_TIME_H
 
-extern void openrisc_clockevent_init(void);
+बाह्य व्योम खोलोrisc_घड़ीevent_init(व्योम);
 
-extern void openrisc_timer_set(unsigned long count);
-extern void openrisc_timer_set_next(unsigned long delta);
+बाह्य व्योम खोलोrisc_समयr_set(अचिन्हित दीर्घ count);
+बाह्य व्योम खोलोrisc_समयr_set_next(अचिन्हित दीर्घ delta);
 
-#ifdef CONFIG_SMP
-extern void synchronise_count_master(int cpu);
-extern void synchronise_count_slave(int cpu);
-#endif
+#अगर_घोषित CONFIG_SMP
+बाह्य व्योम synchronise_count_master(पूर्णांक cpu);
+बाह्य व्योम synchronise_count_slave(पूर्णांक cpu);
+#पूर्ण_अगर
 
-#endif /* __ASM_OR1K_TIME_H */
+#पूर्ण_अगर /* __ASM_OR1K_TIME_H */

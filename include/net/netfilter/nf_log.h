@@ -1,101 +1,102 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_LOG_H
-#define _NF_LOG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_LOG_H
+#घोषणा _NF_LOG_H
 
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_log.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_log.h>
 
 /* Log tcp sequence, tcp options, ip options and uid owning local socket */
-#define NF_LOG_DEFAULT_MASK	0x0f
+#घोषणा NF_LOG_DEFAULT_MASK	0x0f
 
 /* This flag indicates that copy_len field in nf_loginfo is set */
-#define NF_LOG_F_COPY_LEN	0x1
+#घोषणा NF_LOG_F_COPY_LEN	0x1
 
-enum nf_log_type {
+क्रमागत nf_log_type अणु
 	NF_LOG_TYPE_LOG		= 0,
 	NF_LOG_TYPE_ULOG,
 	NF_LOG_TYPE_MAX
-};
+पूर्ण;
 
-struct nf_loginfo {
-	u_int8_t type;
-	union {
-		struct {
-			/* copy_len will be used iff you set
+काष्ठा nf_loginfo अणु
+	u_पूर्णांक8_t type;
+	जोड़ अणु
+		काष्ठा अणु
+			/* copy_len will be used अगरf you set
 			 * NF_LOG_F_COPY_LEN in flags
 			 */
-			u_int32_t copy_len;
-			u_int16_t group;
-			u_int16_t qthreshold;
-			u_int16_t flags;
-		} ulog;
-		struct {
-			u_int8_t level;
-			u_int8_t logflags;
-		} log;
-	} u;
-};
+			u_पूर्णांक32_t copy_len;
+			u_पूर्णांक16_t group;
+			u_पूर्णांक16_t qthreshold;
+			u_पूर्णांक16_t flags;
+		पूर्ण ulog;
+		काष्ठा अणु
+			u_पूर्णांक8_t level;
+			u_पूर्णांक8_t logflags;
+		पूर्ण log;
+	पूर्ण u;
+पूर्ण;
 
-typedef void nf_logfn(struct net *net,
-		      u_int8_t pf,
-		      unsigned int hooknum,
-		      const struct sk_buff *skb,
-		      const struct net_device *in,
-		      const struct net_device *out,
-		      const struct nf_loginfo *li,
-		      const char *prefix);
+प्रकार व्योम nf_logfn(काष्ठा net *net,
+		      u_पूर्णांक8_t pf,
+		      अचिन्हित पूर्णांक hooknum,
+		      स्थिर काष्ठा sk_buff *skb,
+		      स्थिर काष्ठा net_device *in,
+		      स्थिर काष्ठा net_device *out,
+		      स्थिर काष्ठा nf_loginfo *li,
+		      स्थिर अक्षर *prefix);
 
-struct nf_logger {
-	char			*name;
-	enum nf_log_type	type;
+काष्ठा nf_logger अणु
+	अक्षर			*name;
+	क्रमागत nf_log_type	type;
 	nf_logfn 		*logfn;
-	struct module		*me;
-};
+	काष्ठा module		*me;
+पूर्ण;
 
 /* sysctl_nf_log_all_netns - allow LOG target in all network namespaces */
-extern int sysctl_nf_log_all_netns;
+बाह्य पूर्णांक sysctl_nf_log_all_netns;
 
-/* Function to register/unregister log function. */
-int nf_log_register(u_int8_t pf, struct nf_logger *logger);
-void nf_log_unregister(struct nf_logger *logger);
+/* Function to रेजिस्टर/unरेजिस्टर log function. */
+पूर्णांक nf_log_रेजिस्टर(u_पूर्णांक8_t pf, काष्ठा nf_logger *logger);
+व्योम nf_log_unरेजिस्टर(काष्ठा nf_logger *logger);
 
-int nf_log_set(struct net *net, u_int8_t pf, const struct nf_logger *logger);
-void nf_log_unset(struct net *net, const struct nf_logger *logger);
+पूर्णांक nf_log_set(काष्ठा net *net, u_पूर्णांक8_t pf, स्थिर काष्ठा nf_logger *logger);
+व्योम nf_log_unset(काष्ठा net *net, स्थिर काष्ठा nf_logger *logger);
 
-int nf_log_bind_pf(struct net *net, u_int8_t pf,
-		   const struct nf_logger *logger);
-void nf_log_unbind_pf(struct net *net, u_int8_t pf);
+पूर्णांक nf_log_bind_pf(काष्ठा net *net, u_पूर्णांक8_t pf,
+		   स्थिर काष्ठा nf_logger *logger);
+व्योम nf_log_unbind_pf(काष्ठा net *net, u_पूर्णांक8_t pf);
 
-int nf_logger_find_get(int pf, enum nf_log_type type);
-void nf_logger_put(int pf, enum nf_log_type type);
+पूर्णांक nf_logger_find_get(पूर्णांक pf, क्रमागत nf_log_type type);
+व्योम nf_logger_put(पूर्णांक pf, क्रमागत nf_log_type type);
 
-#define MODULE_ALIAS_NF_LOGGER(family, type) \
-	MODULE_ALIAS("nf-logger-" __stringify(family) "-" __stringify(type))
+#घोषणा MODULE_ALIAS_NF_LOGGER(family, type) \
+	MODULE_ALIAS("nf-logger-" __stringअगरy(family) "-" __stringअगरy(type))
 
-/* Calls the registered backend logging function */
-__printf(8, 9)
-void nf_log_packet(struct net *net,
-		   u_int8_t pf,
-		   unsigned int hooknum,
-		   const struct sk_buff *skb,
-		   const struct net_device *in,
-		   const struct net_device *out,
-		   const struct nf_loginfo *li,
-		   const char *fmt, ...);
+/* Calls the रेजिस्टरed backend logging function */
+__म_लिखो(8, 9)
+व्योम nf_log_packet(काष्ठा net *net,
+		   u_पूर्णांक8_t pf,
+		   अचिन्हित पूर्णांक hooknum,
+		   स्थिर काष्ठा sk_buff *skb,
+		   स्थिर काष्ठा net_device *in,
+		   स्थिर काष्ठा net_device *out,
+		   स्थिर काष्ठा nf_loginfo *li,
+		   स्थिर अक्षर *fmt, ...);
 
-__printf(8, 9)
-void nf_log_trace(struct net *net,
-		  u_int8_t pf,
-		  unsigned int hooknum,
-		  const struct sk_buff *skb,
-		  const struct net_device *in,
-		  const struct net_device *out,
-		  const struct nf_loginfo *li,
-		  const char *fmt, ...);
+__म_लिखो(8, 9)
+व्योम nf_log_trace(काष्ठा net *net,
+		  u_पूर्णांक8_t pf,
+		  अचिन्हित पूर्णांक hooknum,
+		  स्थिर काष्ठा sk_buff *skb,
+		  स्थिर काष्ठा net_device *in,
+		  स्थिर काष्ठा net_device *out,
+		  स्थिर काष्ठा nf_loginfo *li,
+		  स्थिर अक्षर *fmt, ...);
 
-struct nf_log_buf;
+काष्ठा nf_log_buf;
 
-struct nf_log_buf *nf_log_buf_open(void);
-__printf(2, 3) int nf_log_buf_add(struct nf_log_buf *m, const char *f, ...);
-void nf_log_buf_close(struct nf_log_buf *m);
-#endif /* _NF_LOG_H */
+काष्ठा nf_log_buf *nf_log_buf_खोलो(व्योम);
+__म_लिखो(2, 3) पूर्णांक nf_log_buf_add(काष्ठा nf_log_buf *m, स्थिर अक्षर *f, ...);
+व्योम nf_log_buf_बंद(काष्ठा nf_log_buf *m);
+#पूर्ण_अगर /* _NF_LOG_H */

@@ -1,123 +1,124 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * gpio-au1300.h -- GPIO control for Au1300 GPIC and compatibles.
+ * gpio-au1300.h -- GPIO control क्रम Au1300 GPIC and compatibles.
  *
  * Copyright (c) 2009-2011 Manuel Lauss <manuel.lauss@googlemail.com>
  */
 
-#ifndef _GPIO_AU1300_H_
-#define _GPIO_AU1300_H_
+#अगर_अघोषित _GPIO_AU1300_H_
+#घोषणा _GPIO_AU1300_H_
 
-#include <asm/addrspace.h>
-#include <asm/io.h>
-#include <asm/mach-au1x00/au1000.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/mach-au1x00/au1000.h>
 
-struct gpio;
-struct gpio_chip;
+काष्ठा gpio;
+काष्ठा gpio_chip;
 
 /* with the current GPIC design, up to 128 GPIOs are possible.
- * The only implementation so far is in the Au1300, which has 75 externally
+ * The only implementation so far is in the Au1300, which has 75 बाह्यally
  * available GPIOs.
  */
-#define AU1300_GPIO_BASE	0
-#define AU1300_GPIO_NUM		75
-#define AU1300_GPIO_MAX		(AU1300_GPIO_BASE + AU1300_GPIO_NUM - 1)
+#घोषणा AU1300_GPIO_BASE	0
+#घोषणा AU1300_GPIO_NUM		75
+#घोषणा AU1300_GPIO_MAX		(AU1300_GPIO_BASE + AU1300_GPIO_NUM - 1)
 
-#define AU1300_GPIC_ADDR	\
-	(void __iomem *)KSEG1ADDR(AU1300_GPIC_PHYS_ADDR)
+#घोषणा AU1300_GPIC_ADDR	\
+	(व्योम __iomem *)KSEG1ADDR(AU1300_GPIC_PHYS_ADDR)
 
-static inline int au1300_gpio_get_value(unsigned int gpio)
-{
-	void __iomem *roff = AU1300_GPIC_ADDR;
-	int bit;
+अटल अंतरभूत पूर्णांक au1300_gpio_get_value(अचिन्हित पूर्णांक gpio)
+अणु
+	व्योम __iomem *roff = AU1300_GPIC_ADDR;
+	पूर्णांक bit;
 
 	gpio -= AU1300_GPIO_BASE;
 	roff += GPIC_GPIO_BANKOFF(gpio);
 	bit = GPIC_GPIO_TO_BIT(gpio);
-	return __raw_readl(roff + AU1300_GPIC_PINVAL) & bit;
-}
+	वापस __raw_पढ़ोl(roff + AU1300_GPIC_PINVAL) & bit;
+पूर्ण
 
-static inline int au1300_gpio_direction_input(unsigned int gpio)
-{
-	void __iomem *roff = AU1300_GPIC_ADDR;
-	unsigned long bit;
+अटल अंतरभूत पूर्णांक au1300_gpio_direction_input(अचिन्हित पूर्णांक gpio)
+अणु
+	व्योम __iomem *roff = AU1300_GPIC_ADDR;
+	अचिन्हित दीर्घ bit;
 
 	gpio -= AU1300_GPIO_BASE;
 
 	roff += GPIC_GPIO_BANKOFF(gpio);
 	bit = GPIC_GPIO_TO_BIT(gpio);
-	__raw_writel(bit, roff + AU1300_GPIC_DEVCLR);
+	__raw_ग_लिखोl(bit, roff + AU1300_GPIC_DEVCLR);
 	wmb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int au1300_gpio_set_value(unsigned int gpio, int v)
-{
-	void __iomem *roff = AU1300_GPIC_ADDR;
-	unsigned long bit;
+अटल अंतरभूत पूर्णांक au1300_gpio_set_value(अचिन्हित पूर्णांक gpio, पूर्णांक v)
+अणु
+	व्योम __iomem *roff = AU1300_GPIC_ADDR;
+	अचिन्हित दीर्घ bit;
 
 	gpio -= AU1300_GPIO_BASE;
 
 	roff += GPIC_GPIO_BANKOFF(gpio);
 	bit = GPIC_GPIO_TO_BIT(gpio);
-	__raw_writel(bit, roff + (v ? AU1300_GPIC_PINVAL
+	__raw_ग_लिखोl(bit, roff + (v ? AU1300_GPIC_PINVAL
 				    : AU1300_GPIC_PINVALCLR));
 	wmb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int au1300_gpio_direction_output(unsigned int gpio, int v)
-{
-	/* hw switches to output automatically */
-	return au1300_gpio_set_value(gpio, v);
-}
+अटल अंतरभूत पूर्णांक au1300_gpio_direction_output(अचिन्हित पूर्णांक gpio, पूर्णांक v)
+अणु
+	/* hw चयनes to output स्वतःmatically */
+	वापस au1300_gpio_set_value(gpio, v);
+पूर्ण
 
-static inline int au1300_gpio_to_irq(unsigned int gpio)
-{
-	return AU1300_FIRST_INT + (gpio - AU1300_GPIO_BASE);
-}
+अटल अंतरभूत पूर्णांक au1300_gpio_to_irq(अचिन्हित पूर्णांक gpio)
+अणु
+	वापस AU1300_FIRST_INT + (gpio - AU1300_GPIO_BASE);
+पूर्ण
 
-static inline int au1300_irq_to_gpio(unsigned int irq)
-{
-	return (irq - AU1300_FIRST_INT) + AU1300_GPIO_BASE;
-}
+अटल अंतरभूत पूर्णांक au1300_irq_to_gpio(अचिन्हित पूर्णांक irq)
+अणु
+	वापस (irq - AU1300_FIRST_INT) + AU1300_GPIO_BASE;
+पूर्ण
 
-static inline int au1300_gpio_is_valid(unsigned int gpio)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक au1300_gpio_is_valid(अचिन्हित पूर्णांक gpio)
+अणु
+	पूर्णांक ret;
 
-	switch (alchemy_get_cputype()) {
-	case ALCHEMY_CPU_AU1300:
+	चयन (alchemy_get_cputype()) अणु
+	हाल ALCHEMY_CPU_AU1300:
 		ret = ((gpio >= AU1300_GPIO_BASE) && (gpio <= AU1300_GPIO_MAX));
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = 0;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static inline int au1300_gpio_cansleep(unsigned int gpio)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक au1300_gpio_cansleep(अचिन्हित पूर्णांक gpio)
+अणु
+	वापस 0;
+पूर्ण
 
-/* hardware remembers gpio 0-63 levels on powerup */
-static inline int au1300_gpio_getinitlvl(unsigned int gpio)
-{
-	void __iomem *roff = AU1300_GPIC_ADDR;
-	unsigned long v;
+/* hardware remembers gpio 0-63 levels on घातerup */
+अटल अंतरभूत पूर्णांक au1300_gpio_getinitlvl(अचिन्हित पूर्णांक gpio)
+अणु
+	व्योम __iomem *roff = AU1300_GPIC_ADDR;
+	अचिन्हित दीर्घ v;
 
-	if (unlikely(gpio > 63))
-		return 0;
-	else if (gpio > 31) {
+	अगर (unlikely(gpio > 63))
+		वापस 0;
+	अन्यथा अगर (gpio > 31) अणु
 		gpio -= 32;
 		roff += 4;
-	}
+	पूर्ण
 
-	v = __raw_readl(roff + AU1300_GPIC_RSTVAL);
-	return (v >> gpio) & 1;
-}
+	v = __raw_पढ़ोl(roff + AU1300_GPIC_RSTVAL);
+	वापस (v >> gpio) & 1;
+पूर्ण
 
-#endif /* _GPIO_AU1300_H_ */
+#पूर्ण_अगर /* _GPIO_AU1300_H_ */

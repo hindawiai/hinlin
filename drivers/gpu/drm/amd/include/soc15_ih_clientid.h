@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,15 +22,15 @@
  *
  */
 
-#ifndef __SOC15_IH_CLIENTID_H__
-#define __SOC15_IH_CLIENTID_H__
+#अगर_अघोषित __SOC15_IH_CLIENTID_H__
+#घोषणा __SOC15_IH_CLIENTID_H__
 
 /*
  * Vega10+ IH clients
- * Whenever this structure is updated, which should not happen, make sure
+ * Whenever this काष्ठाure is updated, which should not happen, make sure
  * soc15_ih_clientid_name in the below is also updated accordingly.
  */
-enum soc15_ih_clientid {
+क्रमागत soc15_ih_clientid अणु
 	SOC15_IH_CLIENTID_IH		= 0x00,
 	SOC15_IH_CLIENTID_ACP		= 0x01,
 	SOC15_IH_CLIENTID_ATHUB		= 0x02,
@@ -75,10 +76,10 @@ enum soc15_ih_clientid {
 	SOC15_IH_CLIENTID_SDMA6		= SOC15_IH_CLIENTID_XDMA,
 	SOC15_IH_CLIENTID_SDMA7		= SOC15_IH_CLIENTID_VCE1,
 	SOC15_IH_CLIENTID_VMC1		= SOC15_IH_CLIENTID_PCIE0,
-};
+पूर्ण;
 
-extern const char *soc15_ih_clientid_name[];
+बाह्य स्थिर अक्षर *soc15_ih_clientid_name[];
 
-#endif
+#पूर्ण_अगर
 
 

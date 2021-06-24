@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Based on pinctrl-mtk-mt6765.h
  *
@@ -9,12 +10,12 @@
  * Copyright (c) 2018 Manivannan Sadhasivam
  */
 
-#ifndef __PINCTRL_MTK_MT6797_H
-#define __PINCTRL_MTK_MT6797_H
+#अगर_अघोषित __PINCTRL_MTK_MT6797_H
+#घोषणा __PINCTRL_MTK_MT6797_H
 
-#include "pinctrl-paris.h"
+#समावेश "pinctrl-paris.h"
 
-static const struct mtk_pin_desc mtk_pins_mt6797[] = {
+अटल स्थिर काष्ठा mtk_pin_desc mtk_pins_mt6797[] = अणु
 	MTK_PIN(
 		0, "GPIO0",
 		MTK_EINT_FUNCTION(NO_EINT_SUPPORT, NO_EINT_SUPPORT),
@@ -2424,6 +2425,6 @@ static const struct mtk_pin_desc mtk_pins_mt6797[] = {
 		MTK_FUNCTION(6, "SCP_JTAG_TRSTN"),
 		MTK_FUNCTION(7, "C2K_DM_JTINTP")
 	),
-};
+पूर्ण;
 
-#endif /* __PINCTRL_MTK_MT6797_H */
+#पूर्ण_अगर /* __PINCTRL_MTK_MT6797_H */

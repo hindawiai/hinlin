@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 	NxtWave Communications - NXT6000 demodulator driver
 
@@ -7,582 +8,582 @@
 
 */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
 
-#include <media/dvb_frontend.h>
-#include "nxt6000_priv.h"
-#include "nxt6000.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "nxt6000_priv.h"
+#समावेश "nxt6000.h"
 
 
 
-struct nxt6000_state {
-	struct i2c_adapter* i2c;
+काष्ठा nxt6000_state अणु
+	काष्ठा i2c_adapter* i2c;
 	/* configuration settings */
-	const struct nxt6000_config* config;
-	struct dvb_frontend frontend;
-};
+	स्थिर काष्ठा nxt6000_config* config;
+	काष्ठा dvb_frontend frontend;
+पूर्ण;
 
-static int debug;
-#define dprintk(fmt, arg...) do {					\
-	if (debug)							\
-		printk(KERN_DEBUG pr_fmt("%s: " fmt),			\
+अटल पूर्णांक debug;
+#घोषणा dprपूर्णांकk(fmt, arg...) करो अणु					\
+	अगर (debug)							\
+		prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt),			\
 		       __func__, ##arg);				\
-} while (0)
+पूर्ण जबतक (0)
 
-static int nxt6000_writereg(struct nxt6000_state* state, u8 reg, u8 data)
-{
-	u8 buf[] = { reg, data };
-	struct i2c_msg msg = {.addr = state->config->demod_address,.flags = 0,.buf = buf,.len = 2 };
-	int ret;
+अटल पूर्णांक nxt6000_ग_लिखोreg(काष्ठा nxt6000_state* state, u8 reg, u8 data)
+अणु
+	u8 buf[] = अणु reg, data पूर्ण;
+	काष्ठा i2c_msg msg = अणु.addr = state->config->demod_address,.flags = 0,.buf = buf,.len = 2 पूर्ण;
+	पूर्णांक ret;
 
-	if ((ret = i2c_transfer(state->i2c, &msg, 1)) != 1)
-		dprintk("nxt6000: nxt6000_write error (reg: 0x%02X, data: 0x%02X, ret: %d)\n", reg, data, ret);
+	अगर ((ret = i2c_transfer(state->i2c, &msg, 1)) != 1)
+		dprपूर्णांकk("nxt6000: nxt6000_write error (reg: 0x%02X, data: 0x%02X, ret: %d)\n", reg, data, ret);
 
-	return (ret != 1) ? -EIO : 0;
-}
+	वापस (ret != 1) ? -EIO : 0;
+पूर्ण
 
-static u8 nxt6000_readreg(struct nxt6000_state* state, u8 reg)
-{
-	int ret;
-	u8 b0[] = { reg };
-	u8 b1[] = { 0 };
-	struct i2c_msg msgs[] = {
-		{.addr = state->config->demod_address,.flags = 0,.buf = b0,.len = 1},
-		{.addr = state->config->demod_address,.flags = I2C_M_RD,.buf = b1,.len = 1}
-	};
+अटल u8 nxt6000_पढ़ोreg(काष्ठा nxt6000_state* state, u8 reg)
+अणु
+	पूर्णांक ret;
+	u8 b0[] = अणु reg पूर्ण;
+	u8 b1[] = अणु 0 पूर्ण;
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु.addr = state->config->demod_address,.flags = 0,.buf = b0,.len = 1पूर्ण,
+		अणु.addr = state->config->demod_address,.flags = I2C_M_RD,.buf = b1,.len = 1पूर्ण
+	पूर्ण;
 
 	ret = i2c_transfer(state->i2c, msgs, 2);
 
-	if (ret != 2)
-		dprintk("nxt6000: nxt6000_read error (reg: 0x%02X, ret: %d)\n", reg, ret);
+	अगर (ret != 2)
+		dprपूर्णांकk("nxt6000: nxt6000_read error (reg: 0x%02X, ret: %d)\n", reg, ret);
 
-	return b1[0];
-}
+	वापस b1[0];
+पूर्ण
 
-static void nxt6000_reset(struct nxt6000_state* state)
-{
+अटल व्योम nxt6000_reset(काष्ठा nxt6000_state* state)
+अणु
 	u8 val;
 
-	val = nxt6000_readreg(state, OFDM_COR_CTL);
+	val = nxt6000_पढ़ोreg(state, OFDM_COR_CTL);
 
-	nxt6000_writereg(state, OFDM_COR_CTL, val & ~COREACT);
-	nxt6000_writereg(state, OFDM_COR_CTL, val | COREACT);
-}
+	nxt6000_ग_लिखोreg(state, OFDM_COR_CTL, val & ~COREACT);
+	nxt6000_ग_लिखोreg(state, OFDM_COR_CTL, val | COREACT);
+पूर्ण
 
-static int nxt6000_set_bandwidth(struct nxt6000_state *state, u32 bandwidth)
-{
+अटल पूर्णांक nxt6000_set_bandwidth(काष्ठा nxt6000_state *state, u32 bandwidth)
+अणु
 	u16 nominal_rate;
-	int result;
+	पूर्णांक result;
 
-	switch (bandwidth) {
-	case 6000000:
+	चयन (bandwidth) अणु
+	हाल 6000000:
 		nominal_rate = 0x55B7;
-		break;
+		अवरोध;
 
-	case 7000000:
+	हाल 7000000:
 		nominal_rate = 0x6400;
-		break;
+		अवरोध;
 
-	case 8000000:
+	हाल 8000000:
 		nominal_rate = 0x7249;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((result = nxt6000_writereg(state, OFDM_TRL_NOMINALRATE_1, nominal_rate & 0xFF)) < 0)
-		return result;
+	अगर ((result = nxt6000_ग_लिखोreg(state, OFDM_TRL_NOMINALRATE_1, nominal_rate & 0xFF)) < 0)
+		वापस result;
 
-	return nxt6000_writereg(state, OFDM_TRL_NOMINALRATE_2, (nominal_rate >> 8) & 0xFF);
-}
+	वापस nxt6000_ग_लिखोreg(state, OFDM_TRL_NOMINALRATE_2, (nominal_rate >> 8) & 0xFF);
+पूर्ण
 
-static int nxt6000_set_guard_interval(struct nxt6000_state *state,
-				      enum fe_guard_interval guard_interval)
-{
-	switch (guard_interval) {
+अटल पूर्णांक nxt6000_set_guard_पूर्णांकerval(काष्ठा nxt6000_state *state,
+				      क्रमागत fe_guard_पूर्णांकerval guard_पूर्णांकerval)
+अणु
+	चयन (guard_पूर्णांकerval) अणु
 
-	case GUARD_INTERVAL_1_32:
-		return nxt6000_writereg(state, OFDM_COR_MODEGUARD, 0x00 | (nxt6000_readreg(state, OFDM_COR_MODEGUARD) & ~0x03));
+	हाल GUARD_INTERVAL_1_32:
+		वापस nxt6000_ग_लिखोreg(state, OFDM_COR_MODEGUARD, 0x00 | (nxt6000_पढ़ोreg(state, OFDM_COR_MODEGUARD) & ~0x03));
 
-	case GUARD_INTERVAL_1_16:
-		return nxt6000_writereg(state, OFDM_COR_MODEGUARD, 0x01 | (nxt6000_readreg(state, OFDM_COR_MODEGUARD) & ~0x03));
+	हाल GUARD_INTERVAL_1_16:
+		वापस nxt6000_ग_लिखोreg(state, OFDM_COR_MODEGUARD, 0x01 | (nxt6000_पढ़ोreg(state, OFDM_COR_MODEGUARD) & ~0x03));
 
-	case GUARD_INTERVAL_AUTO:
-	case GUARD_INTERVAL_1_8:
-		return nxt6000_writereg(state, OFDM_COR_MODEGUARD, 0x02 | (nxt6000_readreg(state, OFDM_COR_MODEGUARD) & ~0x03));
+	हाल GUARD_INTERVAL_AUTO:
+	हाल GUARD_INTERVAL_1_8:
+		वापस nxt6000_ग_लिखोreg(state, OFDM_COR_MODEGUARD, 0x02 | (nxt6000_पढ़ोreg(state, OFDM_COR_MODEGUARD) & ~0x03));
 
-	case GUARD_INTERVAL_1_4:
-		return nxt6000_writereg(state, OFDM_COR_MODEGUARD, 0x03 | (nxt6000_readreg(state, OFDM_COR_MODEGUARD) & ~0x03));
+	हाल GUARD_INTERVAL_1_4:
+		वापस nxt6000_ग_लिखोreg(state, OFDM_COR_MODEGUARD, 0x03 | (nxt6000_पढ़ोreg(state, OFDM_COR_MODEGUARD) & ~0x03));
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int nxt6000_set_inversion(struct nxt6000_state *state,
-				 enum fe_spectral_inversion inversion)
-{
-	switch (inversion) {
+अटल पूर्णांक nxt6000_set_inversion(काष्ठा nxt6000_state *state,
+				 क्रमागत fe_spectral_inversion inversion)
+अणु
+	चयन (inversion) अणु
 
-	case INVERSION_OFF:
-		return nxt6000_writereg(state, OFDM_ITB_CTL, 0x00);
+	हाल INVERSION_OFF:
+		वापस nxt6000_ग_लिखोreg(state, OFDM_ITB_CTL, 0x00);
 
-	case INVERSION_ON:
-		return nxt6000_writereg(state, OFDM_ITB_CTL, ITBINV);
+	हाल INVERSION_ON:
+		वापस nxt6000_ग_लिखोreg(state, OFDM_ITB_CTL, ITBINV);
 
-	default:
-		return -EINVAL;
+	शेष:
+		वापस -EINVAL;
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-nxt6000_set_transmission_mode(struct nxt6000_state *state,
-			      enum fe_transmit_mode transmission_mode)
-{
-	int result;
+अटल पूर्णांक
+nxt6000_set_transmission_mode(काष्ठा nxt6000_state *state,
+			      क्रमागत fe_transmit_mode transmission_mode)
+अणु
+	पूर्णांक result;
 
-	switch (transmission_mode) {
+	चयन (transmission_mode) अणु
 
-	case TRANSMISSION_MODE_2K:
-		if ((result = nxt6000_writereg(state, EN_DMD_RACQ, 0x00 | (nxt6000_readreg(state, EN_DMD_RACQ) & ~0x03))) < 0)
-			return result;
+	हाल TRANSMISSION_MODE_2K:
+		अगर ((result = nxt6000_ग_लिखोreg(state, EN_DMD_RACQ, 0x00 | (nxt6000_पढ़ोreg(state, EN_DMD_RACQ) & ~0x03))) < 0)
+			वापस result;
 
-		return nxt6000_writereg(state, OFDM_COR_MODEGUARD, (0x00 << 2) | (nxt6000_readreg(state, OFDM_COR_MODEGUARD) & ~0x04));
+		वापस nxt6000_ग_लिखोreg(state, OFDM_COR_MODEGUARD, (0x00 << 2) | (nxt6000_पढ़ोreg(state, OFDM_COR_MODEGUARD) & ~0x04));
 
-	case TRANSMISSION_MODE_8K:
-	case TRANSMISSION_MODE_AUTO:
-		if ((result = nxt6000_writereg(state, EN_DMD_RACQ, 0x02 | (nxt6000_readreg(state, EN_DMD_RACQ) & ~0x03))) < 0)
-			return result;
+	हाल TRANSMISSION_MODE_8K:
+	हाल TRANSMISSION_MODE_AUTO:
+		अगर ((result = nxt6000_ग_लिखोreg(state, EN_DMD_RACQ, 0x02 | (nxt6000_पढ़ोreg(state, EN_DMD_RACQ) & ~0x03))) < 0)
+			वापस result;
 
-		return nxt6000_writereg(state, OFDM_COR_MODEGUARD, (0x01 << 2) | (nxt6000_readreg(state, OFDM_COR_MODEGUARD) & ~0x04));
+		वापस nxt6000_ग_लिखोreg(state, OFDM_COR_MODEGUARD, (0x01 << 2) | (nxt6000_पढ़ोreg(state, OFDM_COR_MODEGUARD) & ~0x04));
 
-	default:
-		return -EINVAL;
+	शेष:
+		वापस -EINVAL;
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nxt6000_setup(struct dvb_frontend* fe)
-{
-	struct nxt6000_state* state = fe->demodulator_priv;
+अटल व्योम nxt6000_setup(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा nxt6000_state* state = fe->demodulator_priv;
 
-	nxt6000_writereg(state, RS_COR_SYNC_PARAM, SYNC_PARAM);
-	nxt6000_writereg(state, BER_CTRL, /*(1 << 2) | */ (0x01 << 1) | 0x01);
-	nxt6000_writereg(state, VIT_BERTIME_2, 0x00);  // BER Timer = 0x000200 * 256 = 131072 bits
-	nxt6000_writereg(state, VIT_BERTIME_1, 0x02);  //
-	nxt6000_writereg(state, VIT_BERTIME_0, 0x00);  //
-	nxt6000_writereg(state, VIT_COR_INTEN, 0x98); // Enable BER interrupts
-	nxt6000_writereg(state, VIT_COR_CTL, 0x82);   // Enable BER measurement
-	nxt6000_writereg(state, VIT_COR_CTL, VIT_COR_RESYNC | 0x02 );
-	nxt6000_writereg(state, OFDM_COR_CTL, (0x01 << 5) | (nxt6000_readreg(state, OFDM_COR_CTL) & 0x0F));
-	nxt6000_writereg(state, OFDM_COR_MODEGUARD, FORCEMODE8K | 0x02);
-	nxt6000_writereg(state, OFDM_AGC_CTL, AGCLAST | INITIAL_AGC_BW);
-	nxt6000_writereg(state, OFDM_ITB_FREQ_1, 0x06);
-	nxt6000_writereg(state, OFDM_ITB_FREQ_2, 0x31);
-	nxt6000_writereg(state, OFDM_CAS_CTL, (0x01 << 7) | (0x02 << 3) | 0x04);
-	nxt6000_writereg(state, CAS_FREQ, 0xBB);	/* CHECKME */
-	nxt6000_writereg(state, OFDM_SYR_CTL, 1 << 2);
-	nxt6000_writereg(state, OFDM_PPM_CTL_1, PPM256);
-	nxt6000_writereg(state, OFDM_TRL_NOMINALRATE_1, 0x49);
-	nxt6000_writereg(state, OFDM_TRL_NOMINALRATE_2, 0x72);
-	nxt6000_writereg(state, ANALOG_CONTROL_0, 1 << 5);
-	nxt6000_writereg(state, EN_DMD_RACQ, (1 << 7) | (3 << 4) | 2);
-	nxt6000_writereg(state, DIAG_CONFIG, TB_SET);
+	nxt6000_ग_लिखोreg(state, RS_COR_SYNC_PARAM, SYNC_PARAM);
+	nxt6000_ग_लिखोreg(state, BER_CTRL, /*(1 << 2) | */ (0x01 << 1) | 0x01);
+	nxt6000_ग_लिखोreg(state, VIT_BERTIME_2, 0x00);  // BER Timer = 0x000200 * 256 = 131072 bits
+	nxt6000_ग_लिखोreg(state, VIT_BERTIME_1, 0x02);  //
+	nxt6000_ग_लिखोreg(state, VIT_BERTIME_0, 0x00);  //
+	nxt6000_ग_लिखोreg(state, VIT_COR_INTEN, 0x98); // Enable BER पूर्णांकerrupts
+	nxt6000_ग_लिखोreg(state, VIT_COR_CTL, 0x82);   // Enable BER measurement
+	nxt6000_ग_लिखोreg(state, VIT_COR_CTL, VIT_COR_RESYNC | 0x02 );
+	nxt6000_ग_लिखोreg(state, OFDM_COR_CTL, (0x01 << 5) | (nxt6000_पढ़ोreg(state, OFDM_COR_CTL) & 0x0F));
+	nxt6000_ग_लिखोreg(state, OFDM_COR_MODEGUARD, FORCEMODE8K | 0x02);
+	nxt6000_ग_लिखोreg(state, OFDM_AGC_CTL, AGCLAST | INITIAL_AGC_BW);
+	nxt6000_ग_लिखोreg(state, OFDM_ITB_FREQ_1, 0x06);
+	nxt6000_ग_लिखोreg(state, OFDM_ITB_FREQ_2, 0x31);
+	nxt6000_ग_लिखोreg(state, OFDM_CAS_CTL, (0x01 << 7) | (0x02 << 3) | 0x04);
+	nxt6000_ग_लिखोreg(state, CAS_FREQ, 0xBB);	/* CHECKME */
+	nxt6000_ग_लिखोreg(state, OFDM_SYR_CTL, 1 << 2);
+	nxt6000_ग_लिखोreg(state, OFDM_PPM_CTL_1, PPM256);
+	nxt6000_ग_लिखोreg(state, OFDM_TRL_NOMINALRATE_1, 0x49);
+	nxt6000_ग_लिखोreg(state, OFDM_TRL_NOMINALRATE_2, 0x72);
+	nxt6000_ग_लिखोreg(state, ANALOG_CONTROL_0, 1 << 5);
+	nxt6000_ग_लिखोreg(state, EN_DMD_RACQ, (1 << 7) | (3 << 4) | 2);
+	nxt6000_ग_लिखोreg(state, DIAG_CONFIG, TB_SET);
 
-	if (state->config->clock_inversion)
-		nxt6000_writereg(state, SUB_DIAG_MODE_SEL, CLKINVERSION);
-	else
-		nxt6000_writereg(state, SUB_DIAG_MODE_SEL, 0);
+	अगर (state->config->घड़ी_inversion)
+		nxt6000_ग_लिखोreg(state, SUB_DIAG_MODE_SEL, CLKINVERSION);
+	अन्यथा
+		nxt6000_ग_लिखोreg(state, SUB_DIAG_MODE_SEL, 0);
 
-	nxt6000_writereg(state, TS_FORMAT, 0);
-}
+	nxt6000_ग_लिखोreg(state, TS_FORMAT, 0);
+पूर्ण
 
-static void nxt6000_dump_status(struct nxt6000_state *state)
-{
+अटल व्योम nxt6000_dump_status(काष्ठा nxt6000_state *state)
+अणु
 	u8 val;
 
-#if 0
+#अगर 0
 	pr_info("RS_COR_STAT: 0x%02X\n",
-		nxt6000_readreg(fe, RS_COR_STAT));
+		nxt6000_पढ़ोreg(fe, RS_COR_STAT));
 	pr_info("VIT_SYNC_STATUS: 0x%02X\n",
-		nxt6000_readreg(fe, VIT_SYNC_STATUS));
+		nxt6000_पढ़ोreg(fe, VIT_SYNC_STATUS));
 	pr_info("OFDM_COR_STAT: 0x%02X\n",
-		nxt6000_readreg(fe, OFDM_COR_STAT));
+		nxt6000_पढ़ोreg(fe, OFDM_COR_STAT));
 	pr_info("OFDM_SYR_STAT: 0x%02X\n",
-		nxt6000_readreg(fe, OFDM_SYR_STAT));
+		nxt6000_पढ़ोreg(fe, OFDM_SYR_STAT));
 	pr_info("OFDM_TPS_RCVD_1: 0x%02X\n",
-		nxt6000_readreg(fe, OFDM_TPS_RCVD_1));
+		nxt6000_पढ़ोreg(fe, OFDM_TPS_RCVD_1));
 	pr_info("OFDM_TPS_RCVD_2: 0x%02X\n",
-		nxt6000_readreg(fe, OFDM_TPS_RCVD_2));
+		nxt6000_पढ़ोreg(fe, OFDM_TPS_RCVD_2));
 	pr_info("OFDM_TPS_RCVD_3: 0x%02X\n",
-		nxt6000_readreg(fe, OFDM_TPS_RCVD_3));
+		nxt6000_पढ़ोreg(fe, OFDM_TPS_RCVD_3));
 	pr_info("OFDM_TPS_RCVD_4: 0x%02X\n",
-		nxt6000_readreg(fe, OFDM_TPS_RCVD_4));
+		nxt6000_पढ़ोreg(fe, OFDM_TPS_RCVD_4));
 	pr_info("OFDM_TPS_RESERVED_1: 0x%02X\n",
-		nxt6000_readreg(fe, OFDM_TPS_RESERVED_1));
+		nxt6000_पढ़ोreg(fe, OFDM_TPS_RESERVED_1));
 	pr_info("OFDM_TPS_RESERVED_2: 0x%02X\n",
-		nxt6000_readreg(fe, OFDM_TPS_RESERVED_2));
-#endif
+		nxt6000_पढ़ोreg(fe, OFDM_TPS_RESERVED_2));
+#पूर्ण_अगर
 	pr_info("NXT6000 status:");
 
-	val = nxt6000_readreg(state, RS_COR_STAT);
+	val = nxt6000_पढ़ोreg(state, RS_COR_STAT);
 
 	pr_cont(" DATA DESCR LOCK: %d,", val & 0x01);
 	pr_cont(" DATA SYNC LOCK: %d,", (val >> 1) & 0x01);
 
-	val = nxt6000_readreg(state, VIT_SYNC_STATUS);
+	val = nxt6000_पढ़ोreg(state, VIT_SYNC_STATUS);
 
 	pr_cont(" VITERBI LOCK: %d,", (val >> 7) & 0x01);
 
-	switch ((val >> 4) & 0x07) {
+	चयन ((val >> 4) & 0x07) अणु
 
-	case 0x00:
+	हाल 0x00:
 		pr_cont(" VITERBI CODERATE: 1/2,");
-		break;
+		अवरोध;
 
-	case 0x01:
+	हाल 0x01:
 		pr_cont(" VITERBI CODERATE: 2/3,");
-		break;
+		अवरोध;
 
-	case 0x02:
+	हाल 0x02:
 		pr_cont(" VITERBI CODERATE: 3/4,");
-		break;
+		अवरोध;
 
-	case 0x03:
+	हाल 0x03:
 		pr_cont(" VITERBI CODERATE: 5/6,");
-		break;
+		अवरोध;
 
-	case 0x04:
+	हाल 0x04:
 		pr_cont(" VITERBI CODERATE: 7/8,");
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_cont(" VITERBI CODERATE: Reserved,");
 
-	}
+	पूर्ण
 
-	val = nxt6000_readreg(state, OFDM_COR_STAT);
+	val = nxt6000_पढ़ोreg(state, OFDM_COR_STAT);
 
 	pr_cont(" CHCTrack: %d,", (val >> 7) & 0x01);
 	pr_cont(" TPSLock: %d,", (val >> 6) & 0x01);
 	pr_cont(" SYRLock: %d,", (val >> 5) & 0x01);
 	pr_cont(" AGCLock: %d,", (val >> 4) & 0x01);
 
-	switch (val & 0x0F) {
+	चयन (val & 0x0F) अणु
 
-	case 0x00:
+	हाल 0x00:
 		pr_cont(" CoreState: IDLE,");
-		break;
+		अवरोध;
 
-	case 0x02:
+	हाल 0x02:
 		pr_cont(" CoreState: WAIT_AGC,");
-		break;
+		अवरोध;
 
-	case 0x03:
+	हाल 0x03:
 		pr_cont(" CoreState: WAIT_SYR,");
-		break;
+		अवरोध;
 
-	case 0x04:
+	हाल 0x04:
 		pr_cont(" CoreState: WAIT_PPM,");
-		break;
+		अवरोध;
 
-	case 0x01:
+	हाल 0x01:
 		pr_cont(" CoreState: WAIT_TRL,");
-		break;
+		अवरोध;
 
-	case 0x05:
+	हाल 0x05:
 		pr_cont(" CoreState: WAIT_TPS,");
-		break;
+		अवरोध;
 
-	case 0x06:
+	हाल 0x06:
 		pr_cont(" CoreState: MONITOR_TPS,");
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_cont(" CoreState: Reserved,");
 
-	}
+	पूर्ण
 
-	val = nxt6000_readreg(state, OFDM_SYR_STAT);
+	val = nxt6000_पढ़ोreg(state, OFDM_SYR_STAT);
 
 	pr_cont(" SYRLock: %d,", (val >> 4) & 0x01);
 	pr_cont(" SYRMode: %s,", (val >> 2) & 0x01 ? "8K" : "2K");
 
-	switch ((val >> 4) & 0x03) {
+	चयन ((val >> 4) & 0x03) अणु
 
-	case 0x00:
+	हाल 0x00:
 		pr_cont(" SYRGuard: 1/32,");
-		break;
+		अवरोध;
 
-	case 0x01:
+	हाल 0x01:
 		pr_cont(" SYRGuard: 1/16,");
-		break;
+		अवरोध;
 
-	case 0x02:
+	हाल 0x02:
 		pr_cont(" SYRGuard: 1/8,");
-		break;
+		अवरोध;
 
-	case 0x03:
+	हाल 0x03:
 		pr_cont(" SYRGuard: 1/4,");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	val = nxt6000_readreg(state, OFDM_TPS_RCVD_3);
+	val = nxt6000_पढ़ोreg(state, OFDM_TPS_RCVD_3);
 
-	switch ((val >> 4) & 0x07) {
+	चयन ((val >> 4) & 0x07) अणु
 
-	case 0x00:
+	हाल 0x00:
 		pr_cont(" TPSLP: 1/2,");
-		break;
+		अवरोध;
 
-	case 0x01:
+	हाल 0x01:
 		pr_cont(" TPSLP: 2/3,");
-		break;
+		अवरोध;
 
-	case 0x02:
+	हाल 0x02:
 		pr_cont(" TPSLP: 3/4,");
-		break;
+		अवरोध;
 
-	case 0x03:
+	हाल 0x03:
 		pr_cont(" TPSLP: 5/6,");
-		break;
+		अवरोध;
 
-	case 0x04:
+	हाल 0x04:
 		pr_cont(" TPSLP: 7/8,");
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_cont(" TPSLP: Reserved,");
 
-	}
+	पूर्ण
 
-	switch (val & 0x07) {
+	चयन (val & 0x07) अणु
 
-	case 0x00:
+	हाल 0x00:
 		pr_cont(" TPSHP: 1/2,");
-		break;
+		अवरोध;
 
-	case 0x01:
+	हाल 0x01:
 		pr_cont(" TPSHP: 2/3,");
-		break;
+		अवरोध;
 
-	case 0x02:
+	हाल 0x02:
 		pr_cont(" TPSHP: 3/4,");
-		break;
+		अवरोध;
 
-	case 0x03:
+	हाल 0x03:
 		pr_cont(" TPSHP: 5/6,");
-		break;
+		अवरोध;
 
-	case 0x04:
+	हाल 0x04:
 		pr_cont(" TPSHP: 7/8,");
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_cont(" TPSHP: Reserved,");
 
-	}
+	पूर्ण
 
-	val = nxt6000_readreg(state, OFDM_TPS_RCVD_4);
+	val = nxt6000_पढ़ोreg(state, OFDM_TPS_RCVD_4);
 
 	pr_cont(" TPSMode: %s,", val & 0x01 ? "8K" : "2K");
 
-	switch ((val >> 4) & 0x03) {
+	चयन ((val >> 4) & 0x03) अणु
 
-	case 0x00:
+	हाल 0x00:
 		pr_cont(" TPSGuard: 1/32,");
-		break;
+		अवरोध;
 
-	case 0x01:
+	हाल 0x01:
 		pr_cont(" TPSGuard: 1/16,");
-		break;
+		अवरोध;
 
-	case 0x02:
+	हाल 0x02:
 		pr_cont(" TPSGuard: 1/8,");
-		break;
+		अवरोध;
 
-	case 0x03:
+	हाल 0x03:
 		pr_cont(" TPSGuard: 1/4,");
-		break;
+		अवरोध;
 
-	}
+	पूर्ण
 
 	/* Strange magic required to gain access to RF_AGC_STATUS */
-	nxt6000_readreg(state, RF_AGC_VAL_1);
-	val = nxt6000_readreg(state, RF_AGC_STATUS);
-	val = nxt6000_readreg(state, RF_AGC_STATUS);
+	nxt6000_पढ़ोreg(state, RF_AGC_VAL_1);
+	val = nxt6000_पढ़ोreg(state, RF_AGC_STATUS);
+	val = nxt6000_पढ़ोreg(state, RF_AGC_STATUS);
 
 	pr_cont(" RF AGC LOCK: %d,", (val >> 4) & 0x01);
 	pr_cont("\n");
-}
+पूर्ण
 
-static int nxt6000_read_status(struct dvb_frontend *fe, enum fe_status *status)
-{
+अटल पूर्णांक nxt6000_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
+अणु
 	u8 core_status;
-	struct nxt6000_state* state = fe->demodulator_priv;
+	काष्ठा nxt6000_state* state = fe->demodulator_priv;
 
 	*status = 0;
 
-	core_status = nxt6000_readreg(state, OFDM_COR_STAT);
+	core_status = nxt6000_पढ़ोreg(state, OFDM_COR_STAT);
 
-	if (core_status & AGCLOCKED)
+	अगर (core_status & AGCLOCKED)
 		*status |= FE_HAS_SIGNAL;
 
-	if (nxt6000_readreg(state, OFDM_SYR_STAT) & GI14_SYR_LOCK)
+	अगर (nxt6000_पढ़ोreg(state, OFDM_SYR_STAT) & GI14_SYR_LOCK)
 		*status |= FE_HAS_CARRIER;
 
-	if (nxt6000_readreg(state, VIT_SYNC_STATUS) & VITINSYNC)
+	अगर (nxt6000_पढ़ोreg(state, VIT_SYNC_STATUS) & VITINSYNC)
 		*status |= FE_HAS_VITERBI;
 
-	if (nxt6000_readreg(state, RS_COR_STAT) & RSCORESTATUS)
+	अगर (nxt6000_पढ़ोreg(state, RS_COR_STAT) & RSCORESTATUS)
 		*status |= FE_HAS_SYNC;
 
-	if ((core_status & TPSLOCKED) && (*status == (FE_HAS_SIGNAL | FE_HAS_CARRIER | FE_HAS_VITERBI | FE_HAS_SYNC)))
+	अगर ((core_status & TPSLOCKED) && (*status == (FE_HAS_SIGNAL | FE_HAS_CARRIER | FE_HAS_VITERBI | FE_HAS_SYNC)))
 		*status |= FE_HAS_LOCK;
 
-	if (debug)
+	अगर (debug)
 		nxt6000_dump_status(state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nxt6000_init(struct dvb_frontend* fe)
-{
-	struct nxt6000_state* state = fe->demodulator_priv;
+अटल पूर्णांक nxt6000_init(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा nxt6000_state* state = fe->demodulator_priv;
 
 	nxt6000_reset(state);
 	nxt6000_setup(fe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nxt6000_set_frontend(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct nxt6000_state* state = fe->demodulator_priv;
-	int result;
+अटल पूर्णांक nxt6000_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा nxt6000_state* state = fe->demodulator_priv;
+	पूर्णांक result;
 
-	if (fe->ops.tuner_ops.set_params) {
+	अगर (fe->ops.tuner_ops.set_params) अणु
 		fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
-	}
+		अगर (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
+	पूर्ण
 
 	result = nxt6000_set_bandwidth(state, p->bandwidth_hz);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
-	result = nxt6000_set_guard_interval(state, p->guard_interval);
-	if (result < 0)
-		return result;
+	result = nxt6000_set_guard_पूर्णांकerval(state, p->guard_पूर्णांकerval);
+	अगर (result < 0)
+		वापस result;
 
 	result = nxt6000_set_transmission_mode(state, p->transmission_mode);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
 	result = nxt6000_set_inversion(state, p->inversion);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
 	msleep(500);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nxt6000_release(struct dvb_frontend* fe)
-{
-	struct nxt6000_state* state = fe->demodulator_priv;
-	kfree(state);
-}
+अटल व्योम nxt6000_release(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा nxt6000_state* state = fe->demodulator_priv;
+	kमुक्त(state);
+पूर्ण
 
-static int nxt6000_read_snr(struct dvb_frontend* fe, u16* snr)
-{
-	struct nxt6000_state* state = fe->demodulator_priv;
+अटल पूर्णांक nxt6000_पढ़ो_snr(काष्ठा dvb_frontend* fe, u16* snr)
+अणु
+	काष्ठा nxt6000_state* state = fe->demodulator_priv;
 
-	*snr = nxt6000_readreg( state, OFDM_CHC_SNR) / 8;
+	*snr = nxt6000_पढ़ोreg( state, OFDM_CHC_SNR) / 8;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nxt6000_read_ber(struct dvb_frontend* fe, u32* ber)
-{
-	struct nxt6000_state* state = fe->demodulator_priv;
+अटल पूर्णांक nxt6000_पढ़ो_ber(काष्ठा dvb_frontend* fe, u32* ber)
+अणु
+	काष्ठा nxt6000_state* state = fe->demodulator_priv;
 
-	nxt6000_writereg( state, VIT_COR_INTSTAT, 0x18 );
+	nxt6000_ग_लिखोreg( state, VIT_COR_INTSTAT, 0x18 );
 
-	*ber = (nxt6000_readreg( state, VIT_BER_1 ) << 8 ) |
-		nxt6000_readreg( state, VIT_BER_0 );
+	*ber = (nxt6000_पढ़ोreg( state, VIT_BER_1 ) << 8 ) |
+		nxt6000_पढ़ोreg( state, VIT_BER_0 );
 
-	nxt6000_writereg( state, VIT_COR_INTSTAT, 0x18); // Clear BER Done interrupts
+	nxt6000_ग_लिखोreg( state, VIT_COR_INTSTAT, 0x18); // Clear BER Done पूर्णांकerrupts
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nxt6000_read_signal_strength(struct dvb_frontend* fe, u16* signal_strength)
-{
-	struct nxt6000_state* state = fe->demodulator_priv;
+अटल पूर्णांक nxt6000_पढ़ो_संकेत_strength(काष्ठा dvb_frontend* fe, u16* संकेत_strength)
+अणु
+	काष्ठा nxt6000_state* state = fe->demodulator_priv;
 
-	*signal_strength = (short) (511 -
-		(nxt6000_readreg(state, AGC_GAIN_1) +
-		((nxt6000_readreg(state, AGC_GAIN_2) & 0x03) << 8)));
+	*संकेत_strength = (लघु) (511 -
+		(nxt6000_पढ़ोreg(state, AGC_GAIN_1) +
+		((nxt6000_पढ़ोreg(state, AGC_GAIN_2) & 0x03) << 8)));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nxt6000_fe_get_tune_settings(struct dvb_frontend* fe, struct dvb_frontend_tune_settings *tune)
-{
+अटल पूर्णांक nxt6000_fe_get_tune_settings(काष्ठा dvb_frontend* fe, काष्ठा dvb_frontend_tune_settings *tune)
+अणु
 	tune->min_delay_ms = 500;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nxt6000_i2c_gate_ctrl(struct dvb_frontend* fe, int enable)
-{
-	struct nxt6000_state* state = fe->demodulator_priv;
+अटल पूर्णांक nxt6000_i2c_gate_ctrl(काष्ठा dvb_frontend* fe, पूर्णांक enable)
+अणु
+	काष्ठा nxt6000_state* state = fe->demodulator_priv;
 
-	if (enable) {
-		return nxt6000_writereg(state, ENABLE_TUNER_IIC, 0x01);
-	} else {
-		return nxt6000_writereg(state, ENABLE_TUNER_IIC, 0x00);
-	}
-}
+	अगर (enable) अणु
+		वापस nxt6000_ग_लिखोreg(state, ENABLE_TUNER_IIC, 0x01);
+	पूर्ण अन्यथा अणु
+		वापस nxt6000_ग_लिखोreg(state, ENABLE_TUNER_IIC, 0x00);
+	पूर्ण
+पूर्ण
 
-static const struct dvb_frontend_ops nxt6000_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops nxt6000_ops;
 
-struct dvb_frontend* nxt6000_attach(const struct nxt6000_config* config,
-				    struct i2c_adapter* i2c)
-{
-	struct nxt6000_state* state = NULL;
+काष्ठा dvb_frontend* nxt6000_attach(स्थिर काष्ठा nxt6000_config* config,
+				    काष्ठा i2c_adapter* i2c)
+अणु
+	काष्ठा nxt6000_state* state = शून्य;
 
-	/* allocate memory for the internal state */
-	state = kzalloc(sizeof(struct nxt6000_state), GFP_KERNEL);
-	if (state == NULL) goto error;
+	/* allocate memory क्रम the पूर्णांकernal state */
+	state = kzalloc(माप(काष्ठा nxt6000_state), GFP_KERNEL);
+	अगर (state == शून्य) जाओ error;
 
 	/* setup the state */
 	state->config = config;
 	state->i2c = i2c;
 
-	/* check if the demod is there */
-	if (nxt6000_readreg(state, OFDM_MSC_REV) != NXT6000ASICDEVICE) goto error;
+	/* check अगर the demod is there */
+	अगर (nxt6000_पढ़ोreg(state, OFDM_MSC_REV) != NXT6000ASICDEVICE) जाओ error;
 
 	/* create dvb_frontend */
-	memcpy(&state->frontend.ops, &nxt6000_ops, sizeof(struct dvb_frontend_ops));
+	स_नकल(&state->frontend.ops, &nxt6000_ops, माप(काष्ठा dvb_frontend_ops));
 	state->frontend.demodulator_priv = state;
-	return &state->frontend;
+	वापस &state->frontend;
 
 error:
-	kfree(state);
-	return NULL;
-}
+	kमुक्त(state);
+	वापस शून्य;
+पूर्ण
 
-static const struct dvb_frontend_ops nxt6000_ops = {
-	.delsys = { SYS_DVBT },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops nxt6000_ops = अणु
+	.delsys = अणु SYS_DVBT पूर्ण,
+	.info = अणु
 		.name = "NxtWave NXT6000 DVB-T",
 		.frequency_min_hz = 0,
 		.frequency_max_hz = 863250 * kHz,
@@ -597,7 +598,7 @@ static const struct dvb_frontend_ops nxt6000_ops = {
 			FE_CAN_QAM_16 | FE_CAN_QAM_64 | FE_CAN_QAM_AUTO |
 			FE_CAN_TRANSMISSION_MODE_AUTO | FE_CAN_GUARD_INTERVAL_AUTO |
 			FE_CAN_HIERARCHY_AUTO,
-	},
+	पूर्ण,
 
 	.release = nxt6000_release,
 
@@ -608,13 +609,13 @@ static const struct dvb_frontend_ops nxt6000_ops = {
 
 	.set_frontend = nxt6000_set_frontend,
 
-	.read_status = nxt6000_read_status,
-	.read_ber = nxt6000_read_ber,
-	.read_signal_strength = nxt6000_read_signal_strength,
-	.read_snr = nxt6000_read_snr,
-};
+	.पढ़ो_status = nxt6000_पढ़ो_status,
+	.पढ़ो_ber = nxt6000_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = nxt6000_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = nxt6000_पढ़ो_snr,
+पूर्ण;
 
-module_param(debug, int, 0644);
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off frontend debugging (default:off).");
 
 MODULE_DESCRIPTION("NxtWave NXT6000 DVB-T demodulator driver");

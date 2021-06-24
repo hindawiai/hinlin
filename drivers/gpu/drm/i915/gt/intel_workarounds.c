@@ -1,247 +1,248 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2014-2018 Intel Corporation
+ * Copyright तऊ 2014-2018 Intel Corporation
  */
 
-#include "i915_drv.h"
-#include "intel_context.h"
-#include "intel_engine_pm.h"
-#include "intel_gpu_commands.h"
-#include "intel_gt.h"
-#include "intel_ring.h"
-#include "intel_workarounds.h"
+#समावेश "i915_drv.h"
+#समावेश "intel_context.h"
+#समावेश "intel_engine_pm.h"
+#समावेश "intel_gpu_commands.h"
+#समावेश "intel_gt.h"
+#समावेश "intel_ring.h"
+#समावेश "intel_workarounds.h"
 
 /**
  * DOC: Hardware workarounds
  *
- * This file is intended as a central place to implement most [1]_ of the
- * required workarounds for hardware to work as originally intended. They fall
+ * This file is पूर्णांकended as a central place to implement most [1]_ of the
+ * required workarounds क्रम hardware to work as originally पूर्णांकended. They fall
  * in five basic categories depending on how/when they are applied:
  *
- * - Workarounds that touch registers that are saved/restored to/from the HW
+ * - Workarounds that touch रेजिस्टरs that are saved/restored to/from the HW
  *   context image. The list is emitted (via Load Register Immediate commands)
- *   everytime a new context is created.
- * - GT workarounds. The list of these WAs is applied whenever these registers
- *   revert to default values (on GPU reset, suspend/resume [2]_, etc..).
- * - Display workarounds. The list is applied during display clock-gating
+ *   everyसमय a new context is created.
+ * - GT workarounds. The list of these WAs is applied whenever these रेजिस्टरs
+ *   revert to शेष values (on GPU reset, suspend/resume [2]_, etc..).
+ * - Display workarounds. The list is applied during display घड़ी-gating
  *   initialization.
- * - Workarounds that whitelist a privileged register, so that UMDs can manage
- *   them directly. This is just a special case of a MMMIO workaround (as we
- *   write the list of these to/be-whitelisted registers to some special HW
- *   registers).
- * - Workaround batchbuffers, that get executed automatically by the hardware
+ * - Workarounds that whitelist a privileged रेजिस्टर, so that UMDs can manage
+ *   them directly. This is just a special हाल of a MMMIO workaround (as we
+ *   ग_लिखो the list of these to/be-whitelisted रेजिस्टरs to some special HW
+ *   रेजिस्टरs).
+ * - Workaround batchbuffers, that get executed स्वतःmatically by the hardware
  *   on every HW context restore.
  *
  * .. [1] Please notice that there are other WAs that, due to their nature,
  *    cannot be applied from a central place. Those are peppered around the rest
  *    of the code, as needed.
  *
- * .. [2] Technically, some registers are powercontext saved & restored, so they
+ * .. [2] Technically, some रेजिस्टरs are घातercontext saved & restored, so they
  *    survive a suspend/resume. In practice, writing them again is not too
- *    costly and simplifies things. We can revisit this in the future.
+ *    costly and simplअगरies things. We can revisit this in the future.
  *
  * Layout
  * ~~~~~~
  *
  * Keep things in this file ordered by WA type, as per the above (context, GT,
- * display, register whitelist, batchbuffer). Then, inside each type, keep the
+ * display, रेजिस्टर whitelist, batchbuffer). Then, inside each type, keep the
  * following order:
  *
- * - Infrastructure functions and macros
- * - WAs per platform in standard gen/chrono order
+ * - Infraकाष्ठाure functions and macros
+ * - WAs per platक्रमm in standard gen/chrono order
  * - Public functions to init or apply the given workaround type.
  */
 
-static void wa_init_start(struct i915_wa_list *wal, const char *name, const char *engine_name)
-{
+अटल व्योम wa_init_start(काष्ठा i915_wa_list *wal, स्थिर अक्षर *name, स्थिर अक्षर *engine_name)
+अणु
 	wal->name = name;
 	wal->engine_name = engine_name;
-}
+पूर्ण
 
-#define WA_LIST_CHUNK (1 << 4)
+#घोषणा WA_LIST_CHUNK (1 << 4)
 
-static void wa_init_finish(struct i915_wa_list *wal)
-{
+अटल व्योम wa_init_finish(काष्ठा i915_wa_list *wal)
+अणु
 	/* Trim unused entries. */
-	if (!IS_ALIGNED(wal->count, WA_LIST_CHUNK)) {
-		struct i915_wa *list = kmemdup(wal->list,
-					       wal->count * sizeof(*list),
+	अगर (!IS_ALIGNED(wal->count, WA_LIST_CHUNK)) अणु
+		काष्ठा i915_wa *list = kmemdup(wal->list,
+					       wal->count * माप(*list),
 					       GFP_KERNEL);
 
-		if (list) {
-			kfree(wal->list);
+		अगर (list) अणु
+			kमुक्त(wal->list);
 			wal->list = list;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!wal->count)
-		return;
+	अगर (!wal->count)
+		वापस;
 
 	DRM_DEBUG_DRIVER("Initialized %u %s workarounds on %s\n",
 			 wal->wa_count, wal->name, wal->engine_name);
-}
+पूर्ण
 
-static void _wa_add(struct i915_wa_list *wal, const struct i915_wa *wa)
-{
-	unsigned int addr = i915_mmio_reg_offset(wa->reg);
-	unsigned int start = 0, end = wal->count;
-	const unsigned int grow = WA_LIST_CHUNK;
-	struct i915_wa *wa_;
+अटल व्योम _wa_add(काष्ठा i915_wa_list *wal, स्थिर काष्ठा i915_wa *wa)
+अणु
+	अचिन्हित पूर्णांक addr = i915_mmio_reg_offset(wa->reg);
+	अचिन्हित पूर्णांक start = 0, end = wal->count;
+	स्थिर अचिन्हित पूर्णांक grow = WA_LIST_CHUNK;
+	काष्ठा i915_wa *wa_;
 
-	GEM_BUG_ON(!is_power_of_2(grow));
+	GEM_BUG_ON(!is_घातer_of_2(grow));
 
-	if (IS_ALIGNED(wal->count, grow)) { /* Either uninitialized or full. */
-		struct i915_wa *list;
+	अगर (IS_ALIGNED(wal->count, grow)) अणु /* Either uninitialized or full. */
+		काष्ठा i915_wa *list;
 
-		list = kmalloc_array(ALIGN(wal->count + 1, grow), sizeof(*wa),
+		list = kदो_स्मृति_array(ALIGN(wal->count + 1, grow), माप(*wa),
 				     GFP_KERNEL);
-		if (!list) {
+		अगर (!list) अणु
 			DRM_ERROR("No space for workaround init!\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (wal->list) {
-			memcpy(list, wal->list, sizeof(*wa) * wal->count);
-			kfree(wal->list);
-		}
+		अगर (wal->list) अणु
+			स_नकल(list, wal->list, माप(*wa) * wal->count);
+			kमुक्त(wal->list);
+		पूर्ण
 
 		wal->list = list;
-	}
+	पूर्ण
 
-	while (start < end) {
-		unsigned int mid = start + (end - start) / 2;
+	जबतक (start < end) अणु
+		अचिन्हित पूर्णांक mid = start + (end - start) / 2;
 
-		if (i915_mmio_reg_offset(wal->list[mid].reg) < addr) {
+		अगर (i915_mmio_reg_offset(wal->list[mid].reg) < addr) अणु
 			start = mid + 1;
-		} else if (i915_mmio_reg_offset(wal->list[mid].reg) > addr) {
+		पूर्ण अन्यथा अगर (i915_mmio_reg_offset(wal->list[mid].reg) > addr) अणु
 			end = mid;
-		} else {
+		पूर्ण अन्यथा अणु
 			wa_ = &wal->list[mid];
 
-			if ((wa->clr | wa_->clr) && !(wa->clr & ~wa_->clr)) {
+			अगर ((wa->clr | wa_->clr) && !(wa->clr & ~wa_->clr)) अणु
 				DRM_ERROR("Discarding overwritten w/a for reg %04x (clear: %08x, set: %08x)\n",
 					  i915_mmio_reg_offset(wa_->reg),
 					  wa_->clr, wa_->set);
 
 				wa_->set &= ~wa->clr;
-			}
+			पूर्ण
 
 			wal->wa_count++;
 			wa_->set |= wa->set;
 			wa_->clr |= wa->clr;
-			wa_->read |= wa->read;
-			return;
-		}
-	}
+			wa_->पढ़ो |= wa->पढ़ो;
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	wal->wa_count++;
 	wa_ = &wal->list[wal->count++];
 	*wa_ = *wa;
 
-	while (wa_-- > wal->list) {
+	जबतक (wa_-- > wal->list) अणु
 		GEM_BUG_ON(i915_mmio_reg_offset(wa_[0].reg) ==
 			   i915_mmio_reg_offset(wa_[1].reg));
-		if (i915_mmio_reg_offset(wa_[1].reg) >
+		अगर (i915_mmio_reg_offset(wa_[1].reg) >
 		    i915_mmio_reg_offset(wa_[0].reg))
-			break;
+			अवरोध;
 
 		swap(wa_[1], wa_[0]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void wa_add(struct i915_wa_list *wal, i915_reg_t reg,
-		   u32 clear, u32 set, u32 read_mask)
-{
-	struct i915_wa wa = {
+अटल व्योम wa_add(काष्ठा i915_wa_list *wal, i915_reg_t reg,
+		   u32 clear, u32 set, u32 पढ़ो_mask)
+अणु
+	काष्ठा i915_wa wa = अणु
 		.reg  = reg,
 		.clr  = clear,
 		.set  = set,
-		.read = read_mask,
-	};
+		.पढ़ो = पढ़ो_mask,
+	पूर्ण;
 
 	_wa_add(wal, &wa);
-}
+पूर्ण
 
-static void
-wa_write_clr_set(struct i915_wa_list *wal, i915_reg_t reg, u32 clear, u32 set)
-{
+अटल व्योम
+wa_ग_लिखो_clr_set(काष्ठा i915_wa_list *wal, i915_reg_t reg, u32 clear, u32 set)
+अणु
 	wa_add(wal, reg, clear, set, clear);
-}
+पूर्ण
 
-static void
-wa_write(struct i915_wa_list *wal, i915_reg_t reg, u32 set)
-{
-	wa_write_clr_set(wal, reg, ~0, set);
-}
+अटल व्योम
+wa_ग_लिखो(काष्ठा i915_wa_list *wal, i915_reg_t reg, u32 set)
+अणु
+	wa_ग_लिखो_clr_set(wal, reg, ~0, set);
+पूर्ण
 
-static void
-wa_write_or(struct i915_wa_list *wal, i915_reg_t reg, u32 set)
-{
-	wa_write_clr_set(wal, reg, set, set);
-}
+अटल व्योम
+wa_ग_लिखो_or(काष्ठा i915_wa_list *wal, i915_reg_t reg, u32 set)
+अणु
+	wa_ग_लिखो_clr_set(wal, reg, set, set);
+पूर्ण
 
-static void
-wa_write_clr(struct i915_wa_list *wal, i915_reg_t reg, u32 clr)
-{
-	wa_write_clr_set(wal, reg, clr, 0);
-}
+अटल व्योम
+wa_ग_लिखो_clr(काष्ठा i915_wa_list *wal, i915_reg_t reg, u32 clr)
+अणु
+	wa_ग_लिखो_clr_set(wal, reg, clr, 0);
+पूर्ण
 
 /*
- * WA operations on "masked register". A masked register has the upper 16 bits
- * documented as "masked" in b-spec. Its purpose is to allow writing to just a
- * portion of the register without a rmw: you simply write in the upper 16 bits
- * the mask of bits you are going to modify.
+ * WA operations on "masked register". A masked रेजिस्टर has the upper 16 bits
+ * करोcumented as "masked" in b-spec. Its purpose is to allow writing to just a
+ * portion of the रेजिस्टर without a rmw: you simply ग_लिखो in the upper 16 bits
+ * the mask of bits you are going to modअगरy.
  *
- * The wa_masked_* family of functions already does the necessary operations to
+ * The wa_masked_* family of functions alपढ़ोy करोes the necessary operations to
  * calculate the mask based on the parameters passed, so user only has to
- * provide the lower 16 bits of that register.
+ * provide the lower 16 bits of that रेजिस्टर.
  */
 
-static void
-wa_masked_en(struct i915_wa_list *wal, i915_reg_t reg, u32 val)
-{
+अटल व्योम
+wa_masked_en(काष्ठा i915_wa_list *wal, i915_reg_t reg, u32 val)
+अणु
 	wa_add(wal, reg, 0, _MASKED_BIT_ENABLE(val), val);
-}
+पूर्ण
 
-static void
-wa_masked_dis(struct i915_wa_list *wal, i915_reg_t reg, u32 val)
-{
+अटल व्योम
+wa_masked_dis(काष्ठा i915_wa_list *wal, i915_reg_t reg, u32 val)
+अणु
 	wa_add(wal, reg, 0, _MASKED_BIT_DISABLE(val), val);
-}
+पूर्ण
 
-static void
-wa_masked_field_set(struct i915_wa_list *wal, i915_reg_t reg,
+अटल व्योम
+wa_masked_field_set(काष्ठा i915_wa_list *wal, i915_reg_t reg,
 		    u32 mask, u32 val)
-{
+अणु
 	wa_add(wal, reg, 0, _MASKED_FIELD(mask, val), mask);
-}
+पूर्ण
 
-static void gen6_ctx_workarounds_init(struct intel_engine_cs *engine,
-				      struct i915_wa_list *wal)
-{
+अटल व्योम gen6_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				      काष्ठा i915_wa_list *wal)
+अणु
 	wa_masked_en(wal, INSTPM, INSTPM_FORCE_ORDERING);
-}
+पूर्ण
 
-static void gen7_ctx_workarounds_init(struct intel_engine_cs *engine,
-				      struct i915_wa_list *wal)
-{
+अटल व्योम gen7_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				      काष्ठा i915_wa_list *wal)
+अणु
 	wa_masked_en(wal, INSTPM, INSTPM_FORCE_ORDERING);
-}
+पूर्ण
 
-static void gen8_ctx_workarounds_init(struct intel_engine_cs *engine,
-				      struct i915_wa_list *wal)
-{
+अटल व्योम gen8_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				      काष्ठा i915_wa_list *wal)
+अणु
 	wa_masked_en(wal, INSTPM, INSTPM_FORCE_ORDERING);
 
 	/* WaDisableAsyncFlipPerfMode:bdw,chv */
 	wa_masked_en(wal, MI_MODE, ASYNC_FLIP_PERF_DISABLE);
 
-	/* WaDisablePartialInstShootdown:bdw,chv */
+	/* WaDisablePartialInstShootकरोwn:bdw,chv */
 	wa_masked_en(wal, GEN8_ROW_CHICKEN,
 		     PARTIAL_INSTRUCTION_SHOOTDOWN_DISABLE);
 
 	/* Use Force Non-Coherent whenever executing a 3D context. This is a
-	 * workaround for a possible hang in the unlikely event a TLB
+	 * workaround क्रम a possible hang in the unlikely event a TLB
 	 * invalidation occurs during a PSD flush.
 	 */
 	/* WaForceEnableNonCoherent:bdw,chv */
@@ -253,10 +254,10 @@ static void gen8_ctx_workarounds_init(struct intel_engine_cs *engine,
 	/* From the Haswell PRM, Command Reference: Registers, CACHE_MODE_0:
 	 * "The Hierarchical Z RAW Stall Optimization allows non-overlapping
 	 *  polygons in the same 8x4 pixel/sample area to be processed without
-	 *  stalling waiting for the earlier ones to write to Hierarchical Z
+	 *  stalling रुकोing क्रम the earlier ones to ग_लिखो to Hierarchical Z
 	 *  buffer."
 	 *
-	 * This optimization is off by default for BDW and CHV; turn it on.
+	 * This optimization is off by शेष क्रम BDW and CHV; turn it on.
 	 */
 	wa_masked_dis(wal, CACHE_MODE_0_GEN7, HIZ_RAW_STALL_OPT_DISABLE);
 
@@ -267,29 +268,29 @@ static void gen8_ctx_workarounds_init(struct intel_engine_cs *engine,
 	 * BSpec recommends 8x4 when MSAA is used,
 	 * however in practice 16x4 seems fastest.
 	 *
-	 * Note that PS/WM thread counts depend on the WIZ hashing
-	 * disable bit, which we don't touch here, but it's good
+	 * Note that PS/WM thपढ़ो counts depend on the WIZ hashing
+	 * disable bit, which we करोn't touch here, but it's good
 	 * to keep in mind (see 3DSTATE_PS and 3DSTATE_WM).
 	 */
 	wa_masked_field_set(wal, GEN7_GT_MODE,
 			    GEN6_WIZ_HASHING_MASK,
 			    GEN6_WIZ_HASHING_16x4);
-}
+पूर्ण
 
-static void bdw_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
-	struct drm_i915_private *i915 = engine->i915;
+अटल व्योम bdw_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
 
 	gen8_ctx_workarounds_init(engine, wal);
 
-	/* WaDisableThreadStallDopClockGating:bdw (pre-production) */
+	/* WaDisableThपढ़ोStallDopClockGating:bdw (pre-production) */
 	wa_masked_en(wal, GEN8_ROW_CHICKEN, STALL_DOP_GATING_DISABLE);
 
 	/* WaDisableDopClockGating:bdw
 	 *
-	 * Also see the related UCGTCL1 write in bdw_init_clock_gating()
-	 * to disable EUTC clock gating.
+	 * Also see the related UCGTCL1 ग_लिखो in bdw_init_घड़ी_gating()
+	 * to disable EUTC घड़ी gating.
 	 */
 	wa_masked_en(wal, GEN7_ROW_CHICKEN2,
 		     DOP_CLOCK_GATING_DISABLE);
@@ -302,26 +303,26 @@ static void bdw_ctx_workarounds_init(struct intel_engine_cs *engine,
 		     HDC_FORCE_CONTEXT_SAVE_RESTORE_NON_COHERENT |
 		     /* WaDisableFenceDestinationToSLM:bdw (pre-prod) */
 		     (IS_BDW_GT3(i915) ? HDC_FENCE_DEST_SLM_DISABLE : 0));
-}
+पूर्ण
 
-static void chv_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
+अटल व्योम chv_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
 	gen8_ctx_workarounds_init(engine, wal);
 
-	/* WaDisableThreadStallDopClockGating:chv */
+	/* WaDisableThपढ़ोStallDopClockGating:chv */
 	wa_masked_en(wal, GEN8_ROW_CHICKEN, STALL_DOP_GATING_DISABLE);
 
 	/* Improve HiZ throughput on CHV. */
 	wa_masked_en(wal, HIZ_CHICKEN, CHV_HZ_8X8_MODE_IN_1X);
-}
+पूर्ण
 
-static void gen9_ctx_workarounds_init(struct intel_engine_cs *engine,
-				      struct i915_wa_list *wal)
-{
-	struct drm_i915_private *i915 = engine->i915;
+अटल व्योम gen9_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				      काष्ठा i915_wa_list *wal)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
 
-	if (HAS_LLC(i915)) {
+	अगर (HAS_LLC(i915)) अणु
 		/* WaCompressedResourceSamplerPbeMediaNewHashMode:skl,kbl
 		 *
 		 * Must match Display Engine. See
@@ -331,10 +332,10 @@ static void gen9_ctx_workarounds_init(struct intel_engine_cs *engine,
 			     GEN9_PBE_COMPRESSED_HASH_SELECTION);
 		wa_masked_en(wal, GEN9_HALF_SLICE_CHICKEN7,
 			     GEN9_SAMPLER_HASH_COMPRESSED_READ_ADDR);
-	}
+	पूर्ण
 
 	/* WaClearFlowControlGpgpuContextSave:skl,bxt,kbl,glk,cfl */
-	/* WaDisablePartialInstShootdown:skl,bxt,kbl,glk,cfl */
+	/* WaDisablePartialInstShootकरोwn:skl,bxt,kbl,glk,cfl */
 	wa_masked_en(wal, GEN8_ROW_CHICKEN,
 		     FLOW_CONTROL_ENABLE |
 		     PARTIAL_INSTRUCTION_SHOOTDOWN_DISABLE);
@@ -362,14 +363,14 @@ static void gen9_ctx_workarounds_init(struct intel_engine_cs *engine,
 
 	/* WaForceEnableNonCoherent and WaDisableHDCInvalidation are
 	 * both tied to WaForceContextSaveRestoreNonCoherent
-	 * in some hsds for skl. We keep the tie for all gen9. The
-	 * documentation is a bit hazy and so we want to get common behaviour,
+	 * in some hsds क्रम skl. We keep the tie क्रम all gen9. The
+	 * करोcumentation is a bit hazy and so we want to get common behaviour,
 	 * even though there is no clear evidence we would need both on kbl/bxt.
-	 * This area has been source of system hangs so we play it safe
+	 * This area has been source of प्रणाली hangs so we play it safe
 	 * and mimic the skl regardless of what bspec says.
 	 *
 	 * Use Force Non-Coherent whenever executing a 3D context. This
-	 * is a workaround for a possible hang in the unlikely event
+	 * is a workaround क्रम a possible hang in the unlikely event
 	 * a TLB invalidation occurs during a PSD flush.
 	 */
 
@@ -378,7 +379,7 @@ static void gen9_ctx_workarounds_init(struct intel_engine_cs *engine,
 		     HDC_FORCE_NON_COHERENT);
 
 	/* WaDisableSamplerPowerBypassForSOPingPong:skl,bxt,kbl,cfl */
-	if (IS_SKYLAKE(i915) ||
+	अगर (IS_SKYLAKE(i915) ||
 	    IS_KABYLAKE(i915) ||
 	    IS_COFFEELAKE(i915) ||
 	    IS_COMETLAKE(i915))
@@ -390,13 +391,13 @@ static void gen9_ctx_workarounds_init(struct intel_engine_cs *engine,
 
 	/*
 	 * Supporting preemption with fine-granularity requires changes in the
-	 * batch buffer programming. Since we can't break old userspace, we
-	 * need to set our default preemption level to safe value. Userspace is
+	 * batch buffer programming. Since we can't अवरोध old userspace, we
+	 * need to set our शेष preemption level to safe value. Userspace is
 	 * still able to use more fine-grained preemption levels, since in
 	 * WaEnablePreemptionGranularityControlByUMD we're whitelisting the
-	 * per-ctx register. As such, WaDisable{3D,GPGPU}MidCmdPreemption are
+	 * per-ctx रेजिस्टर. As such, WaDisableअणु3D,GPGPUपूर्णMidCmdPreemption are
 	 * not real HW workarounds, but merely a way to start using preemption
-	 * while maintaining old contract with userspace.
+	 * जबतक मुख्यtaining old contract with userspace.
 	 */
 
 	/* WaDisable3DMidCmdPreemption:skl,bxt,glk,cfl,[cnl] */
@@ -408,26 +409,26 @@ static void gen9_ctx_workarounds_init(struct intel_engine_cs *engine,
 			    GEN9_PREEMPT_GPGPU_COMMAND_LEVEL);
 
 	/* WaClearHIZ_WM_CHICKEN3:bxt,glk */
-	if (IS_GEN9_LP(i915))
+	अगर (IS_GEN9_LP(i915))
 		wa_masked_en(wal, GEN9_WM_CHICKEN3, GEN9_FACTOR_IN_CLR_VAL_HIZ);
-}
+पूर्ण
 
-static void skl_tune_iz_hashing(struct intel_engine_cs *engine,
-				struct i915_wa_list *wal)
-{
-	struct intel_gt *gt = engine->gt;
-	u8 vals[3] = { 0, 0, 0 };
-	unsigned int i;
+अटल व्योम skl_tune_iz_hashing(काष्ठा पूर्णांकel_engine_cs *engine,
+				काष्ठा i915_wa_list *wal)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = engine->gt;
+	u8 vals[3] = अणु 0, 0, 0 पूर्ण;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		u8 ss;
 
 		/*
 		 * Only consider slices where one, and only one, subslice has 7
 		 * EUs
 		 */
-		if (!is_power_of_2(gt->info.sseu.subslice_7eu[i]))
-			continue;
+		अगर (!is_घातer_of_2(gt->info.sseu.subslice_7eu[i]))
+			जारी;
 
 		/*
 		 * subslice_7eu[i] != 0 (because of the check above) and
@@ -437,12 +438,12 @@ static void skl_tune_iz_hashing(struct intel_engine_cs *engine,
 		 */
 		ss = ffs(gt->info.sseu.subslice_7eu[i]) - 1;
 		vals[i] = 3 - ss;
-	}
+	पूर्ण
 
-	if (vals[0] == 0 && vals[1] == 0 && vals[2] == 0)
-		return;
+	अगर (vals[0] == 0 && vals[1] == 0 && vals[2] == 0)
+		वापस;
 
-	/* Tune IZ hashing. See intel_device_info_runtime_init() */
+	/* Tune IZ hashing. See पूर्णांकel_device_info_runसमय_init() */
 	wa_masked_field_set(wal, GEN7_GT_MODE,
 			    GEN9_IZ_HASHING_MASK(2) |
 			    GEN9_IZ_HASHING_MASK(1) |
@@ -450,59 +451,59 @@ static void skl_tune_iz_hashing(struct intel_engine_cs *engine,
 			    GEN9_IZ_HASHING(2, vals[2]) |
 			    GEN9_IZ_HASHING(1, vals[1]) |
 			    GEN9_IZ_HASHING(0, vals[0]));
-}
+पूर्ण
 
-static void skl_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
+अटल व्योम skl_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
 	gen9_ctx_workarounds_init(engine, wal);
 	skl_tune_iz_hashing(engine, wal);
-}
+पूर्ण
 
-static void bxt_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
+अटल व्योम bxt_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
 	gen9_ctx_workarounds_init(engine, wal);
 
-	/* WaDisableThreadStallDopClockGating:bxt */
+	/* WaDisableThपढ़ोStallDopClockGating:bxt */
 	wa_masked_en(wal, GEN8_ROW_CHICKEN,
 		     STALL_DOP_GATING_DISABLE);
 
 	/* WaToEnableHwFixForPushConstHWBug:bxt */
 	wa_masked_en(wal, COMMON_SLICE_CHICKEN2,
 		     GEN8_SBE_DISABLE_REPLAY_BUF_OPTIMIZATION);
-}
+पूर्ण
 
-static void kbl_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
-	struct drm_i915_private *i915 = engine->i915;
+अटल व्योम kbl_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
 
 	gen9_ctx_workarounds_init(engine, wal);
 
 	/* WaToEnableHwFixForPushConstHWBug:kbl */
-	if (IS_KBL_GT_STEP(i915, STEP_C0, STEP_FOREVER))
+	अगर (IS_KBL_GT_STEP(i915, STEP_C0, STEP_FOREVER))
 		wa_masked_en(wal, COMMON_SLICE_CHICKEN2,
 			     GEN8_SBE_DISABLE_REPLAY_BUF_OPTIMIZATION);
 
 	/* WaDisableSbeCacheDispatchPortSharing:kbl */
 	wa_masked_en(wal, GEN7_HALF_SLICE_CHICKEN1,
 		     GEN7_SBE_SS_CACHE_DISPATCH_PORT_SHARING_DISABLE);
-}
+पूर्ण
 
-static void glk_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
+अटल व्योम glk_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
 	gen9_ctx_workarounds_init(engine, wal);
 
 	/* WaToEnableHwFixForPushConstHWBug:glk */
 	wa_masked_en(wal, COMMON_SLICE_CHICKEN2,
 		     GEN8_SBE_DISABLE_REPLAY_BUF_OPTIMIZATION);
-}
+पूर्ण
 
-static void cfl_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
+अटल व्योम cfl_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
 	gen9_ctx_workarounds_init(engine, wal);
 
 	/* WaToEnableHwFixForPushConstHWBug:cfl */
@@ -512,11 +513,11 @@ static void cfl_ctx_workarounds_init(struct intel_engine_cs *engine,
 	/* WaDisableSbeCacheDispatchPortSharing:cfl */
 	wa_masked_en(wal, GEN7_HALF_SLICE_CHICKEN1,
 		     GEN7_SBE_SS_CACHE_DISPATCH_PORT_SHARING_DISABLE);
-}
+पूर्ण
 
-static void cnl_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
+अटल व्योम cnl_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
 	/* WaForceContextSaveRestoreNonCoherent:cnl */
 	wa_masked_en(wal, CNL_HDC_CHICKEN0,
 		     HDC_FORCE_CONTEXT_SAVE_RESTORE_NON_COHERENT);
@@ -541,75 +542,75 @@ static void cnl_ctx_workarounds_init(struct intel_engine_cs *engine,
 
 	/* WaDisableEarlyEOT:cnl */
 	wa_masked_en(wal, GEN8_ROW_CHICKEN, DISABLE_EARLY_EOT);
-}
+पूर्ण
 
-static void icl_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
-	struct drm_i915_private *i915 = engine->i915;
+अटल व्योम icl_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
 
 	/* WaDisableBankHangMode:icl */
-	wa_write(wal,
+	wa_ग_लिखो(wal,
 		 GEN8_L3CNTLREG,
-		 intel_uncore_read(engine->uncore, GEN8_L3CNTLREG) |
+		 पूर्णांकel_uncore_पढ़ो(engine->uncore, GEN8_L3CNTLREG) |
 		 GEN8_ERRDETBCTRL);
 
 	/* Wa_1604370585:icl (pre-prod)
 	 * Formerly known as WaPushConstantDereferenceHoldDisable
 	 */
-	if (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_B0))
+	अगर (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_B0))
 		wa_masked_en(wal, GEN7_ROW_CHICKEN2,
 			     PUSH_CONSTANT_DEREF_DISABLE);
 
 	/* WaForceEnableNonCoherent:icl
-	 * This is not the same workaround as in early Gen9 platforms, where
-	 * lacking this could cause system hangs, but coherency performance
+	 * This is not the same workaround as in early Gen9 platक्रमms, where
+	 * lacking this could cause प्रणाली hangs, but coherency perक्रमmance
 	 * overhead is high and only a few compute workloads really need it
-	 * (the register is whitelisted in hardware now, so UMDs can opt in
-	 * for coherency if they have a good reason).
+	 * (the रेजिस्टर is whitelisted in hardware now, so UMDs can opt in
+	 * क्रम coherency अगर they have a good reason).
 	 */
 	wa_masked_en(wal, ICL_HDC_MODE, HDC_FORCE_NON_COHERENT);
 
 	/* Wa_2006611047:icl (pre-prod)
 	 * Formerly known as WaDisableImprovedTdlClkGating
 	 */
-	if (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_A0))
+	अगर (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_A0))
 		wa_masked_en(wal, GEN7_ROW_CHICKEN2,
 			     GEN11_TDL_CLOCK_GATING_FIX_DISABLE);
 
 	/* Wa_2006665173:icl (pre-prod) */
-	if (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_A0))
+	अगर (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_A0))
 		wa_masked_en(wal, GEN11_COMMON_SLICE_CHICKEN3,
 			     GEN11_BLEND_EMB_FIX_DISABLE_IN_RCC);
 
 	/* WaEnableFloatBlendOptimization:icl */
-	wa_write_clr_set(wal,
+	wa_ग_लिखो_clr_set(wal,
 			 GEN10_CACHE_MODE_SS,
-			 0, /* write-only, so skip validation */
+			 0, /* ग_लिखो-only, so skip validation */
 			 _MASKED_BIT_ENABLE(FLOAT_BLEND_OPTIMIZATION_ENABLE));
 
-	/* WaDisableGPGPUMidThreadPreemption:icl */
+	/* WaDisableGPGPUMidThपढ़ोPreemption:icl */
 	wa_masked_field_set(wal, GEN8_CS_CHICKEN1,
 			    GEN9_PREEMPT_GPGPU_LEVEL_MASK,
 			    GEN9_PREEMPT_GPGPU_THREAD_GROUP_LEVEL);
 
-	/* allow headerless messages for preemptible GPGPU context */
+	/* allow headerless messages क्रम preemptible GPGPU context */
 	wa_masked_en(wal, GEN10_SAMPLER_MODE,
 		     GEN11_SAMPLER_ENABLE_HEADLESS_MSG);
 
 	/* Wa_1604278689:icl,ehl */
-	wa_write(wal, IVB_FBC_RT_BASE, 0xFFFFFFFF & ~ILK_FBC_RT_VALID);
-	wa_write_clr_set(wal, IVB_FBC_RT_BASE_UPPER,
-			 0, /* write-only register; skip validation */
+	wa_ग_लिखो(wal, IVB_FBC_RT_BASE, 0xFFFFFFFF & ~ILK_FBC_RT_VALID);
+	wa_ग_लिखो_clr_set(wal, IVB_FBC_RT_BASE_UPPER,
+			 0, /* ग_लिखो-only रेजिस्टर; skip validation */
 			 0xFFFFFFFF);
 
 	/* Wa_1406306137:icl,ehl */
 	wa_masked_en(wal, GEN9_ROW_CHICKEN4, GEN11_DIS_PICK_2ND_EU);
-}
+पूर्ण
 
-static void gen12_ctx_workarounds_init(struct intel_engine_cs *engine,
-				       struct i915_wa_list *wal)
-{
+अटल व्योम gen12_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				       काष्ठा i915_wa_list *wal)
+अणु
 	/*
 	 * Wa_1409142259:tgl
 	 * Wa_1409347922:tgl
@@ -624,37 +625,37 @@ static void gen12_ctx_workarounds_init(struct intel_engine_cs *engine,
 	wa_masked_en(wal, GEN11_COMMON_SLICE_CHICKEN3,
 		     GEN12_DISABLE_CPS_AWARE_COLOR_PIPE);
 
-	/* WaDisableGPGPUMidThreadPreemption:gen12 */
+	/* WaDisableGPGPUMidThपढ़ोPreemption:gen12 */
 	wa_masked_field_set(wal, GEN8_CS_CHICKEN1,
 			    GEN9_PREEMPT_GPGPU_LEVEL_MASK,
 			    GEN9_PREEMPT_GPGPU_THREAD_GROUP_LEVEL);
-}
+पूर्ण
 
-static void tgl_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
+अटल व्योम tgl_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
 	gen12_ctx_workarounds_init(engine, wal);
 
 	/*
 	 * Wa_1604555607:tgl,rkl
 	 *
-	 * Note that the implementation of this workaround is further modified
+	 * Note that the implementation of this workaround is further modअगरied
 	 * according to the FF_MODE2 guidance given by Wa_1608008084:gen12.
-	 * FF_MODE2 register will return the wrong value when read. The default
-	 * value for this register is zero for all fields and there are no bit
-	 * masks. So instead of doing a RMW we should just write the GS Timer
-	 * and TDS timer values for Wa_1604555607 and Wa_16011163337.
+	 * FF_MODE2 रेजिस्टर will वापस the wrong value when पढ़ो. The शेष
+	 * value क्रम this रेजिस्टर is zero क्रम all fields and there are no bit
+	 * masks. So instead of करोing a RMW we should just ग_लिखो the GS Timer
+	 * and TDS समयr values क्रम Wa_1604555607 and Wa_16011163337.
 	 */
 	wa_add(wal,
 	       FF_MODE2,
 	       FF_MODE2_GS_TIMER_MASK | FF_MODE2_TDS_TIMER_MASK,
 	       FF_MODE2_GS_TIMER_224  | FF_MODE2_TDS_TIMER_128,
 	       0);
-}
+पूर्ण
 
-static void dg1_ctx_workarounds_init(struct intel_engine_cs *engine,
-				     struct i915_wa_list *wal)
-{
+अटल व्योम dg1_ctx_workarounds_init(काष्ठा पूर्णांकel_engine_cs *engine,
+				     काष्ठा i915_wa_list *wal)
+अणु
 	gen12_ctx_workarounds_init(engine, wal);
 
 	/* Wa_1409044764 */
@@ -668,370 +669,370 @@ static void dg1_ctx_workarounds_init(struct intel_engine_cs *engine,
 	/*
 	 * Wa_16011163337
 	 *
-	 * Like in tgl_ctx_workarounds_init(), read verification is ignored due
+	 * Like in tgl_ctx_workarounds_init(), पढ़ो verअगरication is ignored due
 	 * to Wa_1608008084.
 	 */
 	wa_add(wal,
 	       FF_MODE2,
 	       FF_MODE2_GS_TIMER_MASK, FF_MODE2_GS_TIMER_224, 0);
-}
+पूर्ण
 
-static void
-__intel_engine_init_ctx_wa(struct intel_engine_cs *engine,
-			   struct i915_wa_list *wal,
-			   const char *name)
-{
-	struct drm_i915_private *i915 = engine->i915;
+अटल व्योम
+__पूर्णांकel_engine_init_ctx_wa(काष्ठा पूर्णांकel_engine_cs *engine,
+			   काष्ठा i915_wa_list *wal,
+			   स्थिर अक्षर *name)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
 
-	if (engine->class != RENDER_CLASS)
-		return;
+	अगर (engine->class != RENDER_CLASS)
+		वापस;
 
 	wa_init_start(wal, name, engine->name);
 
-	if (IS_DG1(i915))
+	अगर (IS_DG1(i915))
 		dg1_ctx_workarounds_init(engine, wal);
-	else if (IS_ALDERLAKE_S(i915) || IS_ROCKETLAKE(i915) ||
+	अन्यथा अगर (IS_ALDERLAKE_S(i915) || IS_ROCKETLAKE(i915) ||
 		 IS_TIGERLAKE(i915))
 		tgl_ctx_workarounds_init(engine, wal);
-	else if (IS_GEN(i915, 12))
+	अन्यथा अगर (IS_GEN(i915, 12))
 		gen12_ctx_workarounds_init(engine, wal);
-	else if (IS_GEN(i915, 11))
+	अन्यथा अगर (IS_GEN(i915, 11))
 		icl_ctx_workarounds_init(engine, wal);
-	else if (IS_CANNONLAKE(i915))
+	अन्यथा अगर (IS_CANNONLAKE(i915))
 		cnl_ctx_workarounds_init(engine, wal);
-	else if (IS_COFFEELAKE(i915) || IS_COMETLAKE(i915))
+	अन्यथा अगर (IS_COFFEELAKE(i915) || IS_COMETLAKE(i915))
 		cfl_ctx_workarounds_init(engine, wal);
-	else if (IS_GEMINILAKE(i915))
+	अन्यथा अगर (IS_GEMINILAKE(i915))
 		glk_ctx_workarounds_init(engine, wal);
-	else if (IS_KABYLAKE(i915))
+	अन्यथा अगर (IS_KABYLAKE(i915))
 		kbl_ctx_workarounds_init(engine, wal);
-	else if (IS_BROXTON(i915))
+	अन्यथा अगर (IS_BROXTON(i915))
 		bxt_ctx_workarounds_init(engine, wal);
-	else if (IS_SKYLAKE(i915))
+	अन्यथा अगर (IS_SKYLAKE(i915))
 		skl_ctx_workarounds_init(engine, wal);
-	else if (IS_CHERRYVIEW(i915))
+	अन्यथा अगर (IS_CHERRYVIEW(i915))
 		chv_ctx_workarounds_init(engine, wal);
-	else if (IS_BROADWELL(i915))
+	अन्यथा अगर (IS_BROADWELL(i915))
 		bdw_ctx_workarounds_init(engine, wal);
-	else if (IS_GEN(i915, 7))
+	अन्यथा अगर (IS_GEN(i915, 7))
 		gen7_ctx_workarounds_init(engine, wal);
-	else if (IS_GEN(i915, 6))
+	अन्यथा अगर (IS_GEN(i915, 6))
 		gen6_ctx_workarounds_init(engine, wal);
-	else if (INTEL_GEN(i915) < 8)
+	अन्यथा अगर (INTEL_GEN(i915) < 8)
 		;
-	else
+	अन्यथा
 		MISSING_CASE(INTEL_GEN(i915));
 
 	wa_init_finish(wal);
-}
+पूर्ण
 
-void intel_engine_init_ctx_wa(struct intel_engine_cs *engine)
-{
-	__intel_engine_init_ctx_wa(engine, &engine->ctx_wa_list, "context");
-}
+व्योम पूर्णांकel_engine_init_ctx_wa(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	__पूर्णांकel_engine_init_ctx_wa(engine, &engine->ctx_wa_list, "context");
+पूर्ण
 
-int intel_engine_emit_ctx_wa(struct i915_request *rq)
-{
-	struct i915_wa_list *wal = &rq->engine->ctx_wa_list;
-	struct i915_wa *wa;
-	unsigned int i;
+पूर्णांक पूर्णांकel_engine_emit_ctx_wa(काष्ठा i915_request *rq)
+अणु
+	काष्ठा i915_wa_list *wal = &rq->engine->ctx_wa_list;
+	काष्ठा i915_wa *wa;
+	अचिन्हित पूर्णांक i;
 	u32 *cs;
-	int ret;
+	पूर्णांक ret;
 
-	if (wal->count == 0)
-		return 0;
+	अगर (wal->count == 0)
+		वापस 0;
 
 	ret = rq->engine->emit_flush(rq, EMIT_BARRIER);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	cs = intel_ring_begin(rq, (wal->count * 2 + 2));
-	if (IS_ERR(cs))
-		return PTR_ERR(cs);
+	cs = पूर्णांकel_ring_begin(rq, (wal->count * 2 + 2));
+	अगर (IS_ERR(cs))
+		वापस PTR_ERR(cs);
 
 	*cs++ = MI_LOAD_REGISTER_IMM(wal->count);
-	for (i = 0, wa = wal->list; i < wal->count; i++, wa++) {
+	क्रम (i = 0, wa = wal->list; i < wal->count; i++, wa++) अणु
 		*cs++ = i915_mmio_reg_offset(wa->reg);
 		*cs++ = wa->set;
-	}
+	पूर्ण
 	*cs++ = MI_NOOP;
 
-	intel_ring_advance(rq, cs);
+	पूर्णांकel_ring_advance(rq, cs);
 
 	ret = rq->engine->emit_flush(rq, EMIT_BARRIER);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-gen4_gt_workarounds_init(struct drm_i915_private *i915,
-			 struct i915_wa_list *wal)
-{
+अटल व्योम
+gen4_gt_workarounds_init(काष्ठा drm_i915_निजी *i915,
+			 काष्ठा i915_wa_list *wal)
+अणु
 	/* WaDisable_RenderCache_OperationalFlush:gen4,ilk */
 	wa_masked_dis(wal, CACHE_MODE_0, RC_OP_FLUSH_ENABLE);
-}
+पूर्ण
 
-static void
-g4x_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+g4x_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	gen4_gt_workarounds_init(i915, wal);
 
 	/* WaDisableRenderCachePipelinedFlush:g4x,ilk */
 	wa_masked_en(wal, CACHE_MODE_0, CM0_PIPELINED_RENDER_FLUSH_DISABLE);
-}
+पूर्ण
 
-static void
-ilk_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+ilk_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	g4x_gt_workarounds_init(i915, wal);
 
 	wa_masked_en(wal, _3D_CHICKEN2, _3D_CHICKEN2_WM_READ_PIPELINED);
-}
+पूर्ण
 
-static void
-snb_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
-}
+अटल व्योम
+snb_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
+पूर्ण
 
-static void
-ivb_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+ivb_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	/* Apply the WaDisableRHWOOptimizationForRenderHang:ivb workaround. */
 	wa_masked_dis(wal,
 		      GEN7_COMMON_SLICE_CHICKEN1,
 		      GEN7_CSC1_RHWO_OPT_DISABLE_IN_RCC);
 
 	/* WaApplyL3ControlAndL3ChickenMode:ivb */
-	wa_write(wal, GEN7_L3CNTLREG1, GEN7_WA_FOR_GEN7_L3_CONTROL);
-	wa_write(wal, GEN7_L3_CHICKEN_MODE_REGISTER, GEN7_WA_L3_CHICKEN_MODE);
+	wa_ग_लिखो(wal, GEN7_L3CNTLREG1, GEN7_WA_FOR_GEN7_L3_CONTROL);
+	wa_ग_लिखो(wal, GEN7_L3_CHICKEN_MODE_REGISTER, GEN7_WA_L3_CHICKEN_MODE);
 
 	/* WaForceL3Serialization:ivb */
-	wa_write_clr(wal, GEN7_L3SQCREG4, L3SQ_URB_READ_CAM_MATCH_DISABLE);
-}
+	wa_ग_लिखो_clr(wal, GEN7_L3SQCREG4, L3SQ_URB_READ_CAM_MATCH_DISABLE);
+पूर्ण
 
-static void
-vlv_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+vlv_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	/* WaForceL3Serialization:vlv */
-	wa_write_clr(wal, GEN7_L3SQCREG4, L3SQ_URB_READ_CAM_MATCH_DISABLE);
+	wa_ग_लिखो_clr(wal, GEN7_L3SQCREG4, L3SQ_URB_READ_CAM_MATCH_DISABLE);
 
 	/*
 	 * WaIncreaseL3CreditsForVLVB0:vlv
-	 * This is the hardware default actually.
+	 * This is the hardware शेष actually.
 	 */
-	wa_write(wal, GEN7_L3SQCREG1, VLV_B0_WA_L3SQCREG1_VALUE);
-}
+	wa_ग_लिखो(wal, GEN7_L3SQCREG1, VLV_B0_WA_L3SQCREG1_VALUE);
+पूर्ण
 
-static void
-hsw_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
-	/* L3 caching of data atomics doesn't work -- disable it. */
-	wa_write(wal, HSW_SCRATCH1, HSW_SCRATCH1_L3_DATA_ATOMICS_DISABLE);
+अटल व्योम
+hsw_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
+	/* L3 caching of data atomics करोesn't work -- disable it. */
+	wa_ग_लिखो(wal, HSW_SCRATCH1, HSW_SCRATCH1_L3_DATA_ATOMICS_DISABLE);
 
 	wa_add(wal,
 	       HSW_ROW_CHICKEN3, 0,
 	       _MASKED_BIT_ENABLE(HSW_ROW_CHICKEN3_L3_GLOBAL_ATOMICS_DISABLE),
-		0 /* XXX does this reg exist? */);
+		0 /* XXX करोes this reg exist? */);
 
-	/* WaVSRefCountFullforceMissDisable:hsw */
-	wa_write_clr(wal, GEN7_FF_THREAD_MODE, GEN7_FF_VS_REF_CNT_FFME);
-}
+	/* WaVSRefCountFullक्रमceMissDisable:hsw */
+	wa_ग_लिखो_clr(wal, GEN7_FF_THREAD_MODE, GEN7_FF_VS_REF_CNT_FFME);
+पूर्ण
 
-static void
-gen9_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+gen9_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	/* WaDisableKillLogic:bxt,skl,kbl */
-	if (!IS_COFFEELAKE(i915) && !IS_COMETLAKE(i915))
-		wa_write_or(wal,
+	अगर (!IS_COFFEELAKE(i915) && !IS_COMETLAKE(i915))
+		wa_ग_लिखो_or(wal,
 			    GAM_ECOCHK,
 			    ECOCHK_DIS_TLB);
 
-	if (HAS_LLC(i915)) {
+	अगर (HAS_LLC(i915)) अणु
 		/* WaCompressedResourceSamplerPbeMediaNewHashMode:skl,kbl
 		 *
 		 * Must match Display Engine. See
 		 * WaCompressedResourceDisplayNewHashMode.
 		 */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    MMCD_MISC_CTRL,
 			    MMCD_PCLA | MMCD_HOTSPOT_EN);
-	}
+	पूर्ण
 
 	/* WaDisableHDCInvalidation:skl,bxt,kbl,cfl */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GAM_ECOCHK,
 		    BDW_DISABLE_HDC_INVALIDATION);
-}
+पूर्ण
 
-static void
-skl_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+skl_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	gen9_gt_workarounds_init(i915, wal);
 
 	/* WaDisableGafsUnitClkGating:skl */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GEN7_UCGCTL4,
 		    GEN8_EU_GAUNIT_CLOCK_GATE_DISABLE);
 
 	/* WaInPlaceDecompressionHang:skl */
-	if (IS_SKL_REVID(i915, SKL_REVID_H0, REVID_FOREVER))
-		wa_write_or(wal,
+	अगर (IS_SKL_REVID(i915, SKL_REVID_H0, REVID_FOREVER))
+		wa_ग_लिखो_or(wal,
 			    GEN9_GAMT_ECO_REG_RW_IA,
 			    GAMT_ECO_ENABLE_IN_PLACE_DECOMPRESS);
-}
+पूर्ण
 
-static void
-bxt_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+bxt_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	gen9_gt_workarounds_init(i915, wal);
 
 	/* WaInPlaceDecompressionHang:bxt */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GEN9_GAMT_ECO_REG_RW_IA,
 		    GAMT_ECO_ENABLE_IN_PLACE_DECOMPRESS);
-}
+पूर्ण
 
-static void
-kbl_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+kbl_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	gen9_gt_workarounds_init(i915, wal);
 
 	/* WaDisableDynamicCreditSharing:kbl */
-	if (IS_KBL_GT_STEP(i915, 0, STEP_B0))
-		wa_write_or(wal,
+	अगर (IS_KBL_GT_STEP(i915, 0, STEP_B0))
+		wa_ग_लिखो_or(wal,
 			    GAMT_CHKN_BIT_REG,
 			    GAMT_CHKN_DISABLE_DYNAMIC_CREDIT_SHARING);
 
 	/* WaDisableGafsUnitClkGating:kbl */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GEN7_UCGCTL4,
 		    GEN8_EU_GAUNIT_CLOCK_GATE_DISABLE);
 
 	/* WaInPlaceDecompressionHang:kbl */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GEN9_GAMT_ECO_REG_RW_IA,
 		    GAMT_ECO_ENABLE_IN_PLACE_DECOMPRESS);
-}
+पूर्ण
 
-static void
-glk_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+glk_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	gen9_gt_workarounds_init(i915, wal);
-}
+पूर्ण
 
-static void
-cfl_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+cfl_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	gen9_gt_workarounds_init(i915, wal);
 
 	/* WaDisableGafsUnitClkGating:cfl */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GEN7_UCGCTL4,
 		    GEN8_EU_GAUNIT_CLOCK_GATE_DISABLE);
 
 	/* WaInPlaceDecompressionHang:cfl */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GEN9_GAMT_ECO_REG_RW_IA,
 		    GAMT_ECO_ENABLE_IN_PLACE_DECOMPRESS);
-}
+पूर्ण
 
-static void
-wa_init_mcr(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
-	const struct sseu_dev_info *sseu = &i915->gt.info.sseu;
-	unsigned int slice, subslice;
+अटल व्योम
+wa_init_mcr(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
+	स्थिर काष्ठा sseu_dev_info *sseu = &i915->gt.info.sseu;
+	अचिन्हित पूर्णांक slice, subslice;
 	u32 l3_en, mcr, mcr_mask;
 
 	GEM_BUG_ON(INTEL_GEN(i915) < 10);
 
 	/*
-	 * WaProgramMgsrForL3BankSpecificMmioReads: cnl,icl
+	 * WaProgramMgsrForL3BankSpecअगरicMmioReads: cnl,icl
 	 * L3Banks could be fused off in single slice scenario. If that is
-	 * the case, we might need to program MCR select to a valid L3Bank
-	 * by default, to make sure we correctly read certain registers
+	 * the हाल, we might need to program MCR select to a valid L3Bank
+	 * by शेष, to make sure we correctly पढ़ो certain रेजिस्टरs
 	 * later on (in the range 0xB100 - 0xB3FF).
 	 *
-	 * WaProgramMgsrForCorrectSliceSpecificMmioReads:cnl,icl
-	 * Before any MMIO read into slice/subslice specific registers, MCR
-	 * packet control register needs to be programmed to point to any
-	 * enabled s/ss pair. Otherwise, incorrect values will be returned.
-	 * This means each subsequent MMIO read will be forwarded to an
-	 * specific s/ss combination, but this is OK since these registers
-	 * are consistent across s/ss in almost all cases. In the rare
+	 * WaProgramMgsrForCorrectSliceSpecअगरicMmioReads:cnl,icl
+	 * Beक्रमe any MMIO पढ़ो पूर्णांकo slice/subslice specअगरic रेजिस्टरs, MCR
+	 * packet control रेजिस्टर needs to be programmed to poपूर्णांक to any
+	 * enabled s/ss pair. Otherwise, incorrect values will be वापसed.
+	 * This means each subsequent MMIO पढ़ो will be क्रमwarded to an
+	 * specअगरic s/ss combination, but this is OK since these रेजिस्टरs
+	 * are consistent across s/ss in almost all हालs. In the rare
 	 * occasions, such as INSTDONE, where this value is dependent
-	 * on s/ss combo, the read should be done with read_subslice_reg.
+	 * on s/ss combo, the पढ़ो should be करोne with पढ़ो_subslice_reg.
 	 *
 	 * Since GEN8_MCR_SELECTOR contains dual-purpose bits which select both
-	 * to which subslice, or to which L3 bank, the respective mmio reads
-	 * will go, we have to find a common index which works for both
+	 * to which subslice, or to which L3 bank, the respective mmio पढ़ोs
+	 * will go, we have to find a common index which works क्रम both
 	 * accesses.
 	 *
-	 * Case where we cannot find a common index fortunately should not
+	 * Case where we cannot find a common index क्रमtunately should not
 	 * happen in production hardware, so we only emit a warning instead of
 	 * implementing something more complex that requires checking the range
-	 * of every MMIO read.
+	 * of every MMIO पढ़ो.
 	 */
 
-	if (INTEL_GEN(i915) >= 10 && is_power_of_2(sseu->slice_mask)) {
+	अगर (INTEL_GEN(i915) >= 10 && is_घातer_of_2(sseu->slice_mask)) अणु
 		u32 l3_fuse =
-			intel_uncore_read(&i915->uncore, GEN10_MIRROR_FUSE3) &
+			पूर्णांकel_uncore_पढ़ो(&i915->uncore, GEN10_MIRROR_FUSE3) &
 			GEN10_L3BANK_MASK;
 
 		drm_dbg(&i915->drm, "L3 fuse = %x\n", l3_fuse);
 		l3_en = ~(l3_fuse << GEN10_L3BANK_PAIR_COUNT | l3_fuse);
-	} else {
+	पूर्ण अन्यथा अणु
 		l3_en = ~0;
-	}
+	पूर्ण
 
 	slice = fls(sseu->slice_mask) - 1;
-	subslice = fls(l3_en & intel_sseu_get_subslices(sseu, slice));
-	if (!subslice) {
+	subslice = fls(l3_en & पूर्णांकel_sseu_get_subslices(sseu, slice));
+	अगर (!subslice) अणु
 		drm_warn(&i915->drm,
 			 "No common index found between subslice mask %x and L3 bank mask %x!\n",
-			 intel_sseu_get_subslices(sseu, slice), l3_en);
+			 पूर्णांकel_sseu_get_subslices(sseu, slice), l3_en);
 		subslice = fls(l3_en);
 		drm_WARN_ON(&i915->drm, !subslice);
-	}
+	पूर्ण
 	subslice--;
 
-	if (INTEL_GEN(i915) >= 11) {
+	अगर (INTEL_GEN(i915) >= 11) अणु
 		mcr = GEN11_MCR_SLICE(slice) | GEN11_MCR_SUBSLICE(subslice);
 		mcr_mask = GEN11_MCR_SLICE_MASK | GEN11_MCR_SUBSLICE_MASK;
-	} else {
+	पूर्ण अन्यथा अणु
 		mcr = GEN8_MCR_SLICE(slice) | GEN8_MCR_SUBSLICE(subslice);
 		mcr_mask = GEN8_MCR_SLICE_MASK | GEN8_MCR_SUBSLICE_MASK;
-	}
+	पूर्ण
 
 	drm_dbg(&i915->drm, "MCR slice/subslice = %x\n", mcr);
 
-	wa_write_clr_set(wal, GEN8_MCR_SELECTOR, mcr_mask, mcr);
-}
+	wa_ग_लिखो_clr_set(wal, GEN8_MCR_SELECTOR, mcr_mask, mcr);
+पूर्ण
 
-static void
-cnl_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+cnl_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	wa_init_mcr(i915, wal);
 
 	/* WaInPlaceDecompressionHang:cnl */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GEN9_GAMT_ECO_REG_RW_IA,
 		    GAMT_ECO_ENABLE_IN_PLACE_DECOMPRESS);
-}
+पूर्ण
 
-static void
-icl_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+icl_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	wa_init_mcr(i915, wal);
 
 	/* WaInPlaceDecompressionHang:icl */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GEN9_GAMT_ECO_REG_RW_IA,
 		    GAMT_ECO_ENABLE_IN_PLACE_DECOMPRESS);
 
-	/* WaModifyGamTlbPartitioning:icl */
-	wa_write_clr_set(wal,
+	/* WaModअगरyGamTlbPartitioning:icl */
+	wa_ग_लिखो_clr_set(wal,
 			 GEN11_GACB_PERF_CTRL,
 			 GEN11_HASH_CTRL_MASK,
 			 GEN11_HASH_CTRL_BIT0 | GEN11_HASH_CTRL_BIT4);
@@ -1039,7 +1040,7 @@ icl_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
 	/* Wa_1405766107:icl
 	 * Formerly known as WaCL2SFHalfMaxAlloc
 	 */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GEN11_LSN_UNSLCVC,
 		    GEN11_LSN_UNSLCVC_GAFS_HALF_SF_MAXALLOC |
 		    GEN11_LSN_UNSLCVC_GAFS_HALF_CL2_MAXALLOC);
@@ -1047,343 +1048,343 @@ icl_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
 	/* Wa_220166154:icl
 	 * Formerly known as WaDisCtxReload
 	 */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GEN8_GAMW_ECO_DEV_RW_IA,
 		    GAMW_ECO_DEV_CTX_RELOAD_DISABLE);
 
 	/* Wa_1405779004:icl (pre-prod) */
-	if (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_A0))
-		wa_write_or(wal,
+	अगर (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_A0))
+		wa_ग_लिखो_or(wal,
 			    SLICE_UNIT_LEVEL_CLKGATE,
 			    MSCUNIT_CLKGATE_DIS);
 
 	/* Wa_1406838659:icl (pre-prod) */
-	if (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_B0))
-		wa_write_or(wal,
+	अगर (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_B0))
+		wa_ग_लिखो_or(wal,
 			    INF_UNIT_LEVEL_CLKGATE,
 			    CGPSF_CLKGATE_DIS);
 
 	/* Wa_1406463099:icl
 	 * Formerly known as WaGamTlbPendError
 	 */
-	wa_write_or(wal,
+	wa_ग_लिखो_or(wal,
 		    GAMT_CHKN_BIT_REG,
 		    GAMT_CHKN_DISABLE_L3_COH_PIPE);
 
 	/* Wa_1607087056:icl,ehl,jsl */
-	if (IS_ICELAKE(i915) ||
+	अगर (IS_ICELAKE(i915) ||
 	    IS_JSL_EHL_REVID(i915, EHL_REVID_A0, EHL_REVID_A0))
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    SLICE_UNIT_LEVEL_CLKGATE,
 			    L3_CLKGATE_DIS | L3_CR2X_CLKGATE_DIS);
-}
+पूर्ण
 
-static void
-gen12_gt_workarounds_init(struct drm_i915_private *i915,
-			  struct i915_wa_list *wal)
-{
+अटल व्योम
+gen12_gt_workarounds_init(काष्ठा drm_i915_निजी *i915,
+			  काष्ठा i915_wa_list *wal)
+अणु
 	wa_init_mcr(i915, wal);
-}
+पूर्ण
 
-static void
-tgl_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+tgl_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	gen12_gt_workarounds_init(i915, wal);
 
 	/* Wa_1409420604:tgl */
-	if (IS_TGL_UY_GT_STEP(i915, STEP_A0, STEP_A0))
-		wa_write_or(wal,
+	अगर (IS_TGL_UY_GT_STEP(i915, STEP_A0, STEP_A0))
+		wa_ग_लिखो_or(wal,
 			    SUBSLICE_UNIT_LEVEL_CLKGATE2,
 			    CPSSUNIT_CLKGATE_DIS);
 
 	/* Wa_1607087056:tgl also know as BUG:1409180338 */
-	if (IS_TGL_UY_GT_STEP(i915, STEP_A0, STEP_A0))
-		wa_write_or(wal,
+	अगर (IS_TGL_UY_GT_STEP(i915, STEP_A0, STEP_A0))
+		wa_ग_लिखो_or(wal,
 			    SLICE_UNIT_LEVEL_CLKGATE,
 			    L3_CLKGATE_DIS | L3_CR2X_CLKGATE_DIS);
 
 	/* Wa_1408615072:tgl[a0] */
-	if (IS_TGL_UY_GT_STEP(i915, STEP_A0, STEP_A0))
-		wa_write_or(wal, UNSLICE_UNIT_LEVEL_CLKGATE2,
+	अगर (IS_TGL_UY_GT_STEP(i915, STEP_A0, STEP_A0))
+		wa_ग_लिखो_or(wal, UNSLICE_UNIT_LEVEL_CLKGATE2,
 			    VSUNIT_CLKGATE_DIS_TGL);
-}
+पूर्ण
 
-static void
-dg1_gt_workarounds_init(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
+अटल व्योम
+dg1_gt_workarounds_init(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
 	gen12_gt_workarounds_init(i915, wal);
 
 	/* Wa_1607087056:dg1 */
-	if (IS_DG1_REVID(i915, DG1_REVID_A0, DG1_REVID_A0))
-		wa_write_or(wal,
+	अगर (IS_DG1_REVID(i915, DG1_REVID_A0, DG1_REVID_A0))
+		wa_ग_लिखो_or(wal,
 			    SLICE_UNIT_LEVEL_CLKGATE,
 			    L3_CLKGATE_DIS | L3_CR2X_CLKGATE_DIS);
 
 	/* Wa_1409420604:dg1 */
-	if (IS_DG1(i915))
-		wa_write_or(wal,
+	अगर (IS_DG1(i915))
+		wa_ग_लिखो_or(wal,
 			    SUBSLICE_UNIT_LEVEL_CLKGATE2,
 			    CPSSUNIT_CLKGATE_DIS);
 
 	/* Wa_1408615072:dg1 */
-	/* Empirical testing shows this register is unaffected by engine reset. */
-	if (IS_DG1(i915))
-		wa_write_or(wal, UNSLICE_UNIT_LEVEL_CLKGATE2,
+	/* Empirical testing shows this रेजिस्टर is unaffected by engine reset. */
+	अगर (IS_DG1(i915))
+		wa_ग_लिखो_or(wal, UNSLICE_UNIT_LEVEL_CLKGATE2,
 			    VSUNIT_CLKGATE_DIS_TGL);
-}
+पूर्ण
 
-static void
-gt_init_workarounds(struct drm_i915_private *i915, struct i915_wa_list *wal)
-{
-	if (IS_DG1(i915))
+अटल व्योम
+gt_init_workarounds(काष्ठा drm_i915_निजी *i915, काष्ठा i915_wa_list *wal)
+अणु
+	अगर (IS_DG1(i915))
 		dg1_gt_workarounds_init(i915, wal);
-	else if (IS_TIGERLAKE(i915))
+	अन्यथा अगर (IS_TIGERLAKE(i915))
 		tgl_gt_workarounds_init(i915, wal);
-	else if (IS_GEN(i915, 12))
+	अन्यथा अगर (IS_GEN(i915, 12))
 		gen12_gt_workarounds_init(i915, wal);
-	else if (IS_GEN(i915, 11))
+	अन्यथा अगर (IS_GEN(i915, 11))
 		icl_gt_workarounds_init(i915, wal);
-	else if (IS_CANNONLAKE(i915))
+	अन्यथा अगर (IS_CANNONLAKE(i915))
 		cnl_gt_workarounds_init(i915, wal);
-	else if (IS_COFFEELAKE(i915) || IS_COMETLAKE(i915))
+	अन्यथा अगर (IS_COFFEELAKE(i915) || IS_COMETLAKE(i915))
 		cfl_gt_workarounds_init(i915, wal);
-	else if (IS_GEMINILAKE(i915))
+	अन्यथा अगर (IS_GEMINILAKE(i915))
 		glk_gt_workarounds_init(i915, wal);
-	else if (IS_KABYLAKE(i915))
+	अन्यथा अगर (IS_KABYLAKE(i915))
 		kbl_gt_workarounds_init(i915, wal);
-	else if (IS_BROXTON(i915))
+	अन्यथा अगर (IS_BROXTON(i915))
 		bxt_gt_workarounds_init(i915, wal);
-	else if (IS_SKYLAKE(i915))
+	अन्यथा अगर (IS_SKYLAKE(i915))
 		skl_gt_workarounds_init(i915, wal);
-	else if (IS_HASWELL(i915))
+	अन्यथा अगर (IS_HASWELL(i915))
 		hsw_gt_workarounds_init(i915, wal);
-	else if (IS_VALLEYVIEW(i915))
+	अन्यथा अगर (IS_VALLEYVIEW(i915))
 		vlv_gt_workarounds_init(i915, wal);
-	else if (IS_IVYBRIDGE(i915))
+	अन्यथा अगर (IS_IVYBRIDGE(i915))
 		ivb_gt_workarounds_init(i915, wal);
-	else if (IS_GEN(i915, 6))
+	अन्यथा अगर (IS_GEN(i915, 6))
 		snb_gt_workarounds_init(i915, wal);
-	else if (IS_GEN(i915, 5))
+	अन्यथा अगर (IS_GEN(i915, 5))
 		ilk_gt_workarounds_init(i915, wal);
-	else if (IS_G4X(i915))
+	अन्यथा अगर (IS_G4X(i915))
 		g4x_gt_workarounds_init(i915, wal);
-	else if (IS_GEN(i915, 4))
+	अन्यथा अगर (IS_GEN(i915, 4))
 		gen4_gt_workarounds_init(i915, wal);
-	else if (INTEL_GEN(i915) <= 8)
+	अन्यथा अगर (INTEL_GEN(i915) <= 8)
 		;
-	else
+	अन्यथा
 		MISSING_CASE(INTEL_GEN(i915));
-}
+पूर्ण
 
-void intel_gt_init_workarounds(struct drm_i915_private *i915)
-{
-	struct i915_wa_list *wal = &i915->gt_wa_list;
+व्योम पूर्णांकel_gt_init_workarounds(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_wa_list *wal = &i915->gt_wa_list;
 
 	wa_init_start(wal, "GT", "global");
 	gt_init_workarounds(i915, wal);
 	wa_init_finish(wal);
-}
+पूर्ण
 
-static enum forcewake_domains
-wal_get_fw_for_rmw(struct intel_uncore *uncore, const struct i915_wa_list *wal)
-{
-	enum forcewake_domains fw = 0;
-	struct i915_wa *wa;
-	unsigned int i;
+अटल क्रमागत क्रमcewake_करोमुख्यs
+wal_get_fw_क्रम_rmw(काष्ठा पूर्णांकel_uncore *uncore, स्थिर काष्ठा i915_wa_list *wal)
+अणु
+	क्रमागत क्रमcewake_करोमुख्यs fw = 0;
+	काष्ठा i915_wa *wa;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0, wa = wal->list; i < wal->count; i++, wa++)
-		fw |= intel_uncore_forcewake_for_reg(uncore,
+	क्रम (i = 0, wa = wal->list; i < wal->count; i++, wa++)
+		fw |= पूर्णांकel_uncore_क्रमcewake_क्रम_reg(uncore,
 						     wa->reg,
 						     FW_REG_READ |
 						     FW_REG_WRITE);
 
-	return fw;
-}
+	वापस fw;
+पूर्ण
 
-static bool
-wa_verify(const struct i915_wa *wa, u32 cur, const char *name, const char *from)
-{
-	if ((cur ^ wa->set) & wa->read) {
+अटल bool
+wa_verअगरy(स्थिर काष्ठा i915_wa *wa, u32 cur, स्थिर अक्षर *name, स्थिर अक्षर *from)
+अणु
+	अगर ((cur ^ wa->set) & wa->पढ़ो) अणु
 		DRM_ERROR("%s workaround lost on %s! (reg[%x]=0x%x, relevant bits were 0x%x vs expected 0x%x)\n",
 			  name, from, i915_mmio_reg_offset(wa->reg),
-			  cur, cur & wa->read, wa->set & wa->read);
+			  cur, cur & wa->पढ़ो, wa->set & wa->पढ़ो);
 
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-wa_list_apply(struct intel_uncore *uncore, const struct i915_wa_list *wal)
-{
-	enum forcewake_domains fw;
-	unsigned long flags;
-	struct i915_wa *wa;
-	unsigned int i;
+अटल व्योम
+wa_list_apply(काष्ठा पूर्णांकel_uncore *uncore, स्थिर काष्ठा i915_wa_list *wal)
+अणु
+	क्रमागत क्रमcewake_करोमुख्यs fw;
+	अचिन्हित दीर्घ flags;
+	काष्ठा i915_wa *wa;
+	अचिन्हित पूर्णांक i;
 
-	if (!wal->count)
-		return;
+	अगर (!wal->count)
+		वापस;
 
-	fw = wal_get_fw_for_rmw(uncore, wal);
+	fw = wal_get_fw_क्रम_rmw(uncore, wal);
 
 	spin_lock_irqsave(&uncore->lock, flags);
-	intel_uncore_forcewake_get__locked(uncore, fw);
+	पूर्णांकel_uncore_क्रमcewake_get__locked(uncore, fw);
 
-	for (i = 0, wa = wal->list; i < wal->count; i++, wa++) {
-		if (wa->clr)
-			intel_uncore_rmw_fw(uncore, wa->reg, wa->clr, wa->set);
-		else
-			intel_uncore_write_fw(uncore, wa->reg, wa->set);
-		if (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
-			wa_verify(wa,
-				  intel_uncore_read_fw(uncore, wa->reg),
+	क्रम (i = 0, wa = wal->list; i < wal->count; i++, wa++) अणु
+		अगर (wa->clr)
+			पूर्णांकel_uncore_rmw_fw(uncore, wa->reg, wa->clr, wa->set);
+		अन्यथा
+			पूर्णांकel_uncore_ग_लिखो_fw(uncore, wa->reg, wa->set);
+		अगर (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
+			wa_verअगरy(wa,
+				  पूर्णांकel_uncore_पढ़ो_fw(uncore, wa->reg),
 				  wal->name, "application");
-	}
+	पूर्ण
 
-	intel_uncore_forcewake_put__locked(uncore, fw);
+	पूर्णांकel_uncore_क्रमcewake_put__locked(uncore, fw);
 	spin_unlock_irqrestore(&uncore->lock, flags);
-}
+पूर्ण
 
-void intel_gt_apply_workarounds(struct intel_gt *gt)
-{
+व्योम पूर्णांकel_gt_apply_workarounds(काष्ठा पूर्णांकel_gt *gt)
+अणु
 	wa_list_apply(gt->uncore, &gt->i915->gt_wa_list);
-}
+पूर्ण
 
-static bool wa_list_verify(struct intel_uncore *uncore,
-			   const struct i915_wa_list *wal,
-			   const char *from)
-{
-	struct i915_wa *wa;
-	unsigned int i;
+अटल bool wa_list_verअगरy(काष्ठा पूर्णांकel_uncore *uncore,
+			   स्थिर काष्ठा i915_wa_list *wal,
+			   स्थिर अक्षर *from)
+अणु
+	काष्ठा i915_wa *wa;
+	अचिन्हित पूर्णांक i;
 	bool ok = true;
 
-	for (i = 0, wa = wal->list; i < wal->count; i++, wa++)
-		ok &= wa_verify(wa,
-				intel_uncore_read(uncore, wa->reg),
+	क्रम (i = 0, wa = wal->list; i < wal->count; i++, wa++)
+		ok &= wa_verअगरy(wa,
+				पूर्णांकel_uncore_पढ़ो(uncore, wa->reg),
 				wal->name, from);
 
-	return ok;
-}
+	वापस ok;
+पूर्ण
 
-bool intel_gt_verify_workarounds(struct intel_gt *gt, const char *from)
-{
-	return wa_list_verify(gt->uncore, &gt->i915->gt_wa_list, from);
-}
+bool पूर्णांकel_gt_verअगरy_workarounds(काष्ठा पूर्णांकel_gt *gt, स्थिर अक्षर *from)
+अणु
+	वापस wa_list_verअगरy(gt->uncore, &gt->i915->gt_wa_list, from);
+पूर्ण
 
 __maybe_unused
-static bool is_nonpriv_flags_valid(u32 flags)
-{
+अटल bool is_nonpriv_flags_valid(u32 flags)
+अणु
 	/* Check only valid flag bits are set */
-	if (flags & ~RING_FORCE_TO_NONPRIV_MASK_VALID)
-		return false;
+	अगर (flags & ~RING_FORCE_TO_NONPRIV_MASK_VALID)
+		वापस false;
 
-	/* NB: Only 3 out of 4 enum values are valid for access field */
-	if ((flags & RING_FORCE_TO_NONPRIV_ACCESS_MASK) ==
+	/* NB: Only 3 out of 4 क्रमागत values are valid क्रम access field */
+	अगर ((flags & RING_FORCE_TO_NONPRIV_ACCESS_MASK) ==
 	    RING_FORCE_TO_NONPRIV_ACCESS_INVALID)
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-whitelist_reg_ext(struct i915_wa_list *wal, i915_reg_t reg, u32 flags)
-{
-	struct i915_wa wa = {
+अटल व्योम
+whitelist_reg_ext(काष्ठा i915_wa_list *wal, i915_reg_t reg, u32 flags)
+अणु
+	काष्ठा i915_wa wa = अणु
 		.reg = reg
-	};
+	पूर्ण;
 
-	if (GEM_DEBUG_WARN_ON(wal->count >= RING_MAX_NONPRIV_SLOTS))
-		return;
+	अगर (GEM_DEBUG_WARN_ON(wal->count >= RING_MAX_NONPRIV_SLOTS))
+		वापस;
 
-	if (GEM_DEBUG_WARN_ON(!is_nonpriv_flags_valid(flags)))
-		return;
+	अगर (GEM_DEBUG_WARN_ON(!is_nonpriv_flags_valid(flags)))
+		वापस;
 
 	wa.reg.reg |= flags;
 	_wa_add(wal, &wa);
-}
+पूर्ण
 
-static void
-whitelist_reg(struct i915_wa_list *wal, i915_reg_t reg)
-{
+अटल व्योम
+whitelist_reg(काष्ठा i915_wa_list *wal, i915_reg_t reg)
+अणु
 	whitelist_reg_ext(wal, reg, RING_FORCE_TO_NONPRIV_ACCESS_RW);
-}
+पूर्ण
 
-static void gen9_whitelist_build(struct i915_wa_list *w)
-{
+अटल व्योम gen9_whitelist_build(काष्ठा i915_wa_list *w)
+अणु
 	/* WaVFEStateAfterPipeControlwithMediaStateClear:skl,bxt,glk,cfl */
 	whitelist_reg(w, GEN9_CTX_PREEMPT_REG);
 
 	/* WaEnablePreemptionGranularityControlByUMD:skl,bxt,kbl,cfl,[cnl] */
 	whitelist_reg(w, GEN8_CS_CHICKEN1);
 
-	/* WaAllowUMDToModifyHDCChicken1:skl,bxt,kbl,glk,cfl */
+	/* WaAllowUMDToModअगरyHDCChicken1:skl,bxt,kbl,glk,cfl */
 	whitelist_reg(w, GEN8_HDC_CHICKEN1);
 
 	/* WaSendPushConstantsFromMMIO:skl,bxt */
 	whitelist_reg(w, COMMON_SLICE_CHICKEN2);
-}
+पूर्ण
 
-static void skl_whitelist_build(struct intel_engine_cs *engine)
-{
-	struct i915_wa_list *w = &engine->whitelist;
+अटल व्योम skl_whitelist_build(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_wa_list *w = &engine->whitelist;
 
-	if (engine->class != RENDER_CLASS)
-		return;
+	अगर (engine->class != RENDER_CLASS)
+		वापस;
 
 	gen9_whitelist_build(w);
 
-	/* WaDisableLSQCROPERFforOCL:skl */
+	/* WaDisableLSQCROPERFक्रमOCL:skl */
 	whitelist_reg(w, GEN8_L3SQCREG4);
-}
+पूर्ण
 
-static void bxt_whitelist_build(struct intel_engine_cs *engine)
-{
-	if (engine->class != RENDER_CLASS)
-		return;
+अटल व्योम bxt_whitelist_build(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (engine->class != RENDER_CLASS)
+		वापस;
 
 	gen9_whitelist_build(&engine->whitelist);
-}
+पूर्ण
 
-static void kbl_whitelist_build(struct intel_engine_cs *engine)
-{
-	struct i915_wa_list *w = &engine->whitelist;
+अटल व्योम kbl_whitelist_build(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_wa_list *w = &engine->whitelist;
 
-	if (engine->class != RENDER_CLASS)
-		return;
+	अगर (engine->class != RENDER_CLASS)
+		वापस;
 
 	gen9_whitelist_build(w);
 
-	/* WaDisableLSQCROPERFforOCL:kbl */
+	/* WaDisableLSQCROPERFक्रमOCL:kbl */
 	whitelist_reg(w, GEN8_L3SQCREG4);
-}
+पूर्ण
 
-static void glk_whitelist_build(struct intel_engine_cs *engine)
-{
-	struct i915_wa_list *w = &engine->whitelist;
+अटल व्योम glk_whitelist_build(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_wa_list *w = &engine->whitelist;
 
-	if (engine->class != RENDER_CLASS)
-		return;
+	अगर (engine->class != RENDER_CLASS)
+		वापस;
 
 	gen9_whitelist_build(w);
 
-	/* WA #0862: Userspace has to set "Barrier Mode" to avoid hangs. */
+	/* WA #0862: Userspace has to set "Barrier Mode" to aव्योम hangs. */
 	whitelist_reg(w, GEN9_SLICE_COMMON_ECO_CHICKEN1);
-}
+पूर्ण
 
-static void cfl_whitelist_build(struct intel_engine_cs *engine)
-{
-	struct i915_wa_list *w = &engine->whitelist;
+अटल व्योम cfl_whitelist_build(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_wa_list *w = &engine->whitelist;
 
-	if (engine->class != RENDER_CLASS)
-		return;
+	अगर (engine->class != RENDER_CLASS)
+		वापस;
 
 	gen9_whitelist_build(w);
 
 	/*
 	 * WaAllowPMDepthAndInvocationCountAccessFromUMD:cfl,whl,cml,aml
 	 *
-	 * This covers 4 register which are next to one another :
+	 * This covers 4 रेजिस्टर which are next to one another :
 	 *   - PS_INVOCATION_COUNT
 	 *   - PS_INVOCATION_COUNT_UDW
 	 *   - PS_DEPTH_COUNT
@@ -1392,41 +1393,41 @@ static void cfl_whitelist_build(struct intel_engine_cs *engine)
 	whitelist_reg_ext(w, PS_INVOCATION_COUNT,
 			  RING_FORCE_TO_NONPRIV_ACCESS_RD |
 			  RING_FORCE_TO_NONPRIV_RANGE_4);
-}
+पूर्ण
 
-static void cml_whitelist_build(struct intel_engine_cs *engine)
-{
-	struct i915_wa_list *w = &engine->whitelist;
+अटल व्योम cml_whitelist_build(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_wa_list *w = &engine->whitelist;
 
-	if (engine->class != RENDER_CLASS)
+	अगर (engine->class != RENDER_CLASS)
 		whitelist_reg_ext(w,
 				  RING_CTX_TIMESTAMP(engine->mmio_base),
 				  RING_FORCE_TO_NONPRIV_ACCESS_RD);
 
 	cfl_whitelist_build(engine);
-}
+पूर्ण
 
-static void cnl_whitelist_build(struct intel_engine_cs *engine)
-{
-	struct i915_wa_list *w = &engine->whitelist;
+अटल व्योम cnl_whitelist_build(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_wa_list *w = &engine->whitelist;
 
-	if (engine->class != RENDER_CLASS)
-		return;
+	अगर (engine->class != RENDER_CLASS)
+		वापस;
 
 	/* WaEnablePreemptionGranularityControlByUMD:cnl */
 	whitelist_reg(w, GEN8_CS_CHICKEN1);
-}
+पूर्ण
 
-static void icl_whitelist_build(struct intel_engine_cs *engine)
-{
-	struct i915_wa_list *w = &engine->whitelist;
+अटल व्योम icl_whitelist_build(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_wa_list *w = &engine->whitelist;
 
-	switch (engine->class) {
-	case RENDER_CLASS:
-		/* WaAllowUMDToModifyHalfSliceChicken7:icl */
+	चयन (engine->class) अणु
+	हाल RENDER_CLASS:
+		/* WaAllowUMDToModअगरyHalfSliceChicken7:icl */
 		whitelist_reg(w, GEN9_HALF_SLICE_CHICKEN7);
 
-		/* WaAllowUMDToModifySamplerMode:icl */
+		/* WaAllowUMDToModअगरySamplerMode:icl */
 		whitelist_reg(w, GEN10_SAMPLER_MODE);
 
 		/* WaEnableStateCacheRedirectToCS:icl */
@@ -1435,7 +1436,7 @@ static void icl_whitelist_build(struct intel_engine_cs *engine)
 		/*
 		 * WaAllowPMDepthAndInvocationCountAccessFromUMD:icl
 		 *
-		 * This covers 4 register which are next to one another :
+		 * This covers 4 रेजिस्टर which are next to one another :
 		 *   - PS_INVOCATION_COUNT
 		 *   - PS_INVOCATION_COUNT_UDW
 		 *   - PS_DEPTH_COUNT
@@ -1444,9 +1445,9 @@ static void icl_whitelist_build(struct intel_engine_cs *engine)
 		whitelist_reg_ext(w, PS_INVOCATION_COUNT,
 				  RING_FORCE_TO_NONPRIV_ACCESS_RD |
 				  RING_FORCE_TO_NONPRIV_RANGE_4);
-		break;
+		अवरोध;
 
-	case VIDEO_DECODE_CLASS:
+	हाल VIDEO_DECODE_CLASS:
 		/* hucStatusRegOffset */
 		whitelist_reg_ext(w, _MMIO(0x2000 + engine->mmio_base),
 				  RING_FORCE_TO_NONPRIV_ACCESS_RD);
@@ -1459,27 +1460,27 @@ static void icl_whitelist_build(struct intel_engine_cs *engine)
 		whitelist_reg_ext(w,
 				  RING_CTX_TIMESTAMP(engine->mmio_base),
 				  RING_FORCE_TO_NONPRIV_ACCESS_RD);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		whitelist_reg_ext(w,
 				  RING_CTX_TIMESTAMP(engine->mmio_base),
 				  RING_FORCE_TO_NONPRIV_ACCESS_RD);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void tgl_whitelist_build(struct intel_engine_cs *engine)
-{
-	struct i915_wa_list *w = &engine->whitelist;
+अटल व्योम tgl_whitelist_build(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_wa_list *w = &engine->whitelist;
 
-	switch (engine->class) {
-	case RENDER_CLASS:
+	चयन (engine->class) अणु
+	हाल RENDER_CLASS:
 		/*
 		 * WaAllowPMDepthAndInvocationCountAccessFromUMD:tgl
 		 * Wa_1408556865:tgl
 		 *
-		 * This covers 4 registers which are next to one another :
+		 * This covers 4 रेजिस्टरs which are next to one another :
 		 *   - PS_INVOCATION_COUNT
 		 *   - PS_INVOCATION_COUNT_UDW
 		 *   - PS_DEPTH_COUNT
@@ -1494,115 +1495,115 @@ static void tgl_whitelist_build(struct intel_engine_cs *engine)
 
 		/* Wa_1806527549:tgl */
 		whitelist_reg(w, HIZ_CHICKEN);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		whitelist_reg_ext(w,
 				  RING_CTX_TIMESTAMP(engine->mmio_base),
 				  RING_FORCE_TO_NONPRIV_ACCESS_RD);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void dg1_whitelist_build(struct intel_engine_cs *engine)
-{
-	struct i915_wa_list *w = &engine->whitelist;
+अटल व्योम dg1_whitelist_build(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_wa_list *w = &engine->whitelist;
 
 	tgl_whitelist_build(engine);
 
 	/* GEN:BUG:1409280441:dg1 */
-	if (IS_DG1_REVID(engine->i915, DG1_REVID_A0, DG1_REVID_A0) &&
+	अगर (IS_DG1_REVID(engine->i915, DG1_REVID_A0, DG1_REVID_A0) &&
 	    (engine->class == RENDER_CLASS ||
 	     engine->class == COPY_ENGINE_CLASS))
 		whitelist_reg_ext(w, RING_ID(engine->mmio_base),
 				  RING_FORCE_TO_NONPRIV_ACCESS_RD);
-}
+पूर्ण
 
-void intel_engine_init_whitelist(struct intel_engine_cs *engine)
-{
-	struct drm_i915_private *i915 = engine->i915;
-	struct i915_wa_list *w = &engine->whitelist;
+व्योम पूर्णांकel_engine_init_whitelist(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
+	काष्ठा i915_wa_list *w = &engine->whitelist;
 
 	wa_init_start(w, "whitelist", engine->name);
 
-	if (IS_DG1(i915))
+	अगर (IS_DG1(i915))
 		dg1_whitelist_build(engine);
-	else if (IS_GEN(i915, 12))
+	अन्यथा अगर (IS_GEN(i915, 12))
 		tgl_whitelist_build(engine);
-	else if (IS_GEN(i915, 11))
+	अन्यथा अगर (IS_GEN(i915, 11))
 		icl_whitelist_build(engine);
-	else if (IS_CANNONLAKE(i915))
+	अन्यथा अगर (IS_CANNONLAKE(i915))
 		cnl_whitelist_build(engine);
-	else if (IS_COMETLAKE(i915))
+	अन्यथा अगर (IS_COMETLAKE(i915))
 		cml_whitelist_build(engine);
-	else if (IS_COFFEELAKE(i915))
+	अन्यथा अगर (IS_COFFEELAKE(i915))
 		cfl_whitelist_build(engine);
-	else if (IS_GEMINILAKE(i915))
+	अन्यथा अगर (IS_GEMINILAKE(i915))
 		glk_whitelist_build(engine);
-	else if (IS_KABYLAKE(i915))
+	अन्यथा अगर (IS_KABYLAKE(i915))
 		kbl_whitelist_build(engine);
-	else if (IS_BROXTON(i915))
+	अन्यथा अगर (IS_BROXTON(i915))
 		bxt_whitelist_build(engine);
-	else if (IS_SKYLAKE(i915))
+	अन्यथा अगर (IS_SKYLAKE(i915))
 		skl_whitelist_build(engine);
-	else if (INTEL_GEN(i915) <= 8)
+	अन्यथा अगर (INTEL_GEN(i915) <= 8)
 		;
-	else
+	अन्यथा
 		MISSING_CASE(INTEL_GEN(i915));
 
 	wa_init_finish(w);
-}
+पूर्ण
 
-void intel_engine_apply_whitelist(struct intel_engine_cs *engine)
-{
-	const struct i915_wa_list *wal = &engine->whitelist;
-	struct intel_uncore *uncore = engine->uncore;
-	const u32 base = engine->mmio_base;
-	struct i915_wa *wa;
-	unsigned int i;
+व्योम पूर्णांकel_engine_apply_whitelist(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	स्थिर काष्ठा i915_wa_list *wal = &engine->whitelist;
+	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
+	स्थिर u32 base = engine->mmio_base;
+	काष्ठा i915_wa *wa;
+	अचिन्हित पूर्णांक i;
 
-	if (!wal->count)
-		return;
+	अगर (!wal->count)
+		वापस;
 
-	for (i = 0, wa = wal->list; i < wal->count; i++, wa++)
-		intel_uncore_write(uncore,
+	क्रम (i = 0, wa = wal->list; i < wal->count; i++, wa++)
+		पूर्णांकel_uncore_ग_लिखो(uncore,
 				   RING_FORCE_TO_NONPRIV(base, i),
 				   i915_mmio_reg_offset(wa->reg));
 
-	/* And clear the rest just in case of garbage */
-	for (; i < RING_MAX_NONPRIV_SLOTS; i++)
-		intel_uncore_write(uncore,
+	/* And clear the rest just in हाल of garbage */
+	क्रम (; i < RING_MAX_NONPRIV_SLOTS; i++)
+		पूर्णांकel_uncore_ग_लिखो(uncore,
 				   RING_FORCE_TO_NONPRIV(base, i),
 				   i915_mmio_reg_offset(RING_NOPID(base)));
-}
+पूर्ण
 
-static void
-rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
-{
-	struct drm_i915_private *i915 = engine->i915;
+अटल व्योम
+rcs_engine_wa_init(काष्ठा पूर्णांकel_engine_cs *engine, काष्ठा i915_wa_list *wal)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
 
-	if (IS_DG1_REVID(i915, DG1_REVID_A0, DG1_REVID_A0) ||
-	    IS_TGL_UY_GT_STEP(i915, STEP_A0, STEP_A0)) {
+	अगर (IS_DG1_REVID(i915, DG1_REVID_A0, DG1_REVID_A0) ||
+	    IS_TGL_UY_GT_STEP(i915, STEP_A0, STEP_A0)) अणु
 		/*
 		 * Wa_1607138336:tgl[a0],dg1[a0]
 		 * Wa_1607063988:tgl[a0],dg1[a0]
 		 */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    GEN9_CTX_PREEMPT_REG,
 			    GEN12_DISABLE_POSH_BUSY_FF_DOP_CG);
-	}
+	पूर्ण
 
-	if (IS_TGL_UY_GT_STEP(i915, STEP_A0, STEP_A0)) {
+	अगर (IS_TGL_UY_GT_STEP(i915, STEP_A0, STEP_A0)) अणु
 		/*
 		 * Wa_1606679103:tgl
 		 * (see also Wa_1606682166:icl)
 		 */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    GEN7_SARCHKMD,
 			    GEN7_DISABLE_SAMPLER_PREFETCH);
-	}
+	पूर्ण
 
-	if (IS_ALDERLAKE_S(i915) || IS_DG1(i915) ||
-	    IS_ROCKETLAKE(i915) || IS_TIGERLAKE(i915)) {
+	अगर (IS_ALDERLAKE_S(i915) || IS_DG1(i915) ||
+	    IS_ROCKETLAKE(i915) || IS_TIGERLAKE(i915)) अणु
 		/* Wa_1606931601:tgl,rkl,dg1,adl-s */
 		wa_masked_en(wal, GEN7_ROW_CHICKEN2, GEN12_DISABLE_EARLY_READ);
 
@@ -1612,7 +1613,7 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		 * Wa_22010931296:tgl[B0+],dg1[B0+]
 		 * Wa_14010919138:rkl,dg1,adl-s
 		 */
-		wa_write_or(wal, GEN7_FF_THREAD_MODE,
+		wa_ग_लिखो_or(wal, GEN7_FF_THREAD_MODE,
 			    GEN12_FF_TESSELATION_DOP_GATE_DISABLE);
 
 		/*
@@ -1622,10 +1623,10 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		wa_masked_en(wal,
 			     GEN9_CS_DEBUG_MODE1,
 			     FF_DOP_CLOCK_GATE_DISABLE);
-	}
+	पूर्ण
 
-	if (IS_ALDERLAKE_S(i915) || IS_DG1_REVID(i915, DG1_REVID_A0, DG1_REVID_A0) ||
-	    IS_ROCKETLAKE(i915) || IS_TIGERLAKE(i915)) {
+	अगर (IS_ALDERLAKE_S(i915) || IS_DG1_REVID(i915, DG1_REVID_A0, DG1_REVID_A0) ||
+	    IS_ROCKETLAKE(i915) || IS_TIGERLAKE(i915)) अणु
 		/* Wa_1409804808:tgl,rkl,dg1[a0],adl-s */
 		wa_masked_en(wal, GEN7_ROW_CHICKEN2,
 			     GEN12_PUSH_CONST_DEREF_HOLD_DIS);
@@ -1635,17 +1636,17 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		 * Wa_14010229206:tgl,rkl,dg1[a0],adl-s
 		 */
 		wa_masked_en(wal, GEN9_ROW_CHICKEN4, GEN12_DISABLE_TDL_PUSH);
-	}
+	पूर्ण
 
 
-	if (IS_DG1_REVID(i915, DG1_REVID_A0, DG1_REVID_A0) ||
-	    IS_ROCKETLAKE(i915) || IS_TIGERLAKE(i915)) {
+	अगर (IS_DG1_REVID(i915, DG1_REVID_A0, DG1_REVID_A0) ||
+	    IS_ROCKETLAKE(i915) || IS_TIGERLAKE(i915)) अणु
 		/*
 		 * Wa_1607030317:tgl
 		 * Wa_1607186500:tgl
 		 * Wa_1607297627:tgl,rkl,dg1[a0]
 		 *
-		 * On TGL and RKL there are multiple entries for this WA in the
+		 * On TGL and RKL there are multiple entries क्रम this WA in the
 		 * BSpec; some indicate this is an A0-only WA, others indicate
 		 * it applies to all steppings so we trust the "all steppings."
 		 * For DG1 this only applies to A0.
@@ -1654,23 +1655,23 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 			     GEN6_RC_SLEEP_PSMI_CONTROL,
 			     GEN12_WAIT_FOR_EVENT_POWER_DOWN_DISABLE |
 			     GEN8_RC_SEMA_IDLE_MSG_DISABLE);
-	}
+	पूर्ण
 
-	if (IS_DG1(i915) || IS_ROCKETLAKE(i915) || IS_TIGERLAKE(i915)) {
+	अगर (IS_DG1(i915) || IS_ROCKETLAKE(i915) || IS_TIGERLAKE(i915)) अणु
 		/* Wa_1406941453:tgl,rkl,dg1 */
 		wa_masked_en(wal,
 			     GEN10_SAMPLER_MODE,
 			     ENABLE_SMALLPL);
-	}
+	पूर्ण
 
-	if (IS_GEN(i915, 11)) {
-		/* This is not an Wa. Enable for better image quality */
+	अगर (IS_GEN(i915, 11)) अणु
+		/* This is not an Wa. Enable क्रम better image quality */
 		wa_masked_en(wal,
 			     _3D_CHICKEN3,
 			     _3D_CHICKEN3_AA_LINE_QUALITY_FIX_ENABLE);
 
 		/* WaPipelineFlushCoherentLines:icl */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    GEN8_L3SQCREG4,
 			    GEN8_LQSC_FLUSH_COHERENT_LINES);
 
@@ -1678,7 +1679,7 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		 * Wa_1405543622:icl
 		 * Formerly known as WaGAPZPriorityScheme
 		 */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    GEN8_GARBCNTL,
 			    GEN11_ARBITRATION_PRIO_ORDER_MASK);
 
@@ -1686,11 +1687,11 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		 * Wa_1604223664:icl
 		 * Formerly known as WaL3BankAddressHashing
 		 */
-		wa_write_clr_set(wal,
+		wa_ग_लिखो_clr_set(wal,
 				 GEN8_GARBCNTL,
 				 GEN11_HASH_CTRL_EXCL_MASK,
 				 GEN11_HASH_CTRL_EXCL_BIT0);
-		wa_write_clr_set(wal,
+		wa_ग_लिखो_clr_set(wal,
 				 GEN11_GLBLINVL,
 				 GEN11_BANK_HASH_ADDR_EXCL_MASK,
 				 GEN11_BANK_HASH_ADDR_EXCL_BIT0);
@@ -1699,30 +1700,30 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		 * Wa_1405733216:icl
 		 * Formerly known as WaDisableCleanEvicts
 		 */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    GEN8_L3SQCREG4,
 			    GEN11_LQSC_CLEAN_EVICT_DISABLE);
 
 		/* WaForwardProgressSoftReset:icl */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    GEN10_SCRATCH_LNCF2,
 			    PMFLUSHDONE_LNICRSDROP |
 			    PMFLUSH_GAPL3UNBLOCK |
 			    PMFLUSHDONE_LNEBLK);
 
 		/* Wa_1406609255:icl (pre-prod) */
-		if (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_B0))
-			wa_write_or(wal,
+		अगर (IS_ICL_REVID(i915, ICL_REVID_A0, ICL_REVID_B0))
+			wa_ग_लिखो_or(wal,
 				    GEN7_SARCHKMD,
 				    GEN7_DISABLE_DEMAND_PREFETCH);
 
 		/* Wa_1606682166:icl */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    GEN7_SARCHKMD,
 			    GEN7_DISABLE_SAMPLER_PREFETCH);
 
 		/* Wa_1409178092:icl */
-		wa_write_clr_set(wal,
+		wa_ग_लिखो_clr_set(wal,
 				 GEN11_SCRATCH2,
 				 GEN11_COHERENT_PARTIAL_WRITE_MERGE_ENABLE,
 				 0);
@@ -1735,91 +1736,91 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		 * Wa_1408615072:icl,ehl  (vsunit)
 		 * Wa_1407596294:icl,ehl  (hsunit)
 		 */
-		wa_write_or(wal, UNSLICE_UNIT_LEVEL_CLKGATE,
+		wa_ग_लिखो_or(wal, UNSLICE_UNIT_LEVEL_CLKGATE,
 			    VSUNIT_CLKGATE_DIS | HSUNIT_CLKGATE_DIS);
 
 		/* Wa_1407352427:icl,ehl */
-		wa_write_or(wal, UNSLICE_UNIT_LEVEL_CLKGATE2,
+		wa_ग_लिखो_or(wal, UNSLICE_UNIT_LEVEL_CLKGATE2,
 			    PSDUNIT_CLKGATE_DIS);
 
 		/* Wa_1406680159:icl,ehl */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    SUBSLICE_UNIT_LEVEL_CLKGATE,
 			    GWUNIT_CLKGATE_DIS);
 
 		/*
-		 * Wa_1408767742:icl[a2..forever],ehl[all]
+		 * Wa_1408767742:icl[a2..क्रमever],ehl[all]
 		 * Wa_1605460711:icl[a0..c0]
 		 */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    GEN7_FF_THREAD_MODE,
 			    GEN12_FF_TESSELATION_DOP_GATE_DISABLE);
 
 		/* Wa_22010271021:ehl */
-		if (IS_JSL_EHL(i915))
+		अगर (IS_JSL_EHL(i915))
 			wa_masked_en(wal,
 				     GEN9_CS_DEBUG_MODE1,
 				     FF_DOP_CLOCK_GATE_DISABLE);
-	}
+	पूर्ण
 
-	if (IS_GEN_RANGE(i915, 9, 12)) {
+	अगर (IS_GEN_RANGE(i915, 9, 12)) अणु
 		/* FtrPerCtxtPreemptionGranularityControl:skl,bxt,kbl,cfl,cnl,icl,tgl */
 		wa_masked_en(wal,
 			     GEN7_FF_SLICE_CS_CHICKEN1,
 			     GEN9_FFSC_PERCTX_PREEMPT_CTRL);
-	}
+	पूर्ण
 
-	if (IS_SKYLAKE(i915) ||
+	अगर (IS_SKYLAKE(i915) ||
 	    IS_KABYLAKE(i915) ||
 	    IS_COFFEELAKE(i915) ||
-	    IS_COMETLAKE(i915)) {
+	    IS_COMETLAKE(i915)) अणु
 		/* WaEnableGapsTsvCreditFix:skl,kbl,cfl */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    GEN8_GARBCNTL,
 			    GEN9_GAPS_TSV_CREDIT_DISABLE);
-	}
+	पूर्ण
 
-	if (IS_BROXTON(i915)) {
+	अगर (IS_BROXTON(i915)) अणु
 		/* WaDisablePooledEuLoadBalancingFix:bxt */
 		wa_masked_en(wal,
 			     FF_SLICE_CS_CHICKEN2,
 			     GEN9_POOLED_EU_LOAD_BALANCING_FIX_DISABLE);
-	}
+	पूर्ण
 
-	if (IS_GEN(i915, 9)) {
+	अगर (IS_GEN(i915, 9)) अणु
 		/* WaContextSwitchWithConcurrentTLBInvalidate:skl,bxt,kbl,glk,cfl */
 		wa_masked_en(wal,
 			     GEN9_CSFE_CHICKEN1_RCS,
 			     GEN9_PREEMPT_GPGPU_SYNC_SWITCH_DISABLE);
 
 		/* WaEnableLbsSlaRetryTimerDecrement:skl,bxt,kbl,glk,cfl */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    BDW_SCRATCH1,
 			    GEN9_LBS_SLA_RETRY_TIMER_DECREMENT_ENABLE);
 
 		/* WaProgramL3SqcReg1DefaultForPerf:bxt,glk */
-		if (IS_GEN9_LP(i915))
-			wa_write_clr_set(wal,
+		अगर (IS_GEN9_LP(i915))
+			wa_ग_लिखो_clr_set(wal,
 					 GEN8_L3SQCREG1,
 					 L3_PRIO_CREDITS_MASK,
 					 L3_GENERAL_PRIO_CREDITS(62) |
 					 L3_HIGH_PRIO_CREDITS(2));
 
 		/* WaOCLCoherentLineFlush:skl,bxt,kbl,cfl */
-		wa_write_or(wal,
+		wa_ग_लिखो_or(wal,
 			    GEN8_L3SQCREG4,
 			    GEN8_LQSC_FLUSH_COHERENT_LINES);
 
 		/* Disable atomics in L3 to prevent unrecoverable hangs */
-		wa_write_clr_set(wal, GEN9_SCRATCH_LNCF1,
+		wa_ग_लिखो_clr_set(wal, GEN9_SCRATCH_LNCF1,
 				 GEN9_LNCF_NONIA_COHERENT_ATOMICS_ENABLE, 0);
-		wa_write_clr_set(wal, GEN8_L3SQCREG4,
+		wa_ग_लिखो_clr_set(wal, GEN8_L3SQCREG4,
 				 GEN8_LQSQ_NONIA_COHERENT_ATOMICS_ENABLE, 0);
-		wa_write_clr_set(wal, GEN9_SCRATCH1,
+		wa_ग_लिखो_clr_set(wal, GEN9_SCRATCH1,
 				 EVICTION_PERF_FIX_ENABLE, 0);
-	}
+	पूर्ण
 
-	if (IS_HASWELL(i915)) {
+	अगर (IS_HASWELL(i915)) अणु
 		/* WaSampleCChickenBitEnable:hsw */
 		wa_masked_en(wal,
 			     HALF_SLICE_CHICKEN3, HSW_SAMPLE_C_PERFORMANCE);
@@ -1831,21 +1832,21 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 
 		/* WaDisable4x2SubspanOptimization:hsw */
 		wa_masked_en(wal, CACHE_MODE_1, PIXEL_SUBSPAN_COLLECT_OPT_DISABLE);
-	}
+	पूर्ण
 
-	if (IS_VALLEYVIEW(i915)) {
+	अगर (IS_VALLEYVIEW(i915)) अणु
 		/* WaDisableEarlyCull:vlv */
 		wa_masked_en(wal,
 			     _3D_CHICKEN3,
 			     _3D_CHICKEN_SF_DISABLE_OBJEND_CULL);
 
 		/*
-		 * WaVSThreadDispatchOverride:ivb,vlv
+		 * WaVSThपढ़ोDispatchOverride:ivb,vlv
 		 *
 		 * This actually overrides the dispatch
-		 * mode for all thread types.
+		 * mode क्रम all thपढ़ो types.
 		 */
-		wa_write_clr_set(wal,
+		wa_ग_लिखो_clr_set(wal,
 				 GEN7_FF_THREAD_MODE,
 				 GEN7_FF_SCHED_MASK,
 				 GEN7_FF_TS_SCHED_HW |
@@ -1858,28 +1859,28 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 			     GEN7_HALF_SLICE_CHICKEN1,
 			     GEN7_MAX_PS_THREAD_DEP |
 			     GEN7_PSD_SINGLE_PORT_DISPATCH_ENABLE);
-	}
+	पूर्ण
 
-	if (IS_IVYBRIDGE(i915)) {
+	अगर (IS_IVYBRIDGE(i915)) अणु
 		/* WaDisableEarlyCull:ivb */
 		wa_masked_en(wal,
 			     _3D_CHICKEN3,
 			     _3D_CHICKEN_SF_DISABLE_OBJEND_CULL);
 
-		if (0) { /* causes HiZ corruption on ivb:gt1 */
+		अगर (0) अणु /* causes HiZ corruption on ivb:gt1 */
 			/* enable HiZ Raw Stall Optimization */
 			wa_masked_dis(wal,
 				      CACHE_MODE_0_GEN7,
 				      HIZ_RAW_STALL_OPT_DISABLE);
-		}
+		पूर्ण
 
 		/*
-		 * WaVSThreadDispatchOverride:ivb,vlv
+		 * WaVSThपढ़ोDispatchOverride:ivb,vlv
 		 *
 		 * This actually overrides the dispatch
-		 * mode for all thread types.
+		 * mode क्रम all thपढ़ो types.
 		 */
-		wa_write_clr_set(wal,
+		wa_ग_लिखो_clr_set(wal,
 				 GEN7_FF_THREAD_MODE,
 				 GEN7_FF_SCHED_MASK,
 				 GEN7_FF_TS_SCHED_HW |
@@ -1887,13 +1888,13 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 				 GEN7_FF_DS_SCHED_HW);
 
 		/* WaDisablePSDDualDispatchEnable:ivb */
-		if (IS_IVB_GT1(i915))
+		अगर (IS_IVB_GT1(i915))
 			wa_masked_en(wal,
 				     GEN7_HALF_SLICE_CHICKEN1,
 				     GEN7_PSD_SINGLE_PORT_DISPATCH_ENABLE);
-	}
+	पूर्ण
 
-	if (IS_GEN(i915, 7)) {
+	अगर (IS_GEN(i915, 7)) अणु
 		/* WaBCSVCSTlbInvalidationMode:ivb,vlv,hsw */
 		wa_masked_en(wal,
 			     GFX_MODE_GEN7,
@@ -1905,7 +1906,7 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		/*
 		 * BSpec says this must be set, even though
 		 * WaDisable4x2SubspanOptimization:ivb,hsw
-		 * WaDisable4x2SubspanOptimization isn't listed for VLV.
+		 * WaDisable4x2SubspanOptimization isn't listed क्रम VLV.
 		 */
 		wa_masked_en(wal,
 			     CACHE_MODE_1,
@@ -1915,21 +1916,21 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		 * BSpec recommends 8x4 when MSAA is used,
 		 * however in practice 16x4 seems fastest.
 		 *
-		 * Note that PS/WM thread counts depend on the WIZ hashing
-		 * disable bit, which we don't touch here, but it's good
+		 * Note that PS/WM thपढ़ो counts depend on the WIZ hashing
+		 * disable bit, which we करोn't touch here, but it's good
 		 * to keep in mind (see 3DSTATE_PS and 3DSTATE_WM).
 		 */
 		wa_add(wal, GEN7_GT_MODE, 0,
 		       _MASKED_FIELD(GEN6_WIZ_HASHING_MASK,
 				     GEN6_WIZ_HASHING_16x4),
 		       GEN6_WIZ_HASHING_16x4);
-	}
+	पूर्ण
 
-	if (IS_GEN_RANGE(i915, 6, 7))
+	अगर (IS_GEN_RANGE(i915, 6, 7))
 		/*
-		 * We need to disable the AsyncFlip performance optimisations in
+		 * We need to disable the AsyncFlip perक्रमmance optimisations in
 		 * order to use MI_WAIT_FOR_EVENT within the CS. It should
-		 * already be programmed to '1' on all products.
+		 * alपढ़ोy be programmed to '1' on all products.
 		 *
 		 * WaDisableAsyncFlipPerfMode:snb,ivb,hsw,vlv
 		 */
@@ -1937,10 +1938,10 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 			     MI_MODE,
 			     ASYNC_FLIP_PERF_DISABLE);
 
-	if (IS_GEN(i915, 6)) {
+	अगर (IS_GEN(i915, 6)) अणु
 		/*
-		 * Required for the hardware to program scanline values for
-		 * waiting
+		 * Required क्रम the hardware to program scanline values क्रम
+		 * रुकोing
 		 * WaEnableFlushTlbInvalidationMode:snb
 		 */
 		wa_masked_en(wal,
@@ -1954,11 +1955,11 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 
 		wa_masked_en(wal,
 			     _3D_CHICKEN3,
-			     /* WaStripsFansDisableFastClipPerformanceFix:snb */
+			     /* WaStripsFansDisableFastClipPerक्रमmanceFix:snb */
 			     _3D_CHICKEN3_SF_DISABLE_FASTCLIP_CULL |
 			     /*
 			      * Bspec says:
-			      * "This bit must be set if 3DSTATE_CLIP clip mode is set
+			      * "This bit must be set अगर 3DSTATE_CLIP clip mode is set
 			      * to normal and 3DSTATE_SF number of SF output attributes
 			      * is more than 16."
 			      */
@@ -1968,8 +1969,8 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		 * BSpec recommends 8x4 when MSAA is used,
 		 * however in practice 16x4 seems fastest.
 		 *
-		 * Note that PS/WM thread counts depend on the WIZ hashing
-		 * disable bit, which we don't touch here, but it's good
+		 * Note that PS/WM thपढ़ो counts depend on the WIZ hashing
+		 * disable bit, which we करोn't touch here, but it's good
 		 * to keep in mind (see 3DSTATE_PS and 3DSTATE_WM).
 		 */
 		wa_add(wal,
@@ -1989,233 +1990,233 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		wa_masked_dis(wal,
 			      CACHE_MODE_0,
 			      CM0_STC_EVICT_DISABLE_LRA_SNB);
-	}
+	पूर्ण
 
-	if (IS_GEN_RANGE(i915, 4, 6))
+	अगर (IS_GEN_RANGE(i915, 4, 6))
 		/* WaTimedSingleVertexDispatch:cl,bw,ctg,elk,ilk,snb */
 		wa_add(wal, MI_MODE,
 		       0, _MASKED_BIT_ENABLE(VS_TIMER_DISPATCH),
-		       /* XXX bit doesn't stick on Broadwater */
+		       /* XXX bit करोesn't stick on Broadwater */
 		       IS_I965G(i915) ? 0 : VS_TIMER_DISPATCH);
 
-	if (IS_GEN(i915, 4))
+	अगर (IS_GEN(i915, 4))
 		/*
-		 * Disable CONSTANT_BUFFER before it is loaded from the context
+		 * Disable CONSTANT_BUFFER beक्रमe it is loaded from the context
 		 * image. For as it is loaded, it is executed and the stored
-		 * address may no longer be valid, leading to a GPU hang.
+		 * address may no दीर्घer be valid, leading to a GPU hang.
 		 *
 		 * This imposes the requirement that userspace reload their
-		 * CONSTANT_BUFFER on every batch, fortunately a requirement
-		 * they are already accustomed to from before contexts were
+		 * CONSTANT_BUFFER on every batch, क्रमtunately a requirement
+		 * they are alपढ़ोy accustomed to from beक्रमe contexts were
 		 * enabled.
 		 */
 		wa_add(wal, ECOSKPD,
 		       0, _MASKED_BIT_ENABLE(ECO_CONSTANT_BUFFER_SR_DISABLE),
-		       0 /* XXX bit doesn't stick on Broadwater */);
-}
+		       0 /* XXX bit करोesn't stick on Broadwater */);
+पूर्ण
 
-static void
-xcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
-{
-	struct drm_i915_private *i915 = engine->i915;
+अटल व्योम
+xcs_engine_wa_init(काष्ठा पूर्णांकel_engine_cs *engine, काष्ठा i915_wa_list *wal)
+अणु
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
 
 	/* WaKBLVECSSemaphoreWaitPoll:kbl */
-	if (IS_KBL_GT_STEP(i915, STEP_A0, STEP_E0)) {
-		wa_write(wal,
+	अगर (IS_KBL_GT_STEP(i915, STEP_A0, STEP_E0)) अणु
+		wa_ग_लिखो(wal,
 			 RING_SEMA_WAIT_POLL(engine->mmio_base),
 			 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-engine_init_workarounds(struct intel_engine_cs *engine, struct i915_wa_list *wal)
-{
-	if (I915_SELFTEST_ONLY(INTEL_GEN(engine->i915) < 4))
-		return;
+अटल व्योम
+engine_init_workarounds(काष्ठा पूर्णांकel_engine_cs *engine, काष्ठा i915_wa_list *wal)
+अणु
+	अगर (I915_SELFTEST_ONLY(INTEL_GEN(engine->i915) < 4))
+		वापस;
 
-	if (engine->class == RENDER_CLASS)
+	अगर (engine->class == RENDER_CLASS)
 		rcs_engine_wa_init(engine, wal);
-	else
+	अन्यथा
 		xcs_engine_wa_init(engine, wal);
-}
+पूर्ण
 
-void intel_engine_init_workarounds(struct intel_engine_cs *engine)
-{
-	struct i915_wa_list *wal = &engine->wa_list;
+व्योम पूर्णांकel_engine_init_workarounds(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_wa_list *wal = &engine->wa_list;
 
-	if (INTEL_GEN(engine->i915) < 4)
-		return;
+	अगर (INTEL_GEN(engine->i915) < 4)
+		वापस;
 
 	wa_init_start(wal, "engine", engine->name);
 	engine_init_workarounds(engine, wal);
 	wa_init_finish(wal);
-}
+पूर्ण
 
-void intel_engine_apply_workarounds(struct intel_engine_cs *engine)
-{
+व्योम पूर्णांकel_engine_apply_workarounds(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	wa_list_apply(engine->uncore, &engine->wa_list);
-}
+पूर्ण
 
-struct mcr_range {
+काष्ठा mcr_range अणु
 	u32 start;
 	u32 end;
-};
+पूर्ण;
 
-static const struct mcr_range mcr_ranges_gen8[] = {
-	{ .start = 0x5500, .end = 0x55ff },
-	{ .start = 0x7000, .end = 0x7fff },
-	{ .start = 0x9400, .end = 0x97ff },
-	{ .start = 0xb000, .end = 0xb3ff },
-	{ .start = 0xe000, .end = 0xe7ff },
-	{},
-};
+अटल स्थिर काष्ठा mcr_range mcr_ranges_gen8[] = अणु
+	अणु .start = 0x5500, .end = 0x55ff पूर्ण,
+	अणु .start = 0x7000, .end = 0x7fff पूर्ण,
+	अणु .start = 0x9400, .end = 0x97ff पूर्ण,
+	अणु .start = 0xb000, .end = 0xb3ff पूर्ण,
+	अणु .start = 0xe000, .end = 0xe7ff पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct mcr_range mcr_ranges_gen12[] = {
-	{ .start =  0x8150, .end =  0x815f },
-	{ .start =  0x9520, .end =  0x955f },
-	{ .start =  0xb100, .end =  0xb3ff },
-	{ .start =  0xde80, .end =  0xe8ff },
-	{ .start = 0x24a00, .end = 0x24a7f },
-	{},
-};
+अटल स्थिर काष्ठा mcr_range mcr_ranges_gen12[] = अणु
+	अणु .start =  0x8150, .end =  0x815f पूर्ण,
+	अणु .start =  0x9520, .end =  0x955f पूर्ण,
+	अणु .start =  0xb100, .end =  0xb3ff पूर्ण,
+	अणु .start =  0xde80, .end =  0xe8ff पूर्ण,
+	अणु .start = 0x24a00, .end = 0x24a7f पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static bool mcr_range(struct drm_i915_private *i915, u32 offset)
-{
-	const struct mcr_range *mcr_ranges;
-	int i;
+अटल bool mcr_range(काष्ठा drm_i915_निजी *i915, u32 offset)
+अणु
+	स्थिर काष्ठा mcr_range *mcr_ranges;
+	पूर्णांक i;
 
-	if (INTEL_GEN(i915) >= 12)
+	अगर (INTEL_GEN(i915) >= 12)
 		mcr_ranges = mcr_ranges_gen12;
-	else if (INTEL_GEN(i915) >= 8)
+	अन्यथा अगर (INTEL_GEN(i915) >= 8)
 		mcr_ranges = mcr_ranges_gen8;
-	else
-		return false;
+	अन्यथा
+		वापस false;
 
 	/*
 	 * Registers in these ranges are affected by the MCR selector
-	 * which only controls CPU initiated MMIO. Routing does not
-	 * work for CS access so we cannot verify them on this path.
+	 * which only controls CPU initiated MMIO. Routing करोes not
+	 * work क्रम CS access so we cannot verअगरy them on this path.
 	 */
-	for (i = 0; mcr_ranges[i].start; i++)
-		if (offset >= mcr_ranges[i].start &&
+	क्रम (i = 0; mcr_ranges[i].start; i++)
+		अगर (offset >= mcr_ranges[i].start &&
 		    offset <= mcr_ranges[i].end)
-			return true;
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int
-wa_list_srm(struct i915_request *rq,
-	    const struct i915_wa_list *wal,
-	    struct i915_vma *vma)
-{
-	struct drm_i915_private *i915 = rq->engine->i915;
-	unsigned int i, count = 0;
-	const struct i915_wa *wa;
+अटल पूर्णांक
+wa_list_srm(काष्ठा i915_request *rq,
+	    स्थिर काष्ठा i915_wa_list *wal,
+	    काष्ठा i915_vma *vma)
+अणु
+	काष्ठा drm_i915_निजी *i915 = rq->engine->i915;
+	अचिन्हित पूर्णांक i, count = 0;
+	स्थिर काष्ठा i915_wa *wa;
 	u32 srm, *cs;
 
 	srm = MI_STORE_REGISTER_MEM | MI_SRM_LRM_GLOBAL_GTT;
-	if (INTEL_GEN(i915) >= 8)
+	अगर (INTEL_GEN(i915) >= 8)
 		srm++;
 
-	for (i = 0, wa = wal->list; i < wal->count; i++, wa++) {
-		if (!mcr_range(i915, i915_mmio_reg_offset(wa->reg)))
+	क्रम (i = 0, wa = wal->list; i < wal->count; i++, wa++) अणु
+		अगर (!mcr_range(i915, i915_mmio_reg_offset(wa->reg)))
 			count++;
-	}
+	पूर्ण
 
-	cs = intel_ring_begin(rq, 4 * count);
-	if (IS_ERR(cs))
-		return PTR_ERR(cs);
+	cs = पूर्णांकel_ring_begin(rq, 4 * count);
+	अगर (IS_ERR(cs))
+		वापस PTR_ERR(cs);
 
-	for (i = 0, wa = wal->list; i < wal->count; i++, wa++) {
+	क्रम (i = 0, wa = wal->list; i < wal->count; i++, wa++) अणु
 		u32 offset = i915_mmio_reg_offset(wa->reg);
 
-		if (mcr_range(i915, offset))
-			continue;
+		अगर (mcr_range(i915, offset))
+			जारी;
 
 		*cs++ = srm;
 		*cs++ = offset;
-		*cs++ = i915_ggtt_offset(vma) + sizeof(u32) * i;
+		*cs++ = i915_ggtt_offset(vma) + माप(u32) * i;
 		*cs++ = 0;
-	}
-	intel_ring_advance(rq, cs);
+	पूर्ण
+	पूर्णांकel_ring_advance(rq, cs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int engine_wa_list_verify(struct intel_context *ce,
-				 const struct i915_wa_list * const wal,
-				 const char *from)
-{
-	const struct i915_wa *wa;
-	struct i915_request *rq;
-	struct i915_vma *vma;
-	struct i915_gem_ww_ctx ww;
-	unsigned int i;
+अटल पूर्णांक engine_wa_list_verअगरy(काष्ठा पूर्णांकel_context *ce,
+				 स्थिर काष्ठा i915_wa_list * स्थिर wal,
+				 स्थिर अक्षर *from)
+अणु
+	स्थिर काष्ठा i915_wa *wa;
+	काष्ठा i915_request *rq;
+	काष्ठा i915_vma *vma;
+	काष्ठा i915_gem_ww_ctx ww;
+	अचिन्हित पूर्णांक i;
 	u32 *results;
-	int err;
+	पूर्णांक err;
 
-	if (!wal->count)
-		return 0;
+	अगर (!wal->count)
+		वापस 0;
 
-	vma = __vm_create_scratch_for_read(&ce->engine->gt->ggtt->vm,
-					   wal->count * sizeof(u32));
-	if (IS_ERR(vma))
-		return PTR_ERR(vma);
+	vma = __vm_create_scratch_क्रम_पढ़ो(&ce->engine->gt->ggtt->vm,
+					   wal->count * माप(u32));
+	अगर (IS_ERR(vma))
+		वापस PTR_ERR(vma);
 
-	intel_engine_pm_get(ce->engine);
+	पूर्णांकel_engine_pm_get(ce->engine);
 	i915_gem_ww_ctx_init(&ww, false);
 retry:
 	err = i915_gem_object_lock(vma->obj, &ww);
-	if (err == 0)
-		err = intel_context_pin_ww(ce, &ww);
-	if (err)
-		goto err_pm;
+	अगर (err == 0)
+		err = पूर्णांकel_context_pin_ww(ce, &ww);
+	अगर (err)
+		जाओ err_pm;
 
 	err = i915_vma_pin_ww(vma, &ww, 0, 0,
 			   i915_vma_is_ggtt(vma) ? PIN_GLOBAL : PIN_USER);
-	if (err)
-		goto err_unpin;
+	अगर (err)
+		जाओ err_unpin;
 
 	rq = i915_request_create(ce);
-	if (IS_ERR(rq)) {
+	अगर (IS_ERR(rq)) अणु
 		err = PTR_ERR(rq);
-		goto err_vma;
-	}
+		जाओ err_vma;
+	पूर्ण
 
-	err = i915_request_await_object(rq, vma->obj, true);
-	if (err == 0)
+	err = i915_request_aरुको_object(rq, vma->obj, true);
+	अगर (err == 0)
 		err = i915_vma_move_to_active(vma, rq, EXEC_OBJECT_WRITE);
-	if (err == 0)
+	अगर (err == 0)
 		err = wa_list_srm(rq, wal, vma);
 
 	i915_request_get(rq);
-	if (err)
+	अगर (err)
 		i915_request_set_error_once(rq, err);
 	i915_request_add(rq);
 
-	if (err)
-		goto err_rq;
+	अगर (err)
+		जाओ err_rq;
 
-	if (i915_request_wait(rq, 0, HZ / 5) < 0) {
+	अगर (i915_request_रुको(rq, 0, HZ / 5) < 0) अणु
 		err = -ETIME;
-		goto err_rq;
-	}
+		जाओ err_rq;
+	पूर्ण
 
 	results = i915_gem_object_pin_map(vma->obj, I915_MAP_WB);
-	if (IS_ERR(results)) {
+	अगर (IS_ERR(results)) अणु
 		err = PTR_ERR(results);
-		goto err_rq;
-	}
+		जाओ err_rq;
+	पूर्ण
 
 	err = 0;
-	for (i = 0, wa = wal->list; i < wal->count; i++, wa++) {
-		if (mcr_range(rq->engine->i915, i915_mmio_reg_offset(wa->reg)))
-			continue;
+	क्रम (i = 0, wa = wal->list; i < wal->count; i++, wa++) अणु
+		अगर (mcr_range(rq->engine->i915, i915_mmio_reg_offset(wa->reg)))
+			जारी;
 
-		if (!wa_verify(wa, results[i], wal->name, from))
+		अगर (!wa_verअगरy(wa, results[i], wal->name, from))
 			err = -ENXIO;
-	}
+	पूर्ण
 
 	i915_gem_object_unpin_map(vma->obj);
 
@@ -2224,27 +2225,27 @@ err_rq:
 err_vma:
 	i915_vma_unpin(vma);
 err_unpin:
-	intel_context_unpin(ce);
+	पूर्णांकel_context_unpin(ce);
 err_pm:
-	if (err == -EDEADLK) {
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
-	intel_engine_pm_put(ce->engine);
+	पूर्णांकel_engine_pm_put(ce->engine);
 	i915_vma_put(vma);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int intel_engine_verify_workarounds(struct intel_engine_cs *engine,
-				    const char *from)
-{
-	return engine_wa_list_verify(engine->kernel_context,
+पूर्णांक पूर्णांकel_engine_verअगरy_workarounds(काष्ठा पूर्णांकel_engine_cs *engine,
+				    स्थिर अक्षर *from)
+अणु
+	वापस engine_wa_list_verअगरy(engine->kernel_context,
 				     &engine->wa_list,
 				     from);
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftest_workarounds.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftest_workarounds.c"
+#पूर्ण_अगर

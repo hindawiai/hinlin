@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Device operations for the pnfs nfs4 file layout driver.
+ * Device operations क्रम the pnfs nfs4 file layout driver.
  *
  * Copyright (c) 2014, Primary Data, Inc. All rights reserved.
  *
  * Tao Peng <bergwolf@primarydata.com>
  */
 
-#include <linux/nfs_fs.h>
-#include <linux/vmalloc.h>
-#include <linux/module.h>
-#include <linux/sunrpc/addr.h>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sunrpc/addr.h>
 
-#include "../internal.h"
-#include "../nfs4session.h"
-#include "flexfilelayout.h"
+#समावेश "../internal.h"
+#समावेश "../nfs4session.h"
+#समावेश "flexfilelayout.h"
 
-#define NFSDBG_FACILITY		NFSDBG_PNFS_LD
+#घोषणा NFSDBG_FACILITY		NFSDBG_PNFS_LD
 
-static unsigned int dataserver_timeo = NFS_DEF_TCP_TIMEO;
-static unsigned int dataserver_retrans;
+अटल अचिन्हित पूर्णांक dataserver_समयo = NFS_DEF_TCP_TIMEO;
+अटल अचिन्हित पूर्णांक dataserver_retrans;
 
-static bool ff_layout_has_available_ds(struct pnfs_layout_segment *lseg);
+अटल bool ff_layout_has_available_ds(काष्ठा pnfs_layout_segment *lseg);
 
-void nfs4_ff_layout_put_deviceid(struct nfs4_ff_layout_ds *mirror_ds)
-{
-	if (!IS_ERR_OR_NULL(mirror_ds))
+व्योम nfs4_ff_layout_put_deviceid(काष्ठा nfs4_ff_layout_ds *mirror_ds)
+अणु
+	अगर (!IS_ERR_OR_शून्य(mirror_ds))
 		nfs4_put_deviceid_node(&mirror_ds->id_node);
-}
+पूर्ण
 
-void nfs4_ff_layout_free_deviceid(struct nfs4_ff_layout_ds *mirror_ds)
-{
-	nfs4_print_deviceid(&mirror_ds->id_node.deviceid);
+व्योम nfs4_ff_layout_मुक्त_deviceid(काष्ठा nfs4_ff_layout_ds *mirror_ds)
+अणु
+	nfs4_prपूर्णांक_deviceid(&mirror_ds->id_node.deviceid);
 	nfs4_pnfs_ds_put(mirror_ds->ds);
-	kfree(mirror_ds->ds_versions);
-	kfree_rcu(mirror_ds, id_node.rcu);
-}
+	kमुक्त(mirror_ds->ds_versions);
+	kमुक्त_rcu(mirror_ds, id_node.rcu);
+पूर्ण
 
-/* Decode opaque device data and construct new_ds using it */
-struct nfs4_ff_layout_ds *
-nfs4_ff_alloc_deviceid_node(struct nfs_server *server, struct pnfs_device *pdev,
+/* Decode opaque device data and स्थिरruct new_ds using it */
+काष्ठा nfs4_ff_layout_ds *
+nfs4_ff_alloc_deviceid_node(काष्ठा nfs_server *server, काष्ठा pnfs_device *pdev,
 			    gfp_t gfp_flags)
-{
-	struct xdr_stream stream;
-	struct xdr_buf buf;
-	struct page *scratch;
-	struct list_head dsaddrs;
-	struct nfs4_pnfs_ds_addr *da;
-	struct nfs4_ff_layout_ds *new_ds = NULL;
-	struct nfs4_ff_ds_version *ds_versions = NULL;
+अणु
+	काष्ठा xdr_stream stream;
+	काष्ठा xdr_buf buf;
+	काष्ठा page *scratch;
+	काष्ठा list_head dsaddrs;
+	काष्ठा nfs4_pnfs_ds_addr *da;
+	काष्ठा nfs4_ff_layout_ds *new_ds = शून्य;
+	काष्ठा nfs4_ff_ds_version *ds_versions = शून्य;
 	u32 mp_count;
 	u32 version_count;
 	__be32 *p;
-	int i, ret = -ENOMEM;
+	पूर्णांक i, ret = -ENOMEM;
 
 	/* set up xdr stream */
 	scratch = alloc_page(gfp_flags);
-	if (!scratch)
-		goto out_err;
+	अगर (!scratch)
+		जाओ out_err;
 
-	new_ds = kzalloc(sizeof(struct nfs4_ff_layout_ds), gfp_flags);
-	if (!new_ds)
-		goto out_scratch;
+	new_ds = kzalloc(माप(काष्ठा nfs4_ff_layout_ds), gfp_flags);
+	अगर (!new_ds)
+		जाओ out_scratch;
 
 	nfs4_init_deviceid_node(&new_ds->id_node,
 				server,
@@ -72,197 +73,197 @@ nfs4_ff_alloc_deviceid_node(struct nfs_server *server, struct pnfs_device *pdev,
 	xdr_set_scratch_page(&stream, scratch);
 
 	/* multipath count */
-	p = xdr_inline_decode(&stream, 4);
-	if (unlikely(!p))
-		goto out_err_drain_dsaddrs;
+	p = xdr_अंतरभूत_decode(&stream, 4);
+	अगर (unlikely(!p))
+		जाओ out_err_drain_dsaddrs;
 	mp_count = be32_to_cpup(p);
-	dprintk("%s: multipath ds count %d\n", __func__, mp_count);
+	dprपूर्णांकk("%s: multipath ds count %d\n", __func__, mp_count);
 
-	for (i = 0; i < mp_count; i++) {
+	क्रम (i = 0; i < mp_count; i++) अणु
 		/* multipath ds */
 		da = nfs4_decode_mp_ds_addr(server->nfs_client->cl_net,
 					    &stream, gfp_flags);
-		if (da)
+		अगर (da)
 			list_add_tail(&da->da_node, &dsaddrs);
-	}
-	if (list_empty(&dsaddrs)) {
-		dprintk("%s: no suitable DS addresses found\n",
+	पूर्ण
+	अगर (list_empty(&dsaddrs)) अणु
+		dprपूर्णांकk("%s: no suitable DS addresses found\n",
 			__func__);
 		ret = -ENOMEDIUM;
-		goto out_err_drain_dsaddrs;
-	}
+		जाओ out_err_drain_dsaddrs;
+	पूर्ण
 
 	/* version count */
-	p = xdr_inline_decode(&stream, 4);
-	if (unlikely(!p))
-		goto out_err_drain_dsaddrs;
+	p = xdr_अंतरभूत_decode(&stream, 4);
+	अगर (unlikely(!p))
+		जाओ out_err_drain_dsaddrs;
 	version_count = be32_to_cpup(p);
-	dprintk("%s: version count %d\n", __func__, version_count);
+	dprपूर्णांकk("%s: version count %d\n", __func__, version_count);
 
-	ds_versions = kcalloc(version_count,
-			      sizeof(struct nfs4_ff_ds_version),
+	ds_versions = kसुस्मृति(version_count,
+			      माप(काष्ठा nfs4_ff_ds_version),
 			      gfp_flags);
-	if (!ds_versions)
-		goto out_scratch;
+	अगर (!ds_versions)
+		जाओ out_scratch;
 
-	for (i = 0; i < version_count; i++) {
+	क्रम (i = 0; i < version_count; i++) अणु
 		/* 20 = version(4) + minor_version(4) + rsize(4) + wsize(4) +
 		 * tightly_coupled(4) */
-		p = xdr_inline_decode(&stream, 20);
-		if (unlikely(!p))
-			goto out_err_drain_dsaddrs;
+		p = xdr_अंतरभूत_decode(&stream, 20);
+		अगर (unlikely(!p))
+			जाओ out_err_drain_dsaddrs;
 		ds_versions[i].version = be32_to_cpup(p++);
 		ds_versions[i].minor_version = be32_to_cpup(p++);
-		ds_versions[i].rsize = nfs_block_size(be32_to_cpup(p++), NULL);
-		ds_versions[i].wsize = nfs_block_size(be32_to_cpup(p++), NULL);
+		ds_versions[i].rsize = nfs_block_size(be32_to_cpup(p++), शून्य);
+		ds_versions[i].wsize = nfs_block_size(be32_to_cpup(p++), शून्य);
 		ds_versions[i].tightly_coupled = be32_to_cpup(p);
 
-		if (ds_versions[i].rsize > NFS_MAX_FILE_IO_SIZE)
-			ds_versions[i].rsize = NFS_MAX_FILE_IO_SIZE;
-		if (ds_versions[i].wsize > NFS_MAX_FILE_IO_SIZE)
-			ds_versions[i].wsize = NFS_MAX_FILE_IO_SIZE;
+		अगर (ds_versions[i].rsize > NFS_MAX_खाता_IO_SIZE)
+			ds_versions[i].rsize = NFS_MAX_खाता_IO_SIZE;
+		अगर (ds_versions[i].wsize > NFS_MAX_खाता_IO_SIZE)
+			ds_versions[i].wsize = NFS_MAX_खाता_IO_SIZE;
 
 		/*
-		 * check for valid major/minor combination.
+		 * check क्रम valid major/minor combination.
 		 * currently we support dataserver which talk:
 		 *   v3, v4.0, v4.1, v4.2
 		 */
-		if (!((ds_versions[i].version == 3 && ds_versions[i].minor_version == 0) ||
-			(ds_versions[i].version == 4 && ds_versions[i].minor_version < 3))) {
-			dprintk("%s: [%d] unsupported ds version %d-%d\n", __func__,
+		अगर (!((ds_versions[i].version == 3 && ds_versions[i].minor_version == 0) ||
+			(ds_versions[i].version == 4 && ds_versions[i].minor_version < 3))) अणु
+			dprपूर्णांकk("%s: [%d] unsupported ds version %d-%d\n", __func__,
 				i, ds_versions[i].version,
 				ds_versions[i].minor_version);
 			ret = -EPROTONOSUPPORT;
-			goto out_err_drain_dsaddrs;
-		}
+			जाओ out_err_drain_dsaddrs;
+		पूर्ण
 
-		dprintk("%s: [%d] vers %u minor_ver %u rsize %u wsize %u coupled %d\n",
+		dprपूर्णांकk("%s: [%d] vers %u minor_ver %u rsize %u wsize %u coupled %d\n",
 			__func__, i, ds_versions[i].version,
 			ds_versions[i].minor_version,
 			ds_versions[i].rsize,
 			ds_versions[i].wsize,
 			ds_versions[i].tightly_coupled);
-	}
+	पूर्ण
 
 	new_ds->ds_versions = ds_versions;
 	new_ds->ds_versions_cnt = version_count;
 
 	new_ds->ds = nfs4_pnfs_ds_add(&dsaddrs, gfp_flags);
-	if (!new_ds->ds)
-		goto out_err_drain_dsaddrs;
+	अगर (!new_ds->ds)
+		जाओ out_err_drain_dsaddrs;
 
-	/* If DS was already in cache, free ds addrs */
-	while (!list_empty(&dsaddrs)) {
+	/* If DS was alपढ़ोy in cache, मुक्त ds addrs */
+	जबतक (!list_empty(&dsaddrs)) अणु
 		da = list_first_entry(&dsaddrs,
-				      struct nfs4_pnfs_ds_addr,
+				      काष्ठा nfs4_pnfs_ds_addr,
 				      da_node);
 		list_del_init(&da->da_node);
-		kfree(da->da_remotestr);
-		kfree(da);
-	}
+		kमुक्त(da->da_remotestr);
+		kमुक्त(da);
+	पूर्ण
 
-	__free_page(scratch);
-	return new_ds;
+	__मुक्त_page(scratch);
+	वापस new_ds;
 
 out_err_drain_dsaddrs:
-	while (!list_empty(&dsaddrs)) {
-		da = list_first_entry(&dsaddrs, struct nfs4_pnfs_ds_addr,
+	जबतक (!list_empty(&dsaddrs)) अणु
+		da = list_first_entry(&dsaddrs, काष्ठा nfs4_pnfs_ds_addr,
 				      da_node);
 		list_del_init(&da->da_node);
-		kfree(da->da_remotestr);
-		kfree(da);
-	}
+		kमुक्त(da->da_remotestr);
+		kमुक्त(da);
+	पूर्ण
 
-	kfree(ds_versions);
+	kमुक्त(ds_versions);
 out_scratch:
-	__free_page(scratch);
+	__मुक्त_page(scratch);
 out_err:
-	kfree(new_ds);
+	kमुक्त(new_ds);
 
-	dprintk("%s ERROR: returning %d\n", __func__, ret);
-	return NULL;
-}
+	dprपूर्णांकk("%s ERROR: returning %d\n", __func__, ret);
+	वापस शून्य;
+पूर्ण
 
-static void extend_ds_error(struct nfs4_ff_layout_ds_err *err,
+अटल व्योम extend_ds_error(काष्ठा nfs4_ff_layout_ds_err *err,
 			    u64 offset, u64 length)
-{
+अणु
 	u64 end;
 
 	end = max_t(u64, pnfs_end_offset(err->offset, err->length),
 		    pnfs_end_offset(offset, length));
 	err->offset = min_t(u64, err->offset, offset);
 	err->length = end - err->offset;
-}
+पूर्ण
 
-static int
-ff_ds_error_match(const struct nfs4_ff_layout_ds_err *e1,
-		const struct nfs4_ff_layout_ds_err *e2)
-{
-	int ret;
+अटल पूर्णांक
+ff_ds_error_match(स्थिर काष्ठा nfs4_ff_layout_ds_err *e1,
+		स्थिर काष्ठा nfs4_ff_layout_ds_err *e2)
+अणु
+	पूर्णांक ret;
 
-	if (e1->opnum != e2->opnum)
-		return e1->opnum < e2->opnum ? -1 : 1;
-	if (e1->status != e2->status)
-		return e1->status < e2->status ? -1 : 1;
-	ret = memcmp(e1->stateid.data, e2->stateid.data,
-			sizeof(e1->stateid.data));
-	if (ret != 0)
-		return ret;
-	ret = memcmp(&e1->deviceid, &e2->deviceid, sizeof(e1->deviceid));
-	if (ret != 0)
-		return ret;
-	if (pnfs_end_offset(e1->offset, e1->length) < e2->offset)
-		return -1;
-	if (e1->offset > pnfs_end_offset(e2->offset, e2->length))
-		return 1;
+	अगर (e1->opnum != e2->opnum)
+		वापस e1->opnum < e2->opnum ? -1 : 1;
+	अगर (e1->status != e2->status)
+		वापस e1->status < e2->status ? -1 : 1;
+	ret = स_भेद(e1->stateid.data, e2->stateid.data,
+			माप(e1->stateid.data));
+	अगर (ret != 0)
+		वापस ret;
+	ret = स_भेद(&e1->deviceid, &e2->deviceid, माप(e1->deviceid));
+	अगर (ret != 0)
+		वापस ret;
+	अगर (pnfs_end_offset(e1->offset, e1->length) < e2->offset)
+		वापस -1;
+	अगर (e1->offset > pnfs_end_offset(e2->offset, e2->length))
+		वापस 1;
 	/* If ranges overlap or are contiguous, they are the same */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-ff_layout_add_ds_error_locked(struct nfs4_flexfile_layout *flo,
-			      struct nfs4_ff_layout_ds_err *dserr)
-{
-	struct nfs4_ff_layout_ds_err *err, *tmp;
-	struct list_head *head = &flo->error_list;
-	int match;
+अटल व्योम
+ff_layout_add_ds_error_locked(काष्ठा nfs4_flexfile_layout *flo,
+			      काष्ठा nfs4_ff_layout_ds_err *dserr)
+अणु
+	काष्ठा nfs4_ff_layout_ds_err *err, *पंचांगp;
+	काष्ठा list_head *head = &flo->error_list;
+	पूर्णांक match;
 
 	/* Do insertion sort w/ merges */
-	list_for_each_entry_safe(err, tmp, &flo->error_list, list) {
+	list_क्रम_each_entry_safe(err, पंचांगp, &flo->error_list, list) अणु
 		match = ff_ds_error_match(err, dserr);
-		if (match < 0)
-			continue;
-		if (match > 0) {
-			/* Add entry "dserr" _before_ entry "err" */
+		अगर (match < 0)
+			जारी;
+		अगर (match > 0) अणु
+			/* Add entry "dserr" _beक्रमe_ entry "err" */
 			head = &err->list;
-			break;
-		}
-		/* Entries match, so merge "err" into "dserr" */
+			अवरोध;
+		पूर्ण
+		/* Entries match, so merge "err" पूर्णांकo "dserr" */
 		extend_ds_error(dserr, err->offset, err->length);
 		list_replace(&err->list, &dserr->list);
-		kfree(err);
-		return;
-	}
+		kमुक्त(err);
+		वापस;
+	पूर्ण
 
 	list_add_tail(&dserr->list, head);
-}
+पूर्ण
 
-int ff_layout_track_ds_error(struct nfs4_flexfile_layout *flo,
-			     struct nfs4_ff_layout_mirror *mirror, u64 offset,
-			     u64 length, int status, enum nfs_opnum4 opnum,
+पूर्णांक ff_layout_track_ds_error(काष्ठा nfs4_flexfile_layout *flo,
+			     काष्ठा nfs4_ff_layout_mirror *mirror, u64 offset,
+			     u64 length, पूर्णांक status, क्रमागत nfs_opnum4 opnum,
 			     gfp_t gfp_flags)
-{
-	struct nfs4_ff_layout_ds_err *dserr;
+अणु
+	काष्ठा nfs4_ff_layout_ds_err *dserr;
 
-	if (status == 0)
-		return 0;
+	अगर (status == 0)
+		वापस 0;
 
-	if (IS_ERR_OR_NULL(mirror->mirror_ds))
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(mirror->mirror_ds))
+		वापस -EINVAL;
 
-	dserr = kmalloc(sizeof(*dserr), gfp_flags);
-	if (!dserr)
-		return -ENOMEM;
+	dserr = kदो_स्मृति(माप(*dserr), gfp_flags);
+	अगर (!dserr)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&dserr->list);
 	dserr->offset = offset;
@@ -270,220 +271,220 @@ int ff_layout_track_ds_error(struct nfs4_flexfile_layout *flo,
 	dserr->status = status;
 	dserr->opnum = opnum;
 	nfs4_stateid_copy(&dserr->stateid, &mirror->stateid);
-	memcpy(&dserr->deviceid, &mirror->mirror_ds->id_node.deviceid,
+	स_नकल(&dserr->deviceid, &mirror->mirror_ds->id_node.deviceid,
 	       NFS4_DEVICEID4_SIZE);
 
 	spin_lock(&flo->generic_hdr.plh_inode->i_lock);
 	ff_layout_add_ds_error_locked(flo, dserr);
 	spin_unlock(&flo->generic_hdr.plh_inode->i_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct cred *
-ff_layout_get_mirror_cred(struct nfs4_ff_layout_mirror *mirror, u32 iomode)
-{
-	const struct cred *cred, __rcu **pcred;
+अटल स्थिर काष्ठा cred *
+ff_layout_get_mirror_cred(काष्ठा nfs4_ff_layout_mirror *mirror, u32 iomode)
+अणु
+	स्थिर काष्ठा cred *cred, __rcu **pcred;
 
-	if (iomode == IOMODE_READ)
+	अगर (iomode == IOMODE_READ)
 		pcred = &mirror->ro_cred;
-	else
+	अन्यथा
 		pcred = &mirror->rw_cred;
 
-	rcu_read_lock();
-	do {
+	rcu_पढ़ो_lock();
+	करो अणु
 		cred = rcu_dereference(*pcred);
-		if (!cred)
-			break;
+		अगर (!cred)
+			अवरोध;
 
 		cred = get_cred_rcu(cred);
-	} while(!cred);
-	rcu_read_unlock();
-	return cred;
-}
+	पूर्ण जबतक(!cred);
+	rcu_पढ़ो_unlock();
+	वापस cred;
+पूर्ण
 
-struct nfs_fh *
-nfs4_ff_layout_select_ds_fh(struct nfs4_ff_layout_mirror *mirror)
-{
-	/* FIXME: For now assume there is only 1 version available for the DS */
-	return &mirror->fh_versions[0];
-}
+काष्ठा nfs_fh *
+nfs4_ff_layout_select_ds_fh(काष्ठा nfs4_ff_layout_mirror *mirror)
+अणु
+	/* FIXME: For now assume there is only 1 version available क्रम the DS */
+	वापस &mirror->fh_versions[0];
+पूर्ण
 
-void
-nfs4_ff_layout_select_ds_stateid(const struct nfs4_ff_layout_mirror *mirror,
+व्योम
+nfs4_ff_layout_select_ds_stateid(स्थिर काष्ठा nfs4_ff_layout_mirror *mirror,
 		nfs4_stateid *stateid)
-{
-	if (nfs4_ff_layout_ds_version(mirror) == 4)
+अणु
+	अगर (nfs4_ff_layout_ds_version(mirror) == 4)
 		nfs4_stateid_copy(stateid, &mirror->stateid);
-}
+पूर्ण
 
-static bool
-ff_layout_init_mirror_ds(struct pnfs_layout_hdr *lo,
-			 struct nfs4_ff_layout_mirror *mirror)
-{
-	if (mirror == NULL)
-		goto outerr;
-	if (mirror->mirror_ds == NULL) {
-		struct nfs4_deviceid_node *node;
-		struct nfs4_ff_layout_ds *mirror_ds = ERR_PTR(-ENODEV);
+अटल bool
+ff_layout_init_mirror_ds(काष्ठा pnfs_layout_hdr *lo,
+			 काष्ठा nfs4_ff_layout_mirror *mirror)
+अणु
+	अगर (mirror == शून्य)
+		जाओ outerr;
+	अगर (mirror->mirror_ds == शून्य) अणु
+		काष्ठा nfs4_deviceid_node *node;
+		काष्ठा nfs4_ff_layout_ds *mirror_ds = ERR_PTR(-ENODEV);
 
 		node = nfs4_find_get_deviceid(NFS_SERVER(lo->plh_inode),
 				&mirror->devid, lo->plh_lc_cred,
 				GFP_KERNEL);
-		if (node)
+		अगर (node)
 			mirror_ds = FF_LAYOUT_MIRROR_DS(node);
 
-		/* check for race with another call to this function */
-		if (cmpxchg(&mirror->mirror_ds, NULL, mirror_ds) &&
+		/* check क्रम race with another call to this function */
+		अगर (cmpxchg(&mirror->mirror_ds, शून्य, mirror_ds) &&
 		    mirror_ds != ERR_PTR(-ENODEV))
 			nfs4_put_deviceid_node(node);
-	}
+	पूर्ण
 
-	if (IS_ERR(mirror->mirror_ds))
-		goto outerr;
+	अगर (IS_ERR(mirror->mirror_ds))
+		जाओ outerr;
 
-	return true;
+	वापस true;
 outerr:
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * nfs4_ff_layout_prepare_ds - prepare a DS connection for an RPC call
+ * nfs4_ff_layout_prepare_ds - prepare a DS connection क्रम an RPC call
  * @lseg: the layout segment we're operating on
  * @mirror: layout mirror describing the DS to use
- * @fail_return: return layout on connect failure?
+ * @fail_वापस: वापस layout on connect failure?
  *
  * Try to prepare a DS connection to accept an RPC call. This involves
- * selecting a mirror to use and connecting the client to it if it's not
- * already connected.
+ * selecting a mirror to use and connecting the client to it अगर it's not
+ * alपढ़ोy connected.
  *
- * Since we only need a single functioning mirror to satisfy a read, we don't
- * want to return the layout if there is one. For writes though, any down
- * mirror should result in a LAYOUTRETURN. @fail_return is how we distinguish
- * between the two cases.
+ * Since we only need a single functioning mirror to satisfy a पढ़ो, we करोn't
+ * want to वापस the layout अगर there is one. For ग_लिखोs though, any करोwn
+ * mirror should result in a LAYOUTRETURN. @fail_वापस is how we distinguish
+ * between the two हालs.
  *
- * Returns a pointer to a connected DS object on success or NULL on failure.
+ * Returns a poपूर्णांकer to a connected DS object on success or शून्य on failure.
  */
-struct nfs4_pnfs_ds *
-nfs4_ff_layout_prepare_ds(struct pnfs_layout_segment *lseg,
-			  struct nfs4_ff_layout_mirror *mirror,
-			  bool fail_return)
-{
-	struct nfs4_pnfs_ds *ds = NULL;
-	struct inode *ino = lseg->pls_layout->plh_inode;
-	struct nfs_server *s = NFS_SERVER(ino);
-	unsigned int max_payload;
-	int status;
+काष्ठा nfs4_pnfs_ds *
+nfs4_ff_layout_prepare_ds(काष्ठा pnfs_layout_segment *lseg,
+			  काष्ठा nfs4_ff_layout_mirror *mirror,
+			  bool fail_वापस)
+अणु
+	काष्ठा nfs4_pnfs_ds *ds = शून्य;
+	काष्ठा inode *ino = lseg->pls_layout->plh_inode;
+	काष्ठा nfs_server *s = NFS_SERVER(ino);
+	अचिन्हित पूर्णांक max_payload;
+	पूर्णांक status;
 
-	if (!ff_layout_init_mirror_ds(lseg->pls_layout, mirror))
-		goto noconnect;
+	अगर (!ff_layout_init_mirror_ds(lseg->pls_layout, mirror))
+		जाओ noconnect;
 
 	ds = mirror->mirror_ds->ds;
 	/* matching smp_wmb() in _nfs4_pnfs_v3/4_ds_connect */
 	smp_rmb();
-	if (ds->ds_clp)
-		goto out;
+	अगर (ds->ds_clp)
+		जाओ out;
 
 	/* FIXME: For now we assume the server sent only one version of NFS
-	 * to use for the DS.
+	 * to use क्रम the DS.
 	 */
 	status = nfs4_pnfs_ds_connect(s, ds, &mirror->mirror_ds->id_node,
-			     dataserver_timeo, dataserver_retrans,
+			     dataserver_समयo, dataserver_retrans,
 			     mirror->mirror_ds->ds_versions[0].version,
 			     mirror->mirror_ds->ds_versions[0].minor_version);
 
 	/* connect success, check rsize/wsize limit */
-	if (!status) {
+	अगर (!status) अणु
 		max_payload =
 			nfs_block_size(rpc_max_payload(ds->ds_clp->cl_rpcclient),
-				       NULL);
-		if (mirror->mirror_ds->ds_versions[0].rsize > max_payload)
+				       शून्य);
+		अगर (mirror->mirror_ds->ds_versions[0].rsize > max_payload)
 			mirror->mirror_ds->ds_versions[0].rsize = max_payload;
-		if (mirror->mirror_ds->ds_versions[0].wsize > max_payload)
+		अगर (mirror->mirror_ds->ds_versions[0].wsize > max_payload)
 			mirror->mirror_ds->ds_versions[0].wsize = max_payload;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 noconnect:
 	ff_layout_track_ds_error(FF_LAYOUT_FROM_HDR(lseg->pls_layout),
 				 mirror, lseg->pls_range.offset,
 				 lseg->pls_range.length, NFS4ERR_NXIO,
 				 OP_ILLEGAL, GFP_NOIO);
 	ff_layout_send_layouterror(lseg);
-	if (fail_return || !ff_layout_has_available_ds(lseg))
-		pnfs_error_mark_layout_for_return(ino, lseg);
-	ds = NULL;
+	अगर (fail_वापस || !ff_layout_has_available_ds(lseg))
+		pnfs_error_mark_layout_क्रम_वापस(ino, lseg);
+	ds = शून्य;
 out:
-	return ds;
-}
+	वापस ds;
+पूर्ण
 
-const struct cred *
-ff_layout_get_ds_cred(struct nfs4_ff_layout_mirror *mirror,
-		      const struct pnfs_layout_range *range,
-		      const struct cred *mdscred)
-{
-	const struct cred *cred;
+स्थिर काष्ठा cred *
+ff_layout_get_ds_cred(काष्ठा nfs4_ff_layout_mirror *mirror,
+		      स्थिर काष्ठा pnfs_layout_range *range,
+		      स्थिर काष्ठा cred *mdscred)
+अणु
+	स्थिर काष्ठा cred *cred;
 
-	if (mirror && !mirror->mirror_ds->ds_versions[0].tightly_coupled) {
+	अगर (mirror && !mirror->mirror_ds->ds_versions[0].tightly_coupled) अणु
 		cred = ff_layout_get_mirror_cred(mirror, range->iomode);
-		if (!cred)
+		अगर (!cred)
 			cred = get_cred(mdscred);
-	} else {
+	पूर्ण अन्यथा अणु
 		cred = get_cred(mdscred);
-	}
-	return cred;
-}
+	पूर्ण
+	वापस cred;
+पूर्ण
 
 /**
  * nfs4_ff_find_or_create_ds_client - Find or create a DS rpc client
- * @mirror: pointer to the mirror
- * @ds_clp: nfs_client for the DS
- * @inode: pointer to inode
+ * @mirror: poपूर्णांकer to the mirror
+ * @ds_clp: nfs_client क्रम the DS
+ * @inode: poपूर्णांकer to inode
  *
  * Find or create a DS rpc client with th MDS server rpc client auth flavor
  * in the nfs_client cl_ds_clients list.
  */
-struct rpc_clnt *
-nfs4_ff_find_or_create_ds_client(struct nfs4_ff_layout_mirror *mirror,
-				 struct nfs_client *ds_clp, struct inode *inode)
-{
-	switch (mirror->mirror_ds->ds_versions[0].version) {
-	case 3:
+काष्ठा rpc_clnt *
+nfs4_ff_find_or_create_ds_client(काष्ठा nfs4_ff_layout_mirror *mirror,
+				 काष्ठा nfs_client *ds_clp, काष्ठा inode *inode)
+अणु
+	चयन (mirror->mirror_ds->ds_versions[0].version) अणु
+	हाल 3:
 		/* For NFSv3 DS, flavor is set when creating DS connections */
-		return ds_clp->cl_rpcclient;
-	case 4:
-		return nfs4_find_or_create_ds_client(ds_clp, inode);
-	default:
+		वापस ds_clp->cl_rpcclient;
+	हाल 4:
+		वापस nfs4_find_or_create_ds_client(ds_clp, inode);
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ff_layout_free_ds_ioerr(struct list_head *head)
-{
-	struct nfs4_ff_layout_ds_err *err;
+व्योम ff_layout_मुक्त_ds_ioerr(काष्ठा list_head *head)
+अणु
+	काष्ठा nfs4_ff_layout_ds_err *err;
 
-	while (!list_empty(head)) {
+	जबतक (!list_empty(head)) अणु
 		err = list_first_entry(head,
-				struct nfs4_ff_layout_ds_err,
+				काष्ठा nfs4_ff_layout_ds_err,
 				list);
 		list_del(&err->list);
-		kfree(err);
-	}
-}
+		kमुक्त(err);
+	पूर्ण
+पूर्ण
 
 /* called with inode i_lock held */
-int ff_layout_encode_ds_ioerr(struct xdr_stream *xdr, const struct list_head *head)
-{
-	struct nfs4_ff_layout_ds_err *err;
+पूर्णांक ff_layout_encode_ds_ioerr(काष्ठा xdr_stream *xdr, स्थिर काष्ठा list_head *head)
+अणु
+	काष्ठा nfs4_ff_layout_ds_err *err;
 	__be32 *p;
 
-	list_for_each_entry(err, head, list) {
+	list_क्रम_each_entry(err, head, list) अणु
 		/* offset(8) + length(8) + stateid(NFS4_STATEID_SIZE)
 		 * + array length + deviceid(NFS4_DEVICEID4_SIZE)
 		 * + status(4) + opnum(4)
 		 */
 		p = xdr_reserve_space(xdr,
 				28 + NFS4_STATEID_SIZE + NFS4_DEVICEID4_SIZE);
-		if (unlikely(!p))
-			return -ENOBUFS;
+		अगर (unlikely(!p))
+			वापस -ENOBUFS;
 		p = xdr_encode_hyper(p, err->offset);
 		p = xdr_encode_hyper(p, err->length);
 		p = xdr_encode_opaque_fixed(p, &err->stateid,
@@ -494,126 +495,126 @@ int ff_layout_encode_ds_ioerr(struct xdr_stream *xdr, const struct list_head *he
 					    NFS4_DEVICEID4_SIZE);
 		*p++ = cpu_to_be32(err->status);
 		*p++ = cpu_to_be32(err->opnum);
-		dprintk("%s: offset %llu length %llu status %d op %d\n",
+		dprपूर्णांकk("%s: offset %llu length %llu status %d op %d\n",
 			__func__, err->offset, err->length, err->status,
 			err->opnum);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static
-unsigned int do_layout_fetch_ds_ioerr(struct pnfs_layout_hdr *lo,
-				      const struct pnfs_layout_range *range,
-				      struct list_head *head,
-				      unsigned int maxnum)
-{
-	struct nfs4_flexfile_layout *flo = FF_LAYOUT_FROM_HDR(lo);
-	struct inode *inode = lo->plh_inode;
-	struct nfs4_ff_layout_ds_err *err, *n;
-	unsigned int ret = 0;
+अटल
+अचिन्हित पूर्णांक करो_layout_fetch_ds_ioerr(काष्ठा pnfs_layout_hdr *lo,
+				      स्थिर काष्ठा pnfs_layout_range *range,
+				      काष्ठा list_head *head,
+				      अचिन्हित पूर्णांक maxnum)
+अणु
+	काष्ठा nfs4_flexfile_layout *flo = FF_LAYOUT_FROM_HDR(lo);
+	काष्ठा inode *inode = lo->plh_inode;
+	काष्ठा nfs4_ff_layout_ds_err *err, *n;
+	अचिन्हित पूर्णांक ret = 0;
 
 	spin_lock(&inode->i_lock);
-	list_for_each_entry_safe(err, n, &flo->error_list, list) {
-		if (!pnfs_is_range_intersecting(err->offset,
+	list_क्रम_each_entry_safe(err, n, &flo->error_list, list) अणु
+		अगर (!pnfs_is_range_पूर्णांकersecting(err->offset,
 				pnfs_end_offset(err->offset, err->length),
 				range->offset,
 				pnfs_end_offset(range->offset, range->length)))
-			continue;
-		if (!maxnum)
-			break;
+			जारी;
+		अगर (!maxnum)
+			अवरोध;
 		list_move(&err->list, head);
 		maxnum--;
 		ret++;
-	}
+	पूर्ण
 	spin_unlock(&inode->i_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-unsigned int ff_layout_fetch_ds_ioerr(struct pnfs_layout_hdr *lo,
-				      const struct pnfs_layout_range *range,
-				      struct list_head *head,
-				      unsigned int maxnum)
-{
-	unsigned int ret;
+अचिन्हित पूर्णांक ff_layout_fetch_ds_ioerr(काष्ठा pnfs_layout_hdr *lo,
+				      स्थिर काष्ठा pnfs_layout_range *range,
+				      काष्ठा list_head *head,
+				      अचिन्हित पूर्णांक maxnum)
+अणु
+	अचिन्हित पूर्णांक ret;
 
-	ret = do_layout_fetch_ds_ioerr(lo, range, head, maxnum);
-	/* If we're over the max, discard all remaining entries */
-	if (ret == maxnum) {
+	ret = करो_layout_fetch_ds_ioerr(lo, range, head, maxnum);
+	/* If we're over the max, discard all reमुख्यing entries */
+	अगर (ret == maxnum) अणु
 		LIST_HEAD(discard);
-		do_layout_fetch_ds_ioerr(lo, range, &discard, -1);
-		ff_layout_free_ds_ioerr(&discard);
-	}
-	return ret;
-}
+		करो_layout_fetch_ds_ioerr(lo, range, &discard, -1);
+		ff_layout_मुक्त_ds_ioerr(&discard);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static bool ff_read_layout_has_available_ds(struct pnfs_layout_segment *lseg)
-{
-	struct nfs4_ff_layout_mirror *mirror;
-	struct nfs4_deviceid_node *devid;
+अटल bool ff_पढ़ो_layout_has_available_ds(काष्ठा pnfs_layout_segment *lseg)
+अणु
+	काष्ठा nfs4_ff_layout_mirror *mirror;
+	काष्ठा nfs4_deviceid_node *devid;
 	u32 idx;
 
-	for (idx = 0; idx < FF_LAYOUT_MIRROR_COUNT(lseg); idx++) {
+	क्रम (idx = 0; idx < FF_LAYOUT_MIRROR_COUNT(lseg); idx++) अणु
 		mirror = FF_LAYOUT_COMP(lseg, idx);
-		if (mirror) {
-			if (!mirror->mirror_ds)
-				return true;
-			if (IS_ERR(mirror->mirror_ds))
-				continue;
+		अगर (mirror) अणु
+			अगर (!mirror->mirror_ds)
+				वापस true;
+			अगर (IS_ERR(mirror->mirror_ds))
+				जारी;
 			devid = &mirror->mirror_ds->id_node;
-			if (!nfs4_test_deviceid_unavailable(devid))
-				return true;
-		}
-	}
+			अगर (!nfs4_test_deviceid_unavailable(devid))
+				वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool ff_rw_layout_has_available_ds(struct pnfs_layout_segment *lseg)
-{
-	struct nfs4_ff_layout_mirror *mirror;
-	struct nfs4_deviceid_node *devid;
+अटल bool ff_rw_layout_has_available_ds(काष्ठा pnfs_layout_segment *lseg)
+अणु
+	काष्ठा nfs4_ff_layout_mirror *mirror;
+	काष्ठा nfs4_deviceid_node *devid;
 	u32 idx;
 
-	for (idx = 0; idx < FF_LAYOUT_MIRROR_COUNT(lseg); idx++) {
+	क्रम (idx = 0; idx < FF_LAYOUT_MIRROR_COUNT(lseg); idx++) अणु
 		mirror = FF_LAYOUT_COMP(lseg, idx);
-		if (!mirror || IS_ERR(mirror->mirror_ds))
-			return false;
-		if (!mirror->mirror_ds)
-			continue;
+		अगर (!mirror || IS_ERR(mirror->mirror_ds))
+			वापस false;
+		अगर (!mirror->mirror_ds)
+			जारी;
 		devid = &mirror->mirror_ds->id_node;
-		if (nfs4_test_deviceid_unavailable(devid))
-			return false;
-	}
+		अगर (nfs4_test_deviceid_unavailable(devid))
+			वापस false;
+	पूर्ण
 
-	return FF_LAYOUT_MIRROR_COUNT(lseg) != 0;
-}
+	वापस FF_LAYOUT_MIRROR_COUNT(lseg) != 0;
+पूर्ण
 
-static bool ff_layout_has_available_ds(struct pnfs_layout_segment *lseg)
-{
-	if (lseg->pls_range.iomode == IOMODE_READ)
-		return  ff_read_layout_has_available_ds(lseg);
+अटल bool ff_layout_has_available_ds(काष्ठा pnfs_layout_segment *lseg)
+अणु
+	अगर (lseg->pls_range.iomode == IOMODE_READ)
+		वापस  ff_पढ़ो_layout_has_available_ds(lseg);
 	/* Note: RW layout needs all mirrors available */
-	return ff_rw_layout_has_available_ds(lseg);
-}
+	वापस ff_rw_layout_has_available_ds(lseg);
+पूर्ण
 
-bool ff_layout_avoid_mds_available_ds(struct pnfs_layout_segment *lseg)
-{
-	return ff_layout_no_fallback_to_mds(lseg) ||
+bool ff_layout_aव्योम_mds_available_ds(काष्ठा pnfs_layout_segment *lseg)
+अणु
+	वापस ff_layout_no_fallback_to_mds(lseg) ||
 	       ff_layout_has_available_ds(lseg);
-}
+पूर्ण
 
-bool ff_layout_avoid_read_on_rw(struct pnfs_layout_segment *lseg)
-{
-	return lseg->pls_range.iomode == IOMODE_RW &&
-	       ff_layout_no_read_on_rw(lseg);
-}
+bool ff_layout_aव्योम_पढ़ो_on_rw(काष्ठा pnfs_layout_segment *lseg)
+अणु
+	वापस lseg->pls_range.iomode == IOMODE_RW &&
+	       ff_layout_no_पढ़ो_on_rw(lseg);
+पूर्ण
 
-module_param(dataserver_retrans, uint, 0644);
+module_param(dataserver_retrans, uपूर्णांक, 0644);
 MODULE_PARM_DESC(dataserver_retrans, "The  number of times the NFSv4.1 client "
 			"retries a request before it attempts further "
 			" recovery  action.");
-module_param(dataserver_timeo, uint, 0644);
-MODULE_PARM_DESC(dataserver_timeo, "The time (in tenths of a second) the "
+module_param(dataserver_समयo, uपूर्णांक, 0644);
+MODULE_PARM_DESC(dataserver_समयo, "The time (in tenths of a second) the "
 			"NFSv4.1  client  waits for a response from a "
 			" data server before it retries an NFS request.");

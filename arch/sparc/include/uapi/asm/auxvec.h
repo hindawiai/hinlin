@@ -1,15 +1,16 @@
-#ifndef __ASMSPARC_AUXVEC_H
-#define __ASMSPARC_AUXVEC_H
+<शैली गुरु>
+#अगर_अघोषित __ASMSPARC_AUXVEC_H
+#घोषणा __ASMSPARC_AUXVEC_H
 
-#define AT_SYSINFO_EHDR		33
+#घोषणा AT_SYSINFO_EHDR		33
 
-/* Avoid overlap with other AT_* values since they are consolidated in
+/* Aव्योम overlap with other AT_* values since they are consolidated in
  * glibc and any overlaps can cause problems
  */
-#define AT_ADI_BLKSZ	48
-#define AT_ADI_NBITS	49
-#define AT_ADI_UEONADI	50
+#घोषणा AT_ADI_BLKSZ	48
+#घोषणा AT_ADI_NBITS	49
+#घोषणा AT_ADI_UEONADI	50
 
-#define AT_VECTOR_SIZE_ARCH	4
+#घोषणा AT_VECTOR_SIZE_ARCH	4
 
-#endif /* !(__ASMSPARC_AUXVEC_H) */
+#पूर्ण_अगर /* !(__ASMSPARC_AUXVEC_H) */

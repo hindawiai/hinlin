@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * uda134x.h  --  UDA134x ALSA SoC Codec driver
  *
@@ -6,19 +7,19 @@
  * Author: Zoltan Devai
  */
 
-#ifndef _UDA134X_H
-#define _UDA134X_H
+#अगर_अघोषित _UDA134X_H
+#घोषणा _UDA134X_H
 
-#include <sound/l3.h>
+#समावेश <sound/l3.h>
 
-struct uda134x_platform_data {
-	struct l3_pins l3;
-	void (*power) (int);
-	int model;
-#define UDA134X_UDA1340 1
-#define UDA134X_UDA1341 2
-#define UDA134X_UDA1344 3
-#define UDA134X_UDA1345 4
-};
+काष्ठा uda134x_platक्रमm_data अणु
+	काष्ठा l3_pins l3;
+	व्योम (*घातer) (पूर्णांक);
+	पूर्णांक model;
+#घोषणा UDA134X_UDA1340 1
+#घोषणा UDA134X_UDA1341 2
+#घोषणा UDA134X_UDA1344 3
+#घोषणा UDA134X_UDA1345 4
+पूर्ण;
 
-#endif /* _UDA134X_H */
+#पूर्ण_अगर /* _UDA134X_H */

@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <malloc.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <दो_स्मृति.h>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <stdbool.h>
 
-#include "utils.h"
+#समावेश "utils.h"
 
-#define MAX_LEN 8192
-#define MAX_OFFSET 16
-#define MIN_REDZONE 128
-#define BUFLEN (MAX_LEN+MAX_OFFSET+2*MIN_REDZONE)
-#define POISON 0xa5
+#घोषणा MAX_LEN 8192
+#घोषणा MAX_OFFSET 16
+#घोषणा MIN_REDZONE 128
+#घोषणा BUFLEN (MAX_LEN+MAX_OFFSET+2*MIN_REDZONE)
+#घोषणा POISON 0xa5
 
-unsigned long COPY_LOOP(void *to, const void *from, unsigned long size);
+अचिन्हित दीर्घ COPY_LOOP(व्योम *to, स्थिर व्योम *from, अचिन्हित दीर्घ size);
 
-static void do_one(char *src, char *dst, unsigned long src_off,
-		   unsigned long dst_off, unsigned long len, void *redzone,
-		   void *fill)
-{
-	char *srcp, *dstp;
-	unsigned long ret;
-	unsigned long i;
+अटल व्योम करो_one(अक्षर *src, अक्षर *dst, अचिन्हित दीर्घ src_off,
+		   अचिन्हित दीर्घ dst_off, अचिन्हित दीर्घ len, व्योम *redzone,
+		   व्योम *fill)
+अणु
+	अक्षर *srcp, *dstp;
+	अचिन्हित दीर्घ ret;
+	अचिन्हित दीर्घ i;
 
 	srcp = src + MIN_REDZONE + src_off;
 	dstp = dst + MIN_REDZONE + dst_off;
 
-	memset(src, POISON, BUFLEN);
-	memset(dst, POISON, BUFLEN);
-	memcpy(srcp, fill, len);
+	स_रखो(src, POISON, BUFLEN);
+	स_रखो(dst, POISON, BUFLEN);
+	स_नकल(srcp, fill, len);
 
 	ret = COPY_LOOP(dstp, srcp, len);
-	if (ret && ret != (unsigned long)dstp) {
-		printf("(%p,%p,%ld) returned %ld\n", dstp, srcp, len, ret);
-		abort();
-	}
+	अगर (ret && ret != (अचिन्हित दीर्घ)dstp) अणु
+		म_लिखो("(%p,%p,%ld) returned %ld\n", dstp, srcp, len, ret);
+		पात();
+	पूर्ण
 
-	if (memcmp(dstp, srcp, len)) {
-		printf("(%p,%p,%ld) miscompare\n", dstp, srcp, len);
-		printf("src: ");
-		for (i = 0; i < len; i++)
-			printf("%02x ", srcp[i]);
-		printf("\ndst: ");
-		for (i = 0; i < len; i++)
-			printf("%02x ", dstp[i]);
-		printf("\n");
-		abort();
-	}
+	अगर (स_भेद(dstp, srcp, len)) अणु
+		म_लिखो("(%p,%p,%ld) miscompare\n", dstp, srcp, len);
+		म_लिखो("src: ");
+		क्रम (i = 0; i < len; i++)
+			म_लिखो("%02x ", srcp[i]);
+		म_लिखो("\ndst: ");
+		क्रम (i = 0; i < len; i++)
+			म_लिखो("%02x ", dstp[i]);
+		म_लिखो("\n");
+		पात();
+	पूर्ण
 
-	if (memcmp(dst, redzone, dstp - dst)) {
-		printf("(%p,%p,%ld) redzone before corrupted\n",
+	अगर (स_भेद(dst, redzone, dstp - dst)) अणु
+		म_लिखो("(%p,%p,%ld) redzone before corrupted\n",
 		       dstp, srcp, len);
-		abort();
-	}
+		पात();
+	पूर्ण
 
-	if (memcmp(dstp+len, redzone, dst+BUFLEN-(dstp+len))) {
-		printf("(%p,%p,%ld) redzone after corrupted\n",
+	अगर (स_भेद(dstp+len, redzone, dst+BUFLEN-(dstp+len))) अणु
+		म_लिखो("(%p,%p,%ld) redzone after corrupted\n",
 		       dstp, srcp, len);
-		abort();
-	}
-}
+		पात();
+	पूर्ण
+पूर्ण
 
-int test_copy_loop(void)
-{
-	char *src, *dst, *redzone, *fill;
-	unsigned long len, src_off, dst_off;
-	unsigned long i;
+पूर्णांक test_copy_loop(व्योम)
+अणु
+	अक्षर *src, *dst, *redzone, *fill;
+	अचिन्हित दीर्घ len, src_off, dst_off;
+	अचिन्हित दीर्घ i;
 
 	src = memalign(BUFLEN, BUFLEN);
 	dst = memalign(BUFLEN, BUFLEN);
-	redzone = malloc(BUFLEN);
-	fill = malloc(BUFLEN);
+	redzone = दो_स्मृति(BUFLEN);
+	fill = दो_स्मृति(BUFLEN);
 
-	if (!src || !dst || !redzone || !fill) {
-		fprintf(stderr, "malloc failed\n");
-		exit(1);
-	}
+	अगर (!src || !dst || !redzone || !fill) अणु
+		ख_लिखो(मानक_त्रुटि, "malloc failed\n");
+		निकास(1);
+	पूर्ण
 
-	memset(redzone, POISON, BUFLEN);
+	स_रखो(redzone, POISON, BUFLEN);
 
 	/* Fill with sequential bytes */
-	for (i = 0; i < BUFLEN; i++)
+	क्रम (i = 0; i < BUFLEN; i++)
 		fill[i] = i & 0xff;
 
-	for (len = 1; len < MAX_LEN; len++) {
-		for (src_off = 0; src_off < MAX_OFFSET; src_off++) {
-			for (dst_off = 0; dst_off < MAX_OFFSET; dst_off++) {
-				do_one(src, dst, src_off, dst_off, len,
+	क्रम (len = 1; len < MAX_LEN; len++) अणु
+		क्रम (src_off = 0; src_off < MAX_OFFSET; src_off++) अणु
+			क्रम (dst_off = 0; dst_off < MAX_OFFSET; dst_off++) अणु
+				करो_one(src, dst, src_off, dst_off, len,
 				       redzone, fill);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(test_copy_loop, str(COPY_LOOP));
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(test_copy_loop, str(COPY_LOOP));
+पूर्ण

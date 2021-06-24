@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *
  * Function graph tracer.
@@ -7,639 +8,639 @@
  * is Copyright (c) Steven Rostedt <srostedt@redhat.com>
  *
  */
-#include <linux/uaccess.h>
-#include <linux/ftrace.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
 
-#include "trace.h"
-#include "trace_output.h"
+#समावेश "trace.h"
+#समावेश "trace_output.h"
 
 /* When set, irq functions will be ignored */
-static int ftrace_graph_skip_irqs;
+अटल पूर्णांक ftrace_graph_skip_irqs;
 
-struct fgraph_cpu_data {
+काष्ठा fgraph_cpu_data अणु
 	pid_t		last_pid;
-	int		depth;
-	int		depth_irq;
-	int		ignore;
-	unsigned long	enter_funcs[FTRACE_RETFUNC_DEPTH];
-};
+	पूर्णांक		depth;
+	पूर्णांक		depth_irq;
+	पूर्णांक		ignore;
+	अचिन्हित दीर्घ	enter_funcs[FTRACE_RETFUNC_DEPTH];
+पूर्ण;
 
-struct fgraph_data {
-	struct fgraph_cpu_data __percpu *cpu_data;
+काष्ठा fgraph_data अणु
+	काष्ठा fgraph_cpu_data __percpu *cpu_data;
 
 	/* Place to preserve last processed entry. */
-	struct ftrace_graph_ent_entry	ent;
-	struct ftrace_graph_ret_entry	ret;
-	int				failed;
-	int				cpu;
-};
+	काष्ठा ftrace_graph_ent_entry	ent;
+	काष्ठा ftrace_graph_ret_entry	ret;
+	पूर्णांक				failed;
+	पूर्णांक				cpu;
+पूर्ण;
 
-#define TRACE_GRAPH_INDENT	2
+#घोषणा TRACE_GRAPH_INDENT	2
 
-unsigned int fgraph_max_depth;
+अचिन्हित पूर्णांक fgraph_max_depth;
 
-static struct tracer_opt trace_opts[] = {
-	/* Display overruns? (for self-debug purpose) */
-	{ TRACER_OPT(funcgraph-overrun, TRACE_GRAPH_PRINT_OVERRUN) },
+अटल काष्ठा tracer_opt trace_opts[] = अणु
+	/* Display overruns? (क्रम self-debug purpose) */
+	अणु TRACER_OPT(funcgraph-overrun, TRACE_GRAPH_PRINT_OVERRUN) पूर्ण,
 	/* Display CPU ? */
-	{ TRACER_OPT(funcgraph-cpu, TRACE_GRAPH_PRINT_CPU) },
+	अणु TRACER_OPT(funcgraph-cpu, TRACE_GRAPH_PRINT_CPU) पूर्ण,
 	/* Display Overhead ? */
-	{ TRACER_OPT(funcgraph-overhead, TRACE_GRAPH_PRINT_OVERHEAD) },
+	अणु TRACER_OPT(funcgraph-overhead, TRACE_GRAPH_PRINT_OVERHEAD) पूर्ण,
 	/* Display proc name/pid */
-	{ TRACER_OPT(funcgraph-proc, TRACE_GRAPH_PRINT_PROC) },
+	अणु TRACER_OPT(funcgraph-proc, TRACE_GRAPH_PRINT_PROC) पूर्ण,
 	/* Display duration of execution */
-	{ TRACER_OPT(funcgraph-duration, TRACE_GRAPH_PRINT_DURATION) },
-	/* Display absolute time of an entry */
-	{ TRACER_OPT(funcgraph-abstime, TRACE_GRAPH_PRINT_ABS_TIME) },
-	/* Display interrupts */
-	{ TRACER_OPT(funcgraph-irqs, TRACE_GRAPH_PRINT_IRQS) },
-	/* Display function name after trailing } */
-	{ TRACER_OPT(funcgraph-tail, TRACE_GRAPH_PRINT_TAIL) },
-	/* Include sleep time (scheduled out) between entry and return */
-	{ TRACER_OPT(sleep-time, TRACE_GRAPH_SLEEP_TIME) },
+	अणु TRACER_OPT(funcgraph-duration, TRACE_GRAPH_PRINT_DURATION) पूर्ण,
+	/* Display असलolute समय of an entry */
+	अणु TRACER_OPT(funcgraph-असलसमय, TRACE_GRAPH_PRINT_ABS_TIME) पूर्ण,
+	/* Display पूर्णांकerrupts */
+	अणु TRACER_OPT(funcgraph-irqs, TRACE_GRAPH_PRINT_IRQS) पूर्ण,
+	/* Display function name after trailing पूर्ण */
+	अणु TRACER_OPT(funcgraph-tail, TRACE_GRAPH_PRINT_TAIL) पूर्ण,
+	/* Include sleep समय (scheduled out) between entry and वापस */
+	अणु TRACER_OPT(sleep-समय, TRACE_GRAPH_SLEEP_TIME) पूर्ण,
 
-#ifdef CONFIG_FUNCTION_PROFILER
-	/* Include time within nested functions */
-	{ TRACER_OPT(graph-time, TRACE_GRAPH_GRAPH_TIME) },
-#endif
+#अगर_घोषित CONFIG_FUNCTION_PROखाताR
+	/* Include समय within nested functions */
+	अणु TRACER_OPT(graph-समय, TRACE_GRAPH_GRAPH_TIME) पूर्ण,
+#पूर्ण_अगर
 
-	{ } /* Empty entry */
-};
+	अणु पूर्ण /* Empty entry */
+पूर्ण;
 
-static struct tracer_flags tracer_flags = {
-	/* Don't display overruns, proc, or tail by default */
+अटल काष्ठा tracer_flags tracer_flags = अणु
+	/* Don't display overruns, proc, or tail by शेष */
 	.val = TRACE_GRAPH_PRINT_CPU | TRACE_GRAPH_PRINT_OVERHEAD |
 	       TRACE_GRAPH_PRINT_DURATION | TRACE_GRAPH_PRINT_IRQS |
 	       TRACE_GRAPH_SLEEP_TIME | TRACE_GRAPH_GRAPH_TIME,
 	.opts = trace_opts
-};
+पूर्ण;
 
-static struct trace_array *graph_array;
+अटल काष्ठा trace_array *graph_array;
 
 /*
  * DURATION column is being also used to display IRQ signs,
- * following values are used by print_graph_irq and others
- * to fill in space into DURATION column.
+ * following values are used by prपूर्णांक_graph_irq and others
+ * to fill in space पूर्णांकo DURATION column.
  */
-enum {
+क्रमागत अणु
 	FLAGS_FILL_FULL  = 1 << TRACE_GRAPH_PRINT_FILL_SHIFT,
 	FLAGS_FILL_START = 2 << TRACE_GRAPH_PRINT_FILL_SHIFT,
 	FLAGS_FILL_END   = 3 << TRACE_GRAPH_PRINT_FILL_SHIFT,
-};
+पूर्ण;
 
-static void
-print_graph_duration(struct trace_array *tr, unsigned long long duration,
-		     struct trace_seq *s, u32 flags);
+अटल व्योम
+prपूर्णांक_graph_duration(काष्ठा trace_array *tr, अचिन्हित दीर्घ दीर्घ duration,
+		     काष्ठा trace_seq *s, u32 flags);
 
-int __trace_graph_entry(struct trace_array *tr,
-				struct ftrace_graph_ent *trace,
-				unsigned int trace_ctx)
-{
-	struct trace_event_call *call = &event_funcgraph_entry;
-	struct ring_buffer_event *event;
-	struct trace_buffer *buffer = tr->array_buffer.buffer;
-	struct ftrace_graph_ent_entry *entry;
+पूर्णांक __trace_graph_entry(काष्ठा trace_array *tr,
+				काष्ठा ftrace_graph_ent *trace,
+				अचिन्हित पूर्णांक trace_ctx)
+अणु
+	काष्ठा trace_event_call *call = &event_funcgraph_entry;
+	काष्ठा ring_buffer_event *event;
+	काष्ठा trace_buffer *buffer = tr->array_buffer.buffer;
+	काष्ठा ftrace_graph_ent_entry *entry;
 
 	event = trace_buffer_lock_reserve(buffer, TRACE_GRAPH_ENT,
-					  sizeof(*entry), trace_ctx);
-	if (!event)
-		return 0;
+					  माप(*entry), trace_ctx);
+	अगर (!event)
+		वापस 0;
 	entry	= ring_buffer_event_data(event);
 	entry->graph_ent			= *trace;
-	if (!call_filter_check_discard(call, entry, buffer, event))
+	अगर (!call_filter_check_discard(call, entry, buffer, event))
 		trace_buffer_unlock_commit_nostack(buffer, event);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int ftrace_graph_ignore_irqs(void)
-{
-	if (!ftrace_graph_skip_irqs || trace_recursion_test(TRACE_IRQ_BIT))
-		return 0;
+अटल अंतरभूत पूर्णांक ftrace_graph_ignore_irqs(व्योम)
+अणु
+	अगर (!ftrace_graph_skip_irqs || trace_recursion_test(TRACE_IRQ_BIT))
+		वापस 0;
 
-	return in_irq();
-}
+	वापस in_irq();
+पूर्ण
 
-int trace_graph_entry(struct ftrace_graph_ent *trace)
-{
-	struct trace_array *tr = graph_array;
-	struct trace_array_cpu *data;
-	unsigned long flags;
-	unsigned int trace_ctx;
-	long disabled;
-	int ret;
-	int cpu;
+पूर्णांक trace_graph_entry(काष्ठा ftrace_graph_ent *trace)
+अणु
+	काष्ठा trace_array *tr = graph_array;
+	काष्ठा trace_array_cpu *data;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक trace_ctx;
+	दीर्घ disabled;
+	पूर्णांक ret;
+	पूर्णांक cpu;
 
-	if (trace_recursion_test(TRACE_GRAPH_NOTRACE_BIT))
-		return 0;
+	अगर (trace_recursion_test(TRACE_GRAPH_NOTRACE_BIT))
+		वापस 0;
 
 	/*
-	 * Do not trace a function if it's filtered by set_graph_notrace.
+	 * Do not trace a function अगर it's filtered by set_graph_notrace.
 	 * Make the index of ret stack negative to indicate that it should
 	 * ignore further functions.  But it needs its own ret stack entry
-	 * to recover the original index in order to continue tracing after
-	 * returning from the function.
+	 * to recover the original index in order to जारी tracing after
+	 * वापसing from the function.
 	 */
-	if (ftrace_graph_notrace_addr(trace->func)) {
+	अगर (ftrace_graph_notrace_addr(trace->func)) अणु
 		trace_recursion_set(TRACE_GRAPH_NOTRACE_BIT);
 		/*
-		 * Need to return 1 to have the return called
+		 * Need to वापस 1 to have the वापस called
 		 * that will clear the NOTRACE bit.
 		 */
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (!ftrace_trace_task(tr))
-		return 0;
+	अगर (!ftrace_trace_task(tr))
+		वापस 0;
 
-	if (ftrace_graph_ignore_func(trace))
-		return 0;
+	अगर (ftrace_graph_ignore_func(trace))
+		वापस 0;
 
-	if (ftrace_graph_ignore_irqs())
-		return 0;
+	अगर (ftrace_graph_ignore_irqs())
+		वापस 0;
 
 	/*
-	 * Stop here if tracing_threshold is set. We only write function return
+	 * Stop here अगर tracing_threshold is set. We only ग_लिखो function वापस
 	 * events to the ring buffer.
 	 */
-	if (tracing_thresh)
-		return 1;
+	अगर (tracing_thresh)
+		वापस 1;
 
 	local_irq_save(flags);
 	cpu = raw_smp_processor_id();
 	data = per_cpu_ptr(tr->array_buffer.data, cpu);
-	disabled = atomic_inc_return(&data->disabled);
-	if (likely(disabled == 1)) {
+	disabled = atomic_inc_वापस(&data->disabled);
+	अगर (likely(disabled == 1)) अणु
 		trace_ctx = tracing_gen_ctx_flags(flags);
 		ret = __trace_graph_entry(tr, trace, trace_ctx);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = 0;
-	}
+	पूर्ण
 
 	atomic_dec(&data->disabled);
 	local_irq_restore(flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-__trace_graph_function(struct trace_array *tr,
-		unsigned long ip, unsigned int trace_ctx)
-{
-	u64 time = trace_clock_local();
-	struct ftrace_graph_ent ent = {
+अटल व्योम
+__trace_graph_function(काष्ठा trace_array *tr,
+		अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक trace_ctx)
+अणु
+	u64 समय = trace_घड़ी_local();
+	काष्ठा ftrace_graph_ent ent = अणु
 		.func  = ip,
 		.depth = 0,
-	};
-	struct ftrace_graph_ret ret = {
+	पूर्ण;
+	काष्ठा ftrace_graph_ret ret = अणु
 		.func     = ip,
 		.depth    = 0,
-		.calltime = time,
-		.rettime  = time,
-	};
+		.callसमय = समय,
+		.retसमय  = समय,
+	पूर्ण;
 
 	__trace_graph_entry(tr, &ent, trace_ctx);
-	__trace_graph_return(tr, &ret, trace_ctx);
-}
+	__trace_graph_वापस(tr, &ret, trace_ctx);
+पूर्ण
 
-void
-trace_graph_function(struct trace_array *tr,
-		unsigned long ip, unsigned long parent_ip,
-		unsigned int trace_ctx)
-{
+व्योम
+trace_graph_function(काष्ठा trace_array *tr,
+		अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		अचिन्हित पूर्णांक trace_ctx)
+अणु
 	__trace_graph_function(tr, ip, trace_ctx);
-}
+पूर्ण
 
-void __trace_graph_return(struct trace_array *tr,
-				struct ftrace_graph_ret *trace,
-				unsigned int trace_ctx)
-{
-	struct trace_event_call *call = &event_funcgraph_exit;
-	struct ring_buffer_event *event;
-	struct trace_buffer *buffer = tr->array_buffer.buffer;
-	struct ftrace_graph_ret_entry *entry;
+व्योम __trace_graph_वापस(काष्ठा trace_array *tr,
+				काष्ठा ftrace_graph_ret *trace,
+				अचिन्हित पूर्णांक trace_ctx)
+अणु
+	काष्ठा trace_event_call *call = &event_funcgraph_निकास;
+	काष्ठा ring_buffer_event *event;
+	काष्ठा trace_buffer *buffer = tr->array_buffer.buffer;
+	काष्ठा ftrace_graph_ret_entry *entry;
 
 	event = trace_buffer_lock_reserve(buffer, TRACE_GRAPH_RET,
-					  sizeof(*entry), trace_ctx);
-	if (!event)
-		return;
+					  माप(*entry), trace_ctx);
+	अगर (!event)
+		वापस;
 	entry	= ring_buffer_event_data(event);
 	entry->ret				= *trace;
-	if (!call_filter_check_discard(call, entry, buffer, event))
+	अगर (!call_filter_check_discard(call, entry, buffer, event))
 		trace_buffer_unlock_commit_nostack(buffer, event);
-}
+पूर्ण
 
-void trace_graph_return(struct ftrace_graph_ret *trace)
-{
-	struct trace_array *tr = graph_array;
-	struct trace_array_cpu *data;
-	unsigned long flags;
-	unsigned int trace_ctx;
-	long disabled;
-	int cpu;
+व्योम trace_graph_वापस(काष्ठा ftrace_graph_ret *trace)
+अणु
+	काष्ठा trace_array *tr = graph_array;
+	काष्ठा trace_array_cpu *data;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक trace_ctx;
+	दीर्घ disabled;
+	पूर्णांक cpu;
 
 	ftrace_graph_addr_finish(trace);
 
-	if (trace_recursion_test(TRACE_GRAPH_NOTRACE_BIT)) {
+	अगर (trace_recursion_test(TRACE_GRAPH_NOTRACE_BIT)) अणु
 		trace_recursion_clear(TRACE_GRAPH_NOTRACE_BIT);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	local_irq_save(flags);
 	cpu = raw_smp_processor_id();
 	data = per_cpu_ptr(tr->array_buffer.data, cpu);
-	disabled = atomic_inc_return(&data->disabled);
-	if (likely(disabled == 1)) {
+	disabled = atomic_inc_वापस(&data->disabled);
+	अगर (likely(disabled == 1)) अणु
 		trace_ctx = tracing_gen_ctx_flags(flags);
-		__trace_graph_return(tr, trace, trace_ctx);
-	}
+		__trace_graph_वापस(tr, trace, trace_ctx);
+	पूर्ण
 	atomic_dec(&data->disabled);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-void set_graph_array(struct trace_array *tr)
-{
+व्योम set_graph_array(काष्ठा trace_array *tr)
+अणु
 	graph_array = tr;
 
-	/* Make graph_array visible before we start tracing */
+	/* Make graph_array visible beक्रमe we start tracing */
 
 	smp_mb();
-}
+पूर्ण
 
-static void trace_graph_thresh_return(struct ftrace_graph_ret *trace)
-{
+अटल व्योम trace_graph_thresh_वापस(काष्ठा ftrace_graph_ret *trace)
+अणु
 	ftrace_graph_addr_finish(trace);
 
-	if (trace_recursion_test(TRACE_GRAPH_NOTRACE_BIT)) {
+	अगर (trace_recursion_test(TRACE_GRAPH_NOTRACE_BIT)) अणु
 		trace_recursion_clear(TRACE_GRAPH_NOTRACE_BIT);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (tracing_thresh &&
-	    (trace->rettime - trace->calltime < tracing_thresh))
-		return;
-	else
-		trace_graph_return(trace);
-}
+	अगर (tracing_thresh &&
+	    (trace->retसमय - trace->callसमय < tracing_thresh))
+		वापस;
+	अन्यथा
+		trace_graph_वापस(trace);
+पूर्ण
 
-static struct fgraph_ops funcgraph_thresh_ops = {
+अटल काष्ठा fgraph_ops funcgraph_thresh_ops = अणु
 	.entryfunc = &trace_graph_entry,
-	.retfunc = &trace_graph_thresh_return,
-};
+	.retfunc = &trace_graph_thresh_वापस,
+पूर्ण;
 
-static struct fgraph_ops funcgraph_ops = {
+अटल काष्ठा fgraph_ops funcgraph_ops = अणु
 	.entryfunc = &trace_graph_entry,
-	.retfunc = &trace_graph_return,
-};
+	.retfunc = &trace_graph_वापस,
+पूर्ण;
 
-static int graph_trace_init(struct trace_array *tr)
-{
-	int ret;
+अटल पूर्णांक graph_trace_init(काष्ठा trace_array *tr)
+अणु
+	पूर्णांक ret;
 
 	set_graph_array(tr);
-	if (tracing_thresh)
-		ret = register_ftrace_graph(&funcgraph_thresh_ops);
-	else
-		ret = register_ftrace_graph(&funcgraph_ops);
-	if (ret)
-		return ret;
+	अगर (tracing_thresh)
+		ret = रेजिस्टर_ftrace_graph(&funcgraph_thresh_ops);
+	अन्यथा
+		ret = रेजिस्टर_ftrace_graph(&funcgraph_ops);
+	अगर (ret)
+		वापस ret;
 	tracing_start_cmdline_record();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void graph_trace_reset(struct trace_array *tr)
-{
+अटल व्योम graph_trace_reset(काष्ठा trace_array *tr)
+अणु
 	tracing_stop_cmdline_record();
-	if (tracing_thresh)
-		unregister_ftrace_graph(&funcgraph_thresh_ops);
-	else
-		unregister_ftrace_graph(&funcgraph_ops);
-}
+	अगर (tracing_thresh)
+		unरेजिस्टर_ftrace_graph(&funcgraph_thresh_ops);
+	अन्यथा
+		unरेजिस्टर_ftrace_graph(&funcgraph_ops);
+पूर्ण
 
-static int graph_trace_update_thresh(struct trace_array *tr)
-{
+अटल पूर्णांक graph_trace_update_thresh(काष्ठा trace_array *tr)
+अणु
 	graph_trace_reset(tr);
-	return graph_trace_init(tr);
-}
+	वापस graph_trace_init(tr);
+पूर्ण
 
-static int max_bytes_for_cpu;
+अटल पूर्णांक max_bytes_क्रम_cpu;
 
-static void print_graph_cpu(struct trace_seq *s, int cpu)
-{
+अटल व्योम prपूर्णांक_graph_cpu(काष्ठा trace_seq *s, पूर्णांक cpu)
+अणु
 	/*
-	 * Start with a space character - to make it stand out
-	 * to the right a bit when trace output is pasted into
+	 * Start with a space अक्षरacter - to make it stand out
+	 * to the right a bit when trace output is pasted पूर्णांकo
 	 * email:
 	 */
-	trace_seq_printf(s, " %*d) ", max_bytes_for_cpu, cpu);
-}
+	trace_seq_म_लिखो(s, " %*d) ", max_bytes_क्रम_cpu, cpu);
+पूर्ण
 
-#define TRACE_GRAPH_PROCINFO_LENGTH	14
+#घोषणा TRACE_GRAPH_PROCINFO_LENGTH	14
 
-static void print_graph_proc(struct trace_seq *s, pid_t pid)
-{
-	char comm[TASK_COMM_LEN];
+अटल व्योम prपूर्णांक_graph_proc(काष्ठा trace_seq *s, pid_t pid)
+अणु
+	अक्षर comm[TASK_COMM_LEN];
 	/* sign + log10(MAX_INT) + '\0' */
-	char pid_str[11];
-	int spaces = 0;
-	int len;
-	int i;
+	अक्षर pid_str[11];
+	पूर्णांक spaces = 0;
+	पूर्णांक len;
+	पूर्णांक i;
 
 	trace_find_cmdline(pid, comm);
 	comm[7] = '\0';
-	sprintf(pid_str, "%d", pid);
+	प्र_लिखो(pid_str, "%d", pid);
 
-	/* 1 stands for the "-" character */
-	len = strlen(comm) + strlen(pid_str) + 1;
+	/* 1 stands क्रम the "-" अक्षरacter */
+	len = म_माप(comm) + म_माप(pid_str) + 1;
 
-	if (len < TRACE_GRAPH_PROCINFO_LENGTH)
+	अगर (len < TRACE_GRAPH_PROCINFO_LENGTH)
 		spaces = TRACE_GRAPH_PROCINFO_LENGTH - len;
 
 	/* First spaces to align center */
-	for (i = 0; i < spaces / 2; i++)
-		trace_seq_putc(s, ' ');
+	क्रम (i = 0; i < spaces / 2; i++)
+		trace_seq_अ_दो(s, ' ');
 
-	trace_seq_printf(s, "%s-%s", comm, pid_str);
+	trace_seq_म_लिखो(s, "%s-%s", comm, pid_str);
 
 	/* Last spaces to align center */
-	for (i = 0; i < spaces - (spaces / 2); i++)
-		trace_seq_putc(s, ' ');
-}
+	क्रम (i = 0; i < spaces - (spaces / 2); i++)
+		trace_seq_अ_दो(s, ' ');
+पूर्ण
 
 
-static void print_graph_lat_fmt(struct trace_seq *s, struct trace_entry *entry)
-{
-	trace_seq_putc(s, ' ');
-	trace_print_lat_fmt(s, entry);
-	trace_seq_puts(s, " | ");
-}
+अटल व्योम prपूर्णांक_graph_lat_fmt(काष्ठा trace_seq *s, काष्ठा trace_entry *entry)
+अणु
+	trace_seq_अ_दो(s, ' ');
+	trace_prपूर्णांक_lat_fmt(s, entry);
+	trace_seq_माला_दो(s, " | ");
+पूर्ण
 
 /* If the pid changed since the last trace, output this event */
-static void
-verif_pid(struct trace_seq *s, pid_t pid, int cpu, struct fgraph_data *data)
-{
+अटल व्योम
+verअगर_pid(काष्ठा trace_seq *s, pid_t pid, पूर्णांक cpu, काष्ठा fgraph_data *data)
+अणु
 	pid_t prev_pid;
 	pid_t *last_pid;
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
 	last_pid = &(per_cpu_ptr(data->cpu_data, cpu)->last_pid);
 
-	if (*last_pid == pid)
-		return;
+	अगर (*last_pid == pid)
+		वापस;
 
 	prev_pid = *last_pid;
 	*last_pid = pid;
 
-	if (prev_pid == -1)
-		return;
+	अगर (prev_pid == -1)
+		वापस;
 /*
- * Context-switch trace line:
+ * Context-चयन trace line:
 
  ------------------------------------------
  | 1)  migration/0--1  =>  sshd-1755
  ------------------------------------------
 
  */
-	trace_seq_puts(s, " ------------------------------------------\n");
-	print_graph_cpu(s, cpu);
-	print_graph_proc(s, prev_pid);
-	trace_seq_puts(s, " => ");
-	print_graph_proc(s, pid);
-	trace_seq_puts(s, "\n ------------------------------------------\n\n");
-}
+	trace_seq_माला_दो(s, " ------------------------------------------\n");
+	prपूर्णांक_graph_cpu(s, cpu);
+	prपूर्णांक_graph_proc(s, prev_pid);
+	trace_seq_माला_दो(s, " => ");
+	prपूर्णांक_graph_proc(s, pid);
+	trace_seq_माला_दो(s, "\n ------------------------------------------\n\n");
+पूर्ण
 
-static struct ftrace_graph_ret_entry *
-get_return_for_leaf(struct trace_iterator *iter,
-		struct ftrace_graph_ent_entry *curr)
-{
-	struct fgraph_data *data = iter->private;
-	struct ring_buffer_iter *ring_iter = NULL;
-	struct ring_buffer_event *event;
-	struct ftrace_graph_ret_entry *next;
+अटल काष्ठा ftrace_graph_ret_entry *
+get_वापस_क्रम_leaf(काष्ठा trace_iterator *iter,
+		काष्ठा ftrace_graph_ent_entry *curr)
+अणु
+	काष्ठा fgraph_data *data = iter->निजी;
+	काष्ठा ring_buffer_iter *ring_iter = शून्य;
+	काष्ठा ring_buffer_event *event;
+	काष्ठा ftrace_graph_ret_entry *next;
 
 	/*
-	 * If the previous output failed to write to the seq buffer,
-	 * then we just reuse the data from before.
+	 * If the previous output failed to ग_लिखो to the seq buffer,
+	 * then we just reuse the data from beक्रमe.
 	 */
-	if (data && data->failed) {
+	अगर (data && data->failed) अणु
 		curr = &data->ent;
 		next = &data->ret;
-	} else {
+	पूर्ण अन्यथा अणु
 
 		ring_iter = trace_buffer_iter(iter, iter->cpu);
 
 		/* First peek to compare current entry and the next one */
-		if (ring_iter)
-			event = ring_buffer_iter_peek(ring_iter, NULL);
-		else {
+		अगर (ring_iter)
+			event = ring_buffer_iter_peek(ring_iter, शून्य);
+		अन्यथा अणु
 			/*
 			 * We need to consume the current entry to see
 			 * the next one.
 			 */
 			ring_buffer_consume(iter->array_buffer->buffer, iter->cpu,
-					    NULL, NULL);
+					    शून्य, शून्य);
 			event = ring_buffer_peek(iter->array_buffer->buffer, iter->cpu,
-						 NULL, NULL);
-		}
+						 शून्य, शून्य);
+		पूर्ण
 
-		if (!event)
-			return NULL;
+		अगर (!event)
+			वापस शून्य;
 
 		next = ring_buffer_event_data(event);
 
-		if (data) {
+		अगर (data) अणु
 			/*
-			 * Save current and next entries for later reference
-			 * if the output fails.
+			 * Save current and next entries क्रम later reference
+			 * अगर the output fails.
 			 */
 			data->ent = *curr;
 			/*
-			 * If the next event is not a return type, then
+			 * If the next event is not a वापस type, then
 			 * we only care about what type it is. Otherwise we can
 			 * safely copy the entire event.
 			 */
-			if (next->ent.type == TRACE_GRAPH_RET)
+			अगर (next->ent.type == TRACE_GRAPH_RET)
 				data->ret = *next;
-			else
+			अन्यथा
 				data->ret.ent.type = next->ent.type;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (next->ent.type != TRACE_GRAPH_RET)
-		return NULL;
+	अगर (next->ent.type != TRACE_GRAPH_RET)
+		वापस शून्य;
 
-	if (curr->ent.pid != next->ent.pid ||
+	अगर (curr->ent.pid != next->ent.pid ||
 			curr->graph_ent.func != next->ret.func)
-		return NULL;
+		वापस शून्य;
 
 	/* this is a leaf, now advance the iterator */
-	if (ring_iter)
+	अगर (ring_iter)
 		ring_buffer_iter_advance(ring_iter);
 
-	return next;
-}
+	वापस next;
+पूर्ण
 
-static void print_graph_abs_time(u64 t, struct trace_seq *s)
-{
-	unsigned long usecs_rem;
+अटल व्योम prपूर्णांक_graph_असल_समय(u64 t, काष्ठा trace_seq *s)
+अणु
+	अचिन्हित दीर्घ usecs_rem;
 
-	usecs_rem = do_div(t, NSEC_PER_SEC);
+	usecs_rem = करो_भाग(t, NSEC_PER_SEC);
 	usecs_rem /= 1000;
 
-	trace_seq_printf(s, "%5lu.%06lu |  ",
-			 (unsigned long)t, usecs_rem);
-}
+	trace_seq_म_लिखो(s, "%5lu.%06lu |  ",
+			 (अचिन्हित दीर्घ)t, usecs_rem);
+पूर्ण
 
-static void
-print_graph_rel_time(struct trace_iterator *iter, struct trace_seq *s)
-{
-	unsigned long long usecs;
+अटल व्योम
+prपूर्णांक_graph_rel_समय(काष्ठा trace_iterator *iter, काष्ठा trace_seq *s)
+अणु
+	अचिन्हित दीर्घ दीर्घ usecs;
 
-	usecs = iter->ts - iter->array_buffer->time_start;
-	do_div(usecs, NSEC_PER_USEC);
+	usecs = iter->ts - iter->array_buffer->समय_start;
+	करो_भाग(usecs, NSEC_PER_USEC);
 
-	trace_seq_printf(s, "%9llu us |  ", usecs);
-}
+	trace_seq_म_लिखो(s, "%9llu us |  ", usecs);
+पूर्ण
 
-static void
-print_graph_irq(struct trace_iterator *iter, unsigned long addr,
-		enum trace_type type, int cpu, pid_t pid, u32 flags)
-{
-	struct trace_array *tr = iter->tr;
-	struct trace_seq *s = &iter->seq;
-	struct trace_entry *ent = iter->ent;
+अटल व्योम
+prपूर्णांक_graph_irq(काष्ठा trace_iterator *iter, अचिन्हित दीर्घ addr,
+		क्रमागत trace_type type, पूर्णांक cpu, pid_t pid, u32 flags)
+अणु
+	काष्ठा trace_array *tr = iter->tr;
+	काष्ठा trace_seq *s = &iter->seq;
+	काष्ठा trace_entry *ent = iter->ent;
 
-	if (addr < (unsigned long)__irqentry_text_start ||
-		addr >= (unsigned long)__irqentry_text_end)
-		return;
+	अगर (addr < (अचिन्हित दीर्घ)__irqentry_text_start ||
+		addr >= (अचिन्हित दीर्घ)__irqentry_text_end)
+		वापस;
 
-	if (tr->trace_flags & TRACE_ITER_CONTEXT_INFO) {
-		/* Absolute time */
-		if (flags & TRACE_GRAPH_PRINT_ABS_TIME)
-			print_graph_abs_time(iter->ts, s);
+	अगर (tr->trace_flags & TRACE_ITER_CONTEXT_INFO) अणु
+		/* Absolute समय */
+		अगर (flags & TRACE_GRAPH_PRINT_ABS_TIME)
+			prपूर्णांक_graph_असल_समय(iter->ts, s);
 
-		/* Relative time */
-		if (flags & TRACE_GRAPH_PRINT_REL_TIME)
-			print_graph_rel_time(iter, s);
+		/* Relative समय */
+		अगर (flags & TRACE_GRAPH_PRINT_REL_TIME)
+			prपूर्णांक_graph_rel_समय(iter, s);
 
 		/* Cpu */
-		if (flags & TRACE_GRAPH_PRINT_CPU)
-			print_graph_cpu(s, cpu);
+		अगर (flags & TRACE_GRAPH_PRINT_CPU)
+			prपूर्णांक_graph_cpu(s, cpu);
 
 		/* Proc */
-		if (flags & TRACE_GRAPH_PRINT_PROC) {
-			print_graph_proc(s, pid);
-			trace_seq_puts(s, " | ");
-		}
+		अगर (flags & TRACE_GRAPH_PRINT_PROC) अणु
+			prपूर्णांक_graph_proc(s, pid);
+			trace_seq_माला_दो(s, " | ");
+		पूर्ण
 
-		/* Latency format */
-		if (tr->trace_flags & TRACE_ITER_LATENCY_FMT)
-			print_graph_lat_fmt(s, ent);
-	}
+		/* Latency क्रमmat */
+		अगर (tr->trace_flags & TRACE_ITER_LATENCY_FMT)
+			prपूर्णांक_graph_lat_fmt(s, ent);
+	पूर्ण
 
 	/* No overhead */
-	print_graph_duration(tr, 0, s, flags | FLAGS_FILL_START);
+	prपूर्णांक_graph_duration(tr, 0, s, flags | FLAGS_FILL_START);
 
-	if (type == TRACE_GRAPH_ENT)
-		trace_seq_puts(s, "==========>");
-	else
-		trace_seq_puts(s, "<==========");
+	अगर (type == TRACE_GRAPH_ENT)
+		trace_seq_माला_दो(s, "==========>");
+	अन्यथा
+		trace_seq_माला_दो(s, "<==========");
 
-	print_graph_duration(tr, 0, s, flags | FLAGS_FILL_END);
-	trace_seq_putc(s, '\n');
-}
+	prपूर्णांक_graph_duration(tr, 0, s, flags | FLAGS_FILL_END);
+	trace_seq_अ_दो(s, '\n');
+पूर्ण
 
-void
-trace_print_graph_duration(unsigned long long duration, struct trace_seq *s)
-{
-	unsigned long nsecs_rem = do_div(duration, 1000);
-	/* log10(ULONG_MAX) + '\0' */
-	char usecs_str[21];
-	char nsecs_str[5];
-	int len;
-	int i;
+व्योम
+trace_prपूर्णांक_graph_duration(अचिन्हित दीर्घ दीर्घ duration, काष्ठा trace_seq *s)
+अणु
+	अचिन्हित दीर्घ nsecs_rem = करो_भाग(duration, 1000);
+	/* log10(अच_दीर्घ_उच्च) + '\0' */
+	अक्षर usecs_str[21];
+	अक्षर nsecs_str[5];
+	पूर्णांक len;
+	पूर्णांक i;
 
-	sprintf(usecs_str, "%lu", (unsigned long) duration);
+	प्र_लिखो(usecs_str, "%lu", (अचिन्हित दीर्घ) duration);
 
-	/* Print msecs */
-	trace_seq_printf(s, "%s", usecs_str);
+	/* Prपूर्णांक msecs */
+	trace_seq_म_लिखो(s, "%s", usecs_str);
 
-	len = strlen(usecs_str);
+	len = म_माप(usecs_str);
 
-	/* Print nsecs (we don't want to exceed 7 numbers) */
-	if (len < 7) {
-		size_t slen = min_t(size_t, sizeof(nsecs_str), 8UL - len);
+	/* Prपूर्णांक nsecs (we करोn't want to exceed 7 numbers) */
+	अगर (len < 7) अणु
+		माप_प्रकार slen = min_t(माप_प्रकार, माप(nsecs_str), 8UL - len);
 
-		snprintf(nsecs_str, slen, "%03lu", nsecs_rem);
-		trace_seq_printf(s, ".%s", nsecs_str);
-		len += strlen(nsecs_str) + 1;
-	}
+		snम_लिखो(nsecs_str, slen, "%03lu", nsecs_rem);
+		trace_seq_म_लिखो(s, ".%s", nsecs_str);
+		len += म_माप(nsecs_str) + 1;
+	पूर्ण
 
-	trace_seq_puts(s, " us ");
+	trace_seq_माला_दो(s, " us ");
 
-	/* Print remaining spaces to fit the row's width */
-	for (i = len; i < 8; i++)
-		trace_seq_putc(s, ' ');
-}
+	/* Prपूर्णांक reमुख्यing spaces to fit the row's width */
+	क्रम (i = len; i < 8; i++)
+		trace_seq_अ_दो(s, ' ');
+पूर्ण
 
-static void
-print_graph_duration(struct trace_array *tr, unsigned long long duration,
-		     struct trace_seq *s, u32 flags)
-{
-	if (!(flags & TRACE_GRAPH_PRINT_DURATION) ||
+अटल व्योम
+prपूर्णांक_graph_duration(काष्ठा trace_array *tr, अचिन्हित दीर्घ दीर्घ duration,
+		     काष्ठा trace_seq *s, u32 flags)
+अणु
+	अगर (!(flags & TRACE_GRAPH_PRINT_DURATION) ||
 	    !(tr->trace_flags & TRACE_ITER_CONTEXT_INFO))
-		return;
+		वापस;
 
 	/* No real adata, just filling the column with spaces */
-	switch (flags & TRACE_GRAPH_PRINT_FILL_MASK) {
-	case FLAGS_FILL_FULL:
-		trace_seq_puts(s, "              |  ");
-		return;
-	case FLAGS_FILL_START:
-		trace_seq_puts(s, "  ");
-		return;
-	case FLAGS_FILL_END:
-		trace_seq_puts(s, " |");
-		return;
-	}
+	चयन (flags & TRACE_GRAPH_PRINT_FILL_MASK) अणु
+	हाल FLAGS_FILL_FULL:
+		trace_seq_माला_दो(s, "              |  ");
+		वापस;
+	हाल FLAGS_FILL_START:
+		trace_seq_माला_दो(s, "  ");
+		वापस;
+	हाल FLAGS_FILL_END:
+		trace_seq_माला_दो(s, " |");
+		वापस;
+	पूर्ण
 
-	/* Signal a overhead of time execution to the output */
-	if (flags & TRACE_GRAPH_PRINT_OVERHEAD)
-		trace_seq_printf(s, "%c ", trace_find_mark(duration));
-	else
-		trace_seq_puts(s, "  ");
+	/* Signal a overhead of समय execution to the output */
+	अगर (flags & TRACE_GRAPH_PRINT_OVERHEAD)
+		trace_seq_म_लिखो(s, "%c ", trace_find_mark(duration));
+	अन्यथा
+		trace_seq_माला_दो(s, "  ");
 
-	trace_print_graph_duration(duration, s);
-	trace_seq_puts(s, "|  ");
-}
+	trace_prपूर्णांक_graph_duration(duration, s);
+	trace_seq_माला_दो(s, "|  ");
+पूर्ण
 
 /* Case of a leaf function on its call entry */
-static enum print_line_t
-print_graph_entry_leaf(struct trace_iterator *iter,
-		struct ftrace_graph_ent_entry *entry,
-		struct ftrace_graph_ret_entry *ret_entry,
-		struct trace_seq *s, u32 flags)
-{
-	struct fgraph_data *data = iter->private;
-	struct trace_array *tr = iter->tr;
-	struct ftrace_graph_ret *graph_ret;
-	struct ftrace_graph_ent *call;
-	unsigned long long duration;
-	int cpu = iter->cpu;
-	int i;
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_graph_entry_leaf(काष्ठा trace_iterator *iter,
+		काष्ठा ftrace_graph_ent_entry *entry,
+		काष्ठा ftrace_graph_ret_entry *ret_entry,
+		काष्ठा trace_seq *s, u32 flags)
+अणु
+	काष्ठा fgraph_data *data = iter->निजी;
+	काष्ठा trace_array *tr = iter->tr;
+	काष्ठा ftrace_graph_ret *graph_ret;
+	काष्ठा ftrace_graph_ent *call;
+	अचिन्हित दीर्घ दीर्घ duration;
+	पूर्णांक cpu = iter->cpu;
+	पूर्णांक i;
 
 	graph_ret = &ret_entry->ret;
 	call = &entry->graph_ent;
-	duration = graph_ret->rettime - graph_ret->calltime;
+	duration = graph_ret->retसमय - graph_ret->callसमय;
 
-	if (data) {
-		struct fgraph_cpu_data *cpu_data;
+	अगर (data) अणु
+		काष्ठा fgraph_cpu_data *cpu_data;
 
 		cpu_data = per_cpu_ptr(data->cpu_data, cpu);
 
@@ -650,197 +651,197 @@ print_graph_entry_leaf(struct trace_iterator *iter,
 		 */
 		cpu_data->depth = call->depth - 1;
 
-		/* No need to keep this function around for this depth */
-		if (call->depth < FTRACE_RETFUNC_DEPTH &&
+		/* No need to keep this function around क्रम this depth */
+		अगर (call->depth < FTRACE_RETFUNC_DEPTH &&
 		    !WARN_ON_ONCE(call->depth < 0))
 			cpu_data->enter_funcs[call->depth] = 0;
-	}
+	पूर्ण
 
 	/* Overhead and duration */
-	print_graph_duration(tr, duration, s, flags);
+	prपूर्णांक_graph_duration(tr, duration, s, flags);
 
 	/* Function */
-	for (i = 0; i < call->depth * TRACE_GRAPH_INDENT; i++)
-		trace_seq_putc(s, ' ');
+	क्रम (i = 0; i < call->depth * TRACE_GRAPH_INDENT; i++)
+		trace_seq_अ_दो(s, ' ');
 
-	trace_seq_printf(s, "%ps();\n", (void *)call->func);
+	trace_seq_म_लिखो(s, "%ps();\n", (व्योम *)call->func);
 
-	print_graph_irq(iter, graph_ret->func, TRACE_GRAPH_RET,
+	prपूर्णांक_graph_irq(iter, graph_ret->func, TRACE_GRAPH_RET,
 			cpu, iter->ent->pid, flags);
 
-	return trace_handle_return(s);
-}
+	वापस trace_handle_वापस(s);
+पूर्ण
 
-static enum print_line_t
-print_graph_entry_nested(struct trace_iterator *iter,
-			 struct ftrace_graph_ent_entry *entry,
-			 struct trace_seq *s, int cpu, u32 flags)
-{
-	struct ftrace_graph_ent *call = &entry->graph_ent;
-	struct fgraph_data *data = iter->private;
-	struct trace_array *tr = iter->tr;
-	int i;
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_graph_entry_nested(काष्ठा trace_iterator *iter,
+			 काष्ठा ftrace_graph_ent_entry *entry,
+			 काष्ठा trace_seq *s, पूर्णांक cpu, u32 flags)
+अणु
+	काष्ठा ftrace_graph_ent *call = &entry->graph_ent;
+	काष्ठा fgraph_data *data = iter->निजी;
+	काष्ठा trace_array *tr = iter->tr;
+	पूर्णांक i;
 
-	if (data) {
-		struct fgraph_cpu_data *cpu_data;
-		int cpu = iter->cpu;
+	अगर (data) अणु
+		काष्ठा fgraph_cpu_data *cpu_data;
+		पूर्णांक cpu = iter->cpu;
 
 		cpu_data = per_cpu_ptr(data->cpu_data, cpu);
 		cpu_data->depth = call->depth;
 
-		/* Save this function pointer to see if the exit matches */
-		if (call->depth < FTRACE_RETFUNC_DEPTH &&
+		/* Save this function poपूर्णांकer to see अगर the निकास matches */
+		अगर (call->depth < FTRACE_RETFUNC_DEPTH &&
 		    !WARN_ON_ONCE(call->depth < 0))
 			cpu_data->enter_funcs[call->depth] = call->func;
-	}
+	पूर्ण
 
-	/* No time */
-	print_graph_duration(tr, 0, s, flags | FLAGS_FILL_FULL);
+	/* No समय */
+	prपूर्णांक_graph_duration(tr, 0, s, flags | FLAGS_FILL_FULL);
 
 	/* Function */
-	for (i = 0; i < call->depth * TRACE_GRAPH_INDENT; i++)
-		trace_seq_putc(s, ' ');
+	क्रम (i = 0; i < call->depth * TRACE_GRAPH_INDENT; i++)
+		trace_seq_अ_दो(s, ' ');
 
-	trace_seq_printf(s, "%ps() {\n", (void *)call->func);
+	trace_seq_म_लिखो(s, "%ps() {\n", (व्योम *)call->func);
 
-	if (trace_seq_has_overflowed(s))
-		return TRACE_TYPE_PARTIAL_LINE;
+	अगर (trace_seq_has_overflowed(s))
+		वापस TRACE_TYPE_PARTIAL_LINE;
 
 	/*
-	 * we already consumed the current entry to check the next one
-	 * and see if this is a leaf.
+	 * we alपढ़ोy consumed the current entry to check the next one
+	 * and see अगर this is a leaf.
 	 */
-	return TRACE_TYPE_NO_CONSUME;
-}
+	वापस TRACE_TYPE_NO_CONSUME;
+पूर्ण
 
-static void
-print_graph_prologue(struct trace_iterator *iter, struct trace_seq *s,
-		     int type, unsigned long addr, u32 flags)
-{
-	struct fgraph_data *data = iter->private;
-	struct trace_entry *ent = iter->ent;
-	struct trace_array *tr = iter->tr;
-	int cpu = iter->cpu;
+अटल व्योम
+prपूर्णांक_graph_prologue(काष्ठा trace_iterator *iter, काष्ठा trace_seq *s,
+		     पूर्णांक type, अचिन्हित दीर्घ addr, u32 flags)
+अणु
+	काष्ठा fgraph_data *data = iter->निजी;
+	काष्ठा trace_entry *ent = iter->ent;
+	काष्ठा trace_array *tr = iter->tr;
+	पूर्णांक cpu = iter->cpu;
 
 	/* Pid */
-	verif_pid(s, ent->pid, cpu, data);
+	verअगर_pid(s, ent->pid, cpu, data);
 
-	if (type)
+	अगर (type)
 		/* Interrupt */
-		print_graph_irq(iter, addr, type, cpu, ent->pid, flags);
+		prपूर्णांक_graph_irq(iter, addr, type, cpu, ent->pid, flags);
 
-	if (!(tr->trace_flags & TRACE_ITER_CONTEXT_INFO))
-		return;
+	अगर (!(tr->trace_flags & TRACE_ITER_CONTEXT_INFO))
+		वापस;
 
-	/* Absolute time */
-	if (flags & TRACE_GRAPH_PRINT_ABS_TIME)
-		print_graph_abs_time(iter->ts, s);
+	/* Absolute समय */
+	अगर (flags & TRACE_GRAPH_PRINT_ABS_TIME)
+		prपूर्णांक_graph_असल_समय(iter->ts, s);
 
-	/* Relative time */
-	if (flags & TRACE_GRAPH_PRINT_REL_TIME)
-		print_graph_rel_time(iter, s);
+	/* Relative समय */
+	अगर (flags & TRACE_GRAPH_PRINT_REL_TIME)
+		prपूर्णांक_graph_rel_समय(iter, s);
 
 	/* Cpu */
-	if (flags & TRACE_GRAPH_PRINT_CPU)
-		print_graph_cpu(s, cpu);
+	अगर (flags & TRACE_GRAPH_PRINT_CPU)
+		prपूर्णांक_graph_cpu(s, cpu);
 
 	/* Proc */
-	if (flags & TRACE_GRAPH_PRINT_PROC) {
-		print_graph_proc(s, ent->pid);
-		trace_seq_puts(s, " | ");
-	}
+	अगर (flags & TRACE_GRAPH_PRINT_PROC) अणु
+		prपूर्णांक_graph_proc(s, ent->pid);
+		trace_seq_माला_दो(s, " | ");
+	पूर्ण
 
-	/* Latency format */
-	if (tr->trace_flags & TRACE_ITER_LATENCY_FMT)
-		print_graph_lat_fmt(s, ent);
+	/* Latency क्रमmat */
+	अगर (tr->trace_flags & TRACE_ITER_LATENCY_FMT)
+		prपूर्णांक_graph_lat_fmt(s, ent);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
- * Entry check for irq code
+ * Entry check क्रम irq code
  *
- * returns 1 if
+ * वापसs 1 अगर
  *  - we are inside irq code
  *  - we just entered irq code
  *
- * returns 0 if
- *  - funcgraph-interrupts option is set
+ * वापसs 0 अगर
+ *  - funcgraph-पूर्णांकerrupts option is set
  *  - we are not inside irq code
  */
-static int
-check_irq_entry(struct trace_iterator *iter, u32 flags,
-		unsigned long addr, int depth)
-{
-	int cpu = iter->cpu;
-	int *depth_irq;
-	struct fgraph_data *data = iter->private;
+अटल पूर्णांक
+check_irq_entry(काष्ठा trace_iterator *iter, u32 flags,
+		अचिन्हित दीर्घ addr, पूर्णांक depth)
+अणु
+	पूर्णांक cpu = iter->cpu;
+	पूर्णांक *depth_irq;
+	काष्ठा fgraph_data *data = iter->निजी;
 
 	/*
 	 * If we are either displaying irqs, or we got called as
-	 * a graph event and private data does not exist,
+	 * a graph event and निजी data करोes not exist,
 	 * then we bypass the irq check.
 	 */
-	if ((flags & TRACE_GRAPH_PRINT_IRQS) ||
+	अगर ((flags & TRACE_GRAPH_PRINT_IRQS) ||
 	    (!data))
-		return 0;
+		वापस 0;
 
 	depth_irq = &(per_cpu_ptr(data->cpu_data, cpu)->depth_irq);
 
 	/*
 	 * We are inside the irq code
 	 */
-	if (*depth_irq >= 0)
-		return 1;
+	अगर (*depth_irq >= 0)
+		वापस 1;
 
-	if ((addr < (unsigned long)__irqentry_text_start) ||
-	    (addr >= (unsigned long)__irqentry_text_end))
-		return 0;
+	अगर ((addr < (अचिन्हित दीर्घ)__irqentry_text_start) ||
+	    (addr >= (अचिन्हित दीर्घ)__irqentry_text_end))
+		वापस 0;
 
 	/*
 	 * We are entering irq code.
 	 */
 	*depth_irq = depth;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Return check for irq code
+ * Return check क्रम irq code
  *
- * returns 1 if
+ * वापसs 1 अगर
  *  - we are inside irq code
  *  - we just left irq code
  *
- * returns 0 if
- *  - funcgraph-interrupts option is set
+ * वापसs 0 अगर
+ *  - funcgraph-पूर्णांकerrupts option is set
  *  - we are not inside irq code
  */
-static int
-check_irq_return(struct trace_iterator *iter, u32 flags, int depth)
-{
-	int cpu = iter->cpu;
-	int *depth_irq;
-	struct fgraph_data *data = iter->private;
+अटल पूर्णांक
+check_irq_वापस(काष्ठा trace_iterator *iter, u32 flags, पूर्णांक depth)
+अणु
+	पूर्णांक cpu = iter->cpu;
+	पूर्णांक *depth_irq;
+	काष्ठा fgraph_data *data = iter->निजी;
 
 	/*
 	 * If we are either displaying irqs, or we got called as
-	 * a graph event and private data does not exist,
+	 * a graph event and निजी data करोes not exist,
 	 * then we bypass the irq check.
 	 */
-	if ((flags & TRACE_GRAPH_PRINT_IRQS) ||
+	अगर ((flags & TRACE_GRAPH_PRINT_IRQS) ||
 	    (!data))
-		return 0;
+		वापस 0;
 
 	depth_irq = &(per_cpu_ptr(data->cpu_data, cpu)->depth_irq);
 
 	/*
 	 * We are not inside the irq code.
 	 */
-	if (*depth_irq == -1)
-		return 0;
+	अगर (*depth_irq == -1)
+		वापस 0;
 
 	/*
-	 * We are inside the irq code, and this is returning entry.
+	 * We are inside the irq code, and this is वापसing entry.
 	 * Let's not trace it and clear the entry depth, since
 	 * we are out of irq code.
 	 *
@@ -848,520 +849,520 @@ check_irq_return(struct trace_iterator *iter, u32 flags, int depth)
 	 * we are out of the entry depth. Thus protecting us from
 	 * the RETURN entry loss.
 	 */
-	if (*depth_irq >= depth) {
+	अगर (*depth_irq >= depth) अणु
 		*depth_irq = -1;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/*
 	 * We are inside the irq code, and this is not the entry.
 	 */
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static enum print_line_t
-print_graph_entry(struct ftrace_graph_ent_entry *field, struct trace_seq *s,
-			struct trace_iterator *iter, u32 flags)
-{
-	struct fgraph_data *data = iter->private;
-	struct ftrace_graph_ent *call = &field->graph_ent;
-	struct ftrace_graph_ret_entry *leaf_ret;
-	static enum print_line_t ret;
-	int cpu = iter->cpu;
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_graph_entry(काष्ठा ftrace_graph_ent_entry *field, काष्ठा trace_seq *s,
+			काष्ठा trace_iterator *iter, u32 flags)
+अणु
+	काष्ठा fgraph_data *data = iter->निजी;
+	काष्ठा ftrace_graph_ent *call = &field->graph_ent;
+	काष्ठा ftrace_graph_ret_entry *leaf_ret;
+	अटल क्रमागत prपूर्णांक_line_t ret;
+	पूर्णांक cpu = iter->cpu;
 
-	if (check_irq_entry(iter, flags, call->func, call->depth))
-		return TRACE_TYPE_HANDLED;
+	अगर (check_irq_entry(iter, flags, call->func, call->depth))
+		वापस TRACE_TYPE_HANDLED;
 
-	print_graph_prologue(iter, s, TRACE_GRAPH_ENT, call->func, flags);
+	prपूर्णांक_graph_prologue(iter, s, TRACE_GRAPH_ENT, call->func, flags);
 
-	leaf_ret = get_return_for_leaf(iter, field);
-	if (leaf_ret)
-		ret = print_graph_entry_leaf(iter, field, leaf_ret, s, flags);
-	else
-		ret = print_graph_entry_nested(iter, field, s, cpu, flags);
+	leaf_ret = get_वापस_क्रम_leaf(iter, field);
+	अगर (leaf_ret)
+		ret = prपूर्णांक_graph_entry_leaf(iter, field, leaf_ret, s, flags);
+	अन्यथा
+		ret = prपूर्णांक_graph_entry_nested(iter, field, s, cpu, flags);
 
-	if (data) {
+	अगर (data) अणु
 		/*
-		 * If we failed to write our output, then we need to make
-		 * note of it. Because we already consumed our entry.
+		 * If we failed to ग_लिखो our output, then we need to make
+		 * note of it. Because we alपढ़ोy consumed our entry.
 		 */
-		if (s->full) {
+		अगर (s->full) अणु
 			data->failed = 1;
 			data->cpu = cpu;
-		} else
+		पूर्ण अन्यथा
 			data->failed = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum print_line_t
-print_graph_return(struct ftrace_graph_ret *trace, struct trace_seq *s,
-		   struct trace_entry *ent, struct trace_iterator *iter,
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_graph_वापस(काष्ठा ftrace_graph_ret *trace, काष्ठा trace_seq *s,
+		   काष्ठा trace_entry *ent, काष्ठा trace_iterator *iter,
 		   u32 flags)
-{
-	unsigned long long duration = trace->rettime - trace->calltime;
-	struct fgraph_data *data = iter->private;
-	struct trace_array *tr = iter->tr;
+अणु
+	अचिन्हित दीर्घ दीर्घ duration = trace->retसमय - trace->callसमय;
+	काष्ठा fgraph_data *data = iter->निजी;
+	काष्ठा trace_array *tr = iter->tr;
 	pid_t pid = ent->pid;
-	int cpu = iter->cpu;
-	int func_match = 1;
-	int i;
+	पूर्णांक cpu = iter->cpu;
+	पूर्णांक func_match = 1;
+	पूर्णांक i;
 
-	if (check_irq_return(iter, flags, trace->depth))
-		return TRACE_TYPE_HANDLED;
+	अगर (check_irq_वापस(iter, flags, trace->depth))
+		वापस TRACE_TYPE_HANDLED;
 
-	if (data) {
-		struct fgraph_cpu_data *cpu_data;
-		int cpu = iter->cpu;
+	अगर (data) अणु
+		काष्ठा fgraph_cpu_data *cpu_data;
+		पूर्णांक cpu = iter->cpu;
 
 		cpu_data = per_cpu_ptr(data->cpu_data, cpu);
 
 		/*
 		 * Comments display at + 1 to depth. This is the
-		 * return from a function, we now want the comments
+		 * वापस from a function, we now want the comments
 		 * to display at the same level of the bracket.
 		 */
 		cpu_data->depth = trace->depth - 1;
 
-		if (trace->depth < FTRACE_RETFUNC_DEPTH &&
-		    !WARN_ON_ONCE(trace->depth < 0)) {
-			if (cpu_data->enter_funcs[trace->depth] != trace->func)
+		अगर (trace->depth < FTRACE_RETFUNC_DEPTH &&
+		    !WARN_ON_ONCE(trace->depth < 0)) अणु
+			अगर (cpu_data->enter_funcs[trace->depth] != trace->func)
 				func_match = 0;
 			cpu_data->enter_funcs[trace->depth] = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	print_graph_prologue(iter, s, 0, 0, flags);
+	prपूर्णांक_graph_prologue(iter, s, 0, 0, flags);
 
 	/* Overhead and duration */
-	print_graph_duration(tr, duration, s, flags);
+	prपूर्णांक_graph_duration(tr, duration, s, flags);
 
 	/* Closing brace */
-	for (i = 0; i < trace->depth * TRACE_GRAPH_INDENT; i++)
-		trace_seq_putc(s, ' ');
+	क्रम (i = 0; i < trace->depth * TRACE_GRAPH_INDENT; i++)
+		trace_seq_अ_दो(s, ' ');
 
 	/*
-	 * If the return function does not have a matching entry,
-	 * then the entry was lost. Instead of just printing
+	 * If the वापस function करोes not have a matching entry,
+	 * then the entry was lost. Instead of just prपूर्णांकing
 	 * the '}' and letting the user guess what function this
-	 * belongs to, write out the function name. Always do
-	 * that if the funcgraph-tail option is enabled.
+	 * beदीर्घs to, ग_लिखो out the function name. Always करो
+	 * that अगर the funcgraph-tail option is enabled.
 	 */
-	if (func_match && !(flags & TRACE_GRAPH_PRINT_TAIL))
-		trace_seq_puts(s, "}\n");
-	else
-		trace_seq_printf(s, "} /* %ps */\n", (void *)trace->func);
+	अगर (func_match && !(flags & TRACE_GRAPH_PRINT_TAIL))
+		trace_seq_माला_दो(s, "}\n");
+	अन्यथा
+		trace_seq_म_लिखो(s, "} /* %ps */\n", (व्योम *)trace->func);
 
 	/* Overrun */
-	if (flags & TRACE_GRAPH_PRINT_OVERRUN)
-		trace_seq_printf(s, " (Overruns: %u)\n",
+	अगर (flags & TRACE_GRAPH_PRINT_OVERRUN)
+		trace_seq_म_लिखो(s, " (Overruns: %u)\n",
 				 trace->overrun);
 
-	print_graph_irq(iter, trace->func, TRACE_GRAPH_RET,
+	prपूर्णांक_graph_irq(iter, trace->func, TRACE_GRAPH_RET,
 			cpu, pid, flags);
 
-	return trace_handle_return(s);
-}
+	वापस trace_handle_वापस(s);
+पूर्ण
 
-static enum print_line_t
-print_graph_comment(struct trace_seq *s, struct trace_entry *ent,
-		    struct trace_iterator *iter, u32 flags)
-{
-	struct trace_array *tr = iter->tr;
-	unsigned long sym_flags = (tr->trace_flags & TRACE_ITER_SYM_MASK);
-	struct fgraph_data *data = iter->private;
-	struct trace_event *event;
-	int depth = 0;
-	int ret;
-	int i;
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_graph_comment(काष्ठा trace_seq *s, काष्ठा trace_entry *ent,
+		    काष्ठा trace_iterator *iter, u32 flags)
+अणु
+	काष्ठा trace_array *tr = iter->tr;
+	अचिन्हित दीर्घ sym_flags = (tr->trace_flags & TRACE_ITER_SYM_MASK);
+	काष्ठा fgraph_data *data = iter->निजी;
+	काष्ठा trace_event *event;
+	पूर्णांक depth = 0;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (data)
+	अगर (data)
 		depth = per_cpu_ptr(data->cpu_data, iter->cpu)->depth;
 
-	print_graph_prologue(iter, s, 0, 0, flags);
+	prपूर्णांक_graph_prologue(iter, s, 0, 0, flags);
 
-	/* No time */
-	print_graph_duration(tr, 0, s, flags | FLAGS_FILL_FULL);
+	/* No समय */
+	prपूर्णांक_graph_duration(tr, 0, s, flags | FLAGS_FILL_FULL);
 
 	/* Indentation */
-	if (depth > 0)
-		for (i = 0; i < (depth + 1) * TRACE_GRAPH_INDENT; i++)
-			trace_seq_putc(s, ' ');
+	अगर (depth > 0)
+		क्रम (i = 0; i < (depth + 1) * TRACE_GRAPH_INDENT; i++)
+			trace_seq_अ_दो(s, ' ');
 
 	/* The comment */
-	trace_seq_puts(s, "/* ");
+	trace_seq_माला_दो(s, "/* ");
 
-	switch (iter->ent->type) {
-	case TRACE_BPUTS:
-		ret = trace_print_bputs_msg_only(iter);
-		if (ret != TRACE_TYPE_HANDLED)
-			return ret;
-		break;
-	case TRACE_BPRINT:
-		ret = trace_print_bprintk_msg_only(iter);
-		if (ret != TRACE_TYPE_HANDLED)
-			return ret;
-		break;
-	case TRACE_PRINT:
-		ret = trace_print_printk_msg_only(iter);
-		if (ret != TRACE_TYPE_HANDLED)
-			return ret;
-		break;
-	default:
+	चयन (iter->ent->type) अणु
+	हाल TRACE_BPUTS:
+		ret = trace_prपूर्णांक_bमाला_दो_msg_only(iter);
+		अगर (ret != TRACE_TYPE_HANDLED)
+			वापस ret;
+		अवरोध;
+	हाल TRACE_BPRINT:
+		ret = trace_prपूर्णांक_bprपूर्णांकk_msg_only(iter);
+		अगर (ret != TRACE_TYPE_HANDLED)
+			वापस ret;
+		अवरोध;
+	हाल TRACE_PRINT:
+		ret = trace_prपूर्णांक_prपूर्णांकk_msg_only(iter);
+		अगर (ret != TRACE_TYPE_HANDLED)
+			वापस ret;
+		अवरोध;
+	शेष:
 		event = ftrace_find_event(ent->type);
-		if (!event)
-			return TRACE_TYPE_UNHANDLED;
+		अगर (!event)
+			वापस TRACE_TYPE_UNHANDLED;
 
 		ret = event->funcs->trace(iter, sym_flags, event);
-		if (ret != TRACE_TYPE_HANDLED)
-			return ret;
-	}
+		अगर (ret != TRACE_TYPE_HANDLED)
+			वापस ret;
+	पूर्ण
 
-	if (trace_seq_has_overflowed(s))
-		goto out;
+	अगर (trace_seq_has_overflowed(s))
+		जाओ out;
 
 	/* Strip ending newline */
-	if (s->buffer[s->seq.len - 1] == '\n') {
+	अगर (s->buffer[s->seq.len - 1] == '\n') अणु
 		s->buffer[s->seq.len - 1] = '\0';
 		s->seq.len--;
-	}
+	पूर्ण
 
-	trace_seq_puts(s, " */\n");
+	trace_seq_माला_दो(s, " */\n");
  out:
-	return trace_handle_return(s);
-}
+	वापस trace_handle_वापस(s);
+पूर्ण
 
 
-enum print_line_t
-print_graph_function_flags(struct trace_iterator *iter, u32 flags)
-{
-	struct ftrace_graph_ent_entry *field;
-	struct fgraph_data *data = iter->private;
-	struct trace_entry *entry = iter->ent;
-	struct trace_seq *s = &iter->seq;
-	int cpu = iter->cpu;
-	int ret;
+क्रमागत prपूर्णांक_line_t
+prपूर्णांक_graph_function_flags(काष्ठा trace_iterator *iter, u32 flags)
+अणु
+	काष्ठा ftrace_graph_ent_entry *field;
+	काष्ठा fgraph_data *data = iter->निजी;
+	काष्ठा trace_entry *entry = iter->ent;
+	काष्ठा trace_seq *s = &iter->seq;
+	पूर्णांक cpu = iter->cpu;
+	पूर्णांक ret;
 
-	if (data && per_cpu_ptr(data->cpu_data, cpu)->ignore) {
+	अगर (data && per_cpu_ptr(data->cpu_data, cpu)->ignore) अणु
 		per_cpu_ptr(data->cpu_data, cpu)->ignore = 0;
-		return TRACE_TYPE_HANDLED;
-	}
+		वापस TRACE_TYPE_HANDLED;
+	पूर्ण
 
 	/*
 	 * If the last output failed, there's a possibility we need
-	 * to print out the missing entry which would never go out.
+	 * to prपूर्णांक out the missing entry which would never go out.
 	 */
-	if (data && data->failed) {
+	अगर (data && data->failed) अणु
 		field = &data->ent;
 		iter->cpu = data->cpu;
-		ret = print_graph_entry(field, s, iter, flags);
-		if (ret == TRACE_TYPE_HANDLED && iter->cpu != cpu) {
+		ret = prपूर्णांक_graph_entry(field, s, iter, flags);
+		अगर (ret == TRACE_TYPE_HANDLED && iter->cpu != cpu) अणु
 			per_cpu_ptr(data->cpu_data, iter->cpu)->ignore = 1;
 			ret = TRACE_TYPE_NO_CONSUME;
-		}
+		पूर्ण
 		iter->cpu = cpu;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (entry->type) {
-	case TRACE_GRAPH_ENT: {
+	चयन (entry->type) अणु
+	हाल TRACE_GRAPH_ENT: अणु
 		/*
-		 * print_graph_entry() may consume the current event,
+		 * prपूर्णांक_graph_entry() may consume the current event,
 		 * thus @field may become invalid, so we need to save it.
-		 * sizeof(struct ftrace_graph_ent_entry) is very small,
+		 * माप(काष्ठा ftrace_graph_ent_entry) is very small,
 		 * it can be safely saved at the stack.
 		 */
-		struct ftrace_graph_ent_entry saved;
+		काष्ठा ftrace_graph_ent_entry saved;
 		trace_assign_type(field, entry);
 		saved = *field;
-		return print_graph_entry(&saved, s, iter, flags);
-	}
-	case TRACE_GRAPH_RET: {
-		struct ftrace_graph_ret_entry *field;
+		वापस prपूर्णांक_graph_entry(&saved, s, iter, flags);
+	पूर्ण
+	हाल TRACE_GRAPH_RET: अणु
+		काष्ठा ftrace_graph_ret_entry *field;
 		trace_assign_type(field, entry);
-		return print_graph_return(&field->ret, s, entry, iter, flags);
-	}
-	case TRACE_STACK:
-	case TRACE_FN:
-		/* dont trace stack and functions as comments */
-		return TRACE_TYPE_UNHANDLED;
+		वापस prपूर्णांक_graph_वापस(&field->ret, s, entry, iter, flags);
+	पूर्ण
+	हाल TRACE_STACK:
+	हाल TRACE_FN:
+		/* करोnt trace stack and functions as comments */
+		वापस TRACE_TYPE_UNHANDLED;
 
-	default:
-		return print_graph_comment(s, entry, iter, flags);
-	}
+	शेष:
+		वापस prपूर्णांक_graph_comment(s, entry, iter, flags);
+	पूर्ण
 
-	return TRACE_TYPE_HANDLED;
-}
+	वापस TRACE_TYPE_HANDLED;
+पूर्ण
 
-static enum print_line_t
-print_graph_function(struct trace_iterator *iter)
-{
-	return print_graph_function_flags(iter, tracer_flags.val);
-}
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_graph_function(काष्ठा trace_iterator *iter)
+अणु
+	वापस prपूर्णांक_graph_function_flags(iter, tracer_flags.val);
+पूर्ण
 
-static enum print_line_t
-print_graph_function_event(struct trace_iterator *iter, int flags,
-			   struct trace_event *event)
-{
-	return print_graph_function(iter);
-}
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_graph_function_event(काष्ठा trace_iterator *iter, पूर्णांक flags,
+			   काष्ठा trace_event *event)
+अणु
+	वापस prपूर्णांक_graph_function(iter);
+पूर्ण
 
-static void print_lat_header(struct seq_file *s, u32 flags)
-{
-	static const char spaces[] = "                "	/* 16 spaces */
+अटल व्योम prपूर्णांक_lat_header(काष्ठा seq_file *s, u32 flags)
+अणु
+	अटल स्थिर अक्षर spaces[] = "                "	/* 16 spaces */
 		"    "					/* 4 spaces */
 		"                 ";			/* 17 spaces */
-	int size = 0;
+	पूर्णांक size = 0;
 
-	if (flags & TRACE_GRAPH_PRINT_ABS_TIME)
+	अगर (flags & TRACE_GRAPH_PRINT_ABS_TIME)
 		size += 16;
-	if (flags & TRACE_GRAPH_PRINT_REL_TIME)
+	अगर (flags & TRACE_GRAPH_PRINT_REL_TIME)
 		size += 16;
-	if (flags & TRACE_GRAPH_PRINT_CPU)
+	अगर (flags & TRACE_GRAPH_PRINT_CPU)
 		size += 4;
-	if (flags & TRACE_GRAPH_PRINT_PROC)
+	अगर (flags & TRACE_GRAPH_PRINT_PROC)
 		size += 17;
 
-	seq_printf(s, "#%.*s  _-----=> irqs-off        \n", size, spaces);
-	seq_printf(s, "#%.*s / _----=> need-resched    \n", size, spaces);
-	seq_printf(s, "#%.*s| / _---=> hardirq/softirq \n", size, spaces);
-	seq_printf(s, "#%.*s|| / _--=> preempt-depth   \n", size, spaces);
-	seq_printf(s, "#%.*s||| /                      \n", size, spaces);
-}
+	seq_म_लिखो(s, "#%.*s  _-----=> irqs-off        \n", size, spaces);
+	seq_म_लिखो(s, "#%.*s / _----=> need-resched    \n", size, spaces);
+	seq_म_लिखो(s, "#%.*s| / _---=> hardirq/softirq \n", size, spaces);
+	seq_म_लिखो(s, "#%.*s|| / _--=> preempt-depth   \n", size, spaces);
+	seq_म_लिखो(s, "#%.*s||| /                      \n", size, spaces);
+पूर्ण
 
-static void __print_graph_headers_flags(struct trace_array *tr,
-					struct seq_file *s, u32 flags)
-{
-	int lat = tr->trace_flags & TRACE_ITER_LATENCY_FMT;
+अटल व्योम __prपूर्णांक_graph_headers_flags(काष्ठा trace_array *tr,
+					काष्ठा seq_file *s, u32 flags)
+अणु
+	पूर्णांक lat = tr->trace_flags & TRACE_ITER_LATENCY_FMT;
 
-	if (lat)
-		print_lat_header(s, flags);
+	अगर (lat)
+		prपूर्णांक_lat_header(s, flags);
 
 	/* 1st line */
-	seq_putc(s, '#');
-	if (flags & TRACE_GRAPH_PRINT_ABS_TIME)
-		seq_puts(s, "     TIME       ");
-	if (flags & TRACE_GRAPH_PRINT_REL_TIME)
-		seq_puts(s, "   REL TIME     ");
-	if (flags & TRACE_GRAPH_PRINT_CPU)
-		seq_puts(s, " CPU");
-	if (flags & TRACE_GRAPH_PRINT_PROC)
-		seq_puts(s, "  TASK/PID       ");
-	if (lat)
-		seq_puts(s, "||||   ");
-	if (flags & TRACE_GRAPH_PRINT_DURATION)
-		seq_puts(s, "  DURATION   ");
-	seq_puts(s, "               FUNCTION CALLS\n");
+	seq_अ_दो(s, '#');
+	अगर (flags & TRACE_GRAPH_PRINT_ABS_TIME)
+		seq_माला_दो(s, "     TIME       ");
+	अगर (flags & TRACE_GRAPH_PRINT_REL_TIME)
+		seq_माला_दो(s, "   REL TIME     ");
+	अगर (flags & TRACE_GRAPH_PRINT_CPU)
+		seq_माला_दो(s, " CPU");
+	अगर (flags & TRACE_GRAPH_PRINT_PROC)
+		seq_माला_दो(s, "  TASK/PID       ");
+	अगर (lat)
+		seq_माला_दो(s, "||||   ");
+	अगर (flags & TRACE_GRAPH_PRINT_DURATION)
+		seq_माला_दो(s, "  DURATION   ");
+	seq_माला_दो(s, "               FUNCTION CALLS\n");
 
 	/* 2nd line */
-	seq_putc(s, '#');
-	if (flags & TRACE_GRAPH_PRINT_ABS_TIME)
-		seq_puts(s, "      |         ");
-	if (flags & TRACE_GRAPH_PRINT_REL_TIME)
-		seq_puts(s, "      |         ");
-	if (flags & TRACE_GRAPH_PRINT_CPU)
-		seq_puts(s, " |  ");
-	if (flags & TRACE_GRAPH_PRINT_PROC)
-		seq_puts(s, "   |    |        ");
-	if (lat)
-		seq_puts(s, "||||   ");
-	if (flags & TRACE_GRAPH_PRINT_DURATION)
-		seq_puts(s, "   |   |      ");
-	seq_puts(s, "               |   |   |   |\n");
-}
+	seq_अ_दो(s, '#');
+	अगर (flags & TRACE_GRAPH_PRINT_ABS_TIME)
+		seq_माला_दो(s, "      |         ");
+	अगर (flags & TRACE_GRAPH_PRINT_REL_TIME)
+		seq_माला_दो(s, "      |         ");
+	अगर (flags & TRACE_GRAPH_PRINT_CPU)
+		seq_माला_दो(s, " |  ");
+	अगर (flags & TRACE_GRAPH_PRINT_PROC)
+		seq_माला_दो(s, "   |    |        ");
+	अगर (lat)
+		seq_माला_दो(s, "||||   ");
+	अगर (flags & TRACE_GRAPH_PRINT_DURATION)
+		seq_माला_दो(s, "   |   |      ");
+	seq_माला_दो(s, "               |   |   |   |\n");
+पूर्ण
 
-static void print_graph_headers(struct seq_file *s)
-{
-	print_graph_headers_flags(s, tracer_flags.val);
-}
+अटल व्योम prपूर्णांक_graph_headers(काष्ठा seq_file *s)
+अणु
+	prपूर्णांक_graph_headers_flags(s, tracer_flags.val);
+पूर्ण
 
-void print_graph_headers_flags(struct seq_file *s, u32 flags)
-{
-	struct trace_iterator *iter = s->private;
-	struct trace_array *tr = iter->tr;
+व्योम prपूर्णांक_graph_headers_flags(काष्ठा seq_file *s, u32 flags)
+अणु
+	काष्ठा trace_iterator *iter = s->निजी;
+	काष्ठा trace_array *tr = iter->tr;
 
-	if (!(tr->trace_flags & TRACE_ITER_CONTEXT_INFO))
-		return;
+	अगर (!(tr->trace_flags & TRACE_ITER_CONTEXT_INFO))
+		वापस;
 
-	if (tr->trace_flags & TRACE_ITER_LATENCY_FMT) {
-		/* print nothing if the buffers are empty */
-		if (trace_empty(iter))
-			return;
+	अगर (tr->trace_flags & TRACE_ITER_LATENCY_FMT) अणु
+		/* prपूर्णांक nothing अगर the buffers are empty */
+		अगर (trace_empty(iter))
+			वापस;
 
-		print_trace_header(s, iter);
-	}
+		prपूर्णांक_trace_header(s, iter);
+	पूर्ण
 
-	__print_graph_headers_flags(tr, s, flags);
-}
+	__prपूर्णांक_graph_headers_flags(tr, s, flags);
+पूर्ण
 
-void graph_trace_open(struct trace_iterator *iter)
-{
+व्योम graph_trace_खोलो(काष्ठा trace_iterator *iter)
+अणु
 	/* pid and depth on the last trace processed */
-	struct fgraph_data *data;
+	काष्ठा fgraph_data *data;
 	gfp_t gfpflags;
-	int cpu;
+	पूर्णांक cpu;
 
-	iter->private = NULL;
+	iter->निजी = शून्य;
 
 	/* We can be called in atomic context via ftrace_dump() */
 	gfpflags = (in_atomic() || irqs_disabled()) ? GFP_ATOMIC : GFP_KERNEL;
 
-	data = kzalloc(sizeof(*data), gfpflags);
-	if (!data)
-		goto out_err;
+	data = kzalloc(माप(*data), gfpflags);
+	अगर (!data)
+		जाओ out_err;
 
-	data->cpu_data = alloc_percpu_gfp(struct fgraph_cpu_data, gfpflags);
-	if (!data->cpu_data)
-		goto out_err_free;
+	data->cpu_data = alloc_percpu_gfp(काष्ठा fgraph_cpu_data, gfpflags);
+	अगर (!data->cpu_data)
+		जाओ out_err_मुक्त;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		pid_t *pid = &(per_cpu_ptr(data->cpu_data, cpu)->last_pid);
-		int *depth = &(per_cpu_ptr(data->cpu_data, cpu)->depth);
-		int *ignore = &(per_cpu_ptr(data->cpu_data, cpu)->ignore);
-		int *depth_irq = &(per_cpu_ptr(data->cpu_data, cpu)->depth_irq);
+		पूर्णांक *depth = &(per_cpu_ptr(data->cpu_data, cpu)->depth);
+		पूर्णांक *ignore = &(per_cpu_ptr(data->cpu_data, cpu)->ignore);
+		पूर्णांक *depth_irq = &(per_cpu_ptr(data->cpu_data, cpu)->depth_irq);
 
 		*pid = -1;
 		*depth = 0;
 		*ignore = 0;
 		*depth_irq = -1;
-	}
+	पूर्ण
 
-	iter->private = data;
+	iter->निजी = data;
 
-	return;
+	वापस;
 
- out_err_free:
-	kfree(data);
+ out_err_मुक्त:
+	kमुक्त(data);
  out_err:
 	pr_warn("function graph tracer: not enough memory\n");
-}
+पूर्ण
 
-void graph_trace_close(struct trace_iterator *iter)
-{
-	struct fgraph_data *data = iter->private;
+व्योम graph_trace_बंद(काष्ठा trace_iterator *iter)
+अणु
+	काष्ठा fgraph_data *data = iter->निजी;
 
-	if (data) {
-		free_percpu(data->cpu_data);
-		kfree(data);
-	}
-}
+	अगर (data) अणु
+		मुक्त_percpu(data->cpu_data);
+		kमुक्त(data);
+	पूर्ण
+पूर्ण
 
-static int
-func_graph_set_flag(struct trace_array *tr, u32 old_flags, u32 bit, int set)
-{
-	if (bit == TRACE_GRAPH_PRINT_IRQS)
+अटल पूर्णांक
+func_graph_set_flag(काष्ठा trace_array *tr, u32 old_flags, u32 bit, पूर्णांक set)
+अणु
+	अगर (bit == TRACE_GRAPH_PRINT_IRQS)
 		ftrace_graph_skip_irqs = !set;
 
-	if (bit == TRACE_GRAPH_SLEEP_TIME)
-		ftrace_graph_sleep_time_control(set);
+	अगर (bit == TRACE_GRAPH_SLEEP_TIME)
+		ftrace_graph_sleep_समय_control(set);
 
-	if (bit == TRACE_GRAPH_GRAPH_TIME)
-		ftrace_graph_graph_time_control(set);
+	अगर (bit == TRACE_GRAPH_GRAPH_TIME)
+		ftrace_graph_graph_समय_control(set);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct trace_event_functions graph_functions = {
-	.trace		= print_graph_function_event,
-};
+अटल काष्ठा trace_event_functions graph_functions = अणु
+	.trace		= prपूर्णांक_graph_function_event,
+पूर्ण;
 
-static struct trace_event graph_trace_entry_event = {
+अटल काष्ठा trace_event graph_trace_entry_event = अणु
 	.type		= TRACE_GRAPH_ENT,
 	.funcs		= &graph_functions,
-};
+पूर्ण;
 
-static struct trace_event graph_trace_ret_event = {
+अटल काष्ठा trace_event graph_trace_ret_event = अणु
 	.type		= TRACE_GRAPH_RET,
 	.funcs		= &graph_functions
-};
+पूर्ण;
 
-static struct tracer graph_trace __tracer_data = {
+अटल काष्ठा tracer graph_trace __tracer_data = अणु
 	.name		= "function_graph",
 	.update_thresh	= graph_trace_update_thresh,
-	.open		= graph_trace_open,
-	.pipe_open	= graph_trace_open,
-	.close		= graph_trace_close,
-	.pipe_close	= graph_trace_close,
+	.खोलो		= graph_trace_खोलो,
+	.pipe_खोलो	= graph_trace_खोलो,
+	.बंद		= graph_trace_बंद,
+	.pipe_बंद	= graph_trace_बंद,
 	.init		= graph_trace_init,
 	.reset		= graph_trace_reset,
-	.print_line	= print_graph_function,
-	.print_header	= print_graph_headers,
+	.prपूर्णांक_line	= prपूर्णांक_graph_function,
+	.prपूर्णांक_header	= prपूर्णांक_graph_headers,
 	.flags		= &tracer_flags,
 	.set_flag	= func_graph_set_flag,
-#ifdef CONFIG_FTRACE_SELFTEST
+#अगर_घोषित CONFIG_FTRACE_SELFTEST
 	.selftest	= trace_selftest_startup_function_graph,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 
-static ssize_t
-graph_depth_write(struct file *filp, const char __user *ubuf, size_t cnt,
+अटल sमाप_प्रकार
+graph_depth_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf, माप_प्रकार cnt,
 		  loff_t *ppos)
-{
-	unsigned long val;
-	int ret;
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul_from_user(ubuf, cnt, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ_from_user(ubuf, cnt, 10, &val);
+	अगर (ret)
+		वापस ret;
 
 	fgraph_max_depth = val;
 
 	*ppos += cnt;
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static ssize_t
-graph_depth_read(struct file *filp, char __user *ubuf, size_t cnt,
+अटल sमाप_प्रकार
+graph_depth_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf, माप_प्रकार cnt,
 		 loff_t *ppos)
-{
-	char buf[15]; /* More than enough to hold UINT_MAX + "\n"*/
-	int n;
+अणु
+	अक्षर buf[15]; /* More than enough to hold अच_पूर्णांक_उच्च + "\n"*/
+	पूर्णांक n;
 
-	n = sprintf(buf, "%d\n", fgraph_max_depth);
+	n = प्र_लिखो(buf, "%d\n", fgraph_max_depth);
 
-	return simple_read_from_buffer(ubuf, cnt, ppos, buf, n);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos, buf, n);
+पूर्ण
 
-static const struct file_operations graph_depth_fops = {
-	.open		= tracing_open_generic,
-	.write		= graph_depth_write,
-	.read		= graph_depth_read,
+अटल स्थिर काष्ठा file_operations graph_depth_fops = अणु
+	.खोलो		= tracing_खोलो_generic,
+	.ग_लिखो		= graph_depth_ग_लिखो,
+	.पढ़ो		= graph_depth_पढ़ो,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;
 
-static __init int init_graph_tracefs(void)
-{
-	int ret;
+अटल __init पूर्णांक init_graph_tracefs(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = tracing_init_dentry();
-	if (ret)
-		return 0;
+	अगर (ret)
+		वापस 0;
 
-	trace_create_file("max_graph_depth", 0644, NULL,
-			  NULL, &graph_depth_fops);
+	trace_create_file("max_graph_depth", 0644, शून्य,
+			  शून्य, &graph_depth_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 fs_initcall(init_graph_tracefs);
 
-static __init int init_graph_trace(void)
-{
-	max_bytes_for_cpu = snprintf(NULL, 0, "%u", nr_cpu_ids - 1);
+अटल __init पूर्णांक init_graph_trace(व्योम)
+अणु
+	max_bytes_क्रम_cpu = snम_लिखो(शून्य, 0, "%u", nr_cpu_ids - 1);
 
-	if (!register_trace_event(&graph_trace_entry_event)) {
+	अगर (!रेजिस्टर_trace_event(&graph_trace_entry_event)) अणु
 		pr_warn("Warning: could not register graph trace events\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (!register_trace_event(&graph_trace_ret_event)) {
+	अगर (!रेजिस्टर_trace_event(&graph_trace_ret_event)) अणु
 		pr_warn("Warning: could not register graph trace events\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return register_tracer(&graph_trace);
-}
+	वापस रेजिस्टर_tracer(&graph_trace);
+पूर्ण
 
 core_initcall(init_graph_trace);

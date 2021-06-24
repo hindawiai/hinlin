@@ -1,325 +1,326 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Intel IOP32X and IOP33X register definitions
+ * Intel IOP32X and IOP33X रेजिस्टर definitions
  *
  * Author: Rory Bolt <rorybolt@pacbell.net>
  * Copyright (C) 2002 Rory Bolt
  * Copyright (C) 2004 Intel Corp.
  */
 
-#ifndef __IOP3XX_H
-#define __IOP3XX_H
+#अगर_अघोषित __IOP3XX_H
+#घोषणा __IOP3XX_H
 
 /*
  * Peripherals that are shared between the iop32x and iop33x but
- * located at different addresses.
+ * located at dअगरferent addresses.
  */
-#define IOP3XX_TIMER_REG(reg)	(IOP3XX_PERIPHERAL_VIRT_BASE + 0x07e0 + (reg))
+#घोषणा IOP3XX_TIMER_REG(reg)	(IOP3XX_PERIPHERAL_VIRT_BASE + 0x07e0 + (reg))
 
-#include "iop3xx.h"
+#समावेश "iop3xx.h"
 
 /* ATU Parameters
  * set up a 1:1 bus to physical ram relationship
  * w/ physical ram on top of pci in the memory map
  */
-#define IOP32X_MAX_RAM_SIZE            0x40000000UL
-#define IOP3XX_MAX_RAM_SIZE            IOP32X_MAX_RAM_SIZE
-#define IOP3XX_PCI_LOWER_MEM_BA        0x80000000
+#घोषणा IOP32X_MAX_RAM_SIZE            0x40000000UL
+#घोषणा IOP3XX_MAX_RAM_SIZE            IOP32X_MAX_RAM_SIZE
+#घोषणा IOP3XX_PCI_LOWER_MEM_BA        0x80000000
 
 /*
  * IOP3XX GPIO handling
  */
-#define IOP3XX_GPIO_LINE(x)	(x)
+#घोषणा IOP3XX_GPIO_LINE(x)	(x)
 
-#ifndef __ASSEMBLY__
-extern int init_atu;
-extern int iop3xx_get_init_atu(void);
-#endif
+#अगर_अघोषित __ASSEMBLY__
+बाह्य पूर्णांक init_atu;
+बाह्य पूर्णांक iop3xx_get_init_atu(व्योम);
+#पूर्ण_अगर
 
 
 /*
- * IOP3XX processor registers
+ * IOP3XX processor रेजिस्टरs
  */
-#define IOP3XX_PERIPHERAL_PHYS_BASE	0xffffe000
-#define IOP3XX_PERIPHERAL_VIRT_BASE	0xfedfe000
-#define IOP3XX_PERIPHERAL_SIZE		0x00002000
-#define IOP3XX_PERIPHERAL_UPPER_PA (IOP3XX_PERIPHERAL_PHYS_BASE +\
+#घोषणा IOP3XX_PERIPHERAL_PHYS_BASE	0xffffe000
+#घोषणा IOP3XX_PERIPHERAL_VIRT_BASE	0xfedfe000
+#घोषणा IOP3XX_PERIPHERAL_SIZE		0x00002000
+#घोषणा IOP3XX_PERIPHERAL_UPPER_PA (IOP3XX_PERIPHERAL_PHYS_BASE +\
 					IOP3XX_PERIPHERAL_SIZE - 1)
-#define IOP3XX_PERIPHERAL_UPPER_VA (IOP3XX_PERIPHERAL_VIRT_BASE +\
+#घोषणा IOP3XX_PERIPHERAL_UPPER_VA (IOP3XX_PERIPHERAL_VIRT_BASE +\
 					IOP3XX_PERIPHERAL_SIZE - 1)
-#define IOP3XX_PMMR_PHYS_TO_VIRT(addr) (u32) ((u32) (addr) -\
+#घोषणा IOP3XX_PMMR_PHYS_TO_VIRT(addr) (u32) ((u32) (addr) -\
 					(IOP3XX_PERIPHERAL_PHYS_BASE\
 					- IOP3XX_PERIPHERAL_VIRT_BASE))
-#define IOP3XX_REG_ADDR(reg)		(IOP3XX_PERIPHERAL_VIRT_BASE + (reg))
+#घोषणा IOP3XX_REG_ADDR(reg)		(IOP3XX_PERIPHERAL_VIRT_BASE + (reg))
 
 /* Address Translation Unit  */
-#define IOP3XX_ATUVID		(volatile u16 *)IOP3XX_REG_ADDR(0x0100)
-#define IOP3XX_ATUDID		(volatile u16 *)IOP3XX_REG_ADDR(0x0102)
-#define IOP3XX_ATUCMD		(volatile u16 *)IOP3XX_REG_ADDR(0x0104)
-#define IOP3XX_ATUSR		(volatile u16 *)IOP3XX_REG_ADDR(0x0106)
-#define IOP3XX_ATURID		(volatile u8  *)IOP3XX_REG_ADDR(0x0108)
-#define IOP3XX_ATUCCR		(volatile u32 *)IOP3XX_REG_ADDR(0x0109)
-#define IOP3XX_ATUCLSR		(volatile u8  *)IOP3XX_REG_ADDR(0x010c)
-#define IOP3XX_ATULT		(volatile u8  *)IOP3XX_REG_ADDR(0x010d)
-#define IOP3XX_ATUHTR		(volatile u8  *)IOP3XX_REG_ADDR(0x010e)
-#define IOP3XX_ATUBIST		(volatile u8  *)IOP3XX_REG_ADDR(0x010f)
-#define IOP3XX_IABAR0		(volatile u32 *)IOP3XX_REG_ADDR(0x0110)
-#define IOP3XX_IAUBAR0		(volatile u32 *)IOP3XX_REG_ADDR(0x0114)
-#define IOP3XX_IABAR1		(volatile u32 *)IOP3XX_REG_ADDR(0x0118)
-#define IOP3XX_IAUBAR1		(volatile u32 *)IOP3XX_REG_ADDR(0x011c)
-#define IOP3XX_IABAR2		(volatile u32 *)IOP3XX_REG_ADDR(0x0120)
-#define IOP3XX_IAUBAR2		(volatile u32 *)IOP3XX_REG_ADDR(0x0124)
-#define IOP3XX_ASVIR		(volatile u16 *)IOP3XX_REG_ADDR(0x012c)
-#define IOP3XX_ASIR		(volatile u16 *)IOP3XX_REG_ADDR(0x012e)
-#define IOP3XX_ERBAR		(volatile u32 *)IOP3XX_REG_ADDR(0x0130)
-#define IOP3XX_ATUILR		(volatile u8  *)IOP3XX_REG_ADDR(0x013c)
-#define IOP3XX_ATUIPR		(volatile u8  *)IOP3XX_REG_ADDR(0x013d)
-#define IOP3XX_ATUMGNT		(volatile u8  *)IOP3XX_REG_ADDR(0x013e)
-#define IOP3XX_ATUMLAT		(volatile u8  *)IOP3XX_REG_ADDR(0x013f)
-#define IOP3XX_IALR0		(volatile u32 *)IOP3XX_REG_ADDR(0x0140)
-#define IOP3XX_IATVR0		(volatile u32 *)IOP3XX_REG_ADDR(0x0144)
-#define IOP3XX_ERLR		(volatile u32 *)IOP3XX_REG_ADDR(0x0148)
-#define IOP3XX_ERTVR		(volatile u32 *)IOP3XX_REG_ADDR(0x014c)
-#define IOP3XX_IALR1		(volatile u32 *)IOP3XX_REG_ADDR(0x0150)
-#define IOP3XX_IALR2		(volatile u32 *)IOP3XX_REG_ADDR(0x0154)
-#define IOP3XX_IATVR2		(volatile u32 *)IOP3XX_REG_ADDR(0x0158)
-#define IOP3XX_OIOWTVR		(volatile u32 *)IOP3XX_REG_ADDR(0x015c)
-#define IOP3XX_OMWTVR0		(volatile u32 *)IOP3XX_REG_ADDR(0x0160)
-#define IOP3XX_OUMWTVR0		(volatile u32 *)IOP3XX_REG_ADDR(0x0164)
-#define IOP3XX_OMWTVR1		(volatile u32 *)IOP3XX_REG_ADDR(0x0168)
-#define IOP3XX_OUMWTVR1		(volatile u32 *)IOP3XX_REG_ADDR(0x016c)
-#define IOP3XX_OUDWTVR		(volatile u32 *)IOP3XX_REG_ADDR(0x0178)
-#define IOP3XX_ATUCR		(volatile u32 *)IOP3XX_REG_ADDR(0x0180)
-#define IOP3XX_PCSR		(volatile u32 *)IOP3XX_REG_ADDR(0x0184)
-#define IOP3XX_ATUISR		(volatile u32 *)IOP3XX_REG_ADDR(0x0188)
-#define IOP3XX_ATUIMR		(volatile u32 *)IOP3XX_REG_ADDR(0x018c)
-#define IOP3XX_IABAR3		(volatile u32 *)IOP3XX_REG_ADDR(0x0190)
-#define IOP3XX_IAUBAR3		(volatile u32 *)IOP3XX_REG_ADDR(0x0194)
-#define IOP3XX_IALR3		(volatile u32 *)IOP3XX_REG_ADDR(0x0198)
-#define IOP3XX_IATVR3		(volatile u32 *)IOP3XX_REG_ADDR(0x019c)
-#define IOP3XX_OCCAR		(volatile u32 *)IOP3XX_REG_ADDR(0x01a4)
-#define IOP3XX_OCCDR		(volatile u32 *)IOP3XX_REG_ADDR(0x01ac)
-#define IOP3XX_PDSCR		(volatile u32 *)IOP3XX_REG_ADDR(0x01bc)
-#define IOP3XX_PMCAPID		(volatile u8  *)IOP3XX_REG_ADDR(0x01c0)
-#define IOP3XX_PMNEXT		(volatile u8  *)IOP3XX_REG_ADDR(0x01c1)
-#define IOP3XX_APMCR		(volatile u16 *)IOP3XX_REG_ADDR(0x01c2)
-#define IOP3XX_APMCSR		(volatile u16 *)IOP3XX_REG_ADDR(0x01c4)
-#define IOP3XX_PCIXCAPID	(volatile u8  *)IOP3XX_REG_ADDR(0x01e0)
-#define IOP3XX_PCIXNEXT		(volatile u8  *)IOP3XX_REG_ADDR(0x01e1)
-#define IOP3XX_PCIXCMD		(volatile u16 *)IOP3XX_REG_ADDR(0x01e2)
-#define IOP3XX_PCIXSR		(volatile u32 *)IOP3XX_REG_ADDR(0x01e4)
-#define IOP3XX_PCIIRSR		(volatile u32 *)IOP3XX_REG_ADDR(0x01ec)
-#define IOP3XX_PCSR_OUT_Q_BUSY (1 << 15)
-#define IOP3XX_PCSR_IN_Q_BUSY	(1 << 14)
-#define IOP3XX_ATUCR_OUT_EN	(1 << 1)
+#घोषणा IOP3XX_ATUVID		(अस्थिर u16 *)IOP3XX_REG_ADDR(0x0100)
+#घोषणा IOP3XX_ATUDID		(अस्थिर u16 *)IOP3XX_REG_ADDR(0x0102)
+#घोषणा IOP3XX_ATUCMD		(अस्थिर u16 *)IOP3XX_REG_ADDR(0x0104)
+#घोषणा IOP3XX_ATUSR		(अस्थिर u16 *)IOP3XX_REG_ADDR(0x0106)
+#घोषणा IOP3XX_ATURID		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x0108)
+#घोषणा IOP3XX_ATUCCR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0109)
+#घोषणा IOP3XX_ATUCLSR		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x010c)
+#घोषणा IOP3XX_ATULT		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x010d)
+#घोषणा IOP3XX_ATUHTR		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x010e)
+#घोषणा IOP3XX_ATUBIST		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x010f)
+#घोषणा IOP3XX_IABAR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0110)
+#घोषणा IOP3XX_IAUBAR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0114)
+#घोषणा IOP3XX_IABAR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0118)
+#घोषणा IOP3XX_IAUBAR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x011c)
+#घोषणा IOP3XX_IABAR2		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0120)
+#घोषणा IOP3XX_IAUBAR2		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0124)
+#घोषणा IOP3XX_ASVIR		(अस्थिर u16 *)IOP3XX_REG_ADDR(0x012c)
+#घोषणा IOP3XX_ASIR		(अस्थिर u16 *)IOP3XX_REG_ADDR(0x012e)
+#घोषणा IOP3XX_ERBAR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0130)
+#घोषणा IOP3XX_ATUILR		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x013c)
+#घोषणा IOP3XX_ATUIPR		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x013d)
+#घोषणा IOP3XX_ATUMGNT		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x013e)
+#घोषणा IOP3XX_ATUMLAT		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x013f)
+#घोषणा IOP3XX_IALR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0140)
+#घोषणा IOP3XX_IATVR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0144)
+#घोषणा IOP3XX_ERLR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0148)
+#घोषणा IOP3XX_ERTVR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x014c)
+#घोषणा IOP3XX_IALR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0150)
+#घोषणा IOP3XX_IALR2		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0154)
+#घोषणा IOP3XX_IATVR2		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0158)
+#घोषणा IOP3XX_OIOWTVR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x015c)
+#घोषणा IOP3XX_OMWTVR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0160)
+#घोषणा IOP3XX_OUMWTVR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0164)
+#घोषणा IOP3XX_OMWTVR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0168)
+#घोषणा IOP3XX_OUMWTVR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x016c)
+#घोषणा IOP3XX_OUDWTVR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0178)
+#घोषणा IOP3XX_ATUCR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0180)
+#घोषणा IOP3XX_PCSR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0184)
+#घोषणा IOP3XX_ATUISR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0188)
+#घोषणा IOP3XX_ATUIMR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x018c)
+#घोषणा IOP3XX_IABAR3		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0190)
+#घोषणा IOP3XX_IAUBAR3		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0194)
+#घोषणा IOP3XX_IALR3		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0198)
+#घोषणा IOP3XX_IATVR3		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x019c)
+#घोषणा IOP3XX_OCCAR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x01a4)
+#घोषणा IOP3XX_OCCDR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x01ac)
+#घोषणा IOP3XX_PDSCR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x01bc)
+#घोषणा IOP3XX_PMCAPID		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x01c0)
+#घोषणा IOP3XX_PMNEXT		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x01c1)
+#घोषणा IOP3XX_APMCR		(अस्थिर u16 *)IOP3XX_REG_ADDR(0x01c2)
+#घोषणा IOP3XX_APMCSR		(अस्थिर u16 *)IOP3XX_REG_ADDR(0x01c4)
+#घोषणा IOP3XX_PCIXCAPID	(अस्थिर u8  *)IOP3XX_REG_ADDR(0x01e0)
+#घोषणा IOP3XX_PCIXNEXT		(अस्थिर u8  *)IOP3XX_REG_ADDR(0x01e1)
+#घोषणा IOP3XX_PCIXCMD		(अस्थिर u16 *)IOP3XX_REG_ADDR(0x01e2)
+#घोषणा IOP3XX_PCIXSR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x01e4)
+#घोषणा IOP3XX_PCIIRSR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x01ec)
+#घोषणा IOP3XX_PCSR_OUT_Q_BUSY (1 << 15)
+#घोषणा IOP3XX_PCSR_IN_Q_BUSY	(1 << 14)
+#घोषणा IOP3XX_ATUCR_OUT_EN	(1 << 1)
 
-#define IOP3XX_INIT_ATU_DEFAULT 0
-#define IOP3XX_INIT_ATU_DISABLE -1
-#define IOP3XX_INIT_ATU_ENABLE	 1
+#घोषणा IOP3XX_INIT_ATU_DEFAULT 0
+#घोषणा IOP3XX_INIT_ATU_DISABLE -1
+#घोषणा IOP3XX_INIT_ATU_ENABLE	 1
 
 /* Messaging Unit  */
-#define IOP3XX_IMR0		(volatile u32 *)IOP3XX_REG_ADDR(0x0310)
-#define IOP3XX_IMR1		(volatile u32 *)IOP3XX_REG_ADDR(0x0314)
-#define IOP3XX_OMR0		(volatile u32 *)IOP3XX_REG_ADDR(0x0318)
-#define IOP3XX_OMR1		(volatile u32 *)IOP3XX_REG_ADDR(0x031c)
-#define IOP3XX_IDR		(volatile u32 *)IOP3XX_REG_ADDR(0x0320)
-#define IOP3XX_IISR		(volatile u32 *)IOP3XX_REG_ADDR(0x0324)
-#define IOP3XX_IIMR		(volatile u32 *)IOP3XX_REG_ADDR(0x0328)
-#define IOP3XX_ODR		(volatile u32 *)IOP3XX_REG_ADDR(0x032c)
-#define IOP3XX_OISR		(volatile u32 *)IOP3XX_REG_ADDR(0x0330)
-#define IOP3XX_OIMR		(volatile u32 *)IOP3XX_REG_ADDR(0x0334)
-#define IOP3XX_MUCR		(volatile u32 *)IOP3XX_REG_ADDR(0x0350)
-#define IOP3XX_QBAR		(volatile u32 *)IOP3XX_REG_ADDR(0x0354)
-#define IOP3XX_IFHPR		(volatile u32 *)IOP3XX_REG_ADDR(0x0360)
-#define IOP3XX_IFTPR		(volatile u32 *)IOP3XX_REG_ADDR(0x0364)
-#define IOP3XX_IPHPR		(volatile u32 *)IOP3XX_REG_ADDR(0x0368)
-#define IOP3XX_IPTPR		(volatile u32 *)IOP3XX_REG_ADDR(0x036c)
-#define IOP3XX_OFHPR		(volatile u32 *)IOP3XX_REG_ADDR(0x0370)
-#define IOP3XX_OFTPR		(volatile u32 *)IOP3XX_REG_ADDR(0x0374)
-#define IOP3XX_OPHPR		(volatile u32 *)IOP3XX_REG_ADDR(0x0378)
-#define IOP3XX_OPTPR		(volatile u32 *)IOP3XX_REG_ADDR(0x037c)
-#define IOP3XX_IAR		(volatile u32 *)IOP3XX_REG_ADDR(0x0380)
+#घोषणा IOP3XX_IMR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0310)
+#घोषणा IOP3XX_IMR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0314)
+#घोषणा IOP3XX_OMR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0318)
+#घोषणा IOP3XX_OMR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x031c)
+#घोषणा IOP3XX_IDR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0320)
+#घोषणा IOP3XX_IISR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0324)
+#घोषणा IOP3XX_IIMR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0328)
+#घोषणा IOP3XX_ODR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x032c)
+#घोषणा IOP3XX_OISR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0330)
+#घोषणा IOP3XX_OIMR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0334)
+#घोषणा IOP3XX_MUCR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0350)
+#घोषणा IOP3XX_QBAR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0354)
+#घोषणा IOP3XX_IFHPR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0360)
+#घोषणा IOP3XX_IFTPR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0364)
+#घोषणा IOP3XX_IPHPR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0368)
+#घोषणा IOP3XX_IPTPR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x036c)
+#घोषणा IOP3XX_OFHPR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0370)
+#घोषणा IOP3XX_OFTPR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0374)
+#घोषणा IOP3XX_OPHPR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0378)
+#घोषणा IOP3XX_OPTPR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x037c)
+#घोषणा IOP3XX_IAR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0380)
 
 /* DMA Controller  */
-#define IOP3XX_DMA_PHYS_BASE(chan) (IOP3XX_PERIPHERAL_PHYS_BASE + \
+#घोषणा IOP3XX_DMA_PHYS_BASE(chan) (IOP3XX_PERIPHERAL_PHYS_BASE + \
 					(0x400 + (chan << 6)))
-#define IOP3XX_DMA_UPPER_PA(chan)  (IOP3XX_DMA_PHYS_BASE(chan) + 0x27)
+#घोषणा IOP3XX_DMA_UPPER_PA(chan)  (IOP3XX_DMA_PHYS_BASE(chan) + 0x27)
 
-/* Peripheral bus interface  */
-#define IOP3XX_PBCR		(volatile u32 *)IOP3XX_REG_ADDR(0x0680)
-#define IOP3XX_PBISR		(volatile u32 *)IOP3XX_REG_ADDR(0x0684)
-#define IOP3XX_PBBAR0		(volatile u32 *)IOP3XX_REG_ADDR(0x0688)
-#define IOP3XX_PBLR0		(volatile u32 *)IOP3XX_REG_ADDR(0x068c)
-#define IOP3XX_PBBAR1		(volatile u32 *)IOP3XX_REG_ADDR(0x0690)
-#define IOP3XX_PBLR1		(volatile u32 *)IOP3XX_REG_ADDR(0x0694)
-#define IOP3XX_PBBAR2		(volatile u32 *)IOP3XX_REG_ADDR(0x0698)
-#define IOP3XX_PBLR2		(volatile u32 *)IOP3XX_REG_ADDR(0x069c)
-#define IOP3XX_PBBAR3		(volatile u32 *)IOP3XX_REG_ADDR(0x06a0)
-#define IOP3XX_PBLR3		(volatile u32 *)IOP3XX_REG_ADDR(0x06a4)
-#define IOP3XX_PBBAR4		(volatile u32 *)IOP3XX_REG_ADDR(0x06a8)
-#define IOP3XX_PBLR4		(volatile u32 *)IOP3XX_REG_ADDR(0x06ac)
-#define IOP3XX_PBBAR5		(volatile u32 *)IOP3XX_REG_ADDR(0x06b0)
-#define IOP3XX_PBLR5		(volatile u32 *)IOP3XX_REG_ADDR(0x06b4)
-#define IOP3XX_PMBR0		(volatile u32 *)IOP3XX_REG_ADDR(0x06c0)
-#define IOP3XX_PMBR1		(volatile u32 *)IOP3XX_REG_ADDR(0x06e0)
-#define IOP3XX_PMBR2		(volatile u32 *)IOP3XX_REG_ADDR(0x06e4)
+/* Peripheral bus पूर्णांकerface  */
+#घोषणा IOP3XX_PBCR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0680)
+#घोषणा IOP3XX_PBISR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0684)
+#घोषणा IOP3XX_PBBAR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0688)
+#घोषणा IOP3XX_PBLR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x068c)
+#घोषणा IOP3XX_PBBAR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0690)
+#घोषणा IOP3XX_PBLR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0694)
+#घोषणा IOP3XX_PBBAR2		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0698)
+#घोषणा IOP3XX_PBLR2		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x069c)
+#घोषणा IOP3XX_PBBAR3		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x06a0)
+#घोषणा IOP3XX_PBLR3		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x06a4)
+#घोषणा IOP3XX_PBBAR4		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x06a8)
+#घोषणा IOP3XX_PBLR4		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x06ac)
+#घोषणा IOP3XX_PBBAR5		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x06b0)
+#घोषणा IOP3XX_PBLR5		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x06b4)
+#घोषणा IOP3XX_PMBR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x06c0)
+#घोषणा IOP3XX_PMBR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x06e0)
+#घोषणा IOP3XX_PMBR2		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x06e4)
 
-/* Peripheral performance monitoring unit  */
-#define IOP3XX_GTMR		(volatile u32 *)IOP3XX_REG_ADDR(0x0700)
-#define IOP3XX_ESR		(volatile u32 *)IOP3XX_REG_ADDR(0x0704)
-#define IOP3XX_EMISR		(volatile u32 *)IOP3XX_REG_ADDR(0x0708)
-#define IOP3XX_GTSR		(volatile u32 *)IOP3XX_REG_ADDR(0x0710)
+/* Peripheral perक्रमmance monitoring unit  */
+#घोषणा IOP3XX_GTMR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0700)
+#घोषणा IOP3XX_ESR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0704)
+#घोषणा IOP3XX_EMISR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0708)
+#घोषणा IOP3XX_GTSR		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0710)
 /* PERCR0 DOESN'T EXIST - index from 1! */
-#define IOP3XX_PERCR0		(volatile u32 *)IOP3XX_REG_ADDR(0x0710)
+#घोषणा IOP3XX_PERCR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x0710)
 
 /* Timers  */
-#define IOP3XX_TU_TMR0		(volatile u32 *)IOP3XX_TIMER_REG(0x0000)
-#define IOP3XX_TU_TMR1		(volatile u32 *)IOP3XX_TIMER_REG(0x0004)
-#define IOP3XX_TU_TCR0		(volatile u32 *)IOP3XX_TIMER_REG(0x0008)
-#define IOP3XX_TU_TCR1		(volatile u32 *)IOP3XX_TIMER_REG(0x000c)
-#define IOP3XX_TU_TRR0		(volatile u32 *)IOP3XX_TIMER_REG(0x0010)
-#define IOP3XX_TU_TRR1		(volatile u32 *)IOP3XX_TIMER_REG(0x0014)
-#define IOP3XX_TU_TISR		(volatile u32 *)IOP3XX_TIMER_REG(0x0018)
-#define IOP3XX_TU_WDTCR		(volatile u32 *)IOP3XX_TIMER_REG(0x001c)
-#define IOP_TMR_EN	    0x02
-#define IOP_TMR_RELOAD	    0x04
-#define IOP_TMR_PRIVILEGED 0x08
-#define IOP_TMR_RATIO_1_1  0x00
+#घोषणा IOP3XX_TU_TMR0		(अस्थिर u32 *)IOP3XX_TIMER_REG(0x0000)
+#घोषणा IOP3XX_TU_TMR1		(अस्थिर u32 *)IOP3XX_TIMER_REG(0x0004)
+#घोषणा IOP3XX_TU_TCR0		(अस्थिर u32 *)IOP3XX_TIMER_REG(0x0008)
+#घोषणा IOP3XX_TU_TCR1		(अस्थिर u32 *)IOP3XX_TIMER_REG(0x000c)
+#घोषणा IOP3XX_TU_TRR0		(अस्थिर u32 *)IOP3XX_TIMER_REG(0x0010)
+#घोषणा IOP3XX_TU_TRR1		(अस्थिर u32 *)IOP3XX_TIMER_REG(0x0014)
+#घोषणा IOP3XX_TU_TISR		(अस्थिर u32 *)IOP3XX_TIMER_REG(0x0018)
+#घोषणा IOP3XX_TU_WDTCR		(अस्थिर u32 *)IOP3XX_TIMER_REG(0x001c)
+#घोषणा IOP_TMR_EN	    0x02
+#घोषणा IOP_TMR_RELOAD	    0x04
+#घोषणा IOP_TMR_PRIVILEGED 0x08
+#घोषणा IOP_TMR_RATIO_1_1  0x00
 
-/* Watchdog timer definitions */
-#define IOP_WDTCR_EN_ARM        0x1e1e1e1e
-#define IOP_WDTCR_EN            0xe1e1e1e1
-/* iop3xx does not support stopping the watchdog, so we just re-arm */
-#define IOP_WDTCR_DIS_ARM	(IOP_WDTCR_EN_ARM)
-#define IOP_WDTCR_DIS		(IOP_WDTCR_EN)
+/* Watchकरोg समयr definitions */
+#घोषणा IOP_WDTCR_EN_ARM        0x1e1e1e1e
+#घोषणा IOP_WDTCR_EN            0xe1e1e1e1
+/* iop3xx करोes not support stopping the watchकरोg, so we just re-arm */
+#घोषणा IOP_WDTCR_DIS_ARM	(IOP_WDTCR_EN_ARM)
+#घोषणा IOP_WDTCR_DIS		(IOP_WDTCR_EN)
 
 /* Application accelerator unit  */
-#define IOP3XX_AAU_PHYS_BASE (IOP3XX_PERIPHERAL_PHYS_BASE + 0x800)
-#define IOP3XX_AAU_UPPER_PA (IOP3XX_AAU_PHYS_BASE + 0xa7)
+#घोषणा IOP3XX_AAU_PHYS_BASE (IOP3XX_PERIPHERAL_PHYS_BASE + 0x800)
+#घोषणा IOP3XX_AAU_UPPER_PA (IOP3XX_AAU_PHYS_BASE + 0xa7)
 
-/* I2C bus interface unit  */
-#define IOP3XX_ICR0		(volatile u32 *)IOP3XX_REG_ADDR(0x1680)
-#define IOP3XX_ISR0		(volatile u32 *)IOP3XX_REG_ADDR(0x1684)
-#define IOP3XX_ISAR0		(volatile u32 *)IOP3XX_REG_ADDR(0x1688)
-#define IOP3XX_IDBR0		(volatile u32 *)IOP3XX_REG_ADDR(0x168c)
-#define IOP3XX_IBMR0		(volatile u32 *)IOP3XX_REG_ADDR(0x1694)
-#define IOP3XX_ICR1		(volatile u32 *)IOP3XX_REG_ADDR(0x16a0)
-#define IOP3XX_ISR1		(volatile u32 *)IOP3XX_REG_ADDR(0x16a4)
-#define IOP3XX_ISAR1		(volatile u32 *)IOP3XX_REG_ADDR(0x16a8)
-#define IOP3XX_IDBR1		(volatile u32 *)IOP3XX_REG_ADDR(0x16ac)
-#define IOP3XX_IBMR1		(volatile u32 *)IOP3XX_REG_ADDR(0x16b4)
+/* I2C bus पूर्णांकerface unit  */
+#घोषणा IOP3XX_ICR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x1680)
+#घोषणा IOP3XX_ISR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x1684)
+#घोषणा IOP3XX_ISAR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x1688)
+#घोषणा IOP3XX_IDBR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x168c)
+#घोषणा IOP3XX_IBMR0		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x1694)
+#घोषणा IOP3XX_ICR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x16a0)
+#घोषणा IOP3XX_ISR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x16a4)
+#घोषणा IOP3XX_ISAR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x16a8)
+#घोषणा IOP3XX_IDBR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x16ac)
+#घोषणा IOP3XX_IBMR1		(अस्थिर u32 *)IOP3XX_REG_ADDR(0x16b4)
 
 
 /*
- * IOP3XX I/O and Mem space regions for PCI autoconfiguration
+ * IOP3XX I/O and Mem space regions क्रम PCI स्वतःconfiguration
  */
-#define IOP3XX_PCI_LOWER_MEM_PA	0x80000000
-#define IOP3XX_PCI_MEM_WINDOW_SIZE	0x08000000
+#घोषणा IOP3XX_PCI_LOWER_MEM_PA	0x80000000
+#घोषणा IOP3XX_PCI_MEM_WINDOW_SIZE	0x08000000
 
-#define IOP3XX_PCI_LOWER_IO_PA		0x90000000
-#define IOP3XX_PCI_LOWER_IO_BA		0x00000000
+#घोषणा IOP3XX_PCI_LOWER_IO_PA		0x90000000
+#घोषणा IOP3XX_PCI_LOWER_IO_BA		0x00000000
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/types.h>
-#include <linux/reboot.h>
+#समावेश <linux/types.h>
+#समावेश <linux/reboot.h>
 
-void iop3xx_map_io(void);
-void iop_init_cp6_handler(void);
-void iop_init_time(unsigned long tickrate);
-void iop3xx_restart(enum reboot_mode, const char *);
+व्योम iop3xx_map_io(व्योम);
+व्योम iop_init_cp6_handler(व्योम);
+व्योम iop_init_समय(अचिन्हित दीर्घ tickrate);
+व्योम iop3xx_restart(क्रमागत reboot_mode, स्थिर अक्षर *);
 
-static inline u32 read_tmr0(void)
-{
+अटल अंतरभूत u32 पढ़ो_पंचांगr0(व्योम)
+अणु
 	u32 val;
-	asm volatile("mrc p6, 0, %0, c0, c1, 0" : "=r" (val));
-	return val;
-}
+	यंत्र अस्थिर("mrc p6, 0, %0, c0, c1, 0" : "=r" (val));
+	वापस val;
+पूर्ण
 
-static inline void write_tmr0(u32 val)
-{
-	asm volatile("mcr p6, 0, %0, c0, c1, 0" : : "r" (val));
-}
+अटल अंतरभूत व्योम ग_लिखो_पंचांगr0(u32 val)
+अणु
+	यंत्र अस्थिर("mcr p6, 0, %0, c0, c1, 0" : : "r" (val));
+पूर्ण
 
-static inline void write_tmr1(u32 val)
-{
-	asm volatile("mcr p6, 0, %0, c1, c1, 0" : : "r" (val));
-}
+अटल अंतरभूत व्योम ग_लिखो_पंचांगr1(u32 val)
+अणु
+	यंत्र अस्थिर("mcr p6, 0, %0, c1, c1, 0" : : "r" (val));
+पूर्ण
 
-static inline u32 read_tcr0(void)
-{
+अटल अंतरभूत u32 पढ़ो_tcr0(व्योम)
+अणु
 	u32 val;
-	asm volatile("mrc p6, 0, %0, c2, c1, 0" : "=r" (val));
-	return val;
-}
+	यंत्र अस्थिर("mrc p6, 0, %0, c2, c1, 0" : "=r" (val));
+	वापस val;
+पूर्ण
 
-static inline void write_tcr0(u32 val)
-{
-	asm volatile("mcr p6, 0, %0, c2, c1, 0" : : "r" (val));
-}
+अटल अंतरभूत व्योम ग_लिखो_tcr0(u32 val)
+अणु
+	यंत्र अस्थिर("mcr p6, 0, %0, c2, c1, 0" : : "r" (val));
+पूर्ण
 
-static inline u32 read_tcr1(void)
-{
+अटल अंतरभूत u32 पढ़ो_tcr1(व्योम)
+अणु
 	u32 val;
-	asm volatile("mrc p6, 0, %0, c3, c1, 0" : "=r" (val));
-	return val;
-}
+	यंत्र अस्थिर("mrc p6, 0, %0, c3, c1, 0" : "=r" (val));
+	वापस val;
+पूर्ण
 
-static inline void write_tcr1(u32 val)
-{
-	asm volatile("mcr p6, 0, %0, c3, c1, 0" : : "r" (val));
-}
+अटल अंतरभूत व्योम ग_लिखो_tcr1(u32 val)
+अणु
+	यंत्र अस्थिर("mcr p6, 0, %0, c3, c1, 0" : : "r" (val));
+पूर्ण
 
-static inline void write_trr0(u32 val)
-{
-	asm volatile("mcr p6, 0, %0, c4, c1, 0" : : "r" (val));
-}
+अटल अंतरभूत व्योम ग_लिखो_trr0(u32 val)
+अणु
+	यंत्र अस्थिर("mcr p6, 0, %0, c4, c1, 0" : : "r" (val));
+पूर्ण
 
-static inline void write_trr1(u32 val)
-{
-	asm volatile("mcr p6, 0, %0, c5, c1, 0" : : "r" (val));
-}
+अटल अंतरभूत व्योम ग_लिखो_trr1(u32 val)
+अणु
+	यंत्र अस्थिर("mcr p6, 0, %0, c5, c1, 0" : : "r" (val));
+पूर्ण
 
-static inline void write_tisr(u32 val)
-{
-	asm volatile("mcr p6, 0, %0, c6, c1, 0" : : "r" (val));
-}
+अटल अंतरभूत व्योम ग_लिखो_tisr(u32 val)
+अणु
+	यंत्र अस्थिर("mcr p6, 0, %0, c6, c1, 0" : : "r" (val));
+पूर्ण
 
-static inline u32 read_wdtcr(void)
-{
+अटल अंतरभूत u32 पढ़ो_wdtcr(व्योम)
+अणु
 	u32 val;
-	asm volatile("mrc p6, 0, %0, c7, c1, 0":"=r" (val));
-	return val;
-}
-static inline void write_wdtcr(u32 val)
-{
-	asm volatile("mcr p6, 0, %0, c7, c1, 0"::"r" (val));
-}
+	यंत्र अस्थिर("mrc p6, 0, %0, c7, c1, 0":"=r" (val));
+	वापस val;
+पूर्ण
+अटल अंतरभूत व्योम ग_लिखो_wdtcr(u32 val)
+अणु
+	यंत्र अस्थिर("mcr p6, 0, %0, c7, c1, 0"::"r" (val));
+पूर्ण
 
-extern unsigned long get_iop_tick_rate(void);
+बाह्य अचिन्हित दीर्घ get_iop_tick_rate(व्योम);
 
-/* only iop13xx has these registers, we define these to present a
- * common register interface for the iop_wdt driver.
+/* only iop13xx has these रेजिस्टरs, we define these to present a
+ * common रेजिस्टर पूर्णांकerface क्रम the iop_wdt driver.
  */
-#define IOP_RCSR_WDT	(0)
-static inline u32 read_rcsr(void)
-{
-	return 0;
-}
-static inline void write_wdtsr(u32 val)
-{
-	do { } while (0);
-}
+#घोषणा IOP_RCSR_WDT	(0)
+अटल अंतरभूत u32 पढ़ो_rcsr(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम ग_लिखो_wdtsr(u32 val)
+अणु
+	करो अणु पूर्ण जबतक (0);
+पूर्ण
 
-extern struct platform_device iop3xx_dma_0_channel;
-extern struct platform_device iop3xx_dma_1_channel;
-extern struct platform_device iop3xx_aau_channel;
-extern struct platform_device iop3xx_i2c0_device;
-extern struct platform_device iop3xx_i2c1_device;
-extern struct gpiod_lookup_table iop3xx_i2c0_gpio_lookup;
-extern struct gpiod_lookup_table iop3xx_i2c1_gpio_lookup;
+बाह्य काष्ठा platक्रमm_device iop3xx_dma_0_channel;
+बाह्य काष्ठा platक्रमm_device iop3xx_dma_1_channel;
+बाह्य काष्ठा platक्रमm_device iop3xx_aau_channel;
+बाह्य काष्ठा platक्रमm_device iop3xx_i2c0_device;
+बाह्य काष्ठा platक्रमm_device iop3xx_i2c1_device;
+बाह्य काष्ठा gpiod_lookup_table iop3xx_i2c0_gpio_lookup;
+बाह्य काष्ठा gpiod_lookup_table iop3xx_i2c1_gpio_lookup;
 
-#endif
+#पूर्ण_अगर
 
 
-#endif
+#पूर्ण_अगर

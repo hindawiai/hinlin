@@ -1,180 +1,181 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* PKCS#8 Private Key parser [RFC 5208].
  *
  * Copyright (C) 2016 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define pr_fmt(fmt) "PKCS8: "fmt
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/oid_registry.h>
-#include <keys/asymmetric-subtype.h>
-#include <keys/asymmetric-parser.h>
-#include <crypto/public_key.h>
-#include "pkcs8.asn1.h"
+#घोषणा pr_fmt(fmt) "PKCS8: "fmt
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/oid_registry.h>
+#समावेश <keys/asymmetric-subtype.h>
+#समावेश <keys/asymmetric-parser.h>
+#समावेश <crypto/खुला_key.h>
+#समावेश "pkcs8.asn1.h"
 
-struct pkcs8_parse_context {
-	struct public_key *pub;
-	unsigned long	data;			/* Start of data */
-	enum OID	last_oid;		/* Last OID encountered */
-	enum OID	algo_oid;		/* Algorithm OID */
+काष्ठा pkcs8_parse_context अणु
+	काष्ठा खुला_key *pub;
+	अचिन्हित दीर्घ	data;			/* Start of data */
+	क्रमागत OID	last_oid;		/* Last OID encountered */
+	क्रमागत OID	algo_oid;		/* Algorithm OID */
 	u32		key_size;
-	const void	*key;
-};
+	स्थिर व्योम	*key;
+पूर्ण;
 
 /*
- * Note an OID when we find one for later processing when we know how to
- * interpret it.
+ * Note an OID when we find one क्रम later processing when we know how to
+ * पूर्णांकerpret it.
  */
-int pkcs8_note_OID(void *context, size_t hdrlen,
-		   unsigned char tag,
-		   const void *value, size_t vlen)
-{
-	struct pkcs8_parse_context *ctx = context;
+पूर्णांक pkcs8_note_OID(व्योम *context, माप_प्रकार hdrlen,
+		   अचिन्हित अक्षर tag,
+		   स्थिर व्योम *value, माप_प्रकार vlen)
+अणु
+	काष्ठा pkcs8_parse_context *ctx = context;
 
 	ctx->last_oid = look_up_OID(value, vlen);
-	if (ctx->last_oid == OID__NR) {
-		char buffer[50];
+	अगर (ctx->last_oid == OID__NR) अणु
+		अक्षर buffer[50];
 
-		sprint_oid(value, vlen, buffer, sizeof(buffer));
+		sprपूर्णांक_oid(value, vlen, buffer, माप(buffer));
 		pr_info("Unknown OID: [%lu] %s\n",
-			(unsigned long)value - ctx->data, buffer);
-	}
-	return 0;
-}
+			(अचिन्हित दीर्घ)value - ctx->data, buffer);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Note the version number of the ASN.1 blob.
  */
-int pkcs8_note_version(void *context, size_t hdrlen,
-		       unsigned char tag,
-		       const void *value, size_t vlen)
-{
-	if (vlen != 1 || ((const u8 *)value)[0] != 0) {
+पूर्णांक pkcs8_note_version(व्योम *context, माप_प्रकार hdrlen,
+		       अचिन्हित अक्षर tag,
+		       स्थिर व्योम *value, माप_प्रकार vlen)
+अणु
+	अगर (vlen != 1 || ((स्थिर u8 *)value)[0] != 0) अणु
 		pr_warn("Unsupported PKCS#8 version\n");
-		return -EBADMSG;
-	}
-	return 0;
-}
+		वापस -EBADMSG;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Note the public algorithm.
+ * Note the खुला algorithm.
  */
-int pkcs8_note_algo(void *context, size_t hdrlen,
-		    unsigned char tag,
-		    const void *value, size_t vlen)
-{
-	struct pkcs8_parse_context *ctx = context;
+पूर्णांक pkcs8_note_algo(व्योम *context, माप_प्रकार hdrlen,
+		    अचिन्हित अक्षर tag,
+		    स्थिर व्योम *value, माप_प्रकार vlen)
+अणु
+	काष्ठा pkcs8_parse_context *ctx = context;
 
-	if (ctx->last_oid != OID_rsaEncryption)
-		return -ENOPKG;
+	अगर (ctx->last_oid != OID_rsaEncryption)
+		वापस -ENOPKG;
 
 	ctx->pub->pkey_algo = "rsa";
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Note the key data of the ASN.1 blob.
  */
-int pkcs8_note_key(void *context, size_t hdrlen,
-		   unsigned char tag,
-		   const void *value, size_t vlen)
-{
-	struct pkcs8_parse_context *ctx = context;
+पूर्णांक pkcs8_note_key(व्योम *context, माप_प्रकार hdrlen,
+		   अचिन्हित अक्षर tag,
+		   स्थिर व्योम *value, माप_प्रकार vlen)
+अणु
+	काष्ठा pkcs8_parse_context *ctx = context;
 
 	ctx->key = value;
 	ctx->key_size = vlen;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Parse a PKCS#8 private key blob.
+ * Parse a PKCS#8 निजी key blob.
  */
-static struct public_key *pkcs8_parse(const void *data, size_t datalen)
-{
-	struct pkcs8_parse_context ctx;
-	struct public_key *pub;
-	long ret;
+अटल काष्ठा खुला_key *pkcs8_parse(स्थिर व्योम *data, माप_प्रकार datalen)
+अणु
+	काष्ठा pkcs8_parse_context ctx;
+	काष्ठा खुला_key *pub;
+	दीर्घ ret;
 
-	memset(&ctx, 0, sizeof(ctx));
+	स_रखो(&ctx, 0, माप(ctx));
 
 	ret = -ENOMEM;
-	ctx.pub = kzalloc(sizeof(struct public_key), GFP_KERNEL);
-	if (!ctx.pub)
-		goto error;
+	ctx.pub = kzalloc(माप(काष्ठा खुला_key), GFP_KERNEL);
+	अगर (!ctx.pub)
+		जाओ error;
 
-	ctx.data = (unsigned long)data;
+	ctx.data = (अचिन्हित दीर्घ)data;
 
-	/* Attempt to decode the private key */
+	/* Attempt to decode the निजी key */
 	ret = asn1_ber_decoder(&pkcs8_decoder, &ctx, data, datalen);
-	if (ret < 0)
-		goto error_decode;
+	अगर (ret < 0)
+		जाओ error_decode;
 
 	ret = -ENOMEM;
 	pub = ctx.pub;
 	pub->key = kmemdup(ctx.key, ctx.key_size, GFP_KERNEL);
-	if (!pub->key)
-		goto error_decode;
+	अगर (!pub->key)
+		जाओ error_decode;
 
 	pub->keylen = ctx.key_size;
-	pub->key_is_private = true;
-	return pub;
+	pub->key_is_निजी = true;
+	वापस pub;
 
 error_decode:
-	kfree(ctx.pub);
+	kमुक्त(ctx.pub);
 error:
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
 /*
- * Attempt to parse a data blob for a key as a PKCS#8 private key.
+ * Attempt to parse a data blob क्रम a key as a PKCS#8 निजी key.
  */
-static int pkcs8_key_preparse(struct key_preparsed_payload *prep)
-{
-	struct public_key *pub;
+अटल पूर्णांक pkcs8_key_preparse(काष्ठा key_preparsed_payload *prep)
+अणु
+	काष्ठा खुला_key *pub;
 
 	pub = pkcs8_parse(prep->data, prep->datalen);
-	if (IS_ERR(pub))
-		return PTR_ERR(pub);
+	अगर (IS_ERR(pub))
+		वापस PTR_ERR(pub);
 
 	pr_devel("Cert Key Algo: %s\n", pub->pkey_algo);
 	pub->id_type = "PKCS8";
 
 	/* We're pinning the module by being linked against it */
-	__module_get(public_key_subtype.owner);
-	prep->payload.data[asym_subtype] = &public_key_subtype;
-	prep->payload.data[asym_key_ids] = NULL;
+	__module_get(खुला_key_subtype.owner);
+	prep->payload.data[asym_subtype] = &खुला_key_subtype;
+	prep->payload.data[asym_key_ids] = शून्य;
 	prep->payload.data[asym_crypto] = pub;
-	prep->payload.data[asym_auth] = NULL;
+	prep->payload.data[asym_auth] = शून्य;
 	prep->quotalen = 100;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct asymmetric_key_parser pkcs8_key_parser = {
+अटल काष्ठा asymmetric_key_parser pkcs8_key_parser = अणु
 	.owner	= THIS_MODULE,
 	.name	= "pkcs8",
 	.parse	= pkcs8_key_preparse,
-};
+पूर्ण;
 
 /*
  * Module stuff
  */
-static int __init pkcs8_key_init(void)
-{
-	return register_asymmetric_key_parser(&pkcs8_key_parser);
-}
+अटल पूर्णांक __init pkcs8_key_init(व्योम)
+अणु
+	वापस रेजिस्टर_asymmetric_key_parser(&pkcs8_key_parser);
+पूर्ण
 
-static void __exit pkcs8_key_exit(void)
-{
-	unregister_asymmetric_key_parser(&pkcs8_key_parser);
-}
+अटल व्योम __निकास pkcs8_key_निकास(व्योम)
+अणु
+	unरेजिस्टर_asymmetric_key_parser(&pkcs8_key_parser);
+पूर्ण
 
 module_init(pkcs8_key_init);
-module_exit(pkcs8_key_exit);
+module_निकास(pkcs8_key_निकास);
 
 MODULE_DESCRIPTION("PKCS#8 certificate parser");
 MODULE_LICENSE("GPL");

@@ -1,306 +1,307 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *	w1_ds2433.c - w1 family 23 (DS2433) driver
  *
  * Copyright (c) 2005 Ben Gardner <bgardner@wabtec.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/device.h>
-#include <linux/types.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#ifdef CONFIG_W1_SLAVE_DS2433_CRC
-#include <linux/crc16.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/device.h>
+#समावेश <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#अगर_घोषित CONFIG_W1_SLAVE_DS2433_CRC
+#समावेश <linux/crc16.h>
 
-#define CRC16_INIT		0
-#define CRC16_VALID		0xb001
+#घोषणा CRC16_INIT		0
+#घोषणा CRC16_VALID		0xb001
 
-#endif
+#पूर्ण_अगर
 
-#include <linux/w1.h>
+#समावेश <linux/w1.h>
 
-#define W1_EEPROM_DS2433	0x23
+#घोषणा W1_EEPROM_DS2433	0x23
 
-#define W1_EEPROM_SIZE		512
-#define W1_PAGE_COUNT		16
-#define W1_PAGE_SIZE		32
-#define W1_PAGE_BITS		5
-#define W1_PAGE_MASK		0x1F
+#घोषणा W1_EEPROM_SIZE		512
+#घोषणा W1_PAGE_COUNT		16
+#घोषणा W1_PAGE_SIZE		32
+#घोषणा W1_PAGE_BITS		5
+#घोषणा W1_PAGE_MASK		0x1F
 
-#define W1_F23_TIME		300
+#घोषणा W1_F23_TIME		300
 
-#define W1_F23_READ_EEPROM	0xF0
-#define W1_F23_WRITE_SCRATCH	0x0F
-#define W1_F23_READ_SCRATCH	0xAA
-#define W1_F23_COPY_SCRATCH	0x55
+#घोषणा W1_F23_READ_EEPROM	0xF0
+#घोषणा W1_F23_WRITE_SCRATCH	0x0F
+#घोषणा W1_F23_READ_SCRATCH	0xAA
+#घोषणा W1_F23_COPY_SCRATCH	0x55
 
-struct w1_f23_data {
+काष्ठा w1_f23_data अणु
 	u8	memory[W1_EEPROM_SIZE];
 	u32	validcrc;
-};
+पूर्ण;
 
 /**
  * Check the file size bounds and adjusts count as needed.
- * This would not be needed if the file size didn't reset to 0 after a write.
+ * This would not be needed अगर the file size didn't reset to 0 after a ग_लिखो.
  */
-static inline size_t w1_f23_fix_count(loff_t off, size_t count, size_t size)
-{
-	if (off > size)
-		return 0;
+अटल अंतरभूत माप_प्रकार w1_f23_fix_count(loff_t off, माप_प्रकार count, माप_प्रकार size)
+अणु
+	अगर (off > size)
+		वापस 0;
 
-	if ((off + count) > size)
-		return (size - off);
+	अगर ((off + count) > size)
+		वापस (size - off);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-#ifdef CONFIG_W1_SLAVE_DS2433_CRC
-static int w1_f23_refresh_block(struct w1_slave *sl, struct w1_f23_data *data,
-				int block)
-{
+#अगर_घोषित CONFIG_W1_SLAVE_DS2433_CRC
+अटल पूर्णांक w1_f23_refresh_block(काष्ठा w1_slave *sl, काष्ठा w1_f23_data *data,
+				पूर्णांक block)
+अणु
 	u8	wrbuf[3];
-	int	off = block * W1_PAGE_SIZE;
+	पूर्णांक	off = block * W1_PAGE_SIZE;
 
-	if (data->validcrc & (1 << block))
-		return 0;
+	अगर (data->validcrc & (1 << block))
+		वापस 0;
 
-	if (w1_reset_select_slave(sl)) {
+	अगर (w1_reset_select_slave(sl)) अणु
 		data->validcrc = 0;
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	wrbuf[0] = W1_F23_READ_EEPROM;
 	wrbuf[1] = off & 0xff;
 	wrbuf[2] = off >> 8;
-	w1_write_block(sl->master, wrbuf, 3);
-	w1_read_block(sl->master, &data->memory[off], W1_PAGE_SIZE);
+	w1_ग_लिखो_block(sl->master, wrbuf, 3);
+	w1_पढ़ो_block(sl->master, &data->memory[off], W1_PAGE_SIZE);
 
-	/* cache the block if the CRC is valid */
-	if (crc16(CRC16_INIT, &data->memory[off], W1_PAGE_SIZE) == CRC16_VALID)
+	/* cache the block अगर the CRC is valid */
+	अगर (crc16(CRC16_INIT, &data->memory[off], W1_PAGE_SIZE) == CRC16_VALID)
 		data->validcrc |= (1 << block);
 
-	return 0;
-}
-#endif	/* CONFIG_W1_SLAVE_DS2433_CRC */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_W1_SLAVE_DS2433_CRC */
 
-static ssize_t eeprom_read(struct file *filp, struct kobject *kobj,
-			   struct bin_attribute *bin_attr, char *buf,
-			   loff_t off, size_t count)
-{
-	struct w1_slave *sl = kobj_to_w1_slave(kobj);
-#ifdef CONFIG_W1_SLAVE_DS2433_CRC
-	struct w1_f23_data *data = sl->family_data;
-	int i, min_page, max_page;
-#else
+अटल sमाप_प्रकार eeprom_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			   काष्ठा bin_attribute *bin_attr, अक्षर *buf,
+			   loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा w1_slave *sl = kobj_to_w1_slave(kobj);
+#अगर_घोषित CONFIG_W1_SLAVE_DS2433_CRC
+	काष्ठा w1_f23_data *data = sl->family_data;
+	पूर्णांक i, min_page, max_page;
+#अन्यथा
 	u8 wrbuf[3];
-#endif
+#पूर्ण_अगर
 
-	if ((count = w1_f23_fix_count(off, count, W1_EEPROM_SIZE)) == 0)
-		return 0;
+	अगर ((count = w1_f23_fix_count(off, count, W1_EEPROM_SIZE)) == 0)
+		वापस 0;
 
 	mutex_lock(&sl->master->bus_mutex);
 
-#ifdef CONFIG_W1_SLAVE_DS2433_CRC
+#अगर_घोषित CONFIG_W1_SLAVE_DS2433_CRC
 
 	min_page = (off >> W1_PAGE_BITS);
 	max_page = (off + count - 1) >> W1_PAGE_BITS;
-	for (i = min_page; i <= max_page; i++) {
-		if (w1_f23_refresh_block(sl, data, i)) {
+	क्रम (i = min_page; i <= max_page; i++) अणु
+		अगर (w1_f23_refresh_block(sl, data, i)) अणु
 			count = -EIO;
-			goto out_up;
-		}
-	}
-	memcpy(buf, &data->memory[off], count);
+			जाओ out_up;
+		पूर्ण
+	पूर्ण
+	स_नकल(buf, &data->memory[off], count);
 
-#else 	/* CONFIG_W1_SLAVE_DS2433_CRC */
+#अन्यथा 	/* CONFIG_W1_SLAVE_DS2433_CRC */
 
-	/* read directly from the EEPROM */
-	if (w1_reset_select_slave(sl)) {
+	/* पढ़ो directly from the EEPROM */
+	अगर (w1_reset_select_slave(sl)) अणु
 		count = -EIO;
-		goto out_up;
-	}
+		जाओ out_up;
+	पूर्ण
 
 	wrbuf[0] = W1_F23_READ_EEPROM;
 	wrbuf[1] = off & 0xff;
 	wrbuf[2] = off >> 8;
-	w1_write_block(sl->master, wrbuf, 3);
-	w1_read_block(sl->master, buf, count);
+	w1_ग_लिखो_block(sl->master, wrbuf, 3);
+	w1_पढ़ो_block(sl->master, buf, count);
 
-#endif	/* CONFIG_W1_SLAVE_DS2433_CRC */
+#पूर्ण_अगर	/* CONFIG_W1_SLAVE_DS2433_CRC */
 
 out_up:
 	mutex_unlock(&sl->master->bus_mutex);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- * Writes to the scratchpad and reads it back for verification.
+ * Writes to the scratchpad and पढ़ोs it back क्रम verअगरication.
  * Then copies the scratchpad to EEPROM.
  * The data must be on one page.
  * The master must be locked.
  *
- * @param sl	The slave structure
- * @param addr	Address for the write
+ * @param sl	The slave काष्ठाure
+ * @param addr	Address क्रम the ग_लिखो
  * @param len   length must be <= (W1_PAGE_SIZE - (addr & W1_PAGE_MASK))
- * @param data	The data to write
- * @return	0=Success -1=failure
+ * @param data	The data to ग_लिखो
+ * @वापस	0=Success -1=failure
  */
-static int w1_f23_write(struct w1_slave *sl, int addr, int len, const u8 *data)
-{
-#ifdef CONFIG_W1_SLAVE_DS2433_CRC
-	struct w1_f23_data *f23 = sl->family_data;
-#endif
+अटल पूर्णांक w1_f23_ग_लिखो(काष्ठा w1_slave *sl, पूर्णांक addr, पूर्णांक len, स्थिर u8 *data)
+अणु
+#अगर_घोषित CONFIG_W1_SLAVE_DS2433_CRC
+	काष्ठा w1_f23_data *f23 = sl->family_data;
+#पूर्ण_अगर
 	u8 wrbuf[4];
 	u8 rdbuf[W1_PAGE_SIZE + 3];
 	u8 es = (addr + len - 1) & 0x1f;
 
 	/* Write the data to the scratchpad */
-	if (w1_reset_select_slave(sl))
-		return -1;
+	अगर (w1_reset_select_slave(sl))
+		वापस -1;
 
 	wrbuf[0] = W1_F23_WRITE_SCRATCH;
 	wrbuf[1] = addr & 0xff;
 	wrbuf[2] = addr >> 8;
 
-	w1_write_block(sl->master, wrbuf, 3);
-	w1_write_block(sl->master, data, len);
+	w1_ग_लिखो_block(sl->master, wrbuf, 3);
+	w1_ग_लिखो_block(sl->master, data, len);
 
-	/* Read the scratchpad and verify */
-	if (w1_reset_select_slave(sl))
-		return -1;
+	/* Read the scratchpad and verअगरy */
+	अगर (w1_reset_select_slave(sl))
+		वापस -1;
 
-	w1_write_8(sl->master, W1_F23_READ_SCRATCH);
-	w1_read_block(sl->master, rdbuf, len + 3);
+	w1_ग_लिखो_8(sl->master, W1_F23_READ_SCRATCH);
+	w1_पढ़ो_block(sl->master, rdbuf, len + 3);
 
-	/* Compare what was read against the data written */
-	if ((rdbuf[0] != wrbuf[1]) || (rdbuf[1] != wrbuf[2]) ||
-	    (rdbuf[2] != es) || (memcmp(data, &rdbuf[3], len) != 0))
-		return -1;
+	/* Compare what was पढ़ो against the data written */
+	अगर ((rdbuf[0] != wrbuf[1]) || (rdbuf[1] != wrbuf[2]) ||
+	    (rdbuf[2] != es) || (स_भेद(data, &rdbuf[3], len) != 0))
+		वापस -1;
 
 	/* Copy the scratchpad to EEPROM */
-	if (w1_reset_select_slave(sl))
-		return -1;
+	अगर (w1_reset_select_slave(sl))
+		वापस -1;
 
 	wrbuf[0] = W1_F23_COPY_SCRATCH;
 	wrbuf[3] = es;
-	w1_write_block(sl->master, wrbuf, 4);
+	w1_ग_लिखो_block(sl->master, wrbuf, 4);
 
-	/* Sleep for 5 ms to wait for the write to complete */
+	/* Sleep क्रम 5 ms to रुको क्रम the ग_लिखो to complete */
 	msleep(5);
 
 	/* Reset the bus to wake up the EEPROM (this may not be needed) */
 	w1_reset_bus(sl->master);
-#ifdef CONFIG_W1_SLAVE_DS2433_CRC
+#अगर_घोषित CONFIG_W1_SLAVE_DS2433_CRC
 	f23->validcrc &= ~(1 << (addr >> W1_PAGE_BITS));
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static ssize_t eeprom_write(struct file *filp, struct kobject *kobj,
-			    struct bin_attribute *bin_attr, char *buf,
-			    loff_t off, size_t count)
-{
-	struct w1_slave *sl = kobj_to_w1_slave(kobj);
-	int addr, len, idx;
+अटल sमाप_प्रकार eeprom_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			    काष्ठा bin_attribute *bin_attr, अक्षर *buf,
+			    loff_t off, माप_प्रकार count)
+अणु
+	काष्ठा w1_slave *sl = kobj_to_w1_slave(kobj);
+	पूर्णांक addr, len, idx;
 
-	if ((count = w1_f23_fix_count(off, count, W1_EEPROM_SIZE)) == 0)
-		return 0;
+	अगर ((count = w1_f23_fix_count(off, count, W1_EEPROM_SIZE)) == 0)
+		वापस 0;
 
-#ifdef CONFIG_W1_SLAVE_DS2433_CRC
-	/* can only write full blocks in cached mode */
-	if ((off & W1_PAGE_MASK) || (count & W1_PAGE_MASK)) {
+#अगर_घोषित CONFIG_W1_SLAVE_DS2433_CRC
+	/* can only ग_लिखो full blocks in cached mode */
+	अगर ((off & W1_PAGE_MASK) || (count & W1_PAGE_MASK)) अणु
 		dev_err(&sl->dev, "invalid offset/count off=%d cnt=%zd\n",
-			(int)off, count);
-		return -EINVAL;
-	}
+			(पूर्णांक)off, count);
+		वापस -EINVAL;
+	पूर्ण
 
 	/* make sure the block CRCs are valid */
-	for (idx = 0; idx < count; idx += W1_PAGE_SIZE) {
-		if (crc16(CRC16_INIT, &buf[idx], W1_PAGE_SIZE) != CRC16_VALID) {
-			dev_err(&sl->dev, "bad CRC at offset %d\n", (int)off);
-			return -EINVAL;
-		}
-	}
-#endif	/* CONFIG_W1_SLAVE_DS2433_CRC */
+	क्रम (idx = 0; idx < count; idx += W1_PAGE_SIZE) अणु
+		अगर (crc16(CRC16_INIT, &buf[idx], W1_PAGE_SIZE) != CRC16_VALID) अणु
+			dev_err(&sl->dev, "bad CRC at offset %d\n", (पूर्णांक)off);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर	/* CONFIG_W1_SLAVE_DS2433_CRC */
 
 	mutex_lock(&sl->master->bus_mutex);
 
-	/* Can only write data to one page at a time */
+	/* Can only ग_लिखो data to one page at a समय */
 	idx = 0;
-	while (idx < count) {
+	जबतक (idx < count) अणु
 		addr = off + idx;
 		len = W1_PAGE_SIZE - (addr & W1_PAGE_MASK);
-		if (len > (count - idx))
+		अगर (len > (count - idx))
 			len = count - idx;
 
-		if (w1_f23_write(sl, addr, len, &buf[idx]) < 0) {
+		अगर (w1_f23_ग_लिखो(sl, addr, len, &buf[idx]) < 0) अणु
 			count = -EIO;
-			goto out_up;
-		}
+			जाओ out_up;
+		पूर्ण
 		idx += len;
-	}
+	पूर्ण
 
 out_up:
 	mutex_unlock(&sl->master->bus_mutex);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static BIN_ATTR_RW(eeprom, W1_EEPROM_SIZE);
+अटल BIN_ATTR_RW(eeprom, W1_EEPROM_SIZE);
 
-static struct bin_attribute *w1_f23_bin_attributes[] = {
+अटल काष्ठा bin_attribute *w1_f23_bin_attributes[] = अणु
 	&bin_attr_eeprom,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group w1_f23_group = {
+अटल स्थिर काष्ठा attribute_group w1_f23_group = अणु
 	.bin_attrs = w1_f23_bin_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *w1_f23_groups[] = {
+अटल स्थिर काष्ठा attribute_group *w1_f23_groups[] = अणु
 	&w1_f23_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int w1_f23_add_slave(struct w1_slave *sl)
-{
-#ifdef CONFIG_W1_SLAVE_DS2433_CRC
-	struct w1_f23_data *data;
+अटल पूर्णांक w1_f23_add_slave(काष्ठा w1_slave *sl)
+अणु
+#अगर_घोषित CONFIG_W1_SLAVE_DS2433_CRC
+	काष्ठा w1_f23_data *data;
 
-	data = kzalloc(sizeof(struct w1_f23_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kzalloc(माप(काष्ठा w1_f23_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 	sl->family_data = data;
 
-#endif	/* CONFIG_W1_SLAVE_DS2433_CRC */
-	return 0;
-}
+#पूर्ण_अगर	/* CONFIG_W1_SLAVE_DS2433_CRC */
+	वापस 0;
+पूर्ण
 
-static void w1_f23_remove_slave(struct w1_slave *sl)
-{
-#ifdef CONFIG_W1_SLAVE_DS2433_CRC
-	kfree(sl->family_data);
-	sl->family_data = NULL;
-#endif	/* CONFIG_W1_SLAVE_DS2433_CRC */
-}
+अटल व्योम w1_f23_हटाओ_slave(काष्ठा w1_slave *sl)
+अणु
+#अगर_घोषित CONFIG_W1_SLAVE_DS2433_CRC
+	kमुक्त(sl->family_data);
+	sl->family_data = शून्य;
+#पूर्ण_अगर	/* CONFIG_W1_SLAVE_DS2433_CRC */
+पूर्ण
 
-static const struct w1_family_ops w1_f23_fops = {
+अटल स्थिर काष्ठा w1_family_ops w1_f23_fops = अणु
 	.add_slave      = w1_f23_add_slave,
-	.remove_slave   = w1_f23_remove_slave,
+	.हटाओ_slave   = w1_f23_हटाओ_slave,
 	.groups		= w1_f23_groups,
-};
+पूर्ण;
 
-static struct w1_family w1_family_23 = {
+अटल काष्ठा w1_family w1_family_23 = अणु
 	.fid = W1_EEPROM_DS2433,
 	.fops = &w1_f23_fops,
-};
+पूर्ण;
 module_w1_family(w1_family_23);
 
 MODULE_AUTHOR("Ben Gardner <bgardner@wabtec.com>");
 MODULE_DESCRIPTION("w1 family 23 driver for DS2433, 4kb EEPROM");
 MODULE_LICENSE("GPL");
-MODULE_ALIAS("w1-family-" __stringify(W1_EEPROM_DS2433));
+MODULE_ALIAS("w1-family-" __stringअगरy(W1_EEPROM_DS2433));

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2012 Intel Corporation. All rights reserved.
  * Copyright (c) 2006 - 2012 QLogic Corporation. All rights reserved.
@@ -6,20 +7,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,126 +33,126 @@
  * SOFTWARE.
  */
 
-#include <linux/delay.h>
-#include <linux/pci.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "qib.h"
+#समावेश "qib.h"
 
 /*
  * QLogic_IB "Two Wire Serial Interface" driver.
- * Originally written for a not-quite-i2c serial eeprom, which is
+ * Originally written क्रम a not-quite-i2c serial eeprom, which is
  * still used on some supported boards. Later boards have added a
- * variety of other uses, most board-specific, so the bit-boffing
- * part has been split off to this file, while the other parts
- * have been moved to chip-specific files.
+ * variety of other uses, most board-specअगरic, so the bit-boffing
+ * part has been split off to this file, जबतक the other parts
+ * have been moved to chip-specअगरic files.
  *
  * We have also dropped all pretense of fully generic (e.g. pretend
- * we don't know whether '1' is the higher voltage) interface, as
- * the restrictions of the generic i2c interface (e.g. no access from
- * driver itself) make it unsuitable for this use.
+ * we करोn't know whether '1' is the higher voltage) पूर्णांकerface, as
+ * the restrictions of the generic i2c पूर्णांकerface (e.g. no access from
+ * driver itself) make it unsuitable क्रम this use.
  */
 
-#define READ_CMD 1
-#define WRITE_CMD 0
+#घोषणा READ_CMD 1
+#घोषणा WRITE_CMD 0
 
 /**
- * i2c_wait_for_writes - wait for a write
+ * i2c_रुको_क्रम_ग_लिखोs - रुको क्रम a ग_लिखो
  * @dd: the qlogic_ib device
  *
  * We use this instead of udelay directly, so we can make sure
- * that previous register writes have been flushed all the way
- * to the chip.  Since we are delaying anyway, the cost doesn't
+ * that previous रेजिस्टर ग_लिखोs have been flushed all the way
+ * to the chip.  Since we are delaying anyway, the cost करोesn't
  * hurt, and makes the bit twiddling more regular
  */
-static void i2c_wait_for_writes(struct qib_devdata *dd)
-{
+अटल व्योम i2c_रुको_क्रम_ग_लिखोs(काष्ठा qib_devdata *dd)
+अणु
 	/*
-	 * implicit read of EXTStatus is as good as explicit
-	 * read of scratch, if all we want to do is flush
-	 * writes.
+	 * implicit पढ़ो of EXTStatus is as good as explicit
+	 * पढ़ो of scratch, अगर all we want to करो is flush
+	 * ग_लिखोs.
 	 */
 	dd->f_gpio_mod(dd, 0, 0, 0);
-	rmb(); /* inlined, so prevent compiler reordering */
-}
+	rmb(); /* अंतरभूतd, so prevent compiler reordering */
+पूर्ण
 
 /*
- * QSFP modules are allowed to hold SCL low for 500uSec. Allow twice that
- * for "almost compliant" modules
+ * QSFP modules are allowed to hold SCL low क्रम 500uSec. Allow twice that
+ * क्रम "almost compliant" modules
  */
-#define SCL_WAIT_USEC 1000
+#घोषणा SCL_WAIT_USEC 1000
 
-/* BUF_WAIT is time bus must be free between STOP or ACK and to next START.
+/* BUF_WAIT is समय bus must be मुक्त between STOP or ACK and to next START.
  * Should be 20, but some chips need more.
  */
-#define TWSI_BUF_WAIT_USEC 60
+#घोषणा TWSI_BUF_WAIT_USEC 60
 
-static void scl_out(struct qib_devdata *dd, u8 bit)
-{
+अटल व्योम scl_out(काष्ठा qib_devdata *dd, u8 bit)
+अणु
 	u32 mask;
 
 	udelay(1);
 
 	mask = 1UL << dd->gpio_scl_num;
 
-	/* SCL is meant to be bare-drain, so never set "OUT", just DIR */
+	/* SCL is meant to be bare-drain, so never set "OUT", just सूची */
 	dd->f_gpio_mod(dd, 0, bit ? 0 : mask, mask);
 
 	/*
-	 * Allow for slow slaves by simple
-	 * delay for falling edge, sampling on rise.
+	 * Allow क्रम slow slaves by simple
+	 * delay क्रम falling edge, sampling on rise.
 	 */
-	if (!bit)
+	अगर (!bit)
 		udelay(2);
-	else {
-		int rise_usec;
+	अन्यथा अणु
+		पूर्णांक rise_usec;
 
-		for (rise_usec = SCL_WAIT_USEC; rise_usec > 0; rise_usec -= 2) {
-			if (mask & dd->f_gpio_mod(dd, 0, 0, 0))
-				break;
+		क्रम (rise_usec = SCL_WAIT_USEC; rise_usec > 0; rise_usec -= 2) अणु
+			अगर (mask & dd->f_gpio_mod(dd, 0, 0, 0))
+				अवरोध;
 			udelay(2);
-		}
-		if (rise_usec <= 0)
+		पूर्ण
+		अगर (rise_usec <= 0)
 			qib_dev_err(dd, "SCL interface stuck low > %d uSec\n",
 				    SCL_WAIT_USEC);
-	}
-	i2c_wait_for_writes(dd);
-}
+	पूर्ण
+	i2c_रुको_क्रम_ग_लिखोs(dd);
+पूर्ण
 
-static void sda_out(struct qib_devdata *dd, u8 bit)
-{
+अटल व्योम sda_out(काष्ठा qib_devdata *dd, u8 bit)
+अणु
 	u32 mask;
 
 	mask = 1UL << dd->gpio_sda_num;
 
-	/* SDA is meant to be bare-drain, so never set "OUT", just DIR */
+	/* SDA is meant to be bare-drain, so never set "OUT", just सूची */
 	dd->f_gpio_mod(dd, 0, bit ? 0 : mask, mask);
 
-	i2c_wait_for_writes(dd);
+	i2c_रुको_क्रम_ग_लिखोs(dd);
 	udelay(2);
-}
+पूर्ण
 
-static u8 sda_in(struct qib_devdata *dd, int wait)
-{
-	int bnum;
-	u32 read_val, mask;
+अटल u8 sda_in(काष्ठा qib_devdata *dd, पूर्णांक रुको)
+अणु
+	पूर्णांक bnum;
+	u32 पढ़ो_val, mask;
 
 	bnum = dd->gpio_sda_num;
 	mask = (1UL << bnum);
-	/* SDA is meant to be bare-drain, so never set "OUT", just DIR */
+	/* SDA is meant to be bare-drain, so never set "OUT", just सूची */
 	dd->f_gpio_mod(dd, 0, 0, mask);
-	read_val = dd->f_gpio_mod(dd, 0, 0, 0);
-	if (wait)
-		i2c_wait_for_writes(dd);
-	return (read_val & mask) >> bnum;
-}
+	पढ़ो_val = dd->f_gpio_mod(dd, 0, 0, 0);
+	अगर (रुको)
+		i2c_रुको_क्रम_ग_लिखोs(dd);
+	वापस (पढ़ो_val & mask) >> bnum;
+पूर्ण
 
 /**
- * i2c_ackrcv - see if ack following write is true
+ * i2c_ackrcv - see अगर ack following ग_लिखो is true
  * @dd: the qlogic_ib device
  */
-static int i2c_ackrcv(struct qib_devdata *dd)
-{
+अटल पूर्णांक i2c_ackrcv(काष्ठा qib_devdata *dd)
+अणु
 	u8 ack_received;
 
 	/* AT ENTRY SCL = LOW */
@@ -160,111 +161,111 @@ static int i2c_ackrcv(struct qib_devdata *dd)
 	scl_out(dd, 1);
 	ack_received = sda_in(dd, 1) == 0;
 	scl_out(dd, 0);
-	return ack_received;
-}
+	वापस ack_received;
+पूर्ण
 
-static void stop_cmd(struct qib_devdata *dd);
+अटल व्योम stop_cmd(काष्ठा qib_devdata *dd);
 
 /**
- * rd_byte - read a byte, sending STOP on last, else ACK
+ * rd_byte - पढ़ो a byte, sending STOP on last, अन्यथा ACK
  * @dd: the qlogic_ib device
- * @last: identifies the last read
+ * @last: identअगरies the last पढ़ो
  *
- * Returns byte shifted out of device
+ * Returns byte shअगरted out of device
  */
-static int rd_byte(struct qib_devdata *dd, int last)
-{
-	int bit_cntr, data;
+अटल पूर्णांक rd_byte(काष्ठा qib_devdata *dd, पूर्णांक last)
+अणु
+	पूर्णांक bit_cntr, data;
 
 	data = 0;
 
-	for (bit_cntr = 7; bit_cntr >= 0; --bit_cntr) {
+	क्रम (bit_cntr = 7; bit_cntr >= 0; --bit_cntr) अणु
 		data <<= 1;
 		scl_out(dd, 1);
 		data |= sda_in(dd, 0);
 		scl_out(dd, 0);
-	}
-	if (last) {
+	पूर्ण
+	अगर (last) अणु
 		scl_out(dd, 1);
 		stop_cmd(dd);
-	} else {
+	पूर्ण अन्यथा अणु
 		sda_out(dd, 0);
 		scl_out(dd, 1);
 		scl_out(dd, 0);
 		sda_out(dd, 1);
-	}
-	return data;
-}
+	पूर्ण
+	वापस data;
+पूर्ण
 
 /**
- * wr_byte - write a byte, one bit at a time
+ * wr_byte - ग_लिखो a byte, one bit at a समय
  * @dd: the qlogic_ib device
- * @data: the byte to write
+ * @data: the byte to ग_लिखो
  *
- * Returns 0 if we got the following ack, otherwise 1
+ * Returns 0 अगर we got the following ack, otherwise 1
  */
-static int wr_byte(struct qib_devdata *dd, u8 data)
-{
-	int bit_cntr;
+अटल पूर्णांक wr_byte(काष्ठा qib_devdata *dd, u8 data)
+अणु
+	पूर्णांक bit_cntr;
 	u8 bit;
 
-	for (bit_cntr = 7; bit_cntr >= 0; bit_cntr--) {
+	क्रम (bit_cntr = 7; bit_cntr >= 0; bit_cntr--) अणु
 		bit = (data >> bit_cntr) & 1;
 		sda_out(dd, bit);
 		scl_out(dd, 1);
 		scl_out(dd, 0);
-	}
-	return (!i2c_ackrcv(dd)) ? 1 : 0;
-}
+	पूर्ण
+	वापस (!i2c_ackrcv(dd)) ? 1 : 0;
+पूर्ण
 
 /*
  * issue TWSI start sequence:
- * (both clock/data high, clock high, data low while clock is high)
+ * (both घड़ी/data high, घड़ी high, data low जबतक घड़ी is high)
  */
-static void start_seq(struct qib_devdata *dd)
-{
+अटल व्योम start_seq(काष्ठा qib_devdata *dd)
+अणु
 	sda_out(dd, 1);
 	scl_out(dd, 1);
 	sda_out(dd, 0);
 	udelay(1);
 	scl_out(dd, 0);
-}
+पूर्ण
 
 /**
  * stop_seq - transmit the stop sequence
  * @dd: the qlogic_ib device
  *
- * (both clock/data low, clock high, data high while clock is high)
+ * (both घड़ी/data low, घड़ी high, data high जबतक घड़ी is high)
  */
-static void stop_seq(struct qib_devdata *dd)
-{
+अटल व्योम stop_seq(काष्ठा qib_devdata *dd)
+अणु
 	scl_out(dd, 0);
 	sda_out(dd, 0);
 	scl_out(dd, 1);
 	sda_out(dd, 1);
-}
+पूर्ण
 
 /**
  * stop_cmd - transmit the stop condition
  * @dd: the qlogic_ib device
  *
- * (both clock/data low, clock high, data high while clock is high)
+ * (both घड़ी/data low, घड़ी high, data high जबतक घड़ी is high)
  */
-static void stop_cmd(struct qib_devdata *dd)
-{
+अटल व्योम stop_cmd(काष्ठा qib_devdata *dd)
+अणु
 	stop_seq(dd);
 	udelay(TWSI_BUF_WAIT_USEC);
-}
+पूर्ण
 
 /**
  * qib_twsi_reset - reset I2C communication
  * @dd: the qlogic_ib device
  */
 
-int qib_twsi_reset(struct qib_devdata *dd)
-{
-	int clock_cycles_left = 9;
-	int was_high = 0;
+पूर्णांक qib_twsi_reset(काष्ठा qib_devdata *dd)
+अणु
+	पूर्णांक घड़ी_cycles_left = 9;
+	पूर्णांक was_high = 0;
 	u32 pins, mask;
 
 	/* Both SCL and SDA should be high. If not, there
@@ -274,229 +275,229 @@ int qib_twsi_reset(struct qib_devdata *dd)
 
 	/*
 	 * Force pins to desired innocuous state.
-	 * This is the default power-on state with out=0 and dir=0,
-	 * So tri-stated and should be floating high (barring HW problems)
+	 * This is the शेष घातer-on state with out=0 and dir=0,
+	 * So tri-stated and should be भग्नing high (barring HW problems)
 	 */
 	dd->f_gpio_mod(dd, 0, 0, mask);
 
 	/*
-	 * Clock nine times to get all listeners into a sane state.
-	 * If SDA does not go high at any point, we are wedged.
-	 * One vendor recommends then issuing START followed by STOP.
-	 * we cannot use our "normal" functions to do that, because
-	 * if SCL drops between them, another vendor's part will
-	 * wedge, dropping SDA and keeping it low forever, at the end of
-	 * the next transaction (even if it was not the device addressed).
+	 * Clock nine बार to get all listeners पूर्णांकo a sane state.
+	 * If SDA करोes not go high at any poपूर्णांक, we are wedged.
+	 * One venकरोr recommends then issuing START followed by STOP.
+	 * we cannot use our "normal" functions to करो that, because
+	 * अगर SCL drops between them, another venकरोr's part will
+	 * wedge, dropping SDA and keeping it low क्रमever, at the end of
+	 * the next transaction (even अगर it was not the device addressed).
 	 * So our START and STOP take place with SCL held high.
 	 */
-	while (clock_cycles_left--) {
+	जबतक (घड़ी_cycles_left--) अणु
 		scl_out(dd, 0);
 		scl_out(dd, 1);
-		/* Note if SDA is high, but keep clocking to sync slave */
+		/* Note अगर SDA is high, but keep घड़ीing to sync slave */
 		was_high |= sda_in(dd, 0);
-	}
+	पूर्ण
 
-	if (was_high) {
+	अगर (was_high) अणु
 		/*
 		 * We saw a high, which we hope means the slave is sync'd.
-		 * Issue START, STOP, pause for T_BUF.
+		 * Issue START, STOP, छोड़ो क्रम T_BUF.
 		 */
 
 		pins = dd->f_gpio_mod(dd, 0, 0, 0);
-		if ((pins & mask) != mask)
+		अगर ((pins & mask) != mask)
 			qib_dev_err(dd, "GPIO pins not at rest: %d\n",
 				    pins & mask);
 		/* Drop SDA to issue START */
 		udelay(1); /* Guarantee .6 uSec setup */
 		sda_out(dd, 0);
 		udelay(1); /* Guarantee .6 uSec hold */
-		/* At this point, SCL is high, SDA low. Raise SDA for STOP */
+		/* At this poपूर्णांक, SCL is high, SDA low. Raise SDA क्रम STOP */
 		sda_out(dd, 1);
 		udelay(TWSI_BUF_WAIT_USEC);
-	}
+	पूर्ण
 
-	return !was_high;
-}
+	वापस !was_high;
+पूर्ण
 
-#define QIB_TWSI_START 0x100
-#define QIB_TWSI_STOP 0x200
+#घोषणा QIB_TWSI_START 0x100
+#घोषणा QIB_TWSI_STOP 0x200
 
 /* Write byte to TWSI, optionally prefixed with START or suffixed with
  * STOP.
- * returns 0 if OK (ACK received), else != 0
+ * वापसs 0 अगर OK (ACK received), अन्यथा != 0
  */
-static int qib_twsi_wr(struct qib_devdata *dd, int data, int flags)
-{
-	int ret = 1;
+अटल पूर्णांक qib_twsi_wr(काष्ठा qib_devdata *dd, पूर्णांक data, पूर्णांक flags)
+अणु
+	पूर्णांक ret = 1;
 
-	if (flags & QIB_TWSI_START)
+	अगर (flags & QIB_TWSI_START)
 		start_seq(dd);
 
 	ret = wr_byte(dd, data); /* Leaves SCL low (from i2c_ackrcv()) */
 
-	if (flags & QIB_TWSI_STOP)
+	अगर (flags & QIB_TWSI_STOP)
 		stop_cmd(dd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Added functionality for IBA7220-based cards */
-#define QIB_TEMP_DEV 0x98
+/* Added functionality क्रम IBA7220-based cards */
+#घोषणा QIB_TEMP_DEV 0x98
 
 /*
  * qib_twsi_blk_rd
- * Formerly called qib_eeprom_internal_read, and only used for eeprom,
- * but now the general interface for data transfer from twsi devices.
- * One vestige of its former role is that it recognizes a device
- * QIB_TWSI_NO_DEV and does the correct operation for the legacy part,
- * which responded to all TWSI device codes, interpreting them as
+ * Formerly called qib_eeprom_पूर्णांकernal_पढ़ो, and only used क्रम eeprom,
+ * but now the general पूर्णांकerface क्रम data transfer from twsi devices.
+ * One vestige of its क्रमmer role is that it recognizes a device
+ * QIB_TWSI_NO_DEV and करोes the correct operation क्रम the legacy part,
+ * which responded to all TWSI device codes, पूर्णांकerpreting them as
  * address within device. On all other devices found on board handled by
  * this driver, the device is followed by a one-byte "address" which selects
  * the "register" or "offset" within the device from which data should
- * be read.
+ * be पढ़ो.
  */
-int qib_twsi_blk_rd(struct qib_devdata *dd, int dev, int addr,
-		    void *buffer, int len)
-{
-	int ret;
+पूर्णांक qib_twsi_blk_rd(काष्ठा qib_devdata *dd, पूर्णांक dev, पूर्णांक addr,
+		    व्योम *buffer, पूर्णांक len)
+अणु
+	पूर्णांक ret;
 	u8 *bp = buffer;
 
 	ret = 1;
 
-	if (dev == QIB_TWSI_NO_DEV) {
+	अगर (dev == QIB_TWSI_NO_DEV) अणु
 		/* legacy not-really-I2C */
 		addr = (addr << 1) | READ_CMD;
 		ret = qib_twsi_wr(dd, addr, QIB_TWSI_START);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Actual I2C */
 		ret = qib_twsi_wr(dd, dev | WRITE_CMD, QIB_TWSI_START);
-		if (ret) {
+		अगर (ret) अणु
 			stop_cmd(dd);
 			ret = 1;
-			goto bail;
-		}
+			जाओ bail;
+		पूर्ण
 		/*
-		 * SFF spec claims we do _not_ stop after the addr
+		 * SFF spec claims we करो _not_ stop after the addr
 		 * but simply issue a start with the "read" dev-addr.
-		 * Since we are implicitely waiting for ACK here,
-		 * we need t_buf (nominally 20uSec) before that start,
+		 * Since we are implicitely रुकोing क्रम ACK here,
+		 * we need t_buf (nominally 20uSec) beक्रमe that start,
 		 * and cannot rely on the delay built in to the STOP
 		 */
 		ret = qib_twsi_wr(dd, addr, 0);
 		udelay(TWSI_BUF_WAIT_USEC);
 
-		if (ret) {
+		अगर (ret) अणु
 			qib_dev_err(dd,
 				"Failed to write interface read addr %02X\n",
 				addr);
 			ret = 1;
-			goto bail;
-		}
+			जाओ bail;
+		पूर्ण
 		ret = qib_twsi_wr(dd, dev | READ_CMD, QIB_TWSI_START);
-	}
-	if (ret) {
+	पूर्ण
+	अगर (ret) अणु
 		stop_cmd(dd);
 		ret = 1;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	/*
-	 * block devices keeps clocking data out as long as we ack,
-	 * automatically incrementing the address. Some have "pages"
+	 * block devices keeps घड़ीing data out as दीर्घ as we ack,
+	 * स्वतःmatically incrementing the address. Some have "pages"
 	 * whose boundaries will not be crossed, but the handling
 	 * of these is left to the caller, who is in a better
 	 * position to know.
 	 */
-	while (len-- > 0) {
+	जबतक (len-- > 0) अणु
 		/*
-		 * Get and store data, sending ACK if length remaining,
-		 * else STOP
+		 * Get and store data, sending ACK अगर length reमुख्यing,
+		 * अन्यथा STOP
 		 */
 		*bp++ = rd_byte(dd, !len);
-	}
+	पूर्ण
 
 	ret = 0;
 
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * qib_twsi_blk_wr
- * Formerly called qib_eeprom_internal_write, and only used for eeprom,
- * but now the general interface for data transfer to twsi devices.
- * One vestige of its former role is that it recognizes a device
- * QIB_TWSI_NO_DEV and does the correct operation for the legacy part,
- * which responded to all TWSI device codes, interpreting them as
+ * Formerly called qib_eeprom_पूर्णांकernal_ग_लिखो, and only used क्रम eeprom,
+ * but now the general पूर्णांकerface क्रम data transfer to twsi devices.
+ * One vestige of its क्रमmer role is that it recognizes a device
+ * QIB_TWSI_NO_DEV and करोes the correct operation क्रम the legacy part,
+ * which responded to all TWSI device codes, पूर्णांकerpreting them as
  * address within device. On all other devices found on board handled by
  * this driver, the device is followed by a one-byte "address" which selects
  * the "register" or "offset" within the device to which data should
  * be written.
  */
-int qib_twsi_blk_wr(struct qib_devdata *dd, int dev, int addr,
-		    const void *buffer, int len)
-{
-	int sub_len;
-	const u8 *bp = buffer;
-	int max_wait_time, i;
-	int ret = 1;
+पूर्णांक qib_twsi_blk_wr(काष्ठा qib_devdata *dd, पूर्णांक dev, पूर्णांक addr,
+		    स्थिर व्योम *buffer, पूर्णांक len)
+अणु
+	पूर्णांक sub_len;
+	स्थिर u8 *bp = buffer;
+	पूर्णांक max_रुको_समय, i;
+	पूर्णांक ret = 1;
 
-	while (len > 0) {
-		if (dev == QIB_TWSI_NO_DEV) {
-			if (qib_twsi_wr(dd, (addr << 1) | WRITE_CMD,
-					QIB_TWSI_START)) {
-				goto failed_write;
-			}
-		} else {
+	जबतक (len > 0) अणु
+		अगर (dev == QIB_TWSI_NO_DEV) अणु
+			अगर (qib_twsi_wr(dd, (addr << 1) | WRITE_CMD,
+					QIB_TWSI_START)) अणु
+				जाओ failed_ग_लिखो;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* Real I2C */
-			if (qib_twsi_wr(dd, dev | WRITE_CMD, QIB_TWSI_START))
-				goto failed_write;
+			अगर (qib_twsi_wr(dd, dev | WRITE_CMD, QIB_TWSI_START))
+				जाओ failed_ग_लिखो;
 			ret = qib_twsi_wr(dd, addr, 0);
-			if (ret) {
+			अगर (ret) अणु
 				qib_dev_err(dd,
 					"Failed to write interface write addr %02X\n",
 					addr);
-				goto failed_write;
-			}
-		}
+				जाओ failed_ग_लिखो;
+			पूर्ण
+		पूर्ण
 
 		sub_len = min(len, 4);
 		addr += sub_len;
 		len -= sub_len;
 
-		for (i = 0; i < sub_len; i++)
-			if (qib_twsi_wr(dd, *bp++, 0))
-				goto failed_write;
+		क्रम (i = 0; i < sub_len; i++)
+			अगर (qib_twsi_wr(dd, *bp++, 0))
+				जाओ failed_ग_लिखो;
 
 		stop_cmd(dd);
 
 		/*
-		 * Wait for write complete by waiting for a successful
-		 * read (the chip replies with a zero after the write
-		 * cmd completes, and before it writes to the eeprom.
-		 * The startcmd for the read will fail the ack until
-		 * the writes have completed.   We do this inline to avoid
-		 * the debug prints that are in the real read routine
-		 * if the startcmd fails.
-		 * We also use the proper device address, so it doesn't matter
+		 * Wait क्रम ग_लिखो complete by रुकोing क्रम a successful
+		 * पढ़ो (the chip replies with a zero after the ग_लिखो
+		 * cmd completes, and beक्रमe it ग_लिखोs to the eeprom.
+		 * The startcmd क्रम the पढ़ो will fail the ack until
+		 * the ग_लिखोs have completed.   We करो this अंतरभूत to aव्योम
+		 * the debug prपूर्णांकs that are in the real पढ़ो routine
+		 * अगर the startcmd fails.
+		 * We also use the proper device address, so it करोesn't matter
 		 * whether we have real eeprom_dev. Legacy likes any address.
 		 */
-		max_wait_time = 100;
-		while (qib_twsi_wr(dd, dev | READ_CMD, QIB_TWSI_START)) {
+		max_रुको_समय = 100;
+		जबतक (qib_twsi_wr(dd, dev | READ_CMD, QIB_TWSI_START)) अणु
 			stop_cmd(dd);
-			if (!--max_wait_time)
-				goto failed_write;
-		}
-		/* now read (and ignore) the resulting byte */
+			अगर (!--max_रुको_समय)
+				जाओ failed_ग_लिखो;
+		पूर्ण
+		/* now पढ़ो (and ignore) the resulting byte */
 		rd_byte(dd, 1);
-	}
+	पूर्ण
 
 	ret = 0;
-	goto bail;
+	जाओ bail;
 
-failed_write:
+failed_ग_लिखो:
 	stop_cmd(dd);
 	ret = 1;
 
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण

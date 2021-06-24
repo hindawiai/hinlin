@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Allwinner A64 SoCs pinctrl driver.
  *
@@ -5,22 +6,22 @@
  * Author: Andre Przywara <andre.przywara@arm.com>
  *
  * Based on pinctrl-sun7i-a20.c, which is:
- * Copyright (C) 2014 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright (C) 2014 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-sunxi.h"
+#समावेश "pinctrl-sunxi.h"
 
-static const struct sunxi_desc_pin a64_pins[] = {
+अटल स्थिर काष्ठा sunxi_desc_pin a64_pins[] = अणु
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(B, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -262,7 +263,7 @@ static const struct sunxi_desc_pin a64_pins[] = {
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "lcd0"),		/* D20 */
 		  SUNXI_FUNCTION(0x3, "lvds0"),		/* VP1 */
-		  SUNXI_FUNCTION(0x4, "emac")),		/* ENULL */
+		  SUNXI_FUNCTION(0x4, "emac")),		/* Eशून्य */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(D, 15),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -572,30 +573,30 @@ static const struct sunxi_desc_pin a64_pins[] = {
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "mic"),		/* DATA */
 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 11)),	/* EINT11 */
-};
+पूर्ण;
 
-static const struct sunxi_pinctrl_desc a64_pinctrl_data = {
+अटल स्थिर काष्ठा sunxi_pinctrl_desc a64_pinctrl_data = अणु
 	.pins = a64_pins,
 	.npins = ARRAY_SIZE(a64_pins),
 	.irq_banks = 3,
-};
+पूर्ण;
 
-static int a64_pinctrl_probe(struct platform_device *pdev)
-{
-	return sunxi_pinctrl_init(pdev,
+अटल पूर्णांक a64_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस sunxi_pinctrl_init(pdev,
 				  &a64_pinctrl_data);
-}
+पूर्ण
 
-static const struct of_device_id a64_pinctrl_match[] = {
-	{ .compatible = "allwinner,sun50i-a64-pinctrl", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id a64_pinctrl_match[] = अणु
+	अणु .compatible = "allwinner,sun50i-a64-pinctrl", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver a64_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver a64_pinctrl_driver = अणु
 	.probe	= a64_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "sun50i-a64-pinctrl",
 		.of_match_table	= a64_pinctrl_match,
-	},
-};
-builtin_platform_driver(a64_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(a64_pinctrl_driver);

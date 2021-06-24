@@ -1,66 +1,67 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * The Kernel Concurrency Sanitizer (KCSAN) infrastructure. Public interface and
- * data structures to set up runtime. See kcsan-checks.h for explicit checks and
- * modifiers. For more info please see Documentation/dev-tools/kcsan.rst.
+ * The Kernel Concurrency Sanitizer (KCSAN) infraकाष्ठाure. Public पूर्णांकerface and
+ * data काष्ठाures to set up runसमय. See kcsan-checks.h क्रम explicit checks and
+ * modअगरiers. For more info please see Documentation/dev-tools/kcsan.rst.
  *
  * Copyright (C) 2019, Google LLC.
  */
 
-#ifndef _LINUX_KCSAN_H
-#define _LINUX_KCSAN_H
+#अगर_अघोषित _LINUX_KCSAN_H
+#घोषणा _LINUX_KCSAN_H
 
-#include <linux/kcsan-checks.h>
-#include <linux/types.h>
+#समावेश <linux/kcsan-checks.h>
+#समावेश <linux/types.h>
 
-#ifdef CONFIG_KCSAN
+#अगर_घोषित CONFIG_KCSAN
 
 /*
- * Context for each thread of execution: for tasks, this is stored in
- * task_struct, and interrupts access internal per-CPU storage.
+ * Context क्रम each thपढ़ो of execution: क्रम tasks, this is stored in
+ * task_काष्ठा, and पूर्णांकerrupts access पूर्णांकernal per-CPU storage.
  */
-struct kcsan_ctx {
-	int disable_count; /* disable counter */
-	int atomic_next; /* number of following atomic ops */
+काष्ठा kcsan_ctx अणु
+	पूर्णांक disable_count; /* disable counter */
+	पूर्णांक atomic_next; /* number of following atomic ops */
 
 	/*
 	 * We distinguish between: (a) nestable atomic regions that may contain
-	 * other nestable regions; and (b) flat atomic regions that do not keep
+	 * other nestable regions; and (b) flat atomic regions that करो not keep
 	 * track of nesting. Both (a) and (b) are entirely independent of each
 	 * other, and a flat region may be started in a nestable region or
 	 * vice-versa.
 	 *
-	 * This is required because, for example, in the annotations for
-	 * seqlocks, we declare seqlock writer critical sections as (a) nestable
-	 * atomic regions, but reader critical sections as (b) flat atomic
-	 * regions, but have encountered cases where seqlock reader critical
-	 * sections are contained within writer critical sections (the opposite
+	 * This is required because, क्रम example, in the annotations क्रम
+	 * seqlocks, we declare seqlock ग_लिखोr critical sections as (a) nestable
+	 * atomic regions, but पढ़ोer critical sections as (b) flat atomic
+	 * regions, but have encountered हालs where seqlock पढ़ोer critical
+	 * sections are contained within ग_लिखोr critical sections (the opposite
 	 * may be possible, too).
 	 *
-	 * To support these cases, we independently track the depth of nesting
-	 * for (a), and whether the leaf level is flat for (b).
+	 * To support these हालs, we independently track the depth of nesting
+	 * क्रम (a), and whether the leaf level is flat क्रम (b).
 	 */
-	int atomic_nest_count;
+	पूर्णांक atomic_nest_count;
 	bool in_flat_atomic;
 
 	/*
-	 * Access mask for all accesses if non-zero.
+	 * Access mask क्रम all accesses अगर non-zero.
 	 */
-	unsigned long access_mask;
+	अचिन्हित दीर्घ access_mask;
 
 	/* List of scoped accesses. */
-	struct list_head scoped_accesses;
-};
+	काष्ठा list_head scoped_accesses;
+पूर्ण;
 
 /**
- * kcsan_init - initialize KCSAN runtime
+ * kcsan_init - initialize KCSAN runसमय
  */
-void kcsan_init(void);
+व्योम kcsan_init(व्योम);
 
-#else /* CONFIG_KCSAN */
+#अन्यथा /* CONFIG_KCSAN */
 
-static inline void kcsan_init(void)			{ }
+अटल अंतरभूत व्योम kcsan_init(व्योम)			अणु पूर्ण
 
-#endif /* CONFIG_KCSAN */
+#पूर्ण_अगर /* CONFIG_KCSAN */
 
-#endif /* _LINUX_KCSAN_H */
+#पूर्ण_अगर /* _LINUX_KCSAN_H */

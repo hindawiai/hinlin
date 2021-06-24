@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * bsbe1-d01a.h - ALPS BSBE1-D01A tuner support
  *
@@ -7,13 +8,13 @@
  * the project's page is at https://linuxtv.org
  */
 
-#ifndef BSBE1_D01A_H
-#define BSBE1_D01A_H
+#अगर_अघोषित BSBE1_D01A_H
+#घोषणा BSBE1_D01A_H
 
-#include "stb6000.h"
-#include "stv0288.h"
+#समावेश "stb6000.h"
+#समावेश "stv0288.h"
 
-static u8 stv0288_bsbe1_d01a_inittab[] = {
+अटल u8 stv0288_bsbe1_d01a_inittab[] = अणु
 	0x01, 0x15,
 	0x02, 0x20,
 	0x09, 0x0,
@@ -118,12 +119,12 @@ static u8 stv0288_bsbe1_d01a_inittab[] = {
 	0xf1, 0x0,
 	0xf2, 0xc0,
 	0xff, 0xff,
-};
+पूर्ण;
 
-static struct stv0288_config stv0288_bsbe1_d01a_config = {
+अटल काष्ठा stv0288_config stv0288_bsbe1_d01a_config = अणु
 	.demod_address = 0x68,
 	.min_delay_ms = 100,
 	.inittab = stv0288_bsbe1_d01a_inittab,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

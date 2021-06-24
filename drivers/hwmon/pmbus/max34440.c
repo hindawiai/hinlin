@@ -1,282 +1,283 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Hardware monitoring driver for Maxim MAX34440/MAX34441
+ * Hardware monitoring driver क्रम Maxim MAX34440/MAX34441
  *
  * Copyright (c) 2011 Ericsson AB.
  * Copyright (c) 2012 Guenter Roeck
  */
 
-#include <linux/bitops.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include "pmbus.h"
+#समावेश <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश "pmbus.h"
 
-enum chips { max34440, max34441, max34446, max34451, max34460, max34461 };
+क्रमागत chips अणु max34440, max34441, max34446, max34451, max34460, max34461 पूर्ण;
 
-#define MAX34440_MFR_VOUT_PEAK		0xd4
-#define MAX34440_MFR_IOUT_PEAK		0xd5
-#define MAX34440_MFR_TEMPERATURE_PEAK	0xd6
-#define MAX34440_MFR_VOUT_MIN		0xd7
+#घोषणा MAX34440_MFR_VOUT_PEAK		0xd4
+#घोषणा MAX34440_MFR_IOUT_PEAK		0xd5
+#घोषणा MAX34440_MFR_TEMPERATURE_PEAK	0xd6
+#घोषणा MAX34440_MFR_VOUT_MIN		0xd7
 
-#define MAX34446_MFR_POUT_PEAK		0xe0
-#define MAX34446_MFR_POUT_AVG		0xe1
-#define MAX34446_MFR_IOUT_AVG		0xe2
-#define MAX34446_MFR_TEMPERATURE_AVG	0xe3
+#घोषणा MAX34446_MFR_POUT_PEAK		0xe0
+#घोषणा MAX34446_MFR_POUT_AVG		0xe1
+#घोषणा MAX34446_MFR_IOUT_AVG		0xe2
+#घोषणा MAX34446_MFR_TEMPERATURE_AVG	0xe3
 
-#define MAX34440_STATUS_OC_WARN		BIT(0)
-#define MAX34440_STATUS_OC_FAULT	BIT(1)
-#define MAX34440_STATUS_OT_FAULT	BIT(5)
-#define MAX34440_STATUS_OT_WARN		BIT(6)
+#घोषणा MAX34440_STATUS_OC_WARN		BIT(0)
+#घोषणा MAX34440_STATUS_OC_FAULT	BIT(1)
+#घोषणा MAX34440_STATUS_OT_FAULT	BIT(5)
+#घोषणा MAX34440_STATUS_OT_WARN		BIT(6)
 
 /*
  * The whole max344* family have IOUT_OC_WARN_LIMIT and IOUT_OC_FAULT_LIMIT
  * swapped from the standard pmbus spec addresses.
  */
-#define MAX34440_IOUT_OC_WARN_LIMIT	0x46
-#define MAX34440_IOUT_OC_FAULT_LIMIT	0x4A
+#घोषणा MAX34440_IOUT_OC_WARN_LIMIT	0x46
+#घोषणा MAX34440_IOUT_OC_FAULT_LIMIT	0x4A
 
-#define MAX34451_MFR_CHANNEL_CONFIG	0xe4
-#define MAX34451_MFR_CHANNEL_CONFIG_SEL_MASK	0x3f
+#घोषणा MAX34451_MFR_CHANNEL_CONFIG	0xe4
+#घोषणा MAX34451_MFR_CHANNEL_CONFIG_SEL_MASK	0x3f
 
-struct max34440_data {
-	int id;
-	struct pmbus_driver_info info;
-};
+काष्ठा max34440_data अणु
+	पूर्णांक id;
+	काष्ठा pmbus_driver_info info;
+पूर्ण;
 
-#define to_max34440_data(x)  container_of(x, struct max34440_data, info)
+#घोषणा to_max34440_data(x)  container_of(x, काष्ठा max34440_data, info)
 
-static const struct i2c_device_id max34440_id[];
+अटल स्थिर काष्ठा i2c_device_id max34440_id[];
 
-static int max34440_read_word_data(struct i2c_client *client, int page,
-				   int phase, int reg)
-{
-	int ret;
-	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
-	const struct max34440_data *data = to_max34440_data(info);
+अटल पूर्णांक max34440_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
+				   पूर्णांक phase, पूर्णांक reg)
+अणु
+	पूर्णांक ret;
+	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
+	स्थिर काष्ठा max34440_data *data = to_max34440_data(info);
 
-	switch (reg) {
-	case PMBUS_IOUT_OC_FAULT_LIMIT:
-		ret = pmbus_read_word_data(client, page, phase,
+	चयन (reg) अणु
+	हाल PMBUS_IOUT_OC_FAULT_LIMIT:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX34440_IOUT_OC_FAULT_LIMIT);
-		break;
-	case PMBUS_IOUT_OC_WARN_LIMIT:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_IOUT_OC_WARN_LIMIT:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX34440_IOUT_OC_WARN_LIMIT);
-		break;
-	case PMBUS_VIRT_READ_VOUT_MIN:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_VOUT_MIN:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX34440_MFR_VOUT_MIN);
-		break;
-	case PMBUS_VIRT_READ_VOUT_MAX:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_VOUT_MAX:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX34440_MFR_VOUT_PEAK);
-		break;
-	case PMBUS_VIRT_READ_IOUT_AVG:
-		if (data->id != max34446 && data->id != max34451)
-			return -ENXIO;
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_IOUT_AVG:
+		अगर (data->id != max34446 && data->id != max34451)
+			वापस -ENXIO;
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX34446_MFR_IOUT_AVG);
-		break;
-	case PMBUS_VIRT_READ_IOUT_MAX:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_IOUT_MAX:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX34440_MFR_IOUT_PEAK);
-		break;
-	case PMBUS_VIRT_READ_POUT_AVG:
-		if (data->id != max34446)
-			return -ENXIO;
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_POUT_AVG:
+		अगर (data->id != max34446)
+			वापस -ENXIO;
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX34446_MFR_POUT_AVG);
-		break;
-	case PMBUS_VIRT_READ_POUT_MAX:
-		if (data->id != max34446)
-			return -ENXIO;
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_POUT_MAX:
+		अगर (data->id != max34446)
+			वापस -ENXIO;
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX34446_MFR_POUT_PEAK);
-		break;
-	case PMBUS_VIRT_READ_TEMP_AVG:
-		if (data->id != max34446 && data->id != max34460 &&
+		अवरोध;
+	हाल PMBUS_VIRT_READ_TEMP_AVG:
+		अगर (data->id != max34446 && data->id != max34460 &&
 		    data->id != max34461)
-			return -ENXIO;
-		ret = pmbus_read_word_data(client, page, phase,
+			वापस -ENXIO;
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX34446_MFR_TEMPERATURE_AVG);
-		break;
-	case PMBUS_VIRT_READ_TEMP_MAX:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_TEMP_MAX:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   MAX34440_MFR_TEMPERATURE_PEAK);
-		break;
-	case PMBUS_VIRT_RESET_POUT_HISTORY:
-		if (data->id != max34446)
-			return -ENXIO;
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_POUT_HISTORY:
+		अगर (data->id != max34446)
+			वापस -ENXIO;
 		ret = 0;
-		break;
-	case PMBUS_VIRT_RESET_VOUT_HISTORY:
-	case PMBUS_VIRT_RESET_IOUT_HISTORY:
-	case PMBUS_VIRT_RESET_TEMP_HISTORY:
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_VOUT_HISTORY:
+	हाल PMBUS_VIRT_RESET_IOUT_HISTORY:
+	हाल PMBUS_VIRT_RESET_TEMP_HISTORY:
 		ret = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENODATA;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int max34440_write_word_data(struct i2c_client *client, int page,
-				    int reg, u16 word)
-{
-	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
-	const struct max34440_data *data = to_max34440_data(info);
-	int ret;
+अटल पूर्णांक max34440_ग_लिखो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
+				    पूर्णांक reg, u16 word)
+अणु
+	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
+	स्थिर काष्ठा max34440_data *data = to_max34440_data(info);
+	पूर्णांक ret;
 
-	switch (reg) {
-	case PMBUS_IOUT_OC_FAULT_LIMIT:
-		ret = pmbus_write_word_data(client, page, MAX34440_IOUT_OC_FAULT_LIMIT,
+	चयन (reg) अणु
+	हाल PMBUS_IOUT_OC_FAULT_LIMIT:
+		ret = pmbus_ग_लिखो_word_data(client, page, MAX34440_IOUT_OC_FAULT_LIMIT,
 					    word);
-		break;
-	case PMBUS_IOUT_OC_WARN_LIMIT:
-		ret = pmbus_write_word_data(client, page, MAX34440_IOUT_OC_WARN_LIMIT,
+		अवरोध;
+	हाल PMBUS_IOUT_OC_WARN_LIMIT:
+		ret = pmbus_ग_लिखो_word_data(client, page, MAX34440_IOUT_OC_WARN_LIMIT,
 					    word);
-		break;
-	case PMBUS_VIRT_RESET_POUT_HISTORY:
-		ret = pmbus_write_word_data(client, page,
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_POUT_HISTORY:
+		ret = pmbus_ग_लिखो_word_data(client, page,
 					    MAX34446_MFR_POUT_PEAK, 0);
-		if (ret)
-			break;
-		ret = pmbus_write_word_data(client, page,
+		अगर (ret)
+			अवरोध;
+		ret = pmbus_ग_लिखो_word_data(client, page,
 					    MAX34446_MFR_POUT_AVG, 0);
-		break;
-	case PMBUS_VIRT_RESET_VOUT_HISTORY:
-		ret = pmbus_write_word_data(client, page,
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_VOUT_HISTORY:
+		ret = pmbus_ग_लिखो_word_data(client, page,
 					    MAX34440_MFR_VOUT_MIN, 0x7fff);
-		if (ret)
-			break;
-		ret = pmbus_write_word_data(client, page,
+		अगर (ret)
+			अवरोध;
+		ret = pmbus_ग_लिखो_word_data(client, page,
 					    MAX34440_MFR_VOUT_PEAK, 0);
-		break;
-	case PMBUS_VIRT_RESET_IOUT_HISTORY:
-		ret = pmbus_write_word_data(client, page,
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_IOUT_HISTORY:
+		ret = pmbus_ग_लिखो_word_data(client, page,
 					    MAX34440_MFR_IOUT_PEAK, 0);
-		if (!ret && (data->id == max34446 || data->id == max34451))
-			ret = pmbus_write_word_data(client, page,
+		अगर (!ret && (data->id == max34446 || data->id == max34451))
+			ret = pmbus_ग_लिखो_word_data(client, page,
 					MAX34446_MFR_IOUT_AVG, 0);
 
-		break;
-	case PMBUS_VIRT_RESET_TEMP_HISTORY:
-		ret = pmbus_write_word_data(client, page,
+		अवरोध;
+	हाल PMBUS_VIRT_RESET_TEMP_HISTORY:
+		ret = pmbus_ग_लिखो_word_data(client, page,
 					    MAX34440_MFR_TEMPERATURE_PEAK,
 					    0x8000);
-		if (!ret && data->id == max34446)
-			ret = pmbus_write_word_data(client, page,
+		अगर (!ret && data->id == max34446)
+			ret = pmbus_ग_लिखो_word_data(client, page,
 					MAX34446_MFR_TEMPERATURE_AVG, 0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENODATA;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int max34440_read_byte_data(struct i2c_client *client, int page, int reg)
-{
-	int ret = 0;
-	int mfg_status;
+अटल पूर्णांक max34440_पढ़ो_byte_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक mfg_status;
 
-	if (page >= 0) {
+	अगर (page >= 0) अणु
 		ret = pmbus_set_page(client, page, 0xff);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	switch (reg) {
-	case PMBUS_STATUS_IOUT:
-		mfg_status = pmbus_read_word_data(client, 0, 0xff,
+	चयन (reg) अणु
+	हाल PMBUS_STATUS_IOUT:
+		mfg_status = pmbus_पढ़ो_word_data(client, 0, 0xff,
 						  PMBUS_STATUS_MFR_SPECIFIC);
-		if (mfg_status < 0)
-			return mfg_status;
-		if (mfg_status & MAX34440_STATUS_OC_WARN)
+		अगर (mfg_status < 0)
+			वापस mfg_status;
+		अगर (mfg_status & MAX34440_STATUS_OC_WARN)
 			ret |= PB_IOUT_OC_WARNING;
-		if (mfg_status & MAX34440_STATUS_OC_FAULT)
+		अगर (mfg_status & MAX34440_STATUS_OC_FAULT)
 			ret |= PB_IOUT_OC_FAULT;
-		break;
-	case PMBUS_STATUS_TEMPERATURE:
-		mfg_status = pmbus_read_word_data(client, 0, 0xff,
+		अवरोध;
+	हाल PMBUS_STATUS_TEMPERATURE:
+		mfg_status = pmbus_पढ़ो_word_data(client, 0, 0xff,
 						  PMBUS_STATUS_MFR_SPECIFIC);
-		if (mfg_status < 0)
-			return mfg_status;
-		if (mfg_status & MAX34440_STATUS_OT_WARN)
+		अगर (mfg_status < 0)
+			वापस mfg_status;
+		अगर (mfg_status & MAX34440_STATUS_OT_WARN)
 			ret |= PB_TEMP_OT_WARNING;
-		if (mfg_status & MAX34440_STATUS_OT_FAULT)
+		अगर (mfg_status & MAX34440_STATUS_OT_FAULT)
 			ret |= PB_TEMP_OT_FAULT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENODATA;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int max34451_set_supported_funcs(struct i2c_client *client,
-					 struct max34440_data *data)
-{
+अटल पूर्णांक max34451_set_supported_funcs(काष्ठा i2c_client *client,
+					 काष्ठा max34440_data *data)
+अणु
 	/*
 	 * Each of the channel 0-15 can be configured to monitor the following
 	 * functions based on MFR_CHANNEL_CONFIG[5:0]
-	 * 0x10: Sequencing + voltage monitoring (only valid for PAGES 0–11)
+	 * 0x10: Sequencing + voltage monitoring (only valid क्रम PAGES 0ै 11)
 	 * 0x20: Voltage monitoring (no sequencing)
-	 * 0x21: Voltage read only
+	 * 0x21: Voltage पढ़ो only
 	 * 0x22: Current monitoring
-	 * 0x23: Current read only
+	 * 0x23: Current पढ़ो only
 	 * 0x30: General-purpose input active low
 	 * 0x34: General-purpose input active high
 	 * 0x00:  Disabled
 	 */
 
-	int page, rv;
+	पूर्णांक page, rv;
 
-	for (page = 0; page < 16; page++) {
-		rv = i2c_smbus_write_byte_data(client, PMBUS_PAGE, page);
-		if (rv < 0)
-			return rv;
+	क्रम (page = 0; page < 16; page++) अणु
+		rv = i2c_smbus_ग_लिखो_byte_data(client, PMBUS_PAGE, page);
+		अगर (rv < 0)
+			वापस rv;
 
-		rv = i2c_smbus_read_word_data(client,
+		rv = i2c_smbus_पढ़ो_word_data(client,
 					      MAX34451_MFR_CHANNEL_CONFIG);
-		if (rv < 0)
-			return rv;
+		अगर (rv < 0)
+			वापस rv;
 
-		switch (rv & MAX34451_MFR_CHANNEL_CONFIG_SEL_MASK) {
-		case 0x10:
-		case 0x20:
+		चयन (rv & MAX34451_MFR_CHANNEL_CONFIG_SEL_MASK) अणु
+		हाल 0x10:
+		हाल 0x20:
 			data->info.func[page] = PMBUS_HAVE_VOUT |
 				PMBUS_HAVE_STATUS_VOUT;
-			break;
-		case 0x21:
+			अवरोध;
+		हाल 0x21:
 			data->info.func[page] = PMBUS_HAVE_VOUT;
-			break;
-		case 0x22:
+			अवरोध;
+		हाल 0x22:
 			data->info.func[page] = PMBUS_HAVE_IOUT |
 				PMBUS_HAVE_STATUS_IOUT;
-			break;
-		case 0x23:
+			अवरोध;
+		हाल 0x23:
 			data->info.func[page] = PMBUS_HAVE_IOUT;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pmbus_driver_info max34440_info[] = {
-	[max34440] = {
+अटल काष्ठा pmbus_driver_info max34440_info[] = अणु
+	[max34440] = अणु
 		.pages = 14,
-		.format[PSC_VOLTAGE_IN] = direct,
-		.format[PSC_VOLTAGE_OUT] = direct,
-		.format[PSC_TEMPERATURE] = direct,
-		.format[PSC_CURRENT_OUT] = direct,
+		.क्रमmat[PSC_VOLTAGE_IN] = direct,
+		.क्रमmat[PSC_VOLTAGE_OUT] = direct,
+		.क्रमmat[PSC_TEMPERATURE] = direct,
+		.क्रमmat[PSC_CURRENT_OUT] = direct,
 		.m[PSC_VOLTAGE_IN] = 1,
 		.b[PSC_VOLTAGE_IN] = 0,
 		.R[PSC_VOLTAGE_IN] = 3,	    /* R = 0 in datasheet reflects mV */
@@ -309,17 +310,17 @@ static struct pmbus_driver_info max34440_info[] = {
 		.func[11] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[12] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[13] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
-		.read_byte_data = max34440_read_byte_data,
-		.read_word_data = max34440_read_word_data,
-		.write_word_data = max34440_write_word_data,
-	},
-	[max34441] = {
+		.पढ़ो_byte_data = max34440_पढ़ो_byte_data,
+		.पढ़ो_word_data = max34440_पढ़ो_word_data,
+		.ग_लिखो_word_data = max34440_ग_लिखो_word_data,
+	पूर्ण,
+	[max34441] = अणु
 		.pages = 12,
-		.format[PSC_VOLTAGE_IN] = direct,
-		.format[PSC_VOLTAGE_OUT] = direct,
-		.format[PSC_TEMPERATURE] = direct,
-		.format[PSC_CURRENT_OUT] = direct,
-		.format[PSC_FAN] = direct,
+		.क्रमmat[PSC_VOLTAGE_IN] = direct,
+		.क्रमmat[PSC_VOLTAGE_OUT] = direct,
+		.क्रमmat[PSC_TEMPERATURE] = direct,
+		.क्रमmat[PSC_CURRENT_OUT] = direct,
+		.क्रमmat[PSC_FAN] = direct,
 		.m[PSC_VOLTAGE_IN] = 1,
 		.b[PSC_VOLTAGE_IN] = 0,
 		.R[PSC_VOLTAGE_IN] = 3,
@@ -352,17 +353,17 @@ static struct pmbus_driver_info max34440_info[] = {
 		.func[9] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[10] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[11] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
-		.read_byte_data = max34440_read_byte_data,
-		.read_word_data = max34440_read_word_data,
-		.write_word_data = max34440_write_word_data,
-	},
-	[max34446] = {
+		.पढ़ो_byte_data = max34440_पढ़ो_byte_data,
+		.पढ़ो_word_data = max34440_पढ़ो_word_data,
+		.ग_लिखो_word_data = max34440_ग_लिखो_word_data,
+	पूर्ण,
+	[max34446] = अणु
 		.pages = 7,
-		.format[PSC_VOLTAGE_IN] = direct,
-		.format[PSC_VOLTAGE_OUT] = direct,
-		.format[PSC_TEMPERATURE] = direct,
-		.format[PSC_CURRENT_OUT] = direct,
-		.format[PSC_POWER] = direct,
+		.क्रमmat[PSC_VOLTAGE_IN] = direct,
+		.क्रमmat[PSC_VOLTAGE_OUT] = direct,
+		.क्रमmat[PSC_TEMPERATURE] = direct,
+		.क्रमmat[PSC_CURRENT_OUT] = direct,
+		.क्रमmat[PSC_POWER] = direct,
 		.m[PSC_VOLTAGE_IN] = 1,
 		.b[PSC_VOLTAGE_IN] = 0,
 		.R[PSC_VOLTAGE_IN] = 3,
@@ -389,15 +390,15 @@ static struct pmbus_driver_info max34440_info[] = {
 		.func[4] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[5] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[6] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
-		.read_byte_data = max34440_read_byte_data,
-		.read_word_data = max34440_read_word_data,
-		.write_word_data = max34440_write_word_data,
-	},
-	[max34451] = {
+		.पढ़ो_byte_data = max34440_पढ़ो_byte_data,
+		.पढ़ो_word_data = max34440_पढ़ो_word_data,
+		.ग_लिखो_word_data = max34440_ग_लिखो_word_data,
+	पूर्ण,
+	[max34451] = अणु
 		.pages = 21,
-		.format[PSC_VOLTAGE_OUT] = direct,
-		.format[PSC_TEMPERATURE] = direct,
-		.format[PSC_CURRENT_OUT] = direct,
+		.क्रमmat[PSC_VOLTAGE_OUT] = direct,
+		.क्रमmat[PSC_TEMPERATURE] = direct,
+		.क्रमmat[PSC_CURRENT_OUT] = direct,
 		.m[PSC_VOLTAGE_OUT] = 1,
 		.b[PSC_VOLTAGE_OUT] = 0,
 		.R[PSC_VOLTAGE_OUT] = 3,
@@ -407,19 +408,19 @@ static struct pmbus_driver_info max34440_info[] = {
 		.m[PSC_TEMPERATURE] = 1,
 		.b[PSC_TEMPERATURE] = 0,
 		.R[PSC_TEMPERATURE] = 2,
-		/* func 0-15 is set dynamically before probing */
+		/* func 0-15 is set dynamically beक्रमe probing */
 		.func[16] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[17] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[18] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[19] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[20] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
-		.read_word_data = max34440_read_word_data,
-		.write_word_data = max34440_write_word_data,
-	},
-	[max34460] = {
+		.पढ़ो_word_data = max34440_पढ़ो_word_data,
+		.ग_लिखो_word_data = max34440_ग_लिखो_word_data,
+	पूर्ण,
+	[max34460] = अणु
 		.pages = 18,
-		.format[PSC_VOLTAGE_OUT] = direct,
-		.format[PSC_TEMPERATURE] = direct,
+		.क्रमmat[PSC_VOLTAGE_OUT] = direct,
+		.क्रमmat[PSC_TEMPERATURE] = direct,
 		.m[PSC_VOLTAGE_OUT] = 1,
 		.b[PSC_VOLTAGE_OUT] = 0,
 		.R[PSC_VOLTAGE_OUT] = 3,
@@ -443,13 +444,13 @@ static struct pmbus_driver_info max34440_info[] = {
 		.func[15] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[16] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[17] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
-		.read_word_data = max34440_read_word_data,
-		.write_word_data = max34440_write_word_data,
-	},
-	[max34461] = {
+		.पढ़ो_word_data = max34440_पढ़ो_word_data,
+		.ग_लिखो_word_data = max34440_ग_लिखो_word_data,
+	पूर्ण,
+	[max34461] = अणु
 		.pages = 23,
-		.format[PSC_VOLTAGE_OUT] = direct,
-		.format[PSC_TEMPERATURE] = direct,
+		.क्रमmat[PSC_VOLTAGE_OUT] = direct,
+		.क्रमmat[PSC_TEMPERATURE] = direct,
 		.m[PSC_VOLTAGE_OUT] = 1,
 		.b[PSC_VOLTAGE_OUT] = 0,
 		.R[PSC_VOLTAGE_OUT] = 3,
@@ -478,51 +479,51 @@ static struct pmbus_driver_info max34440_info[] = {
 		.func[19] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[20] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
 		.func[21] = PMBUS_HAVE_TEMP | PMBUS_HAVE_STATUS_TEMP,
-		.read_word_data = max34440_read_word_data,
-		.write_word_data = max34440_write_word_data,
-	},
-};
+		.पढ़ो_word_data = max34440_पढ़ो_word_data,
+		.ग_लिखो_word_data = max34440_ग_लिखो_word_data,
+	पूर्ण,
+पूर्ण;
 
-static int max34440_probe(struct i2c_client *client)
-{
-	struct max34440_data *data;
-	int rv;
+अटल पूर्णांक max34440_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा max34440_data *data;
+	पूर्णांक rv;
 
-	data = devm_kzalloc(&client->dev, sizeof(struct max34440_data),
+	data = devm_kzalloc(&client->dev, माप(काष्ठा max34440_data),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 	data->id = i2c_match_id(max34440_id, client)->driver_data;
 	data->info = max34440_info[data->id];
 
-	if (data->id == max34451) {
+	अगर (data->id == max34451) अणु
 		rv = max34451_set_supported_funcs(client, data);
-		if (rv)
-			return rv;
-	}
+		अगर (rv)
+			वापस rv;
+	पूर्ण
 
-	return pmbus_do_probe(client, &data->info);
-}
+	वापस pmbus_करो_probe(client, &data->info);
+पूर्ण
 
-static const struct i2c_device_id max34440_id[] = {
-	{"max34440", max34440},
-	{"max34441", max34441},
-	{"max34446", max34446},
-	{"max34451", max34451},
-	{"max34460", max34460},
-	{"max34461", max34461},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id max34440_id[] = अणु
+	अणु"max34440", max34440पूर्ण,
+	अणु"max34441", max34441पूर्ण,
+	अणु"max34446", max34446पूर्ण,
+	अणु"max34451", max34451पूर्ण,
+	अणु"max34460", max34460पूर्ण,
+	अणु"max34461", max34461पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, max34440_id);
 
 /* This is the driver that will be inserted */
-static struct i2c_driver max34440_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max34440_driver = अणु
+	.driver = अणु
 		   .name = "max34440",
-		   },
+		   पूर्ण,
 	.probe_new = max34440_probe,
 	.id_table = max34440_id,
-};
+पूर्ण;
 
 module_i2c_driver(max34440_driver);
 

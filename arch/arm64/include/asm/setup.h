@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#ifndef __ARM64_ASM_SETUP_H
-#define __ARM64_ASM_SETUP_H
+#अगर_अघोषित __ARM64_ASM_SETUP_H
+#घोषणा __ARM64_ASM_SETUP_H
 
-#include <uapi/asm/setup.h>
+#समावेश <uapi/यंत्र/setup.h>
 
-void *get_early_fdt_ptr(void);
-void early_fdt_map(u64 dt_phys);
+व्योम *get_early_fdt_ptr(व्योम);
+व्योम early_fdt_map(u64 dt_phys);
 
-#endif
+#पूर्ण_अगर

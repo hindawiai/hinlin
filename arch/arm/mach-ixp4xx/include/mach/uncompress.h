@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * arch/arm/mach-ixp4xx/include/mach/uncompress.h 
  *
@@ -6,47 +7,47 @@
  * Copyright (C) 2003-2004 MontaVista Software, Inc.
  */
 
-#ifndef _ARCH_UNCOMPRESS_H_
-#define _ARCH_UNCOMPRESS_H_
+#अगर_अघोषित _ARCH_UNCOMPRESS_H_
+#घोषणा _ARCH_UNCOMPRESS_H_
 
-#include "ixp4xx-regs.h"
-#include <asm/mach-types.h>
-#include <linux/serial_reg.h>
+#समावेश "ixp4xx-regs.h"
+#समावेश <यंत्र/mach-types.h>
+#समावेश <linux/serial_reg.h>
 
-#define TX_DONE (UART_LSR_TEMT|UART_LSR_THRE)
+#घोषणा TX_DONE (UART_LSR_TEMT|UART_LSR_THRE)
 
-volatile u32* uart_base;
+अस्थिर u32* uart_base;
 
-static inline void putc(int c)
-{
-	/* Check THRE and TEMT bits before we transmit the character.
+अटल अंतरभूत व्योम अ_दो(पूर्णांक c)
+अणु
+	/* Check THRE and TEMT bits beक्रमe we transmit the अक्षरacter.
 	 */
-	while ((uart_base[UART_LSR] & TX_DONE) != TX_DONE)
+	जबतक ((uart_base[UART_LSR] & TX_DONE) != TX_DONE)
 		barrier();
 
 	*uart_base = c;
-}
+पूर्ण
 
-static void flush(void)
-{
-}
+अटल व्योम flush(व्योम)
+अणु
+पूर्ण
 
-static __inline__ void __arch_decomp_setup(unsigned long arch_id)
-{
+अटल __अंतरभूत__ व्योम __arch_decomp_setup(अचिन्हित दीर्घ arch_id)
+अणु
 	/*
 	 * Some boards are using UART2 as console
 	 */
-	if (machine_is_adi_coyote() || machine_is_gtwx5715() ||
+	अगर (machine_is_adi_coyote() || machine_is_gtwx5715() ||
 	    machine_is_gateway7001() || machine_is_wg302v2() ||
 	    machine_is_devixp() || machine_is_miccpt() || machine_is_mic256())
-		uart_base = (volatile u32*) IXP4XX_UART2_BASE_PHYS;
-	else
-		uart_base = (volatile u32*) IXP4XX_UART1_BASE_PHYS;
-}
+		uart_base = (अस्थिर u32*) IXP4XX_UART2_BASE_PHYS;
+	अन्यथा
+		uart_base = (अस्थिर u32*) IXP4XX_UART1_BASE_PHYS;
+पूर्ण
 
 /*
  * arch_id is a variable in decompress_kernel()
  */
-#define arch_decomp_setup()	__arch_decomp_setup(arch_id)
+#घोषणा arch_decomp_setup()	__arch_decomp_setup(arch_id)
 
-#endif
+#पूर्ण_अगर

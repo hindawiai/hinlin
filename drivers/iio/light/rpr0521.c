@@ -1,247 +1,248 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * RPR-0521 ROHM Ambient Light and Proximity Sensor
  *
  * Copyright (c) 2015, Intel Corporation.
  *
- * IIO driver for RPR-0521RS (7-bit I2C slave address 0x38).
+ * IIO driver क्रम RPR-0521RS (7-bit I2C slave address 0x38).
  *
  * TODO: illuminance channel
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/delay.h>
-#include <linux/acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/acpi.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/iio/sysfs.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/pm_runसमय.स>
 
-#define RPR0521_REG_SYSTEM_CTRL		0x40
-#define RPR0521_REG_MODE_CTRL		0x41
-#define RPR0521_REG_ALS_CTRL		0x42
-#define RPR0521_REG_PXS_CTRL		0x43
-#define RPR0521_REG_PXS_DATA		0x44 /* 16-bit, little endian */
-#define RPR0521_REG_ALS_DATA0		0x46 /* 16-bit, little endian */
-#define RPR0521_REG_ALS_DATA1		0x48 /* 16-bit, little endian */
-#define RPR0521_REG_INTERRUPT		0x4A
-#define RPR0521_REG_PS_OFFSET_LSB	0x53
-#define RPR0521_REG_ID			0x92
+#घोषणा RPR0521_REG_SYSTEM_CTRL		0x40
+#घोषणा RPR0521_REG_MODE_CTRL		0x41
+#घोषणा RPR0521_REG_ALS_CTRL		0x42
+#घोषणा RPR0521_REG_PXS_CTRL		0x43
+#घोषणा RPR0521_REG_PXS_DATA		0x44 /* 16-bit, little endian */
+#घोषणा RPR0521_REG_ALS_DATA0		0x46 /* 16-bit, little endian */
+#घोषणा RPR0521_REG_ALS_DATA1		0x48 /* 16-bit, little endian */
+#घोषणा RPR0521_REG_INTERRUPT		0x4A
+#घोषणा RPR0521_REG_PS_OFFSET_LSB	0x53
+#घोषणा RPR0521_REG_ID			0x92
 
-#define RPR0521_MODE_ALS_MASK		BIT(7)
-#define RPR0521_MODE_PXS_MASK		BIT(6)
-#define RPR0521_MODE_MEAS_TIME_MASK	GENMASK(3, 0)
-#define RPR0521_ALS_DATA0_GAIN_MASK	GENMASK(5, 4)
-#define RPR0521_ALS_DATA0_GAIN_SHIFT	4
-#define RPR0521_ALS_DATA1_GAIN_MASK	GENMASK(3, 2)
-#define RPR0521_ALS_DATA1_GAIN_SHIFT	2
-#define RPR0521_PXS_GAIN_MASK		GENMASK(5, 4)
-#define RPR0521_PXS_GAIN_SHIFT		4
-#define RPR0521_PXS_PERSISTENCE_MASK	GENMASK(3, 0)
-#define RPR0521_INTERRUPT_INT_TRIG_PS_MASK	BIT(0)
-#define RPR0521_INTERRUPT_INT_TRIG_ALS_MASK	BIT(1)
-#define RPR0521_INTERRUPT_INT_REASSERT_MASK	BIT(3)
-#define RPR0521_INTERRUPT_ALS_INT_STATUS_MASK	BIT(6)
-#define RPR0521_INTERRUPT_PS_INT_STATUS_MASK	BIT(7)
+#घोषणा RPR0521_MODE_ALS_MASK		BIT(7)
+#घोषणा RPR0521_MODE_PXS_MASK		BIT(6)
+#घोषणा RPR0521_MODE_MEAS_TIME_MASK	GENMASK(3, 0)
+#घोषणा RPR0521_ALS_DATA0_GAIN_MASK	GENMASK(5, 4)
+#घोषणा RPR0521_ALS_DATA0_GAIN_SHIFT	4
+#घोषणा RPR0521_ALS_DATA1_GAIN_MASK	GENMASK(3, 2)
+#घोषणा RPR0521_ALS_DATA1_GAIN_SHIFT	2
+#घोषणा RPR0521_PXS_GAIN_MASK		GENMASK(5, 4)
+#घोषणा RPR0521_PXS_GAIN_SHIFT		4
+#घोषणा RPR0521_PXS_PERSISTENCE_MASK	GENMASK(3, 0)
+#घोषणा RPR0521_INTERRUPT_INT_TRIG_PS_MASK	BIT(0)
+#घोषणा RPR0521_INTERRUPT_INT_TRIG_ALS_MASK	BIT(1)
+#घोषणा RPR0521_INTERRUPT_INT_REASSERT_MASK	BIT(3)
+#घोषणा RPR0521_INTERRUPT_ALS_INT_STATUS_MASK	BIT(6)
+#घोषणा RPR0521_INTERRUPT_PS_INT_STATUS_MASK	BIT(7)
 
-#define RPR0521_MODE_ALS_ENABLE		BIT(7)
-#define RPR0521_MODE_ALS_DISABLE	0x00
-#define RPR0521_MODE_PXS_ENABLE		BIT(6)
-#define RPR0521_MODE_PXS_DISABLE	0x00
-#define RPR0521_PXS_PERSISTENCE_DRDY	0x00
+#घोषणा RPR0521_MODE_ALS_ENABLE		BIT(7)
+#घोषणा RPR0521_MODE_ALS_DISABLE	0x00
+#घोषणा RPR0521_MODE_PXS_ENABLE		BIT(6)
+#घोषणा RPR0521_MODE_PXS_DISABLE	0x00
+#घोषणा RPR0521_PXS_PERSISTENCE_DRDY	0x00
 
-#define RPR0521_INTERRUPT_INT_TRIG_PS_ENABLE	BIT(0)
-#define RPR0521_INTERRUPT_INT_TRIG_PS_DISABLE	0x00
-#define RPR0521_INTERRUPT_INT_TRIG_ALS_ENABLE	BIT(1)
-#define RPR0521_INTERRUPT_INT_TRIG_ALS_DISABLE	0x00
-#define RPR0521_INTERRUPT_INT_REASSERT_ENABLE	BIT(3)
-#define RPR0521_INTERRUPT_INT_REASSERT_DISABLE	0x00
+#घोषणा RPR0521_INTERRUPT_INT_TRIG_PS_ENABLE	BIT(0)
+#घोषणा RPR0521_INTERRUPT_INT_TRIG_PS_DISABLE	0x00
+#घोषणा RPR0521_INTERRUPT_INT_TRIG_ALS_ENABLE	BIT(1)
+#घोषणा RPR0521_INTERRUPT_INT_TRIG_ALS_DISABLE	0x00
+#घोषणा RPR0521_INTERRUPT_INT_REASSERT_ENABLE	BIT(3)
+#घोषणा RPR0521_INTERRUPT_INT_REASSERT_DISABLE	0x00
 
-#define RPR0521_MANUFACT_ID		0xE0
-#define RPR0521_DEFAULT_MEAS_TIME	0x06 /* ALS - 100ms, PXS - 100ms */
+#घोषणा RPR0521_MANUFACT_ID		0xE0
+#घोषणा RPR0521_DEFAULT_MEAS_TIME	0x06 /* ALS - 100ms, PXS - 100ms */
 
-#define RPR0521_DRV_NAME		"RPR0521"
-#define RPR0521_IRQ_NAME		"rpr0521_event"
-#define RPR0521_REGMAP_NAME		"rpr0521_regmap"
+#घोषणा RPR0521_DRV_NAME		"RPR0521"
+#घोषणा RPR0521_IRQ_NAME		"rpr0521_event"
+#घोषणा RPR0521_REGMAP_NAME		"rpr0521_regmap"
 
-#define RPR0521_SLEEP_DELAY_MS	2000
+#घोषणा RPR0521_SLEEP_DELAY_MS	2000
 
-#define RPR0521_ALS_SCALE_AVAIL "0.007812 0.015625 0.5 1"
-#define RPR0521_PXS_SCALE_AVAIL "0.125 0.5 1"
+#घोषणा RPR0521_ALS_SCALE_AVAIL "0.007812 0.015625 0.5 1"
+#घोषणा RPR0521_PXS_SCALE_AVAIL "0.125 0.5 1"
 
-struct rpr0521_gain {
-	int scale;
-	int uscale;
-};
+काष्ठा rpr0521_gain अणु
+	पूर्णांक scale;
+	पूर्णांक uscale;
+पूर्ण;
 
-static const struct rpr0521_gain rpr0521_als_gain[4] = {
-	{1, 0},		/* x1 */
-	{0, 500000},	/* x2 */
-	{0, 15625},	/* x64 */
-	{0, 7812},	/* x128 */
-};
+अटल स्थिर काष्ठा rpr0521_gain rpr0521_als_gain[4] = अणु
+	अणु1, 0पूर्ण,		/* x1 */
+	अणु0, 500000पूर्ण,	/* x2 */
+	अणु0, 15625पूर्ण,	/* x64 */
+	अणु0, 7812पूर्ण,	/* x128 */
+पूर्ण;
 
-static const struct rpr0521_gain rpr0521_pxs_gain[3] = {
-	{1, 0},		/* x1 */
-	{0, 500000},	/* x2 */
-	{0, 125000},	/* x4 */
-};
+अटल स्थिर काष्ठा rpr0521_gain rpr0521_pxs_gain[3] = अणु
+	अणु1, 0पूर्ण,		/* x1 */
+	अणु0, 500000पूर्ण,	/* x2 */
+	अणु0, 125000पूर्ण,	/* x4 */
+पूर्ण;
 
-enum rpr0521_channel {
+क्रमागत rpr0521_channel अणु
 	RPR0521_CHAN_PXS,
 	RPR0521_CHAN_ALS_DATA0,
 	RPR0521_CHAN_ALS_DATA1,
-};
+पूर्ण;
 
-struct rpr0521_reg_desc {
+काष्ठा rpr0521_reg_desc अणु
 	u8 address;
 	u8 device_mask;
-};
+पूर्ण;
 
-static const struct rpr0521_reg_desc rpr0521_data_reg[] = {
-	[RPR0521_CHAN_PXS]	= {
+अटल स्थिर काष्ठा rpr0521_reg_desc rpr0521_data_reg[] = अणु
+	[RPR0521_CHAN_PXS]	= अणु
 		.address	= RPR0521_REG_PXS_DATA,
 		.device_mask	= RPR0521_MODE_PXS_MASK,
-	},
-	[RPR0521_CHAN_ALS_DATA0] = {
+	पूर्ण,
+	[RPR0521_CHAN_ALS_DATA0] = अणु
 		.address	= RPR0521_REG_ALS_DATA0,
 		.device_mask	= RPR0521_MODE_ALS_MASK,
-	},
-	[RPR0521_CHAN_ALS_DATA1] = {
+	पूर्ण,
+	[RPR0521_CHAN_ALS_DATA1] = अणु
 		.address	= RPR0521_REG_ALS_DATA1,
 		.device_mask	= RPR0521_MODE_ALS_MASK,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct rpr0521_gain_info {
+अटल स्थिर काष्ठा rpr0521_gain_info अणु
 	u8 reg;
 	u8 mask;
-	u8 shift;
-	const struct rpr0521_gain *gain;
-	int size;
-} rpr0521_gain[] = {
-	[RPR0521_CHAN_PXS] = {
+	u8 shअगरt;
+	स्थिर काष्ठा rpr0521_gain *gain;
+	पूर्णांक size;
+पूर्ण rpr0521_gain[] = अणु
+	[RPR0521_CHAN_PXS] = अणु
 		.reg	= RPR0521_REG_PXS_CTRL,
 		.mask	= RPR0521_PXS_GAIN_MASK,
-		.shift	= RPR0521_PXS_GAIN_SHIFT,
+		.shअगरt	= RPR0521_PXS_GAIN_SHIFT,
 		.gain	= rpr0521_pxs_gain,
 		.size	= ARRAY_SIZE(rpr0521_pxs_gain),
-	},
-	[RPR0521_CHAN_ALS_DATA0] = {
+	पूर्ण,
+	[RPR0521_CHAN_ALS_DATA0] = अणु
 		.reg	= RPR0521_REG_ALS_CTRL,
 		.mask	= RPR0521_ALS_DATA0_GAIN_MASK,
-		.shift	= RPR0521_ALS_DATA0_GAIN_SHIFT,
+		.shअगरt	= RPR0521_ALS_DATA0_GAIN_SHIFT,
 		.gain	= rpr0521_als_gain,
 		.size	= ARRAY_SIZE(rpr0521_als_gain),
-	},
-	[RPR0521_CHAN_ALS_DATA1] = {
+	पूर्ण,
+	[RPR0521_CHAN_ALS_DATA1] = अणु
 		.reg	= RPR0521_REG_ALS_CTRL,
 		.mask	= RPR0521_ALS_DATA1_GAIN_MASK,
-		.shift	= RPR0521_ALS_DATA1_GAIN_SHIFT,
+		.shअगरt	= RPR0521_ALS_DATA1_GAIN_SHIFT,
 		.gain	= rpr0521_als_gain,
 		.size	= ARRAY_SIZE(rpr0521_als_gain),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct rpr0521_samp_freq {
-	int	als_hz;
-	int	als_uhz;
-	int	pxs_hz;
-	int	pxs_uhz;
-};
+काष्ठा rpr0521_samp_freq अणु
+	पूर्णांक	als_hz;
+	पूर्णांक	als_uhz;
+	पूर्णांक	pxs_hz;
+	पूर्णांक	pxs_uhz;
+पूर्ण;
 
-static const struct rpr0521_samp_freq rpr0521_samp_freq_i[13] = {
-/*	{ALS, PXS},		   W==currently writable option */
-	{0, 0, 0, 0},		/* W0000, 0=standby */
-	{0, 0, 100, 0},		/*  0001 */
-	{0, 0, 25, 0},		/*  0010 */
-	{0, 0, 10, 0},		/*  0011 */
-	{0, 0, 2, 500000},	/*  0100 */
-	{10, 0, 20, 0},		/*  0101 */
-	{10, 0, 10, 0},		/* W0110 */
-	{10, 0, 2, 500000},	/*  0111 */
-	{2, 500000, 20, 0},	/*  1000, measurement 100ms, sleep 300ms */
-	{2, 500000, 10, 0},	/*  1001, measurement 100ms, sleep 300ms */
-	{2, 500000, 0, 0},	/*  1010, high sensitivity mode */
-	{2, 500000, 2, 500000},	/* W1011, high sensitivity mode */
-	{20, 0, 20, 0}	/* 1100, ALS_data x 0.5, see specification P.18 */
-};
+अटल स्थिर काष्ठा rpr0521_samp_freq rpr0521_samp_freq_i[13] = अणु
+/*	अणुALS, PXSपूर्ण,		   W==currently writable option */
+	अणु0, 0, 0, 0पूर्ण,		/* W0000, 0=standby */
+	अणु0, 0, 100, 0पूर्ण,		/*  0001 */
+	अणु0, 0, 25, 0पूर्ण,		/*  0010 */
+	अणु0, 0, 10, 0पूर्ण,		/*  0011 */
+	अणु0, 0, 2, 500000पूर्ण,	/*  0100 */
+	अणु10, 0, 20, 0पूर्ण,		/*  0101 */
+	अणु10, 0, 10, 0पूर्ण,		/* W0110 */
+	अणु10, 0, 2, 500000पूर्ण,	/*  0111 */
+	अणु2, 500000, 20, 0पूर्ण,	/*  1000, measurement 100ms, sleep 300ms */
+	अणु2, 500000, 10, 0पूर्ण,	/*  1001, measurement 100ms, sleep 300ms */
+	अणु2, 500000, 0, 0पूर्ण,	/*  1010, high sensitivity mode */
+	अणु2, 500000, 2, 500000पूर्ण,	/* W1011, high sensitivity mode */
+	अणु20, 0, 20, 0पूर्ण	/* 1100, ALS_data x 0.5, see specअगरication P.18 */
+पूर्ण;
 
-struct rpr0521_data {
-	struct i2c_client *client;
+काष्ठा rpr0521_data अणु
+	काष्ठा i2c_client *client;
 
 	/* protect device params updates (e.g state, gain) */
-	struct mutex lock;
+	काष्ठा mutex lock;
 
 	/* device active status */
 	bool als_dev_en;
 	bool pxs_dev_en;
 
-	struct iio_trigger *drdy_trigger0;
-	s64 irq_timestamp;
+	काष्ठा iio_trigger *drdy_trigger0;
+	s64 irq_बारtamp;
 
-	/* optimize runtime pm ops - enable/disable device only if needed */
+	/* optimize runसमय pm ops - enable/disable device only अगर needed */
 	bool als_ps_need_en;
 	bool pxs_ps_need_en;
 	bool als_need_dis;
 	bool pxs_need_dis;
 
-	struct regmap *regmap;
+	काष्ठा regmap *regmap;
 
 	/*
-	 * Ensure correct naturally aligned timestamp.
-	 * Note that the read will put garbage data into
+	 * Ensure correct naturally aligned बारtamp.
+	 * Note that the पढ़ो will put garbage data पूर्णांकo
 	 * the padding but this should not be a problem
 	 */
-	struct {
+	काष्ठा अणु
 		__le16 channels[3];
 		u8 garbage;
 		s64 ts __aligned(8);
-	} scan;
-};
+	पूर्ण scan;
+पूर्ण;
 
-static IIO_CONST_ATTR(in_intensity_scale_available, RPR0521_ALS_SCALE_AVAIL);
-static IIO_CONST_ATTR(in_proximity_scale_available, RPR0521_PXS_SCALE_AVAIL);
+अटल IIO_CONST_ATTR(in_पूर्णांकensity_scale_available, RPR0521_ALS_SCALE_AVAIL);
+अटल IIO_CONST_ATTR(in_proximity_scale_available, RPR0521_PXS_SCALE_AVAIL);
 
 /*
  * Start with easy freq first, whole table of freq combinations is more
  * complicated.
  */
-static IIO_CONST_ATTR_SAMP_FREQ_AVAIL("2.5 10");
+अटल IIO_CONST_ATTR_SAMP_FREQ_AVAIL("2.5 10");
 
-static struct attribute *rpr0521_attributes[] = {
-	&iio_const_attr_in_intensity_scale_available.dev_attr.attr,
-	&iio_const_attr_in_proximity_scale_available.dev_attr.attr,
-	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
-	NULL,
-};
+अटल काष्ठा attribute *rpr0521_attributes[] = अणु
+	&iio_स्थिर_attr_in_पूर्णांकensity_scale_available.dev_attr.attr,
+	&iio_स्थिर_attr_in_proximity_scale_available.dev_attr.attr,
+	&iio_स्थिर_attr_sampling_frequency_available.dev_attr.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group rpr0521_attribute_group = {
+अटल स्थिर काष्ठा attribute_group rpr0521_attribute_group = अणु
 	.attrs = rpr0521_attributes,
-};
+पूर्ण;
 
 /* Order of the channel data in buffer */
-enum rpr0521_scan_index_order {
+क्रमागत rpr0521_scan_index_order अणु
 	RPR0521_CHAN_INDEX_PXS,
 	RPR0521_CHAN_INDEX_BOTH,
 	RPR0521_CHAN_INDEX_IR,
-};
+पूर्ण;
 
-static const unsigned long rpr0521_available_scan_masks[] = {
+अटल स्थिर अचिन्हित दीर्घ rpr0521_available_scan_masks[] = अणु
 	BIT(RPR0521_CHAN_INDEX_PXS) | BIT(RPR0521_CHAN_INDEX_BOTH) |
 	BIT(RPR0521_CHAN_INDEX_IR),
 	0
-};
+पूर्ण;
 
-static const struct iio_chan_spec rpr0521_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec rpr0521_channels[] = अणु
+	अणु
 		.type = IIO_PROXIMITY,
 		.address = RPR0521_CHAN_PXS,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
@@ -249,704 +250,704 @@ static const struct iio_chan_spec rpr0521_channels[] = {
 			BIT(IIO_CHAN_INFO_SCALE),
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
 		.scan_index = RPR0521_CHAN_INDEX_PXS,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 'u',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_LE,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.type = IIO_INTENSITY,
-		.modified = 1,
+		.modअगरied = 1,
 		.address = RPR0521_CHAN_ALS_DATA0,
 		.channel2 = IIO_MOD_LIGHT_BOTH,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 			BIT(IIO_CHAN_INFO_SCALE),
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
 		.scan_index = RPR0521_CHAN_INDEX_BOTH,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 'u',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_LE,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.type = IIO_INTENSITY,
-		.modified = 1,
+		.modअगरied = 1,
 		.address = RPR0521_CHAN_ALS_DATA1,
 		.channel2 = IIO_MOD_LIGHT_IR,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 			BIT(IIO_CHAN_INFO_SCALE),
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
 		.scan_index = RPR0521_CHAN_INDEX_IR,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 'u',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_LE,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int rpr0521_als_enable(struct rpr0521_data *data, u8 status)
-{
-	int ret;
+अटल पूर्णांक rpr0521_als_enable(काष्ठा rpr0521_data *data, u8 status)
+अणु
+	पूर्णांक ret;
 
 	ret = regmap_update_bits(data->regmap, RPR0521_REG_MODE_CTRL,
 				 RPR0521_MODE_ALS_MASK,
 				 status);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (status & RPR0521_MODE_ALS_MASK)
+	अगर (status & RPR0521_MODE_ALS_MASK)
 		data->als_dev_en = true;
-	else
+	अन्यथा
 		data->als_dev_en = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rpr0521_pxs_enable(struct rpr0521_data *data, u8 status)
-{
-	int ret;
+अटल पूर्णांक rpr0521_pxs_enable(काष्ठा rpr0521_data *data, u8 status)
+अणु
+	पूर्णांक ret;
 
 	ret = regmap_update_bits(data->regmap, RPR0521_REG_MODE_CTRL,
 				 RPR0521_MODE_PXS_MASK,
 				 status);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (status & RPR0521_MODE_PXS_MASK)
+	अगर (status & RPR0521_MODE_PXS_MASK)
 		data->pxs_dev_en = true;
-	else
+	अन्यथा
 		data->pxs_dev_en = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * rpr0521_set_power_state - handles runtime PM state and sensors enabled status
+ * rpr0521_set_घातer_state - handles runसमय PM state and sensors enabled status
  *
- * @data: rpr0521 device private data
- * @on: state to be set for devices in @device_mask
- * @device_mask: bitmask specifying for which device we need to update @on state
+ * @data: rpr0521 device निजी data
+ * @on: state to be set क्रम devices in @device_mask
+ * @device_mask: biपंचांगask specअगरying क्रम which device we need to update @on state
  *
- * Calls for this function must be balanced so that each ON should have matching
- * OFF. Otherwise pm usage_count gets out of sync.
+ * Calls क्रम this function must be balanced so that each ON should have matching
+ * OFF. Otherwise pm usage_count माला_लो out of sync.
  */
-static int rpr0521_set_power_state(struct rpr0521_data *data, bool on,
+अटल पूर्णांक rpr0521_set_घातer_state(काष्ठा rpr0521_data *data, bool on,
 				   u8 device_mask)
-{
-#ifdef CONFIG_PM
-	int ret;
+अणु
+#अगर_घोषित CONFIG_PM
+	पूर्णांक ret;
 
-	if (device_mask & RPR0521_MODE_ALS_MASK) {
+	अगर (device_mask & RPR0521_MODE_ALS_MASK) अणु
 		data->als_ps_need_en = on;
 		data->als_need_dis = !on;
-	}
+	पूर्ण
 
-	if (device_mask & RPR0521_MODE_PXS_MASK) {
+	अगर (device_mask & RPR0521_MODE_PXS_MASK) अणु
 		data->pxs_ps_need_en = on;
 		data->pxs_need_dis = !on;
-	}
+	पूर्ण
 
 	/*
 	 * On: _resume() is called only when we are suspended
-	 * Off: _suspend() is called after delay if _resume() is not
-	 * called before that.
-	 * Note: If either measurement is re-enabled before _suspend(),
+	 * Off: _suspend() is called after delay अगर _resume() is not
+	 * called beक्रमe that.
+	 * Note: If either measurement is re-enabled beक्रमe _suspend(),
 	 * both stay enabled until _suspend().
 	 */
-	if (on) {
-		ret = pm_runtime_get_sync(&data->client->dev);
-	} else {
-		pm_runtime_mark_last_busy(&data->client->dev);
-		ret = pm_runtime_put_autosuspend(&data->client->dev);
-	}
-	if (ret < 0) {
+	अगर (on) अणु
+		ret = pm_runसमय_get_sync(&data->client->dev);
+	पूर्ण अन्यथा अणु
+		pm_runसमय_mark_last_busy(&data->client->dev);
+		ret = pm_runसमय_put_स्वतःsuspend(&data->client->dev);
+	पूर्ण
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev,
 			"Failed: rpr0521_set_power_state for %d, ret %d\n",
 			on, ret);
-		if (on)
-			pm_runtime_put_noidle(&data->client->dev);
+		अगर (on)
+			pm_runसमय_put_noidle(&data->client->dev);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (on) {
+	अगर (on) अणु
 		/* If _resume() was not called, enable measurement now. */
-		if (data->als_ps_need_en) {
+		अगर (data->als_ps_need_en) अणु
 			ret = rpr0521_als_enable(data, RPR0521_MODE_ALS_ENABLE);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			data->als_ps_need_en = false;
-		}
+		पूर्ण
 
-		if (data->pxs_ps_need_en) {
+		अगर (data->pxs_ps_need_en) अणु
 			ret = rpr0521_pxs_enable(data, RPR0521_MODE_PXS_ENABLE);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			data->pxs_ps_need_en = false;
-		}
-	}
-#endif
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-/* Interrupt register tells if this sensor caused the interrupt or not. */
-static inline bool rpr0521_is_triggered(struct rpr0521_data *data)
-{
-	int ret;
-	int reg;
+/* Interrupt रेजिस्टर tells अगर this sensor caused the पूर्णांकerrupt or not. */
+अटल अंतरभूत bool rpr0521_is_triggered(काष्ठा rpr0521_data *data)
+अणु
+	पूर्णांक ret;
+	पूर्णांक reg;
 
-	ret = regmap_read(data->regmap, RPR0521_REG_INTERRUPT, &reg);
-	if (ret < 0)
-		return false;   /* Reg read failed. */
-	if (reg &
+	ret = regmap_पढ़ो(data->regmap, RPR0521_REG_INTERRUPT, &reg);
+	अगर (ret < 0)
+		वापस false;   /* Reg पढ़ो failed. */
+	अगर (reg &
 	    (RPR0521_INTERRUPT_ALS_INT_STATUS_MASK |
 	    RPR0521_INTERRUPT_PS_INT_STATUS_MASK))
-		return true;
-	else
-		return false;   /* Int not from this sensor. */
-}
+		वापस true;
+	अन्यथा
+		वापस false;   /* Int not from this sensor. */
+पूर्ण
 
 /* IRQ to trigger handler */
-static irqreturn_t rpr0521_drdy_irq_handler(int irq, void *private)
-{
-	struct iio_dev *indio_dev = private;
-	struct rpr0521_data *data = iio_priv(indio_dev);
+अटल irqवापस_t rpr0521_drdy_irq_handler(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा iio_dev *indio_dev = निजी;
+	काष्ठा rpr0521_data *data = iio_priv(indio_dev);
 
-	data->irq_timestamp = iio_get_time_ns(indio_dev);
+	data->irq_बारtamp = iio_get_समय_ns(indio_dev);
 	/*
-	 * We need to wake the thread to read the interrupt reg. It
-	 * is not possible to do that here because regmap_read takes a
+	 * We need to wake the thपढ़ो to पढ़ो the पूर्णांकerrupt reg. It
+	 * is not possible to करो that here because regmap_पढ़ो takes a
 	 * mutex.
 	 */
 
-	return IRQ_WAKE_THREAD;
-}
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static irqreturn_t rpr0521_drdy_irq_thread(int irq, void *private)
-{
-	struct iio_dev *indio_dev = private;
-	struct rpr0521_data *data = iio_priv(indio_dev);
+अटल irqवापस_t rpr0521_drdy_irq_thपढ़ो(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा iio_dev *indio_dev = निजी;
+	काष्ठा rpr0521_data *data = iio_priv(indio_dev);
 
-	if (rpr0521_is_triggered(data)) {
+	अगर (rpr0521_is_triggered(data)) अणु
 		iio_trigger_poll_chained(data->drdy_trigger0);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static irqreturn_t rpr0521_trigger_consumer_store_time(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
+अटल irqवापस_t rpr0521_trigger_consumer_store_समय(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
 
-	/* Other trigger polls store time here. */
-	if (!iio_trigger_using_own(indio_dev))
-		pf->timestamp = iio_get_time_ns(indio_dev);
+	/* Other trigger polls store समय here. */
+	अगर (!iio_trigger_using_own(indio_dev))
+		pf->बारtamp = iio_get_समय_ns(indio_dev);
 
-	return IRQ_WAKE_THREAD;
-}
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static irqreturn_t rpr0521_trigger_consumer_handler(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct rpr0521_data *data = iio_priv(indio_dev);
-	int err;
+अटल irqवापस_t rpr0521_trigger_consumer_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा rpr0521_data *data = iio_priv(indio_dev);
+	पूर्णांक err;
 
-	/* Use irq timestamp when reasonable. */
-	if (iio_trigger_using_own(indio_dev) && data->irq_timestamp) {
-		pf->timestamp = data->irq_timestamp;
-		data->irq_timestamp = 0;
-	}
-	/* Other chained trigger polls get timestamp only here. */
-	if (!pf->timestamp)
-		pf->timestamp = iio_get_time_ns(indio_dev);
+	/* Use irq बारtamp when reasonable. */
+	अगर (iio_trigger_using_own(indio_dev) && data->irq_बारtamp) अणु
+		pf->बारtamp = data->irq_बारtamp;
+		data->irq_बारtamp = 0;
+	पूर्ण
+	/* Other chained trigger polls get बारtamp only here. */
+	अगर (!pf->बारtamp)
+		pf->बारtamp = iio_get_समय_ns(indio_dev);
 
-	err = regmap_bulk_read(data->regmap, RPR0521_REG_PXS_DATA,
+	err = regmap_bulk_पढ़ो(data->regmap, RPR0521_REG_PXS_DATA,
 		data->scan.channels,
-		(3 * 2) + 1);	/* 3 * 16-bit + (discarded) int clear reg. */
-	if (!err)
-		iio_push_to_buffers_with_timestamp(indio_dev,
-						   &data->scan, pf->timestamp);
-	else
+		(3 * 2) + 1);	/* 3 * 16-bit + (discarded) पूर्णांक clear reg. */
+	अगर (!err)
+		iio_push_to_buffers_with_बारtamp(indio_dev,
+						   &data->scan, pf->बारtamp);
+	अन्यथा
 		dev_err(&data->client->dev,
 			"Trigger consumer can't read from sensor.\n");
-	pf->timestamp = 0;
+	pf->बारtamp = 0;
 
-	iio_trigger_notify_done(indio_dev->trig);
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rpr0521_write_int_enable(struct rpr0521_data *data)
-{
-	int err;
+अटल पूर्णांक rpr0521_ग_लिखो_पूर्णांक_enable(काष्ठा rpr0521_data *data)
+अणु
+	पूर्णांक err;
 
 	/* Interrupt after each measurement */
 	err = regmap_update_bits(data->regmap, RPR0521_REG_PXS_CTRL,
 		RPR0521_PXS_PERSISTENCE_MASK,
 		RPR0521_PXS_PERSISTENCE_DRDY);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&data->client->dev, "PS control reg write fail.\n");
-		return -EBUSY;
-		}
+		वापस -EBUSY;
+		पूर्ण
 
 	/* Ignore latch and mode because of drdy */
-	err = regmap_write(data->regmap, RPR0521_REG_INTERRUPT,
+	err = regmap_ग_लिखो(data->regmap, RPR0521_REG_INTERRUPT,
 		RPR0521_INTERRUPT_INT_REASSERT_DISABLE |
 		RPR0521_INTERRUPT_INT_TRIG_ALS_DISABLE |
 		RPR0521_INTERRUPT_INT_TRIG_PS_ENABLE
 		);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&data->client->dev, "Interrupt setup write fail.\n");
-		return -EBUSY;
-		}
+		वापस -EBUSY;
+		पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rpr0521_write_int_disable(struct rpr0521_data *data)
-{
-	/* Don't care of clearing mode, assert and latch. */
-	return regmap_write(data->regmap, RPR0521_REG_INTERRUPT,
+अटल पूर्णांक rpr0521_ग_लिखो_पूर्णांक_disable(काष्ठा rpr0521_data *data)
+अणु
+	/* Don't care of clearing mode, निश्चित and latch. */
+	वापस regmap_ग_लिखो(data->regmap, RPR0521_REG_INTERRUPT,
 				RPR0521_INTERRUPT_INT_TRIG_ALS_DISABLE |
 				RPR0521_INTERRUPT_INT_TRIG_PS_DISABLE
 				);
-}
+पूर्ण
 
 /*
  * Trigger producer enable / disable. Note that there will be trigs only when
- * measurement data is ready to be read.
+ * measurement data is पढ़ोy to be पढ़ो.
  */
-static int rpr0521_pxs_drdy_set_state(struct iio_trigger *trigger,
+अटल पूर्णांक rpr0521_pxs_drdy_set_state(काष्ठा iio_trigger *trigger,
 	bool enable_drdy)
-{
-	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trigger);
-	struct rpr0521_data *data = iio_priv(indio_dev);
-	int err;
+अणु
+	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trigger);
+	काष्ठा rpr0521_data *data = iio_priv(indio_dev);
+	पूर्णांक err;
 
-	if (enable_drdy)
-		err = rpr0521_write_int_enable(data);
-	else
-		err = rpr0521_write_int_disable(data);
-	if (err)
+	अगर (enable_drdy)
+		err = rpr0521_ग_लिखो_पूर्णांक_enable(data);
+	अन्यथा
+		err = rpr0521_ग_लिखो_पूर्णांक_disable(data);
+	अगर (err)
 		dev_err(&data->client->dev, "rpr0521_pxs_drdy_set_state failed\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct iio_trigger_ops rpr0521_trigger_ops = {
+अटल स्थिर काष्ठा iio_trigger_ops rpr0521_trigger_ops = अणु
 	.set_trigger_state = rpr0521_pxs_drdy_set_state,
-	};
+	पूर्ण;
 
 
-static int rpr0521_buffer_preenable(struct iio_dev *indio_dev)
-{
-	int err;
-	struct rpr0521_data *data = iio_priv(indio_dev);
+अटल पूर्णांक rpr0521_buffer_preenable(काष्ठा iio_dev *indio_dev)
+अणु
+	पूर्णांक err;
+	काष्ठा rpr0521_data *data = iio_priv(indio_dev);
 
 	mutex_lock(&data->lock);
-	err = rpr0521_set_power_state(data, true,
+	err = rpr0521_set_घातer_state(data, true,
 		(RPR0521_MODE_PXS_MASK | RPR0521_MODE_ALS_MASK));
 	mutex_unlock(&data->lock);
-	if (err)
+	अगर (err)
 		dev_err(&data->client->dev, "_buffer_preenable fail\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rpr0521_buffer_postdisable(struct iio_dev *indio_dev)
-{
-	int err;
-	struct rpr0521_data *data = iio_priv(indio_dev);
+अटल पूर्णांक rpr0521_buffer_postdisable(काष्ठा iio_dev *indio_dev)
+अणु
+	पूर्णांक err;
+	काष्ठा rpr0521_data *data = iio_priv(indio_dev);
 
 	mutex_lock(&data->lock);
-	err = rpr0521_set_power_state(data, false,
+	err = rpr0521_set_घातer_state(data, false,
 		(RPR0521_MODE_PXS_MASK | RPR0521_MODE_ALS_MASK));
 	mutex_unlock(&data->lock);
-	if (err)
+	अगर (err)
 		dev_err(&data->client->dev, "_buffer_postdisable fail\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct iio_buffer_setup_ops rpr0521_buffer_setup_ops = {
+अटल स्थिर काष्ठा iio_buffer_setup_ops rpr0521_buffer_setup_ops = अणु
 	.preenable = rpr0521_buffer_preenable,
 	.postdisable = rpr0521_buffer_postdisable,
-};
+पूर्ण;
 
-static int rpr0521_get_gain(struct rpr0521_data *data, int chan,
-			    int *val, int *val2)
-{
-	int ret, reg, idx;
+अटल पूर्णांक rpr0521_get_gain(काष्ठा rpr0521_data *data, पूर्णांक chan,
+			    पूर्णांक *val, पूर्णांक *val2)
+अणु
+	पूर्णांक ret, reg, idx;
 
-	ret = regmap_read(data->regmap, rpr0521_gain[chan].reg, &reg);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(data->regmap, rpr0521_gain[chan].reg, &reg);
+	अगर (ret < 0)
+		वापस ret;
 
-	idx = (rpr0521_gain[chan].mask & reg) >> rpr0521_gain[chan].shift;
+	idx = (rpr0521_gain[chan].mask & reg) >> rpr0521_gain[chan].shअगरt;
 	*val = rpr0521_gain[chan].gain[idx].scale;
 	*val2 = rpr0521_gain[chan].gain[idx].uscale;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rpr0521_set_gain(struct rpr0521_data *data, int chan,
-			    int val, int val2)
-{
-	int i, idx = -EINVAL;
+अटल पूर्णांक rpr0521_set_gain(काष्ठा rpr0521_data *data, पूर्णांक chan,
+			    पूर्णांक val, पूर्णांक val2)
+अणु
+	पूर्णांक i, idx = -EINVAL;
 
 	/* get gain index */
-	for (i = 0; i < rpr0521_gain[chan].size; i++)
-		if (val == rpr0521_gain[chan].gain[i].scale &&
-		    val2 == rpr0521_gain[chan].gain[i].uscale) {
+	क्रम (i = 0; i < rpr0521_gain[chan].size; i++)
+		अगर (val == rpr0521_gain[chan].gain[i].scale &&
+		    val2 == rpr0521_gain[chan].gain[i].uscale) अणु
 			idx = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 
-	return regmap_update_bits(data->regmap, rpr0521_gain[chan].reg,
+	वापस regmap_update_bits(data->regmap, rpr0521_gain[chan].reg,
 				  rpr0521_gain[chan].mask,
-				  idx << rpr0521_gain[chan].shift);
-}
+				  idx << rpr0521_gain[chan].shअगरt);
+पूर्ण
 
-static int rpr0521_read_samp_freq(struct rpr0521_data *data,
-				enum iio_chan_type chan_type,
-			    int *val, int *val2)
-{
-	int reg, ret;
+अटल पूर्णांक rpr0521_पढ़ो_samp_freq(काष्ठा rpr0521_data *data,
+				क्रमागत iio_chan_type chan_type,
+			    पूर्णांक *val, पूर्णांक *val2)
+अणु
+	पूर्णांक reg, ret;
 
-	ret = regmap_read(data->regmap, RPR0521_REG_MODE_CTRL, &reg);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(data->regmap, RPR0521_REG_MODE_CTRL, &reg);
+	अगर (ret < 0)
+		वापस ret;
 
 	reg &= RPR0521_MODE_MEAS_TIME_MASK;
-	if (reg >= ARRAY_SIZE(rpr0521_samp_freq_i))
-		return -EINVAL;
+	अगर (reg >= ARRAY_SIZE(rpr0521_samp_freq_i))
+		वापस -EINVAL;
 
-	switch (chan_type) {
-	case IIO_INTENSITY:
+	चयन (chan_type) अणु
+	हाल IIO_INTENSITY:
 		*val = rpr0521_samp_freq_i[reg].als_hz;
 		*val2 = rpr0521_samp_freq_i[reg].als_uhz;
-		return 0;
+		वापस 0;
 
-	case IIO_PROXIMITY:
+	हाल IIO_PROXIMITY:
 		*val = rpr0521_samp_freq_i[reg].pxs_hz;
 		*val2 = rpr0521_samp_freq_i[reg].pxs_uhz;
-		return 0;
+		वापस 0;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int rpr0521_write_samp_freq_common(struct rpr0521_data *data,
-				enum iio_chan_type chan_type,
-				int val, int val2)
-{
-	int i;
+अटल पूर्णांक rpr0521_ग_लिखो_samp_freq_common(काष्ठा rpr0521_data *data,
+				क्रमागत iio_chan_type chan_type,
+				पूर्णांक val, पूर्णांक val2)
+अणु
+	पूर्णांक i;
 
 	/*
 	 * Ignore channel
 	 * both pxs and als are setup only to same freq because of simplicity
 	 */
-	switch (val) {
-	case 0:
+	चयन (val) अणु
+	हाल 0:
 		i = 0;
-		break;
+		अवरोध;
 
-	case 2:
-		if (val2 != 500000)
-			return -EINVAL;
+	हाल 2:
+		अगर (val2 != 500000)
+			वापस -EINVAL;
 
 		i = 11;
-		break;
+		अवरोध;
 
-	case 10:
+	हाल 10:
 		i = 6;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return regmap_update_bits(data->regmap,
+	वापस regmap_update_bits(data->regmap,
 		RPR0521_REG_MODE_CTRL,
 		RPR0521_MODE_MEAS_TIME_MASK,
 		i);
-}
+पूर्ण
 
-static int rpr0521_read_ps_offset(struct rpr0521_data *data, int *offset)
-{
-	int ret;
+अटल पूर्णांक rpr0521_पढ़ो_ps_offset(काष्ठा rpr0521_data *data, पूर्णांक *offset)
+अणु
+	पूर्णांक ret;
 	__le16 buffer;
 
-	ret = regmap_bulk_read(data->regmap,
-		RPR0521_REG_PS_OFFSET_LSB, &buffer, sizeof(buffer));
+	ret = regmap_bulk_पढ़ो(data->regmap,
+		RPR0521_REG_PS_OFFSET_LSB, &buffer, माप(buffer));
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Failed to read PS OFFSET register\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	*offset = le16_to_cpu(buffer);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rpr0521_write_ps_offset(struct rpr0521_data *data, int offset)
-{
-	int ret;
+अटल पूर्णांक rpr0521_ग_लिखो_ps_offset(काष्ठा rpr0521_data *data, पूर्णांक offset)
+अणु
+	पूर्णांक ret;
 	__le16 buffer;
 
 	buffer = cpu_to_le16(offset & 0x3ff);
-	ret = regmap_raw_write(data->regmap,
-		RPR0521_REG_PS_OFFSET_LSB, &buffer, sizeof(buffer));
+	ret = regmap_raw_ग_लिखो(data->regmap,
+		RPR0521_REG_PS_OFFSET_LSB, &buffer, माप(buffer));
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Failed to write PS OFFSET register\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rpr0521_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *chan, int *val,
-			    int *val2, long mask)
-{
-	struct rpr0521_data *data = iio_priv(indio_dev);
-	int ret;
-	int busy;
+अटल पूर्णांक rpr0521_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
+			    पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा rpr0521_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
+	पूर्णांक busy;
 	u8 device_mask;
 	__le16 raw_data;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		if (chan->type != IIO_INTENSITY && chan->type != IIO_PROXIMITY)
-			return -EINVAL;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		अगर (chan->type != IIO_INTENSITY && chan->type != IIO_PROXIMITY)
+			वापस -EINVAL;
 
 		busy = iio_device_claim_direct_mode(indio_dev);
-		if (busy)
-			return -EBUSY;
+		अगर (busy)
+			वापस -EBUSY;
 
 		device_mask = rpr0521_data_reg[chan->address].device_mask;
 
 		mutex_lock(&data->lock);
-		ret = rpr0521_set_power_state(data, true, device_mask);
-		if (ret < 0)
-			goto rpr0521_read_raw_out;
+		ret = rpr0521_set_घातer_state(data, true, device_mask);
+		अगर (ret < 0)
+			जाओ rpr0521_पढ़ो_raw_out;
 
-		ret = regmap_bulk_read(data->regmap,
+		ret = regmap_bulk_पढ़ो(data->regmap,
 				       rpr0521_data_reg[chan->address].address,
-				       &raw_data, sizeof(raw_data));
-		if (ret < 0) {
-			rpr0521_set_power_state(data, false, device_mask);
-			goto rpr0521_read_raw_out;
-		}
+				       &raw_data, माप(raw_data));
+		अगर (ret < 0) अणु
+			rpr0521_set_घातer_state(data, false, device_mask);
+			जाओ rpr0521_पढ़ो_raw_out;
+		पूर्ण
 
-		ret = rpr0521_set_power_state(data, false, device_mask);
+		ret = rpr0521_set_घातer_state(data, false, device_mask);
 
-rpr0521_read_raw_out:
+rpr0521_पढ़ो_raw_out:
 		mutex_unlock(&data->lock);
 		iio_device_release_direct_mode(indio_dev);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		*val = le16_to_cpu(raw_data);
 
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 
-	case IIO_CHAN_INFO_SCALE:
+	हाल IIO_CHAN_INFO_SCALE:
 		mutex_lock(&data->lock);
 		ret = rpr0521_get_gain(data, chan->address, val, val2);
 		mutex_unlock(&data->lock);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		return IIO_VAL_INT_PLUS_MICRO;
+		वापस IIO_VAL_INT_PLUS_MICRO;
 
-	case IIO_CHAN_INFO_SAMP_FREQ:
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		mutex_lock(&data->lock);
-		ret = rpr0521_read_samp_freq(data, chan->type, val, val2);
+		ret = rpr0521_पढ़ो_samp_freq(data, chan->type, val, val2);
 		mutex_unlock(&data->lock);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		return IIO_VAL_INT_PLUS_MICRO;
+		वापस IIO_VAL_INT_PLUS_MICRO;
 
-	case IIO_CHAN_INFO_OFFSET:
+	हाल IIO_CHAN_INFO_OFFSET:
 		mutex_lock(&data->lock);
-		ret = rpr0521_read_ps_offset(data, val);
+		ret = rpr0521_पढ़ो_ps_offset(data, val);
 		mutex_unlock(&data->lock);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int rpr0521_write_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan, int val,
-			     int val2, long mask)
-{
-	struct rpr0521_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक rpr0521_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val,
+			     पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा rpr0521_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SCALE:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SCALE:
 		mutex_lock(&data->lock);
 		ret = rpr0521_set_gain(data, chan->address, val, val2);
 		mutex_unlock(&data->lock);
 
-		return ret;
+		वापस ret;
 
-	case IIO_CHAN_INFO_SAMP_FREQ:
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		mutex_lock(&data->lock);
-		ret = rpr0521_write_samp_freq_common(data, chan->type,
+		ret = rpr0521_ग_लिखो_samp_freq_common(data, chan->type,
 						     val, val2);
 		mutex_unlock(&data->lock);
 
-		return ret;
+		वापस ret;
 
-	case IIO_CHAN_INFO_OFFSET:
+	हाल IIO_CHAN_INFO_OFFSET:
 		mutex_lock(&data->lock);
-		ret = rpr0521_write_ps_offset(data, val);
+		ret = rpr0521_ग_लिखो_ps_offset(data, val);
 		mutex_unlock(&data->lock);
 
-		return ret;
+		वापस ret;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info rpr0521_info = {
-	.read_raw	= rpr0521_read_raw,
-	.write_raw	= rpr0521_write_raw,
+अटल स्थिर काष्ठा iio_info rpr0521_info = अणु
+	.पढ़ो_raw	= rpr0521_पढ़ो_raw,
+	.ग_लिखो_raw	= rpr0521_ग_लिखो_raw,
 	.attrs		= &rpr0521_attribute_group,
-};
+पूर्ण;
 
-static int rpr0521_init(struct rpr0521_data *data)
-{
-	int ret;
-	int id;
+अटल पूर्णांक rpr0521_init(काष्ठा rpr0521_data *data)
+अणु
+	पूर्णांक ret;
+	पूर्णांक id;
 
-	ret = regmap_read(data->regmap, RPR0521_REG_ID, &id);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(data->regmap, RPR0521_REG_ID, &id);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Failed to read REG_ID register\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (id != RPR0521_MANUFACT_ID) {
+	अगर (id != RPR0521_MANUFACT_ID) अणु
 		dev_err(&data->client->dev, "Wrong id, got %x, expected %x\n",
 			id, RPR0521_MANUFACT_ID);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* set default measurement time - 100 ms for both ALS and PS */
+	/* set शेष measurement समय - 100 ms क्रम both ALS and PS */
 	ret = regmap_update_bits(data->regmap, RPR0521_REG_MODE_CTRL,
 				 RPR0521_MODE_MEAS_TIME_MASK,
 				 RPR0521_DEFAULT_MEAS_TIME);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("regmap_update_bits returned %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-#ifndef CONFIG_PM
+#अगर_अघोषित CONFIG_PM
 	ret = rpr0521_als_enable(data, RPR0521_MODE_ALS_ENABLE);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	ret = rpr0521_pxs_enable(data, RPR0521_MODE_PXS_ENABLE);
-	if (ret < 0)
-		return ret;
-#endif
+	अगर (ret < 0)
+		वापस ret;
+#पूर्ण_अगर
 
-	data->irq_timestamp = 0;
+	data->irq_बारtamp = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rpr0521_poweroff(struct rpr0521_data *data)
-{
-	int ret;
-	int tmp;
+अटल पूर्णांक rpr0521_घातeroff(काष्ठा rpr0521_data *data)
+अणु
+	पूर्णांक ret;
+	पूर्णांक पंचांगp;
 
 	ret = regmap_update_bits(data->regmap, RPR0521_REG_MODE_CTRL,
 				 RPR0521_MODE_ALS_MASK |
 				 RPR0521_MODE_PXS_MASK,
 				 RPR0521_MODE_ALS_DISABLE |
 				 RPR0521_MODE_PXS_DISABLE);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	data->als_dev_en = false;
 	data->pxs_dev_en = false;
 
 	/*
-	 * Int pin keeps state after power off. Set pin to high impedance
-	 * mode to prevent power drain.
+	 * Int pin keeps state after घातer off. Set pin to high impedance
+	 * mode to prevent घातer drain.
 	 */
-	ret = regmap_read(data->regmap, RPR0521_REG_INTERRUPT, &tmp);
-	if (ret) {
+	ret = regmap_पढ़ो(data->regmap, RPR0521_REG_INTERRUPT, &पंचांगp);
+	अगर (ret) अणु
 		dev_err(&data->client->dev, "Failed to reset int pin.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool rpr0521_is_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case RPR0521_REG_MODE_CTRL:
-	case RPR0521_REG_ALS_CTRL:
-	case RPR0521_REG_PXS_CTRL:
-		return false;
-	default:
-		return true;
-	}
-}
+अटल bool rpr0521_is_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल RPR0521_REG_MODE_CTRL:
+	हाल RPR0521_REG_ALS_CTRL:
+	हाल RPR0521_REG_PXS_CTRL:
+		वापस false;
+	शेष:
+		वापस true;
+	पूर्ण
+पूर्ण
 
-static const struct regmap_config rpr0521_regmap_config = {
+अटल स्थिर काष्ठा regmap_config rpr0521_regmap_config = अणु
 	.name		= RPR0521_REGMAP_NAME,
 
 	.reg_bits	= 8,
 	.val_bits	= 8,
 
-	.max_register	= RPR0521_REG_ID,
+	.max_रेजिस्टर	= RPR0521_REG_ID,
 	.cache_type	= REGCACHE_RBTREE,
-	.volatile_reg	= rpr0521_is_volatile_reg,
-};
+	.अस्थिर_reg	= rpr0521_is_अस्थिर_reg,
+पूर्ण;
 
-static int rpr0521_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct rpr0521_data *data;
-	struct iio_dev *indio_dev;
-	struct regmap *regmap;
-	int ret;
+अटल पूर्णांक rpr0521_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा rpr0521_data *data;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा regmap *regmap;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	regmap = devm_regmap_init_i2c(client, &rpr0521_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&client->dev, "regmap_init failed!\n");
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
@@ -959,183 +960,183 @@ static int rpr0521_probe(struct i2c_client *client,
 	indio_dev->name = RPR0521_DRV_NAME;
 	indio_dev->channels = rpr0521_channels;
 	indio_dev->num_channels = ARRAY_SIZE(rpr0521_channels);
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
 	ret = rpr0521_init(data);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "rpr0521 chip init failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = pm_runtime_set_active(&client->dev);
-	if (ret < 0)
-		goto err_poweroff;
+	ret = pm_runसमय_set_active(&client->dev);
+	अगर (ret < 0)
+		जाओ err_घातeroff;
 
-	pm_runtime_enable(&client->dev);
-	pm_runtime_set_autosuspend_delay(&client->dev, RPR0521_SLEEP_DELAY_MS);
-	pm_runtime_use_autosuspend(&client->dev);
+	pm_runसमय_enable(&client->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&client->dev, RPR0521_SLEEP_DELAY_MS);
+	pm_runसमय_use_स्वतःsuspend(&client->dev);
 
 	/*
-	 * If sensor write/read is needed in _probe after _use_autosuspend,
-	 * sensor needs to be _resumed first using rpr0521_set_power_state().
+	 * If sensor ग_लिखो/पढ़ो is needed in _probe after _use_स्वतःsuspend,
+	 * sensor needs to be _resumed first using rpr0521_set_घातer_state().
 	 */
 
 	/* IRQ to trigger setup */
-	if (client->irq) {
+	अगर (client->irq) अणु
 		/* Trigger0 producer setup */
 		data->drdy_trigger0 = devm_iio_trigger_alloc(
 			indio_dev->dev.parent,
 			"%s-dev%d", indio_dev->name, indio_dev->id);
-		if (!data->drdy_trigger0) {
+		अगर (!data->drdy_trigger0) अणु
 			ret = -ENOMEM;
-			goto err_pm_disable;
-		}
+			जाओ err_pm_disable;
+		पूर्ण
 		data->drdy_trigger0->ops = &rpr0521_trigger_ops;
 		indio_dev->available_scan_masks = rpr0521_available_scan_masks;
 		iio_trigger_set_drvdata(data->drdy_trigger0, indio_dev);
 
 		/* Ties irq to trigger producer handler. */
-		ret = devm_request_threaded_irq(&client->dev, client->irq,
-			rpr0521_drdy_irq_handler, rpr0521_drdy_irq_thread,
+		ret = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+			rpr0521_drdy_irq_handler, rpr0521_drdy_irq_thपढ़ो,
 			IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 			RPR0521_IRQ_NAME, indio_dev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&client->dev, "request irq %d for trigger0 failed\n",
 				client->irq);
-			goto err_pm_disable;
-			}
+			जाओ err_pm_disable;
+			पूर्ण
 
-		ret = devm_iio_trigger_register(indio_dev->dev.parent,
+		ret = devm_iio_trigger_रेजिस्टर(indio_dev->dev.parent,
 						data->drdy_trigger0);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&client->dev, "iio trigger register failed\n");
-			goto err_pm_disable;
-		}
+			जाओ err_pm_disable;
+		पूर्ण
 
 		/*
-		 * Now whole pipe from physical interrupt (irq defined by
+		 * Now whole pipe from physical पूर्णांकerrupt (irq defined by
 		 * devicetree to device) to trigger0 output is set up.
 		 */
 
 		/* Trigger consumer setup */
 		ret = devm_iio_triggered_buffer_setup(indio_dev->dev.parent,
 			indio_dev,
-			rpr0521_trigger_consumer_store_time,
+			rpr0521_trigger_consumer_store_समय,
 			rpr0521_trigger_consumer_handler,
 			&rpr0521_buffer_setup_ops);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&client->dev, "iio triggered buffer setup failed\n");
-			goto err_pm_disable;
-		}
-	}
+			जाओ err_pm_disable;
+		पूर्ण
+	पूर्ण
 
-	ret = iio_device_register(indio_dev);
-	if (ret)
-		goto err_pm_disable;
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret)
+		जाओ err_pm_disable;
 
-	return 0;
+	वापस 0;
 
 err_pm_disable:
-	pm_runtime_disable(&client->dev);
-	pm_runtime_set_suspended(&client->dev);
-	pm_runtime_put_noidle(&client->dev);
-err_poweroff:
-	rpr0521_poweroff(data);
+	pm_runसमय_disable(&client->dev);
+	pm_runसमय_set_suspended(&client->dev);
+	pm_runसमय_put_noidle(&client->dev);
+err_घातeroff:
+	rpr0521_घातeroff(data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rpr0521_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
+अटल पूर्णांक rpr0521_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 
-	pm_runtime_disable(&client->dev);
-	pm_runtime_set_suspended(&client->dev);
-	pm_runtime_put_noidle(&client->dev);
+	pm_runसमय_disable(&client->dev);
+	pm_runसमय_set_suspended(&client->dev);
+	pm_runसमय_put_noidle(&client->dev);
 
-	rpr0521_poweroff(iio_priv(indio_dev));
+	rpr0521_घातeroff(iio_priv(indio_dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int rpr0521_runtime_suspend(struct device *dev)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	struct rpr0521_data *data = iio_priv(indio_dev);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक rpr0521_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा rpr0521_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	mutex_lock(&data->lock);
 	/* If measurements are enabled, enable them on resume */
-	if (!data->als_need_dis)
+	अगर (!data->als_need_dis)
 		data->als_ps_need_en = data->als_dev_en;
-	if (!data->pxs_need_dis)
+	अगर (!data->pxs_need_dis)
 		data->pxs_ps_need_en = data->pxs_dev_en;
 
-	/* disable channels and sets {als,pxs}_dev_en to false */
-	ret = rpr0521_poweroff(data);
+	/* disable channels and sets अणुals,pxsपूर्ण_dev_en to false */
+	ret = rpr0521_घातeroff(data);
 	regcache_mark_dirty(data->regmap);
 	mutex_unlock(&data->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rpr0521_runtime_resume(struct device *dev)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	struct rpr0521_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक rpr0521_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा rpr0521_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	regcache_sync(data->regmap);
-	if (data->als_ps_need_en) {
+	अगर (data->als_ps_need_en) अणु
 		ret = rpr0521_als_enable(data, RPR0521_MODE_ALS_ENABLE);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		data->als_ps_need_en = false;
-	}
+	पूर्ण
 
-	if (data->pxs_ps_need_en) {
+	अगर (data->pxs_ps_need_en) अणु
 		ret = rpr0521_pxs_enable(data, RPR0521_MODE_PXS_ENABLE);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		data->pxs_ps_need_en = false;
-	}
-	msleep(100);	//wait for first measurement result
+	पूर्ण
+	msleep(100);	//रुको क्रम first measurement result
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops rpr0521_pm_ops = {
-	SET_RUNTIME_PM_OPS(rpr0521_runtime_suspend,
-			   rpr0521_runtime_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops rpr0521_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(rpr0521_runसमय_suspend,
+			   rpr0521_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct acpi_device_id rpr0521_acpi_match[] = {
-	{"RPR0521", 0},
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id rpr0521_acpi_match[] = अणु
+	अणु"RPR0521", 0पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, rpr0521_acpi_match);
 
-static const struct i2c_device_id rpr0521_id[] = {
-	{"rpr0521", 0},
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id rpr0521_id[] = अणु
+	अणु"rpr0521", 0पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, rpr0521_id);
 
-static struct i2c_driver rpr0521_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver rpr0521_driver = अणु
+	.driver = अणु
 		.name	= RPR0521_DRV_NAME,
 		.pm	= &rpr0521_pm_ops,
 		.acpi_match_table = ACPI_PTR(rpr0521_acpi_match),
-	},
+	पूर्ण,
 	.probe		= rpr0521_probe,
-	.remove		= rpr0521_remove,
+	.हटाओ		= rpr0521_हटाओ,
 	.id_table	= rpr0521_id,
-};
+पूर्ण;
 
 module_i2c_driver(rpr0521_driver);
 

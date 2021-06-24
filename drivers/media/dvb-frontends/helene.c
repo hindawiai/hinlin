@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * helene.c
  *
@@ -9,102 +10,102 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
   */
 
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/dvb/frontend.h>
-#include <linux/types.h>
-#include "helene.h"
-#include <media/dvb_frontend.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/types.h>
+#समावेश "helene.h"
+#समावेश <media/dvb_frontend.h>
 
-#define MAX_WRITE_REGSIZE 20
+#घोषणा MAX_WRITE_REGSIZE 20
 
-enum helene_state {
+क्रमागत helene_state अणु
 	STATE_UNKNOWN,
 	STATE_SLEEP,
 	STATE_ACTIVE
-};
+पूर्ण;
 
-struct helene_priv {
+काष्ठा helene_priv अणु
 	u32			frequency;
 	u8			i2c_address;
-	struct i2c_adapter	*i2c;
-	enum helene_state	state;
-	void			*set_tuner_data;
-	int			(*set_tuner)(void *, int);
-	enum helene_xtal xtal;
-};
+	काष्ठा i2c_adapter	*i2c;
+	क्रमागत helene_state	state;
+	व्योम			*set_tuner_data;
+	पूर्णांक			(*set_tuner)(व्योम *, पूर्णांक);
+	क्रमागत helene_xtal xtal;
+पूर्ण;
 
-#define TERR_INTERNAL_LOOPFILTER_AVAILABLE(tv_system) \
-	(((tv_system) != SONY_HELENE_DTV_DVBC_6) && \
-	 ((tv_system) != SONY_HELENE_DTV_DVBC_8)\
-	 && ((tv_system) != SONY_HELENE_DTV_DVBC2_6) && \
-	 ((tv_system) != SONY_HELENE_DTV_DVBC2_8))
+#घोषणा TERR_INTERNAL_LOOPFILTER_AVAILABLE(tv_प्रणाली) \
+	(((tv_प्रणाली) != SONY_HELENE_DTV_DVBC_6) && \
+	 ((tv_प्रणाली) != SONY_HELENE_DTV_DVBC_8)\
+	 && ((tv_प्रणाली) != SONY_HELENE_DTV_DVBC2_6) && \
+	 ((tv_प्रणाली) != SONY_HELENE_DTV_DVBC2_8))
 
-#define HELENE_AUTO		0xff
-#define HELENE_OFFSET(ofs)	((u8)(ofs) & 0x1F)
-#define HELENE_BW_6		0x00
-#define HELENE_BW_7		0x01
-#define HELENE_BW_8		0x02
-#define HELENE_BW_1_7		0x03
+#घोषणा HELENE_AUTO		0xff
+#घोषणा HELENE_OFFSET(ofs)	((u8)(ofs) & 0x1F)
+#घोषणा HELENE_BW_6		0x00
+#घोषणा HELENE_BW_7		0x01
+#घोषणा HELENE_BW_8		0x02
+#घोषणा HELENE_BW_1_7		0x03
 
-enum helene_tv_system_t {
+क्रमागत helene_tv_प्रणाली_t अणु
 	SONY_HELENE_TV_SYSTEM_UNKNOWN,
 	/* Terrestrial Analog */
 	SONY_HELENE_ATV_MN_EIAJ,
-	/**< System-M (Japan) (IF: Fp=5.75MHz in default) */
+	/**< System-M (Japan) (IF: Fp=5.75MHz in शेष) */
 	SONY_HELENE_ATV_MN_SAP,
-	/**< System-M (US)    (IF: Fp=5.75MHz in default) */
+	/**< System-M (US)    (IF: Fp=5.75MHz in शेष) */
 	SONY_HELENE_ATV_MN_A2,
-	/**< System-M (Korea) (IF: Fp=5.9MHz in default) */
+	/**< System-M (Korea) (IF: Fp=5.9MHz in शेष) */
 	SONY_HELENE_ATV_BG,
-	/**< System-B/G       (IF: Fp=7.3MHz in default) */
+	/**< System-B/G       (IF: Fp=7.3MHz in शेष) */
 	SONY_HELENE_ATV_I,
-	/**< System-I         (IF: Fp=7.85MHz in default) */
+	/**< System-I         (IF: Fp=7.85MHz in शेष) */
 	SONY_HELENE_ATV_DK,
-	/**< System-D/K       (IF: Fp=7.85MHz in default) */
+	/**< System-D/K       (IF: Fp=7.85MHz in शेष) */
 	SONY_HELENE_ATV_L,
-	/**< System-L         (IF: Fp=7.85MHz in default) */
+	/**< System-L         (IF: Fp=7.85MHz in शेष) */
 	SONY_HELENE_ATV_L_DASH,
-	/**< System-L DASH    (IF: Fp=2.2MHz in default) */
+	/**< System-L DASH    (IF: Fp=2.2MHz in शेष) */
 	/* Terrestrial/Cable Digital */
 	SONY_HELENE_DTV_8VSB,
-	/**< ATSC 8VSB        (IF: Fc=3.7MHz in default) */
+	/**< ATSC 8VSB        (IF: Fc=3.7MHz in शेष) */
 	SONY_HELENE_DTV_QAM,
-	/**< US QAM           (IF: Fc=3.7MHz in default) */
+	/**< US QAM           (IF: Fc=3.7MHz in शेष) */
 	SONY_HELENE_DTV_ISDBT_6,
-	/**< ISDB-T 6MHzBW    (IF: Fc=3.55MHz in default) */
+	/**< ISDB-T 6MHzBW    (IF: Fc=3.55MHz in शेष) */
 	SONY_HELENE_DTV_ISDBT_7,
-	/**< ISDB-T 7MHzBW    (IF: Fc=4.15MHz in default) */
+	/**< ISDB-T 7MHzBW    (IF: Fc=4.15MHz in शेष) */
 	SONY_HELENE_DTV_ISDBT_8,
-	/**< ISDB-T 8MHzBW    (IF: Fc=4.75MHz in default) */
+	/**< ISDB-T 8MHzBW    (IF: Fc=4.75MHz in शेष) */
 	SONY_HELENE_DTV_DVBT_5,
-	/**< DVB-T 5MHzBW     (IF: Fc=3.6MHz in default) */
+	/**< DVB-T 5MHzBW     (IF: Fc=3.6MHz in शेष) */
 	SONY_HELENE_DTV_DVBT_6,
-	/**< DVB-T 6MHzBW     (IF: Fc=3.6MHz in default) */
+	/**< DVB-T 6MHzBW     (IF: Fc=3.6MHz in शेष) */
 	SONY_HELENE_DTV_DVBT_7,
-	/**< DVB-T 7MHzBW     (IF: Fc=4.2MHz in default) */
+	/**< DVB-T 7MHzBW     (IF: Fc=4.2MHz in शेष) */
 	SONY_HELENE_DTV_DVBT_8,
-	/**< DVB-T 8MHzBW     (IF: Fc=4.8MHz in default) */
+	/**< DVB-T 8MHzBW     (IF: Fc=4.8MHz in शेष) */
 	SONY_HELENE_DTV_DVBT2_1_7,
-	/**< DVB-T2 1.7MHzBW  (IF: Fc=3.5MHz in default) */
+	/**< DVB-T2 1.7MHzBW  (IF: Fc=3.5MHz in शेष) */
 	SONY_HELENE_DTV_DVBT2_5,
-	/**< DVB-T2 5MHzBW    (IF: Fc=3.6MHz in default) */
+	/**< DVB-T2 5MHzBW    (IF: Fc=3.6MHz in शेष) */
 	SONY_HELENE_DTV_DVBT2_6,
-	/**< DVB-T2 6MHzBW    (IF: Fc=3.6MHz in default) */
+	/**< DVB-T2 6MHzBW    (IF: Fc=3.6MHz in शेष) */
 	SONY_HELENE_DTV_DVBT2_7,
-	/**< DVB-T2 7MHzBW    (IF: Fc=4.2MHz in default) */
+	/**< DVB-T2 7MHzBW    (IF: Fc=4.2MHz in शेष) */
 	SONY_HELENE_DTV_DVBT2_8,
-	/**< DVB-T2 8MHzBW    (IF: Fc=4.8MHz in default) */
+	/**< DVB-T2 8MHzBW    (IF: Fc=4.8MHz in शेष) */
 	SONY_HELENE_DTV_DVBC_6,
-	/**< DVB-C 6MHzBW     (IF: Fc=3.7MHz in default) */
+	/**< DVB-C 6MHzBW     (IF: Fc=3.7MHz in शेष) */
 	SONY_HELENE_DTV_DVBC_8,
-	/**< DVB-C 8MHzBW     (IF: Fc=4.9MHz in default) */
+	/**< DVB-C 8MHzBW     (IF: Fc=4.9MHz in शेष) */
 	SONY_HELENE_DTV_DVBC2_6,
-	/**< DVB-C2 6MHzBW    (IF: Fc=3.7MHz in default) */
+	/**< DVB-C2 6MHzBW    (IF: Fc=3.7MHz in शेष) */
 	SONY_HELENE_DTV_DVBC2_8,
-	/**< DVB-C2 8MHzBW    (IF: Fc=4.9MHz in default) */
+	/**< DVB-C2 8MHzBW    (IF: Fc=4.9MHz in शेष) */
 	SONY_HELENE_DTV_DTMB,
-	/**< DTMB             (IF: Fc=5.1MHz in default) */
+	/**< DTMB             (IF: Fc=5.1MHz in शेष) */
 	/* Satellite */
 	SONY_HELENE_STV_ISDBS,
 	/**< ISDB-S */
@@ -114,688 +115,688 @@ enum helene_tv_system_t {
 	/**< DVB-S2 */
 
 	SONY_HELENE_ATV_MIN = SONY_HELENE_ATV_MN_EIAJ,
-	/**< Minimum analog terrestrial system */
+	/**< Minimum analog terrestrial प्रणाली */
 	SONY_HELENE_ATV_MAX = SONY_HELENE_ATV_L_DASH,
-	/**< Maximum analog terrestrial system */
+	/**< Maximum analog terrestrial प्रणाली */
 	SONY_HELENE_DTV_MIN = SONY_HELENE_DTV_8VSB,
-	/**< Minimum digital terrestrial system */
+	/**< Minimum digital terrestrial प्रणाली */
 	SONY_HELENE_DTV_MAX = SONY_HELENE_DTV_DTMB,
-	/**< Maximum digital terrestrial system */
+	/**< Maximum digital terrestrial प्रणाली */
 	SONY_HELENE_TERR_TV_SYSTEM_NUM,
-	/**< Number of supported terrestrial broadcasting system */
+	/**< Number of supported terrestrial broadcasting प्रणाली */
 	SONY_HELENE_STV_MIN = SONY_HELENE_STV_ISDBS,
-	/**< Minimum satellite system */
+	/**< Minimum satellite प्रणाली */
 	SONY_HELENE_STV_MAX = SONY_HELENE_STV_DVBS2
-	/**< Maximum satellite system */
-};
+	/**< Maximum satellite प्रणाली */
+पूर्ण;
 
-struct helene_terr_adjust_param_t {
+काष्ठा helene_terr_adjust_param_t अणु
 	/* < Addr:0x69 Bit[6:4] : RFVGA gain.
 	 * 0xFF means Auto. (RF_GAIN_SEL = 1)
 	 */
-	uint8_t RF_GAIN;
+	uपूर्णांक8_t RF_GAIN;
 	/* < Addr:0x69 Bit[3:0] : IF_BPF gain.
 	*/
-	uint8_t IF_BPF_GC;
+	uपूर्णांक8_t IF_BPF_GC;
 	/* < Addr:0x6B Bit[3:0] : RF overload
 	 * RF input detect level. (FRF <= 172MHz)
 	*/
-	uint8_t RFOVLD_DET_LV1_VL;
+	uपूर्णांक8_t RFOVLD_DET_LV1_VL;
 	/* < Addr:0x6B Bit[3:0] : RF overload
 	 * RF input detect level. (172MHz < FRF <= 464MHz)
 	*/
-	uint8_t RFOVLD_DET_LV1_VH;
+	uपूर्णांक8_t RFOVLD_DET_LV1_VH;
 	/* < Addr:0x6B Bit[3:0] : RF overload
 	 * RF input detect level. (FRF > 464MHz)
 	*/
-	uint8_t RFOVLD_DET_LV1_U;
+	uपूर्णांक8_t RFOVLD_DET_LV1_U;
 	/* < Addr:0x6C Bit[2:0] :
 	 * Internal RFAGC detect level. (FRF <= 172MHz)
 	*/
-	uint8_t IFOVLD_DET_LV_VL;
+	uपूर्णांक8_t IFOVLD_DET_LV_VL;
 	/* < Addr:0x6C Bit[2:0] :
 	 * Internal RFAGC detect level. (172MHz < FRF <= 464MHz)
 	*/
-	uint8_t IFOVLD_DET_LV_VH;
+	uपूर्णांक8_t IFOVLD_DET_LV_VH;
 	/* < Addr:0x6C Bit[2:0] :
 	 * Internal RFAGC detect level. (FRF > 464MHz)
 	*/
-	uint8_t IFOVLD_DET_LV_U;
+	uपूर्णांक8_t IFOVLD_DET_LV_U;
 	/* < Addr:0x6D Bit[5:4] :
 	 * IF filter center offset.
 	*/
-	uint8_t IF_BPF_F0;
+	uपूर्णांक8_t IF_BPF_F0;
 	/* < Addr:0x6D Bit[1:0] :
 	 * 6MHzBW(0x00) or 7MHzBW(0x01)
 	 * or 8MHzBW(0x02) or 1.7MHzBW(0x03)
 	*/
-	uint8_t BW;
+	uपूर्णांक8_t BW;
 	/* < Addr:0x6E Bit[4:0] :
-	 * 5bit signed. IF offset (kHz) = FIF_OFFSET x 50
+	 * 5bit चिन्हित. IF offset (kHz) = FIF_OFFSET x 50
 	*/
-	uint8_t FIF_OFFSET;
+	uपूर्णांक8_t FIF_OFFSET;
 	/* < Addr:0x6F Bit[4:0] :
-	 * 5bit signed. BW offset (kHz) =
+	 * 5bit चिन्हित. BW offset (kHz) =
 	 * BW_OFFSET x 50 (BW_OFFSET x 10 in 1.7MHzBW)
 	*/
-	uint8_t BW_OFFSET;
+	uपूर्णांक8_t BW_OFFSET;
 	/* < Addr:0x9C Bit[0]   :
 	 * Local polarity. (0: Upper Local, 1: Lower Local)
 	*/
-	uint8_t IS_LOWERLOCAL;
-};
+	uपूर्णांक8_t IS_LOWERLOCAL;
+पूर्ण;
 
-static const struct helene_terr_adjust_param_t
-terr_params[SONY_HELENE_TERR_TV_SYSTEM_NUM] = {
+अटल स्थिर काष्ठा helene_terr_adjust_param_t
+terr_params[SONY_HELENE_TERR_TV_SYSTEM_NUM] = अणु
 	/*< SONY_HELENE_TV_SYSTEM_UNKNOWN */
-	{HELENE_AUTO, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		HELENE_BW_6, HELENE_OFFSET(0),  HELENE_OFFSET(0),  0x00},
+	अणुHELENE_AUTO, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		HELENE_BW_6, HELENE_OFFSET(0),  HELENE_OFFSET(0),  0x00पूर्ण,
 	/* Analog */
 	/**< SONY_HELENE_ATV_MN_EIAJ   (System-M (Japan)) */
-	{HELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(0),  HELENE_OFFSET(1),  0x00},
+	अणुHELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(0),  HELENE_OFFSET(1),  0x00पूर्ण,
 	/**< SONY_HELENE_ATV_MN_SAP    (System-M (US)) */
-	{HELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(0),  HELENE_OFFSET(1),  0x00},
-	{HELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(3),  HELENE_OFFSET(1),  0x00},
+	अणुHELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(0),  HELENE_OFFSET(1),  0x00पूर्ण,
+	अणुHELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(3),  HELENE_OFFSET(1),  0x00पूर्ण,
 	/**< SONY_HELENE_ATV_MN_A2     (System-M (Korea)) */
-	{HELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
-		HELENE_BW_7,  HELENE_OFFSET(11), HELENE_OFFSET(5),  0x00},
+	अणुHELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
+		HELENE_BW_7,  HELENE_OFFSET(11), HELENE_OFFSET(5),  0x00पूर्ण,
 	/**< SONY_HELENE_ATV_BG        (System-B/G) */
-	{HELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
-		HELENE_BW_8,  HELENE_OFFSET(2),  HELENE_OFFSET(-3), 0x00},
+	अणुHELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
+		HELENE_BW_8,  HELENE_OFFSET(2),  HELENE_OFFSET(-3), 0x00पूर्ण,
 	/**< SONY_HELENE_ATV_I         (System-I) */
-	{HELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
-		HELENE_BW_8,  HELENE_OFFSET(2),  HELENE_OFFSET(-3), 0x00},
+	अणुHELENE_AUTO, 0x05, 0x03, 0x06, 0x03, 0x01, 0x01, 0x01, 0x00,
+		HELENE_BW_8,  HELENE_OFFSET(2),  HELENE_OFFSET(-3), 0x00पूर्ण,
 	/**< SONY_HELENE_ATV_DK        (System-D/K) */
-	{HELENE_AUTO, 0x03, 0x04, 0x0A, 0x04, 0x04, 0x04, 0x04, 0x00,
-		HELENE_BW_8,  HELENE_OFFSET(2),  HELENE_OFFSET(-3), 0x00},
+	अणुHELENE_AUTO, 0x03, 0x04, 0x0A, 0x04, 0x04, 0x04, 0x04, 0x00,
+		HELENE_BW_8,  HELENE_OFFSET(2),  HELENE_OFFSET(-3), 0x00पूर्ण,
 	/**< SONY_HELENE_ATV_L         (System-L) */
-	{HELENE_AUTO, 0x03, 0x04, 0x0A, 0x04, 0x04, 0x04, 0x04, 0x00,
-		HELENE_BW_8,  HELENE_OFFSET(-1), HELENE_OFFSET(4),  0x00},
+	अणुHELENE_AUTO, 0x03, 0x04, 0x0A, 0x04, 0x04, 0x04, 0x04, 0x00,
+		HELENE_BW_8,  HELENE_OFFSET(-1), HELENE_OFFSET(4),  0x00पूर्ण,
 	/**< SONY_HELENE_ATV_L_DASH    (System-L DASH) */
 	/* Digital */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x03, 0x03, 0x03, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(-6), HELENE_OFFSET(-3), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x03, 0x03, 0x03, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(-6), HELENE_OFFSET(-3), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_8VSB      (ATSC 8VSB) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(-6), HELENE_OFFSET(-3), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(-6), HELENE_OFFSET(-3), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_QAM       (US QAM) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(-9), HELENE_OFFSET(-5), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(-9), HELENE_OFFSET(-5), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_ISDBT_6   (ISDB-T 6MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_7,  HELENE_OFFSET(-7), HELENE_OFFSET(-6), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_7,  HELENE_OFFSET(-7), HELENE_OFFSET(-6), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_ISDBT_7   (ISDB-T 7MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_8,  HELENE_OFFSET(-5), HELENE_OFFSET(-7), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_8,  HELENE_OFFSET(-5), HELENE_OFFSET(-7), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_ISDBT_8   (ISDB-T 8MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(-8), HELENE_OFFSET(-3), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(-8), HELENE_OFFSET(-3), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBT_5    (DVB-T 5MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(-8), HELENE_OFFSET(-3), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(-8), HELENE_OFFSET(-3), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBT_6    (DVB-T 6MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_7,  HELENE_OFFSET(-6), HELENE_OFFSET(-5), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_7,  HELENE_OFFSET(-6), HELENE_OFFSET(-5), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBT_7    (DVB-T 7MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_8,  HELENE_OFFSET(-4), HELENE_OFFSET(-6), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_8,  HELENE_OFFSET(-4), HELENE_OFFSET(-6), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBT_8    (DVB-T 8MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_1_7, HELENE_OFFSET(-10), HELENE_OFFSET(-10), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_1_7, HELENE_OFFSET(-10), HELENE_OFFSET(-10), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBT2_1_7 (DVB-T2 1.7MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(-8), HELENE_OFFSET(-3), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(-8), HELENE_OFFSET(-3), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBT2_5   (DVB-T2 5MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(-8), HELENE_OFFSET(-3), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(-8), HELENE_OFFSET(-3), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBT2_6   (DVB-T2 6MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_7,  HELENE_OFFSET(-6), HELENE_OFFSET(-5), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_7,  HELENE_OFFSET(-6), HELENE_OFFSET(-5), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBT2_7   (DVB-T2 7MHzBW) */
-	{HELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_8,  HELENE_OFFSET(-4), HELENE_OFFSET(-6), 0x00},
+	अणुHELENE_AUTO, 0x09, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_8,  HELENE_OFFSET(-4), HELENE_OFFSET(-6), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBT2_8   (DVB-T2 8MHzBW) */
-	{HELENE_AUTO, 0x05, 0x02, 0x02, 0x02, 0x01, 0x01, 0x01, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(-6), HELENE_OFFSET(-4), 0x00},
+	अणुHELENE_AUTO, 0x05, 0x02, 0x02, 0x02, 0x01, 0x01, 0x01, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(-6), HELENE_OFFSET(-4), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBC_6    (DVB-C 6MHzBW) */
-	{HELENE_AUTO, 0x05, 0x02, 0x02, 0x02, 0x01, 0x01, 0x01, 0x00,
-		HELENE_BW_8,  HELENE_OFFSET(-2), HELENE_OFFSET(-3), 0x00},
+	अणुHELENE_AUTO, 0x05, 0x02, 0x02, 0x02, 0x01, 0x01, 0x01, 0x00,
+		HELENE_BW_8,  HELENE_OFFSET(-2), HELENE_OFFSET(-3), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBC_8    (DVB-C 8MHzBW) */
-	{HELENE_AUTO, 0x03, 0x09, 0x09, 0x09, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_6,  HELENE_OFFSET(-6), HELENE_OFFSET(-2), 0x00},
+	अणुHELENE_AUTO, 0x03, 0x09, 0x09, 0x09, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_6,  HELENE_OFFSET(-6), HELENE_OFFSET(-2), 0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBC2_6   (DVB-C2 6MHzBW) */
-	{HELENE_AUTO, 0x03, 0x09, 0x09, 0x09, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_8,  HELENE_OFFSET(-2), HELENE_OFFSET(0),  0x00},
+	अणुHELENE_AUTO, 0x03, 0x09, 0x09, 0x09, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_8,  HELENE_OFFSET(-2), HELENE_OFFSET(0),  0x00पूर्ण,
 	/**< SONY_HELENE_DTV_DVBC2_8   (DVB-C2 8MHzBW) */
-	{HELENE_AUTO, 0x04, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
-		HELENE_BW_8,  HELENE_OFFSET(2),  HELENE_OFFSET(1),  0x00}
+	अणुHELENE_AUTO, 0x04, 0x0B, 0x0B, 0x0B, 0x02, 0x02, 0x02, 0x00,
+		HELENE_BW_8,  HELENE_OFFSET(2),  HELENE_OFFSET(1),  0x00पूर्ण
 	/**< SONY_HELENE_DTV_DTMB      (DTMB) */
-};
+पूर्ण;
 
-static void helene_i2c_debug(struct helene_priv *priv,
-		u8 reg, u8 write, const u8 *data, u32 len)
-{
+अटल व्योम helene_i2c_debug(काष्ठा helene_priv *priv,
+		u8 reg, u8 ग_लिखो, स्थिर u8 *data, u32 len)
+अणु
 	dev_dbg(&priv->i2c->dev, "helene: I2C %s reg 0x%02x size %d\n",
-			(write == 0 ? "read" : "write"), reg, len);
-	print_hex_dump_bytes("helene: I2C data: ",
+			(ग_लिखो == 0 ? "read" : "write"), reg, len);
+	prपूर्णांक_hex_dump_bytes("helene: I2C data: ",
 			DUMP_PREFIX_OFFSET, data, len);
-}
+पूर्ण
 
-static int helene_write_regs(struct helene_priv *priv,
-		u8 reg, const u8 *data, u32 len)
-{
-	int ret;
+अटल पूर्णांक helene_ग_लिखो_regs(काष्ठा helene_priv *priv,
+		u8 reg, स्थिर u8 *data, u32 len)
+अणु
+	पूर्णांक ret;
 	u8 buf[MAX_WRITE_REGSIZE + 1];
-	struct i2c_msg msg[1] = {
-		{
+	काष्ठा i2c_msg msg[1] = अणु
+		अणु
 			.addr = priv->i2c_address,
 			.flags = 0,
 			.len = len + 1,
 			.buf = buf,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	if (len + 1 > sizeof(buf)) {
+	अगर (len + 1 > माप(buf)) अणु
 		dev_warn(&priv->i2c->dev,
 				"wr reg=%04x: len=%d vs %zu is too big!\n",
-				reg, len + 1, sizeof(buf));
-		return -E2BIG;
-	}
+				reg, len + 1, माप(buf));
+		वापस -E2BIG;
+	पूर्ण
 
 	helene_i2c_debug(priv, reg, 1, data, len);
 	buf[0] = reg;
-	memcpy(&buf[1], data, len);
+	स_नकल(&buf[1], data, len);
 	ret = i2c_transfer(priv->i2c, msg, 1);
-	if (ret >= 0 && ret != 1)
+	अगर (ret >= 0 && ret != 1)
 		ret = -EREMOTEIO;
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_warn(&priv->i2c->dev,
 				"%s: i2c wr failed=%d reg=%02x len=%d\n",
 				KBUILD_MODNAME, ret, reg, len);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int helene_write_reg(struct helene_priv *priv, u8 reg, u8 val)
-{
-	u8 tmp = val; /* see gcc.gnu.org/bugzilla/show_bug.cgi?id=81715 */
+अटल पूर्णांक helene_ग_लिखो_reg(काष्ठा helene_priv *priv, u8 reg, u8 val)
+अणु
+	u8 पंचांगp = val; /* see gcc.gnu.org/bugzilla/show_bug.cgi?id=81715 */
 
-	return helene_write_regs(priv, reg, &tmp, 1);
-}
+	वापस helene_ग_लिखो_regs(priv, reg, &पंचांगp, 1);
+पूर्ण
 
-static int helene_read_regs(struct helene_priv *priv,
+अटल पूर्णांक helene_पढ़ो_regs(काष्ठा helene_priv *priv,
 		u8 reg, u8 *val, u32 len)
-{
-	int ret;
-	struct i2c_msg msg[2] = {
-		{
+अणु
+	पूर्णांक ret;
+	काष्ठा i2c_msg msg[2] = अणु
+		अणु
 			.addr = priv->i2c_address,
 			.flags = 0,
 			.len = 1,
 			.buf = &reg,
-		}, {
+		पूर्ण, अणु
 			.addr = priv->i2c_address,
 			.flags = I2C_M_RD,
 			.len = len,
 			.buf = val,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
 	ret = i2c_transfer(priv->i2c, &msg[0], 1);
-	if (ret >= 0 && ret != 1)
+	अगर (ret >= 0 && ret != 1)
 		ret = -EREMOTEIO;
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_warn(&priv->i2c->dev,
 				"%s: I2C rw failed=%d addr=%02x reg=%02x\n",
 				KBUILD_MODNAME, ret, priv->i2c_address, reg);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = i2c_transfer(priv->i2c, &msg[1], 1);
-	if (ret >= 0 && ret != 1)
+	अगर (ret >= 0 && ret != 1)
 		ret = -EREMOTEIO;
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_warn(&priv->i2c->dev,
 				"%s: i2c rd failed=%d addr=%02x reg=%02x\n",
 				KBUILD_MODNAME, ret, priv->i2c_address, reg);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	helene_i2c_debug(priv, reg, 0, val, len);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int helene_read_reg(struct helene_priv *priv, u8 reg, u8 *val)
-{
-	return helene_read_regs(priv, reg, val, 1);
-}
+अटल पूर्णांक helene_पढ़ो_reg(काष्ठा helene_priv *priv, u8 reg, u8 *val)
+अणु
+	वापस helene_पढ़ो_regs(priv, reg, val, 1);
+पूर्ण
 
-static int helene_set_reg_bits(struct helene_priv *priv,
+अटल पूर्णांक helene_set_reg_bits(काष्ठा helene_priv *priv,
 		u8 reg, u8 data, u8 mask)
-{
-	int res;
+अणु
+	पूर्णांक res;
 	u8 rdata;
 
-	if (mask != 0xff) {
-		res = helene_read_reg(priv, reg, &rdata);
-		if (res != 0)
-			return res;
+	अगर (mask != 0xff) अणु
+		res = helene_पढ़ो_reg(priv, reg, &rdata);
+		अगर (res != 0)
+			वापस res;
 		data = ((data & mask) | (rdata & (mask ^ 0xFF)));
-	}
-	return helene_write_reg(priv, reg, data);
-}
+	पूर्ण
+	वापस helene_ग_लिखो_reg(priv, reg, data);
+पूर्ण
 
-static int helene_enter_power_save(struct helene_priv *priv)
-{
+अटल पूर्णांक helene_enter_घातer_save(काष्ठा helene_priv *priv)
+अणु
 	dev_dbg(&priv->i2c->dev, "%s()\n", __func__);
-	if (priv->state == STATE_SLEEP)
-		return 0;
+	अगर (priv->state == STATE_SLEEP)
+		वापस 0;
 
-	/* Standby setting for CPU */
-	helene_write_reg(priv, 0x88, 0x0);
+	/* Standby setting क्रम CPU */
+	helene_ग_लिखो_reg(priv, 0x88, 0x0);
 
-	/* Standby setting for internal logic block */
-	helene_write_reg(priv, 0x87, 0xC0);
+	/* Standby setting क्रम पूर्णांकernal logic block */
+	helene_ग_लिखो_reg(priv, 0x87, 0xC0);
 
 	priv->state = STATE_SLEEP;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int helene_leave_power_save(struct helene_priv *priv)
-{
+अटल पूर्णांक helene_leave_घातer_save(काष्ठा helene_priv *priv)
+अणु
 	dev_dbg(&priv->i2c->dev, "%s()\n", __func__);
-	if (priv->state == STATE_ACTIVE)
-		return 0;
+	अगर (priv->state == STATE_ACTIVE)
+		वापस 0;
 
-	/* Standby setting for internal logic block */
-	helene_write_reg(priv, 0x87, 0xC4);
+	/* Standby setting क्रम पूर्णांकernal logic block */
+	helene_ग_लिखो_reg(priv, 0x87, 0xC4);
 
-	/* Standby setting for CPU */
-	helene_write_reg(priv, 0x88, 0x40);
+	/* Standby setting क्रम CPU */
+	helene_ग_लिखो_reg(priv, 0x88, 0x40);
 
 	priv->state = STATE_ACTIVE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int helene_init(struct dvb_frontend *fe)
-{
-	struct helene_priv *priv = fe->tuner_priv;
-
-	dev_dbg(&priv->i2c->dev, "%s()\n", __func__);
-	return helene_leave_power_save(priv);
-}
-
-static void helene_release(struct dvb_frontend *fe)
-{
-	struct helene_priv *priv = fe->tuner_priv;
+अटल पूर्णांक helene_init(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा helene_priv *priv = fe->tuner_priv;
 
 	dev_dbg(&priv->i2c->dev, "%s()\n", __func__);
-	kfree(fe->tuner_priv);
-	fe->tuner_priv = NULL;
-}
+	वापस helene_leave_घातer_save(priv);
+पूर्ण
 
-static int helene_sleep(struct dvb_frontend *fe)
-{
-	struct helene_priv *priv = fe->tuner_priv;
+अटल व्योम helene_release(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा helene_priv *priv = fe->tuner_priv;
 
 	dev_dbg(&priv->i2c->dev, "%s()\n", __func__);
-	helene_enter_power_save(priv);
-	return 0;
-}
+	kमुक्त(fe->tuner_priv);
+	fe->tuner_priv = शून्य;
+पूर्ण
 
-static enum helene_tv_system_t helene_get_tv_system(struct dvb_frontend *fe)
-{
-	enum helene_tv_system_t system = SONY_HELENE_TV_SYSTEM_UNKNOWN;
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct helene_priv *priv = fe->tuner_priv;
+अटल पूर्णांक helene_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा helene_priv *priv = fe->tuner_priv;
 
-	if (p->delivery_system == SYS_DVBT) {
-		if (p->bandwidth_hz <= 5000000)
-			system = SONY_HELENE_DTV_DVBT_5;
-		else if (p->bandwidth_hz <= 6000000)
-			system = SONY_HELENE_DTV_DVBT_6;
-		else if (p->bandwidth_hz <= 7000000)
-			system = SONY_HELENE_DTV_DVBT_7;
-		else if (p->bandwidth_hz <= 8000000)
-			system = SONY_HELENE_DTV_DVBT_8;
-		else {
-			system = SONY_HELENE_DTV_DVBT_8;
+	dev_dbg(&priv->i2c->dev, "%s()\n", __func__);
+	helene_enter_घातer_save(priv);
+	वापस 0;
+पूर्ण
+
+अटल क्रमागत helene_tv_प्रणाली_t helene_get_tv_प्रणाली(काष्ठा dvb_frontend *fe)
+अणु
+	क्रमागत helene_tv_प्रणाली_t प्रणाली = SONY_HELENE_TV_SYSTEM_UNKNOWN;
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा helene_priv *priv = fe->tuner_priv;
+
+	अगर (p->delivery_प्रणाली == SYS_DVBT) अणु
+		अगर (p->bandwidth_hz <= 5000000)
+			प्रणाली = SONY_HELENE_DTV_DVBT_5;
+		अन्यथा अगर (p->bandwidth_hz <= 6000000)
+			प्रणाली = SONY_HELENE_DTV_DVBT_6;
+		अन्यथा अगर (p->bandwidth_hz <= 7000000)
+			प्रणाली = SONY_HELENE_DTV_DVBT_7;
+		अन्यथा अगर (p->bandwidth_hz <= 8000000)
+			प्रणाली = SONY_HELENE_DTV_DVBT_8;
+		अन्यथा अणु
+			प्रणाली = SONY_HELENE_DTV_DVBT_8;
 			p->bandwidth_hz = 8000000;
-		}
-	} else if (p->delivery_system == SYS_DVBT2) {
-		if (p->bandwidth_hz <= 5000000)
-			system = SONY_HELENE_DTV_DVBT2_5;
-		else if (p->bandwidth_hz <= 6000000)
-			system = SONY_HELENE_DTV_DVBT2_6;
-		else if (p->bandwidth_hz <= 7000000)
-			system = SONY_HELENE_DTV_DVBT2_7;
-		else if (p->bandwidth_hz <= 8000000)
-			system = SONY_HELENE_DTV_DVBT2_8;
-		else {
-			system = SONY_HELENE_DTV_DVBT2_8;
+		पूर्ण
+	पूर्ण अन्यथा अगर (p->delivery_प्रणाली == SYS_DVBT2) अणु
+		अगर (p->bandwidth_hz <= 5000000)
+			प्रणाली = SONY_HELENE_DTV_DVBT2_5;
+		अन्यथा अगर (p->bandwidth_hz <= 6000000)
+			प्रणाली = SONY_HELENE_DTV_DVBT2_6;
+		अन्यथा अगर (p->bandwidth_hz <= 7000000)
+			प्रणाली = SONY_HELENE_DTV_DVBT2_7;
+		अन्यथा अगर (p->bandwidth_hz <= 8000000)
+			प्रणाली = SONY_HELENE_DTV_DVBT2_8;
+		अन्यथा अणु
+			प्रणाली = SONY_HELENE_DTV_DVBT2_8;
 			p->bandwidth_hz = 8000000;
-		}
-	} else if (p->delivery_system == SYS_DVBS) {
-		system = SONY_HELENE_STV_DVBS;
-	} else if (p->delivery_system == SYS_DVBS2) {
-		system = SONY_HELENE_STV_DVBS2;
-	} else if (p->delivery_system == SYS_ISDBS) {
-		system = SONY_HELENE_STV_ISDBS;
-	} else if (p->delivery_system == SYS_ISDBT) {
-		if (p->bandwidth_hz <= 6000000)
-			system = SONY_HELENE_DTV_ISDBT_6;
-		else if (p->bandwidth_hz <= 7000000)
-			system = SONY_HELENE_DTV_ISDBT_7;
-		else if (p->bandwidth_hz <= 8000000)
-			system = SONY_HELENE_DTV_ISDBT_8;
-		else {
-			system = SONY_HELENE_DTV_ISDBT_8;
+		पूर्ण
+	पूर्ण अन्यथा अगर (p->delivery_प्रणाली == SYS_DVBS) अणु
+		प्रणाली = SONY_HELENE_STV_DVBS;
+	पूर्ण अन्यथा अगर (p->delivery_प्रणाली == SYS_DVBS2) अणु
+		प्रणाली = SONY_HELENE_STV_DVBS2;
+	पूर्ण अन्यथा अगर (p->delivery_प्रणाली == SYS_ISDBS) अणु
+		प्रणाली = SONY_HELENE_STV_ISDBS;
+	पूर्ण अन्यथा अगर (p->delivery_प्रणाली == SYS_ISDBT) अणु
+		अगर (p->bandwidth_hz <= 6000000)
+			प्रणाली = SONY_HELENE_DTV_ISDBT_6;
+		अन्यथा अगर (p->bandwidth_hz <= 7000000)
+			प्रणाली = SONY_HELENE_DTV_ISDBT_7;
+		अन्यथा अगर (p->bandwidth_hz <= 8000000)
+			प्रणाली = SONY_HELENE_DTV_ISDBT_8;
+		अन्यथा अणु
+			प्रणाली = SONY_HELENE_DTV_ISDBT_8;
 			p->bandwidth_hz = 8000000;
-		}
-	} else if (p->delivery_system == SYS_DVBC_ANNEX_A) {
-		if (p->bandwidth_hz <= 6000000)
-			system = SONY_HELENE_DTV_DVBC_6;
-		else if (p->bandwidth_hz <= 8000000)
-			system = SONY_HELENE_DTV_DVBC_8;
-	}
+		पूर्ण
+	पूर्ण अन्यथा अगर (p->delivery_प्रणाली == SYS_DVBC_ANNEX_A) अणु
+		अगर (p->bandwidth_hz <= 6000000)
+			प्रणाली = SONY_HELENE_DTV_DVBC_6;
+		अन्यथा अगर (p->bandwidth_hz <= 8000000)
+			प्रणाली = SONY_HELENE_DTV_DVBC_8;
+	पूर्ण
 	dev_dbg(&priv->i2c->dev,
 			"%s(): HELENE DTV system %d (delsys %d, bandwidth %d)\n",
-			__func__, (int)system, p->delivery_system,
+			__func__, (पूर्णांक)प्रणाली, p->delivery_प्रणाली,
 			p->bandwidth_hz);
-	return system;
-}
+	वापस प्रणाली;
+पूर्ण
 
-static int helene_set_params_s(struct dvb_frontend *fe)
-{
+अटल पूर्णांक helene_set_params_s(काष्ठा dvb_frontend *fe)
+अणु
 	u8 data[MAX_WRITE_REGSIZE];
 	u32 frequency;
-	enum helene_tv_system_t tv_system;
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct helene_priv *priv = fe->tuner_priv;
-	int frequencykHz = p->frequency;
-	uint32_t frequency4kHz = 0;
+	क्रमागत helene_tv_प्रणाली_t tv_प्रणाली;
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा helene_priv *priv = fe->tuner_priv;
+	पूर्णांक frequencykHz = p->frequency;
+	uपूर्णांक32_t frequency4kHz = 0;
 	u32 symbol_rate = p->symbol_rate/1000;
 
 	dev_dbg(&priv->i2c->dev, "%s(): tune frequency %dkHz sr=%uKsps\n",
 			__func__, frequencykHz, symbol_rate);
-	tv_system = helene_get_tv_system(fe);
+	tv_प्रणाली = helene_get_tv_प्रणाली(fe);
 
-	if (tv_system == SONY_HELENE_TV_SYSTEM_UNKNOWN) {
+	अगर (tv_प्रणाली == SONY_HELENE_TV_SYSTEM_UNKNOWN) अणु
 		dev_err(&priv->i2c->dev, "%s(): unknown DTV system\n",
 				__func__);
-		return -EINVAL;
-	}
-	/* RF switch turn to satellite */
-	if (priv->set_tuner)
+		वापस -EINVAL;
+	पूर्ण
+	/* RF चयन turn to satellite */
+	अगर (priv->set_tuner)
 		priv->set_tuner(priv->set_tuner_data, 0);
 	frequency = roundup(p->frequency / 1000, 1);
 
-	/* Disable IF signal output */
-	helene_write_reg(priv, 0x15, 0x02);
+	/* Disable IF संकेत output */
+	helene_ग_लिखो_reg(priv, 0x15, 0x02);
 
-	/* RFIN matching in power save (Sat) reset */
-	helene_write_reg(priv, 0x43, 0x06);
+	/* RFIN matching in घातer save (Sat) reset */
+	helene_ग_लिखो_reg(priv, 0x43, 0x06);
 
 	/* Analog block setting (0x6A, 0x6B) */
 	data[0] = 0x00;
 	data[1] = 0x00;
-	helene_write_regs(priv, 0x6A, data, 2);
-	helene_write_reg(priv, 0x75, 0x99);
-	helene_write_reg(priv, 0x9D, 0x00);
+	helene_ग_लिखो_regs(priv, 0x6A, data, 2);
+	helene_ग_लिखो_reg(priv, 0x75, 0x99);
+	helene_ग_लिखो_reg(priv, 0x9D, 0x00);
 
-	/* Tuning setting for CPU (0x61) */
-	helene_write_reg(priv, 0x61, 0x07);
+	/* Tuning setting क्रम CPU (0x61) */
+	helene_ग_लिखो_reg(priv, 0x61, 0x07);
 
 	/* Satellite mode select (0x01) */
-	helene_write_reg(priv, 0x01, 0x01);
+	helene_ग_लिखो_reg(priv, 0x01, 0x01);
 
-	/* Clock enable for internal logic block, CPU wake-up (0x04, 0x05) */
+	/* Clock enable क्रम पूर्णांकernal logic block, CPU wake-up (0x04, 0x05) */
 	data[0] = 0xC4;
 	data[1] = 0x40;
 
-	switch (priv->xtal) {
-	case SONY_HELENE_XTAL_16000:
+	चयन (priv->xtal) अणु
+	हाल SONY_HELENE_XTAL_16000:
 		data[2] = 0x02;
-		break;
-	case SONY_HELENE_XTAL_20500:
+		अवरोध;
+	हाल SONY_HELENE_XTAL_20500:
 		data[2] = 0x02;
-		break;
-	case SONY_HELENE_XTAL_24000:
+		अवरोध;
+	हाल SONY_HELENE_XTAL_24000:
 		data[2] = 0x03;
-		break;
-	case SONY_HELENE_XTAL_41000:
+		अवरोध;
+	हाल SONY_HELENE_XTAL_41000:
 		data[2] = 0x05;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&priv->i2c->dev, "%s(): unknown xtal %d\n",
 				__func__, priv->xtal);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Setting for analog block (0x07). LOOPFILTER INTERNAL */
+	/* Setting क्रम analog block (0x07). LOOPFILTER INTERNAL */
 	data[3] = 0x80;
 
-	/* Tuning setting for analog block
+	/* Tuning setting क्रम analog block
 	 * (0x08, 0x09, 0x0A, 0x0B). LOOPFILTER INTERNAL
 	*/
-	if (priv->xtal == SONY_HELENE_XTAL_20500)
+	अगर (priv->xtal == SONY_HELENE_XTAL_20500)
 		data[4] = 0x58;
-	else
+	अन्यथा
 		data[4] = 0x70;
 
 	data[5] = 0x1E;
 	data[6] = 0x02;
 	data[7] = 0x24;
 
-	/* Enable for analog block (0x0C, 0x0D, 0x0E). SAT LNA ON */
+	/* Enable क्रम analog block (0x0C, 0x0D, 0x0E). SAT LNA ON */
 	data[8] = 0x0F;
 	data[8] |= 0xE0; /* POWERSAVE_TERR_RF_ACTIVE */
 	data[9]  = 0x02;
 	data[10] = 0x1E;
 
-	/* Setting for LPF cutoff frequency (0x0F) */
-	switch (tv_system) {
-	case SONY_HELENE_STV_ISDBS:
+	/* Setting क्रम LPF cutoff frequency (0x0F) */
+	चयन (tv_प्रणाली) अणु
+	हाल SONY_HELENE_STV_ISDBS:
 		data[11] = 0x22; /* 22MHz */
-		break;
-	case SONY_HELENE_STV_DVBS:
-		if (symbol_rate <= 4000)
+		अवरोध;
+	हाल SONY_HELENE_STV_DVBS:
+		अगर (symbol_rate <= 4000)
 			data[11] = 0x05;
-		else if (symbol_rate <= 10000)
-			data[11] = (uint8_t)((symbol_rate * 47
+		अन्यथा अगर (symbol_rate <= 10000)
+			data[11] = (uपूर्णांक8_t)((symbol_rate * 47
 						+ (40000-1)) / 40000);
-		else
-			data[11] = (uint8_t)((symbol_rate * 27
+		अन्यथा
+			data[11] = (uपूर्णांक8_t)((symbol_rate * 27
 						+ (40000-1)) / 40000 + 5);
 
-		if (data[11] > 36)
+		अगर (data[11] > 36)
 			data[11] = 36; /* 5 <= lpf_cutoff <= 36 is valid */
-		break;
-	case SONY_HELENE_STV_DVBS2:
-		if (symbol_rate <= 4000)
+		अवरोध;
+	हाल SONY_HELENE_STV_DVBS2:
+		अगर (symbol_rate <= 4000)
 			data[11] = 0x05;
-		else if (symbol_rate <= 10000)
-			data[11] = (uint8_t)((symbol_rate * 11
+		अन्यथा अगर (symbol_rate <= 10000)
+			data[11] = (uपूर्णांक8_t)((symbol_rate * 11
 						+ (10000-1)) / 10000);
-		else
-			data[11] = (uint8_t)((symbol_rate * 3
+		अन्यथा
+			data[11] = (uपूर्णांक8_t)((symbol_rate * 3
 						+ (5000-1)) / 5000 + 5);
 
-		if (data[11] > 36)
+		अगर (data[11] > 36)
 			data[11] = 36; /* 5 <= lpf_cutoff <= 36 is valid */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&priv->i2c->dev, "%s(): unknown standard %d\n",
-				__func__, tv_system);
-		return -EINVAL;
-	}
+				__func__, tv_प्रणाली);
+		वापस -EINVAL;
+	पूर्ण
 
 	/* RF tuning frequency setting (0x10, 0x11, 0x12) */
 	frequency4kHz = (frequencykHz + 2) / 4;
-	data[12] = (uint8_t)(frequency4kHz & 0xFF);         /* FRF_L */
-	data[13] = (uint8_t)((frequency4kHz >> 8) & 0xFF);  /* FRF_M */
+	data[12] = (uपूर्णांक8_t)(frequency4kHz & 0xFF);         /* FRF_L */
+	data[13] = (uपूर्णांक8_t)((frequency4kHz >> 8) & 0xFF);  /* FRF_M */
 	/* FRF_H (bit[3:0]) */
-	data[14] = (uint8_t)((frequency4kHz >> 16) & 0x0F);
+	data[14] = (uपूर्णांक8_t)((frequency4kHz >> 16) & 0x0F);
 
 	/* Tuning command (0x13) */
 	data[15] = 0xFF;
 
-	/* Setting for IQOUT_LIMIT (0x14) 0.75Vpp */
+	/* Setting क्रम IQOUT_LIMIT (0x14) 0.75Vpp */
 	data[16] = 0x00;
 
 	/* Enable IQ output (0x15) */
 	data[17] = 0x01;
 
-	helene_write_regs(priv, 0x04, data, 18);
+	helene_ग_लिखो_regs(priv, 0x04, data, 18);
 
 	dev_dbg(&priv->i2c->dev, "%s(): tune done\n",
 			__func__);
 
 	priv->frequency = frequency;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int helene_set_params_t(struct dvb_frontend *fe)
-{
+अटल पूर्णांक helene_set_params_t(काष्ठा dvb_frontend *fe)
+अणु
 	u8 data[MAX_WRITE_REGSIZE];
 	u32 frequency;
-	enum helene_tv_system_t tv_system;
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct helene_priv *priv = fe->tuner_priv;
-	int frequencykHz = p->frequency / 1000;
+	क्रमागत helene_tv_प्रणाली_t tv_प्रणाली;
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा helene_priv *priv = fe->tuner_priv;
+	पूर्णांक frequencykHz = p->frequency / 1000;
 
 	dev_dbg(&priv->i2c->dev, "%s(): tune frequency %dkHz\n",
 			__func__, frequencykHz);
-	tv_system = helene_get_tv_system(fe);
+	tv_प्रणाली = helene_get_tv_प्रणाली(fe);
 
-	if (tv_system == SONY_HELENE_TV_SYSTEM_UNKNOWN) {
+	अगर (tv_प्रणाली == SONY_HELENE_TV_SYSTEM_UNKNOWN) अणु
 		dev_dbg(&priv->i2c->dev, "%s(): unknown DTV system\n",
 				__func__);
-		return -EINVAL;
-	}
-	if (priv->set_tuner)
+		वापस -EINVAL;
+	पूर्ण
+	अगर (priv->set_tuner)
 		priv->set_tuner(priv->set_tuner_data, 1);
 	frequency = roundup(p->frequency / 1000, 25);
 
 	/* mode select */
-	helene_write_reg(priv, 0x01, 0x00);
+	helene_ग_लिखो_reg(priv, 0x01, 0x00);
 
-	/* Disable IF signal output */
-	helene_write_reg(priv, 0x74, 0x02);
+	/* Disable IF संकेत output */
+	helene_ग_लिखो_reg(priv, 0x74, 0x02);
 
-	if (priv->state == STATE_SLEEP)
-		helene_leave_power_save(priv);
+	अगर (priv->state == STATE_SLEEP)
+		helene_leave_घातer_save(priv);
 
-	/* Initial setting for internal analog block (0x91, 0x92) */
-	if ((tv_system == SONY_HELENE_DTV_DVBC_6) ||
-			(tv_system == SONY_HELENE_DTV_DVBC_8)) {
+	/* Initial setting क्रम पूर्णांकernal analog block (0x91, 0x92) */
+	अगर ((tv_प्रणाली == SONY_HELENE_DTV_DVBC_6) ||
+			(tv_प्रणाली == SONY_HELENE_DTV_DVBC_8)) अणु
 		data[0] = 0x16;
 		data[1] = 0x26;
-	} else {
+	पूर्ण अन्यथा अणु
 		data[0] = 0x10;
 		data[1] = 0x20;
-	}
-	helene_write_regs(priv, 0x91, data, 2);
+	पूर्ण
+	helene_ग_लिखो_regs(priv, 0x91, data, 2);
 
-	/* Setting for analog block */
-	if (TERR_INTERNAL_LOOPFILTER_AVAILABLE(tv_system))
+	/* Setting क्रम analog block */
+	अगर (TERR_INTERNAL_LOOPFILTER_AVAILABLE(tv_प्रणाली))
 		data[0] = 0x90;
-	else
+	अन्यथा
 		data[0] = 0x00;
 
-	/* Setting for local polarity (0x9D) */
-	data[1] = (uint8_t)(terr_params[tv_system].IS_LOWERLOCAL & 0x01);
-	helene_write_regs(priv, 0x9C, data, 2);
+	/* Setting क्रम local polarity (0x9D) */
+	data[1] = (uपूर्णांक8_t)(terr_params[tv_प्रणाली].IS_LOWERLOCAL & 0x01);
+	helene_ग_लिखो_regs(priv, 0x9C, data, 2);
 
-	/* Enable for analog block */
+	/* Enable क्रम analog block */
 	data[0] = 0xEE;
 	data[1] = 0x02;
 	data[2] = 0x1E;
-	data[3] = 0x67; /* Tuning setting for CPU */
+	data[3] = 0x67; /* Tuning setting क्रम CPU */
 
-	/* Setting for PLL reference divider for xtal=24MHz */
-	if ((tv_system == SONY_HELENE_DTV_DVBC_6) ||
-			(tv_system == SONY_HELENE_DTV_DVBC_8))
+	/* Setting क्रम PLL reference भागider क्रम xtal=24MHz */
+	अगर ((tv_प्रणाली == SONY_HELENE_DTV_DVBC_6) ||
+			(tv_प्रणाली == SONY_HELENE_DTV_DVBC_8))
 		data[4] = 0x18;
-	else
+	अन्यथा
 		data[4] = 0x03;
 
-	/* Tuning setting for analog block */
-	if (TERR_INTERNAL_LOOPFILTER_AVAILABLE(tv_system)) {
+	/* Tuning setting क्रम analog block */
+	अगर (TERR_INTERNAL_LOOPFILTER_AVAILABLE(tv_प्रणाली)) अणु
 		data[5] = 0x38;
 		data[6] = 0x1E;
 		data[7] = 0x02;
 		data[8] = 0x24;
-	} else if ((tv_system == SONY_HELENE_DTV_DVBC_6) ||
-			(tv_system == SONY_HELENE_DTV_DVBC_8)) {
+	पूर्ण अन्यथा अगर ((tv_प्रणाली == SONY_HELENE_DTV_DVBC_6) ||
+			(tv_प्रणाली == SONY_HELENE_DTV_DVBC_8)) अणु
 		data[5] = 0x1C;
 		data[6] = 0x78;
 		data[7] = 0x08;
 		data[8] = 0x1C;
-	} else {
+	पूर्ण अन्यथा अणु
 		data[5] = 0xB4;
 		data[6] = 0x78;
 		data[7] = 0x08;
 		data[8] = 0x30;
-	}
-	helene_write_regs(priv, 0x5E, data, 9);
+	पूर्ण
+	helene_ग_लिखो_regs(priv, 0x5E, data, 9);
 
 	/* LT_AMP_EN should be 0 */
 	helene_set_reg_bits(priv, 0x67, 0x0, 0x02);
 
-	/* Setting for IFOUT_LIMIT */
+	/* Setting क्रम IFOUT_LIMIT */
 	data[0] = 0x00; /* 1.5Vpp */
 
 	/* RF_GAIN setting */
-	if (terr_params[tv_system].RF_GAIN == HELENE_AUTO)
+	अगर (terr_params[tv_प्रणाली].RF_GAIN == HELENE_AUTO)
 		data[1] = 0x80; /* RF_GAIN_SEL = 1 */
-	else
-		data[1] = (uint8_t)((terr_params[tv_system].RF_GAIN
+	अन्यथा
+		data[1] = (uपूर्णांक8_t)((terr_params[tv_प्रणाली].RF_GAIN
 					<< 4) & 0x70);
 
 	/* IF_BPF_GC setting */
-	data[1] |= (uint8_t)(terr_params[tv_system].IF_BPF_GC & 0x0F);
+	data[1] |= (uपूर्णांक8_t)(terr_params[tv_प्रणाली].IF_BPF_GC & 0x0F);
 
-	/* Setting for internal RFAGC (0x6A, 0x6B, 0x6C) */
+	/* Setting क्रम पूर्णांकernal RFAGC (0x6A, 0x6B, 0x6C) */
 	data[2] = 0x00;
-	if (frequencykHz <= 172000) {
-		data[3] = (uint8_t)(terr_params[tv_system].RFOVLD_DET_LV1_VL
+	अगर (frequencykHz <= 172000) अणु
+		data[3] = (uपूर्णांक8_t)(terr_params[tv_प्रणाली].RFOVLD_DET_LV1_VL
 				& 0x0F);
-		data[4] = (uint8_t)(terr_params[tv_system].IFOVLD_DET_LV_VL
+		data[4] = (uपूर्णांक8_t)(terr_params[tv_प्रणाली].IFOVLD_DET_LV_VL
 				& 0x07);
-	} else if (frequencykHz <= 464000) {
-		data[3] = (uint8_t)(terr_params[tv_system].RFOVLD_DET_LV1_VH
+	पूर्ण अन्यथा अगर (frequencykHz <= 464000) अणु
+		data[3] = (uपूर्णांक8_t)(terr_params[tv_प्रणाली].RFOVLD_DET_LV1_VH
 				& 0x0F);
-		data[4] = (uint8_t)(terr_params[tv_system].IFOVLD_DET_LV_VH
+		data[4] = (uपूर्णांक8_t)(terr_params[tv_प्रणाली].IFOVLD_DET_LV_VH
 				& 0x07);
-	} else {
-		data[3] = (uint8_t)(terr_params[tv_system].RFOVLD_DET_LV1_U
+	पूर्ण अन्यथा अणु
+		data[3] = (uपूर्णांक8_t)(terr_params[tv_प्रणाली].RFOVLD_DET_LV1_U
 				& 0x0F);
-		data[4] = (uint8_t)(terr_params[tv_system].IFOVLD_DET_LV_U
+		data[4] = (uपूर्णांक8_t)(terr_params[tv_प्रणाली].IFOVLD_DET_LV_U
 				& 0x07);
-	}
+	पूर्ण
 	data[4] |= 0x20;
 
-	/* Setting for IF frequency and bandwidth */
+	/* Setting क्रम IF frequency and bandwidth */
 
 	/* IF filter center frequency offset (IF_BPF_F0) (0x6D) */
-	data[5] = (uint8_t)((terr_params[tv_system].IF_BPF_F0 << 4) & 0x30);
+	data[5] = (uपूर्णांक8_t)((terr_params[tv_प्रणाली].IF_BPF_F0 << 4) & 0x30);
 
 	/* IF filter band width (BW) (0x6D) */
-	data[5] |= (uint8_t)(terr_params[tv_system].BW & 0x03);
+	data[5] |= (uपूर्णांक8_t)(terr_params[tv_प्रणाली].BW & 0x03);
 
 	/* IF frequency offset value (FIF_OFFSET) (0x6E) */
-	data[6] = (uint8_t)(terr_params[tv_system].FIF_OFFSET & 0x1F);
+	data[6] = (uपूर्णांक8_t)(terr_params[tv_प्रणाली].FIF_OFFSET & 0x1F);
 
 	/* IF band width offset value (BW_OFFSET) (0x6F) */
-	data[7] = (uint8_t)(terr_params[tv_system].BW_OFFSET & 0x1F);
+	data[7] = (uपूर्णांक8_t)(terr_params[tv_प्रणाली].BW_OFFSET & 0x1F);
 
 	/* RF tuning frequency setting (0x70, 0x71, 0x72) */
-	data[8]  = (uint8_t)(frequencykHz & 0xFF);         /* FRF_L */
-	data[9]  = (uint8_t)((frequencykHz >> 8) & 0xFF);  /* FRF_M */
-	data[10] = (uint8_t)((frequencykHz >> 16)
+	data[8]  = (uपूर्णांक8_t)(frequencykHz & 0xFF);         /* FRF_L */
+	data[9]  = (uपूर्णांक8_t)((frequencykHz >> 8) & 0xFF);  /* FRF_M */
+	data[10] = (uपूर्णांक8_t)((frequencykHz >> 16)
 			& 0x0F); /* FRF_H (bit[3:0]) */
 
 	/* Tuning command */
@@ -804,138 +805,138 @@ static int helene_set_params_t(struct dvb_frontend *fe)
 	/* Enable IF output, AGC and IFOUT pin selection (0x74) */
 	data[12] = 0x01;
 
-	if ((tv_system == SONY_HELENE_DTV_DVBC_6) ||
-			(tv_system == SONY_HELENE_DTV_DVBC_8)) {
+	अगर ((tv_प्रणाली == SONY_HELENE_DTV_DVBC_6) ||
+			(tv_प्रणाली == SONY_HELENE_DTV_DVBC_8)) अणु
 		data[13] = 0xD9;
 		data[14] = 0x0F;
 		data[15] = 0x24;
 		data[16] = 0x87;
-	} else {
+	पूर्ण अन्यथा अणु
 		data[13] = 0x99;
 		data[14] = 0x00;
 		data[15] = 0x24;
 		data[16] = 0x87;
-	}
+	पूर्ण
 
-	helene_write_regs(priv, 0x68, data, 17);
+	helene_ग_लिखो_regs(priv, 0x68, data, 17);
 
 	dev_dbg(&priv->i2c->dev, "%s(): tune done\n",
 			__func__);
 
 	priv->frequency = frequency;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int helene_set_params(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
+अटल पूर्णांक helene_set_params(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
 
-	if (p->delivery_system == SYS_DVBT ||
-	    p->delivery_system == SYS_DVBT2 ||
-	    p->delivery_system == SYS_ISDBT ||
-	    p->delivery_system == SYS_DVBC_ANNEX_A)
-		return helene_set_params_t(fe);
+	अगर (p->delivery_प्रणाली == SYS_DVBT ||
+	    p->delivery_प्रणाली == SYS_DVBT2 ||
+	    p->delivery_प्रणाली == SYS_ISDBT ||
+	    p->delivery_प्रणाली == SYS_DVBC_ANNEX_A)
+		वापस helene_set_params_t(fe);
 
-	return helene_set_params_s(fe);
-}
+	वापस helene_set_params_s(fe);
+पूर्ण
 
-static int helene_get_frequency(struct dvb_frontend *fe, u32 *frequency)
-{
-	struct helene_priv *priv = fe->tuner_priv;
+अटल पूर्णांक helene_get_frequency(काष्ठा dvb_frontend *fe, u32 *frequency)
+अणु
+	काष्ठा helene_priv *priv = fe->tuner_priv;
 
 	*frequency = priv->frequency * 1000;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dvb_tuner_ops helene_tuner_ops_t = {
-	.info = {
+अटल स्थिर काष्ठा dvb_tuner_ops helene_tuner_ops_t = अणु
+	.info = अणु
 		.name = "Sony HELENE Ter tuner",
 		.frequency_min_hz  =    1 * MHz,
 		.frequency_max_hz  = 1200 * MHz,
 		.frequency_step_hz =   25 * kHz,
-	},
+	पूर्ण,
 	.init = helene_init,
 	.release = helene_release,
 	.sleep = helene_sleep,
 	.set_params = helene_set_params_t,
 	.get_frequency = helene_get_frequency,
-};
+पूर्ण;
 
-static const struct dvb_tuner_ops helene_tuner_ops_s = {
-	.info = {
+अटल स्थिर काष्ठा dvb_tuner_ops helene_tuner_ops_s = अणु
+	.info = अणु
 		.name = "Sony HELENE Sat tuner",
 		.frequency_min_hz  =  500 * MHz,
 		.frequency_max_hz  = 2500 * MHz,
 		.frequency_step_hz =    1 * MHz,
-	},
+	पूर्ण,
 	.init = helene_init,
 	.release = helene_release,
 	.sleep = helene_sleep,
 	.set_params = helene_set_params_s,
 	.get_frequency = helene_get_frequency,
-};
+पूर्ण;
 
-static const struct dvb_tuner_ops helene_tuner_ops = {
-	.info = {
+अटल स्थिर काष्ठा dvb_tuner_ops helene_tuner_ops = अणु
+	.info = अणु
 		.name = "Sony HELENE Sat/Ter tuner",
 		.frequency_min_hz  =    1 * MHz,
 		.frequency_max_hz  = 2500 * MHz,
 		.frequency_step_hz =   25 * kHz,
-	},
+	पूर्ण,
 	.init = helene_init,
 	.release = helene_release,
 	.sleep = helene_sleep,
 	.set_params = helene_set_params,
 	.get_frequency = helene_get_frequency,
-};
+पूर्ण;
 
-/* power-on tuner
+/* घातer-on tuner
  * call once after reset
  */
-static int helene_x_pon(struct helene_priv *priv)
-{
-	/* RFIN matching in power save (terrestrial) = ACTIVE */
-	/* RFIN matching in power save (satellite) = ACTIVE */
-	u8 dataT[] = { 0x06, 0x00, 0x02, 0x00 };
+अटल पूर्णांक helene_x_pon(काष्ठा helene_priv *priv)
+अणु
+	/* RFIN matching in घातer save (terrestrial) = ACTIVE */
+	/* RFIN matching in घातer save (satellite) = ACTIVE */
+	u8 dataT[] = अणु 0x06, 0x00, 0x02, 0x00 पूर्ण;
 	/* SAT_RF_ACTIVE = true, lnaOff = false, terrRfActive = true */
-	u8 dataS[] = { 0x05, 0x06 };
-	u8 cdata[] = {0x7A, 0x01};
+	u8 dataS[] = अणु 0x05, 0x06 पूर्ण;
+	u8 cdata[] = अणु0x7A, 0x01पूर्ण;
 	u8 data[20];
 	u8 rdata[2];
 
 	/* mode select */
-	helene_write_reg(priv, 0x01, 0x00);
+	helene_ग_लिखो_reg(priv, 0x01, 0x00);
 
-	helene_write_reg(priv, 0x67, dataT[3]);
-	helene_write_reg(priv, 0x43, dataS[1]);
-	helene_write_regs(priv, 0x5E, dataT, 3);
-	helene_write_reg(priv, 0x0C, dataS[0]);
+	helene_ग_लिखो_reg(priv, 0x67, dataT[3]);
+	helene_ग_लिखो_reg(priv, 0x43, dataS[1]);
+	helene_ग_लिखो_regs(priv, 0x5E, dataT, 3);
+	helene_ग_लिखो_reg(priv, 0x0C, dataS[0]);
 
-	/* Initial setting for internal logic block */
-	helene_write_regs(priv, 0x99, cdata, sizeof(cdata));
+	/* Initial setting क्रम पूर्णांकernal logic block */
+	helene_ग_लिखो_regs(priv, 0x99, cdata, माप(cdata));
 
 	/* 0x81 - 0x94 */
-	if (priv->xtal == SONY_HELENE_XTAL_16000)
+	अगर (priv->xtal == SONY_HELENE_XTAL_16000)
 		data[0] = 0x10; /* xtal 16 MHz */
-	else
+	अन्यथा
 		data[0] = 0x18; /* xtal 24 MHz */
-	data[1] = (uint8_t)(0x80 | (0x04 & 0x1F)); /* 4 x 25 = 100uA */
-	data[2] = (uint8_t)(0x80 | (0x26 & 0x7F)); /* 38 x 0.25 = 9.5pF */
-	data[3] = 0x80; /* REFOUT signal output 500mVpp */
+	data[1] = (uपूर्णांक8_t)(0x80 | (0x04 & 0x1F)); /* 4 x 25 = 100uA */
+	data[2] = (uपूर्णांक8_t)(0x80 | (0x26 & 0x7F)); /* 38 x 0.25 = 9.5pF */
+	data[3] = 0x80; /* REFOUT संकेत output 500mVpp */
 	data[4] = 0x00; /* GPIO settings */
 	data[5] = 0x00; /* GPIO settings */
-	data[6] = 0xC4; /* Clock enable for internal logic block */
+	data[6] = 0xC4; /* Clock enable क्रम पूर्णांकernal logic block */
 	data[7] = 0x40; /* Start CPU boot-up */
-	data[8] = 0x10; /* For burst-write */
+	data[8] = 0x10; /* For burst-ग_लिखो */
 
-	/* Setting for internal RFAGC */
+	/* Setting क्रम पूर्णांकernal RFAGC */
 	data[9] = 0x00;
 	data[10] = 0x45;
 	data[11] = 0x75;
 
-	data[12] = 0x07; /* Setting for analog block */
+	data[12] = 0x07; /* Setting क्रम analog block */
 
-	/* Initial setting for internal analog block */
+	/* Initial setting क्रम पूर्णांकernal analog block */
 	data[13] = 0x1C;
 	data[14] = 0x3F;
 	data[15] = 0x02;
@@ -944,136 +945,136 @@ static int helene_x_pon(struct helene_priv *priv)
 	data[18] = 0x0A;
 	data[19] = 0x00;
 
-	helene_write_regs(priv, 0x81, data, sizeof(data));
+	helene_ग_लिखो_regs(priv, 0x81, data, माप(data));
 
-	/* Setting for internal RFAGC */
-	helene_write_reg(priv, 0x9B, 0x00);
+	/* Setting क्रम पूर्णांकernal RFAGC */
+	helene_ग_लिखो_reg(priv, 0x9B, 0x00);
 
 	msleep(20);
 
 	/* Check CPU_STT/CPU_ERR */
-	helene_read_regs(priv, 0x1A, rdata, sizeof(rdata));
+	helene_पढ़ो_regs(priv, 0x1A, rdata, माप(rdata));
 
-	if (rdata[0] != 0x00) {
+	अगर (rdata[0] != 0x00) अणु
 		dev_err(&priv->i2c->dev,
 				"HELENE tuner CPU error 0x%x\n", rdata[0]);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* VCO current setting */
 	cdata[0] = 0x90;
 	cdata[1] = 0x06;
-	helene_write_regs(priv, 0x17, cdata, sizeof(cdata));
+	helene_ग_लिखो_regs(priv, 0x17, cdata, माप(cdata));
 	msleep(20);
-	helene_read_reg(priv, 0x19, data);
-	helene_write_reg(priv, 0x95, (uint8_t)((data[0] >> 4) & 0x0F));
+	helene_पढ़ो_reg(priv, 0x19, data);
+	helene_ग_लिखो_reg(priv, 0x95, (uपूर्णांक8_t)((data[0] >> 4) & 0x0F));
 
-	/* Disable IF signal output */
-	helene_write_reg(priv, 0x74, 0x02);
+	/* Disable IF संकेत output */
+	helene_ग_लिखो_reg(priv, 0x74, 0x02);
 
-	/* Standby setting for CPU */
-	helene_write_reg(priv, 0x88, 0x00);
+	/* Standby setting क्रम CPU */
+	helene_ग_लिखो_reg(priv, 0x88, 0x00);
 
-	/* Standby setting for internal logic block */
-	helene_write_reg(priv, 0x87, 0xC0);
+	/* Standby setting क्रम पूर्णांकernal logic block */
+	helene_ग_लिखो_reg(priv, 0x87, 0xC0);
 
-	/* Load capacitance control setting for crystal oscillator */
-	helene_write_reg(priv, 0x80, 0x01);
+	/* Load capacitance control setting क्रम crystal oscillator */
+	helene_ग_लिखो_reg(priv, 0x80, 0x01);
 
 	/* Satellite initial setting */
 	cdata[0] = 0x07;
 	cdata[1] = 0x00;
-	helene_write_regs(priv, 0x41, cdata, sizeof(cdata));
+	helene_ग_लिखो_regs(priv, 0x41, cdata, माप(cdata));
 
 	dev_info(&priv->i2c->dev,
 			"HELENE tuner x_pon done\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct dvb_frontend *helene_attach_s(struct dvb_frontend *fe,
-		const struct helene_config *config,
-		struct i2c_adapter *i2c)
-{
-	struct helene_priv *priv = NULL;
+काष्ठा dvb_frontend *helene_attach_s(काष्ठा dvb_frontend *fe,
+		स्थिर काष्ठा helene_config *config,
+		काष्ठा i2c_adapter *i2c)
+अणु
+	काष्ठा helene_priv *priv = शून्य;
 
-	priv = kzalloc(sizeof(struct helene_priv), GFP_KERNEL);
-	if (priv == NULL)
-		return NULL;
+	priv = kzalloc(माप(काष्ठा helene_priv), GFP_KERNEL);
+	अगर (priv == शून्य)
+		वापस शून्य;
 	priv->i2c_address = (config->i2c_address >> 1);
 	priv->i2c = i2c;
 	priv->set_tuner_data = config->set_tuner_priv;
 	priv->set_tuner = config->set_tuner_callback;
 	priv->xtal = config->xtal;
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
-	if (helene_x_pon(priv) != 0) {
-		kfree(priv);
-		return NULL;
-	}
+	अगर (helene_x_pon(priv) != 0) अणु
+		kमुक्त(priv);
+		वापस शून्य;
+	पूर्ण
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	memcpy(&fe->ops.tuner_ops, &helene_tuner_ops_s,
-			sizeof(struct dvb_tuner_ops));
+	स_नकल(&fe->ops.tuner_ops, &helene_tuner_ops_s,
+			माप(काष्ठा dvb_tuner_ops));
 	fe->tuner_priv = priv;
 	dev_info(&priv->i2c->dev,
 			"Sony HELENE Sat attached on addr=%x at I2C adapter %p\n",
 			priv->i2c_address, priv->i2c);
-	return fe;
-}
+	वापस fe;
+पूर्ण
 EXPORT_SYMBOL(helene_attach_s);
 
-struct dvb_frontend *helene_attach(struct dvb_frontend *fe,
-		const struct helene_config *config,
-		struct i2c_adapter *i2c)
-{
-	struct helene_priv *priv = NULL;
+काष्ठा dvb_frontend *helene_attach(काष्ठा dvb_frontend *fe,
+		स्थिर काष्ठा helene_config *config,
+		काष्ठा i2c_adapter *i2c)
+अणु
+	काष्ठा helene_priv *priv = शून्य;
 
-	priv = kzalloc(sizeof(struct helene_priv), GFP_KERNEL);
-	if (priv == NULL)
-		return NULL;
+	priv = kzalloc(माप(काष्ठा helene_priv), GFP_KERNEL);
+	अगर (priv == शून्य)
+		वापस शून्य;
 	priv->i2c_address = (config->i2c_address >> 1);
 	priv->i2c = i2c;
 	priv->set_tuner_data = config->set_tuner_priv;
 	priv->set_tuner = config->set_tuner_callback;
 	priv->xtal = config->xtal;
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
-	if (helene_x_pon(priv) != 0) {
-		kfree(priv);
-		return NULL;
-	}
+	अगर (helene_x_pon(priv) != 0) अणु
+		kमुक्त(priv);
+		वापस शून्य;
+	पूर्ण
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	memcpy(&fe->ops.tuner_ops, &helene_tuner_ops_t,
-			sizeof(struct dvb_tuner_ops));
+	स_नकल(&fe->ops.tuner_ops, &helene_tuner_ops_t,
+			माप(काष्ठा dvb_tuner_ops));
 	fe->tuner_priv = priv;
 	dev_info(&priv->i2c->dev,
 			"Sony HELENE Ter attached on addr=%x at I2C adapter %p\n",
 			priv->i2c_address, priv->i2c);
-	return fe;
-}
+	वापस fe;
+पूर्ण
 EXPORT_SYMBOL(helene_attach);
 
-static int helene_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	struct helene_config *config = client->dev.platform_data;
-	struct dvb_frontend *fe = config->fe;
-	struct device *dev = &client->dev;
-	struct helene_priv *priv;
+अटल पूर्णांक helene_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा helene_config *config = client->dev.platक्रमm_data;
+	काष्ठा dvb_frontend *fe = config->fe;
+	काष्ठा device *dev = &client->dev;
+	काष्ठा helene_priv *priv;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->i2c_address = client->addr;
 	priv->i2c = client->adapter;
@@ -1081,39 +1082,39 @@ static int helene_probe(struct i2c_client *client,
 	priv->set_tuner = config->set_tuner_callback;
 	priv->xtal = config->xtal;
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
-	if (helene_x_pon(priv) != 0)
-		return -EINVAL;
+	अगर (helene_x_pon(priv) != 0)
+		वापस -EINVAL;
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 0);
 
-	memcpy(&fe->ops.tuner_ops, &helene_tuner_ops,
-	       sizeof(struct dvb_tuner_ops));
+	स_नकल(&fe->ops.tuner_ops, &helene_tuner_ops,
+	       माप(काष्ठा dvb_tuner_ops));
 	fe->tuner_priv = priv;
 	i2c_set_clientdata(client, priv);
 
 	dev_info(dev, "Sony HELENE attached on addr=%x at I2C adapter %p\n",
 		 priv->i2c_address, priv->i2c);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id helene_id[] = {
-	{ "helene", },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id helene_id[] = अणु
+	अणु "helene", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, helene_id);
 
-static struct i2c_driver helene_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver helene_driver = अणु
+	.driver = अणु
 		.name = "helene",
-	},
+	पूर्ण,
 	.probe    = helene_probe,
 	.id_table = helene_id,
-};
+पूर्ण;
 module_i2c_driver(helene_driver);
 
 MODULE_DESCRIPTION("Sony HELENE Sat/Ter tuner driver");

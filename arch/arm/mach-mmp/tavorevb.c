@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-mmp/tavorevb.c
  *
- *  Support for the Marvell PXA910-based TavorEVB Development Platform.
+ *  Support क्रम the Marvell PXA910-based TavorEVB Development Platक्रमm.
  */
-#include <linux/gpio.h>
-#include <linux/gpio-pxa.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/smc91x.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio-pxa.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/smc91x.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include "addr-map.h"
-#include "mfp-pxa910.h"
-#include "pxa910.h"
-#include "irqs.h"
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश "addr-map.h"
+#समावेश "mfp-pxa910.h"
+#समावेश "pxa910.h"
+#समावेश "irqs.h"
 
-#include "common.h"
+#समावेश "common.h"
 
-static unsigned long tavorevb_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ tavorevb_pin_config[] __initdata = अणु
 	/* UART2 */
 	GPIO47_UART2_RXD,
 	GPIO48_UART2_TXD,
@@ -56,58 +57,58 @@ static unsigned long tavorevb_pin_config[] __initdata = {
 	DF_WEn_DF_WEn,
 	DF_REn_DF_REn,
 	DF_RDY0_DF_RDY0,
-};
+पूर्ण;
 
-static struct pxa_gpio_platform_data pxa910_gpio_pdata = {
+अटल काष्ठा pxa_gpio_platक्रमm_data pxa910_gpio_pdata = अणु
 	.irq_base	= MMP_GPIO_TO_IRQ(0),
-};
+पूर्ण;
 
-static struct smc91x_platdata tavorevb_smc91x_info = {
+अटल काष्ठा smc91x_platdata tavorevb_smc91x_info = अणु
 	.flags	= SMC91X_USE_16BIT | SMC91X_NOWAIT,
-};
+पूर्ण;
 
-static struct resource smc91x_resources[] = {
-	[0] = {
+अटल काष्ठा resource smc91x_resources[] = अणु
+	[0] = अणु
 		.start	= SMC_CS1_PHYS_BASE + 0x300,
 		.end	= SMC_CS1_PHYS_BASE + 0xfffff,
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= MMP_GPIO_TO_IRQ(80),
 		.end	= MMP_GPIO_TO_IRQ(80),
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device smc91x_device = {
+अटल काष्ठा platक्रमm_device smc91x_device = अणु
 	.name		= "smc91x",
 	.id		= 0,
-	.dev		= {
-		.platform_data = &tavorevb_smc91x_info,
-	},
+	.dev		= अणु
+		.platक्रमm_data = &tavorevb_smc91x_info,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(smc91x_resources),
 	.resource	= smc91x_resources,
-};
+पूर्ण;
 
-static void __init tavorevb_init(void)
-{
+अटल व्योम __init tavorevb_init(व्योम)
+अणु
 	mfp_config(ARRAY_AND_SIZE(tavorevb_pin_config));
 
 	/* on-chip devices */
 	pxa910_add_uart(1);
-	platform_device_add_data(&pxa910_device_gpio, &pxa910_gpio_pdata,
-				 sizeof(struct pxa_gpio_platform_data));
-	platform_device_register(&pxa910_device_gpio);
+	platक्रमm_device_add_data(&pxa910_device_gpio, &pxa910_gpio_pdata,
+				 माप(काष्ठा pxa_gpio_platक्रमm_data));
+	platक्रमm_device_रेजिस्टर(&pxa910_device_gpio);
 
 	/* off-chip devices */
-	platform_device_register(&smc91x_device);
-}
+	platक्रमm_device_रेजिस्टर(&smc91x_device);
+पूर्ण
 
 MACHINE_START(TAVOREVB, "PXA910 Evaluation Board (aka TavorEVB)")
 	.map_io		= mmp_map_io,
 	.nr_irqs	= MMP_NR_IRQS,
 	.init_irq       = pxa910_init_irq,
-	.init_time	= pxa910_timer_init,
+	.init_समय	= pxa910_समयr_init,
 	.init_machine   = tavorevb_init,
 	.restart	= mmp_restart,
 MACHINE_END

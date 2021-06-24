@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	NET3:	Implementation of the ICMP protocol layer.
  *
  *		Alan Cox, <alan@lxorguk.ukuu.org.uk>
  *
- *	Some of the function names and the icmp unreach table for this
+ *	Some of the function names and the icmp unreach table क्रम this
  *	module were derived from [icmp.c 1.0.11 06/02/93] by
  *	Ross Biro, Fred N. van Kempen, Mark Evans, Alan Cox, Gerhard Koerting.
- *	Other than that this module is a complete rewrite.
+ *	Other than that this module is a complete reग_लिखो.
  *
  *	Fixes:
- *	Clemens Fruhwirth	:	introduce global icmp rate limiting
+ *	Clemens Fruhwirth	:	पूर्णांकroduce global icmp rate limiting
  *					with icmp type masking ability instead
- *					of broken per type icmp timeouts.
+ *					of broken per type icmp समयouts.
  *		Mike Shaver	:	RFC1122 checks.
  *		Alan Cox	:	Multicast ping reply as self.
  *		Alan Cox	:	Fix atomicity lockup in ip_build_xmit
@@ -21,7 +22,7 @@
  *					code.
  *		Martin Mares	:	RFC1812 checks.
  *		Martin Mares	:	Can be configured to follow redirects
- *					if acting as a router _without_ a
+ *					अगर acting as a router _without_ a
  *					routing protocol (RFC 1812).
  *		Martin Mares	:	Echo requests may be configured to
  *					be ignored (RFC 1812).
@@ -33,15 +34,15 @@
  *					original packet as we can without
  *					exceeding 576 bytes (RFC 1812).
  *	Willy Konynenberg	:	Transparent proxying support.
- *		Keith Owens	:	RFC1191 correction for 4.2BSD based
+ *		Keith Owens	:	RFC1191 correction क्रम 4.2BSD based
  *					path MTU bug.
  *		Thomas Quinot	:	ICMP Dest Unreach codes up to 15 are
  *					valid (RFC 1812).
  *		Andi Kleen	:	Check all packet lengths properly
- *					and moved all kfree_skb() up to
+ *					and moved all kमुक्त_skb() up to
  *					icmp_rcv.
  *		Andi Kleen	:	Move the rate limit bookkeeping
- *					into the dest entry and use a token
+ *					पूर्णांकo the dest entry and use a token
  *					bucket filter (thanks to ANK). Make
  *					the rates sysctl configurable.
  *		Yu Tianli	:	Fixed two ugly bugs in icmp_send
@@ -57,300 +58,300 @@
  *	  This would also greatly simply some upper layer error handlers. --AK
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/fcntl.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/inet.h>
-#include <linux/inetdevice.h>
-#include <linux/netdevice.h>
-#include <linux/string.h>
-#include <linux/netfilter_ipv4.h>
-#include <linux/slab.h>
-#include <net/snmp.h>
-#include <net/ip.h>
-#include <net/route.h>
-#include <net/protocol.h>
-#include <net/icmp.h>
-#include <net/tcp.h>
-#include <net/udp.h>
-#include <net/raw.h>
-#include <net/ping.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <linux/errno.h>
-#include <linux/timer.h>
-#include <linux/init.h>
-#include <linux/uaccess.h>
-#include <net/checksum.h>
-#include <net/xfrm.h>
-#include <net/inet_common.h>
-#include <net/ip_fib.h>
-#include <net/l3mdev.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/netfilter_ipv4.h>
+#समावेश <linux/slab.h>
+#समावेश <net/snmp.h>
+#समावेश <net/ip.h>
+#समावेश <net/route.h>
+#समावेश <net/protocol.h>
+#समावेश <net/icmp.h>
+#समावेश <net/tcp.h>
+#समावेश <net/udp.h>
+#समावेश <net/raw.h>
+#समावेश <net/ping.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/uaccess.h>
+#समावेश <net/checksum.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/inet_common.h>
+#समावेश <net/ip_fib.h>
+#समावेश <net/l3mdev.h>
 
 /*
  *	Build xmit assembly blocks
  */
 
-struct icmp_bxm {
-	struct sk_buff *skb;
-	int offset;
-	int data_len;
+काष्ठा icmp_bxm अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक offset;
+	पूर्णांक data_len;
 
-	struct {
-		struct icmphdr icmph;
-		__be32	       times[3];
-	} data;
-	int head_len;
-	struct ip_options_data replyopts;
-};
+	काष्ठा अणु
+		काष्ठा icmphdr icmph;
+		__be32	       बार[3];
+	पूर्ण data;
+	पूर्णांक head_len;
+	काष्ठा ip_options_data replyopts;
+पूर्ण;
 
-/* An array of errno for error messages from dest unreach. */
+/* An array of त्रुटि_सं क्रम error messages from dest unreach. */
 /* RFC 1122: 3.2.2.1 States that NET_UNREACH, HOST_UNREACH and SR_FAILED MUST be considered 'transient errs'. */
 
-const struct icmp_err icmp_err_convert[] = {
-	{
-		.errno = ENETUNREACH,	/* ICMP_NET_UNREACH */
+स्थिर काष्ठा icmp_err icmp_err_convert[] = अणु
+	अणु
+		.त्रुटि_सं = ENETUNREACH,	/* ICMP_NET_UNREACH */
 		.fatal = 0,
-	},
-	{
-		.errno = EHOSTUNREACH,	/* ICMP_HOST_UNREACH */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = EHOSTUNREACH,	/* ICMP_HOST_UNREACH */
 		.fatal = 0,
-	},
-	{
-		.errno = ENOPROTOOPT	/* ICMP_PROT_UNREACH */,
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = ENOPROTOOPT	/* ICMP_PROT_UNREACH */,
 		.fatal = 1,
-	},
-	{
-		.errno = ECONNREFUSED,	/* ICMP_PORT_UNREACH */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = ECONNREFUSED,	/* ICMP_PORT_UNREACH */
 		.fatal = 1,
-	},
-	{
-		.errno = EMSGSIZE,	/* ICMP_FRAG_NEEDED */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = EMSGSIZE,	/* ICMP_FRAG_NEEDED */
 		.fatal = 0,
-	},
-	{
-		.errno = EOPNOTSUPP,	/* ICMP_SR_FAILED */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = EOPNOTSUPP,	/* ICMP_SR_FAILED */
 		.fatal = 0,
-	},
-	{
-		.errno = ENETUNREACH,	/* ICMP_NET_UNKNOWN */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = ENETUNREACH,	/* ICMP_NET_UNKNOWN */
 		.fatal = 1,
-	},
-	{
-		.errno = EHOSTDOWN,	/* ICMP_HOST_UNKNOWN */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = EHOSTDOWN,	/* ICMP_HOST_UNKNOWN */
 		.fatal = 1,
-	},
-	{
-		.errno = ENONET,	/* ICMP_HOST_ISOLATED */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = ENONET,	/* ICMP_HOST_ISOLATED */
 		.fatal = 1,
-	},
-	{
-		.errno = ENETUNREACH,	/* ICMP_NET_ANO	*/
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = ENETUNREACH,	/* ICMP_NET_ANO	*/
 		.fatal = 1,
-	},
-	{
-		.errno = EHOSTUNREACH,	/* ICMP_HOST_ANO */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = EHOSTUNREACH,	/* ICMP_HOST_ANO */
 		.fatal = 1,
-	},
-	{
-		.errno = ENETUNREACH,	/* ICMP_NET_UNR_TOS */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = ENETUNREACH,	/* ICMP_NET_UNR_TOS */
 		.fatal = 0,
-	},
-	{
-		.errno = EHOSTUNREACH,	/* ICMP_HOST_UNR_TOS */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = EHOSTUNREACH,	/* ICMP_HOST_UNR_TOS */
 		.fatal = 0,
-	},
-	{
-		.errno = EHOSTUNREACH,	/* ICMP_PKT_FILTERED */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = EHOSTUNREACH,	/* ICMP_PKT_FILTERED */
 		.fatal = 1,
-	},
-	{
-		.errno = EHOSTUNREACH,	/* ICMP_PREC_VIOLATION */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = EHOSTUNREACH,	/* ICMP_PREC_VIOLATION */
 		.fatal = 1,
-	},
-	{
-		.errno = EHOSTUNREACH,	/* ICMP_PREC_CUTOFF */
+	पूर्ण,
+	अणु
+		.त्रुटि_सं = EHOSTUNREACH,	/* ICMP_PREC_CUTOFF */
 		.fatal = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 EXPORT_SYMBOL(icmp_err_convert);
 
 /*
- *	ICMP control array. This specifies what to do with each ICMP.
+ *	ICMP control array. This specअगरies what to करो with each ICMP.
  */
 
-struct icmp_control {
-	bool (*handler)(struct sk_buff *skb);
-	short   error;		/* This ICMP is classed as an error message */
-};
+काष्ठा icmp_control अणु
+	bool (*handler)(काष्ठा sk_buff *skb);
+	लघु   error;		/* This ICMP is classed as an error message */
+पूर्ण;
 
-static const struct icmp_control icmp_pointers[NR_ICMP_TYPES+1];
+अटल स्थिर काष्ठा icmp_control icmp_poपूर्णांकers[NR_ICMP_TYPES+1];
 
 /*
  *	The ICMP socket(s). This is the most convenient way to flow control
- *	our ICMP output as well as maintain a clean interface throughout
+ *	our ICMP output as well as मुख्यtain a clean पूर्णांकerface throughout
  *	all layers. All Socketless IP sends will soon be gone.
  *
  *	On SMP we have one ICMP socket per-cpu.
  */
-static struct sock *icmp_sk(struct net *net)
-{
-	return this_cpu_read(*net->ipv4.icmp_sk);
-}
+अटल काष्ठा sock *icmp_sk(काष्ठा net *net)
+अणु
+	वापस this_cpu_पढ़ो(*net->ipv4.icmp_sk);
+पूर्ण
 
 /* Called with BH disabled */
-static inline struct sock *icmp_xmit_lock(struct net *net)
-{
-	struct sock *sk;
+अटल अंतरभूत काष्ठा sock *icmp_xmit_lock(काष्ठा net *net)
+अणु
+	काष्ठा sock *sk;
 
 	sk = icmp_sk(net);
 
-	if (unlikely(!spin_trylock(&sk->sk_lock.slock))) {
-		/* This can happen if the output path signals a
-		 * dst_link_failure() for an outgoing ICMP packet.
+	अगर (unlikely(!spin_trylock(&sk->sk_lock.slock))) अणु
+		/* This can happen अगर the output path संकेतs a
+		 * dst_link_failure() क्रम an outgoing ICMP packet.
 		 */
-		return NULL;
-	}
-	return sk;
-}
+		वापस शून्य;
+	पूर्ण
+	वापस sk;
+पूर्ण
 
-static inline void icmp_xmit_unlock(struct sock *sk)
-{
+अटल अंतरभूत व्योम icmp_xmit_unlock(काष्ठा sock *sk)
+अणु
 	spin_unlock(&sk->sk_lock.slock);
-}
+पूर्ण
 
-int sysctl_icmp_msgs_per_sec __read_mostly = 1000;
-int sysctl_icmp_msgs_burst __read_mostly = 50;
+पूर्णांक sysctl_icmp_msgs_per_sec __पढ़ो_mostly = 1000;
+पूर्णांक sysctl_icmp_msgs_burst __पढ़ो_mostly = 50;
 
-static struct {
+अटल काष्ठा अणु
 	spinlock_t	lock;
 	u32		credit;
 	u32		stamp;
-} icmp_global = {
+पूर्ण icmp_global = अणु
 	.lock		= __SPIN_LOCK_UNLOCKED(icmp_global.lock),
-};
+पूर्ण;
 
 /**
  * icmp_global_allow - Are we allowed to send one more ICMP message ?
  *
  * Uses a token bucket to limit our ICMP messages to ~sysctl_icmp_msgs_per_sec.
- * Returns false if we reached the limit and can not send another packet.
+ * Returns false अगर we reached the limit and can not send another packet.
  * Note: called with BH disabled
  */
-bool icmp_global_allow(void)
-{
-	u32 credit, delta, incr = 0, now = (u32)jiffies;
+bool icmp_global_allow(व्योम)
+अणु
+	u32 credit, delta, incr = 0, now = (u32)jअगरfies;
 	bool rc = false;
 
-	/* Check if token bucket is empty and cannot be refilled
+	/* Check अगर token bucket is empty and cannot be refilled
 	 * without taking the spinlock. The READ_ONCE() are paired
 	 * with the following WRITE_ONCE() in this same function.
 	 */
-	if (!READ_ONCE(icmp_global.credit)) {
+	अगर (!READ_ONCE(icmp_global.credit)) अणु
 		delta = min_t(u32, now - READ_ONCE(icmp_global.stamp), HZ);
-		if (delta < HZ / 50)
-			return false;
-	}
+		अगर (delta < HZ / 50)
+			वापस false;
+	पूर्ण
 
 	spin_lock(&icmp_global.lock);
 	delta = min_t(u32, now - icmp_global.stamp, HZ);
-	if (delta >= HZ / 50) {
+	अगर (delta >= HZ / 50) अणु
 		incr = sysctl_icmp_msgs_per_sec * delta / HZ ;
-		if (incr)
+		अगर (incr)
 			WRITE_ONCE(icmp_global.stamp, now);
-	}
+	पूर्ण
 	credit = min_t(u32, icmp_global.credit + incr, sysctl_icmp_msgs_burst);
-	if (credit) {
-		/* We want to use a credit of one in average, but need to randomize
-		 * it for security reasons.
+	अगर (credit) अणु
+		/* We want to use a credit of one in average, but need to अक्रमomize
+		 * it क्रम security reasons.
 		 */
-		credit = max_t(int, credit - prandom_u32_max(3), 0);
+		credit = max_t(पूर्णांक, credit - pअक्रमom_u32_max(3), 0);
 		rc = true;
-	}
+	पूर्ण
 	WRITE_ONCE(icmp_global.credit, credit);
 	spin_unlock(&icmp_global.lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL(icmp_global_allow);
 
-static bool icmpv4_mask_allow(struct net *net, int type, int code)
-{
-	if (type > NR_ICMP_TYPES)
-		return true;
+अटल bool icmpv4_mask_allow(काष्ठा net *net, पूर्णांक type, पूर्णांक code)
+अणु
+	अगर (type > NR_ICMP_TYPES)
+		वापस true;
 
 	/* Don't limit PMTU discovery. */
-	if (type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED)
-		return true;
+	अगर (type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED)
+		वापस true;
 
-	/* Limit if icmp type is enabled in ratemask. */
-	if (!((1 << type) & net->ipv4.sysctl_icmp_ratemask))
-		return true;
+	/* Limit अगर icmp type is enabled in ratemask. */
+	अगर (!((1 << type) & net->ipv4.sysctl_icmp_ratemask))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool icmpv4_global_allow(struct net *net, int type, int code)
-{
-	if (icmpv4_mask_allow(net, type, code))
-		return true;
+अटल bool icmpv4_global_allow(काष्ठा net *net, पूर्णांक type, पूर्णांक code)
+अणु
+	अगर (icmpv4_mask_allow(net, type, code))
+		वापस true;
 
-	if (icmp_global_allow())
-		return true;
+	अगर (icmp_global_allow())
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  *	Send an ICMP frame.
  */
 
-static bool icmpv4_xrlim_allow(struct net *net, struct rtable *rt,
-			       struct flowi4 *fl4, int type, int code)
-{
-	struct dst_entry *dst = &rt->dst;
-	struct inet_peer *peer;
+अटल bool icmpv4_xrlim_allow(काष्ठा net *net, काष्ठा rtable *rt,
+			       काष्ठा flowi4 *fl4, पूर्णांक type, पूर्णांक code)
+अणु
+	काष्ठा dst_entry *dst = &rt->dst;
+	काष्ठा inet_peer *peer;
 	bool rc = true;
-	int vif;
+	पूर्णांक vअगर;
 
-	if (icmpv4_mask_allow(net, type, code))
-		goto out;
+	अगर (icmpv4_mask_allow(net, type, code))
+		जाओ out;
 
 	/* No rate limit on loopback */
-	if (dst->dev && (dst->dev->flags&IFF_LOOPBACK))
-		goto out;
+	अगर (dst->dev && (dst->dev->flags&IFF_LOOPBACK))
+		जाओ out;
 
-	vif = l3mdev_master_ifindex(dst->dev);
-	peer = inet_getpeer_v4(net->ipv4.peers, fl4->daddr, vif, 1);
+	vअगर = l3mdev_master_अगरindex(dst->dev);
+	peer = inet_getpeer_v4(net->ipv4.peers, fl4->daddr, vअगर, 1);
 	rc = inet_peer_xrlim_allow(peer, net->ipv4.sysctl_icmp_ratelimit);
-	if (peer)
+	अगर (peer)
 		inet_putpeer(peer);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- *	Maintain the counters used in the SNMP statistics for outgoing ICMP
+ *	Maपूर्णांकain the counters used in the SNMP statistics क्रम outgoing ICMP
  */
-void icmp_out_count(struct net *net, unsigned char type)
-{
+व्योम icmp_out_count(काष्ठा net *net, अचिन्हित अक्षर type)
+अणु
 	ICMPMSGOUT_INC_STATS(net, type);
 	ICMP_INC_STATS(net, ICMP_MIB_OUTMSGS);
-}
+पूर्ण
 
 /*
  *	Checksum each fragment, and on the first include the headers and final
  *	checksum.
  */
-static int icmp_glue_bits(void *from, char *to, int offset, int len, int odd,
-			  struct sk_buff *skb)
-{
-	struct icmp_bxm *icmp_param = (struct icmp_bxm *)from;
+अटल पूर्णांक icmp_glue_bits(व्योम *from, अक्षर *to, पूर्णांक offset, पूर्णांक len, पूर्णांक odd,
+			  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा icmp_bxm *icmp_param = (काष्ठा icmp_bxm *)from;
 	__wsum csum;
 
 	csum = skb_copy_and_csum_bits(icmp_param->skb,
@@ -358,72 +359,72 @@ static int icmp_glue_bits(void *from, char *to, int offset, int len, int odd,
 				      to, len);
 
 	skb->csum = csum_block_add(skb->csum, csum, odd);
-	if (icmp_pointers[icmp_param->data.icmph.type].error)
+	अगर (icmp_poपूर्णांकers[icmp_param->data.icmph.type].error)
 		nf_ct_attach(skb, icmp_param->skb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void icmp_push_reply(struct icmp_bxm *icmp_param,
-			    struct flowi4 *fl4,
-			    struct ipcm_cookie *ipc, struct rtable **rt)
-{
-	struct sock *sk;
-	struct sk_buff *skb;
+अटल व्योम icmp_push_reply(काष्ठा icmp_bxm *icmp_param,
+			    काष्ठा flowi4 *fl4,
+			    काष्ठा ipcm_cookie *ipc, काष्ठा rtable **rt)
+अणु
+	काष्ठा sock *sk;
+	काष्ठा sk_buff *skb;
 
 	sk = icmp_sk(dev_net((*rt)->dst.dev));
-	if (ip_append_data(sk, fl4, icmp_glue_bits, icmp_param,
+	अगर (ip_append_data(sk, fl4, icmp_glue_bits, icmp_param,
 			   icmp_param->data_len+icmp_param->head_len,
 			   icmp_param->head_len,
-			   ipc, rt, MSG_DONTWAIT) < 0) {
+			   ipc, rt, MSG_DONTWAIT) < 0) अणु
 		__ICMP_INC_STATS(sock_net(sk), ICMP_MIB_OUTERRORS);
 		ip_flush_pending_frames(sk);
-	} else if ((skb = skb_peek(&sk->sk_write_queue)) != NULL) {
-		struct icmphdr *icmph = icmp_hdr(skb);
+	पूर्ण अन्यथा अगर ((skb = skb_peek(&sk->sk_ग_लिखो_queue)) != शून्य) अणु
+		काष्ठा icmphdr *icmph = icmp_hdr(skb);
 		__wsum csum;
-		struct sk_buff *skb1;
+		काष्ठा sk_buff *skb1;
 
-		csum = csum_partial_copy_nocheck((void *)&icmp_param->data,
-						 (char *)icmph,
+		csum = csum_partial_copy_nocheck((व्योम *)&icmp_param->data,
+						 (अक्षर *)icmph,
 						 icmp_param->head_len);
-		skb_queue_walk(&sk->sk_write_queue, skb1) {
+		skb_queue_walk(&sk->sk_ग_लिखो_queue, skb1) अणु
 			csum = csum_add(csum, skb1->csum);
-		}
+		पूर्ण
 		icmph->checksum = csum_fold(csum);
 		skb->ip_summed = CHECKSUM_NONE;
 		ip_push_pending_frames(sk, fl4);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *	Driving logic for building and sending ICMP messages.
+ *	Driving logic क्रम building and sending ICMP messages.
  */
 
-static void icmp_reply(struct icmp_bxm *icmp_param, struct sk_buff *skb)
-{
-	struct ipcm_cookie ipc;
-	struct rtable *rt = skb_rtable(skb);
-	struct net *net = dev_net(rt->dst.dev);
-	struct flowi4 fl4;
-	struct sock *sk;
-	struct inet_sock *inet;
+अटल व्योम icmp_reply(काष्ठा icmp_bxm *icmp_param, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ipcm_cookie ipc;
+	काष्ठा rtable *rt = skb_rtable(skb);
+	काष्ठा net *net = dev_net(rt->dst.dev);
+	काष्ठा flowi4 fl4;
+	काष्ठा sock *sk;
+	काष्ठा inet_sock *inet;
 	__be32 daddr, saddr;
 	u32 mark = IP4_REPLY_MARK(net, skb->mark);
-	int type = icmp_param->data.icmph.type;
-	int code = icmp_param->data.icmph.code;
+	पूर्णांक type = icmp_param->data.icmph.type;
+	पूर्णांक code = icmp_param->data.icmph.code;
 
-	if (ip_options_echo(net, &icmp_param->replyopts.opt.opt, skb))
-		return;
+	अगर (ip_options_echo(net, &icmp_param->replyopts.opt.opt, skb))
+		वापस;
 
 	/* Needed by both icmp_global_allow and icmp_xmit_lock */
 	local_bh_disable();
 
 	/* global icmp_msgs_per_sec */
-	if (!icmpv4_global_allow(net, type, code))
-		goto out_bh_enable;
+	अगर (!icmpv4_global_allow(net, type, code))
+		जाओ out_bh_enable;
 
 	sk = icmp_xmit_lock(net);
-	if (!sk)
-		goto out_bh_enable;
+	अगर (!sk)
+		जाओ out_bh_enable;
 	inet = inet_sk(sk);
 
 	icmp_param->data.icmph.checksum = 0;
@@ -434,247 +435,247 @@ static void icmp_reply(struct icmp_bxm *icmp_param, struct sk_buff *skb)
 	daddr = ipc.addr = ip_hdr(skb)->saddr;
 	saddr = fib_compute_spec_dst(skb);
 
-	if (icmp_param->replyopts.opt.opt.optlen) {
+	अगर (icmp_param->replyopts.opt.opt.optlen) अणु
 		ipc.opt = &icmp_param->replyopts.opt;
-		if (ipc.opt->opt.srr)
+		अगर (ipc.opt->opt.srr)
 			daddr = icmp_param->replyopts.opt.opt.faddr;
-	}
-	memset(&fl4, 0, sizeof(fl4));
+	पूर्ण
+	स_रखो(&fl4, 0, माप(fl4));
 	fl4.daddr = daddr;
 	fl4.saddr = saddr;
 	fl4.flowi4_mark = mark;
-	fl4.flowi4_uid = sock_net_uid(net, NULL);
+	fl4.flowi4_uid = sock_net_uid(net, शून्य);
 	fl4.flowi4_tos = RT_TOS(ip_hdr(skb)->tos);
 	fl4.flowi4_proto = IPPROTO_ICMP;
-	fl4.flowi4_oif = l3mdev_master_ifindex(skb->dev);
-	security_skb_classify_flow(skb, flowi4_to_flowi_common(&fl4));
+	fl4.flowi4_oअगर = l3mdev_master_अगरindex(skb->dev);
+	security_skb_classअगरy_flow(skb, flowi4_to_flowi_common(&fl4));
 	rt = ip_route_output_key(net, &fl4);
-	if (IS_ERR(rt))
-		goto out_unlock;
-	if (icmpv4_xrlim_allow(net, rt, &fl4, type, code))
+	अगर (IS_ERR(rt))
+		जाओ out_unlock;
+	अगर (icmpv4_xrlim_allow(net, rt, &fl4, type, code))
 		icmp_push_reply(icmp_param, &fl4, &ipc, &rt);
 	ip_rt_put(rt);
 out_unlock:
 	icmp_xmit_unlock(sk);
 out_bh_enable:
 	local_bh_enable();
-}
+पूर्ण
 
 /*
- * The device used for looking up which routing table to use for sending an ICMP
+ * The device used क्रम looking up which routing table to use क्रम sending an ICMP
  * error is preferably the source whenever it is set, which should ensure the
- * icmp error can be sent to the source host, else lookup using the routing
- * table of the destination device, else use the main routing table (index 0).
+ * icmp error can be sent to the source host, अन्यथा lookup using the routing
+ * table of the destination device, अन्यथा use the मुख्य routing table (index 0).
  */
-static struct net_device *icmp_get_route_lookup_dev(struct sk_buff *skb)
-{
-	struct net_device *route_lookup_dev = NULL;
+अटल काष्ठा net_device *icmp_get_route_lookup_dev(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *route_lookup_dev = शून्य;
 
-	if (skb->dev)
+	अगर (skb->dev)
 		route_lookup_dev = skb->dev;
-	else if (skb_dst(skb))
+	अन्यथा अगर (skb_dst(skb))
 		route_lookup_dev = skb_dst(skb)->dev;
-	return route_lookup_dev;
-}
+	वापस route_lookup_dev;
+पूर्ण
 
-static struct rtable *icmp_route_lookup(struct net *net,
-					struct flowi4 *fl4,
-					struct sk_buff *skb_in,
-					const struct iphdr *iph,
+अटल काष्ठा rtable *icmp_route_lookup(काष्ठा net *net,
+					काष्ठा flowi4 *fl4,
+					काष्ठा sk_buff *skb_in,
+					स्थिर काष्ठा iphdr *iph,
 					__be32 saddr, u8 tos, u32 mark,
-					int type, int code,
-					struct icmp_bxm *param)
-{
-	struct net_device *route_lookup_dev;
-	struct rtable *rt, *rt2;
-	struct flowi4 fl4_dec;
-	int err;
+					पूर्णांक type, पूर्णांक code,
+					काष्ठा icmp_bxm *param)
+अणु
+	काष्ठा net_device *route_lookup_dev;
+	काष्ठा rtable *rt, *rt2;
+	काष्ठा flowi4 fl4_dec;
+	पूर्णांक err;
 
-	memset(fl4, 0, sizeof(*fl4));
+	स_रखो(fl4, 0, माप(*fl4));
 	fl4->daddr = (param->replyopts.opt.opt.srr ?
 		      param->replyopts.opt.opt.faddr : iph->saddr);
 	fl4->saddr = saddr;
 	fl4->flowi4_mark = mark;
-	fl4->flowi4_uid = sock_net_uid(net, NULL);
+	fl4->flowi4_uid = sock_net_uid(net, शून्य);
 	fl4->flowi4_tos = RT_TOS(tos);
 	fl4->flowi4_proto = IPPROTO_ICMP;
 	fl4->fl4_icmp_type = type;
 	fl4->fl4_icmp_code = code;
 	route_lookup_dev = icmp_get_route_lookup_dev(skb_in);
-	fl4->flowi4_oif = l3mdev_master_ifindex(route_lookup_dev);
+	fl4->flowi4_oअगर = l3mdev_master_अगरindex(route_lookup_dev);
 
-	security_skb_classify_flow(skb_in, flowi4_to_flowi_common(fl4));
+	security_skb_classअगरy_flow(skb_in, flowi4_to_flowi_common(fl4));
 	rt = ip_route_output_key_hash(net, fl4, skb_in);
-	if (IS_ERR(rt))
-		return rt;
+	अगर (IS_ERR(rt))
+		वापस rt;
 
 	/* No need to clone since we're just using its address. */
 	rt2 = rt;
 
-	rt = (struct rtable *) xfrm_lookup(net, &rt->dst,
-					   flowi4_to_flowi(fl4), NULL, 0);
-	if (!IS_ERR(rt)) {
-		if (rt != rt2)
-			return rt;
-	} else if (PTR_ERR(rt) == -EPERM) {
-		rt = NULL;
-	} else
-		return rt;
+	rt = (काष्ठा rtable *) xfrm_lookup(net, &rt->dst,
+					   flowi4_to_flowi(fl4), शून्य, 0);
+	अगर (!IS_ERR(rt)) अणु
+		अगर (rt != rt2)
+			वापस rt;
+	पूर्ण अन्यथा अगर (PTR_ERR(rt) == -EPERM) अणु
+		rt = शून्य;
+	पूर्ण अन्यथा
+		वापस rt;
 
 	err = xfrm_decode_session_reverse(skb_in, flowi4_to_flowi(&fl4_dec), AF_INET);
-	if (err)
-		goto relookup_failed;
+	अगर (err)
+		जाओ relookup_failed;
 
-	if (inet_addr_type_dev_table(net, route_lookup_dev,
-				     fl4_dec.saddr) == RTN_LOCAL) {
+	अगर (inet_addr_type_dev_table(net, route_lookup_dev,
+				     fl4_dec.saddr) == RTN_LOCAL) अणु
 		rt2 = __ip_route_output_key(net, &fl4_dec);
-		if (IS_ERR(rt2))
+		अगर (IS_ERR(rt2))
 			err = PTR_ERR(rt2);
-	} else {
-		struct flowi4 fl4_2 = {};
-		unsigned long orefdst;
+	पूर्ण अन्यथा अणु
+		काष्ठा flowi4 fl4_2 = अणुपूर्ण;
+		अचिन्हित दीर्घ orefdst;
 
 		fl4_2.daddr = fl4_dec.saddr;
 		rt2 = ip_route_output_key(net, &fl4_2);
-		if (IS_ERR(rt2)) {
+		अगर (IS_ERR(rt2)) अणु
 			err = PTR_ERR(rt2);
-			goto relookup_failed;
-		}
+			जाओ relookup_failed;
+		पूर्ण
 		/* Ugh! */
 		orefdst = skb_in->_skb_refdst; /* save old refdst */
-		skb_dst_set(skb_in, NULL);
+		skb_dst_set(skb_in, शून्य);
 		err = ip_route_input(skb_in, fl4_dec.daddr, fl4_dec.saddr,
 				     RT_TOS(tos), rt2->dst.dev);
 
 		dst_release(&rt2->dst);
 		rt2 = skb_rtable(skb_in);
 		skb_in->_skb_refdst = orefdst; /* restore old refdst */
-	}
+	पूर्ण
 
-	if (err)
-		goto relookup_failed;
+	अगर (err)
+		जाओ relookup_failed;
 
-	rt2 = (struct rtable *) xfrm_lookup(net, &rt2->dst,
-					    flowi4_to_flowi(&fl4_dec), NULL,
+	rt2 = (काष्ठा rtable *) xfrm_lookup(net, &rt2->dst,
+					    flowi4_to_flowi(&fl4_dec), शून्य,
 					    XFRM_LOOKUP_ICMP);
-	if (!IS_ERR(rt2)) {
+	अगर (!IS_ERR(rt2)) अणु
 		dst_release(&rt->dst);
-		memcpy(fl4, &fl4_dec, sizeof(*fl4));
+		स_नकल(fl4, &fl4_dec, माप(*fl4));
 		rt = rt2;
-	} else if (PTR_ERR(rt2) == -EPERM) {
-		if (rt)
+	पूर्ण अन्यथा अगर (PTR_ERR(rt2) == -EPERM) अणु
+		अगर (rt)
 			dst_release(&rt->dst);
-		return rt2;
-	} else {
+		वापस rt2;
+	पूर्ण अन्यथा अणु
 		err = PTR_ERR(rt2);
-		goto relookup_failed;
-	}
-	return rt;
+		जाओ relookup_failed;
+	पूर्ण
+	वापस rt;
 
 relookup_failed:
-	if (rt)
-		return rt;
-	return ERR_PTR(err);
-}
+	अगर (rt)
+		वापस rt;
+	वापस ERR_PTR(err);
+पूर्ण
 
 /*
  *	Send an ICMP message in response to a situation
  *
  *	RFC 1122: 3.2.2	MUST send at least the IP header and 8 bytes of header.
- *		  MAY send more (we do).
- *			MUST NOT change this header information.
+ *		  MAY send more (we करो).
+ *			MUST NOT change this header inक्रमmation.
  *			MUST NOT reply to a multicast/broadcast IP address.
  *			MUST NOT reply to a multicast/broadcast MAC address.
  *			MUST reply to only the first fragment.
  */
 
-void __icmp_send(struct sk_buff *skb_in, int type, int code, __be32 info,
-		 const struct ip_options *opt)
-{
-	struct iphdr *iph;
-	int room;
-	struct icmp_bxm icmp_param;
-	struct rtable *rt = skb_rtable(skb_in);
-	struct ipcm_cookie ipc;
-	struct flowi4 fl4;
+व्योम __icmp_send(काष्ठा sk_buff *skb_in, पूर्णांक type, पूर्णांक code, __be32 info,
+		 स्थिर काष्ठा ip_options *opt)
+अणु
+	काष्ठा iphdr *iph;
+	पूर्णांक room;
+	काष्ठा icmp_bxm icmp_param;
+	काष्ठा rtable *rt = skb_rtable(skb_in);
+	काष्ठा ipcm_cookie ipc;
+	काष्ठा flowi4 fl4;
 	__be32 saddr;
 	u8  tos;
 	u32 mark;
-	struct net *net;
-	struct sock *sk;
+	काष्ठा net *net;
+	काष्ठा sock *sk;
 
-	if (!rt)
-		goto out;
+	अगर (!rt)
+		जाओ out;
 
-	if (rt->dst.dev)
+	अगर (rt->dst.dev)
 		net = dev_net(rt->dst.dev);
-	else if (skb_in->dev)
+	अन्यथा अगर (skb_in->dev)
 		net = dev_net(skb_in->dev);
-	else
-		goto out;
+	अन्यथा
+		जाओ out;
 
 	/*
 	 *	Find the original header. It is expected to be valid, of course.
 	 *	Check this, icmp_send is called from the most obscure devices
-	 *	sometimes.
+	 *	someबार.
 	 */
 	iph = ip_hdr(skb_in);
 
-	if ((u8 *)iph < skb_in->head ||
-	    (skb_network_header(skb_in) + sizeof(*iph)) >
-	    skb_tail_pointer(skb_in))
-		goto out;
+	अगर ((u8 *)iph < skb_in->head ||
+	    (skb_network_header(skb_in) + माप(*iph)) >
+	    skb_tail_poपूर्णांकer(skb_in))
+		जाओ out;
 
 	/*
 	 *	No replies to physical multicast/broadcast
 	 */
-	if (skb_in->pkt_type != PACKET_HOST)
-		goto out;
+	अगर (skb_in->pkt_type != PACKET_HOST)
+		जाओ out;
 
 	/*
 	 *	Now check at the protocol level
 	 */
-	if (rt->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
-		goto out;
+	अगर (rt->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
+		जाओ out;
 
 	/*
-	 *	Only reply to fragment 0. We byte re-order the constant
-	 *	mask for efficiency.
+	 *	Only reply to fragment 0. We byte re-order the स्थिरant
+	 *	mask क्रम efficiency.
 	 */
-	if (iph->frag_off & htons(IP_OFFSET))
-		goto out;
+	अगर (iph->frag_off & htons(IP_OFFSET))
+		जाओ out;
 
 	/*
 	 *	If we send an ICMP error to an ICMP error a mess would result..
 	 */
-	if (icmp_pointers[type].error) {
+	अगर (icmp_poपूर्णांकers[type].error) अणु
 		/*
-		 *	We are an error, check if we are replying to an
+		 *	We are an error, check अगर we are replying to an
 		 *	ICMP error
 		 */
-		if (iph->protocol == IPPROTO_ICMP) {
+		अगर (iph->protocol == IPPROTO_ICMP) अणु
 			u8 _inner_type, *itp;
 
-			itp = skb_header_pointer(skb_in,
+			itp = skb_header_poपूर्णांकer(skb_in,
 						 skb_network_header(skb_in) +
 						 (iph->ihl << 2) +
-						 offsetof(struct icmphdr,
+						 दुरत्व(काष्ठा icmphdr,
 							  type) -
 						 skb_in->data,
-						 sizeof(_inner_type),
+						 माप(_inner_type),
 						 &_inner_type);
-			if (!itp)
-				goto out;
+			अगर (!itp)
+				जाओ out;
 
 			/*
 			 *	Assume any unknown ICMP type is an error. This
-			 *	isn't specified by the RFC, but think about it..
+			 *	isn't specअगरied by the RFC, but think about it..
 			 */
-			if (*itp > NR_ICMP_TYPES ||
-			    icmp_pointers[*itp].error)
-				goto out;
-		}
-	}
+			अगर (*itp > NR_ICMP_TYPES ||
+			    icmp_poपूर्णांकers[*itp].error)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Needed by both icmp_global_allow and icmp_xmit_lock */
 	local_bh_disable();
@@ -683,46 +684,46 @@ void __icmp_send(struct sk_buff *skb_in, int type, int code, __be32 info,
 	 * incoming dev is loopback.  If outgoing dev change to not be
 	 * loopback, then peer ratelimit still work (in icmpv4_xrlim_allow)
 	 */
-	if (!(skb_in->dev && (skb_in->dev->flags&IFF_LOOPBACK)) &&
+	अगर (!(skb_in->dev && (skb_in->dev->flags&IFF_LOOPBACK)) &&
 	      !icmpv4_global_allow(net, type, code))
-		goto out_bh_enable;
+		जाओ out_bh_enable;
 
 	sk = icmp_xmit_lock(net);
-	if (!sk)
-		goto out_bh_enable;
+	अगर (!sk)
+		जाओ out_bh_enable;
 
 	/*
-	 *	Construct source address and options.
+	 *	Conकाष्ठा source address and options.
 	 */
 
 	saddr = iph->daddr;
-	if (!(rt->rt_flags & RTCF_LOCAL)) {
-		struct net_device *dev = NULL;
+	अगर (!(rt->rt_flags & RTCF_LOCAL)) अणु
+		काष्ठा net_device *dev = शून्य;
 
-		rcu_read_lock();
-		if (rt_is_input_route(rt) &&
-		    net->ipv4.sysctl_icmp_errors_use_inbound_ifaddr)
-			dev = dev_get_by_index_rcu(net, inet_iif(skb_in));
+		rcu_पढ़ो_lock();
+		अगर (rt_is_input_route(rt) &&
+		    net->ipv4.sysctl_icmp_errors_use_inbound_अगरaddr)
+			dev = dev_get_by_index_rcu(net, inet_iअगर(skb_in));
 
-		if (dev)
+		अगर (dev)
 			saddr = inet_select_addr(dev, iph->saddr,
 						 RT_SCOPE_LINK);
-		else
+		अन्यथा
 			saddr = 0;
-		rcu_read_unlock();
-	}
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	tos = icmp_pointers[type].error ? (RT_TOS(iph->tos) |
+	tos = icmp_poपूर्णांकers[type].error ? (RT_TOS(iph->tos) |
 					   IPTOS_PREC_INTERNETCONTROL) :
 					   iph->tos;
 	mark = IP4_REPLY_MARK(net, skb_in->mark);
 
-	if (__ip_options_echo(net, &icmp_param.replyopts.opt.opt, skb_in, opt))
-		goto out_unlock;
+	अगर (__ip_options_echo(net, &icmp_param.replyopts.opt.opt, skb_in, opt))
+		जाओ out_unlock;
 
 
 	/*
-	 *	Prepare data for ICMP header.
+	 *	Prepare data क्रम ICMP header.
 	 */
 
 	icmp_param.data.icmph.type	 = type;
@@ -739,31 +740,31 @@ void __icmp_send(struct sk_buff *skb_in, int type, int code, __be32 info,
 
 	rt = icmp_route_lookup(net, &fl4, skb_in, iph, saddr, tos, mark,
 			       type, code, &icmp_param);
-	if (IS_ERR(rt))
-		goto out_unlock;
+	अगर (IS_ERR(rt))
+		जाओ out_unlock;
 
 	/* peer icmp_ratelimit */
-	if (!icmpv4_xrlim_allow(net, rt, &fl4, type, code))
-		goto ende;
+	अगर (!icmpv4_xrlim_allow(net, rt, &fl4, type, code))
+		जाओ ende;
 
-	/* RFC says return as much as we can without exceeding 576 bytes. */
+	/* RFC says वापस as much as we can without exceeding 576 bytes. */
 
 	room = dst_mtu(&rt->dst);
-	if (room > 576)
+	अगर (room > 576)
 		room = 576;
-	room -= sizeof(struct iphdr) + icmp_param.replyopts.opt.opt.optlen;
-	room -= sizeof(struct icmphdr);
+	room -= माप(काष्ठा iphdr) + icmp_param.replyopts.opt.opt.optlen;
+	room -= माप(काष्ठा icmphdr);
 
 	icmp_param.data_len = skb_in->len - icmp_param.offset;
-	if (icmp_param.data_len > room)
+	अगर (icmp_param.data_len > room)
 		icmp_param.data_len = room;
-	icmp_param.head_len = sizeof(struct icmphdr);
+	icmp_param.head_len = माप(काष्ठा icmphdr);
 
-	/* if we don't have a source address at this point, fall back to the
+	/* अगर we करोn't have a source address at this poपूर्णांक, fall back to the
 	 * dummy address instead of sending out a packet with a source address
 	 * of 0.0.0.0
 	 */
-	if (!fl4.saddr)
+	अगर (!fl4.saddr)
 		fl4.saddr = htonl(INADDR_DUMMY);
 
 	icmp_push_reply(&icmp_param, &fl4, &ipc, &rt);
@@ -774,33 +775,33 @@ out_unlock:
 out_bh_enable:
 	local_bh_enable();
 out:;
-}
+पूर्ण
 EXPORT_SYMBOL(__icmp_send);
 
-#if IS_ENABLED(CONFIG_NF_NAT)
-#include <net/netfilter/nf_conntrack.h>
-void icmp_ndo_send(struct sk_buff *skb_in, int type, int code, __be32 info)
-{
-	struct sk_buff *cloned_skb = NULL;
-	struct ip_options opts = { 0 };
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+#समावेश <net/netfilter/nf_conntrack.h>
+व्योम icmp_nकरो_send(काष्ठा sk_buff *skb_in, पूर्णांक type, पूर्णांक code, __be32 info)
+अणु
+	काष्ठा sk_buff *cloned_skb = शून्य;
+	काष्ठा ip_options opts = अणु 0 पूर्ण;
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
 	__be32 orig_ip;
 
 	ct = nf_ct_get(skb_in, &ctinfo);
-	if (!ct || !(ct->status & IPS_SRC_NAT)) {
+	अगर (!ct || !(ct->status & IPS_SRC_NAT)) अणु
 		__icmp_send(skb_in, type, code, info, &opts);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (skb_shared(skb_in))
+	अगर (skb_shared(skb_in))
 		skb_in = cloned_skb = skb_clone(skb_in, GFP_ATOMIC);
 
-	if (unlikely(!skb_in || skb_network_header(skb_in) < skb_in->head ||
-	    (skb_network_header(skb_in) + sizeof(struct iphdr)) >
-	    skb_tail_pointer(skb_in) || skb_ensure_writable(skb_in,
-	    skb_network_offset(skb_in) + sizeof(struct iphdr))))
-		goto out;
+	अगर (unlikely(!skb_in || skb_network_header(skb_in) < skb_in->head ||
+	    (skb_network_header(skb_in) + माप(काष्ठा iphdr)) >
+	    skb_tail_poपूर्णांकer(skb_in) || skb_ensure_writable(skb_in,
+	    skb_network_offset(skb_in) + माप(काष्ठा iphdr))))
+		जाओ out;
 
 	orig_ip = ip_hdr(skb_in)->saddr;
 	ip_hdr(skb_in)->saddr = ct->tuplehash[0].tuple.src.u3.ip;
@@ -808,117 +809,117 @@ void icmp_ndo_send(struct sk_buff *skb_in, int type, int code, __be32 info)
 	ip_hdr(skb_in)->saddr = orig_ip;
 out:
 	consume_skb(cloned_skb);
-}
-EXPORT_SYMBOL(icmp_ndo_send);
-#endif
+पूर्ण
+EXPORT_SYMBOL(icmp_nकरो_send);
+#पूर्ण_अगर
 
-static void icmp_socket_deliver(struct sk_buff *skb, u32 info)
-{
-	const struct iphdr *iph = (const struct iphdr *)skb->data;
-	const struct net_protocol *ipprot;
-	int protocol = iph->protocol;
+अटल व्योम icmp_socket_deliver(काष्ठा sk_buff *skb, u32 info)
+अणु
+	स्थिर काष्ठा iphdr *iph = (स्थिर काष्ठा iphdr *)skb->data;
+	स्थिर काष्ठा net_protocol *ipprot;
+	पूर्णांक protocol = iph->protocol;
 
 	/* Checkin full IP header plus 8 bytes of protocol to
-	 * avoid additional coding at protocol handlers.
+	 * aव्योम additional coding at protocol handlers.
 	 */
-	if (!pskb_may_pull(skb, iph->ihl * 4 + 8)) {
+	अगर (!pskb_may_pull(skb, iph->ihl * 4 + 8)) अणु
 		__ICMP_INC_STATS(dev_net(skb->dev), ICMP_MIB_INERRORS);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	raw_icmp_error(skb, protocol, info);
 
 	ipprot = rcu_dereference(inet_protos[protocol]);
-	if (ipprot && ipprot->err_handler)
+	अगर (ipprot && ipprot->err_handler)
 		ipprot->err_handler(skb, info);
-}
+पूर्ण
 
-static bool icmp_tag_validation(int proto)
-{
+अटल bool icmp_tag_validation(पूर्णांक proto)
+अणु
 	bool ok;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ok = rcu_dereference(inet_protos[proto])->icmp_strict_tag_validation;
-	rcu_read_unlock();
-	return ok;
-}
+	rcu_पढ़ो_unlock();
+	वापस ok;
+पूर्ण
 
 /*
  *	Handle ICMP_DEST_UNREACH, ICMP_TIME_EXCEEDED, ICMP_QUENCH, and
  *	ICMP_PARAMETERPROB.
  */
 
-static bool icmp_unreach(struct sk_buff *skb)
-{
-	const struct iphdr *iph;
-	struct icmphdr *icmph;
-	struct net *net;
+अटल bool icmp_unreach(काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा iphdr *iph;
+	काष्ठा icmphdr *icmph;
+	काष्ठा net *net;
 	u32 info = 0;
 
 	net = dev_net(skb_dst(skb)->dev);
 
 	/*
 	 *	Incomplete header ?
-	 * 	Only checks for the IP header, there should be an
-	 *	additional check for longer headers in upper levels.
+	 * 	Only checks क्रम the IP header, there should be an
+	 *	additional check क्रम दीर्घer headers in upper levels.
 	 */
 
-	if (!pskb_may_pull(skb, sizeof(struct iphdr)))
-		goto out_err;
+	अगर (!pskb_may_pull(skb, माप(काष्ठा iphdr)))
+		जाओ out_err;
 
 	icmph = icmp_hdr(skb);
-	iph   = (const struct iphdr *)skb->data;
+	iph   = (स्थिर काष्ठा iphdr *)skb->data;
 
-	if (iph->ihl < 5) /* Mangled header, drop. */
-		goto out_err;
+	अगर (iph->ihl < 5) /* Mangled header, drop. */
+		जाओ out_err;
 
-	switch (icmph->type) {
-	case ICMP_DEST_UNREACH:
-		switch (icmph->code & 15) {
-		case ICMP_NET_UNREACH:
-		case ICMP_HOST_UNREACH:
-		case ICMP_PROT_UNREACH:
-		case ICMP_PORT_UNREACH:
-			break;
-		case ICMP_FRAG_NEEDED:
-			/* for documentation of the ip_no_pmtu_disc
+	चयन (icmph->type) अणु
+	हाल ICMP_DEST_UNREACH:
+		चयन (icmph->code & 15) अणु
+		हाल ICMP_NET_UNREACH:
+		हाल ICMP_HOST_UNREACH:
+		हाल ICMP_PROT_UNREACH:
+		हाल ICMP_PORT_UNREACH:
+			अवरोध;
+		हाल ICMP_FRAG_NEEDED:
+			/* क्रम करोcumentation of the ip_no_pmtu_disc
 			 * values please see
 			 * Documentation/networking/ip-sysctl.rst
 			 */
-			switch (net->ipv4.sysctl_ip_no_pmtu_disc) {
-			default:
+			चयन (net->ipv4.sysctl_ip_no_pmtu_disc) अणु
+			शेष:
 				net_dbg_ratelimited("%pI4: fragmentation needed and DF set\n",
 						    &iph->daddr);
-				break;
-			case 2:
-				goto out;
-			case 3:
-				if (!icmp_tag_validation(iph->protocol))
-					goto out;
+				अवरोध;
+			हाल 2:
+				जाओ out;
+			हाल 3:
+				अगर (!icmp_tag_validation(iph->protocol))
+					जाओ out;
 				fallthrough;
-			case 0:
+			हाल 0:
 				info = ntohs(icmph->un.frag.mtu);
-			}
-			break;
-		case ICMP_SR_FAILED:
+			पूर्ण
+			अवरोध;
+		हाल ICMP_SR_FAILED:
 			net_dbg_ratelimited("%pI4: Source Route Failed\n",
 					    &iph->daddr);
-			break;
-		default:
-			break;
-		}
-		if (icmph->code > NR_ICMP_UNREACH)
-			goto out;
-		break;
-	case ICMP_PARAMETERPROB:
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अगर (icmph->code > NR_ICMP_UNREACH)
+			जाओ out;
+		अवरोध;
+	हाल ICMP_PARAMETERPROB:
 		info = ntohl(icmph->un.gateway) >> 24;
-		break;
-	case ICMP_TIME_EXCEEDED:
+		अवरोध;
+	हाल ICMP_TIME_EXCEEDED:
 		__ICMP_INC_STATS(net, ICMP_MIB_INTIMEEXCDS);
-		if (icmph->code == ICMP_EXC_FRAGTIME)
-			goto out;
-		break;
-	}
+		अगर (icmph->code == ICMP_EXC_FRAGTIME)
+			जाओ out;
+		अवरोध;
+	पूर्ण
 
 	/*
 	 *	Throw it at our lower layers
@@ -927,55 +928,55 @@ static bool icmp_unreach(struct sk_buff *skb)
 	 *		  header.
 	 *	RFC 1122: 3.2.2.1 MUST pass ICMP unreach messages to the
 	 *		  transport layer.
-	 *	RFC 1122: 3.2.2.2 MUST pass ICMP time expired messages to
+	 *	RFC 1122: 3.2.2.2 MUST pass ICMP समय expired messages to
 	 *		  transport layer.
 	 */
 
 	/*
 	 *	Check the other end isn't violating RFC 1122. Some routers send
 	 *	bogus responses to broadcast frames. If you see this message
-	 *	first check your netmask matches at both ends, if it does then
-	 *	get the other vendor to fix their kit.
+	 *	first check your neपंचांगask matches at both ends, अगर it करोes then
+	 *	get the other venकरोr to fix their kit.
 	 */
 
-	if (!net->ipv4.sysctl_icmp_ignore_bogus_error_responses &&
-	    inet_addr_type_dev_table(net, skb->dev, iph->daddr) == RTN_BROADCAST) {
+	अगर (!net->ipv4.sysctl_icmp_ignore_bogus_error_responses &&
+	    inet_addr_type_dev_table(net, skb->dev, iph->daddr) == RTN_BROADCAST) अणु
 		net_warn_ratelimited("%pI4 sent an invalid ICMP type %u, code %u error to a broadcast: %pI4 on %s\n",
 				     &ip_hdr(skb)->saddr,
 				     icmph->type, icmph->code,
 				     &iph->daddr, skb->dev->name);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	icmp_socket_deliver(skb, info);
 
 out:
-	return true;
+	वापस true;
 out_err:
 	__ICMP_INC_STATS(net, ICMP_MIB_INERRORS);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 
 /*
- *	Handle ICMP_REDIRECT.
+ *	Handle ICMP_REसूचीECT.
  */
 
-static bool icmp_redirect(struct sk_buff *skb)
-{
-	if (skb->len < sizeof(struct iphdr)) {
+अटल bool icmp_redirect(काष्ठा sk_buff *skb)
+अणु
+	अगर (skb->len < माप(काष्ठा iphdr)) अणु
 		__ICMP_INC_STATS(dev_net(skb->dev), ICMP_MIB_INERRORS);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!pskb_may_pull(skb, sizeof(struct iphdr))) {
+	अगर (!pskb_may_pull(skb, माप(काष्ठा iphdr))) अणु
 		/* there aught to be a stat */
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	icmp_socket_deliver(skb, ntohl(icmp_hdr(skb)->un.gateway));
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  *	Handle ICMP_ECHO ("ping") and ICMP_EXT_ECHO ("PROBE") requests.
@@ -984,152 +985,152 @@ static bool icmp_redirect(struct sk_buff *skb)
  *		  requests.
  *	RFC 1122: 3.2.2.6 Data received in the ICMP_ECHO request MUST be
  *		  included in the reply.
- *	RFC 1812: 4.3.3.6 SHOULD have a config option for silently ignoring
- *		  echo requests, MUST have default=NOT.
+ *	RFC 1812: 4.3.3.6 SHOULD have a config option क्रम silently ignoring
+ *		  echo requests, MUST have शेष=NOT.
  *	RFC 8335: 8 MUST have a config option to enable/disable ICMP
- *		  Extended Echo Functionality, MUST be disabled by default
- *	See also WRT handling of options once they are done and working.
+ *		  Extended Echo Functionality, MUST be disabled by शेष
+ *	See also WRT handling of options once they are करोne and working.
  */
 
-static bool icmp_echo(struct sk_buff *skb)
-{
-	struct icmp_ext_hdr *ext_hdr, _ext_hdr;
-	struct icmp_ext_echo_iio *iio, _iio;
-	struct icmp_bxm icmp_param;
-	struct net_device *dev;
-	char buff[IFNAMSIZ];
-	struct net *net;
+अटल bool icmp_echo(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा icmp_ext_hdr *ext_hdr, _ext_hdr;
+	काष्ठा icmp_ext_echo_iio *iio, _iio;
+	काष्ठा icmp_bxm icmp_param;
+	काष्ठा net_device *dev;
+	अक्षर buff[IFNAMSIZ];
+	काष्ठा net *net;
 	u16 ident_len;
 	u8 status;
 
 	net = dev_net(skb_dst(skb)->dev);
-	/* should there be an ICMP stat for ignored echos? */
-	if (net->ipv4.sysctl_icmp_echo_ignore_all)
-		return true;
+	/* should there be an ICMP stat क्रम ignored echos? */
+	अगर (net->ipv4.sysctl_icmp_echo_ignore_all)
+		वापस true;
 
 	icmp_param.data.icmph	   = *icmp_hdr(skb);
 	icmp_param.skb		   = skb;
 	icmp_param.offset	   = 0;
 	icmp_param.data_len	   = skb->len;
-	icmp_param.head_len	   = sizeof(struct icmphdr);
+	icmp_param.head_len	   = माप(काष्ठा icmphdr);
 
-	if (icmp_param.data.icmph.type == ICMP_ECHO) {
+	अगर (icmp_param.data.icmph.type == ICMP_ECHO) अणु
 		icmp_param.data.icmph.type = ICMP_ECHOREPLY;
-		goto send_reply;
-	}
-	if (!net->ipv4.sysctl_icmp_echo_enable_probe)
-		return true;
-	/* We currently only support probing interfaces on the proxy node
+		जाओ send_reply;
+	पूर्ण
+	अगर (!net->ipv4.sysctl_icmp_echo_enable_probe)
+		वापस true;
+	/* We currently only support probing पूर्णांकerfaces on the proxy node
 	 * Check to ensure L-bit is set
 	 */
-	if (!(ntohs(icmp_param.data.icmph.un.echo.sequence) & 1))
-		return true;
+	अगर (!(ntohs(icmp_param.data.icmph.un.echo.sequence) & 1))
+		वापस true;
 	/* Clear status bits in reply message */
 	icmp_param.data.icmph.un.echo.sequence &= htons(0xFF00);
 	icmp_param.data.icmph.type = ICMP_EXT_ECHOREPLY;
-	ext_hdr = skb_header_pointer(skb, 0, sizeof(_ext_hdr), &_ext_hdr);
+	ext_hdr = skb_header_poपूर्णांकer(skb, 0, माप(_ext_hdr), &_ext_hdr);
 	/* Size of iio is class_type dependent.
-	 * Only check header here and assign length based on ctype in the switch statement
+	 * Only check header here and assign length based on ctype in the चयन statement
 	 */
-	iio = skb_header_pointer(skb, sizeof(_ext_hdr), sizeof(iio->extobj_hdr), &_iio);
-	if (!ext_hdr || !iio)
-		goto send_mal_query;
-	if (ntohs(iio->extobj_hdr.length) <= sizeof(iio->extobj_hdr))
-		goto send_mal_query;
-	ident_len = ntohs(iio->extobj_hdr.length) - sizeof(iio->extobj_hdr);
+	iio = skb_header_poपूर्णांकer(skb, माप(_ext_hdr), माप(iio->extobj_hdr), &_iio);
+	अगर (!ext_hdr || !iio)
+		जाओ send_mal_query;
+	अगर (ntohs(iio->extobj_hdr.length) <= माप(iio->extobj_hdr))
+		जाओ send_mal_query;
+	ident_len = ntohs(iio->extobj_hdr.length) - माप(iio->extobj_hdr);
 	status = 0;
-	dev = NULL;
-	switch (iio->extobj_hdr.class_type) {
-	case ICMP_EXT_ECHO_CTYPE_NAME:
-		iio = skb_header_pointer(skb, sizeof(_ext_hdr), sizeof(_iio), &_iio);
-		if (ident_len >= IFNAMSIZ)
-			goto send_mal_query;
-		memset(buff, 0, sizeof(buff));
-		memcpy(buff, &iio->ident.name, ident_len);
+	dev = शून्य;
+	चयन (iio->extobj_hdr.class_type) अणु
+	हाल ICMP_EXT_ECHO_CTYPE_NAME:
+		iio = skb_header_poपूर्णांकer(skb, माप(_ext_hdr), माप(_iio), &_iio);
+		अगर (ident_len >= IFNAMSIZ)
+			जाओ send_mal_query;
+		स_रखो(buff, 0, माप(buff));
+		स_नकल(buff, &iio->ident.name, ident_len);
 		dev = dev_get_by_name(net, buff);
-		break;
-	case ICMP_EXT_ECHO_CTYPE_INDEX:
-		iio = skb_header_pointer(skb, sizeof(_ext_hdr), sizeof(iio->extobj_hdr) +
-					 sizeof(iio->ident.ifindex), &_iio);
-		if (ident_len != sizeof(iio->ident.ifindex))
-			goto send_mal_query;
-		dev = dev_get_by_index(net, ntohl(iio->ident.ifindex));
-		break;
-	case ICMP_EXT_ECHO_CTYPE_ADDR:
-		if (ident_len != sizeof(iio->ident.addr.ctype3_hdr) +
+		अवरोध;
+	हाल ICMP_EXT_ECHO_CTYPE_INDEX:
+		iio = skb_header_poपूर्णांकer(skb, माप(_ext_hdr), माप(iio->extobj_hdr) +
+					 माप(iio->ident.अगरindex), &_iio);
+		अगर (ident_len != माप(iio->ident.अगरindex))
+			जाओ send_mal_query;
+		dev = dev_get_by_index(net, ntohl(iio->ident.अगरindex));
+		अवरोध;
+	हाल ICMP_EXT_ECHO_CTYPE_ADDR:
+		अगर (ident_len != माप(iio->ident.addr.ctype3_hdr) +
 				 iio->ident.addr.ctype3_hdr.addrlen)
-			goto send_mal_query;
-		switch (ntohs(iio->ident.addr.ctype3_hdr.afi)) {
-		case ICMP_AFI_IP:
-			iio = skb_header_pointer(skb, sizeof(_ext_hdr), sizeof(iio->extobj_hdr) +
-						 sizeof(struct in_addr), &_iio);
-			if (ident_len != sizeof(iio->ident.addr.ctype3_hdr) +
-					 sizeof(struct in_addr))
-				goto send_mal_query;
+			जाओ send_mal_query;
+		चयन (ntohs(iio->ident.addr.ctype3_hdr.afi)) अणु
+		हाल ICMP_AFI_IP:
+			iio = skb_header_poपूर्णांकer(skb, माप(_ext_hdr), माप(iio->extobj_hdr) +
+						 माप(काष्ठा in_addr), &_iio);
+			अगर (ident_len != माप(iio->ident.addr.ctype3_hdr) +
+					 माप(काष्ठा in_addr))
+				जाओ send_mal_query;
 			dev = ip_dev_find(net, iio->ident.addr.ip_addr.ipv4_addr.s_addr);
-			break;
-#if IS_ENABLED(CONFIG_IPV6)
-		case ICMP_AFI_IP6:
-			iio = skb_header_pointer(skb, sizeof(_ext_hdr), sizeof(_iio), &_iio);
-			if (ident_len != sizeof(iio->ident.addr.ctype3_hdr) +
-					 sizeof(struct in6_addr))
-				goto send_mal_query;
+			अवरोध;
+#अगर IS_ENABLED(CONFIG_IPV6)
+		हाल ICMP_AFI_IP6:
+			iio = skb_header_poपूर्णांकer(skb, माप(_ext_hdr), माप(_iio), &_iio);
+			अगर (ident_len != माप(iio->ident.addr.ctype3_hdr) +
+					 माप(काष्ठा in6_addr))
+				जाओ send_mal_query;
 			dev = ipv6_stub->ipv6_dev_find(net, &iio->ident.addr.ip_addr.ipv6_addr, dev);
-			if (dev)
+			अगर (dev)
 				dev_hold(dev);
-			break;
-#endif
-		default:
-			goto send_mal_query;
-		}
-		break;
-	default:
-		goto send_mal_query;
-	}
-	if (!dev) {
+			अवरोध;
+#पूर्ण_अगर
+		शेष:
+			जाओ send_mal_query;
+		पूर्ण
+		अवरोध;
+	शेष:
+		जाओ send_mal_query;
+	पूर्ण
+	अगर (!dev) अणु
 		icmp_param.data.icmph.code = ICMP_EXT_CODE_NO_IF;
-		goto send_reply;
-	}
+		जाओ send_reply;
+	पूर्ण
 	/* Fill bits in reply message */
-	if (dev->flags & IFF_UP)
+	अगर (dev->flags & IFF_UP)
 		status |= ICMP_EXT_ECHOREPLY_ACTIVE;
-	if (__in_dev_get_rcu(dev) && __in_dev_get_rcu(dev)->ifa_list)
+	अगर (__in_dev_get_rcu(dev) && __in_dev_get_rcu(dev)->अगरa_list)
 		status |= ICMP_EXT_ECHOREPLY_IPV4;
-	if (!list_empty(&rcu_dereference(dev->ip6_ptr)->addr_list))
+	अगर (!list_empty(&rcu_dereference(dev->ip6_ptr)->addr_list))
 		status |= ICMP_EXT_ECHOREPLY_IPV6;
 	dev_put(dev);
 	icmp_param.data.icmph.un.echo.sequence |= htons(status);
 send_reply:
 	icmp_reply(&icmp_param, skb);
-		return true;
+		वापस true;
 send_mal_query:
 	icmp_param.data.icmph.code = ICMP_EXT_CODE_MAL_QUERY;
-	goto send_reply;
-}
+	जाओ send_reply;
+पूर्ण
 
 /*
  *	Handle ICMP Timestamp requests.
- *	RFC 1122: 3.2.2.8 MAY implement ICMP timestamp requests.
- *		  SHOULD be in the kernel for minimum random latency.
+ *	RFC 1122: 3.2.2.8 MAY implement ICMP बारtamp requests.
+ *		  SHOULD be in the kernel क्रम minimum अक्रमom latency.
  *		  MUST be accurate to a few minutes.
  *		  MUST be updated at least at 15Hz.
  */
-static bool icmp_timestamp(struct sk_buff *skb)
-{
-	struct icmp_bxm icmp_param;
+अटल bool icmp_बारtamp(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा icmp_bxm icmp_param;
 	/*
-	 *	Too short.
+	 *	Too लघु.
 	 */
-	if (skb->len < 4)
-		goto out_err;
+	अगर (skb->len < 4)
+		जाओ out_err;
 
 	/*
-	 *	Fill in the current time as ms since midnight UT:
+	 *	Fill in the current समय as ms since midnight UT:
 	 */
-	icmp_param.data.times[1] = inet_current_timestamp();
-	icmp_param.data.times[2] = icmp_param.data.times[1];
+	icmp_param.data.बार[1] = inet_current_बारtamp();
+	icmp_param.data.बार[2] = icmp_param.data.बार[1];
 
-	BUG_ON(skb_copy_bits(skb, 0, &icmp_param.data.times[0], 4));
+	BUG_ON(skb_copy_bits(skb, 0, &icmp_param.data.बार[0], 4));
 
 	icmp_param.data.icmph	   = *icmp_hdr(skb);
 	icmp_param.data.icmph.type = ICMP_TIMESTAMPREPLY;
@@ -1137,327 +1138,327 @@ static bool icmp_timestamp(struct sk_buff *skb)
 	icmp_param.skb		   = skb;
 	icmp_param.offset	   = 0;
 	icmp_param.data_len	   = 0;
-	icmp_param.head_len	   = sizeof(struct icmphdr) + 12;
+	icmp_param.head_len	   = माप(काष्ठा icmphdr) + 12;
 	icmp_reply(&icmp_param, skb);
-	return true;
+	वापस true;
 
 out_err:
 	__ICMP_INC_STATS(dev_net(skb_dst(skb)->dev), ICMP_MIB_INERRORS);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool icmp_discard(struct sk_buff *skb)
-{
+अटल bool icmp_discard(काष्ठा sk_buff *skb)
+अणु
 	/* pretend it was a success */
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  *	Deal with incoming ICMP packets.
  */
-int icmp_rcv(struct sk_buff *skb)
-{
-	struct icmphdr *icmph;
-	struct rtable *rt = skb_rtable(skb);
-	struct net *net = dev_net(rt->dst.dev);
+पूर्णांक icmp_rcv(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा icmphdr *icmph;
+	काष्ठा rtable *rt = skb_rtable(skb);
+	काष्ठा net *net = dev_net(rt->dst.dev);
 	bool success;
 
-	if (!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb)) {
-		struct sec_path *sp = skb_sec_path(skb);
-		int nh;
+	अगर (!xfrm4_policy_check(शून्य, XFRM_POLICY_IN, skb)) अणु
+		काष्ठा sec_path *sp = skb_sec_path(skb);
+		पूर्णांक nh;
 
-		if (!(sp && sp->xvec[sp->len - 1]->props.flags &
+		अगर (!(sp && sp->xvec[sp->len - 1]->props.flags &
 				 XFRM_STATE_ICMP))
-			goto drop;
+			जाओ drop;
 
-		if (!pskb_may_pull(skb, sizeof(*icmph) + sizeof(struct iphdr)))
-			goto drop;
+		अगर (!pskb_may_pull(skb, माप(*icmph) + माप(काष्ठा iphdr)))
+			जाओ drop;
 
 		nh = skb_network_offset(skb);
-		skb_set_network_header(skb, sizeof(*icmph));
+		skb_set_network_header(skb, माप(*icmph));
 
-		if (!xfrm4_policy_check_reverse(NULL, XFRM_POLICY_IN, skb))
-			goto drop;
+		अगर (!xfrm4_policy_check_reverse(शून्य, XFRM_POLICY_IN, skb))
+			जाओ drop;
 
 		skb_set_network_header(skb, nh);
-	}
+	पूर्ण
 
 	__ICMP_INC_STATS(net, ICMP_MIB_INMSGS);
 
-	if (skb_checksum_simple_validate(skb))
-		goto csum_error;
+	अगर (skb_checksum_simple_validate(skb))
+		जाओ csum_error;
 
-	if (!pskb_pull(skb, sizeof(*icmph)))
-		goto error;
+	अगर (!pskb_pull(skb, माप(*icmph)))
+		जाओ error;
 
 	icmph = icmp_hdr(skb);
 
 	ICMPMSGIN_INC_STATS(net, icmph->type);
 
-	/* Check for ICMP Extended Echo (PROBE) messages */
-	if (icmph->type == ICMP_EXT_ECHO) {
-		/* We can't use icmp_pointers[].handler() because it is an array of
+	/* Check क्रम ICMP Extended Echo (PROBE) messages */
+	अगर (icmph->type == ICMP_EXT_ECHO) अणु
+		/* We can't use icmp_poपूर्णांकers[].handler() because it is an array of
 		 * size NR_ICMP_TYPES + 1 (19 elements) and PROBE has code 42.
 		 */
 		success = icmp_echo(skb);
-		goto success_check;
-	}
+		जाओ success_check;
+	पूर्ण
 
-	if (icmph->type == ICMP_EXT_ECHOREPLY) {
+	अगर (icmph->type == ICMP_EXT_ECHOREPLY) अणु
 		success = ping_rcv(skb);
-		goto success_check;
-	}
+		जाओ success_check;
+	पूर्ण
 
 	/*
-	 *	18 is the highest 'known' ICMP type. Anything else is a mystery
+	 *	18 is the highest 'known' ICMP type. Anything अन्यथा is a mystery
 	 *
 	 *	RFC 1122: 3.2.2  Unknown ICMP messages types MUST be silently
 	 *		  discarded.
 	 */
-	if (icmph->type > NR_ICMP_TYPES)
-		goto error;
+	अगर (icmph->type > NR_ICMP_TYPES)
+		जाओ error;
 
 	/*
 	 *	Parse the ICMP message
 	 */
 
-	if (rt->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST)) {
+	अगर (rt->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST)) अणु
 		/*
 		 *	RFC 1122: 3.2.2.6 An ICMP_ECHO to broadcast MAY be
 		 *	  silently ignored (we let user decide with a sysctl).
 		 *	RFC 1122: 3.2.2.8 An ICMP_TIMESTAMP MAY be silently
-		 *	  discarded if to broadcast/multicast.
+		 *	  discarded अगर to broadcast/multicast.
 		 */
-		if ((icmph->type == ICMP_ECHO ||
+		अगर ((icmph->type == ICMP_ECHO ||
 		     icmph->type == ICMP_TIMESTAMP) &&
-		    net->ipv4.sysctl_icmp_echo_ignore_broadcasts) {
-			goto error;
-		}
-		if (icmph->type != ICMP_ECHO &&
+		    net->ipv4.sysctl_icmp_echo_ignore_broadcasts) अणु
+			जाओ error;
+		पूर्ण
+		अगर (icmph->type != ICMP_ECHO &&
 		    icmph->type != ICMP_TIMESTAMP &&
 		    icmph->type != ICMP_ADDRESS &&
-		    icmph->type != ICMP_ADDRESSREPLY) {
-			goto error;
-		}
-	}
+		    icmph->type != ICMP_ADDRESSREPLY) अणु
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	success = icmp_pointers[icmph->type].handler(skb);
+	success = icmp_poपूर्णांकers[icmph->type].handler(skb);
 success_check:
-	if (success)  {
+	अगर (success)  अणु
 		consume_skb(skb);
-		return NET_RX_SUCCESS;
-	}
+		वापस NET_RX_SUCCESS;
+	पूर्ण
 
 drop:
-	kfree_skb(skb);
-	return NET_RX_DROP;
+	kमुक्त_skb(skb);
+	वापस NET_RX_DROP;
 csum_error:
 	__ICMP_INC_STATS(net, ICMP_MIB_CSUMERRORS);
 error:
 	__ICMP_INC_STATS(net, ICMP_MIB_INERRORS);
-	goto drop;
-}
+	जाओ drop;
+पूर्ण
 
-static bool ip_icmp_error_rfc4884_validate(const struct sk_buff *skb, int off)
-{
-	struct icmp_extobj_hdr *objh, _objh;
-	struct icmp_ext_hdr *exth, _exth;
+अटल bool ip_icmp_error_rfc4884_validate(स्थिर काष्ठा sk_buff *skb, पूर्णांक off)
+अणु
+	काष्ठा icmp_extobj_hdr *objh, _objh;
+	काष्ठा icmp_ext_hdr *exth, _exth;
 	u16 olen;
 
-	exth = skb_header_pointer(skb, off, sizeof(_exth), &_exth);
-	if (!exth)
-		return false;
-	if (exth->version != 2)
-		return true;
+	exth = skb_header_poपूर्णांकer(skb, off, माप(_exth), &_exth);
+	अगर (!exth)
+		वापस false;
+	अगर (exth->version != 2)
+		वापस true;
 
-	if (exth->checksum &&
+	अगर (exth->checksum &&
 	    csum_fold(skb_checksum(skb, off, skb->len - off, 0)))
-		return false;
+		वापस false;
 
-	off += sizeof(_exth);
-	while (off < skb->len) {
-		objh = skb_header_pointer(skb, off, sizeof(_objh), &_objh);
-		if (!objh)
-			return false;
+	off += माप(_exth);
+	जबतक (off < skb->len) अणु
+		objh = skb_header_poपूर्णांकer(skb, off, माप(_objh), &_objh);
+		अगर (!objh)
+			वापस false;
 
 		olen = ntohs(objh->length);
-		if (olen < sizeof(_objh))
-			return false;
+		अगर (olen < माप(_objh))
+			वापस false;
 
 		off += olen;
-		if (off > skb->len)
-			return false;
-	}
+		अगर (off > skb->len)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void ip_icmp_error_rfc4884(const struct sk_buff *skb,
-			   struct sock_ee_data_rfc4884 *out,
-			   int thlen, int off)
-{
-	int hlen;
+व्योम ip_icmp_error_rfc4884(स्थिर काष्ठा sk_buff *skb,
+			   काष्ठा sock_ee_data_rfc4884 *out,
+			   पूर्णांक thlen, पूर्णांक off)
+अणु
+	पूर्णांक hlen;
 
 	/* original datagram headers: end of icmph to payload (skb->data) */
 	hlen = -skb_transport_offset(skb) - thlen;
 
 	/* per rfc 4884: minimal datagram length of 128 bytes */
-	if (off < 128 || off < hlen)
-		return;
+	अगर (off < 128 || off < hlen)
+		वापस;
 
-	/* kernel has stripped headers: return payload offset in bytes */
+	/* kernel has stripped headers: वापस payload offset in bytes */
 	off -= hlen;
-	if (off + sizeof(struct icmp_ext_hdr) > skb->len)
-		return;
+	अगर (off + माप(काष्ठा icmp_ext_hdr) > skb->len)
+		वापस;
 
 	out->len = off;
 
-	if (!ip_icmp_error_rfc4884_validate(skb, off))
+	अगर (!ip_icmp_error_rfc4884_validate(skb, off))
 		out->flags |= SO_EE_RFC4884_FLAG_INVALID;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ip_icmp_error_rfc4884);
 
-int icmp_err(struct sk_buff *skb, u32 info)
-{
-	struct iphdr *iph = (struct iphdr *)skb->data;
-	int offset = iph->ihl<<2;
-	struct icmphdr *icmph = (struct icmphdr *)(skb->data + offset);
-	int type = icmp_hdr(skb)->type;
-	int code = icmp_hdr(skb)->code;
-	struct net *net = dev_net(skb->dev);
+पूर्णांक icmp_err(काष्ठा sk_buff *skb, u32 info)
+अणु
+	काष्ठा iphdr *iph = (काष्ठा iphdr *)skb->data;
+	पूर्णांक offset = iph->ihl<<2;
+	काष्ठा icmphdr *icmph = (काष्ठा icmphdr *)(skb->data + offset);
+	पूर्णांक type = icmp_hdr(skb)->type;
+	पूर्णांक code = icmp_hdr(skb)->code;
+	काष्ठा net *net = dev_net(skb->dev);
 
 	/*
 	 * Use ping_err to handle all icmp errors except those
 	 * triggered by ICMP_ECHOREPLY which sent from kernel.
 	 */
-	if (icmph->type != ICMP_ECHOREPLY) {
+	अगर (icmph->type != ICMP_ECHOREPLY) अणु
 		ping_err(skb, offset, info);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED)
+	अगर (type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED)
 		ipv4_update_pmtu(skb, net, info, 0, IPPROTO_ICMP);
-	else if (type == ICMP_REDIRECT)
+	अन्यथा अगर (type == ICMP_REसूचीECT)
 		ipv4_redirect(skb, net, 0, IPPROTO_ICMP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	This table is the definition of how we handle ICMP.
  */
-static const struct icmp_control icmp_pointers[NR_ICMP_TYPES + 1] = {
-	[ICMP_ECHOREPLY] = {
+अटल स्थिर काष्ठा icmp_control icmp_poपूर्णांकers[NR_ICMP_TYPES + 1] = अणु
+	[ICMP_ECHOREPLY] = अणु
 		.handler = ping_rcv,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.handler = icmp_discard,
 		.error = 1,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.handler = icmp_discard,
 		.error = 1,
-	},
-	[ICMP_DEST_UNREACH] = {
+	पूर्ण,
+	[ICMP_DEST_UNREACH] = अणु
 		.handler = icmp_unreach,
 		.error = 1,
-	},
-	[ICMP_SOURCE_QUENCH] = {
+	पूर्ण,
+	[ICMP_SOURCE_QUENCH] = अणु
 		.handler = icmp_unreach,
 		.error = 1,
-	},
-	[ICMP_REDIRECT] = {
+	पूर्ण,
+	[ICMP_REसूचीECT] = अणु
 		.handler = icmp_redirect,
 		.error = 1,
-	},
-	[6] = {
+	पूर्ण,
+	[6] = अणु
 		.handler = icmp_discard,
 		.error = 1,
-	},
-	[7] = {
+	पूर्ण,
+	[7] = अणु
 		.handler = icmp_discard,
 		.error = 1,
-	},
-	[ICMP_ECHO] = {
+	पूर्ण,
+	[ICMP_ECHO] = अणु
 		.handler = icmp_echo,
-	},
-	[9] = {
+	पूर्ण,
+	[9] = अणु
 		.handler = icmp_discard,
 		.error = 1,
-	},
-	[10] = {
+	पूर्ण,
+	[10] = अणु
 		.handler = icmp_discard,
 		.error = 1,
-	},
-	[ICMP_TIME_EXCEEDED] = {
+	पूर्ण,
+	[ICMP_TIME_EXCEEDED] = अणु
 		.handler = icmp_unreach,
 		.error = 1,
-	},
-	[ICMP_PARAMETERPROB] = {
+	पूर्ण,
+	[ICMP_PARAMETERPROB] = अणु
 		.handler = icmp_unreach,
 		.error = 1,
-	},
-	[ICMP_TIMESTAMP] = {
-		.handler = icmp_timestamp,
-	},
-	[ICMP_TIMESTAMPREPLY] = {
+	पूर्ण,
+	[ICMP_TIMESTAMP] = अणु
+		.handler = icmp_बारtamp,
+	पूर्ण,
+	[ICMP_TIMESTAMPREPLY] = अणु
 		.handler = icmp_discard,
-	},
-	[ICMP_INFO_REQUEST] = {
+	पूर्ण,
+	[ICMP_INFO_REQUEST] = अणु
 		.handler = icmp_discard,
-	},
-	[ICMP_INFO_REPLY] = {
+	पूर्ण,
+	[ICMP_INFO_REPLY] = अणु
 		.handler = icmp_discard,
-	},
-	[ICMP_ADDRESS] = {
+	पूर्ण,
+	[ICMP_ADDRESS] = अणु
 		.handler = icmp_discard,
-	},
-	[ICMP_ADDRESSREPLY] = {
+	पूर्ण,
+	[ICMP_ADDRESSREPLY] = अणु
 		.handler = icmp_discard,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void __net_exit icmp_sk_exit(struct net *net)
-{
-	int i;
+अटल व्योम __net_निकास icmp_sk_निकास(काष्ठा net *net)
+अणु
+	पूर्णांक i;
 
-	for_each_possible_cpu(i)
+	क्रम_each_possible_cpu(i)
 		inet_ctl_sock_destroy(*per_cpu_ptr(net->ipv4.icmp_sk, i));
-	free_percpu(net->ipv4.icmp_sk);
-	net->ipv4.icmp_sk = NULL;
-}
+	मुक्त_percpu(net->ipv4.icmp_sk);
+	net->ipv4.icmp_sk = शून्य;
+पूर्ण
 
-static int __net_init icmp_sk_init(struct net *net)
-{
-	int i, err;
+अटल पूर्णांक __net_init icmp_sk_init(काष्ठा net *net)
+अणु
+	पूर्णांक i, err;
 
-	net->ipv4.icmp_sk = alloc_percpu(struct sock *);
-	if (!net->ipv4.icmp_sk)
-		return -ENOMEM;
+	net->ipv4.icmp_sk = alloc_percpu(काष्ठा sock *);
+	अगर (!net->ipv4.icmp_sk)
+		वापस -ENOMEM;
 
-	for_each_possible_cpu(i) {
-		struct sock *sk;
+	क्रम_each_possible_cpu(i) अणु
+		काष्ठा sock *sk;
 
 		err = inet_ctl_sock_create(&sk, PF_INET,
 					   SOCK_RAW, IPPROTO_ICMP, net);
-		if (err < 0)
-			goto fail;
+		अगर (err < 0)
+			जाओ fail;
 
 		*per_cpu_ptr(net->ipv4.icmp_sk, i) = sk;
 
-		/* Enough space for 2 64K ICMP packets, including
-		 * sk_buff/skb_shared_info struct overhead.
+		/* Enough space क्रम 2 64K ICMP packets, including
+		 * sk_buff/skb_shared_info काष्ठा overhead.
 		 */
 		sk->sk_sndbuf =	2 * SKB_TRUESIZE(64 * 1024);
 
 		/*
-		 * Speedup sock_wfree()
+		 * Speedup sock_wमुक्त()
 		 */
 		sock_set_flag(sk, SOCK_USE_WRITE_QUEUE);
 		inet_sk(sk)->pmtudisc = IP_PMTUDISC_DONT;
-	}
+	पूर्ण
 
-	/* Control parameters for ECHO replies. */
+	/* Control parameters क्रम ECHO replies. */
 	net->ipv4.sysctl_icmp_echo_ignore_all = 0;
 	net->ipv4.sysctl_icmp_echo_enable_probe = 0;
 	net->ipv4.sysctl_icmp_echo_ignore_broadcasts = 1;
@@ -1468,32 +1469,32 @@ static int __net_init icmp_sk_init(struct net *net)
 	/*
 	 * 	Configurable global rate limit.
 	 *
-	 *	ratelimit defines tokens/packet consumed for dst->rate_token
+	 *	ratelimit defines tokens/packet consumed क्रम dst->rate_token
 	 *	bucket ratemask defines which icmp types are ratelimited by
 	 *	setting	it's bit position.
 	 *
-	 *	default:
+	 *	शेष:
 	 *	dest unreachable (3), source quench (4),
-	 *	time exceeded (11), parameter problem (12)
+	 *	समय exceeded (11), parameter problem (12)
 	 */
 
 	net->ipv4.sysctl_icmp_ratelimit = 1 * HZ;
 	net->ipv4.sysctl_icmp_ratemask = 0x1818;
-	net->ipv4.sysctl_icmp_errors_use_inbound_ifaddr = 0;
+	net->ipv4.sysctl_icmp_errors_use_inbound_अगरaddr = 0;
 
-	return 0;
+	वापस 0;
 
 fail:
-	icmp_sk_exit(net);
-	return err;
-}
+	icmp_sk_निकास(net);
+	वापस err;
+पूर्ण
 
-static struct pernet_operations __net_initdata icmp_sk_ops = {
+अटल काष्ठा pernet_operations __net_initdata icmp_sk_ops = अणु
        .init = icmp_sk_init,
-       .exit = icmp_sk_exit,
-};
+       .निकास = icmp_sk_निकास,
+पूर्ण;
 
-int __init icmp_init(void)
-{
-	return register_pernet_subsys(&icmp_sk_ops);
-}
+पूर्णांक __init icmp_init(व्योम)
+अणु
+	वापस रेजिस्टर_pernet_subsys(&icmp_sk_ops);
+पूर्ण

@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 
-#ifndef __CSKY_KERNEL_PROBES_SIMULATE_INSN_H
-#define __CSKY_KERNEL_PROBES_SIMULATE_INSN_H
+#अगर_अघोषित __CSKY_KERNEL_PROBES_SIMULATE_INSN_H
+#घोषणा __CSKY_KERNEL_PROBES_SIMULATE_INSN_H
 
-#define __CSKY_INSN_FUNCS(name, mask, val)				\
-static __always_inline bool csky_insn_is_##name(probe_opcode_t code)	\
-{									\
+#घोषणा __CSKY_INSN_FUNCS(name, mask, val)				\
+अटल __always_अंतरभूत bool csky_insn_is_##name(probe_opcode_t code)	\
+अणु									\
 	BUILD_BUG_ON(~(mask) & (val));					\
-	return (code & (mask)) == (val);				\
-}									\
-void simulate_##name(u32 opcode, long addr, struct pt_regs *regs);
+	वापस (code & (mask)) == (val);				\
+पूर्ण									\
+व्योम simulate_##name(u32 opcode, दीर्घ addr, काष्ठा pt_regs *regs);
 
-#define CSKY_INSN_SET_SIMULATE(name, code)				\
-	do {								\
-		if (csky_insn_is_##name(code)) {			\
+#घोषणा CSKY_INSN_SET_SIMULATE(name, code)				\
+	करो अणु								\
+		अगर (csky_insn_is_##name(code)) अणु			\
 			api->handler = simulate_##name;			\
-			return INSN_GOOD_NO_SLOT;			\
-		}							\
-	} while (0)
+			वापस INSN_GOOD_NO_SLOT;			\
+		पूर्ण							\
+	पूर्ण जबतक (0)
 
 __CSKY_INSN_FUNCS(br16,		0xfc00, 0x0400)
 __CSKY_INSN_FUNCS(bt16,		0xfc00, 0x0800)
@@ -46,4 +47,4 @@ __CSKY_INSN_FUNCS(bsr32,	0x0000fc00, 0x0000e000)
 __CSKY_INSN_FUNCS(jmpi32,	0x0000ffff, 0x0000eac0)
 __CSKY_INSN_FUNCS(jsri32,	0x0000ffff, 0x0000eae0)
 
-#endif /* __CSKY_KERNEL_PROBES_SIMULATE_INSN_H */
+#पूर्ण_अगर /* __CSKY_KERNEL_PROBES_SIMULATE_INSN_H */

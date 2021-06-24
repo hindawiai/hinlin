@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  linux/include/linux/sunrpc/timer.h
+ *  linux/include/linux/sunrpc/समयr.h
  *
- *  Declarations for the RPC transport timer.
+ *  Declarations क्रम the RPC transport समयr.
  *
  *  Copyright (C) 2002 Trond Myklebust <trond.myklebust@fys.uio.no>
  */
 
-#ifndef _LINUX_SUNRPC_TIMER_H
-#define _LINUX_SUNRPC_TIMER_H
+#अगर_अघोषित _LINUX_SUNRPC_TIMER_H
+#घोषणा _LINUX_SUNRPC_TIMER_H
 
-#include <linux/atomic.h>
+#समावेश <linux/atomic.h>
 
-struct rpc_rtt {
-	unsigned long timeo;	/* default timeout value */
-	unsigned long srtt[5];	/* smoothed round trip time << 3 */
-	unsigned long sdrtt[5];	/* smoothed medium deviation of RTT */
-	int ntimeouts[5];	/* Number of timeouts for the last request */
-};
+काष्ठा rpc_rtt अणु
+	अचिन्हित दीर्घ समयo;	/* शेष समयout value */
+	अचिन्हित दीर्घ srtt[5];	/* smoothed round trip समय << 3 */
+	अचिन्हित दीर्घ sdrtt[5];	/* smoothed medium deviation of RTT */
+	पूर्णांक nसमयouts[5];	/* Number of समयouts क्रम the last request */
+पूर्ण;
 
 
-extern void rpc_init_rtt(struct rpc_rtt *rt, unsigned long timeo);
-extern void rpc_update_rtt(struct rpc_rtt *rt, unsigned timer, long m);
-extern unsigned long rpc_calc_rto(struct rpc_rtt *rt, unsigned timer);
+बाह्य व्योम rpc_init_rtt(काष्ठा rpc_rtt *rt, अचिन्हित दीर्घ समयo);
+बाह्य व्योम rpc_update_rtt(काष्ठा rpc_rtt *rt, अचिन्हित समयr, दीर्घ m);
+बाह्य अचिन्हित दीर्घ rpc_calc_rto(काष्ठा rpc_rtt *rt, अचिन्हित समयr);
 
-static inline void rpc_set_timeo(struct rpc_rtt *rt, int timer, int ntimeo)
-{
-	int *t;
-	if (!timer)
-		return;
-	t = &rt->ntimeouts[timer-1];
-	if (ntimeo < *t) {
-		if (*t > 0)
+अटल अंतरभूत व्योम rpc_set_समयo(काष्ठा rpc_rtt *rt, पूर्णांक समयr, पूर्णांक nसमयo)
+अणु
+	पूर्णांक *t;
+	अगर (!समयr)
+		वापस;
+	t = &rt->nसमयouts[समयr-1];
+	अगर (nसमयo < *t) अणु
+		अगर (*t > 0)
 			(*t)--;
-	} else {
-		if (ntimeo > 8)
-			ntimeo = 8;
-		*t = ntimeo;
-	}
-}
+	पूर्ण अन्यथा अणु
+		अगर (nसमयo > 8)
+			nसमयo = 8;
+		*t = nसमयo;
+	पूर्ण
+पूर्ण
 
-static inline int rpc_ntimeo(struct rpc_rtt *rt, int timer)
-{
-	if (!timer)
-		return 0;
-	return rt->ntimeouts[timer-1];
-}
+अटल अंतरभूत पूर्णांक rpc_nसमयo(काष्ठा rpc_rtt *rt, पूर्णांक समयr)
+अणु
+	अगर (!समयr)
+		वापस 0;
+	वापस rt->nसमयouts[समयr-1];
+पूर्ण
 
-#endif /* _LINUX_SUNRPC_TIMER_H */
+#पूर्ण_अगर /* _LINUX_SUNRPC_TIMER_H */

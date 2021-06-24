@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * EISA specific code
+ * EISA specअगरic code
  */
-#include <linux/ioport.h>
-#include <linux/eisa.h>
-#include <linux/io.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/eisa.h>
+#समावेश <linux/पन.स>
 
-#include <xen/xen.h>
+#समावेश <xen/xen.h>
 
-static __init int eisa_bus_probe(void)
-{
-	void __iomem *p;
+अटल __init पूर्णांक eisa_bus_probe(व्योम)
+अणु
+	व्योम __iomem *p;
 
-	if (xen_pv_domain() && !xen_initial_domain())
-		return 0;
+	अगर (xen_pv_करोमुख्य() && !xen_initial_करोमुख्य())
+		वापस 0;
 
 	p = ioremap(0x0FFFD9, 4);
-	if (p && readl(p) == 'E' + ('I' << 8) + ('S' << 16) + ('A' << 24))
+	अगर (p && पढ़ोl(p) == 'E' + ('I' << 8) + ('S' << 16) + ('A' << 24))
 		EISA_bus = 1;
 	iounmap(p);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(eisa_bus_probe);

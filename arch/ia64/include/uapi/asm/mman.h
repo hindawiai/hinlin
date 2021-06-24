@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Based on <asm-i386/mman.h>.
+ * Based on <यंत्र-i386/mman.h>.
  *
- * Modified 1998-2000, 2002
+ * Modअगरied 1998-2000, 2002
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  */
-#ifndef _UAPI_ASM_IA64_MMAN_H
-#define _UAPI_ASM_IA64_MMAN_H
+#अगर_अघोषित _UAPI_ASM_IA64_MMAN_H
+#घोषणा _UAPI_ASM_IA64_MMAN_H
 
 
-#include <asm-generic/mman.h>
+#समावेश <यंत्र-generic/mman.h>
 
-#define MAP_GROWSUP	0x0200		/* register stack-like segment */
+#घोषणा MAP_GROWSUP	0x0200		/* रेजिस्टर stack-like segment */
 
 
-#endif /* _UAPI_ASM_IA64_MMAN_H */
+#पूर्ण_अगर /* _UAPI_ASM_IA64_MMAN_H */

@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2019-2020, Mellanox Technologies inc. All rights reserved. */
 
-#ifndef __MLX5_EN_XSK_POOL_H__
-#define __MLX5_EN_XSK_POOL_H__
+#अगर_अघोषित __MLX5_EN_XSK_POOL_H__
+#घोषणा __MLX5_EN_XSK_POOL_H__
 
-#include "en.h"
+#समावेश "en.h"
 
-static inline struct xsk_buff_pool *mlx5e_xsk_get_pool(struct mlx5e_params *params,
-						       struct mlx5e_xsk *xsk, u16 ix)
-{
-	if (!xsk || !xsk->pools)
-		return NULL;
+अटल अंतरभूत काष्ठा xsk_buff_pool *mlx5e_xsk_get_pool(काष्ठा mlx5e_params *params,
+						       काष्ठा mlx5e_xsk *xsk, u16 ix)
+अणु
+	अगर (!xsk || !xsk->pools)
+		वापस शून्य;
 
-	if (unlikely(ix >= params->num_channels))
-		return NULL;
+	अगर (unlikely(ix >= params->num_channels))
+		वापस शून्य;
 
-	return xsk->pools[ix];
-}
+	वापस xsk->pools[ix];
+पूर्ण
 
-struct mlx5e_xsk_param;
-void mlx5e_build_xsk_param(struct xsk_buff_pool *pool, struct mlx5e_xsk_param *xsk);
+काष्ठा mlx5e_xsk_param;
+व्योम mlx5e_build_xsk_param(काष्ठा xsk_buff_pool *pool, काष्ठा mlx5e_xsk_param *xsk);
 
-/* .ndo_bpf callback. */
-int mlx5e_xsk_setup_pool(struct net_device *dev, struct xsk_buff_pool *pool, u16 qid);
+/* .nकरो_bpf callback. */
+पूर्णांक mlx5e_xsk_setup_pool(काष्ठा net_device *dev, काष्ठा xsk_buff_pool *pool, u16 qid);
 
-#endif /* __MLX5_EN_XSK_POOL_H__ */
+#पूर्ण_अगर /* __MLX5_EN_XSK_POOL_H__ */

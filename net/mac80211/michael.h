@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Michael MIC implementation - optimized for TKIP MIC operations
+ * Michael MIC implementation - optimized क्रम TKIP MIC operations
  * Copyright 2002-2003, Instant802 Networks, Inc.
  */
 
-#ifndef MICHAEL_H
-#define MICHAEL_H
+#अगर_अघोषित MICHAEL_H
+#घोषणा MICHAEL_H
 
-#include <linux/types.h>
-#include <linux/ieee80211.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ieee80211.h>
 
-#define MICHAEL_MIC_LEN 8
+#घोषणा MICHAEL_MIC_LEN 8
 
-struct michael_mic_ctx {
+काष्ठा michael_mic_ctx अणु
 	u32 l, r;
-};
+पूर्ण;
 
-void michael_mic(const u8 *key, struct ieee80211_hdr *hdr,
-		 const u8 *data, size_t data_len, u8 *mic);
+व्योम michael_mic(स्थिर u8 *key, काष्ठा ieee80211_hdr *hdr,
+		 स्थिर u8 *data, माप_प्रकार data_len, u8 *mic);
 
-#endif /* MICHAEL_H */
+#पूर्ण_अगर /* MICHAEL_H */

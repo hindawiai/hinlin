@@ -1,98 +1,99 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _TOOLS_LINUX_ASM_AARCH64_BARRIER_H
-#define _TOOLS_LINUX_ASM_AARCH64_BARRIER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _TOOLS_LINUX_ASM_AARCH64_BARRIER_H
+#घोषणा _TOOLS_LINUX_ASM_AARCH64_BARRIER_H
 
 /*
- * From tools/perf/perf-sys.h, last modified in:
+ * From tools/perf/perf-sys.h, last modअगरied in:
  * f428ebd184c82a7914b2aa7e9f868918aaf7ea78 perf tools: Fix AAAAARGH64 memory barriers
  *
- * XXX: arch/arm64/include/asm/barrier.h in the kernel sources use dsb, is this
- * a case like for arm32 where we do things differently in userspace?
+ * XXX: arch/arm64/include/यंत्र/barrier.h in the kernel sources use dsb, is this
+ * a हाल like क्रम arm32 where we करो things dअगरferently in userspace?
  */
 
-#define mb()		asm volatile("dmb ish" ::: "memory")
-#define wmb()		asm volatile("dmb ishst" ::: "memory")
-#define rmb()		asm volatile("dmb ishld" ::: "memory")
+#घोषणा mb()		यंत्र अस्थिर("dmb ish" ::: "memory")
+#घोषणा wmb()		यंत्र अस्थिर("dmb ishst" ::: "memory")
+#घोषणा rmb()		यंत्र अस्थिर("dmb ishld" ::: "memory")
 
 /*
- * Kernel uses dmb variants on arm64 for smp_*() barriers. Pretty much the same
- * implementation as above mb()/wmb()/rmb(), though for the latter kernel uses
- * dsb. In any case, should above mb()/wmb()/rmb() change, make sure the below
- * smp_*() don't.
+ * Kernel uses dmb variants on arm64 क्रम smp_*() barriers. Pretty much the same
+ * implementation as above mb()/wmb()/rmb(), though क्रम the latter kernel uses
+ * dsb. In any हाल, should above mb()/wmb()/rmb() change, make sure the below
+ * smp_*() करोn't.
  */
-#define smp_mb()	asm volatile("dmb ish" ::: "memory")
-#define smp_wmb()	asm volatile("dmb ishst" ::: "memory")
-#define smp_rmb()	asm volatile("dmb ishld" ::: "memory")
+#घोषणा smp_mb()	यंत्र अस्थिर("dmb ish" ::: "memory")
+#घोषणा smp_wmb()	यंत्र अस्थिर("dmb ishst" ::: "memory")
+#घोषणा smp_rmb()	यंत्र अस्थिर("dmb ishld" ::: "memory")
 
-#define smp_store_release(p, v)						\
-do {									\
-	union { typeof(*p) __val; char __c[1]; } __u =			\
-		{ .__val = (v) }; 					\
+#घोषणा smp_store_release(p, v)						\
+करो अणु									\
+	जोड़ अणु typeof(*p) __val; अक्षर __c[1]; पूर्ण __u =			\
+		अणु .__val = (v) पूर्ण; 					\
 									\
-	switch (sizeof(*p)) {						\
-	case 1:								\
-		asm volatile ("stlrb %w1, %0"				\
+	चयन (माप(*p)) अणु						\
+	हाल 1:								\
+		यंत्र अस्थिर ("stlrb %w1, %0"				\
 				: "=Q" (*p)				\
 				: "r" (*(__u8_alias_t *)__u.__c)	\
 				: "memory");				\
-		break;							\
-	case 2:								\
-		asm volatile ("stlrh %w1, %0"				\
+		अवरोध;							\
+	हाल 2:								\
+		यंत्र अस्थिर ("stlrh %w1, %0"				\
 				: "=Q" (*p)				\
 				: "r" (*(__u16_alias_t *)__u.__c)	\
 				: "memory");				\
-		break;							\
-	case 4:								\
-		asm volatile ("stlr %w1, %0"				\
+		अवरोध;							\
+	हाल 4:								\
+		यंत्र अस्थिर ("stlr %w1, %0"				\
 				: "=Q" (*p)				\
 				: "r" (*(__u32_alias_t *)__u.__c)	\
 				: "memory");				\
-		break;							\
-	case 8:								\
-		asm volatile ("stlr %1, %0"				\
+		अवरोध;							\
+	हाल 8:								\
+		यंत्र अस्थिर ("stlr %1, %0"				\
 				: "=Q" (*p)				\
 				: "r" (*(__u64_alias_t *)__u.__c)	\
 				: "memory");				\
-		break;							\
-	default:							\
+		अवरोध;							\
+	शेष:							\
 		/* Only to shut up gcc ... */				\
 		mb();							\
-		break;							\
-	}								\
-} while (0)
+		अवरोध;							\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define smp_load_acquire(p)						\
-({									\
-	union { typeof(*p) __val; char __c[1]; } __u =			\
-		{ .__c = { 0 } };					\
+#घोषणा smp_load_acquire(p)						\
+(अणु									\
+	जोड़ अणु typeof(*p) __val; अक्षर __c[1]; पूर्ण __u =			\
+		अणु .__c = अणु 0 पूर्ण पूर्ण;					\
 									\
-	switch (sizeof(*p)) {						\
-	case 1:								\
-		asm volatile ("ldarb %w0, %1"				\
+	चयन (माप(*p)) अणु						\
+	हाल 1:								\
+		यंत्र अस्थिर ("ldarb %w0, %1"				\
 			: "=r" (*(__u8_alias_t *)__u.__c)		\
 			: "Q" (*p) : "memory");				\
-		break;							\
-	case 2:								\
-		asm volatile ("ldarh %w0, %1"				\
+		अवरोध;							\
+	हाल 2:								\
+		यंत्र अस्थिर ("ldarh %w0, %1"				\
 			: "=r" (*(__u16_alias_t *)__u.__c)		\
 			: "Q" (*p) : "memory");				\
-		break;							\
-	case 4:								\
-		asm volatile ("ldar %w0, %1"				\
+		अवरोध;							\
+	हाल 4:								\
+		यंत्र अस्थिर ("ldar %w0, %1"				\
 			: "=r" (*(__u32_alias_t *)__u.__c)		\
 			: "Q" (*p) : "memory");				\
-		break;							\
-	case 8:								\
-		asm volatile ("ldar %0, %1"				\
+		अवरोध;							\
+	हाल 8:								\
+		यंत्र अस्थिर ("ldar %0, %1"				\
 			: "=r" (*(__u64_alias_t *)__u.__c)		\
 			: "Q" (*p) : "memory");				\
-		break;							\
-	default:							\
+		अवरोध;							\
+	शेष:							\
 		/* Only to shut up gcc ... */				\
 		mb();							\
-		break;							\
-	}								\
+		अवरोध;							\
+	पूर्ण								\
 	__u.__val;							\
-})
+पूर्ण)
 
-#endif /* _TOOLS_LINUX_ASM_AARCH64_BARRIER_H */
+#पूर्ण_अगर /* _TOOLS_LINUX_ASM_AARCH64_BARRIER_H */

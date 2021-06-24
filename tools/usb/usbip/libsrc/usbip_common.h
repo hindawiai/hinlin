@@ -1,152 +1,153 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2005-2007 Takahiro Hirofuchi
  */
 
-#ifndef __USBIP_COMMON_H
-#define __USBIP_COMMON_H
+#अगर_अघोषित __USBIP_COMMON_H
+#घोषणा __USBIP_COMMON_H
 
-#include <libudev.h>
+#समावेश <libudev.h>
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
 
-#include <syslog.h>
-#include <unistd.h>
-#include <linux/usb/ch9.h>
-#include <linux/usbip.h>
+#समावेश <syslog.h>
+#समावेश <unistd.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usbip.h>
 
-#ifndef USBIDS_FILE
-#define USBIDS_FILE "/usr/share/hwdata/usb.ids"
-#endif
+#अगर_अघोषित USBIDS_खाता
+#घोषणा USBIDS_खाता "/usr/share/hwdata/usb.ids"
+#पूर्ण_अगर
 
-#ifndef VHCI_STATE_PATH
-#define VHCI_STATE_PATH "/var/run/vhci_hcd"
-#endif
+#अगर_अघोषित VHCI_STATE_PATH
+#घोषणा VHCI_STATE_PATH "/var/run/vhci_hcd"
+#पूर्ण_अगर
 
-#define VUDC_DEVICE_DESCR_FILE "dev_desc"
+#घोषणा VUDC_DEVICE_DESCR_खाता "dev_desc"
 
 /* kernel module names */
-#define USBIP_CORE_MOD_NAME	"usbip-core"
-#define USBIP_HOST_DRV_NAME	"usbip-host"
-#define USBIP_DEVICE_DRV_NAME	"usbip-vudc"
-#define USBIP_VHCI_DRV_NAME	"vhci_hcd"
+#घोषणा USBIP_CORE_MOD_NAME	"usbip-core"
+#घोषणा USBIP_HOST_DRV_NAME	"usbip-host"
+#घोषणा USBIP_DEVICE_DRV_NAME	"usbip-vudc"
+#घोषणा USBIP_VHCI_DRV_NAME	"vhci_hcd"
 
-/* sysfs constants */
-#define SYSFS_MNT_PATH         "/sys"
-#define SYSFS_BUS_NAME         "bus"
-#define SYSFS_BUS_TYPE         "usb"
-#define SYSFS_DRIVERS_NAME     "drivers"
+/* sysfs स्थिरants */
+#घोषणा SYSFS_MNT_PATH         "/sys"
+#घोषणा SYSFS_BUS_NAME         "bus"
+#घोषणा SYSFS_BUS_TYPE         "usb"
+#घोषणा SYSFS_DRIVERS_NAME     "drivers"
 
-#define SYSFS_PATH_MAX		256
-#define SYSFS_BUS_ID_SIZE	32
+#घोषणा SYSFS_PATH_MAX		256
+#घोषणा SYSFS_BUS_ID_SIZE	32
 
-/* Defines for op_code status in server/client op_common PDUs */
-#define ST_OK	0x00
-#define ST_NA	0x01
-	/* Device requested for import is not available */
-#define ST_DEV_BUSY	0x02
-	/* Device requested for import is in error state */
-#define ST_DEV_ERR	0x03
-#define ST_NODEV	0x04
-#define ST_ERROR	0x05
+/* Defines क्रम op_code status in server/client op_common PDUs */
+#घोषणा ST_OK	0x00
+#घोषणा ST_NA	0x01
+	/* Device requested क्रम import is not available */
+#घोषणा ST_DEV_BUSY	0x02
+	/* Device requested क्रम import is in error state */
+#घोषणा ST_DEV_ERR	0x03
+#घोषणा ST_NODEV	0x04
+#घोषणा ST_ERROR	0x05
 
-extern int usbip_use_syslog;
-extern int usbip_use_stderr;
-extern int usbip_use_debug ;
+बाह्य पूर्णांक usbip_use_syslog;
+बाह्य पूर्णांक usbip_use_मानक_त्रुटि;
+बाह्य पूर्णांक usbip_use_debug ;
 
-#define PROGNAME "usbip"
+#घोषणा PROGNAME "usbip"
 
-#define pr_fmt(fmt)	"%s: %s: " fmt "\n", PROGNAME
-#define dbg_fmt(fmt)	pr_fmt("%s:%d:[%s] " fmt), "debug",	\
-		        __FILE__, __LINE__, __func__
+#घोषणा pr_fmt(fmt)	"%s: %s: " fmt "\n", PROGNAME
+#घोषणा dbg_fmt(fmt)	pr_fmt("%s:%d:[%s] " fmt), "debug",	\
+		        __खाता__, __LINE__, __func__
 
-#define err(fmt, args...)						\
-	do {								\
-		if (usbip_use_syslog) {					\
+#घोषणा err(fmt, args...)						\
+	करो अणु								\
+		अगर (usbip_use_syslog) अणु					\
 			syslog(LOG_ERR, pr_fmt(fmt), "error", ##args);	\
-		}							\
-		if (usbip_use_stderr) {					\
-			fprintf(stderr, pr_fmt(fmt), "error", ##args);	\
-		}							\
-	} while (0)
+		पूर्ण							\
+		अगर (usbip_use_मानक_त्रुटि) अणु					\
+			ख_लिखो(मानक_त्रुटि, pr_fmt(fmt), "error", ##args);	\
+		पूर्ण							\
+	पूर्ण जबतक (0)
 
-#define info(fmt, args...)						\
-	do {								\
-		if (usbip_use_syslog) {					\
+#घोषणा info(fmt, args...)						\
+	करो अणु								\
+		अगर (usbip_use_syslog) अणु					\
 			syslog(LOG_INFO, pr_fmt(fmt), "info", ##args);	\
-		}							\
-		if (usbip_use_stderr) {					\
-			fprintf(stderr, pr_fmt(fmt), "info", ##args);	\
-		}							\
-	} while (0)
+		पूर्ण							\
+		अगर (usbip_use_मानक_त्रुटि) अणु					\
+			ख_लिखो(मानक_त्रुटि, pr_fmt(fmt), "info", ##args);	\
+		पूर्ण							\
+	पूर्ण जबतक (0)
 
-#define dbg(fmt, args...)						\
-	do {								\
-	if (usbip_use_debug) {						\
-		if (usbip_use_syslog) {					\
+#घोषणा dbg(fmt, args...)						\
+	करो अणु								\
+	अगर (usbip_use_debug) अणु						\
+		अगर (usbip_use_syslog) अणु					\
 			syslog(LOG_DEBUG, dbg_fmt(fmt), ##args);	\
-		}							\
-		if (usbip_use_stderr) {					\
-			fprintf(stderr, dbg_fmt(fmt), ##args);		\
-		}							\
-	}								\
-	} while (0)
+		पूर्ण							\
+		अगर (usbip_use_मानक_त्रुटि) अणु					\
+			ख_लिखो(मानक_त्रुटि, dbg_fmt(fmt), ##args);		\
+		पूर्ण							\
+	पूर्ण								\
+	पूर्ण जबतक (0)
 
-#define BUG()						\
-	do {						\
+#घोषणा BUG()						\
+	करो अणु						\
 		err("sorry, it's a bug!");		\
-		abort();				\
-	} while (0)
+		पात();				\
+	पूर्ण जबतक (0)
 
-struct usbip_usb_interface {
-	uint8_t bInterfaceClass;
-	uint8_t bInterfaceSubClass;
-	uint8_t bInterfaceProtocol;
-	uint8_t padding;	/* alignment */
-} __attribute__((packed));
+काष्ठा usbip_usb_पूर्णांकerface अणु
+	uपूर्णांक8_t bInterfaceClass;
+	uपूर्णांक8_t bInterfaceSubClass;
+	uपूर्णांक8_t bInterfaceProtocol;
+	uपूर्णांक8_t padding;	/* alignment */
+पूर्ण __attribute__((packed));
 
-struct usbip_usb_device {
-	char path[SYSFS_PATH_MAX];
-	char busid[SYSFS_BUS_ID_SIZE];
+काष्ठा usbip_usb_device अणु
+	अक्षर path[SYSFS_PATH_MAX];
+	अक्षर busid[SYSFS_BUS_ID_SIZE];
 
-	uint32_t busnum;
-	uint32_t devnum;
-	uint32_t speed;
+	uपूर्णांक32_t busnum;
+	uपूर्णांक32_t devnum;
+	uपूर्णांक32_t speed;
 
-	uint16_t idVendor;
-	uint16_t idProduct;
-	uint16_t bcdDevice;
+	uपूर्णांक16_t idVenकरोr;
+	uपूर्णांक16_t idProduct;
+	uपूर्णांक16_t bcdDevice;
 
-	uint8_t bDeviceClass;
-	uint8_t bDeviceSubClass;
-	uint8_t bDeviceProtocol;
-	uint8_t bConfigurationValue;
-	uint8_t bNumConfigurations;
-	uint8_t bNumInterfaces;
-} __attribute__((packed));
+	uपूर्णांक8_t bDeviceClass;
+	uपूर्णांक8_t bDeviceSubClass;
+	uपूर्णांक8_t bDeviceProtocol;
+	uपूर्णांक8_t bConfigurationValue;
+	uपूर्णांक8_t bNumConfigurations;
+	uपूर्णांक8_t bNumInterfaces;
+पूर्ण __attribute__((packed));
 
-#define to_string(s)	#s
+#घोषणा to_string(s)	#s
 
-void dump_usb_interface(struct usbip_usb_interface *);
-void dump_usb_device(struct usbip_usb_device *);
-int read_usb_device(struct udev_device *sdev, struct usbip_usb_device *udev);
-int read_attr_value(struct udev_device *dev, const char *name,
-		    const char *format);
-int read_usb_interface(struct usbip_usb_device *udev, int i,
-		       struct usbip_usb_interface *uinf);
+व्योम dump_usb_पूर्णांकerface(काष्ठा usbip_usb_पूर्णांकerface *);
+व्योम dump_usb_device(काष्ठा usbip_usb_device *);
+पूर्णांक पढ़ो_usb_device(काष्ठा udev_device *sdev, काष्ठा usbip_usb_device *udev);
+पूर्णांक पढ़ो_attr_value(काष्ठा udev_device *dev, स्थिर अक्षर *name,
+		    स्थिर अक्षर *क्रमmat);
+पूर्णांक पढ़ो_usb_पूर्णांकerface(काष्ठा usbip_usb_device *udev, पूर्णांक i,
+		       काष्ठा usbip_usb_पूर्णांकerface *uinf);
 
-const char *usbip_speed_string(int num);
-const char *usbip_status_string(int32_t status);
-const char *usbip_op_common_status_string(int status);
+स्थिर अक्षर *usbip_speed_string(पूर्णांक num);
+स्थिर अक्षर *usbip_status_string(पूर्णांक32_t status);
+स्थिर अक्षर *usbip_op_common_status_string(पूर्णांक status);
 
-int usbip_names_init(char *);
-void usbip_names_free(void);
-void usbip_names_get_product(char *buff, size_t size, uint16_t vendor,
-			     uint16_t product);
-void usbip_names_get_class(char *buff, size_t size, uint8_t class,
-			   uint8_t subclass, uint8_t protocol);
+पूर्णांक usbip_names_init(अक्षर *);
+व्योम usbip_names_मुक्त(व्योम);
+व्योम usbip_names_get_product(अक्षर *buff, माप_प्रकार size, uपूर्णांक16_t venकरोr,
+			     uपूर्णांक16_t product);
+व्योम usbip_names_get_class(अक्षर *buff, माप_प्रकार size, uपूर्णांक8_t class,
+			   uपूर्णांक8_t subclass, uपूर्णांक8_t protocol);
 
-#endif /* __USBIP_COMMON_H */
+#पूर्ण_अगर /* __USBIP_COMMON_H */

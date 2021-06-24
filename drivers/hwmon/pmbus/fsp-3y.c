@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Hardware monitoring driver for FSP 3Y-Power PSUs
+ * Hardware monitoring driver क्रम FSP 3Y-Power PSUs
  *
- * Copyright (c) 2021 Václav Kubernát, CESNET
+ * Copyright (c) 2021 Vथँclav Kubernथँt, CESNET
  *
  * This driver is mostly reverse engineered with the help of a tool called pmbus_peek written by
- * David Brownell (and later adopted by Jan Kundrát). The device has some sort of a timing issue
- * when switching pages, details are explained in the code. The driver support is limited. It
+ * David Brownell (and later aकरोpted by Jan Kundrथँt). The device has some sort of a timing issue
+ * when चयनing pages, details are explained in the code. The driver support is limited. It
  * exposes only the values, that have been tested to work correctly. Unsupported values either
  * aren't supported by the devices or their encondings are unknown.
  */
 
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include "pmbus.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश "pmbus.h"
 
-#define YM2151_PAGE_12V_LOG	0x00
-#define YM2151_PAGE_12V_REAL	0x00
-#define YM2151_PAGE_5VSB_LOG	0x01
-#define YM2151_PAGE_5VSB_REAL	0x20
-#define YH5151E_PAGE_12V_LOG	0x00
-#define YH5151E_PAGE_12V_REAL	0x00
-#define YH5151E_PAGE_5V_LOG	0x01
-#define YH5151E_PAGE_5V_REAL	0x10
-#define YH5151E_PAGE_3V3_LOG	0x02
-#define YH5151E_PAGE_3V3_REAL	0x11
+#घोषणा YM2151_PAGE_12V_LOG	0x00
+#घोषणा YM2151_PAGE_12V_REAL	0x00
+#घोषणा YM2151_PAGE_5VSB_LOG	0x01
+#घोषणा YM2151_PAGE_5VSB_REAL	0x20
+#घोषणा YH5151E_PAGE_12V_LOG	0x00
+#घोषणा YH5151E_PAGE_12V_REAL	0x00
+#घोषणा YH5151E_PAGE_5V_LOG	0x01
+#घोषणा YH5151E_PAGE_5V_REAL	0x10
+#घोषणा YH5151E_PAGE_3V3_LOG	0x02
+#घोषणा YH5151E_PAGE_3V3_REAL	0x11
 
-enum chips {
+क्रमागत chips अणु
 	ym2151e,
 	yh5151e
-};
+पूर्ण;
 
-struct fsp3y_data {
-	struct pmbus_driver_info info;
-	int chip;
-	int page;
+काष्ठा fsp3y_data अणु
+	काष्ठा pmbus_driver_info info;
+	पूर्णांक chip;
+	पूर्णांक page;
 
 	bool vout_linear_11;
-};
+पूर्ण;
 
-#define to_fsp3y_data(x) container_of(x, struct fsp3y_data, info)
+#घोषणा to_fsp3y_data(x) container_of(x, काष्ठा fsp3y_data, info)
 
-static int page_log_to_page_real(int page_log, enum chips chip)
-{
-	switch (chip) {
-	case ym2151e:
-		switch (page_log) {
-		case YM2151_PAGE_12V_LOG:
-			return YM2151_PAGE_12V_REAL;
-		case YM2151_PAGE_5VSB_LOG:
-			return YM2151_PAGE_5VSB_REAL;
-		}
-		return -EINVAL;
-	case yh5151e:
-		switch (page_log) {
-		case YH5151E_PAGE_12V_LOG:
-			return YH5151E_PAGE_12V_REAL;
-		case YH5151E_PAGE_5V_LOG:
-			return YH5151E_PAGE_5V_REAL;
-		case YH5151E_PAGE_3V3_LOG:
-			return YH5151E_PAGE_3V3_REAL;
-		}
-		return -EINVAL;
-	}
+अटल पूर्णांक page_log_to_page_real(पूर्णांक page_log, क्रमागत chips chip)
+अणु
+	चयन (chip) अणु
+	हाल ym2151e:
+		चयन (page_log) अणु
+		हाल YM2151_PAGE_12V_LOG:
+			वापस YM2151_PAGE_12V_REAL;
+		हाल YM2151_PAGE_5VSB_LOG:
+			वापस YM2151_PAGE_5VSB_REAL;
+		पूर्ण
+		वापस -EINVAL;
+	हाल yh5151e:
+		चयन (page_log) अणु
+		हाल YH5151E_PAGE_12V_LOG:
+			वापस YH5151E_PAGE_12V_REAL;
+		हाल YH5151E_PAGE_5V_LOG:
+			वापस YH5151E_PAGE_5V_REAL;
+		हाल YH5151E_PAGE_3V3_LOG:
+			वापस YH5151E_PAGE_3V3_REAL;
+		पूर्ण
+		वापस -EINVAL;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int set_page(struct i2c_client *client, int page_log)
-{
-	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
-	struct fsp3y_data *data = to_fsp3y_data(info);
-	int rv;
-	int page_real;
+अटल पूर्णांक set_page(काष्ठा i2c_client *client, पूर्णांक page_log)
+अणु
+	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
+	काष्ठा fsp3y_data *data = to_fsp3y_data(info);
+	पूर्णांक rv;
+	पूर्णांक page_real;
 
-	if (page_log < 0)
-		return 0;
+	अगर (page_log < 0)
+		वापस 0;
 
 	page_real = page_log_to_page_real(page_log, data->chip);
-	if (page_real < 0)
-		return page_real;
+	अगर (page_real < 0)
+		वापस page_real;
 
-	if (data->page != page_real) {
-		rv = i2c_smbus_write_byte_data(client, PMBUS_PAGE, page_real);
-		if (rv < 0)
-			return rv;
+	अगर (data->page != page_real) अणु
+		rv = i2c_smbus_ग_लिखो_byte_data(client, PMBUS_PAGE, page_real);
+		अगर (rv < 0)
+			वापस rv;
 
 		data->page = page_real;
 
 		/*
 		 * Testing showed that the device has a timing issue. After
-		 * setting a page, it takes a while, before the device actually
+		 * setting a page, it takes a जबतक, beक्रमe the device actually
 		 * gives the correct values from the correct page. 20 ms was
 		 * tested to be enough to not give wrong values (15 ms wasn't
 		 * enough).
 		 */
 		usleep_range(20000, 30000);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsp3y_read_byte_data(struct i2c_client *client, int page, int reg)
-{
-	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
-	struct fsp3y_data *data = to_fsp3y_data(info);
-	int rv;
+अटल पूर्णांक fsp3y_पढ़ो_byte_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक reg)
+अणु
+	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
+	काष्ठा fsp3y_data *data = to_fsp3y_data(info);
+	पूर्णांक rv;
 
 	/*
-	 * Inject an exponent for non-compliant YH5151-E.
+	 * Inject an exponent क्रम non-compliant YH5151-E.
 	 */
-	if (data->vout_linear_11 && reg == PMBUS_VOUT_MODE)
-		return 0x1A;
+	अगर (data->vout_linear_11 && reg == PMBUS_VOUT_MODE)
+		वापस 0x1A;
 
 	rv = set_page(client, page);
-	if (rv < 0)
-		return rv;
+	अगर (rv < 0)
+		वापस rv;
 
-	return i2c_smbus_read_byte_data(client, reg);
-}
+	वापस i2c_smbus_पढ़ो_byte_data(client, reg);
+पूर्ण
 
-static int fsp3y_read_word_data(struct i2c_client *client, int page, int phase, int reg)
-{
-	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
-	struct fsp3y_data *data = to_fsp3y_data(info);
-	int rv;
+अटल पूर्णांक fsp3y_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page, पूर्णांक phase, पूर्णांक reg)
+अणु
+	स्थिर काष्ठा pmbus_driver_info *info = pmbus_get_driver_info(client);
+	काष्ठा fsp3y_data *data = to_fsp3y_data(info);
+	पूर्णांक rv;
 
 	/*
 	 * This masks commands which weren't tested to work correctly. Some of
-	 * the masked commands return 0xFFFF. These would probably get tagged as
-	 * invalid by pmbus_core. Other ones do return values which might be
+	 * the masked commands वापस 0xFFFF. These would probably get tagged as
+	 * invalid by pmbus_core. Other ones करो वापस values which might be
 	 * useful (that is, they are not 0xFFFF), but their encoding is unknown,
 	 * and so they are unsupported.
 	 */
-	switch (reg) {
-	case PMBUS_READ_FAN_SPEED_1:
-	case PMBUS_READ_IIN:
-	case PMBUS_READ_IOUT:
-	case PMBUS_READ_PIN:
-	case PMBUS_READ_POUT:
-	case PMBUS_READ_TEMPERATURE_1:
-	case PMBUS_READ_TEMPERATURE_2:
-	case PMBUS_READ_TEMPERATURE_3:
-	case PMBUS_READ_VIN:
-	case PMBUS_READ_VOUT:
-	case PMBUS_STATUS_WORD:
-		break;
-	default:
-		return -ENXIO;
-	}
+	चयन (reg) अणु
+	हाल PMBUS_READ_FAN_SPEED_1:
+	हाल PMBUS_READ_IIN:
+	हाल PMBUS_READ_IOUT:
+	हाल PMBUS_READ_PIN:
+	हाल PMBUS_READ_POUT:
+	हाल PMBUS_READ_TEMPERATURE_1:
+	हाल PMBUS_READ_TEMPERATURE_2:
+	हाल PMBUS_READ_TEMPERATURE_3:
+	हाल PMBUS_READ_VIN:
+	हाल PMBUS_READ_VOUT:
+	हाल PMBUS_STATUS_WORD:
+		अवरोध;
+	शेष:
+		वापस -ENXIO;
+	पूर्ण
 
 	rv = set_page(client, page);
-	if (rv < 0)
-		return rv;
+	अगर (rv < 0)
+		वापस rv;
 
-	rv = i2c_smbus_read_word_data(client, reg);
-	if (rv < 0)
-		return rv;
+	rv = i2c_smbus_पढ़ो_word_data(client, reg);
+	अगर (rv < 0)
+		वापस rv;
 
 	/*
 	 * Handle YH-5151E non-compliant linear11 vout voltage.
 	 */
-	if (data->vout_linear_11 && reg == PMBUS_READ_VOUT)
+	अगर (data->vout_linear_11 && reg == PMBUS_READ_VOUT)
 		rv = sign_extend32(rv, 10) & 0xffff;
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static struct pmbus_driver_info fsp3y_info[] = {
-	[ym2151e] = {
+अटल काष्ठा pmbus_driver_info fsp3y_info[] = अणु
+	[ym2151e] = अणु
 		.pages = 2,
 		.func[YM2151_PAGE_12V_LOG] =
 			PMBUS_HAVE_VOUT | PMBUS_HAVE_IOUT |
@@ -181,10 +182,10 @@ static struct pmbus_driver_info fsp3y_info[] = {
 		.func[YM2151_PAGE_5VSB_LOG] =
 			PMBUS_HAVE_VOUT | PMBUS_HAVE_IOUT,
 			PMBUS_HAVE_IIN,
-		.read_word_data = fsp3y_read_word_data,
-		.read_byte_data = fsp3y_read_byte_data,
-	},
-	[yh5151e] = {
+		.पढ़ो_word_data = fsp3y_पढ़ो_word_data,
+		.पढ़ो_byte_data = fsp3y_पढ़ो_byte_data,
+	पूर्ण,
+	[yh5151e] = अणु
 		.pages = 3,
 		.func[YH5151E_PAGE_12V_LOG] =
 			PMBUS_HAVE_VOUT | PMBUS_HAVE_IOUT |
@@ -196,100 +197,100 @@ static struct pmbus_driver_info fsp3y_info[] = {
 		.func[YH5151E_PAGE_3V3_LOG] =
 			PMBUS_HAVE_VOUT | PMBUS_HAVE_IOUT |
 			PMBUS_HAVE_POUT,
-		.read_word_data = fsp3y_read_word_data,
-		.read_byte_data = fsp3y_read_byte_data,
-	}
-};
+		.पढ़ो_word_data = fsp3y_पढ़ो_word_data,
+		.पढ़ो_byte_data = fsp3y_पढ़ो_byte_data,
+	पूर्ण
+पूर्ण;
 
-static int fsp3y_detect(struct i2c_client *client)
-{
-	int rv;
+अटल पूर्णांक fsp3y_detect(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक rv;
 	u8 buf[I2C_SMBUS_BLOCK_MAX + 1];
 
-	rv = i2c_smbus_read_block_data(client, PMBUS_MFR_MODEL, buf);
-	if (rv < 0)
-		return rv;
+	rv = i2c_smbus_पढ़ो_block_data(client, PMBUS_MFR_MODEL, buf);
+	अगर (rv < 0)
+		वापस rv;
 
 	buf[rv] = '\0';
 
-	if (rv == 8) {
-		if (!strcmp(buf, "YM-2151E"))
-			return ym2151e;
-		else if (!strcmp(buf, "YH-5151E"))
-			return yh5151e;
-	}
+	अगर (rv == 8) अणु
+		अगर (!म_भेद(buf, "YM-2151E"))
+			वापस ym2151e;
+		अन्यथा अगर (!म_भेद(buf, "YH-5151E"))
+			वापस yh5151e;
+	पूर्ण
 
 	dev_err(&client->dev, "Unsupported model %.*s\n", rv, buf);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static const struct i2c_device_id fsp3y_id[] = {
-	{"ym2151e", ym2151e},
-	{"yh5151e", yh5151e},
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id fsp3y_id[] = अणु
+	अणु"ym2151e", ym2151eपूर्ण,
+	अणु"yh5151e", yh5151eपूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int fsp3y_probe(struct i2c_client *client)
-{
-	struct fsp3y_data *data;
-	const struct i2c_device_id *id;
-	int rv;
+अटल पूर्णांक fsp3y_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा fsp3y_data *data;
+	स्थिर काष्ठा i2c_device_id *id;
+	पूर्णांक rv;
 
-	data = devm_kzalloc(&client->dev, sizeof(struct fsp3y_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&client->dev, माप(काष्ठा fsp3y_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->chip = fsp3y_detect(client);
-	if (data->chip < 0)
-		return data->chip;
+	अगर (data->chip < 0)
+		वापस data->chip;
 
 	id = i2c_match_id(fsp3y_id, client);
-	if (data->chip != id->driver_data)
+	अगर (data->chip != id->driver_data)
 		dev_warn(&client->dev, "Device mismatch: Configured %s (%d), detected %d\n",
-			 id->name, (int)id->driver_data, data->chip);
+			 id->name, (पूर्णांक)id->driver_data, data->chip);
 
-	rv = i2c_smbus_read_byte_data(client, PMBUS_PAGE);
-	if (rv < 0)
-		return rv;
+	rv = i2c_smbus_पढ़ो_byte_data(client, PMBUS_PAGE);
+	अगर (rv < 0)
+		वापस rv;
 	data->page = rv;
 
 	data->info = fsp3y_info[data->chip];
 
 	/*
-	 * YH-5151E sometimes reports vout in linear11 and sometimes in
-	 * linear16. This depends on the exact individual piece of hardware. One
+	 * YH-5151E someबार reports vout in linear11 and someबार in
+	 * linear16. This depends on the exact inभागidual piece of hardware. One
 	 * YH-5151E can use linear16 and another might use linear11 instead.
 	 *
-	 * The format can be recognized by reading VOUT_MODE - if it doesn't
+	 * The क्रमmat can be recognized by पढ़ोing VOUT_MODE - अगर it करोesn't
 	 * report a valid exponent, then vout uses linear11. Otherwise, the
 	 * device is compliant and uses linear16.
 	 */
 	data->vout_linear_11 = false;
-	if (data->chip == yh5151e) {
-		rv = i2c_smbus_read_byte_data(client, PMBUS_VOUT_MODE);
-		if (rv < 0)
-			return rv;
+	अगर (data->chip == yh5151e) अणु
+		rv = i2c_smbus_पढ़ो_byte_data(client, PMBUS_VOUT_MODE);
+		अगर (rv < 0)
+			वापस rv;
 
-		if (rv == 0xFF)
+		अगर (rv == 0xFF)
 			data->vout_linear_11 = true;
-	}
+	पूर्ण
 
-	return pmbus_do_probe(client, &data->info);
-}
+	वापस pmbus_करो_probe(client, &data->info);
+पूर्ण
 
 MODULE_DEVICE_TABLE(i2c, fsp3y_id);
 
-static struct i2c_driver fsp3y_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver fsp3y_driver = अणु
+	.driver = अणु
 		   .name = "fsp3y",
-		   },
+		   पूर्ण,
 	.probe_new = fsp3y_probe,
 	.id_table = fsp3y_id
-};
+पूर्ण;
 
 module_i2c_driver(fsp3y_driver);
 
-MODULE_AUTHOR("Václav Kubernát");
+MODULE_AUTHOR("Vथँclav Kubernथँt");
 MODULE_DESCRIPTION("PMBus driver for FSP/3Y-Power power supplies");
 MODULE_LICENSE("GPL");
 MODULE_IMPORT_NS(PMBUS);

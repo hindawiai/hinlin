@@ -1,418 +1,419 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "util.h"
-#include "debug.h"
-#include "event.h"
-#include <api/fs/fs.h>
-#include <sys/stat.h>
-#include <sys/utsname.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <inttypes.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-#include <linux/capability.h>
-#include <linux/kernel.h>
-#include <linux/log2.h>
-#include <linux/time64.h>
-#include <unistd.h>
-#include "cap.h"
-#include "strlist.h"
-#include "string2.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "util.h"
+#समावेश "debug.h"
+#समावेश "event.h"
+#समावेश <api/fs/fs.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/utsname.h>
+#समावेश <dirent.h>
+#समावेश <fcntl.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <सीमा.स>
+#समावेश <linux/capability.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/समय64.h>
+#समावेश <unistd.h>
+#समावेश "cap.h"
+#समावेश "strlist.h"
+#समावेश "string2.h"
 
 /*
- * XXX We need to find a better place for these things...
+ * XXX We need to find a better place क्रम these things...
  */
 
-bool perf_singlethreaded = true;
+bool perf_singlethपढ़ोed = true;
 
-void perf_set_singlethreaded(void)
-{
-	perf_singlethreaded = true;
-}
+व्योम perf_set_singlethपढ़ोed(व्योम)
+अणु
+	perf_singlethपढ़ोed = true;
+पूर्ण
 
-void perf_set_multithreaded(void)
-{
-	perf_singlethreaded = false;
-}
+व्योम perf_set_multithपढ़ोed(व्योम)
+अणु
+	perf_singlethपढ़ोed = false;
+पूर्ण
 
-int sysctl_perf_event_max_stack = PERF_MAX_STACK_DEPTH;
-int sysctl_perf_event_max_contexts_per_stack = PERF_MAX_CONTEXTS_PER_STACK;
+पूर्णांक sysctl_perf_event_max_stack = PERF_MAX_STACK_DEPTH;
+पूर्णांक sysctl_perf_event_max_contexts_per_stack = PERF_MAX_CONTEXTS_PER_STACK;
 
-int sysctl__max_stack(void)
-{
-	int value;
+पूर्णांक sysctl__max_stack(व्योम)
+अणु
+	पूर्णांक value;
 
-	if (sysctl__read_int("kernel/perf_event_max_stack", &value) == 0)
+	अगर (sysctl__पढ़ो_पूर्णांक("kernel/perf_event_max_stack", &value) == 0)
 		sysctl_perf_event_max_stack = value;
 
-	if (sysctl__read_int("kernel/perf_event_max_contexts_per_stack", &value) == 0)
+	अगर (sysctl__पढ़ो_पूर्णांक("kernel/perf_event_max_contexts_per_stack", &value) == 0)
 		sysctl_perf_event_max_contexts_per_stack = value;
 
-	return sysctl_perf_event_max_stack;
-}
+	वापस sysctl_perf_event_max_stack;
+पूर्ण
 
-bool sysctl__nmi_watchdog_enabled(void)
-{
-	static bool cached;
-	static bool nmi_watchdog;
-	int value;
+bool sysctl__nmi_watchकरोg_enabled(व्योम)
+अणु
+	अटल bool cached;
+	अटल bool nmi_watchकरोg;
+	पूर्णांक value;
 
-	if (cached)
-		return nmi_watchdog;
+	अगर (cached)
+		वापस nmi_watchकरोg;
 
-	if (sysctl__read_int("kernel/nmi_watchdog", &value) < 0)
-		return false;
+	अगर (sysctl__पढ़ो_पूर्णांक("kernel/nmi_watchdog", &value) < 0)
+		वापस false;
 
-	nmi_watchdog = (value > 0) ? true : false;
+	nmi_watchकरोg = (value > 0) ? true : false;
 	cached = true;
 
-	return nmi_watchdog;
-}
+	वापस nmi_watchकरोg;
+पूर्ण
 
 bool test_attr__enabled;
 
 bool perf_host  = true;
 bool perf_guest = false;
 
-void event_attr_init(struct perf_event_attr *attr)
-{
-	if (!perf_host)
+व्योम event_attr_init(काष्ठा perf_event_attr *attr)
+अणु
+	अगर (!perf_host)
 		attr->exclude_host  = 1;
-	if (!perf_guest)
+	अगर (!perf_guest)
 		attr->exclude_guest = 1;
 	/* to capture ABI version */
-	attr->size = sizeof(*attr);
-}
+	attr->size = माप(*attr);
+पूर्ण
 
-int mkdir_p(char *path, mode_t mode)
-{
-	struct stat st;
-	int err;
-	char *d = path;
+पूर्णांक सूची_गढ़ो_p(अक्षर *path, mode_t mode)
+अणु
+	काष्ठा stat st;
+	पूर्णांक err;
+	अक्षर *d = path;
 
-	if (*d != '/')
-		return -1;
+	अगर (*d != '/')
+		वापस -1;
 
-	if (stat(path, &st) == 0)
-		return 0;
+	अगर (stat(path, &st) == 0)
+		वापस 0;
 
-	while (*++d == '/');
+	जबतक (*++d == '/');
 
-	while ((d = strchr(d, '/'))) {
+	जबतक ((d = म_अक्षर(d, '/'))) अणु
 		*d = '\0';
-		err = stat(path, &st) && mkdir(path, mode);
+		err = stat(path, &st) && सूची_गढ़ो(path, mode);
 		*d++ = '/';
-		if (err)
-			return -1;
-		while (*d == '/')
+		अगर (err)
+			वापस -1;
+		जबतक (*d == '/')
 			++d;
-	}
-	return (stat(path, &st) && mkdir(path, mode)) ? -1 : 0;
-}
+	पूर्ण
+	वापस (stat(path, &st) && सूची_गढ़ो(path, mode)) ? -1 : 0;
+पूर्ण
 
-static bool match_pat(char *file, const char **pat)
-{
-	int i = 0;
+अटल bool match_pat(अक्षर *file, स्थिर अक्षर **pat)
+अणु
+	पूर्णांक i = 0;
 
-	if (!pat)
-		return true;
+	अगर (!pat)
+		वापस true;
 
-	while (pat[i]) {
-		if (strglobmatch(file, pat[i]))
-			return true;
+	जबतक (pat[i]) अणु
+		अगर (strglobmatch(file, pat[i]))
+			वापस true;
 
 		i++;
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * The depth specify how deep the removal will go.
- * 0       - will remove only files under the 'path' directory
- * 1 .. x  - will dive in x-level deep under the 'path' directory
+ * The depth specअगरy how deep the removal will go.
+ * 0       - will हटाओ only files under the 'path' directory
+ * 1 .. x  - will भागe in x-level deep under the 'path' directory
  *
- * If specified the pat is array of string patterns ended with NULL,
+ * If specअगरied the pat is array of string patterns ended with शून्य,
  * which are checked upon every file/directory found. Only matching
- * ones are removed.
+ * ones are हटाओd.
  *
- * The function returns:
+ * The function वापसs:
  *    0 on success
- *   -1 on removal failure with errno set
+ *   -1 on removal failure with त्रुटि_सं set
  *   -2 on pattern failure
  */
-static int rm_rf_depth_pat(const char *path, int depth, const char **pat)
-{
-	DIR *dir;
-	int ret;
-	struct dirent *d;
-	char namebuf[PATH_MAX];
-	struct stat statbuf;
+अटल पूर्णांक rm_rf_depth_pat(स्थिर अक्षर *path, पूर्णांक depth, स्थिर अक्षर **pat)
+अणु
+	सूची *dir;
+	पूर्णांक ret;
+	काष्ठा dirent *d;
+	अक्षर namebuf[PATH_MAX];
+	काष्ठा stat statbuf;
 
-	/* Do not fail if there's no file. */
+	/* Do not fail अगर there's no file. */
 	ret = lstat(path, &statbuf);
-	if (ret)
-		return 0;
+	अगर (ret)
+		वापस 0;
 
-	/* Try to remove any file we get. */
-	if (!(statbuf.st_mode & S_IFDIR))
-		return unlink(path);
+	/* Try to हटाओ any file we get. */
+	अगर (!(statbuf.st_mode & S_IFसूची))
+		वापस unlink(path);
 
 	/* We have directory in path. */
-	dir = opendir(path);
-	if (dir == NULL)
-		return -1;
+	dir = सूची_खोलो(path);
+	अगर (dir == शून्य)
+		वापस -1;
 
-	while ((d = readdir(dir)) != NULL && !ret) {
+	जबतक ((d = सूची_पढ़ो(dir)) != शून्य && !ret) अणु
 
-		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
-			continue;
+		अगर (!म_भेद(d->d_name, ".") || !म_भेद(d->d_name, ".."))
+			जारी;
 
-		if (!match_pat(d->d_name, pat)) {
+		अगर (!match_pat(d->d_name, pat)) अणु
 			ret =  -2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		scnprintf(namebuf, sizeof(namebuf), "%s/%s",
+		scnम_लिखो(namebuf, माप(namebuf), "%s/%s",
 			  path, d->d_name);
 
 		/* We have to check symbolic link itself */
 		ret = lstat(namebuf, &statbuf);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_debug("stat failed: %s\n", namebuf);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (S_ISDIR(statbuf.st_mode))
+		अगर (S_ISसूची(statbuf.st_mode))
 			ret = depth ? rm_rf_depth_pat(namebuf, depth - 1, pat) : 0;
-		else
+		अन्यथा
 			ret = unlink(namebuf);
-	}
-	closedir(dir);
+	पूर्ण
+	बंद_सूची(dir);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return rmdir(path);
-}
+	वापस सूची_हटाओ(path);
+पूर्ण
 
-static int rm_rf_kcore_dir(const char *path)
-{
-	char kcore_dir_path[PATH_MAX];
-	const char *pat[] = {
+अटल पूर्णांक rm_rf_kcore_dir(स्थिर अक्षर *path)
+अणु
+	अक्षर kcore_dir_path[PATH_MAX];
+	स्थिर अक्षर *pat[] = अणु
 		"kcore",
 		"kallsyms",
 		"modules",
-		NULL,
-	};
+		शून्य,
+	पूर्ण;
 
-	snprintf(kcore_dir_path, sizeof(kcore_dir_path), "%s/kcore_dir", path);
+	snम_लिखो(kcore_dir_path, माप(kcore_dir_path), "%s/kcore_dir", path);
 
-	return rm_rf_depth_pat(kcore_dir_path, 0, pat);
-}
+	वापस rm_rf_depth_pat(kcore_dir_path, 0, pat);
+पूर्ण
 
-int rm_rf_perf_data(const char *path)
-{
-	const char *pat[] = {
+पूर्णांक rm_rf_perf_data(स्थिर अक्षर *path)
+अणु
+	स्थिर अक्षर *pat[] = अणु
 		"data",
 		"data.*",
-		NULL,
-	};
+		शून्य,
+	पूर्ण;
 
 	rm_rf_kcore_dir(path);
 
-	return rm_rf_depth_pat(path, 0, pat);
-}
+	वापस rm_rf_depth_pat(path, 0, pat);
+पूर्ण
 
-int rm_rf(const char *path)
-{
-	return rm_rf_depth_pat(path, INT_MAX, NULL);
-}
+पूर्णांक rm_rf(स्थिर अक्षर *path)
+अणु
+	वापस rm_rf_depth_pat(path, पूर्णांक_उच्च, शून्य);
+पूर्ण
 
-/* A filter which removes dot files */
-bool lsdir_no_dot_filter(const char *name __maybe_unused, struct dirent *d)
-{
-	return d->d_name[0] != '.';
-}
+/* A filter which हटाओs करोt files */
+bool lsdir_no_करोt_filter(स्थिर अक्षर *name __maybe_unused, काष्ठा dirent *d)
+अणु
+	वापस d->d_name[0] != '.';
+पूर्ण
 
-/* lsdir reads a directory and store it in strlist */
-struct strlist *lsdir(const char *name,
-		      bool (*filter)(const char *, struct dirent *))
-{
-	struct strlist *list = NULL;
-	DIR *dir;
-	struct dirent *d;
+/* lsdir पढ़ोs a directory and store it in strlist */
+काष्ठा strlist *lsdir(स्थिर अक्षर *name,
+		      bool (*filter)(स्थिर अक्षर *, काष्ठा dirent *))
+अणु
+	काष्ठा strlist *list = शून्य;
+	सूची *dir;
+	काष्ठा dirent *d;
 
-	dir = opendir(name);
-	if (!dir)
-		return NULL;
+	dir = सूची_खोलो(name);
+	अगर (!dir)
+		वापस शून्य;
 
-	list = strlist__new(NULL, NULL);
-	if (!list) {
-		errno = ENOMEM;
-		goto out;
-	}
+	list = strlist__new(शून्य, शून्य);
+	अगर (!list) अणु
+		त्रुटि_सं = ENOMEM;
+		जाओ out;
+	पूर्ण
 
-	while ((d = readdir(dir)) != NULL) {
-		if (!filter || filter(name, d))
+	जबतक ((d = सूची_पढ़ो(dir)) != शून्य) अणु
+		अगर (!filter || filter(name, d))
 			strlist__add(list, d->d_name);
-	}
+	पूर्ण
 
 out:
-	closedir(dir);
-	return list;
-}
+	बंद_सूची(dir);
+	वापस list;
+पूर्ण
 
-size_t hex_width(u64 v)
-{
-	size_t n = 1;
+माप_प्रकार hex_width(u64 v)
+अणु
+	माप_प्रकार n = 1;
 
-	while ((v >>= 4))
+	जबतक ((v >>= 4))
 		++n;
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-int perf_event_paranoid(void)
-{
-	int value;
+पूर्णांक perf_event_paranoid(व्योम)
+अणु
+	पूर्णांक value;
 
-	if (sysctl__read_int("kernel/perf_event_paranoid", &value))
-		return INT_MAX;
+	अगर (sysctl__पढ़ो_पूर्णांक("kernel/perf_event_paranoid", &value))
+		वापस पूर्णांक_उच्च;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-bool perf_event_paranoid_check(int max_level)
-{
-	return perf_cap__capable(CAP_SYS_ADMIN) ||
+bool perf_event_paranoid_check(पूर्णांक max_level)
+अणु
+	वापस perf_cap__capable(CAP_SYS_ADMIN) ||
 			perf_cap__capable(CAP_PERFMON) ||
 			perf_event_paranoid() <= max_level;
-}
+पूर्ण
 
-static int
-fetch_ubuntu_kernel_version(unsigned int *puint)
-{
-	ssize_t len;
-	size_t line_len = 0;
-	char *ptr, *line = NULL;
-	int version, patchlevel, sublevel, err;
-	FILE *vsig;
+अटल पूर्णांक
+fetch_ubuntu_kernel_version(अचिन्हित पूर्णांक *puपूर्णांक)
+अणु
+	sमाप_प्रकार len;
+	माप_प्रकार line_len = 0;
+	अक्षर *ptr, *line = शून्य;
+	पूर्णांक version, patchlevel, sublevel, err;
+	खाता *vsig;
 
-	if (!puint)
-		return 0;
+	अगर (!puपूर्णांक)
+		वापस 0;
 
-	vsig = fopen("/proc/version_signature", "r");
-	if (!vsig) {
+	vsig = ख_खोलो("/proc/version_signature", "r");
+	अगर (!vsig) अणु
 		pr_debug("Open /proc/version_signature failed: %s\n",
-			 strerror(errno));
-		return -1;
-	}
+			 म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
 	len = getline(&line, &line_len, vsig);
-	fclose(vsig);
+	ख_बंद(vsig);
 	err = -1;
-	if (len <= 0) {
+	अगर (len <= 0) अणु
 		pr_debug("Reading from /proc/version_signature failed: %s\n",
-			 strerror(errno));
-		goto errout;
-	}
+			 म_त्रुटि(त्रुटि_सं));
+		जाओ errout;
+	पूर्ण
 
-	ptr = strrchr(line, ' ');
-	if (!ptr) {
+	ptr = म_खोजप(line, ' ');
+	अगर (!ptr) अणु
 		pr_debug("Parsing /proc/version_signature failed: %s\n", line);
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	err = sscanf(ptr + 1, "%d.%d.%d",
+	err = माला_पूछो(ptr + 1, "%d.%d.%d",
 		     &version, &patchlevel, &sublevel);
-	if (err != 3) {
+	अगर (err != 3) अणु
 		pr_debug("Unable to get kernel version from /proc/version_signature '%s'\n",
 			 line);
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	*puint = (version << 16) + (patchlevel << 8) + sublevel;
+	*puपूर्णांक = (version << 16) + (patchlevel << 8) + sublevel;
 	err = 0;
 errout:
-	free(line);
-	return err;
-}
+	मुक्त(line);
+	वापस err;
+पूर्ण
 
-int
-fetch_kernel_version(unsigned int *puint, char *str,
-		     size_t str_size)
-{
-	struct utsname utsname;
-	int version, patchlevel, sublevel, err;
-	bool int_ver_ready = false;
+पूर्णांक
+fetch_kernel_version(अचिन्हित पूर्णांक *puपूर्णांक, अक्षर *str,
+		     माप_प्रकार str_size)
+अणु
+	काष्ठा utsname utsname;
+	पूर्णांक version, patchlevel, sublevel, err;
+	bool पूर्णांक_ver_पढ़ोy = false;
 
-	if (access("/proc/version_signature", R_OK) == 0)
-		if (!fetch_ubuntu_kernel_version(puint))
-			int_ver_ready = true;
+	अगर (access("/proc/version_signature", R_OK) == 0)
+		अगर (!fetch_ubuntu_kernel_version(puपूर्णांक))
+			पूर्णांक_ver_पढ़ोy = true;
 
-	if (uname(&utsname))
-		return -1;
+	अगर (uname(&utsname))
+		वापस -1;
 
-	if (str && str_size) {
-		strncpy(str, utsname.release, str_size);
+	अगर (str && str_size) अणु
+		म_नकलन(str, utsname.release, str_size);
 		str[str_size - 1] = '\0';
-	}
+	पूर्ण
 
-	if (!puint || int_ver_ready)
-		return 0;
+	अगर (!puपूर्णांक || पूर्णांक_ver_पढ़ोy)
+		वापस 0;
 
-	err = sscanf(utsname.release, "%d.%d.%d",
+	err = माला_पूछो(utsname.release, "%d.%d.%d",
 		     &version, &patchlevel, &sublevel);
 
-	if (err != 3) {
+	अगर (err != 3) अणु
 		pr_debug("Unable to get kernel version from uname '%s'\n",
 			 utsname.release);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	*puint = (version << 16) + (patchlevel << 8) + sublevel;
-	return 0;
-}
+	*puपूर्णांक = (version << 16) + (patchlevel << 8) + sublevel;
+	वापस 0;
+पूर्ण
 
-const char *perf_tip(const char *dirpath)
-{
-	struct strlist *tips;
-	struct str_node *node;
-	char *tip = NULL;
-	struct strlist_config conf = {
-		.dirname = dirpath,
+स्थिर अक्षर *perf_tip(स्थिर अक्षर *dirpath)
+अणु
+	काष्ठा strlist *tips;
+	काष्ठा str_node *node;
+	अक्षर *tip = शून्य;
+	काष्ठा strlist_config conf = अणु
+		.स_नाम = dirpath,
 		.file_only = true,
-	};
+	पूर्ण;
 
 	tips = strlist__new("tips.txt", &conf);
-	if (tips == NULL)
-		return errno == ENOENT ? NULL :
+	अगर (tips == शून्य)
+		वापस त्रुटि_सं == ENOENT ? शून्य :
 			"Tip: check path of tips.txt or get more memory! ;-p";
 
-	if (strlist__nr_entries(tips) == 0)
-		goto out;
+	अगर (strlist__nr_entries(tips) == 0)
+		जाओ out;
 
-	node = strlist__entry(tips, random() % strlist__nr_entries(tips));
-	if (asprintf(&tip, "Tip: %s", node->s) < 0)
-		tip = (char *)"Tip: get more memory! ;-)";
+	node = strlist__entry(tips, अक्रमom() % strlist__nr_entries(tips));
+	अगर (aप्र_लिखो(&tip, "Tip: %s", node->s) < 0)
+		tip = (अक्षर *)"Tip: get more memory! ;-)";
 
 out:
 	strlist__delete(tips);
 
-	return tip;
-}
+	वापस tip;
+पूर्ण
 
-char *perf_exe(char *buf, int len)
-{
-	int n = readlink("/proc/self/exe", buf, len);
-	if (n > 0) {
+अक्षर *perf_exe(अक्षर *buf, पूर्णांक len)
+अणु
+	पूर्णांक n = पढ़ोlink("/proc/self/exe", buf, len);
+	अगर (n > 0) अणु
 		buf[n] = 0;
-		return buf;
-	}
-	return strcpy(buf, "perf");
-}
+		वापस buf;
+	पूर्ण
+	वापस म_नकल(buf, "perf");
+पूर्ण

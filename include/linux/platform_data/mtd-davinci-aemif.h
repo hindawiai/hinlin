@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * TI DaVinci AEMIF support
  *
@@ -7,21 +8,21 @@
  * version 2. This program is licensed "as is" without any warranty of any
  * kind, whether express or implied.
  */
-#ifndef _MACH_DAVINCI_AEMIF_H
-#define _MACH_DAVINCI_AEMIF_H
+#अगर_अघोषित _MACH_DAVINCI_AEMIF_H
+#घोषणा _MACH_DAVINCI_AEMIF_H
 
-#include <linux/platform_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define NRCSR_OFFSET		0x00
-#define AWCCR_OFFSET		0x04
-#define A1CR_OFFSET		0x10
+#घोषणा NRCSR_OFFSET		0x00
+#घोषणा AWCCR_OFFSET		0x04
+#घोषणा A1CR_OFFSET		0x10
 
-#define ACR_ASIZE_MASK		0x3
-#define ACR_EW_MASK		BIT(30)
-#define ACR_SS_MASK		BIT(31)
+#घोषणा ACR_ASIZE_MASK		0x3
+#घोषणा ACR_EW_MASK		BIT(30)
+#घोषणा ACR_SS_MASK		BIT(31)
 
 /* All timings in nanoseconds */
-struct davinci_aemif_timing {
+काष्ठा davinci_aemअगर_timing अणु
 	u8	wsetup;
 	u8	wstrobe;
 	u8	whold;
@@ -31,6 +32,6 @@ struct davinci_aemif_timing {
 	u8	rhold;
 
 	u8	ta;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

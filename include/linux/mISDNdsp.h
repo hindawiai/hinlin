@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __mISDNdsp_H__
-#define __mISDNdsp_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __mISDNdsp_H__
+#घोषणा __mISDNdsp_H__
 
-struct mISDN_dsp_element_arg {
-	char	*name;
-	char	*def;
-	char	*desc;
-};
+काष्ठा mISDN_dsp_element_arg अणु
+	अक्षर	*name;
+	अक्षर	*def;
+	अक्षर	*desc;
+पूर्ण;
 
-struct mISDN_dsp_element {
-	char	*name;
-	void	*(*new)(const char *arg);
-	void	(*free)(void *p);
-	void	(*process_tx)(void *p, unsigned char *data, int len);
-	void	(*process_rx)(void *p, unsigned char *data, int len,
-			unsigned int txlen);
-	int	num_args;
-	struct mISDN_dsp_element_arg
+काष्ठा mISDN_dsp_element अणु
+	अक्षर	*name;
+	व्योम	*(*new)(स्थिर अक्षर *arg);
+	व्योम	(*मुक्त)(व्योम *p);
+	व्योम	(*process_tx)(व्योम *p, अचिन्हित अक्षर *data, पूर्णांक len);
+	व्योम	(*process_rx)(व्योम *p, अचिन्हित अक्षर *data, पूर्णांक len,
+			अचिन्हित पूर्णांक txlen);
+	पूर्णांक	num_args;
+	काष्ठा mISDN_dsp_element_arg
 		*args;
-};
+पूर्ण;
 
-extern int  mISDN_dsp_element_register(struct mISDN_dsp_element *elem);
-extern void mISDN_dsp_element_unregister(struct mISDN_dsp_element *elem);
+बाह्य पूर्णांक  mISDN_dsp_element_रेजिस्टर(काष्ठा mISDN_dsp_element *elem);
+बाह्य व्योम mISDN_dsp_element_unरेजिस्टर(काष्ठा mISDN_dsp_element *elem);
 
-struct dsp_features {
-	int	hfc_id; /* unique id to identify the chip (or -1) */
-	int	hfc_dtmf; /* set if HFCmulti card supports dtmf */
-	int	hfc_conf; /* set if HFCmulti card supports conferences */
-	int	hfc_loops; /* set if card supports tone loops */
-	int	hfc_echocanhw; /* set if card supports echocancelation*/
-	int	pcm_id; /* unique id to identify the pcm bus (or -1) */
-	int	pcm_slots; /* number of slots on the pcm bus */
-	int	pcm_banks; /* number of IO banks of pcm bus */
-	int	unclocked; /* data is not clocked (has jitter/loss) */
-	int	unordered; /* data is unordered (packets have index) */
-};
+काष्ठा dsp_features अणु
+	पूर्णांक	hfc_id; /* unique id to identअगरy the chip (or -1) */
+	पूर्णांक	hfc_dपंचांगf; /* set अगर HFCmulti card supports dपंचांगf */
+	पूर्णांक	hfc_conf; /* set अगर HFCmulti card supports conferences */
+	पूर्णांक	hfc_loops; /* set अगर card supports tone loops */
+	पूर्णांक	hfc_echocanhw; /* set अगर card supports echocancelation*/
+	पूर्णांक	pcm_id; /* unique id to identअगरy the pcm bus (or -1) */
+	पूर्णांक	pcm_slots; /* number of slots on the pcm bus */
+	पूर्णांक	pcm_banks; /* number of IO banks of pcm bus */
+	पूर्णांक	unघड़ीed; /* data is not घड़ीed (has jitter/loss) */
+	पूर्णांक	unordered; /* data is unordered (packets have index) */
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 

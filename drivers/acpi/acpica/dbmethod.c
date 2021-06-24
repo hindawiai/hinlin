@@ -1,224 +1,225 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: dbmethod - Debug commands for control methods
+ * Module Name: dbmethod - Debug commands क्रम control methods
  *
  ******************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acdispat.h"
-#include "acnamesp.h"
-#include "acdebug.h"
-#include "acparser.h"
-#include "acpredef.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acdispat.h"
+#समावेश "acnamesp.h"
+#समावेश "acdebug.h"
+#समावेश "acparser.h"
+#समावेश "acpredef.h"
 
-#define _COMPONENT          ACPI_CA_DEBUGGER
+#घोषणा _COMPONENT          ACPI_CA_DEBUGGER
 ACPI_MODULE_NAME("dbmethod")
 
 /* Local prototypes */
-static acpi_status
-acpi_db_walk_for_execute(acpi_handle obj_handle,
-			 u32 nesting_level, void *context, void **return_value);
+अटल acpi_status
+acpi_db_walk_क्रम_execute(acpi_handle obj_handle,
+			 u32 nesting_level, व्योम *context, व्योम **वापस_value);
 
-static acpi_status acpi_db_evaluate_object(struct acpi_namespace_node *node);
+अटल acpi_status acpi_db_evaluate_object(काष्ठा acpi_namespace_node *node);
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_db_set_method_breakpoint
+ * FUNCTION:    acpi_db_set_method_अवरोधpoपूर्णांक
  *
- * PARAMETERS:  location            - AML offset of breakpoint
+ * PARAMETERS:  location            - AML offset of अवरोधpoपूर्णांक
  *              walk_state          - Current walk info
  *              op                  - Current Op (from parse walk)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Set a breakpoint in a control method at the specified
+ * DESCRIPTION: Set a अवरोधpoपूर्णांक in a control method at the specअगरied
  *              AML offset
  *
  ******************************************************************************/
 
-void
-acpi_db_set_method_breakpoint(char *location,
-			      struct acpi_walk_state *walk_state,
-			      union acpi_parse_object *op)
-{
+व्योम
+acpi_db_set_method_अवरोधpoपूर्णांक(अक्षर *location,
+			      काष्ठा acpi_walk_state *walk_state,
+			      जोड़ acpi_parse_object *op)
+अणु
 	u32 address;
 	u32 aml_offset;
 
-	if (!op) {
-		acpi_os_printf("There is no method currently executing\n");
-		return;
-	}
+	अगर (!op) अणु
+		acpi_os_म_लिखो("There is no method currently executing\n");
+		वापस;
+	पूर्ण
 
-	/* Get and verify the breakpoint address */
+	/* Get and verअगरy the अवरोधpoपूर्णांक address */
 
-	address = strtoul(location, NULL, 16);
+	address = म_से_अदीर्घ(location, शून्य, 16);
 	aml_offset = (u32)ACPI_PTR_DIFF(op->common.aml,
 					walk_state->parser_state.aml_start);
-	if (address <= aml_offset) {
-		acpi_os_printf("Breakpoint %X is beyond current address %X\n",
+	अगर (address <= aml_offset) अणु
+		acpi_os_म_लिखो("Breakpoint %X is beyond current address %X\n",
 			       address, aml_offset);
-	}
+	पूर्ण
 
-	/* Save breakpoint in current walk */
+	/* Save अवरोधpoपूर्णांक in current walk */
 
-	walk_state->user_breakpoint = address;
-	acpi_os_printf("Breakpoint set at AML offset %X\n", address);
-}
+	walk_state->user_अवरोधpoपूर्णांक = address;
+	acpi_os_म_लिखो("Breakpoint set at AML offset %X\n", address);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_db_set_method_call_breakpoint
+ * FUNCTION:    acpi_db_set_method_call_अवरोधpoपूर्णांक
  *
  * PARAMETERS:  op                  - Current Op (from parse walk)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Set a breakpoint in a control method at the specified
+ * DESCRIPTION: Set a अवरोधpoपूर्णांक in a control method at the specअगरied
  *              AML offset
  *
  ******************************************************************************/
 
-void acpi_db_set_method_call_breakpoint(union acpi_parse_object *op)
-{
+व्योम acpi_db_set_method_call_अवरोधpoपूर्णांक(जोड़ acpi_parse_object *op)
+अणु
 
-	if (!op) {
-		acpi_os_printf("There is no method currently executing\n");
-		return;
-	}
+	अगर (!op) अणु
+		acpi_os_म_लिखो("There is no method currently executing\n");
+		वापस;
+	पूर्ण
 
 	acpi_gbl_step_to_next_call = TRUE;
-}
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_db_set_method_data
  *
- * PARAMETERS:  type_arg        - L for local, A for argument
+ * PARAMETERS:  type_arg        - L क्रम local, A क्रम argument
  *              index_arg       - which one
  *              value_arg       - Value to set.
  *
  * RETURN:      None
  *
- * DESCRIPTION: Set a local or argument for the running control method.
+ * DESCRIPTION: Set a local or argument क्रम the running control method.
  *              NOTE: only object supported is Number.
  *
  ******************************************************************************/
 
-void acpi_db_set_method_data(char *type_arg, char *index_arg, char *value_arg)
-{
-	char type;
+व्योम acpi_db_set_method_data(अक्षर *type_arg, अक्षर *index_arg, अक्षर *value_arg)
+अणु
+	अक्षर type;
 	u32 index;
 	u32 value;
-	struct acpi_walk_state *walk_state;
-	union acpi_operand_object *obj_desc;
+	काष्ठा acpi_walk_state *walk_state;
+	जोड़ acpi_opeअक्रम_object *obj_desc;
 	acpi_status status;
-	struct acpi_namespace_node *node;
+	काष्ठा acpi_namespace_node *node;
 
 	/* Validate type_arg */
 
 	acpi_ut_strupr(type_arg);
 	type = type_arg[0];
-	if ((type != 'L') && (type != 'A') && (type != 'N')) {
-		acpi_os_printf("Invalid SET operand: %s\n", type_arg);
-		return;
-	}
+	अगर ((type != 'L') && (type != 'A') && (type != 'N')) अणु
+		acpi_os_म_लिखो("Invalid SET operand: %s\n", type_arg);
+		वापस;
+	पूर्ण
 
-	value = strtoul(value_arg, NULL, 16);
+	value = म_से_अदीर्घ(value_arg, शून्य, 16);
 
-	if (type == 'N') {
+	अगर (type == 'N') अणु
 		node = acpi_db_convert_to_node(index_arg);
-		if (!node) {
-			return;
-		}
+		अगर (!node) अणु
+			वापस;
+		पूर्ण
 
-		if (node->type != ACPI_TYPE_INTEGER) {
-			acpi_os_printf("Can only set Integer nodes\n");
-			return;
-		}
+		अगर (node->type != ACPI_TYPE_INTEGER) अणु
+			acpi_os_म_लिखो("Can only set Integer nodes\n");
+			वापस;
+		पूर्ण
 		obj_desc = node->object;
-		obj_desc->integer.value = value;
-		return;
-	}
+		obj_desc->पूर्णांकeger.value = value;
+		वापस;
+	पूर्ण
 
 	/* Get the index and value */
 
-	index = strtoul(index_arg, NULL, 16);
+	index = म_से_अदीर्घ(index_arg, शून्य, 16);
 
 	walk_state = acpi_ds_get_current_walk_state(acpi_gbl_current_walk_list);
-	if (!walk_state) {
-		acpi_os_printf("There is no method currently executing\n");
-		return;
-	}
+	अगर (!walk_state) अणु
+		acpi_os_म_लिखो("There is no method currently executing\n");
+		वापस;
+	पूर्ण
 
 	/* Create and initialize the new object */
 
-	obj_desc = acpi_ut_create_integer_object((u64)value);
-	if (!obj_desc) {
-		acpi_os_printf("Could not create an internal object\n");
-		return;
-	}
+	obj_desc = acpi_ut_create_पूर्णांकeger_object((u64)value);
+	अगर (!obj_desc) अणु
+		acpi_os_म_लिखो("Could not create an internal object\n");
+		वापस;
+	पूर्ण
 
-	/* Store the new object into the target */
+	/* Store the new object पूर्णांकo the target */
 
-	switch (type) {
-	case 'A':
+	चयन (type) अणु
+	हाल 'A':
 
 		/* Set a method argument */
 
-		if (index > ACPI_METHOD_MAX_ARG) {
-			acpi_os_printf("Arg%u - Invalid argument name\n",
+		अगर (index > ACPI_METHOD_MAX_ARG) अणु
+			acpi_os_म_लिखो("Arg%u - Invalid argument name\n",
 				       index);
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
 		status = acpi_ds_store_object_to_local(ACPI_REFCLASS_ARG,
 						       index, obj_desc,
 						       walk_state);
-		if (ACPI_FAILURE(status)) {
-			goto cleanup;
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			जाओ cleanup;
+		पूर्ण
 
 		obj_desc = walk_state->arguments[index].object;
 
-		acpi_os_printf("Arg%u: ", index);
-		acpi_db_display_internal_object(obj_desc, walk_state);
-		break;
+		acpi_os_म_लिखो("Arg%u: ", index);
+		acpi_db_display_पूर्णांकernal_object(obj_desc, walk_state);
+		अवरोध;
 
-	case 'L':
+	हाल 'L':
 
 		/* Set a method local */
 
-		if (index > ACPI_METHOD_MAX_LOCAL) {
-			acpi_os_printf
+		अगर (index > ACPI_METHOD_MAX_LOCAL) अणु
+			acpi_os_म_लिखो
 			    ("Local%u - Invalid local variable name\n", index);
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
 		status = acpi_ds_store_object_to_local(ACPI_REFCLASS_LOCAL,
 						       index, obj_desc,
 						       walk_state);
-		if (ACPI_FAILURE(status)) {
-			goto cleanup;
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			जाओ cleanup;
+		पूर्ण
 
 		obj_desc = walk_state->local_variables[index].object;
 
-		acpi_os_printf("Local%u: ", index);
-		acpi_db_display_internal_object(obj_desc, walk_state);
-		break;
+		acpi_os_म_लिखो("Local%u: ", index);
+		acpi_db_display_पूर्णांकernal_object(obj_desc, walk_state);
+		अवरोध;
 
-	default:
+	शेष:
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 cleanup:
-	acpi_ut_remove_reference(obj_desc);
-}
+	acpi_ut_हटाओ_reference(obj_desc);
+पूर्ण
 
-#ifdef ACPI_DISASSEMBLER
+#अगर_घोषित ACPI_DISASSEMBLER
 /*******************************************************************************
  *
  * FUNCTION:    acpi_db_disassemble_aml
@@ -228,26 +229,26 @@ cleanup:
  *
  * RETURN:      None
  *
- * DESCRIPTION: Display disassembled AML (ASL) starting from Op for the number
- *              of statements specified.
+ * DESCRIPTION: Display disassembled AML (ASL) starting from Op क्रम the number
+ *              of statements specअगरied.
  *
  ******************************************************************************/
 
-void acpi_db_disassemble_aml(char *statements, union acpi_parse_object *op)
-{
+व्योम acpi_db_disassemble_aml(अक्षर *statements, जोड़ acpi_parse_object *op)
+अणु
 	u32 num_statements = 8;
 
-	if (!op) {
-		acpi_os_printf("There is no method currently executing\n");
-		return;
-	}
+	अगर (!op) अणु
+		acpi_os_म_लिखो("There is no method currently executing\n");
+		वापस;
+	पूर्ण
 
-	if (statements) {
-		num_statements = strtoul(statements, NULL, 0);
-	}
+	अगर (statements) अणु
+		num_statements = म_से_अदीर्घ(statements, शून्य, 0);
+	पूर्ण
 
-	acpi_dm_disassemble(NULL, op, num_statements);
-}
+	acpi_dm_disassemble(शून्य, op, num_statements);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -257,82 +258,82 @@ void acpi_db_disassemble_aml(char *statements, union acpi_parse_object *op)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Display disassembled AML (ASL) starting from Op for the number
- *              of statements specified.
+ * DESCRIPTION: Display disassembled AML (ASL) starting from Op क्रम the number
+ *              of statements specअगरied.
  *
  ******************************************************************************/
 
-acpi_status acpi_db_disassemble_method(char *name)
-{
+acpi_status acpi_db_disassemble_method(अक्षर *name)
+अणु
 	acpi_status status;
-	union acpi_parse_object *op;
-	struct acpi_walk_state *walk_state;
-	union acpi_operand_object *obj_desc;
-	struct acpi_namespace_node *method;
+	जोड़ acpi_parse_object *op;
+	काष्ठा acpi_walk_state *walk_state;
+	जोड़ acpi_opeअक्रम_object *obj_desc;
+	काष्ठा acpi_namespace_node *method;
 
 	method = acpi_db_convert_to_node(name);
-	if (!method) {
-		return (AE_BAD_PARAMETER);
-	}
+	अगर (!method) अणु
+		वापस (AE_BAD_PARAMETER);
+	पूर्ण
 
-	if (method->type != ACPI_TYPE_METHOD) {
+	अगर (method->type != ACPI_TYPE_METHOD) अणु
 		ACPI_ERROR((AE_INFO, "%s (%s): Object must be a control method",
 			    name, acpi_ut_get_type_name(method->type)));
-		return (AE_BAD_PARAMETER);
-	}
+		वापस (AE_BAD_PARAMETER);
+	पूर्ण
 
 	obj_desc = method->object;
 
 	op = acpi_ps_create_scope_op(obj_desc->method.aml_start);
-	if (!op) {
-		return (AE_NO_MEMORY);
-	}
+	अगर (!op) अणु
+		वापस (AE_NO_MEMORY);
+	पूर्ण
 
 	/* Create and initialize a new walk state */
 
-	walk_state = acpi_ds_create_walk_state(0, op, NULL, NULL);
-	if (!walk_state) {
-		return (AE_NO_MEMORY);
-	}
+	walk_state = acpi_ds_create_walk_state(0, op, शून्य, शून्य);
+	अगर (!walk_state) अणु
+		वापस (AE_NO_MEMORY);
+	पूर्ण
 
-	status = acpi_ds_init_aml_walk(walk_state, op, NULL,
+	status = acpi_ds_init_aml_walk(walk_state, op, शून्य,
 				       obj_desc->method.aml_start,
-				       obj_desc->method.aml_length, NULL,
+				       obj_desc->method.aml_length, शून्य,
 				       ACPI_IMODE_LOAD_PASS1);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
 	status = acpi_ut_allocate_owner_id(&obj_desc->method.owner_id);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
 	walk_state->owner_id = obj_desc->method.owner_id;
 
 	/* Push start scope on scope stack and make it current */
 
 	status = acpi_ds_scope_stack_push(method, method->type, walk_state);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
-	/* Parse the entire method AML including deferred operators */
+	/* Parse the entire method AML including deferred चालकs */
 
 	walk_state->parse_flags &= ~ACPI_PARSE_DELETE_TREE;
 	walk_state->parse_flags |= ACPI_PARSE_DISASSEMBLE;
 
 	status = acpi_ps_parse_aml(walk_state);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
-	(void)acpi_dm_parse_deferred_ops(op);
+	(व्योम)acpi_dm_parse_deferred_ops(op);
 
 	/* Now we can disassemble the method */
 
 	acpi_gbl_dm_opt_verbose = FALSE;
-	acpi_dm_disassemble(NULL, op, 0);
+	acpi_dm_disassemble(शून्य, op, 0);
 	acpi_gbl_dm_opt_verbose = TRUE;
 
 	acpi_ps_delete_parse_tree(op);
@@ -342,98 +343,98 @@ acpi_status acpi_db_disassemble_method(char *name)
 	acpi_ns_delete_namespace_subtree(method);
 	acpi_ns_delete_namespace_by_owner(obj_desc->method.owner_id);
 	acpi_ut_release_owner_id(&obj_desc->method.owner_id);
-	return (AE_OK);
-}
-#endif
+	वापस (AE_OK);
+पूर्ण
+#पूर्ण_अगर
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_db_evaluate_object
  *
- * PARAMETERS:  node                - Namespace node for the object
+ * PARAMETERS:  node                - Namespace node क्रम the object
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Main execution function for the Evaluate/Execute/All debugger
+ * DESCRIPTION: Main execution function क्रम the Evaluate/Execute/All debugger
  *              commands.
  *
  ******************************************************************************/
 
-static acpi_status acpi_db_evaluate_object(struct acpi_namespace_node *node)
-{
-	char *pathname;
+अटल acpi_status acpi_db_evaluate_object(काष्ठा acpi_namespace_node *node)
+अणु
+	अक्षर *pathname;
 	u32 i;
-	struct acpi_device_info *obj_info;
-	struct acpi_object_list param_objects;
-	union acpi_object params[ACPI_METHOD_NUM_ARGS];
-	struct acpi_buffer return_obj;
+	काष्ठा acpi_device_info *obj_info;
+	काष्ठा acpi_object_list param_objects;
+	जोड़ acpi_object params[ACPI_METHOD_NUM_ARGS];
+	काष्ठा acpi_buffer वापस_obj;
 	acpi_status status;
 
-	pathname = acpi_ns_get_external_pathname(node);
-	if (!pathname) {
-		return (AE_OK);
-	}
+	pathname = acpi_ns_get_बाह्यal_pathname(node);
+	अगर (!pathname) अणु
+		वापस (AE_OK);
+	पूर्ण
 
-	/* Get the object info for number of method parameters */
+	/* Get the object info क्रम number of method parameters */
 
 	status = acpi_get_object_info(node, &obj_info);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_FREE(pathname);
-		return (status);
-	}
+		वापस (status);
+	पूर्ण
 
-	param_objects.pointer = NULL;
+	param_objects.poपूर्णांकer = शून्य;
 	param_objects.count = 0;
 
-	if (obj_info->type == ACPI_TYPE_METHOD) {
+	अगर (obj_info->type == ACPI_TYPE_METHOD) अणु
 
-		/* Setup default parameters */
+		/* Setup शेष parameters */
 
-		for (i = 0; i < obj_info->param_count; i++) {
+		क्रम (i = 0; i < obj_info->param_count; i++) अणु
 			params[i].type = ACPI_TYPE_INTEGER;
-			params[i].integer.value = 1;
-		}
+			params[i].पूर्णांकeger.value = 1;
+		पूर्ण
 
-		param_objects.pointer = params;
+		param_objects.poपूर्णांकer = params;
 		param_objects.count = obj_info->param_count;
-	}
+	पूर्ण
 
 	ACPI_FREE(obj_info);
-	return_obj.pointer = NULL;
-	return_obj.length = ACPI_ALLOCATE_BUFFER;
+	वापस_obj.poपूर्णांकer = शून्य;
+	वापस_obj.length = ACPI_ALLOCATE_BUFFER;
 
 	/* Do the actual method execution */
 
 	acpi_gbl_method_executing = TRUE;
 
-	status = acpi_evaluate_object(node, NULL, &param_objects, &return_obj);
+	status = acpi_evaluate_object(node, शून्य, &param_objects, &वापस_obj);
 	acpi_gbl_method_executing = FALSE;
 
-	acpi_os_printf("%-32s returned %s\n", pathname,
-		       acpi_format_exception(status));
-	if (return_obj.length) {
-		acpi_os_printf("Evaluation of %s returned object %p, "
+	acpi_os_म_लिखो("%-32s returned %s\n", pathname,
+		       acpi_क्रमmat_exception(status));
+	अगर (वापस_obj.length) अणु
+		acpi_os_म_लिखो("Evaluation of %s returned object %p, "
 			       "external buffer length %X\n",
-			       pathname, return_obj.pointer,
-			       (u32)return_obj.length);
+			       pathname, वापस_obj.poपूर्णांकer,
+			       (u32)वापस_obj.length);
 
-		acpi_db_dump_external_object(return_obj.pointer, 1);
-		acpi_os_printf("\n");
-	}
+		acpi_db_dump_बाह्यal_object(वापस_obj.poपूर्णांकer, 1);
+		acpi_os_म_लिखो("\n");
+	पूर्ण
 
 	ACPI_FREE(pathname);
 
 	/* Ignore status from method execution */
 
-	return (AE_OK);
+	वापस (AE_OK);
 
-	/* Update count, check if we have executed enough methods */
+	/* Update count, check अगर we have executed enough methods */
 
-}
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_db_walk_for_execute
+ * FUNCTION:    acpi_db_walk_क्रम_execute
  *
  * PARAMETERS:  Callback from walk_namespace
  *
@@ -444,25 +445,25 @@ static acpi_status acpi_db_evaluate_object(struct acpi_namespace_node *node)
  *
  ******************************************************************************/
 
-static acpi_status
-acpi_db_walk_for_execute(acpi_handle obj_handle,
-			 u32 nesting_level, void *context, void **return_value)
-{
-	struct acpi_namespace_node *node =
-	    (struct acpi_namespace_node *)obj_handle;
-	struct acpi_db_execute_walk *info =
-	    (struct acpi_db_execute_walk *)context;
+अटल acpi_status
+acpi_db_walk_क्रम_execute(acpi_handle obj_handle,
+			 u32 nesting_level, व्योम *context, व्योम **वापस_value)
+अणु
+	काष्ठा acpi_namespace_node *node =
+	    (काष्ठा acpi_namespace_node *)obj_handle;
+	काष्ठा acpi_db_execute_walk *info =
+	    (काष्ठा acpi_db_execute_walk *)context;
 	acpi_status status;
-	const union acpi_predefined_info *predefined;
+	स्थिर जोड़ acpi_predefined_info *predefined;
 
 	predefined = acpi_ut_match_predefined_method(node->name.ascii);
-	if (!predefined) {
-		return (AE_OK);
-	}
+	अगर (!predefined) अणु
+		वापस (AE_OK);
+	पूर्ण
 
-	if (node->type == ACPI_TYPE_LOCAL_SCOPE) {
-		return (AE_OK);
-	}
+	अगर (node->type == ACPI_TYPE_LOCAL_SCOPE) अणु
+		वापस (AE_OK);
+	पूर्ण
 
 	acpi_db_evaluate_object(node);
 
@@ -470,47 +471,47 @@ acpi_db_walk_for_execute(acpi_handle obj_handle,
 
 	status = AE_OK;
 
-	/* Update count, check if we have executed enough methods */
+	/* Update count, check अगर we have executed enough methods */
 
 	info->count++;
-	if (info->count >= info->max_count) {
+	अगर (info->count >= info->max_count) अणु
 		status = AE_CTRL_TERMINATE;
-	}
+	पूर्ण
 
-	return (status);
-}
+	वापस (status);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_db_walk_for_execute_all
+ * FUNCTION:    acpi_db_walk_क्रम_execute_all
  *
  * PARAMETERS:  Callback from walk_namespace
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Batch execution function. Evaluates all objects whose path ends
- *              with the nameseg "Info->NameSeg". Used for the "ALL" command.
+ *              with the nameseg "Info->NameSeg". Used क्रम the "ALL" command.
  *
  ******************************************************************************/
 
-static acpi_status
-acpi_db_walk_for_execute_all(acpi_handle obj_handle,
+अटल acpi_status
+acpi_db_walk_क्रम_execute_all(acpi_handle obj_handle,
 			     u32 nesting_level,
-			     void *context, void **return_value)
-{
-	struct acpi_namespace_node *node =
-	    (struct acpi_namespace_node *)obj_handle;
-	struct acpi_db_execute_walk *info =
-	    (struct acpi_db_execute_walk *)context;
+			     व्योम *context, व्योम **वापस_value)
+अणु
+	काष्ठा acpi_namespace_node *node =
+	    (काष्ठा acpi_namespace_node *)obj_handle;
+	काष्ठा acpi_db_execute_walk *info =
+	    (काष्ठा acpi_db_execute_walk *)context;
 	acpi_status status;
 
-	if (!ACPI_COMPARE_NAMESEG(node->name.ascii, info->name_seg)) {
-		return (AE_OK);
-	}
+	अगर (!ACPI_COMPARE_NAMESEG(node->name.ascii, info->name_seg)) अणु
+		वापस (AE_OK);
+	पूर्ण
 
-	if (node->type == ACPI_TYPE_LOCAL_SCOPE) {
-		return (AE_OK);
-	}
+	अगर (node->type == ACPI_TYPE_LOCAL_SCOPE) अणु
+		वापस (AE_OK);
+	पूर्ण
 
 	/* Now evaluate the input object (node) */
 
@@ -523,8 +524,8 @@ acpi_db_walk_for_execute_all(acpi_handle obj_handle,
 	/* Update count of executed methods/objects */
 
 	info->count++;
-	return (status);
-}
+	वापस (status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -535,26 +536,26 @@ acpi_db_walk_for_execute_all(acpi_handle obj_handle,
  * RETURN:      None
  *
  * DESCRIPTION: Namespace batch execution. Execute predefined names in the
- *              namespace, up to the max count, if specified.
+ *              namespace, up to the max count, अगर specअगरied.
  *
  ******************************************************************************/
 
-void acpi_db_evaluate_predefined_names(void)
-{
-	struct acpi_db_execute_walk info;
+व्योम acpi_db_evaluate_predefined_names(व्योम)
+अणु
+	काष्ठा acpi_db_execute_walk info;
 
 	info.count = 0;
 	info.max_count = ACPI_UINT32_MAX;
 
 	/* Search all nodes in namespace */
 
-	(void)acpi_walk_namespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
-				  ACPI_UINT32_MAX, acpi_db_walk_for_execute,
-				  NULL, (void *)&info, NULL);
+	(व्योम)acpi_walk_namespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
+				  ACPI_UINT32_MAX, acpi_db_walk_क्रम_execute,
+				  शून्य, (व्योम *)&info, शून्य);
 
-	acpi_os_printf("Evaluated %u predefined names in the namespace\n",
+	acpi_os_म_लिखो("Evaluated %u predefined names in the namespace\n",
 		       info.count);
-}
+पूर्ण
 
 /*******************************************************************************
  *
@@ -570,9 +571,9 @@ void acpi_db_evaluate_predefined_names(void)
  *
  ******************************************************************************/
 
-void acpi_db_evaluate_all(char *name_seg)
-{
-	struct acpi_db_execute_walk info;
+व्योम acpi_db_evaluate_all(अक्षर *name_seg)
+अणु
+	काष्ठा acpi_db_execute_walk info;
 
 	info.count = 0;
 	info.max_count = ACPI_UINT32_MAX;
@@ -581,9 +582,9 @@ void acpi_db_evaluate_all(char *name_seg)
 
 	/* Search all nodes in namespace */
 
-	(void)acpi_walk_namespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
-				  ACPI_UINT32_MAX, acpi_db_walk_for_execute_all,
-				  NULL, (void *)&info, NULL);
+	(व्योम)acpi_walk_namespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
+				  ACPI_UINT32_MAX, acpi_db_walk_क्रम_execute_all,
+				  शून्य, (व्योम *)&info, शून्य);
 
-	acpi_os_printf("Evaluated %u names in the namespace\n", info.count);
-}
+	acpi_os_म_लिखो("Evaluated %u names in the namespace\n", info.count);
+पूर्ण

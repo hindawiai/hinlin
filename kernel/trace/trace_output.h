@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0
-#ifndef __TRACE_EVENTS_H
-#define __TRACE_EVENTS_H
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#अगर_अघोषित __TRACE_EVENTS_H
+#घोषणा __TRACE_EVENTS_H
 
-#include <linux/trace_seq.h>
-#include "trace.h"
+#समावेश <linux/trace_seq.h>
+#समावेश "trace.h"
 
-extern enum print_line_t
-trace_print_bputs_msg_only(struct trace_iterator *iter);
-extern enum print_line_t
-trace_print_bprintk_msg_only(struct trace_iterator *iter);
-extern enum print_line_t
-trace_print_printk_msg_only(struct trace_iterator *iter);
+बाह्य क्रमागत prपूर्णांक_line_t
+trace_prपूर्णांक_bमाला_दो_msg_only(काष्ठा trace_iterator *iter);
+बाह्य क्रमागत prपूर्णांक_line_t
+trace_prपूर्णांक_bprपूर्णांकk_msg_only(काष्ठा trace_iterator *iter);
+बाह्य क्रमागत prपूर्णांक_line_t
+trace_prपूर्णांक_prपूर्णांकk_msg_only(काष्ठा trace_iterator *iter);
 
-extern int
-seq_print_ip_sym(struct trace_seq *s, unsigned long ip,
-		unsigned long sym_flags);
+बाह्य पूर्णांक
+seq_prपूर्णांक_ip_sym(काष्ठा trace_seq *s, अचिन्हित दीर्घ ip,
+		अचिन्हित दीर्घ sym_flags);
 
-extern void trace_seq_print_sym(struct trace_seq *s, unsigned long address, bool offset);
-extern int trace_print_context(struct trace_iterator *iter);
-extern int trace_print_lat_context(struct trace_iterator *iter);
+बाह्य व्योम trace_seq_prपूर्णांक_sym(काष्ठा trace_seq *s, अचिन्हित दीर्घ address, bool offset);
+बाह्य पूर्णांक trace_prपूर्णांक_context(काष्ठा trace_iterator *iter);
+बाह्य पूर्णांक trace_prपूर्णांक_lat_context(काष्ठा trace_iterator *iter);
 
-extern void trace_event_read_lock(void);
-extern void trace_event_read_unlock(void);
-extern struct trace_event *ftrace_find_event(int type);
+बाह्य व्योम trace_event_पढ़ो_lock(व्योम);
+बाह्य व्योम trace_event_पढ़ो_unlock(व्योम);
+बाह्य काष्ठा trace_event *ftrace_find_event(पूर्णांक type);
 
-extern enum print_line_t trace_nop_print(struct trace_iterator *iter,
-					 int flags, struct trace_event *event);
-extern int
-trace_print_lat_fmt(struct trace_seq *s, struct trace_entry *entry);
+बाह्य क्रमागत prपूर्णांक_line_t trace_nop_prपूर्णांक(काष्ठा trace_iterator *iter,
+					 पूर्णांक flags, काष्ठा trace_event *event);
+बाह्य पूर्णांक
+trace_prपूर्णांक_lat_fmt(काष्ठा trace_seq *s, काष्ठा trace_entry *entry);
 
-/* used by module unregistering */
-extern int __unregister_trace_event(struct trace_event *event);
-extern struct rw_semaphore trace_event_sem;
+/* used by module unरेजिस्टरing */
+बाह्य पूर्णांक __unरेजिस्टर_trace_event(काष्ठा trace_event *event);
+बाह्य काष्ठा rw_semaphore trace_event_sem;
 
-#define SEQ_PUT_FIELD(s, x)				\
-	trace_seq_putmem(s, &(x), sizeof(x))
+#घोषणा SEQ_PUT_FIELD(s, x)				\
+	trace_seq_puपंचांगem(s, &(x), माप(x))
 
-#define SEQ_PUT_HEX_FIELD(s, x)				\
-	trace_seq_putmem_hex(s, &(x), sizeof(x))
+#घोषणा SEQ_PUT_HEX_FIELD(s, x)				\
+	trace_seq_puपंचांगem_hex(s, &(x), माप(x))
 
-#endif
+#पूर्ण_अगर
 

@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: MIT */
-static uint32_t gk208_grgpc_data[] = {
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+अटल uपूर्णांक32_t gk208_grgpc_data[] = अणु
 /* 0x0000: gpc_mmio_list_head */
 	0x0000006c,
 /* 0x0004: gpc_mmio_list_tail */
@@ -39,9 +40,9 @@ static uint32_t gk208_grgpc_data[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;
 
-static uint32_t gk208_grgpc_code[] = {
+अटल uपूर्णांक32_t gk208_grgpc_code[] = अणु
 	0x03140ef5,
 /* 0x0004: queue_put */
 	0x9800d898,
@@ -69,13 +70,13 @@ static uint32_t gk208_grgpc_code[] = {
 	0xb6019f98,
 	0x84f00180,
 	0x00d8b50f,
-/* 0x0063: queue_get_done */
+/* 0x0063: queue_get_करोne */
 	0xf80132f4,
 /* 0x0065: nv_rd32 */
 	0xf0ecb200,
 	0x00801fc9,
 	0x0cf601ca,
-/* 0x0073: nv_rd32_wait */
+/* 0x0073: nv_rd32_रुको */
 	0x8c04bd00,
 	0xcf01ca00,
 	0xccc800cc,
@@ -91,18 +92,18 @@ static uint32_t gk208_grgpc_code[] = {
 	0x1ec9f01f,
 	0x01ca0080,
 	0xbd000cf6,
-/* 0x00a9: nv_wr32_wait */
+/* 0x00a9: nv_wr32_रुको */
 	0xca008c04,
 	0x00cccf01,
 	0xf41fccc8,
 	0x00f8f61b,
-/* 0x00b8: wait_donez */
+/* 0x00b8: रुको_करोnez */
 	0x99f094bd,
 	0x37008000,
 	0x0009f602,
 	0x008004bd,
 	0x0af60206,
-/* 0x00cf: wait_donez_ne */
+/* 0x00cf: रुको_करोnez_ne */
 	0x8804bd00,
 	0xcf010000,
 	0x8aff0088,
@@ -111,13 +112,13 @@ static uint32_t gk208_grgpc_code[] = {
 	0x17008000,
 	0x0009f602,
 	0x00f804bd,
-/* 0x00ec: wait_doneo */
+/* 0x00ec: रुको_करोneo */
 	0x99f094bd,
 	0x37008000,
 	0x0009f602,
 	0x008004bd,
 	0x0af60206,
-/* 0x0103: wait_doneo_e */
+/* 0x0103: रुको_करोneo_e */
 	0x8804bd00,
 	0xcf010000,
 	0x8aff0088,
@@ -161,7 +162,7 @@ static uint32_t gk208_grgpc_code[] = {
 	0x01c50080,
 	0xbd000bf6,
 /* 0x0195: mmctx_exec_loop */
-/* 0x0195: mmctx_wait_free */
+/* 0x0195: mmctx_रुको_मुक्त */
 	0xc5008e04,
 	0x00eecf01,
 	0xf41fe4f0,
@@ -172,7 +173,7 @@ static uint32_t gk208_grgpc_code[] = {
 	0x04c0b604,
 	0x1bf4cda4,
 	0x02abc8df,
-/* 0x01bf: mmctx_fini_wait */
+/* 0x01bf: mmctx_fini_रुको */
 	0x8b1c1bf4,
 	0xcf01c500,
 	0xb4f000bb,
@@ -186,31 +187,31 @@ static uint32_t gk208_grgpc_code[] = {
 	0x12b9f00c,
 	0x01c50080,
 	0xbd000bf6,
-/* 0x01ed: mmctx_stop_wait */
+/* 0x01ed: mmctx_stop_रुको */
 	0xc5008b04,
 	0x00bbcf01,
 	0xf412bbc8,
-/* 0x01fa: mmctx_done */
+/* 0x01fa: mmctx_करोne */
 	0x94bdf61b,
 	0x800199f0,
 	0xf6021700,
 	0x04bd0009,
-/* 0x020a: strand_wait */
+/* 0x020a: stअक्रम_रुको */
 	0xa0f900f8,
 	0xb87e020a,
 	0xa0fc0000,
-/* 0x0216: strand_pre */
+/* 0x0216: stअक्रम_pre */
 	0x0c0900f8,
 	0x024afc80,
 	0xbd0009f6,
 	0x020a7e04,
-/* 0x0227: strand_post */
+/* 0x0227: stअक्रम_post */
 	0x0900f800,
 	0x4afc800d,
 	0x0009f602,
 	0x0a7e04bd,
 	0x00f80002,
-/* 0x0238: strand_set */
+/* 0x0238: stअक्रम_set */
 	0xfc800f0c,
 	0x0cf6024f,
 	0x0c04bd00,
@@ -223,7 +224,7 @@ static uint32_t gk208_grgpc_code[] = {
 	0x000cf602,
 	0x0a7e04bd,
 	0x00f80002,
-/* 0x0268: strand_ctx_init */
+/* 0x0268: stअक्रम_ctx_init */
 	0x99f094bd,
 	0x37008003,
 	0x0009f602,
@@ -247,7 +248,7 @@ static uint32_t gk208_grgpc_code[] = {
 	0x42008800,
 	0x20008902,
 	0x0099cf02,
-/* 0x02c7: ctx_init_strand_loop */
+/* 0x02c7: ctx_init_stअक्रम_loop */
 	0xf608fe95,
 	0x8ef6008e,
 	0x808acf40,
@@ -308,7 +309,7 @@ static uint32_t gk208_grgpc_code[] = {
 	0xb60130b6,
 	0xe0b60120,
 	0x0126b004,
-/* 0x03a7: init_unk_done */
+/* 0x03a7: init_unk_करोne */
 	0xb5e21bf4,
 	0x04b50703,
 	0x01008208,
@@ -350,9 +351,9 @@ static uint32_t gk208_grgpc_code[] = {
 	0x801f29f0,
 	0xf6023000,
 	0x04bd0002,
-/* 0x0448: wait */
+/* 0x0448: रुको */
 	0xf40028f4,
-/* 0x044e: main */
+/* 0x044e: मुख्य */
 	0x240d0031,
 	0x0000377e,
 	0xb0f401f4,
@@ -363,7 +364,7 @@ static uint32_t gk208_grgpc_code[] = {
 	0x1efd01e4,
 	0x0018fe05,
 	0x00051f7e,
-/* 0x0477: main_not_ctx_xfer */
+/* 0x0477: मुख्य_not_ctx_xfer */
 	0x94da0ef4,
 	0xf5f010ef,
 	0x02f87e01,
@@ -384,7 +385,7 @@ static uint32_t gk208_grgpc_code[] = {
 	0x00047e00,
 	0x40010e00,
 	0x0ef61d00,
-/* 0x04c3: ih_no_fifo */
+/* 0x04c3: ih_no_fअगरo */
 	0x4004bd00,
 	0x0af60100,
 	0xfc04bd00,
@@ -394,17 +395,17 @@ static uint32_t gk208_grgpc_code[] = {
 	0x0088fe80,
 	0x00fc80fc,
 	0xf80032f4,
-/* 0x04e5: hub_barrier_done */
+/* 0x04e5: hub_barrier_करोne */
 	0x98010f01,
 	0xfebb040e,
 	0x8effb204,
 	0x7e409418,
 	0xf800008f,
-/* 0x04f9: ctx_redswitch */
+/* 0x04f9: ctx_redचयन */
 	0x80200f00,
 	0xf6018500,
 	0x04bd000f,
-/* 0x0506: ctx_redswitch_delay */
+/* 0x0506: ctx_redचयन_delay */
 	0xe2b6080e,
 	0xfd1bf401,
 	0x0800f5f1,
@@ -454,7 +455,7 @@ static uint32_t gk208_grgpc_code[] = {
 	0x12f40601,
 /* 0x05b9: ctx_xfer_post */
 	0x02277e07,
-/* 0x05bd: ctx_xfer_done */
+/* 0x05bd: ctx_xfer_करोne */
 	0x04e57e00,
 	0x0000f800,
 	0x00000000,
@@ -472,4 +473,4 @@ static uint32_t gk208_grgpc_code[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;

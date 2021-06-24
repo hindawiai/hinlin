@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  include/asm-m68k/bugs.h
+ *  include/यंत्र-m68k/bugs.h
  *
  *  Copyright (C) 1994  Linus Torvalds
  */
 
 /*
- * This is included by init/main.c to check for architecture-dependent bugs.
+ * This is included by init/मुख्य.c to check क्रम architecture-dependent bugs.
  *
  * Needs:
- *	void check_bugs(void);
+ *	व्योम check_bugs(व्योम);
  */
 
-#ifdef CONFIG_MMU
-extern void check_bugs(void);	/* in arch/m68k/kernel/setup.c */
-#else
-static void check_bugs(void)
-{
-}
-#endif
+#अगर_घोषित CONFIG_MMU
+बाह्य व्योम check_bugs(व्योम);	/* in arch/m68k/kernel/setup.c */
+#अन्यथा
+अटल व्योम check_bugs(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर

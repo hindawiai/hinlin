@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * ioctl interface for /dev/clp
+ * ioctl पूर्णांकerface क्रम /dev/clp
  *
  * Copyright IBM Corp. 2016
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#ifndef _ASM_CLP_H
-#define _ASM_CLP_H
+#अगर_अघोषित _ASM_CLP_H
+#घोषणा _ASM_CLP_H
 
-#include <linux/types.h>
-#include <linux/ioctl.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ioctl.h>
 
-struct clp_req {
-	unsigned int c : 1;
-	unsigned int r : 1;
-	unsigned int lps : 6;
-	unsigned int cmd : 8;
-	unsigned int : 16;
-	unsigned int reserved;
+काष्ठा clp_req अणु
+	अचिन्हित पूर्णांक c : 1;
+	अचिन्हित पूर्णांक r : 1;
+	अचिन्हित पूर्णांक lps : 6;
+	अचिन्हित पूर्णांक cmd : 8;
+	अचिन्हित पूर्णांक : 16;
+	अचिन्हित पूर्णांक reserved;
 	__u64 data_p;
-};
+पूर्ण;
 
-#define CLP_IOCTL_MAGIC 'c'
+#घोषणा CLP_IOCTL_MAGIC 'c'
 
-#define CLP_SYNC _IOWR(CLP_IOCTL_MAGIC, 0xC1, struct clp_req)
+#घोषणा CLP_SYNC _IOWR(CLP_IOCTL_MAGIC, 0xC1, काष्ठा clp_req)
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * (C) 2001 Clemson University and The University of Chicago
  * Copyright 2018 Omnibond Systems, L.L.C.
@@ -10,42 +11,42 @@
  *  Linux VFS inode operations.
  */
 
-#include <linux/bvec.h>
-#include <linux/fileattr.h>
-#include "protocol.h"
-#include "orangefs-kernel.h"
-#include "orangefs-bufmap.h"
+#समावेश <linux/bvec.h>
+#समावेश <linux/fileattr.h>
+#समावेश "protocol.h"
+#समावेश "orangefs-kernel.h"
+#समावेश "orangefs-bufmap.h"
 
-static int orangefs_writepage_locked(struct page *page,
-    struct writeback_control *wbc)
-{
-	struct inode *inode = page->mapping->host;
-	struct orangefs_write_range *wr = NULL;
-	struct iov_iter iter;
-	struct bio_vec bv;
-	size_t len, wlen;
-	ssize_t ret;
+अटल पूर्णांक orangefs_ग_लिखोpage_locked(काष्ठा page *page,
+    काष्ठा ग_लिखोback_control *wbc)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा orangefs_ग_लिखो_range *wr = शून्य;
+	काष्ठा iov_iter iter;
+	काष्ठा bio_vec bv;
+	माप_प्रकार len, wlen;
+	sमाप_प्रकार ret;
 	loff_t off;
 
-	set_page_writeback(page);
+	set_page_ग_लिखोback(page);
 
-	len = i_size_read(inode);
-	if (PagePrivate(page)) {
-		wr = (struct orangefs_write_range *)page_private(page);
+	len = i_size_पढ़ो(inode);
+	अगर (PagePrivate(page)) अणु
+		wr = (काष्ठा orangefs_ग_लिखो_range *)page_निजी(page);
 		WARN_ON(wr->pos >= len);
 		off = wr->pos;
-		if (off + wr->len > len)
+		अगर (off + wr->len > len)
 			wlen = len - off;
-		else
+		अन्यथा
 			wlen = wr->len;
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(1);
 		off = page_offset(page);
-		if (off + PAGE_SIZE > len)
+		अगर (off + PAGE_SIZE > len)
 			wlen = len - off;
-		else
+		अन्यथा
 			wlen = PAGE_SIZE;
-	}
+	पूर्ण
 	/* Should've been handled in orangefs_invalidatepage. */
 	WARN_ON(off == len || off + wlen > len);
 
@@ -55,249 +56,249 @@ static int orangefs_writepage_locked(struct page *page,
 	WARN_ON(wlen == 0);
 	iov_iter_bvec(&iter, WRITE, &bv, 1, wlen);
 
-	ret = wait_for_direct_io(ORANGEFS_IO_WRITE, inode, &off, &iter, wlen,
-	    len, wr, NULL, NULL);
-	if (ret < 0) {
+	ret = रुको_क्रम_direct_io(ORANGEFS_IO_WRITE, inode, &off, &iter, wlen,
+	    len, wr, शून्य, शून्य);
+	अगर (ret < 0) अणु
 		SetPageError(page);
 		mapping_set_error(page->mapping, ret);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = 0;
-	}
-	kfree(detach_page_private(page));
-	return ret;
-}
+	पूर्ण
+	kमुक्त(detach_page_निजी(page));
+	वापस ret;
+पूर्ण
 
-static int orangefs_writepage(struct page *page, struct writeback_control *wbc)
-{
-	int ret;
-	ret = orangefs_writepage_locked(page, wbc);
+अटल पूर्णांक orangefs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	पूर्णांक ret;
+	ret = orangefs_ग_लिखोpage_locked(page, wbc);
 	unlock_page(page);
-	end_page_writeback(page);
-	return ret;
-}
+	end_page_ग_लिखोback(page);
+	वापस ret;
+पूर्ण
 
-struct orangefs_writepages {
+काष्ठा orangefs_ग_लिखोpages अणु
 	loff_t off;
-	size_t len;
+	माप_प्रकार len;
 	kuid_t uid;
 	kgid_t gid;
-	int maxpages;
-	int npages;
-	struct page **pages;
-	struct bio_vec *bv;
-};
+	पूर्णांक maxpages;
+	पूर्णांक npages;
+	काष्ठा page **pages;
+	काष्ठा bio_vec *bv;
+पूर्ण;
 
-static int orangefs_writepages_work(struct orangefs_writepages *ow,
-    struct writeback_control *wbc)
-{
-	struct inode *inode = ow->pages[0]->mapping->host;
-	struct orangefs_write_range *wrp, wr;
-	struct iov_iter iter;
-	ssize_t ret;
-	size_t len;
+अटल पूर्णांक orangefs_ग_लिखोpages_work(काष्ठा orangefs_ग_लिखोpages *ow,
+    काष्ठा ग_लिखोback_control *wbc)
+अणु
+	काष्ठा inode *inode = ow->pages[0]->mapping->host;
+	काष्ठा orangefs_ग_लिखो_range *wrp, wr;
+	काष्ठा iov_iter iter;
+	sमाप_प्रकार ret;
+	माप_प्रकार len;
 	loff_t off;
-	int i;
+	पूर्णांक i;
 
-	len = i_size_read(inode);
+	len = i_size_पढ़ो(inode);
 
-	for (i = 0; i < ow->npages; i++) {
-		set_page_writeback(ow->pages[i]);
+	क्रम (i = 0; i < ow->npages; i++) अणु
+		set_page_ग_लिखोback(ow->pages[i]);
 		ow->bv[i].bv_page = ow->pages[i];
 		ow->bv[i].bv_len = min(page_offset(ow->pages[i]) + PAGE_SIZE,
 		    ow->off + ow->len) -
 		    max(ow->off, page_offset(ow->pages[i]));
-		if (i == 0)
+		अगर (i == 0)
 			ow->bv[i].bv_offset = ow->off -
 			    page_offset(ow->pages[i]);
-		else
+		अन्यथा
 			ow->bv[i].bv_offset = 0;
-	}
+	पूर्ण
 	iov_iter_bvec(&iter, WRITE, ow->bv, ow->npages, ow->len);
 
 	WARN_ON(ow->off >= len);
-	if (ow->off + ow->len > len)
+	अगर (ow->off + ow->len > len)
 		ow->len = len - ow->off;
 
 	off = ow->off;
 	wr.uid = ow->uid;
 	wr.gid = ow->gid;
-	ret = wait_for_direct_io(ORANGEFS_IO_WRITE, inode, &off, &iter, ow->len,
-	    0, &wr, NULL, NULL);
-	if (ret < 0) {
-		for (i = 0; i < ow->npages; i++) {
+	ret = रुको_क्रम_direct_io(ORANGEFS_IO_WRITE, inode, &off, &iter, ow->len,
+	    0, &wr, शून्य, शून्य);
+	अगर (ret < 0) अणु
+		क्रम (i = 0; i < ow->npages; i++) अणु
 			SetPageError(ow->pages[i]);
 			mapping_set_error(ow->pages[i]->mapping, ret);
-			if (PagePrivate(ow->pages[i])) {
-				wrp = (struct orangefs_write_range *)
-				    page_private(ow->pages[i]);
+			अगर (PagePrivate(ow->pages[i])) अणु
+				wrp = (काष्ठा orangefs_ग_लिखो_range *)
+				    page_निजी(ow->pages[i]);
 				ClearPagePrivate(ow->pages[i]);
 				put_page(ow->pages[i]);
-				kfree(wrp);
-			}
-			end_page_writeback(ow->pages[i]);
+				kमुक्त(wrp);
+			पूर्ण
+			end_page_ग_लिखोback(ow->pages[i]);
 			unlock_page(ow->pages[i]);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = 0;
-		for (i = 0; i < ow->npages; i++) {
-			if (PagePrivate(ow->pages[i])) {
-				wrp = (struct orangefs_write_range *)
-				    page_private(ow->pages[i]);
+		क्रम (i = 0; i < ow->npages; i++) अणु
+			अगर (PagePrivate(ow->pages[i])) अणु
+				wrp = (काष्ठा orangefs_ग_लिखो_range *)
+				    page_निजी(ow->pages[i]);
 				ClearPagePrivate(ow->pages[i]);
 				put_page(ow->pages[i]);
-				kfree(wrp);
-			}
-			end_page_writeback(ow->pages[i]);
+				kमुक्त(wrp);
+			पूर्ण
+			end_page_ग_लिखोback(ow->pages[i]);
 			unlock_page(ow->pages[i]);
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int orangefs_writepages_callback(struct page *page,
-    struct writeback_control *wbc, void *data)
-{
-	struct orangefs_writepages *ow = data;
-	struct orangefs_write_range *wr;
-	int ret;
+अटल पूर्णांक orangefs_ग_लिखोpages_callback(काष्ठा page *page,
+    काष्ठा ग_लिखोback_control *wbc, व्योम *data)
+अणु
+	काष्ठा orangefs_ग_लिखोpages *ow = data;
+	काष्ठा orangefs_ग_लिखो_range *wr;
+	पूर्णांक ret;
 
-	if (!PagePrivate(page)) {
+	अगर (!PagePrivate(page)) अणु
 		unlock_page(page);
-		/* It's not private so there's nothing to write, right? */
-		printk("writepages_callback not private!\n");
+		/* It's not private so there's nothing to ग_लिखो, right? */
+		prपूर्णांकk("writepages_callback not private!\n");
 		BUG();
-		return 0;
-	}
-	wr = (struct orangefs_write_range *)page_private(page);
+		वापस 0;
+	पूर्ण
+	wr = (काष्ठा orangefs_ग_लिखो_range *)page_निजी(page);
 
 	ret = -1;
-	if (ow->npages == 0) {
+	अगर (ow->npages == 0) अणु
 		ow->off = wr->pos;
 		ow->len = wr->len;
 		ow->uid = wr->uid;
 		ow->gid = wr->gid;
 		ow->pages[ow->npages++] = page;
 		ret = 0;
-		goto done;
-	}
-	if (!uid_eq(ow->uid, wr->uid) || !gid_eq(ow->gid, wr->gid)) {
-		orangefs_writepages_work(ow, wbc);
+		जाओ करोne;
+	पूर्ण
+	अगर (!uid_eq(ow->uid, wr->uid) || !gid_eq(ow->gid, wr->gid)) अणु
+		orangefs_ग_लिखोpages_work(ow, wbc);
 		ow->npages = 0;
 		ret = -1;
-		goto done;
-	}
-	if (ow->off + ow->len == wr->pos) {
+		जाओ करोne;
+	पूर्ण
+	अगर (ow->off + ow->len == wr->pos) अणु
 		ow->len += wr->len;
 		ow->pages[ow->npages++] = page;
 		ret = 0;
-		goto done;
-	}
-done:
-	if (ret == -1) {
-		if (ow->npages) {
-			orangefs_writepages_work(ow, wbc);
+		जाओ करोne;
+	पूर्ण
+करोne:
+	अगर (ret == -1) अणु
+		अगर (ow->npages) अणु
+			orangefs_ग_लिखोpages_work(ow, wbc);
 			ow->npages = 0;
-		}
-		ret = orangefs_writepage_locked(page, wbc);
+		पूर्ण
+		ret = orangefs_ग_लिखोpage_locked(page, wbc);
 		mapping_set_error(page->mapping, ret);
 		unlock_page(page);
-		end_page_writeback(page);
-	} else {
-		if (ow->npages == ow->maxpages) {
-			orangefs_writepages_work(ow, wbc);
+		end_page_ग_लिखोback(page);
+	पूर्ण अन्यथा अणु
+		अगर (ow->npages == ow->maxpages) अणु
+			orangefs_ग_लिखोpages_work(ow, wbc);
 			ow->npages = 0;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int orangefs_writepages(struct address_space *mapping,
-    struct writeback_control *wbc)
-{
-	struct orangefs_writepages *ow;
-	struct blk_plug plug;
-	int ret;
-	ow = kzalloc(sizeof(struct orangefs_writepages), GFP_KERNEL);
-	if (!ow)
-		return -ENOMEM;
+अटल पूर्णांक orangefs_ग_लिखोpages(काष्ठा address_space *mapping,
+    काष्ठा ग_लिखोback_control *wbc)
+अणु
+	काष्ठा orangefs_ग_लिखोpages *ow;
+	काष्ठा blk_plug plug;
+	पूर्णांक ret;
+	ow = kzalloc(माप(काष्ठा orangefs_ग_लिखोpages), GFP_KERNEL);
+	अगर (!ow)
+		वापस -ENOMEM;
 	ow->maxpages = orangefs_bufmap_size_query()/PAGE_SIZE;
-	ow->pages = kcalloc(ow->maxpages, sizeof(struct page *), GFP_KERNEL);
-	if (!ow->pages) {
-		kfree(ow);
-		return -ENOMEM;
-	}
-	ow->bv = kcalloc(ow->maxpages, sizeof(struct bio_vec), GFP_KERNEL);
-	if (!ow->bv) {
-		kfree(ow->pages);
-		kfree(ow);
-		return -ENOMEM;
-	}
+	ow->pages = kसुस्मृति(ow->maxpages, माप(काष्ठा page *), GFP_KERNEL);
+	अगर (!ow->pages) अणु
+		kमुक्त(ow);
+		वापस -ENOMEM;
+	पूर्ण
+	ow->bv = kसुस्मृति(ow->maxpages, माप(काष्ठा bio_vec), GFP_KERNEL);
+	अगर (!ow->bv) अणु
+		kमुक्त(ow->pages);
+		kमुक्त(ow);
+		वापस -ENOMEM;
+	पूर्ण
 	blk_start_plug(&plug);
-	ret = write_cache_pages(mapping, wbc, orangefs_writepages_callback, ow);
-	if (ow->npages)
-		ret = orangefs_writepages_work(ow, wbc);
+	ret = ग_लिखो_cache_pages(mapping, wbc, orangefs_ग_लिखोpages_callback, ow);
+	अगर (ow->npages)
+		ret = orangefs_ग_लिखोpages_work(ow, wbc);
 	blk_finish_plug(&plug);
-	kfree(ow->pages);
-	kfree(ow->bv);
-	kfree(ow);
-	return ret;
-}
+	kमुक्त(ow->pages);
+	kमुक्त(ow->bv);
+	kमुक्त(ow);
+	वापस ret;
+पूर्ण
 
-static int orangefs_launder_page(struct page *);
+अटल पूर्णांक orangefs_launder_page(काष्ठा page *);
 
-static void orangefs_readahead(struct readahead_control *rac)
-{
+अटल व्योम orangefs_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
+अणु
 	loff_t offset;
-	struct iov_iter iter;
-	struct file *file = rac->file;
-	struct inode *inode = file->f_mapping->host;
-	struct xarray *i_pages;
-	struct page *page;
-	loff_t new_start = readahead_pos(rac);
-	int ret;
-	size_t new_len = 0;
+	काष्ठा iov_iter iter;
+	काष्ठा file *file = rac->file;
+	काष्ठा inode *inode = file->f_mapping->host;
+	काष्ठा xarray *i_pages;
+	काष्ठा page *page;
+	loff_t new_start = पढ़ोahead_pos(rac);
+	पूर्णांक ret;
+	माप_प्रकार new_len = 0;
 
-	loff_t bytes_remaining = inode->i_size - readahead_pos(rac);
-	loff_t pages_remaining = bytes_remaining / PAGE_SIZE;
+	loff_t bytes_reमुख्यing = inode->i_size - पढ़ोahead_pos(rac);
+	loff_t pages_reमुख्यing = bytes_reमुख्यing / PAGE_SIZE;
 
-	if (pages_remaining >= 1024)
+	अगर (pages_reमुख्यing >= 1024)
 		new_len = 4194304;
-	else if (pages_remaining > readahead_count(rac))
-		new_len = bytes_remaining;
+	अन्यथा अगर (pages_reमुख्यing > पढ़ोahead_count(rac))
+		new_len = bytes_reमुख्यing;
 
-	if (new_len)
-		readahead_expand(rac, new_start, new_len);
+	अगर (new_len)
+		पढ़ोahead_expand(rac, new_start, new_len);
 
-	offset = readahead_pos(rac);
+	offset = पढ़ोahead_pos(rac);
 	i_pages = &file->f_mapping->i_pages;
 
-	iov_iter_xarray(&iter, READ, i_pages, offset, readahead_length(rac));
+	iov_iter_xarray(&iter, READ, i_pages, offset, पढ़ोahead_length(rac));
 
-	/* read in the pages. */
-	if ((ret = wait_for_direct_io(ORANGEFS_IO_READ, inode,
-			&offset, &iter, readahead_length(rac),
-			inode->i_size, NULL, NULL, file)) < 0)
-		gossip_debug(GOSSIP_FILE_DEBUG,
+	/* पढ़ो in the pages. */
+	अगर ((ret = रुको_क्रम_direct_io(ORANGEFS_IO_READ, inode,
+			&offset, &iter, पढ़ोahead_length(rac),
+			inode->i_size, शून्य, शून्य, file)) < 0)
+		gossip_debug(GOSSIP_खाता_DEBUG,
 			"%s: wait_for_direct_io failed. \n", __func__);
-	else
+	अन्यथा
 		ret = 0;
 
 	/* clean up. */
-	while ((page = readahead_page(rac))) {
+	जबतक ((page = पढ़ोahead_page(rac))) अणु
 		page_endio(page, false, ret);
 		put_page(page);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int orangefs_readpage(struct file *file, struct page *page)
-{
-	struct inode *inode = page->mapping->host;
-	struct iov_iter iter;
-	struct bio_vec bv;
-	ssize_t ret;
-	loff_t off; /* offset into this page */
+अटल पूर्णांक orangefs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा iov_iter iter;
+	काष्ठा bio_vec bv;
+	sमाप_प्रकार ret;
+	loff_t off; /* offset पूर्णांकo this page */
 
-	if (PageDirty(page))
+	अगर (PageDirty(page))
 		orangefs_launder_page(page);
 
 	off = page_offset(page);
@@ -306,424 +307,424 @@ static int orangefs_readpage(struct file *file, struct page *page)
 	bv.bv_offset = 0;
 	iov_iter_bvec(&iter, READ, &bv, 1, PAGE_SIZE);
 
-	ret = wait_for_direct_io(ORANGEFS_IO_READ, inode, &off, &iter,
-	    PAGE_SIZE, inode->i_size, NULL, NULL, file);
-	/* this will only zero remaining unread portions of the page data */
+	ret = रुको_क्रम_direct_io(ORANGEFS_IO_READ, inode, &off, &iter,
+	    PAGE_SIZE, inode->i_size, शून्य, शून्य, file);
+	/* this will only zero reमुख्यing unपढ़ो portions of the page data */
 	iov_iter_zero(~0U, &iter);
 	/* takes care of potential aliasing */
 	flush_dcache_page(page);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SetPageError(page);
-	} else {
+	पूर्ण अन्यथा अणु
 		SetPageUptodate(page);
-		if (PageError(page))
+		अगर (PageError(page))
 			ClearPageError(page);
 		ret = 0;
-	}
-	/* unlock the page after the ->readpage() routine completes */
+	पूर्ण
+	/* unlock the page after the ->पढ़ोpage() routine completes */
 	unlock_page(page);
-        return ret;
-}
+        वापस ret;
+पूर्ण
 
-static int orangefs_write_begin(struct file *file,
-    struct address_space *mapping,
-    loff_t pos, unsigned len, unsigned flags, struct page **pagep,
-    void **fsdata)
-{
-	struct orangefs_write_range *wr;
-	struct page *page;
+अटल पूर्णांक orangefs_ग_लिखो_begin(काष्ठा file *file,
+    काष्ठा address_space *mapping,
+    loff_t pos, अचिन्हित len, अचिन्हित flags, काष्ठा page **pagep,
+    व्योम **fsdata)
+अणु
+	काष्ठा orangefs_ग_लिखो_range *wr;
+	काष्ठा page *page;
 	pgoff_t index;
-	int ret;
+	पूर्णांक ret;
 
 	index = pos >> PAGE_SHIFT;
 
-	page = grab_cache_page_write_begin(mapping, index, flags);
-	if (!page)
-		return -ENOMEM;
+	page = grab_cache_page_ग_लिखो_begin(mapping, index, flags);
+	अगर (!page)
+		वापस -ENOMEM;
 
 	*pagep = page;
 
-	if (PageDirty(page) && !PagePrivate(page)) {
+	अगर (PageDirty(page) && !PagePrivate(page)) अणु
 		/*
 		 * Should be impossible.  If it happens, launder the page
-		 * since we don't know what's dirty.  This will WARN in
-		 * orangefs_writepage_locked.
+		 * since we करोn't know what's dirty.  This will WARN in
+		 * orangefs_ग_लिखोpage_locked.
 		 */
 		ret = orangefs_launder_page(page);
-		if (ret)
-			return ret;
-	}
-	if (PagePrivate(page)) {
-		struct orangefs_write_range *wr;
-		wr = (struct orangefs_write_range *)page_private(page);
-		if (wr->pos + wr->len == pos &&
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	अगर (PagePrivate(page)) अणु
+		काष्ठा orangefs_ग_लिखो_range *wr;
+		wr = (काष्ठा orangefs_ग_लिखो_range *)page_निजी(page);
+		अगर (wr->pos + wr->len == pos &&
 		    uid_eq(wr->uid, current_fsuid()) &&
-		    gid_eq(wr->gid, current_fsgid())) {
+		    gid_eq(wr->gid, current_fsgid())) अणु
 			wr->len += len;
-			goto okay;
-		} else {
+			जाओ okay;
+		पूर्ण अन्यथा अणु
 			ret = orangefs_launder_page(page);
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	wr = kmalloc(sizeof *wr, GFP_KERNEL);
-	if (!wr)
-		return -ENOMEM;
+	wr = kदो_स्मृति(माप *wr, GFP_KERNEL);
+	अगर (!wr)
+		वापस -ENOMEM;
 
 	wr->pos = pos;
 	wr->len = len;
 	wr->uid = current_fsuid();
 	wr->gid = current_fsgid();
-	attach_page_private(page, wr);
+	attach_page_निजी(page, wr);
 okay:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int orangefs_write_end(struct file *file, struct address_space *mapping,
-    loff_t pos, unsigned len, unsigned copied, struct page *page, void *fsdata)
-{
-	struct inode *inode = page->mapping->host;
+अटल पूर्णांक orangefs_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
+    loff_t pos, अचिन्हित len, अचिन्हित copied, काष्ठा page *page, व्योम *fsdata)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
 	loff_t last_pos = pos + copied;
 
 	/*
-	 * No need to use i_size_read() here, the i_size
+	 * No need to use i_size_पढ़ो() here, the i_size
 	 * cannot change under us because we hold the i_mutex.
 	 */
-	if (last_pos > inode->i_size)
-		i_size_write(inode, last_pos);
+	अगर (last_pos > inode->i_size)
+		i_size_ग_लिखो(inode, last_pos);
 
-	/* zero the stale part of the page if we did a short copy */
-	if (!PageUptodate(page)) {
-		unsigned from = pos & (PAGE_SIZE - 1);
-		if (copied < len) {
+	/* zero the stale part of the page अगर we did a लघु copy */
+	अगर (!PageUptodate(page)) अणु
+		अचिन्हित from = pos & (PAGE_SIZE - 1);
+		अगर (copied < len) अणु
 			zero_user(page, from + copied, len - copied);
-		}
+		पूर्ण
 		/* Set fully written pages uptodate. */
-		if (pos == page_offset(page) &&
-		    (len == PAGE_SIZE || pos + len == inode->i_size)) {
+		अगर (pos == page_offset(page) &&
+		    (len == PAGE_SIZE || pos + len == inode->i_size)) अणु
 			zero_user_segment(page, from + copied, PAGE_SIZE);
 			SetPageUptodate(page);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	set_page_dirty(page);
 	unlock_page(page);
 	put_page(page);
 
 	mark_inode_dirty_sync(file_inode(file));
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
-static void orangefs_invalidatepage(struct page *page,
-				 unsigned int offset,
-				 unsigned int length)
-{
-	struct orangefs_write_range *wr;
-	wr = (struct orangefs_write_range *)page_private(page);
+अटल व्योम orangefs_invalidatepage(काष्ठा page *page,
+				 अचिन्हित पूर्णांक offset,
+				 अचिन्हित पूर्णांक length)
+अणु
+	काष्ठा orangefs_ग_लिखो_range *wr;
+	wr = (काष्ठा orangefs_ग_लिखो_range *)page_निजी(page);
 
-	if (offset == 0 && length == PAGE_SIZE) {
-		kfree(detach_page_private(page));
-		return;
-	/* write range entirely within invalidate range (or equal) */
-	} else if (page_offset(page) + offset <= wr->pos &&
-	    wr->pos + wr->len <= page_offset(page) + offset + length) {
-		kfree(detach_page_private(page));
+	अगर (offset == 0 && length == PAGE_SIZE) अणु
+		kमुक्त(detach_page_निजी(page));
+		वापस;
+	/* ग_लिखो range entirely within invalidate range (or equal) */
+	पूर्ण अन्यथा अगर (page_offset(page) + offset <= wr->pos &&
+	    wr->pos + wr->len <= page_offset(page) + offset + length) अणु
+		kमुक्त(detach_page_निजी(page));
 		/* XXX is this right? only caller in fs */
 		cancel_dirty_page(page);
-		return;
-	/* invalidate range chops off end of write range */
-	} else if (wr->pos < page_offset(page) + offset &&
+		वापस;
+	/* invalidate range chops off end of ग_लिखो range */
+	पूर्ण अन्यथा अगर (wr->pos < page_offset(page) + offset &&
 	    wr->pos + wr->len <= page_offset(page) + offset + length &&
-	     page_offset(page) + offset < wr->pos + wr->len) {
-		size_t x;
+	     page_offset(page) + offset < wr->pos + wr->len) अणु
+		माप_प्रकार x;
 		x = wr->pos + wr->len - (page_offset(page) + offset);
 		WARN_ON(x > wr->len);
 		wr->len -= x;
 		wr->uid = current_fsuid();
 		wr->gid = current_fsgid();
-	/* invalidate range chops off beginning of write range */
-	} else if (page_offset(page) + offset <= wr->pos &&
+	/* invalidate range chops off beginning of ग_लिखो range */
+	पूर्ण अन्यथा अगर (page_offset(page) + offset <= wr->pos &&
 	    page_offset(page) + offset + length < wr->pos + wr->len &&
-	    wr->pos < page_offset(page) + offset + length) {
-		size_t x;
+	    wr->pos < page_offset(page) + offset + length) अणु
+		माप_प्रकार x;
 		x = page_offset(page) + offset + length - wr->pos;
 		WARN_ON(x > wr->len);
 		wr->pos += x;
 		wr->len -= x;
 		wr->uid = current_fsuid();
 		wr->gid = current_fsgid();
-	/* invalidate range entirely within write range (punch hole) */
-	} else if (wr->pos < page_offset(page) + offset &&
-	    page_offset(page) + offset + length < wr->pos + wr->len) {
-		/* XXX what do we do here... should not WARN_ON */
+	/* invalidate range entirely within ग_लिखो range (punch hole) */
+	पूर्ण अन्यथा अगर (wr->pos < page_offset(page) + offset &&
+	    page_offset(page) + offset + length < wr->pos + wr->len) अणु
+		/* XXX what करो we करो here... should not WARN_ON */
 		WARN_ON(1);
 		/* punch hole */
 		/*
-		 * should we just ignore this and write it out anyway?
+		 * should we just ignore this and ग_लिखो it out anyway?
 		 * it hardly makes sense
 		 */
-		return;
+		वापस;
 	/* non-overlapping ranges */
-	} else {
-		/* WARN if they do overlap */
-		if (!((page_offset(page) + offset + length <= wr->pos) ^
-		    (wr->pos + wr->len <= page_offset(page) + offset))) {
+	पूर्ण अन्यथा अणु
+		/* WARN अगर they करो overlap */
+		अगर (!((page_offset(page) + offset + length <= wr->pos) ^
+		    (wr->pos + wr->len <= page_offset(page) + offset))) अणु
 			WARN_ON(1);
-			printk("invalidate range offset %llu length %u\n",
+			prपूर्णांकk("invalidate range offset %llu length %u\n",
 			    page_offset(page) + offset, length);
-			printk("write range offset %llu length %zu\n",
+			prपूर्णांकk("write range offset %llu length %zu\n",
 			    wr->pos, wr->len);
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	/*
-	 * Above there are returns where wr is freed or where we WARN.
-	 * Thus the following runs if wr was modified above.
+	 * Above there are वापसs where wr is मुक्तd or where we WARN.
+	 * Thus the following runs अगर wr was modअगरied above.
 	 */
 
 	orangefs_launder_page(page);
-}
+पूर्ण
 
-static int orangefs_releasepage(struct page *page, gfp_t foo)
-{
-	return !PagePrivate(page);
-}
+अटल पूर्णांक orangefs_releasepage(काष्ठा page *page, gfp_t foo)
+अणु
+	वापस !PagePrivate(page);
+पूर्ण
 
-static void orangefs_freepage(struct page *page)
-{
-	kfree(detach_page_private(page));
-}
+अटल व्योम orangefs_मुक्तpage(काष्ठा page *page)
+अणु
+	kमुक्त(detach_page_निजी(page));
+पूर्ण
 
-static int orangefs_launder_page(struct page *page)
-{
-	int r = 0;
-	struct writeback_control wbc = {
+अटल पूर्णांक orangefs_launder_page(काष्ठा page *page)
+अणु
+	पूर्णांक r = 0;
+	काष्ठा ग_लिखोback_control wbc = अणु
 		.sync_mode = WB_SYNC_ALL,
-		.nr_to_write = 0,
-	};
-	wait_on_page_writeback(page);
-	if (clear_page_dirty_for_io(page)) {
-		r = orangefs_writepage_locked(page, &wbc);
-		end_page_writeback(page);
-	}
-	return r;
-}
+		.nr_to_ग_लिखो = 0,
+	पूर्ण;
+	रुको_on_page_ग_लिखोback(page);
+	अगर (clear_page_dirty_क्रम_io(page)) अणु
+		r = orangefs_ग_लिखोpage_locked(page, &wbc);
+		end_page_ग_लिखोback(page);
+	पूर्ण
+	वापस r;
+पूर्ण
 
-static ssize_t orangefs_direct_IO(struct kiocb *iocb,
-				  struct iov_iter *iter)
-{
+अटल sमाप_प्रकार orangefs_direct_IO(काष्ठा kiocb *iocb,
+				  काष्ठा iov_iter *iter)
+अणु
 	/*
-	 * Comment from original do_readv_writev:
-	 * Common entry point for read/write/readv/writev
+	 * Comment from original करो_पढ़ोv_ग_लिखोv:
+	 * Common entry poपूर्णांक क्रम पढ़ो/ग_लिखो/पढ़ोv/ग_लिखोv
 	 * This function will dispatch it to either the direct I/O
 	 * or buffered I/O path depending on the mount options and/or
 	 * augmented/extended metadata attached to the file.
 	 * Note: File extended attributes override any mount options.
 	 */
-	struct file *file = iocb->ki_filp;
+	काष्ठा file *file = iocb->ki_filp;
 	loff_t pos = iocb->ki_pos;
-	enum ORANGEFS_io_type type = iov_iter_rw(iter) == WRITE ?
+	क्रमागत ORANGEFS_io_type type = iov_iter_rw(iter) == WRITE ?
             ORANGEFS_IO_WRITE : ORANGEFS_IO_READ;
 	loff_t *offset = &pos;
-	struct inode *inode = file->f_mapping->host;
-	struct orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
-	struct orangefs_khandle *handle = &orangefs_inode->refn.khandle;
-	size_t count = iov_iter_count(iter);
-	ssize_t total_count = 0;
-	ssize_t ret = -EINVAL;
-	int i = 0;
+	काष्ठा inode *inode = file->f_mapping->host;
+	काष्ठा orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
+	काष्ठा orangefs_khandle *handle = &orangefs_inode->refn.khandle;
+	माप_प्रकार count = iov_iter_count(iter);
+	sमाप_प्रकार total_count = 0;
+	sमाप_प्रकार ret = -EINVAL;
+	पूर्णांक i = 0;
 
-	gossip_debug(GOSSIP_FILE_DEBUG,
+	gossip_debug(GOSSIP_खाता_DEBUG,
 		"%s-BEGIN(%pU): count(%d) after estimate_max_iovecs.\n",
 		__func__,
 		handle,
-		(int)count);
+		(पूर्णांक)count);
 
-	if (type == ORANGEFS_IO_WRITE) {
-		gossip_debug(GOSSIP_FILE_DEBUG,
+	अगर (type == ORANGEFS_IO_WRITE) अणु
+		gossip_debug(GOSSIP_खाता_DEBUG,
 			     "%s(%pU): proceeding with offset : %llu, "
 			     "size %d\n",
 			     __func__,
 			     handle,
 			     llu(*offset),
-			     (int)count);
-	}
+			     (पूर्णांक)count);
+	पूर्ण
 
-	if (count == 0) {
+	अगर (count == 0) अणु
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (iov_iter_count(iter)) {
-		size_t each_count = iov_iter_count(iter);
-		size_t amt_complete;
+	जबतक (iov_iter_count(iter)) अणु
+		माप_प्रकार each_count = iov_iter_count(iter);
+		माप_प्रकार amt_complete;
 		i++;
 
 		/* how much to transfer in this loop iteration */
-		if (each_count > orangefs_bufmap_size_query())
+		अगर (each_count > orangefs_bufmap_size_query())
 			each_count = orangefs_bufmap_size_query();
 
-		gossip_debug(GOSSIP_FILE_DEBUG,
+		gossip_debug(GOSSIP_खाता_DEBUG,
 			     "%s(%pU): size of each_count(%d)\n",
 			     __func__,
 			     handle,
-			     (int)each_count);
-		gossip_debug(GOSSIP_FILE_DEBUG,
+			     (पूर्णांक)each_count);
+		gossip_debug(GOSSIP_खाता_DEBUG,
 			     "%s(%pU): BEFORE wait_for_io: offset is %d\n",
 			     __func__,
 			     handle,
-			     (int)*offset);
+			     (पूर्णांक)*offset);
 
-		ret = wait_for_direct_io(type, inode, offset, iter,
-				each_count, 0, NULL, NULL, file);
-		gossip_debug(GOSSIP_FILE_DEBUG,
+		ret = रुको_क्रम_direct_io(type, inode, offset, iter,
+				each_count, 0, शून्य, शून्य, file);
+		gossip_debug(GOSSIP_खाता_DEBUG,
 			     "%s(%pU): return from wait_for_io:%d\n",
 			     __func__,
 			     handle,
-			     (int)ret);
+			     (पूर्णांक)ret);
 
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 
 		*offset += ret;
 		total_count += ret;
 		amt_complete = ret;
 
-		gossip_debug(GOSSIP_FILE_DEBUG,
+		gossip_debug(GOSSIP_खाता_DEBUG,
 			     "%s(%pU): AFTER wait_for_io: offset is %d\n",
 			     __func__,
 			     handle,
-			     (int)*offset);
+			     (पूर्णांक)*offset);
 
 		/*
-		 * if we got a short I/O operations,
-		 * fall out and return what we got so far
+		 * अगर we got a लघु I/O operations,
+		 * fall out and वापस what we got so far
 		 */
-		if (amt_complete < each_count)
-			break;
-	} /*end while */
+		अगर (amt_complete < each_count)
+			अवरोध;
+	पूर्ण /*end जबतक */
 
 out:
-	if (total_count > 0)
+	अगर (total_count > 0)
 		ret = total_count;
-	if (ret > 0) {
-		if (type == ORANGEFS_IO_READ) {
+	अगर (ret > 0) अणु
+		अगर (type == ORANGEFS_IO_READ) अणु
 			file_accessed(file);
-		} else {
-			file_update_time(file);
-			if (*offset > i_size_read(inode))
-				i_size_write(inode, *offset);
-		}
-	}
+		पूर्ण अन्यथा अणु
+			file_update_समय(file);
+			अगर (*offset > i_size_पढ़ो(inode))
+				i_size_ग_लिखो(inode, *offset);
+		पूर्ण
+	पूर्ण
 
-	gossip_debug(GOSSIP_FILE_DEBUG,
+	gossip_debug(GOSSIP_खाता_DEBUG,
 		     "%s(%pU): Value(%d) returned.\n",
 		     __func__,
 		     handle,
-		     (int)ret);
+		     (पूर्णांक)ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /** ORANGEFS2 implementation of address space operations */
-static const struct address_space_operations orangefs_address_operations = {
-	.writepage = orangefs_writepage,
-	.readahead = orangefs_readahead,
-	.readpage = orangefs_readpage,
-	.writepages = orangefs_writepages,
+अटल स्थिर काष्ठा address_space_operations orangefs_address_operations = अणु
+	.ग_लिखोpage = orangefs_ग_लिखोpage,
+	.पढ़ोahead = orangefs_पढ़ोahead,
+	.पढ़ोpage = orangefs_पढ़ोpage,
+	.ग_लिखोpages = orangefs_ग_लिखोpages,
 	.set_page_dirty = __set_page_dirty_nobuffers,
-	.write_begin = orangefs_write_begin,
-	.write_end = orangefs_write_end,
+	.ग_लिखो_begin = orangefs_ग_लिखो_begin,
+	.ग_लिखो_end = orangefs_ग_लिखो_end,
 	.invalidatepage = orangefs_invalidatepage,
 	.releasepage = orangefs_releasepage,
-	.freepage = orangefs_freepage,
+	.मुक्तpage = orangefs_मुक्तpage,
 	.launder_page = orangefs_launder_page,
 	.direct_IO = orangefs_direct_IO,
-};
+पूर्ण;
 
-vm_fault_t orangefs_page_mkwrite(struct vm_fault *vmf)
-{
-	struct page *page = vmf->page;
-	struct inode *inode = file_inode(vmf->vma->vm_file);
-	struct orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
-	unsigned long *bitlock = &orangefs_inode->bitlock;
+vm_fault_t orangefs_page_mkग_लिखो(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा page *page = vmf->page;
+	काष्ठा inode *inode = file_inode(vmf->vma->vm_file);
+	काष्ठा orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
+	अचिन्हित दीर्घ *bitlock = &orangefs_inode->bitlock;
 	vm_fault_t ret;
-	struct orangefs_write_range *wr;
+	काष्ठा orangefs_ग_लिखो_range *wr;
 
 	sb_start_pagefault(inode->i_sb);
 
-	if (wait_on_bit(bitlock, 1, TASK_KILLABLE)) {
+	अगर (रुको_on_bit(bitlock, 1, TASK_KILLABLE)) अणु
 		ret = VM_FAULT_RETRY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	lock_page(page);
-	if (PageDirty(page) && !PagePrivate(page)) {
+	अगर (PageDirty(page) && !PagePrivate(page)) अणु
 		/*
 		 * Should be impossible.  If it happens, launder the page
-		 * since we don't know what's dirty.  This will WARN in
-		 * orangefs_writepage_locked.
+		 * since we करोn't know what's dirty.  This will WARN in
+		 * orangefs_ग_लिखोpage_locked.
 		 */
-		if (orangefs_launder_page(page)) {
+		अगर (orangefs_launder_page(page)) अणु
 			ret = VM_FAULT_LOCKED|VM_FAULT_RETRY;
-			goto out;
-		}
-	}
-	if (PagePrivate(page)) {
-		wr = (struct orangefs_write_range *)page_private(page);
-		if (uid_eq(wr->uid, current_fsuid()) &&
-		    gid_eq(wr->gid, current_fsgid())) {
+			जाओ out;
+		पूर्ण
+	पूर्ण
+	अगर (PagePrivate(page)) अणु
+		wr = (काष्ठा orangefs_ग_लिखो_range *)page_निजी(page);
+		अगर (uid_eq(wr->uid, current_fsuid()) &&
+		    gid_eq(wr->gid, current_fsgid())) अणु
 			wr->pos = page_offset(page);
 			wr->len = PAGE_SIZE;
-			goto okay;
-		} else {
-			if (orangefs_launder_page(page)) {
+			जाओ okay;
+		पूर्ण अन्यथा अणु
+			अगर (orangefs_launder_page(page)) अणु
 				ret = VM_FAULT_LOCKED|VM_FAULT_RETRY;
-				goto out;
-			}
-		}
-	}
-	wr = kmalloc(sizeof *wr, GFP_KERNEL);
-	if (!wr) {
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	wr = kदो_स्मृति(माप *wr, GFP_KERNEL);
+	अगर (!wr) अणु
 		ret = VM_FAULT_LOCKED|VM_FAULT_RETRY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	wr->pos = page_offset(page);
 	wr->len = PAGE_SIZE;
 	wr->uid = current_fsuid();
 	wr->gid = current_fsgid();
-	attach_page_private(page, wr);
+	attach_page_निजी(page, wr);
 okay:
 
-	file_update_time(vmf->vma->vm_file);
-	if (page->mapping != inode->i_mapping) {
+	file_update_समय(vmf->vma->vm_file);
+	अगर (page->mapping != inode->i_mapping) अणु
 		unlock_page(page);
 		ret = VM_FAULT_LOCKED|VM_FAULT_NOPAGE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * We mark the page dirty already here so that when freeze is in
-	 * progress, we are guaranteed that writeback during freezing will
-	 * see the dirty page and writeprotect it again.
+	 * We mark the page dirty alपढ़ोy here so that when मुक्तze is in
+	 * progress, we are guaranteed that ग_लिखोback during मुक्तzing will
+	 * see the dirty page and ग_लिखोprotect it again.
 	 */
 	set_page_dirty(page);
-	wait_for_stable_page(page);
+	रुको_क्रम_stable_page(page);
 	ret = VM_FAULT_LOCKED;
 out:
 	sb_end_pagefault(inode->i_sb);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int orangefs_setattr_size(struct inode *inode, struct iattr *iattr)
-{
-	struct orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
-	struct orangefs_kernel_op_s *new_op;
+अटल पूर्णांक orangefs_setattr_size(काष्ठा inode *inode, काष्ठा iattr *iattr)
+अणु
+	काष्ठा orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
+	काष्ठा orangefs_kernel_op_s *new_op;
 	loff_t orig_size;
-	int ret = -EINVAL;
+	पूर्णांक ret = -EINVAL;
 
 	gossip_debug(GOSSIP_INODE_DEBUG,
 		     "%s: %pU: Handle is %pU | fs_id %d | size is %llu\n",
@@ -733,142 +734,142 @@ static int orangefs_setattr_size(struct inode *inode, struct iattr *iattr)
 		     orangefs_inode->refn.fs_id,
 		     iattr->ia_size);
 
-	/* Ensure that we have a up to date size, so we know if it changed. */
+	/* Ensure that we have a up to date size, so we know अगर it changed. */
 	ret = orangefs_inode_getattr(inode, ORANGEFS_GETATTR_SIZE);
-	if (ret == -ESTALE)
+	अगर (ret == -ESTALE)
 		ret = -EIO;
-	if (ret) {
+	अगर (ret) अणु
 		gossip_err("%s: orangefs_inode_getattr failed, ret:%d:.\n",
 		    __func__, ret);
-		return ret;
-	}
-	orig_size = i_size_read(inode);
+		वापस ret;
+	पूर्ण
+	orig_size = i_size_पढ़ो(inode);
 
-	/* This is truncate_setsize in a different order. */
+	/* This is truncate_setsize in a dअगरferent order. */
 	truncate_pagecache(inode, iattr->ia_size);
-	i_size_write(inode, iattr->ia_size);
-	if (iattr->ia_size > orig_size)
+	i_size_ग_लिखो(inode, iattr->ia_size);
+	अगर (iattr->ia_size > orig_size)
 		pagecache_isize_extended(inode, orig_size, iattr->ia_size);
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_TRUNCATE);
-	if (!new_op)
-		return -ENOMEM;
+	अगर (!new_op)
+		वापस -ENOMEM;
 
 	new_op->upcall.req.truncate.refn = orangefs_inode->refn;
 	new_op->upcall.req.truncate.size = (__s64) iattr->ia_size;
 
 	ret = service_operation(new_op,
 		__func__,
-		get_interruptible_flag(inode));
+		get_पूर्णांकerruptible_flag(inode));
 
 	/*
-	 * the truncate has no downcall members to retrieve, but
-	 * the status value tells us if it went through ok or not
+	 * the truncate has no करोwncall members to retrieve, but
+	 * the status value tells us अगर it went through ok or not
 	 */
 	gossip_debug(GOSSIP_INODE_DEBUG, "%s: ret:%d:\n", __func__, ret);
 
 	op_release(new_op);
 
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
-	if (orig_size != i_size_read(inode))
+	अगर (orig_size != i_size_पढ़ो(inode))
 		iattr->ia_valid |= ATTR_CTIME | ATTR_MTIME;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int __orangefs_setattr(struct inode *inode, struct iattr *iattr)
-{
-	int ret;
+पूर्णांक __orangefs_setattr(काष्ठा inode *inode, काष्ठा iattr *iattr)
+अणु
+	पूर्णांक ret;
 
-	if (iattr->ia_valid & ATTR_MODE) {
-		if (iattr->ia_mode & (S_ISVTX)) {
-			if (is_root_handle(inode)) {
+	अगर (iattr->ia_valid & ATTR_MODE) अणु
+		अगर (iattr->ia_mode & (S_ISVTX)) अणु
+			अगर (is_root_handle(inode)) अणु
 				/*
 				 * allow sticky bit to be set on root (since
-				 * it shows up that way by default anyhow),
-				 * but don't show it to the server
+				 * it shows up that way by शेष anyhow),
+				 * but करोn't show it to the server
 				 */
 				iattr->ia_mode -= S_ISVTX;
-			} else {
+			पूर्ण अन्यथा अणु
 				gossip_debug(GOSSIP_UTILS_DEBUG,
 					     "User attempted to set sticky bit on non-root directory; returning EINVAL.\n");
 				ret = -EINVAL;
-				goto out;
-			}
-		}
-		if (iattr->ia_mode & (S_ISUID)) {
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		अगर (iattr->ia_mode & (S_ISUID)) अणु
 			gossip_debug(GOSSIP_UTILS_DEBUG,
 				     "Attempting to set setuid bit (not supported); returning EINVAL.\n");
 			ret = -EINVAL;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (iattr->ia_valid & ATTR_SIZE) {
+	अगर (iattr->ia_valid & ATTR_SIZE) अणु
 		ret = orangefs_setattr_size(inode, iattr);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 again:
 	spin_lock(&inode->i_lock);
-	if (ORANGEFS_I(inode)->attr_valid) {
-		if (uid_eq(ORANGEFS_I(inode)->attr_uid, current_fsuid()) &&
-		    gid_eq(ORANGEFS_I(inode)->attr_gid, current_fsgid())) {
+	अगर (ORANGEFS_I(inode)->attr_valid) अणु
+		अगर (uid_eq(ORANGEFS_I(inode)->attr_uid, current_fsuid()) &&
+		    gid_eq(ORANGEFS_I(inode)->attr_gid, current_fsgid())) अणु
 			ORANGEFS_I(inode)->attr_valid = iattr->ia_valid;
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_unlock(&inode->i_lock);
-			write_inode_now(inode, 1);
-			goto again;
-		}
-	} else {
+			ग_लिखो_inode_now(inode, 1);
+			जाओ again;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ORANGEFS_I(inode)->attr_valid = iattr->ia_valid;
 		ORANGEFS_I(inode)->attr_uid = current_fsuid();
 		ORANGEFS_I(inode)->attr_gid = current_fsgid();
-	}
+	पूर्ण
 	setattr_copy(&init_user_ns, inode, iattr);
 	spin_unlock(&inode->i_lock);
 	mark_inode_dirty(inode);
 
-	if (iattr->ia_valid & ATTR_MODE)
+	अगर (iattr->ia_valid & ATTR_MODE)
 		/* change mod on a file that has ACLs */
 		ret = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
 
 	ret = 0;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Change attributes of an object referenced by dentry.
  */
-int orangefs_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-		     struct iattr *iattr)
-{
-	int ret;
+पूर्णांक orangefs_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		     काष्ठा iattr *iattr)
+अणु
+	पूर्णांक ret;
 	gossip_debug(GOSSIP_INODE_DEBUG, "__orangefs_setattr: called on %pd\n",
 	    dentry);
 	ret = setattr_prepare(&init_user_ns, dentry, iattr);
-	if (ret)
-	        goto out;
+	अगर (ret)
+	        जाओ out;
 	ret = __orangefs_setattr(d_inode(dentry), iattr);
 	sync_inode_metadata(d_inode(dentry), 1);
 out:
 	gossip_debug(GOSSIP_INODE_DEBUG, "orangefs_setattr: returning %d\n",
 	    ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Obtain attributes of an object given a dentry
  */
-int orangefs_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		     struct kstat *stat, u32 request_mask, unsigned int flags)
-{
-	int ret;
-	struct inode *inode = path->dentry->d_inode;
+पूर्णांक orangefs_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		     काष्ठा kstat *stat, u32 request_mask, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक ret;
+	काष्ठा inode *inode = path->dentry->d_inode;
 
 	gossip_debug(GOSSIP_INODE_DEBUG,
 		     "orangefs_getattr: called on %pd mask %u\n",
@@ -876,198 +877,198 @@ int orangefs_getattr(struct user_namespace *mnt_userns, const struct path *path,
 
 	ret = orangefs_inode_getattr(inode,
 	    request_mask & STATX_SIZE ? ORANGEFS_GETATTR_SIZE : 0);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		generic_fillattr(&init_user_ns, inode, stat);
 
 		/* override block size reported to stat */
-		if (!(request_mask & STATX_SIZE))
+		अगर (!(request_mask & STATX_SIZE))
 			stat->result_mask &= ~STATX_SIZE;
 
 		stat->attributes_mask = STATX_ATTR_IMMUTABLE |
 		    STATX_ATTR_APPEND;
-		if (inode->i_flags & S_IMMUTABLE)
+		अगर (inode->i_flags & S_IMMUTABLE)
 			stat->attributes |= STATX_ATTR_IMMUTABLE;
-		if (inode->i_flags & S_APPEND)
+		अगर (inode->i_flags & S_APPEND)
 			stat->attributes |= STATX_ATTR_APPEND;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int orangefs_permission(struct user_namespace *mnt_userns,
-			struct inode *inode, int mask)
-{
-	int ret;
+पूर्णांक orangefs_permission(काष्ठा user_namespace *mnt_userns,
+			काष्ठा inode *inode, पूर्णांक mask)
+अणु
+	पूर्णांक ret;
 
-	if (mask & MAY_NOT_BLOCK)
-		return -ECHILD;
+	अगर (mask & MAY_NOT_BLOCK)
+		वापस -ECHILD;
 
 	gossip_debug(GOSSIP_INODE_DEBUG, "%s: refreshing\n", __func__);
 
 	/* Make sure the permission (and other common attrs) are up to date. */
 	ret = orangefs_inode_getattr(inode, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return generic_permission(&init_user_ns, inode, mask);
-}
+	वापस generic_permission(&init_user_ns, inode, mask);
+पूर्ण
 
-int orangefs_update_time(struct inode *inode, struct timespec64 *time, int flags)
-{
-	struct iattr iattr;
+पूर्णांक orangefs_update_समय(काष्ठा inode *inode, काष्ठा बारpec64 *समय, पूर्णांक flags)
+अणु
+	काष्ठा iattr iattr;
 	gossip_debug(GOSSIP_INODE_DEBUG, "orangefs_update_time: %pU\n",
 	    get_khandle_from_ino(inode));
-	generic_update_time(inode, time, flags);
-	memset(&iattr, 0, sizeof iattr);
-        if (flags & S_ATIME)
+	generic_update_समय(inode, समय, flags);
+	स_रखो(&iattr, 0, माप iattr);
+        अगर (flags & S_ATIME)
 		iattr.ia_valid |= ATTR_ATIME;
-	if (flags & S_CTIME)
+	अगर (flags & S_CTIME)
 		iattr.ia_valid |= ATTR_CTIME;
-	if (flags & S_MTIME)
+	अगर (flags & S_MTIME)
 		iattr.ia_valid |= ATTR_MTIME;
-	return __orangefs_setattr(inode, &iattr);
-}
+	वापस __orangefs_setattr(inode, &iattr);
+पूर्ण
 
-static int orangefs_fileattr_get(struct dentry *dentry, struct fileattr *fa)
-{
+अटल पूर्णांक orangefs_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
 	u64 val = 0;
-	int ret;
+	पूर्णांक ret;
 
-	gossip_debug(GOSSIP_FILE_DEBUG, "%s: called on %pd\n", __func__,
+	gossip_debug(GOSSIP_खाता_DEBUG, "%s: called on %pd\n", __func__,
 		     dentry);
 
 	ret = orangefs_inode_getxattr(d_inode(dentry),
 				      "user.pvfs2.meta_hint",
-				      &val, sizeof(val));
-	if (ret < 0 && ret != -ENODATA)
-		return ret;
+				      &val, माप(val));
+	अगर (ret < 0 && ret != -ENODATA)
+		वापस ret;
 
-	gossip_debug(GOSSIP_FILE_DEBUG, "%s: flags=%u\n", __func__, (u32) val);
+	gossip_debug(GOSSIP_खाता_DEBUG, "%s: flags=%u\n", __func__, (u32) val);
 
 	fileattr_fill_flags(fa, val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int orangefs_fileattr_set(struct user_namespace *mnt_userns,
-				 struct dentry *dentry, struct fileattr *fa)
-{
+अटल पूर्णांक orangefs_fileattr_set(काष्ठा user_namespace *mnt_userns,
+				 काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
 	u64 val = 0;
 
-	gossip_debug(GOSSIP_FILE_DEBUG, "%s: called on %pd\n", __func__,
+	gossip_debug(GOSSIP_खाता_DEBUG, "%s: called on %pd\n", __func__,
 		     dentry);
 	/*
-	 * ORANGEFS_MIRROR_FL is set internally when the mirroring mode is
-	 * turned on for a file. The user is not allowed to turn on this bit,
-	 * but the bit is present if the user first gets the flags and then
+	 * ORANGEFS_MIRROR_FL is set पूर्णांकernally when the mirroring mode is
+	 * turned on क्रम a file. The user is not allowed to turn on this bit,
+	 * but the bit is present अगर the user first माला_लो the flags and then
 	 * updates the flags with some new settings. So, we ignore it in the
 	 * following edit. bligon.
 	 */
-	if (fileattr_has_fsx(fa) ||
-	    (fa->flags & ~(FS_IMMUTABLE_FL | FS_APPEND_FL | FS_NOATIME_FL | ORANGEFS_MIRROR_FL))) {
+	अगर (fileattr_has_fsx(fa) ||
+	    (fa->flags & ~(FS_IMMUTABLE_FL | FS_APPEND_FL | FS_NOATIME_FL | ORANGEFS_MIRROR_FL))) अणु
 		gossip_err("%s: only supports setting one of FS_IMMUTABLE_FL|FS_APPEND_FL|FS_NOATIME_FL\n",
 			   __func__);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 	val = fa->flags;
-	gossip_debug(GOSSIP_FILE_DEBUG, "%s: flags=%u\n", __func__, (u32) val);
-	return orangefs_inode_setxattr(d_inode(dentry),
+	gossip_debug(GOSSIP_खाता_DEBUG, "%s: flags=%u\n", __func__, (u32) val);
+	वापस orangefs_inode_setxattr(d_inode(dentry),
 				       "user.pvfs2.meta_hint",
-				       &val, sizeof(val), 0);
-}
+				       &val, माप(val), 0);
+पूर्ण
 
-/* ORANGEFS2 implementation of VFS inode operations for files */
-static const struct inode_operations orangefs_file_inode_operations = {
+/* ORANGEFS2 implementation of VFS inode operations क्रम files */
+अटल स्थिर काष्ठा inode_operations orangefs_file_inode_operations = अणु
 	.get_acl = orangefs_get_acl,
 	.set_acl = orangefs_set_acl,
 	.setattr = orangefs_setattr,
 	.getattr = orangefs_getattr,
 	.listxattr = orangefs_listxattr,
 	.permission = orangefs_permission,
-	.update_time = orangefs_update_time,
+	.update_समय = orangefs_update_समय,
 	.fileattr_get = orangefs_fileattr_get,
 	.fileattr_set = orangefs_fileattr_set,
-};
+पूर्ण;
 
-static int orangefs_init_iops(struct inode *inode)
-{
+अटल पूर्णांक orangefs_init_iops(काष्ठा inode *inode)
+अणु
 	inode->i_mapping->a_ops = &orangefs_address_operations;
 
-	switch (inode->i_mode & S_IFMT) {
-	case S_IFREG:
+	चयन (inode->i_mode & S_IFMT) अणु
+	हाल S_IFREG:
 		inode->i_op = &orangefs_file_inode_operations;
 		inode->i_fop = &orangefs_file_operations;
-		break;
-	case S_IFLNK:
+		अवरोध;
+	हाल S_IFLNK:
 		inode->i_op = &orangefs_symlink_inode_operations;
-		break;
-	case S_IFDIR:
+		अवरोध;
+	हाल S_IFसूची:
 		inode->i_op = &orangefs_dir_inode_operations;
 		inode->i_fop = &orangefs_dir_operations;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		gossip_debug(GOSSIP_INODE_DEBUG,
 			     "%s: unsupported mode\n",
 			     __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Given an ORANGEFS object identifier (fsid, handle), convert it into
+ * Given an ORANGEFS object identअगरier (fsid, handle), convert it पूर्णांकo
  * a ino_t type that will be used as a hash-index from where the handle will
- * be searched for in the VFS hash table of inodes.
+ * be searched क्रम in the VFS hash table of inodes.
  */
-static inline ino_t orangefs_handle_hash(struct orangefs_object_kref *ref)
-{
-	if (!ref)
-		return 0;
-	return orangefs_khandle_to_ino(&(ref->khandle));
-}
+अटल अंतरभूत ino_t orangefs_handle_hash(काष्ठा orangefs_object_kref *ref)
+अणु
+	अगर (!ref)
+		वापस 0;
+	वापस orangefs_khandle_to_ino(&(ref->khandle));
+पूर्ण
 
 /*
  * Called to set up an inode from iget5_locked.
  */
-static int orangefs_set_inode(struct inode *inode, void *data)
-{
-	struct orangefs_object_kref *ref = (struct orangefs_object_kref *) data;
+अटल पूर्णांक orangefs_set_inode(काष्ठा inode *inode, व्योम *data)
+अणु
+	काष्ठा orangefs_object_kref *ref = (काष्ठा orangefs_object_kref *) data;
 	ORANGEFS_I(inode)->refn.fs_id = ref->fs_id;
 	ORANGEFS_I(inode)->refn.khandle = ref->khandle;
 	ORANGEFS_I(inode)->attr_valid = 0;
 	hash_init(ORANGEFS_I(inode)->xattr_cache);
-	ORANGEFS_I(inode)->mapping_time = jiffies - 1;
+	ORANGEFS_I(inode)->mapping_समय = jअगरfies - 1;
 	ORANGEFS_I(inode)->bitlock = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Called to determine if handles match.
+ * Called to determine अगर handles match.
  */
-static int orangefs_test_inode(struct inode *inode, void *data)
-{
-	struct orangefs_object_kref *ref = (struct orangefs_object_kref *) data;
-	struct orangefs_inode_s *orangefs_inode = NULL;
+अटल पूर्णांक orangefs_test_inode(काष्ठा inode *inode, व्योम *data)
+अणु
+	काष्ठा orangefs_object_kref *ref = (काष्ठा orangefs_object_kref *) data;
+	काष्ठा orangefs_inode_s *orangefs_inode = शून्य;
 
 	orangefs_inode = ORANGEFS_I(inode);
 	/* test handles and fs_ids... */
-	return (!ORANGEFS_khandle_cmp(&(orangefs_inode->refn.khandle),
+	वापस (!ORANGEFS_khandle_cmp(&(orangefs_inode->refn.khandle),
 				&(ref->khandle)) &&
 			orangefs_inode->refn.fs_id == ref->fs_id);
-}
+पूर्ण
 
 /*
- * Front-end to lookup the inode-cache maintained by the VFS using the ORANGEFS
+ * Front-end to lookup the inode-cache मुख्यtained by the VFS using the ORANGEFS
  * file handle.
  *
- * @sb: the file system super block instance.
- * @ref: The ORANGEFS object for which we are trying to locate an inode.
+ * @sb: the file प्रणाली super block instance.
+ * @ref: The ORANGEFS object क्रम which we are trying to locate an inode.
  */
-struct inode *orangefs_iget(struct super_block *sb,
-		struct orangefs_object_kref *ref)
-{
-	struct inode *inode = NULL;
-	unsigned long hash;
-	int error;
+काष्ठा inode *orangefs_iget(काष्ठा super_block *sb,
+		काष्ठा orangefs_object_kref *ref)
+अणु
+	काष्ठा inode *inode = शून्य;
+	अचिन्हित दीर्घ hash;
+	पूर्णांक error;
 
 	hash = orangefs_handle_hash(ref);
 	inode = iget5_locked(sb,
@@ -1076,19 +1077,19 @@ struct inode *orangefs_iget(struct super_block *sb,
 			orangefs_set_inode,
 			ref);
 
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (!(inode->i_state & I_NEW))
-		return inode;
+	अगर (!(inode->i_state & I_NEW))
+		वापस inode;
 
 	error = orangefs_inode_getattr(inode, ORANGEFS_GETATTR_NEW);
-	if (error) {
+	अगर (error) अणु
 		iget_failed(inode);
-		return ERR_PTR(error);
-	}
+		वापस ERR_PTR(error);
+	पूर्ण
 
-	inode->i_ino = hash;	/* needed for stat etc */
+	inode->i_ino = hash;	/* needed क्रम stat etc */
 	orangefs_init_iops(inode);
 	unlock_new_inode(inode);
 
@@ -1099,18 +1100,18 @@ struct inode *orangefs_iget(struct super_block *sb,
 		     hash,
 		     inode->i_ino);
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
 /*
- * Allocate an inode for a newly created file and insert it into the inode hash.
+ * Allocate an inode क्रम a newly created file and insert it पूर्णांकo the inode hash.
  */
-struct inode *orangefs_new_inode(struct super_block *sb, struct inode *dir,
-		int mode, dev_t dev, struct orangefs_object_kref *ref)
-{
-	unsigned long hash = orangefs_handle_hash(ref);
-	struct inode *inode;
-	int error;
+काष्ठा inode *orangefs_new_inode(काष्ठा super_block *sb, काष्ठा inode *dir,
+		पूर्णांक mode, dev_t dev, काष्ठा orangefs_object_kref *ref)
+अणु
+	अचिन्हित दीर्घ hash = orangefs_handle_hash(ref);
+	काष्ठा inode *inode;
+	पूर्णांक error;
 
 	gossip_debug(GOSSIP_INODE_DEBUG,
 		     "%s:(sb is %p | MAJOR(dev)=%u | MINOR(dev)=%u mode=%o)\n",
@@ -1121,30 +1122,30 @@ struct inode *orangefs_new_inode(struct super_block *sb, struct inode *dir,
 		     mode);
 
 	inode = new_inode(sb);
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
 
 	orangefs_set_inode(inode, ref);
-	inode->i_ino = hash;	/* needed for stat etc */
+	inode->i_ino = hash;	/* needed क्रम stat etc */
 
 	error = orangefs_inode_getattr(inode, ORANGEFS_GETATTR_NEW);
-	if (error)
-		goto out_iput;
+	अगर (error)
+		जाओ out_iput;
 
 	orangefs_init_iops(inode);
 	inode->i_rdev = dev;
 
 	error = insert_inode_locked4(inode, hash, orangefs_test_inode, ref);
-	if (error < 0)
-		goto out_iput;
+	अगर (error < 0)
+		जाओ out_iput;
 
 	gossip_debug(GOSSIP_INODE_DEBUG,
 		     "Initializing ACL's for inode %pU\n",
 		     get_khandle_from_ino(inode));
 	orangefs_init_acl(inode, dir);
-	return inode;
+	वापस inode;
 
 out_iput:
 	iput(inode);
-	return ERR_PTR(error);
-}
+	वापस ERR_PTR(error);
+पूर्ण

@@ -1,19 +1,20 @@
-#ifndef DW_HDMI_CEC_H
-#define DW_HDMI_CEC_H
+<शैली गुरु>
+#अगर_अघोषित DW_HDMI_CEC_H
+#घोषणा DW_HDMI_CEC_H
 
-struct dw_hdmi;
+काष्ठा dw_hdmi;
 
-struct dw_hdmi_cec_ops {
-	void (*write)(struct dw_hdmi *hdmi, u8 val, int offset);
-	u8 (*read)(struct dw_hdmi *hdmi, int offset);
-	void (*enable)(struct dw_hdmi *hdmi);
-	void (*disable)(struct dw_hdmi *hdmi);
-};
+काष्ठा dw_hdmi_cec_ops अणु
+	व्योम (*ग_लिखो)(काष्ठा dw_hdmi *hdmi, u8 val, पूर्णांक offset);
+	u8 (*पढ़ो)(काष्ठा dw_hdmi *hdmi, पूर्णांक offset);
+	व्योम (*enable)(काष्ठा dw_hdmi *hdmi);
+	व्योम (*disable)(काष्ठा dw_hdmi *hdmi);
+पूर्ण;
 
-struct dw_hdmi_cec_data {
-	struct dw_hdmi *hdmi;
-	const struct dw_hdmi_cec_ops *ops;
-	int irq;
-};
+काष्ठा dw_hdmi_cec_data अणु
+	काष्ठा dw_hdmi *hdmi;
+	स्थिर काष्ठा dw_hdmi_cec_ops *ops;
+	पूर्णांक irq;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

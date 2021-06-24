@@ -1,184 +1,185 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * arch/powerpc/sysdev/qe_lib/qe_io.c
+ * arch/घातerpc/sysdev/qe_lib/qe_io.c
  *
  * QE Parallel I/O ports configuration routines
  *
  * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
  *
- * Author: Li Yang <LeoLi@freescale.com>
- * Based on code from Shlomi Gridish <gridish@freescale.com>
+ * Author: Li Yang <LeoLi@मुक्तscale.com>
+ * Based on code from Shlomi Gridish <gridish@मुक्तscale.com>
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/ioport.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/ioport.h>
 
-#include <asm/io.h>
-#include <soc/fsl/qe/qe.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <soc/fsl/qe/qe.h>
 
-#undef DEBUG
+#अघोषित DEBUG
 
-static struct qe_pio_regs __iomem *par_io;
-static int num_par_io_ports = 0;
+अटल काष्ठा qe_pio_regs __iomem *par_io;
+अटल पूर्णांक num_par_io_ports = 0;
 
-int par_io_init(struct device_node *np)
-{
-	struct resource res;
-	int ret;
+पूर्णांक par_io_init(काष्ठा device_node *np)
+अणु
+	काष्ठा resource res;
+	पूर्णांक ret;
 	u32 num_ports;
 
-	/* Map Parallel I/O ports registers */
+	/* Map Parallel I/O ports रेजिस्टरs */
 	ret = of_address_to_resource(np, 0, &res);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	par_io = ioremap(res.start, resource_size(&res));
 
-	if (!of_property_read_u32(np, "num-ports", &num_ports))
+	अगर (!of_property_पढ़ो_u32(np, "num-ports", &num_ports))
 		num_par_io_ports = num_ports;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __par_io_config_pin(struct qe_pio_regs __iomem *par_io, u8 pin, int dir,
-			 int open_drain, int assignment, int has_irq)
-{
+व्योम __par_io_config_pin(काष्ठा qe_pio_regs __iomem *par_io, u8 pin, पूर्णांक dir,
+			 पूर्णांक खोलो_drain, पूर्णांक assignment, पूर्णांक has_irq)
+अणु
 	u32 pin_mask1bit;
 	u32 pin_mask2bits;
 	u32 new_mask2bits;
-	u32 tmp_val;
+	u32 पंचांगp_val;
 
-	/* calculate pin location for single and 2 bits information */
+	/* calculate pin location क्रम single and 2 bits inक्रमmation */
 	pin_mask1bit = (u32) (1 << (QE_PIO_PINS - (pin + 1)));
 
-	/* Set open drain, if required */
-	tmp_val = ioread32be(&par_io->cpodr);
-	if (open_drain)
-		iowrite32be(pin_mask1bit | tmp_val, &par_io->cpodr);
-	else
-		iowrite32be(~pin_mask1bit & tmp_val, &par_io->cpodr);
+	/* Set खोलो drain, अगर required */
+	पंचांगp_val = ioपढ़ो32be(&par_io->cpodr);
+	अगर (खोलो_drain)
+		ioग_लिखो32be(pin_mask1bit | पंचांगp_val, &par_io->cpodr);
+	अन्यथा
+		ioग_लिखो32be(~pin_mask1bit & पंचांगp_val, &par_io->cpodr);
 
 	/* define direction */
-	tmp_val = (pin > (QE_PIO_PINS / 2) - 1) ?
-		ioread32be(&par_io->cpdir2) :
-		ioread32be(&par_io->cpdir1);
+	पंचांगp_val = (pin > (QE_PIO_PINS / 2) - 1) ?
+		ioपढ़ो32be(&par_io->cpdir2) :
+		ioपढ़ो32be(&par_io->cpdir1);
 
-	/* get all bits mask for 2 bit per port */
+	/* get all bits mask क्रम 2 bit per port */
 	pin_mask2bits = (u32) (0x3 << (QE_PIO_PINS -
 				(pin % (QE_PIO_PINS / 2) + 1) * 2));
 
-	/* Get the final mask we need for the right definition */
+	/* Get the final mask we need क्रम the right definition */
 	new_mask2bits = (u32) (dir << (QE_PIO_PINS -
 				(pin % (QE_PIO_PINS / 2) + 1) * 2));
 
 	/* clear and set 2 bits mask */
-	if (pin > (QE_PIO_PINS / 2) - 1) {
-		iowrite32be(~pin_mask2bits & tmp_val, &par_io->cpdir2);
-		tmp_val &= ~pin_mask2bits;
-		iowrite32be(new_mask2bits | tmp_val, &par_io->cpdir2);
-	} else {
-		iowrite32be(~pin_mask2bits & tmp_val, &par_io->cpdir1);
-		tmp_val &= ~pin_mask2bits;
-		iowrite32be(new_mask2bits | tmp_val, &par_io->cpdir1);
-	}
+	अगर (pin > (QE_PIO_PINS / 2) - 1) अणु
+		ioग_लिखो32be(~pin_mask2bits & पंचांगp_val, &par_io->cpdir2);
+		पंचांगp_val &= ~pin_mask2bits;
+		ioग_लिखो32be(new_mask2bits | पंचांगp_val, &par_io->cpdir2);
+	पूर्ण अन्यथा अणु
+		ioग_लिखो32be(~pin_mask2bits & पंचांगp_val, &par_io->cpdir1);
+		पंचांगp_val &= ~pin_mask2bits;
+		ioग_लिखो32be(new_mask2bits | पंचांगp_val, &par_io->cpdir1);
+	पूर्ण
 	/* define pin assignment */
-	tmp_val = (pin > (QE_PIO_PINS / 2) - 1) ?
-		ioread32be(&par_io->cppar2) :
-		ioread32be(&par_io->cppar1);
+	पंचांगp_val = (pin > (QE_PIO_PINS / 2) - 1) ?
+		ioपढ़ो32be(&par_io->cppar2) :
+		ioपढ़ो32be(&par_io->cppar1);
 
 	new_mask2bits = (u32) (assignment << (QE_PIO_PINS -
 			(pin % (QE_PIO_PINS / 2) + 1) * 2));
 	/* clear and set 2 bits mask */
-	if (pin > (QE_PIO_PINS / 2) - 1) {
-		iowrite32be(~pin_mask2bits & tmp_val, &par_io->cppar2);
-		tmp_val &= ~pin_mask2bits;
-		iowrite32be(new_mask2bits | tmp_val, &par_io->cppar2);
-	} else {
-		iowrite32be(~pin_mask2bits & tmp_val, &par_io->cppar1);
-		tmp_val &= ~pin_mask2bits;
-		iowrite32be(new_mask2bits | tmp_val, &par_io->cppar1);
-	}
-}
+	अगर (pin > (QE_PIO_PINS / 2) - 1) अणु
+		ioग_लिखो32be(~pin_mask2bits & पंचांगp_val, &par_io->cppar2);
+		पंचांगp_val &= ~pin_mask2bits;
+		ioग_लिखो32be(new_mask2bits | पंचांगp_val, &par_io->cppar2);
+	पूर्ण अन्यथा अणु
+		ioग_लिखो32be(~pin_mask2bits & पंचांगp_val, &par_io->cppar1);
+		पंचांगp_val &= ~pin_mask2bits;
+		ioग_लिखो32be(new_mask2bits | पंचांगp_val, &par_io->cppar1);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(__par_io_config_pin);
 
-int par_io_config_pin(u8 port, u8 pin, int dir, int open_drain,
-		      int assignment, int has_irq)
-{
-	if (!par_io || port >= num_par_io_ports)
-		return -EINVAL;
+पूर्णांक par_io_config_pin(u8 port, u8 pin, पूर्णांक dir, पूर्णांक खोलो_drain,
+		      पूर्णांक assignment, पूर्णांक has_irq)
+अणु
+	अगर (!par_io || port >= num_par_io_ports)
+		वापस -EINVAL;
 
-	__par_io_config_pin(&par_io[port], pin, dir, open_drain, assignment,
+	__par_io_config_pin(&par_io[port], pin, dir, खोलो_drain, assignment,
 			    has_irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(par_io_config_pin);
 
-int par_io_data_set(u8 port, u8 pin, u8 val)
-{
-	u32 pin_mask, tmp_val;
+पूर्णांक par_io_data_set(u8 port, u8 pin, u8 val)
+अणु
+	u32 pin_mask, पंचांगp_val;
 
-	if (port >= num_par_io_ports)
-		return -EINVAL;
-	if (pin >= QE_PIO_PINS)
-		return -EINVAL;
+	अगर (port >= num_par_io_ports)
+		वापस -EINVAL;
+	अगर (pin >= QE_PIO_PINS)
+		वापस -EINVAL;
 	/* calculate pin location */
 	pin_mask = (u32) (1 << (QE_PIO_PINS - 1 - pin));
 
-	tmp_val = ioread32be(&par_io[port].cpdata);
+	पंचांगp_val = ioपढ़ो32be(&par_io[port].cpdata);
 
-	if (val == 0)		/* clear */
-		iowrite32be(~pin_mask & tmp_val, &par_io[port].cpdata);
-	else			/* set */
-		iowrite32be(pin_mask | tmp_val, &par_io[port].cpdata);
+	अगर (val == 0)		/* clear */
+		ioग_लिखो32be(~pin_mask & पंचांगp_val, &par_io[port].cpdata);
+	अन्यथा			/* set */
+		ioग_लिखो32be(pin_mask | पंचांगp_val, &par_io[port].cpdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(par_io_data_set);
 
-int par_io_of_config(struct device_node *np)
-{
-	struct device_node *pio;
-	int pio_map_len;
-	const __be32 *pio_map;
+पूर्णांक par_io_of_config(काष्ठा device_node *np)
+अणु
+	काष्ठा device_node *pio;
+	पूर्णांक pio_map_len;
+	स्थिर __be32 *pio_map;
 
-	if (par_io == NULL) {
-		printk(KERN_ERR "par_io not initialized\n");
-		return -1;
-	}
+	अगर (par_io == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "par_io not initialized\n");
+		वापस -1;
+	पूर्ण
 
 	pio = of_parse_phandle(np, "pio-handle", 0);
-	if (pio == NULL) {
-		printk(KERN_ERR "pio-handle not available\n");
-		return -1;
-	}
+	अगर (pio == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "pio-handle not available\n");
+		वापस -1;
+	पूर्ण
 
 	pio_map = of_get_property(pio, "pio-map", &pio_map_len);
-	if (pio_map == NULL) {
-		printk(KERN_ERR "pio-map is not set!\n");
-		return -1;
-	}
-	pio_map_len /= sizeof(unsigned int);
-	if ((pio_map_len % 6) != 0) {
-		printk(KERN_ERR "pio-map format wrong!\n");
-		return -1;
-	}
+	अगर (pio_map == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "pio-map is not set!\n");
+		वापस -1;
+	पूर्ण
+	pio_map_len /= माप(अचिन्हित पूर्णांक);
+	अगर ((pio_map_len % 6) != 0) अणु
+		prपूर्णांकk(KERN_ERR "pio-map format wrong!\n");
+		वापस -1;
+	पूर्ण
 
-	while (pio_map_len > 0) {
+	जबतक (pio_map_len > 0) अणु
 		u8 port        = be32_to_cpu(pio_map[0]);
 		u8 pin         = be32_to_cpu(pio_map[1]);
-		int dir        = be32_to_cpu(pio_map[2]);
-		int open_drain = be32_to_cpu(pio_map[3]);
-		int assignment = be32_to_cpu(pio_map[4]);
-		int has_irq    = be32_to_cpu(pio_map[5]);
+		पूर्णांक dir        = be32_to_cpu(pio_map[2]);
+		पूर्णांक खोलो_drain = be32_to_cpu(pio_map[3]);
+		पूर्णांक assignment = be32_to_cpu(pio_map[4]);
+		पूर्णांक has_irq    = be32_to_cpu(pio_map[5]);
 
-		par_io_config_pin(port, pin, dir, open_drain,
+		par_io_config_pin(port, pin, dir, खोलो_drain,
 				  assignment, has_irq);
 		pio_map += 6;
 		pio_map_len -= 6;
-	}
+	पूर्ण
 	of_node_put(pio);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(par_io_of_config);

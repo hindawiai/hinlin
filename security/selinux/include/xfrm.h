@@ -1,92 +1,93 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * SELinux support for the XFRM LSM hooks
+ * SELinux support क्रम the XFRM LSM hooks
  *
  * Author : Trent Jaeger, <jaegert@us.ibm.com>
  * Updated : Venkat Yekkirala, <vyekkirala@TrustedCS.com>
  */
-#ifndef _SELINUX_XFRM_H_
-#define _SELINUX_XFRM_H_
+#अगर_अघोषित _SELINUX_XFRM_H_
+#घोषणा _SELINUX_XFRM_H_
 
-#include <net/flow.h>
+#समावेश <net/flow.h>
 
-int selinux_xfrm_policy_alloc(struct xfrm_sec_ctx **ctxp,
-			      struct xfrm_user_sec_ctx *uctx,
+पूर्णांक selinux_xfrm_policy_alloc(काष्ठा xfrm_sec_ctx **ctxp,
+			      काष्ठा xfrm_user_sec_ctx *uctx,
 			      gfp_t gfp);
-int selinux_xfrm_policy_clone(struct xfrm_sec_ctx *old_ctx,
-			      struct xfrm_sec_ctx **new_ctxp);
-void selinux_xfrm_policy_free(struct xfrm_sec_ctx *ctx);
-int selinux_xfrm_policy_delete(struct xfrm_sec_ctx *ctx);
-int selinux_xfrm_state_alloc(struct xfrm_state *x,
-			     struct xfrm_user_sec_ctx *uctx);
-int selinux_xfrm_state_alloc_acquire(struct xfrm_state *x,
-				     struct xfrm_sec_ctx *polsec, u32 secid);
-void selinux_xfrm_state_free(struct xfrm_state *x);
-int selinux_xfrm_state_delete(struct xfrm_state *x);
-int selinux_xfrm_policy_lookup(struct xfrm_sec_ctx *ctx, u32 fl_secid, u8 dir);
-int selinux_xfrm_state_pol_flow_match(struct xfrm_state *x,
-				      struct xfrm_policy *xp,
-				      const struct flowi_common *flic);
+पूर्णांक selinux_xfrm_policy_clone(काष्ठा xfrm_sec_ctx *old_ctx,
+			      काष्ठा xfrm_sec_ctx **new_ctxp);
+व्योम selinux_xfrm_policy_मुक्त(काष्ठा xfrm_sec_ctx *ctx);
+पूर्णांक selinux_xfrm_policy_delete(काष्ठा xfrm_sec_ctx *ctx);
+पूर्णांक selinux_xfrm_state_alloc(काष्ठा xfrm_state *x,
+			     काष्ठा xfrm_user_sec_ctx *uctx);
+पूर्णांक selinux_xfrm_state_alloc_acquire(काष्ठा xfrm_state *x,
+				     काष्ठा xfrm_sec_ctx *polsec, u32 secid);
+व्योम selinux_xfrm_state_मुक्त(काष्ठा xfrm_state *x);
+पूर्णांक selinux_xfrm_state_delete(काष्ठा xfrm_state *x);
+पूर्णांक selinux_xfrm_policy_lookup(काष्ठा xfrm_sec_ctx *ctx, u32 fl_secid, u8 dir);
+पूर्णांक selinux_xfrm_state_pol_flow_match(काष्ठा xfrm_state *x,
+				      काष्ठा xfrm_policy *xp,
+				      स्थिर काष्ठा flowi_common *flic);
 
-#ifdef CONFIG_SECURITY_NETWORK_XFRM
-extern atomic_t selinux_xfrm_refcount;
+#अगर_घोषित CONFIG_SECURITY_NETWORK_XFRM
+बाह्य atomic_t selinux_xfrm_refcount;
 
-static inline int selinux_xfrm_enabled(void)
-{
-	return (atomic_read(&selinux_xfrm_refcount) > 0);
-}
+अटल अंतरभूत पूर्णांक selinux_xfrm_enabled(व्योम)
+अणु
+	वापस (atomic_पढ़ो(&selinux_xfrm_refcount) > 0);
+पूर्ण
 
-int selinux_xfrm_sock_rcv_skb(u32 sk_sid, struct sk_buff *skb,
-			      struct common_audit_data *ad);
-int selinux_xfrm_postroute_last(u32 sk_sid, struct sk_buff *skb,
-				struct common_audit_data *ad, u8 proto);
-int selinux_xfrm_decode_session(struct sk_buff *skb, u32 *sid, int ckall);
-int selinux_xfrm_skb_sid(struct sk_buff *skb, u32 *sid);
+पूर्णांक selinux_xfrm_sock_rcv_skb(u32 sk_sid, काष्ठा sk_buff *skb,
+			      काष्ठा common_audit_data *ad);
+पूर्णांक selinux_xfrm_postroute_last(u32 sk_sid, काष्ठा sk_buff *skb,
+				काष्ठा common_audit_data *ad, u8 proto);
+पूर्णांक selinux_xfrm_decode_session(काष्ठा sk_buff *skb, u32 *sid, पूर्णांक ckall);
+पूर्णांक selinux_xfrm_skb_sid(काष्ठा sk_buff *skb, u32 *sid);
 
-static inline void selinux_xfrm_notify_policyload(void)
-{
-	struct net *net;
+अटल अंतरभूत व्योम selinux_xfrm_notअगरy_policyload(व्योम)
+अणु
+	काष्ठा net *net;
 
-	down_read(&net_rwsem);
-	for_each_net(net)
+	करोwn_पढ़ो(&net_rwsem);
+	क्रम_each_net(net)
 		rt_genid_bump_all(net);
-	up_read(&net_rwsem);
-}
-#else
-static inline int selinux_xfrm_enabled(void)
-{
-	return 0;
-}
+	up_पढ़ो(&net_rwsem);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक selinux_xfrm_enabled(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int selinux_xfrm_sock_rcv_skb(u32 sk_sid, struct sk_buff *skb,
-					    struct common_audit_data *ad)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक selinux_xfrm_sock_rcv_skb(u32 sk_sid, काष्ठा sk_buff *skb,
+					    काष्ठा common_audit_data *ad)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int selinux_xfrm_postroute_last(u32 sk_sid, struct sk_buff *skb,
-					      struct common_audit_data *ad,
+अटल अंतरभूत पूर्णांक selinux_xfrm_postroute_last(u32 sk_sid, काष्ठा sk_buff *skb,
+					      काष्ठा common_audit_data *ad,
 					      u8 proto)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int selinux_xfrm_decode_session(struct sk_buff *skb, u32 *sid,
-					      int ckall)
-{
-	*sid = SECSID_NULL;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक selinux_xfrm_decode_session(काष्ठा sk_buff *skb, u32 *sid,
+					      पूर्णांक ckall)
+अणु
+	*sid = SECSID_शून्य;
+	वापस 0;
+पूर्ण
 
-static inline void selinux_xfrm_notify_policyload(void)
-{
-}
+अटल अंतरभूत व्योम selinux_xfrm_notअगरy_policyload(व्योम)
+अणु
+पूर्ण
 
-static inline int selinux_xfrm_skb_sid(struct sk_buff *skb, u32 *sid)
-{
-	*sid = SECSID_NULL;
-	return 0;
-}
-#endif
+अटल अंतरभूत पूर्णांक selinux_xfrm_skb_sid(काष्ठा sk_buff *skb, u32 *sid)
+अणु
+	*sid = SECSID_शून्य;
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _SELINUX_XFRM_H_ */
+#पूर्ण_अगर /* _SELINUX_XFRM_H_ */

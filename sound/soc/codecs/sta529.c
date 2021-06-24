@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * ASoC codec driver for spear platform
+ * ASoC codec driver क्रम spear platक्रमm
  *
  * sound/soc/codecs/sta529.c -- spear ALSA Soc codec driver
  *
@@ -11,57 +12,57 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/clk.h>
-#include <linux/init.h>
-#include <linux/i2c.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/pm.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/init.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#include <sound/core.h>
-#include <sound/initval.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-dapm.h>
-#include <sound/tlv.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dapm.h>
+#समावेश <sound/tlv.h>
 
 /* STA529 Register offsets */
-#define	 STA529_FFXCFG0		0x00
-#define	 STA529_FFXCFG1		0x01
-#define	 STA529_MVOL		0x02
-#define	 STA529_LVOL		0x03
-#define	 STA529_RVOL		0x04
-#define	 STA529_TTF0		0x05
-#define	 STA529_TTF1		0x06
-#define	 STA529_TTP0		0x07
-#define	 STA529_TTP1		0x08
-#define	 STA529_S2PCFG0		0x0A
-#define	 STA529_S2PCFG1		0x0B
-#define	 STA529_P2SCFG0		0x0C
-#define	 STA529_P2SCFG1		0x0D
-#define	 STA529_PLLCFG0		0x14
-#define	 STA529_PLLCFG1		0x15
-#define	 STA529_PLLCFG2		0x16
-#define	 STA529_PLLCFG3		0x17
-#define	 STA529_PLLPFE		0x18
-#define	 STA529_PLLST		0x19
-#define	 STA529_ADCCFG		0x1E /*mic_select*/
-#define	 STA529_CKOCFG		0x1F
-#define	 STA529_MISC		0x20
-#define	 STA529_PADST0		0x21
-#define	 STA529_PADST1		0x22
-#define	 STA529_FFXST		0x23
-#define	 STA529_PWMIN1		0x2D
-#define	 STA529_PWMIN2		0x2E
-#define	 STA529_POWST		0x32
+#घोषणा	 STA529_FFXCFG0		0x00
+#घोषणा	 STA529_FFXCFG1		0x01
+#घोषणा	 STA529_MVOL		0x02
+#घोषणा	 STA529_LVOL		0x03
+#घोषणा	 STA529_RVOL		0x04
+#घोषणा	 STA529_TTF0		0x05
+#घोषणा	 STA529_TTF1		0x06
+#घोषणा	 STA529_TTP0		0x07
+#घोषणा	 STA529_TTP1		0x08
+#घोषणा	 STA529_S2PCFG0		0x0A
+#घोषणा	 STA529_S2PCFG1		0x0B
+#घोषणा	 STA529_P2SCFG0		0x0C
+#घोषणा	 STA529_P2SCFG1		0x0D
+#घोषणा	 STA529_PLLCFG0		0x14
+#घोषणा	 STA529_PLLCFG1		0x15
+#घोषणा	 STA529_PLLCFG2		0x16
+#घोषणा	 STA529_PLLCFG3		0x17
+#घोषणा	 STA529_PLLPFE		0x18
+#घोषणा	 STA529_PLLST		0x19
+#घोषणा	 STA529_ADCCFG		0x1E /*mic_select*/
+#घोषणा	 STA529_CKOCFG		0x1F
+#घोषणा	 STA529_MISC		0x20
+#घोषणा	 STA529_PADST0		0x21
+#घोषणा	 STA529_PADST1		0x22
+#घोषणा	 STA529_FFXST		0x23
+#घोषणा	 STA529_PWMIN1		0x2D
+#घोषणा	 STA529_PWMIN2		0x2E
+#घोषणा	 STA529_POWST		0x32
 
-#define STA529_MAX_REGISTER	0x32
+#घोषणा STA529_MAX_REGISTER	0x32
 
-#define STA529_RATES		(SNDRV_PCM_RATE_8000 | \
+#घोषणा STA529_RATES		(SNDRV_PCM_RATE_8000 | \
 				SNDRV_PCM_RATE_11025 | \
 				SNDRV_PCM_RATE_16000 | \
 				SNDRV_PCM_RATE_22050 | \
@@ -69,103 +70,103 @@
 				SNDRV_PCM_RATE_44100 | \
 				SNDRV_PCM_RATE_48000)
 
-#define STA529_FORMAT		(SNDRV_PCM_FMTBIT_S16_LE | \
+#घोषणा STA529_FORMAT		(SNDRV_PCM_FMTBIT_S16_LE | \
 				SNDRV_PCM_FMTBIT_S24_LE | \
 				SNDRV_PCM_FMTBIT_S32_LE)
-#define	S2PC_VALUE		0x98
-#define CLOCK_OUT		0x60
-#define DATA_FORMAT_MSK		0x0E
-#define LEFT_J_DATA_FORMAT	0x00
-#define I2S_DATA_FORMAT		0x02
-#define RIGHT_J_DATA_FORMAT	0x04
-#define CODEC_MUTE_VAL		0x80
+#घोषणा	S2PC_VALUE		0x98
+#घोषणा CLOCK_OUT		0x60
+#घोषणा DATA_FORMAT_MSK		0x0E
+#घोषणा LEFT_J_DATA_FORMAT	0x00
+#घोषणा I2S_DATA_FORMAT		0x02
+#घोषणा RIGHT_J_DATA_FORMAT	0x04
+#घोषणा CODEC_MUTE_VAL		0x80
 
-#define POWER_CNTLMSAK		0x40
-#define POWER_STDBY		0x40
-#define FFX_MASK		0x80
-#define FFX_OFF			0x80
-#define POWER_UP		0x00
-#define FFX_CLK_ENB		0x01
-#define FFX_CLK_DIS		0x00
-#define FFX_CLK_MSK		0x01
-#define PLAY_FREQ_RANGE_MSK	0x70
-#define CAP_FREQ_RANGE_MSK	0x0C
-#define PDATA_LEN_MSK		0xC0
-#define BCLK_TO_FS_MSK		0x30
-#define AUDIO_MUTE_MSK		0x80
+#घोषणा POWER_CNTLMSAK		0x40
+#घोषणा POWER_STDBY		0x40
+#घोषणा FFX_MASK		0x80
+#घोषणा FFX_OFF			0x80
+#घोषणा POWER_UP		0x00
+#घोषणा FFX_CLK_ENB		0x01
+#घोषणा FFX_CLK_DIS		0x00
+#घोषणा FFX_CLK_MSK		0x01
+#घोषणा PLAY_FREQ_RANGE_MSK	0x70
+#घोषणा CAP_FREQ_RANGE_MSK	0x0C
+#घोषणा PDATA_LEN_MSK		0xC0
+#घोषणा BCLK_TO_FS_MSK		0x30
+#घोषणा AUDIO_MUTE_MSK		0x80
 
-static const struct reg_default sta529_reg_defaults[] = {
-	{ 0,  0x35 },     /* R0   - FFX Configuration reg 0 */
-	{ 1,  0xc8 },     /* R1   - FFX Configuration reg 1 */
-	{ 2,  0x50 },     /* R2   - Master Volume */
-	{ 3,  0x00 },     /* R3   - Left Volume */
-	{ 4,  0x00 },     /* R4  -  Right Volume */
-	{ 10, 0xb2 },     /* R10  - S2P Config Reg 0 */
-	{ 11, 0x41 },     /* R11  - S2P Config Reg 1 */
-	{ 12, 0x92 },     /* R12  - P2S Config Reg 0 */
-	{ 13, 0x41 },     /* R13  - P2S Config Reg 1 */
-	{ 30, 0xd2 },     /* R30  - ADC Config Reg */
-	{ 31, 0x40 },     /* R31  - clock Out Reg */
-	{ 32, 0x21 },     /* R32  - Misc Register */
-};
+अटल स्थिर काष्ठा reg_शेष sta529_reg_शेषs[] = अणु
+	अणु 0,  0x35 पूर्ण,     /* R0   - FFX Configuration reg 0 */
+	अणु 1,  0xc8 पूर्ण,     /* R1   - FFX Configuration reg 1 */
+	अणु 2,  0x50 पूर्ण,     /* R2   - Master Volume */
+	अणु 3,  0x00 पूर्ण,     /* R3   - Left Volume */
+	अणु 4,  0x00 पूर्ण,     /* R4  -  Right Volume */
+	अणु 10, 0xb2 पूर्ण,     /* R10  - S2P Config Reg 0 */
+	अणु 11, 0x41 पूर्ण,     /* R11  - S2P Config Reg 1 */
+	अणु 12, 0x92 पूर्ण,     /* R12  - P2S Config Reg 0 */
+	अणु 13, 0x41 पूर्ण,     /* R13  - P2S Config Reg 1 */
+	अणु 30, 0xd2 पूर्ण,     /* R30  - ADC Config Reg */
+	अणु 31, 0x40 पूर्ण,     /* R31  - घड़ी Out Reg */
+	अणु 32, 0x21 पूर्ण,     /* R32  - Misc Register */
+पूर्ण;
 
-struct sta529 {
-	struct regmap *regmap;
-};
+काष्ठा sta529 अणु
+	काष्ठा regmap *regmap;
+पूर्ण;
 
-static bool sta529_readable(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
+अटल bool sta529_पढ़ोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
 
-	case STA529_FFXCFG0:
-	case STA529_FFXCFG1:
-	case STA529_MVOL:
-	case STA529_LVOL:
-	case STA529_RVOL:
-	case STA529_S2PCFG0:
-	case STA529_S2PCFG1:
-	case STA529_P2SCFG0:
-	case STA529_P2SCFG1:
-	case STA529_ADCCFG:
-	case STA529_CKOCFG:
-	case STA529_MISC:
-		return true;
-	default:
-		return false;
-	}
-}
+	हाल STA529_FFXCFG0:
+	हाल STA529_FFXCFG1:
+	हाल STA529_MVOL:
+	हाल STA529_LVOL:
+	हाल STA529_RVOL:
+	हाल STA529_S2PCFG0:
+	हाल STA529_S2PCFG1:
+	हाल STA529_P2SCFG0:
+	हाल STA529_P2SCFG1:
+	हाल STA529_ADCCFG:
+	हाल STA529_CKOCFG:
+	हाल STA529_MISC:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
 
-static const char *pwm_mode_text[] = { "Binary", "Headphone", "Ternary",
-	"Phase-shift"};
+अटल स्थिर अक्षर *pwm_mode_text[] = अणु "Binary", "Headphone", "Ternary",
+	"Phase-shift"पूर्ण;
 
-static const DECLARE_TLV_DB_SCALE(out_gain_tlv, -9150, 50, 0);
-static const DECLARE_TLV_DB_SCALE(master_vol_tlv, -12750, 50, 0);
-static SOC_ENUM_SINGLE_DECL(pwm_src, STA529_FFXCFG1, 4, pwm_mode_text);
+अटल स्थिर DECLARE_TLV_DB_SCALE(out_gain_tlv, -9150, 50, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(master_vol_tlv, -12750, 50, 0);
+अटल SOC_ENUM_SINGLE_DECL(pwm_src, STA529_FFXCFG1, 4, pwm_mode_text);
 
-static const struct snd_kcontrol_new sta529_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sta529_snd_controls[] = अणु
 	SOC_DOUBLE_R_TLV("Digital Playback Volume", STA529_LVOL, STA529_RVOL, 0,
 			127, 0, out_gain_tlv),
 	SOC_SINGLE_TLV("Master Playback Volume", STA529_MVOL, 0, 127, 1,
 			master_vol_tlv),
 	SOC_ENUM("PWM Select", pwm_src),
-};
+पूर्ण;
 
-static int sta529_set_bias_level(struct snd_soc_component *component, enum
+अटल पूर्णांक sta529_set_bias_level(काष्ठा snd_soc_component *component, क्रमागत
 		snd_soc_bias_level level)
-{
-	struct sta529 *sta529 = snd_soc_component_get_drvdata(component);
+अणु
+	काष्ठा sta529 *sta529 = snd_soc_component_get_drvdata(component);
 
-	switch (level) {
-	case SND_SOC_BIAS_ON:
-	case SND_SOC_BIAS_PREPARE:
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
+	हाल SND_SOC_BIAS_PREPARE:
 		snd_soc_component_update_bits(component, STA529_FFXCFG0, POWER_CNTLMSAK,
 				POWER_UP);
 		snd_soc_component_update_bits(component, STA529_MISC,	FFX_CLK_MSK,
 				FFX_CLK_ENB);
-		break;
-	case SND_SOC_BIAS_STANDBY:
-		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF)
+		अवरोध;
+	हाल SND_SOC_BIAS_STANDBY:
+		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF)
 			regcache_sync(sta529->regmap);
 		snd_soc_component_update_bits(component, STA529_FFXCFG0,
 					POWER_CNTLMSAK, POWER_STDBY);
@@ -174,216 +175,216 @@ static int sta529_set_bias_level(struct snd_soc_component *component, enum
 				FFX_OFF);
 		snd_soc_component_update_bits(component, STA529_MISC, FFX_CLK_MSK,
 				FFX_CLK_DIS);
-		break;
-	case SND_SOC_BIAS_OFF:
-		break;
-	}
+		अवरोध;
+	हाल SND_SOC_BIAS_OFF:
+		अवरोध;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int sta529_hw_params(struct snd_pcm_substream *substream,
-		struct snd_pcm_hw_params *params,
-		struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	int pdata, play_freq_val, record_freq_val;
-	int bclk_to_fs_ratio;
+अटल पूर्णांक sta529_hw_params(काष्ठा snd_pcm_substream *substream,
+		काष्ठा snd_pcm_hw_params *params,
+		काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	पूर्णांक pdata, play_freq_val, record_freq_val;
+	पूर्णांक bclk_to_fs_ratio;
 
-	switch (params_width(params)) {
-	case 16:
+	चयन (params_width(params)) अणु
+	हाल 16:
 		pdata = 1;
 		bclk_to_fs_ratio = 0;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		pdata = 2;
 		bclk_to_fs_ratio = 1;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		pdata = 3;
 		bclk_to_fs_ratio = 2;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(component->dev, "Unsupported format\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (params_rate(params)) {
-	case 8000:
-	case 11025:
+	चयन (params_rate(params)) अणु
+	हाल 8000:
+	हाल 11025:
 		play_freq_val = 0;
 		record_freq_val = 2;
-		break;
-	case 16000:
-	case 22050:
+		अवरोध;
+	हाल 16000:
+	हाल 22050:
 		play_freq_val = 1;
 		record_freq_val = 0;
-		break;
+		अवरोध;
 
-	case 32000:
-	case 44100:
-	case 48000:
+	हाल 32000:
+	हाल 44100:
+	हाल 48000:
 		play_freq_val = 2;
 		record_freq_val = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(component->dev, "Unsupported rate\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 		snd_soc_component_update_bits(component, STA529_S2PCFG1, PDATA_LEN_MSK,
 				pdata << 6);
 		snd_soc_component_update_bits(component, STA529_S2PCFG1, BCLK_TO_FS_MSK,
 				bclk_to_fs_ratio << 4);
 		snd_soc_component_update_bits(component, STA529_MISC, PLAY_FREQ_RANGE_MSK,
 				play_freq_val << 4);
-	} else {
+	पूर्ण अन्यथा अणु
 		snd_soc_component_update_bits(component, STA529_P2SCFG1, PDATA_LEN_MSK,
 				pdata << 6);
 		snd_soc_component_update_bits(component, STA529_P2SCFG1, BCLK_TO_FS_MSK,
 				bclk_to_fs_ratio << 4);
 		snd_soc_component_update_bits(component, STA529_MISC, CAP_FREQ_RANGE_MSK,
 				record_freq_val << 2);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sta529_mute(struct snd_soc_dai *dai, int mute, int direction)
-{
+अटल पूर्णांक sta529_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
+अणु
 	u8 val = 0;
 
-	if (mute)
+	अगर (mute)
 		val |= CODEC_MUTE_VAL;
 
 	snd_soc_component_update_bits(dai->component, STA529_FFXCFG0, AUDIO_MUTE_MSK, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sta529_set_dai_fmt(struct snd_soc_dai *codec_dai, u32 fmt)
-{
-	struct snd_soc_component *component = codec_dai->component;
+अटल पूर्णांक sta529_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai, u32 fmt)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
 	u8 mode = 0;
 
-	/* interface format */
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_LEFT_J:
+	/* पूर्णांकerface क्रमmat */
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		mode = LEFT_J_DATA_FORMAT;
-		break;
-	case SND_SOC_DAIFMT_I2S:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_I2S:
 		mode = I2S_DATA_FORMAT;
-		break;
-	case SND_SOC_DAIFMT_RIGHT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_RIGHT_J:
 		mode = RIGHT_J_DATA_FORMAT;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	snd_soc_component_update_bits(component, STA529_S2PCFG0, DATA_FORMAT_MSK, mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops sta529_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops sta529_dai_ops = अणु
 	.hw_params	=	sta529_hw_params,
 	.set_fmt	=	sta529_set_dai_fmt,
 	.mute_stream	=	sta529_mute,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver sta529_dai = {
+अटल काष्ठा snd_soc_dai_driver sta529_dai = अणु
 	.name = "sta529-audio",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = STA529_RATES,
-		.formats = STA529_FORMAT,
-	},
-	.capture = {
+		.क्रमmats = STA529_FORMAT,
+	पूर्ण,
+	.capture = अणु
 		.stream_name = "Capture",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = STA529_RATES,
-		.formats = STA529_FORMAT,
-	},
+		.क्रमmats = STA529_FORMAT,
+	पूर्ण,
 	.ops	= &sta529_dai_ops,
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver sta529_component_driver = {
+अटल स्थिर काष्ठा snd_soc_component_driver sta529_component_driver = अणु
 	.set_bias_level		= sta529_set_bias_level,
 	.controls		= sta529_snd_controls,
 	.num_controls		= ARRAY_SIZE(sta529_snd_controls),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static const struct regmap_config sta529_regmap = {
+अटल स्थिर काष्ठा regmap_config sta529_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = STA529_MAX_REGISTER,
-	.readable_reg = sta529_readable,
+	.max_रेजिस्टर = STA529_MAX_REGISTER,
+	.पढ़ोable_reg = sta529_पढ़ोable,
 
 	.cache_type = REGCACHE_RBTREE,
-	.reg_defaults = sta529_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(sta529_reg_defaults),
-};
+	.reg_शेषs = sta529_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(sta529_reg_शेषs),
+पूर्ण;
 
-static int sta529_i2c_probe(struct i2c_client *i2c,
-			    const struct i2c_device_id *id)
-{
-	struct sta529 *sta529;
-	int ret;
+अटल पूर्णांक sta529_i2c_probe(काष्ठा i2c_client *i2c,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा sta529 *sta529;
+	पूर्णांक ret;
 
-	sta529 = devm_kzalloc(&i2c->dev, sizeof(struct sta529), GFP_KERNEL);
-	if (!sta529)
-		return -ENOMEM;
+	sta529 = devm_kzalloc(&i2c->dev, माप(काष्ठा sta529), GFP_KERNEL);
+	अगर (!sta529)
+		वापस -ENOMEM;
 
 	sta529->regmap = devm_regmap_init_i2c(i2c, &sta529_regmap);
-	if (IS_ERR(sta529->regmap)) {
+	अगर (IS_ERR(sta529->regmap)) अणु
 		ret = PTR_ERR(sta529->regmap);
 		dev_err(&i2c->dev, "Failed to allocate regmap: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	i2c_set_clientdata(i2c, sta529);
 
-	ret = devm_snd_soc_register_component(&i2c->dev,
+	ret = devm_snd_soc_रेजिस्टर_component(&i2c->dev,
 			&sta529_component_driver, &sta529_dai, 1);
-	if (ret != 0)
+	अगर (ret != 0)
 		dev_err(&i2c->dev, "Failed to register CODEC: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct i2c_device_id sta529_i2c_id[] = {
-	{ "sta529", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id sta529_i2c_id[] = अणु
+	अणु "sta529", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, sta529_i2c_id);
 
-static const struct of_device_id sta529_of_match[] = {
-	{ .compatible = "st,sta529", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sta529_of_match[] = अणु
+	अणु .compatible = "st,sta529", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sta529_of_match);
 
-static struct i2c_driver sta529_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver sta529_i2c_driver = अणु
+	.driver = अणु
 		.name = "sta529",
 		.of_match_table = sta529_of_match,
-	},
+	पूर्ण,
 	.probe		= sta529_i2c_probe,
 	.id_table	= sta529_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(sta529_i2c_driver);
 

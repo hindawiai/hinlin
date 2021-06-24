@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,34 +16,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _VNIC_WQ_H_
-#define _VNIC_WQ_H_
+#अगर_अघोषित _VNIC_WQ_H_
+#घोषणा _VNIC_WQ_H_
 
-#include <linux/pci.h>
-#include "vnic_dev.h"
-#include "vnic_cq.h"
+#समावेश <linux/pci.h>
+#समावेश "vnic_dev.h"
+#समावेश "vnic_cq.h"
 
 /*
- * These defines avoid symbol clash between fnic and enic (Cisco 10G Eth
+ * These defines aव्योम symbol clash between fnic and enic (Cisco 10G Eth
  * Driver) when both are built with CONFIG options =y
  */
-#define vnic_wq_desc_avail fnic_wq_desc_avail
-#define vnic_wq_desc_used fnic_wq_desc_used
-#define vnic_wq_next_desc fni_cwq_next_desc
-#define vnic_wq_post fnic_wq_post
-#define vnic_wq_service fnic_wq_service
-#define vnic_wq_free fnic_wq_free
-#define vnic_wq_alloc fnic_wq_alloc
-#define vnic_wq_devcmd2_alloc fnic_wq_devcmd2_alloc
-#define vnic_wq_init_start fnic_wq_init_start
-#define vnic_wq_init fnic_wq_init
-#define vnic_wq_error_status fnic_wq_error_status
-#define vnic_wq_enable fnic_wq_enable
-#define vnic_wq_disable fnic_wq_disable
-#define vnic_wq_clean fnic_wq_clean
+#घोषणा vnic_wq_desc_avail fnic_wq_desc_avail
+#घोषणा vnic_wq_desc_used fnic_wq_desc_used
+#घोषणा vnic_wq_next_desc fni_cwq_next_desc
+#घोषणा vnic_wq_post fnic_wq_post
+#घोषणा vnic_wq_service fnic_wq_service
+#घोषणा vnic_wq_मुक्त fnic_wq_मुक्त
+#घोषणा vnic_wq_alloc fnic_wq_alloc
+#घोषणा vnic_wq_devcmd2_alloc fnic_wq_devcmd2_alloc
+#घोषणा vnic_wq_init_start fnic_wq_init_start
+#घोषणा vnic_wq_init fnic_wq_init
+#घोषणा vnic_wq_error_status fnic_wq_error_status
+#घोषणा vnic_wq_enable fnic_wq_enable
+#घोषणा vnic_wq_disable fnic_wq_disable
+#घोषणा vnic_wq_clean fnic_wq_clean
 
 /* Work queue control */
-struct vnic_wq_ctrl {
+काष्ठा vnic_wq_ctrl अणु
 	u64 ring_base;			/* 0x00 */
 	u32 ring_size;			/* 0x08 */
 	u32 pad0;
@@ -58,96 +59,96 @@ struct vnic_wq_ctrl {
 	u32 pad5;
 	u32 dca_value;			/* 0x38 */
 	u32 pad6;
-	u32 error_interrupt_enable;	/* 0x40 */
+	u32 error_पूर्णांकerrupt_enable;	/* 0x40 */
 	u32 pad7;
-	u32 error_interrupt_offset;	/* 0x48 */
+	u32 error_पूर्णांकerrupt_offset;	/* 0x48 */
 	u32 pad8;
 	u32 error_status;		/* 0x50 */
 	u32 pad9;
-};
+पूर्ण;
 
-struct vnic_wq_buf {
-	struct vnic_wq_buf *next;
+काष्ठा vnic_wq_buf अणु
+	काष्ठा vnic_wq_buf *next;
 	dma_addr_t dma_addr;
-	void *os_buf;
-	unsigned int len;
-	unsigned int index;
-	int sop;
-	void *desc;
-};
+	व्योम *os_buf;
+	अचिन्हित पूर्णांक len;
+	अचिन्हित पूर्णांक index;
+	पूर्णांक sop;
+	व्योम *desc;
+पूर्ण;
 
-/* Break the vnic_wq_buf allocations into blocks of 64 entries */
-#define VNIC_WQ_BUF_BLK_ENTRIES 64
-#define VNIC_WQ_BUF_BLK_SZ \
-	(VNIC_WQ_BUF_BLK_ENTRIES * sizeof(struct vnic_wq_buf))
-#define VNIC_WQ_BUF_BLKS_NEEDED(entries) \
+/* Break the vnic_wq_buf allocations पूर्णांकo blocks of 64 entries */
+#घोषणा VNIC_WQ_BUF_BLK_ENTRIES 64
+#घोषणा VNIC_WQ_BUF_BLK_SZ \
+	(VNIC_WQ_BUF_BLK_ENTRIES * माप(काष्ठा vnic_wq_buf))
+#घोषणा VNIC_WQ_BUF_BLKS_NEEDED(entries) \
 	DIV_ROUND_UP(entries, VNIC_WQ_BUF_BLK_ENTRIES)
-#define VNIC_WQ_BUF_BLKS_MAX VNIC_WQ_BUF_BLKS_NEEDED(4096)
+#घोषणा VNIC_WQ_BUF_BLKS_MAX VNIC_WQ_BUF_BLKS_NEEDED(4096)
 
-struct vnic_wq {
-	unsigned int index;
-	struct vnic_dev *vdev;
-	struct vnic_wq_ctrl __iomem *ctrl;	/* memory-mapped */
-	struct vnic_dev_ring ring;
-	struct vnic_wq_buf *bufs[VNIC_WQ_BUF_BLKS_MAX];
-	struct vnic_wq_buf *to_use;
-	struct vnic_wq_buf *to_clean;
-	unsigned int pkts_outstanding;
-};
+काष्ठा vnic_wq अणु
+	अचिन्हित पूर्णांक index;
+	काष्ठा vnic_dev *vdev;
+	काष्ठा vnic_wq_ctrl __iomem *ctrl;	/* memory-mapped */
+	काष्ठा vnic_dev_ring ring;
+	काष्ठा vnic_wq_buf *bufs[VNIC_WQ_BUF_BLKS_MAX];
+	काष्ठा vnic_wq_buf *to_use;
+	काष्ठा vnic_wq_buf *to_clean;
+	अचिन्हित पूर्णांक pkts_outstanding;
+पूर्ण;
 
-static inline unsigned int vnic_wq_desc_avail(struct vnic_wq *wq)
-{
-	/* how many does SW own? */
-	return wq->ring.desc_avail;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक vnic_wq_desc_avail(काष्ठा vnic_wq *wq)
+अणु
+	/* how many करोes SW own? */
+	वापस wq->ring.desc_avail;
+पूर्ण
 
-static inline unsigned int vnic_wq_desc_used(struct vnic_wq *wq)
-{
-	/* how many does HW own? */
-	return wq->ring.desc_count - wq->ring.desc_avail - 1;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक vnic_wq_desc_used(काष्ठा vnic_wq *wq)
+अणु
+	/* how many करोes HW own? */
+	वापस wq->ring.desc_count - wq->ring.desc_avail - 1;
+पूर्ण
 
-static inline void *vnic_wq_next_desc(struct vnic_wq *wq)
-{
-	return wq->to_use->desc;
-}
+अटल अंतरभूत व्योम *vnic_wq_next_desc(काष्ठा vnic_wq *wq)
+अणु
+	वापस wq->to_use->desc;
+पूर्ण
 
-static inline void vnic_wq_post(struct vnic_wq *wq,
-	void *os_buf, dma_addr_t dma_addr,
-	unsigned int len, int sop, int eop)
-{
-	struct vnic_wq_buf *buf = wq->to_use;
+अटल अंतरभूत व्योम vnic_wq_post(काष्ठा vnic_wq *wq,
+	व्योम *os_buf, dma_addr_t dma_addr,
+	अचिन्हित पूर्णांक len, पूर्णांक sop, पूर्णांक eop)
+अणु
+	काष्ठा vnic_wq_buf *buf = wq->to_use;
 
 	buf->sop = sop;
-	buf->os_buf = eop ? os_buf : NULL;
+	buf->os_buf = eop ? os_buf : शून्य;
 	buf->dma_addr = dma_addr;
 	buf->len = len;
 
 	buf = buf->next;
-	if (eop) {
-		/* Adding write memory barrier prevents compiler and/or CPU
-		 * reordering, thus avoiding descriptor posting before
-		 * descriptor is initialized. Otherwise, hardware can read
+	अगर (eop) अणु
+		/* Adding ग_लिखो memory barrier prevents compiler and/or CPU
+		 * reordering, thus aव्योमing descriptor posting beक्रमe
+		 * descriptor is initialized. Otherwise, hardware can पढ़ो
 		 * stale descriptor fields.
 		 */
 		wmb();
-		iowrite32(buf->index, &wq->ctrl->posted_index);
-	}
+		ioग_लिखो32(buf->index, &wq->ctrl->posted_index);
+	पूर्ण
 	wq->to_use = buf;
 
 	wq->ring.desc_avail--;
-}
+पूर्ण
 
-static inline void vnic_wq_service(struct vnic_wq *wq,
-	struct cq_desc *cq_desc, u16 completed_index,
-	void (*buf_service)(struct vnic_wq *wq,
-	struct cq_desc *cq_desc, struct vnic_wq_buf *buf, void *opaque),
-	void *opaque)
-{
-	struct vnic_wq_buf *buf;
+अटल अंतरभूत व्योम vnic_wq_service(काष्ठा vnic_wq *wq,
+	काष्ठा cq_desc *cq_desc, u16 completed_index,
+	व्योम (*buf_service)(काष्ठा vnic_wq *wq,
+	काष्ठा cq_desc *cq_desc, काष्ठा vnic_wq_buf *buf, व्योम *opaque),
+	व्योम *opaque)
+अणु
+	काष्ठा vnic_wq_buf *buf;
 
 	buf = wq->to_clean;
-	while (1) {
+	जबतक (1) अणु
 
 		(*buf_service)(wq, cq_desc, buf, opaque);
 
@@ -155,29 +156,29 @@ static inline void vnic_wq_service(struct vnic_wq *wq,
 
 		wq->to_clean = buf->next;
 
-		if (buf->index == completed_index)
-			break;
+		अगर (buf->index == completed_index)
+			अवरोध;
 
 		buf = wq->to_clean;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void vnic_wq_free(struct vnic_wq *wq);
-int vnic_wq_alloc(struct vnic_dev *vdev, struct vnic_wq *wq, unsigned int index,
-	unsigned int desc_count, unsigned int desc_size);
-int vnic_wq_devcmd2_alloc(struct vnic_dev *vdev, struct vnic_wq *wq,
-		unsigned int desc_count, unsigned int desc_size);
-void vnic_wq_init_start(struct vnic_wq *wq, unsigned int cq_index,
-		unsigned int fetch_index, unsigned int posted_index,
-		unsigned int error_interrupt_enable,
-		unsigned int error_interrupt_offset);
-void vnic_wq_init(struct vnic_wq *wq, unsigned int cq_index,
-	unsigned int error_interrupt_enable,
-	unsigned int error_interrupt_offset);
-unsigned int vnic_wq_error_status(struct vnic_wq *wq);
-void vnic_wq_enable(struct vnic_wq *wq);
-int vnic_wq_disable(struct vnic_wq *wq);
-void vnic_wq_clean(struct vnic_wq *wq,
-	void (*buf_clean)(struct vnic_wq *wq, struct vnic_wq_buf *buf));
+व्योम vnic_wq_मुक्त(काष्ठा vnic_wq *wq);
+पूर्णांक vnic_wq_alloc(काष्ठा vnic_dev *vdev, काष्ठा vnic_wq *wq, अचिन्हित पूर्णांक index,
+	अचिन्हित पूर्णांक desc_count, अचिन्हित पूर्णांक desc_size);
+पूर्णांक vnic_wq_devcmd2_alloc(काष्ठा vnic_dev *vdev, काष्ठा vnic_wq *wq,
+		अचिन्हित पूर्णांक desc_count, अचिन्हित पूर्णांक desc_size);
+व्योम vnic_wq_init_start(काष्ठा vnic_wq *wq, अचिन्हित पूर्णांक cq_index,
+		अचिन्हित पूर्णांक fetch_index, अचिन्हित पूर्णांक posted_index,
+		अचिन्हित पूर्णांक error_पूर्णांकerrupt_enable,
+		अचिन्हित पूर्णांक error_पूर्णांकerrupt_offset);
+व्योम vnic_wq_init(काष्ठा vnic_wq *wq, अचिन्हित पूर्णांक cq_index,
+	अचिन्हित पूर्णांक error_पूर्णांकerrupt_enable,
+	अचिन्हित पूर्णांक error_पूर्णांकerrupt_offset);
+अचिन्हित पूर्णांक vnic_wq_error_status(काष्ठा vnic_wq *wq);
+व्योम vnic_wq_enable(काष्ठा vnic_wq *wq);
+पूर्णांक vnic_wq_disable(काष्ठा vnic_wq *wq);
+व्योम vnic_wq_clean(काष्ठा vnic_wq *wq,
+	व्योम (*buf_clean)(काष्ठा vnic_wq *wq, काष्ठा vnic_wq_buf *buf));
 
-#endif /* _VNIC_WQ_H_ */
+#पूर्ण_अगर /* _VNIC_WQ_H_ */

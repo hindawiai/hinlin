@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  */
-#ifndef __ASM_SECTIONS_H
-#define __ASM_SECTIONS_H
+#अगर_अघोषित __ASM_SECTIONS_H
+#घोषणा __ASM_SECTIONS_H
 
-#include <asm-generic/sections.h>
+#समावेश <यंत्र-generic/sections.h>
 
-extern char _start[];
-extern char _start_kernel[];
-extern char __init_data_begin[], __init_data_end[];
-extern char __init_text_begin[], __init_text_end[];
-extern char __alt_start[], __alt_end[];
+बाह्य अक्षर _start[];
+बाह्य अक्षर _start_kernel[];
+बाह्य अक्षर __init_data_begin[], __init_data_end[];
+बाह्य अक्षर __init_text_begin[], __init_text_end[];
+बाह्य अक्षर __alt_start[], __alt_end[];
 
-#endif /* __ASM_SECTIONS_H */
+#पूर्ण_अगर /* __ASM_SECTIONS_H */

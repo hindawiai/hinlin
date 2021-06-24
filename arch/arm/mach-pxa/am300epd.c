@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
- * am300epd.c -- Platform device for AM300 EPD kit
+ * am300epd.c -- Platक्रमm device क्रम AM300 EPD kit
  *
  * Copyright (C) 2008, Jaya Kumar
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file COPYING in the main directory of this archive for
+ * License. See the file COPYING in the मुख्य directory of this archive क्रम
  * more details.
  *
  * This work was made possible by help and equipment support from E-Ink
@@ -12,36 +13,36 @@
  *
  * This driver is written to be used with the Broadsheet display controller.
  * on the AM300 EPD prototype kit/development kit with an E-Ink 800x600
- * Vizplex EPD on a Gumstix board using the Broadsheet interface board.
+ * Vizplex EPD on a Gumstix board using the Broadsheet पूर्णांकerface board.
  *
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/irq.h>
-#include <linux/gpio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/gpपन.स>
 
-#include "gumstix.h"
-#include "mfp-pxa25x.h"
-#include <mach/irqs.h>
-#include <linux/platform_data/video-pxafb.h>
+#समावेश "gumstix.h"
+#समावेश "mfp-pxa25x.h"
+#समावेश <mach/irqs.h>
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
 
-#include "generic.h"
+#समावेश "generic.h"
 
-#include <video/broadsheetfb.h>
+#समावेश <video/broadsheetfb.h>
 
-static unsigned int panel_type = 6;
-static struct platform_device *am300_device;
-static struct broadsheet_board am300_board;
+अटल अचिन्हित पूर्णांक panel_type = 6;
+अटल काष्ठा platक्रमm_device *am300_device;
+अटल काष्ठा broadsheet_board am300_board;
 
-static unsigned long am300_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ am300_pin_config[] __initdata = अणु
 	GPIO16_GPIO,
 	GPIO17_GPIO,
 	GPIO32_GPIO,
@@ -73,64 +74,64 @@ static unsigned long am300_pin_config[] __initdata = {
 	GPIO71_GPIO,
 	GPIO72_GPIO,
 	GPIO73_GPIO,
-};
+पूर्ण;
 
-/* register offsets for gpio control */
-#define PWR_GPIO_PIN	16
-#define CFG_GPIO_PIN	17
-#define RDY_GPIO_PIN	32
-#define DC_GPIO_PIN	48
-#define RST_GPIO_PIN	49
-#define LED_GPIO_PIN	51
-#define RD_GPIO_PIN	74
-#define WR_GPIO_PIN	75
-#define CS_GPIO_PIN	76
-#define IRQ_GPIO_PIN	77
+/* रेजिस्टर offsets क्रम gpio control */
+#घोषणा PWR_GPIO_PIN	16
+#घोषणा CFG_GPIO_PIN	17
+#घोषणा RDY_GPIO_PIN	32
+#घोषणा DC_GPIO_PIN	48
+#घोषणा RST_GPIO_PIN	49
+#घोषणा LED_GPIO_PIN	51
+#घोषणा RD_GPIO_PIN	74
+#घोषणा WR_GPIO_PIN	75
+#घोषणा CS_GPIO_PIN	76
+#घोषणा IRQ_GPIO_PIN	77
 
 /* hdb bus */
-#define DB0_GPIO_PIN	58
-#define DB15_GPIO_PIN	73
+#घोषणा DB0_GPIO_PIN	58
+#घोषणा DB15_GPIO_PIN	73
 
-static int gpios[] = { PWR_GPIO_PIN, CFG_GPIO_PIN, RDY_GPIO_PIN, DC_GPIO_PIN,
+अटल पूर्णांक gpios[] = अणु PWR_GPIO_PIN, CFG_GPIO_PIN, RDY_GPIO_PIN, DC_GPIO_PIN,
 			RST_GPIO_PIN, RD_GPIO_PIN, WR_GPIO_PIN, CS_GPIO_PIN,
-			IRQ_GPIO_PIN, LED_GPIO_PIN };
-static char *gpio_names[] = { "PWR", "CFG", "RDY", "DC", "RST", "RD", "WR",
-				"CS", "IRQ", "LED" };
+			IRQ_GPIO_PIN, LED_GPIO_PIN पूर्ण;
+अटल अक्षर *gpio_names[] = अणु "PWR", "CFG", "RDY", "DC", "RST", "RD", "WR",
+				"CS", "IRQ", "LED" पूर्ण;
 
-static int am300_wait_event(struct broadsheetfb_par *par)
-{
-	/* todo: improve err recovery */
-	wait_event(par->waitq, gpio_get_value(RDY_GPIO_PIN));
-	return 0;
-}
+अटल पूर्णांक am300_रुको_event(काष्ठा broadsheetfb_par *par)
+अणु
+	/* toकरो: improve err recovery */
+	रुको_event(par->रुकोq, gpio_get_value(RDY_GPIO_PIN));
+	वापस 0;
+पूर्ण
 
-static int am300_init_gpio_regs(struct broadsheetfb_par *par)
-{
-	int i;
-	int err;
-	char dbname[8];
+अटल पूर्णांक am300_init_gpio_regs(काष्ठा broadsheetfb_par *par)
+अणु
+	पूर्णांक i;
+	पूर्णांक err;
+	अक्षर dbname[8];
 
-	for (i = 0; i < ARRAY_SIZE(gpios); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(gpios); i++) अणु
 		err = gpio_request(gpios[i], gpio_names[i]);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&am300_device->dev, "failed requesting "
 				"gpio %s, err=%d\n", gpio_names[i], err);
-			goto err_req_gpio;
-		}
-	}
+			जाओ err_req_gpio;
+		पूर्ण
+	पूर्ण
 
 	/* we also need to take care of the hdb bus */
-	for (i = DB0_GPIO_PIN; i <= DB15_GPIO_PIN; i++) {
-		sprintf(dbname, "DB%d", i);
+	क्रम (i = DB0_GPIO_PIN; i <= DB15_GPIO_PIN; i++) अणु
+		प्र_लिखो(dbname, "DB%d", i);
 		err = gpio_request(i, dbname);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&am300_device->dev, "failed requesting "
 				"gpio %d, err=%d\n", i, err);
-			goto err_req_gpio2;
-		}
-	}
+			जाओ err_req_gpio2;
+		पूर्ण
+	पूर्ण
 
-	/* setup the outputs and init values */
+	/* setup the outमाला_दो and init values */
 	gpio_direction_output(PWR_GPIO_PIN, 0);
 	gpio_direction_output(CFG_GPIO_PIN, 1);
 	gpio_direction_output(DC_GPIO_PIN, 0);
@@ -139,156 +140,156 @@ static int am300_init_gpio_regs(struct broadsheetfb_par *par)
 	gpio_direction_output(CS_GPIO_PIN, 1);
 	gpio_direction_output(RST_GPIO_PIN, 0);
 
-	/* setup the inputs */
+	/* setup the inमाला_दो */
 	gpio_direction_input(RDY_GPIO_PIN);
 	gpio_direction_input(IRQ_GPIO_PIN);
 
 	/* start the hdb bus as an input */
-	for (i = DB0_GPIO_PIN; i <= DB15_GPIO_PIN; i++)
+	क्रम (i = DB0_GPIO_PIN; i <= DB15_GPIO_PIN; i++)
 		gpio_direction_output(i, 0);
 
-	/* go into command mode */
+	/* go पूर्णांकo command mode */
 	gpio_set_value(CFG_GPIO_PIN, 1);
 	gpio_set_value(RST_GPIO_PIN, 0);
 	msleep(10);
 	gpio_set_value(RST_GPIO_PIN, 1);
 	msleep(10);
-	am300_wait_event(par);
+	am300_रुको_event(par);
 
-	return 0;
+	वापस 0;
 
 err_req_gpio2:
-	while (--i >= DB0_GPIO_PIN)
-		gpio_free(i);
+	जबतक (--i >= DB0_GPIO_PIN)
+		gpio_मुक्त(i);
 	i = ARRAY_SIZE(gpios);
 err_req_gpio:
-	while (--i >= 0)
-		gpio_free(gpios[i]);
+	जबतक (--i >= 0)
+		gpio_मुक्त(gpios[i]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int am300_init_board(struct broadsheetfb_par *par)
-{
-	return am300_init_gpio_regs(par);
-}
+अटल पूर्णांक am300_init_board(काष्ठा broadsheetfb_par *par)
+अणु
+	वापस am300_init_gpio_regs(par);
+पूर्ण
 
-static void am300_cleanup(struct broadsheetfb_par *par)
-{
-	int i;
+अटल व्योम am300_cleanup(काष्ठा broadsheetfb_par *par)
+अणु
+	पूर्णांक i;
 
-	free_irq(PXA_GPIO_TO_IRQ(RDY_GPIO_PIN), par);
+	मुक्त_irq(PXA_GPIO_TO_IRQ(RDY_GPIO_PIN), par);
 
-	for (i = 0; i < ARRAY_SIZE(gpios); i++)
-		gpio_free(gpios[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(gpios); i++)
+		gpio_मुक्त(gpios[i]);
 
-	for (i = DB0_GPIO_PIN; i <= DB15_GPIO_PIN; i++)
-		gpio_free(i);
+	क्रम (i = DB0_GPIO_PIN; i <= DB15_GPIO_PIN; i++)
+		gpio_मुक्त(i);
 
-}
+पूर्ण
 
-static u16 am300_get_hdb(struct broadsheetfb_par *par)
-{
+अटल u16 am300_get_hdb(काष्ठा broadsheetfb_par *par)
+अणु
 	u16 res = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i <= (DB15_GPIO_PIN - DB0_GPIO_PIN) ; i++)
+	क्रम (i = 0; i <= (DB15_GPIO_PIN - DB0_GPIO_PIN) ; i++)
 		res |= (gpio_get_value(DB0_GPIO_PIN + i)) ? (1 << i) : 0;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void am300_set_hdb(struct broadsheetfb_par *par, u16 data)
-{
-	int i;
+अटल व्योम am300_set_hdb(काष्ठा broadsheetfb_par *par, u16 data)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i <= (DB15_GPIO_PIN - DB0_GPIO_PIN) ; i++)
+	क्रम (i = 0; i <= (DB15_GPIO_PIN - DB0_GPIO_PIN) ; i++)
 		gpio_set_value(DB0_GPIO_PIN + i, (data >> i) & 0x01);
-}
+पूर्ण
 
 
-static void am300_set_ctl(struct broadsheetfb_par *par, unsigned char bit,
+अटल व्योम am300_set_ctl(काष्ठा broadsheetfb_par *par, अचिन्हित अक्षर bit,
 				u8 state)
-{
-	switch (bit) {
-	case BS_CS:
+अणु
+	चयन (bit) अणु
+	हाल BS_CS:
 		gpio_set_value(CS_GPIO_PIN, state);
-		break;
-	case BS_DC:
+		अवरोध;
+	हाल BS_DC:
 		gpio_set_value(DC_GPIO_PIN, state);
-		break;
-	case BS_WR:
+		अवरोध;
+	हाल BS_WR:
 		gpio_set_value(WR_GPIO_PIN, state);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int am300_get_panel_type(void)
-{
-	return panel_type;
-}
+अटल पूर्णांक am300_get_panel_type(व्योम)
+अणु
+	वापस panel_type;
+पूर्ण
 
-static irqreturn_t am300_handle_irq(int irq, void *dev_id)
-{
-	struct broadsheetfb_par *par = dev_id;
+अटल irqवापस_t am300_handle_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा broadsheetfb_par *par = dev_id;
 
-	wake_up(&par->waitq);
-	return IRQ_HANDLED;
-}
+	wake_up(&par->रुकोq);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int am300_setup_irq(struct fb_info *info)
-{
-	int ret;
-	struct broadsheetfb_par *par = info->par;
+अटल पूर्णांक am300_setup_irq(काष्ठा fb_info *info)
+अणु
+	पूर्णांक ret;
+	काष्ठा broadsheetfb_par *par = info->par;
 
 	ret = request_irq(PXA_GPIO_TO_IRQ(RDY_GPIO_PIN), am300_handle_irq,
 				IRQF_TRIGGER_RISING, "AM300", par);
-	if (ret)
+	अगर (ret)
 		dev_err(&am300_device->dev, "request_irq failed: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct broadsheet_board am300_board = {
+अटल काष्ठा broadsheet_board am300_board = अणु
 	.owner			= THIS_MODULE,
 	.init			= am300_init_board,
 	.cleanup		= am300_cleanup,
 	.set_hdb		= am300_set_hdb,
 	.get_hdb		= am300_get_hdb,
 	.set_ctl		= am300_set_ctl,
-	.wait_for_rdy		= am300_wait_event,
+	.रुको_क्रम_rdy		= am300_रुको_event,
 	.get_panel_type		= am300_get_panel_type,
 	.setup_irq		= am300_setup_irq,
-};
+पूर्ण;
 
-int __init am300_init(void)
-{
-	int ret;
+पूर्णांक __init am300_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(am300_pin_config));
 
-	/* request our platform independent driver */
+	/* request our platक्रमm independent driver */
 	request_module("broadsheetfb");
 
-	am300_device = platform_device_alloc("broadsheetfb", -1);
-	if (!am300_device)
-		return -ENOMEM;
+	am300_device = platक्रमm_device_alloc("broadsheetfb", -1);
+	अगर (!am300_device)
+		वापस -ENOMEM;
 
 	/* the am300_board that will be seen by broadsheetfb is a copy */
-	platform_device_add_data(am300_device, &am300_board,
-					sizeof(am300_board));
+	platक्रमm_device_add_data(am300_device, &am300_board,
+					माप(am300_board));
 
-	ret = platform_device_add(am300_device);
+	ret = platक्रमm_device_add(am300_device);
 
-	if (ret) {
-		platform_device_put(am300_device);
-		return ret;
-	}
+	अगर (ret) अणु
+		platक्रमm_device_put(am300_device);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-module_param(panel_type, uint, 0);
+module_param(panel_type, uपूर्णांक, 0);
 MODULE_PARM_DESC(panel_type, "Select the panel type: 37, 6, 97");
 
 MODULE_DESCRIPTION("board driver for am300 epd kit");

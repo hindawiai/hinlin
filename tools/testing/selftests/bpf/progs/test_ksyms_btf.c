@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Google */
 
-#include "vmlinux.h"
+#समावेश "vmlinux.h"
 
-#include <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_helpers.h>
 
 __u64 out__runqueues_addr = -1;
 __u64 out__bpf_prog_active_addr = -1;
 
-__u32 out__rq_cpu = -1; /* percpu struct fields */
-int out__bpf_prog_active = -1; /* percpu int */
+__u32 out__rq_cpu = -1; /* percpu काष्ठा fields */
+पूर्णांक out__bpf_prog_active = -1; /* percpu पूर्णांक */
 
 __u32 out__this_rq_cpu = -1;
-int out__this_bpf_prog_active = -1;
+पूर्णांक out__this_bpf_prog_active = -1;
 
 __u32 out__cpu_0_rq_cpu = -1; /* cpu_rq(0)->cpu */
 
-extern const struct rq runqueues __ksym; /* struct type global var. */
-extern const int bpf_prog_active __ksym; /* int type global var. */
+बाह्य स्थिर काष्ठा rq runqueues __ksym; /* काष्ठा type global var. */
+बाह्य स्थिर पूर्णांक bpf_prog_active __ksym; /* पूर्णांक type global var. */
 
 SEC("raw_tp/sys_enter")
-int handler(const void *ctx)
-{
-	struct rq *rq;
-	int *active;
+पूर्णांक handler(स्थिर व्योम *ctx)
+अणु
+	काष्ठा rq *rq;
+	पूर्णांक *active;
 	__u32 cpu;
 
 	out__runqueues_addr = (__u64)&runqueues;
@@ -32,24 +33,24 @@ int handler(const void *ctx)
 	cpu = bpf_get_smp_processor_id();
 
 	/* test bpf_per_cpu_ptr() */
-	rq = (struct rq *)bpf_per_cpu_ptr(&runqueues, cpu);
-	if (rq)
+	rq = (काष्ठा rq *)bpf_per_cpu_ptr(&runqueues, cpu);
+	अगर (rq)
 		out__rq_cpu = rq->cpu;
-	active = (int *)bpf_per_cpu_ptr(&bpf_prog_active, cpu);
-	if (active)
+	active = (पूर्णांक *)bpf_per_cpu_ptr(&bpf_prog_active, cpu);
+	अगर (active)
 		out__bpf_prog_active = *active;
 
-	rq = (struct rq *)bpf_per_cpu_ptr(&runqueues, 0);
-	if (rq) /* should always be valid, but we can't spare the check. */
+	rq = (काष्ठा rq *)bpf_per_cpu_ptr(&runqueues, 0);
+	अगर (rq) /* should always be valid, but we can't spare the check. */
 		out__cpu_0_rq_cpu = rq->cpu;
 
 	/* test bpf_this_cpu_ptr */
-	rq = (struct rq *)bpf_this_cpu_ptr(&runqueues);
+	rq = (काष्ठा rq *)bpf_this_cpu_ptr(&runqueues);
 	out__this_rq_cpu = rq->cpu;
-	active = (int *)bpf_this_cpu_ptr(&bpf_prog_active);
+	active = (पूर्णांक *)bpf_this_cpu_ptr(&bpf_prog_active);
 	out__this_bpf_prog_active = *active;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Sleepable Read-Copy Update mechanism for mutual exclusion
+ * Sleepable Read-Copy Update mechanism क्रम mutual exclusion
  *
  * Copyright (C) IBM Corporation, 2006
  * Copyright (C) Fujitsu, 2012
@@ -13,196 +14,196 @@
  *
  */
 
-#ifndef _LINUX_SRCU_H
-#define _LINUX_SRCU_H
+#अगर_अघोषित _LINUX_SRCU_H
+#घोषणा _LINUX_SRCU_H
 
-#include <linux/mutex.h>
-#include <linux/rcupdate.h>
-#include <linux/workqueue.h>
-#include <linux/rcu_segcblist.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/rcu_segcblist.h>
 
-struct srcu_struct;
+काष्ठा srcu_काष्ठा;
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 
-int __init_srcu_struct(struct srcu_struct *ssp, const char *name,
-		       struct lock_class_key *key);
+पूर्णांक __init_srcu_काष्ठा(काष्ठा srcu_काष्ठा *ssp, स्थिर अक्षर *name,
+		       काष्ठा lock_class_key *key);
 
-#define init_srcu_struct(ssp) \
-({ \
-	static struct lock_class_key __srcu_key; \
+#घोषणा init_srcu_काष्ठा(ssp) \
+(अणु \
+	अटल काष्ठा lock_class_key __srcu_key; \
 	\
-	__init_srcu_struct((ssp), #ssp, &__srcu_key); \
-})
+	__init_srcu_काष्ठा((ssp), #ssp, &__srcu_key); \
+पूर्ण)
 
-#define __SRCU_DEP_MAP_INIT(srcu_name)	.dep_map = { .name = #srcu_name },
-#else /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
+#घोषणा __SRCU_DEP_MAP_INIT(srcu_name)	.dep_map = अणु .name = #srcu_name पूर्ण,
+#अन्यथा /* #अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC */
 
-int init_srcu_struct(struct srcu_struct *ssp);
+पूर्णांक init_srcu_काष्ठा(काष्ठा srcu_काष्ठा *ssp);
 
-#define __SRCU_DEP_MAP_INIT(srcu_name)
-#endif /* #else #ifdef CONFIG_DEBUG_LOCK_ALLOC */
+#घोषणा __SRCU_DEP_MAP_INIT(srcu_name)
+#पूर्ण_अगर /* #अन्यथा #अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC */
 
-#ifdef CONFIG_TINY_SRCU
-#include <linux/srcutiny.h>
-#elif defined(CONFIG_TREE_SRCU)
-#include <linux/srcutree.h>
-#elif defined(CONFIG_SRCU)
-#error "Unknown SRCU implementation specified to kernel configuration"
-#else
-/* Dummy definition for things like notifiers.  Actual use gets link error. */
-struct srcu_struct { };
-#endif
+#अगर_घोषित CONFIG_TINY_SRCU
+#समावेश <linux/srcutiny.h>
+#या_अगर defined(CONFIG_TREE_SRCU)
+#समावेश <linux/srcutree.h>
+#या_अगर defined(CONFIG_SRCU)
+#त्रुटि "Unknown SRCU implementation specified to kernel configuration"
+#अन्यथा
+/* Dummy definition क्रम things like notअगरiers.  Actual use माला_लो link error. */
+काष्ठा srcu_काष्ठा अणु पूर्ण;
+#पूर्ण_अगर
 
-void call_srcu(struct srcu_struct *ssp, struct rcu_head *head,
-		void (*func)(struct rcu_head *head));
-void cleanup_srcu_struct(struct srcu_struct *ssp);
-int __srcu_read_lock(struct srcu_struct *ssp) __acquires(ssp);
-void __srcu_read_unlock(struct srcu_struct *ssp, int idx) __releases(ssp);
-void synchronize_srcu(struct srcu_struct *ssp);
-unsigned long get_state_synchronize_srcu(struct srcu_struct *ssp);
-unsigned long start_poll_synchronize_srcu(struct srcu_struct *ssp);
-bool poll_state_synchronize_srcu(struct srcu_struct *ssp, unsigned long cookie);
+व्योम call_srcu(काष्ठा srcu_काष्ठा *ssp, काष्ठा rcu_head *head,
+		व्योम (*func)(काष्ठा rcu_head *head));
+व्योम cleanup_srcu_काष्ठा(काष्ठा srcu_काष्ठा *ssp);
+पूर्णांक __srcu_पढ़ो_lock(काष्ठा srcu_काष्ठा *ssp) __acquires(ssp);
+व्योम __srcu_पढ़ो_unlock(काष्ठा srcu_काष्ठा *ssp, पूर्णांक idx) __releases(ssp);
+व्योम synchronize_srcu(काष्ठा srcu_काष्ठा *ssp);
+अचिन्हित दीर्घ get_state_synchronize_srcu(काष्ठा srcu_काष्ठा *ssp);
+अचिन्हित दीर्घ start_poll_synchronize_srcu(काष्ठा srcu_काष्ठा *ssp);
+bool poll_state_synchronize_srcu(काष्ठा srcu_काष्ठा *ssp, अचिन्हित दीर्घ cookie);
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 
 /**
- * srcu_read_lock_held - might we be in SRCU read-side critical section?
- * @ssp: The srcu_struct structure to check
+ * srcu_पढ़ो_lock_held - might we be in SRCU पढ़ो-side critical section?
+ * @ssp: The srcu_काष्ठा काष्ठाure to check
  *
- * If CONFIG_DEBUG_LOCK_ALLOC is selected, returns nonzero iff in an SRCU
- * read-side critical section.  In absence of CONFIG_DEBUG_LOCK_ALLOC,
- * this assumes we are in an SRCU read-side critical section unless it can
+ * If CONFIG_DEBUG_LOCK_ALLOC is selected, वापसs nonzero अगरf in an SRCU
+ * पढ़ो-side critical section.  In असलence of CONFIG_DEBUG_LOCK_ALLOC,
+ * this assumes we are in an SRCU पढ़ो-side critical section unless it can
  * prove otherwise.
  *
  * Checks debug_lockdep_rcu_enabled() to prevent false positives during boot
- * and while lockdep is disabled.
+ * and जबतक lockdep is disabled.
  *
- * Note that SRCU is based on its own statemachine and it doesn't
+ * Note that SRCU is based on its own statemachine and it करोesn't
  * relies on normal RCU, it can be called from the CPU which
- * is in the idle loop from an RCU point of view or offline.
+ * is in the idle loop from an RCU poपूर्णांक of view or offline.
  */
-static inline int srcu_read_lock_held(const struct srcu_struct *ssp)
-{
-	if (!debug_lockdep_rcu_enabled())
-		return 1;
-	return lock_is_held(&ssp->dep_map);
-}
+अटल अंतरभूत पूर्णांक srcu_पढ़ो_lock_held(स्थिर काष्ठा srcu_काष्ठा *ssp)
+अणु
+	अगर (!debug_lockdep_rcu_enabled())
+		वापस 1;
+	वापस lock_is_held(&ssp->dep_map);
+पूर्ण
 
-#else /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
+#अन्यथा /* #अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC */
 
-static inline int srcu_read_lock_held(const struct srcu_struct *ssp)
-{
-	return 1;
-}
+अटल अंतरभूत पूर्णांक srcu_पढ़ो_lock_held(स्थिर काष्ठा srcu_काष्ठा *ssp)
+अणु
+	वापस 1;
+पूर्ण
 
-#endif /* #else #ifdef CONFIG_DEBUG_LOCK_ALLOC */
+#पूर्ण_अगर /* #अन्यथा #अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC */
 
 /**
- * srcu_dereference_check - fetch SRCU-protected pointer for later dereferencing
- * @p: the pointer to fetch and protect for later dereferencing
- * @ssp: pointer to the srcu_struct, which is used to check that we
- *	really are in an SRCU read-side critical section.
- * @c: condition to check for update-side use
+ * srcu_dereference_check - fetch SRCU-रक्षित poपूर्णांकer क्रम later dereferencing
+ * @p: the poपूर्णांकer to fetch and protect क्रम later dereferencing
+ * @ssp: poपूर्णांकer to the srcu_काष्ठा, which is used to check that we
+ *	really are in an SRCU पढ़ो-side critical section.
+ * @c: condition to check क्रम update-side use
  *
- * If PROVE_RCU is enabled, invoking this outside of an RCU read-side
+ * If PROVE_RCU is enabled, invoking this outside of an RCU पढ़ो-side
  * critical section will result in an RCU-lockdep splat, unless @c evaluates
  * to 1.  The @c argument will normally be a logical expression containing
  * lockdep_is_held() calls.
  */
-#define srcu_dereference_check(p, ssp, c) \
-	__rcu_dereference_check((p), (c) || srcu_read_lock_held(ssp), __rcu)
+#घोषणा srcu_dereference_check(p, ssp, c) \
+	__rcu_dereference_check((p), (c) || srcu_पढ़ो_lock_held(ssp), __rcu)
 
 /**
- * srcu_dereference - fetch SRCU-protected pointer for later dereferencing
- * @p: the pointer to fetch and protect for later dereferencing
- * @ssp: pointer to the srcu_struct, which is used to check that we
- *	really are in an SRCU read-side critical section.
+ * srcu_dereference - fetch SRCU-रक्षित poपूर्णांकer क्रम later dereferencing
+ * @p: the poपूर्णांकer to fetch and protect क्रम later dereferencing
+ * @ssp: poपूर्णांकer to the srcu_काष्ठा, which is used to check that we
+ *	really are in an SRCU पढ़ो-side critical section.
  *
- * Makes rcu_dereference_check() do the dirty work.  If PROVE_RCU
- * is enabled, invoking this outside of an RCU read-side critical
+ * Makes rcu_dereference_check() करो the dirty work.  If PROVE_RCU
+ * is enabled, invoking this outside of an RCU पढ़ो-side critical
  * section will result in an RCU-lockdep splat.
  */
-#define srcu_dereference(p, ssp) srcu_dereference_check((p), (ssp), 0)
+#घोषणा srcu_dereference(p, ssp) srcu_dereference_check((p), (ssp), 0)
 
 /**
  * srcu_dereference_notrace - no tracing and no lockdep calls from here
- * @p: the pointer to fetch and protect for later dereferencing
- * @ssp: pointer to the srcu_struct, which is used to check that we
- *	really are in an SRCU read-side critical section.
+ * @p: the poपूर्णांकer to fetch and protect क्रम later dereferencing
+ * @ssp: poपूर्णांकer to the srcu_काष्ठा, which is used to check that we
+ *	really are in an SRCU पढ़ो-side critical section.
  */
-#define srcu_dereference_notrace(p, ssp) srcu_dereference_check((p), (ssp), 1)
+#घोषणा srcu_dereference_notrace(p, ssp) srcu_dereference_check((p), (ssp), 1)
 
 /**
- * srcu_read_lock - register a new reader for an SRCU-protected structure.
- * @ssp: srcu_struct in which to register the new reader.
+ * srcu_पढ़ो_lock - रेजिस्टर a new पढ़ोer क्रम an SRCU-रक्षित काष्ठाure.
+ * @ssp: srcu_काष्ठा in which to रेजिस्टर the new पढ़ोer.
  *
- * Enter an SRCU read-side critical section.  Note that SRCU read-side
+ * Enter an SRCU पढ़ो-side critical section.  Note that SRCU पढ़ो-side
  * critical sections may be nested.  However, it is illegal to
- * call anything that waits on an SRCU grace period for the same
- * srcu_struct, whether directly or indirectly.  Please note that
- * one way to indirectly wait on an SRCU grace period is to acquire
- * a mutex that is held elsewhere while calling synchronize_srcu() or
+ * call anything that रुकोs on an SRCU grace period क्रम the same
+ * srcu_काष्ठा, whether directly or indirectly.  Please note that
+ * one way to indirectly रुको on an SRCU grace period is to acquire
+ * a mutex that is held अन्यथाwhere जबतक calling synchronize_srcu() or
  * synchronize_srcu_expedited().
  *
- * Note that srcu_read_lock() and the matching srcu_read_unlock() must
- * occur in the same context, for example, it is illegal to invoke
- * srcu_read_unlock() in an irq handler if the matching srcu_read_lock()
+ * Note that srcu_पढ़ो_lock() and the matching srcu_पढ़ो_unlock() must
+ * occur in the same context, क्रम example, it is illegal to invoke
+ * srcu_पढ़ो_unlock() in an irq handler अगर the matching srcu_पढ़ो_lock()
  * was invoked in process context.
  */
-static inline int srcu_read_lock(struct srcu_struct *ssp) __acquires(ssp)
-{
-	int retval;
+अटल अंतरभूत पूर्णांक srcu_पढ़ो_lock(काष्ठा srcu_काष्ठा *ssp) __acquires(ssp)
+अणु
+	पूर्णांक retval;
 
-	retval = __srcu_read_lock(ssp);
+	retval = __srcu_पढ़ो_lock(ssp);
 	rcu_lock_acquire(&(ssp)->dep_map);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* Used by tracing, cannot be traced and cannot invoke lockdep. */
-static inline notrace int
-srcu_read_lock_notrace(struct srcu_struct *ssp) __acquires(ssp)
-{
-	int retval;
+अटल अंतरभूत notrace पूर्णांक
+srcu_पढ़ो_lock_notrace(काष्ठा srcu_काष्ठा *ssp) __acquires(ssp)
+अणु
+	पूर्णांक retval;
 
-	retval = __srcu_read_lock(ssp);
-	return retval;
-}
+	retval = __srcu_पढ़ो_lock(ssp);
+	वापस retval;
+पूर्ण
 
 /**
- * srcu_read_unlock - unregister a old reader from an SRCU-protected structure.
- * @ssp: srcu_struct in which to unregister the old reader.
- * @idx: return value from corresponding srcu_read_lock().
+ * srcu_पढ़ो_unlock - unरेजिस्टर a old पढ़ोer from an SRCU-रक्षित काष्ठाure.
+ * @ssp: srcu_काष्ठा in which to unरेजिस्टर the old पढ़ोer.
+ * @idx: वापस value from corresponding srcu_पढ़ो_lock().
  *
- * Exit an SRCU read-side critical section.
+ * Exit an SRCU पढ़ो-side critical section.
  */
-static inline void srcu_read_unlock(struct srcu_struct *ssp, int idx)
+अटल अंतरभूत व्योम srcu_पढ़ो_unlock(काष्ठा srcu_काष्ठा *ssp, पूर्णांक idx)
 	__releases(ssp)
-{
+अणु
 	WARN_ON_ONCE(idx & ~0x1);
 	rcu_lock_release(&(ssp)->dep_map);
-	__srcu_read_unlock(ssp, idx);
-}
+	__srcu_पढ़ो_unlock(ssp, idx);
+पूर्ण
 
 /* Used by tracing, cannot be traced and cannot call lockdep. */
-static inline notrace void
-srcu_read_unlock_notrace(struct srcu_struct *ssp, int idx) __releases(ssp)
-{
-	__srcu_read_unlock(ssp, idx);
-}
+अटल अंतरभूत notrace व्योम
+srcu_पढ़ो_unlock_notrace(काष्ठा srcu_काष्ठा *ssp, पूर्णांक idx) __releases(ssp)
+अणु
+	__srcu_पढ़ो_unlock(ssp, idx);
+पूर्ण
 
 /**
- * smp_mb__after_srcu_read_unlock - ensure full ordering after srcu_read_unlock
+ * smp_mb__after_srcu_पढ़ो_unlock - ensure full ordering after srcu_पढ़ो_unlock
  *
- * Converts the preceding srcu_read_unlock into a two-way memory barrier.
+ * Converts the preceding srcu_पढ़ो_unlock पूर्णांकo a two-way memory barrier.
  *
- * Call this after srcu_read_unlock, to guarantee that all memory operations
- * that occur after smp_mb__after_srcu_read_unlock will appear to happen after
- * the preceding srcu_read_unlock.
+ * Call this after srcu_पढ़ो_unlock, to guarantee that all memory operations
+ * that occur after smp_mb__after_srcu_पढ़ो_unlock will appear to happen after
+ * the preceding srcu_पढ़ो_unlock.
  */
-static inline void smp_mb__after_srcu_read_unlock(void)
-{
-	/* __srcu_read_unlock has smp_mb() internally so nothing to do here. */
-}
+अटल अंतरभूत व्योम smp_mb__after_srcu_पढ़ो_unlock(व्योम)
+अणु
+	/* __srcu_पढ़ो_unlock has smp_mb() पूर्णांकernally so nothing to करो here. */
+पूर्ण
 
-#endif
+#पूर्ण_अगर

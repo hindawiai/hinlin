@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/mxm8x10.c
  *
- * Support for the Embedian MXM-8x10 Computer on Module
+ * Support क्रम the Embedian MXM-8x10 Computer on Module
  *
  * Copyright (C) 2006 Marvell International Ltd.
  * Copyright (C) 2009 Embedian Inc.
  * Copyright (C) 2009 TMT Services & Supplies (Pty) Ltd.
  *
  * 2007-09-04: eric miao <eric.y.miao@gmail.com>
- *             rewrite to align with latest kernel
+ *             reग_लिखो to align with latest kernel
  *
- * 2010-01-09: Edwin Peer <epeer@tmtservices.co.za>
- * 	       Hennie van der Merwe <hvdmerwe@tmtservices.co.za>
- *             rework for upstream merge
+ * 2010-01-09: Edwin Peer <epeer@पंचांगtservices.co.za>
+ * 	       Hennie van der Merwe <hvdmerwe@पंचांगtservices.co.za>
+ *             rework क्रम upstream merge
  */
 
-#include <linux/serial_8250.h>
-#include <linux/dm9000.h>
-#include <linux/gpio/machine.h>
-#include <linux/platform_data/i2c-pxa.h>
+#समावेश <linux/serial_8250.h>
+#समावेश <linux/dm9000.h>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
 
-#include <linux/platform_data/mtd-nand-pxa3xx.h>
+#समावेश <linux/platक्रमm_data/mtd-nand-pxa3xx.h>
 
-#include <linux/platform_data/video-pxafb.h>
-#include <linux/platform_data/mmc-pxamci.h>
-#include <linux/platform_data/usb-ohci-pxa27x.h>
-#include "pxa320.h"
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
+#समावेश <linux/platक्रमm_data/usb-ohci-pxa27x.h>
+#समावेश "pxa320.h"
 
-#include "mxm8x10.h"
+#समावेश "mxm8x10.h"
 
-#include "devices.h"
-#include "generic.h"
+#समावेश "devices.h"
+#समावेश "generic.h"
 
 /* GPIO pin definition
 
-External device stuff   - Leave unconfigured for now...
+External device stuff   - Leave unconfigured क्रम now...
 ---------------------
 GPIO0   -   DREQ    (External DMA Request)
 GPIO3   -   nGCS2   (External Chip Select) Where is nGCS0; nGCS1; nGCS4; nGCS5 ?
@@ -62,7 +63,7 @@ GPIO80  -   EXT_IRQ7
 GPIO81  -   EXT_IRQ8
 GPIO87  -   VCCIO_PWREN (External Device PWREN)
 
-Dallas 1-Wire   - Leave unconfigured for now...
+Dallas 1-Wire   - Leave unconfigured क्रम now...
 -------------
 GPIO0_2 -   DS - 1Wire
 
@@ -72,7 +73,7 @@ GPIO1   -   DM9000 PWR
 GPIO9   -   DM9K_nIRQ
 GPIO36  -   DM9K_RESET
 
-Keypad  - Leave unconfigured by for now...
+Keypad  - Leave unconfigured by क्रम now...
 ------
 GPIO1_2 -   KP_DKIN0
 GPIO5_2 -   KP_MKOUT7
@@ -95,7 +96,7 @@ GPIO124 -   KP_MKOUT4
 GPIO125 -   KP_MKOUT5
 GPIO127 -   KP_MKOUT6
 
-Data Bus    - Leave unconfigured for now...
+Data Bus    - Leave unconfigured क्रम now...
 --------
 GPIO2   -   nWait (Data Bus)
 
@@ -126,12 +127,12 @@ GPIO101 -   UTM_SUSPENDM_X
 GPIO102 -   UTM_LINESTATE0
 GPIO103 -   UTM_LINESTATE1
 
-Card-Bus Interface  - Leave unconfigured for now...
+Card-Bus Interface  - Leave unconfigured क्रम now...
 ------------------
 GPIO5   -   nPIOR (I/O space output enable)
-GPIO6   -   nPIOW (I/O space write enable)
+GPIO6   -   nPIOW (I/O space ग_लिखो enable)
 GPIO7   -   nIOS16 (Input from I/O space telling size of data bus)
-GPIO8   -   nPWAIT (Input for inserting wait states)
+GPIO8   -   nPWAIT (Input क्रम inserting रुको states)
 
 LCD
 ---
@@ -159,7 +160,7 @@ GPIO88      -   VCCLCD_PWREN (LCD Panel PWREN)
 GPIO97      -   BACKLIGHT_EN
 GPIO104     -   LCD_PWREN
 
-PWM   - Leave unconfigured for now...
+PWM   - Leave unconfigured क्रम now...
 ---
 GPIO11  -   PWM0
 GPIO12  -   PWM1
@@ -215,7 +216,7 @@ GPIO106 -   nRTS3
 GPIO107 -   TXD3
 GPIO108 -   RXD3
 
-SSP3    - Leave unconfigured for now...
+SSP3    - Leave unconfigured क्रम now...
 ----
 GPIO89  -   SSP3_CLK
 GPIO90  -   SSP3_SFRM
@@ -229,7 +230,7 @@ GPIO95  -   SSP4_TXD
 GPIO96  -   SSP4_RXD
 */
 
-static mfp_cfg_t mfp_cfg[] __initdata = {
+अटल mfp_cfg_t mfp_cfg[] __initdata = अणु
 	/* USB */
 	GPIO10_UTM_CLK,
 	GPIO49_U2D_PHYDATA_0,
@@ -316,166 +317,166 @@ static mfp_cfg_t mfp_cfg[] __initdata = {
 	GPIO79_GPIO | MFP_LPM_EDGE_RISE, /* EXT_IRQ6 */
 	GPIO80_GPIO | MFP_LPM_EDGE_RISE, /* EXT_IRQ7 */
 	GPIO81_GPIO | MFP_LPM_EDGE_RISE  /* EXT_IRQ8 */
-};
+पूर्ण;
 
 /* MMC/MCI Support */
-#if defined(CONFIG_MMC)
-static struct pxamci_platform_data mxm_8x10_mci_platform_data = {
+#अगर defined(CONFIG_MMC)
+अटल काष्ठा pxamci_platक्रमm_data mxm_8x10_mci_platक्रमm_data = अणु
 	.ocr_mask = MMC_VDD_32_33 | MMC_VDD_33_34,
 	.detect_delay_ms = 10,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table mxm_8x10_mci_gpio_table = {
+अटल काष्ठा gpiod_lookup_table mxm_8x10_mci_gpio_table = अणु
 	.dev_id = "pxa2xx-mci.0",
-	.table = {
+	.table = अणु
 		/* Card detect on GPIO 72 */
 		GPIO_LOOKUP("gpio-pxa", MXM_8X10_SD_nCD,
 			    "cd", GPIO_ACTIVE_LOW),
 		/* Write protect on GPIO 84 */
 		GPIO_LOOKUP("gpio-pxa", MXM_8X10_SD_WP,
 			    "wp", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-void __init mxm_8x10_mmc_init(void)
-{
+व्योम __init mxm_8x10_mmc_init(व्योम)
+अणु
 	gpiod_add_lookup_table(&mxm_8x10_mci_gpio_table);
-	pxa_set_mci_info(&mxm_8x10_mci_platform_data);
-}
-#endif
+	pxa_set_mci_info(&mxm_8x10_mci_platक्रमm_data);
+पूर्ण
+#पूर्ण_अगर
 
 /* USB Open Host Controller Interface */
-static struct pxaohci_platform_data mxm_8x10_ohci_platform_data = {
+अटल काष्ठा pxaohci_platक्रमm_data mxm_8x10_ohci_platक्रमm_data = अणु
 	.port_mode = PMM_NPS_MODE,
 	.flags = ENABLE_PORT_ALL
-};
+पूर्ण;
 
-void __init mxm_8x10_usb_host_init(void)
-{
-	pxa_set_ohci_info(&mxm_8x10_ohci_platform_data);
-}
+व्योम __init mxm_8x10_usb_host_init(व्योम)
+अणु
+	pxa_set_ohci_info(&mxm_8x10_ohci_platक्रमm_data);
+पूर्ण
 
 /* AC97 Sound Support */
-static struct platform_device mxm_8x10_ac97_device = {
+अटल काष्ठा platक्रमm_device mxm_8x10_ac97_device = अणु
 	.name = "pxa2xx-ac97"
-};
+पूर्ण;
 
-void __init mxm_8x10_ac97_init(void)
-{
-	platform_device_register(&mxm_8x10_ac97_device);
-}
+व्योम __init mxm_8x10_ac97_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&mxm_8x10_ac97_device);
+पूर्ण
 
-/* NAND flash Support */
-#if IS_ENABLED(CONFIG_MTD_NAND_MARVELL)
-#define NAND_BLOCK_SIZE SZ_128K
-#define NB(x)           (NAND_BLOCK_SIZE * (x))
-static struct mtd_partition mxm_8x10_nand_partitions[] = {
-	[0] = {
+/* न_अंकD flash Support */
+#अगर IS_ENABLED(CONFIG_MTD_न_अंकD_MARVELL)
+#घोषणा न_अंकD_BLOCK_SIZE SZ_128K
+#घोषणा NB(x)           (न_अंकD_BLOCK_SIZE * (x))
+अटल काष्ठा mtd_partition mxm_8x10_nand_partitions[] = अणु
+	[0] = अणु
 	       .name = "boot",
 	       .size = NB(0x002),
 	       .offset = NB(0x000),
 	       .mask_flags = MTD_WRITEABLE
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 	       .name = "kernel",
 	       .size = NB(0x010),
 	       .offset = NB(0x002),
 	       .mask_flags = MTD_WRITEABLE
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 	       .name = "root",
 	       .size = NB(0x36c),
 	       .offset = NB(0x012)
-	},
-	[3] = {
+	पूर्ण,
+	[3] = अणु
 	       .name = "bbt",
 	       .size = NB(0x082),
 	       .offset = NB(0x37e),
 	       .mask_flags = MTD_WRITEABLE
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct pxa3xx_nand_platform_data mxm_8x10_nand_info = {
+अटल काष्ठा pxa3xx_nand_platक्रमm_data mxm_8x10_nand_info = अणु
 	.keep_config	= 1,
 	.parts		= mxm_8x10_nand_partitions,
 	.nr_parts	= ARRAY_SIZE(mxm_8x10_nand_partitions)
-};
+पूर्ण;
 
-static void __init mxm_8x10_nand_init(void)
-{
+अटल व्योम __init mxm_8x10_nand_init(व्योम)
+अणु
 	pxa3xx_set_nand_info(&mxm_8x10_nand_info);
-}
-#else
-static inline void mxm_8x10_nand_init(void) {}
-#endif /* IS_ENABLED(CONFIG_MTD_NAND_MARVELL) */
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम mxm_8x10_nand_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_MTD_न_अंकD_MARVELL) */
 
 /* Ethernet support: Davicom DM9000 */
-static struct resource dm9k_resources[] = {
-	[0] = {
+अटल काष्ठा resource dm9k_resources[] = अणु
+	[0] = अणु
 	       .start = MXM_8X10_ETH_PHYS + 0x300,
 	       .end = MXM_8X10_ETH_PHYS + 0x300,
 	       .flags = IORESOURCE_MEM
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 	       .start = MXM_8X10_ETH_PHYS + 0x308,
 	       .end = MXM_8X10_ETH_PHYS + 0x308,
 	       .flags = IORESOURCE_MEM
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 	       .start = PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO9)),
 	       .end = PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO9)),
 	       .flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct dm9000_plat_data dm9k_plat_data = {
+अटल काष्ठा dm9000_plat_data dm9k_plat_data = अणु
 	.flags = DM9000_PLATF_16BITONLY
-};
+पूर्ण;
 
-static struct platform_device dm9k_device = {
+अटल काष्ठा platक्रमm_device dm9k_device = अणु
 	.name = "dm9000",
 	.id = 0,
 	.num_resources = ARRAY_SIZE(dm9k_resources),
 	.resource = dm9k_resources,
-	.dev = {
-		.platform_data = &dm9k_plat_data
-	}
-};
+	.dev = अणु
+		.platक्रमm_data = &dm9k_plat_data
+	पूर्ण
+पूर्ण;
 
-static void __init mxm_8x10_ethernet_init(void)
-{
-	platform_device_register(&dm9k_device);
-}
+अटल व्योम __init mxm_8x10_ethernet_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&dm9k_device);
+पूर्ण
 
 /* PXA UARTs */
-static void __init mxm_8x10_uarts_init(void)
-{
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
-}
+अटल व्योम __init mxm_8x10_uarts_init(व्योम)
+अणु
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
+पूर्ण
 
 /* I2C and Real Time Clock */
-static struct i2c_board_info __initdata mxm_8x10_i2c_devices[] = {
-	{
+अटल काष्ठा i2c_board_info __initdata mxm_8x10_i2c_devices[] = अणु
+	अणु
 		I2C_BOARD_INFO("ds1337", 0x68)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static void __init mxm_8x10_i2c_init(void)
-{
-	i2c_register_board_info(0, mxm_8x10_i2c_devices,
+अटल व्योम __init mxm_8x10_i2c_init(व्योम)
+अणु
+	i2c_रेजिस्टर_board_info(0, mxm_8x10_i2c_devices,
 				ARRAY_SIZE(mxm_8x10_i2c_devices));
-	pxa_set_i2c_info(NULL);
-}
+	pxa_set_i2c_info(शून्य);
+पूर्ण
 
-void __init mxm_8x10_barebones_init(void)
-{
+व्योम __init mxm_8x10_barebones_init(व्योम)
+अणु
 	pxa3xx_mfp_config(ARRAY_AND_SIZE(mfp_cfg));
 
 	mxm_8x10_uarts_init();
 	mxm_8x10_nand_init();
 	mxm_8x10_i2c_init();
 	mxm_8x10_ethernet_init();
-}
+पूर्ण

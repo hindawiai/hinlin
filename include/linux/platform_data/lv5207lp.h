@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * lv5207lp.h - Sanyo LV5207LP LEDs Driver
  */
-#ifndef __LV5207LP_H__
-#define __LV5207LP_H__
+#अगर_अघोषित __LV5207LP_H__
+#घोषणा __LV5207LP_H__
 
-struct device;
+काष्ठा device;
 
-struct lv5207lp_platform_data {
-	struct device *fbdev;
-	unsigned int max_value;
-	unsigned int def_value;
-};
+काष्ठा lv5207lp_platक्रमm_data अणु
+	काष्ठा device *fbdev;
+	अचिन्हित पूर्णांक max_value;
+	अचिन्हित पूर्णांक def_value;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

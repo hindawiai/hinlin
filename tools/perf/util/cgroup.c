@@ -1,487 +1,488 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <subcmd/parse-options.h>
-#include "evsel.h"
-#include "cgroup.h"
-#include "evlist.h"
-#include "rblist.h"
-#include "metricgroup.h"
-#include "stat.h"
-#include <linux/zalloc.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
-#include <api/fs/fs.h>
-#include <ftw.h>
-#include <regex.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <subcmd/parse-options.h>
+#समावेश "evsel.h"
+#समावेश "cgroup.h"
+#समावेश "evlist.h"
+#समावेश "rblist.h"
+#समावेश "metricgroup.h"
+#समावेश "stat.h"
+#समावेश <linux/zभाग.स>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <api/fs/fs.h>
+#समावेश <ftw.h>
+#समावेश <regex.h>
 
-int nr_cgroups;
+पूर्णांक nr_cgroups;
 
 /* used to match cgroup name with patterns */
-struct cgroup_name {
-	struct list_head list;
+काष्ठा cgroup_name अणु
+	काष्ठा list_head list;
 	bool used;
-	char name[];
-};
-static LIST_HEAD(cgroup_list);
+	अक्षर name[];
+पूर्ण;
+अटल LIST_HEAD(cgroup_list);
 
-static int open_cgroup(const char *name)
-{
-	char path[PATH_MAX + 1];
-	char mnt[PATH_MAX + 1];
-	int fd;
+अटल पूर्णांक खोलो_cgroup(स्थिर अक्षर *name)
+अणु
+	अक्षर path[PATH_MAX + 1];
+	अक्षर mnt[PATH_MAX + 1];
+	पूर्णांक fd;
 
 
-	if (cgroupfs_find_mountpoint(mnt, PATH_MAX + 1, "perf_event"))
-		return -1;
+	अगर (cgroupfs_find_mountpoपूर्णांक(mnt, PATH_MAX + 1, "perf_event"))
+		वापस -1;
 
-	scnprintf(path, PATH_MAX, "%s/%s", mnt, name);
+	scnम_लिखो(path, PATH_MAX, "%s/%s", mnt, name);
 
-	fd = open(path, O_RDONLY);
-	if (fd == -1)
-		fprintf(stderr, "no access to cgroup %s\n", path);
+	fd = खोलो(path, O_RDONLY);
+	अगर (fd == -1)
+		ख_लिखो(मानक_त्रुटि, "no access to cgroup %s\n", path);
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static struct cgroup *evlist__find_cgroup(struct evlist *evlist, const char *str)
-{
-	struct evsel *counter;
+अटल काष्ठा cgroup *evlist__find_cgroup(काष्ठा evlist *evlist, स्थिर अक्षर *str)
+अणु
+	काष्ठा evsel *counter;
 	/*
-	 * check if cgrp is already defined, if so we reuse it
+	 * check अगर cgrp is alपढ़ोy defined, अगर so we reuse it
 	 */
-	evlist__for_each_entry(evlist, counter) {
-		if (!counter->cgrp)
-			continue;
-		if (!strcmp(counter->cgrp->name, str))
-			return cgroup__get(counter->cgrp);
-	}
+	evlist__क्रम_each_entry(evlist, counter) अणु
+		अगर (!counter->cgrp)
+			जारी;
+		अगर (!म_भेद(counter->cgrp->name, str))
+			वापस cgroup__get(counter->cgrp);
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct cgroup *cgroup__new(const char *name, bool do_open)
-{
-	struct cgroup *cgroup = zalloc(sizeof(*cgroup));
+अटल काष्ठा cgroup *cgroup__new(स्थिर अक्षर *name, bool करो_खोलो)
+अणु
+	काष्ठा cgroup *cgroup = zalloc(माप(*cgroup));
 
-	if (cgroup != NULL) {
+	अगर (cgroup != शून्य) अणु
 		refcount_set(&cgroup->refcnt, 1);
 
 		cgroup->name = strdup(name);
-		if (!cgroup->name)
-			goto out_err;
+		अगर (!cgroup->name)
+			जाओ out_err;
 
-		if (do_open) {
-			cgroup->fd = open_cgroup(name);
-			if (cgroup->fd == -1)
-				goto out_free_name;
-		} else {
+		अगर (करो_खोलो) अणु
+			cgroup->fd = खोलो_cgroup(name);
+			अगर (cgroup->fd == -1)
+				जाओ out_मुक्त_name;
+		पूर्ण अन्यथा अणु
 			cgroup->fd = -1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return cgroup;
+	वापस cgroup;
 
-out_free_name:
-	zfree(&cgroup->name);
+out_मुक्त_name:
+	zमुक्त(&cgroup->name);
 out_err:
-	free(cgroup);
-	return NULL;
-}
+	मुक्त(cgroup);
+	वापस शून्य;
+पूर्ण
 
-struct cgroup *evlist__findnew_cgroup(struct evlist *evlist, const char *name)
-{
-	struct cgroup *cgroup = evlist__find_cgroup(evlist, name);
+काष्ठा cgroup *evlist__findnew_cgroup(काष्ठा evlist *evlist, स्थिर अक्षर *name)
+अणु
+	काष्ठा cgroup *cgroup = evlist__find_cgroup(evlist, name);
 
-	return cgroup ?: cgroup__new(name, true);
-}
+	वापस cgroup ?: cgroup__new(name, true);
+पूर्ण
 
-static int add_cgroup(struct evlist *evlist, const char *str)
-{
-	struct evsel *counter;
-	struct cgroup *cgrp = evlist__findnew_cgroup(evlist, str);
-	int n;
+अटल पूर्णांक add_cgroup(काष्ठा evlist *evlist, स्थिर अक्षर *str)
+अणु
+	काष्ठा evsel *counter;
+	काष्ठा cgroup *cgrp = evlist__findnew_cgroup(evlist, str);
+	पूर्णांक n;
 
-	if (!cgrp)
-		return -1;
+	अगर (!cgrp)
+		वापस -1;
 	/*
 	 * find corresponding event
-	 * if add cgroup N, then need to find event N
+	 * अगर add cgroup N, then need to find event N
 	 */
 	n = 0;
-	evlist__for_each_entry(evlist, counter) {
-		if (n == nr_cgroups)
-			goto found;
+	evlist__क्रम_each_entry(evlist, counter) अणु
+		अगर (n == nr_cgroups)
+			जाओ found;
 		n++;
-	}
+	पूर्ण
 
 	cgroup__put(cgrp);
-	return -1;
+	वापस -1;
 found:
 	counter->cgrp = cgrp;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cgroup__delete(struct cgroup *cgroup)
-{
-	if (cgroup->fd >= 0)
-		close(cgroup->fd);
-	zfree(&cgroup->name);
-	free(cgroup);
-}
+अटल व्योम cgroup__delete(काष्ठा cgroup *cgroup)
+अणु
+	अगर (cgroup->fd >= 0)
+		बंद(cgroup->fd);
+	zमुक्त(&cgroup->name);
+	मुक्त(cgroup);
+पूर्ण
 
-void cgroup__put(struct cgroup *cgrp)
-{
-	if (cgrp && refcount_dec_and_test(&cgrp->refcnt)) {
+व्योम cgroup__put(काष्ठा cgroup *cgrp)
+अणु
+	अगर (cgrp && refcount_dec_and_test(&cgrp->refcnt)) अणु
 		cgroup__delete(cgrp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct cgroup *cgroup__get(struct cgroup *cgroup)
-{
-       if (cgroup)
+काष्ठा cgroup *cgroup__get(काष्ठा cgroup *cgroup)
+अणु
+       अगर (cgroup)
 		refcount_inc(&cgroup->refcnt);
-       return cgroup;
-}
+       वापस cgroup;
+पूर्ण
 
-static void evsel__set_default_cgroup(struct evsel *evsel, struct cgroup *cgroup)
-{
-	if (evsel->cgrp == NULL)
+अटल व्योम evsel__set_शेष_cgroup(काष्ठा evsel *evsel, काष्ठा cgroup *cgroup)
+अणु
+	अगर (evsel->cgrp == शून्य)
 		evsel->cgrp = cgroup__get(cgroup);
-}
+पूर्ण
 
-void evlist__set_default_cgroup(struct evlist *evlist, struct cgroup *cgroup)
-{
-	struct evsel *evsel;
+व्योम evlist__set_शेष_cgroup(काष्ठा evlist *evlist, काष्ठा cgroup *cgroup)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel)
-		evsel__set_default_cgroup(evsel, cgroup);
-}
+	evlist__क्रम_each_entry(evlist, evsel)
+		evsel__set_शेष_cgroup(evsel, cgroup);
+पूर्ण
 
-/* helper function for ftw() in match_cgroups and list_cgroups */
-static int add_cgroup_name(const char *fpath, const struct stat *sb __maybe_unused,
-			   int typeflag, struct FTW *ftwbuf __maybe_unused)
-{
-	struct cgroup_name *cn;
+/* helper function क्रम ftw() in match_cgroups and list_cgroups */
+अटल पूर्णांक add_cgroup_name(स्थिर अक्षर *fpath, स्थिर काष्ठा stat *sb __maybe_unused,
+			   पूर्णांक typeflag, काष्ठा FTW *ftwbuf __maybe_unused)
+अणु
+	काष्ठा cgroup_name *cn;
 
-	if (typeflag != FTW_D)
-		return 0;
+	अगर (typeflag != FTW_D)
+		वापस 0;
 
-	cn = malloc(sizeof(*cn) + strlen(fpath) + 1);
-	if (cn == NULL)
-		return -1;
+	cn = दो_स्मृति(माप(*cn) + म_माप(fpath) + 1);
+	अगर (cn == शून्य)
+		वापस -1;
 
 	cn->used = false;
-	strcpy(cn->name, fpath);
+	म_नकल(cn->name, fpath);
 
 	list_add_tail(&cn->list, &cgroup_list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void release_cgroup_list(void)
-{
-	struct cgroup_name *cn;
+अटल व्योम release_cgroup_list(व्योम)
+अणु
+	काष्ठा cgroup_name *cn;
 
-	while (!list_empty(&cgroup_list)) {
-		cn = list_first_entry(&cgroup_list, struct cgroup_name, list);
+	जबतक (!list_empty(&cgroup_list)) अणु
+		cn = list_first_entry(&cgroup_list, काष्ठा cgroup_name, list);
 		list_del(&cn->list);
-		free(cn);
-	}
-}
+		मुक्त(cn);
+	पूर्ण
+पूर्ण
 
 /* collect given cgroups only */
-static int list_cgroups(const char *str)
-{
-	const char *p, *e, *eos = str + strlen(str);
-	struct cgroup_name *cn;
-	char *s;
+अटल पूर्णांक list_cgroups(स्थिर अक्षर *str)
+अणु
+	स्थिर अक्षर *p, *e, *eos = str + म_माप(str);
+	काष्ठा cgroup_name *cn;
+	अक्षर *s;
 
-	/* use given name as is - for testing purpose */
-	for (;;) {
-		p = strchr(str, ',');
+	/* use given name as is - क्रम testing purpose */
+	क्रम (;;) अणु
+		p = म_अक्षर(str, ',');
 		e = p ? p : eos;
 
-		if (e - str) {
-			int ret;
+		अगर (e - str) अणु
+			पूर्णांक ret;
 
 			s = strndup(str, e - str);
-			if (!s)
-				return -1;
-			/* pretend if it's added by ftw() */
-			ret = add_cgroup_name(s, NULL, FTW_D, NULL);
-			free(s);
-			if (ret)
-				return -1;
-		} else {
-			if (add_cgroup_name("", NULL, FTW_D, NULL) < 0)
-				return -1;
-		}
+			अगर (!s)
+				वापस -1;
+			/* pretend अगर it's added by ftw() */
+			ret = add_cgroup_name(s, शून्य, FTW_D, शून्य);
+			मुक्त(s);
+			अगर (ret)
+				वापस -1;
+		पूर्ण अन्यथा अणु
+			अगर (add_cgroup_name("", शून्य, FTW_D, शून्य) < 0)
+				वापस -1;
+		पूर्ण
 
-		if (!p)
-			break;
+		अगर (!p)
+			अवरोध;
 		str = p+1;
-	}
+	पूर्ण
 
 	/* these groups will be used */
-	list_for_each_entry(cn, &cgroup_list, list)
+	list_क्रम_each_entry(cn, &cgroup_list, list)
 		cn->used = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* collect all cgroups first and then match with the pattern */
-static int match_cgroups(const char *str)
-{
-	char mnt[PATH_MAX];
-	const char *p, *e, *eos = str + strlen(str);
-	struct cgroup_name *cn;
+अटल पूर्णांक match_cgroups(स्थिर अक्षर *str)
+अणु
+	अक्षर mnt[PATH_MAX];
+	स्थिर अक्षर *p, *e, *eos = str + म_माप(str);
+	काष्ठा cgroup_name *cn;
 	regex_t reg;
-	int prefix_len;
-	char *s;
+	पूर्णांक prefix_len;
+	अक्षर *s;
 
-	if (cgroupfs_find_mountpoint(mnt, sizeof(mnt), "perf_event"))
-		return -1;
+	अगर (cgroupfs_find_mountpoपूर्णांक(mnt, माप(mnt), "perf_event"))
+		वापस -1;
 
 	/* cgroup_name will have a full path, skip the root directory */
-	prefix_len = strlen(mnt);
+	prefix_len = म_माप(mnt);
 
 	/* collect all cgroups in the cgroup_list */
-	if (nftw(mnt, add_cgroup_name, 20, 0) < 0)
-		return -1;
+	अगर (nftw(mnt, add_cgroup_name, 20, 0) < 0)
+		वापस -1;
 
-	for (;;) {
-		p = strchr(str, ',');
+	क्रम (;;) अणु
+		p = म_अक्षर(str, ',');
 		e = p ? p : eos;
 
 		/* allow empty cgroups, i.e., skip */
-		if (e - str) {
+		अगर (e - str) अणु
 			/* termination added */
 			s = strndup(str, e - str);
-			if (!s)
-				return -1;
-			if (regcomp(&reg, s, REG_NOSUB)) {
-				free(s);
-				return -1;
-			}
+			अगर (!s)
+				वापस -1;
+			अगर (regcomp(&reg, s, REG_NOSUB)) अणु
+				मुक्त(s);
+				वापस -1;
+			पूर्ण
 
 			/* check cgroup name with the pattern */
-			list_for_each_entry(cn, &cgroup_list, list) {
-				char *name = cn->name + prefix_len;
+			list_क्रम_each_entry(cn, &cgroup_list, list) अणु
+				अक्षर *name = cn->name + prefix_len;
 
-				if (name[0] == '/' && name[1])
+				अगर (name[0] == '/' && name[1])
 					name++;
-				if (!regexec(&reg, name, 0, NULL, 0))
+				अगर (!regexec(&reg, name, 0, शून्य, 0))
 					cn->used = true;
-			}
-			regfree(&reg);
-			free(s);
-		} else {
+			पूर्ण
+			regमुक्त(&reg);
+			मुक्त(s);
+		पूर्ण अन्यथा अणु
 			/* first entry to root cgroup */
-			cn = list_first_entry(&cgroup_list, struct cgroup_name,
+			cn = list_first_entry(&cgroup_list, काष्ठा cgroup_name,
 					      list);
 			cn->used = true;
-		}
+		पूर्ण
 
-		if (!p)
-			break;
+		अगर (!p)
+			अवरोध;
 		str = p+1;
-	}
-	return prefix_len;
-}
+	पूर्ण
+	वापस prefix_len;
+पूर्ण
 
-int parse_cgroups(const struct option *opt, const char *str,
-		  int unset __maybe_unused)
-{
-	struct evlist *evlist = *(struct evlist **)opt->value;
-	struct evsel *counter;
-	struct cgroup *cgrp = NULL;
-	const char *p, *e, *eos = str + strlen(str);
-	char *s;
-	int ret, i;
+पूर्णांक parse_cgroups(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
+		  पूर्णांक unset __maybe_unused)
+अणु
+	काष्ठा evlist *evlist = *(काष्ठा evlist **)opt->value;
+	काष्ठा evsel *counter;
+	काष्ठा cgroup *cgrp = शून्य;
+	स्थिर अक्षर *p, *e, *eos = str + म_माप(str);
+	अक्षर *s;
+	पूर्णांक ret, i;
 
-	if (list_empty(&evlist->core.entries)) {
-		fprintf(stderr, "must define events before cgroups\n");
-		return -1;
-	}
+	अगर (list_empty(&evlist->core.entries)) अणु
+		ख_लिखो(मानक_त्रुटि, "must define events before cgroups\n");
+		वापस -1;
+	पूर्ण
 
-	for (;;) {
-		p = strchr(str, ',');
+	क्रम (;;) अणु
+		p = म_अक्षर(str, ',');
 		e = p ? p : eos;
 
 		/* allow empty cgroups, i.e., skip */
-		if (e - str) {
+		अगर (e - str) अणु
 			/* termination added */
 			s = strndup(str, e - str);
-			if (!s)
-				return -1;
+			अगर (!s)
+				वापस -1;
 			ret = add_cgroup(evlist, s);
-			free(s);
-			if (ret)
-				return -1;
-		}
-		/* nr_cgroups is increased een for empty cgroups */
+			मुक्त(s);
+			अगर (ret)
+				वापस -1;
+		पूर्ण
+		/* nr_cgroups is increased een क्रम empty cgroups */
 		nr_cgroups++;
-		if (!p)
-			break;
+		अगर (!p)
+			अवरोध;
 		str = p+1;
-	}
-	/* for the case one cgroup combine to multiple events */
+	पूर्ण
+	/* क्रम the हाल one cgroup combine to multiple events */
 	i = 0;
-	if (nr_cgroups == 1) {
-		evlist__for_each_entry(evlist, counter) {
-			if (i == 0)
+	अगर (nr_cgroups == 1) अणु
+		evlist__क्रम_each_entry(evlist, counter) अणु
+			अगर (i == 0)
 				cgrp = counter->cgrp;
-			else {
+			अन्यथा अणु
 				counter->cgrp = cgrp;
 				refcount_inc(&cgrp->refcnt);
-			}
+			पूर्ण
 			i++;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static bool has_pattern_string(const char *str)
-{
-	return !!strpbrk(str, "{}[]()|*+?^$");
-}
+अटल bool has_pattern_string(स्थिर अक्षर *str)
+अणु
+	वापस !!strpbrk(str, "अणुपूर्ण[]()|*+?^$");
+पूर्ण
 
-int evlist__expand_cgroup(struct evlist *evlist, const char *str,
-			  struct rblist *metric_events, bool open_cgroup)
-{
-	struct evlist *orig_list, *tmp_list;
-	struct evsel *pos, *evsel, *leader;
-	struct rblist orig_metric_events;
-	struct cgroup *cgrp = NULL;
-	struct cgroup_name *cn;
-	int ret = -1;
-	int prefix_len;
+पूर्णांक evlist__expand_cgroup(काष्ठा evlist *evlist, स्थिर अक्षर *str,
+			  काष्ठा rblist *metric_events, bool खोलो_cgroup)
+अणु
+	काष्ठा evlist *orig_list, *पंचांगp_list;
+	काष्ठा evsel *pos, *evsel, *leader;
+	काष्ठा rblist orig_metric_events;
+	काष्ठा cgroup *cgrp = शून्य;
+	काष्ठा cgroup_name *cn;
+	पूर्णांक ret = -1;
+	पूर्णांक prefix_len;
 
-	if (evlist->core.nr_entries == 0) {
-		fprintf(stderr, "must define events before cgroups\n");
-		return -EINVAL;
-	}
+	अगर (evlist->core.nr_entries == 0) अणु
+		ख_लिखो(मानक_त्रुटि, "must define events before cgroups\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	orig_list = evlist__new();
-	tmp_list = evlist__new();
-	if (orig_list == NULL || tmp_list == NULL) {
-		fprintf(stderr, "memory allocation failed\n");
-		return -ENOMEM;
-	}
+	पंचांगp_list = evlist__new();
+	अगर (orig_list == शून्य || पंचांगp_list == शून्य) अणु
+		ख_लिखो(मानक_त्रुटि, "memory allocation failed\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* save original events and init evlist */
 	evlist__splice_list_tail(orig_list, &evlist->core.entries);
 	evlist->core.nr_entries = 0;
 
-	if (metric_events) {
+	अगर (metric_events) अणु
 		orig_metric_events = *metric_events;
 		rblist__init(metric_events);
-	} else {
+	पूर्ण अन्यथा अणु
 		rblist__init(&orig_metric_events);
-	}
+	पूर्ण
 
-	if (has_pattern_string(str))
+	अगर (has_pattern_string(str))
 		prefix_len = match_cgroups(str);
-	else
+	अन्यथा
 		prefix_len = list_cgroups(str);
 
-	if (prefix_len < 0)
-		goto out_err;
+	अगर (prefix_len < 0)
+		जाओ out_err;
 
-	list_for_each_entry(cn, &cgroup_list, list) {
-		char *name;
+	list_क्रम_each_entry(cn, &cgroup_list, list) अणु
+		अक्षर *name;
 
-		if (!cn->used)
-			continue;
+		अगर (!cn->used)
+			जारी;
 
 		/* cgroup_name might have a full path, skip the prefix */
 		name = cn->name + prefix_len;
-		if (name[0] == '/' && name[1])
+		अगर (name[0] == '/' && name[1])
 			name++;
-		cgrp = cgroup__new(name, open_cgroup);
-		if (cgrp == NULL)
-			goto out_err;
+		cgrp = cgroup__new(name, खोलो_cgroup);
+		अगर (cgrp == शून्य)
+			जाओ out_err;
 
-		leader = NULL;
-		evlist__for_each_entry(orig_list, pos) {
+		leader = शून्य;
+		evlist__क्रम_each_entry(orig_list, pos) अणु
 			evsel = evsel__clone(pos);
-			if (evsel == NULL)
-				goto out_err;
+			अगर (evsel == शून्य)
+				जाओ out_err;
 
 			cgroup__put(evsel->cgrp);
 			evsel->cgrp = cgroup__get(cgrp);
 
-			if (evsel__is_group_leader(pos))
+			अगर (evsel__is_group_leader(pos))
 				leader = evsel;
 			evsel->leader = leader;
 
-			evlist__add(tmp_list, evsel);
-		}
+			evlist__add(पंचांगp_list, evsel);
+		पूर्ण
 		/* cgroup__new() has a refcount, release it here */
 		cgroup__put(cgrp);
 		nr_cgroups++;
 
-		if (metric_events) {
-			perf_stat__collect_metric_expr(tmp_list);
-			if (metricgroup__copy_metric_events(tmp_list, cgrp,
+		अगर (metric_events) अणु
+			perf_stat__collect_metric_expr(पंचांगp_list);
+			अगर (metricgroup__copy_metric_events(पंचांगp_list, cgrp,
 							    metric_events,
 							    &orig_metric_events) < 0)
-				goto out_err;
-		}
+				जाओ out_err;
+		पूर्ण
 
-		evlist__splice_list_tail(evlist, &tmp_list->core.entries);
-		tmp_list->core.nr_entries = 0;
-	}
+		evlist__splice_list_tail(evlist, &पंचांगp_list->core.entries);
+		पंचांगp_list->core.nr_entries = 0;
+	पूर्ण
 
-	if (list_empty(&evlist->core.entries)) {
-		fprintf(stderr, "no cgroup matched: %s\n", str);
-		goto out_err;
-	}
+	अगर (list_empty(&evlist->core.entries)) अणु
+		ख_लिखो(मानक_त्रुटि, "no cgroup matched: %s\n", str);
+		जाओ out_err;
+	पूर्ण
 
 	ret = 0;
 
 out_err:
 	evlist__delete(orig_list);
-	evlist__delete(tmp_list);
-	rblist__exit(&orig_metric_events);
+	evlist__delete(पंचांगp_list);
+	rblist__निकास(&orig_metric_events);
 	release_cgroup_list();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct cgroup *__cgroup__findnew(struct rb_root *root, uint64_t id,
-					bool create, const char *path)
-{
-	struct rb_node **p = &root->rb_node;
-	struct rb_node *parent = NULL;
-	struct cgroup *cgrp;
+अटल काष्ठा cgroup *__cgroup__findnew(काष्ठा rb_root *root, uपूर्णांक64_t id,
+					bool create, स्थिर अक्षर *path)
+अणु
+	काष्ठा rb_node **p = &root->rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा cgroup *cgrp;
 
-	while (*p != NULL) {
+	जबतक (*p != शून्य) अणु
 		parent = *p;
-		cgrp = rb_entry(parent, struct cgroup, node);
+		cgrp = rb_entry(parent, काष्ठा cgroup, node);
 
-		if (cgrp->id == id)
-			return cgrp;
+		अगर (cgrp->id == id)
+			वापस cgrp;
 
-		if (cgrp->id < id)
+		अगर (cgrp->id < id)
 			p = &(*p)->rb_left;
-		else
+		अन्यथा
 			p = &(*p)->rb_right;
-	}
+	पूर्ण
 
-	if (!create)
-		return NULL;
+	अगर (!create)
+		वापस शून्य;
 
-	cgrp = malloc(sizeof(*cgrp));
-	if (cgrp == NULL)
-		return NULL;
+	cgrp = दो_स्मृति(माप(*cgrp));
+	अगर (cgrp == शून्य)
+		वापस शून्य;
 
 	cgrp->name = strdup(path);
-	if (cgrp->name == NULL) {
-		free(cgrp);
-		return NULL;
-	}
+	अगर (cgrp->name == शून्य) अणु
+		मुक्त(cgrp);
+		वापस शून्य;
+	पूर्ण
 
 	cgrp->fd = -1;
 	cgrp->id = id;
@@ -490,42 +491,42 @@ static struct cgroup *__cgroup__findnew(struct rb_root *root, uint64_t id,
 	rb_link_node(&cgrp->node, parent, p);
 	rb_insert_color(&cgrp->node, root);
 
-	return cgrp;
-}
+	वापस cgrp;
+पूर्ण
 
-struct cgroup *cgroup__findnew(struct perf_env *env, uint64_t id,
-			       const char *path)
-{
-	struct cgroup *cgrp;
+काष्ठा cgroup *cgroup__findnew(काष्ठा perf_env *env, uपूर्णांक64_t id,
+			       स्थिर अक्षर *path)
+अणु
+	काष्ठा cgroup *cgrp;
 
-	down_write(&env->cgroups.lock);
+	करोwn_ग_लिखो(&env->cgroups.lock);
 	cgrp = __cgroup__findnew(&env->cgroups.tree, id, true, path);
-	up_write(&env->cgroups.lock);
-	return cgrp;
-}
+	up_ग_लिखो(&env->cgroups.lock);
+	वापस cgrp;
+पूर्ण
 
-struct cgroup *cgroup__find(struct perf_env *env, uint64_t id)
-{
-	struct cgroup *cgrp;
+काष्ठा cgroup *cgroup__find(काष्ठा perf_env *env, uपूर्णांक64_t id)
+अणु
+	काष्ठा cgroup *cgrp;
 
-	down_read(&env->cgroups.lock);
-	cgrp = __cgroup__findnew(&env->cgroups.tree, id, false, NULL);
-	up_read(&env->cgroups.lock);
-	return cgrp;
-}
+	करोwn_पढ़ो(&env->cgroups.lock);
+	cgrp = __cgroup__findnew(&env->cgroups.tree, id, false, शून्य);
+	up_पढ़ो(&env->cgroups.lock);
+	वापस cgrp;
+पूर्ण
 
-void perf_env__purge_cgroups(struct perf_env *env)
-{
-	struct rb_node *node;
-	struct cgroup *cgrp;
+व्योम perf_env__purge_cgroups(काष्ठा perf_env *env)
+अणु
+	काष्ठा rb_node *node;
+	काष्ठा cgroup *cgrp;
 
-	down_write(&env->cgroups.lock);
-	while (!RB_EMPTY_ROOT(&env->cgroups.tree)) {
+	करोwn_ग_लिखो(&env->cgroups.lock);
+	जबतक (!RB_EMPTY_ROOT(&env->cgroups.tree)) अणु
 		node = rb_first(&env->cgroups.tree);
-		cgrp = rb_entry(node, struct cgroup, node);
+		cgrp = rb_entry(node, काष्ठा cgroup, node);
 
 		rb_erase(node, &env->cgroups.tree);
 		cgroup__put(cgrp);
-	}
-	up_write(&env->cgroups.lock);
-}
+	पूर्ण
+	up_ग_लिखो(&env->cgroups.lock);
+पूर्ण

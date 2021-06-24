@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_TIMEX_H
-#define _ASM_IA64_TIMEX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_TIMEX_H
+#घोषणा _ASM_IA64_TIMEX_H
 
 /*
  * Copyright (C) 1998-2001, 2003 Hewlett-Packard Co
@@ -8,39 +9,39 @@
  */
 /*
  * 2001/01/18 davidm	Removed CLOCK_TICK_RATE.  It makes no sense on IA-64.
- *			Also removed cacheflush_time as it's entirely unused.
+ *			Also हटाओd cacheflush_समय as it's entirely unused.
  */
 
-#include <asm/intrinsics.h>
-#include <asm/processor.h>
+#समावेश <यंत्र/पूर्णांकrinsics.h>
+#समावेश <यंत्र/processor.h>
 
-typedef unsigned long cycles_t;
+प्रकार अचिन्हित दीर्घ cycles_t;
 
-extern void (*ia64_udelay)(unsigned long usecs);
+बाह्य व्योम (*ia64_udelay)(अचिन्हित दीर्घ usecs);
 
 /*
- * For performance reasons, we don't want to define CLOCK_TICK_TRATE as
- * local_cpu_data->itc_rate.  Fortunately, we don't have to, either: according to George
- * Anzinger, 1/CLOCK_TICK_RATE is taken as the resolution of the timer clock.  The time
+ * For perक्रमmance reasons, we करोn't want to define CLOCK_TICK_TRATE as
+ * local_cpu_data->itc_rate.  Fortunately, we करोn't have to, either: according to George
+ * Anzinger, 1/CLOCK_TICK_RATE is taken as the resolution of the समयr घड़ी.  The समय
  * calculation assumes that you will use enough of these so that your tick size <= 1/HZ.
  * If the calculation shows that your CLOCK_TICK_RATE can not supply exactly 1/HZ ticks,
- * the actual value is calculated and used to update the wall clock each jiffie.  Setting
+ * the actual value is calculated and used to update the wall घड़ी each jअगरfie.  Setting
  * the CLOCK_TICK_RATE to x*HZ insures that the calculation will find no errors.  Hence we
- * pick a multiple of HZ which gives us a (totally virtual) CLOCK_TICK_RATE of about
+ * pick a multiple of HZ which gives us a (totally भव) CLOCK_TICK_RATE of about
  * 100MHz.
  */
-#define CLOCK_TICK_RATE		(HZ * 100000UL)
+#घोषणा CLOCK_TICK_RATE		(HZ * 100000UL)
 
-static inline cycles_t
-get_cycles (void)
-{
+अटल अंतरभूत cycles_t
+get_cycles (व्योम)
+अणु
 	cycles_t ret;
 
 	ret = ia64_getreg(_IA64_REG_AR_ITC);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-extern void ia64_cpu_local_tick (void);
-extern unsigned long long ia64_native_sched_clock (void);
+बाह्य व्योम ia64_cpu_local_tick (व्योम);
+बाह्य अचिन्हित दीर्घ दीर्घ ia64_native_sched_घड़ी (व्योम);
 
-#endif /* _ASM_IA64_TIMEX_H */
+#पूर्ण_अगर /* _ASM_IA64_TIMEX_H */

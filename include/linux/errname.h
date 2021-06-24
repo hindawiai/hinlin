@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_ERRNAME_H
-#define _LINUX_ERRNAME_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_ERRNAME_H
+#घोषणा _LINUX_ERRNAME_H
 
-#include <linux/stddef.h>
+#समावेश <linux/मानकघोष.स>
 
-#ifdef CONFIG_SYMBOLIC_ERRNAME
-const char *errname(int err);
-#else
-static inline const char *errname(int err)
-{
-	return NULL;
-}
-#endif
+#अगर_घोषित CONFIG_SYMBOLIC_ERRNAME
+स्थिर अक्षर *errname(पूर्णांक err);
+#अन्यथा
+अटल अंतरभूत स्थिर अक्षर *errname(पूर्णांक err)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_ERRNAME_H */
+#पूर्ण_अगर /* _LINUX_ERRNAME_H */

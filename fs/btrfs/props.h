@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2014 Filipe David Borba Manana <fdmanana@gmail.com>
  */
 
-#ifndef BTRFS_PROPS_H
-#define BTRFS_PROPS_H
+#अगर_अघोषित BTRFS_PROPS_H
+#घोषणा BTRFS_PROPS_H
 
-#include "ctree.h"
+#समावेश "ctree.h"
 
-void __init btrfs_props_init(void);
+व्योम __init btrfs_props_init(व्योम);
 
-int btrfs_set_prop(struct btrfs_trans_handle *trans, struct inode *inode,
-		   const char *name, const char *value, size_t value_len,
-		   int flags);
-int btrfs_validate_prop(const char *name, const char *value, size_t value_len);
+पूर्णांक btrfs_set_prop(काष्ठा btrfs_trans_handle *trans, काष्ठा inode *inode,
+		   स्थिर अक्षर *name, स्थिर अक्षर *value, माप_प्रकार value_len,
+		   पूर्णांक flags);
+पूर्णांक btrfs_validate_prop(स्थिर अक्षर *name, स्थिर अक्षर *value, माप_प्रकार value_len);
 
-int btrfs_load_inode_props(struct inode *inode, struct btrfs_path *path);
+पूर्णांक btrfs_load_inode_props(काष्ठा inode *inode, काष्ठा btrfs_path *path);
 
-int btrfs_inode_inherit_props(struct btrfs_trans_handle *trans,
-			      struct inode *inode,
-			      struct inode *dir);
+पूर्णांक btrfs_inode_inherit_props(काष्ठा btrfs_trans_handle *trans,
+			      काष्ठा inode *inode,
+			      काष्ठा inode *dir);
 
-int btrfs_subvol_inherit_props(struct btrfs_trans_handle *trans,
-			       struct btrfs_root *root,
-			       struct btrfs_root *parent_root);
+पूर्णांक btrfs_subvol_inherit_props(काष्ठा btrfs_trans_handle *trans,
+			       काष्ठा btrfs_root *root,
+			       काष्ठा btrfs_root *parent_root);
 
-#endif
+#पूर्ण_अगर

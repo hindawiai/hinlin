@@ -1,545 +1,546 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * pwm-fan.c - Hwmon driver for fans connected to PWM lines.
+ * pwm-fan.c - Hwmon driver क्रम fans connected to PWM lines.
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  *
  * Author: Kamil Debski <k.debski@samsung.com>
  */
 
-#include <linux/hwmon.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pwm.h>
-#include <linux/regulator/consumer.h>
-#include <linux/sysfs.h>
-#include <linux/thermal.h>
-#include <linux/timer.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/thermal.h>
+#समावेश <linux/समयr.h>
 
-#define MAX_PWM 255
+#घोषणा MAX_PWM 255
 
-struct pwm_fan_tach {
-	int irq;
+काष्ठा pwm_fan_tach अणु
+	पूर्णांक irq;
 	atomic_t pulses;
-	unsigned int rpm;
+	अचिन्हित पूर्णांक rpm;
 	u8 pulses_per_revolution;
-};
+पूर्ण;
 
-struct pwm_fan_ctx {
-	struct mutex lock;
-	struct pwm_device *pwm;
-	struct pwm_state pwm_state;
-	struct regulator *reg_en;
+काष्ठा pwm_fan_ctx अणु
+	काष्ठा mutex lock;
+	काष्ठा pwm_device *pwm;
+	काष्ठा pwm_state pwm_state;
+	काष्ठा regulator *reg_en;
 
-	int tach_count;
-	struct pwm_fan_tach *tachs;
-	ktime_t sample_start;
-	struct timer_list rpm_timer;
+	पूर्णांक tach_count;
+	काष्ठा pwm_fan_tach *tachs;
+	kसमय_प्रकार sample_start;
+	काष्ठा समयr_list rpm_समयr;
 
-	unsigned int pwm_value;
-	unsigned int pwm_fan_state;
-	unsigned int pwm_fan_max_state;
-	unsigned int *pwm_fan_cooling_levels;
-	struct thermal_cooling_device *cdev;
+	अचिन्हित पूर्णांक pwm_value;
+	अचिन्हित पूर्णांक pwm_fan_state;
+	अचिन्हित पूर्णांक pwm_fan_max_state;
+	अचिन्हित पूर्णांक *pwm_fan_cooling_levels;
+	काष्ठा thermal_cooling_device *cdev;
 
-	struct hwmon_chip_info info;
-	struct hwmon_channel_info fan_channel;
-};
+	काष्ठा hwmon_chip_info info;
+	काष्ठा hwmon_channel_info fan_channel;
+पूर्ण;
 
-static const u32 pwm_fan_channel_config_pwm[] = {
+अटल स्थिर u32 pwm_fan_channel_config_pwm[] = अणु
 	HWMON_PWM_INPUT,
 	0
-};
+पूर्ण;
 
-static const struct hwmon_channel_info pwm_fan_channel_pwm = {
+अटल स्थिर काष्ठा hwmon_channel_info pwm_fan_channel_pwm = अणु
 	.type = hwmon_pwm,
 	.config = pwm_fan_channel_config_pwm,
-};
+पूर्ण;
 
-/* This handler assumes self resetting edge triggered interrupt. */
-static irqreturn_t pulse_handler(int irq, void *dev_id)
-{
-	struct pwm_fan_tach *tach = dev_id;
+/* This handler assumes self resetting edge triggered पूर्णांकerrupt. */
+अटल irqवापस_t pulse_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा pwm_fan_tach *tach = dev_id;
 
 	atomic_inc(&tach->pulses);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void sample_timer(struct timer_list *t)
-{
-	struct pwm_fan_ctx *ctx = from_timer(ctx, t, rpm_timer);
-	unsigned int delta = ktime_ms_delta(ktime_get(), ctx->sample_start);
-	int i;
+अटल व्योम sample_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा pwm_fan_ctx *ctx = from_समयr(ctx, t, rpm_समयr);
+	अचिन्हित पूर्णांक delta = kसमय_ms_delta(kसमय_get(), ctx->sample_start);
+	पूर्णांक i;
 
-	if (delta) {
-		for (i = 0; i < ctx->tach_count; i++) {
-			struct pwm_fan_tach *tach = &ctx->tachs[i];
-			int pulses;
+	अगर (delta) अणु
+		क्रम (i = 0; i < ctx->tach_count; i++) अणु
+			काष्ठा pwm_fan_tach *tach = &ctx->tachs[i];
+			पूर्णांक pulses;
 
-			pulses = atomic_read(&tach->pulses);
+			pulses = atomic_पढ़ो(&tach->pulses);
 			atomic_sub(pulses, &tach->pulses);
-			tach->rpm = (unsigned int)(pulses * 1000 * 60) /
+			tach->rpm = (अचिन्हित पूर्णांक)(pulses * 1000 * 60) /
 				(tach->pulses_per_revolution * delta);
-		}
+		पूर्ण
 
-		ctx->sample_start = ktime_get();
-	}
+		ctx->sample_start = kसमय_get();
+	पूर्ण
 
-	mod_timer(&ctx->rpm_timer, jiffies + HZ);
-}
+	mod_समयr(&ctx->rpm_समयr, jअगरfies + HZ);
+पूर्ण
 
-static int  __set_pwm(struct pwm_fan_ctx *ctx, unsigned long pwm)
-{
-	unsigned long period;
-	int ret = 0;
-	struct pwm_state *state = &ctx->pwm_state;
+अटल पूर्णांक  __set_pwm(काष्ठा pwm_fan_ctx *ctx, अचिन्हित दीर्घ pwm)
+अणु
+	अचिन्हित दीर्घ period;
+	पूर्णांक ret = 0;
+	काष्ठा pwm_state *state = &ctx->pwm_state;
 
 	mutex_lock(&ctx->lock);
-	if (ctx->pwm_value == pwm)
-		goto exit_set_pwm_err;
+	अगर (ctx->pwm_value == pwm)
+		जाओ निकास_set_pwm_err;
 
 	period = state->period;
 	state->duty_cycle = DIV_ROUND_UP(pwm * (period - 1), MAX_PWM);
 	state->enabled = pwm ? true : false;
 
 	ret = pwm_apply_state(ctx->pwm, state);
-	if (!ret)
+	अगर (!ret)
 		ctx->pwm_value = pwm;
-exit_set_pwm_err:
+निकास_set_pwm_err:
 	mutex_unlock(&ctx->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void pwm_fan_update_state(struct pwm_fan_ctx *ctx, unsigned long pwm)
-{
-	int i;
+अटल व्योम pwm_fan_update_state(काष्ठा pwm_fan_ctx *ctx, अचिन्हित दीर्घ pwm)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ctx->pwm_fan_max_state; ++i)
-		if (pwm < ctx->pwm_fan_cooling_levels[i + 1])
-			break;
+	क्रम (i = 0; i < ctx->pwm_fan_max_state; ++i)
+		अगर (pwm < ctx->pwm_fan_cooling_levels[i + 1])
+			अवरोध;
 
 	ctx->pwm_fan_state = i;
-}
+पूर्ण
 
-static int pwm_fan_write(struct device *dev, enum hwmon_sensor_types type,
-			 u32 attr, int channel, long val)
-{
-	struct pwm_fan_ctx *ctx = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक pwm_fan_ग_लिखो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+			 u32 attr, पूर्णांक channel, दीर्घ val)
+अणु
+	काष्ठा pwm_fan_ctx *ctx = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (val < 0 || val > MAX_PWM)
-		return -EINVAL;
+	अगर (val < 0 || val > MAX_PWM)
+		वापस -EINVAL;
 
 	ret = __set_pwm(ctx, val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pwm_fan_update_state(ctx, val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwm_fan_read(struct device *dev, enum hwmon_sensor_types type,
-			u32 attr, int channel, long *val)
-{
-	struct pwm_fan_ctx *ctx = dev_get_drvdata(dev);
+अटल पूर्णांक pwm_fan_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+			u32 attr, पूर्णांक channel, दीर्घ *val)
+अणु
+	काष्ठा pwm_fan_ctx *ctx = dev_get_drvdata(dev);
 
-	switch (type) {
-	case hwmon_pwm:
+	चयन (type) अणु
+	हाल hwmon_pwm:
 		*val = ctx->pwm_value;
-		return 0;
+		वापस 0;
 
-	case hwmon_fan:
+	हाल hwmon_fan:
 		*val = ctx->tachs[channel].rpm;
-		return 0;
+		वापस 0;
 
-	default:
-		return -ENOTSUPP;
-	}
-}
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
+पूर्ण
 
-static umode_t pwm_fan_is_visible(const void *data,
-				  enum hwmon_sensor_types type,
-				  u32 attr, int channel)
-{
-	switch (type) {
-	case hwmon_pwm:
-		return 0644;
+अटल umode_t pwm_fan_is_visible(स्थिर व्योम *data,
+				  क्रमागत hwmon_sensor_types type,
+				  u32 attr, पूर्णांक channel)
+अणु
+	चयन (type) अणु
+	हाल hwmon_pwm:
+		वापस 0644;
 
-	case hwmon_fan:
-		return 0444;
+	हाल hwmon_fan:
+		वापस 0444;
 
-	default:
-		return 0;
-	}
-}
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static const struct hwmon_ops pwm_fan_hwmon_ops = {
+अटल स्थिर काष्ठा hwmon_ops pwm_fan_hwmon_ops = अणु
 	.is_visible = pwm_fan_is_visible,
-	.read = pwm_fan_read,
-	.write = pwm_fan_write,
-};
+	.पढ़ो = pwm_fan_पढ़ो,
+	.ग_लिखो = pwm_fan_ग_लिखो,
+पूर्ण;
 
 /* thermal cooling device callbacks */
-static int pwm_fan_get_max_state(struct thermal_cooling_device *cdev,
-				 unsigned long *state)
-{
-	struct pwm_fan_ctx *ctx = cdev->devdata;
+अटल पूर्णांक pwm_fan_get_max_state(काष्ठा thermal_cooling_device *cdev,
+				 अचिन्हित दीर्घ *state)
+अणु
+	काष्ठा pwm_fan_ctx *ctx = cdev->devdata;
 
-	if (!ctx)
-		return -EINVAL;
+	अगर (!ctx)
+		वापस -EINVAL;
 
 	*state = ctx->pwm_fan_max_state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwm_fan_get_cur_state(struct thermal_cooling_device *cdev,
-				 unsigned long *state)
-{
-	struct pwm_fan_ctx *ctx = cdev->devdata;
+अटल पूर्णांक pwm_fan_get_cur_state(काष्ठा thermal_cooling_device *cdev,
+				 अचिन्हित दीर्घ *state)
+अणु
+	काष्ठा pwm_fan_ctx *ctx = cdev->devdata;
 
-	if (!ctx)
-		return -EINVAL;
+	अगर (!ctx)
+		वापस -EINVAL;
 
 	*state = ctx->pwm_fan_state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-pwm_fan_set_cur_state(struct thermal_cooling_device *cdev, unsigned long state)
-{
-	struct pwm_fan_ctx *ctx = cdev->devdata;
-	int ret;
+अटल पूर्णांक
+pwm_fan_set_cur_state(काष्ठा thermal_cooling_device *cdev, अचिन्हित दीर्घ state)
+अणु
+	काष्ठा pwm_fan_ctx *ctx = cdev->devdata;
+	पूर्णांक ret;
 
-	if (!ctx || (state > ctx->pwm_fan_max_state))
-		return -EINVAL;
+	अगर (!ctx || (state > ctx->pwm_fan_max_state))
+		वापस -EINVAL;
 
-	if (state == ctx->pwm_fan_state)
-		return 0;
+	अगर (state == ctx->pwm_fan_state)
+		वापस 0;
 
 	ret = __set_pwm(ctx, ctx->pwm_fan_cooling_levels[state]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&cdev->device, "Cannot set pwm!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ctx->pwm_fan_state = state;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct thermal_cooling_device_ops pwm_fan_cooling_ops = {
+अटल स्थिर काष्ठा thermal_cooling_device_ops pwm_fan_cooling_ops = अणु
 	.get_max_state = pwm_fan_get_max_state,
 	.get_cur_state = pwm_fan_get_cur_state,
 	.set_cur_state = pwm_fan_set_cur_state,
-};
+पूर्ण;
 
-static int pwm_fan_of_get_cooling_data(struct device *dev,
-				       struct pwm_fan_ctx *ctx)
-{
-	struct device_node *np = dev->of_node;
-	int num, i, ret;
+अटल पूर्णांक pwm_fan_of_get_cooling_data(काष्ठा device *dev,
+				       काष्ठा pwm_fan_ctx *ctx)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	पूर्णांक num, i, ret;
 
-	if (!of_find_property(np, "cooling-levels", NULL))
-		return 0;
+	अगर (!of_find_property(np, "cooling-levels", शून्य))
+		वापस 0;
 
 	ret = of_property_count_u32_elems(np, "cooling-levels");
-	if (ret <= 0) {
+	अगर (ret <= 0) अणु
 		dev_err(dev, "Wrong data!\n");
-		return ret ? : -EINVAL;
-	}
+		वापस ret ? : -EINVAL;
+	पूर्ण
 
 	num = ret;
-	ctx->pwm_fan_cooling_levels = devm_kcalloc(dev, num, sizeof(u32),
+	ctx->pwm_fan_cooling_levels = devm_kसुस्मृति(dev, num, माप(u32),
 						   GFP_KERNEL);
-	if (!ctx->pwm_fan_cooling_levels)
-		return -ENOMEM;
+	अगर (!ctx->pwm_fan_cooling_levels)
+		वापस -ENOMEM;
 
-	ret = of_property_read_u32_array(np, "cooling-levels",
+	ret = of_property_पढ़ो_u32_array(np, "cooling-levels",
 					 ctx->pwm_fan_cooling_levels, num);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Property 'cooling-levels' cannot be read!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < num; i++) {
-		if (ctx->pwm_fan_cooling_levels[i] > MAX_PWM) {
+	क्रम (i = 0; i < num; i++) अणु
+		अगर (ctx->pwm_fan_cooling_levels[i] > MAX_PWM) अणु
 			dev_err(dev, "PWM fan state[%d]:%d > %d\n", i,
 				ctx->pwm_fan_cooling_levels[i], MAX_PWM);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	ctx->pwm_fan_max_state = num - 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pwm_fan_regulator_disable(void *data)
-{
+अटल व्योम pwm_fan_regulator_disable(व्योम *data)
+अणु
 	regulator_disable(data);
-}
+पूर्ण
 
-static void pwm_fan_pwm_disable(void *__ctx)
-{
-	struct pwm_fan_ctx *ctx = __ctx;
+अटल व्योम pwm_fan_pwm_disable(व्योम *__ctx)
+अणु
+	काष्ठा pwm_fan_ctx *ctx = __ctx;
 
 	ctx->pwm_state.enabled = false;
 	pwm_apply_state(ctx->pwm, &ctx->pwm_state);
-	del_timer_sync(&ctx->rpm_timer);
-}
+	del_समयr_sync(&ctx->rpm_समयr);
+पूर्ण
 
-static int pwm_fan_probe(struct platform_device *pdev)
-{
-	struct thermal_cooling_device *cdev;
-	struct device *dev = &pdev->dev;
-	struct pwm_fan_ctx *ctx;
-	struct device *hwmon;
-	int ret;
-	const struct hwmon_channel_info **channels;
+अटल पूर्णांक pwm_fan_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा thermal_cooling_device *cdev;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा pwm_fan_ctx *ctx;
+	काष्ठा device *hwmon;
+	पूर्णांक ret;
+	स्थिर काष्ठा hwmon_channel_info **channels;
 	u32 *fan_channel_config;
-	int channel_count = 1;	/* We always have a PWM channel. */
-	int i;
+	पूर्णांक channel_count = 1;	/* We always have a PWM channel. */
+	पूर्णांक i;
 
-	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = devm_kzalloc(dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	mutex_init(&ctx->lock);
 
-	ctx->pwm = devm_of_pwm_get(dev, dev->of_node, NULL);
-	if (IS_ERR(ctx->pwm))
-		return dev_err_probe(dev, PTR_ERR(ctx->pwm), "Could not get PWM\n");
+	ctx->pwm = devm_of_pwm_get(dev, dev->of_node, शून्य);
+	अगर (IS_ERR(ctx->pwm))
+		वापस dev_err_probe(dev, PTR_ERR(ctx->pwm), "Could not get PWM\n");
 
-	platform_set_drvdata(pdev, ctx);
+	platक्रमm_set_drvdata(pdev, ctx);
 
 	ctx->reg_en = devm_regulator_get_optional(dev, "fan");
-	if (IS_ERR(ctx->reg_en)) {
-		if (PTR_ERR(ctx->reg_en) != -ENODEV)
-			return PTR_ERR(ctx->reg_en);
+	अगर (IS_ERR(ctx->reg_en)) अणु
+		अगर (PTR_ERR(ctx->reg_en) != -ENODEV)
+			वापस PTR_ERR(ctx->reg_en);
 
-		ctx->reg_en = NULL;
-	} else {
+		ctx->reg_en = शून्य;
+	पूर्ण अन्यथा अणु
 		ret = regulator_enable(ctx->reg_en);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to enable fan supply: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		ret = devm_add_action_or_reset(dev, pwm_fan_regulator_disable,
 					       ctx->reg_en);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ctx->pwm_value = MAX_PWM;
 
 	pwm_init_state(ctx->pwm, &ctx->pwm_state);
 
 	/*
-	 * __set_pwm assumes that MAX_PWM * (period - 1) fits into an unsigned
-	 * long. Check this here to prevent the fan running at a too low
+	 * __set_pwm assumes that MAX_PWM * (period - 1) fits पूर्णांकo an अचिन्हित
+	 * दीर्घ. Check this here to prevent the fan running at a too low
 	 * frequency.
 	 */
-	if (ctx->pwm_state.period > ULONG_MAX / MAX_PWM + 1) {
+	अगर (ctx->pwm_state.period > अच_दीर्घ_उच्च / MAX_PWM + 1) अणु
 		dev_err(dev, "Configured period too big\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Set duty cycle to maximum allowed and enable PWM output */
 	ret = __set_pwm(ctx, MAX_PWM);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to configure PWM: %d\n", ret);
-		return ret;
-	}
-	timer_setup(&ctx->rpm_timer, sample_timer, 0);
+		वापस ret;
+	पूर्ण
+	समयr_setup(&ctx->rpm_समयr, sample_समयr, 0);
 	ret = devm_add_action_or_reset(dev, pwm_fan_pwm_disable, ctx);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ctx->tach_count = platform_irq_count(pdev);
-	if (ctx->tach_count < 0)
-		return dev_err_probe(dev, ctx->tach_count,
+	ctx->tach_count = platक्रमm_irq_count(pdev);
+	अगर (ctx->tach_count < 0)
+		वापस dev_err_probe(dev, ctx->tach_count,
 				     "Could not get number of fan tachometer inputs\n");
 	dev_dbg(dev, "%d fan tachometer inputs\n", ctx->tach_count);
 
-	if (ctx->tach_count) {
+	अगर (ctx->tach_count) अणु
 		channel_count++;	/* We also have a FAN channel. */
 
-		ctx->tachs = devm_kcalloc(dev, ctx->tach_count,
-					  sizeof(struct pwm_fan_tach),
+		ctx->tachs = devm_kसुस्मृति(dev, ctx->tach_count,
+					  माप(काष्ठा pwm_fan_tach),
 					  GFP_KERNEL);
-		if (!ctx->tachs)
-			return -ENOMEM;
+		अगर (!ctx->tachs)
+			वापस -ENOMEM;
 
 		ctx->fan_channel.type = hwmon_fan;
-		fan_channel_config = devm_kcalloc(dev, ctx->tach_count + 1,
-						  sizeof(u32), GFP_KERNEL);
-		if (!fan_channel_config)
-			return -ENOMEM;
+		fan_channel_config = devm_kसुस्मृति(dev, ctx->tach_count + 1,
+						  माप(u32), GFP_KERNEL);
+		अगर (!fan_channel_config)
+			वापस -ENOMEM;
 		ctx->fan_channel.config = fan_channel_config;
-	}
+	पूर्ण
 
-	channels = devm_kcalloc(dev, channel_count + 1,
-				sizeof(struct hwmon_channel_info *), GFP_KERNEL);
-	if (!channels)
-		return -ENOMEM;
+	channels = devm_kसुस्मृति(dev, channel_count + 1,
+				माप(काष्ठा hwmon_channel_info *), GFP_KERNEL);
+	अगर (!channels)
+		वापस -ENOMEM;
 
 	channels[0] = &pwm_fan_channel_pwm;
 
-	for (i = 0; i < ctx->tach_count; i++) {
-		struct pwm_fan_tach *tach = &ctx->tachs[i];
+	क्रम (i = 0; i < ctx->tach_count; i++) अणु
+		काष्ठा pwm_fan_tach *tach = &ctx->tachs[i];
 		u32 ppr = 2;
 
-		tach->irq = platform_get_irq(pdev, i);
-		if (tach->irq == -EPROBE_DEFER)
-			return tach->irq;
-		if (tach->irq > 0) {
+		tach->irq = platक्रमm_get_irq(pdev, i);
+		अगर (tach->irq == -EPROBE_DEFER)
+			वापस tach->irq;
+		अगर (tach->irq > 0) अणु
 			ret = devm_request_irq(dev, tach->irq, pulse_handler, 0,
 					       pdev->name, tach);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(dev,
 					"Failed to request interrupt: %d\n",
 					ret);
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
-		of_property_read_u32_index(dev->of_node,
+		of_property_पढ़ो_u32_index(dev->of_node,
 					   "pulses-per-revolution",
 					   i,
 					   &ppr);
 		tach->pulses_per_revolution = ppr;
-		if (!tach->pulses_per_revolution) {
+		अगर (!tach->pulses_per_revolution) अणु
 			dev_err(dev, "pulses-per-revolution can't be zero.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		fan_channel_config[i] = HWMON_F_INPUT;
 
 		dev_dbg(dev, "tach%d: irq=%d, pulses_per_revolution=%d\n",
 			i, tach->irq, tach->pulses_per_revolution);
-	}
+	पूर्ण
 
-	if (ctx->tach_count > 0) {
-		ctx->sample_start = ktime_get();
-		mod_timer(&ctx->rpm_timer, jiffies + HZ);
+	अगर (ctx->tach_count > 0) अणु
+		ctx->sample_start = kसमय_get();
+		mod_समयr(&ctx->rpm_समयr, jअगरfies + HZ);
 
 		channels[1] = &ctx->fan_channel;
-	}
+	पूर्ण
 
 	ctx->info.ops = &pwm_fan_hwmon_ops;
 	ctx->info.info = channels;
 
-	hwmon = devm_hwmon_device_register_with_info(dev, "pwmfan",
-						     ctx, &ctx->info, NULL);
-	if (IS_ERR(hwmon)) {
+	hwmon = devm_hwmon_device_रेजिस्टर_with_info(dev, "pwmfan",
+						     ctx, &ctx->info, शून्य);
+	अगर (IS_ERR(hwmon)) अणु
 		dev_err(dev, "Failed to register hwmon device\n");
-		return PTR_ERR(hwmon);
-	}
+		वापस PTR_ERR(hwmon);
+	पूर्ण
 
 	ret = pwm_fan_of_get_cooling_data(dev, ctx);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ctx->pwm_fan_state = ctx->pwm_fan_max_state;
-	if (IS_ENABLED(CONFIG_THERMAL)) {
-		cdev = devm_thermal_of_cooling_device_register(dev,
+	अगर (IS_ENABLED(CONFIG_THERMAL)) अणु
+		cdev = devm_thermal_of_cooling_device_रेजिस्टर(dev,
 			dev->of_node, "pwm-fan", ctx, &pwm_fan_cooling_ops);
-		if (IS_ERR(cdev)) {
+		अगर (IS_ERR(cdev)) अणु
 			ret = PTR_ERR(cdev);
 			dev_err(dev,
 				"Failed to register pwm-fan as cooling device: %d\n",
 				ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		ctx->cdev = cdev;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwm_fan_disable(struct device *dev)
-{
-	struct pwm_fan_ctx *ctx = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक pwm_fan_disable(काष्ठा device *dev)
+अणु
+	काष्ठा pwm_fan_ctx *ctx = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (ctx->pwm_value) {
-		/* keep ctx->pwm_state unmodified for pwm_fan_resume() */
-		struct pwm_state state = ctx->pwm_state;
+	अगर (ctx->pwm_value) अणु
+		/* keep ctx->pwm_state unmodअगरied क्रम pwm_fan_resume() */
+		काष्ठा pwm_state state = ctx->pwm_state;
 
 		state.duty_cycle = 0;
 		state.enabled = false;
 		ret = pwm_apply_state(ctx->pwm, &state);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (ctx->reg_en) {
+	अगर (ctx->reg_en) अणु
 		ret = regulator_disable(ctx->reg_en);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to disable fan supply: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pwm_fan_shutdown(struct platform_device *pdev)
-{
+अटल व्योम pwm_fan_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
 	pwm_fan_disable(&pdev->dev);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int pwm_fan_suspend(struct device *dev)
-{
-	return pwm_fan_disable(dev);
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक pwm_fan_suspend(काष्ठा device *dev)
+अणु
+	वापस pwm_fan_disable(dev);
+पूर्ण
 
-static int pwm_fan_resume(struct device *dev)
-{
-	struct pwm_fan_ctx *ctx = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक pwm_fan_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pwm_fan_ctx *ctx = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (ctx->reg_en) {
+	अगर (ctx->reg_en) अणु
 		ret = regulator_enable(ctx->reg_en);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to enable fan supply: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (ctx->pwm_value == 0)
-		return 0;
+	अगर (ctx->pwm_value == 0)
+		वापस 0;
 
-	return pwm_apply_state(ctx->pwm, &ctx->pwm_state);
-}
-#endif
+	वापस pwm_apply_state(ctx->pwm, &ctx->pwm_state);
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(pwm_fan_pm, pwm_fan_suspend, pwm_fan_resume);
+अटल SIMPLE_DEV_PM_OPS(pwm_fan_pm, pwm_fan_suspend, pwm_fan_resume);
 
-static const struct of_device_id of_pwm_fan_match[] = {
-	{ .compatible = "pwm-fan", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_pwm_fan_match[] = अणु
+	अणु .compatible = "pwm-fan", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_pwm_fan_match);
 
-static struct platform_driver pwm_fan_driver = {
+अटल काष्ठा platक्रमm_driver pwm_fan_driver = अणु
 	.probe		= pwm_fan_probe,
-	.shutdown	= pwm_fan_shutdown,
-	.driver	= {
+	.shutकरोwn	= pwm_fan_shutकरोwn,
+	.driver	= अणु
 		.name		= "pwm-fan",
 		.pm		= &pwm_fan_pm,
 		.of_match_table	= of_pwm_fan_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(pwm_fan_driver);
+module_platक्रमm_driver(pwm_fan_driver);
 
 MODULE_AUTHOR("Kamil Debski <k.debski@samsung.com>");
 MODULE_ALIAS("platform:pwm-fan");

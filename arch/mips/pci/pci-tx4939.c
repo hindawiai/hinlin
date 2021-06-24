@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Based on linux/arch/mips/txx9/rbtx4939/setup.c,
  *	    and RBTX49xx patch from CELF patch archive.
@@ -7,101 +8,101 @@
  * (C) Copyright TOSHIBA CORPORATION 2000-2001, 2004-2007
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <asm/txx9/generic.h>
-#include <asm/txx9/tx4939.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <यंत्र/txx9/generic.h>
+#समावेश <यंत्र/txx9/tx4939.h>
 
-int __init tx4939_report_pciclk(void)
-{
-	int pciclk = 0;
+पूर्णांक __init tx4939_report_pciclk(व्योम)
+अणु
+	पूर्णांक pciclk = 0;
 
 	pr_info("PCIC --%s PCICLK:",
-		(__raw_readq(&tx4939_ccfgptr->ccfg) & TX4939_CCFG_PCI66) ?
+		(__raw_पढ़ोq(&tx4939_ccfgptr->ccfg) & TX4939_CCFG_PCI66) ?
 		" PCI66" : "");
-	if (__raw_readq(&tx4939_ccfgptr->pcfg) & TX4939_PCFG_PCICLKEN_ALL) {
-		pciclk = txx9_master_clock * 20 / 6;
-		if (!(__raw_readq(&tx4939_ccfgptr->ccfg) & TX4939_CCFG_PCI66))
+	अगर (__raw_पढ़ोq(&tx4939_ccfgptr->pcfg) & TX4939_PCFG_PCICLKEN_ALL) अणु
+		pciclk = txx9_master_घड़ी * 20 / 6;
+		अगर (!(__raw_पढ़ोq(&tx4939_ccfgptr->ccfg) & TX4939_CCFG_PCI66))
 			pciclk /= 2;
 		pr_cont("Internal(%u.%uMHz)",
 			(pciclk + 50000) / 1000000,
 			((pciclk + 50000) / 100000) % 10);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_cont("External");
 		pciclk = -1;
-	}
+	पूर्ण
 	pr_cont("\n");
-	return pciclk;
-}
+	वापस pciclk;
+पूर्ण
 
-void __init tx4939_report_pci1clk(void)
-{
-	unsigned int pciclk = txx9_master_clock * 20 / 6;
+व्योम __init tx4939_report_pci1clk(व्योम)
+अणु
+	अचिन्हित पूर्णांक pciclk = txx9_master_घड़ी * 20 / 6;
 
 	pr_info("PCIC1 -- PCICLK:%u.%uMHz\n",
 		(pciclk + 50000) / 1000000,
 		((pciclk + 50000) / 100000) % 10);
-}
+पूर्ण
 
-int tx4939_pcic1_map_irq(const struct pci_dev *dev, u8 slot)
-{
-	if (get_tx4927_pcicptr(dev->bus->sysdata) == tx4939_pcic1ptr) {
-		switch (slot) {
-		case TX4927_PCIC_IDSEL_AD_TO_SLOT(31):
-			if (__raw_readq(&tx4939_ccfgptr->pcfg) &
+पूर्णांक tx4939_pcic1_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot)
+अणु
+	अगर (get_tx4927_pcicptr(dev->bus->sysdata) == tx4939_pcic1ptr) अणु
+		चयन (slot) अणु
+		हाल TX4927_PCIC_IDSEL_AD_TO_SLOT(31):
+			अगर (__raw_पढ़ोq(&tx4939_ccfgptr->pcfg) &
 			    TX4939_PCFG_ET0MODE)
-				return TXX9_IRQ_BASE + TX4939_IR_ETH(0);
-			break;
-		case TX4927_PCIC_IDSEL_AD_TO_SLOT(30):
-			if (__raw_readq(&tx4939_ccfgptr->pcfg) &
+				वापस TXX9_IRQ_BASE + TX4939_IR_ETH(0);
+			अवरोध;
+		हाल TX4927_PCIC_IDSEL_AD_TO_SLOT(30):
+			अगर (__raw_पढ़ोq(&tx4939_ccfgptr->pcfg) &
 			    TX4939_PCFG_ET1MODE)
-				return TXX9_IRQ_BASE + TX4939_IR_ETH(1);
-			break;
-		}
-		return 0;
-	}
-	return -1;
-}
+				वापस TXX9_IRQ_BASE + TX4939_IR_ETH(1);
+			अवरोध;
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-int tx4939_pci_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	int irq = tx4939_pcic1_map_irq(dev, slot);
+पूर्णांक tx4939_pci_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	पूर्णांक irq = tx4939_pcic1_map_irq(dev, slot);
 
-	if (irq >= 0)
-		return irq;
+	अगर (irq >= 0)
+		वापस irq;
 	irq = pin;
 	/* IRQ rotation */
 	irq--;	/* 0-3 */
 	irq = (irq + 33 - slot) % 4;
 	irq++;	/* 1-4 */
 
-	switch (irq) {
-	case 1:
+	चयन (irq) अणु
+	हाल 1:
 		irq = TXX9_IRQ_BASE + TX4939_IR_INTA;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		irq = TXX9_IRQ_BASE + TX4939_IR_INTB;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		irq = TXX9_IRQ_BASE + TX4939_IR_INTC;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		irq = TXX9_IRQ_BASE + TX4939_IR_INTD;
-		break;
-	}
-	return irq;
-}
+		अवरोध;
+	पूर्ण
+	वापस irq;
+पूर्ण
 
-void __init tx4939_setup_pcierr_irq(void)
-{
-	if (request_irq(TXX9_IRQ_BASE + TX4939_IR_PCIERR,
-			tx4927_pcierr_interrupt,
+व्योम __init tx4939_setup_pcierr_irq(व्योम)
+अणु
+	अगर (request_irq(TXX9_IRQ_BASE + TX4939_IR_PCIERR,
+			tx4927_pcierr_पूर्णांकerrupt,
 			0, "PCI error",
-			(void *)TX4939_PCIC_REG))
+			(व्योम *)TX4939_PCIC_REG))
 		pr_warn("Failed to request irq for PCIERR\n");
-}
+पूर्ण

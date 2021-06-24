@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _FS_CEPH_DEBUG_H
-#define _FS_CEPH_DEBUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _FS_CEPH_DEBUG_H
+#घोषणा _FS_CEPH_DEBUG_H
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/string.h>
+#समावेश <linux/माला.स>
 
-#ifdef CONFIG_CEPH_LIB_PRETTYDEBUG
+#अगर_घोषित CONFIG_CEPH_LIB_PRETTYDEBUG
 
 /*
  * wrap pr_debug to include a filename:lineno prefix on each line.
- * this incurs some overhead (kernel size and execution time) due to
+ * this incurs some overhead (kernel size and execution समय) due to
  * the extra function call at each call site.
  */
 
-# if defined(DEBUG) || defined(CONFIG_DYNAMIC_DEBUG)
-#  define dout(fmt, ...)						\
+# अगर defined(DEBUG) || defined(CONFIG_DYNAMIC_DEBUG)
+#  define करोut(fmt, ...)						\
 	pr_debug("%.*s %12.12s:%-4d : " fmt,				\
-		 8 - (int)sizeof(KBUILD_MODNAME), "    ",		\
-		 kbasename(__FILE__), __LINE__, ##__VA_ARGS__)
-# else
-/* faux printk call just to see any compiler warnings. */
-#  define dout(fmt, ...)	do {				\
-		if (0)						\
-			printk(KERN_DEBUG fmt, ##__VA_ARGS__);	\
-	} while (0)
-# endif
+		 8 - (पूर्णांक)माप(KBUILD_MODNAME), "    ",		\
+		 kbasename(__खाता__), __LINE__, ##__VA_ARGS__)
+# अन्यथा
+/* faux prपूर्णांकk call just to see any compiler warnings. */
+#  define करोut(fmt, ...)	करो अणु				\
+		अगर (0)						\
+			prपूर्णांकk(KERN_DEBUG fmt, ##__VA_ARGS__);	\
+	पूर्ण जबतक (0)
+# endअगर
 
-#else
+#अन्यथा
 
 /*
  * or, just wrap pr_debug
  */
-# define dout(fmt, ...)	pr_debug(" " fmt, ##__VA_ARGS__)
+# define करोut(fmt, ...)	pr_debug(" " fmt, ##__VA_ARGS__)
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

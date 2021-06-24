@@ -1,237 +1,238 @@
+<शैली गुरु>
 /*
  * DTMF decoder.
  *
  * Copyright            by Andreas Eversberg (jolly@eversberg.eu)
- *			based on different decoders such as ISDN4Linux
+ *			based on dअगरferent decoders such as ISDN4Linux
  *
  * This software may be used and distributed according to the terms
  * of the GNU General Public License, incorporated herein by reference.
  *
  */
 
-#include <linux/mISDNif.h>
-#include <linux/mISDNdsp.h>
-#include "core.h"
-#include "dsp.h"
+#समावेश <linux/mISDNअगर.h>
+#समावेश <linux/mISDNdsp.h>
+#समावेश "core.h"
+#समावेश "dsp.h"
 
-#define NCOEFF            8     /* number of frequencies to be analyzed */
+#घोषणा NCOEFF            8     /* number of frequencies to be analyzed */
 
 /* For DTMF recognition:
- * 2 * cos(2 * PI * k / N) precalculated for all k
+ * 2 * cos(2 * PI * k / N) precalculated क्रम all k
  */
-static u64 cos2pik[NCOEFF] =
-{
-	/* k << 15 (source: hfc-4s/8s documentation (www.colognechip.de)) */
+अटल u64 cos2pik[NCOEFF] =
+अणु
+	/* k << 15 (source: hfc-4s/8s करोcumentation (www.colognechip.de)) */
 	55960, 53912, 51402, 48438, 38146, 32650, 26170, 18630
-};
+पूर्ण;
 
 /* digit matrix */
-static char dtmf_matrix[4][4] =
-{
-	{'1', '2', '3', 'A'},
-	{'4', '5', '6', 'B'},
-	{'7', '8', '9', 'C'},
-	{'*', '0', '#', 'D'}
-};
+अटल अक्षर dपंचांगf_matrix[4][4] =
+अणु
+	अणु'1', '2', '3', 'A'पूर्ण,
+	अणु'4', '5', '6', 'B'पूर्ण,
+	अणु'7', '8', '9', 'C'पूर्ण,
+	अणु'*', '0', '#', 'D'पूर्ण
+पूर्ण;
 
-/* dtmf detection using goertzel algorithm
+/* dपंचांगf detection using goertzel algorithm
  * init function
  */
-void dsp_dtmf_goertzel_init(struct dsp *dsp)
-{
-	dsp->dtmf.size = 0;
-	dsp->dtmf.lastwhat = '\0';
-	dsp->dtmf.lastdigit = '\0';
-	dsp->dtmf.count = 0;
-}
+व्योम dsp_dपंचांगf_goertzel_init(काष्ठा dsp *dsp)
+अणु
+	dsp->dपंचांगf.size = 0;
+	dsp->dपंचांगf.lastwhat = '\0';
+	dsp->dपंचांगf.lastdigit = '\0';
+	dsp->dपंचांगf.count = 0;
+पूर्ण
 
-/* check for hardware or software features
+/* check क्रम hardware or software features
  */
-void dsp_dtmf_hardware(struct dsp *dsp)
-{
-	int hardware = 1;
+व्योम dsp_dपंचांगf_hardware(काष्ठा dsp *dsp)
+अणु
+	पूर्णांक hardware = 1;
 
-	if (!dsp->dtmf.enable)
-		return;
+	अगर (!dsp->dपंचांगf.enable)
+		वापस;
 
-	if (!dsp->features.hfc_dtmf)
+	अगर (!dsp->features.hfc_dपंचांगf)
 		hardware = 0;
 
-	/* check for volume change */
-	if (dsp->tx_volume) {
-		if (dsp_debug & DEBUG_DSP_DTMF)
-			printk(KERN_DEBUG "%s dsp %s cannot do hardware DTMF, "
+	/* check क्रम volume change */
+	अगर (dsp->tx_volume) अणु
+		अगर (dsp_debug & DEBUG_DSP_DTMF)
+			prपूर्णांकk(KERN_DEBUG "%s dsp %s cannot do hardware DTMF, "
 			       "because tx_volume is changed\n",
 			       __func__, dsp->name);
 		hardware = 0;
-	}
-	if (dsp->rx_volume) {
-		if (dsp_debug & DEBUG_DSP_DTMF)
-			printk(KERN_DEBUG "%s dsp %s cannot do hardware DTMF, "
+	पूर्ण
+	अगर (dsp->rx_volume) अणु
+		अगर (dsp_debug & DEBUG_DSP_DTMF)
+			prपूर्णांकk(KERN_DEBUG "%s dsp %s cannot do hardware DTMF, "
 			       "because rx_volume is changed\n",
 			       __func__, dsp->name);
 		hardware = 0;
-	}
-	/* check if encryption is enabled */
-	if (dsp->bf_enable) {
-		if (dsp_debug & DEBUG_DSP_DTMF)
-			printk(KERN_DEBUG "%s dsp %s cannot do hardware DTMF, "
+	पूर्ण
+	/* check अगर encryption is enabled */
+	अगर (dsp->bf_enable) अणु
+		अगर (dsp_debug & DEBUG_DSP_DTMF)
+			prपूर्णांकk(KERN_DEBUG "%s dsp %s cannot do hardware DTMF, "
 			       "because encryption is enabled\n",
 			       __func__, dsp->name);
 		hardware = 0;
-	}
-	/* check if pipeline exists */
-	if (dsp->pipeline.inuse) {
-		if (dsp_debug & DEBUG_DSP_DTMF)
-			printk(KERN_DEBUG "%s dsp %s cannot do hardware DTMF, "
+	पूर्ण
+	/* check अगर pipeline exists */
+	अगर (dsp->pipeline.inuse) अणु
+		अगर (dsp_debug & DEBUG_DSP_DTMF)
+			prपूर्णांकk(KERN_DEBUG "%s dsp %s cannot do hardware DTMF, "
 			       "because pipeline exists.\n",
 			       __func__, dsp->name);
 		hardware = 0;
-	}
+	पूर्ण
 
-	dsp->dtmf.hardware = hardware;
-	dsp->dtmf.software = !hardware;
-}
+	dsp->dपंचांगf.hardware = hardware;
+	dsp->dपंचांगf.software = !hardware;
+पूर्ण
 
 
 /*************************************************************
  * calculate the coefficients of the given sample and decode *
  *************************************************************/
 
-/* the given sample is decoded. if the sample is not long enough for a
- * complete frame, the decoding is finished and continued with the next
+/* the given sample is decoded. अगर the sample is not दीर्घ enough क्रम a
+ * complete frame, the decoding is finished and जारीd with the next
  * call of this function.
  *
- * the algorithm is very good for detection with a minimum of errors. i
- * tested it allot. it even works with very short tones (40ms). the only
- * disadvantage is, that it doesn't work good with different volumes of both
- * tones. this will happen, if accoustically coupled dialers are used.
- * it sometimes detects tones during speech, which is normal for decoders.
+ * the algorithm is very good क्रम detection with a minimum of errors. i
+ * tested it allot. it even works with very लघु tones (40ms). the only
+ * disadvantage is, that it करोesn't work good with dअगरferent volumes of both
+ * tones. this will happen, अगर accoustically coupled dialers are used.
+ * it someबार detects tones during speech, which is normal क्रम decoders.
  * use sequences to given commands during calls.
  *
- * dtmf - points to a structure of the current dtmf state
+ * dपंचांगf - poपूर्णांकs to a काष्ठाure of the current dपंचांगf state
  * spl and len - the sample
  * fmt - 0 = alaw, 1 = ulaw, 2 = coefficients from HFC DTMF hw-decoder
  */
 
 u8
-*dsp_dtmf_goertzel_decode(struct dsp *dsp, u8 *data, int len, int fmt)
-{
+*dsp_dपंचांगf_goertzel_decode(काष्ठा dsp *dsp, u8 *data, पूर्णांक len, पूर्णांक fmt)
+अणु
 	u8 what;
-	int size;
-	signed short *buf;
+	पूर्णांक size;
+	चिन्हित लघु *buf;
 	s32 sk, sk1, sk2;
-	int k, n, i;
+	पूर्णांक k, n, i;
 	s32 *hfccoeff;
 	s32 result[NCOEFF], tresh, treshl;
-	int lowgroup, highgroup;
+	पूर्णांक lowgroup, highgroup;
 	s64 cos2pik_;
 
-	dsp->dtmf.digits[0] = '\0';
+	dsp->dपंचांगf.digits[0] = '\0';
 
 	/* Note: The function will loop until the buffer has not enough samples
 	 * left to decode a full frame.
 	 */
 again:
 	/* convert samples */
-	size = dsp->dtmf.size;
-	buf = dsp->dtmf.buffer;
-	switch (fmt) {
-	case 0: /* alaw */
-	case 1: /* ulaw */
-		while (size < DSP_DTMF_NPOINTS && len) {
+	size = dsp->dपंचांगf.size;
+	buf = dsp->dपंचांगf.buffer;
+	चयन (fmt) अणु
+	हाल 0: /* alaw */
+	हाल 1: /* ulaw */
+		जबतक (size < DSP_DTMF_NPOINTS && len) अणु
 			buf[size++] = dsp_audio_law_to_s32[*data++];
 			len--;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 2: /* HFC coefficients */
-	default:
-		if (len < 64) {
-			if (len > 0)
-				printk(KERN_ERR "%s: coefficients have invalid "
+	हाल 2: /* HFC coefficients */
+	शेष:
+		अगर (len < 64) अणु
+			अगर (len > 0)
+				prपूर्णांकk(KERN_ERR "%s: coefficients have invalid "
 				       "size. (is=%d < must=%d)\n",
 				       __func__, len, 64);
-			return dsp->dtmf.digits;
-		}
+			वापस dsp->dपंचांगf.digits;
+		पूर्ण
 		hfccoeff = (s32 *)data;
-		for (k = 0; k < NCOEFF; k++) {
+		क्रम (k = 0; k < NCOEFF; k++) अणु
 			sk2 = (*hfccoeff++) >> 4;
 			sk = (*hfccoeff++) >> 4;
-			if (sk > 32767 || sk < -32767 || sk2 > 32767
+			अगर (sk > 32767 || sk < -32767 || sk2 > 32767
 			    || sk2 < -32767)
-				printk(KERN_WARNING
+				prपूर्णांकk(KERN_WARNING
 				       "DTMF-Detection overflow\n");
 			/* compute |X(k)|**2 */
 			result[k] =
 				(sk * sk) -
 				(((cos2pik[k] * sk) >> 15) * sk2) +
 				(sk2 * sk2);
-		}
+		पूर्ण
 		data += 64;
 		len -= 64;
-		goto coefficients;
-		break;
-	}
-	dsp->dtmf.size = size;
+		जाओ coefficients;
+		अवरोध;
+	पूर्ण
+	dsp->dपंचांगf.size = size;
 
-	if (size < DSP_DTMF_NPOINTS)
-		return dsp->dtmf.digits;
+	अगर (size < DSP_DTMF_NPOINTS)
+		वापस dsp->dपंचांगf.digits;
 
-	dsp->dtmf.size = 0;
+	dsp->dपंचांगf.size = 0;
 
-	/* now we have a full buffer of signed long samples - we do goertzel */
-	for (k = 0; k < NCOEFF; k++) {
+	/* now we have a full buffer of चिन्हित दीर्घ samples - we करो goertzel */
+	क्रम (k = 0; k < NCOEFF; k++) अणु
 		sk = 0;
 		sk1 = 0;
 		sk2 = 0;
-		buf = dsp->dtmf.buffer;
+		buf = dsp->dपंचांगf.buffer;
 		cos2pik_ = cos2pik[k];
-		for (n = 0; n < DSP_DTMF_NPOINTS; n++) {
+		क्रम (n = 0; n < DSP_DTMF_NPOINTS; n++) अणु
 			sk = ((cos2pik_ * sk1) >> 15) - sk2 + (*buf++);
 			sk2 = sk1;
 			sk1 = sk;
-		}
+		पूर्ण
 		sk >>= 8;
 		sk2 >>= 8;
-		if (sk > 32767 || sk < -32767 || sk2 > 32767 || sk2 < -32767)
-			printk(KERN_WARNING "DTMF-Detection overflow\n");
+		अगर (sk > 32767 || sk < -32767 || sk2 > 32767 || sk2 < -32767)
+			prपूर्णांकk(KERN_WARNING "DTMF-Detection overflow\n");
 		/* compute |X(k)|**2 */
 		result[k] =
 			(sk * sk) -
 			(((cos2pik[k] * sk) >> 15) * sk2) +
 			(sk2 * sk2);
-	}
+	पूर्ण
 
 	/* our (squared) coefficients have been calculated, we need to process
 	 * them.
 	 */
 coefficients:
 	tresh = 0;
-	for (i = 0; i < NCOEFF; i++) {
-		if (result[i] < 0)
+	क्रम (i = 0; i < NCOEFF; i++) अणु
+		अगर (result[i] < 0)
 			result[i] = 0;
-		if (result[i] > dsp->dtmf.treshold) {
-			if (result[i] > tresh)
+		अगर (result[i] > dsp->dपंचांगf.treshold) अणु
+			अगर (result[i] > tresh)
 				tresh = result[i];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (tresh == 0) {
+	अगर (tresh == 0) अणु
 		what = 0;
-		goto storedigit;
-	}
+		जाओ storedigit;
+	पूर्ण
 
-	if (dsp_debug & DEBUG_DSP_DTMFCOEFF) {
+	अगर (dsp_debug & DEBUG_DSP_DTMFCOEFF) अणु
 		s32 tresh_100 = tresh/100;
 
-		if (tresh_100 == 0) {
+		अगर (tresh_100 == 0) अणु
 			tresh_100 = 1;
-			printk(KERN_DEBUG
+			prपूर्णांकk(KERN_DEBUG
 				"tresh(%d) too small set tresh/100 to 1\n",
 				tresh);
-		}
-		printk(KERN_DEBUG "a %3d %3d %3d %3d %3d %3d %3d %3d"
+		पूर्ण
+		prपूर्णांकk(KERN_DEBUG "a %3d %3d %3d %3d %3d %3d %3d %3d"
 		       " tr:%3d r %3d %3d %3d %3d %3d %3d %3d %3d\n",
 		       result[0] / 10000, result[1] / 10000, result[2] / 10000,
 		       result[3] / 10000, result[4] / 10000, result[5] / 10000,
@@ -240,74 +241,74 @@ coefficients:
 		       result[2] / (tresh_100), result[3] / (tresh_100),
 		       result[4] / (tresh_100), result[5] / (tresh_100),
 		       result[6] / (tresh_100), result[7] / (tresh_100));
-	}
+	पूर्ण
 
 	/* calc digit (lowgroup/highgroup) */
 	lowgroup = -1;
 	highgroup = -1;
 	treshl = tresh >> 3;  /* tones which are not on, must be below 9 dB */
 	tresh = tresh >> 2;  /* touchtones must match within 6 dB */
-	for (i = 0; i < NCOEFF; i++) {
-		if (result[i] < treshl)
-			continue;  /* ignore */
-		if (result[i] < tresh) {
+	क्रम (i = 0; i < NCOEFF; i++) अणु
+		अगर (result[i] < treshl)
+			जारी;  /* ignore */
+		अगर (result[i] < tresh) अणु
 			lowgroup = -1;
 			highgroup = -1;
-			break;  /* noise in between */
-		}
-		/* good level found. This is allowed only one time per group */
-		if (i < NCOEFF / 2) {
+			अवरोध;  /* noise in between */
+		पूर्ण
+		/* good level found. This is allowed only one समय per group */
+		अगर (i < NCOEFF / 2) अणु
 			/* lowgroup */
-			if (lowgroup >= 0) {
+			अगर (lowgroup >= 0) अणु
 				/* Bad. Another tone found. */
 				lowgroup = -1;
-				break;
-			} else
+				अवरोध;
+			पूर्ण अन्यथा
 				lowgroup = i;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* higroup */
-			if (highgroup >= 0) {
+			अगर (highgroup >= 0) अणु
 				/* Bad. Another tone found. */
 				highgroup = -1;
-				break;
-			} else
+				अवरोध;
+			पूर्ण अन्यथा
 				highgroup = i - (NCOEFF / 2);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* get digit or null */
 	what = 0;
-	if (lowgroup >= 0 && highgroup >= 0)
-		what = dtmf_matrix[lowgroup][highgroup];
+	अगर (lowgroup >= 0 && highgroup >= 0)
+		what = dपंचांगf_matrix[lowgroup][highgroup];
 
 storedigit:
-	if (what && (dsp_debug & DEBUG_DSP_DTMF))
-		printk(KERN_DEBUG "DTMF what: %c\n", what);
+	अगर (what && (dsp_debug & DEBUG_DSP_DTMF))
+		prपूर्णांकk(KERN_DEBUG "DTMF what: %c\n", what);
 
-	if (dsp->dtmf.lastwhat != what)
-		dsp->dtmf.count = 0;
+	अगर (dsp->dपंचांगf.lastwhat != what)
+		dsp->dपंचांगf.count = 0;
 
-	/* the tone (or no tone) must remain 3 times without change */
-	if (dsp->dtmf.count == 2) {
-		if (dsp->dtmf.lastdigit != what) {
-			dsp->dtmf.lastdigit = what;
-			if (what) {
-				if (dsp_debug & DEBUG_DSP_DTMF)
-					printk(KERN_DEBUG "DTMF digit: %c\n",
+	/* the tone (or no tone) must reमुख्य 3 बार without change */
+	अगर (dsp->dपंचांगf.count == 2) अणु
+		अगर (dsp->dपंचांगf.lastdigit != what) अणु
+			dsp->dपंचांगf.lastdigit = what;
+			अगर (what) अणु
+				अगर (dsp_debug & DEBUG_DSP_DTMF)
+					prपूर्णांकk(KERN_DEBUG "DTMF digit: %c\n",
 					       what);
-				if ((strlen(dsp->dtmf.digits) + 1)
-				    < sizeof(dsp->dtmf.digits)) {
-					dsp->dtmf.digits[strlen(
-							dsp->dtmf.digits) + 1] = '\0';
-					dsp->dtmf.digits[strlen(
-							dsp->dtmf.digits)] = what;
-				}
-			}
-		}
-	} else
-		dsp->dtmf.count++;
+				अगर ((म_माप(dsp->dपंचांगf.digits) + 1)
+				    < माप(dsp->dपंचांगf.digits)) अणु
+					dsp->dपंचांगf.digits[म_माप(
+							dsp->dपंचांगf.digits) + 1] = '\0';
+					dsp->dपंचांगf.digits[म_माप(
+							dsp->dपंचांगf.digits)] = what;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा
+		dsp->dपंचांगf.count++;
 
-	dsp->dtmf.lastwhat = what;
+	dsp->dपंचांगf.lastwhat = what;
 
-	goto again;
-}
+	जाओ again;
+पूर्ण

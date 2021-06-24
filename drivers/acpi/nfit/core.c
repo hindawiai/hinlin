@@ -1,470 +1,471 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
-#include <linux/list_sort.h>
-#include <linux/libnvdimm.h>
-#include <linux/module.h>
-#include <linux/nospec.h>
-#include <linux/mutex.h>
-#include <linux/ndctl.h>
-#include <linux/sysfs.h>
-#include <linux/delay.h>
-#include <linux/list.h>
-#include <linux/acpi.h>
-#include <linux/sort.h>
-#include <linux/io.h>
-#include <linux/nd.h>
-#include <asm/cacheflush.h>
-#include <acpi/nfit.h>
-#include "intel.h"
-#include "nfit.h"
+#समावेश <linux/list_sort.h>
+#समावेश <linux/libnvdimm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nospec.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/ndctl.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/list.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/nd.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <acpi/nfit.h>
+#समावेश "intel.h"
+#समावेश "nfit.h"
 
 /*
- * For readq() and writeq() on 32-bit builds, the hi-lo, lo-hi order is
+ * For पढ़ोq() and ग_लिखोq() on 32-bit builds, the hi-lo, lo-hi order is
  * irrelevant.
  */
-#include <linux/io-64-nonatomic-hi-lo.h>
+#समावेश <linux/io-64-nonatomic-hi-lo.h>
 
-static bool force_enable_dimms;
-module_param(force_enable_dimms, bool, S_IRUGO|S_IWUSR);
-MODULE_PARM_DESC(force_enable_dimms, "Ignore _STA (ACPI DIMM device) status");
+अटल bool क्रमce_enable_dimms;
+module_param(क्रमce_enable_dimms, bool, S_IRUGO|S_IWUSR);
+MODULE_PARM_DESC(क्रमce_enable_dimms, "Ignore _STA (ACPI DIMM device) status");
 
-static bool disable_vendor_specific;
-module_param(disable_vendor_specific, bool, S_IRUGO);
-MODULE_PARM_DESC(disable_vendor_specific,
+अटल bool disable_venकरोr_specअगरic;
+module_param(disable_venकरोr_specअगरic, bool, S_IRUGO);
+MODULE_PARM_DESC(disable_venकरोr_specअगरic,
 		"Limit commands to the publicly specified set");
 
-static unsigned long override_dsm_mask;
-module_param(override_dsm_mask, ulong, S_IRUGO);
+अटल अचिन्हित दीर्घ override_dsm_mask;
+module_param(override_dsm_mask, uदीर्घ, S_IRUGO);
 MODULE_PARM_DESC(override_dsm_mask, "Bitmask of allowed NVDIMM DSM functions");
 
-static int default_dsm_family = -1;
-module_param(default_dsm_family, int, S_IRUGO);
-MODULE_PARM_DESC(default_dsm_family,
+अटल पूर्णांक शेष_dsm_family = -1;
+module_param(शेष_dsm_family, पूर्णांक, S_IRUGO);
+MODULE_PARM_DESC(शेष_dsm_family,
 		"Try this DSM type first when identifying NVDIMM family");
 
-static bool no_init_ars;
+अटल bool no_init_ars;
 module_param(no_init_ars, bool, 0644);
 MODULE_PARM_DESC(no_init_ars, "Skip ARS run at nfit init time");
 
-static bool force_labels;
-module_param(force_labels, bool, 0444);
-MODULE_PARM_DESC(force_labels, "Opt-in to labels despite missing methods");
+अटल bool क्रमce_labels;
+module_param(क्रमce_labels, bool, 0444);
+MODULE_PARM_DESC(क्रमce_labels, "Opt-in to labels despite missing methods");
 
 LIST_HEAD(acpi_descs);
 DEFINE_MUTEX(acpi_desc_lock);
 
-static struct workqueue_struct *nfit_wq;
+अटल काष्ठा workqueue_काष्ठा *nfit_wq;
 
-struct nfit_table_prev {
-	struct list_head spas;
-	struct list_head memdevs;
-	struct list_head dcrs;
-	struct list_head bdws;
-	struct list_head idts;
-	struct list_head flushes;
-};
+काष्ठा nfit_table_prev अणु
+	काष्ठा list_head spas;
+	काष्ठा list_head memdevs;
+	काष्ठा list_head dcrs;
+	काष्ठा list_head bdws;
+	काष्ठा list_head idts;
+	काष्ठा list_head flushes;
+पूर्ण;
 
-static guid_t nfit_uuid[NFIT_UUID_MAX];
+अटल guid_t nfit_uuid[NFIT_UUID_MAX];
 
-const guid_t *to_nfit_uuid(enum nfit_uuids id)
-{
-	return &nfit_uuid[id];
-}
+स्थिर guid_t *to_nfit_uuid(क्रमागत nfit_uuids id)
+अणु
+	वापस &nfit_uuid[id];
+पूर्ण
 EXPORT_SYMBOL(to_nfit_uuid);
 
-static const guid_t *to_nfit_bus_uuid(int family)
-{
-	if (WARN_ONCE(family == NVDIMM_BUS_FAMILY_NFIT,
+अटल स्थिर guid_t *to_nfit_bus_uuid(पूर्णांक family)
+अणु
+	अगर (WARN_ONCE(family == NVDIMM_BUS_FAMILY_NFIT,
 			"only secondary bus families can be translated\n"))
-		return NULL;
+		वापस शून्य;
 	/*
 	 * The index of bus UUIDs starts immediately following the last
 	 * NVDIMM/leaf family.
 	 */
-	return to_nfit_uuid(family + NVDIMM_FAMILY_MAX);
-}
+	वापस to_nfit_uuid(family + NVDIMM_FAMILY_MAX);
+पूर्ण
 
-static struct acpi_device *to_acpi_dev(struct acpi_nfit_desc *acpi_desc)
-{
-	struct nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
+अटल काष्ठा acpi_device *to_acpi_dev(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
 
 	/*
-	 * If provider == 'ACPI.NFIT' we can assume 'dev' is a struct
+	 * If provider == 'ACPI.NFIT' we can assume 'dev' is a काष्ठा
 	 * acpi_device.
 	 */
-	if (!nd_desc->provider_name
-			|| strcmp(nd_desc->provider_name, "ACPI.NFIT") != 0)
-		return NULL;
+	अगर (!nd_desc->provider_name
+			|| म_भेद(nd_desc->provider_name, "ACPI.NFIT") != 0)
+		वापस शून्य;
 
-	return to_acpi_device(acpi_desc->dev);
-}
+	वापस to_acpi_device(acpi_desc->dev);
+पूर्ण
 
-static int xlat_bus_status(void *buf, unsigned int cmd, u32 status)
-{
-	struct nd_cmd_clear_error *clear_err;
-	struct nd_cmd_ars_status *ars_status;
+अटल पूर्णांक xlat_bus_status(व्योम *buf, अचिन्हित पूर्णांक cmd, u32 status)
+अणु
+	काष्ठा nd_cmd_clear_error *clear_err;
+	काष्ठा nd_cmd_ars_status *ars_status;
 	u16 flags;
 
-	switch (cmd) {
-	case ND_CMD_ARS_CAP:
-		if ((status & 0xffff) == NFIT_ARS_CAP_NONE)
-			return -ENOTTY;
+	चयन (cmd) अणु
+	हाल ND_CMD_ARS_CAP:
+		अगर ((status & 0xffff) == NFIT_ARS_CAP_NONE)
+			वापस -ENOTTY;
 
 		/* Command failed */
-		if (status & 0xffff)
-			return -EIO;
+		अगर (status & 0xffff)
+			वापस -EIO;
 
-		/* No supported scan types for this range */
+		/* No supported scan types क्रम this range */
 		flags = ND_ARS_PERSISTENT | ND_ARS_VOLATILE;
-		if ((status >> 16 & flags) == 0)
-			return -ENOTTY;
-		return 0;
-	case ND_CMD_ARS_START:
+		अगर ((status >> 16 & flags) == 0)
+			वापस -ENOTTY;
+		वापस 0;
+	हाल ND_CMD_ARS_START:
 		/* ARS is in progress */
-		if ((status & 0xffff) == NFIT_ARS_START_BUSY)
-			return -EBUSY;
+		अगर ((status & 0xffff) == NFIT_ARS_START_BUSY)
+			वापस -EBUSY;
 
 		/* Command failed */
-		if (status & 0xffff)
-			return -EIO;
-		return 0;
-	case ND_CMD_ARS_STATUS:
+		अगर (status & 0xffff)
+			वापस -EIO;
+		वापस 0;
+	हाल ND_CMD_ARS_STATUS:
 		ars_status = buf;
 		/* Command failed */
-		if (status & 0xffff)
-			return -EIO;
+		अगर (status & 0xffff)
+			वापस -EIO;
 		/* Check extended status (Upper two bytes) */
-		if (status == NFIT_ARS_STATUS_DONE)
-			return 0;
+		अगर (status == NFIT_ARS_STATUS_DONE)
+			वापस 0;
 
 		/* ARS is in progress */
-		if (status == NFIT_ARS_STATUS_BUSY)
-			return -EBUSY;
+		अगर (status == NFIT_ARS_STATUS_BUSY)
+			वापस -EBUSY;
 
-		/* No ARS performed for the current boot */
-		if (status == NFIT_ARS_STATUS_NONE)
-			return -EAGAIN;
+		/* No ARS perक्रमmed क्रम the current boot */
+		अगर (status == NFIT_ARS_STATUS_NONE)
+			वापस -EAGAIN;
 
 		/*
-		 * ARS interrupted, either we overflowed or some other
+		 * ARS पूर्णांकerrupted, either we overflowed or some other
 		 * agent wants the scan to stop.  If we didn't overflow
-		 * then just continue with the returned results.
+		 * then just जारी with the वापसed results.
 		 */
-		if (status == NFIT_ARS_STATUS_INTR) {
-			if (ars_status->out_length >= 40 && (ars_status->flags
+		अगर (status == NFIT_ARS_STATUS_INTR) अणु
+			अगर (ars_status->out_length >= 40 && (ars_status->flags
 						& NFIT_ARS_F_OVERFLOW))
-				return -ENOSPC;
-			return 0;
-		}
+				वापस -ENOSPC;
+			वापस 0;
+		पूर्ण
 
 		/* Unknown status */
-		if (status >> 16)
-			return -EIO;
-		return 0;
-	case ND_CMD_CLEAR_ERROR:
+		अगर (status >> 16)
+			वापस -EIO;
+		वापस 0;
+	हाल ND_CMD_CLEAR_ERROR:
 		clear_err = buf;
-		if (status & 0xffff)
-			return -EIO;
-		if (!clear_err->cleared)
-			return -EIO;
-		if (clear_err->length > clear_err->cleared)
-			return clear_err->cleared;
-		return 0;
-	default:
-		break;
-	}
+		अगर (status & 0xffff)
+			वापस -EIO;
+		अगर (!clear_err->cleared)
+			वापस -EIO;
+		अगर (clear_err->length > clear_err->cleared)
+			वापस clear_err->cleared;
+		वापस 0;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* all other non-zero status results in an error */
-	if (status)
-		return -EIO;
-	return 0;
-}
+	अगर (status)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-#define ACPI_LABELS_LOCKED 3
+#घोषणा ACPI_LABELS_LOCKED 3
 
-static int xlat_nvdimm_status(struct nvdimm *nvdimm, void *buf, unsigned int cmd,
+अटल पूर्णांक xlat_nvdimm_status(काष्ठा nvdimm *nvdimm, व्योम *buf, अचिन्हित पूर्णांक cmd,
 		u32 status)
-{
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+अणु
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
 
-	switch (cmd) {
-	case ND_CMD_GET_CONFIG_SIZE:
+	चयन (cmd) अणु
+	हाल ND_CMD_GET_CONFIG_SIZE:
 		/*
-		 * In the _LSI, _LSR, _LSW case the locked status is
-		 * communicated via the read/write commands
+		 * In the _LSI, _LSR, _LSW हाल the locked status is
+		 * communicated via the पढ़ो/ग_लिखो commands
 		 */
-		if (test_bit(NFIT_MEM_LSR, &nfit_mem->flags))
-			break;
+		अगर (test_bit(NFIT_MEM_LSR, &nfit_mem->flags))
+			अवरोध;
 
-		if (status >> 16 & ND_CONFIG_LOCKED)
-			return -EACCES;
-		break;
-	case ND_CMD_GET_CONFIG_DATA:
-		if (test_bit(NFIT_MEM_LSR, &nfit_mem->flags)
+		अगर (status >> 16 & ND_CONFIG_LOCKED)
+			वापस -EACCES;
+		अवरोध;
+	हाल ND_CMD_GET_CONFIG_DATA:
+		अगर (test_bit(NFIT_MEM_LSR, &nfit_mem->flags)
 				&& status == ACPI_LABELS_LOCKED)
-			return -EACCES;
-		break;
-	case ND_CMD_SET_CONFIG_DATA:
-		if (test_bit(NFIT_MEM_LSW, &nfit_mem->flags)
+			वापस -EACCES;
+		अवरोध;
+	हाल ND_CMD_SET_CONFIG_DATA:
+		अगर (test_bit(NFIT_MEM_LSW, &nfit_mem->flags)
 				&& status == ACPI_LABELS_LOCKED)
-			return -EACCES;
-		break;
-	default:
-		break;
-	}
+			वापस -EACCES;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* all other non-zero status results in an error */
-	if (status)
-		return -EIO;
-	return 0;
-}
+	अगर (status)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static int xlat_status(struct nvdimm *nvdimm, void *buf, unsigned int cmd,
+अटल पूर्णांक xlat_status(काष्ठा nvdimm *nvdimm, व्योम *buf, अचिन्हित पूर्णांक cmd,
 		u32 status)
-{
-	if (!nvdimm)
-		return xlat_bus_status(buf, cmd, status);
-	return xlat_nvdimm_status(nvdimm, buf, cmd, status);
-}
+अणु
+	अगर (!nvdimm)
+		वापस xlat_bus_status(buf, cmd, status);
+	वापस xlat_nvdimm_status(nvdimm, buf, cmd, status);
+पूर्ण
 
-/* convert _LS{I,R} packages to the buffer object acpi_nfit_ctl expects */
-static union acpi_object *pkg_to_buf(union acpi_object *pkg)
-{
-	int i;
-	void *dst;
-	size_t size = 0;
-	union acpi_object *buf = NULL;
+/* convert _LSअणुI,Rपूर्ण packages to the buffer object acpi_nfit_ctl expects */
+अटल जोड़ acpi_object *pkg_to_buf(जोड़ acpi_object *pkg)
+अणु
+	पूर्णांक i;
+	व्योम *dst;
+	माप_प्रकार size = 0;
+	जोड़ acpi_object *buf = शून्य;
 
-	if (pkg->type != ACPI_TYPE_PACKAGE) {
+	अगर (pkg->type != ACPI_TYPE_PACKAGE) अणु
 		WARN_ONCE(1, "BIOS bug, unexpected element type: %d\n",
 				pkg->type);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	for (i = 0; i < pkg->package.count; i++) {
-		union acpi_object *obj = &pkg->package.elements[i];
+	क्रम (i = 0; i < pkg->package.count; i++) अणु
+		जोड़ acpi_object *obj = &pkg->package.elements[i];
 
-		if (obj->type == ACPI_TYPE_INTEGER)
+		अगर (obj->type == ACPI_TYPE_INTEGER)
 			size += 4;
-		else if (obj->type == ACPI_TYPE_BUFFER)
+		अन्यथा अगर (obj->type == ACPI_TYPE_BUFFER)
 			size += obj->buffer.length;
-		else {
+		अन्यथा अणु
 			WARN_ONCE(1, "BIOS bug, unexpected element type: %d\n",
 					obj->type);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	buf = ACPI_ALLOCATE(sizeof(*buf) + size);
-	if (!buf)
-		goto err;
+	buf = ACPI_ALLOCATE(माप(*buf) + size);
+	अगर (!buf)
+		जाओ err;
 
 	dst = buf + 1;
 	buf->type = ACPI_TYPE_BUFFER;
 	buf->buffer.length = size;
-	buf->buffer.pointer = dst;
-	for (i = 0; i < pkg->package.count; i++) {
-		union acpi_object *obj = &pkg->package.elements[i];
+	buf->buffer.poपूर्णांकer = dst;
+	क्रम (i = 0; i < pkg->package.count; i++) अणु
+		जोड़ acpi_object *obj = &pkg->package.elements[i];
 
-		if (obj->type == ACPI_TYPE_INTEGER) {
-			memcpy(dst, &obj->integer.value, 4);
+		अगर (obj->type == ACPI_TYPE_INTEGER) अणु
+			स_नकल(dst, &obj->पूर्णांकeger.value, 4);
 			dst += 4;
-		} else if (obj->type == ACPI_TYPE_BUFFER) {
-			memcpy(dst, obj->buffer.pointer, obj->buffer.length);
+		पूर्ण अन्यथा अगर (obj->type == ACPI_TYPE_BUFFER) अणु
+			स_नकल(dst, obj->buffer.poपूर्णांकer, obj->buffer.length);
 			dst += obj->buffer.length;
-		}
-	}
+		पूर्ण
+	पूर्ण
 err:
 	ACPI_FREE(pkg);
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static union acpi_object *int_to_buf(union acpi_object *integer)
-{
-	union acpi_object *buf = NULL;
-	void *dst = NULL;
+अटल जोड़ acpi_object *पूर्णांक_to_buf(जोड़ acpi_object *पूर्णांकeger)
+अणु
+	जोड़ acpi_object *buf = शून्य;
+	व्योम *dst = शून्य;
 
-	if (integer->type != ACPI_TYPE_INTEGER) {
+	अगर (पूर्णांकeger->type != ACPI_TYPE_INTEGER) अणु
 		WARN_ONCE(1, "BIOS bug, unexpected element type: %d\n",
-				integer->type);
-		goto err;
-	}
+				पूर्णांकeger->type);
+		जाओ err;
+	पूर्ण
 
-	buf = ACPI_ALLOCATE(sizeof(*buf) + 4);
-	if (!buf)
-		goto err;
+	buf = ACPI_ALLOCATE(माप(*buf) + 4);
+	अगर (!buf)
+		जाओ err;
 
 	dst = buf + 1;
 	buf->type = ACPI_TYPE_BUFFER;
 	buf->buffer.length = 4;
-	buf->buffer.pointer = dst;
-	memcpy(dst, &integer->integer.value, 4);
+	buf->buffer.poपूर्णांकer = dst;
+	स_नकल(dst, &पूर्णांकeger->पूर्णांकeger.value, 4);
 err:
-	ACPI_FREE(integer);
-	return buf;
-}
+	ACPI_FREE(पूर्णांकeger);
+	वापस buf;
+पूर्ण
 
-static union acpi_object *acpi_label_write(acpi_handle handle, u32 offset,
-		u32 len, void *data)
-{
+अटल जोड़ acpi_object *acpi_label_ग_लिखो(acpi_handle handle, u32 offset,
+		u32 len, व्योम *data)
+अणु
 	acpi_status rc;
-	struct acpi_buffer buf = { ACPI_ALLOCATE_BUFFER, NULL };
-	struct acpi_object_list input = {
+	काष्ठा acpi_buffer buf = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	काष्ठा acpi_object_list input = अणु
 		.count = 3,
-		.pointer = (union acpi_object []) {
-			[0] = {
-				.integer.type = ACPI_TYPE_INTEGER,
-				.integer.value = offset,
-			},
-			[1] = {
-				.integer.type = ACPI_TYPE_INTEGER,
-				.integer.value = len,
-			},
-			[2] = {
+		.poपूर्णांकer = (जोड़ acpi_object []) अणु
+			[0] = अणु
+				.पूर्णांकeger.type = ACPI_TYPE_INTEGER,
+				.पूर्णांकeger.value = offset,
+			पूर्ण,
+			[1] = अणु
+				.पूर्णांकeger.type = ACPI_TYPE_INTEGER,
+				.पूर्णांकeger.value = len,
+			पूर्ण,
+			[2] = अणु
 				.buffer.type = ACPI_TYPE_BUFFER,
-				.buffer.pointer = data,
+				.buffer.poपूर्णांकer = data,
 				.buffer.length = len,
-			},
-		},
-	};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण;
 
 	rc = acpi_evaluate_object(handle, "_LSW", &input, &buf);
-	if (ACPI_FAILURE(rc))
-		return NULL;
-	return int_to_buf(buf.pointer);
-}
+	अगर (ACPI_FAILURE(rc))
+		वापस शून्य;
+	वापस पूर्णांक_to_buf(buf.poपूर्णांकer);
+पूर्ण
 
-static union acpi_object *acpi_label_read(acpi_handle handle, u32 offset,
+अटल जोड़ acpi_object *acpi_label_पढ़ो(acpi_handle handle, u32 offset,
 		u32 len)
-{
+अणु
 	acpi_status rc;
-	struct acpi_buffer buf = { ACPI_ALLOCATE_BUFFER, NULL };
-	struct acpi_object_list input = {
+	काष्ठा acpi_buffer buf = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	काष्ठा acpi_object_list input = अणु
 		.count = 2,
-		.pointer = (union acpi_object []) {
-			[0] = {
-				.integer.type = ACPI_TYPE_INTEGER,
-				.integer.value = offset,
-			},
-			[1] = {
-				.integer.type = ACPI_TYPE_INTEGER,
-				.integer.value = len,
-			},
-		},
-	};
+		.poपूर्णांकer = (जोड़ acpi_object []) अणु
+			[0] = अणु
+				.पूर्णांकeger.type = ACPI_TYPE_INTEGER,
+				.पूर्णांकeger.value = offset,
+			पूर्ण,
+			[1] = अणु
+				.पूर्णांकeger.type = ACPI_TYPE_INTEGER,
+				.पूर्णांकeger.value = len,
+			पूर्ण,
+		पूर्ण,
+	पूर्ण;
 
 	rc = acpi_evaluate_object(handle, "_LSR", &input, &buf);
-	if (ACPI_FAILURE(rc))
-		return NULL;
-	return pkg_to_buf(buf.pointer);
-}
+	अगर (ACPI_FAILURE(rc))
+		वापस शून्य;
+	वापस pkg_to_buf(buf.poपूर्णांकer);
+पूर्ण
 
-static union acpi_object *acpi_label_info(acpi_handle handle)
-{
+अटल जोड़ acpi_object *acpi_label_info(acpi_handle handle)
+अणु
 	acpi_status rc;
-	struct acpi_buffer buf = { ACPI_ALLOCATE_BUFFER, NULL };
+	काष्ठा acpi_buffer buf = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
 
-	rc = acpi_evaluate_object(handle, "_LSI", NULL, &buf);
-	if (ACPI_FAILURE(rc))
-		return NULL;
-	return pkg_to_buf(buf.pointer);
-}
+	rc = acpi_evaluate_object(handle, "_LSI", शून्य, &buf);
+	अगर (ACPI_FAILURE(rc))
+		वापस शून्य;
+	वापस pkg_to_buf(buf.poपूर्णांकer);
+पूर्ण
 
-static u8 nfit_dsm_revid(unsigned family, unsigned func)
-{
-	static const u8 revid_table[NVDIMM_FAMILY_MAX+1][NVDIMM_CMD_MAX+1] = {
-		[NVDIMM_FAMILY_INTEL] = {
+अटल u8 nfit_dsm_revid(अचिन्हित family, अचिन्हित func)
+अणु
+	अटल स्थिर u8 revid_table[NVDIMM_FAMILY_MAX+1][NVDIMM_CMD_MAX+1] = अणु
+		[NVDIMM_FAMILY_INTEL] = अणु
 			[NVDIMM_INTEL_GET_MODES ...
 				NVDIMM_INTEL_FW_ACTIVATE_ARM] = 2,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 	u8 id;
 
-	if (family > NVDIMM_FAMILY_MAX)
-		return 0;
-	if (func > NVDIMM_CMD_MAX)
-		return 0;
+	अगर (family > NVDIMM_FAMILY_MAX)
+		वापस 0;
+	अगर (func > NVDIMM_CMD_MAX)
+		वापस 0;
 	id = revid_table[family][func];
-	if (id == 0)
-		return 1; /* default */
-	return id;
-}
+	अगर (id == 0)
+		वापस 1; /* शेष */
+	वापस id;
+पूर्ण
 
-static bool payload_dumpable(struct nvdimm *nvdimm, unsigned int func)
-{
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+अटल bool payload_dumpable(काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक func)
+अणु
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
 
-	if (nfit_mem && nfit_mem->family == NVDIMM_FAMILY_INTEL
+	अगर (nfit_mem && nfit_mem->family == NVDIMM_FAMILY_INTEL
 			&& func >= NVDIMM_INTEL_GET_SECURITY_STATE
 			&& func <= NVDIMM_INTEL_MASTER_SECURE_ERASE)
-		return IS_ENABLED(CONFIG_NFIT_SECURITY_DEBUG);
-	return true;
-}
+		वापस IS_ENABLED(CONFIG_NFIT_SECURITY_DEBUG);
+	वापस true;
+पूर्ण
 
-static int cmd_to_func(struct nfit_mem *nfit_mem, unsigned int cmd,
-		struct nd_cmd_pkg *call_pkg, int *family)
-{
-	if (call_pkg) {
-		int i;
+अटल पूर्णांक cmd_to_func(काष्ठा nfit_mem *nfit_mem, अचिन्हित पूर्णांक cmd,
+		काष्ठा nd_cmd_pkg *call_pkg, पूर्णांक *family)
+अणु
+	अगर (call_pkg) अणु
+		पूर्णांक i;
 
-		if (nfit_mem && nfit_mem->family != call_pkg->nd_family)
-			return -ENOTTY;
+		अगर (nfit_mem && nfit_mem->family != call_pkg->nd_family)
+			वापस -ENOTTY;
 
-		for (i = 0; i < ARRAY_SIZE(call_pkg->nd_reserved2); i++)
-			if (call_pkg->nd_reserved2[i])
-				return -EINVAL;
+		क्रम (i = 0; i < ARRAY_SIZE(call_pkg->nd_reserved2); i++)
+			अगर (call_pkg->nd_reserved2[i])
+				वापस -EINVAL;
 		*family = call_pkg->nd_family;
-		return call_pkg->nd_command;
-	}
+		वापस call_pkg->nd_command;
+	पूर्ण
 
-	/* In the !call_pkg case, bus commands == bus functions */
-	if (!nfit_mem)
-		return cmd;
+	/* In the !call_pkg हाल, bus commands == bus functions */
+	अगर (!nfit_mem)
+		वापस cmd;
 
 	/* Linux ND commands == NVDIMM_FAMILY_INTEL function numbers */
-	if (nfit_mem->family == NVDIMM_FAMILY_INTEL)
-		return cmd;
+	अगर (nfit_mem->family == NVDIMM_FAMILY_INTEL)
+		वापस cmd;
 
 	/*
 	 * Force function number validation to fail since 0 is never
 	 * published as a valid function in dsm_mask.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int acpi_nfit_ctl(struct nvdimm_bus_descriptor *nd_desc, struct nvdimm *nvdimm,
-		unsigned int cmd, void *buf, unsigned int buf_len, int *cmd_rc)
-{
-	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	union acpi_object in_obj, in_buf, *out_obj;
-	const struct nd_cmd_desc *desc = NULL;
-	struct device *dev = acpi_desc->dev;
-	struct nd_cmd_pkg *call_pkg = NULL;
-	const char *cmd_name, *dimm_name;
-	unsigned long cmd_mask, dsm_mask;
+पूर्णांक acpi_nfit_ctl(काष्ठा nvdimm_bus_descriptor *nd_desc, काष्ठा nvdimm *nvdimm,
+		अचिन्हित पूर्णांक cmd, व्योम *buf, अचिन्हित पूर्णांक buf_len, पूर्णांक *cmd_rc)
+अणु
+	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	जोड़ acpi_object in_obj, in_buf, *out_obj;
+	स्थिर काष्ठा nd_cmd_desc *desc = शून्य;
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nd_cmd_pkg *call_pkg = शून्य;
+	स्थिर अक्षर *cmd_name, *dimm_name;
+	अचिन्हित दीर्घ cmd_mask, dsm_mask;
 	u32 offset, fw_status = 0;
 	acpi_handle handle;
-	const guid_t *guid;
-	int func, rc, i;
-	int family = 0;
+	स्थिर guid_t *guid;
+	पूर्णांक func, rc, i;
+	पूर्णांक family = 0;
 
-	if (cmd_rc)
+	अगर (cmd_rc)
 		*cmd_rc = -EINVAL;
 
-	if (cmd == ND_CMD_CALL)
+	अगर (cmd == ND_CMD_CALL)
 		call_pkg = buf;
 	func = cmd_to_func(nfit_mem, cmd, call_pkg, &family);
-	if (func < 0)
-		return func;
+	अगर (func < 0)
+		वापस func;
 
-	if (nvdimm) {
-		struct acpi_device *adev = nfit_mem->adev;
+	अगर (nvdimm) अणु
+		काष्ठा acpi_device *adev = nfit_mem->adev;
 
-		if (!adev)
-			return -ENOTTY;
+		अगर (!adev)
+			वापस -ENOTTY;
 
 		dimm_name = nvdimm_name(nvdimm);
 		cmd_name = nvdimm_cmd_name(cmd);
@@ -473,192 +474,192 @@ int acpi_nfit_ctl(struct nvdimm_bus_descriptor *nd_desc, struct nvdimm *nvdimm,
 		desc = nd_cmd_dimm_desc(cmd);
 		guid = to_nfit_uuid(nfit_mem->family);
 		handle = adev->handle;
-	} else {
-		struct acpi_device *adev = to_acpi_dev(acpi_desc);
+	पूर्ण अन्यथा अणु
+		काष्ठा acpi_device *adev = to_acpi_dev(acpi_desc);
 
 		cmd_name = nvdimm_bus_cmd_name(cmd);
 		cmd_mask = nd_desc->cmd_mask;
-		if (cmd == ND_CMD_CALL && call_pkg->nd_family) {
+		अगर (cmd == ND_CMD_CALL && call_pkg->nd_family) अणु
 			family = call_pkg->nd_family;
-			if (family > NVDIMM_BUS_FAMILY_MAX ||
+			अगर (family > NVDIMM_BUS_FAMILY_MAX ||
 			    !test_bit(family, &nd_desc->bus_family_mask))
-				return -EINVAL;
+				वापस -EINVAL;
 			family = array_index_nospec(family,
 						    NVDIMM_BUS_FAMILY_MAX + 1);
 			dsm_mask = acpi_desc->family_dsm_mask[family];
 			guid = to_nfit_bus_uuid(family);
-		} else {
+		पूर्ण अन्यथा अणु
 			dsm_mask = acpi_desc->bus_dsm_mask;
 			guid = to_nfit_uuid(NFIT_DEV_BUS);
-		}
+		पूर्ण
 		desc = nd_cmd_bus_desc(cmd);
 		handle = adev->handle;
 		dimm_name = "bus";
-	}
+	पूर्ण
 
-	if (!desc || (cmd && (desc->out_num + desc->in_num == 0)))
-		return -ENOTTY;
+	अगर (!desc || (cmd && (desc->out_num + desc->in_num == 0)))
+		वापस -ENOTTY;
 
 	/*
-	 * Check for a valid command.  For ND_CMD_CALL, we also have to
+	 * Check क्रम a valid command.  For ND_CMD_CALL, we also have to
 	 * make sure that the DSM function is supported.
 	 */
-	if (cmd == ND_CMD_CALL &&
+	अगर (cmd == ND_CMD_CALL &&
 	    (func > NVDIMM_CMD_MAX || !test_bit(func, &dsm_mask)))
-		return -ENOTTY;
-	else if (!test_bit(cmd, &cmd_mask))
-		return -ENOTTY;
+		वापस -ENOTTY;
+	अन्यथा अगर (!test_bit(cmd, &cmd_mask))
+		वापस -ENOTTY;
 
 	in_obj.type = ACPI_TYPE_PACKAGE;
 	in_obj.package.count = 1;
 	in_obj.package.elements = &in_buf;
 	in_buf.type = ACPI_TYPE_BUFFER;
-	in_buf.buffer.pointer = buf;
+	in_buf.buffer.poपूर्णांकer = buf;
 	in_buf.buffer.length = 0;
 
-	/* libnvdimm has already validated the input envelope */
-	for (i = 0; i < desc->in_num; i++)
+	/* libnvdimm has alपढ़ोy validated the input envelope */
+	क्रम (i = 0; i < desc->in_num; i++)
 		in_buf.buffer.length += nd_cmd_in_size(nvdimm, cmd, desc,
 				i, buf);
 
-	if (call_pkg) {
+	अगर (call_pkg) अणु
 		/* skip over package wrapper */
-		in_buf.buffer.pointer = (void *) &call_pkg->nd_payload;
+		in_buf.buffer.poपूर्णांकer = (व्योम *) &call_pkg->nd_payload;
 		in_buf.buffer.length = call_pkg->nd_size_in;
-	}
+	पूर्ण
 
 	dev_dbg(dev, "%s cmd: %d: family: %d func: %d input length: %d\n",
 		dimm_name, cmd, family, func, in_buf.buffer.length);
-	if (payload_dumpable(nvdimm, func))
-		print_hex_dump_debug("nvdimm in  ", DUMP_PREFIX_OFFSET, 4, 4,
-				in_buf.buffer.pointer,
+	अगर (payload_dumpable(nvdimm, func))
+		prपूर्णांक_hex_dump_debug("nvdimm in  ", DUMP_PREFIX_OFFSET, 4, 4,
+				in_buf.buffer.poपूर्णांकer,
 				min_t(u32, 256, in_buf.buffer.length), true);
 
-	/* call the BIOS, prefer the named methods over _DSM if available */
-	if (nvdimm && cmd == ND_CMD_GET_CONFIG_SIZE
+	/* call the BIOS, prefer the named methods over _DSM अगर available */
+	अगर (nvdimm && cmd == ND_CMD_GET_CONFIG_SIZE
 			&& test_bit(NFIT_MEM_LSR, &nfit_mem->flags))
 		out_obj = acpi_label_info(handle);
-	else if (nvdimm && cmd == ND_CMD_GET_CONFIG_DATA
-			&& test_bit(NFIT_MEM_LSR, &nfit_mem->flags)) {
-		struct nd_cmd_get_config_data_hdr *p = buf;
+	अन्यथा अगर (nvdimm && cmd == ND_CMD_GET_CONFIG_DATA
+			&& test_bit(NFIT_MEM_LSR, &nfit_mem->flags)) अणु
+		काष्ठा nd_cmd_get_config_data_hdr *p = buf;
 
-		out_obj = acpi_label_read(handle, p->in_offset, p->in_length);
-	} else if (nvdimm && cmd == ND_CMD_SET_CONFIG_DATA
-			&& test_bit(NFIT_MEM_LSW, &nfit_mem->flags)) {
-		struct nd_cmd_set_config_hdr *p = buf;
+		out_obj = acpi_label_पढ़ो(handle, p->in_offset, p->in_length);
+	पूर्ण अन्यथा अगर (nvdimm && cmd == ND_CMD_SET_CONFIG_DATA
+			&& test_bit(NFIT_MEM_LSW, &nfit_mem->flags)) अणु
+		काष्ठा nd_cmd_set_config_hdr *p = buf;
 
-		out_obj = acpi_label_write(handle, p->in_offset, p->in_length,
+		out_obj = acpi_label_ग_लिखो(handle, p->in_offset, p->in_length,
 				p->in_buf);
-	} else {
+	पूर्ण अन्यथा अणु
 		u8 revid;
 
-		if (nvdimm)
+		अगर (nvdimm)
 			revid = nfit_dsm_revid(nfit_mem->family, func);
-		else
+		अन्यथा
 			revid = 1;
 		out_obj = acpi_evaluate_dsm(handle, guid, revid, func, &in_obj);
-	}
+	पूर्ण
 
-	if (!out_obj) {
+	अगर (!out_obj) अणु
 		dev_dbg(dev, "%s _DSM failed cmd: %s\n", dimm_name, cmd_name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (out_obj->type != ACPI_TYPE_BUFFER) {
+	अगर (out_obj->type != ACPI_TYPE_BUFFER) अणु
 		dev_dbg(dev, "%s unexpected output object type cmd: %s type: %d\n",
 				dimm_name, cmd_name, out_obj->type);
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev_dbg(dev, "%s cmd: %s output length: %d\n", dimm_name,
 			cmd_name, out_obj->buffer.length);
-	print_hex_dump_debug(cmd_name, DUMP_PREFIX_OFFSET, 4, 4,
-			out_obj->buffer.pointer,
+	prपूर्णांक_hex_dump_debug(cmd_name, DUMP_PREFIX_OFFSET, 4, 4,
+			out_obj->buffer.poपूर्णांकer,
 			min_t(u32, 128, out_obj->buffer.length), true);
 
-	if (call_pkg) {
+	अगर (call_pkg) अणु
 		call_pkg->nd_fw_size = out_obj->buffer.length;
-		memcpy(call_pkg->nd_payload + call_pkg->nd_size_in,
-			out_obj->buffer.pointer,
+		स_नकल(call_pkg->nd_payload + call_pkg->nd_size_in,
+			out_obj->buffer.poपूर्णांकer,
 			min(call_pkg->nd_fw_size, call_pkg->nd_size_out));
 
 		ACPI_FREE(out_obj);
 		/*
 		 * Need to support FW function w/o known size in advance.
 		 * Caller can determine required size based upon nd_fw_size.
-		 * If we return an error (like elsewhere) then caller wouldn't
-		 * be able to rely upon data returned to make calculation.
+		 * If we वापस an error (like अन्यथाwhere) then caller wouldn't
+		 * be able to rely upon data वापसed to make calculation.
 		 */
-		if (cmd_rc)
+		अगर (cmd_rc)
 			*cmd_rc = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (i = 0, offset = 0; i < desc->out_num; i++) {
+	क्रम (i = 0, offset = 0; i < desc->out_num; i++) अणु
 		u32 out_size = nd_cmd_out_size(nvdimm, cmd, desc, i, buf,
-				(u32 *) out_obj->buffer.pointer,
+				(u32 *) out_obj->buffer.poपूर्णांकer,
 				out_obj->buffer.length - offset);
 
-		if (offset + out_size > out_obj->buffer.length) {
+		अगर (offset + out_size > out_obj->buffer.length) अणु
 			dev_dbg(dev, "%s output object underflow cmd: %s field: %d\n",
 					dimm_name, cmd_name, i);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (in_buf.buffer.length + offset + out_size > buf_len) {
+		अगर (in_buf.buffer.length + offset + out_size > buf_len) अणु
 			dev_dbg(dev, "%s output overrun cmd: %s field: %d\n",
 					dimm_name, cmd_name, i);
 			rc = -ENXIO;
-			goto out;
-		}
-		memcpy(buf + in_buf.buffer.length + offset,
-				out_obj->buffer.pointer + offset, out_size);
+			जाओ out;
+		पूर्ण
+		स_नकल(buf + in_buf.buffer.length + offset,
+				out_obj->buffer.poपूर्णांकer + offset, out_size);
 		offset += out_size;
-	}
+	पूर्ण
 
 	/*
-	 * Set fw_status for all the commands with a known format to be
-	 * later interpreted by xlat_status().
+	 * Set fw_status क्रम all the commands with a known क्रमmat to be
+	 * later पूर्णांकerpreted by xlat_status().
 	 */
-	if (i >= 1 && ((!nvdimm && cmd >= ND_CMD_ARS_CAP
+	अगर (i >= 1 && ((!nvdimm && cmd >= ND_CMD_ARS_CAP
 					&& cmd <= ND_CMD_CLEAR_ERROR)
 				|| (nvdimm && cmd >= ND_CMD_SMART
 					&& cmd <= ND_CMD_VENDOR)))
-		fw_status = *(u32 *) out_obj->buffer.pointer;
+		fw_status = *(u32 *) out_obj->buffer.poपूर्णांकer;
 
-	if (offset + in_buf.buffer.length < buf_len) {
-		if (i >= 1) {
+	अगर (offset + in_buf.buffer.length < buf_len) अणु
+		अगर (i >= 1) अणु
 			/*
-			 * status valid, return the number of bytes left
+			 * status valid, वापस the number of bytes left
 			 * unfilled in the output buffer
 			 */
 			rc = buf_len - offset - in_buf.buffer.length;
-			if (cmd_rc)
+			अगर (cmd_rc)
 				*cmd_rc = xlat_status(nvdimm, buf, cmd,
 						fw_status);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(dev, "%s:%s underrun cmd: %s buf_len: %d out_len: %d\n",
 					__func__, dimm_name, cmd_name, buf_len,
 					offset);
 			rc = -ENXIO;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rc = 0;
-		if (cmd_rc)
+		अगर (cmd_rc)
 			*cmd_rc = xlat_status(nvdimm, buf, cmd, fw_status);
-	}
+	पूर्ण
 
  out:
 	ACPI_FREE(out_obj);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_nfit_ctl);
 
-static const char *spa_type_name(u16 type)
-{
-	static const char *to_name[] = {
+अटल स्थिर अक्षर *spa_type_name(u16 type)
+अणु
+	अटल स्थिर अक्षर *to_name[] = अणु
 		[NFIT_SPA_VOLATILE] = "volatile",
 		[NFIT_SPA_PM] = "pmem",
 		[NFIT_SPA_DCR] = "dimm-control-region",
@@ -668,976 +669,976 @@ static const char *spa_type_name(u16 type)
 		[NFIT_SPA_PDISK] = "persistent-disk",
 		[NFIT_SPA_PCD] = "persistent-cd",
 
-	};
+	पूर्ण;
 
-	if (type > NFIT_SPA_PCD)
-		return "unknown";
+	अगर (type > NFIT_SPA_PCD)
+		वापस "unknown";
 
-	return to_name[type];
-}
+	वापस to_name[type];
+पूर्ण
 
-int nfit_spa_type(struct acpi_nfit_system_address *spa)
-{
-	int i;
+पूर्णांक nfit_spa_type(काष्ठा acpi_nfit_प्रणाली_address *spa)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NFIT_UUID_MAX; i++)
-		if (guid_equal(to_nfit_uuid(i), (guid_t *)&spa->range_guid))
-			return i;
-	return -1;
-}
+	क्रम (i = 0; i < NFIT_UUID_MAX; i++)
+		अगर (guid_equal(to_nfit_uuid(i), (guid_t *)&spa->range_guid))
+			वापस i;
+	वापस -1;
+पूर्ण
 
-static size_t sizeof_spa(struct acpi_nfit_system_address *spa)
-{
-	if (spa->flags & ACPI_NFIT_LOCATION_COOKIE_VALID)
-		return sizeof(*spa);
-	return sizeof(*spa) - 8;
-}
+अटल माप_प्रकार माप_spa(काष्ठा acpi_nfit_प्रणाली_address *spa)
+अणु
+	अगर (spa->flags & ACPI_NFIT_LOCATION_COOKIE_VALID)
+		वापस माप(*spa);
+	वापस माप(*spa) - 8;
+पूर्ण
 
-static bool add_spa(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_table_prev *prev,
-		struct acpi_nfit_system_address *spa)
-{
-	struct device *dev = acpi_desc->dev;
-	struct nfit_spa *nfit_spa;
+अटल bool add_spa(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_table_prev *prev,
+		काष्ठा acpi_nfit_प्रणाली_address *spa)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nfit_spa *nfit_spa;
 
-	if (spa->header.length != sizeof_spa(spa))
-		return false;
+	अगर (spa->header.length != माप_spa(spa))
+		वापस false;
 
-	list_for_each_entry(nfit_spa, &prev->spas, list) {
-		if (memcmp(nfit_spa->spa, spa, sizeof_spa(spa)) == 0) {
+	list_क्रम_each_entry(nfit_spa, &prev->spas, list) अणु
+		अगर (स_भेद(nfit_spa->spa, spa, माप_spa(spa)) == 0) अणु
 			list_move_tail(&nfit_spa->list, &acpi_desc->spas);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	nfit_spa = devm_kzalloc(dev, sizeof(*nfit_spa) + sizeof_spa(spa),
+	nfit_spa = devm_kzalloc(dev, माप(*nfit_spa) + माप_spa(spa),
 			GFP_KERNEL);
-	if (!nfit_spa)
-		return false;
+	अगर (!nfit_spa)
+		वापस false;
 	INIT_LIST_HEAD(&nfit_spa->list);
-	memcpy(nfit_spa->spa, spa, sizeof_spa(spa));
+	स_नकल(nfit_spa->spa, spa, माप_spa(spa));
 	list_add_tail(&nfit_spa->list, &acpi_desc->spas);
 	dev_dbg(dev, "spa index: %d type: %s\n",
 			spa->range_index,
 			spa_type_name(nfit_spa_type(spa)));
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool add_memdev(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_table_prev *prev,
-		struct acpi_nfit_memory_map *memdev)
-{
-	struct device *dev = acpi_desc->dev;
-	struct nfit_memdev *nfit_memdev;
+अटल bool add_memdev(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_table_prev *prev,
+		काष्ठा acpi_nfit_memory_map *memdev)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nfit_memdev *nfit_memdev;
 
-	if (memdev->header.length != sizeof(*memdev))
-		return false;
+	अगर (memdev->header.length != माप(*memdev))
+		वापस false;
 
-	list_for_each_entry(nfit_memdev, &prev->memdevs, list)
-		if (memcmp(nfit_memdev->memdev, memdev, sizeof(*memdev)) == 0) {
+	list_क्रम_each_entry(nfit_memdev, &prev->memdevs, list)
+		अगर (स_भेद(nfit_memdev->memdev, memdev, माप(*memdev)) == 0) अणु
 			list_move_tail(&nfit_memdev->list, &acpi_desc->memdevs);
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
-	nfit_memdev = devm_kzalloc(dev, sizeof(*nfit_memdev) + sizeof(*memdev),
+	nfit_memdev = devm_kzalloc(dev, माप(*nfit_memdev) + माप(*memdev),
 			GFP_KERNEL);
-	if (!nfit_memdev)
-		return false;
+	अगर (!nfit_memdev)
+		वापस false;
 	INIT_LIST_HEAD(&nfit_memdev->list);
-	memcpy(nfit_memdev->memdev, memdev, sizeof(*memdev));
+	स_नकल(nfit_memdev->memdev, memdev, माप(*memdev));
 	list_add_tail(&nfit_memdev->list, &acpi_desc->memdevs);
 	dev_dbg(dev, "memdev handle: %#x spa: %d dcr: %d flags: %#x\n",
 			memdev->device_handle, memdev->range_index,
 			memdev->region_index, memdev->flags);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int nfit_get_smbios_id(u32 device_handle, u16 *flags)
-{
-	struct acpi_nfit_memory_map *memdev;
-	struct acpi_nfit_desc *acpi_desc;
-	struct nfit_mem *nfit_mem;
+पूर्णांक nfit_get_smbios_id(u32 device_handle, u16 *flags)
+अणु
+	काष्ठा acpi_nfit_memory_map *memdev;
+	काष्ठा acpi_nfit_desc *acpi_desc;
+	काष्ठा nfit_mem *nfit_mem;
 	u16 physical_id;
 
 	mutex_lock(&acpi_desc_lock);
-	list_for_each_entry(acpi_desc, &acpi_descs, list) {
+	list_क्रम_each_entry(acpi_desc, &acpi_descs, list) अणु
 		mutex_lock(&acpi_desc->init_mutex);
-		list_for_each_entry(nfit_mem, &acpi_desc->dimms, list) {
+		list_क्रम_each_entry(nfit_mem, &acpi_desc->dimms, list) अणु
 			memdev = __to_nfit_memdev(nfit_mem);
-			if (memdev->device_handle == device_handle) {
+			अगर (memdev->device_handle == device_handle) अणु
 				*flags = memdev->flags;
 				physical_id = memdev->physical_id;
 				mutex_unlock(&acpi_desc->init_mutex);
 				mutex_unlock(&acpi_desc_lock);
-				return physical_id;
-			}
-		}
+				वापस physical_id;
+			पूर्ण
+		पूर्ण
 		mutex_unlock(&acpi_desc->init_mutex);
-	}
+	पूर्ण
 	mutex_unlock(&acpi_desc_lock);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 EXPORT_SYMBOL_GPL(nfit_get_smbios_id);
 
 /*
- * An implementation may provide a truncated control region if no block windows
+ * An implementation may provide a truncated control region अगर no block winकरोws
  * are defined.
  */
-static size_t sizeof_dcr(struct acpi_nfit_control_region *dcr)
-{
-	if (dcr->header.length < offsetof(struct acpi_nfit_control_region,
-				window_size))
-		return 0;
-	if (dcr->windows)
-		return sizeof(*dcr);
-	return offsetof(struct acpi_nfit_control_region, window_size);
-}
+अटल माप_प्रकार माप_dcr(काष्ठा acpi_nfit_control_region *dcr)
+अणु
+	अगर (dcr->header.length < दुरत्व(काष्ठा acpi_nfit_control_region,
+				winकरोw_size))
+		वापस 0;
+	अगर (dcr->winकरोws)
+		वापस माप(*dcr);
+	वापस दुरत्व(काष्ठा acpi_nfit_control_region, winकरोw_size);
+पूर्ण
 
-static bool add_dcr(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_table_prev *prev,
-		struct acpi_nfit_control_region *dcr)
-{
-	struct device *dev = acpi_desc->dev;
-	struct nfit_dcr *nfit_dcr;
+अटल bool add_dcr(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_table_prev *prev,
+		काष्ठा acpi_nfit_control_region *dcr)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nfit_dcr *nfit_dcr;
 
-	if (!sizeof_dcr(dcr))
-		return false;
+	अगर (!माप_dcr(dcr))
+		वापस false;
 
-	list_for_each_entry(nfit_dcr, &prev->dcrs, list)
-		if (memcmp(nfit_dcr->dcr, dcr, sizeof_dcr(dcr)) == 0) {
+	list_क्रम_each_entry(nfit_dcr, &prev->dcrs, list)
+		अगर (स_भेद(nfit_dcr->dcr, dcr, माप_dcr(dcr)) == 0) अणु
 			list_move_tail(&nfit_dcr->list, &acpi_desc->dcrs);
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
-	nfit_dcr = devm_kzalloc(dev, sizeof(*nfit_dcr) + sizeof(*dcr),
+	nfit_dcr = devm_kzalloc(dev, माप(*nfit_dcr) + माप(*dcr),
 			GFP_KERNEL);
-	if (!nfit_dcr)
-		return false;
+	अगर (!nfit_dcr)
+		वापस false;
 	INIT_LIST_HEAD(&nfit_dcr->list);
-	memcpy(nfit_dcr->dcr, dcr, sizeof_dcr(dcr));
+	स_नकल(nfit_dcr->dcr, dcr, माप_dcr(dcr));
 	list_add_tail(&nfit_dcr->list, &acpi_desc->dcrs);
 	dev_dbg(dev, "dcr index: %d windows: %d\n",
-			dcr->region_index, dcr->windows);
-	return true;
-}
+			dcr->region_index, dcr->winकरोws);
+	वापस true;
+पूर्ण
 
-static bool add_bdw(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_table_prev *prev,
-		struct acpi_nfit_data_region *bdw)
-{
-	struct device *dev = acpi_desc->dev;
-	struct nfit_bdw *nfit_bdw;
+अटल bool add_bdw(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_table_prev *prev,
+		काष्ठा acpi_nfit_data_region *bdw)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nfit_bdw *nfit_bdw;
 
-	if (bdw->header.length != sizeof(*bdw))
-		return false;
-	list_for_each_entry(nfit_bdw, &prev->bdws, list)
-		if (memcmp(nfit_bdw->bdw, bdw, sizeof(*bdw)) == 0) {
+	अगर (bdw->header.length != माप(*bdw))
+		वापस false;
+	list_क्रम_each_entry(nfit_bdw, &prev->bdws, list)
+		अगर (स_भेद(nfit_bdw->bdw, bdw, माप(*bdw)) == 0) अणु
 			list_move_tail(&nfit_bdw->list, &acpi_desc->bdws);
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
-	nfit_bdw = devm_kzalloc(dev, sizeof(*nfit_bdw) + sizeof(*bdw),
+	nfit_bdw = devm_kzalloc(dev, माप(*nfit_bdw) + माप(*bdw),
 			GFP_KERNEL);
-	if (!nfit_bdw)
-		return false;
+	अगर (!nfit_bdw)
+		वापस false;
 	INIT_LIST_HEAD(&nfit_bdw->list);
-	memcpy(nfit_bdw->bdw, bdw, sizeof(*bdw));
+	स_नकल(nfit_bdw->bdw, bdw, माप(*bdw));
 	list_add_tail(&nfit_bdw->list, &acpi_desc->bdws);
 	dev_dbg(dev, "bdw dcr: %d windows: %d\n",
-			bdw->region_index, bdw->windows);
-	return true;
-}
+			bdw->region_index, bdw->winकरोws);
+	वापस true;
+पूर्ण
 
-static size_t sizeof_idt(struct acpi_nfit_interleave *idt)
-{
-	if (idt->header.length < sizeof(*idt))
-		return 0;
-	return sizeof(*idt) + sizeof(u32) * (idt->line_count - 1);
-}
+अटल माप_प्रकार माप_idt(काष्ठा acpi_nfit_पूर्णांकerleave *idt)
+अणु
+	अगर (idt->header.length < माप(*idt))
+		वापस 0;
+	वापस माप(*idt) + माप(u32) * (idt->line_count - 1);
+पूर्ण
 
-static bool add_idt(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_table_prev *prev,
-		struct acpi_nfit_interleave *idt)
-{
-	struct device *dev = acpi_desc->dev;
-	struct nfit_idt *nfit_idt;
+अटल bool add_idt(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_table_prev *prev,
+		काष्ठा acpi_nfit_पूर्णांकerleave *idt)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nfit_idt *nfit_idt;
 
-	if (!sizeof_idt(idt))
-		return false;
+	अगर (!माप_idt(idt))
+		वापस false;
 
-	list_for_each_entry(nfit_idt, &prev->idts, list) {
-		if (sizeof_idt(nfit_idt->idt) != sizeof_idt(idt))
-			continue;
+	list_क्रम_each_entry(nfit_idt, &prev->idts, list) अणु
+		अगर (माप_idt(nfit_idt->idt) != माप_idt(idt))
+			जारी;
 
-		if (memcmp(nfit_idt->idt, idt, sizeof_idt(idt)) == 0) {
+		अगर (स_भेद(nfit_idt->idt, idt, माप_idt(idt)) == 0) अणु
 			list_move_tail(&nfit_idt->list, &acpi_desc->idts);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	nfit_idt = devm_kzalloc(dev, sizeof(*nfit_idt) + sizeof_idt(idt),
+	nfit_idt = devm_kzalloc(dev, माप(*nfit_idt) + माप_idt(idt),
 			GFP_KERNEL);
-	if (!nfit_idt)
-		return false;
+	अगर (!nfit_idt)
+		वापस false;
 	INIT_LIST_HEAD(&nfit_idt->list);
-	memcpy(nfit_idt->idt, idt, sizeof_idt(idt));
+	स_नकल(nfit_idt->idt, idt, माप_idt(idt));
 	list_add_tail(&nfit_idt->list, &acpi_desc->idts);
 	dev_dbg(dev, "idt index: %d num_lines: %d\n",
-			idt->interleave_index, idt->line_count);
-	return true;
-}
+			idt->पूर्णांकerleave_index, idt->line_count);
+	वापस true;
+पूर्ण
 
-static size_t sizeof_flush(struct acpi_nfit_flush_address *flush)
-{
-	if (flush->header.length < sizeof(*flush))
-		return 0;
-	return sizeof(*flush) + sizeof(u64) * (flush->hint_count - 1);
-}
+अटल माप_प्रकार माप_flush(काष्ठा acpi_nfit_flush_address *flush)
+अणु
+	अगर (flush->header.length < माप(*flush))
+		वापस 0;
+	वापस माप(*flush) + माप(u64) * (flush->hपूर्णांक_count - 1);
+पूर्ण
 
-static bool add_flush(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_table_prev *prev,
-		struct acpi_nfit_flush_address *flush)
-{
-	struct device *dev = acpi_desc->dev;
-	struct nfit_flush *nfit_flush;
+अटल bool add_flush(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_table_prev *prev,
+		काष्ठा acpi_nfit_flush_address *flush)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nfit_flush *nfit_flush;
 
-	if (!sizeof_flush(flush))
-		return false;
+	अगर (!माप_flush(flush))
+		वापस false;
 
-	list_for_each_entry(nfit_flush, &prev->flushes, list) {
-		if (sizeof_flush(nfit_flush->flush) != sizeof_flush(flush))
-			continue;
+	list_क्रम_each_entry(nfit_flush, &prev->flushes, list) अणु
+		अगर (माप_flush(nfit_flush->flush) != माप_flush(flush))
+			जारी;
 
-		if (memcmp(nfit_flush->flush, flush,
-					sizeof_flush(flush)) == 0) {
+		अगर (स_भेद(nfit_flush->flush, flush,
+					माप_flush(flush)) == 0) अणु
 			list_move_tail(&nfit_flush->list, &acpi_desc->flushes);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	nfit_flush = devm_kzalloc(dev, sizeof(*nfit_flush)
-			+ sizeof_flush(flush), GFP_KERNEL);
-	if (!nfit_flush)
-		return false;
+	nfit_flush = devm_kzalloc(dev, माप(*nfit_flush)
+			+ माप_flush(flush), GFP_KERNEL);
+	अगर (!nfit_flush)
+		वापस false;
 	INIT_LIST_HEAD(&nfit_flush->list);
-	memcpy(nfit_flush->flush, flush, sizeof_flush(flush));
+	स_नकल(nfit_flush->flush, flush, माप_flush(flush));
 	list_add_tail(&nfit_flush->list, &acpi_desc->flushes);
 	dev_dbg(dev, "nfit_flush handle: %d hint_count: %d\n",
-			flush->device_handle, flush->hint_count);
-	return true;
-}
+			flush->device_handle, flush->hपूर्णांक_count);
+	वापस true;
+पूर्ण
 
-static bool add_platform_cap(struct acpi_nfit_desc *acpi_desc,
-		struct acpi_nfit_capabilities *pcap)
-{
-	struct device *dev = acpi_desc->dev;
+अटल bool add_platक्रमm_cap(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा acpi_nfit_capabilities *pcap)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
 	u32 mask;
 
 	mask = (1 << (pcap->highest_capability + 1)) - 1;
-	acpi_desc->platform_cap = pcap->capabilities & mask;
-	dev_dbg(dev, "cap: %#x\n", acpi_desc->platform_cap);
-	return true;
-}
+	acpi_desc->platक्रमm_cap = pcap->capabilities & mask;
+	dev_dbg(dev, "cap: %#x\n", acpi_desc->platक्रमm_cap);
+	वापस true;
+पूर्ण
 
-static void *add_table(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_table_prev *prev, void *table, const void *end)
-{
-	struct device *dev = acpi_desc->dev;
-	struct acpi_nfit_header *hdr;
-	void *err = ERR_PTR(-ENOMEM);
+अटल व्योम *add_table(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_table_prev *prev, व्योम *table, स्थिर व्योम *end)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा acpi_nfit_header *hdr;
+	व्योम *err = ERR_PTR(-ENOMEM);
 
-	if (table >= end)
-		return NULL;
+	अगर (table >= end)
+		वापस शून्य;
 
 	hdr = table;
-	if (!hdr->length) {
+	अगर (!hdr->length) अणु
 		dev_warn(dev, "found a zero length table '%d' parsing nfit\n",
 			hdr->type);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	switch (hdr->type) {
-	case ACPI_NFIT_TYPE_SYSTEM_ADDRESS:
-		if (!add_spa(acpi_desc, prev, table))
-			return err;
-		break;
-	case ACPI_NFIT_TYPE_MEMORY_MAP:
-		if (!add_memdev(acpi_desc, prev, table))
-			return err;
-		break;
-	case ACPI_NFIT_TYPE_CONTROL_REGION:
-		if (!add_dcr(acpi_desc, prev, table))
-			return err;
-		break;
-	case ACPI_NFIT_TYPE_DATA_REGION:
-		if (!add_bdw(acpi_desc, prev, table))
-			return err;
-		break;
-	case ACPI_NFIT_TYPE_INTERLEAVE:
-		if (!add_idt(acpi_desc, prev, table))
-			return err;
-		break;
-	case ACPI_NFIT_TYPE_FLUSH_ADDRESS:
-		if (!add_flush(acpi_desc, prev, table))
-			return err;
-		break;
-	case ACPI_NFIT_TYPE_SMBIOS:
+	चयन (hdr->type) अणु
+	हाल ACPI_NFIT_TYPE_SYSTEM_ADDRESS:
+		अगर (!add_spa(acpi_desc, prev, table))
+			वापस err;
+		अवरोध;
+	हाल ACPI_NFIT_TYPE_MEMORY_MAP:
+		अगर (!add_memdev(acpi_desc, prev, table))
+			वापस err;
+		अवरोध;
+	हाल ACPI_NFIT_TYPE_CONTROL_REGION:
+		अगर (!add_dcr(acpi_desc, prev, table))
+			वापस err;
+		अवरोध;
+	हाल ACPI_NFIT_TYPE_DATA_REGION:
+		अगर (!add_bdw(acpi_desc, prev, table))
+			वापस err;
+		अवरोध;
+	हाल ACPI_NFIT_TYPE_INTERLEAVE:
+		अगर (!add_idt(acpi_desc, prev, table))
+			वापस err;
+		अवरोध;
+	हाल ACPI_NFIT_TYPE_FLUSH_ADDRESS:
+		अगर (!add_flush(acpi_desc, prev, table))
+			वापस err;
+		अवरोध;
+	हाल ACPI_NFIT_TYPE_SMBIOS:
 		dev_dbg(dev, "smbios\n");
-		break;
-	case ACPI_NFIT_TYPE_CAPABILITIES:
-		if (!add_platform_cap(acpi_desc, table))
-			return err;
-		break;
-	default:
+		अवरोध;
+	हाल ACPI_NFIT_TYPE_CAPABILITIES:
+		अगर (!add_platक्रमm_cap(acpi_desc, table))
+			वापस err;
+		अवरोध;
+	शेष:
 		dev_err(dev, "unknown table '%d' parsing nfit\n", hdr->type);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return table + hdr->length;
-}
+	वापस table + hdr->length;
+पूर्ण
 
-static void nfit_mem_find_spa_bdw(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_mem *nfit_mem)
-{
+अटल व्योम nfit_mem_find_spa_bdw(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_mem *nfit_mem)
+अणु
 	u32 device_handle = __to_nfit_memdev(nfit_mem)->device_handle;
 	u16 dcr = nfit_mem->dcr->region_index;
-	struct nfit_spa *nfit_spa;
+	काष्ठा nfit_spa *nfit_spa;
 
-	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
+	list_क्रम_each_entry(nfit_spa, &acpi_desc->spas, list) अणु
 		u16 range_index = nfit_spa->spa->range_index;
-		int type = nfit_spa_type(nfit_spa->spa);
-		struct nfit_memdev *nfit_memdev;
+		पूर्णांक type = nfit_spa_type(nfit_spa->spa);
+		काष्ठा nfit_memdev *nfit_memdev;
 
-		if (type != NFIT_SPA_BDW)
-			continue;
+		अगर (type != NFIT_SPA_BDW)
+			जारी;
 
-		list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
-			if (nfit_memdev->memdev->range_index != range_index)
-				continue;
-			if (nfit_memdev->memdev->device_handle != device_handle)
-				continue;
-			if (nfit_memdev->memdev->region_index != dcr)
-				continue;
+		list_क्रम_each_entry(nfit_memdev, &acpi_desc->memdevs, list) अणु
+			अगर (nfit_memdev->memdev->range_index != range_index)
+				जारी;
+			अगर (nfit_memdev->memdev->device_handle != device_handle)
+				जारी;
+			अगर (nfit_memdev->memdev->region_index != dcr)
+				जारी;
 
 			nfit_mem->spa_bdw = nfit_spa->spa;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	dev_dbg(acpi_desc->dev, "SPA-BDW not found for SPA-DCR %d\n",
 			nfit_mem->spa_dcr->range_index);
-	nfit_mem->bdw = NULL;
-}
+	nfit_mem->bdw = शून्य;
+पूर्ण
 
-static void nfit_mem_init_bdw(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_mem *nfit_mem, struct acpi_nfit_system_address *spa)
-{
+अटल व्योम nfit_mem_init_bdw(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_mem *nfit_mem, काष्ठा acpi_nfit_प्रणाली_address *spa)
+अणु
 	u16 dcr = __to_nfit_memdev(nfit_mem)->region_index;
-	struct nfit_memdev *nfit_memdev;
-	struct nfit_bdw *nfit_bdw;
-	struct nfit_idt *nfit_idt;
+	काष्ठा nfit_memdev *nfit_memdev;
+	काष्ठा nfit_bdw *nfit_bdw;
+	काष्ठा nfit_idt *nfit_idt;
 	u16 idt_idx, range_index;
 
-	list_for_each_entry(nfit_bdw, &acpi_desc->bdws, list) {
-		if (nfit_bdw->bdw->region_index != dcr)
-			continue;
+	list_क्रम_each_entry(nfit_bdw, &acpi_desc->bdws, list) अणु
+		अगर (nfit_bdw->bdw->region_index != dcr)
+			जारी;
 		nfit_mem->bdw = nfit_bdw->bdw;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!nfit_mem->bdw)
-		return;
+	अगर (!nfit_mem->bdw)
+		वापस;
 
 	nfit_mem_find_spa_bdw(acpi_desc, nfit_mem);
 
-	if (!nfit_mem->spa_bdw)
-		return;
+	अगर (!nfit_mem->spa_bdw)
+		वापस;
 
 	range_index = nfit_mem->spa_bdw->range_index;
-	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
-		if (nfit_memdev->memdev->range_index != range_index ||
+	list_क्रम_each_entry(nfit_memdev, &acpi_desc->memdevs, list) अणु
+		अगर (nfit_memdev->memdev->range_index != range_index ||
 				nfit_memdev->memdev->region_index != dcr)
-			continue;
+			जारी;
 		nfit_mem->memdev_bdw = nfit_memdev->memdev;
-		idt_idx = nfit_memdev->memdev->interleave_index;
-		list_for_each_entry(nfit_idt, &acpi_desc->idts, list) {
-			if (nfit_idt->idt->interleave_index != idt_idx)
-				continue;
+		idt_idx = nfit_memdev->memdev->पूर्णांकerleave_index;
+		list_क्रम_each_entry(nfit_idt, &acpi_desc->idts, list) अणु
+			अगर (nfit_idt->idt->पूर्णांकerleave_index != idt_idx)
+				जारी;
 			nfit_mem->idt_bdw = nfit_idt->idt;
-			break;
-		}
-		break;
-	}
-}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int __nfit_mem_init(struct acpi_nfit_desc *acpi_desc,
-		struct acpi_nfit_system_address *spa)
-{
-	struct nfit_mem *nfit_mem, *found;
-	struct nfit_memdev *nfit_memdev;
-	int type = spa ? nfit_spa_type(spa) : 0;
+अटल पूर्णांक __nfit_mem_init(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा acpi_nfit_प्रणाली_address *spa)
+अणु
+	काष्ठा nfit_mem *nfit_mem, *found;
+	काष्ठा nfit_memdev *nfit_memdev;
+	पूर्णांक type = spa ? nfit_spa_type(spa) : 0;
 
-	switch (type) {
-	case NFIT_SPA_DCR:
-	case NFIT_SPA_PM:
-		break;
-	default:
-		if (spa)
-			return 0;
-	}
+	चयन (type) अणु
+	हाल NFIT_SPA_DCR:
+	हाल NFIT_SPA_PM:
+		अवरोध;
+	शेष:
+		अगर (spa)
+			वापस 0;
+	पूर्ण
 
 	/*
 	 * This loop runs in two modes, when a dimm is mapped the loop
 	 * adds memdev associations to an existing dimm, or creates a
-	 * dimm. In the unmapped dimm case this loop sweeps for memdev
+	 * dimm. In the unmapped dimm हाल this loop sweeps क्रम memdev
 	 * instances with an invalid / zero range_index and adds those
 	 * dimms without spa associations.
 	 */
-	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
-		struct nfit_flush *nfit_flush;
-		struct nfit_dcr *nfit_dcr;
+	list_क्रम_each_entry(nfit_memdev, &acpi_desc->memdevs, list) अणु
+		काष्ठा nfit_flush *nfit_flush;
+		काष्ठा nfit_dcr *nfit_dcr;
 		u32 device_handle;
 		u16 dcr;
 
-		if (spa && nfit_memdev->memdev->range_index != spa->range_index)
-			continue;
-		if (!spa && nfit_memdev->memdev->range_index)
-			continue;
-		found = NULL;
+		अगर (spa && nfit_memdev->memdev->range_index != spa->range_index)
+			जारी;
+		अगर (!spa && nfit_memdev->memdev->range_index)
+			जारी;
+		found = शून्य;
 		dcr = nfit_memdev->memdev->region_index;
 		device_handle = nfit_memdev->memdev->device_handle;
-		list_for_each_entry(nfit_mem, &acpi_desc->dimms, list)
-			if (__to_nfit_memdev(nfit_mem)->device_handle
-					== device_handle) {
+		list_क्रम_each_entry(nfit_mem, &acpi_desc->dimms, list)
+			अगर (__to_nfit_memdev(nfit_mem)->device_handle
+					== device_handle) अणु
 				found = nfit_mem;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		if (found)
+		अगर (found)
 			nfit_mem = found;
-		else {
+		अन्यथा अणु
 			nfit_mem = devm_kzalloc(acpi_desc->dev,
-					sizeof(*nfit_mem), GFP_KERNEL);
-			if (!nfit_mem)
-				return -ENOMEM;
+					माप(*nfit_mem), GFP_KERNEL);
+			अगर (!nfit_mem)
+				वापस -ENOMEM;
 			INIT_LIST_HEAD(&nfit_mem->list);
 			nfit_mem->acpi_desc = acpi_desc;
 			list_add(&nfit_mem->list, &acpi_desc->dimms);
-		}
+		पूर्ण
 
-		list_for_each_entry(nfit_dcr, &acpi_desc->dcrs, list) {
-			if (nfit_dcr->dcr->region_index != dcr)
-				continue;
+		list_क्रम_each_entry(nfit_dcr, &acpi_desc->dcrs, list) अणु
+			अगर (nfit_dcr->dcr->region_index != dcr)
+				जारी;
 			/*
-			 * Record the control region for the dimm.  For
-			 * the ACPI 6.1 case, where there are separate
-			 * control regions for the pmem vs blk
-			 * interfaces, be sure to record the extended
+			 * Record the control region क्रम the dimm.  For
+			 * the ACPI 6.1 हाल, where there are separate
+			 * control regions क्रम the pmem vs blk
+			 * पूर्णांकerfaces, be sure to record the extended
 			 * blk details.
 			 */
-			if (!nfit_mem->dcr)
+			अगर (!nfit_mem->dcr)
 				nfit_mem->dcr = nfit_dcr->dcr;
-			else if (nfit_mem->dcr->windows == 0
-					&& nfit_dcr->dcr->windows)
+			अन्यथा अगर (nfit_mem->dcr->winकरोws == 0
+					&& nfit_dcr->dcr->winकरोws)
 				nfit_mem->dcr = nfit_dcr->dcr;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		list_for_each_entry(nfit_flush, &acpi_desc->flushes, list) {
-			struct acpi_nfit_flush_address *flush;
+		list_क्रम_each_entry(nfit_flush, &acpi_desc->flushes, list) अणु
+			काष्ठा acpi_nfit_flush_address *flush;
 			u16 i;
 
-			if (nfit_flush->flush->device_handle != device_handle)
-				continue;
+			अगर (nfit_flush->flush->device_handle != device_handle)
+				जारी;
 			nfit_mem->nfit_flush = nfit_flush;
 			flush = nfit_flush->flush;
-			nfit_mem->flush_wpq = devm_kcalloc(acpi_desc->dev,
-					flush->hint_count,
-					sizeof(struct resource),
+			nfit_mem->flush_wpq = devm_kसुस्मृति(acpi_desc->dev,
+					flush->hपूर्णांक_count,
+					माप(काष्ठा resource),
 					GFP_KERNEL);
-			if (!nfit_mem->flush_wpq)
-				return -ENOMEM;
-			for (i = 0; i < flush->hint_count; i++) {
-				struct resource *res = &nfit_mem->flush_wpq[i];
+			अगर (!nfit_mem->flush_wpq)
+				वापस -ENOMEM;
+			क्रम (i = 0; i < flush->hपूर्णांक_count; i++) अणु
+				काष्ठा resource *res = &nfit_mem->flush_wpq[i];
 
-				res->start = flush->hint_address[i];
+				res->start = flush->hपूर्णांक_address[i];
 				res->end = res->start + 8 - 1;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		if (dcr && !nfit_mem->dcr) {
+		अगर (dcr && !nfit_mem->dcr) अणु
 			dev_err(acpi_desc->dev, "SPA %d missing DCR %d\n",
 					spa->range_index, dcr);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		if (type == NFIT_SPA_DCR) {
-			struct nfit_idt *nfit_idt;
+		अगर (type == NFIT_SPA_DCR) अणु
+			काष्ठा nfit_idt *nfit_idt;
 			u16 idt_idx;
 
-			/* multiple dimms may share a SPA when interleaved */
+			/* multiple dimms may share a SPA when पूर्णांकerleaved */
 			nfit_mem->spa_dcr = spa;
 			nfit_mem->memdev_dcr = nfit_memdev->memdev;
-			idt_idx = nfit_memdev->memdev->interleave_index;
-			list_for_each_entry(nfit_idt, &acpi_desc->idts, list) {
-				if (nfit_idt->idt->interleave_index != idt_idx)
-					continue;
+			idt_idx = nfit_memdev->memdev->पूर्णांकerleave_index;
+			list_क्रम_each_entry(nfit_idt, &acpi_desc->idts, list) अणु
+				अगर (nfit_idt->idt->पूर्णांकerleave_index != idt_idx)
+					जारी;
 				nfit_mem->idt_dcr = nfit_idt->idt;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			nfit_mem_init_bdw(acpi_desc, nfit_mem, spa);
-		} else if (type == NFIT_SPA_PM) {
+		पूर्ण अन्यथा अगर (type == NFIT_SPA_PM) अणु
 			/*
-			 * A single dimm may belong to multiple SPA-PM
+			 * A single dimm may beदीर्घ to multiple SPA-PM
 			 * ranges, record at least one in addition to
 			 * any SPA-DCR range.
 			 */
 			nfit_mem->memdev_pmem = nfit_memdev->memdev;
-		} else
+		पूर्ण अन्यथा
 			nfit_mem->memdev_dcr = nfit_memdev->memdev;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfit_mem_cmp(void *priv, const struct list_head *_a,
-		const struct list_head *_b)
-{
-	struct nfit_mem *a = container_of(_a, typeof(*a), list);
-	struct nfit_mem *b = container_of(_b, typeof(*b), list);
+अटल पूर्णांक nfit_mem_cmp(व्योम *priv, स्थिर काष्ठा list_head *_a,
+		स्थिर काष्ठा list_head *_b)
+अणु
+	काष्ठा nfit_mem *a = container_of(_a, typeof(*a), list);
+	काष्ठा nfit_mem *b = container_of(_b, typeof(*b), list);
 	u32 handleA, handleB;
 
 	handleA = __to_nfit_memdev(a)->device_handle;
 	handleB = __to_nfit_memdev(b)->device_handle;
-	if (handleA < handleB)
-		return -1;
-	else if (handleA > handleB)
-		return 1;
-	return 0;
-}
+	अगर (handleA < handleB)
+		वापस -1;
+	अन्यथा अगर (handleA > handleB)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int nfit_mem_init(struct acpi_nfit_desc *acpi_desc)
-{
-	struct nfit_spa *nfit_spa;
-	int rc;
+अटल पूर्णांक nfit_mem_init(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	काष्ठा nfit_spa *nfit_spa;
+	पूर्णांक rc;
 
 
 	/*
 	 * For each SPA-DCR or SPA-PMEM address range find its
 	 * corresponding MEMDEV(s).  From each MEMDEV find the
-	 * corresponding DCR.  Then, if we're operating on a SPA-DCR,
+	 * corresponding DCR.  Then, अगर we're operating on a SPA-DCR,
 	 * try to find a SPA-BDW and a corresponding BDW that references
-	 * the DCR.  Throw it all into an nfit_mem object.  Note, that
+	 * the DCR.  Throw it all पूर्णांकo an nfit_mem object.  Note, that
 	 * BDWs are optional.
 	 */
-	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
+	list_क्रम_each_entry(nfit_spa, &acpi_desc->spas, list) अणु
 		rc = __nfit_mem_init(acpi_desc, nfit_spa->spa);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	/*
-	 * If a DIMM has failed to be mapped into SPA there will be no
-	 * SPA entries above. Find and register all the unmapped DIMMs
-	 * for reporting and recovery purposes.
+	 * If a DIMM has failed to be mapped पूर्णांकo SPA there will be no
+	 * SPA entries above. Find and रेजिस्टर all the unmapped DIMMs
+	 * क्रम reporting and recovery purposes.
 	 */
-	rc = __nfit_mem_init(acpi_desc, NULL);
-	if (rc)
-		return rc;
+	rc = __nfit_mem_init(acpi_desc, शून्य);
+	अगर (rc)
+		वापस rc;
 
-	list_sort(NULL, &acpi_desc->dimms, nfit_mem_cmp);
+	list_sort(शून्य, &acpi_desc->dimms, nfit_mem_cmp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t bus_dsm_mask_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	struct nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
-	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+अटल sमाप_प्रकार bus_dsm_mask_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	काष्ठा nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
+	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
 
-	return sprintf(buf, "%#lx\n", acpi_desc->bus_dsm_mask);
-}
-static struct device_attribute dev_attr_bus_dsm_mask =
-		__ATTR(dsm_mask, 0444, bus_dsm_mask_show, NULL);
+	वापस प्र_लिखो(buf, "%#lx\n", acpi_desc->bus_dsm_mask);
+पूर्ण
+अटल काष्ठा device_attribute dev_attr_bus_dsm_mask =
+		__ATTR(dsm_mask, 0444, bus_dsm_mask_show, शून्य);
 
-static ssize_t revision_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	struct nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
-	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+अटल sमाप_प्रकार revision_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	काष्ठा nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
+	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
 
-	return sprintf(buf, "%d\n", acpi_desc->acpi_header.revision);
-}
-static DEVICE_ATTR_RO(revision);
+	वापस प्र_लिखो(buf, "%d\n", acpi_desc->acpi_header.revision);
+पूर्ण
+अटल DEVICE_ATTR_RO(revision);
 
-static ssize_t hw_error_scrub_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	struct nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
-	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+अटल sमाप_प्रकार hw_error_scrub_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	काष्ठा nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
+	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
 
-	return sprintf(buf, "%d\n", acpi_desc->scrub_mode);
-}
+	वापस प्र_लिखो(buf, "%d\n", acpi_desc->scrub_mode);
+पूर्ण
 
 /*
  * The 'hw_error_scrub' attribute can have the following values written to it:
- * '0': Switch to the default mode where an exception will only insert
- *      the address of the memory error into the poison and badblocks lists.
- * '1': Enable a full scrub to happen if an exception for a memory error is
+ * '0': Switch to the शेष mode where an exception will only insert
+ *      the address of the memory error पूर्णांकo the poison and badblocks lists.
+ * '1': Enable a full scrub to happen अगर an exception क्रम a memory error is
  *      received.
  */
-static ssize_t hw_error_scrub_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	struct nvdimm_bus_descriptor *nd_desc;
-	ssize_t rc;
-	long val;
+अटल sमाप_प्रकार hw_error_scrub_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc;
+	sमाप_प्रकार rc;
+	दीर्घ val;
 
-	rc = kstrtol(buf, 0, &val);
-	if (rc)
-		return rc;
+	rc = kम_से_दीर्घ(buf, 0, &val);
+	अगर (rc)
+		वापस rc;
 
 	nfit_device_lock(dev);
 	nd_desc = dev_get_drvdata(dev);
-	if (nd_desc) {
-		struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+	अगर (nd_desc) अणु
+		काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
 
-		switch (val) {
-		case HW_ERROR_SCRUB_ON:
+		चयन (val) अणु
+		हाल HW_ERROR_SCRUB_ON:
 			acpi_desc->scrub_mode = HW_ERROR_SCRUB_ON;
-			break;
-		case HW_ERROR_SCRUB_OFF:
+			अवरोध;
+		हाल HW_ERROR_SCRUB_OFF:
 			acpi_desc->scrub_mode = HW_ERROR_SCRUB_OFF;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			rc = -EINVAL;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	nfit_device_unlock(dev);
-	if (rc)
-		return rc;
-	return size;
-}
-static DEVICE_ATTR_RW(hw_error_scrub);
+	अगर (rc)
+		वापस rc;
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(hw_error_scrub);
 
 /*
  * This shows the number of full Address Range Scrubs that have been
- * completed since driver load time. Userspace can wait on this using
+ * completed since driver load समय. Userspace can रुको on this using
  * select/poll etc. A '+' at the end indicates an ARS is in progress
  */
-static ssize_t scrub_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm_bus_descriptor *nd_desc;
-	struct acpi_nfit_desc *acpi_desc;
-	ssize_t rc = -ENXIO;
+अटल sमाप_प्रकार scrub_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc;
+	काष्ठा acpi_nfit_desc *acpi_desc;
+	sमाप_प्रकार rc = -ENXIO;
 	bool busy;
 
 	nfit_device_lock(dev);
 	nd_desc = dev_get_drvdata(dev);
-	if (!nd_desc) {
+	अगर (!nd_desc) अणु
 		nfit_device_unlock(dev);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	acpi_desc = to_acpi_desc(nd_desc);
 
 	mutex_lock(&acpi_desc->init_mutex);
 	busy = test_bit(ARS_BUSY, &acpi_desc->scrub_flags)
 		&& !test_bit(ARS_CANCEL, &acpi_desc->scrub_flags);
-	rc = sprintf(buf, "%d%s", acpi_desc->scrub_count, busy ? "+\n" : "\n");
+	rc = प्र_लिखो(buf, "%d%s", acpi_desc->scrub_count, busy ? "+\n" : "\n");
 	/* Allow an admin to poll the busy state at a higher rate */
-	if (busy && capable(CAP_SYS_RAWIO) && !test_and_set_bit(ARS_POLL,
-				&acpi_desc->scrub_flags)) {
-		acpi_desc->scrub_tmo = 1;
+	अगर (busy && capable(CAP_SYS_RAWIO) && !test_and_set_bit(ARS_POLL,
+				&acpi_desc->scrub_flags)) अणु
+		acpi_desc->scrub_पंचांगo = 1;
 		mod_delayed_work(nfit_wq, &acpi_desc->dwork, HZ);
-	}
+	पूर्ण
 
 	mutex_unlock(&acpi_desc->init_mutex);
 	nfit_device_unlock(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t scrub_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	struct nvdimm_bus_descriptor *nd_desc;
-	ssize_t rc;
-	long val;
+अटल sमाप_प्रकार scrub_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc;
+	sमाप_प्रकार rc;
+	दीर्घ val;
 
-	rc = kstrtol(buf, 0, &val);
-	if (rc)
-		return rc;
-	if (val != 1)
-		return -EINVAL;
+	rc = kम_से_दीर्घ(buf, 0, &val);
+	अगर (rc)
+		वापस rc;
+	अगर (val != 1)
+		वापस -EINVAL;
 
 	nfit_device_lock(dev);
 	nd_desc = dev_get_drvdata(dev);
-	if (nd_desc) {
-		struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+	अगर (nd_desc) अणु
+		काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
 
 		rc = acpi_nfit_ars_rescan(acpi_desc, ARS_REQ_LONG);
-	}
+	पूर्ण
 	nfit_device_unlock(dev);
-	if (rc)
-		return rc;
-	return size;
-}
-static DEVICE_ATTR_RW(scrub);
+	अगर (rc)
+		वापस rc;
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(scrub);
 
-static bool ars_supported(struct nvdimm_bus *nvdimm_bus)
-{
-	struct nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
-	const unsigned long mask = 1 << ND_CMD_ARS_CAP | 1 << ND_CMD_ARS_START
+अटल bool ars_supported(काष्ठा nvdimm_bus *nvdimm_bus)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
+	स्थिर अचिन्हित दीर्घ mask = 1 << ND_CMD_ARS_CAP | 1 << ND_CMD_ARS_START
 		| 1 << ND_CMD_ARS_STATUS;
 
-	return (nd_desc->cmd_mask & mask) == mask;
-}
+	वापस (nd_desc->cmd_mask & mask) == mask;
+पूर्ण
 
-static umode_t nfit_visible(struct kobject *kobj, struct attribute *a, int n)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+अटल umode_t nfit_visible(काष्ठा kobject *kobj, काष्ठा attribute *a, पूर्णांक n)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
 
-	if (a == &dev_attr_scrub.attr)
-		return ars_supported(nvdimm_bus) ? a->mode : 0;
+	अगर (a == &dev_attr_scrub.attr)
+		वापस ars_supported(nvdimm_bus) ? a->mode : 0;
 
-	if (a == &dev_attr_firmware_activate_noidle.attr)
-		return intel_fwa_supported(nvdimm_bus) ? a->mode : 0;
+	अगर (a == &dev_attr_firmware_activate_noidle.attr)
+		वापस पूर्णांकel_fwa_supported(nvdimm_bus) ? a->mode : 0;
 
-	return a->mode;
-}
+	वापस a->mode;
+पूर्ण
 
-static struct attribute *acpi_nfit_attributes[] = {
+अटल काष्ठा attribute *acpi_nfit_attributes[] = अणु
 	&dev_attr_revision.attr,
 	&dev_attr_scrub.attr,
 	&dev_attr_hw_error_scrub.attr,
 	&dev_attr_bus_dsm_mask.attr,
 	&dev_attr_firmware_activate_noidle.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group acpi_nfit_attribute_group = {
+अटल स्थिर काष्ठा attribute_group acpi_nfit_attribute_group = अणु
 	.name = "nfit",
 	.attrs = acpi_nfit_attributes,
 	.is_visible = nfit_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *acpi_nfit_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *acpi_nfit_attribute_groups[] = अणु
 	&acpi_nfit_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct acpi_nfit_memory_map *to_nfit_memdev(struct device *dev)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+अटल काष्ठा acpi_nfit_memory_map *to_nfit_memdev(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
 
-	return __to_nfit_memdev(nfit_mem);
-}
+	वापस __to_nfit_memdev(nfit_mem);
+पूर्ण
 
-static struct acpi_nfit_control_region *to_nfit_dcr(struct device *dev)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+अटल काष्ठा acpi_nfit_control_region *to_nfit_dcr(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
 
-	return nfit_mem->dcr;
-}
+	वापस nfit_mem->dcr;
+पूर्ण
 
-static ssize_t handle_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct acpi_nfit_memory_map *memdev = to_nfit_memdev(dev);
+अटल sमाप_प्रकार handle_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा acpi_nfit_memory_map *memdev = to_nfit_memdev(dev);
 
-	return sprintf(buf, "%#x\n", memdev->device_handle);
-}
-static DEVICE_ATTR_RO(handle);
+	वापस प्र_लिखो(buf, "%#x\n", memdev->device_handle);
+पूर्ण
+अटल DEVICE_ATTR_RO(handle);
 
-static ssize_t phys_id_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct acpi_nfit_memory_map *memdev = to_nfit_memdev(dev);
+अटल sमाप_प्रकार phys_id_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा acpi_nfit_memory_map *memdev = to_nfit_memdev(dev);
 
-	return sprintf(buf, "%#x\n", memdev->physical_id);
-}
-static DEVICE_ATTR_RO(phys_id);
+	वापस प्र_लिखो(buf, "%#x\n", memdev->physical_id);
+पूर्ण
+अटल DEVICE_ATTR_RO(phys_id);
 
-static ssize_t vendor_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
+अटल sमाप_प्रकार venकरोr_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
 
-	return sprintf(buf, "0x%04x\n", be16_to_cpu(dcr->vendor_id));
-}
-static DEVICE_ATTR_RO(vendor);
+	वापस प्र_लिखो(buf, "0x%04x\n", be16_to_cpu(dcr->venकरोr_id));
+पूर्ण
+अटल DEVICE_ATTR_RO(venकरोr);
 
-static ssize_t rev_id_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
+अटल sमाप_प्रकार rev_id_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
 
-	return sprintf(buf, "0x%04x\n", be16_to_cpu(dcr->revision_id));
-}
-static DEVICE_ATTR_RO(rev_id);
+	वापस प्र_लिखो(buf, "0x%04x\n", be16_to_cpu(dcr->revision_id));
+पूर्ण
+अटल DEVICE_ATTR_RO(rev_id);
 
-static ssize_t device_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
+अटल sमाप_प्रकार device_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
 
-	return sprintf(buf, "0x%04x\n", be16_to_cpu(dcr->device_id));
-}
-static DEVICE_ATTR_RO(device);
+	वापस प्र_लिखो(buf, "0x%04x\n", be16_to_cpu(dcr->device_id));
+पूर्ण
+अटल DEVICE_ATTR_RO(device);
 
-static ssize_t subsystem_vendor_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
+अटल sमाप_प्रकार subप्रणाली_venकरोr_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
 
-	return sprintf(buf, "0x%04x\n", be16_to_cpu(dcr->subsystem_vendor_id));
-}
-static DEVICE_ATTR_RO(subsystem_vendor);
+	वापस प्र_लिखो(buf, "0x%04x\n", be16_to_cpu(dcr->subप्रणाली_venकरोr_id));
+पूर्ण
+अटल DEVICE_ATTR_RO(subप्रणाली_venकरोr);
 
-static ssize_t subsystem_rev_id_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
+अटल sमाप_प्रकार subप्रणाली_rev_id_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
 
-	return sprintf(buf, "0x%04x\n",
-			be16_to_cpu(dcr->subsystem_revision_id));
-}
-static DEVICE_ATTR_RO(subsystem_rev_id);
+	वापस प्र_लिखो(buf, "0x%04x\n",
+			be16_to_cpu(dcr->subप्रणाली_revision_id));
+पूर्ण
+अटल DEVICE_ATTR_RO(subप्रणाली_rev_id);
 
-static ssize_t subsystem_device_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
+अटल sमाप_प्रकार subप्रणाली_device_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
 
-	return sprintf(buf, "0x%04x\n", be16_to_cpu(dcr->subsystem_device_id));
-}
-static DEVICE_ATTR_RO(subsystem_device);
+	वापस प्र_लिखो(buf, "0x%04x\n", be16_to_cpu(dcr->subप्रणाली_device_id));
+पूर्ण
+अटल DEVICE_ATTR_RO(subप्रणाली_device);
 
-static int num_nvdimm_formats(struct nvdimm *nvdimm)
-{
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-	int formats = 0;
+अटल पूर्णांक num_nvdimm_क्रमmats(काष्ठा nvdimm *nvdimm)
+अणु
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+	पूर्णांक क्रमmats = 0;
 
-	if (nfit_mem->memdev_pmem)
-		formats++;
-	if (nfit_mem->memdev_bdw)
-		formats++;
-	return formats;
-}
+	अगर (nfit_mem->memdev_pmem)
+		क्रमmats++;
+	अगर (nfit_mem->memdev_bdw)
+		क्रमmats++;
+	वापस क्रमmats;
+पूर्ण
 
-static ssize_t format_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
+अटल sमाप_प्रकार क्रमmat_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
 
-	return sprintf(buf, "0x%04x\n", le16_to_cpu(dcr->code));
-}
-static DEVICE_ATTR_RO(format);
+	वापस प्र_लिखो(buf, "0x%04x\n", le16_to_cpu(dcr->code));
+पूर्ण
+अटल DEVICE_ATTR_RO(क्रमmat);
 
-static ssize_t format1_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार क्रमmat1_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	u32 handle;
-	ssize_t rc = -ENXIO;
-	struct nfit_mem *nfit_mem;
-	struct nfit_memdev *nfit_memdev;
-	struct acpi_nfit_desc *acpi_desc;
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
+	sमाप_प्रकार rc = -ENXIO;
+	काष्ठा nfit_mem *nfit_mem;
+	काष्ठा nfit_memdev *nfit_memdev;
+	काष्ठा acpi_nfit_desc *acpi_desc;
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
 
 	nfit_mem = nvdimm_provider_data(nvdimm);
 	acpi_desc = nfit_mem->acpi_desc;
 	handle = to_nfit_memdev(dev)->device_handle;
 
-	/* assumes DIMMs have at most 2 published interface codes */
+	/* assumes DIMMs have at most 2 published पूर्णांकerface codes */
 	mutex_lock(&acpi_desc->init_mutex);
-	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
-		struct acpi_nfit_memory_map *memdev = nfit_memdev->memdev;
-		struct nfit_dcr *nfit_dcr;
+	list_क्रम_each_entry(nfit_memdev, &acpi_desc->memdevs, list) अणु
+		काष्ठा acpi_nfit_memory_map *memdev = nfit_memdev->memdev;
+		काष्ठा nfit_dcr *nfit_dcr;
 
-		if (memdev->device_handle != handle)
-			continue;
+		अगर (memdev->device_handle != handle)
+			जारी;
 
-		list_for_each_entry(nfit_dcr, &acpi_desc->dcrs, list) {
-			if (nfit_dcr->dcr->region_index != memdev->region_index)
-				continue;
-			if (nfit_dcr->dcr->code == dcr->code)
-				continue;
-			rc = sprintf(buf, "0x%04x\n",
+		list_क्रम_each_entry(nfit_dcr, &acpi_desc->dcrs, list) अणु
+			अगर (nfit_dcr->dcr->region_index != memdev->region_index)
+				जारी;
+			अगर (nfit_dcr->dcr->code == dcr->code)
+				जारी;
+			rc = प्र_लिखो(buf, "0x%04x\n",
 					le16_to_cpu(nfit_dcr->dcr->code));
-			break;
-		}
-		if (rc != -ENXIO)
-			break;
-	}
+			अवरोध;
+		पूर्ण
+		अगर (rc != -ENXIO)
+			अवरोध;
+	पूर्ण
 	mutex_unlock(&acpi_desc->init_mutex);
-	return rc;
-}
-static DEVICE_ATTR_RO(format1);
+	वापस rc;
+पूर्ण
+अटल DEVICE_ATTR_RO(क्रमmat1);
 
-static ssize_t formats_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
+अटल sमाप_प्रकार क्रमmats_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
 
-	return sprintf(buf, "%d\n", num_nvdimm_formats(nvdimm));
-}
-static DEVICE_ATTR_RO(formats);
+	वापस प्र_लिखो(buf, "%d\n", num_nvdimm_क्रमmats(nvdimm));
+पूर्ण
+अटल DEVICE_ATTR_RO(क्रमmats);
 
-static ssize_t serial_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
+अटल sमाप_प्रकार serial_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा acpi_nfit_control_region *dcr = to_nfit_dcr(dev);
 
-	return sprintf(buf, "0x%08x\n", be32_to_cpu(dcr->serial_number));
-}
-static DEVICE_ATTR_RO(serial);
+	वापस प्र_लिखो(buf, "0x%08x\n", be32_to_cpu(dcr->serial_number));
+पूर्ण
+अटल DEVICE_ATTR_RO(serial);
 
-static ssize_t family_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+अटल sमाप_प्रकार family_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
 
-	if (nfit_mem->family < 0)
-		return -ENXIO;
-	return sprintf(buf, "%d\n", nfit_mem->family);
-}
-static DEVICE_ATTR_RO(family);
+	अगर (nfit_mem->family < 0)
+		वापस -ENXIO;
+	वापस प्र_लिखो(buf, "%d\n", nfit_mem->family);
+पूर्ण
+अटल DEVICE_ATTR_RO(family);
 
-static ssize_t dsm_mask_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+अटल sमाप_प्रकार dsm_mask_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
 
-	if (nfit_mem->family < 0)
-		return -ENXIO;
-	return sprintf(buf, "%#lx\n", nfit_mem->dsm_mask);
-}
-static DEVICE_ATTR_RO(dsm_mask);
+	अगर (nfit_mem->family < 0)
+		वापस -ENXIO;
+	वापस प्र_लिखो(buf, "%#lx\n", nfit_mem->dsm_mask);
+पूर्ण
+अटल DEVICE_ATTR_RO(dsm_mask);
 
-static ssize_t flags_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+अटल sमाप_प्रकार flags_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
 	u16 flags = __to_nfit_memdev(nfit_mem)->flags;
 
-	if (test_bit(NFIT_MEM_DIRTY, &nfit_mem->flags))
+	अगर (test_bit(NFIT_MEM_सूचीTY, &nfit_mem->flags))
 		flags |= ACPI_NFIT_MEM_FLUSH_FAILED;
 
-	return sprintf(buf, "%s%s%s%s%s%s%s\n",
+	वापस प्र_लिखो(buf, "%s%s%s%s%s%s%s\n",
 		flags & ACPI_NFIT_MEM_SAVE_FAILED ? "save_fail " : "",
 		flags & ACPI_NFIT_MEM_RESTORE_FAILED ? "restore_fail " : "",
 		flags & ACPI_NFIT_MEM_FLUSH_FAILED ? "flush_fail " : "",
@@ -1645,504 +1646,504 @@ static ssize_t flags_show(struct device *dev,
 		flags & ACPI_NFIT_MEM_HEALTH_OBSERVED ? "smart_event " : "",
 		flags & ACPI_NFIT_MEM_MAP_FAILED ? "map_fail " : "",
 		flags & ACPI_NFIT_MEM_HEALTH_ENABLED ? "smart_notify " : "");
-}
-static DEVICE_ATTR_RO(flags);
+पूर्ण
+अटल DEVICE_ATTR_RO(flags);
 
-static ssize_t id_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+अटल sमाप_प्रकार id_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
 
-	return sprintf(buf, "%s\n", nfit_mem->id);
-}
-static DEVICE_ATTR_RO(id);
+	वापस प्र_लिखो(buf, "%s\n", nfit_mem->id);
+पूर्ण
+अटल DEVICE_ATTR_RO(id);
 
-static ssize_t dirty_shutdown_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+अटल sमाप_प्रकार dirty_shutकरोwn_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
 
-	return sprintf(buf, "%d\n", nfit_mem->dirty_shutdown);
-}
-static DEVICE_ATTR_RO(dirty_shutdown);
+	वापस प्र_लिखो(buf, "%d\n", nfit_mem->dirty_shutकरोwn);
+पूर्ण
+अटल DEVICE_ATTR_RO(dirty_shutकरोwn);
 
-static struct attribute *acpi_nfit_dimm_attributes[] = {
+अटल काष्ठा attribute *acpi_nfit_dimm_attributes[] = अणु
 	&dev_attr_handle.attr,
 	&dev_attr_phys_id.attr,
-	&dev_attr_vendor.attr,
+	&dev_attr_venकरोr.attr,
 	&dev_attr_device.attr,
 	&dev_attr_rev_id.attr,
-	&dev_attr_subsystem_vendor.attr,
-	&dev_attr_subsystem_device.attr,
-	&dev_attr_subsystem_rev_id.attr,
-	&dev_attr_format.attr,
-	&dev_attr_formats.attr,
-	&dev_attr_format1.attr,
+	&dev_attr_subप्रणाली_venकरोr.attr,
+	&dev_attr_subप्रणाली_device.attr,
+	&dev_attr_subप्रणाली_rev_id.attr,
+	&dev_attr_क्रमmat.attr,
+	&dev_attr_क्रमmats.attr,
+	&dev_attr_क्रमmat1.attr,
 	&dev_attr_serial.attr,
 	&dev_attr_flags.attr,
 	&dev_attr_id.attr,
 	&dev_attr_family.attr,
 	&dev_attr_dsm_mask.attr,
-	&dev_attr_dirty_shutdown.attr,
-	NULL,
-};
+	&dev_attr_dirty_shutकरोwn.attr,
+	शून्य,
+पूर्ण;
 
-static umode_t acpi_nfit_dimm_attr_visible(struct kobject *kobj,
-		struct attribute *a, int n)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+अटल umode_t acpi_nfit_dimm_attr_visible(काष्ठा kobject *kobj,
+		काष्ठा attribute *a, पूर्णांक n)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
 
-	if (!to_nfit_dcr(dev)) {
+	अगर (!to_nfit_dcr(dev)) अणु
 		/* Without a dcr only the memdev attributes can be surfaced */
-		if (a == &dev_attr_handle.attr || a == &dev_attr_phys_id.attr
+		अगर (a == &dev_attr_handle.attr || a == &dev_attr_phys_id.attr
 				|| a == &dev_attr_flags.attr
 				|| a == &dev_attr_family.attr
 				|| a == &dev_attr_dsm_mask.attr)
-			return a->mode;
-		return 0;
-	}
+			वापस a->mode;
+		वापस 0;
+	पूर्ण
 
-	if (a == &dev_attr_format1.attr && num_nvdimm_formats(nvdimm) <= 1)
-		return 0;
+	अगर (a == &dev_attr_क्रमmat1.attr && num_nvdimm_क्रमmats(nvdimm) <= 1)
+		वापस 0;
 
-	if (!test_bit(NFIT_MEM_DIRTY_COUNT, &nfit_mem->flags)
-			&& a == &dev_attr_dirty_shutdown.attr)
-		return 0;
+	अगर (!test_bit(NFIT_MEM_सूचीTY_COUNT, &nfit_mem->flags)
+			&& a == &dev_attr_dirty_shutकरोwn.attr)
+		वापस 0;
 
-	return a->mode;
-}
+	वापस a->mode;
+पूर्ण
 
-static const struct attribute_group acpi_nfit_dimm_attribute_group = {
+अटल स्थिर काष्ठा attribute_group acpi_nfit_dimm_attribute_group = अणु
 	.name = "nfit",
 	.attrs = acpi_nfit_dimm_attributes,
 	.is_visible = acpi_nfit_dimm_attr_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *acpi_nfit_dimm_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *acpi_nfit_dimm_attribute_groups[] = अणु
 	&acpi_nfit_dimm_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct nvdimm *acpi_nfit_dimm_by_handle(struct acpi_nfit_desc *acpi_desc,
+अटल काष्ठा nvdimm *acpi_nfit_dimm_by_handle(काष्ठा acpi_nfit_desc *acpi_desc,
 		u32 device_handle)
-{
-	struct nfit_mem *nfit_mem;
+अणु
+	काष्ठा nfit_mem *nfit_mem;
 
-	list_for_each_entry(nfit_mem, &acpi_desc->dimms, list)
-		if (__to_nfit_memdev(nfit_mem)->device_handle == device_handle)
-			return nfit_mem->nvdimm;
+	list_क्रम_each_entry(nfit_mem, &acpi_desc->dimms, list)
+		अगर (__to_nfit_memdev(nfit_mem)->device_handle == device_handle)
+			वापस nfit_mem->nvdimm;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void __acpi_nvdimm_notify(struct device *dev, u32 event)
-{
-	struct nfit_mem *nfit_mem;
-	struct acpi_nfit_desc *acpi_desc;
+व्योम __acpi_nvdimm_notअगरy(काष्ठा device *dev, u32 event)
+अणु
+	काष्ठा nfit_mem *nfit_mem;
+	काष्ठा acpi_nfit_desc *acpi_desc;
 
 	dev_dbg(dev->parent, "%s: event: %d\n", dev_name(dev),
 			event);
 
-	if (event != NFIT_NOTIFY_DIMM_HEALTH) {
+	अगर (event != NFIT_NOTIFY_DIMM_HEALTH) अणु
 		dev_dbg(dev->parent, "%s: unknown event: %d\n", dev_name(dev),
 				event);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	acpi_desc = dev_get_drvdata(dev->parent);
-	if (!acpi_desc)
-		return;
+	अगर (!acpi_desc)
+		वापस;
 
 	/*
 	 * If we successfully retrieved acpi_desc, then we know nfit_mem data
 	 * is still valid.
 	 */
 	nfit_mem = dev_get_drvdata(dev);
-	if (nfit_mem && nfit_mem->flags_attr)
-		sysfs_notify_dirent(nfit_mem->flags_attr);
-}
-EXPORT_SYMBOL_GPL(__acpi_nvdimm_notify);
+	अगर (nfit_mem && nfit_mem->flags_attr)
+		sysfs_notअगरy_dirent(nfit_mem->flags_attr);
+पूर्ण
+EXPORT_SYMBOL_GPL(__acpi_nvdimm_notअगरy);
 
-static void acpi_nvdimm_notify(acpi_handle handle, u32 event, void *data)
-{
-	struct acpi_device *adev = data;
-	struct device *dev = &adev->dev;
+अटल व्योम acpi_nvdimm_notअगरy(acpi_handle handle, u32 event, व्योम *data)
+अणु
+	काष्ठा acpi_device *adev = data;
+	काष्ठा device *dev = &adev->dev;
 
 	nfit_device_lock(dev->parent);
-	__acpi_nvdimm_notify(dev, event);
+	__acpi_nvdimm_notअगरy(dev, event);
 	nfit_device_unlock(dev->parent);
-}
+पूर्ण
 
-static bool acpi_nvdimm_has_method(struct acpi_device *adev, char *method)
-{
+अटल bool acpi_nvdimm_has_method(काष्ठा acpi_device *adev, अक्षर *method)
+अणु
 	acpi_handle handle;
 	acpi_status status;
 
 	status = acpi_get_handle(adev->handle, method, &handle);
 
-	if (ACPI_SUCCESS(status))
-		return true;
-	return false;
-}
+	अगर (ACPI_SUCCESS(status))
+		वापस true;
+	वापस false;
+पूर्ण
 
-__weak void nfit_intel_shutdown_status(struct nfit_mem *nfit_mem)
-{
-	struct device *dev = &nfit_mem->adev->dev;
-	struct nd_intel_smart smart = { 0 };
-	union acpi_object in_buf = {
+__weak व्योम nfit_पूर्णांकel_shutकरोwn_status(काष्ठा nfit_mem *nfit_mem)
+अणु
+	काष्ठा device *dev = &nfit_mem->adev->dev;
+	काष्ठा nd_पूर्णांकel_smart smart = अणु 0 पूर्ण;
+	जोड़ acpi_object in_buf = अणु
 		.buffer.type = ACPI_TYPE_BUFFER,
 		.buffer.length = 0,
-	};
-	union acpi_object in_obj = {
+	पूर्ण;
+	जोड़ acpi_object in_obj = अणु
 		.package.type = ACPI_TYPE_PACKAGE,
 		.package.count = 1,
 		.package.elements = &in_buf,
-	};
-	const u8 func = ND_INTEL_SMART;
-	const guid_t *guid = to_nfit_uuid(nfit_mem->family);
+	पूर्ण;
+	स्थिर u8 func = ND_INTEL_SMART;
+	स्थिर guid_t *guid = to_nfit_uuid(nfit_mem->family);
 	u8 revid = nfit_dsm_revid(nfit_mem->family, func);
-	struct acpi_device *adev = nfit_mem->adev;
+	काष्ठा acpi_device *adev = nfit_mem->adev;
 	acpi_handle handle = adev->handle;
-	union acpi_object *out_obj;
+	जोड़ acpi_object *out_obj;
 
-	if ((nfit_mem->dsm_mask & (1 << func)) == 0)
-		return;
+	अगर ((nfit_mem->dsm_mask & (1 << func)) == 0)
+		वापस;
 
 	out_obj = acpi_evaluate_dsm(handle, guid, revid, func, &in_obj);
-	if (!out_obj || out_obj->type != ACPI_TYPE_BUFFER
-			|| out_obj->buffer.length < sizeof(smart)) {
+	अगर (!out_obj || out_obj->type != ACPI_TYPE_BUFFER
+			|| out_obj->buffer.length < माप(smart)) अणु
 		dev_dbg(dev->parent, "%s: failed to retrieve initial health\n",
 				dev_name(dev));
 		ACPI_FREE(out_obj);
-		return;
-	}
-	memcpy(&smart, out_obj->buffer.pointer, sizeof(smart));
+		वापस;
+	पूर्ण
+	स_नकल(&smart, out_obj->buffer.poपूर्णांकer, माप(smart));
 	ACPI_FREE(out_obj);
 
-	if (smart.flags & ND_INTEL_SMART_SHUTDOWN_VALID) {
-		if (smart.shutdown_state)
-			set_bit(NFIT_MEM_DIRTY, &nfit_mem->flags);
-	}
+	अगर (smart.flags & ND_INTEL_SMART_SHUTDOWN_VALID) अणु
+		अगर (smart.shutकरोwn_state)
+			set_bit(NFIT_MEM_सूचीTY, &nfit_mem->flags);
+	पूर्ण
 
-	if (smart.flags & ND_INTEL_SMART_SHUTDOWN_COUNT_VALID) {
-		set_bit(NFIT_MEM_DIRTY_COUNT, &nfit_mem->flags);
-		nfit_mem->dirty_shutdown = smart.shutdown_count;
-	}
-}
+	अगर (smart.flags & ND_INTEL_SMART_SHUTDOWN_COUNT_VALID) अणु
+		set_bit(NFIT_MEM_सूचीTY_COUNT, &nfit_mem->flags);
+		nfit_mem->dirty_shutकरोwn = smart.shutकरोwn_count;
+	पूर्ण
+पूर्ण
 
-static void populate_shutdown_status(struct nfit_mem *nfit_mem)
-{
+अटल व्योम populate_shutकरोwn_status(काष्ठा nfit_mem *nfit_mem)
+अणु
 	/*
 	 * For DIMMs that provide a dynamic facility to retrieve a
-	 * dirty-shutdown status and/or a dirty-shutdown count, cache
+	 * dirty-shutकरोwn status and/or a dirty-shutकरोwn count, cache
 	 * these values in nfit_mem.
 	 */
-	if (nfit_mem->family == NVDIMM_FAMILY_INTEL)
-		nfit_intel_shutdown_status(nfit_mem);
-}
+	अगर (nfit_mem->family == NVDIMM_FAMILY_INTEL)
+		nfit_पूर्णांकel_shutकरोwn_status(nfit_mem);
+पूर्ण
 
-static int acpi_nfit_add_dimm(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_mem *nfit_mem, u32 device_handle)
-{
-	struct nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
-	struct acpi_device *adev, *adev_dimm;
-	struct device *dev = acpi_desc->dev;
-	unsigned long dsm_mask, label_mask;
-	const guid_t *guid;
-	int i;
-	int family = -1;
-	struct acpi_nfit_control_region *dcr = nfit_mem->dcr;
+अटल पूर्णांक acpi_nfit_add_dimm(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_mem *nfit_mem, u32 device_handle)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
+	काष्ठा acpi_device *adev, *adev_dimm;
+	काष्ठा device *dev = acpi_desc->dev;
+	अचिन्हित दीर्घ dsm_mask, label_mask;
+	स्थिर guid_t *guid;
+	पूर्णांक i;
+	पूर्णांक family = -1;
+	काष्ठा acpi_nfit_control_region *dcr = nfit_mem->dcr;
 
 	/* nfit test assumes 1:1 relationship between commands and dsms */
-	nfit_mem->dsm_mask = acpi_desc->dimm_cmd_force_en;
+	nfit_mem->dsm_mask = acpi_desc->dimm_cmd_क्रमce_en;
 	nfit_mem->family = NVDIMM_FAMILY_INTEL;
 	set_bit(NVDIMM_FAMILY_INTEL, &nd_desc->dimm_family_mask);
 
-	if (dcr->valid_fields & ACPI_NFIT_CONTROL_MFG_INFO_VALID)
-		sprintf(nfit_mem->id, "%04x-%02x-%04x-%08x",
-				be16_to_cpu(dcr->vendor_id),
+	अगर (dcr->valid_fields & ACPI_NFIT_CONTROL_MFG_INFO_VALID)
+		प्र_लिखो(nfit_mem->id, "%04x-%02x-%04x-%08x",
+				be16_to_cpu(dcr->venकरोr_id),
 				dcr->manufacturing_location,
 				be16_to_cpu(dcr->manufacturing_date),
 				be32_to_cpu(dcr->serial_number));
-	else
-		sprintf(nfit_mem->id, "%04x-%08x",
-				be16_to_cpu(dcr->vendor_id),
+	अन्यथा
+		प्र_लिखो(nfit_mem->id, "%04x-%08x",
+				be16_to_cpu(dcr->venकरोr_id),
 				be32_to_cpu(dcr->serial_number));
 
 	adev = to_acpi_dev(acpi_desc);
-	if (!adev) {
-		/* unit test case */
-		populate_shutdown_status(nfit_mem);
-		return 0;
-	}
+	अगर (!adev) अणु
+		/* unit test हाल */
+		populate_shutकरोwn_status(nfit_mem);
+		वापस 0;
+	पूर्ण
 
 	adev_dimm = acpi_find_child_device(adev, device_handle, false);
 	nfit_mem->adev = adev_dimm;
-	if (!adev_dimm) {
+	अगर (!adev_dimm) अणु
 		dev_err(dev, "no ACPI.NFIT device with _ADR %#x, disabling...\n",
 				device_handle);
-		return force_enable_dimms ? 0 : -ENODEV;
-	}
+		वापस क्रमce_enable_dimms ? 0 : -ENODEV;
+	पूर्ण
 
-	if (ACPI_FAILURE(acpi_install_notify_handler(adev_dimm->handle,
-		ACPI_DEVICE_NOTIFY, acpi_nvdimm_notify, adev_dimm))) {
+	अगर (ACPI_FAILURE(acpi_install_notअगरy_handler(adev_dimm->handle,
+		ACPI_DEVICE_NOTIFY, acpi_nvdimm_notअगरy, adev_dimm))) अणु
 		dev_err(dev, "%s: notification registration failed\n",
 				dev_name(&adev_dimm->dev));
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	/*
-	 * Record nfit_mem for the notification path to track back to
-	 * the nfit sysfs attributes for this dimm device object.
+	 * Record nfit_mem क्रम the notअगरication path to track back to
+	 * the nfit sysfs attributes क्रम this dimm device object.
 	 */
 	dev_set_drvdata(&adev_dimm->dev, nfit_mem);
 
 	/*
 	 * There are 4 "legacy" NVDIMM command sets
-	 * (NVDIMM_FAMILY_{INTEL,MSFT,HPE1,HPE2}) that were created before
-	 * an EFI working group was established to constrain this
-	 * proliferation. The nfit driver probes for the supported command
-	 * set by GUID. Note, if you're a platform developer looking to add
+	 * (NVDIMM_FAMILY_अणुINTEL,MSFT,HPE1,HPE2पूर्ण) that were created beक्रमe
+	 * an EFI working group was established to स्थिरrain this
+	 * prolअगरeration. The nfit driver probes क्रम the supported command
+	 * set by GUID. Note, अगर you're a platक्रमm developer looking to add
 	 * a new command set to this probe, consider using an existing set,
 	 * or otherwise seek approval to publish the command set at
 	 * http://www.uefi.org/RFIC_LIST.
 	 *
-	 * Note, that checking for function0 (bit0) tells us if any commands
+	 * Note, that checking क्रम function0 (bit0) tells us अगर any commands
 	 * are reachable through this GUID.
 	 */
 	clear_bit(NVDIMM_FAMILY_INTEL, &nd_desc->dimm_family_mask);
-	for (i = 0; i <= NVDIMM_FAMILY_MAX; i++)
-		if (acpi_check_dsm(adev_dimm->handle, to_nfit_uuid(i), 1, 1)) {
+	क्रम (i = 0; i <= NVDIMM_FAMILY_MAX; i++)
+		अगर (acpi_check_dsm(adev_dimm->handle, to_nfit_uuid(i), 1, 1)) अणु
 			set_bit(i, &nd_desc->dimm_family_mask);
-			if (family < 0 || i == default_dsm_family)
+			अगर (family < 0 || i == शेष_dsm_family)
 				family = i;
-		}
+		पूर्ण
 
-	/* limit the supported commands to those that are publicly documented */
+	/* limit the supported commands to those that are खुलाly करोcumented */
 	nfit_mem->family = family;
-	if (override_dsm_mask && !disable_vendor_specific)
+	अगर (override_dsm_mask && !disable_venकरोr_specअगरic)
 		dsm_mask = override_dsm_mask;
-	else if (nfit_mem->family == NVDIMM_FAMILY_INTEL) {
+	अन्यथा अगर (nfit_mem->family == NVDIMM_FAMILY_INTEL) अणु
 		dsm_mask = NVDIMM_INTEL_CMDMASK;
-		if (disable_vendor_specific)
+		अगर (disable_venकरोr_specअगरic)
 			dsm_mask &= ~(1 << ND_CMD_VENDOR);
-	} else if (nfit_mem->family == NVDIMM_FAMILY_HPE1) {
+	पूर्ण अन्यथा अगर (nfit_mem->family == NVDIMM_FAMILY_HPE1) अणु
 		dsm_mask = 0x1c3c76;
-	} else if (nfit_mem->family == NVDIMM_FAMILY_HPE2) {
+	पूर्ण अन्यथा अगर (nfit_mem->family == NVDIMM_FAMILY_HPE2) अणु
 		dsm_mask = 0x1fe;
-		if (disable_vendor_specific)
+		अगर (disable_venकरोr_specअगरic)
 			dsm_mask &= ~(1 << 8);
-	} else if (nfit_mem->family == NVDIMM_FAMILY_MSFT) {
+	पूर्ण अन्यथा अगर (nfit_mem->family == NVDIMM_FAMILY_MSFT) अणु
 		dsm_mask = 0xffffffff;
-	} else if (nfit_mem->family == NVDIMM_FAMILY_HYPERV) {
+	पूर्ण अन्यथा अगर (nfit_mem->family == NVDIMM_FAMILY_HYPERV) अणु
 		dsm_mask = 0x1f;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(dev, "unknown dimm command family\n");
 		nfit_mem->family = -1;
-		/* DSMs are optional, continue loading the driver... */
-		return 0;
-	}
+		/* DSMs are optional, जारी loading the driver... */
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * Function 0 is the command interrogation function, don't
+	 * Function 0 is the command पूर्णांकerrogation function, करोn't
 	 * export it to potential userspace use, and enable it to be
 	 * used as an error value in acpi_nfit_ctl().
 	 */
 	dsm_mask &= ~1UL;
 
 	guid = to_nfit_uuid(nfit_mem->family);
-	for_each_set_bit(i, &dsm_mask, BITS_PER_LONG)
-		if (acpi_check_dsm(adev_dimm->handle, guid,
+	क्रम_each_set_bit(i, &dsm_mask, BITS_PER_LONG)
+		अगर (acpi_check_dsm(adev_dimm->handle, guid,
 					nfit_dsm_revid(nfit_mem->family, i),
 					1ULL << i))
 			set_bit(i, &nfit_mem->dsm_mask);
 
 	/*
-	 * Prefer the NVDIMM_FAMILY_INTEL label read commands if present
+	 * Prefer the NVDIMM_FAMILY_INTEL label पढ़ो commands अगर present
 	 * due to their better semantics handling locked capacity.
 	 */
 	label_mask = 1 << ND_CMD_GET_CONFIG_SIZE | 1 << ND_CMD_GET_CONFIG_DATA
 		| 1 << ND_CMD_SET_CONFIG_DATA;
-	if (family == NVDIMM_FAMILY_INTEL
+	अगर (family == NVDIMM_FAMILY_INTEL
 			&& (dsm_mask & label_mask) == label_mask)
-		/* skip _LS{I,R,W} enabling */;
-	else {
-		if (acpi_nvdimm_has_method(adev_dimm, "_LSI")
-				&& acpi_nvdimm_has_method(adev_dimm, "_LSR")) {
+		/* skip _LSअणुI,R,Wपूर्ण enabling */;
+	अन्यथा अणु
+		अगर (acpi_nvdimm_has_method(adev_dimm, "_LSI")
+				&& acpi_nvdimm_has_method(adev_dimm, "_LSR")) अणु
 			dev_dbg(dev, "%s: has _LSR\n", dev_name(&adev_dimm->dev));
 			set_bit(NFIT_MEM_LSR, &nfit_mem->flags);
-		}
+		पूर्ण
 
-		if (test_bit(NFIT_MEM_LSR, &nfit_mem->flags)
-				&& acpi_nvdimm_has_method(adev_dimm, "_LSW")) {
+		अगर (test_bit(NFIT_MEM_LSR, &nfit_mem->flags)
+				&& acpi_nvdimm_has_method(adev_dimm, "_LSW")) अणु
 			dev_dbg(dev, "%s: has _LSW\n", dev_name(&adev_dimm->dev));
 			set_bit(NFIT_MEM_LSW, &nfit_mem->flags);
-		}
+		पूर्ण
 
 		/*
-		 * Quirk read-only label configurations to preserve
-		 * access to label-less namespaces by default.
+		 * Quirk पढ़ो-only label configurations to preserve
+		 * access to label-less namespaces by शेष.
 		 */
-		if (!test_bit(NFIT_MEM_LSW, &nfit_mem->flags)
-				&& !force_labels) {
+		अगर (!test_bit(NFIT_MEM_LSW, &nfit_mem->flags)
+				&& !क्रमce_labels) अणु
 			dev_dbg(dev, "%s: No _LSW, disable labels\n",
 					dev_name(&adev_dimm->dev));
 			clear_bit(NFIT_MEM_LSR, &nfit_mem->flags);
-		} else
+		पूर्ण अन्यथा
 			dev_dbg(dev, "%s: Force enable labels\n",
 					dev_name(&adev_dimm->dev));
-	}
+	पूर्ण
 
-	populate_shutdown_status(nfit_mem);
+	populate_shutकरोwn_status(nfit_mem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void shutdown_dimm_notify(void *data)
-{
-	struct acpi_nfit_desc *acpi_desc = data;
-	struct nfit_mem *nfit_mem;
+अटल व्योम shutकरोwn_dimm_notअगरy(व्योम *data)
+अणु
+	काष्ठा acpi_nfit_desc *acpi_desc = data;
+	काष्ठा nfit_mem *nfit_mem;
 
 	mutex_lock(&acpi_desc->init_mutex);
 	/*
-	 * Clear out the nfit_mem->flags_attr and shut down dimm event
-	 * notifications.
+	 * Clear out the nfit_mem->flags_attr and shut करोwn dimm event
+	 * notअगरications.
 	 */
-	list_for_each_entry(nfit_mem, &acpi_desc->dimms, list) {
-		struct acpi_device *adev_dimm = nfit_mem->adev;
+	list_क्रम_each_entry(nfit_mem, &acpi_desc->dimms, list) अणु
+		काष्ठा acpi_device *adev_dimm = nfit_mem->adev;
 
-		if (nfit_mem->flags_attr) {
+		अगर (nfit_mem->flags_attr) अणु
 			sysfs_put(nfit_mem->flags_attr);
-			nfit_mem->flags_attr = NULL;
-		}
-		if (adev_dimm) {
-			acpi_remove_notify_handler(adev_dimm->handle,
-					ACPI_DEVICE_NOTIFY, acpi_nvdimm_notify);
-			dev_set_drvdata(&adev_dimm->dev, NULL);
-		}
-	}
+			nfit_mem->flags_attr = शून्य;
+		पूर्ण
+		अगर (adev_dimm) अणु
+			acpi_हटाओ_notअगरy_handler(adev_dimm->handle,
+					ACPI_DEVICE_NOTIFY, acpi_nvdimm_notअगरy);
+			dev_set_drvdata(&adev_dimm->dev, शून्य);
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&acpi_desc->init_mutex);
-}
+पूर्ण
 
-static const struct nvdimm_security_ops *acpi_nfit_get_security_ops(int family)
-{
-	switch (family) {
-	case NVDIMM_FAMILY_INTEL:
-		return intel_security_ops;
-	default:
-		return NULL;
-	}
-}
+अटल स्थिर काष्ठा nvdimm_security_ops *acpi_nfit_get_security_ops(पूर्णांक family)
+अणु
+	चयन (family) अणु
+	हाल NVDIMM_FAMILY_INTEL:
+		वापस पूर्णांकel_security_ops;
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-static const struct nvdimm_fw_ops *acpi_nfit_get_fw_ops(
-		struct nfit_mem *nfit_mem)
-{
-	unsigned long mask;
-	struct acpi_nfit_desc *acpi_desc = nfit_mem->acpi_desc;
-	struct nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
+अटल स्थिर काष्ठा nvdimm_fw_ops *acpi_nfit_get_fw_ops(
+		काष्ठा nfit_mem *nfit_mem)
+अणु
+	अचिन्हित दीर्घ mask;
+	काष्ठा acpi_nfit_desc *acpi_desc = nfit_mem->acpi_desc;
+	काष्ठा nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
 
-	if (!nd_desc->fw_ops)
-		return NULL;
+	अगर (!nd_desc->fw_ops)
+		वापस शून्य;
 
-	if (nfit_mem->family != NVDIMM_FAMILY_INTEL)
-		return NULL;
+	अगर (nfit_mem->family != NVDIMM_FAMILY_INTEL)
+		वापस शून्य;
 
 	mask = nfit_mem->dsm_mask & NVDIMM_INTEL_FW_ACTIVATE_CMDMASK;
-	if (mask != NVDIMM_INTEL_FW_ACTIVATE_CMDMASK)
-		return NULL;
+	अगर (mask != NVDIMM_INTEL_FW_ACTIVATE_CMDMASK)
+		वापस शून्य;
 
-	return intel_fw_ops;
-}
+	वापस पूर्णांकel_fw_ops;
+पूर्ण
 
-static int acpi_nfit_register_dimms(struct acpi_nfit_desc *acpi_desc)
-{
-	struct nfit_mem *nfit_mem;
-	int dimm_count = 0, rc;
-	struct nvdimm *nvdimm;
+अटल पूर्णांक acpi_nfit_रेजिस्टर_dimms(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	काष्ठा nfit_mem *nfit_mem;
+	पूर्णांक dimm_count = 0, rc;
+	काष्ठा nvdimm *nvdimm;
 
-	list_for_each_entry(nfit_mem, &acpi_desc->dimms, list) {
-		struct acpi_nfit_flush_address *flush;
-		unsigned long flags = 0, cmd_mask;
-		struct nfit_memdev *nfit_memdev;
+	list_क्रम_each_entry(nfit_mem, &acpi_desc->dimms, list) अणु
+		काष्ठा acpi_nfit_flush_address *flush;
+		अचिन्हित दीर्घ flags = 0, cmd_mask;
+		काष्ठा nfit_memdev *nfit_memdev;
 		u32 device_handle;
 		u16 mem_flags;
 
 		device_handle = __to_nfit_memdev(nfit_mem)->device_handle;
 		nvdimm = acpi_nfit_dimm_by_handle(acpi_desc, device_handle);
-		if (nvdimm) {
+		अगर (nvdimm) अणु
 			dimm_count++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (nfit_mem->bdw && nfit_mem->memdev_pmem) {
+		अगर (nfit_mem->bdw && nfit_mem->memdev_pmem) अणु
 			set_bit(NDD_ALIASING, &flags);
 			set_bit(NDD_LABELING, &flags);
-		}
+		पूर्ण
 
-		/* collate flags across all memdevs for this dimm */
-		list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
-			struct acpi_nfit_memory_map *dimm_memdev;
+		/* collate flags across all memdevs क्रम this dimm */
+		list_क्रम_each_entry(nfit_memdev, &acpi_desc->memdevs, list) अणु
+			काष्ठा acpi_nfit_memory_map *dimm_memdev;
 
 			dimm_memdev = __to_nfit_memdev(nfit_mem);
-			if (dimm_memdev->device_handle
+			अगर (dimm_memdev->device_handle
 					!= nfit_memdev->memdev->device_handle)
-				continue;
+				जारी;
 			dimm_memdev->flags |= nfit_memdev->memdev->flags;
-		}
+		पूर्ण
 
 		mem_flags = __to_nfit_memdev(nfit_mem)->flags;
-		if (mem_flags & ACPI_NFIT_MEM_NOT_ARMED)
+		अगर (mem_flags & ACPI_NFIT_MEM_NOT_ARMED)
 			set_bit(NDD_UNARMED, &flags);
 
 		rc = acpi_nfit_add_dimm(acpi_desc, nfit_mem, device_handle);
-		if (rc)
-			continue;
+		अगर (rc)
+			जारी;
 
 		/*
-		 * TODO: provide translation for non-NVDIMM_FAMILY_INTEL
+		 * TODO: provide translation क्रम non-NVDIMM_FAMILY_INTEL
 		 * devices (i.e. from nd_cmd to acpi_dsm) to standardize the
-		 * userspace interface.
+		 * userspace पूर्णांकerface.
 		 */
 		cmd_mask = 1UL << ND_CMD_CALL;
-		if (nfit_mem->family == NVDIMM_FAMILY_INTEL) {
+		अगर (nfit_mem->family == NVDIMM_FAMILY_INTEL) अणु
 			/*
 			 * These commands have a 1:1 correspondence
 			 * between DSM payload and libnvdimm ioctl
-			 * payload format.
+			 * payload क्रमmat.
 			 */
 			cmd_mask |= nfit_mem->dsm_mask & NVDIMM_STANDARD_CMDMASK;
-		}
+		पूर्ण
 
-		/* Quirk to ignore LOCAL for labels on HYPERV DIMMs */
-		if (nfit_mem->family == NVDIMM_FAMILY_HYPERV)
+		/* Quirk to ignore LOCAL क्रम labels on HYPERV DIMMs */
+		अगर (nfit_mem->family == NVDIMM_FAMILY_HYPERV)
 			set_bit(NDD_NOBLK, &flags);
 
-		if (test_bit(NFIT_MEM_LSR, &nfit_mem->flags)) {
+		अगर (test_bit(NFIT_MEM_LSR, &nfit_mem->flags)) अणु
 			set_bit(ND_CMD_GET_CONFIG_SIZE, &cmd_mask);
 			set_bit(ND_CMD_GET_CONFIG_DATA, &cmd_mask);
-		}
-		if (test_bit(NFIT_MEM_LSW, &nfit_mem->flags))
+		पूर्ण
+		अगर (test_bit(NFIT_MEM_LSW, &nfit_mem->flags))
 			set_bit(ND_CMD_SET_CONFIG_DATA, &cmd_mask);
 
 		flush = nfit_mem->nfit_flush ? nfit_mem->nfit_flush->flush
-			: NULL;
+			: शून्य;
 		nvdimm = __nvdimm_create(acpi_desc->nvdimm_bus, nfit_mem,
 				acpi_nfit_dimm_attribute_groups,
-				flags, cmd_mask, flush ? flush->hint_count : 0,
+				flags, cmd_mask, flush ? flush->hपूर्णांक_count : 0,
 				nfit_mem->flush_wpq, &nfit_mem->id[0],
 				acpi_nfit_get_security_ops(nfit_mem->family),
 				acpi_nfit_get_fw_ops(nfit_mem));
-		if (!nvdimm)
-			return -ENOMEM;
+		अगर (!nvdimm)
+			वापस -ENOMEM;
 
 		nfit_mem->nvdimm = nvdimm;
 		dimm_count++;
 
-		if ((mem_flags & ACPI_NFIT_MEM_FAILED_MASK) == 0)
-			continue;
+		अगर ((mem_flags & ACPI_NFIT_MEM_FAILED_MASK) == 0)
+			जारी;
 
 		dev_err(acpi_desc->dev, "Error found in NVDIMM %s flags:%s%s%s%s%s\n",
 				nvdimm_name(nvdimm),
@@ -2152,75 +2153,75 @@ static int acpi_nfit_register_dimms(struct acpi_nfit_desc *acpi_desc)
 		  mem_flags & ACPI_NFIT_MEM_NOT_ARMED ? " not_armed" : "",
 		  mem_flags & ACPI_NFIT_MEM_MAP_FAILED ? " map_fail" : "");
 
-	}
+	पूर्ण
 
 	rc = nvdimm_bus_check_dimm_count(acpi_desc->nvdimm_bus, dimm_count);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/*
-	 * Now that dimms are successfully registered, and async registration
-	 * is flushed, attempt to enable event notification.
+	 * Now that dimms are successfully रेजिस्टरed, and async registration
+	 * is flushed, attempt to enable event notअगरication.
 	 */
-	list_for_each_entry(nfit_mem, &acpi_desc->dimms, list) {
-		struct kernfs_node *nfit_kernfs;
+	list_क्रम_each_entry(nfit_mem, &acpi_desc->dimms, list) अणु
+		काष्ठा kernfs_node *nfit_kernfs;
 
 		nvdimm = nfit_mem->nvdimm;
-		if (!nvdimm)
-			continue;
+		अगर (!nvdimm)
+			जारी;
 
 		nfit_kernfs = sysfs_get_dirent(nvdimm_kobj(nvdimm)->sd, "nfit");
-		if (nfit_kernfs)
+		अगर (nfit_kernfs)
 			nfit_mem->flags_attr = sysfs_get_dirent(nfit_kernfs,
 					"flags");
 		sysfs_put(nfit_kernfs);
-		if (!nfit_mem->flags_attr)
+		अगर (!nfit_mem->flags_attr)
 			dev_warn(acpi_desc->dev, "%s: notifications disabled\n",
 					nvdimm_name(nvdimm));
-	}
+	पूर्ण
 
-	return devm_add_action_or_reset(acpi_desc->dev, shutdown_dimm_notify,
+	वापस devm_add_action_or_reset(acpi_desc->dev, shutकरोwn_dimm_notअगरy,
 			acpi_desc);
-}
+पूर्ण
 
 /*
- * These constants are private because there are no kernel consumers of
+ * These स्थिरants are निजी because there are no kernel consumers of
  * these commands.
  */
-enum nfit_aux_cmds {
+क्रमागत nfit_aux_cmds अणु
 	NFIT_CMD_TRANSLATE_SPA = 5,
 	NFIT_CMD_ARS_INJECT_SET = 7,
 	NFIT_CMD_ARS_INJECT_CLEAR = 8,
 	NFIT_CMD_ARS_INJECT_GET = 9,
-};
+पूर्ण;
 
-static void acpi_nfit_init_dsms(struct acpi_nfit_desc *acpi_desc)
-{
-	struct nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
-	const guid_t *guid = to_nfit_uuid(NFIT_DEV_BUS);
-	unsigned long dsm_mask, *mask;
-	struct acpi_device *adev;
-	int i;
+अटल व्योम acpi_nfit_init_dsms(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
+	स्थिर guid_t *guid = to_nfit_uuid(NFIT_DEV_BUS);
+	अचिन्हित दीर्घ dsm_mask, *mask;
+	काष्ठा acpi_device *adev;
+	पूर्णांक i;
 
 	set_bit(ND_CMD_CALL, &nd_desc->cmd_mask);
 	set_bit(NVDIMM_BUS_FAMILY_NFIT, &nd_desc->bus_family_mask);
 
 	/* enable nfit_test to inject bus command emulation */
-	if (acpi_desc->bus_cmd_force_en) {
-		nd_desc->cmd_mask = acpi_desc->bus_cmd_force_en;
+	अगर (acpi_desc->bus_cmd_क्रमce_en) अणु
+		nd_desc->cmd_mask = acpi_desc->bus_cmd_क्रमce_en;
 		mask = &nd_desc->bus_family_mask;
-		if (acpi_desc->family_dsm_mask[NVDIMM_BUS_FAMILY_INTEL]) {
+		अगर (acpi_desc->family_dsm_mask[NVDIMM_BUS_FAMILY_INTEL]) अणु
 			set_bit(NVDIMM_BUS_FAMILY_INTEL, mask);
-			nd_desc->fw_ops = intel_bus_fw_ops;
-		}
-	}
+			nd_desc->fw_ops = पूर्णांकel_bus_fw_ops;
+		पूर्ण
+	पूर्ण
 
 	adev = to_acpi_dev(acpi_desc);
-	if (!adev)
-		return;
+	अगर (!adev)
+		वापस;
 
-	for (i = ND_CMD_ARS_CAP; i <= ND_CMD_CLEAR_ERROR; i++)
-		if (acpi_check_dsm(adev->handle, guid, 1, 1ULL << i))
+	क्रम (i = ND_CMD_ARS_CAP; i <= ND_CMD_CLEAR_ERROR; i++)
+		अगर (acpi_check_dsm(adev->handle, guid, 1, 1ULL << i))
 			set_bit(i, &nd_desc->cmd_mask);
 
 	dsm_mask =
@@ -2232,393 +2233,393 @@ static void acpi_nfit_init_dsms(struct acpi_nfit_desc *acpi_desc)
 		(1 << NFIT_CMD_ARS_INJECT_SET) |
 		(1 << NFIT_CMD_ARS_INJECT_CLEAR) |
 		(1 << NFIT_CMD_ARS_INJECT_GET);
-	for_each_set_bit(i, &dsm_mask, BITS_PER_LONG)
-		if (acpi_check_dsm(adev->handle, guid, 1, 1ULL << i))
+	क्रम_each_set_bit(i, &dsm_mask, BITS_PER_LONG)
+		अगर (acpi_check_dsm(adev->handle, guid, 1, 1ULL << i))
 			set_bit(i, &acpi_desc->bus_dsm_mask);
 
 	/* Enumerate allowed NVDIMM_BUS_FAMILY_INTEL commands */
 	dsm_mask = NVDIMM_BUS_INTEL_FW_ACTIVATE_CMDMASK;
 	guid = to_nfit_bus_uuid(NVDIMM_BUS_FAMILY_INTEL);
 	mask = &acpi_desc->family_dsm_mask[NVDIMM_BUS_FAMILY_INTEL];
-	for_each_set_bit(i, &dsm_mask, BITS_PER_LONG)
-		if (acpi_check_dsm(adev->handle, guid, 1, 1ULL << i))
+	क्रम_each_set_bit(i, &dsm_mask, BITS_PER_LONG)
+		अगर (acpi_check_dsm(adev->handle, guid, 1, 1ULL << i))
 			set_bit(i, mask);
 
-	if (*mask == dsm_mask) {
+	अगर (*mask == dsm_mask) अणु
 		set_bit(NVDIMM_BUS_FAMILY_INTEL, &nd_desc->bus_family_mask);
-		nd_desc->fw_ops = intel_bus_fw_ops;
-	}
-}
+		nd_desc->fw_ops = पूर्णांकel_bus_fw_ops;
+	पूर्ण
+पूर्ण
 
-static ssize_t range_index_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nd_region *nd_region = to_nd_region(dev);
-	struct nfit_spa *nfit_spa = nd_region_provider_data(nd_region);
+अटल sमाप_प्रकार range_index_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nd_region *nd_region = to_nd_region(dev);
+	काष्ठा nfit_spa *nfit_spa = nd_region_provider_data(nd_region);
 
-	return sprintf(buf, "%d\n", nfit_spa->spa->range_index);
-}
-static DEVICE_ATTR_RO(range_index);
+	वापस प्र_लिखो(buf, "%d\n", nfit_spa->spa->range_index);
+पूर्ण
+अटल DEVICE_ATTR_RO(range_index);
 
-static struct attribute *acpi_nfit_region_attributes[] = {
+अटल काष्ठा attribute *acpi_nfit_region_attributes[] = अणु
 	&dev_attr_range_index.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group acpi_nfit_region_attribute_group = {
+अटल स्थिर काष्ठा attribute_group acpi_nfit_region_attribute_group = अणु
 	.name = "nfit",
 	.attrs = acpi_nfit_region_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group *acpi_nfit_region_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *acpi_nfit_region_attribute_groups[] = अणु
 	&acpi_nfit_region_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* enough info to uniquely specify an interleave set */
-struct nfit_set_info {
+/* enough info to uniquely specअगरy an पूर्णांकerleave set */
+काष्ठा nfit_set_info अणु
 	u64 region_offset;
 	u32 serial_number;
 	u32 pad;
-};
+पूर्ण;
 
-struct nfit_set_info2 {
+काष्ठा nfit_set_info2 अणु
 	u64 region_offset;
 	u32 serial_number;
-	u16 vendor_id;
+	u16 venकरोr_id;
 	u16 manufacturing_date;
 	u8 manufacturing_location;
 	u8 reserved[31];
-};
+पूर्ण;
 
-static int cmp_map_compat(const void *m0, const void *m1)
-{
-	const struct nfit_set_info *map0 = m0;
-	const struct nfit_set_info *map1 = m1;
+अटल पूर्णांक cmp_map_compat(स्थिर व्योम *m0, स्थिर व्योम *m1)
+अणु
+	स्थिर काष्ठा nfit_set_info *map0 = m0;
+	स्थिर काष्ठा nfit_set_info *map1 = m1;
 
-	return memcmp(&map0->region_offset, &map1->region_offset,
-			sizeof(u64));
-}
+	वापस स_भेद(&map0->region_offset, &map1->region_offset,
+			माप(u64));
+पूर्ण
 
-static int cmp_map(const void *m0, const void *m1)
-{
-	const struct nfit_set_info *map0 = m0;
-	const struct nfit_set_info *map1 = m1;
+अटल पूर्णांक cmp_map(स्थिर व्योम *m0, स्थिर व्योम *m1)
+अणु
+	स्थिर काष्ठा nfit_set_info *map0 = m0;
+	स्थिर काष्ठा nfit_set_info *map1 = m1;
 
-	if (map0->region_offset < map1->region_offset)
-		return -1;
-	else if (map0->region_offset > map1->region_offset)
-		return 1;
-	return 0;
-}
+	अगर (map0->region_offset < map1->region_offset)
+		वापस -1;
+	अन्यथा अगर (map0->region_offset > map1->region_offset)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int cmp_map2(const void *m0, const void *m1)
-{
-	const struct nfit_set_info2 *map0 = m0;
-	const struct nfit_set_info2 *map1 = m1;
+अटल पूर्णांक cmp_map2(स्थिर व्योम *m0, स्थिर व्योम *m1)
+अणु
+	स्थिर काष्ठा nfit_set_info2 *map0 = m0;
+	स्थिर काष्ठा nfit_set_info2 *map1 = m1;
 
-	if (map0->region_offset < map1->region_offset)
-		return -1;
-	else if (map0->region_offset > map1->region_offset)
-		return 1;
-	return 0;
-}
+	अगर (map0->region_offset < map1->region_offset)
+		वापस -1;
+	अन्यथा अगर (map0->region_offset > map1->region_offset)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /* Retrieve the nth entry referencing this spa */
-static struct acpi_nfit_memory_map *memdev_from_spa(
-		struct acpi_nfit_desc *acpi_desc, u16 range_index, int n)
-{
-	struct nfit_memdev *nfit_memdev;
+अटल काष्ठा acpi_nfit_memory_map *memdev_from_spa(
+		काष्ठा acpi_nfit_desc *acpi_desc, u16 range_index, पूर्णांक n)
+अणु
+	काष्ठा nfit_memdev *nfit_memdev;
 
-	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list)
-		if (nfit_memdev->memdev->range_index == range_index)
-			if (n-- == 0)
-				return nfit_memdev->memdev;
-	return NULL;
-}
+	list_क्रम_each_entry(nfit_memdev, &acpi_desc->memdevs, list)
+		अगर (nfit_memdev->memdev->range_index == range_index)
+			अगर (n-- == 0)
+				वापस nfit_memdev->memdev;
+	वापस शून्य;
+पूर्ण
 
-static int acpi_nfit_init_interleave_set(struct acpi_nfit_desc *acpi_desc,
-		struct nd_region_desc *ndr_desc,
-		struct acpi_nfit_system_address *spa)
-{
-	struct device *dev = acpi_desc->dev;
-	struct nd_interleave_set *nd_set;
+अटल पूर्णांक acpi_nfit_init_पूर्णांकerleave_set(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nd_region_desc *ndr_desc,
+		काष्ठा acpi_nfit_प्रणाली_address *spa)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nd_पूर्णांकerleave_set *nd_set;
 	u16 nr = ndr_desc->num_mappings;
-	struct nfit_set_info2 *info2;
-	struct nfit_set_info *info;
-	int i;
+	काष्ठा nfit_set_info2 *info2;
+	काष्ठा nfit_set_info *info;
+	पूर्णांक i;
 
-	nd_set = devm_kzalloc(dev, sizeof(*nd_set), GFP_KERNEL);
-	if (!nd_set)
-		return -ENOMEM;
+	nd_set = devm_kzalloc(dev, माप(*nd_set), GFP_KERNEL);
+	अगर (!nd_set)
+		वापस -ENOMEM;
 	import_guid(&nd_set->type_guid, spa->range_guid);
 
-	info = devm_kcalloc(dev, nr, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kसुस्मृति(dev, nr, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	info2 = devm_kcalloc(dev, nr, sizeof(*info2), GFP_KERNEL);
-	if (!info2)
-		return -ENOMEM;
+	info2 = devm_kसुस्मृति(dev, nr, माप(*info2), GFP_KERNEL);
+	अगर (!info2)
+		वापस -ENOMEM;
 
-	for (i = 0; i < nr; i++) {
-		struct nd_mapping_desc *mapping = &ndr_desc->mapping[i];
-		struct nvdimm *nvdimm = mapping->nvdimm;
-		struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-		struct nfit_set_info *map = &info[i];
-		struct nfit_set_info2 *map2 = &info2[i];
-		struct acpi_nfit_memory_map *memdev =
+	क्रम (i = 0; i < nr; i++) अणु
+		काष्ठा nd_mapping_desc *mapping = &ndr_desc->mapping[i];
+		काष्ठा nvdimm *nvdimm = mapping->nvdimm;
+		काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+		काष्ठा nfit_set_info *map = &info[i];
+		काष्ठा nfit_set_info2 *map2 = &info2[i];
+		काष्ठा acpi_nfit_memory_map *memdev =
 			memdev_from_spa(acpi_desc, spa->range_index, i);
-		struct acpi_nfit_control_region *dcr = nfit_mem->dcr;
+		काष्ठा acpi_nfit_control_region *dcr = nfit_mem->dcr;
 
-		if (!memdev || !nfit_mem->dcr) {
+		अगर (!memdev || !nfit_mem->dcr) अणु
 			dev_err(dev, "%s: failed to find DCR\n", __func__);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		map->region_offset = memdev->region_offset;
 		map->serial_number = dcr->serial_number;
 
 		map2->region_offset = memdev->region_offset;
 		map2->serial_number = dcr->serial_number;
-		map2->vendor_id = dcr->vendor_id;
+		map2->venकरोr_id = dcr->venकरोr_id;
 		map2->manufacturing_date = dcr->manufacturing_date;
 		map2->manufacturing_location = dcr->manufacturing_location;
-	}
+	पूर्ण
 
 	/* v1.1 namespaces */
-	sort(info, nr, sizeof(*info), cmp_map, NULL);
-	nd_set->cookie1 = nd_fletcher64(info, sizeof(*info) * nr, 0);
+	sort(info, nr, माप(*info), cmp_map, शून्य);
+	nd_set->cookie1 = nd_fletcher64(info, माप(*info) * nr, 0);
 
 	/* v1.2 namespaces */
-	sort(info2, nr, sizeof(*info2), cmp_map2, NULL);
-	nd_set->cookie2 = nd_fletcher64(info2, sizeof(*info2) * nr, 0);
+	sort(info2, nr, माप(*info2), cmp_map2, शून्य);
+	nd_set->cookie2 = nd_fletcher64(info2, माप(*info2) * nr, 0);
 
 	/* support v1.1 namespaces created with the wrong sort order */
-	sort(info, nr, sizeof(*info), cmp_map_compat, NULL);
-	nd_set->altcookie = nd_fletcher64(info, sizeof(*info) * nr, 0);
+	sort(info, nr, माप(*info), cmp_map_compat, शून्य);
+	nd_set->altcookie = nd_fletcher64(info, माप(*info) * nr, 0);
 
-	/* record the result of the sort for the mapping position */
-	for (i = 0; i < nr; i++) {
-		struct nfit_set_info2 *map2 = &info2[i];
-		int j;
+	/* record the result of the sort क्रम the mapping position */
+	क्रम (i = 0; i < nr; i++) अणु
+		काष्ठा nfit_set_info2 *map2 = &info2[i];
+		पूर्णांक j;
 
-		for (j = 0; j < nr; j++) {
-			struct nd_mapping_desc *mapping = &ndr_desc->mapping[j];
-			struct nvdimm *nvdimm = mapping->nvdimm;
-			struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
-			struct acpi_nfit_control_region *dcr = nfit_mem->dcr;
+		क्रम (j = 0; j < nr; j++) अणु
+			काष्ठा nd_mapping_desc *mapping = &ndr_desc->mapping[j];
+			काष्ठा nvdimm *nvdimm = mapping->nvdimm;
+			काष्ठा nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
+			काष्ठा acpi_nfit_control_region *dcr = nfit_mem->dcr;
 
-			if (map2->serial_number == dcr->serial_number &&
-			    map2->vendor_id == dcr->vendor_id &&
+			अगर (map2->serial_number == dcr->serial_number &&
+			    map2->venकरोr_id == dcr->venकरोr_id &&
 			    map2->manufacturing_date == dcr->manufacturing_date &&
 			    map2->manufacturing_location
-				    == dcr->manufacturing_location) {
+				    == dcr->manufacturing_location) अणु
 				mapping->position = i;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	ndr_desc->nd_set = nd_set;
-	devm_kfree(dev, info);
-	devm_kfree(dev, info2);
+	devm_kमुक्त(dev, info);
+	devm_kमुक्त(dev, info2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64 to_interleave_offset(u64 offset, struct nfit_blk_mmio *mmio)
-{
-	struct acpi_nfit_interleave *idt = mmio->idt;
+अटल u64 to_पूर्णांकerleave_offset(u64 offset, काष्ठा nfit_blk_mmio *mmio)
+अणु
+	काष्ठा acpi_nfit_पूर्णांकerleave *idt = mmio->idt;
 	u32 sub_line_offset, line_index, line_offset;
 	u64 line_no, table_skip_count, table_offset;
 
-	line_no = div_u64_rem(offset, mmio->line_size, &sub_line_offset);
-	table_skip_count = div_u64_rem(line_no, mmio->num_lines, &line_index);
+	line_no = भाग_u64_rem(offset, mmio->line_size, &sub_line_offset);
+	table_skip_count = भाग_u64_rem(line_no, mmio->num_lines, &line_index);
 	line_offset = idt->line_offset[line_index]
 		* mmio->line_size;
 	table_offset = table_skip_count * mmio->table_size;
 
-	return mmio->base_offset + line_offset + table_offset + sub_line_offset;
-}
+	वापस mmio->base_offset + line_offset + table_offset + sub_line_offset;
+पूर्ण
 
-static u32 read_blk_stat(struct nfit_blk *nfit_blk, unsigned int bw)
-{
-	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[DCR];
+अटल u32 पढ़ो_blk_stat(काष्ठा nfit_blk *nfit_blk, अचिन्हित पूर्णांक bw)
+अणु
+	काष्ठा nfit_blk_mmio *mmio = &nfit_blk->mmio[DCR];
 	u64 offset = nfit_blk->stat_offset + mmio->size * bw;
-	const u32 STATUS_MASK = 0x80000037;
+	स्थिर u32 STATUS_MASK = 0x80000037;
 
-	if (mmio->num_lines)
-		offset = to_interleave_offset(offset, mmio);
+	अगर (mmio->num_lines)
+		offset = to_पूर्णांकerleave_offset(offset, mmio);
 
-	return readl(mmio->addr.base + offset) & STATUS_MASK;
-}
+	वापस पढ़ोl(mmio->addr.base + offset) & STATUS_MASK;
+पूर्ण
 
-static void write_blk_ctl(struct nfit_blk *nfit_blk, unsigned int bw,
-		resource_size_t dpa, unsigned int len, unsigned int write)
-{
+अटल व्योम ग_लिखो_blk_ctl(काष्ठा nfit_blk *nfit_blk, अचिन्हित पूर्णांक bw,
+		resource_माप_प्रकार dpa, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक ग_लिखो)
+अणु
 	u64 cmd, offset;
-	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[DCR];
+	काष्ठा nfit_blk_mmio *mmio = &nfit_blk->mmio[DCR];
 
-	enum {
+	क्रमागत अणु
 		BCW_OFFSET_MASK = (1ULL << 48)-1,
 		BCW_LEN_SHIFT = 48,
 		BCW_LEN_MASK = (1ULL << 8) - 1,
 		BCW_CMD_SHIFT = 56,
-	};
+	पूर्ण;
 
 	cmd = (dpa >> L1_CACHE_SHIFT) & BCW_OFFSET_MASK;
 	len = len >> L1_CACHE_SHIFT;
 	cmd |= ((u64) len & BCW_LEN_MASK) << BCW_LEN_SHIFT;
-	cmd |= ((u64) write) << BCW_CMD_SHIFT;
+	cmd |= ((u64) ग_लिखो) << BCW_CMD_SHIFT;
 
 	offset = nfit_blk->cmd_offset + mmio->size * bw;
-	if (mmio->num_lines)
-		offset = to_interleave_offset(offset, mmio);
+	अगर (mmio->num_lines)
+		offset = to_पूर्णांकerleave_offset(offset, mmio);
 
-	writeq(cmd, mmio->addr.base + offset);
-	nvdimm_flush(nfit_blk->nd_region, NULL);
+	ग_लिखोq(cmd, mmio->addr.base + offset);
+	nvdimm_flush(nfit_blk->nd_region, शून्य);
 
-	if (nfit_blk->dimm_flags & NFIT_BLK_DCR_LATCH)
-		readq(mmio->addr.base + offset);
-}
+	अगर (nfit_blk->dimm_flags & NFIT_BLK_DCR_LATCH)
+		पढ़ोq(mmio->addr.base + offset);
+पूर्ण
 
-static int acpi_nfit_blk_single_io(struct nfit_blk *nfit_blk,
-		resource_size_t dpa, void *iobuf, size_t len, int rw,
-		unsigned int lane)
-{
-	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
-	unsigned int copied = 0;
+अटल पूर्णांक acpi_nfit_blk_single_io(काष्ठा nfit_blk *nfit_blk,
+		resource_माप_प्रकार dpa, व्योम *iobuf, माप_प्रकार len, पूर्णांक rw,
+		अचिन्हित पूर्णांक lane)
+अणु
+	काष्ठा nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
+	अचिन्हित पूर्णांक copied = 0;
 	u64 base_offset;
-	int rc;
+	पूर्णांक rc;
 
 	base_offset = nfit_blk->bdw_offset + dpa % L1_CACHE_BYTES
 		+ lane * mmio->size;
-	write_blk_ctl(nfit_blk, lane, dpa, len, rw);
-	while (len) {
-		unsigned int c;
+	ग_लिखो_blk_ctl(nfit_blk, lane, dpa, len, rw);
+	जबतक (len) अणु
+		अचिन्हित पूर्णांक c;
 		u64 offset;
 
-		if (mmio->num_lines) {
+		अगर (mmio->num_lines) अणु
 			u32 line_offset;
 
-			offset = to_interleave_offset(base_offset + copied,
+			offset = to_पूर्णांकerleave_offset(base_offset + copied,
 					mmio);
-			div_u64_rem(offset, mmio->line_size, &line_offset);
-			c = min_t(size_t, len, mmio->line_size - line_offset);
-		} else {
+			भाग_u64_rem(offset, mmio->line_size, &line_offset);
+			c = min_t(माप_प्रकार, len, mmio->line_size - line_offset);
+		पूर्ण अन्यथा अणु
 			offset = base_offset + nfit_blk->bdw_offset;
 			c = len;
-		}
+		पूर्ण
 
-		if (rw)
-			memcpy_flushcache(mmio->addr.aperture + offset, iobuf + copied, c);
-		else {
-			if (nfit_blk->dimm_flags & NFIT_BLK_READ_FLUSH)
-				arch_invalidate_pmem((void __force *)
+		अगर (rw)
+			स_नकल_flushcache(mmio->addr.aperture + offset, iobuf + copied, c);
+		अन्यथा अणु
+			अगर (nfit_blk->dimm_flags & NFIT_BLK_READ_FLUSH)
+				arch_invalidate_pmem((व्योम __क्रमce *)
 					mmio->addr.aperture + offset, c);
 
-			memcpy(iobuf + copied, mmio->addr.aperture + offset, c);
-		}
+			स_नकल(iobuf + copied, mmio->addr.aperture + offset, c);
+		पूर्ण
 
 		copied += c;
 		len -= c;
-	}
+	पूर्ण
 
-	if (rw)
-		nvdimm_flush(nfit_blk->nd_region, NULL);
+	अगर (rw)
+		nvdimm_flush(nfit_blk->nd_region, शून्य);
 
-	rc = read_blk_stat(nfit_blk, lane) ? -EIO : 0;
-	return rc;
-}
+	rc = पढ़ो_blk_stat(nfit_blk, lane) ? -EIO : 0;
+	वापस rc;
+पूर्ण
 
-static int acpi_nfit_blk_region_do_io(struct nd_blk_region *ndbr,
-		resource_size_t dpa, void *iobuf, u64 len, int rw)
-{
-	struct nfit_blk *nfit_blk = nd_blk_region_provider_data(ndbr);
-	struct nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
-	struct nd_region *nd_region = nfit_blk->nd_region;
-	unsigned int lane, copied = 0;
-	int rc = 0;
+अटल पूर्णांक acpi_nfit_blk_region_करो_io(काष्ठा nd_blk_region *ndbr,
+		resource_माप_प्रकार dpa, व्योम *iobuf, u64 len, पूर्णांक rw)
+अणु
+	काष्ठा nfit_blk *nfit_blk = nd_blk_region_provider_data(ndbr);
+	काष्ठा nfit_blk_mmio *mmio = &nfit_blk->mmio[BDW];
+	काष्ठा nd_region *nd_region = nfit_blk->nd_region;
+	अचिन्हित पूर्णांक lane, copied = 0;
+	पूर्णांक rc = 0;
 
 	lane = nd_region_acquire_lane(nd_region);
-	while (len) {
+	जबतक (len) अणु
 		u64 c = min(len, mmio->size);
 
 		rc = acpi_nfit_blk_single_io(nfit_blk, dpa + copied,
 				iobuf + copied, c, rw, lane);
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 
 		copied += c;
 		len -= c;
-	}
+	पूर्ण
 	nd_region_release_lane(nd_region, lane);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfit_blk_init_interleave(struct nfit_blk_mmio *mmio,
-		struct acpi_nfit_interleave *idt, u16 interleave_ways)
-{
-	if (idt) {
+अटल पूर्णांक nfit_blk_init_पूर्णांकerleave(काष्ठा nfit_blk_mmio *mmio,
+		काष्ठा acpi_nfit_पूर्णांकerleave *idt, u16 पूर्णांकerleave_ways)
+अणु
+	अगर (idt) अणु
 		mmio->num_lines = idt->line_count;
 		mmio->line_size = idt->line_size;
-		if (interleave_ways == 0)
-			return -ENXIO;
-		mmio->table_size = mmio->num_lines * interleave_ways
+		अगर (पूर्णांकerleave_ways == 0)
+			वापस -ENXIO;
+		mmio->table_size = mmio->num_lines * पूर्णांकerleave_ways
 			* mmio->line_size;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_nfit_blk_get_flags(struct nvdimm_bus_descriptor *nd_desc,
-		struct nvdimm *nvdimm, struct nfit_blk *nfit_blk)
-{
-	struct nd_cmd_dimm_flags flags;
-	int rc;
+अटल पूर्णांक acpi_nfit_blk_get_flags(काष्ठा nvdimm_bus_descriptor *nd_desc,
+		काष्ठा nvdimm *nvdimm, काष्ठा nfit_blk *nfit_blk)
+अणु
+	काष्ठा nd_cmd_dimm_flags flags;
+	पूर्णांक rc;
 
-	memset(&flags, 0, sizeof(flags));
+	स_रखो(&flags, 0, माप(flags));
 	rc = nd_desc->ndctl(nd_desc, nvdimm, ND_CMD_DIMM_FLAGS, &flags,
-			sizeof(flags), NULL);
+			माप(flags), शून्य);
 
-	if (rc >= 0 && flags.status == 0)
+	अगर (rc >= 0 && flags.status == 0)
 		nfit_blk->dimm_flags = flags.flags;
-	else if (rc == -ENOTTY) {
-		/* fall back to a conservative default */
+	अन्यथा अगर (rc == -ENOTTY) अणु
+		/* fall back to a conservative शेष */
 		nfit_blk->dimm_flags = NFIT_BLK_DCR_LATCH | NFIT_BLK_READ_FLUSH;
 		rc = 0;
-	} else
+	पूर्ण अन्यथा
 		rc = -ENXIO;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int acpi_nfit_blk_region_enable(struct nvdimm_bus *nvdimm_bus,
-		struct device *dev)
-{
-	struct nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
-	struct nd_blk_region *ndbr = to_nd_blk_region(dev);
-	struct nfit_blk_mmio *mmio;
-	struct nfit_blk *nfit_blk;
-	struct nfit_mem *nfit_mem;
-	struct nvdimm *nvdimm;
-	int rc;
+अटल पूर्णांक acpi_nfit_blk_region_enable(काष्ठा nvdimm_bus *nvdimm_bus,
+		काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = to_nd_desc(nvdimm_bus);
+	काष्ठा nd_blk_region *ndbr = to_nd_blk_region(dev);
+	काष्ठा nfit_blk_mmio *mmio;
+	काष्ठा nfit_blk *nfit_blk;
+	काष्ठा nfit_mem *nfit_mem;
+	काष्ठा nvdimm *nvdimm;
+	पूर्णांक rc;
 
 	nvdimm = nd_blk_region_to_dimm(ndbr);
 	nfit_mem = nvdimm_provider_data(nvdimm);
-	if (!nfit_mem || !nfit_mem->dcr || !nfit_mem->bdw) {
+	अगर (!nfit_mem || !nfit_mem->dcr || !nfit_mem->bdw) अणु
 		dev_dbg(dev, "missing%s%s%s\n",
 				nfit_mem ? "" : " nfit_mem",
 				(nfit_mem && nfit_mem->dcr) ? "" : " dcr",
 				(nfit_mem && nfit_mem->bdw) ? "" : " bdw");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	nfit_blk = devm_kzalloc(dev, sizeof(*nfit_blk), GFP_KERNEL);
-	if (!nfit_blk)
-		return -ENOMEM;
+	nfit_blk = devm_kzalloc(dev, माप(*nfit_blk), GFP_KERNEL);
+	अगर (!nfit_blk)
+		वापस -ENOMEM;
 	nd_blk_region_set_provider_data(ndbr, nfit_blk);
 	nfit_blk->nd_region = to_nd_region(dev);
 
@@ -2627,22 +2628,22 @@ static int acpi_nfit_blk_region_enable(struct nvdimm_bus *nvdimm_bus,
 	mmio = &nfit_blk->mmio[BDW];
 	mmio->addr.base = devm_nvdimm_memremap(dev, nfit_mem->spa_bdw->address,
 			nfit_mem->spa_bdw->length, nd_blk_memremap_flags(ndbr));
-	if (!mmio->addr.base) {
+	अगर (!mmio->addr.base) अणु
 		dev_dbg(dev, "%s failed to map bdw\n",
 				nvdimm_name(nvdimm));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	mmio->size = nfit_mem->bdw->size;
 	mmio->base_offset = nfit_mem->memdev_bdw->region_offset;
 	mmio->idt = nfit_mem->idt_bdw;
 	mmio->spa = nfit_mem->spa_bdw;
-	rc = nfit_blk_init_interleave(mmio, nfit_mem->idt_bdw,
-			nfit_mem->memdev_bdw->interleave_ways);
-	if (rc) {
+	rc = nfit_blk_init_पूर्णांकerleave(mmio, nfit_mem->idt_bdw,
+			nfit_mem->memdev_bdw->पूर्णांकerleave_ways);
+	अगर (rc) अणु
 		dev_dbg(dev, "%s failed to init bdw interleave\n",
 				nvdimm_name(nvdimm));
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* map block control memory */
 	nfit_blk->cmd_offset = nfit_mem->dcr->command_offset;
@@ -2650,237 +2651,237 @@ static int acpi_nfit_blk_region_enable(struct nvdimm_bus *nvdimm_bus,
 	mmio = &nfit_blk->mmio[DCR];
 	mmio->addr.base = devm_nvdimm_ioremap(dev, nfit_mem->spa_dcr->address,
 			nfit_mem->spa_dcr->length);
-	if (!mmio->addr.base) {
+	अगर (!mmio->addr.base) अणु
 		dev_dbg(dev, "%s failed to map dcr\n",
 				nvdimm_name(nvdimm));
-		return -ENOMEM;
-	}
-	mmio->size = nfit_mem->dcr->window_size;
+		वापस -ENOMEM;
+	पूर्ण
+	mmio->size = nfit_mem->dcr->winकरोw_size;
 	mmio->base_offset = nfit_mem->memdev_dcr->region_offset;
 	mmio->idt = nfit_mem->idt_dcr;
 	mmio->spa = nfit_mem->spa_dcr;
-	rc = nfit_blk_init_interleave(mmio, nfit_mem->idt_dcr,
-			nfit_mem->memdev_dcr->interleave_ways);
-	if (rc) {
+	rc = nfit_blk_init_पूर्णांकerleave(mmio, nfit_mem->idt_dcr,
+			nfit_mem->memdev_dcr->पूर्णांकerleave_ways);
+	अगर (rc) अणु
 		dev_dbg(dev, "%s failed to init dcr interleave\n",
 				nvdimm_name(nvdimm));
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = acpi_nfit_blk_get_flags(nd_desc, nvdimm, nfit_blk);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_dbg(dev, "%s failed get DIMM flags\n",
 				nvdimm_name(nvdimm));
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (nvdimm_has_flush(nfit_blk->nd_region) < 0)
+	अगर (nvdimm_has_flush(nfit_blk->nd_region) < 0)
 		dev_warn(dev, "unable to guarantee persistence of writes\n");
 
-	if (mmio->line_size == 0)
-		return 0;
+	अगर (mmio->line_size == 0)
+		वापस 0;
 
-	if ((u32) nfit_blk->cmd_offset % mmio->line_size
-			+ 8 > mmio->line_size) {
+	अगर ((u32) nfit_blk->cmd_offset % mmio->line_size
+			+ 8 > mmio->line_size) अणु
 		dev_dbg(dev, "cmd_offset crosses interleave boundary\n");
-		return -ENXIO;
-	} else if ((u32) nfit_blk->stat_offset % mmio->line_size
-			+ 8 > mmio->line_size) {
+		वापस -ENXIO;
+	पूर्ण अन्यथा अगर ((u32) nfit_blk->stat_offset % mmio->line_size
+			+ 8 > mmio->line_size) अणु
 		dev_dbg(dev, "stat_offset crosses interleave boundary\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ars_get_cap(struct acpi_nfit_desc *acpi_desc,
-		struct nd_cmd_ars_cap *cmd, struct nfit_spa *nfit_spa)
-{
-	struct nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
-	struct acpi_nfit_system_address *spa = nfit_spa->spa;
-	int cmd_rc, rc;
+अटल पूर्णांक ars_get_cap(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nd_cmd_ars_cap *cmd, काष्ठा nfit_spa *nfit_spa)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
+	काष्ठा acpi_nfit_प्रणाली_address *spa = nfit_spa->spa;
+	पूर्णांक cmd_rc, rc;
 
 	cmd->address = spa->address;
 	cmd->length = spa->length;
-	rc = nd_desc->ndctl(nd_desc, NULL, ND_CMD_ARS_CAP, cmd,
-			sizeof(*cmd), &cmd_rc);
-	if (rc < 0)
-		return rc;
-	return cmd_rc;
-}
+	rc = nd_desc->ndctl(nd_desc, शून्य, ND_CMD_ARS_CAP, cmd,
+			माप(*cmd), &cmd_rc);
+	अगर (rc < 0)
+		वापस rc;
+	वापस cmd_rc;
+पूर्ण
 
-static int ars_start(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_spa *nfit_spa, enum nfit_ars_state req_type)
-{
-	int rc;
-	int cmd_rc;
-	struct nd_cmd_ars_start ars_start;
-	struct acpi_nfit_system_address *spa = nfit_spa->spa;
-	struct nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
+अटल पूर्णांक ars_start(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_spa *nfit_spa, क्रमागत nfit_ars_state req_type)
+अणु
+	पूर्णांक rc;
+	पूर्णांक cmd_rc;
+	काष्ठा nd_cmd_ars_start ars_start;
+	काष्ठा acpi_nfit_प्रणाली_address *spa = nfit_spa->spa;
+	काष्ठा nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
 
-	memset(&ars_start, 0, sizeof(ars_start));
+	स_रखो(&ars_start, 0, माप(ars_start));
 	ars_start.address = spa->address;
 	ars_start.length = spa->length;
-	if (req_type == ARS_REQ_SHORT)
+	अगर (req_type == ARS_REQ_SHORT)
 		ars_start.flags = ND_ARS_RETURN_PREV_DATA;
-	if (nfit_spa_type(spa) == NFIT_SPA_PM)
+	अगर (nfit_spa_type(spa) == NFIT_SPA_PM)
 		ars_start.type = ND_ARS_PERSISTENT;
-	else if (nfit_spa_type(spa) == NFIT_SPA_VOLATILE)
+	अन्यथा अगर (nfit_spa_type(spa) == NFIT_SPA_VOLATILE)
 		ars_start.type = ND_ARS_VOLATILE;
-	else
-		return -ENOTTY;
+	अन्यथा
+		वापस -ENOTTY;
 
-	rc = nd_desc->ndctl(nd_desc, NULL, ND_CMD_ARS_START, &ars_start,
-			sizeof(ars_start), &cmd_rc);
+	rc = nd_desc->ndctl(nd_desc, शून्य, ND_CMD_ARS_START, &ars_start,
+			माप(ars_start), &cmd_rc);
 
-	if (rc < 0)
-		return rc;
-	if (cmd_rc < 0)
-		return cmd_rc;
+	अगर (rc < 0)
+		वापस rc;
+	अगर (cmd_rc < 0)
+		वापस cmd_rc;
 	set_bit(ARS_VALID, &acpi_desc->scrub_flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ars_continue(struct acpi_nfit_desc *acpi_desc)
-{
-	int rc, cmd_rc;
-	struct nd_cmd_ars_start ars_start;
-	struct nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
-	struct nd_cmd_ars_status *ars_status = acpi_desc->ars_status;
+अटल पूर्णांक ars_जारी(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	पूर्णांक rc, cmd_rc;
+	काष्ठा nd_cmd_ars_start ars_start;
+	काष्ठा nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
+	काष्ठा nd_cmd_ars_status *ars_status = acpi_desc->ars_status;
 
-	ars_start = (struct nd_cmd_ars_start) {
+	ars_start = (काष्ठा nd_cmd_ars_start) अणु
 		.address = ars_status->restart_address,
 		.length = ars_status->restart_length,
 		.type = ars_status->type,
-	};
-	rc = nd_desc->ndctl(nd_desc, NULL, ND_CMD_ARS_START, &ars_start,
-			sizeof(ars_start), &cmd_rc);
-	if (rc < 0)
-		return rc;
-	return cmd_rc;
-}
+	पूर्ण;
+	rc = nd_desc->ndctl(nd_desc, शून्य, ND_CMD_ARS_START, &ars_start,
+			माप(ars_start), &cmd_rc);
+	अगर (rc < 0)
+		वापस rc;
+	वापस cmd_rc;
+पूर्ण
 
-static int ars_get_status(struct acpi_nfit_desc *acpi_desc)
-{
-	struct nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
-	struct nd_cmd_ars_status *ars_status = acpi_desc->ars_status;
-	int rc, cmd_rc;
+अटल पूर्णांक ars_get_status(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = &acpi_desc->nd_desc;
+	काष्ठा nd_cmd_ars_status *ars_status = acpi_desc->ars_status;
+	पूर्णांक rc, cmd_rc;
 
-	rc = nd_desc->ndctl(nd_desc, NULL, ND_CMD_ARS_STATUS, ars_status,
+	rc = nd_desc->ndctl(nd_desc, शून्य, ND_CMD_ARS_STATUS, ars_status,
 			acpi_desc->max_ars, &cmd_rc);
-	if (rc < 0)
-		return rc;
-	return cmd_rc;
-}
+	अगर (rc < 0)
+		वापस rc;
+	वापस cmd_rc;
+पूर्ण
 
-static void ars_complete(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_spa *nfit_spa)
-{
-	struct nd_cmd_ars_status *ars_status = acpi_desc->ars_status;
-	struct acpi_nfit_system_address *spa = nfit_spa->spa;
-	struct nd_region *nd_region = nfit_spa->nd_region;
-	struct device *dev;
+अटल व्योम ars_complete(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_spa *nfit_spa)
+अणु
+	काष्ठा nd_cmd_ars_status *ars_status = acpi_desc->ars_status;
+	काष्ठा acpi_nfit_प्रणाली_address *spa = nfit_spa->spa;
+	काष्ठा nd_region *nd_region = nfit_spa->nd_region;
+	काष्ठा device *dev;
 
-	lockdep_assert_held(&acpi_desc->init_mutex);
+	lockdep_निश्चित_held(&acpi_desc->init_mutex);
 	/*
-	 * Only advance the ARS state for ARS runs initiated by the
-	 * kernel, ignore ARS results from BIOS initiated runs for scrub
+	 * Only advance the ARS state क्रम ARS runs initiated by the
+	 * kernel, ignore ARS results from BIOS initiated runs क्रम scrub
 	 * completion tracking.
 	 */
-	if (acpi_desc->scrub_spa != nfit_spa)
-		return;
+	अगर (acpi_desc->scrub_spa != nfit_spa)
+		वापस;
 
-	if ((ars_status->address >= spa->address && ars_status->address
+	अगर ((ars_status->address >= spa->address && ars_status->address
 				< spa->address + spa->length)
-			|| (ars_status->address < spa->address)) {
+			|| (ars_status->address < spa->address)) अणु
 		/*
-		 * Assume that if a scrub starts at an offset from the
+		 * Assume that अगर a scrub starts at an offset from the
 		 * start of nfit_spa that we are in the continuation
-		 * case.
+		 * हाल.
 		 *
-		 * Otherwise, if the scrub covers the spa range, mark
+		 * Otherwise, अगर the scrub covers the spa range, mark
 		 * any pending request complete.
 		 */
-		if (ars_status->address + ars_status->length
+		अगर (ars_status->address + ars_status->length
 				>= spa->address + spa->length)
 				/* complete */;
-		else
-			return;
-	} else
-		return;
+		अन्यथा
+			वापस;
+	पूर्ण अन्यथा
+		वापस;
 
-	acpi_desc->scrub_spa = NULL;
-	if (nd_region) {
+	acpi_desc->scrub_spa = शून्य;
+	अगर (nd_region) अणु
 		dev = nd_region_dev(nd_region);
-		nvdimm_region_notify(nd_region, NVDIMM_REVALIDATE_POISON);
-	} else
+		nvdimm_region_notअगरy(nd_region, NVDIMM_REVALIDATE_POISON);
+	पूर्ण अन्यथा
 		dev = acpi_desc->dev;
 	dev_dbg(dev, "ARS: range %d complete\n", spa->range_index);
-}
+पूर्ण
 
-static int ars_status_process_records(struct acpi_nfit_desc *acpi_desc)
-{
-	struct nvdimm_bus *nvdimm_bus = acpi_desc->nvdimm_bus;
-	struct nd_cmd_ars_status *ars_status = acpi_desc->ars_status;
-	int rc;
+अटल पूर्णांक ars_status_process_records(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = acpi_desc->nvdimm_bus;
+	काष्ठा nd_cmd_ars_status *ars_status = acpi_desc->ars_status;
+	पूर्णांक rc;
 	u32 i;
 
 	/*
 	 * First record starts at 44 byte offset from the start of the
 	 * payload.
 	 */
-	if (ars_status->out_length < 44)
-		return 0;
+	अगर (ars_status->out_length < 44)
+		वापस 0;
 
 	/*
 	 * Ignore potentially stale results that are only refreshed
 	 * after a start-ARS event.
 	 */
-	if (!test_and_clear_bit(ARS_VALID, &acpi_desc->scrub_flags)) {
+	अगर (!test_and_clear_bit(ARS_VALID, &acpi_desc->scrub_flags)) अणु
 		dev_dbg(acpi_desc->dev, "skip %d stale records\n",
 				ars_status->num_records);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < ars_status->num_records; i++) {
+	क्रम (i = 0; i < ars_status->num_records; i++) अणु
 		/* only process full records */
-		if (ars_status->out_length
-				< 44 + sizeof(struct nd_ars_record) * (i + 1))
-			break;
+		अगर (ars_status->out_length
+				< 44 + माप(काष्ठा nd_ars_record) * (i + 1))
+			अवरोध;
 		rc = nvdimm_bus_add_badrange(nvdimm_bus,
 				ars_status->records[i].err_address,
 				ars_status->records[i].length);
-		if (rc)
-			return rc;
-	}
-	if (i < ars_status->num_records)
+		अगर (rc)
+			वापस rc;
+	पूर्ण
+	अगर (i < ars_status->num_records)
 		dev_warn(acpi_desc->dev, "detected truncated ars results\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void acpi_nfit_remove_resource(void *data)
-{
-	struct resource *res = data;
+अटल व्योम acpi_nfit_हटाओ_resource(व्योम *data)
+अणु
+	काष्ठा resource *res = data;
 
-	remove_resource(res);
-}
+	हटाओ_resource(res);
+पूर्ण
 
-static int acpi_nfit_insert_resource(struct acpi_nfit_desc *acpi_desc,
-		struct nd_region_desc *ndr_desc)
-{
-	struct resource *res, *nd_res = ndr_desc->res;
-	int is_pmem, ret;
+अटल पूर्णांक acpi_nfit_insert_resource(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nd_region_desc *ndr_desc)
+अणु
+	काष्ठा resource *res, *nd_res = ndr_desc->res;
+	पूर्णांक is_pmem, ret;
 
-	/* No operation if the region is already registered as PMEM */
-	is_pmem = region_intersects(nd_res->start, resource_size(nd_res),
+	/* No operation अगर the region is alपढ़ोy रेजिस्टरed as PMEM */
+	is_pmem = region_पूर्णांकersects(nd_res->start, resource_size(nd_res),
 				IORESOURCE_MEM, IORES_DESC_PERSISTENT_MEMORY);
-	if (is_pmem == REGION_INTERSECTS)
-		return 0;
+	अगर (is_pmem == REGION_INTERSECTS)
+		वापस 0;
 
-	res = devm_kzalloc(acpi_desc->dev, sizeof(*res), GFP_KERNEL);
-	if (!res)
-		return -ENOMEM;
+	res = devm_kzalloc(acpi_desc->dev, माप(*res), GFP_KERNEL);
+	अगर (!res)
+		वापस -ENOMEM;
 
 	res->name = "Persistent Memory";
 	res->start = nd_res->start;
@@ -2889,335 +2890,335 @@ static int acpi_nfit_insert_resource(struct acpi_nfit_desc *acpi_desc,
 	res->desc = IORES_DESC_PERSISTENT_MEMORY;
 
 	ret = insert_resource(&iomem_resource, res);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = devm_add_action_or_reset(acpi_desc->dev,
-					acpi_nfit_remove_resource,
+					acpi_nfit_हटाओ_resource,
 					res);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_nfit_init_mapping(struct acpi_nfit_desc *acpi_desc,
-		struct nd_mapping_desc *mapping, struct nd_region_desc *ndr_desc,
-		struct acpi_nfit_memory_map *memdev,
-		struct nfit_spa *nfit_spa)
-{
-	struct nvdimm *nvdimm = acpi_nfit_dimm_by_handle(acpi_desc,
+अटल पूर्णांक acpi_nfit_init_mapping(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nd_mapping_desc *mapping, काष्ठा nd_region_desc *ndr_desc,
+		काष्ठा acpi_nfit_memory_map *memdev,
+		काष्ठा nfit_spa *nfit_spa)
+अणु
+	काष्ठा nvdimm *nvdimm = acpi_nfit_dimm_by_handle(acpi_desc,
 			memdev->device_handle);
-	struct acpi_nfit_system_address *spa = nfit_spa->spa;
-	struct nd_blk_region_desc *ndbr_desc;
-	struct nfit_mem *nfit_mem;
-	int rc;
+	काष्ठा acpi_nfit_प्रणाली_address *spa = nfit_spa->spa;
+	काष्ठा nd_blk_region_desc *ndbr_desc;
+	काष्ठा nfit_mem *nfit_mem;
+	पूर्णांक rc;
 
-	if (!nvdimm) {
+	अगर (!nvdimm) अणु
 		dev_err(acpi_desc->dev, "spa%d dimm: %#x not found\n",
 				spa->range_index, memdev->device_handle);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	mapping->nvdimm = nvdimm;
-	switch (nfit_spa_type(spa)) {
-	case NFIT_SPA_PM:
-	case NFIT_SPA_VOLATILE:
+	चयन (nfit_spa_type(spa)) अणु
+	हाल NFIT_SPA_PM:
+	हाल NFIT_SPA_VOLATILE:
 		mapping->start = memdev->address;
 		mapping->size = memdev->region_size;
-		break;
-	case NFIT_SPA_DCR:
+		अवरोध;
+	हाल NFIT_SPA_DCR:
 		nfit_mem = nvdimm_provider_data(nvdimm);
-		if (!nfit_mem || !nfit_mem->bdw) {
+		अगर (!nfit_mem || !nfit_mem->bdw) अणु
 			dev_dbg(acpi_desc->dev, "spa%d %s missing bdw\n",
 					spa->range_index, nvdimm_name(nvdimm));
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mapping->size = nfit_mem->bdw->capacity;
 		mapping->start = nfit_mem->bdw->start_address;
-		ndr_desc->num_lanes = nfit_mem->bdw->windows;
+		ndr_desc->num_lanes = nfit_mem->bdw->winकरोws;
 		ndr_desc->mapping = mapping;
 		ndr_desc->num_mappings = 1;
 		ndbr_desc = to_blk_region_desc(ndr_desc);
 		ndbr_desc->enable = acpi_nfit_blk_region_enable;
-		ndbr_desc->do_io = acpi_desc->blk_do_io;
-		rc = acpi_nfit_init_interleave_set(acpi_desc, ndr_desc, spa);
-		if (rc)
-			return rc;
+		ndbr_desc->करो_io = acpi_desc->blk_करो_io;
+		rc = acpi_nfit_init_पूर्णांकerleave_set(acpi_desc, ndr_desc, spa);
+		अगर (rc)
+			वापस rc;
 		nfit_spa->nd_region = nvdimm_blk_region_create(acpi_desc->nvdimm_bus,
 				ndr_desc);
-		if (!nfit_spa->nd_region)
-			return -ENOMEM;
-		break;
-	}
+		अगर (!nfit_spa->nd_region)
+			वापस -ENOMEM;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool nfit_spa_is_virtual(struct acpi_nfit_system_address *spa)
-{
-	return (nfit_spa_type(spa) == NFIT_SPA_VDISK ||
+अटल bool nfit_spa_is_भव(काष्ठा acpi_nfit_प्रणाली_address *spa)
+अणु
+	वापस (nfit_spa_type(spa) == NFIT_SPA_VDISK ||
 		nfit_spa_type(spa) == NFIT_SPA_VCD   ||
 		nfit_spa_type(spa) == NFIT_SPA_PDISK ||
 		nfit_spa_type(spa) == NFIT_SPA_PCD);
-}
+पूर्ण
 
-static bool nfit_spa_is_volatile(struct acpi_nfit_system_address *spa)
-{
-	return (nfit_spa_type(spa) == NFIT_SPA_VDISK ||
+अटल bool nfit_spa_is_अस्थिर(काष्ठा acpi_nfit_प्रणाली_address *spa)
+अणु
+	वापस (nfit_spa_type(spa) == NFIT_SPA_VDISK ||
 		nfit_spa_type(spa) == NFIT_SPA_VCD   ||
 		nfit_spa_type(spa) == NFIT_SPA_VOLATILE);
-}
+पूर्ण
 
-static int acpi_nfit_register_region(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_spa *nfit_spa)
-{
-	static struct nd_mapping_desc mappings[ND_MAX_MAPPINGS];
-	struct acpi_nfit_system_address *spa = nfit_spa->spa;
-	struct nd_blk_region_desc ndbr_desc;
-	struct nd_region_desc *ndr_desc;
-	struct nfit_memdev *nfit_memdev;
-	struct nvdimm_bus *nvdimm_bus;
-	struct resource res;
-	int count = 0, rc;
+अटल पूर्णांक acpi_nfit_रेजिस्टर_region(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_spa *nfit_spa)
+अणु
+	अटल काष्ठा nd_mapping_desc mappings[ND_MAX_MAPPINGS];
+	काष्ठा acpi_nfit_प्रणाली_address *spa = nfit_spa->spa;
+	काष्ठा nd_blk_region_desc ndbr_desc;
+	काष्ठा nd_region_desc *ndr_desc;
+	काष्ठा nfit_memdev *nfit_memdev;
+	काष्ठा nvdimm_bus *nvdimm_bus;
+	काष्ठा resource res;
+	पूर्णांक count = 0, rc;
 
-	if (nfit_spa->nd_region)
-		return 0;
+	अगर (nfit_spa->nd_region)
+		वापस 0;
 
-	if (spa->range_index == 0 && !nfit_spa_is_virtual(spa)) {
+	अगर (spa->range_index == 0 && !nfit_spa_is_भव(spa)) अणु
 		dev_dbg(acpi_desc->dev, "detected invalid spa index\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	memset(&res, 0, sizeof(res));
-	memset(&mappings, 0, sizeof(mappings));
-	memset(&ndbr_desc, 0, sizeof(ndbr_desc));
+	स_रखो(&res, 0, माप(res));
+	स_रखो(&mappings, 0, माप(mappings));
+	स_रखो(&ndbr_desc, 0, माप(ndbr_desc));
 	res.start = spa->address;
 	res.end = res.start + spa->length - 1;
 	ndr_desc = &ndbr_desc.ndr_desc;
 	ndr_desc->res = &res;
 	ndr_desc->provider_data = nfit_spa;
 	ndr_desc->attr_groups = acpi_nfit_region_attribute_groups;
-	if (spa->flags & ACPI_NFIT_PROXIMITY_VALID) {
-		ndr_desc->numa_node = pxm_to_online_node(spa->proximity_domain);
-		ndr_desc->target_node = pxm_to_node(spa->proximity_domain);
-	} else {
+	अगर (spa->flags & ACPI_NFIT_PROXIMITY_VALID) अणु
+		ndr_desc->numa_node = pxm_to_online_node(spa->proximity_करोमुख्य);
+		ndr_desc->target_node = pxm_to_node(spa->proximity_करोमुख्य);
+	पूर्ण अन्यथा अणु
 		ndr_desc->numa_node = NUMA_NO_NODE;
 		ndr_desc->target_node = NUMA_NO_NODE;
-	}
+	पूर्ण
 
 	/*
-	 * Persistence domain bits are hierarchical, if
+	 * Persistence करोमुख्य bits are hierarchical, अगर
 	 * ACPI_NFIT_CAPABILITY_CACHE_FLUSH is set then
 	 * ACPI_NFIT_CAPABILITY_MEM_FLUSH is implied.
 	 */
-	if (acpi_desc->platform_cap & ACPI_NFIT_CAPABILITY_CACHE_FLUSH)
+	अगर (acpi_desc->platक्रमm_cap & ACPI_NFIT_CAPABILITY_CACHE_FLUSH)
 		set_bit(ND_REGION_PERSIST_CACHE, &ndr_desc->flags);
-	else if (acpi_desc->platform_cap & ACPI_NFIT_CAPABILITY_MEM_FLUSH)
+	अन्यथा अगर (acpi_desc->platक्रमm_cap & ACPI_NFIT_CAPABILITY_MEM_FLUSH)
 		set_bit(ND_REGION_PERSIST_MEMCTRL, &ndr_desc->flags);
 
-	list_for_each_entry(nfit_memdev, &acpi_desc->memdevs, list) {
-		struct acpi_nfit_memory_map *memdev = nfit_memdev->memdev;
-		struct nd_mapping_desc *mapping;
+	list_क्रम_each_entry(nfit_memdev, &acpi_desc->memdevs, list) अणु
+		काष्ठा acpi_nfit_memory_map *memdev = nfit_memdev->memdev;
+		काष्ठा nd_mapping_desc *mapping;
 
-		if (memdev->range_index != spa->range_index)
-			continue;
-		if (count >= ND_MAX_MAPPINGS) {
+		अगर (memdev->range_index != spa->range_index)
+			जारी;
+		अगर (count >= ND_MAX_MAPPINGS) अणु
 			dev_err(acpi_desc->dev, "spa%d exceeds max mappings %d\n",
 					spa->range_index, ND_MAX_MAPPINGS);
-			return -ENXIO;
-		}
+			वापस -ENXIO;
+		पूर्ण
 		mapping = &mappings[count++];
 		rc = acpi_nfit_init_mapping(acpi_desc, mapping, ndr_desc,
 				memdev, nfit_spa);
-		if (rc)
-			goto out;
-	}
+		अगर (rc)
+			जाओ out;
+	पूर्ण
 
 	ndr_desc->mapping = mappings;
 	ndr_desc->num_mappings = count;
-	rc = acpi_nfit_init_interleave_set(acpi_desc, ndr_desc, spa);
-	if (rc)
-		goto out;
+	rc = acpi_nfit_init_पूर्णांकerleave_set(acpi_desc, ndr_desc, spa);
+	अगर (rc)
+		जाओ out;
 
 	nvdimm_bus = acpi_desc->nvdimm_bus;
-	if (nfit_spa_type(spa) == NFIT_SPA_PM) {
+	अगर (nfit_spa_type(spa) == NFIT_SPA_PM) अणु
 		rc = acpi_nfit_insert_resource(acpi_desc, ndr_desc);
-		if (rc) {
+		अगर (rc) अणु
 			dev_warn(acpi_desc->dev,
 				"failed to insert pmem resource to iomem: %d\n",
 				rc);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		nfit_spa->nd_region = nvdimm_pmem_region_create(nvdimm_bus,
 				ndr_desc);
-		if (!nfit_spa->nd_region)
+		अगर (!nfit_spa->nd_region)
 			rc = -ENOMEM;
-	} else if (nfit_spa_is_volatile(spa)) {
-		nfit_spa->nd_region = nvdimm_volatile_region_create(nvdimm_bus,
+	पूर्ण अन्यथा अगर (nfit_spa_is_अस्थिर(spa)) अणु
+		nfit_spa->nd_region = nvdimm_अस्थिर_region_create(nvdimm_bus,
 				ndr_desc);
-		if (!nfit_spa->nd_region)
+		अगर (!nfit_spa->nd_region)
 			rc = -ENOMEM;
-	} else if (nfit_spa_is_virtual(spa)) {
+	पूर्ण अन्यथा अगर (nfit_spa_is_भव(spa)) अणु
 		nfit_spa->nd_region = nvdimm_pmem_region_create(nvdimm_bus,
 				ndr_desc);
-		if (!nfit_spa->nd_region)
+		अगर (!nfit_spa->nd_region)
 			rc = -ENOMEM;
-	}
+	पूर्ण
 
  out:
-	if (rc)
+	अगर (rc)
 		dev_err(acpi_desc->dev, "failed to register spa range %d\n",
 				nfit_spa->spa->range_index);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ars_status_alloc(struct acpi_nfit_desc *acpi_desc)
-{
-	struct device *dev = acpi_desc->dev;
-	struct nd_cmd_ars_status *ars_status;
+अटल पूर्णांक ars_status_alloc(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nd_cmd_ars_status *ars_status;
 
-	if (acpi_desc->ars_status) {
-		memset(acpi_desc->ars_status, 0, acpi_desc->max_ars);
-		return 0;
-	}
+	अगर (acpi_desc->ars_status) अणु
+		स_रखो(acpi_desc->ars_status, 0, acpi_desc->max_ars);
+		वापस 0;
+	पूर्ण
 
 	ars_status = devm_kzalloc(dev, acpi_desc->max_ars, GFP_KERNEL);
-	if (!ars_status)
-		return -ENOMEM;
+	अगर (!ars_status)
+		वापस -ENOMEM;
 	acpi_desc->ars_status = ars_status;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_nfit_query_poison(struct acpi_nfit_desc *acpi_desc)
-{
-	int rc;
+अटल पूर्णांक acpi_nfit_query_poison(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	पूर्णांक rc;
 
-	if (ars_status_alloc(acpi_desc))
-		return -ENOMEM;
+	अगर (ars_status_alloc(acpi_desc))
+		वापस -ENOMEM;
 
 	rc = ars_get_status(acpi_desc);
 
-	if (rc < 0 && rc != -ENOSPC)
-		return rc;
+	अगर (rc < 0 && rc != -ENOSPC)
+		वापस rc;
 
-	if (ars_status_process_records(acpi_desc))
+	अगर (ars_status_process_records(acpi_desc))
 		dev_err(acpi_desc->dev, "Failed to process ARS records\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ars_register(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_spa *nfit_spa)
-{
-	int rc;
+अटल पूर्णांक ars_रेजिस्टर(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_spa *nfit_spa)
+अणु
+	पूर्णांक rc;
 
-	if (test_bit(ARS_FAILED, &nfit_spa->ars_state))
-		return acpi_nfit_register_region(acpi_desc, nfit_spa);
+	अगर (test_bit(ARS_FAILED, &nfit_spa->ars_state))
+		वापस acpi_nfit_रेजिस्टर_region(acpi_desc, nfit_spa);
 
 	set_bit(ARS_REQ_SHORT, &nfit_spa->ars_state);
-	if (!no_init_ars)
+	अगर (!no_init_ars)
 		set_bit(ARS_REQ_LONG, &nfit_spa->ars_state);
 
-	switch (acpi_nfit_query_poison(acpi_desc)) {
-	case 0:
-	case -ENOSPC:
-	case -EAGAIN:
+	चयन (acpi_nfit_query_poison(acpi_desc)) अणु
+	हाल 0:
+	हाल -ENOSPC:
+	हाल -EAGAIN:
 		rc = ars_start(acpi_desc, nfit_spa, ARS_REQ_SHORT);
 		/* shouldn't happen, try again later */
-		if (rc == -EBUSY)
-			break;
-		if (rc) {
+		अगर (rc == -EBUSY)
+			अवरोध;
+		अगर (rc) अणु
 			set_bit(ARS_FAILED, &nfit_spa->ars_state);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		clear_bit(ARS_REQ_SHORT, &nfit_spa->ars_state);
 		rc = acpi_nfit_query_poison(acpi_desc);
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 		acpi_desc->scrub_spa = nfit_spa;
 		ars_complete(acpi_desc, nfit_spa);
 		/*
 		 * If ars_complete() says we didn't complete the
-		 * short scrub, we'll try again with a long
+		 * लघु scrub, we'll try again with a दीर्घ
 		 * request.
 		 */
-		acpi_desc->scrub_spa = NULL;
-		break;
-	case -EBUSY:
-	case -ENOMEM:
+		acpi_desc->scrub_spa = शून्य;
+		अवरोध;
+	हाल -EBUSY:
+	हाल -ENOMEM:
 		/*
-		 * BIOS was using ARS, wait for it to complete (or
-		 * resources to become available) and then perform our
+		 * BIOS was using ARS, रुको क्रम it to complete (or
+		 * resources to become available) and then perक्रमm our
 		 * own scrubs.
 		 */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		set_bit(ARS_FAILED, &nfit_spa->ars_state);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return acpi_nfit_register_region(acpi_desc, nfit_spa);
-}
+	वापस acpi_nfit_रेजिस्टर_region(acpi_desc, nfit_spa);
+पूर्ण
 
-static void ars_complete_all(struct acpi_nfit_desc *acpi_desc)
-{
-	struct nfit_spa *nfit_spa;
+अटल व्योम ars_complete_all(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	काष्ठा nfit_spa *nfit_spa;
 
-	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
-		if (test_bit(ARS_FAILED, &nfit_spa->ars_state))
-			continue;
+	list_क्रम_each_entry(nfit_spa, &acpi_desc->spas, list) अणु
+		अगर (test_bit(ARS_FAILED, &nfit_spa->ars_state))
+			जारी;
 		ars_complete(acpi_desc, nfit_spa);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int __acpi_nfit_scrub(struct acpi_nfit_desc *acpi_desc,
-		int query_rc)
-{
-	unsigned int tmo = acpi_desc->scrub_tmo;
-	struct device *dev = acpi_desc->dev;
-	struct nfit_spa *nfit_spa;
+अटल अचिन्हित पूर्णांक __acpi_nfit_scrub(काष्ठा acpi_nfit_desc *acpi_desc,
+		पूर्णांक query_rc)
+अणु
+	अचिन्हित पूर्णांक पंचांगo = acpi_desc->scrub_पंचांगo;
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nfit_spa *nfit_spa;
 
-	lockdep_assert_held(&acpi_desc->init_mutex);
+	lockdep_निश्चित_held(&acpi_desc->init_mutex);
 
-	if (test_bit(ARS_CANCEL, &acpi_desc->scrub_flags))
-		return 0;
+	अगर (test_bit(ARS_CANCEL, &acpi_desc->scrub_flags))
+		वापस 0;
 
-	if (query_rc == -EBUSY) {
+	अगर (query_rc == -EBUSY) अणु
 		dev_dbg(dev, "ARS: ARS busy\n");
-		return min(30U * 60U, tmo * 2);
-	}
-	if (query_rc == -ENOSPC) {
+		वापस min(30U * 60U, पंचांगo * 2);
+	पूर्ण
+	अगर (query_rc == -ENOSPC) अणु
 		dev_dbg(dev, "ARS: ARS continue\n");
-		ars_continue(acpi_desc);
-		return 1;
-	}
-	if (query_rc && query_rc != -EAGAIN) {
-		unsigned long long addr, end;
+		ars_जारी(acpi_desc);
+		वापस 1;
+	पूर्ण
+	अगर (query_rc && query_rc != -EAGAIN) अणु
+		अचिन्हित दीर्घ दीर्घ addr, end;
 
 		addr = acpi_desc->ars_status->address;
 		end = addr + acpi_desc->ars_status->length;
 		dev_dbg(dev, "ARS: %llx-%llx failed (%d)\n", addr, end,
 				query_rc);
-	}
+	पूर्ण
 
 	ars_complete_all(acpi_desc);
-	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
-		enum nfit_ars_state req_type;
-		int rc;
+	list_क्रम_each_entry(nfit_spa, &acpi_desc->spas, list) अणु
+		क्रमागत nfit_ars_state req_type;
+		पूर्णांक rc;
 
-		if (test_bit(ARS_FAILED, &nfit_spa->ars_state))
-			continue;
+		अगर (test_bit(ARS_FAILED, &nfit_spa->ars_state))
+			जारी;
 
-		/* prefer short ARS requests first */
-		if (test_bit(ARS_REQ_SHORT, &nfit_spa->ars_state))
+		/* prefer लघु ARS requests first */
+		अगर (test_bit(ARS_REQ_SHORT, &nfit_spa->ars_state))
 			req_type = ARS_REQ_SHORT;
-		else if (test_bit(ARS_REQ_LONG, &nfit_spa->ars_state))
+		अन्यथा अगर (test_bit(ARS_REQ_LONG, &nfit_spa->ars_state))
 			req_type = ARS_REQ_LONG;
-		else
-			continue;
+		अन्यथा
+			जारी;
 		rc = ars_start(acpi_desc, nfit_spa, req_type);
 
 		dev = nd_region_dev(nfit_spa->nd_region);
@@ -3226,236 +3227,236 @@ static unsigned int __acpi_nfit_scrub(struct acpi_nfit_desc *acpi_desc,
 				req_type == ARS_REQ_SHORT ? "short" : "long",
 				rc);
 		/*
-		 * Hmm, we raced someone else starting ARS? Try again in
+		 * Hmm, we raced someone अन्यथा starting ARS? Try again in
 		 * a bit.
 		 */
-		if (rc == -EBUSY)
-			return 1;
-		if (rc == 0) {
+		अगर (rc == -EBUSY)
+			वापस 1;
+		अगर (rc == 0) अणु
 			dev_WARN_ONCE(dev, acpi_desc->scrub_spa,
 					"scrub start while range %d active\n",
 					acpi_desc->scrub_spa->spa->range_index);
 			clear_bit(req_type, &nfit_spa->ars_state);
 			acpi_desc->scrub_spa = nfit_spa;
 			/*
-			 * Consider this spa last for future scrub
+			 * Consider this spa last क्रम future scrub
 			 * requests
 			 */
 			list_move_tail(&nfit_spa->list, &acpi_desc->spas);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		dev_err(dev, "ARS: range %d ARS failed (%d)\n",
 				nfit_spa->spa->range_index, rc);
 		set_bit(ARS_FAILED, &nfit_spa->ars_state);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __sched_ars(struct acpi_nfit_desc *acpi_desc, unsigned int tmo)
-{
-	lockdep_assert_held(&acpi_desc->init_mutex);
+अटल व्योम __sched_ars(काष्ठा acpi_nfit_desc *acpi_desc, अचिन्हित पूर्णांक पंचांगo)
+अणु
+	lockdep_निश्चित_held(&acpi_desc->init_mutex);
 
 	set_bit(ARS_BUSY, &acpi_desc->scrub_flags);
 	/* note this should only be set from within the workqueue */
-	if (tmo)
-		acpi_desc->scrub_tmo = tmo;
-	queue_delayed_work(nfit_wq, &acpi_desc->dwork, tmo * HZ);
-}
+	अगर (पंचांगo)
+		acpi_desc->scrub_पंचांगo = पंचांगo;
+	queue_delayed_work(nfit_wq, &acpi_desc->dwork, पंचांगo * HZ);
+पूर्ण
 
-static void sched_ars(struct acpi_nfit_desc *acpi_desc)
-{
+अटल व्योम sched_ars(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
 	__sched_ars(acpi_desc, 0);
-}
+पूर्ण
 
-static void notify_ars_done(struct acpi_nfit_desc *acpi_desc)
-{
-	lockdep_assert_held(&acpi_desc->init_mutex);
+अटल व्योम notअगरy_ars_करोne(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	lockdep_निश्चित_held(&acpi_desc->init_mutex);
 
 	clear_bit(ARS_BUSY, &acpi_desc->scrub_flags);
 	acpi_desc->scrub_count++;
-	if (acpi_desc->scrub_count_state)
-		sysfs_notify_dirent(acpi_desc->scrub_count_state);
-}
+	अगर (acpi_desc->scrub_count_state)
+		sysfs_notअगरy_dirent(acpi_desc->scrub_count_state);
+पूर्ण
 
-static void acpi_nfit_scrub(struct work_struct *work)
-{
-	struct acpi_nfit_desc *acpi_desc;
-	unsigned int tmo;
-	int query_rc;
+अटल व्योम acpi_nfit_scrub(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा acpi_nfit_desc *acpi_desc;
+	अचिन्हित पूर्णांक पंचांगo;
+	पूर्णांक query_rc;
 
 	acpi_desc = container_of(work, typeof(*acpi_desc), dwork.work);
 	mutex_lock(&acpi_desc->init_mutex);
 	query_rc = acpi_nfit_query_poison(acpi_desc);
-	tmo = __acpi_nfit_scrub(acpi_desc, query_rc);
-	if (tmo)
-		__sched_ars(acpi_desc, tmo);
-	else
-		notify_ars_done(acpi_desc);
-	memset(acpi_desc->ars_status, 0, acpi_desc->max_ars);
+	पंचांगo = __acpi_nfit_scrub(acpi_desc, query_rc);
+	अगर (पंचांगo)
+		__sched_ars(acpi_desc, पंचांगo);
+	अन्यथा
+		notअगरy_ars_करोne(acpi_desc);
+	स_रखो(acpi_desc->ars_status, 0, acpi_desc->max_ars);
 	clear_bit(ARS_POLL, &acpi_desc->scrub_flags);
 	mutex_unlock(&acpi_desc->init_mutex);
-}
+पूर्ण
 
-static void acpi_nfit_init_ars(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_spa *nfit_spa)
-{
-	int type = nfit_spa_type(nfit_spa->spa);
-	struct nd_cmd_ars_cap ars_cap;
-	int rc;
+अटल व्योम acpi_nfit_init_ars(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_spa *nfit_spa)
+अणु
+	पूर्णांक type = nfit_spa_type(nfit_spa->spa);
+	काष्ठा nd_cmd_ars_cap ars_cap;
+	पूर्णांक rc;
 
 	set_bit(ARS_FAILED, &nfit_spa->ars_state);
-	memset(&ars_cap, 0, sizeof(ars_cap));
+	स_रखो(&ars_cap, 0, माप(ars_cap));
 	rc = ars_get_cap(acpi_desc, &ars_cap, nfit_spa);
-	if (rc < 0)
-		return;
+	अगर (rc < 0)
+		वापस;
 	/* check that the supported scrub types match the spa type */
-	if (type == NFIT_SPA_VOLATILE && ((ars_cap.status >> 16)
+	अगर (type == NFIT_SPA_VOLATILE && ((ars_cap.status >> 16)
 				& ND_ARS_VOLATILE) == 0)
-		return;
-	if (type == NFIT_SPA_PM && ((ars_cap.status >> 16)
+		वापस;
+	अगर (type == NFIT_SPA_PM && ((ars_cap.status >> 16)
 				& ND_ARS_PERSISTENT) == 0)
-		return;
+		वापस;
 
 	nfit_spa->max_ars = ars_cap.max_ars_out;
 	nfit_spa->clear_err_unit = ars_cap.clear_err_unit;
 	acpi_desc->max_ars = max(nfit_spa->max_ars, acpi_desc->max_ars);
 	clear_bit(ARS_FAILED, &nfit_spa->ars_state);
-}
+पूर्ण
 
-static int acpi_nfit_register_regions(struct acpi_nfit_desc *acpi_desc)
-{
-	struct nfit_spa *nfit_spa;
-	int rc, do_sched_ars = 0;
+अटल पूर्णांक acpi_nfit_रेजिस्टर_regions(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	काष्ठा nfit_spa *nfit_spa;
+	पूर्णांक rc, करो_sched_ars = 0;
 
 	set_bit(ARS_VALID, &acpi_desc->scrub_flags);
-	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
-		switch (nfit_spa_type(nfit_spa->spa)) {
-		case NFIT_SPA_VOLATILE:
-		case NFIT_SPA_PM:
+	list_क्रम_each_entry(nfit_spa, &acpi_desc->spas, list) अणु
+		चयन (nfit_spa_type(nfit_spa->spa)) अणु
+		हाल NFIT_SPA_VOLATILE:
+		हाल NFIT_SPA_PM:
 			acpi_nfit_init_ars(acpi_desc, nfit_spa);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
-		switch (nfit_spa_type(nfit_spa->spa)) {
-		case NFIT_SPA_VOLATILE:
-		case NFIT_SPA_PM:
-			/* register regions and kick off initial ARS run */
-			rc = ars_register(acpi_desc, nfit_spa);
-			if (rc)
-				return rc;
+	list_क्रम_each_entry(nfit_spa, &acpi_desc->spas, list) अणु
+		चयन (nfit_spa_type(nfit_spa->spa)) अणु
+		हाल NFIT_SPA_VOLATILE:
+		हाल NFIT_SPA_PM:
+			/* रेजिस्टर regions and kick off initial ARS run */
+			rc = ars_रेजिस्टर(acpi_desc, nfit_spa);
+			अगर (rc)
+				वापस rc;
 
 			/*
-			 * Kick off background ARS if at least one
-			 * region successfully registered ARS
+			 * Kick off background ARS अगर at least one
+			 * region successfully रेजिस्टरed ARS
 			 */
-			if (!test_bit(ARS_FAILED, &nfit_spa->ars_state))
-				do_sched_ars++;
-			break;
-		case NFIT_SPA_BDW:
-			/* nothing to register */
-			break;
-		case NFIT_SPA_DCR:
-		case NFIT_SPA_VDISK:
-		case NFIT_SPA_VCD:
-		case NFIT_SPA_PDISK:
-		case NFIT_SPA_PCD:
-			/* register known regions that don't support ARS */
-			rc = acpi_nfit_register_region(acpi_desc, nfit_spa);
-			if (rc)
-				return rc;
-			break;
-		default:
-			/* don't register unknown regions */
-			break;
-		}
-	}
+			अगर (!test_bit(ARS_FAILED, &nfit_spa->ars_state))
+				करो_sched_ars++;
+			अवरोध;
+		हाल NFIT_SPA_BDW:
+			/* nothing to रेजिस्टर */
+			अवरोध;
+		हाल NFIT_SPA_DCR:
+		हाल NFIT_SPA_VDISK:
+		हाल NFIT_SPA_VCD:
+		हाल NFIT_SPA_PDISK:
+		हाल NFIT_SPA_PCD:
+			/* रेजिस्टर known regions that करोn't support ARS */
+			rc = acpi_nfit_रेजिस्टर_region(acpi_desc, nfit_spa);
+			अगर (rc)
+				वापस rc;
+			अवरोध;
+		शेष:
+			/* करोn't रेजिस्टर unknown regions */
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (do_sched_ars)
+	अगर (करो_sched_ars)
 		sched_ars(acpi_desc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acpi_nfit_check_deletions(struct acpi_nfit_desc *acpi_desc,
-		struct nfit_table_prev *prev)
-{
-	struct device *dev = acpi_desc->dev;
+अटल पूर्णांक acpi_nfit_check_deletions(काष्ठा acpi_nfit_desc *acpi_desc,
+		काष्ठा nfit_table_prev *prev)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
 
-	if (!list_empty(&prev->spas) ||
+	अगर (!list_empty(&prev->spas) ||
 			!list_empty(&prev->memdevs) ||
 			!list_empty(&prev->dcrs) ||
 			!list_empty(&prev->bdws) ||
 			!list_empty(&prev->idts) ||
-			!list_empty(&prev->flushes)) {
+			!list_empty(&prev->flushes)) अणु
 		dev_err(dev, "new nfit deletes entries (unsupported)\n");
-		return -ENXIO;
-	}
-	return 0;
-}
+		वापस -ENXIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int acpi_nfit_desc_init_scrub_attr(struct acpi_nfit_desc *acpi_desc)
-{
-	struct device *dev = acpi_desc->dev;
-	struct kernfs_node *nfit;
-	struct device *bus_dev;
+अटल पूर्णांक acpi_nfit_desc_init_scrub_attr(काष्ठा acpi_nfit_desc *acpi_desc)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा kernfs_node *nfit;
+	काष्ठा device *bus_dev;
 
-	if (!ars_supported(acpi_desc->nvdimm_bus))
-		return 0;
+	अगर (!ars_supported(acpi_desc->nvdimm_bus))
+		वापस 0;
 
 	bus_dev = to_nvdimm_bus_dev(acpi_desc->nvdimm_bus);
 	nfit = sysfs_get_dirent(bus_dev->kobj.sd, "nfit");
-	if (!nfit) {
+	अगर (!nfit) अणु
 		dev_err(dev, "sysfs_get_dirent 'nfit' failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	acpi_desc->scrub_count_state = sysfs_get_dirent(nfit, "scrub");
 	sysfs_put(nfit);
-	if (!acpi_desc->scrub_count_state) {
+	अगर (!acpi_desc->scrub_count_state) अणु
 		dev_err(dev, "sysfs_get_dirent 'scrub' failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void acpi_nfit_unregister(void *data)
-{
-	struct acpi_nfit_desc *acpi_desc = data;
+अटल व्योम acpi_nfit_unरेजिस्टर(व्योम *data)
+अणु
+	काष्ठा acpi_nfit_desc *acpi_desc = data;
 
-	nvdimm_bus_unregister(acpi_desc->nvdimm_bus);
-}
+	nvdimm_bus_unरेजिस्टर(acpi_desc->nvdimm_bus);
+पूर्ण
 
-int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, void *data, acpi_size sz)
-{
-	struct device *dev = acpi_desc->dev;
-	struct nfit_table_prev prev;
-	const void *end;
-	int rc;
+पूर्णांक acpi_nfit_init(काष्ठा acpi_nfit_desc *acpi_desc, व्योम *data, acpi_size sz)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	काष्ठा nfit_table_prev prev;
+	स्थिर व्योम *end;
+	पूर्णांक rc;
 
-	if (!acpi_desc->nvdimm_bus) {
+	अगर (!acpi_desc->nvdimm_bus) अणु
 		acpi_nfit_init_dsms(acpi_desc);
 
-		acpi_desc->nvdimm_bus = nvdimm_bus_register(dev,
+		acpi_desc->nvdimm_bus = nvdimm_bus_रेजिस्टर(dev,
 				&acpi_desc->nd_desc);
-		if (!acpi_desc->nvdimm_bus)
-			return -ENOMEM;
+		अगर (!acpi_desc->nvdimm_bus)
+			वापस -ENOMEM;
 
-		rc = devm_add_action_or_reset(dev, acpi_nfit_unregister,
+		rc = devm_add_action_or_reset(dev, acpi_nfit_unरेजिस्टर,
 				acpi_desc);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		rc = acpi_nfit_desc_init_scrub_attr(acpi_desc);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
-		/* register this acpi_desc for mce notifications */
+		/* रेजिस्टर this acpi_desc क्रम mce notअगरications */
 		mutex_lock(&acpi_desc_lock);
 		list_add_tail(&acpi_desc->list, &acpi_descs);
 		mutex_unlock(&acpi_desc_lock);
-	}
+	पूर्ण
 
 	mutex_lock(&acpi_desc->init_mutex);
 
@@ -3480,41 +3481,41 @@ int acpi_nfit_init(struct acpi_nfit_desc *acpi_desc, void *data, acpi_size sz)
 				acpi_desc->flushes.prev);
 
 	end = data + sz;
-	while (!IS_ERR_OR_NULL(data))
+	जबतक (!IS_ERR_OR_शून्य(data))
 		data = add_table(acpi_desc, &prev, data, end);
 
-	if (IS_ERR(data)) {
+	अगर (IS_ERR(data)) अणु
 		dev_dbg(dev, "nfit table parsing error: %ld\n",	PTR_ERR(data));
 		rc = PTR_ERR(data);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	rc = acpi_nfit_check_deletions(acpi_desc, &prev);
-	if (rc)
-		goto out_unlock;
+	अगर (rc)
+		जाओ out_unlock;
 
 	rc = nfit_mem_init(acpi_desc);
-	if (rc)
-		goto out_unlock;
+	अगर (rc)
+		जाओ out_unlock;
 
-	rc = acpi_nfit_register_dimms(acpi_desc);
-	if (rc)
-		goto out_unlock;
+	rc = acpi_nfit_रेजिस्टर_dimms(acpi_desc);
+	अगर (rc)
+		जाओ out_unlock;
 
-	rc = acpi_nfit_register_regions(acpi_desc);
+	rc = acpi_nfit_रेजिस्टर_regions(acpi_desc);
 
  out_unlock:
 	mutex_unlock(&acpi_desc->init_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_nfit_init);
 
-static int acpi_nfit_flush_probe(struct nvdimm_bus_descriptor *nd_desc)
-{
-	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
-	struct device *dev = acpi_desc->dev;
+अटल पूर्णांक acpi_nfit_flush_probe(काष्ठा nvdimm_bus_descriptor *nd_desc)
+अणु
+	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+	काष्ठा device *dev = acpi_desc->dev;
 
-	/* Bounce the device lock to flush acpi_nfit_add / acpi_nfit_notify */
+	/* Bounce the device lock to flush acpi_nfit_add / acpi_nfit_notअगरy */
 	nfit_device_lock(dev);
 	nfit_device_unlock(dev);
 
@@ -3522,103 +3523,103 @@ static int acpi_nfit_flush_probe(struct nvdimm_bus_descriptor *nd_desc)
 	mutex_lock(&acpi_desc->init_mutex);
 	mutex_unlock(&acpi_desc->init_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __acpi_nfit_clear_to_send(struct nvdimm_bus_descriptor *nd_desc,
-		struct nvdimm *nvdimm, unsigned int cmd)
-{
-	struct acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
+अटल पूर्णांक __acpi_nfit_clear_to_send(काष्ठा nvdimm_bus_descriptor *nd_desc,
+		काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक cmd)
+अणु
+	काष्ठा acpi_nfit_desc *acpi_desc = to_acpi_desc(nd_desc);
 
-	if (nvdimm)
-		return 0;
-	if (cmd != ND_CMD_ARS_START)
-		return 0;
+	अगर (nvdimm)
+		वापस 0;
+	अगर (cmd != ND_CMD_ARS_START)
+		वापस 0;
 
 	/*
 	 * The kernel and userspace may race to initiate a scrub, but
-	 * the scrub thread is prepared to lose that initial race.  It
+	 * the scrub thपढ़ो is prepared to lose that initial race.  It
 	 * just needs guarantees that any ARS it initiates are not
-	 * interrupted by any intervening start requests from userspace.
+	 * पूर्णांकerrupted by any पूर्णांकervening start requests from userspace.
 	 */
-	if (work_busy(&acpi_desc->dwork.work))
-		return -EBUSY;
+	अगर (work_busy(&acpi_desc->dwork.work))
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Prevent security and firmware activate commands from being issued via
  * ioctl.
  */
-static int acpi_nfit_clear_to_send(struct nvdimm_bus_descriptor *nd_desc,
-		struct nvdimm *nvdimm, unsigned int cmd, void *buf)
-{
-	struct nd_cmd_pkg *call_pkg = buf;
-	unsigned int func;
+अटल पूर्णांक acpi_nfit_clear_to_send(काष्ठा nvdimm_bus_descriptor *nd_desc,
+		काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक cmd, व्योम *buf)
+अणु
+	काष्ठा nd_cmd_pkg *call_pkg = buf;
+	अचिन्हित पूर्णांक func;
 
-	if (nvdimm && cmd == ND_CMD_CALL &&
-			call_pkg->nd_family == NVDIMM_FAMILY_INTEL) {
+	अगर (nvdimm && cmd == ND_CMD_CALL &&
+			call_pkg->nd_family == NVDIMM_FAMILY_INTEL) अणु
 		func = call_pkg->nd_command;
-		if (func > NVDIMM_CMD_MAX ||
+		अगर (func > NVDIMM_CMD_MAX ||
 		    (1 << func) & NVDIMM_INTEL_DENY_CMDMASK)
-			return -EOPNOTSUPP;
-	}
+			वापस -EOPNOTSUPP;
+	पूर्ण
 
 	/* block all non-nfit bus commands */
-	if (!nvdimm && cmd == ND_CMD_CALL &&
+	अगर (!nvdimm && cmd == ND_CMD_CALL &&
 			call_pkg->nd_family != NVDIMM_BUS_FAMILY_NFIT)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	return __acpi_nfit_clear_to_send(nd_desc, nvdimm, cmd);
-}
+	वापस __acpi_nfit_clear_to_send(nd_desc, nvdimm, cmd);
+पूर्ण
 
-int acpi_nfit_ars_rescan(struct acpi_nfit_desc *acpi_desc,
-		enum nfit_ars_state req_type)
-{
-	struct device *dev = acpi_desc->dev;
-	int scheduled = 0, busy = 0;
-	struct nfit_spa *nfit_spa;
+पूर्णांक acpi_nfit_ars_rescan(काष्ठा acpi_nfit_desc *acpi_desc,
+		क्रमागत nfit_ars_state req_type)
+अणु
+	काष्ठा device *dev = acpi_desc->dev;
+	पूर्णांक scheduled = 0, busy = 0;
+	काष्ठा nfit_spa *nfit_spa;
 
 	mutex_lock(&acpi_desc->init_mutex);
-	if (test_bit(ARS_CANCEL, &acpi_desc->scrub_flags)) {
+	अगर (test_bit(ARS_CANCEL, &acpi_desc->scrub_flags)) अणु
 		mutex_unlock(&acpi_desc->init_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
-		int type = nfit_spa_type(nfit_spa->spa);
+	list_क्रम_each_entry(nfit_spa, &acpi_desc->spas, list) अणु
+		पूर्णांक type = nfit_spa_type(nfit_spa->spa);
 
-		if (type != NFIT_SPA_PM && type != NFIT_SPA_VOLATILE)
-			continue;
-		if (test_bit(ARS_FAILED, &nfit_spa->ars_state))
-			continue;
+		अगर (type != NFIT_SPA_PM && type != NFIT_SPA_VOLATILE)
+			जारी;
+		अगर (test_bit(ARS_FAILED, &nfit_spa->ars_state))
+			जारी;
 
-		if (test_and_set_bit(req_type, &nfit_spa->ars_state))
+		अगर (test_and_set_bit(req_type, &nfit_spa->ars_state))
 			busy++;
-		else
+		अन्यथा
 			scheduled++;
-	}
-	if (scheduled) {
+	पूर्ण
+	अगर (scheduled) अणु
 		sched_ars(acpi_desc);
 		dev_dbg(dev, "ars_scan triggered\n");
-	}
+	पूर्ण
 	mutex_unlock(&acpi_desc->init_mutex);
 
-	if (scheduled)
-		return 0;
-	if (busy)
-		return -EBUSY;
-	return -ENOTTY;
-}
+	अगर (scheduled)
+		वापस 0;
+	अगर (busy)
+		वापस -EBUSY;
+	वापस -ENOTTY;
+पूर्ण
 
-void acpi_nfit_desc_init(struct acpi_nfit_desc *acpi_desc, struct device *dev)
-{
-	struct nvdimm_bus_descriptor *nd_desc;
+व्योम acpi_nfit_desc_init(काष्ठा acpi_nfit_desc *acpi_desc, काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc;
 
 	dev_set_drvdata(dev, acpi_desc);
 	acpi_desc->dev = dev;
-	acpi_desc->blk_do_io = acpi_nfit_blk_region_do_io;
+	acpi_desc->blk_करो_io = acpi_nfit_blk_region_करो_io;
 	nd_desc = &acpi_desc->nd_desc;
 	nd_desc->provider_name = "ACPI.NFIT";
 	nd_desc->module = THIS_MODULE;
@@ -3636,24 +3637,24 @@ void acpi_nfit_desc_init(struct acpi_nfit_desc *acpi_desc, struct device *dev)
 	INIT_LIST_HEAD(&acpi_desc->dimms);
 	INIT_LIST_HEAD(&acpi_desc->list);
 	mutex_init(&acpi_desc->init_mutex);
-	acpi_desc->scrub_tmo = 1;
+	acpi_desc->scrub_पंचांगo = 1;
 	INIT_DELAYED_WORK(&acpi_desc->dwork, acpi_nfit_scrub);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_nfit_desc_init);
 
-static void acpi_nfit_put_table(void *table)
-{
+अटल व्योम acpi_nfit_put_table(व्योम *table)
+अणु
 	acpi_put_table(table);
-}
+पूर्ण
 
-void acpi_nfit_shutdown(void *data)
-{
-	struct acpi_nfit_desc *acpi_desc = data;
-	struct device *bus_dev = to_nvdimm_bus_dev(acpi_desc->nvdimm_bus);
+व्योम acpi_nfit_shutकरोwn(व्योम *data)
+अणु
+	काष्ठा acpi_nfit_desc *acpi_desc = data;
+	काष्ठा device *bus_dev = to_nvdimm_bus_dev(acpi_desc->nvdimm_bus);
 
 	/*
-	 * Destruct under acpi_desc_lock so that nfit_handle_mce does not
-	 * race teardown
+	 * Deकाष्ठा under acpi_desc_lock so that nfit_handle_mce करोes not
+	 * race tearकरोwn
 	 */
 	mutex_lock(&acpi_desc_lock);
 	list_del(&acpi_desc->list);
@@ -3673,179 +3674,179 @@ void acpi_nfit_shutdown(void *data)
 	nfit_device_unlock(bus_dev);
 
 	flush_workqueue(nfit_wq);
-}
-EXPORT_SYMBOL_GPL(acpi_nfit_shutdown);
+पूर्ण
+EXPORT_SYMBOL_GPL(acpi_nfit_shutकरोwn);
 
-static int acpi_nfit_add(struct acpi_device *adev)
-{
-	struct acpi_buffer buf = { ACPI_ALLOCATE_BUFFER, NULL };
-	struct acpi_nfit_desc *acpi_desc;
-	struct device *dev = &adev->dev;
-	struct acpi_table_header *tbl;
+अटल पूर्णांक acpi_nfit_add(काष्ठा acpi_device *adev)
+अणु
+	काष्ठा acpi_buffer buf = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	काष्ठा acpi_nfit_desc *acpi_desc;
+	काष्ठा device *dev = &adev->dev;
+	काष्ठा acpi_table_header *tbl;
 	acpi_status status = AE_OK;
 	acpi_size sz;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	status = acpi_get_table(ACPI_SIG_NFIT, 0, &tbl);
-	if (ACPI_FAILURE(status)) {
-		/* The NVDIMM root device allows OS to trigger enumeration of
-		 * NVDIMMs through NFIT at boot time and re-enumeration at
-		 * root level via the _FIT method during runtime.
-		 * This is ok to return 0 here, we could have an nvdimm
-		 * hotplugged later and evaluate _FIT method which returns
-		 * data in the format of a series of NFIT Structures.
+	अगर (ACPI_FAILURE(status)) अणु
+		/* The NVDIMM root device allows OS to trigger क्रमागतeration of
+		 * NVDIMMs through NFIT at boot समय and re-क्रमागतeration at
+		 * root level via the _FIT method during runसमय.
+		 * This is ok to वापस 0 here, we could have an nvdimm
+		 * hotplugged later and evaluate _FIT method which वापसs
+		 * data in the क्रमmat of a series of NFIT Structures.
 		 */
 		dev_dbg(dev, "failed to find NFIT at startup\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	rc = devm_add_action_or_reset(dev, acpi_nfit_put_table, tbl);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	sz = tbl->length;
 
-	acpi_desc = devm_kzalloc(dev, sizeof(*acpi_desc), GFP_KERNEL);
-	if (!acpi_desc)
-		return -ENOMEM;
+	acpi_desc = devm_kzalloc(dev, माप(*acpi_desc), GFP_KERNEL);
+	अगर (!acpi_desc)
+		वापस -ENOMEM;
 	acpi_nfit_desc_init(acpi_desc, &adev->dev);
 
-	/* Save the acpi header for exporting the revision via sysfs */
+	/* Save the acpi header क्रम exporting the revision via sysfs */
 	acpi_desc->acpi_header = *tbl;
 
-	/* Evaluate _FIT and override with that if present */
-	status = acpi_evaluate_object(adev->handle, "_FIT", NULL, &buf);
-	if (ACPI_SUCCESS(status) && buf.length > 0) {
-		union acpi_object *obj = buf.pointer;
+	/* Evaluate _FIT and override with that अगर present */
+	status = acpi_evaluate_object(adev->handle, "_FIT", शून्य, &buf);
+	अगर (ACPI_SUCCESS(status) && buf.length > 0) अणु
+		जोड़ acpi_object *obj = buf.poपूर्णांकer;
 
-		if (obj->type == ACPI_TYPE_BUFFER)
-			rc = acpi_nfit_init(acpi_desc, obj->buffer.pointer,
+		अगर (obj->type == ACPI_TYPE_BUFFER)
+			rc = acpi_nfit_init(acpi_desc, obj->buffer.poपूर्णांकer,
 					obj->buffer.length);
-		else
+		अन्यथा
 			dev_dbg(dev, "invalid type %d, ignoring _FIT\n",
-				(int) obj->type);
-		kfree(buf.pointer);
-	} else
+				(पूर्णांक) obj->type);
+		kमुक्त(buf.poपूर्णांकer);
+	पूर्ण अन्यथा
 		/* skip over the lead-in header table */
-		rc = acpi_nfit_init(acpi_desc, (void *) tbl
-				+ sizeof(struct acpi_table_nfit),
-				sz - sizeof(struct acpi_table_nfit));
+		rc = acpi_nfit_init(acpi_desc, (व्योम *) tbl
+				+ माप(काष्ठा acpi_table_nfit),
+				sz - माप(काष्ठा acpi_table_nfit));
 
-	if (rc)
-		return rc;
-	return devm_add_action_or_reset(dev, acpi_nfit_shutdown, acpi_desc);
-}
+	अगर (rc)
+		वापस rc;
+	वापस devm_add_action_or_reset(dev, acpi_nfit_shutकरोwn, acpi_desc);
+पूर्ण
 
-static int acpi_nfit_remove(struct acpi_device *adev)
-{
-	/* see acpi_nfit_unregister */
-	return 0;
-}
+अटल पूर्णांक acpi_nfit_हटाओ(काष्ठा acpi_device *adev)
+अणु
+	/* see acpi_nfit_unरेजिस्टर */
+	वापस 0;
+पूर्ण
 
-static void acpi_nfit_update_notify(struct device *dev, acpi_handle handle)
-{
-	struct acpi_nfit_desc *acpi_desc = dev_get_drvdata(dev);
-	struct acpi_buffer buf = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *obj;
+अटल व्योम acpi_nfit_update_notअगरy(काष्ठा device *dev, acpi_handle handle)
+अणु
+	काष्ठा acpi_nfit_desc *acpi_desc = dev_get_drvdata(dev);
+	काष्ठा acpi_buffer buf = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *obj;
 	acpi_status status;
-	int ret;
+	पूर्णांक ret;
 
-	if (!dev->driver) {
-		/* dev->driver may be null if we're being removed */
+	अगर (!dev->driver) अणु
+		/* dev->driver may be null अगर we're being हटाओd */
 		dev_dbg(dev, "no driver found for dev\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!acpi_desc) {
-		acpi_desc = devm_kzalloc(dev, sizeof(*acpi_desc), GFP_KERNEL);
-		if (!acpi_desc)
-			return;
+	अगर (!acpi_desc) अणु
+		acpi_desc = devm_kzalloc(dev, माप(*acpi_desc), GFP_KERNEL);
+		अगर (!acpi_desc)
+			वापस;
 		acpi_nfit_desc_init(acpi_desc, dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Finish previous registration before considering new
+		 * Finish previous registration beक्रमe considering new
 		 * regions.
 		 */
 		flush_workqueue(nfit_wq);
-	}
+	पूर्ण
 
 	/* Evaluate _FIT */
-	status = acpi_evaluate_object(handle, "_FIT", NULL, &buf);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_object(handle, "_FIT", शून्य, &buf);
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_err(dev, "failed to evaluate _FIT\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	obj = buf.pointer;
-	if (obj->type == ACPI_TYPE_BUFFER) {
-		ret = acpi_nfit_init(acpi_desc, obj->buffer.pointer,
+	obj = buf.poपूर्णांकer;
+	अगर (obj->type == ACPI_TYPE_BUFFER) अणु
+		ret = acpi_nfit_init(acpi_desc, obj->buffer.poपूर्णांकer,
 				obj->buffer.length);
-		if (ret)
+		अगर (ret)
 			dev_err(dev, "failed to merge updated NFIT\n");
-	} else
+	पूर्ण अन्यथा
 		dev_err(dev, "Invalid _FIT\n");
-	kfree(buf.pointer);
-}
+	kमुक्त(buf.poपूर्णांकer);
+पूर्ण
 
-static void acpi_nfit_uc_error_notify(struct device *dev, acpi_handle handle)
-{
-	struct acpi_nfit_desc *acpi_desc = dev_get_drvdata(dev);
+अटल व्योम acpi_nfit_uc_error_notअगरy(काष्ठा device *dev, acpi_handle handle)
+अणु
+	काष्ठा acpi_nfit_desc *acpi_desc = dev_get_drvdata(dev);
 
-	if (acpi_desc->scrub_mode == HW_ERROR_SCRUB_ON)
+	अगर (acpi_desc->scrub_mode == HW_ERROR_SCRUB_ON)
 		acpi_nfit_ars_rescan(acpi_desc, ARS_REQ_LONG);
-	else
+	अन्यथा
 		acpi_nfit_ars_rescan(acpi_desc, ARS_REQ_SHORT);
-}
+पूर्ण
 
-void __acpi_nfit_notify(struct device *dev, acpi_handle handle, u32 event)
-{
+व्योम __acpi_nfit_notअगरy(काष्ठा device *dev, acpi_handle handle, u32 event)
+अणु
 	dev_dbg(dev, "event: 0x%x\n", event);
 
-	switch (event) {
-	case NFIT_NOTIFY_UPDATE:
-		return acpi_nfit_update_notify(dev, handle);
-	case NFIT_NOTIFY_UC_MEMORY_ERROR:
-		return acpi_nfit_uc_error_notify(dev, handle);
-	default:
-		return;
-	}
-}
-EXPORT_SYMBOL_GPL(__acpi_nfit_notify);
+	चयन (event) अणु
+	हाल NFIT_NOTIFY_UPDATE:
+		वापस acpi_nfit_update_notअगरy(dev, handle);
+	हाल NFIT_NOTIFY_UC_MEMORY_ERROR:
+		वापस acpi_nfit_uc_error_notअगरy(dev, handle);
+	शेष:
+		वापस;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(__acpi_nfit_notअगरy);
 
-static void acpi_nfit_notify(struct acpi_device *adev, u32 event)
-{
+अटल व्योम acpi_nfit_notअगरy(काष्ठा acpi_device *adev, u32 event)
+अणु
 	nfit_device_lock(&adev->dev);
-	__acpi_nfit_notify(&adev->dev, adev->handle, event);
+	__acpi_nfit_notअगरy(&adev->dev, adev->handle, event);
 	nfit_device_unlock(&adev->dev);
-}
+पूर्ण
 
-static const struct acpi_device_id acpi_nfit_ids[] = {
-	{ "ACPI0012", 0 },
-	{ "", 0 },
-};
+अटल स्थिर काष्ठा acpi_device_id acpi_nfit_ids[] = अणु
+	अणु "ACPI0012", 0 पूर्ण,
+	अणु "", 0 पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, acpi_nfit_ids);
 
-static struct acpi_driver acpi_nfit_driver = {
+अटल काष्ठा acpi_driver acpi_nfit_driver = अणु
 	.name = KBUILD_MODNAME,
 	.ids = acpi_nfit_ids,
-	.ops = {
+	.ops = अणु
 		.add = acpi_nfit_add,
-		.remove = acpi_nfit_remove,
-		.notify = acpi_nfit_notify,
-	},
-};
+		.हटाओ = acpi_nfit_हटाओ,
+		.notअगरy = acpi_nfit_notअगरy,
+	पूर्ण,
+पूर्ण;
 
-static __init int nfit_init(void)
-{
-	int ret;
+अटल __init पूर्णांक nfit_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	BUILD_BUG_ON(sizeof(struct acpi_table_nfit) != 40);
-	BUILD_BUG_ON(sizeof(struct acpi_nfit_system_address) != 64);
-	BUILD_BUG_ON(sizeof(struct acpi_nfit_memory_map) != 48);
-	BUILD_BUG_ON(sizeof(struct acpi_nfit_interleave) != 20);
-	BUILD_BUG_ON(sizeof(struct acpi_nfit_smbios) != 9);
-	BUILD_BUG_ON(sizeof(struct acpi_nfit_control_region) != 80);
-	BUILD_BUG_ON(sizeof(struct acpi_nfit_data_region) != 40);
-	BUILD_BUG_ON(sizeof(struct acpi_nfit_capabilities) != 16);
+	BUILD_BUG_ON(माप(काष्ठा acpi_table_nfit) != 40);
+	BUILD_BUG_ON(माप(काष्ठा acpi_nfit_प्रणाली_address) != 64);
+	BUILD_BUG_ON(माप(काष्ठा acpi_nfit_memory_map) != 48);
+	BUILD_BUG_ON(माप(काष्ठा acpi_nfit_पूर्णांकerleave) != 20);
+	BUILD_BUG_ON(माप(काष्ठा acpi_nfit_smbios) != 9);
+	BUILD_BUG_ON(माप(काष्ठा acpi_nfit_control_region) != 80);
+	BUILD_BUG_ON(माप(काष्ठा acpi_nfit_data_region) != 40);
+	BUILD_BUG_ON(माप(काष्ठा acpi_nfit_capabilities) != 16);
 
 	guid_parse(UUID_VOLATILE_MEMORY, &nfit_uuid[NFIT_SPA_VOLATILE]);
 	guid_parse(UUID_PERSISTENT_MEMORY, &nfit_uuid[NFIT_SPA_PM]);
@@ -3863,30 +3864,30 @@ static __init int nfit_init(void)
 	guid_parse(UUID_NFIT_DIMM_N_HYPERV, &nfit_uuid[NFIT_DEV_DIMM_N_HYPERV]);
 	guid_parse(UUID_INTEL_BUS, &nfit_uuid[NFIT_BUS_INTEL]);
 
-	nfit_wq = create_singlethread_workqueue("nfit");
-	if (!nfit_wq)
-		return -ENOMEM;
+	nfit_wq = create_singlethपढ़ो_workqueue("nfit");
+	अगर (!nfit_wq)
+		वापस -ENOMEM;
 
-	nfit_mce_register();
-	ret = acpi_bus_register_driver(&acpi_nfit_driver);
-	if (ret) {
-		nfit_mce_unregister();
+	nfit_mce_रेजिस्टर();
+	ret = acpi_bus_रेजिस्टर_driver(&acpi_nfit_driver);
+	अगर (ret) अणु
+		nfit_mce_unरेजिस्टर();
 		destroy_workqueue(nfit_wq);
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static __exit void nfit_exit(void)
-{
-	nfit_mce_unregister();
-	acpi_bus_unregister_driver(&acpi_nfit_driver);
+अटल __निकास व्योम nfit_निकास(व्योम)
+अणु
+	nfit_mce_unरेजिस्टर();
+	acpi_bus_unरेजिस्टर_driver(&acpi_nfit_driver);
 	destroy_workqueue(nfit_wq);
 	WARN_ON(!list_empty(&acpi_descs));
-}
+पूर्ण
 
 module_init(nfit_init);
-module_exit(nfit_exit);
+module_निकास(nfit_निकास);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Intel Corporation");

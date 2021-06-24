@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * sm3_base.h - core logic for SM3 implementations
+ * sm3_base.h - core logic क्रम SM3 implementations
  *
  * Copyright (C) 2017 ARM Limited or its affiliates.
  * Written by Gilad Ben-Yossef <gilad@benyossef.com>
  */
 
-#ifndef _CRYPTO_SM3_BASE_H
-#define _CRYPTO_SM3_BASE_H
+#अगर_अघोषित _CRYPTO_SM3_BASE_H
+#घोषणा _CRYPTO_SM3_BASE_H
 
-#include <crypto/internal/hash.h>
-#include <crypto/sm3.h>
-#include <linux/crypto.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <asm/unaligned.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/sm3.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/unaligned.h>
 
-typedef void (sm3_block_fn)(struct sm3_state *sst, u8 const *src, int blocks);
+प्रकार व्योम (sm3_block_fn)(काष्ठा sm3_state *sst, u8 स्थिर *src, पूर्णांक blocks);
 
-static inline int sm3_base_init(struct shash_desc *desc)
-{
-	struct sm3_state *sctx = shash_desc_ctx(desc);
+अटल अंतरभूत पूर्णांक sm3_base_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा sm3_state *sctx = shash_desc_ctx(desc);
 
 	sctx->state[0] = SM3_IVA;
 	sctx->state[1] = SM3_IVB;
@@ -32,81 +33,81 @@ static inline int sm3_base_init(struct shash_desc *desc)
 	sctx->state[7] = SM3_IVH;
 	sctx->count = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int sm3_base_do_update(struct shash_desc *desc,
-				      const u8 *data,
-				      unsigned int len,
+अटल अंतरभूत पूर्णांक sm3_base_करो_update(काष्ठा shash_desc *desc,
+				      स्थिर u8 *data,
+				      अचिन्हित पूर्णांक len,
 				      sm3_block_fn *block_fn)
-{
-	struct sm3_state *sctx = shash_desc_ctx(desc);
-	unsigned int partial = sctx->count % SM3_BLOCK_SIZE;
+अणु
+	काष्ठा sm3_state *sctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial = sctx->count % SM3_BLOCK_SIZE;
 
 	sctx->count += len;
 
-	if (unlikely((partial + len) >= SM3_BLOCK_SIZE)) {
-		int blocks;
+	अगर (unlikely((partial + len) >= SM3_BLOCK_SIZE)) अणु
+		पूर्णांक blocks;
 
-		if (partial) {
-			int p = SM3_BLOCK_SIZE - partial;
+		अगर (partial) अणु
+			पूर्णांक p = SM3_BLOCK_SIZE - partial;
 
-			memcpy(sctx->buffer + partial, data, p);
+			स_नकल(sctx->buffer + partial, data, p);
 			data += p;
 			len -= p;
 
 			block_fn(sctx, sctx->buffer, 1);
-		}
+		पूर्ण
 
 		blocks = len / SM3_BLOCK_SIZE;
 		len %= SM3_BLOCK_SIZE;
 
-		if (blocks) {
+		अगर (blocks) अणु
 			block_fn(sctx, data, blocks);
 			data += blocks * SM3_BLOCK_SIZE;
-		}
+		पूर्ण
 		partial = 0;
-	}
-	if (len)
-		memcpy(sctx->buffer + partial, data, len);
+	पूर्ण
+	अगर (len)
+		स_नकल(sctx->buffer + partial, data, len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int sm3_base_do_finalize(struct shash_desc *desc,
+अटल अंतरभूत पूर्णांक sm3_base_करो_finalize(काष्ठा shash_desc *desc,
 					sm3_block_fn *block_fn)
-{
-	const int bit_offset = SM3_BLOCK_SIZE - sizeof(__be64);
-	struct sm3_state *sctx = shash_desc_ctx(desc);
+अणु
+	स्थिर पूर्णांक bit_offset = SM3_BLOCK_SIZE - माप(__be64);
+	काष्ठा sm3_state *sctx = shash_desc_ctx(desc);
 	__be64 *bits = (__be64 *)(sctx->buffer + bit_offset);
-	unsigned int partial = sctx->count % SM3_BLOCK_SIZE;
+	अचिन्हित पूर्णांक partial = sctx->count % SM3_BLOCK_SIZE;
 
 	sctx->buffer[partial++] = 0x80;
-	if (partial > bit_offset) {
-		memset(sctx->buffer + partial, 0x0, SM3_BLOCK_SIZE - partial);
+	अगर (partial > bit_offset) अणु
+		स_रखो(sctx->buffer + partial, 0x0, SM3_BLOCK_SIZE - partial);
 		partial = 0;
 
 		block_fn(sctx, sctx->buffer, 1);
-	}
+	पूर्ण
 
-	memset(sctx->buffer + partial, 0x0, bit_offset - partial);
+	स_रखो(sctx->buffer + partial, 0x0, bit_offset - partial);
 	*bits = cpu_to_be64(sctx->count << 3);
 	block_fn(sctx, sctx->buffer, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int sm3_base_finish(struct shash_desc *desc, u8 *out)
-{
-	struct sm3_state *sctx = shash_desc_ctx(desc);
+अटल अंतरभूत पूर्णांक sm3_base_finish(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा sm3_state *sctx = shash_desc_ctx(desc);
 	__be32 *digest = (__be32 *)out;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < SM3_DIGEST_SIZE / sizeof(__be32); i++)
+	क्रम (i = 0; i < SM3_DIGEST_SIZE / माप(__be32); i++)
 		put_unaligned_be32(sctx->state[i], digest++);
 
-	memzero_explicit(sctx, sizeof(*sctx));
-	return 0;
-}
+	memzero_explicit(sctx, माप(*sctx));
+	वापस 0;
+पूर्ण
 
-#endif /* _CRYPTO_SM3_BASE_H */
+#पूर्ण_अगर /* _CRYPTO_SM3_BASE_H */

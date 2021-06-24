@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * generic helper functions for handling video4linux capture buffers
+ * generic helper functions क्रम handling video4linux capture buffers
  *
  * (c) 2007 Mauro Carvalho Chehab, <mchehab@kernel.org>
  *
@@ -10,47 +11,47 @@
  * (c) 2006 Ted Walther and John Sokol
  */
 
-#ifndef _VIDEOBUF_CORE_H
-#define _VIDEOBUF_CORE_H
+#अगर_अघोषित _VIDEOBUF_CORE_H
+#घोषणा _VIDEOBUF_CORE_H
 
-#include <linux/poll.h>
-#include <linux/videodev2.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/videodev2.h>
 
-#define UNSET (-1U)
+#घोषणा UNSET (-1U)
 
 
-struct videobuf_buffer;
-struct videobuf_queue;
+काष्ठा videobuf_buffer;
+काष्ठा videobuf_queue;
 
 /* --------------------------------------------------------------------- */
 
 /*
  * A small set of helper functions to manage video4linux buffers.
  *
- * struct videobuf_buffer holds the data structures used by the helper
- * functions, additionally some commonly used fields for v4l buffers
- * (width, height, lists, waitqueue) are in there.  That struct should
- * be used as first element in the drivers buffer struct.
+ * काष्ठा videobuf_buffer holds the data काष्ठाures used by the helper
+ * functions, additionally some commonly used fields क्रम v4l buffers
+ * (width, height, lists, रुकोqueue) are in there.  That काष्ठा should
+ * be used as first element in the drivers buffer काष्ठा.
  *
  * about the mmap helpers (videobuf_mmap_*):
  *
  * The mmaper function allows to map any subset of contiguous buffers.
- * This includes one mmap() call for all buffers (which the original
- * video4linux API uses) as well as one mmap() for every single buffer
+ * This includes one mmap() call क्रम all buffers (which the original
+ * video4linux API uses) as well as one mmap() क्रम every single buffer
  * (which v4l2 uses).
  *
- * If there is a valid mapping for a buffer, buffer->baddr/bsize holds
- * userspace address + size which can be fed into the
+ * If there is a valid mapping क्रम a buffer, buffer->baddr/bsize holds
+ * userspace address + size which can be fed पूर्णांकo the
  * videobuf_dma_init_user function listed above.
  *
  */
 
-struct videobuf_mapping {
-	unsigned int count;
-	struct videobuf_queue *q;
-};
+काष्ठा videobuf_mapping अणु
+	अचिन्हित पूर्णांक count;
+	काष्ठा videobuf_queue *q;
+पूर्ण;
 
-enum videobuf_state {
+क्रमागत videobuf_state अणु
 	VIDEOBUF_NEEDS_INIT = 0,
 	VIDEOBUF_PREPARED   = 1,
 	VIDEOBUF_QUEUED     = 2,
@@ -58,176 +59,176 @@ enum videobuf_state {
 	VIDEOBUF_DONE       = 4,
 	VIDEOBUF_ERROR      = 5,
 	VIDEOBUF_IDLE       = 6,
-};
+पूर्ण;
 
-struct videobuf_buffer {
-	unsigned int            i;
+काष्ठा videobuf_buffer अणु
+	अचिन्हित पूर्णांक            i;
 	u32                     magic;
 
 	/* info about the buffer */
-	unsigned int            width;
-	unsigned int            height;
-	unsigned int            bytesperline; /* use only if != 0 */
-	unsigned long           size;
-	enum v4l2_field         field;
-	enum videobuf_state     state;
-	struct list_head        stream;  /* QBUF/DQBUF list */
+	अचिन्हित पूर्णांक            width;
+	अचिन्हित पूर्णांक            height;
+	अचिन्हित पूर्णांक            bytesperline; /* use only अगर != 0 */
+	अचिन्हित दीर्घ           size;
+	क्रमागत v4l2_field         field;
+	क्रमागत videobuf_state     state;
+	काष्ठा list_head        stream;  /* QBUF/DQBUF list */
 
 	/* touched by irq handler */
-	struct list_head        queue;
-	wait_queue_head_t       done;
-	unsigned int            field_count;
+	काष्ठा list_head        queue;
+	रुको_queue_head_t       करोne;
+	अचिन्हित पूर्णांक            field_count;
 	u64			ts;
 
 	/* Memory type */
-	enum v4l2_memory        memory;
+	क्रमागत v4l2_memory        memory;
 
 	/* buffer size */
-	size_t                  bsize;
+	माप_प्रकार                  bsize;
 
 	/* buffer offset (mmap + overlay) */
-	size_t                  boff;
+	माप_प्रकार                  boff;
 
 	/* buffer addr (userland ptr!) */
-	unsigned long           baddr;
+	अचिन्हित दीर्घ           baddr;
 
-	/* for mmap'ed buffers */
-	struct videobuf_mapping *map;
+	/* क्रम mmap'ed buffers */
+	काष्ठा videobuf_mapping *map;
 
-	/* Private pointer to allow specific methods to store their data */
-	int			privsize;
-	void                    *priv;
-};
+	/* Private poपूर्णांकer to allow specअगरic methods to store their data */
+	पूर्णांक			privsize;
+	व्योम                    *priv;
+पूर्ण;
 
-struct videobuf_queue_ops {
-	int (*buf_setup)(struct videobuf_queue *q,
-			 unsigned int *count, unsigned int *size);
-	int (*buf_prepare)(struct videobuf_queue *q,
-			   struct videobuf_buffer *vb,
-			   enum v4l2_field field);
-	void (*buf_queue)(struct videobuf_queue *q,
-			  struct videobuf_buffer *vb);
-	void (*buf_release)(struct videobuf_queue *q,
-			    struct videobuf_buffer *vb);
-};
+काष्ठा videobuf_queue_ops अणु
+	पूर्णांक (*buf_setup)(काष्ठा videobuf_queue *q,
+			 अचिन्हित पूर्णांक *count, अचिन्हित पूर्णांक *size);
+	पूर्णांक (*buf_prepare)(काष्ठा videobuf_queue *q,
+			   काष्ठा videobuf_buffer *vb,
+			   क्रमागत v4l2_field field);
+	व्योम (*buf_queue)(काष्ठा videobuf_queue *q,
+			  काष्ठा videobuf_buffer *vb);
+	व्योम (*buf_release)(काष्ठा videobuf_queue *q,
+			    काष्ठा videobuf_buffer *vb);
+पूर्ण;
 
-#define MAGIC_QTYPE_OPS	0x12261003
+#घोषणा MAGIC_QTYPE_OPS	0x12261003
 
 /* Helper operations - device type dependent */
-struct videobuf_qtype_ops {
+काष्ठा videobuf_qtype_ops अणु
 	u32                     magic;
 
-	struct videobuf_buffer *(*alloc_vb)(size_t size);
-	void *(*vaddr)		(struct videobuf_buffer *buf);
-	int (*iolock)		(struct videobuf_queue *q,
-				 struct videobuf_buffer *vb,
-				 struct v4l2_framebuffer *fbuf);
-	int (*sync)		(struct videobuf_queue *q,
-				 struct videobuf_buffer *buf);
-	int (*mmap_mapper)	(struct videobuf_queue *q,
-				 struct videobuf_buffer *buf,
-				 struct vm_area_struct *vma);
-};
+	काष्ठा videobuf_buffer *(*alloc_vb)(माप_प्रकार size);
+	व्योम *(*vaddr)		(काष्ठा videobuf_buffer *buf);
+	पूर्णांक (*iolock)		(काष्ठा videobuf_queue *q,
+				 काष्ठा videobuf_buffer *vb,
+				 काष्ठा v4l2_framebuffer *fbuf);
+	पूर्णांक (*sync)		(काष्ठा videobuf_queue *q,
+				 काष्ठा videobuf_buffer *buf);
+	पूर्णांक (*mmap_mapper)	(काष्ठा videobuf_queue *q,
+				 काष्ठा videobuf_buffer *buf,
+				 काष्ठा vm_area_काष्ठा *vma);
+पूर्ण;
 
-struct videobuf_queue {
-	struct mutex               vb_lock;
-	struct mutex               *ext_lock;
+काष्ठा videobuf_queue अणु
+	काष्ठा mutex               vb_lock;
+	काष्ठा mutex               *ext_lock;
 	spinlock_t                 *irqlock;
-	struct device		   *dev;
+	काष्ठा device		   *dev;
 
-	wait_queue_head_t	   wait; /* wait if queue is empty */
+	रुको_queue_head_t	   रुको; /* रुको अगर queue is empty */
 
-	enum v4l2_buf_type         type;
-	unsigned int               msize;
-	enum v4l2_field            field;
-	enum v4l2_field            last;   /* for field=V4L2_FIELD_ALTERNATE */
-	struct videobuf_buffer     *bufs[VIDEO_MAX_FRAME];
-	const struct videobuf_queue_ops  *ops;
-	struct videobuf_qtype_ops  *int_ops;
+	क्रमागत v4l2_buf_type         type;
+	अचिन्हित पूर्णांक               msize;
+	क्रमागत v4l2_field            field;
+	क्रमागत v4l2_field            last;   /* क्रम field=V4L2_FIELD_ALTERNATE */
+	काष्ठा videobuf_buffer     *bufs[VIDEO_MAX_FRAME];
+	स्थिर काष्ठा videobuf_queue_ops  *ops;
+	काष्ठा videobuf_qtype_ops  *पूर्णांक_ops;
 
-	unsigned int               streaming:1;
-	unsigned int               reading:1;
+	अचिन्हित पूर्णांक               streaming:1;
+	अचिन्हित पूर्णांक               पढ़ोing:1;
 
 	/* capture via mmap() + ioctl(QBUF/DQBUF) */
-	struct list_head           stream;
+	काष्ठा list_head           stream;
 
-	/* capture via read() */
-	unsigned int               read_off;
-	struct videobuf_buffer     *read_buf;
+	/* capture via पढ़ो() */
+	अचिन्हित पूर्णांक               पढ़ो_off;
+	काष्ठा videobuf_buffer     *पढ़ो_buf;
 
-	/* driver private data */
-	void                       *priv_data;
-};
+	/* driver निजी data */
+	व्योम                       *priv_data;
+पूर्ण;
 
-static inline void videobuf_queue_lock(struct videobuf_queue *q)
-{
-	if (!q->ext_lock)
+अटल अंतरभूत व्योम videobuf_queue_lock(काष्ठा videobuf_queue *q)
+अणु
+	अगर (!q->ext_lock)
 		mutex_lock(&q->vb_lock);
-}
+पूर्ण
 
-static inline void videobuf_queue_unlock(struct videobuf_queue *q)
-{
-	if (!q->ext_lock)
+अटल अंतरभूत व्योम videobuf_queue_unlock(काष्ठा videobuf_queue *q)
+अणु
+	अगर (!q->ext_lock)
 		mutex_unlock(&q->vb_lock);
-}
+पूर्ण
 
-int videobuf_waiton(struct videobuf_queue *q, struct videobuf_buffer *vb,
-		int non_blocking, int intr);
-int videobuf_iolock(struct videobuf_queue *q, struct videobuf_buffer *vb,
-		struct v4l2_framebuffer *fbuf);
+पूर्णांक videobuf_रुकोon(काष्ठा videobuf_queue *q, काष्ठा videobuf_buffer *vb,
+		पूर्णांक non_blocking, पूर्णांक पूर्णांकr);
+पूर्णांक videobuf_iolock(काष्ठा videobuf_queue *q, काष्ठा videobuf_buffer *vb,
+		काष्ठा v4l2_framebuffer *fbuf);
 
-struct videobuf_buffer *videobuf_alloc_vb(struct videobuf_queue *q);
+काष्ठा videobuf_buffer *videobuf_alloc_vb(काष्ठा videobuf_queue *q);
 
 /* Used on videobuf-dvb */
-void *videobuf_queue_to_vaddr(struct videobuf_queue *q,
-			      struct videobuf_buffer *buf);
+व्योम *videobuf_queue_to_vaddr(काष्ठा videobuf_queue *q,
+			      काष्ठा videobuf_buffer *buf);
 
-void videobuf_queue_core_init(struct videobuf_queue *q,
-			 const struct videobuf_queue_ops *ops,
-			 struct device *dev,
+व्योम videobuf_queue_core_init(काष्ठा videobuf_queue *q,
+			 स्थिर काष्ठा videobuf_queue_ops *ops,
+			 काष्ठा device *dev,
 			 spinlock_t *irqlock,
-			 enum v4l2_buf_type type,
-			 enum v4l2_field field,
-			 unsigned int msize,
-			 void *priv,
-			 struct videobuf_qtype_ops *int_ops,
-			 struct mutex *ext_lock);
-int  videobuf_queue_is_busy(struct videobuf_queue *q);
-void videobuf_queue_cancel(struct videobuf_queue *q);
+			 क्रमागत v4l2_buf_type type,
+			 क्रमागत v4l2_field field,
+			 अचिन्हित पूर्णांक msize,
+			 व्योम *priv,
+			 काष्ठा videobuf_qtype_ops *पूर्णांक_ops,
+			 काष्ठा mutex *ext_lock);
+पूर्णांक  videobuf_queue_is_busy(काष्ठा videobuf_queue *q);
+व्योम videobuf_queue_cancel(काष्ठा videobuf_queue *q);
 
-enum v4l2_field videobuf_next_field(struct videobuf_queue *q);
-int videobuf_reqbufs(struct videobuf_queue *q,
-		     struct v4l2_requestbuffers *req);
-int videobuf_querybuf(struct videobuf_queue *q, struct v4l2_buffer *b);
-int videobuf_qbuf(struct videobuf_queue *q,
-		  struct v4l2_buffer *b);
-int videobuf_dqbuf(struct videobuf_queue *q,
-		   struct v4l2_buffer *b, int nonblocking);
-int videobuf_streamon(struct videobuf_queue *q);
-int videobuf_streamoff(struct videobuf_queue *q);
+क्रमागत v4l2_field videobuf_next_field(काष्ठा videobuf_queue *q);
+पूर्णांक videobuf_reqbufs(काष्ठा videobuf_queue *q,
+		     काष्ठा v4l2_requestbuffers *req);
+पूर्णांक videobuf_querybuf(काष्ठा videobuf_queue *q, काष्ठा v4l2_buffer *b);
+पूर्णांक videobuf_qbuf(काष्ठा videobuf_queue *q,
+		  काष्ठा v4l2_buffer *b);
+पूर्णांक videobuf_dqbuf(काष्ठा videobuf_queue *q,
+		   काष्ठा v4l2_buffer *b, पूर्णांक nonblocking);
+पूर्णांक videobuf_streamon(काष्ठा videobuf_queue *q);
+पूर्णांक videobuf_streamoff(काष्ठा videobuf_queue *q);
 
-void videobuf_stop(struct videobuf_queue *q);
+व्योम videobuf_stop(काष्ठा videobuf_queue *q);
 
-int videobuf_read_start(struct videobuf_queue *q);
-void videobuf_read_stop(struct videobuf_queue *q);
-ssize_t videobuf_read_stream(struct videobuf_queue *q,
-			     char __user *data, size_t count, loff_t *ppos,
-			     int vbihack, int nonblocking);
-ssize_t videobuf_read_one(struct videobuf_queue *q,
-			  char __user *data, size_t count, loff_t *ppos,
-			  int nonblocking);
-__poll_t videobuf_poll_stream(struct file *file,
-				  struct videobuf_queue *q,
-				  poll_table *wait);
+पूर्णांक videobuf_पढ़ो_start(काष्ठा videobuf_queue *q);
+व्योम videobuf_पढ़ो_stop(काष्ठा videobuf_queue *q);
+sमाप_प्रकार videobuf_पढ़ो_stream(काष्ठा videobuf_queue *q,
+			     अक्षर __user *data, माप_प्रकार count, loff_t *ppos,
+			     पूर्णांक vbihack, पूर्णांक nonblocking);
+sमाप_प्रकार videobuf_पढ़ो_one(काष्ठा videobuf_queue *q,
+			  अक्षर __user *data, माप_प्रकार count, loff_t *ppos,
+			  पूर्णांक nonblocking);
+__poll_t videobuf_poll_stream(काष्ठा file *file,
+				  काष्ठा videobuf_queue *q,
+				  poll_table *रुको);
 
-int videobuf_mmap_setup(struct videobuf_queue *q,
-			unsigned int bcount, unsigned int bsize,
-			enum v4l2_memory memory);
-int __videobuf_mmap_setup(struct videobuf_queue *q,
-			unsigned int bcount, unsigned int bsize,
-			enum v4l2_memory memory);
-int videobuf_mmap_free(struct videobuf_queue *q);
-int videobuf_mmap_mapper(struct videobuf_queue *q,
-			 struct vm_area_struct *vma);
+पूर्णांक videobuf_mmap_setup(काष्ठा videobuf_queue *q,
+			अचिन्हित पूर्णांक bcount, अचिन्हित पूर्णांक bsize,
+			क्रमागत v4l2_memory memory);
+पूर्णांक __videobuf_mmap_setup(काष्ठा videobuf_queue *q,
+			अचिन्हित पूर्णांक bcount, अचिन्हित पूर्णांक bsize,
+			क्रमागत v4l2_memory memory);
+पूर्णांक videobuf_mmap_मुक्त(काष्ठा videobuf_queue *q);
+पूर्णांक videobuf_mmap_mapper(काष्ठा videobuf_queue *q,
+			 काष्ठा vm_area_काष्ठा *vma);
 
-#endif
+#पूर्ण_अगर

@@ -1,217 +1,218 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Marvell MVEBU CPU clock handling.
+ * Marvell MVEBU CPU घड़ी handling.
  *
  * Copyright (C) 2012 Marvell
  *
- * Gregory CLEMENT <gregory.clement@free-electrons.com>
+ * Gregory CLEMENT <gregory.clement@मुक्त-electrons.com>
  *
  */
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/of_address.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/delay.h>
-#include <linux/mvebu-pmsu.h>
-#include <asm/smp_plat.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mvebu-pmsu.h>
+#समावेश <यंत्र/smp_plat.h>
 
-#define SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET               0x0
-#define   SYS_CTRL_CLK_DIVIDER_CTRL_RESET_ALL          0xff
-#define   SYS_CTRL_CLK_DIVIDER_CTRL_RESET_SHIFT        8
-#define SYS_CTRL_CLK_DIVIDER_CTRL2_OFFSET              0x8
-#define   SYS_CTRL_CLK_DIVIDER_CTRL2_NBCLK_RATIO_SHIFT 16
-#define SYS_CTRL_CLK_DIVIDER_VALUE_OFFSET              0xC
-#define SYS_CTRL_CLK_DIVIDER_MASK                      0x3F
+#घोषणा SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET               0x0
+#घोषणा   SYS_CTRL_CLK_DIVIDER_CTRL_RESET_ALL          0xff
+#घोषणा   SYS_CTRL_CLK_DIVIDER_CTRL_RESET_SHIFT        8
+#घोषणा SYS_CTRL_CLK_DIVIDER_CTRL2_OFFSET              0x8
+#घोषणा   SYS_CTRL_CLK_DIVIDER_CTRL2_NBCLK_RATIO_SHIFT 16
+#घोषणा SYS_CTRL_CLK_DIVIDER_VALUE_OFFSET              0xC
+#घोषणा SYS_CTRL_CLK_DIVIDER_MASK                      0x3F
 
-#define PMU_DFS_RATIO_SHIFT 16
-#define PMU_DFS_RATIO_MASK  0x3F
+#घोषणा PMU_DFS_RATIO_SHIFT 16
+#घोषणा PMU_DFS_RATIO_MASK  0x3F
 
-#define MAX_CPU	    4
-struct cpu_clk {
-	struct clk_hw hw;
-	int cpu;
-	const char *clk_name;
-	const char *parent_name;
-	void __iomem *reg_base;
-	void __iomem *pmu_dfs;
-};
+#घोषणा MAX_CPU	    4
+काष्ठा cpu_clk अणु
+	काष्ठा clk_hw hw;
+	पूर्णांक cpu;
+	स्थिर अक्षर *clk_name;
+	स्थिर अक्षर *parent_name;
+	व्योम __iomem *reg_base;
+	व्योम __iomem *pmu_dfs;
+पूर्ण;
 
-static struct clk **clks;
+अटल काष्ठा clk **clks;
 
-static struct clk_onecell_data clk_data;
+अटल काष्ठा clk_onecell_data clk_data;
 
-#define to_cpu_clk(p) container_of(p, struct cpu_clk, hw)
+#घोषणा to_cpu_clk(p) container_of(p, काष्ठा cpu_clk, hw)
 
-static unsigned long clk_cpu_recalc_rate(struct clk_hw *hwclk,
-					 unsigned long parent_rate)
-{
-	struct cpu_clk *cpuclk = to_cpu_clk(hwclk);
-	u32 reg, div;
+अटल अचिन्हित दीर्घ clk_cpu_recalc_rate(काष्ठा clk_hw *hwclk,
+					 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा cpu_clk *cpuclk = to_cpu_clk(hwclk);
+	u32 reg, भाग;
 
-	reg = readl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_VALUE_OFFSET);
-	div = (reg >> (cpuclk->cpu * 8)) & SYS_CTRL_CLK_DIVIDER_MASK;
-	return parent_rate / div;
-}
+	reg = पढ़ोl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_VALUE_OFFSET);
+	भाग = (reg >> (cpuclk->cpu * 8)) & SYS_CTRL_CLK_DIVIDER_MASK;
+	वापस parent_rate / भाग;
+पूर्ण
 
-static long clk_cpu_round_rate(struct clk_hw *hwclk, unsigned long rate,
-			       unsigned long *parent_rate)
-{
+अटल दीर्घ clk_cpu_round_rate(काष्ठा clk_hw *hwclk, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ *parent_rate)
+अणु
 	/* Valid ratio are 1:1, 1:2 and 1:3 */
-	u32 div;
+	u32 भाग;
 
-	div = *parent_rate / rate;
-	if (div == 0)
-		div = 1;
-	else if (div > 3)
-		div = 3;
+	भाग = *parent_rate / rate;
+	अगर (भाग == 0)
+		भाग = 1;
+	अन्यथा अगर (भाग > 3)
+		भाग = 3;
 
-	return *parent_rate / div;
-}
+	वापस *parent_rate / भाग;
+पूर्ण
 
-static int clk_cpu_off_set_rate(struct clk_hw *hwclk, unsigned long rate,
-				unsigned long parent_rate)
+अटल पूर्णांक clk_cpu_off_set_rate(काष्ठा clk_hw *hwclk, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate)
 
-{
-	struct cpu_clk *cpuclk = to_cpu_clk(hwclk);
-	u32 reg, div;
+अणु
+	काष्ठा cpu_clk *cpuclk = to_cpu_clk(hwclk);
+	u32 reg, भाग;
 	u32 reload_mask;
 
-	div = parent_rate / rate;
-	reg = (readl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_VALUE_OFFSET)
+	भाग = parent_rate / rate;
+	reg = (पढ़ोl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_VALUE_OFFSET)
 		& (~(SYS_CTRL_CLK_DIVIDER_MASK << (cpuclk->cpu * 8))))
-		| (div << (cpuclk->cpu * 8));
-	writel(reg, cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_VALUE_OFFSET);
-	/* Set clock divider reload smooth bit mask */
+		| (भाग << (cpuclk->cpu * 8));
+	ग_लिखोl(reg, cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_VALUE_OFFSET);
+	/* Set घड़ी भागider reload smooth bit mask */
 	reload_mask = 1 << (20 + cpuclk->cpu);
 
-	reg = readl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET)
+	reg = पढ़ोl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET)
 	    | reload_mask;
-	writel(reg, cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET);
+	ग_लिखोl(reg, cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET);
 
-	/* Now trigger the clock update */
-	reg = readl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET)
+	/* Now trigger the घड़ी update */
+	reg = पढ़ोl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET)
 	    | 1 << 24;
-	writel(reg, cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET);
+	ग_लिखोl(reg, cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET);
 
-	/* Wait for clocks to settle down then clear reload request */
+	/* Wait क्रम घड़ीs to settle करोwn then clear reload request */
 	udelay(1000);
 	reg &= ~(reload_mask | 1 << 24);
-	writel(reg, cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET);
+	ग_लिखोl(reg, cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET);
 	udelay(1000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_cpu_on_set_rate(struct clk_hw *hwclk, unsigned long rate,
-			       unsigned long parent_rate)
-{
+अटल पूर्णांक clk_cpu_on_set_rate(काष्ठा clk_hw *hwclk, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ parent_rate)
+अणु
 	u32 reg;
-	unsigned long fabric_div, target_div, cur_rate;
-	struct cpu_clk *cpuclk = to_cpu_clk(hwclk);
+	अचिन्हित दीर्घ fabric_भाग, target_भाग, cur_rate;
+	काष्ठा cpu_clk *cpuclk = to_cpu_clk(hwclk);
 
 	/*
-	 * PMU DFS registers are not mapped, Device Tree does not
+	 * PMU DFS रेजिस्टरs are not mapped, Device Tree करोes not
 	 * describes them. We cannot change the frequency dynamically.
 	 */
-	if (!cpuclk->pmu_dfs)
-		return -ENODEV;
+	अगर (!cpuclk->pmu_dfs)
+		वापस -ENODEV;
 
 	cur_rate = clk_hw_get_rate(hwclk);
 
-	reg = readl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL2_OFFSET);
-	fabric_div = (reg >> SYS_CTRL_CLK_DIVIDER_CTRL2_NBCLK_RATIO_SHIFT) &
+	reg = पढ़ोl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL2_OFFSET);
+	fabric_भाग = (reg >> SYS_CTRL_CLK_DIVIDER_CTRL2_NBCLK_RATIO_SHIFT) &
 		SYS_CTRL_CLK_DIVIDER_MASK;
 
 	/* Frequency is going up */
-	if (rate == 2 * cur_rate)
-		target_div = fabric_div / 2;
-	/* Frequency is going down */
-	else
-		target_div = fabric_div;
+	अगर (rate == 2 * cur_rate)
+		target_भाग = fabric_भाग / 2;
+	/* Frequency is going करोwn */
+	अन्यथा
+		target_भाग = fabric_भाग;
 
-	if (target_div == 0)
-		target_div = 1;
+	अगर (target_भाग == 0)
+		target_भाग = 1;
 
-	reg = readl(cpuclk->pmu_dfs);
+	reg = पढ़ोl(cpuclk->pmu_dfs);
 	reg &= ~(PMU_DFS_RATIO_MASK << PMU_DFS_RATIO_SHIFT);
-	reg |= (target_div << PMU_DFS_RATIO_SHIFT);
-	writel(reg, cpuclk->pmu_dfs);
+	reg |= (target_भाग << PMU_DFS_RATIO_SHIFT);
+	ग_लिखोl(reg, cpuclk->pmu_dfs);
 
-	reg = readl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET);
+	reg = पढ़ोl(cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET);
 	reg |= (SYS_CTRL_CLK_DIVIDER_CTRL_RESET_ALL <<
 		SYS_CTRL_CLK_DIVIDER_CTRL_RESET_SHIFT);
-	writel(reg, cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET);
+	ग_लिखोl(reg, cpuclk->reg_base + SYS_CTRL_CLK_DIVIDER_CTRL_OFFSET);
 
-	return mvebu_pmsu_dfs_request(cpuclk->cpu);
-}
+	वापस mvebu_pmsu_dfs_request(cpuclk->cpu);
+पूर्ण
 
-static int clk_cpu_set_rate(struct clk_hw *hwclk, unsigned long rate,
-			    unsigned long parent_rate)
-{
-	if (__clk_is_enabled(hwclk->clk))
-		return clk_cpu_on_set_rate(hwclk, rate, parent_rate);
-	else
-		return clk_cpu_off_set_rate(hwclk, rate, parent_rate);
-}
+अटल पूर्णांक clk_cpu_set_rate(काष्ठा clk_hw *hwclk, अचिन्हित दीर्घ rate,
+			    अचिन्हित दीर्घ parent_rate)
+अणु
+	अगर (__clk_is_enabled(hwclk->clk))
+		वापस clk_cpu_on_set_rate(hwclk, rate, parent_rate);
+	अन्यथा
+		वापस clk_cpu_off_set_rate(hwclk, rate, parent_rate);
+पूर्ण
 
-static const struct clk_ops cpu_ops = {
+अटल स्थिर काष्ठा clk_ops cpu_ops = अणु
 	.recalc_rate = clk_cpu_recalc_rate,
 	.round_rate = clk_cpu_round_rate,
 	.set_rate = clk_cpu_set_rate,
-};
+पूर्ण;
 
-static void __init of_cpu_clk_setup(struct device_node *node)
-{
-	struct cpu_clk *cpuclk;
-	void __iomem *clock_complex_base = of_iomap(node, 0);
-	void __iomem *pmu_dfs_base = of_iomap(node, 1);
-	int ncpus = 0;
-	struct device_node *dn;
+अटल व्योम __init of_cpu_clk_setup(काष्ठा device_node *node)
+अणु
+	काष्ठा cpu_clk *cpuclk;
+	व्योम __iomem *घड़ी_complex_base = of_iomap(node, 0);
+	व्योम __iomem *pmu_dfs_base = of_iomap(node, 1);
+	पूर्णांक ncpus = 0;
+	काष्ठा device_node *dn;
 
-	if (clock_complex_base == NULL) {
+	अगर (घड़ी_complex_base == शून्य) अणु
 		pr_err("%s: clock-complex base register not set\n",
 			__func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (pmu_dfs_base == NULL)
+	अगर (pmu_dfs_base == शून्य)
 		pr_warn("%s: pmu-dfs base register not set, dynamic frequency scaling not available\n",
 			__func__);
 
-	for_each_of_cpu_node(dn)
+	क्रम_each_of_cpu_node(dn)
 		ncpus++;
 
-	cpuclk = kcalloc(ncpus, sizeof(*cpuclk), GFP_KERNEL);
-	if (WARN_ON(!cpuclk))
-		goto cpuclk_out;
+	cpuclk = kसुस्मृति(ncpus, माप(*cpuclk), GFP_KERNEL);
+	अगर (WARN_ON(!cpuclk))
+		जाओ cpuclk_out;
 
-	clks = kcalloc(ncpus, sizeof(*clks), GFP_KERNEL);
-	if (WARN_ON(!clks))
-		goto clks_out;
+	clks = kसुस्मृति(ncpus, माप(*clks), GFP_KERNEL);
+	अगर (WARN_ON(!clks))
+		जाओ clks_out;
 
-	for_each_of_cpu_node(dn) {
-		struct clk_init_data init;
-		struct clk *clk;
-		char *clk_name = kzalloc(5, GFP_KERNEL);
-		int cpu, err;
+	क्रम_each_of_cpu_node(dn) अणु
+		काष्ठा clk_init_data init;
+		काष्ठा clk *clk;
+		अक्षर *clk_name = kzalloc(5, GFP_KERNEL);
+		पूर्णांक cpu, err;
 
-		if (WARN_ON(!clk_name))
-			goto bail_out;
+		अगर (WARN_ON(!clk_name))
+			जाओ bail_out;
 
-		err = of_property_read_u32(dn, "reg", &cpu);
-		if (WARN_ON(err))
-			goto bail_out;
+		err = of_property_पढ़ो_u32(dn, "reg", &cpu);
+		अगर (WARN_ON(err))
+			जाओ bail_out;
 
-		sprintf(clk_name, "cpu%d", cpu);
+		प्र_लिखो(clk_name, "cpu%d", cpu);
 
 		cpuclk[cpu].parent_name = of_clk_get_parent_name(node, 0);
 		cpuclk[cpu].clk_name = clk_name;
 		cpuclk[cpu].cpu = cpu;
-		cpuclk[cpu].reg_base = clock_complex_base;
-		if (pmu_dfs_base)
+		cpuclk[cpu].reg_base = घड़ी_complex_base;
+		अगर (pmu_dfs_base)
 			cpuclk[cpu].pmu_dfs = pmu_dfs_base + 4 * cpu;
 		cpuclk[cpu].hw.init = &init;
 
@@ -221,33 +222,33 @@ static void __init of_cpu_clk_setup(struct device_node *node)
 		init.parent_names = &cpuclk[cpu].parent_name;
 		init.num_parents = 1;
 
-		clk = clk_register(NULL, &cpuclk[cpu].hw);
-		if (WARN_ON(IS_ERR(clk)))
-			goto bail_out;
+		clk = clk_रेजिस्टर(शून्य, &cpuclk[cpu].hw);
+		अगर (WARN_ON(IS_ERR(clk)))
+			जाओ bail_out;
 		clks[cpu] = clk;
-	}
+	पूर्ण
 	clk_data.clk_num = MAX_CPU;
 	clk_data.clks = clks;
 	of_clk_add_provider(node, of_clk_src_onecell_get, &clk_data);
 
-	return;
+	वापस;
 bail_out:
-	kfree(clks);
-	while(ncpus--)
-		kfree(cpuclk[ncpus].clk_name);
+	kमुक्त(clks);
+	जबतक(ncpus--)
+		kमुक्त(cpuclk[ncpus].clk_name);
 clks_out:
-	kfree(cpuclk);
+	kमुक्त(cpuclk);
 cpuclk_out:
-	iounmap(clock_complex_base);
-}
+	iounmap(घड़ी_complex_base);
+पूर्ण
 
-CLK_OF_DECLARE(armada_xp_cpu_clock, "marvell,armada-xp-cpu-clock",
+CLK_OF_DECLARE(armada_xp_cpu_घड़ी, "marvell,armada-xp-cpu-clock",
 					 of_cpu_clk_setup);
 
-static void __init of_mv98dx3236_cpu_clk_setup(struct device_node *node)
-{
-	of_clk_add_provider(node, of_clk_src_simple_get, NULL);
-}
+अटल व्योम __init of_mv98dx3236_cpu_clk_setup(काष्ठा device_node *node)
+अणु
+	of_clk_add_provider(node, of_clk_src_simple_get, शून्य);
+पूर्ण
 
-CLK_OF_DECLARE(mv98dx3236_cpu_clock, "marvell,mv98dx3236-cpu-clock",
+CLK_OF_DECLARE(mv98dx3236_cpu_घड़ी, "marvell,mv98dx3236-cpu-clock",
 					 of_mv98dx3236_cpu_clk_setup);

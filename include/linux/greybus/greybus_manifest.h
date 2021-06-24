@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Greybus manifest definition
+ * Greybus manअगरest definition
  *
- * See "Greybus Application Protocol" document (version 0.1) for
- * details on these values and structures.
+ * See "Greybus Application Protocol" करोcument (version 0.1) क्रम
+ * details on these values and काष्ठाures.
  *
  * Copyright 2014-2015 Google Inc.
  * Copyright 2014-2015 Linaro Ltd.
@@ -11,21 +12,21 @@
  * Released under the GPLv2 and BSD licenses.
  */
 
-#ifndef __GREYBUS_MANIFEST_H
-#define __GREYBUS_MANIFEST_H
+#अगर_अघोषित __GREYBUS_MANIFEST_H
+#घोषणा __GREYBUS_MANIFEST_H
 
-#include <linux/bits.h>
-#include <linux/types.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/types.h>
 
-enum greybus_descriptor_type {
+क्रमागत greybus_descriptor_type अणु
 	GREYBUS_TYPE_INVALID		= 0x00,
 	GREYBUS_TYPE_INTERFACE		= 0x01,
 	GREYBUS_TYPE_STRING		= 0x02,
 	GREYBUS_TYPE_BUNDLE		= 0x03,
 	GREYBUS_TYPE_CPORT		= 0x04,
-};
+पूर्ण;
 
-enum greybus_protocol {
+क्रमागत greybus_protocol अणु
 	GREYBUS_PROTOCOL_CONTROL	= 0x00,
 	/* 0x01 is unused */
 	GREYBUS_PROTOCOL_GPIO		= 0x02,
@@ -56,9 +57,9 @@ enum greybus_protocol {
 		/* ... */
 	GREYBUS_PROTOCOL_RAW		= 0xfe,
 	GREYBUS_PROTOCOL_VENDOR		= 0xff,
-};
+पूर्ण;
 
-enum greybus_class_type {
+क्रमागत greybus_class_type अणु
 	GREYBUS_CLASS_CONTROL		= 0x00,
 	/* 0x01 is unused */
 	/* 0x02 is unused */
@@ -86,96 +87,96 @@ enum greybus_class_type {
 		/* ... */
 	GREYBUS_CLASS_RAW		= 0xfe,
 	GREYBUS_CLASS_VENDOR		= 0xff,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	GREYBUS_INTERFACE_FEATURE_TIMESYNC = BIT(0),
-};
+पूर्ण;
 
 /*
  * The string in a string descriptor is not NUL-terminated.  The
  * size of the descriptor will be rounded up to a multiple of 4
- * bytes, by padding the string with 0x00 bytes if necessary.
+ * bytes, by padding the string with 0x00 bytes अगर necessary.
  */
-struct greybus_descriptor_string {
+काष्ठा greybus_descriptor_string अणु
 	__u8	length;
 	__u8	id;
 	__u8	string[0];
-} __packed;
+पूर्ण __packed;
 
 /*
- * An interface descriptor describes information about an interface as a whole,
+ * An पूर्णांकerface descriptor describes inक्रमmation about an पूर्णांकerface as a whole,
  * *not* the functions within it.
  */
-struct greybus_descriptor_interface {
-	__u8	vendor_stringid;
+काष्ठा greybus_descriptor_पूर्णांकerface अणु
+	__u8	venकरोr_stringid;
 	__u8	product_stringid;
 	__u8	features;
 	__u8	pad;
-} __packed;
+पूर्ण __packed;
 
 /*
- * An bundle descriptor defines an identification number and a class for
+ * An bundle descriptor defines an identअगरication number and a class क्रम
  * each bundle.
  *
- * @id: Uniquely identifies a bundle within a interface, its sole purpose is to
- * allow CPort descriptors to specify which bundle they are associated with.
+ * @id: Uniquely identअगरies a bundle within a पूर्णांकerface, its sole purpose is to
+ * allow CPort descriptors to specअगरy which bundle they are associated with.
  * The first bundle will have id 0, second will have 1 and so on.
  *
  * The largest CPort id associated with an bundle (defined by a
- * CPort descriptor in the manifest) is used to determine how to
+ * CPort descriptor in the manअगरest) is used to determine how to
  * encode the device id and module number in UniPro packets
  * that use the bundle.
  *
  * @class: It is used by kernel to know the functionality provided by the
- * bundle and will be matched against drivers functinality while probing greybus
+ * bundle and will be matched against drivers functinality जबतक probing greybus
  * driver. It should contain one of the values defined in
  * 'enum greybus_class_type'.
  *
  */
-struct greybus_descriptor_bundle {
-	__u8	id;	/* interface-relative id (0..) */
+काष्ठा greybus_descriptor_bundle अणु
+	__u8	id;	/* पूर्णांकerface-relative id (0..) */
 	__u8	class;
 	__u8	pad[2];
-} __packed;
+पूर्ण __packed;
 
 /*
  * A CPort descriptor indicates the id of the bundle within the
- * module it's associated with, along with the CPort id used to
- * address the CPort.  The protocol id defines the format of messages
+ * module it's associated with, aदीर्घ with the CPort id used to
+ * address the CPort.  The protocol id defines the क्रमmat of messages
  * exchanged using the CPort.
  */
-struct greybus_descriptor_cport {
+काष्ठा greybus_descriptor_cport अणु
 	__le16	id;
 	__u8	bundle;
-	__u8	protocol_id;	/* enum greybus_protocol */
-} __packed;
+	__u8	protocol_id;	/* क्रमागत greybus_protocol */
+पूर्ण __packed;
 
-struct greybus_descriptor_header {
+काष्ठा greybus_descriptor_header अणु
 	__le16	size;
-	__u8	type;		/* enum greybus_descriptor_type */
+	__u8	type;		/* क्रमागत greybus_descriptor_type */
 	__u8	pad;
-} __packed;
+पूर्ण __packed;
 
-struct greybus_descriptor {
-	struct greybus_descriptor_header		header;
-	union {
-		struct greybus_descriptor_string	string;
-		struct greybus_descriptor_interface	interface;
-		struct greybus_descriptor_bundle	bundle;
-		struct greybus_descriptor_cport		cport;
-	};
-} __packed;
+काष्ठा greybus_descriptor अणु
+	काष्ठा greybus_descriptor_header		header;
+	जोड़ अणु
+		काष्ठा greybus_descriptor_string	string;
+		काष्ठा greybus_descriptor_पूर्णांकerface	पूर्णांकerface;
+		काष्ठा greybus_descriptor_bundle	bundle;
+		काष्ठा greybus_descriptor_cport		cport;
+	पूर्ण;
+पूर्ण __packed;
 
-struct greybus_manifest_header {
+काष्ठा greybus_manअगरest_header अणु
 	__le16	size;
 	__u8	version_major;
 	__u8	version_minor;
-} __packed;
+पूर्ण __packed;
 
-struct greybus_manifest {
-	struct greybus_manifest_header		header;
-	struct greybus_descriptor		descriptors[0];
-} __packed;
+काष्ठा greybus_manअगरest अणु
+	काष्ठा greybus_manअगरest_header		header;
+	काष्ठा greybus_descriptor		descriptors[0];
+पूर्ण __packed;
 
-#endif /* __GREYBUS_MANIFEST_H */
+#पूर्ण_अगर /* __GREYBUS_MANIFEST_H */

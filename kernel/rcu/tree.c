@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Read-Copy Update mechanism for mutual exclusion (tree-based version)
+ * Read-Copy Update mechanism क्रम mutual exclusion (tree-based version)
  *
  * Copyright IBM Corporation, 2008
  *
  * Authors: Dipankar Sarma <dipankar@in.ibm.com>
- *	    Manfred Spraul <manfred@colorfullife.com>
+ *	    Manfred Spraul <manfred@colorfullअगरe.com>
  *	    Paul E. McKenney <paulmck@linux.ibm.com>
  *
  * Based on the original work by Paul McKenney <paulmck@linux.ibm.com>
- * and inputs from Rusty Russell, Andrea Arcangeli and Andi Kleen.
+ * and inमाला_दो from Rusty Russell, Andrea Arcangeli and Andi Kleen.
  *
  * For detailed explanation of Read-Copy Update mechanism see -
  *	Documentation/RCU
  */
 
-#define pr_fmt(fmt) "rcu: " fmt
+#घोषणा pr_fmt(fmt) "rcu: " fmt
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/smp.h>
-#include <linux/rcupdate_wait.h>
-#include <linux/interrupt.h>
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/nmi.h>
-#include <linux/atomic.h>
-#include <linux/bitops.h>
-#include <linux/export.h>
-#include <linux/completion.h>
-#include <linux/moduleparam.h>
-#include <linux/percpu.h>
-#include <linux/notifier.h>
-#include <linux/cpu.h>
-#include <linux/mutex.h>
-#include <linux/time.h>
-#include <linux/kernel_stat.h>
-#include <linux/wait.h>
-#include <linux/kthread.h>
-#include <uapi/linux/sched/types.h>
-#include <linux/prefetch.h>
-#include <linux/delay.h>
-#include <linux/random.h>
-#include <linux/trace_events.h>
-#include <linux/suspend.h>
-#include <linux/ftrace.h>
-#include <linux/tick.h>
-#include <linux/sysrq.h>
-#include <linux/kprobes.h>
-#include <linux/gfp.h>
-#include <linux/oom.h>
-#include <linux/smpboot.h>
-#include <linux/jiffies.h>
-#include <linux/slab.h>
-#include <linux/sched/isolation.h>
-#include <linux/sched/clock.h>
-#include <linux/vmalloc.h>
-#include <linux/mm.h>
-#include <linux/kasan.h>
-#include "../time/tick-internal.h"
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/rcupdate_रुको.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/export.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <uapi/linux/sched/types.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/trace_events.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/tick.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/smpboot.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/isolation.h>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kasan.h>
+#समावेश "../time/tick-internal.h"
 
-#include "tree.h"
-#include "rcu.h"
+#समावेश "tree.h"
+#समावेश "rcu.h"
 
-#ifdef MODULE_PARAM_PREFIX
-#undef MODULE_PARAM_PREFIX
-#endif
-#define MODULE_PARAM_PREFIX "rcutree."
+#अगर_घोषित MODULE_PARAM_PREFIX
+#अघोषित MODULE_PARAM_PREFIX
+#पूर्ण_अगर
+#घोषणा MODULE_PARAM_PREFIX "rcutree."
 
-/* Data structures. */
+/* Data काष्ठाures. */
 
 /*
- * Steal a bit from the bottom of ->dynticks for idle entry/exit
- * control.  Initially this is for TLB flushing.
+ * Steal a bit from the bottom of ->dynticks क्रम idle entry/निकास
+ * control.  Initially this is क्रम TLB flushing.
  */
-#define RCU_DYNTICK_CTRL_MASK 0x1
-#define RCU_DYNTICK_CTRL_CTR  (RCU_DYNTICK_CTRL_MASK + 1)
+#घोषणा RCU_DYNTICK_CTRL_MASK 0x1
+#घोषणा RCU_DYNTICK_CTRL_CTR  (RCU_DYNTICK_CTRL_MASK + 1)
 
-static DEFINE_PER_CPU_SHARED_ALIGNED(struct rcu_data, rcu_data) = {
+अटल DEFINE_PER_CPU_SHARED_ALIGNED(काष्ठा rcu_data, rcu_data) = अणु
 	.dynticks_nesting = 1,
 	.dynticks_nmi_nesting = DYNTICK_IRQ_NONIDLE,
 	.dynticks = ATOMIC_INIT(RCU_DYNTICK_CTRL_CTR),
-#ifdef CONFIG_RCU_NOCB_CPU
+#अगर_घोषित CONFIG_RCU_NOCB_CPU
 	.cblist.flags = SEGCBLIST_SOFTIRQ_ONLY,
-#endif
-};
-static struct rcu_state rcu_state = {
-	.level = { &rcu_state.node[0] },
+#पूर्ण_अगर
+पूर्ण;
+अटल काष्ठा rcu_state rcu_state = अणु
+	.level = अणु &rcu_state.node[0] पूर्ण,
 	.gp_state = RCU_GP_IDLE,
 	.gp_seq = (0UL - 300UL) << RCU_SEQ_CTR_SHIFT,
 	.barrier_mutex = __MUTEX_INITIALIZER(rcu_state.barrier_mutex),
@@ -97,208 +98,208 @@ static struct rcu_state rcu_state = {
 	.exp_mutex = __MUTEX_INITIALIZER(rcu_state.exp_mutex),
 	.exp_wake_mutex = __MUTEX_INITIALIZER(rcu_state.exp_wake_mutex),
 	.ofl_lock = __RAW_SPIN_LOCK_UNLOCKED(rcu_state.ofl_lock),
-};
+पूर्ण;
 
-/* Dump rcu_node combining tree at boot to verify correct setup. */
-static bool dump_tree;
+/* Dump rcu_node combining tree at boot to verअगरy correct setup. */
+अटल bool dump_tree;
 module_param(dump_tree, bool, 0444);
-/* By default, use RCU_SOFTIRQ instead of rcuc kthreads. */
-static bool use_softirq = !IS_ENABLED(CONFIG_PREEMPT_RT);
-#ifndef CONFIG_PREEMPT_RT
+/* By शेष, use RCU_SOFTIRQ instead of rcuc kthपढ़ोs. */
+अटल bool use_softirq = !IS_ENABLED(CONFIG_PREEMPT_RT);
+#अगर_अघोषित CONFIG_PREEMPT_RT
 module_param(use_softirq, bool, 0444);
-#endif
-/* Control rcu_node-tree auto-balancing at boot time. */
-static bool rcu_fanout_exact;
+#पूर्ण_अगर
+/* Control rcu_node-tree स्वतः-balancing at boot समय. */
+अटल bool rcu_fanout_exact;
 module_param(rcu_fanout_exact, bool, 0444);
-/* Increase (but not decrease) the RCU_FANOUT_LEAF at boot time. */
-static int rcu_fanout_leaf = RCU_FANOUT_LEAF;
-module_param(rcu_fanout_leaf, int, 0444);
-int rcu_num_lvls __read_mostly = RCU_NUM_LVLS;
-/* Number of rcu_nodes at specified level. */
-int num_rcu_lvl[] = NUM_RCU_LVL_INIT;
-int rcu_num_nodes __read_mostly = NUM_RCU_NODES; /* Total # rcu_nodes in use. */
+/* Increase (but not decrease) the RCU_FANOUT_LEAF at boot समय. */
+अटल पूर्णांक rcu_fanout_leaf = RCU_FANOUT_LEAF;
+module_param(rcu_fanout_leaf, पूर्णांक, 0444);
+पूर्णांक rcu_num_lvls __पढ़ो_mostly = RCU_NUM_LVLS;
+/* Number of rcu_nodes at specअगरied level. */
+पूर्णांक num_rcu_lvl[] = NUM_RCU_LVL_INIT;
+पूर्णांक rcu_num_nodes __पढ़ो_mostly = NUM_RCU_NODES; /* Total # rcu_nodes in use. */
 
 /*
  * The rcu_scheduler_active variable is initialized to the value
- * RCU_SCHEDULER_INACTIVE and transitions RCU_SCHEDULER_INIT just before the
+ * RCU_SCHEDULER_INACTIVE and transitions RCU_SCHEDULER_INIT just beक्रमe the
  * first task is spawned.  So when this variable is RCU_SCHEDULER_INACTIVE,
- * RCU can assume that there is but one task, allowing RCU to (for example)
+ * RCU can assume that there is but one task, allowing RCU to (क्रम example)
  * optimize synchronize_rcu() to a simple barrier().  When this variable
- * is RCU_SCHEDULER_INIT, RCU must actually do all the hard work required
+ * is RCU_SCHEDULER_INIT, RCU must actually करो all the hard work required
  * to detect real grace periods.  This variable is also used to suppress
- * boot-time false positives from lockdep-RCU error checking.  Finally, it
+ * boot-समय false positives from lockdep-RCU error checking.  Finally, it
  * transitions from RCU_SCHEDULER_INIT to RCU_SCHEDULER_RUNNING after RCU
- * is fully initialized, including all of its kthreads having been spawned.
+ * is fully initialized, including all of its kthपढ़ोs having been spawned.
  */
-int rcu_scheduler_active __read_mostly;
+पूर्णांक rcu_scheduler_active __पढ़ो_mostly;
 EXPORT_SYMBOL_GPL(rcu_scheduler_active);
 
 /*
  * The rcu_scheduler_fully_active variable transitions from zero to one
  * during the early_initcall() processing, which is after the scheduler
- * is capable of creating new tasks.  So RCU processing (for example,
- * creating tasks for RCU priority boosting) must be delayed until after
+ * is capable of creating new tasks.  So RCU processing (क्रम example,
+ * creating tasks क्रम RCU priority boosting) must be delayed until after
  * rcu_scheduler_fully_active transitions from zero to one.  We also
- * currently delay invocation of any RCU callbacks until after this point.
+ * currently delay invocation of any RCU callbacks until after this poपूर्णांक.
  *
- * It might later prove better for people registering RCU callbacks during
- * early boot to take responsibility for these callbacks, but one step at
- * a time.
+ * It might later prove better क्रम people रेजिस्टरing RCU callbacks during
+ * early boot to take responsibility क्रम these callbacks, but one step at
+ * a समय.
  */
-static int rcu_scheduler_fully_active __read_mostly;
+अटल पूर्णांक rcu_scheduler_fully_active __पढ़ो_mostly;
 
-static void rcu_report_qs_rnp(unsigned long mask, struct rcu_node *rnp,
-			      unsigned long gps, unsigned long flags);
-static void rcu_init_new_rnp(struct rcu_node *rnp_leaf);
-static void rcu_cleanup_dead_rnp(struct rcu_node *rnp_leaf);
-static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu);
-static void invoke_rcu_core(void);
-static void rcu_report_exp_rdp(struct rcu_data *rdp);
-static void sync_sched_exp_online_cleanup(int cpu);
-static void check_cb_ovld_locked(struct rcu_data *rdp, struct rcu_node *rnp);
-static bool rcu_rdp_is_offloaded(struct rcu_data *rdp);
+अटल व्योम rcu_report_qs_rnp(अचिन्हित दीर्घ mask, काष्ठा rcu_node *rnp,
+			      अचिन्हित दीर्घ gps, अचिन्हित दीर्घ flags);
+अटल व्योम rcu_init_new_rnp(काष्ठा rcu_node *rnp_leaf);
+अटल व्योम rcu_cleanup_dead_rnp(काष्ठा rcu_node *rnp_leaf);
+अटल व्योम rcu_boost_kthपढ़ो_setaffinity(काष्ठा rcu_node *rnp, पूर्णांक outgoingcpu);
+अटल व्योम invoke_rcu_core(व्योम);
+अटल व्योम rcu_report_exp_rdp(काष्ठा rcu_data *rdp);
+अटल व्योम sync_sched_exp_online_cleanup(पूर्णांक cpu);
+अटल व्योम check_cb_ovld_locked(काष्ठा rcu_data *rdp, काष्ठा rcu_node *rnp);
+अटल bool rcu_rdp_is_offloaded(काष्ठा rcu_data *rdp);
 
-/* rcuc/rcub kthread realtime priority */
-static int kthread_prio = IS_ENABLED(CONFIG_RCU_BOOST) ? 1 : 0;
-module_param(kthread_prio, int, 0444);
+/* rcuc/rcub kthपढ़ो realसमय priority */
+अटल पूर्णांक kthपढ़ो_prio = IS_ENABLED(CONFIG_RCU_BOOST) ? 1 : 0;
+module_param(kthपढ़ो_prio, पूर्णांक, 0444);
 
-/* Delay in jiffies for grace-period initialization delays, debug only. */
+/* Delay in jअगरfies क्रम grace-period initialization delays, debug only. */
 
-static int gp_preinit_delay;
-module_param(gp_preinit_delay, int, 0444);
-static int gp_init_delay;
-module_param(gp_init_delay, int, 0444);
-static int gp_cleanup_delay;
-module_param(gp_cleanup_delay, int, 0444);
+अटल पूर्णांक gp_preinit_delay;
+module_param(gp_preinit_delay, पूर्णांक, 0444);
+अटल पूर्णांक gp_init_delay;
+module_param(gp_init_delay, पूर्णांक, 0444);
+अटल पूर्णांक gp_cleanup_delay;
+module_param(gp_cleanup_delay, पूर्णांक, 0444);
 
-// Add delay to rcu_read_unlock() for strict grace periods.
-static int rcu_unlock_delay;
-#ifdef CONFIG_RCU_STRICT_GRACE_PERIOD
-module_param(rcu_unlock_delay, int, 0444);
-#endif
+// Add delay to rcu_पढ़ो_unlock() क्रम strict grace periods.
+अटल पूर्णांक rcu_unlock_delay;
+#अगर_घोषित CONFIG_RCU_STRICT_GRACE_PERIOD
+module_param(rcu_unlock_delay, पूर्णांक, 0444);
+#पूर्ण_अगर
 
 /*
- * This rcu parameter is runtime-read-only. It reflects
+ * This rcu parameter is runसमय-पढ़ो-only. It reflects
  * a minimum allowed number of objects which can be cached
  * per-CPU. Object size is equal to one page. This value
- * can be changed at boot time.
+ * can be changed at boot समय.
  */
-static int rcu_min_cached_objs = 5;
-module_param(rcu_min_cached_objs, int, 0444);
+अटल पूर्णांक rcu_min_cached_objs = 5;
+module_param(rcu_min_cached_objs, पूर्णांक, 0444);
 
-/* Retrieve RCU kthreads priority for rcutorture */
-int rcu_get_gp_kthreads_prio(void)
-{
-	return kthread_prio;
-}
-EXPORT_SYMBOL_GPL(rcu_get_gp_kthreads_prio);
+/* Retrieve RCU kthपढ़ोs priority क्रम rcutorture */
+पूर्णांक rcu_get_gp_kthपढ़ोs_prio(व्योम)
+अणु
+	वापस kthपढ़ो_prio;
+पूर्ण
+EXPORT_SYMBOL_GPL(rcu_get_gp_kthपढ़ोs_prio);
 
 /*
  * Number of grace periods between delays, normalized by the duration of
- * the delay.  The longer the delay, the more the grace periods between
- * each delay.  The reason for this normalization is that it means that,
- * for non-zero delays, the overall slowdown of grace periods is constant
+ * the delay.  The दीर्घer the delay, the more the grace periods between
+ * each delay.  The reason क्रम this normalization is that it means that,
+ * क्रम non-zero delays, the overall slowकरोwn of grace periods is स्थिरant
  * regardless of the duration of the delay.  This arrangement balances
- * the need for long delays to increase some race probabilities with the
- * need for fast grace periods to increase other race probabilities.
+ * the need क्रम दीर्घ delays to increase some race probabilities with the
+ * need क्रम fast grace periods to increase other race probabilities.
  */
-#define PER_RCU_NODE_PERIOD 3	/* Number of grace periods between delays. */
+#घोषणा PER_RCU_NODE_PERIOD 3	/* Number of grace periods between delays. */
 
 /*
- * Compute the mask of online CPUs for the specified rcu_node structure.
- * This will not be stable unless the rcu_node structure's ->lock is
+ * Compute the mask of online CPUs क्रम the specअगरied rcu_node काष्ठाure.
+ * This will not be stable unless the rcu_node काष्ठाure's ->lock is
  * held, but the bit corresponding to the current CPU will be stable
  * in most contexts.
  */
-static unsigned long rcu_rnp_online_cpus(struct rcu_node *rnp)
-{
-	return READ_ONCE(rnp->qsmaskinitnext);
-}
+अटल अचिन्हित दीर्घ rcu_rnp_online_cpus(काष्ठा rcu_node *rnp)
+अणु
+	वापस READ_ONCE(rnp->qsmaskinitnext);
+पूर्ण
 
 /*
- * Return true if an RCU grace period is in progress.  The READ_ONCE()s
+ * Return true अगर an RCU grace period is in progress.  The READ_ONCE()s
  * permit this function to be invoked without holding the root rcu_node
- * structure's ->lock, but of course results can be subject to change.
+ * काष्ठाure's ->lock, but of course results can be subject to change.
  */
-static int rcu_gp_in_progress(void)
-{
-	return rcu_seq_state(rcu_seq_current(&rcu_state.gp_seq));
-}
+अटल पूर्णांक rcu_gp_in_progress(व्योम)
+अणु
+	वापस rcu_seq_state(rcu_seq_current(&rcu_state.gp_seq));
+पूर्ण
 
 /*
- * Return the number of callbacks queued on the specified CPU.
- * Handles both the nocbs and normal cases.
+ * Return the number of callbacks queued on the specअगरied CPU.
+ * Handles both the nocbs and normal हालs.
  */
-static long rcu_get_n_cbs_cpu(int cpu)
-{
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+अटल दीर्घ rcu_get_n_cbs_cpu(पूर्णांक cpu)
+अणु
+	काष्ठा rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
 
-	if (rcu_segcblist_is_enabled(&rdp->cblist))
-		return rcu_segcblist_n_cbs(&rdp->cblist);
-	return 0;
-}
+	अगर (rcu_segcblist_is_enabled(&rdp->cblist))
+		वापस rcu_segcblist_n_cbs(&rdp->cblist);
+	वापस 0;
+पूर्ण
 
-void rcu_softirq_qs(void)
-{
+व्योम rcu_softirq_qs(व्योम)
+अणु
 	rcu_qs();
 	rcu_preempt_deferred_qs(current);
-}
+पूर्ण
 
 /*
- * Record entry into an extended quiescent state.  This is only to be
- * called when not already in an extended quiescent state, that is,
- * RCU is watching prior to the call to this function and is no longer
- * watching upon return.
+ * Record entry पूर्णांकo an extended quiescent state.  This is only to be
+ * called when not alपढ़ोy in an extended quiescent state, that is,
+ * RCU is watching prior to the call to this function and is no दीर्घer
+ * watching upon वापस.
  */
-static noinstr void rcu_dynticks_eqs_enter(void)
-{
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
-	int seq;
+अटल noinstr व्योम rcu_dynticks_eqs_enter(व्योम)
+अणु
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
+	पूर्णांक seq;
 
 	/*
-	 * CPUs seeing atomic_add_return() must see prior RCU read-side
-	 * critical sections, and we also must force ordering with the
+	 * CPUs seeing atomic_add_वापस() must see prior RCU पढ़ो-side
+	 * critical sections, and we also must क्रमce ordering with the
 	 * next idle sojourn.
 	 */
-	rcu_dynticks_task_trace_enter();  // Before ->dynticks update!
-	seq = arch_atomic_add_return(RCU_DYNTICK_CTRL_CTR, &rdp->dynticks);
-	// RCU is no longer watching.  Better be in extended quiescent state!
+	rcu_dynticks_task_trace_enter();  // Beक्रमe ->dynticks update!
+	seq = arch_atomic_add_वापस(RCU_DYNTICK_CTRL_CTR, &rdp->dynticks);
+	// RCU is no दीर्घer watching.  Better be in extended quiescent state!
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) &&
 		     (seq & RCU_DYNTICK_CTRL_CTR));
 	/* Better not have special action (TLB flush) pending! */
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) &&
 		     (seq & RCU_DYNTICK_CTRL_MASK));
-}
+पूर्ण
 
 /*
- * Record exit from an extended quiescent state.  This is only to be
+ * Record निकास from an extended quiescent state.  This is only to be
  * called from an extended quiescent state, that is, RCU is not watching
- * prior to the call to this function and is watching upon return.
+ * prior to the call to this function and is watching upon वापस.
  */
-static noinstr void rcu_dynticks_eqs_exit(void)
-{
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
-	int seq;
+अटल noinstr व्योम rcu_dynticks_eqs_निकास(व्योम)
+अणु
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
+	पूर्णांक seq;
 
 	/*
-	 * CPUs seeing atomic_add_return() must see prior idle sojourns,
-	 * and we also must force ordering with the next RCU read-side
+	 * CPUs seeing atomic_add_वापस() must see prior idle sojourns,
+	 * and we also must क्रमce ordering with the next RCU पढ़ो-side
 	 * critical section.
 	 */
-	seq = arch_atomic_add_return(RCU_DYNTICK_CTRL_CTR, &rdp->dynticks);
+	seq = arch_atomic_add_वापस(RCU_DYNTICK_CTRL_CTR, &rdp->dynticks);
 	// RCU is now watching.  Better not be in an extended quiescent state!
-	rcu_dynticks_task_trace_exit();  // After ->dynticks update!
+	rcu_dynticks_task_trace_निकास();  // After ->dynticks update!
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) &&
 		     !(seq & RCU_DYNTICK_CTRL_CTR));
-	if (seq & RCU_DYNTICK_CTRL_MASK) {
+	अगर (seq & RCU_DYNTICK_CTRL_MASK) अणु
 		arch_atomic_andnot(RCU_DYNTICK_CTRL_MASK, &rdp->dynticks);
-		smp_mb__after_atomic(); /* _exit after clearing mask. */
-	}
-}
+		smp_mb__after_atomic(); /* _निकास after clearing mask. */
+	पूर्ण
+पूर्ण
 
 /*
  * Reset the current CPU's ->dynticks counter to indicate that the
- * newly onlined CPU is no longer in an extended quiescent state.
+ * newly onlined CPU is no दीर्घer in an extended quiescent state.
  * This will either leave the counter unchanged, or increment it
  * to the next non-quiescent value.
  *
@@ -306,440 +307,440 @@ static noinstr void rcu_dynticks_eqs_exit(void)
  * of the ->dynticks counter are manipulated only by the corresponding CPU,
  * or when the corresponding CPU is offline.
  */
-static void rcu_dynticks_eqs_online(void)
-{
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+अटल व्योम rcu_dynticks_eqs_online(व्योम)
+अणु
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
-	if (atomic_read(&rdp->dynticks) & RCU_DYNTICK_CTRL_CTR)
-		return;
+	अगर (atomic_पढ़ो(&rdp->dynticks) & RCU_DYNTICK_CTRL_CTR)
+		वापस;
 	atomic_add(RCU_DYNTICK_CTRL_CTR, &rdp->dynticks);
-}
+पूर्ण
 
 /*
  * Is the current CPU in an extended quiescent state?
  *
- * No ordering, as we are sampling CPU-local information.
+ * No ordering, as we are sampling CPU-local inक्रमmation.
  */
-static __always_inline bool rcu_dynticks_curr_cpu_in_eqs(void)
-{
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+अटल __always_अंतरभूत bool rcu_dynticks_curr_cpu_in_eqs(व्योम)
+अणु
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
-	return !(arch_atomic_read(&rdp->dynticks) & RCU_DYNTICK_CTRL_CTR);
-}
+	वापस !(arch_atomic_पढ़ो(&rdp->dynticks) & RCU_DYNTICK_CTRL_CTR);
+पूर्ण
 
 /*
  * Snapshot the ->dynticks counter with full ordering so as to allow
  * stable comparison of this counter with past and future snapshots.
  */
-static int rcu_dynticks_snap(struct rcu_data *rdp)
-{
-	int snap = atomic_add_return(0, &rdp->dynticks);
+अटल पूर्णांक rcu_dynticks_snap(काष्ठा rcu_data *rdp)
+अणु
+	पूर्णांक snap = atomic_add_वापस(0, &rdp->dynticks);
 
-	return snap & ~RCU_DYNTICK_CTRL_MASK;
-}
+	वापस snap & ~RCU_DYNTICK_CTRL_MASK;
+पूर्ण
 
 /*
- * Return true if the snapshot returned from rcu_dynticks_snap()
+ * Return true अगर the snapshot वापसed from rcu_dynticks_snap()
  * indicates that RCU is in an extended quiescent state.
  */
-static bool rcu_dynticks_in_eqs(int snap)
-{
-	return !(snap & RCU_DYNTICK_CTRL_CTR);
-}
+अटल bool rcu_dynticks_in_eqs(पूर्णांक snap)
+अणु
+	वापस !(snap & RCU_DYNTICK_CTRL_CTR);
+पूर्ण
 
-/* Return true if the specified CPU is currently idle from an RCU viewpoint.  */
-bool rcu_is_idle_cpu(int cpu)
-{
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+/* Return true अगर the specअगरied CPU is currently idle from an RCU viewpoपूर्णांक.  */
+bool rcu_is_idle_cpu(पूर्णांक cpu)
+अणु
+	काष्ठा rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
 
-	return rcu_dynticks_in_eqs(rcu_dynticks_snap(rdp));
-}
-
-/*
- * Return true if the CPU corresponding to the specified rcu_data
- * structure has spent some time in an extended quiescent state since
- * rcu_dynticks_snap() returned the specified snapshot.
- */
-static bool rcu_dynticks_in_eqs_since(struct rcu_data *rdp, int snap)
-{
-	return snap != rcu_dynticks_snap(rdp);
-}
+	वापस rcu_dynticks_in_eqs(rcu_dynticks_snap(rdp));
+पूर्ण
 
 /*
- * Return true if the referenced integer is zero while the specified
- * CPU remains within a single extended quiescent state.
+ * Return true अगर the CPU corresponding to the specअगरied rcu_data
+ * काष्ठाure has spent some समय in an extended quiescent state since
+ * rcu_dynticks_snap() वापसed the specअगरied snapshot.
  */
-bool rcu_dynticks_zero_in_eqs(int cpu, int *vp)
-{
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
-	int snap;
+अटल bool rcu_dynticks_in_eqs_since(काष्ठा rcu_data *rdp, पूर्णांक snap)
+अणु
+	वापस snap != rcu_dynticks_snap(rdp);
+पूर्ण
 
-	// If not quiescent, force back to earlier extended quiescent state.
-	snap = atomic_read(&rdp->dynticks) & ~(RCU_DYNTICK_CTRL_MASK |
+/*
+ * Return true अगर the referenced पूर्णांकeger is zero जबतक the specअगरied
+ * CPU reमुख्यs within a single extended quiescent state.
+ */
+bool rcu_dynticks_zero_in_eqs(पूर्णांक cpu, पूर्णांक *vp)
+अणु
+	काष्ठा rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+	पूर्णांक snap;
+
+	// If not quiescent, क्रमce back to earlier extended quiescent state.
+	snap = atomic_पढ़ो(&rdp->dynticks) & ~(RCU_DYNTICK_CTRL_MASK |
 					       RCU_DYNTICK_CTRL_CTR);
 
-	smp_rmb(); // Order ->dynticks and *vp reads.
-	if (READ_ONCE(*vp))
-		return false;  // Non-zero, so report failure;
-	smp_rmb(); // Order *vp read and ->dynticks re-read.
+	smp_rmb(); // Order ->dynticks and *vp पढ़ोs.
+	अगर (READ_ONCE(*vp))
+		वापस false;  // Non-zero, so report failure;
+	smp_rmb(); // Order *vp पढ़ो and ->dynticks re-पढ़ो.
 
 	// If still in the same extended quiescent state, we are good!
-	return snap == (atomic_read(&rdp->dynticks) & ~RCU_DYNTICK_CTRL_MASK);
-}
+	वापस snap == (atomic_पढ़ो(&rdp->dynticks) & ~RCU_DYNTICK_CTRL_MASK);
+पूर्ण
 
 /*
- * Set the special (bottom) bit of the specified CPU so that it
+ * Set the special (bottom) bit of the specअगरied CPU so that it
  * will take special action (such as flushing its TLB) on the
- * next exit from an extended quiescent state.  Returns true if
- * the bit was successfully set, or false if the CPU was not in
+ * next निकास from an extended quiescent state.  Returns true अगर
+ * the bit was successfully set, or false अगर the CPU was not in
  * an extended quiescent state.
  */
-bool rcu_eqs_special_set(int cpu)
-{
-	int old;
-	int new;
-	int new_old;
-	struct rcu_data *rdp = &per_cpu(rcu_data, cpu);
+bool rcu_eqs_special_set(पूर्णांक cpu)
+अणु
+	पूर्णांक old;
+	पूर्णांक new;
+	पूर्णांक new_old;
+	काष्ठा rcu_data *rdp = &per_cpu(rcu_data, cpu);
 
-	new_old = atomic_read(&rdp->dynticks);
-	do {
+	new_old = atomic_पढ़ो(&rdp->dynticks);
+	करो अणु
 		old = new_old;
-		if (old & RCU_DYNTICK_CTRL_CTR)
-			return false;
+		अगर (old & RCU_DYNTICK_CTRL_CTR)
+			वापस false;
 		new = old | RCU_DYNTICK_CTRL_MASK;
 		new_old = atomic_cmpxchg(&rdp->dynticks, old, new);
-	} while (new_old != old);
-	return true;
-}
+	पूर्ण जबतक (new_old != old);
+	वापस true;
+पूर्ण
 
 /*
  * Let the RCU core know that this CPU has gone through the scheduler,
- * which is a quiescent state.  This is called when the need for a
+ * which is a quiescent state.  This is called when the need क्रम a
  * quiescent state is urgent, so we burn an atomic operation and full
  * memory barriers to let the RCU core know about it, regardless of what
- * this CPU might (or might not) do in the near future.
+ * this CPU might (or might not) करो in the near future.
  *
- * We inform the RCU core by emulating a zero-duration dyntick-idle period.
+ * We inक्रमm the RCU core by emulating a zero-duration dyntick-idle period.
  *
- * The caller must have disabled interrupts and must not be idle.
+ * The caller must have disabled पूर्णांकerrupts and must not be idle.
  */
-notrace void rcu_momentary_dyntick_idle(void)
-{
-	int special;
+notrace व्योम rcu_momentary_dyntick_idle(व्योम)
+अणु
+	पूर्णांक special;
 
-	raw_cpu_write(rcu_data.rcu_need_heavy_qs, false);
-	special = atomic_add_return(2 * RCU_DYNTICK_CTRL_CTR,
+	raw_cpu_ग_लिखो(rcu_data.rcu_need_heavy_qs, false);
+	special = atomic_add_वापस(2 * RCU_DYNTICK_CTRL_CTR,
 				    &this_cpu_ptr(&rcu_data)->dynticks);
 	/* It is illegal to call this from idle state. */
 	WARN_ON_ONCE(!(special & RCU_DYNTICK_CTRL_CTR));
 	rcu_preempt_deferred_qs(current);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rcu_momentary_dyntick_idle);
 
 /**
- * rcu_is_cpu_rrupt_from_idle - see if 'interrupted' from idle
+ * rcu_is_cpu_rrupt_from_idle - see अगर 'interrupted' from idle
  *
  * If the current CPU is idle and running at a first-level (not nested)
- * interrupt, or directly, from idle, return true.
+ * पूर्णांकerrupt, or directly, from idle, वापस true.
  *
  * The caller must have at least disabled IRQs.
  */
-static int rcu_is_cpu_rrupt_from_idle(void)
-{
-	long nesting;
+अटल पूर्णांक rcu_is_cpu_rrupt_from_idle(व्योम)
+अणु
+	दीर्घ nesting;
 
 	/*
 	 * Usually called from the tick; but also used from smp_function_call()
-	 * for expedited grace periods. This latter can result in running from
+	 * क्रम expedited grace periods. This latter can result in running from
 	 * the idle task, instead of an actual IPI.
 	 */
-	lockdep_assert_irqs_disabled();
+	lockdep_निश्चित_irqs_disabled();
 
-	/* Check for counter underflows */
-	RCU_LOCKDEP_WARN(__this_cpu_read(rcu_data.dynticks_nesting) < 0,
+	/* Check क्रम counter underflows */
+	RCU_LOCKDEP_WARN(__this_cpu_पढ़ो(rcu_data.dynticks_nesting) < 0,
 			 "RCU dynticks_nesting counter underflow!");
-	RCU_LOCKDEP_WARN(__this_cpu_read(rcu_data.dynticks_nmi_nesting) <= 0,
+	RCU_LOCKDEP_WARN(__this_cpu_पढ़ो(rcu_data.dynticks_nmi_nesting) <= 0,
 			 "RCU dynticks_nmi_nesting counter underflow/zero!");
 
-	/* Are we at first interrupt nesting level? */
-	nesting = __this_cpu_read(rcu_data.dynticks_nmi_nesting);
-	if (nesting > 1)
-		return false;
+	/* Are we at first पूर्णांकerrupt nesting level? */
+	nesting = __this_cpu_पढ़ो(rcu_data.dynticks_nmi_nesting);
+	अगर (nesting > 1)
+		वापस false;
 
 	/*
-	 * If we're not in an interrupt, we must be in the idle task!
+	 * If we're not in an पूर्णांकerrupt, we must be in the idle task!
 	 */
 	WARN_ON_ONCE(!nesting && !is_idle_task(current));
 
-	/* Does CPU appear to be idle from an RCU standpoint? */
-	return __this_cpu_read(rcu_data.dynticks_nesting) == 0;
-}
+	/* Does CPU appear to be idle from an RCU standpoपूर्णांक? */
+	वापस __this_cpu_पढ़ो(rcu_data.dynticks_nesting) == 0;
+पूर्ण
 
-#define DEFAULT_RCU_BLIMIT (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD) ? 1000 : 10)
-				// Maximum callbacks per rcu_do_batch ...
-#define DEFAULT_MAX_RCU_BLIMIT 10000 // ... even during callback flood.
-static long blimit = DEFAULT_RCU_BLIMIT;
-#define DEFAULT_RCU_QHIMARK 10000 // If this many pending, ignore blimit.
-static long qhimark = DEFAULT_RCU_QHIMARK;
-#define DEFAULT_RCU_QLOMARK 100   // Once only this many pending, use blimit.
-static long qlowmark = DEFAULT_RCU_QLOMARK;
-#define DEFAULT_RCU_QOVLD_MULT 2
-#define DEFAULT_RCU_QOVLD (DEFAULT_RCU_QOVLD_MULT * DEFAULT_RCU_QHIMARK)
-static long qovld = DEFAULT_RCU_QOVLD; // If this many pending, hammer QS.
-static long qovld_calc = -1;	  // No pre-initialization lock acquisitions!
+#घोषणा DEFAULT_RCU_BLIMIT (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD) ? 1000 : 10)
+				// Maximum callbacks per rcu_करो_batch ...
+#घोषणा DEFAULT_MAX_RCU_BLIMIT 10000 // ... even during callback flood.
+अटल दीर्घ blimit = DEFAULT_RCU_BLIMIT;
+#घोषणा DEFAULT_RCU_QHIMARK 10000 // If this many pending, ignore blimit.
+अटल दीर्घ qhimark = DEFAULT_RCU_QHIMARK;
+#घोषणा DEFAULT_RCU_QLOMARK 100   // Once only this many pending, use blimit.
+अटल दीर्घ qlowmark = DEFAULT_RCU_QLOMARK;
+#घोषणा DEFAULT_RCU_QOVLD_MULT 2
+#घोषणा DEFAULT_RCU_QOVLD (DEFAULT_RCU_QOVLD_MULT * DEFAULT_RCU_QHIMARK)
+अटल दीर्घ qovld = DEFAULT_RCU_QOVLD; // If this many pending, hammer QS.
+अटल दीर्घ qovld_calc = -1;	  // No pre-initialization lock acquisitions!
 
-module_param(blimit, long, 0444);
-module_param(qhimark, long, 0444);
-module_param(qlowmark, long, 0444);
-module_param(qovld, long, 0444);
+module_param(blimit, दीर्घ, 0444);
+module_param(qhimark, दीर्घ, 0444);
+module_param(qlowmark, दीर्घ, 0444);
+module_param(qovld, दीर्घ, 0444);
 
-static ulong jiffies_till_first_fqs = IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD) ? 0 : ULONG_MAX;
-static ulong jiffies_till_next_fqs = ULONG_MAX;
-static bool rcu_kick_kthreads;
-static int rcu_divisor = 7;
-module_param(rcu_divisor, int, 0644);
+अटल uदीर्घ jअगरfies_till_first_fqs = IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD) ? 0 : अच_दीर्घ_उच्च;
+अटल uदीर्घ jअगरfies_till_next_fqs = अच_दीर्घ_उच्च;
+अटल bool rcu_kick_kthपढ़ोs;
+अटल पूर्णांक rcu_भागisor = 7;
+module_param(rcu_भागisor, पूर्णांक, 0644);
 
-/* Force an exit from rcu_do_batch() after 3 milliseconds. */
-static long rcu_resched_ns = 3 * NSEC_PER_MSEC;
-module_param(rcu_resched_ns, long, 0644);
-
-/*
- * How long the grace period must be before we start recruiting
- * quiescent-state help from rcu_note_context_switch().
- */
-static ulong jiffies_till_sched_qs = ULONG_MAX;
-module_param(jiffies_till_sched_qs, ulong, 0444);
-static ulong jiffies_to_sched_qs; /* See adjust_jiffies_till_sched_qs(). */
-module_param(jiffies_to_sched_qs, ulong, 0444); /* Display only! */
+/* Force an निकास from rcu_करो_batch() after 3 milliseconds. */
+अटल दीर्घ rcu_resched_ns = 3 * NSEC_PER_MSEC;
+module_param(rcu_resched_ns, दीर्घ, 0644);
 
 /*
- * Make sure that we give the grace-period kthread time to detect any
- * idle CPUs before taking active measures to force quiescent states.
- * However, don't go below 100 milliseconds, adjusted upwards for really
- * large systems.
+ * How दीर्घ the grace period must be beक्रमe we start recruiting
+ * quiescent-state help from rcu_note_context_चयन().
  */
-static void adjust_jiffies_till_sched_qs(void)
-{
-	unsigned long j;
+अटल uदीर्घ jअगरfies_till_sched_qs = अच_दीर्घ_उच्च;
+module_param(jअगरfies_till_sched_qs, uदीर्घ, 0444);
+अटल uदीर्घ jअगरfies_to_sched_qs; /* See adjust_jअगरfies_till_sched_qs(). */
+module_param(jअगरfies_to_sched_qs, uदीर्घ, 0444); /* Display only! */
 
-	/* If jiffies_till_sched_qs was specified, respect the request. */
-	if (jiffies_till_sched_qs != ULONG_MAX) {
-		WRITE_ONCE(jiffies_to_sched_qs, jiffies_till_sched_qs);
-		return;
-	}
-	/* Otherwise, set to third fqs scan, but bound below on large system. */
-	j = READ_ONCE(jiffies_till_first_fqs) +
-		      2 * READ_ONCE(jiffies_till_next_fqs);
-	if (j < HZ / 10 + nr_cpu_ids / RCU_JIFFIES_FQS_DIV)
+/*
+ * Make sure that we give the grace-period kthपढ़ो समय to detect any
+ * idle CPUs beक्रमe taking active measures to क्रमce quiescent states.
+ * However, करोn't go below 100 milliseconds, adjusted upwards क्रम really
+ * large प्रणालीs.
+ */
+अटल व्योम adjust_jअगरfies_till_sched_qs(व्योम)
+अणु
+	अचिन्हित दीर्घ j;
+
+	/* If jअगरfies_till_sched_qs was specअगरied, respect the request. */
+	अगर (jअगरfies_till_sched_qs != अच_दीर्घ_उच्च) अणु
+		WRITE_ONCE(jअगरfies_to_sched_qs, jअगरfies_till_sched_qs);
+		वापस;
+	पूर्ण
+	/* Otherwise, set to third fqs scan, but bound below on large प्रणाली. */
+	j = READ_ONCE(jअगरfies_till_first_fqs) +
+		      2 * READ_ONCE(jअगरfies_till_next_fqs);
+	अगर (j < HZ / 10 + nr_cpu_ids / RCU_JIFFIES_FQS_DIV)
 		j = HZ / 10 + nr_cpu_ids / RCU_JIFFIES_FQS_DIV;
 	pr_info("RCU calculated value of scheduler-enlistment delay is %ld jiffies.\n", j);
-	WRITE_ONCE(jiffies_to_sched_qs, j);
-}
+	WRITE_ONCE(jअगरfies_to_sched_qs, j);
+पूर्ण
 
-static int param_set_first_fqs_jiffies(const char *val, const struct kernel_param *kp)
-{
-	ulong j;
-	int ret = kstrtoul(val, 0, &j);
+अटल पूर्णांक param_set_first_fqs_jअगरfies(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	uदीर्घ j;
+	पूर्णांक ret = kम_से_अदीर्घ(val, 0, &j);
 
-	if (!ret) {
-		WRITE_ONCE(*(ulong *)kp->arg, (j > HZ) ? HZ : j);
-		adjust_jiffies_till_sched_qs();
-	}
-	return ret;
-}
+	अगर (!ret) अणु
+		WRITE_ONCE(*(uदीर्घ *)kp->arg, (j > HZ) ? HZ : j);
+		adjust_jअगरfies_till_sched_qs();
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int param_set_next_fqs_jiffies(const char *val, const struct kernel_param *kp)
-{
-	ulong j;
-	int ret = kstrtoul(val, 0, &j);
+अटल पूर्णांक param_set_next_fqs_jअगरfies(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	uदीर्घ j;
+	पूर्णांक ret = kम_से_अदीर्घ(val, 0, &j);
 
-	if (!ret) {
-		WRITE_ONCE(*(ulong *)kp->arg, (j > HZ) ? HZ : (j ?: 1));
-		adjust_jiffies_till_sched_qs();
-	}
-	return ret;
-}
+	अगर (!ret) अणु
+		WRITE_ONCE(*(uदीर्घ *)kp->arg, (j > HZ) ? HZ : (j ?: 1));
+		adjust_jअगरfies_till_sched_qs();
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct kernel_param_ops first_fqs_jiffies_ops = {
-	.set = param_set_first_fqs_jiffies,
-	.get = param_get_ulong,
-};
+अटल स्थिर काष्ठा kernel_param_ops first_fqs_jअगरfies_ops = अणु
+	.set = param_set_first_fqs_jअगरfies,
+	.get = param_get_uदीर्घ,
+पूर्ण;
 
-static const struct kernel_param_ops next_fqs_jiffies_ops = {
-	.set = param_set_next_fqs_jiffies,
-	.get = param_get_ulong,
-};
+अटल स्थिर काष्ठा kernel_param_ops next_fqs_jअगरfies_ops = अणु
+	.set = param_set_next_fqs_jअगरfies,
+	.get = param_get_uदीर्घ,
+पूर्ण;
 
-module_param_cb(jiffies_till_first_fqs, &first_fqs_jiffies_ops, &jiffies_till_first_fqs, 0644);
-module_param_cb(jiffies_till_next_fqs, &next_fqs_jiffies_ops, &jiffies_till_next_fqs, 0644);
-module_param(rcu_kick_kthreads, bool, 0644);
+module_param_cb(jअगरfies_till_first_fqs, &first_fqs_jअगरfies_ops, &jअगरfies_till_first_fqs, 0644);
+module_param_cb(jअगरfies_till_next_fqs, &next_fqs_jअगरfies_ops, &jअगरfies_till_next_fqs, 0644);
+module_param(rcu_kick_kthपढ़ोs, bool, 0644);
 
-static void force_qs_rnp(int (*f)(struct rcu_data *rdp));
-static int rcu_pending(int user);
+अटल व्योम क्रमce_qs_rnp(पूर्णांक (*f)(काष्ठा rcu_data *rdp));
+अटल पूर्णांक rcu_pending(पूर्णांक user);
 
 /*
- * Return the number of RCU GPs completed thus far for debug & stats.
+ * Return the number of RCU GPs completed thus far क्रम debug & stats.
  */
-unsigned long rcu_get_gp_seq(void)
-{
-	return READ_ONCE(rcu_state.gp_seq);
-}
+अचिन्हित दीर्घ rcu_get_gp_seq(व्योम)
+अणु
+	वापस READ_ONCE(rcu_state.gp_seq);
+पूर्ण
 EXPORT_SYMBOL_GPL(rcu_get_gp_seq);
 
 /*
- * Return the number of RCU expedited batches completed thus far for
+ * Return the number of RCU expedited batches completed thus far क्रम
  * debug & stats.  Odd numbers mean that a batch is in progress, even
- * numbers mean idle.  The value returned will thus be roughly double
+ * numbers mean idle.  The value वापसed will thus be roughly द्विगुन
  * the cumulative batches since boot.
  */
-unsigned long rcu_exp_batches_completed(void)
-{
-	return rcu_state.expedited_sequence;
-}
+अचिन्हित दीर्घ rcu_exp_batches_completed(व्योम)
+अणु
+	वापस rcu_state.expedited_sequence;
+पूर्ण
 EXPORT_SYMBOL_GPL(rcu_exp_batches_completed);
 
 /*
- * Return the root node of the rcu_state structure.
+ * Return the root node of the rcu_state काष्ठाure.
  */
-static struct rcu_node *rcu_get_root(void)
-{
-	return &rcu_state.node[0];
-}
+अटल काष्ठा rcu_node *rcu_get_root(व्योम)
+अणु
+	वापस &rcu_state.node[0];
+पूर्ण
 
 /*
- * Send along grace-period-related data for rcutorture diagnostics.
+ * Send aदीर्घ grace-period-related data क्रम rcutorture diagnostics.
  */
-void rcutorture_get_gp_data(enum rcutorture_type test_type, int *flags,
-			    unsigned long *gp_seq)
-{
-	switch (test_type) {
-	case RCU_FLAVOR:
+व्योम rcutorture_get_gp_data(क्रमागत rcutorture_type test_type, पूर्णांक *flags,
+			    अचिन्हित दीर्घ *gp_seq)
+अणु
+	चयन (test_type) अणु
+	हाल RCU_FLAVOR:
 		*flags = READ_ONCE(rcu_state.gp_flags);
 		*gp_seq = rcu_seq_current(&rcu_state.gp_seq);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(rcutorture_get_gp_data);
 
 /*
  * Enter an RCU extended quiescent state, which can be either the
  * idle loop or adaptive-tickless usermode execution.
  *
- * We crowbar the ->dynticks_nmi_nesting field to zero to allow for
+ * We crowbar the ->dynticks_nmi_nesting field to zero to allow क्रम
  * the possibility of usermode upcalls having messed up our count
- * of interrupt nesting level during the prior busy period.
+ * of पूर्णांकerrupt nesting level during the prior busy period.
  */
-static noinstr void rcu_eqs_enter(bool user)
-{
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+अटल noinstr व्योम rcu_eqs_enter(bool user)
+अणु
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
 	WARN_ON_ONCE(rdp->dynticks_nmi_nesting != DYNTICK_IRQ_NONIDLE);
 	WRITE_ONCE(rdp->dynticks_nmi_nesting, 0);
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) &&
 		     rdp->dynticks_nesting == 0);
-	if (rdp->dynticks_nesting != 1) {
-		// RCU will still be watching, so just do accounting and leave.
+	अगर (rdp->dynticks_nesting != 1) अणु
+		// RCU will still be watching, so just करो accounting and leave.
 		rdp->dynticks_nesting--;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	lockdep_assert_irqs_disabled();
+	lockdep_निश्चित_irqs_disabled();
 	instrumentation_begin();
-	trace_rcu_dyntick(TPS("Start"), rdp->dynticks_nesting, 0, atomic_read(&rdp->dynticks));
+	trace_rcu_dyntick(TPS("Start"), rdp->dynticks_nesting, 0, atomic_पढ़ो(&rdp->dynticks));
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) && !user && !is_idle_task(current));
-	rcu_prepare_for_idle();
+	rcu_prepare_क्रम_idle();
 	rcu_preempt_deferred_qs(current);
 
-	// instrumentation for the noinstr rcu_dynticks_eqs_enter()
-	instrument_atomic_write(&rdp->dynticks, sizeof(rdp->dynticks));
+	// instrumentation क्रम the noinstr rcu_dynticks_eqs_enter()
+	instrument_atomic_ग_लिखो(&rdp->dynticks, माप(rdp->dynticks));
 
 	instrumentation_end();
-	WRITE_ONCE(rdp->dynticks_nesting, 0); /* Avoid irq-access tearing. */
+	WRITE_ONCE(rdp->dynticks_nesting, 0); /* Aव्योम irq-access tearing. */
 	// RCU is watching here ...
 	rcu_dynticks_eqs_enter();
-	// ... but is no longer watching here.
+	// ... but is no दीर्घer watching here.
 	rcu_dynticks_task_enter();
-}
+पूर्ण
 
 /**
- * rcu_idle_enter - inform RCU that current CPU is entering idle
+ * rcu_idle_enter - inक्रमm RCU that current CPU is entering idle
  *
  * Enter idle mode, in other words, -leave- the mode in which RCU
- * read-side critical sections can occur.  (Though RCU read-side
+ * पढ़ो-side critical sections can occur.  (Though RCU पढ़ो-side
  * critical sections can occur in irq handlers in idle, a possibility
- * handled by irq_enter() and irq_exit().)
+ * handled by irq_enter() and irq_निकास().)
  *
- * If you add or remove a call to rcu_idle_enter(), be sure to test with
+ * If you add or हटाओ a call to rcu_idle_enter(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_idle_enter(void)
-{
-	lockdep_assert_irqs_disabled();
+व्योम rcu_idle_enter(व्योम)
+अणु
+	lockdep_निश्चित_irqs_disabled();
 	rcu_eqs_enter(false);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rcu_idle_enter);
 
-#ifdef CONFIG_NO_HZ_FULL
+#अगर_घोषित CONFIG_NO_HZ_FULL
 
-#if !defined(CONFIG_GENERIC_ENTRY) || !defined(CONFIG_KVM_XFER_TO_GUEST_WORK)
+#अगर !defined(CONFIG_GENERIC_ENTRY) || !defined(CONFIG_KVM_XFER_TO_GUEST_WORK)
 /*
  * An empty function that will trigger a reschedule on
  * IRQ tail once IRQs get re-enabled on userspace/guest resume.
  */
-static void late_wakeup_func(struct irq_work *work)
-{
-}
+अटल व्योम late_wakeup_func(काष्ठा irq_work *work)
+अणु
+पूर्ण
 
-static DEFINE_PER_CPU(struct irq_work, late_wakeup_work) =
+अटल DEFINE_PER_CPU(काष्ठा irq_work, late_wakeup_work) =
 	IRQ_WORK_INIT(late_wakeup_func);
 
 /*
  * If either:
  *
- * 1) the task is about to enter in guest mode and $ARCH doesn't support KVM generic work
- * 2) the task is about to enter in user mode and $ARCH doesn't support generic entry.
+ * 1) the task is about to enter in guest mode and $ARCH करोesn't support KVM generic work
+ * 2) the task is about to enter in user mode and $ARCH करोesn't support generic entry.
  *
- * In these cases the late RCU wake ups aren't supported in the resched loops and our
+ * In these हालs the late RCU wake ups aren't supported in the resched loops and our
  * last resort is to fire a local irq_work that will trigger a reschedule once IRQs
  * get re-enabled again.
  */
-noinstr static void rcu_irq_work_resched(void)
-{
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+noinstr अटल व्योम rcu_irq_work_resched(व्योम)
+अणु
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
-	if (IS_ENABLED(CONFIG_GENERIC_ENTRY) && !(current->flags & PF_VCPU))
-		return;
+	अगर (IS_ENABLED(CONFIG_GENERIC_ENTRY) && !(current->flags & PF_VCPU))
+		वापस;
 
-	if (IS_ENABLED(CONFIG_KVM_XFER_TO_GUEST_WORK) && (current->flags & PF_VCPU))
-		return;
+	अगर (IS_ENABLED(CONFIG_KVM_XFER_TO_GUEST_WORK) && (current->flags & PF_VCPU))
+		वापस;
 
 	instrumentation_begin();
-	if (do_nocb_deferred_wakeup(rdp) && need_resched()) {
+	अगर (करो_nocb_deferred_wakeup(rdp) && need_resched()) अणु
 		irq_work_queue(this_cpu_ptr(&late_wakeup_work));
-	}
+	पूर्ण
 	instrumentation_end();
-}
+पूर्ण
 
-#else
-static inline void rcu_irq_work_resched(void) { }
-#endif
+#अन्यथा
+अटल अंतरभूत व्योम rcu_irq_work_resched(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
 /**
- * rcu_user_enter - inform RCU that we are resuming userspace.
+ * rcu_user_enter - inक्रमm RCU that we are resuming userspace.
  *
- * Enter RCU idle mode right before resuming userspace.  No use of RCU
- * is permitted between this call and rcu_user_exit(). This way the
- * CPU doesn't need to maintain the tick for RCU maintenance purposes
+ * Enter RCU idle mode right beक्रमe resuming userspace.  No use of RCU
+ * is permitted between this call and rcu_user_निकास(). This way the
+ * CPU करोesn't need to मुख्यtain the tick क्रम RCU मुख्यtenance purposes
  * when the CPU runs in userspace.
  *
- * If you add or remove a call to rcu_user_enter(), be sure to test with
+ * If you add or हटाओ a call to rcu_user_enter(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-noinstr void rcu_user_enter(void)
-{
-	lockdep_assert_irqs_disabled();
+noinstr व्योम rcu_user_enter(व्योम)
+अणु
+	lockdep_निश्चित_irqs_disabled();
 
 	/*
 	 * Other than generic entry implementation, we may be past the last
@@ -748,29 +749,29 @@ noinstr void rcu_user_enter(void)
 	 */
 	rcu_irq_work_resched();
 	rcu_eqs_enter(true);
-}
+पूर्ण
 
-#endif /* CONFIG_NO_HZ_FULL */
+#पूर्ण_अगर /* CONFIG_NO_HZ_FULL */
 
 /**
- * rcu_nmi_exit - inform RCU of exit from NMI context
+ * rcu_nmi_निकास - inक्रमm RCU of निकास from NMI context
  *
- * If we are returning from the outermost NMI handler that interrupted an
+ * If we are वापसing from the outermost NMI handler that पूर्णांकerrupted an
  * RCU-idle period, update rdp->dynticks and rdp->dynticks_nmi_nesting
  * to let the RCU grace-period handling know that the CPU is back to
  * being RCU-idle.
  *
- * If you add or remove a call to rcu_nmi_exit(), be sure to test
+ * If you add or हटाओ a call to rcu_nmi_निकास(), be sure to test
  * with CONFIG_RCU_EQS_DEBUG=y.
  */
-noinstr void rcu_nmi_exit(void)
-{
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+noinstr व्योम rcu_nmi_निकास(व्योम)
+अणु
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
 	instrumentation_begin();
 	/*
-	 * Check for ->dynticks_nmi_nesting underflow and bad ->dynticks.
-	 * (We are exiting an NMI handler, so RCU better be paying attention
+	 * Check क्रम ->dynticks_nmi_nesting underflow and bad ->dynticks.
+	 * (We are निकासing an NMI handler, so RCU better be paying attention
 	 * to us!)
 	 */
 	WARN_ON_ONCE(rdp->dynticks_nmi_nesting <= 0);
@@ -780,43 +781,43 @@ noinstr void rcu_nmi_exit(void)
 	 * If the nesting level is not 1, the CPU wasn't RCU-idle, so
 	 * leave it in non-RCU-idle state.
 	 */
-	if (rdp->dynticks_nmi_nesting != 1) {
+	अगर (rdp->dynticks_nmi_nesting != 1) अणु
 		trace_rcu_dyntick(TPS("--="), rdp->dynticks_nmi_nesting, rdp->dynticks_nmi_nesting - 2,
-				  atomic_read(&rdp->dynticks));
+				  atomic_पढ़ो(&rdp->dynticks));
 		WRITE_ONCE(rdp->dynticks_nmi_nesting, /* No store tearing. */
 			   rdp->dynticks_nmi_nesting - 2);
 		instrumentation_end();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* This NMI interrupted an RCU-idle CPU, restore RCU-idleness. */
-	trace_rcu_dyntick(TPS("Startirq"), rdp->dynticks_nmi_nesting, 0, atomic_read(&rdp->dynticks));
-	WRITE_ONCE(rdp->dynticks_nmi_nesting, 0); /* Avoid store tearing. */
+	/* This NMI पूर्णांकerrupted an RCU-idle CPU, restore RCU-idleness. */
+	trace_rcu_dyntick(TPS("Startirq"), rdp->dynticks_nmi_nesting, 0, atomic_पढ़ो(&rdp->dynticks));
+	WRITE_ONCE(rdp->dynticks_nmi_nesting, 0); /* Aव्योम store tearing. */
 
-	if (!in_nmi())
-		rcu_prepare_for_idle();
+	अगर (!in_nmi())
+		rcu_prepare_क्रम_idle();
 
-	// instrumentation for the noinstr rcu_dynticks_eqs_enter()
-	instrument_atomic_write(&rdp->dynticks, sizeof(rdp->dynticks));
+	// instrumentation क्रम the noinstr rcu_dynticks_eqs_enter()
+	instrument_atomic_ग_लिखो(&rdp->dynticks, माप(rdp->dynticks));
 	instrumentation_end();
 
 	// RCU is watching here ...
 	rcu_dynticks_eqs_enter();
-	// ... but is no longer watching here.
+	// ... but is no दीर्घer watching here.
 
-	if (!in_nmi())
+	अगर (!in_nmi())
 		rcu_dynticks_task_enter();
-}
+पूर्ण
 
 /**
- * rcu_irq_exit - inform RCU that current CPU is exiting irq towards idle
+ * rcu_irq_निकास - inक्रमm RCU that current CPU is निकासing irq towards idle
  *
- * Exit from an interrupt handler, which might possibly result in entering
- * idle mode, in other words, leaving the mode in which read-side critical
- * sections can occur.  The caller must have disabled interrupts.
+ * Exit from an पूर्णांकerrupt handler, which might possibly result in entering
+ * idle mode, in other words, leaving the mode in which पढ़ो-side critical
+ * sections can occur.  The caller must have disabled पूर्णांकerrupts.
  *
- * This code assumes that the idle loop never does anything that might
- * result in unbalanced calls to irq_enter() and irq_exit().  If your
+ * This code assumes that the idle loop never करोes anything that might
+ * result in unbalanced calls to irq_enter() and irq_निकास().  If your
  * architecture's idle loop violates this assumption, RCU will give you what
  * you deserve, good and hard.  But very infrequently and irreproducibly.
  *
@@ -824,576 +825,576 @@ noinstr void rcu_nmi_exit(void)
  *
  * You have been warned.
  *
- * If you add or remove a call to rcu_irq_exit(), be sure to test with
+ * If you add or हटाओ a call to rcu_irq_निकास(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-void noinstr rcu_irq_exit(void)
-{
-	lockdep_assert_irqs_disabled();
-	rcu_nmi_exit();
-}
+व्योम noinstr rcu_irq_निकास(व्योम)
+अणु
+	lockdep_निश्चित_irqs_disabled();
+	rcu_nmi_निकास();
+पूर्ण
 
 /**
- * rcu_irq_exit_preempt - Inform RCU that current CPU is exiting irq
+ * rcu_irq_निकास_preempt - Inक्रमm RCU that current CPU is निकासing irq
  *			  towards in kernel preemption
  *
- * Same as rcu_irq_exit() but has a sanity check that scheduling is safe
- * from RCU point of view. Invoked from return from interrupt before kernel
+ * Same as rcu_irq_निकास() but has a sanity check that scheduling is safe
+ * from RCU poपूर्णांक of view. Invoked from वापस from पूर्णांकerrupt beक्रमe kernel
  * preemption.
  */
-void rcu_irq_exit_preempt(void)
-{
-	lockdep_assert_irqs_disabled();
-	rcu_nmi_exit();
+व्योम rcu_irq_निकास_preempt(व्योम)
+अणु
+	lockdep_निश्चित_irqs_disabled();
+	rcu_nmi_निकास();
 
-	RCU_LOCKDEP_WARN(__this_cpu_read(rcu_data.dynticks_nesting) <= 0,
+	RCU_LOCKDEP_WARN(__this_cpu_पढ़ो(rcu_data.dynticks_nesting) <= 0,
 			 "RCU dynticks_nesting counter underflow/zero!");
-	RCU_LOCKDEP_WARN(__this_cpu_read(rcu_data.dynticks_nmi_nesting) !=
+	RCU_LOCKDEP_WARN(__this_cpu_पढ़ो(rcu_data.dynticks_nmi_nesting) !=
 			 DYNTICK_IRQ_NONIDLE,
 			 "Bad RCU  dynticks_nmi_nesting counter\n");
 	RCU_LOCKDEP_WARN(rcu_dynticks_curr_cpu_in_eqs(),
 			 "RCU in extended quiescent state!");
-}
+पूर्ण
 
-#ifdef CONFIG_PROVE_RCU
+#अगर_घोषित CONFIG_PROVE_RCU
 /**
- * rcu_irq_exit_check_preempt - Validate that scheduling is possible
+ * rcu_irq_निकास_check_preempt - Validate that scheduling is possible
  */
-void rcu_irq_exit_check_preempt(void)
-{
-	lockdep_assert_irqs_disabled();
+व्योम rcu_irq_निकास_check_preempt(व्योम)
+अणु
+	lockdep_निश्चित_irqs_disabled();
 
-	RCU_LOCKDEP_WARN(__this_cpu_read(rcu_data.dynticks_nesting) <= 0,
+	RCU_LOCKDEP_WARN(__this_cpu_पढ़ो(rcu_data.dynticks_nesting) <= 0,
 			 "RCU dynticks_nesting counter underflow/zero!");
-	RCU_LOCKDEP_WARN(__this_cpu_read(rcu_data.dynticks_nmi_nesting) !=
+	RCU_LOCKDEP_WARN(__this_cpu_पढ़ो(rcu_data.dynticks_nmi_nesting) !=
 			 DYNTICK_IRQ_NONIDLE,
 			 "Bad RCU  dynticks_nmi_nesting counter\n");
 	RCU_LOCKDEP_WARN(rcu_dynticks_curr_cpu_in_eqs(),
 			 "RCU in extended quiescent state!");
-}
-#endif /* #ifdef CONFIG_PROVE_RCU */
+पूर्ण
+#पूर्ण_अगर /* #अगर_घोषित CONFIG_PROVE_RCU */
 
 /*
- * Wrapper for rcu_irq_exit() where interrupts are enabled.
+ * Wrapper क्रम rcu_irq_निकास() where पूर्णांकerrupts are enabled.
  *
- * If you add or remove a call to rcu_irq_exit_irqson(), be sure to test
+ * If you add or हटाओ a call to rcu_irq_निकास_irqson(), be sure to test
  * with CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_irq_exit_irqson(void)
-{
-	unsigned long flags;
+व्योम rcu_irq_निकास_irqson(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	rcu_irq_exit();
+	rcu_irq_निकास();
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /*
  * Exit an RCU extended quiescent state, which can be either the
  * idle loop or adaptive-tickless usermode execution.
  *
  * We crowbar the ->dynticks_nmi_nesting field to DYNTICK_IRQ_NONIDLE to
- * allow for the possibility of usermode upcalls messing up our count of
- * interrupt nesting level during the busy period that is just now starting.
+ * allow क्रम the possibility of usermode upcalls messing up our count of
+ * पूर्णांकerrupt nesting level during the busy period that is just now starting.
  */
-static void noinstr rcu_eqs_exit(bool user)
-{
-	struct rcu_data *rdp;
-	long oldval;
+अटल व्योम noinstr rcu_eqs_निकास(bool user)
+अणु
+	काष्ठा rcu_data *rdp;
+	दीर्घ oldval;
 
-	lockdep_assert_irqs_disabled();
+	lockdep_निश्चित_irqs_disabled();
 	rdp = this_cpu_ptr(&rcu_data);
 	oldval = rdp->dynticks_nesting;
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) && oldval < 0);
-	if (oldval) {
-		// RCU was already watching, so just do accounting and leave.
+	अगर (oldval) अणु
+		// RCU was alपढ़ोy watching, so just करो accounting and leave.
 		rdp->dynticks_nesting++;
-		return;
-	}
-	rcu_dynticks_task_exit();
+		वापस;
+	पूर्ण
+	rcu_dynticks_task_निकास();
 	// RCU is not watching here ...
-	rcu_dynticks_eqs_exit();
+	rcu_dynticks_eqs_निकास();
 	// ... but is watching here.
 	instrumentation_begin();
 
-	// instrumentation for the noinstr rcu_dynticks_eqs_exit()
-	instrument_atomic_write(&rdp->dynticks, sizeof(rdp->dynticks));
+	// instrumentation क्रम the noinstr rcu_dynticks_eqs_निकास()
+	instrument_atomic_ग_लिखो(&rdp->dynticks, माप(rdp->dynticks));
 
 	rcu_cleanup_after_idle();
-	trace_rcu_dyntick(TPS("End"), rdp->dynticks_nesting, 1, atomic_read(&rdp->dynticks));
+	trace_rcu_dyntick(TPS("End"), rdp->dynticks_nesting, 1, atomic_पढ़ो(&rdp->dynticks));
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) && !user && !is_idle_task(current));
 	WRITE_ONCE(rdp->dynticks_nesting, 1);
 	WARN_ON_ONCE(rdp->dynticks_nmi_nesting);
 	WRITE_ONCE(rdp->dynticks_nmi_nesting, DYNTICK_IRQ_NONIDLE);
 	instrumentation_end();
-}
+पूर्ण
 
 /**
- * rcu_idle_exit - inform RCU that current CPU is leaving idle
+ * rcu_idle_निकास - inक्रमm RCU that current CPU is leaving idle
  *
  * Exit idle mode, in other words, -enter- the mode in which RCU
- * read-side critical sections can occur.
+ * पढ़ो-side critical sections can occur.
  *
- * If you add or remove a call to rcu_idle_exit(), be sure to test with
+ * If you add or हटाओ a call to rcu_idle_निकास(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_idle_exit(void)
-{
-	unsigned long flags;
+व्योम rcu_idle_निकास(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	rcu_eqs_exit(false);
+	rcu_eqs_निकास(false);
 	local_irq_restore(flags);
-}
-EXPORT_SYMBOL_GPL(rcu_idle_exit);
+पूर्ण
+EXPORT_SYMBOL_GPL(rcu_idle_निकास);
 
-#ifdef CONFIG_NO_HZ_FULL
+#अगर_घोषित CONFIG_NO_HZ_FULL
 /**
- * rcu_user_exit - inform RCU that we are exiting userspace.
+ * rcu_user_निकास - inक्रमm RCU that we are निकासing userspace.
  *
- * Exit RCU idle mode while entering the kernel because it can
- * run a RCU read side critical section anytime.
+ * Exit RCU idle mode जबतक entering the kernel because it can
+ * run a RCU पढ़ो side critical section anyसमय.
  *
- * If you add or remove a call to rcu_user_exit(), be sure to test with
+ * If you add or हटाओ a call to rcu_user_निकास(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-void noinstr rcu_user_exit(void)
-{
-	rcu_eqs_exit(1);
-}
+व्योम noinstr rcu_user_निकास(व्योम)
+अणु
+	rcu_eqs_निकास(1);
+पूर्ण
 
 /**
- * __rcu_irq_enter_check_tick - Enable scheduler tick on CPU if RCU needs it.
+ * __rcu_irq_enter_check_tick - Enable scheduler tick on CPU अगर RCU needs it.
  *
  * The scheduler tick is not normally enabled when CPUs enter the kernel
  * from nohz_full userspace execution.  After all, nohz_full userspace
- * execution is an RCU quiescent state and the time executing in the kernel
- * is quite short.  Except of course when it isn't.  And it is not hard to
- * cause a large system to spend tens of seconds or even minutes looping
+ * execution is an RCU quiescent state and the समय executing in the kernel
+ * is quite लघु.  Except of course when it isn't.  And it is not hard to
+ * cause a large प्रणाली to spend tens of seconds or even minutes looping
  * in the kernel, which can cause a number of problems, include RCU CPU
  * stall warnings.
  *
- * Therefore, if a nohz_full CPU fails to report a quiescent state
- * in a timely manner, the RCU grace-period kthread sets that CPU's
- * ->rcu_urgent_qs flag with the expectation that the next interrupt or
+ * Thereक्रमe, अगर a nohz_full CPU fails to report a quiescent state
+ * in a समयly manner, the RCU grace-period kthपढ़ो sets that CPU's
+ * ->rcu_urgent_qs flag with the expectation that the next पूर्णांकerrupt or
  * exception will invoke this function, which will turn on the scheduler
  * tick, which will enable RCU to detect that CPU's quiescent states,
- * for example, due to cond_resched() calls in CONFIG_PREEMPT=n kernels.
- * The tick will be disabled once a quiescent state is reported for
+ * क्रम example, due to cond_resched() calls in CONFIG_PREEMPT=n kernels.
+ * The tick will be disabled once a quiescent state is reported क्रम
  * this CPU.
  *
- * Of course, in carefully tuned systems, there might never be an
- * interrupt or exception.  In that case, the RCU grace-period kthread
+ * Of course, in carefully tuned प्रणालीs, there might never be an
+ * पूर्णांकerrupt or exception.  In that हाल, the RCU grace-period kthपढ़ो
  * will eventually cause one to happen.  However, in less carefully
  * controlled environments, this function allows RCU to get what it
- * needs without creating otherwise useless interruptions.
+ * needs without creating otherwise useless पूर्णांकerruptions.
  */
-void __rcu_irq_enter_check_tick(void)
-{
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+व्योम __rcu_irq_enter_check_tick(व्योम)
+अणु
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
-	// If we're here from NMI there's nothing to do.
-	if (in_nmi())
-		return;
+	// If we're here from NMI there's nothing to करो.
+	अगर (in_nmi())
+		वापस;
 
 	RCU_LOCKDEP_WARN(rcu_dynticks_curr_cpu_in_eqs(),
 			 "Illegal rcu_irq_enter_check_tick() from extended quiescent state");
 
-	if (!tick_nohz_full_cpu(rdp->cpu) ||
+	अगर (!tick_nohz_full_cpu(rdp->cpu) ||
 	    !READ_ONCE(rdp->rcu_urgent_qs) ||
-	    READ_ONCE(rdp->rcu_forced_tick)) {
-		// RCU doesn't need nohz_full help from this CPU, or it is
-		// already getting that help.
-		return;
-	}
+	    READ_ONCE(rdp->rcu_क्रमced_tick)) अणु
+		// RCU करोesn't need nohz_full help from this CPU, or it is
+		// alपढ़ोy getting that help.
+		वापस;
+	पूर्ण
 
 	// We get here only when not in an extended quiescent state and
-	// from interrupts (as opposed to NMIs).  Therefore, (1) RCU is
-	// already watching and (2) The fact that we are in an interrupt
+	// from पूर्णांकerrupts (as opposed to NMIs).  Thereक्रमe, (1) RCU is
+	// alपढ़ोy watching and (2) The fact that we are in an पूर्णांकerrupt
 	// handler and that the rcu_node lock is an irq-disabled lock
 	// prevents self-deadlock.  So we can safely recheck under the lock.
 	// Note that the nohz_full state currently cannot change.
 	raw_spin_lock_rcu_node(rdp->mynode);
-	if (rdp->rcu_urgent_qs && !rdp->rcu_forced_tick) {
+	अगर (rdp->rcu_urgent_qs && !rdp->rcu_क्रमced_tick) अणु
 		// A nohz_full CPU is in the kernel and RCU needs a
 		// quiescent state.  Turn on the tick!
-		WRITE_ONCE(rdp->rcu_forced_tick, true);
+		WRITE_ONCE(rdp->rcu_क्रमced_tick, true);
 		tick_dep_set_cpu(rdp->cpu, TICK_DEP_BIT_RCU);
-	}
+	पूर्ण
 	raw_spin_unlock_rcu_node(rdp->mynode);
-}
-#endif /* CONFIG_NO_HZ_FULL */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NO_HZ_FULL */
 
 /**
- * rcu_nmi_enter - inform RCU of entry to NMI context
+ * rcu_nmi_enter - inक्रमm RCU of entry to NMI context
  *
- * If the CPU was idle from RCU's viewpoint, update rdp->dynticks and
+ * If the CPU was idle from RCU's viewpoपूर्णांक, update rdp->dynticks and
  * rdp->dynticks_nmi_nesting to let the RCU grace-period handling know
  * that the CPU is active.  This implementation permits nested NMIs, as
- * long as the nesting level does not overflow an int.  (You will probably
+ * दीर्घ as the nesting level करोes not overflow an पूर्णांक.  (You will probably
  * run out of stack space first.)
  *
- * If you add or remove a call to rcu_nmi_enter(), be sure to test
+ * If you add or हटाओ a call to rcu_nmi_enter(), be sure to test
  * with CONFIG_RCU_EQS_DEBUG=y.
  */
-noinstr void rcu_nmi_enter(void)
-{
-	long incby = 2;
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+noinstr व्योम rcu_nmi_enter(व्योम)
+अणु
+	दीर्घ incby = 2;
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
 	/* Complain about underflow. */
 	WARN_ON_ONCE(rdp->dynticks_nmi_nesting < 0);
 
 	/*
-	 * If idle from RCU viewpoint, atomically increment ->dynticks
+	 * If idle from RCU viewpoपूर्णांक, atomically increment ->dynticks
 	 * to mark non-idle and increment ->dynticks_nmi_nesting by one.
 	 * Otherwise, increment ->dynticks_nmi_nesting by two.  This means
-	 * if ->dynticks_nmi_nesting is equal to one, we are guaranteed
-	 * to be in the outermost NMI handler that interrupted an RCU-idle
+	 * अगर ->dynticks_nmi_nesting is equal to one, we are guaranteed
+	 * to be in the outermost NMI handler that पूर्णांकerrupted an RCU-idle
 	 * period (observation due to Andy Lutomirski).
 	 */
-	if (rcu_dynticks_curr_cpu_in_eqs()) {
+	अगर (rcu_dynticks_curr_cpu_in_eqs()) अणु
 
-		if (!in_nmi())
-			rcu_dynticks_task_exit();
+		अगर (!in_nmi())
+			rcu_dynticks_task_निकास();
 
 		// RCU is not watching here ...
-		rcu_dynticks_eqs_exit();
+		rcu_dynticks_eqs_निकास();
 		// ... but is watching here.
 
-		if (!in_nmi()) {
+		अगर (!in_nmi()) अणु
 			instrumentation_begin();
 			rcu_cleanup_after_idle();
 			instrumentation_end();
-		}
+		पूर्ण
 
 		instrumentation_begin();
-		// instrumentation for the noinstr rcu_dynticks_curr_cpu_in_eqs()
-		instrument_atomic_read(&rdp->dynticks, sizeof(rdp->dynticks));
-		// instrumentation for the noinstr rcu_dynticks_eqs_exit()
-		instrument_atomic_write(&rdp->dynticks, sizeof(rdp->dynticks));
+		// instrumentation क्रम the noinstr rcu_dynticks_curr_cpu_in_eqs()
+		instrument_atomic_पढ़ो(&rdp->dynticks, माप(rdp->dynticks));
+		// instrumentation क्रम the noinstr rcu_dynticks_eqs_निकास()
+		instrument_atomic_ग_लिखो(&rdp->dynticks, माप(rdp->dynticks));
 
 		incby = 1;
-	} else if (!in_nmi()) {
+	पूर्ण अन्यथा अगर (!in_nmi()) अणु
 		instrumentation_begin();
 		rcu_irq_enter_check_tick();
-	} else  {
+	पूर्ण अन्यथा  अणु
 		instrumentation_begin();
-	}
+	पूर्ण
 
 	trace_rcu_dyntick(incby == 1 ? TPS("Endirq") : TPS("++="),
 			  rdp->dynticks_nmi_nesting,
-			  rdp->dynticks_nmi_nesting + incby, atomic_read(&rdp->dynticks));
+			  rdp->dynticks_nmi_nesting + incby, atomic_पढ़ो(&rdp->dynticks));
 	instrumentation_end();
 	WRITE_ONCE(rdp->dynticks_nmi_nesting, /* Prevent store tearing. */
 		   rdp->dynticks_nmi_nesting + incby);
 	barrier();
-}
+पूर्ण
 
 /**
- * rcu_irq_enter - inform RCU that current CPU is entering irq away from idle
+ * rcu_irq_enter - inक्रमm RCU that current CPU is entering irq away from idle
  *
- * Enter an interrupt handler, which might possibly result in exiting
- * idle mode, in other words, entering the mode in which read-side critical
- * sections can occur.  The caller must have disabled interrupts.
+ * Enter an पूर्णांकerrupt handler, which might possibly result in निकासing
+ * idle mode, in other words, entering the mode in which पढ़ो-side critical
+ * sections can occur.  The caller must have disabled पूर्णांकerrupts.
  *
- * Note that the Linux kernel is fully capable of entering an interrupt
- * handler that it never exits, for example when doing upcalls to user mode!
- * This code assumes that the idle loop never does upcalls to user mode.
- * If your architecture's idle loop does do upcalls to user mode (or does
- * anything else that results in unbalanced calls to the irq_enter() and
- * irq_exit() functions), RCU will give you what you deserve, good and hard.
+ * Note that the Linux kernel is fully capable of entering an पूर्णांकerrupt
+ * handler that it never निकासs, क्रम example when करोing upcalls to user mode!
+ * This code assumes that the idle loop never करोes upcalls to user mode.
+ * If your architecture's idle loop करोes करो upcalls to user mode (or करोes
+ * anything अन्यथा that results in unbalanced calls to the irq_enter() and
+ * irq_निकास() functions), RCU will give you what you deserve, good and hard.
  * But very infrequently and irreproducibly.
  *
  * Use things like work queues to work around this limitation.
  *
  * You have been warned.
  *
- * If you add or remove a call to rcu_irq_enter(), be sure to test with
+ * If you add or हटाओ a call to rcu_irq_enter(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-noinstr void rcu_irq_enter(void)
-{
-	lockdep_assert_irqs_disabled();
+noinstr व्योम rcu_irq_enter(व्योम)
+अणु
+	lockdep_निश्चित_irqs_disabled();
 	rcu_nmi_enter();
-}
+पूर्ण
 
 /*
- * Wrapper for rcu_irq_enter() where interrupts are enabled.
+ * Wrapper क्रम rcu_irq_enter() where पूर्णांकerrupts are enabled.
  *
- * If you add or remove a call to rcu_irq_enter_irqson(), be sure to test
+ * If you add or हटाओ a call to rcu_irq_enter_irqson(), be sure to test
  * with CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_irq_enter_irqson(void)
-{
-	unsigned long flags;
+व्योम rcu_irq_enter_irqson(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	rcu_irq_enter();
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /*
- * If any sort of urgency was applied to the current CPU (for example,
- * the scheduler-clock interrupt was enabled on a nohz_full CPU) in order
+ * If any sort of urgency was applied to the current CPU (क्रम example,
+ * the scheduler-घड़ी पूर्णांकerrupt was enabled on a nohz_full CPU) in order
  * to get to a quiescent state, disable it.
  */
-static void rcu_disable_urgency_upon_qs(struct rcu_data *rdp)
-{
-	raw_lockdep_assert_held_rcu_node(rdp->mynode);
+अटल व्योम rcu_disable_urgency_upon_qs(काष्ठा rcu_data *rdp)
+अणु
+	raw_lockdep_निश्चित_held_rcu_node(rdp->mynode);
 	WRITE_ONCE(rdp->rcu_urgent_qs, false);
 	WRITE_ONCE(rdp->rcu_need_heavy_qs, false);
-	if (tick_nohz_full_cpu(rdp->cpu) && rdp->rcu_forced_tick) {
+	अगर (tick_nohz_full_cpu(rdp->cpu) && rdp->rcu_क्रमced_tick) अणु
 		tick_dep_clear_cpu(rdp->cpu, TICK_DEP_BIT_RCU);
-		WRITE_ONCE(rdp->rcu_forced_tick, false);
-	}
-}
+		WRITE_ONCE(rdp->rcu_क्रमced_tick, false);
+	पूर्ण
+पूर्ण
 
 /**
- * rcu_is_watching - see if RCU thinks that the current CPU is not idle
+ * rcu_is_watching - see अगर RCU thinks that the current CPU is not idle
  *
- * Return true if RCU is watching the running CPU, which means that this
- * CPU can safely enter RCU read-side critical sections.  In other words,
- * if the current CPU is not in its idle loop or is in an interrupt or
- * NMI handler, return true.
+ * Return true अगर RCU is watching the running CPU, which means that this
+ * CPU can safely enter RCU पढ़ो-side critical sections.  In other words,
+ * अगर the current CPU is not in its idle loop or is in an पूर्णांकerrupt or
+ * NMI handler, वापस true.
  *
- * Make notrace because it can be called by the internal functions of
- * ftrace, and making this notrace removes unnecessary recursion calls.
+ * Make notrace because it can be called by the पूर्णांकernal functions of
+ * ftrace, and making this notrace हटाओs unnecessary recursion calls.
  */
-notrace bool rcu_is_watching(void)
-{
+notrace bool rcu_is_watching(व्योम)
+अणु
 	bool ret;
 
 	preempt_disable_notrace();
 	ret = !rcu_dynticks_curr_cpu_in_eqs();
 	preempt_enable_notrace();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(rcu_is_watching);
 
 /*
- * If a holdout task is actually running, request an urgent quiescent
+ * If a holकरोut task is actually running, request an urgent quiescent
  * state from its CPU.  This is unsynchronized, so migrations can cause
  * the request to go to the wrong CPU.  Which is OK, all that will happen
- * is that the CPU's next context switch will be a bit slower and next
- * time around this task will generate another request.
+ * is that the CPU's next context चयन will be a bit slower and next
+ * समय around this task will generate another request.
  */
-void rcu_request_urgent_qs_task(struct task_struct *t)
-{
-	int cpu;
+व्योम rcu_request_urgent_qs_task(काष्ठा task_काष्ठा *t)
+अणु
+	पूर्णांक cpu;
 
 	barrier();
 	cpu = task_cpu(t);
-	if (!task_curr(t))
-		return; /* This task is not running on that CPU. */
+	अगर (!task_curr(t))
+		वापस; /* This task is not running on that CPU. */
 	smp_store_release(per_cpu_ptr(&rcu_data.rcu_urgent_qs, cpu), true);
-}
+पूर्ण
 
-#if defined(CONFIG_PROVE_RCU) && defined(CONFIG_HOTPLUG_CPU)
+#अगर defined(CONFIG_PROVE_RCU) && defined(CONFIG_HOTPLUG_CPU)
 
 /*
  * Is the current CPU online as far as RCU is concerned?
  *
- * Disable preemption to avoid false positives that could otherwise
+ * Disable preemption to aव्योम false positives that could otherwise
  * happen due to the current CPU number being sampled, this task being
  * preempted, its old CPU being taken offline, resuming on some other CPU,
  * then determining that its old CPU is now offline.
  *
- * Disable checking if in an NMI handler because we cannot safely
+ * Disable checking अगर in an NMI handler because we cannot safely
  * report errors from NMI handlers anyway.  In addition, it is OK to use
- * RCU on an offline processor during initial boot, hence the check for
+ * RCU on an offline processor during initial boot, hence the check क्रम
  * rcu_scheduler_fully_active.
  */
-bool rcu_lockdep_current_cpu_online(void)
-{
-	struct rcu_data *rdp;
-	struct rcu_node *rnp;
+bool rcu_lockdep_current_cpu_online(व्योम)
+अणु
+	काष्ठा rcu_data *rdp;
+	काष्ठा rcu_node *rnp;
 	bool ret = false;
 
-	if (in_nmi() || !rcu_scheduler_fully_active)
-		return true;
+	अगर (in_nmi() || !rcu_scheduler_fully_active)
+		वापस true;
 	preempt_disable_notrace();
 	rdp = this_cpu_ptr(&rcu_data);
 	rnp = rdp->mynode;
-	if (rdp->grpmask & rcu_rnp_online_cpus(rnp) || READ_ONCE(rnp->ofl_seq) & 0x1)
+	अगर (rdp->grpmask & rcu_rnp_online_cpus(rnp) || READ_ONCE(rnp->ofl_seq) & 0x1)
 		ret = true;
 	preempt_enable_notrace();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(rcu_lockdep_current_cpu_online);
 
-#endif /* #if defined(CONFIG_PROVE_RCU) && defined(CONFIG_HOTPLUG_CPU) */
+#पूर्ण_अगर /* #अगर defined(CONFIG_PROVE_RCU) && defined(CONFIG_HOTPLUG_CPU) */
 
 /*
  * We are reporting a quiescent state on behalf of some other CPU, so
- * it is our responsibility to check for and handle potential overflow
+ * it is our responsibility to check क्रम and handle potential overflow
  * of the rcu_node ->gp_seq counter with respect to the rcu_data counters.
  * After all, the CPU might be in deep idle state, and thus executing no
  * code whatsoever.
  */
-static void rcu_gpnum_ovf(struct rcu_node *rnp, struct rcu_data *rdp)
-{
-	raw_lockdep_assert_held_rcu_node(rnp);
-	if (ULONG_CMP_LT(rcu_seq_current(&rdp->gp_seq) + ULONG_MAX / 4,
+अटल व्योम rcu_gpnum_ovf(काष्ठा rcu_node *rnp, काष्ठा rcu_data *rdp)
+अणु
+	raw_lockdep_निश्चित_held_rcu_node(rnp);
+	अगर (ULONG_CMP_LT(rcu_seq_current(&rdp->gp_seq) + अच_दीर्घ_उच्च / 4,
 			 rnp->gp_seq))
 		WRITE_ONCE(rdp->gpwrap, true);
-	if (ULONG_CMP_LT(rdp->rcu_iw_gp_seq + ULONG_MAX / 4, rnp->gp_seq))
-		rdp->rcu_iw_gp_seq = rnp->gp_seq + ULONG_MAX / 4;
-}
+	अगर (ULONG_CMP_LT(rdp->rcu_iw_gp_seq + अच_दीर्घ_उच्च / 4, rnp->gp_seq))
+		rdp->rcu_iw_gp_seq = rnp->gp_seq + अच_दीर्घ_उच्च / 4;
+पूर्ण
 
 /*
- * Snapshot the specified CPU's dynticks counter so that we can later
- * credit them with an implicit quiescent state.  Return 1 if this CPU
+ * Snapshot the specअगरied CPU's dynticks counter so that we can later
+ * credit them with an implicit quiescent state.  Return 1 अगर this CPU
  * is in dynticks idle mode, which is an extended quiescent state.
  */
-static int dyntick_save_progress_counter(struct rcu_data *rdp)
-{
+अटल पूर्णांक dyntick_save_progress_counter(काष्ठा rcu_data *rdp)
+अणु
 	rdp->dynticks_snap = rcu_dynticks_snap(rdp);
-	if (rcu_dynticks_in_eqs(rdp->dynticks_snap)) {
+	अगर (rcu_dynticks_in_eqs(rdp->dynticks_snap)) अणु
 		trace_rcu_fqs(rcu_state.name, rdp->gp_seq, rdp->cpu, TPS("dti"));
 		rcu_gpnum_ovf(rdp->mynode, rdp);
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Return true if the specified CPU has passed through a quiescent
+ * Return true अगर the specअगरied CPU has passed through a quiescent
  * state by virtue of being in or having passed through an dynticks
  * idle state since the last call to dyntick_save_progress_counter()
- * for this same CPU, or by virtue of having been offline.
+ * क्रम this same CPU, or by virtue of having been offline.
  */
-static int rcu_implicit_dynticks_qs(struct rcu_data *rdp)
-{
-	unsigned long jtsq;
+अटल पूर्णांक rcu_implicit_dynticks_qs(काष्ठा rcu_data *rdp)
+अणु
+	अचिन्हित दीर्घ jtsq;
 	bool *rnhqp;
 	bool *ruqp;
-	struct rcu_node *rnp = rdp->mynode;
+	काष्ठा rcu_node *rnp = rdp->mynode;
 
 	/*
 	 * If the CPU passed through or entered a dynticks idle phase with
 	 * no active irq/NMI handlers, then we can safely pretend that the CPU
-	 * already acknowledged the request to pass through a quiescent
+	 * alपढ़ोy acknowledged the request to pass through a quiescent
 	 * state.  Either way, that CPU cannot possibly be in an RCU
-	 * read-side critical section that started before the beginning
+	 * पढ़ो-side critical section that started beक्रमe the beginning
 	 * of the current RCU grace period.
 	 */
-	if (rcu_dynticks_in_eqs_since(rdp, rdp->dynticks_snap)) {
+	अगर (rcu_dynticks_in_eqs_since(rdp, rdp->dynticks_snap)) अणु
 		trace_rcu_fqs(rcu_state.name, rdp->gp_seq, rdp->cpu, TPS("dti"));
 		rcu_gpnum_ovf(rnp, rdp);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/*
-	 * Complain if a CPU that is considered to be offline from RCU's
+	 * Complain अगर a CPU that is considered to be offline from RCU's
 	 * perspective has not yet reported a quiescent state.  After all,
 	 * the offline CPU should have reported a quiescent state during
 	 * the CPU-offline process, or, failing that, by rcu_gp_init()
-	 * if it ran concurrently with either the CPU going offline or the
-	 * last task on a leaf rcu_node structure exiting its RCU read-side
-	 * critical section while all CPUs corresponding to that structure
+	 * अगर it ran concurrently with either the CPU going offline or the
+	 * last task on a leaf rcu_node काष्ठाure निकासing its RCU पढ़ो-side
+	 * critical section जबतक all CPUs corresponding to that काष्ठाure
 	 * are offline.  This added warning detects bugs in any of these
 	 * code paths.
 	 *
-	 * The rcu_node structure's ->lock is held here, which excludes
+	 * The rcu_node काष्ठाure's ->lock is held here, which excludes
 	 * the relevant portions the CPU-hotplug code, the grace-period
-	 * initialization code, and the rcu_read_unlock() code paths.
+	 * initialization code, and the rcu_पढ़ो_unlock() code paths.
 	 *
 	 * For more detail, please refer to the "Hotplug CPU" section
-	 * of RCU's Requirements documentation.
+	 * of RCU's Requirements करोcumentation.
 	 */
-	if (WARN_ON_ONCE(!(rdp->grpmask & rcu_rnp_online_cpus(rnp)))) {
+	अगर (WARN_ON_ONCE(!(rdp->grpmask & rcu_rnp_online_cpus(rnp)))) अणु
 		bool onl;
-		struct rcu_node *rnp1;
+		काष्ठा rcu_node *rnp1;
 
 		pr_info("%s: grp: %d-%d level: %d ->gp_seq %ld ->completedqs %ld\n",
 			__func__, rnp->grplo, rnp->grphi, rnp->level,
-			(long)rnp->gp_seq, (long)rnp->completedqs);
-		for (rnp1 = rnp; rnp1; rnp1 = rnp1->parent)
+			(दीर्घ)rnp->gp_seq, (दीर्घ)rnp->completedqs);
+		क्रम (rnp1 = rnp; rnp1; rnp1 = rnp1->parent)
 			pr_info("%s: %d:%d ->qsmask %#lx ->qsmaskinit %#lx ->qsmaskinitnext %#lx ->rcu_gp_init_mask %#lx\n",
 				__func__, rnp1->grplo, rnp1->grphi, rnp1->qsmask, rnp1->qsmaskinit, rnp1->qsmaskinitnext, rnp1->rcu_gp_init_mask);
 		onl = !!(rdp->grpmask & rcu_rnp_online_cpus(rnp));
 		pr_info("%s %d: %c online: %ld(%d) offline: %ld(%d)\n",
 			__func__, rdp->cpu, ".o"[onl],
-			(long)rdp->rcu_onl_gp_seq, rdp->rcu_onl_gp_flags,
-			(long)rdp->rcu_ofl_gp_seq, rdp->rcu_ofl_gp_flags);
-		return 1; /* Break things loose after complaining. */
-	}
+			(दीर्घ)rdp->rcu_onl_gp_seq, rdp->rcu_onl_gp_flags,
+			(दीर्घ)rdp->rcu_ofl_gp_seq, rdp->rcu_ofl_gp_flags);
+		वापस 1; /* Break things loose after complaining. */
+	पूर्ण
 
 	/*
-	 * A CPU running for an extended time within the kernel can
-	 * delay RCU grace periods: (1) At age jiffies_to_sched_qs,
-	 * set .rcu_urgent_qs, (2) At age 2*jiffies_to_sched_qs, set
+	 * A CPU running क्रम an extended समय within the kernel can
+	 * delay RCU grace periods: (1) At age jअगरfies_to_sched_qs,
+	 * set .rcu_urgent_qs, (2) At age 2*jअगरfies_to_sched_qs, set
 	 * both .rcu_need_heavy_qs and .rcu_urgent_qs.  Note that the
 	 * unsynchronized assignments to the per-CPU rcu_need_heavy_qs
-	 * variable are safe because the assignments are repeated if this
+	 * variable are safe because the assignments are repeated अगर this
 	 * CPU failed to pass through a quiescent state.  This code
-	 * also checks .jiffies_resched in case jiffies_to_sched_qs
+	 * also checks .jअगरfies_resched in हाल jअगरfies_to_sched_qs
 	 * is set way high.
 	 */
-	jtsq = READ_ONCE(jiffies_to_sched_qs);
+	jtsq = READ_ONCE(jअगरfies_to_sched_qs);
 	ruqp = per_cpu_ptr(&rcu_data.rcu_urgent_qs, rdp->cpu);
 	rnhqp = &per_cpu(rcu_data.rcu_need_heavy_qs, rdp->cpu);
-	if (!READ_ONCE(*rnhqp) &&
-	    (time_after(jiffies, rcu_state.gp_start + jtsq * 2) ||
-	     time_after(jiffies, rcu_state.jiffies_resched) ||
-	     rcu_state.cbovld)) {
+	अगर (!READ_ONCE(*rnhqp) &&
+	    (समय_after(jअगरfies, rcu_state.gp_start + jtsq * 2) ||
+	     समय_after(jअगरfies, rcu_state.jअगरfies_resched) ||
+	     rcu_state.cbovld)) अणु
 		WRITE_ONCE(*rnhqp, true);
-		/* Store rcu_need_heavy_qs before rcu_urgent_qs. */
+		/* Store rcu_need_heavy_qs beक्रमe rcu_urgent_qs. */
 		smp_store_release(ruqp, true);
-	} else if (time_after(jiffies, rcu_state.gp_start + jtsq)) {
+	पूर्ण अन्यथा अगर (समय_after(jअगरfies, rcu_state.gp_start + jtsq)) अणु
 		WRITE_ONCE(*ruqp, true);
-	}
+	पूर्ण
 
 	/*
-	 * NO_HZ_FULL CPUs can run in-kernel without rcu_sched_clock_irq!
-	 * The above code handles this, but only for straight cond_resched().
-	 * And some in-kernel loops check need_resched() before calling
-	 * cond_resched(), which defeats the above code for CPUs that are
-	 * running in-kernel with scheduling-clock interrupts disabled.
+	 * NO_HZ_FULL CPUs can run in-kernel without rcu_sched_घड़ी_irq!
+	 * The above code handles this, but only क्रम straight cond_resched().
+	 * And some in-kernel loops check need_resched() beक्रमe calling
+	 * cond_resched(), which defeats the above code क्रम CPUs that are
+	 * running in-kernel with scheduling-घड़ी पूर्णांकerrupts disabled.
 	 * So hit them over the head with the resched_cpu() hammer!
 	 */
-	if (tick_nohz_full_cpu(rdp->cpu) &&
-	    (time_after(jiffies, READ_ONCE(rdp->last_fqs_resched) + jtsq * 3) ||
-	     rcu_state.cbovld)) {
+	अगर (tick_nohz_full_cpu(rdp->cpu) &&
+	    (समय_after(jअगरfies, READ_ONCE(rdp->last_fqs_resched) + jtsq * 3) ||
+	     rcu_state.cbovld)) अणु
 		WRITE_ONCE(*ruqp, true);
 		resched_cpu(rdp->cpu);
-		WRITE_ONCE(rdp->last_fqs_resched, jiffies);
-	}
+		WRITE_ONCE(rdp->last_fqs_resched, jअगरfies);
+	पूर्ण
 
 	/*
-	 * If more than halfway to RCU CPU stall-warning time, invoke
+	 * If more than halfway to RCU CPU stall-warning समय, invoke
 	 * resched_cpu() more frequently to try to loosen things up a bit.
-	 * Also check to see if the CPU is getting hammered with interrupts,
-	 * but only once per grace period, just to keep the IPIs down to
+	 * Also check to see अगर the CPU is getting hammered with पूर्णांकerrupts,
+	 * but only once per grace period, just to keep the IPIs करोwn to
 	 * a dull roar.
 	 */
-	if (time_after(jiffies, rcu_state.jiffies_resched)) {
-		if (time_after(jiffies,
-			       READ_ONCE(rdp->last_fqs_resched) + jtsq)) {
+	अगर (समय_after(jअगरfies, rcu_state.jअगरfies_resched)) अणु
+		अगर (समय_after(jअगरfies,
+			       READ_ONCE(rdp->last_fqs_resched) + jtsq)) अणु
 			resched_cpu(rdp->cpu);
-			WRITE_ONCE(rdp->last_fqs_resched, jiffies);
-		}
-		if (IS_ENABLED(CONFIG_IRQ_WORK) &&
+			WRITE_ONCE(rdp->last_fqs_resched, jअगरfies);
+		पूर्ण
+		अगर (IS_ENABLED(CONFIG_IRQ_WORK) &&
 		    !rdp->rcu_iw_pending && rdp->rcu_iw_gp_seq != rnp->gp_seq &&
-		    (rnp->ffmask & rdp->grpmask)) {
+		    (rnp->ffmask & rdp->grpmask)) अणु
 			rdp->rcu_iw_pending = true;
 			rdp->rcu_iw_gp_seq = rnp->gp_seq;
 			irq_work_queue_on(&rdp->rcu_iw, rdp->cpu);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Trace-event wrapper function for trace_rcu_future_grace_period.  */
-static void trace_rcu_this_gp(struct rcu_node *rnp, struct rcu_data *rdp,
-			      unsigned long gp_seq_req, const char *s)
-{
+/* Trace-event wrapper function क्रम trace_rcu_future_grace_period.  */
+अटल व्योम trace_rcu_this_gp(काष्ठा rcu_node *rnp, काष्ठा rcu_data *rdp,
+			      अचिन्हित दीर्घ gp_seq_req, स्थिर अक्षर *s)
+अणु
 	trace_rcu_future_grace_period(rcu_state.name, READ_ONCE(rnp->gp_seq),
 				      gp_seq_req, rnp->level,
 				      rnp->grplo, rnp->grphi, s);
-}
+पूर्ण
 
 /*
  * rcu_start_this_gp - Request the start of a particular grace period
@@ -1401,415 +1402,415 @@ static void trace_rcu_this_gp(struct rcu_node *rnp, struct rcu_data *rdp,
  * @rdp: The rcu_data corresponding to the CPU from which to start.
  * @gp_seq_req: The gp_seq of the grace period to start.
  *
- * Start the specified grace period, as needed to handle newly arrived
+ * Start the specअगरied grace period, as needed to handle newly arrived
  * callbacks.  The required future grace periods are recorded in each
- * rcu_node structure's ->gp_seq_needed field.  Returns true if there
- * is reason to awaken the grace-period kthread.
+ * rcu_node काष्ठाure's ->gp_seq_needed field.  Returns true अगर there
+ * is reason to awaken the grace-period kthपढ़ो.
  *
- * The caller must hold the specified rcu_node structure's ->lock, which
- * is why the caller is responsible for waking the grace-period kthread.
+ * The caller must hold the specअगरied rcu_node काष्ठाure's ->lock, which
+ * is why the caller is responsible क्रम waking the grace-period kthपढ़ो.
  *
- * Returns true if the GP thread needs to be awakened else false.
+ * Returns true अगर the GP thपढ़ो needs to be awakened अन्यथा false.
  */
-static bool rcu_start_this_gp(struct rcu_node *rnp_start, struct rcu_data *rdp,
-			      unsigned long gp_seq_req)
-{
+अटल bool rcu_start_this_gp(काष्ठा rcu_node *rnp_start, काष्ठा rcu_data *rdp,
+			      अचिन्हित दीर्घ gp_seq_req)
+अणु
 	bool ret = false;
-	struct rcu_node *rnp;
+	काष्ठा rcu_node *rnp;
 
 	/*
 	 * Use funnel locking to either acquire the root rcu_node
-	 * structure's lock or bail out if the need for this grace period
-	 * has already been recorded -- or if that grace period has in
-	 * fact already started.  If there is already a grace period in
+	 * काष्ठाure's lock or bail out अगर the need क्रम this grace period
+	 * has alपढ़ोy been recorded -- or अगर that grace period has in
+	 * fact alपढ़ोy started.  If there is alपढ़ोy a grace period in
 	 * progress in a non-leaf node, no recording is needed because the
-	 * end of the grace period will scan the leaf rcu_node structures.
+	 * end of the grace period will scan the leaf rcu_node काष्ठाures.
 	 * Note that rnp_start->lock must not be released.
 	 */
-	raw_lockdep_assert_held_rcu_node(rnp_start);
+	raw_lockdep_निश्चित_held_rcu_node(rnp_start);
 	trace_rcu_this_gp(rnp_start, rdp, gp_seq_req, TPS("Startleaf"));
-	for (rnp = rnp_start; 1; rnp = rnp->parent) {
-		if (rnp != rnp_start)
+	क्रम (rnp = rnp_start; 1; rnp = rnp->parent) अणु
+		अगर (rnp != rnp_start)
 			raw_spin_lock_rcu_node(rnp);
-		if (ULONG_CMP_GE(rnp->gp_seq_needed, gp_seq_req) ||
+		अगर (ULONG_CMP_GE(rnp->gp_seq_needed, gp_seq_req) ||
 		    rcu_seq_started(&rnp->gp_seq, gp_seq_req) ||
 		    (rnp != rnp_start &&
-		     rcu_seq_state(rcu_seq_current(&rnp->gp_seq)))) {
+		     rcu_seq_state(rcu_seq_current(&rnp->gp_seq)))) अणु
 			trace_rcu_this_gp(rnp, rdp, gp_seq_req,
 					  TPS("Prestarted"));
-			goto unlock_out;
-		}
+			जाओ unlock_out;
+		पूर्ण
 		WRITE_ONCE(rnp->gp_seq_needed, gp_seq_req);
-		if (rcu_seq_state(rcu_seq_current(&rnp->gp_seq))) {
+		अगर (rcu_seq_state(rcu_seq_current(&rnp->gp_seq))) अणु
 			/*
-			 * We just marked the leaf or internal node, and a
+			 * We just marked the leaf or पूर्णांकernal node, and a
 			 * grace period is in progress, which means that
 			 * rcu_gp_cleanup() will see the marking.  Bail to
 			 * reduce contention.
 			 */
 			trace_rcu_this_gp(rnp_start, rdp, gp_seq_req,
 					  TPS("Startedleaf"));
-			goto unlock_out;
-		}
-		if (rnp != rnp_start && rnp->parent != NULL)
+			जाओ unlock_out;
+		पूर्ण
+		अगर (rnp != rnp_start && rnp->parent != शून्य)
 			raw_spin_unlock_rcu_node(rnp);
-		if (!rnp->parent)
-			break;  /* At root, and perhaps also leaf. */
-	}
+		अगर (!rnp->parent)
+			अवरोध;  /* At root, and perhaps also leaf. */
+	पूर्ण
 
-	/* If GP already in progress, just leave, otherwise start one. */
-	if (rcu_gp_in_progress()) {
+	/* If GP alपढ़ोy in progress, just leave, otherwise start one. */
+	अगर (rcu_gp_in_progress()) अणु
 		trace_rcu_this_gp(rnp, rdp, gp_seq_req, TPS("Startedleafroot"));
-		goto unlock_out;
-	}
+		जाओ unlock_out;
+	पूर्ण
 	trace_rcu_this_gp(rnp, rdp, gp_seq_req, TPS("Startedroot"));
 	WRITE_ONCE(rcu_state.gp_flags, rcu_state.gp_flags | RCU_GP_FLAG_INIT);
-	WRITE_ONCE(rcu_state.gp_req_activity, jiffies);
-	if (!READ_ONCE(rcu_state.gp_kthread)) {
+	WRITE_ONCE(rcu_state.gp_req_activity, jअगरfies);
+	अगर (!READ_ONCE(rcu_state.gp_kthपढ़ो)) अणु
 		trace_rcu_this_gp(rnp, rdp, gp_seq_req, TPS("NoGPkthread"));
-		goto unlock_out;
-	}
+		जाओ unlock_out;
+	पूर्ण
 	trace_rcu_grace_period(rcu_state.name, data_race(rcu_state.gp_seq), TPS("newreq"));
-	ret = true;  /* Caller must wake GP kthread. */
+	ret = true;  /* Caller must wake GP kthपढ़ो. */
 unlock_out:
-	/* Push furthest requested GP to leaf node and rcu_data structure. */
-	if (ULONG_CMP_LT(gp_seq_req, rnp->gp_seq_needed)) {
+	/* Push furthest requested GP to leaf node and rcu_data काष्ठाure. */
+	अगर (ULONG_CMP_LT(gp_seq_req, rnp->gp_seq_needed)) अणु
 		WRITE_ONCE(rnp_start->gp_seq_needed, rnp->gp_seq_needed);
 		WRITE_ONCE(rdp->gp_seq_needed, rnp->gp_seq_needed);
-	}
-	if (rnp != rnp_start)
+	पूर्ण
+	अगर (rnp != rnp_start)
 		raw_spin_unlock_rcu_node(rnp);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Clean up any old requests for the just-ended grace period.  Also return
+ * Clean up any old requests क्रम the just-ended grace period.  Also वापस
  * whether any additional grace periods have been requested.
  */
-static bool rcu_future_gp_cleanup(struct rcu_node *rnp)
-{
+अटल bool rcu_future_gp_cleanup(काष्ठा rcu_node *rnp)
+अणु
 	bool needmore;
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
 	needmore = ULONG_CMP_LT(rnp->gp_seq, rnp->gp_seq_needed);
-	if (!needmore)
-		rnp->gp_seq_needed = rnp->gp_seq; /* Avoid counter wrap. */
+	अगर (!needmore)
+		rnp->gp_seq_needed = rnp->gp_seq; /* Aव्योम counter wrap. */
 	trace_rcu_this_gp(rnp, rdp, rnp->gp_seq,
 			  needmore ? TPS("CleanupMore") : TPS("Cleanup"));
-	return needmore;
-}
+	वापस needmore;
+पूर्ण
 
 /*
- * Awaken the grace-period kthread.  Don't do a self-awaken (unless in an
- * interrupt or softirq handler, in which case we just might immediately
- * sleep upon return, resulting in a grace-period hang), and don't bother
- * awakening when there is nothing for the grace-period kthread to do
- * (as in several CPUs raced to awaken, we lost), and finally don't try
- * to awaken a kthread that has not yet been created.  If all those checks
- * are passed, track some debug information and awaken.
+ * Awaken the grace-period kthपढ़ो.  Don't करो a self-awaken (unless in an
+ * पूर्णांकerrupt or softirq handler, in which हाल we just might immediately
+ * sleep upon वापस, resulting in a grace-period hang), and करोn't bother
+ * awakening when there is nothing क्रम the grace-period kthपढ़ो to करो
+ * (as in several CPUs raced to awaken, we lost), and finally करोn't try
+ * to awaken a kthपढ़ो that has not yet been created.  If all those checks
+ * are passed, track some debug inक्रमmation and awaken.
  *
- * So why do the self-wakeup when in an interrupt or softirq handler
- * in the grace-period kthread's context?  Because the kthread might have
- * been interrupted just as it was going to sleep, and just after the final
- * pre-sleep check of the awaken condition.  In this case, a wakeup really
- * is required, and is therefore supplied.
+ * So why करो the self-wakeup when in an पूर्णांकerrupt or softirq handler
+ * in the grace-period kthपढ़ो's context?  Because the kthपढ़ो might have
+ * been पूर्णांकerrupted just as it was going to sleep, and just after the final
+ * pre-sleep check of the awaken condition.  In this हाल, a wakeup really
+ * is required, and is thereक्रमe supplied.
  */
-static void rcu_gp_kthread_wake(void)
-{
-	struct task_struct *t = READ_ONCE(rcu_state.gp_kthread);
+अटल व्योम rcu_gp_kthपढ़ो_wake(व्योम)
+अणु
+	काष्ठा task_काष्ठा *t = READ_ONCE(rcu_state.gp_kthपढ़ो);
 
-	if ((current == t && !in_irq() && !in_serving_softirq()) ||
+	अगर ((current == t && !in_irq() && !in_serving_softirq()) ||
 	    !READ_ONCE(rcu_state.gp_flags) || !t)
-		return;
-	WRITE_ONCE(rcu_state.gp_wake_time, jiffies);
+		वापस;
+	WRITE_ONCE(rcu_state.gp_wake_समय, jअगरfies);
 	WRITE_ONCE(rcu_state.gp_wake_seq, READ_ONCE(rcu_state.gp_seq));
 	swake_up_one(&rcu_state.gp_wq);
-}
+पूर्ण
 
 /*
  * If there is room, assign a ->gp_seq number to any callbacks on this
- * CPU that have not already been assigned.  Also accelerate any callbacks
- * that were previously assigned a ->gp_seq number that has since proven
- * to be too conservative, which can happen if callbacks get assigned a
- * ->gp_seq number while RCU is idle, but with reference to a non-root
- * rcu_node structure.  This function is idempotent, so it does not hurt
+ * CPU that have not alपढ़ोy been asचिन्हित.  Also accelerate any callbacks
+ * that were previously asचिन्हित a ->gp_seq number that has since proven
+ * to be too conservative, which can happen अगर callbacks get asचिन्हित a
+ * ->gp_seq number जबतक RCU is idle, but with reference to a non-root
+ * rcu_node काष्ठाure.  This function is idempotent, so it करोes not hurt
  * to call it repeatedly.  Returns an flag saying that we should awaken
- * the RCU grace-period kthread.
+ * the RCU grace-period kthपढ़ो.
  *
- * The caller must hold rnp->lock with interrupts disabled.
+ * The caller must hold rnp->lock with पूर्णांकerrupts disabled.
  */
-static bool rcu_accelerate_cbs(struct rcu_node *rnp, struct rcu_data *rdp)
-{
-	unsigned long gp_seq_req;
+अटल bool rcu_accelerate_cbs(काष्ठा rcu_node *rnp, काष्ठा rcu_data *rdp)
+अणु
+	अचिन्हित दीर्घ gp_seq_req;
 	bool ret = false;
 
-	rcu_lockdep_assert_cblist_protected(rdp);
-	raw_lockdep_assert_held_rcu_node(rnp);
+	rcu_lockdep_निश्चित_cblist_रक्षित(rdp);
+	raw_lockdep_निश्चित_held_rcu_node(rnp);
 
-	/* If no pending (not yet ready to invoke) callbacks, nothing to do. */
-	if (!rcu_segcblist_pend_cbs(&rdp->cblist))
-		return false;
+	/* If no pending (not yet पढ़ोy to invoke) callbacks, nothing to करो. */
+	अगर (!rcu_segcblist_pend_cbs(&rdp->cblist))
+		वापस false;
 
 	trace_rcu_segcb_stats(&rdp->cblist, TPS("SegCbPreAcc"));
 
 	/*
-	 * Callbacks are often registered with incomplete grace-period
-	 * information.  Something about the fact that getting exact
-	 * information requires acquiring a global lock...  RCU therefore
+	 * Callbacks are often रेजिस्टरed with incomplete grace-period
+	 * inक्रमmation.  Something about the fact that getting exact
+	 * inक्रमmation requires acquiring a global lock...  RCU thereक्रमe
 	 * makes a conservative estimate of the grace period number at which
-	 * a given callback will become ready to invoke.	The following
+	 * a given callback will become पढ़ोy to invoke.	The following
 	 * code checks this estimate and improves it when possible, thus
 	 * accelerating callback invocation to an earlier grace-period
 	 * number.
 	 */
 	gp_seq_req = rcu_seq_snap(&rcu_state.gp_seq);
-	if (rcu_segcblist_accelerate(&rdp->cblist, gp_seq_req))
+	अगर (rcu_segcblist_accelerate(&rdp->cblist, gp_seq_req))
 		ret = rcu_start_this_gp(rnp, rdp, gp_seq_req);
 
 	/* Trace depending on how much we were able to accelerate. */
-	if (rcu_segcblist_restempty(&rdp->cblist, RCU_WAIT_TAIL))
+	अगर (rcu_segcblist_restempty(&rdp->cblist, RCU_WAIT_TAIL))
 		trace_rcu_grace_period(rcu_state.name, gp_seq_req, TPS("AccWaitCB"));
-	else
+	अन्यथा
 		trace_rcu_grace_period(rcu_state.name, gp_seq_req, TPS("AccReadyCB"));
 
 	trace_rcu_segcb_stats(&rdp->cblist, TPS("SegCbPostAcc"));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Similar to rcu_accelerate_cbs(), but does not require that the leaf
- * rcu_node structure's ->lock be held.  It consults the cached value
- * of ->gp_seq_needed in the rcu_data structure, and if that indicates
+ * Similar to rcu_accelerate_cbs(), but करोes not require that the leaf
+ * rcu_node काष्ठाure's ->lock be held.  It consults the cached value
+ * of ->gp_seq_needed in the rcu_data काष्ठाure, and अगर that indicates
  * that a new grace-period request be made, invokes rcu_accelerate_cbs()
- * while holding the leaf rcu_node structure's ->lock.
+ * जबतक holding the leaf rcu_node काष्ठाure's ->lock.
  */
-static void rcu_accelerate_cbs_unlocked(struct rcu_node *rnp,
-					struct rcu_data *rdp)
-{
-	unsigned long c;
+अटल व्योम rcu_accelerate_cbs_unlocked(काष्ठा rcu_node *rnp,
+					काष्ठा rcu_data *rdp)
+अणु
+	अचिन्हित दीर्घ c;
 	bool needwake;
 
-	rcu_lockdep_assert_cblist_protected(rdp);
+	rcu_lockdep_निश्चित_cblist_रक्षित(rdp);
 	c = rcu_seq_snap(&rcu_state.gp_seq);
-	if (!READ_ONCE(rdp->gpwrap) && ULONG_CMP_GE(rdp->gp_seq_needed, c)) {
+	अगर (!READ_ONCE(rdp->gpwrap) && ULONG_CMP_GE(rdp->gp_seq_needed, c)) अणु
 		/* Old request still live, so mark recent callbacks. */
-		(void)rcu_segcblist_accelerate(&rdp->cblist, c);
-		return;
-	}
-	raw_spin_lock_rcu_node(rnp); /* irqs already disabled. */
+		(व्योम)rcu_segcblist_accelerate(&rdp->cblist, c);
+		वापस;
+	पूर्ण
+	raw_spin_lock_rcu_node(rnp); /* irqs alपढ़ोy disabled. */
 	needwake = rcu_accelerate_cbs(rnp, rdp);
-	raw_spin_unlock_rcu_node(rnp); /* irqs remain disabled. */
-	if (needwake)
-		rcu_gp_kthread_wake();
-}
+	raw_spin_unlock_rcu_node(rnp); /* irqs reमुख्य disabled. */
+	अगर (needwake)
+		rcu_gp_kthपढ़ो_wake();
+पूर्ण
 
 /*
  * Move any callbacks whose grace period has completed to the
- * RCU_DONE_TAIL sublist, then compact the remaining sublists and
+ * RCU_DONE_TAIL sublist, then compact the reमुख्यing sublists and
  * assign ->gp_seq numbers to any callbacks in the RCU_NEXT_TAIL
- * sublist.  This function is idempotent, so it does not hurt to
- * invoke it repeatedly.  As long as it is not invoked -too- often...
- * Returns true if the RCU grace-period kthread needs to be awakened.
+ * sublist.  This function is idempotent, so it करोes not hurt to
+ * invoke it repeatedly.  As दीर्घ as it is not invoked -too- often...
+ * Returns true अगर the RCU grace-period kthपढ़ो needs to be awakened.
  *
- * The caller must hold rnp->lock with interrupts disabled.
+ * The caller must hold rnp->lock with पूर्णांकerrupts disabled.
  */
-static bool rcu_advance_cbs(struct rcu_node *rnp, struct rcu_data *rdp)
-{
-	rcu_lockdep_assert_cblist_protected(rdp);
-	raw_lockdep_assert_held_rcu_node(rnp);
+अटल bool rcu_advance_cbs(काष्ठा rcu_node *rnp, काष्ठा rcu_data *rdp)
+अणु
+	rcu_lockdep_निश्चित_cblist_रक्षित(rdp);
+	raw_lockdep_निश्चित_held_rcu_node(rnp);
 
-	/* If no pending (not yet ready to invoke) callbacks, nothing to do. */
-	if (!rcu_segcblist_pend_cbs(&rdp->cblist))
-		return false;
+	/* If no pending (not yet पढ़ोy to invoke) callbacks, nothing to करो. */
+	अगर (!rcu_segcblist_pend_cbs(&rdp->cblist))
+		वापस false;
 
 	/*
 	 * Find all callbacks whose ->gp_seq numbers indicate that they
-	 * are ready to invoke, and put them into the RCU_DONE_TAIL sublist.
+	 * are पढ़ोy to invoke, and put them पूर्णांकo the RCU_DONE_TAIL sublist.
 	 */
 	rcu_segcblist_advance(&rdp->cblist, rnp->gp_seq);
 
-	/* Classify any remaining callbacks. */
-	return rcu_accelerate_cbs(rnp, rdp);
-}
+	/* Classअगरy any reमुख्यing callbacks. */
+	वापस rcu_accelerate_cbs(rnp, rdp);
+पूर्ण
 
 /*
- * Move and classify callbacks, but only if doing so won't require
- * that the RCU grace-period kthread be awakened.
+ * Move and classअगरy callbacks, but only अगर करोing so won't require
+ * that the RCU grace-period kthपढ़ो be awakened.
  */
-static void __maybe_unused rcu_advance_cbs_nowake(struct rcu_node *rnp,
-						  struct rcu_data *rdp)
-{
-	rcu_lockdep_assert_cblist_protected(rdp);
-	if (!rcu_seq_state(rcu_seq_current(&rnp->gp_seq)) ||
+अटल व्योम __maybe_unused rcu_advance_cbs_nowake(काष्ठा rcu_node *rnp,
+						  काष्ठा rcu_data *rdp)
+अणु
+	rcu_lockdep_निश्चित_cblist_रक्षित(rdp);
+	अगर (!rcu_seq_state(rcu_seq_current(&rnp->gp_seq)) ||
 	    !raw_spin_trylock_rcu_node(rnp))
-		return;
+		वापस;
 	WARN_ON_ONCE(rcu_advance_cbs(rnp, rdp));
 	raw_spin_unlock_rcu_node(rnp);
-}
+पूर्ण
 
 /*
  * In CONFIG_RCU_STRICT_GRACE_PERIOD=y kernels, attempt to generate a
- * quiescent state.  This is intended to be invoked when the CPU notices
+ * quiescent state.  This is पूर्णांकended to be invoked when the CPU notices
  * a new grace period.
  */
-static void rcu_strict_gp_check_qs(void)
-{
-	if (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD)) {
-		rcu_read_lock();
-		rcu_read_unlock();
-	}
-}
+अटल व्योम rcu_strict_gp_check_qs(व्योम)
+अणु
+	अगर (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD)) अणु
+		rcu_पढ़ो_lock();
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
 /*
  * Update CPU-local rcu_data state to record the beginnings and ends of
  * grace periods.  The caller must hold the ->lock of the leaf rcu_node
- * structure corresponding to the current CPU, and must have irqs disabled.
- * Returns true if the grace-period kthread needs to be awakened.
+ * काष्ठाure corresponding to the current CPU, and must have irqs disabled.
+ * Returns true अगर the grace-period kthपढ़ो needs to be awakened.
  */
-static bool __note_gp_changes(struct rcu_node *rnp, struct rcu_data *rdp)
-{
+अटल bool __note_gp_changes(काष्ठा rcu_node *rnp, काष्ठा rcu_data *rdp)
+अणु
 	bool ret = false;
 	bool need_qs;
-	const bool offloaded = rcu_rdp_is_offloaded(rdp);
+	स्थिर bool offloaded = rcu_rdp_is_offloaded(rdp);
 
-	raw_lockdep_assert_held_rcu_node(rnp);
+	raw_lockdep_निश्चित_held_rcu_node(rnp);
 
-	if (rdp->gp_seq == rnp->gp_seq)
-		return false; /* Nothing to do. */
+	अगर (rdp->gp_seq == rnp->gp_seq)
+		वापस false; /* Nothing to करो. */
 
 	/* Handle the ends of any preceding grace periods first. */
-	if (rcu_seq_completed_gp(rdp->gp_seq, rnp->gp_seq) ||
-	    unlikely(READ_ONCE(rdp->gpwrap))) {
-		if (!offloaded)
+	अगर (rcu_seq_completed_gp(rdp->gp_seq, rnp->gp_seq) ||
+	    unlikely(READ_ONCE(rdp->gpwrap))) अणु
+		अगर (!offloaded)
 			ret = rcu_advance_cbs(rnp, rdp); /* Advance CBs. */
 		rdp->core_needs_qs = false;
 		trace_rcu_grace_period(rcu_state.name, rdp->gp_seq, TPS("cpuend"));
-	} else {
-		if (!offloaded)
+	पूर्ण अन्यथा अणु
+		अगर (!offloaded)
 			ret = rcu_accelerate_cbs(rnp, rdp); /* Recent CBs. */
-		if (rdp->core_needs_qs)
+		अगर (rdp->core_needs_qs)
 			rdp->core_needs_qs = !!(rnp->qsmask & rdp->grpmask);
-	}
+	पूर्ण
 
 	/* Now handle the beginnings of any new-to-this-CPU grace periods. */
-	if (rcu_seq_new_gp(rdp->gp_seq, rnp->gp_seq) ||
-	    unlikely(READ_ONCE(rdp->gpwrap))) {
+	अगर (rcu_seq_new_gp(rdp->gp_seq, rnp->gp_seq) ||
+	    unlikely(READ_ONCE(rdp->gpwrap))) अणु
 		/*
-		 * If the current grace period is waiting for this CPU,
-		 * set up to detect a quiescent state, otherwise don't
-		 * go looking for one.
+		 * If the current grace period is रुकोing क्रम this CPU,
+		 * set up to detect a quiescent state, otherwise करोn't
+		 * go looking क्रम one.
 		 */
 		trace_rcu_grace_period(rcu_state.name, rnp->gp_seq, TPS("cpustart"));
 		need_qs = !!(rnp->qsmask & rdp->grpmask);
 		rdp->cpu_no_qs.b.norm = need_qs;
 		rdp->core_needs_qs = need_qs;
 		zero_cpu_stall_ticks(rdp);
-	}
+	पूर्ण
 	rdp->gp_seq = rnp->gp_seq;  /* Remember new grace-period state. */
-	if (ULONG_CMP_LT(rdp->gp_seq_needed, rnp->gp_seq_needed) || rdp->gpwrap)
+	अगर (ULONG_CMP_LT(rdp->gp_seq_needed, rnp->gp_seq_needed) || rdp->gpwrap)
 		WRITE_ONCE(rdp->gp_seq_needed, rnp->gp_seq_needed);
 	WRITE_ONCE(rdp->gpwrap, false);
 	rcu_gpnum_ovf(rnp, rdp);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void note_gp_changes(struct rcu_data *rdp)
-{
-	unsigned long flags;
+अटल व्योम note_gp_changes(काष्ठा rcu_data *rdp)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool needwake;
-	struct rcu_node *rnp;
+	काष्ठा rcu_node *rnp;
 
 	local_irq_save(flags);
 	rnp = rdp->mynode;
-	if ((rdp->gp_seq == rcu_seq_current(&rnp->gp_seq) &&
+	अगर ((rdp->gp_seq == rcu_seq_current(&rnp->gp_seq) &&
 	     !unlikely(READ_ONCE(rdp->gpwrap))) || /* w/out lock. */
-	    !raw_spin_trylock_rcu_node(rnp)) { /* irqs already off, so later. */
+	    !raw_spin_trylock_rcu_node(rnp)) अणु /* irqs alपढ़ोy off, so later. */
 		local_irq_restore(flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	needwake = __note_gp_changes(rnp, rdp);
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	rcu_strict_gp_check_qs();
-	if (needwake)
-		rcu_gp_kthread_wake();
-}
+	अगर (needwake)
+		rcu_gp_kthपढ़ो_wake();
+पूर्ण
 
-static void rcu_gp_slow(int delay)
-{
-	if (delay > 0 &&
+अटल व्योम rcu_gp_slow(पूर्णांक delay)
+अणु
+	अगर (delay > 0 &&
 	    !(rcu_seq_ctr(rcu_state.gp_seq) %
 	      (rcu_num_nodes * PER_RCU_NODE_PERIOD * delay)))
-		schedule_timeout_idle(delay);
-}
+		schedule_समयout_idle(delay);
+पूर्ण
 
-static unsigned long sleep_duration;
+अटल अचिन्हित दीर्घ sleep_duration;
 
-/* Allow rcutorture to stall the grace-period kthread. */
-void rcu_gp_set_torture_wait(int duration)
-{
-	if (IS_ENABLED(CONFIG_RCU_TORTURE_TEST) && duration > 0)
+/* Allow rcutorture to stall the grace-period kthपढ़ो. */
+व्योम rcu_gp_set_torture_रुको(पूर्णांक duration)
+अणु
+	अगर (IS_ENABLED(CONFIG_RCU_TORTURE_TEST) && duration > 0)
 		WRITE_ONCE(sleep_duration, duration);
-}
-EXPORT_SYMBOL_GPL(rcu_gp_set_torture_wait);
+पूर्ण
+EXPORT_SYMBOL_GPL(rcu_gp_set_torture_रुको);
 
-/* Actually implement the aforementioned wait. */
-static void rcu_gp_torture_wait(void)
-{
-	unsigned long duration;
+/* Actually implement the aक्रमementioned रुको. */
+अटल व्योम rcu_gp_torture_रुको(व्योम)
+अणु
+	अचिन्हित दीर्घ duration;
 
-	if (!IS_ENABLED(CONFIG_RCU_TORTURE_TEST))
-		return;
+	अगर (!IS_ENABLED(CONFIG_RCU_TORTURE_TEST))
+		वापस;
 	duration = xchg(&sleep_duration, 0UL);
-	if (duration > 0) {
+	अगर (duration > 0) अणु
 		pr_alert("%s: Waiting %lu jiffies\n", __func__, duration);
-		schedule_timeout_idle(duration);
+		schedule_समयout_idle(duration);
 		pr_alert("%s: Wait complete\n", __func__);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Handler for on_each_cpu() to invoke the target CPU's RCU core
+ * Handler क्रम on_each_cpu() to invoke the target CPU's RCU core
  * processing.
  */
-static void rcu_strict_gp_boundary(void *unused)
-{
+अटल व्योम rcu_strict_gp_boundary(व्योम *unused)
+अणु
 	invoke_rcu_core();
-}
+पूर्ण
 
 /*
- * Initialize a new grace period.  Return false if no grace period required.
+ * Initialize a new grace period.  Return false अगर no grace period required.
  */
-static bool rcu_gp_init(void)
-{
-	unsigned long firstseq;
-	unsigned long flags;
-	unsigned long oldmask;
-	unsigned long mask;
-	struct rcu_data *rdp;
-	struct rcu_node *rnp = rcu_get_root();
+अटल bool rcu_gp_init(व्योम)
+अणु
+	अचिन्हित दीर्घ firstseq;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ oldmask;
+	अचिन्हित दीर्घ mask;
+	काष्ठा rcu_data *rdp;
+	काष्ठा rcu_node *rnp = rcu_get_root();
 
-	WRITE_ONCE(rcu_state.gp_activity, jiffies);
+	WRITE_ONCE(rcu_state.gp_activity, jअगरfies);
 	raw_spin_lock_irq_rcu_node(rnp);
-	if (!READ_ONCE(rcu_state.gp_flags)) {
+	अगर (!READ_ONCE(rcu_state.gp_flags)) अणु
 		/* Spurious wakeup, tell caller to go back to sleep.  */
 		raw_spin_unlock_irq_rcu_node(rnp);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	WRITE_ONCE(rcu_state.gp_flags, 0); /* Clear all flags: New GP. */
 
-	if (WARN_ON_ONCE(rcu_gp_in_progress())) {
+	अगर (WARN_ON_ONCE(rcu_gp_in_progress())) अणु
 		/*
-		 * Grace period already in progress, don't start another.
+		 * Grace period alपढ़ोy in progress, करोn't start another.
 		 * Not supposed to be able to happen.
 		 */
 		raw_spin_unlock_irq_rcu_node(rnp);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* Advance to a new grace period and initialize state. */
-	record_gp_stall_check_time();
-	/* Record GP times before starting GP, hence rcu_seq_start(). */
+	record_gp_stall_check_समय();
+	/* Record GP बार beक्रमe starting GP, hence rcu_seq_start(). */
 	rcu_seq_start(&rcu_state.gp_seq);
 	ASSERT_EXCLUSIVE_WRITER(rcu_state.gp_seq);
 	trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq, TPS("start"));
@@ -1818,723 +1819,723 @@ static bool rcu_gp_init(void)
 	/*
 	 * Apply per-leaf buffered online and offline operations to
 	 * the rcu_node tree. Note that this new grace period need not
-	 * wait for subsequent online CPUs, and that RCU hooks in the CPU
+	 * रुको क्रम subsequent online CPUs, and that RCU hooks in the CPU
 	 * offlining path, when combined with checks in this function,
 	 * will handle CPUs that are currently going offline or that will
 	 * go offline later.  Please also refer to "Hotplug CPU" section
-	 * of RCU's Requirements documentation.
+	 * of RCU's Requirements करोcumentation.
 	 */
 	WRITE_ONCE(rcu_state.gp_state, RCU_GP_ONOFF);
-	rcu_for_each_leaf_node(rnp) {
+	rcu_क्रम_each_leaf_node(rnp) अणु
 		smp_mb(); // Pair with barriers used when updating ->ofl_seq to odd values.
 		firstseq = READ_ONCE(rnp->ofl_seq);
-		if (firstseq & 0x1)
-			while (firstseq == READ_ONCE(rnp->ofl_seq))
-				schedule_timeout_idle(1);  // Can't wake unless RCU is watching.
+		अगर (firstseq & 0x1)
+			जबतक (firstseq == READ_ONCE(rnp->ofl_seq))
+				schedule_समयout_idle(1);  // Can't wake unless RCU is watching.
 		smp_mb(); // Pair with barriers used when updating ->ofl_seq to even values.
 		raw_spin_lock(&rcu_state.ofl_lock);
 		raw_spin_lock_irq_rcu_node(rnp);
-		if (rnp->qsmaskinit == rnp->qsmaskinitnext &&
-		    !rnp->wait_blkd_tasks) {
-			/* Nothing to do on this leaf rcu_node structure. */
+		अगर (rnp->qsmaskinit == rnp->qsmaskinitnext &&
+		    !rnp->रुको_blkd_tasks) अणु
+			/* Nothing to करो on this leaf rcu_node काष्ठाure. */
 			raw_spin_unlock_irq_rcu_node(rnp);
 			raw_spin_unlock(&rcu_state.ofl_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Record old state, apply changes to ->qsmaskinit field. */
 		oldmask = rnp->qsmaskinit;
 		rnp->qsmaskinit = rnp->qsmaskinitnext;
 
 		/* If zero-ness of ->qsmaskinit changed, propagate up tree. */
-		if (!oldmask != !rnp->qsmaskinit) {
-			if (!oldmask) { /* First online CPU for rcu_node. */
-				if (!rnp->wait_blkd_tasks) /* Ever offline? */
+		अगर (!oldmask != !rnp->qsmaskinit) अणु
+			अगर (!oldmask) अणु /* First online CPU क्रम rcu_node. */
+				अगर (!rnp->रुको_blkd_tasks) /* Ever offline? */
 					rcu_init_new_rnp(rnp);
-			} else if (rcu_preempt_has_tasks(rnp)) {
-				rnp->wait_blkd_tasks = true; /* blocked tasks */
-			} else { /* Last offline CPU and can propagate. */
+			पूर्ण अन्यथा अगर (rcu_preempt_has_tasks(rnp)) अणु
+				rnp->रुको_blkd_tasks = true; /* blocked tasks */
+			पूर्ण अन्यथा अणु /* Last offline CPU and can propagate. */
 				rcu_cleanup_dead_rnp(rnp);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * If all waited-on tasks from prior grace period are
-		 * done, and if all this rcu_node structure's CPUs are
+		 * If all रुकोed-on tasks from prior grace period are
+		 * करोne, and अगर all this rcu_node काष्ठाure's CPUs are
 		 * still offline, propagate up the rcu_node tree and
-		 * clear ->wait_blkd_tasks.  Otherwise, if one of this
-		 * rcu_node structure's CPUs has since come back online,
-		 * simply clear ->wait_blkd_tasks.
+		 * clear ->रुको_blkd_tasks.  Otherwise, अगर one of this
+		 * rcu_node काष्ठाure's CPUs has since come back online,
+		 * simply clear ->रुको_blkd_tasks.
 		 */
-		if (rnp->wait_blkd_tasks &&
-		    (!rcu_preempt_has_tasks(rnp) || rnp->qsmaskinit)) {
-			rnp->wait_blkd_tasks = false;
-			if (!rnp->qsmaskinit)
+		अगर (rnp->रुको_blkd_tasks &&
+		    (!rcu_preempt_has_tasks(rnp) || rnp->qsmaskinit)) अणु
+			rnp->रुको_blkd_tasks = false;
+			अगर (!rnp->qsmaskinit)
 				rcu_cleanup_dead_rnp(rnp);
-		}
+		पूर्ण
 
 		raw_spin_unlock_irq_rcu_node(rnp);
 		raw_spin_unlock(&rcu_state.ofl_lock);
-	}
+	पूर्ण
 	rcu_gp_slow(gp_preinit_delay); /* Races with CPU hotplug. */
 
 	/*
 	 * Set the quiescent-state-needed bits in all the rcu_node
-	 * structures for all currently online CPUs in breadth-first
-	 * order, starting from the root rcu_node structure, relying on the
+	 * काष्ठाures क्रम all currently online CPUs in bपढ़ोth-first
+	 * order, starting from the root rcu_node काष्ठाure, relying on the
 	 * layout of the tree within the rcu_state.node[] array.  Note that
 	 * other CPUs will access only the leaves of the hierarchy, thus
 	 * seeing that no grace period is in progress, at least until the
 	 * corresponding leaf node has been initialized.
 	 *
 	 * The grace period cannot complete until the initialization
-	 * process finishes, because this kthread handles both.
+	 * process finishes, because this kthपढ़ो handles both.
 	 */
 	WRITE_ONCE(rcu_state.gp_state, RCU_GP_INIT);
-	rcu_for_each_node_breadth_first(rnp) {
+	rcu_क्रम_each_node_bपढ़ोth_first(rnp) अणु
 		rcu_gp_slow(gp_init_delay);
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 		rdp = this_cpu_ptr(&rcu_data);
 		rcu_preempt_check_blocked_tasks(rnp);
 		rnp->qsmask = rnp->qsmaskinit;
 		WRITE_ONCE(rnp->gp_seq, rcu_state.gp_seq);
-		if (rnp == rdp->mynode)
-			(void)__note_gp_changes(rnp, rdp);
+		अगर (rnp == rdp->mynode)
+			(व्योम)__note_gp_changes(rnp, rdp);
 		rcu_preempt_boost_start_gp(rnp);
 		trace_rcu_grace_period_init(rcu_state.name, rnp->gp_seq,
 					    rnp->level, rnp->grplo,
 					    rnp->grphi, rnp->qsmask);
-		/* Quiescent states for tasks on any now-offline CPUs. */
+		/* Quiescent states क्रम tasks on any now-offline CPUs. */
 		mask = rnp->qsmask & ~rnp->qsmaskinitnext;
 		rnp->rcu_gp_init_mask = mask;
-		if ((mask || rnp->wait_blkd_tasks) && rcu_is_leaf_node(rnp))
+		अगर ((mask || rnp->रुको_blkd_tasks) && rcu_is_leaf_node(rnp))
 			rcu_report_qs_rnp(mask, rnp, rnp->gp_seq, flags);
-		else
+		अन्यथा
 			raw_spin_unlock_irq_rcu_node(rnp);
 		cond_resched_tasks_rcu_qs();
-		WRITE_ONCE(rcu_state.gp_activity, jiffies);
-	}
+		WRITE_ONCE(rcu_state.gp_activity, jअगरfies);
+	पूर्ण
 
 	// If strict, make all CPUs aware of new grace period.
-	if (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD))
-		on_each_cpu(rcu_strict_gp_boundary, NULL, 0);
+	अगर (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD))
+		on_each_cpu(rcu_strict_gp_boundary, शून्य, 0);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Helper function for swait_event_idle_exclusive() wakeup at force-quiescent-state
- * time.
+ * Helper function क्रम sरुको_event_idle_exclusive() wakeup at क्रमce-quiescent-state
+ * समय.
  */
-static bool rcu_gp_fqs_check_wake(int *gfp)
-{
-	struct rcu_node *rnp = rcu_get_root();
+अटल bool rcu_gp_fqs_check_wake(पूर्णांक *gfp)
+अणु
+	काष्ठा rcu_node *rnp = rcu_get_root();
 
-	// If under overload conditions, force an immediate FQS scan.
-	if (*gfp & RCU_GP_FLAG_OVLD)
-		return true;
+	// If under overload conditions, क्रमce an immediate FQS scan.
+	अगर (*gfp & RCU_GP_FLAG_OVLD)
+		वापस true;
 
-	// Someone like call_rcu() requested a force-quiescent-state scan.
+	// Someone like call_rcu() requested a क्रमce-quiescent-state scan.
 	*gfp = READ_ONCE(rcu_state.gp_flags);
-	if (*gfp & RCU_GP_FLAG_FQS)
-		return true;
+	अगर (*gfp & RCU_GP_FLAG_FQS)
+		वापस true;
 
 	// The current grace period has completed.
-	if (!READ_ONCE(rnp->qsmask) && !rcu_preempt_blocked_readers_cgp(rnp))
-		return true;
+	अगर (!READ_ONCE(rnp->qsmask) && !rcu_preempt_blocked_पढ़ोers_cgp(rnp))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Do one round of quiescent-state forcing.
+ * Do one round of quiescent-state क्रमcing.
  */
-static void rcu_gp_fqs(bool first_time)
-{
-	struct rcu_node *rnp = rcu_get_root();
+अटल व्योम rcu_gp_fqs(bool first_समय)
+अणु
+	काष्ठा rcu_node *rnp = rcu_get_root();
 
-	WRITE_ONCE(rcu_state.gp_activity, jiffies);
-	rcu_state.n_force_qs++;
-	if (first_time) {
+	WRITE_ONCE(rcu_state.gp_activity, jअगरfies);
+	rcu_state.n_क्रमce_qs++;
+	अगर (first_समय) अणु
 		/* Collect dyntick-idle snapshots. */
-		force_qs_rnp(dyntick_save_progress_counter);
-	} else {
+		क्रमce_qs_rnp(dyntick_save_progress_counter);
+	पूर्ण अन्यथा अणु
 		/* Handle dyntick-idle and offline CPUs. */
-		force_qs_rnp(rcu_implicit_dynticks_qs);
-	}
+		क्रमce_qs_rnp(rcu_implicit_dynticks_qs);
+	पूर्ण
 	/* Clear flag to prevent immediate re-entry. */
-	if (READ_ONCE(rcu_state.gp_flags) & RCU_GP_FLAG_FQS) {
+	अगर (READ_ONCE(rcu_state.gp_flags) & RCU_GP_FLAG_FQS) अणु
 		raw_spin_lock_irq_rcu_node(rnp);
 		WRITE_ONCE(rcu_state.gp_flags,
 			   READ_ONCE(rcu_state.gp_flags) & ~RCU_GP_FLAG_FQS);
 		raw_spin_unlock_irq_rcu_node(rnp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Loop doing repeated quiescent-state forcing until the grace period ends.
+ * Loop करोing repeated quiescent-state क्रमcing until the grace period ends.
  */
-static void rcu_gp_fqs_loop(void)
-{
+अटल व्योम rcu_gp_fqs_loop(व्योम)
+अणु
 	bool first_gp_fqs;
-	int gf = 0;
-	unsigned long j;
-	int ret;
-	struct rcu_node *rnp = rcu_get_root();
+	पूर्णांक gf = 0;
+	अचिन्हित दीर्घ j;
+	पूर्णांक ret;
+	काष्ठा rcu_node *rnp = rcu_get_root();
 
 	first_gp_fqs = true;
-	j = READ_ONCE(jiffies_till_first_fqs);
-	if (rcu_state.cbovld)
+	j = READ_ONCE(jअगरfies_till_first_fqs);
+	अगर (rcu_state.cbovld)
 		gf = RCU_GP_FLAG_OVLD;
 	ret = 0;
-	for (;;) {
-		if (!ret) {
-			WRITE_ONCE(rcu_state.jiffies_force_qs, jiffies + j);
+	क्रम (;;) अणु
+		अगर (!ret) अणु
+			WRITE_ONCE(rcu_state.jअगरfies_क्रमce_qs, jअगरfies + j);
 			/*
-			 * jiffies_force_qs before RCU_GP_WAIT_FQS state
-			 * update; required for stall checks.
+			 * jअगरfies_क्रमce_qs beक्रमe RCU_GP_WAIT_FQS state
+			 * update; required क्रम stall checks.
 			 */
 			smp_wmb();
-			WRITE_ONCE(rcu_state.jiffies_kick_kthreads,
-				   jiffies + (j ? 3 * j : 2));
-		}
+			WRITE_ONCE(rcu_state.jअगरfies_kick_kthपढ़ोs,
+				   jअगरfies + (j ? 3 * j : 2));
+		पूर्ण
 		trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq,
 				       TPS("fqswait"));
 		WRITE_ONCE(rcu_state.gp_state, RCU_GP_WAIT_FQS);
-		ret = swait_event_idle_timeout_exclusive(
+		ret = sरुको_event_idle_समयout_exclusive(
 				rcu_state.gp_wq, rcu_gp_fqs_check_wake(&gf), j);
-		rcu_gp_torture_wait();
+		rcu_gp_torture_रुको();
 		WRITE_ONCE(rcu_state.gp_state, RCU_GP_DOING_FQS);
 		/* Locking provides needed memory barriers. */
-		/* If grace period done, leave loop. */
-		if (!READ_ONCE(rnp->qsmask) &&
-		    !rcu_preempt_blocked_readers_cgp(rnp))
-			break;
-		/* If time for quiescent-state forcing, do it. */
-		if (!time_after(rcu_state.jiffies_force_qs, jiffies) ||
-		    (gf & (RCU_GP_FLAG_FQS | RCU_GP_FLAG_OVLD))) {
+		/* If grace period करोne, leave loop. */
+		अगर (!READ_ONCE(rnp->qsmask) &&
+		    !rcu_preempt_blocked_पढ़ोers_cgp(rnp))
+			अवरोध;
+		/* If समय क्रम quiescent-state क्रमcing, करो it. */
+		अगर (!समय_after(rcu_state.jअगरfies_क्रमce_qs, jअगरfies) ||
+		    (gf & (RCU_GP_FLAG_FQS | RCU_GP_FLAG_OVLD))) अणु
 			trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq,
 					       TPS("fqsstart"));
 			rcu_gp_fqs(first_gp_fqs);
 			gf = 0;
-			if (first_gp_fqs) {
+			अगर (first_gp_fqs) अणु
 				first_gp_fqs = false;
 				gf = rcu_state.cbovld ? RCU_GP_FLAG_OVLD : 0;
-			}
+			पूर्ण
 			trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq,
 					       TPS("fqsend"));
 			cond_resched_tasks_rcu_qs();
-			WRITE_ONCE(rcu_state.gp_activity, jiffies);
-			ret = 0; /* Force full wait till next FQS. */
-			j = READ_ONCE(jiffies_till_next_fqs);
-		} else {
-			/* Deal with stray signal. */
+			WRITE_ONCE(rcu_state.gp_activity, jअगरfies);
+			ret = 0; /* Force full रुको till next FQS. */
+			j = READ_ONCE(jअगरfies_till_next_fqs);
+		पूर्ण अन्यथा अणु
+			/* Deal with stray संकेत. */
 			cond_resched_tasks_rcu_qs();
-			WRITE_ONCE(rcu_state.gp_activity, jiffies);
-			WARN_ON(signal_pending(current));
+			WRITE_ONCE(rcu_state.gp_activity, jअगरfies);
+			WARN_ON(संकेत_pending(current));
 			trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq,
 					       TPS("fqswaitsig"));
 			ret = 1; /* Keep old FQS timing. */
-			j = jiffies;
-			if (time_after(jiffies, rcu_state.jiffies_force_qs))
+			j = jअगरfies;
+			अगर (समय_after(jअगरfies, rcu_state.jअगरfies_क्रमce_qs))
 				j = 1;
-			else
-				j = rcu_state.jiffies_force_qs - j;
+			अन्यथा
+				j = rcu_state.jअगरfies_क्रमce_qs - j;
 			gf = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Clean up after the old grace period.
  */
-static void rcu_gp_cleanup(void)
-{
-	int cpu;
+अटल व्योम rcu_gp_cleanup(व्योम)
+अणु
+	पूर्णांक cpu;
 	bool needgp = false;
-	unsigned long gp_duration;
-	unsigned long new_gp_seq;
+	अचिन्हित दीर्घ gp_duration;
+	अचिन्हित दीर्घ new_gp_seq;
 	bool offloaded;
-	struct rcu_data *rdp;
-	struct rcu_node *rnp = rcu_get_root();
-	struct swait_queue_head *sq;
+	काष्ठा rcu_data *rdp;
+	काष्ठा rcu_node *rnp = rcu_get_root();
+	काष्ठा sरुको_queue_head *sq;
 
-	WRITE_ONCE(rcu_state.gp_activity, jiffies);
+	WRITE_ONCE(rcu_state.gp_activity, jअगरfies);
 	raw_spin_lock_irq_rcu_node(rnp);
-	rcu_state.gp_end = jiffies;
+	rcu_state.gp_end = jअगरfies;
 	gp_duration = rcu_state.gp_end - rcu_state.gp_start;
-	if (gp_duration > rcu_state.gp_max)
+	अगर (gp_duration > rcu_state.gp_max)
 		rcu_state.gp_max = gp_duration;
 
 	/*
-	 * We know the grace period is complete, but to everyone else
-	 * it appears to still be ongoing.  But it is also the case
-	 * that to everyone else it looks like there is nothing that
-	 * they can do to advance the grace period.  It is therefore
-	 * safe for us to drop the lock in order to mark the grace
-	 * period as completed in all of the rcu_node structures.
+	 * We know the grace period is complete, but to everyone अन्यथा
+	 * it appears to still be ongoing.  But it is also the हाल
+	 * that to everyone अन्यथा it looks like there is nothing that
+	 * they can करो to advance the grace period.  It is thereक्रमe
+	 * safe क्रम us to drop the lock in order to mark the grace
+	 * period as completed in all of the rcu_node काष्ठाures.
 	 */
 	raw_spin_unlock_irq_rcu_node(rnp);
 
 	/*
-	 * Propagate new ->gp_seq value to rcu_node structures so that
-	 * other CPUs don't have to wait until the start of the next grace
-	 * period to process their callbacks.  This also avoids some nasty
-	 * RCU grace-period initialization races by forcing the end of
+	 * Propagate new ->gp_seq value to rcu_node काष्ठाures so that
+	 * other CPUs करोn't have to रुको until the start of the next grace
+	 * period to process their callbacks.  This also aव्योमs some nasty
+	 * RCU grace-period initialization races by क्रमcing the end of
 	 * the current grace period to be completely recorded in all of
-	 * the rcu_node structures before the beginning of the next grace
-	 * period is recorded in any of the rcu_node structures.
+	 * the rcu_node काष्ठाures beक्रमe the beginning of the next grace
+	 * period is recorded in any of the rcu_node काष्ठाures.
 	 */
 	new_gp_seq = rcu_state.gp_seq;
 	rcu_seq_end(&new_gp_seq);
-	rcu_for_each_node_breadth_first(rnp) {
+	rcu_क्रम_each_node_bपढ़ोth_first(rnp) अणु
 		raw_spin_lock_irq_rcu_node(rnp);
-		if (WARN_ON_ONCE(rcu_preempt_blocked_readers_cgp(rnp)))
+		अगर (WARN_ON_ONCE(rcu_preempt_blocked_पढ़ोers_cgp(rnp)))
 			dump_blkd_tasks(rnp, 10);
 		WARN_ON_ONCE(rnp->qsmask);
 		WRITE_ONCE(rnp->gp_seq, new_gp_seq);
 		rdp = this_cpu_ptr(&rcu_data);
-		if (rnp == rdp->mynode)
+		अगर (rnp == rdp->mynode)
 			needgp = __note_gp_changes(rnp, rdp) || needgp;
 		/* smp_mb() provided by prior unlock-lock pair. */
 		needgp = rcu_future_gp_cleanup(rnp) || needgp;
-		// Reset overload indication for CPUs no longer overloaded
-		if (rcu_is_leaf_node(rnp))
-			for_each_leaf_node_cpu_mask(rnp, cpu, rnp->cbovldmask) {
+		// Reset overload indication क्रम CPUs no दीर्घer overloaded
+		अगर (rcu_is_leaf_node(rnp))
+			क्रम_each_leaf_node_cpu_mask(rnp, cpu, rnp->cbovldmask) अणु
 				rdp = per_cpu_ptr(&rcu_data, cpu);
 				check_cb_ovld_locked(rdp, rnp);
-			}
+			पूर्ण
 		sq = rcu_nocb_gp_get(rnp);
 		raw_spin_unlock_irq_rcu_node(rnp);
 		rcu_nocb_gp_cleanup(sq);
 		cond_resched_tasks_rcu_qs();
-		WRITE_ONCE(rcu_state.gp_activity, jiffies);
+		WRITE_ONCE(rcu_state.gp_activity, jअगरfies);
 		rcu_gp_slow(gp_cleanup_delay);
-	}
+	पूर्ण
 	rnp = rcu_get_root();
-	raw_spin_lock_irq_rcu_node(rnp); /* GP before ->gp_seq update. */
+	raw_spin_lock_irq_rcu_node(rnp); /* GP beक्रमe ->gp_seq update. */
 
-	/* Declare grace period done, trace first to use old GP number. */
+	/* Declare grace period करोne, trace first to use old GP number. */
 	trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq, TPS("end"));
 	rcu_seq_end(&rcu_state.gp_seq);
 	ASSERT_EXCLUSIVE_WRITER(rcu_state.gp_seq);
 	WRITE_ONCE(rcu_state.gp_state, RCU_GP_IDLE);
-	/* Check for GP requests since above loop. */
+	/* Check क्रम GP requests since above loop. */
 	rdp = this_cpu_ptr(&rcu_data);
-	if (!needgp && ULONG_CMP_LT(rnp->gp_seq, rnp->gp_seq_needed)) {
+	अगर (!needgp && ULONG_CMP_LT(rnp->gp_seq, rnp->gp_seq_needed)) अणु
 		trace_rcu_this_gp(rnp, rdp, rnp->gp_seq_needed,
 				  TPS("CleanupMore"));
 		needgp = true;
-	}
+	पूर्ण
 	/* Advance CBs to reduce false positives below. */
 	offloaded = rcu_rdp_is_offloaded(rdp);
-	if ((offloaded || !rcu_accelerate_cbs(rnp, rdp)) && needgp) {
+	अगर ((offloaded || !rcu_accelerate_cbs(rnp, rdp)) && needgp) अणु
 		WRITE_ONCE(rcu_state.gp_flags, RCU_GP_FLAG_INIT);
-		WRITE_ONCE(rcu_state.gp_req_activity, jiffies);
+		WRITE_ONCE(rcu_state.gp_req_activity, jअगरfies);
 		trace_rcu_grace_period(rcu_state.name,
 				       rcu_state.gp_seq,
 				       TPS("newreq"));
-	} else {
+	पूर्ण अन्यथा अणु
 		WRITE_ONCE(rcu_state.gp_flags,
 			   rcu_state.gp_flags & RCU_GP_FLAG_INIT);
-	}
+	पूर्ण
 	raw_spin_unlock_irq_rcu_node(rnp);
 
 	// If strict, make all CPUs aware of the end of the old grace period.
-	if (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD))
-		on_each_cpu(rcu_strict_gp_boundary, NULL, 0);
-}
+	अगर (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD))
+		on_each_cpu(rcu_strict_gp_boundary, शून्य, 0);
+पूर्ण
 
 /*
- * Body of kthread that handles grace periods.
+ * Body of kthपढ़ो that handles grace periods.
  */
-static int __noreturn rcu_gp_kthread(void *unused)
-{
-	rcu_bind_gp_kthread();
-	for (;;) {
+अटल पूर्णांक __noवापस rcu_gp_kthपढ़ो(व्योम *unused)
+अणु
+	rcu_bind_gp_kthपढ़ो();
+	क्रम (;;) अणु
 
 		/* Handle grace-period start. */
-		for (;;) {
+		क्रम (;;) अणु
 			trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq,
 					       TPS("reqwait"));
 			WRITE_ONCE(rcu_state.gp_state, RCU_GP_WAIT_GPS);
-			swait_event_idle_exclusive(rcu_state.gp_wq,
+			sरुको_event_idle_exclusive(rcu_state.gp_wq,
 					 READ_ONCE(rcu_state.gp_flags) &
 					 RCU_GP_FLAG_INIT);
-			rcu_gp_torture_wait();
+			rcu_gp_torture_रुको();
 			WRITE_ONCE(rcu_state.gp_state, RCU_GP_DONE_GPS);
 			/* Locking provides needed memory barrier. */
-			if (rcu_gp_init())
-				break;
+			अगर (rcu_gp_init())
+				अवरोध;
 			cond_resched_tasks_rcu_qs();
-			WRITE_ONCE(rcu_state.gp_activity, jiffies);
-			WARN_ON(signal_pending(current));
+			WRITE_ONCE(rcu_state.gp_activity, jअगरfies);
+			WARN_ON(संकेत_pending(current));
 			trace_rcu_grace_period(rcu_state.name, rcu_state.gp_seq,
 					       TPS("reqwaitsig"));
-		}
+		पूर्ण
 
-		/* Handle quiescent-state forcing. */
+		/* Handle quiescent-state क्रमcing. */
 		rcu_gp_fqs_loop();
 
 		/* Handle grace-period end. */
 		WRITE_ONCE(rcu_state.gp_state, RCU_GP_CLEANUP);
 		rcu_gp_cleanup();
 		WRITE_ONCE(rcu_state.gp_state, RCU_GP_CLEANED);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Report a full set of quiescent states to the rcu_state data structure.
- * Invoke rcu_gp_kthread_wake() to awaken the grace-period kthread if
+ * Report a full set of quiescent states to the rcu_state data काष्ठाure.
+ * Invoke rcu_gp_kthपढ़ो_wake() to awaken the grace-period kthपढ़ो अगर
  * another grace period is required.  Whether we wake the grace-period
- * kthread or it awakens itself for the next round of quiescent-state
- * forcing, that kthread will clean up after the just-completed grace
+ * kthपढ़ो or it awakens itself क्रम the next round of quiescent-state
+ * क्रमcing, that kthपढ़ो will clean up after the just-completed grace
  * period.  Note that the caller must hold rnp->lock, which is released
- * before return.
+ * beक्रमe वापस.
  */
-static void rcu_report_qs_rsp(unsigned long flags)
+अटल व्योम rcu_report_qs_rsp(अचिन्हित दीर्घ flags)
 	__releases(rcu_get_root()->lock)
-{
-	raw_lockdep_assert_held_rcu_node(rcu_get_root());
+अणु
+	raw_lockdep_निश्चित_held_rcu_node(rcu_get_root());
 	WARN_ON_ONCE(!rcu_gp_in_progress());
 	WRITE_ONCE(rcu_state.gp_flags,
 		   READ_ONCE(rcu_state.gp_flags) | RCU_GP_FLAG_FQS);
 	raw_spin_unlock_irqrestore_rcu_node(rcu_get_root(), flags);
-	rcu_gp_kthread_wake();
-}
+	rcu_gp_kthपढ़ो_wake();
+पूर्ण
 
 /*
- * Similar to rcu_report_qs_rdp(), for which it is a helper function.
- * Allows quiescent states for a group of CPUs to be reported at one go
- * to the specified rcu_node structure, though all the CPUs in the group
- * must be represented by the same rcu_node structure (which need not be a
- * leaf rcu_node structure, though it often will be).  The gps parameter
+ * Similar to rcu_report_qs_rdp(), क्रम which it is a helper function.
+ * Allows quiescent states क्रम a group of CPUs to be reported at one go
+ * to the specअगरied rcu_node काष्ठाure, though all the CPUs in the group
+ * must be represented by the same rcu_node काष्ठाure (which need not be a
+ * leaf rcu_node काष्ठाure, though it often will be).  The gps parameter
  * is the grace-period snapshot, which means that the quiescent states
- * are valid only if rnp->gp_seq is equal to gps.  That structure's lock
- * must be held upon entry, and it is released before return.
+ * are valid only अगर rnp->gp_seq is equal to gps.  That काष्ठाure's lock
+ * must be held upon entry, and it is released beक्रमe वापस.
  *
- * As a special case, if mask is zero, the bit-already-cleared check is
+ * As a special हाल, अगर mask is zero, the bit-alपढ़ोy-cleared check is
  * disabled.  This allows propagating quiescent state due to resumed tasks
  * during grace-period initialization.
  */
-static void rcu_report_qs_rnp(unsigned long mask, struct rcu_node *rnp,
-			      unsigned long gps, unsigned long flags)
+अटल व्योम rcu_report_qs_rnp(अचिन्हित दीर्घ mask, काष्ठा rcu_node *rnp,
+			      अचिन्हित दीर्घ gps, अचिन्हित दीर्घ flags)
 	__releases(rnp->lock)
-{
-	unsigned long oldmask = 0;
-	struct rcu_node *rnp_c;
+अणु
+	अचिन्हित दीर्घ oldmask = 0;
+	काष्ठा rcu_node *rnp_c;
 
-	raw_lockdep_assert_held_rcu_node(rnp);
+	raw_lockdep_निश्चित_held_rcu_node(rnp);
 
 	/* Walk up the rcu_node hierarchy. */
-	for (;;) {
-		if ((!(rnp->qsmask & mask) && mask) || rnp->gp_seq != gps) {
+	क्रम (;;) अणु
+		अगर ((!(rnp->qsmask & mask) && mask) || rnp->gp_seq != gps) अणु
 
 			/*
-			 * Our bit has already been cleared, or the
-			 * relevant grace period is already over, so done.
+			 * Our bit has alपढ़ोy been cleared, or the
+			 * relevant grace period is alपढ़ोy over, so करोne.
 			 */
 			raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-			return;
-		}
+			वापस;
+		पूर्ण
 		WARN_ON_ONCE(oldmask); /* Any child must be all zeroed! */
 		WARN_ON_ONCE(!rcu_is_leaf_node(rnp) &&
-			     rcu_preempt_blocked_readers_cgp(rnp));
+			     rcu_preempt_blocked_पढ़ोers_cgp(rnp));
 		WRITE_ONCE(rnp->qsmask, rnp->qsmask & ~mask);
 		trace_rcu_quiescent_state_report(rcu_state.name, rnp->gp_seq,
 						 mask, rnp->qsmask, rnp->level,
 						 rnp->grplo, rnp->grphi,
 						 !!rnp->gp_tasks);
-		if (rnp->qsmask != 0 || rcu_preempt_blocked_readers_cgp(rnp)) {
+		अगर (rnp->qsmask != 0 || rcu_preempt_blocked_पढ़ोers_cgp(rnp)) अणु
 
-			/* Other bits still set at this level, so done. */
+			/* Other bits still set at this level, so करोne. */
 			raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-			return;
-		}
+			वापस;
+		पूर्ण
 		rnp->completedqs = rnp->gp_seq;
 		mask = rnp->grpmask;
-		if (rnp->parent == NULL) {
+		अगर (rnp->parent == शून्य) अणु
 
 			/* No more levels.  Exit loop holding root lock. */
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 		rnp_c = rnp;
 		rnp = rnp->parent;
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 		oldmask = READ_ONCE(rnp_c->qsmask);
-	}
+	पूर्ण
 
 	/*
-	 * Get here if we are the last CPU to pass through a quiescent
-	 * state for this grace period.  Invoke rcu_report_qs_rsp()
-	 * to clean up and start the next grace period if one is needed.
+	 * Get here अगर we are the last CPU to pass through a quiescent
+	 * state क्रम this grace period.  Invoke rcu_report_qs_rsp()
+	 * to clean up and start the next grace period अगर one is needed.
 	 */
 	rcu_report_qs_rsp(flags); /* releases rnp->lock. */
-}
+पूर्ण
 
 /*
- * Record a quiescent state for all tasks that were previously queued
- * on the specified rcu_node structure and that were blocking the current
+ * Record a quiescent state क्रम all tasks that were previously queued
+ * on the specअगरied rcu_node काष्ठाure and that were blocking the current
  * RCU grace period.  The caller must hold the corresponding rnp->lock with
- * irqs disabled, and this lock is released upon return, but irqs remain
+ * irqs disabled, and this lock is released upon वापस, but irqs reमुख्य
  * disabled.
  */
-static void __maybe_unused
-rcu_report_unblock_qs_rnp(struct rcu_node *rnp, unsigned long flags)
+अटल व्योम __maybe_unused
+rcu_report_unblock_qs_rnp(काष्ठा rcu_node *rnp, अचिन्हित दीर्घ flags)
 	__releases(rnp->lock)
-{
-	unsigned long gps;
-	unsigned long mask;
-	struct rcu_node *rnp_p;
+अणु
+	अचिन्हित दीर्घ gps;
+	अचिन्हित दीर्घ mask;
+	काष्ठा rcu_node *rnp_p;
 
-	raw_lockdep_assert_held_rcu_node(rnp);
-	if (WARN_ON_ONCE(!IS_ENABLED(CONFIG_PREEMPT_RCU)) ||
-	    WARN_ON_ONCE(rcu_preempt_blocked_readers_cgp(rnp)) ||
-	    rnp->qsmask != 0) {
+	raw_lockdep_निश्चित_held_rcu_node(rnp);
+	अगर (WARN_ON_ONCE(!IS_ENABLED(CONFIG_PREEMPT_RCU)) ||
+	    WARN_ON_ONCE(rcu_preempt_blocked_पढ़ोers_cgp(rnp)) ||
+	    rnp->qsmask != 0) अणु
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-		return;  /* Still need more quiescent states! */
-	}
+		वापस;  /* Still need more quiescent states! */
+	पूर्ण
 
 	rnp->completedqs = rnp->gp_seq;
 	rnp_p = rnp->parent;
-	if (rnp_p == NULL) {
+	अगर (rnp_p == शून्य) अणु
 		/*
-		 * Only one rcu_node structure in the tree, so don't
+		 * Only one rcu_node काष्ठाure in the tree, so करोn't
 		 * try to report up to its nonexistent parent!
 		 */
 		rcu_report_qs_rsp(flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Report up the rest of the hierarchy, tracking current ->gp_seq. */
 	gps = rnp->gp_seq;
 	mask = rnp->grpmask;
-	raw_spin_unlock_rcu_node(rnp);	/* irqs remain disabled. */
-	raw_spin_lock_rcu_node(rnp_p);	/* irqs already disabled. */
+	raw_spin_unlock_rcu_node(rnp);	/* irqs reमुख्य disabled. */
+	raw_spin_lock_rcu_node(rnp_p);	/* irqs alपढ़ोy disabled. */
 	rcu_report_qs_rnp(mask, rnp_p, gps, flags);
-}
+पूर्ण
 
 /*
- * Record a quiescent state for the specified CPU to that CPU's rcu_data
- * structure.  This must be called from the specified CPU.
+ * Record a quiescent state क्रम the specअगरied CPU to that CPU's rcu_data
+ * काष्ठाure.  This must be called from the specअगरied CPU.
  */
-static void
-rcu_report_qs_rdp(struct rcu_data *rdp)
-{
-	unsigned long flags;
-	unsigned long mask;
+अटल व्योम
+rcu_report_qs_rdp(काष्ठा rcu_data *rdp)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ mask;
 	bool needwake = false;
-	const bool offloaded = rcu_rdp_is_offloaded(rdp);
-	struct rcu_node *rnp;
+	स्थिर bool offloaded = rcu_rdp_is_offloaded(rdp);
+	काष्ठा rcu_node *rnp;
 
 	WARN_ON_ONCE(rdp->cpu != smp_processor_id());
 	rnp = rdp->mynode;
 	raw_spin_lock_irqsave_rcu_node(rnp, flags);
-	if (rdp->cpu_no_qs.b.norm || rdp->gp_seq != rnp->gp_seq ||
-	    rdp->gpwrap) {
+	अगर (rdp->cpu_no_qs.b.norm || rdp->gp_seq != rnp->gp_seq ||
+	    rdp->gpwrap) अणु
 
 		/*
 		 * The grace period in which this quiescent state was
-		 * recorded has ended, so don't report it upwards.
+		 * recorded has ended, so करोn't report it upwards.
 		 * We will instead need a new quiescent state that lies
 		 * within the current grace period.
 		 */
-		rdp->cpu_no_qs.b.norm = true;	/* need qs for new gp. */
+		rdp->cpu_no_qs.b.norm = true;	/* need qs क्रम new gp. */
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	mask = rdp->grpmask;
 	rdp->core_needs_qs = false;
-	if ((rnp->qsmask & mask) == 0) {
+	अगर ((rnp->qsmask & mask) == 0) अणु
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * This GP can't end until cpu checks in, so all of our
 		 * callbacks can be processed during the next GP.
 		 */
-		if (!offloaded)
+		अगर (!offloaded)
 			needwake = rcu_accelerate_cbs(rnp, rdp);
 
 		rcu_disable_urgency_upon_qs(rdp);
 		rcu_report_qs_rnp(mask, rnp, rnp->gp_seq, flags);
 		/* ^^^ Released rnp->lock */
-		if (needwake)
-			rcu_gp_kthread_wake();
-	}
-}
+		अगर (needwake)
+			rcu_gp_kthपढ़ो_wake();
+	पूर्ण
+पूर्ण
 
 /*
- * Check to see if there is a new grace period of which this CPU
- * is not yet aware, and if so, set up local rcu_data state for it.
- * Otherwise, see if this CPU has just passed through its first
- * quiescent state for this grace period, and record that fact if so.
+ * Check to see अगर there is a new grace period of which this CPU
+ * is not yet aware, and अगर so, set up local rcu_data state क्रम it.
+ * Otherwise, see अगर this CPU has just passed through its first
+ * quiescent state क्रम this grace period, and record that fact अगर so.
  */
-static void
-rcu_check_quiescent_state(struct rcu_data *rdp)
-{
-	/* Check for grace-period ends and beginnings. */
+अटल व्योम
+rcu_check_quiescent_state(काष्ठा rcu_data *rdp)
+अणु
+	/* Check क्रम grace-period ends and beginnings. */
 	note_gp_changes(rdp);
 
 	/*
-	 * Does this CPU still need to do its part for current grace period?
-	 * If no, return and let the other CPUs do their part as well.
+	 * Does this CPU still need to करो its part क्रम current grace period?
+	 * If no, वापस and let the other CPUs करो their part as well.
 	 */
-	if (!rdp->core_needs_qs)
-		return;
+	अगर (!rdp->core_needs_qs)
+		वापस;
 
 	/*
 	 * Was there a quiescent state since the beginning of the grace
-	 * period? If no, then exit and wait for the next call.
+	 * period? If no, then निकास and रुको क्रम the next call.
 	 */
-	if (rdp->cpu_no_qs.b.norm)
-		return;
+	अगर (rdp->cpu_no_qs.b.norm)
+		वापस;
 
 	/*
-	 * Tell RCU we are done (but rcu_report_qs_rdp() will be the
+	 * Tell RCU we are करोne (but rcu_report_qs_rdp() will be the
 	 * judge of that).
 	 */
 	rcu_report_qs_rdp(rdp);
-}
+पूर्ण
 
 /*
  * Near the end of the offline process.  Trace the fact that this CPU
  * is going offline.
  */
-int rcutree_dying_cpu(unsigned int cpu)
-{
+पूर्णांक rcutree_dying_cpu(अचिन्हित पूर्णांक cpu)
+अणु
 	bool blkd;
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
-	struct rcu_node *rnp = rdp->mynode;
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
+	काष्ठा rcu_node *rnp = rdp->mynode;
 
-	if (!IS_ENABLED(CONFIG_HOTPLUG_CPU))
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_HOTPLUG_CPU))
+		वापस 0;
 
 	blkd = !!(rnp->qsmask & rdp->grpmask);
 	trace_rcu_grace_period(rcu_state.name, READ_ONCE(rnp->gp_seq),
 			       blkd ? TPS("cpuofl-bgp") : TPS("cpuofl"));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * All CPUs for the specified rcu_node structure have gone offline,
- * and all tasks that were preempted within an RCU read-side critical
- * section while running on one of those CPUs have since exited their RCU
- * read-side critical section.  Some other CPU is reporting this fact with
- * the specified rcu_node structure's ->lock held and interrupts disabled.
- * This function therefore goes up the tree of rcu_node structures,
+ * All CPUs क्रम the specअगरied rcu_node काष्ठाure have gone offline,
+ * and all tasks that were preempted within an RCU पढ़ो-side critical
+ * section जबतक running on one of those CPUs have since निकासed their RCU
+ * पढ़ो-side critical section.  Some other CPU is reporting this fact with
+ * the specअगरied rcu_node काष्ठाure's ->lock held and पूर्णांकerrupts disabled.
+ * This function thereक्रमe goes up the tree of rcu_node काष्ठाures,
  * clearing the corresponding bits in the ->qsmaskinit fields.  Note that
- * the leaf rcu_node structure's ->qsmaskinit field has already been
+ * the leaf rcu_node काष्ठाure's ->qsmaskinit field has alपढ़ोy been
  * updated.
  *
- * This function does check that the specified rcu_node structure has
+ * This function करोes check that the specअगरied rcu_node काष्ठाure has
  * all CPUs offline and no blocked tasks, so it is OK to invoke it
  * prematurely.  That said, invoking it after the fact will cost you
- * a needless lock acquisition.  So once it has done its work, don't
+ * a needless lock acquisition.  So once it has करोne its work, करोn't
  * invoke it again.
  */
-static void rcu_cleanup_dead_rnp(struct rcu_node *rnp_leaf)
-{
-	long mask;
-	struct rcu_node *rnp = rnp_leaf;
+अटल व्योम rcu_cleanup_dead_rnp(काष्ठा rcu_node *rnp_leaf)
+अणु
+	दीर्घ mask;
+	काष्ठा rcu_node *rnp = rnp_leaf;
 
-	raw_lockdep_assert_held_rcu_node(rnp_leaf);
-	if (!IS_ENABLED(CONFIG_HOTPLUG_CPU) ||
+	raw_lockdep_निश्चित_held_rcu_node(rnp_leaf);
+	अगर (!IS_ENABLED(CONFIG_HOTPLUG_CPU) ||
 	    WARN_ON_ONCE(rnp_leaf->qsmaskinit) ||
 	    WARN_ON_ONCE(rcu_preempt_has_tasks(rnp_leaf)))
-		return;
-	for (;;) {
+		वापस;
+	क्रम (;;) अणु
 		mask = rnp->grpmask;
 		rnp = rnp->parent;
-		if (!rnp)
-			break;
-		raw_spin_lock_rcu_node(rnp); /* irqs already disabled. */
+		अगर (!rnp)
+			अवरोध;
+		raw_spin_lock_rcu_node(rnp); /* irqs alपढ़ोy disabled. */
 		rnp->qsmaskinit &= ~mask;
-		/* Between grace periods, so better already be zero! */
+		/* Between grace periods, so better alपढ़ोy be zero! */
 		WARN_ON_ONCE(rnp->qsmask);
-		if (rnp->qsmaskinit) {
+		अगर (rnp->qsmaskinit) अणु
 			raw_spin_unlock_rcu_node(rnp);
-			/* irqs remain disabled. */
-			return;
-		}
-		raw_spin_unlock_rcu_node(rnp); /* irqs remain disabled. */
-	}
-}
+			/* irqs reमुख्य disabled. */
+			वापस;
+		पूर्ण
+		raw_spin_unlock_rcu_node(rnp); /* irqs reमुख्य disabled. */
+	पूर्ण
+पूर्ण
 
 /*
- * The CPU has been completely removed, and some other CPU is reporting
- * this fact from process context.  Do the remainder of the cleanup.
- * There can only be one CPU hotplug operation at a time, so no need for
+ * The CPU has been completely हटाओd, and some other CPU is reporting
+ * this fact from process context.  Do the reमुख्यder of the cleanup.
+ * There can only be one CPU hotplug operation at a समय, so no need क्रम
  * explicit locking.
  */
-int rcutree_dead_cpu(unsigned int cpu)
-{
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
-	struct rcu_node *rnp = rdp->mynode;  /* Outgoing CPU's rdp & rnp. */
+पूर्णांक rcutree_dead_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+	काष्ठा rcu_node *rnp = rdp->mynode;  /* Outgoing CPU's rdp & rnp. */
 
-	if (!IS_ENABLED(CONFIG_HOTPLUG_CPU))
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_HOTPLUG_CPU))
+		वापस 0;
 
 	WRITE_ONCE(rcu_state.n_online_cpus, rcu_state.n_online_cpus - 1);
-	/* Adjust any no-longer-needed kthreads. */
-	rcu_boost_kthread_setaffinity(rnp, -1);
+	/* Adjust any no-दीर्घer-needed kthपढ़ोs. */
+	rcu_boost_kthपढ़ो_setaffinity(rnp, -1);
 	/* Do any needed no-CB deferred wakeups from this CPU. */
-	do_nocb_deferred_wakeup(per_cpu_ptr(&rcu_data, cpu));
+	करो_nocb_deferred_wakeup(per_cpu_ptr(&rcu_data, cpu));
 
-	// Stop-machine done, so allow nohz_full to disable tick.
+	// Stop-machine करोne, so allow nohz_full to disable tick.
 	tick_dep_clear(TICK_DEP_BIT_RCU);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Invoke any RCU callbacks that have made it to the end of their grace
- * period.  Thottle as specified by rdp->blimit.
+ * period.  Thottle as specअगरied by rdp->blimit.
  */
-static void rcu_do_batch(struct rcu_data *rdp)
-{
-	int div;
+अटल व्योम rcu_करो_batch(काष्ठा rcu_data *rdp)
+अणु
+	पूर्णांक भाग;
 	bool __maybe_unused empty;
-	unsigned long flags;
-	const bool offloaded = rcu_rdp_is_offloaded(rdp);
-	struct rcu_head *rhp;
-	struct rcu_cblist rcl = RCU_CBLIST_INITIALIZER(rcl);
-	long bl, count = 0;
-	long pending, tlimit = 0;
+	अचिन्हित दीर्घ flags;
+	स्थिर bool offloaded = rcu_rdp_is_offloaded(rdp);
+	काष्ठा rcu_head *rhp;
+	काष्ठा rcu_cblist rcl = RCU_CBLIST_INITIALIZER(rcl);
+	दीर्घ bl, count = 0;
+	दीर्घ pending, tlimit = 0;
 
-	/* If no callbacks are ready, just return. */
-	if (!rcu_segcblist_ready_cbs(&rdp->cblist)) {
+	/* If no callbacks are पढ़ोy, just वापस. */
+	अगर (!rcu_segcblist_पढ़ोy_cbs(&rdp->cblist)) अणु
 		trace_rcu_batch_start(rcu_state.name,
 				      rcu_segcblist_n_cbs(&rdp->cblist), 0);
 		trace_rcu_batch_end(rcu_state.name, 0,
 				    !rcu_segcblist_empty(&rdp->cblist),
 				    need_resched(), is_idle_task(current),
-				    rcu_is_callbacks_kthread());
-		return;
-	}
+				    rcu_is_callbacks_kthपढ़ो());
+		वापस;
+	पूर्ण
 
 	/*
-	 * Extract the list of ready callbacks, disabling to prevent
-	 * races with call_rcu() from interrupt handlers.  Leave the
+	 * Extract the list of पढ़ोy callbacks, disabling to prevent
+	 * races with call_rcu() from पूर्णांकerrupt handlers.  Leave the
 	 * callback counts, as rcu_barrier() needs to be conservative.
 	 */
 	local_irq_save(flags);
 	rcu_nocb_lock(rdp);
 	WARN_ON_ONCE(cpu_is_offline(smp_processor_id()));
 	pending = rcu_segcblist_n_cbs(&rdp->cblist);
-	div = READ_ONCE(rcu_divisor);
-	div = div < 0 ? 7 : div > sizeof(long) * 8 - 2 ? sizeof(long) * 8 - 2 : div;
-	bl = max(rdp->blimit, pending >> div);
-	if (unlikely(bl > 100)) {
-		long rrn = READ_ONCE(rcu_resched_ns);
+	भाग = READ_ONCE(rcu_भागisor);
+	भाग = भाग < 0 ? 7 : भाग > माप(दीर्घ) * 8 - 2 ? माप(दीर्घ) * 8 - 2 : भाग;
+	bl = max(rdp->blimit, pending >> भाग);
+	अगर (unlikely(bl > 100)) अणु
+		दीर्घ rrn = READ_ONCE(rcu_resched_ns);
 
 		rrn = rrn < NSEC_PER_MSEC ? NSEC_PER_MSEC : rrn > NSEC_PER_SEC ? NSEC_PER_SEC : rrn;
-		tlimit = local_clock() + rrn;
-	}
+		tlimit = local_घड़ी() + rrn;
+	पूर्ण
 	trace_rcu_batch_start(rcu_state.name,
 			      rcu_segcblist_n_cbs(&rdp->cblist), bl);
-	rcu_segcblist_extract_done_cbs(&rdp->cblist, &rcl);
-	if (offloaded)
+	rcu_segcblist_extract_करोne_cbs(&rdp->cblist, &rcl);
+	अगर (offloaded)
 		rdp->qlen_last_fqs_check = rcu_segcblist_n_cbs(&rdp->cblist);
 
 	trace_rcu_segcb_stats(&rdp->cblist, TPS("SegCbDequeued"));
@@ -2544,7 +2545,7 @@ static void rcu_do_batch(struct rcu_data *rdp)
 	tick_dep_set_task(current, TICK_DEP_BIT_RCU);
 	rhp = rcu_cblist_dequeue(&rcl);
 
-	for (; rhp; rhp = rcu_cblist_dequeue(&rcl)) {
+	क्रम (; rhp; rhp = rcu_cblist_dequeue(&rcl)) अणु
 		rcu_callback_t f;
 
 		count++;
@@ -2560,53 +2561,53 @@ static void rcu_do_batch(struct rcu_data *rdp)
 		rcu_lock_release(&rcu_callback_map);
 
 		/*
-		 * Stop only if limit reached and CPU has something to do.
+		 * Stop only अगर limit reached and CPU has something to करो.
 		 */
-		if (count >= bl && !offloaded &&
+		अगर (count >= bl && !offloaded &&
 		    (need_resched() ||
-		     (!is_idle_task(current) && !rcu_is_callbacks_kthread())))
-			break;
-		if (unlikely(tlimit)) {
-			/* only call local_clock() every 32 callbacks */
-			if (likely((count & 31) || local_clock() < tlimit))
-				continue;
-			/* Exceeded the time limit, so leave. */
-			break;
-		}
-		if (!in_serving_softirq()) {
+		     (!is_idle_task(current) && !rcu_is_callbacks_kthपढ़ो())))
+			अवरोध;
+		अगर (unlikely(tlimit)) अणु
+			/* only call local_घड़ी() every 32 callbacks */
+			अगर (likely((count & 31) || local_घड़ी() < tlimit))
+				जारी;
+			/* Exceeded the समय limit, so leave. */
+			अवरोध;
+		पूर्ण
+		अगर (!in_serving_softirq()) अणु
 			local_bh_enable();
-			lockdep_assert_irqs_enabled();
+			lockdep_निश्चित_irqs_enabled();
 			cond_resched_tasks_rcu_qs();
-			lockdep_assert_irqs_enabled();
+			lockdep_निश्चित_irqs_enabled();
 			local_bh_disable();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	local_irq_save(flags);
 	rcu_nocb_lock(rdp);
 	rdp->n_cbs_invoked += count;
 	trace_rcu_batch_end(rcu_state.name, count, !!rcl.head, need_resched(),
-			    is_idle_task(current), rcu_is_callbacks_kthread());
+			    is_idle_task(current), rcu_is_callbacks_kthपढ़ो());
 
-	/* Update counts and requeue any remaining callbacks. */
-	rcu_segcblist_insert_done_cbs(&rdp->cblist, &rcl);
+	/* Update counts and requeue any reमुख्यing callbacks. */
+	rcu_segcblist_insert_करोne_cbs(&rdp->cblist, &rcl);
 	rcu_segcblist_add_len(&rdp->cblist, -count);
 
-	/* Reinstate batch limit if we have worked down the excess. */
+	/* Reinstate batch limit अगर we have worked करोwn the excess. */
 	count = rcu_segcblist_n_cbs(&rdp->cblist);
-	if (rdp->blimit >= DEFAULT_MAX_RCU_BLIMIT && count <= qlowmark)
+	अगर (rdp->blimit >= DEFAULT_MAX_RCU_BLIMIT && count <= qlowmark)
 		rdp->blimit = blimit;
 
-	/* Reset ->qlen_last_fqs_check trigger if enough CBs have drained. */
-	if (count == 0 && rdp->qlen_last_fqs_check != 0) {
+	/* Reset ->qlen_last_fqs_check trigger अगर enough CBs have drained. */
+	अगर (count == 0 && rdp->qlen_last_fqs_check != 0) अणु
 		rdp->qlen_last_fqs_check = 0;
-		rdp->n_force_qs_snap = rcu_state.n_force_qs;
-	} else if (count < rdp->qlen_last_fqs_check - qhimark)
+		rdp->n_क्रमce_qs_snap = rcu_state.n_क्रमce_qs;
+	पूर्ण अन्यथा अगर (count < rdp->qlen_last_fqs_check - qhimark)
 		rdp->qlen_last_fqs_check = count;
 
 	/*
-	 * The following usually indicates a double call_rcu().  To track
-	 * this down, try building with CONFIG_DEBUG_OBJECTS_RCU_HEAD=y.
+	 * The following usually indicates a द्विगुन call_rcu().  To track
+	 * this करोwn, try building with CONFIG_DEBUG_OBJECTS_RCU_HEAD=y.
 	 */
 	empty = rcu_segcblist_empty(&rdp->cblist);
 	WARN_ON_ONCE(count == 0 && !empty);
@@ -2617,774 +2618,774 @@ static void rcu_do_batch(struct rcu_data *rdp)
 
 	rcu_nocb_unlock_irqrestore(rdp, flags);
 
-	/* Re-invoke RCU core processing if there are callbacks remaining. */
-	if (!offloaded && rcu_segcblist_ready_cbs(&rdp->cblist))
+	/* Re-invoke RCU core processing अगर there are callbacks reमुख्यing. */
+	अगर (!offloaded && rcu_segcblist_पढ़ोy_cbs(&rdp->cblist))
 		invoke_rcu_core();
 	tick_dep_clear_task(current, TICK_DEP_BIT_RCU);
-}
+पूर्ण
 
 /*
- * This function is invoked from each scheduling-clock interrupt,
- * and checks to see if this CPU is in a non-context-switch quiescent
- * state, for example, user mode or idle loop.  It also schedules RCU
- * core processing.  If the current grace period has gone on too long,
- * it will ask the scheduler to manufacture a context switch for the sole
+ * This function is invoked from each scheduling-घड़ी पूर्णांकerrupt,
+ * and checks to see अगर this CPU is in a non-context-चयन quiescent
+ * state, क्रम example, user mode or idle loop.  It also schedules RCU
+ * core processing.  If the current grace period has gone on too दीर्घ,
+ * it will ask the scheduler to manufacture a context चयन क्रम the sole
  * purpose of providing a providing the needed quiescent state.
  */
-void rcu_sched_clock_irq(int user)
-{
+व्योम rcu_sched_घड़ी_irq(पूर्णांक user)
+अणु
 	trace_rcu_utilization(TPS("Start scheduler-tick"));
-	lockdep_assert_irqs_disabled();
+	lockdep_निश्चित_irqs_disabled();
 	raw_cpu_inc(rcu_data.ticks_this_gp);
 	/* The load-acquire pairs with the store-release setting to true. */
-	if (smp_load_acquire(this_cpu_ptr(&rcu_data.rcu_urgent_qs))) {
-		/* Idle and userspace execution already are quiescent states. */
-		if (!rcu_is_cpu_rrupt_from_idle() && !user) {
+	अगर (smp_load_acquire(this_cpu_ptr(&rcu_data.rcu_urgent_qs))) अणु
+		/* Idle and userspace execution alपढ़ोy are quiescent states. */
+		अगर (!rcu_is_cpu_rrupt_from_idle() && !user) अणु
 			set_tsk_need_resched(current);
 			set_preempt_need_resched();
-		}
-		__this_cpu_write(rcu_data.rcu_urgent_qs, false);
-	}
-	rcu_flavor_sched_clock_irq(user);
-	if (rcu_pending(user))
+		पूर्ण
+		__this_cpu_ग_लिखो(rcu_data.rcu_urgent_qs, false);
+	पूर्ण
+	rcu_flavor_sched_घड़ी_irq(user);
+	अगर (rcu_pending(user))
 		invoke_rcu_core();
-	lockdep_assert_irqs_disabled();
+	lockdep_निश्चित_irqs_disabled();
 
 	trace_rcu_utilization(TPS("End scheduler-tick"));
-}
+पूर्ण
 
 /*
- * Scan the leaf rcu_node structures.  For each structure on which all
+ * Scan the leaf rcu_node काष्ठाures.  For each काष्ठाure on which all
  * CPUs have reported a quiescent state and on which there are tasks
  * blocking the current grace period, initiate RCU priority boosting.
- * Otherwise, invoke the specified function to check dyntick state for
+ * Otherwise, invoke the specअगरied function to check dyntick state क्रम
  * each CPU that has not yet reported a quiescent state.
  */
-static void force_qs_rnp(int (*f)(struct rcu_data *rdp))
-{
-	int cpu;
-	unsigned long flags;
-	unsigned long mask;
-	struct rcu_data *rdp;
-	struct rcu_node *rnp;
+अटल व्योम क्रमce_qs_rnp(पूर्णांक (*f)(काष्ठा rcu_data *rdp))
+अणु
+	पूर्णांक cpu;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ mask;
+	काष्ठा rcu_data *rdp;
+	काष्ठा rcu_node *rnp;
 
 	rcu_state.cbovld = rcu_state.cbovldnext;
 	rcu_state.cbovldnext = false;
-	rcu_for_each_leaf_node(rnp) {
+	rcu_क्रम_each_leaf_node(rnp) अणु
 		cond_resched_tasks_rcu_qs();
 		mask = 0;
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 		rcu_state.cbovldnext |= !!rnp->cbovldmask;
-		if (rnp->qsmask == 0) {
-			if (rcu_preempt_blocked_readers_cgp(rnp)) {
+		अगर (rnp->qsmask == 0) अणु
+			अगर (rcu_preempt_blocked_पढ़ोers_cgp(rnp)) अणु
 				/*
-				 * No point in scanning bits because they
+				 * No poपूर्णांक in scanning bits because they
 				 * are all zero.  But we might need to
-				 * priority-boost blocked readers.
+				 * priority-boost blocked पढ़ोers.
 				 */
 				rcu_initiate_boost(rnp, flags);
 				/* rcu_initiate_boost() releases rnp->lock */
-				continue;
-			}
+				जारी;
+			पूर्ण
 			raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-			continue;
-		}
-		for_each_leaf_node_cpu_mask(rnp, cpu, rnp->qsmask) {
+			जारी;
+		पूर्ण
+		क्रम_each_leaf_node_cpu_mask(rnp, cpu, rnp->qsmask) अणु
 			rdp = per_cpu_ptr(&rcu_data, cpu);
-			if (f(rdp)) {
+			अगर (f(rdp)) अणु
 				mask |= rdp->grpmask;
 				rcu_disable_urgency_upon_qs(rdp);
-			}
-		}
-		if (mask != 0) {
+			पूर्ण
+		पूर्ण
+		अगर (mask != 0) अणु
 			/* Idle/offline CPUs, report (releases rnp->lock). */
 			rcu_report_qs_rnp(mask, rnp, rnp->gp_seq, flags);
-		} else {
-			/* Nothing to do here, so just drop the lock. */
+		पूर्ण अन्यथा अणु
+			/* Nothing to करो here, so just drop the lock. */
 			raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Force quiescent states on reluctant CPUs, and also detect which
  * CPUs are in dyntick-idle mode.
  */
-void rcu_force_quiescent_state(void)
-{
-	unsigned long flags;
+व्योम rcu_क्रमce_quiescent_state(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool ret;
-	struct rcu_node *rnp;
-	struct rcu_node *rnp_old = NULL;
+	काष्ठा rcu_node *rnp;
+	काष्ठा rcu_node *rnp_old = शून्य;
 
 	/* Funnel through hierarchy to reduce memory contention. */
-	rnp = __this_cpu_read(rcu_data.mynode);
-	for (; rnp != NULL; rnp = rnp->parent) {
+	rnp = __this_cpu_पढ़ो(rcu_data.mynode);
+	क्रम (; rnp != शून्य; rnp = rnp->parent) अणु
 		ret = (READ_ONCE(rcu_state.gp_flags) & RCU_GP_FLAG_FQS) ||
 		       !raw_spin_trylock(&rnp->fqslock);
-		if (rnp_old != NULL)
+		अगर (rnp_old != शून्य)
 			raw_spin_unlock(&rnp_old->fqslock);
-		if (ret)
-			return;
+		अगर (ret)
+			वापस;
 		rnp_old = rnp;
-	}
-	/* rnp_old == rcu_get_root(), rnp == NULL. */
+	पूर्ण
+	/* rnp_old == rcu_get_root(), rnp == शून्य. */
 
 	/* Reached the root of the rcu_node tree, acquire lock. */
 	raw_spin_lock_irqsave_rcu_node(rnp_old, flags);
 	raw_spin_unlock(&rnp_old->fqslock);
-	if (READ_ONCE(rcu_state.gp_flags) & RCU_GP_FLAG_FQS) {
+	अगर (READ_ONCE(rcu_state.gp_flags) & RCU_GP_FLAG_FQS) अणु
 		raw_spin_unlock_irqrestore_rcu_node(rnp_old, flags);
-		return;  /* Someone beat us to it. */
-	}
+		वापस;  /* Someone beat us to it. */
+	पूर्ण
 	WRITE_ONCE(rcu_state.gp_flags,
 		   READ_ONCE(rcu_state.gp_flags) | RCU_GP_FLAG_FQS);
 	raw_spin_unlock_irqrestore_rcu_node(rnp_old, flags);
-	rcu_gp_kthread_wake();
-}
-EXPORT_SYMBOL_GPL(rcu_force_quiescent_state);
+	rcu_gp_kthपढ़ो_wake();
+पूर्ण
+EXPORT_SYMBOL_GPL(rcu_क्रमce_quiescent_state);
 
-// Workqueue handler for an RCU reader for kernels enforcing struct RCU
+// Workqueue handler क्रम an RCU पढ़ोer क्रम kernels enक्रमcing काष्ठा RCU
 // grace periods.
-static void strict_work_handler(struct work_struct *work)
-{
-	rcu_read_lock();
-	rcu_read_unlock();
-}
+अटल व्योम strict_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	rcu_पढ़ो_lock();
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-/* Perform RCU core processing work for the current CPU.  */
-static __latent_entropy void rcu_core(void)
-{
-	unsigned long flags;
-	struct rcu_data *rdp = raw_cpu_ptr(&rcu_data);
-	struct rcu_node *rnp = rdp->mynode;
-	const bool do_batch = !rcu_segcblist_completely_offloaded(&rdp->cblist);
+/* Perक्रमm RCU core processing work क्रम the current CPU.  */
+अटल __latent_entropy व्योम rcu_core(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा rcu_data *rdp = raw_cpu_ptr(&rcu_data);
+	काष्ठा rcu_node *rnp = rdp->mynode;
+	स्थिर bool करो_batch = !rcu_segcblist_completely_offloaded(&rdp->cblist);
 
-	if (cpu_is_offline(smp_processor_id()))
-		return;
+	अगर (cpu_is_offline(smp_processor_id()))
+		वापस;
 	trace_rcu_utilization(TPS("Start RCU core"));
 	WARN_ON_ONCE(!rdp->beenonline);
 
-	/* Report any deferred quiescent states if preemption enabled. */
-	if (!(preempt_count() & PREEMPT_MASK)) {
+	/* Report any deferred quiescent states अगर preemption enabled. */
+	अगर (!(preempt_count() & PREEMPT_MASK)) अणु
 		rcu_preempt_deferred_qs(current);
-	} else if (rcu_preempt_need_deferred_qs(current)) {
+	पूर्ण अन्यथा अगर (rcu_preempt_need_deferred_qs(current)) अणु
 		set_tsk_need_resched(current);
 		set_preempt_need_resched();
-	}
+	पूर्ण
 
 	/* Update RCU state based on any recent quiescent states. */
 	rcu_check_quiescent_state(rdp);
 
-	/* No grace period and unregistered callbacks? */
-	if (!rcu_gp_in_progress() &&
-	    rcu_segcblist_is_enabled(&rdp->cblist) && do_batch) {
+	/* No grace period and unरेजिस्टरed callbacks? */
+	अगर (!rcu_gp_in_progress() &&
+	    rcu_segcblist_is_enabled(&rdp->cblist) && करो_batch) अणु
 		rcu_nocb_lock_irqsave(rdp, flags);
-		if (!rcu_segcblist_restempty(&rdp->cblist, RCU_NEXT_READY_TAIL))
+		अगर (!rcu_segcblist_restempty(&rdp->cblist, RCU_NEXT_READY_TAIL))
 			rcu_accelerate_cbs_unlocked(rnp, rdp);
 		rcu_nocb_unlock_irqrestore(rdp, flags);
-	}
+	पूर्ण
 
-	rcu_check_gp_start_stall(rnp, rdp, rcu_jiffies_till_stall_check());
+	rcu_check_gp_start_stall(rnp, rdp, rcu_jअगरfies_till_stall_check());
 
-	/* If there are callbacks ready, invoke them. */
-	if (do_batch && rcu_segcblist_ready_cbs(&rdp->cblist) &&
+	/* If there are callbacks पढ़ोy, invoke them. */
+	अगर (करो_batch && rcu_segcblist_पढ़ोy_cbs(&rdp->cblist) &&
 	    likely(READ_ONCE(rcu_scheduler_fully_active)))
-		rcu_do_batch(rdp);
+		rcu_करो_batch(rdp);
 
-	/* Do any needed deferred wakeups of rcuo kthreads. */
-	do_nocb_deferred_wakeup(rdp);
+	/* Do any needed deferred wakeups of rcuo kthपढ़ोs. */
+	करो_nocb_deferred_wakeup(rdp);
 	trace_rcu_utilization(TPS("End RCU core"));
 
-	// If strict GPs, schedule an RCU reader in a clean environment.
-	if (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD))
+	// If strict GPs, schedule an RCU पढ़ोer in a clean environment.
+	अगर (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD))
 		queue_work_on(rdp->cpu, rcu_gp_wq, &rdp->strict_work);
-}
+पूर्ण
 
-static void rcu_core_si(struct softirq_action *h)
-{
+अटल व्योम rcu_core_si(काष्ठा softirq_action *h)
+अणु
 	rcu_core();
-}
+पूर्ण
 
-static void rcu_wake_cond(struct task_struct *t, int status)
-{
+अटल व्योम rcu_wake_cond(काष्ठा task_काष्ठा *t, पूर्णांक status)
+अणु
 	/*
-	 * If the thread is yielding, only wake it when this
+	 * If the thपढ़ो is yielding, only wake it when this
 	 * is invoked from idle
 	 */
-	if (t && (status != RCU_KTHREAD_YIELDING || is_idle_task(current)))
+	अगर (t && (status != RCU_KTHREAD_YIELDING || is_idle_task(current)))
 		wake_up_process(t);
-}
+पूर्ण
 
-static void invoke_rcu_core_kthread(void)
-{
-	struct task_struct *t;
-	unsigned long flags;
+अटल व्योम invoke_rcu_core_kthपढ़ो(व्योम)
+अणु
+	काष्ठा task_काष्ठा *t;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	__this_cpu_write(rcu_data.rcu_cpu_has_work, 1);
-	t = __this_cpu_read(rcu_data.rcu_cpu_kthread_task);
-	if (t != NULL && t != current)
-		rcu_wake_cond(t, __this_cpu_read(rcu_data.rcu_cpu_kthread_status));
+	__this_cpu_ग_लिखो(rcu_data.rcu_cpu_has_work, 1);
+	t = __this_cpu_पढ़ो(rcu_data.rcu_cpu_kthपढ़ो_task);
+	अगर (t != शून्य && t != current)
+		rcu_wake_cond(t, __this_cpu_पढ़ो(rcu_data.rcu_cpu_kthपढ़ो_status));
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /*
- * Wake up this CPU's rcuc kthread to do RCU core processing.
+ * Wake up this CPU's rcuc kthपढ़ो to करो RCU core processing.
  */
-static void invoke_rcu_core(void)
-{
-	if (!cpu_online(smp_processor_id()))
-		return;
-	if (use_softirq)
-		raise_softirq(RCU_SOFTIRQ);
-	else
-		invoke_rcu_core_kthread();
-}
+अटल व्योम invoke_rcu_core(व्योम)
+अणु
+	अगर (!cpu_online(smp_processor_id()))
+		वापस;
+	अगर (use_softirq)
+		उठाओ_softirq(RCU_SOFTIRQ);
+	अन्यथा
+		invoke_rcu_core_kthपढ़ो();
+पूर्ण
 
-static void rcu_cpu_kthread_park(unsigned int cpu)
-{
-	per_cpu(rcu_data.rcu_cpu_kthread_status, cpu) = RCU_KTHREAD_OFFCPU;
-}
+अटल व्योम rcu_cpu_kthपढ़ो_park(अचिन्हित पूर्णांक cpu)
+अणु
+	per_cpu(rcu_data.rcu_cpu_kthपढ़ो_status, cpu) = RCU_KTHREAD_OFFCPU;
+पूर्ण
 
-static int rcu_cpu_kthread_should_run(unsigned int cpu)
-{
-	return __this_cpu_read(rcu_data.rcu_cpu_has_work);
-}
+अटल पूर्णांक rcu_cpu_kthपढ़ो_should_run(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस __this_cpu_पढ़ो(rcu_data.rcu_cpu_has_work);
+पूर्ण
 
 /*
- * Per-CPU kernel thread that invokes RCU callbacks.  This replaces
- * the RCU softirq used in configurations of RCU that do not support RCU
+ * Per-CPU kernel thपढ़ो that invokes RCU callbacks.  This replaces
+ * the RCU softirq used in configurations of RCU that करो not support RCU
  * priority boosting.
  */
-static void rcu_cpu_kthread(unsigned int cpu)
-{
-	unsigned int *statusp = this_cpu_ptr(&rcu_data.rcu_cpu_kthread_status);
-	char work, *workp = this_cpu_ptr(&rcu_data.rcu_cpu_has_work);
-	int spincnt;
+अटल व्योम rcu_cpu_kthपढ़ो(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित पूर्णांक *statusp = this_cpu_ptr(&rcu_data.rcu_cpu_kthपढ़ो_status);
+	अक्षर work, *workp = this_cpu_ptr(&rcu_data.rcu_cpu_has_work);
+	पूर्णांक spincnt;
 
 	trace_rcu_utilization(TPS("Start CPU kthread@rcu_run"));
-	for (spincnt = 0; spincnt < 10; spincnt++) {
+	क्रम (spincnt = 0; spincnt < 10; spincnt++) अणु
 		local_bh_disable();
 		*statusp = RCU_KTHREAD_RUNNING;
 		local_irq_disable();
 		work = *workp;
 		*workp = 0;
 		local_irq_enable();
-		if (work)
+		अगर (work)
 			rcu_core();
 		local_bh_enable();
-		if (*workp == 0) {
+		अगर (*workp == 0) अणु
 			trace_rcu_utilization(TPS("End CPU kthread@rcu_wait"));
 			*statusp = RCU_KTHREAD_WAITING;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	*statusp = RCU_KTHREAD_YIELDING;
 	trace_rcu_utilization(TPS("Start CPU kthread@rcu_yield"));
-	schedule_timeout_idle(2);
+	schedule_समयout_idle(2);
 	trace_rcu_utilization(TPS("End CPU kthread@rcu_yield"));
 	*statusp = RCU_KTHREAD_WAITING;
-}
+पूर्ण
 
-static struct smp_hotplug_thread rcu_cpu_thread_spec = {
-	.store			= &rcu_data.rcu_cpu_kthread_task,
-	.thread_should_run	= rcu_cpu_kthread_should_run,
-	.thread_fn		= rcu_cpu_kthread,
-	.thread_comm		= "rcuc/%u",
-	.setup			= rcu_cpu_kthread_setup,
-	.park			= rcu_cpu_kthread_park,
-};
+अटल काष्ठा smp_hotplug_thपढ़ो rcu_cpu_thपढ़ो_spec = अणु
+	.store			= &rcu_data.rcu_cpu_kthपढ़ो_task,
+	.thपढ़ो_should_run	= rcu_cpu_kthपढ़ो_should_run,
+	.thपढ़ो_fn		= rcu_cpu_kthपढ़ो,
+	.thपढ़ो_comm		= "rcuc/%u",
+	.setup			= rcu_cpu_kthपढ़ो_setup,
+	.park			= rcu_cpu_kthपढ़ो_park,
+पूर्ण;
 
 /*
- * Spawn per-CPU RCU core processing kthreads.
+ * Spawn per-CPU RCU core processing kthपढ़ोs.
  */
-static int __init rcu_spawn_core_kthreads(void)
-{
-	int cpu;
+अटल पूर्णांक __init rcu_spawn_core_kthपढ़ोs(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		per_cpu(rcu_data.rcu_cpu_has_work, cpu) = 0;
-	if (!IS_ENABLED(CONFIG_RCU_BOOST) && use_softirq)
-		return 0;
-	WARN_ONCE(smpboot_register_percpu_thread(&rcu_cpu_thread_spec),
+	अगर (!IS_ENABLED(CONFIG_RCU_BOOST) && use_softirq)
+		वापस 0;
+	WARN_ONCE(smpboot_रेजिस्टर_percpu_thपढ़ो(&rcu_cpu_thपढ़ो_spec),
 		  "%s: Could not start rcuc kthread, OOM is now expected behavior\n", __func__);
-	return 0;
-}
-early_initcall(rcu_spawn_core_kthreads);
+	वापस 0;
+पूर्ण
+early_initcall(rcu_spawn_core_kthपढ़ोs);
 
 /*
  * Handle any core-RCU processing required by a call_rcu() invocation.
  */
-static void __call_rcu_core(struct rcu_data *rdp, struct rcu_head *head,
-			    unsigned long flags)
-{
+अटल व्योम __call_rcu_core(काष्ठा rcu_data *rdp, काष्ठा rcu_head *head,
+			    अचिन्हित दीर्घ flags)
+अणु
 	/*
 	 * If called from an extended quiescent state, invoke the RCU
-	 * core in order to force a re-evaluation of RCU's idleness.
+	 * core in order to क्रमce a re-evaluation of RCU's idleness.
 	 */
-	if (!rcu_is_watching())
+	अगर (!rcu_is_watching())
 		invoke_rcu_core();
 
-	/* If interrupts were disabled or CPU offline, don't invoke RCU core. */
-	if (irqs_disabled_flags(flags) || cpu_is_offline(smp_processor_id()))
-		return;
+	/* If पूर्णांकerrupts were disabled or CPU offline, करोn't invoke RCU core. */
+	अगर (irqs_disabled_flags(flags) || cpu_is_offline(smp_processor_id()))
+		वापस;
 
 	/*
-	 * Force the grace period if too many callbacks or too long waiting.
-	 * Enforce hysteresis, and don't invoke rcu_force_quiescent_state()
-	 * if some other CPU has recently done so.  Also, don't bother
-	 * invoking rcu_force_quiescent_state() if the newly enqueued callback
-	 * is the only one waiting for a grace period to complete.
+	 * Force the grace period अगर too many callbacks or too दीर्घ रुकोing.
+	 * Enक्रमce hysteresis, and करोn't invoke rcu_क्रमce_quiescent_state()
+	 * अगर some other CPU has recently करोne so.  Also, करोn't bother
+	 * invoking rcu_क्रमce_quiescent_state() अगर the newly enqueued callback
+	 * is the only one रुकोing क्रम a grace period to complete.
 	 */
-	if (unlikely(rcu_segcblist_n_cbs(&rdp->cblist) >
-		     rdp->qlen_last_fqs_check + qhimark)) {
+	अगर (unlikely(rcu_segcblist_n_cbs(&rdp->cblist) >
+		     rdp->qlen_last_fqs_check + qhimark)) अणु
 
 		/* Are we ignoring a completed grace period? */
 		note_gp_changes(rdp);
 
-		/* Start a new grace period if one not already started. */
-		if (!rcu_gp_in_progress()) {
+		/* Start a new grace period अगर one not alपढ़ोy started. */
+		अगर (!rcu_gp_in_progress()) अणु
 			rcu_accelerate_cbs_unlocked(rdp->mynode, rdp);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Give the grace period a kick. */
 			rdp->blimit = DEFAULT_MAX_RCU_BLIMIT;
-			if (rcu_state.n_force_qs == rdp->n_force_qs_snap &&
+			अगर (rcu_state.n_क्रमce_qs == rdp->n_क्रमce_qs_snap &&
 			    rcu_segcblist_first_pend_cb(&rdp->cblist) != head)
-				rcu_force_quiescent_state();
-			rdp->n_force_qs_snap = rcu_state.n_force_qs;
+				rcu_क्रमce_quiescent_state();
+			rdp->n_क्रमce_qs_snap = rcu_state.n_क्रमce_qs;
 			rdp->qlen_last_fqs_check = rcu_segcblist_n_cbs(&rdp->cblist);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * RCU callback function to leak a callback.
  */
-static void rcu_leak_callback(struct rcu_head *rhp)
-{
-}
+अटल व्योम rcu_leak_callback(काष्ठा rcu_head *rhp)
+अणु
+पूर्ण
 
 /*
- * Check and if necessary update the leaf rcu_node structure's
+ * Check and अगर necessary update the leaf rcu_node काष्ठाure's
  * ->cbovldmask bit corresponding to the current CPU based on that CPU's
  * number of queued RCU callbacks.  The caller must hold the leaf rcu_node
- * structure's ->lock.
+ * काष्ठाure's ->lock.
  */
-static void check_cb_ovld_locked(struct rcu_data *rdp, struct rcu_node *rnp)
-{
-	raw_lockdep_assert_held_rcu_node(rnp);
-	if (qovld_calc <= 0)
-		return; // Early boot and wildcard value set.
-	if (rcu_segcblist_n_cbs(&rdp->cblist) >= qovld_calc)
+अटल व्योम check_cb_ovld_locked(काष्ठा rcu_data *rdp, काष्ठा rcu_node *rnp)
+अणु
+	raw_lockdep_निश्चित_held_rcu_node(rnp);
+	अगर (qovld_calc <= 0)
+		वापस; // Early boot and wildcard value set.
+	अगर (rcu_segcblist_n_cbs(&rdp->cblist) >= qovld_calc)
 		WRITE_ONCE(rnp->cbovldmask, rnp->cbovldmask | rdp->grpmask);
-	else
+	अन्यथा
 		WRITE_ONCE(rnp->cbovldmask, rnp->cbovldmask & ~rdp->grpmask);
-}
+पूर्ण
 
 /*
- * Check and if necessary update the leaf rcu_node structure's
+ * Check and अगर necessary update the leaf rcu_node काष्ठाure's
  * ->cbovldmask bit corresponding to the current CPU based on that CPU's
  * number of queued RCU callbacks.  No locks need be held, but the
- * caller must have disabled interrupts.
+ * caller must have disabled पूर्णांकerrupts.
  *
  * Note that this function ignores the possibility that there are a lot
- * of callbacks all of which have already seen the end of their respective
- * grace periods.  This omission is due to the need for no-CBs CPUs to
- * be holding ->nocb_lock to do this check, which is too heavy for a
- * common-case operation.
+ * of callbacks all of which have alपढ़ोy seen the end of their respective
+ * grace periods.  This omission is due to the need क्रम no-CBs CPUs to
+ * be holding ->nocb_lock to करो this check, which is too heavy क्रम a
+ * common-हाल operation.
  */
-static void check_cb_ovld(struct rcu_data *rdp)
-{
-	struct rcu_node *const rnp = rdp->mynode;
+अटल व्योम check_cb_ovld(काष्ठा rcu_data *rdp)
+अणु
+	काष्ठा rcu_node *स्थिर rnp = rdp->mynode;
 
-	if (qovld_calc <= 0 ||
+	अगर (qovld_calc <= 0 ||
 	    ((rcu_segcblist_n_cbs(&rdp->cblist) >= qovld_calc) ==
 	     !!(READ_ONCE(rnp->cbovldmask) & rdp->grpmask)))
-		return; // Early boot wildcard value or already set correctly.
+		वापस; // Early boot wildcard value or alपढ़ोy set correctly.
 	raw_spin_lock_rcu_node(rnp);
 	check_cb_ovld_locked(rdp, rnp);
 	raw_spin_unlock_rcu_node(rnp);
-}
+पूर्ण
 
-/* Helper function for call_rcu() and friends.  */
-static void
-__call_rcu(struct rcu_head *head, rcu_callback_t func)
-{
-	static atomic_t doublefrees;
-	unsigned long flags;
-	struct rcu_data *rdp;
-	bool was_alldone;
+/* Helper function क्रम call_rcu() and मित्रs.  */
+अटल व्योम
+__call_rcu(काष्ठा rcu_head *head, rcu_callback_t func)
+अणु
+	अटल atomic_t द्विगुनमुक्तs;
+	अचिन्हित दीर्घ flags;
+	काष्ठा rcu_data *rdp;
+	bool was_allकरोne;
 
 	/* Misaligned rcu_head! */
-	WARN_ON_ONCE((unsigned long)head & (sizeof(void *) - 1));
+	WARN_ON_ONCE((अचिन्हित दीर्घ)head & (माप(व्योम *) - 1));
 
-	if (debug_rcu_head_queue(head)) {
+	अगर (debug_rcu_head_queue(head)) अणु
 		/*
-		 * Probable double call_rcu(), so leak the callback.
+		 * Probable द्विगुन call_rcu(), so leak the callback.
 		 * Use rcu:rcu_callback trace event to find the previous
-		 * time callback was passed to __call_rcu().
+		 * समय callback was passed to __call_rcu().
 		 */
-		if (atomic_inc_return(&doublefrees) < 4) {
+		अगर (atomic_inc_वापस(&द्विगुनमुक्तs) < 4) अणु
 			pr_err("%s(): Double-freed CB %p->%pS()!!!  ", __func__, head, head->func);
 			mem_dump_obj(head);
-		}
+		पूर्ण
 		WRITE_ONCE(head->func, rcu_leak_callback);
-		return;
-	}
+		वापस;
+	पूर्ण
 	head->func = func;
-	head->next = NULL;
+	head->next = शून्य;
 	local_irq_save(flags);
 	kasan_record_aux_stack(head);
 	rdp = this_cpu_ptr(&rcu_data);
 
 	/* Add the callback to our list. */
-	if (unlikely(!rcu_segcblist_is_enabled(&rdp->cblist))) {
+	अगर (unlikely(!rcu_segcblist_is_enabled(&rdp->cblist))) अणु
 		// This can trigger due to call_rcu() from offline CPU:
 		WARN_ON_ONCE(rcu_scheduler_active != RCU_SCHEDULER_INACTIVE);
 		WARN_ON_ONCE(!rcu_is_watching());
-		// Very early boot, before rcu_init().  Initialize if needed
+		// Very early boot, beक्रमe rcu_init().  Initialize अगर needed
 		// and then drop through to queue the callback.
-		if (rcu_segcblist_empty(&rdp->cblist))
+		अगर (rcu_segcblist_empty(&rdp->cblist))
 			rcu_segcblist_init(&rdp->cblist);
-	}
+	पूर्ण
 
 	check_cb_ovld(rdp);
-	if (rcu_nocb_try_bypass(rdp, head, &was_alldone, flags))
-		return; // Enqueued onto ->nocb_bypass, so just leave.
-	// If no-CBs CPU gets here, rcu_nocb_try_bypass() acquired ->nocb_lock.
+	अगर (rcu_nocb_try_bypass(rdp, head, &was_allकरोne, flags))
+		वापस; // Enqueued onto ->nocb_bypass, so just leave.
+	// If no-CBs CPU माला_लो here, rcu_nocb_try_bypass() acquired ->nocb_lock.
 	rcu_segcblist_enqueue(&rdp->cblist, head);
-	if (__is_kvfree_rcu_offset((unsigned long)func))
-		trace_rcu_kvfree_callback(rcu_state.name, head,
-					 (unsigned long)func,
+	अगर (__is_kvमुक्त_rcu_offset((अचिन्हित दीर्घ)func))
+		trace_rcu_kvमुक्त_callback(rcu_state.name, head,
+					 (अचिन्हित दीर्घ)func,
 					 rcu_segcblist_n_cbs(&rdp->cblist));
-	else
+	अन्यथा
 		trace_rcu_callback(rcu_state.name, head,
 				   rcu_segcblist_n_cbs(&rdp->cblist));
 
 	trace_rcu_segcb_stats(&rdp->cblist, TPS("SegCBQueued"));
 
 	/* Go handle any RCU core processing required. */
-	if (unlikely(rcu_rdp_is_offloaded(rdp))) {
-		__call_rcu_nocb_wake(rdp, was_alldone, flags); /* unlocks */
-	} else {
+	अगर (unlikely(rcu_rdp_is_offloaded(rdp))) अणु
+		__call_rcu_nocb_wake(rdp, was_allकरोne, flags); /* unlocks */
+	पूर्ण अन्यथा अणु
 		__call_rcu_core(rdp, head, flags);
 		local_irq_restore(flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * call_rcu() - Queue an RCU callback for invocation after a grace period.
- * @head: structure to be used for queueing the RCU updates.
+ * call_rcu() - Queue an RCU callback क्रम invocation after a grace period.
+ * @head: काष्ठाure to be used क्रम queueing the RCU updates.
  * @func: actual callback function to be invoked after the grace period
  *
- * The callback function will be invoked some time after a full grace
- * period elapses, in other words after all pre-existing RCU read-side
+ * The callback function will be invoked some समय after a full grace
+ * period elapses, in other words after all pre-existing RCU पढ़ो-side
  * critical sections have completed.  However, the callback function
- * might well execute concurrently with RCU read-side critical sections
- * that started after call_rcu() was invoked.  RCU read-side critical
- * sections are delimited by rcu_read_lock() and rcu_read_unlock(), and
- * may be nested.  In addition, regions of code across which interrupts,
- * preemption, or softirqs have been disabled also serve as RCU read-side
- * critical sections.  This includes hardware interrupt handlers, softirq
+ * might well execute concurrently with RCU पढ़ो-side critical sections
+ * that started after call_rcu() was invoked.  RCU पढ़ो-side critical
+ * sections are delimited by rcu_पढ़ो_lock() and rcu_पढ़ो_unlock(), and
+ * may be nested.  In addition, regions of code across which पूर्णांकerrupts,
+ * preemption, or softirqs have been disabled also serve as RCU पढ़ो-side
+ * critical sections.  This includes hardware पूर्णांकerrupt handlers, softirq
  * handlers, and NMI handlers.
  *
  * Note that all CPUs must agree that the grace period extended beyond
- * all pre-existing RCU read-side critical section.  On systems with more
+ * all pre-existing RCU पढ़ो-side critical section.  On प्रणालीs with more
  * than one CPU, this means that when "func()" is invoked, each CPU is
  * guaranteed to have executed a full memory barrier since the end of its
- * last RCU read-side critical section whose beginning preceded the call
- * to call_rcu().  It also means that each CPU executing an RCU read-side
- * critical section that continues beyond the start of "func()" must have
- * executed a memory barrier after the call_rcu() but before the beginning
- * of that RCU read-side critical section.  Note that these guarantees
+ * last RCU पढ़ो-side critical section whose beginning preceded the call
+ * to call_rcu().  It also means that each CPU executing an RCU पढ़ो-side
+ * critical section that जारीs beyond the start of "func()" must have
+ * executed a memory barrier after the call_rcu() but beक्रमe the beginning
+ * of that RCU पढ़ो-side critical section.  Note that these guarantees
  * include CPUs that are offline, idle, or executing in user mode, as
  * well as CPUs that are executing in the kernel.
  *
- * Furthermore, if CPU A invoked call_rcu() and CPU B invoked the
+ * Furthermore, अगर CPU A invoked call_rcu() and CPU B invoked the
  * resulting RCU callback function "func()", then both CPU A and CPU B are
- * guaranteed to execute a full memory barrier during the time interval
+ * guaranteed to execute a full memory barrier during the समय पूर्णांकerval
  * between the call to call_rcu() and the invocation of "func()" -- even
- * if CPU A and CPU B are the same CPU (but again only if the system has
+ * अगर CPU A and CPU B are the same CPU (but again only अगर the प्रणाली has
  * more than one CPU).
  */
-void call_rcu(struct rcu_head *head, rcu_callback_t func)
-{
+व्योम call_rcu(काष्ठा rcu_head *head, rcu_callback_t func)
+अणु
 	__call_rcu(head, func);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(call_rcu);
 
 
-/* Maximum number of jiffies to wait before draining a batch. */
-#define KFREE_DRAIN_JIFFIES (HZ / 50)
-#define KFREE_N_BATCHES 2
-#define FREE_N_CHANNELS 2
+/* Maximum number of jअगरfies to रुको beक्रमe draining a batch. */
+#घोषणा KFREE_DRAIN_JIFFIES (HZ / 50)
+#घोषणा KFREE_N_BATCHES 2
+#घोषणा FREE_N_CHANNELS 2
 
 /**
- * struct kvfree_rcu_bulk_data - single block to store kvfree_rcu() pointers
- * @nr_records: Number of active pointers in the array
+ * काष्ठा kvमुक्त_rcu_bulk_data - single block to store kvमुक्त_rcu() poपूर्णांकers
+ * @nr_records: Number of active poपूर्णांकers in the array
  * @next: Next bulk object in the block chain
- * @records: Array of the kvfree_rcu() pointers
+ * @records: Array of the kvमुक्त_rcu() poपूर्णांकers
  */
-struct kvfree_rcu_bulk_data {
-	unsigned long nr_records;
-	struct kvfree_rcu_bulk_data *next;
-	void *records[];
-};
+काष्ठा kvमुक्त_rcu_bulk_data अणु
+	अचिन्हित दीर्घ nr_records;
+	काष्ठा kvमुक्त_rcu_bulk_data *next;
+	व्योम *records[];
+पूर्ण;
 
 /*
  * This macro defines how many entries the "records" array
  * will contain. It is based on the fact that the size of
- * kvfree_rcu_bulk_data structure becomes exactly one page.
+ * kvमुक्त_rcu_bulk_data काष्ठाure becomes exactly one page.
  */
-#define KVFREE_BULK_MAX_ENTR \
-	((PAGE_SIZE - sizeof(struct kvfree_rcu_bulk_data)) / sizeof(void *))
+#घोषणा KVFREE_BULK_MAX_ENTR \
+	((PAGE_SIZE - माप(काष्ठा kvमुक्त_rcu_bulk_data)) / माप(व्योम *))
 
 /**
- * struct kfree_rcu_cpu_work - single batch of kfree_rcu() requests
+ * काष्ठा kमुक्त_rcu_cpu_work - single batch of kमुक्त_rcu() requests
  * @rcu_work: Let queue_rcu_work() invoke workqueue handler after grace period
- * @head_free: List of kfree_rcu() objects waiting for a grace period
- * @bkvhead_free: Bulk-List of kvfree_rcu() objects waiting for a grace period
- * @krcp: Pointer to @kfree_rcu_cpu structure
+ * @head_मुक्त: List of kमुक्त_rcu() objects रुकोing क्रम a grace period
+ * @bkvhead_मुक्त: Bulk-List of kvमुक्त_rcu() objects रुकोing क्रम a grace period
+ * @krcp: Poपूर्णांकer to @kमुक्त_rcu_cpu काष्ठाure
  */
 
-struct kfree_rcu_cpu_work {
-	struct rcu_work rcu_work;
-	struct rcu_head *head_free;
-	struct kvfree_rcu_bulk_data *bkvhead_free[FREE_N_CHANNELS];
-	struct kfree_rcu_cpu *krcp;
-};
+काष्ठा kमुक्त_rcu_cpu_work अणु
+	काष्ठा rcu_work rcu_work;
+	काष्ठा rcu_head *head_मुक्त;
+	काष्ठा kvमुक्त_rcu_bulk_data *bkvhead_मुक्त[FREE_N_CHANNELS];
+	काष्ठा kमुक्त_rcu_cpu *krcp;
+पूर्ण;
 
 /**
- * struct kfree_rcu_cpu - batch up kfree_rcu() requests for RCU grace period
- * @head: List of kfree_rcu() objects not yet waiting for a grace period
- * @bkvhead: Bulk-List of kvfree_rcu() objects not yet waiting for a grace period
- * @krw_arr: Array of batches of kfree_rcu() objects waiting for a grace period
- * @lock: Synchronize access to this structure
- * @monitor_work: Promote @head to @head_free after KFREE_DRAIN_JIFFIES
- * @monitor_todo: Tracks whether a @monitor_work delayed work is pending
+ * काष्ठा kमुक्त_rcu_cpu - batch up kमुक्त_rcu() requests क्रम RCU grace period
+ * @head: List of kमुक्त_rcu() objects not yet रुकोing क्रम a grace period
+ * @bkvhead: Bulk-List of kvमुक्त_rcu() objects not yet रुकोing क्रम a grace period
+ * @krw_arr: Array of batches of kमुक्त_rcu() objects रुकोing क्रम a grace period
+ * @lock: Synchronize access to this काष्ठाure
+ * @monitor_work: Promote @head to @head_मुक्त after KFREE_DRAIN_JIFFIES
+ * @monitor_toकरो: Tracks whether a @monitor_work delayed work is pending
  * @initialized: The @rcu_work fields have been initialized
- * @count: Number of objects for which GP not started
+ * @count: Number of objects क्रम which GP not started
  * @bkvcache:
- *	A simple cache list that contains objects for reuse purpose.
+ *	A simple cache list that contains objects क्रम reuse purpose.
  *	In order to save some per-cpu space the list is singular.
- *	Even though it is lockless an access has to be protected by the
+ *	Even though it is lockless an access has to be रक्षित by the
  *	per-cpu lock.
  * @page_cache_work: A work to refill the cache when it is empty
  * @work_in_progress: Indicates that page_cache_work is running
- * @hrtimer: A hrtimer for scheduling a page_cache_work
+ * @hrसमयr: A hrसमयr क्रम scheduling a page_cache_work
  * @nr_bkv_objs: number of allocated objects at @bkvcache.
  *
- * This is a per-CPU structure.  The reason that it is not included in
- * the rcu_data structure is to permit this code to be extracted from
+ * This is a per-CPU काष्ठाure.  The reason that it is not included in
+ * the rcu_data काष्ठाure is to permit this code to be extracted from
  * the RCU files.  Such extraction could allow further optimization of
- * the interactions with the slab allocators.
+ * the पूर्णांकeractions with the slab allocators.
  */
-struct kfree_rcu_cpu {
-	struct rcu_head *head;
-	struct kvfree_rcu_bulk_data *bkvhead[FREE_N_CHANNELS];
-	struct kfree_rcu_cpu_work krw_arr[KFREE_N_BATCHES];
+काष्ठा kमुक्त_rcu_cpu अणु
+	काष्ठा rcu_head *head;
+	काष्ठा kvमुक्त_rcu_bulk_data *bkvhead[FREE_N_CHANNELS];
+	काष्ठा kमुक्त_rcu_cpu_work krw_arr[KFREE_N_BATCHES];
 	raw_spinlock_t lock;
-	struct delayed_work monitor_work;
-	bool monitor_todo;
+	काष्ठा delayed_work monitor_work;
+	bool monitor_toकरो;
 	bool initialized;
-	int count;
+	पूर्णांक count;
 
-	struct work_struct page_cache_work;
+	काष्ठा work_काष्ठा page_cache_work;
 	atomic_t work_in_progress;
-	struct hrtimer hrtimer;
+	काष्ठा hrसमयr hrसमयr;
 
-	struct llist_head bkvcache;
-	int nr_bkv_objs;
-};
+	काष्ठा llist_head bkvcache;
+	पूर्णांक nr_bkv_objs;
+पूर्ण;
 
-static DEFINE_PER_CPU(struct kfree_rcu_cpu, krc) = {
+अटल DEFINE_PER_CPU(काष्ठा kमुक्त_rcu_cpu, krc) = अणु
 	.lock = __RAW_SPIN_LOCK_UNLOCKED(krc.lock),
-};
+पूर्ण;
 
-static __always_inline void
-debug_rcu_bhead_unqueue(struct kvfree_rcu_bulk_data *bhead)
-{
-#ifdef CONFIG_DEBUG_OBJECTS_RCU_HEAD
-	int i;
+अटल __always_अंतरभूत व्योम
+debug_rcu_bhead_unqueue(काष्ठा kvमुक्त_rcu_bulk_data *bhead)
+अणु
+#अगर_घोषित CONFIG_DEBUG_OBJECTS_RCU_HEAD
+	पूर्णांक i;
 
-	for (i = 0; i < bhead->nr_records; i++)
-		debug_rcu_head_unqueue((struct rcu_head *)(bhead->records[i]));
-#endif
-}
+	क्रम (i = 0; i < bhead->nr_records; i++)
+		debug_rcu_head_unqueue((काष्ठा rcu_head *)(bhead->records[i]));
+#पूर्ण_अगर
+पूर्ण
 
-static inline struct kfree_rcu_cpu *
-krc_this_cpu_lock(unsigned long *flags)
-{
-	struct kfree_rcu_cpu *krcp;
+अटल अंतरभूत काष्ठा kमुक्त_rcu_cpu *
+krc_this_cpu_lock(अचिन्हित दीर्घ *flags)
+अणु
+	काष्ठा kमुक्त_rcu_cpu *krcp;
 
 	local_irq_save(*flags);	// For safely calling this_cpu_ptr().
 	krcp = this_cpu_ptr(&krc);
 	raw_spin_lock(&krcp->lock);
 
-	return krcp;
-}
+	वापस krcp;
+पूर्ण
 
-static inline void
-krc_this_cpu_unlock(struct kfree_rcu_cpu *krcp, unsigned long flags)
-{
+अटल अंतरभूत व्योम
+krc_this_cpu_unlock(काष्ठा kमुक्त_rcu_cpu *krcp, अचिन्हित दीर्घ flags)
+अणु
 	raw_spin_unlock_irqrestore(&krcp->lock, flags);
-}
+पूर्ण
 
-static inline struct kvfree_rcu_bulk_data *
-get_cached_bnode(struct kfree_rcu_cpu *krcp)
-{
-	if (!krcp->nr_bkv_objs)
-		return NULL;
+अटल अंतरभूत काष्ठा kvमुक्त_rcu_bulk_data *
+get_cached_bnode(काष्ठा kमुक्त_rcu_cpu *krcp)
+अणु
+	अगर (!krcp->nr_bkv_objs)
+		वापस शून्य;
 
 	krcp->nr_bkv_objs--;
-	return (struct kvfree_rcu_bulk_data *)
+	वापस (काष्ठा kvमुक्त_rcu_bulk_data *)
 		llist_del_first(&krcp->bkvcache);
-}
+पूर्ण
 
-static inline bool
-put_cached_bnode(struct kfree_rcu_cpu *krcp,
-	struct kvfree_rcu_bulk_data *bnode)
-{
+अटल अंतरभूत bool
+put_cached_bnode(काष्ठा kमुक्त_rcu_cpu *krcp,
+	काष्ठा kvमुक्त_rcu_bulk_data *bnode)
+अणु
 	// Check the limit.
-	if (krcp->nr_bkv_objs >= rcu_min_cached_objs)
-		return false;
+	अगर (krcp->nr_bkv_objs >= rcu_min_cached_objs)
+		वापस false;
 
-	llist_add((struct llist_node *) bnode, &krcp->bkvcache);
+	llist_add((काष्ठा llist_node *) bnode, &krcp->bkvcache);
 	krcp->nr_bkv_objs++;
-	return true;
+	वापस true;
 
-}
+पूर्ण
 
 /*
  * This function is invoked in workqueue context after a grace period.
- * It frees all the objects queued on ->bhead_free or ->head_free.
+ * It मुक्तs all the objects queued on ->bhead_मुक्त or ->head_मुक्त.
  */
-static void kfree_rcu_work(struct work_struct *work)
-{
-	unsigned long flags;
-	struct kvfree_rcu_bulk_data *bkvhead[FREE_N_CHANNELS], *bnext;
-	struct rcu_head *head, *next;
-	struct kfree_rcu_cpu *krcp;
-	struct kfree_rcu_cpu_work *krwp;
-	int i, j;
+अटल व्योम kमुक्त_rcu_work(काष्ठा work_काष्ठा *work)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा kvमुक्त_rcu_bulk_data *bkvhead[FREE_N_CHANNELS], *bnext;
+	काष्ठा rcu_head *head, *next;
+	काष्ठा kमुक्त_rcu_cpu *krcp;
+	काष्ठा kमुक्त_rcu_cpu_work *krwp;
+	पूर्णांक i, j;
 
 	krwp = container_of(to_rcu_work(work),
-			    struct kfree_rcu_cpu_work, rcu_work);
+			    काष्ठा kमुक्त_rcu_cpu_work, rcu_work);
 	krcp = krwp->krcp;
 
 	raw_spin_lock_irqsave(&krcp->lock, flags);
 	// Channels 1 and 2.
-	for (i = 0; i < FREE_N_CHANNELS; i++) {
-		bkvhead[i] = krwp->bkvhead_free[i];
-		krwp->bkvhead_free[i] = NULL;
-	}
+	क्रम (i = 0; i < FREE_N_CHANNELS; i++) अणु
+		bkvhead[i] = krwp->bkvhead_मुक्त[i];
+		krwp->bkvhead_मुक्त[i] = शून्य;
+	पूर्ण
 
 	// Channel 3.
-	head = krwp->head_free;
-	krwp->head_free = NULL;
+	head = krwp->head_मुक्त;
+	krwp->head_मुक्त = शून्य;
 	raw_spin_unlock_irqrestore(&krcp->lock, flags);
 
 	// Handle two first channels.
-	for (i = 0; i < FREE_N_CHANNELS; i++) {
-		for (; bkvhead[i]; bkvhead[i] = bnext) {
+	क्रम (i = 0; i < FREE_N_CHANNELS; i++) अणु
+		क्रम (; bkvhead[i]; bkvhead[i] = bnext) अणु
 			bnext = bkvhead[i]->next;
 			debug_rcu_bhead_unqueue(bkvhead[i]);
 
 			rcu_lock_acquire(&rcu_callback_map);
-			if (i == 0) { // kmalloc() / kfree().
-				trace_rcu_invoke_kfree_bulk_callback(
+			अगर (i == 0) अणु // kदो_स्मृति() / kमुक्त().
+				trace_rcu_invoke_kमुक्त_bulk_callback(
 					rcu_state.name, bkvhead[i]->nr_records,
 					bkvhead[i]->records);
 
-				kfree_bulk(bkvhead[i]->nr_records,
+				kमुक्त_bulk(bkvhead[i]->nr_records,
 					bkvhead[i]->records);
-			} else { // vmalloc() / vfree().
-				for (j = 0; j < bkvhead[i]->nr_records; j++) {
-					trace_rcu_invoke_kvfree_callback(
+			पूर्ण अन्यथा अणु // vदो_स्मृति() / vमुक्त().
+				क्रम (j = 0; j < bkvhead[i]->nr_records; j++) अणु
+					trace_rcu_invoke_kvमुक्त_callback(
 						rcu_state.name,
 						bkvhead[i]->records[j], 0);
 
-					vfree(bkvhead[i]->records[j]);
-				}
-			}
+					vमुक्त(bkvhead[i]->records[j]);
+				पूर्ण
+			पूर्ण
 			rcu_lock_release(&rcu_callback_map);
 
 			raw_spin_lock_irqsave(&krcp->lock, flags);
-			if (put_cached_bnode(krcp, bkvhead[i]))
-				bkvhead[i] = NULL;
+			अगर (put_cached_bnode(krcp, bkvhead[i]))
+				bkvhead[i] = शून्य;
 			raw_spin_unlock_irqrestore(&krcp->lock, flags);
 
-			if (bkvhead[i])
-				free_page((unsigned long) bkvhead[i]);
+			अगर (bkvhead[i])
+				मुक्त_page((अचिन्हित दीर्घ) bkvhead[i]);
 
 			cond_resched_tasks_rcu_qs();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Emergency case only. It can happen under low memory
-	 * condition when an allocation gets failed, so the "bulk"
-	 * path can not be temporary maintained.
+	 * Emergency हाल only. It can happen under low memory
+	 * condition when an allocation माला_लो failed, so the "bulk"
+	 * path can not be temporary मुख्यtained.
 	 */
-	for (; head; head = next) {
-		unsigned long offset = (unsigned long)head->func;
-		void *ptr = (void *)head - offset;
+	क्रम (; head; head = next) अणु
+		अचिन्हित दीर्घ offset = (अचिन्हित दीर्घ)head->func;
+		व्योम *ptr = (व्योम *)head - offset;
 
 		next = head->next;
-		debug_rcu_head_unqueue((struct rcu_head *)ptr);
+		debug_rcu_head_unqueue((काष्ठा rcu_head *)ptr);
 		rcu_lock_acquire(&rcu_callback_map);
-		trace_rcu_invoke_kvfree_callback(rcu_state.name, head, offset);
+		trace_rcu_invoke_kvमुक्त_callback(rcu_state.name, head, offset);
 
-		if (!WARN_ON_ONCE(!__is_kvfree_rcu_offset(offset)))
-			kvfree(ptr);
+		अगर (!WARN_ON_ONCE(!__is_kvमुक्त_rcu_offset(offset)))
+			kvमुक्त(ptr);
 
 		rcu_lock_release(&rcu_callback_map);
 		cond_resched_tasks_rcu_qs();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Schedule the kfree batch RCU work to run in workqueue context after a GP.
+ * Schedule the kमुक्त batch RCU work to run in workqueue context after a GP.
  *
- * This function is invoked by kfree_rcu_monitor() when the KFREE_DRAIN_JIFFIES
- * timeout has been reached.
+ * This function is invoked by kमुक्त_rcu_monitor() when the KFREE_DRAIN_JIFFIES
+ * समयout has been reached.
  */
-static inline bool queue_kfree_rcu_work(struct kfree_rcu_cpu *krcp)
-{
-	struct kfree_rcu_cpu_work *krwp;
+अटल अंतरभूत bool queue_kमुक्त_rcu_work(काष्ठा kमुक्त_rcu_cpu *krcp)
+अणु
+	काष्ठा kमुक्त_rcu_cpu_work *krwp;
 	bool repeat = false;
-	int i, j;
+	पूर्णांक i, j;
 
-	lockdep_assert_held(&krcp->lock);
+	lockdep_निश्चित_held(&krcp->lock);
 
-	for (i = 0; i < KFREE_N_BATCHES; i++) {
+	क्रम (i = 0; i < KFREE_N_BATCHES; i++) अणु
 		krwp = &(krcp->krw_arr[i]);
 
 		/*
 		 * Try to detach bkvhead or head and attach it over any
-		 * available corresponding free channel. It can be that
+		 * available corresponding मुक्त channel. It can be that
 		 * a previous RCU batch is in progress, it means that
 		 * immediately to queue another one is not possible so
-		 * return false to tell caller to retry.
+		 * वापस false to tell caller to retry.
 		 */
-		if ((krcp->bkvhead[0] && !krwp->bkvhead_free[0]) ||
-			(krcp->bkvhead[1] && !krwp->bkvhead_free[1]) ||
-				(krcp->head && !krwp->head_free)) {
+		अगर ((krcp->bkvhead[0] && !krwp->bkvhead_मुक्त[0]) ||
+			(krcp->bkvhead[1] && !krwp->bkvhead_मुक्त[1]) ||
+				(krcp->head && !krwp->head_मुक्त)) अणु
 			// Channel 1 corresponds to SLAB ptrs.
-			// Channel 2 corresponds to vmalloc ptrs.
-			for (j = 0; j < FREE_N_CHANNELS; j++) {
-				if (!krwp->bkvhead_free[j]) {
-					krwp->bkvhead_free[j] = krcp->bkvhead[j];
-					krcp->bkvhead[j] = NULL;
-				}
-			}
+			// Channel 2 corresponds to vदो_स्मृति ptrs.
+			क्रम (j = 0; j < FREE_N_CHANNELS; j++) अणु
+				अगर (!krwp->bkvhead_मुक्त[j]) अणु
+					krwp->bkvhead_मुक्त[j] = krcp->bkvhead[j];
+					krcp->bkvhead[j] = शून्य;
+				पूर्ण
+			पूर्ण
 
 			// Channel 3 corresponds to emergency path.
-			if (!krwp->head_free) {
-				krwp->head_free = krcp->head;
-				krcp->head = NULL;
-			}
+			अगर (!krwp->head_मुक्त) अणु
+				krwp->head_मुक्त = krcp->head;
+				krcp->head = शून्य;
+			पूर्ण
 
 			WRITE_ONCE(krcp->count, 0);
 
@@ -3395,131 +3396,131 @@ static inline bool queue_kfree_rcu_work(struct kfree_rcu_cpu *krcp)
 			 * channels have been detached following by each
 			 * other.
 			 */
-			queue_rcu_work(system_wq, &krwp->rcu_work);
-		}
+			queue_rcu_work(प्रणाली_wq, &krwp->rcu_work);
+		पूर्ण
 
-		// Repeat if any "free" corresponding channel is still busy.
-		if (krcp->bkvhead[0] || krcp->bkvhead[1] || krcp->head)
+		// Repeat अगर any "free" corresponding channel is still busy.
+		अगर (krcp->bkvhead[0] || krcp->bkvhead[1] || krcp->head)
 			repeat = true;
-	}
+	पूर्ण
 
-	return !repeat;
-}
+	वापस !repeat;
+पूर्ण
 
-static inline void kfree_rcu_drain_unlock(struct kfree_rcu_cpu *krcp,
-					  unsigned long flags)
-{
+अटल अंतरभूत व्योम kमुक्त_rcu_drain_unlock(काष्ठा kमुक्त_rcu_cpu *krcp,
+					  अचिन्हित दीर्घ flags)
+अणु
 	// Attempt to start a new batch.
-	krcp->monitor_todo = false;
-	if (queue_kfree_rcu_work(krcp)) {
-		// Success! Our job is done here.
+	krcp->monitor_toकरो = false;
+	अगर (queue_kमुक्त_rcu_work(krcp)) अणु
+		// Success! Our job is करोne here.
 		raw_spin_unlock_irqrestore(&krcp->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	// Previous RCU batch still in progress, try again later.
-	krcp->monitor_todo = true;
+	krcp->monitor_toकरो = true;
 	schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
 	raw_spin_unlock_irqrestore(&krcp->lock, flags);
-}
+पूर्ण
 
 /*
- * This function is invoked after the KFREE_DRAIN_JIFFIES timeout.
- * It invokes kfree_rcu_drain_unlock() to attempt to start another batch.
+ * This function is invoked after the KFREE_DRAIN_JIFFIES समयout.
+ * It invokes kमुक्त_rcu_drain_unlock() to attempt to start another batch.
  */
-static void kfree_rcu_monitor(struct work_struct *work)
-{
-	unsigned long flags;
-	struct kfree_rcu_cpu *krcp = container_of(work, struct kfree_rcu_cpu,
+अटल व्योम kमुक्त_rcu_monitor(काष्ठा work_काष्ठा *work)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा kमुक्त_rcu_cpu *krcp = container_of(work, काष्ठा kमुक्त_rcu_cpu,
 						 monitor_work.work);
 
 	raw_spin_lock_irqsave(&krcp->lock, flags);
-	if (krcp->monitor_todo)
-		kfree_rcu_drain_unlock(krcp, flags);
-	else
+	अगर (krcp->monitor_toकरो)
+		kमुक्त_rcu_drain_unlock(krcp, flags);
+	अन्यथा
 		raw_spin_unlock_irqrestore(&krcp->lock, flags);
-}
+पूर्ण
 
-static enum hrtimer_restart
-schedule_page_work_fn(struct hrtimer *t)
-{
-	struct kfree_rcu_cpu *krcp =
-		container_of(t, struct kfree_rcu_cpu, hrtimer);
+अटल क्रमागत hrसमयr_restart
+schedule_page_work_fn(काष्ठा hrसमयr *t)
+अणु
+	काष्ठा kमुक्त_rcu_cpu *krcp =
+		container_of(t, काष्ठा kमुक्त_rcu_cpu, hrसमयr);
 
-	queue_work(system_highpri_wq, &krcp->page_cache_work);
-	return HRTIMER_NORESTART;
-}
+	queue_work(प्रणाली_highpri_wq, &krcp->page_cache_work);
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-static void fill_page_cache_func(struct work_struct *work)
-{
-	struct kvfree_rcu_bulk_data *bnode;
-	struct kfree_rcu_cpu *krcp =
-		container_of(work, struct kfree_rcu_cpu,
+अटल व्योम fill_page_cache_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा kvमुक्त_rcu_bulk_data *bnode;
+	काष्ठा kमुक्त_rcu_cpu *krcp =
+		container_of(work, काष्ठा kमुक्त_rcu_cpu,
 			page_cache_work);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	bool pushed;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < rcu_min_cached_objs; i++) {
-		bnode = (struct kvfree_rcu_bulk_data *)
-			__get_free_page(GFP_KERNEL | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
+	क्रम (i = 0; i < rcu_min_cached_objs; i++) अणु
+		bnode = (काष्ठा kvमुक्त_rcu_bulk_data *)
+			__get_मुक्त_page(GFP_KERNEL | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
 
-		if (bnode) {
+		अगर (bnode) अणु
 			raw_spin_lock_irqsave(&krcp->lock, flags);
 			pushed = put_cached_bnode(krcp, bnode);
 			raw_spin_unlock_irqrestore(&krcp->lock, flags);
 
-			if (!pushed) {
-				free_page((unsigned long) bnode);
-				break;
-			}
-		}
-	}
+			अगर (!pushed) अणु
+				मुक्त_page((अचिन्हित दीर्घ) bnode);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	atomic_set(&krcp->work_in_progress, 0);
-}
+पूर्ण
 
-static void
-run_page_cache_worker(struct kfree_rcu_cpu *krcp)
-{
-	if (rcu_scheduler_active == RCU_SCHEDULER_RUNNING &&
-			!atomic_xchg(&krcp->work_in_progress, 1)) {
-		hrtimer_init(&krcp->hrtimer, CLOCK_MONOTONIC,
+अटल व्योम
+run_page_cache_worker(काष्ठा kमुक्त_rcu_cpu *krcp)
+अणु
+	अगर (rcu_scheduler_active == RCU_SCHEDULER_RUNNING &&
+			!atomic_xchg(&krcp->work_in_progress, 1)) अणु
+		hrसमयr_init(&krcp->hrसमयr, CLOCK_MONOTONIC,
 			HRTIMER_MODE_REL);
-		krcp->hrtimer.function = schedule_page_work_fn;
-		hrtimer_start(&krcp->hrtimer, 0, HRTIMER_MODE_REL);
-	}
-}
+		krcp->hrसमयr.function = schedule_page_work_fn;
+		hrसमयr_start(&krcp->hrसमयr, 0, HRTIMER_MODE_REL);
+	पूर्ण
+पूर्ण
 
 // Record ptr in a page managed by krcp, with the pre-krc_this_cpu_lock()
-// state specified by flags.  If can_alloc is true, the caller must
+// state specअगरied by flags.  If can_alloc is true, the caller must
 // be schedulable and not be holding any locks or mutexes that might be
 // acquired by the memory allocator or anything that it might invoke.
-// Returns true if ptr was successfully recorded, else the caller must
+// Returns true अगर ptr was successfully recorded, अन्यथा the caller must
 // use a fallback.
-static inline bool
-add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
-	unsigned long *flags, void *ptr, bool can_alloc)
-{
-	struct kvfree_rcu_bulk_data *bnode;
-	int idx;
+अटल अंतरभूत bool
+add_ptr_to_bulk_krc_lock(काष्ठा kमुक्त_rcu_cpu **krcp,
+	अचिन्हित दीर्घ *flags, व्योम *ptr, bool can_alloc)
+अणु
+	काष्ठा kvमुक्त_rcu_bulk_data *bnode;
+	पूर्णांक idx;
 
 	*krcp = krc_this_cpu_lock(flags);
-	if (unlikely(!(*krcp)->initialized))
-		return false;
+	अगर (unlikely(!(*krcp)->initialized))
+		वापस false;
 
-	idx = !!is_vmalloc_addr(ptr);
+	idx = !!is_vदो_स्मृति_addr(ptr);
 
-	/* Check if a new block is required. */
-	if (!(*krcp)->bkvhead[idx] ||
-			(*krcp)->bkvhead[idx]->nr_records == KVFREE_BULK_MAX_ENTR) {
+	/* Check अगर a new block is required. */
+	अगर (!(*krcp)->bkvhead[idx] ||
+			(*krcp)->bkvhead[idx]->nr_records == KVFREE_BULK_MAX_ENTR) अणु
 		bnode = get_cached_bnode(*krcp);
-		if (!bnode && can_alloc) {
+		अगर (!bnode && can_alloc) अणु
 			krc_this_cpu_unlock(*krcp, *flags);
 
 			// __GFP_NORETRY - allows a light-weight direct reclaim
-			// what is OK from minimizing of fallback hitting point of
-			// view. Apart of that it forbids any OOM invoking what is
+			// what is OK from minimizing of fallback hitting poपूर्णांक of
+			// view. Apart of that it क्रमbids any OOM invoking what is
 			// also beneficial since we are about to release memory soon.
 			//
 			// __GFP_NOMEMALLOC - prevents from consuming of all the
@@ -3528,13 +3529,13 @@ add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
 			// __GFP_NOWARN - it is supposed that an allocation can
 			// be failed under low memory or high memory pressure
 			// scenarios.
-			bnode = (struct kvfree_rcu_bulk_data *)
-				__get_free_page(GFP_KERNEL | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
+			bnode = (काष्ठा kvमुक्त_rcu_bulk_data *)
+				__get_मुक्त_page(GFP_KERNEL | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
 			*krcp = krc_this_cpu_lock(flags);
-		}
+		पूर्ण
 
-		if (!bnode)
-			return false;
+		अगर (!bnode)
+			वापस false;
 
 		/* Initialize the new block. */
 		bnode->nr_records = 0;
@@ -3542,252 +3543,252 @@ add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
 
 		/* Attach it to the head. */
 		(*krcp)->bkvhead[idx] = bnode;
-	}
+	पूर्ण
 
 	/* Finally insert. */
 	(*krcp)->bkvhead[idx]->records
 		[(*krcp)->bkvhead[idx]->nr_records++] = ptr;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Queue a request for lazy invocation of appropriate free routine after a
- * grace period. Please note there are three paths are maintained, two are the
- * main ones that use array of pointers interface and third one is emergency
- * one, that is used only when the main path can not be maintained temporary,
+ * Queue a request क्रम lazy invocation of appropriate मुक्त routine after a
+ * grace period. Please note there are three paths are मुख्यtained, two are the
+ * मुख्य ones that use array of poपूर्णांकers पूर्णांकerface and third one is emergency
+ * one, that is used only when the मुख्य path can not be मुख्यtained temporary,
  * due to memory pressure.
  *
- * Each kvfree_call_rcu() request is added to a batch. The batch will be drained
- * every KFREE_DRAIN_JIFFIES number of jiffies. All the objects in the batch will
- * be free'd in workqueue context. This allows us to: batch requests together to
- * reduce the number of grace periods during heavy kfree_rcu()/kvfree_rcu() load.
+ * Each kvमुक्त_call_rcu() request is added to a batch. The batch will be drained
+ * every KFREE_DRAIN_JIFFIES number of jअगरfies. All the objects in the batch will
+ * be मुक्त'd in workqueue context. This allows us to: batch requests together to
+ * reduce the number of grace periods during heavy kमुक्त_rcu()/kvमुक्त_rcu() load.
  */
-void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
-{
-	unsigned long flags;
-	struct kfree_rcu_cpu *krcp;
+व्योम kvमुक्त_call_rcu(काष्ठा rcu_head *head, rcu_callback_t func)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा kमुक्त_rcu_cpu *krcp;
 	bool success;
-	void *ptr;
+	व्योम *ptr;
 
-	if (head) {
-		ptr = (void *) head - (unsigned long) func;
-	} else {
+	अगर (head) अणु
+		ptr = (व्योम *) head - (अचिन्हित दीर्घ) func;
+	पूर्ण अन्यथा अणु
 		/*
-		 * Please note there is a limitation for the head-less
-		 * variant, that is why there is a clear rule for such
+		 * Please note there is a limitation क्रम the head-less
+		 * variant, that is why there is a clear rule क्रम such
 		 * objects: it can be used from might_sleep() context
 		 * only. For other places please embed an rcu_head to
 		 * your data.
 		 */
 		might_sleep();
-		ptr = (unsigned long *) func;
-	}
+		ptr = (अचिन्हित दीर्घ *) func;
+	पूर्ण
 
-	// Queue the object but don't yet schedule the batch.
-	if (debug_rcu_head_queue(ptr)) {
-		// Probable double kfree_rcu(), just leak.
+	// Queue the object but करोn't yet schedule the batch.
+	अगर (debug_rcu_head_queue(ptr)) अणु
+		// Probable द्विगुन kमुक्त_rcu(), just leak.
 		WARN_ONCE(1, "%s(): Double-freed call. rcu_head %p\n",
 			  __func__, head);
 
 		// Mark as success and leave.
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	kasan_record_aux_stack(ptr);
 	success = add_ptr_to_bulk_krc_lock(&krcp, &flags, ptr, !head);
-	if (!success) {
+	अगर (!success) अणु
 		run_page_cache_worker(krcp);
 
-		if (head == NULL)
-			// Inline if kvfree_rcu(one_arg) call.
-			goto unlock_return;
+		अगर (head == शून्य)
+			// Inline अगर kvमुक्त_rcu(one_arg) call.
+			जाओ unlock_वापस;
 
 		head->func = func;
 		head->next = krcp->head;
 		krcp->head = head;
 		success = true;
-	}
+	पूर्ण
 
 	WRITE_ONCE(krcp->count, krcp->count + 1);
 
-	// Set timer to drain after KFREE_DRAIN_JIFFIES.
-	if (rcu_scheduler_active == RCU_SCHEDULER_RUNNING &&
-	    !krcp->monitor_todo) {
-		krcp->monitor_todo = true;
+	// Set समयr to drain after KFREE_DRAIN_JIFFIES.
+	अगर (rcu_scheduler_active == RCU_SCHEDULER_RUNNING &&
+	    !krcp->monitor_toकरो) अणु
+		krcp->monitor_toकरो = true;
 		schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
-	}
+	पूर्ण
 
-unlock_return:
+unlock_वापस:
 	krc_this_cpu_unlock(krcp, flags);
 
 	/*
-	 * Inline kvfree() after synchronize_rcu(). We can do
+	 * Inline kvमुक्त() after synchronize_rcu(). We can करो
 	 * it from might_sleep() context only, so the current
 	 * CPU can pass the QS state.
 	 */
-	if (!success) {
-		debug_rcu_head_unqueue((struct rcu_head *) ptr);
+	अगर (!success) अणु
+		debug_rcu_head_unqueue((काष्ठा rcu_head *) ptr);
 		synchronize_rcu();
-		kvfree(ptr);
-	}
-}
-EXPORT_SYMBOL_GPL(kvfree_call_rcu);
+		kvमुक्त(ptr);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(kvमुक्त_call_rcu);
 
-static unsigned long
-kfree_rcu_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
-{
-	int cpu;
-	unsigned long count = 0;
+अटल अचिन्हित दीर्घ
+kमुक्त_rcu_shrink_count(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
+अणु
+	पूर्णांक cpu;
+	अचिन्हित दीर्घ count = 0;
 
 	/* Snapshot count of all CPUs */
-	for_each_possible_cpu(cpu) {
-		struct kfree_rcu_cpu *krcp = per_cpu_ptr(&krc, cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा kमुक्त_rcu_cpu *krcp = per_cpu_ptr(&krc, cpu);
 
 		count += READ_ONCE(krcp->count);
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static unsigned long
-kfree_rcu_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
-{
-	int cpu, freed = 0;
-	unsigned long flags;
+अटल अचिन्हित दीर्घ
+kमुक्त_rcu_shrink_scan(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
+अणु
+	पूर्णांक cpu, मुक्तd = 0;
+	अचिन्हित दीर्घ flags;
 
-	for_each_possible_cpu(cpu) {
-		int count;
-		struct kfree_rcu_cpu *krcp = per_cpu_ptr(&krc, cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		पूर्णांक count;
+		काष्ठा kमुक्त_rcu_cpu *krcp = per_cpu_ptr(&krc, cpu);
 
 		count = krcp->count;
 		raw_spin_lock_irqsave(&krcp->lock, flags);
-		if (krcp->monitor_todo)
-			kfree_rcu_drain_unlock(krcp, flags);
-		else
+		अगर (krcp->monitor_toकरो)
+			kमुक्त_rcu_drain_unlock(krcp, flags);
+		अन्यथा
 			raw_spin_unlock_irqrestore(&krcp->lock, flags);
 
 		sc->nr_to_scan -= count;
-		freed += count;
+		मुक्तd += count;
 
-		if (sc->nr_to_scan <= 0)
-			break;
-	}
+		अगर (sc->nr_to_scan <= 0)
+			अवरोध;
+	पूर्ण
 
-	return freed == 0 ? SHRINK_STOP : freed;
-}
+	वापस मुक्तd == 0 ? SHRINK_STOP : मुक्तd;
+पूर्ण
 
-static struct shrinker kfree_rcu_shrinker = {
-	.count_objects = kfree_rcu_shrink_count,
-	.scan_objects = kfree_rcu_shrink_scan,
+अटल काष्ठा shrinker kमुक्त_rcu_shrinker = अणु
+	.count_objects = kमुक्त_rcu_shrink_count,
+	.scan_objects = kमुक्त_rcu_shrink_scan,
 	.batch = 0,
 	.seeks = DEFAULT_SEEKS,
-};
+पूर्ण;
 
-void __init kfree_rcu_scheduler_running(void)
-{
-	int cpu;
-	unsigned long flags;
+व्योम __init kमुक्त_rcu_scheduler_running(व्योम)
+अणु
+	पूर्णांक cpu;
+	अचिन्हित दीर्घ flags;
 
-	for_each_possible_cpu(cpu) {
-		struct kfree_rcu_cpu *krcp = per_cpu_ptr(&krc, cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा kमुक्त_rcu_cpu *krcp = per_cpu_ptr(&krc, cpu);
 
 		raw_spin_lock_irqsave(&krcp->lock, flags);
-		if (!krcp->head || krcp->monitor_todo) {
+		अगर (!krcp->head || krcp->monitor_toकरो) अणु
 			raw_spin_unlock_irqrestore(&krcp->lock, flags);
-			continue;
-		}
-		krcp->monitor_todo = true;
+			जारी;
+		पूर्ण
+		krcp->monitor_toकरो = true;
 		schedule_delayed_work_on(cpu, &krcp->monitor_work,
 					 KFREE_DRAIN_JIFFIES);
 		raw_spin_unlock_irqrestore(&krcp->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * During early boot, any blocking grace-period wait automatically
- * implies a grace period.  Later on, this is never the case for PREEMPTION.
+ * During early boot, any blocking grace-period रुको स्वतःmatically
+ * implies a grace period.  Later on, this is never the हाल क्रम PREEMPTION.
  *
- * However, because a context switch is a grace period for !PREEMPTION, any
- * blocking grace-period wait automatically implies a grace period if
- * there is only one CPU online at any point time during execution of
+ * However, because a context चयन is a grace period क्रम !PREEMPTION, any
+ * blocking grace-period रुको स्वतःmatically implies a grace period अगर
+ * there is only one CPU online at any poपूर्णांक समय during execution of
  * either synchronize_rcu() or synchronize_rcu_expedited().  It is OK to
  * occasionally incorrectly indicate that there are multiple CPUs online
- * when there was in fact only one the whole time, as this just adds some
+ * when there was in fact only one the whole समय, as this just adds some
  * overhead: RCU still operates correctly.
  */
-static int rcu_blocking_is_gp(void)
-{
-	int ret;
+अटल पूर्णांक rcu_blocking_is_gp(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (IS_ENABLED(CONFIG_PREEMPTION))
-		return rcu_scheduler_active == RCU_SCHEDULER_INACTIVE;
-	might_sleep();  /* Check for RCU read-side critical section. */
+	अगर (IS_ENABLED(CONFIG_PREEMPTION))
+		वापस rcu_scheduler_active == RCU_SCHEDULER_INACTIVE;
+	might_sleep();  /* Check क्रम RCU पढ़ो-side critical section. */
 	preempt_disable();
 	/*
 	 * If the rcu_state.n_online_cpus counter is equal to one,
 	 * there is only one CPU, and that CPU sees all prior accesses
-	 * made by any CPU that was online at the time of its access.
-	 * Furthermore, if this counter is equal to one, its value cannot
+	 * made by any CPU that was online at the समय of its access.
+	 * Furthermore, अगर this counter is equal to one, its value cannot
 	 * change until after the preempt_enable() below.
 	 *
-	 * Furthermore, if rcu_state.n_online_cpus is equal to one here,
+	 * Furthermore, अगर rcu_state.n_online_cpus is equal to one here,
 	 * all later CPUs (both this one and any that come online later
-	 * on) are guaranteed to see all accesses prior to this point
-	 * in the code, without the need for additional memory barriers.
+	 * on) are guaranteed to see all accesses prior to this poपूर्णांक
+	 * in the code, without the need क्रम additional memory barriers.
 	 * Those memory barriers are provided by CPU-hotplug code.
 	 */
 	ret = READ_ONCE(rcu_state.n_online_cpus) <= 1;
 	preempt_enable();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * synchronize_rcu - wait until a grace period has elapsed.
+ * synchronize_rcu - रुको until a grace period has elapsed.
  *
- * Control will return to the caller some time after a full grace
+ * Control will वापस to the caller some समय after a full grace
  * period has elapsed, in other words after all currently executing RCU
- * read-side critical sections have completed.  Note, however, that
- * upon return from synchronize_rcu(), the caller might well be executing
- * concurrently with new RCU read-side critical sections that began while
- * synchronize_rcu() was waiting.  RCU read-side critical sections are
- * delimited by rcu_read_lock() and rcu_read_unlock(), and may be nested.
- * In addition, regions of code across which interrupts, preemption, or
- * softirqs have been disabled also serve as RCU read-side critical
- * sections.  This includes hardware interrupt handlers, softirq handlers,
+ * पढ़ो-side critical sections have completed.  Note, however, that
+ * upon वापस from synchronize_rcu(), the caller might well be executing
+ * concurrently with new RCU पढ़ो-side critical sections that began जबतक
+ * synchronize_rcu() was रुकोing.  RCU पढ़ो-side critical sections are
+ * delimited by rcu_पढ़ो_lock() and rcu_पढ़ो_unlock(), and may be nested.
+ * In addition, regions of code across which पूर्णांकerrupts, preemption, or
+ * softirqs have been disabled also serve as RCU पढ़ो-side critical
+ * sections.  This includes hardware पूर्णांकerrupt handlers, softirq handlers,
  * and NMI handlers.
  *
  * Note that this guarantee implies further memory-ordering guarantees.
- * On systems with more than one CPU, when synchronize_rcu() returns,
+ * On प्रणालीs with more than one CPU, when synchronize_rcu() वापसs,
  * each CPU is guaranteed to have executed a full memory barrier since
- * the end of its last RCU read-side critical section whose beginning
+ * the end of its last RCU पढ़ो-side critical section whose beginning
  * preceded the call to synchronize_rcu().  In addition, each CPU having
- * an RCU read-side critical section that extends beyond the return from
+ * an RCU पढ़ो-side critical section that extends beyond the वापस from
  * synchronize_rcu() is guaranteed to have executed a full memory barrier
- * after the beginning of synchronize_rcu() and before the beginning of
- * that RCU read-side critical section.  Note that these guarantees include
+ * after the beginning of synchronize_rcu() and beक्रमe the beginning of
+ * that RCU पढ़ो-side critical section.  Note that these guarantees include
  * CPUs that are offline, idle, or executing in user mode, as well as CPUs
  * that are executing in the kernel.
  *
- * Furthermore, if CPU A invoked synchronize_rcu(), which returned
+ * Furthermore, अगर CPU A invoked synchronize_rcu(), which वापसed
  * to its caller on CPU B, then both CPU A and CPU B are guaranteed
  * to have executed a full memory barrier during the execution of
- * synchronize_rcu() -- even if CPU A and CPU B are the same CPU (but
- * again only if the system has more than one CPU).
+ * synchronize_rcu() -- even अगर CPU A and CPU B are the same CPU (but
+ * again only अगर the प्रणाली has more than one CPU).
  */
-void synchronize_rcu(void)
-{
+व्योम synchronize_rcu(व्योम)
+अणु
 	RCU_LOCKDEP_WARN(lock_is_held(&rcu_bh_lock_map) ||
 			 lock_is_held(&rcu_lock_map) ||
 			 lock_is_held(&rcu_sched_lock_map),
 			 "Illegal synchronize_rcu() in RCU read-side critical section");
-	if (rcu_blocking_is_gp())
-		return;  // Context allows vacuous grace periods.
-	if (rcu_gp_is_expedited())
+	अगर (rcu_blocking_is_gp())
+		वापस;  // Context allows vacuous grace periods.
+	अगर (rcu_gp_is_expedited())
 		synchronize_rcu_expedited();
-	else
-		wait_rcu_gp(call_rcu);
-}
+	अन्यथा
+		रुको_rcu_gp(call_rcu);
+पूर्ण
 EXPORT_SYMBOL_GPL(synchronize_rcu);
 
 /**
@@ -3795,17 +3796,17 @@ EXPORT_SYMBOL_GPL(synchronize_rcu);
  *
  * Returns a cookie that is used by a later call to cond_synchronize_rcu()
  * or poll_state_synchronize_rcu() to determine whether or not a full
- * grace period has elapsed in the meantime.
+ * grace period has elapsed in the meanसमय.
  */
-unsigned long get_state_synchronize_rcu(void)
-{
+अचिन्हित दीर्घ get_state_synchronize_rcu(व्योम)
+अणु
 	/*
-	 * Any prior manipulation of RCU-protected data must happen
-	 * before the load from ->gp_seq.
+	 * Any prior manipulation of RCU-रक्षित data must happen
+	 * beक्रमe the load from ->gp_seq.
 	 */
 	smp_mb();  /* ^^^ */
-	return rcu_seq_snap(&rcu_state.gp_seq);
-}
+	वापस rcu_seq_snap(&rcu_state.gp_seq);
+पूर्ण
 EXPORT_SYMBOL_GPL(get_state_synchronize_rcu);
 
 /**
@@ -3813,218 +3814,218 @@ EXPORT_SYMBOL_GPL(get_state_synchronize_rcu);
  *
  * Returns a cookie that is used by a later call to cond_synchronize_rcu()
  * or poll_state_synchronize_rcu() to determine whether or not a full
- * grace period has elapsed in the meantime.  If the needed grace period
- * is not already slated to start, notifies RCU core of the need for that
+ * grace period has elapsed in the meanसमय.  If the needed grace period
+ * is not alपढ़ोy slated to start, notअगरies RCU core of the need क्रम that
  * grace period.
  *
- * Interrupts must be enabled for the case where it is necessary to awaken
- * the grace-period kthread.
+ * Interrupts must be enabled क्रम the हाल where it is necessary to awaken
+ * the grace-period kthपढ़ो.
  */
-unsigned long start_poll_synchronize_rcu(void)
-{
-	unsigned long flags;
-	unsigned long gp_seq = get_state_synchronize_rcu();
+अचिन्हित दीर्घ start_poll_synchronize_rcu(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ gp_seq = get_state_synchronize_rcu();
 	bool needwake;
-	struct rcu_data *rdp;
-	struct rcu_node *rnp;
+	काष्ठा rcu_data *rdp;
+	काष्ठा rcu_node *rnp;
 
-	lockdep_assert_irqs_enabled();
+	lockdep_निश्चित_irqs_enabled();
 	local_irq_save(flags);
 	rdp = this_cpu_ptr(&rcu_data);
 	rnp = rdp->mynode;
-	raw_spin_lock_rcu_node(rnp); // irqs already disabled.
+	raw_spin_lock_rcu_node(rnp); // irqs alपढ़ोy disabled.
 	needwake = rcu_start_this_gp(rnp, rdp, gp_seq);
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-	if (needwake)
-		rcu_gp_kthread_wake();
-	return gp_seq;
-}
+	अगर (needwake)
+		rcu_gp_kthपढ़ो_wake();
+	वापस gp_seq;
+पूर्ण
 EXPORT_SYMBOL_GPL(start_poll_synchronize_rcu);
 
 /**
- * poll_state_synchronize_rcu - Conditionally wait for an RCU grace period
+ * poll_state_synchronize_rcu - Conditionally रुको क्रम an RCU grace period
  *
- * @oldstate: return from call to get_state_synchronize_rcu() or start_poll_synchronize_rcu()
+ * @oldstate: वापस from call to get_state_synchronize_rcu() or start_poll_synchronize_rcu()
  *
  * If a full RCU grace period has elapsed since the earlier call from
- * which oldstate was obtained, return @true, otherwise return @false.
- * If @false is returned, it is the caller's responsibilty to invoke this
- * function later on until it does return @true.  Alternatively, the caller
- * can explicitly wait for a grace period, for example, by passing @oldstate
+ * which oldstate was obtained, वापस @true, otherwise वापस @false.
+ * If @false is वापसed, it is the caller's responsibilty to invoke this
+ * function later on until it करोes वापस @true.  Alternatively, the caller
+ * can explicitly रुको क्रम a grace period, क्रम example, by passing @oldstate
  * to cond_synchronize_rcu() or by directly invoking synchronize_rcu().
  *
- * Yes, this function does not take counter wrap into account.
- * But counter wrap is harmless.  If the counter wraps, we have waited for
- * more than 2 billion grace periods (and way more on a 64-bit system!).
- * Those needing to keep oldstate values for very long time periods
- * (many hours even on 32-bit systems) should check them occasionally
+ * Yes, this function करोes not take counter wrap पूर्णांकo account.
+ * But counter wrap is harmless.  If the counter wraps, we have रुकोed क्रम
+ * more than 2 billion grace periods (and way more on a 64-bit प्रणाली!).
+ * Those needing to keep oldstate values क्रम very दीर्घ समय periods
+ * (many hours even on 32-bit प्रणालीs) should check them occasionally
  * and either refresh them or set a flag indicating that the grace period
  * has completed.
  */
-bool poll_state_synchronize_rcu(unsigned long oldstate)
-{
-	if (rcu_seq_done(&rcu_state.gp_seq, oldstate)) {
-		smp_mb(); /* Ensure GP ends before subsequent accesses. */
-		return true;
-	}
-	return false;
-}
+bool poll_state_synchronize_rcu(अचिन्हित दीर्घ oldstate)
+अणु
+	अगर (rcu_seq_करोne(&rcu_state.gp_seq, oldstate)) अणु
+		smp_mb(); /* Ensure GP ends beक्रमe subsequent accesses. */
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(poll_state_synchronize_rcu);
 
 /**
- * cond_synchronize_rcu - Conditionally wait for an RCU grace period
+ * cond_synchronize_rcu - Conditionally रुको क्रम an RCU grace period
  *
- * @oldstate: return value from earlier call to get_state_synchronize_rcu()
+ * @oldstate: वापस value from earlier call to get_state_synchronize_rcu()
  *
  * If a full RCU grace period has elapsed since the earlier call to
- * get_state_synchronize_rcu() or start_poll_synchronize_rcu(), just return.
- * Otherwise, invoke synchronize_rcu() to wait for a full grace period.
+ * get_state_synchronize_rcu() or start_poll_synchronize_rcu(), just वापस.
+ * Otherwise, invoke synchronize_rcu() to रुको क्रम a full grace period.
  *
- * Yes, this function does not take counter wrap into account.  But
- * counter wrap is harmless.  If the counter wraps, we have waited for
- * more than 2 billion grace periods (and way more on a 64-bit system!),
- * so waiting for one additional grace period should be just fine.
+ * Yes, this function करोes not take counter wrap पूर्णांकo account.  But
+ * counter wrap is harmless.  If the counter wraps, we have रुकोed क्रम
+ * more than 2 billion grace periods (and way more on a 64-bit प्रणाली!),
+ * so रुकोing क्रम one additional grace period should be just fine.
  */
-void cond_synchronize_rcu(unsigned long oldstate)
-{
-	if (!poll_state_synchronize_rcu(oldstate))
+व्योम cond_synchronize_rcu(अचिन्हित दीर्घ oldstate)
+अणु
+	अगर (!poll_state_synchronize_rcu(oldstate))
 		synchronize_rcu();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(cond_synchronize_rcu);
 
 /*
- * Check to see if there is any immediate RCU-related work to be done by
- * the current CPU, returning 1 if so and zero otherwise.  The checks are
+ * Check to see अगर there is any immediate RCU-related work to be करोne by
+ * the current CPU, वापसing 1 अगर so and zero otherwise.  The checks are
  * in order of increasing expense: checks that can be carried out against
- * CPU-local state are performed first.  However, we must check for CPU
- * stalls first, else we might not get a chance.
+ * CPU-local state are perक्रमmed first.  However, we must check क्रम CPU
+ * stalls first, अन्यथा we might not get a chance.
  */
-static int rcu_pending(int user)
-{
+अटल पूर्णांक rcu_pending(पूर्णांक user)
+अणु
 	bool gp_in_progress;
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
-	struct rcu_node *rnp = rdp->mynode;
+	काष्ठा rcu_data *rdp = this_cpu_ptr(&rcu_data);
+	काष्ठा rcu_node *rnp = rdp->mynode;
 
-	lockdep_assert_irqs_disabled();
+	lockdep_निश्चित_irqs_disabled();
 
-	/* Check for CPU stalls, if enabled. */
+	/* Check क्रम CPU stalls, अगर enabled. */
 	check_cpu_stall(rdp);
 
 	/* Does this CPU need a deferred NOCB wakeup? */
-	if (rcu_nocb_need_deferred_wakeup(rdp))
-		return 1;
+	अगर (rcu_nocb_need_deferred_wakeup(rdp))
+		वापस 1;
 
-	/* Is this a nohz_full CPU in userspace or idle?  (Ignore RCU if so.) */
-	if ((user || rcu_is_cpu_rrupt_from_idle()) && rcu_nohz_full_cpu())
-		return 0;
+	/* Is this a nohz_full CPU in userspace or idle?  (Ignore RCU अगर so.) */
+	अगर ((user || rcu_is_cpu_rrupt_from_idle()) && rcu_nohz_full_cpu())
+		वापस 0;
 
-	/* Is the RCU core waiting for a quiescent state from this CPU? */
+	/* Is the RCU core रुकोing क्रम a quiescent state from this CPU? */
 	gp_in_progress = rcu_gp_in_progress();
-	if (rdp->core_needs_qs && !rdp->cpu_no_qs.b.norm && gp_in_progress)
-		return 1;
+	अगर (rdp->core_needs_qs && !rdp->cpu_no_qs.b.norm && gp_in_progress)
+		वापस 1;
 
-	/* Does this CPU have callbacks ready to invoke? */
-	if (!rcu_rdp_is_offloaded(rdp) &&
-	    rcu_segcblist_ready_cbs(&rdp->cblist))
-		return 1;
+	/* Does this CPU have callbacks पढ़ोy to invoke? */
+	अगर (!rcu_rdp_is_offloaded(rdp) &&
+	    rcu_segcblist_पढ़ोy_cbs(&rdp->cblist))
+		वापस 1;
 
 	/* Has RCU gone idle with this CPU needing another grace period? */
-	if (!gp_in_progress && rcu_segcblist_is_enabled(&rdp->cblist) &&
+	अगर (!gp_in_progress && rcu_segcblist_is_enabled(&rdp->cblist) &&
 	    !rcu_rdp_is_offloaded(rdp) &&
 	    !rcu_segcblist_restempty(&rdp->cblist, RCU_NEXT_READY_TAIL))
-		return 1;
+		वापस 1;
 
 	/* Have RCU grace period completed or started?  */
-	if (rcu_seq_current(&rnp->gp_seq) != rdp->gp_seq ||
+	अगर (rcu_seq_current(&rnp->gp_seq) != rdp->gp_seq ||
 	    unlikely(READ_ONCE(rdp->gpwrap))) /* outside lock */
-		return 1;
+		वापस 1;
 
-	/* nothing to do */
-	return 0;
-}
+	/* nothing to करो */
+	वापस 0;
+पूर्ण
 
 /*
- * Helper function for rcu_barrier() tracing.  If tracing is disabled,
+ * Helper function क्रम rcu_barrier() tracing.  If tracing is disabled,
  * the compiler is expected to optimize this away.
  */
-static void rcu_barrier_trace(const char *s, int cpu, unsigned long done)
-{
+अटल व्योम rcu_barrier_trace(स्थिर अक्षर *s, पूर्णांक cpu, अचिन्हित दीर्घ करोne)
+अणु
 	trace_rcu_barrier(rcu_state.name, s, cpu,
-			  atomic_read(&rcu_state.barrier_cpu_count), done);
-}
+			  atomic_पढ़ो(&rcu_state.barrier_cpu_count), करोne);
+पूर्ण
 
 /*
- * RCU callback function for rcu_barrier().  If we are last, wake
+ * RCU callback function क्रम rcu_barrier().  If we are last, wake
  * up the task executing rcu_barrier().
  *
  * Note that the value of rcu_state.barrier_sequence must be captured
- * before the atomic_dec_and_test().  Otherwise, if this CPU is not last,
- * other CPUs might count the value down to zero before this CPU gets
+ * beक्रमe the atomic_dec_and_test().  Otherwise, अगर this CPU is not last,
+ * other CPUs might count the value करोwn to zero beक्रमe this CPU माला_लो
  * around to invoking rcu_barrier_trace(), which might result in bogus
  * data from the next instance of rcu_barrier().
  */
-static void rcu_barrier_callback(struct rcu_head *rhp)
-{
-	unsigned long __maybe_unused s = rcu_state.barrier_sequence;
+अटल व्योम rcu_barrier_callback(काष्ठा rcu_head *rhp)
+अणु
+	अचिन्हित दीर्घ __maybe_unused s = rcu_state.barrier_sequence;
 
-	if (atomic_dec_and_test(&rcu_state.barrier_cpu_count)) {
+	अगर (atomic_dec_and_test(&rcu_state.barrier_cpu_count)) अणु
 		rcu_barrier_trace(TPS("LastCB"), -1, s);
 		complete(&rcu_state.barrier_completion);
-	} else {
+	पूर्ण अन्यथा अणु
 		rcu_barrier_trace(TPS("CB"), -1, s);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Called with preemption disabled, and from cross-cpu IRQ context.
  */
-static void rcu_barrier_func(void *cpu_in)
-{
-	uintptr_t cpu = (uintptr_t)cpu_in;
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+अटल व्योम rcu_barrier_func(व्योम *cpu_in)
+अणु
+	uपूर्णांकptr_t cpu = (uपूर्णांकptr_t)cpu_in;
+	काष्ठा rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
 
 	rcu_barrier_trace(TPS("IRQ"), -1, rcu_state.barrier_sequence);
 	rdp->barrier_head.func = rcu_barrier_callback;
 	debug_rcu_head_queue(&rdp->barrier_head);
 	rcu_nocb_lock(rdp);
-	WARN_ON_ONCE(!rcu_nocb_flush_bypass(rdp, NULL, jiffies));
-	if (rcu_segcblist_entrain(&rdp->cblist, &rdp->barrier_head)) {
+	WARN_ON_ONCE(!rcu_nocb_flush_bypass(rdp, शून्य, jअगरfies));
+	अगर (rcu_segcblist_entrain(&rdp->cblist, &rdp->barrier_head)) अणु
 		atomic_inc(&rcu_state.barrier_cpu_count);
-	} else {
+	पूर्ण अन्यथा अणु
 		debug_rcu_head_unqueue(&rdp->barrier_head);
 		rcu_barrier_trace(TPS("IRQNQ"), -1,
 				  rcu_state.barrier_sequence);
-	}
+	पूर्ण
 	rcu_nocb_unlock(rdp);
-}
+पूर्ण
 
 /**
  * rcu_barrier - Wait until all in-flight call_rcu() callbacks complete.
  *
- * Note that this primitive does not necessarily wait for an RCU grace period
- * to complete.  For example, if there are no RCU callbacks queued anywhere
- * in the system, then rcu_barrier() is within its rights to return
- * immediately, without waiting for anything, much less an RCU grace period.
+ * Note that this primitive करोes not necessarily रुको क्रम an RCU grace period
+ * to complete.  For example, अगर there are no RCU callbacks queued anywhere
+ * in the प्रणाली, then rcu_barrier() is within its rights to वापस
+ * immediately, without रुकोing क्रम anything, much less an RCU grace period.
  */
-void rcu_barrier(void)
-{
-	uintptr_t cpu;
-	struct rcu_data *rdp;
-	unsigned long s = rcu_seq_snap(&rcu_state.barrier_sequence);
+व्योम rcu_barrier(व्योम)
+अणु
+	uपूर्णांकptr_t cpu;
+	काष्ठा rcu_data *rdp;
+	अचिन्हित दीर्घ s = rcu_seq_snap(&rcu_state.barrier_sequence);
 
 	rcu_barrier_trace(TPS("Begin"), -1, s);
 
 	/* Take mutex to serialize concurrent rcu_barrier() requests. */
 	mutex_lock(&rcu_state.barrier_mutex);
 
-	/* Did someone else do our work for us? */
-	if (rcu_seq_done(&rcu_state.barrier_sequence, s)) {
+	/* Did someone अन्यथा करो our work क्रम us? */
+	अगर (rcu_seq_करोne(&rcu_state.barrier_sequence, s)) अणु
 		rcu_barrier_trace(TPS("EarlyExit"), -1,
 				  rcu_state.barrier_sequence);
 		smp_mb(); /* caller's subsequent code after above check. */
 		mutex_unlock(&rcu_state.barrier_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Mark the start of the barrier operation. */
 	rcu_seq_start(&rcu_state.barrier_sequence);
@@ -4032,7 +4033,7 @@ void rcu_barrier(void)
 
 	/*
 	 * Initialize the count to two rather than to zero in order
-	 * to avoid a too-soon return to zero in case of an immediate
+	 * to aव्योम a too-soon वापस to zero in हाल of an immediate
 	 * invocation of the just-enqueued callback (or preemption of
 	 * this task).  Exclude CPU-hotplug operations to ensure that no
 	 * offline non-offloaded CPU has callbacks queued.
@@ -4042,45 +4043,45 @@ void rcu_barrier(void)
 	get_online_cpus();
 
 	/*
-	 * Force each CPU with callbacks to register a new callback.
+	 * Force each CPU with callbacks to रेजिस्टर a new callback.
 	 * When that callback is invoked, we will know that all of the
 	 * corresponding CPU's preceding callbacks have been invoked.
 	 */
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		rdp = per_cpu_ptr(&rcu_data, cpu);
-		if (cpu_is_offline(cpu) &&
+		अगर (cpu_is_offline(cpu) &&
 		    !rcu_rdp_is_offloaded(rdp))
-			continue;
-		if (rcu_segcblist_n_cbs(&rdp->cblist) && cpu_online(cpu)) {
+			जारी;
+		अगर (rcu_segcblist_n_cbs(&rdp->cblist) && cpu_online(cpu)) अणु
 			rcu_barrier_trace(TPS("OnlineQ"), cpu,
 					  rcu_state.barrier_sequence);
-			smp_call_function_single(cpu, rcu_barrier_func, (void *)cpu, 1);
-		} else if (rcu_segcblist_n_cbs(&rdp->cblist) &&
-			   cpu_is_offline(cpu)) {
+			smp_call_function_single(cpu, rcu_barrier_func, (व्योम *)cpu, 1);
+		पूर्ण अन्यथा अगर (rcu_segcblist_n_cbs(&rdp->cblist) &&
+			   cpu_is_offline(cpu)) अणु
 			rcu_barrier_trace(TPS("OfflineNoCBQ"), cpu,
 					  rcu_state.barrier_sequence);
 			local_irq_disable();
-			rcu_barrier_func((void *)cpu);
+			rcu_barrier_func((व्योम *)cpu);
 			local_irq_enable();
-		} else if (cpu_is_offline(cpu)) {
+		पूर्ण अन्यथा अगर (cpu_is_offline(cpu)) अणु
 			rcu_barrier_trace(TPS("OfflineNoCBNoQ"), cpu,
 					  rcu_state.barrier_sequence);
-		} else {
+		पूर्ण अन्यथा अणु
 			rcu_barrier_trace(TPS("OnlineNQ"), cpu,
 					  rcu_state.barrier_sequence);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	put_online_cpus();
 
 	/*
 	 * Now that we have an rcu_barrier_callback() callback on each
-	 * CPU, and thus each counted, remove the initial count.
+	 * CPU, and thus each counted, हटाओ the initial count.
 	 */
-	if (atomic_sub_and_test(2, &rcu_state.barrier_cpu_count))
+	अगर (atomic_sub_and_test(2, &rcu_state.barrier_cpu_count))
 		complete(&rcu_state.barrier_completion);
 
-	/* Wait for all rcu_barrier_callback() callbacks to be invoked. */
-	wait_for_completion(&rcu_state.barrier_completion);
+	/* Wait क्रम all rcu_barrier_callback() callbacks to be invoked. */
+	रुको_क्रम_completion(&rcu_state.barrier_completion);
 
 	/* Mark the end of the barrier operation. */
 	rcu_barrier_trace(TPS("Inc2"), -1, rcu_state.barrier_sequence);
@@ -4088,44 +4089,44 @@ void rcu_barrier(void)
 
 	/* Other rcu_barrier() invocations can now safely proceed. */
 	mutex_unlock(&rcu_state.barrier_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rcu_barrier);
 
 /*
- * Propagate ->qsinitmask bits up the rcu_node tree to account for the
- * first CPU in a given leaf rcu_node structure coming online.  The caller
- * must hold the corresponding leaf rcu_node ->lock with interrrupts
+ * Propagate ->qsiniपंचांगask bits up the rcu_node tree to account क्रम the
+ * first CPU in a given leaf rcu_node काष्ठाure coming online.  The caller
+ * must hold the corresponding leaf rcu_node ->lock with पूर्णांकerrrupts
  * disabled.
  */
-static void rcu_init_new_rnp(struct rcu_node *rnp_leaf)
-{
-	long mask;
-	long oldmask;
-	struct rcu_node *rnp = rnp_leaf;
+अटल व्योम rcu_init_new_rnp(काष्ठा rcu_node *rnp_leaf)
+अणु
+	दीर्घ mask;
+	दीर्घ oldmask;
+	काष्ठा rcu_node *rnp = rnp_leaf;
 
-	raw_lockdep_assert_held_rcu_node(rnp_leaf);
-	WARN_ON_ONCE(rnp->wait_blkd_tasks);
-	for (;;) {
+	raw_lockdep_निश्चित_held_rcu_node(rnp_leaf);
+	WARN_ON_ONCE(rnp->रुको_blkd_tasks);
+	क्रम (;;) अणु
 		mask = rnp->grpmask;
 		rnp = rnp->parent;
-		if (rnp == NULL)
-			return;
-		raw_spin_lock_rcu_node(rnp); /* Interrupts already disabled. */
+		अगर (rnp == शून्य)
+			वापस;
+		raw_spin_lock_rcu_node(rnp); /* Interrupts alपढ़ोy disabled. */
 		oldmask = rnp->qsmaskinit;
 		rnp->qsmaskinit |= mask;
-		raw_spin_unlock_rcu_node(rnp); /* Interrupts remain disabled. */
-		if (oldmask)
-			return;
-	}
-}
+		raw_spin_unlock_rcu_node(rnp); /* Interrupts reमुख्य disabled. */
+		अगर (oldmask)
+			वापस;
+	पूर्ण
+पूर्ण
 
 /*
- * Do boot-time initialization of a CPU's per-CPU RCU data.
+ * Do boot-समय initialization of a CPU's per-CPU RCU data.
  */
-static void __init
-rcu_boot_init_percpu_data(int cpu)
-{
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+अटल व्योम __init
+rcu_boot_init_percpu_data(पूर्णांक cpu)
+अणु
+	काष्ठा rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
 
 	/* Set up local state, ensuring consistent view of global state. */
 	rdp->grpmask = leaf_node_cpu_bit(rdp->mynode, cpu);
@@ -4138,47 +4139,47 @@ rcu_boot_init_percpu_data(int cpu)
 	rdp->rcu_onl_gp_flags = RCU_GP_CLEANED;
 	rdp->cpu = cpu;
 	rcu_boot_init_nocb_percpu_data(rdp);
-}
+पूर्ण
 
 /*
  * Invoked early in the CPU-online process, when pretty much all services
  * are available.  The incoming CPU is not present.
  *
  * Initializes a CPU's per-CPU RCU data.  Note that only one online or
- * offline event can be happening at a given time.  Note also that we can
+ * offline event can be happening at a given समय.  Note also that we can
  * accept some slop in the rsp->gp_seq access due to the fact that this
  * CPU cannot possibly have any non-offloaded RCU callbacks in flight yet.
- * And any offloaded callbacks are being numbered elsewhere.
+ * And any offloaded callbacks are being numbered अन्यथाwhere.
  */
-int rcutree_prepare_cpu(unsigned int cpu)
-{
-	unsigned long flags;
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
-	struct rcu_node *rnp = rcu_get_root();
+पूर्णांक rcutree_prepare_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+	काष्ठा rcu_node *rnp = rcu_get_root();
 
 	/* Set up local state, ensuring consistent view of global state. */
 	raw_spin_lock_irqsave_rcu_node(rnp, flags);
 	rdp->qlen_last_fqs_check = 0;
-	rdp->n_force_qs_snap = rcu_state.n_force_qs;
+	rdp->n_क्रमce_qs_snap = rcu_state.n_क्रमce_qs;
 	rdp->blimit = blimit;
 	rdp->dynticks_nesting = 1;	/* CPU not up, no tearing. */
 	rcu_dynticks_eqs_online();
-	raw_spin_unlock_rcu_node(rnp);		/* irqs remain disabled. */
+	raw_spin_unlock_rcu_node(rnp);		/* irqs reमुख्य disabled. */
 
 	/*
 	 * Only non-NOCB CPUs that didn't have early-boot callbacks need to be
 	 * (re-)initialized.
 	 */
-	if (!rcu_segcblist_is_enabled(&rdp->cblist))
+	अगर (!rcu_segcblist_is_enabled(&rdp->cblist))
 		rcu_segcblist_init(&rdp->cblist);  /* Re-enable callbacks. */
 
 	/*
-	 * Add CPU to leaf rcu_node pending-online bitmask.  Any needed
+	 * Add CPU to leaf rcu_node pending-online biपंचांगask.  Any needed
 	 * propagation up the rcu_node tree will happen at the beginning
 	 * of the next grace period.
 	 */
 	rnp = rdp->mynode;
-	raw_spin_lock_rcu_node(rnp);		/* irqs already disabled. */
+	raw_spin_lock_rcu_node(rnp);		/* irqs alपढ़ोy disabled. */
 	rdp->beenonline = true;	 /* We have now been online. */
 	rdp->gp_seq = READ_ONCE(rnp->gp_seq);
 	rdp->gp_seq_needed = rdp->gp_seq;
@@ -4189,57 +4190,57 @@ int rcutree_prepare_cpu(unsigned int cpu)
 	rdp->rcu_iw_gp_seq = rdp->gp_seq - 1;
 	trace_rcu_grace_period(rcu_state.name, rdp->gp_seq, TPS("cpuonl"));
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-	rcu_prepare_kthreads(cpu);
-	rcu_spawn_cpu_nocb_kthread(cpu);
+	rcu_prepare_kthपढ़ोs(cpu);
+	rcu_spawn_cpu_nocb_kthपढ़ो(cpu);
 	WRITE_ONCE(rcu_state.n_online_cpus, rcu_state.n_online_cpus + 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Update RCU priority boot kthread affinity for CPU-hotplug changes.
+ * Update RCU priority boot kthपढ़ो affinity क्रम CPU-hotplug changes.
  */
-static void rcutree_affinity_setting(unsigned int cpu, int outgoing)
-{
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+अटल व्योम rcutree_affinity_setting(अचिन्हित पूर्णांक cpu, पूर्णांक outgoing)
+अणु
+	काष्ठा rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
 
-	rcu_boost_kthread_setaffinity(rdp->mynode, outgoing);
-}
+	rcu_boost_kthपढ़ो_setaffinity(rdp->mynode, outgoing);
+पूर्ण
 
 /*
  * Near the end of the CPU-online process.  Pretty much all services
  * enabled, and the CPU is now very much alive.
  */
-int rcutree_online_cpu(unsigned int cpu)
-{
-	unsigned long flags;
-	struct rcu_data *rdp;
-	struct rcu_node *rnp;
+पूर्णांक rcutree_online_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा rcu_data *rdp;
+	काष्ठा rcu_node *rnp;
 
 	rdp = per_cpu_ptr(&rcu_data, cpu);
 	rnp = rdp->mynode;
 	raw_spin_lock_irqsave_rcu_node(rnp, flags);
 	rnp->ffmask |= rdp->grpmask;
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-	if (rcu_scheduler_active == RCU_SCHEDULER_INACTIVE)
-		return 0; /* Too early in boot for scheduler work. */
+	अगर (rcu_scheduler_active == RCU_SCHEDULER_INACTIVE)
+		वापस 0; /* Too early in boot क्रम scheduler work. */
 	sync_sched_exp_online_cleanup(cpu);
 	rcutree_affinity_setting(cpu, -1);
 
-	// Stop-machine done, so allow nohz_full to disable tick.
+	// Stop-machine करोne, so allow nohz_full to disable tick.
 	tick_dep_clear(TICK_DEP_BIT_RCU);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Near the beginning of the process.  The CPU is still very much alive
  * with pretty much all services enabled.
  */
-int rcutree_offline_cpu(unsigned int cpu)
-{
-	unsigned long flags;
-	struct rcu_data *rdp;
-	struct rcu_node *rnp;
+पूर्णांक rcutree_offline_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा rcu_data *rdp;
+	काष्ठा rcu_node *rnp;
 
 	rdp = per_cpu_ptr(&rcu_data, cpu);
 	rnp = rdp->mynode;
@@ -4249,15 +4250,15 @@ int rcutree_offline_cpu(unsigned int cpu)
 
 	rcutree_affinity_setting(cpu, cpu);
 
-	// nohz_full CPUs need the tick for stop-machine to work quickly
+	// nohz_full CPUs need the tick क्रम stop-machine to work quickly
 	tick_dep_set(TICK_DEP_BIT_RCU);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Mark the specified CPU as being online so that subsequent grace periods
- * (both expedited and normal) will wait on it.  Note that this means that
- * incoming CPUs are not allowed to use RCU read-side critical sections
+ * Mark the specअगरied CPU as being online so that subsequent grace periods
+ * (both expedited and normal) will रुको on it.  Note that this means that
+ * incoming CPUs are not allowed to use RCU पढ़ो-side critical sections
  * until this function is called.  Failing to observe this restriction
  * will result in lockdep splats.
  *
@@ -4265,17 +4266,17 @@ int rcutree_offline_cpu(unsigned int cpu)
  * from the incoming CPU rather than from the cpuhp_step mechanism.
  * This is because this function must be invoked at a precise location.
  */
-void rcu_cpu_starting(unsigned int cpu)
-{
-	unsigned long flags;
-	unsigned long mask;
-	struct rcu_data *rdp;
-	struct rcu_node *rnp;
+व्योम rcu_cpu_starting(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ mask;
+	काष्ठा rcu_data *rdp;
+	काष्ठा rcu_node *rnp;
 	bool newcpu;
 
 	rdp = per_cpu_ptr(&rcu_data, cpu);
-	if (rdp->cpu_started)
-		return;
+	अगर (rdp->cpu_started)
+		वापस;
 	rdp->cpu_started = true;
 
 	rnp = rdp->mynode;
@@ -4287,7 +4288,7 @@ void rcu_cpu_starting(unsigned int cpu)
 	WRITE_ONCE(rnp->qsmaskinitnext, rnp->qsmaskinitnext | mask);
 	newcpu = !(rnp->expmaskinitnext & mask);
 	rnp->expmaskinitnext |= mask;
-	/* Allow lockless access for expedited grace periods. */
+	/* Allow lockless access क्रम expedited grace periods. */
 	smp_store_release(&rcu_state.ncpus, rcu_state.ncpus + newcpu); /* ^^^ */
 	ASSERT_EXCLUSIVE_WRITER(rcu_state.ncpus);
 	rcu_gpnum_ovf(rnp, rdp); /* Offline-induced counter wrap? */
@@ -4295,57 +4296,57 @@ void rcu_cpu_starting(unsigned int cpu)
 	rdp->rcu_onl_gp_flags = READ_ONCE(rcu_state.gp_flags);
 
 	/* An incoming CPU should never be blocking a grace period. */
-	if (WARN_ON_ONCE(rnp->qsmask & mask)) { /* RCU waiting on incoming CPU? */
+	अगर (WARN_ON_ONCE(rnp->qsmask & mask)) अणु /* RCU रुकोing on incoming CPU? */
 		rcu_disable_urgency_upon_qs(rdp);
 		/* Report QS -after- changing ->qsmaskinitnext! */
 		rcu_report_qs_rnp(mask, rnp, rnp->gp_seq, flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-	}
+	पूर्ण
 	smp_mb(); // Pair with rcu_gp_cleanup()'s ->ofl_seq barrier().
 	WRITE_ONCE(rnp->ofl_seq, rnp->ofl_seq + 1);
 	WARN_ON_ONCE(rnp->ofl_seq & 0x1);
-	smp_mb(); /* Ensure RCU read-side usage follows above initialization. */
-}
+	smp_mb(); /* Ensure RCU पढ़ो-side usage follows above initialization. */
+पूर्ण
 
 /*
- * The outgoing function has no further need of RCU, so remove it from
+ * The outgoing function has no further need of RCU, so हटाओ it from
  * the rcu_node tree's ->qsmaskinitnext bit masks.
  *
  * Note that this function is special in that it is invoked directly
  * from the outgoing CPU rather than from the cpuhp_step mechanism.
  * This is because this function must be invoked at a precise location.
  */
-void rcu_report_dead(unsigned int cpu)
-{
-	unsigned long flags;
-	unsigned long mask;
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
-	struct rcu_node *rnp = rdp->mynode;  /* Outgoing CPU's rdp & rnp. */
+व्योम rcu_report_dead(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ mask;
+	काष्ठा rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+	काष्ठा rcu_node *rnp = rdp->mynode;  /* Outgoing CPU's rdp & rnp. */
 
 	// Do any dangling deferred wakeups.
-	do_nocb_deferred_wakeup(rdp);
+	करो_nocb_deferred_wakeup(rdp);
 
-	/* QS for any half-done expedited grace period. */
+	/* QS क्रम any half-करोne expedited grace period. */
 	preempt_disable();
 	rcu_report_exp_rdp(this_cpu_ptr(&rcu_data));
 	preempt_enable();
 	rcu_preempt_deferred_qs(current);
 
-	/* Remove outgoing CPU from mask in the leaf rcu_node structure. */
+	/* Remove outgoing CPU from mask in the leaf rcu_node काष्ठाure. */
 	mask = rdp->grpmask;
 	WRITE_ONCE(rnp->ofl_seq, rnp->ofl_seq + 1);
 	WARN_ON_ONCE(!(rnp->ofl_seq & 0x1));
 	smp_mb(); // Pair with rcu_gp_cleanup()'s ->ofl_seq barrier().
 	raw_spin_lock(&rcu_state.ofl_lock);
-	raw_spin_lock_irqsave_rcu_node(rnp, flags); /* Enforce GP memory-order guarantee. */
+	raw_spin_lock_irqsave_rcu_node(rnp, flags); /* Enक्रमce GP memory-order guarantee. */
 	rdp->rcu_ofl_gp_seq = READ_ONCE(rcu_state.gp_seq);
 	rdp->rcu_ofl_gp_flags = READ_ONCE(rcu_state.gp_flags);
-	if (rnp->qsmask & mask) { /* RCU waiting on outgoing CPU? */
-		/* Report quiescent state -before- changing ->qsmaskinitnext! */
+	अगर (rnp->qsmask & mask) अणु /* RCU रुकोing on outgoing CPU? */
+		/* Report quiescent state -beक्रमe- changing ->qsmaskinitnext! */
 		rcu_report_qs_rnp(mask, rnp, rnp->gp_seq, flags);
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
-	}
+	पूर्ण
 	WRITE_ONCE(rnp->qsmaskinitnext, rnp->qsmaskinitnext & ~mask);
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	raw_spin_unlock(&rcu_state.ofl_lock);
@@ -4354,33 +4355,33 @@ void rcu_report_dead(unsigned int cpu)
 	WARN_ON_ONCE(rnp->ofl_seq & 0x1);
 
 	rdp->cpu_started = false;
-}
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 /*
  * The outgoing CPU has just passed through the dying-idle state, and we
- * are being invoked from the CPU that was IPIed to continue the offline
+ * are being invoked from the CPU that was IPIed to जारी the offline
  * operation.  Migrate the outgoing CPU's callbacks to the current CPU.
  */
-void rcutree_migrate_callbacks(int cpu)
-{
-	unsigned long flags;
-	struct rcu_data *my_rdp;
-	struct rcu_node *my_rnp;
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+व्योम rcutree_migrate_callbacks(पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा rcu_data *my_rdp;
+	काष्ठा rcu_node *my_rnp;
+	काष्ठा rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
 	bool needwake;
 
-	if (rcu_rdp_is_offloaded(rdp) ||
+	अगर (rcu_rdp_is_offloaded(rdp) ||
 	    rcu_segcblist_empty(&rdp->cblist))
-		return;  /* No callbacks to migrate. */
+		वापस;  /* No callbacks to migrate. */
 
 	local_irq_save(flags);
 	my_rdp = this_cpu_ptr(&rcu_data);
 	my_rnp = my_rdp->mynode;
-	rcu_nocb_lock(my_rdp); /* irqs already disabled. */
-	WARN_ON_ONCE(!rcu_nocb_flush_bypass(my_rdp, NULL, jiffies));
-	raw_spin_lock_rcu_node(my_rnp); /* irqs already disabled. */
-	/* Leverage recent GPs and set GP for new callbacks. */
+	rcu_nocb_lock(my_rdp); /* irqs alपढ़ोy disabled. */
+	WARN_ON_ONCE(!rcu_nocb_flush_bypass(my_rdp, शून्य, jअगरfies));
+	raw_spin_lock_rcu_node(my_rnp); /* irqs alपढ़ोy disabled. */
+	/* Leverage recent GPs and set GP क्रम new callbacks. */
 	needwake = rcu_advance_cbs(my_rnp, rdp) ||
 		   rcu_advance_cbs(my_rnp, my_rdp);
 	rcu_segcblist_merge(&my_rdp->cblist, &rdp->cblist);
@@ -4388,148 +4389,148 @@ void rcutree_migrate_callbacks(int cpu)
 	rcu_segcblist_disable(&rdp->cblist);
 	WARN_ON_ONCE(rcu_segcblist_empty(&my_rdp->cblist) !=
 		     !rcu_segcblist_n_cbs(&my_rdp->cblist));
-	if (rcu_rdp_is_offloaded(my_rdp)) {
-		raw_spin_unlock_rcu_node(my_rnp); /* irqs remain disabled. */
+	अगर (rcu_rdp_is_offloaded(my_rdp)) अणु
+		raw_spin_unlock_rcu_node(my_rnp); /* irqs reमुख्य disabled. */
 		__call_rcu_nocb_wake(my_rdp, true, flags);
-	} else {
-		rcu_nocb_unlock(my_rdp); /* irqs remain disabled. */
+	पूर्ण अन्यथा अणु
+		rcu_nocb_unlock(my_rdp); /* irqs reमुख्य disabled. */
 		raw_spin_unlock_irqrestore_rcu_node(my_rnp, flags);
-	}
-	if (needwake)
-		rcu_gp_kthread_wake();
-	lockdep_assert_irqs_enabled();
+	पूर्ण
+	अगर (needwake)
+		rcu_gp_kthपढ़ो_wake();
+	lockdep_निश्चित_irqs_enabled();
 	WARN_ONCE(rcu_segcblist_n_cbs(&rdp->cblist) != 0 ||
 		  !rcu_segcblist_empty(&rdp->cblist),
 		  "rcu_cleanup_dead_cpu: Callbacks on offline CPU %d: qlen=%lu, 1stCB=%p\n",
 		  cpu, rcu_segcblist_n_cbs(&rdp->cblist),
 		  rcu_segcblist_first_cb(&rdp->cblist));
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * On non-huge systems, use expedited RCU grace periods to make suspend
+ * On non-huge प्रणालीs, use expedited RCU grace periods to make suspend
  * and hibernation run faster.
  */
-static int rcu_pm_notify(struct notifier_block *self,
-			 unsigned long action, void *hcpu)
-{
-	switch (action) {
-	case PM_HIBERNATION_PREPARE:
-	case PM_SUSPEND_PREPARE:
+अटल पूर्णांक rcu_pm_notअगरy(काष्ठा notअगरier_block *self,
+			 अचिन्हित दीर्घ action, व्योम *hcpu)
+अणु
+	चयन (action) अणु
+	हाल PM_HIBERNATION_PREPARE:
+	हाल PM_SUSPEND_PREPARE:
 		rcu_expedite_gp();
-		break;
-	case PM_POST_HIBERNATION:
-	case PM_POST_SUSPEND:
+		अवरोध;
+	हाल PM_POST_HIBERNATION:
+	हाल PM_POST_SUSPEND:
 		rcu_unexpedite_gp();
-		break;
-	default:
-		break;
-	}
-	return NOTIFY_OK;
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_OK;
+पूर्ण
 
 /*
- * Spawn the kthreads that handle RCU's grace periods.
+ * Spawn the kthपढ़ोs that handle RCU's grace periods.
  */
-static int __init rcu_spawn_gp_kthread(void)
-{
-	unsigned long flags;
-	int kthread_prio_in = kthread_prio;
-	struct rcu_node *rnp;
-	struct sched_param sp;
-	struct task_struct *t;
+अटल पूर्णांक __init rcu_spawn_gp_kthपढ़ो(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक kthपढ़ो_prio_in = kthपढ़ो_prio;
+	काष्ठा rcu_node *rnp;
+	काष्ठा sched_param sp;
+	काष्ठा task_काष्ठा *t;
 
-	/* Force priority into range. */
-	if (IS_ENABLED(CONFIG_RCU_BOOST) && kthread_prio < 2
+	/* Force priority पूर्णांकo range. */
+	अगर (IS_ENABLED(CONFIG_RCU_BOOST) && kthपढ़ो_prio < 2
 	    && IS_BUILTIN(CONFIG_RCU_TORTURE_TEST))
-		kthread_prio = 2;
-	else if (IS_ENABLED(CONFIG_RCU_BOOST) && kthread_prio < 1)
-		kthread_prio = 1;
-	else if (kthread_prio < 0)
-		kthread_prio = 0;
-	else if (kthread_prio > 99)
-		kthread_prio = 99;
+		kthपढ़ो_prio = 2;
+	अन्यथा अगर (IS_ENABLED(CONFIG_RCU_BOOST) && kthपढ़ो_prio < 1)
+		kthपढ़ो_prio = 1;
+	अन्यथा अगर (kthपढ़ो_prio < 0)
+		kthपढ़ो_prio = 0;
+	अन्यथा अगर (kthपढ़ो_prio > 99)
+		kthपढ़ो_prio = 99;
 
-	if (kthread_prio != kthread_prio_in)
+	अगर (kthपढ़ो_prio != kthपढ़ो_prio_in)
 		pr_alert("rcu_spawn_gp_kthread(): Limited prio to %d from %d\n",
-			 kthread_prio, kthread_prio_in);
+			 kthपढ़ो_prio, kthपढ़ो_prio_in);
 
 	rcu_scheduler_fully_active = 1;
-	t = kthread_create(rcu_gp_kthread, NULL, "%s", rcu_state.name);
-	if (WARN_ONCE(IS_ERR(t), "%s: Could not start grace-period kthread, OOM is now expected behavior\n", __func__))
-		return 0;
-	if (kthread_prio) {
-		sp.sched_priority = kthread_prio;
+	t = kthपढ़ो_create(rcu_gp_kthपढ़ो, शून्य, "%s", rcu_state.name);
+	अगर (WARN_ONCE(IS_ERR(t), "%s: Could not start grace-period kthread, OOM is now expected behavior\n", __func__))
+		वापस 0;
+	अगर (kthपढ़ो_prio) अणु
+		sp.sched_priority = kthपढ़ो_prio;
 		sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
-	}
+	पूर्ण
 	rnp = rcu_get_root();
 	raw_spin_lock_irqsave_rcu_node(rnp, flags);
-	WRITE_ONCE(rcu_state.gp_activity, jiffies);
-	WRITE_ONCE(rcu_state.gp_req_activity, jiffies);
-	// Reset .gp_activity and .gp_req_activity before setting .gp_kthread.
-	smp_store_release(&rcu_state.gp_kthread, t);  /* ^^^ */
+	WRITE_ONCE(rcu_state.gp_activity, jअगरfies);
+	WRITE_ONCE(rcu_state.gp_req_activity, jअगरfies);
+	// Reset .gp_activity and .gp_req_activity beक्रमe setting .gp_kthपढ़ो.
+	smp_store_release(&rcu_state.gp_kthपढ़ो, t);  /* ^^^ */
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	wake_up_process(t);
-	rcu_spawn_nocb_kthreads();
-	rcu_spawn_boost_kthreads();
-	return 0;
-}
-early_initcall(rcu_spawn_gp_kthread);
+	rcu_spawn_nocb_kthपढ़ोs();
+	rcu_spawn_boost_kthपढ़ोs();
+	वापस 0;
+पूर्ण
+early_initcall(rcu_spawn_gp_kthपढ़ो);
 
 /*
  * This function is invoked towards the end of the scheduler's
- * initialization process.  Before this is called, the idle task might
- * contain synchronous grace-period primitives (during which time, this idle
- * task is booting the system, and such primitives are no-ops).  After this
+ * initialization process.  Beक्रमe this is called, the idle task might
+ * contain synchronous grace-period primitives (during which समय, this idle
+ * task is booting the प्रणाली, and such primitives are no-ops).  After this
  * function is called, any synchronous grace-period primitives are run as
- * expedited, with the requesting task driving the grace period forward.
- * A later core_initcall() rcu_set_runtime_mode() will switch to full
- * runtime RCU functionality.
+ * expedited, with the requesting task driving the grace period क्रमward.
+ * A later core_initcall() rcu_set_runसमय_mode() will चयन to full
+ * runसमय RCU functionality.
  */
-void rcu_scheduler_starting(void)
-{
+व्योम rcu_scheduler_starting(व्योम)
+अणु
 	WARN_ON(num_online_cpus() != 1);
-	WARN_ON(nr_context_switches() > 0);
+	WARN_ON(nr_context_चयनes() > 0);
 	rcu_test_sync_prims();
 	rcu_scheduler_active = RCU_SCHEDULER_INIT;
 	rcu_test_sync_prims();
-}
+पूर्ण
 
 /*
- * Helper function for rcu_init() that initializes the rcu_state structure.
+ * Helper function क्रम rcu_init() that initializes the rcu_state काष्ठाure.
  */
-static void __init rcu_init_one(void)
-{
-	static const char * const buf[] = RCU_NODE_NAME_INIT;
-	static const char * const fqs[] = RCU_FQS_NAME_INIT;
-	static struct lock_class_key rcu_node_class[RCU_NUM_LVLS];
-	static struct lock_class_key rcu_fqs_class[RCU_NUM_LVLS];
+अटल व्योम __init rcu_init_one(व्योम)
+अणु
+	अटल स्थिर अक्षर * स्थिर buf[] = RCU_NODE_NAME_INIT;
+	अटल स्थिर अक्षर * स्थिर fqs[] = RCU_FQS_NAME_INIT;
+	अटल काष्ठा lock_class_key rcu_node_class[RCU_NUM_LVLS];
+	अटल काष्ठा lock_class_key rcu_fqs_class[RCU_NUM_LVLS];
 
-	int levelspread[RCU_NUM_LVLS];		/* kids/node in each level. */
-	int cpustride = 1;
-	int i;
-	int j;
-	struct rcu_node *rnp;
+	पूर्णांक levelspपढ़ो[RCU_NUM_LVLS];		/* kids/node in each level. */
+	पूर्णांक cpustride = 1;
+	पूर्णांक i;
+	पूर्णांक j;
+	काष्ठा rcu_node *rnp;
 
 	BUILD_BUG_ON(RCU_NUM_LVLS > ARRAY_SIZE(buf));  /* Fix buf[] init! */
 
 	/* Silence gcc 4.8 false positive about array index out of range. */
-	if (rcu_num_lvls <= 0 || rcu_num_lvls > RCU_NUM_LVLS)
+	अगर (rcu_num_lvls <= 0 || rcu_num_lvls > RCU_NUM_LVLS)
 		panic("rcu_init_one: rcu_num_lvls out of range");
 
 	/* Initialize the level-tracking arrays. */
 
-	for (i = 1; i < rcu_num_lvls; i++)
+	क्रम (i = 1; i < rcu_num_lvls; i++)
 		rcu_state.level[i] =
 			rcu_state.level[i - 1] + num_rcu_lvl[i - 1];
-	rcu_init_levelspread(levelspread, num_rcu_lvl);
+	rcu_init_levelspपढ़ो(levelspपढ़ो, num_rcu_lvl);
 
 	/* Initialize the elements themselves, starting from the leaves. */
 
-	for (i = rcu_num_lvls - 1; i >= 0; i--) {
-		cpustride *= levelspread[i];
+	क्रम (i = rcu_num_lvls - 1; i >= 0; i--) अणु
+		cpustride *= levelspपढ़ो[i];
 		rnp = rcu_state.level[i];
-		for (j = 0; j < num_rcu_lvl[i]; j++, rnp++) {
+		क्रम (j = 0; j < num_rcu_lvl[i]; j++, rnp++) अणु
 			raw_spin_lock_init(&ACCESS_PRIVATE(rnp, lock));
 			lockdep_set_class_and_name(&ACCESS_PRIVATE(rnp, lock),
 						   &rcu_node_class[i], buf[i]);
@@ -4543,208 +4544,208 @@ static void __init rcu_init_one(void)
 			rnp->qsmaskinit = 0;
 			rnp->grplo = j * cpustride;
 			rnp->grphi = (j + 1) * cpustride - 1;
-			if (rnp->grphi >= nr_cpu_ids)
+			अगर (rnp->grphi >= nr_cpu_ids)
 				rnp->grphi = nr_cpu_ids - 1;
-			if (i == 0) {
+			अगर (i == 0) अणु
 				rnp->grpnum = 0;
 				rnp->grpmask = 0;
-				rnp->parent = NULL;
-			} else {
-				rnp->grpnum = j % levelspread[i - 1];
+				rnp->parent = शून्य;
+			पूर्ण अन्यथा अणु
+				rnp->grpnum = j % levelspपढ़ो[i - 1];
 				rnp->grpmask = BIT(rnp->grpnum);
 				rnp->parent = rcu_state.level[i - 1] +
-					      j / levelspread[i - 1];
-			}
+					      j / levelspपढ़ो[i - 1];
+			पूर्ण
 			rnp->level = i;
 			INIT_LIST_HEAD(&rnp->blkd_tasks);
 			rcu_init_one_nocb(rnp);
-			init_waitqueue_head(&rnp->exp_wq[0]);
-			init_waitqueue_head(&rnp->exp_wq[1]);
-			init_waitqueue_head(&rnp->exp_wq[2]);
-			init_waitqueue_head(&rnp->exp_wq[3]);
+			init_रुकोqueue_head(&rnp->exp_wq[0]);
+			init_रुकोqueue_head(&rnp->exp_wq[1]);
+			init_रुकोqueue_head(&rnp->exp_wq[2]);
+			init_रुकोqueue_head(&rnp->exp_wq[3]);
 			spin_lock_init(&rnp->exp_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	init_swait_queue_head(&rcu_state.gp_wq);
-	init_swait_queue_head(&rcu_state.expedited_wq);
+	init_sरुको_queue_head(&rcu_state.gp_wq);
+	init_sरुको_queue_head(&rcu_state.expedited_wq);
 	rnp = rcu_first_leaf_node();
-	for_each_possible_cpu(i) {
-		while (i > rnp->grphi)
+	क्रम_each_possible_cpu(i) अणु
+		जबतक (i > rnp->grphi)
 			rnp++;
 		per_cpu_ptr(&rcu_data, i)->mynode = rnp;
 		rcu_boot_init_percpu_data(i);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Compute the rcu_node tree geometry from kernel parameters.  This cannot
  * replace the definitions in tree.h because those are needed to size
- * the ->node array in the rcu_state structure.
+ * the ->node array in the rcu_state काष्ठाure.
  */
-static void __init rcu_init_geometry(void)
-{
-	ulong d;
-	int i;
-	int rcu_capacity[RCU_NUM_LVLS];
+अटल व्योम __init rcu_init_geometry(व्योम)
+अणु
+	uदीर्घ d;
+	पूर्णांक i;
+	पूर्णांक rcu_capacity[RCU_NUM_LVLS];
 
 	/*
-	 * Initialize any unspecified boot parameters.
-	 * The default values of jiffies_till_first_fqs and
-	 * jiffies_till_next_fqs are set to the RCU_JIFFIES_TILL_FORCE_QS
-	 * value, which is a function of HZ, then adding one for each
-	 * RCU_JIFFIES_FQS_DIV CPUs that might be on the system.
+	 * Initialize any unspecअगरied boot parameters.
+	 * The शेष values of jअगरfies_till_first_fqs and
+	 * jअगरfies_till_next_fqs are set to the RCU_JIFFIES_TILL_FORCE_QS
+	 * value, which is a function of HZ, then adding one क्रम each
+	 * RCU_JIFFIES_FQS_DIV CPUs that might be on the प्रणाली.
 	 */
 	d = RCU_JIFFIES_TILL_FORCE_QS + nr_cpu_ids / RCU_JIFFIES_FQS_DIV;
-	if (jiffies_till_first_fqs == ULONG_MAX)
-		jiffies_till_first_fqs = d;
-	if (jiffies_till_next_fqs == ULONG_MAX)
-		jiffies_till_next_fqs = d;
-	adjust_jiffies_till_sched_qs();
+	अगर (jअगरfies_till_first_fqs == अच_दीर्घ_उच्च)
+		jअगरfies_till_first_fqs = d;
+	अगर (jअगरfies_till_next_fqs == अच_दीर्घ_उच्च)
+		jअगरfies_till_next_fqs = d;
+	adjust_jअगरfies_till_sched_qs();
 
-	/* If the compile-time values are accurate, just leave. */
-	if (rcu_fanout_leaf == RCU_FANOUT_LEAF &&
+	/* If the compile-समय values are accurate, just leave. */
+	अगर (rcu_fanout_leaf == RCU_FANOUT_LEAF &&
 	    nr_cpu_ids == NR_CPUS)
-		return;
+		वापस;
 	pr_info("Adjusting geometry for rcu_fanout_leaf=%d, nr_cpu_ids=%u\n",
 		rcu_fanout_leaf, nr_cpu_ids);
 
 	/*
-	 * The boot-time rcu_fanout_leaf parameter must be at least two
+	 * The boot-समय rcu_fanout_leaf parameter must be at least two
 	 * and cannot exceed the number of bits in the rcu_node masks.
-	 * Complain and fall back to the compile-time values if this
+	 * Complain and fall back to the compile-समय values अगर this
 	 * limit is exceeded.
 	 */
-	if (rcu_fanout_leaf < 2 ||
-	    rcu_fanout_leaf > sizeof(unsigned long) * 8) {
+	अगर (rcu_fanout_leaf < 2 ||
+	    rcu_fanout_leaf > माप(अचिन्हित दीर्घ) * 8) अणु
 		rcu_fanout_leaf = RCU_FANOUT_LEAF;
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Compute number of nodes that can be handled an rcu_node tree
 	 * with the given number of levels.
 	 */
 	rcu_capacity[0] = rcu_fanout_leaf;
-	for (i = 1; i < RCU_NUM_LVLS; i++)
+	क्रम (i = 1; i < RCU_NUM_LVLS; i++)
 		rcu_capacity[i] = rcu_capacity[i - 1] * RCU_FANOUT;
 
 	/*
 	 * The tree must be able to accommodate the configured number of CPUs.
-	 * If this limit is exceeded, fall back to the compile-time values.
+	 * If this limit is exceeded, fall back to the compile-समय values.
 	 */
-	if (nr_cpu_ids > rcu_capacity[RCU_NUM_LVLS - 1]) {
+	अगर (nr_cpu_ids > rcu_capacity[RCU_NUM_LVLS - 1]) अणु
 		rcu_fanout_leaf = RCU_FANOUT_LEAF;
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Calculate the number of levels in the tree. */
-	for (i = 0; nr_cpu_ids > rcu_capacity[i]; i++) {
-	}
+	क्रम (i = 0; nr_cpu_ids > rcu_capacity[i]; i++) अणु
+	पूर्ण
 	rcu_num_lvls = i + 1;
 
 	/* Calculate the number of rcu_nodes at each level of the tree. */
-	for (i = 0; i < rcu_num_lvls; i++) {
-		int cap = rcu_capacity[(rcu_num_lvls - 1) - i];
+	क्रम (i = 0; i < rcu_num_lvls; i++) अणु
+		पूर्णांक cap = rcu_capacity[(rcu_num_lvls - 1) - i];
 		num_rcu_lvl[i] = DIV_ROUND_UP(nr_cpu_ids, cap);
-	}
+	पूर्ण
 
-	/* Calculate the total number of rcu_node structures. */
+	/* Calculate the total number of rcu_node काष्ठाures. */
 	rcu_num_nodes = 0;
-	for (i = 0; i < rcu_num_lvls; i++)
+	क्रम (i = 0; i < rcu_num_lvls; i++)
 		rcu_num_nodes += num_rcu_lvl[i];
-}
+पूर्ण
 
 /*
- * Dump out the structure of the rcu_node combining tree associated
- * with the rcu_state structure.
+ * Dump out the काष्ठाure of the rcu_node combining tree associated
+ * with the rcu_state काष्ठाure.
  */
-static void __init rcu_dump_rcu_node_tree(void)
-{
-	int level = 0;
-	struct rcu_node *rnp;
+अटल व्योम __init rcu_dump_rcu_node_tree(व्योम)
+अणु
+	पूर्णांक level = 0;
+	काष्ठा rcu_node *rnp;
 
 	pr_info("rcu_node tree layout dump\n");
 	pr_info(" ");
-	rcu_for_each_node_breadth_first(rnp) {
-		if (rnp->level != level) {
+	rcu_क्रम_each_node_bपढ़ोth_first(rnp) अणु
+		अगर (rnp->level != level) अणु
 			pr_cont("\n");
 			pr_info(" ");
 			level = rnp->level;
-		}
+		पूर्ण
 		pr_cont("%d:%d ^%d  ", rnp->grplo, rnp->grphi, rnp->grpnum);
-	}
+	पूर्ण
 	pr_cont("\n");
-}
+पूर्ण
 
-struct workqueue_struct *rcu_gp_wq;
-struct workqueue_struct *rcu_par_gp_wq;
+काष्ठा workqueue_काष्ठा *rcu_gp_wq;
+काष्ठा workqueue_काष्ठा *rcu_par_gp_wq;
 
-static void __init kfree_rcu_batch_init(void)
-{
-	int cpu;
-	int i;
+अटल व्योम __init kमुक्त_rcu_batch_init(व्योम)
+अणु
+	पूर्णांक cpu;
+	पूर्णांक i;
 
-	for_each_possible_cpu(cpu) {
-		struct kfree_rcu_cpu *krcp = per_cpu_ptr(&krc, cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा kमुक्त_rcu_cpu *krcp = per_cpu_ptr(&krc, cpu);
 
-		for (i = 0; i < KFREE_N_BATCHES; i++) {
-			INIT_RCU_WORK(&krcp->krw_arr[i].rcu_work, kfree_rcu_work);
+		क्रम (i = 0; i < KFREE_N_BATCHES; i++) अणु
+			INIT_RCU_WORK(&krcp->krw_arr[i].rcu_work, kमुक्त_rcu_work);
 			krcp->krw_arr[i].krcp = krcp;
-		}
+		पूर्ण
 
-		INIT_DELAYED_WORK(&krcp->monitor_work, kfree_rcu_monitor);
+		INIT_DELAYED_WORK(&krcp->monitor_work, kमुक्त_rcu_monitor);
 		INIT_WORK(&krcp->page_cache_work, fill_page_cache_func);
 		krcp->initialized = true;
-	}
-	if (register_shrinker(&kfree_rcu_shrinker))
+	पूर्ण
+	अगर (रेजिस्टर_shrinker(&kमुक्त_rcu_shrinker))
 		pr_err("Failed to register kfree_rcu() shrinker!\n");
-}
+पूर्ण
 
-void __init rcu_init(void)
-{
-	int cpu;
+व्योम __init rcu_init(व्योम)
+अणु
+	पूर्णांक cpu;
 
 	rcu_early_boot_tests();
 
-	kfree_rcu_batch_init();
+	kमुक्त_rcu_batch_init();
 	rcu_bootup_announce();
 	rcu_init_geometry();
 	rcu_init_one();
-	if (dump_tree)
+	अगर (dump_tree)
 		rcu_dump_rcu_node_tree();
-	if (use_softirq)
-		open_softirq(RCU_SOFTIRQ, rcu_core_si);
+	अगर (use_softirq)
+		खोलो_softirq(RCU_SOFTIRQ, rcu_core_si);
 
 	/*
-	 * We don't need protection against CPU-hotplug here because
-	 * this is called early in boot, before either interrupts
+	 * We करोn't need protection against CPU-hotplug here because
+	 * this is called early in boot, beक्रमe either पूर्णांकerrupts
 	 * or the scheduler are operational.
 	 */
-	pm_notifier(rcu_pm_notify, 0);
-	for_each_online_cpu(cpu) {
+	pm_notअगरier(rcu_pm_notअगरy, 0);
+	क्रम_each_online_cpu(cpu) अणु
 		rcutree_prepare_cpu(cpu);
 		rcu_cpu_starting(cpu);
 		rcutree_online_cpu(cpu);
-	}
+	पूर्ण
 
-	/* Create workqueue for expedited GPs and for Tree SRCU. */
+	/* Create workqueue क्रम expedited GPs and क्रम Tree SRCU. */
 	rcu_gp_wq = alloc_workqueue("rcu_gp", WQ_MEM_RECLAIM, 0);
 	WARN_ON(!rcu_gp_wq);
 	rcu_par_gp_wq = alloc_workqueue("rcu_par_gp", WQ_MEM_RECLAIM, 0);
 	WARN_ON(!rcu_par_gp_wq);
 	srcu_init();
 
-	/* Fill in default value for rcutree.qovld boot parameter. */
+	/* Fill in शेष value क्रम rcutree.qovld boot parameter. */
 	/* -After- the rcu_node ->lock fields are initialized! */
-	if (qovld < 0)
+	अगर (qovld < 0)
 		qovld_calc = DEFAULT_RCU_QOVLD_MULT * qhimark;
-	else
+	अन्यथा
 		qovld_calc = qovld;
-}
+पूर्ण
 
-#include "tree_stall.h"
-#include "tree_exp.h"
-#include "tree_plugin.h"
+#समावेश "tree_stall.h"
+#समावेश "tree_exp.h"
+#समावेश "tree_plugin.h"

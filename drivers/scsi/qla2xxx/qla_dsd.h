@@ -1,32 +1,33 @@
-#ifndef _QLA_DSD_H_
-#define _QLA_DSD_H_
+<शैली गुरु>
+#अगर_अघोषित _QLA_DSD_H_
+#घोषणा _QLA_DSD_H_
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
 /* 32-bit data segment descriptor (8 bytes) */
-struct dsd32 {
+काष्ठा dsd32 अणु
 	__le32 address;
 	__le32 length;
-};
+पूर्ण;
 
-static inline void append_dsd32(struct dsd32 **dsd, struct scatterlist *sg)
-{
+अटल अंतरभूत व्योम append_dsd32(काष्ठा dsd32 **dsd, काष्ठा scatterlist *sg)
+अणु
 	put_unaligned_le32(sg_dma_address(sg), &(*dsd)->address);
 	put_unaligned_le32(sg_dma_len(sg),     &(*dsd)->length);
 	(*dsd)++;
-}
+पूर्ण
 
 /* 64-bit data segment descriptor (12 bytes) */
-struct dsd64 {
+काष्ठा dsd64 अणु
 	__le64 address;
 	__le32 length;
-} __packed;
+पूर्ण __packed;
 
-static inline void append_dsd64(struct dsd64 **dsd, struct scatterlist *sg)
-{
+अटल अंतरभूत व्योम append_dsd64(काष्ठा dsd64 **dsd, काष्ठा scatterlist *sg)
+अणु
 	put_unaligned_le64(sg_dma_address(sg), &(*dsd)->address);
 	put_unaligned_le32(sg_dma_len(sg),     &(*dsd)->length);
 	(*dsd)++;
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,682 +1,683 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2010 Texas Instruments Inc
  */
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/ctype.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/videodev2.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/slab.h>
 
-#include <linux/platform_data/i2c-davinci.h>
+#समावेश <linux/platक्रमm_data/i2c-davinci.h>
 
-#include <linux/io.h>
+#समावेश <linux/पन.स>
 
-#include <media/davinci/vpbe_types.h>
-#include <media/davinci/vpbe_venc.h>
-#include <media/davinci/vpss.h>
-#include <media/v4l2-device.h>
+#समावेश <media/davinci/vpbe_types.h>
+#समावेश <media/davinci/vpbe_venc.h>
+#समावेश <media/davinci/vpss.h>
+#समावेश <media/v4l2-device.h>
 
-#include "vpbe_venc_regs.h"
+#समावेश "vpbe_venc_regs.h"
 
-#define MODULE_NAME	"davinci-vpbe-venc"
+#घोषणा MODULE_NAME	"davinci-vpbe-venc"
 
-static const struct platform_device_id vpbe_venc_devtype[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id vpbe_venc_devtype[] = अणु
+	अणु
 		.name = DM644X_VPBE_VENC_SUBDEV_NAME,
 		.driver_data = VPBE_VERSION_1,
-	}, {
+	पूर्ण, अणु
 		.name = DM365_VPBE_VENC_SUBDEV_NAME,
 		.driver_data = VPBE_VERSION_2,
-	}, {
+	पूर्ण, अणु
 		.name = DM355_VPBE_VENC_SUBDEV_NAME,
 		.driver_data = VPBE_VERSION_3,
-	},
-	{
+	पूर्ण,
+	अणु
 		/* sentinel */
-	}
-};
+	पूर्ण
+पूर्ण;
 
-MODULE_DEVICE_TABLE(platform, vpbe_venc_devtype);
+MODULE_DEVICE_TABLE(platक्रमm, vpbe_venc_devtype);
 
-static int debug = 2;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug = 2;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Debug level 0-2");
 
-struct venc_state {
-	struct v4l2_subdev sd;
-	struct venc_callback *callback;
-	struct venc_platform_data *pdata;
-	struct device *pdev;
+काष्ठा venc_state अणु
+	काष्ठा v4l2_subdev sd;
+	काष्ठा venc_callback *callback;
+	काष्ठा venc_platक्रमm_data *pdata;
+	काष्ठा device *pdev;
 	u32 output;
 	v4l2_std_id std;
 	spinlock_t lock;
-	void __iomem *venc_base;
-	void __iomem *vdaccfg_reg;
-	enum vpbe_version venc_type;
-};
+	व्योम __iomem *venc_base;
+	व्योम __iomem *vdaccfg_reg;
+	क्रमागत vpbe_version venc_type;
+पूर्ण;
 
-static inline struct venc_state *to_state(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct venc_state, sd);
-}
+अटल अंतरभूत काष्ठा venc_state *to_state(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा venc_state, sd);
+पूर्ण
 
-static inline u32 venc_read(struct v4l2_subdev *sd, u32 offset)
-{
-	struct venc_state *venc = to_state(sd);
+अटल अंतरभूत u32 venc_पढ़ो(काष्ठा v4l2_subdev *sd, u32 offset)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
 
-	return readl(venc->venc_base + offset);
-}
+	वापस पढ़ोl(venc->venc_base + offset);
+पूर्ण
 
-static inline u32 venc_write(struct v4l2_subdev *sd, u32 offset, u32 val)
-{
-	struct venc_state *venc = to_state(sd);
+अटल अंतरभूत u32 venc_ग_लिखो(काष्ठा v4l2_subdev *sd, u32 offset, u32 val)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
 
-	writel(val, (venc->venc_base + offset));
+	ग_लिखोl(val, (venc->venc_base + offset));
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline u32 venc_modify(struct v4l2_subdev *sd, u32 offset,
+अटल अंतरभूत u32 venc_modअगरy(काष्ठा v4l2_subdev *sd, u32 offset,
 				 u32 val, u32 mask)
-{
-	u32 new_val = (venc_read(sd, offset) & ~mask) | (val & mask);
+अणु
+	u32 new_val = (venc_पढ़ो(sd, offset) & ~mask) | (val & mask);
 
-	venc_write(sd, offset, new_val);
+	venc_ग_लिखो(sd, offset, new_val);
 
-	return new_val;
-}
+	वापस new_val;
+पूर्ण
 
-static inline u32 vdaccfg_write(struct v4l2_subdev *sd, u32 val)
-{
-	struct venc_state *venc = to_state(sd);
+अटल अंतरभूत u32 vdaccfg_ग_लिखो(काष्ठा v4l2_subdev *sd, u32 val)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
 
-	writel(val, venc->vdaccfg_reg);
+	ग_लिखोl(val, venc->vdaccfg_reg);
 
-	val = readl(venc->vdaccfg_reg);
+	val = पढ़ोl(venc->vdaccfg_reg);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-#define VDAC_COMPONENT	0x543
-#define VDAC_S_VIDEO	0x210
-/* This function sets the dac of the VPBE for various outputs
+#घोषणा VDAC_COMPONENT	0x543
+#घोषणा VDAC_S_VIDEO	0x210
+/* This function sets the dac of the VPBE क्रम various outमाला_दो
  */
-static int venc_set_dac(struct v4l2_subdev *sd, u32 out_index)
-{
-	switch (out_index) {
-	case 0:
+अटल पूर्णांक venc_set_dac(काष्ठा v4l2_subdev *sd, u32 out_index)
+अणु
+	चयन (out_index) अणु
+	हाल 0:
 		v4l2_dbg(debug, 1, sd, "Setting output to Composite\n");
-		venc_write(sd, VENC_DACSEL, 0);
-		break;
-	case 1:
+		venc_ग_लिखो(sd, VENC_DACSEL, 0);
+		अवरोध;
+	हाल 1:
 		v4l2_dbg(debug, 1, sd, "Setting output to Component\n");
-		venc_write(sd, VENC_DACSEL, VDAC_COMPONENT);
-		break;
-	case 2:
+		venc_ग_लिखो(sd, VENC_DACSEL, VDAC_COMPONENT);
+		अवरोध;
+	हाल 2:
 		v4l2_dbg(debug, 1, sd, "Setting output to S-video\n");
-		venc_write(sd, VENC_DACSEL, VDAC_S_VIDEO);
-		break;
-	default:
-		return -EINVAL;
-	}
+		venc_ग_लिखो(sd, VENC_DACSEL, VDAC_S_VIDEO);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void venc_enabledigitaloutput(struct v4l2_subdev *sd, int benable)
-{
-	struct venc_state *venc = to_state(sd);
+अटल व्योम venc_enabledigitaloutput(काष्ठा v4l2_subdev *sd, पूर्णांक benable)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
 
 	v4l2_dbg(debug, 2, sd, "venc_enabledigitaloutput\n");
 
-	if (benable) {
-		venc_write(sd, VENC_VMOD, 0);
-		venc_write(sd, VENC_CVBS, 0);
-		venc_write(sd, VENC_LCDOUT, 0);
-		venc_write(sd, VENC_HSPLS, 0);
-		venc_write(sd, VENC_HSTART, 0);
-		venc_write(sd, VENC_HVALID, 0);
-		venc_write(sd, VENC_HINT, 0);
-		venc_write(sd, VENC_VSPLS, 0);
-		venc_write(sd, VENC_VSTART, 0);
-		venc_write(sd, VENC_VVALID, 0);
-		venc_write(sd, VENC_VINT, 0);
-		venc_write(sd, VENC_YCCCTL, 0);
-		venc_write(sd, VENC_DACSEL, 0);
+	अगर (benable) अणु
+		venc_ग_लिखो(sd, VENC_VMOD, 0);
+		venc_ग_लिखो(sd, VENC_CVBS, 0);
+		venc_ग_लिखो(sd, VENC_LCDOUT, 0);
+		venc_ग_लिखो(sd, VENC_HSPLS, 0);
+		venc_ग_लिखो(sd, VENC_HSTART, 0);
+		venc_ग_लिखो(sd, VENC_HVALID, 0);
+		venc_ग_लिखो(sd, VENC_HINT, 0);
+		venc_ग_लिखो(sd, VENC_VSPLS, 0);
+		venc_ग_लिखो(sd, VENC_VSTART, 0);
+		venc_ग_लिखो(sd, VENC_VVALID, 0);
+		venc_ग_लिखो(sd, VENC_VINT, 0);
+		venc_ग_लिखो(sd, VENC_YCCCTL, 0);
+		venc_ग_लिखो(sd, VENC_DACSEL, 0);
 
-	} else {
-		venc_write(sd, VENC_VMOD, 0);
+	पूर्ण अन्यथा अणु
+		venc_ग_लिखो(sd, VENC_VMOD, 0);
 		/* disable VCLK output pin enable */
-		venc_write(sd, VENC_VIDCTL, 0x141);
+		venc_ग_लिखो(sd, VENC_VIDCTL, 0x141);
 
 		/* Disable output sync pins */
-		venc_write(sd, VENC_SYNCCTL, 0);
+		venc_ग_लिखो(sd, VENC_SYNCCTL, 0);
 
 		/* Disable DCLOCK */
-		venc_write(sd, VENC_DCLKCTL, 0);
-		venc_write(sd, VENC_DRGBX1, 0x0000057C);
+		venc_ग_लिखो(sd, VENC_DCLKCTL, 0);
+		venc_ग_लिखो(sd, VENC_DRGBX1, 0x0000057C);
 
-		/* Disable LCD output control (accepting default polarity) */
-		venc_write(sd, VENC_LCDOUT, 0);
-		if (venc->venc_type != VPBE_VERSION_3)
-			venc_write(sd, VENC_CMPNT, 0x100);
-		venc_write(sd, VENC_HSPLS, 0);
-		venc_write(sd, VENC_HINT, 0);
-		venc_write(sd, VENC_HSTART, 0);
-		venc_write(sd, VENC_HVALID, 0);
+		/* Disable LCD output control (accepting शेष polarity) */
+		venc_ग_लिखो(sd, VENC_LCDOUT, 0);
+		अगर (venc->venc_type != VPBE_VERSION_3)
+			venc_ग_लिखो(sd, VENC_CMPNT, 0x100);
+		venc_ग_लिखो(sd, VENC_HSPLS, 0);
+		venc_ग_लिखो(sd, VENC_HINT, 0);
+		venc_ग_लिखो(sd, VENC_HSTART, 0);
+		venc_ग_लिखो(sd, VENC_HVALID, 0);
 
-		venc_write(sd, VENC_VSPLS, 0);
-		venc_write(sd, VENC_VINT, 0);
-		venc_write(sd, VENC_VSTART, 0);
-		venc_write(sd, VENC_VVALID, 0);
+		venc_ग_लिखो(sd, VENC_VSPLS, 0);
+		venc_ग_लिखो(sd, VENC_VINT, 0);
+		venc_ग_लिखो(sd, VENC_VSTART, 0);
+		venc_ग_लिखो(sd, VENC_VVALID, 0);
 
-		venc_write(sd, VENC_HSDLY, 0);
-		venc_write(sd, VENC_VSDLY, 0);
+		venc_ग_लिखो(sd, VENC_HSDLY, 0);
+		venc_ग_लिखो(sd, VENC_VSDLY, 0);
 
-		venc_write(sd, VENC_YCCCTL, 0);
-		venc_write(sd, VENC_VSTARTA, 0);
+		venc_ग_लिखो(sd, VENC_YCCCTL, 0);
+		venc_ग_लिखो(sd, VENC_VSTARTA, 0);
 
-		/* Set OSD clock and OSD Sync Adavance registers */
-		venc_write(sd, VENC_OSDCLK0, 1);
-		venc_write(sd, VENC_OSDCLK1, 2);
-	}
-}
+		/* Set OSD घड़ी and OSD Sync Adavance रेजिस्टरs */
+		venc_ग_लिखो(sd, VENC_OSDCLK0, 1);
+		venc_ग_लिखो(sd, VENC_OSDCLK1, 2);
+	पूर्ण
+पूर्ण
 
-static void
-venc_enable_vpss_clock(int venc_type,
-		       enum vpbe_enc_timings_type type,
-		       unsigned int pclock)
-{
-	if (venc_type == VPBE_VERSION_1)
-		return;
+अटल व्योम
+venc_enable_vpss_घड़ी(पूर्णांक venc_type,
+		       क्रमागत vpbe_enc_timings_type type,
+		       अचिन्हित पूर्णांक pघड़ी)
+अणु
+	अगर (venc_type == VPBE_VERSION_1)
+		वापस;
 
-	if (venc_type == VPBE_VERSION_2 && (type == VPBE_ENC_STD || (type ==
-	    VPBE_ENC_DV_TIMINGS && pclock <= 27000000))) {
-		vpss_enable_clock(VPSS_VENC_CLOCK_SEL, 1);
-		vpss_enable_clock(VPSS_VPBE_CLOCK, 1);
-		return;
-	}
+	अगर (venc_type == VPBE_VERSION_2 && (type == VPBE_ENC_STD || (type ==
+	    VPBE_ENC_DV_TIMINGS && pघड़ी <= 27000000))) अणु
+		vpss_enable_घड़ी(VPSS_VENC_CLOCK_SEL, 1);
+		vpss_enable_घड़ी(VPSS_VPBE_CLOCK, 1);
+		वापस;
+	पूर्ण
 
-	if (venc_type == VPBE_VERSION_3 && type == VPBE_ENC_STD)
-		vpss_enable_clock(VPSS_VENC_CLOCK_SEL, 0);
-}
+	अगर (venc_type == VPBE_VERSION_3 && type == VPBE_ENC_STD)
+		vpss_enable_घड़ी(VPSS_VENC_CLOCK_SEL, 0);
+पूर्ण
 
-#define VDAC_CONFIG_SD_V3	0x0E21A6B6
-#define VDAC_CONFIG_SD_V2	0x081141CF
+#घोषणा VDAC_CONFIG_SD_V3	0x0E21A6B6
+#घोषणा VDAC_CONFIG_SD_V2	0x081141CF
 /*
  * setting NTSC mode
  */
-static int venc_set_ntsc(struct v4l2_subdev *sd)
-{
-	struct venc_state *venc = to_state(sd);
-	struct venc_platform_data *pdata = venc->pdata;
+अटल पूर्णांक venc_set_ntsc(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
+	काष्ठा venc_platक्रमm_data *pdata = venc->pdata;
 
 	v4l2_dbg(debug, 2, sd, "venc_set_ntsc\n");
 
-	/* Setup clock at VPSS & VENC for SD */
-	vpss_enable_clock(VPSS_VENC_CLOCK_SEL, 1);
-	if (pdata->setup_clock(VPBE_ENC_STD, V4L2_STD_525_60) < 0)
-		return -EINVAL;
+	/* Setup घड़ी at VPSS & VENC क्रम SD */
+	vpss_enable_घड़ी(VPSS_VENC_CLOCK_SEL, 1);
+	अगर (pdata->setup_घड़ी(VPBE_ENC_STD, V4L2_STD_525_60) < 0)
+		वापस -EINVAL;
 
-	venc_enable_vpss_clock(venc->venc_type, VPBE_ENC_STD, V4L2_STD_525_60);
+	venc_enable_vpss_घड़ी(venc->venc_type, VPBE_ENC_STD, V4L2_STD_525_60);
 	venc_enabledigitaloutput(sd, 0);
 
-	if (venc->venc_type == VPBE_VERSION_3) {
-		venc_write(sd, VENC_CLKCTL, 0x01);
-		venc_write(sd, VENC_VIDCTL, 0);
-		vdaccfg_write(sd, VDAC_CONFIG_SD_V3);
-	} else if (venc->venc_type == VPBE_VERSION_2) {
-		venc_write(sd, VENC_CLKCTL, 0x01);
-		venc_write(sd, VENC_VIDCTL, 0);
-		vdaccfg_write(sd, VDAC_CONFIG_SD_V2);
-	} else {
-		/* to set VENC CLK DIV to 1 - final clock is 54 MHz */
-		venc_modify(sd, VENC_VIDCTL, 0, 1 << 1);
+	अगर (venc->venc_type == VPBE_VERSION_3) अणु
+		venc_ग_लिखो(sd, VENC_CLKCTL, 0x01);
+		venc_ग_लिखो(sd, VENC_VIDCTL, 0);
+		vdaccfg_ग_लिखो(sd, VDAC_CONFIG_SD_V3);
+	पूर्ण अन्यथा अगर (venc->venc_type == VPBE_VERSION_2) अणु
+		venc_ग_लिखो(sd, VENC_CLKCTL, 0x01);
+		venc_ग_लिखो(sd, VENC_VIDCTL, 0);
+		vdaccfg_ग_लिखो(sd, VDAC_CONFIG_SD_V2);
+	पूर्ण अन्यथा अणु
+		/* to set VENC CLK DIV to 1 - final घड़ी is 54 MHz */
+		venc_modअगरy(sd, VENC_VIDCTL, 0, 1 << 1);
 		/* Set REC656 Mode */
-		venc_write(sd, VENC_YCCCTL, 0x1);
-		venc_modify(sd, VENC_VDPRO, 0, VENC_VDPRO_DAFRQ);
-		venc_modify(sd, VENC_VDPRO, 0, VENC_VDPRO_DAUPS);
-	}
+		venc_ग_लिखो(sd, VENC_YCCCTL, 0x1);
+		venc_modअगरy(sd, VENC_VDPRO, 0, VENC_VDPRO_DAFRQ);
+		venc_modअगरy(sd, VENC_VDPRO, 0, VENC_VDPRO_DAUPS);
+	पूर्ण
 
-	venc_write(sd, VENC_VMOD, 0);
-	venc_modify(sd, VENC_VMOD, (1 << VENC_VMOD_VIE_SHIFT),
+	venc_ग_लिखो(sd, VENC_VMOD, 0);
+	venc_modअगरy(sd, VENC_VMOD, (1 << VENC_VMOD_VIE_SHIFT),
 			VENC_VMOD_VIE);
-	venc_modify(sd, VENC_VMOD, (0 << VENC_VMOD_VMD), VENC_VMOD_VMD);
-	venc_modify(sd, VENC_VMOD, (0 << VENC_VMOD_TVTYP_SHIFT),
+	venc_modअगरy(sd, VENC_VMOD, (0 << VENC_VMOD_VMD), VENC_VMOD_VMD);
+	venc_modअगरy(sd, VENC_VMOD, (0 << VENC_VMOD_TVTYP_SHIFT),
 			VENC_VMOD_TVTYP);
-	venc_write(sd, VENC_DACTST, 0x0);
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
+	venc_ग_लिखो(sd, VENC_DACTST, 0x0);
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * setting PAL mode
  */
-static int venc_set_pal(struct v4l2_subdev *sd)
-{
-	struct venc_state *venc = to_state(sd);
+अटल पूर्णांक venc_set_pal(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
 
 	v4l2_dbg(debug, 2, sd, "venc_set_pal\n");
 
-	/* Setup clock at VPSS & VENC for SD */
-	vpss_enable_clock(VPSS_VENC_CLOCK_SEL, 1);
-	if (venc->pdata->setup_clock(VPBE_ENC_STD, V4L2_STD_625_50) < 0)
-		return -EINVAL;
+	/* Setup घड़ी at VPSS & VENC क्रम SD */
+	vpss_enable_घड़ी(VPSS_VENC_CLOCK_SEL, 1);
+	अगर (venc->pdata->setup_घड़ी(VPBE_ENC_STD, V4L2_STD_625_50) < 0)
+		वापस -EINVAL;
 
-	venc_enable_vpss_clock(venc->venc_type, VPBE_ENC_STD, V4L2_STD_625_50);
+	venc_enable_vpss_घड़ी(venc->venc_type, VPBE_ENC_STD, V4L2_STD_625_50);
 	venc_enabledigitaloutput(sd, 0);
 
-	if (venc->venc_type == VPBE_VERSION_3) {
-		venc_write(sd, VENC_CLKCTL, 0x1);
-		venc_write(sd, VENC_VIDCTL, 0);
-		vdaccfg_write(sd, VDAC_CONFIG_SD_V3);
-	} else if (venc->venc_type == VPBE_VERSION_2) {
-		venc_write(sd, VENC_CLKCTL, 0x1);
-		venc_write(sd, VENC_VIDCTL, 0);
-		vdaccfg_write(sd, VDAC_CONFIG_SD_V2);
-	} else {
-		/* to set VENC CLK DIV to 1 - final clock is 54 MHz */
-		venc_modify(sd, VENC_VIDCTL, 0, 1 << 1);
+	अगर (venc->venc_type == VPBE_VERSION_3) अणु
+		venc_ग_लिखो(sd, VENC_CLKCTL, 0x1);
+		venc_ग_लिखो(sd, VENC_VIDCTL, 0);
+		vdaccfg_ग_लिखो(sd, VDAC_CONFIG_SD_V3);
+	पूर्ण अन्यथा अगर (venc->venc_type == VPBE_VERSION_2) अणु
+		venc_ग_लिखो(sd, VENC_CLKCTL, 0x1);
+		venc_ग_लिखो(sd, VENC_VIDCTL, 0);
+		vdaccfg_ग_लिखो(sd, VDAC_CONFIG_SD_V2);
+	पूर्ण अन्यथा अणु
+		/* to set VENC CLK DIV to 1 - final घड़ी is 54 MHz */
+		venc_modअगरy(sd, VENC_VIDCTL, 0, 1 << 1);
 		/* Set REC656 Mode */
-		venc_write(sd, VENC_YCCCTL, 0x1);
-	}
+		venc_ग_लिखो(sd, VENC_YCCCTL, 0x1);
+	पूर्ण
 
-	venc_modify(sd, VENC_SYNCCTL, 1 << VENC_SYNCCTL_OVD_SHIFT,
+	venc_modअगरy(sd, VENC_SYNCCTL, 1 << VENC_SYNCCTL_OVD_SHIFT,
 			VENC_SYNCCTL_OVD);
-	venc_write(sd, VENC_VMOD, 0);
-	venc_modify(sd, VENC_VMOD,
+	venc_ग_लिखो(sd, VENC_VMOD, 0);
+	venc_modअगरy(sd, VENC_VMOD,
 			(1 << VENC_VMOD_VIE_SHIFT),
 			VENC_VMOD_VIE);
-	venc_modify(sd, VENC_VMOD,
+	venc_modअगरy(sd, VENC_VMOD,
 			(0 << VENC_VMOD_VMD), VENC_VMOD_VMD);
-	venc_modify(sd, VENC_VMOD,
+	venc_modअगरy(sd, VENC_VMOD,
 			(1 << VENC_VMOD_TVTYP_SHIFT),
 			VENC_VMOD_TVTYP);
-	venc_write(sd, VENC_DACTST, 0x0);
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
+	venc_ग_लिखो(sd, VENC_DACTST, 0x0);
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define VDAC_CONFIG_HD_V2	0x081141EF
+#घोषणा VDAC_CONFIG_HD_V2	0x081141EF
 /*
  * venc_set_480p59_94
  *
  * This function configures the video encoder to EDTV(525p) component setting.
  */
-static int venc_set_480p59_94(struct v4l2_subdev *sd)
-{
-	struct venc_state *venc = to_state(sd);
-	struct venc_platform_data *pdata = venc->pdata;
+अटल पूर्णांक venc_set_480p59_94(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
+	काष्ठा venc_platक्रमm_data *pdata = venc->pdata;
 
 	v4l2_dbg(debug, 2, sd, "venc_set_480p59_94\n");
-	if (venc->venc_type != VPBE_VERSION_1 &&
+	अगर (venc->venc_type != VPBE_VERSION_1 &&
 	    venc->venc_type != VPBE_VERSION_2)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Setup clock at VPSS & VENC for SD */
-	if (pdata->setup_clock(VPBE_ENC_DV_TIMINGS, 27000000) < 0)
-		return -EINVAL;
+	/* Setup घड़ी at VPSS & VENC क्रम SD */
+	अगर (pdata->setup_घड़ी(VPBE_ENC_DV_TIMINGS, 27000000) < 0)
+		वापस -EINVAL;
 
-	venc_enable_vpss_clock(venc->venc_type, VPBE_ENC_DV_TIMINGS, 27000000);
+	venc_enable_vpss_घड़ी(venc->venc_type, VPBE_ENC_DV_TIMINGS, 27000000);
 	venc_enabledigitaloutput(sd, 0);
 
-	if (venc->venc_type == VPBE_VERSION_2)
-		vdaccfg_write(sd, VDAC_CONFIG_HD_V2);
-	venc_write(sd, VENC_OSDCLK0, 0);
-	venc_write(sd, VENC_OSDCLK1, 1);
+	अगर (venc->venc_type == VPBE_VERSION_2)
+		vdaccfg_ग_लिखो(sd, VDAC_CONFIG_HD_V2);
+	venc_ग_लिखो(sd, VENC_OSDCLK0, 0);
+	venc_ग_लिखो(sd, VENC_OSDCLK1, 1);
 
-	if (venc->venc_type == VPBE_VERSION_1) {
-		venc_modify(sd, VENC_VDPRO, VENC_VDPRO_DAFRQ,
+	अगर (venc->venc_type == VPBE_VERSION_1) अणु
+		venc_modअगरy(sd, VENC_VDPRO, VENC_VDPRO_DAFRQ,
 			    VENC_VDPRO_DAFRQ);
-		venc_modify(sd, VENC_VDPRO, VENC_VDPRO_DAUPS,
+		venc_modअगरy(sd, VENC_VDPRO, VENC_VDPRO_DAUPS,
 			    VENC_VDPRO_DAUPS);
-	}
+	पूर्ण
 
-	venc_write(sd, VENC_VMOD, 0);
-	venc_modify(sd, VENC_VMOD, (1 << VENC_VMOD_VIE_SHIFT),
+	venc_ग_लिखो(sd, VENC_VMOD, 0);
+	venc_modअगरy(sd, VENC_VMOD, (1 << VENC_VMOD_VIE_SHIFT),
 		    VENC_VMOD_VIE);
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_HDMD, VENC_VMOD_HDMD);
-	venc_modify(sd, VENC_VMOD, (HDTV_525P << VENC_VMOD_TVTYP_SHIFT),
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_HDMD, VENC_VMOD_HDMD);
+	venc_modअगरy(sd, VENC_VMOD, (HDTV_525P << VENC_VMOD_TVTYP_SHIFT),
 		    VENC_VMOD_TVTYP);
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_VDMD_YCBCR8 <<
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_VDMD_YCBCR8 <<
 		    VENC_VMOD_VDMD_SHIFT, VENC_VMOD_VDMD);
 
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * venc_set_625p
  *
  * This function configures the video encoder to HDTV(625p) component setting
  */
-static int venc_set_576p50(struct v4l2_subdev *sd)
-{
-	struct venc_state *venc = to_state(sd);
-	struct venc_platform_data *pdata = venc->pdata;
+अटल पूर्णांक venc_set_576p50(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
+	काष्ठा venc_platक्रमm_data *pdata = venc->pdata;
 
 	v4l2_dbg(debug, 2, sd, "venc_set_576p50\n");
 
-	if (venc->venc_type != VPBE_VERSION_1 &&
+	अगर (venc->venc_type != VPBE_VERSION_1 &&
 	    venc->venc_type != VPBE_VERSION_2)
-		return -EINVAL;
-	/* Setup clock at VPSS & VENC for SD */
-	if (pdata->setup_clock(VPBE_ENC_DV_TIMINGS, 27000000) < 0)
-		return -EINVAL;
+		वापस -EINVAL;
+	/* Setup घड़ी at VPSS & VENC क्रम SD */
+	अगर (pdata->setup_घड़ी(VPBE_ENC_DV_TIMINGS, 27000000) < 0)
+		वापस -EINVAL;
 
-	venc_enable_vpss_clock(venc->venc_type, VPBE_ENC_DV_TIMINGS, 27000000);
+	venc_enable_vpss_घड़ी(venc->venc_type, VPBE_ENC_DV_TIMINGS, 27000000);
 	venc_enabledigitaloutput(sd, 0);
 
-	if (venc->venc_type == VPBE_VERSION_2)
-		vdaccfg_write(sd, VDAC_CONFIG_HD_V2);
+	अगर (venc->venc_type == VPBE_VERSION_2)
+		vdaccfg_ग_लिखो(sd, VDAC_CONFIG_HD_V2);
 
-	venc_write(sd, VENC_OSDCLK0, 0);
-	venc_write(sd, VENC_OSDCLK1, 1);
+	venc_ग_लिखो(sd, VENC_OSDCLK0, 0);
+	venc_ग_लिखो(sd, VENC_OSDCLK1, 1);
 
-	if (venc->venc_type == VPBE_VERSION_1) {
-		venc_modify(sd, VENC_VDPRO, VENC_VDPRO_DAFRQ,
+	अगर (venc->venc_type == VPBE_VERSION_1) अणु
+		venc_modअगरy(sd, VENC_VDPRO, VENC_VDPRO_DAFRQ,
 			    VENC_VDPRO_DAFRQ);
-		venc_modify(sd, VENC_VDPRO, VENC_VDPRO_DAUPS,
+		venc_modअगरy(sd, VENC_VDPRO, VENC_VDPRO_DAUPS,
 			    VENC_VDPRO_DAUPS);
-	}
+	पूर्ण
 
-	venc_write(sd, VENC_VMOD, 0);
-	venc_modify(sd, VENC_VMOD, (1 << VENC_VMOD_VIE_SHIFT),
+	venc_ग_लिखो(sd, VENC_VMOD, 0);
+	venc_modअगरy(sd, VENC_VMOD, (1 << VENC_VMOD_VIE_SHIFT),
 		    VENC_VMOD_VIE);
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_HDMD, VENC_VMOD_HDMD);
-	venc_modify(sd, VENC_VMOD, (HDTV_625P << VENC_VMOD_TVTYP_SHIFT),
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_HDMD, VENC_VMOD_HDMD);
+	venc_modअगरy(sd, VENC_VMOD, (HDTV_625P << VENC_VMOD_TVTYP_SHIFT),
 		    VENC_VMOD_TVTYP);
 
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_VDMD_YCBCR8 <<
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_VDMD_YCBCR8 <<
 		    VENC_VMOD_VDMD_SHIFT, VENC_VMOD_VDMD);
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * venc_set_720p60_internal - Setup 720p60 in venc for dm365 only
+ * venc_set_720p60_पूर्णांकernal - Setup 720p60 in venc क्रम dm365 only
  */
-static int venc_set_720p60_internal(struct v4l2_subdev *sd)
-{
-	struct venc_state *venc = to_state(sd);
-	struct venc_platform_data *pdata = venc->pdata;
+अटल पूर्णांक venc_set_720p60_पूर्णांकernal(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
+	काष्ठा venc_platक्रमm_data *pdata = venc->pdata;
 
-	if (pdata->setup_clock(VPBE_ENC_DV_TIMINGS, 74250000) < 0)
-		return -EINVAL;
+	अगर (pdata->setup_घड़ी(VPBE_ENC_DV_TIMINGS, 74250000) < 0)
+		वापस -EINVAL;
 
-	venc_enable_vpss_clock(venc->venc_type, VPBE_ENC_DV_TIMINGS, 74250000);
+	venc_enable_vpss_घड़ी(venc->venc_type, VPBE_ENC_DV_TIMINGS, 74250000);
 	venc_enabledigitaloutput(sd, 0);
 
-	venc_write(sd, VENC_OSDCLK0, 0);
-	venc_write(sd, VENC_OSDCLK1, 1);
+	venc_ग_लिखो(sd, VENC_OSDCLK0, 0);
+	venc_ग_लिखो(sd, VENC_OSDCLK1, 1);
 
-	venc_write(sd, VENC_VMOD, 0);
+	venc_ग_लिखो(sd, VENC_VMOD, 0);
 	/* DM365 component HD mode */
-	venc_modify(sd, VENC_VMOD, (1 << VENC_VMOD_VIE_SHIFT),
+	venc_modअगरy(sd, VENC_VMOD, (1 << VENC_VMOD_VIE_SHIFT),
 	    VENC_VMOD_VIE);
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_HDMD, VENC_VMOD_HDMD);
-	venc_modify(sd, VENC_VMOD, (HDTV_720P << VENC_VMOD_TVTYP_SHIFT),
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_HDMD, VENC_VMOD_HDMD);
+	venc_modअगरy(sd, VENC_VMOD, (HDTV_720P << VENC_VMOD_TVTYP_SHIFT),
 		    VENC_VMOD_TVTYP);
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
-	venc_write(sd, VENC_XHINTVL, 0);
-	return 0;
-}
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
+	venc_ग_लिखो(sd, VENC_XHINTVL, 0);
+	वापस 0;
+पूर्ण
 
 /*
- * venc_set_1080i30_internal - Setup 1080i30 in venc for dm365 only
+ * venc_set_1080i30_पूर्णांकernal - Setup 1080i30 in venc क्रम dm365 only
  */
-static int venc_set_1080i30_internal(struct v4l2_subdev *sd)
-{
-	struct venc_state *venc = to_state(sd);
-	struct venc_platform_data *pdata = venc->pdata;
+अटल पूर्णांक venc_set_1080i30_पूर्णांकernal(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
+	काष्ठा venc_platक्रमm_data *pdata = venc->pdata;
 
-	if (pdata->setup_clock(VPBE_ENC_DV_TIMINGS, 74250000) < 0)
-		return -EINVAL;
+	अगर (pdata->setup_घड़ी(VPBE_ENC_DV_TIMINGS, 74250000) < 0)
+		वापस -EINVAL;
 
-	venc_enable_vpss_clock(venc->venc_type, VPBE_ENC_DV_TIMINGS, 74250000);
+	venc_enable_vpss_घड़ी(venc->venc_type, VPBE_ENC_DV_TIMINGS, 74250000);
 	venc_enabledigitaloutput(sd, 0);
 
-	venc_write(sd, VENC_OSDCLK0, 0);
-	venc_write(sd, VENC_OSDCLK1, 1);
+	venc_ग_लिखो(sd, VENC_OSDCLK0, 0);
+	venc_ग_लिखो(sd, VENC_OSDCLK1, 1);
 
 
-	venc_write(sd, VENC_VMOD, 0);
+	venc_ग_लिखो(sd, VENC_VMOD, 0);
 	/* DM365 component HD mode */
-	venc_modify(sd, VENC_VMOD, (1 << VENC_VMOD_VIE_SHIFT),
+	venc_modअगरy(sd, VENC_VMOD, (1 << VENC_VMOD_VIE_SHIFT),
 		    VENC_VMOD_VIE);
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_HDMD, VENC_VMOD_HDMD);
-	venc_modify(sd, VENC_VMOD, (HDTV_1080I << VENC_VMOD_TVTYP_SHIFT),
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_HDMD, VENC_VMOD_HDMD);
+	venc_modअगरy(sd, VENC_VMOD, (HDTV_1080I << VENC_VMOD_TVTYP_SHIFT),
 		    VENC_VMOD_TVTYP);
-	venc_modify(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
-	venc_write(sd, VENC_XHINTVL, 0);
-	return 0;
-}
+	venc_modअगरy(sd, VENC_VMOD, VENC_VMOD_VENC, VENC_VMOD_VENC);
+	venc_ग_लिखो(sd, VENC_XHINTVL, 0);
+	वापस 0;
+पूर्ण
 
-static int venc_s_std_output(struct v4l2_subdev *sd, v4l2_std_id norm)
-{
+अटल पूर्णांक venc_s_std_output(काष्ठा v4l2_subdev *sd, v4l2_std_id norm)
+अणु
 	v4l2_dbg(debug, 1, sd, "venc_s_std_output\n");
 
-	if (norm & V4L2_STD_525_60)
-		return venc_set_ntsc(sd);
-	else if (norm & V4L2_STD_625_50)
-		return venc_set_pal(sd);
+	अगर (norm & V4L2_STD_525_60)
+		वापस venc_set_ntsc(sd);
+	अन्यथा अगर (norm & V4L2_STD_625_50)
+		वापस venc_set_pal(sd);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int venc_s_dv_timings(struct v4l2_subdev *sd,
-			    struct v4l2_dv_timings *dv_timings)
-{
-	struct venc_state *venc = to_state(sd);
+अटल पूर्णांक venc_s_dv_timings(काष्ठा v4l2_subdev *sd,
+			    काष्ठा v4l2_dv_timings *dv_timings)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
 	u32 height = dv_timings->bt.height;
-	int ret;
+	पूर्णांक ret;
 
 	v4l2_dbg(debug, 1, sd, "venc_s_dv_timings\n");
 
-	if (height == 576)
-		return venc_set_576p50(sd);
-	else if (height == 480)
-		return venc_set_480p59_94(sd);
-	else if ((height == 720) &&
-			(venc->venc_type == VPBE_VERSION_2)) {
-		/* TBD setup internal 720p mode here */
-		ret = venc_set_720p60_internal(sd);
-		/* for DM365 VPBE, there is DAC inside */
-		vdaccfg_write(sd, VDAC_CONFIG_HD_V2);
-		return ret;
-	} else if ((height == 1080) &&
-		(venc->venc_type == VPBE_VERSION_2)) {
-		/* TBD setup internal 1080i mode here */
-		ret = venc_set_1080i30_internal(sd);
-		/* for DM365 VPBE, there is DAC inside */
-		vdaccfg_write(sd, VDAC_CONFIG_HD_V2);
-		return ret;
-	}
-	return -EINVAL;
-}
+	अगर (height == 576)
+		वापस venc_set_576p50(sd);
+	अन्यथा अगर (height == 480)
+		वापस venc_set_480p59_94(sd);
+	अन्यथा अगर ((height == 720) &&
+			(venc->venc_type == VPBE_VERSION_2)) अणु
+		/* TBD setup पूर्णांकernal 720p mode here */
+		ret = venc_set_720p60_पूर्णांकernal(sd);
+		/* क्रम DM365 VPBE, there is DAC inside */
+		vdaccfg_ग_लिखो(sd, VDAC_CONFIG_HD_V2);
+		वापस ret;
+	पूर्ण अन्यथा अगर ((height == 1080) &&
+		(venc->venc_type == VPBE_VERSION_2)) अणु
+		/* TBD setup पूर्णांकernal 1080i mode here */
+		ret = venc_set_1080i30_पूर्णांकernal(sd);
+		/* क्रम DM365 VPBE, there is DAC inside */
+		vdaccfg_ग_लिखो(sd, VDAC_CONFIG_HD_V2);
+		वापस ret;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int venc_s_routing(struct v4l2_subdev *sd, u32 input, u32 output,
+अटल पूर्णांक venc_s_routing(काष्ठा v4l2_subdev *sd, u32 input, u32 output,
 			  u32 config)
-{
-	struct venc_state *venc = to_state(sd);
-	int ret;
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
+	पूर्णांक ret;
 
 	v4l2_dbg(debug, 1, sd, "venc_s_routing\n");
 
 	ret = venc_set_dac(sd, output);
-	if (!ret)
+	अगर (!ret)
 		venc->output = output;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long venc_ioctl(struct v4l2_subdev *sd,
-			unsigned int cmd,
-			void *arg)
-{
+अटल दीर्घ venc_ioctl(काष्ठा v4l2_subdev *sd,
+			अचिन्हित पूर्णांक cmd,
+			व्योम *arg)
+अणु
 	u32 val;
 
-	switch (cmd) {
-	case VENC_GET_FLD:
-		val = venc_read(sd, VENC_VSTAT);
-		*((int *)arg) = ((val & VENC_VSTAT_FIDST) ==
+	चयन (cmd) अणु
+	हाल VENC_GET_FLD:
+		val = venc_पढ़ो(sd, VENC_VSTAT);
+		*((पूर्णांक *)arg) = ((val & VENC_VSTAT_FIDST) ==
 		VENC_VSTAT_FIDST);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		v4l2_err(sd, "Wrong IOCTL cmd\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_core_ops venc_core_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_core_ops venc_core_ops = अणु
 	.ioctl      = venc_ioctl,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_video_ops venc_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops venc_video_ops = अणु
 	.s_routing = venc_s_routing,
 	.s_std_output = venc_s_std_output,
 	.s_dv_timings = venc_s_dv_timings,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops venc_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops venc_ops = अणु
 	.core = &venc_core_ops,
 	.video = &venc_video_ops,
-};
+पूर्ण;
 
-static int venc_initialize(struct v4l2_subdev *sd)
-{
-	struct venc_state *venc = to_state(sd);
-	int ret;
+अटल पूर्णांक venc_initialize(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा venc_state *venc = to_state(sd);
+	पूर्णांक ret;
 
-	/* Set default to output to composite and std to NTSC */
+	/* Set शेष to output to composite and std to NTSC */
 	venc->output = 0;
 	venc->std = V4L2_STD_525_60;
 
 	ret = venc_s_routing(sd, 0, venc->output, 0);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		v4l2_err(sd, "Error setting output during init\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = venc_s_std_output(sd, venc->std);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		v4l2_err(sd, "Error setting std during init\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int venc_device_get(struct device *dev, void *data)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct venc_state **venc = data;
+अटल पूर्णांक venc_device_get(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा venc_state **venc = data;
 
-	if (strstr(pdev->name, "vpbe-venc") != NULL)
-		*venc = platform_get_drvdata(pdev);
+	अगर (म_माला(pdev->name, "vpbe-venc") != शून्य)
+		*venc = platक्रमm_get_drvdata(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct v4l2_subdev *venc_sub_dev_init(struct v4l2_device *v4l2_dev,
-		const char *venc_name)
-{
-	struct venc_state *venc = NULL;
+काष्ठा v4l2_subdev *venc_sub_dev_init(काष्ठा v4l2_device *v4l2_dev,
+		स्थिर अक्षर *venc_name)
+अणु
+	काष्ठा venc_state *venc = शून्य;
 
-	bus_for_each_dev(&platform_bus_type, NULL, &venc,
+	bus_क्रम_each_dev(&platक्रमm_bus_type, शून्य, &venc,
 			venc_device_get);
-	if (venc == NULL)
-		return NULL;
+	अगर (venc == शून्य)
+		वापस शून्य;
 
 	v4l2_subdev_init(&venc->sd, &venc_ops);
 
-	strscpy(venc->sd.name, venc_name, sizeof(venc->sd.name));
-	if (v4l2_device_register_subdev(v4l2_dev, &venc->sd) < 0) {
+	strscpy(venc->sd.name, venc_name, माप(venc->sd.name));
+	अगर (v4l2_device_रेजिस्टर_subdev(v4l2_dev, &venc->sd) < 0) अणु
 		v4l2_err(v4l2_dev,
 			"vpbe unable to register venc sub device\n");
-		return NULL;
-	}
-	if (venc_initialize(&venc->sd)) {
+		वापस शून्य;
+	पूर्ण
+	अगर (venc_initialize(&venc->sd)) अणु
 		v4l2_err(v4l2_dev,
 			"vpbe venc initialization failed\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return &venc->sd;
-}
+	वापस &venc->sd;
+पूर्ण
 EXPORT_SYMBOL(venc_sub_dev_init);
 
-static int venc_probe(struct platform_device *pdev)
-{
-	const struct platform_device_id *pdev_id;
-	struct venc_state *venc;
-	struct resource *res;
+अटल पूर्णांक venc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा platक्रमm_device_id *pdev_id;
+	काष्ठा venc_state *venc;
+	काष्ठा resource *res;
 
-	if (!pdev->dev.platform_data) {
+	अगर (!pdev->dev.platक्रमm_data) अणु
 		dev_err(&pdev->dev, "No platform data for VENC sub device");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pdev_id = platform_get_device_id(pdev);
-	if (!pdev_id)
-		return -EINVAL;
+	pdev_id = platक्रमm_get_device_id(pdev);
+	अगर (!pdev_id)
+		वापस -EINVAL;
 
-	venc = devm_kzalloc(&pdev->dev, sizeof(struct venc_state), GFP_KERNEL);
-	if (venc == NULL)
-		return -ENOMEM;
+	venc = devm_kzalloc(&pdev->dev, माप(काष्ठा venc_state), GFP_KERNEL);
+	अगर (venc == शून्य)
+		वापस -ENOMEM;
 
 	venc->venc_type = pdev_id->driver_data;
 	venc->pdev = &pdev->dev;
-	venc->pdata = pdev->dev.platform_data;
+	venc->pdata = pdev->dev.platक्रमm_data;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 
 	venc->venc_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(venc->venc_base))
-		return PTR_ERR(venc->venc_base);
+	अगर (IS_ERR(venc->venc_base))
+		वापस PTR_ERR(venc->venc_base);
 
-	if (venc->venc_type != VPBE_VERSION_1) {
-		res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	अगर (venc->venc_type != VPBE_VERSION_1) अणु
+		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 
 		venc->vdaccfg_reg = devm_ioremap_resource(&pdev->dev, res);
-		if (IS_ERR(venc->vdaccfg_reg))
-			return PTR_ERR(venc->vdaccfg_reg);
-	}
+		अगर (IS_ERR(venc->vdaccfg_reg))
+			वापस PTR_ERR(venc->vdaccfg_reg);
+	पूर्ण
 	spin_lock_init(&venc->lock);
-	platform_set_drvdata(pdev, venc);
+	platक्रमm_set_drvdata(pdev, venc);
 	dev_notice(venc->pdev, "VENC sub device probe success\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int venc_remove(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक venc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static struct platform_driver venc_driver = {
+अटल काष्ठा platक्रमm_driver venc_driver = अणु
 	.probe		= venc_probe,
-	.remove		= venc_remove,
-	.driver		= {
+	.हटाओ		= venc_हटाओ,
+	.driver		= अणु
 		.name	= MODULE_NAME,
-	},
+	पूर्ण,
 	.id_table	= vpbe_venc_devtype
-};
+पूर्ण;
 
-module_platform_driver(venc_driver);
+module_platक्रमm_driver(venc_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("VPBE VENC Driver");

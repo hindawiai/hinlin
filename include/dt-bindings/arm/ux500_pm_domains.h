@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2014 Linaro Ltd.
  *
  * Author: Ulf Hansson <ulf.hansson@linaro.org>
  */
-#ifndef _DT_BINDINGS_ARM_UX500_PM_DOMAINS_H
-#define _DT_BINDINGS_ARM_UX500_PM_DOMAINS_H
+#अगर_अघोषित _DT_BINDINGS_ARM_UX500_PM_DOMAINS_H
+#घोषणा _DT_BINDINGS_ARM_UX500_PM_DOMAINS_H
 
-#define DOMAIN_VAPE		0
+#घोषणा DOMAIN_VAPE		0
 
-/* Number of PM domains. */
-#define NR_DOMAINS		(DOMAIN_VAPE + 1)
+/* Number of PM करोमुख्यs. */
+#घोषणा NR_DOMAINS		(DOMAIN_VAPE + 1)
 
-#endif
+#पूर्ण_अगर

@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_FTRACE_H
-#define __ASM_SH_FTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_FTRACE_H
+#घोषणा __ASM_SH_FTRACE_H
 
-#ifdef CONFIG_FUNCTION_TRACER
+#अगर_घोषित CONFIG_FUNCTION_TRACER
 
-#define MCOUNT_INSN_SIZE	4 /* sizeof mcount call */
-#define FTRACE_SYSCALL_MAX	NR_syscalls
+#घोषणा MCOUNT_INSN_SIZE	4 /* माप mcount call */
+#घोषणा FTRACE_SYSCALL_MAX	NR_syscalls
 
-#ifndef __ASSEMBLY__
-extern void mcount(void);
+#अगर_अघोषित __ASSEMBLY__
+बाह्य व्योम mcount(व्योम);
 
-#define MCOUNT_ADDR		((unsigned long)(mcount))
+#घोषणा MCOUNT_ADDR		((अचिन्हित दीर्घ)(mcount))
 
-#ifdef CONFIG_DYNAMIC_FTRACE
-#define CALL_ADDR		((long)(ftrace_call))
-#define STUB_ADDR		((long)(ftrace_stub))
-#define GRAPH_ADDR		((long)(ftrace_graph_call))
-#define CALLER_ADDR		((long)(ftrace_caller))
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+#घोषणा CALL_ADDR		((दीर्घ)(ftrace_call))
+#घोषणा STUB_ADDR		((दीर्घ)(ftrace_stub))
+#घोषणा GRAPH_ADDR		((दीर्घ)(ftrace_graph_call))
+#घोषणा CALLER_ADDR		((दीर्घ)(ftrace_caller))
 
-#define MCOUNT_INSN_OFFSET	((STUB_ADDR - CALL_ADDR) - 4)
-#define GRAPH_INSN_OFFSET	((CALLER_ADDR - GRAPH_ADDR) - 4)
+#घोषणा MCOUNT_INSN_OFFSET	((STUB_ADDR - CALL_ADDR) - 4)
+#घोषणा GRAPH_INSN_OFFSET	((CALLER_ADDR - GRAPH_ADDR) - 4)
 
-struct dyn_arch_ftrace {
+काष्ठा dyn_arch_ftrace अणु
 	/* No extra data needed on sh */
-};
+पूर्ण;
 
-#endif /* CONFIG_DYNAMIC_FTRACE */
+#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
 
-static inline unsigned long ftrace_call_adjust(unsigned long addr)
-{
+अटल अंतरभूत अचिन्हित दीर्घ ftrace_call_adjust(अचिन्हित दीर्घ addr)
+अणु
 	/* 'addr' is the memory table address. */
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-#endif /* __ASSEMBLY__ */
-#endif /* CONFIG_FUNCTION_TRACER */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* CONFIG_FUNCTION_TRACER */
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-/* arch/sh/kernel/return_address.c */
-extern void *return_address(unsigned int);
+/* arch/sh/kernel/वापस_address.c */
+बाह्य व्योम *वापस_address(अचिन्हित पूर्णांक);
 
-#define ftrace_return_address(n) return_address(n)
+#घोषणा ftrace_वापस_address(n) वापस_address(n)
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* __ASM_SH_FTRACE_H */
+#पूर्ण_अगर /* __ASM_SH_FTRACE_H */

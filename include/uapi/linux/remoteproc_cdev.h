@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only WITH Linux-syscall-note */
 /*
- * IOCTLs for Remoteproc's character device interface.
+ * IOCTLs क्रम Remoteproc's अक्षरacter device पूर्णांकerface.
  *
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _UAPI_REMOTEPROC_CDEV_H_
-#define _UAPI_REMOTEPROC_CDEV_H_
+#अगर_अघोषित _UAPI_REMOTEPROC_CDEV_H_
+#घोषणा _UAPI_REMOTEPROC_CDEV_H_
 
-#include <linux/ioctl.h>
-#include <linux/types.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/types.h>
 
-#define RPROC_MAGIC	0xB7
-
-/*
- * The RPROC_SET_SHUTDOWN_ON_RELEASE ioctl allows to enable/disable the shutdown of a remote
- * processor automatically when the controlling userpsace closes the char device interface.
- *
- * input parameter: integer
- *   0		: disable automatic shutdown
- *   other	: enable automatic shutdown
- */
-#define RPROC_SET_SHUTDOWN_ON_RELEASE _IOW(RPROC_MAGIC, 1, __s32)
+#घोषणा RPROC_MAGIC	0xB7
 
 /*
- * The RPROC_GET_SHUTDOWN_ON_RELEASE ioctl gets information about whether the automatic shutdown of
- * a remote processor is enabled or disabled when the controlling userspace closes the char device
- * interface.
+ * The RPROC_SET_SHUTDOWN_ON_RELEASE ioctl allows to enable/disable the shutकरोwn of a remote
+ * processor स्वतःmatically when the controlling userpsace बंदs the अक्षर device पूर्णांकerface.
  *
- * output parameter: integer
- *   0		: automatic shutdown disable
- *   other	: automatic shutdown enable
+ * input parameter: पूर्णांकeger
+ *   0		: disable स्वतःmatic shutकरोwn
+ *   other	: enable स्वतःmatic shutकरोwn
  */
-#define RPROC_GET_SHUTDOWN_ON_RELEASE _IOR(RPROC_MAGIC, 2, __s32)
+#घोषणा RPROC_SET_SHUTDOWN_ON_RELEASE _IOW(RPROC_MAGIC, 1, __s32)
 
-#endif
+/*
+ * The RPROC_GET_SHUTDOWN_ON_RELEASE ioctl माला_लो inक्रमmation about whether the स्वतःmatic shutकरोwn of
+ * a remote processor is enabled or disabled when the controlling userspace बंदs the अक्षर device
+ * पूर्णांकerface.
+ *
+ * output parameter: पूर्णांकeger
+ *   0		: स्वतःmatic shutकरोwn disable
+ *   other	: स्वतःmatic shutकरोwn enable
+ */
+#घोषणा RPROC_GET_SHUTDOWN_ON_RELEASE _IOR(RPROC_MAGIC, 2, __s32)
+
+#पूर्ण_अगर

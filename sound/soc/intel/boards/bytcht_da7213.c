@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  bytcht-da7213.c - ASoc Machine driver for Intel Baytrail and
- *             Cherrytrail-based platforms, with Dialog DA7213 codec
+ *  bytcht-da7213.c - ASoc Machine driver क्रम Intel Baytrail and
+ *             Cherrytrail-based platक्रमms, with Dialog DA7213 codec
  *
  *  Copyright (C) 2017 Intel Corporation
- *  Author: Pierre-Louis Bossart <pierre-louis.bossart@linux.intel.com>
+ *  Author: Pierre-Louis Bossart <pierre-louis.bossart@linux.पूर्णांकel.com>
  *
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include <linux/module.h>
-#include <linux/acpi.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-acpi.h>
-#include "../../codecs/da7213.h"
-#include "../atom/sst-atom-controls.h"
+#समावेश <linux/module.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-acpi.h>
+#समावेश "../../codecs/da7213.h"
+#समावेश "../atom/sst-atom-controls.h"
 
-static const struct snd_kcontrol_new controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new controls[] = अणु
 	SOC_DAPM_PIN_SWITCH("Headphone Jack"),
 	SOC_DAPM_PIN_SWITCH("Headset Mic"),
 	SOC_DAPM_PIN_SWITCH("Mic"),
 	SOC_DAPM_PIN_SWITCH("Aux In"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget dapm_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-	SND_SOC_DAPM_MIC("Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("Mic", NULL),
-	SND_SOC_DAPM_LINE("Aux In", NULL),
-};
+अटल स्थिर काष्ठा snd_soc_dapm_widget dapm_widमाला_लो[] = अणु
+	SND_SOC_DAPM_HP("Headphone Jack", शून्य),
+	SND_SOC_DAPM_MIC("Headset Mic", शून्य),
+	SND_SOC_DAPM_MIC("Mic", शून्य),
+	SND_SOC_DAPM_LINE("Aux In", शून्य),
+पूर्ण;
 
-static const struct snd_soc_dapm_route audio_map[] = {
-	{"Headphone Jack", NULL, "HPL"},
-	{"Headphone Jack", NULL, "HPR"},
+अटल स्थिर काष्ठा snd_soc_dapm_route audio_map[] = अणु
+	अणु"Headphone Jack", शून्य, "HPL"पूर्ण,
+	अणु"Headphone Jack", शून्य, "HPR"पूर्ण,
 
-	{"AUXL", NULL, "Aux In"},
-	{"AUXR", NULL, "Aux In"},
+	अणु"AUXL", शून्य, "Aux In"पूर्ण,
+	अणु"AUXR", शून्य, "Aux In"पूर्ण,
 
 	/* Assume Mic1 is linked to Headset and Mic2 to on-board mic */
-	{"MIC1", NULL, "Headset Mic"},
-	{"MIC2", NULL, "Mic"},
+	अणु"MIC1", शून्य, "Headset Mic"पूर्ण,
+	अणु"MIC2", शून्य, "Mic"पूर्ण,
 
 	/* SOC-codec link */
-	{"ssp2 Tx", NULL, "codec_out0"},
-	{"ssp2 Tx", NULL, "codec_out1"},
-	{"codec_in0", NULL, "ssp2 Rx"},
-	{"codec_in1", NULL, "ssp2 Rx"},
+	अणु"ssp2 Tx", शून्य, "codec_out0"पूर्ण,
+	अणु"ssp2 Tx", शून्य, "codec_out1"पूर्ण,
+	अणु"codec_in0", शून्य, "ssp2 Rx"पूर्ण,
+	अणु"codec_in1", शून्य, "ssp2 Rx"पूर्ण,
 
-	{"Playback", NULL, "ssp2 Tx"},
-	{"ssp2 Rx", NULL, "Capture"},
-};
+	अणु"Playback", शून्य, "ssp2 Tx"पूर्ण,
+	अणु"ssp2 Rx", शून्य, "Capture"पूर्ण,
+पूर्ण;
 
-static int codec_fixup(struct snd_soc_pcm_runtime *rtd,
-		       struct snd_pcm_hw_params *params)
-{
-	int ret;
-	struct snd_interval *rate = hw_param_interval(params,
+अटल पूर्णांक codec_fixup(काष्ठा snd_soc_pcm_runसमय *rtd,
+		       काष्ठा snd_pcm_hw_params *params)
+अणु
+	पूर्णांक ret;
+	काष्ठा snd_पूर्णांकerval *rate = hw_param_पूर्णांकerval(params,
 			SNDRV_PCM_HW_PARAM_RATE);
-	struct snd_interval *channels = hw_param_interval(params,
+	काष्ठा snd_पूर्णांकerval *channels = hw_param_पूर्णांकerval(params,
 						SNDRV_PCM_HW_PARAM_CHANNELS);
 
 	/* The DSP will convert the FE rate to 48k, stereo, 24bits */
@@ -71,10 +72,10 @@ static int codec_fixup(struct snd_soc_pcm_runtime *rtd,
 	channels->min = channels->max = 2;
 
 	/* set SSP2 to 24-bit */
-	params_set_format(params, SNDRV_PCM_FORMAT_S24_LE);
+	params_set_क्रमmat(params, SNDRV_PCM_FORMAT_S24_LE);
 
 	/*
-	 * Default mode for SSP configuration is TDM 4 slot, override config
+	 * Default mode क्रम SSP configuration is TDM 4 slot, override config
 	 * with explicit setting to I2S 2ch 24-bit. The word length is set with
 	 * dai_set_tdm_slot() since there is no other API exposed
 	 */
@@ -82,73 +83,73 @@ static int codec_fixup(struct snd_soc_pcm_runtime *rtd,
 				  SND_SOC_DAIFMT_I2S     |
 				  SND_SOC_DAIFMT_NB_NF   |
 				  SND_SOC_DAIFMT_CBS_CFS);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(rtd->dev, "can't set format to I2S, err %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = snd_soc_dai_set_tdm_slot(asoc_rtd_to_cpu(rtd, 0), 0x3, 0x3, 2, 24);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(rtd->dev, "can't set I2S config, err %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aif1_startup(struct snd_pcm_substream *substream)
-{
-	return snd_pcm_hw_constraint_single(substream->runtime,
+अटल पूर्णांक aअगर1_startup(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_pcm_hw_स्थिरraपूर्णांक_single(substream->runसमय,
 			SNDRV_PCM_HW_PARAM_RATE, 48000);
-}
+पूर्ण
 
-static int aif1_hw_params(struct snd_pcm_substream *substream,
-			  struct snd_pcm_hw_params *params)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	int ret;
+अटल पूर्णांक aअगर1_hw_params(काष्ठा snd_pcm_substream *substream,
+			  काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	पूर्णांक ret;
 
 	ret = snd_soc_dai_set_sysclk(codec_dai, DA7213_CLKSRC_MCLK,
 				     19200000, SND_SOC_CLOCK_IN);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(codec_dai->dev, "can't set codec sysclk configuration\n");
 
 	ret = snd_soc_dai_set_pll(codec_dai, 0,
 			DA7213_SYSCLK_PLL_SRM, 0, DA7213_PLL_FREQ_OUT_98304000);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(codec_dai->dev, "failed to start PLL: %d\n", ret);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int aif1_hw_free(struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	int ret;
+अटल पूर्णांक aअगर1_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	पूर्णांक ret;
 
 	ret = snd_soc_dai_set_pll(codec_dai, 0,
 				  DA7213_SYSCLK_MCLK, 0, 0);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(codec_dai->dev, "failed to stop PLL: %d\n", ret);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct snd_soc_ops aif1_ops = {
-	.startup = aif1_startup,
-};
+अटल स्थिर काष्ठा snd_soc_ops aअगर1_ops = अणु
+	.startup = aअगर1_startup,
+पूर्ण;
 
-static const struct snd_soc_ops ssp2_ops = {
-	.hw_params = aif1_hw_params,
-	.hw_free = aif1_hw_free,
+अटल स्थिर काष्ठा snd_soc_ops ssp2_ops = अणु
+	.hw_params = aअगर1_hw_params,
+	.hw_मुक्त = aअगर1_hw_मुक्त,
 
-};
+पूर्ण;
 
 SND_SOC_DAILINK_DEF(dummy,
 	DAILINK_COMP_ARRAY(COMP_DUMMY()));
@@ -165,32 +166,32 @@ SND_SOC_DAILINK_DEF(ssp2_codec,
 	DAILINK_COMP_ARRAY(COMP_CODEC("i2c-DLGS7213:00",
 				      "da7213-hifi")));
 
-SND_SOC_DAILINK_DEF(platform,
+SND_SOC_DAILINK_DEF(platक्रमm,
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("sst-mfld-platform")));
 
-static struct snd_soc_dai_link dailink[] = {
-	[MERR_DPCM_AUDIO] = {
+अटल काष्ठा snd_soc_dai_link dailink[] = अणु
+	[MERR_DPCM_AUDIO] = अणु
 		.name = "Audio Port",
 		.stream_name = "Audio",
 		.nonatomic = true,
 		.dynamic = 1,
 		.dpcm_playback = 1,
 		.dpcm_capture = 1,
-		.ops = &aif1_ops,
-		SND_SOC_DAILINK_REG(media, dummy, platform),
-	},
-	[MERR_DPCM_DEEP_BUFFER] = {
+		.ops = &aअगर1_ops,
+		SND_SOC_DAILINK_REG(media, dummy, platक्रमm),
+	पूर्ण,
+	[MERR_DPCM_DEEP_BUFFER] = अणु
 		.name = "Deep-Buffer Audio Port",
 		.stream_name = "Deep-Buffer Audio",
 		.nonatomic = true,
 		.dynamic = 1,
 		.dpcm_playback = 1,
-		.ops = &aif1_ops,
-		SND_SOC_DAILINK_REG(deepbuffer, dummy, platform),
-	},
+		.ops = &aअगर1_ops,
+		SND_SOC_DAILINK_REG(deepbuffer, dummy, platक्रमm),
+	पूर्ण,
 	/* CODEC<->CODEC link */
 	/* back ends */
-	{
+	अणु
 		.name = "SSP2-Codec",
 		.id = 0,
 		.no_pcm = 1,
@@ -201,19 +202,19 @@ static struct snd_soc_dai_link dailink[] = {
 		.dpcm_playback = 1,
 		.dpcm_capture = 1,
 		.ops = &ssp2_ops,
-		SND_SOC_DAILINK_REG(ssp2_port, ssp2_codec, platform),
-	},
-};
+		SND_SOC_DAILINK_REG(ssp2_port, ssp2_codec, platक्रमm),
+	पूर्ण,
+पूर्ण;
 
-/* use space before codec name to simplify card ID, and simplify driver name */
-#define SOF_CARD_NAME "bytcht da7213" /* card name will be 'sof-bytcht da7213' */
-#define SOF_DRIVER_NAME "SOF"
+/* use space beक्रमe codec name to simplअगरy card ID, and simplअगरy driver name */
+#घोषणा SOF_CARD_NAME "bytcht da7213" /* card name will be 'sof-bytcht da7213' */
+#घोषणा SOF_DRIVER_NAME "SOF"
 
-#define CARD_NAME "bytcht-da7213"
-#define DRIVER_NAME NULL /* card name will be used for driver name */
+#घोषणा CARD_NAME "bytcht-da7213"
+#घोषणा DRIVER_NAME शून्य /* card name will be used क्रम driver name */
 
 /* SoC card */
-static struct snd_soc_card bytcht_da7213_card = {
+अटल काष्ठा snd_soc_card bytcht_da7213_card = अणु
 	.name = CARD_NAME,
 	.driver_name = DRIVER_NAME,
 	.owner = THIS_MODULE,
@@ -221,85 +222,85 @@ static struct snd_soc_card bytcht_da7213_card = {
 	.num_links = ARRAY_SIZE(dailink),
 	.controls = controls,
 	.num_controls = ARRAY_SIZE(controls),
-	.dapm_widgets = dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(dapm_widgets),
+	.dapm_widमाला_लो = dapm_widमाला_लो,
+	.num_dapm_widमाला_लो = ARRAY_SIZE(dapm_widमाला_लो),
 	.dapm_routes = audio_map,
 	.num_dapm_routes = ARRAY_SIZE(audio_map),
-};
+पूर्ण;
 
-static char codec_name[SND_ACPI_I2C_ID_LEN];
+अटल अक्षर codec_name[SND_ACPI_I2C_ID_LEN];
 
-static int bytcht_da7213_probe(struct platform_device *pdev)
-{
-	struct snd_soc_card *card;
-	struct snd_soc_acpi_mach *mach;
-	const char *platform_name;
-	struct acpi_device *adev;
+अटल पूर्णांक bytcht_da7213_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snd_soc_card *card;
+	काष्ठा snd_soc_acpi_mach *mach;
+	स्थिर अक्षर *platक्रमm_name;
+	काष्ठा acpi_device *adev;
 	bool sof_parent;
-	int dai_index = 0;
-	int ret_val = 0;
-	int i;
+	पूर्णांक dai_index = 0;
+	पूर्णांक ret_val = 0;
+	पूर्णांक i;
 
-	mach = pdev->dev.platform_data;
+	mach = pdev->dev.platक्रमm_data;
 	card = &bytcht_da7213_card;
 	card->dev = &pdev->dev;
 
 	/* fix index of codec dai */
-	for (i = 0; i < ARRAY_SIZE(dailink); i++) {
-		if (!strcmp(dailink[i].codecs->name, "i2c-DLGS7213:00")) {
+	क्रम (i = 0; i < ARRAY_SIZE(dailink); i++) अणु
+		अगर (!म_भेद(dailink[i].codecs->name, "i2c-DLGS7213:00")) अणु
 			dai_index = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* fixup codec name based on HID */
-	adev = acpi_dev_get_first_match_dev(mach->id, NULL, -1);
-	if (adev) {
-		snprintf(codec_name, sizeof(codec_name),
+	adev = acpi_dev_get_first_match_dev(mach->id, शून्य, -1);
+	अगर (adev) अणु
+		snम_लिखो(codec_name, माप(codec_name),
 			 "i2c-%s", acpi_dev_name(adev));
 		put_device(&adev->dev);
 		dailink[dai_index].codecs->name = codec_name;
-	}
+	पूर्ण
 
-	/* override plaform name, if required */
-	platform_name = mach->mach_params.platform;
+	/* override plaक्रमm name, अगर required */
+	platक्रमm_name = mach->mach_params.platक्रमm;
 
-	ret_val = snd_soc_fixup_dai_links_platform_name(card, platform_name);
-	if (ret_val)
-		return ret_val;
+	ret_val = snd_soc_fixup_dai_links_platक्रमm_name(card, platक्रमm_name);
+	अगर (ret_val)
+		वापस ret_val;
 
 	sof_parent = snd_soc_acpi_sof_parent(&pdev->dev);
 
 	/* set card and driver name */
-	if (sof_parent) {
+	अगर (sof_parent) अणु
 		bytcht_da7213_card.name = SOF_CARD_NAME;
 		bytcht_da7213_card.driver_name = SOF_DRIVER_NAME;
-	} else {
+	पूर्ण अन्यथा अणु
 		bytcht_da7213_card.name = CARD_NAME;
 		bytcht_da7213_card.driver_name = DRIVER_NAME;
-	}
+	पूर्ण
 
 	/* set pm ops */
-	if (sof_parent)
+	अगर (sof_parent)
 		pdev->dev.driver->pm = &snd_soc_pm_ops;
 
-	ret_val = devm_snd_soc_register_card(&pdev->dev, card);
-	if (ret_val) {
+	ret_val = devm_snd_soc_रेजिस्टर_card(&pdev->dev, card);
+	अगर (ret_val) अणु
 		dev_err(&pdev->dev,
 			"snd_soc_register_card failed %d\n", ret_val);
-		return ret_val;
-	}
-	platform_set_drvdata(pdev, card);
-	return ret_val;
-}
+		वापस ret_val;
+	पूर्ण
+	platक्रमm_set_drvdata(pdev, card);
+	वापस ret_val;
+पूर्ण
 
-static struct platform_driver bytcht_da7213_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver bytcht_da7213_driver = अणु
+	.driver = अणु
 		.name = "bytcht_da7213",
-	},
+	पूर्ण,
 	.probe = bytcht_da7213_probe,
-};
-module_platform_driver(bytcht_da7213_driver);
+पूर्ण;
+module_platक्रमm_driver(bytcht_da7213_driver);
 
 MODULE_DESCRIPTION("ASoC Intel(R) Baytrail/Cherrytrail+DA7213 Machine driver");
 MODULE_AUTHOR("Pierre-Louis Bossart");

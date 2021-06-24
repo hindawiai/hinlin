@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/pagewalk.h>
-#include <linux/vmacache.h>
-#include <linux/hugetlb.h>
-#include <linux/huge_mm.h>
-#include <linux/mount.h>
-#include <linux/seq_file.h>
-#include <linux/highmem.h>
-#include <linux/ptrace.h>
-#include <linux/slab.h>
-#include <linux/pagemap.h>
-#include <linux/mempolicy.h>
-#include <linux/rmap.h>
-#include <linux/swap.h>
-#include <linux/sched/mm.h>
-#include <linux/swapops.h>
-#include <linux/mmu_notifier.h>
-#include <linux/page_idle.h>
-#include <linux/shmem_fs.h>
-#include <linux/uaccess.h>
-#include <linux/pkeys.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/pagewalk.h>
+#समावेश <linux/vmacache.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/huge_mm.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/mempolicy.h>
+#समावेश <linux/rmap.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/swapops.h>
+#समावेश <linux/mmu_notअगरier.h>
+#समावेश <linux/page_idle.h>
+#समावेश <linux/shmem_fs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/pkeys.h>
 
-#include <asm/elf.h>
-#include <asm/tlb.h>
-#include <asm/tlbflush.h>
-#include "internal.h"
+#समावेश <यंत्र/elf.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश "internal.h"
 
-#define SEQ_PUT_DEC(str, val) \
+#घोषणा SEQ_PUT_DEC(str, val) \
 		seq_put_decimal_ull_width(m, str, (val) << (PAGE_SHIFT-10), 8)
-void task_mem(struct seq_file *m, struct mm_struct *mm)
-{
-	unsigned long text, lib, swap, anon, file, shmem;
-	unsigned long hiwater_vm, total_vm, hiwater_rss, total_rss;
+व्योम task_mem(काष्ठा seq_file *m, काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ text, lib, swap, anon, file, shmem;
+	अचिन्हित दीर्घ hiwater_vm, total_vm, hiwater_rss, total_rss;
 
 	anon = get_mm_counter(mm, MM_ANONPAGES);
-	file = get_mm_counter(mm, MM_FILEPAGES);
+	file = get_mm_counter(mm, MM_खाताPAGES);
 	shmem = get_mm_counter(mm, MM_SHMEMPAGES);
 
 	/*
-	 * Note: to minimize their overhead, mm maintains hiwater_vm and
+	 * Note: to minimize their overhead, mm मुख्यtains hiwater_vm and
 	 * hiwater_rss only when about to *lower* total_vm or rss.  Any
-	 * collector of these hiwater stats must therefore get total_vm
+	 * collector of these hiwater stats must thereक्रमe get total_vm
 	 * and rss too, which will usually be the higher.  Barriers? not
-	 * worth the effort, such snapshots can always be inconsistent.
+	 * worth the efक्रमt, such snapshots can always be inconsistent.
 	 */
 	hiwater_vm = total_vm = mm->total_vm;
-	if (hiwater_vm < mm->hiwater_vm)
+	अगर (hiwater_vm < mm->hiwater_vm)
 		hiwater_vm = mm->hiwater_vm;
 	hiwater_rss = total_rss = anon + file + shmem;
-	if (hiwater_rss < mm->hiwater_rss)
+	अगर (hiwater_rss < mm->hiwater_rss)
 		hiwater_rss = mm->hiwater_rss;
 
 	/* split executable areas between text and lib */
@@ -59,7 +60,7 @@ void task_mem(struct seq_file *m, struct mm_struct *mm)
 	SEQ_PUT_DEC("VmPeak:\t", hiwater_vm);
 	SEQ_PUT_DEC(" kB\nVmSize:\t", total_vm);
 	SEQ_PUT_DEC(" kB\nVmLck:\t", mm->locked_vm);
-	SEQ_PUT_DEC(" kB\nVmPin:\t", atomic64_read(&mm->pinned_vm));
+	SEQ_PUT_DEC(" kB\nVmPin:\t", atomic64_पढ़ो(&mm->pinned_vm));
 	SEQ_PUT_DEC(" kB\nVmHWM:\t", hiwater_rss);
 	SEQ_PUT_DEC(" kB\nVmRSS:\t", total_rss);
 	SEQ_PUT_DEC(" kB\nRssAnon:\t", anon);
@@ -74,323 +75,323 @@ void task_mem(struct seq_file *m, struct mm_struct *mm)
 	seq_put_decimal_ull_width(m,
 		    " kB\nVmPTE:\t", mm_pgtables_bytes(mm) >> 10, 8);
 	SEQ_PUT_DEC(" kB\nVmSwap:\t", swap);
-	seq_puts(m, " kB\n");
+	seq_माला_दो(m, " kB\n");
 	hugetlb_report_usage(m, mm);
-}
-#undef SEQ_PUT_DEC
+पूर्ण
+#अघोषित SEQ_PUT_DEC
 
-unsigned long task_vsize(struct mm_struct *mm)
-{
-	return PAGE_SIZE * mm->total_vm;
-}
+अचिन्हित दीर्घ task_vsize(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस PAGE_SIZE * mm->total_vm;
+पूर्ण
 
-unsigned long task_statm(struct mm_struct *mm,
-			 unsigned long *shared, unsigned long *text,
-			 unsigned long *data, unsigned long *resident)
-{
-	*shared = get_mm_counter(mm, MM_FILEPAGES) +
+अचिन्हित दीर्घ task_staपंचांग(काष्ठा mm_काष्ठा *mm,
+			 अचिन्हित दीर्घ *shared, अचिन्हित दीर्घ *text,
+			 अचिन्हित दीर्घ *data, अचिन्हित दीर्घ *resident)
+अणु
+	*shared = get_mm_counter(mm, MM_खाताPAGES) +
 			get_mm_counter(mm, MM_SHMEMPAGES);
 	*text = (PAGE_ALIGN(mm->end_code) - (mm->start_code & PAGE_MASK))
 								>> PAGE_SHIFT;
 	*data = mm->data_vm + mm->stack_vm;
 	*resident = *shared + get_mm_counter(mm, MM_ANONPAGES);
-	return mm->total_vm;
-}
+	वापस mm->total_vm;
+पूर्ण
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 /*
- * Save get_task_policy() for show_numa_map().
+ * Save get_task_policy() क्रम show_numa_map().
  */
-static void hold_task_mempolicy(struct proc_maps_private *priv)
-{
-	struct task_struct *task = priv->task;
+अटल व्योम hold_task_mempolicy(काष्ठा proc_maps_निजी *priv)
+अणु
+	काष्ठा task_काष्ठा *task = priv->task;
 
 	task_lock(task);
 	priv->task_mempolicy = get_task_policy(task);
 	mpol_get(priv->task_mempolicy);
 	task_unlock(task);
-}
-static void release_task_mempolicy(struct proc_maps_private *priv)
-{
+पूर्ण
+अटल व्योम release_task_mempolicy(काष्ठा proc_maps_निजी *priv)
+अणु
 	mpol_put(priv->task_mempolicy);
-}
-#else
-static void hold_task_mempolicy(struct proc_maps_private *priv)
-{
-}
-static void release_task_mempolicy(struct proc_maps_private *priv)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल व्योम hold_task_mempolicy(काष्ठा proc_maps_निजी *priv)
+अणु
+पूर्ण
+अटल व्योम release_task_mempolicy(काष्ठा proc_maps_निजी *priv)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static void *m_start(struct seq_file *m, loff_t *ppos)
-{
-	struct proc_maps_private *priv = m->private;
-	unsigned long last_addr = *ppos;
-	struct mm_struct *mm;
-	struct vm_area_struct *vma;
+अटल व्योम *m_start(काष्ठा seq_file *m, loff_t *ppos)
+अणु
+	काष्ठा proc_maps_निजी *priv = m->निजी;
+	अचिन्हित दीर्घ last_addr = *ppos;
+	काष्ठा mm_काष्ठा *mm;
+	काष्ठा vm_area_काष्ठा *vma;
 
 	/* See m_next(). Zero at the start or after lseek. */
-	if (last_addr == -1UL)
-		return NULL;
+	अगर (last_addr == -1UL)
+		वापस शून्य;
 
 	priv->task = get_proc_task(priv->inode);
-	if (!priv->task)
-		return ERR_PTR(-ESRCH);
+	अगर (!priv->task)
+		वापस ERR_PTR(-ESRCH);
 
 	mm = priv->mm;
-	if (!mm || !mmget_not_zero(mm)) {
-		put_task_struct(priv->task);
-		priv->task = NULL;
-		return NULL;
-	}
+	अगर (!mm || !mmget_not_zero(mm)) अणु
+		put_task_काष्ठा(priv->task);
+		priv->task = शून्य;
+		वापस शून्य;
+	पूर्ण
 
-	if (mmap_read_lock_killable(mm)) {
+	अगर (mmap_पढ़ो_lock_समाप्तable(mm)) अणु
 		mmput(mm);
-		put_task_struct(priv->task);
-		priv->task = NULL;
-		return ERR_PTR(-EINTR);
-	}
+		put_task_काष्ठा(priv->task);
+		priv->task = शून्य;
+		वापस ERR_PTR(-EINTR);
+	पूर्ण
 
 	hold_task_mempolicy(priv);
 	priv->tail_vma = get_gate_vma(mm);
 
 	vma = find_vma(mm, last_addr);
-	if (vma)
-		return vma;
+	अगर (vma)
+		वापस vma;
 
-	return priv->tail_vma;
-}
+	वापस priv->tail_vma;
+पूर्ण
 
-static void *m_next(struct seq_file *m, void *v, loff_t *ppos)
-{
-	struct proc_maps_private *priv = m->private;
-	struct vm_area_struct *next, *vma = v;
+अटल व्योम *m_next(काष्ठा seq_file *m, व्योम *v, loff_t *ppos)
+अणु
+	काष्ठा proc_maps_निजी *priv = m->निजी;
+	काष्ठा vm_area_काष्ठा *next, *vma = v;
 
-	if (vma == priv->tail_vma)
-		next = NULL;
-	else if (vma->vm_next)
+	अगर (vma == priv->tail_vma)
+		next = शून्य;
+	अन्यथा अगर (vma->vm_next)
 		next = vma->vm_next;
-	else
+	अन्यथा
 		next = priv->tail_vma;
 
 	*ppos = next ? next->vm_start : -1UL;
 
-	return next;
-}
+	वापस next;
+पूर्ण
 
-static void m_stop(struct seq_file *m, void *v)
-{
-	struct proc_maps_private *priv = m->private;
-	struct mm_struct *mm = priv->mm;
+अटल व्योम m_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा proc_maps_निजी *priv = m->निजी;
+	काष्ठा mm_काष्ठा *mm = priv->mm;
 
-	if (!priv->task)
-		return;
+	अगर (!priv->task)
+		वापस;
 
 	release_task_mempolicy(priv);
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 	mmput(mm);
-	put_task_struct(priv->task);
-	priv->task = NULL;
-}
+	put_task_काष्ठा(priv->task);
+	priv->task = शून्य;
+पूर्ण
 
-static int proc_maps_open(struct inode *inode, struct file *file,
-			const struct seq_operations *ops, int psize)
-{
-	struct proc_maps_private *priv = __seq_open_private(file, ops, psize);
+अटल पूर्णांक proc_maps_खोलो(काष्ठा inode *inode, काष्ठा file *file,
+			स्थिर काष्ठा seq_operations *ops, पूर्णांक psize)
+अणु
+	काष्ठा proc_maps_निजी *priv = __seq_खोलो_निजी(file, ops, psize);
 
-	if (!priv)
-		return -ENOMEM;
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->inode = inode;
-	priv->mm = proc_mem_open(inode, PTRACE_MODE_READ);
-	if (IS_ERR(priv->mm)) {
-		int err = PTR_ERR(priv->mm);
+	priv->mm = proc_mem_खोलो(inode, PTRACE_MODE_READ);
+	अगर (IS_ERR(priv->mm)) अणु
+		पूर्णांक err = PTR_ERR(priv->mm);
 
-		seq_release_private(inode, file);
-		return err;
-	}
+		seq_release_निजी(inode, file);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int proc_map_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	struct proc_maps_private *priv = seq->private;
+अटल पूर्णांक proc_map_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा proc_maps_निजी *priv = seq->निजी;
 
-	if (priv->mm)
+	अगर (priv->mm)
 		mmdrop(priv->mm);
 
-	return seq_release_private(inode, file);
-}
+	वापस seq_release_निजी(inode, file);
+पूर्ण
 
-static int do_maps_open(struct inode *inode, struct file *file,
-			const struct seq_operations *ops)
-{
-	return proc_maps_open(inode, file, ops,
-				sizeof(struct proc_maps_private));
-}
+अटल पूर्णांक करो_maps_खोलो(काष्ठा inode *inode, काष्ठा file *file,
+			स्थिर काष्ठा seq_operations *ops)
+अणु
+	वापस proc_maps_खोलो(inode, file, ops,
+				माप(काष्ठा proc_maps_निजी));
+पूर्ण
 
 /*
- * Indicate if the VMA is a stack for the given task; for
- * /proc/PID/maps that is the stack of the main task.
+ * Indicate अगर the VMA is a stack क्रम the given task; क्रम
+ * /proc/PID/maps that is the stack of the मुख्य task.
  */
-static int is_stack(struct vm_area_struct *vma)
-{
+अटल पूर्णांक is_stack(काष्ठा vm_area_काष्ठा *vma)
+अणु
 	/*
-	 * We make no effort to guess what a given thread considers to be
-	 * its "stack".  It's not even well-defined for programs written
+	 * We make no efक्रमt to guess what a given thपढ़ो considers to be
+	 * its "stack".  It's not even well-defined क्रम programs written
 	 * languages like Go.
 	 */
-	return vma->vm_start <= vma->vm_mm->start_stack &&
+	वापस vma->vm_start <= vma->vm_mm->start_stack &&
 		vma->vm_end >= vma->vm_mm->start_stack;
-}
+पूर्ण
 
-static void show_vma_header_prefix(struct seq_file *m,
-				   unsigned long start, unsigned long end,
-				   vm_flags_t flags, unsigned long long pgoff,
-				   dev_t dev, unsigned long ino)
-{
-	seq_setwidth(m, 25 + sizeof(void *) * 6 - 1);
-	seq_put_hex_ll(m, NULL, start, 8);
+अटल व्योम show_vma_header_prefix(काष्ठा seq_file *m,
+				   अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+				   vm_flags_t flags, अचिन्हित दीर्घ दीर्घ pgoff,
+				   dev_t dev, अचिन्हित दीर्घ ino)
+अणु
+	seq_setwidth(m, 25 + माप(व्योम *) * 6 - 1);
+	seq_put_hex_ll(m, शून्य, start, 8);
 	seq_put_hex_ll(m, "-", end, 8);
-	seq_putc(m, ' ');
-	seq_putc(m, flags & VM_READ ? 'r' : '-');
-	seq_putc(m, flags & VM_WRITE ? 'w' : '-');
-	seq_putc(m, flags & VM_EXEC ? 'x' : '-');
-	seq_putc(m, flags & VM_MAYSHARE ? 's' : 'p');
+	seq_अ_दो(m, ' ');
+	seq_अ_दो(m, flags & VM_READ ? 'r' : '-');
+	seq_अ_दो(m, flags & VM_WRITE ? 'w' : '-');
+	seq_अ_दो(m, flags & VM_EXEC ? 'x' : '-');
+	seq_अ_दो(m, flags & VM_MAYSHARE ? 's' : 'p');
 	seq_put_hex_ll(m, " ", pgoff, 8);
 	seq_put_hex_ll(m, " ", MAJOR(dev), 2);
 	seq_put_hex_ll(m, ":", MINOR(dev), 2);
 	seq_put_decimal_ull(m, " ", ino);
-	seq_putc(m, ' ');
-}
+	seq_अ_दो(m, ' ');
+पूर्ण
 
-static void
-show_map_vma(struct seq_file *m, struct vm_area_struct *vma)
-{
-	struct mm_struct *mm = vma->vm_mm;
-	struct file *file = vma->vm_file;
+अटल व्योम
+show_map_vma(काष्ठा seq_file *m, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+	काष्ठा file *file = vma->vm_file;
 	vm_flags_t flags = vma->vm_flags;
-	unsigned long ino = 0;
-	unsigned long long pgoff = 0;
-	unsigned long start, end;
+	अचिन्हित दीर्घ ino = 0;
+	अचिन्हित दीर्घ दीर्घ pgoff = 0;
+	अचिन्हित दीर्घ start, end;
 	dev_t dev = 0;
-	const char *name = NULL;
+	स्थिर अक्षर *name = शून्य;
 
-	if (file) {
-		struct inode *inode = file_inode(vma->vm_file);
+	अगर (file) अणु
+		काष्ठा inode *inode = file_inode(vma->vm_file);
 		dev = inode->i_sb->s_dev;
 		ino = inode->i_ino;
 		pgoff = ((loff_t)vma->vm_pgoff) << PAGE_SHIFT;
-	}
+	पूर्ण
 
 	start = vma->vm_start;
 	end = vma->vm_end;
 	show_vma_header_prefix(m, start, end, flags, pgoff, dev, ino);
 
 	/*
-	 * Print the dentry name for named mappings, and a
-	 * special [heap] marker for the heap:
+	 * Prपूर्णांक the dentry name क्रम named mappings, and a
+	 * special [heap] marker क्रम the heap:
 	 */
-	if (file) {
+	अगर (file) अणु
 		seq_pad(m, ' ');
 		seq_file_path(m, file, "\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (vma->vm_ops && vma->vm_ops->name) {
+	अगर (vma->vm_ops && vma->vm_ops->name) अणु
 		name = vma->vm_ops->name(vma);
-		if (name)
-			goto done;
-	}
+		अगर (name)
+			जाओ करोne;
+	पूर्ण
 
 	name = arch_vma_name(vma);
-	if (!name) {
-		if (!mm) {
+	अगर (!name) अणु
+		अगर (!mm) अणु
 			name = "[vdso]";
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		if (vma->vm_start <= mm->brk &&
-		    vma->vm_end >= mm->start_brk) {
+		अगर (vma->vm_start <= mm->brk &&
+		    vma->vm_end >= mm->start_brk) अणु
 			name = "[heap]";
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		if (is_stack(vma))
+		अगर (is_stack(vma))
 			name = "[stack]";
-	}
+	पूर्ण
 
-done:
-	if (name) {
+करोne:
+	अगर (name) अणु
 		seq_pad(m, ' ');
-		seq_puts(m, name);
-	}
-	seq_putc(m, '\n');
-}
+		seq_माला_दो(m, name);
+	पूर्ण
+	seq_अ_दो(m, '\n');
+पूर्ण
 
-static int show_map(struct seq_file *m, void *v)
-{
+अटल पूर्णांक show_map(काष्ठा seq_file *m, व्योम *v)
+अणु
 	show_map_vma(m, v);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations proc_pid_maps_op = {
+अटल स्थिर काष्ठा seq_operations proc_pid_maps_op = अणु
 	.start	= m_start,
 	.next	= m_next,
 	.stop	= m_stop,
 	.show	= show_map
-};
+पूर्ण;
 
-static int pid_maps_open(struct inode *inode, struct file *file)
-{
-	return do_maps_open(inode, file, &proc_pid_maps_op);
-}
+अटल पूर्णांक pid_maps_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस करो_maps_खोलो(inode, file, &proc_pid_maps_op);
+पूर्ण
 
-const struct file_operations proc_pid_maps_operations = {
-	.open		= pid_maps_open,
-	.read		= seq_read,
+स्थिर काष्ठा file_operations proc_pid_maps_operations = अणु
+	.खोलो		= pid_maps_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= proc_map_release,
-};
+पूर्ण;
 
 /*
  * Proportional Set Size(PSS): my share of RSS.
  *
  * PSS of a process is the count of pages it has in memory, where each
- * page is divided by the number of processes sharing it.  So if a
+ * page is भागided by the number of processes sharing it.  So अगर a
  * process has 1000 pages all to itself, and 1000 shared with one other
  * process, its PSS will be 1500.
  *
- * To keep (accumulated) division errors low, we adopt a 64bit
- * fixed-point pss counter to minimize division errors. So (pss >>
+ * To keep (accumulated) भागision errors low, we aकरोpt a 64bit
+ * fixed-poपूर्णांक pss counter to minimize भागision errors. So (pss >>
  * PSS_SHIFT) would be the real byte count.
  *
- * A shift of 12 before division means (assuming 4K page size):
+ * A shअगरt of 12 beक्रमe भागision means (assuming 4K page size):
  * 	- 1M 3-user-pages add up to 8KB errors;
  * 	- supports mapcount up to 2^24, or 16M;
  * 	- supports PSS up to 2^52 bytes, or 4PB.
  */
-#define PSS_SHIFT 12
+#घोषणा PSS_SHIFT 12
 
-#ifdef CONFIG_PROC_PAGE_MONITOR
-struct mem_size_stats {
-	unsigned long resident;
-	unsigned long shared_clean;
-	unsigned long shared_dirty;
-	unsigned long private_clean;
-	unsigned long private_dirty;
-	unsigned long referenced;
-	unsigned long anonymous;
-	unsigned long lazyfree;
-	unsigned long anonymous_thp;
-	unsigned long shmem_thp;
-	unsigned long file_thp;
-	unsigned long swap;
-	unsigned long shared_hugetlb;
-	unsigned long private_hugetlb;
+#अगर_घोषित CONFIG_PROC_PAGE_MONITOR
+काष्ठा mem_size_stats अणु
+	अचिन्हित दीर्घ resident;
+	अचिन्हित दीर्घ shared_clean;
+	अचिन्हित दीर्घ shared_dirty;
+	अचिन्हित दीर्घ निजी_clean;
+	अचिन्हित दीर्घ निजी_dirty;
+	अचिन्हित दीर्घ referenced;
+	अचिन्हित दीर्घ anonymous;
+	अचिन्हित दीर्घ lazyमुक्त;
+	अचिन्हित दीर्घ anonymous_thp;
+	अचिन्हित दीर्घ shmem_thp;
+	अचिन्हित दीर्घ file_thp;
+	अचिन्हित दीर्घ swap;
+	अचिन्हित दीर्घ shared_hugetlb;
+	अचिन्हित दीर्घ निजी_hugetlb;
 	u64 pss;
 	u64 pss_anon;
 	u64 pss_file;
@@ -398,216 +399,216 @@ struct mem_size_stats {
 	u64 pss_locked;
 	u64 swap_pss;
 	bool check_shmem_swap;
-};
+पूर्ण;
 
-static void smaps_page_accumulate(struct mem_size_stats *mss,
-		struct page *page, unsigned long size, unsigned long pss,
-		bool dirty, bool locked, bool private)
-{
+अटल व्योम smaps_page_accumulate(काष्ठा mem_size_stats *mss,
+		काष्ठा page *page, अचिन्हित दीर्घ size, अचिन्हित दीर्घ pss,
+		bool dirty, bool locked, bool निजी)
+अणु
 	mss->pss += pss;
 
-	if (PageAnon(page))
+	अगर (PageAnon(page))
 		mss->pss_anon += pss;
-	else if (PageSwapBacked(page))
+	अन्यथा अगर (PageSwapBacked(page))
 		mss->pss_shmem += pss;
-	else
+	अन्यथा
 		mss->pss_file += pss;
 
-	if (locked)
+	अगर (locked)
 		mss->pss_locked += pss;
 
-	if (dirty || PageDirty(page)) {
-		if (private)
-			mss->private_dirty += size;
-		else
+	अगर (dirty || PageDirty(page)) अणु
+		अगर (निजी)
+			mss->निजी_dirty += size;
+		अन्यथा
 			mss->shared_dirty += size;
-	} else {
-		if (private)
-			mss->private_clean += size;
-		else
+	पूर्ण अन्यथा अणु
+		अगर (निजी)
+			mss->निजी_clean += size;
+		अन्यथा
 			mss->shared_clean += size;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void smaps_account(struct mem_size_stats *mss, struct page *page,
+अटल व्योम smaps_account(काष्ठा mem_size_stats *mss, काष्ठा page *page,
 		bool compound, bool young, bool dirty, bool locked)
-{
-	int i, nr = compound ? compound_nr(page) : 1;
-	unsigned long size = nr * PAGE_SIZE;
+अणु
+	पूर्णांक i, nr = compound ? compound_nr(page) : 1;
+	अचिन्हित दीर्घ size = nr * PAGE_SIZE;
 
 	/*
 	 * First accumulate quantities that depend only on |size| and the type
 	 * of the compound page.
 	 */
-	if (PageAnon(page)) {
+	अगर (PageAnon(page)) अणु
 		mss->anonymous += size;
-		if (!PageSwapBacked(page) && !dirty && !PageDirty(page))
-			mss->lazyfree += size;
-	}
+		अगर (!PageSwapBacked(page) && !dirty && !PageDirty(page))
+			mss->lazyमुक्त += size;
+	पूर्ण
 
 	mss->resident += size;
 	/* Accumulate the size in pages that have been accessed. */
-	if (young || page_is_young(page) || PageReferenced(page))
+	अगर (young || page_is_young(page) || PageReferenced(page))
 		mss->referenced += size;
 
 	/*
 	 * Then accumulate quantities that may depend on sharing, or that may
-	 * differ page-by-page.
+	 * dअगरfer page-by-page.
 	 *
 	 * page_count(page) == 1 guarantees the page is mapped exactly once.
 	 * If any subpage of the compound page mapped with PTE it would elevate
 	 * page_count().
 	 */
-	if (page_count(page) == 1) {
+	अगर (page_count(page) == 1) अणु
 		smaps_page_accumulate(mss, page, size, size << PSS_SHIFT, dirty,
 			locked, true);
-		return;
-	}
-	for (i = 0; i < nr; i++, page++) {
-		int mapcount = page_mapcount(page);
-		unsigned long pss = PAGE_SIZE << PSS_SHIFT;
-		if (mapcount >= 2)
+		वापस;
+	पूर्ण
+	क्रम (i = 0; i < nr; i++, page++) अणु
+		पूर्णांक mapcount = page_mapcount(page);
+		अचिन्हित दीर्घ pss = PAGE_SIZE << PSS_SHIFT;
+		अगर (mapcount >= 2)
 			pss /= mapcount;
 		smaps_page_accumulate(mss, page, PAGE_SIZE, pss, dirty, locked,
 				      mapcount < 2);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_SHMEM
-static int smaps_pte_hole(unsigned long addr, unsigned long end,
-			  __always_unused int depth, struct mm_walk *walk)
-{
-	struct mem_size_stats *mss = walk->private;
+#अगर_घोषित CONFIG_SHMEM
+अटल पूर्णांक smaps_pte_hole(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+			  __always_unused पूर्णांक depth, काष्ठा mm_walk *walk)
+अणु
+	काष्ठा mem_size_stats *mss = walk->निजी;
 
 	mss->swap += shmem_partial_swap_usage(
 			walk->vma->vm_file->f_mapping, addr, end);
 
-	return 0;
-}
-#else
-#define smaps_pte_hole		NULL
-#endif /* CONFIG_SHMEM */
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा smaps_pte_hole		शून्य
+#पूर्ण_अगर /* CONFIG_SHMEM */
 
-static void smaps_pte_entry(pte_t *pte, unsigned long addr,
-		struct mm_walk *walk)
-{
-	struct mem_size_stats *mss = walk->private;
-	struct vm_area_struct *vma = walk->vma;
+अटल व्योम smaps_pte_entry(pte_t *pte, अचिन्हित दीर्घ addr,
+		काष्ठा mm_walk *walk)
+अणु
+	काष्ठा mem_size_stats *mss = walk->निजी;
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 	bool locked = !!(vma->vm_flags & VM_LOCKED);
-	struct page *page = NULL;
+	काष्ठा page *page = शून्य;
 
-	if (pte_present(*pte)) {
+	अगर (pte_present(*pte)) अणु
 		page = vm_normal_page(vma, addr, *pte);
-	} else if (is_swap_pte(*pte)) {
+	पूर्ण अन्यथा अगर (is_swap_pte(*pte)) अणु
 		swp_entry_t swpent = pte_to_swp_entry(*pte);
 
-		if (!non_swap_entry(swpent)) {
-			int mapcount;
+		अगर (!non_swap_entry(swpent)) अणु
+			पूर्णांक mapcount;
 
 			mss->swap += PAGE_SIZE;
 			mapcount = swp_swapcount(swpent);
-			if (mapcount >= 2) {
+			अगर (mapcount >= 2) अणु
 				u64 pss_delta = (u64)PAGE_SIZE << PSS_SHIFT;
 
-				do_div(pss_delta, mapcount);
+				करो_भाग(pss_delta, mapcount);
 				mss->swap_pss += pss_delta;
-			} else {
+			पूर्ण अन्यथा अणु
 				mss->swap_pss += (u64)PAGE_SIZE << PSS_SHIFT;
-			}
-		} else if (is_migration_entry(swpent))
+			पूर्ण
+		पूर्ण अन्यथा अगर (is_migration_entry(swpent))
 			page = migration_entry_to_page(swpent);
-		else if (is_device_private_entry(swpent))
-			page = device_private_entry_to_page(swpent);
-	} else if (unlikely(IS_ENABLED(CONFIG_SHMEM) && mss->check_shmem_swap
-							&& pte_none(*pte))) {
+		अन्यथा अगर (is_device_निजी_entry(swpent))
+			page = device_निजी_entry_to_page(swpent);
+	पूर्ण अन्यथा अगर (unlikely(IS_ENABLED(CONFIG_SHMEM) && mss->check_shmem_swap
+							&& pte_none(*pte))) अणु
 		page = xa_load(&vma->vm_file->f_mapping->i_pages,
 						linear_page_index(vma, addr));
-		if (xa_is_value(page))
+		अगर (xa_is_value(page))
 			mss->swap += PAGE_SIZE;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!page)
-		return;
+	अगर (!page)
+		वापस;
 
 	smaps_account(mss, page, false, pte_young(*pte), pte_dirty(*pte), locked);
-}
+पूर्ण
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-static void smaps_pmd_entry(pmd_t *pmd, unsigned long addr,
-		struct mm_walk *walk)
-{
-	struct mem_size_stats *mss = walk->private;
-	struct vm_area_struct *vma = walk->vma;
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+अटल व्योम smaps_pmd_entry(pmd_t *pmd, अचिन्हित दीर्घ addr,
+		काष्ठा mm_walk *walk)
+अणु
+	काष्ठा mem_size_stats *mss = walk->निजी;
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 	bool locked = !!(vma->vm_flags & VM_LOCKED);
-	struct page *page = NULL;
+	काष्ठा page *page = शून्य;
 
-	if (pmd_present(*pmd)) {
-		/* FOLL_DUMP will return -EFAULT on huge zero page */
+	अगर (pmd_present(*pmd)) अणु
+		/* FOLL_DUMP will वापस -EFAULT on huge zero page */
 		page = follow_trans_huge_pmd(vma, addr, pmd, FOLL_DUMP);
-	} else if (unlikely(thp_migration_supported() && is_swap_pmd(*pmd))) {
+	पूर्ण अन्यथा अगर (unlikely(thp_migration_supported() && is_swap_pmd(*pmd))) अणु
 		swp_entry_t entry = pmd_to_swp_entry(*pmd);
 
-		if (is_migration_entry(entry))
+		अगर (is_migration_entry(entry))
 			page = migration_entry_to_page(entry);
-	}
-	if (IS_ERR_OR_NULL(page))
-		return;
-	if (PageAnon(page))
+	पूर्ण
+	अगर (IS_ERR_OR_शून्य(page))
+		वापस;
+	अगर (PageAnon(page))
 		mss->anonymous_thp += HPAGE_PMD_SIZE;
-	else if (PageSwapBacked(page))
+	अन्यथा अगर (PageSwapBacked(page))
 		mss->shmem_thp += HPAGE_PMD_SIZE;
-	else if (is_zone_device_page(page))
+	अन्यथा अगर (is_zone_device_page(page))
 		/* pass */;
-	else
+	अन्यथा
 		mss->file_thp += HPAGE_PMD_SIZE;
 	smaps_account(mss, page, true, pmd_young(*pmd), pmd_dirty(*pmd), locked);
-}
-#else
-static void smaps_pmd_entry(pmd_t *pmd, unsigned long addr,
-		struct mm_walk *walk)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल व्योम smaps_pmd_entry(pmd_t *pmd, अचिन्हित दीर्घ addr,
+		काष्ठा mm_walk *walk)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int smaps_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end,
-			   struct mm_walk *walk)
-{
-	struct vm_area_struct *vma = walk->vma;
+अटल पूर्णांक smaps_pte_range(pmd_t *pmd, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+			   काष्ठा mm_walk *walk)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 	pte_t *pte;
 	spinlock_t *ptl;
 
 	ptl = pmd_trans_huge_lock(pmd, vma);
-	if (ptl) {
+	अगर (ptl) अणु
 		smaps_pmd_entry(pmd, addr, walk);
 		spin_unlock(ptl);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (pmd_trans_unstable(pmd))
-		goto out;
+	अगर (pmd_trans_unstable(pmd))
+		जाओ out;
 	/*
 	 * The mmap_lock held all the way back in m_start() is what
 	 * keeps khugepaged out of here and from collapsing things
 	 * in here.
 	 */
 	pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
-	for (; addr != end; pte++, addr += PAGE_SIZE)
+	क्रम (; addr != end; pte++, addr += PAGE_SIZE)
 		smaps_pte_entry(pte, addr, walk);
 	pte_unmap_unlock(pte - 1, ptl);
 out:
 	cond_resched();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
-{
+अटल व्योम show_smap_vma_flags(काष्ठा seq_file *m, काष्ठा vm_area_काष्ठा *vma)
+अणु
 	/*
-	 * Don't forget to update Documentation/ on changes.
+	 * Don't क्रमget to update Documentation/ on changes.
 	 */
-	static const char mnemonics[BITS_PER_LONG][2] = {
+	अटल स्थिर अक्षर mnemonics[BITS_PER_LONG][2] = अणु
 		/*
-		 * In case if we meet a flag we don't know about.
+		 * In हाल अगर we meet a flag we करोn't know about.
 		 */
 		[0 ... (BITS_PER_LONG-1)] = "??",
 
@@ -635,154 +636,154 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
 		[ilog2(VM_ARCH_1)]	= "ar",
 		[ilog2(VM_WIPEONFORK)]	= "wf",
 		[ilog2(VM_DONTDUMP)]	= "dd",
-#ifdef CONFIG_ARM64_BTI
+#अगर_घोषित CONFIG_ARM64_BTI
 		[ilog2(VM_ARM64_BTI)]	= "bt",
-#endif
-#ifdef CONFIG_MEM_SOFT_DIRTY
-		[ilog2(VM_SOFTDIRTY)]	= "sd",
-#endif
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MEM_SOFT_सूचीTY
+		[ilog2(VM_SOFTसूचीTY)]	= "sd",
+#पूर्ण_अगर
 		[ilog2(VM_MIXEDMAP)]	= "mm",
 		[ilog2(VM_HUGEPAGE)]	= "hg",
 		[ilog2(VM_NOHUGEPAGE)]	= "nh",
 		[ilog2(VM_MERGEABLE)]	= "mg",
 		[ilog2(VM_UFFD_MISSING)]= "um",
 		[ilog2(VM_UFFD_WP)]	= "uw",
-#ifdef CONFIG_ARM64_MTE
+#अगर_घोषित CONFIG_ARM64_MTE
 		[ilog2(VM_MTE)]		= "mt",
 		[ilog2(VM_MTE_ALLOWED)]	= "",
-#endif
-#ifdef CONFIG_ARCH_HAS_PKEYS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_HAS_PKEYS
 		/* These come out via ProtectionKey: */
 		[ilog2(VM_PKEY_BIT0)]	= "",
 		[ilog2(VM_PKEY_BIT1)]	= "",
 		[ilog2(VM_PKEY_BIT2)]	= "",
 		[ilog2(VM_PKEY_BIT3)]	= "",
-#if VM_PKEY_BIT4
+#अगर VM_PKEY_BIT4
 		[ilog2(VM_PKEY_BIT4)]	= "",
-#endif
-#endif /* CONFIG_ARCH_HAS_PKEYS */
-#ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_ARCH_HAS_PKEYS */
+#अगर_घोषित CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
 		[ilog2(VM_UFFD_MINOR)]	= "ui",
-#endif /* CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
-	};
-	size_t i;
+#पूर्ण_अगर /* CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
+	पूर्ण;
+	माप_प्रकार i;
 
-	seq_puts(m, "VmFlags: ");
-	for (i = 0; i < BITS_PER_LONG; i++) {
-		if (!mnemonics[i][0])
-			continue;
-		if (vma->vm_flags & (1UL << i)) {
-			seq_putc(m, mnemonics[i][0]);
-			seq_putc(m, mnemonics[i][1]);
-			seq_putc(m, ' ');
-		}
-	}
-	seq_putc(m, '\n');
-}
+	seq_माला_दो(m, "VmFlags: ");
+	क्रम (i = 0; i < BITS_PER_LONG; i++) अणु
+		अगर (!mnemonics[i][0])
+			जारी;
+		अगर (vma->vm_flags & (1UL << i)) अणु
+			seq_अ_दो(m, mnemonics[i][0]);
+			seq_अ_दो(m, mnemonics[i][1]);
+			seq_अ_दो(m, ' ');
+		पूर्ण
+	पूर्ण
+	seq_अ_दो(m, '\n');
+पूर्ण
 
-#ifdef CONFIG_HUGETLB_PAGE
-static int smaps_hugetlb_range(pte_t *pte, unsigned long hmask,
-				 unsigned long addr, unsigned long end,
-				 struct mm_walk *walk)
-{
-	struct mem_size_stats *mss = walk->private;
-	struct vm_area_struct *vma = walk->vma;
-	struct page *page = NULL;
+#अगर_घोषित CONFIG_HUGETLB_PAGE
+अटल पूर्णांक smaps_hugetlb_range(pte_t *pte, अचिन्हित दीर्घ hmask,
+				 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+				 काष्ठा mm_walk *walk)
+अणु
+	काष्ठा mem_size_stats *mss = walk->निजी;
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
+	काष्ठा page *page = शून्य;
 
-	if (pte_present(*pte)) {
+	अगर (pte_present(*pte)) अणु
 		page = vm_normal_page(vma, addr, *pte);
-	} else if (is_swap_pte(*pte)) {
+	पूर्ण अन्यथा अगर (is_swap_pte(*pte)) अणु
 		swp_entry_t swpent = pte_to_swp_entry(*pte);
 
-		if (is_migration_entry(swpent))
+		अगर (is_migration_entry(swpent))
 			page = migration_entry_to_page(swpent);
-		else if (is_device_private_entry(swpent))
-			page = device_private_entry_to_page(swpent);
-	}
-	if (page) {
-		int mapcount = page_mapcount(page);
+		अन्यथा अगर (is_device_निजी_entry(swpent))
+			page = device_निजी_entry_to_page(swpent);
+	पूर्ण
+	अगर (page) अणु
+		पूर्णांक mapcount = page_mapcount(page);
 
-		if (mapcount >= 2)
+		अगर (mapcount >= 2)
 			mss->shared_hugetlb += huge_page_size(hstate_vma(vma));
-		else
-			mss->private_hugetlb += huge_page_size(hstate_vma(vma));
-	}
-	return 0;
-}
-#else
-#define smaps_hugetlb_range	NULL
-#endif /* HUGETLB_PAGE */
+		अन्यथा
+			mss->निजी_hugetlb += huge_page_size(hstate_vma(vma));
+	पूर्ण
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा smaps_hugetlb_range	शून्य
+#पूर्ण_अगर /* HUGETLB_PAGE */
 
-static const struct mm_walk_ops smaps_walk_ops = {
+अटल स्थिर काष्ठा mm_walk_ops smaps_walk_ops = अणु
 	.pmd_entry		= smaps_pte_range,
 	.hugetlb_entry		= smaps_hugetlb_range,
-};
+पूर्ण;
 
-static const struct mm_walk_ops smaps_shmem_walk_ops = {
+अटल स्थिर काष्ठा mm_walk_ops smaps_shmem_walk_ops = अणु
 	.pmd_entry		= smaps_pte_range,
 	.hugetlb_entry		= smaps_hugetlb_range,
 	.pte_hole		= smaps_pte_hole,
-};
+पूर्ण;
 
 /*
  * Gather mem stats from @vma with the indicated beginning
  * address @start, and keep them in @mss.
  *
- * Use vm_start of @vma as the beginning address if @start is 0.
+ * Use vm_start of @vma as the beginning address अगर @start is 0.
  */
-static void smap_gather_stats(struct vm_area_struct *vma,
-		struct mem_size_stats *mss, unsigned long start)
-{
-	const struct mm_walk_ops *ops = &smaps_walk_ops;
+अटल व्योम smap_gather_stats(काष्ठा vm_area_काष्ठा *vma,
+		काष्ठा mem_size_stats *mss, अचिन्हित दीर्घ start)
+अणु
+	स्थिर काष्ठा mm_walk_ops *ops = &smaps_walk_ops;
 
 	/* Invalid start */
-	if (start >= vma->vm_end)
-		return;
+	अगर (start >= vma->vm_end)
+		वापस;
 
-#ifdef CONFIG_SHMEM
-	/* In case of smaps_rollup, reset the value from previous vma */
+#अगर_घोषित CONFIG_SHMEM
+	/* In हाल of smaps_rollup, reset the value from previous vma */
 	mss->check_shmem_swap = false;
-	if (vma->vm_file && shmem_mapping(vma->vm_file->f_mapping)) {
+	अगर (vma->vm_file && shmem_mapping(vma->vm_file->f_mapping)) अणु
 		/*
-		 * For shared or readonly shmem mappings we know that all
-		 * swapped out pages belong to the shmem object, and we can
-		 * obtain the swap value much more efficiently. For private
+		 * For shared or पढ़ोonly shmem mappings we know that all
+		 * swapped out pages beदीर्घ to the shmem object, and we can
+		 * obtain the swap value much more efficiently. For निजी
 		 * writable mappings, we might have COW pages that are
 		 * not affected by the parent swapped out pages of the shmem
 		 * object, so we have to distinguish them during the page walk.
 		 * Unless we know that the shmem object (or the part mapped by
 		 * our VMA) has no swapped out pages at all.
 		 */
-		unsigned long shmem_swapped = shmem_swap_usage(vma);
+		अचिन्हित दीर्घ shmem_swapped = shmem_swap_usage(vma);
 
-		if (!start && (!shmem_swapped || (vma->vm_flags & VM_SHARED) ||
-					!(vma->vm_flags & VM_WRITE))) {
+		अगर (!start && (!shmem_swapped || (vma->vm_flags & VM_SHARED) ||
+					!(vma->vm_flags & VM_WRITE))) अणु
 			mss->swap += shmem_swapped;
-		} else {
+		पूर्ण अन्यथा अणु
 			mss->check_shmem_swap = true;
 			ops = &smaps_shmem_walk_ops;
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 	/* mmap_lock is held in m_start */
-	if (!start)
+	अगर (!start)
 		walk_page_vma(vma, ops, mss);
-	else
+	अन्यथा
 		walk_page_range(vma->vm_mm, start, vma->vm_end, ops, mss);
-}
+पूर्ण
 
-#define SEQ_PUT_DEC(str, val) \
+#घोषणा SEQ_PUT_DEC(str, val) \
 		seq_put_decimal_ull_width(m, str, (val) >> 10, 8)
 
-/* Show the contents common for smaps and smaps_rollup */
-static void __show_smap(struct seq_file *m, const struct mem_size_stats *mss,
+/* Show the contents common क्रम smaps and smaps_rollup */
+अटल व्योम __show_smap(काष्ठा seq_file *m, स्थिर काष्ठा mem_size_stats *mss,
 	bool rollup_mode)
-{
+अणु
 	SEQ_PUT_DEC("Rss:            ", mss->resident);
 	SEQ_PUT_DEC(" kB\nPss:            ", mss->pss >> PSS_SHIFT);
-	if (rollup_mode) {
+	अगर (rollup_mode) अणु
 		/*
-		 * These are meaningful only for smaps_rollup, otherwise two of
+		 * These are meaningful only क्रम smaps_rollup, otherwise two of
 		 * them are zero, and the other one is the same as Pss.
 		 */
 		SEQ_PUT_DEC(" kB\nPss_Anon:       ",
@@ -791,34 +792,34 @@ static void __show_smap(struct seq_file *m, const struct mem_size_stats *mss,
 			mss->pss_file >> PSS_SHIFT);
 		SEQ_PUT_DEC(" kB\nPss_Shmem:      ",
 			mss->pss_shmem >> PSS_SHIFT);
-	}
+	पूर्ण
 	SEQ_PUT_DEC(" kB\nShared_Clean:   ", mss->shared_clean);
 	SEQ_PUT_DEC(" kB\nShared_Dirty:   ", mss->shared_dirty);
-	SEQ_PUT_DEC(" kB\nPrivate_Clean:  ", mss->private_clean);
-	SEQ_PUT_DEC(" kB\nPrivate_Dirty:  ", mss->private_dirty);
+	SEQ_PUT_DEC(" kB\nPrivate_Clean:  ", mss->निजी_clean);
+	SEQ_PUT_DEC(" kB\nPrivate_Dirty:  ", mss->निजी_dirty);
 	SEQ_PUT_DEC(" kB\nReferenced:     ", mss->referenced);
 	SEQ_PUT_DEC(" kB\nAnonymous:      ", mss->anonymous);
-	SEQ_PUT_DEC(" kB\nLazyFree:       ", mss->lazyfree);
+	SEQ_PUT_DEC(" kB\nLazyFree:       ", mss->lazyमुक्त);
 	SEQ_PUT_DEC(" kB\nAnonHugePages:  ", mss->anonymous_thp);
 	SEQ_PUT_DEC(" kB\nShmemPmdMapped: ", mss->shmem_thp);
 	SEQ_PUT_DEC(" kB\nFilePmdMapped:  ", mss->file_thp);
 	SEQ_PUT_DEC(" kB\nShared_Hugetlb: ", mss->shared_hugetlb);
 	seq_put_decimal_ull_width(m, " kB\nPrivate_Hugetlb: ",
-				  mss->private_hugetlb >> 10, 7);
+				  mss->निजी_hugetlb >> 10, 7);
 	SEQ_PUT_DEC(" kB\nSwap:           ", mss->swap);
 	SEQ_PUT_DEC(" kB\nSwapPss:        ",
 					mss->swap_pss >> PSS_SHIFT);
 	SEQ_PUT_DEC(" kB\nLocked:         ",
 					mss->pss_locked >> PSS_SHIFT);
-	seq_puts(m, " kB\n");
-}
+	seq_माला_दो(m, " kB\n");
+पूर्ण
 
-static int show_smap(struct seq_file *m, void *v)
-{
-	struct vm_area_struct *vma = v;
-	struct mem_size_stats mss;
+अटल पूर्णांक show_smap(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = v;
+	काष्ठा mem_size_stats mss;
 
-	memset(&mss, 0, sizeof(mss));
+	स_रखो(&mss, 0, माप(mss));
 
 	smap_gather_stats(vma, &mss, 0);
 
@@ -827,66 +828,66 @@ static int show_smap(struct seq_file *m, void *v)
 	SEQ_PUT_DEC("Size:           ", vma->vm_end - vma->vm_start);
 	SEQ_PUT_DEC(" kB\nKernelPageSize: ", vma_kernel_pagesize(vma));
 	SEQ_PUT_DEC(" kB\nMMUPageSize:    ", vma_mmu_pagesize(vma));
-	seq_puts(m, " kB\n");
+	seq_माला_दो(m, " kB\n");
 
 	__show_smap(m, &mss, false);
 
-	seq_printf(m, "THPeligible:    %d\n",
+	seq_म_लिखो(m, "THPeligible:    %d\n",
 		   transparent_hugepage_enabled(vma));
 
-	if (arch_pkeys_enabled())
-		seq_printf(m, "ProtectionKey:  %8u\n", vma_pkey(vma));
+	अगर (arch_pkeys_enabled())
+		seq_म_लिखो(m, "ProtectionKey:  %8u\n", vma_pkey(vma));
 	show_smap_vma_flags(m, vma);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int show_smaps_rollup(struct seq_file *m, void *v)
-{
-	struct proc_maps_private *priv = m->private;
-	struct mem_size_stats mss;
-	struct mm_struct *mm;
-	struct vm_area_struct *vma;
-	unsigned long last_vma_end = 0;
-	int ret = 0;
+अटल पूर्णांक show_smaps_rollup(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा proc_maps_निजी *priv = m->निजी;
+	काष्ठा mem_size_stats mss;
+	काष्ठा mm_काष्ठा *mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	अचिन्हित दीर्घ last_vma_end = 0;
+	पूर्णांक ret = 0;
 
 	priv->task = get_proc_task(priv->inode);
-	if (!priv->task)
-		return -ESRCH;
+	अगर (!priv->task)
+		वापस -ESRCH;
 
 	mm = priv->mm;
-	if (!mm || !mmget_not_zero(mm)) {
+	अगर (!mm || !mmget_not_zero(mm)) अणु
 		ret = -ESRCH;
-		goto out_put_task;
-	}
+		जाओ out_put_task;
+	पूर्ण
 
-	memset(&mss, 0, sizeof(mss));
+	स_रखो(&mss, 0, माप(mss));
 
-	ret = mmap_read_lock_killable(mm);
-	if (ret)
-		goto out_put_mm;
+	ret = mmap_पढ़ो_lock_समाप्तable(mm);
+	अगर (ret)
+		जाओ out_put_mm;
 
 	hold_task_mempolicy(priv);
 
-	for (vma = priv->mm->mmap; vma;) {
+	क्रम (vma = priv->mm->mmap; vma;) अणु
 		smap_gather_stats(vma, &mss, 0);
 		last_vma_end = vma->vm_end;
 
 		/*
-		 * Release mmap_lock temporarily if someone wants to
-		 * access it for write request.
+		 * Release mmap_lock temporarily अगर someone wants to
+		 * access it क्रम ग_लिखो request.
 		 */
-		if (mmap_lock_is_contended(mm)) {
-			mmap_read_unlock(mm);
-			ret = mmap_read_lock_killable(mm);
-			if (ret) {
+		अगर (mmap_lock_is_contended(mm)) अणु
+			mmap_पढ़ो_unlock(mm);
+			ret = mmap_पढ़ो_lock_समाप्तable(mm);
+			अगर (ret) अणु
 				release_task_mempolicy(priv);
-				goto out_put_mm;
-			}
+				जाओ out_put_mm;
+			पूर्ण
 
 			/*
-			 * After dropping the lock, there are four cases to
-			 * consider. See the following example for explanation.
+			 * After dropping the lock, there are four हालs to
+			 * consider. See the following example क्रम explanation.
 			 *
 			 *   +------+------+-----------+
 			 *   | VMA1 | VMA2 | VMA3      |
@@ -894,247 +895,247 @@ static int show_smaps_rollup(struct seq_file *m, void *v)
 			 *   |      |      |           |
 			 *  4k     8k     16k         400k
 			 *
-			 * Suppose we drop the lock after reading VMA2 due to
+			 * Suppose we drop the lock after पढ़ोing VMA2 due to
 			 * contention, then we get:
 			 *
 			 *	last_vma_end = 16k
 			 *
-			 * 1) VMA2 is freed, but VMA3 exists:
+			 * 1) VMA2 is मुक्तd, but VMA3 exists:
 			 *
-			 *    find_vma(mm, 16k - 1) will return VMA3.
-			 *    In this case, just continue from VMA3.
+			 *    find_vma(mm, 16k - 1) will वापस VMA3.
+			 *    In this हाल, just जारी from VMA3.
 			 *
 			 * 2) VMA2 still exists:
 			 *
-			 *    find_vma(mm, 16k - 1) will return VMA2.
+			 *    find_vma(mm, 16k - 1) will वापस VMA2.
 			 *    Iterate the loop like the original one.
 			 *
 			 * 3) No more VMAs can be found:
 			 *
-			 *    find_vma(mm, 16k - 1) will return NULL.
-			 *    No more things to do, just break.
+			 *    find_vma(mm, 16k - 1) will वापस शून्य.
+			 *    No more things to करो, just अवरोध.
 			 *
 			 * 4) (last_vma_end - 1) is the middle of a vma (VMA'):
 			 *
-			 *    find_vma(mm, 16k - 1) will return VMA' whose range
+			 *    find_vma(mm, 16k - 1) will वापस VMA' whose range
 			 *    contains last_vma_end.
 			 *    Iterate VMA' from last_vma_end.
 			 */
 			vma = find_vma(mm, last_vma_end - 1);
 			/* Case 3 above */
-			if (!vma)
-				break;
+			अगर (!vma)
+				अवरोध;
 
 			/* Case 1 above */
-			if (vma->vm_start >= last_vma_end)
-				continue;
+			अगर (vma->vm_start >= last_vma_end)
+				जारी;
 
 			/* Case 4 above */
-			if (vma->vm_end > last_vma_end)
+			अगर (vma->vm_end > last_vma_end)
 				smap_gather_stats(vma, &mss, last_vma_end);
-		}
+		पूर्ण
 		/* Case 2 above */
 		vma = vma->vm_next;
-	}
+	पूर्ण
 
 	show_vma_header_prefix(m, priv->mm->mmap->vm_start,
 			       last_vma_end, 0, 0, 0, 0);
 	seq_pad(m, ' ');
-	seq_puts(m, "[rollup]\n");
+	seq_माला_दो(m, "[rollup]\n");
 
 	__show_smap(m, &mss, true);
 
 	release_task_mempolicy(priv);
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 
 out_put_mm:
 	mmput(mm);
 out_put_task:
-	put_task_struct(priv->task);
-	priv->task = NULL;
+	put_task_काष्ठा(priv->task);
+	priv->task = शून्य;
 
-	return ret;
-}
-#undef SEQ_PUT_DEC
+	वापस ret;
+पूर्ण
+#अघोषित SEQ_PUT_DEC
 
-static const struct seq_operations proc_pid_smaps_op = {
+अटल स्थिर काष्ठा seq_operations proc_pid_smaps_op = अणु
 	.start	= m_start,
 	.next	= m_next,
 	.stop	= m_stop,
 	.show	= show_smap
-};
+पूर्ण;
 
-static int pid_smaps_open(struct inode *inode, struct file *file)
-{
-	return do_maps_open(inode, file, &proc_pid_smaps_op);
-}
+अटल पूर्णांक pid_smaps_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस करो_maps_खोलो(inode, file, &proc_pid_smaps_op);
+पूर्ण
 
-static int smaps_rollup_open(struct inode *inode, struct file *file)
-{
-	int ret;
-	struct proc_maps_private *priv;
+अटल पूर्णांक smaps_rollup_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret;
+	काष्ठा proc_maps_निजी *priv;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL_ACCOUNT);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL_ACCOUNT);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	ret = single_open(file, show_smaps_rollup, priv);
-	if (ret)
-		goto out_free;
+	ret = single_खोलो(file, show_smaps_rollup, priv);
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	priv->inode = inode;
-	priv->mm = proc_mem_open(inode, PTRACE_MODE_READ);
-	if (IS_ERR(priv->mm)) {
+	priv->mm = proc_mem_खोलो(inode, PTRACE_MODE_READ);
+	अगर (IS_ERR(priv->mm)) अणु
 		ret = PTR_ERR(priv->mm);
 
 		single_release(inode, file);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_free:
-	kfree(priv);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(priv);
+	वापस ret;
+पूर्ण
 
-static int smaps_rollup_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	struct proc_maps_private *priv = seq->private;
+अटल पूर्णांक smaps_rollup_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा proc_maps_निजी *priv = seq->निजी;
 
-	if (priv->mm)
+	अगर (priv->mm)
 		mmdrop(priv->mm);
 
-	kfree(priv);
-	return single_release(inode, file);
-}
+	kमुक्त(priv);
+	वापस single_release(inode, file);
+पूर्ण
 
-const struct file_operations proc_pid_smaps_operations = {
-	.open		= pid_smaps_open,
-	.read		= seq_read,
+स्थिर काष्ठा file_operations proc_pid_smaps_operations = अणु
+	.खोलो		= pid_smaps_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= proc_map_release,
-};
+पूर्ण;
 
-const struct file_operations proc_pid_smaps_rollup_operations = {
-	.open		= smaps_rollup_open,
-	.read		= seq_read,
+स्थिर काष्ठा file_operations proc_pid_smaps_rollup_operations = अणु
+	.खोलो		= smaps_rollup_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= smaps_rollup_release,
-};
+पूर्ण;
 
-enum clear_refs_types {
+क्रमागत clear_refs_types अणु
 	CLEAR_REFS_ALL = 1,
 	CLEAR_REFS_ANON,
 	CLEAR_REFS_MAPPED,
-	CLEAR_REFS_SOFT_DIRTY,
+	CLEAR_REFS_SOFT_सूचीTY,
 	CLEAR_REFS_MM_HIWATER_RSS,
 	CLEAR_REFS_LAST,
-};
+पूर्ण;
 
-struct clear_refs_private {
-	enum clear_refs_types type;
-};
+काष्ठा clear_refs_निजी अणु
+	क्रमागत clear_refs_types type;
+पूर्ण;
 
-#ifdef CONFIG_MEM_SOFT_DIRTY
+#अगर_घोषित CONFIG_MEM_SOFT_सूचीTY
 
-static inline bool pte_is_pinned(struct vm_area_struct *vma, unsigned long addr, pte_t pte)
-{
-	struct page *page;
+अटल अंतरभूत bool pte_is_pinned(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr, pte_t pte)
+अणु
+	काष्ठा page *page;
 
-	if (!pte_write(pte))
-		return false;
-	if (!is_cow_mapping(vma->vm_flags))
-		return false;
-	if (likely(!atomic_read(&vma->vm_mm->has_pinned)))
-		return false;
+	अगर (!pte_ग_लिखो(pte))
+		वापस false;
+	अगर (!is_cow_mapping(vma->vm_flags))
+		वापस false;
+	अगर (likely(!atomic_पढ़ो(&vma->vm_mm->has_pinned)))
+		वापस false;
 	page = vm_normal_page(vma, addr, pte);
-	if (!page)
-		return false;
-	return page_maybe_dma_pinned(page);
-}
+	अगर (!page)
+		वापस false;
+	वापस page_maybe_dma_pinned(page);
+पूर्ण
 
-static inline void clear_soft_dirty(struct vm_area_struct *vma,
-		unsigned long addr, pte_t *pte)
-{
+अटल अंतरभूत व्योम clear_soft_dirty(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ addr, pte_t *pte)
+अणु
 	/*
-	 * The soft-dirty tracker uses #PF-s to catch writes
-	 * to pages, so write-protect the pte as well. See the
-	 * Documentation/admin-guide/mm/soft-dirty.rst for full description
+	 * The soft-dirty tracker uses #PF-s to catch ग_लिखोs
+	 * to pages, so ग_लिखो-protect the pte as well. See the
+	 * Documentation/admin-guide/mm/soft-dirty.rst क्रम full description
 	 * of how soft-dirty works.
 	 */
 	pte_t ptent = *pte;
 
-	if (pte_present(ptent)) {
+	अगर (pte_present(ptent)) अणु
 		pte_t old_pte;
 
-		if (pte_is_pinned(vma, addr, ptent))
-			return;
-		old_pte = ptep_modify_prot_start(vma, addr, pte);
+		अगर (pte_is_pinned(vma, addr, ptent))
+			वापस;
+		old_pte = ptep_modअगरy_prot_start(vma, addr, pte);
 		ptent = pte_wrprotect(old_pte);
 		ptent = pte_clear_soft_dirty(ptent);
-		ptep_modify_prot_commit(vma, addr, pte, old_pte, ptent);
-	} else if (is_swap_pte(ptent)) {
+		ptep_modअगरy_prot_commit(vma, addr, pte, old_pte, ptent);
+	पूर्ण अन्यथा अगर (is_swap_pte(ptent)) अणु
 		ptent = pte_swp_clear_soft_dirty(ptent);
 		set_pte_at(vma->vm_mm, addr, pte, ptent);
-	}
-}
-#else
-static inline void clear_soft_dirty(struct vm_area_struct *vma,
-		unsigned long addr, pte_t *pte)
-{
-}
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम clear_soft_dirty(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ addr, pte_t *pte)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_MEM_SOFT_DIRTY) && defined(CONFIG_TRANSPARENT_HUGEPAGE)
-static inline void clear_soft_dirty_pmd(struct vm_area_struct *vma,
-		unsigned long addr, pmd_t *pmdp)
-{
+#अगर defined(CONFIG_MEM_SOFT_सूचीTY) && defined(CONFIG_TRANSPARENT_HUGEPAGE)
+अटल अंतरभूत व्योम clear_soft_dirty_pmd(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ addr, pmd_t *pmdp)
+अणु
 	pmd_t old, pmd = *pmdp;
 
-	if (pmd_present(pmd)) {
+	अगर (pmd_present(pmd)) अणु
 		/* See comment in change_huge_pmd() */
 		old = pmdp_invalidate(vma, addr, pmdp);
-		if (pmd_dirty(old))
-			pmd = pmd_mkdirty(pmd);
-		if (pmd_young(old))
+		अगर (pmd_dirty(old))
+			pmd = pmd_सूची_गढ़ोty(pmd);
+		अगर (pmd_young(old))
 			pmd = pmd_mkyoung(pmd);
 
 		pmd = pmd_wrprotect(pmd);
 		pmd = pmd_clear_soft_dirty(pmd);
 
 		set_pmd_at(vma->vm_mm, addr, pmdp, pmd);
-	} else if (is_migration_entry(pmd_to_swp_entry(pmd))) {
+	पूर्ण अन्यथा अगर (is_migration_entry(pmd_to_swp_entry(pmd))) अणु
 		pmd = pmd_swp_clear_soft_dirty(pmd);
 		set_pmd_at(vma->vm_mm, addr, pmdp, pmd);
-	}
-}
-#else
-static inline void clear_soft_dirty_pmd(struct vm_area_struct *vma,
-		unsigned long addr, pmd_t *pmdp)
-{
-}
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम clear_soft_dirty_pmd(काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ addr, pmd_t *pmdp)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int clear_refs_pte_range(pmd_t *pmd, unsigned long addr,
-				unsigned long end, struct mm_walk *walk)
-{
-	struct clear_refs_private *cp = walk->private;
-	struct vm_area_struct *vma = walk->vma;
+अटल पूर्णांक clear_refs_pte_range(pmd_t *pmd, अचिन्हित दीर्घ addr,
+				अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
+अणु
+	काष्ठा clear_refs_निजी *cp = walk->निजी;
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 	pte_t *pte, ptent;
 	spinlock_t *ptl;
-	struct page *page;
+	काष्ठा page *page;
 
 	ptl = pmd_trans_huge_lock(pmd, vma);
-	if (ptl) {
-		if (cp->type == CLEAR_REFS_SOFT_DIRTY) {
+	अगर (ptl) अणु
+		अगर (cp->type == CLEAR_REFS_SOFT_सूचीTY) अणु
 			clear_soft_dirty_pmd(vma, addr, pmd);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!pmd_present(*pmd))
-			goto out;
+		अगर (!pmd_present(*pmd))
+			जाओ out;
 
 		page = pmd_page(*pmd);
 
@@ -1144,46 +1145,46 @@ static int clear_refs_pte_range(pmd_t *pmd, unsigned long addr,
 		ClearPageReferenced(page);
 out:
 		spin_unlock(ptl);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (pmd_trans_unstable(pmd))
-		return 0;
+	अगर (pmd_trans_unstable(pmd))
+		वापस 0;
 
 	pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
-	for (; addr != end; pte++, addr += PAGE_SIZE) {
+	क्रम (; addr != end; pte++, addr += PAGE_SIZE) अणु
 		ptent = *pte;
 
-		if (cp->type == CLEAR_REFS_SOFT_DIRTY) {
+		अगर (cp->type == CLEAR_REFS_SOFT_सूचीTY) अणु
 			clear_soft_dirty(vma, addr, pte);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!pte_present(ptent))
-			continue;
+		अगर (!pte_present(ptent))
+			जारी;
 
 		page = vm_normal_page(vma, addr, ptent);
-		if (!page)
-			continue;
+		अगर (!page)
+			जारी;
 
 		/* Clear accessed and referenced bits. */
 		ptep_test_and_clear_young(vma, addr, pte);
 		test_and_clear_page_young(page);
 		ClearPageReferenced(page);
-	}
+	पूर्ण
 	pte_unmap_unlock(pte - 1, ptl);
 	cond_resched();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clear_refs_test_walk(unsigned long start, unsigned long end,
-				struct mm_walk *walk)
-{
-	struct clear_refs_private *cp = walk->private;
-	struct vm_area_struct *vma = walk->vma;
+अटल पूर्णांक clear_refs_test_walk(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+				काष्ठा mm_walk *walk)
+अणु
+	काष्ठा clear_refs_निजी *cp = walk->निजी;
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 
-	if (vma->vm_flags & VM_PFNMAP)
-		return 1;
+	अगर (vma->vm_flags & VM_PFNMAP)
+		वापस 1;
 
 	/*
 	 * Writing 1 to /proc/pid/clear_refs affects all pages.
@@ -1191,372 +1192,372 @@ static int clear_refs_test_walk(unsigned long start, unsigned long end,
 	 * Writing 3 to /proc/pid/clear_refs only affects file mapped pages.
 	 * Writing 4 to /proc/pid/clear_refs affects all pages.
 	 */
-	if (cp->type == CLEAR_REFS_ANON && vma->vm_file)
-		return 1;
-	if (cp->type == CLEAR_REFS_MAPPED && !vma->vm_file)
-		return 1;
-	return 0;
-}
+	अगर (cp->type == CLEAR_REFS_ANON && vma->vm_file)
+		वापस 1;
+	अगर (cp->type == CLEAR_REFS_MAPPED && !vma->vm_file)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static const struct mm_walk_ops clear_refs_walk_ops = {
+अटल स्थिर काष्ठा mm_walk_ops clear_refs_walk_ops = अणु
 	.pmd_entry		= clear_refs_pte_range,
 	.test_walk		= clear_refs_test_walk,
-};
+पूर्ण;
 
-static ssize_t clear_refs_write(struct file *file, const char __user *buf,
-				size_t count, loff_t *ppos)
-{
-	struct task_struct *task;
-	char buffer[PROC_NUMBUF];
-	struct mm_struct *mm;
-	struct vm_area_struct *vma;
-	enum clear_refs_types type;
-	int itype;
-	int rv;
+अटल sमाप_प्रकार clear_refs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा task_काष्ठा *task;
+	अक्षर buffer[PROC_NUMBUF];
+	काष्ठा mm_काष्ठा *mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	क्रमागत clear_refs_types type;
+	पूर्णांक itype;
+	पूर्णांक rv;
 
-	memset(buffer, 0, sizeof(buffer));
-	if (count > sizeof(buffer) - 1)
-		count = sizeof(buffer) - 1;
-	if (copy_from_user(buffer, buf, count))
-		return -EFAULT;
-	rv = kstrtoint(strstrip(buffer), 10, &itype);
-	if (rv < 0)
-		return rv;
-	type = (enum clear_refs_types)itype;
-	if (type < CLEAR_REFS_ALL || type >= CLEAR_REFS_LAST)
-		return -EINVAL;
+	स_रखो(buffer, 0, माप(buffer));
+	अगर (count > माप(buffer) - 1)
+		count = माप(buffer) - 1;
+	अगर (copy_from_user(buffer, buf, count))
+		वापस -EFAULT;
+	rv = kstrtoपूर्णांक(म_मालाip(buffer), 10, &itype);
+	अगर (rv < 0)
+		वापस rv;
+	type = (क्रमागत clear_refs_types)itype;
+	अगर (type < CLEAR_REFS_ALL || type >= CLEAR_REFS_LAST)
+		वापस -EINVAL;
 
 	task = get_proc_task(file_inode(file));
-	if (!task)
-		return -ESRCH;
+	अगर (!task)
+		वापस -ESRCH;
 	mm = get_task_mm(task);
-	if (mm) {
-		struct mmu_notifier_range range;
-		struct clear_refs_private cp = {
+	अगर (mm) अणु
+		काष्ठा mmu_notअगरier_range range;
+		काष्ठा clear_refs_निजी cp = अणु
 			.type = type,
-		};
+		पूर्ण;
 
-		if (mmap_write_lock_killable(mm)) {
+		अगर (mmap_ग_लिखो_lock_समाप्तable(mm)) अणु
 			count = -EINTR;
-			goto out_mm;
-		}
-		if (type == CLEAR_REFS_MM_HIWATER_RSS) {
+			जाओ out_mm;
+		पूर्ण
+		अगर (type == CLEAR_REFS_MM_HIWATER_RSS) अणु
 			/*
 			 * Writing 5 to /proc/pid/clear_refs resets the peak
 			 * resident set size to this mm's current rss value.
 			 */
 			reset_mm_hiwater_rss(mm);
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
-		if (type == CLEAR_REFS_SOFT_DIRTY) {
-			for (vma = mm->mmap; vma; vma = vma->vm_next) {
-				if (!(vma->vm_flags & VM_SOFTDIRTY))
-					continue;
-				vma->vm_flags &= ~VM_SOFTDIRTY;
+		अगर (type == CLEAR_REFS_SOFT_सूचीTY) अणु
+			क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
+				अगर (!(vma->vm_flags & VM_SOFTसूचीTY))
+					जारी;
+				vma->vm_flags &= ~VM_SOFTसूचीTY;
 				vma_set_page_prot(vma);
-			}
+			पूर्ण
 
 			inc_tlb_flush_pending(mm);
-			mmu_notifier_range_init(&range, MMU_NOTIFY_SOFT_DIRTY,
-						0, NULL, mm, 0, -1UL);
-			mmu_notifier_invalidate_range_start(&range);
-		}
+			mmu_notअगरier_range_init(&range, MMU_NOTIFY_SOFT_सूचीTY,
+						0, शून्य, mm, 0, -1UL);
+			mmu_notअगरier_invalidate_range_start(&range);
+		पूर्ण
 		walk_page_range(mm, 0, mm->highest_vm_end, &clear_refs_walk_ops,
 				&cp);
-		if (type == CLEAR_REFS_SOFT_DIRTY) {
-			mmu_notifier_invalidate_range_end(&range);
+		अगर (type == CLEAR_REFS_SOFT_सूचीTY) अणु
+			mmu_notअगरier_invalidate_range_end(&range);
 			flush_tlb_mm(mm);
 			dec_tlb_flush_pending(mm);
-		}
+		पूर्ण
 out_unlock:
-		mmap_write_unlock(mm);
+		mmap_ग_लिखो_unlock(mm);
 out_mm:
 		mmput(mm);
-	}
-	put_task_struct(task);
+	पूर्ण
+	put_task_काष्ठा(task);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-const struct file_operations proc_clear_refs_operations = {
-	.write		= clear_refs_write,
+स्थिर काष्ठा file_operations proc_clear_refs_operations = अणु
+	.ग_लिखो		= clear_refs_ग_लिखो,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	u64 pme;
-} pagemap_entry_t;
+पूर्ण pagemap_entry_t;
 
-struct pagemapread {
-	int pos, len;		/* units: PM_ENTRY_BYTES, not bytes */
+काष्ठा pagemapपढ़ो अणु
+	पूर्णांक pos, len;		/* units: PM_ENTRY_BYTES, not bytes */
 	pagemap_entry_t *buffer;
 	bool show_pfn;
-};
+पूर्ण;
 
-#define PAGEMAP_WALK_SIZE	(PMD_SIZE)
-#define PAGEMAP_WALK_MASK	(PMD_MASK)
+#घोषणा PAGEMAP_WALK_SIZE	(PMD_SIZE)
+#घोषणा PAGEMAP_WALK_MASK	(PMD_MASK)
 
-#define PM_ENTRY_BYTES		sizeof(pagemap_entry_t)
-#define PM_PFRAME_BITS		55
-#define PM_PFRAME_MASK		GENMASK_ULL(PM_PFRAME_BITS - 1, 0)
-#define PM_SOFT_DIRTY		BIT_ULL(55)
-#define PM_MMAP_EXCLUSIVE	BIT_ULL(56)
-#define PM_FILE			BIT_ULL(61)
-#define PM_SWAP			BIT_ULL(62)
-#define PM_PRESENT		BIT_ULL(63)
+#घोषणा PM_ENTRY_BYTES		माप(pagemap_entry_t)
+#घोषणा PM_PFRAME_BITS		55
+#घोषणा PM_PFRAME_MASK		GENMASK_ULL(PM_PFRAME_BITS - 1, 0)
+#घोषणा PM_SOFT_सूचीTY		BIT_ULL(55)
+#घोषणा PM_MMAP_EXCLUSIVE	BIT_ULL(56)
+#घोषणा PM_खाता			BIT_ULL(61)
+#घोषणा PM_SWAP			BIT_ULL(62)
+#घोषणा PM_PRESENT		BIT_ULL(63)
 
-#define PM_END_OF_BUFFER    1
+#घोषणा PM_END_OF_BUFFER    1
 
-static inline pagemap_entry_t make_pme(u64 frame, u64 flags)
-{
-	return (pagemap_entry_t) { .pme = (frame & PM_PFRAME_MASK) | flags };
-}
+अटल अंतरभूत pagemap_entry_t make_pme(u64 frame, u64 flags)
+अणु
+	वापस (pagemap_entry_t) अणु .pme = (frame & PM_PFRAME_MASK) | flags पूर्ण;
+पूर्ण
 
-static int add_to_pagemap(unsigned long addr, pagemap_entry_t *pme,
-			  struct pagemapread *pm)
-{
+अटल पूर्णांक add_to_pagemap(अचिन्हित दीर्घ addr, pagemap_entry_t *pme,
+			  काष्ठा pagemapपढ़ो *pm)
+अणु
 	pm->buffer[pm->pos++] = *pme;
-	if (pm->pos >= pm->len)
-		return PM_END_OF_BUFFER;
-	return 0;
-}
+	अगर (pm->pos >= pm->len)
+		वापस PM_END_OF_BUFFER;
+	वापस 0;
+पूर्ण
 
-static int pagemap_pte_hole(unsigned long start, unsigned long end,
-			    __always_unused int depth, struct mm_walk *walk)
-{
-	struct pagemapread *pm = walk->private;
-	unsigned long addr = start;
-	int err = 0;
+अटल पूर्णांक pagemap_pte_hole(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+			    __always_unused पूर्णांक depth, काष्ठा mm_walk *walk)
+अणु
+	काष्ठा pagemapपढ़ो *pm = walk->निजी;
+	अचिन्हित दीर्घ addr = start;
+	पूर्णांक err = 0;
 
-	while (addr < end) {
-		struct vm_area_struct *vma = find_vma(walk->mm, addr);
+	जबतक (addr < end) अणु
+		काष्ठा vm_area_काष्ठा *vma = find_vma(walk->mm, addr);
 		pagemap_entry_t pme = make_pme(0, 0);
 		/* End of address space hole, which we mark as non-present. */
-		unsigned long hole_end;
+		अचिन्हित दीर्घ hole_end;
 
-		if (vma)
+		अगर (vma)
 			hole_end = min(end, vma->vm_start);
-		else
+		अन्यथा
 			hole_end = end;
 
-		for (; addr < hole_end; addr += PAGE_SIZE) {
+		क्रम (; addr < hole_end; addr += PAGE_SIZE) अणु
 			err = add_to_pagemap(addr, &pme, pm);
-			if (err)
-				goto out;
-		}
+			अगर (err)
+				जाओ out;
+		पूर्ण
 
-		if (!vma)
-			break;
+		अगर (!vma)
+			अवरोध;
 
 		/* Addresses in the VMA. */
-		if (vma->vm_flags & VM_SOFTDIRTY)
-			pme = make_pme(0, PM_SOFT_DIRTY);
-		for (; addr < min(end, vma->vm_end); addr += PAGE_SIZE) {
+		अगर (vma->vm_flags & VM_SOFTसूचीTY)
+			pme = make_pme(0, PM_SOFT_सूचीTY);
+		क्रम (; addr < min(end, vma->vm_end); addr += PAGE_SIZE) अणु
 			err = add_to_pagemap(addr, &pme, pm);
-			if (err)
-				goto out;
-		}
-	}
+			अगर (err)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static pagemap_entry_t pte_to_pagemap_entry(struct pagemapread *pm,
-		struct vm_area_struct *vma, unsigned long addr, pte_t pte)
-{
+अटल pagemap_entry_t pte_to_pagemap_entry(काष्ठा pagemapपढ़ो *pm,
+		काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr, pte_t pte)
+अणु
 	u64 frame = 0, flags = 0;
-	struct page *page = NULL;
+	काष्ठा page *page = शून्य;
 
-	if (pte_present(pte)) {
-		if (pm->show_pfn)
+	अगर (pte_present(pte)) अणु
+		अगर (pm->show_pfn)
 			frame = pte_pfn(pte);
 		flags |= PM_PRESENT;
 		page = vm_normal_page(vma, addr, pte);
-		if (pte_soft_dirty(pte))
-			flags |= PM_SOFT_DIRTY;
-	} else if (is_swap_pte(pte)) {
+		अगर (pte_soft_dirty(pte))
+			flags |= PM_SOFT_सूचीTY;
+	पूर्ण अन्यथा अगर (is_swap_pte(pte)) अणु
 		swp_entry_t entry;
-		if (pte_swp_soft_dirty(pte))
-			flags |= PM_SOFT_DIRTY;
+		अगर (pte_swp_soft_dirty(pte))
+			flags |= PM_SOFT_सूचीTY;
 		entry = pte_to_swp_entry(pte);
-		if (pm->show_pfn)
+		अगर (pm->show_pfn)
 			frame = swp_type(entry) |
-				(swp_offset(entry) << MAX_SWAPFILES_SHIFT);
+				(swp_offset(entry) << MAX_SWAPखाताS_SHIFT);
 		flags |= PM_SWAP;
-		if (is_migration_entry(entry))
+		अगर (is_migration_entry(entry))
 			page = migration_entry_to_page(entry);
 
-		if (is_device_private_entry(entry))
-			page = device_private_entry_to_page(entry);
-	}
+		अगर (is_device_निजी_entry(entry))
+			page = device_निजी_entry_to_page(entry);
+	पूर्ण
 
-	if (page && !PageAnon(page))
-		flags |= PM_FILE;
-	if (page && page_mapcount(page) == 1)
+	अगर (page && !PageAnon(page))
+		flags |= PM_खाता;
+	अगर (page && page_mapcount(page) == 1)
 		flags |= PM_MMAP_EXCLUSIVE;
-	if (vma->vm_flags & VM_SOFTDIRTY)
-		flags |= PM_SOFT_DIRTY;
+	अगर (vma->vm_flags & VM_SOFTसूचीTY)
+		flags |= PM_SOFT_सूचीTY;
 
-	return make_pme(frame, flags);
-}
+	वापस make_pme(frame, flags);
+पूर्ण
 
-static int pagemap_pmd_range(pmd_t *pmdp, unsigned long addr, unsigned long end,
-			     struct mm_walk *walk)
-{
-	struct vm_area_struct *vma = walk->vma;
-	struct pagemapread *pm = walk->private;
+अटल पूर्णांक pagemap_pmd_range(pmd_t *pmdp, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+			     काष्ठा mm_walk *walk)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
+	काष्ठा pagemapपढ़ो *pm = walk->निजी;
 	spinlock_t *ptl;
 	pte_t *pte, *orig_pte;
-	int err = 0;
+	पूर्णांक err = 0;
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 	ptl = pmd_trans_huge_lock(pmdp, vma);
-	if (ptl) {
+	अगर (ptl) अणु
 		u64 flags = 0, frame = 0;
 		pmd_t pmd = *pmdp;
-		struct page *page = NULL;
+		काष्ठा page *page = शून्य;
 
-		if (vma->vm_flags & VM_SOFTDIRTY)
-			flags |= PM_SOFT_DIRTY;
+		अगर (vma->vm_flags & VM_SOFTसूचीTY)
+			flags |= PM_SOFT_सूचीTY;
 
-		if (pmd_present(pmd)) {
+		अगर (pmd_present(pmd)) अणु
 			page = pmd_page(pmd);
 
 			flags |= PM_PRESENT;
-			if (pmd_soft_dirty(pmd))
-				flags |= PM_SOFT_DIRTY;
-			if (pm->show_pfn)
+			अगर (pmd_soft_dirty(pmd))
+				flags |= PM_SOFT_सूचीTY;
+			अगर (pm->show_pfn)
 				frame = pmd_pfn(pmd) +
 					((addr & ~PMD_MASK) >> PAGE_SHIFT);
-		}
-#ifdef CONFIG_ARCH_ENABLE_THP_MIGRATION
-		else if (is_swap_pmd(pmd)) {
+		पूर्ण
+#अगर_घोषित CONFIG_ARCH_ENABLE_THP_MIGRATION
+		अन्यथा अगर (is_swap_pmd(pmd)) अणु
 			swp_entry_t entry = pmd_to_swp_entry(pmd);
-			unsigned long offset;
+			अचिन्हित दीर्घ offset;
 
-			if (pm->show_pfn) {
+			अगर (pm->show_pfn) अणु
 				offset = swp_offset(entry) +
 					((addr & ~PMD_MASK) >> PAGE_SHIFT);
 				frame = swp_type(entry) |
-					(offset << MAX_SWAPFILES_SHIFT);
-			}
+					(offset << MAX_SWAPखाताS_SHIFT);
+			पूर्ण
 			flags |= PM_SWAP;
-			if (pmd_swp_soft_dirty(pmd))
-				flags |= PM_SOFT_DIRTY;
+			अगर (pmd_swp_soft_dirty(pmd))
+				flags |= PM_SOFT_सूचीTY;
 			VM_BUG_ON(!is_pmd_migration_entry(pmd));
 			page = migration_entry_to_page(entry);
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 
-		if (page && page_mapcount(page) == 1)
+		अगर (page && page_mapcount(page) == 1)
 			flags |= PM_MMAP_EXCLUSIVE;
 
-		for (; addr != end; addr += PAGE_SIZE) {
+		क्रम (; addr != end; addr += PAGE_SIZE) अणु
 			pagemap_entry_t pme = make_pme(frame, flags);
 
 			err = add_to_pagemap(addr, &pme, pm);
-			if (err)
-				break;
-			if (pm->show_pfn) {
-				if (flags & PM_PRESENT)
+			अगर (err)
+				अवरोध;
+			अगर (pm->show_pfn) अणु
+				अगर (flags & PM_PRESENT)
 					frame++;
-				else if (flags & PM_SWAP)
-					frame += (1 << MAX_SWAPFILES_SHIFT);
-			}
-		}
+				अन्यथा अगर (flags & PM_SWAP)
+					frame += (1 << MAX_SWAPखाताS_SHIFT);
+			पूर्ण
+		पूर्ण
 		spin_unlock(ptl);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (pmd_trans_unstable(pmdp))
-		return 0;
-#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+	अगर (pmd_trans_unstable(pmdp))
+		वापस 0;
+#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
 
 	/*
-	 * We can assume that @vma always points to a valid one and @end never
+	 * We can assume that @vma always poपूर्णांकs to a valid one and @end never
 	 * goes beyond vma->vm_end.
 	 */
 	orig_pte = pte = pte_offset_map_lock(walk->mm, pmdp, addr, &ptl);
-	for (; addr < end; pte++, addr += PAGE_SIZE) {
+	क्रम (; addr < end; pte++, addr += PAGE_SIZE) अणु
 		pagemap_entry_t pme;
 
 		pme = pte_to_pagemap_entry(pm, vma, addr, *pte);
 		err = add_to_pagemap(addr, &pme, pm);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 	pte_unmap_unlock(orig_pte, ptl);
 
 	cond_resched();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_HUGETLB_PAGE
+#अगर_घोषित CONFIG_HUGETLB_PAGE
 /* This function walks within one hugetlb entry in the single call */
-static int pagemap_hugetlb_range(pte_t *ptep, unsigned long hmask,
-				 unsigned long addr, unsigned long end,
-				 struct mm_walk *walk)
-{
-	struct pagemapread *pm = walk->private;
-	struct vm_area_struct *vma = walk->vma;
+अटल पूर्णांक pagemap_hugetlb_range(pte_t *ptep, अचिन्हित दीर्घ hmask,
+				 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+				 काष्ठा mm_walk *walk)
+अणु
+	काष्ठा pagemapपढ़ो *pm = walk->निजी;
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 	u64 flags = 0, frame = 0;
-	int err = 0;
+	पूर्णांक err = 0;
 	pte_t pte;
 
-	if (vma->vm_flags & VM_SOFTDIRTY)
-		flags |= PM_SOFT_DIRTY;
+	अगर (vma->vm_flags & VM_SOFTसूचीTY)
+		flags |= PM_SOFT_सूचीTY;
 
 	pte = huge_ptep_get(ptep);
-	if (pte_present(pte)) {
-		struct page *page = pte_page(pte);
+	अगर (pte_present(pte)) अणु
+		काष्ठा page *page = pte_page(pte);
 
-		if (!PageAnon(page))
-			flags |= PM_FILE;
+		अगर (!PageAnon(page))
+			flags |= PM_खाता;
 
-		if (page_mapcount(page) == 1)
+		अगर (page_mapcount(page) == 1)
 			flags |= PM_MMAP_EXCLUSIVE;
 
 		flags |= PM_PRESENT;
-		if (pm->show_pfn)
+		अगर (pm->show_pfn)
 			frame = pte_pfn(pte) +
 				((addr & ~hmask) >> PAGE_SHIFT);
-	}
+	पूर्ण
 
-	for (; addr != end; addr += PAGE_SIZE) {
+	क्रम (; addr != end; addr += PAGE_SIZE) अणु
 		pagemap_entry_t pme = make_pme(frame, flags);
 
 		err = add_to_pagemap(addr, &pme, pm);
-		if (err)
-			return err;
-		if (pm->show_pfn && (flags & PM_PRESENT))
+		अगर (err)
+			वापस err;
+		अगर (pm->show_pfn && (flags & PM_PRESENT))
 			frame++;
-	}
+	पूर्ण
 
 	cond_resched();
 
-	return err;
-}
-#else
-#define pagemap_hugetlb_range	NULL
-#endif /* HUGETLB_PAGE */
+	वापस err;
+पूर्ण
+#अन्यथा
+#घोषणा pagemap_hugetlb_range	शून्य
+#पूर्ण_अगर /* HUGETLB_PAGE */
 
-static const struct mm_walk_ops pagemap_ops = {
+अटल स्थिर काष्ठा mm_walk_ops pagemap_ops = अणु
 	.pmd_entry	= pagemap_pmd_range,
 	.pte_hole	= pagemap_pte_hole,
 	.hugetlb_entry	= pagemap_hugetlb_range,
-};
+पूर्ण;
 
 /*
- * /proc/pid/pagemap - an array mapping virtual pages to pfns
+ * /proc/pid/pagemap - an array mapping भव pages to pfns
  *
  * For each page in the address space, this file contains one 64-bit entry
  * consisting of the following:
  *
- * Bits 0-54  page frame number (PFN) if present
- * Bits 0-4   swap type if swapped
- * Bits 5-54  swap offset if swapped
+ * Bits 0-54  page frame number (PFN) अगर present
+ * Bits 0-4   swap type अगर swapped
+ * Bits 5-54  swap offset अगर swapped
  * Bit  55    pte is soft-dirty (see Documentation/admin-guide/mm/soft-dirty.rst)
  * Bit  56    page exclusively mapped
  * Bits 57-60 zero
@@ -1565,394 +1566,394 @@ static const struct mm_walk_ops pagemap_ops = {
  * Bit  63    page present
  *
  * If the page is not present but in swap, then the PFN contains an
- * encoding of the swap file number and the page's offset into the
- * swap. Unmapped pages return a null PFN. This allows determining
+ * encoding of the swap file number and the page's offset पूर्णांकo the
+ * swap. Unmapped pages वापस a null PFN. This allows determining
  * precisely which pages are mapped (or in swap) and comparing mapped
  * pages between processes.
  *
- * Efficient users of this interface will use /proc/pid/maps to
+ * Efficient users of this पूर्णांकerface will use /proc/pid/maps to
  * determine which areas of memory are actually mapped and llseek to
  * skip over unmapped regions.
  */
-static ssize_t pagemap_read(struct file *file, char __user *buf,
-			    size_t count, loff_t *ppos)
-{
-	struct mm_struct *mm = file->private_data;
-	struct pagemapread pm;
-	unsigned long src;
-	unsigned long svpfn;
-	unsigned long start_vaddr;
-	unsigned long end_vaddr;
-	int ret = 0, copied = 0;
+अटल sमाप_प्रकार pagemap_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mm_काष्ठा *mm = file->निजी_data;
+	काष्ठा pagemapपढ़ो pm;
+	अचिन्हित दीर्घ src;
+	अचिन्हित दीर्घ svpfn;
+	अचिन्हित दीर्घ start_vaddr;
+	अचिन्हित दीर्घ end_vaddr;
+	पूर्णांक ret = 0, copied = 0;
 
-	if (!mm || !mmget_not_zero(mm))
-		goto out;
+	अगर (!mm || !mmget_not_zero(mm))
+		जाओ out;
 
 	ret = -EINVAL;
 	/* file position must be aligned */
-	if ((*ppos % PM_ENTRY_BYTES) || (count % PM_ENTRY_BYTES))
-		goto out_mm;
+	अगर ((*ppos % PM_ENTRY_BYTES) || (count % PM_ENTRY_BYTES))
+		जाओ out_mm;
 
 	ret = 0;
-	if (!count)
-		goto out_mm;
+	अगर (!count)
+		जाओ out_mm;
 
-	/* do not disclose physical addresses: attack vector */
+	/* करो not disबंद physical addresses: attack vector */
 	pm.show_pfn = file_ns_capable(file, &init_user_ns, CAP_SYS_ADMIN);
 
 	pm.len = (PAGEMAP_WALK_SIZE >> PAGE_SHIFT);
-	pm.buffer = kmalloc_array(pm.len, PM_ENTRY_BYTES, GFP_KERNEL);
+	pm.buffer = kदो_स्मृति_array(pm.len, PM_ENTRY_BYTES, GFP_KERNEL);
 	ret = -ENOMEM;
-	if (!pm.buffer)
-		goto out_mm;
+	अगर (!pm.buffer)
+		जाओ out_mm;
 
 	src = *ppos;
 	svpfn = src / PM_ENTRY_BYTES;
 	end_vaddr = mm->task_size;
 
-	/* watch out for wraparound */
+	/* watch out क्रम wraparound */
 	start_vaddr = end_vaddr;
-	if (svpfn <= (ULONG_MAX >> PAGE_SHIFT))
+	अगर (svpfn <= (अच_दीर्घ_उच्च >> PAGE_SHIFT))
 		start_vaddr = untagged_addr(svpfn << PAGE_SHIFT);
 
 	/* Ensure the address is inside the task */
-	if (start_vaddr > mm->task_size)
+	अगर (start_vaddr > mm->task_size)
 		start_vaddr = end_vaddr;
 
 	/*
 	 * The odds are that this will stop walking way
-	 * before end_vaddr, because the length of the
+	 * beक्रमe end_vaddr, because the length of the
 	 * user buffer is tracked in "pm", and the walk
 	 * will stop when we hit the end of the buffer.
 	 */
 	ret = 0;
-	while (count && (start_vaddr < end_vaddr)) {
-		int len;
-		unsigned long end;
+	जबतक (count && (start_vaddr < end_vaddr)) अणु
+		पूर्णांक len;
+		अचिन्हित दीर्घ end;
 
 		pm.pos = 0;
 		end = (start_vaddr + PAGEMAP_WALK_SIZE) & PAGEMAP_WALK_MASK;
 		/* overflow ? */
-		if (end < start_vaddr || end > end_vaddr)
+		अगर (end < start_vaddr || end > end_vaddr)
 			end = end_vaddr;
-		ret = mmap_read_lock_killable(mm);
-		if (ret)
-			goto out_free;
+		ret = mmap_पढ़ो_lock_समाप्तable(mm);
+		अगर (ret)
+			जाओ out_मुक्त;
 		ret = walk_page_range(mm, start_vaddr, end, &pagemap_ops, &pm);
-		mmap_read_unlock(mm);
+		mmap_पढ़ो_unlock(mm);
 		start_vaddr = end;
 
 		len = min(count, PM_ENTRY_BYTES * pm.pos);
-		if (copy_to_user(buf, pm.buffer, len)) {
+		अगर (copy_to_user(buf, pm.buffer, len)) अणु
 			ret = -EFAULT;
-			goto out_free;
-		}
+			जाओ out_मुक्त;
+		पूर्ण
 		copied += len;
 		buf += len;
 		count -= len;
-	}
+	पूर्ण
 	*ppos += copied;
-	if (!ret || ret == PM_END_OF_BUFFER)
+	अगर (!ret || ret == PM_END_OF_BUFFER)
 		ret = copied;
 
-out_free:
-	kfree(pm.buffer);
+out_मुक्त:
+	kमुक्त(pm.buffer);
 out_mm:
 	mmput(mm);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pagemap_open(struct inode *inode, struct file *file)
-{
-	struct mm_struct *mm;
+अटल पूर्णांक pagemap_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा mm_काष्ठा *mm;
 
-	mm = proc_mem_open(inode, PTRACE_MODE_READ);
-	if (IS_ERR(mm))
-		return PTR_ERR(mm);
-	file->private_data = mm;
-	return 0;
-}
+	mm = proc_mem_खोलो(inode, PTRACE_MODE_READ);
+	अगर (IS_ERR(mm))
+		वापस PTR_ERR(mm);
+	file->निजी_data = mm;
+	वापस 0;
+पूर्ण
 
-static int pagemap_release(struct inode *inode, struct file *file)
-{
-	struct mm_struct *mm = file->private_data;
+अटल पूर्णांक pagemap_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा mm_काष्ठा *mm = file->निजी_data;
 
-	if (mm)
+	अगर (mm)
 		mmdrop(mm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct file_operations proc_pagemap_operations = {
+स्थिर काष्ठा file_operations proc_pagemap_operations = अणु
 	.llseek		= mem_lseek, /* borrow this */
-	.read		= pagemap_read,
-	.open		= pagemap_open,
+	.पढ़ो		= pagemap_पढ़ो,
+	.खोलो		= pagemap_खोलो,
 	.release	= pagemap_release,
-};
-#endif /* CONFIG_PROC_PAGE_MONITOR */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PROC_PAGE_MONITOR */
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 
-struct numa_maps {
-	unsigned long pages;
-	unsigned long anon;
-	unsigned long active;
-	unsigned long writeback;
-	unsigned long mapcount_max;
-	unsigned long dirty;
-	unsigned long swapcache;
-	unsigned long node[MAX_NUMNODES];
-};
+काष्ठा numa_maps अणु
+	अचिन्हित दीर्घ pages;
+	अचिन्हित दीर्घ anon;
+	अचिन्हित दीर्घ active;
+	अचिन्हित दीर्घ ग_लिखोback;
+	अचिन्हित दीर्घ mapcount_max;
+	अचिन्हित दीर्घ dirty;
+	अचिन्हित दीर्घ swapcache;
+	अचिन्हित दीर्घ node[MAX_NUMNODES];
+पूर्ण;
 
-struct numa_maps_private {
-	struct proc_maps_private proc_maps;
-	struct numa_maps md;
-};
+काष्ठा numa_maps_निजी अणु
+	काष्ठा proc_maps_निजी proc_maps;
+	काष्ठा numa_maps md;
+पूर्ण;
 
-static void gather_stats(struct page *page, struct numa_maps *md, int pte_dirty,
-			unsigned long nr_pages)
-{
-	int count = page_mapcount(page);
+अटल व्योम gather_stats(काष्ठा page *page, काष्ठा numa_maps *md, पूर्णांक pte_dirty,
+			अचिन्हित दीर्घ nr_pages)
+अणु
+	पूर्णांक count = page_mapcount(page);
 
 	md->pages += nr_pages;
-	if (pte_dirty || PageDirty(page))
+	अगर (pte_dirty || PageDirty(page))
 		md->dirty += nr_pages;
 
-	if (PageSwapCache(page))
+	अगर (PageSwapCache(page))
 		md->swapcache += nr_pages;
 
-	if (PageActive(page) || PageUnevictable(page))
+	अगर (PageActive(page) || PageUnevictable(page))
 		md->active += nr_pages;
 
-	if (PageWriteback(page))
-		md->writeback += nr_pages;
+	अगर (PageWriteback(page))
+		md->ग_लिखोback += nr_pages;
 
-	if (PageAnon(page))
+	अगर (PageAnon(page))
 		md->anon += nr_pages;
 
-	if (count > md->mapcount_max)
+	अगर (count > md->mapcount_max)
 		md->mapcount_max = count;
 
 	md->node[page_to_nid(page)] += nr_pages;
-}
+पूर्ण
 
-static struct page *can_gather_numa_stats(pte_t pte, struct vm_area_struct *vma,
-		unsigned long addr)
-{
-	struct page *page;
-	int nid;
+अटल काष्ठा page *can_gather_numa_stats(pte_t pte, काष्ठा vm_area_काष्ठा *vma,
+		अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा page *page;
+	पूर्णांक nid;
 
-	if (!pte_present(pte))
-		return NULL;
+	अगर (!pte_present(pte))
+		वापस शून्य;
 
 	page = vm_normal_page(vma, addr, pte);
-	if (!page)
-		return NULL;
+	अगर (!page)
+		वापस शून्य;
 
-	if (PageReserved(page))
-		return NULL;
+	अगर (PageReserved(page))
+		वापस शून्य;
 
 	nid = page_to_nid(page);
-	if (!node_isset(nid, node_states[N_MEMORY]))
-		return NULL;
+	अगर (!node_isset(nid, node_states[N_MEMORY]))
+		वापस शून्य;
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-static struct page *can_gather_numa_stats_pmd(pmd_t pmd,
-					      struct vm_area_struct *vma,
-					      unsigned long addr)
-{
-	struct page *page;
-	int nid;
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+अटल काष्ठा page *can_gather_numa_stats_pmd(pmd_t pmd,
+					      काष्ठा vm_area_काष्ठा *vma,
+					      अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा page *page;
+	पूर्णांक nid;
 
-	if (!pmd_present(pmd))
-		return NULL;
+	अगर (!pmd_present(pmd))
+		वापस शून्य;
 
 	page = vm_normal_page_pmd(vma, addr, pmd);
-	if (!page)
-		return NULL;
+	अगर (!page)
+		वापस शून्य;
 
-	if (PageReserved(page))
-		return NULL;
+	अगर (PageReserved(page))
+		वापस शून्य;
 
 	nid = page_to_nid(page);
-	if (!node_isset(nid, node_states[N_MEMORY]))
-		return NULL;
+	अगर (!node_isset(nid, node_states[N_MEMORY]))
+		वापस शून्य;
 
-	return page;
-}
-#endif
+	वापस page;
+पूर्ण
+#पूर्ण_अगर
 
-static int gather_pte_stats(pmd_t *pmd, unsigned long addr,
-		unsigned long end, struct mm_walk *walk)
-{
-	struct numa_maps *md = walk->private;
-	struct vm_area_struct *vma = walk->vma;
+अटल पूर्णांक gather_pte_stats(pmd_t *pmd, अचिन्हित दीर्घ addr,
+		अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
+अणु
+	काष्ठा numa_maps *md = walk->निजी;
+	काष्ठा vm_area_काष्ठा *vma = walk->vma;
 	spinlock_t *ptl;
 	pte_t *orig_pte;
 	pte_t *pte;
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 	ptl = pmd_trans_huge_lock(pmd, vma);
-	if (ptl) {
-		struct page *page;
+	अगर (ptl) अणु
+		काष्ठा page *page;
 
 		page = can_gather_numa_stats_pmd(*pmd, vma, addr);
-		if (page)
+		अगर (page)
 			gather_stats(page, md, pmd_dirty(*pmd),
 				     HPAGE_PMD_SIZE/PAGE_SIZE);
 		spin_unlock(ptl);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (pmd_trans_unstable(pmd))
-		return 0;
-#endif
+	अगर (pmd_trans_unstable(pmd))
+		वापस 0;
+#पूर्ण_अगर
 	orig_pte = pte = pte_offset_map_lock(walk->mm, pmd, addr, &ptl);
-	do {
-		struct page *page = can_gather_numa_stats(*pte, vma, addr);
-		if (!page)
-			continue;
+	करो अणु
+		काष्ठा page *page = can_gather_numa_stats(*pte, vma, addr);
+		अगर (!page)
+			जारी;
 		gather_stats(page, md, pte_dirty(*pte), 1);
 
-	} while (pte++, addr += PAGE_SIZE, addr != end);
+	पूर्ण जबतक (pte++, addr += PAGE_SIZE, addr != end);
 	pte_unmap_unlock(orig_pte, ptl);
 	cond_resched();
-	return 0;
-}
-#ifdef CONFIG_HUGETLB_PAGE
-static int gather_hugetlb_stats(pte_t *pte, unsigned long hmask,
-		unsigned long addr, unsigned long end, struct mm_walk *walk)
-{
+	वापस 0;
+पूर्ण
+#अगर_घोषित CONFIG_HUGETLB_PAGE
+अटल पूर्णांक gather_hugetlb_stats(pte_t *pte, अचिन्हित दीर्घ hmask,
+		अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
+अणु
 	pte_t huge_pte = huge_ptep_get(pte);
-	struct numa_maps *md;
-	struct page *page;
+	काष्ठा numa_maps *md;
+	काष्ठा page *page;
 
-	if (!pte_present(huge_pte))
-		return 0;
+	अगर (!pte_present(huge_pte))
+		वापस 0;
 
 	page = pte_page(huge_pte);
-	if (!page)
-		return 0;
+	अगर (!page)
+		वापस 0;
 
-	md = walk->private;
+	md = walk->निजी;
 	gather_stats(page, md, pte_dirty(huge_pte), 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else
-static int gather_hugetlb_stats(pte_t *pte, unsigned long hmask,
-		unsigned long addr, unsigned long end, struct mm_walk *walk)
-{
-	return 0;
-}
-#endif
+#अन्यथा
+अटल पूर्णांक gather_hugetlb_stats(pte_t *pte, अचिन्हित दीर्घ hmask,
+		अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct mm_walk_ops show_numa_ops = {
+अटल स्थिर काष्ठा mm_walk_ops show_numa_ops = अणु
 	.hugetlb_entry = gather_hugetlb_stats,
 	.pmd_entry = gather_pte_stats,
-};
+पूर्ण;
 
 /*
  * Display pages allocated per node and memory policy via /proc.
  */
-static int show_numa_map(struct seq_file *m, void *v)
-{
-	struct numa_maps_private *numa_priv = m->private;
-	struct proc_maps_private *proc_priv = &numa_priv->proc_maps;
-	struct vm_area_struct *vma = v;
-	struct numa_maps *md = &numa_priv->md;
-	struct file *file = vma->vm_file;
-	struct mm_struct *mm = vma->vm_mm;
-	struct mempolicy *pol;
-	char buffer[64];
-	int nid;
+अटल पूर्णांक show_numa_map(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा numa_maps_निजी *numa_priv = m->निजी;
+	काष्ठा proc_maps_निजी *proc_priv = &numa_priv->proc_maps;
+	काष्ठा vm_area_काष्ठा *vma = v;
+	काष्ठा numa_maps *md = &numa_priv->md;
+	काष्ठा file *file = vma->vm_file;
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+	काष्ठा mempolicy *pol;
+	अक्षर buffer[64];
+	पूर्णांक nid;
 
-	if (!mm)
-		return 0;
+	अगर (!mm)
+		वापस 0;
 
 	/* Ensure we start with an empty set of numa_maps statistics. */
-	memset(md, 0, sizeof(*md));
+	स_रखो(md, 0, माप(*md));
 
 	pol = __get_vma_policy(vma, vma->vm_start);
-	if (pol) {
-		mpol_to_str(buffer, sizeof(buffer), pol);
+	अगर (pol) अणु
+		mpol_to_str(buffer, माप(buffer), pol);
 		mpol_cond_put(pol);
-	} else {
-		mpol_to_str(buffer, sizeof(buffer), proc_priv->task_mempolicy);
-	}
+	पूर्ण अन्यथा अणु
+		mpol_to_str(buffer, माप(buffer), proc_priv->task_mempolicy);
+	पूर्ण
 
-	seq_printf(m, "%08lx %s", vma->vm_start, buffer);
+	seq_म_लिखो(m, "%08lx %s", vma->vm_start, buffer);
 
-	if (file) {
-		seq_puts(m, " file=");
+	अगर (file) अणु
+		seq_माला_दो(m, " file=");
 		seq_file_path(m, file, "\n\t= ");
-	} else if (vma->vm_start <= mm->brk && vma->vm_end >= mm->start_brk) {
-		seq_puts(m, " heap");
-	} else if (is_stack(vma)) {
-		seq_puts(m, " stack");
-	}
+	पूर्ण अन्यथा अगर (vma->vm_start <= mm->brk && vma->vm_end >= mm->start_brk) अणु
+		seq_माला_दो(m, " heap");
+	पूर्ण अन्यथा अगर (is_stack(vma)) अणु
+		seq_माला_दो(m, " stack");
+	पूर्ण
 
-	if (is_vm_hugetlb_page(vma))
-		seq_puts(m, " huge");
+	अगर (is_vm_hugetlb_page(vma))
+		seq_माला_दो(m, " huge");
 
 	/* mmap_lock is held by m_start */
 	walk_page_vma(vma, &show_numa_ops, md);
 
-	if (!md->pages)
-		goto out;
+	अगर (!md->pages)
+		जाओ out;
 
-	if (md->anon)
-		seq_printf(m, " anon=%lu", md->anon);
+	अगर (md->anon)
+		seq_म_लिखो(m, " anon=%lu", md->anon);
 
-	if (md->dirty)
-		seq_printf(m, " dirty=%lu", md->dirty);
+	अगर (md->dirty)
+		seq_म_लिखो(m, " dirty=%lu", md->dirty);
 
-	if (md->pages != md->anon && md->pages != md->dirty)
-		seq_printf(m, " mapped=%lu", md->pages);
+	अगर (md->pages != md->anon && md->pages != md->dirty)
+		seq_म_लिखो(m, " mapped=%lu", md->pages);
 
-	if (md->mapcount_max > 1)
-		seq_printf(m, " mapmax=%lu", md->mapcount_max);
+	अगर (md->mapcount_max > 1)
+		seq_म_लिखो(m, " mapmax=%lu", md->mapcount_max);
 
-	if (md->swapcache)
-		seq_printf(m, " swapcache=%lu", md->swapcache);
+	अगर (md->swapcache)
+		seq_म_लिखो(m, " swapcache=%lu", md->swapcache);
 
-	if (md->active < md->pages && !is_vm_hugetlb_page(vma))
-		seq_printf(m, " active=%lu", md->active);
+	अगर (md->active < md->pages && !is_vm_hugetlb_page(vma))
+		seq_म_लिखो(m, " active=%lu", md->active);
 
-	if (md->writeback)
-		seq_printf(m, " writeback=%lu", md->writeback);
+	अगर (md->ग_लिखोback)
+		seq_म_लिखो(m, " writeback=%lu", md->ग_लिखोback);
 
-	for_each_node_state(nid, N_MEMORY)
-		if (md->node[nid])
-			seq_printf(m, " N%d=%lu", nid, md->node[nid]);
+	क्रम_each_node_state(nid, N_MEMORY)
+		अगर (md->node[nid])
+			seq_म_लिखो(m, " N%d=%lu", nid, md->node[nid]);
 
-	seq_printf(m, " kernelpagesize_kB=%lu", vma_kernel_pagesize(vma) >> 10);
+	seq_म_लिखो(m, " kernelpagesize_kB=%lu", vma_kernel_pagesize(vma) >> 10);
 out:
-	seq_putc(m, '\n');
-	return 0;
-}
+	seq_अ_दो(m, '\n');
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations proc_pid_numa_maps_op = {
+अटल स्थिर काष्ठा seq_operations proc_pid_numa_maps_op = अणु
 	.start  = m_start,
 	.next   = m_next,
 	.stop   = m_stop,
 	.show   = show_numa_map,
-};
+पूर्ण;
 
-static int pid_numa_maps_open(struct inode *inode, struct file *file)
-{
-	return proc_maps_open(inode, file, &proc_pid_numa_maps_op,
-				sizeof(struct numa_maps_private));
-}
+अटल पूर्णांक pid_numa_maps_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस proc_maps_खोलो(inode, file, &proc_pid_numa_maps_op,
+				माप(काष्ठा numa_maps_निजी));
+पूर्ण
 
-const struct file_operations proc_pid_numa_maps_operations = {
-	.open		= pid_numa_maps_open,
-	.read		= seq_read,
+स्थिर काष्ठा file_operations proc_pid_numa_maps_operations = अणु
+	.खोलो		= pid_numa_maps_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= proc_map_release,
-};
+पूर्ण;
 
-#endif /* CONFIG_NUMA */
+#पूर्ण_अगर /* CONFIG_NUMA */

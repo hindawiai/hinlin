@@ -1,230 +1,231 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * FPGA to/from HPS Bridge Driver for Altera SoCFPGA Devices
+ * FPGA to/from HPS Bridge Driver क्रम Altera SoCFPGA Devices
  *
  *  Copyright (C) 2013-2016 Altera Corporation, All Rights Reserved.
  *
  * Includes this patch from the mailing list:
  *   fpga: altera-hps2fpga: fix HPS2FPGA bridge visibility to L3 masters
- *   Signed-off-by: Anatolij Gustschin <agust@denx.de>
+ *   Signed-off-by: Anम_से_दij Gustschin <agust@denx.de>
  */
 
 /*
  * This driver manages bridges on a Altera SOCFPGA between the ARM host
- * processor system (HPS) and the embedded FPGA.
+ * processor प्रणाली (HPS) and the embedded FPGA.
  *
  * This driver supports enabling and disabling of the configured ports, which
- * allows for safe reprogramming of the FPGA, assuming that the new FPGA image
- * uses the same port configuration.  Bridges must be disabled before
+ * allows क्रम safe reprogramming of the FPGA, assuming that the new FPGA image
+ * uses the same port configuration.  Bridges must be disabled beक्रमe
  * reprogramming the FPGA and re-enabled after the FPGA has been programmed.
  */
 
-#include <linux/clk.h>
-#include <linux/fpga/fpga-bridge.h>
-#include <linux/kernel.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/regmap.h>
-#include <linux/reset.h>
-#include <linux/spinlock.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/fpga/fpga-bridge.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/spinlock.h>
 
-#define ALT_L3_REMAP_OFST			0x0
-#define ALT_L3_REMAP_MPUZERO_MSK		0x00000001
-#define ALT_L3_REMAP_H2F_MSK			0x00000008
-#define ALT_L3_REMAP_LWH2F_MSK			0x00000010
+#घोषणा ALT_L3_REMAP_OFST			0x0
+#घोषणा ALT_L3_REMAP_MPUZERO_MSK		0x00000001
+#घोषणा ALT_L3_REMAP_H2F_MSK			0x00000008
+#घोषणा ALT_L3_REMAP_LWH2F_MSK			0x00000010
 
-#define HPS2FPGA_BRIDGE_NAME			"hps2fpga"
-#define LWHPS2FPGA_BRIDGE_NAME			"lwhps2fpga"
-#define FPGA2HPS_BRIDGE_NAME			"fpga2hps"
+#घोषणा HPS2FPGA_BRIDGE_NAME			"hps2fpga"
+#घोषणा LWHPS2FPGA_BRIDGE_NAME			"lwhps2fpga"
+#घोषणा FPGA2HPS_BRIDGE_NAME			"fpga2hps"
 
-struct altera_hps2fpga_data {
-	const char *name;
-	struct reset_control *bridge_reset;
-	struct regmap *l3reg;
-	unsigned int remap_mask;
-	struct clk *clk;
-};
+काष्ठा altera_hps2fpga_data अणु
+	स्थिर अक्षर *name;
+	काष्ठा reset_control *bridge_reset;
+	काष्ठा regmap *l3reg;
+	अचिन्हित पूर्णांक remap_mask;
+	काष्ठा clk *clk;
+पूर्ण;
 
-static int alt_hps2fpga_enable_show(struct fpga_bridge *bridge)
-{
-	struct altera_hps2fpga_data *priv = bridge->priv;
+अटल पूर्णांक alt_hps2fpga_enable_show(काष्ठा fpga_bridge *bridge)
+अणु
+	काष्ठा altera_hps2fpga_data *priv = bridge->priv;
 
-	return reset_control_status(priv->bridge_reset);
-}
+	वापस reset_control_status(priv->bridge_reset);
+पूर्ण
 
-/* The L3 REMAP register is write only, so keep a cached value. */
-static unsigned int l3_remap_shadow;
-static DEFINE_SPINLOCK(l3_remap_lock);
+/* The L3 REMAP रेजिस्टर is ग_लिखो only, so keep a cached value. */
+अटल अचिन्हित पूर्णांक l3_remap_shaकरोw;
+अटल DEFINE_SPINLOCK(l3_remap_lock);
 
-static int _alt_hps2fpga_enable_set(struct altera_hps2fpga_data *priv,
+अटल पूर्णांक _alt_hps2fpga_enable_set(काष्ठा altera_hps2fpga_data *priv,
 				    bool enable)
-{
-	unsigned long flags;
-	int ret;
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	/* bring bridge out of reset */
-	if (enable)
-		ret = reset_control_deassert(priv->bridge_reset);
-	else
-		ret = reset_control_assert(priv->bridge_reset);
-	if (ret)
-		return ret;
+	अगर (enable)
+		ret = reset_control_deनिश्चित(priv->bridge_reset);
+	अन्यथा
+		ret = reset_control_निश्चित(priv->bridge_reset);
+	अगर (ret)
+		वापस ret;
 
 	/* Allow bridge to be visible to L3 masters or not */
-	if (priv->remap_mask) {
+	अगर (priv->remap_mask) अणु
 		spin_lock_irqsave(&l3_remap_lock, flags);
-		l3_remap_shadow |= ALT_L3_REMAP_MPUZERO_MSK;
+		l3_remap_shaकरोw |= ALT_L3_REMAP_MPUZERO_MSK;
 
-		if (enable)
-			l3_remap_shadow |= priv->remap_mask;
-		else
-			l3_remap_shadow &= ~priv->remap_mask;
+		अगर (enable)
+			l3_remap_shaकरोw |= priv->remap_mask;
+		अन्यथा
+			l3_remap_shaकरोw &= ~priv->remap_mask;
 
-		ret = regmap_write(priv->l3reg, ALT_L3_REMAP_OFST,
-				   l3_remap_shadow);
+		ret = regmap_ग_लिखो(priv->l3reg, ALT_L3_REMAP_OFST,
+				   l3_remap_shaकरोw);
 		spin_unlock_irqrestore(&l3_remap_lock, flags);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int alt_hps2fpga_enable_set(struct fpga_bridge *bridge, bool enable)
-{
-	return _alt_hps2fpga_enable_set(bridge->priv, enable);
-}
+अटल पूर्णांक alt_hps2fpga_enable_set(काष्ठा fpga_bridge *bridge, bool enable)
+अणु
+	वापस _alt_hps2fpga_enable_set(bridge->priv, enable);
+पूर्ण
 
-static const struct fpga_bridge_ops altera_hps2fpga_br_ops = {
+अटल स्थिर काष्ठा fpga_bridge_ops altera_hps2fpga_br_ops = अणु
 	.enable_set = alt_hps2fpga_enable_set,
 	.enable_show = alt_hps2fpga_enable_show,
-};
+पूर्ण;
 
-static struct altera_hps2fpga_data hps2fpga_data  = {
+अटल काष्ठा altera_hps2fpga_data hps2fpga_data  = अणु
 	.name = HPS2FPGA_BRIDGE_NAME,
 	.remap_mask = ALT_L3_REMAP_H2F_MSK,
-};
+पूर्ण;
 
-static struct altera_hps2fpga_data lwhps2fpga_data  = {
+अटल काष्ठा altera_hps2fpga_data lwhps2fpga_data  = अणु
 	.name = LWHPS2FPGA_BRIDGE_NAME,
 	.remap_mask = ALT_L3_REMAP_LWH2F_MSK,
-};
+पूर्ण;
 
-static struct altera_hps2fpga_data fpga2hps_data  = {
+अटल काष्ठा altera_hps2fpga_data fpga2hps_data  = अणु
 	.name = FPGA2HPS_BRIDGE_NAME,
-};
+पूर्ण;
 
-static const struct of_device_id altera_fpga_of_match[] = {
-	{ .compatible = "altr,socfpga-hps2fpga-bridge",
-	  .data = &hps2fpga_data },
-	{ .compatible = "altr,socfpga-lwhps2fpga-bridge",
-	  .data = &lwhps2fpga_data },
-	{ .compatible = "altr,socfpga-fpga2hps-bridge",
-	  .data = &fpga2hps_data },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id altera_fpga_of_match[] = अणु
+	अणु .compatible = "altr,socfpga-hps2fpga-bridge",
+	  .data = &hps2fpga_data पूर्ण,
+	अणु .compatible = "altr,socfpga-lwhps2fpga-bridge",
+	  .data = &lwhps2fpga_data पूर्ण,
+	अणु .compatible = "altr,socfpga-fpga2hps-bridge",
+	  .data = &fpga2hps_data पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int alt_fpga_bridge_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct altera_hps2fpga_data *priv;
-	const struct of_device_id *of_id;
-	struct fpga_bridge *br;
+अटल पूर्णांक alt_fpga_bridge_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा altera_hps2fpga_data *priv;
+	स्थिर काष्ठा of_device_id *of_id;
+	काष्ठा fpga_bridge *br;
 	u32 enable;
-	int ret;
+	पूर्णांक ret;
 
 	of_id = of_match_device(altera_fpga_of_match, dev);
-	if (!of_id) {
+	अगर (!of_id) अणु
 		dev_err(dev, "failed to match device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	priv = (struct altera_hps2fpga_data *)of_id->data;
+	priv = (काष्ठा altera_hps2fpga_data *)of_id->data;
 
 	priv->bridge_reset = of_reset_control_get_exclusive_by_index(dev->of_node,
 								     0);
-	if (IS_ERR(priv->bridge_reset)) {
+	अगर (IS_ERR(priv->bridge_reset)) अणु
 		dev_err(dev, "Could not get %s reset control\n", priv->name);
-		return PTR_ERR(priv->bridge_reset);
-	}
+		वापस PTR_ERR(priv->bridge_reset);
+	पूर्ण
 
-	if (priv->remap_mask) {
+	अगर (priv->remap_mask) अणु
 		priv->l3reg = syscon_regmap_lookup_by_compatible("altr,l3regs");
-		if (IS_ERR(priv->l3reg)) {
+		अगर (IS_ERR(priv->l3reg)) अणु
 			dev_err(dev, "regmap for altr,l3regs lookup failed\n");
-			return PTR_ERR(priv->l3reg);
-		}
-	}
+			वापस PTR_ERR(priv->l3reg);
+		पूर्ण
+	पूर्ण
 
-	priv->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(priv->clk)) {
+	priv->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(priv->clk)) अणु
 		dev_err(dev, "no clock specified\n");
-		return PTR_ERR(priv->clk);
-	}
+		वापस PTR_ERR(priv->clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(priv->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "could not enable clock\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!of_property_read_u32(dev->of_node, "bridge-enable", &enable)) {
-		if (enable > 1) {
+	अगर (!of_property_पढ़ो_u32(dev->of_node, "bridge-enable", &enable)) अणु
+		अगर (enable > 1) अणु
 			dev_warn(dev, "invalid bridge-enable %u > 1\n", enable);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_info(dev, "%s bridge\n",
 				 (enable ? "enabling" : "disabling"));
 
 			ret = _alt_hps2fpga_enable_set(priv, enable);
-			if (ret)
-				goto err;
-		}
-	}
+			अगर (ret)
+				जाओ err;
+		पूर्ण
+	पूर्ण
 
 	br = devm_fpga_bridge_create(dev, priv->name,
 				     &altera_hps2fpga_br_ops, priv);
-	if (!br) {
+	अगर (!br) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, br);
+	platक्रमm_set_drvdata(pdev, br);
 
-	ret = fpga_bridge_register(br);
-	if (ret)
-		goto err;
+	ret = fpga_bridge_रेजिस्टर(br);
+	अगर (ret)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
 	clk_disable_unprepare(priv->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int alt_fpga_bridge_remove(struct platform_device *pdev)
-{
-	struct fpga_bridge *bridge = platform_get_drvdata(pdev);
-	struct altera_hps2fpga_data *priv = bridge->priv;
+अटल पूर्णांक alt_fpga_bridge_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fpga_bridge *bridge = platक्रमm_get_drvdata(pdev);
+	काष्ठा altera_hps2fpga_data *priv = bridge->priv;
 
-	fpga_bridge_unregister(bridge);
+	fpga_bridge_unरेजिस्टर(bridge);
 
 	clk_disable_unprepare(priv->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 MODULE_DEVICE_TABLE(of, altera_fpga_of_match);
 
-static struct platform_driver alt_fpga_bridge_driver = {
+अटल काष्ठा platक्रमm_driver alt_fpga_bridge_driver = अणु
 	.probe = alt_fpga_bridge_probe,
-	.remove = alt_fpga_bridge_remove,
-	.driver = {
+	.हटाओ = alt_fpga_bridge_हटाओ,
+	.driver = अणु
 		.name	= "altera_hps2fpga_bridge",
 		.of_match_table = of_match_ptr(altera_fpga_of_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(alt_fpga_bridge_driver);
+module_platक्रमm_driver(alt_fpga_bridge_driver);
 
 MODULE_DESCRIPTION("Altera SoCFPGA HPS to FPGA Bridge");
 MODULE_AUTHOR("Alan Tull <atull@opensource.altera.com>");

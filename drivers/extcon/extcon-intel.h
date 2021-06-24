@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Header file for Intel extcon hardware
+ * Header file क्रम Intel extcon hardware
  *
  * Copyright (C) 2019 Intel Corporation. All rights reserved.
  */
 
-#ifndef __EXTCON_INTEL_H__
-#define __EXTCON_INTEL_H__
+#अगर_अघोषित __EXTCON_INTEL_H__
+#घोषणा __EXTCON_INTEL_H__
 
-enum extcon_intel_usb_id {
+क्रमागत extcon_पूर्णांकel_usb_id अणु
 	INTEL_USB_ID_OTG,
 	INTEL_USB_ID_GND,
 	INTEL_USB_ID_FLOAT,
 	INTEL_USB_RID_A,
 	INTEL_USB_RID_B,
 	INTEL_USB_RID_C,
-};
+पूर्ण;
 
-#endif	/* __EXTCON_INTEL_H__ */
+#पूर्ण_अगर	/* __EXTCON_INTEL_H__ */

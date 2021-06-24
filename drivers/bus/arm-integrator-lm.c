@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ARM Integrator Logical Module bus driver
  * Copyright (C) 2020 Linaro Ltd.
  * Author: Linus Walleij <linus.walleij@linaro.org>
  *
- * See the device tree bindings for this block for more details on the
+ * See the device tree bindings क्रम this block क्रम more details on the
  * hardware.
  */
 
-#include <linux/module.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/bitops.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
 
-/* All information about the connected logic modules are in here */
-#define INTEGRATOR_SC_DEC_OFFSET	0x10
+/* All inक्रमmation about the connected logic modules are in here */
+#घोषणा INTEGRATOR_SC_DEC_OFFSET	0x10
 
-/* Base address for the expansion modules */
-#define INTEGRATOR_AP_EXP_BASE		0xc0000000
-#define INTEGRATOR_AP_EXP_STRIDE	0x10000000
+/* Base address क्रम the expansion modules */
+#घोषणा INTEGRATOR_AP_EXP_BASE		0xc0000000
+#घोषणा INTEGRATOR_AP_EXP_STRIDE	0x10000000
 
-static int integrator_lm_populate(int num, struct device *dev)
-{
-	struct device_node *np = dev->of_node;
-	struct device_node *child;
+अटल पूर्णांक पूर्णांकegrator_lm_populate(पूर्णांक num, काष्ठा device *dev)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा device_node *child;
 	u32 base;
-	int ret;
+	पूर्णांक ret;
 
 	base = INTEGRATOR_AP_EXP_BASE + (num * INTEGRATOR_AP_EXP_STRIDE);
 
 	/* Walk over the child nodes and see what chipselects we use */
-	for_each_available_child_of_node(np, child) {
-		struct resource res;
+	क्रम_each_available_child_of_node(np, child) अणु
+		काष्ठा resource res;
 
 		ret = of_address_to_resource(child, 0, &res);
-		if (ret) {
+		अगर (ret) अणु
 			dev_info(dev, "no valid address on child\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* First populate the syscon then any devices */
-		if (res.start == base) {
+		अगर (res.start == base) अणु
 			dev_info(dev, "populate module @0x%08x from DT\n",
 				 base);
-			ret = of_platform_default_populate(child, NULL, dev);
-			if (ret) {
+			ret = of_platक्रमm_शेष_populate(child, शून्य, dev);
+			अगर (ret) अणु
 				dev_err(dev, "failed to populate module\n");
 				of_node_put(child);
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id integrator_ap_syscon_match[] = {
-	{ .compatible = "arm,integrator-ap-syscon"},
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id पूर्णांकegrator_ap_syscon_match[] = अणु
+	अणु .compatible = "arm,integrator-ap-syscon"पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int integrator_ap_lm_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *syscon;
-	static struct regmap *map;
+अटल पूर्णांक पूर्णांकegrator_ap_lm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *syscon;
+	अटल काष्ठा regmap *map;
 	u32 val;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	/* Look up the system controller */
-	syscon = of_find_matching_node(NULL, integrator_ap_syscon_match);
-	if (!syscon) {
+	/* Look up the प्रणाली controller */
+	syscon = of_find_matching_node(शून्य, पूर्णांकegrator_ap_syscon_match);
+	अगर (!syscon) अणु
 		dev_err(dev,
 			"could not find Integrator/AP system controller\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	map = syscon_node_to_regmap(syscon);
-	if (IS_ERR(map)) {
+	अगर (IS_ERR(map)) अणु
 		dev_err(dev,
 			"could not find Integrator/AP system controller\n");
-		return PTR_ERR(map);
-	}
+		वापस PTR_ERR(map);
+	पूर्ण
 
-	ret = regmap_read(map, INTEGRATOR_SC_DEC_OFFSET, &val);
-	if (ret) {
+	ret = regmap_पढ़ो(map, INTEGRATOR_SC_DEC_OFFSET, &val);
+	अगर (ret) अणु
 		dev_err(dev, "could not read from Integrator/AP syscon\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Loop over the connected modules */
-	for (i = 0; i < 4; i++) {
-		if (!(val & BIT(4 + i)))
-			continue;
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (!(val & BIT(4 + i)))
+			जारी;
 
 		dev_info(dev, "detected module in slot %d\n", i);
-		ret = integrator_lm_populate(i, dev);
-		if (ret)
-			return ret;
-	}
+		ret = पूर्णांकegrator_lm_populate(i, dev);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id integrator_ap_lm_match[] = {
-	{ .compatible = "arm,integrator-ap-lm"},
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id पूर्णांकegrator_ap_lm_match[] = अणु
+	अणु .compatible = "arm,integrator-ap-lm"पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver integrator_ap_lm_driver = {
-	.probe = integrator_ap_lm_probe,
-	.driver = {
+अटल काष्ठा platक्रमm_driver पूर्णांकegrator_ap_lm_driver = अणु
+	.probe = पूर्णांकegrator_ap_lm_probe,
+	.driver = अणु
 		.name = "integratorap-lm",
-		.of_match_table = integrator_ap_lm_match,
-	},
-};
-module_platform_driver(integrator_ap_lm_driver);
+		.of_match_table = पूर्णांकegrator_ap_lm_match,
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(पूर्णांकegrator_ap_lm_driver);
 MODULE_AUTHOR("Linus Walleij <linus.walleij@linaro.org>");
 MODULE_DESCRIPTION("Integrator AP Logical Module driver");
 MODULE_LICENSE("GPL v2");

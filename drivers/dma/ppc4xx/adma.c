@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2006-2009 DENX Software Engineering.
  *
  * Author: Yuri Tikhonov <yur@emcraft.com>
  *
- * Further porting to arch/powerpc by
- * 	Anatolij Gustschin <agust@denx.de>
+ * Further porting to arch/घातerpc by
+ * 	Anम_से_दij Gustschin <agust@denx.de>
  */
 
 /*
@@ -15,26 +16,26 @@
  * ADMA driver written by D.Williams.
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/async_tx.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/proc_fs.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <asm/dcr.h>
-#include <asm/dcr-regs.h>
-#include "adma.h"
-#include "../dmaengine.h"
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/async_tx.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <यंत्र/dcr.h>
+#समावेश <यंत्र/dcr-regs.h>
+#समावेश "adma.h"
+#समावेश "../dmaengine.h"
 
-enum ppc_adma_init_code {
+क्रमागत ppc_adma_init_code अणु
 	PPC_ADMA_INIT_OK = 0,
 	PPC_ADMA_INIT_MEMRES,
 	PPC_ADMA_INIT_MEMREG,
@@ -44,9 +45,9 @@ enum ppc_adma_init_code {
 	PPC_ADMA_INIT_IRQ1,
 	PPC_ADMA_INIT_IRQ2,
 	PPC_ADMA_INIT_REGISTER
-};
+पूर्ण;
 
-static char *ppc_adma_errors[] = {
+अटल अक्षर *ppc_adma_errors[] = अणु
 	[PPC_ADMA_INIT_OK] = "ok",
 	[PPC_ADMA_INIT_MEMRES] = "failed to get memory resource",
 	[PPC_ADMA_INIT_MEMREG] = "failed to request memory region",
@@ -58,83 +59,83 @@ static char *ppc_adma_errors[] = {
 	[PPC_ADMA_INIT_IRQ1] = "failed to request first irq",
 	[PPC_ADMA_INIT_IRQ2] = "failed to request second irq",
 	[PPC_ADMA_INIT_REGISTER] = "failed to register dma async device",
-};
+पूर्ण;
 
-static enum ppc_adma_init_code
+अटल क्रमागत ppc_adma_init_code
 ppc440spe_adma_devices[PPC440SPE_ADMA_ENGINES_NUM];
 
-struct ppc_dma_chan_ref {
-	struct dma_chan *chan;
-	struct list_head node;
-};
+काष्ठा ppc_dma_chan_ref अणु
+	काष्ठा dma_chan *chan;
+	काष्ठा list_head node;
+पूर्ण;
 
 /* The list of channels exported by ppc440spe ADMA */
-static struct list_head
+अटल काष्ठा list_head
 ppc440spe_adma_chan_list = LIST_HEAD_INIT(ppc440spe_adma_chan_list);
 
-/* This flag is set when want to refetch the xor chain in the interrupt
+/* This flag is set when want to refetch the xor chain in the पूर्णांकerrupt
  * handler
  */
-static u32 do_xor_refetch;
+अटल u32 करो_xor_refetch;
 
-/* Pointer to DMA0, DMA1 CP/CS FIFO */
-static void *ppc440spe_dma_fifo_buf;
+/* Poपूर्णांकer to DMA0, DMA1 CP/CS FIFO */
+अटल व्योम *ppc440spe_dma_fअगरo_buf;
 
-/* Pointers to last submitted to DMA0, DMA1 CDBs */
-static struct ppc440spe_adma_desc_slot *chan_last_sub[3];
-static struct ppc440spe_adma_desc_slot *chan_first_cdb[3];
+/* Poपूर्णांकers to last submitted to DMA0, DMA1 CDBs */
+अटल काष्ठा ppc440spe_adma_desc_slot *chan_last_sub[3];
+अटल काष्ठा ppc440spe_adma_desc_slot *chan_first_cdb[3];
 
-/* Pointer to last linked and submitted xor CB */
-static struct ppc440spe_adma_desc_slot *xor_last_linked;
-static struct ppc440spe_adma_desc_slot *xor_last_submit;
+/* Poपूर्णांकer to last linked and submitted xor CB */
+अटल काष्ठा ppc440spe_adma_desc_slot *xor_last_linked;
+अटल काष्ठा ppc440spe_adma_desc_slot *xor_last_submit;
 
-/* This array is used in data-check operations for storing a pattern */
-static char ppc440spe_qword[16];
+/* This array is used in data-check operations क्रम storing a pattern */
+अटल अक्षर ppc440spe_qword[16];
 
-static atomic_t ppc440spe_adma_err_irq_ref;
-static dcr_host_t ppc440spe_mq_dcr_host;
-static unsigned int ppc440spe_mq_dcr_len;
+अटल atomic_t ppc440spe_adma_err_irq_ref;
+अटल dcr_host_t ppc440spe_mq_dcr_host;
+अटल अचिन्हित पूर्णांक ppc440spe_mq_dcr_len;
 
-/* Since RXOR operations use the common register (MQ0_CF2H) for setting-up
- * the block size in transactions, then we do not allow to activate more than
+/* Since RXOR operations use the common रेजिस्टर (MQ0_CF2H) क्रम setting-up
+ * the block size in transactions, then we करो not allow to activate more than
  * only one RXOR transactions simultaneously. So use this var to store
- * the information about is RXOR currently active (PPC440SPE_RXOR_RUN bit is
+ * the inक्रमmation about is RXOR currently active (PPC440SPE_RXOR_RUN bit is
  * set) or not (PPC440SPE_RXOR_RUN is clear).
  */
-static unsigned long ppc440spe_rxor_state;
+अटल अचिन्हित दीर्घ ppc440spe_rxor_state;
 
 /* These are used in enable & check routines
  */
-static u32 ppc440spe_r6_enabled;
-static struct ppc440spe_adma_chan *ppc440spe_r6_tchan;
-static struct completion ppc440spe_r6_test_comp;
+अटल u32 ppc440spe_r6_enabled;
+अटल काष्ठा ppc440spe_adma_chan *ppc440spe_r6_tchan;
+अटल काष्ठा completion ppc440spe_r6_test_comp;
 
-static int ppc440spe_adma_dma2rxor_prep_src(
-		struct ppc440spe_adma_desc_slot *desc,
-		struct ppc440spe_rxor *cursor, int index,
-		int src_cnt, u32 addr);
-static void ppc440spe_adma_dma2rxor_set_src(
-		struct ppc440spe_adma_desc_slot *desc,
-		int index, dma_addr_t addr);
-static void ppc440spe_adma_dma2rxor_set_mult(
-		struct ppc440spe_adma_desc_slot *desc,
-		int index, u8 mult);
+अटल पूर्णांक ppc440spe_adma_dma2rxor_prep_src(
+		काष्ठा ppc440spe_adma_desc_slot *desc,
+		काष्ठा ppc440spe_rxor *cursor, पूर्णांक index,
+		पूर्णांक src_cnt, u32 addr);
+अटल व्योम ppc440spe_adma_dma2rxor_set_src(
+		काष्ठा ppc440spe_adma_desc_slot *desc,
+		पूर्णांक index, dma_addr_t addr);
+अटल व्योम ppc440spe_adma_dma2rxor_set_mult(
+		काष्ठा ppc440spe_adma_desc_slot *desc,
+		पूर्णांक index, u8 mult);
 
-#ifdef ADMA_LL_DEBUG
-#define ADMA_LL_DBG(x) ({ if (1) x; 0; })
-#else
-#define ADMA_LL_DBG(x) ({ if (0) x; 0; })
-#endif
+#अगर_घोषित ADMA_LL_DEBUG
+#घोषणा ADMA_LL_DBG(x) (अणु अगर (1) x; 0; पूर्ण)
+#अन्यथा
+#घोषणा ADMA_LL_DBG(x) (अणु अगर (0) x; 0; पूर्ण)
+#पूर्ण_अगर
 
-static void print_cb(struct ppc440spe_adma_chan *chan, void *block)
-{
-	struct dma_cdb *cdb;
-	struct xor_cb *cb;
-	int i;
+अटल व्योम prपूर्णांक_cb(काष्ठा ppc440spe_adma_chan *chan, व्योम *block)
+अणु
+	काष्ठा dma_cdb *cdb;
+	काष्ठा xor_cb *cb;
+	पूर्णांक i;
 
-	switch (chan->device->id) {
-	case 0:
-	case 1:
+	चयन (chan->device->id) अणु
+	हाल 0:
+	हाल 1:
 		cdb = block;
 
 		pr_debug("CDB at %p [%d]:\n"
@@ -148,8 +149,8 @@ static void print_cb(struct ppc440spe_adma_chan *chan, void *block)
 			le32_to_cpu(cdb->sg2u), le32_to_cpu(cdb->sg2l),
 			le32_to_cpu(cdb->sg3u), le32_to_cpu(cdb->sg3l)
 		);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		cb = block;
 
 		pr_debug("CB at %p [%d]:\n"
@@ -160,981 +161,981 @@ static void print_cb(struct ppc440spe_adma_chan *chan, void *block)
 			cb->cbc, cb->cbbc, cb->cbs,
 			cb->cbtah, cb->cbtal,
 			cb->cblah, cb->cblal);
-		for (i = 0; i < 16; i++) {
-			if (i && !cb->ops[i].h && !cb->ops[i].l)
-				continue;
+		क्रम (i = 0; i < 16; i++) अणु
+			अगर (i && !cb->ops[i].h && !cb->ops[i].l)
+				जारी;
 			pr_debug("\t ops[%2d]: h 0x%08x l 0x%08x\n",
 				i, cb->ops[i].h, cb->ops[i].l);
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void print_cb_list(struct ppc440spe_adma_chan *chan,
-			  struct ppc440spe_adma_desc_slot *iter)
-{
-	for (; iter; iter = iter->hw_next)
-		print_cb(chan, iter->hw_desc);
-}
+अटल व्योम prपूर्णांक_cb_list(काष्ठा ppc440spe_adma_chan *chan,
+			  काष्ठा ppc440spe_adma_desc_slot *iter)
+अणु
+	क्रम (; iter; iter = iter->hw_next)
+		prपूर्णांक_cb(chan, iter->hw_desc);
+पूर्ण
 
-static void prep_dma_xor_dbg(int id, dma_addr_t dst, dma_addr_t *src,
-			     unsigned int src_cnt)
-{
-	int i;
+अटल व्योम prep_dma_xor_dbg(पूर्णांक id, dma_addr_t dst, dma_addr_t *src,
+			     अचिन्हित पूर्णांक src_cnt)
+अणु
+	पूर्णांक i;
 
 	pr_debug("\n%s(%d):\nsrc: ", __func__, id);
-	for (i = 0; i < src_cnt; i++)
+	क्रम (i = 0; i < src_cnt; i++)
 		pr_debug("\t0x%016llx ", src[i]);
 	pr_debug("dst:\n\t0x%016llx\n", dst);
-}
+पूर्ण
 
-static void prep_dma_pq_dbg(int id, dma_addr_t *dst, dma_addr_t *src,
-			    unsigned int src_cnt)
-{
-	int i;
+अटल व्योम prep_dma_pq_dbg(पूर्णांक id, dma_addr_t *dst, dma_addr_t *src,
+			    अचिन्हित पूर्णांक src_cnt)
+अणु
+	पूर्णांक i;
 
 	pr_debug("\n%s(%d):\nsrc: ", __func__, id);
-	for (i = 0; i < src_cnt; i++)
+	क्रम (i = 0; i < src_cnt; i++)
 		pr_debug("\t0x%016llx ", src[i]);
 	pr_debug("dst: ");
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		pr_debug("\t0x%016llx ", dst[i]);
-}
+पूर्ण
 
-static void prep_dma_pqzero_sum_dbg(int id, dma_addr_t *src,
-				    unsigned int src_cnt,
-				    const unsigned char *scf)
-{
-	int i;
+अटल व्योम prep_dma_pqzero_sum_dbg(पूर्णांक id, dma_addr_t *src,
+				    अचिन्हित पूर्णांक src_cnt,
+				    स्थिर अचिन्हित अक्षर *scf)
+अणु
+	पूर्णांक i;
 
 	pr_debug("\n%s(%d):\nsrc(coef): ", __func__, id);
-	if (scf) {
-		for (i = 0; i < src_cnt; i++)
+	अगर (scf) अणु
+		क्रम (i = 0; i < src_cnt; i++)
 			pr_debug("\t0x%016llx(0x%02x) ", src[i], scf[i]);
-	} else {
-		for (i = 0; i < src_cnt; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < src_cnt; i++)
 			pr_debug("\t0x%016llx(no) ", src[i]);
-	}
+	पूर्ण
 
 	pr_debug("dst: ");
-	for (i = 0; i < 2; i++)
+	क्रम (i = 0; i < 2; i++)
 		pr_debug("\t0x%016llx ", src[src_cnt + i]);
-}
+पूर्ण
 
 /******************************************************************************
  * Command (Descriptor) Blocks low-level routines
  ******************************************************************************/
 /**
- * ppc440spe_desc_init_interrupt - initialize the descriptor for INTERRUPT
- * pseudo operation
+ * ppc440spe_desc_init_पूर्णांकerrupt - initialize the descriptor क्रम INTERRUPT
+ * pseuकरो operation
  */
-static void ppc440spe_desc_init_interrupt(struct ppc440spe_adma_desc_slot *desc,
-					  struct ppc440spe_adma_chan *chan)
-{
-	struct xor_cb *p;
+अटल व्योम ppc440spe_desc_init_पूर्णांकerrupt(काष्ठा ppc440spe_adma_desc_slot *desc,
+					  काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	काष्ठा xor_cb *p;
 
-	switch (chan->device->id) {
-	case PPC440SPE_XOR_ID:
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_XOR_ID:
 		p = desc->hw_desc;
-		memset(desc->hw_desc, 0, sizeof(struct xor_cb));
+		स_रखो(desc->hw_desc, 0, माप(काष्ठा xor_cb));
 		/* NOP with Command Block Complete Enable */
 		p->cbc = XOR_CBCR_CBCE_BIT;
-		break;
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
-		memset(desc->hw_desc, 0, sizeof(struct dma_cdb));
-		/* NOP with interrupt */
+		अवरोध;
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
+		स_रखो(desc->hw_desc, 0, माप(काष्ठा dma_cdb));
+		/* NOP with पूर्णांकerrupt */
 		set_bit(PPC440SPE_DESC_INT, &desc->flags);
-		break;
-	default:
-		printk(KERN_ERR "Unsupported id %d in %s\n", chan->device->id,
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "Unsupported id %d in %s\n", chan->device->id,
 				__func__);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * ppc440spe_desc_init_null_xor - initialize the descriptor for NULL XOR
- * pseudo operation
+ * ppc440spe_desc_init_null_xor - initialize the descriptor क्रम शून्य XOR
+ * pseuकरो operation
  */
-static void ppc440spe_desc_init_null_xor(struct ppc440spe_adma_desc_slot *desc)
-{
-	memset(desc->hw_desc, 0, sizeof(struct xor_cb));
-	desc->hw_next = NULL;
+अटल व्योम ppc440spe_desc_init_null_xor(काष्ठा ppc440spe_adma_desc_slot *desc)
+अणु
+	स_रखो(desc->hw_desc, 0, माप(काष्ठा xor_cb));
+	desc->hw_next = शून्य;
 	desc->src_cnt = 0;
 	desc->dst_cnt = 1;
-}
+पूर्ण
 
 /**
- * ppc440spe_desc_init_xor - initialize the descriptor for XOR operation
+ * ppc440spe_desc_init_xor - initialize the descriptor क्रम XOR operation
  */
-static void ppc440spe_desc_init_xor(struct ppc440spe_adma_desc_slot *desc,
-					 int src_cnt, unsigned long flags)
-{
-	struct xor_cb *hw_desc = desc->hw_desc;
+अटल व्योम ppc440spe_desc_init_xor(काष्ठा ppc440spe_adma_desc_slot *desc,
+					 पूर्णांक src_cnt, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा xor_cb *hw_desc = desc->hw_desc;
 
-	memset(desc->hw_desc, 0, sizeof(struct xor_cb));
-	desc->hw_next = NULL;
+	स_रखो(desc->hw_desc, 0, माप(काष्ठा xor_cb));
+	desc->hw_next = शून्य;
 	desc->src_cnt = src_cnt;
 	desc->dst_cnt = 1;
 
 	hw_desc->cbc = XOR_CBCR_TGT_BIT | src_cnt;
-	if (flags & DMA_PREP_INTERRUPT)
-		/* Enable interrupt on completion */
+	अगर (flags & DMA_PREP_INTERRUPT)
+		/* Enable पूर्णांकerrupt on completion */
 		hw_desc->cbc |= XOR_CBCR_CBCE_BIT;
-}
+पूर्ण
 
 /**
- * ppc440spe_desc_init_dma2pq - initialize the descriptor for PQ
+ * ppc440spe_desc_init_dma2pq - initialize the descriptor क्रम PQ
  * operation in DMA2 controller
  */
-static void ppc440spe_desc_init_dma2pq(struct ppc440spe_adma_desc_slot *desc,
-		int dst_cnt, int src_cnt, unsigned long flags)
-{
-	struct xor_cb *hw_desc = desc->hw_desc;
+अटल व्योम ppc440spe_desc_init_dma2pq(काष्ठा ppc440spe_adma_desc_slot *desc,
+		पूर्णांक dst_cnt, पूर्णांक src_cnt, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा xor_cb *hw_desc = desc->hw_desc;
 
-	memset(desc->hw_desc, 0, sizeof(struct xor_cb));
-	desc->hw_next = NULL;
+	स_रखो(desc->hw_desc, 0, माप(काष्ठा xor_cb));
+	desc->hw_next = शून्य;
 	desc->src_cnt = src_cnt;
 	desc->dst_cnt = dst_cnt;
-	memset(desc->reverse_flags, 0, sizeof(desc->reverse_flags));
+	स_रखो(desc->reverse_flags, 0, माप(desc->reverse_flags));
 	desc->descs_per_op = 0;
 
 	hw_desc->cbc = XOR_CBCR_TGT_BIT;
-	if (flags & DMA_PREP_INTERRUPT)
-		/* Enable interrupt on completion */
+	अगर (flags & DMA_PREP_INTERRUPT)
+		/* Enable पूर्णांकerrupt on completion */
 		hw_desc->cbc |= XOR_CBCR_CBCE_BIT;
-}
+पूर्ण
 
-#define DMA_CTRL_FLAGS_LAST	DMA_PREP_FENCE
-#define DMA_PREP_ZERO_P		(DMA_CTRL_FLAGS_LAST << 1)
-#define DMA_PREP_ZERO_Q		(DMA_PREP_ZERO_P << 1)
+#घोषणा DMA_CTRL_FLAGS_LAST	DMA_PREP_FENCE
+#घोषणा DMA_PREP_ZERO_P		(DMA_CTRL_FLAGS_LAST << 1)
+#घोषणा DMA_PREP_ZERO_Q		(DMA_PREP_ZERO_P << 1)
 
 /**
- * ppc440spe_desc_init_dma01pq - initialize the descriptors for PQ operation
+ * ppc440spe_desc_init_dma01pq - initialize the descriptors क्रम PQ operation
  * with DMA0/1
  */
-static void ppc440spe_desc_init_dma01pq(struct ppc440spe_adma_desc_slot *desc,
-				int dst_cnt, int src_cnt, unsigned long flags,
-				unsigned long op)
-{
-	struct dma_cdb *hw_desc;
-	struct ppc440spe_adma_desc_slot *iter;
-	u8 dopc;
+अटल व्योम ppc440spe_desc_init_dma01pq(काष्ठा ppc440spe_adma_desc_slot *desc,
+				पूर्णांक dst_cnt, पूर्णांक src_cnt, अचिन्हित दीर्घ flags,
+				अचिन्हित दीर्घ op)
+अणु
+	काष्ठा dma_cdb *hw_desc;
+	काष्ठा ppc440spe_adma_desc_slot *iter;
+	u8 करोpc;
 
 	/* Common initialization of a PQ descriptors chain */
 	set_bits(op, &desc->flags);
 	desc->src_cnt = src_cnt;
 	desc->dst_cnt = dst_cnt;
 
-	/* WXOR MULTICAST if both P and Q are being computed
-	 * MV_SG1_SG2 if Q only
+	/* WXOR MULTICAST अगर both P and Q are being computed
+	 * MV_SG1_SG2 अगर Q only
 	 */
-	dopc = (desc->dst_cnt == DMA_DEST_MAX_NUM) ?
+	करोpc = (desc->dst_cnt == DMA_DEST_MAX_NUM) ?
 		DMA_CDB_OPC_MULTICAST : DMA_CDB_OPC_MV_SG1_SG2;
 
-	list_for_each_entry(iter, &desc->group_list, chain_node) {
+	list_क्रम_each_entry(iter, &desc->group_list, chain_node) अणु
 		hw_desc = iter->hw_desc;
-		memset(iter->hw_desc, 0, sizeof(struct dma_cdb));
+		स_रखो(iter->hw_desc, 0, माप(काष्ठा dma_cdb));
 
-		if (likely(!list_is_last(&iter->chain_node,
-				&desc->group_list))) {
-			/* set 'next' pointer */
+		अगर (likely(!list_is_last(&iter->chain_node,
+				&desc->group_list))) अणु
+			/* set 'next' poपूर्णांकer */
 			iter->hw_next = list_entry(iter->chain_node.next,
-				struct ppc440spe_adma_desc_slot, chain_node);
+				काष्ठा ppc440spe_adma_desc_slot, chain_node);
 			clear_bit(PPC440SPE_DESC_INT, &iter->flags);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* this is the last descriptor.
 			 * this slot will be pasted from ADMA level
-			 * each time it wants to configure parameters
+			 * each समय it wants to configure parameters
 			 * of the transaction (src, dst, ...)
 			 */
-			iter->hw_next = NULL;
-			if (flags & DMA_PREP_INTERRUPT)
+			iter->hw_next = शून्य;
+			अगर (flags & DMA_PREP_INTERRUPT)
 				set_bit(PPC440SPE_DESC_INT, &iter->flags);
-			else
+			अन्यथा
 				clear_bit(PPC440SPE_DESC_INT, &iter->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Set OPS depending on WXOR/RXOR type of operation */
-	if (!test_bit(PPC440SPE_DESC_RXOR, &desc->flags)) {
+	अगर (!test_bit(PPC440SPE_DESC_RXOR, &desc->flags)) अणु
 		/* This is a WXOR only chain:
-		 * - first descriptors are for zeroing destinations
-		 *   if PPC440SPE_ZERO_P/Q set;
-		 * - descriptors remained are for GF-XOR operations.
+		 * - first descriptors are क्रम zeroing destinations
+		 *   अगर PPC440SPE_ZERO_P/Q set;
+		 * - descriptors reमुख्यed are क्रम GF-XOR operations.
 		 */
 		iter = list_first_entry(&desc->group_list,
-					struct ppc440spe_adma_desc_slot,
+					काष्ठा ppc440spe_adma_desc_slot,
 					chain_node);
 
-		if (test_bit(PPC440SPE_ZERO_P, &desc->flags)) {
+		अगर (test_bit(PPC440SPE_ZERO_P, &desc->flags)) अणु
 			hw_desc = iter->hw_desc;
 			hw_desc->opc = DMA_CDB_OPC_MV_SG1_SG2;
 			iter = list_first_entry(&iter->chain_node,
-					struct ppc440spe_adma_desc_slot,
+					काष्ठा ppc440spe_adma_desc_slot,
 					chain_node);
-		}
+		पूर्ण
 
-		if (test_bit(PPC440SPE_ZERO_Q, &desc->flags)) {
+		अगर (test_bit(PPC440SPE_ZERO_Q, &desc->flags)) अणु
 			hw_desc = iter->hw_desc;
 			hw_desc->opc = DMA_CDB_OPC_MV_SG1_SG2;
 			iter = list_first_entry(&iter->chain_node,
-					struct ppc440spe_adma_desc_slot,
+					काष्ठा ppc440spe_adma_desc_slot,
 					chain_node);
-		}
+		पूर्ण
 
-		list_for_each_entry_from(iter, &desc->group_list, chain_node) {
+		list_क्रम_each_entry_from(iter, &desc->group_list, chain_node) अणु
 			hw_desc = iter->hw_desc;
-			hw_desc->opc = dopc;
-		}
-	} else {
+			hw_desc->opc = करोpc;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* This is either RXOR-only or mixed RXOR/WXOR */
 
 		/* The first 1 or 2 slots in chain are always RXOR,
-		 * if need to calculate P & Q, then there are two
-		 * RXOR slots; if only P or only Q, then there is one
+		 * अगर need to calculate P & Q, then there are two
+		 * RXOR slots; अगर only P or only Q, then there is one
 		 */
 		iter = list_first_entry(&desc->group_list,
-					struct ppc440spe_adma_desc_slot,
+					काष्ठा ppc440spe_adma_desc_slot,
 					chain_node);
 		hw_desc = iter->hw_desc;
 		hw_desc->opc = DMA_CDB_OPC_MV_SG1_SG2;
 
-		if (desc->dst_cnt == DMA_DEST_MAX_NUM) {
+		अगर (desc->dst_cnt == DMA_DEST_MAX_NUM) अणु
 			iter = list_first_entry(&iter->chain_node,
-						struct ppc440spe_adma_desc_slot,
+						काष्ठा ppc440spe_adma_desc_slot,
 						chain_node);
 			hw_desc = iter->hw_desc;
 			hw_desc->opc = DMA_CDB_OPC_MV_SG1_SG2;
-		}
+		पूर्ण
 
-		/* The remaining descs (if any) are WXORs */
-		if (test_bit(PPC440SPE_DESC_WXOR, &desc->flags)) {
+		/* The reमुख्यing descs (अगर any) are WXORs */
+		अगर (test_bit(PPC440SPE_DESC_WXOR, &desc->flags)) अणु
 			iter = list_first_entry(&iter->chain_node,
-						struct ppc440spe_adma_desc_slot,
+						काष्ठा ppc440spe_adma_desc_slot,
 						chain_node);
-			list_for_each_entry_from(iter, &desc->group_list,
-						chain_node) {
+			list_क्रम_each_entry_from(iter, &desc->group_list,
+						chain_node) अणु
 				hw_desc = iter->hw_desc;
-				hw_desc->opc = dopc;
-			}
-		}
-	}
-}
+				hw_desc->opc = करोpc;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_desc_init_dma01pqzero_sum - initialize the descriptor
- * for PQ_ZERO_SUM operation
+ * क्रम PQ_ZERO_SUM operation
  */
-static void ppc440spe_desc_init_dma01pqzero_sum(
-				struct ppc440spe_adma_desc_slot *desc,
-				int dst_cnt, int src_cnt)
-{
-	struct dma_cdb *hw_desc;
-	struct ppc440spe_adma_desc_slot *iter;
-	int i = 0;
-	u8 dopc = (dst_cnt == 2) ? DMA_CDB_OPC_MULTICAST :
+अटल व्योम ppc440spe_desc_init_dma01pqzero_sum(
+				काष्ठा ppc440spe_adma_desc_slot *desc,
+				पूर्णांक dst_cnt, पूर्णांक src_cnt)
+अणु
+	काष्ठा dma_cdb *hw_desc;
+	काष्ठा ppc440spe_adma_desc_slot *iter;
+	पूर्णांक i = 0;
+	u8 करोpc = (dst_cnt == 2) ? DMA_CDB_OPC_MULTICAST :
 				   DMA_CDB_OPC_MV_SG1_SG2;
 	/*
 	 * Initialize starting from 2nd or 3rd descriptor dependent
-	 * on dst_cnt. First one or two slots are for cloning P
+	 * on dst_cnt. First one or two slots are क्रम cloning P
 	 * and/or Q to chan->pdest and/or chan->qdest as we have
 	 * to preserve original P/Q.
 	 */
 	iter = list_first_entry(&desc->group_list,
-				struct ppc440spe_adma_desc_slot, chain_node);
+				काष्ठा ppc440spe_adma_desc_slot, chain_node);
 	iter = list_entry(iter->chain_node.next,
-			  struct ppc440spe_adma_desc_slot, chain_node);
+			  काष्ठा ppc440spe_adma_desc_slot, chain_node);
 
-	if (dst_cnt > 1) {
+	अगर (dst_cnt > 1) अणु
 		iter = list_entry(iter->chain_node.next,
-				  struct ppc440spe_adma_desc_slot, chain_node);
-	}
+				  काष्ठा ppc440spe_adma_desc_slot, chain_node);
+	पूर्ण
 	/* initialize each source descriptor in chain */
-	list_for_each_entry_from(iter, &desc->group_list, chain_node) {
+	list_क्रम_each_entry_from(iter, &desc->group_list, chain_node) अणु
 		hw_desc = iter->hw_desc;
-		memset(iter->hw_desc, 0, sizeof(struct dma_cdb));
+		स_रखो(iter->hw_desc, 0, माप(काष्ठा dma_cdb));
 		iter->src_cnt = 0;
 		iter->dst_cnt = 0;
 
 		/* This is a ZERO_SUM operation:
 		 * - <src_cnt> descriptors starting from 2nd or 3rd
-		 *   descriptor are for GF-XOR operations;
-		 * - remaining <dst_cnt> descriptors are for checking the result
+		 *   descriptor are क्रम GF-XOR operations;
+		 * - reमुख्यing <dst_cnt> descriptors are क्रम checking the result
 		 */
-		if (i++ < src_cnt)
-			/* MV_SG1_SG2 if only Q is being verified
-			 * MULTICAST if both P and Q are being verified
+		अगर (i++ < src_cnt)
+			/* MV_SG1_SG2 अगर only Q is being verअगरied
+			 * MULTICAST अगर both P and Q are being verअगरied
 			 */
-			hw_desc->opc = dopc;
-		else
+			hw_desc->opc = करोpc;
+		अन्यथा
 			/* DMA_CDB_OPC_DCHECK128 operation */
 			hw_desc->opc = DMA_CDB_OPC_DCHECK128;
 
-		if (likely(!list_is_last(&iter->chain_node,
-					 &desc->group_list))) {
-			/* set 'next' pointer */
+		अगर (likely(!list_is_last(&iter->chain_node,
+					 &desc->group_list))) अणु
+			/* set 'next' poपूर्णांकer */
 			iter->hw_next = list_entry(iter->chain_node.next,
-						struct ppc440spe_adma_desc_slot,
+						काष्ठा ppc440spe_adma_desc_slot,
 						chain_node);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* this is the last descriptor.
 			 * this slot will be pasted from ADMA level
-			 * each time it wants to configure parameters
+			 * each समय it wants to configure parameters
 			 * of the transaction (src, dst, ...)
 			 */
-			iter->hw_next = NULL;
-			/* always enable interrupt generation since we get
+			iter->hw_next = शून्य;
+			/* always enable पूर्णांकerrupt generation since we get
 			 * the status of pqzero from the handler
 			 */
 			set_bit(PPC440SPE_DESC_INT, &iter->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	desc->src_cnt = src_cnt;
 	desc->dst_cnt = dst_cnt;
-}
+पूर्ण
 
 /**
- * ppc440spe_desc_init_memcpy - initialize the descriptor for MEMCPY operation
+ * ppc440spe_desc_init_स_नकल - initialize the descriptor क्रम MEMCPY operation
  */
-static void ppc440spe_desc_init_memcpy(struct ppc440spe_adma_desc_slot *desc,
-					unsigned long flags)
-{
-	struct dma_cdb *hw_desc = desc->hw_desc;
+अटल व्योम ppc440spe_desc_init_स_नकल(काष्ठा ppc440spe_adma_desc_slot *desc,
+					अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा dma_cdb *hw_desc = desc->hw_desc;
 
-	memset(desc->hw_desc, 0, sizeof(struct dma_cdb));
-	desc->hw_next = NULL;
+	स_रखो(desc->hw_desc, 0, माप(काष्ठा dma_cdb));
+	desc->hw_next = शून्य;
 	desc->src_cnt = 1;
 	desc->dst_cnt = 1;
 
-	if (flags & DMA_PREP_INTERRUPT)
+	अगर (flags & DMA_PREP_INTERRUPT)
 		set_bit(PPC440SPE_DESC_INT, &desc->flags);
-	else
+	अन्यथा
 		clear_bit(PPC440SPE_DESC_INT, &desc->flags);
 
 	hw_desc->opc = DMA_CDB_OPC_MV_SG1_SG2;
-}
+पूर्ण
 
 /**
- * ppc440spe_desc_set_src_addr - set source address into the descriptor
+ * ppc440spe_desc_set_src_addr - set source address पूर्णांकo the descriptor
  */
-static void ppc440spe_desc_set_src_addr(struct ppc440spe_adma_desc_slot *desc,
-					struct ppc440spe_adma_chan *chan,
-					int src_idx, dma_addr_t addrh,
+अटल व्योम ppc440spe_desc_set_src_addr(काष्ठा ppc440spe_adma_desc_slot *desc,
+					काष्ठा ppc440spe_adma_chan *chan,
+					पूर्णांक src_idx, dma_addr_t addrh,
 					dma_addr_t addrl)
-{
-	struct dma_cdb *dma_hw_desc;
-	struct xor_cb *xor_hw_desc;
-	phys_addr_t addr64, tmplow, tmphi;
+अणु
+	काष्ठा dma_cdb *dma_hw_desc;
+	काष्ठा xor_cb *xor_hw_desc;
+	phys_addr_t addr64, पंचांगplow, पंचांगphi;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
-		if (!addrh) {
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
+		अगर (!addrh) अणु
 			addr64 = addrl;
-			tmphi = (addr64 >> 32);
-			tmplow = (addr64 & 0xFFFFFFFF);
-		} else {
-			tmphi = addrh;
-			tmplow = addrl;
-		}
+			पंचांगphi = (addr64 >> 32);
+			पंचांगplow = (addr64 & 0xFFFFFFFF);
+		पूर्ण अन्यथा अणु
+			पंचांगphi = addrh;
+			पंचांगplow = addrl;
+		पूर्ण
 		dma_hw_desc = desc->hw_desc;
-		dma_hw_desc->sg1l = cpu_to_le32((u32)tmplow);
-		dma_hw_desc->sg1u |= cpu_to_le32((u32)tmphi);
-		break;
-	case PPC440SPE_XOR_ID:
+		dma_hw_desc->sg1l = cpu_to_le32((u32)पंचांगplow);
+		dma_hw_desc->sg1u |= cpu_to_le32((u32)पंचांगphi);
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
 		xor_hw_desc = desc->hw_desc;
 		xor_hw_desc->ops[src_idx].l = addrl;
 		xor_hw_desc->ops[src_idx].h |= addrh;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * ppc440spe_desc_set_src_mult - set source address mult into the descriptor
+ * ppc440spe_desc_set_src_mult - set source address mult पूर्णांकo the descriptor
  */
-static void ppc440spe_desc_set_src_mult(struct ppc440spe_adma_desc_slot *desc,
-			struct ppc440spe_adma_chan *chan, u32 mult_index,
-			int sg_index, unsigned char mult_value)
-{
-	struct dma_cdb *dma_hw_desc;
+अटल व्योम ppc440spe_desc_set_src_mult(काष्ठा ppc440spe_adma_desc_slot *desc,
+			काष्ठा ppc440spe_adma_chan *chan, u32 mult_index,
+			पूर्णांक sg_index, अचिन्हित अक्षर mult_value)
+अणु
+	काष्ठा dma_cdb *dma_hw_desc;
 	u32 *psgu;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
 		dma_hw_desc = desc->hw_desc;
 
-		switch (sg_index) {
-		/* for RXOR operations set multiplier
-		 * into source cued address
+		चयन (sg_index) अणु
+		/* क्रम RXOR operations set multiplier
+		 * पूर्णांकo source cued address
 		 */
-		case DMA_CDB_SG_SRC:
+		हाल DMA_CDB_SG_SRC:
 			psgu = &dma_hw_desc->sg1u;
-			break;
-		/* for WXOR operations set multiplier
-		 * into destination cued address(es)
+			अवरोध;
+		/* क्रम WXOR operations set multiplier
+		 * पूर्णांकo destination cued address(es)
 		 */
-		case DMA_CDB_SG_DST1:
+		हाल DMA_CDB_SG_DST1:
 			psgu = &dma_hw_desc->sg2u;
-			break;
-		case DMA_CDB_SG_DST2:
+			अवरोध;
+		हाल DMA_CDB_SG_DST2:
 			psgu = &dma_hw_desc->sg3u;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			BUG();
-		}
+		पूर्ण
 
 		*psgu |= cpu_to_le32(mult_value << mult_index);
-		break;
-	case PPC440SPE_XOR_ID:
-		break;
-	default:
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ppc440spe_desc_set_dest_addr - set destination address into the descriptor
+ * ppc440spe_desc_set_dest_addr - set destination address पूर्णांकo the descriptor
  */
-static void ppc440spe_desc_set_dest_addr(struct ppc440spe_adma_desc_slot *desc,
-				struct ppc440spe_adma_chan *chan,
+अटल व्योम ppc440spe_desc_set_dest_addr(काष्ठा ppc440spe_adma_desc_slot *desc,
+				काष्ठा ppc440spe_adma_chan *chan,
 				dma_addr_t addrh, dma_addr_t addrl,
 				u32 dst_idx)
-{
-	struct dma_cdb *dma_hw_desc;
-	struct xor_cb *xor_hw_desc;
-	phys_addr_t addr64, tmphi, tmplow;
+अणु
+	काष्ठा dma_cdb *dma_hw_desc;
+	काष्ठा xor_cb *xor_hw_desc;
+	phys_addr_t addr64, पंचांगphi, पंचांगplow;
 	u32 *psgu, *psgl;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
-		if (!addrh) {
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
+		अगर (!addrh) अणु
 			addr64 = addrl;
-			tmphi = (addr64 >> 32);
-			tmplow = (addr64 & 0xFFFFFFFF);
-		} else {
-			tmphi = addrh;
-			tmplow = addrl;
-		}
+			पंचांगphi = (addr64 >> 32);
+			पंचांगplow = (addr64 & 0xFFFFFFFF);
+		पूर्ण अन्यथा अणु
+			पंचांगphi = addrh;
+			पंचांगplow = addrl;
+		पूर्ण
 		dma_hw_desc = desc->hw_desc;
 
 		psgu = dst_idx ? &dma_hw_desc->sg3u : &dma_hw_desc->sg2u;
 		psgl = dst_idx ? &dma_hw_desc->sg3l : &dma_hw_desc->sg2l;
 
-		*psgl = cpu_to_le32((u32)tmplow);
-		*psgu |= cpu_to_le32((u32)tmphi);
-		break;
-	case PPC440SPE_XOR_ID:
+		*psgl = cpu_to_le32((u32)पंचांगplow);
+		*psgu |= cpu_to_le32((u32)पंचांगphi);
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
 		xor_hw_desc = desc->hw_desc;
 		xor_hw_desc->cbtal = addrl;
 		xor_hw_desc->cbtah |= addrh;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_desc_set_byte_count - set number of data bytes involved
- * into the operation
+ * पूर्णांकo the operation
  */
-static void ppc440spe_desc_set_byte_count(struct ppc440spe_adma_desc_slot *desc,
-				struct ppc440spe_adma_chan *chan,
+अटल व्योम ppc440spe_desc_set_byte_count(काष्ठा ppc440spe_adma_desc_slot *desc,
+				काष्ठा ppc440spe_adma_chan *chan,
 				u32 byte_count)
-{
-	struct dma_cdb *dma_hw_desc;
-	struct xor_cb *xor_hw_desc;
+अणु
+	काष्ठा dma_cdb *dma_hw_desc;
+	काष्ठा xor_cb *xor_hw_desc;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
 		dma_hw_desc = desc->hw_desc;
 		dma_hw_desc->cnt = cpu_to_le32(byte_count);
-		break;
-	case PPC440SPE_XOR_ID:
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
 		xor_hw_desc = desc->hw_desc;
 		xor_hw_desc->cbbc = byte_count;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_desc_set_rxor_block_size - set RXOR block size
  */
-static inline void ppc440spe_desc_set_rxor_block_size(u32 byte_count)
-{
+अटल अंतरभूत व्योम ppc440spe_desc_set_rxor_block_size(u32 byte_count)
+अणु
 	/* assume that byte_count is aligned on the 512-boundary;
-	 * thus write it directly to the register (bits 23:31 are
+	 * thus ग_लिखो it directly to the रेजिस्टर (bits 23:31 are
 	 * reserved there).
 	 */
-	dcr_write(ppc440spe_mq_dcr_host, DCRN_MQ0_CF2H, byte_count);
-}
+	dcr_ग_लिखो(ppc440spe_mq_dcr_host, DCRN_MQ0_CF2H, byte_count);
+पूर्ण
 
 /**
  * ppc440spe_desc_set_dcheck - set CHECK pattern
  */
-static void ppc440spe_desc_set_dcheck(struct ppc440spe_adma_desc_slot *desc,
-				struct ppc440spe_adma_chan *chan, u8 *qword)
-{
-	struct dma_cdb *dma_hw_desc;
+अटल व्योम ppc440spe_desc_set_dcheck(काष्ठा ppc440spe_adma_desc_slot *desc,
+				काष्ठा ppc440spe_adma_chan *chan, u8 *qword)
+अणु
+	काष्ठा dma_cdb *dma_hw_desc;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
 		dma_hw_desc = desc->hw_desc;
-		iowrite32(qword[0], &dma_hw_desc->sg3l);
-		iowrite32(qword[4], &dma_hw_desc->sg3u);
-		iowrite32(qword[8], &dma_hw_desc->sg2l);
-		iowrite32(qword[12], &dma_hw_desc->sg2u);
-		break;
-	default:
+		ioग_लिखो32(qword[0], &dma_hw_desc->sg3l);
+		ioग_लिखो32(qword[4], &dma_hw_desc->sg3u);
+		ioग_लिखो32(qword[8], &dma_hw_desc->sg2l);
+		ioग_लिखो32(qword[12], &dma_hw_desc->sg2u);
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_xor_set_link - set link address in xor CB
  */
-static void ppc440spe_xor_set_link(struct ppc440spe_adma_desc_slot *prev_desc,
-				struct ppc440spe_adma_desc_slot *next_desc)
-{
-	struct xor_cb *xor_hw_desc = prev_desc->hw_desc;
+अटल व्योम ppc440spe_xor_set_link(काष्ठा ppc440spe_adma_desc_slot *prev_desc,
+				काष्ठा ppc440spe_adma_desc_slot *next_desc)
+अणु
+	काष्ठा xor_cb *xor_hw_desc = prev_desc->hw_desc;
 
-	if (unlikely(!next_desc || !(next_desc->phys))) {
-		printk(KERN_ERR "%s: next_desc=0x%p; next_desc->phys=0x%llx\n",
+	अगर (unlikely(!next_desc || !(next_desc->phys))) अणु
+		prपूर्णांकk(KERN_ERR "%s: next_desc=0x%p; next_desc->phys=0x%llx\n",
 			__func__, next_desc,
 			next_desc ? next_desc->phys : 0);
 		BUG();
-	}
+	पूर्ण
 
 	xor_hw_desc->cbs = 0;
 	xor_hw_desc->cblal = next_desc->phys;
 	xor_hw_desc->cblah = 0;
 	xor_hw_desc->cbc |= XOR_CBCR_LNK_BIT;
-}
+पूर्ण
 
 /**
  * ppc440spe_desc_set_link - set the address of descriptor following this
  * descriptor in chain
  */
-static void ppc440spe_desc_set_link(struct ppc440spe_adma_chan *chan,
-				struct ppc440spe_adma_desc_slot *prev_desc,
-				struct ppc440spe_adma_desc_slot *next_desc)
-{
-	unsigned long flags;
-	struct ppc440spe_adma_desc_slot *tail = next_desc;
+अटल व्योम ppc440spe_desc_set_link(काष्ठा ppc440spe_adma_chan *chan,
+				काष्ठा ppc440spe_adma_desc_slot *prev_desc,
+				काष्ठा ppc440spe_adma_desc_slot *next_desc)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा ppc440spe_adma_desc_slot *tail = next_desc;
 
-	if (unlikely(!prev_desc || !next_desc ||
-		(prev_desc->hw_next && prev_desc->hw_next != next_desc))) {
+	अगर (unlikely(!prev_desc || !next_desc ||
+		(prev_desc->hw_next && prev_desc->hw_next != next_desc))) अणु
 		/* If previous next is overwritten something is wrong.
 		 * though we may refetch from append to initiate list
-		 * processing; in this case - it's ok.
+		 * processing; in this हाल - it's ok.
 		 */
-		printk(KERN_ERR "%s: prev_desc=0x%p; next_desc=0x%p; "
+		prपूर्णांकk(KERN_ERR "%s: prev_desc=0x%p; next_desc=0x%p; "
 			"prev->hw_next=0x%p\n", __func__, prev_desc,
 			next_desc, prev_desc ? prev_desc->hw_next : 0);
 		BUG();
-	}
+	पूर्ण
 
 	local_irq_save(flags);
 
-	/* do s/w chaining both for DMA and XOR descriptors */
+	/* करो s/w chaining both क्रम DMA and XOR descriptors */
 	prev_desc->hw_next = next_desc;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
-		break;
-	case PPC440SPE_XOR_ID:
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
 		/* bind descriptor to the chain */
-		while (tail->hw_next)
+		जबतक (tail->hw_next)
 			tail = tail->hw_next;
 		xor_last_linked = tail;
 
-		if (prev_desc == xor_last_submit)
-			/* do not link to the last submitted CB */
-			break;
+		अगर (prev_desc == xor_last_submit)
+			/* करो not link to the last submitted CB */
+			अवरोध;
 		ppc440spe_xor_set_link(prev_desc, next_desc);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /**
  * ppc440spe_desc_get_link - get the address of the descriptor that
  * follows this one
  */
-static inline u32 ppc440spe_desc_get_link(struct ppc440spe_adma_desc_slot *desc,
-					struct ppc440spe_adma_chan *chan)
-{
-	if (!desc->hw_next)
-		return 0;
+अटल अंतरभूत u32 ppc440spe_desc_get_link(काष्ठा ppc440spe_adma_desc_slot *desc,
+					काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	अगर (!desc->hw_next)
+		वापस 0;
 
-	return desc->hw_next->phys;
-}
+	वापस desc->hw_next->phys;
+पूर्ण
 
 /**
  * ppc440spe_desc_is_aligned - check alignment
  */
-static inline int ppc440spe_desc_is_aligned(
-	struct ppc440spe_adma_desc_slot *desc, int num_slots)
-{
-	return (desc->idx & (num_slots - 1)) ? 0 : 1;
-}
+अटल अंतरभूत पूर्णांक ppc440spe_desc_is_aligned(
+	काष्ठा ppc440spe_adma_desc_slot *desc, पूर्णांक num_slots)
+अणु
+	वापस (desc->idx & (num_slots - 1)) ? 0 : 1;
+पूर्ण
 
 /**
- * ppc440spe_chan_xor_slot_count - get the number of slots necessary for
+ * ppc440spe_chan_xor_slot_count - get the number of slots necessary क्रम
  * XOR operation
  */
-static int ppc440spe_chan_xor_slot_count(size_t len, int src_cnt,
-			int *slots_per_op)
-{
-	int slot_cnt;
+अटल पूर्णांक ppc440spe_chan_xor_slot_count(माप_प्रकार len, पूर्णांक src_cnt,
+			पूर्णांक *slots_per_op)
+अणु
+	पूर्णांक slot_cnt;
 
-	/* each XOR descriptor provides up to 16 source operands */
+	/* each XOR descriptor provides up to 16 source opeअक्रमs */
 	slot_cnt = *slots_per_op = (src_cnt + XOR_MAX_OPS - 1)/XOR_MAX_OPS;
 
-	if (likely(len <= PPC440SPE_ADMA_XOR_MAX_BYTE_COUNT))
-		return slot_cnt;
+	अगर (likely(len <= PPC440SPE_ADMA_XOR_MAX_BYTE_COUNT))
+		वापस slot_cnt;
 
-	printk(KERN_ERR "%s: len %d > max %d !!\n",
+	prपूर्णांकk(KERN_ERR "%s: len %d > max %d !!\n",
 		__func__, len, PPC440SPE_ADMA_XOR_MAX_BYTE_COUNT);
 	BUG();
-	return slot_cnt;
-}
+	वापस slot_cnt;
+पूर्ण
 
 /**
- * ppc440spe_dma2_pq_slot_count - get the number of slots necessary for
+ * ppc440spe_dma2_pq_slot_count - get the number of slots necessary क्रम
  * DMA2 PQ operation
  */
-static int ppc440spe_dma2_pq_slot_count(dma_addr_t *srcs,
-		int src_cnt, size_t len)
-{
-	signed long long order = 0;
-	int state = 0;
-	int addr_count = 0;
-	int i;
-	for (i = 1; i < src_cnt; i++) {
+अटल पूर्णांक ppc440spe_dma2_pq_slot_count(dma_addr_t *srcs,
+		पूर्णांक src_cnt, माप_प्रकार len)
+अणु
+	चिन्हित दीर्घ दीर्घ order = 0;
+	पूर्णांक state = 0;
+	पूर्णांक addr_count = 0;
+	पूर्णांक i;
+	क्रम (i = 1; i < src_cnt; i++) अणु
 		dma_addr_t cur_addr = srcs[i];
 		dma_addr_t old_addr = srcs[i-1];
-		switch (state) {
-		case 0:
-			if (cur_addr == old_addr + len) {
+		चयन (state) अणु
+		हाल 0:
+			अगर (cur_addr == old_addr + len) अणु
 				/* direct RXOR */
 				order = 1;
 				state = 1;
-				if (i == src_cnt-1)
+				अगर (i == src_cnt-1)
 					addr_count++;
-			} else if (old_addr == cur_addr + len) {
+			पूर्ण अन्यथा अगर (old_addr == cur_addr + len) अणु
 				/* reverse RXOR */
 				order = -1;
 				state = 1;
-				if (i == src_cnt-1)
+				अगर (i == src_cnt-1)
 					addr_count++;
-			} else {
+			पूर्ण अन्यथा अणु
 				state = 3;
-			}
-			break;
-		case 1:
-			if (i == src_cnt-2 || (order == -1
-				&& cur_addr != old_addr - len)) {
+			पूर्ण
+			अवरोध;
+		हाल 1:
+			अगर (i == src_cnt-2 || (order == -1
+				&& cur_addr != old_addr - len)) अणु
 				order = 0;
 				state = 0;
 				addr_count++;
-			} else if (cur_addr == old_addr + len*order) {
+			पूर्ण अन्यथा अगर (cur_addr == old_addr + len*order) अणु
 				state = 2;
-				if (i == src_cnt-1)
+				अगर (i == src_cnt-1)
 					addr_count++;
-			} else if (cur_addr == old_addr + 2*len) {
+			पूर्ण अन्यथा अगर (cur_addr == old_addr + 2*len) अणु
 				state = 2;
-				if (i == src_cnt-1)
+				अगर (i == src_cnt-1)
 					addr_count++;
-			} else if (cur_addr == old_addr + 3*len) {
+			पूर्ण अन्यथा अगर (cur_addr == old_addr + 3*len) अणु
 				state = 2;
-				if (i == src_cnt-1)
+				अगर (i == src_cnt-1)
 					addr_count++;
-			} else {
+			पूर्ण अन्यथा अणु
 				order = 0;
 				state = 0;
 				addr_count++;
-			}
-			break;
-		case 2:
+			पूर्ण
+			अवरोध;
+		हाल 2:
 			order = 0;
 			state = 0;
 			addr_count++;
-				break;
-		}
-		if (state == 3)
-			break;
-	}
-	if (src_cnt <= 1 || (state != 1 && state != 2)) {
+				अवरोध;
+		पूर्ण
+		अगर (state == 3)
+			अवरोध;
+	पूर्ण
+	अगर (src_cnt <= 1 || (state != 1 && state != 2)) अणु
 		pr_err("%s: src_cnt=%d, state=%d, addr_count=%d, order=%lld\n",
 			__func__, src_cnt, state, addr_count, order);
-		for (i = 0; i < src_cnt; i++)
+		क्रम (i = 0; i < src_cnt; i++)
 			pr_err("\t[%d] 0x%llx \n", i, srcs[i]);
 		BUG();
-	}
+	पूर्ण
 
-	return (addr_count + XOR_MAX_OPS - 1) / XOR_MAX_OPS;
-}
+	वापस (addr_count + XOR_MAX_OPS - 1) / XOR_MAX_OPS;
+पूर्ण
 
 
 /******************************************************************************
  * ADMA channel low-level routines
  ******************************************************************************/
 
-static u32
-ppc440spe_chan_get_current_descriptor(struct ppc440spe_adma_chan *chan);
-static void ppc440spe_chan_append(struct ppc440spe_adma_chan *chan);
+अटल u32
+ppc440spe_chan_get_current_descriptor(काष्ठा ppc440spe_adma_chan *chan);
+अटल व्योम ppc440spe_chan_append(काष्ठा ppc440spe_adma_chan *chan);
 
 /**
- * ppc440spe_adma_device_clear_eot_status - interrupt ack to XOR or DMA engine
+ * ppc440spe_adma_device_clear_eot_status - पूर्णांकerrupt ack to XOR or DMA engine
  */
-static void ppc440spe_adma_device_clear_eot_status(
-					struct ppc440spe_adma_chan *chan)
-{
-	struct dma_regs *dma_reg;
-	struct xor_regs *xor_reg;
+अटल व्योम ppc440spe_adma_device_clear_eot_status(
+					काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	काष्ठा dma_regs *dma_reg;
+	काष्ठा xor_regs *xor_reg;
 	u8 *p = chan->device->dma_desc_pool_virt;
-	struct dma_cdb *cdb;
+	काष्ठा dma_cdb *cdb;
 	u32 rv, i;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
-		/* read FIFO to ack */
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
+		/* पढ़ो FIFO to ack */
 		dma_reg = chan->device->dma_reg;
-		while ((rv = ioread32(&dma_reg->csfpl))) {
+		जबतक ((rv = ioपढ़ो32(&dma_reg->csfpl))) अणु
 			i = rv & DMA_CDB_ADDR_MSK;
-			cdb = (struct dma_cdb *)&p[i -
+			cdb = (काष्ठा dma_cdb *)&p[i -
 			    (u32)chan->device->dma_desc_pool];
 
-			/* Clear opcode to ack. This is necessary for
+			/* Clear opcode to ack. This is necessary क्रम
 			 * ZeroSum operations only
 			 */
 			cdb->opc = 0;
 
-			if (test_bit(PPC440SPE_RXOR_RUN,
-			    &ppc440spe_rxor_state)) {
+			अगर (test_bit(PPC440SPE_RXOR_RUN,
+			    &ppc440spe_rxor_state)) अणु
 				/* probably this is a completed RXOR op,
-				 * get pointer to CDB using the fact that
-				 * physical and virtual addresses of CDB
+				 * get poपूर्णांकer to CDB using the fact that
+				 * physical and भव addresses of CDB
 				 * in pools have the same offsets
 				 */
-				if (le32_to_cpu(cdb->sg1u) &
-				    DMA_CUED_XOR_BASE) {
+				अगर (le32_to_cpu(cdb->sg1u) &
+				    DMA_CUED_XOR_BASE) अणु
 					/* this is a RXOR */
 					clear_bit(PPC440SPE_RXOR_RUN,
 						  &ppc440spe_rxor_state);
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if (rv & DMA_CDB_STATUS_MSK) {
+			अगर (rv & DMA_CDB_STATUS_MSK) अणु
 				/* ZeroSum check failed
 				 */
-				struct ppc440spe_adma_desc_slot *iter;
+				काष्ठा ppc440spe_adma_desc_slot *iter;
 				dma_addr_t phys = rv & ~DMA_CDB_MSK;
 
 				/*
 				 * Update the status of corresponding
 				 * descriptor.
 				 */
-				list_for_each_entry(iter, &chan->chain,
-				    chain_node) {
-					if (iter->phys == phys)
-						break;
-				}
+				list_क्रम_each_entry(iter, &chan->chain,
+				    chain_node) अणु
+					अगर (iter->phys == phys)
+						अवरोध;
+				पूर्ण
 				/*
-				 * if cannot find the corresponding
+				 * अगर cannot find the corresponding
 				 * slot it's a bug
 				 */
 				BUG_ON(&iter->chain_node == &chan->chain);
 
-				if (iter->xor_check_result) {
-					if (test_bit(PPC440SPE_DESC_PCHECK,
-						     &iter->flags)) {
+				अगर (iter->xor_check_result) अणु
+					अगर (test_bit(PPC440SPE_DESC_PCHECK,
+						     &iter->flags)) अणु
 						*iter->xor_check_result |=
 							SUM_CHECK_P_RESULT;
-					} else
-					if (test_bit(PPC440SPE_DESC_QCHECK,
-						     &iter->flags)) {
+					पूर्ण अन्यथा
+					अगर (test_bit(PPC440SPE_DESC_QCHECK,
+						     &iter->flags)) अणु
 						*iter->xor_check_result |=
 							SUM_CHECK_Q_RESULT;
-					} else
+					पूर्ण अन्यथा
 						BUG();
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		rv = ioread32(&dma_reg->dsts);
-		if (rv) {
+		rv = ioपढ़ो32(&dma_reg->dsts);
+		अगर (rv) अणु
 			pr_err("DMA%d err status: 0x%x\n",
 			       chan->device->id, rv);
-			/* write back to clear */
-			iowrite32(rv, &dma_reg->dsts);
-		}
-		break;
-	case PPC440SPE_XOR_ID:
+			/* ग_लिखो back to clear */
+			ioग_लिखो32(rv, &dma_reg->dsts);
+		पूर्ण
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
 		/* reset status bits to ack */
 		xor_reg = chan->device->xor_reg;
-		rv = ioread32be(&xor_reg->sr);
-		iowrite32be(rv, &xor_reg->sr);
+		rv = ioपढ़ो32be(&xor_reg->sr);
+		ioग_लिखो32be(rv, &xor_reg->sr);
 
-		if (rv & (XOR_IE_ICBIE_BIT|XOR_IE_ICIE_BIT|XOR_IE_RPTIE_BIT)) {
-			if (rv & XOR_IE_RPTIE_BIT) {
+		अगर (rv & (XOR_IE_ICBIE_BIT|XOR_IE_ICIE_BIT|XOR_IE_RPTIE_BIT)) अणु
+			अगर (rv & XOR_IE_RPTIE_BIT) अणु
 				/* Read PLB Timeout Error.
 				 * Try to resubmit the CB
 				 */
-				u32 val = ioread32be(&xor_reg->ccbalr);
+				u32 val = ioपढ़ो32be(&xor_reg->ccbalr);
 
-				iowrite32be(val, &xor_reg->cblalr);
+				ioग_लिखो32be(val, &xor_reg->cblalr);
 
-				val = ioread32be(&xor_reg->crsr);
-				iowrite32be(val | XOR_CRSR_XAE_BIT,
+				val = ioपढ़ो32be(&xor_reg->crsr);
+				ioग_लिखो32be(val | XOR_CRSR_XAE_BIT,
 					    &xor_reg->crsr);
-			} else
+			पूर्ण अन्यथा
 				pr_err("XOR ERR 0x%x status\n", rv);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/*  if the XORcore is idle, but there are unprocessed CBs
+		/*  अगर the XORcore is idle, but there are unprocessed CBs
 		 * then refetch the s/w chain here
 		 */
-		if (!(ioread32be(&xor_reg->sr) & XOR_SR_XCP_BIT) &&
-		    do_xor_refetch)
+		अगर (!(ioपढ़ो32be(&xor_reg->sr) & XOR_SR_XCP_BIT) &&
+		    करो_xor_refetch)
 			ppc440spe_chan_append(chan);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_chan_is_busy - get the channel status
  */
-static int ppc440spe_chan_is_busy(struct ppc440spe_adma_chan *chan)
-{
-	struct dma_regs *dma_reg;
-	struct xor_regs *xor_reg;
-	int busy = 0;
+अटल पूर्णांक ppc440spe_chan_is_busy(काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	काष्ठा dma_regs *dma_reg;
+	काष्ठा xor_regs *xor_reg;
+	पूर्णांक busy = 0;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
 		dma_reg = chan->device->dma_reg;
-		/*  if command FIFO's head and tail pointers are equal and
-		 * status tail is the same as command, then channel is free
+		/*  अगर command FIFO's head and tail poपूर्णांकers are equal and
+		 * status tail is the same as command, then channel is मुक्त
 		 */
-		if (ioread16(&dma_reg->cpfhp) != ioread16(&dma_reg->cpftp) ||
-		    ioread16(&dma_reg->cpftp) != ioread16(&dma_reg->csftp))
+		अगर (ioपढ़ो16(&dma_reg->cpfhp) != ioपढ़ो16(&dma_reg->cpftp) ||
+		    ioपढ़ो16(&dma_reg->cpftp) != ioपढ़ो16(&dma_reg->csftp))
 			busy = 1;
-		break;
-	case PPC440SPE_XOR_ID:
-		/* use the special status bit for the XORcore
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
+		/* use the special status bit क्रम the XORcore
 		 */
 		xor_reg = chan->device->xor_reg;
-		busy = (ioread32be(&xor_reg->sr) & XOR_SR_XCP_BIT) ? 1 : 0;
-		break;
-	}
+		busy = (ioपढ़ो32be(&xor_reg->sr) & XOR_SR_XCP_BIT) ? 1 : 0;
+		अवरोध;
+	पूर्ण
 
-	return busy;
-}
+	वापस busy;
+पूर्ण
 
 /**
  * ppc440spe_chan_set_first_xor_descriptor -  init XORcore chain
  */
-static void ppc440spe_chan_set_first_xor_descriptor(
-				struct ppc440spe_adma_chan *chan,
-				struct ppc440spe_adma_desc_slot *next_desc)
-{
-	struct xor_regs *xor_reg = chan->device->xor_reg;
+अटल व्योम ppc440spe_chan_set_first_xor_descriptor(
+				काष्ठा ppc440spe_adma_chan *chan,
+				काष्ठा ppc440spe_adma_desc_slot *next_desc)
+अणु
+	काष्ठा xor_regs *xor_reg = chan->device->xor_reg;
 
-	if (ioread32be(&xor_reg->sr) & XOR_SR_XCP_BIT)
-		printk(KERN_INFO "%s: Warn: XORcore is running "
+	अगर (ioपढ़ो32be(&xor_reg->sr) & XOR_SR_XCP_BIT)
+		prपूर्णांकk(KERN_INFO "%s: Warn: XORcore is running "
 			"when try to set the first CDB!\n",
 			__func__);
 
 	xor_last_submit = xor_last_linked = next_desc;
 
-	iowrite32be(XOR_CRSR_64BA_BIT, &xor_reg->crsr);
+	ioग_लिखो32be(XOR_CRSR_64BA_BIT, &xor_reg->crsr);
 
-	iowrite32be(next_desc->phys, &xor_reg->cblalr);
-	iowrite32be(0, &xor_reg->cblahr);
-	iowrite32be(ioread32be(&xor_reg->cbcr) | XOR_CBCR_LNK_BIT,
+	ioग_लिखो32be(next_desc->phys, &xor_reg->cblalr);
+	ioग_लिखो32be(0, &xor_reg->cblahr);
+	ioग_लिखो32be(ioपढ़ो32be(&xor_reg->cbcr) | XOR_CBCR_LNK_BIT,
 		    &xor_reg->cbcr);
 
 	chan->hw_chain_inited = 1;
-}
+पूर्ण
 
 /**
  * ppc440spe_dma_put_desc - put DMA0,1 descriptor to FIFO.
  * called with irqs disabled
  */
-static void ppc440spe_dma_put_desc(struct ppc440spe_adma_chan *chan,
-		struct ppc440spe_adma_desc_slot *desc)
-{
+अटल व्योम ppc440spe_dma_put_desc(काष्ठा ppc440spe_adma_chan *chan,
+		काष्ठा ppc440spe_adma_desc_slot *desc)
+अणु
 	u32 pcdb;
-	struct dma_regs *dma_reg = chan->device->dma_reg;
+	काष्ठा dma_regs *dma_reg = chan->device->dma_reg;
 
 	pcdb = desc->phys;
-	if (!test_bit(PPC440SPE_DESC_INT, &desc->flags))
+	अगर (!test_bit(PPC440SPE_DESC_INT, &desc->flags))
 		pcdb |= DMA_CDB_NO_INT;
 
 	chan_last_sub[chan->device->id] = desc;
 
-	ADMA_LL_DBG(print_cb(chan, desc->hw_desc));
+	ADMA_LL_DBG(prपूर्णांक_cb(chan, desc->hw_desc));
 
-	iowrite32(pcdb, &dma_reg->cpfpl);
-}
+	ioग_लिखो32(pcdb, &dma_reg->cpfpl);
+पूर्ण
 
 /**
  * ppc440spe_chan_append - update the h/w chain in the channel
  */
-static void ppc440spe_chan_append(struct ppc440spe_adma_chan *chan)
-{
-	struct xor_regs *xor_reg;
-	struct ppc440spe_adma_desc_slot *iter;
-	struct xor_cb *xcb;
+अटल व्योम ppc440spe_chan_append(काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	काष्ठा xor_regs *xor_reg;
+	काष्ठा ppc440spe_adma_desc_slot *iter;
+	काष्ठा xor_cb *xcb;
 	u32 cur_desc;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
 		cur_desc = ppc440spe_chan_get_current_descriptor(chan);
 
-		if (likely(cur_desc)) {
+		अगर (likely(cur_desc)) अणु
 			iter = chan_last_sub[chan->device->id];
 			BUG_ON(!iter);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* first peer */
 			iter = chan_first_cdb[chan->device->id];
 			BUG_ON(!iter);
 			ppc440spe_dma_put_desc(chan, iter);
 			chan->hw_chain_inited = 1;
-		}
+		पूर्ण
 
 		/* is there something new to append */
-		if (!iter->hw_next)
-			break;
+		अगर (!iter->hw_next)
+			अवरोध;
 
-		/* flush descriptors from the s/w queue to fifo */
-		list_for_each_entry_continue(iter, &chan->chain, chain_node) {
+		/* flush descriptors from the s/w queue to fअगरo */
+		list_क्रम_each_entry_जारी(iter, &chan->chain, chain_node) अणु
 			ppc440spe_dma_put_desc(chan, iter);
-			if (!iter->hw_next)
-				break;
-		}
-		break;
-	case PPC440SPE_XOR_ID:
+			अगर (!iter->hw_next)
+				अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
 		/* update h/w links and refetch */
-		if (!xor_last_submit->hw_next)
-			break;
+		अगर (!xor_last_submit->hw_next)
+			अवरोध;
 
 		xor_reg = chan->device->xor_reg;
-		/* the last linked CDB has to generate an interrupt
+		/* the last linked CDB has to generate an पूर्णांकerrupt
 		 * that we'd be able to append the next lists to h/w
 		 * regardless of the XOR engine state at the moment of
 		 * appending of these next lists
@@ -1142,174 +1143,174 @@ static void ppc440spe_chan_append(struct ppc440spe_adma_chan *chan)
 		xcb = xor_last_linked->hw_desc;
 		xcb->cbc |= XOR_CBCR_CBCE_BIT;
 
-		if (!(ioread32be(&xor_reg->sr) & XOR_SR_XCP_BIT)) {
+		अगर (!(ioपढ़ो32be(&xor_reg->sr) & XOR_SR_XCP_BIT)) अणु
 			/* XORcore is idle. Refetch now */
-			do_xor_refetch = 0;
+			करो_xor_refetch = 0;
 			ppc440spe_xor_set_link(xor_last_submit,
 				xor_last_submit->hw_next);
 
-			ADMA_LL_DBG(print_cb_list(chan,
+			ADMA_LL_DBG(prपूर्णांक_cb_list(chan,
 				xor_last_submit->hw_next));
 
 			xor_last_submit = xor_last_linked;
-			iowrite32be(ioread32be(&xor_reg->crsr) |
+			ioग_लिखो32be(ioपढ़ो32be(&xor_reg->crsr) |
 				    XOR_CRSR_RCBE_BIT | XOR_CRSR_64BA_BIT,
 				    &xor_reg->crsr);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* XORcore is running. Refetch later in the handler */
-			do_xor_refetch = 1;
-		}
+			करो_xor_refetch = 1;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /**
  * ppc440spe_chan_get_current_descriptor - get the currently executed descriptor
  */
-static u32
-ppc440spe_chan_get_current_descriptor(struct ppc440spe_adma_chan *chan)
-{
-	struct dma_regs *dma_reg;
-	struct xor_regs *xor_reg;
+अटल u32
+ppc440spe_chan_get_current_descriptor(काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	काष्ठा dma_regs *dma_reg;
+	काष्ठा xor_regs *xor_reg;
 
-	if (unlikely(!chan->hw_chain_inited))
+	अगर (unlikely(!chan->hw_chain_inited))
 		/* h/w descriptor chain is not initialized yet */
-		return 0;
+		वापस 0;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
 		dma_reg = chan->device->dma_reg;
-		return ioread32(&dma_reg->acpl) & (~DMA_CDB_MSK);
-	case PPC440SPE_XOR_ID:
+		वापस ioपढ़ो32(&dma_reg->acpl) & (~DMA_CDB_MSK);
+	हाल PPC440SPE_XOR_ID:
 		xor_reg = chan->device->xor_reg;
-		return ioread32be(&xor_reg->ccbalr);
-	}
-	return 0;
-}
+		वापस ioपढ़ो32be(&xor_reg->ccbalr);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * ppc440spe_chan_run - enable the channel
  */
-static void ppc440spe_chan_run(struct ppc440spe_adma_chan *chan)
-{
-	struct xor_regs *xor_reg;
+अटल व्योम ppc440spe_chan_run(काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	काष्ठा xor_regs *xor_reg;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
-		/* DMAs are always enabled, do nothing */
-		break;
-	case PPC440SPE_XOR_ID:
-		/* drain write buffer */
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
+		/* DMAs are always enabled, करो nothing */
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
+		/* drain ग_लिखो buffer */
 		xor_reg = chan->device->xor_reg;
 
-		/* fetch descriptor pointed to in <link> */
-		iowrite32be(XOR_CRSR_64BA_BIT | XOR_CRSR_XAE_BIT,
+		/* fetch descriptor poपूर्णांकed to in <link> */
+		ioग_लिखो32be(XOR_CRSR_64BA_BIT | XOR_CRSR_XAE_BIT,
 			    &xor_reg->crsr);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /******************************************************************************
  * ADMA device level
  ******************************************************************************/
 
-static void ppc440spe_chan_start_null_xor(struct ppc440spe_adma_chan *chan);
-static int ppc440spe_adma_alloc_chan_resources(struct dma_chan *chan);
+अटल व्योम ppc440spe_chan_start_null_xor(काष्ठा ppc440spe_adma_chan *chan);
+अटल पूर्णांक ppc440spe_adma_alloc_chan_resources(काष्ठा dma_chan *chan);
 
-static dma_cookie_t
-ppc440spe_adma_tx_submit(struct dma_async_tx_descriptor *tx);
+अटल dma_cookie_t
+ppc440spe_adma_tx_submit(काष्ठा dma_async_tx_descriptor *tx);
 
-static void ppc440spe_adma_set_dest(struct ppc440spe_adma_desc_slot *tx,
-				    dma_addr_t addr, int index);
-static void
-ppc440spe_adma_memcpy_xor_set_src(struct ppc440spe_adma_desc_slot *tx,
-				  dma_addr_t addr, int index);
+अटल व्योम ppc440spe_adma_set_dest(काष्ठा ppc440spe_adma_desc_slot *tx,
+				    dma_addr_t addr, पूर्णांक index);
+अटल व्योम
+ppc440spe_adma_स_नकल_xor_set_src(काष्ठा ppc440spe_adma_desc_slot *tx,
+				  dma_addr_t addr, पूर्णांक index);
 
-static void
-ppc440spe_adma_pq_set_dest(struct ppc440spe_adma_desc_slot *tx,
-			   dma_addr_t *paddr, unsigned long flags);
-static void
-ppc440spe_adma_pq_set_src(struct ppc440spe_adma_desc_slot *tx,
-			  dma_addr_t addr, int index);
-static void
-ppc440spe_adma_pq_set_src_mult(struct ppc440spe_adma_desc_slot *tx,
-			       unsigned char mult, int index, int dst_pos);
-static void
-ppc440spe_adma_pqzero_sum_set_dest(struct ppc440spe_adma_desc_slot *tx,
+अटल व्योम
+ppc440spe_adma_pq_set_dest(काष्ठा ppc440spe_adma_desc_slot *tx,
+			   dma_addr_t *paddr, अचिन्हित दीर्घ flags);
+अटल व्योम
+ppc440spe_adma_pq_set_src(काष्ठा ppc440spe_adma_desc_slot *tx,
+			  dma_addr_t addr, पूर्णांक index);
+अटल व्योम
+ppc440spe_adma_pq_set_src_mult(काष्ठा ppc440spe_adma_desc_slot *tx,
+			       अचिन्हित अक्षर mult, पूर्णांक index, पूर्णांक dst_pos);
+अटल व्योम
+ppc440spe_adma_pqzero_sum_set_dest(काष्ठा ppc440spe_adma_desc_slot *tx,
 				   dma_addr_t paddr, dma_addr_t qaddr);
 
-static struct page *ppc440spe_rxor_srcs[32];
+अटल काष्ठा page *ppc440spe_rxor_srcs[32];
 
 /**
- * ppc440spe_can_rxor - check if the operands may be processed with RXOR
+ * ppc440spe_can_rxor - check अगर the opeअक्रमs may be processed with RXOR
  */
-static int ppc440spe_can_rxor(struct page **srcs, int src_cnt, size_t len)
-{
-	int i, order = 0, state = 0;
-	int idx = 0;
+अटल पूर्णांक ppc440spe_can_rxor(काष्ठा page **srcs, पूर्णांक src_cnt, माप_प्रकार len)
+अणु
+	पूर्णांक i, order = 0, state = 0;
+	पूर्णांक idx = 0;
 
-	if (unlikely(!(src_cnt > 1)))
-		return 0;
+	अगर (unlikely(!(src_cnt > 1)))
+		वापस 0;
 
 	BUG_ON(src_cnt > ARRAY_SIZE(ppc440spe_rxor_srcs));
 
-	/* Skip holes in the source list before checking */
-	for (i = 0; i < src_cnt; i++) {
-		if (!srcs[i])
-			continue;
+	/* Skip holes in the source list beक्रमe checking */
+	क्रम (i = 0; i < src_cnt; i++) अणु
+		अगर (!srcs[i])
+			जारी;
 		ppc440spe_rxor_srcs[idx++] = srcs[i];
-	}
+	पूर्ण
 	src_cnt = idx;
 
-	for (i = 1; i < src_cnt; i++) {
-		char *cur_addr = page_address(ppc440spe_rxor_srcs[i]);
-		char *old_addr = page_address(ppc440spe_rxor_srcs[i - 1]);
+	क्रम (i = 1; i < src_cnt; i++) अणु
+		अक्षर *cur_addr = page_address(ppc440spe_rxor_srcs[i]);
+		अक्षर *old_addr = page_address(ppc440spe_rxor_srcs[i - 1]);
 
-		switch (state) {
-		case 0:
-			if (cur_addr == old_addr + len) {
+		चयन (state) अणु
+		हाल 0:
+			अगर (cur_addr == old_addr + len) अणु
 				/* direct RXOR */
 				order = 1;
 				state = 1;
-			} else if (old_addr == cur_addr + len) {
+			पूर्ण अन्यथा अगर (old_addr == cur_addr + len) अणु
 				/* reverse RXOR */
 				order = -1;
 				state = 1;
-			} else
-				goto out;
-			break;
-		case 1:
-			if ((i == src_cnt - 2) ||
-			    (order == -1 && cur_addr != old_addr - len)) {
+			पूर्ण अन्यथा
+				जाओ out;
+			अवरोध;
+		हाल 1:
+			अगर ((i == src_cnt - 2) ||
+			    (order == -1 && cur_addr != old_addr - len)) अणु
 				order = 0;
 				state = 0;
-			} else if ((cur_addr == old_addr + len * order) ||
+			पूर्ण अन्यथा अगर ((cur_addr == old_addr + len * order) ||
 				   (cur_addr == old_addr + 2 * len) ||
-				   (cur_addr == old_addr + 3 * len)) {
+				   (cur_addr == old_addr + 3 * len)) अणु
 				state = 2;
-			} else {
+			पूर्ण अन्यथा अणु
 				order = 0;
 				state = 0;
-			}
-			break;
-		case 2:
+			पूर्ण
+			अवरोध;
+		हाल 2:
 			order = 0;
 			state = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
-	if (state == 1 || state == 2)
-		return 1;
+	अगर (state == 1 || state == 2)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ppc440spe_adma_device_estimate - estimate the efficiency of processing
@@ -1317,154 +1318,154 @@ out:
  *	capable to process 'cap' type of operation.
  * @chan: channel to use
  * @cap: type of transaction
- * @dst_lst: array of destination pointers
- * @dst_cnt: number of destination operands
- * @src_lst: array of source pointers
- * @src_cnt: number of source operands
- * @src_sz: size of each source operand
+ * @dst_lst: array of destination poपूर्णांकers
+ * @dst_cnt: number of destination opeअक्रमs
+ * @src_lst: array of source poपूर्णांकers
+ * @src_cnt: number of source opeअक्रमs
+ * @src_sz: size of each source opeअक्रम
  */
-static int ppc440spe_adma_estimate(struct dma_chan *chan,
-	enum dma_transaction_type cap, struct page **dst_lst, int dst_cnt,
-	struct page **src_lst, int src_cnt, size_t src_sz)
-{
-	int ef = 1;
+अटल पूर्णांक ppc440spe_adma_estimate(काष्ठा dma_chan *chan,
+	क्रमागत dma_transaction_type cap, काष्ठा page **dst_lst, पूर्णांक dst_cnt,
+	काष्ठा page **src_lst, पूर्णांक src_cnt, माप_प्रकार src_sz)
+अणु
+	पूर्णांक ef = 1;
 
-	if (cap == DMA_PQ || cap == DMA_PQ_VAL) {
-		/* If RAID-6 capabilities were not activated don't try
+	अगर (cap == DMA_PQ || cap == DMA_PQ_VAL) अणु
+		/* If RAID-6 capabilities were not activated करोn't try
 		 * to use them
 		 */
-		if (unlikely(!ppc440spe_r6_enabled))
-			return -1;
-	}
+		अगर (unlikely(!ppc440spe_r6_enabled))
+			वापस -1;
+	पूर्ण
 	/*  In the current implementation of ppc440spe ADMA driver it
-	 * makes sense to pick out only pq case, because it may be
+	 * makes sense to pick out only pq हाल, because it may be
 	 * processed:
 	 * (1) either using Biskup method on DMA2;
 	 * (2) or on DMA0/1.
-	 *  Thus we give a favour to (1) if the sources are suitable;
-	 * else let it be processed on one of the DMA0/1 engines.
-	 *  In the sum_product case where destination is also the
+	 *  Thus we give a favour to (1) अगर the sources are suitable;
+	 * अन्यथा let it be processed on one of the DMA0/1 engines.
+	 *  In the sum_product हाल where destination is also the
 	 * source process it on DMA0/1 only.
 	 */
-	if (cap == DMA_PQ && chan->chan_id == PPC440SPE_XOR_ID) {
+	अगर (cap == DMA_PQ && chan->chan_id == PPC440SPE_XOR_ID) अणु
 
-		if (dst_cnt == 1 && src_cnt == 2 && dst_lst[0] == src_lst[1])
-			ef = 0; /* sum_product case, process on DMA0/1 */
-		else if (ppc440spe_can_rxor(src_lst, src_cnt, src_sz))
+		अगर (dst_cnt == 1 && src_cnt == 2 && dst_lst[0] == src_lst[1])
+			ef = 0; /* sum_product हाल, process on DMA0/1 */
+		अन्यथा अगर (ppc440spe_can_rxor(src_lst, src_cnt, src_sz))
 			ef = 3; /* override (DMA0/1 + idle) */
-		else
-			ef = 0; /* can't process on DMA2 if !rxor */
-	}
+		अन्यथा
+			ef = 0; /* can't process on DMA2 अगर !rxor */
+	पूर्ण
 
 	/* channel idleness increases the priority */
-	if (likely(ef) &&
+	अगर (likely(ef) &&
 	    !ppc440spe_chan_is_busy(to_ppc440spe_adma_chan(chan)))
 		ef++;
 
-	return ef;
-}
+	वापस ef;
+पूर्ण
 
-struct dma_chan *
-ppc440spe_async_tx_find_best_channel(enum dma_transaction_type cap,
-	struct page **dst_lst, int dst_cnt, struct page **src_lst,
-	int src_cnt, size_t src_sz)
-{
-	struct dma_chan *best_chan = NULL;
-	struct ppc_dma_chan_ref *ref;
-	int best_rank = -1;
+काष्ठा dma_chan *
+ppc440spe_async_tx_find_best_channel(क्रमागत dma_transaction_type cap,
+	काष्ठा page **dst_lst, पूर्णांक dst_cnt, काष्ठा page **src_lst,
+	पूर्णांक src_cnt, माप_प्रकार src_sz)
+अणु
+	काष्ठा dma_chan *best_chan = शून्य;
+	काष्ठा ppc_dma_chan_ref *ref;
+	पूर्णांक best_rank = -1;
 
-	if (unlikely(!src_sz))
-		return NULL;
-	if (src_sz > PAGE_SIZE) {
+	अगर (unlikely(!src_sz))
+		वापस शून्य;
+	अगर (src_sz > PAGE_SIZE) अणु
 		/*
 		 * should a user of the api ever pass > PAGE_SIZE requests
-		 * we sort out cases where temporary page-sized buffers
+		 * we sort out हालs where temporary page-sized buffers
 		 * are used.
 		 */
-		switch (cap) {
-		case DMA_PQ:
-			if (src_cnt == 1 && dst_lst[1] == src_lst[0])
-				return NULL;
-			if (src_cnt == 2 && dst_lst[1] == src_lst[1])
-				return NULL;
-			break;
-		case DMA_PQ_VAL:
-		case DMA_XOR_VAL:
-			return NULL;
-		default:
-			break;
-		}
-	}
+		चयन (cap) अणु
+		हाल DMA_PQ:
+			अगर (src_cnt == 1 && dst_lst[1] == src_lst[0])
+				वापस शून्य;
+			अगर (src_cnt == 2 && dst_lst[1] == src_lst[1])
+				वापस शून्य;
+			अवरोध;
+		हाल DMA_PQ_VAL:
+		हाल DMA_XOR_VAL:
+			वापस शून्य;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(ref, &ppc440spe_adma_chan_list, node) {
-		if (dma_has_cap(cap, ref->chan->device->cap_mask)) {
-			int rank;
+	list_क्रम_each_entry(ref, &ppc440spe_adma_chan_list, node) अणु
+		अगर (dma_has_cap(cap, ref->chan->device->cap_mask)) अणु
+			पूर्णांक rank;
 
 			rank = ppc440spe_adma_estimate(ref->chan, cap, dst_lst,
 					dst_cnt, src_lst, src_cnt, src_sz);
-			if (rank > best_rank) {
+			अगर (rank > best_rank) अणु
 				best_rank = rank;
 				best_chan = ref->chan;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return best_chan;
-}
+	वापस best_chan;
+पूर्ण
 EXPORT_SYMBOL_GPL(ppc440spe_async_tx_find_best_channel);
 
 /**
  * ppc440spe_get_group_entry - get group entry with index idx
  * @tdesc: is the last allocated slot in the group.
  */
-static struct ppc440spe_adma_desc_slot *
-ppc440spe_get_group_entry(struct ppc440spe_adma_desc_slot *tdesc, u32 entry_idx)
-{
-	struct ppc440spe_adma_desc_slot *iter = tdesc->group_head;
-	int i = 0;
+अटल काष्ठा ppc440spe_adma_desc_slot *
+ppc440spe_get_group_entry(काष्ठा ppc440spe_adma_desc_slot *tdesc, u32 entry_idx)
+अणु
+	काष्ठा ppc440spe_adma_desc_slot *iter = tdesc->group_head;
+	पूर्णांक i = 0;
 
-	if (entry_idx < 0 || entry_idx >= (tdesc->src_cnt + tdesc->dst_cnt)) {
-		printk("%s: entry_idx %d, src_cnt %d, dst_cnt %d\n",
+	अगर (entry_idx < 0 || entry_idx >= (tdesc->src_cnt + tdesc->dst_cnt)) अणु
+		prपूर्णांकk("%s: entry_idx %d, src_cnt %d, dst_cnt %d\n",
 			__func__, entry_idx, tdesc->src_cnt, tdesc->dst_cnt);
 		BUG();
-	}
+	पूर्ण
 
-	list_for_each_entry(iter, &tdesc->group_list, chain_node) {
-		if (i++ == entry_idx)
-			break;
-	}
-	return iter;
-}
+	list_क्रम_each_entry(iter, &tdesc->group_list, chain_node) अणु
+		अगर (i++ == entry_idx)
+			अवरोध;
+	पूर्ण
+	वापस iter;
+पूर्ण
 
 /**
- * ppc440spe_adma_free_slots - flags descriptor slots for reuse
- * @slot: Slot to free
- * Caller must hold &ppc440spe_chan->lock while calling this function
+ * ppc440spe_adma_मुक्त_slots - flags descriptor slots क्रम reuse
+ * @slot: Slot to मुक्त
+ * Caller must hold &ppc440spe_chan->lock जबतक calling this function
  */
-static void ppc440spe_adma_free_slots(struct ppc440spe_adma_desc_slot *slot,
-				      struct ppc440spe_adma_chan *chan)
-{
-	int stride = slot->slots_per_op;
+अटल व्योम ppc440spe_adma_मुक्त_slots(काष्ठा ppc440spe_adma_desc_slot *slot,
+				      काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	पूर्णांक stride = slot->slots_per_op;
 
-	while (stride--) {
+	जबतक (stride--) अणु
 		slot->slots_per_op = 0;
 		slot = list_entry(slot->slot_node.next,
-				struct ppc440spe_adma_desc_slot,
+				काष्ठा ppc440spe_adma_desc_slot,
 				slot_node);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_adma_run_tx_complete_actions - call functions to be called
  * upon completion
  */
-static dma_cookie_t ppc440spe_adma_run_tx_complete_actions(
-		struct ppc440spe_adma_desc_slot *desc,
-		struct ppc440spe_adma_chan *chan,
+अटल dma_cookie_t ppc440spe_adma_run_tx_complete_actions(
+		काष्ठा ppc440spe_adma_desc_slot *desc,
+		काष्ठा ppc440spe_adma_chan *chan,
 		dma_cookie_t cookie)
-{
+अणु
 	BUG_ON(desc->async_tx.cookie < 0);
-	if (desc->async_tx.cookie > 0) {
+	अगर (desc->async_tx.cookie > 0) अणु
 		cookie = desc->async_tx.cookie;
 		desc->async_tx.cookie = 0;
 
@@ -1472,87 +1473,87 @@ static dma_cookie_t ppc440spe_adma_run_tx_complete_actions(
 		/* call the callback (must not sleep or submit new
 		 * operations to this channel)
 		 */
-		dmaengine_desc_get_callback_invoke(&desc->async_tx, NULL);
-	}
+		dmaengine_desc_get_callback_invoke(&desc->async_tx, शून्य);
+	पूर्ण
 
 	/* run dependent operations */
 	dma_run_dependencies(&desc->async_tx);
 
-	return cookie;
-}
+	वापस cookie;
+पूर्ण
 
 /**
- * ppc440spe_adma_clean_slot - clean up CDB slot (if ack is set)
+ * ppc440spe_adma_clean_slot - clean up CDB slot (अगर ack is set)
  */
-static int ppc440spe_adma_clean_slot(struct ppc440spe_adma_desc_slot *desc,
-		struct ppc440spe_adma_chan *chan)
-{
+अटल पूर्णांक ppc440spe_adma_clean_slot(काष्ठा ppc440spe_adma_desc_slot *desc,
+		काष्ठा ppc440spe_adma_chan *chan)
+अणु
 	/* the client is allowed to attach dependent operations
 	 * until 'ack' is set
 	 */
-	if (!async_tx_test_ack(&desc->async_tx))
-		return 0;
+	अगर (!async_tx_test_ack(&desc->async_tx))
+		वापस 0;
 
 	/* leave the last descriptor in the chain
 	 * so we can append to it
 	 */
-	if (list_is_last(&desc->chain_node, &chan->chain) ||
+	अगर (list_is_last(&desc->chain_node, &chan->chain) ||
 	    desc->phys == ppc440spe_chan_get_current_descriptor(chan))
-		return 1;
+		वापस 1;
 
-	if (chan->device->id != PPC440SPE_XOR_ID) {
-		/* our DMA interrupt handler clears opc field of
+	अगर (chan->device->id != PPC440SPE_XOR_ID) अणु
+		/* our DMA पूर्णांकerrupt handler clears opc field of
 		 * each processed descriptor. For all types of
-		 * operations except for ZeroSum we do not actually
-		 * need ack from the interrupt handler. ZeroSum is a
-		 * special case since the result of this operation
-		 * is available from the handler only, so if we see
+		 * operations except क्रम ZeroSum we करो not actually
+		 * need ack from the पूर्णांकerrupt handler. ZeroSum is a
+		 * special हाल since the result of this operation
+		 * is available from the handler only, so अगर we see
 		 * such type of descriptor (which is unprocessed yet)
 		 * then leave it in chain.
 		 */
-		struct dma_cdb *cdb = desc->hw_desc;
-		if (cdb->opc == DMA_CDB_OPC_DCHECK128)
-			return 1;
-	}
+		काष्ठा dma_cdb *cdb = desc->hw_desc;
+		अगर (cdb->opc == DMA_CDB_OPC_DCHECK128)
+			वापस 1;
+	पूर्ण
 
 	dev_dbg(chan->device->common.dev, "\tfree slot %llx: %d stride: %d\n",
 		desc->phys, desc->idx, desc->slots_per_op);
 
 	list_del(&desc->chain_node);
-	ppc440spe_adma_free_slots(desc, chan);
-	return 0;
-}
+	ppc440spe_adma_मुक्त_slots(desc, chan);
+	वापस 0;
+पूर्ण
 
 /**
  * __ppc440spe_adma_slot_cleanup - this is the common clean-up routine
  *	which runs through the channel CDBs list until reach the descriptor
  *	currently processed. When routine determines that all CDBs of group
- *	are completed then corresponding callbacks (if any) are called and slots
- *	are freed.
+ *	are completed then corresponding callbacks (अगर any) are called and slots
+ *	are मुक्तd.
  */
-static void __ppc440spe_adma_slot_cleanup(struct ppc440spe_adma_chan *chan)
-{
-	struct ppc440spe_adma_desc_slot *iter, *_iter, *group_start = NULL;
+अटल व्योम __ppc440spe_adma_slot_cleanup(काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	काष्ठा ppc440spe_adma_desc_slot *iter, *_iter, *group_start = शून्य;
 	dma_cookie_t cookie = 0;
 	u32 current_desc = ppc440spe_chan_get_current_descriptor(chan);
-	int busy = ppc440spe_chan_is_busy(chan);
-	int seen_current = 0, slot_cnt = 0, slots_per_op = 0;
+	पूर्णांक busy = ppc440spe_chan_is_busy(chan);
+	पूर्णांक seen_current = 0, slot_cnt = 0, slots_per_op = 0;
 
 	dev_dbg(chan->device->common.dev, "ppc440spe adma%d: %s\n",
 		chan->device->id, __func__);
 
-	if (!current_desc) {
+	अगर (!current_desc) अणु
 		/*  There were no transactions yet, so
 		 * nothing to clean
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* free completed slots from the chain starting with
+	/* मुक्त completed slots from the chain starting with
 	 * the oldest descriptor
 	 */
-	list_for_each_entry_safe(iter, _iter, &chan->chain,
-					chain_node) {
+	list_क्रम_each_entry_safe(iter, _iter, &chan->chain,
+					chain_node) अणु
 		dev_dbg(chan->device->common.dev, "\tcookie: %d slot: %d "
 		    "busy: %d this_desc: %#llx next_desc: %#x "
 		    "cur: %#x ack: %d\n",
@@ -1562,53 +1563,53 @@ static void __ppc440spe_adma_slot_cleanup(struct ppc440spe_adma_chan *chan)
 		prefetch(_iter);
 		prefetch(&_iter->async_tx);
 
-		/* do not advance past the current descriptor loaded into the
+		/* करो not advance past the current descriptor loaded पूर्णांकo the
 		 * hardware channel,subsequent descriptors are either in process
 		 * or have not been submitted
 		 */
-		if (seen_current)
-			break;
+		अगर (seen_current)
+			अवरोध;
 
-		/* stop the search if we reach the current descriptor and the
-		 * channel is busy, or if it appears that the current descriptor
-		 * needs to be re-read (i.e. has been appended to)
+		/* stop the search अगर we reach the current descriptor and the
+		 * channel is busy, or अगर it appears that the current descriptor
+		 * needs to be re-पढ़ो (i.e. has been appended to)
 		 */
-		if (iter->phys == current_desc) {
+		अगर (iter->phys == current_desc) अणु
 			BUG_ON(seen_current++);
-			if (busy || ppc440spe_desc_get_link(iter, chan)) {
+			अगर (busy || ppc440spe_desc_get_link(iter, chan)) अणु
 				/* not all descriptors of the group have
-				 * been completed; exit.
+				 * been completed; निकास.
 				 */
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/* detect the start of a group transaction */
-		if (!slot_cnt && !slots_per_op) {
+		अगर (!slot_cnt && !slots_per_op) अणु
 			slot_cnt = iter->slot_cnt;
 			slots_per_op = iter->slots_per_op;
-			if (slot_cnt <= slots_per_op) {
+			अगर (slot_cnt <= slots_per_op) अणु
 				slot_cnt = 0;
 				slots_per_op = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (slot_cnt) {
-			if (!group_start)
+		अगर (slot_cnt) अणु
+			अगर (!group_start)
 				group_start = iter;
 			slot_cnt -= slots_per_op;
-		}
+		पूर्ण
 
 		/* all the members of a group are complete */
-		if (slots_per_op != 0 && slot_cnt == 0) {
-			struct ppc440spe_adma_desc_slot *grp_iter, *_grp_iter;
-			int end_of_chain = 0;
+		अगर (slots_per_op != 0 && slot_cnt == 0) अणु
+			काष्ठा ppc440spe_adma_desc_slot *grp_iter, *_grp_iter;
+			पूर्णांक end_of_chain = 0;
 
 			/* clean up the group */
 			slot_cnt = group_start->slot_cnt;
 			grp_iter = group_start;
-			list_for_each_entry_safe_from(grp_iter, _grp_iter,
-				&chan->chain, chain_node) {
+			list_क्रम_each_entry_safe_from(grp_iter, _grp_iter,
+				&chan->chain, chain_node) अणु
 
 				cookie = ppc440spe_adma_run_tx_complete_actions(
 					grp_iter, chan, cookie);
@@ -1616,158 +1617,158 @@ static void __ppc440spe_adma_slot_cleanup(struct ppc440spe_adma_chan *chan)
 				slot_cnt -= slots_per_op;
 				end_of_chain = ppc440spe_adma_clean_slot(
 				    grp_iter, chan);
-				if (end_of_chain && slot_cnt) {
-					/* Should wait for ZeroSum completion */
-					if (cookie > 0)
+				अगर (end_of_chain && slot_cnt) अणु
+					/* Should रुको क्रम ZeroSum completion */
+					अगर (cookie > 0)
 						chan->common.completed_cookie = cookie;
-					return;
-				}
+					वापस;
+				पूर्ण
 
-				if (slot_cnt == 0 || end_of_chain)
-					break;
-			}
+				अगर (slot_cnt == 0 || end_of_chain)
+					अवरोध;
+			पूर्ण
 
-			/* the group should be complete at this point */
+			/* the group should be complete at this poपूर्णांक */
 			BUG_ON(slot_cnt);
 
 			slots_per_op = 0;
-			group_start = NULL;
-			if (end_of_chain)
-				break;
-			else
-				continue;
-		} else if (slots_per_op) /* wait for group completion */
-			continue;
+			group_start = शून्य;
+			अगर (end_of_chain)
+				अवरोध;
+			अन्यथा
+				जारी;
+		पूर्ण अन्यथा अगर (slots_per_op) /* रुको क्रम group completion */
+			जारी;
 
 		cookie = ppc440spe_adma_run_tx_complete_actions(iter, chan,
 		    cookie);
 
-		if (ppc440spe_adma_clean_slot(iter, chan))
-			break;
-	}
+		अगर (ppc440spe_adma_clean_slot(iter, chan))
+			अवरोध;
+	पूर्ण
 
 	BUG_ON(!seen_current);
 
-	if (cookie > 0) {
+	अगर (cookie > 0) अणु
 		chan->common.completed_cookie = cookie;
 		pr_debug("\tcompleted cookie %d\n", cookie);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 /**
- * ppc440spe_adma_tasklet - clean up watch-dog initiator
+ * ppc440spe_adma_tasklet - clean up watch-करोg initiator
  */
-static void ppc440spe_adma_tasklet(struct tasklet_struct *t)
-{
-	struct ppc440spe_adma_chan *chan = from_tasklet(chan, t, irq_tasklet);
+अटल व्योम ppc440spe_adma_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा ppc440spe_adma_chan *chan = from_tasklet(chan, t, irq_tasklet);
 
 	spin_lock_nested(&chan->lock, SINGLE_DEPTH_NESTING);
 	__ppc440spe_adma_slot_cleanup(chan);
 	spin_unlock(&chan->lock);
-}
+पूर्ण
 
 /**
  * ppc440spe_adma_slot_cleanup - clean up scheduled initiator
  */
-static void ppc440spe_adma_slot_cleanup(struct ppc440spe_adma_chan *chan)
-{
+अटल व्योम ppc440spe_adma_slot_cleanup(काष्ठा ppc440spe_adma_chan *chan)
+अणु
 	spin_lock_bh(&chan->lock);
 	__ppc440spe_adma_slot_cleanup(chan);
 	spin_unlock_bh(&chan->lock);
-}
+पूर्ण
 
 /**
- * ppc440spe_adma_alloc_slots - allocate free slots (if any)
+ * ppc440spe_adma_alloc_slots - allocate मुक्त slots (अगर any)
  */
-static struct ppc440spe_adma_desc_slot *ppc440spe_adma_alloc_slots(
-		struct ppc440spe_adma_chan *chan, int num_slots,
-		int slots_per_op)
-{
-	struct ppc440spe_adma_desc_slot *iter = NULL, *_iter;
-	struct ppc440spe_adma_desc_slot *alloc_start = NULL;
-	struct list_head chain = LIST_HEAD_INIT(chain);
-	int slots_found, retry = 0;
+अटल काष्ठा ppc440spe_adma_desc_slot *ppc440spe_adma_alloc_slots(
+		काष्ठा ppc440spe_adma_chan *chan, पूर्णांक num_slots,
+		पूर्णांक slots_per_op)
+अणु
+	काष्ठा ppc440spe_adma_desc_slot *iter = शून्य, *_iter;
+	काष्ठा ppc440spe_adma_desc_slot *alloc_start = शून्य;
+	काष्ठा list_head chain = LIST_HEAD_INIT(chain);
+	पूर्णांक slots_found, retry = 0;
 
 
 	BUG_ON(!num_slots || !slots_per_op);
 	/* start search from the last allocated descrtiptor
-	 * if a contiguous allocation can not be found start searching
+	 * अगर a contiguous allocation can not be found start searching
 	 * from the beginning of the list
 	 */
 retry:
 	slots_found = 0;
-	if (retry == 0)
+	अगर (retry == 0)
 		iter = chan->last_used;
-	else
+	अन्यथा
 		iter = list_entry(&chan->all_slots,
-				  struct ppc440spe_adma_desc_slot,
+				  काष्ठा ppc440spe_adma_desc_slot,
 				  slot_node);
-	list_for_each_entry_safe_continue(iter, _iter, &chan->all_slots,
-	    slot_node) {
+	list_क्रम_each_entry_safe_जारी(iter, _iter, &chan->all_slots,
+	    slot_node) अणु
 		prefetch(_iter);
 		prefetch(&_iter->async_tx);
-		if (iter->slots_per_op) {
+		अगर (iter->slots_per_op) अणु
 			slots_found = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* start the allocation if the slot is correctly aligned */
-		if (!slots_found++)
+		/* start the allocation अगर the slot is correctly aligned */
+		अगर (!slots_found++)
 			alloc_start = iter;
 
-		if (slots_found == num_slots) {
-			struct ppc440spe_adma_desc_slot *alloc_tail = NULL;
-			struct ppc440spe_adma_desc_slot *last_used = NULL;
+		अगर (slots_found == num_slots) अणु
+			काष्ठा ppc440spe_adma_desc_slot *alloc_tail = शून्य;
+			काष्ठा ppc440spe_adma_desc_slot *last_used = शून्य;
 
 			iter = alloc_start;
-			while (num_slots) {
-				int i;
+			जबतक (num_slots) अणु
+				पूर्णांक i;
 				/* pre-ack all but the last descriptor */
-				if (num_slots != slots_per_op)
+				अगर (num_slots != slots_per_op)
 					async_tx_ack(&iter->async_tx);
 
 				list_add_tail(&iter->chain_node, &chain);
 				alloc_tail = iter;
 				iter->async_tx.cookie = 0;
-				iter->hw_next = NULL;
+				iter->hw_next = शून्य;
 				iter->flags = 0;
 				iter->slot_cnt = num_slots;
-				iter->xor_check_result = NULL;
-				for (i = 0; i < slots_per_op; i++) {
+				iter->xor_check_result = शून्य;
+				क्रम (i = 0; i < slots_per_op; i++) अणु
 					iter->slots_per_op = slots_per_op - i;
 					last_used = iter;
 					iter = list_entry(iter->slot_node.next,
-						struct ppc440spe_adma_desc_slot,
+						काष्ठा ppc440spe_adma_desc_slot,
 						slot_node);
-				}
+				पूर्ण
 				num_slots -= slots_per_op;
-			}
+			पूर्ण
 			alloc_tail->group_head = alloc_start;
 			alloc_tail->async_tx.cookie = -EBUSY;
 			list_splice(&chain, &alloc_tail->group_list);
 			chan->last_used = last_used;
-			return alloc_tail;
-		}
-	}
-	if (!retry++)
-		goto retry;
+			वापस alloc_tail;
+		पूर्ण
+	पूर्ण
+	अगर (!retry++)
+		जाओ retry;
 
-	/* try to free some slots if the allocation fails */
+	/* try to मुक्त some slots अगर the allocation fails */
 	tasklet_schedule(&chan->irq_tasklet);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * ppc440spe_adma_alloc_chan_resources -  allocate pools for CDB slots
+ * ppc440spe_adma_alloc_chan_resources -  allocate pools क्रम CDB slots
  */
-static int ppc440spe_adma_alloc_chan_resources(struct dma_chan *chan)
-{
-	struct ppc440spe_adma_chan *ppc440spe_chan;
-	struct ppc440spe_adma_desc_slot *slot = NULL;
-	char *hw_desc;
-	int i, db_sz;
-	int init;
+अटल पूर्णांक ppc440spe_adma_alloc_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा ppc440spe_adma_chan *ppc440spe_chan;
+	काष्ठा ppc440spe_adma_desc_slot *slot = शून्य;
+	अक्षर *hw_desc;
+	पूर्णांक i, db_sz;
+	पूर्णांक init;
 
 	ppc440spe_chan = to_ppc440spe_adma_chan(chan);
 	init = ppc440spe_chan->slots_allocated ? 0 : 1;
@@ -1775,22 +1776,22 @@ static int ppc440spe_adma_alloc_chan_resources(struct dma_chan *chan)
 
 	/* Allocate descriptor slots */
 	i = ppc440spe_chan->slots_allocated;
-	if (ppc440spe_chan->device->id != PPC440SPE_XOR_ID)
-		db_sz = sizeof(struct dma_cdb);
-	else
-		db_sz = sizeof(struct xor_cb);
+	अगर (ppc440spe_chan->device->id != PPC440SPE_XOR_ID)
+		db_sz = माप(काष्ठा dma_cdb);
+	अन्यथा
+		db_sz = माप(काष्ठा xor_cb);
 
-	for (; i < (ppc440spe_chan->device->pool_size / db_sz); i++) {
-		slot = kzalloc(sizeof(struct ppc440spe_adma_desc_slot),
+	क्रम (; i < (ppc440spe_chan->device->pool_size / db_sz); i++) अणु
+		slot = kzalloc(माप(काष्ठा ppc440spe_adma_desc_slot),
 			       GFP_KERNEL);
-		if (!slot) {
-			printk(KERN_INFO "SPE ADMA Channel only initialized"
+		अगर (!slot) अणु
+			prपूर्णांकk(KERN_INFO "SPE ADMA Channel only initialized"
 				" %d descriptor slots", i--);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		hw_desc = (char *) ppc440spe_chan->device->dma_desc_pool_virt;
-		slot->hw_desc = (void *) &hw_desc[i * db_sz];
+		hw_desc = (अक्षर *) ppc440spe_chan->device->dma_desc_pool_virt;
+		slot->hw_desc = (व्योम *) &hw_desc[i * db_sz];
 		dma_async_tx_descriptor_init(&slot->async_tx, chan);
 		slot->async_tx.tx_submit = ppc440spe_adma_tx_submit;
 		INIT_LIST_HEAD(&slot->chain_node);
@@ -1803,102 +1804,102 @@ static int ppc440spe_adma_alloc_chan_resources(struct dma_chan *chan)
 		ppc440spe_chan->slots_allocated++;
 		list_add_tail(&slot->slot_node, &ppc440spe_chan->all_slots);
 		spin_unlock_bh(&ppc440spe_chan->lock);
-	}
+	पूर्ण
 
-	if (i && !ppc440spe_chan->last_used) {
+	अगर (i && !ppc440spe_chan->last_used) अणु
 		ppc440spe_chan->last_used =
 			list_entry(ppc440spe_chan->all_slots.next,
-				struct ppc440spe_adma_desc_slot,
+				काष्ठा ppc440spe_adma_desc_slot,
 				slot_node);
-	}
+	पूर्ण
 
 	dev_dbg(ppc440spe_chan->device->common.dev,
 		"ppc440spe adma%d: allocated %d descriptor slots\n",
 		ppc440spe_chan->device->id, i);
 
 	/* initialize the channel and the chain with a null operation */
-	if (init) {
-		switch (ppc440spe_chan->device->id) {
-		case PPC440SPE_DMA0_ID:
-		case PPC440SPE_DMA1_ID:
+	अगर (init) अणु
+		चयन (ppc440spe_chan->device->id) अणु
+		हाल PPC440SPE_DMA0_ID:
+		हाल PPC440SPE_DMA1_ID:
 			ppc440spe_chan->hw_chain_inited = 0;
-			/* Use WXOR for self-testing */
-			if (!ppc440spe_r6_tchan)
+			/* Use WXOR क्रम self-testing */
+			अगर (!ppc440spe_r6_tchan)
 				ppc440spe_r6_tchan = ppc440spe_chan;
-			break;
-		case PPC440SPE_XOR_ID:
+			अवरोध;
+		हाल PPC440SPE_XOR_ID:
 			ppc440spe_chan_start_null_xor(ppc440spe_chan);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			BUG();
-		}
+		पूर्ण
 		ppc440spe_chan->needs_unmap = 1;
-	}
+	पूर्ण
 
-	return (i > 0) ? i : -ENOMEM;
-}
+	वापस (i > 0) ? i : -ENOMEM;
+पूर्ण
 
 /**
  * ppc440spe_rxor_set_region_data -
  */
-static void ppc440spe_rxor_set_region(struct ppc440spe_adma_desc_slot *desc,
+अटल व्योम ppc440spe_rxor_set_region(काष्ठा ppc440spe_adma_desc_slot *desc,
 	u8 xor_arg_no, u32 mask)
-{
-	struct xor_cb *xcb = desc->hw_desc;
+अणु
+	काष्ठा xor_cb *xcb = desc->hw_desc;
 
 	xcb->ops[xor_arg_no].h |= mask;
-}
+पूर्ण
 
 /**
  * ppc440spe_rxor_set_src -
  */
-static void ppc440spe_rxor_set_src(struct ppc440spe_adma_desc_slot *desc,
+अटल व्योम ppc440spe_rxor_set_src(काष्ठा ppc440spe_adma_desc_slot *desc,
 	u8 xor_arg_no, dma_addr_t addr)
-{
-	struct xor_cb *xcb = desc->hw_desc;
+अणु
+	काष्ठा xor_cb *xcb = desc->hw_desc;
 
 	xcb->ops[xor_arg_no].h |= DMA_CUED_XOR_BASE;
 	xcb->ops[xor_arg_no].l = addr;
-}
+पूर्ण
 
 /**
  * ppc440spe_rxor_set_mult -
  */
-static void ppc440spe_rxor_set_mult(struct ppc440spe_adma_desc_slot *desc,
+अटल व्योम ppc440spe_rxor_set_mult(काष्ठा ppc440spe_adma_desc_slot *desc,
 	u8 xor_arg_no, u8 idx, u8 mult)
-{
-	struct xor_cb *xcb = desc->hw_desc;
+अणु
+	काष्ठा xor_cb *xcb = desc->hw_desc;
 
 	xcb->ops[xor_arg_no].h |= mult << (DMA_CUED_MULT1_OFF + idx * 8);
-}
+पूर्ण
 
 /**
- * ppc440spe_adma_check_threshold - append CDBs to h/w chain if threshold
+ * ppc440spe_adma_check_threshold - append CDBs to h/w chain अगर threshold
  *	has been achieved
  */
-static void ppc440spe_adma_check_threshold(struct ppc440spe_adma_chan *chan)
-{
+अटल व्योम ppc440spe_adma_check_threshold(काष्ठा ppc440spe_adma_chan *chan)
+अणु
 	dev_dbg(chan->device->common.dev, "ppc440spe adma%d: pending: %d\n",
 		chan->device->id, chan->pending);
 
-	if (chan->pending >= PPC440SPE_ADMA_THRESHOLD) {
+	अगर (chan->pending >= PPC440SPE_ADMA_THRESHOLD) अणु
 		chan->pending = 0;
 		ppc440spe_chan_append(chan);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_adma_tx_submit - submit new descriptor group to the channel
  *	(it's not necessary that descriptors will be submitted to the h/w
  *	chains too right now)
  */
-static dma_cookie_t ppc440spe_adma_tx_submit(struct dma_async_tx_descriptor *tx)
-{
-	struct ppc440spe_adma_desc_slot *sw_desc;
-	struct ppc440spe_adma_chan *chan = to_ppc440spe_adma_chan(tx->chan);
-	struct ppc440spe_adma_desc_slot *group_start, *old_chain_tail;
-	int slot_cnt;
-	int slots_per_op;
+अटल dma_cookie_t ppc440spe_adma_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
+अणु
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc;
+	काष्ठा ppc440spe_adma_chan *chan = to_ppc440spe_adma_chan(tx->chan);
+	काष्ठा ppc440spe_adma_desc_slot *group_start, *old_chain_tail;
+	पूर्णांक slot_cnt;
+	पूर्णांक slots_per_op;
 	dma_cookie_t cookie;
 
 	sw_desc = tx_to_ppc440spe_adma_slot(tx);
@@ -1910,20 +1911,20 @@ static dma_cookie_t ppc440spe_adma_tx_submit(struct dma_async_tx_descriptor *tx)
 	spin_lock_bh(&chan->lock);
 	cookie = dma_cookie_assign(tx);
 
-	if (unlikely(list_empty(&chan->chain))) {
+	अगर (unlikely(list_empty(&chan->chain))) अणु
 		/* first peer */
 		list_splice_init(&sw_desc->group_list, &chan->chain);
 		chan_first_cdb[chan->device->id] = group_start;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* isn't first peer, bind CDBs to chain */
 		old_chain_tail = list_entry(chan->chain.prev,
-					struct ppc440spe_adma_desc_slot,
+					काष्ठा ppc440spe_adma_desc_slot,
 					chain_node);
 		list_splice_init(&sw_desc->group_list,
 		    &old_chain_tail->chain_node);
 		/* fix up the hardware chain */
 		ppc440spe_desc_set_link(chan, old_chain_tail, group_start);
-	}
+	पूर्ण
 
 	/* increment the pending count by the number of operations */
 	chan->pending += slot_cnt / slots_per_op;
@@ -1935,18 +1936,18 @@ static dma_cookie_t ppc440spe_adma_tx_submit(struct dma_async_tx_descriptor *tx)
 		chan->device->id, __func__,
 		sw_desc->async_tx.cookie, sw_desc->idx, sw_desc);
 
-	return cookie;
-}
+	वापस cookie;
+पूर्ण
 
 /**
- * ppc440spe_adma_prep_dma_interrupt - prepare CDB for a pseudo DMA operation
+ * ppc440spe_adma_prep_dma_पूर्णांकerrupt - prepare CDB क्रम a pseuकरो DMA operation
  */
-static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_interrupt(
-		struct dma_chan *chan, unsigned long flags)
-{
-	struct ppc440spe_adma_chan *ppc440spe_chan;
-	struct ppc440spe_adma_desc_slot *sw_desc, *group_start;
-	int slot_cnt, slots_per_op;
+अटल काष्ठा dma_async_tx_descriptor *ppc440spe_adma_prep_dma_पूर्णांकerrupt(
+		काष्ठा dma_chan *chan, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा ppc440spe_adma_chan *ppc440spe_chan;
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc, *group_start;
+	पूर्णांक slot_cnt, slots_per_op;
 
 	ppc440spe_chan = to_ppc440spe_adma_chan(chan);
 
@@ -1958,32 +1959,32 @@ static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_interrupt(
 	slot_cnt = slots_per_op = 1;
 	sw_desc = ppc440spe_adma_alloc_slots(ppc440spe_chan, slot_cnt,
 			slots_per_op);
-	if (sw_desc) {
+	अगर (sw_desc) अणु
 		group_start = sw_desc->group_head;
-		ppc440spe_desc_init_interrupt(group_start, ppc440spe_chan);
+		ppc440spe_desc_init_पूर्णांकerrupt(group_start, ppc440spe_chan);
 		group_start->unmap_len = 0;
 		sw_desc->async_tx.flags = flags;
-	}
+	पूर्ण
 	spin_unlock_bh(&ppc440spe_chan->lock);
 
-	return sw_desc ? &sw_desc->async_tx : NULL;
-}
+	वापस sw_desc ? &sw_desc->async_tx : शून्य;
+पूर्ण
 
 /**
- * ppc440spe_adma_prep_dma_memcpy - prepare CDB for a MEMCPY operation
+ * ppc440spe_adma_prep_dma_स_नकल - prepare CDB क्रम a MEMCPY operation
  */
-static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_memcpy(
-		struct dma_chan *chan, dma_addr_t dma_dest,
-		dma_addr_t dma_src, size_t len, unsigned long flags)
-{
-	struct ppc440spe_adma_chan *ppc440spe_chan;
-	struct ppc440spe_adma_desc_slot *sw_desc, *group_start;
-	int slot_cnt, slots_per_op;
+अटल काष्ठा dma_async_tx_descriptor *ppc440spe_adma_prep_dma_स_नकल(
+		काष्ठा dma_chan *chan, dma_addr_t dma_dest,
+		dma_addr_t dma_src, माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा ppc440spe_adma_chan *ppc440spe_chan;
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc, *group_start;
+	पूर्णांक slot_cnt, slots_per_op;
 
 	ppc440spe_chan = to_ppc440spe_adma_chan(chan);
 
-	if (unlikely(!len))
-		return NULL;
+	अगर (unlikely(!len))
+		वापस शून्य;
 
 	BUG_ON(len > PPC440SPE_ADMA_DMA_MAX_BYTE_COUNT);
 
@@ -1996,38 +1997,38 @@ static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_memcpy(
 	slot_cnt = slots_per_op = 1;
 	sw_desc = ppc440spe_adma_alloc_slots(ppc440spe_chan, slot_cnt,
 		slots_per_op);
-	if (sw_desc) {
+	अगर (sw_desc) अणु
 		group_start = sw_desc->group_head;
-		ppc440spe_desc_init_memcpy(group_start, flags);
+		ppc440spe_desc_init_स_नकल(group_start, flags);
 		ppc440spe_adma_set_dest(group_start, dma_dest, 0);
-		ppc440spe_adma_memcpy_xor_set_src(group_start, dma_src, 0);
+		ppc440spe_adma_स_नकल_xor_set_src(group_start, dma_src, 0);
 		ppc440spe_desc_set_byte_count(group_start, ppc440spe_chan, len);
 		sw_desc->unmap_len = len;
 		sw_desc->async_tx.flags = flags;
-	}
+	पूर्ण
 	spin_unlock_bh(&ppc440spe_chan->lock);
 
-	return sw_desc ? &sw_desc->async_tx : NULL;
-}
+	वापस sw_desc ? &sw_desc->async_tx : शून्य;
+पूर्ण
 
 /**
- * ppc440spe_adma_prep_dma_xor - prepare CDB for a XOR operation
+ * ppc440spe_adma_prep_dma_xor - prepare CDB क्रम a XOR operation
  */
-static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_xor(
-		struct dma_chan *chan, dma_addr_t dma_dest,
-		dma_addr_t *dma_src, u32 src_cnt, size_t len,
-		unsigned long flags)
-{
-	struct ppc440spe_adma_chan *ppc440spe_chan;
-	struct ppc440spe_adma_desc_slot *sw_desc, *group_start;
-	int slot_cnt, slots_per_op;
+अटल काष्ठा dma_async_tx_descriptor *ppc440spe_adma_prep_dma_xor(
+		काष्ठा dma_chan *chan, dma_addr_t dma_dest,
+		dma_addr_t *dma_src, u32 src_cnt, माप_प्रकार len,
+		अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा ppc440spe_adma_chan *ppc440spe_chan;
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc, *group_start;
+	पूर्णांक slot_cnt, slots_per_op;
 
 	ppc440spe_chan = to_ppc440spe_adma_chan(chan);
 
 	ADMA_LL_DBG(prep_dma_xor_dbg(ppc440spe_chan->device->id,
 				     dma_dest, dma_src, src_cnt));
-	if (unlikely(!len))
-		return NULL;
+	अगर (unlikely(!len))
+		वापस शून्य;
 	BUG_ON(len > PPC440SPE_ADMA_XOR_MAX_BYTE_COUNT);
 
 	dev_dbg(ppc440spe_chan->device->common.dev,
@@ -2039,55 +2040,55 @@ static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_xor(
 	slot_cnt = ppc440spe_chan_xor_slot_count(len, src_cnt, &slots_per_op);
 	sw_desc = ppc440spe_adma_alloc_slots(ppc440spe_chan, slot_cnt,
 			slots_per_op);
-	if (sw_desc) {
+	अगर (sw_desc) अणु
 		group_start = sw_desc->group_head;
 		ppc440spe_desc_init_xor(group_start, src_cnt, flags);
 		ppc440spe_adma_set_dest(group_start, dma_dest, 0);
-		while (src_cnt--)
-			ppc440spe_adma_memcpy_xor_set_src(group_start,
+		जबतक (src_cnt--)
+			ppc440spe_adma_स_नकल_xor_set_src(group_start,
 				dma_src[src_cnt], src_cnt);
 		ppc440spe_desc_set_byte_count(group_start, ppc440spe_chan, len);
 		sw_desc->unmap_len = len;
 		sw_desc->async_tx.flags = flags;
-	}
+	पूर्ण
 	spin_unlock_bh(&ppc440spe_chan->lock);
 
-	return sw_desc ? &sw_desc->async_tx : NULL;
-}
+	वापस sw_desc ? &sw_desc->async_tx : शून्य;
+पूर्ण
 
-static inline void
-ppc440spe_desc_set_xor_src_cnt(struct ppc440spe_adma_desc_slot *desc,
-				int src_cnt);
-static void ppc440spe_init_rxor_cursor(struct ppc440spe_rxor *cursor);
+अटल अंतरभूत व्योम
+ppc440spe_desc_set_xor_src_cnt(काष्ठा ppc440spe_adma_desc_slot *desc,
+				पूर्णांक src_cnt);
+अटल व्योम ppc440spe_init_rxor_cursor(काष्ठा ppc440spe_rxor *cursor);
 
 /**
  * ppc440spe_adma_init_dma2rxor_slot -
  */
-static void ppc440spe_adma_init_dma2rxor_slot(
-		struct ppc440spe_adma_desc_slot *desc,
-		dma_addr_t *src, int src_cnt)
-{
-	int i;
+अटल व्योम ppc440spe_adma_init_dma2rxor_slot(
+		काष्ठा ppc440spe_adma_desc_slot *desc,
+		dma_addr_t *src, पूर्णांक src_cnt)
+अणु
+	पूर्णांक i;
 
 	/* initialize CDB */
-	for (i = 0; i < src_cnt; i++) {
+	क्रम (i = 0; i < src_cnt; i++) अणु
 		ppc440spe_adma_dma2rxor_prep_src(desc, &desc->rxor_cursor, i,
 						 desc->src_cnt, (u32)src[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_dma01_prep_mult -
- * for Q operation where destination is also the source
+ * क्रम Q operation where destination is also the source
  */
-static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_mult(
-		struct ppc440spe_adma_chan *ppc440spe_chan,
-		dma_addr_t *dst, int dst_cnt, dma_addr_t *src, int src_cnt,
-		const unsigned char *scf, size_t len, unsigned long flags)
-{
-	struct ppc440spe_adma_desc_slot *sw_desc = NULL;
-	unsigned long op = 0;
-	int slot_cnt;
+अटल काष्ठा ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_mult(
+		काष्ठा ppc440spe_adma_chan *ppc440spe_chan,
+		dma_addr_t *dst, पूर्णांक dst_cnt, dma_addr_t *src, पूर्णांक src_cnt,
+		स्थिर अचिन्हित अक्षर *scf, माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc = शून्य;
+	अचिन्हित दीर्घ op = 0;
+	पूर्णांक slot_cnt;
 
 	set_bit(PPC440SPE_DESC_WXOR, &op);
 	slot_cnt = 2;
@@ -2096,10 +2097,10 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_mult(
 
 	/* use WXOR, each descriptor occupies one slot */
 	sw_desc = ppc440spe_adma_alloc_slots(ppc440spe_chan, slot_cnt, 1);
-	if (sw_desc) {
-		struct ppc440spe_adma_chan *chan;
-		struct ppc440spe_adma_desc_slot *iter;
-		struct dma_cdb *hw_desc;
+	अगर (sw_desc) अणु
+		काष्ठा ppc440spe_adma_chan *chan;
+		काष्ठा ppc440spe_adma_desc_slot *iter;
+		काष्ठा dma_cdb *hw_desc;
 
 		chan = to_ppc440spe_adma_chan(sw_desc->async_tx.chan);
 		set_bits(op, &sw_desc->flags);
@@ -2109,12 +2110,12 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_mult(
 		 * to q page using MULTICAST transfer.
 		 */
 		iter = list_first_entry(&sw_desc->group_list,
-					struct ppc440spe_adma_desc_slot,
+					काष्ठा ppc440spe_adma_desc_slot,
 					chain_node);
-		memset(iter->hw_desc, 0, sizeof(struct dma_cdb));
-		/* set 'next' pointer */
+		स_रखो(iter->hw_desc, 0, माप(काष्ठा dma_cdb));
+		/* set 'next' poपूर्णांकer */
 		iter->hw_next = list_entry(iter->chain_node.next,
-					   struct ppc440spe_adma_desc_slot,
+					   काष्ठा ppc440spe_adma_desc_slot,
 					   chain_node);
 		clear_bit(PPC440SPE_DESC_INT, &iter->flags);
 		hw_desc = iter->hw_desc;
@@ -2133,13 +2134,13 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_mult(
 		 * and store the result in real destination.
 		 */
 		iter = list_first_entry(&iter->chain_node,
-					struct ppc440spe_adma_desc_slot,
+					काष्ठा ppc440spe_adma_desc_slot,
 					chain_node);
-		memset(iter->hw_desc, 0, sizeof(struct dma_cdb));
-		iter->hw_next = NULL;
-		if (flags & DMA_PREP_INTERRUPT)
+		स_रखो(iter->hw_desc, 0, माप(काष्ठा dma_cdb));
+		iter->hw_next = शून्य;
+		अगर (flags & DMA_PREP_INTERRUPT)
 			set_bit(PPC440SPE_DESC_INT, &iter->flags);
-		else
+		अन्यथा
 			clear_bit(PPC440SPE_DESC_INT, &iter->flags);
 
 		hw_desc = iter->hw_desc;
@@ -2154,26 +2155,26 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_mult(
 		ppc440spe_desc_set_byte_count(iter, ppc440spe_chan, len);
 		iter->unmap_len = len;
 		sw_desc->async_tx.flags = flags;
-	}
+	पूर्ण
 
 	spin_unlock_bh(&ppc440spe_chan->lock);
 
-	return sw_desc;
-}
+	वापस sw_desc;
+पूर्ण
 
 /**
  * ppc440spe_dma01_prep_sum_product -
  * Dx = A*(P+Pxy) + B*(Q+Qxy) operation where destination is also
  * the source.
  */
-static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_sum_product(
-		struct ppc440spe_adma_chan *ppc440spe_chan,
-		dma_addr_t *dst, dma_addr_t *src, int src_cnt,
-		const unsigned char *scf, size_t len, unsigned long flags)
-{
-	struct ppc440spe_adma_desc_slot *sw_desc = NULL;
-	unsigned long op = 0;
-	int slot_cnt;
+अटल काष्ठा ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_sum_product(
+		काष्ठा ppc440spe_adma_chan *ppc440spe_chan,
+		dma_addr_t *dst, dma_addr_t *src, पूर्णांक src_cnt,
+		स्थिर अचिन्हित अक्षर *scf, माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc = शून्य;
+	अचिन्हित दीर्घ op = 0;
+	पूर्णांक slot_cnt;
 
 	set_bit(PPC440SPE_DESC_WXOR, &op);
 	slot_cnt = 3;
@@ -2182,10 +2183,10 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_sum_product(
 
 	/* WXOR, each descriptor occupies one slot */
 	sw_desc = ppc440spe_adma_alloc_slots(ppc440spe_chan, slot_cnt, 1);
-	if (sw_desc) {
-		struct ppc440spe_adma_chan *chan;
-		struct ppc440spe_adma_desc_slot *iter;
-		struct dma_cdb *hw_desc;
+	अगर (sw_desc) अणु
+		काष्ठा ppc440spe_adma_chan *chan;
+		काष्ठा ppc440spe_adma_desc_slot *iter;
+		काष्ठा dma_cdb *hw_desc;
 
 		chan = to_ppc440spe_adma_chan(sw_desc->async_tx.chan);
 		set_bits(op, &sw_desc->flags);
@@ -2193,11 +2194,11 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_sum_product(
 		sw_desc->dst_cnt = 1;
 		/* 1st descriptor, src[1] data to q page and zero destination */
 		iter = list_first_entry(&sw_desc->group_list,
-					struct ppc440spe_adma_desc_slot,
+					काष्ठा ppc440spe_adma_desc_slot,
 					chain_node);
-		memset(iter->hw_desc, 0, sizeof(struct dma_cdb));
+		स_रखो(iter->hw_desc, 0, माप(काष्ठा dma_cdb));
 		iter->hw_next = list_entry(iter->chain_node.next,
-					   struct ppc440spe_adma_desc_slot,
+					   काष्ठा ppc440spe_adma_desc_slot,
 					   chain_node);
 		clear_bit(PPC440SPE_DESC_INT, &iter->flags);
 		hw_desc = iter->hw_desc;
@@ -2215,16 +2216,16 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_sum_product(
 		/* 2nd descriptor, multiply src[1] data and store the
 		 * result in destination */
 		iter = list_first_entry(&iter->chain_node,
-					struct ppc440spe_adma_desc_slot,
+					काष्ठा ppc440spe_adma_desc_slot,
 					chain_node);
-		memset(iter->hw_desc, 0, sizeof(struct dma_cdb));
-		/* set 'next' pointer */
+		स_रखो(iter->hw_desc, 0, माप(काष्ठा dma_cdb));
+		/* set 'next' poपूर्णांकer */
 		iter->hw_next = list_entry(iter->chain_node.next,
-					   struct ppc440spe_adma_desc_slot,
+					   काष्ठा ppc440spe_adma_desc_slot,
 					   chain_node);
-		if (flags & DMA_PREP_INTERRUPT)
+		अगर (flags & DMA_PREP_INTERRUPT)
 			set_bit(PPC440SPE_DESC_INT, &iter->flags);
-		else
+		अन्यथा
 			clear_bit(PPC440SPE_DESC_INT, &iter->flags);
 
 		hw_desc = iter->hw_desc;
@@ -2243,13 +2244,13 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_sum_product(
 		 * with destination
 		 */
 		iter = list_first_entry(&iter->chain_node,
-					struct ppc440spe_adma_desc_slot,
+					काष्ठा ppc440spe_adma_desc_slot,
 					chain_node);
-		memset(iter->hw_desc, 0, sizeof(struct dma_cdb));
-		iter->hw_next = NULL;
-		if (flags & DMA_PREP_INTERRUPT)
+		स_रखो(iter->hw_desc, 0, माप(काष्ठा dma_cdb));
+		iter->hw_next = शून्य;
+		अगर (flags & DMA_PREP_INTERRUPT)
 			set_bit(PPC440SPE_DESC_INT, &iter->flags);
-		else
+		अन्यथा
 			clear_bit(PPC440SPE_DESC_INT, &iter->flags);
 
 		hw_desc = iter->hw_desc;
@@ -2263,121 +2264,121 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_sum_product(
 		ppc440spe_desc_set_byte_count(iter, ppc440spe_chan, len);
 		iter->unmap_len = len;
 		sw_desc->async_tx.flags = flags;
-	}
+	पूर्ण
 
 	spin_unlock_bh(&ppc440spe_chan->lock);
 
-	return sw_desc;
-}
+	वापस sw_desc;
+पूर्ण
 
-static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_pq(
-		struct ppc440spe_adma_chan *ppc440spe_chan,
-		dma_addr_t *dst, int dst_cnt, dma_addr_t *src, int src_cnt,
-		const unsigned char *scf, size_t len, unsigned long flags)
-{
-	int slot_cnt;
-	struct ppc440spe_adma_desc_slot *sw_desc = NULL, *iter;
-	unsigned long op = 0;
-	unsigned char mult = 1;
+अटल काष्ठा ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_pq(
+		काष्ठा ppc440spe_adma_chan *ppc440spe_chan,
+		dma_addr_t *dst, पूर्णांक dst_cnt, dma_addr_t *src, पूर्णांक src_cnt,
+		स्थिर अचिन्हित अक्षर *scf, माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	पूर्णांक slot_cnt;
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc = शून्य, *iter;
+	अचिन्हित दीर्घ op = 0;
+	अचिन्हित अक्षर mult = 1;
 
 	pr_debug("%s: dst_cnt %d, src_cnt %d, len %d\n",
 		 __func__, dst_cnt, src_cnt, len);
 	/*  select operations WXOR/RXOR depending on the
-	 * source addresses of operators and the number
+	 * source addresses of चालकs and the number
 	 * of destinations (RXOR support only Q-parity calculations)
 	 */
 	set_bit(PPC440SPE_DESC_WXOR, &op);
-	if (!test_and_set_bit(PPC440SPE_RXOR_RUN, &ppc440spe_rxor_state)) {
+	अगर (!test_and_set_bit(PPC440SPE_RXOR_RUN, &ppc440spe_rxor_state)) अणु
 		/* no active RXOR;
-		 * do RXOR if:
+		 * करो RXOR अगर:
 		 * - there are more than 1 source,
 		 * - len is aligned on 512-byte boundary,
 		 * - source addresses fit to one of 4 possible regions.
 		 */
-		if (src_cnt > 1 &&
+		अगर (src_cnt > 1 &&
 		    !(len & MQ0_CF2H_RXOR_BS_MASK) &&
-		    (src[0] + len) == src[1]) {
-			/* may do RXOR R1 R2 */
+		    (src[0] + len) == src[1]) अणु
+			/* may करो RXOR R1 R2 */
 			set_bit(PPC440SPE_DESC_RXOR, &op);
-			if (src_cnt != 2) {
+			अगर (src_cnt != 2) अणु
 				/* may try to enhance region of RXOR */
-				if ((src[1] + len) == src[2]) {
-					/* do RXOR R1 R2 R3 */
+				अगर ((src[1] + len) == src[2]) अणु
+					/* करो RXOR R1 R2 R3 */
 					set_bit(PPC440SPE_DESC_RXOR123,
 						&op);
-				} else if ((src[1] + len * 2) == src[2]) {
-					/* do RXOR R1 R2 R4 */
+				पूर्ण अन्यथा अगर ((src[1] + len * 2) == src[2]) अणु
+					/* करो RXOR R1 R2 R4 */
 					set_bit(PPC440SPE_DESC_RXOR124, &op);
-				} else if ((src[1] + len * 3) == src[2]) {
-					/* do RXOR R1 R2 R5 */
+				पूर्ण अन्यथा अगर ((src[1] + len * 3) == src[2]) अणु
+					/* करो RXOR R1 R2 R5 */
 					set_bit(PPC440SPE_DESC_RXOR125,
 						&op);
-				} else {
-					/* do RXOR R1 R2 */
+				पूर्ण अन्यथा अणु
+					/* करो RXOR R1 R2 */
 					set_bit(PPC440SPE_DESC_RXOR12,
 						&op);
-				}
-			} else {
-				/* do RXOR R1 R2 */
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				/* करो RXOR R1 R2 */
 				set_bit(PPC440SPE_DESC_RXOR12, &op);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (!test_bit(PPC440SPE_DESC_RXOR, &op)) {
-			/* can not do this operation with RXOR */
+		अगर (!test_bit(PPC440SPE_DESC_RXOR, &op)) अणु
+			/* can not करो this operation with RXOR */
 			clear_bit(PPC440SPE_RXOR_RUN,
 				&ppc440spe_rxor_state);
-		} else {
-			/* can do; set block size right now */
+		पूर्ण अन्यथा अणु
+			/* can करो; set block size right now */
 			ppc440spe_desc_set_rxor_block_size(len);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Number of necessary slots depends on operation type selected */
-	if (!test_bit(PPC440SPE_DESC_RXOR, &op)) {
-		/*  This is a WXOR only chain. Need descriptors for each
+	अगर (!test_bit(PPC440SPE_DESC_RXOR, &op)) अणु
+		/*  This is a WXOR only chain. Need descriptors क्रम each
 		 * source to GF-XOR them with WXOR, and need descriptors
-		 * for each destination to zero them with WXOR
+		 * क्रम each destination to zero them with WXOR
 		 */
 		slot_cnt = src_cnt;
 
-		if (flags & DMA_PREP_ZERO_P) {
+		अगर (flags & DMA_PREP_ZERO_P) अणु
 			slot_cnt++;
 			set_bit(PPC440SPE_ZERO_P, &op);
-		}
-		if (flags & DMA_PREP_ZERO_Q) {
+		पूर्ण
+		अगर (flags & DMA_PREP_ZERO_Q) अणु
 			slot_cnt++;
 			set_bit(PPC440SPE_ZERO_Q, &op);
-		}
-	} else {
-		/*  Need 1/2 descriptor for RXOR operation, and
-		 * need (src_cnt - (2 or 3)) for WXOR of sources
-		 * remained (if any)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/*  Need 1/2 descriptor क्रम RXOR operation, and
+		 * need (src_cnt - (2 or 3)) क्रम WXOR of sources
+		 * reमुख्यed (अगर any)
 		 */
 		slot_cnt = dst_cnt;
 
-		if (flags & DMA_PREP_ZERO_P)
+		अगर (flags & DMA_PREP_ZERO_P)
 			set_bit(PPC440SPE_ZERO_P, &op);
-		if (flags & DMA_PREP_ZERO_Q)
+		अगर (flags & DMA_PREP_ZERO_Q)
 			set_bit(PPC440SPE_ZERO_Q, &op);
 
-		if (test_bit(PPC440SPE_DESC_RXOR12, &op))
+		अगर (test_bit(PPC440SPE_DESC_RXOR12, &op))
 			slot_cnt += src_cnt - 2;
-		else
+		अन्यथा
 			slot_cnt += src_cnt - 3;
 
 		/*  Thus we have either RXOR only chain or
 		 * mixed RXOR/WXOR
 		 */
-		if (slot_cnt == dst_cnt)
+		अगर (slot_cnt == dst_cnt)
 			/* RXOR only chain */
 			clear_bit(PPC440SPE_DESC_WXOR, &op);
-	}
+	पूर्ण
 
 	spin_lock_bh(&ppc440spe_chan->lock);
-	/* for both RXOR/WXOR each descriptor occupies one slot */
+	/* क्रम both RXOR/WXOR each descriptor occupies one slot */
 	sw_desc = ppc440spe_adma_alloc_slots(ppc440spe_chan, slot_cnt, 1);
-	if (sw_desc) {
+	अगर (sw_desc) अणु
 		ppc440spe_desc_init_dma01pq(sw_desc, dst_cnt, src_cnt,
 				flags, op);
 
@@ -2385,45 +2386,45 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma01_prep_pq(
 		pr_debug("%s: set dst descriptor 0, 1: 0x%016llx, 0x%016llx\n",
 			 __func__, dst[0], dst[1]);
 		ppc440spe_adma_pq_set_dest(sw_desc, dst, flags);
-		while (src_cnt--) {
+		जबतक (src_cnt--) अणु
 			ppc440spe_adma_pq_set_src(sw_desc, src[src_cnt],
 						  src_cnt);
 
 			/* NOTE: "Multi = 0 is equivalent to = 1" as it
 			 * stated in 440SPSPe_RAID6_Addendum_UM_1_17.pdf
-			 * doesn't work for RXOR with DMA0/1! Instead, multi=0
+			 * करोesn't work क्रम RXOR with DMA0/1! Instead, multi=0
 			 * leads to zeroing source data after RXOR.
-			 * So, for P case set-up mult=1 explicitly.
+			 * So, क्रम P हाल set-up mult=1 explicitly.
 			 */
-			if (!(flags & DMA_PREP_PQ_DISABLE_Q))
+			अगर (!(flags & DMA_PREP_PQ_DISABLE_Q))
 				mult = scf[src_cnt];
 			ppc440spe_adma_pq_set_src_mult(sw_desc,
 				mult, src_cnt,  dst_cnt - 1);
-		}
+		पूर्ण
 
-		/* Setup byte count foreach slot just allocated */
+		/* Setup byte count क्रमeach slot just allocated */
 		sw_desc->async_tx.flags = flags;
-		list_for_each_entry(iter, &sw_desc->group_list,
-				chain_node) {
+		list_क्रम_each_entry(iter, &sw_desc->group_list,
+				chain_node) अणु
 			ppc440spe_desc_set_byte_count(iter,
 				ppc440spe_chan, len);
 			iter->unmap_len = len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&ppc440spe_chan->lock);
 
-	return sw_desc;
-}
+	वापस sw_desc;
+पूर्ण
 
-static struct ppc440spe_adma_desc_slot *ppc440spe_dma2_prep_pq(
-		struct ppc440spe_adma_chan *ppc440spe_chan,
-		dma_addr_t *dst, int dst_cnt, dma_addr_t *src, int src_cnt,
-		const unsigned char *scf, size_t len, unsigned long flags)
-{
-	int slot_cnt, descs_per_op;
-	struct ppc440spe_adma_desc_slot *sw_desc = NULL, *iter;
-	unsigned long op = 0;
-	unsigned char mult = 1;
+अटल काष्ठा ppc440spe_adma_desc_slot *ppc440spe_dma2_prep_pq(
+		काष्ठा ppc440spe_adma_chan *ppc440spe_chan,
+		dma_addr_t *dst, पूर्णांक dst_cnt, dma_addr_t *src, पूर्णांक src_cnt,
+		स्थिर अचिन्हित अक्षर *scf, माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	पूर्णांक slot_cnt, descs_per_op;
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc = शून्य, *iter;
+	अचिन्हित दीर्घ op = 0;
+	अचिन्हित अक्षर mult = 1;
 
 	BUG_ON(!dst_cnt);
 	/*pr_debug("%s: dst_cnt %d, src_cnt %d, len %d\n",
@@ -2431,19 +2432,19 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma2_prep_pq(
 
 	spin_lock_bh(&ppc440spe_chan->lock);
 	descs_per_op = ppc440spe_dma2_pq_slot_count(src, src_cnt, len);
-	if (descs_per_op < 0) {
+	अगर (descs_per_op < 0) अणु
 		spin_unlock_bh(&ppc440spe_chan->lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* depending on number of sources we have 1 or 2 RXOR chains */
 	slot_cnt = descs_per_op * dst_cnt;
 
 	sw_desc = ppc440spe_adma_alloc_slots(ppc440spe_chan, slot_cnt, 1);
-	if (sw_desc) {
+	अगर (sw_desc) अणु
 		op = slot_cnt;
 		sw_desc->async_tx.flags = flags;
-		list_for_each_entry(iter, &sw_desc->group_list, chain_node) {
+		list_क्रम_each_entry(iter, &sw_desc->group_list, chain_node) अणु
 			ppc440spe_desc_init_dma2pq(iter, dst_cnt, src_cnt,
 				--op ? 0 : flags);
 			ppc440spe_desc_set_byte_count(iter, ppc440spe_chan,
@@ -2453,65 +2454,65 @@ static struct ppc440spe_adma_desc_slot *ppc440spe_dma2_prep_pq(
 			ppc440spe_init_rxor_cursor(&(iter->rxor_cursor));
 			iter->rxor_cursor.len = len;
 			iter->descs_per_op = descs_per_op;
-		}
+		पूर्ण
 		op = 0;
-		list_for_each_entry(iter, &sw_desc->group_list, chain_node) {
+		list_क्रम_each_entry(iter, &sw_desc->group_list, chain_node) अणु
 			op++;
-			if (op % descs_per_op == 0)
+			अगर (op % descs_per_op == 0)
 				ppc440spe_adma_init_dma2rxor_slot(iter, src,
 								  src_cnt);
-			if (likely(!list_is_last(&iter->chain_node,
-						 &sw_desc->group_list))) {
-				/* set 'next' pointer */
+			अगर (likely(!list_is_last(&iter->chain_node,
+						 &sw_desc->group_list))) अणु
+				/* set 'next' poपूर्णांकer */
 				iter->hw_next =
 					list_entry(iter->chain_node.next,
-						struct ppc440spe_adma_desc_slot,
+						काष्ठा ppc440spe_adma_desc_slot,
 						chain_node);
 				ppc440spe_xor_set_link(iter, iter->hw_next);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* this is the last descriptor. */
-				iter->hw_next = NULL;
-			}
-		}
+				iter->hw_next = शून्य;
+			पूर्ण
+		पूर्ण
 
 		/* fixup head descriptor */
 		sw_desc->dst_cnt = dst_cnt;
-		if (flags & DMA_PREP_ZERO_P)
+		अगर (flags & DMA_PREP_ZERO_P)
 			set_bit(PPC440SPE_ZERO_P, &sw_desc->flags);
-		if (flags & DMA_PREP_ZERO_Q)
+		अगर (flags & DMA_PREP_ZERO_Q)
 			set_bit(PPC440SPE_ZERO_Q, &sw_desc->flags);
 
 		/* setup dst/src/mult */
 		ppc440spe_adma_pq_set_dest(sw_desc, dst, flags);
 
-		while (src_cnt--) {
-			/* handle descriptors (if dst_cnt == 2) inside
+		जबतक (src_cnt--) अणु
+			/* handle descriptors (अगर dst_cnt == 2) inside
 			 * the ppc440spe_adma_pq_set_srcxxx() functions
 			 */
 			ppc440spe_adma_pq_set_src(sw_desc, src[src_cnt],
 						  src_cnt);
-			if (!(flags & DMA_PREP_PQ_DISABLE_Q))
+			अगर (!(flags & DMA_PREP_PQ_DISABLE_Q))
 				mult = scf[src_cnt];
 			ppc440spe_adma_pq_set_src_mult(sw_desc,
 					mult, src_cnt, dst_cnt - 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&ppc440spe_chan->lock);
 	ppc440spe_desc_set_rxor_block_size(len);
-	return sw_desc;
-}
+	वापस sw_desc;
+पूर्ण
 
 /**
- * ppc440spe_adma_prep_dma_pq - prepare CDB (group) for a GF-XOR operation
+ * ppc440spe_adma_prep_dma_pq - prepare CDB (group) क्रम a GF-XOR operation
  */
-static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_pq(
-		struct dma_chan *chan, dma_addr_t *dst, dma_addr_t *src,
-		unsigned int src_cnt, const unsigned char *scf,
-		size_t len, unsigned long flags)
-{
-	struct ppc440spe_adma_chan *ppc440spe_chan;
-	struct ppc440spe_adma_desc_slot *sw_desc = NULL;
-	int dst_cnt = 0;
+अटल काष्ठा dma_async_tx_descriptor *ppc440spe_adma_prep_dma_pq(
+		काष्ठा dma_chan *chan, dma_addr_t *dst, dma_addr_t *src,
+		अचिन्हित पूर्णांक src_cnt, स्थिर अचिन्हित अक्षर *scf,
+		माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा ppc440spe_adma_chan *ppc440spe_chan;
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc = शून्य;
+	पूर्णांक dst_cnt = 0;
 
 	ppc440spe_chan = to_ppc440spe_adma_chan(chan);
 
@@ -2521,7 +2522,7 @@ static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_pq(
 	BUG_ON(len > PPC440SPE_ADMA_XOR_MAX_BYTE_COUNT);
 	BUG_ON(!src_cnt);
 
-	if (src_cnt == 1 && dst[1] == src[0]) {
+	अगर (src_cnt == 1 && dst[1] == src[0]) अणु
 		dma_addr_t dest[2];
 
 		/* dst[1] is real destination (Q) */
@@ -2530,26 +2531,26 @@ static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_pq(
 		dest[1] = ppc440spe_chan->qdest;
 		sw_desc = ppc440spe_dma01_prep_mult(ppc440spe_chan,
 				dest, 2, src, src_cnt, scf, len, flags);
-		return sw_desc ? &sw_desc->async_tx : NULL;
-	}
+		वापस sw_desc ? &sw_desc->async_tx : शून्य;
+	पूर्ण
 
-	if (src_cnt == 2 && dst[1] == src[1]) {
+	अगर (src_cnt == 2 && dst[1] == src[1]) अणु
 		sw_desc = ppc440spe_dma01_prep_sum_product(ppc440spe_chan,
 					&dst[1], src, 2, scf, len, flags);
-		return sw_desc ? &sw_desc->async_tx : NULL;
-	}
+		वापस sw_desc ? &sw_desc->async_tx : शून्य;
+	पूर्ण
 
-	if (!(flags & DMA_PREP_PQ_DISABLE_P)) {
+	अगर (!(flags & DMA_PREP_PQ_DISABLE_P)) अणु
 		BUG_ON(!dst[0]);
 		dst_cnt++;
 		flags |= DMA_PREP_ZERO_P;
-	}
+	पूर्ण
 
-	if (!(flags & DMA_PREP_PQ_DISABLE_Q)) {
+	अगर (!(flags & DMA_PREP_PQ_DISABLE_Q)) अणु
 		BUG_ON(!dst[1]);
 		dst_cnt++;
 		flags |= DMA_PREP_ZERO_Q;
-	}
+	पूर्ण
 
 	BUG_ON(!dst_cnt);
 
@@ -2558,60 +2559,60 @@ static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_pq(
 		ppc440spe_chan->device->id, __func__, src_cnt, len,
 		flags & DMA_PREP_INTERRUPT ? 1 : 0);
 
-	switch (ppc440spe_chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
+	चयन (ppc440spe_chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
 		sw_desc = ppc440spe_dma01_prep_pq(ppc440spe_chan,
 				dst, dst_cnt, src, src_cnt, scf,
 				len, flags);
-		break;
+		अवरोध;
 
-	case PPC440SPE_XOR_ID:
+	हाल PPC440SPE_XOR_ID:
 		sw_desc = ppc440spe_dma2_prep_pq(ppc440spe_chan,
 				dst, dst_cnt, src, src_cnt, scf,
 				len, flags);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return sw_desc ? &sw_desc->async_tx : NULL;
-}
+	वापस sw_desc ? &sw_desc->async_tx : शून्य;
+पूर्ण
 
 /**
- * ppc440spe_adma_prep_dma_pqzero_sum - prepare CDB group for
+ * ppc440spe_adma_prep_dma_pqzero_sum - prepare CDB group क्रम
  * a PQ_ZERO_SUM operation
  */
-static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_pqzero_sum(
-		struct dma_chan *chan, dma_addr_t *pq, dma_addr_t *src,
-		unsigned int src_cnt, const unsigned char *scf, size_t len,
-		enum sum_check_flags *pqres, unsigned long flags)
-{
-	struct ppc440spe_adma_chan *ppc440spe_chan;
-	struct ppc440spe_adma_desc_slot *sw_desc, *iter;
+अटल काष्ठा dma_async_tx_descriptor *ppc440spe_adma_prep_dma_pqzero_sum(
+		काष्ठा dma_chan *chan, dma_addr_t *pq, dma_addr_t *src,
+		अचिन्हित पूर्णांक src_cnt, स्थिर अचिन्हित अक्षर *scf, माप_प्रकार len,
+		क्रमागत sum_check_flags *pqres, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा ppc440spe_adma_chan *ppc440spe_chan;
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc, *iter;
 	dma_addr_t pdest, qdest;
-	int slot_cnt, slots_per_op, idst, dst_cnt;
+	पूर्णांक slot_cnt, slots_per_op, idst, dst_cnt;
 
 	ppc440spe_chan = to_ppc440spe_adma_chan(chan);
 
-	if (flags & DMA_PREP_PQ_DISABLE_P)
+	अगर (flags & DMA_PREP_PQ_DISABLE_P)
 		pdest = 0;
-	else
+	अन्यथा
 		pdest = pq[0];
 
-	if (flags & DMA_PREP_PQ_DISABLE_Q)
+	अगर (flags & DMA_PREP_PQ_DISABLE_Q)
 		qdest = 0;
-	else
+	अन्यथा
 		qdest = pq[1];
 
 	ADMA_LL_DBG(prep_dma_pqzero_sum_dbg(ppc440spe_chan->device->id,
 					    src, src_cnt, scf));
 
-	/* Always use WXOR for P/Q calculations (two destinations).
-	 * Need 1 or 2 extra slots to verify results are zero.
+	/* Always use WXOR क्रम P/Q calculations (two destinations).
+	 * Need 1 or 2 extra slots to verअगरy results are zero.
 	 */
 	idst = dst_cnt = (pdest && qdest) ? 2 : 1;
 
 	/* One additional slot per destination to clone P/Q
-	 * before calculation (we have to preserve destinations).
+	 * beक्रमe calculation (we have to preserve destinations).
 	 */
 	slot_cnt = src_cnt + dst_cnt * 2;
 	slots_per_op = 1;
@@ -2619,26 +2620,26 @@ static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_pqzero_sum(
 	spin_lock_bh(&ppc440spe_chan->lock);
 	sw_desc = ppc440spe_adma_alloc_slots(ppc440spe_chan, slot_cnt,
 					     slots_per_op);
-	if (sw_desc) {
+	अगर (sw_desc) अणु
 		ppc440spe_desc_init_dma01pqzero_sum(sw_desc, dst_cnt, src_cnt);
 
-		/* Setup byte count for each slot just allocated */
+		/* Setup byte count क्रम each slot just allocated */
 		sw_desc->async_tx.flags = flags;
-		list_for_each_entry(iter, &sw_desc->group_list, chain_node) {
+		list_क्रम_each_entry(iter, &sw_desc->group_list, chain_node) अणु
 			ppc440spe_desc_set_byte_count(iter, ppc440spe_chan,
 						      len);
 			iter->unmap_len = len;
-		}
+		पूर्ण
 
-		if (pdest) {
-			struct dma_cdb *hw_desc;
-			struct ppc440spe_adma_chan *chan;
+		अगर (pdest) अणु
+			काष्ठा dma_cdb *hw_desc;
+			काष्ठा ppc440spe_adma_chan *chan;
 
 			iter = sw_desc->group_head;
 			chan = to_ppc440spe_adma_chan(iter->async_tx.chan);
-			memset(iter->hw_desc, 0, sizeof(struct dma_cdb));
+			स_रखो(iter->hw_desc, 0, माप(काष्ठा dma_cdb));
 			iter->hw_next = list_entry(iter->chain_node.next,
-						struct ppc440spe_adma_desc_slot,
+						काष्ठा ppc440spe_adma_desc_slot,
 						chain_node);
 			hw_desc = iter->hw_desc;
 			hw_desc->opc = DMA_CDB_OPC_MV_SG1_SG2;
@@ -2652,25 +2653,25 @@ static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_pqzero_sum(
 			iter->unmap_len = 0;
 			/* override pdest to preserve original P */
 			pdest = ppc440spe_chan->pdest;
-		}
-		if (qdest) {
-			struct dma_cdb *hw_desc;
-			struct ppc440spe_adma_chan *chan;
+		पूर्ण
+		अगर (qdest) अणु
+			काष्ठा dma_cdb *hw_desc;
+			काष्ठा ppc440spe_adma_chan *chan;
 
 			iter = list_first_entry(&sw_desc->group_list,
-						struct ppc440spe_adma_desc_slot,
+						काष्ठा ppc440spe_adma_desc_slot,
 						chain_node);
 			chan = to_ppc440spe_adma_chan(iter->async_tx.chan);
 
-			if (pdest) {
+			अगर (pdest) अणु
 				iter = list_entry(iter->chain_node.next,
-						struct ppc440spe_adma_desc_slot,
+						काष्ठा ppc440spe_adma_desc_slot,
 						chain_node);
-			}
+			पूर्ण
 
-			memset(iter->hw_desc, 0, sizeof(struct dma_cdb));
+			स_रखो(iter->hw_desc, 0, माप(काष्ठा dma_cdb));
 			iter->hw_next = list_entry(iter->chain_node.next,
-						struct ppc440spe_adma_desc_slot,
+						काष्ठा ppc440spe_adma_desc_slot,
 						chain_node);
 			hw_desc = iter->hw_desc;
 			hw_desc->opc = DMA_CDB_OPC_MV_SG1_SG2;
@@ -2684,86 +2685,86 @@ static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_pqzero_sum(
 			iter->unmap_len = 0;
 			/* override qdest to preserve original Q */
 			qdest = ppc440spe_chan->qdest;
-		}
+		पूर्ण
 
-		/* Setup destinations for P/Q ops */
+		/* Setup destinations क्रम P/Q ops */
 		ppc440spe_adma_pqzero_sum_set_dest(sw_desc, pdest, qdest);
 
-		/* Setup zero QWORDs into DCHECK CDBs */
+		/* Setup zero QWORDs पूर्णांकo DCHECK CDBs */
 		idst = dst_cnt;
-		list_for_each_entry_reverse(iter, &sw_desc->group_list,
-					    chain_node) {
+		list_क्रम_each_entry_reverse(iter, &sw_desc->group_list,
+					    chain_node) अणु
 			/*
 			 * The last CDB corresponds to Q-parity check,
-			 * the one before last CDB corresponds
+			 * the one beक्रमe last CDB corresponds
 			 * P-parity check
 			 */
-			if (idst == DMA_DEST_MAX_NUM) {
-				if (idst == dst_cnt) {
+			अगर (idst == DMA_DEST_MAX_NUM) अणु
+				अगर (idst == dst_cnt) अणु
 					set_bit(PPC440SPE_DESC_QCHECK,
 						&iter->flags);
-				} else {
+				पूर्ण अन्यथा अणु
 					set_bit(PPC440SPE_DESC_PCHECK,
 						&iter->flags);
-				}
-			} else {
-				if (qdest) {
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (qdest) अणु
 					set_bit(PPC440SPE_DESC_QCHECK,
 						&iter->flags);
-				} else {
+				पूर्ण अन्यथा अणु
 					set_bit(PPC440SPE_DESC_PCHECK,
 						&iter->flags);
-				}
-			}
+				पूर्ण
+			पूर्ण
 			iter->xor_check_result = pqres;
 
 			/*
-			 * set it to zero, if check fail then result will
+			 * set it to zero, अगर check fail then result will
 			 * be updated
 			 */
 			*iter->xor_check_result = 0;
 			ppc440spe_desc_set_dcheck(iter, ppc440spe_chan,
 				ppc440spe_qword);
 
-			if (!(--dst_cnt))
-				break;
-		}
+			अगर (!(--dst_cnt))
+				अवरोध;
+		पूर्ण
 
-		/* Setup sources and mults for P/Q ops */
-		list_for_each_entry_continue_reverse(iter, &sw_desc->group_list,
-						     chain_node) {
-			struct ppc440spe_adma_chan *chan;
+		/* Setup sources and mults क्रम P/Q ops */
+		list_क्रम_each_entry_जारी_reverse(iter, &sw_desc->group_list,
+						     chain_node) अणु
+			काष्ठा ppc440spe_adma_chan *chan;
 			u32 mult_dst;
 
 			chan = to_ppc440spe_adma_chan(iter->async_tx.chan);
 			ppc440spe_desc_set_src_addr(iter, chan, 0,
 						    DMA_CUED_XOR_HB,
 						    src[src_cnt - 1]);
-			if (qdest) {
+			अगर (qdest) अणु
 				mult_dst = (dst_cnt - 1) ? DMA_CDB_SG_DST2 :
 							   DMA_CDB_SG_DST1;
 				ppc440spe_desc_set_src_mult(iter, chan,
 							    DMA_CUED_MULT1_OFF,
 							    mult_dst,
 							    scf[src_cnt - 1]);
-			}
-			if (!(--src_cnt))
-				break;
-		}
-	}
+			पूर्ण
+			अगर (!(--src_cnt))
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&ppc440spe_chan->lock);
-	return sw_desc ? &sw_desc->async_tx : NULL;
-}
+	वापस sw_desc ? &sw_desc->async_tx : शून्य;
+पूर्ण
 
 /**
- * ppc440spe_adma_prep_dma_xor_zero_sum - prepare CDB group for
+ * ppc440spe_adma_prep_dma_xor_zero_sum - prepare CDB group क्रम
  * XOR ZERO_SUM operation
  */
-static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_xor_zero_sum(
-		struct dma_chan *chan, dma_addr_t *src, unsigned int src_cnt,
-		size_t len, enum sum_check_flags *result, unsigned long flags)
-{
-	struct dma_async_tx_descriptor *tx;
+अटल काष्ठा dma_async_tx_descriptor *ppc440spe_adma_prep_dma_xor_zero_sum(
+		काष्ठा dma_chan *chan, dma_addr_t *src, अचिन्हित पूर्णांक src_cnt,
+		माप_प्रकार len, क्रमागत sum_check_flags *result, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा dma_async_tx_descriptor *tx;
 	dma_addr_t pq[2];
 
 	/* validate P, disable Q */
@@ -2774,41 +2775,41 @@ static struct dma_async_tx_descriptor *ppc440spe_adma_prep_dma_xor_zero_sum(
 	tx = ppc440spe_adma_prep_dma_pqzero_sum(chan, pq, &src[1],
 						src_cnt - 1, 0, len,
 						result, flags);
-	return tx;
-}
+	वापस tx;
+पूर्ण
 
 /**
- * ppc440spe_adma_set_dest - set destination address into descriptor
+ * ppc440spe_adma_set_dest - set destination address पूर्णांकo descriptor
  */
-static void ppc440spe_adma_set_dest(struct ppc440spe_adma_desc_slot *sw_desc,
-		dma_addr_t addr, int index)
-{
-	struct ppc440spe_adma_chan *chan;
+अटल व्योम ppc440spe_adma_set_dest(काष्ठा ppc440spe_adma_desc_slot *sw_desc,
+		dma_addr_t addr, पूर्णांक index)
+अणु
+	काष्ठा ppc440spe_adma_chan *chan;
 
 	BUG_ON(index >= sw_desc->dst_cnt);
 
 	chan = to_ppc440spe_adma_chan(sw_desc->async_tx.chan);
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
-		/* to do: support transfers lengths >
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
+		/* to करो: support transfers lengths >
 		 * PPC440SPE_ADMA_DMA/XOR_MAX_BYTE_COUNT
 		 */
 		ppc440spe_desc_set_dest_addr(sw_desc->group_head,
 			chan, 0, addr, index);
-		break;
-	case PPC440SPE_XOR_ID:
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
 		sw_desc = ppc440spe_get_group_entry(sw_desc, index);
 		ppc440spe_desc_set_dest_addr(sw_desc,
 			chan, 0, addr, index);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void ppc440spe_adma_pq_zero_op(struct ppc440spe_adma_desc_slot *iter,
-		struct ppc440spe_adma_chan *chan, dma_addr_t addr)
-{
+अटल व्योम ppc440spe_adma_pq_zero_op(काष्ठा ppc440spe_adma_desc_slot *iter,
+		काष्ठा ppc440spe_adma_chan *chan, dma_addr_t addr)
+अणु
 	/*  To clear destinations update the descriptor
 	 * (P or Q depending on index) as follows:
 	 * addr is destination (0 corresponds to SG2):
@@ -2821,94 +2822,94 @@ static void ppc440spe_adma_pq_zero_op(struct ppc440spe_adma_desc_slot *iter,
 	/* addr is always SG2 then the mult is always DST1 */
 	ppc440spe_desc_set_src_mult(iter, chan, DMA_CUED_MULT1_OFF,
 				    DMA_CDB_SG_DST1, 1);
-}
+पूर्ण
 
 /**
- * ppc440spe_adma_pq_set_dest - set destination address into descriptor
- * for the PQXOR operation
+ * ppc440spe_adma_pq_set_dest - set destination address पूर्णांकo descriptor
+ * क्रम the PQXOR operation
  */
-static void ppc440spe_adma_pq_set_dest(struct ppc440spe_adma_desc_slot *sw_desc,
-		dma_addr_t *addrs, unsigned long flags)
-{
-	struct ppc440spe_adma_desc_slot *iter;
-	struct ppc440spe_adma_chan *chan;
+अटल व्योम ppc440spe_adma_pq_set_dest(काष्ठा ppc440spe_adma_desc_slot *sw_desc,
+		dma_addr_t *addrs, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा ppc440spe_adma_desc_slot *iter;
+	काष्ठा ppc440spe_adma_chan *chan;
 	dma_addr_t paddr, qaddr;
 	dma_addr_t addr = 0, ppath, qpath;
-	int index = 0, i;
+	पूर्णांक index = 0, i;
 
 	chan = to_ppc440spe_adma_chan(sw_desc->async_tx.chan);
 
-	if (flags & DMA_PREP_PQ_DISABLE_P)
+	अगर (flags & DMA_PREP_PQ_DISABLE_P)
 		paddr = 0;
-	else
+	अन्यथा
 		paddr = addrs[0];
 
-	if (flags & DMA_PREP_PQ_DISABLE_Q)
+	अगर (flags & DMA_PREP_PQ_DISABLE_Q)
 		qaddr = 0;
-	else
+	अन्यथा
 		qaddr = addrs[1];
 
-	if (!paddr || !qaddr)
+	अगर (!paddr || !qaddr)
 		addr = paddr ? paddr : qaddr;
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
 		/* walk through the WXOR source list and set P/Q-destinations
-		 * for each slot:
+		 * क्रम each slot:
 		 */
-		if (!test_bit(PPC440SPE_DESC_RXOR, &sw_desc->flags)) {
+		अगर (!test_bit(PPC440SPE_DESC_RXOR, &sw_desc->flags)) अणु
 			/* This is WXOR-only chain; may have 1/2 zero descs */
-			if (test_bit(PPC440SPE_ZERO_P, &sw_desc->flags))
+			अगर (test_bit(PPC440SPE_ZERO_P, &sw_desc->flags))
 				index++;
-			if (test_bit(PPC440SPE_ZERO_Q, &sw_desc->flags))
+			अगर (test_bit(PPC440SPE_ZERO_Q, &sw_desc->flags))
 				index++;
 
 			iter = ppc440spe_get_group_entry(sw_desc, index);
-			if (addr) {
+			अगर (addr) अणु
 				/* one destination */
-				list_for_each_entry_from(iter,
+				list_क्रम_each_entry_from(iter,
 					&sw_desc->group_list, chain_node)
 					ppc440spe_desc_set_dest_addr(iter, chan,
 						DMA_CUED_XOR_BASE, addr, 0);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* two destinations */
-				list_for_each_entry_from(iter,
-					&sw_desc->group_list, chain_node) {
+				list_क्रम_each_entry_from(iter,
+					&sw_desc->group_list, chain_node) अणु
 					ppc440spe_desc_set_dest_addr(iter, chan,
 						DMA_CUED_XOR_BASE, paddr, 0);
 					ppc440spe_desc_set_dest_addr(iter, chan,
 						DMA_CUED_XOR_BASE, qaddr, 1);
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if (index) {
+			अगर (index) अणु
 				/*  To clear destinations update the descriptor
 				 * (1st,2nd, or both depending on flags)
 				 */
 				index = 0;
-				if (test_bit(PPC440SPE_ZERO_P,
-						&sw_desc->flags)) {
+				अगर (test_bit(PPC440SPE_ZERO_P,
+						&sw_desc->flags)) अणु
 					iter = ppc440spe_get_group_entry(
 							sw_desc, index++);
 					ppc440spe_adma_pq_zero_op(iter, chan,
 							paddr);
-				}
+				पूर्ण
 
-				if (test_bit(PPC440SPE_ZERO_Q,
-						&sw_desc->flags)) {
+				अगर (test_bit(PPC440SPE_ZERO_Q,
+						&sw_desc->flags)) अणु
 					iter = ppc440spe_get_group_entry(
 							sw_desc, index++);
 					ppc440spe_adma_pq_zero_op(iter, chan,
 							qaddr);
-				}
+				पूर्ण
 
-				return;
-			}
-		} else {
+				वापस;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* This is RXOR-only or RXOR/WXOR mixed chain */
 
-			/* If we want to include destination into calculations,
+			/* If we want to include destination पूर्णांकo calculations,
 			 * then make dest addresses cued with mult=1 (XOR).
 			 */
 			ppath = test_bit(PPC440SPE_ZERO_P, &sw_desc->flags) ?
@@ -2925,23 +2926,23 @@ static void ppc440spe_adma_pq_set_dest(struct ppc440spe_adma_desc_slot *sw_desc,
 			ppc440spe_desc_set_dest_addr(iter, chan,
 						paddr ? ppath : qpath,
 						paddr ? paddr : qaddr, 0);
-			if (!addr) {
+			अगर (!addr) अणु
 				/* two destinations */
 				iter = ppc440spe_get_group_entry(sw_desc,
 								 index++);
 				ppc440spe_desc_set_dest_addr(iter, chan,
 						qpath, qaddr, 0);
-			}
+			पूर्ण
 
-			if (test_bit(PPC440SPE_DESC_WXOR, &sw_desc->flags)) {
-				/* Setup destination(s) in remaining WXOR
+			अगर (test_bit(PPC440SPE_DESC_WXOR, &sw_desc->flags)) अणु
+				/* Setup destination(s) in reमुख्यing WXOR
 				 * slots
 				 */
 				iter = ppc440spe_get_group_entry(sw_desc,
 								 index);
-				if (addr) {
+				अगर (addr) अणु
 					/* one destination */
-					list_for_each_entry_from(iter,
+					list_क्रम_each_entry_from(iter,
 					    &sw_desc->group_list,
 					    chain_node)
 						ppc440spe_desc_set_dest_addr(
@@ -2949,11 +2950,11 @@ static void ppc440spe_adma_pq_set_dest(struct ppc440spe_adma_desc_slot *sw_desc,
 							DMA_CUED_XOR_BASE,
 							addr, 0);
 
-				} else {
+				पूर्ण अन्यथा अणु
 					/* two destinations */
-					list_for_each_entry_from(iter,
+					list_क्रम_each_entry_from(iter,
 					    &sw_desc->group_list,
-					    chain_node) {
+					    chain_node) अणु
 						ppc440spe_desc_set_dest_addr(
 							iter, chan,
 							DMA_CUED_XOR_BASE,
@@ -2962,17 +2963,17 @@ static void ppc440spe_adma_pq_set_dest(struct ppc440spe_adma_desc_slot *sw_desc,
 							iter, chan,
 							DMA_CUED_XOR_BASE,
 							qaddr, 1);
-					}
-				}
-			}
+					पूर्ण
+				पूर्ण
+			पूर्ण
 
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case PPC440SPE_XOR_ID:
+	हाल PPC440SPE_XOR_ID:
 		/* DMA2 descriptors have only 1 destination, so there are
-		 * two chains - one for each dest.
-		 * If we want to include destination into calculations,
+		 * two chains - one क्रम each dest.
+		 * If we want to include destination पूर्णांकo calculations,
 		 * then make dest addresses cued with mult=1 (XOR).
 		 */
 		ppath = test_bit(PPC440SPE_ZERO_P, &sw_desc->flags) ?
@@ -2986,308 +2987,308 @@ static void ppc440spe_adma_pq_set_dest(struct ppc440spe_adma_desc_slot *sw_desc,
 					(1 << DMA_CUED_MULT1_OFF);
 
 		iter = ppc440spe_get_group_entry(sw_desc, 0);
-		for (i = 0; i < sw_desc->descs_per_op; i++) {
+		क्रम (i = 0; i < sw_desc->descs_per_op; i++) अणु
 			ppc440spe_desc_set_dest_addr(iter, chan,
 				paddr ? ppath : qpath,
 				paddr ? paddr : qaddr, 0);
 			iter = list_entry(iter->chain_node.next,
-					  struct ppc440spe_adma_desc_slot,
+					  काष्ठा ppc440spe_adma_desc_slot,
 					  chain_node);
-		}
+		पूर्ण
 
-		if (!addr) {
+		अगर (!addr) अणु
 			/* Two destinations; setup Q here */
 			iter = ppc440spe_get_group_entry(sw_desc,
 				sw_desc->descs_per_op);
-			for (i = 0; i < sw_desc->descs_per_op; i++) {
+			क्रम (i = 0; i < sw_desc->descs_per_op; i++) अणु
 				ppc440spe_desc_set_dest_addr(iter,
 					chan, qpath, qaddr, 0);
 				iter = list_entry(iter->chain_node.next,
-						struct ppc440spe_adma_desc_slot,
+						काष्ठा ppc440spe_adma_desc_slot,
 						chain_node);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * ppc440spe_adma_pq_zero_sum_set_dest - set destination address into descriptor
- * for the PQ_ZERO_SUM operation
+ * ppc440spe_adma_pq_zero_sum_set_dest - set destination address पूर्णांकo descriptor
+ * क्रम the PQ_ZERO_SUM operation
  */
-static void ppc440spe_adma_pqzero_sum_set_dest(
-		struct ppc440spe_adma_desc_slot *sw_desc,
+अटल व्योम ppc440spe_adma_pqzero_sum_set_dest(
+		काष्ठा ppc440spe_adma_desc_slot *sw_desc,
 		dma_addr_t paddr, dma_addr_t qaddr)
-{
-	struct ppc440spe_adma_desc_slot *iter, *end;
-	struct ppc440spe_adma_chan *chan;
+अणु
+	काष्ठा ppc440spe_adma_desc_slot *iter, *end;
+	काष्ठा ppc440spe_adma_chan *chan;
 	dma_addr_t addr = 0;
-	int idx;
+	पूर्णांक idx;
 
 	chan = to_ppc440spe_adma_chan(sw_desc->async_tx.chan);
 
 	/* walk through the WXOR source list and set P/Q-destinations
-	 * for each slot
+	 * क्रम each slot
 	 */
 	idx = (paddr && qaddr) ? 2 : 1;
 	/* set end */
-	list_for_each_entry_reverse(end, &sw_desc->group_list,
-				    chain_node) {
-		if (!(--idx))
-			break;
-	}
+	list_क्रम_each_entry_reverse(end, &sw_desc->group_list,
+				    chain_node) अणु
+		अगर (!(--idx))
+			अवरोध;
+	पूर्ण
 	/* set start */
 	idx = (paddr && qaddr) ? 2 : 1;
 	iter = ppc440spe_get_group_entry(sw_desc, idx);
 
-	if (paddr && qaddr) {
+	अगर (paddr && qaddr) अणु
 		/* two destinations */
-		list_for_each_entry_from(iter, &sw_desc->group_list,
-					 chain_node) {
-			if (unlikely(iter == end))
-				break;
+		list_क्रम_each_entry_from(iter, &sw_desc->group_list,
+					 chain_node) अणु
+			अगर (unlikely(iter == end))
+				अवरोध;
 			ppc440spe_desc_set_dest_addr(iter, chan,
 						DMA_CUED_XOR_BASE, paddr, 0);
 			ppc440spe_desc_set_dest_addr(iter, chan,
 						DMA_CUED_XOR_BASE, qaddr, 1);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* one destination */
 		addr = paddr ? paddr : qaddr;
-		list_for_each_entry_from(iter, &sw_desc->group_list,
-					 chain_node) {
-			if (unlikely(iter == end))
-				break;
+		list_क्रम_each_entry_from(iter, &sw_desc->group_list,
+					 chain_node) अणु
+			अगर (unlikely(iter == end))
+				अवरोध;
 			ppc440spe_desc_set_dest_addr(iter, chan,
 						DMA_CUED_XOR_BASE, addr, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/*  The remaining descriptors are DATACHECK. These have no need in
+	/*  The reमुख्यing descriptors are DATACHECK. These have no need in
 	 * destination. Actually, these destinations are used there
-	 * as sources for check operation. So, set addr as source.
+	 * as sources क्रम check operation. So, set addr as source.
 	 */
 	ppc440spe_desc_set_src_addr(end, chan, 0, 0, addr ? addr : paddr);
 
-	if (!addr) {
+	अगर (!addr) अणु
 		end = list_entry(end->chain_node.next,
-				 struct ppc440spe_adma_desc_slot, chain_node);
+				 काष्ठा ppc440spe_adma_desc_slot, chain_node);
 		ppc440spe_desc_set_src_addr(end, chan, 0, 0, qaddr);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ppc440spe_desc_set_xor_src_cnt - set source count into descriptor
+ * ppc440spe_desc_set_xor_src_cnt - set source count पूर्णांकo descriptor
  */
-static inline void ppc440spe_desc_set_xor_src_cnt(
-			struct ppc440spe_adma_desc_slot *desc,
-			int src_cnt)
-{
-	struct xor_cb *hw_desc = desc->hw_desc;
+अटल अंतरभूत व्योम ppc440spe_desc_set_xor_src_cnt(
+			काष्ठा ppc440spe_adma_desc_slot *desc,
+			पूर्णांक src_cnt)
+अणु
+	काष्ठा xor_cb *hw_desc = desc->hw_desc;
 
 	hw_desc->cbc &= ~XOR_CDCR_OAC_MSK;
 	hw_desc->cbc |= src_cnt;
-}
+पूर्ण
 
 /**
- * ppc440spe_adma_pq_set_src - set source address into descriptor
+ * ppc440spe_adma_pq_set_src - set source address पूर्णांकo descriptor
  */
-static void ppc440spe_adma_pq_set_src(struct ppc440spe_adma_desc_slot *sw_desc,
-		dma_addr_t addr, int index)
-{
-	struct ppc440spe_adma_chan *chan;
+अटल व्योम ppc440spe_adma_pq_set_src(काष्ठा ppc440spe_adma_desc_slot *sw_desc,
+		dma_addr_t addr, पूर्णांक index)
+अणु
+	काष्ठा ppc440spe_adma_chan *chan;
 	dma_addr_t haddr = 0;
-	struct ppc440spe_adma_desc_slot *iter = NULL;
+	काष्ठा ppc440spe_adma_desc_slot *iter = शून्य;
 
 	chan = to_ppc440spe_adma_chan(sw_desc->async_tx.chan);
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
-		/* DMA0,1 may do: WXOR, RXOR, RXOR+WXORs chain
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
+		/* DMA0,1 may करो: WXOR, RXOR, RXOR+WXORs chain
 		 */
-		if (test_bit(PPC440SPE_DESC_RXOR, &sw_desc->flags)) {
+		अगर (test_bit(PPC440SPE_DESC_RXOR, &sw_desc->flags)) अणु
 			/* RXOR-only or RXOR/WXOR operation */
-			int iskip = test_bit(PPC440SPE_DESC_RXOR12,
+			पूर्णांक iskip = test_bit(PPC440SPE_DESC_RXOR12,
 				&sw_desc->flags) ?  2 : 3;
 
-			if (index == 0) {
+			अगर (index == 0) अणु
 				/* 1st slot (RXOR) */
 				/* setup sources region (R1-2-3, R1-2-4,
 				 * or R1-2-5)
 				 */
-				if (test_bit(PPC440SPE_DESC_RXOR12,
+				अगर (test_bit(PPC440SPE_DESC_RXOR12,
 						&sw_desc->flags))
 					haddr = DMA_RXOR12 <<
 						DMA_CUED_REGION_OFF;
-				else if (test_bit(PPC440SPE_DESC_RXOR123,
+				अन्यथा अगर (test_bit(PPC440SPE_DESC_RXOR123,
 				    &sw_desc->flags))
 					haddr = DMA_RXOR123 <<
 						DMA_CUED_REGION_OFF;
-				else if (test_bit(PPC440SPE_DESC_RXOR124,
+				अन्यथा अगर (test_bit(PPC440SPE_DESC_RXOR124,
 				    &sw_desc->flags))
 					haddr = DMA_RXOR124 <<
 						DMA_CUED_REGION_OFF;
-				else if (test_bit(PPC440SPE_DESC_RXOR125,
+				अन्यथा अगर (test_bit(PPC440SPE_DESC_RXOR125,
 				    &sw_desc->flags))
 					haddr = DMA_RXOR125 <<
 						DMA_CUED_REGION_OFF;
-				else
+				अन्यथा
 					BUG();
 				haddr |= DMA_CUED_XOR_BASE;
 				iter = ppc440spe_get_group_entry(sw_desc, 0);
-			} else if (index < iskip) {
+			पूर्ण अन्यथा अगर (index < iskip) अणु
 				/* 1st slot (RXOR)
 				 * shall actually set source address only once
 				 * instead of first <iskip>
 				 */
-				iter = NULL;
-			} else {
+				iter = शून्य;
+			पूर्ण अन्यथा अणु
 				/* 2nd/3d and next slots (WXOR);
 				 * skip first slot with RXOR
 				 */
 				haddr = DMA_CUED_XOR_HB;
 				iter = ppc440spe_get_group_entry(sw_desc,
 				    index - iskip + sw_desc->dst_cnt);
-			}
-		} else {
-			int znum = 0;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			पूर्णांक znum = 0;
 
 			/* WXOR-only operation; skip first slots with
 			 * zeroing destinations
 			 */
-			if (test_bit(PPC440SPE_ZERO_P, &sw_desc->flags))
+			अगर (test_bit(PPC440SPE_ZERO_P, &sw_desc->flags))
 				znum++;
-			if (test_bit(PPC440SPE_ZERO_Q, &sw_desc->flags))
+			अगर (test_bit(PPC440SPE_ZERO_Q, &sw_desc->flags))
 				znum++;
 
 			haddr = DMA_CUED_XOR_HB;
 			iter = ppc440spe_get_group_entry(sw_desc,
 					index + znum);
-		}
+		पूर्ण
 
-		if (likely(iter)) {
+		अगर (likely(iter)) अणु
 			ppc440spe_desc_set_src_addr(iter, chan, 0, haddr, addr);
 
-			if (!index &&
+			अगर (!index &&
 			    test_bit(PPC440SPE_DESC_RXOR, &sw_desc->flags) &&
-			    sw_desc->dst_cnt == 2) {
-				/* if we have two destinations for RXOR, then
+			    sw_desc->dst_cnt == 2) अणु
+				/* अगर we have two destinations क्रम RXOR, then
 				 * setup source in the second descr too
 				 */
 				iter = ppc440spe_get_group_entry(sw_desc, 1);
 				ppc440spe_desc_set_src_addr(iter, chan, 0,
 					haddr, addr);
-			}
-		}
-		break;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case PPC440SPE_XOR_ID:
-		/* DMA2 may do Biskup */
+	हाल PPC440SPE_XOR_ID:
+		/* DMA2 may करो Biskup */
 		iter = sw_desc->group_head;
-		if (iter->dst_cnt == 2) {
+		अगर (iter->dst_cnt == 2) अणु
 			/* both P & Q calculations required; set P src here */
 			ppc440spe_adma_dma2rxor_set_src(iter, index, addr);
 
-			/* this is for Q */
+			/* this is क्रम Q */
 			iter = ppc440spe_get_group_entry(sw_desc,
 				sw_desc->descs_per_op);
-		}
+		पूर्ण
 		ppc440spe_adma_dma2rxor_set_src(iter, index, addr);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * ppc440spe_adma_memcpy_xor_set_src - set source address into descriptor
+ * ppc440spe_adma_स_नकल_xor_set_src - set source address पूर्णांकo descriptor
  */
-static void ppc440spe_adma_memcpy_xor_set_src(
-		struct ppc440spe_adma_desc_slot *sw_desc,
-		dma_addr_t addr, int index)
-{
-	struct ppc440spe_adma_chan *chan;
+अटल व्योम ppc440spe_adma_स_नकल_xor_set_src(
+		काष्ठा ppc440spe_adma_desc_slot *sw_desc,
+		dma_addr_t addr, पूर्णांक index)
+अणु
+	काष्ठा ppc440spe_adma_chan *chan;
 
 	chan = to_ppc440spe_adma_chan(sw_desc->async_tx.chan);
 	sw_desc = sw_desc->group_head;
 
-	if (likely(sw_desc))
+	अगर (likely(sw_desc))
 		ppc440spe_desc_set_src_addr(sw_desc, chan, index, 0, addr);
-}
+पूर्ण
 
 /**
  * ppc440spe_adma_dma2rxor_inc_addr  -
  */
-static void ppc440spe_adma_dma2rxor_inc_addr(
-		struct ppc440spe_adma_desc_slot *desc,
-		struct ppc440spe_rxor *cursor, int index, int src_cnt)
-{
+अटल व्योम ppc440spe_adma_dma2rxor_inc_addr(
+		काष्ठा ppc440spe_adma_desc_slot *desc,
+		काष्ठा ppc440spe_rxor *cursor, पूर्णांक index, पूर्णांक src_cnt)
+अणु
 	cursor->addr_count++;
-	if (index == src_cnt - 1) {
+	अगर (index == src_cnt - 1) अणु
 		ppc440spe_desc_set_xor_src_cnt(desc, cursor->addr_count);
-	} else if (cursor->addr_count == XOR_MAX_OPS) {
+	पूर्ण अन्यथा अगर (cursor->addr_count == XOR_MAX_OPS) अणु
 		ppc440spe_desc_set_xor_src_cnt(desc, cursor->addr_count);
 		cursor->addr_count = 0;
 		cursor->desc_count++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_adma_dma2rxor_prep_src - setup RXOR types in DMA2 CDB
  */
-static int ppc440spe_adma_dma2rxor_prep_src(
-		struct ppc440spe_adma_desc_slot *hdesc,
-		struct ppc440spe_rxor *cursor, int index,
-		int src_cnt, u32 addr)
-{
-	int rval = 0;
+अटल पूर्णांक ppc440spe_adma_dma2rxor_prep_src(
+		काष्ठा ppc440spe_adma_desc_slot *hdesc,
+		काष्ठा ppc440spe_rxor *cursor, पूर्णांक index,
+		पूर्णांक src_cnt, u32 addr)
+अणु
+	पूर्णांक rval = 0;
 	u32 sign;
-	struct ppc440spe_adma_desc_slot *desc = hdesc;
-	int i;
+	काष्ठा ppc440spe_adma_desc_slot *desc = hdesc;
+	पूर्णांक i;
 
-	for (i = 0; i < cursor->desc_count; i++) {
+	क्रम (i = 0; i < cursor->desc_count; i++) अणु
 		desc = list_entry(hdesc->chain_node.next,
-				  struct ppc440spe_adma_desc_slot,
+				  काष्ठा ppc440spe_adma_desc_slot,
 				  chain_node);
-	}
+	पूर्ण
 
-	switch (cursor->state) {
-	case 0:
-		if (addr == cursor->addrl + cursor->len) {
+	चयन (cursor->state) अणु
+	हाल 0:
+		अगर (addr == cursor->addrl + cursor->len) अणु
 			/* direct RXOR */
 			cursor->state = 1;
 			cursor->xor_count++;
-			if (index == src_cnt-1) {
+			अगर (index == src_cnt-1) अणु
 				ppc440spe_rxor_set_region(desc,
 					cursor->addr_count,
 					DMA_RXOR12 << DMA_CUED_REGION_OFF);
 				ppc440spe_adma_dma2rxor_inc_addr(
 					desc, cursor, index, src_cnt);
-			}
-		} else if (cursor->addrl == addr + cursor->len) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (cursor->addrl == addr + cursor->len) अणु
 			/* reverse RXOR */
 			cursor->state = 1;
 			cursor->xor_count++;
 			set_bit(cursor->addr_count, &desc->reverse_flags[0]);
-			if (index == src_cnt-1) {
+			अगर (index == src_cnt-1) अणु
 				ppc440spe_rxor_set_region(desc,
 					cursor->addr_count,
 					DMA_RXOR12 << DMA_CUED_REGION_OFF);
 				ppc440spe_adma_dma2rxor_inc_addr(
 					desc, cursor, index, src_cnt);
-			}
-		} else {
-			printk(KERN_ERR "Cannot build "
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_ERR "Cannot build "
 				"DMA2 RXOR command block.\n");
 			BUG();
-		}
-		break;
-	case 1:
+		पूर्ण
+		अवरोध;
+	हाल 1:
 		sign = test_bit(cursor->addr_count,
 				desc->reverse_flags)
 			? -1 : 1;
-		if (index == src_cnt-2 || (sign == -1
-			&& addr != cursor->addrl - 2*cursor->len)) {
+		अगर (index == src_cnt-2 || (sign == -1
+			&& addr != cursor->addrl - 2*cursor->len)) अणु
 			cursor->state = 0;
 			cursor->xor_count = 1;
 			cursor->addrl = addr;
@@ -3296,37 +3297,37 @@ static int ppc440spe_adma_dma2rxor_prep_src(
 				DMA_RXOR12 << DMA_CUED_REGION_OFF);
 			ppc440spe_adma_dma2rxor_inc_addr(
 				desc, cursor, index, src_cnt);
-		} else if (addr == cursor->addrl + 2*sign*cursor->len) {
+		पूर्ण अन्यथा अगर (addr == cursor->addrl + 2*sign*cursor->len) अणु
 			cursor->state = 2;
 			cursor->xor_count = 0;
 			ppc440spe_rxor_set_region(desc,
 				cursor->addr_count,
 				DMA_RXOR123 << DMA_CUED_REGION_OFF);
-			if (index == src_cnt-1) {
+			अगर (index == src_cnt-1) अणु
 				ppc440spe_adma_dma2rxor_inc_addr(
 					desc, cursor, index, src_cnt);
-			}
-		} else if (addr == cursor->addrl + 3*cursor->len) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (addr == cursor->addrl + 3*cursor->len) अणु
 			cursor->state = 2;
 			cursor->xor_count = 0;
 			ppc440spe_rxor_set_region(desc,
 				cursor->addr_count,
 				DMA_RXOR124 << DMA_CUED_REGION_OFF);
-			if (index == src_cnt-1) {
+			अगर (index == src_cnt-1) अणु
 				ppc440spe_adma_dma2rxor_inc_addr(
 					desc, cursor, index, src_cnt);
-			}
-		} else if (addr == cursor->addrl + 4*cursor->len) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (addr == cursor->addrl + 4*cursor->len) अणु
 			cursor->state = 2;
 			cursor->xor_count = 0;
 			ppc440spe_rxor_set_region(desc,
 				cursor->addr_count,
 				DMA_RXOR125 << DMA_CUED_REGION_OFF);
-			if (index == src_cnt-1) {
+			अगर (index == src_cnt-1) अणु
 				ppc440spe_adma_dma2rxor_inc_addr(
 					desc, cursor, index, src_cnt);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			cursor->state = 0;
 			cursor->xor_count = 1;
 			cursor->addrl = addr;
@@ -3335,143 +3336,143 @@ static int ppc440spe_adma_dma2rxor_prep_src(
 				DMA_RXOR12 << DMA_CUED_REGION_OFF);
 			ppc440spe_adma_dma2rxor_inc_addr(
 				desc, cursor, index, src_cnt);
-		}
-		break;
-	case 2:
+		पूर्ण
+		अवरोध;
+	हाल 2:
 		cursor->state = 0;
 		cursor->addrl = addr;
 		cursor->xor_count++;
-		if (index) {
+		अगर (index) अणु
 			ppc440spe_adma_dma2rxor_inc_addr(
 				desc, cursor, index, src_cnt);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 /**
  * ppc440spe_adma_dma2rxor_set_src - set RXOR source address; it's assumed that
- *	ppc440spe_adma_dma2rxor_prep_src() has already done prior this call
+ *	ppc440spe_adma_dma2rxor_prep_src() has alपढ़ोy करोne prior this call
  */
-static void ppc440spe_adma_dma2rxor_set_src(
-		struct ppc440spe_adma_desc_slot *desc,
-		int index, dma_addr_t addr)
-{
-	struct xor_cb *xcb = desc->hw_desc;
-	int k = 0, op = 0, lop = 0;
+अटल व्योम ppc440spe_adma_dma2rxor_set_src(
+		काष्ठा ppc440spe_adma_desc_slot *desc,
+		पूर्णांक index, dma_addr_t addr)
+अणु
+	काष्ठा xor_cb *xcb = desc->hw_desc;
+	पूर्णांक k = 0, op = 0, lop = 0;
 
-	/* get the RXOR operand which corresponds to index addr */
-	while (op <= index) {
+	/* get the RXOR opeअक्रम which corresponds to index addr */
+	जबतक (op <= index) अणु
 		lop = op;
-		if (k == XOR_MAX_OPS) {
+		अगर (k == XOR_MAX_OPS) अणु
 			k = 0;
 			desc = list_entry(desc->chain_node.next,
-				struct ppc440spe_adma_desc_slot, chain_node);
+				काष्ठा ppc440spe_adma_desc_slot, chain_node);
 			xcb = desc->hw_desc;
 
-		}
-		if ((xcb->ops[k++].h & (DMA_RXOR12 << DMA_CUED_REGION_OFF)) ==
+		पूर्ण
+		अगर ((xcb->ops[k++].h & (DMA_RXOR12 << DMA_CUED_REGION_OFF)) ==
 		    (DMA_RXOR12 << DMA_CUED_REGION_OFF))
 			op += 2;
-		else
+		अन्यथा
 			op += 3;
-	}
+	पूर्ण
 
 	BUG_ON(k < 1);
 
-	if (test_bit(k-1, desc->reverse_flags)) {
-		/* reverse operand order; put last op in RXOR group */
-		if (index == op - 1)
+	अगर (test_bit(k-1, desc->reverse_flags)) अणु
+		/* reverse opeअक्रम order; put last op in RXOR group */
+		अगर (index == op - 1)
 			ppc440spe_rxor_set_src(desc, k - 1, addr);
-	} else {
-		/* direct operand order; put first op in RXOR group */
-		if (index == lop)
+	पूर्ण अन्यथा अणु
+		/* direct opeअक्रम order; put first op in RXOR group */
+		अगर (index == lop)
 			ppc440spe_rxor_set_src(desc, k - 1, addr);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_adma_dma2rxor_set_mult - set RXOR multipliers; it's assumed that
- *	ppc440spe_adma_dma2rxor_prep_src() has already done prior this call
+ *	ppc440spe_adma_dma2rxor_prep_src() has alपढ़ोy करोne prior this call
  */
-static void ppc440spe_adma_dma2rxor_set_mult(
-		struct ppc440spe_adma_desc_slot *desc,
-		int index, u8 mult)
-{
-	struct xor_cb *xcb = desc->hw_desc;
-	int k = 0, op = 0, lop = 0;
+अटल व्योम ppc440spe_adma_dma2rxor_set_mult(
+		काष्ठा ppc440spe_adma_desc_slot *desc,
+		पूर्णांक index, u8 mult)
+अणु
+	काष्ठा xor_cb *xcb = desc->hw_desc;
+	पूर्णांक k = 0, op = 0, lop = 0;
 
-	/* get the RXOR operand which corresponds to index mult */
-	while (op <= index) {
+	/* get the RXOR opeअक्रम which corresponds to index mult */
+	जबतक (op <= index) अणु
 		lop = op;
-		if (k == XOR_MAX_OPS) {
+		अगर (k == XOR_MAX_OPS) अणु
 			k = 0;
 			desc = list_entry(desc->chain_node.next,
-					  struct ppc440spe_adma_desc_slot,
+					  काष्ठा ppc440spe_adma_desc_slot,
 					  chain_node);
 			xcb = desc->hw_desc;
 
-		}
-		if ((xcb->ops[k++].h & (DMA_RXOR12 << DMA_CUED_REGION_OFF)) ==
+		पूर्ण
+		अगर ((xcb->ops[k++].h & (DMA_RXOR12 << DMA_CUED_REGION_OFF)) ==
 		    (DMA_RXOR12 << DMA_CUED_REGION_OFF))
 			op += 2;
-		else
+		अन्यथा
 			op += 3;
-	}
+	पूर्ण
 
 	BUG_ON(k < 1);
-	if (test_bit(k-1, desc->reverse_flags)) {
+	अगर (test_bit(k-1, desc->reverse_flags)) अणु
 		/* reverse order */
 		ppc440spe_rxor_set_mult(desc, k - 1, op - index - 1, mult);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* direct order */
 		ppc440spe_rxor_set_mult(desc, k - 1, index - lop, mult);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_init_rxor_cursor -
  */
-static void ppc440spe_init_rxor_cursor(struct ppc440spe_rxor *cursor)
-{
-	memset(cursor, 0, sizeof(struct ppc440spe_rxor));
+अटल व्योम ppc440spe_init_rxor_cursor(काष्ठा ppc440spe_rxor *cursor)
+अणु
+	स_रखो(cursor, 0, माप(काष्ठा ppc440spe_rxor));
 	cursor->state = 2;
-}
+पूर्ण
 
 /**
- * ppc440spe_adma_pq_set_src_mult - set multiplication coefficient into
- * descriptor for the PQXOR operation
+ * ppc440spe_adma_pq_set_src_mult - set multiplication coefficient पूर्णांकo
+ * descriptor क्रम the PQXOR operation
  */
-static void ppc440spe_adma_pq_set_src_mult(
-		struct ppc440spe_adma_desc_slot *sw_desc,
-		unsigned char mult, int index, int dst_pos)
-{
-	struct ppc440spe_adma_chan *chan;
+अटल व्योम ppc440spe_adma_pq_set_src_mult(
+		काष्ठा ppc440spe_adma_desc_slot *sw_desc,
+		अचिन्हित अक्षर mult, पूर्णांक index, पूर्णांक dst_pos)
+अणु
+	काष्ठा ppc440spe_adma_chan *chan;
 	u32 mult_idx, mult_dst;
-	struct ppc440spe_adma_desc_slot *iter = NULL, *iter1 = NULL;
+	काष्ठा ppc440spe_adma_desc_slot *iter = शून्य, *iter1 = शून्य;
 
 	chan = to_ppc440spe_adma_chan(sw_desc->async_tx.chan);
 
-	switch (chan->device->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
-		if (test_bit(PPC440SPE_DESC_RXOR, &sw_desc->flags)) {
-			int region = test_bit(PPC440SPE_DESC_RXOR12,
+	चयन (chan->device->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
+		अगर (test_bit(PPC440SPE_DESC_RXOR, &sw_desc->flags)) अणु
+			पूर्णांक region = test_bit(PPC440SPE_DESC_RXOR12,
 					&sw_desc->flags) ? 2 : 3;
 
-			if (index < region) {
+			अगर (index < region) अणु
 				/* RXOR multipliers */
 				iter = ppc440spe_get_group_entry(sw_desc,
 					sw_desc->dst_cnt - 1);
-				if (sw_desc->dst_cnt == 2)
+				अगर (sw_desc->dst_cnt == 2)
 					iter1 = ppc440spe_get_group_entry(
 							sw_desc, 0);
 
 				mult_idx = DMA_CUED_MULT1_OFF + (index << 3);
 				mult_dst = DMA_CDB_SG_SRC;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* WXOR multiplier */
 				iter = ppc440spe_get_group_entry(sw_desc,
 							index - region +
@@ -3479,79 +3480,79 @@ static void ppc440spe_adma_pq_set_src_mult(
 				mult_idx = DMA_CUED_MULT1_OFF;
 				mult_dst = dst_pos ? DMA_CDB_SG_DST2 :
 						     DMA_CDB_SG_DST1;
-			}
-		} else {
-			int znum = 0;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			पूर्णांक znum = 0;
 
 			/* WXOR-only;
-			 * skip first slots with destinations (if ZERO_DST has
+			 * skip first slots with destinations (अगर ZERO_DST has
 			 * place)
 			 */
-			if (test_bit(PPC440SPE_ZERO_P, &sw_desc->flags))
+			अगर (test_bit(PPC440SPE_ZERO_P, &sw_desc->flags))
 				znum++;
-			if (test_bit(PPC440SPE_ZERO_Q, &sw_desc->flags))
+			अगर (test_bit(PPC440SPE_ZERO_Q, &sw_desc->flags))
 				znum++;
 
 			iter = ppc440spe_get_group_entry(sw_desc, index + znum);
 			mult_idx = DMA_CUED_MULT1_OFF;
 			mult_dst = dst_pos ? DMA_CDB_SG_DST2 : DMA_CDB_SG_DST1;
-		}
+		पूर्ण
 
-		if (likely(iter)) {
+		अगर (likely(iter)) अणु
 			ppc440spe_desc_set_src_mult(iter, chan,
 				mult_idx, mult_dst, mult);
 
-			if (unlikely(iter1)) {
-				/* if we have two destinations for RXOR, then
+			अगर (unlikely(iter1)) अणु
+				/* अगर we have two destinations क्रम RXOR, then
 				 * we've just set Q mult. Set-up P now.
 				 */
 				ppc440spe_desc_set_src_mult(iter1, chan,
 					mult_idx, mult_dst, 1);
-			}
+			पूर्ण
 
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case PPC440SPE_XOR_ID:
+	हाल PPC440SPE_XOR_ID:
 		iter = sw_desc->group_head;
-		if (sw_desc->dst_cnt == 2) {
+		अगर (sw_desc->dst_cnt == 2) अणु
 			/* both P & Q calculations required; set P mult here */
 			ppc440spe_adma_dma2rxor_set_mult(iter, index, 1);
 
 			/* and then set Q mult */
 			iter = ppc440spe_get_group_entry(sw_desc,
 			       sw_desc->descs_per_op);
-		}
+		पूर्ण
 		ppc440spe_adma_dma2rxor_set_mult(iter, index, mult);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * ppc440spe_adma_free_chan_resources - free the resources allocated
+ * ppc440spe_adma_मुक्त_chan_resources - मुक्त the resources allocated
  */
-static void ppc440spe_adma_free_chan_resources(struct dma_chan *chan)
-{
-	struct ppc440spe_adma_chan *ppc440spe_chan;
-	struct ppc440spe_adma_desc_slot *iter, *_iter;
-	int in_use_descs = 0;
+अटल व्योम ppc440spe_adma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा ppc440spe_adma_chan *ppc440spe_chan;
+	काष्ठा ppc440spe_adma_desc_slot *iter, *_iter;
+	पूर्णांक in_use_descs = 0;
 
 	ppc440spe_chan = to_ppc440spe_adma_chan(chan);
 	ppc440spe_adma_slot_cleanup(ppc440spe_chan);
 
 	spin_lock_bh(&ppc440spe_chan->lock);
-	list_for_each_entry_safe(iter, _iter, &ppc440spe_chan->chain,
-					chain_node) {
+	list_क्रम_each_entry_safe(iter, _iter, &ppc440spe_chan->chain,
+					chain_node) अणु
 		in_use_descs++;
 		list_del(&iter->chain_node);
-	}
-	list_for_each_entry_safe_reverse(iter, _iter,
-			&ppc440spe_chan->all_slots, slot_node) {
+	पूर्ण
+	list_क्रम_each_entry_safe_reverse(iter, _iter,
+			&ppc440spe_chan->all_slots, slot_node) अणु
 		list_del(&iter->slot_node);
-		kfree(iter);
+		kमुक्त(iter);
 		ppc440spe_chan->slots_allocated--;
-	}
-	ppc440spe_chan->last_used = NULL;
+	पूर्ण
+	ppc440spe_chan->last_used = शून्य;
 
 	dev_dbg(ppc440spe_chan->device->common.dev,
 		"ppc440spe adma%d %s slots_allocated %d\n",
@@ -3560,39 +3561,39 @@ static void ppc440spe_adma_free_chan_resources(struct dma_chan *chan)
 	spin_unlock_bh(&ppc440spe_chan->lock);
 
 	/* one is ok since we left it on there on purpose */
-	if (in_use_descs > 1)
-		printk(KERN_ERR "SPE: Freeing %d in use descriptors!\n",
+	अगर (in_use_descs > 1)
+		prपूर्णांकk(KERN_ERR "SPE: Freeing %d in use descriptors!\n",
 			in_use_descs - 1);
-}
+पूर्ण
 
 /**
  * ppc440spe_adma_tx_status - poll the status of an ADMA transaction
  * @chan: ADMA channel handle
- * @cookie: ADMA transaction identifier
- * @txstate: a holder for the current state of the channel
+ * @cookie: ADMA transaction identअगरier
+ * @txstate: a holder क्रम the current state of the channel
  */
-static enum dma_status ppc440spe_adma_tx_status(struct dma_chan *chan,
-			dma_cookie_t cookie, struct dma_tx_state *txstate)
-{
-	struct ppc440spe_adma_chan *ppc440spe_chan;
-	enum dma_status ret;
+अटल क्रमागत dma_status ppc440spe_adma_tx_status(काष्ठा dma_chan *chan,
+			dma_cookie_t cookie, काष्ठा dma_tx_state *txstate)
+अणु
+	काष्ठा ppc440spe_adma_chan *ppc440spe_chan;
+	क्रमागत dma_status ret;
 
 	ppc440spe_chan = to_ppc440spe_adma_chan(chan);
 	ret = dma_cookie_status(chan, cookie, txstate);
-	if (ret == DMA_COMPLETE)
-		return ret;
+	अगर (ret == DMA_COMPLETE)
+		वापस ret;
 
 	ppc440spe_adma_slot_cleanup(ppc440spe_chan);
 
-	return dma_cookie_status(chan, cookie, txstate);
-}
+	वापस dma_cookie_status(chan, cookie, txstate);
+पूर्ण
 
 /**
- * ppc440spe_adma_eot_handler - end of transfer interrupt handler
+ * ppc440spe_adma_eot_handler - end of transfer पूर्णांकerrupt handler
  */
-static irqreturn_t ppc440spe_adma_eot_handler(int irq, void *data)
-{
-	struct ppc440spe_adma_chan *chan = data;
+अटल irqवापस_t ppc440spe_adma_eot_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ppc440spe_adma_chan *chan = data;
 
 	dev_dbg(chan->device->common.dev,
 		"ppc440spe adma%d: %s\n", chan->device->id, __func__);
@@ -3600,16 +3601,16 @@ static irqreturn_t ppc440spe_adma_eot_handler(int irq, void *data)
 	tasklet_schedule(&chan->irq_tasklet);
 	ppc440spe_adma_device_clear_eot_status(chan);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * ppc440spe_adma_err_handler - DMA error interrupt handler;
- *	do the same things as a eot handler
+ * ppc440spe_adma_err_handler - DMA error पूर्णांकerrupt handler;
+ *	करो the same things as a eot handler
  */
-static irqreturn_t ppc440spe_adma_err_handler(int irq, void *data)
-{
-	struct ppc440spe_adma_chan *chan = data;
+अटल irqवापस_t ppc440spe_adma_err_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ppc440spe_adma_chan *chan = data;
 
 	dev_dbg(chan->device->common.dev,
 		"ppc440spe adma%d: %s\n", chan->device->id, __func__);
@@ -3617,45 +3618,45 @@ static irqreturn_t ppc440spe_adma_err_handler(int irq, void *data)
 	tasklet_schedule(&chan->irq_tasklet);
 	ppc440spe_adma_device_clear_eot_status(chan);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * ppc440spe_test_callback - called when test operation has been done
+ * ppc440spe_test_callback - called when test operation has been करोne
  */
-static void ppc440spe_test_callback(void *unused)
-{
+अटल व्योम ppc440spe_test_callback(व्योम *unused)
+अणु
 	complete(&ppc440spe_r6_test_comp);
-}
+पूर्ण
 
 /**
  * ppc440spe_adma_issue_pending - flush all pending descriptors to h/w
  */
-static void ppc440spe_adma_issue_pending(struct dma_chan *chan)
-{
-	struct ppc440spe_adma_chan *ppc440spe_chan;
+अटल व्योम ppc440spe_adma_issue_pending(काष्ठा dma_chan *chan)
+अणु
+	काष्ठा ppc440spe_adma_chan *ppc440spe_chan;
 
 	ppc440spe_chan = to_ppc440spe_adma_chan(chan);
 	dev_dbg(ppc440spe_chan->device->common.dev,
 		"ppc440spe adma%d: %s %d \n", ppc440spe_chan->device->id,
 		__func__, ppc440spe_chan->pending);
 
-	if (ppc440spe_chan->pending) {
+	अगर (ppc440spe_chan->pending) अणु
 		ppc440spe_chan->pending = 0;
 		ppc440spe_chan_append(ppc440spe_chan);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_chan_start_null_xor - initiate the first XOR operation (DMA engines
  *	use FIFOs (as opposite to chains used in XOR) so this is a XOR
- *	specific operation)
+ *	specअगरic operation)
  */
-static void ppc440spe_chan_start_null_xor(struct ppc440spe_adma_chan *chan)
-{
-	struct ppc440spe_adma_desc_slot *sw_desc, *group_start;
+अटल व्योम ppc440spe_chan_start_null_xor(काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc, *group_start;
 	dma_cookie_t cookie;
-	int slot_cnt, slots_per_op;
+	पूर्णांक slot_cnt, slots_per_op;
 
 	dev_dbg(chan->device->common.dev,
 		"ppc440spe adma%d: %s\n", chan->device->id, __func__);
@@ -3663,7 +3664,7 @@ static void ppc440spe_chan_start_null_xor(struct ppc440spe_adma_chan *chan)
 	spin_lock_bh(&chan->lock);
 	slot_cnt = ppc440spe_chan_xor_slot_count(0, 2, &slots_per_op);
 	sw_desc = ppc440spe_adma_alloc_slots(chan, slot_cnt, slots_per_op);
-	if (sw_desc) {
+	अगर (sw_desc) अणु
 		group_start = sw_desc->group_head;
 		list_splice_init(&sw_desc->group_list, &chan->chain);
 		async_tx_ack(&sw_desc->async_tx);
@@ -3684,54 +3685,54 @@ static void ppc440spe_chan_start_null_xor(struct ppc440spe_adma_chan *chan)
 
 		/* run the descriptor */
 		ppc440spe_chan_run(chan);
-	} else
-		printk(KERN_ERR "ppc440spe adma%d"
+	पूर्ण अन्यथा
+		prपूर्णांकk(KERN_ERR "ppc440spe adma%d"
 			" failed to allocate null descriptor\n",
 			chan->device->id);
 	spin_unlock_bh(&chan->lock);
-}
+पूर्ण
 
 /**
  * ppc440spe_test_raid6 - test are RAID-6 capabilities enabled successfully.
- *	For this we just perform one WXOR operation with the same source
- *	and destination addresses, the GF-multiplier is 1; so if RAID-6
+ *	For this we just perक्रमm one WXOR operation with the same source
+ *	and destination addresses, the GF-multiplier is 1; so अगर RAID-6
  *	capabilities are enabled then we'll get src/dst filled with zero.
  */
-static int ppc440spe_test_raid6(struct ppc440spe_adma_chan *chan)
-{
-	struct ppc440spe_adma_desc_slot *sw_desc, *iter;
-	struct page *pg;
-	char *a;
+अटल पूर्णांक ppc440spe_test_raid6(काष्ठा ppc440spe_adma_chan *chan)
+अणु
+	काष्ठा ppc440spe_adma_desc_slot *sw_desc, *iter;
+	काष्ठा page *pg;
+	अक्षर *a;
 	dma_addr_t dma_addr, addrs[2];
-	unsigned long op = 0;
-	int rval = 0;
+	अचिन्हित दीर्घ op = 0;
+	पूर्णांक rval = 0;
 
 	set_bit(PPC440SPE_DESC_WXOR, &op);
 
 	pg = alloc_page(GFP_KERNEL);
-	if (!pg)
-		return -ENOMEM;
+	अगर (!pg)
+		वापस -ENOMEM;
 
 	spin_lock_bh(&chan->lock);
 	sw_desc = ppc440spe_adma_alloc_slots(chan, 1, 1);
-	if (sw_desc) {
-		/* 1 src, 1 dsr, int_ena, WXOR */
+	अगर (sw_desc) अणु
+		/* 1 src, 1 dsr, पूर्णांक_ena, WXOR */
 		ppc440spe_desc_init_dma01pq(sw_desc, 1, 1, 1, op);
-		list_for_each_entry(iter, &sw_desc->group_list, chain_node) {
+		list_क्रम_each_entry(iter, &sw_desc->group_list, chain_node) अणु
 			ppc440spe_desc_set_byte_count(iter, chan, PAGE_SIZE);
 			iter->unmap_len = PAGE_SIZE;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rval = -EFAULT;
 		spin_unlock_bh(&chan->lock);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	spin_unlock_bh(&chan->lock);
 
 	/* Fill the test page with ones */
-	memset(page_address(pg), 0xFF, PAGE_SIZE);
+	स_रखो(page_address(pg), 0xFF, PAGE_SIZE);
 	dma_addr = dma_map_page(chan->device->dev, pg, 0,
-				PAGE_SIZE, DMA_BIDIRECTIONAL);
+				PAGE_SIZE, DMA_BIसूचीECTIONAL);
 
 	/* Setup addresses */
 	ppc440spe_adma_pq_set_src(sw_desc, dma_addr, 0);
@@ -3742,115 +3743,115 @@ static int ppc440spe_test_raid6(struct ppc440spe_adma_chan *chan)
 
 	async_tx_ack(&sw_desc->async_tx);
 	sw_desc->async_tx.callback = ppc440spe_test_callback;
-	sw_desc->async_tx.callback_param = NULL;
+	sw_desc->async_tx.callback_param = शून्य;
 
 	init_completion(&ppc440spe_r6_test_comp);
 
 	ppc440spe_adma_tx_submit(&sw_desc->async_tx);
 	ppc440spe_adma_issue_pending(&chan->common);
 
-	wait_for_completion(&ppc440spe_r6_test_comp);
+	रुको_क्रम_completion(&ppc440spe_r6_test_comp);
 
-	/* Now check if the test page is zeroed */
+	/* Now check अगर the test page is zeroed */
 	a = page_address(pg);
-	if ((*(u32 *)a) == 0 && memcmp(a, a+4, PAGE_SIZE-4) == 0) {
+	अगर ((*(u32 *)a) == 0 && स_भेद(a, a+4, PAGE_SIZE-4) == 0) अणु
 		/* page is zero - RAID-6 enabled */
 		rval = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* RAID-6 was not enabled */
 		rval = -EINVAL;
-	}
-exit:
-	__free_page(pg);
-	return rval;
-}
+	पूर्ण
+निकास:
+	__मुक्त_page(pg);
+	वापस rval;
+पूर्ण
 
-static void ppc440spe_adma_init_capabilities(struct ppc440spe_adma_device *adev)
-{
-	switch (adev->id) {
-	case PPC440SPE_DMA0_ID:
-	case PPC440SPE_DMA1_ID:
+अटल व्योम ppc440spe_adma_init_capabilities(काष्ठा ppc440spe_adma_device *adev)
+अणु
+	चयन (adev->id) अणु
+	हाल PPC440SPE_DMA0_ID:
+	हाल PPC440SPE_DMA1_ID:
 		dma_cap_set(DMA_MEMCPY, adev->common.cap_mask);
 		dma_cap_set(DMA_INTERRUPT, adev->common.cap_mask);
 		dma_cap_set(DMA_PQ, adev->common.cap_mask);
 		dma_cap_set(DMA_PQ_VAL, adev->common.cap_mask);
 		dma_cap_set(DMA_XOR_VAL, adev->common.cap_mask);
-		break;
-	case PPC440SPE_XOR_ID:
+		अवरोध;
+	हाल PPC440SPE_XOR_ID:
 		dma_cap_set(DMA_XOR, adev->common.cap_mask);
 		dma_cap_set(DMA_PQ, adev->common.cap_mask);
 		dma_cap_set(DMA_INTERRUPT, adev->common.cap_mask);
 		adev->common.cap_mask = adev->common.cap_mask;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Set base routines */
 	adev->common.device_alloc_chan_resources =
 				ppc440spe_adma_alloc_chan_resources;
-	adev->common.device_free_chan_resources =
-				ppc440spe_adma_free_chan_resources;
+	adev->common.device_मुक्त_chan_resources =
+				ppc440spe_adma_मुक्त_chan_resources;
 	adev->common.device_tx_status = ppc440spe_adma_tx_status;
 	adev->common.device_issue_pending = ppc440spe_adma_issue_pending;
 
 	/* Set prep routines based on capability */
-	if (dma_has_cap(DMA_MEMCPY, adev->common.cap_mask)) {
-		adev->common.device_prep_dma_memcpy =
-			ppc440spe_adma_prep_dma_memcpy;
-	}
-	if (dma_has_cap(DMA_XOR, adev->common.cap_mask)) {
+	अगर (dma_has_cap(DMA_MEMCPY, adev->common.cap_mask)) अणु
+		adev->common.device_prep_dma_स_नकल =
+			ppc440spe_adma_prep_dma_स_नकल;
+	पूर्ण
+	अगर (dma_has_cap(DMA_XOR, adev->common.cap_mask)) अणु
 		adev->common.max_xor = XOR_MAX_OPS;
 		adev->common.device_prep_dma_xor =
 			ppc440spe_adma_prep_dma_xor;
-	}
-	if (dma_has_cap(DMA_PQ, adev->common.cap_mask)) {
-		switch (adev->id) {
-		case PPC440SPE_DMA0_ID:
+	पूर्ण
+	अगर (dma_has_cap(DMA_PQ, adev->common.cap_mask)) अणु
+		चयन (adev->id) अणु
+		हाल PPC440SPE_DMA0_ID:
 			dma_set_maxpq(&adev->common,
-				DMA0_FIFO_SIZE / sizeof(struct dma_cdb), 0);
-			break;
-		case PPC440SPE_DMA1_ID:
+				DMA0_FIFO_SIZE / माप(काष्ठा dma_cdb), 0);
+			अवरोध;
+		हाल PPC440SPE_DMA1_ID:
 			dma_set_maxpq(&adev->common,
-				DMA1_FIFO_SIZE / sizeof(struct dma_cdb), 0);
-			break;
-		case PPC440SPE_XOR_ID:
+				DMA1_FIFO_SIZE / माप(काष्ठा dma_cdb), 0);
+			अवरोध;
+		हाल PPC440SPE_XOR_ID:
 			adev->common.max_pq = XOR_MAX_OPS * 3;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		adev->common.device_prep_dma_pq =
 			ppc440spe_adma_prep_dma_pq;
-	}
-	if (dma_has_cap(DMA_PQ_VAL, adev->common.cap_mask)) {
-		switch (adev->id) {
-		case PPC440SPE_DMA0_ID:
+	पूर्ण
+	अगर (dma_has_cap(DMA_PQ_VAL, adev->common.cap_mask)) अणु
+		चयन (adev->id) अणु
+		हाल PPC440SPE_DMA0_ID:
 			adev->common.max_pq = DMA0_FIFO_SIZE /
-						sizeof(struct dma_cdb);
-			break;
-		case PPC440SPE_DMA1_ID:
+						माप(काष्ठा dma_cdb);
+			अवरोध;
+		हाल PPC440SPE_DMA1_ID:
 			adev->common.max_pq = DMA1_FIFO_SIZE /
-						sizeof(struct dma_cdb);
-			break;
-		}
+						माप(काष्ठा dma_cdb);
+			अवरोध;
+		पूर्ण
 		adev->common.device_prep_dma_pq_val =
 			ppc440spe_adma_prep_dma_pqzero_sum;
-	}
-	if (dma_has_cap(DMA_XOR_VAL, adev->common.cap_mask)) {
-		switch (adev->id) {
-		case PPC440SPE_DMA0_ID:
+	पूर्ण
+	अगर (dma_has_cap(DMA_XOR_VAL, adev->common.cap_mask)) अणु
+		चयन (adev->id) अणु
+		हाल PPC440SPE_DMA0_ID:
 			adev->common.max_xor = DMA0_FIFO_SIZE /
-						sizeof(struct dma_cdb);
-			break;
-		case PPC440SPE_DMA1_ID:
+						माप(काष्ठा dma_cdb);
+			अवरोध;
+		हाल PPC440SPE_DMA1_ID:
 			adev->common.max_xor = DMA1_FIFO_SIZE /
-						sizeof(struct dma_cdb);
-			break;
-		}
+						माप(काष्ठा dma_cdb);
+			अवरोध;
+		पूर्ण
 		adev->common.device_prep_dma_xor_val =
 			ppc440spe_adma_prep_dma_xor_zero_sum;
-	}
-	if (dma_has_cap(DMA_INTERRUPT, adev->common.cap_mask)) {
-		adev->common.device_prep_dma_interrupt =
-			ppc440spe_adma_prep_dma_interrupt;
-	}
+	पूर्ण
+	अगर (dma_has_cap(DMA_INTERRUPT, adev->common.cap_mask)) अणु
+		adev->common.device_prep_dma_पूर्णांकerrupt =
+			ppc440spe_adma_prep_dma_पूर्णांकerrupt;
+	पूर्ण
 	pr_info("%s: AMCC(R) PPC440SP(E) ADMA Engine: "
 	  "( %s%s%s%s%s%s)\n",
 	  dev_name(adev->dev),
@@ -3860,182 +3861,182 @@ static void ppc440spe_adma_init_capabilities(struct ppc440spe_adma_device *adev)
 	  dma_has_cap(DMA_XOR_VAL, adev->common.cap_mask) ? "xor_val " : "",
 	  dma_has_cap(DMA_MEMCPY, adev->common.cap_mask) ? "memcpy " : "",
 	  dma_has_cap(DMA_INTERRUPT, adev->common.cap_mask) ? "intr " : "");
-}
+पूर्ण
 
-static int ppc440spe_adma_setup_irqs(struct ppc440spe_adma_device *adev,
-				     struct ppc440spe_adma_chan *chan,
-				     int *initcode)
-{
-	struct platform_device *ofdev;
-	struct device_node *np;
-	int ret;
+अटल पूर्णांक ppc440spe_adma_setup_irqs(काष्ठा ppc440spe_adma_device *adev,
+				     काष्ठा ppc440spe_adma_chan *chan,
+				     पूर्णांक *initcode)
+अणु
+	काष्ठा platक्रमm_device *ofdev;
+	काष्ठा device_node *np;
+	पूर्णांक ret;
 
-	ofdev = container_of(adev->dev, struct platform_device, dev);
+	ofdev = container_of(adev->dev, काष्ठा platक्रमm_device, dev);
 	np = ofdev->dev.of_node;
-	if (adev->id != PPC440SPE_XOR_ID) {
+	अगर (adev->id != PPC440SPE_XOR_ID) अणु
 		adev->err_irq = irq_of_parse_and_map(np, 1);
-		if (!adev->err_irq) {
+		अगर (!adev->err_irq) अणु
 			dev_warn(adev->dev, "no err irq resource?\n");
 			*initcode = PPC_ADMA_INIT_IRQ2;
 			adev->err_irq = -ENXIO;
-		} else
+		पूर्ण अन्यथा
 			atomic_inc(&ppc440spe_adma_err_irq_ref);
-	} else {
+	पूर्ण अन्यथा अणु
 		adev->err_irq = -ENXIO;
-	}
+	पूर्ण
 
 	adev->irq = irq_of_parse_and_map(np, 0);
-	if (!adev->irq) {
+	अगर (!adev->irq) अणु
 		dev_err(adev->dev, "no irq resource\n");
 		*initcode = PPC_ADMA_INIT_IRQ1;
 		ret = -ENXIO;
-		goto err_irq_map;
-	}
+		जाओ err_irq_map;
+	पूर्ण
 	dev_dbg(adev->dev, "irq %d, err irq %d\n",
 		adev->irq, adev->err_irq);
 
 	ret = request_irq(adev->irq, ppc440spe_adma_eot_handler,
 			  0, dev_driver_string(adev->dev), chan);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(adev->dev, "can't request irq %d\n",
 			adev->irq);
 		*initcode = PPC_ADMA_INIT_IRQ1;
 		ret = -EIO;
-		goto err_req1;
-	}
+		जाओ err_req1;
+	पूर्ण
 
 	/* only DMA engines have a separate error IRQ
-	 * so it's Ok if err_irq < 0 in XOR engine case.
+	 * so it's Ok अगर err_irq < 0 in XOR engine हाल.
 	 */
-	if (adev->err_irq > 0) {
+	अगर (adev->err_irq > 0) अणु
 		/* both DMA engines share common error IRQ */
 		ret = request_irq(adev->err_irq,
 				  ppc440spe_adma_err_handler,
 				  IRQF_SHARED,
 				  dev_driver_string(adev->dev),
 				  chan);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(adev->dev, "can't request irq %d\n",
 				adev->err_irq);
 			*initcode = PPC_ADMA_INIT_IRQ2;
 			ret = -EIO;
-			goto err_req2;
-		}
-	}
+			जाओ err_req2;
+		पूर्ण
+	पूर्ण
 
-	if (adev->id == PPC440SPE_XOR_ID) {
-		/* enable XOR engine interrupts */
-		iowrite32be(XOR_IE_CBCIE_BIT | XOR_IE_ICBIE_BIT |
+	अगर (adev->id == PPC440SPE_XOR_ID) अणु
+		/* enable XOR engine पूर्णांकerrupts */
+		ioग_लिखो32be(XOR_IE_CBCIE_BIT | XOR_IE_ICBIE_BIT |
 			    XOR_IE_ICIE_BIT | XOR_IE_RPTIE_BIT,
 			    &adev->xor_reg->ier);
-	} else {
+	पूर्ण अन्यथा अणु
 		u32 mask, enable;
 
-		np = of_find_compatible_node(NULL, NULL, "ibm,i2o-440spe");
-		if (!np) {
+		np = of_find_compatible_node(शून्य, शून्य, "ibm,i2o-440spe");
+		अगर (!np) अणु
 			pr_err("%s: can't find I2O device tree node\n",
 				__func__);
 			ret = -ENODEV;
-			goto err_req2;
-		}
+			जाओ err_req2;
+		पूर्ण
 		adev->i2o_reg = of_iomap(np, 0);
-		if (!adev->i2o_reg) {
+		अगर (!adev->i2o_reg) अणु
 			pr_err("%s: failed to map I2O registers\n", __func__);
 			of_node_put(np);
 			ret = -EINVAL;
-			goto err_req2;
-		}
+			जाओ err_req2;
+		पूर्ण
 		of_node_put(np);
-		/* Unmask 'CS FIFO Attention' interrupts and
-		 * enable generating interrupts on errors
+		/* Unmask 'CS FIFO Attention' पूर्णांकerrupts and
+		 * enable generating पूर्णांकerrupts on errors
 		 */
 		enable = (adev->id == PPC440SPE_DMA0_ID) ?
 			 ~(I2O_IOPIM_P0SNE | I2O_IOPIM_P0EM) :
 			 ~(I2O_IOPIM_P1SNE | I2O_IOPIM_P1EM);
-		mask = ioread32(&adev->i2o_reg->iopim) & enable;
-		iowrite32(mask, &adev->i2o_reg->iopim);
-	}
-	return 0;
+		mask = ioपढ़ो32(&adev->i2o_reg->iopim) & enable;
+		ioग_लिखो32(mask, &adev->i2o_reg->iopim);
+	पूर्ण
+	वापस 0;
 
 err_req2:
-	free_irq(adev->irq, chan);
+	मुक्त_irq(adev->irq, chan);
 err_req1:
 	irq_dispose_mapping(adev->irq);
 err_irq_map:
-	if (adev->err_irq > 0) {
-		if (atomic_dec_and_test(&ppc440spe_adma_err_irq_ref))
+	अगर (adev->err_irq > 0) अणु
+		अगर (atomic_dec_and_test(&ppc440spe_adma_err_irq_ref))
 			irq_dispose_mapping(adev->err_irq);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void ppc440spe_adma_release_irqs(struct ppc440spe_adma_device *adev,
-					struct ppc440spe_adma_chan *chan)
-{
+अटल व्योम ppc440spe_adma_release_irqs(काष्ठा ppc440spe_adma_device *adev,
+					काष्ठा ppc440spe_adma_chan *chan)
+अणु
 	u32 mask, disable;
 
-	if (adev->id == PPC440SPE_XOR_ID) {
-		/* disable XOR engine interrupts */
-		mask = ioread32be(&adev->xor_reg->ier);
+	अगर (adev->id == PPC440SPE_XOR_ID) अणु
+		/* disable XOR engine पूर्णांकerrupts */
+		mask = ioपढ़ो32be(&adev->xor_reg->ier);
 		mask &= ~(XOR_IE_CBCIE_BIT | XOR_IE_ICBIE_BIT |
 			  XOR_IE_ICIE_BIT | XOR_IE_RPTIE_BIT);
-		iowrite32be(mask, &adev->xor_reg->ier);
-	} else {
-		/* disable DMAx engine interrupts */
+		ioग_लिखो32be(mask, &adev->xor_reg->ier);
+	पूर्ण अन्यथा अणु
+		/* disable DMAx engine पूर्णांकerrupts */
 		disable = (adev->id == PPC440SPE_DMA0_ID) ?
 			  (I2O_IOPIM_P0SNE | I2O_IOPIM_P0EM) :
 			  (I2O_IOPIM_P1SNE | I2O_IOPIM_P1EM);
-		mask = ioread32(&adev->i2o_reg->iopim) | disable;
-		iowrite32(mask, &adev->i2o_reg->iopim);
-	}
-	free_irq(adev->irq, chan);
+		mask = ioपढ़ो32(&adev->i2o_reg->iopim) | disable;
+		ioग_लिखो32(mask, &adev->i2o_reg->iopim);
+	पूर्ण
+	मुक्त_irq(adev->irq, chan);
 	irq_dispose_mapping(adev->irq);
-	if (adev->err_irq > 0) {
-		free_irq(adev->err_irq, chan);
-		if (atomic_dec_and_test(&ppc440spe_adma_err_irq_ref)) {
+	अगर (adev->err_irq > 0) अणु
+		मुक्त_irq(adev->err_irq, chan);
+		अगर (atomic_dec_and_test(&ppc440spe_adma_err_irq_ref)) अणु
 			irq_dispose_mapping(adev->err_irq);
 			iounmap(adev->i2o_reg);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * ppc440spe_adma_probe - probe the asynch device
  */
-static int ppc440spe_adma_probe(struct platform_device *ofdev)
-{
-	struct device_node *np = ofdev->dev.of_node;
-	struct resource res;
-	struct ppc440spe_adma_device *adev;
-	struct ppc440spe_adma_chan *chan;
-	struct ppc_dma_chan_ref *ref, *_ref;
-	int ret = 0, initcode = PPC_ADMA_INIT_OK;
-	const u32 *idx;
-	int len;
-	void *regs;
+अटल पूर्णांक ppc440spe_adma_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	काष्ठा resource res;
+	काष्ठा ppc440spe_adma_device *adev;
+	काष्ठा ppc440spe_adma_chan *chan;
+	काष्ठा ppc_dma_chan_ref *ref, *_ref;
+	पूर्णांक ret = 0, initcode = PPC_ADMA_INIT_OK;
+	स्थिर u32 *idx;
+	पूर्णांक len;
+	व्योम *regs;
 	u32 id, pool_size;
 
-	if (of_device_is_compatible(np, "amcc,xor-accelerator")) {
+	अगर (of_device_is_compatible(np, "amcc,xor-accelerator")) अणु
 		id = PPC440SPE_XOR_ID;
-		/* As far as the XOR engine is concerned, it does not
+		/* As far as the XOR engine is concerned, it करोes not
 		 * use FIFOs but uses linked list. So there is no dependency
 		 * between pool size to allocate and the engine configuration.
 		 */
 		pool_size = PAGE_SIZE << 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* it is DMA0 or DMA1 */
 		idx = of_get_property(np, "cell-index", &len);
-		if (!idx || (len != sizeof(u32))) {
+		अगर (!idx || (len != माप(u32))) अणु
 			dev_err(&ofdev->dev, "Device node %pOF has missing "
 				"or invalid cell-index property\n",
 				np);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		id = *idx;
-		/* DMA0,1 engines use FIFO to maintain CDBs, so we
+		/* DMA0,1 engines use FIFO to मुख्यtain CDBs, so we
 		 * should allocate the pool accordingly to size of this
 		 * FIFO. Thus, the pool size depends on the FIFO depth:
-		 * how much CDBs pointers the FIFO may contain then so
+		 * how much CDBs poपूर्णांकers the FIFO may contain then so
 		 * much CDBs we should provide in the pool.
 		 * That is
 		 *   CDB size = 32B;
@@ -4046,91 +4047,91 @@ static int ppc440spe_adma_probe(struct platform_device *ofdev)
 		pool_size = (id == PPC440SPE_DMA0_ID) ?
 			    DMA0_FIFO_SIZE : DMA1_FIFO_SIZE;
 		pool_size <<= 2;
-	}
+	पूर्ण
 
-	if (of_address_to_resource(np, 0, &res)) {
+	अगर (of_address_to_resource(np, 0, &res)) अणु
 		dev_err(&ofdev->dev, "failed to get memory resource\n");
 		initcode = PPC_ADMA_INIT_MEMRES;
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!request_mem_region(res.start, resource_size(&res),
-				dev_driver_string(&ofdev->dev))) {
+	अगर (!request_mem_region(res.start, resource_size(&res),
+				dev_driver_string(&ofdev->dev))) अणु
 		dev_err(&ofdev->dev, "failed to request memory region %pR\n",
 			&res);
 		initcode = PPC_ADMA_INIT_MEMREG;
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* create a device */
-	adev = kzalloc(sizeof(*adev), GFP_KERNEL);
-	if (!adev) {
+	adev = kzalloc(माप(*adev), GFP_KERNEL);
+	अगर (!adev) अणु
 		initcode = PPC_ADMA_INIT_ALLOC;
 		ret = -ENOMEM;
-		goto err_adev_alloc;
-	}
+		जाओ err_adev_alloc;
+	पूर्ण
 
 	adev->id = id;
 	adev->pool_size = pool_size;
-	/* allocate coherent memory for hardware descriptors */
+	/* allocate coherent memory क्रम hardware descriptors */
 	adev->dma_desc_pool_virt = dma_alloc_coherent(&ofdev->dev,
 					adev->pool_size, &adev->dma_desc_pool,
 					GFP_KERNEL);
-	if (adev->dma_desc_pool_virt == NULL) {
+	अगर (adev->dma_desc_pool_virt == शून्य) अणु
 		dev_err(&ofdev->dev, "failed to allocate %d bytes of coherent "
 			"memory for hardware descriptors\n",
 			adev->pool_size);
 		initcode = PPC_ADMA_INIT_COHERENT;
 		ret = -ENOMEM;
-		goto err_dma_alloc;
-	}
+		जाओ err_dma_alloc;
+	पूर्ण
 	dev_dbg(&ofdev->dev, "allocated descriptor pool virt 0x%p phys 0x%llx\n",
 		adev->dma_desc_pool_virt, (u64)adev->dma_desc_pool);
 
 	regs = ioremap(res.start, resource_size(&res));
-	if (!regs) {
+	अगर (!regs) अणु
 		dev_err(&ofdev->dev, "failed to ioremap regs!\n");
 		ret = -ENOMEM;
-		goto err_regs_alloc;
-	}
+		जाओ err_regs_alloc;
+	पूर्ण
 
-	if (adev->id == PPC440SPE_XOR_ID) {
+	अगर (adev->id == PPC440SPE_XOR_ID) अणु
 		adev->xor_reg = regs;
 		/* Reset XOR */
-		iowrite32be(XOR_CRSR_XASR_BIT, &adev->xor_reg->crsr);
-		iowrite32be(XOR_CRSR_64BA_BIT, &adev->xor_reg->crrr);
-	} else {
-		size_t fifo_size = (adev->id == PPC440SPE_DMA0_ID) ?
+		ioग_लिखो32be(XOR_CRSR_XASR_BIT, &adev->xor_reg->crsr);
+		ioग_लिखो32be(XOR_CRSR_64BA_BIT, &adev->xor_reg->crrr);
+	पूर्ण अन्यथा अणु
+		माप_प्रकार fअगरo_size = (adev->id == PPC440SPE_DMA0_ID) ?
 				   DMA0_FIFO_SIZE : DMA1_FIFO_SIZE;
 		adev->dma_reg = regs;
 		/* DMAx_FIFO_SIZE is defined in bytes,
-		 * <fsiz> - is defined in number of CDB pointers (8byte).
+		 * <fsiz> - is defined in number of CDB poपूर्णांकers (8byte).
 		 * DMA FIFO Length = CSlength + CPlength, where
 		 * CSlength = CPlength = (fsiz + 1) * 8.
 		 */
-		iowrite32(DMA_FIFO_ENABLE | ((fifo_size >> 3) - 2),
+		ioग_लिखो32(DMA_FIFO_ENABLE | ((fअगरo_size >> 3) - 2),
 			  &adev->dma_reg->fsiz);
 		/* Configure DMA engine */
-		iowrite32(DMA_CFG_DXEPR_HP | DMA_CFG_DFMPP_HP | DMA_CFG_FALGN,
+		ioग_लिखो32(DMA_CFG_DXEPR_HP | DMA_CFG_DFMPP_HP | DMA_CFG_FALGN,
 			  &adev->dma_reg->cfg);
 		/* Clear Status */
-		iowrite32(~0, &adev->dma_reg->dsts);
-	}
+		ioग_लिखो32(~0, &adev->dma_reg->dsts);
+	पूर्ण
 
 	adev->dev = &ofdev->dev;
 	adev->common.dev = &ofdev->dev;
 	INIT_LIST_HEAD(&adev->common.channels);
-	platform_set_drvdata(ofdev, adev);
+	platक्रमm_set_drvdata(ofdev, adev);
 
 	/* create a channel */
-	chan = kzalloc(sizeof(*chan), GFP_KERNEL);
-	if (!chan) {
+	chan = kzalloc(माप(*chan), GFP_KERNEL);
+	अगर (!chan) अणु
 		initcode = PPC_ADMA_INIT_CHANNEL;
 		ret = -ENOMEM;
-		goto err_chan_alloc;
-	}
+		जाओ err_chan_alloc;
+	पूर्ण
 
 	spin_lock_init(&chan->lock);
 	INIT_LIST_HEAD(&chan->chain);
@@ -4141,323 +4142,323 @@ static int ppc440spe_adma_probe(struct platform_device *ofdev)
 	list_add_tail(&chan->common.device_node, &adev->common.channels);
 	tasklet_setup(&chan->irq_tasklet, ppc440spe_adma_tasklet);
 
-	/* allocate and map helper pages for async validation or
+	/* allocate and map helper pages क्रम async validation or
 	 * async_mult/async_sum_product operations on DMA0/1.
 	 */
-	if (adev->id != PPC440SPE_XOR_ID) {
+	अगर (adev->id != PPC440SPE_XOR_ID) अणु
 		chan->pdest_page = alloc_page(GFP_KERNEL);
 		chan->qdest_page = alloc_page(GFP_KERNEL);
-		if (!chan->pdest_page ||
-		    !chan->qdest_page) {
-			if (chan->pdest_page)
-				__free_page(chan->pdest_page);
-			if (chan->qdest_page)
-				__free_page(chan->qdest_page);
+		अगर (!chan->pdest_page ||
+		    !chan->qdest_page) अणु
+			अगर (chan->pdest_page)
+				__मुक्त_page(chan->pdest_page);
+			अगर (chan->qdest_page)
+				__मुक्त_page(chan->qdest_page);
 			ret = -ENOMEM;
-			goto err_page_alloc;
-		}
+			जाओ err_page_alloc;
+		पूर्ण
 		chan->pdest = dma_map_page(&ofdev->dev, chan->pdest_page, 0,
-					   PAGE_SIZE, DMA_BIDIRECTIONAL);
+					   PAGE_SIZE, DMA_BIसूचीECTIONAL);
 		chan->qdest = dma_map_page(&ofdev->dev, chan->qdest_page, 0,
-					   PAGE_SIZE, DMA_BIDIRECTIONAL);
-	}
+					   PAGE_SIZE, DMA_BIसूचीECTIONAL);
+	पूर्ण
 
-	ref = kmalloc(sizeof(*ref), GFP_KERNEL);
-	if (ref) {
+	ref = kदो_स्मृति(माप(*ref), GFP_KERNEL);
+	अगर (ref) अणु
 		ref->chan = &chan->common;
 		INIT_LIST_HEAD(&ref->node);
 		list_add_tail(&ref->node, &ppc440spe_adma_chan_list);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&ofdev->dev, "failed to allocate channel reference!\n");
 		ret = -ENOMEM;
-		goto err_ref_alloc;
-	}
+		जाओ err_ref_alloc;
+	पूर्ण
 
 	ret = ppc440spe_adma_setup_irqs(adev, chan, &initcode);
-	if (ret)
-		goto err_irq;
+	अगर (ret)
+		जाओ err_irq;
 
 	ppc440spe_adma_init_capabilities(adev);
 
-	ret = dma_async_device_register(&adev->common);
-	if (ret) {
+	ret = dma_async_device_रेजिस्टर(&adev->common);
+	अगर (ret) अणु
 		initcode = PPC_ADMA_INIT_REGISTER;
 		dev_err(&ofdev->dev, "failed to register dma device\n");
-		goto err_dev_reg;
-	}
+		जाओ err_dev_reg;
+	पूर्ण
 
-	goto out;
+	जाओ out;
 
 err_dev_reg:
 	ppc440spe_adma_release_irqs(adev, chan);
 err_irq:
-	list_for_each_entry_safe(ref, _ref, &ppc440spe_adma_chan_list, node) {
-		if (chan == to_ppc440spe_adma_chan(ref->chan)) {
+	list_क्रम_each_entry_safe(ref, _ref, &ppc440spe_adma_chan_list, node) अणु
+		अगर (chan == to_ppc440spe_adma_chan(ref->chan)) अणु
 			list_del(&ref->node);
-			kfree(ref);
-		}
-	}
+			kमुक्त(ref);
+		पूर्ण
+	पूर्ण
 err_ref_alloc:
-	if (adev->id != PPC440SPE_XOR_ID) {
+	अगर (adev->id != PPC440SPE_XOR_ID) अणु
 		dma_unmap_page(&ofdev->dev, chan->pdest,
-			       PAGE_SIZE, DMA_BIDIRECTIONAL);
+			       PAGE_SIZE, DMA_BIसूचीECTIONAL);
 		dma_unmap_page(&ofdev->dev, chan->qdest,
-			       PAGE_SIZE, DMA_BIDIRECTIONAL);
-		__free_page(chan->pdest_page);
-		__free_page(chan->qdest_page);
-	}
+			       PAGE_SIZE, DMA_BIसूचीECTIONAL);
+		__मुक्त_page(chan->pdest_page);
+		__मुक्त_page(chan->qdest_page);
+	पूर्ण
 err_page_alloc:
-	kfree(chan);
+	kमुक्त(chan);
 err_chan_alloc:
-	if (adev->id == PPC440SPE_XOR_ID)
+	अगर (adev->id == PPC440SPE_XOR_ID)
 		iounmap(adev->xor_reg);
-	else
+	अन्यथा
 		iounmap(adev->dma_reg);
 err_regs_alloc:
-	dma_free_coherent(adev->dev, adev->pool_size,
+	dma_मुक्त_coherent(adev->dev, adev->pool_size,
 			  adev->dma_desc_pool_virt,
 			  adev->dma_desc_pool);
 err_dma_alloc:
-	kfree(adev);
+	kमुक्त(adev);
 err_adev_alloc:
 	release_mem_region(res.start, resource_size(&res));
 out:
-	if (id < PPC440SPE_ADMA_ENGINES_NUM)
+	अगर (id < PPC440SPE_ADMA_ENGINES_NUM)
 		ppc440spe_adma_devices[id] = initcode;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ppc440spe_adma_remove - remove the asynch device
+ * ppc440spe_adma_हटाओ - हटाओ the asynch device
  */
-static int ppc440spe_adma_remove(struct platform_device *ofdev)
-{
-	struct ppc440spe_adma_device *adev = platform_get_drvdata(ofdev);
-	struct device_node *np = ofdev->dev.of_node;
-	struct resource res;
-	struct dma_chan *chan, *_chan;
-	struct ppc_dma_chan_ref *ref, *_ref;
-	struct ppc440spe_adma_chan *ppc440spe_chan;
+अटल पूर्णांक ppc440spe_adma_हटाओ(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा ppc440spe_adma_device *adev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	काष्ठा resource res;
+	काष्ठा dma_chan *chan, *_chan;
+	काष्ठा ppc_dma_chan_ref *ref, *_ref;
+	काष्ठा ppc440spe_adma_chan *ppc440spe_chan;
 
-	if (adev->id < PPC440SPE_ADMA_ENGINES_NUM)
+	अगर (adev->id < PPC440SPE_ADMA_ENGINES_NUM)
 		ppc440spe_adma_devices[adev->id] = -1;
 
-	dma_async_device_unregister(&adev->common);
+	dma_async_device_unरेजिस्टर(&adev->common);
 
-	list_for_each_entry_safe(chan, _chan, &adev->common.channels,
-				 device_node) {
+	list_क्रम_each_entry_safe(chan, _chan, &adev->common.channels,
+				 device_node) अणु
 		ppc440spe_chan = to_ppc440spe_adma_chan(chan);
 		ppc440spe_adma_release_irqs(adev, ppc440spe_chan);
-		tasklet_kill(&ppc440spe_chan->irq_tasklet);
-		if (adev->id != PPC440SPE_XOR_ID) {
+		tasklet_समाप्त(&ppc440spe_chan->irq_tasklet);
+		अगर (adev->id != PPC440SPE_XOR_ID) अणु
 			dma_unmap_page(&ofdev->dev, ppc440spe_chan->pdest,
-					PAGE_SIZE, DMA_BIDIRECTIONAL);
+					PAGE_SIZE, DMA_BIसूचीECTIONAL);
 			dma_unmap_page(&ofdev->dev, ppc440spe_chan->qdest,
-					PAGE_SIZE, DMA_BIDIRECTIONAL);
-			__free_page(ppc440spe_chan->pdest_page);
-			__free_page(ppc440spe_chan->qdest_page);
-		}
-		list_for_each_entry_safe(ref, _ref, &ppc440spe_adma_chan_list,
-					 node) {
-			if (ppc440spe_chan ==
-			    to_ppc440spe_adma_chan(ref->chan)) {
+					PAGE_SIZE, DMA_BIसूचीECTIONAL);
+			__मुक्त_page(ppc440spe_chan->pdest_page);
+			__मुक्त_page(ppc440spe_chan->qdest_page);
+		पूर्ण
+		list_क्रम_each_entry_safe(ref, _ref, &ppc440spe_adma_chan_list,
+					 node) अणु
+			अगर (ppc440spe_chan ==
+			    to_ppc440spe_adma_chan(ref->chan)) अणु
 				list_del(&ref->node);
-				kfree(ref);
-			}
-		}
+				kमुक्त(ref);
+			पूर्ण
+		पूर्ण
 		list_del(&chan->device_node);
-		kfree(ppc440spe_chan);
-	}
+		kमुक्त(ppc440spe_chan);
+	पूर्ण
 
-	dma_free_coherent(adev->dev, adev->pool_size,
+	dma_मुक्त_coherent(adev->dev, adev->pool_size,
 			  adev->dma_desc_pool_virt, adev->dma_desc_pool);
-	if (adev->id == PPC440SPE_XOR_ID)
+	अगर (adev->id == PPC440SPE_XOR_ID)
 		iounmap(adev->xor_reg);
-	else
+	अन्यथा
 		iounmap(adev->dma_reg);
 	of_address_to_resource(np, 0, &res);
 	release_mem_region(res.start, resource_size(&res));
-	kfree(adev);
-	return 0;
-}
+	kमुक्त(adev);
+	वापस 0;
+पूर्ण
 
 /*
- * /sys driver interface to enable h/w RAID-6 capabilities
+ * /sys driver पूर्णांकerface to enable h/w RAID-6 capabilities
  * Files created in e.g. /sys/devices/plb.0/400100100.dma0/driver/
  * directory are "devices", "enable" and "poly".
  * "devices" shows available engines.
  * "enable" is used to enable RAID-6 capabilities or to check
  * whether these has been activated.
- * "poly" allows setting/checking used polynomial (for PPC440SPe only).
+ * "poly" allows setting/checking used polynomial (क्रम PPC440SPe only).
  */
 
-static ssize_t devices_show(struct device_driver *dev, char *buf)
-{
-	ssize_t size = 0;
-	int i;
+अटल sमाप_प्रकार devices_show(काष्ठा device_driver *dev, अक्षर *buf)
+अणु
+	sमाप_प्रकार size = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < PPC440SPE_ADMA_ENGINES_NUM; i++) {
-		if (ppc440spe_adma_devices[i] == -1)
-			continue;
-		size += scnprintf(buf + size, PAGE_SIZE - size,
+	क्रम (i = 0; i < PPC440SPE_ADMA_ENGINES_NUM; i++) अणु
+		अगर (ppc440spe_adma_devices[i] == -1)
+			जारी;
+		size += scnम_लिखो(buf + size, PAGE_SIZE - size,
 				 "PPC440SP(E)-ADMA.%d: %s\n", i,
 				 ppc_adma_errors[ppc440spe_adma_devices[i]]);
-	}
-	return size;
-}
-static DRIVER_ATTR_RO(devices);
+	पूर्ण
+	वापस size;
+पूर्ण
+अटल DRIVER_ATTR_RO(devices);
 
-static ssize_t enable_show(struct device_driver *dev, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE,
+अटल sमाप_प्रकार enable_show(काष्ठा device_driver *dev, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE,
 			"PPC440SP(e) RAID-6 capabilities are %sABLED.\n",
 			ppc440spe_r6_enabled ? "EN" : "DIS");
-}
+पूर्ण
 
-static ssize_t enable_store(struct device_driver *dev, const char *buf,
-			    size_t count)
-{
-	unsigned long val;
+अटल sमाप_प्रकार enable_store(काष्ठा device_driver *dev, स्थिर अक्षर *buf,
+			    माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ val;
 
-	if (!count || count > 11)
-		return -EINVAL;
+	अगर (!count || count > 11)
+		वापस -EINVAL;
 
-	if (!ppc440spe_r6_tchan)
-		return -EFAULT;
+	अगर (!ppc440spe_r6_tchan)
+		वापस -EFAULT;
 
 	/* Write a key */
-	sscanf(buf, "%lx", &val);
-	dcr_write(ppc440spe_mq_dcr_host, DCRN_MQ0_XORBA, val);
+	माला_पूछो(buf, "%lx", &val);
+	dcr_ग_लिखो(ppc440spe_mq_dcr_host, DCRN_MQ0_XORBA, val);
 	isync();
 
-	/* Verify whether it really works now */
-	if (ppc440spe_test_raid6(ppc440spe_r6_tchan) == 0) {
+	/* Verअगरy whether it really works now */
+	अगर (ppc440spe_test_raid6(ppc440spe_r6_tchan) == 0) अणु
 		pr_info("PPC440SP(e) RAID-6 has been activated "
 			"successfully\n");
 		ppc440spe_r6_enabled = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_info("PPC440SP(e) RAID-6 hasn't been activated!"
 			" Error key ?\n");
 		ppc440spe_r6_enabled = 0;
-	}
-	return count;
-}
-static DRIVER_ATTR_RW(enable);
+	पूर्ण
+	वापस count;
+पूर्ण
+अटल DRIVER_ATTR_RW(enable);
 
-static ssize_t poly_show(struct device_driver *dev, char *buf)
-{
-	ssize_t size = 0;
+अटल sमाप_प्रकार poly_show(काष्ठा device_driver *dev, अक्षर *buf)
+अणु
+	sमाप_प्रकार size = 0;
 	u32 reg;
 
-#ifdef CONFIG_440SP
+#अगर_घोषित CONFIG_440SP
 	/* 440SP has fixed polynomial */
 	reg = 0x4d;
-#else
-	reg = dcr_read(ppc440spe_mq_dcr_host, DCRN_MQ0_CFBHL);
+#अन्यथा
+	reg = dcr_पढ़ो(ppc440spe_mq_dcr_host, DCRN_MQ0_CFBHL);
 	reg >>= MQ0_CFBHL_POLY;
 	reg &= 0xFF;
-#endif
+#पूर्ण_अगर
 
-	size = snprintf(buf, PAGE_SIZE, "PPC440SP(e) RAID-6 driver "
+	size = snम_लिखो(buf, PAGE_SIZE, "PPC440SP(e) RAID-6 driver "
 			"uses 0x1%02x polynomial.\n", reg);
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t poly_store(struct device_driver *dev, const char *buf,
-			  size_t count)
-{
-	unsigned long reg, val;
+अटल sमाप_प्रकार poly_store(काष्ठा device_driver *dev, स्थिर अक्षर *buf,
+			  माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ reg, val;
 
-#ifdef CONFIG_440SP
-	/* 440SP uses default 0x14D polynomial only */
-	return -EINVAL;
-#endif
+#अगर_घोषित CONFIG_440SP
+	/* 440SP uses शेष 0x14D polynomial only */
+	वापस -EINVAL;
+#पूर्ण_अगर
 
-	if (!count || count > 6)
-		return -EINVAL;
+	अगर (!count || count > 6)
+		वापस -EINVAL;
 
 	/* e.g., 0x14D or 0x11D */
-	sscanf(buf, "%lx", &val);
+	माला_पूछो(buf, "%lx", &val);
 
-	if (val & ~0x1FF)
-		return -EINVAL;
+	अगर (val & ~0x1FF)
+		वापस -EINVAL;
 
 	val &= 0xFF;
-	reg = dcr_read(ppc440spe_mq_dcr_host, DCRN_MQ0_CFBHL);
+	reg = dcr_पढ़ो(ppc440spe_mq_dcr_host, DCRN_MQ0_CFBHL);
 	reg &= ~(0xFF << MQ0_CFBHL_POLY);
 	reg |= val << MQ0_CFBHL_POLY;
-	dcr_write(ppc440spe_mq_dcr_host, DCRN_MQ0_CFBHL, reg);
+	dcr_ग_लिखो(ppc440spe_mq_dcr_host, DCRN_MQ0_CFBHL, reg);
 
-	return count;
-}
-static DRIVER_ATTR_RW(poly);
+	वापस count;
+पूर्ण
+अटल DRIVER_ATTR_RW(poly);
 
 /*
- * Common initialisation for RAID engines; allocate memory for
- * DMAx FIFOs, perform configuration common for all DMA engines.
- * Further DMA engine specific configuration is done at probe time.
+ * Common initialisation क्रम RAID engines; allocate memory क्रम
+ * DMAx FIFOs, perक्रमm configuration common क्रम all DMA engines.
+ * Further DMA engine specअगरic configuration is करोne at probe समय.
  */
-static int ppc440spe_configure_raid_devices(void)
-{
-	struct device_node *np;
-	struct resource i2o_res;
-	struct i2o_regs __iomem *i2o_reg;
+अटल पूर्णांक ppc440spe_configure_raid_devices(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा resource i2o_res;
+	काष्ठा i2o_regs __iomem *i2o_reg;
 	dcr_host_t i2o_dcr_host;
-	unsigned int dcr_base, dcr_len;
-	int i, ret;
+	अचिन्हित पूर्णांक dcr_base, dcr_len;
+	पूर्णांक i, ret;
 
-	np = of_find_compatible_node(NULL, NULL, "ibm,i2o-440spe");
-	if (!np) {
+	np = of_find_compatible_node(शून्य, शून्य, "ibm,i2o-440spe");
+	अगर (!np) अणु
 		pr_err("%s: can't find I2O device tree node\n",
 			__func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (of_address_to_resource(np, 0, &i2o_res)) {
+	अगर (of_address_to_resource(np, 0, &i2o_res)) अणु
 		of_node_put(np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	i2o_reg = of_iomap(np, 0);
-	if (!i2o_reg) {
+	अगर (!i2o_reg) अणु
 		pr_err("%s: failed to map I2O registers\n", __func__);
 		of_node_put(np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Get I2O DCRs base */
 	dcr_base = dcr_resource_start(np, 0);
 	dcr_len = dcr_resource_len(np, 0);
-	if (!dcr_base && !dcr_len) {
+	अगर (!dcr_base && !dcr_len) अणु
 		pr_err("%pOF: can't get DCR registers base/len!\n", np);
 		of_node_put(np);
 		iounmap(i2o_reg);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	i2o_dcr_host = dcr_map(np, dcr_base, dcr_len);
-	if (!DCR_MAP_OK(i2o_dcr_host)) {
+	अगर (!DCR_MAP_OK(i2o_dcr_host)) अणु
 		pr_err("%pOF: failed to map DCRs!\n", np);
 		of_node_put(np);
 		iounmap(i2o_reg);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	of_node_put(np);
 
-	/* Provide memory regions for DMA's FIFOs: I2O, DMA0 and DMA1 share
+	/* Provide memory regions क्रम DMA's FIFOs: I2O, DMA0 and DMA1 share
 	 * the base address of FIFO memory space.
 	 * Actually we need twice more physical memory than programmed in the
-	 * <fsiz> register (because there are two FIFOs for each DMA: CP and CS)
+	 * <fsiz> रेजिस्टर (because there are two FIFOs क्रम each DMA: CP and CS)
 	 */
-	ppc440spe_dma_fifo_buf = kmalloc((DMA0_FIFO_SIZE + DMA1_FIFO_SIZE) << 1,
+	ppc440spe_dma_fअगरo_buf = kदो_स्मृति((DMA0_FIFO_SIZE + DMA1_FIFO_SIZE) << 1,
 					 GFP_KERNEL);
-	if (!ppc440spe_dma_fifo_buf) {
+	अगर (!ppc440spe_dma_fअगरo_buf) अणु
 		pr_err("%s: DMA FIFO buffer allocation failed.\n", __func__);
 		iounmap(i2o_reg);
 		dcr_unmap(i2o_dcr_host, dcr_len);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
 	 * Configure h/w
@@ -4466,158 +4467,158 @@ static int ppc440spe_configure_raid_devices(void)
 	mtdcri(SDR0, DCRN_SDR0_SRST, DCRN_SDR0_SRST_I2ODMA);
 	mtdcri(SDR0, DCRN_SDR0_SRST, 0);
 
-	/* Setup the base address of mmaped registers */
-	dcr_write(i2o_dcr_host, DCRN_I2O0_IBAH, (u32)(i2o_res.start >> 32));
-	dcr_write(i2o_dcr_host, DCRN_I2O0_IBAL, (u32)(i2o_res.start) |
+	/* Setup the base address of mmaped रेजिस्टरs */
+	dcr_ग_लिखो(i2o_dcr_host, DCRN_I2O0_IBAH, (u32)(i2o_res.start >> 32));
+	dcr_ग_लिखो(i2o_dcr_host, DCRN_I2O0_IBAL, (u32)(i2o_res.start) |
 						I2O_REG_ENABLE);
 	dcr_unmap(i2o_dcr_host, dcr_len);
 
 	/* Setup FIFO memory space base address */
-	iowrite32(0, &i2o_reg->ifbah);
-	iowrite32(((u32)__pa(ppc440spe_dma_fifo_buf)), &i2o_reg->ifbal);
+	ioग_लिखो32(0, &i2o_reg->अगरbah);
+	ioग_लिखो32(((u32)__pa(ppc440spe_dma_fअगरo_buf)), &i2o_reg->अगरbal);
 
-	/* set zero FIFO size for I2O, so the whole
-	 * ppc440spe_dma_fifo_buf is used by DMAs.
-	 * DMAx_FIFOs will be configured while probe.
+	/* set zero FIFO size क्रम I2O, so the whole
+	 * ppc440spe_dma_fअगरo_buf is used by DMAs.
+	 * DMAx_FIFOs will be configured जबतक probe.
 	 */
-	iowrite32(0, &i2o_reg->ifsiz);
+	ioग_लिखो32(0, &i2o_reg->अगरsiz);
 	iounmap(i2o_reg);
 
 	/* To prepare WXOR/RXOR functionality we need access to
 	 * Memory Queue Module DCRs (finally it will be enabled
-	 * via /sys interface of the ppc440spe ADMA driver).
+	 * via /sys पूर्णांकerface of the ppc440spe ADMA driver).
 	 */
-	np = of_find_compatible_node(NULL, NULL, "ibm,mq-440spe");
-	if (!np) {
+	np = of_find_compatible_node(शून्य, शून्य, "ibm,mq-440spe");
+	अगर (!np) अणु
 		pr_err("%s: can't find MQ device tree node\n",
 			__func__);
 		ret = -ENODEV;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	/* Get MQ DCRs base */
 	dcr_base = dcr_resource_start(np, 0);
 	dcr_len = dcr_resource_len(np, 0);
-	if (!dcr_base && !dcr_len) {
+	अगर (!dcr_base && !dcr_len) अणु
 		pr_err("%pOF: can't get DCR registers base/len!\n", np);
 		ret = -ENODEV;
-		goto out_mq;
-	}
+		जाओ out_mq;
+	पूर्ण
 
 	ppc440spe_mq_dcr_host = dcr_map(np, dcr_base, dcr_len);
-	if (!DCR_MAP_OK(ppc440spe_mq_dcr_host)) {
+	अगर (!DCR_MAP_OK(ppc440spe_mq_dcr_host)) अणु
 		pr_err("%pOF: failed to map DCRs!\n", np);
 		ret = -ENODEV;
-		goto out_mq;
-	}
+		जाओ out_mq;
+	पूर्ण
 	of_node_put(np);
 	ppc440spe_mq_dcr_len = dcr_len;
 
 	/* Set HB alias */
-	dcr_write(ppc440spe_mq_dcr_host, DCRN_MQ0_BAUH, DMA_CUED_XOR_HB);
+	dcr_ग_लिखो(ppc440spe_mq_dcr_host, DCRN_MQ0_BAUH, DMA_CUED_XOR_HB);
 
 	/* Set:
 	 * - LL transaction passing limit to 1;
 	 * - Memory controller cycle limit to 1;
-	 * - Galois Polynomial to 0x14d (default)
+	 * - Galois Polynomial to 0x14d (शेष)
 	 */
-	dcr_write(ppc440spe_mq_dcr_host, DCRN_MQ0_CFBHL,
+	dcr_ग_लिखो(ppc440spe_mq_dcr_host, DCRN_MQ0_CFBHL,
 		  (1 << MQ0_CFBHL_TPLM) | (1 << MQ0_CFBHL_HBCL) |
 		  (PPC440SPE_DEFAULT_POLY << MQ0_CFBHL_POLY));
 
 	atomic_set(&ppc440spe_adma_err_irq_ref, 0);
-	for (i = 0; i < PPC440SPE_ADMA_ENGINES_NUM; i++)
+	क्रम (i = 0; i < PPC440SPE_ADMA_ENGINES_NUM; i++)
 		ppc440spe_adma_devices[i] = -1;
 
-	return 0;
+	वापस 0;
 
 out_mq:
 	of_node_put(np);
-out_free:
-	kfree(ppc440spe_dma_fifo_buf);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(ppc440spe_dma_fअगरo_buf);
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id ppc440spe_adma_of_match[] = {
-	{ .compatible	= "ibm,dma-440spe", },
-	{ .compatible	= "amcc,xor-accelerator", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ppc440spe_adma_of_match[] = अणु
+	अणु .compatible	= "ibm,dma-440spe", पूर्ण,
+	अणु .compatible	= "amcc,xor-accelerator", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ppc440spe_adma_of_match);
 
-static struct platform_driver ppc440spe_adma_driver = {
+अटल काष्ठा platक्रमm_driver ppc440spe_adma_driver = अणु
 	.probe = ppc440spe_adma_probe,
-	.remove = ppc440spe_adma_remove,
-	.driver = {
+	.हटाओ = ppc440spe_adma_हटाओ,
+	.driver = अणु
 		.name = "PPC440SP(E)-ADMA",
 		.of_match_table = ppc440spe_adma_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static __init int ppc440spe_adma_init(void)
-{
-	int ret;
+अटल __init पूर्णांक ppc440spe_adma_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = ppc440spe_configure_raid_devices();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&ppc440spe_adma_driver);
-	if (ret) {
+	ret = platक्रमm_driver_रेजिस्टर(&ppc440spe_adma_driver);
+	अगर (ret) अणु
 		pr_err("%s: failed to register platform driver\n",
 			__func__);
-		goto out_reg;
-	}
+		जाओ out_reg;
+	पूर्ण
 
 	/* Initialization status */
 	ret = driver_create_file(&ppc440spe_adma_driver.driver,
 				 &driver_attr_devices);
-	if (ret)
-		goto out_dev;
+	अगर (ret)
+		जाओ out_dev;
 
 	/* RAID-6 h/w enable entry */
 	ret = driver_create_file(&ppc440spe_adma_driver.driver,
 				 &driver_attr_enable);
-	if (ret)
-		goto out_en;
+	अगर (ret)
+		जाओ out_en;
 
 	/* GF polynomial to use */
 	ret = driver_create_file(&ppc440spe_adma_driver.driver,
 				 &driver_attr_poly);
-	if (!ret)
-		return ret;
+	अगर (!ret)
+		वापस ret;
 
-	driver_remove_file(&ppc440spe_adma_driver.driver,
+	driver_हटाओ_file(&ppc440spe_adma_driver.driver,
 			   &driver_attr_enable);
 out_en:
-	driver_remove_file(&ppc440spe_adma_driver.driver,
+	driver_हटाओ_file(&ppc440spe_adma_driver.driver,
 			   &driver_attr_devices);
 out_dev:
 	/* User will not be able to enable h/w RAID-6 */
 	pr_err("%s: failed to create RAID-6 driver interface\n",
 		__func__);
-	platform_driver_unregister(&ppc440spe_adma_driver);
+	platक्रमm_driver_unरेजिस्टर(&ppc440spe_adma_driver);
 out_reg:
 	dcr_unmap(ppc440spe_mq_dcr_host, ppc440spe_mq_dcr_len);
-	kfree(ppc440spe_dma_fifo_buf);
-	return ret;
-}
+	kमुक्त(ppc440spe_dma_fअगरo_buf);
+	वापस ret;
+पूर्ण
 
-static void __exit ppc440spe_adma_exit(void)
-{
-	driver_remove_file(&ppc440spe_adma_driver.driver,
+अटल व्योम __निकास ppc440spe_adma_निकास(व्योम)
+अणु
+	driver_हटाओ_file(&ppc440spe_adma_driver.driver,
 			   &driver_attr_poly);
-	driver_remove_file(&ppc440spe_adma_driver.driver,
+	driver_हटाओ_file(&ppc440spe_adma_driver.driver,
 			   &driver_attr_enable);
-	driver_remove_file(&ppc440spe_adma_driver.driver,
+	driver_हटाओ_file(&ppc440spe_adma_driver.driver,
 			   &driver_attr_devices);
-	platform_driver_unregister(&ppc440spe_adma_driver);
+	platक्रमm_driver_unरेजिस्टर(&ppc440spe_adma_driver);
 	dcr_unmap(ppc440spe_mq_dcr_host, ppc440spe_mq_dcr_len);
-	kfree(ppc440spe_dma_fifo_buf);
-}
+	kमुक्त(ppc440spe_dma_fअगरo_buf);
+पूर्ण
 
 arch_initcall(ppc440spe_adma_init);
-module_exit(ppc440spe_adma_exit);
+module_निकास(ppc440spe_adma_निकास);
 
 MODULE_AUTHOR("Yuri Tikhonov <yur@emcraft.com>");
 MODULE_DESCRIPTION("PPC440SPE ADMA Engine Driver");

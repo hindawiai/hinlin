@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
  * Common tx3927 irq handler
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright 2001 MontaVista Software Inc.
  * Copyright (C) 2000-2001 Toshiba Corporation
  */
-#include <linux/init.h>
-#include <asm/txx9irq.h>
-#include <asm/txx9/tx3927.h>
+#समावेश <linux/init.h>
+#समावेश <यंत्र/txx9irq.h>
+#समावेश <यंत्र/txx9/tx3927.h>
 
-void __init tx3927_irq_init(void)
-{
-	int i;
+व्योम __init tx3927_irq_init(व्योम)
+अणु
+	पूर्णांक i;
 
 	txx9_irq_init(TX3927_IRC_REG);
-	/* raise priority for timers, sio */
-	for (i = 0; i < TX3927_NR_TMR; i++)
+	/* उठाओ priority क्रम समयrs, sio */
+	क्रम (i = 0; i < TX3927_NR_TMR; i++)
 		txx9_irq_set_pri(TX3927_IR_TMR(i), 6);
-	for (i = 0; i < TX3927_NR_SIO; i++)
+	क्रम (i = 0; i < TX3927_NR_SIO; i++)
 		txx9_irq_set_pri(TX3927_IR_SIO(i), 7);
-}
+पूर्ण

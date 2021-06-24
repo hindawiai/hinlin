@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* Big capacity key type.
  *
  * Copyright (C) 2013 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _KEYS_BIG_KEY_TYPE_H
-#define _KEYS_BIG_KEY_TYPE_H
+#अगर_अघोषित _KEYS_BIG_KEY_TYPE_H
+#घोषणा _KEYS_BIG_KEY_TYPE_H
 
-#include <linux/key-type.h>
+#समावेश <linux/key-type.h>
 
-extern struct key_type key_type_big_key;
+बाह्य काष्ठा key_type key_type_big_key;
 
-extern int big_key_preparse(struct key_preparsed_payload *prep);
-extern void big_key_free_preparse(struct key_preparsed_payload *prep);
-extern void big_key_revoke(struct key *key);
-extern void big_key_destroy(struct key *key);
-extern void big_key_describe(const struct key *big_key, struct seq_file *m);
-extern long big_key_read(const struct key *key, char *buffer, size_t buflen);
-extern int big_key_update(struct key *key, struct key_preparsed_payload *prep);
+बाह्य पूर्णांक big_key_preparse(काष्ठा key_preparsed_payload *prep);
+बाह्य व्योम big_key_मुक्त_preparse(काष्ठा key_preparsed_payload *prep);
+बाह्य व्योम big_key_revoke(काष्ठा key *key);
+बाह्य व्योम big_key_destroy(काष्ठा key *key);
+बाह्य व्योम big_key_describe(स्थिर काष्ठा key *big_key, काष्ठा seq_file *m);
+बाह्य दीर्घ big_key_पढ़ो(स्थिर काष्ठा key *key, अक्षर *buffer, माप_प्रकार buflen);
+बाह्य पूर्णांक big_key_update(काष्ठा key *key, काष्ठा key_preparsed_payload *prep);
 
-#endif /* _KEYS_BIG_KEY_TYPE_H */
+#पूर्ण_अगर /* _KEYS_BIG_KEY_TYPE_H */

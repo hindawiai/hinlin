@@ -1,187 +1,188 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap1/fpga.c
  *
- * Interrupt handler for OMAP-1510 Innovator FPGA
+ * Interrupt handler क्रम OMAP-1510 Innovator FPGA
  *
  * Copyright (C) 2001 RidgeRun, Inc.
  * Author: Greg Lonnon <glonnon@ridgerun.com>
  *
  * Copyright (C) 2002 MontaVista Software, Inc.
  *
- * Separated FPGA interrupts from innovator1510.c and cleaned up for 2.6
+ * Separated FPGA पूर्णांकerrupts from innovator1510.c and cleaned up क्रम 2.6
  * Copyright (C) 2004 Nokia Corporation by Tony Lindrgen <tony@atomide.com>
  */
 
-#include <linux/types.h>
-#include <linux/gpio.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/io.h>
+#समावेश <linux/types.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पन.स>
 
-#include <asm/irq.h>
-#include <asm/mach/irq.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mach/irq.h>
 
-#include <mach/hardware.h>
+#समावेश <mach/hardware.h>
 
-#include "iomap.h"
-#include "common.h"
-#include "fpga.h"
+#समावेश "iomap.h"
+#समावेश "common.h"
+#समावेश "fpga.h"
 
-static void fpga_mask_irq(struct irq_data *d)
-{
-	unsigned int irq = d->irq - OMAP_FPGA_IRQ_BASE;
+अटल व्योम fpga_mask_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq - OMAP_FPGA_IRQ_BASE;
 
-	if (irq < 8)
-		__raw_writeb((__raw_readb(OMAP1510_FPGA_IMR_LO)
+	अगर (irq < 8)
+		__raw_ग_लिखोb((__raw_पढ़ोb(OMAP1510_FPGA_IMR_LO)
 			      & ~(1 << irq)), OMAP1510_FPGA_IMR_LO);
-	else if (irq < 16)
-		__raw_writeb((__raw_readb(OMAP1510_FPGA_IMR_HI)
+	अन्यथा अगर (irq < 16)
+		__raw_ग_लिखोb((__raw_पढ़ोb(OMAP1510_FPGA_IMR_HI)
 			      & ~(1 << (irq - 8))), OMAP1510_FPGA_IMR_HI);
-	else
-		__raw_writeb((__raw_readb(INNOVATOR_FPGA_IMR2)
+	अन्यथा
+		__raw_ग_लिखोb((__raw_पढ़ोb(INNOVATOR_FPGA_IMR2)
 			      & ~(1 << (irq - 16))), INNOVATOR_FPGA_IMR2);
-}
+पूर्ण
 
 
-static inline u32 get_fpga_unmasked_irqs(void)
-{
-	return
-		((__raw_readb(OMAP1510_FPGA_ISR_LO) &
-		  __raw_readb(OMAP1510_FPGA_IMR_LO))) |
-		((__raw_readb(OMAP1510_FPGA_ISR_HI) &
-		  __raw_readb(OMAP1510_FPGA_IMR_HI)) << 8) |
-		((__raw_readb(INNOVATOR_FPGA_ISR2) &
-		  __raw_readb(INNOVATOR_FPGA_IMR2)) << 16);
-}
+अटल अंतरभूत u32 get_fpga_unmasked_irqs(व्योम)
+अणु
+	वापस
+		((__raw_पढ़ोb(OMAP1510_FPGA_ISR_LO) &
+		  __raw_पढ़ोb(OMAP1510_FPGA_IMR_LO))) |
+		((__raw_पढ़ोb(OMAP1510_FPGA_ISR_HI) &
+		  __raw_पढ़ोb(OMAP1510_FPGA_IMR_HI)) << 8) |
+		((__raw_पढ़ोb(INNOVATOR_FPGA_ISR2) &
+		  __raw_पढ़ोb(INNOVATOR_FPGA_IMR2)) << 16);
+पूर्ण
 
 
-static void fpga_ack_irq(struct irq_data *d)
-{
-	/* Don't need to explicitly ACK FPGA interrupts */
-}
+अटल व्योम fpga_ack_irq(काष्ठा irq_data *d)
+अणु
+	/* Don't need to explicitly ACK FPGA पूर्णांकerrupts */
+पूर्ण
 
-static void fpga_unmask_irq(struct irq_data *d)
-{
-	unsigned int irq = d->irq - OMAP_FPGA_IRQ_BASE;
+अटल व्योम fpga_unmask_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक irq = d->irq - OMAP_FPGA_IRQ_BASE;
 
-	if (irq < 8)
-		__raw_writeb((__raw_readb(OMAP1510_FPGA_IMR_LO) | (1 << irq)),
+	अगर (irq < 8)
+		__raw_ग_लिखोb((__raw_पढ़ोb(OMAP1510_FPGA_IMR_LO) | (1 << irq)),
 		     OMAP1510_FPGA_IMR_LO);
-	else if (irq < 16)
-		__raw_writeb((__raw_readb(OMAP1510_FPGA_IMR_HI)
+	अन्यथा अगर (irq < 16)
+		__raw_ग_लिखोb((__raw_पढ़ोb(OMAP1510_FPGA_IMR_HI)
 			      | (1 << (irq - 8))), OMAP1510_FPGA_IMR_HI);
-	else
-		__raw_writeb((__raw_readb(INNOVATOR_FPGA_IMR2)
+	अन्यथा
+		__raw_ग_लिखोb((__raw_पढ़ोb(INNOVATOR_FPGA_IMR2)
 			      | (1 << (irq - 16))), INNOVATOR_FPGA_IMR2);
-}
+पूर्ण
 
-static void fpga_mask_ack_irq(struct irq_data *d)
-{
+अटल व्योम fpga_mask_ack_irq(काष्ठा irq_data *d)
+अणु
 	fpga_mask_irq(d);
 	fpga_ack_irq(d);
-}
+पूर्ण
 
-static void innovator_fpga_IRQ_demux(struct irq_desc *desc)
-{
+अटल व्योम innovator_fpga_IRQ_demux(काष्ठा irq_desc *desc)
+अणु
 	u32 stat;
-	int fpga_irq;
+	पूर्णांक fpga_irq;
 
 	stat = get_fpga_unmasked_irqs();
 
-	if (!stat)
-		return;
+	अगर (!stat)
+		वापस;
 
-	for (fpga_irq = OMAP_FPGA_IRQ_BASE;
+	क्रम (fpga_irq = OMAP_FPGA_IRQ_BASE;
 	     (fpga_irq < OMAP_FPGA_IRQ_END) && stat;
-	     fpga_irq++, stat >>= 1) {
-		if (stat & 1) {
+	     fpga_irq++, stat >>= 1) अणु
+		अगर (stat & 1) अणु
 			generic_handle_irq(fpga_irq);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static struct irq_chip omap_fpga_irq_ack = {
+अटल काष्ठा irq_chip omap_fpga_irq_ack = अणु
 	.name		= "FPGA-ack",
 	.irq_ack	= fpga_mask_ack_irq,
 	.irq_mask	= fpga_mask_irq,
 	.irq_unmask	= fpga_unmask_irq,
-};
+पूर्ण;
 
 
-static struct irq_chip omap_fpga_irq = {
+अटल काष्ठा irq_chip omap_fpga_irq = अणु
 	.name		= "FPGA",
 	.irq_ack	= fpga_ack_irq,
 	.irq_mask	= fpga_mask_irq,
 	.irq_unmask	= fpga_unmask_irq,
-};
+पूर्ण;
 
 /*
- * All of the FPGA interrupt request inputs except for the touchscreen are
+ * All of the FPGA पूर्णांकerrupt request inमाला_दो except क्रम the touchscreen are
  * edge-sensitive; the touchscreen is level-sensitive.  The edge-sensitive
- * interrupts are acknowledged as a side-effect of reading the interrupt
- * status register from the FPGA.  The edge-sensitive interrupt inputs
- * cause a problem with level interrupt requests, such as Ethernet.  The
- * problem occurs when a level interrupt request is asserted while its
- * interrupt input is masked in the FPGA, which results in a missed
- * interrupt.
+ * पूर्णांकerrupts are acknowledged as a side-effect of पढ़ोing the पूर्णांकerrupt
+ * status रेजिस्टर from the FPGA.  The edge-sensitive पूर्णांकerrupt inमाला_दो
+ * cause a problem with level पूर्णांकerrupt requests, such as Ethernet.  The
+ * problem occurs when a level पूर्णांकerrupt request is निश्चितed जबतक its
+ * पूर्णांकerrupt input is masked in the FPGA, which results in a missed
+ * पूर्णांकerrupt.
  *
- * In an attempt to workaround the problem with missed interrupts, the
- * mask_ack routine for all of the FPGA interrupts has been changed from
- * fpga_mask_ack_irq() to fpga_ack_irq() so that the specific FPGA interrupt
- * being serviced is left unmasked.  We can do this because the FPGA cascade
- * interrupt is run with all interrupts masked.
+ * In an attempt to workaround the problem with missed पूर्णांकerrupts, the
+ * mask_ack routine क्रम all of the FPGA पूर्णांकerrupts has been changed from
+ * fpga_mask_ack_irq() to fpga_ack_irq() so that the specअगरic FPGA पूर्णांकerrupt
+ * being serviced is left unmasked.  We can करो this because the FPGA cascade
+ * पूर्णांकerrupt is run with all पूर्णांकerrupts masked.
  *
  * Limited testing indicates that this workaround appears to be effective
- * for the smc9194 Ethernet driver used on the Innovator.  It should work
- * on other FPGA interrupts as well, but any drivers that explicitly mask
- * interrupts at the interrupt controller via disable_irq/enable_irq
+ * क्रम the smc9194 Ethernet driver used on the Innovator.  It should work
+ * on other FPGA पूर्णांकerrupts as well, but any drivers that explicitly mask
+ * पूर्णांकerrupts at the पूर्णांकerrupt controller via disable_irq/enable_irq
  * could pose a problem.
  */
-void omap1510_fpga_init_irq(void)
-{
-	int i, res;
+व्योम omap1510_fpga_init_irq(व्योम)
+अणु
+	पूर्णांक i, res;
 
-	__raw_writeb(0, OMAP1510_FPGA_IMR_LO);
-	__raw_writeb(0, OMAP1510_FPGA_IMR_HI);
-	__raw_writeb(0, INNOVATOR_FPGA_IMR2);
+	__raw_ग_लिखोb(0, OMAP1510_FPGA_IMR_LO);
+	__raw_ग_लिखोb(0, OMAP1510_FPGA_IMR_HI);
+	__raw_ग_लिखोb(0, INNOVATOR_FPGA_IMR2);
 
-	for (i = OMAP_FPGA_IRQ_BASE; i < OMAP_FPGA_IRQ_END; i++) {
+	क्रम (i = OMAP_FPGA_IRQ_BASE; i < OMAP_FPGA_IRQ_END; i++) अणु
 
-		if (i == OMAP1510_INT_FPGA_TS) {
+		अगर (i == OMAP1510_INT_FPGA_TS) अणु
 			/*
-			 * The touchscreen interrupt is level-sensitive, so
-			 * we'll use the regular mask_ack routine for it.
+			 * The touchscreen पूर्णांकerrupt is level-sensitive, so
+			 * we'll use the regular mask_ack routine क्रम it.
 			 */
 			irq_set_chip(i, &omap_fpga_irq_ack);
-		}
-		else {
+		पूर्ण
+		अन्यथा अणु
 			/*
-			 * All FPGA interrupts except the touchscreen are
+			 * All FPGA पूर्णांकerrupts except the touchscreen are
 			 * edge-sensitive, so we won't mask them.
 			 */
 			irq_set_chip(i, &omap_fpga_irq);
-		}
+		पूर्ण
 
 		irq_set_handler(i, handle_edge_irq);
 		irq_clear_status_flags(i, IRQ_NOREQUEST);
-	}
+	पूर्ण
 
 	/*
-	 * The FPGA interrupt line is connected to GPIO13. Claim this pin for
+	 * The FPGA पूर्णांकerrupt line is connected to GPIO13. Claim this pin क्रम
 	 * the ARM.
 	 *
-	 * NOTE: For general GPIO/MPUIO access and interrupts, please see
+	 * NOTE: For general GPIO/MPUIO access and पूर्णांकerrupts, please see
 	 * gpio.[ch]
 	 */
 	res = gpio_request(13, "FPGA irq");
-	if (res) {
+	अगर (res) अणु
 		pr_err("%s failed to get gpio\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 	gpio_direction_input(13);
 	irq_set_irq_type(gpio_to_irq(13), IRQ_TYPE_EDGE_RISING);
 	irq_set_chained_handler(OMAP1510_INT_FPGA, innovator_fpga_IRQ_demux);
-}
+पूर्ण

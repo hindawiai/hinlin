@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /**********************************************************
  * Copyright 1998-2015 VMware, Inc.
  *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person
+ * obtaining a copy of this software and associated करोcumentation
  * files (the "Software"), to deal in the Software without
  * restriction, including without limitation the rights to use, copy,
- * modify, merge, publish, distribute, sublicense, and/or sell copies
+ * modअगरy, merge, publish, distribute, sublicense, and/or sell copies
  * of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
@@ -30,22 +31,22 @@
  *       SVGA 3d hardware definitions
  */
 
-#ifndef _SVGA3D_REG_H_
-#define _SVGA3D_REG_H_
+#अगर_अघोषित _SVGA3D_REG_H_
+#घोषणा _SVGA3D_REG_H_
 
-#define INCLUDE_ALLOW_MODULE
-#define INCLUDE_ALLOW_USERLEVEL
-#define INCLUDE_ALLOW_VMCORE
+#घोषणा INCLUDE_ALLOW_MODULE
+#घोषणा INCLUDE_ALLOW_USERLEVEL
+#घोषणा INCLUDE_ALLOW_VMCORE
 
-#include "includeCheck.h"
+#समावेश "includeCheck.h"
 
-#include "svga_reg.h"
+#समावेश "svga_reg.h"
 
-#include "svga3d_types.h"
-#include "svga3d_limits.h"
-#include "svga3d_cmd.h"
-#include "svga3d_dx.h"
-#include "svga3d_devcaps.h"
+#समावेश "svga3d_types.h"
+#समावेश "svga3d_limits.h"
+#समावेश "svga3d_cmd.h"
+#समावेश "svga3d_dx.h"
+#समावेश "svga3d_devcaps.h"
 
 
-#endif /* _SVGA3D_REG_H_ */
+#पूर्ण_अगर /* _SVGA3D_REG_H_ */

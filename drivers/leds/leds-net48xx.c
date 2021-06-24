@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * LEDs driver for Soekris net48xx
+ * LEDs driver क्रम Soekris net48xx
  *
  * Copyright (C) 2006 Chris Boot <bootc@bootc.net>
  *
  * Based on leds-ams-delta.c
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/leds.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/nsc_gpio.h>
-#include <linux/scx200_gpio.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/nsc_gpपन.स>
+#समावेश <linux/scx200_gpपन.स>
+#समावेश <linux/module.h>
 
-#define DRVNAME "net48xx-led"
-#define NET48XX_ERROR_LED_GPIO	20
+#घोषणा DRVNAME "net48xx-led"
+#घोषणा NET48XX_ERROR_LED_GPIO	20
 
-static struct platform_device *pdev;
+अटल काष्ठा platक्रमm_device *pdev;
 
-static void net48xx_error_led_set(struct led_classdev *led_cdev,
-		enum led_brightness value)
-{
+अटल व्योम net48xx_error_led_set(काष्ठा led_classdev *led_cdev,
+		क्रमागत led_brightness value)
+अणु
 	scx200_gpio_ops.gpio_set(NET48XX_ERROR_LED_GPIO, value ? 1 : 0);
-}
+पूर्ण
 
-static struct led_classdev net48xx_error_led = {
+अटल काष्ठा led_classdev net48xx_error_led = अणु
 	.name		= "net48xx::error",
 	.brightness_set	= net48xx_error_led_set,
 	.flags		= LED_CORE_SUSPENDRESUME,
-};
+पूर्ण;
 
-static int net48xx_led_probe(struct platform_device *pdev)
-{
-	return devm_led_classdev_register(&pdev->dev, &net48xx_error_led);
-}
+अटल पूर्णांक net48xx_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस devm_led_classdev_रेजिस्टर(&pdev->dev, &net48xx_error_led);
+पूर्ण
 
-static struct platform_driver net48xx_led_driver = {
+अटल काष्ठा platक्रमm_driver net48xx_led_driver = अणु
 	.probe		= net48xx_led_probe,
-	.driver		= {
+	.driver		= अणु
 		.name		= DRVNAME,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init net48xx_led_init(void)
-{
-	int ret;
+अटल पूर्णांक __init net48xx_led_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	/* small hack, but scx200_gpio doesn't set .dev if the probe fails */
-	if (!scx200_gpio_ops.dev) {
+	/* small hack, but scx200_gpio करोesn't set .dev अगर the probe fails */
+	अगर (!scx200_gpio_ops.dev) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = platform_driver_register(&net48xx_led_driver);
-	if (ret < 0)
-		goto out;
+	ret = platक्रमm_driver_रेजिस्टर(&net48xx_led_driver);
+	अगर (ret < 0)
+		जाओ out;
 
-	pdev = platform_device_register_simple(DRVNAME, -1, NULL, 0);
-	if (IS_ERR(pdev)) {
+	pdev = platक्रमm_device_रेजिस्टर_simple(DRVNAME, -1, शून्य, 0);
+	अगर (IS_ERR(pdev)) अणु
 		ret = PTR_ERR(pdev);
-		platform_driver_unregister(&net48xx_led_driver);
-		goto out;
-	}
+		platक्रमm_driver_unरेजिस्टर(&net48xx_led_driver);
+		जाओ out;
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit net48xx_led_exit(void)
-{
-	platform_device_unregister(pdev);
-	platform_driver_unregister(&net48xx_led_driver);
-}
+अटल व्योम __निकास net48xx_led_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(pdev);
+	platक्रमm_driver_unरेजिस्टर(&net48xx_led_driver);
+पूर्ण
 
 module_init(net48xx_led_init);
-module_exit(net48xx_led_exit);
+module_निकास(net48xx_led_निकास);
 
 MODULE_AUTHOR("Chris Boot <bootc@bootc.net>");
 MODULE_DESCRIPTION("Soekris net48xx LED driver");

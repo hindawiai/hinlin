@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
 */
 
-#ifndef _EMAC_PHY_H_
-#define _EMAC_PHY_H_
+#अगर_अघोषित _EMAC_PHY_H_
+#घोषणा _EMAC_PHY_H_
 
-struct emac_adapter;
+काष्ठा emac_adapter;
 
-int emac_phy_config(struct platform_device *pdev, struct emac_adapter *adpt);
+पूर्णांक emac_phy_config(काष्ठा platक्रमm_device *pdev, काष्ठा emac_adapter *adpt);
 
-#endif /* _EMAC_PHY_H_ */
+#पूर्ण_अगर /* _EMAC_PHY_H_ */

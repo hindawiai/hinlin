@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Intel MID platform PM support
+ * Intel MID platक्रमm PM support
  *
  * Copyright (C) 2016, Intel Corporation
  *
- * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
  */
 
-#include <linux/init.h>
-#include <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
 
-#include <asm/cpu_device_id.h>
-#include <asm/intel-family.h>
-#include <asm/intel-mid.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
+#समावेश <यंत्र/पूर्णांकel-mid.h>
 
-#include "pci.h"
+#समावेश "pci.h"
 
-static bool mid_pci_power_manageable(struct pci_dev *dev)
-{
-	return true;
-}
+अटल bool mid_pci_घातer_manageable(काष्ठा pci_dev *dev)
+अणु
+	वापस true;
+पूर्ण
 
-static int mid_pci_set_power_state(struct pci_dev *pdev, pci_power_t state)
-{
-	return intel_mid_pci_set_power_state(pdev, state);
-}
+अटल पूर्णांक mid_pci_set_घातer_state(काष्ठा pci_dev *pdev, pci_घातer_t state)
+अणु
+	वापस पूर्णांकel_mid_pci_set_घातer_state(pdev, state);
+पूर्ण
 
-static pci_power_t mid_pci_get_power_state(struct pci_dev *pdev)
-{
-	return intel_mid_pci_get_power_state(pdev);
-}
+अटल pci_घातer_t mid_pci_get_घातer_state(काष्ठा pci_dev *pdev)
+अणु
+	वापस पूर्णांकel_mid_pci_get_घातer_state(pdev);
+पूर्ण
 
-static pci_power_t mid_pci_choose_state(struct pci_dev *pdev)
-{
-	return PCI_D3hot;
-}
+अटल pci_घातer_t mid_pci_choose_state(काष्ठा pci_dev *pdev)
+अणु
+	वापस PCI_D3hot;
+पूर्ण
 
-static int mid_pci_wakeup(struct pci_dev *dev, bool enable)
-{
-	return 0;
-}
+अटल पूर्णांक mid_pci_wakeup(काष्ठा pci_dev *dev, bool enable)
+अणु
+	वापस 0;
+पूर्ण
 
-static bool mid_pci_need_resume(struct pci_dev *dev)
-{
-	return false;
-}
+अटल bool mid_pci_need_resume(काष्ठा pci_dev *dev)
+अणु
+	वापस false;
+पूर्ण
 
-static const struct pci_platform_pm_ops mid_pci_platform_pm = {
-	.is_manageable	= mid_pci_power_manageable,
-	.set_state	= mid_pci_set_power_state,
-	.get_state	= mid_pci_get_power_state,
+अटल स्थिर काष्ठा pci_platक्रमm_pm_ops mid_pci_platक्रमm_pm = अणु
+	.is_manageable	= mid_pci_घातer_manageable,
+	.set_state	= mid_pci_set_घातer_state,
+	.get_state	= mid_pci_get_घातer_state,
 	.choose_state	= mid_pci_choose_state,
 	.set_wakeup	= mid_pci_wakeup,
 	.need_resume	= mid_pci_need_resume,
-};
+पूर्ण;
 
 /*
  * This table should be in sync with the one in
- * arch/x86/platform/intel-mid/pwr.c.
+ * arch/x86/platक्रमm/पूर्णांकel-mid/pwr.c.
  */
-static const struct x86_cpu_id lpss_cpu_ids[] = {
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SALTWELL_MID, NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT_MID, NULL),
-	{}
-};
+अटल स्थिर काष्ठा x86_cpu_id lpss_cpu_ids[] = अणु
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SALTWELL_MID, शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT_MID, शून्य),
+	अणुपूर्ण
+पूर्ण;
 
-static int __init mid_pci_init(void)
-{
-	const struct x86_cpu_id *id;
+अटल पूर्णांक __init mid_pci_init(व्योम)
+अणु
+	स्थिर काष्ठा x86_cpu_id *id;
 
 	id = x86_match_cpu(lpss_cpu_ids);
-	if (id)
-		pci_set_platform_pm(&mid_pci_platform_pm);
-	return 0;
-}
+	अगर (id)
+		pci_set_platक्रमm_pm(&mid_pci_platक्रमm_pm);
+	वापस 0;
+पूर्ण
 arch_initcall(mid_pci_init);

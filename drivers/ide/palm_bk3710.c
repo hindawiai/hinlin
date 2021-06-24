@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Palmchip bk3710 IDE controller
  *
@@ -10,210 +11,210 @@
  * ----------------------------------------------------------------------------
  */
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/ioport.h>
-#include <linux/ide.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/clk.h>
-#include <linux/platform_device.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/platक्रमm_device.h>
 
-/* Offset of the primary interface registers */
-#define IDE_PALM_ATA_PRI_REG_OFFSET 0x1F0
+/* Offset of the primary पूर्णांकerface रेजिस्टरs */
+#घोषणा IDE_PALM_ATA_PRI_REG_OFFSET 0x1F0
 
 /* Primary Control Offset */
-#define IDE_PALM_ATA_PRI_CTL_OFFSET 0x3F6
+#घोषणा IDE_PALM_ATA_PRI_CTL_OFFSET 0x3F6
 
-#define BK3710_BMICP		0x00
-#define BK3710_BMISP		0x02
-#define BK3710_BMIDTP		0x04
-#define BK3710_IDETIMP		0x40
-#define BK3710_IDESTATUS	0x47
-#define BK3710_UDMACTL		0x48
-#define BK3710_MISCCTL		0x50
-#define BK3710_REGSTB		0x54
-#define BK3710_REGRCVR		0x58
-#define BK3710_DATSTB		0x5C
-#define BK3710_DATRCVR		0x60
-#define BK3710_DMASTB		0x64
-#define BK3710_DMARCVR		0x68
-#define BK3710_UDMASTB		0x6C
-#define BK3710_UDMATRP		0x70
-#define BK3710_UDMAENV		0x74
-#define BK3710_IORDYTMP		0x78
+#घोषणा BK3710_BMICP		0x00
+#घोषणा BK3710_BMISP		0x02
+#घोषणा BK3710_BMIDTP		0x04
+#घोषणा BK3710_IDETIMP		0x40
+#घोषणा BK3710_IDESTATUS	0x47
+#घोषणा BK3710_UDMACTL		0x48
+#घोषणा BK3710_MISCCTL		0x50
+#घोषणा BK3710_REGSTB		0x54
+#घोषणा BK3710_REGRCVR		0x58
+#घोषणा BK3710_DATSTB		0x5C
+#घोषणा BK3710_DATRCVR		0x60
+#घोषणा BK3710_DMASTB		0x64
+#घोषणा BK3710_DMARCVR		0x68
+#घोषणा BK3710_UDMASTB		0x6C
+#घोषणा BK3710_UDMATRP		0x70
+#घोषणा BK3710_UDMAENV		0x74
+#घोषणा BK3710_IORDYTMP		0x78
 
-static unsigned ideclk_period; /* in nanoseconds */
+अटल अचिन्हित ideclk_period; /* in nanoseconds */
 
-struct palm_bk3710_udmatiming {
-	unsigned int rptime;	/* tRP -- Ready to pause time (nsec) */
-	unsigned int cycletime;	/* tCYCTYP2/2 -- avg Cycle Time (nsec) */
+काष्ठा palm_bk3710_udmatiming अणु
+	अचिन्हित पूर्णांक rpसमय;	/* tRP -- Ready to छोड़ो समय (nsec) */
+	अचिन्हित पूर्णांक cycleसमय;	/* tCYCTYP2/2 -- avg Cycle Time (nsec) */
 				/* tENV is always a minimum of 20 nsec */
-};
+पूर्ण;
 
-static const struct palm_bk3710_udmatiming palm_bk3710_udmatimings[6] = {
-	{ 160, 240 / 2 },	/* UDMA Mode 0 */
-	{ 125, 160 / 2 },	/* UDMA Mode 1 */
-	{ 100, 120 / 2 },	/* UDMA Mode 2 */
-	{ 100,  90 / 2 },	/* UDMA Mode 3 */
-	{ 100,  60 / 2 },	/* UDMA Mode 4 */
-	{  85,  40 / 2 },	/* UDMA Mode 5 */
-};
+अटल स्थिर काष्ठा palm_bk3710_udmatiming palm_bk3710_udmatimings[6] = अणु
+	अणु 160, 240 / 2 पूर्ण,	/* UDMA Mode 0 */
+	अणु 125, 160 / 2 पूर्ण,	/* UDMA Mode 1 */
+	अणु 100, 120 / 2 पूर्ण,	/* UDMA Mode 2 */
+	अणु 100,  90 / 2 पूर्ण,	/* UDMA Mode 3 */
+	अणु 100,  60 / 2 पूर्ण,	/* UDMA Mode 4 */
+	अणु  85,  40 / 2 पूर्ण,	/* UDMA Mode 5 */
+पूर्ण;
 
-static void palm_bk3710_setudmamode(void __iomem *base, unsigned int dev,
-				    unsigned int mode)
-{
+अटल व्योम palm_bk3710_setudmamode(व्योम __iomem *base, अचिन्हित पूर्णांक dev,
+				    अचिन्हित पूर्णांक mode)
+अणु
 	u8 tenv, trp, t0;
 	u32 val32;
 	u16 val16;
 
 	/* DMA Data Setup */
-	t0 = DIV_ROUND_UP(palm_bk3710_udmatimings[mode].cycletime,
+	t0 = DIV_ROUND_UP(palm_bk3710_udmatimings[mode].cycleसमय,
 			  ideclk_period) - 1;
 	tenv = DIV_ROUND_UP(20, ideclk_period) - 1;
-	trp = DIV_ROUND_UP(palm_bk3710_udmatimings[mode].rptime,
+	trp = DIV_ROUND_UP(palm_bk3710_udmatimings[mode].rpसमय,
 			   ideclk_period) - 1;
 
 	/* udmastb Ultra DMA Access Strobe Width */
-	val32 = readl(base + BK3710_UDMASTB) & (0xFF << (dev ? 0 : 8));
+	val32 = पढ़ोl(base + BK3710_UDMASTB) & (0xFF << (dev ? 0 : 8));
 	val32 |= (t0 << (dev ? 8 : 0));
-	writel(val32, base + BK3710_UDMASTB);
+	ग_लिखोl(val32, base + BK3710_UDMASTB);
 
 	/* udmatrp Ultra DMA Ready to Pause Time */
-	val32 = readl(base + BK3710_UDMATRP) & (0xFF << (dev ? 0 : 8));
+	val32 = पढ़ोl(base + BK3710_UDMATRP) & (0xFF << (dev ? 0 : 8));
 	val32 |= (trp << (dev ? 8 : 0));
-	writel(val32, base + BK3710_UDMATRP);
+	ग_लिखोl(val32, base + BK3710_UDMATRP);
 
 	/* udmaenv Ultra DMA envelop Time */
-	val32 = readl(base + BK3710_UDMAENV) & (0xFF << (dev ? 0 : 8));
+	val32 = पढ़ोl(base + BK3710_UDMAENV) & (0xFF << (dev ? 0 : 8));
 	val32 |= (tenv << (dev ? 8 : 0));
-	writel(val32, base + BK3710_UDMAENV);
+	ग_लिखोl(val32, base + BK3710_UDMAENV);
 
-	/* Enable UDMA for Device */
-	val16 = readw(base + BK3710_UDMACTL) | (1 << dev);
-	writew(val16, base + BK3710_UDMACTL);
-}
+	/* Enable UDMA क्रम Device */
+	val16 = पढ़ोw(base + BK3710_UDMACTL) | (1 << dev);
+	ग_लिखोw(val16, base + BK3710_UDMACTL);
+पूर्ण
 
-static void palm_bk3710_setdmamode(void __iomem *base, unsigned int dev,
-				   unsigned short min_cycle,
-				   unsigned int mode)
-{
+अटल व्योम palm_bk3710_setdmamode(व्योम __iomem *base, अचिन्हित पूर्णांक dev,
+				   अचिन्हित लघु min_cycle,
+				   अचिन्हित पूर्णांक mode)
+अणु
 	u8 td, tkw, t0;
 	u32 val32;
 	u16 val16;
-	struct ide_timing *t;
-	int cycletime;
+	काष्ठा ide_timing *t;
+	पूर्णांक cycleसमय;
 
 	t = ide_timing_find_mode(mode);
-	cycletime = max_t(int, t->cycle, min_cycle);
+	cycleसमय = max_t(पूर्णांक, t->cycle, min_cycle);
 
 	/* DMA Data Setup */
-	t0 = DIV_ROUND_UP(cycletime, ideclk_period);
+	t0 = DIV_ROUND_UP(cycleसमय, ideclk_period);
 	td = DIV_ROUND_UP(t->active, ideclk_period);
 	tkw = t0 - td - 1;
 	td -= 1;
 
-	val32 = readl(base + BK3710_DMASTB) & (0xFF << (dev ? 0 : 8));
+	val32 = पढ़ोl(base + BK3710_DMASTB) & (0xFF << (dev ? 0 : 8));
 	val32 |= (td << (dev ? 8 : 0));
-	writel(val32, base + BK3710_DMASTB);
+	ग_लिखोl(val32, base + BK3710_DMASTB);
 
-	val32 = readl(base + BK3710_DMARCVR) & (0xFF << (dev ? 0 : 8));
+	val32 = पढ़ोl(base + BK3710_DMARCVR) & (0xFF << (dev ? 0 : 8));
 	val32 |= (tkw << (dev ? 8 : 0));
-	writel(val32, base + BK3710_DMARCVR);
+	ग_लिखोl(val32, base + BK3710_DMARCVR);
 
-	/* Disable UDMA for Device */
-	val16 = readw(base + BK3710_UDMACTL) & ~(1 << dev);
-	writew(val16, base + BK3710_UDMACTL);
-}
+	/* Disable UDMA क्रम Device */
+	val16 = पढ़ोw(base + BK3710_UDMACTL) & ~(1 << dev);
+	ग_लिखोw(val16, base + BK3710_UDMACTL);
+पूर्ण
 
-static void palm_bk3710_setpiomode(void __iomem *base, ide_drive_t *mate,
-				   unsigned int dev, unsigned int cycletime,
-				   unsigned int mode)
-{
+अटल व्योम palm_bk3710_setpiomode(व्योम __iomem *base, ide_drive_t *mate,
+				   अचिन्हित पूर्णांक dev, अचिन्हित पूर्णांक cycleसमय,
+				   अचिन्हित पूर्णांक mode)
+अणु
 	u8 t2, t2i, t0;
 	u32 val32;
-	struct ide_timing *t;
+	काष्ठा ide_timing *t;
 
 	t = ide_timing_find_mode(XFER_PIO_0 + mode);
 
 	/* PIO Data Setup */
-	t0 = DIV_ROUND_UP(cycletime, ideclk_period);
+	t0 = DIV_ROUND_UP(cycleसमय, ideclk_period);
 	t2 = DIV_ROUND_UP(t->active, ideclk_period);
 
 	t2i = t0 - t2 - 1;
 	t2 -= 1;
 
-	val32 = readl(base + BK3710_DATSTB) & (0xFF << (dev ? 0 : 8));
+	val32 = पढ़ोl(base + BK3710_DATSTB) & (0xFF << (dev ? 0 : 8));
 	val32 |= (t2 << (dev ? 8 : 0));
-	writel(val32, base + BK3710_DATSTB);
+	ग_लिखोl(val32, base + BK3710_DATSTB);
 
-	val32 = readl(base + BK3710_DATRCVR) & (0xFF << (dev ? 0 : 8));
+	val32 = पढ़ोl(base + BK3710_DATRCVR) & (0xFF << (dev ? 0 : 8));
 	val32 |= (t2i << (dev ? 8 : 0));
-	writel(val32, base + BK3710_DATRCVR);
+	ग_लिखोl(val32, base + BK3710_DATRCVR);
 
-	if (mate) {
+	अगर (mate) अणु
 		u8 mode2 = mate->pio_mode - XFER_PIO_0;
 
-		if (mode2 < mode)
+		अगर (mode2 < mode)
 			mode = mode2;
-	}
+	पूर्ण
 
-	/* TASKFILE Setup */
+	/* TASKखाता Setup */
 	t0 = DIV_ROUND_UP(t->cyc8b, ideclk_period);
 	t2 = DIV_ROUND_UP(t->act8b, ideclk_period);
 
 	t2i = t0 - t2 - 1;
 	t2 -= 1;
 
-	val32 = readl(base + BK3710_REGSTB) & (0xFF << (dev ? 0 : 8));
+	val32 = पढ़ोl(base + BK3710_REGSTB) & (0xFF << (dev ? 0 : 8));
 	val32 |= (t2 << (dev ? 8 : 0));
-	writel(val32, base + BK3710_REGSTB);
+	ग_लिखोl(val32, base + BK3710_REGSTB);
 
-	val32 = readl(base + BK3710_REGRCVR) & (0xFF << (dev ? 0 : 8));
+	val32 = पढ़ोl(base + BK3710_REGRCVR) & (0xFF << (dev ? 0 : 8));
 	val32 |= (t2i << (dev ? 8 : 0));
-	writel(val32, base + BK3710_REGRCVR);
-}
+	ग_लिखोl(val32, base + BK3710_REGRCVR);
+पूर्ण
 
-static void palm_bk3710_set_dma_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	int is_slave = drive->dn & 1;
-	void __iomem *base = (void __iomem *)hwif->dma_base;
-	const u8 xferspeed = drive->dma_mode;
+अटल व्योम palm_bk3710_set_dma_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	पूर्णांक is_slave = drive->dn & 1;
+	व्योम __iomem *base = (व्योम __iomem *)hwअगर->dma_base;
+	स्थिर u8 xferspeed = drive->dma_mode;
 
-	if (xferspeed >= XFER_UDMA_0) {
+	अगर (xferspeed >= XFER_UDMA_0) अणु
 		palm_bk3710_setudmamode(base, is_slave,
 					xferspeed - XFER_UDMA_0);
-	} else {
+	पूर्ण अन्यथा अणु
 		palm_bk3710_setdmamode(base, is_slave,
 				       drive->id[ATA_ID_EIDE_DMA_MIN],
 				       xferspeed);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void palm_bk3710_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	unsigned int cycle_time;
-	int is_slave = drive->dn & 1;
+अटल व्योम palm_bk3710_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	अचिन्हित पूर्णांक cycle_समय;
+	पूर्णांक is_slave = drive->dn & 1;
 	ide_drive_t *mate;
-	void __iomem *base = (void __iomem *)hwif->dma_base;
-	const u8 pio = drive->pio_mode - XFER_PIO_0;
+	व्योम __iomem *base = (व्योम __iomem *)hwअगर->dma_base;
+	स्थिर u8 pio = drive->pio_mode - XFER_PIO_0;
 
 	/*
-	 * Obtain the drive PIO data for tuning the Palm Chip registers
+	 * Obtain the drive PIO data क्रम tuning the Palm Chip रेजिस्टरs
 	 */
-	cycle_time = ide_pio_cycle_time(drive, pio);
+	cycle_समय = ide_pio_cycle_समय(drive, pio);
 	mate = ide_get_pair_dev(drive);
-	palm_bk3710_setpiomode(base, mate, is_slave, cycle_time, pio);
-}
+	palm_bk3710_setpiomode(base, mate, is_slave, cycle_समय, pio);
+पूर्ण
 
-static void palm_bk3710_chipinit(void __iomem *base)
-{
+अटल व्योम palm_bk3710_chipinit(व्योम __iomem *base)
+अणु
 	/*
-	 * REVISIT:  the ATA reset signal needs to be managed through a
-	 * GPIO, which means it should come from platform_data.  Until
-	 * we get and use such information, we have to trust that things
-	 * have been reset before we get here.
+	 * REVISIT:  the ATA reset संकेत needs to be managed through a
+	 * GPIO, which means it should come from platक्रमm_data.  Until
+	 * we get and use such inक्रमmation, we have to trust that things
+	 * have been reset beक्रमe we get here.
 	 */
 
 	/*
@@ -224,9 +225,9 @@ static void palm_bk3710_chipinit(void __iomem *base)
 	 * (ATA_IDETIMP_PREPOST0	, DISABLE) |
 	 *
 	 * DM6446 silicon rev 2.1 and earlier have no observed net benefit
-	 * from enabling prefetch/postwrite.
+	 * from enabling prefetch/postग_लिखो.
 	 */
-	writew(BIT(15), base + BK3710_IDETIMP);
+	ग_लिखोw(BIT(15), base + BK3710_IDETIMP);
 
 	/*
 	 * UDMACTL Ultra-ATA DMA Control
@@ -234,7 +235,7 @@ static void palm_bk3710_chipinit(void __iomem *base)
 	 * (ATA_UDMACTL_UDMAP0	, 0 )
 	 *
 	 */
-	writew(0, base + BK3710_UDMACTL);
+	ग_लिखोw(0, base + BK3710_UDMACTL);
 
 	/*
 	 * MISCCTL Miscellaneous Conrol Register
@@ -242,13 +243,13 @@ static void palm_bk3710_chipinit(void __iomem *base)
 	 * (ATA_MISCCTL_HWNHLD0P	, 1 cycle)
 	 * (ATA_MISCCTL_TIMORIDE	, 1)
 	 */
-	writel(0x001, base + BK3710_MISCCTL);
+	ग_लिखोl(0x001, base + BK3710_MISCCTL);
 
 	/*
-	 * IORDYTMP IORDY Timer for Primary Register
+	 * IORDYTMP IORDY Timer क्रम Primary Register
 	 * (ATA_IORDYTMP_IORDYTMP     , 0xffff  )
 	 */
-	writel(0xFFFF, base + BK3710_IORDYTMP);
+	ग_लिखोl(0xFFFF, base + BK3710_IORDYTMP);
 
 	/*
 	 * Configure BMISP Register
@@ -258,36 +259,36 @@ static void palm_bk3710_chipinit(void __iomem *base)
 	 * (ATA_BMISP_INTRSTAT	, CLEAR)	|
 	 * (ATA_BMISP_DMAERROR	, CLEAR)
 	 */
-	writew(0, base + BK3710_BMISP);
+	ग_लिखोw(0, base + BK3710_BMISP);
 
-	palm_bk3710_setpiomode(base, NULL, 0, 600, 0);
-	palm_bk3710_setpiomode(base, NULL, 1, 600, 0);
-}
+	palm_bk3710_setpiomode(base, शून्य, 0, 600, 0);
+	palm_bk3710_setpiomode(base, शून्य, 1, 600, 0);
+पूर्ण
 
-static u8 palm_bk3710_cable_detect(ide_hwif_t *hwif)
-{
-	return ATA_CBL_PATA80;
-}
+अटल u8 palm_bk3710_cable_detect(ide_hwअगर_t *hwअगर)
+अणु
+	वापस ATA_CBL_PATA80;
+पूर्ण
 
-static int palm_bk3710_init_dma(ide_hwif_t *hwif, const struct ide_port_info *d)
-{
-	printk(KERN_INFO "    %s: MMIO-DMA\n", hwif->name);
+अटल पूर्णांक palm_bk3710_init_dma(ide_hwअगर_t *hwअगर, स्थिर काष्ठा ide_port_info *d)
+अणु
+	prपूर्णांकk(KERN_INFO "    %s: MMIO-DMA\n", hwअगर->name);
 
-	if (ide_allocate_dma_engine(hwif))
-		return -1;
+	अगर (ide_allocate_dma_engine(hwअगर))
+		वापस -1;
 
-	hwif->dma_base = hwif->io_ports.data_addr - IDE_PALM_ATA_PRI_REG_OFFSET;
+	hwअगर->dma_base = hwअगर->io_ports.data_addr - IDE_PALM_ATA_PRI_REG_OFFSET;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ide_port_ops palm_bk3710_ports_ops = {
+अटल स्थिर काष्ठा ide_port_ops palm_bk3710_ports_ops = अणु
 	.set_pio_mode		= palm_bk3710_set_pio_mode,
 	.set_dma_mode		= palm_bk3710_set_dma_mode,
 	.cable_detect		= palm_bk3710_cable_detect,
-};
+पूर्ण;
 
-static struct ide_port_info palm_bk3710_port_info __initdata = {
+अटल काष्ठा ide_port_info palm_bk3710_port_info __initdata = अणु
 	.init_dma		= palm_bk3710_init_dma,
 	.port_ops		= &palm_bk3710_ports_ops,
 	.dma_ops		= &sff_dma_ops,
@@ -295,62 +296,62 @@ static struct ide_port_info palm_bk3710_port_info __initdata = {
 	.pio_mask		= ATA_PIO4,
 	.mwdma_mask		= ATA_MWDMA2,
 	.chipset		= ide_palm3710,
-};
+पूर्ण;
 
-static int __init palm_bk3710_probe(struct platform_device *pdev)
-{
-	struct clk *clk;
-	struct resource *mem, *irq;
-	void __iomem *base;
-	unsigned long rate, mem_size;
-	int i, rc;
-	struct ide_hw hw, *hws[] = { &hw };
+अटल पूर्णांक __init palm_bk3710_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk *clk;
+	काष्ठा resource *mem, *irq;
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ rate, mem_size;
+	पूर्णांक i, rc;
+	काष्ठा ide_hw hw, *hws[] = अणु &hw पूर्ण;
 
-	clk = clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk))
-		return -ENODEV;
+	clk = clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(clk))
+		वापस -ENODEV;
 
 	clk_enable(clk);
 	rate = clk_get_rate(clk);
-	if (!rate)
-		return -EINVAL;
+	अगर (!rate)
+		वापस -EINVAL;
 
-	/* NOTE:  round *down* to meet minimum timings; we count in clocks */
+	/* NOTE:  round *करोwn* to meet minimum timings; we count in घड़ीs */
 	ideclk_period = 1000000000UL / rate;
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (mem == NULL) {
-		printk(KERN_ERR "failed to get memory region resource\n");
-		return -ENODEV;
-	}
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (mem == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "failed to get memory region resource\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (irq == NULL) {
-		printk(KERN_ERR "failed to get IRQ resource\n");
-		return -ENODEV;
-	}
+	irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (irq == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "failed to get IRQ resource\n");
+		वापस -ENODEV;
+	पूर्ण
 
 	mem_size = resource_size(mem);
-	if (request_mem_region(mem->start, mem_size, "palm_bk3710") == NULL) {
-		printk(KERN_ERR "failed to request memory region\n");
-		return -EBUSY;
-	}
+	अगर (request_mem_region(mem->start, mem_size, "palm_bk3710") == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "failed to request memory region\n");
+		वापस -EBUSY;
+	पूर्ण
 
 	base = ioremap(mem->start, mem_size);
-	if (!base) {
-		printk(KERN_ERR "failed to map IO memory\n");
+	अगर (!base) अणु
+		prपूर्णांकk(KERN_ERR "failed to map IO memory\n");
 		release_mem_region(mem->start, mem_size);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Configure the Palm Chip controller */
 	palm_bk3710_chipinit(base);
 
-	memset(&hw, 0, sizeof(hw));
-	for (i = 0; i < IDE_NR_PORTS - 2; i++)
-		hw.io_ports_array[i] = (unsigned long)
+	स_रखो(&hw, 0, माप(hw));
+	क्रम (i = 0; i < IDE_NR_PORTS - 2; i++)
+		hw.io_ports_array[i] = (अचिन्हित दीर्घ)
 				(base + IDE_PALM_ATA_PRI_REG_OFFSET + i);
-	hw.io_ports.ctl_addr = (unsigned long)
+	hw.io_ports.ctl_addr = (अचिन्हित दीर्घ)
 			(base + IDE_PALM_ATA_PRI_CTL_OFFSET);
 	hw.irq = irq->start;
 	hw.dev = &pdev->dev;
@@ -358,30 +359,30 @@ static int __init palm_bk3710_probe(struct platform_device *pdev)
 	palm_bk3710_port_info.udma_mask = rate < 100000000 ? ATA_UDMA4 :
 							     ATA_UDMA5;
 
-	/* Register the IDE interface with Linux */
-	rc = ide_host_add(&palm_bk3710_port_info, hws, 1, NULL);
-	if (rc)
-		goto out;
+	/* Register the IDE पूर्णांकerface with Linux */
+	rc = ide_host_add(&palm_bk3710_port_info, hws, 1, शून्य);
+	अगर (rc)
+		जाओ out;
 
-	return 0;
+	वापस 0;
 out:
-	printk(KERN_WARNING "Palm Chip BK3710 IDE Register Fail\n");
-	return rc;
-}
+	prपूर्णांकk(KERN_WARNING "Palm Chip BK3710 IDE Register Fail\n");
+	वापस rc;
+पूर्ण
 
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:palm_bk3710");
 
-static struct platform_driver platform_bk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver platक्रमm_bk_driver = अणु
+	.driver = अणु
 		.name = "palm_bk3710",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init palm_bk3710_init(void)
-{
-	return platform_driver_probe(&platform_bk_driver, palm_bk3710_probe);
-}
+अटल पूर्णांक __init palm_bk3710_init(व्योम)
+अणु
+	वापस platक्रमm_driver_probe(&platक्रमm_bk_driver, palm_bk3710_probe);
+पूर्ण
 
 module_init(palm_bk3710_init);
 MODULE_LICENSE("GPL");

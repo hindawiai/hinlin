@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: dsfield - Dispatcher field routines
@@ -7,95 +8,95 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "amlcode.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acnamesp.h"
-#include "acparser.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "amlcode.h"
+#समावेश "acdispat.h"
+#समावेश "acinterp.h"
+#समावेश "acnamesp.h"
+#समावेश "acparser.h"
 
-#ifdef ACPI_EXEC_APP
-#include "aecommon.h"
-#endif
+#अगर_घोषित ACPI_EXEC_APP
+#समावेश "aecommon.h"
+#पूर्ण_अगर
 
-#define _COMPONENT          ACPI_DISPATCHER
+#घोषणा _COMPONENT          ACPI_DISPATCHER
 ACPI_MODULE_NAME("dsfield")
 
 /* Local prototypes */
-#ifdef ACPI_ASL_COMPILER
-#include "acdisasm.h"
-static acpi_status
-acpi_ds_create_external_region(acpi_status lookup_status,
-			       union acpi_parse_object *op,
-			       char *path,
-			       struct acpi_walk_state *walk_state,
-			       struct acpi_namespace_node **node);
-#endif
+#अगर_घोषित ACPI_ASL_COMPILER
+#समावेश "acdisasm.h"
+अटल acpi_status
+acpi_ds_create_बाह्यal_region(acpi_status lookup_status,
+			       जोड़ acpi_parse_object *op,
+			       अक्षर *path,
+			       काष्ठा acpi_walk_state *walk_state,
+			       काष्ठा acpi_namespace_node **node);
+#पूर्ण_अगर
 
-static acpi_status
-acpi_ds_get_field_names(struct acpi_create_field_info *info,
-			struct acpi_walk_state *walk_state,
-			union acpi_parse_object *arg);
+अटल acpi_status
+acpi_ds_get_field_names(काष्ठा acpi_create_field_info *info,
+			काष्ठा acpi_walk_state *walk_state,
+			जोड़ acpi_parse_object *arg);
 
-#ifdef ACPI_ASL_COMPILER
+#अगर_घोषित ACPI_ASL_COMPILER
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ds_create_external_region (iASL Disassembler only)
+ * FUNCTION:    acpi_ds_create_बाह्यal_region (iASL Disassembler only)
  *
  * PARAMETERS:  lookup_status   - Status from ns_lookup operation
  *              op              - Op containing the Field definition and args
  *              path            - Pathname of the region
  *  `           walk_state      - Current method state
- *              node            - Where the new region node is returned
+ *              node            - Where the new region node is वापसed
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Add region to the external list if NOT_FOUND. Create a new
+ * DESCRIPTION: Add region to the बाह्यal list अगर NOT_FOUND. Create a new
  *              region node/object.
  *
  ******************************************************************************/
 
-static acpi_status
-acpi_ds_create_external_region(acpi_status lookup_status,
-			       union acpi_parse_object *op,
-			       char *path,
-			       struct acpi_walk_state *walk_state,
-			       struct acpi_namespace_node **node)
-{
+अटल acpi_status
+acpi_ds_create_बाह्यal_region(acpi_status lookup_status,
+			       जोड़ acpi_parse_object *op,
+			       अक्षर *path,
+			       काष्ठा acpi_walk_state *walk_state,
+			       काष्ठा acpi_namespace_node **node)
+अणु
 	acpi_status status;
-	union acpi_operand_object *obj_desc;
+	जोड़ acpi_opeअक्रम_object *obj_desc;
 
-	if (lookup_status != AE_NOT_FOUND) {
-		return (lookup_status);
-	}
+	अगर (lookup_status != AE_NOT_FOUND) अणु
+		वापस (lookup_status);
+	पूर्ण
 
 	/*
 	 * Table disassembly:
-	 * operation_region not found. Generate an External for it, and
-	 * insert the name into the namespace.
+	 * operation_region not found. Generate an External क्रम it, and
+	 * insert the name पूर्णांकo the namespace.
 	 */
-	acpi_dm_add_op_to_external_list(op, path, ACPI_TYPE_REGION, 0, 0);
+	acpi_dm_add_op_to_बाह्यal_list(op, path, ACPI_TYPE_REGION, 0, 0);
 
 	status = acpi_ns_lookup(walk_state->scope_info, path, ACPI_TYPE_REGION,
 				ACPI_IMODE_LOAD_PASS1, ACPI_NS_SEARCH_PARENT,
 				walk_state, node);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
-	/* Must create and install a region object for the new node */
+	/* Must create and install a region object क्रम the new node */
 
-	obj_desc = acpi_ut_create_internal_object(ACPI_TYPE_REGION);
-	if (!obj_desc) {
-		return (AE_NO_MEMORY);
-	}
+	obj_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_REGION);
+	अगर (!obj_desc) अणु
+		वापस (AE_NO_MEMORY);
+	पूर्ण
 
 	obj_desc->region.node = *node;
 	status = acpi_ns_attach_object(*node, obj_desc, ACPI_TYPE_REGION);
-	return (status);
-}
-#endif
+	वापस (status);
+पूर्ण
+#पूर्ण_अगर
 
 /*******************************************************************************
  *
@@ -106,7 +107,7 @@ acpi_ds_create_external_region(acpi_status lookup_status,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute the create_field operators:
+ * DESCRIPTION: Execute the create_field चालकs:
  *              create_bit_field_op,
  *              create_byte_field_op,
  *              create_word_field_op,
@@ -117,14 +118,14 @@ acpi_ds_create_external_region(acpi_status lookup_status,
  ******************************************************************************/
 
 acpi_status
-acpi_ds_create_buffer_field(union acpi_parse_object *op,
-			    struct acpi_walk_state *walk_state)
-{
-	union acpi_parse_object *arg;
-	struct acpi_namespace_node *node;
+acpi_ds_create_buffer_field(जोड़ acpi_parse_object *op,
+			    काष्ठा acpi_walk_state *walk_state)
+अणु
+	जोड़ acpi_parse_object *arg;
+	काष्ठा acpi_namespace_node *node;
 	acpi_status status;
-	union acpi_operand_object *obj_desc;
-	union acpi_operand_object *second_desc = NULL;
+	जोड़ acpi_opeअक्रम_object *obj_desc;
+	जोड़ acpi_opeअक्रम_object *second_desc = शून्य;
 	u32 flags;
 
 	ACPI_FUNCTION_TRACE(ds_create_buffer_field);
@@ -132,64 +133,64 @@ acpi_ds_create_buffer_field(union acpi_parse_object *op,
 	/*
 	 * Get the name_string argument (name of the new buffer_field)
 	 */
-	if (op->common.aml_opcode == AML_CREATE_FIELD_OP) {
+	अगर (op->common.aml_opcode == AML_CREATE_FIELD_OP) अणु
 
 		/* For create_field, name is the 4th argument */
 
 		arg = acpi_ps_get_arg(op, 3);
-	} else {
-		/* For all other create_XXXField operators, name is the 3rd argument */
+	पूर्ण अन्यथा अणु
+		/* For all other create_XXXField चालकs, name is the 3rd argument */
 
 		arg = acpi_ps_get_arg(op, 2);
-	}
+	पूर्ण
 
-	if (!arg) {
-		return_ACPI_STATUS(AE_AML_NO_OPERAND);
-	}
+	अगर (!arg) अणु
+		वापस_ACPI_STATUS(AE_AML_NO_OPERAND);
+	पूर्ण
 
-	if (walk_state->deferred_node) {
+	अगर (walk_state->deferred_node) अणु
 		node = walk_state->deferred_node;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Execute flag should always be set when this function is entered */
 
-		if (!(walk_state->parse_flags & ACPI_PARSE_EXECUTE)) {
+		अगर (!(walk_state->parse_flags & ACPI_PARSE_EXECUTE)) अणु
 			ACPI_ERROR((AE_INFO, "Parse execute mode is not set"));
-			return_ACPI_STATUS(AE_AML_INTERNAL);
-		}
+			वापस_ACPI_STATUS(AE_AML_INTERNAL);
+		पूर्ण
 
-		/* Creating new namespace node, should not already exist */
+		/* Creating new namespace node, should not alपढ़ोy exist */
 
 		flags = ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE |
 		    ACPI_NS_ERROR_IF_FOUND;
 
 		/*
-		 * Mark node temporary if we are executing a normal control
-		 * method. (Don't mark if this is a module-level code method)
+		 * Mark node temporary अगर we are executing a normal control
+		 * method. (Don't mark अगर this is a module-level code method)
 		 */
-		if (walk_state->method_node &&
-		    !(walk_state->parse_flags & ACPI_PARSE_MODULE_LEVEL)) {
+		अगर (walk_state->method_node &&
+		    !(walk_state->parse_flags & ACPI_PARSE_MODULE_LEVEL)) अणु
 			flags |= ACPI_NS_TEMPORARY;
-		}
+		पूर्ण
 
-		/* Enter the name_string into the namespace */
+		/* Enter the name_string पूर्णांकo the namespace */
 
 		status = acpi_ns_lookup(walk_state->scope_info,
 					arg->common.value.string, ACPI_TYPE_ANY,
 					ACPI_IMODE_LOAD_PASS1, flags,
 					walk_state, &node);
-		if ((walk_state->parse_flags & ACPI_PARSE_DISASSEMBLE)
-		    && status == AE_ALREADY_EXISTS) {
+		अगर ((walk_state->parse_flags & ACPI_PARSE_DISASSEMBLE)
+		    && status == AE_ALREADY_EXISTS) अणु
 			status = AE_OK;
-		} else if (ACPI_FAILURE(status)) {
+		पूर्ण अन्यथा अगर (ACPI_FAILURE(status)) अणु
 			ACPI_ERROR_NAMESPACE(walk_state->scope_info,
 					     arg->common.value.string, status);
-			return_ACPI_STATUS(status);
-		}
-	}
+			वापस_ACPI_STATUS(status);
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * We could put the returned object (Node) on the object stack for later,
-	 * but for now, we will put it in the "op" object that the parser uses,
+	 * We could put the वापसed object (Node) on the object stack क्रम later,
+	 * but क्रम now, we will put it in the "op" object that the parser uses,
 	 * so we can get it again at the end of this scope.
 	 */
 	op->common.node = node;
@@ -197,79 +198,79 @@ acpi_ds_create_buffer_field(union acpi_parse_object *op,
 	/*
 	 * If there is no object attached to the node, this node was just created
 	 * and we need to create the field object. Otherwise, this was a lookup
-	 * of an existing node and we don't want to create the field object again.
+	 * of an existing node and we करोn't want to create the field object again.
 	 */
 	obj_desc = acpi_ns_get_attached_object(node);
-	if (obj_desc) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (obj_desc) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/*
-	 * The Field definition is not fully parsed at this time.
-	 * (We must save the address of the AML for the buffer and index operands)
+	 * The Field definition is not fully parsed at this समय.
+	 * (We must save the address of the AML क्रम the buffer and index opeअक्रमs)
 	 */
 
 	/* Create the buffer field object */
 
-	obj_desc = acpi_ut_create_internal_object(ACPI_TYPE_BUFFER_FIELD);
-	if (!obj_desc) {
+	obj_desc = acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_BUFFER_FIELD);
+	अगर (!obj_desc) अणु
 		status = AE_NO_MEMORY;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	/*
-	 * Remember location in AML stream of the field unit opcode and operands
-	 * -- since the buffer and index operands must be evaluated.
+	 * Remember location in AML stream of the field unit opcode and opeअक्रमs
+	 * -- since the buffer and index opeअक्रमs must be evaluated.
 	 */
 	second_desc = obj_desc->common.next_object;
 	second_desc->extra.aml_start = op->named.data;
 	second_desc->extra.aml_length = op->named.length;
 	obj_desc->buffer_field.node = node;
 
-	/* Attach constructed field descriptors to parent node */
+	/* Attach स्थिरructed field descriptors to parent node */
 
 	status = acpi_ns_attach_object(node, obj_desc, ACPI_TYPE_BUFFER_FIELD);
-	if (ACPI_FAILURE(status)) {
-		goto cleanup;
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		जाओ cleanup;
+	पूर्ण
 
 cleanup:
 
 	/* Remove local reference to the object */
 
-	acpi_ut_remove_reference(obj_desc);
-	return_ACPI_STATUS(status);
-}
+	acpi_ut_हटाओ_reference(obj_desc);
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ds_get_field_names
  *
- * PARAMETERS:  info            - create_field info structure
+ * PARAMETERS:  info            - create_field info काष्ठाure
  *              walk_state      - Current method state
- *              arg             - First parser arg for the field name list
+ *              arg             - First parser arg क्रम the field name list
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Process all named fields in a field declaration. Names are
- *              entered into the namespace.
+ *              entered पूर्णांकo the namespace.
  *
  ******************************************************************************/
 
-static acpi_status
-acpi_ds_get_field_names(struct acpi_create_field_info *info,
-			struct acpi_walk_state *walk_state,
-			union acpi_parse_object *arg)
-{
+अटल acpi_status
+acpi_ds_get_field_names(काष्ठा acpi_create_field_info *info,
+			काष्ठा acpi_walk_state *walk_state,
+			जोड़ acpi_parse_object *arg)
+अणु
 	acpi_status status;
 	u64 position;
-	union acpi_parse_object *child;
+	जोड़ acpi_parse_object *child;
 
-#ifdef ACPI_EXEC_APP
-	union acpi_operand_object *result_desc;
-	union acpi_operand_object *obj_desc;
-	char *name_path;
-#endif
+#अगर_घोषित ACPI_EXEC_APP
+	जोड़ acpi_opeअक्रम_object *result_desc;
+	जोड़ acpi_opeअक्रम_object *obj_desc;
+	अक्षर *name_path;
+#पूर्ण_अगर
 
 	ACPI_FUNCTION_TRACE_PTR(ds_get_field_names, info);
 
@@ -279,37 +280,37 @@ acpi_ds_get_field_names(struct acpi_create_field_info *info,
 
 	/* Process all elements in the field list (of parse nodes) */
 
-	while (arg) {
+	जबतक (arg) अणु
 		/*
 		 * Four types of field elements are handled:
-		 * 1) name - Enters a new named field into the namespace
-		 * 2) offset - specifies a bit offset
+		 * 1) name - Enters a new named field पूर्णांकo the namespace
+		 * 2) offset - specअगरies a bit offset
 		 * 3) access_as - changes the access mode/attributes
-		 * 4) connection - Associate a resource template with the field
+		 * 4) connection - Associate a resource ढाँचा with the field
 		 */
-		switch (arg->common.aml_opcode) {
-		case AML_INT_RESERVEDFIELD_OP:
+		चयन (arg->common.aml_opcode) अणु
+		हाल AML_INT_RESERVEDFIELD_OP:
 
 			position = (u64)info->field_bit_position +
 			    (u64)arg->common.value.size;
 
-			if (position > ACPI_UINT32_MAX) {
+			अगर (position > ACPI_UINT32_MAX) अणु
 				ACPI_ERROR((AE_INFO,
 					    "Bit offset within field too large (> 0xFFFFFFFF)"));
-				return_ACPI_STATUS(AE_SUPPORT);
-			}
+				वापस_ACPI_STATUS(AE_SUPPORT);
+			पूर्ण
 
 			info->field_bit_position = (u32) position;
-			break;
+			अवरोध;
 
-		case AML_INT_ACCESSFIELD_OP:
-		case AML_INT_EXTACCESSFIELD_OP:
+		हाल AML_INT_ACCESSFIELD_OP:
+		हाल AML_INT_EXTACCESSFIELD_OP:
 			/*
 			 * Get new access_type, access_attribute, and access_length fields
-			 * -- to be used for all field units that follow, until the
+			 * -- to be used क्रम all field units that follow, until the
 			 * end-of-field or another access_as keyword is encountered.
-			 * NOTE. These three bytes are encoded in the integer value
-			 * of the parseop for convenience.
+			 * NOTE. These three bytes are encoded in the पूर्णांकeger value
+			 * of the parseop क्रम convenience.
 			 *
 			 * In field_flags, preserve the flag bits other than the
 			 * ACCESS_TYPE bits.
@@ -320,39 +321,39 @@ acpi_ds_get_field_names(struct acpi_create_field_info *info,
 			info->field_flags = (u8)
 			    ((info->
 			      field_flags & ~(AML_FIELD_ACCESS_TYPE_MASK)) |
-			     ((u8)((u32)(arg->common.value.integer & 0x07))));
+			     ((u8)((u32)(arg->common.value.पूर्णांकeger & 0x07))));
 
 			/* access_attribute (attrib_quick, attrib_byte, etc.) */
 
 			info->attribute = (u8)
-			    ((arg->common.value.integer >> 8) & 0xFF);
+			    ((arg->common.value.पूर्णांकeger >> 8) & 0xFF);
 
-			/* access_length (for serial/buffer protocols) */
+			/* access_length (क्रम serial/buffer protocols) */
 
 			info->access_length = (u8)
-			    ((arg->common.value.integer >> 16) & 0xFF);
-			break;
+			    ((arg->common.value.पूर्णांकeger >> 16) & 0xFF);
+			अवरोध;
 
-		case AML_INT_CONNECTION_OP:
+		हाल AML_INT_CONNECTION_OP:
 			/*
-			 * Clear any previous connection. New connection is used for all
+			 * Clear any previous connection. New connection is used क्रम all
 			 * fields that follow, similar to access_as
 			 */
-			info->resource_buffer = NULL;
-			info->connection_node = NULL;
+			info->resource_buffer = शून्य;
+			info->connection_node = शून्य;
 			info->pin_number_index = 0;
 
 			/*
 			 * A Connection() is either an actual resource descriptor (buffer)
-			 * or a named reference to a resource template
+			 * or a named reference to a resource ढाँचा
 			 */
 			child = arg->common.value.arg;
-			if (child->common.aml_opcode == AML_INT_BYTELIST_OP) {
+			अगर (child->common.aml_opcode == AML_INT_BYTELIST_OP) अणु
 				info->resource_buffer = child->named.data;
 				info->resource_length =
-				    (u16)child->named.value.integer;
-			} else {
-				/* Lookup the Connection() namepath, it should already exist */
+				    (u16)child->named.value.पूर्णांकeger;
+			पूर्ण अन्यथा अणु
+				/* Lookup the Connection() namepath, it should alपढ़ोy exist */
 
 				status = acpi_ns_lookup(walk_state->scope_info,
 							child->common.value.
@@ -361,33 +362,33 @@ acpi_ds_get_field_names(struct acpi_create_field_info *info,
 							ACPI_NS_DONT_OPEN_SCOPE,
 							walk_state,
 							&info->connection_node);
-				if (ACPI_FAILURE(status)) {
+				अगर (ACPI_FAILURE(status)) अणु
 					ACPI_ERROR_NAMESPACE(walk_state->
 							     scope_info,
 							     child->common.
 							     value.name,
 							     status);
-					return_ACPI_STATUS(status);
-				}
-			}
-			break;
+					वापस_ACPI_STATUS(status);
+				पूर्ण
+			पूर्ण
+			अवरोध;
 
-		case AML_INT_NAMEDFIELD_OP:
+		हाल AML_INT_NAMEDFIELD_OP:
 
-			/* Lookup the name, it should already exist */
+			/* Lookup the name, it should alपढ़ोy exist */
 
 			status = acpi_ns_lookup(walk_state->scope_info,
-						(char *)&arg->named.name,
+						(अक्षर *)&arg->named.name,
 						info->field_type,
 						ACPI_IMODE_EXECUTE,
 						ACPI_NS_DONT_OPEN_SCOPE,
 						walk_state, &info->field_node);
-			if (ACPI_FAILURE(status)) {
+			अगर (ACPI_FAILURE(status)) अणु
 				ACPI_ERROR_NAMESPACE(walk_state->scope_info,
-						     (char *)&arg->named.name,
+						     (अक्षर *)&arg->named.name,
 						     status);
-				return_ACPI_STATUS(status);
-			} else {
+				वापस_ACPI_STATUS(status);
+			पूर्ण अन्यथा अणु
 				arg->common.node = info->field_node;
 				info->field_bit_length = arg->common.value.size;
 
@@ -395,144 +396,144 @@ acpi_ds_get_field_names(struct acpi_create_field_info *info,
 				 * If there is no object attached to the node, this node was
 				 * just created and we need to create the field object.
 				 * Otherwise, this was a lookup of an existing node and we
-				 * don't want to create the field object again.
+				 * करोn't want to create the field object again.
 				 */
-				if (!acpi_ns_get_attached_object
-				    (info->field_node)) {
+				अगर (!acpi_ns_get_attached_object
+				    (info->field_node)) अणु
 					status = acpi_ex_prep_field_value(info);
-					if (ACPI_FAILURE(status)) {
-						return_ACPI_STATUS(status);
-					}
-#ifdef ACPI_EXEC_APP
+					अगर (ACPI_FAILURE(status)) अणु
+						वापस_ACPI_STATUS(status);
+					पूर्ण
+#अगर_घोषित ACPI_EXEC_APP
 					name_path =
-					    acpi_ns_get_external_pathname(info->
+					    acpi_ns_get_बाह्यal_pathname(info->
 									  field_node);
-					if (ACPI_SUCCESS
+					अगर (ACPI_SUCCESS
 					    (ae_lookup_init_file_entry
-					     (name_path, &obj_desc))) {
-						acpi_ex_write_data_to_field
+					     (name_path, &obj_desc))) अणु
+						acpi_ex_ग_लिखो_data_to_field
 						    (obj_desc,
 						     acpi_ns_get_attached_object
 						     (info->field_node),
 						     &result_desc);
-						acpi_ut_remove_reference
+						acpi_ut_हटाओ_reference
 						    (obj_desc);
-					}
+					पूर्ण
 					ACPI_FREE(name_path);
-#endif
-				}
-			}
+#पूर्ण_अगर
+				पूर्ण
+			पूर्ण
 
-			/* Keep track of bit position for the next field */
+			/* Keep track of bit position क्रम the next field */
 
 			position = (u64)info->field_bit_position +
 			    (u64)arg->common.value.size;
 
-			if (position > ACPI_UINT32_MAX) {
+			अगर (position > ACPI_UINT32_MAX) अणु
 				ACPI_ERROR((AE_INFO,
 					    "Field [%4.4s] bit offset too large (> 0xFFFFFFFF)",
-					    ACPI_CAST_PTR(char,
+					    ACPI_CAST_PTR(अक्षर,
 							  &info->field_node->
 							  name)));
-				return_ACPI_STATUS(AE_SUPPORT);
-			}
+				वापस_ACPI_STATUS(AE_SUPPORT);
+			पूर्ण
 
 			info->field_bit_position += info->field_bit_length;
 			info->pin_number_index++;	/* Index relative to previous Connection() */
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 
 			ACPI_ERROR((AE_INFO,
 				    "Invalid opcode in field list: 0x%X",
 				    arg->common.aml_opcode));
-			return_ACPI_STATUS(AE_AML_BAD_OPCODE);
-		}
+			वापस_ACPI_STATUS(AE_AML_BAD_OPCODE);
+		पूर्ण
 
 		arg = arg->common.next;
-	}
+	पूर्ण
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ds_create_field
  *
  * PARAMETERS:  op              - Op containing the Field definition and args
- *              region_node     - Object for the containing Operation Region
+ *              region_node     - Object क्रम the containing Operation Region
  *  `           walk_state      - Current method state
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Create a new field in the specified operation region
+ * DESCRIPTION: Create a new field in the specअगरied operation region
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ds_create_field(union acpi_parse_object *op,
-		     struct acpi_namespace_node *region_node,
-		     struct acpi_walk_state *walk_state)
-{
+acpi_ds_create_field(जोड़ acpi_parse_object *op,
+		     काष्ठा acpi_namespace_node *region_node,
+		     काष्ठा acpi_walk_state *walk_state)
+अणु
 	acpi_status status;
-	union acpi_parse_object *arg;
-	struct acpi_create_field_info info;
+	जोड़ acpi_parse_object *arg;
+	काष्ठा acpi_create_field_info info;
 
 	ACPI_FUNCTION_TRACE_PTR(ds_create_field, op);
 
-	/* First arg is the name of the parent op_region (must already exist) */
+	/* First arg is the name of the parent op_region (must alपढ़ोy exist) */
 
 	arg = op->common.value.arg;
 
-	if (!region_node) {
+	अगर (!region_node) अणु
 		status =
 		    acpi_ns_lookup(walk_state->scope_info,
 				   arg->common.value.name, ACPI_TYPE_REGION,
 				   ACPI_IMODE_EXECUTE, ACPI_NS_SEARCH_PARENT,
 				   walk_state, &region_node);
-#ifdef ACPI_ASL_COMPILER
-		status = acpi_ds_create_external_region(status, arg,
+#अगर_घोषित ACPI_ASL_COMPILER
+		status = acpi_ds_create_बाह्यal_region(status, arg,
 							arg->common.value.name,
 							walk_state,
 							&region_node);
-#endif
-		if (ACPI_FAILURE(status)) {
+#पूर्ण_अगर
+		अगर (ACPI_FAILURE(status)) अणु
 			ACPI_ERROR_NAMESPACE(walk_state->scope_info,
 					     arg->common.value.name, status);
-			return_ACPI_STATUS(status);
-		}
-	}
+			वापस_ACPI_STATUS(status);
+		पूर्ण
+	पूर्ण
 
-	memset(&info, 0, sizeof(struct acpi_create_field_info));
+	स_रखो(&info, 0, माप(काष्ठा acpi_create_field_info));
 
 	/* Second arg is the field flags */
 
 	arg = arg->common.next;
-	info.field_flags = (u8) arg->common.value.integer;
+	info.field_flags = (u8) arg->common.value.पूर्णांकeger;
 	info.attribute = 0;
 
-	/* Each remaining arg is a Named Field */
+	/* Each reमुख्यing arg is a Named Field */
 
 	info.field_type = ACPI_TYPE_LOCAL_REGION_FIELD;
 	info.region_node = region_node;
 
 	status = acpi_ds_get_field_names(&info, walk_state, arg->common.next);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	if (info.region_node->object->region.space_id ==
-	    ACPI_ADR_SPACE_PLATFORM_COMM) {
-		region_node->object->field.internal_pcc_buffer =
+	अगर (info.region_node->object->region.space_id ==
+	    ACPI_ADR_SPACE_PLATFORM_COMM) अणु
+		region_node->object->field.पूर्णांकernal_pcc_buffer =
 		    ACPI_ALLOCATE_ZEROED(info.region_node->object->region.
 					 length);
-		if (!region_node->object->field.internal_pcc_buffer) {
-			return_ACPI_STATUS(AE_NO_MEMORY);
-		}
-	}
+		अगर (!region_node->object->field.पूर्णांकernal_pcc_buffer) अणु
+			वापस_ACPI_STATUS(AE_NO_MEMORY);
+		पूर्ण
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -544,18 +545,18 @@ acpi_ds_create_field(union acpi_parse_object *op,
  * RETURN:      Status
  *
  * DESCRIPTION: For each "Field Unit" name in the argument list that is
- *              part of the field declaration, enter the name into the
+ *              part of the field declaration, enter the name पूर्णांकo the
  *              namespace.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ds_init_field_objects(union acpi_parse_object *op,
-			   struct acpi_walk_state *walk_state)
-{
+acpi_ds_init_field_objects(जोड़ acpi_parse_object *op,
+			   काष्ठा acpi_walk_state *walk_state)
+अणु
 	acpi_status status;
-	union acpi_parse_object *arg = NULL;
-	struct acpi_namespace_node *node;
+	जोड़ acpi_parse_object *arg = शून्य;
+	काष्ठा acpi_namespace_node *node;
 	u8 type = 0;
 	u32 flags;
 
@@ -563,254 +564,254 @@ acpi_ds_init_field_objects(union acpi_parse_object *op,
 
 	/* Execute flag should always be set when this function is entered */
 
-	if (!(walk_state->parse_flags & ACPI_PARSE_EXECUTE)) {
-		if (walk_state->parse_flags & ACPI_PARSE_DEFERRED_OP) {
+	अगर (!(walk_state->parse_flags & ACPI_PARSE_EXECUTE)) अणु
+		अगर (walk_state->parse_flags & ACPI_PARSE_DEFERRED_OP) अणु
 
-			/* bank_field Op is deferred, just return OK */
+			/* bank_field Op is deferred, just वापस OK */
 
-			return_ACPI_STATUS(AE_OK);
-		}
+			वापस_ACPI_STATUS(AE_OK);
+		पूर्ण
 
 		ACPI_ERROR((AE_INFO, "Parse deferred mode is not set"));
-		return_ACPI_STATUS(AE_AML_INTERNAL);
-	}
+		वापस_ACPI_STATUS(AE_AML_INTERNAL);
+	पूर्ण
 
 	/*
-	 * Get the field_list argument for this opcode. This is the start of the
+	 * Get the field_list argument क्रम this opcode. This is the start of the
 	 * list of field elements.
 	 */
-	switch (walk_state->opcode) {
-	case AML_FIELD_OP:
+	चयन (walk_state->opcode) अणु
+	हाल AML_FIELD_OP:
 
 		arg = acpi_ps_get_arg(op, 2);
 		type = ACPI_TYPE_LOCAL_REGION_FIELD;
-		break;
+		अवरोध;
 
-	case AML_BANK_FIELD_OP:
+	हाल AML_BANK_FIELD_OP:
 
 		arg = acpi_ps_get_arg(op, 4);
 		type = ACPI_TYPE_LOCAL_BANK_FIELD;
-		break;
+		अवरोध;
 
-	case AML_INDEX_FIELD_OP:
+	हाल AML_INDEX_FIELD_OP:
 
 		arg = acpi_ps_get_arg(op, 3);
 		type = ACPI_TYPE_LOCAL_INDEX_FIELD;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
-	/* Creating new namespace node(s), should not already exist */
+	/* Creating new namespace node(s), should not alपढ़ोy exist */
 
 	flags = ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE |
 	    ACPI_NS_ERROR_IF_FOUND;
 
 	/*
-	 * Mark node(s) temporary if we are executing a normal control
-	 * method. (Don't mark if this is a module-level code method)
+	 * Mark node(s) temporary अगर we are executing a normal control
+	 * method. (Don't mark अगर this is a module-level code method)
 	 */
-	if (walk_state->method_node &&
-	    !(walk_state->parse_flags & ACPI_PARSE_MODULE_LEVEL)) {
+	अगर (walk_state->method_node &&
+	    !(walk_state->parse_flags & ACPI_PARSE_MODULE_LEVEL)) अणु
 		flags |= ACPI_NS_TEMPORARY;
-	}
-#ifdef ACPI_EXEC_APP
+	पूर्ण
+#अगर_घोषित ACPI_EXEC_APP
 	flags |= ACPI_NS_OVERRIDE_IF_FOUND;
-#endif
+#पूर्ण_अगर
 	/*
 	 * Walk the list of entries in the field_list
-	 * Note: field_list can be of zero length. In this case, Arg will be NULL.
+	 * Note: field_list can be of zero length. In this हाल, Arg will be शून्य.
 	 */
-	while (arg) {
+	जबतक (arg) अणु
 		/*
-		 * Ignore OFFSET/ACCESSAS/CONNECTION terms here; we are only interested
-		 * in the field names in order to enter them into the namespace.
+		 * Ignore OFFSET/ACCESSAS/CONNECTION terms here; we are only पूर्णांकerested
+		 * in the field names in order to enter them पूर्णांकo the namespace.
 		 */
-		if (arg->common.aml_opcode == AML_INT_NAMEDFIELD_OP) {
+		अगर (arg->common.aml_opcode == AML_INT_NAMEDFIELD_OP) अणु
 			status = acpi_ns_lookup(walk_state->scope_info,
-						(char *)&arg->named.name, type,
+						(अक्षर *)&arg->named.name, type,
 						ACPI_IMODE_LOAD_PASS1, flags,
 						walk_state, &node);
-			if (ACPI_FAILURE(status)) {
+			अगर (ACPI_FAILURE(status)) अणु
 				ACPI_ERROR_NAMESPACE(walk_state->scope_info,
-						     (char *)&arg->named.name,
+						     (अक्षर *)&arg->named.name,
 						     status);
-				if (status != AE_ALREADY_EXISTS) {
-					return_ACPI_STATUS(status);
-				}
+				अगर (status != AE_ALREADY_EXISTS) अणु
+					वापस_ACPI_STATUS(status);
+				पूर्ण
 
-				/* Name already exists, just ignore this error */
-			}
+				/* Name alपढ़ोy exists, just ignore this error */
+			पूर्ण
 
 			arg->common.node = node;
-		}
+		पूर्ण
 
 		/* Get the next field element in the list */
 
 		arg = arg->common.next;
-	}
+	पूर्ण
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ds_create_bank_field
  *
  * PARAMETERS:  op              - Op containing the Field definition and args
- *              region_node     - Object for the containing Operation Region
+ *              region_node     - Object क्रम the containing Operation Region
  *              walk_state      - Current method state
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Create a new bank field in the specified operation region
+ * DESCRIPTION: Create a new bank field in the specअगरied operation region
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ds_create_bank_field(union acpi_parse_object *op,
-			  struct acpi_namespace_node *region_node,
-			  struct acpi_walk_state *walk_state)
-{
+acpi_ds_create_bank_field(जोड़ acpi_parse_object *op,
+			  काष्ठा acpi_namespace_node *region_node,
+			  काष्ठा acpi_walk_state *walk_state)
+अणु
 	acpi_status status;
-	union acpi_parse_object *arg;
-	struct acpi_create_field_info info;
+	जोड़ acpi_parse_object *arg;
+	काष्ठा acpi_create_field_info info;
 
 	ACPI_FUNCTION_TRACE_PTR(ds_create_bank_field, op);
 
-	/* First arg is the name of the parent op_region (must already exist) */
+	/* First arg is the name of the parent op_region (must alपढ़ोy exist) */
 
 	arg = op->common.value.arg;
-	if (!region_node) {
+	अगर (!region_node) अणु
 		status =
 		    acpi_ns_lookup(walk_state->scope_info,
 				   arg->common.value.name, ACPI_TYPE_REGION,
 				   ACPI_IMODE_EXECUTE, ACPI_NS_SEARCH_PARENT,
 				   walk_state, &region_node);
-#ifdef ACPI_ASL_COMPILER
-		status = acpi_ds_create_external_region(status, arg,
+#अगर_घोषित ACPI_ASL_COMPILER
+		status = acpi_ds_create_बाह्यal_region(status, arg,
 							arg->common.value.name,
 							walk_state,
 							&region_node);
-#endif
-		if (ACPI_FAILURE(status)) {
+#पूर्ण_अगर
+		अगर (ACPI_FAILURE(status)) अणु
 			ACPI_ERROR_NAMESPACE(walk_state->scope_info,
 					     arg->common.value.name, status);
-			return_ACPI_STATUS(status);
-		}
-	}
+			वापस_ACPI_STATUS(status);
+		पूर्ण
+	पूर्ण
 
-	/* Second arg is the Bank Register (Field) (must already exist) */
+	/* Second arg is the Bank Register (Field) (must alपढ़ोy exist) */
 
 	arg = arg->common.next;
 	status =
 	    acpi_ns_lookup(walk_state->scope_info, arg->common.value.string,
 			   ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
 			   ACPI_NS_SEARCH_PARENT, walk_state,
-			   &info.register_node);
-	if (ACPI_FAILURE(status)) {
+			   &info.रेजिस्टर_node);
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_ERROR_NAMESPACE(walk_state->scope_info,
 				     arg->common.value.string, status);
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/*
 	 * Third arg is the bank_value
-	 * This arg is a term_arg, not a constant
-	 * It will be evaluated later, by acpi_ds_eval_bank_field_operands
+	 * This arg is a term_arg, not a स्थिरant
+	 * It will be evaluated later, by acpi_ds_eval_bank_field_opeअक्रमs
 	 */
 	arg = arg->common.next;
 
 	/* Fourth arg is the field flags */
 
 	arg = arg->common.next;
-	info.field_flags = (u8) arg->common.value.integer;
+	info.field_flags = (u8) arg->common.value.पूर्णांकeger;
 
-	/* Each remaining arg is a Named Field */
+	/* Each reमुख्यing arg is a Named Field */
 
 	info.field_type = ACPI_TYPE_LOCAL_BANK_FIELD;
 	info.region_node = region_node;
 
 	/*
-	 * Use Info.data_register_node to store bank_field Op
-	 * It's safe because data_register_node will never be used when create
-	 * bank field \we store aml_start and aml_length in the bank_field Op for
+	 * Use Info.data_रेजिस्टर_node to store bank_field Op
+	 * It's safe because data_रेजिस्टर_node will never be used when create
+	 * bank field \we store aml_start and aml_length in the bank_field Op क्रम
 	 * late evaluation. Used in acpi_ex_prep_field_value(Info)
 	 *
-	 * TBD: Or, should we add a field in struct acpi_create_field_info, like
+	 * TBD: Or, should we add a field in काष्ठा acpi_create_field_info, like
 	 * "void *ParentOp"?
 	 */
-	info.data_register_node = (struct acpi_namespace_node *)op;
+	info.data_रेजिस्टर_node = (काष्ठा acpi_namespace_node *)op;
 
 	status = acpi_ds_get_field_names(&info, walk_state, arg->common.next);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ds_create_index_field
  *
  * PARAMETERS:  op              - Op containing the Field definition and args
- *              region_node     - Object for the containing Operation Region
+ *              region_node     - Object क्रम the containing Operation Region
  *  `           walk_state      - Current method state
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Create a new index field in the specified operation region
+ * DESCRIPTION: Create a new index field in the specअगरied operation region
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ds_create_index_field(union acpi_parse_object *op,
-			   struct acpi_namespace_node *region_node,
-			   struct acpi_walk_state *walk_state)
-{
+acpi_ds_create_index_field(जोड़ acpi_parse_object *op,
+			   काष्ठा acpi_namespace_node *region_node,
+			   काष्ठा acpi_walk_state *walk_state)
+अणु
 	acpi_status status;
-	union acpi_parse_object *arg;
-	struct acpi_create_field_info info;
+	जोड़ acpi_parse_object *arg;
+	काष्ठा acpi_create_field_info info;
 
 	ACPI_FUNCTION_TRACE_PTR(ds_create_index_field, op);
 
-	/* First arg is the name of the Index register (must already exist) */
+	/* First arg is the name of the Index रेजिस्टर (must alपढ़ोy exist) */
 
 	arg = op->common.value.arg;
 	status =
 	    acpi_ns_lookup(walk_state->scope_info, arg->common.value.string,
 			   ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
 			   ACPI_NS_SEARCH_PARENT, walk_state,
-			   &info.register_node);
-	if (ACPI_FAILURE(status)) {
+			   &info.रेजिस्टर_node);
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_ERROR_NAMESPACE(walk_state->scope_info,
 				     arg->common.value.string, status);
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	/* Second arg is the data register (must already exist) */
+	/* Second arg is the data रेजिस्टर (must alपढ़ोy exist) */
 
 	arg = arg->common.next;
 	status =
 	    acpi_ns_lookup(walk_state->scope_info, arg->common.value.string,
 			   ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
 			   ACPI_NS_SEARCH_PARENT, walk_state,
-			   &info.data_register_node);
-	if (ACPI_FAILURE(status)) {
+			   &info.data_रेजिस्टर_node);
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_ERROR_NAMESPACE(walk_state->scope_info,
 				     arg->common.value.string, status);
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/* Next arg is the field flags */
 
 	arg = arg->common.next;
-	info.field_flags = (u8) arg->common.value.integer;
+	info.field_flags = (u8) arg->common.value.पूर्णांकeger;
 
-	/* Each remaining arg is a Named Field */
+	/* Each reमुख्यing arg is a Named Field */
 
 	info.field_type = ACPI_TYPE_LOCAL_INDEX_FIELD;
 	info.region_node = region_node;
 
 	status = acpi_ds_get_field_names(&info, walk_state, arg->common.next);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण

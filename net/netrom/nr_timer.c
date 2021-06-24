@@ -1,245 +1,246 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  * Copyright (C) 2002 Ralf Baechle DO1GRB (ralf@gnu.org)
  */
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/jiffies.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <net/ax25.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <net/netrom.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <net/netrom.h>
 
-static void nr_heartbeat_expiry(struct timer_list *);
-static void nr_t1timer_expiry(struct timer_list *);
-static void nr_t2timer_expiry(struct timer_list *);
-static void nr_t4timer_expiry(struct timer_list *);
-static void nr_idletimer_expiry(struct timer_list *);
+अटल व्योम nr_heartbeat_expiry(काष्ठा समयr_list *);
+अटल व्योम nr_t1समयr_expiry(काष्ठा समयr_list *);
+अटल व्योम nr_t2समयr_expiry(काष्ठा समयr_list *);
+अटल व्योम nr_t4समयr_expiry(काष्ठा समयr_list *);
+अटल व्योम nr_idleसमयr_expiry(काष्ठा समयr_list *);
 
-void nr_init_timers(struct sock *sk)
-{
-	struct nr_sock *nr = nr_sk(sk);
+व्योम nr_init_समयrs(काष्ठा sock *sk)
+अणु
+	काष्ठा nr_sock *nr = nr_sk(sk);
 
-	timer_setup(&nr->t1timer, nr_t1timer_expiry, 0);
-	timer_setup(&nr->t2timer, nr_t2timer_expiry, 0);
-	timer_setup(&nr->t4timer, nr_t4timer_expiry, 0);
-	timer_setup(&nr->idletimer, nr_idletimer_expiry, 0);
+	समयr_setup(&nr->t1समयr, nr_t1समयr_expiry, 0);
+	समयr_setup(&nr->t2समयr, nr_t2समयr_expiry, 0);
+	समयr_setup(&nr->t4समयr, nr_t4समयr_expiry, 0);
+	समयr_setup(&nr->idleसमयr, nr_idleसमयr_expiry, 0);
 
 	/* initialized by sock_init_data */
-	sk->sk_timer.function = nr_heartbeat_expiry;
-}
+	sk->sk_समयr.function = nr_heartbeat_expiry;
+पूर्ण
 
-void nr_start_t1timer(struct sock *sk)
-{
-	struct nr_sock *nr = nr_sk(sk);
+व्योम nr_start_t1समयr(काष्ठा sock *sk)
+अणु
+	काष्ठा nr_sock *nr = nr_sk(sk);
 
-	sk_reset_timer(sk, &nr->t1timer, jiffies + nr->t1);
-}
+	sk_reset_समयr(sk, &nr->t1समयr, jअगरfies + nr->t1);
+पूर्ण
 
-void nr_start_t2timer(struct sock *sk)
-{
-	struct nr_sock *nr = nr_sk(sk);
+व्योम nr_start_t2समयr(काष्ठा sock *sk)
+अणु
+	काष्ठा nr_sock *nr = nr_sk(sk);
 
-	sk_reset_timer(sk, &nr->t2timer, jiffies + nr->t2);
-}
+	sk_reset_समयr(sk, &nr->t2समयr, jअगरfies + nr->t2);
+पूर्ण
 
-void nr_start_t4timer(struct sock *sk)
-{
-	struct nr_sock *nr = nr_sk(sk);
+व्योम nr_start_t4समयr(काष्ठा sock *sk)
+अणु
+	काष्ठा nr_sock *nr = nr_sk(sk);
 
-	sk_reset_timer(sk, &nr->t4timer, jiffies + nr->t4);
-}
+	sk_reset_समयr(sk, &nr->t4समयr, jअगरfies + nr->t4);
+पूर्ण
 
-void nr_start_idletimer(struct sock *sk)
-{
-	struct nr_sock *nr = nr_sk(sk);
+व्योम nr_start_idleसमयr(काष्ठा sock *sk)
+अणु
+	काष्ठा nr_sock *nr = nr_sk(sk);
 
-	if (nr->idle > 0)
-		sk_reset_timer(sk, &nr->idletimer, jiffies + nr->idle);
-}
+	अगर (nr->idle > 0)
+		sk_reset_समयr(sk, &nr->idleसमयr, jअगरfies + nr->idle);
+पूर्ण
 
-void nr_start_heartbeat(struct sock *sk)
-{
-	sk_reset_timer(sk, &sk->sk_timer, jiffies + 5 * HZ);
-}
+व्योम nr_start_heartbeat(काष्ठा sock *sk)
+अणु
+	sk_reset_समयr(sk, &sk->sk_समयr, jअगरfies + 5 * HZ);
+पूर्ण
 
-void nr_stop_t1timer(struct sock *sk)
-{
-	sk_stop_timer(sk, &nr_sk(sk)->t1timer);
-}
+व्योम nr_stop_t1समयr(काष्ठा sock *sk)
+अणु
+	sk_stop_समयr(sk, &nr_sk(sk)->t1समयr);
+पूर्ण
 
-void nr_stop_t2timer(struct sock *sk)
-{
-	sk_stop_timer(sk, &nr_sk(sk)->t2timer);
-}
+व्योम nr_stop_t2समयr(काष्ठा sock *sk)
+अणु
+	sk_stop_समयr(sk, &nr_sk(sk)->t2समयr);
+पूर्ण
 
-void nr_stop_t4timer(struct sock *sk)
-{
-	sk_stop_timer(sk, &nr_sk(sk)->t4timer);
-}
+व्योम nr_stop_t4समयr(काष्ठा sock *sk)
+अणु
+	sk_stop_समयr(sk, &nr_sk(sk)->t4समयr);
+पूर्ण
 
-void nr_stop_idletimer(struct sock *sk)
-{
-	sk_stop_timer(sk, &nr_sk(sk)->idletimer);
-}
+व्योम nr_stop_idleसमयr(काष्ठा sock *sk)
+अणु
+	sk_stop_समयr(sk, &nr_sk(sk)->idleसमयr);
+पूर्ण
 
-void nr_stop_heartbeat(struct sock *sk)
-{
-	sk_stop_timer(sk, &sk->sk_timer);
-}
+व्योम nr_stop_heartbeat(काष्ठा sock *sk)
+अणु
+	sk_stop_समयr(sk, &sk->sk_समयr);
+पूर्ण
 
-int nr_t1timer_running(struct sock *sk)
-{
-	return timer_pending(&nr_sk(sk)->t1timer);
-}
+पूर्णांक nr_t1समयr_running(काष्ठा sock *sk)
+अणु
+	वापस समयr_pending(&nr_sk(sk)->t1समयr);
+पूर्ण
 
-static void nr_heartbeat_expiry(struct timer_list *t)
-{
-	struct sock *sk = from_timer(sk, t, sk_timer);
-	struct nr_sock *nr = nr_sk(sk);
+अटल व्योम nr_heartbeat_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sock *sk = from_समयr(sk, t, sk_समयr);
+	काष्ठा nr_sock *nr = nr_sk(sk);
 
 	bh_lock_sock(sk);
-	switch (nr->state) {
-	case NR_STATE_0:
-		/* Magic here: If we listen() and a new link dies before it
-		   is accepted() it isn't 'dead' so doesn't get removed. */
-		if (sock_flag(sk, SOCK_DESTROY) ||
-		    (sk->sk_state == TCP_LISTEN && sock_flag(sk, SOCK_DEAD))) {
+	चयन (nr->state) अणु
+	हाल NR_STATE_0:
+		/* Magic here: If we listen() and a new link dies beक्रमe it
+		   is accepted() it isn't 'dead' so doesn't get हटाओd. */
+		अगर (sock_flag(sk, SOCK_DESTROY) ||
+		    (sk->sk_state == TCP_LISTEN && sock_flag(sk, SOCK_DEAD))) अणु
 			sock_hold(sk);
 			bh_unlock_sock(sk);
 			nr_destroy_socket(sk);
 			sock_put(sk);
-			return;
-		}
-		break;
+			वापस;
+		पूर्ण
+		अवरोध;
 
-	case NR_STATE_3:
+	हाल NR_STATE_3:
 		/*
-		 * Check for the state of the receive buffer.
+		 * Check क्रम the state of the receive buffer.
 		 */
-		if (atomic_read(&sk->sk_rmem_alloc) < (sk->sk_rcvbuf / 2) &&
-		    (nr->condition & NR_COND_OWN_RX_BUSY)) {
+		अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) < (sk->sk_rcvbuf / 2) &&
+		    (nr->condition & NR_COND_OWN_RX_BUSY)) अणु
 			nr->condition &= ~NR_COND_OWN_RX_BUSY;
 			nr->condition &= ~NR_COND_ACK_PENDING;
 			nr->vl         = nr->vr;
-			nr_write_internal(sk, NR_INFOACK);
-			break;
-		}
-		break;
-	}
+			nr_ग_लिखो_पूर्णांकernal(sk, NR_INFOACK);
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	nr_start_heartbeat(sk);
 	bh_unlock_sock(sk);
-}
+पूर्ण
 
-static void nr_t2timer_expiry(struct timer_list *t)
-{
-	struct nr_sock *nr = from_timer(nr, t, t2timer);
-	struct sock *sk = &nr->sock;
+अटल व्योम nr_t2समयr_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा nr_sock *nr = from_समयr(nr, t, t2समयr);
+	काष्ठा sock *sk = &nr->sock;
 
 	bh_lock_sock(sk);
-	if (nr->condition & NR_COND_ACK_PENDING) {
+	अगर (nr->condition & NR_COND_ACK_PENDING) अणु
 		nr->condition &= ~NR_COND_ACK_PENDING;
 		nr_enquiry_response(sk);
-	}
+	पूर्ण
 	bh_unlock_sock(sk);
-}
+पूर्ण
 
-static void nr_t4timer_expiry(struct timer_list *t)
-{
-	struct nr_sock *nr = from_timer(nr, t, t4timer);
-	struct sock *sk = &nr->sock;
+अटल व्योम nr_t4समयr_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा nr_sock *nr = from_समयr(nr, t, t4समयr);
+	काष्ठा sock *sk = &nr->sock;
 
 	bh_lock_sock(sk);
 	nr_sk(sk)->condition &= ~NR_COND_PEER_RX_BUSY;
 	bh_unlock_sock(sk);
-}
+पूर्ण
 
-static void nr_idletimer_expiry(struct timer_list *t)
-{
-	struct nr_sock *nr = from_timer(nr, t, idletimer);
-	struct sock *sk = &nr->sock;
+अटल व्योम nr_idleसमयr_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा nr_sock *nr = from_समयr(nr, t, idleसमयr);
+	काष्ठा sock *sk = &nr->sock;
 
 	bh_lock_sock(sk);
 
 	nr_clear_queues(sk);
 
 	nr->n2count = 0;
-	nr_write_internal(sk, NR_DISCREQ);
+	nr_ग_लिखो_पूर्णांकernal(sk, NR_DISCREQ);
 	nr->state = NR_STATE_2;
 
-	nr_start_t1timer(sk);
-	nr_stop_t2timer(sk);
-	nr_stop_t4timer(sk);
+	nr_start_t1समयr(sk);
+	nr_stop_t2समयr(sk);
+	nr_stop_t4समयr(sk);
 
 	sk->sk_state     = TCP_CLOSE;
 	sk->sk_err       = 0;
-	sk->sk_shutdown |= SEND_SHUTDOWN;
+	sk->sk_shutकरोwn |= SEND_SHUTDOWN;
 
-	if (!sock_flag(sk, SOCK_DEAD)) {
+	अगर (!sock_flag(sk, SOCK_DEAD)) अणु
 		sk->sk_state_change(sk);
 		sock_set_flag(sk, SOCK_DEAD);
-	}
+	पूर्ण
 	bh_unlock_sock(sk);
-}
+पूर्ण
 
-static void nr_t1timer_expiry(struct timer_list *t)
-{
-	struct nr_sock *nr = from_timer(nr, t, t1timer);
-	struct sock *sk = &nr->sock;
+अटल व्योम nr_t1समयr_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा nr_sock *nr = from_समयr(nr, t, t1समयr);
+	काष्ठा sock *sk = &nr->sock;
 
 	bh_lock_sock(sk);
-	switch (nr->state) {
-	case NR_STATE_1:
-		if (nr->n2count == nr->n2) {
+	चयन (nr->state) अणु
+	हाल NR_STATE_1:
+		अगर (nr->n2count == nr->n2) अणु
 			nr_disconnect(sk, ETIMEDOUT);
 			bh_unlock_sock(sk);
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 			nr->n2count++;
-			nr_write_internal(sk, NR_CONNREQ);
-		}
-		break;
+			nr_ग_लिखो_पूर्णांकernal(sk, NR_CONNREQ);
+		पूर्ण
+		अवरोध;
 
-	case NR_STATE_2:
-		if (nr->n2count == nr->n2) {
+	हाल NR_STATE_2:
+		अगर (nr->n2count == nr->n2) अणु
 			nr_disconnect(sk, ETIMEDOUT);
 			bh_unlock_sock(sk);
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 			nr->n2count++;
-			nr_write_internal(sk, NR_DISCREQ);
-		}
-		break;
+			nr_ग_लिखो_पूर्णांकernal(sk, NR_DISCREQ);
+		पूर्ण
+		अवरोध;
 
-	case NR_STATE_3:
-		if (nr->n2count == nr->n2) {
+	हाल NR_STATE_3:
+		अगर (nr->n2count == nr->n2) अणु
 			nr_disconnect(sk, ETIMEDOUT);
 			bh_unlock_sock(sk);
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 			nr->n2count++;
 			nr_requeue_frames(sk);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	nr_start_t1timer(sk);
+	nr_start_t1समयr(sk);
 	bh_unlock_sock(sk);
-}
+पूर्ण

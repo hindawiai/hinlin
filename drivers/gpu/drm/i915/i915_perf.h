@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __I915_PERF_H__
-#define __I915_PERF_H__
+#अगर_अघोषित __I915_PERF_H__
+#घोषणा __I915_PERF_H__
 
-#include <linux/kref.h>
-#include <linux/types.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/types.h>
 
-#include "i915_perf_types.h"
+#समावेश "i915_perf_types.h"
 
-struct drm_device;
-struct drm_file;
-struct drm_i915_private;
-struct i915_oa_config;
-struct intel_context;
-struct intel_engine_cs;
+काष्ठा drm_device;
+काष्ठा drm_file;
+काष्ठा drm_i915_निजी;
+काष्ठा i915_oa_config;
+काष्ठा पूर्णांकel_context;
+काष्ठा पूर्णांकel_engine_cs;
 
-void i915_perf_init(struct drm_i915_private *i915);
-void i915_perf_fini(struct drm_i915_private *i915);
-void i915_perf_register(struct drm_i915_private *i915);
-void i915_perf_unregister(struct drm_i915_private *i915);
-int i915_perf_ioctl_version(void);
-void i915_perf_sysctl_register(void);
-void i915_perf_sysctl_unregister(void);
+व्योम i915_perf_init(काष्ठा drm_i915_निजी *i915);
+व्योम i915_perf_fini(काष्ठा drm_i915_निजी *i915);
+व्योम i915_perf_रेजिस्टर(काष्ठा drm_i915_निजी *i915);
+व्योम i915_perf_unरेजिस्टर(काष्ठा drm_i915_निजी *i915);
+पूर्णांक i915_perf_ioctl_version(व्योम);
+व्योम i915_perf_sysctl_रेजिस्टर(व्योम);
+व्योम i915_perf_sysctl_unरेजिस्टर(व्योम);
 
-int i915_perf_open_ioctl(struct drm_device *dev, void *data,
-			 struct drm_file *file);
-int i915_perf_add_config_ioctl(struct drm_device *dev, void *data,
-			       struct drm_file *file);
-int i915_perf_remove_config_ioctl(struct drm_device *dev, void *data,
-				  struct drm_file *file);
+पूर्णांक i915_perf_खोलो_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			 काष्ठा drm_file *file);
+पूर्णांक i915_perf_add_config_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			       काष्ठा drm_file *file);
+पूर्णांक i915_perf_हटाओ_config_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				  काष्ठा drm_file *file);
 
-void i915_oa_init_reg_state(const struct intel_context *ce,
-			    const struct intel_engine_cs *engine);
+व्योम i915_oa_init_reg_state(स्थिर काष्ठा पूर्णांकel_context *ce,
+			    स्थिर काष्ठा पूर्णांकel_engine_cs *engine);
 
-struct i915_oa_config *
-i915_perf_get_oa_config(struct i915_perf *perf, int metrics_set);
+काष्ठा i915_oa_config *
+i915_perf_get_oa_config(काष्ठा i915_perf *perf, पूर्णांक metrics_set);
 
-static inline struct i915_oa_config *
-i915_oa_config_get(struct i915_oa_config *oa_config)
-{
-	if (kref_get_unless_zero(&oa_config->ref))
-		return oa_config;
-	else
-		return NULL;
-}
+अटल अंतरभूत काष्ठा i915_oa_config *
+i915_oa_config_get(काष्ठा i915_oa_config *oa_config)
+अणु
+	अगर (kref_get_unless_zero(&oa_config->ref))
+		वापस oa_config;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-void i915_oa_config_release(struct kref *ref);
-static inline void i915_oa_config_put(struct i915_oa_config *oa_config)
-{
-	if (!oa_config)
-		return;
+व्योम i915_oa_config_release(काष्ठा kref *ref);
+अटल अंतरभूत व्योम i915_oa_config_put(काष्ठा i915_oa_config *oa_config)
+अणु
+	अगर (!oa_config)
+		वापस;
 
 	kref_put(&oa_config->ref, i915_oa_config_release);
-}
+पूर्ण
 
-#endif /* __I915_PERF_H__ */
+#पूर्ण_अगर /* __I915_PERF_H__ */

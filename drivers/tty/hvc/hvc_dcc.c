@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2010, 2014 The Linux Foundation. All rights reserved.  */
 
-#include <linux/console.h>
-#include <linux/init.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
+#समावेश <linux/console.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
 
-#include <asm/dcc.h>
-#include <asm/processor.h>
+#समावेश <यंत्र/dcc.h>
+#समावेश <यंत्र/processor.h>
 
-#include "hvc_console.h"
+#समावेश "hvc_console.h"
 
 /* DCC Status Bits */
-#define DCC_STATUS_RX		(1 << 30)
-#define DCC_STATUS_TX		(1 << 29)
+#घोषणा DCC_STATUS_RX		(1 << 30)
+#घोषणा DCC_STATUS_TX		(1 << 29)
 
-static void dcc_uart_console_putchar(struct uart_port *port, int ch)
-{
-	while (__dcc_getstatus() & DCC_STATUS_TX)
+अटल व्योम dcc_uart_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	जबतक (__dcc_माला_लोtatus() & DCC_STATUS_TX)
 		cpu_relax();
 
-	__dcc_putchar(ch);
-}
+	__dcc_अक्षर_दो(ch);
+पूर्ण
 
-static void dcc_early_write(struct console *con, const char *s, unsigned n)
-{
-	struct earlycon_device *dev = con->data;
+अटल व्योम dcc_early_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s, अचिन्हित n)
+अणु
+	काष्ठा earlycon_device *dev = con->data;
 
-	uart_console_write(&dev->port, s, n, dcc_uart_console_putchar);
-}
+	uart_console_ग_लिखो(&dev->port, s, n, dcc_uart_console_अक्षर_दो);
+पूर्ण
 
-static int __init dcc_early_console_setup(struct earlycon_device *device,
-					  const char *opt)
-{
-	device->con->write = dcc_early_write;
+अटल पूर्णांक __init dcc_early_console_setup(काष्ठा earlycon_device *device,
+					  स्थिर अक्षर *opt)
+अणु
+	device->con->ग_लिखो = dcc_early_ग_लिखो;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 EARLYCON_DECLARE(dcc, dcc_early_console_setup);
 
-static int hvc_dcc_put_chars(uint32_t vt, const char *buf, int count)
-{
-	int i;
+अटल पूर्णांक hvc_dcc_put_अक्षरs(uपूर्णांक32_t vt, स्थिर अक्षर *buf, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
-		while (__dcc_getstatus() & DCC_STATUS_TX)
+	क्रम (i = 0; i < count; i++) अणु
+		जबतक (__dcc_माला_लोtatus() & DCC_STATUS_TX)
 			cpu_relax();
 
-		__dcc_putchar(buf[i]);
-	}
+		__dcc_अक्षर_दो(buf[i]);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int hvc_dcc_get_chars(uint32_t vt, char *buf, int count)
-{
-	int i;
+अटल पूर्णांक hvc_dcc_get_अक्षरs(uपूर्णांक32_t vt, अक्षर *buf, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; ++i)
-		if (__dcc_getstatus() & DCC_STATUS_RX)
-			buf[i] = __dcc_getchar();
-		else
-			break;
+	क्रम (i = 0; i < count; ++i)
+		अगर (__dcc_माला_लोtatus() & DCC_STATUS_RX)
+			buf[i] = __dcc_अक्षर_लो();
+		अन्यथा
+			अवरोध;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static bool hvc_dcc_check(void)
-{
-	unsigned long time = jiffies + (HZ / 10);
+अटल bool hvc_dcc_check(व्योम)
+अणु
+	अचिन्हित दीर्घ समय = jअगरfies + (HZ / 10);
 
-	/* Write a test character to check if it is handled */
-	__dcc_putchar('\n');
+	/* Write a test अक्षरacter to check अगर it is handled */
+	__dcc_अक्षर_दो('\n');
 
-	while (time_is_after_jiffies(time)) {
-		if (!(__dcc_getstatus() & DCC_STATUS_TX))
-			return true;
-	}
+	जबतक (समय_is_after_jअगरfies(समय)) अणु
+		अगर (!(__dcc_माला_लोtatus() & DCC_STATUS_TX))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static const struct hv_ops hvc_dcc_get_put_ops = {
-	.get_chars = hvc_dcc_get_chars,
-	.put_chars = hvc_dcc_put_chars,
-};
+अटल स्थिर काष्ठा hv_ops hvc_dcc_get_put_ops = अणु
+	.get_अक्षरs = hvc_dcc_get_अक्षरs,
+	.put_अक्षरs = hvc_dcc_put_अक्षरs,
+पूर्ण;
 
-static int __init hvc_dcc_console_init(void)
-{
-	int ret;
+अटल पूर्णांक __init hvc_dcc_console_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!hvc_dcc_check())
-		return -ENODEV;
+	अगर (!hvc_dcc_check())
+		वापस -ENODEV;
 
-	/* Returns -1 if error */
+	/* Returns -1 अगर error */
 	ret = hvc_instantiate(0, 0, &hvc_dcc_get_put_ops);
 
-	return ret < 0 ? -ENODEV : 0;
-}
+	वापस ret < 0 ? -ENODEV : 0;
+पूर्ण
 console_initcall(hvc_dcc_console_init);
 
-static int __init hvc_dcc_init(void)
-{
-	struct hvc_struct *p;
+अटल पूर्णांक __init hvc_dcc_init(व्योम)
+अणु
+	काष्ठा hvc_काष्ठा *p;
 
-	if (!hvc_dcc_check())
-		return -ENODEV;
+	अगर (!hvc_dcc_check())
+		वापस -ENODEV;
 
 	p = hvc_alloc(0, 0, &hvc_dcc_get_put_ops, 128);
 
-	return PTR_ERR_OR_ZERO(p);
-}
+	वापस PTR_ERR_OR_ZERO(p);
+पूर्ण
 device_initcall(hvc_dcc_init);

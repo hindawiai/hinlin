@@ -1,193 +1,194 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * QLogic iSCSI HBA Driver
  * Copyright (c)  2003-2013 QLogic Corporation
  */
-#include <linux/moduleparam.h>
-#include <linux/slab.h>
-#include <linux/blkdev.h>
-#include <linux/iscsi_boot_sysfs.h>
-#include <linux/inet.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/iscsi_boot_sysfs.h>
+#समावेश <linux/inet.h>
 
-#include <scsi/scsi_tcq.h>
-#include <scsi/scsicam.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <scsi/scsicam.h>
 
-#include "ql4_def.h"
-#include "ql4_version.h"
-#include "ql4_glbl.h"
-#include "ql4_dbg.h"
-#include "ql4_inline.h"
-#include "ql4_83xx.h"
+#समावेश "ql4_def.h"
+#समावेश "ql4_version.h"
+#समावेश "ql4_glbl.h"
+#समावेश "ql4_dbg.h"
+#समावेश "ql4_inline.h"
+#समावेश "ql4_83xx.h"
 
 /*
  * Driver version
  */
-static char qla4xxx_version_str[40];
+अटल अक्षर qla4xxx_version_str[40];
 
 /*
  * SRB allocation cache
  */
-static struct kmem_cache *srb_cachep;
+अटल काष्ठा kmem_cache *srb_cachep;
 
 /*
- * Module parameter information and variables
+ * Module parameter inक्रमmation and variables
  */
-static int ql4xdisablesysfsboot = 1;
-module_param(ql4xdisablesysfsboot, int, S_IRUGO | S_IWUSR);
+अटल पूर्णांक ql4xdisablesysfsboot = 1;
+module_param(ql4xdisablesysfsboot, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(ql4xdisablesysfsboot,
 		 " Set to disable exporting boot targets to sysfs.\n"
 		 "\t\t  0 - Export boot targets\n"
 		 "\t\t  1 - Do not export boot targets (Default)");
 
-int ql4xdontresethba;
-module_param(ql4xdontresethba, int, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(ql4xdontresethba,
+पूर्णांक ql4xकरोntresethba;
+module_param(ql4xकरोntresethba, पूर्णांक, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(ql4xकरोntresethba,
 		 " Don't reset the HBA for driver recovery.\n"
 		 "\t\t  0 - It will reset HBA (Default)\n"
 		 "\t\t  1 - It will NOT reset HBA");
 
-int ql4xextended_error_logging;
-module_param(ql4xextended_error_logging, int, S_IRUGO | S_IWUSR);
+पूर्णांक ql4xextended_error_logging;
+module_param(ql4xextended_error_logging, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(ql4xextended_error_logging,
 		 " Option to enable extended error logging.\n"
 		 "\t\t  0 - no logging (Default)\n"
 		 "\t\t  2 - debug logging");
 
-int ql4xenablemsix = 1;
-module_param(ql4xenablemsix, int, S_IRUGO|S_IWUSR);
+पूर्णांक ql4xenablemsix = 1;
+module_param(ql4xenablemsix, पूर्णांक, S_IRUGO|S_IWUSR);
 MODULE_PARM_DESC(ql4xenablemsix,
 		 " Set to enable MSI or MSI-X interrupt mechanism.\n"
 		 "\t\t  0 = enable INTx interrupt mechanism.\n"
 		 "\t\t  1 = enable MSI-X interrupt mechanism (Default).\n"
 		 "\t\t  2 = enable MSI interrupt mechanism.");
 
-#define QL4_DEF_QDEPTH 32
-static int ql4xmaxqdepth = QL4_DEF_QDEPTH;
-module_param(ql4xmaxqdepth, int, S_IRUGO | S_IWUSR);
+#घोषणा QL4_DEF_QDEPTH 32
+अटल पूर्णांक ql4xmaxqdepth = QL4_DEF_QDEPTH;
+module_param(ql4xmaxqdepth, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(ql4xmaxqdepth,
 		 " Maximum queue depth to report for target devices.\n"
 		 "\t\t  Default: 32.");
 
-static int ql4xqfulltracking = 1;
-module_param(ql4xqfulltracking, int, S_IRUGO | S_IWUSR);
+अटल पूर्णांक ql4xqfulltracking = 1;
+module_param(ql4xqfulltracking, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(ql4xqfulltracking,
 		 " Enable or disable dynamic tracking and adjustment of\n"
 		 "\t\t scsi device queue depth.\n"
 		 "\t\t  0 - Disable.\n"
 		 "\t\t  1 - Enable. (Default)");
 
-static int ql4xsess_recovery_tmo = QL4_SESS_RECOVERY_TMO;
-module_param(ql4xsess_recovery_tmo, int, S_IRUGO);
-MODULE_PARM_DESC(ql4xsess_recovery_tmo,
+अटल पूर्णांक ql4xsess_recovery_पंचांगo = QL4_SESS_RECOVERY_TMO;
+module_param(ql4xsess_recovery_पंचांगo, पूर्णांक, S_IRUGO);
+MODULE_PARM_DESC(ql4xsess_recovery_पंचांगo,
 		" Target Session Recovery Timeout.\n"
 		"\t\t  Default: 120 sec.");
 
-int ql4xmdcapmask = 0;
-module_param(ql4xmdcapmask, int, S_IRUGO);
+पूर्णांक ql4xmdcapmask = 0;
+module_param(ql4xmdcapmask, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(ql4xmdcapmask,
 		 " Set the Minidump driver capture mask level.\n"
 		 "\t\t  Default is 0 (firmware default capture mask)\n"
 		 "\t\t  Can be set to 0x3, 0x7, 0xF, 0x1F, 0x3F, 0x7F, 0xFF");
 
-int ql4xenablemd = 1;
-module_param(ql4xenablemd, int, S_IRUGO | S_IWUSR);
+पूर्णांक ql4xenablemd = 1;
+module_param(ql4xenablemd, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(ql4xenablemd,
 		 " Set to enable minidump.\n"
 		 "\t\t  0 - disable minidump\n"
 		 "\t\t  1 - enable minidump (Default)");
 
-static int qla4xxx_wait_for_hba_online(struct scsi_qla_host *ha);
+अटल पूर्णांक qla4xxx_रुको_क्रम_hba_online(काष्ठा scsi_qla_host *ha);
 /*
- * SCSI host template entry points
+ * SCSI host ढाँचा entry poपूर्णांकs
  */
-static void qla4xxx_config_dma_addressing(struct scsi_qla_host *ha);
+अटल व्योम qla4xxx_config_dma_addressing(काष्ठा scsi_qla_host *ha);
 
 /*
- * iSCSI template entry points
+ * iSCSI ढाँचा entry poपूर्णांकs
  */
-static int qla4xxx_session_get_param(struct iscsi_cls_session *cls_sess,
-				     enum iscsi_param param, char *buf);
-static int qla4xxx_conn_get_param(struct iscsi_cls_conn *conn,
-				  enum iscsi_param param, char *buf);
-static int qla4xxx_host_get_param(struct Scsi_Host *shost,
-				  enum iscsi_host_param param, char *buf);
-static int qla4xxx_iface_set_param(struct Scsi_Host *shost, void *data,
-				   uint32_t len);
-static int qla4xxx_get_iface_param(struct iscsi_iface *iface,
-				   enum iscsi_param_type param_type,
-				   int param, char *buf);
-static enum blk_eh_timer_return qla4xxx_eh_cmd_timed_out(struct scsi_cmnd *sc);
-static struct iscsi_endpoint *qla4xxx_ep_connect(struct Scsi_Host *shost,
-						 struct sockaddr *dst_addr,
-						 int non_blocking);
-static int qla4xxx_ep_poll(struct iscsi_endpoint *ep, int timeout_ms);
-static void qla4xxx_ep_disconnect(struct iscsi_endpoint *ep);
-static int qla4xxx_get_ep_param(struct iscsi_endpoint *ep,
-				enum iscsi_param param, char *buf);
-static int qla4xxx_conn_start(struct iscsi_cls_conn *conn);
-static struct iscsi_cls_conn *
-qla4xxx_conn_create(struct iscsi_cls_session *cls_sess, uint32_t conn_idx);
-static int qla4xxx_conn_bind(struct iscsi_cls_session *cls_session,
-			     struct iscsi_cls_conn *cls_conn,
-			     uint64_t transport_fd, int is_leading);
-static void qla4xxx_conn_destroy(struct iscsi_cls_conn *conn);
-static struct iscsi_cls_session *
-qla4xxx_session_create(struct iscsi_endpoint *ep, uint16_t cmds_max,
-			uint16_t qdepth, uint32_t initial_cmdsn);
-static void qla4xxx_session_destroy(struct iscsi_cls_session *sess);
-static void qla4xxx_task_work(struct work_struct *wdata);
-static int qla4xxx_alloc_pdu(struct iscsi_task *, uint8_t);
-static int qla4xxx_task_xmit(struct iscsi_task *);
-static void qla4xxx_task_cleanup(struct iscsi_task *);
-static void qla4xxx_fail_session(struct iscsi_cls_session *cls_session);
-static void qla4xxx_conn_get_stats(struct iscsi_cls_conn *cls_conn,
-				   struct iscsi_stats *stats);
-static int qla4xxx_send_ping(struct Scsi_Host *shost, uint32_t iface_num,
-			     uint32_t iface_type, uint32_t payload_size,
-			     uint32_t pid, struct sockaddr *dst_addr);
-static int qla4xxx_get_chap_list(struct Scsi_Host *shost, uint16_t chap_tbl_idx,
-				 uint32_t *num_entries, char *buf);
-static int qla4xxx_delete_chap(struct Scsi_Host *shost, uint16_t chap_tbl_idx);
-static int qla4xxx_set_chap_entry(struct Scsi_Host *shost, void  *data,
-				  int len);
-static int qla4xxx_get_host_stats(struct Scsi_Host *shost, char *buf, int len);
+अटल पूर्णांक qla4xxx_session_get_param(काष्ठा iscsi_cls_session *cls_sess,
+				     क्रमागत iscsi_param param, अक्षर *buf);
+अटल पूर्णांक qla4xxx_conn_get_param(काष्ठा iscsi_cls_conn *conn,
+				  क्रमागत iscsi_param param, अक्षर *buf);
+अटल पूर्णांक qla4xxx_host_get_param(काष्ठा Scsi_Host *shost,
+				  क्रमागत iscsi_host_param param, अक्षर *buf);
+अटल पूर्णांक qla4xxx_अगरace_set_param(काष्ठा Scsi_Host *shost, व्योम *data,
+				   uपूर्णांक32_t len);
+अटल पूर्णांक qla4xxx_get_अगरace_param(काष्ठा iscsi_अगरace *अगरace,
+				   क्रमागत iscsi_param_type param_type,
+				   पूर्णांक param, अक्षर *buf);
+अटल क्रमागत blk_eh_समयr_वापस qla4xxx_eh_cmd_समयd_out(काष्ठा scsi_cmnd *sc);
+अटल काष्ठा iscsi_endpoपूर्णांक *qla4xxx_ep_connect(काष्ठा Scsi_Host *shost,
+						 काष्ठा sockaddr *dst_addr,
+						 पूर्णांक non_blocking);
+अटल पूर्णांक qla4xxx_ep_poll(काष्ठा iscsi_endpoपूर्णांक *ep, पूर्णांक समयout_ms);
+अटल व्योम qla4xxx_ep_disconnect(काष्ठा iscsi_endpoपूर्णांक *ep);
+अटल पूर्णांक qla4xxx_get_ep_param(काष्ठा iscsi_endpoपूर्णांक *ep,
+				क्रमागत iscsi_param param, अक्षर *buf);
+अटल पूर्णांक qla4xxx_conn_start(काष्ठा iscsi_cls_conn *conn);
+अटल काष्ठा iscsi_cls_conn *
+qla4xxx_conn_create(काष्ठा iscsi_cls_session *cls_sess, uपूर्णांक32_t conn_idx);
+अटल पूर्णांक qla4xxx_conn_bind(काष्ठा iscsi_cls_session *cls_session,
+			     काष्ठा iscsi_cls_conn *cls_conn,
+			     uपूर्णांक64_t transport_fd, पूर्णांक is_leading);
+अटल व्योम qla4xxx_conn_destroy(काष्ठा iscsi_cls_conn *conn);
+अटल काष्ठा iscsi_cls_session *
+qla4xxx_session_create(काष्ठा iscsi_endpoपूर्णांक *ep, uपूर्णांक16_t cmds_max,
+			uपूर्णांक16_t qdepth, uपूर्णांक32_t initial_cmdsn);
+अटल व्योम qla4xxx_session_destroy(काष्ठा iscsi_cls_session *sess);
+अटल व्योम qla4xxx_task_work(काष्ठा work_काष्ठा *wdata);
+अटल पूर्णांक qla4xxx_alloc_pdu(काष्ठा iscsi_task *, uपूर्णांक8_t);
+अटल पूर्णांक qla4xxx_task_xmit(काष्ठा iscsi_task *);
+अटल व्योम qla4xxx_task_cleanup(काष्ठा iscsi_task *);
+अटल व्योम qla4xxx_fail_session(काष्ठा iscsi_cls_session *cls_session);
+अटल व्योम qla4xxx_conn_get_stats(काष्ठा iscsi_cls_conn *cls_conn,
+				   काष्ठा iscsi_stats *stats);
+अटल पूर्णांक qla4xxx_send_ping(काष्ठा Scsi_Host *shost, uपूर्णांक32_t अगरace_num,
+			     uपूर्णांक32_t अगरace_type, uपूर्णांक32_t payload_size,
+			     uपूर्णांक32_t pid, काष्ठा sockaddr *dst_addr);
+अटल पूर्णांक qla4xxx_get_chap_list(काष्ठा Scsi_Host *shost, uपूर्णांक16_t chap_tbl_idx,
+				 uपूर्णांक32_t *num_entries, अक्षर *buf);
+अटल पूर्णांक qla4xxx_delete_chap(काष्ठा Scsi_Host *shost, uपूर्णांक16_t chap_tbl_idx);
+अटल पूर्णांक qla4xxx_set_chap_entry(काष्ठा Scsi_Host *shost, व्योम  *data,
+				  पूर्णांक len);
+अटल पूर्णांक qla4xxx_get_host_stats(काष्ठा Scsi_Host *shost, अक्षर *buf, पूर्णांक len);
 
 /*
- * SCSI host template entry points
+ * SCSI host ढाँचा entry poपूर्णांकs
  */
-static int qla4xxx_queuecommand(struct Scsi_Host *h, struct scsi_cmnd *cmd);
-static int qla4xxx_eh_abort(struct scsi_cmnd *cmd);
-static int qla4xxx_eh_device_reset(struct scsi_cmnd *cmd);
-static int qla4xxx_eh_target_reset(struct scsi_cmnd *cmd);
-static int qla4xxx_eh_host_reset(struct scsi_cmnd *cmd);
-static int qla4xxx_slave_alloc(struct scsi_device *device);
-static umode_t qla4_attr_is_visible(int param_type, int param);
-static int qla4xxx_host_reset(struct Scsi_Host *shost, int reset_type);
+अटल पूर्णांक qla4xxx_queuecommand(काष्ठा Scsi_Host *h, काष्ठा scsi_cmnd *cmd);
+अटल पूर्णांक qla4xxx_eh_पात(काष्ठा scsi_cmnd *cmd);
+अटल पूर्णांक qla4xxx_eh_device_reset(काष्ठा scsi_cmnd *cmd);
+अटल पूर्णांक qla4xxx_eh_target_reset(काष्ठा scsi_cmnd *cmd);
+अटल पूर्णांक qla4xxx_eh_host_reset(काष्ठा scsi_cmnd *cmd);
+अटल पूर्णांक qla4xxx_slave_alloc(काष्ठा scsi_device *device);
+अटल umode_t qla4_attr_is_visible(पूर्णांक param_type, पूर्णांक param);
+अटल पूर्णांक qla4xxx_host_reset(काष्ठा Scsi_Host *shost, पूर्णांक reset_type);
 
 /*
- * iSCSI Flash DDB sysfs entry points
+ * iSCSI Flash DDB sysfs entry poपूर्णांकs
  */
-static int
-qla4xxx_sysfs_ddb_set_param(struct iscsi_bus_flash_session *fnode_sess,
-			    struct iscsi_bus_flash_conn *fnode_conn,
-			    void *data, int len);
-static int
-qla4xxx_sysfs_ddb_get_param(struct iscsi_bus_flash_session *fnode_sess,
-			    int param, char *buf);
-static int qla4xxx_sysfs_ddb_add(struct Scsi_Host *shost, const char *buf,
-				 int len);
-static int
-qla4xxx_sysfs_ddb_delete(struct iscsi_bus_flash_session *fnode_sess);
-static int qla4xxx_sysfs_ddb_login(struct iscsi_bus_flash_session *fnode_sess,
-				   struct iscsi_bus_flash_conn *fnode_conn);
-static int qla4xxx_sysfs_ddb_logout(struct iscsi_bus_flash_session *fnode_sess,
-				    struct iscsi_bus_flash_conn *fnode_conn);
-static int qla4xxx_sysfs_ddb_logout_sid(struct iscsi_cls_session *cls_sess);
+अटल पूर्णांक
+qla4xxx_sysfs_ddb_set_param(काष्ठा iscsi_bus_flash_session *fnode_sess,
+			    काष्ठा iscsi_bus_flash_conn *fnode_conn,
+			    व्योम *data, पूर्णांक len);
+अटल पूर्णांक
+qla4xxx_sysfs_ddb_get_param(काष्ठा iscsi_bus_flash_session *fnode_sess,
+			    पूर्णांक param, अक्षर *buf);
+अटल पूर्णांक qla4xxx_sysfs_ddb_add(काष्ठा Scsi_Host *shost, स्थिर अक्षर *buf,
+				 पूर्णांक len);
+अटल पूर्णांक
+qla4xxx_sysfs_ddb_delete(काष्ठा iscsi_bus_flash_session *fnode_sess);
+अटल पूर्णांक qla4xxx_sysfs_ddb_login(काष्ठा iscsi_bus_flash_session *fnode_sess,
+				   काष्ठा iscsi_bus_flash_conn *fnode_conn);
+अटल पूर्णांक qla4xxx_sysfs_ddb_logout(काष्ठा iscsi_bus_flash_session *fnode_sess,
+				    काष्ठा iscsi_bus_flash_conn *fnode_conn);
+अटल पूर्णांक qla4xxx_sysfs_ddb_logout_sid(काष्ठा iscsi_cls_session *cls_sess);
 
-static struct qla4_8xxx_legacy_intr_set legacy_intr[] =
+अटल काष्ठा qla4_8xxx_legacy_पूर्णांकr_set legacy_पूर्णांकr[] =
     QLA82XX_LEGACY_INTR_CONFIG;
 
-static const uint32_t qla4_82xx_reg_tbl[] = {
+अटल स्थिर uपूर्णांक32_t qla4_82xx_reg_tbl[] = अणु
 	QLA82XX_PEG_HALT_STATUS1,
 	QLA82XX_PEG_HALT_STATUS2,
 	QLA82XX_PEG_ALIVE_COUNTER,
@@ -202,9 +203,9 @@ static const uint32_t qla4_82xx_reg_tbl[] = {
 	QLA82XX_FW_VERSION_SUB,
 	CRB_CMDPEG_STATE,
 	CRB_TEMP_STATE,
-};
+पूर्ण;
 
-static const uint32_t qla4_83xx_reg_tbl[] = {
+अटल स्थिर uपूर्णांक32_t qla4_83xx_reg_tbl[] = अणु
 	QLA83XX_PEG_HALT_STATUS1,
 	QLA83XX_PEG_HALT_STATUS2,
 	QLA83XX_PEG_ALIVE_COUNTER,
@@ -219,19 +220,19 @@ static const uint32_t qla4_83xx_reg_tbl[] = {
 	QLA83XX_FW_VER_SUB,
 	QLA83XX_CMDPEG_STATE,
 	QLA83XX_ASIC_TEMP,
-};
+पूर्ण;
 
-static struct scsi_host_template qla4xxx_driver_template = {
+अटल काष्ठा scsi_host_ढाँचा qla4xxx_driver_ढाँचा = अणु
 	.module			= THIS_MODULE,
 	.name			= DRIVER_NAME,
 	.proc_name		= DRIVER_NAME,
 	.queuecommand		= qla4xxx_queuecommand,
 
-	.eh_abort_handler	= qla4xxx_eh_abort,
+	.eh_पात_handler	= qla4xxx_eh_पात,
 	.eh_device_reset_handler = qla4xxx_eh_device_reset,
 	.eh_target_reset_handler = qla4xxx_eh_target_reset,
 	.eh_host_reset_handler	= qla4xxx_eh_host_reset,
-	.eh_timed_out		= qla4xxx_eh_cmd_timed_out,
+	.eh_समयd_out		= qla4xxx_eh_cmd_समयd_out,
 
 	.slave_alloc		= qla4xxx_slave_alloc,
 	.change_queue_depth	= scsi_change_queue_depth,
@@ -243,10 +244,10 @@ static struct scsi_host_template qla4xxx_driver_template = {
 	.max_sectors		= 0xFFFF,
 	.shost_attrs		= qla4xxx_host_attrs,
 	.host_reset		= qla4xxx_host_reset,
-	.vendor_id		= SCSI_NL_VID_TYPE_PCI | PCI_VENDOR_ID_QLOGIC,
-};
+	.venकरोr_id		= SCSI_NL_VID_TYPE_PCI | PCI_VENDOR_ID_QLOGIC,
+पूर्ण;
 
-static struct iscsi_transport qla4xxx_iscsi_transport = {
+अटल काष्ठा iscsi_transport qla4xxx_iscsi_transport = अणु
 	.owner			= THIS_MODULE,
 	.name			= DRIVER_NAME,
 	.caps			= CAP_TEXT_NEGO |
@@ -275,8 +276,8 @@ static struct iscsi_transport qla4xxx_iscsi_transport = {
 	.alloc_pdu		= qla4xxx_alloc_pdu,
 
 	.get_host_param		= qla4xxx_host_get_param,
-	.set_iface_param	= qla4xxx_iface_set_param,
-	.get_iface_param	= qla4xxx_get_iface_param,
+	.set_अगरace_param	= qla4xxx_अगरace_set_param,
+	.get_अगरace_param	= qla4xxx_get_अगरace_param,
 	.bsg_request		= qla4xxx_bsg_request,
 	.send_ping		= qla4xxx_send_ping,
 	.get_chap		= qla4xxx_get_chap_list,
@@ -290,511 +291,511 @@ static struct iscsi_transport qla4xxx_iscsi_transport = {
 	.logout_flashnode	= qla4xxx_sysfs_ddb_logout,
 	.logout_flashnode_sid	= qla4xxx_sysfs_ddb_logout_sid,
 	.get_host_stats		= qla4xxx_get_host_stats,
-};
+पूर्ण;
 
-static struct scsi_transport_template *qla4xxx_scsi_transport;
+अटल काष्ठा scsi_transport_ढाँचा *qla4xxx_scsi_transport;
 
-static int qla4xxx_isp_check_reg(struct scsi_qla_host *ha)
-{
+अटल पूर्णांक qla4xxx_isp_check_reg(काष्ठा scsi_qla_host *ha)
+अणु
 	u32 reg_val = 0;
-	int rval = QLA_SUCCESS;
+	पूर्णांक rval = QLA_SUCCESS;
 
-	if (is_qla8022(ha))
-		reg_val = readl(&ha->qla4_82xx_reg->host_status);
-	else if (is_qla8032(ha) || is_qla8042(ha))
+	अगर (is_qla8022(ha))
+		reg_val = पढ़ोl(&ha->qla4_82xx_reg->host_status);
+	अन्यथा अगर (is_qla8032(ha) || is_qla8042(ha))
 		reg_val = qla4_8xxx_rd_direct(ha, QLA8XXX_PEG_ALIVE_COUNTER);
-	else
-		reg_val = readw(&ha->reg->ctrl_status);
+	अन्यथा
+		reg_val = पढ़ोw(&ha->reg->ctrl_status);
 
-	if (reg_val == QL4_ISP_REG_DISCONNECT)
+	अगर (reg_val == QL4_ISP_REG_DISCONNECT)
 		rval = QLA_ERROR;
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int qla4xxx_send_ping(struct Scsi_Host *shost, uint32_t iface_num,
-			     uint32_t iface_type, uint32_t payload_size,
-			     uint32_t pid, struct sockaddr *dst_addr)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct sockaddr_in *addr;
-	struct sockaddr_in6 *addr6;
-	uint32_t options = 0;
-	uint8_t ipaddr[IPv6_ADDR_LEN];
-	int rval;
+अटल पूर्णांक qla4xxx_send_ping(काष्ठा Scsi_Host *shost, uपूर्णांक32_t अगरace_num,
+			     uपूर्णांक32_t अगरace_type, uपूर्णांक32_t payload_size,
+			     uपूर्णांक32_t pid, काष्ठा sockaddr *dst_addr)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा sockaddr_in *addr;
+	काष्ठा sockaddr_in6 *addr6;
+	uपूर्णांक32_t options = 0;
+	uपूर्णांक8_t ipaddr[IPv6_ADDR_LEN];
+	पूर्णांक rval;
 
-	memset(ipaddr, 0, IPv6_ADDR_LEN);
+	स_रखो(ipaddr, 0, IPv6_ADDR_LEN);
 	/* IPv4 to IPv4 */
-	if ((iface_type == ISCSI_IFACE_TYPE_IPV4) &&
-	    (dst_addr->sa_family == AF_INET)) {
-		addr = (struct sockaddr_in *)dst_addr;
-		memcpy(ipaddr, &addr->sin_addr.s_addr, IP_ADDR_LEN);
-		DEBUG2(ql4_printk(KERN_INFO, ha, "%s: IPv4 Ping src: %pI4 "
+	अगर ((अगरace_type == ISCSI_IFACE_TYPE_IPV4) &&
+	    (dst_addr->sa_family == AF_INET)) अणु
+		addr = (काष्ठा sockaddr_in *)dst_addr;
+		स_नकल(ipaddr, &addr->sin_addr.s_addr, IP_ADDR_LEN);
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: IPv4 Ping src: %pI4 "
 				  "dest: %pI4\n", __func__,
 				  &ha->ip_config.ip_address, ipaddr));
 		rval = qla4xxx_ping_iocb(ha, options, payload_size, pid,
 					 ipaddr);
-		if (rval)
+		अगर (rval)
 			rval = -EINVAL;
-	} else if ((iface_type == ISCSI_IFACE_TYPE_IPV6) &&
-		   (dst_addr->sa_family == AF_INET6)) {
+	पूर्ण अन्यथा अगर ((अगरace_type == ISCSI_IFACE_TYPE_IPV6) &&
+		   (dst_addr->sa_family == AF_INET6)) अणु
 		/* IPv6 to IPv6 */
-		addr6 = (struct sockaddr_in6 *)dst_addr;
-		memcpy(ipaddr, &addr6->sin6_addr.in6_u.u6_addr8, IPv6_ADDR_LEN);
+		addr6 = (काष्ठा sockaddr_in6 *)dst_addr;
+		स_नकल(ipaddr, &addr6->sin6_addr.in6_u.u6_addr8, IPv6_ADDR_LEN);
 
 		options |= PING_IPV6_PROTOCOL_ENABLE;
 
 		/* Ping using LinkLocal address */
-		if ((iface_num == 0) || (iface_num == 1)) {
-			DEBUG2(ql4_printk(KERN_INFO, ha, "%s: LinkLocal Ping "
+		अगर ((अगरace_num == 0) || (अगरace_num == 1)) अणु
+			DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: LinkLocal Ping "
 					  "src: %pI6 dest: %pI6\n", __func__,
 					  &ha->ip_config.ipv6_link_local_addr,
 					  ipaddr));
 			options |= PING_IPV6_LINKLOCAL_ADDR;
 			rval = qla4xxx_ping_iocb(ha, options, payload_size,
 						 pid, ipaddr);
-		} else {
-			ql4_printk(KERN_WARNING, ha, "%s: iface num = %d "
-				   "not supported\n", __func__, iface_num);
+		पूर्ण अन्यथा अणु
+			ql4_prपूर्णांकk(KERN_WARNING, ha, "%s: iface num = %d "
+				   "not supported\n", __func__, अगरace_num);
 			rval = -ENOSYS;
-			goto exit_send_ping;
-		}
+			जाओ निकास_send_ping;
+		पूर्ण
 
 		/*
 		 * If ping using LinkLocal address fails, try ping using
 		 * IPv6 address
 		 */
-		if (rval != QLA_SUCCESS) {
+		अगर (rval != QLA_SUCCESS) अणु
 			options &= ~PING_IPV6_LINKLOCAL_ADDR;
-			if (iface_num == 0) {
+			अगर (अगरace_num == 0) अणु
 				options |= PING_IPV6_ADDR0;
-				DEBUG2(ql4_printk(KERN_INFO, ha, "%s: IPv6 "
+				DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: IPv6 "
 						  "Ping src: %pI6 "
 						  "dest: %pI6\n", __func__,
 						  &ha->ip_config.ipv6_addr0,
 						  ipaddr));
-			} else if (iface_num == 1) {
+			पूर्ण अन्यथा अगर (अगरace_num == 1) अणु
 				options |= PING_IPV6_ADDR1;
-				DEBUG2(ql4_printk(KERN_INFO, ha, "%s: IPv6 "
+				DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: IPv6 "
 						  "Ping src: %pI6 "
 						  "dest: %pI6\n", __func__,
 						  &ha->ip_config.ipv6_addr1,
 						  ipaddr));
-			}
+			पूर्ण
 			rval = qla4xxx_ping_iocb(ha, options, payload_size,
 						 pid, ipaddr);
-			if (rval)
+			अगर (rval)
 				rval = -EINVAL;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		rval = -ENOSYS;
-exit_send_ping:
-	return rval;
-}
+निकास_send_ping:
+	वापस rval;
+पूर्ण
 
-static umode_t qla4_attr_is_visible(int param_type, int param)
-{
-	switch (param_type) {
-	case ISCSI_HOST_PARAM:
-		switch (param) {
-		case ISCSI_HOST_PARAM_HWADDRESS:
-		case ISCSI_HOST_PARAM_IPADDRESS:
-		case ISCSI_HOST_PARAM_INITIATOR_NAME:
-		case ISCSI_HOST_PARAM_PORT_STATE:
-		case ISCSI_HOST_PARAM_PORT_SPEED:
-			return S_IRUGO;
-		default:
-			return 0;
-		}
-	case ISCSI_PARAM:
-		switch (param) {
-		case ISCSI_PARAM_PERSISTENT_ADDRESS:
-		case ISCSI_PARAM_PERSISTENT_PORT:
-		case ISCSI_PARAM_CONN_ADDRESS:
-		case ISCSI_PARAM_CONN_PORT:
-		case ISCSI_PARAM_TARGET_NAME:
-		case ISCSI_PARAM_TPGT:
-		case ISCSI_PARAM_TARGET_ALIAS:
-		case ISCSI_PARAM_MAX_BURST:
-		case ISCSI_PARAM_MAX_R2T:
-		case ISCSI_PARAM_FIRST_BURST:
-		case ISCSI_PARAM_MAX_RECV_DLENGTH:
-		case ISCSI_PARAM_MAX_XMIT_DLENGTH:
-		case ISCSI_PARAM_IFACE_NAME:
-		case ISCSI_PARAM_CHAP_OUT_IDX:
-		case ISCSI_PARAM_CHAP_IN_IDX:
-		case ISCSI_PARAM_USERNAME:
-		case ISCSI_PARAM_PASSWORD:
-		case ISCSI_PARAM_USERNAME_IN:
-		case ISCSI_PARAM_PASSWORD_IN:
-		case ISCSI_PARAM_AUTO_SND_TGT_DISABLE:
-		case ISCSI_PARAM_DISCOVERY_SESS:
-		case ISCSI_PARAM_PORTAL_TYPE:
-		case ISCSI_PARAM_CHAP_AUTH_EN:
-		case ISCSI_PARAM_DISCOVERY_LOGOUT_EN:
-		case ISCSI_PARAM_BIDI_CHAP_EN:
-		case ISCSI_PARAM_DISCOVERY_AUTH_OPTIONAL:
-		case ISCSI_PARAM_DEF_TIME2WAIT:
-		case ISCSI_PARAM_DEF_TIME2RETAIN:
-		case ISCSI_PARAM_HDRDGST_EN:
-		case ISCSI_PARAM_DATADGST_EN:
-		case ISCSI_PARAM_INITIAL_R2T_EN:
-		case ISCSI_PARAM_IMM_DATA_EN:
-		case ISCSI_PARAM_PDU_INORDER_EN:
-		case ISCSI_PARAM_DATASEQ_INORDER_EN:
-		case ISCSI_PARAM_MAX_SEGMENT_SIZE:
-		case ISCSI_PARAM_TCP_TIMESTAMP_STAT:
-		case ISCSI_PARAM_TCP_WSF_DISABLE:
-		case ISCSI_PARAM_TCP_NAGLE_DISABLE:
-		case ISCSI_PARAM_TCP_TIMER_SCALE:
-		case ISCSI_PARAM_TCP_TIMESTAMP_EN:
-		case ISCSI_PARAM_TCP_XMIT_WSF:
-		case ISCSI_PARAM_TCP_RECV_WSF:
-		case ISCSI_PARAM_IP_FRAGMENT_DISABLE:
-		case ISCSI_PARAM_IPV4_TOS:
-		case ISCSI_PARAM_IPV6_TC:
-		case ISCSI_PARAM_IPV6_FLOW_LABEL:
-		case ISCSI_PARAM_IS_FW_ASSIGNED_IPV6:
-		case ISCSI_PARAM_KEEPALIVE_TMO:
-		case ISCSI_PARAM_LOCAL_PORT:
-		case ISCSI_PARAM_ISID:
-		case ISCSI_PARAM_TSID:
-		case ISCSI_PARAM_DEF_TASKMGMT_TMO:
-		case ISCSI_PARAM_ERL:
-		case ISCSI_PARAM_STATSN:
-		case ISCSI_PARAM_EXP_STATSN:
-		case ISCSI_PARAM_DISCOVERY_PARENT_IDX:
-		case ISCSI_PARAM_DISCOVERY_PARENT_TYPE:
-		case ISCSI_PARAM_LOCAL_IPADDR:
-			return S_IRUGO;
-		default:
-			return 0;
-		}
-	case ISCSI_NET_PARAM:
-		switch (param) {
-		case ISCSI_NET_PARAM_IPV4_ADDR:
-		case ISCSI_NET_PARAM_IPV4_SUBNET:
-		case ISCSI_NET_PARAM_IPV4_GW:
-		case ISCSI_NET_PARAM_IPV4_BOOTPROTO:
-		case ISCSI_NET_PARAM_IFACE_ENABLE:
-		case ISCSI_NET_PARAM_IPV6_LINKLOCAL:
-		case ISCSI_NET_PARAM_IPV6_ADDR:
-		case ISCSI_NET_PARAM_IPV6_ROUTER:
-		case ISCSI_NET_PARAM_IPV6_ADDR_AUTOCFG:
-		case ISCSI_NET_PARAM_IPV6_LINKLOCAL_AUTOCFG:
-		case ISCSI_NET_PARAM_VLAN_ID:
-		case ISCSI_NET_PARAM_VLAN_PRIORITY:
-		case ISCSI_NET_PARAM_VLAN_ENABLED:
-		case ISCSI_NET_PARAM_MTU:
-		case ISCSI_NET_PARAM_PORT:
-		case ISCSI_NET_PARAM_IPADDR_STATE:
-		case ISCSI_NET_PARAM_IPV6_LINKLOCAL_STATE:
-		case ISCSI_NET_PARAM_IPV6_ROUTER_STATE:
-		case ISCSI_NET_PARAM_DELAYED_ACK_EN:
-		case ISCSI_NET_PARAM_TCP_NAGLE_DISABLE:
-		case ISCSI_NET_PARAM_TCP_WSF_DISABLE:
-		case ISCSI_NET_PARAM_TCP_WSF:
-		case ISCSI_NET_PARAM_TCP_TIMER_SCALE:
-		case ISCSI_NET_PARAM_TCP_TIMESTAMP_EN:
-		case ISCSI_NET_PARAM_CACHE_ID:
-		case ISCSI_NET_PARAM_IPV4_DHCP_DNS_ADDR_EN:
-		case ISCSI_NET_PARAM_IPV4_DHCP_SLP_DA_EN:
-		case ISCSI_NET_PARAM_IPV4_TOS_EN:
-		case ISCSI_NET_PARAM_IPV4_TOS:
-		case ISCSI_NET_PARAM_IPV4_GRAT_ARP_EN:
-		case ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID_EN:
-		case ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID:
-		case ISCSI_NET_PARAM_IPV4_DHCP_REQ_VENDOR_ID_EN:
-		case ISCSI_NET_PARAM_IPV4_DHCP_USE_VENDOR_ID_EN:
-		case ISCSI_NET_PARAM_IPV4_DHCP_VENDOR_ID:
-		case ISCSI_NET_PARAM_IPV4_DHCP_LEARN_IQN_EN:
-		case ISCSI_NET_PARAM_IPV4_FRAGMENT_DISABLE:
-		case ISCSI_NET_PARAM_IPV4_IN_FORWARD_EN:
-		case ISCSI_NET_PARAM_REDIRECT_EN:
-		case ISCSI_NET_PARAM_IPV4_TTL:
-		case ISCSI_NET_PARAM_IPV6_GRAT_NEIGHBOR_ADV_EN:
-		case ISCSI_NET_PARAM_IPV6_MLD_EN:
-		case ISCSI_NET_PARAM_IPV6_FLOW_LABEL:
-		case ISCSI_NET_PARAM_IPV6_TRAFFIC_CLASS:
-		case ISCSI_NET_PARAM_IPV6_HOP_LIMIT:
-		case ISCSI_NET_PARAM_IPV6_ND_REACHABLE_TMO:
-		case ISCSI_NET_PARAM_IPV6_ND_REXMIT_TIME:
-		case ISCSI_NET_PARAM_IPV6_ND_STALE_TMO:
-		case ISCSI_NET_PARAM_IPV6_DUP_ADDR_DETECT_CNT:
-		case ISCSI_NET_PARAM_IPV6_RTR_ADV_LINK_MTU:
-			return S_IRUGO;
-		default:
-			return 0;
-		}
-	case ISCSI_IFACE_PARAM:
-		switch (param) {
-		case ISCSI_IFACE_PARAM_DEF_TASKMGMT_TMO:
-		case ISCSI_IFACE_PARAM_HDRDGST_EN:
-		case ISCSI_IFACE_PARAM_DATADGST_EN:
-		case ISCSI_IFACE_PARAM_IMM_DATA_EN:
-		case ISCSI_IFACE_PARAM_INITIAL_R2T_EN:
-		case ISCSI_IFACE_PARAM_DATASEQ_INORDER_EN:
-		case ISCSI_IFACE_PARAM_PDU_INORDER_EN:
-		case ISCSI_IFACE_PARAM_ERL:
-		case ISCSI_IFACE_PARAM_MAX_RECV_DLENGTH:
-		case ISCSI_IFACE_PARAM_FIRST_BURST:
-		case ISCSI_IFACE_PARAM_MAX_R2T:
-		case ISCSI_IFACE_PARAM_MAX_BURST:
-		case ISCSI_IFACE_PARAM_CHAP_AUTH_EN:
-		case ISCSI_IFACE_PARAM_BIDI_CHAP_EN:
-		case ISCSI_IFACE_PARAM_DISCOVERY_AUTH_OPTIONAL:
-		case ISCSI_IFACE_PARAM_DISCOVERY_LOGOUT_EN:
-		case ISCSI_IFACE_PARAM_STRICT_LOGIN_COMP_EN:
-		case ISCSI_IFACE_PARAM_INITIATOR_NAME:
-			return S_IRUGO;
-		default:
-			return 0;
-		}
-	case ISCSI_FLASHNODE_PARAM:
-		switch (param) {
-		case ISCSI_FLASHNODE_IS_FW_ASSIGNED_IPV6:
-		case ISCSI_FLASHNODE_PORTAL_TYPE:
-		case ISCSI_FLASHNODE_AUTO_SND_TGT_DISABLE:
-		case ISCSI_FLASHNODE_DISCOVERY_SESS:
-		case ISCSI_FLASHNODE_ENTRY_EN:
-		case ISCSI_FLASHNODE_HDR_DGST_EN:
-		case ISCSI_FLASHNODE_DATA_DGST_EN:
-		case ISCSI_FLASHNODE_IMM_DATA_EN:
-		case ISCSI_FLASHNODE_INITIAL_R2T_EN:
-		case ISCSI_FLASHNODE_DATASEQ_INORDER:
-		case ISCSI_FLASHNODE_PDU_INORDER:
-		case ISCSI_FLASHNODE_CHAP_AUTH_EN:
-		case ISCSI_FLASHNODE_SNACK_REQ_EN:
-		case ISCSI_FLASHNODE_DISCOVERY_LOGOUT_EN:
-		case ISCSI_FLASHNODE_BIDI_CHAP_EN:
-		case ISCSI_FLASHNODE_DISCOVERY_AUTH_OPTIONAL:
-		case ISCSI_FLASHNODE_ERL:
-		case ISCSI_FLASHNODE_TCP_TIMESTAMP_STAT:
-		case ISCSI_FLASHNODE_TCP_NAGLE_DISABLE:
-		case ISCSI_FLASHNODE_TCP_WSF_DISABLE:
-		case ISCSI_FLASHNODE_TCP_TIMER_SCALE:
-		case ISCSI_FLASHNODE_TCP_TIMESTAMP_EN:
-		case ISCSI_FLASHNODE_IP_FRAG_DISABLE:
-		case ISCSI_FLASHNODE_MAX_RECV_DLENGTH:
-		case ISCSI_FLASHNODE_MAX_XMIT_DLENGTH:
-		case ISCSI_FLASHNODE_FIRST_BURST:
-		case ISCSI_FLASHNODE_DEF_TIME2WAIT:
-		case ISCSI_FLASHNODE_DEF_TIME2RETAIN:
-		case ISCSI_FLASHNODE_MAX_R2T:
-		case ISCSI_FLASHNODE_KEEPALIVE_TMO:
-		case ISCSI_FLASHNODE_ISID:
-		case ISCSI_FLASHNODE_TSID:
-		case ISCSI_FLASHNODE_PORT:
-		case ISCSI_FLASHNODE_MAX_BURST:
-		case ISCSI_FLASHNODE_DEF_TASKMGMT_TMO:
-		case ISCSI_FLASHNODE_IPADDR:
-		case ISCSI_FLASHNODE_ALIAS:
-		case ISCSI_FLASHNODE_REDIRECT_IPADDR:
-		case ISCSI_FLASHNODE_MAX_SEGMENT_SIZE:
-		case ISCSI_FLASHNODE_LOCAL_PORT:
-		case ISCSI_FLASHNODE_IPV4_TOS:
-		case ISCSI_FLASHNODE_IPV6_TC:
-		case ISCSI_FLASHNODE_IPV6_FLOW_LABEL:
-		case ISCSI_FLASHNODE_NAME:
-		case ISCSI_FLASHNODE_TPGT:
-		case ISCSI_FLASHNODE_LINK_LOCAL_IPV6:
-		case ISCSI_FLASHNODE_DISCOVERY_PARENT_IDX:
-		case ISCSI_FLASHNODE_DISCOVERY_PARENT_TYPE:
-		case ISCSI_FLASHNODE_TCP_XMIT_WSF:
-		case ISCSI_FLASHNODE_TCP_RECV_WSF:
-		case ISCSI_FLASHNODE_CHAP_OUT_IDX:
-		case ISCSI_FLASHNODE_USERNAME:
-		case ISCSI_FLASHNODE_PASSWORD:
-		case ISCSI_FLASHNODE_STATSN:
-		case ISCSI_FLASHNODE_EXP_STATSN:
-		case ISCSI_FLASHNODE_IS_BOOT_TGT:
-			return S_IRUGO;
-		default:
-			return 0;
-		}
-	}
+अटल umode_t qla4_attr_is_visible(पूर्णांक param_type, पूर्णांक param)
+अणु
+	चयन (param_type) अणु
+	हाल ISCSI_HOST_PARAM:
+		चयन (param) अणु
+		हाल ISCSI_HOST_PARAM_HWADDRESS:
+		हाल ISCSI_HOST_PARAM_IPADDRESS:
+		हाल ISCSI_HOST_PARAM_INITIATOR_NAME:
+		हाल ISCSI_HOST_PARAM_PORT_STATE:
+		हाल ISCSI_HOST_PARAM_PORT_SPEED:
+			वापस S_IRUGO;
+		शेष:
+			वापस 0;
+		पूर्ण
+	हाल ISCSI_PARAM:
+		चयन (param) अणु
+		हाल ISCSI_PARAM_PERSISTENT_ADDRESS:
+		हाल ISCSI_PARAM_PERSISTENT_PORT:
+		हाल ISCSI_PARAM_CONN_ADDRESS:
+		हाल ISCSI_PARAM_CONN_PORT:
+		हाल ISCSI_PARAM_TARGET_NAME:
+		हाल ISCSI_PARAM_TPGT:
+		हाल ISCSI_PARAM_TARGET_ALIAS:
+		हाल ISCSI_PARAM_MAX_BURST:
+		हाल ISCSI_PARAM_MAX_R2T:
+		हाल ISCSI_PARAM_FIRST_BURST:
+		हाल ISCSI_PARAM_MAX_RECV_DLENGTH:
+		हाल ISCSI_PARAM_MAX_XMIT_DLENGTH:
+		हाल ISCSI_PARAM_IFACE_NAME:
+		हाल ISCSI_PARAM_CHAP_OUT_IDX:
+		हाल ISCSI_PARAM_CHAP_IN_IDX:
+		हाल ISCSI_PARAM_USERNAME:
+		हाल ISCSI_PARAM_PASSWORD:
+		हाल ISCSI_PARAM_USERNAME_IN:
+		हाल ISCSI_PARAM_PASSWORD_IN:
+		हाल ISCSI_PARAM_AUTO_SND_TGT_DISABLE:
+		हाल ISCSI_PARAM_DISCOVERY_SESS:
+		हाल ISCSI_PARAM_PORTAL_TYPE:
+		हाल ISCSI_PARAM_CHAP_AUTH_EN:
+		हाल ISCSI_PARAM_DISCOVERY_LOGOUT_EN:
+		हाल ISCSI_PARAM_BIDI_CHAP_EN:
+		हाल ISCSI_PARAM_DISCOVERY_AUTH_OPTIONAL:
+		हाल ISCSI_PARAM_DEF_TIME2WAIT:
+		हाल ISCSI_PARAM_DEF_TIME2RETAIN:
+		हाल ISCSI_PARAM_HDRDGST_EN:
+		हाल ISCSI_PARAM_DATADGST_EN:
+		हाल ISCSI_PARAM_INITIAL_R2T_EN:
+		हाल ISCSI_PARAM_IMM_DATA_EN:
+		हाल ISCSI_PARAM_PDU_INORDER_EN:
+		हाल ISCSI_PARAM_DATASEQ_INORDER_EN:
+		हाल ISCSI_PARAM_MAX_SEGMENT_SIZE:
+		हाल ISCSI_PARAM_TCP_TIMESTAMP_STAT:
+		हाल ISCSI_PARAM_TCP_WSF_DISABLE:
+		हाल ISCSI_PARAM_TCP_NAGLE_DISABLE:
+		हाल ISCSI_PARAM_TCP_TIMER_SCALE:
+		हाल ISCSI_PARAM_TCP_TIMESTAMP_EN:
+		हाल ISCSI_PARAM_TCP_XMIT_WSF:
+		हाल ISCSI_PARAM_TCP_RECV_WSF:
+		हाल ISCSI_PARAM_IP_FRAGMENT_DISABLE:
+		हाल ISCSI_PARAM_IPV4_TOS:
+		हाल ISCSI_PARAM_IPV6_TC:
+		हाल ISCSI_PARAM_IPV6_FLOW_LABEL:
+		हाल ISCSI_PARAM_IS_FW_ASSIGNED_IPV6:
+		हाल ISCSI_PARAM_KEEPALIVE_TMO:
+		हाल ISCSI_PARAM_LOCAL_PORT:
+		हाल ISCSI_PARAM_ISID:
+		हाल ISCSI_PARAM_TSID:
+		हाल ISCSI_PARAM_DEF_TASKMGMT_TMO:
+		हाल ISCSI_PARAM_ERL:
+		हाल ISCSI_PARAM_STATSN:
+		हाल ISCSI_PARAM_EXP_STATSN:
+		हाल ISCSI_PARAM_DISCOVERY_PARENT_IDX:
+		हाल ISCSI_PARAM_DISCOVERY_PARENT_TYPE:
+		हाल ISCSI_PARAM_LOCAL_IPADDR:
+			वापस S_IRUGO;
+		शेष:
+			वापस 0;
+		पूर्ण
+	हाल ISCSI_NET_PARAM:
+		चयन (param) अणु
+		हाल ISCSI_NET_PARAM_IPV4_ADDR:
+		हाल ISCSI_NET_PARAM_IPV4_SUBNET:
+		हाल ISCSI_NET_PARAM_IPV4_GW:
+		हाल ISCSI_NET_PARAM_IPV4_BOOTPROTO:
+		हाल ISCSI_NET_PARAM_IFACE_ENABLE:
+		हाल ISCSI_NET_PARAM_IPV6_LINKLOCAL:
+		हाल ISCSI_NET_PARAM_IPV6_ADDR:
+		हाल ISCSI_NET_PARAM_IPV6_ROUTER:
+		हाल ISCSI_NET_PARAM_IPV6_ADDR_AUTOCFG:
+		हाल ISCSI_NET_PARAM_IPV6_LINKLOCAL_AUTOCFG:
+		हाल ISCSI_NET_PARAM_VLAN_ID:
+		हाल ISCSI_NET_PARAM_VLAN_PRIORITY:
+		हाल ISCSI_NET_PARAM_VLAN_ENABLED:
+		हाल ISCSI_NET_PARAM_MTU:
+		हाल ISCSI_NET_PARAM_PORT:
+		हाल ISCSI_NET_PARAM_IPADDR_STATE:
+		हाल ISCSI_NET_PARAM_IPV6_LINKLOCAL_STATE:
+		हाल ISCSI_NET_PARAM_IPV6_ROUTER_STATE:
+		हाल ISCSI_NET_PARAM_DELAYED_ACK_EN:
+		हाल ISCSI_NET_PARAM_TCP_NAGLE_DISABLE:
+		हाल ISCSI_NET_PARAM_TCP_WSF_DISABLE:
+		हाल ISCSI_NET_PARAM_TCP_WSF:
+		हाल ISCSI_NET_PARAM_TCP_TIMER_SCALE:
+		हाल ISCSI_NET_PARAM_TCP_TIMESTAMP_EN:
+		हाल ISCSI_NET_PARAM_CACHE_ID:
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_DNS_ADDR_EN:
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_SLP_DA_EN:
+		हाल ISCSI_NET_PARAM_IPV4_TOS_EN:
+		हाल ISCSI_NET_PARAM_IPV4_TOS:
+		हाल ISCSI_NET_PARAM_IPV4_GRAT_ARP_EN:
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID_EN:
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID:
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_REQ_VENDOR_ID_EN:
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_USE_VENDOR_ID_EN:
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_VENDOR_ID:
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_LEARN_IQN_EN:
+		हाल ISCSI_NET_PARAM_IPV4_FRAGMENT_DISABLE:
+		हाल ISCSI_NET_PARAM_IPV4_IN_FORWARD_EN:
+		हाल ISCSI_NET_PARAM_REसूचीECT_EN:
+		हाल ISCSI_NET_PARAM_IPV4_TTL:
+		हाल ISCSI_NET_PARAM_IPV6_GRAT_NEIGHBOR_ADV_EN:
+		हाल ISCSI_NET_PARAM_IPV6_MLD_EN:
+		हाल ISCSI_NET_PARAM_IPV6_FLOW_LABEL:
+		हाल ISCSI_NET_PARAM_IPV6_TRAFFIC_CLASS:
+		हाल ISCSI_NET_PARAM_IPV6_HOP_LIMIT:
+		हाल ISCSI_NET_PARAM_IPV6_ND_REACHABLE_TMO:
+		हाल ISCSI_NET_PARAM_IPV6_ND_REXMIT_TIME:
+		हाल ISCSI_NET_PARAM_IPV6_ND_STALE_TMO:
+		हाल ISCSI_NET_PARAM_IPV6_DUP_ADDR_DETECT_CNT:
+		हाल ISCSI_NET_PARAM_IPV6_RTR_ADV_LINK_MTU:
+			वापस S_IRUGO;
+		शेष:
+			वापस 0;
+		पूर्ण
+	हाल ISCSI_IFACE_PARAM:
+		चयन (param) अणु
+		हाल ISCSI_IFACE_PARAM_DEF_TASKMGMT_TMO:
+		हाल ISCSI_IFACE_PARAM_HDRDGST_EN:
+		हाल ISCSI_IFACE_PARAM_DATADGST_EN:
+		हाल ISCSI_IFACE_PARAM_IMM_DATA_EN:
+		हाल ISCSI_IFACE_PARAM_INITIAL_R2T_EN:
+		हाल ISCSI_IFACE_PARAM_DATASEQ_INORDER_EN:
+		हाल ISCSI_IFACE_PARAM_PDU_INORDER_EN:
+		हाल ISCSI_IFACE_PARAM_ERL:
+		हाल ISCSI_IFACE_PARAM_MAX_RECV_DLENGTH:
+		हाल ISCSI_IFACE_PARAM_FIRST_BURST:
+		हाल ISCSI_IFACE_PARAM_MAX_R2T:
+		हाल ISCSI_IFACE_PARAM_MAX_BURST:
+		हाल ISCSI_IFACE_PARAM_CHAP_AUTH_EN:
+		हाल ISCSI_IFACE_PARAM_BIDI_CHAP_EN:
+		हाल ISCSI_IFACE_PARAM_DISCOVERY_AUTH_OPTIONAL:
+		हाल ISCSI_IFACE_PARAM_DISCOVERY_LOGOUT_EN:
+		हाल ISCSI_IFACE_PARAM_STRICT_LOGIN_COMP_EN:
+		हाल ISCSI_IFACE_PARAM_INITIATOR_NAME:
+			वापस S_IRUGO;
+		शेष:
+			वापस 0;
+		पूर्ण
+	हाल ISCSI_FLASHNODE_PARAM:
+		चयन (param) अणु
+		हाल ISCSI_FLASHNODE_IS_FW_ASSIGNED_IPV6:
+		हाल ISCSI_FLASHNODE_PORTAL_TYPE:
+		हाल ISCSI_FLASHNODE_AUTO_SND_TGT_DISABLE:
+		हाल ISCSI_FLASHNODE_DISCOVERY_SESS:
+		हाल ISCSI_FLASHNODE_ENTRY_EN:
+		हाल ISCSI_FLASHNODE_HDR_DGST_EN:
+		हाल ISCSI_FLASHNODE_DATA_DGST_EN:
+		हाल ISCSI_FLASHNODE_IMM_DATA_EN:
+		हाल ISCSI_FLASHNODE_INITIAL_R2T_EN:
+		हाल ISCSI_FLASHNODE_DATASEQ_INORDER:
+		हाल ISCSI_FLASHNODE_PDU_INORDER:
+		हाल ISCSI_FLASHNODE_CHAP_AUTH_EN:
+		हाल ISCSI_FLASHNODE_SNACK_REQ_EN:
+		हाल ISCSI_FLASHNODE_DISCOVERY_LOGOUT_EN:
+		हाल ISCSI_FLASHNODE_BIDI_CHAP_EN:
+		हाल ISCSI_FLASHNODE_DISCOVERY_AUTH_OPTIONAL:
+		हाल ISCSI_FLASHNODE_ERL:
+		हाल ISCSI_FLASHNODE_TCP_TIMESTAMP_STAT:
+		हाल ISCSI_FLASHNODE_TCP_NAGLE_DISABLE:
+		हाल ISCSI_FLASHNODE_TCP_WSF_DISABLE:
+		हाल ISCSI_FLASHNODE_TCP_TIMER_SCALE:
+		हाल ISCSI_FLASHNODE_TCP_TIMESTAMP_EN:
+		हाल ISCSI_FLASHNODE_IP_FRAG_DISABLE:
+		हाल ISCSI_FLASHNODE_MAX_RECV_DLENGTH:
+		हाल ISCSI_FLASHNODE_MAX_XMIT_DLENGTH:
+		हाल ISCSI_FLASHNODE_FIRST_BURST:
+		हाल ISCSI_FLASHNODE_DEF_TIME2WAIT:
+		हाल ISCSI_FLASHNODE_DEF_TIME2RETAIN:
+		हाल ISCSI_FLASHNODE_MAX_R2T:
+		हाल ISCSI_FLASHNODE_KEEPALIVE_TMO:
+		हाल ISCSI_FLASHNODE_ISID:
+		हाल ISCSI_FLASHNODE_TSID:
+		हाल ISCSI_FLASHNODE_PORT:
+		हाल ISCSI_FLASHNODE_MAX_BURST:
+		हाल ISCSI_FLASHNODE_DEF_TASKMGMT_TMO:
+		हाल ISCSI_FLASHNODE_IPADDR:
+		हाल ISCSI_FLASHNODE_ALIAS:
+		हाल ISCSI_FLASHNODE_REसूचीECT_IPADDR:
+		हाल ISCSI_FLASHNODE_MAX_SEGMENT_SIZE:
+		हाल ISCSI_FLASHNODE_LOCAL_PORT:
+		हाल ISCSI_FLASHNODE_IPV4_TOS:
+		हाल ISCSI_FLASHNODE_IPV6_TC:
+		हाल ISCSI_FLASHNODE_IPV6_FLOW_LABEL:
+		हाल ISCSI_FLASHNODE_NAME:
+		हाल ISCSI_FLASHNODE_TPGT:
+		हाल ISCSI_FLASHNODE_LINK_LOCAL_IPV6:
+		हाल ISCSI_FLASHNODE_DISCOVERY_PARENT_IDX:
+		हाल ISCSI_FLASHNODE_DISCOVERY_PARENT_TYPE:
+		हाल ISCSI_FLASHNODE_TCP_XMIT_WSF:
+		हाल ISCSI_FLASHNODE_TCP_RECV_WSF:
+		हाल ISCSI_FLASHNODE_CHAP_OUT_IDX:
+		हाल ISCSI_FLASHNODE_USERNAME:
+		हाल ISCSI_FLASHNODE_PASSWORD:
+		हाल ISCSI_FLASHNODE_STATSN:
+		हाल ISCSI_FLASHNODE_EXP_STATSN:
+		हाल ISCSI_FLASHNODE_IS_BOOT_TGT:
+			वापस S_IRUGO;
+		शेष:
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * qla4xxx_create_chap_list - Create CHAP list from FLASH
- * @ha: pointer to adapter structure
+ * @ha: poपूर्णांकer to adapter काष्ठाure
  *
  * Read flash and make a list of CHAP entries, during login when a CHAP entry
  * is received, it will be checked in this list. If entry exist then the CHAP
- * entry index is set in the DDB. If CHAP entry does not exist in this list
+ * entry index is set in the DDB. If CHAP entry करोes not exist in this list
  * then a new entry is added in FLASH in CHAP table and the index obtained is
  * used in the DDB.
  **/
-static void qla4xxx_create_chap_list(struct scsi_qla_host *ha)
-{
-	int rval = 0;
-	uint8_t *chap_flash_data = NULL;
-	uint32_t offset;
+अटल व्योम qla4xxx_create_chap_list(काष्ठा scsi_qla_host *ha)
+अणु
+	पूर्णांक rval = 0;
+	uपूर्णांक8_t *chap_flash_data = शून्य;
+	uपूर्णांक32_t offset;
 	dma_addr_t chap_dma;
-	uint32_t chap_size = 0;
+	uपूर्णांक32_t chap_size = 0;
 
-	if (is_qla40XX(ha))
+	अगर (is_qla40XX(ha))
 		chap_size = MAX_CHAP_ENTRIES_40XX *
-			    sizeof(struct ql4_chap_table);
-	else	/* Single region contains CHAP info for both
-		 * ports which is divided into half for each port.
+			    माप(काष्ठा ql4_chap_table);
+	अन्यथा	/* Single region contains CHAP info क्रम both
+		 * ports which is भागided पूर्णांकo half क्रम each port.
 		 */
 		chap_size = ha->hw.flt_chap_size / 2;
 
 	chap_flash_data = dma_alloc_coherent(&ha->pdev->dev, chap_size,
 					     &chap_dma, GFP_KERNEL);
-	if (!chap_flash_data) {
-		ql4_printk(KERN_ERR, ha, "No memory for chap_flash_data\n");
-		return;
-	}
+	अगर (!chap_flash_data) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "No memory for chap_flash_data\n");
+		वापस;
+	पूर्ण
 
-	if (is_qla40XX(ha)) {
+	अगर (is_qla40XX(ha)) अणु
 		offset = FLASH_CHAP_OFFSET;
-	} else {
+	पूर्ण अन्यथा अणु
 		offset = FLASH_RAW_ACCESS_ADDR + (ha->hw.flt_region_chap << 2);
-		if (ha->port_num == 1)
+		अगर (ha->port_num == 1)
 			offset += chap_size;
-	}
+	पूर्ण
 
 	rval = qla4xxx_get_flash(ha, chap_dma, offset, chap_size);
-	if (rval != QLA_SUCCESS)
-		goto exit_chap_list;
+	अगर (rval != QLA_SUCCESS)
+		जाओ निकास_chap_list;
 
-	if (ha->chap_list == NULL)
-		ha->chap_list = vmalloc(chap_size);
-	if (ha->chap_list == NULL) {
-		ql4_printk(KERN_ERR, ha, "No memory for ha->chap_list\n");
-		goto exit_chap_list;
-	}
+	अगर (ha->chap_list == शून्य)
+		ha->chap_list = vदो_स्मृति(chap_size);
+	अगर (ha->chap_list == शून्य) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "No memory for ha->chap_list\n");
+		जाओ निकास_chap_list;
+	पूर्ण
 
-	memset(ha->chap_list, 0, chap_size);
-	memcpy(ha->chap_list, chap_flash_data, chap_size);
+	स_रखो(ha->chap_list, 0, chap_size);
+	स_नकल(ha->chap_list, chap_flash_data, chap_size);
 
-exit_chap_list:
-	dma_free_coherent(&ha->pdev->dev, chap_size, chap_flash_data, chap_dma);
-}
+निकास_chap_list:
+	dma_मुक्त_coherent(&ha->pdev->dev, chap_size, chap_flash_data, chap_dma);
+पूर्ण
 
-static int qla4xxx_get_chap_by_index(struct scsi_qla_host *ha,
-				     int16_t chap_index,
-				     struct ql4_chap_table **chap_entry)
-{
-	int rval = QLA_ERROR;
-	int max_chap_entries;
+अटल पूर्णांक qla4xxx_get_chap_by_index(काष्ठा scsi_qla_host *ha,
+				     पूर्णांक16_t chap_index,
+				     काष्ठा ql4_chap_table **chap_entry)
+अणु
+	पूर्णांक rval = QLA_ERROR;
+	पूर्णांक max_chap_entries;
 
-	if (!ha->chap_list) {
-		ql4_printk(KERN_ERR, ha, "CHAP table cache is empty!\n");
-		goto exit_get_chap;
-	}
+	अगर (!ha->chap_list) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "CHAP table cache is empty!\n");
+		जाओ निकास_get_chap;
+	पूर्ण
 
-	if (is_qla80XX(ha))
+	अगर (is_qla80XX(ha))
 		max_chap_entries = (ha->hw.flt_chap_size / 2) /
-				   sizeof(struct ql4_chap_table);
-	else
+				   माप(काष्ठा ql4_chap_table);
+	अन्यथा
 		max_chap_entries = MAX_CHAP_ENTRIES_40XX;
 
-	if (chap_index > max_chap_entries) {
-		ql4_printk(KERN_ERR, ha, "Invalid Chap index\n");
-		goto exit_get_chap;
-	}
+	अगर (chap_index > max_chap_entries) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Invalid Chap index\n");
+		जाओ निकास_get_chap;
+	पूर्ण
 
-	*chap_entry = (struct ql4_chap_table *)ha->chap_list + chap_index;
-	if ((*chap_entry)->cookie !=
-	     __constant_cpu_to_le16(CHAP_VALID_COOKIE)) {
-		*chap_entry = NULL;
-	} else {
+	*chap_entry = (काष्ठा ql4_chap_table *)ha->chap_list + chap_index;
+	अगर ((*chap_entry)->cookie !=
+	     __स्थिरant_cpu_to_le16(CHAP_VALID_COOKIE)) अणु
+		*chap_entry = शून्य;
+	पूर्ण अन्यथा अणु
 		rval = QLA_SUCCESS;
-	}
+	पूर्ण
 
-exit_get_chap:
-	return rval;
-}
+निकास_get_chap:
+	वापस rval;
+पूर्ण
 
 /**
- * qla4xxx_find_free_chap_index - Find the first free chap index
- * @ha: pointer to adapter structure
- * @chap_index: CHAP index to be returned
+ * qla4xxx_find_मुक्त_chap_index - Find the first मुक्त chap index
+ * @ha: poपूर्णांकer to adapter काष्ठाure
+ * @chap_index: CHAP index to be वापसed
  *
- * Find the first free chap index available in the chap table
+ * Find the first मुक्त chap index available in the chap table
  *
- * Note: Caller should acquire the chap lock before getting here.
+ * Note: Caller should acquire the chap lock beक्रमe getting here.
  **/
-static int qla4xxx_find_free_chap_index(struct scsi_qla_host *ha,
-					uint16_t *chap_index)
-{
-	int i, rval;
-	int free_index = -1;
-	int max_chap_entries = 0;
-	struct ql4_chap_table *chap_table;
+अटल पूर्णांक qla4xxx_find_मुक्त_chap_index(काष्ठा scsi_qla_host *ha,
+					uपूर्णांक16_t *chap_index)
+अणु
+	पूर्णांक i, rval;
+	पूर्णांक मुक्त_index = -1;
+	पूर्णांक max_chap_entries = 0;
+	काष्ठा ql4_chap_table *chap_table;
 
-	if (is_qla80XX(ha))
+	अगर (is_qla80XX(ha))
 		max_chap_entries = (ha->hw.flt_chap_size / 2) /
-						sizeof(struct ql4_chap_table);
-	else
+						माप(काष्ठा ql4_chap_table);
+	अन्यथा
 		max_chap_entries = MAX_CHAP_ENTRIES_40XX;
 
-	if (!ha->chap_list) {
-		ql4_printk(KERN_ERR, ha, "CHAP table cache is empty!\n");
+	अगर (!ha->chap_list) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "CHAP table cache is empty!\n");
 		rval = QLA_ERROR;
-		goto exit_find_chap;
-	}
+		जाओ निकास_find_chap;
+	पूर्ण
 
-	for (i = 0; i < max_chap_entries; i++) {
-		chap_table = (struct ql4_chap_table *)ha->chap_list + i;
+	क्रम (i = 0; i < max_chap_entries; i++) अणु
+		chap_table = (काष्ठा ql4_chap_table *)ha->chap_list + i;
 
-		if ((chap_table->cookie !=
-		    __constant_cpu_to_le16(CHAP_VALID_COOKIE)) &&
-		   (i > MAX_RESRV_CHAP_IDX)) {
-				free_index = i;
-				break;
-		}
-	}
+		अगर ((chap_table->cookie !=
+		    __स्थिरant_cpu_to_le16(CHAP_VALID_COOKIE)) &&
+		   (i > MAX_RESRV_CHAP_IDX)) अणु
+				मुक्त_index = i;
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (free_index != -1) {
-		*chap_index = free_index;
+	अगर (मुक्त_index != -1) अणु
+		*chap_index = मुक्त_index;
 		rval = QLA_SUCCESS;
-	} else {
+	पूर्ण अन्यथा अणु
 		rval = QLA_ERROR;
-	}
+	पूर्ण
 
-exit_find_chap:
-	return rval;
-}
+निकास_find_chap:
+	वापस rval;
+पूर्ण
 
-static int qla4xxx_get_chap_list(struct Scsi_Host *shost, uint16_t chap_tbl_idx,
-				  uint32_t *num_entries, char *buf)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct ql4_chap_table *chap_table;
-	struct iscsi_chap_rec *chap_rec;
-	int max_chap_entries = 0;
-	int valid_chap_entries = 0;
-	int ret = 0, i;
+अटल पूर्णांक qla4xxx_get_chap_list(काष्ठा Scsi_Host *shost, uपूर्णांक16_t chap_tbl_idx,
+				  uपूर्णांक32_t *num_entries, अक्षर *buf)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा ql4_chap_table *chap_table;
+	काष्ठा iscsi_chap_rec *chap_rec;
+	पूर्णांक max_chap_entries = 0;
+	पूर्णांक valid_chap_entries = 0;
+	पूर्णांक ret = 0, i;
 
-	if (is_qla80XX(ha))
+	अगर (is_qla80XX(ha))
 		max_chap_entries = (ha->hw.flt_chap_size / 2) /
-					sizeof(struct ql4_chap_table);
-	else
+					माप(काष्ठा ql4_chap_table);
+	अन्यथा
 		max_chap_entries = MAX_CHAP_ENTRIES_40XX;
 
-	ql4_printk(KERN_INFO, ha, "%s: num_entries = %d, CHAP idx = %d\n",
+	ql4_prपूर्णांकk(KERN_INFO, ha, "%s: num_entries = %d, CHAP idx = %d\n",
 			__func__, *num_entries, chap_tbl_idx);
 
-	if (!buf) {
+	अगर (!buf) अणु
 		ret = -ENOMEM;
-		goto exit_get_chap_list;
-	}
+		जाओ निकास_get_chap_list;
+	पूर्ण
 
 	qla4xxx_create_chap_list(ha);
 
-	chap_rec = (struct iscsi_chap_rec *) buf;
+	chap_rec = (काष्ठा iscsi_chap_rec *) buf;
 	mutex_lock(&ha->chap_sem);
-	for (i = chap_tbl_idx; i < max_chap_entries; i++) {
-		chap_table = (struct ql4_chap_table *)ha->chap_list + i;
-		if (chap_table->cookie !=
-		    __constant_cpu_to_le16(CHAP_VALID_COOKIE))
-			continue;
+	क्रम (i = chap_tbl_idx; i < max_chap_entries; i++) अणु
+		chap_table = (काष्ठा ql4_chap_table *)ha->chap_list + i;
+		अगर (chap_table->cookie !=
+		    __स्थिरant_cpu_to_le16(CHAP_VALID_COOKIE))
+			जारी;
 
 		chap_rec->chap_tbl_idx = i;
 		strlcpy(chap_rec->username, chap_table->name,
@@ -803,312 +804,312 @@ static int qla4xxx_get_chap_list(struct Scsi_Host *shost, uint16_t chap_tbl_idx,
 			QL4_CHAP_MAX_SECRET_LEN);
 		chap_rec->password_length = chap_table->secret_len;
 
-		if (chap_table->flags & BIT_7) /* local */
+		अगर (chap_table->flags & BIT_7) /* local */
 			chap_rec->chap_type = CHAP_TYPE_OUT;
 
-		if (chap_table->flags & BIT_6) /* peer */
+		अगर (chap_table->flags & BIT_6) /* peer */
 			chap_rec->chap_type = CHAP_TYPE_IN;
 
 		chap_rec++;
 
 		valid_chap_entries++;
-		if (valid_chap_entries == *num_entries)
-			break;
-		else
-			continue;
-	}
+		अगर (valid_chap_entries == *num_entries)
+			अवरोध;
+		अन्यथा
+			जारी;
+	पूर्ण
 	mutex_unlock(&ha->chap_sem);
 
-exit_get_chap_list:
-	ql4_printk(KERN_INFO, ha, "%s: Valid CHAP Entries = %d\n",
+निकास_get_chap_list:
+	ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Valid CHAP Entries = %d\n",
 			__func__,  valid_chap_entries);
 	*num_entries = valid_chap_entries;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __qla4xxx_is_chap_active(struct device *dev, void *data)
-{
-	int ret = 0;
-	uint16_t *chap_tbl_idx = (uint16_t *) data;
-	struct iscsi_cls_session *cls_session;
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
+अटल पूर्णांक __qla4xxx_is_chap_active(काष्ठा device *dev, व्योम *data)
+अणु
+	पूर्णांक ret = 0;
+	uपूर्णांक16_t *chap_tbl_idx = (uपूर्णांक16_t *) data;
+	काष्ठा iscsi_cls_session *cls_session;
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
 
-	if (!iscsi_is_session_dev(dev))
-		goto exit_is_chap_active;
+	अगर (!iscsi_is_session_dev(dev))
+		जाओ निकास_is_chap_active;
 
 	cls_session = iscsi_dev_to_session(dev);
 	sess = cls_session->dd_data;
 	ddb_entry = sess->dd_data;
 
-	if (iscsi_is_session_online(cls_session))
-		goto exit_is_chap_active;
+	अगर (iscsi_is_session_online(cls_session))
+		जाओ निकास_is_chap_active;
 
-	if (ddb_entry->chap_tbl_idx == *chap_tbl_idx)
+	अगर (ddb_entry->chap_tbl_idx == *chap_tbl_idx)
 		ret = 1;
 
-exit_is_chap_active:
-	return ret;
-}
+निकास_is_chap_active:
+	वापस ret;
+पूर्ण
 
-static int qla4xxx_is_chap_active(struct Scsi_Host *shost,
-				  uint16_t chap_tbl_idx)
-{
-	int ret = 0;
+अटल पूर्णांक qla4xxx_is_chap_active(काष्ठा Scsi_Host *shost,
+				  uपूर्णांक16_t chap_tbl_idx)
+अणु
+	पूर्णांक ret = 0;
 
-	ret = device_for_each_child(&shost->shost_gendev, &chap_tbl_idx,
+	ret = device_क्रम_each_child(&shost->shost_gendev, &chap_tbl_idx,
 				    __qla4xxx_is_chap_active);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qla4xxx_delete_chap(struct Scsi_Host *shost, uint16_t chap_tbl_idx)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct ql4_chap_table *chap_table;
+अटल पूर्णांक qla4xxx_delete_chap(काष्ठा Scsi_Host *shost, uपूर्णांक16_t chap_tbl_idx)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा ql4_chap_table *chap_table;
 	dma_addr_t chap_dma;
-	int max_chap_entries = 0;
-	uint32_t offset = 0;
-	uint32_t chap_size;
-	int ret = 0;
+	पूर्णांक max_chap_entries = 0;
+	uपूर्णांक32_t offset = 0;
+	uपूर्णांक32_t chap_size;
+	पूर्णांक ret = 0;
 
 	chap_table = dma_pool_zalloc(ha->chap_dma_pool, GFP_KERNEL, &chap_dma);
-	if (chap_table == NULL)
-		return -ENOMEM;
+	अगर (chap_table == शून्य)
+		वापस -ENOMEM;
 
-	if (is_qla80XX(ha))
+	अगर (is_qla80XX(ha))
 		max_chap_entries = (ha->hw.flt_chap_size / 2) /
-				   sizeof(struct ql4_chap_table);
-	else
+				   माप(काष्ठा ql4_chap_table);
+	अन्यथा
 		max_chap_entries = MAX_CHAP_ENTRIES_40XX;
 
-	if (chap_tbl_idx > max_chap_entries) {
+	अगर (chap_tbl_idx > max_chap_entries) अणु
 		ret = -EINVAL;
-		goto exit_delete_chap;
-	}
+		जाओ निकास_delete_chap;
+	पूर्ण
 
-	/* Check if chap index is in use.
-	 * If chap is in use don't delet chap entry */
+	/* Check अगर chap index is in use.
+	 * If chap is in use करोn't delet chap entry */
 	ret = qla4xxx_is_chap_active(shost, chap_tbl_idx);
-	if (ret) {
-		ql4_printk(KERN_INFO, ha, "CHAP entry %d is in use, cannot "
+	अगर (ret) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "CHAP entry %d is in use, cannot "
 			   "delete from flash\n", chap_tbl_idx);
 		ret = -EBUSY;
-		goto exit_delete_chap;
-	}
+		जाओ निकास_delete_chap;
+	पूर्ण
 
-	chap_size = sizeof(struct ql4_chap_table);
-	if (is_qla40XX(ha))
+	chap_size = माप(काष्ठा ql4_chap_table);
+	अगर (is_qla40XX(ha))
 		offset = FLASH_CHAP_OFFSET | (chap_tbl_idx * chap_size);
-	else {
+	अन्यथा अणु
 		offset = FLASH_RAW_ACCESS_ADDR + (ha->hw.flt_region_chap << 2);
-		/* flt_chap_size is CHAP table size for both ports
-		 * so divide it by 2 to calculate the offset for second port
+		/* flt_chap_size is CHAP table size क्रम both ports
+		 * so भागide it by 2 to calculate the offset क्रम second port
 		 */
-		if (ha->port_num == 1)
+		अगर (ha->port_num == 1)
 			offset += (ha->hw.flt_chap_size / 2);
 		offset += (chap_tbl_idx * chap_size);
-	}
+	पूर्ण
 
 	ret = qla4xxx_get_flash(ha, chap_dma, offset, chap_size);
-	if (ret != QLA_SUCCESS) {
+	अगर (ret != QLA_SUCCESS) अणु
 		ret = -EINVAL;
-		goto exit_delete_chap;
-	}
+		जाओ निकास_delete_chap;
+	पूर्ण
 
-	DEBUG2(ql4_printk(KERN_INFO, ha, "Chap Cookie: x%x\n",
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "Chap Cookie: x%x\n",
 			  __le16_to_cpu(chap_table->cookie)));
 
-	if (__le16_to_cpu(chap_table->cookie) != CHAP_VALID_COOKIE) {
-		ql4_printk(KERN_ERR, ha, "No valid chap entry found\n");
-		goto exit_delete_chap;
-	}
+	अगर (__le16_to_cpu(chap_table->cookie) != CHAP_VALID_COOKIE) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "No valid chap entry found\n");
+		जाओ निकास_delete_chap;
+	पूर्ण
 
-	chap_table->cookie = __constant_cpu_to_le16(0xFFFF);
+	chap_table->cookie = __स्थिरant_cpu_to_le16(0xFFFF);
 
 	offset = FLASH_CHAP_OFFSET |
-			(chap_tbl_idx * sizeof(struct ql4_chap_table));
+			(chap_tbl_idx * माप(काष्ठा ql4_chap_table));
 	ret = qla4xxx_set_flash(ha, chap_dma, offset, chap_size,
 				FLASH_OPT_RMW_COMMIT);
-	if (ret == QLA_SUCCESS && ha->chap_list) {
+	अगर (ret == QLA_SUCCESS && ha->chap_list) अणु
 		mutex_lock(&ha->chap_sem);
 		/* Update ha chap_list cache */
-		memcpy((struct ql4_chap_table *)ha->chap_list + chap_tbl_idx,
-			chap_table, sizeof(struct ql4_chap_table));
+		स_नकल((काष्ठा ql4_chap_table *)ha->chap_list + chap_tbl_idx,
+			chap_table, माप(काष्ठा ql4_chap_table));
 		mutex_unlock(&ha->chap_sem);
-	}
-	if (ret != QLA_SUCCESS)
+	पूर्ण
+	अगर (ret != QLA_SUCCESS)
 		ret =  -EINVAL;
 
-exit_delete_chap:
-	dma_pool_free(ha->chap_dma_pool, chap_table, chap_dma);
-	return ret;
-}
+निकास_delete_chap:
+	dma_pool_मुक्त(ha->chap_dma_pool, chap_table, chap_dma);
+	वापस ret;
+पूर्ण
 
 /**
- * qla4xxx_set_chap_entry - Make chap entry with given information
- * @shost: pointer to host
+ * qla4xxx_set_chap_entry - Make chap entry with given inक्रमmation
+ * @shost: poपूर्णांकer to host
  * @data: chap info - credentials, index and type to make chap entry
  * @len: length of data
  *
- * Add or update chap entry with the given information
+ * Add or update chap entry with the given inक्रमmation
  **/
-static int qla4xxx_set_chap_entry(struct Scsi_Host *shost, void *data, int len)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct iscsi_chap_rec chap_rec;
-	struct ql4_chap_table *chap_entry = NULL;
-	struct iscsi_param_info *param_info;
-	struct nlattr *attr;
-	int max_chap_entries = 0;
-	int type;
-	int rem = len;
-	int rc = 0;
-	int size;
+अटल पूर्णांक qla4xxx_set_chap_entry(काष्ठा Scsi_Host *shost, व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा iscsi_chap_rec chap_rec;
+	काष्ठा ql4_chap_table *chap_entry = शून्य;
+	काष्ठा iscsi_param_info *param_info;
+	काष्ठा nlattr *attr;
+	पूर्णांक max_chap_entries = 0;
+	पूर्णांक type;
+	पूर्णांक rem = len;
+	पूर्णांक rc = 0;
+	पूर्णांक size;
 
-	memset(&chap_rec, 0, sizeof(chap_rec));
+	स_रखो(&chap_rec, 0, माप(chap_rec));
 
-	nla_for_each_attr(attr, data, len, rem) {
+	nla_क्रम_each_attr(attr, data, len, rem) अणु
 		param_info = nla_data(attr);
 
-		switch (param_info->param) {
-		case ISCSI_CHAP_PARAM_INDEX:
-			chap_rec.chap_tbl_idx = *(uint16_t *)param_info->value;
-			break;
-		case ISCSI_CHAP_PARAM_CHAP_TYPE:
+		चयन (param_info->param) अणु
+		हाल ISCSI_CHAP_PARAM_INDEX:
+			chap_rec.chap_tbl_idx = *(uपूर्णांक16_t *)param_info->value;
+			अवरोध;
+		हाल ISCSI_CHAP_PARAM_CHAP_TYPE:
 			chap_rec.chap_type = param_info->value[0];
-			break;
-		case ISCSI_CHAP_PARAM_USERNAME:
-			size = min_t(size_t, sizeof(chap_rec.username),
+			अवरोध;
+		हाल ISCSI_CHAP_PARAM_USERNAME:
+			size = min_t(माप_प्रकार, माप(chap_rec.username),
 				     param_info->len);
-			memcpy(chap_rec.username, param_info->value, size);
-			break;
-		case ISCSI_CHAP_PARAM_PASSWORD:
-			size = min_t(size_t, sizeof(chap_rec.password),
+			स_नकल(chap_rec.username, param_info->value, size);
+			अवरोध;
+		हाल ISCSI_CHAP_PARAM_PASSWORD:
+			size = min_t(माप_प्रकार, माप(chap_rec.password),
 				     param_info->len);
-			memcpy(chap_rec.password, param_info->value, size);
-			break;
-		case ISCSI_CHAP_PARAM_PASSWORD_LEN:
+			स_नकल(chap_rec.password, param_info->value, size);
+			अवरोध;
+		हाल ISCSI_CHAP_PARAM_PASSWORD_LEN:
 			chap_rec.password_length = param_info->value[0];
-			break;
-		default:
-			ql4_printk(KERN_ERR, ha,
+			अवरोध;
+		शेष:
+			ql4_prपूर्णांकk(KERN_ERR, ha,
 				   "%s: No such sysfs attribute\n", __func__);
 			rc = -ENOSYS;
-			goto exit_set_chap;
-		}
-	}
+			जाओ निकास_set_chap;
+		पूर्ण
+	पूर्ण
 
-	if (chap_rec.chap_type == CHAP_TYPE_IN)
+	अगर (chap_rec.chap_type == CHAP_TYPE_IN)
 		type = BIDI_CHAP;
-	else
+	अन्यथा
 		type = LOCAL_CHAP;
 
-	if (is_qla80XX(ha))
+	अगर (is_qla80XX(ha))
 		max_chap_entries = (ha->hw.flt_chap_size / 2) /
-				   sizeof(struct ql4_chap_table);
-	else
+				   माप(काष्ठा ql4_chap_table);
+	अन्यथा
 		max_chap_entries = MAX_CHAP_ENTRIES_40XX;
 
 	mutex_lock(&ha->chap_sem);
-	if (chap_rec.chap_tbl_idx < max_chap_entries) {
+	अगर (chap_rec.chap_tbl_idx < max_chap_entries) अणु
 		rc = qla4xxx_get_chap_by_index(ha, chap_rec.chap_tbl_idx,
 					       &chap_entry);
-		if (!rc) {
-			if (!(type == qla4xxx_get_chap_type(chap_entry))) {
-				ql4_printk(KERN_INFO, ha,
+		अगर (!rc) अणु
+			अगर (!(type == qla4xxx_get_chap_type(chap_entry))) अणु
+				ql4_prपूर्णांकk(KERN_INFO, ha,
 					   "Type mismatch for CHAP entry %d\n",
 					   chap_rec.chap_tbl_idx);
 				rc = -EINVAL;
-				goto exit_unlock_chap;
-			}
+				जाओ निकास_unlock_chap;
+			पूर्ण
 
-			/* If chap index is in use then don't modify it */
+			/* If chap index is in use then करोn't modअगरy it */
 			rc = qla4xxx_is_chap_active(shost,
 						    chap_rec.chap_tbl_idx);
-			if (rc) {
-				ql4_printk(KERN_INFO, ha,
+			अगर (rc) अणु
+				ql4_prपूर्णांकk(KERN_INFO, ha,
 					   "CHAP entry %d is in use\n",
 					   chap_rec.chap_tbl_idx);
 				rc = -EBUSY;
-				goto exit_unlock_chap;
-			}
-		}
-	} else {
-		rc = qla4xxx_find_free_chap_index(ha, &chap_rec.chap_tbl_idx);
-		if (rc) {
-			ql4_printk(KERN_INFO, ha, "CHAP entry not available\n");
+				जाओ निकास_unlock_chap;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		rc = qla4xxx_find_मुक्त_chap_index(ha, &chap_rec.chap_tbl_idx);
+		अगर (rc) अणु
+			ql4_prपूर्णांकk(KERN_INFO, ha, "CHAP entry not available\n");
 			rc = -EBUSY;
-			goto exit_unlock_chap;
-		}
-	}
+			जाओ निकास_unlock_chap;
+		पूर्ण
+	पूर्ण
 
 	rc = qla4xxx_set_chap(ha, chap_rec.username, chap_rec.password,
 			      chap_rec.chap_tbl_idx, type);
 
-exit_unlock_chap:
+निकास_unlock_chap:
 	mutex_unlock(&ha->chap_sem);
 
-exit_set_chap:
-	return rc;
-}
+निकास_set_chap:
+	वापस rc;
+पूर्ण
 
 
-static int qla4xxx_get_host_stats(struct Scsi_Host *shost, char *buf, int len)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct iscsi_offload_host_stats *host_stats = NULL;
-	int host_stats_size;
-	int ret = 0;
-	int ddb_idx = 0;
-	struct ql_iscsi_stats *ql_iscsi_stats = NULL;
-	int stats_size;
+अटल पूर्णांक qla4xxx_get_host_stats(काष्ठा Scsi_Host *shost, अक्षर *buf, पूर्णांक len)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा iscsi_offload_host_stats *host_stats = शून्य;
+	पूर्णांक host_stats_size;
+	पूर्णांक ret = 0;
+	पूर्णांक ddb_idx = 0;
+	काष्ठा ql_iscsi_stats *ql_iscsi_stats = शून्य;
+	पूर्णांक stats_size;
 	dma_addr_t iscsi_stats_dma;
 
-	DEBUG2(ql4_printk(KERN_INFO, ha, "Func: %s\n", __func__));
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "Func: %s\n", __func__));
 
-	host_stats_size = sizeof(struct iscsi_offload_host_stats);
+	host_stats_size = माप(काष्ठा iscsi_offload_host_stats);
 
-	if (host_stats_size != len) {
-		ql4_printk(KERN_INFO, ha, "%s: host_stats size mismatch expected = %d, is = %d\n",
+	अगर (host_stats_size != len) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "%s: host_stats size mismatch expected = %d, is = %d\n",
 			   __func__, len, host_stats_size);
 		ret = -EINVAL;
-		goto exit_host_stats;
-	}
-	host_stats = (struct iscsi_offload_host_stats *)buf;
+		जाओ निकास_host_stats;
+	पूर्ण
+	host_stats = (काष्ठा iscsi_offload_host_stats *)buf;
 
-	if (!buf) {
+	अगर (!buf) अणु
 		ret = -ENOMEM;
-		goto exit_host_stats;
-	}
+		जाओ निकास_host_stats;
+	पूर्ण
 
-	stats_size = PAGE_ALIGN(sizeof(struct ql_iscsi_stats));
+	stats_size = PAGE_ALIGN(माप(काष्ठा ql_iscsi_stats));
 
 	ql_iscsi_stats = dma_alloc_coherent(&ha->pdev->dev, stats_size,
 					    &iscsi_stats_dma, GFP_KERNEL);
-	if (!ql_iscsi_stats) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!ql_iscsi_stats) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "Unable to allocate memory for iscsi stats\n");
 		ret = -ENOMEM;
-		goto exit_host_stats;
-	}
+		जाओ निकास_host_stats;
+	पूर्ण
 
 	ret =  qla4xxx_get_mgmt_data(ha, ddb_idx, stats_size,
 				     iscsi_stats_dma);
-	if (ret != QLA_SUCCESS) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (ret != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "Unable to retrieve iscsi stats\n");
 		ret = -EIO;
-		goto exit_host_stats;
-	}
+		जाओ निकास_host_stats;
+	पूर्ण
 	host_stats->mactx_frames = le64_to_cpu(ql_iscsi_stats->mac_tx_frames);
 	host_stats->mactx_bytes = le64_to_cpu(ql_iscsi_stats->mac_tx_bytes);
 	host_stats->mactx_multicast_frames =
 			le64_to_cpu(ql_iscsi_stats->mac_tx_multicast_frames);
 	host_stats->mactx_broadcast_frames =
 			le64_to_cpu(ql_iscsi_stats->mac_tx_broadcast_frames);
-	host_stats->mactx_pause_frames =
-			le64_to_cpu(ql_iscsi_stats->mac_tx_pause_frames);
+	host_stats->mactx_छोड़ो_frames =
+			le64_to_cpu(ql_iscsi_stats->mac_tx_छोड़ो_frames);
 	host_stats->mactx_control_frames =
 			le64_to_cpu(ql_iscsi_stats->mac_tx_control_frames);
 	host_stats->mactx_deferral =
@@ -1117,7 +1118,7 @@ static int qla4xxx_get_host_stats(struct Scsi_Host *shost, char *buf, int len)
 			le64_to_cpu(ql_iscsi_stats->mac_tx_excess_deferral);
 	host_stats->mactx_late_collision =
 			le64_to_cpu(ql_iscsi_stats->mac_tx_late_collision);
-	host_stats->mactx_abort	= le64_to_cpu(ql_iscsi_stats->mac_tx_abort);
+	host_stats->mactx_पात	= le64_to_cpu(ql_iscsi_stats->mac_tx_पात);
 	host_stats->mactx_single_collision =
 			le64_to_cpu(ql_iscsi_stats->mac_tx_single_collision);
 	host_stats->mactx_multiple_collision =
@@ -1132,8 +1133,8 @@ static int qla4xxx_get_host_stats(struct Scsi_Host *shost, char *buf, int len)
 	host_stats->macrx_bytes = le64_to_cpu(ql_iscsi_stats->mac_rx_bytes);
 	host_stats->macrx_unknown_control_frames =
 		le64_to_cpu(ql_iscsi_stats->mac_rx_unknown_control_frames);
-	host_stats->macrx_pause_frames =
-			le64_to_cpu(ql_iscsi_stats->mac_rx_pause_frames);
+	host_stats->macrx_छोड़ो_frames =
+			le64_to_cpu(ql_iscsi_stats->mac_rx_छोड़ो_frames);
 	host_stats->macrx_control_frames =
 			le64_to_cpu(ql_iscsi_stats->mac_rx_control_frames);
 	host_stats->macrx_dribble =
@@ -1174,10 +1175,10 @@ static int qla4xxx_get_host_stats(struct Scsi_Host *shost, char *buf, int len)
 			le64_to_cpu(ql_iscsi_stats->ip_error_packets);
 	host_stats->ip_fragrx_overlap =
 			le64_to_cpu(ql_iscsi_stats->ip_fragrx_overlap);
-	host_stats->ip_fragrx_outoforder =
-			le64_to_cpu(ql_iscsi_stats->ip_fragrx_outoforder);
-	host_stats->ip_datagram_reassembly_timeout =
-		le64_to_cpu(ql_iscsi_stats->ip_datagram_reassembly_timeout);
+	host_stats->ip_fragrx_outoक्रमder =
+			le64_to_cpu(ql_iscsi_stats->ip_fragrx_outoक्रमder);
+	host_stats->ip_datagram_reassembly_समयout =
+		le64_to_cpu(ql_iscsi_stats->ip_datagram_reassembly_समयout);
 	host_stats->ipv6tx_packets =
 			le64_to_cpu(ql_iscsi_stats->ipv6_tx_packets);
 	host_stats->ipv6tx_bytes = le64_to_cpu(ql_iscsi_stats->ipv6_tx_bytes);
@@ -1196,10 +1197,10 @@ static int qla4xxx_get_host_stats(struct Scsi_Host *shost, char *buf, int len)
 			le64_to_cpu(ql_iscsi_stats->ipv6_error_packets);
 	host_stats->ipv6_fragrx_overlap =
 			le64_to_cpu(ql_iscsi_stats->ipv6_fragrx_overlap);
-	host_stats->ipv6_fragrx_outoforder =
-			le64_to_cpu(ql_iscsi_stats->ipv6_fragrx_outoforder);
-	host_stats->ipv6_datagram_reassembly_timeout =
-		le64_to_cpu(ql_iscsi_stats->ipv6_datagram_reassembly_timeout);
+	host_stats->ipv6_fragrx_outoक्रमder =
+			le64_to_cpu(ql_iscsi_stats->ipv6_fragrx_outoक्रमder);
+	host_stats->ipv6_datagram_reassembly_समयout =
+		le64_to_cpu(ql_iscsi_stats->ipv6_datagram_reassembly_समयout);
 	host_stats->tcptx_segments =
 			le64_to_cpu(ql_iscsi_stats->tcp_tx_segments);
 	host_stats->tcptx_bytes	= le64_to_cpu(ql_iscsi_stats->tcp_tx_bytes);
@@ -1208,8 +1209,8 @@ static int qla4xxx_get_host_stats(struct Scsi_Host *shost, char *buf, int len)
 	host_stats->tcprx_byte = le64_to_cpu(ql_iscsi_stats->tcp_rx_byte);
 	host_stats->tcp_duplicate_ack_retx =
 			le64_to_cpu(ql_iscsi_stats->tcp_duplicate_ack_retx);
-	host_stats->tcp_retx_timer_expired =
-			le64_to_cpu(ql_iscsi_stats->tcp_retx_timer_expired);
+	host_stats->tcp_retx_समयr_expired =
+			le64_to_cpu(ql_iscsi_stats->tcp_retx_समयr_expired);
 	host_stats->tcprx_duplicate_ack	=
 			le64_to_cpu(ql_iscsi_stats->tcp_rx_duplicate_ack);
 	host_stats->tcprx_pure_ackr =
@@ -1220,14 +1221,14 @@ static int qla4xxx_get_host_stats(struct Scsi_Host *shost, char *buf, int len)
 			le64_to_cpu(ql_iscsi_stats->tcp_tx_pure_ack);
 	host_stats->tcprx_segment_error =
 			le64_to_cpu(ql_iscsi_stats->tcp_rx_segment_error);
-	host_stats->tcprx_segment_outoforder =
-			le64_to_cpu(ql_iscsi_stats->tcp_rx_segment_outoforder);
-	host_stats->tcprx_window_probe =
-			le64_to_cpu(ql_iscsi_stats->tcp_rx_window_probe);
-	host_stats->tcprx_window_update =
-			le64_to_cpu(ql_iscsi_stats->tcp_rx_window_update);
-	host_stats->tcptx_window_probe_persist =
-		le64_to_cpu(ql_iscsi_stats->tcp_tx_window_probe_persist);
+	host_stats->tcprx_segment_outoक्रमder =
+			le64_to_cpu(ql_iscsi_stats->tcp_rx_segment_outoक्रमder);
+	host_stats->tcprx_winकरोw_probe =
+			le64_to_cpu(ql_iscsi_stats->tcp_rx_winकरोw_probe);
+	host_stats->tcprx_winकरोw_update =
+			le64_to_cpu(ql_iscsi_stats->tcp_rx_winकरोw_update);
+	host_stats->tcptx_winकरोw_probe_persist =
+		le64_to_cpu(ql_iscsi_stats->tcp_tx_winकरोw_probe_persist);
 	host_stats->ecc_error_correction =
 			le64_to_cpu(ql_iscsi_stats->ecc_error_correction);
 	host_stats->iscsi_pdu_tx = le64_to_cpu(ql_iscsi_stats->iscsi_pdu_tx);
@@ -1240,580 +1241,580 @@ static int qla4xxx_get_host_stats(struct Scsi_Host *shost, char *buf, int len)
 			le64_to_cpu(ql_iscsi_stats->iscsi_io_completed);
 	host_stats->iscsi_unexpected_io_rx =
 			le64_to_cpu(ql_iscsi_stats->iscsi_unexpected_io_rx);
-	host_stats->iscsi_format_error =
-			le64_to_cpu(ql_iscsi_stats->iscsi_format_error);
+	host_stats->iscsi_क्रमmat_error =
+			le64_to_cpu(ql_iscsi_stats->iscsi_क्रमmat_error);
 	host_stats->iscsi_hdr_digest_error =
 			le64_to_cpu(ql_iscsi_stats->iscsi_hdr_digest_error);
 	host_stats->iscsi_data_digest_error =
 			le64_to_cpu(ql_iscsi_stats->iscsi_data_digest_error);
 	host_stats->iscsi_sequence_error =
 			le64_to_cpu(ql_iscsi_stats->iscsi_sequence_error);
-exit_host_stats:
-	if (ql_iscsi_stats)
-		dma_free_coherent(&ha->pdev->dev, stats_size,
+निकास_host_stats:
+	अगर (ql_iscsi_stats)
+		dma_मुक्त_coherent(&ha->pdev->dev, stats_size,
 				  ql_iscsi_stats, iscsi_stats_dma);
 
-	ql4_printk(KERN_INFO, ha, "%s: Get host stats done\n",
+	ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Get host stats done\n",
 		   __func__);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qla4xxx_get_iface_param(struct iscsi_iface *iface,
-				   enum iscsi_param_type param_type,
-				   int param, char *buf)
-{
-	struct Scsi_Host *shost = iscsi_iface_to_shost(iface);
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	int ival;
-	char *pval = NULL;
-	int len = -ENOSYS;
+अटल पूर्णांक qla4xxx_get_अगरace_param(काष्ठा iscsi_अगरace *अगरace,
+				   क्रमागत iscsi_param_type param_type,
+				   पूर्णांक param, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = iscsi_अगरace_to_shost(अगरace);
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	पूर्णांक ival;
+	अक्षर *pval = शून्य;
+	पूर्णांक len = -ENOSYS;
 
-	if (param_type == ISCSI_NET_PARAM) {
-		switch (param) {
-		case ISCSI_NET_PARAM_IPV4_ADDR:
-			len = sprintf(buf, "%pI4\n", &ha->ip_config.ip_address);
-			break;
-		case ISCSI_NET_PARAM_IPV4_SUBNET:
-			len = sprintf(buf, "%pI4\n",
+	अगर (param_type == ISCSI_NET_PARAM) अणु
+		चयन (param) अणु
+		हाल ISCSI_NET_PARAM_IPV4_ADDR:
+			len = प्र_लिखो(buf, "%pI4\n", &ha->ip_config.ip_address);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_SUBNET:
+			len = प्र_लिखो(buf, "%pI4\n",
 				      &ha->ip_config.subnet_mask);
-			break;
-		case ISCSI_NET_PARAM_IPV4_GW:
-			len = sprintf(buf, "%pI4\n", &ha->ip_config.gateway);
-			break;
-		case ISCSI_NET_PARAM_IFACE_ENABLE:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4) {
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_GW:
+			len = प्र_लिखो(buf, "%pI4\n", &ha->ip_config.gateway);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IFACE_ENABLE:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4) अणु
 				OP_STATE(ha->ip_config.ipv4_options,
 					 IPOPT_IPV4_PROTOCOL_ENABLE, pval);
-			} else {
+			पूर्ण अन्यथा अणु
 				OP_STATE(ha->ip_config.ipv6_options,
 					 IPV6_OPT_IPV6_PROTOCOL_ENABLE, pval);
-			}
+			पूर्ण
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_BOOTPROTO:
-			len = sprintf(buf, "%s\n",
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_BOOTPROTO:
+			len = प्र_लिखो(buf, "%s\n",
 				      (ha->ip_config.tcp_options &
 				       TCPOPT_DHCP_ENABLE) ?
 				      "dhcp" : "static");
-			break;
-		case ISCSI_NET_PARAM_IPV6_ADDR:
-			if (iface->iface_num == 0)
-				len = sprintf(buf, "%pI6\n",
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_ADDR:
+			अगर (अगरace->अगरace_num == 0)
+				len = प्र_लिखो(buf, "%pI6\n",
 					      &ha->ip_config.ipv6_addr0);
-			if (iface->iface_num == 1)
-				len = sprintf(buf, "%pI6\n",
+			अगर (अगरace->अगरace_num == 1)
+				len = प्र_लिखो(buf, "%pI6\n",
 					      &ha->ip_config.ipv6_addr1);
-			break;
-		case ISCSI_NET_PARAM_IPV6_LINKLOCAL:
-			len = sprintf(buf, "%pI6\n",
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_LINKLOCAL:
+			len = प्र_लिखो(buf, "%pI6\n",
 				      &ha->ip_config.ipv6_link_local_addr);
-			break;
-		case ISCSI_NET_PARAM_IPV6_ROUTER:
-			len = sprintf(buf, "%pI6\n",
-				      &ha->ip_config.ipv6_default_router_addr);
-			break;
-		case ISCSI_NET_PARAM_IPV6_ADDR_AUTOCFG:
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_ROUTER:
+			len = प्र_लिखो(buf, "%pI6\n",
+				      &ha->ip_config.ipv6_शेष_router_addr);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_ADDR_AUTOCFG:
 			pval = (ha->ip_config.ipv6_addl_options &
 				IPV6_ADDOPT_NEIGHBOR_DISCOVERY_ADDR_ENABLE) ?
 				"nd" : "static";
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV6_LINKLOCAL_AUTOCFG:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_LINKLOCAL_AUTOCFG:
 			pval = (ha->ip_config.ipv6_addl_options &
 				IPV6_ADDOPT_AUTOCONFIG_LINK_LOCAL_ADDR) ?
 				"auto" : "static";
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_VLAN_ID:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4)
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_VLAN_ID:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4)
 				ival = ha->ip_config.ipv4_vlan_tag &
 				       ISCSI_MAX_VLAN_ID;
-			else
+			अन्यथा
 				ival = ha->ip_config.ipv6_vlan_tag &
 				       ISCSI_MAX_VLAN_ID;
 
-			len = sprintf(buf, "%d\n", ival);
-			break;
-		case ISCSI_NET_PARAM_VLAN_PRIORITY:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4)
+			len = प्र_लिखो(buf, "%d\n", ival);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_VLAN_PRIORITY:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4)
 				ival = (ha->ip_config.ipv4_vlan_tag >> 13) &
 				       ISCSI_MAX_VLAN_PRIORITY;
-			else
+			अन्यथा
 				ival = (ha->ip_config.ipv6_vlan_tag >> 13) &
 				       ISCSI_MAX_VLAN_PRIORITY;
 
-			len = sprintf(buf, "%d\n", ival);
-			break;
-		case ISCSI_NET_PARAM_VLAN_ENABLED:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4) {
+			len = प्र_लिखो(buf, "%d\n", ival);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_VLAN_ENABLED:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4) अणु
 				OP_STATE(ha->ip_config.ipv4_options,
 					 IPOPT_VLAN_TAGGING_ENABLE, pval);
-			} else {
+			पूर्ण अन्यथा अणु
 				OP_STATE(ha->ip_config.ipv6_options,
 					 IPV6_OPT_VLAN_TAGGING_ENABLE, pval);
-			}
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_MTU:
-			len = sprintf(buf, "%d\n", ha->ip_config.eth_mtu_size);
-			break;
-		case ISCSI_NET_PARAM_PORT:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4)
-				len = sprintf(buf, "%d\n",
+			पूर्ण
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_MTU:
+			len = प्र_लिखो(buf, "%d\n", ha->ip_config.eth_mtu_size);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_PORT:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4)
+				len = प्र_लिखो(buf, "%d\n",
 					      ha->ip_config.ipv4_port);
-			else
-				len = sprintf(buf, "%d\n",
+			अन्यथा
+				len = प्र_लिखो(buf, "%d\n",
 					      ha->ip_config.ipv6_port);
-			break;
-		case ISCSI_NET_PARAM_IPADDR_STATE:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4) {
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPADDR_STATE:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4) अणु
 				pval = iscsi_get_ipaddress_state_name(
 						ha->ip_config.ipv4_addr_state);
-			} else {
-				if (iface->iface_num == 0)
+			पूर्ण अन्यथा अणु
+				अगर (अगरace->अगरace_num == 0)
 					pval = iscsi_get_ipaddress_state_name(
 						ha->ip_config.ipv6_addr0_state);
-				else if (iface->iface_num == 1)
+				अन्यथा अगर (अगरace->अगरace_num == 1)
 					pval = iscsi_get_ipaddress_state_name(
 						ha->ip_config.ipv6_addr1_state);
-			}
+			पूर्ण
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV6_LINKLOCAL_STATE:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_LINKLOCAL_STATE:
 			pval = iscsi_get_ipaddress_state_name(
 					ha->ip_config.ipv6_link_local_state);
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV6_ROUTER_STATE:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_ROUTER_STATE:
 			pval = iscsi_get_router_state_name(
-				      ha->ip_config.ipv6_default_router_state);
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_DELAYED_ACK_EN:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4) {
+				      ha->ip_config.ipv6_शेष_router_state);
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_DELAYED_ACK_EN:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4) अणु
 				OP_STATE(~ha->ip_config.tcp_options,
 					 TCPOPT_DELAYED_ACK_DISABLE, pval);
-			} else {
+			पूर्ण अन्यथा अणु
 				OP_STATE(~ha->ip_config.ipv6_tcp_options,
 					 IPV6_TCPOPT_DELAYED_ACK_DISABLE, pval);
-			}
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_TCP_NAGLE_DISABLE:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4) {
+			पूर्ण
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_TCP_NAGLE_DISABLE:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4) अणु
 				OP_STATE(~ha->ip_config.tcp_options,
 					 TCPOPT_NAGLE_ALGO_DISABLE, pval);
-			} else {
+			पूर्ण अन्यथा अणु
 				OP_STATE(~ha->ip_config.ipv6_tcp_options,
 					 IPV6_TCPOPT_NAGLE_ALGO_DISABLE, pval);
-			}
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_TCP_WSF_DISABLE:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4) {
+			पूर्ण
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_TCP_WSF_DISABLE:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4) अणु
 				OP_STATE(~ha->ip_config.tcp_options,
 					 TCPOPT_WINDOW_SCALE_DISABLE, pval);
-			} else {
+			पूर्ण अन्यथा अणु
 				OP_STATE(~ha->ip_config.ipv6_tcp_options,
 					 IPV6_TCPOPT_WINDOW_SCALE_DISABLE,
 					 pval);
-			}
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_TCP_WSF:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4)
-				len = sprintf(buf, "%d\n",
+			पूर्ण
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_TCP_WSF:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4)
+				len = प्र_लिखो(buf, "%d\n",
 					      ha->ip_config.tcp_wsf);
-			else
-				len = sprintf(buf, "%d\n",
+			अन्यथा
+				len = प्र_लिखो(buf, "%d\n",
 					      ha->ip_config.ipv6_tcp_wsf);
-			break;
-		case ISCSI_NET_PARAM_TCP_TIMER_SCALE:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4)
+			अवरोध;
+		हाल ISCSI_NET_PARAM_TCP_TIMER_SCALE:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4)
 				ival = (ha->ip_config.tcp_options &
 					TCPOPT_TIMER_SCALE) >> 1;
-			else
+			अन्यथा
 				ival = (ha->ip_config.ipv6_tcp_options &
 					IPV6_TCPOPT_TIMER_SCALE) >> 1;
 
-			len = sprintf(buf, "%d\n", ival);
-			break;
-		case ISCSI_NET_PARAM_TCP_TIMESTAMP_EN:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4) {
+			len = प्र_लिखो(buf, "%d\n", ival);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_TCP_TIMESTAMP_EN:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4) अणु
 				OP_STATE(ha->ip_config.tcp_options,
 					 TCPOPT_TIMESTAMP_ENABLE, pval);
-			} else {
+			पूर्ण अन्यथा अणु
 				OP_STATE(ha->ip_config.ipv6_tcp_options,
 					 IPV6_TCPOPT_TIMESTAMP_EN, pval);
-			}
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_CACHE_ID:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4)
-				len = sprintf(buf, "%d\n",
+			पूर्ण
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_CACHE_ID:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4)
+				len = प्र_लिखो(buf, "%d\n",
 					      ha->ip_config.ipv4_cache_id);
-			else
-				len = sprintf(buf, "%d\n",
+			अन्यथा
+				len = प्र_लिखो(buf, "%d\n",
 					      ha->ip_config.ipv6_cache_id);
-			break;
-		case ISCSI_NET_PARAM_IPV4_DHCP_DNS_ADDR_EN:
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_DNS_ADDR_EN:
 			OP_STATE(ha->ip_config.tcp_options,
 				 TCPOPT_DNS_SERVER_IP_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_DHCP_SLP_DA_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_SLP_DA_EN:
 			OP_STATE(ha->ip_config.tcp_options,
 				 TCPOPT_SLP_DA_INFO_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_TOS_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_TOS_EN:
 			OP_STATE(ha->ip_config.ipv4_options,
 				 IPOPT_IPV4_TOS_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_TOS:
-			len = sprintf(buf, "%d\n", ha->ip_config.ipv4_tos);
-			break;
-		case ISCSI_NET_PARAM_IPV4_GRAT_ARP_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_TOS:
+			len = प्र_लिखो(buf, "%d\n", ha->ip_config.ipv4_tos);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_GRAT_ARP_EN:
 			OP_STATE(ha->ip_config.ipv4_options,
 				 IPOPT_GRAT_ARP_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID_EN:
 			OP_STATE(ha->ip_config.ipv4_options, IPOPT_ALT_CID_EN,
 				 pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID:
 			pval = (ha->ip_config.ipv4_alt_cid_len) ?
-			       (char *)ha->ip_config.ipv4_alt_cid : "";
+			       (अक्षर *)ha->ip_config.ipv4_alt_cid : "";
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_DHCP_REQ_VENDOR_ID_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_REQ_VENDOR_ID_EN:
 			OP_STATE(ha->ip_config.ipv4_options,
 				 IPOPT_REQ_VID_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_DHCP_USE_VENDOR_ID_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_USE_VENDOR_ID_EN:
 			OP_STATE(ha->ip_config.ipv4_options,
 				 IPOPT_USE_VID_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_DHCP_VENDOR_ID:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_VENDOR_ID:
 			pval = (ha->ip_config.ipv4_vid_len) ?
-			       (char *)ha->ip_config.ipv4_vid : "";
+			       (अक्षर *)ha->ip_config.ipv4_vid : "";
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_DHCP_LEARN_IQN_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_DHCP_LEARN_IQN_EN:
 			OP_STATE(ha->ip_config.ipv4_options,
 				 IPOPT_LEARN_IQN_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_FRAGMENT_DISABLE:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_FRAGMENT_DISABLE:
 			OP_STATE(~ha->ip_config.ipv4_options,
 				 IPOPT_FRAGMENTATION_DISABLE, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_IN_FORWARD_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_IN_FORWARD_EN:
 			OP_STATE(ha->ip_config.ipv4_options,
 				 IPOPT_IN_FORWARD_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_REDIRECT_EN:
-			if (iface->iface_type == ISCSI_IFACE_TYPE_IPV4) {
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_REसूचीECT_EN:
+			अगर (अगरace->अगरace_type == ISCSI_IFACE_TYPE_IPV4) अणु
 				OP_STATE(ha->ip_config.ipv4_options,
-					 IPOPT_ARP_REDIRECT_EN, pval);
-			} else {
+					 IPOPT_ARP_REसूचीECT_EN, pval);
+			पूर्ण अन्यथा अणु
 				OP_STATE(ha->ip_config.ipv6_options,
-					 IPV6_OPT_REDIRECT_EN, pval);
-			}
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV4_TTL:
-			len = sprintf(buf, "%d\n", ha->ip_config.ipv4_ttl);
-			break;
-		case ISCSI_NET_PARAM_IPV6_GRAT_NEIGHBOR_ADV_EN:
+					 IPV6_OPT_REसूचीECT_EN, pval);
+			पूर्ण
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV4_TTL:
+			len = प्र_लिखो(buf, "%d\n", ha->ip_config.ipv4_ttl);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_GRAT_NEIGHBOR_ADV_EN:
 			OP_STATE(ha->ip_config.ipv6_options,
 				 IPV6_OPT_GRAT_NEIGHBOR_ADV_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV6_MLD_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_MLD_EN:
 			OP_STATE(ha->ip_config.ipv6_addl_options,
 				 IPV6_ADDOPT_MLD_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_NET_PARAM_IPV6_FLOW_LABEL:
-			len = sprintf(buf, "%u\n", ha->ip_config.ipv6_flow_lbl);
-			break;
-		case ISCSI_NET_PARAM_IPV6_TRAFFIC_CLASS:
-			len = sprintf(buf, "%d\n",
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_FLOW_LABEL:
+			len = प्र_लिखो(buf, "%u\n", ha->ip_config.ipv6_flow_lbl);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_TRAFFIC_CLASS:
+			len = प्र_लिखो(buf, "%d\n",
 				      ha->ip_config.ipv6_traffic_class);
-			break;
-		case ISCSI_NET_PARAM_IPV6_HOP_LIMIT:
-			len = sprintf(buf, "%d\n",
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_HOP_LIMIT:
+			len = प्र_लिखो(buf, "%d\n",
 				      ha->ip_config.ipv6_hop_limit);
-			break;
-		case ISCSI_NET_PARAM_IPV6_ND_REACHABLE_TMO:
-			len = sprintf(buf, "%d\n",
-				      ha->ip_config.ipv6_nd_reach_time);
-			break;
-		case ISCSI_NET_PARAM_IPV6_ND_REXMIT_TIME:
-			len = sprintf(buf, "%d\n",
-				      ha->ip_config.ipv6_nd_rexmit_timer);
-			break;
-		case ISCSI_NET_PARAM_IPV6_ND_STALE_TMO:
-			len = sprintf(buf, "%d\n",
-				      ha->ip_config.ipv6_nd_stale_timeout);
-			break;
-		case ISCSI_NET_PARAM_IPV6_DUP_ADDR_DETECT_CNT:
-			len = sprintf(buf, "%d\n",
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_ND_REACHABLE_TMO:
+			len = प्र_लिखो(buf, "%d\n",
+				      ha->ip_config.ipv6_nd_reach_समय);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_ND_REXMIT_TIME:
+			len = प्र_लिखो(buf, "%d\n",
+				      ha->ip_config.ipv6_nd_rexmit_समयr);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_ND_STALE_TMO:
+			len = प्र_लिखो(buf, "%d\n",
+				      ha->ip_config.ipv6_nd_stale_समयout);
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_DUP_ADDR_DETECT_CNT:
+			len = प्र_लिखो(buf, "%d\n",
 				      ha->ip_config.ipv6_dup_addr_detect_count);
-			break;
-		case ISCSI_NET_PARAM_IPV6_RTR_ADV_LINK_MTU:
-			len = sprintf(buf, "%d\n",
+			अवरोध;
+		हाल ISCSI_NET_PARAM_IPV6_RTR_ADV_LINK_MTU:
+			len = प्र_लिखो(buf, "%d\n",
 				      ha->ip_config.ipv6_gw_advrt_mtu);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			len = -ENOSYS;
-		}
-	} else if (param_type == ISCSI_IFACE_PARAM) {
-		switch (param) {
-		case ISCSI_IFACE_PARAM_DEF_TASKMGMT_TMO:
-			len = sprintf(buf, "%d\n", ha->ip_config.def_timeout);
-			break;
-		case ISCSI_IFACE_PARAM_HDRDGST_EN:
+		पूर्ण
+	पूर्ण अन्यथा अगर (param_type == ISCSI_IFACE_PARAM) अणु
+		चयन (param) अणु
+		हाल ISCSI_IFACE_PARAM_DEF_TASKMGMT_TMO:
+			len = प्र_लिखो(buf, "%d\n", ha->ip_config.def_समयout);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_HDRDGST_EN:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_HEADER_DIGEST_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_DATADGST_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_DATADGST_EN:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_DATA_DIGEST_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_IMM_DATA_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_IMM_DATA_EN:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_IMMEDIATE_DATA_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_INITIAL_R2T_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_INITIAL_R2T_EN:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_INITIAL_R2T_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_DATASEQ_INORDER_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_DATASEQ_INORDER_EN:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_DATA_SEQ_INORDER_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_PDU_INORDER_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_PDU_INORDER_EN:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_DATA_PDU_INORDER_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_ERL:
-			len = sprintf(buf, "%d\n",
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_ERL:
+			len = प्र_लिखो(buf, "%d\n",
 				      (ha->ip_config.iscsi_options &
 				       ISCSIOPTS_ERL));
-			break;
-		case ISCSI_IFACE_PARAM_MAX_RECV_DLENGTH:
-			len = sprintf(buf, "%u\n",
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_MAX_RECV_DLENGTH:
+			len = प्र_लिखो(buf, "%u\n",
 				      ha->ip_config.iscsi_max_pdu_size *
 				      BYTE_UNITS);
-			break;
-		case ISCSI_IFACE_PARAM_FIRST_BURST:
-			len = sprintf(buf, "%u\n",
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_FIRST_BURST:
+			len = प्र_लिखो(buf, "%u\n",
 				      ha->ip_config.iscsi_first_burst_len *
 				      BYTE_UNITS);
-			break;
-		case ISCSI_IFACE_PARAM_MAX_R2T:
-			len = sprintf(buf, "%d\n",
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_MAX_R2T:
+			len = प्र_लिखो(buf, "%d\n",
 				      ha->ip_config.iscsi_max_outstnd_r2t);
-			break;
-		case ISCSI_IFACE_PARAM_MAX_BURST:
-			len = sprintf(buf, "%u\n",
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_MAX_BURST:
+			len = प्र_लिखो(buf, "%u\n",
 				      ha->ip_config.iscsi_max_burst_len *
 				      BYTE_UNITS);
-			break;
-		case ISCSI_IFACE_PARAM_CHAP_AUTH_EN:
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_CHAP_AUTH_EN:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_CHAP_AUTH_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_BIDI_CHAP_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_BIDI_CHAP_EN:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_BIDI_CHAP_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_DISCOVERY_AUTH_OPTIONAL:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_DISCOVERY_AUTH_OPTIONAL:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_DISCOVERY_AUTH_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_DISCOVERY_LOGOUT_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_DISCOVERY_LOGOUT_EN:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_DISCOVERY_LOGOUT_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_STRICT_LOGIN_COMP_EN:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_STRICT_LOGIN_COMP_EN:
 			OP_STATE(ha->ip_config.iscsi_options,
 				 ISCSIOPTS_STRICT_LOGIN_COMP_EN, pval);
 
-			len = sprintf(buf, "%s\n", pval);
-			break;
-		case ISCSI_IFACE_PARAM_INITIATOR_NAME:
-			len = sprintf(buf, "%s\n", ha->ip_config.iscsi_name);
-			break;
-		default:
+			len = प्र_लिखो(buf, "%s\n", pval);
+			अवरोध;
+		हाल ISCSI_IFACE_PARAM_INITIATOR_NAME:
+			len = प्र_लिखो(buf, "%s\n", ha->ip_config.iscsi_name);
+			अवरोध;
+		शेष:
 			len = -ENOSYS;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct iscsi_endpoint *
-qla4xxx_ep_connect(struct Scsi_Host *shost, struct sockaddr *dst_addr,
-		   int non_blocking)
-{
-	int ret;
-	struct iscsi_endpoint *ep;
-	struct qla_endpoint *qla_ep;
-	struct scsi_qla_host *ha;
-	struct sockaddr_in *addr;
-	struct sockaddr_in6 *addr6;
+अटल काष्ठा iscsi_endpoपूर्णांक *
+qla4xxx_ep_connect(काष्ठा Scsi_Host *shost, काष्ठा sockaddr *dst_addr,
+		   पूर्णांक non_blocking)
+अणु
+	पूर्णांक ret;
+	काष्ठा iscsi_endpoपूर्णांक *ep;
+	काष्ठा qla_endpoपूर्णांक *qla_ep;
+	काष्ठा scsi_qla_host *ha;
+	काष्ठा sockaddr_in *addr;
+	काष्ठा sockaddr_in6 *addr6;
 
-	if (!shost) {
+	अगर (!shost) अणु
 		ret = -ENXIO;
 		pr_err("%s: shost is NULL\n", __func__);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	ha = iscsi_host_priv(shost);
-	ep = iscsi_create_endpoint(sizeof(struct qla_endpoint));
-	if (!ep) {
+	ep = iscsi_create_endpoपूर्णांक(माप(काष्ठा qla_endpoपूर्णांक));
+	अगर (!ep) अणु
 		ret = -ENOMEM;
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	qla_ep = ep->dd_data;
-	memset(qla_ep, 0, sizeof(struct qla_endpoint));
-	if (dst_addr->sa_family == AF_INET) {
-		memcpy(&qla_ep->dst_addr, dst_addr, sizeof(struct sockaddr_in));
-		addr = (struct sockaddr_in *)&qla_ep->dst_addr;
-		DEBUG2(ql4_printk(KERN_INFO, ha, "%s: %pI4\n", __func__,
-				  (char *)&addr->sin_addr));
-	} else if (dst_addr->sa_family == AF_INET6) {
-		memcpy(&qla_ep->dst_addr, dst_addr,
-		       sizeof(struct sockaddr_in6));
-		addr6 = (struct sockaddr_in6 *)&qla_ep->dst_addr;
-		DEBUG2(ql4_printk(KERN_INFO, ha, "%s: %pI6\n", __func__,
-				  (char *)&addr6->sin6_addr));
-	} else {
-		ql4_printk(KERN_WARNING, ha, "%s: Invalid endpoint\n",
+	स_रखो(qla_ep, 0, माप(काष्ठा qla_endpoपूर्णांक));
+	अगर (dst_addr->sa_family == AF_INET) अणु
+		स_नकल(&qla_ep->dst_addr, dst_addr, माप(काष्ठा sockaddr_in));
+		addr = (काष्ठा sockaddr_in *)&qla_ep->dst_addr;
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: %pI4\n", __func__,
+				  (अक्षर *)&addr->sin_addr));
+	पूर्ण अन्यथा अगर (dst_addr->sa_family == AF_INET6) अणु
+		स_नकल(&qla_ep->dst_addr, dst_addr,
+		       माप(काष्ठा sockaddr_in6));
+		addr6 = (काष्ठा sockaddr_in6 *)&qla_ep->dst_addr;
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: %pI6\n", __func__,
+				  (अक्षर *)&addr6->sin6_addr));
+	पूर्ण अन्यथा अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha, "%s: Invalid endpoint\n",
 			   __func__);
-	}
+	पूर्ण
 
 	qla_ep->host = shost;
 
-	return ep;
-}
+	वापस ep;
+पूर्ण
 
-static int qla4xxx_ep_poll(struct iscsi_endpoint *ep, int timeout_ms)
-{
-	struct qla_endpoint *qla_ep;
-	struct scsi_qla_host *ha;
-	int ret = 0;
+अटल पूर्णांक qla4xxx_ep_poll(काष्ठा iscsi_endpoपूर्णांक *ep, पूर्णांक समयout_ms)
+अणु
+	काष्ठा qla_endpoपूर्णांक *qla_ep;
+	काष्ठा scsi_qla_host *ha;
+	पूर्णांक ret = 0;
 
 	qla_ep = ep->dd_data;
 	ha = to_qla_host(qla_ep->host);
 	DEBUG2(pr_info_ratelimited("%s: host: %ld\n", __func__, ha->host_no));
 
-	if (adapter_up(ha) && !test_bit(AF_BUILD_DDB_LIST, &ha->flags))
+	अगर (adapter_up(ha) && !test_bit(AF_BUILD_DDB_LIST, &ha->flags))
 		ret = 1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qla4xxx_ep_disconnect(struct iscsi_endpoint *ep)
-{
-	struct qla_endpoint *qla_ep;
-	struct scsi_qla_host *ha;
+अटल व्योम qla4xxx_ep_disconnect(काष्ठा iscsi_endpoपूर्णांक *ep)
+अणु
+	काष्ठा qla_endpoपूर्णांक *qla_ep;
+	काष्ठा scsi_qla_host *ha;
 
 	qla_ep = ep->dd_data;
 	ha = to_qla_host(qla_ep->host);
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: host: %ld\n", __func__,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: host: %ld\n", __func__,
 			  ha->host_no));
-	iscsi_destroy_endpoint(ep);
-}
+	iscsi_destroy_endpoपूर्णांक(ep);
+पूर्ण
 
-static int qla4xxx_get_ep_param(struct iscsi_endpoint *ep,
-				enum iscsi_param param,
-				char *buf)
-{
-	struct qla_endpoint *qla_ep = ep->dd_data;
-	struct sockaddr *dst_addr;
-	struct scsi_qla_host *ha;
+अटल पूर्णांक qla4xxx_get_ep_param(काष्ठा iscsi_endpoपूर्णांक *ep,
+				क्रमागत iscsi_param param,
+				अक्षर *buf)
+अणु
+	काष्ठा qla_endpoपूर्णांक *qla_ep = ep->dd_data;
+	काष्ठा sockaddr *dst_addr;
+	काष्ठा scsi_qla_host *ha;
 
-	if (!qla_ep)
-		return -ENOTCONN;
+	अगर (!qla_ep)
+		वापस -ENOTCONN;
 
 	ha = to_qla_host(qla_ep->host);
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: host: %ld\n", __func__,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: host: %ld\n", __func__,
 			  ha->host_no));
 
-	switch (param) {
-	case ISCSI_PARAM_CONN_PORT:
-	case ISCSI_PARAM_CONN_ADDRESS:
-		dst_addr = (struct sockaddr *)&qla_ep->dst_addr;
-		if (!dst_addr)
-			return -ENOTCONN;
+	चयन (param) अणु
+	हाल ISCSI_PARAM_CONN_PORT:
+	हाल ISCSI_PARAM_CONN_ADDRESS:
+		dst_addr = (काष्ठा sockaddr *)&qla_ep->dst_addr;
+		अगर (!dst_addr)
+			वापस -ENOTCONN;
 
-		return iscsi_conn_get_addr_param((struct sockaddr_storage *)
+		वापस iscsi_conn_get_addr_param((काष्ठा sockaddr_storage *)
 						 &qla_ep->dst_addr, param, buf);
-	default:
-		return -ENOSYS;
-	}
-}
+	शेष:
+		वापस -ENOSYS;
+	पूर्ण
+पूर्ण
 
-static void qla4xxx_conn_get_stats(struct iscsi_cls_conn *cls_conn,
-				   struct iscsi_stats *stats)
-{
-	struct iscsi_session *sess;
-	struct iscsi_cls_session *cls_sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
-	struct ql_iscsi_stats *ql_iscsi_stats;
-	int stats_size;
-	int ret;
+अटल व्योम qla4xxx_conn_get_stats(काष्ठा iscsi_cls_conn *cls_conn,
+				   काष्ठा iscsi_stats *stats)
+अणु
+	काष्ठा iscsi_session *sess;
+	काष्ठा iscsi_cls_session *cls_sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
+	काष्ठा ql_iscsi_stats *ql_iscsi_stats;
+	पूर्णांक stats_size;
+	पूर्णांक ret;
 	dma_addr_t iscsi_stats_dma;
 
 	cls_sess = iscsi_conn_to_session(cls_conn);
@@ -1821,25 +1822,25 @@ static void qla4xxx_conn_get_stats(struct iscsi_cls_conn *cls_conn,
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
 
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: host: %ld\n", __func__,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: host: %ld\n", __func__,
 			  ha->host_no));
-	stats_size = PAGE_ALIGN(sizeof(struct ql_iscsi_stats));
+	stats_size = PAGE_ALIGN(माप(काष्ठा ql_iscsi_stats));
 	/* Allocate memory */
 	ql_iscsi_stats = dma_alloc_coherent(&ha->pdev->dev, stats_size,
 					    &iscsi_stats_dma, GFP_KERNEL);
-	if (!ql_iscsi_stats) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!ql_iscsi_stats) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "Unable to allocate memory for iscsi stats\n");
-		goto exit_get_stats;
-	}
+		जाओ निकास_get_stats;
+	पूर्ण
 
 	ret =  qla4xxx_get_mgmt_data(ha, ddb_entry->fw_ddb_index, stats_size,
 				     iscsi_stats_dma);
-	if (ret != QLA_SUCCESS) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (ret != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "Unable to retrieve iscsi stats\n");
-		goto free_stats;
-	}
+		जाओ मुक्त_stats;
+	पूर्ण
 
 	/* octets */
 	stats->txdata_octets = le64_to_cpu(ql_iscsi_stats->tx_data_octets);
@@ -1847,1268 +1848,1268 @@ static void qla4xxx_conn_get_stats(struct iscsi_cls_conn *cls_conn,
 	/* xmit pdus */
 	stats->noptx_pdus = le32_to_cpu(ql_iscsi_stats->tx_nopout_pdus);
 	stats->scsicmd_pdus = le32_to_cpu(ql_iscsi_stats->tx_scsi_cmd_pdus);
-	stats->tmfcmd_pdus = le32_to_cpu(ql_iscsi_stats->tx_tmf_cmd_pdus);
+	stats->पंचांगfcmd_pdus = le32_to_cpu(ql_iscsi_stats->tx_पंचांगf_cmd_pdus);
 	stats->login_pdus = le32_to_cpu(ql_iscsi_stats->tx_login_cmd_pdus);
 	stats->text_pdus = le32_to_cpu(ql_iscsi_stats->tx_text_cmd_pdus);
-	stats->dataout_pdus = le32_to_cpu(ql_iscsi_stats->tx_scsi_write_pdus);
+	stats->dataout_pdus = le32_to_cpu(ql_iscsi_stats->tx_scsi_ग_लिखो_pdus);
 	stats->logout_pdus = le32_to_cpu(ql_iscsi_stats->tx_logout_cmd_pdus);
 	stats->snack_pdus = le32_to_cpu(ql_iscsi_stats->tx_snack_req_pdus);
 	/* recv pdus */
 	stats->noprx_pdus = le32_to_cpu(ql_iscsi_stats->rx_nopin_pdus);
 	stats->scsirsp_pdus = le32_to_cpu(ql_iscsi_stats->rx_scsi_resp_pdus);
-	stats->tmfrsp_pdus = le32_to_cpu(ql_iscsi_stats->rx_tmf_resp_pdus);
+	stats->पंचांगfrsp_pdus = le32_to_cpu(ql_iscsi_stats->rx_पंचांगf_resp_pdus);
 	stats->textrsp_pdus = le32_to_cpu(ql_iscsi_stats->rx_text_resp_pdus);
-	stats->datain_pdus = le32_to_cpu(ql_iscsi_stats->rx_scsi_read_pdus);
+	stats->datain_pdus = le32_to_cpu(ql_iscsi_stats->rx_scsi_पढ़ो_pdus);
 	stats->logoutrsp_pdus =
 			le32_to_cpu(ql_iscsi_stats->rx_logout_resp_pdus);
 	stats->r2t_pdus = le32_to_cpu(ql_iscsi_stats->rx_r2t_pdus);
 	stats->async_pdus = le32_to_cpu(ql_iscsi_stats->rx_async_pdus);
 	stats->rjt_pdus = le32_to_cpu(ql_iscsi_stats->rx_reject_pdus);
 
-free_stats:
-	dma_free_coherent(&ha->pdev->dev, stats_size, ql_iscsi_stats,
+मुक्त_stats:
+	dma_मुक्त_coherent(&ha->pdev->dev, stats_size, ql_iscsi_stats,
 			  iscsi_stats_dma);
-exit_get_stats:
-	return;
-}
+निकास_get_stats:
+	वापस;
+पूर्ण
 
-static enum blk_eh_timer_return qla4xxx_eh_cmd_timed_out(struct scsi_cmnd *sc)
-{
-	struct iscsi_cls_session *session;
-	unsigned long flags;
-	enum blk_eh_timer_return ret = BLK_EH_DONE;
+अटल क्रमागत blk_eh_समयr_वापस qla4xxx_eh_cmd_समयd_out(काष्ठा scsi_cmnd *sc)
+अणु
+	काष्ठा iscsi_cls_session *session;
+	अचिन्हित दीर्घ flags;
+	क्रमागत blk_eh_समयr_वापस ret = BLK_EH_DONE;
 
 	session = starget_to_session(scsi_target(sc->device));
 
 	spin_lock_irqsave(&session->lock, flags);
-	if (session->state == ISCSI_SESSION_FAILED)
+	अगर (session->state == ISCSI_SESSION_FAILED)
 		ret = BLK_EH_RESET_TIMER;
 	spin_unlock_irqrestore(&session->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qla4xxx_set_port_speed(struct Scsi_Host *shost)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct iscsi_cls_host *ihost = shost->shost_data;
-	uint32_t speed = ISCSI_PORT_SPEED_UNKNOWN;
+अटल व्योम qla4xxx_set_port_speed(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा iscsi_cls_host *ihost = shost->shost_data;
+	uपूर्णांक32_t speed = ISCSI_PORT_SPEED_UNKNOWN;
 
 	qla4xxx_get_firmware_state(ha);
 
-	switch (ha->addl_fw_state & 0x0F00) {
-	case FW_ADDSTATE_LINK_SPEED_10MBPS:
+	चयन (ha->addl_fw_state & 0x0F00) अणु
+	हाल FW_ADDSTATE_LINK_SPEED_10MBPS:
 		speed = ISCSI_PORT_SPEED_10MBPS;
-		break;
-	case FW_ADDSTATE_LINK_SPEED_100MBPS:
+		अवरोध;
+	हाल FW_ADDSTATE_LINK_SPEED_100MBPS:
 		speed = ISCSI_PORT_SPEED_100MBPS;
-		break;
-	case FW_ADDSTATE_LINK_SPEED_1GBPS:
+		अवरोध;
+	हाल FW_ADDSTATE_LINK_SPEED_1GBPS:
 		speed = ISCSI_PORT_SPEED_1GBPS;
-		break;
-	case FW_ADDSTATE_LINK_SPEED_10GBPS:
+		अवरोध;
+	हाल FW_ADDSTATE_LINK_SPEED_10GBPS:
 		speed = ISCSI_PORT_SPEED_10GBPS;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	ihost->port_speed = speed;
-}
+पूर्ण
 
-static void qla4xxx_set_port_state(struct Scsi_Host *shost)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct iscsi_cls_host *ihost = shost->shost_data;
-	uint32_t state = ISCSI_PORT_STATE_DOWN;
+अटल व्योम qla4xxx_set_port_state(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा iscsi_cls_host *ihost = shost->shost_data;
+	uपूर्णांक32_t state = ISCSI_PORT_STATE_DOWN;
 
-	if (test_bit(AF_LINK_UP, &ha->flags))
+	अगर (test_bit(AF_LINK_UP, &ha->flags))
 		state = ISCSI_PORT_STATE_UP;
 
 	ihost->port_state = state;
-}
+पूर्ण
 
-static int qla4xxx_host_get_param(struct Scsi_Host *shost,
-				  enum iscsi_host_param param, char *buf)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	int len;
+अटल पूर्णांक qla4xxx_host_get_param(काष्ठा Scsi_Host *shost,
+				  क्रमागत iscsi_host_param param, अक्षर *buf)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	पूर्णांक len;
 
-	switch (param) {
-	case ISCSI_HOST_PARAM_HWADDRESS:
-		len = sysfs_format_mac(buf, ha->my_mac, MAC_ADDR_LEN);
-		break;
-	case ISCSI_HOST_PARAM_IPADDRESS:
-		len = sprintf(buf, "%pI4\n", &ha->ip_config.ip_address);
-		break;
-	case ISCSI_HOST_PARAM_INITIATOR_NAME:
-		len = sprintf(buf, "%s\n", ha->name_string);
-		break;
-	case ISCSI_HOST_PARAM_PORT_STATE:
+	चयन (param) अणु
+	हाल ISCSI_HOST_PARAM_HWADDRESS:
+		len = sysfs_क्रमmat_mac(buf, ha->my_mac, MAC_ADDR_LEN);
+		अवरोध;
+	हाल ISCSI_HOST_PARAM_IPADDRESS:
+		len = प्र_लिखो(buf, "%pI4\n", &ha->ip_config.ip_address);
+		अवरोध;
+	हाल ISCSI_HOST_PARAM_INITIATOR_NAME:
+		len = प्र_लिखो(buf, "%s\n", ha->name_string);
+		अवरोध;
+	हाल ISCSI_HOST_PARAM_PORT_STATE:
 		qla4xxx_set_port_state(shost);
-		len = sprintf(buf, "%s\n", iscsi_get_port_state_name(shost));
-		break;
-	case ISCSI_HOST_PARAM_PORT_SPEED:
+		len = प्र_लिखो(buf, "%s\n", iscsi_get_port_state_name(shost));
+		अवरोध;
+	हाल ISCSI_HOST_PARAM_PORT_SPEED:
 		qla4xxx_set_port_speed(shost);
-		len = sprintf(buf, "%s\n", iscsi_get_port_speed_name(shost));
-		break;
-	default:
-		return -ENOSYS;
-	}
+		len = प्र_लिखो(buf, "%s\n", iscsi_get_port_speed_name(shost));
+		अवरोध;
+	शेष:
+		वापस -ENOSYS;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static void qla4xxx_create_ipv4_iface(struct scsi_qla_host *ha)
-{
-	if (ha->iface_ipv4)
-		return;
+अटल व्योम qla4xxx_create_ipv4_अगरace(काष्ठा scsi_qla_host *ha)
+अणु
+	अगर (ha->अगरace_ipv4)
+		वापस;
 
 	/* IPv4 */
-	ha->iface_ipv4 = iscsi_create_iface(ha->host,
+	ha->अगरace_ipv4 = iscsi_create_अगरace(ha->host,
 					    &qla4xxx_iscsi_transport,
 					    ISCSI_IFACE_TYPE_IPV4, 0, 0);
-	if (!ha->iface_ipv4)
-		ql4_printk(KERN_ERR, ha, "Could not create IPv4 iSCSI "
+	अगर (!ha->अगरace_ipv4)
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Could not create IPv4 iSCSI "
 			   "iface0.\n");
-}
+पूर्ण
 
-static void qla4xxx_create_ipv6_iface(struct scsi_qla_host *ha)
-{
-	if (!ha->iface_ipv6_0)
-		/* IPv6 iface-0 */
-		ha->iface_ipv6_0 = iscsi_create_iface(ha->host,
+अटल व्योम qla4xxx_create_ipv6_अगरace(काष्ठा scsi_qla_host *ha)
+अणु
+	अगर (!ha->अगरace_ipv6_0)
+		/* IPv6 अगरace-0 */
+		ha->अगरace_ipv6_0 = iscsi_create_अगरace(ha->host,
 						      &qla4xxx_iscsi_transport,
 						      ISCSI_IFACE_TYPE_IPV6, 0,
 						      0);
-	if (!ha->iface_ipv6_0)
-		ql4_printk(KERN_ERR, ha, "Could not create IPv6 iSCSI "
+	अगर (!ha->अगरace_ipv6_0)
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Could not create IPv6 iSCSI "
 			   "iface0.\n");
 
-	if (!ha->iface_ipv6_1)
-		/* IPv6 iface-1 */
-		ha->iface_ipv6_1 = iscsi_create_iface(ha->host,
+	अगर (!ha->अगरace_ipv6_1)
+		/* IPv6 अगरace-1 */
+		ha->अगरace_ipv6_1 = iscsi_create_अगरace(ha->host,
 						      &qla4xxx_iscsi_transport,
 						      ISCSI_IFACE_TYPE_IPV6, 1,
 						      0);
-	if (!ha->iface_ipv6_1)
-		ql4_printk(KERN_ERR, ha, "Could not create IPv6 iSCSI "
+	अगर (!ha->अगरace_ipv6_1)
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Could not create IPv6 iSCSI "
 			   "iface1.\n");
-}
+पूर्ण
 
-static void qla4xxx_create_ifaces(struct scsi_qla_host *ha)
-{
-	if (ha->ip_config.ipv4_options & IPOPT_IPV4_PROTOCOL_ENABLE)
-		qla4xxx_create_ipv4_iface(ha);
+अटल व्योम qla4xxx_create_अगरaces(काष्ठा scsi_qla_host *ha)
+अणु
+	अगर (ha->ip_config.ipv4_options & IPOPT_IPV4_PROTOCOL_ENABLE)
+		qla4xxx_create_ipv4_अगरace(ha);
 
-	if (ha->ip_config.ipv6_options & IPV6_OPT_IPV6_PROTOCOL_ENABLE)
-		qla4xxx_create_ipv6_iface(ha);
-}
+	अगर (ha->ip_config.ipv6_options & IPV6_OPT_IPV6_PROTOCOL_ENABLE)
+		qla4xxx_create_ipv6_अगरace(ha);
+पूर्ण
 
-static void qla4xxx_destroy_ipv4_iface(struct scsi_qla_host *ha)
-{
-	if (ha->iface_ipv4) {
-		iscsi_destroy_iface(ha->iface_ipv4);
-		ha->iface_ipv4 = NULL;
-	}
-}
+अटल व्योम qla4xxx_destroy_ipv4_अगरace(काष्ठा scsi_qla_host *ha)
+अणु
+	अगर (ha->अगरace_ipv4) अणु
+		iscsi_destroy_अगरace(ha->अगरace_ipv4);
+		ha->अगरace_ipv4 = शून्य;
+	पूर्ण
+पूर्ण
 
-static void qla4xxx_destroy_ipv6_iface(struct scsi_qla_host *ha)
-{
-	if (ha->iface_ipv6_0) {
-		iscsi_destroy_iface(ha->iface_ipv6_0);
-		ha->iface_ipv6_0 = NULL;
-	}
-	if (ha->iface_ipv6_1) {
-		iscsi_destroy_iface(ha->iface_ipv6_1);
-		ha->iface_ipv6_1 = NULL;
-	}
-}
+अटल व्योम qla4xxx_destroy_ipv6_अगरace(काष्ठा scsi_qla_host *ha)
+अणु
+	अगर (ha->अगरace_ipv6_0) अणु
+		iscsi_destroy_अगरace(ha->अगरace_ipv6_0);
+		ha->अगरace_ipv6_0 = शून्य;
+	पूर्ण
+	अगर (ha->अगरace_ipv6_1) अणु
+		iscsi_destroy_अगरace(ha->अगरace_ipv6_1);
+		ha->अगरace_ipv6_1 = शून्य;
+	पूर्ण
+पूर्ण
 
-static void qla4xxx_destroy_ifaces(struct scsi_qla_host *ha)
-{
-	qla4xxx_destroy_ipv4_iface(ha);
-	qla4xxx_destroy_ipv6_iface(ha);
-}
+अटल व्योम qla4xxx_destroy_अगरaces(काष्ठा scsi_qla_host *ha)
+अणु
+	qla4xxx_destroy_ipv4_अगरace(ha);
+	qla4xxx_destroy_ipv6_अगरace(ha);
+पूर्ण
 
-static void qla4xxx_set_ipv6(struct scsi_qla_host *ha,
-			     struct iscsi_iface_param_info *iface_param,
-			     struct addr_ctrl_blk *init_fw_cb)
-{
+अटल व्योम qla4xxx_set_ipv6(काष्ठा scsi_qla_host *ha,
+			     काष्ठा iscsi_अगरace_param_info *अगरace_param,
+			     काष्ठा addr_ctrl_blk *init_fw_cb)
+अणु
 	/*
-	 * iface_num 0 is valid for IPv6 Addr, linklocal, router, autocfg.
-	 * iface_num 1 is valid only for IPv6 Addr.
+	 * अगरace_num 0 is valid क्रम IPv6 Addr, linklocal, router, स्वतःcfg.
+	 * अगरace_num 1 is valid only क्रम IPv6 Addr.
 	 */
-	switch (iface_param->param) {
-	case ISCSI_NET_PARAM_IPV6_ADDR:
-		if (iface_param->iface_num & 0x1)
+	चयन (अगरace_param->param) अणु
+	हाल ISCSI_NET_PARAM_IPV6_ADDR:
+		अगर (अगरace_param->अगरace_num & 0x1)
 			/* IPv6 Addr 1 */
-			memcpy(init_fw_cb->ipv6_addr1, iface_param->value,
-			       sizeof(init_fw_cb->ipv6_addr1));
-		else
+			स_नकल(init_fw_cb->ipv6_addr1, अगरace_param->value,
+			       माप(init_fw_cb->ipv6_addr1));
+		अन्यथा
 			/* IPv6 Addr 0 */
-			memcpy(init_fw_cb->ipv6_addr0, iface_param->value,
-			       sizeof(init_fw_cb->ipv6_addr0));
-		break;
-	case ISCSI_NET_PARAM_IPV6_LINKLOCAL:
-		if (iface_param->iface_num & 0x1)
-			break;
-		memcpy(init_fw_cb->ipv6_if_id, &iface_param->value[8],
-		       sizeof(init_fw_cb->ipv6_if_id));
-		break;
-	case ISCSI_NET_PARAM_IPV6_ROUTER:
-		if (iface_param->iface_num & 0x1)
-			break;
-		memcpy(init_fw_cb->ipv6_dflt_rtr_addr, iface_param->value,
-		       sizeof(init_fw_cb->ipv6_dflt_rtr_addr));
-		break;
-	case ISCSI_NET_PARAM_IPV6_ADDR_AUTOCFG:
-		/* Autocfg applies to even interface */
-		if (iface_param->iface_num & 0x1)
-			break;
+			स_नकल(init_fw_cb->ipv6_addr0, अगरace_param->value,
+			       माप(init_fw_cb->ipv6_addr0));
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_LINKLOCAL:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		स_नकल(init_fw_cb->ipv6_अगर_id, &अगरace_param->value[8],
+		       माप(init_fw_cb->ipv6_अगर_id));
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_ROUTER:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		स_नकल(init_fw_cb->ipv6_dflt_rtr_addr, अगरace_param->value,
+		       माप(init_fw_cb->ipv6_dflt_rtr_addr));
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_ADDR_AUTOCFG:
+		/* Autocfg applies to even पूर्णांकerface */
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 
-		if (iface_param->value[0] == ISCSI_IPV6_AUTOCFG_DISABLE)
+		अगर (अगरace_param->value[0] == ISCSI_IPV6_AUTOCFG_DISABLE)
 			init_fw_cb->ipv6_addtl_opts &=
 				cpu_to_le16(
 				  ~IPV6_ADDOPT_NEIGHBOR_DISCOVERY_ADDR_ENABLE);
-		else if (iface_param->value[0] == ISCSI_IPV6_AUTOCFG_ND_ENABLE)
+		अन्यथा अगर (अगरace_param->value[0] == ISCSI_IPV6_AUTOCFG_ND_ENABLE)
 			init_fw_cb->ipv6_addtl_opts |=
 				cpu_to_le16(
 				  IPV6_ADDOPT_NEIGHBOR_DISCOVERY_ADDR_ENABLE);
-		else
-			ql4_printk(KERN_ERR, ha,
+		अन्यथा
+			ql4_prपूर्णांकk(KERN_ERR, ha,
 				   "Invalid autocfg setting for IPv6 addr\n");
-		break;
-	case ISCSI_NET_PARAM_IPV6_LINKLOCAL_AUTOCFG:
-		/* Autocfg applies to even interface */
-		if (iface_param->iface_num & 0x1)
-			break;
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_LINKLOCAL_AUTOCFG:
+		/* Autocfg applies to even पूर्णांकerface */
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 
-		if (iface_param->value[0] ==
+		अगर (अगरace_param->value[0] ==
 		    ISCSI_IPV6_LINKLOCAL_AUTOCFG_ENABLE)
 			init_fw_cb->ipv6_addtl_opts |= cpu_to_le16(
 					IPV6_ADDOPT_AUTOCONFIG_LINK_LOCAL_ADDR);
-		else if (iface_param->value[0] ==
+		अन्यथा अगर (अगरace_param->value[0] ==
 			 ISCSI_IPV6_LINKLOCAL_AUTOCFG_DISABLE)
 			init_fw_cb->ipv6_addtl_opts &= cpu_to_le16(
 				       ~IPV6_ADDOPT_AUTOCONFIG_LINK_LOCAL_ADDR);
-		else
-			ql4_printk(KERN_ERR, ha,
+		अन्यथा
+			ql4_prपूर्णांकk(KERN_ERR, ha,
 				   "Invalid autocfg setting for IPv6 linklocal addr\n");
-		break;
-	case ISCSI_NET_PARAM_IPV6_ROUTER_AUTOCFG:
-		/* Autocfg applies to even interface */
-		if (iface_param->iface_num & 0x1)
-			break;
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_ROUTER_AUTOCFG:
+		/* Autocfg applies to even पूर्णांकerface */
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 
-		if (iface_param->value[0] == ISCSI_IPV6_ROUTER_AUTOCFG_ENABLE)
-			memset(init_fw_cb->ipv6_dflt_rtr_addr, 0,
-			       sizeof(init_fw_cb->ipv6_dflt_rtr_addr));
-		break;
-	case ISCSI_NET_PARAM_IFACE_ENABLE:
-		if (iface_param->value[0] == ISCSI_IFACE_ENABLE) {
+		अगर (अगरace_param->value[0] == ISCSI_IPV6_ROUTER_AUTOCFG_ENABLE)
+			स_रखो(init_fw_cb->ipv6_dflt_rtr_addr, 0,
+			       माप(init_fw_cb->ipv6_dflt_rtr_addr));
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IFACE_ENABLE:
+		अगर (अगरace_param->value[0] == ISCSI_IFACE_ENABLE) अणु
 			init_fw_cb->ipv6_opts |=
 				cpu_to_le16(IPV6_OPT_IPV6_PROTOCOL_ENABLE);
-			qla4xxx_create_ipv6_iface(ha);
-		} else {
+			qla4xxx_create_ipv6_अगरace(ha);
+		पूर्ण अन्यथा अणु
 			init_fw_cb->ipv6_opts &=
 				cpu_to_le16(~IPV6_OPT_IPV6_PROTOCOL_ENABLE &
 					    0xFFFF);
-			qla4xxx_destroy_ipv6_iface(ha);
-		}
-		break;
-	case ISCSI_NET_PARAM_VLAN_TAG:
-		if (iface_param->len != sizeof(init_fw_cb->ipv6_vlan_tag))
-			break;
+			qla4xxx_destroy_ipv6_अगरace(ha);
+		पूर्ण
+		अवरोध;
+	हाल ISCSI_NET_PARAM_VLAN_TAG:
+		अगर (अगरace_param->len != माप(init_fw_cb->ipv6_vlan_tag))
+			अवरोध;
 		init_fw_cb->ipv6_vlan_tag =
-				cpu_to_be16(*(uint16_t *)iface_param->value);
-		break;
-	case ISCSI_NET_PARAM_VLAN_ENABLED:
-		if (iface_param->value[0] == ISCSI_VLAN_ENABLE)
+				cpu_to_be16(*(uपूर्णांक16_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_VLAN_ENABLED:
+		अगर (अगरace_param->value[0] == ISCSI_VLAN_ENABLE)
 			init_fw_cb->ipv6_opts |=
 				cpu_to_le16(IPV6_OPT_VLAN_TAGGING_ENABLE);
-		else
+		अन्यथा
 			init_fw_cb->ipv6_opts &=
 				cpu_to_le16(~IPV6_OPT_VLAN_TAGGING_ENABLE);
-		break;
-	case ISCSI_NET_PARAM_MTU:
+		अवरोध;
+	हाल ISCSI_NET_PARAM_MTU:
 		init_fw_cb->eth_mtu_size =
-				cpu_to_le16(*(uint16_t *)iface_param->value);
-		break;
-	case ISCSI_NET_PARAM_PORT:
-		/* Autocfg applies to even interface */
-		if (iface_param->iface_num & 0x1)
-			break;
+				cpu_to_le16(*(uपूर्णांक16_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_PORT:
+		/* Autocfg applies to even पूर्णांकerface */
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 
 		init_fw_cb->ipv6_port =
-				cpu_to_le16(*(uint16_t *)iface_param->value);
-		break;
-	case ISCSI_NET_PARAM_DELAYED_ACK_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_DISABLE)
+				cpu_to_le16(*(uपूर्णांक16_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_DELAYED_ACK_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_DISABLE)
 			init_fw_cb->ipv6_tcp_opts |=
 				cpu_to_le16(IPV6_TCPOPT_DELAYED_ACK_DISABLE);
-		else
+		अन्यथा
 			init_fw_cb->ipv6_tcp_opts &=
 				cpu_to_le16(~IPV6_TCPOPT_DELAYED_ACK_DISABLE &
 					    0xFFFF);
-		break;
-	case ISCSI_NET_PARAM_TCP_NAGLE_DISABLE:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_DISABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_TCP_NAGLE_DISABLE:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_DISABLE)
 			init_fw_cb->ipv6_tcp_opts |=
 				cpu_to_le16(IPV6_TCPOPT_NAGLE_ALGO_DISABLE);
-		else
+		अन्यथा
 			init_fw_cb->ipv6_tcp_opts &=
 				cpu_to_le16(~IPV6_TCPOPT_NAGLE_ALGO_DISABLE);
-		break;
-	case ISCSI_NET_PARAM_TCP_WSF_DISABLE:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_DISABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_TCP_WSF_DISABLE:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_DISABLE)
 			init_fw_cb->ipv6_tcp_opts |=
 				cpu_to_le16(IPV6_TCPOPT_WINDOW_SCALE_DISABLE);
-		else
+		अन्यथा
 			init_fw_cb->ipv6_tcp_opts &=
 				cpu_to_le16(~IPV6_TCPOPT_WINDOW_SCALE_DISABLE);
-		break;
-	case ISCSI_NET_PARAM_TCP_WSF:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->ipv6_tcp_wsf = iface_param->value[0];
-		break;
-	case ISCSI_NET_PARAM_TCP_TIMER_SCALE:
-		if (iface_param->iface_num & 0x1)
-			break;
+		अवरोध;
+	हाल ISCSI_NET_PARAM_TCP_WSF:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->ipv6_tcp_wsf = अगरace_param->value[0];
+		अवरोध;
+	हाल ISCSI_NET_PARAM_TCP_TIMER_SCALE:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 		init_fw_cb->ipv6_tcp_opts &=
 					cpu_to_le16(~IPV6_TCPOPT_TIMER_SCALE);
 		init_fw_cb->ipv6_tcp_opts |=
-				cpu_to_le16((iface_param->value[0] << 1) &
+				cpu_to_le16((अगरace_param->value[0] << 1) &
 					    IPV6_TCPOPT_TIMER_SCALE);
-		break;
-	case ISCSI_NET_PARAM_TCP_TIMESTAMP_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_TCP_TIMESTAMP_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv6_tcp_opts |=
 				cpu_to_le16(IPV6_TCPOPT_TIMESTAMP_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv6_tcp_opts &=
 				cpu_to_le16(~IPV6_TCPOPT_TIMESTAMP_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV6_GRAT_NEIGHBOR_ADV_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_GRAT_NEIGHBOR_ADV_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv6_opts |=
 				cpu_to_le16(IPV6_OPT_GRAT_NEIGHBOR_ADV_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv6_opts &=
 				cpu_to_le16(~IPV6_OPT_GRAT_NEIGHBOR_ADV_EN);
-		break;
-	case ISCSI_NET_PARAM_REDIRECT_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_REसूचीECT_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv6_opts |=
-				cpu_to_le16(IPV6_OPT_REDIRECT_EN);
-		else
+				cpu_to_le16(IPV6_OPT_REसूचीECT_EN);
+		अन्यथा
 			init_fw_cb->ipv6_opts &=
-				cpu_to_le16(~IPV6_OPT_REDIRECT_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV6_MLD_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+				cpu_to_le16(~IPV6_OPT_REसूचीECT_EN);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_MLD_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv6_addtl_opts |=
 				cpu_to_le16(IPV6_ADDOPT_MLD_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv6_addtl_opts &=
 				cpu_to_le16(~IPV6_ADDOPT_MLD_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV6_FLOW_LABEL:
-		if (iface_param->iface_num & 0x1)
-			break;
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_FLOW_LABEL:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 		init_fw_cb->ipv6_flow_lbl =
-				cpu_to_le16(*(uint16_t *)iface_param->value);
-		break;
-	case ISCSI_NET_PARAM_IPV6_TRAFFIC_CLASS:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->ipv6_traffic_class = iface_param->value[0];
-		break;
-	case ISCSI_NET_PARAM_IPV6_HOP_LIMIT:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->ipv6_hop_limit = iface_param->value[0];
-		break;
-	case ISCSI_NET_PARAM_IPV6_ND_REACHABLE_TMO:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->ipv6_nd_reach_time =
-				cpu_to_le32(*(uint32_t *)iface_param->value);
-		break;
-	case ISCSI_NET_PARAM_IPV6_ND_REXMIT_TIME:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->ipv6_nd_rexmit_timer =
-				cpu_to_le32(*(uint32_t *)iface_param->value);
-		break;
-	case ISCSI_NET_PARAM_IPV6_ND_STALE_TMO:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->ipv6_nd_stale_timeout =
-				cpu_to_le32(*(uint32_t *)iface_param->value);
-		break;
-	case ISCSI_NET_PARAM_IPV6_DUP_ADDR_DETECT_CNT:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->ipv6_dup_addr_detect_count = iface_param->value[0];
-		break;
-	case ISCSI_NET_PARAM_IPV6_RTR_ADV_LINK_MTU:
-		if (iface_param->iface_num & 0x1)
-			break;
+				cpu_to_le16(*(uपूर्णांक16_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_TRAFFIC_CLASS:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->ipv6_traffic_class = अगरace_param->value[0];
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_HOP_LIMIT:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->ipv6_hop_limit = अगरace_param->value[0];
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_ND_REACHABLE_TMO:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->ipv6_nd_reach_समय =
+				cpu_to_le32(*(uपूर्णांक32_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_ND_REXMIT_TIME:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->ipv6_nd_rexmit_समयr =
+				cpu_to_le32(*(uपूर्णांक32_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_ND_STALE_TMO:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->ipv6_nd_stale_समयout =
+				cpu_to_le32(*(uपूर्णांक32_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_DUP_ADDR_DETECT_CNT:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->ipv6_dup_addr_detect_count = अगरace_param->value[0];
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV6_RTR_ADV_LINK_MTU:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 		init_fw_cb->ipv6_gw_advrt_mtu =
-				cpu_to_le32(*(uint32_t *)iface_param->value);
-		break;
-	default:
-		ql4_printk(KERN_ERR, ha, "Unknown IPv6 param = %d\n",
-			   iface_param->param);
-		break;
-	}
-}
+				cpu_to_le32(*(uपूर्णांक32_t *)अगरace_param->value);
+		अवरोध;
+	शेष:
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Unknown IPv6 param = %d\n",
+			   अगरace_param->param);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void qla4xxx_set_ipv4(struct scsi_qla_host *ha,
-			     struct iscsi_iface_param_info *iface_param,
-			     struct addr_ctrl_blk *init_fw_cb)
-{
-	switch (iface_param->param) {
-	case ISCSI_NET_PARAM_IPV4_ADDR:
-		memcpy(init_fw_cb->ipv4_addr, iface_param->value,
-		       sizeof(init_fw_cb->ipv4_addr));
-		break;
-	case ISCSI_NET_PARAM_IPV4_SUBNET:
-		memcpy(init_fw_cb->ipv4_subnet,	iface_param->value,
-		       sizeof(init_fw_cb->ipv4_subnet));
-		break;
-	case ISCSI_NET_PARAM_IPV4_GW:
-		memcpy(init_fw_cb->ipv4_gw_addr, iface_param->value,
-		       sizeof(init_fw_cb->ipv4_gw_addr));
-		break;
-	case ISCSI_NET_PARAM_IPV4_BOOTPROTO:
-		if (iface_param->value[0] == ISCSI_BOOTPROTO_DHCP)
+अटल व्योम qla4xxx_set_ipv4(काष्ठा scsi_qla_host *ha,
+			     काष्ठा iscsi_अगरace_param_info *अगरace_param,
+			     काष्ठा addr_ctrl_blk *init_fw_cb)
+अणु
+	चयन (अगरace_param->param) अणु
+	हाल ISCSI_NET_PARAM_IPV4_ADDR:
+		स_नकल(init_fw_cb->ipv4_addr, अगरace_param->value,
+		       माप(init_fw_cb->ipv4_addr));
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_SUBNET:
+		स_नकल(init_fw_cb->ipv4_subnet,	अगरace_param->value,
+		       माप(init_fw_cb->ipv4_subnet));
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_GW:
+		स_नकल(init_fw_cb->ipv4_gw_addr, अगरace_param->value,
+		       माप(init_fw_cb->ipv4_gw_addr));
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_BOOTPROTO:
+		अगर (अगरace_param->value[0] == ISCSI_BOOTPROTO_DHCP)
 			init_fw_cb->ipv4_tcp_opts |=
 					cpu_to_le16(TCPOPT_DHCP_ENABLE);
-		else if (iface_param->value[0] == ISCSI_BOOTPROTO_STATIC)
+		अन्यथा अगर (अगरace_param->value[0] == ISCSI_BOOTPROTO_STATIC)
 			init_fw_cb->ipv4_tcp_opts &=
 					cpu_to_le16(~TCPOPT_DHCP_ENABLE);
-		else
-			ql4_printk(KERN_ERR, ha, "Invalid IPv4 bootproto\n");
-		break;
-	case ISCSI_NET_PARAM_IFACE_ENABLE:
-		if (iface_param->value[0] == ISCSI_IFACE_ENABLE) {
+		अन्यथा
+			ql4_prपूर्णांकk(KERN_ERR, ha, "Invalid IPv4 bootproto\n");
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IFACE_ENABLE:
+		अगर (अगरace_param->value[0] == ISCSI_IFACE_ENABLE) अणु
 			init_fw_cb->ipv4_ip_opts |=
 				cpu_to_le16(IPOPT_IPV4_PROTOCOL_ENABLE);
-			qla4xxx_create_ipv4_iface(ha);
-		} else {
+			qla4xxx_create_ipv4_अगरace(ha);
+		पूर्ण अन्यथा अणु
 			init_fw_cb->ipv4_ip_opts &=
 				cpu_to_le16(~IPOPT_IPV4_PROTOCOL_ENABLE &
 					    0xFFFF);
-			qla4xxx_destroy_ipv4_iface(ha);
-		}
-		break;
-	case ISCSI_NET_PARAM_VLAN_TAG:
-		if (iface_param->len != sizeof(init_fw_cb->ipv4_vlan_tag))
-			break;
+			qla4xxx_destroy_ipv4_अगरace(ha);
+		पूर्ण
+		अवरोध;
+	हाल ISCSI_NET_PARAM_VLAN_TAG:
+		अगर (अगरace_param->len != माप(init_fw_cb->ipv4_vlan_tag))
+			अवरोध;
 		init_fw_cb->ipv4_vlan_tag =
-				cpu_to_be16(*(uint16_t *)iface_param->value);
-		break;
-	case ISCSI_NET_PARAM_VLAN_ENABLED:
-		if (iface_param->value[0] == ISCSI_VLAN_ENABLE)
+				cpu_to_be16(*(uपूर्णांक16_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_VLAN_ENABLED:
+		अगर (अगरace_param->value[0] == ISCSI_VLAN_ENABLE)
 			init_fw_cb->ipv4_ip_opts |=
 					cpu_to_le16(IPOPT_VLAN_TAGGING_ENABLE);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_ip_opts &=
 					cpu_to_le16(~IPOPT_VLAN_TAGGING_ENABLE);
-		break;
-	case ISCSI_NET_PARAM_MTU:
+		अवरोध;
+	हाल ISCSI_NET_PARAM_MTU:
 		init_fw_cb->eth_mtu_size =
-				cpu_to_le16(*(uint16_t *)iface_param->value);
-		break;
-	case ISCSI_NET_PARAM_PORT:
+				cpu_to_le16(*(uपूर्णांक16_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_PORT:
 		init_fw_cb->ipv4_port =
-				cpu_to_le16(*(uint16_t *)iface_param->value);
-		break;
-	case ISCSI_NET_PARAM_DELAYED_ACK_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_DISABLE)
+				cpu_to_le16(*(uपूर्णांक16_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_DELAYED_ACK_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_DISABLE)
 			init_fw_cb->ipv4_tcp_opts |=
 				cpu_to_le16(TCPOPT_DELAYED_ACK_DISABLE);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_tcp_opts &=
 				cpu_to_le16(~TCPOPT_DELAYED_ACK_DISABLE &
 					    0xFFFF);
-		break;
-	case ISCSI_NET_PARAM_TCP_NAGLE_DISABLE:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_DISABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_TCP_NAGLE_DISABLE:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_DISABLE)
 			init_fw_cb->ipv4_tcp_opts |=
 				cpu_to_le16(TCPOPT_NAGLE_ALGO_DISABLE);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_tcp_opts &=
 				cpu_to_le16(~TCPOPT_NAGLE_ALGO_DISABLE);
-		break;
-	case ISCSI_NET_PARAM_TCP_WSF_DISABLE:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_DISABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_TCP_WSF_DISABLE:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_DISABLE)
 			init_fw_cb->ipv4_tcp_opts |=
 				cpu_to_le16(TCPOPT_WINDOW_SCALE_DISABLE);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_tcp_opts &=
 				cpu_to_le16(~TCPOPT_WINDOW_SCALE_DISABLE);
-		break;
-	case ISCSI_NET_PARAM_TCP_WSF:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->ipv4_tcp_wsf = iface_param->value[0];
-		break;
-	case ISCSI_NET_PARAM_TCP_TIMER_SCALE:
-		if (iface_param->iface_num & 0x1)
-			break;
+		अवरोध;
+	हाल ISCSI_NET_PARAM_TCP_WSF:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->ipv4_tcp_wsf = अगरace_param->value[0];
+		अवरोध;
+	हाल ISCSI_NET_PARAM_TCP_TIMER_SCALE:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 		init_fw_cb->ipv4_tcp_opts &= cpu_to_le16(~TCPOPT_TIMER_SCALE);
 		init_fw_cb->ipv4_tcp_opts |=
-				cpu_to_le16((iface_param->value[0] << 1) &
+				cpu_to_le16((अगरace_param->value[0] << 1) &
 					    TCPOPT_TIMER_SCALE);
-		break;
-	case ISCSI_NET_PARAM_TCP_TIMESTAMP_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_TCP_TIMESTAMP_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_tcp_opts |=
 				cpu_to_le16(TCPOPT_TIMESTAMP_ENABLE);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_tcp_opts &=
 				cpu_to_le16(~TCPOPT_TIMESTAMP_ENABLE);
-		break;
-	case ISCSI_NET_PARAM_IPV4_DHCP_DNS_ADDR_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_DHCP_DNS_ADDR_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_tcp_opts |=
 				cpu_to_le16(TCPOPT_DNS_SERVER_IP_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_tcp_opts &=
 				cpu_to_le16(~TCPOPT_DNS_SERVER_IP_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV4_DHCP_SLP_DA_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_DHCP_SLP_DA_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_tcp_opts |=
 				cpu_to_le16(TCPOPT_SLP_DA_INFO_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_tcp_opts &=
 				cpu_to_le16(~TCPOPT_SLP_DA_INFO_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV4_TOS_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_TOS_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_ip_opts |=
 				cpu_to_le16(IPOPT_IPV4_TOS_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_ip_opts &=
 				cpu_to_le16(~IPOPT_IPV4_TOS_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV4_TOS:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->ipv4_tos = iface_param->value[0];
-		break;
-	case ISCSI_NET_PARAM_IPV4_GRAT_ARP_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_TOS:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->ipv4_tos = अगरace_param->value[0];
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_GRAT_ARP_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_ip_opts |=
 					cpu_to_le16(IPOPT_GRAT_ARP_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_ip_opts &=
 					cpu_to_le16(~IPOPT_GRAT_ARP_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_ip_opts |=
 				cpu_to_le16(IPOPT_ALT_CID_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_ip_opts &=
 				cpu_to_le16(~IPOPT_ALT_CID_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID:
-		if (iface_param->iface_num & 0x1)
-			break;
-		memcpy(init_fw_cb->ipv4_dhcp_alt_cid, iface_param->value,
-		       (sizeof(init_fw_cb->ipv4_dhcp_alt_cid) - 1));
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_DHCP_ALT_CLIENT_ID:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		स_नकल(init_fw_cb->ipv4_dhcp_alt_cid, अगरace_param->value,
+		       (माप(init_fw_cb->ipv4_dhcp_alt_cid) - 1));
 		init_fw_cb->ipv4_dhcp_alt_cid_len =
-					strlen(init_fw_cb->ipv4_dhcp_alt_cid);
-		break;
-	case ISCSI_NET_PARAM_IPV4_DHCP_REQ_VENDOR_ID_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+					म_माप(init_fw_cb->ipv4_dhcp_alt_cid);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_DHCP_REQ_VENDOR_ID_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_ip_opts |=
 					cpu_to_le16(IPOPT_REQ_VID_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_ip_opts &=
 					cpu_to_le16(~IPOPT_REQ_VID_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV4_DHCP_USE_VENDOR_ID_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_DHCP_USE_VENDOR_ID_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_ip_opts |=
 					cpu_to_le16(IPOPT_USE_VID_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_ip_opts &=
 					cpu_to_le16(~IPOPT_USE_VID_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV4_DHCP_VENDOR_ID:
-		if (iface_param->iface_num & 0x1)
-			break;
-		memcpy(init_fw_cb->ipv4_dhcp_vid, iface_param->value,
-		       (sizeof(init_fw_cb->ipv4_dhcp_vid) - 1));
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_DHCP_VENDOR_ID:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		स_नकल(init_fw_cb->ipv4_dhcp_vid, अगरace_param->value,
+		       (माप(init_fw_cb->ipv4_dhcp_vid) - 1));
 		init_fw_cb->ipv4_dhcp_vid_len =
-					strlen(init_fw_cb->ipv4_dhcp_vid);
-		break;
-	case ISCSI_NET_PARAM_IPV4_DHCP_LEARN_IQN_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+					म_माप(init_fw_cb->ipv4_dhcp_vid);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_DHCP_LEARN_IQN_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_ip_opts |=
 					cpu_to_le16(IPOPT_LEARN_IQN_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_ip_opts &=
 					cpu_to_le16(~IPOPT_LEARN_IQN_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV4_FRAGMENT_DISABLE:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_DISABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_FRAGMENT_DISABLE:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_DISABLE)
 			init_fw_cb->ipv4_ip_opts |=
 				cpu_to_le16(IPOPT_FRAGMENTATION_DISABLE);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_ip_opts &=
 				cpu_to_le16(~IPOPT_FRAGMENTATION_DISABLE);
-		break;
-	case ISCSI_NET_PARAM_IPV4_IN_FORWARD_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_IN_FORWARD_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_ip_opts |=
 				cpu_to_le16(IPOPT_IN_FORWARD_EN);
-		else
+		अन्यथा
 			init_fw_cb->ipv4_ip_opts &=
 				cpu_to_le16(~IPOPT_IN_FORWARD_EN);
-		break;
-	case ISCSI_NET_PARAM_REDIRECT_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_NET_PARAM_REसूचीECT_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->ipv4_ip_opts |=
-				cpu_to_le16(IPOPT_ARP_REDIRECT_EN);
-		else
+				cpu_to_le16(IPOPT_ARP_REसूचीECT_EN);
+		अन्यथा
 			init_fw_cb->ipv4_ip_opts &=
-				cpu_to_le16(~IPOPT_ARP_REDIRECT_EN);
-		break;
-	case ISCSI_NET_PARAM_IPV4_TTL:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->ipv4_ttl = iface_param->value[0];
-		break;
-	default:
-		ql4_printk(KERN_ERR, ha, "Unknown IPv4 param = %d\n",
-			   iface_param->param);
-		break;
-	}
-}
+				cpu_to_le16(~IPOPT_ARP_REसूचीECT_EN);
+		अवरोध;
+	हाल ISCSI_NET_PARAM_IPV4_TTL:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->ipv4_ttl = अगरace_param->value[0];
+		अवरोध;
+	शेष:
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Unknown IPv4 param = %d\n",
+			   अगरace_param->param);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void qla4xxx_set_iscsi_param(struct scsi_qla_host *ha,
-				    struct iscsi_iface_param_info *iface_param,
-				    struct addr_ctrl_blk *init_fw_cb)
-{
-	switch (iface_param->param) {
-	case ISCSI_IFACE_PARAM_DEF_TASKMGMT_TMO:
-		if (iface_param->iface_num & 0x1)
-			break;
-		init_fw_cb->def_timeout =
-				cpu_to_le16(*(uint16_t *)iface_param->value);
-		break;
-	case ISCSI_IFACE_PARAM_HDRDGST_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+अटल व्योम qla4xxx_set_iscsi_param(काष्ठा scsi_qla_host *ha,
+				    काष्ठा iscsi_अगरace_param_info *अगरace_param,
+				    काष्ठा addr_ctrl_blk *init_fw_cb)
+अणु
+	चयन (अगरace_param->param) अणु
+	हाल ISCSI_IFACE_PARAM_DEF_TASKMGMT_TMO:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		init_fw_cb->def_समयout =
+				cpu_to_le16(*(uपूर्णांक16_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_HDRDGST_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_HEADER_DIGEST_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_HEADER_DIGEST_EN);
-		break;
-	case ISCSI_IFACE_PARAM_DATADGST_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_DATADGST_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_DATA_DIGEST_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_DATA_DIGEST_EN);
-		break;
-	case ISCSI_IFACE_PARAM_IMM_DATA_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_IMM_DATA_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_IMMEDIATE_DATA_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_IMMEDIATE_DATA_EN);
-		break;
-	case ISCSI_IFACE_PARAM_INITIAL_R2T_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_INITIAL_R2T_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_INITIAL_R2T_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_INITIAL_R2T_EN);
-		break;
-	case ISCSI_IFACE_PARAM_DATASEQ_INORDER_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_DATASEQ_INORDER_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_DATA_SEQ_INORDER_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_DATA_SEQ_INORDER_EN);
-		break;
-	case ISCSI_IFACE_PARAM_PDU_INORDER_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_PDU_INORDER_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_DATA_PDU_INORDER_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_DATA_PDU_INORDER_EN);
-		break;
-	case ISCSI_IFACE_PARAM_ERL:
-		if (iface_param->iface_num & 0x1)
-			break;
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_ERL:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 		init_fw_cb->iscsi_opts &= cpu_to_le16(~ISCSIOPTS_ERL);
-		init_fw_cb->iscsi_opts |= cpu_to_le16(iface_param->value[0] &
+		init_fw_cb->iscsi_opts |= cpu_to_le16(अगरace_param->value[0] &
 						      ISCSIOPTS_ERL);
-		break;
-	case ISCSI_IFACE_PARAM_MAX_RECV_DLENGTH:
-		if (iface_param->iface_num & 0x1)
-			break;
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_MAX_RECV_DLENGTH:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 		init_fw_cb->iscsi_max_pdu_size =
-				cpu_to_le32(*(uint32_t *)iface_param->value) /
+				cpu_to_le32(*(uपूर्णांक32_t *)अगरace_param->value) /
 				BYTE_UNITS;
-		break;
-	case ISCSI_IFACE_PARAM_FIRST_BURST:
-		if (iface_param->iface_num & 0x1)
-			break;
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_FIRST_BURST:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 		init_fw_cb->iscsi_fburst_len =
-				cpu_to_le32(*(uint32_t *)iface_param->value) /
+				cpu_to_le32(*(uपूर्णांक32_t *)अगरace_param->value) /
 				BYTE_UNITS;
-		break;
-	case ISCSI_IFACE_PARAM_MAX_R2T:
-		if (iface_param->iface_num & 0x1)
-			break;
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_MAX_R2T:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 		init_fw_cb->iscsi_max_outstnd_r2t =
-				cpu_to_le16(*(uint16_t *)iface_param->value);
-		break;
-	case ISCSI_IFACE_PARAM_MAX_BURST:
-		if (iface_param->iface_num & 0x1)
-			break;
+				cpu_to_le16(*(uपूर्णांक16_t *)अगरace_param->value);
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_MAX_BURST:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
 		init_fw_cb->iscsi_max_burst_len =
-				cpu_to_le32(*(uint32_t *)iface_param->value) /
+				cpu_to_le32(*(uपूर्णांक32_t *)अगरace_param->value) /
 				BYTE_UNITS;
-		break;
-	case ISCSI_IFACE_PARAM_CHAP_AUTH_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_CHAP_AUTH_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_CHAP_AUTH_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_CHAP_AUTH_EN);
-		break;
-	case ISCSI_IFACE_PARAM_BIDI_CHAP_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_BIDI_CHAP_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_BIDI_CHAP_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_BIDI_CHAP_EN);
-		break;
-	case ISCSI_IFACE_PARAM_DISCOVERY_AUTH_OPTIONAL:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_DISCOVERY_AUTH_OPTIONAL:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_DISCOVERY_AUTH_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_DISCOVERY_AUTH_EN);
-		break;
-	case ISCSI_IFACE_PARAM_DISCOVERY_LOGOUT_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_DISCOVERY_LOGOUT_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_DISCOVERY_LOGOUT_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_DISCOVERY_LOGOUT_EN);
-		break;
-	case ISCSI_IFACE_PARAM_STRICT_LOGIN_COMP_EN:
-		if (iface_param->iface_num & 0x1)
-			break;
-		if (iface_param->value[0] == ISCSI_NET_PARAM_ENABLE)
+		अवरोध;
+	हाल ISCSI_IFACE_PARAM_STRICT_LOGIN_COMP_EN:
+		अगर (अगरace_param->अगरace_num & 0x1)
+			अवरोध;
+		अगर (अगरace_param->value[0] == ISCSI_NET_PARAM_ENABLE)
 			init_fw_cb->iscsi_opts |=
 				cpu_to_le16(ISCSIOPTS_STRICT_LOGIN_COMP_EN);
-		else
+		अन्यथा
 			init_fw_cb->iscsi_opts &=
 				cpu_to_le16(~ISCSIOPTS_STRICT_LOGIN_COMP_EN);
-		break;
-	default:
-		ql4_printk(KERN_ERR, ha, "Unknown iscsi param = %d\n",
-			   iface_param->param);
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Unknown iscsi param = %d\n",
+			   अगरace_param->param);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-qla4xxx_initcb_to_acb(struct addr_ctrl_blk *init_fw_cb)
-{
-	struct addr_ctrl_blk_def *acb;
-	acb = (struct addr_ctrl_blk_def *)init_fw_cb;
-	memset(acb->reserved1, 0, sizeof(acb->reserved1));
-	memset(acb->reserved2, 0, sizeof(acb->reserved2));
-	memset(acb->reserved3, 0, sizeof(acb->reserved3));
-	memset(acb->reserved4, 0, sizeof(acb->reserved4));
-	memset(acb->reserved5, 0, sizeof(acb->reserved5));
-	memset(acb->reserved6, 0, sizeof(acb->reserved6));
-	memset(acb->reserved7, 0, sizeof(acb->reserved7));
-	memset(acb->reserved8, 0, sizeof(acb->reserved8));
-	memset(acb->reserved9, 0, sizeof(acb->reserved9));
-	memset(acb->reserved10, 0, sizeof(acb->reserved10));
-	memset(acb->reserved11, 0, sizeof(acb->reserved11));
-	memset(acb->reserved12, 0, sizeof(acb->reserved12));
-	memset(acb->reserved13, 0, sizeof(acb->reserved13));
-	memset(acb->reserved14, 0, sizeof(acb->reserved14));
-	memset(acb->reserved15, 0, sizeof(acb->reserved15));
-}
+अटल व्योम
+qla4xxx_initcb_to_acb(काष्ठा addr_ctrl_blk *init_fw_cb)
+अणु
+	काष्ठा addr_ctrl_blk_def *acb;
+	acb = (काष्ठा addr_ctrl_blk_def *)init_fw_cb;
+	स_रखो(acb->reserved1, 0, माप(acb->reserved1));
+	स_रखो(acb->reserved2, 0, माप(acb->reserved2));
+	स_रखो(acb->reserved3, 0, माप(acb->reserved3));
+	स_रखो(acb->reserved4, 0, माप(acb->reserved4));
+	स_रखो(acb->reserved5, 0, माप(acb->reserved5));
+	स_रखो(acb->reserved6, 0, माप(acb->reserved6));
+	स_रखो(acb->reserved7, 0, माप(acb->reserved7));
+	स_रखो(acb->reserved8, 0, माप(acb->reserved8));
+	स_रखो(acb->reserved9, 0, माप(acb->reserved9));
+	स_रखो(acb->reserved10, 0, माप(acb->reserved10));
+	स_रखो(acb->reserved11, 0, माप(acb->reserved11));
+	स_रखो(acb->reserved12, 0, माप(acb->reserved12));
+	स_रखो(acb->reserved13, 0, माप(acb->reserved13));
+	स_रखो(acb->reserved14, 0, माप(acb->reserved14));
+	स_रखो(acb->reserved15, 0, माप(acb->reserved15));
+पूर्ण
 
-static int
-qla4xxx_iface_set_param(struct Scsi_Host *shost, void *data, uint32_t len)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	int rval = 0;
-	struct iscsi_iface_param_info *iface_param = NULL;
-	struct addr_ctrl_blk *init_fw_cb = NULL;
+अटल पूर्णांक
+qla4xxx_अगरace_set_param(काष्ठा Scsi_Host *shost, व्योम *data, uपूर्णांक32_t len)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	पूर्णांक rval = 0;
+	काष्ठा iscsi_अगरace_param_info *अगरace_param = शून्य;
+	काष्ठा addr_ctrl_blk *init_fw_cb = शून्य;
 	dma_addr_t init_fw_cb_dma;
-	uint32_t mbox_cmd[MBOX_REG_COUNT];
-	uint32_t mbox_sts[MBOX_REG_COUNT];
-	uint32_t rem = len;
-	struct nlattr *attr;
+	uपूर्णांक32_t mbox_cmd[MBOX_REG_COUNT];
+	uपूर्णांक32_t mbox_sts[MBOX_REG_COUNT];
+	uपूर्णांक32_t rem = len;
+	काष्ठा nlattr *attr;
 
 	init_fw_cb = dma_alloc_coherent(&ha->pdev->dev,
-					sizeof(struct addr_ctrl_blk),
+					माप(काष्ठा addr_ctrl_blk),
 					&init_fw_cb_dma, GFP_KERNEL);
-	if (!init_fw_cb) {
-		ql4_printk(KERN_ERR, ha, "%s: Unable to alloc init_cb\n",
+	अगर (!init_fw_cb) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Unable to alloc init_cb\n",
 			   __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	memset(&mbox_cmd, 0, sizeof(mbox_cmd));
-	memset(&mbox_sts, 0, sizeof(mbox_sts));
+	स_रखो(&mbox_cmd, 0, माप(mbox_cmd));
+	स_रखो(&mbox_sts, 0, माप(mbox_sts));
 
-	if (qla4xxx_get_ifcb(ha, &mbox_cmd[0], &mbox_sts[0], init_fw_cb_dma)) {
-		ql4_printk(KERN_ERR, ha, "%s: get ifcb failed\n", __func__);
+	अगर (qla4xxx_get_अगरcb(ha, &mbox_cmd[0], &mbox_sts[0], init_fw_cb_dma)) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: get ifcb failed\n", __func__);
 		rval = -EIO;
-		goto exit_init_fw_cb;
-	}
+		जाओ निकास_init_fw_cb;
+	पूर्ण
 
-	nla_for_each_attr(attr, data, len, rem) {
-		iface_param = nla_data(attr);
+	nla_क्रम_each_attr(attr, data, len, rem) अणु
+		अगरace_param = nla_data(attr);
 
-		if (iface_param->param_type == ISCSI_NET_PARAM) {
-			switch (iface_param->iface_type) {
-			case ISCSI_IFACE_TYPE_IPV4:
-				switch (iface_param->iface_num) {
-				case 0:
-					qla4xxx_set_ipv4(ha, iface_param,
+		अगर (अगरace_param->param_type == ISCSI_NET_PARAM) अणु
+			चयन (अगरace_param->अगरace_type) अणु
+			हाल ISCSI_IFACE_TYPE_IPV4:
+				चयन (अगरace_param->अगरace_num) अणु
+				हाल 0:
+					qla4xxx_set_ipv4(ha, अगरace_param,
 							 init_fw_cb);
-					break;
-				default:
-				/* Cannot have more than one IPv4 interface */
-					ql4_printk(KERN_ERR, ha,
+					अवरोध;
+				शेष:
+				/* Cannot have more than one IPv4 पूर्णांकerface */
+					ql4_prपूर्णांकk(KERN_ERR, ha,
 						   "Invalid IPv4 iface number = %d\n",
-						   iface_param->iface_num);
-					break;
-				}
-				break;
-			case ISCSI_IFACE_TYPE_IPV6:
-				switch (iface_param->iface_num) {
-				case 0:
-				case 1:
-					qla4xxx_set_ipv6(ha, iface_param,
+						   अगरace_param->अगरace_num);
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			हाल ISCSI_IFACE_TYPE_IPV6:
+				चयन (अगरace_param->अगरace_num) अणु
+				हाल 0:
+				हाल 1:
+					qla4xxx_set_ipv6(ha, अगरace_param,
 							 init_fw_cb);
-					break;
-				default:
-				/* Cannot have more than two IPv6 interface */
-					ql4_printk(KERN_ERR, ha,
+					अवरोध;
+				शेष:
+				/* Cannot have more than two IPv6 पूर्णांकerface */
+					ql4_prपूर्णांकk(KERN_ERR, ha,
 						   "Invalid IPv6 iface number = %d\n",
-						   iface_param->iface_num);
-					break;
-				}
-				break;
-			default:
-				ql4_printk(KERN_ERR, ha,
+						   अगरace_param->अगरace_num);
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			शेष:
+				ql4_prपूर्णांकk(KERN_ERR, ha,
 					   "Invalid iface type\n");
-				break;
-			}
-		} else if (iface_param->param_type == ISCSI_IFACE_PARAM) {
-				qla4xxx_set_iscsi_param(ha, iface_param,
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अगर (अगरace_param->param_type == ISCSI_IFACE_PARAM) अणु
+				qla4xxx_set_iscsi_param(ha, अगरace_param,
 							init_fw_cb);
-		} else {
-			continue;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			जारी;
+		पूर्ण
+	पूर्ण
 
 	init_fw_cb->cookie = cpu_to_le32(0x11BEAD5A);
 
 	rval = qla4xxx_set_flash(ha, init_fw_cb_dma, FLASH_SEGMENT_IFCB,
-				 sizeof(struct addr_ctrl_blk),
+				 माप(काष्ठा addr_ctrl_blk),
 				 FLASH_OPT_RMW_COMMIT);
-	if (rval != QLA_SUCCESS) {
-		ql4_printk(KERN_ERR, ha, "%s: set flash mbx failed\n",
+	अगर (rval != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: set flash mbx failed\n",
 			   __func__);
 		rval = -EIO;
-		goto exit_init_fw_cb;
-	}
+		जाओ निकास_init_fw_cb;
+	पूर्ण
 
 	rval = qla4xxx_disable_acb(ha);
-	if (rval != QLA_SUCCESS) {
-		ql4_printk(KERN_ERR, ha, "%s: disable acb mbx failed\n",
+	अगर (rval != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: disable acb mbx failed\n",
 			   __func__);
 		rval = -EIO;
-		goto exit_init_fw_cb;
-	}
+		जाओ निकास_init_fw_cb;
+	पूर्ण
 
-	wait_for_completion_timeout(&ha->disable_acb_comp,
+	रुको_क्रम_completion_समयout(&ha->disable_acb_comp,
 				    DISABLE_ACB_TOV * HZ);
 
 	qla4xxx_initcb_to_acb(init_fw_cb);
 
 	rval = qla4xxx_set_acb(ha, &mbox_cmd[0], &mbox_sts[0], init_fw_cb_dma);
-	if (rval != QLA_SUCCESS) {
-		ql4_printk(KERN_ERR, ha, "%s: set acb mbx failed\n",
+	अगर (rval != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: set acb mbx failed\n",
 			   __func__);
 		rval = -EIO;
-		goto exit_init_fw_cb;
-	}
+		जाओ निकास_init_fw_cb;
+	पूर्ण
 
-	memset(init_fw_cb, 0, sizeof(struct addr_ctrl_blk));
-	qla4xxx_update_local_ifcb(ha, &mbox_cmd[0], &mbox_sts[0], init_fw_cb,
+	स_रखो(init_fw_cb, 0, माप(काष्ठा addr_ctrl_blk));
+	qla4xxx_update_local_अगरcb(ha, &mbox_cmd[0], &mbox_sts[0], init_fw_cb,
 				  init_fw_cb_dma);
 
-exit_init_fw_cb:
-	dma_free_coherent(&ha->pdev->dev, sizeof(struct addr_ctrl_blk),
+निकास_init_fw_cb:
+	dma_मुक्त_coherent(&ha->pdev->dev, माप(काष्ठा addr_ctrl_blk),
 			  init_fw_cb, init_fw_cb_dma);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int qla4xxx_session_get_param(struct iscsi_cls_session *cls_sess,
-				     enum iscsi_param param, char *buf)
-{
-	struct iscsi_session *sess = cls_sess->dd_data;
-	struct ddb_entry *ddb_entry = sess->dd_data;
-	struct scsi_qla_host *ha = ddb_entry->ha;
-	struct iscsi_cls_conn *cls_conn = ddb_entry->conn;
-	struct ql4_chap_table chap_tbl;
-	int rval, len;
-	uint16_t idx;
+अटल पूर्णांक qla4xxx_session_get_param(काष्ठा iscsi_cls_session *cls_sess,
+				     क्रमागत iscsi_param param, अक्षर *buf)
+अणु
+	काष्ठा iscsi_session *sess = cls_sess->dd_data;
+	काष्ठा ddb_entry *ddb_entry = sess->dd_data;
+	काष्ठा scsi_qla_host *ha = ddb_entry->ha;
+	काष्ठा iscsi_cls_conn *cls_conn = ddb_entry->conn;
+	काष्ठा ql4_chap_table chap_tbl;
+	पूर्णांक rval, len;
+	uपूर्णांक16_t idx;
 
-	memset(&chap_tbl, 0, sizeof(chap_tbl));
-	switch (param) {
-	case ISCSI_PARAM_CHAP_IN_IDX:
+	स_रखो(&chap_tbl, 0, माप(chap_tbl));
+	चयन (param) अणु
+	हाल ISCSI_PARAM_CHAP_IN_IDX:
 		rval = qla4xxx_get_chap_index(ha, sess->username_in,
 					      sess->password_in, BIDI_CHAP,
 					      &idx);
-		if (rval)
-			len = sprintf(buf, "\n");
-		else
-			len = sprintf(buf, "%hu\n", idx);
-		break;
-	case ISCSI_PARAM_CHAP_OUT_IDX:
-		if (ddb_entry->ddb_type == FLASH_DDB) {
-			if (ddb_entry->chap_tbl_idx != INVALID_ENTRY) {
+		अगर (rval)
+			len = प्र_लिखो(buf, "\n");
+		अन्यथा
+			len = प्र_लिखो(buf, "%hu\n", idx);
+		अवरोध;
+	हाल ISCSI_PARAM_CHAP_OUT_IDX:
+		अगर (ddb_entry->ddb_type == FLASH_DDB) अणु
+			अगर (ddb_entry->chap_tbl_idx != INVALID_ENTRY) अणु
 				idx = ddb_entry->chap_tbl_idx;
 				rval = QLA_SUCCESS;
-			} else {
+			पूर्ण अन्यथा अणु
 				rval = QLA_ERROR;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			rval = qla4xxx_get_chap_index(ha, sess->username,
 						      sess->password,
 						      LOCAL_CHAP, &idx);
-		}
-		if (rval)
-			len = sprintf(buf, "\n");
-		else
-			len = sprintf(buf, "%hu\n", idx);
-		break;
-	case ISCSI_PARAM_USERNAME:
-	case ISCSI_PARAM_PASSWORD:
-		/* First, populate session username and password for FLASH DDB,
-		 * if not already done. This happens when session login fails
-		 * for a FLASH DDB.
+		पूर्ण
+		अगर (rval)
+			len = प्र_लिखो(buf, "\n");
+		अन्यथा
+			len = प्र_लिखो(buf, "%hu\n", idx);
+		अवरोध;
+	हाल ISCSI_PARAM_USERNAME:
+	हाल ISCSI_PARAM_PASSWORD:
+		/* First, populate session username and password क्रम FLASH DDB,
+		 * अगर not alपढ़ोy करोne. This happens when session login fails
+		 * क्रम a FLASH DDB.
 		 */
-		if (ddb_entry->ddb_type == FLASH_DDB &&
+		अगर (ddb_entry->ddb_type == FLASH_DDB &&
 		    ddb_entry->chap_tbl_idx != INVALID_ENTRY &&
-		    !sess->username && !sess->password) {
+		    !sess->username && !sess->password) अणु
 			idx = ddb_entry->chap_tbl_idx;
 			rval = qla4xxx_get_uni_chap_at_index(ha, chap_tbl.name,
 							    chap_tbl.secret,
 							    idx);
-			if (!rval) {
+			अगर (!rval) अणु
 				iscsi_set_param(cls_conn, ISCSI_PARAM_USERNAME,
-						(char *)chap_tbl.name,
-						strlen((char *)chap_tbl.name));
+						(अक्षर *)chap_tbl.name,
+						म_माप((अक्षर *)chap_tbl.name));
 				iscsi_set_param(cls_conn, ISCSI_PARAM_PASSWORD,
-						(char *)chap_tbl.secret,
+						(अक्षर *)chap_tbl.secret,
 						chap_tbl.secret_len);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		fallthrough;
-	default:
-		return iscsi_session_get_param(cls_sess, param, buf);
-	}
+	शेष:
+		वापस iscsi_session_get_param(cls_sess, param, buf);
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int qla4xxx_conn_get_param(struct iscsi_cls_conn *cls_conn,
-				  enum iscsi_param param, char *buf)
-{
-	struct iscsi_conn *conn;
-	struct qla_conn *qla_conn;
-	struct sockaddr *dst_addr;
+अटल पूर्णांक qla4xxx_conn_get_param(काष्ठा iscsi_cls_conn *cls_conn,
+				  क्रमागत iscsi_param param, अक्षर *buf)
+अणु
+	काष्ठा iscsi_conn *conn;
+	काष्ठा qla_conn *qla_conn;
+	काष्ठा sockaddr *dst_addr;
 
 	conn = cls_conn->dd_data;
 	qla_conn = conn->dd_data;
-	dst_addr = (struct sockaddr *)&qla_conn->qla_ep->dst_addr;
+	dst_addr = (काष्ठा sockaddr *)&qla_conn->qla_ep->dst_addr;
 
-	switch (param) {
-	case ISCSI_PARAM_CONN_PORT:
-	case ISCSI_PARAM_CONN_ADDRESS:
-		return iscsi_conn_get_addr_param((struct sockaddr_storage *)
+	चयन (param) अणु
+	हाल ISCSI_PARAM_CONN_PORT:
+	हाल ISCSI_PARAM_CONN_ADDRESS:
+		वापस iscsi_conn_get_addr_param((काष्ठा sockaddr_storage *)
 						 dst_addr, param, buf);
-	default:
-		return iscsi_conn_get_param(cls_conn, param, buf);
-	}
-}
+	शेष:
+		वापस iscsi_conn_get_param(cls_conn, param, buf);
+	पूर्ण
+पूर्ण
 
-int qla4xxx_get_ddb_index(struct scsi_qla_host *ha, uint16_t *ddb_index)
-{
-	uint32_t mbx_sts = 0;
-	uint16_t tmp_ddb_index;
-	int ret;
+पूर्णांक qla4xxx_get_ddb_index(काष्ठा scsi_qla_host *ha, uपूर्णांक16_t *ddb_index)
+अणु
+	uपूर्णांक32_t mbx_sts = 0;
+	uपूर्णांक16_t पंचांगp_ddb_index;
+	पूर्णांक ret;
 
 get_ddb_index:
-	tmp_ddb_index = find_first_zero_bit(ha->ddb_idx_map, MAX_DDB_ENTRIES);
+	पंचांगp_ddb_index = find_first_zero_bit(ha->ddb_idx_map, MAX_DDB_ENTRIES);
 
-	if (tmp_ddb_index >= MAX_DDB_ENTRIES) {
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+	अगर (पंचांगp_ddb_index >= MAX_DDB_ENTRIES) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				  "Free DDB index not available\n"));
 		ret = QLA_ERROR;
-		goto exit_get_ddb_index;
-	}
+		जाओ निकास_get_ddb_index;
+	पूर्ण
 
-	if (test_and_set_bit(tmp_ddb_index, ha->ddb_idx_map))
-		goto get_ddb_index;
+	अगर (test_and_set_bit(पंचांगp_ddb_index, ha->ddb_idx_map))
+		जाओ get_ddb_index;
 
-	DEBUG2(ql4_printk(KERN_INFO, ha,
-			  "Found a free DDB index at %d\n", tmp_ddb_index));
-	ret = qla4xxx_req_ddb_entry(ha, tmp_ddb_index, &mbx_sts);
-	if (ret == QLA_ERROR) {
-		if (mbx_sts == MBOX_STS_COMMAND_ERROR) {
-			ql4_printk(KERN_INFO, ha,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+			  "Found a free DDB index at %d\n", पंचांगp_ddb_index));
+	ret = qla4xxx_req_ddb_entry(ha, पंचांगp_ddb_index, &mbx_sts);
+	अगर (ret == QLA_ERROR) अणु
+		अगर (mbx_sts == MBOX_STS_COMMAND_ERROR) अणु
+			ql4_prपूर्णांकk(KERN_INFO, ha,
 				   "DDB index = %d not available trying next\n",
-				   tmp_ddb_index);
-			goto get_ddb_index;
-		}
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+				   पंचांगp_ddb_index);
+			जाओ get_ddb_index;
+		पूर्ण
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				  "Free FW DDB not available\n"));
-	}
+	पूर्ण
 
-	*ddb_index = tmp_ddb_index;
+	*ddb_index = पंचांगp_ddb_index;
 
-exit_get_ddb_index:
-	return ret;
-}
+निकास_get_ddb_index:
+	वापस ret;
+पूर्ण
 
-static int qla4xxx_match_ipaddress(struct scsi_qla_host *ha,
-				   struct ddb_entry *ddb_entry,
-				   char *existing_ipaddr,
-				   char *user_ipaddr)
-{
-	uint8_t dst_ipaddr[IPv6_ADDR_LEN];
-	char formatted_ipaddr[DDB_IPADDR_LEN];
-	int status = QLA_SUCCESS, ret = 0;
+अटल पूर्णांक qla4xxx_match_ipaddress(काष्ठा scsi_qla_host *ha,
+				   काष्ठा ddb_entry *ddb_entry,
+				   अक्षर *existing_ipaddr,
+				   अक्षर *user_ipaddr)
+अणु
+	uपूर्णांक8_t dst_ipaddr[IPv6_ADDR_LEN];
+	अक्षर क्रमmatted_ipaddr[DDB_IPADDR_LEN];
+	पूर्णांक status = QLA_SUCCESS, ret = 0;
 
-	if (ddb_entry->fw_ddb_entry.options & DDB_OPT_IPV6_DEVICE) {
-		ret = in6_pton(user_ipaddr, strlen(user_ipaddr), dst_ipaddr,
-			       '\0', NULL);
-		if (ret == 0) {
+	अगर (ddb_entry->fw_ddb_entry.options & DDB_OPT_IPV6_DEVICE) अणु
+		ret = in6_pton(user_ipaddr, म_माप(user_ipaddr), dst_ipaddr,
+			       '\0', शून्य);
+		अगर (ret == 0) अणु
 			status = QLA_ERROR;
-			goto out_match;
-		}
-		ret = sprintf(formatted_ipaddr, "%pI6", dst_ipaddr);
-	} else {
-		ret = in4_pton(user_ipaddr, strlen(user_ipaddr), dst_ipaddr,
-			       '\0', NULL);
-		if (ret == 0) {
+			जाओ out_match;
+		पूर्ण
+		ret = प्र_लिखो(क्रमmatted_ipaddr, "%pI6", dst_ipaddr);
+	पूर्ण अन्यथा अणु
+		ret = in4_pton(user_ipaddr, म_माप(user_ipaddr), dst_ipaddr,
+			       '\0', शून्य);
+		अगर (ret == 0) अणु
 			status = QLA_ERROR;
-			goto out_match;
-		}
-		ret = sprintf(formatted_ipaddr, "%pI4", dst_ipaddr);
-	}
+			जाओ out_match;
+		पूर्ण
+		ret = प्र_लिखो(क्रमmatted_ipaddr, "%pI4", dst_ipaddr);
+	पूर्ण
 
-	if (strcmp(existing_ipaddr, formatted_ipaddr))
+	अगर (म_भेद(existing_ipaddr, क्रमmatted_ipaddr))
 		status = QLA_ERROR;
 
 out_match:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int qla4xxx_match_fwdb_session(struct scsi_qla_host *ha,
-				      struct iscsi_cls_conn *cls_conn)
-{
-	int idx = 0, max_ddbs, rval;
-	struct iscsi_cls_session *cls_sess = iscsi_conn_to_session(cls_conn);
-	struct iscsi_session *sess, *existing_sess;
-	struct iscsi_conn *conn, *existing_conn;
-	struct ddb_entry *ddb_entry;
+अटल पूर्णांक qla4xxx_match_fwdb_session(काष्ठा scsi_qla_host *ha,
+				      काष्ठा iscsi_cls_conn *cls_conn)
+अणु
+	पूर्णांक idx = 0, max_ddbs, rval;
+	काष्ठा iscsi_cls_session *cls_sess = iscsi_conn_to_session(cls_conn);
+	काष्ठा iscsi_session *sess, *existing_sess;
+	काष्ठा iscsi_conn *conn, *existing_conn;
+	काष्ठा ddb_entry *ddb_entry;
 
 	sess = cls_sess->dd_data;
 	conn = cls_conn->dd_data;
 
-	if (sess->targetname == NULL ||
-	    conn->persistent_address == NULL ||
+	अगर (sess->targetname == शून्य ||
+	    conn->persistent_address == शून्य ||
 	    conn->persistent_port == 0)
-		return QLA_ERROR;
+		वापस QLA_ERROR;
 
 	max_ddbs =  is_qla40XX(ha) ? MAX_DEV_DB_ENTRIES_40XX :
 				     MAX_DEV_DB_ENTRIES;
 
-	for (idx = 0; idx < max_ddbs; idx++) {
+	क्रम (idx = 0; idx < max_ddbs; idx++) अणु
 		ddb_entry = qla4xxx_lookup_ddb_by_fw_index(ha, idx);
-		if (ddb_entry == NULL)
-			continue;
+		अगर (ddb_entry == शून्य)
+			जारी;
 
-		if (ddb_entry->ddb_type != FLASH_DDB)
-			continue;
+		अगर (ddb_entry->ddb_type != FLASH_DDB)
+			जारी;
 
 		existing_sess = ddb_entry->sess->dd_data;
 		existing_conn = ddb_entry->conn->dd_data;
 
-		if (existing_sess->targetname == NULL ||
-		    existing_conn->persistent_address == NULL ||
+		अगर (existing_sess->targetname == शून्य ||
+		    existing_conn->persistent_address == शून्य ||
 		    existing_conn->persistent_port == 0)
-			continue;
+			जारी;
 
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				  "IQN = %s User IQN = %s\n",
 				  existing_sess->targetname,
 				  sess->targetname));
 
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				  "IP = %s User IP = %s\n",
 				  existing_conn->persistent_address,
 				  conn->persistent_address));
 
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				  "Port = %d User Port = %d\n",
 				  existing_conn->persistent_port,
 				  conn->persistent_port));
 
-		if (strcmp(existing_sess->targetname, sess->targetname))
-			continue;
+		अगर (म_भेद(existing_sess->targetname, sess->targetname))
+			जारी;
 		rval = qla4xxx_match_ipaddress(ha, ddb_entry,
 					existing_conn->persistent_address,
 					conn->persistent_address);
-		if (rval == QLA_ERROR)
-			continue;
-		if (existing_conn->persistent_port != conn->persistent_port)
-			continue;
-		break;
-	}
+		अगर (rval == QLA_ERROR)
+			जारी;
+		अगर (existing_conn->persistent_port != conn->persistent_port)
+			जारी;
+		अवरोध;
+	पूर्ण
 
-	if (idx == max_ddbs)
-		return QLA_ERROR;
+	अगर (idx == max_ddbs)
+		वापस QLA_ERROR;
 
-	DEBUG2(ql4_printk(KERN_INFO, ha,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 			  "Match found in fwdb sessions\n"));
-	return QLA_SUCCESS;
-}
+	वापस QLA_SUCCESS;
+पूर्ण
 
-static struct iscsi_cls_session *
-qla4xxx_session_create(struct iscsi_endpoint *ep,
-			uint16_t cmds_max, uint16_t qdepth,
-			uint32_t initial_cmdsn)
-{
-	struct iscsi_cls_session *cls_sess;
-	struct scsi_qla_host *ha;
-	struct qla_endpoint *qla_ep;
-	struct ddb_entry *ddb_entry;
-	uint16_t ddb_index;
-	struct iscsi_session *sess;
-	int ret;
+अटल काष्ठा iscsi_cls_session *
+qla4xxx_session_create(काष्ठा iscsi_endpoपूर्णांक *ep,
+			uपूर्णांक16_t cmds_max, uपूर्णांक16_t qdepth,
+			uपूर्णांक32_t initial_cmdsn)
+अणु
+	काष्ठा iscsi_cls_session *cls_sess;
+	काष्ठा scsi_qla_host *ha;
+	काष्ठा qla_endpoपूर्णांक *qla_ep;
+	काष्ठा ddb_entry *ddb_entry;
+	uपूर्णांक16_t ddb_index;
+	काष्ठा iscsi_session *sess;
+	पूर्णांक ret;
 
-	if (!ep) {
-		printk(KERN_ERR "qla4xxx: missing ep.\n");
-		return NULL;
-	}
+	अगर (!ep) अणु
+		prपूर्णांकk(KERN_ERR "qla4xxx: missing ep.\n");
+		वापस शून्य;
+	पूर्ण
 
 	qla_ep = ep->dd_data;
 	ha = to_qla_host(qla_ep->host);
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: host: %ld\n", __func__,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: host: %ld\n", __func__,
 			  ha->host_no));
 
 	ret = qla4xxx_get_ddb_index(ha, &ddb_index);
-	if (ret == QLA_ERROR)
-		return NULL;
+	अगर (ret == QLA_ERROR)
+		वापस शून्य;
 
 	cls_sess = iscsi_session_setup(&qla4xxx_iscsi_transport, qla_ep->host,
-				       cmds_max, sizeof(struct ddb_entry),
-				       sizeof(struct ql4_task_data),
+				       cmds_max, माप(काष्ठा ddb_entry),
+				       माप(काष्ठा ql4_task_data),
 				       initial_cmdsn, ddb_index);
-	if (!cls_sess)
-		return NULL;
+	अगर (!cls_sess)
+		वापस शून्य;
 
 	sess = cls_sess->dd_data;
 	ddb_entry = sess->dd_data;
@@ -3119,300 +3120,300 @@ qla4xxx_session_create(struct iscsi_endpoint *ep,
 	ddb_entry->unblock_sess = qla4xxx_unblock_ddb;
 	ddb_entry->ddb_change = qla4xxx_ddb_change;
 	clear_bit(DDB_CONN_CLOSE_FAILURE, &ddb_entry->flags);
-	cls_sess->recovery_tmo = ql4xsess_recovery_tmo;
+	cls_sess->recovery_पंचांगo = ql4xsess_recovery_पंचांगo;
 	ha->fw_ddb_index_map[ddb_entry->fw_ddb_index] = ddb_entry;
 	ha->tot_ddbs++;
 
-	return cls_sess;
-}
+	वापस cls_sess;
+पूर्ण
 
-static void qla4xxx_session_destroy(struct iscsi_cls_session *cls_sess)
-{
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
-	unsigned long flags, wtime;
-	struct dev_db_entry *fw_ddb_entry = NULL;
+अटल व्योम qla4xxx_session_destroy(काष्ठा iscsi_cls_session *cls_sess)
+अणु
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
+	अचिन्हित दीर्घ flags, wसमय;
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
 	dma_addr_t fw_ddb_entry_dma;
-	uint32_t ddb_state;
-	int ret;
+	uपूर्णांक32_t ddb_state;
+	पूर्णांक ret;
 
 	sess = cls_sess->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: host: %ld\n", __func__,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: host: %ld\n", __func__,
 			  ha->host_no));
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Unable to allocate dma buffer\n", __func__);
-		goto destroy_session;
-	}
+		जाओ destroy_session;
+	पूर्ण
 
-	wtime = jiffies + (HZ * LOGOUT_TOV);
-	do {
+	wसमय = jअगरfies + (HZ * LOGOUT_TOV);
+	करो अणु
 		ret = qla4xxx_get_fwddb_entry(ha, ddb_entry->fw_ddb_index,
 					      fw_ddb_entry, fw_ddb_entry_dma,
-					      NULL, NULL, &ddb_state, NULL,
-					      NULL, NULL);
-		if (ret == QLA_ERROR)
-			goto destroy_session;
+					      शून्य, शून्य, &ddb_state, शून्य,
+					      शून्य, शून्य);
+		अगर (ret == QLA_ERROR)
+			जाओ destroy_session;
 
-		if ((ddb_state == DDB_DS_NO_CONNECTION_ACTIVE) ||
+		अगर ((ddb_state == DDB_DS_NO_CONNECTION_ACTIVE) ||
 		    (ddb_state == DDB_DS_SESSION_FAILED))
-			goto destroy_session;
+			जाओ destroy_session;
 
-		schedule_timeout_uninterruptible(HZ);
-	} while ((time_after(wtime, jiffies)));
+		schedule_समयout_unपूर्णांकerruptible(HZ);
+	पूर्ण जबतक ((समय_after(wसमय, jअगरfies)));
 
 destroy_session:
 	qla4xxx_clear_ddb_entry(ha, ddb_entry->fw_ddb_index);
-	if (test_and_clear_bit(DDB_CONN_CLOSE_FAILURE, &ddb_entry->flags))
+	अगर (test_and_clear_bit(DDB_CONN_CLOSE_FAILURE, &ddb_entry->flags))
 		clear_bit(ddb_entry->fw_ddb_index, ha->ddb_idx_map);
 	spin_lock_irqsave(&ha->hardware_lock, flags);
-	qla4xxx_free_ddb(ha, ddb_entry);
+	qla4xxx_मुक्त_ddb(ha, ddb_entry);
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-	iscsi_session_teardown(cls_sess);
+	iscsi_session_tearकरोwn(cls_sess);
 
-	if (fw_ddb_entry)
-		dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	अगर (fw_ddb_entry)
+		dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 				  fw_ddb_entry, fw_ddb_entry_dma);
-}
+पूर्ण
 
-static struct iscsi_cls_conn *
-qla4xxx_conn_create(struct iscsi_cls_session *cls_sess, uint32_t conn_idx)
-{
-	struct iscsi_cls_conn *cls_conn;
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
+अटल काष्ठा iscsi_cls_conn *
+qla4xxx_conn_create(काष्ठा iscsi_cls_session *cls_sess, uपूर्णांक32_t conn_idx)
+अणु
+	काष्ठा iscsi_cls_conn *cls_conn;
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
 
-	cls_conn = iscsi_conn_setup(cls_sess, sizeof(struct qla_conn),
+	cls_conn = iscsi_conn_setup(cls_sess, माप(काष्ठा qla_conn),
 				    conn_idx);
-	if (!cls_conn) {
+	अगर (!cls_conn) अणु
 		pr_info("%s: Can not create connection for conn_idx = %u\n",
 			__func__, conn_idx);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	sess = cls_sess->dd_data;
 	ddb_entry = sess->dd_data;
 	ddb_entry->conn = cls_conn;
 
 	ha = ddb_entry->ha;
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: conn_idx = %u\n", __func__,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: conn_idx = %u\n", __func__,
 			  conn_idx));
-	return cls_conn;
-}
+	वापस cls_conn;
+पूर्ण
 
-static int qla4xxx_conn_bind(struct iscsi_cls_session *cls_session,
-			     struct iscsi_cls_conn *cls_conn,
-			     uint64_t transport_fd, int is_leading)
-{
-	struct iscsi_conn *conn;
-	struct qla_conn *qla_conn;
-	struct iscsi_endpoint *ep;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
-	struct iscsi_session *sess;
+अटल पूर्णांक qla4xxx_conn_bind(काष्ठा iscsi_cls_session *cls_session,
+			     काष्ठा iscsi_cls_conn *cls_conn,
+			     uपूर्णांक64_t transport_fd, पूर्णांक is_leading)
+अणु
+	काष्ठा iscsi_conn *conn;
+	काष्ठा qla_conn *qla_conn;
+	काष्ठा iscsi_endpoपूर्णांक *ep;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
+	काष्ठा iscsi_session *sess;
 
 	sess = cls_session->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
 
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: sid = %d, cid = %d\n", __func__,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: sid = %d, cid = %d\n", __func__,
 			  cls_session->sid, cls_conn->cid));
 
-	if (iscsi_conn_bind(cls_session, cls_conn, is_leading))
-		return -EINVAL;
-	ep = iscsi_lookup_endpoint(transport_fd);
-	if (!ep)
-		return -EINVAL;
+	अगर (iscsi_conn_bind(cls_session, cls_conn, is_leading))
+		वापस -EINVAL;
+	ep = iscsi_lookup_endpoपूर्णांक(transport_fd);
+	अगर (!ep)
+		वापस -EINVAL;
 	conn = cls_conn->dd_data;
 	qla_conn = conn->dd_data;
 	qla_conn->qla_ep = ep->dd_data;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qla4xxx_conn_start(struct iscsi_cls_conn *cls_conn)
-{
-	struct iscsi_cls_session *cls_sess = iscsi_conn_to_session(cls_conn);
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
-	struct dev_db_entry *fw_ddb_entry = NULL;
+अटल पूर्णांक qla4xxx_conn_start(काष्ठा iscsi_cls_conn *cls_conn)
+अणु
+	काष्ठा iscsi_cls_session *cls_sess = iscsi_conn_to_session(cls_conn);
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
 	dma_addr_t fw_ddb_entry_dma;
-	uint32_t mbx_sts = 0;
-	int ret = 0;
-	int status = QLA_SUCCESS;
+	uपूर्णांक32_t mbx_sts = 0;
+	पूर्णांक ret = 0;
+	पूर्णांक status = QLA_SUCCESS;
 
 	sess = cls_sess->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: sid = %d, cid = %d\n", __func__,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: sid = %d, cid = %d\n", __func__,
 			  cls_sess->sid, cls_conn->cid));
 
-	/* Check if we have  matching FW DDB, if yes then do not
+	/* Check अगर we have  matching FW DDB, अगर yes then करो not
 	 * login to this target. This could cause target to logout previous
 	 * connection
 	 */
 	ret = qla4xxx_match_fwdb_session(ha, cls_conn);
-	if (ret == QLA_SUCCESS) {
-		ql4_printk(KERN_INFO, ha,
+	अगर (ret == QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha,
 			   "Session already exist in FW.\n");
 		ret = -EEXIST;
-		goto exit_conn_start;
-	}
+		जाओ निकास_conn_start;
+	पूर्ण
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Unable to allocate dma buffer\n", __func__);
 		ret = -ENOMEM;
-		goto exit_conn_start;
-	}
+		जाओ निकास_conn_start;
+	पूर्ण
 
 	ret = qla4xxx_set_param_ddbentry(ha, ddb_entry, cls_conn, &mbx_sts);
-	if (ret) {
-		/* If iscsid is stopped and started then no need to do
-		* set param again since ddb state will be already
-		* active and FW does not allow set ddb to an
+	अगर (ret) अणु
+		/* If iscsid is stopped and started then no need to करो
+		* set param again since ddb state will be alपढ़ोy
+		* active and FW करोes not allow set ddb to an
 		* active session.
 		*/
-		if (mbx_sts)
-			if (ddb_entry->fw_ddb_device_state ==
-						DDB_DS_SESSION_ACTIVE) {
+		अगर (mbx_sts)
+			अगर (ddb_entry->fw_ddb_device_state ==
+						DDB_DS_SESSION_ACTIVE) अणु
 				ddb_entry->unblock_sess(ddb_entry->sess);
-				goto exit_set_param;
-			}
+				जाओ निकास_set_param;
+			पूर्ण
 
-		ql4_printk(KERN_ERR, ha, "%s: Failed set param for index[%d]\n",
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Failed set param for index[%d]\n",
 			   __func__, ddb_entry->fw_ddb_index);
-		goto exit_conn_start;
-	}
+		जाओ निकास_conn_start;
+	पूर्ण
 
-	status = qla4xxx_conn_open(ha, ddb_entry->fw_ddb_index);
-	if (status == QLA_ERROR) {
-		ql4_printk(KERN_ERR, ha, "%s: Login failed: %s\n", __func__,
+	status = qla4xxx_conn_खोलो(ha, ddb_entry->fw_ddb_index);
+	अगर (status == QLA_ERROR) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Login failed: %s\n", __func__,
 			   sess->targetname);
 		ret = -EINVAL;
-		goto exit_conn_start;
-	}
+		जाओ निकास_conn_start;
+	पूर्ण
 
-	if (ddb_entry->fw_ddb_device_state == DDB_DS_NO_CONNECTION_ACTIVE)
+	अगर (ddb_entry->fw_ddb_device_state == DDB_DS_NO_CONNECTION_ACTIVE)
 		ddb_entry->fw_ddb_device_state = DDB_DS_LOGIN_IN_PROCESS;
 
-	DEBUG2(printk(KERN_INFO "%s: DDB state [%d]\n", __func__,
+	DEBUG2(prपूर्णांकk(KERN_INFO "%s: DDB state [%d]\n", __func__,
 		      ddb_entry->fw_ddb_device_state));
 
-exit_set_param:
+निकास_set_param:
 	ret = 0;
 
-exit_conn_start:
-	if (fw_ddb_entry)
-		dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+निकास_conn_start:
+	अगर (fw_ddb_entry)
+		dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 				  fw_ddb_entry, fw_ddb_entry_dma);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qla4xxx_conn_destroy(struct iscsi_cls_conn *cls_conn)
-{
-	struct iscsi_cls_session *cls_sess = iscsi_conn_to_session(cls_conn);
-	struct iscsi_session *sess;
-	struct scsi_qla_host *ha;
-	struct ddb_entry *ddb_entry;
-	int options;
+अटल व्योम qla4xxx_conn_destroy(काष्ठा iscsi_cls_conn *cls_conn)
+अणु
+	काष्ठा iscsi_cls_session *cls_sess = iscsi_conn_to_session(cls_conn);
+	काष्ठा iscsi_session *sess;
+	काष्ठा scsi_qla_host *ha;
+	काष्ठा ddb_entry *ddb_entry;
+	पूर्णांक options;
 
 	sess = cls_sess->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: cid = %d\n", __func__,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: cid = %d\n", __func__,
 			  cls_conn->cid));
 
 	options = LOGOUT_OPTION_CLOSE_SESSION;
-	if (qla4xxx_session_logout_ddb(ha, ddb_entry, options) == QLA_ERROR)
-		ql4_printk(KERN_ERR, ha, "%s: Logout failed\n", __func__);
-}
+	अगर (qla4xxx_session_logout_ddb(ha, ddb_entry, options) == QLA_ERROR)
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Logout failed\n", __func__);
+पूर्ण
 
-static void qla4xxx_task_work(struct work_struct *wdata)
-{
-	struct ql4_task_data *task_data;
-	struct scsi_qla_host *ha;
-	struct passthru_status *sts;
-	struct iscsi_task *task;
-	struct iscsi_hdr *hdr;
-	uint8_t *data;
-	uint32_t data_len;
-	struct iscsi_conn *conn;
-	int hdr_len;
+अटल व्योम qla4xxx_task_work(काष्ठा work_काष्ठा *wdata)
+अणु
+	काष्ठा ql4_task_data *task_data;
+	काष्ठा scsi_qla_host *ha;
+	काष्ठा passthru_status *sts;
+	काष्ठा iscsi_task *task;
+	काष्ठा iscsi_hdr *hdr;
+	uपूर्णांक8_t *data;
+	uपूर्णांक32_t data_len;
+	काष्ठा iscsi_conn *conn;
+	पूर्णांक hdr_len;
 	itt_t itt;
 
-	task_data = container_of(wdata, struct ql4_task_data, task_work);
+	task_data = container_of(wdata, काष्ठा ql4_task_data, task_work);
 	ha = task_data->ha;
 	task = task_data->task;
 	sts = &task_data->sts;
-	hdr_len = sizeof(struct iscsi_hdr);
+	hdr_len = माप(काष्ठा iscsi_hdr);
 
-	DEBUG3(printk(KERN_INFO "Status returned\n"));
+	DEBUG3(prपूर्णांकk(KERN_INFO "Status returned\n"));
 	DEBUG3(qla4xxx_dump_buffer(sts, 64));
-	DEBUG3(printk(KERN_INFO "Response buffer"));
+	DEBUG3(prपूर्णांकk(KERN_INFO "Response buffer"));
 	DEBUG3(qla4xxx_dump_buffer(task_data->resp_buffer, 64));
 
 	conn = task->conn;
 
-	switch (sts->completionStatus) {
-	case PASSTHRU_STATUS_COMPLETE:
-		hdr = (struct iscsi_hdr *)task_data->resp_buffer;
+	चयन (sts->completionStatus) अणु
+	हाल PASSTHRU_STATUS_COMPLETE:
+		hdr = (काष्ठा iscsi_hdr *)task_data->resp_buffer;
 		/* Assign back the itt in hdr, until we use the PREASSIGN_TAG */
 		itt = sts->handle;
 		hdr->itt = itt;
 		data = task_data->resp_buffer + hdr_len;
 		data_len = task_data->resp_len - hdr_len;
 		iscsi_complete_pdu(conn, hdr, data, data_len);
-		break;
-	default:
-		ql4_printk(KERN_ERR, ha, "Passthru failed status = 0x%x\n",
+		अवरोध;
+	शेष:
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Passthru failed status = 0x%x\n",
 			   sts->completionStatus);
-		break;
-	}
-	return;
-}
+		अवरोध;
+	पूर्ण
+	वापस;
+पूर्ण
 
-static int qla4xxx_alloc_pdu(struct iscsi_task *task, uint8_t opcode)
-{
-	struct ql4_task_data *task_data;
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
-	int hdr_len;
+अटल पूर्णांक qla4xxx_alloc_pdu(काष्ठा iscsi_task *task, uपूर्णांक8_t opcode)
+अणु
+	काष्ठा ql4_task_data *task_data;
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
+	पूर्णांक hdr_len;
 
 	sess = task->conn->session;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
 	task_data = task->dd_data;
-	memset(task_data, 0, sizeof(struct ql4_task_data));
+	स_रखो(task_data, 0, माप(काष्ठा ql4_task_data));
 
-	if (task->sc) {
-		ql4_printk(KERN_INFO, ha,
+	अगर (task->sc) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha,
 			   "%s: SCSI Commands not implemented\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	hdr_len = sizeof(struct iscsi_hdr);
+	hdr_len = माप(काष्ठा iscsi_hdr);
 	task_data->ha = ha;
 	task_data->task = task;
 
-	if (task->data_count) {
+	अगर (task->data_count) अणु
 		task_data->data_dma = dma_map_single(&ha->pdev->dev, task->data,
 						     task->data_count,
 						     DMA_TO_DEVICE);
-	}
+	पूर्ण
 
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: MaxRecvLen %u, iscsi hrd %d\n",
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: MaxRecvLen %u, iscsi hrd %d\n",
 		      __func__, task->conn->max_recv_dlength, hdr_len));
 
 	task_data->resp_len = task->conn->max_recv_dlength + hdr_len;
@@ -3420,100 +3421,100 @@ static int qla4xxx_alloc_pdu(struct iscsi_task *task, uint8_t opcode)
 						    task_data->resp_len,
 						    &task_data->resp_dma,
 						    GFP_ATOMIC);
-	if (!task_data->resp_buffer)
-		goto exit_alloc_pdu;
+	अगर (!task_data->resp_buffer)
+		जाओ निकास_alloc_pdu;
 
 	task_data->req_len = task->data_count + hdr_len;
 	task_data->req_buffer = dma_alloc_coherent(&ha->pdev->dev,
 						   task_data->req_len,
 						   &task_data->req_dma,
 						   GFP_ATOMIC);
-	if (!task_data->req_buffer)
-		goto exit_alloc_pdu;
+	अगर (!task_data->req_buffer)
+		जाओ निकास_alloc_pdu;
 
 	task->hdr = task_data->req_buffer;
 
 	INIT_WORK(&task_data->task_work, qla4xxx_task_work);
 
-	return 0;
+	वापस 0;
 
-exit_alloc_pdu:
-	if (task_data->resp_buffer)
-		dma_free_coherent(&ha->pdev->dev, task_data->resp_len,
+निकास_alloc_pdu:
+	अगर (task_data->resp_buffer)
+		dma_मुक्त_coherent(&ha->pdev->dev, task_data->resp_len,
 				  task_data->resp_buffer, task_data->resp_dma);
 
-	if (task_data->req_buffer)
-		dma_free_coherent(&ha->pdev->dev, task_data->req_len,
+	अगर (task_data->req_buffer)
+		dma_मुक्त_coherent(&ha->pdev->dev, task_data->req_len,
 				  task_data->req_buffer, task_data->req_dma);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void qla4xxx_task_cleanup(struct iscsi_task *task)
-{
-	struct ql4_task_data *task_data;
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
-	int hdr_len;
+अटल व्योम qla4xxx_task_cleanup(काष्ठा iscsi_task *task)
+अणु
+	काष्ठा ql4_task_data *task_data;
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
+	पूर्णांक hdr_len;
 
-	hdr_len = sizeof(struct iscsi_hdr);
+	hdr_len = माप(काष्ठा iscsi_hdr);
 	sess = task->conn->session;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
 	task_data = task->dd_data;
 
-	if (task->data_count) {
+	अगर (task->data_count) अणु
 		dma_unmap_single(&ha->pdev->dev, task_data->data_dma,
 				 task->data_count, DMA_TO_DEVICE);
-	}
+	पूर्ण
 
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: MaxRecvLen %u, iscsi hrd %d\n",
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: MaxRecvLen %u, iscsi hrd %d\n",
 		      __func__, task->conn->max_recv_dlength, hdr_len));
 
-	dma_free_coherent(&ha->pdev->dev, task_data->resp_len,
+	dma_मुक्त_coherent(&ha->pdev->dev, task_data->resp_len,
 			  task_data->resp_buffer, task_data->resp_dma);
-	dma_free_coherent(&ha->pdev->dev, task_data->req_len,
+	dma_मुक्त_coherent(&ha->pdev->dev, task_data->req_len,
 			  task_data->req_buffer, task_data->req_dma);
-	return;
-}
+	वापस;
+पूर्ण
 
-static int qla4xxx_task_xmit(struct iscsi_task *task)
-{
-	struct scsi_cmnd *sc = task->sc;
-	struct iscsi_session *sess = task->conn->session;
-	struct ddb_entry *ddb_entry = sess->dd_data;
-	struct scsi_qla_host *ha = ddb_entry->ha;
+अटल पूर्णांक qla4xxx_task_xmit(काष्ठा iscsi_task *task)
+अणु
+	काष्ठा scsi_cmnd *sc = task->sc;
+	काष्ठा iscsi_session *sess = task->conn->session;
+	काष्ठा ddb_entry *ddb_entry = sess->dd_data;
+	काष्ठा scsi_qla_host *ha = ddb_entry->ha;
 
-	if (!sc)
-		return qla4xxx_send_passthru0(task);
+	अगर (!sc)
+		वापस qla4xxx_send_passthru0(task);
 
-	ql4_printk(KERN_INFO, ha, "%s: scsi cmd xmit not implemented\n",
+	ql4_prपूर्णांकk(KERN_INFO, ha, "%s: scsi cmd xmit not implemented\n",
 		   __func__);
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
-static int qla4xxx_copy_from_fwddb_param(struct iscsi_bus_flash_session *sess,
-					 struct iscsi_bus_flash_conn *conn,
-					 struct dev_db_entry *fw_ddb_entry)
-{
-	unsigned long options = 0;
-	int rc = 0;
+अटल पूर्णांक qla4xxx_copy_from_fwddb_param(काष्ठा iscsi_bus_flash_session *sess,
+					 काष्ठा iscsi_bus_flash_conn *conn,
+					 काष्ठा dev_db_entry *fw_ddb_entry)
+अणु
+	अचिन्हित दीर्घ options = 0;
+	पूर्णांक rc = 0;
 
 	options = le16_to_cpu(fw_ddb_entry->options);
-	conn->is_fw_assigned_ipv6 = test_bit(OPT_IS_FW_ASSIGNED_IPV6, &options);
-	if (test_bit(OPT_IPV6_DEVICE, &options)) {
-		rc = iscsi_switch_str_param(&sess->portal_type,
+	conn->is_fw_asचिन्हित_ipv6 = test_bit(OPT_IS_FW_ASSIGNED_IPV6, &options);
+	अगर (test_bit(OPT_IPV6_DEVICE, &options)) अणु
+		rc = iscsi_चयन_str_param(&sess->portal_type,
 					    PORTAL_TYPE_IPV6);
-		if (rc)
-			goto exit_copy;
-	} else {
-		rc = iscsi_switch_str_param(&sess->portal_type,
+		अगर (rc)
+			जाओ निकास_copy;
+	पूर्ण अन्यथा अणु
+		rc = iscsi_चयन_str_param(&sess->portal_type,
 					    PORTAL_TYPE_IPV4);
-		if (rc)
-			goto exit_copy;
-	}
+		अगर (rc)
+			जाओ निकास_copy;
+	पूर्ण
 
-	sess->auto_snd_tgt_disable = test_bit(OPT_AUTO_SENDTGTS_DISABLE,
+	sess->स्वतः_snd_tgt_disable = test_bit(OPT_AUTO_SENDTGTS_DISABLE,
 					      &options);
 	sess->discovery_sess = test_bit(OPT_DISC_SESSION, &options);
 	sess->entry_state = test_bit(OPT_ENTRY_STATE, &options);
@@ -3533,24 +3534,24 @@ static int qla4xxx_copy_from_fwddb_param(struct iscsi_bus_flash_session *sess,
 	sess->bidi_chap_en = test_bit(ISCSIOPT_BIDI_CHAP_EN, &options);
 	sess->discovery_auth_optional =
 			test_bit(ISCSIOPT_DISCOVERY_AUTH_OPTIONAL, &options);
-	if (test_bit(ISCSIOPT_ERL1, &options))
+	अगर (test_bit(ISCSIOPT_ERL1, &options))
 		sess->erl |= BIT_1;
-	if (test_bit(ISCSIOPT_ERL0, &options))
+	अगर (test_bit(ISCSIOPT_ERL0, &options))
 		sess->erl |= BIT_0;
 
 	options = le16_to_cpu(fw_ddb_entry->tcp_options);
-	conn->tcp_timestamp_stat = test_bit(TCPOPT_TIMESTAMP_STAT, &options);
+	conn->tcp_बारtamp_stat = test_bit(TCPOPT_TIMESTAMP_STAT, &options);
 	conn->tcp_nagle_disable = test_bit(TCPOPT_NAGLE_DISABLE, &options);
 	conn->tcp_wsf_disable = test_bit(TCPOPT_WSF_DISABLE, &options);
-	if (test_bit(TCPOPT_TIMER_SCALE3, &options))
-		conn->tcp_timer_scale |= BIT_3;
-	if (test_bit(TCPOPT_TIMER_SCALE2, &options))
-		conn->tcp_timer_scale |= BIT_2;
-	if (test_bit(TCPOPT_TIMER_SCALE1, &options))
-		conn->tcp_timer_scale |= BIT_1;
+	अगर (test_bit(TCPOPT_TIMER_SCALE3, &options))
+		conn->tcp_समयr_scale |= BIT_3;
+	अगर (test_bit(TCPOPT_TIMER_SCALE2, &options))
+		conn->tcp_समयr_scale |= BIT_2;
+	अगर (test_bit(TCPOPT_TIMER_SCALE1, &options))
+		conn->tcp_समयr_scale |= BIT_1;
 
-	conn->tcp_timer_scale >>= 1;
-	conn->tcp_timestamp_en = test_bit(TCPOPT_TIMESTAMP_EN, &options);
+	conn->tcp_समयr_scale >>= 1;
+	conn->tcp_बारtamp_en = test_bit(TCPOPT_TIMESTAMP_EN, &options);
 
 	options = le16_to_cpu(fw_ddb_entry->ip_options);
 	conn->fragment_disable = test_bit(IPOPT_FRAGMENT_DISABLE, &options);
@@ -3564,14 +3565,14 @@ static int qla4xxx_copy_from_fwddb_param(struct iscsi_bus_flash_session *sess,
 	sess->max_burst = BYTE_UNITS *
 				 le16_to_cpu(fw_ddb_entry->iscsi_max_burst_len);
 	sess->max_r2t = le16_to_cpu(fw_ddb_entry->iscsi_max_outsnd_r2t);
-	sess->time2wait = le16_to_cpu(fw_ddb_entry->iscsi_def_time2wait);
-	sess->time2retain = le16_to_cpu(fw_ddb_entry->iscsi_def_time2retain);
+	sess->समय2रुको = le16_to_cpu(fw_ddb_entry->iscsi_def_समय2रुको);
+	sess->समय2retain = le16_to_cpu(fw_ddb_entry->iscsi_def_समय2retain);
 	sess->tpgt = le32_to_cpu(fw_ddb_entry->tgt_portal_grp);
 	conn->max_segment_size = le16_to_cpu(fw_ddb_entry->mss);
 	conn->tcp_xmit_wsf = fw_ddb_entry->tcp_xmt_wsf;
 	conn->tcp_recv_wsf = fw_ddb_entry->tcp_rcv_wsf;
 	conn->ipv6_flow_label = le16_to_cpu(fw_ddb_entry->ipv6_flow_lbl);
-	conn->keepalive_timeout = le16_to_cpu(fw_ddb_entry->ka_timeout);
+	conn->keepalive_समयout = le16_to_cpu(fw_ddb_entry->ka_समयout);
 	conn->local_port = le16_to_cpu(fw_ddb_entry->lcl_port);
 	conn->statsn = le32_to_cpu(fw_ddb_entry->stat_sn);
 	conn->exp_statsn = le32_to_cpu(fw_ddb_entry->exp_stat_sn);
@@ -3580,75 +3581,75 @@ static int qla4xxx_copy_from_fwddb_param(struct iscsi_bus_flash_session *sess,
 	sess->chap_out_idx = le16_to_cpu(fw_ddb_entry->chap_tbl_idx);
 	sess->tsid = le16_to_cpu(fw_ddb_entry->tsid);
 
-	sess->default_taskmgmt_timeout =
-				le16_to_cpu(fw_ddb_entry->def_timeout);
+	sess->शेष_taskmgmt_समयout =
+				le16_to_cpu(fw_ddb_entry->def_समयout);
 	conn->port = le16_to_cpu(fw_ddb_entry->port);
 
 	options = le16_to_cpu(fw_ddb_entry->options);
 	conn->ipaddress = kzalloc(IPv6_ADDR_LEN, GFP_KERNEL);
-	if (!conn->ipaddress) {
+	अगर (!conn->ipaddress) अणु
 		rc = -ENOMEM;
-		goto exit_copy;
-	}
+		जाओ निकास_copy;
+	पूर्ण
 
 	conn->redirect_ipaddr = kzalloc(IPv6_ADDR_LEN, GFP_KERNEL);
-	if (!conn->redirect_ipaddr) {
+	अगर (!conn->redirect_ipaddr) अणु
 		rc = -ENOMEM;
-		goto exit_copy;
-	}
+		जाओ निकास_copy;
+	पूर्ण
 
-	memcpy(conn->ipaddress, fw_ddb_entry->ip_addr, IPv6_ADDR_LEN);
-	memcpy(conn->redirect_ipaddr, fw_ddb_entry->tgt_addr, IPv6_ADDR_LEN);
+	स_नकल(conn->ipaddress, fw_ddb_entry->ip_addr, IPv6_ADDR_LEN);
+	स_नकल(conn->redirect_ipaddr, fw_ddb_entry->tgt_addr, IPv6_ADDR_LEN);
 
-	if (test_bit(OPT_IPV6_DEVICE, &options)) {
+	अगर (test_bit(OPT_IPV6_DEVICE, &options)) अणु
 		conn->ipv6_traffic_class = fw_ddb_entry->ipv4_tos;
 
 		conn->link_local_ipv6_addr = kmemdup(
 					fw_ddb_entry->link_local_ipv6_addr,
 					IPv6_ADDR_LEN, GFP_KERNEL);
-		if (!conn->link_local_ipv6_addr) {
+		अगर (!conn->link_local_ipv6_addr) अणु
 			rc = -ENOMEM;
-			goto exit_copy;
-		}
-	} else {
+			जाओ निकास_copy;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		conn->ipv4_tos = fw_ddb_entry->ipv4_tos;
-	}
+	पूर्ण
 
-	if (fw_ddb_entry->iscsi_name[0]) {
-		rc = iscsi_switch_str_param(&sess->targetname,
-					    (char *)fw_ddb_entry->iscsi_name);
-		if (rc)
-			goto exit_copy;
-	}
+	अगर (fw_ddb_entry->iscsi_name[0]) अणु
+		rc = iscsi_चयन_str_param(&sess->targetname,
+					    (अक्षर *)fw_ddb_entry->iscsi_name);
+		अगर (rc)
+			जाओ निकास_copy;
+	पूर्ण
 
-	if (fw_ddb_entry->iscsi_alias[0]) {
-		rc = iscsi_switch_str_param(&sess->targetalias,
-					    (char *)fw_ddb_entry->iscsi_alias);
-		if (rc)
-			goto exit_copy;
-	}
+	अगर (fw_ddb_entry->iscsi_alias[0]) अणु
+		rc = iscsi_चयन_str_param(&sess->targetalias,
+					    (अक्षर *)fw_ddb_entry->iscsi_alias);
+		अगर (rc)
+			जाओ निकास_copy;
+	पूर्ण
 
 	COPY_ISID(sess->isid, fw_ddb_entry->isid);
 
-exit_copy:
-	return rc;
-}
+निकास_copy:
+	वापस rc;
+पूर्ण
 
-static int qla4xxx_copy_to_fwddb_param(struct iscsi_bus_flash_session *sess,
-				       struct iscsi_bus_flash_conn *conn,
-				       struct dev_db_entry *fw_ddb_entry)
-{
-	uint16_t options;
-	int rc = 0;
+अटल पूर्णांक qla4xxx_copy_to_fwddb_param(काष्ठा iscsi_bus_flash_session *sess,
+				       काष्ठा iscsi_bus_flash_conn *conn,
+				       काष्ठा dev_db_entry *fw_ddb_entry)
+अणु
+	uपूर्णांक16_t options;
+	पूर्णांक rc = 0;
 
 	options = le16_to_cpu(fw_ddb_entry->options);
-	SET_BITVAL(conn->is_fw_assigned_ipv6,  options, BIT_11);
-	if (!strncmp(sess->portal_type, PORTAL_TYPE_IPV6, 4))
+	SET_BITVAL(conn->is_fw_asचिन्हित_ipv6,  options, BIT_11);
+	अगर (!म_भेदन(sess->portal_type, PORTAL_TYPE_IPV6, 4))
 		options |= BIT_8;
-	else
+	अन्यथा
 		options &= ~BIT_8;
 
-	SET_BITVAL(sess->auto_snd_tgt_disable, options, BIT_6);
+	SET_BITVAL(sess->स्वतः_snd_tgt_disable, options, BIT_6);
 	SET_BITVAL(sess->discovery_sess, options, BIT_4);
 	SET_BITVAL(sess->entry_state, options, BIT_3);
 	fw_ddb_entry->options = cpu_to_le16(options);
@@ -3670,13 +3671,13 @@ static int qla4xxx_copy_to_fwddb_param(struct iscsi_bus_flash_session *sess,
 	fw_ddb_entry->iscsi_options = cpu_to_le16(options);
 
 	options = le16_to_cpu(fw_ddb_entry->tcp_options);
-	SET_BITVAL(conn->tcp_timestamp_stat, options, BIT_6);
+	SET_BITVAL(conn->tcp_बारtamp_stat, options, BIT_6);
 	SET_BITVAL(conn->tcp_nagle_disable, options, BIT_5);
 	SET_BITVAL(conn->tcp_wsf_disable, options, BIT_4);
-	SET_BITVAL(conn->tcp_timer_scale & BIT_2, options, BIT_3);
-	SET_BITVAL(conn->tcp_timer_scale & BIT_1, options, BIT_2);
-	SET_BITVAL(conn->tcp_timer_scale & BIT_0, options, BIT_1);
-	SET_BITVAL(conn->tcp_timestamp_en, options, BIT_0);
+	SET_BITVAL(conn->tcp_समयr_scale & BIT_2, options, BIT_3);
+	SET_BITVAL(conn->tcp_समयr_scale & BIT_1, options, BIT_2);
+	SET_BITVAL(conn->tcp_समयr_scale & BIT_0, options, BIT_1);
+	SET_BITVAL(conn->tcp_बारtamp_en, options, BIT_0);
 	fw_ddb_entry->tcp_options = cpu_to_le16(options);
 
 	options = le16_to_cpu(fw_ddb_entry->ip_options);
@@ -3692,14 +3693,14 @@ static int qla4xxx_copy_to_fwddb_param(struct iscsi_bus_flash_session *sess,
 				cpu_to_le16(sess->first_burst / BYTE_UNITS);
 	fw_ddb_entry->iscsi_max_burst_len = cpu_to_le16(sess->max_burst /
 					    BYTE_UNITS);
-	fw_ddb_entry->iscsi_def_time2wait = cpu_to_le16(sess->time2wait);
-	fw_ddb_entry->iscsi_def_time2retain = cpu_to_le16(sess->time2retain);
+	fw_ddb_entry->iscsi_def_समय2रुको = cpu_to_le16(sess->समय2रुको);
+	fw_ddb_entry->iscsi_def_समय2retain = cpu_to_le16(sess->समय2retain);
 	fw_ddb_entry->tgt_portal_grp = cpu_to_le16(sess->tpgt);
 	fw_ddb_entry->mss = cpu_to_le16(conn->max_segment_size);
-	fw_ddb_entry->tcp_xmt_wsf = (uint8_t) cpu_to_le32(conn->tcp_xmit_wsf);
-	fw_ddb_entry->tcp_rcv_wsf = (uint8_t) cpu_to_le32(conn->tcp_recv_wsf);
+	fw_ddb_entry->tcp_xmt_wsf = (uपूर्णांक8_t) cpu_to_le32(conn->tcp_xmit_wsf);
+	fw_ddb_entry->tcp_rcv_wsf = (uपूर्णांक8_t) cpu_to_le32(conn->tcp_recv_wsf);
 	fw_ddb_entry->ipv6_flow_lbl = cpu_to_le16(conn->ipv6_flow_label);
-	fw_ddb_entry->ka_timeout = cpu_to_le16(conn->keepalive_timeout);
+	fw_ddb_entry->ka_समयout = cpu_to_le16(conn->keepalive_समयout);
 	fw_ddb_entry->lcl_port = cpu_to_le16(conn->local_port);
 	fw_ddb_entry->stat_sn = cpu_to_le32(conn->statsn);
 	fw_ddb_entry->exp_stat_sn = cpu_to_le32(conn->exp_statsn);
@@ -3707,52 +3708,52 @@ static int qla4xxx_copy_to_fwddb_param(struct iscsi_bus_flash_session *sess,
 	fw_ddb_entry->chap_tbl_idx = cpu_to_le16(sess->chap_out_idx);
 	fw_ddb_entry->tsid = cpu_to_le16(sess->tsid);
 	fw_ddb_entry->port = cpu_to_le16(conn->port);
-	fw_ddb_entry->def_timeout =
-				cpu_to_le16(sess->default_taskmgmt_timeout);
+	fw_ddb_entry->def_समयout =
+				cpu_to_le16(sess->शेष_taskmgmt_समयout);
 
-	if (!strncmp(sess->portal_type, PORTAL_TYPE_IPV6, 4))
+	अगर (!म_भेदन(sess->portal_type, PORTAL_TYPE_IPV6, 4))
 		fw_ddb_entry->ipv4_tos = conn->ipv6_traffic_class;
-	else
+	अन्यथा
 		fw_ddb_entry->ipv4_tos = conn->ipv4_tos;
 
-	if (conn->ipaddress)
-		memcpy(fw_ddb_entry->ip_addr, conn->ipaddress,
-		       sizeof(fw_ddb_entry->ip_addr));
+	अगर (conn->ipaddress)
+		स_नकल(fw_ddb_entry->ip_addr, conn->ipaddress,
+		       माप(fw_ddb_entry->ip_addr));
 
-	if (conn->redirect_ipaddr)
-		memcpy(fw_ddb_entry->tgt_addr, conn->redirect_ipaddr,
-		       sizeof(fw_ddb_entry->tgt_addr));
+	अगर (conn->redirect_ipaddr)
+		स_नकल(fw_ddb_entry->tgt_addr, conn->redirect_ipaddr,
+		       माप(fw_ddb_entry->tgt_addr));
 
-	if (conn->link_local_ipv6_addr)
-		memcpy(fw_ddb_entry->link_local_ipv6_addr,
+	अगर (conn->link_local_ipv6_addr)
+		स_नकल(fw_ddb_entry->link_local_ipv6_addr,
 		       conn->link_local_ipv6_addr,
-		       sizeof(fw_ddb_entry->link_local_ipv6_addr));
+		       माप(fw_ddb_entry->link_local_ipv6_addr));
 
-	if (sess->targetname)
-		memcpy(fw_ddb_entry->iscsi_name, sess->targetname,
-		       sizeof(fw_ddb_entry->iscsi_name));
+	अगर (sess->targetname)
+		स_नकल(fw_ddb_entry->iscsi_name, sess->targetname,
+		       माप(fw_ddb_entry->iscsi_name));
 
-	if (sess->targetalias)
-		memcpy(fw_ddb_entry->iscsi_alias, sess->targetalias,
-		       sizeof(fw_ddb_entry->iscsi_alias));
+	अगर (sess->targetalias)
+		स_नकल(fw_ddb_entry->iscsi_alias, sess->targetalias,
+		       माप(fw_ddb_entry->iscsi_alias));
 
 	COPY_ISID(fw_ddb_entry->isid, sess->isid);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void qla4xxx_copy_to_sess_conn_params(struct iscsi_conn *conn,
-					     struct iscsi_session *sess,
-					     struct dev_db_entry *fw_ddb_entry)
-{
-	unsigned long options = 0;
-	uint16_t ddb_link;
-	uint16_t disc_parent;
-	char ip_addr[DDB_IPADDR_LEN];
+अटल व्योम qla4xxx_copy_to_sess_conn_params(काष्ठा iscsi_conn *conn,
+					     काष्ठा iscsi_session *sess,
+					     काष्ठा dev_db_entry *fw_ddb_entry)
+अणु
+	अचिन्हित दीर्घ options = 0;
+	uपूर्णांक16_t ddb_link;
+	uपूर्णांक16_t disc_parent;
+	अक्षर ip_addr[DDB_IPADDR_LEN];
 
 	options = le16_to_cpu(fw_ddb_entry->options);
-	conn->is_fw_assigned_ipv6 = test_bit(OPT_IS_FW_ASSIGNED_IPV6, &options);
-	sess->auto_snd_tgt_disable = test_bit(OPT_AUTO_SENDTGTS_DISABLE,
+	conn->is_fw_asचिन्हित_ipv6 = test_bit(OPT_IS_FW_ASSIGNED_IPV6, &options);
+	sess->स्वतः_snd_tgt_disable = test_bit(OPT_AUTO_SENDTGTS_DISABLE,
 					      &options);
 	sess->discovery_sess = test_bit(OPT_DISC_SESSION, &options);
 
@@ -3770,24 +3771,24 @@ static void qla4xxx_copy_to_sess_conn_params(struct iscsi_conn *conn,
 	sess->bidi_chap_en = test_bit(ISCSIOPT_BIDI_CHAP_EN, &options);
 	sess->discovery_auth_optional =
 			test_bit(ISCSIOPT_DISCOVERY_AUTH_OPTIONAL, &options);
-	if (test_bit(ISCSIOPT_ERL1, &options))
+	अगर (test_bit(ISCSIOPT_ERL1, &options))
 		sess->erl |= BIT_1;
-	if (test_bit(ISCSIOPT_ERL0, &options))
+	अगर (test_bit(ISCSIOPT_ERL0, &options))
 		sess->erl |= BIT_0;
 
 	options = le16_to_cpu(fw_ddb_entry->tcp_options);
-	conn->tcp_timestamp_stat = test_bit(TCPOPT_TIMESTAMP_STAT, &options);
+	conn->tcp_बारtamp_stat = test_bit(TCPOPT_TIMESTAMP_STAT, &options);
 	conn->tcp_nagle_disable = test_bit(TCPOPT_NAGLE_DISABLE, &options);
 	conn->tcp_wsf_disable = test_bit(TCPOPT_WSF_DISABLE, &options);
-	if (test_bit(TCPOPT_TIMER_SCALE3, &options))
-		conn->tcp_timer_scale |= BIT_3;
-	if (test_bit(TCPOPT_TIMER_SCALE2, &options))
-		conn->tcp_timer_scale |= BIT_2;
-	if (test_bit(TCPOPT_TIMER_SCALE1, &options))
-		conn->tcp_timer_scale |= BIT_1;
+	अगर (test_bit(TCPOPT_TIMER_SCALE3, &options))
+		conn->tcp_समयr_scale |= BIT_3;
+	अगर (test_bit(TCPOPT_TIMER_SCALE2, &options))
+		conn->tcp_समयr_scale |= BIT_2;
+	अगर (test_bit(TCPOPT_TIMER_SCALE1, &options))
+		conn->tcp_समयr_scale |= BIT_1;
 
-	conn->tcp_timer_scale >>= 1;
-	conn->tcp_timestamp_en = test_bit(TCPOPT_TIMESTAMP_EN, &options);
+	conn->tcp_समयr_scale >>= 1;
+	conn->tcp_बारtamp_en = test_bit(TCPOPT_TIMESTAMP_EN, &options);
 
 	options = le16_to_cpu(fw_ddb_entry->ip_options);
 	conn->fragment_disable = test_bit(IPOPT_FRAGMENT_DISABLE, &options);
@@ -3801,14 +3802,14 @@ static void qla4xxx_copy_to_sess_conn_params(struct iscsi_conn *conn,
 			       le16_to_cpu(fw_ddb_entry->iscsi_first_burst_len);
 	sess->max_burst = BYTE_UNITS *
 				 le16_to_cpu(fw_ddb_entry->iscsi_max_burst_len);
-	sess->time2wait = le16_to_cpu(fw_ddb_entry->iscsi_def_time2wait);
-	sess->time2retain = le16_to_cpu(fw_ddb_entry->iscsi_def_time2retain);
+	sess->समय2रुको = le16_to_cpu(fw_ddb_entry->iscsi_def_समय2रुको);
+	sess->समय2retain = le16_to_cpu(fw_ddb_entry->iscsi_def_समय2retain);
 	sess->tpgt = le32_to_cpu(fw_ddb_entry->tgt_portal_grp);
 	conn->max_segment_size = le16_to_cpu(fw_ddb_entry->mss);
 	conn->tcp_xmit_wsf = fw_ddb_entry->tcp_xmt_wsf;
 	conn->tcp_recv_wsf = fw_ddb_entry->tcp_rcv_wsf;
 	conn->ipv4_tos = fw_ddb_entry->ipv4_tos;
-	conn->keepalive_tmo = le16_to_cpu(fw_ddb_entry->ka_timeout);
+	conn->keepalive_पंचांगo = le16_to_cpu(fw_ddb_entry->ka_समयout);
 	conn->local_port = le16_to_cpu(fw_ddb_entry->lcl_port);
 	conn->statsn = le32_to_cpu(fw_ddb_entry->stat_sn);
 	conn->exp_statsn = le32_to_cpu(fw_ddb_entry->exp_stat_sn);
@@ -3816,114 +3817,114 @@ static void qla4xxx_copy_to_sess_conn_params(struct iscsi_conn *conn,
 	COPY_ISID(sess->isid, fw_ddb_entry->isid);
 
 	ddb_link = le16_to_cpu(fw_ddb_entry->ddb_link);
-	if (ddb_link == DDB_ISNS)
+	अगर (ddb_link == DDB_ISNS)
 		disc_parent = ISCSI_DISC_PARENT_ISNS;
-	else if (ddb_link == DDB_NO_LINK)
+	अन्यथा अगर (ddb_link == DDB_NO_LINK)
 		disc_parent = ISCSI_DISC_PARENT_UNKNOWN;
-	else if (ddb_link < MAX_DDB_ENTRIES)
+	अन्यथा अगर (ddb_link < MAX_DDB_ENTRIES)
 		disc_parent = ISCSI_DISC_PARENT_SENDTGT;
-	else
+	अन्यथा
 		disc_parent = ISCSI_DISC_PARENT_UNKNOWN;
 
 	iscsi_set_param(conn->cls_conn, ISCSI_PARAM_DISCOVERY_PARENT_TYPE,
 			iscsi_get_discovery_parent_name(disc_parent), 0);
 
 	iscsi_set_param(conn->cls_conn, ISCSI_PARAM_TARGET_ALIAS,
-			(char *)fw_ddb_entry->iscsi_alias, 0);
+			(अक्षर *)fw_ddb_entry->iscsi_alias, 0);
 
 	options = le16_to_cpu(fw_ddb_entry->options);
-	if (options & DDB_OPT_IPV6_DEVICE) {
-		memset(ip_addr, 0, sizeof(ip_addr));
-		sprintf(ip_addr, "%pI6", fw_ddb_entry->link_local_ipv6_addr);
+	अगर (options & DDB_OPT_IPV6_DEVICE) अणु
+		स_रखो(ip_addr, 0, माप(ip_addr));
+		प्र_लिखो(ip_addr, "%pI6", fw_ddb_entry->link_local_ipv6_addr);
 		iscsi_set_param(conn->cls_conn, ISCSI_PARAM_LOCAL_IPADDR,
-				(char *)ip_addr, 0);
-	}
-}
+				(अक्षर *)ip_addr, 0);
+	पूर्ण
+पूर्ण
 
-static void qla4xxx_copy_fwddb_param(struct scsi_qla_host *ha,
-				     struct dev_db_entry *fw_ddb_entry,
-				     struct iscsi_cls_session *cls_sess,
-				     struct iscsi_cls_conn *cls_conn)
-{
-	int buflen = 0;
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct ql4_chap_table chap_tbl;
-	struct iscsi_conn *conn;
-	char ip_addr[DDB_IPADDR_LEN];
-	uint16_t options = 0;
+अटल व्योम qla4xxx_copy_fwddb_param(काष्ठा scsi_qla_host *ha,
+				     काष्ठा dev_db_entry *fw_ddb_entry,
+				     काष्ठा iscsi_cls_session *cls_sess,
+				     काष्ठा iscsi_cls_conn *cls_conn)
+अणु
+	पूर्णांक buflen = 0;
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा ql4_chap_table chap_tbl;
+	काष्ठा iscsi_conn *conn;
+	अक्षर ip_addr[DDB_IPADDR_LEN];
+	uपूर्णांक16_t options = 0;
 
 	sess = cls_sess->dd_data;
 	ddb_entry = sess->dd_data;
 	conn = cls_conn->dd_data;
-	memset(&chap_tbl, 0, sizeof(chap_tbl));
+	स_रखो(&chap_tbl, 0, माप(chap_tbl));
 
 	ddb_entry->chap_tbl_idx = le16_to_cpu(fw_ddb_entry->chap_tbl_idx);
 
 	qla4xxx_copy_to_sess_conn_params(conn, sess, fw_ddb_entry);
 
-	sess->def_taskmgmt_tmo = le16_to_cpu(fw_ddb_entry->def_timeout);
+	sess->def_taskmgmt_पंचांगo = le16_to_cpu(fw_ddb_entry->def_समयout);
 	conn->persistent_port = le16_to_cpu(fw_ddb_entry->port);
 
-	memset(ip_addr, 0, sizeof(ip_addr));
+	स_रखो(ip_addr, 0, माप(ip_addr));
 	options = le16_to_cpu(fw_ddb_entry->options);
-	if (options & DDB_OPT_IPV6_DEVICE) {
+	अगर (options & DDB_OPT_IPV6_DEVICE) अणु
 		iscsi_set_param(cls_conn, ISCSI_PARAM_PORTAL_TYPE, "ipv6", 4);
 
-		memset(ip_addr, 0, sizeof(ip_addr));
-		sprintf(ip_addr, "%pI6", fw_ddb_entry->ip_addr);
-	} else {
+		स_रखो(ip_addr, 0, माप(ip_addr));
+		प्र_लिखो(ip_addr, "%pI6", fw_ddb_entry->ip_addr);
+	पूर्ण अन्यथा अणु
 		iscsi_set_param(cls_conn, ISCSI_PARAM_PORTAL_TYPE, "ipv4", 4);
-		sprintf(ip_addr, "%pI4", fw_ddb_entry->ip_addr);
-	}
+		प्र_लिखो(ip_addr, "%pI4", fw_ddb_entry->ip_addr);
+	पूर्ण
 
 	iscsi_set_param(cls_conn, ISCSI_PARAM_PERSISTENT_ADDRESS,
-			(char *)ip_addr, buflen);
+			(अक्षर *)ip_addr, buflen);
 	iscsi_set_param(cls_conn, ISCSI_PARAM_TARGET_NAME,
-			(char *)fw_ddb_entry->iscsi_name, buflen);
+			(अक्षर *)fw_ddb_entry->iscsi_name, buflen);
 	iscsi_set_param(cls_conn, ISCSI_PARAM_INITIATOR_NAME,
-			(char *)ha->name_string, buflen);
+			(अक्षर *)ha->name_string, buflen);
 
-	if (ddb_entry->chap_tbl_idx != INVALID_ENTRY) {
-		if (!qla4xxx_get_uni_chap_at_index(ha, chap_tbl.name,
+	अगर (ddb_entry->chap_tbl_idx != INVALID_ENTRY) अणु
+		अगर (!qla4xxx_get_uni_chap_at_index(ha, chap_tbl.name,
 						   chap_tbl.secret,
-						   ddb_entry->chap_tbl_idx)) {
+						   ddb_entry->chap_tbl_idx)) अणु
 			iscsi_set_param(cls_conn, ISCSI_PARAM_USERNAME,
-					(char *)chap_tbl.name,
-					strlen((char *)chap_tbl.name));
+					(अक्षर *)chap_tbl.name,
+					म_माप((अक्षर *)chap_tbl.name));
 			iscsi_set_param(cls_conn, ISCSI_PARAM_PASSWORD,
-					(char *)chap_tbl.secret,
+					(अक्षर *)chap_tbl.secret,
 					chap_tbl.secret_len);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void qla4xxx_update_session_conn_fwddb_param(struct scsi_qla_host *ha,
-					     struct ddb_entry *ddb_entry)
-{
-	struct iscsi_cls_session *cls_sess;
-	struct iscsi_cls_conn *cls_conn;
-	uint32_t ddb_state;
+व्योम qla4xxx_update_session_conn_fwddb_param(काष्ठा scsi_qla_host *ha,
+					     काष्ठा ddb_entry *ddb_entry)
+अणु
+	काष्ठा iscsi_cls_session *cls_sess;
+	काष्ठा iscsi_cls_conn *cls_conn;
+	uपूर्णांक32_t ddb_state;
 	dma_addr_t fw_ddb_entry_dma;
-	struct dev_db_entry *fw_ddb_entry;
+	काष्ठा dev_db_entry *fw_ddb_entry;
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Unable to allocate dma buffer\n", __func__);
-		goto exit_session_conn_fwddb_param;
-	}
+		जाओ निकास_session_conn_fwddb_param;
+	पूर्ण
 
-	if (qla4xxx_get_fwddb_entry(ha, ddb_entry->fw_ddb_index, fw_ddb_entry,
-				    fw_ddb_entry_dma, NULL, NULL, &ddb_state,
-				    NULL, NULL, NULL) == QLA_ERROR) {
-		DEBUG2(ql4_printk(KERN_ERR, ha, "scsi%ld: %s: failed "
+	अगर (qla4xxx_get_fwddb_entry(ha, ddb_entry->fw_ddb_index, fw_ddb_entry,
+				    fw_ddb_entry_dma, शून्य, शून्य, &ddb_state,
+				    शून्य, शून्य, शून्य) == QLA_ERROR) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "scsi%ld: %s: failed "
 				  "get_ddb_entry for fw_ddb_index %d\n",
 				  ha->host_no, __func__,
 				  ddb_entry->fw_ddb_index));
-		goto exit_session_conn_fwddb_param;
-	}
+		जाओ निकास_session_conn_fwddb_param;
+	पूर्ण
 
 	cls_sess = ddb_entry->sess;
 
@@ -3932,40 +3933,40 @@ void qla4xxx_update_session_conn_fwddb_param(struct scsi_qla_host *ha,
 	/* Update params */
 	qla4xxx_copy_fwddb_param(ha, fw_ddb_entry, cls_sess, cls_conn);
 
-exit_session_conn_fwddb_param:
-	if (fw_ddb_entry)
-		dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+निकास_session_conn_fwddb_param:
+	अगर (fw_ddb_entry)
+		dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 				  fw_ddb_entry, fw_ddb_entry_dma);
-}
+पूर्ण
 
-void qla4xxx_update_session_conn_param(struct scsi_qla_host *ha,
-				       struct ddb_entry *ddb_entry)
-{
-	struct iscsi_cls_session *cls_sess;
-	struct iscsi_cls_conn *cls_conn;
-	struct iscsi_session *sess;
-	struct iscsi_conn *conn;
-	uint32_t ddb_state;
+व्योम qla4xxx_update_session_conn_param(काष्ठा scsi_qla_host *ha,
+				       काष्ठा ddb_entry *ddb_entry)
+अणु
+	काष्ठा iscsi_cls_session *cls_sess;
+	काष्ठा iscsi_cls_conn *cls_conn;
+	काष्ठा iscsi_session *sess;
+	काष्ठा iscsi_conn *conn;
+	uपूर्णांक32_t ddb_state;
 	dma_addr_t fw_ddb_entry_dma;
-	struct dev_db_entry *fw_ddb_entry;
+	काष्ठा dev_db_entry *fw_ddb_entry;
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Unable to allocate dma buffer\n", __func__);
-		goto exit_session_conn_param;
-	}
+		जाओ निकास_session_conn_param;
+	पूर्ण
 
-	if (qla4xxx_get_fwddb_entry(ha, ddb_entry->fw_ddb_index, fw_ddb_entry,
-				    fw_ddb_entry_dma, NULL, NULL, &ddb_state,
-				    NULL, NULL, NULL) == QLA_ERROR) {
-		DEBUG2(ql4_printk(KERN_ERR, ha, "scsi%ld: %s: failed "
+	अगर (qla4xxx_get_fwddb_entry(ha, ddb_entry->fw_ddb_index, fw_ddb_entry,
+				    fw_ddb_entry_dma, शून्य, शून्य, &ddb_state,
+				    शून्य, शून्य, शून्य) == QLA_ERROR) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "scsi%ld: %s: failed "
 				  "get_ddb_entry for fw_ddb_index %d\n",
 				  ha->host_no, __func__,
 				  ddb_entry->fw_ddb_index));
-		goto exit_session_conn_param;
-	}
+		जाओ निकास_session_conn_param;
+	पूर्ण
 
 	cls_sess = ddb_entry->sess;
 	sess = cls_sess->dd_data;
@@ -3973,157 +3974,157 @@ void qla4xxx_update_session_conn_param(struct scsi_qla_host *ha,
 	cls_conn = ddb_entry->conn;
 	conn = cls_conn->dd_data;
 
-	/* Update timers after login */
-	ddb_entry->default_relogin_timeout =
-		(le16_to_cpu(fw_ddb_entry->def_timeout) > LOGIN_TOV) &&
-		 (le16_to_cpu(fw_ddb_entry->def_timeout) < LOGIN_TOV * 10) ?
-		 le16_to_cpu(fw_ddb_entry->def_timeout) : LOGIN_TOV;
-	ddb_entry->default_time2wait =
-				le16_to_cpu(fw_ddb_entry->iscsi_def_time2wait);
+	/* Update समयrs after login */
+	ddb_entry->शेष_relogin_समयout =
+		(le16_to_cpu(fw_ddb_entry->def_समयout) > LOGIN_TOV) &&
+		 (le16_to_cpu(fw_ddb_entry->def_समयout) < LOGIN_TOV * 10) ?
+		 le16_to_cpu(fw_ddb_entry->def_समयout) : LOGIN_TOV;
+	ddb_entry->शेष_समय2रुको =
+				le16_to_cpu(fw_ddb_entry->iscsi_def_समय2रुको);
 
 	/* Update params */
 	ddb_entry->chap_tbl_idx = le16_to_cpu(fw_ddb_entry->chap_tbl_idx);
 	qla4xxx_copy_to_sess_conn_params(conn, sess, fw_ddb_entry);
 
-	memcpy(sess->initiatorname, ha->name_string,
-	       min(sizeof(ha->name_string), sizeof(sess->initiatorname)));
+	स_नकल(sess->initiatorname, ha->name_string,
+	       min(माप(ha->name_string), माप(sess->initiatorname)));
 
-exit_session_conn_param:
-	if (fw_ddb_entry)
-		dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+निकास_session_conn_param:
+	अगर (fw_ddb_entry)
+		dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 				  fw_ddb_entry, fw_ddb_entry_dma);
-}
+पूर्ण
 
 /*
  * Timer routines
  */
-static void qla4xxx_timer(struct timer_list *t);
+अटल व्योम qla4xxx_समयr(काष्ठा समयr_list *t);
 
-static void qla4xxx_start_timer(struct scsi_qla_host *ha,
-				unsigned long interval)
-{
-	DEBUG(printk("scsi: %s: Starting timer thread for adapter %d\n",
+अटल व्योम qla4xxx_start_समयr(काष्ठा scsi_qla_host *ha,
+				अचिन्हित दीर्घ पूर्णांकerval)
+अणु
+	DEBUG(prपूर्णांकk("scsi: %s: Starting timer thread for adapter %d\n",
 		     __func__, ha->host->host_no));
-	timer_setup(&ha->timer, qla4xxx_timer, 0);
-	ha->timer.expires = jiffies + interval * HZ;
-	add_timer(&ha->timer);
-	ha->timer_active = 1;
-}
+	समयr_setup(&ha->समयr, qla4xxx_समयr, 0);
+	ha->समयr.expires = jअगरfies + पूर्णांकerval * HZ;
+	add_समयr(&ha->समयr);
+	ha->समयr_active = 1;
+पूर्ण
 
-static void qla4xxx_stop_timer(struct scsi_qla_host *ha)
-{
-	del_timer_sync(&ha->timer);
-	ha->timer_active = 0;
-}
+अटल व्योम qla4xxx_stop_समयr(काष्ठा scsi_qla_host *ha)
+अणु
+	del_समयr_sync(&ha->समयr);
+	ha->समयr_active = 0;
+पूर्ण
 
 /***
  * qla4xxx_mark_device_missing - blocks the session
- * @cls_session: Pointer to the session to be blocked
- * @ddb_entry: Pointer to device database entry
+ * @cls_session: Poपूर्णांकer to the session to be blocked
+ * @ddb_entry: Poपूर्णांकer to device database entry
  *
- * This routine marks a device missing and close connection.
+ * This routine marks a device missing and बंद connection.
  **/
-void qla4xxx_mark_device_missing(struct iscsi_cls_session *cls_session)
-{
+व्योम qla4xxx_mark_device_missing(काष्ठा iscsi_cls_session *cls_session)
+अणु
 	iscsi_block_session(cls_session);
-}
+पूर्ण
 
 /**
  * qla4xxx_mark_all_devices_missing - mark all devices as missing.
- * @ha: Pointer to host adapter structure.
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
  *
  * This routine marks a device missing and resets the relogin retry count.
  **/
-void qla4xxx_mark_all_devices_missing(struct scsi_qla_host *ha)
-{
-	iscsi_host_for_each_session(ha->host, qla4xxx_mark_device_missing);
-}
+व्योम qla4xxx_mark_all_devices_missing(काष्ठा scsi_qla_host *ha)
+अणु
+	iscsi_host_क्रम_each_session(ha->host, qla4xxx_mark_device_missing);
+पूर्ण
 
-static struct srb* qla4xxx_get_new_srb(struct scsi_qla_host *ha,
-				       struct ddb_entry *ddb_entry,
-				       struct scsi_cmnd *cmd)
-{
-	struct srb *srb;
+अटल काष्ठा srb* qla4xxx_get_new_srb(काष्ठा scsi_qla_host *ha,
+				       काष्ठा ddb_entry *ddb_entry,
+				       काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा srb *srb;
 
 	srb = mempool_alloc(ha->srb_mempool, GFP_ATOMIC);
-	if (!srb)
-		return srb;
+	अगर (!srb)
+		वापस srb;
 
 	kref_init(&srb->srb_ref);
 	srb->ha = ha;
 	srb->ddb = ddb_entry;
 	srb->cmd = cmd;
 	srb->flags = 0;
-	CMD_SP(cmd) = (void *)srb;
+	CMD_SP(cmd) = (व्योम *)srb;
 
-	return srb;
-}
+	वापस srb;
+पूर्ण
 
-static void qla4xxx_srb_free_dma(struct scsi_qla_host *ha, struct srb *srb)
-{
-	struct scsi_cmnd *cmd = srb->cmd;
+अटल व्योम qla4xxx_srb_मुक्त_dma(काष्ठा scsi_qla_host *ha, काष्ठा srb *srb)
+अणु
+	काष्ठा scsi_cmnd *cmd = srb->cmd;
 
-	if (srb->flags & SRB_DMA_VALID) {
+	अगर (srb->flags & SRB_DMA_VALID) अणु
 		scsi_dma_unmap(cmd);
 		srb->flags &= ~SRB_DMA_VALID;
-	}
-	CMD_SP(cmd) = NULL;
-}
+	पूर्ण
+	CMD_SP(cmd) = शून्य;
+पूर्ण
 
-void qla4xxx_srb_compl(struct kref *ref)
-{
-	struct srb *srb = container_of(ref, struct srb, srb_ref);
-	struct scsi_cmnd *cmd = srb->cmd;
-	struct scsi_qla_host *ha = srb->ha;
+व्योम qla4xxx_srb_compl(काष्ठा kref *ref)
+अणु
+	काष्ठा srb *srb = container_of(ref, काष्ठा srb, srb_ref);
+	काष्ठा scsi_cmnd *cmd = srb->cmd;
+	काष्ठा scsi_qla_host *ha = srb->ha;
 
-	qla4xxx_srb_free_dma(ha, srb);
+	qla4xxx_srb_मुक्त_dma(ha, srb);
 
-	mempool_free(srb, ha->srb_mempool);
+	mempool_मुक्त(srb, ha->srb_mempool);
 
-	cmd->scsi_done(cmd);
-}
+	cmd->scsi_करोne(cmd);
+पूर्ण
 
 /**
  * qla4xxx_queuecommand - scsi layer issues scsi command to driver.
  * @host: scsi host
- * @cmd: Pointer to Linux's SCSI command structure
+ * @cmd: Poपूर्णांकer to Linux's SCSI command काष्ठाure
  *
  * Remarks:
  * This routine is invoked by Linux to send a SCSI command to the driver.
- * The mid-level driver tries to ensure that queuecommand never gets
- * invoked concurrently with itself or the interrupt handler (although
- * the interrupt handler may call this routine as part of request-
- * completion handling).   Unfortunely, it sometimes calls the scheduler
- * in interrupt context which is a big NO! NO!.
+ * The mid-level driver tries to ensure that queuecommand never माला_लो
+ * invoked concurrently with itself or the पूर्णांकerrupt handler (although
+ * the पूर्णांकerrupt handler may call this routine as part of request-
+ * completion handling).   Unक्रमtunely, it someबार calls the scheduler
+ * in पूर्णांकerrupt context which is a big NO! NO!.
  **/
-static int qla4xxx_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
-{
-	struct scsi_qla_host *ha = to_qla_host(host);
-	struct ddb_entry *ddb_entry = cmd->device->hostdata;
-	struct iscsi_cls_session *sess = ddb_entry->sess;
-	struct srb *srb;
-	int rval;
+अटल पूर्णांक qla4xxx_queuecommand(काष्ठा Scsi_Host *host, काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(host);
+	काष्ठा ddb_entry *ddb_entry = cmd->device->hostdata;
+	काष्ठा iscsi_cls_session *sess = ddb_entry->sess;
+	काष्ठा srb *srb;
+	पूर्णांक rval;
 
-	if (test_bit(AF_EEH_BUSY, &ha->flags)) {
-		if (test_bit(AF_PCI_CHANNEL_IO_PERM_FAILURE, &ha->flags))
+	अगर (test_bit(AF_EEH_BUSY, &ha->flags)) अणु
+		अगर (test_bit(AF_PCI_CHANNEL_IO_PERM_FAILURE, &ha->flags))
 			cmd->result = DID_NO_CONNECT << 16;
-		else
+		अन्यथा
 			cmd->result = DID_REQUEUE << 16;
-		goto qc_fail_command;
-	}
+		जाओ qc_fail_command;
+	पूर्ण
 
-	if (!sess) {
+	अगर (!sess) अणु
 		cmd->result = DID_IMM_RETRY << 16;
-		goto qc_fail_command;
-	}
+		जाओ qc_fail_command;
+	पूर्ण
 
-	rval = iscsi_session_chkready(sess);
-	if (rval) {
+	rval = iscsi_session_chkपढ़ोy(sess);
+	अगर (rval) अणु
 		cmd->result = rval;
-		goto qc_fail_command;
-	}
+		जाओ qc_fail_command;
+	पूर्ण
 
-	if (test_bit(DPC_RESET_HA_INTR, &ha->dpc_flags) ||
+	अगर (test_bit(DPC_RESET_HA_INTR, &ha->dpc_flags) ||
 	    test_bit(DPC_RESET_ACTIVE, &ha->dpc_flags) ||
 	    test_bit(DPC_RESET_HA, &ha->dpc_flags) ||
 	    test_bit(DPC_HA_UNRECOVERABLE, &ha->dpc_flags) ||
@@ -4134,452 +4135,452 @@ static int qla4xxx_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmd)
 	    test_bit(DPC_POST_IDC_ACK, &ha->dpc_flags) ||
 	    test_bit(DPC_RESTORE_ACB, &ha->dpc_flags) ||
 	    test_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags))
-		goto qc_host_busy;
+		जाओ qc_host_busy;
 
 	srb = qla4xxx_get_new_srb(ha, ddb_entry, cmd);
-	if (!srb)
-		goto qc_host_busy;
+	अगर (!srb)
+		जाओ qc_host_busy;
 
 	rval = qla4xxx_send_command_to_isp(ha, srb);
-	if (rval != QLA_SUCCESS)
-		goto qc_host_busy_free_sp;
+	अगर (rval != QLA_SUCCESS)
+		जाओ qc_host_busy_मुक्त_sp;
 
-	return 0;
+	वापस 0;
 
-qc_host_busy_free_sp:
-	qla4xxx_srb_free_dma(ha, srb);
-	mempool_free(srb, ha->srb_mempool);
+qc_host_busy_मुक्त_sp:
+	qla4xxx_srb_मुक्त_dma(ha, srb);
+	mempool_मुक्त(srb, ha->srb_mempool);
 
 qc_host_busy:
-	return SCSI_MLQUEUE_HOST_BUSY;
+	वापस SCSI_MLQUEUE_HOST_BUSY;
 
 qc_fail_command:
-	cmd->scsi_done(cmd);
+	cmd->scsi_करोne(cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * qla4xxx_mem_free - frees memory allocated to adapter
- * @ha: Pointer to host adapter structure.
+ * qla4xxx_mem_मुक्त - मुक्तs memory allocated to adapter
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
  *
  * Frees memory previously allocated by qla4xxx_mem_alloc
  **/
-static void qla4xxx_mem_free(struct scsi_qla_host *ha)
-{
-	if (ha->queues)
-		dma_free_coherent(&ha->pdev->dev, ha->queues_len, ha->queues,
+अटल व्योम qla4xxx_mem_मुक्त(काष्ठा scsi_qla_host *ha)
+अणु
+	अगर (ha->queues)
+		dma_मुक्त_coherent(&ha->pdev->dev, ha->queues_len, ha->queues,
 				  ha->queues_dma);
 
-	vfree(ha->fw_dump);
+	vमुक्त(ha->fw_dump);
 
 	ha->queues_len = 0;
-	ha->queues = NULL;
+	ha->queues = शून्य;
 	ha->queues_dma = 0;
-	ha->request_ring = NULL;
+	ha->request_ring = शून्य;
 	ha->request_dma = 0;
-	ha->response_ring = NULL;
+	ha->response_ring = शून्य;
 	ha->response_dma = 0;
-	ha->shadow_regs = NULL;
-	ha->shadow_regs_dma = 0;
-	ha->fw_dump = NULL;
+	ha->shaकरोw_regs = शून्य;
+	ha->shaकरोw_regs_dma = 0;
+	ha->fw_dump = शून्य;
 	ha->fw_dump_size = 0;
 
 	/* Free srb pool. */
 	mempool_destroy(ha->srb_mempool);
-	ha->srb_mempool = NULL;
+	ha->srb_mempool = शून्य;
 
 	dma_pool_destroy(ha->chap_dma_pool);
 
-	vfree(ha->chap_list);
-	ha->chap_list = NULL;
+	vमुक्त(ha->chap_list);
+	ha->chap_list = शून्य;
 
 	dma_pool_destroy(ha->fw_ddb_dma_pool);
 
-	/* release io space registers  */
-	if (is_qla8022(ha)) {
-		if (ha->nx_pcibase)
+	/* release io space रेजिस्टरs  */
+	अगर (is_qla8022(ha)) अणु
+		अगर (ha->nx_pcibase)
 			iounmap(
-			    (struct device_reg_82xx __iomem *)ha->nx_pcibase);
-	} else if (is_qla8032(ha) || is_qla8042(ha)) {
-		if (ha->nx_pcibase)
+			    (काष्ठा device_reg_82xx __iomem *)ha->nx_pcibase);
+	पूर्ण अन्यथा अगर (is_qla8032(ha) || is_qla8042(ha)) अणु
+		अगर (ha->nx_pcibase)
 			iounmap(
-			    (struct device_reg_83xx __iomem *)ha->nx_pcibase);
-	} else if (ha->reg) {
+			    (काष्ठा device_reg_83xx __iomem *)ha->nx_pcibase);
+	पूर्ण अन्यथा अगर (ha->reg) अणु
 		iounmap(ha->reg);
-	}
+	पूर्ण
 
-	vfree(ha->reset_tmplt.buff);
+	vमुक्त(ha->reset_पंचांगplt.buff);
 
 	pci_release_regions(ha->pdev);
-}
+पूर्ण
 
 /**
- * qla4xxx_mem_alloc - allocates memory for use by adapter.
- * @ha: Pointer to host adapter structure
+ * qla4xxx_mem_alloc - allocates memory क्रम use by adapter.
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure
  *
- * Allocates DMA memory for request and response queues. Also allocates memory
- * for srbs.
+ * Allocates DMA memory क्रम request and response queues. Also allocates memory
+ * क्रम srbs.
  **/
-static int qla4xxx_mem_alloc(struct scsi_qla_host *ha)
-{
-	unsigned long align;
+अटल पूर्णांक qla4xxx_mem_alloc(काष्ठा scsi_qla_host *ha)
+अणु
+	अचिन्हित दीर्घ align;
 
-	/* Allocate contiguous block of DMA memory for queues. */
+	/* Allocate contiguous block of DMA memory क्रम queues. */
 	ha->queues_len = ((REQUEST_QUEUE_DEPTH * QUEUE_SIZE) +
 			  (RESPONSE_QUEUE_DEPTH * QUEUE_SIZE) +
-			  sizeof(struct shadow_regs) +
+			  माप(काष्ठा shaकरोw_regs) +
 			  MEM_ALIGN_VALUE +
 			  (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
 	ha->queues = dma_alloc_coherent(&ha->pdev->dev, ha->queues_len,
 					&ha->queues_dma, GFP_KERNEL);
-	if (ha->queues == NULL) {
-		ql4_printk(KERN_WARNING, ha,
+	अगर (ha->queues == शून्य) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha,
 		    "Memory Allocation failed - queues.\n");
 
-		goto mem_alloc_error_exit;
-	}
+		जाओ mem_alloc_error_निकास;
+	पूर्ण
 
 	/*
 	 * As per RISC alignment requirements -- the bus-address must be a
 	 * multiple of the request-ring size (in bytes).
 	 */
 	align = 0;
-	if ((unsigned long)ha->queues_dma & (MEM_ALIGN_VALUE - 1))
-		align = MEM_ALIGN_VALUE - ((unsigned long)ha->queues_dma &
+	अगर ((अचिन्हित दीर्घ)ha->queues_dma & (MEM_ALIGN_VALUE - 1))
+		align = MEM_ALIGN_VALUE - ((अचिन्हित दीर्घ)ha->queues_dma &
 					   (MEM_ALIGN_VALUE - 1));
 
-	/* Update request and response queue pointers. */
+	/* Update request and response queue poपूर्णांकers. */
 	ha->request_dma = ha->queues_dma + align;
-	ha->request_ring = (struct queue_entry *) (ha->queues + align);
+	ha->request_ring = (काष्ठा queue_entry *) (ha->queues + align);
 	ha->response_dma = ha->queues_dma + align +
 		(REQUEST_QUEUE_DEPTH * QUEUE_SIZE);
-	ha->response_ring = (struct queue_entry *) (ha->queues + align +
+	ha->response_ring = (काष्ठा queue_entry *) (ha->queues + align +
 						    (REQUEST_QUEUE_DEPTH *
 						     QUEUE_SIZE));
-	ha->shadow_regs_dma = ha->queues_dma + align +
+	ha->shaकरोw_regs_dma = ha->queues_dma + align +
 		(REQUEST_QUEUE_DEPTH * QUEUE_SIZE) +
 		(RESPONSE_QUEUE_DEPTH * QUEUE_SIZE);
-	ha->shadow_regs = (struct shadow_regs *) (ha->queues + align +
+	ha->shaकरोw_regs = (काष्ठा shaकरोw_regs *) (ha->queues + align +
 						  (REQUEST_QUEUE_DEPTH *
 						   QUEUE_SIZE) +
 						  (RESPONSE_QUEUE_DEPTH *
 						   QUEUE_SIZE));
 
-	/* Allocate memory for srb pool. */
+	/* Allocate memory क्रम srb pool. */
 	ha->srb_mempool = mempool_create(SRB_MIN_REQ, mempool_alloc_slab,
-					 mempool_free_slab, srb_cachep);
-	if (ha->srb_mempool == NULL) {
-		ql4_printk(KERN_WARNING, ha,
+					 mempool_मुक्त_slab, srb_cachep);
+	अगर (ha->srb_mempool == शून्य) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha,
 		    "Memory Allocation failed - SRB Pool.\n");
 
-		goto mem_alloc_error_exit;
-	}
+		जाओ mem_alloc_error_निकास;
+	पूर्ण
 
 	ha->chap_dma_pool = dma_pool_create("ql4_chap", &ha->pdev->dev,
 					    CHAP_DMA_BLOCK_SIZE, 8, 0);
 
-	if (ha->chap_dma_pool == NULL) {
-		ql4_printk(KERN_WARNING, ha,
+	अगर (ha->chap_dma_pool == शून्य) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha,
 		    "%s: chap_dma_pool allocation failed..\n", __func__);
-		goto mem_alloc_error_exit;
-	}
+		जाओ mem_alloc_error_निकास;
+	पूर्ण
 
 	ha->fw_ddb_dma_pool = dma_pool_create("ql4_fw_ddb", &ha->pdev->dev,
 					      DDB_DMA_BLOCK_SIZE, 8, 0);
 
-	if (ha->fw_ddb_dma_pool == NULL) {
-		ql4_printk(KERN_WARNING, ha,
+	अगर (ha->fw_ddb_dma_pool == शून्य) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha,
 			   "%s: fw_ddb_dma_pool allocation failed..\n",
 			   __func__);
-		goto mem_alloc_error_exit;
-	}
+		जाओ mem_alloc_error_निकास;
+	पूर्ण
 
-	return QLA_SUCCESS;
+	वापस QLA_SUCCESS;
 
-mem_alloc_error_exit:
-	return QLA_ERROR;
-}
+mem_alloc_error_निकास:
+	वापस QLA_ERROR;
+पूर्ण
 
 /**
  * qla4_8xxx_check_temp - Check the ISP82XX temperature.
- * @ha: adapter block pointer.
+ * @ha: adapter block poपूर्णांकer.
  *
  * Note: The caller should not hold the idc lock.
  **/
-static int qla4_8xxx_check_temp(struct scsi_qla_host *ha)
-{
-	uint32_t temp, temp_state, temp_val;
-	int status = QLA_SUCCESS;
+अटल पूर्णांक qla4_8xxx_check_temp(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक32_t temp, temp_state, temp_val;
+	पूर्णांक status = QLA_SUCCESS;
 
 	temp = qla4_8xxx_rd_direct(ha, QLA8XXX_CRB_TEMP_STATE);
 
 	temp_state = qla82xx_get_temp_state(temp);
 	temp_val = qla82xx_get_temp_val(temp);
 
-	if (temp_state == QLA82XX_TEMP_PANIC) {
-		ql4_printk(KERN_WARNING, ha, "Device temperature %d degrees C"
+	अगर (temp_state == QLA82XX_TEMP_PANIC) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha, "Device temperature %d degrees C"
 			   " exceeds maximum allowed. Hardware has been shut"
 			   " down.\n", temp_val);
 		status = QLA_ERROR;
-	} else if (temp_state == QLA82XX_TEMP_WARN) {
-		if (ha->temperature == QLA82XX_TEMP_NORMAL)
-			ql4_printk(KERN_WARNING, ha, "Device temperature %d"
+	पूर्ण अन्यथा अगर (temp_state == QLA82XX_TEMP_WARN) अणु
+		अगर (ha->temperature == QLA82XX_TEMP_NORMAL)
+			ql4_prपूर्णांकk(KERN_WARNING, ha, "Device temperature %d"
 				   " degrees C exceeds operating range."
 				   " Immediate action needed.\n", temp_val);
-	} else {
-		if (ha->temperature == QLA82XX_TEMP_WARN)
-			ql4_printk(KERN_INFO, ha, "Device temperature is"
+	पूर्ण अन्यथा अणु
+		अगर (ha->temperature == QLA82XX_TEMP_WARN)
+			ql4_prपूर्णांकk(KERN_INFO, ha, "Device temperature is"
 				   " now %d degrees C in normal range.\n",
 				   temp_val);
-	}
+	पूर्ण
 	ha->temperature = temp_state;
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
  * qla4_8xxx_check_fw_alive  - Check firmware health
- * @ha: Pointer to host adapter structure.
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
  *
  * Context: Interrupt
  **/
-static int qla4_8xxx_check_fw_alive(struct scsi_qla_host *ha)
-{
-	uint32_t fw_heartbeat_counter;
-	int status = QLA_SUCCESS;
+अटल पूर्णांक qla4_8xxx_check_fw_alive(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक32_t fw_heartbeat_counter;
+	पूर्णांक status = QLA_SUCCESS;
 
 	fw_heartbeat_counter = qla4_8xxx_rd_direct(ha,
 						   QLA8XXX_PEG_ALIVE_COUNTER);
 	/* If PEG_ALIVE_COUNTER is 0xffffffff, AER/EEH is in progress, ignore */
-	if (fw_heartbeat_counter == 0xffffffff) {
-		DEBUG2(printk(KERN_WARNING "scsi%ld: %s: Device in frozen "
+	अगर (fw_heartbeat_counter == 0xffffffff) अणु
+		DEBUG2(prपूर्णांकk(KERN_WARNING "scsi%ld: %s: Device in frozen "
 		    "state, QLA82XX_PEG_ALIVE_COUNTER is 0xffffffff\n",
 		    ha->host_no, __func__));
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	if (ha->fw_heartbeat_counter == fw_heartbeat_counter) {
+	अगर (ha->fw_heartbeat_counter == fw_heartbeat_counter) अणु
 		ha->seconds_since_last_heartbeat++;
 		/* FW not alive after 2 seconds */
-		if (ha->seconds_since_last_heartbeat == 2) {
+		अगर (ha->seconds_since_last_heartbeat == 2) अणु
 			ha->seconds_since_last_heartbeat = 0;
 			qla4_8xxx_dump_peg_reg(ha);
 			status = QLA_ERROR;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		ha->seconds_since_last_heartbeat = 0;
 
 	ha->fw_heartbeat_counter = fw_heartbeat_counter;
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void qla4_8xxx_process_fw_error(struct scsi_qla_host *ha)
-{
-	uint32_t halt_status;
-	int halt_status_unrecoverable = 0;
+अटल व्योम qla4_8xxx_process_fw_error(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक32_t halt_status;
+	पूर्णांक halt_status_unrecoverable = 0;
 
 	halt_status = qla4_8xxx_rd_direct(ha, QLA8XXX_PEG_HALT_STATUS1);
 
-	if (is_qla8022(ha)) {
-		ql4_printk(KERN_INFO, ha, "%s: disabling pause transmit on port 0 & 1.\n",
+	अगर (is_qla8022(ha)) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "%s: disabling pause transmit on port 0 & 1.\n",
 			   __func__);
 		qla4_82xx_wr_32(ha, QLA82XX_CRB_NIU + 0x98,
 				CRB_NIU_XG_PAUSE_CTL_P0 |
 				CRB_NIU_XG_PAUSE_CTL_P1);
 
-		if (QLA82XX_FWERROR_CODE(halt_status) == 0x67)
-			ql4_printk(KERN_ERR, ha, "%s: Firmware aborted with error code 0x00006700. Device is being reset\n",
+		अगर (QLA82XX_FWERROR_CODE(halt_status) == 0x67)
+			ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Firmware aborted with error code 0x00006700. Device is being reset\n",
 				   __func__);
-		if (halt_status & HALT_STATUS_UNRECOVERABLE)
+		अगर (halt_status & HALT_STATUS_UNRECOVERABLE)
 			halt_status_unrecoverable = 1;
-	} else if (is_qla8032(ha) || is_qla8042(ha)) {
-		if (halt_status & QLA83XX_HALT_STATUS_FW_RESET)
-			ql4_printk(KERN_ERR, ha, "%s: Firmware error detected device is being reset\n",
+	पूर्ण अन्यथा अगर (is_qla8032(ha) || is_qla8042(ha)) अणु
+		अगर (halt_status & QLA83XX_HALT_STATUS_FW_RESET)
+			ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Firmware error detected device is being reset\n",
 				   __func__);
-		else if (halt_status & QLA83XX_HALT_STATUS_UNRECOVERABLE)
+		अन्यथा अगर (halt_status & QLA83XX_HALT_STATUS_UNRECOVERABLE)
 			halt_status_unrecoverable = 1;
-	}
+	पूर्ण
 
 	/*
-	 * Since we cannot change dev_state in interrupt context,
+	 * Since we cannot change dev_state in पूर्णांकerrupt context,
 	 * set appropriate DPC flag then wakeup DPC
 	 */
-	if (halt_status_unrecoverable) {
+	अगर (halt_status_unrecoverable) अणु
 		set_bit(DPC_HA_UNRECOVERABLE, &ha->dpc_flags);
-	} else {
-		ql4_printk(KERN_INFO, ha, "%s: detect abort needed!\n",
+	पूर्ण अन्यथा अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "%s: detect abort needed!\n",
 			   __func__);
 		set_bit(DPC_RESET_HA, &ha->dpc_flags);
-	}
+	पूर्ण
 	qla4xxx_mailbox_premature_completion(ha);
 	qla4xxx_wake_dpc(ha);
-}
+पूर्ण
 
 /**
- * qla4_8xxx_watchdog - Poll dev state
- * @ha: Pointer to host adapter structure.
+ * qla4_8xxx_watchकरोg - Poll dev state
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
  *
  * Context: Interrupt
  **/
-void qla4_8xxx_watchdog(struct scsi_qla_host *ha)
-{
-	uint32_t dev_state;
-	uint32_t idc_ctrl;
+व्योम qla4_8xxx_watchकरोg(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक32_t dev_state;
+	uपूर्णांक32_t idc_ctrl;
 
-	if (is_qla8032(ha) &&
+	अगर (is_qla8032(ha) &&
 	    (qla4_83xx_is_detached(ha) == QLA_SUCCESS))
 		WARN_ONCE(1, "%s: iSCSI function %d marked invisible\n",
 			  __func__, ha->func_num);
 
-	/* don't poll if reset is going on */
-	if (!(test_bit(DPC_RESET_ACTIVE, &ha->dpc_flags) ||
+	/* करोn't poll अगर reset is going on */
+	अगर (!(test_bit(DPC_RESET_ACTIVE, &ha->dpc_flags) ||
 	    test_bit(DPC_RESET_HA, &ha->dpc_flags) ||
-	    test_bit(DPC_RETRY_RESET_HA, &ha->dpc_flags))) {
+	    test_bit(DPC_RETRY_RESET_HA, &ha->dpc_flags))) अणु
 		dev_state = qla4_8xxx_rd_direct(ha, QLA8XXX_CRB_DEV_STATE);
 
-		if (qla4_8xxx_check_temp(ha)) {
-			if (is_qla8022(ha)) {
-				ql4_printk(KERN_INFO, ha, "disabling pause transmit on port 0 & 1.\n");
+		अगर (qla4_8xxx_check_temp(ha)) अणु
+			अगर (is_qla8022(ha)) अणु
+				ql4_prपूर्णांकk(KERN_INFO, ha, "disabling pause transmit on port 0 & 1.\n");
 				qla4_82xx_wr_32(ha, QLA82XX_CRB_NIU + 0x98,
 						CRB_NIU_XG_PAUSE_CTL_P0 |
 						CRB_NIU_XG_PAUSE_CTL_P1);
-			}
+			पूर्ण
 			set_bit(DPC_HA_UNRECOVERABLE, &ha->dpc_flags);
 			qla4xxx_wake_dpc(ha);
-		} else if (dev_state == QLA8XXX_DEV_NEED_RESET &&
-			   !test_bit(DPC_RESET_HA, &ha->dpc_flags)) {
+		पूर्ण अन्यथा अगर (dev_state == QLA8XXX_DEV_NEED_RESET &&
+			   !test_bit(DPC_RESET_HA, &ha->dpc_flags)) अणु
 
-			ql4_printk(KERN_INFO, ha, "%s: HW State: NEED RESET!\n",
+			ql4_prपूर्णांकk(KERN_INFO, ha, "%s: HW State: NEED RESET!\n",
 				   __func__);
 
-			if (is_qla8032(ha) || is_qla8042(ha)) {
+			अगर (is_qla8032(ha) || is_qla8042(ha)) अणु
 				idc_ctrl = qla4_83xx_rd_reg(ha,
 							QLA83XX_IDC_DRV_CTRL);
-				if (!(idc_ctrl & GRACEFUL_RESET_BIT1)) {
-					ql4_printk(KERN_INFO, ha, "%s: Graceful reset bit is not set\n",
+				अगर (!(idc_ctrl & GRACEFUL_RESET_BIT1)) अणु
+					ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Graceful reset bit is not set\n",
 						   __func__);
 					qla4xxx_mailbox_premature_completion(
 									    ha);
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if ((is_qla8032(ha) || is_qla8042(ha)) ||
-			    (is_qla8022(ha) && !ql4xdontresethba)) {
+			अगर ((is_qla8032(ha) || is_qla8042(ha)) ||
+			    (is_qla8022(ha) && !ql4xकरोntresethba)) अणु
 				set_bit(DPC_RESET_HA, &ha->dpc_flags);
 				qla4xxx_wake_dpc(ha);
-			}
-		} else if (dev_state == QLA8XXX_DEV_NEED_QUIESCENT &&
-		    !test_bit(DPC_HA_NEED_QUIESCENT, &ha->dpc_flags)) {
-			ql4_printk(KERN_INFO, ha, "%s: HW State: NEED QUIES!\n",
+			पूर्ण
+		पूर्ण अन्यथा अगर (dev_state == QLA8XXX_DEV_NEED_QUIESCENT &&
+		    !test_bit(DPC_HA_NEED_QUIESCENT, &ha->dpc_flags)) अणु
+			ql4_prपूर्णांकk(KERN_INFO, ha, "%s: HW State: NEED QUIES!\n",
 			    __func__);
 			set_bit(DPC_HA_NEED_QUIESCENT, &ha->dpc_flags);
 			qla4xxx_wake_dpc(ha);
-		} else  {
+		पूर्ण अन्यथा  अणु
 			/* Check firmware health */
-			if (qla4_8xxx_check_fw_alive(ha))
+			अगर (qla4_8xxx_check_fw_alive(ha))
 				qla4_8xxx_process_fw_error(ha);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void qla4xxx_check_relogin_flash_ddb(struct iscsi_cls_session *cls_sess)
-{
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
+अटल व्योम qla4xxx_check_relogin_flash_ddb(काष्ठा iscsi_cls_session *cls_sess)
+अणु
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
 
 	sess = cls_sess->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
 
-	if (!(ddb_entry->ddb_type == FLASH_DDB))
-		return;
+	अगर (!(ddb_entry->ddb_type == FLASH_DDB))
+		वापस;
 
-	if (adapter_up(ha) && !test_bit(DF_RELOGIN, &ddb_entry->flags) &&
-	    !iscsi_is_session_online(cls_sess)) {
-		if (atomic_read(&ddb_entry->retry_relogin_timer) !=
-		    INVALID_ENTRY) {
-			if (atomic_read(&ddb_entry->retry_relogin_timer) ==
-					0) {
-				atomic_set(&ddb_entry->retry_relogin_timer,
+	अगर (adapter_up(ha) && !test_bit(DF_RELOGIN, &ddb_entry->flags) &&
+	    !iscsi_is_session_online(cls_sess)) अणु
+		अगर (atomic_पढ़ो(&ddb_entry->retry_relogin_समयr) !=
+		    INVALID_ENTRY) अणु
+			अगर (atomic_पढ़ो(&ddb_entry->retry_relogin_समयr) ==
+					0) अणु
+				atomic_set(&ddb_entry->retry_relogin_समयr,
 					   INVALID_ENTRY);
 				set_bit(DPC_RELOGIN_DEVICE, &ha->dpc_flags);
 				set_bit(DF_RELOGIN, &ddb_entry->flags);
-				DEBUG2(ql4_printk(KERN_INFO, ha,
+				DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				       "%s: index [%d] login device\n",
 					__func__, ddb_entry->fw_ddb_index));
-			} else
-				atomic_dec(&ddb_entry->retry_relogin_timer);
-		}
-	}
+			पूर्ण अन्यथा
+				atomic_dec(&ddb_entry->retry_relogin_समयr);
+		पूर्ण
+	पूर्ण
 
-	/* Wait for relogin to timeout */
-	if (atomic_read(&ddb_entry->relogin_timer) &&
-	    (atomic_dec_and_test(&ddb_entry->relogin_timer) != 0)) {
+	/* Wait क्रम relogin to समयout */
+	अगर (atomic_पढ़ो(&ddb_entry->relogin_समयr) &&
+	    (atomic_dec_and_test(&ddb_entry->relogin_समयr) != 0)) अणु
 		/*
-		 * If the relogin times out and the device is
+		 * If the relogin बार out and the device is
 		 * still NOT ONLINE then try and relogin again.
 		 */
-		if (!iscsi_is_session_online(cls_sess)) {
-			/* Reset retry relogin timer */
+		अगर (!iscsi_is_session_online(cls_sess)) अणु
+			/* Reset retry relogin समयr */
 			atomic_inc(&ddb_entry->relogin_retry_count);
-			DEBUG2(ql4_printk(KERN_INFO, ha,
+			DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				"%s: index[%d] relogin timed out-retrying"
 				" relogin (%d), retry (%d)\n", __func__,
 				ddb_entry->fw_ddb_index,
-				atomic_read(&ddb_entry->relogin_retry_count),
-				ddb_entry->default_time2wait + 4));
+				atomic_पढ़ो(&ddb_entry->relogin_retry_count),
+				ddb_entry->शेष_समय2रुको + 4));
 			set_bit(DPC_RELOGIN_DEVICE, &ha->dpc_flags);
-			atomic_set(&ddb_entry->retry_relogin_timer,
-				   ddb_entry->default_time2wait + 4);
-		}
-	}
-}
+			atomic_set(&ddb_entry->retry_relogin_समयr,
+				   ddb_entry->शेष_समय2रुको + 4);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * qla4xxx_timer - checks every second for work to do.
- * @t: Context to obtain pointer to host adapter structure.
+ * qla4xxx_समयr - checks every second क्रम work to करो.
+ * @t: Context to obtain poपूर्णांकer to host adapter काष्ठाure.
  **/
-static void qla4xxx_timer(struct timer_list *t)
-{
-	struct scsi_qla_host *ha = from_timer(ha, t, timer);
-	int start_dpc = 0;
-	uint16_t w;
+अटल व्योम qla4xxx_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा scsi_qla_host *ha = from_समयr(ha, t, समयr);
+	पूर्णांक start_dpc = 0;
+	uपूर्णांक16_t w;
 
-	iscsi_host_for_each_session(ha->host, qla4xxx_check_relogin_flash_ddb);
+	iscsi_host_क्रम_each_session(ha->host, qla4xxx_check_relogin_flash_ddb);
 
 	/* If we are in the middle of AER/EEH processing
-	 * skip any processing and reschedule the timer
+	 * skip any processing and reschedule the समयr
 	 */
-	if (test_bit(AF_EEH_BUSY, &ha->flags)) {
-		mod_timer(&ha->timer, jiffies + HZ);
-		return;
-	}
+	अगर (test_bit(AF_EEH_BUSY, &ha->flags)) अणु
+		mod_समयr(&ha->समयr, jअगरfies + HZ);
+		वापस;
+	पूर्ण
 
-	/* Hardware read to trigger an EEH error during mailbox waits. */
-	if (!pci_channel_offline(ha->pdev))
-		pci_read_config_word(ha->pdev, PCI_VENDOR_ID, &w);
+	/* Hardware पढ़ो to trigger an EEH error during mailbox रुकोs. */
+	अगर (!pci_channel_offline(ha->pdev))
+		pci_पढ़ो_config_word(ha->pdev, PCI_VENDOR_ID, &w);
 
-	if (is_qla80XX(ha))
-		qla4_8xxx_watchdog(ha);
+	अगर (is_qla80XX(ha))
+		qla4_8xxx_watchकरोg(ha);
 
-	if (is_qla40XX(ha)) {
-		/* Check for heartbeat interval. */
-		if (ha->firmware_options & FWOPT_HEARTBEAT_ENABLE &&
-		    ha->heartbeat_interval != 0) {
+	अगर (is_qla40XX(ha)) अणु
+		/* Check क्रम heartbeat पूर्णांकerval. */
+		अगर (ha->firmware_options & FWOPT_HEARTBEAT_ENABLE &&
+		    ha->heartbeat_पूर्णांकerval != 0) अणु
 			ha->seconds_since_last_heartbeat++;
-			if (ha->seconds_since_last_heartbeat >
-			    ha->heartbeat_interval + 2)
+			अगर (ha->seconds_since_last_heartbeat >
+			    ha->heartbeat_पूर्णांकerval + 2)
 				set_bit(DPC_RESET_HA, &ha->dpc_flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Process any deferred work. */
-	if (!list_empty(&ha->work_list))
+	अगर (!list_empty(&ha->work_list))
 		start_dpc++;
 
-	/* Wakeup the dpc routine for this adapter, if needed. */
-	if (start_dpc ||
+	/* Wakeup the dpc routine क्रम this adapter, अगर needed. */
+	अगर (start_dpc ||
 	     test_bit(DPC_RESET_HA, &ha->dpc_flags) ||
 	     test_bit(DPC_RETRY_RESET_HA, &ha->dpc_flags) ||
 	     test_bit(DPC_RELOGIN_DEVICE, &ha->dpc_flags) ||
@@ -4590,81 +4591,81 @@ static void qla4xxx_timer(struct timer_list *t)
 	     test_bit(DPC_HA_UNRECOVERABLE, &ha->dpc_flags) ||
 	     test_bit(DPC_HA_NEED_QUIESCENT, &ha->dpc_flags) ||
 	     test_bit(DPC_SYSFS_DDB_EXPORT, &ha->dpc_flags) ||
-	     test_bit(DPC_AEN, &ha->dpc_flags)) {
-		DEBUG2(printk("scsi%ld: %s: scheduling dpc routine"
+	     test_bit(DPC_AEN, &ha->dpc_flags)) अणु
+		DEBUG2(prपूर्णांकk("scsi%ld: %s: scheduling dpc routine"
 			      " - dpc flags = 0x%lx\n",
 			      ha->host_no, __func__, ha->dpc_flags));
 		qla4xxx_wake_dpc(ha);
-	}
+	पूर्ण
 
-	/* Reschedule timer thread to call us back in one second */
-	mod_timer(&ha->timer, jiffies + HZ);
+	/* Reschedule समयr thपढ़ो to call us back in one second */
+	mod_समयr(&ha->समयr, jअगरfies + HZ);
 
-	DEBUG2(ha->seconds_since_last_intr++);
-}
+	DEBUG2(ha->seconds_since_last_पूर्णांकr++);
+पूर्ण
 
 /**
- * qla4xxx_cmd_wait - waits for all outstanding commands to complete
- * @ha: Pointer to host adapter structure.
+ * qla4xxx_cmd_रुको - रुकोs क्रम all outstanding commands to complete
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
  *
- * This routine stalls the driver until all outstanding commands are returned.
+ * This routine stalls the driver until all outstanding commands are वापसed.
  * Caller must release the Hardware Lock prior to calling this routine.
  **/
-static int qla4xxx_cmd_wait(struct scsi_qla_host *ha)
-{
-	uint32_t index = 0;
-	unsigned long flags;
-	struct scsi_cmnd *cmd;
-	unsigned long wtime;
-	uint32_t wtmo;
+अटल पूर्णांक qla4xxx_cmd_रुको(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक32_t index = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा scsi_cmnd *cmd;
+	अचिन्हित दीर्घ wसमय;
+	uपूर्णांक32_t wपंचांगo;
 
-	if (is_qla40XX(ha))
-		wtmo = WAIT_CMD_TOV;
-	else
-		wtmo = ha->nx_reset_timeout / 2;
+	अगर (is_qla40XX(ha))
+		wपंचांगo = WAIT_CMD_TOV;
+	अन्यथा
+		wपंचांगo = ha->nx_reset_समयout / 2;
 
-	wtime = jiffies + (wtmo * HZ);
+	wसमय = jअगरfies + (wपंचांगo * HZ);
 
-	DEBUG2(ql4_printk(KERN_INFO, ha,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 			  "Wait up to %u seconds for cmds to complete\n",
-			  wtmo));
+			  wपंचांगo));
 
-	while (!time_after_eq(jiffies, wtime)) {
+	जबतक (!समय_after_eq(jअगरfies, wसमय)) अणु
 		spin_lock_irqsave(&ha->hardware_lock, flags);
 		/* Find a command that hasn't completed. */
-		for (index = 0; index < ha->host->can_queue; index++) {
+		क्रम (index = 0; index < ha->host->can_queue; index++) अणु
 			cmd = scsi_host_find_tag(ha->host, index);
 			/*
-			 * We cannot just check if the index is valid,
-			 * becase if we are run from the scsi eh, then
+			 * We cannot just check अगर the index is valid,
+			 * beहाल अगर we are run from the scsi eh, then
 			 * the scsi/block layer is going to prevent
 			 * the tag from being released.
 			 */
-			if (cmd != NULL && CMD_SP(cmd))
-				break;
-		}
+			अगर (cmd != शून्य && CMD_SP(cmd))
+				अवरोध;
+		पूर्ण
 		spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-		/* If No Commands are pending, wait is complete */
-		if (index == ha->host->can_queue)
-			return QLA_SUCCESS;
+		/* If No Commands are pending, रुको is complete */
+		अगर (index == ha->host->can_queue)
+			वापस QLA_SUCCESS;
 
 		msleep(1000);
-	}
-	/* If we timed out on waiting for commands to come back
-	 * return ERROR. */
-	return QLA_ERROR;
-}
+	पूर्ण
+	/* If we समयd out on रुकोing क्रम commands to come back
+	 * वापस ERROR. */
+	वापस QLA_ERROR;
+पूर्ण
 
-int qla4xxx_hw_reset(struct scsi_qla_host *ha)
-{
-	uint32_t ctrl_status;
-	unsigned long flags = 0;
+पूर्णांक qla4xxx_hw_reset(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक32_t ctrl_status;
+	अचिन्हित दीर्घ flags = 0;
 
-	DEBUG2(printk(KERN_ERR "scsi%ld: %s\n", ha->host_no, __func__));
+	DEBUG2(prपूर्णांकk(KERN_ERR "scsi%ld: %s\n", ha->host_no, __func__));
 
-	if (ql4xxx_lock_drvr_wait(ha) != QLA_SUCCESS)
-		return QLA_ERROR;
+	अगर (ql4xxx_lock_drvr_रुको(ha) != QLA_SUCCESS)
+		वापस QLA_ERROR;
 
 	spin_lock_irqsave(&ha->hardware_lock, flags);
 
@@ -4672,315 +4673,315 @@ int qla4xxx_hw_reset(struct scsi_qla_host *ha)
 	 * If the SCSI Reset Interrupt bit is set, clear it.
 	 * Otherwise, the Soft Reset won't work.
 	 */
-	ctrl_status = readw(&ha->reg->ctrl_status);
-	if ((ctrl_status & CSR_SCSI_RESET_INTR) != 0)
-		writel(set_rmask(CSR_SCSI_RESET_INTR), &ha->reg->ctrl_status);
+	ctrl_status = पढ़ोw(&ha->reg->ctrl_status);
+	अगर ((ctrl_status & CSR_SCSI_RESET_INTR) != 0)
+		ग_लिखोl(set_rmask(CSR_SCSI_RESET_INTR), &ha->reg->ctrl_status);
 
 	/* Issue Soft Reset */
-	writel(set_rmask(CSR_SOFT_RESET), &ha->reg->ctrl_status);
-	readl(&ha->reg->ctrl_status);
+	ग_लिखोl(set_rmask(CSR_SOFT_RESET), &ha->reg->ctrl_status);
+	पढ़ोl(&ha->reg->ctrl_status);
 
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
-	return QLA_SUCCESS;
-}
+	वापस QLA_SUCCESS;
+पूर्ण
 
 /**
- * qla4xxx_soft_reset - performs soft reset.
- * @ha: Pointer to host adapter structure.
+ * qla4xxx_soft_reset - perक्रमms soft reset.
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
  **/
-int qla4xxx_soft_reset(struct scsi_qla_host *ha)
-{
-	uint32_t max_wait_time;
-	unsigned long flags = 0;
-	int status;
-	uint32_t ctrl_status;
+पूर्णांक qla4xxx_soft_reset(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक32_t max_रुको_समय;
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक status;
+	uपूर्णांक32_t ctrl_status;
 
 	status = qla4xxx_hw_reset(ha);
-	if (status != QLA_SUCCESS)
-		return status;
+	अगर (status != QLA_SUCCESS)
+		वापस status;
 
 	status = QLA_ERROR;
 	/* Wait until the Network Reset Intr bit is cleared */
-	max_wait_time = RESET_INTR_TOV;
-	do {
+	max_रुको_समय = RESET_INTR_TOV;
+	करो अणु
 		spin_lock_irqsave(&ha->hardware_lock, flags);
-		ctrl_status = readw(&ha->reg->ctrl_status);
+		ctrl_status = पढ़ोw(&ha->reg->ctrl_status);
 		spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-		if ((ctrl_status & CSR_NET_RESET_INTR) == 0)
-			break;
+		अगर ((ctrl_status & CSR_NET_RESET_INTR) == 0)
+			अवरोध;
 
 		msleep(1000);
-	} while ((--max_wait_time));
+	पूर्ण जबतक ((--max_रुको_समय));
 
-	if ((ctrl_status & CSR_NET_RESET_INTR) != 0) {
-		DEBUG2(printk(KERN_WARNING
+	अगर ((ctrl_status & CSR_NET_RESET_INTR) != 0) अणु
+		DEBUG2(prपूर्णांकk(KERN_WARNING
 			      "scsi%ld: Network Reset Intr not cleared by "
 			      "Network function, clearing it now!\n",
 			      ha->host_no));
 		spin_lock_irqsave(&ha->hardware_lock, flags);
-		writel(set_rmask(CSR_NET_RESET_INTR), &ha->reg->ctrl_status);
-		readl(&ha->reg->ctrl_status);
+		ग_लिखोl(set_rmask(CSR_NET_RESET_INTR), &ha->reg->ctrl_status);
+		पढ़ोl(&ha->reg->ctrl_status);
 		spin_unlock_irqrestore(&ha->hardware_lock, flags);
-	}
+	पूर्ण
 
-	/* Wait until the firmware tells us the Soft Reset is done */
-	max_wait_time = SOFT_RESET_TOV;
-	do {
+	/* Wait until the firmware tells us the Soft Reset is करोne */
+	max_रुको_समय = SOFT_RESET_TOV;
+	करो अणु
 		spin_lock_irqsave(&ha->hardware_lock, flags);
-		ctrl_status = readw(&ha->reg->ctrl_status);
+		ctrl_status = पढ़ोw(&ha->reg->ctrl_status);
 		spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-		if ((ctrl_status & CSR_SOFT_RESET) == 0) {
+		अगर ((ctrl_status & CSR_SOFT_RESET) == 0) अणु
 			status = QLA_SUCCESS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		msleep(1000);
-	} while ((--max_wait_time));
+	पूर्ण जबतक ((--max_रुको_समय));
 
 	/*
 	 * Also, make sure that the SCSI Reset Interrupt bit has been cleared
 	 * after the soft reset has taken place.
 	 */
 	spin_lock_irqsave(&ha->hardware_lock, flags);
-	ctrl_status = readw(&ha->reg->ctrl_status);
-	if ((ctrl_status & CSR_SCSI_RESET_INTR) != 0) {
-		writel(set_rmask(CSR_SCSI_RESET_INTR), &ha->reg->ctrl_status);
-		readl(&ha->reg->ctrl_status);
-	}
+	ctrl_status = पढ़ोw(&ha->reg->ctrl_status);
+	अगर ((ctrl_status & CSR_SCSI_RESET_INTR) != 0) अणु
+		ग_लिखोl(set_rmask(CSR_SCSI_RESET_INTR), &ha->reg->ctrl_status);
+		पढ़ोl(&ha->reg->ctrl_status);
+	पूर्ण
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
 	/* If soft reset fails then most probably the bios on other
 	 * function is also enabled.
 	 * Since the initialization is sequential the other fn
 	 * wont be able to acknowledge the soft reset.
-	 * Issue a force soft reset to workaround this scenario.
+	 * Issue a क्रमce soft reset to workaround this scenario.
 	 */
-	if (max_wait_time == 0) {
+	अगर (max_रुको_समय == 0) अणु
 		/* Issue Force Soft Reset */
 		spin_lock_irqsave(&ha->hardware_lock, flags);
-		writel(set_rmask(CSR_FORCE_SOFT_RESET), &ha->reg->ctrl_status);
-		readl(&ha->reg->ctrl_status);
+		ग_लिखोl(set_rmask(CSR_FORCE_SOFT_RESET), &ha->reg->ctrl_status);
+		पढ़ोl(&ha->reg->ctrl_status);
 		spin_unlock_irqrestore(&ha->hardware_lock, flags);
-		/* Wait until the firmware tells us the Soft Reset is done */
-		max_wait_time = SOFT_RESET_TOV;
-		do {
+		/* Wait until the firmware tells us the Soft Reset is करोne */
+		max_रुको_समय = SOFT_RESET_TOV;
+		करो अणु
 			spin_lock_irqsave(&ha->hardware_lock, flags);
-			ctrl_status = readw(&ha->reg->ctrl_status);
+			ctrl_status = पढ़ोw(&ha->reg->ctrl_status);
 			spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-			if ((ctrl_status & CSR_FORCE_SOFT_RESET) == 0) {
+			अगर ((ctrl_status & CSR_FORCE_SOFT_RESET) == 0) अणु
 				status = QLA_SUCCESS;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			msleep(1000);
-		} while ((--max_wait_time));
-	}
+		पूर्ण जबतक ((--max_रुको_समय));
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * qla4xxx_abort_active_cmds - returns all outstanding i/o requests to O.S.
- * @ha: Pointer to host adapter structure.
- * @res: returned scsi status
+ * qla4xxx_पात_active_cmds - वापसs all outstanding i/o requests to O.S.
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
+ * @res: वापसed scsi status
  *
- * This routine is called just prior to a HARD RESET to return all
+ * This routine is called just prior to a HARD RESET to वापस all
  * outstanding commands back to the Operating System.
  * Caller should make sure that the following locks are released
- * before this calling routine: Hardware lock, and io_request_lock.
+ * beक्रमe this calling routine: Hardware lock, and io_request_lock.
  **/
-static void qla4xxx_abort_active_cmds(struct scsi_qla_host *ha, int res)
-{
-	struct srb *srb;
-	int i;
-	unsigned long flags;
+अटल व्योम qla4xxx_पात_active_cmds(काष्ठा scsi_qla_host *ha, पूर्णांक res)
+अणु
+	काष्ठा srb *srb;
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ha->hardware_lock, flags);
-	for (i = 0; i < ha->host->can_queue; i++) {
+	क्रम (i = 0; i < ha->host->can_queue; i++) अणु
 		srb = qla4xxx_del_from_active_array(ha, i);
-		if (srb != NULL) {
+		अगर (srb != शून्य) अणु
 			srb->cmd->result = res;
 			kref_put(&srb->srb_ref, qla4xxx_srb_compl);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
-}
+पूर्ण
 
-void qla4xxx_dead_adapter_cleanup(struct scsi_qla_host *ha)
-{
+व्योम qla4xxx_dead_adapter_cleanup(काष्ठा scsi_qla_host *ha)
+अणु
 	clear_bit(AF_ONLINE, &ha->flags);
 
 	/* Disable the board */
-	ql4_printk(KERN_INFO, ha, "Disabling the board\n");
+	ql4_prपूर्णांकk(KERN_INFO, ha, "Disabling the board\n");
 
-	qla4xxx_abort_active_cmds(ha, DID_NO_CONNECT << 16);
+	qla4xxx_पात_active_cmds(ha, DID_NO_CONNECT << 16);
 	qla4xxx_mark_all_devices_missing(ha);
 	clear_bit(AF_INIT_DONE, &ha->flags);
-}
+पूर्ण
 
-static void qla4xxx_fail_session(struct iscsi_cls_session *cls_session)
-{
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
+अटल व्योम qla4xxx_fail_session(काष्ठा iscsi_cls_session *cls_session)
+अणु
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
 
 	sess = cls_session->dd_data;
 	ddb_entry = sess->dd_data;
 	ddb_entry->fw_ddb_device_state = DDB_DS_SESSION_FAILED;
 
-	if (ddb_entry->ddb_type == FLASH_DDB)
+	अगर (ddb_entry->ddb_type == FLASH_DDB)
 		iscsi_block_session(ddb_entry->sess);
-	else
+	अन्यथा
 		iscsi_session_failure(cls_session->dd_data,
 				      ISCSI_ERR_CONN_FAILED);
-}
+पूर्ण
 
 /**
  * qla4xxx_recover_adapter - recovers adapter after a fatal error
- * @ha: Pointer to host adapter structure.
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
  **/
-static int qla4xxx_recover_adapter(struct scsi_qla_host *ha)
-{
-	int status = QLA_ERROR;
-	uint8_t reset_chip = 0;
-	uint32_t dev_state;
-	unsigned long wait;
+अटल पूर्णांक qla4xxx_recover_adapter(काष्ठा scsi_qla_host *ha)
+अणु
+	पूर्णांक status = QLA_ERROR;
+	uपूर्णांक8_t reset_chip = 0;
+	uपूर्णांक32_t dev_state;
+	अचिन्हित दीर्घ रुको;
 
-	/* Stall incoming I/O until we are done */
+	/* Stall incoming I/O until we are करोne */
 	scsi_block_requests(ha->host);
 	clear_bit(AF_ONLINE, &ha->flags);
 	clear_bit(AF_LINK_UP, &ha->flags);
 
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: adapter OFFLINE\n", __func__));
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: adapter OFFLINE\n", __func__));
 
 	set_bit(DPC_RESET_ACTIVE, &ha->dpc_flags);
 
-	if ((is_qla8032(ha) || is_qla8042(ha)) &&
-	    !test_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags)) {
-		ql4_printk(KERN_INFO, ha, "%s: disabling pause transmit on port 0 & 1.\n",
+	अगर ((is_qla8032(ha) || is_qla8042(ha)) &&
+	    !test_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags)) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "%s: disabling pause transmit on port 0 & 1.\n",
 			   __func__);
-		/* disable pause frame for ISP83xx */
-		qla4_83xx_disable_pause(ha);
-	}
+		/* disable छोड़ो frame क्रम ISP83xx */
+		qla4_83xx_disable_छोड़ो(ha);
+	पूर्ण
 
-	iscsi_host_for_each_session(ha->host, qla4xxx_fail_session);
+	iscsi_host_क्रम_each_session(ha->host, qla4xxx_fail_session);
 
-	if (test_bit(DPC_RESET_HA, &ha->dpc_flags))
+	अगर (test_bit(DPC_RESET_HA, &ha->dpc_flags))
 		reset_chip = 1;
 
-	/* For the DPC_RESET_HA_INTR case (ISP-4xxx specific)
-	 * do not reset adapter, jump to initialize_adapter */
-	if (test_bit(DPC_RESET_HA_INTR, &ha->dpc_flags)) {
+	/* For the DPC_RESET_HA_INTR हाल (ISP-4xxx specअगरic)
+	 * करो not reset adapter, jump to initialize_adapter */
+	अगर (test_bit(DPC_RESET_HA_INTR, &ha->dpc_flags)) अणु
 		status = QLA_SUCCESS;
-		goto recover_ha_init_adapter;
-	}
+		जाओ recover_ha_init_adapter;
+	पूर्ण
 
-	/* For the ISP-8xxx adapter, issue a stop_firmware if invoked
+	/* For the ISP-8xxx adapter, issue a stop_firmware अगर invoked
 	 * from eh_host_reset or ioctl module */
-	if (is_qla80XX(ha) && !reset_chip &&
-	    test_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags)) {
+	अगर (is_qla80XX(ha) && !reset_chip &&
+	    test_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags)) अणु
 
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 		    "scsi%ld: %s - Performing stop_firmware...\n",
 		    ha->host_no, __func__));
 		status = ha->isp_ops->reset_firmware(ha);
-		if (status == QLA_SUCCESS) {
-			ha->isp_ops->disable_intrs(ha);
+		अगर (status == QLA_SUCCESS) अणु
+			ha->isp_ops->disable_पूर्णांकrs(ha);
 			qla4xxx_process_aen(ha, FLUSH_DDB_CHANGED_AENS);
-			qla4xxx_abort_active_cmds(ha, DID_RESET << 16);
-		} else {
+			qla4xxx_पात_active_cmds(ha, DID_RESET << 16);
+		पूर्ण अन्यथा अणु
 			/* If the stop_firmware fails then
 			 * reset the entire chip */
 			reset_chip = 1;
 			clear_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags);
 			set_bit(DPC_RESET_HA, &ha->dpc_flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Issue full chip reset if recovering from a catastrophic error,
-	 * or if stop_firmware fails for ISP-8xxx.
-	 * This is the default case for ISP-4xxx */
-	if (is_qla40XX(ha) || reset_chip) {
-		if (is_qla40XX(ha))
-			goto chip_reset;
+	/* Issue full chip reset अगर recovering from a catastrophic error,
+	 * or अगर stop_firmware fails क्रम ISP-8xxx.
+	 * This is the शेष हाल क्रम ISP-4xxx */
+	अगर (is_qla40XX(ha) || reset_chip) अणु
+		अगर (is_qla40XX(ha))
+			जाओ chip_reset;
 
-		/* Check if 8XXX firmware is alive or not
+		/* Check अगर 8XXX firmware is alive or not
 		 * We may have arrived here from NEED_RESET
 		 * detection only */
-		if (test_bit(AF_FW_RECOVERY, &ha->flags))
-			goto chip_reset;
+		अगर (test_bit(AF_FW_RECOVERY, &ha->flags))
+			जाओ chip_reset;
 
-		wait = jiffies + (FW_ALIVE_WAIT_TOV * HZ);
-		while (time_before(jiffies, wait)) {
-			if (qla4_8xxx_check_fw_alive(ha)) {
+		रुको = jअगरfies + (FW_ALIVE_WAIT_TOV * HZ);
+		जबतक (समय_beक्रमe(jअगरfies, रुको)) अणु
+			अगर (qla4_8xxx_check_fw_alive(ha)) अणु
 				qla4xxx_mailbox_premature_completion(ha);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			set_current_state(TASK_UNINTERRUPTIBLE);
-			schedule_timeout(HZ);
-		}
+			schedule_समयout(HZ);
+		पूर्ण
 chip_reset:
-		if (!test_bit(AF_FW_RECOVERY, &ha->flags))
-			qla4xxx_cmd_wait(ha);
+		अगर (!test_bit(AF_FW_RECOVERY, &ha->flags))
+			qla4xxx_cmd_रुको(ha);
 
 		qla4xxx_process_aen(ha, FLUSH_DDB_CHANGED_AENS);
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 		    "scsi%ld: %s - Performing chip reset..\n",
 		    ha->host_no, __func__));
 		status = ha->isp_ops->reset_chip(ha);
-		qla4xxx_abort_active_cmds(ha, DID_RESET << 16);
-	}
+		qla4xxx_पात_active_cmds(ha, DID_RESET << 16);
+	पूर्ण
 
 	/* Flush any pending ddb changed AENs */
 	qla4xxx_process_aen(ha, FLUSH_DDB_CHANGED_AENS);
 
 recover_ha_init_adapter:
 	/* Upon successful firmware/chip reset, re-initialize the adapter */
-	if (status == QLA_SUCCESS) {
-		/* For ISP-4xxx, force function 1 to always initialize
-		 * before function 3 to prevent both funcions from
+	अगर (status == QLA_SUCCESS) अणु
+		/* For ISP-4xxx, क्रमce function 1 to always initialize
+		 * beक्रमe function 3 to prevent both funcions from
 		 * stepping on top of the other */
-		if (is_qla40XX(ha) && (ha->mac_index == 3))
+		अगर (is_qla40XX(ha) && (ha->mac_index == 3))
 			ssleep(6);
 
 		/* NOTE: AF_ONLINE flag set upon successful completion of
 		 * qla4xxx_initialize_adapter */
 		status = qla4xxx_initialize_adapter(ha, RESET_ADAPTER);
-		if (is_qla80XX(ha) && (status == QLA_ERROR)) {
+		अगर (is_qla80XX(ha) && (status == QLA_ERROR)) अणु
 			status = qla4_8xxx_check_init_adapter_retry(ha);
-			if (status == QLA_ERROR) {
-				ql4_printk(KERN_INFO, ha, "scsi%ld: %s: Don't retry recover adapter\n",
+			अगर (status == QLA_ERROR) अणु
+				ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: Don't retry recover adapter\n",
 					   ha->host_no, __func__);
 				qla4xxx_dead_adapter_cleanup(ha);
 				clear_bit(DPC_RETRY_RESET_HA, &ha->dpc_flags);
 				clear_bit(DPC_RESET_HA, &ha->dpc_flags);
 				clear_bit(DPC_RESET_HA_FW_CONTEXT,
 					  &ha->dpc_flags);
-				goto exit_recover;
-			}
-		}
-	}
+				जाओ निकास_recover;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Retry failed adapter initialization, if necessary
-	 * Do not retry initialize_adapter for RESET_HA_INTR (ISP-4xxx specific)
-	 * case to prevent ping-pong resets between functions */
-	if (!test_bit(AF_ONLINE, &ha->flags) &&
-	    !test_bit(DPC_RESET_HA_INTR, &ha->dpc_flags)) {
-		/* Adapter initialization failed, see if we can retry
+	/* Retry failed adapter initialization, अगर necessary
+	 * Do not retry initialize_adapter क्रम RESET_HA_INTR (ISP-4xxx specअगरic)
+	 * हाल to prevent ping-pong resets between functions */
+	अगर (!test_bit(AF_ONLINE, &ha->flags) &&
+	    !test_bit(DPC_RESET_HA_INTR, &ha->dpc_flags)) अणु
+		/* Adapter initialization failed, see अगर we can retry
 		 * resetting the ha.
-		 * Since we don't want to block the DPC for too long
-		 * with multiple resets in the same thread,
+		 * Since we करोn't want to block the DPC क्रम too दीर्घ
+		 * with multiple resets in the same thपढ़ो,
 		 * utilize DPC to retry */
-		if (is_qla80XX(ha)) {
+		अगर (is_qla80XX(ha)) अणु
 			ha->isp_ops->idc_lock(ha);
 			dev_state = qla4_8xxx_rd_direct(ha,
 							QLA8XXX_CRB_DEV_STATE);
 			ha->isp_ops->idc_unlock(ha);
-			if (dev_state == QLA8XXX_DEV_FAILED) {
-				ql4_printk(KERN_INFO, ha, "%s: don't retry "
+			अगर (dev_state == QLA8XXX_DEV_FAILED) अणु
+				ql4_prपूर्णांकk(KERN_INFO, ha, "%s: don't retry "
 					   "recover adapter. H/W is in Failed "
 					   "state\n", __func__);
 				qla4xxx_dead_adapter_cleanup(ha);
@@ -4990,32 +4991,32 @@ recover_ha_init_adapter:
 						&ha->dpc_flags);
 				status = QLA_ERROR;
 
-				goto exit_recover;
-			}
-		}
+				जाओ निकास_recover;
+			पूर्ण
+		पूर्ण
 
-		if (!test_bit(DPC_RETRY_RESET_HA, &ha->dpc_flags)) {
+		अगर (!test_bit(DPC_RETRY_RESET_HA, &ha->dpc_flags)) अणु
 			ha->retry_reset_ha_cnt = MAX_RESET_HA_RETRIES;
-			DEBUG2(printk("scsi%ld: recover adapter - retrying "
+			DEBUG2(prपूर्णांकk("scsi%ld: recover adapter - retrying "
 				      "(%d) more times\n", ha->host_no,
 				      ha->retry_reset_ha_cnt));
 			set_bit(DPC_RETRY_RESET_HA, &ha->dpc_flags);
 			status = QLA_ERROR;
-		} else {
-			if (ha->retry_reset_ha_cnt > 0) {
+		पूर्ण अन्यथा अणु
+			अगर (ha->retry_reset_ha_cnt > 0) अणु
 				/* Schedule another Reset HA--DPC will retry */
 				ha->retry_reset_ha_cnt--;
-				DEBUG2(printk("scsi%ld: recover adapter - "
+				DEBUG2(prपूर्णांकk("scsi%ld: recover adapter - "
 					      "retry remaining %d\n",
 					      ha->host_no,
 					      ha->retry_reset_ha_cnt));
 				status = QLA_ERROR;
-			}
+			पूर्ण
 
-			if (ha->retry_reset_ha_cnt == 0) {
+			अगर (ha->retry_reset_ha_cnt == 0) अणु
 				/* Recover adapter retries have been exhausted.
 				 * Adapter DEAD */
-				DEBUG2(printk("scsi%ld: recover adapter "
+				DEBUG2(prपूर्णांकk("scsi%ld: recover adapter "
 					      "failed - board disabled\n",
 					      ha->host_no));
 				qla4xxx_dead_adapter_cleanup(ha);
@@ -5024,621 +5025,621 @@ recover_ha_init_adapter:
 				clear_bit(DPC_RESET_HA_FW_CONTEXT,
 					  &ha->dpc_flags);
 				status = QLA_ERROR;
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		clear_bit(DPC_RESET_HA, &ha->dpc_flags);
 		clear_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags);
 		clear_bit(DPC_RETRY_RESET_HA, &ha->dpc_flags);
-	}
+	पूर्ण
 
-exit_recover:
+निकास_recover:
 	ha->adapter_error_count++;
 
-	if (test_bit(AF_ONLINE, &ha->flags))
-		ha->isp_ops->enable_intrs(ha);
+	अगर (test_bit(AF_ONLINE, &ha->flags))
+		ha->isp_ops->enable_पूर्णांकrs(ha);
 
 	scsi_unblock_requests(ha->host);
 
 	clear_bit(DPC_RESET_ACTIVE, &ha->dpc_flags);
-	DEBUG2(printk("scsi%ld: recover adapter: %s\n", ha->host_no,
+	DEBUG2(prपूर्णांकk("scsi%ld: recover adapter: %s\n", ha->host_no,
 	    status == QLA_ERROR ? "FAILED" : "SUCCEEDED"));
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void qla4xxx_relogin_devices(struct iscsi_cls_session *cls_session)
-{
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
+अटल व्योम qla4xxx_relogin_devices(काष्ठा iscsi_cls_session *cls_session)
+अणु
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
 
 	sess = cls_session->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
-	if (!iscsi_is_session_online(cls_session)) {
-		if (ddb_entry->fw_ddb_device_state == DDB_DS_SESSION_ACTIVE) {
-			ql4_printk(KERN_INFO, ha, "scsi%ld: %s: ddb[%d]"
+	अगर (!iscsi_is_session_online(cls_session)) अणु
+		अगर (ddb_entry->fw_ddb_device_state == DDB_DS_SESSION_ACTIVE) अणु
+			ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: ddb[%d]"
 				   " unblock session\n", ha->host_no, __func__,
 				   ddb_entry->fw_ddb_index);
 			iscsi_unblock_session(ddb_entry->sess);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Trigger relogin */
-			if (ddb_entry->ddb_type == FLASH_DDB) {
-				if (!(test_bit(DF_RELOGIN, &ddb_entry->flags) ||
+			अगर (ddb_entry->ddb_type == FLASH_DDB) अणु
+				अगर (!(test_bit(DF_RELOGIN, &ddb_entry->flags) ||
 				      test_bit(DF_DISABLE_RELOGIN,
 					       &ddb_entry->flags)))
-					qla4xxx_arm_relogin_timer(ddb_entry);
-			} else
+					qla4xxx_arm_relogin_समयr(ddb_entry);
+			पूर्ण अन्यथा
 				iscsi_session_failure(cls_session->dd_data,
 						      ISCSI_ERR_CONN_FAILED);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int qla4xxx_unblock_flash_ddb(struct iscsi_cls_session *cls_session)
-{
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
+पूर्णांक qla4xxx_unblock_flash_ddb(काष्ठा iscsi_cls_session *cls_session)
+अणु
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
 
 	sess = cls_session->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
-	ql4_printk(KERN_INFO, ha, "scsi%ld: %s: ddb[%d]"
+	ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: ddb[%d]"
 		   " unblock session\n", ha->host_no, __func__,
 		   ddb_entry->fw_ddb_index);
 
 	iscsi_unblock_session(ddb_entry->sess);
 
 	/* Start scan target */
-	if (test_bit(AF_ONLINE, &ha->flags)) {
-		ql4_printk(KERN_INFO, ha, "scsi%ld: %s: ddb[%d]"
+	अगर (test_bit(AF_ONLINE, &ha->flags)) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: ddb[%d]"
 			   " start scan\n", ha->host_no, __func__,
 			   ddb_entry->fw_ddb_index);
 		scsi_queue_work(ha->host, &ddb_entry->sess->scan_work);
-	}
-	return QLA_SUCCESS;
-}
+	पूर्ण
+	वापस QLA_SUCCESS;
+पूर्ण
 
-int qla4xxx_unblock_ddb(struct iscsi_cls_session *cls_session)
-{
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
-	int status = QLA_SUCCESS;
+पूर्णांक qla4xxx_unblock_ddb(काष्ठा iscsi_cls_session *cls_session)
+अणु
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
+	पूर्णांक status = QLA_SUCCESS;
 
 	sess = cls_session->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
-	ql4_printk(KERN_INFO, ha, "scsi%ld: %s: ddb[%d]"
+	ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: ddb[%d]"
 		   " unblock user space session\n", ha->host_no, __func__,
 		   ddb_entry->fw_ddb_index);
 
-	if (!iscsi_is_session_online(cls_session)) {
+	अगर (!iscsi_is_session_online(cls_session)) अणु
 		iscsi_conn_start(ddb_entry->conn);
 		iscsi_conn_login_event(ddb_entry->conn,
 				       ISCSI_CONN_STATE_LOGGED_IN);
-	} else {
-		ql4_printk(KERN_INFO, ha,
+	पूर्ण अन्यथा अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha,
 			   "scsi%ld: %s: ddb[%d] session [%d] already logged in\n",
 			   ha->host_no, __func__, ddb_entry->fw_ddb_index,
 			   cls_session->sid);
 		status = QLA_ERROR;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void qla4xxx_relogin_all_devices(struct scsi_qla_host *ha)
-{
-	iscsi_host_for_each_session(ha->host, qla4xxx_relogin_devices);
-}
+अटल व्योम qla4xxx_relogin_all_devices(काष्ठा scsi_qla_host *ha)
+अणु
+	iscsi_host_क्रम_each_session(ha->host, qla4xxx_relogin_devices);
+पूर्ण
 
-static void qla4xxx_relogin_flash_ddb(struct iscsi_cls_session *cls_sess)
-{
-	uint16_t relogin_timer;
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
+अटल व्योम qla4xxx_relogin_flash_ddb(काष्ठा iscsi_cls_session *cls_sess)
+अणु
+	uपूर्णांक16_t relogin_समयr;
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
 
 	sess = cls_sess->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
 
-	relogin_timer = max(ddb_entry->default_relogin_timeout,
-			    (uint16_t)RELOGIN_TOV);
-	atomic_set(&ddb_entry->relogin_timer, relogin_timer);
+	relogin_समयr = max(ddb_entry->शेष_relogin_समयout,
+			    (uपूर्णांक16_t)RELOGIN_TOV);
+	atomic_set(&ddb_entry->relogin_समयr, relogin_समयr);
 
-	DEBUG2(ql4_printk(KERN_INFO, ha,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 			  "scsi%ld: Relogin index [%d]. TOV=%d\n", ha->host_no,
-			  ddb_entry->fw_ddb_index, relogin_timer));
+			  ddb_entry->fw_ddb_index, relogin_समयr));
 
 	qla4xxx_login_flash_ddb(cls_sess);
-}
+पूर्ण
 
-static void qla4xxx_dpc_relogin(struct iscsi_cls_session *cls_sess)
-{
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry;
-	struct scsi_qla_host *ha;
+अटल व्योम qla4xxx_dpc_relogin(काष्ठा iscsi_cls_session *cls_sess)
+अणु
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा scsi_qla_host *ha;
 
 	sess = cls_sess->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
 
-	if (!(ddb_entry->ddb_type == FLASH_DDB))
-		return;
+	अगर (!(ddb_entry->ddb_type == FLASH_DDB))
+		वापस;
 
-	if (test_bit(DF_DISABLE_RELOGIN, &ddb_entry->flags))
-		return;
+	अगर (test_bit(DF_DISABLE_RELOGIN, &ddb_entry->flags))
+		वापस;
 
-	if (test_and_clear_bit(DF_RELOGIN, &ddb_entry->flags) &&
-	    !iscsi_is_session_online(cls_sess)) {
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+	अगर (test_and_clear_bit(DF_RELOGIN, &ddb_entry->flags) &&
+	    !iscsi_is_session_online(cls_sess)) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				  "relogin issued\n"));
 		qla4xxx_relogin_flash_ddb(cls_sess);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void qla4xxx_wake_dpc(struct scsi_qla_host *ha)
-{
-	if (ha->dpc_thread)
-		queue_work(ha->dpc_thread, &ha->dpc_work);
-}
+व्योम qla4xxx_wake_dpc(काष्ठा scsi_qla_host *ha)
+अणु
+	अगर (ha->dpc_thपढ़ो)
+		queue_work(ha->dpc_thपढ़ो, &ha->dpc_work);
+पूर्ण
 
-static struct qla4_work_evt *
-qla4xxx_alloc_work(struct scsi_qla_host *ha, uint32_t data_size,
-		   enum qla4_work_type type)
-{
-	struct qla4_work_evt *e;
-	uint32_t size = sizeof(struct qla4_work_evt) + data_size;
+अटल काष्ठा qla4_work_evt *
+qla4xxx_alloc_work(काष्ठा scsi_qla_host *ha, uपूर्णांक32_t data_size,
+		   क्रमागत qla4_work_type type)
+अणु
+	काष्ठा qla4_work_evt *e;
+	uपूर्णांक32_t size = माप(काष्ठा qla4_work_evt) + data_size;
 
 	e = kzalloc(size, GFP_ATOMIC);
-	if (!e)
-		return NULL;
+	अगर (!e)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&e->list);
 	e->type = type;
-	return e;
-}
+	वापस e;
+पूर्ण
 
-static void qla4xxx_post_work(struct scsi_qla_host *ha,
-			     struct qla4_work_evt *e)
-{
-	unsigned long flags;
+अटल व्योम qla4xxx_post_work(काष्ठा scsi_qla_host *ha,
+			     काष्ठा qla4_work_evt *e)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ha->work_lock, flags);
 	list_add_tail(&e->list, &ha->work_list);
 	spin_unlock_irqrestore(&ha->work_lock, flags);
 	qla4xxx_wake_dpc(ha);
-}
+पूर्ण
 
-int qla4xxx_post_aen_work(struct scsi_qla_host *ha,
-			  enum iscsi_host_event_code aen_code,
-			  uint32_t data_size, uint8_t *data)
-{
-	struct qla4_work_evt *e;
+पूर्णांक qla4xxx_post_aen_work(काष्ठा scsi_qla_host *ha,
+			  क्रमागत iscsi_host_event_code aen_code,
+			  uपूर्णांक32_t data_size, uपूर्णांक8_t *data)
+अणु
+	काष्ठा qla4_work_evt *e;
 
 	e = qla4xxx_alloc_work(ha, data_size, QLA4_EVENT_AEN);
-	if (!e)
-		return QLA_ERROR;
+	अगर (!e)
+		वापस QLA_ERROR;
 
 	e->u.aen.code = aen_code;
 	e->u.aen.data_size = data_size;
-	memcpy(e->u.aen.data, data, data_size);
+	स_नकल(e->u.aen.data, data, data_size);
 
 	qla4xxx_post_work(ha, e);
 
-	return QLA_SUCCESS;
-}
+	वापस QLA_SUCCESS;
+पूर्ण
 
-int qla4xxx_post_ping_evt_work(struct scsi_qla_host *ha,
-			       uint32_t status, uint32_t pid,
-			       uint32_t data_size, uint8_t *data)
-{
-	struct qla4_work_evt *e;
+पूर्णांक qla4xxx_post_ping_evt_work(काष्ठा scsi_qla_host *ha,
+			       uपूर्णांक32_t status, uपूर्णांक32_t pid,
+			       uपूर्णांक32_t data_size, uपूर्णांक8_t *data)
+अणु
+	काष्ठा qla4_work_evt *e;
 
 	e = qla4xxx_alloc_work(ha, data_size, QLA4_EVENT_PING_STATUS);
-	if (!e)
-		return QLA_ERROR;
+	अगर (!e)
+		वापस QLA_ERROR;
 
 	e->u.ping.status = status;
 	e->u.ping.pid = pid;
 	e->u.ping.data_size = data_size;
-	memcpy(e->u.ping.data, data, data_size);
+	स_नकल(e->u.ping.data, data, data_size);
 
 	qla4xxx_post_work(ha, e);
 
-	return QLA_SUCCESS;
-}
+	वापस QLA_SUCCESS;
+पूर्ण
 
-static void qla4xxx_do_work(struct scsi_qla_host *ha)
-{
-	struct qla4_work_evt *e, *tmp;
-	unsigned long flags;
+अटल व्योम qla4xxx_करो_work(काष्ठा scsi_qla_host *ha)
+अणु
+	काष्ठा qla4_work_evt *e, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(work);
 
 	spin_lock_irqsave(&ha->work_lock, flags);
 	list_splice_init(&ha->work_list, &work);
 	spin_unlock_irqrestore(&ha->work_lock, flags);
 
-	list_for_each_entry_safe(e, tmp, &work, list) {
+	list_क्रम_each_entry_safe(e, पंचांगp, &work, list) अणु
 		list_del_init(&e->list);
 
-		switch (e->type) {
-		case QLA4_EVENT_AEN:
+		चयन (e->type) अणु
+		हाल QLA4_EVENT_AEN:
 			iscsi_post_host_event(ha->host_no,
 					      &qla4xxx_iscsi_transport,
 					      e->u.aen.code,
 					      e->u.aen.data_size,
 					      e->u.aen.data);
-			break;
-		case QLA4_EVENT_PING_STATUS:
+			अवरोध;
+		हाल QLA4_EVENT_PING_STATUS:
 			iscsi_ping_comp_event(ha->host_no,
 					      &qla4xxx_iscsi_transport,
 					      e->u.ping.status,
 					      e->u.ping.pid,
 					      e->u.ping.data_size,
 					      e->u.ping.data);
-			break;
-		default:
-			ql4_printk(KERN_WARNING, ha, "event type: 0x%x not "
+			अवरोध;
+		शेष:
+			ql4_prपूर्णांकk(KERN_WARNING, ha, "event type: 0x%x not "
 				   "supported", e->type);
-		}
-		kfree(e);
-	}
-}
+		पूर्ण
+		kमुक्त(e);
+	पूर्ण
+पूर्ण
 
 /**
- * qla4xxx_do_dpc - dpc routine
- * @work: Context to obtain pointer to host adapter structure.
+ * qla4xxx_करो_dpc - dpc routine
+ * @work: Context to obtain poपूर्णांकer to host adapter काष्ठाure.
  *
- * This routine is a task that is schedule by the interrupt handler
- * to perform the background processing for interrupts.  We put it
+ * This routine is a task that is schedule by the पूर्णांकerrupt handler
+ * to perक्रमm the background processing क्रम पूर्णांकerrupts.  We put it
  * on a task queue that is consumed whenever the scheduler runs; that's
- * so you can do anything (i.e. put the process to sleep etc).  In fact,
+ * so you can करो anything (i.e. put the process to sleep etc).  In fact,
  * the mid-level tries to sleep when it reaches the driver threshold
- * "host->can_queue". This can cause a panic if we were in our interrupt code.
+ * "host->can_queue". This can cause a panic अगर we were in our पूर्णांकerrupt code.
  **/
-static void qla4xxx_do_dpc(struct work_struct *work)
-{
-	struct scsi_qla_host *ha =
-		container_of(work, struct scsi_qla_host, dpc_work);
-	int status = QLA_ERROR;
+अटल व्योम qla4xxx_करो_dpc(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा scsi_qla_host *ha =
+		container_of(work, काष्ठा scsi_qla_host, dpc_work);
+	पूर्णांक status = QLA_ERROR;
 
-	DEBUG2(ql4_printk(KERN_INFO, ha,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 			  "scsi%ld: %s: DPC handler waking up. flags = 0x%08lx, dpc_flags = 0x%08lx\n",
 			  ha->host_no, __func__, ha->flags, ha->dpc_flags));
 
-	/* Initialization not yet finished. Don't do anything yet. */
-	if (!test_bit(AF_INIT_DONE, &ha->flags))
-		return;
+	/* Initialization not yet finished. Don't करो anything yet. */
+	अगर (!test_bit(AF_INIT_DONE, &ha->flags))
+		वापस;
 
-	if (test_bit(AF_EEH_BUSY, &ha->flags)) {
-		DEBUG2(printk(KERN_INFO "scsi%ld: %s: flags = %lx\n",
+	अगर (test_bit(AF_EEH_BUSY, &ha->flags)) अणु
+		DEBUG2(prपूर्णांकk(KERN_INFO "scsi%ld: %s: flags = %lx\n",
 		    ha->host_no, __func__, ha->flags));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* post events to application */
-	qla4xxx_do_work(ha);
+	qla4xxx_करो_work(ha);
 
-	if (is_qla80XX(ha)) {
-		if (test_bit(DPC_HA_UNRECOVERABLE, &ha->dpc_flags)) {
-			if (is_qla8032(ha) || is_qla8042(ha)) {
-				ql4_printk(KERN_INFO, ha, "%s: disabling pause transmit on port 0 & 1.\n",
+	अगर (is_qla80XX(ha)) अणु
+		अगर (test_bit(DPC_HA_UNRECOVERABLE, &ha->dpc_flags)) अणु
+			अगर (is_qla8032(ha) || is_qla8042(ha)) अणु
+				ql4_prपूर्णांकk(KERN_INFO, ha, "%s: disabling pause transmit on port 0 & 1.\n",
 					   __func__);
-				/* disable pause frame for ISP83xx */
-				qla4_83xx_disable_pause(ha);
-			}
+				/* disable छोड़ो frame क्रम ISP83xx */
+				qla4_83xx_disable_छोड़ो(ha);
+			पूर्ण
 
 			ha->isp_ops->idc_lock(ha);
 			qla4_8xxx_wr_direct(ha, QLA8XXX_CRB_DEV_STATE,
 					    QLA8XXX_DEV_FAILED);
 			ha->isp_ops->idc_unlock(ha);
-			ql4_printk(KERN_INFO, ha, "HW State: FAILED\n");
+			ql4_prपूर्णांकk(KERN_INFO, ha, "HW State: FAILED\n");
 			qla4_8xxx_device_state_handler(ha);
-		}
+		पूर्ण
 
-		if (test_bit(DPC_POST_IDC_ACK, &ha->dpc_flags)) {
-			if (is_qla8042(ha)) {
-				if (ha->idc_info.info2 &
-				    ENABLE_INTERNAL_LOOPBACK) {
-					ql4_printk(KERN_INFO, ha, "%s: Disabling ACB\n",
+		अगर (test_bit(DPC_POST_IDC_ACK, &ha->dpc_flags)) अणु
+			अगर (is_qla8042(ha)) अणु
+				अगर (ha->idc_info.info2 &
+				    ENABLE_INTERNAL_LOOPBACK) अणु
+					ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Disabling ACB\n",
 						   __func__);
 					status = qla4_84xx_config_acb(ha,
 							    ACB_CONFIG_DISABLE);
-					if (status != QLA_SUCCESS) {
-						ql4_printk(KERN_INFO, ha, "%s: ACB config failed\n",
+					अगर (status != QLA_SUCCESS) अणु
+						ql4_prपूर्णांकk(KERN_INFO, ha, "%s: ACB config failed\n",
 							   __func__);
-					}
-				}
-			}
+					पूर्ण
+				पूर्ण
+			पूर्ण
 			qla4_83xx_post_idc_ack(ha);
 			clear_bit(DPC_POST_IDC_ACK, &ha->dpc_flags);
-		}
+		पूर्ण
 
-		if (is_qla8042(ha) &&
-		    test_bit(DPC_RESTORE_ACB, &ha->dpc_flags)) {
-			ql4_printk(KERN_INFO, ha, "%s: Restoring ACB\n",
+		अगर (is_qla8042(ha) &&
+		    test_bit(DPC_RESTORE_ACB, &ha->dpc_flags)) अणु
+			ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Restoring ACB\n",
 				   __func__);
-			if (qla4_84xx_config_acb(ha, ACB_CONFIG_SET) !=
-			    QLA_SUCCESS) {
-				ql4_printk(KERN_INFO, ha, "%s: ACB config failed ",
+			अगर (qla4_84xx_config_acb(ha, ACB_CONFIG_SET) !=
+			    QLA_SUCCESS) अणु
+				ql4_prपूर्णांकk(KERN_INFO, ha, "%s: ACB config failed ",
 					   __func__);
-			}
+			पूर्ण
 			clear_bit(DPC_RESTORE_ACB, &ha->dpc_flags);
-		}
+		पूर्ण
 
-		if (test_and_clear_bit(DPC_HA_NEED_QUIESCENT, &ha->dpc_flags)) {
+		अगर (test_and_clear_bit(DPC_HA_NEED_QUIESCENT, &ha->dpc_flags)) अणु
 			qla4_8xxx_need_qsnt_handler(ha);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!test_bit(DPC_RESET_ACTIVE, &ha->dpc_flags) &&
+	अगर (!test_bit(DPC_RESET_ACTIVE, &ha->dpc_flags) &&
 	    (test_bit(DPC_RESET_HA, &ha->dpc_flags) ||
 	    test_bit(DPC_RESET_HA_INTR, &ha->dpc_flags) ||
-	    test_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags))) {
-		if ((is_qla8022(ha) && ql4xdontresethba) ||
+	    test_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags))) अणु
+		अगर ((is_qla8022(ha) && ql4xकरोntresethba) ||
 		    ((is_qla8032(ha) || is_qla8042(ha)) &&
-		     qla4_83xx_idc_dontreset(ha))) {
-			DEBUG2(printk("scsi%ld: %s: Don't Reset HBA\n",
+		     qla4_83xx_idc_करोntreset(ha))) अणु
+			DEBUG2(prपूर्णांकk("scsi%ld: %s: Don't Reset HBA\n",
 			    ha->host_no, __func__));
 			clear_bit(DPC_RESET_HA, &ha->dpc_flags);
 			clear_bit(DPC_RESET_HA_INTR, &ha->dpc_flags);
 			clear_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags);
-			goto dpc_post_reset_ha;
-		}
-		if (test_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags) ||
+			जाओ dpc_post_reset_ha;
+		पूर्ण
+		अगर (test_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags) ||
 		    test_bit(DPC_RESET_HA, &ha->dpc_flags))
 			qla4xxx_recover_adapter(ha);
 
-		if (test_bit(DPC_RESET_HA_INTR, &ha->dpc_flags)) {
-			uint8_t wait_time = RESET_INTR_TOV;
+		अगर (test_bit(DPC_RESET_HA_INTR, &ha->dpc_flags)) अणु
+			uपूर्णांक8_t रुको_समय = RESET_INTR_TOV;
 
-			while ((readw(&ha->reg->ctrl_status) &
-				(CSR_SOFT_RESET | CSR_FORCE_SOFT_RESET)) != 0) {
-				if (--wait_time == 0)
-					break;
+			जबतक ((पढ़ोw(&ha->reg->ctrl_status) &
+				(CSR_SOFT_RESET | CSR_FORCE_SOFT_RESET)) != 0) अणु
+				अगर (--रुको_समय == 0)
+					अवरोध;
 				msleep(1000);
-			}
-			if (wait_time == 0)
-				DEBUG2(printk("scsi%ld: %s: SR|FSR "
+			पूर्ण
+			अगर (रुको_समय == 0)
+				DEBUG2(prपूर्णांकk("scsi%ld: %s: SR|FSR "
 					      "bit not cleared-- resetting\n",
 					      ha->host_no, __func__));
-			qla4xxx_abort_active_cmds(ha, DID_RESET << 16);
-			if (ql4xxx_lock_drvr_wait(ha) == QLA_SUCCESS) {
+			qla4xxx_पात_active_cmds(ha, DID_RESET << 16);
+			अगर (ql4xxx_lock_drvr_रुको(ha) == QLA_SUCCESS) अणु
 				qla4xxx_process_aen(ha, FLUSH_DDB_CHANGED_AENS);
 				status = qla4xxx_recover_adapter(ha);
-			}
+			पूर्ण
 			clear_bit(DPC_RESET_HA_INTR, &ha->dpc_flags);
-			if (status == QLA_SUCCESS)
-				ha->isp_ops->enable_intrs(ha);
-		}
-	}
+			अगर (status == QLA_SUCCESS)
+				ha->isp_ops->enable_पूर्णांकrs(ha);
+		पूर्ण
+	पूर्ण
 
 dpc_post_reset_ha:
 	/* ---- process AEN? --- */
-	if (test_and_clear_bit(DPC_AEN, &ha->dpc_flags))
+	अगर (test_and_clear_bit(DPC_AEN, &ha->dpc_flags))
 		qla4xxx_process_aen(ha, PROCESS_ALL_AENS);
 
 	/* ---- Get DHCP IP Address? --- */
-	if (test_and_clear_bit(DPC_GET_DHCP_IP_ADDR, &ha->dpc_flags))
+	अगर (test_and_clear_bit(DPC_GET_DHCP_IP_ADDR, &ha->dpc_flags))
 		qla4xxx_get_dhcp_ip_address(ha);
 
 	/* ---- relogin device? --- */
-	if (adapter_up(ha) &&
-	    test_and_clear_bit(DPC_RELOGIN_DEVICE, &ha->dpc_flags)) {
-		iscsi_host_for_each_session(ha->host, qla4xxx_dpc_relogin);
-	}
+	अगर (adapter_up(ha) &&
+	    test_and_clear_bit(DPC_RELOGIN_DEVICE, &ha->dpc_flags)) अणु
+		iscsi_host_क्रम_each_session(ha->host, qla4xxx_dpc_relogin);
+	पूर्ण
 
 	/* ---- link change? --- */
-	if (!test_bit(AF_LOOPBACK, &ha->flags) &&
-	    test_and_clear_bit(DPC_LINK_CHANGED, &ha->dpc_flags)) {
-		if (!test_bit(AF_LINK_UP, &ha->flags)) {
-			/* ---- link down? --- */
+	अगर (!test_bit(AF_LOOPBACK, &ha->flags) &&
+	    test_and_clear_bit(DPC_LINK_CHANGED, &ha->dpc_flags)) अणु
+		अगर (!test_bit(AF_LINK_UP, &ha->flags)) अणु
+			/* ---- link करोwn? --- */
 			qla4xxx_mark_all_devices_missing(ha);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* ---- link up? --- *
-			 * F/W will auto login to all devices ONLY ONCE after
-			 * link up during driver initialization and runtime
-			 * fatal error recovery.  Therefore, the driver must
+			 * F/W will स्वतः login to all devices ONLY ONCE after
+			 * link up during driver initialization and runसमय
+			 * fatal error recovery.  Thereक्रमe, the driver must
 			 * manually relogin to devices when recovering from
 			 * connection failures, logouts, expired KATO, etc. */
-			if (test_and_clear_bit(AF_BUILD_DDB_LIST, &ha->flags)) {
+			अगर (test_and_clear_bit(AF_BUILD_DDB_LIST, &ha->flags)) अणु
 				qla4xxx_build_ddb_list(ha, ha->is_reset);
-				iscsi_host_for_each_session(ha->host,
+				iscsi_host_क्रम_each_session(ha->host,
 						qla4xxx_login_flash_ddb);
-			} else
+			पूर्ण अन्यथा
 				qla4xxx_relogin_all_devices(ha);
-		}
-	}
-	if (test_and_clear_bit(DPC_SYSFS_DDB_EXPORT, &ha->dpc_flags)) {
-		if (qla4xxx_sysfs_ddb_export(ha))
-			ql4_printk(KERN_ERR, ha, "%s: Error exporting ddb to sysfs\n",
+		पूर्ण
+	पूर्ण
+	अगर (test_and_clear_bit(DPC_SYSFS_DDB_EXPORT, &ha->dpc_flags)) अणु
+		अगर (qla4xxx_sysfs_ddb_export(ha))
+			ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Error exporting ddb to sysfs\n",
 				   __func__);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * qla4xxx_free_adapter - release the adapter
- * @ha: pointer to adapter structure
+ * qla4xxx_मुक्त_adapter - release the adapter
+ * @ha: poपूर्णांकer to adapter काष्ठाure
  **/
-static void qla4xxx_free_adapter(struct scsi_qla_host *ha)
-{
-	qla4xxx_abort_active_cmds(ha, DID_NO_CONNECT << 16);
+अटल व्योम qla4xxx_मुक्त_adapter(काष्ठा scsi_qla_host *ha)
+अणु
+	qla4xxx_पात_active_cmds(ha, DID_NO_CONNECT << 16);
 
-	/* Turn-off interrupts on the card. */
-	ha->isp_ops->disable_intrs(ha);
+	/* Turn-off पूर्णांकerrupts on the card. */
+	ha->isp_ops->disable_पूर्णांकrs(ha);
 
-	if (is_qla40XX(ha)) {
-		writel(set_rmask(CSR_SCSI_PROCESSOR_INTR),
+	अगर (is_qla40XX(ha)) अणु
+		ग_लिखोl(set_rmask(CSR_SCSI_PROCESSOR_INTR),
 		       &ha->reg->ctrl_status);
-		readl(&ha->reg->ctrl_status);
-	} else if (is_qla8022(ha)) {
-		writel(0, &ha->qla4_82xx_reg->host_int);
-		readl(&ha->qla4_82xx_reg->host_int);
-	} else if (is_qla8032(ha) || is_qla8042(ha)) {
-		writel(0, &ha->qla4_83xx_reg->risc_intr);
-		readl(&ha->qla4_83xx_reg->risc_intr);
-	}
+		पढ़ोl(&ha->reg->ctrl_status);
+	पूर्ण अन्यथा अगर (is_qla8022(ha)) अणु
+		ग_लिखोl(0, &ha->qla4_82xx_reg->host_पूर्णांक);
+		पढ़ोl(&ha->qla4_82xx_reg->host_पूर्णांक);
+	पूर्ण अन्यथा अगर (is_qla8032(ha) || is_qla8042(ha)) अणु
+		ग_लिखोl(0, &ha->qla4_83xx_reg->risc_पूर्णांकr);
+		पढ़ोl(&ha->qla4_83xx_reg->risc_पूर्णांकr);
+	पूर्ण
 
-	/* Remove timer thread, if present */
-	if (ha->timer_active)
-		qla4xxx_stop_timer(ha);
+	/* Remove समयr thपढ़ो, अगर present */
+	अगर (ha->समयr_active)
+		qla4xxx_stop_समयr(ha);
 
-	/* Kill the kernel thread for this host */
-	if (ha->dpc_thread)
-		destroy_workqueue(ha->dpc_thread);
+	/* Kill the kernel thपढ़ो क्रम this host */
+	अगर (ha->dpc_thपढ़ो)
+		destroy_workqueue(ha->dpc_thपढ़ो);
 
-	/* Kill the kernel thread for this host */
-	if (ha->task_wq)
+	/* Kill the kernel thपढ़ो क्रम this host */
+	अगर (ha->task_wq)
 		destroy_workqueue(ha->task_wq);
 
 	/* Put firmware in known state */
 	ha->isp_ops->reset_firmware(ha);
 
-	if (is_qla80XX(ha)) {
+	अगर (is_qla80XX(ha)) अणु
 		ha->isp_ops->idc_lock(ha);
 		qla4_8xxx_clear_drv_active(ha);
 		ha->isp_ops->idc_unlock(ha);
-	}
+	पूर्ण
 
-	/* Detach interrupts */
-	qla4xxx_free_irqs(ha);
+	/* Detach पूर्णांकerrupts */
+	qla4xxx_मुक्त_irqs(ha);
 
-	/* free extra memory */
-	qla4xxx_mem_free(ha);
-}
+	/* मुक्त extra memory */
+	qla4xxx_mem_मुक्त(ha);
+पूर्ण
 
-int qla4_8xxx_iospace_config(struct scsi_qla_host *ha)
-{
-	int status = 0;
-	unsigned long mem_base, mem_len;
-	struct pci_dev *pdev = ha->pdev;
+पूर्णांक qla4_8xxx_iospace_config(काष्ठा scsi_qla_host *ha)
+अणु
+	पूर्णांक status = 0;
+	अचिन्हित दीर्घ mem_base, mem_len;
+	काष्ठा pci_dev *pdev = ha->pdev;
 
 	status = pci_request_regions(pdev, DRIVER_NAME);
-	if (status) {
-		printk(KERN_WARNING
+	अगर (status) अणु
+		prपूर्णांकk(KERN_WARNING
 		    "scsi(%ld) Failed to reserve PIO regions (%s) "
 		    "status=%d\n", ha->host_no, pci_name(pdev), status);
-		goto iospace_error_exit;
-	}
+		जाओ iospace_error_निकास;
+	पूर्ण
 
-	DEBUG2(printk(KERN_INFO "%s: revision-id=%d\n",
+	DEBUG2(prपूर्णांकk(KERN_INFO "%s: revision-id=%d\n",
 	    __func__, pdev->revision));
 	ha->revision_id = pdev->revision;
 
 	/* remap phys address */
-	mem_base = pci_resource_start(pdev, 0); /* 0 is for BAR 0 */
+	mem_base = pci_resource_start(pdev, 0); /* 0 is क्रम BAR 0 */
 	mem_len = pci_resource_len(pdev, 0);
-	DEBUG2(printk(KERN_INFO "%s: ioremap from %lx a size of %lx\n",
+	DEBUG2(prपूर्णांकk(KERN_INFO "%s: ioremap from %lx a size of %lx\n",
 	    __func__, mem_base, mem_len));
 
-	/* mapping of pcibase pointer */
-	ha->nx_pcibase = (unsigned long)ioremap(mem_base, mem_len);
-	if (!ha->nx_pcibase) {
-		printk(KERN_ERR
+	/* mapping of pcibase poपूर्णांकer */
+	ha->nx_pcibase = (अचिन्हित दीर्घ)ioremap(mem_base, mem_len);
+	अगर (!ha->nx_pcibase) अणु
+		prपूर्णांकk(KERN_ERR
 		    "cannot remap MMIO (%s), aborting\n", pci_name(pdev));
 		pci_release_regions(ha->pdev);
-		goto iospace_error_exit;
-	}
+		जाओ iospace_error_निकास;
+	पूर्ण
 
-	/* Mapping of IO base pointer, door bell read and write pointer */
+	/* Mapping of IO base poपूर्णांकer, करोor bell पढ़ो and ग_लिखो poपूर्णांकer */
 
-	/* mapping of IO base pointer */
-	if (is_qla8022(ha)) {
-		ha->qla4_82xx_reg = (struct device_reg_82xx  __iomem *)
-				    ((uint8_t *)ha->nx_pcibase + 0xbc000 +
+	/* mapping of IO base poपूर्णांकer */
+	अगर (is_qla8022(ha)) अणु
+		ha->qla4_82xx_reg = (काष्ठा device_reg_82xx  __iomem *)
+				    ((uपूर्णांक8_t *)ha->nx_pcibase + 0xbc000 +
 				     (ha->pdev->devfn << 11));
 		ha->nx_db_wr_ptr = (ha->pdev->devfn == 4 ? QLA82XX_CAM_RAM_DB1 :
 				    QLA82XX_CAM_RAM_DB2);
-	} else if (is_qla8032(ha) || is_qla8042(ha)) {
-		ha->qla4_83xx_reg = (struct device_reg_83xx __iomem *)
-				    ((uint8_t *)ha->nx_pcibase);
-	}
+	पूर्ण अन्यथा अगर (is_qla8032(ha) || is_qla8042(ha)) अणु
+		ha->qla4_83xx_reg = (काष्ठा device_reg_83xx __iomem *)
+				    ((uपूर्णांक8_t *)ha->nx_pcibase);
+	पूर्ण
 
-	return 0;
-iospace_error_exit:
-	return -ENOMEM;
-}
+	वापस 0;
+iospace_error_निकास:
+	वापस -ENOMEM;
+पूर्ण
 
 /***
- * qla4xxx_iospace_config - maps registers
- * @ha: pointer to adapter structure
+ * qla4xxx_iospace_config - maps रेजिस्टरs
+ * @ha: poपूर्णांकer to adapter काष्ठाure
  *
- * This routines maps HBA's registers from the pci address space
- * into the kernel virtual address space for memory mapped i/o.
+ * This routines maps HBA's रेजिस्टरs from the pci address space
+ * पूर्णांकo the kernel भव address space क्रम memory mapped i/o.
  **/
-int qla4xxx_iospace_config(struct scsi_qla_host *ha)
-{
-	unsigned long pio, pio_len, pio_flags;
-	unsigned long mmio, mmio_len, mmio_flags;
+पूर्णांक qla4xxx_iospace_config(काष्ठा scsi_qla_host *ha)
+अणु
+	अचिन्हित दीर्घ pio, pio_len, pio_flags;
+	अचिन्हित दीर्घ mmio, mmio_len, mmio_flags;
 
 	pio = pci_resource_start(ha->pdev, 0);
 	pio_len = pci_resource_len(ha->pdev, 0);
 	pio_flags = pci_resource_flags(ha->pdev, 0);
-	if (pio_flags & IORESOURCE_IO) {
-		if (pio_len < MIN_IOBASE_LEN) {
-			ql4_printk(KERN_WARNING, ha,
+	अगर (pio_flags & IORESOURCE_IO) अणु
+		अगर (pio_len < MIN_IOBASE_LEN) अणु
+			ql4_prपूर्णांकk(KERN_WARNING, ha,
 				"Invalid PCI I/O region size\n");
 			pio = 0;
-		}
-	} else {
-		ql4_printk(KERN_WARNING, ha, "region #0 not a PIO resource\n");
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha, "region #0 not a PIO resource\n");
 		pio = 0;
-	}
+	पूर्ण
 
-	/* Use MMIO operations for all accesses. */
+	/* Use MMIO operations क्रम all accesses. */
 	mmio = pci_resource_start(ha->pdev, 1);
 	mmio_len = pci_resource_len(ha->pdev, 1);
 	mmio_flags = pci_resource_flags(ha->pdev, 1);
 
-	if (!(mmio_flags & IORESOURCE_MEM)) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!(mmio_flags & IORESOURCE_MEM)) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 		    "region #0 not an MMIO resource, aborting\n");
 
-		goto iospace_error_exit;
-	}
+		जाओ iospace_error_निकास;
+	पूर्ण
 
-	if (mmio_len < MIN_IOBASE_LEN) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (mmio_len < MIN_IOBASE_LEN) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 		    "Invalid PCI mem region size, aborting\n");
-		goto iospace_error_exit;
-	}
+		जाओ iospace_error_निकास;
+	पूर्ण
 
-	if (pci_request_regions(ha->pdev, DRIVER_NAME)) {
-		ql4_printk(KERN_WARNING, ha,
+	अगर (pci_request_regions(ha->pdev, DRIVER_NAME)) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha,
 		    "Failed to reserve PIO/MMIO regions\n");
 
-		goto iospace_error_exit;
-	}
+		जाओ iospace_error_निकास;
+	पूर्ण
 
 	ha->pio_address = pio;
 	ha->pio_length = pio_len;
 	ha->reg = ioremap(mmio, MIN_IOBASE_LEN);
-	if (!ha->reg) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!ha->reg) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 		    "cannot remap MMIO, aborting\n");
 
-		goto iospace_error_exit;
-	}
+		जाओ iospace_error_निकास;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-iospace_error_exit:
-	return -ENOMEM;
-}
+iospace_error_निकास:
+	वापस -ENOMEM;
+पूर्ण
 
-static struct isp_operations qla4xxx_isp_ops = {
+अटल काष्ठा isp_operations qla4xxx_isp_ops = अणु
 	.iospace_config         = qla4xxx_iospace_config,
 	.pci_config             = qla4xxx_pci_config,
-	.disable_intrs          = qla4xxx_disable_intrs,
-	.enable_intrs           = qla4xxx_enable_intrs,
+	.disable_पूर्णांकrs          = qla4xxx_disable_पूर्णांकrs,
+	.enable_पूर्णांकrs           = qla4xxx_enable_पूर्णांकrs,
 	.start_firmware         = qla4xxx_start_firmware,
-	.intr_handler           = qla4xxx_intr_handler,
-	.interrupt_service_routine = qla4xxx_interrupt_service_routine,
+	.पूर्णांकr_handler           = qla4xxx_पूर्णांकr_handler,
+	.पूर्णांकerrupt_service_routine = qla4xxx_पूर्णांकerrupt_service_routine,
 	.reset_chip             = qla4xxx_soft_reset,
 	.reset_firmware         = qla4xxx_hw_reset,
 	.queue_iocb             = qla4xxx_queue_iocb,
@@ -5647,18 +5648,18 @@ static struct isp_operations qla4xxx_isp_ops = {
 	.rd_shdw_rsp_q_in       = qla4xxx_rd_shdw_rsp_q_in,
 	.get_sys_info           = qla4xxx_get_sys_info,
 	.queue_mailbox_command	= qla4xxx_queue_mbox_cmd,
-	.process_mailbox_interrupt = qla4xxx_process_mbox_intr,
-};
+	.process_mailbox_पूर्णांकerrupt = qla4xxx_process_mbox_पूर्णांकr,
+पूर्ण;
 
-static struct isp_operations qla4_82xx_isp_ops = {
+अटल काष्ठा isp_operations qla4_82xx_isp_ops = अणु
 	.iospace_config         = qla4_8xxx_iospace_config,
 	.pci_config             = qla4_8xxx_pci_config,
-	.disable_intrs          = qla4_82xx_disable_intrs,
-	.enable_intrs           = qla4_82xx_enable_intrs,
+	.disable_पूर्णांकrs          = qla4_82xx_disable_पूर्णांकrs,
+	.enable_पूर्णांकrs           = qla4_82xx_enable_पूर्णांकrs,
 	.start_firmware         = qla4_8xxx_load_risc,
 	.restart_firmware	= qla4_82xx_try_start_fw,
-	.intr_handler           = qla4_82xx_intr_handler,
-	.interrupt_service_routine = qla4_82xx_interrupt_service_routine,
+	.पूर्णांकr_handler           = qla4_82xx_पूर्णांकr_handler,
+	.पूर्णांकerrupt_service_routine = qla4_82xx_पूर्णांकerrupt_service_routine,
 	.need_reset		= qla4_8xxx_need_reset,
 	.reset_chip             = qla4_82xx_isp_reset,
 	.reset_firmware         = qla4_8xxx_stop_firmware,
@@ -5675,18 +5676,18 @@ static struct isp_operations qla4_82xx_isp_ops = {
 	.idc_unlock		= qla4_82xx_idc_unlock,
 	.rom_lock_recovery	= qla4_82xx_rom_lock_recovery,
 	.queue_mailbox_command	= qla4_82xx_queue_mbox_cmd,
-	.process_mailbox_interrupt = qla4_82xx_process_mbox_intr,
-};
+	.process_mailbox_पूर्णांकerrupt = qla4_82xx_process_mbox_पूर्णांकr,
+पूर्ण;
 
-static struct isp_operations qla4_83xx_isp_ops = {
+अटल काष्ठा isp_operations qla4_83xx_isp_ops = अणु
 	.iospace_config		= qla4_8xxx_iospace_config,
 	.pci_config		= qla4_8xxx_pci_config,
-	.disable_intrs		= qla4_83xx_disable_intrs,
-	.enable_intrs		= qla4_83xx_enable_intrs,
+	.disable_पूर्णांकrs		= qla4_83xx_disable_पूर्णांकrs,
+	.enable_पूर्णांकrs		= qla4_83xx_enable_पूर्णांकrs,
 	.start_firmware		= qla4_8xxx_load_risc,
 	.restart_firmware	= qla4_83xx_start_firmware,
-	.intr_handler		= qla4_83xx_intr_handler,
-	.interrupt_service_routine = qla4_83xx_interrupt_service_routine,
+	.पूर्णांकr_handler		= qla4_83xx_पूर्णांकr_handler,
+	.पूर्णांकerrupt_service_routine = qla4_83xx_पूर्णांकerrupt_service_routine,
 	.need_reset		= qla4_8xxx_need_reset,
 	.reset_chip		= qla4_83xx_isp_reset,
 	.reset_firmware		= qla4_8xxx_stop_firmware,
@@ -5703,578 +5704,578 @@ static struct isp_operations qla4_83xx_isp_ops = {
 	.idc_unlock		= qla4_83xx_drv_unlock,
 	.rom_lock_recovery	= qla4_83xx_rom_lock_recovery,
 	.queue_mailbox_command	= qla4_83xx_queue_mbox_cmd,
-	.process_mailbox_interrupt = qla4_83xx_process_mbox_intr,
-};
+	.process_mailbox_पूर्णांकerrupt = qla4_83xx_process_mbox_पूर्णांकr,
+पूर्ण;
 
-uint16_t qla4xxx_rd_shdw_req_q_out(struct scsi_qla_host *ha)
-{
-	return (uint16_t)le32_to_cpu(ha->shadow_regs->req_q_out);
-}
+uपूर्णांक16_t qla4xxx_rd_shdw_req_q_out(काष्ठा scsi_qla_host *ha)
+अणु
+	वापस (uपूर्णांक16_t)le32_to_cpu(ha->shaकरोw_regs->req_q_out);
+पूर्ण
 
-uint16_t qla4_82xx_rd_shdw_req_q_out(struct scsi_qla_host *ha)
-{
-	return (uint16_t)le32_to_cpu(readl(&ha->qla4_82xx_reg->req_q_out));
-}
+uपूर्णांक16_t qla4_82xx_rd_shdw_req_q_out(काष्ठा scsi_qla_host *ha)
+अणु
+	वापस (uपूर्णांक16_t)le32_to_cpu(पढ़ोl(&ha->qla4_82xx_reg->req_q_out));
+पूर्ण
 
-uint16_t qla4xxx_rd_shdw_rsp_q_in(struct scsi_qla_host *ha)
-{
-	return (uint16_t)le32_to_cpu(ha->shadow_regs->rsp_q_in);
-}
+uपूर्णांक16_t qla4xxx_rd_shdw_rsp_q_in(काष्ठा scsi_qla_host *ha)
+अणु
+	वापस (uपूर्णांक16_t)le32_to_cpu(ha->shaकरोw_regs->rsp_q_in);
+पूर्ण
 
-uint16_t qla4_82xx_rd_shdw_rsp_q_in(struct scsi_qla_host *ha)
-{
-	return (uint16_t)le32_to_cpu(readl(&ha->qla4_82xx_reg->rsp_q_in));
-}
+uपूर्णांक16_t qla4_82xx_rd_shdw_rsp_q_in(काष्ठा scsi_qla_host *ha)
+अणु
+	वापस (uपूर्णांक16_t)le32_to_cpu(पढ़ोl(&ha->qla4_82xx_reg->rsp_q_in));
+पूर्ण
 
-static ssize_t qla4xxx_show_boot_eth_info(void *data, int type, char *buf)
-{
-	struct scsi_qla_host *ha = data;
-	char *str = buf;
-	int rc;
+अटल sमाप_प्रकार qla4xxx_show_boot_eth_info(व्योम *data, पूर्णांक type, अक्षर *buf)
+अणु
+	काष्ठा scsi_qla_host *ha = data;
+	अक्षर *str = buf;
+	पूर्णांक rc;
 
-	switch (type) {
-	case ISCSI_BOOT_ETH_FLAGS:
-		rc = sprintf(str, "%d\n", SYSFS_FLAG_FW_SEL_BOOT);
-		break;
-	case ISCSI_BOOT_ETH_INDEX:
-		rc = sprintf(str, "0\n");
-		break;
-	case ISCSI_BOOT_ETH_MAC:
-		rc = sysfs_format_mac(str, ha->my_mac,
+	चयन (type) अणु
+	हाल ISCSI_BOOT_ETH_FLAGS:
+		rc = प्र_लिखो(str, "%d\n", SYSFS_FLAG_FW_SEL_BOOT);
+		अवरोध;
+	हाल ISCSI_BOOT_ETH_INDEX:
+		rc = प्र_लिखो(str, "0\n");
+		अवरोध;
+	हाल ISCSI_BOOT_ETH_MAC:
+		rc = sysfs_क्रमmat_mac(str, ha->my_mac,
 				      MAC_ADDR_LEN);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -ENOSYS;
-		break;
-	}
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static umode_t qla4xxx_eth_get_attr_visibility(void *data, int type)
-{
-	int rc;
+अटल umode_t qla4xxx_eth_get_attr_visibility(व्योम *data, पूर्णांक type)
+अणु
+	पूर्णांक rc;
 
-	switch (type) {
-	case ISCSI_BOOT_ETH_FLAGS:
-	case ISCSI_BOOT_ETH_MAC:
-	case ISCSI_BOOT_ETH_INDEX:
+	चयन (type) अणु
+	हाल ISCSI_BOOT_ETH_FLAGS:
+	हाल ISCSI_BOOT_ETH_MAC:
+	हाल ISCSI_BOOT_ETH_INDEX:
 		rc = S_IRUGO;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = 0;
-		break;
-	}
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static ssize_t qla4xxx_show_boot_ini_info(void *data, int type, char *buf)
-{
-	struct scsi_qla_host *ha = data;
-	char *str = buf;
-	int rc;
+अटल sमाप_प्रकार qla4xxx_show_boot_ini_info(व्योम *data, पूर्णांक type, अक्षर *buf)
+अणु
+	काष्ठा scsi_qla_host *ha = data;
+	अक्षर *str = buf;
+	पूर्णांक rc;
 
-	switch (type) {
-	case ISCSI_BOOT_INI_INITIATOR_NAME:
-		rc = sprintf(str, "%s\n", ha->name_string);
-		break;
-	default:
+	चयन (type) अणु
+	हाल ISCSI_BOOT_INI_INITIATOR_NAME:
+		rc = प्र_लिखो(str, "%s\n", ha->name_string);
+		अवरोध;
+	शेष:
 		rc = -ENOSYS;
-		break;
-	}
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static umode_t qla4xxx_ini_get_attr_visibility(void *data, int type)
-{
-	int rc;
+अटल umode_t qla4xxx_ini_get_attr_visibility(व्योम *data, पूर्णांक type)
+अणु
+	पूर्णांक rc;
 
-	switch (type) {
-	case ISCSI_BOOT_INI_INITIATOR_NAME:
+	चयन (type) अणु
+	हाल ISCSI_BOOT_INI_INITIATOR_NAME:
 		rc = S_IRUGO;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = 0;
-		break;
-	}
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static ssize_t
-qla4xxx_show_boot_tgt_info(struct ql4_boot_session_info *boot_sess, int type,
-			   char *buf)
-{
-	struct ql4_conn_info *boot_conn = &boot_sess->conn_list[0];
-	char *str = buf;
-	int rc;
+अटल sमाप_प्रकार
+qla4xxx_show_boot_tgt_info(काष्ठा ql4_boot_session_info *boot_sess, पूर्णांक type,
+			   अक्षर *buf)
+अणु
+	काष्ठा ql4_conn_info *boot_conn = &boot_sess->conn_list[0];
+	अक्षर *str = buf;
+	पूर्णांक rc;
 
-	switch (type) {
-	case ISCSI_BOOT_TGT_NAME:
-		rc = sprintf(buf, "%s\n", (char *)&boot_sess->target_name);
-		break;
-	case ISCSI_BOOT_TGT_IP_ADDR:
-		if (boot_sess->conn_list[0].dest_ipaddr.ip_type == 0x1)
-			rc = sprintf(buf, "%pI4\n",
+	चयन (type) अणु
+	हाल ISCSI_BOOT_TGT_NAME:
+		rc = प्र_लिखो(buf, "%s\n", (अक्षर *)&boot_sess->target_name);
+		अवरोध;
+	हाल ISCSI_BOOT_TGT_IP_ADDR:
+		अगर (boot_sess->conn_list[0].dest_ipaddr.ip_type == 0x1)
+			rc = प्र_लिखो(buf, "%pI4\n",
 				     &boot_conn->dest_ipaddr.ip_address);
-		else
-			rc = sprintf(str, "%pI6\n",
+		अन्यथा
+			rc = प्र_लिखो(str, "%pI6\n",
 				     &boot_conn->dest_ipaddr.ip_address);
-		break;
-	case ISCSI_BOOT_TGT_PORT:
-			rc = sprintf(str, "%d\n", boot_conn->dest_port);
-		break;
-	case ISCSI_BOOT_TGT_CHAP_NAME:
-		rc = sprintf(str,  "%.*s\n",
+		अवरोध;
+	हाल ISCSI_BOOT_TGT_PORT:
+			rc = प्र_लिखो(str, "%d\n", boot_conn->dest_port);
+		अवरोध;
+	हाल ISCSI_BOOT_TGT_CHAP_NAME:
+		rc = प्र_लिखो(str,  "%.*s\n",
 			     boot_conn->chap.target_chap_name_length,
-			     (char *)&boot_conn->chap.target_chap_name);
-		break;
-	case ISCSI_BOOT_TGT_CHAP_SECRET:
-		rc = sprintf(str,  "%.*s\n",
+			     (अक्षर *)&boot_conn->chap.target_chap_name);
+		अवरोध;
+	हाल ISCSI_BOOT_TGT_CHAP_SECRET:
+		rc = प्र_लिखो(str,  "%.*s\n",
 			     boot_conn->chap.target_secret_length,
-			     (char *)&boot_conn->chap.target_secret);
-		break;
-	case ISCSI_BOOT_TGT_REV_CHAP_NAME:
-		rc = sprintf(str,  "%.*s\n",
-			     boot_conn->chap.intr_chap_name_length,
-			     (char *)&boot_conn->chap.intr_chap_name);
-		break;
-	case ISCSI_BOOT_TGT_REV_CHAP_SECRET:
-		rc = sprintf(str,  "%.*s\n",
-			     boot_conn->chap.intr_secret_length,
-			     (char *)&boot_conn->chap.intr_secret);
-		break;
-	case ISCSI_BOOT_TGT_FLAGS:
-		rc = sprintf(str, "%d\n", SYSFS_FLAG_FW_SEL_BOOT);
-		break;
-	case ISCSI_BOOT_TGT_NIC_ASSOC:
-		rc = sprintf(str, "0\n");
-		break;
-	default:
+			     (अक्षर *)&boot_conn->chap.target_secret);
+		अवरोध;
+	हाल ISCSI_BOOT_TGT_REV_CHAP_NAME:
+		rc = प्र_लिखो(str,  "%.*s\n",
+			     boot_conn->chap.पूर्णांकr_chap_name_length,
+			     (अक्षर *)&boot_conn->chap.पूर्णांकr_chap_name);
+		अवरोध;
+	हाल ISCSI_BOOT_TGT_REV_CHAP_SECRET:
+		rc = प्र_लिखो(str,  "%.*s\n",
+			     boot_conn->chap.पूर्णांकr_secret_length,
+			     (अक्षर *)&boot_conn->chap.पूर्णांकr_secret);
+		अवरोध;
+	हाल ISCSI_BOOT_TGT_FLAGS:
+		rc = प्र_लिखो(str, "%d\n", SYSFS_FLAG_FW_SEL_BOOT);
+		अवरोध;
+	हाल ISCSI_BOOT_TGT_NIC_ASSOC:
+		rc = प्र_लिखो(str, "0\n");
+		अवरोध;
+	शेष:
 		rc = -ENOSYS;
-		break;
-	}
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static ssize_t qla4xxx_show_boot_tgt_pri_info(void *data, int type, char *buf)
-{
-	struct scsi_qla_host *ha = data;
-	struct ql4_boot_session_info *boot_sess = &(ha->boot_tgt.boot_pri_sess);
+अटल sमाप_प्रकार qla4xxx_show_boot_tgt_pri_info(व्योम *data, पूर्णांक type, अक्षर *buf)
+अणु
+	काष्ठा scsi_qla_host *ha = data;
+	काष्ठा ql4_boot_session_info *boot_sess = &(ha->boot_tgt.boot_pri_sess);
 
-	return qla4xxx_show_boot_tgt_info(boot_sess, type, buf);
-}
+	वापस qla4xxx_show_boot_tgt_info(boot_sess, type, buf);
+पूर्ण
 
-static ssize_t qla4xxx_show_boot_tgt_sec_info(void *data, int type, char *buf)
-{
-	struct scsi_qla_host *ha = data;
-	struct ql4_boot_session_info *boot_sess = &(ha->boot_tgt.boot_sec_sess);
+अटल sमाप_प्रकार qla4xxx_show_boot_tgt_sec_info(व्योम *data, पूर्णांक type, अक्षर *buf)
+अणु
+	काष्ठा scsi_qla_host *ha = data;
+	काष्ठा ql4_boot_session_info *boot_sess = &(ha->boot_tgt.boot_sec_sess);
 
-	return qla4xxx_show_boot_tgt_info(boot_sess, type, buf);
-}
+	वापस qla4xxx_show_boot_tgt_info(boot_sess, type, buf);
+पूर्ण
 
-static umode_t qla4xxx_tgt_get_attr_visibility(void *data, int type)
-{
-	int rc;
+अटल umode_t qla4xxx_tgt_get_attr_visibility(व्योम *data, पूर्णांक type)
+अणु
+	पूर्णांक rc;
 
-	switch (type) {
-	case ISCSI_BOOT_TGT_NAME:
-	case ISCSI_BOOT_TGT_IP_ADDR:
-	case ISCSI_BOOT_TGT_PORT:
-	case ISCSI_BOOT_TGT_CHAP_NAME:
-	case ISCSI_BOOT_TGT_CHAP_SECRET:
-	case ISCSI_BOOT_TGT_REV_CHAP_NAME:
-	case ISCSI_BOOT_TGT_REV_CHAP_SECRET:
-	case ISCSI_BOOT_TGT_NIC_ASSOC:
-	case ISCSI_BOOT_TGT_FLAGS:
+	चयन (type) अणु
+	हाल ISCSI_BOOT_TGT_NAME:
+	हाल ISCSI_BOOT_TGT_IP_ADDR:
+	हाल ISCSI_BOOT_TGT_PORT:
+	हाल ISCSI_BOOT_TGT_CHAP_NAME:
+	हाल ISCSI_BOOT_TGT_CHAP_SECRET:
+	हाल ISCSI_BOOT_TGT_REV_CHAP_NAME:
+	हाल ISCSI_BOOT_TGT_REV_CHAP_SECRET:
+	हाल ISCSI_BOOT_TGT_NIC_ASSOC:
+	हाल ISCSI_BOOT_TGT_FLAGS:
 		rc = S_IRUGO;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = 0;
-		break;
-	}
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void qla4xxx_boot_release(void *data)
-{
-	struct scsi_qla_host *ha = data;
+अटल व्योम qla4xxx_boot_release(व्योम *data)
+अणु
+	काष्ठा scsi_qla_host *ha = data;
 
 	scsi_host_put(ha->host);
-}
+पूर्ण
 
-static int get_fw_boot_info(struct scsi_qla_host *ha, uint16_t ddb_index[])
-{
+अटल पूर्णांक get_fw_boot_info(काष्ठा scsi_qla_host *ha, uपूर्णांक16_t ddb_index[])
+अणु
 	dma_addr_t buf_dma;
-	uint32_t addr, pri_addr, sec_addr;
-	uint32_t offset;
-	uint16_t func_num;
-	uint8_t val;
-	uint8_t *buf = NULL;
-	size_t size = 13 * sizeof(uint8_t);
-	int ret = QLA_SUCCESS;
+	uपूर्णांक32_t addr, pri_addr, sec_addr;
+	uपूर्णांक32_t offset;
+	uपूर्णांक16_t func_num;
+	uपूर्णांक8_t val;
+	uपूर्णांक8_t *buf = शून्य;
+	माप_प्रकार size = 13 * माप(uपूर्णांक8_t);
+	पूर्णांक ret = QLA_SUCCESS;
 
 	func_num = PCI_FUNC(ha->pdev->devfn);
 
-	ql4_printk(KERN_INFO, ha, "%s: Get FW boot info for 0x%x func %d\n",
+	ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Get FW boot info for 0x%x func %d\n",
 		   __func__, ha->pdev->device, func_num);
 
-	if (is_qla40XX(ha)) {
-		if (func_num == 1) {
+	अगर (is_qla40XX(ha)) अणु
+		अगर (func_num == 1) अणु
 			addr = NVRAM_PORT0_BOOT_MODE;
 			pri_addr = NVRAM_PORT0_BOOT_PRI_TGT;
 			sec_addr = NVRAM_PORT0_BOOT_SEC_TGT;
-		} else if (func_num == 3) {
+		पूर्ण अन्यथा अगर (func_num == 3) अणु
 			addr = NVRAM_PORT1_BOOT_MODE;
 			pri_addr = NVRAM_PORT1_BOOT_PRI_TGT;
 			sec_addr = NVRAM_PORT1_BOOT_SEC_TGT;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = QLA_ERROR;
-			goto exit_boot_info;
-		}
+			जाओ निकास_boot_info;
+		पूर्ण
 
 		/* Check Boot Mode */
 		val = rd_nvram_byte(ha, addr);
-		if (!(val & 0x07)) {
-			DEBUG2(ql4_printk(KERN_INFO, ha, "%s: Adapter boot "
+		अगर (!(val & 0x07)) अणु
+			DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Adapter boot "
 					  "options : 0x%x\n", __func__, val));
 			ret = QLA_ERROR;
-			goto exit_boot_info;
-		}
+			जाओ निकास_boot_info;
+		पूर्ण
 
 		/* get primary valid target index */
 		val = rd_nvram_byte(ha, pri_addr);
-		if (val & BIT_7)
+		अगर (val & BIT_7)
 			ddb_index[0] = (val & 0x7f);
 
 		/* get secondary valid target index */
 		val = rd_nvram_byte(ha, sec_addr);
-		if (val & BIT_7)
+		अगर (val & BIT_7)
 			ddb_index[1] = (val & 0x7f);
-		goto exit_boot_info;
-	} else if (is_qla80XX(ha)) {
+		जाओ निकास_boot_info;
+	पूर्ण अन्यथा अगर (is_qla80XX(ha)) अणु
 		buf = dma_alloc_coherent(&ha->pdev->dev, size,
 					 &buf_dma, GFP_KERNEL);
-		if (!buf) {
-			DEBUG2(ql4_printk(KERN_ERR, ha,
+		अगर (!buf) अणु
+			DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha,
 					  "%s: Unable to allocate dma buffer\n",
 					   __func__));
 			ret = QLA_ERROR;
-			goto exit_boot_info;
-		}
+			जाओ निकास_boot_info;
+		पूर्ण
 
-		if (ha->port_num == 0)
+		अगर (ha->port_num == 0)
 			offset = BOOT_PARAM_OFFSET_PORT0;
-		else if (ha->port_num == 1)
+		अन्यथा अगर (ha->port_num == 1)
 			offset = BOOT_PARAM_OFFSET_PORT1;
-		else {
+		अन्यथा अणु
 			ret = QLA_ERROR;
-			goto exit_boot_info_free;
-		}
+			जाओ निकास_boot_info_मुक्त;
+		पूर्ण
 		addr = FLASH_RAW_ACCESS_ADDR + (ha->hw.flt_iscsi_param * 4) +
 		       offset;
-		if (qla4xxx_get_flash(ha, buf_dma, addr,
-				      13 * sizeof(uint8_t)) != QLA_SUCCESS) {
-			DEBUG2(ql4_printk(KERN_ERR, ha, "scsi%ld: %s: Get Flash"
+		अगर (qla4xxx_get_flash(ha, buf_dma, addr,
+				      13 * माप(uपूर्णांक8_t)) != QLA_SUCCESS) अणु
+			DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "scsi%ld: %s: Get Flash"
 					  " failed\n", ha->host_no, __func__));
 			ret = QLA_ERROR;
-			goto exit_boot_info_free;
-		}
+			जाओ निकास_boot_info_मुक्त;
+		पूर्ण
 		/* Check Boot Mode */
-		if (!(buf[1] & 0x07)) {
-			DEBUG2(ql4_printk(KERN_INFO, ha, "Firmware boot options"
+		अगर (!(buf[1] & 0x07)) अणु
+			DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "Firmware boot options"
 					  " : 0x%x\n", buf[1]));
 			ret = QLA_ERROR;
-			goto exit_boot_info_free;
-		}
+			जाओ निकास_boot_info_मुक्त;
+		पूर्ण
 
 		/* get primary valid target index */
-		if (buf[2] & BIT_7)
+		अगर (buf[2] & BIT_7)
 			ddb_index[0] = buf[2] & 0x7f;
 
 		/* get secondary valid target index */
-		if (buf[11] & BIT_7)
+		अगर (buf[11] & BIT_7)
 			ddb_index[1] = buf[11] & 0x7f;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = QLA_ERROR;
-		goto exit_boot_info;
-	}
+		जाओ निकास_boot_info;
+	पूर्ण
 
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s: Primary target ID %d, Secondary"
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Primary target ID %d, Secondary"
 			  " target ID %d\n", __func__, ddb_index[0],
 			  ddb_index[1]));
 
-exit_boot_info_free:
-	dma_free_coherent(&ha->pdev->dev, size, buf, buf_dma);
-exit_boot_info:
+निकास_boot_info_मुक्त:
+	dma_मुक्त_coherent(&ha->pdev->dev, size, buf, buf_dma);
+निकास_boot_info:
 	ha->pri_ddb_idx = ddb_index[0];
 	ha->sec_ddb_idx = ddb_index[1];
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * qla4xxx_get_bidi_chap - Get a BIDI CHAP user and password
- * @ha: pointer to adapter structure
- * @username: CHAP username to be returned
- * @password: CHAP password to be returned
+ * @ha: poपूर्णांकer to adapter काष्ठाure
+ * @username: CHAP username to be वापसed
+ * @password: CHAP password to be वापसed
  *
  * If a boot entry has BIDI CHAP enabled then we need to set the BIDI CHAP
  * user and password in the sysfs entry in /sys/firmware/iscsi_boot#/.
  * So from the CHAP cache find the first BIDI CHAP entry and set it
  * to the boot record in sysfs.
  **/
-static int qla4xxx_get_bidi_chap(struct scsi_qla_host *ha, char *username,
-			    char *password)
-{
-	int i, ret = -EINVAL;
-	int max_chap_entries = 0;
-	struct ql4_chap_table *chap_table;
+अटल पूर्णांक qla4xxx_get_bidi_chap(काष्ठा scsi_qla_host *ha, अक्षर *username,
+			    अक्षर *password)
+अणु
+	पूर्णांक i, ret = -EINVAL;
+	पूर्णांक max_chap_entries = 0;
+	काष्ठा ql4_chap_table *chap_table;
 
-	if (is_qla80XX(ha))
+	अगर (is_qla80XX(ha))
 		max_chap_entries = (ha->hw.flt_chap_size / 2) /
-						sizeof(struct ql4_chap_table);
-	else
+						माप(काष्ठा ql4_chap_table);
+	अन्यथा
 		max_chap_entries = MAX_CHAP_ENTRIES_40XX;
 
-	if (!ha->chap_list) {
-		ql4_printk(KERN_ERR, ha, "Do not have CHAP table cache\n");
-		return ret;
-	}
+	अगर (!ha->chap_list) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Do not have CHAP table cache\n");
+		वापस ret;
+	पूर्ण
 
 	mutex_lock(&ha->chap_sem);
-	for (i = 0; i < max_chap_entries; i++) {
-		chap_table = (struct ql4_chap_table *)ha->chap_list + i;
-		if (chap_table->cookie !=
-		    __constant_cpu_to_le16(CHAP_VALID_COOKIE)) {
-			continue;
-		}
+	क्रम (i = 0; i < max_chap_entries; i++) अणु
+		chap_table = (काष्ठा ql4_chap_table *)ha->chap_list + i;
+		अगर (chap_table->cookie !=
+		    __स्थिरant_cpu_to_le16(CHAP_VALID_COOKIE)) अणु
+			जारी;
+		पूर्ण
 
-		if (chap_table->flags & BIT_7) /* local */
-			continue;
+		अगर (chap_table->flags & BIT_7) /* local */
+			जारी;
 
-		if (!(chap_table->flags & BIT_6)) /* Not BIDI */
-			continue;
+		अगर (!(chap_table->flags & BIT_6)) /* Not BIDI */
+			जारी;
 
 		strlcpy(password, chap_table->secret, QL4_CHAP_MAX_SECRET_LEN);
 		strlcpy(username, chap_table->name, QL4_CHAP_MAX_NAME_LEN);
 		ret = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&ha->chap_sem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int qla4xxx_get_boot_target(struct scsi_qla_host *ha,
-				   struct ql4_boot_session_info *boot_sess,
-				   uint16_t ddb_index)
-{
-	struct ql4_conn_info *boot_conn = &boot_sess->conn_list[0];
-	struct dev_db_entry *fw_ddb_entry;
+अटल पूर्णांक qla4xxx_get_boot_target(काष्ठा scsi_qla_host *ha,
+				   काष्ठा ql4_boot_session_info *boot_sess,
+				   uपूर्णांक16_t ddb_index)
+अणु
+	काष्ठा ql4_conn_info *boot_conn = &boot_sess->conn_list[0];
+	काष्ठा dev_db_entry *fw_ddb_entry;
 	dma_addr_t fw_ddb_entry_dma;
-	uint16_t idx;
-	uint16_t options;
-	int ret = QLA_SUCCESS;
+	uपूर्णांक16_t idx;
+	uपूर्णांक16_t options;
+	पूर्णांक ret = QLA_SUCCESS;
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha,
 				  "%s: Unable to allocate dma buffer.\n",
 				  __func__));
 		ret = QLA_ERROR;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (qla4xxx_bootdb_by_index(ha, fw_ddb_entry,
-				   fw_ddb_entry_dma, ddb_index)) {
-		DEBUG2(ql4_printk(KERN_INFO, ha, "%s: No Flash DDB found at "
+	अगर (qla4xxx_bootdb_by_index(ha, fw_ddb_entry,
+				   fw_ddb_entry_dma, ddb_index)) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: No Flash DDB found at "
 				  "index [%d]\n", __func__, ddb_index));
 		ret = QLA_ERROR;
-		goto exit_boot_target;
-	}
+		जाओ निकास_boot_target;
+	पूर्ण
 
 	/* Update target name and IP from DDB */
-	memcpy(boot_sess->target_name, fw_ddb_entry->iscsi_name,
-	       min(sizeof(boot_sess->target_name),
-		   sizeof(fw_ddb_entry->iscsi_name)));
+	स_नकल(boot_sess->target_name, fw_ddb_entry->iscsi_name,
+	       min(माप(boot_sess->target_name),
+		   माप(fw_ddb_entry->iscsi_name)));
 
 	options = le16_to_cpu(fw_ddb_entry->options);
-	if (options & DDB_OPT_IPV6_DEVICE) {
-		memcpy(&boot_conn->dest_ipaddr.ip_address,
+	अगर (options & DDB_OPT_IPV6_DEVICE) अणु
+		स_नकल(&boot_conn->dest_ipaddr.ip_address,
 		       &fw_ddb_entry->ip_addr[0], IPv6_ADDR_LEN);
-	} else {
+	पूर्ण अन्यथा अणु
 		boot_conn->dest_ipaddr.ip_type = 0x1;
-		memcpy(&boot_conn->dest_ipaddr.ip_address,
+		स_नकल(&boot_conn->dest_ipaddr.ip_address,
 		       &fw_ddb_entry->ip_addr[0], IP_ADDR_LEN);
-	}
+	पूर्ण
 
 	boot_conn->dest_port = le16_to_cpu(fw_ddb_entry->port);
 
-	/* update chap information */
+	/* update chap inक्रमmation */
 	idx = __le16_to_cpu(fw_ddb_entry->chap_tbl_idx);
 
-	if (BIT_7 & le16_to_cpu(fw_ddb_entry->iscsi_options))	{
+	अगर (BIT_7 & le16_to_cpu(fw_ddb_entry->iscsi_options))	अणु
 
-		DEBUG2(ql4_printk(KERN_INFO, ha, "Setting chap\n"));
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "Setting chap\n"));
 
-		ret = qla4xxx_get_chap(ha, (char *)&boot_conn->chap.
+		ret = qla4xxx_get_chap(ha, (अक्षर *)&boot_conn->chap.
 				       target_chap_name,
-				       (char *)&boot_conn->chap.target_secret,
+				       (अक्षर *)&boot_conn->chap.target_secret,
 				       idx);
-		if (ret) {
-			ql4_printk(KERN_ERR, ha, "Failed to set chap\n");
+		अगर (ret) अणु
+			ql4_prपूर्णांकk(KERN_ERR, ha, "Failed to set chap\n");
 			ret = QLA_ERROR;
-			goto exit_boot_target;
-		}
+			जाओ निकास_boot_target;
+		पूर्ण
 
 		boot_conn->chap.target_chap_name_length = QL4_CHAP_MAX_NAME_LEN;
 		boot_conn->chap.target_secret_length = QL4_CHAP_MAX_SECRET_LEN;
-	}
+	पूर्ण
 
-	if (BIT_4 & le16_to_cpu(fw_ddb_entry->iscsi_options)) {
+	अगर (BIT_4 & le16_to_cpu(fw_ddb_entry->iscsi_options)) अणु
 
-		DEBUG2(ql4_printk(KERN_INFO, ha, "Setting BIDI chap\n"));
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "Setting BIDI chap\n"));
 
 		ret = qla4xxx_get_bidi_chap(ha,
-				    (char *)&boot_conn->chap.intr_chap_name,
-				    (char *)&boot_conn->chap.intr_secret);
+				    (अक्षर *)&boot_conn->chap.पूर्णांकr_chap_name,
+				    (अक्षर *)&boot_conn->chap.पूर्णांकr_secret);
 
-		if (ret) {
-			ql4_printk(KERN_ERR, ha, "Failed to set BIDI chap\n");
+		अगर (ret) अणु
+			ql4_prपूर्णांकk(KERN_ERR, ha, "Failed to set BIDI chap\n");
 			ret = QLA_ERROR;
-			goto exit_boot_target;
-		}
+			जाओ निकास_boot_target;
+		पूर्ण
 
-		boot_conn->chap.intr_chap_name_length = QL4_CHAP_MAX_NAME_LEN;
-		boot_conn->chap.intr_secret_length = QL4_CHAP_MAX_SECRET_LEN;
-	}
+		boot_conn->chap.पूर्णांकr_chap_name_length = QL4_CHAP_MAX_NAME_LEN;
+		boot_conn->chap.पूर्णांकr_secret_length = QL4_CHAP_MAX_SECRET_LEN;
+	पूर्ण
 
-exit_boot_target:
-	dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+निकास_boot_target:
+	dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 			  fw_ddb_entry, fw_ddb_entry_dma);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qla4xxx_get_boot_info(struct scsi_qla_host *ha)
-{
-	uint16_t ddb_index[2];
-	int ret = QLA_ERROR;
-	int rval;
+अटल पूर्णांक qla4xxx_get_boot_info(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक16_t ddb_index[2];
+	पूर्णांक ret = QLA_ERROR;
+	पूर्णांक rval;
 
-	memset(ddb_index, 0, sizeof(ddb_index));
+	स_रखो(ddb_index, 0, माप(ddb_index));
 	ddb_index[0] = 0xffff;
 	ddb_index[1] = 0xffff;
 	ret = get_fw_boot_info(ha, ddb_index);
-	if (ret != QLA_SUCCESS) {
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+	अगर (ret != QLA_SUCCESS) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				"%s: No boot target configured.\n", __func__));
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ql4xdisablesysfsboot)
-		return QLA_SUCCESS;
+	अगर (ql4xdisablesysfsboot)
+		वापस QLA_SUCCESS;
 
-	if (ddb_index[0] == 0xffff)
-		goto sec_target;
+	अगर (ddb_index[0] == 0xffff)
+		जाओ sec_target;
 
 	rval = qla4xxx_get_boot_target(ha, &(ha->boot_tgt.boot_pri_sess),
 				      ddb_index[0]);
-	if (rval != QLA_SUCCESS) {
-		DEBUG2(ql4_printk(KERN_INFO, ha, "%s: Primary boot target not "
+	अगर (rval != QLA_SUCCESS) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Primary boot target not "
 				  "configured\n", __func__));
-	} else
+	पूर्ण अन्यथा
 		ret = QLA_SUCCESS;
 
 sec_target:
-	if (ddb_index[1] == 0xffff)
-		goto exit_get_boot_info;
+	अगर (ddb_index[1] == 0xffff)
+		जाओ निकास_get_boot_info;
 
 	rval = qla4xxx_get_boot_target(ha, &(ha->boot_tgt.boot_sec_sess),
 				      ddb_index[1]);
-	if (rval != QLA_SUCCESS) {
-		DEBUG2(ql4_printk(KERN_INFO, ha, "%s: Secondary boot target not"
+	अगर (rval != QLA_SUCCESS) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Secondary boot target not"
 				  " configured\n", __func__));
-	} else
+	पूर्ण अन्यथा
 		ret = QLA_SUCCESS;
 
-exit_get_boot_info:
-	return ret;
-}
+निकास_get_boot_info:
+	वापस ret;
+पूर्ण
 
-static int qla4xxx_setup_boot_info(struct scsi_qla_host *ha)
-{
-	struct iscsi_boot_kobj *boot_kobj;
+अटल पूर्णांक qla4xxx_setup_boot_info(काष्ठा scsi_qla_host *ha)
+अणु
+	काष्ठा iscsi_boot_kobj *boot_kobj;
 
-	if (qla4xxx_get_boot_info(ha) != QLA_SUCCESS)
-		return QLA_ERROR;
+	अगर (qla4xxx_get_boot_info(ha) != QLA_SUCCESS)
+		वापस QLA_ERROR;
 
-	if (ql4xdisablesysfsboot) {
-		ql4_printk(KERN_INFO, ha,
+	अगर (ql4xdisablesysfsboot) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha,
 			   "%s: syfsboot disabled - driver will trigger login "
 			   "and publish session for discovery .\n", __func__);
-		return QLA_SUCCESS;
-	}
+		वापस QLA_SUCCESS;
+	पूर्ण
 
 
 	ha->boot_kset = iscsi_boot_create_host_kset(ha->host->host_no);
-	if (!ha->boot_kset)
-		goto kset_free;
+	अगर (!ha->boot_kset)
+		जाओ kset_मुक्त;
 
-	if (!scsi_host_get(ha->host))
-		goto kset_free;
+	अगर (!scsi_host_get(ha->host))
+		जाओ kset_मुक्त;
 	boot_kobj = iscsi_boot_create_target(ha->boot_kset, 0, ha,
 					     qla4xxx_show_boot_tgt_pri_info,
 					     qla4xxx_tgt_get_attr_visibility,
 					     qla4xxx_boot_release);
-	if (!boot_kobj)
-		goto put_host;
+	अगर (!boot_kobj)
+		जाओ put_host;
 
-	if (!scsi_host_get(ha->host))
-		goto kset_free;
+	अगर (!scsi_host_get(ha->host))
+		जाओ kset_मुक्त;
 	boot_kobj = iscsi_boot_create_target(ha->boot_kset, 1, ha,
 					     qla4xxx_show_boot_tgt_sec_info,
 					     qla4xxx_tgt_get_attr_visibility,
 					     qla4xxx_boot_release);
-	if (!boot_kobj)
-		goto put_host;
+	अगर (!boot_kobj)
+		जाओ put_host;
 
-	if (!scsi_host_get(ha->host))
-		goto kset_free;
+	अगर (!scsi_host_get(ha->host))
+		जाओ kset_मुक्त;
 	boot_kobj = iscsi_boot_create_initiator(ha->boot_kset, 0, ha,
 					       qla4xxx_show_boot_ini_info,
 					       qla4xxx_ini_get_attr_visibility,
 					       qla4xxx_boot_release);
-	if (!boot_kobj)
-		goto put_host;
+	अगर (!boot_kobj)
+		जाओ put_host;
 
-	if (!scsi_host_get(ha->host))
-		goto kset_free;
+	अगर (!scsi_host_get(ha->host))
+		जाओ kset_मुक्त;
 	boot_kobj = iscsi_boot_create_ethernet(ha->boot_kset, 0, ha,
 					       qla4xxx_show_boot_eth_info,
 					       qla4xxx_eth_get_attr_visibility,
 					       qla4xxx_boot_release);
-	if (!boot_kobj)
-		goto put_host;
+	अगर (!boot_kobj)
+		जाओ put_host;
 
-	return QLA_SUCCESS;
+	वापस QLA_SUCCESS;
 
 put_host:
 	scsi_host_put(ha->host);
-kset_free:
+kset_मुक्त:
 	iscsi_boot_destroy_kset(ha->boot_kset);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 
-static void qla4xxx_get_param_ddb(struct ddb_entry *ddb_entry,
-				  struct ql4_tuple_ddb *tddb)
-{
-	struct iscsi_cls_session *cls_sess;
-	struct iscsi_cls_conn *cls_conn;
-	struct iscsi_session *sess;
-	struct iscsi_conn *conn;
+अटल व्योम qla4xxx_get_param_ddb(काष्ठा ddb_entry *ddb_entry,
+				  काष्ठा ql4_tuple_ddb *tddb)
+अणु
+	काष्ठा iscsi_cls_session *cls_sess;
+	काष्ठा iscsi_cls_conn *cls_conn;
+	काष्ठा iscsi_session *sess;
+	काष्ठा iscsi_conn *conn;
 
-	DEBUG2(printk(KERN_INFO "Func: %s\n", __func__));
+	DEBUG2(prपूर्णांकk(KERN_INFO "Func: %s\n", __func__));
 	cls_sess = ddb_entry->sess;
 	sess = cls_sess->dd_data;
 	cls_conn = ddb_entry->conn;
@@ -6284,334 +6285,334 @@ static void qla4xxx_get_param_ddb(struct ddb_entry *ddb_entry,
 	tddb->port = conn->persistent_port;
 	strlcpy(tddb->iscsi_name, sess->targetname, ISCSI_NAME_SIZE);
 	strlcpy(tddb->ip_addr, conn->persistent_address, DDB_IPADDR_LEN);
-}
+पूर्ण
 
-static void qla4xxx_convert_param_ddb(struct dev_db_entry *fw_ddb_entry,
-				      struct ql4_tuple_ddb *tddb,
-				      uint8_t *flash_isid)
-{
-	uint16_t options = 0;
+अटल व्योम qla4xxx_convert_param_ddb(काष्ठा dev_db_entry *fw_ddb_entry,
+				      काष्ठा ql4_tuple_ddb *tddb,
+				      uपूर्णांक8_t *flash_isid)
+अणु
+	uपूर्णांक16_t options = 0;
 
 	tddb->tpgt = le32_to_cpu(fw_ddb_entry->tgt_portal_grp);
-	memcpy(&tddb->iscsi_name[0], &fw_ddb_entry->iscsi_name[0],
-	       min(sizeof(tddb->iscsi_name), sizeof(fw_ddb_entry->iscsi_name)));
+	स_नकल(&tddb->iscsi_name[0], &fw_ddb_entry->iscsi_name[0],
+	       min(माप(tddb->iscsi_name), माप(fw_ddb_entry->iscsi_name)));
 
 	options = le16_to_cpu(fw_ddb_entry->options);
-	if (options & DDB_OPT_IPV6_DEVICE)
-		sprintf(tddb->ip_addr, "%pI6", fw_ddb_entry->ip_addr);
-	else
-		sprintf(tddb->ip_addr, "%pI4", fw_ddb_entry->ip_addr);
+	अगर (options & DDB_OPT_IPV6_DEVICE)
+		प्र_लिखो(tddb->ip_addr, "%pI6", fw_ddb_entry->ip_addr);
+	अन्यथा
+		प्र_लिखो(tddb->ip_addr, "%pI4", fw_ddb_entry->ip_addr);
 
 	tddb->port = le16_to_cpu(fw_ddb_entry->port);
 
-	if (flash_isid == NULL)
-		memcpy(&tddb->isid[0], &fw_ddb_entry->isid[0],
-		       sizeof(tddb->isid));
-	else
-		memcpy(&tddb->isid[0], &flash_isid[0], sizeof(tddb->isid));
-}
+	अगर (flash_isid == शून्य)
+		स_नकल(&tddb->isid[0], &fw_ddb_entry->isid[0],
+		       माप(tddb->isid));
+	अन्यथा
+		स_नकल(&tddb->isid[0], &flash_isid[0], माप(tddb->isid));
+पूर्ण
 
-static int qla4xxx_compare_tuple_ddb(struct scsi_qla_host *ha,
-				     struct ql4_tuple_ddb *old_tddb,
-				     struct ql4_tuple_ddb *new_tddb,
-				     uint8_t is_isid_compare)
-{
-	if (strcmp(old_tddb->iscsi_name, new_tddb->iscsi_name))
-		return QLA_ERROR;
+अटल पूर्णांक qla4xxx_compare_tuple_ddb(काष्ठा scsi_qla_host *ha,
+				     काष्ठा ql4_tuple_ddb *old_tddb,
+				     काष्ठा ql4_tuple_ddb *new_tddb,
+				     uपूर्णांक8_t is_isid_compare)
+अणु
+	अगर (म_भेद(old_tddb->iscsi_name, new_tddb->iscsi_name))
+		वापस QLA_ERROR;
 
-	if (strcmp(old_tddb->ip_addr, new_tddb->ip_addr))
-		return QLA_ERROR;
+	अगर (म_भेद(old_tddb->ip_addr, new_tddb->ip_addr))
+		वापस QLA_ERROR;
 
-	if (old_tddb->port != new_tddb->port)
-		return QLA_ERROR;
+	अगर (old_tddb->port != new_tddb->port)
+		वापस QLA_ERROR;
 
-	/* For multi sessions, driver generates the ISID, so do not compare
+	/* For multi sessions, driver generates the ISID, so करो not compare
 	 * ISID in reset path since it would be a comparison between the
 	 * driver generated ISID and firmware generated ISID. This could
 	 * lead to adding duplicated DDBs in the list as driver generated
 	 * ISID would not match firmware generated ISID.
 	 */
-	if (is_isid_compare) {
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+	अगर (is_isid_compare) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 			"%s: old ISID [%pmR] New ISID [%pmR]\n",
 			__func__, old_tddb->isid, new_tddb->isid));
 
-		if (memcmp(&old_tddb->isid[0], &new_tddb->isid[0],
-			   sizeof(old_tddb->isid)))
-			return QLA_ERROR;
-	}
+		अगर (स_भेद(&old_tddb->isid[0], &new_tddb->isid[0],
+			   माप(old_tddb->isid)))
+			वापस QLA_ERROR;
+	पूर्ण
 
-	DEBUG2(ql4_printk(KERN_INFO, ha,
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 			  "Match Found, fw[%d,%d,%s,%s], [%d,%d,%s,%s]",
 			  old_tddb->port, old_tddb->tpgt, old_tddb->ip_addr,
 			  old_tddb->iscsi_name, new_tddb->port, new_tddb->tpgt,
 			  new_tddb->ip_addr, new_tddb->iscsi_name));
 
-	return QLA_SUCCESS;
-}
+	वापस QLA_SUCCESS;
+पूर्ण
 
-static int qla4xxx_is_session_exists(struct scsi_qla_host *ha,
-				     struct dev_db_entry *fw_ddb_entry,
-				     uint32_t *index)
-{
-	struct ddb_entry *ddb_entry;
-	struct ql4_tuple_ddb *fw_tddb = NULL;
-	struct ql4_tuple_ddb *tmp_tddb = NULL;
-	int idx;
-	int ret = QLA_ERROR;
+अटल पूर्णांक qla4xxx_is_session_exists(काष्ठा scsi_qla_host *ha,
+				     काष्ठा dev_db_entry *fw_ddb_entry,
+				     uपूर्णांक32_t *index)
+अणु
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा ql4_tuple_ddb *fw_tddb = शून्य;
+	काष्ठा ql4_tuple_ddb *पंचांगp_tddb = शून्य;
+	पूर्णांक idx;
+	पूर्णांक ret = QLA_ERROR;
 
-	fw_tddb = vzalloc(sizeof(*fw_tddb));
-	if (!fw_tddb) {
-		DEBUG2(ql4_printk(KERN_WARNING, ha,
+	fw_tddb = vzalloc(माप(*fw_tddb));
+	अगर (!fw_tddb) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_WARNING, ha,
 				  "Memory Allocation failed.\n"));
 		ret = QLA_SUCCESS;
-		goto exit_check;
-	}
+		जाओ निकास_check;
+	पूर्ण
 
-	tmp_tddb = vzalloc(sizeof(*tmp_tddb));
-	if (!tmp_tddb) {
-		DEBUG2(ql4_printk(KERN_WARNING, ha,
+	पंचांगp_tddb = vzalloc(माप(*पंचांगp_tddb));
+	अगर (!पंचांगp_tddb) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_WARNING, ha,
 				  "Memory Allocation failed.\n"));
 		ret = QLA_SUCCESS;
-		goto exit_check;
-	}
+		जाओ निकास_check;
+	पूर्ण
 
-	qla4xxx_convert_param_ddb(fw_ddb_entry, fw_tddb, NULL);
+	qla4xxx_convert_param_ddb(fw_ddb_entry, fw_tddb, शून्य);
 
-	for (idx = 0; idx < MAX_DDB_ENTRIES; idx++) {
+	क्रम (idx = 0; idx < MAX_DDB_ENTRIES; idx++) अणु
 		ddb_entry = qla4xxx_lookup_ddb_by_fw_index(ha, idx);
-		if (ddb_entry == NULL)
-			continue;
+		अगर (ddb_entry == शून्य)
+			जारी;
 
-		qla4xxx_get_param_ddb(ddb_entry, tmp_tddb);
-		if (!qla4xxx_compare_tuple_ddb(ha, fw_tddb, tmp_tddb, false)) {
+		qla4xxx_get_param_ddb(ddb_entry, पंचांगp_tddb);
+		अगर (!qla4xxx_compare_tuple_ddb(ha, fw_tddb, पंचांगp_tddb, false)) अणु
 			ret = QLA_SUCCESS; /* found */
-			if (index != NULL)
+			अगर (index != शून्य)
 				*index = idx;
-			goto exit_check;
-		}
-	}
+			जाओ निकास_check;
+		पूर्ण
+	पूर्ण
 
-exit_check:
-	vfree(fw_tddb);
-	vfree(tmp_tddb);
-	return ret;
-}
+निकास_check:
+	vमुक्त(fw_tddb);
+	vमुक्त(पंचांगp_tddb);
+	वापस ret;
+पूर्ण
 
 /**
- * qla4xxx_check_existing_isid - check if target with same isid exist
+ * qla4xxx_check_existing_isid - check अगर target with same isid exist
  *				 in target list
  * @list_nt: list of target
  * @isid: isid to check
  *
- * This routine return QLA_SUCCESS if target with same isid exist
+ * This routine वापस QLA_SUCCESS अगर target with same isid exist
  **/
-static int qla4xxx_check_existing_isid(struct list_head *list_nt, uint8_t *isid)
-{
-	struct qla_ddb_index *nt_ddb_idx, *nt_ddb_idx_tmp;
-	struct dev_db_entry *fw_ddb_entry;
+अटल पूर्णांक qla4xxx_check_existing_isid(काष्ठा list_head *list_nt, uपूर्णांक8_t *isid)
+अणु
+	काष्ठा qla_ddb_index *nt_ddb_idx, *nt_ddb_idx_पंचांगp;
+	काष्ठा dev_db_entry *fw_ddb_entry;
 
-	list_for_each_entry_safe(nt_ddb_idx, nt_ddb_idx_tmp, list_nt, list) {
+	list_क्रम_each_entry_safe(nt_ddb_idx, nt_ddb_idx_पंचांगp, list_nt, list) अणु
 		fw_ddb_entry = &nt_ddb_idx->fw_ddb;
 
-		if (memcmp(&fw_ddb_entry->isid[0], &isid[0],
-			   sizeof(nt_ddb_idx->fw_ddb.isid)) == 0) {
-			return QLA_SUCCESS;
-		}
-	}
-	return QLA_ERROR;
-}
+		अगर (स_भेद(&fw_ddb_entry->isid[0], &isid[0],
+			   माप(nt_ddb_idx->fw_ddb.isid)) == 0) अणु
+			वापस QLA_SUCCESS;
+		पूर्ण
+	पूर्ण
+	वापस QLA_ERROR;
+पूर्ण
 
 /**
  * qla4xxx_update_isid - compare ddbs and updated isid
- * @ha: Pointer to host adapter structure.
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
  * @list_nt: list of nt target
  * @fw_ddb_entry: firmware ddb entry
  *
- * This routine update isid if ddbs have same iqn, same isid and
- * different IP addr.
- * Return QLA_SUCCESS if isid is updated.
+ * This routine update isid अगर ddbs have same iqn, same isid and
+ * dअगरferent IP addr.
+ * Return QLA_SUCCESS अगर isid is updated.
  **/
-static int qla4xxx_update_isid(struct scsi_qla_host *ha,
-			       struct list_head *list_nt,
-			       struct dev_db_entry *fw_ddb_entry)
-{
-	uint8_t base_value, i;
+अटल पूर्णांक qla4xxx_update_isid(काष्ठा scsi_qla_host *ha,
+			       काष्ठा list_head *list_nt,
+			       काष्ठा dev_db_entry *fw_ddb_entry)
+अणु
+	uपूर्णांक8_t base_value, i;
 
 	base_value = fw_ddb_entry->isid[1] & 0x1f;
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		fw_ddb_entry->isid[1] = (base_value | (i << 5));
-		if (qla4xxx_check_existing_isid(list_nt, fw_ddb_entry->isid))
-			break;
-	}
+		अगर (qla4xxx_check_existing_isid(list_nt, fw_ddb_entry->isid))
+			अवरोध;
+	पूर्ण
 
-	if (!qla4xxx_check_existing_isid(list_nt, fw_ddb_entry->isid))
-		return QLA_ERROR;
+	अगर (!qla4xxx_check_existing_isid(list_nt, fw_ddb_entry->isid))
+		वापस QLA_ERROR;
 
-	return QLA_SUCCESS;
-}
+	वापस QLA_SUCCESS;
+पूर्ण
 
 /**
- * qla4xxx_should_update_isid - check if isid need to update
- * @ha: Pointer to host adapter structure.
+ * qla4xxx_should_update_isid - check अगर isid need to update
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
  * @old_tddb: ddb tuple
  * @new_tddb: ddb tuple
  *
- * Return QLA_SUCCESS if different IP, different PORT, same iqn,
+ * Return QLA_SUCCESS अगर dअगरferent IP, dअगरferent PORT, same iqn,
  * same isid
  **/
-static int qla4xxx_should_update_isid(struct scsi_qla_host *ha,
-				      struct ql4_tuple_ddb *old_tddb,
-				      struct ql4_tuple_ddb *new_tddb)
-{
-	if (strcmp(old_tddb->ip_addr, new_tddb->ip_addr) == 0) {
+अटल पूर्णांक qla4xxx_should_update_isid(काष्ठा scsi_qla_host *ha,
+				      काष्ठा ql4_tuple_ddb *old_tddb,
+				      काष्ठा ql4_tuple_ddb *new_tddb)
+अणु
+	अगर (म_भेद(old_tddb->ip_addr, new_tddb->ip_addr) == 0) अणु
 		/* Same ip */
-		if (old_tddb->port == new_tddb->port)
-			return QLA_ERROR;
-	}
+		अगर (old_tddb->port == new_tddb->port)
+			वापस QLA_ERROR;
+	पूर्ण
 
-	if (strcmp(old_tddb->iscsi_name, new_tddb->iscsi_name))
-		/* different iqn */
-		return QLA_ERROR;
+	अगर (म_भेद(old_tddb->iscsi_name, new_tddb->iscsi_name))
+		/* dअगरferent iqn */
+		वापस QLA_ERROR;
 
-	if (memcmp(&old_tddb->isid[0], &new_tddb->isid[0],
-		   sizeof(old_tddb->isid)))
-		/* different isid */
-		return QLA_ERROR;
+	अगर (स_भेद(&old_tddb->isid[0], &new_tddb->isid[0],
+		   माप(old_tddb->isid)))
+		/* dअगरferent isid */
+		वापस QLA_ERROR;
 
-	return QLA_SUCCESS;
-}
+	वापस QLA_SUCCESS;
+पूर्ण
 
 /**
- * qla4xxx_is_flash_ddb_exists - check if fw_ddb_entry already exists in list_nt
- * @ha: Pointer to host adapter structure.
+ * qla4xxx_is_flash_ddb_exists - check अगर fw_ddb_entry alपढ़ोy exists in list_nt
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
  * @list_nt: list of nt target.
  * @fw_ddb_entry: firmware ddb entry.
  *
- * This routine check if fw_ddb_entry already exists in list_nt to avoid
+ * This routine check अगर fw_ddb_entry alपढ़ोy exists in list_nt to aव्योम
  * duplicate ddb in list_nt.
- * Return QLA_SUCCESS if duplicate ddb exit in list_nl.
- * Note: This function also update isid of DDB if required.
+ * Return QLA_SUCCESS अगर duplicate ddb निकास in list_nl.
+ * Note: This function also update isid of DDB अगर required.
  **/
 
-static int qla4xxx_is_flash_ddb_exists(struct scsi_qla_host *ha,
-				       struct list_head *list_nt,
-				       struct dev_db_entry *fw_ddb_entry)
-{
-	struct qla_ddb_index  *nt_ddb_idx, *nt_ddb_idx_tmp;
-	struct ql4_tuple_ddb *fw_tddb = NULL;
-	struct ql4_tuple_ddb *tmp_tddb = NULL;
-	int rval, ret = QLA_ERROR;
+अटल पूर्णांक qla4xxx_is_flash_ddb_exists(काष्ठा scsi_qla_host *ha,
+				       काष्ठा list_head *list_nt,
+				       काष्ठा dev_db_entry *fw_ddb_entry)
+अणु
+	काष्ठा qla_ddb_index  *nt_ddb_idx, *nt_ddb_idx_पंचांगp;
+	काष्ठा ql4_tuple_ddb *fw_tddb = शून्य;
+	काष्ठा ql4_tuple_ddb *पंचांगp_tddb = शून्य;
+	पूर्णांक rval, ret = QLA_ERROR;
 
-	fw_tddb = vzalloc(sizeof(*fw_tddb));
-	if (!fw_tddb) {
-		DEBUG2(ql4_printk(KERN_WARNING, ha,
+	fw_tddb = vzalloc(माप(*fw_tddb));
+	अगर (!fw_tddb) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_WARNING, ha,
 				  "Memory Allocation failed.\n"));
 		ret = QLA_SUCCESS;
-		goto exit_check;
-	}
+		जाओ निकास_check;
+	पूर्ण
 
-	tmp_tddb = vzalloc(sizeof(*tmp_tddb));
-	if (!tmp_tddb) {
-		DEBUG2(ql4_printk(KERN_WARNING, ha,
+	पंचांगp_tddb = vzalloc(माप(*पंचांगp_tddb));
+	अगर (!पंचांगp_tddb) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_WARNING, ha,
 				  "Memory Allocation failed.\n"));
 		ret = QLA_SUCCESS;
-		goto exit_check;
-	}
+		जाओ निकास_check;
+	पूर्ण
 
-	qla4xxx_convert_param_ddb(fw_ddb_entry, fw_tddb, NULL);
+	qla4xxx_convert_param_ddb(fw_ddb_entry, fw_tddb, शून्य);
 
-	list_for_each_entry_safe(nt_ddb_idx, nt_ddb_idx_tmp, list_nt, list) {
-		qla4xxx_convert_param_ddb(&nt_ddb_idx->fw_ddb, tmp_tddb,
+	list_क्रम_each_entry_safe(nt_ddb_idx, nt_ddb_idx_पंचांगp, list_nt, list) अणु
+		qla4xxx_convert_param_ddb(&nt_ddb_idx->fw_ddb, पंचांगp_tddb,
 					  nt_ddb_idx->flash_isid);
-		ret = qla4xxx_compare_tuple_ddb(ha, fw_tddb, tmp_tddb, true);
+		ret = qla4xxx_compare_tuple_ddb(ha, fw_tddb, पंचांगp_tddb, true);
 		/* found duplicate ddb */
-		if (ret == QLA_SUCCESS)
-			goto exit_check;
-	}
+		अगर (ret == QLA_SUCCESS)
+			जाओ निकास_check;
+	पूर्ण
 
-	list_for_each_entry_safe(nt_ddb_idx, nt_ddb_idx_tmp, list_nt, list) {
-		qla4xxx_convert_param_ddb(&nt_ddb_idx->fw_ddb, tmp_tddb, NULL);
+	list_क्रम_each_entry_safe(nt_ddb_idx, nt_ddb_idx_पंचांगp, list_nt, list) अणु
+		qla4xxx_convert_param_ddb(&nt_ddb_idx->fw_ddb, पंचांगp_tddb, शून्य);
 
-		ret = qla4xxx_should_update_isid(ha, tmp_tddb, fw_tddb);
-		if (ret == QLA_SUCCESS) {
+		ret = qla4xxx_should_update_isid(ha, पंचांगp_tddb, fw_tddb);
+		अगर (ret == QLA_SUCCESS) अणु
 			rval = qla4xxx_update_isid(ha, list_nt, fw_ddb_entry);
-			if (rval == QLA_SUCCESS)
+			अगर (rval == QLA_SUCCESS)
 				ret = QLA_ERROR;
-			else
+			अन्यथा
 				ret = QLA_SUCCESS;
 
-			goto exit_check;
-		}
-	}
+			जाओ निकास_check;
+		पूर्ण
+	पूर्ण
 
-exit_check:
-	vfree(fw_tddb);
-	vfree(tmp_tddb);
-	return ret;
-}
+निकास_check:
+	vमुक्त(fw_tddb);
+	vमुक्त(पंचांगp_tddb);
+	वापस ret;
+पूर्ण
 
-static void qla4xxx_free_ddb_list(struct list_head *list_ddb)
-{
-	struct qla_ddb_index  *ddb_idx, *ddb_idx_tmp;
+अटल व्योम qla4xxx_मुक्त_ddb_list(काष्ठा list_head *list_ddb)
+अणु
+	काष्ठा qla_ddb_index  *ddb_idx, *ddb_idx_पंचांगp;
 
-	list_for_each_entry_safe(ddb_idx, ddb_idx_tmp, list_ddb, list) {
+	list_क्रम_each_entry_safe(ddb_idx, ddb_idx_पंचांगp, list_ddb, list) अणु
 		list_del_init(&ddb_idx->list);
-		vfree(ddb_idx);
-	}
-}
+		vमुक्त(ddb_idx);
+	पूर्ण
+पूर्ण
 
-static struct iscsi_endpoint *qla4xxx_get_ep_fwdb(struct scsi_qla_host *ha,
-					struct dev_db_entry *fw_ddb_entry)
-{
-	struct iscsi_endpoint *ep;
-	struct sockaddr_in *addr;
-	struct sockaddr_in6 *addr6;
-	struct sockaddr *t_addr;
-	struct sockaddr_storage *dst_addr;
-	char *ip;
+अटल काष्ठा iscsi_endpoपूर्णांक *qla4xxx_get_ep_fwdb(काष्ठा scsi_qla_host *ha,
+					काष्ठा dev_db_entry *fw_ddb_entry)
+अणु
+	काष्ठा iscsi_endpoपूर्णांक *ep;
+	काष्ठा sockaddr_in *addr;
+	काष्ठा sockaddr_in6 *addr6;
+	काष्ठा sockaddr *t_addr;
+	काष्ठा sockaddr_storage *dst_addr;
+	अक्षर *ip;
 
-	/* TODO: need to destroy on unload iscsi_endpoint*/
-	dst_addr = vmalloc(sizeof(*dst_addr));
-	if (!dst_addr)
-		return NULL;
+	/* TODO: need to destroy on unload iscsi_endpoपूर्णांक*/
+	dst_addr = vदो_स्मृति(माप(*dst_addr));
+	अगर (!dst_addr)
+		वापस शून्य;
 
-	if (fw_ddb_entry->options & DDB_OPT_IPV6_DEVICE) {
-		t_addr = (struct sockaddr *)dst_addr;
+	अगर (fw_ddb_entry->options & DDB_OPT_IPV6_DEVICE) अणु
+		t_addr = (काष्ठा sockaddr *)dst_addr;
 		t_addr->sa_family = AF_INET6;
-		addr6 = (struct sockaddr_in6 *)dst_addr;
-		ip = (char *)&addr6->sin6_addr;
-		memcpy(ip, fw_ddb_entry->ip_addr, IPv6_ADDR_LEN);
+		addr6 = (काष्ठा sockaddr_in6 *)dst_addr;
+		ip = (अक्षर *)&addr6->sin6_addr;
+		स_नकल(ip, fw_ddb_entry->ip_addr, IPv6_ADDR_LEN);
 		addr6->sin6_port = htons(le16_to_cpu(fw_ddb_entry->port));
 
-	} else {
-		t_addr = (struct sockaddr *)dst_addr;
+	पूर्ण अन्यथा अणु
+		t_addr = (काष्ठा sockaddr *)dst_addr;
 		t_addr->sa_family = AF_INET;
-		addr = (struct sockaddr_in *)dst_addr;
-		ip = (char *)&addr->sin_addr;
-		memcpy(ip, fw_ddb_entry->ip_addr, IP_ADDR_LEN);
+		addr = (काष्ठा sockaddr_in *)dst_addr;
+		ip = (अक्षर *)&addr->sin_addr;
+		स_नकल(ip, fw_ddb_entry->ip_addr, IP_ADDR_LEN);
 		addr->sin_port = htons(le16_to_cpu(fw_ddb_entry->port));
-	}
+	पूर्ण
 
-	ep = qla4xxx_ep_connect(ha->host, (struct sockaddr *)dst_addr, 0);
-	vfree(dst_addr);
-	return ep;
-}
+	ep = qla4xxx_ep_connect(ha->host, (काष्ठा sockaddr *)dst_addr, 0);
+	vमुक्त(dst_addr);
+	वापस ep;
+पूर्ण
 
-static int qla4xxx_verify_boot_idx(struct scsi_qla_host *ha, uint16_t idx)
-{
-	if (ql4xdisablesysfsboot)
-		return QLA_SUCCESS;
-	if (idx == ha->pri_ddb_idx || idx == ha->sec_ddb_idx)
-		return QLA_ERROR;
-	return QLA_SUCCESS;
-}
+अटल पूर्णांक qla4xxx_verअगरy_boot_idx(काष्ठा scsi_qla_host *ha, uपूर्णांक16_t idx)
+अणु
+	अगर (ql4xdisablesysfsboot)
+		वापस QLA_SUCCESS;
+	अगर (idx == ha->pri_ddb_idx || idx == ha->sec_ddb_idx)
+		वापस QLA_ERROR;
+	वापस QLA_SUCCESS;
+पूर्ण
 
-static void qla4xxx_setup_flash_ddb_entry(struct scsi_qla_host *ha,
-					  struct ddb_entry *ddb_entry,
-					  uint16_t idx)
-{
-	uint16_t def_timeout;
+अटल व्योम qla4xxx_setup_flash_ddb_entry(काष्ठा scsi_qla_host *ha,
+					  काष्ठा ddb_entry *ddb_entry,
+					  uपूर्णांक16_t idx)
+अणु
+	uपूर्णांक16_t def_समयout;
 
 	ddb_entry->ddb_type = FLASH_DDB;
 	ddb_entry->fw_ddb_index = INVALID_ENTRY;
@@ -6621,256 +6622,256 @@ static void qla4xxx_setup_flash_ddb_entry(struct scsi_qla_host *ha,
 	ddb_entry->ddb_change = qla4xxx_flash_ddb_change;
 	ddb_entry->chap_tbl_idx = INVALID_ENTRY;
 
-	atomic_set(&ddb_entry->retry_relogin_timer, INVALID_ENTRY);
-	atomic_set(&ddb_entry->relogin_timer, 0);
+	atomic_set(&ddb_entry->retry_relogin_समयr, INVALID_ENTRY);
+	atomic_set(&ddb_entry->relogin_समयr, 0);
 	atomic_set(&ddb_entry->relogin_retry_count, 0);
-	def_timeout = le16_to_cpu(ddb_entry->fw_ddb_entry.def_timeout);
-	ddb_entry->default_relogin_timeout =
-		(def_timeout > LOGIN_TOV) && (def_timeout < LOGIN_TOV * 10) ?
-		def_timeout : LOGIN_TOV;
-	ddb_entry->default_time2wait =
-		le16_to_cpu(ddb_entry->fw_ddb_entry.iscsi_def_time2wait);
+	def_समयout = le16_to_cpu(ddb_entry->fw_ddb_entry.def_समयout);
+	ddb_entry->शेष_relogin_समयout =
+		(def_समयout > LOGIN_TOV) && (def_समयout < LOGIN_TOV * 10) ?
+		def_समयout : LOGIN_TOV;
+	ddb_entry->शेष_समय2रुको =
+		le16_to_cpu(ddb_entry->fw_ddb_entry.iscsi_def_समय2रुको);
 
-	if (ql4xdisablesysfsboot &&
+	अगर (ql4xdisablesysfsboot &&
 	    (idx == ha->pri_ddb_idx || idx == ha->sec_ddb_idx))
 		set_bit(DF_BOOT_TGT, &ddb_entry->flags);
-}
+पूर्ण
 
-static void qla4xxx_wait_for_ip_configuration(struct scsi_qla_host *ha)
-{
-	uint32_t idx = 0;
-	uint32_t ip_idx[IP_ADDR_COUNT] = {0, 1, 2, 3}; /* 4 IP interfaces */
-	uint32_t sts[MBOX_REG_COUNT];
-	uint32_t ip_state;
-	unsigned long wtime;
-	int ret;
+अटल व्योम qla4xxx_रुको_क्रम_ip_configuration(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक32_t idx = 0;
+	uपूर्णांक32_t ip_idx[IP_ADDR_COUNT] = अणु0, 1, 2, 3पूर्ण; /* 4 IP पूर्णांकerfaces */
+	uपूर्णांक32_t sts[MBOX_REG_COUNT];
+	uपूर्णांक32_t ip_state;
+	अचिन्हित दीर्घ wसमय;
+	पूर्णांक ret;
 
-	wtime = jiffies + (HZ * IP_CONFIG_TOV);
-	do {
-		for (idx = 0; idx < IP_ADDR_COUNT; idx++) {
-			if (ip_idx[idx] == -1)
-				continue;
+	wसमय = jअगरfies + (HZ * IP_CONFIG_TOV);
+	करो अणु
+		क्रम (idx = 0; idx < IP_ADDR_COUNT; idx++) अणु
+			अगर (ip_idx[idx] == -1)
+				जारी;
 
 			ret = qla4xxx_get_ip_state(ha, 0, ip_idx[idx], sts);
 
-			if (ret == QLA_ERROR) {
+			अगर (ret == QLA_ERROR) अणु
 				ip_idx[idx] = -1;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			ip_state = (sts[1] & IP_STATE_MASK) >> IP_STATE_SHIFT;
 
-			DEBUG2(ql4_printk(KERN_INFO, ha,
+			DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 					  "Waiting for IP state for idx = %d, state = 0x%x\n",
 					  ip_idx[idx], ip_state));
-			if (ip_state == IP_ADDRSTATE_UNCONFIGURED ||
+			अगर (ip_state == IP_ADDRSTATE_UNCONFIGURED ||
 			    ip_state == IP_ADDRSTATE_INVALID ||
 			    ip_state == IP_ADDRSTATE_PREFERRED ||
 			    ip_state == IP_ADDRSTATE_DEPRICATED ||
 			    ip_state == IP_ADDRSTATE_DISABLING)
 				ip_idx[idx] = -1;
-		}
+		पूर्ण
 
-		/* Break if all IP states checked */
-		if ((ip_idx[0] == -1) &&
+		/* Break अगर all IP states checked */
+		अगर ((ip_idx[0] == -1) &&
 		    (ip_idx[1] == -1) &&
 		    (ip_idx[2] == -1) &&
 		    (ip_idx[3] == -1))
-			break;
-		schedule_timeout_uninterruptible(HZ);
-	} while (time_after(wtime, jiffies));
-}
+			अवरोध;
+		schedule_समयout_unपूर्णांकerruptible(HZ);
+	पूर्ण जबतक (समय_after(wसमय, jअगरfies));
+पूर्ण
 
-static int qla4xxx_cmp_fw_stentry(struct dev_db_entry *fw_ddb_entry,
-				  struct dev_db_entry *flash_ddb_entry)
-{
-	uint16_t options = 0;
-	size_t ip_len = IP_ADDR_LEN;
+अटल पूर्णांक qla4xxx_cmp_fw_stentry(काष्ठा dev_db_entry *fw_ddb_entry,
+				  काष्ठा dev_db_entry *flash_ddb_entry)
+अणु
+	uपूर्णांक16_t options = 0;
+	माप_प्रकार ip_len = IP_ADDR_LEN;
 
 	options = le16_to_cpu(fw_ddb_entry->options);
-	if (options & DDB_OPT_IPV6_DEVICE)
+	अगर (options & DDB_OPT_IPV6_DEVICE)
 		ip_len = IPv6_ADDR_LEN;
 
-	if (memcmp(fw_ddb_entry->ip_addr, flash_ddb_entry->ip_addr, ip_len))
-		return QLA_ERROR;
+	अगर (स_भेद(fw_ddb_entry->ip_addr, flash_ddb_entry->ip_addr, ip_len))
+		वापस QLA_ERROR;
 
-	if (memcmp(&fw_ddb_entry->isid[0], &flash_ddb_entry->isid[0],
-		   sizeof(fw_ddb_entry->isid)))
-		return QLA_ERROR;
+	अगर (स_भेद(&fw_ddb_entry->isid[0], &flash_ddb_entry->isid[0],
+		   माप(fw_ddb_entry->isid)))
+		वापस QLA_ERROR;
 
-	if (memcmp(&fw_ddb_entry->port, &flash_ddb_entry->port,
-		   sizeof(fw_ddb_entry->port)))
-		return QLA_ERROR;
+	अगर (स_भेद(&fw_ddb_entry->port, &flash_ddb_entry->port,
+		   माप(fw_ddb_entry->port)))
+		वापस QLA_ERROR;
 
-	return QLA_SUCCESS;
-}
+	वापस QLA_SUCCESS;
+पूर्ण
 
-static int qla4xxx_find_flash_st_idx(struct scsi_qla_host *ha,
-				     struct dev_db_entry *fw_ddb_entry,
-				     uint32_t fw_idx, uint32_t *flash_index)
-{
-	struct dev_db_entry *flash_ddb_entry;
+अटल पूर्णांक qla4xxx_find_flash_st_idx(काष्ठा scsi_qla_host *ha,
+				     काष्ठा dev_db_entry *fw_ddb_entry,
+				     uपूर्णांक32_t fw_idx, uपूर्णांक32_t *flash_index)
+अणु
+	काष्ठा dev_db_entry *flash_ddb_entry;
 	dma_addr_t flash_ddb_entry_dma;
-	uint32_t idx = 0;
-	int max_ddbs;
-	int ret = QLA_ERROR, status;
+	uपूर्णांक32_t idx = 0;
+	पूर्णांक max_ddbs;
+	पूर्णांक ret = QLA_ERROR, status;
 
 	max_ddbs =  is_qla40XX(ha) ? MAX_DEV_DB_ENTRIES_40XX :
 				     MAX_DEV_DB_ENTRIES;
 
 	flash_ddb_entry = dma_pool_alloc(ha->fw_ddb_dma_pool, GFP_KERNEL,
 					 &flash_ddb_entry_dma);
-	if (flash_ddb_entry == NULL || fw_ddb_entry == NULL) {
-		ql4_printk(KERN_ERR, ha, "Out of memory\n");
-		goto exit_find_st_idx;
-	}
+	अगर (flash_ddb_entry == शून्य || fw_ddb_entry == शून्य) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Out of memory\n");
+		जाओ निकास_find_st_idx;
+	पूर्ण
 
 	status = qla4xxx_flashdb_by_index(ha, flash_ddb_entry,
 					  flash_ddb_entry_dma, fw_idx);
-	if (status == QLA_SUCCESS) {
+	अगर (status == QLA_SUCCESS) अणु
 		status = qla4xxx_cmp_fw_stentry(fw_ddb_entry, flash_ddb_entry);
-		if (status == QLA_SUCCESS) {
+		अगर (status == QLA_SUCCESS) अणु
 			*flash_index = fw_idx;
 			ret = QLA_SUCCESS;
-			goto exit_find_st_idx;
-		}
-	}
+			जाओ निकास_find_st_idx;
+		पूर्ण
+	पूर्ण
 
-	for (idx = 0; idx < max_ddbs; idx++) {
+	क्रम (idx = 0; idx < max_ddbs; idx++) अणु
 		status = qla4xxx_flashdb_by_index(ha, flash_ddb_entry,
 						  flash_ddb_entry_dma, idx);
-		if (status == QLA_ERROR)
-			continue;
+		अगर (status == QLA_ERROR)
+			जारी;
 
 		status = qla4xxx_cmp_fw_stentry(fw_ddb_entry, flash_ddb_entry);
-		if (status == QLA_SUCCESS) {
+		अगर (status == QLA_SUCCESS) अणु
 			*flash_index = idx;
 			ret = QLA_SUCCESS;
-			goto exit_find_st_idx;
-		}
-	}
+			जाओ निकास_find_st_idx;
+		पूर्ण
+	पूर्ण
 
-	if (idx == max_ddbs)
-		ql4_printk(KERN_ERR, ha, "Failed to find ST [%d] in flash\n",
+	अगर (idx == max_ddbs)
+		ql4_prपूर्णांकk(KERN_ERR, ha, "Failed to find ST [%d] in flash\n",
 			   fw_idx);
 
-exit_find_st_idx:
-	if (flash_ddb_entry)
-		dma_pool_free(ha->fw_ddb_dma_pool, flash_ddb_entry,
+निकास_find_st_idx:
+	अगर (flash_ddb_entry)
+		dma_pool_मुक्त(ha->fw_ddb_dma_pool, flash_ddb_entry,
 			      flash_ddb_entry_dma);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qla4xxx_build_st_list(struct scsi_qla_host *ha,
-				  struct list_head *list_st)
-{
-	struct qla_ddb_index  *st_ddb_idx;
-	int max_ddbs;
-	int fw_idx_size;
-	struct dev_db_entry *fw_ddb_entry;
+अटल व्योम qla4xxx_build_st_list(काष्ठा scsi_qla_host *ha,
+				  काष्ठा list_head *list_st)
+अणु
+	काष्ठा qla_ddb_index  *st_ddb_idx;
+	पूर्णांक max_ddbs;
+	पूर्णांक fw_idx_size;
+	काष्ठा dev_db_entry *fw_ddb_entry;
 	dma_addr_t fw_ddb_dma;
-	int ret;
-	uint32_t idx = 0, next_idx = 0;
-	uint32_t state = 0, conn_err = 0;
-	uint32_t flash_index = -1;
-	uint16_t conn_id = 0;
+	पूर्णांक ret;
+	uपूर्णांक32_t idx = 0, next_idx = 0;
+	uपूर्णांक32_t state = 0, conn_err = 0;
+	uपूर्णांक32_t flash_index = -1;
+	uपूर्णांक16_t conn_id = 0;
 
 	fw_ddb_entry = dma_pool_alloc(ha->fw_ddb_dma_pool, GFP_KERNEL,
 				      &fw_ddb_dma);
-	if (fw_ddb_entry == NULL) {
-		DEBUG2(ql4_printk(KERN_ERR, ha, "Out of memory\n"));
-		goto exit_st_list;
-	}
+	अगर (fw_ddb_entry == शून्य) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "Out of memory\n"));
+		जाओ निकास_st_list;
+	पूर्ण
 
 	max_ddbs =  is_qla40XX(ha) ? MAX_DEV_DB_ENTRIES_40XX :
 				     MAX_DEV_DB_ENTRIES;
-	fw_idx_size = sizeof(struct qla_ddb_index);
+	fw_idx_size = माप(काष्ठा qla_ddb_index);
 
-	for (idx = 0; idx < max_ddbs; idx = next_idx) {
+	क्रम (idx = 0; idx < max_ddbs; idx = next_idx) अणु
 		ret = qla4xxx_get_fwddb_entry(ha, idx, fw_ddb_entry, fw_ddb_dma,
-					      NULL, &next_idx, &state,
-					      &conn_err, NULL, &conn_id);
-		if (ret == QLA_ERROR)
-			break;
+					      शून्य, &next_idx, &state,
+					      &conn_err, शून्य, &conn_id);
+		अगर (ret == QLA_ERROR)
+			अवरोध;
 
-		/* Ignore DDB if invalid state (unassigned) */
-		if (state == DDB_DS_UNASSIGNED)
-			goto continue_next_st;
+		/* Ignore DDB अगर invalid state (unasचिन्हित) */
+		अगर (state == DDB_DS_UNASSIGNED)
+			जाओ जारी_next_st;
 
-		/* Check if ST, add to the list_st */
-		if (strlen((char *) fw_ddb_entry->iscsi_name) != 0)
-			goto continue_next_st;
+		/* Check अगर ST, add to the list_st */
+		अगर (म_माप((अक्षर *) fw_ddb_entry->iscsi_name) != 0)
+			जाओ जारी_next_st;
 
 		st_ddb_idx = vzalloc(fw_idx_size);
-		if (!st_ddb_idx)
-			break;
+		अगर (!st_ddb_idx)
+			अवरोध;
 
 		ret = qla4xxx_find_flash_st_idx(ha, fw_ddb_entry, idx,
 						&flash_index);
-		if (ret == QLA_ERROR) {
-			ql4_printk(KERN_ERR, ha,
+		अगर (ret == QLA_ERROR) अणु
+			ql4_prपूर्णांकk(KERN_ERR, ha,
 				   "No flash entry for ST at idx [%d]\n", idx);
 			st_ddb_idx->flash_ddb_idx = idx;
-		} else {
-			ql4_printk(KERN_INFO, ha,
+		पूर्ण अन्यथा अणु
+			ql4_prपूर्णांकk(KERN_INFO, ha,
 				   "ST at idx [%d] is stored at flash [%d]\n",
 				   idx, flash_index);
 			st_ddb_idx->flash_ddb_idx = flash_index;
-		}
+		पूर्ण
 
 		st_ddb_idx->fw_ddb_idx = idx;
 
 		list_add_tail(&st_ddb_idx->list, list_st);
-continue_next_st:
-		if (next_idx == 0)
-			break;
-	}
+जारी_next_st:
+		अगर (next_idx == 0)
+			अवरोध;
+	पूर्ण
 
-exit_st_list:
-	if (fw_ddb_entry)
-		dma_pool_free(ha->fw_ddb_dma_pool, fw_ddb_entry, fw_ddb_dma);
-}
+निकास_st_list:
+	अगर (fw_ddb_entry)
+		dma_pool_मुक्त(ha->fw_ddb_dma_pool, fw_ddb_entry, fw_ddb_dma);
+पूर्ण
 
 /**
- * qla4xxx_remove_failed_ddb - Remove inactive or failed ddb from list
- * @ha: pointer to adapter structure
- * @list_ddb: List from which failed ddb to be removed
+ * qla4xxx_हटाओ_failed_ddb - Remove inactive or failed ddb from list
+ * @ha: poपूर्णांकer to adapter काष्ठाure
+ * @list_ddb: List from which failed ddb to be हटाओd
  *
- * Iterate over the list of DDBs and find and remove DDBs that are either in
+ * Iterate over the list of DDBs and find and हटाओ DDBs that are either in
  * no connection active state or failed state
  **/
-static void qla4xxx_remove_failed_ddb(struct scsi_qla_host *ha,
-				      struct list_head *list_ddb)
-{
-	struct qla_ddb_index  *ddb_idx, *ddb_idx_tmp;
-	uint32_t next_idx = 0;
-	uint32_t state = 0, conn_err = 0;
-	int ret;
+अटल व्योम qla4xxx_हटाओ_failed_ddb(काष्ठा scsi_qla_host *ha,
+				      काष्ठा list_head *list_ddb)
+अणु
+	काष्ठा qla_ddb_index  *ddb_idx, *ddb_idx_पंचांगp;
+	uपूर्णांक32_t next_idx = 0;
+	uपूर्णांक32_t state = 0, conn_err = 0;
+	पूर्णांक ret;
 
-	list_for_each_entry_safe(ddb_idx, ddb_idx_tmp, list_ddb, list) {
+	list_क्रम_each_entry_safe(ddb_idx, ddb_idx_पंचांगp, list_ddb, list) अणु
 		ret = qla4xxx_get_fwddb_entry(ha, ddb_idx->fw_ddb_idx,
-					      NULL, 0, NULL, &next_idx, &state,
-					      &conn_err, NULL, NULL);
-		if (ret == QLA_ERROR)
-			continue;
+					      शून्य, 0, शून्य, &next_idx, &state,
+					      &conn_err, शून्य, शून्य);
+		अगर (ret == QLA_ERROR)
+			जारी;
 
-		if (state == DDB_DS_NO_CONNECTION_ACTIVE ||
-		    state == DDB_DS_SESSION_FAILED) {
+		अगर (state == DDB_DS_NO_CONNECTION_ACTIVE ||
+		    state == DDB_DS_SESSION_FAILED) अणु
 			list_del_init(&ddb_idx->list);
-			vfree(ddb_idx);
-		}
-	}
-}
+			vमुक्त(ddb_idx);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void qla4xxx_update_sess_disc_idx(struct scsi_qla_host *ha,
-					 struct ddb_entry *ddb_entry,
-					 struct dev_db_entry *fw_ddb_entry)
-{
-	struct iscsi_cls_session *cls_sess;
-	struct iscsi_session *sess;
-	uint32_t max_ddbs = 0;
-	uint16_t ddb_link = -1;
+अटल व्योम qla4xxx_update_sess_disc_idx(काष्ठा scsi_qla_host *ha,
+					 काष्ठा ddb_entry *ddb_entry,
+					 काष्ठा dev_db_entry *fw_ddb_entry)
+अणु
+	काष्ठा iscsi_cls_session *cls_sess;
+	काष्ठा iscsi_session *sess;
+	uपूर्णांक32_t max_ddbs = 0;
+	uपूर्णांक16_t ddb_link = -1;
 
 	max_ddbs =  is_qla40XX(ha) ? MAX_DEV_DB_ENTRIES_40XX :
 				     MAX_DEV_DB_ENTRIES;
@@ -6879,38 +6880,38 @@ static void qla4xxx_update_sess_disc_idx(struct scsi_qla_host *ha,
 	sess = cls_sess->dd_data;
 
 	ddb_link = le16_to_cpu(fw_ddb_entry->ddb_link);
-	if (ddb_link < max_ddbs)
+	अगर (ddb_link < max_ddbs)
 		sess->discovery_parent_idx = ddb_link;
-	else
+	अन्यथा
 		sess->discovery_parent_idx = DDB_NO_LINK;
-}
+पूर्ण
 
-static int qla4xxx_sess_conn_setup(struct scsi_qla_host *ha,
-				   struct dev_db_entry *fw_ddb_entry,
-				   int is_reset, uint16_t idx)
-{
-	struct iscsi_cls_session *cls_sess;
-	struct iscsi_session *sess;
-	struct iscsi_cls_conn *cls_conn;
-	struct iscsi_endpoint *ep;
-	uint16_t cmds_max = 32;
-	uint16_t conn_id = 0;
-	uint32_t initial_cmdsn = 0;
-	int ret = QLA_SUCCESS;
+अटल पूर्णांक qla4xxx_sess_conn_setup(काष्ठा scsi_qla_host *ha,
+				   काष्ठा dev_db_entry *fw_ddb_entry,
+				   पूर्णांक is_reset, uपूर्णांक16_t idx)
+अणु
+	काष्ठा iscsi_cls_session *cls_sess;
+	काष्ठा iscsi_session *sess;
+	काष्ठा iscsi_cls_conn *cls_conn;
+	काष्ठा iscsi_endpoपूर्णांक *ep;
+	uपूर्णांक16_t cmds_max = 32;
+	uपूर्णांक16_t conn_id = 0;
+	uपूर्णांक32_t initial_cmdsn = 0;
+	पूर्णांक ret = QLA_SUCCESS;
 
-	struct ddb_entry *ddb_entry = NULL;
+	काष्ठा ddb_entry *ddb_entry = शून्य;
 
 	/* Create session object, with INVALID_ENTRY,
 	 * the targer_id would get set when we issue the login
 	 */
 	cls_sess = iscsi_session_setup(&qla4xxx_iscsi_transport, ha->host,
-				       cmds_max, sizeof(struct ddb_entry),
-				       sizeof(struct ql4_task_data),
+				       cmds_max, माप(काष्ठा ddb_entry),
+				       माप(काष्ठा ql4_task_data),
 				       initial_cmdsn, INVALID_ENTRY);
-	if (!cls_sess) {
+	अगर (!cls_sess) अणु
 		ret = QLA_ERROR;
-		goto exit_setup;
-	}
+		जाओ निकास_setup;
+	पूर्ण
 
 	/*
 	 * so calling module_put function to decrement the
@@ -6921,130 +6922,130 @@ static int qla4xxx_sess_conn_setup(struct scsi_qla_host *ha,
 	ddb_entry = sess->dd_data;
 	ddb_entry->sess = cls_sess;
 
-	cls_sess->recovery_tmo = ql4xsess_recovery_tmo;
-	memcpy(&ddb_entry->fw_ddb_entry, fw_ddb_entry,
-	       sizeof(struct dev_db_entry));
+	cls_sess->recovery_पंचांगo = ql4xsess_recovery_पंचांगo;
+	स_नकल(&ddb_entry->fw_ddb_entry, fw_ddb_entry,
+	       माप(काष्ठा dev_db_entry));
 
 	qla4xxx_setup_flash_ddb_entry(ha, ddb_entry, idx);
 
-	cls_conn = iscsi_conn_setup(cls_sess, sizeof(struct qla_conn), conn_id);
+	cls_conn = iscsi_conn_setup(cls_sess, माप(काष्ठा qla_conn), conn_id);
 
-	if (!cls_conn) {
+	अगर (!cls_conn) अणु
 		ret = QLA_ERROR;
-		goto exit_setup;
-	}
+		जाओ निकास_setup;
+	पूर्ण
 
 	ddb_entry->conn = cls_conn;
 
-	/* Setup ep, for displaying attributes in sysfs */
+	/* Setup ep, क्रम displaying attributes in sysfs */
 	ep = qla4xxx_get_ep_fwdb(ha, fw_ddb_entry);
-	if (ep) {
+	अगर (ep) अणु
 		ep->conn = cls_conn;
 		cls_conn->ep = ep;
-	} else {
-		DEBUG2(ql4_printk(KERN_ERR, ha, "Unable to get ep\n"));
+	पूर्ण अन्यथा अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "Unable to get ep\n"));
 		ret = QLA_ERROR;
-		goto exit_setup;
-	}
+		जाओ निकास_setup;
+	पूर्ण
 
 	/* Update sess/conn params */
 	qla4xxx_copy_fwddb_param(ha, fw_ddb_entry, cls_sess, cls_conn);
 	qla4xxx_update_sess_disc_idx(ha, ddb_entry, fw_ddb_entry);
 
-	if (is_reset == RESET_ADAPTER) {
+	अगर (is_reset == RESET_ADAPTER) अणु
 		iscsi_block_session(cls_sess);
 		/* Use the relogin path to discover new devices
-		 *  by short-circuiting the logic of setting
-		 *  timer to relogin - instead set the flags
+		 *  by लघु-circuiting the logic of setting
+		 *  समयr to relogin - instead set the flags
 		 *  to initiate login right away.
 		 */
 		set_bit(DPC_RELOGIN_DEVICE, &ha->dpc_flags);
 		set_bit(DF_RELOGIN, &ddb_entry->flags);
-	}
+	पूर्ण
 
-exit_setup:
-	return ret;
-}
+निकास_setup:
+	वापस ret;
+पूर्ण
 
-static void qla4xxx_update_fw_ddb_link(struct scsi_qla_host *ha,
-				       struct list_head *list_ddb,
-				       struct dev_db_entry *fw_ddb_entry)
-{
-	struct qla_ddb_index  *ddb_idx, *ddb_idx_tmp;
-	uint16_t ddb_link;
+अटल व्योम qla4xxx_update_fw_ddb_link(काष्ठा scsi_qla_host *ha,
+				       काष्ठा list_head *list_ddb,
+				       काष्ठा dev_db_entry *fw_ddb_entry)
+अणु
+	काष्ठा qla_ddb_index  *ddb_idx, *ddb_idx_पंचांगp;
+	uपूर्णांक16_t ddb_link;
 
 	ddb_link = le16_to_cpu(fw_ddb_entry->ddb_link);
 
-	list_for_each_entry_safe(ddb_idx, ddb_idx_tmp, list_ddb, list) {
-		if (ddb_idx->fw_ddb_idx == ddb_link) {
-			DEBUG2(ql4_printk(KERN_INFO, ha,
+	list_क्रम_each_entry_safe(ddb_idx, ddb_idx_पंचांगp, list_ddb, list) अणु
+		अगर (ddb_idx->fw_ddb_idx == ddb_link) अणु
+			DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 					  "Updating NT parent idx from [%d] to [%d]\n",
 					  ddb_link, ddb_idx->flash_ddb_idx));
 			fw_ddb_entry->ddb_link =
 					    cpu_to_le16(ddb_idx->flash_ddb_idx);
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void qla4xxx_build_nt_list(struct scsi_qla_host *ha,
-				  struct list_head *list_nt,
-				  struct list_head *list_st,
-				  int is_reset)
-{
-	struct dev_db_entry *fw_ddb_entry;
-	struct ddb_entry *ddb_entry = NULL;
+अटल व्योम qla4xxx_build_nt_list(काष्ठा scsi_qla_host *ha,
+				  काष्ठा list_head *list_nt,
+				  काष्ठा list_head *list_st,
+				  पूर्णांक is_reset)
+अणु
+	काष्ठा dev_db_entry *fw_ddb_entry;
+	काष्ठा ddb_entry *ddb_entry = शून्य;
 	dma_addr_t fw_ddb_dma;
-	int max_ddbs;
-	int fw_idx_size;
-	int ret;
-	uint32_t idx = 0, next_idx = 0;
-	uint32_t state = 0, conn_err = 0;
-	uint32_t ddb_idx = -1;
-	uint16_t conn_id = 0;
-	uint16_t ddb_link = -1;
-	struct qla_ddb_index  *nt_ddb_idx;
+	पूर्णांक max_ddbs;
+	पूर्णांक fw_idx_size;
+	पूर्णांक ret;
+	uपूर्णांक32_t idx = 0, next_idx = 0;
+	uपूर्णांक32_t state = 0, conn_err = 0;
+	uपूर्णांक32_t ddb_idx = -1;
+	uपूर्णांक16_t conn_id = 0;
+	uपूर्णांक16_t ddb_link = -1;
+	काष्ठा qla_ddb_index  *nt_ddb_idx;
 
 	fw_ddb_entry = dma_pool_alloc(ha->fw_ddb_dma_pool, GFP_KERNEL,
 				      &fw_ddb_dma);
-	if (fw_ddb_entry == NULL) {
-		DEBUG2(ql4_printk(KERN_ERR, ha, "Out of memory\n"));
-		goto exit_nt_list;
-	}
+	अगर (fw_ddb_entry == शून्य) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "Out of memory\n"));
+		जाओ निकास_nt_list;
+	पूर्ण
 	max_ddbs =  is_qla40XX(ha) ? MAX_DEV_DB_ENTRIES_40XX :
 				     MAX_DEV_DB_ENTRIES;
-	fw_idx_size = sizeof(struct qla_ddb_index);
+	fw_idx_size = माप(काष्ठा qla_ddb_index);
 
-	for (idx = 0; idx < max_ddbs; idx = next_idx) {
+	क्रम (idx = 0; idx < max_ddbs; idx = next_idx) अणु
 		ret = qla4xxx_get_fwddb_entry(ha, idx, fw_ddb_entry, fw_ddb_dma,
-					      NULL, &next_idx, &state,
-					      &conn_err, NULL, &conn_id);
-		if (ret == QLA_ERROR)
-			break;
+					      शून्य, &next_idx, &state,
+					      &conn_err, शून्य, &conn_id);
+		अगर (ret == QLA_ERROR)
+			अवरोध;
 
-		if (qla4xxx_verify_boot_idx(ha, idx) != QLA_SUCCESS)
-			goto continue_next_nt;
+		अगर (qla4xxx_verअगरy_boot_idx(ha, idx) != QLA_SUCCESS)
+			जाओ जारी_next_nt;
 
-		/* Check if NT, then add to list it */
-		if (strlen((char *) fw_ddb_entry->iscsi_name) == 0)
-			goto continue_next_nt;
+		/* Check अगर NT, then add to list it */
+		अगर (म_माप((अक्षर *) fw_ddb_entry->iscsi_name) == 0)
+			जाओ जारी_next_nt;
 
 		ddb_link = le16_to_cpu(fw_ddb_entry->ddb_link);
-		if (ddb_link < max_ddbs)
+		अगर (ddb_link < max_ddbs)
 			qla4xxx_update_fw_ddb_link(ha, list_st, fw_ddb_entry);
 
-		if (!(state == DDB_DS_NO_CONNECTION_ACTIVE ||
+		अगर (!(state == DDB_DS_NO_CONNECTION_ACTIVE ||
 		    state == DDB_DS_SESSION_FAILED) &&
 		    (is_reset == INIT_ADAPTER))
-			goto continue_next_nt;
+			जाओ जारी_next_nt;
 
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				  "Adding  DDB to session = 0x%x\n", idx));
 
-		if (is_reset == INIT_ADAPTER) {
-			nt_ddb_idx = vmalloc(fw_idx_size);
-			if (!nt_ddb_idx)
-				break;
+		अगर (is_reset == INIT_ADAPTER) अणु
+			nt_ddb_idx = vदो_स्मृति(fw_idx_size);
+			अगर (!nt_ddb_idx)
+				अवरोध;
 
 			nt_ddb_idx->fw_ddb_idx = idx;
 
@@ -7052,644 +7053,644 @@ static void qla4xxx_build_nt_list(struct scsi_qla_host *ha,
 			 * qla4xxx_update_isid(). We need original isid in
 			 * function qla4xxx_compare_tuple_ddb to find duplicate
 			 * target */
-			memcpy(&nt_ddb_idx->flash_isid[0],
+			स_नकल(&nt_ddb_idx->flash_isid[0],
 			       &fw_ddb_entry->isid[0],
-			       sizeof(nt_ddb_idx->flash_isid));
+			       माप(nt_ddb_idx->flash_isid));
 
 			ret = qla4xxx_is_flash_ddb_exists(ha, list_nt,
 							  fw_ddb_entry);
-			if (ret == QLA_SUCCESS) {
-				/* free nt_ddb_idx and do not add to list_nt */
-				vfree(nt_ddb_idx);
-				goto continue_next_nt;
-			}
+			अगर (ret == QLA_SUCCESS) अणु
+				/* मुक्त nt_ddb_idx and करो not add to list_nt */
+				vमुक्त(nt_ddb_idx);
+				जाओ जारी_next_nt;
+			पूर्ण
 
 			/* Copy updated isid */
-			memcpy(&nt_ddb_idx->fw_ddb, fw_ddb_entry,
-			       sizeof(struct dev_db_entry));
+			स_नकल(&nt_ddb_idx->fw_ddb, fw_ddb_entry,
+			       माप(काष्ठा dev_db_entry));
 
 			list_add_tail(&nt_ddb_idx->list, list_nt);
-		} else if (is_reset == RESET_ADAPTER) {
+		पूर्ण अन्यथा अगर (is_reset == RESET_ADAPTER) अणु
 			ret = qla4xxx_is_session_exists(ha, fw_ddb_entry,
 							&ddb_idx);
-			if (ret == QLA_SUCCESS) {
+			अगर (ret == QLA_SUCCESS) अणु
 				ddb_entry = qla4xxx_lookup_ddb_by_fw_index(ha,
 								       ddb_idx);
-				if (ddb_entry != NULL)
+				अगर (ddb_entry != शून्य)
 					qla4xxx_update_sess_disc_idx(ha,
 								     ddb_entry,
 								  fw_ddb_entry);
-				goto continue_next_nt;
-			}
-		}
+				जाओ जारी_next_nt;
+			पूर्ण
+		पूर्ण
 
 		ret = qla4xxx_sess_conn_setup(ha, fw_ddb_entry, is_reset, idx);
-		if (ret == QLA_ERROR)
-			goto exit_nt_list;
+		अगर (ret == QLA_ERROR)
+			जाओ निकास_nt_list;
 
-continue_next_nt:
-		if (next_idx == 0)
-			break;
-	}
+जारी_next_nt:
+		अगर (next_idx == 0)
+			अवरोध;
+	पूर्ण
 
-exit_nt_list:
-	if (fw_ddb_entry)
-		dma_pool_free(ha->fw_ddb_dma_pool, fw_ddb_entry, fw_ddb_dma);
-}
+निकास_nt_list:
+	अगर (fw_ddb_entry)
+		dma_pool_मुक्त(ha->fw_ddb_dma_pool, fw_ddb_entry, fw_ddb_dma);
+पूर्ण
 
-static void qla4xxx_build_new_nt_list(struct scsi_qla_host *ha,
-				      struct list_head *list_nt,
-				      uint16_t target_id)
-{
-	struct dev_db_entry *fw_ddb_entry;
+अटल व्योम qla4xxx_build_new_nt_list(काष्ठा scsi_qla_host *ha,
+				      काष्ठा list_head *list_nt,
+				      uपूर्णांक16_t target_id)
+अणु
+	काष्ठा dev_db_entry *fw_ddb_entry;
 	dma_addr_t fw_ddb_dma;
-	int max_ddbs;
-	int fw_idx_size;
-	int ret;
-	uint32_t idx = 0, next_idx = 0;
-	uint32_t state = 0, conn_err = 0;
-	uint16_t conn_id = 0;
-	struct qla_ddb_index  *nt_ddb_idx;
+	पूर्णांक max_ddbs;
+	पूर्णांक fw_idx_size;
+	पूर्णांक ret;
+	uपूर्णांक32_t idx = 0, next_idx = 0;
+	uपूर्णांक32_t state = 0, conn_err = 0;
+	uपूर्णांक16_t conn_id = 0;
+	काष्ठा qla_ddb_index  *nt_ddb_idx;
 
 	fw_ddb_entry = dma_pool_alloc(ha->fw_ddb_dma_pool, GFP_KERNEL,
 				      &fw_ddb_dma);
-	if (fw_ddb_entry == NULL) {
-		DEBUG2(ql4_printk(KERN_ERR, ha, "Out of memory\n"));
-		goto exit_new_nt_list;
-	}
+	अगर (fw_ddb_entry == शून्य) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "Out of memory\n"));
+		जाओ निकास_new_nt_list;
+	पूर्ण
 	max_ddbs =  is_qla40XX(ha) ? MAX_DEV_DB_ENTRIES_40XX :
 				     MAX_DEV_DB_ENTRIES;
-	fw_idx_size = sizeof(struct qla_ddb_index);
+	fw_idx_size = माप(काष्ठा qla_ddb_index);
 
-	for (idx = 0; idx < max_ddbs; idx = next_idx) {
+	क्रम (idx = 0; idx < max_ddbs; idx = next_idx) अणु
 		ret = qla4xxx_get_fwddb_entry(ha, idx, fw_ddb_entry, fw_ddb_dma,
-					      NULL, &next_idx, &state,
-					      &conn_err, NULL, &conn_id);
-		if (ret == QLA_ERROR)
-			break;
+					      शून्य, &next_idx, &state,
+					      &conn_err, शून्य, &conn_id);
+		अगर (ret == QLA_ERROR)
+			अवरोध;
 
-		/* Check if NT, then add it to list */
-		if (strlen((char *)fw_ddb_entry->iscsi_name) == 0)
-			goto continue_next_new_nt;
+		/* Check अगर NT, then add it to list */
+		अगर (म_माप((अक्षर *)fw_ddb_entry->iscsi_name) == 0)
+			जाओ जारी_next_new_nt;
 
-		if (!(state == DDB_DS_NO_CONNECTION_ACTIVE))
-			goto continue_next_new_nt;
+		अगर (!(state == DDB_DS_NO_CONNECTION_ACTIVE))
+			जाओ जारी_next_new_nt;
 
-		DEBUG2(ql4_printk(KERN_INFO, ha,
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 				  "Adding  DDB to session = 0x%x\n", idx));
 
-		nt_ddb_idx = vmalloc(fw_idx_size);
-		if (!nt_ddb_idx)
-			break;
+		nt_ddb_idx = vदो_स्मृति(fw_idx_size);
+		अगर (!nt_ddb_idx)
+			अवरोध;
 
 		nt_ddb_idx->fw_ddb_idx = idx;
 
-		ret = qla4xxx_is_session_exists(ha, fw_ddb_entry, NULL);
-		if (ret == QLA_SUCCESS) {
-			/* free nt_ddb_idx and do not add to list_nt */
-			vfree(nt_ddb_idx);
-			goto continue_next_new_nt;
-		}
+		ret = qla4xxx_is_session_exists(ha, fw_ddb_entry, शून्य);
+		अगर (ret == QLA_SUCCESS) अणु
+			/* मुक्त nt_ddb_idx and करो not add to list_nt */
+			vमुक्त(nt_ddb_idx);
+			जाओ जारी_next_new_nt;
+		पूर्ण
 
-		if (target_id < max_ddbs)
+		अगर (target_id < max_ddbs)
 			fw_ddb_entry->ddb_link = cpu_to_le16(target_id);
 
 		list_add_tail(&nt_ddb_idx->list, list_nt);
 
 		ret = qla4xxx_sess_conn_setup(ha, fw_ddb_entry, RESET_ADAPTER,
 					      idx);
-		if (ret == QLA_ERROR)
-			goto exit_new_nt_list;
+		अगर (ret == QLA_ERROR)
+			जाओ निकास_new_nt_list;
 
-continue_next_new_nt:
-		if (next_idx == 0)
-			break;
-	}
+जारी_next_new_nt:
+		अगर (next_idx == 0)
+			अवरोध;
+	पूर्ण
 
-exit_new_nt_list:
-	if (fw_ddb_entry)
-		dma_pool_free(ha->fw_ddb_dma_pool, fw_ddb_entry, fw_ddb_dma);
-}
+निकास_new_nt_list:
+	अगर (fw_ddb_entry)
+		dma_pool_मुक्त(ha->fw_ddb_dma_pool, fw_ddb_entry, fw_ddb_dma);
+पूर्ण
 
 /**
- * qla4xxx_sysfs_ddb_is_non_persistent - check for non-persistence of ddb entry
+ * qla4xxx_sysfs_ddb_is_non_persistent - check क्रम non-persistence of ddb entry
  * @dev: dev associated with the sysfs entry
- * @data: pointer to flashnode session object
+ * @data: poपूर्णांकer to flashnode session object
  *
  * Returns:
- *	1: if flashnode entry is non-persistent
- *	0: if flashnode entry is persistent
+ *	1: अगर flashnode entry is non-persistent
+ *	0: अगर flashnode entry is persistent
  **/
-static int qla4xxx_sysfs_ddb_is_non_persistent(struct device *dev, void *data)
-{
-	struct iscsi_bus_flash_session *fnode_sess;
+अटल पूर्णांक qla4xxx_sysfs_ddb_is_non_persistent(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा iscsi_bus_flash_session *fnode_sess;
 
-	if (!iscsi_flashnode_bus_match(dev, NULL))
-		return 0;
+	अगर (!iscsi_flashnode_bus_match(dev, शून्य))
+		वापस 0;
 
 	fnode_sess = iscsi_dev_to_flash_session(dev);
 
-	return (fnode_sess->flash_state == DEV_DB_NON_PERSISTENT);
-}
+	वापस (fnode_sess->flash_state == DEV_DB_NON_PERSISTENT);
+पूर्ण
 
 /**
- * qla4xxx_sysfs_ddb_tgt_create - Create sysfs entry for target
- * @ha: pointer to host
+ * qla4xxx_sysfs_ddb_tgt_create - Create sysfs entry क्रम target
+ * @ha: poपूर्णांकer to host
  * @fw_ddb_entry: flash ddb data
  * @idx: target index
- * @user: if set then this call is made from userland else from kernel
+ * @user: अगर set then this call is made from userland अन्यथा from kernel
  *
  * Returns:
  * On sucess: QLA_SUCCESS
  * On failure: QLA_ERROR
  *
- * This create separate sysfs entries for session and connection attributes of
+ * This create separate sysfs entries क्रम session and connection attributes of
  * the given fw ddb entry.
  * If this is invoked as a result of a userspace call then the entry is marked
  * as nonpersistent using flash_state field.
  **/
-static int qla4xxx_sysfs_ddb_tgt_create(struct scsi_qla_host *ha,
-					struct dev_db_entry *fw_ddb_entry,
-					uint16_t *idx, int user)
-{
-	struct iscsi_bus_flash_session *fnode_sess = NULL;
-	struct iscsi_bus_flash_conn *fnode_conn = NULL;
-	int rc = QLA_ERROR;
+अटल पूर्णांक qla4xxx_sysfs_ddb_tgt_create(काष्ठा scsi_qla_host *ha,
+					काष्ठा dev_db_entry *fw_ddb_entry,
+					uपूर्णांक16_t *idx, पूर्णांक user)
+अणु
+	काष्ठा iscsi_bus_flash_session *fnode_sess = शून्य;
+	काष्ठा iscsi_bus_flash_conn *fnode_conn = शून्य;
+	पूर्णांक rc = QLA_ERROR;
 
 	fnode_sess = iscsi_create_flashnode_sess(ha->host, *idx,
 						 &qla4xxx_iscsi_transport, 0);
-	if (!fnode_sess) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!fnode_sess) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Unable to create session sysfs entry for flashnode %d of host%lu\n",
 			   __func__, *idx, ha->host_no);
-		goto exit_tgt_create;
-	}
+		जाओ निकास_tgt_create;
+	पूर्ण
 
 	fnode_conn = iscsi_create_flashnode_conn(ha->host, fnode_sess,
 						 &qla4xxx_iscsi_transport, 0);
-	if (!fnode_conn) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!fnode_conn) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Unable to create conn sysfs entry for flashnode %d of host%lu\n",
 			   __func__, *idx, ha->host_no);
-		goto free_sess;
-	}
+		जाओ मुक्त_sess;
+	पूर्ण
 
-	if (user) {
+	अगर (user) अणु
 		fnode_sess->flash_state = DEV_DB_NON_PERSISTENT;
-	} else {
+	पूर्ण अन्यथा अणु
 		fnode_sess->flash_state = DEV_DB_PERSISTENT;
 
-		if (*idx == ha->pri_ddb_idx || *idx == ha->sec_ddb_idx)
+		अगर (*idx == ha->pri_ddb_idx || *idx == ha->sec_ddb_idx)
 			fnode_sess->is_boot_target = 1;
-		else
+		अन्यथा
 			fnode_sess->is_boot_target = 0;
-	}
+	पूर्ण
 
 	rc = qla4xxx_copy_from_fwddb_param(fnode_sess, fnode_conn,
 					   fw_ddb_entry);
-	if (rc)
-		goto free_sess;
+	अगर (rc)
+		जाओ मुक्त_sess;
 
-	ql4_printk(KERN_INFO, ha, "%s: sysfs entry %s created\n",
+	ql4_prपूर्णांकk(KERN_INFO, ha, "%s: sysfs entry %s created\n",
 		   __func__, fnode_sess->dev.kobj.name);
 
-	ql4_printk(KERN_INFO, ha, "%s: sysfs entry %s created\n",
+	ql4_prपूर्णांकk(KERN_INFO, ha, "%s: sysfs entry %s created\n",
 		   __func__, fnode_conn->dev.kobj.name);
 
-	return QLA_SUCCESS;
+	वापस QLA_SUCCESS;
 
-free_sess:
+मुक्त_sess:
 	iscsi_destroy_flashnode_sess(fnode_sess);
 
-exit_tgt_create:
-	return QLA_ERROR;
-}
+निकास_tgt_create:
+	वापस QLA_ERROR;
+पूर्ण
 
 /**
  * qla4xxx_sysfs_ddb_add - Add new ddb entry in flash
- * @shost: pointer to host
+ * @shost: poपूर्णांकer to host
  * @buf: type of ddb entry (ipv4/ipv6)
  * @len: length of buf
  *
- * This creates new ddb entry in the flash by finding first free index and
- * storing default ddb there. And then create sysfs entry for the new ddb entry.
+ * This creates new ddb entry in the flash by finding first मुक्त index and
+ * storing शेष ddb there. And then create sysfs entry क्रम the new ddb entry.
  **/
-static int qla4xxx_sysfs_ddb_add(struct Scsi_Host *shost, const char *buf,
-				 int len)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct dev_db_entry *fw_ddb_entry = NULL;
+अटल पूर्णांक qla4xxx_sysfs_ddb_add(काष्ठा Scsi_Host *shost, स्थिर अक्षर *buf,
+				 पूर्णांक len)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
 	dma_addr_t fw_ddb_entry_dma;
-	struct device *dev;
-	uint16_t idx = 0;
-	uint16_t max_ddbs = 0;
-	uint32_t options = 0;
-	uint32_t rval = QLA_ERROR;
+	काष्ठा device *dev;
+	uपूर्णांक16_t idx = 0;
+	uपूर्णांक16_t max_ddbs = 0;
+	uपूर्णांक32_t options = 0;
+	uपूर्णांक32_t rval = QLA_ERROR;
 
-	if (strncasecmp(PORTAL_TYPE_IPV4, buf, 4) &&
-	    strncasecmp(PORTAL_TYPE_IPV6, buf, 4)) {
-		DEBUG2(ql4_printk(KERN_ERR, ha, "%s: Invalid portal type\n",
+	अगर (strnहालcmp(PORTAL_TYPE_IPV4, buf, 4) &&
+	    strnहालcmp(PORTAL_TYPE_IPV6, buf, 4)) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Invalid portal type\n",
 				  __func__));
-		goto exit_ddb_add;
-	}
+		जाओ निकास_ddb_add;
+	पूर्ण
 
 	max_ddbs =  is_qla40XX(ha) ? MAX_PRST_DEV_DB_ENTRIES :
 				     MAX_DEV_DB_ENTRIES;
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha,
 				  "%s: Unable to allocate dma buffer\n",
 				  __func__));
-		goto exit_ddb_add;
-	}
+		जाओ निकास_ddb_add;
+	पूर्ण
 
-	dev = iscsi_find_flashnode_sess(ha->host, NULL,
+	dev = iscsi_find_flashnode_sess(ha->host, शून्य,
 					qla4xxx_sysfs_ddb_is_non_persistent);
-	if (dev) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (dev) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: A non-persistent entry %s found\n",
 			   __func__, dev->kobj.name);
 		put_device(dev);
-		goto exit_ddb_add;
-	}
+		जाओ निकास_ddb_add;
+	पूर्ण
 
-	/* Index 0 and 1 are reserved for boot target entries */
-	for (idx = 2; idx < max_ddbs; idx++) {
-		if (qla4xxx_flashdb_by_index(ha, fw_ddb_entry,
+	/* Index 0 and 1 are reserved क्रम boot target entries */
+	क्रम (idx = 2; idx < max_ddbs; idx++) अणु
+		अगर (qla4xxx_flashdb_by_index(ha, fw_ddb_entry,
 					     fw_ddb_entry_dma, idx))
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	if (idx == max_ddbs)
-		goto exit_ddb_add;
+	अगर (idx == max_ddbs)
+		जाओ निकास_ddb_add;
 
-	if (!strncasecmp("ipv6", buf, 4))
+	अगर (!strnहालcmp("ipv6", buf, 4))
 		options |= IPV6_DEFAULT_DDB_ENTRY;
 
-	rval = qla4xxx_get_default_ddb(ha, options, fw_ddb_entry_dma);
-	if (rval == QLA_ERROR)
-		goto exit_ddb_add;
+	rval = qla4xxx_get_शेष_ddb(ha, options, fw_ddb_entry_dma);
+	अगर (rval == QLA_ERROR)
+		जाओ निकास_ddb_add;
 
 	rval = qla4xxx_sysfs_ddb_tgt_create(ha, fw_ddb_entry, &idx, 1);
 
-exit_ddb_add:
-	if (fw_ddb_entry)
-		dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+निकास_ddb_add:
+	अगर (fw_ddb_entry)
+		dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 				  fw_ddb_entry, fw_ddb_entry_dma);
-	if (rval == QLA_SUCCESS)
-		return idx;
-	else
-		return -EIO;
-}
+	अगर (rval == QLA_SUCCESS)
+		वापस idx;
+	अन्यथा
+		वापस -EIO;
+पूर्ण
 
 /**
- * qla4xxx_sysfs_ddb_apply - write the target ddb contents to Flash
- * @fnode_sess: pointer to session attrs of flash ddb entry
- * @fnode_conn: pointer to connection attrs of flash ddb entry
+ * qla4xxx_sysfs_ddb_apply - ग_लिखो the target ddb contents to Flash
+ * @fnode_sess: poपूर्णांकer to session attrs of flash ddb entry
+ * @fnode_conn: poपूर्णांकer to connection attrs of flash ddb entry
  *
- * This writes the contents of target ddb buffer to Flash with a valid cookie
+ * This ग_लिखोs the contents of target ddb buffer to Flash with a valid cookie
  * value in order to make the ddb entry persistent.
  **/
-static int  qla4xxx_sysfs_ddb_apply(struct iscsi_bus_flash_session *fnode_sess,
-				    struct iscsi_bus_flash_conn *fnode_conn)
-{
-	struct Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	uint32_t dev_db_start_offset = FLASH_OFFSET_DB_INFO;
-	struct dev_db_entry *fw_ddb_entry = NULL;
+अटल पूर्णांक  qla4xxx_sysfs_ddb_apply(काष्ठा iscsi_bus_flash_session *fnode_sess,
+				    काष्ठा iscsi_bus_flash_conn *fnode_conn)
+अणु
+	काष्ठा Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	uपूर्णांक32_t dev_db_start_offset = FLASH_OFFSET_DB_INFO;
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
 	dma_addr_t fw_ddb_entry_dma;
-	uint32_t options = 0;
-	int rval = 0;
+	uपूर्णांक32_t options = 0;
+	पूर्णांक rval = 0;
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha,
 				  "%s: Unable to allocate dma buffer\n",
 				  __func__));
 		rval = -ENOMEM;
-		goto exit_ddb_apply;
-	}
+		जाओ निकास_ddb_apply;
+	पूर्ण
 
-	if (!strncasecmp(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
+	अगर (!strnहालcmp(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
 		options |= IPV6_DEFAULT_DDB_ENTRY;
 
-	rval = qla4xxx_get_default_ddb(ha, options, fw_ddb_entry_dma);
-	if (rval == QLA_ERROR)
-		goto exit_ddb_apply;
+	rval = qla4xxx_get_शेष_ddb(ha, options, fw_ddb_entry_dma);
+	अगर (rval == QLA_ERROR)
+		जाओ निकास_ddb_apply;
 
 	dev_db_start_offset += (fnode_sess->target_id *
-				sizeof(*fw_ddb_entry));
+				माप(*fw_ddb_entry));
 
 	qla4xxx_copy_to_fwddb_param(fnode_sess, fnode_conn, fw_ddb_entry);
 	fw_ddb_entry->cookie = DDB_VALID_COOKIE;
 
 	rval = qla4xxx_set_flash(ha, fw_ddb_entry_dma, dev_db_start_offset,
-				 sizeof(*fw_ddb_entry), FLASH_OPT_RMW_COMMIT);
+				 माप(*fw_ddb_entry), FLASH_OPT_RMW_COMMIT);
 
-	if (rval == QLA_SUCCESS) {
+	अगर (rval == QLA_SUCCESS) अणु
 		fnode_sess->flash_state = DEV_DB_PERSISTENT;
-		ql4_printk(KERN_INFO, ha,
+		ql4_prपूर्णांकk(KERN_INFO, ha,
 			   "%s: flash node %u of host %lu written to flash\n",
 			   __func__, fnode_sess->target_id, ha->host_no);
-	} else {
+	पूर्ण अन्यथा अणु
 		rval = -EIO;
-		ql4_printk(KERN_ERR, ha,
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Error while writing flash node %u of host %lu to flash\n",
 			   __func__, fnode_sess->target_id, ha->host_no);
-	}
+	पूर्ण
 
-exit_ddb_apply:
-	if (fw_ddb_entry)
-		dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+निकास_ddb_apply:
+	अगर (fw_ddb_entry)
+		dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 				  fw_ddb_entry, fw_ddb_entry_dma);
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static ssize_t qla4xxx_sysfs_ddb_conn_open(struct scsi_qla_host *ha,
-					   struct dev_db_entry *fw_ddb_entry,
-					   uint16_t idx)
-{
-	struct dev_db_entry *ddb_entry = NULL;
+अटल sमाप_प्रकार qla4xxx_sysfs_ddb_conn_खोलो(काष्ठा scsi_qla_host *ha,
+					   काष्ठा dev_db_entry *fw_ddb_entry,
+					   uपूर्णांक16_t idx)
+अणु
+	काष्ठा dev_db_entry *ddb_entry = शून्य;
 	dma_addr_t ddb_entry_dma;
-	unsigned long wtime;
-	uint32_t mbx_sts = 0;
-	uint32_t state = 0, conn_err = 0;
-	uint16_t tmo = 0;
-	int ret = 0;
+	अचिन्हित दीर्घ wसमय;
+	uपूर्णांक32_t mbx_sts = 0;
+	uपूर्णांक32_t state = 0, conn_err = 0;
+	uपूर्णांक16_t पंचांगo = 0;
+	पूर्णांक ret = 0;
 
-	ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*ddb_entry),
+	ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*ddb_entry),
 				       &ddb_entry_dma, GFP_KERNEL);
-	if (!ddb_entry) {
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+	अगर (!ddb_entry) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha,
 				  "%s: Unable to allocate dma buffer\n",
 				  __func__));
-		return QLA_ERROR;
-	}
+		वापस QLA_ERROR;
+	पूर्ण
 
-	memcpy(ddb_entry, fw_ddb_entry, sizeof(*ddb_entry));
+	स_नकल(ddb_entry, fw_ddb_entry, माप(*ddb_entry));
 
 	ret = qla4xxx_set_ddb_entry(ha, idx, ddb_entry_dma, &mbx_sts);
-	if (ret != QLA_SUCCESS) {
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+	अगर (ret != QLA_SUCCESS) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha,
 				  "%s: Unable to set ddb entry for index %d\n",
 				  __func__, idx));
-		goto exit_ddb_conn_open;
-	}
+		जाओ निकास_ddb_conn_खोलो;
+	पूर्ण
 
-	qla4xxx_conn_open(ha, idx);
+	qla4xxx_conn_खोलो(ha, idx);
 
-	/* To ensure that sendtargets is done, wait for at least 12 secs */
-	tmo = ((ha->def_timeout > LOGIN_TOV) &&
-	       (ha->def_timeout < LOGIN_TOV * 10) ?
-	       ha->def_timeout : LOGIN_TOV);
+	/* To ensure that sendtarमाला_लो is करोne, रुको क्रम at least 12 secs */
+	पंचांगo = ((ha->def_समयout > LOGIN_TOV) &&
+	       (ha->def_समयout < LOGIN_TOV * 10) ?
+	       ha->def_समयout : LOGIN_TOV);
 
-	DEBUG2(ql4_printk(KERN_INFO, ha,
-			  "Default time to wait for login to ddb %d\n", tmo));
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+			  "Default time to wait for login to ddb %d\n", पंचांगo));
 
-	wtime = jiffies + (HZ * tmo);
-	do {
-		ret = qla4xxx_get_fwddb_entry(ha, idx, NULL, 0, NULL,
-					      NULL, &state, &conn_err, NULL,
-					      NULL);
-		if (ret == QLA_ERROR)
-			continue;
+	wसमय = jअगरfies + (HZ * पंचांगo);
+	करो अणु
+		ret = qla4xxx_get_fwddb_entry(ha, idx, शून्य, 0, शून्य,
+					      शून्य, &state, &conn_err, शून्य,
+					      शून्य);
+		अगर (ret == QLA_ERROR)
+			जारी;
 
-		if (state == DDB_DS_NO_CONNECTION_ACTIVE ||
+		अगर (state == DDB_DS_NO_CONNECTION_ACTIVE ||
 		    state == DDB_DS_SESSION_FAILED)
-			break;
+			अवरोध;
 
-		schedule_timeout_uninterruptible(HZ / 10);
-	} while (time_after(wtime, jiffies));
+		schedule_समयout_unपूर्णांकerruptible(HZ / 10);
+	पूर्ण जबतक (समय_after(wसमय, jअगरfies));
 
-exit_ddb_conn_open:
-	if (ddb_entry)
-		dma_free_coherent(&ha->pdev->dev, sizeof(*ddb_entry),
+निकास_ddb_conn_खोलो:
+	अगर (ddb_entry)
+		dma_मुक्त_coherent(&ha->pdev->dev, माप(*ddb_entry),
 				  ddb_entry, ddb_entry_dma);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qla4xxx_ddb_login_st(struct scsi_qla_host *ha,
-				struct dev_db_entry *fw_ddb_entry,
-				uint16_t target_id)
-{
-	struct qla_ddb_index *ddb_idx, *ddb_idx_tmp;
-	struct list_head list_nt;
-	uint16_t ddb_index;
-	int ret = 0;
+अटल पूर्णांक qla4xxx_ddb_login_st(काष्ठा scsi_qla_host *ha,
+				काष्ठा dev_db_entry *fw_ddb_entry,
+				uपूर्णांक16_t target_id)
+अणु
+	काष्ठा qla_ddb_index *ddb_idx, *ddb_idx_पंचांगp;
+	काष्ठा list_head list_nt;
+	uपूर्णांक16_t ddb_index;
+	पूर्णांक ret = 0;
 
-	if (test_bit(AF_ST_DISCOVERY_IN_PROGRESS, &ha->flags)) {
-		ql4_printk(KERN_WARNING, ha,
+	अगर (test_bit(AF_ST_DISCOVERY_IN_PROGRESS, &ha->flags)) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha,
 			   "%s: A discovery already in progress!\n", __func__);
-		return QLA_ERROR;
-	}
+		वापस QLA_ERROR;
+	पूर्ण
 
 	INIT_LIST_HEAD(&list_nt);
 
 	set_bit(AF_ST_DISCOVERY_IN_PROGRESS, &ha->flags);
 
 	ret = qla4xxx_get_ddb_index(ha, &ddb_index);
-	if (ret == QLA_ERROR)
-		goto exit_login_st_clr_bit;
+	अगर (ret == QLA_ERROR)
+		जाओ निकास_login_st_clr_bit;
 
-	ret = qla4xxx_sysfs_ddb_conn_open(ha, fw_ddb_entry, ddb_index);
-	if (ret == QLA_ERROR)
-		goto exit_login_st;
+	ret = qla4xxx_sysfs_ddb_conn_खोलो(ha, fw_ddb_entry, ddb_index);
+	अगर (ret == QLA_ERROR)
+		जाओ निकास_login_st;
 
 	qla4xxx_build_new_nt_list(ha, &list_nt, target_id);
 
-	list_for_each_entry_safe(ddb_idx, ddb_idx_tmp, &list_nt, list) {
+	list_क्रम_each_entry_safe(ddb_idx, ddb_idx_पंचांगp, &list_nt, list) अणु
 		list_del_init(&ddb_idx->list);
 		qla4xxx_clear_ddb_entry(ha, ddb_idx->fw_ddb_idx);
-		vfree(ddb_idx);
-	}
+		vमुक्त(ddb_idx);
+	पूर्ण
 
-exit_login_st:
-	if (qla4xxx_clear_ddb_entry(ha, ddb_index) == QLA_ERROR) {
-		ql4_printk(KERN_ERR, ha,
+निकास_login_st:
+	अगर (qla4xxx_clear_ddb_entry(ha, ddb_index) == QLA_ERROR) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "Unable to clear DDB index = 0x%x\n", ddb_index);
-	}
+	पूर्ण
 
 	clear_bit(ddb_index, ha->ddb_idx_map);
 
-exit_login_st_clr_bit:
+निकास_login_st_clr_bit:
 	clear_bit(AF_ST_DISCOVERY_IN_PROGRESS, &ha->flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qla4xxx_ddb_login_nt(struct scsi_qla_host *ha,
-				struct dev_db_entry *fw_ddb_entry,
-				uint16_t idx)
-{
-	int ret = QLA_ERROR;
+अटल पूर्णांक qla4xxx_ddb_login_nt(काष्ठा scsi_qla_host *ha,
+				काष्ठा dev_db_entry *fw_ddb_entry,
+				uपूर्णांक16_t idx)
+अणु
+	पूर्णांक ret = QLA_ERROR;
 
-	ret = qla4xxx_is_session_exists(ha, fw_ddb_entry, NULL);
-	if (ret != QLA_SUCCESS)
+	ret = qla4xxx_is_session_exists(ha, fw_ddb_entry, शून्य);
+	अगर (ret != QLA_SUCCESS)
 		ret = qla4xxx_sess_conn_setup(ha, fw_ddb_entry, RESET_ADAPTER,
 					      idx);
-	else
+	अन्यथा
 		ret = -EPERM;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * qla4xxx_sysfs_ddb_login - Login to the specified target
- * @fnode_sess: pointer to session attrs of flash ddb entry
- * @fnode_conn: pointer to connection attrs of flash ddb entry
+ * qla4xxx_sysfs_ddb_login - Login to the specअगरied target
+ * @fnode_sess: poपूर्णांकer to session attrs of flash ddb entry
+ * @fnode_conn: poपूर्णांकer to connection attrs of flash ddb entry
  *
- * This logs in to the specified target
+ * This logs in to the specअगरied target
  **/
-static int qla4xxx_sysfs_ddb_login(struct iscsi_bus_flash_session *fnode_sess,
-				   struct iscsi_bus_flash_conn *fnode_conn)
-{
-	struct Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct dev_db_entry *fw_ddb_entry = NULL;
+अटल पूर्णांक qla4xxx_sysfs_ddb_login(काष्ठा iscsi_bus_flash_session *fnode_sess,
+				   काष्ठा iscsi_bus_flash_conn *fnode_conn)
+अणु
+	काष्ठा Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
 	dma_addr_t fw_ddb_entry_dma;
-	uint32_t options = 0;
-	int ret = 0;
+	uपूर्णांक32_t options = 0;
+	पूर्णांक ret = 0;
 
-	if (fnode_sess->flash_state == DEV_DB_NON_PERSISTENT) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (fnode_sess->flash_state == DEV_DB_NON_PERSISTENT) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Target info is not persistent\n", __func__);
 		ret = -EIO;
-		goto exit_ddb_login;
-	}
+		जाओ निकास_ddb_login;
+	पूर्ण
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha,
 				  "%s: Unable to allocate dma buffer\n",
 				  __func__));
 		ret = -ENOMEM;
-		goto exit_ddb_login;
-	}
+		जाओ निकास_ddb_login;
+	पूर्ण
 
-	if (!strncasecmp(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
+	अगर (!strnहालcmp(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
 		options |= IPV6_DEFAULT_DDB_ENTRY;
 
-	ret = qla4xxx_get_default_ddb(ha, options, fw_ddb_entry_dma);
-	if (ret == QLA_ERROR)
-		goto exit_ddb_login;
+	ret = qla4xxx_get_शेष_ddb(ha, options, fw_ddb_entry_dma);
+	अगर (ret == QLA_ERROR)
+		जाओ निकास_ddb_login;
 
 	qla4xxx_copy_to_fwddb_param(fnode_sess, fnode_conn, fw_ddb_entry);
 	fw_ddb_entry->cookie = DDB_VALID_COOKIE;
 
-	if (strlen((char *)fw_ddb_entry->iscsi_name) == 0)
+	अगर (म_माप((अक्षर *)fw_ddb_entry->iscsi_name) == 0)
 		ret = qla4xxx_ddb_login_st(ha, fw_ddb_entry,
 					   fnode_sess->target_id);
-	else
+	अन्यथा
 		ret = qla4xxx_ddb_login_nt(ha, fw_ddb_entry,
 					   fnode_sess->target_id);
 
-	if (ret > 0)
+	अगर (ret > 0)
 		ret = -EIO;
 
-exit_ddb_login:
-	if (fw_ddb_entry)
-		dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+निकास_ddb_login:
+	अगर (fw_ddb_entry)
+		dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 				  fw_ddb_entry, fw_ddb_entry_dma);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * qla4xxx_sysfs_ddb_logout_sid - Logout session for the specified target
- * @cls_sess: pointer to session to be logged out
+ * qla4xxx_sysfs_ddb_logout_sid - Logout session क्रम the specअगरied target
+ * @cls_sess: poपूर्णांकer to session to be logged out
  *
- * This performs session log out from the specified target
+ * This perक्रमms session log out from the specअगरied target
  **/
-static int qla4xxx_sysfs_ddb_logout_sid(struct iscsi_cls_session *cls_sess)
-{
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb_entry = NULL;
-	struct scsi_qla_host *ha;
-	struct dev_db_entry *fw_ddb_entry = NULL;
+अटल पूर्णांक qla4xxx_sysfs_ddb_logout_sid(काष्ठा iscsi_cls_session *cls_sess)
+अणु
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb_entry = शून्य;
+	काष्ठा scsi_qla_host *ha;
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
 	dma_addr_t fw_ddb_entry_dma;
-	unsigned long flags;
-	unsigned long wtime;
-	uint32_t ddb_state;
-	int options;
-	int ret = 0;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ wसमय;
+	uपूर्णांक32_t ddb_state;
+	पूर्णांक options;
+	पूर्णांक ret = 0;
 
 	sess = cls_sess->dd_data;
 	ddb_entry = sess->dd_data;
 	ha = ddb_entry->ha;
 
-	if (ddb_entry->ddb_type != FLASH_DDB) {
-		ql4_printk(KERN_ERR, ha, "%s: Not a flash node session\n",
+	अगर (ddb_entry->ddb_type != FLASH_DDB) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Not a flash node session\n",
 			   __func__);
 		ret = -ENXIO;
-		goto exit_ddb_logout;
-	}
+		जाओ निकास_ddb_logout;
+	पूर्ण
 
-	if (test_bit(DF_BOOT_TGT, &ddb_entry->flags)) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (test_bit(DF_BOOT_TGT, &ddb_entry->flags)) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Logout from boot target entry is not permitted.\n",
 			   __func__);
 		ret = -EPERM;
-		goto exit_ddb_logout;
-	}
+		जाओ निकास_ddb_logout;
+	पूर्ण
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Unable to allocate dma buffer\n", __func__);
 		ret = -ENOMEM;
-		goto exit_ddb_logout;
-	}
+		जाओ निकास_ddb_logout;
+	पूर्ण
 
-	if (test_and_set_bit(DF_DISABLE_RELOGIN, &ddb_entry->flags))
-		goto ddb_logout_init;
+	अगर (test_and_set_bit(DF_DISABLE_RELOGIN, &ddb_entry->flags))
+		जाओ ddb_logout_init;
 
 	ret = qla4xxx_get_fwddb_entry(ha, ddb_entry->fw_ddb_index,
 				      fw_ddb_entry, fw_ddb_entry_dma,
-				      NULL, NULL, &ddb_state, NULL,
-				      NULL, NULL);
-	if (ret == QLA_ERROR)
-		goto ddb_logout_init;
+				      शून्य, शून्य, &ddb_state, शून्य,
+				      शून्य, शून्य);
+	अगर (ret == QLA_ERROR)
+		जाओ ddb_logout_init;
 
-	if (ddb_state == DDB_DS_SESSION_ACTIVE)
-		goto ddb_logout_init;
+	अगर (ddb_state == DDB_DS_SESSION_ACTIVE)
+		जाओ ddb_logout_init;
 
-	/* wait until next relogin is triggered using DF_RELOGIN and
-	 * clear DF_RELOGIN to avoid invocation of further relogin
+	/* रुको until next relogin is triggered using DF_RELOGIN and
+	 * clear DF_RELOGIN to aव्योम invocation of further relogin
 	 */
-	wtime = jiffies + (HZ * RELOGIN_TOV);
-	do {
-		if (test_and_clear_bit(DF_RELOGIN, &ddb_entry->flags))
-			goto ddb_logout_init;
+	wसमय = jअगरfies + (HZ * RELOGIN_TOV);
+	करो अणु
+		अगर (test_and_clear_bit(DF_RELOGIN, &ddb_entry->flags))
+			जाओ ddb_logout_init;
 
-		schedule_timeout_uninterruptible(HZ);
-	} while ((time_after(wtime, jiffies)));
+		schedule_समयout_unपूर्णांकerruptible(HZ);
+	पूर्ण जबतक ((समय_after(wसमय, jअगरfies)));
 
 ddb_logout_init:
-	atomic_set(&ddb_entry->retry_relogin_timer, INVALID_ENTRY);
-	atomic_set(&ddb_entry->relogin_timer, 0);
+	atomic_set(&ddb_entry->retry_relogin_समयr, INVALID_ENTRY);
+	atomic_set(&ddb_entry->relogin_समयr, 0);
 
 	options = LOGOUT_OPTION_CLOSE_SESSION;
 	qla4xxx_session_logout_ddb(ha, ddb_entry, options);
 
-	memset(fw_ddb_entry, 0, sizeof(*fw_ddb_entry));
-	wtime = jiffies + (HZ * LOGOUT_TOV);
-	do {
+	स_रखो(fw_ddb_entry, 0, माप(*fw_ddb_entry));
+	wसमय = jअगरfies + (HZ * LOGOUT_TOV);
+	करो अणु
 		ret = qla4xxx_get_fwddb_entry(ha, ddb_entry->fw_ddb_index,
 					      fw_ddb_entry, fw_ddb_entry_dma,
-					      NULL, NULL, &ddb_state, NULL,
-					      NULL, NULL);
-		if (ret == QLA_ERROR)
-			goto ddb_logout_clr_sess;
+					      शून्य, शून्य, &ddb_state, शून्य,
+					      शून्य, शून्य);
+		अगर (ret == QLA_ERROR)
+			जाओ ddb_logout_clr_sess;
 
-		if ((ddb_state == DDB_DS_NO_CONNECTION_ACTIVE) ||
+		अगर ((ddb_state == DDB_DS_NO_CONNECTION_ACTIVE) ||
 		    (ddb_state == DDB_DS_SESSION_FAILED))
-			goto ddb_logout_clr_sess;
+			जाओ ddb_logout_clr_sess;
 
-		schedule_timeout_uninterruptible(HZ);
-	} while ((time_after(wtime, jiffies)));
+		schedule_समयout_unपूर्णांकerruptible(HZ);
+	पूर्ण जबतक ((समय_after(wसमय, jअगरfies)));
 
 ddb_logout_clr_sess:
 	qla4xxx_clear_ddb_entry(ha, ddb_entry->fw_ddb_index);
@@ -7700,701 +7701,701 @@ ddb_logout_clr_sess:
 	 * session
 	 **/
 	try_module_get(qla4xxx_iscsi_transport.owner);
-	iscsi_destroy_endpoint(ddb_entry->conn->ep);
+	iscsi_destroy_endpoपूर्णांक(ddb_entry->conn->ep);
 
 	spin_lock_irqsave(&ha->hardware_lock, flags);
-	qla4xxx_free_ddb(ha, ddb_entry);
+	qla4xxx_मुक्त_ddb(ha, ddb_entry);
 	clear_bit(ddb_entry->fw_ddb_index, ha->ddb_idx_map);
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-	iscsi_session_teardown(ddb_entry->sess);
+	iscsi_session_tearकरोwn(ddb_entry->sess);
 
 	clear_bit(DF_DISABLE_RELOGIN, &ddb_entry->flags);
 	ret = QLA_SUCCESS;
 
-exit_ddb_logout:
-	if (fw_ddb_entry)
-		dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+निकास_ddb_logout:
+	अगर (fw_ddb_entry)
+		dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 				  fw_ddb_entry, fw_ddb_entry_dma);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * qla4xxx_sysfs_ddb_logout - Logout from the specified target
- * @fnode_sess: pointer to session attrs of flash ddb entry
- * @fnode_conn: pointer to connection attrs of flash ddb entry
+ * qla4xxx_sysfs_ddb_logout - Logout from the specअगरied target
+ * @fnode_sess: poपूर्णांकer to session attrs of flash ddb entry
+ * @fnode_conn: poपूर्णांकer to connection attrs of flash ddb entry
  *
- * This performs log out from the specified target
+ * This perक्रमms log out from the specअगरied target
  **/
-static int qla4xxx_sysfs_ddb_logout(struct iscsi_bus_flash_session *fnode_sess,
-				    struct iscsi_bus_flash_conn *fnode_conn)
-{
-	struct Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct ql4_tuple_ddb *flash_tddb = NULL;
-	struct ql4_tuple_ddb *tmp_tddb = NULL;
-	struct dev_db_entry *fw_ddb_entry = NULL;
-	struct ddb_entry *ddb_entry = NULL;
+अटल पूर्णांक qla4xxx_sysfs_ddb_logout(काष्ठा iscsi_bus_flash_session *fnode_sess,
+				    काष्ठा iscsi_bus_flash_conn *fnode_conn)
+अणु
+	काष्ठा Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा ql4_tuple_ddb *flash_tddb = शून्य;
+	काष्ठा ql4_tuple_ddb *पंचांगp_tddb = शून्य;
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
+	काष्ठा ddb_entry *ddb_entry = शून्य;
 	dma_addr_t fw_ddb_dma;
-	uint32_t next_idx = 0;
-	uint32_t state = 0, conn_err = 0;
-	uint16_t conn_id = 0;
-	int idx, index;
-	int status, ret = 0;
+	uपूर्णांक32_t next_idx = 0;
+	uपूर्णांक32_t state = 0, conn_err = 0;
+	uपूर्णांक16_t conn_id = 0;
+	पूर्णांक idx, index;
+	पूर्णांक status, ret = 0;
 
 	fw_ddb_entry = dma_pool_alloc(ha->fw_ddb_dma_pool, GFP_KERNEL,
 				      &fw_ddb_dma);
-	if (fw_ddb_entry == NULL) {
-		ql4_printk(KERN_ERR, ha, "%s:Out of memory\n", __func__);
+	अगर (fw_ddb_entry == शून्य) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s:Out of memory\n", __func__);
 		ret = -ENOMEM;
-		goto exit_ddb_logout;
-	}
+		जाओ निकास_ddb_logout;
+	पूर्ण
 
-	flash_tddb = vzalloc(sizeof(*flash_tddb));
-	if (!flash_tddb) {
-		ql4_printk(KERN_WARNING, ha,
+	flash_tddb = vzalloc(माप(*flash_tddb));
+	अगर (!flash_tddb) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha,
 			   "%s:Memory Allocation failed.\n", __func__);
 		ret = -ENOMEM;
-		goto exit_ddb_logout;
-	}
+		जाओ निकास_ddb_logout;
+	पूर्ण
 
-	tmp_tddb = vzalloc(sizeof(*tmp_tddb));
-	if (!tmp_tddb) {
-		ql4_printk(KERN_WARNING, ha,
+	पंचांगp_tddb = vzalloc(माप(*पंचांगp_tddb));
+	अगर (!पंचांगp_tddb) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha,
 			   "%s:Memory Allocation failed.\n", __func__);
 		ret = -ENOMEM;
-		goto exit_ddb_logout;
-	}
+		जाओ निकास_ddb_logout;
+	पूर्ण
 
-	if (!fnode_sess->targetname) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!fnode_sess->targetname) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s:Cannot logout from SendTarget entry\n",
 			   __func__);
 		ret = -EPERM;
-		goto exit_ddb_logout;
-	}
+		जाओ निकास_ddb_logout;
+	पूर्ण
 
-	if (fnode_sess->is_boot_target) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (fnode_sess->is_boot_target) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Logout from boot target entry is not permitted.\n",
 			   __func__);
 		ret = -EPERM;
-		goto exit_ddb_logout;
-	}
+		जाओ निकास_ddb_logout;
+	पूर्ण
 
 	strlcpy(flash_tddb->iscsi_name, fnode_sess->targetname,
 		ISCSI_NAME_SIZE);
 
-	if (!strncmp(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
-		sprintf(flash_tddb->ip_addr, "%pI6", fnode_conn->ipaddress);
-	else
-		sprintf(flash_tddb->ip_addr, "%pI4", fnode_conn->ipaddress);
+	अगर (!म_भेदन(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
+		प्र_लिखो(flash_tddb->ip_addr, "%pI6", fnode_conn->ipaddress);
+	अन्यथा
+		प्र_लिखो(flash_tddb->ip_addr, "%pI4", fnode_conn->ipaddress);
 
 	flash_tddb->tpgt = fnode_sess->tpgt;
 	flash_tddb->port = fnode_conn->port;
 
 	COPY_ISID(flash_tddb->isid, fnode_sess->isid);
 
-	for (idx = 0; idx < MAX_DDB_ENTRIES; idx++) {
+	क्रम (idx = 0; idx < MAX_DDB_ENTRIES; idx++) अणु
 		ddb_entry = qla4xxx_lookup_ddb_by_fw_index(ha, idx);
-		if (ddb_entry == NULL)
-			continue;
+		अगर (ddb_entry == शून्य)
+			जारी;
 
-		if (ddb_entry->ddb_type != FLASH_DDB)
-			continue;
+		अगर (ddb_entry->ddb_type != FLASH_DDB)
+			जारी;
 
 		index = ddb_entry->sess->target_id;
 		status = qla4xxx_get_fwddb_entry(ha, index, fw_ddb_entry,
-						 fw_ddb_dma, NULL, &next_idx,
-						 &state, &conn_err, NULL,
+						 fw_ddb_dma, शून्य, &next_idx,
+						 &state, &conn_err, शून्य,
 						 &conn_id);
-		if (status == QLA_ERROR) {
+		अगर (status == QLA_ERROR) अणु
 			ret = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		qla4xxx_convert_param_ddb(fw_ddb_entry, tmp_tddb, NULL);
+		qla4xxx_convert_param_ddb(fw_ddb_entry, पंचांगp_tddb, शून्य);
 
-		status = qla4xxx_compare_tuple_ddb(ha, flash_tddb, tmp_tddb,
+		status = qla4xxx_compare_tuple_ddb(ha, flash_tddb, पंचांगp_tddb,
 						   true);
-		if (status == QLA_SUCCESS) {
+		अगर (status == QLA_SUCCESS) अणु
 			ret = qla4xxx_sysfs_ddb_logout_sid(ddb_entry->sess);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (idx == MAX_DDB_ENTRIES)
+	अगर (idx == MAX_DDB_ENTRIES)
 		ret = -ESRCH;
 
-exit_ddb_logout:
-	vfree(flash_tddb);
-	vfree(tmp_tddb);
-	if (fw_ddb_entry)
-		dma_pool_free(ha->fw_ddb_dma_pool, fw_ddb_entry, fw_ddb_dma);
+निकास_ddb_logout:
+	vमुक्त(flash_tddb);
+	vमुक्त(पंचांगp_tddb);
+	अगर (fw_ddb_entry)
+		dma_pool_मुक्त(ha->fw_ddb_dma_pool, fw_ddb_entry, fw_ddb_dma);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-qla4xxx_sysfs_ddb_get_param(struct iscsi_bus_flash_session *fnode_sess,
-			    int param, char *buf)
-{
-	struct Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct iscsi_bus_flash_conn *fnode_conn;
-	struct ql4_chap_table chap_tbl;
-	struct device *dev;
-	int parent_type;
-	int rc = 0;
+अटल पूर्णांक
+qla4xxx_sysfs_ddb_get_param(काष्ठा iscsi_bus_flash_session *fnode_sess,
+			    पूर्णांक param, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा iscsi_bus_flash_conn *fnode_conn;
+	काष्ठा ql4_chap_table chap_tbl;
+	काष्ठा device *dev;
+	पूर्णांक parent_type;
+	पूर्णांक rc = 0;
 
 	dev = iscsi_find_flashnode_conn(fnode_sess);
-	if (!dev)
-		return -EIO;
+	अगर (!dev)
+		वापस -EIO;
 
 	fnode_conn = iscsi_dev_to_flash_conn(dev);
 
-	switch (param) {
-	case ISCSI_FLASHNODE_IS_FW_ASSIGNED_IPV6:
-		rc = sprintf(buf, "%u\n", fnode_conn->is_fw_assigned_ipv6);
-		break;
-	case ISCSI_FLASHNODE_PORTAL_TYPE:
-		rc = sprintf(buf, "%s\n", fnode_sess->portal_type);
-		break;
-	case ISCSI_FLASHNODE_AUTO_SND_TGT_DISABLE:
-		rc = sprintf(buf, "%u\n", fnode_sess->auto_snd_tgt_disable);
-		break;
-	case ISCSI_FLASHNODE_DISCOVERY_SESS:
-		rc = sprintf(buf, "%u\n", fnode_sess->discovery_sess);
-		break;
-	case ISCSI_FLASHNODE_ENTRY_EN:
-		rc = sprintf(buf, "%u\n", fnode_sess->entry_state);
-		break;
-	case ISCSI_FLASHNODE_HDR_DGST_EN:
-		rc = sprintf(buf, "%u\n", fnode_conn->hdrdgst_en);
-		break;
-	case ISCSI_FLASHNODE_DATA_DGST_EN:
-		rc = sprintf(buf, "%u\n", fnode_conn->datadgst_en);
-		break;
-	case ISCSI_FLASHNODE_IMM_DATA_EN:
-		rc = sprintf(buf, "%u\n", fnode_sess->imm_data_en);
-		break;
-	case ISCSI_FLASHNODE_INITIAL_R2T_EN:
-		rc = sprintf(buf, "%u\n", fnode_sess->initial_r2t_en);
-		break;
-	case ISCSI_FLASHNODE_DATASEQ_INORDER:
-		rc = sprintf(buf, "%u\n", fnode_sess->dataseq_inorder_en);
-		break;
-	case ISCSI_FLASHNODE_PDU_INORDER:
-		rc = sprintf(buf, "%u\n", fnode_sess->pdu_inorder_en);
-		break;
-	case ISCSI_FLASHNODE_CHAP_AUTH_EN:
-		rc = sprintf(buf, "%u\n", fnode_sess->chap_auth_en);
-		break;
-	case ISCSI_FLASHNODE_SNACK_REQ_EN:
-		rc = sprintf(buf, "%u\n", fnode_conn->snack_req_en);
-		break;
-	case ISCSI_FLASHNODE_DISCOVERY_LOGOUT_EN:
-		rc = sprintf(buf, "%u\n", fnode_sess->discovery_logout_en);
-		break;
-	case ISCSI_FLASHNODE_BIDI_CHAP_EN:
-		rc = sprintf(buf, "%u\n", fnode_sess->bidi_chap_en);
-		break;
-	case ISCSI_FLASHNODE_DISCOVERY_AUTH_OPTIONAL:
-		rc = sprintf(buf, "%u\n", fnode_sess->discovery_auth_optional);
-		break;
-	case ISCSI_FLASHNODE_ERL:
-		rc = sprintf(buf, "%u\n", fnode_sess->erl);
-		break;
-	case ISCSI_FLASHNODE_TCP_TIMESTAMP_STAT:
-		rc = sprintf(buf, "%u\n", fnode_conn->tcp_timestamp_stat);
-		break;
-	case ISCSI_FLASHNODE_TCP_NAGLE_DISABLE:
-		rc = sprintf(buf, "%u\n", fnode_conn->tcp_nagle_disable);
-		break;
-	case ISCSI_FLASHNODE_TCP_WSF_DISABLE:
-		rc = sprintf(buf, "%u\n", fnode_conn->tcp_wsf_disable);
-		break;
-	case ISCSI_FLASHNODE_TCP_TIMER_SCALE:
-		rc = sprintf(buf, "%u\n", fnode_conn->tcp_timer_scale);
-		break;
-	case ISCSI_FLASHNODE_TCP_TIMESTAMP_EN:
-		rc = sprintf(buf, "%u\n", fnode_conn->tcp_timestamp_en);
-		break;
-	case ISCSI_FLASHNODE_IP_FRAG_DISABLE:
-		rc = sprintf(buf, "%u\n", fnode_conn->fragment_disable);
-		break;
-	case ISCSI_FLASHNODE_MAX_RECV_DLENGTH:
-		rc = sprintf(buf, "%u\n", fnode_conn->max_recv_dlength);
-		break;
-	case ISCSI_FLASHNODE_MAX_XMIT_DLENGTH:
-		rc = sprintf(buf, "%u\n", fnode_conn->max_xmit_dlength);
-		break;
-	case ISCSI_FLASHNODE_FIRST_BURST:
-		rc = sprintf(buf, "%u\n", fnode_sess->first_burst);
-		break;
-	case ISCSI_FLASHNODE_DEF_TIME2WAIT:
-		rc = sprintf(buf, "%u\n", fnode_sess->time2wait);
-		break;
-	case ISCSI_FLASHNODE_DEF_TIME2RETAIN:
-		rc = sprintf(buf, "%u\n", fnode_sess->time2retain);
-		break;
-	case ISCSI_FLASHNODE_MAX_R2T:
-		rc = sprintf(buf, "%u\n", fnode_sess->max_r2t);
-		break;
-	case ISCSI_FLASHNODE_KEEPALIVE_TMO:
-		rc = sprintf(buf, "%u\n", fnode_conn->keepalive_timeout);
-		break;
-	case ISCSI_FLASHNODE_ISID:
-		rc = sprintf(buf, "%pm\n", fnode_sess->isid);
-		break;
-	case ISCSI_FLASHNODE_TSID:
-		rc = sprintf(buf, "%u\n", fnode_sess->tsid);
-		break;
-	case ISCSI_FLASHNODE_PORT:
-		rc = sprintf(buf, "%d\n", fnode_conn->port);
-		break;
-	case ISCSI_FLASHNODE_MAX_BURST:
-		rc = sprintf(buf, "%u\n", fnode_sess->max_burst);
-		break;
-	case ISCSI_FLASHNODE_DEF_TASKMGMT_TMO:
-		rc = sprintf(buf, "%u\n",
-			     fnode_sess->default_taskmgmt_timeout);
-		break;
-	case ISCSI_FLASHNODE_IPADDR:
-		if (!strncmp(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
-			rc = sprintf(buf, "%pI6\n", fnode_conn->ipaddress);
-		else
-			rc = sprintf(buf, "%pI4\n", fnode_conn->ipaddress);
-		break;
-	case ISCSI_FLASHNODE_ALIAS:
-		if (fnode_sess->targetalias)
-			rc = sprintf(buf, "%s\n", fnode_sess->targetalias);
-		else
-			rc = sprintf(buf, "\n");
-		break;
-	case ISCSI_FLASHNODE_REDIRECT_IPADDR:
-		if (!strncmp(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
-			rc = sprintf(buf, "%pI6\n",
+	चयन (param) अणु
+	हाल ISCSI_FLASHNODE_IS_FW_ASSIGNED_IPV6:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->is_fw_asचिन्हित_ipv6);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_PORTAL_TYPE:
+		rc = प्र_लिखो(buf, "%s\n", fnode_sess->portal_type);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_AUTO_SND_TGT_DISABLE:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->स्वतः_snd_tgt_disable);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_DISCOVERY_SESS:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->discovery_sess);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_ENTRY_EN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->entry_state);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_HDR_DGST_EN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->hdrdgst_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_DATA_DGST_EN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->datadgst_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_IMM_DATA_EN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->imm_data_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_INITIAL_R2T_EN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->initial_r2t_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_DATASEQ_INORDER:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->dataseq_inorder_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_PDU_INORDER:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->pdu_inorder_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_CHAP_AUTH_EN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->chap_auth_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_SNACK_REQ_EN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->snack_req_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_DISCOVERY_LOGOUT_EN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->discovery_logout_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_BIDI_CHAP_EN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->bidi_chap_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_DISCOVERY_AUTH_OPTIONAL:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->discovery_auth_optional);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_ERL:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->erl);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_TCP_TIMESTAMP_STAT:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->tcp_बारtamp_stat);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_TCP_NAGLE_DISABLE:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->tcp_nagle_disable);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_TCP_WSF_DISABLE:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->tcp_wsf_disable);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_TCP_TIMER_SCALE:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->tcp_समयr_scale);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_TCP_TIMESTAMP_EN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->tcp_बारtamp_en);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_IP_FRAG_DISABLE:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->fragment_disable);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_MAX_RECV_DLENGTH:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->max_recv_dlength);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_MAX_XMIT_DLENGTH:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->max_xmit_dlength);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_FIRST_BURST:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->first_burst);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_DEF_TIME2WAIT:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->समय2रुको);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_DEF_TIME2RETAIN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->समय2retain);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_MAX_R2T:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->max_r2t);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_KEEPALIVE_TMO:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->keepalive_समयout);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_ISID:
+		rc = प्र_लिखो(buf, "%pm\n", fnode_sess->isid);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_TSID:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->tsid);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_PORT:
+		rc = प्र_लिखो(buf, "%d\n", fnode_conn->port);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_MAX_BURST:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->max_burst);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_DEF_TASKMGMT_TMO:
+		rc = प्र_लिखो(buf, "%u\n",
+			     fnode_sess->शेष_taskmgmt_समयout);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_IPADDR:
+		अगर (!म_भेदन(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
+			rc = प्र_लिखो(buf, "%pI6\n", fnode_conn->ipaddress);
+		अन्यथा
+			rc = प्र_लिखो(buf, "%pI4\n", fnode_conn->ipaddress);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_ALIAS:
+		अगर (fnode_sess->targetalias)
+			rc = प्र_लिखो(buf, "%s\n", fnode_sess->targetalias);
+		अन्यथा
+			rc = प्र_लिखो(buf, "\n");
+		अवरोध;
+	हाल ISCSI_FLASHNODE_REसूचीECT_IPADDR:
+		अगर (!म_भेदन(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
+			rc = प्र_लिखो(buf, "%pI6\n",
 				     fnode_conn->redirect_ipaddr);
-		else
-			rc = sprintf(buf, "%pI4\n",
+		अन्यथा
+			rc = प्र_लिखो(buf, "%pI4\n",
 				     fnode_conn->redirect_ipaddr);
-		break;
-	case ISCSI_FLASHNODE_MAX_SEGMENT_SIZE:
-		rc = sprintf(buf, "%u\n", fnode_conn->max_segment_size);
-		break;
-	case ISCSI_FLASHNODE_LOCAL_PORT:
-		rc = sprintf(buf, "%u\n", fnode_conn->local_port);
-		break;
-	case ISCSI_FLASHNODE_IPV4_TOS:
-		rc = sprintf(buf, "%u\n", fnode_conn->ipv4_tos);
-		break;
-	case ISCSI_FLASHNODE_IPV6_TC:
-		if (!strncmp(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
-			rc = sprintf(buf, "%u\n",
+		अवरोध;
+	हाल ISCSI_FLASHNODE_MAX_SEGMENT_SIZE:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->max_segment_size);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_LOCAL_PORT:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->local_port);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_IPV4_TOS:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->ipv4_tos);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_IPV6_TC:
+		अगर (!म_भेदन(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
+			rc = प्र_लिखो(buf, "%u\n",
 				     fnode_conn->ipv6_traffic_class);
-		else
-			rc = sprintf(buf, "\n");
-		break;
-	case ISCSI_FLASHNODE_IPV6_FLOW_LABEL:
-		rc = sprintf(buf, "%u\n", fnode_conn->ipv6_flow_label);
-		break;
-	case ISCSI_FLASHNODE_LINK_LOCAL_IPV6:
-		if (!strncmp(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
-			rc = sprintf(buf, "%pI6\n",
+		अन्यथा
+			rc = प्र_लिखो(buf, "\n");
+		अवरोध;
+	हाल ISCSI_FLASHNODE_IPV6_FLOW_LABEL:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->ipv6_flow_label);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_LINK_LOCAL_IPV6:
+		अगर (!म_भेदन(fnode_sess->portal_type, PORTAL_TYPE_IPV6, 4))
+			rc = प्र_लिखो(buf, "%pI6\n",
 				     fnode_conn->link_local_ipv6_addr);
-		else
-			rc = sprintf(buf, "\n");
-		break;
-	case ISCSI_FLASHNODE_DISCOVERY_PARENT_IDX:
-		rc = sprintf(buf, "%u\n", fnode_sess->discovery_parent_idx);
-		break;
-	case ISCSI_FLASHNODE_DISCOVERY_PARENT_TYPE:
-		if (fnode_sess->discovery_parent_type == DDB_ISNS)
+		अन्यथा
+			rc = प्र_लिखो(buf, "\n");
+		अवरोध;
+	हाल ISCSI_FLASHNODE_DISCOVERY_PARENT_IDX:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->discovery_parent_idx);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_DISCOVERY_PARENT_TYPE:
+		अगर (fnode_sess->discovery_parent_type == DDB_ISNS)
 			parent_type = ISCSI_DISC_PARENT_ISNS;
-		else if (fnode_sess->discovery_parent_type == DDB_NO_LINK)
+		अन्यथा अगर (fnode_sess->discovery_parent_type == DDB_NO_LINK)
 			parent_type = ISCSI_DISC_PARENT_UNKNOWN;
-		else if (fnode_sess->discovery_parent_type < MAX_DDB_ENTRIES)
+		अन्यथा अगर (fnode_sess->discovery_parent_type < MAX_DDB_ENTRIES)
 			parent_type = ISCSI_DISC_PARENT_SENDTGT;
-		else
+		अन्यथा
 			parent_type = ISCSI_DISC_PARENT_UNKNOWN;
 
-		rc = sprintf(buf, "%s\n",
+		rc = प्र_लिखो(buf, "%s\n",
 			     iscsi_get_discovery_parent_name(parent_type));
-		break;
-	case ISCSI_FLASHNODE_NAME:
-		if (fnode_sess->targetname)
-			rc = sprintf(buf, "%s\n", fnode_sess->targetname);
-		else
-			rc = sprintf(buf, "\n");
-		break;
-	case ISCSI_FLASHNODE_TPGT:
-		rc = sprintf(buf, "%u\n", fnode_sess->tpgt);
-		break;
-	case ISCSI_FLASHNODE_TCP_XMIT_WSF:
-		rc = sprintf(buf, "%u\n", fnode_conn->tcp_xmit_wsf);
-		break;
-	case ISCSI_FLASHNODE_TCP_RECV_WSF:
-		rc = sprintf(buf, "%u\n", fnode_conn->tcp_recv_wsf);
-		break;
-	case ISCSI_FLASHNODE_CHAP_OUT_IDX:
-		rc = sprintf(buf, "%u\n", fnode_sess->chap_out_idx);
-		break;
-	case ISCSI_FLASHNODE_USERNAME:
-		if (fnode_sess->chap_auth_en) {
+		अवरोध;
+	हाल ISCSI_FLASHNODE_NAME:
+		अगर (fnode_sess->targetname)
+			rc = प्र_लिखो(buf, "%s\n", fnode_sess->targetname);
+		अन्यथा
+			rc = प्र_लिखो(buf, "\n");
+		अवरोध;
+	हाल ISCSI_FLASHNODE_TPGT:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->tpgt);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_TCP_XMIT_WSF:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->tcp_xmit_wsf);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_TCP_RECV_WSF:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->tcp_recv_wsf);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_CHAP_OUT_IDX:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->chap_out_idx);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_USERNAME:
+		अगर (fnode_sess->chap_auth_en) अणु
 			qla4xxx_get_uni_chap_at_index(ha,
 						      chap_tbl.name,
 						      chap_tbl.secret,
 						      fnode_sess->chap_out_idx);
-			rc = sprintf(buf, "%s\n", chap_tbl.name);
-		} else {
-			rc = sprintf(buf, "\n");
-		}
-		break;
-	case ISCSI_FLASHNODE_PASSWORD:
-		if (fnode_sess->chap_auth_en) {
+			rc = प्र_लिखो(buf, "%s\n", chap_tbl.name);
+		पूर्ण अन्यथा अणु
+			rc = प्र_लिखो(buf, "\n");
+		पूर्ण
+		अवरोध;
+	हाल ISCSI_FLASHNODE_PASSWORD:
+		अगर (fnode_sess->chap_auth_en) अणु
 			qla4xxx_get_uni_chap_at_index(ha,
 						      chap_tbl.name,
 						      chap_tbl.secret,
 						      fnode_sess->chap_out_idx);
-			rc = sprintf(buf, "%s\n", chap_tbl.secret);
-		} else {
-			rc = sprintf(buf, "\n");
-		}
-		break;
-	case ISCSI_FLASHNODE_STATSN:
-		rc = sprintf(buf, "%u\n", fnode_conn->statsn);
-		break;
-	case ISCSI_FLASHNODE_EXP_STATSN:
-		rc = sprintf(buf, "%u\n", fnode_conn->exp_statsn);
-		break;
-	case ISCSI_FLASHNODE_IS_BOOT_TGT:
-		rc = sprintf(buf, "%u\n", fnode_sess->is_boot_target);
-		break;
-	default:
+			rc = प्र_लिखो(buf, "%s\n", chap_tbl.secret);
+		पूर्ण अन्यथा अणु
+			rc = प्र_लिखो(buf, "\n");
+		पूर्ण
+		अवरोध;
+	हाल ISCSI_FLASHNODE_STATSN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->statsn);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_EXP_STATSN:
+		rc = प्र_लिखो(buf, "%u\n", fnode_conn->exp_statsn);
+		अवरोध;
+	हाल ISCSI_FLASHNODE_IS_BOOT_TGT:
+		rc = प्र_लिखो(buf, "%u\n", fnode_sess->is_boot_target);
+		अवरोध;
+	शेष:
 		rc = -ENOSYS;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * qla4xxx_sysfs_ddb_set_param - Set parameter for firmware DDB entry
- * @fnode_sess: pointer to session attrs of flash ddb entry
- * @fnode_conn: pointer to connection attrs of flash ddb entry
+ * qla4xxx_sysfs_ddb_set_param - Set parameter क्रम firmware DDB entry
+ * @fnode_sess: poपूर्णांकer to session attrs of flash ddb entry
+ * @fnode_conn: poपूर्णांकer to connection attrs of flash ddb entry
  * @data: Parameters and their values to update
  * @len: len of data
  *
- * This sets the parameter of flash ddb entry and writes them to flash
+ * This sets the parameter of flash ddb entry and ग_लिखोs them to flash
  **/
-static int
-qla4xxx_sysfs_ddb_set_param(struct iscsi_bus_flash_session *fnode_sess,
-			    struct iscsi_bus_flash_conn *fnode_conn,
-			    void *data, int len)
-{
-	struct Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	struct iscsi_flashnode_param_info *fnode_param;
-	struct ql4_chap_table chap_tbl;
-	struct nlattr *attr;
-	uint16_t chap_out_idx = INVALID_ENTRY;
-	int rc = QLA_ERROR;
-	uint32_t rem = len;
+अटल पूर्णांक
+qla4xxx_sysfs_ddb_set_param(काष्ठा iscsi_bus_flash_session *fnode_sess,
+			    काष्ठा iscsi_bus_flash_conn *fnode_conn,
+			    व्योम *data, पूर्णांक len)
+अणु
+	काष्ठा Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	काष्ठा iscsi_flashnode_param_info *fnode_param;
+	काष्ठा ql4_chap_table chap_tbl;
+	काष्ठा nlattr *attr;
+	uपूर्णांक16_t chap_out_idx = INVALID_ENTRY;
+	पूर्णांक rc = QLA_ERROR;
+	uपूर्णांक32_t rem = len;
 
-	memset((void *)&chap_tbl, 0, sizeof(chap_tbl));
-	nla_for_each_attr(attr, data, len, rem) {
+	स_रखो((व्योम *)&chap_tbl, 0, माप(chap_tbl));
+	nla_क्रम_each_attr(attr, data, len, rem) अणु
 		fnode_param = nla_data(attr);
 
-		switch (fnode_param->param) {
-		case ISCSI_FLASHNODE_IS_FW_ASSIGNED_IPV6:
-			fnode_conn->is_fw_assigned_ipv6 = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_PORTAL_TYPE:
-			memcpy(fnode_sess->portal_type, fnode_param->value,
-			       strlen(fnode_sess->portal_type));
-			break;
-		case ISCSI_FLASHNODE_AUTO_SND_TGT_DISABLE:
-			fnode_sess->auto_snd_tgt_disable =
+		चयन (fnode_param->param) अणु
+		हाल ISCSI_FLASHNODE_IS_FW_ASSIGNED_IPV6:
+			fnode_conn->is_fw_asचिन्हित_ipv6 = fnode_param->value[0];
+			अवरोध;
+		हाल ISCSI_FLASHNODE_PORTAL_TYPE:
+			स_नकल(fnode_sess->portal_type, fnode_param->value,
+			       म_माप(fnode_sess->portal_type));
+			अवरोध;
+		हाल ISCSI_FLASHNODE_AUTO_SND_TGT_DISABLE:
+			fnode_sess->स्वतः_snd_tgt_disable =
 							fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_DISCOVERY_SESS:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_DISCOVERY_SESS:
 			fnode_sess->discovery_sess = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_ENTRY_EN:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_ENTRY_EN:
 			fnode_sess->entry_state = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_HDR_DGST_EN:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_HDR_DGST_EN:
 			fnode_conn->hdrdgst_en = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_DATA_DGST_EN:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_DATA_DGST_EN:
 			fnode_conn->datadgst_en = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_IMM_DATA_EN:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_IMM_DATA_EN:
 			fnode_sess->imm_data_en = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_INITIAL_R2T_EN:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_INITIAL_R2T_EN:
 			fnode_sess->initial_r2t_en = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_DATASEQ_INORDER:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_DATASEQ_INORDER:
 			fnode_sess->dataseq_inorder_en = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_PDU_INORDER:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_PDU_INORDER:
 			fnode_sess->pdu_inorder_en = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_CHAP_AUTH_EN:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_CHAP_AUTH_EN:
 			fnode_sess->chap_auth_en = fnode_param->value[0];
-			/* Invalidate chap index if chap auth is disabled */
-			if (!fnode_sess->chap_auth_en)
+			/* Invalidate chap index अगर chap auth is disabled */
+			अगर (!fnode_sess->chap_auth_en)
 				fnode_sess->chap_out_idx = INVALID_ENTRY;
 
-			break;
-		case ISCSI_FLASHNODE_SNACK_REQ_EN:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_SNACK_REQ_EN:
 			fnode_conn->snack_req_en = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_DISCOVERY_LOGOUT_EN:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_DISCOVERY_LOGOUT_EN:
 			fnode_sess->discovery_logout_en = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_BIDI_CHAP_EN:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_BIDI_CHAP_EN:
 			fnode_sess->bidi_chap_en = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_DISCOVERY_AUTH_OPTIONAL:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_DISCOVERY_AUTH_OPTIONAL:
 			fnode_sess->discovery_auth_optional =
 							fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_ERL:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_ERL:
 			fnode_sess->erl = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_TCP_TIMESTAMP_STAT:
-			fnode_conn->tcp_timestamp_stat = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_TCP_NAGLE_DISABLE:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_TCP_TIMESTAMP_STAT:
+			fnode_conn->tcp_बारtamp_stat = fnode_param->value[0];
+			अवरोध;
+		हाल ISCSI_FLASHNODE_TCP_NAGLE_DISABLE:
 			fnode_conn->tcp_nagle_disable = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_TCP_WSF_DISABLE:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_TCP_WSF_DISABLE:
 			fnode_conn->tcp_wsf_disable = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_TCP_TIMER_SCALE:
-			fnode_conn->tcp_timer_scale = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_TCP_TIMESTAMP_EN:
-			fnode_conn->tcp_timestamp_en = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_IP_FRAG_DISABLE:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_TCP_TIMER_SCALE:
+			fnode_conn->tcp_समयr_scale = fnode_param->value[0];
+			अवरोध;
+		हाल ISCSI_FLASHNODE_TCP_TIMESTAMP_EN:
+			fnode_conn->tcp_बारtamp_en = fnode_param->value[0];
+			अवरोध;
+		हाल ISCSI_FLASHNODE_IP_FRAG_DISABLE:
 			fnode_conn->fragment_disable = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_MAX_RECV_DLENGTH:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_MAX_RECV_DLENGTH:
 			fnode_conn->max_recv_dlength =
-					*(unsigned *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_MAX_XMIT_DLENGTH:
+					*(अचिन्हित *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_MAX_XMIT_DLENGTH:
 			fnode_conn->max_xmit_dlength =
-					*(unsigned *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_FIRST_BURST:
+					*(अचिन्हित *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_FIRST_BURST:
 			fnode_sess->first_burst =
-					*(unsigned *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_DEF_TIME2WAIT:
-			fnode_sess->time2wait = *(uint16_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_DEF_TIME2RETAIN:
-			fnode_sess->time2retain =
-						*(uint16_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_MAX_R2T:
+					*(अचिन्हित *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_DEF_TIME2WAIT:
+			fnode_sess->समय2रुको = *(uपूर्णांक16_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_DEF_TIME2RETAIN:
+			fnode_sess->समय2retain =
+						*(uपूर्णांक16_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_MAX_R2T:
 			fnode_sess->max_r2t =
-					*(uint16_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_KEEPALIVE_TMO:
-			fnode_conn->keepalive_timeout =
-				*(uint16_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_ISID:
-			memcpy(fnode_sess->isid, fnode_param->value,
-			       sizeof(fnode_sess->isid));
-			break;
-		case ISCSI_FLASHNODE_TSID:
-			fnode_sess->tsid = *(uint16_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_PORT:
-			fnode_conn->port = *(uint16_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_MAX_BURST:
-			fnode_sess->max_burst = *(unsigned *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_DEF_TASKMGMT_TMO:
-			fnode_sess->default_taskmgmt_timeout =
-						*(uint16_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_IPADDR:
-			memcpy(fnode_conn->ipaddress, fnode_param->value,
+					*(uपूर्णांक16_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_KEEPALIVE_TMO:
+			fnode_conn->keepalive_समयout =
+				*(uपूर्णांक16_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_ISID:
+			स_नकल(fnode_sess->isid, fnode_param->value,
+			       माप(fnode_sess->isid));
+			अवरोध;
+		हाल ISCSI_FLASHNODE_TSID:
+			fnode_sess->tsid = *(uपूर्णांक16_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_PORT:
+			fnode_conn->port = *(uपूर्णांक16_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_MAX_BURST:
+			fnode_sess->max_burst = *(अचिन्हित *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_DEF_TASKMGMT_TMO:
+			fnode_sess->शेष_taskmgmt_समयout =
+						*(uपूर्णांक16_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_IPADDR:
+			स_नकल(fnode_conn->ipaddress, fnode_param->value,
 			       IPv6_ADDR_LEN);
-			break;
-		case ISCSI_FLASHNODE_ALIAS:
-			rc = iscsi_switch_str_param(&fnode_sess->targetalias,
-						    (char *)fnode_param->value);
-			break;
-		case ISCSI_FLASHNODE_REDIRECT_IPADDR:
-			memcpy(fnode_conn->redirect_ipaddr, fnode_param->value,
+			अवरोध;
+		हाल ISCSI_FLASHNODE_ALIAS:
+			rc = iscsi_चयन_str_param(&fnode_sess->targetalias,
+						    (अक्षर *)fnode_param->value);
+			अवरोध;
+		हाल ISCSI_FLASHNODE_REसूचीECT_IPADDR:
+			स_नकल(fnode_conn->redirect_ipaddr, fnode_param->value,
 			       IPv6_ADDR_LEN);
-			break;
-		case ISCSI_FLASHNODE_MAX_SEGMENT_SIZE:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_MAX_SEGMENT_SIZE:
 			fnode_conn->max_segment_size =
-					*(unsigned *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_LOCAL_PORT:
+					*(अचिन्हित *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_LOCAL_PORT:
 			fnode_conn->local_port =
-						*(uint16_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_IPV4_TOS:
+						*(uपूर्णांक16_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_IPV4_TOS:
 			fnode_conn->ipv4_tos = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_IPV6_TC:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_IPV6_TC:
 			fnode_conn->ipv6_traffic_class = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_IPV6_FLOW_LABEL:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_IPV6_FLOW_LABEL:
 			fnode_conn->ipv6_flow_label = fnode_param->value[0];
-			break;
-		case ISCSI_FLASHNODE_NAME:
-			rc = iscsi_switch_str_param(&fnode_sess->targetname,
-						    (char *)fnode_param->value);
-			break;
-		case ISCSI_FLASHNODE_TPGT:
-			fnode_sess->tpgt = *(uint16_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_LINK_LOCAL_IPV6:
-			memcpy(fnode_conn->link_local_ipv6_addr,
+			अवरोध;
+		हाल ISCSI_FLASHNODE_NAME:
+			rc = iscsi_चयन_str_param(&fnode_sess->targetname,
+						    (अक्षर *)fnode_param->value);
+			अवरोध;
+		हाल ISCSI_FLASHNODE_TPGT:
+			fnode_sess->tpgt = *(uपूर्णांक16_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_LINK_LOCAL_IPV6:
+			स_नकल(fnode_conn->link_local_ipv6_addr,
 			       fnode_param->value, IPv6_ADDR_LEN);
-			break;
-		case ISCSI_FLASHNODE_DISCOVERY_PARENT_IDX:
+			अवरोध;
+		हाल ISCSI_FLASHNODE_DISCOVERY_PARENT_IDX:
 			fnode_sess->discovery_parent_idx =
-						*(uint16_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_TCP_XMIT_WSF:
+						*(uपूर्णांक16_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_TCP_XMIT_WSF:
 			fnode_conn->tcp_xmit_wsf =
-						*(uint8_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_TCP_RECV_WSF:
+						*(uपूर्णांक8_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_TCP_RECV_WSF:
 			fnode_conn->tcp_recv_wsf =
-						*(uint8_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_STATSN:
-			fnode_conn->statsn = *(uint32_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_EXP_STATSN:
+						*(uपूर्णांक8_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_STATSN:
+			fnode_conn->statsn = *(uपूर्णांक32_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_EXP_STATSN:
 			fnode_conn->exp_statsn =
-						*(uint32_t *)fnode_param->value;
-			break;
-		case ISCSI_FLASHNODE_CHAP_OUT_IDX:
-			chap_out_idx = *(uint16_t *)fnode_param->value;
-			if (!qla4xxx_get_uni_chap_at_index(ha,
+						*(uपूर्णांक32_t *)fnode_param->value;
+			अवरोध;
+		हाल ISCSI_FLASHNODE_CHAP_OUT_IDX:
+			chap_out_idx = *(uपूर्णांक16_t *)fnode_param->value;
+			अगर (!qla4xxx_get_uni_chap_at_index(ha,
 							   chap_tbl.name,
 							   chap_tbl.secret,
-							   chap_out_idx)) {
+							   chap_out_idx)) अणु
 				fnode_sess->chap_out_idx = chap_out_idx;
-				/* Enable chap auth if chap index is valid */
+				/* Enable chap auth अगर chap index is valid */
 				fnode_sess->chap_auth_en = QL4_PARAM_ENABLE;
-			}
-			break;
-		default:
-			ql4_printk(KERN_ERR, ha,
+			पूर्ण
+			अवरोध;
+		शेष:
+			ql4_prपूर्णांकk(KERN_ERR, ha,
 				   "%s: No such sysfs attribute\n", __func__);
 			rc = -ENOSYS;
-			goto exit_set_param;
-		}
-	}
+			जाओ निकास_set_param;
+		पूर्ण
+	पूर्ण
 
 	rc = qla4xxx_sysfs_ddb_apply(fnode_sess, fnode_conn);
 
-exit_set_param:
-	return rc;
-}
+निकास_set_param:
+	वापस rc;
+पूर्ण
 
 /**
  * qla4xxx_sysfs_ddb_delete - Delete firmware DDB entry
- * @fnode_sess: pointer to session attrs of flash ddb entry
+ * @fnode_sess: poपूर्णांकer to session attrs of flash ddb entry
  *
  * This invalidates the flash ddb entry at the given index
  **/
-static int qla4xxx_sysfs_ddb_delete(struct iscsi_bus_flash_session *fnode_sess)
-{
-	struct Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	uint32_t dev_db_start_offset;
-	uint32_t dev_db_end_offset;
-	struct dev_db_entry *fw_ddb_entry = NULL;
+अटल पूर्णांक qla4xxx_sysfs_ddb_delete(काष्ठा iscsi_bus_flash_session *fnode_sess)
+अणु
+	काष्ठा Scsi_Host *shost = iscsi_flash_session_to_shost(fnode_sess);
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	uपूर्णांक32_t dev_db_start_offset;
+	uपूर्णांक32_t dev_db_end_offset;
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
 	dma_addr_t fw_ddb_entry_dma;
-	uint16_t *ddb_cookie = NULL;
-	size_t ddb_size = 0;
-	void *pddb = NULL;
-	int target_id;
-	int rc = 0;
+	uपूर्णांक16_t *ddb_cookie = शून्य;
+	माप_प्रकार ddb_size = 0;
+	व्योम *pddb = शून्य;
+	पूर्णांक target_id;
+	पूर्णांक rc = 0;
 
-	if (fnode_sess->is_boot_target) {
+	अगर (fnode_sess->is_boot_target) अणु
 		rc = -EPERM;
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha,
 				  "%s: Deletion of boot target entry is not permitted.\n",
 				  __func__));
-		goto exit_ddb_del;
-	}
+		जाओ निकास_ddb_del;
+	पूर्ण
 
-	if (fnode_sess->flash_state == DEV_DB_NON_PERSISTENT)
-		goto sysfs_ddb_del;
+	अगर (fnode_sess->flash_state == DEV_DB_NON_PERSISTENT)
+		जाओ sysfs_ddb_del;
 
-	if (is_qla40XX(ha)) {
+	अगर (is_qla40XX(ha)) अणु
 		dev_db_start_offset = FLASH_OFFSET_DB_INFO;
 		dev_db_end_offset = FLASH_OFFSET_DB_END;
 		dev_db_start_offset += (fnode_sess->target_id *
-				       sizeof(*fw_ddb_entry));
-		ddb_size = sizeof(*fw_ddb_entry);
-	} else {
+				       माप(*fw_ddb_entry));
+		ddb_size = माप(*fw_ddb_entry);
+	पूर्ण अन्यथा अणु
 		dev_db_start_offset = FLASH_RAW_ACCESS_ADDR +
 				      (ha->hw.flt_region_ddb << 2);
-		/* flt_ddb_size is DDB table size for both ports
-		 * so divide it by 2 to calculate the offset for second port
+		/* flt_ddb_size is DDB table size क्रम both ports
+		 * so भागide it by 2 to calculate the offset क्रम second port
 		 */
-		if (ha->port_num == 1)
+		अगर (ha->port_num == 1)
 			dev_db_start_offset += (ha->hw.flt_ddb_size / 2);
 
 		dev_db_end_offset = dev_db_start_offset +
 				    (ha->hw.flt_ddb_size / 2);
 
 		dev_db_start_offset += (fnode_sess->target_id *
-				       sizeof(*fw_ddb_entry));
-		dev_db_start_offset += offsetof(struct dev_db_entry, cookie);
+				       माप(*fw_ddb_entry));
+		dev_db_start_offset += दुरत्व(काष्ठा dev_db_entry, cookie);
 
-		ddb_size = sizeof(*ddb_cookie);
-	}
+		ddb_size = माप(*ddb_cookie);
+	पूर्ण
 
-	DEBUG2(ql4_printk(KERN_ERR, ha, "%s: start offset=%u, end offset=%u\n",
+	DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "%s: start offset=%u, end offset=%u\n",
 			  __func__, dev_db_start_offset, dev_db_end_offset));
 
-	if (dev_db_start_offset > dev_db_end_offset) {
+	अगर (dev_db_start_offset > dev_db_end_offset) अणु
 		rc = -EIO;
-		DEBUG2(ql4_printk(KERN_ERR, ha, "%s:Invalid DDB index %u\n",
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha, "%s:Invalid DDB index %u\n",
 				  __func__, fnode_sess->target_id));
-		goto exit_ddb_del;
-	}
+		जाओ निकास_ddb_del;
+	पूर्ण
 
 	pddb = dma_alloc_coherent(&ha->pdev->dev, ddb_size,
 				  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!pddb) {
+	अगर (!pddb) अणु
 		rc = -ENOMEM;
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha,
 				  "%s: Unable to allocate dma buffer\n",
 				  __func__));
-		goto exit_ddb_del;
-	}
+		जाओ निकास_ddb_del;
+	पूर्ण
 
-	if (is_qla40XX(ha)) {
+	अगर (is_qla40XX(ha)) अणु
 		fw_ddb_entry = pddb;
-		memset(fw_ddb_entry, 0, ddb_size);
+		स_रखो(fw_ddb_entry, 0, ddb_size);
 		ddb_cookie = &fw_ddb_entry->cookie;
-	} else {
+	पूर्ण अन्यथा अणु
 		ddb_cookie = pddb;
-	}
+	पूर्ण
 
 	/* invalidate the cookie */
 	*ddb_cookie = 0xFFEE;
@@ -8404,237 +8405,237 @@ static int qla4xxx_sysfs_ddb_delete(struct iscsi_bus_flash_session *fnode_sess)
 sysfs_ddb_del:
 	target_id = fnode_sess->target_id;
 	iscsi_destroy_flashnode_sess(fnode_sess);
-	ql4_printk(KERN_INFO, ha,
+	ql4_prपूर्णांकk(KERN_INFO, ha,
 		   "%s: session and conn entries for flashnode %u of host %lu deleted\n",
 		   __func__, target_id, ha->host_no);
-exit_ddb_del:
-	if (pddb)
-		dma_free_coherent(&ha->pdev->dev, ddb_size, pddb,
+निकास_ddb_del:
+	अगर (pddb)
+		dma_मुक्त_coherent(&ha->pdev->dev, ddb_size, pddb,
 				  fw_ddb_entry_dma);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * qla4xxx_sysfs_ddb_export - Create sysfs entries for firmware DDBs
- * @ha: pointer to adapter structure
+ * qla4xxx_sysfs_ddb_export - Create sysfs entries क्रम firmware DDBs
+ * @ha: poपूर्णांकer to adapter काष्ठाure
  *
- * Export the firmware DDB for all send targets and normal targets to sysfs.
+ * Export the firmware DDB क्रम all send tarमाला_लो and normal tarमाला_लो to sysfs.
  **/
-int qla4xxx_sysfs_ddb_export(struct scsi_qla_host *ha)
-{
-	struct dev_db_entry *fw_ddb_entry = NULL;
+पूर्णांक qla4xxx_sysfs_ddb_export(काष्ठा scsi_qla_host *ha)
+अणु
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
 	dma_addr_t fw_ddb_entry_dma;
-	uint16_t max_ddbs;
-	uint16_t idx = 0;
-	int ret = QLA_SUCCESS;
+	uपूर्णांक16_t max_ddbs;
+	uपूर्णांक16_t idx = 0;
+	पूर्णांक ret = QLA_SUCCESS;
 
 	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev,
-					  sizeof(*fw_ddb_entry),
+					  माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		DEBUG2(ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_ERR, ha,
 				  "%s: Unable to allocate dma buffer\n",
 				  __func__));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	max_ddbs =  is_qla40XX(ha) ? MAX_PRST_DEV_DB_ENTRIES :
 				     MAX_DEV_DB_ENTRIES;
 
-	for (idx = 0; idx < max_ddbs; idx++) {
-		if (qla4xxx_flashdb_by_index(ha, fw_ddb_entry, fw_ddb_entry_dma,
+	क्रम (idx = 0; idx < max_ddbs; idx++) अणु
+		अगर (qla4xxx_flashdb_by_index(ha, fw_ddb_entry, fw_ddb_entry_dma,
 					     idx))
-			continue;
+			जारी;
 
 		ret = qla4xxx_sysfs_ddb_tgt_create(ha, fw_ddb_entry, &idx, 0);
-		if (ret) {
+		अगर (ret) अणु
 			ret = -EIO;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry), fw_ddb_entry,
+	dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry), fw_ddb_entry,
 			  fw_ddb_entry_dma);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qla4xxx_sysfs_ddb_remove(struct scsi_qla_host *ha)
-{
+अटल व्योम qla4xxx_sysfs_ddb_हटाओ(काष्ठा scsi_qla_host *ha)
+अणु
 	iscsi_destroy_all_flashnode(ha->host);
-}
+पूर्ण
 
 /**
  * qla4xxx_build_ddb_list - Build ddb list and setup sessions
- * @ha: pointer to adapter structure
+ * @ha: poपूर्णांकer to adapter काष्ठाure
  * @is_reset: Is this init path or reset path
  *
- * Create a list of sendtargets (st) from firmware DDBs, issue send targets
- * using connection open, then create the list of normal targets (nt)
+ * Create a list of sendtarमाला_लो (st) from firmware DDBs, issue send tarमाला_लो
+ * using connection खोलो, then create the list of normal tarमाला_लो (nt)
  * from firmware DDBs. Based on the list of nt setup session and connection
  * objects.
  **/
-void qla4xxx_build_ddb_list(struct scsi_qla_host *ha, int is_reset)
-{
-	uint16_t tmo = 0;
-	struct list_head list_st, list_nt;
-	struct qla_ddb_index  *st_ddb_idx, *st_ddb_idx_tmp;
-	unsigned long wtime;
+व्योम qla4xxx_build_ddb_list(काष्ठा scsi_qla_host *ha, पूर्णांक is_reset)
+अणु
+	uपूर्णांक16_t पंचांगo = 0;
+	काष्ठा list_head list_st, list_nt;
+	काष्ठा qla_ddb_index  *st_ddb_idx, *st_ddb_idx_पंचांगp;
+	अचिन्हित दीर्घ wसमय;
 
-	if (!test_bit(AF_LINK_UP, &ha->flags)) {
+	अगर (!test_bit(AF_LINK_UP, &ha->flags)) अणु
 		set_bit(AF_BUILD_DDB_LIST, &ha->flags);
 		ha->is_reset = is_reset;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	INIT_LIST_HEAD(&list_st);
 	INIT_LIST_HEAD(&list_nt);
 
 	qla4xxx_build_st_list(ha, &list_st);
 
-	/* Before issuing conn open mbox, ensure all IPs states are configured
-	 * Note, conn open fails if IPs are not configured
+	/* Beक्रमe issuing conn खोलो mbox, ensure all IPs states are configured
+	 * Note, conn खोलो fails अगर IPs are not configured
 	 */
-	qla4xxx_wait_for_ip_configuration(ha);
+	qla4xxx_रुको_क्रम_ip_configuration(ha);
 
-	/* Go thru the STs and fire the sendtargets by issuing conn open mbx */
-	list_for_each_entry_safe(st_ddb_idx, st_ddb_idx_tmp, &list_st, list) {
-		qla4xxx_conn_open(ha, st_ddb_idx->fw_ddb_idx);
-	}
+	/* Go thru the STs and fire the sendtarमाला_लो by issuing conn खोलो mbx */
+	list_क्रम_each_entry_safe(st_ddb_idx, st_ddb_idx_पंचांगp, &list_st, list) अणु
+		qla4xxx_conn_खोलो(ha, st_ddb_idx->fw_ddb_idx);
+	पूर्ण
 
-	/* Wait to ensure all sendtargets are done for min 12 sec wait */
-	tmo = ((ha->def_timeout > LOGIN_TOV) &&
-	       (ha->def_timeout < LOGIN_TOV * 10) ?
-	       ha->def_timeout : LOGIN_TOV);
+	/* Wait to ensure all sendtarमाला_लो are करोne क्रम min 12 sec रुको */
+	पंचांगo = ((ha->def_समयout > LOGIN_TOV) &&
+	       (ha->def_समयout < LOGIN_TOV * 10) ?
+	       ha->def_समयout : LOGIN_TOV);
 
-	DEBUG2(ql4_printk(KERN_INFO, ha,
-			  "Default time to wait for build ddb %d\n", tmo));
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
+			  "Default time to wait for build ddb %d\n", पंचांगo));
 
-	wtime = jiffies + (HZ * tmo);
-	do {
-		if (list_empty(&list_st))
-			break;
+	wसमय = jअगरfies + (HZ * पंचांगo);
+	करो अणु
+		अगर (list_empty(&list_st))
+			अवरोध;
 
-		qla4xxx_remove_failed_ddb(ha, &list_st);
-		schedule_timeout_uninterruptible(HZ / 10);
-	} while (time_after(wtime, jiffies));
+		qla4xxx_हटाओ_failed_ddb(ha, &list_st);
+		schedule_समयout_unपूर्णांकerruptible(HZ / 10);
+	पूर्ण जबतक (समय_after(wसमय, jअगरfies));
 
 
 	qla4xxx_build_nt_list(ha, &list_nt, &list_st, is_reset);
 
-	qla4xxx_free_ddb_list(&list_st);
-	qla4xxx_free_ddb_list(&list_nt);
+	qla4xxx_मुक्त_ddb_list(&list_st);
+	qla4xxx_मुक्त_ddb_list(&list_nt);
 
-	qla4xxx_free_ddb_index(ha);
-}
+	qla4xxx_मुक्त_ddb_index(ha);
+पूर्ण
 
 /**
- * qla4xxx_wait_login_resp_boot_tgt -  Wait for iSCSI boot target login
+ * qla4xxx_रुको_login_resp_boot_tgt -  Wait क्रम iSCSI boot target login
  * response.
- * @ha: pointer to adapter structure
+ * @ha: poपूर्णांकer to adapter काष्ठाure
  *
  * When the boot entry is normal iSCSI target then DF_BOOT_TGT flag will be
- * set in DDB and we will wait for login response of boot targets during
+ * set in DDB and we will रुको क्रम login response of boot tarमाला_लो during
  * probe.
  **/
-static void qla4xxx_wait_login_resp_boot_tgt(struct scsi_qla_host *ha)
-{
-	struct ddb_entry *ddb_entry;
-	struct dev_db_entry *fw_ddb_entry = NULL;
+अटल व्योम qla4xxx_रुको_login_resp_boot_tgt(काष्ठा scsi_qla_host *ha)
+अणु
+	काष्ठा ddb_entry *ddb_entry;
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
 	dma_addr_t fw_ddb_entry_dma;
-	unsigned long wtime;
-	uint32_t ddb_state;
-	int max_ddbs, idx, ret;
+	अचिन्हित दीर्घ wसमय;
+	uपूर्णांक32_t ddb_state;
+	पूर्णांक max_ddbs, idx, ret;
 
 	max_ddbs =  is_qla40XX(ha) ? MAX_DEV_DB_ENTRIES_40XX :
 				     MAX_DEV_DB_ENTRIES;
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Unable to allocate dma buffer\n", __func__);
-		goto exit_login_resp;
-	}
+		जाओ निकास_login_resp;
+	पूर्ण
 
-	wtime = jiffies + (HZ * BOOT_LOGIN_RESP_TOV);
+	wसमय = jअगरfies + (HZ * BOOT_LOGIN_RESP_TOV);
 
-	for (idx = 0; idx < max_ddbs; idx++) {
+	क्रम (idx = 0; idx < max_ddbs; idx++) अणु
 		ddb_entry = qla4xxx_lookup_ddb_by_fw_index(ha, idx);
-		if (ddb_entry == NULL)
-			continue;
+		अगर (ddb_entry == शून्य)
+			जारी;
 
-		if (test_bit(DF_BOOT_TGT, &ddb_entry->flags)) {
-			DEBUG2(ql4_printk(KERN_INFO, ha,
+		अगर (test_bit(DF_BOOT_TGT, &ddb_entry->flags)) अणु
+			DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 					  "%s: DDB index [%d]\n", __func__,
 					  ddb_entry->fw_ddb_index));
-			do {
+			करो अणु
 				ret = qla4xxx_get_fwddb_entry(ha,
 						ddb_entry->fw_ddb_index,
 						fw_ddb_entry, fw_ddb_entry_dma,
-						NULL, NULL, &ddb_state, NULL,
-						NULL, NULL);
-				if (ret == QLA_ERROR)
-					goto exit_login_resp;
+						शून्य, शून्य, &ddb_state, शून्य,
+						शून्य, शून्य);
+				अगर (ret == QLA_ERROR)
+					जाओ निकास_login_resp;
 
-				if ((ddb_state == DDB_DS_SESSION_ACTIVE) ||
+				अगर ((ddb_state == DDB_DS_SESSION_ACTIVE) ||
 				    (ddb_state == DDB_DS_SESSION_FAILED))
-					break;
+					अवरोध;
 
-				schedule_timeout_uninterruptible(HZ);
+				schedule_समयout_unपूर्णांकerruptible(HZ);
 
-			} while ((time_after(wtime, jiffies)));
+			पूर्ण जबतक ((समय_after(wसमय, jअगरfies)));
 
-			if (!time_after(wtime, jiffies)) {
-				DEBUG2(ql4_printk(KERN_INFO, ha,
+			अगर (!समय_after(wसमय, jअगरfies)) अणु
+				DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha,
 						  "%s: Login response wait timer expired\n",
 						  __func__));
-				 goto exit_login_resp;
-			}
-		}
-	}
+				 जाओ निकास_login_resp;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-exit_login_resp:
-	if (fw_ddb_entry)
-		dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+निकास_login_resp:
+	अगर (fw_ddb_entry)
+		dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 				  fw_ddb_entry, fw_ddb_entry_dma);
-}
+पूर्ण
 
 /**
  * qla4xxx_probe_adapter - callback function to probe HBA
- * @pdev: pointer to pci_dev structure
- * @ent: pointer to pci_device entry
+ * @pdev: poपूर्णांकer to pci_dev काष्ठाure
+ * @ent: poपूर्णांकer to pci_device entry
  *
- * This routine will probe for Qlogic 4xxx iSCSI host adapters.
- * It returns zero if successful. It also initializes all data necessary for
+ * This routine will probe क्रम Qlogic 4xxx iSCSI host adapters.
+ * It वापसs zero अगर successful. It also initializes all data necessary क्रम
  * the driver.
  **/
-static int qla4xxx_probe_adapter(struct pci_dev *pdev,
-				 const struct pci_device_id *ent)
-{
-	int ret = -ENODEV, status;
-	struct Scsi_Host *host;
-	struct scsi_qla_host *ha;
-	uint8_t init_retry_count = 0;
-	char buf[34];
-	struct qla4_8xxx_legacy_intr_set *nx_legacy_intr;
-	uint32_t dev_state;
+अटल पूर्णांक qla4xxx_probe_adapter(काष्ठा pci_dev *pdev,
+				 स्थिर काष्ठा pci_device_id *ent)
+अणु
+	पूर्णांक ret = -ENODEV, status;
+	काष्ठा Scsi_Host *host;
+	काष्ठा scsi_qla_host *ha;
+	uपूर्णांक8_t init_retry_count = 0;
+	अक्षर buf[34];
+	काष्ठा qla4_8xxx_legacy_पूर्णांकr_set *nx_legacy_पूर्णांकr;
+	uपूर्णांक32_t dev_state;
 
-	if (pci_enable_device(pdev))
-		return -1;
+	अगर (pci_enable_device(pdev))
+		वापस -1;
 
-	host = iscsi_host_alloc(&qla4xxx_driver_template, sizeof(*ha), 0);
-	if (host == NULL) {
-		printk(KERN_WARNING
+	host = iscsi_host_alloc(&qla4xxx_driver_ढाँचा, माप(*ha), 0);
+	अगर (host == शून्य) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "qla4xxx: Couldn't allocate host from scsi layer!\n");
-		goto probe_disable_device;
-	}
+		जाओ probe_disable_device;
+	पूर्ण
 
 	/* Clear our data area */
 	ha = to_qla_host(host);
-	memset(ha, 0, sizeof(*ha));
+	स_रखो(ha, 0, माप(*ha));
 
-	/* Save the information from PCI BIOS.	*/
+	/* Save the inक्रमmation from PCI BIOS.	*/
 	ha->pdev = pdev;
 	ha->host = host;
 	ha->host_no = host->host_no;
@@ -8642,49 +8643,49 @@ static int qla4xxx_probe_adapter(struct pci_dev *pdev,
 
 	pci_enable_pcie_error_reporting(pdev);
 
-	/* Setup Runtime configurable options */
-	if (is_qla8022(ha)) {
+	/* Setup Runसमय configurable options */
+	अगर (is_qla8022(ha)) अणु
 		ha->isp_ops = &qla4_82xx_isp_ops;
-		ha->reg_tbl = (uint32_t *) qla4_82xx_reg_tbl;
-		ha->qdr_sn_window = -1;
-		ha->ddr_mn_window = -1;
-		ha->curr_window = 255;
-		nx_legacy_intr = &legacy_intr[ha->func_num];
-		ha->nx_legacy_intr.int_vec_bit = nx_legacy_intr->int_vec_bit;
-		ha->nx_legacy_intr.tgt_status_reg =
-			nx_legacy_intr->tgt_status_reg;
-		ha->nx_legacy_intr.tgt_mask_reg = nx_legacy_intr->tgt_mask_reg;
-		ha->nx_legacy_intr.pci_int_reg = nx_legacy_intr->pci_int_reg;
-	} else if (is_qla8032(ha) || is_qla8042(ha)) {
+		ha->reg_tbl = (uपूर्णांक32_t *) qla4_82xx_reg_tbl;
+		ha->qdr_sn_winकरोw = -1;
+		ha->ddr_mn_winकरोw = -1;
+		ha->curr_winकरोw = 255;
+		nx_legacy_पूर्णांकr = &legacy_पूर्णांकr[ha->func_num];
+		ha->nx_legacy_पूर्णांकr.पूर्णांक_vec_bit = nx_legacy_पूर्णांकr->पूर्णांक_vec_bit;
+		ha->nx_legacy_पूर्णांकr.tgt_status_reg =
+			nx_legacy_पूर्णांकr->tgt_status_reg;
+		ha->nx_legacy_पूर्णांकr.tgt_mask_reg = nx_legacy_पूर्णांकr->tgt_mask_reg;
+		ha->nx_legacy_पूर्णांकr.pci_पूर्णांक_reg = nx_legacy_पूर्णांकr->pci_पूर्णांक_reg;
+	पूर्ण अन्यथा अगर (is_qla8032(ha) || is_qla8042(ha)) अणु
 		ha->isp_ops = &qla4_83xx_isp_ops;
-		ha->reg_tbl = (uint32_t *)qla4_83xx_reg_tbl;
-	} else {
+		ha->reg_tbl = (uपूर्णांक32_t *)qla4_83xx_reg_tbl;
+	पूर्ण अन्यथा अणु
 		ha->isp_ops = &qla4xxx_isp_ops;
-	}
+	पूर्ण
 
-	if (is_qla80XX(ha)) {
+	अगर (is_qla80XX(ha)) अणु
 		rwlock_init(&ha->hw_lock);
 		ha->pf_bit = ha->func_num << 16;
-		/* Set EEH reset type to fundamental if required by hba */
+		/* Set EEH reset type to fundamental अगर required by hba */
 		pdev->needs_freset = 1;
-	}
+	पूर्ण
 
 	/* Configure PCI I/O space. */
 	ret = ha->isp_ops->iospace_config(ha);
-	if (ret)
-		goto probe_failed_ioconfig;
+	अगर (ret)
+		जाओ probe_failed_ioconfig;
 
-	ql4_printk(KERN_INFO, ha, "Found an ISP%04x, irq %d, iobase 0x%p\n",
+	ql4_prपूर्णांकk(KERN_INFO, ha, "Found an ISP%04x, irq %d, iobase 0x%p\n",
 		   pdev->device, pdev->irq, ha->reg);
 
 	qla4xxx_config_dma_addressing(ha);
 
 	/* Initialize lists and spinlocks. */
-	INIT_LIST_HEAD(&ha->free_srb_q);
+	INIT_LIST_HEAD(&ha->मुक्त_srb_q);
 
 	mutex_init(&ha->mbox_sem);
 	mutex_init(&ha->chap_sem);
-	init_completion(&ha->mbx_intr_comp);
+	init_completion(&ha->mbx_पूर्णांकr_comp);
 	init_completion(&ha->disable_acb_comp);
 	init_completion(&ha->idc_comp);
 	init_completion(&ha->link_up_comp);
@@ -8696,13 +8697,13 @@ static int qla4xxx_probe_adapter(struct pci_dev *pdev,
 	INIT_LIST_HEAD(&ha->work_list);
 
 	/* Allocate dma buffers */
-	if (qla4xxx_mem_alloc(ha)) {
-		ql4_printk(KERN_WARNING, ha,
+	अगर (qla4xxx_mem_alloc(ha)) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha,
 		    "[ERROR] Failed to allocate memory for adapter\n");
 
 		ret = -ENOMEM;
-		goto probe_failed;
-	}
+		जाओ probe_failed;
+	पूर्ण
 
 	host->cmd_per_lun = 3;
 	host->max_channel = 0;
@@ -8715,127 +8716,127 @@ static int qla4xxx_probe_adapter(struct pci_dev *pdev,
 	pci_set_drvdata(pdev, ha);
 
 	ret = scsi_add_host(host, &pdev->dev);
-	if (ret)
-		goto probe_failed;
+	अगर (ret)
+		जाओ probe_failed;
 
-	if (is_qla80XX(ha))
+	अगर (is_qla80XX(ha))
 		qla4_8xxx_get_flash_info(ha);
 
-	if (is_qla8032(ha) || is_qla8042(ha)) {
-		qla4_83xx_read_reset_template(ha);
+	अगर (is_qla8032(ha) || is_qla8042(ha)) अणु
+		qla4_83xx_पढ़ो_reset_ढाँचा(ha);
 		/*
-		 * NOTE: If ql4dontresethba==1, set IDC_CTRL DONTRESET_BIT0.
+		 * NOTE: If ql4करोntresethba==1, set IDC_CTRL DONTRESET_BIT0.
 		 * If DONRESET_BIT0 is set, drivers should not set dev_state
-		 * to NEED_RESET. But if NEED_RESET is set, drivers should
+		 * to NEED_RESET. But अगर NEED_RESET is set, drivers should
 		 * should honor the reset.
 		 */
-		if (ql4xdontresethba == 1)
-			qla4_83xx_set_idc_dontreset(ha);
-	}
+		अगर (ql4xकरोntresethba == 1)
+			qla4_83xx_set_idc_करोntreset(ha);
+	पूर्ण
 
 	/*
 	 * Initialize the Host adapter request/response queues and
 	 * firmware
-	 * NOTE: interrupts enabled upon successful completion
+	 * NOTE: पूर्णांकerrupts enabled upon successful completion
 	 */
 	status = qla4xxx_initialize_adapter(ha, INIT_ADAPTER);
 
-	/* Dont retry adapter initialization if IRQ allocation failed */
-	if (is_qla80XX(ha) && (status == QLA_ERROR))
-		goto skip_retry_init;
+	/* Dont retry adapter initialization अगर IRQ allocation failed */
+	अगर (is_qla80XX(ha) && (status == QLA_ERROR))
+		जाओ skip_retry_init;
 
-	while ((!test_bit(AF_ONLINE, &ha->flags)) &&
-	    init_retry_count++ < MAX_INIT_RETRIES) {
+	जबतक ((!test_bit(AF_ONLINE, &ha->flags)) &&
+	    init_retry_count++ < MAX_INIT_RETRIES) अणु
 
-		if (is_qla80XX(ha)) {
+		अगर (is_qla80XX(ha)) अणु
 			ha->isp_ops->idc_lock(ha);
 			dev_state = qla4_8xxx_rd_direct(ha,
 							QLA8XXX_CRB_DEV_STATE);
 			ha->isp_ops->idc_unlock(ha);
-			if (dev_state == QLA8XXX_DEV_FAILED) {
-				ql4_printk(KERN_WARNING, ha, "%s: don't retry "
+			अगर (dev_state == QLA8XXX_DEV_FAILED) अणु
+				ql4_prपूर्णांकk(KERN_WARNING, ha, "%s: don't retry "
 				    "initialize adapter. H/W is in failed state\n",
 				    __func__);
-				break;
-			}
-		}
-		DEBUG2(printk("scsi: %s: retrying adapter initialization "
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		DEBUG2(prपूर्णांकk("scsi: %s: retrying adapter initialization "
 			      "(%d)\n", __func__, init_retry_count));
 
-		if (ha->isp_ops->reset_chip(ha) == QLA_ERROR)
-			continue;
+		अगर (ha->isp_ops->reset_chip(ha) == QLA_ERROR)
+			जारी;
 
 		status = qla4xxx_initialize_adapter(ha, INIT_ADAPTER);
-		if (is_qla80XX(ha) && (status == QLA_ERROR)) {
-			if (qla4_8xxx_check_init_adapter_retry(ha) == QLA_ERROR)
-				goto skip_retry_init;
-		}
-	}
+		अगर (is_qla80XX(ha) && (status == QLA_ERROR)) अणु
+			अगर (qla4_8xxx_check_init_adapter_retry(ha) == QLA_ERROR)
+				जाओ skip_retry_init;
+		पूर्ण
+	पूर्ण
 
 skip_retry_init:
-	if (!test_bit(AF_ONLINE, &ha->flags)) {
-		ql4_printk(KERN_WARNING, ha, "Failed to initialize adapter\n");
+	अगर (!test_bit(AF_ONLINE, &ha->flags)) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha, "Failed to initialize adapter\n");
 
-		if ((is_qla8022(ha) && ql4xdontresethba) ||
+		अगर ((is_qla8022(ha) && ql4xकरोntresethba) ||
 		    ((is_qla8032(ha) || is_qla8042(ha)) &&
-		     qla4_83xx_idc_dontreset(ha))) {
+		     qla4_83xx_idc_करोntreset(ha))) अणु
 			/* Put the device in failed state. */
-			DEBUG2(printk(KERN_ERR "HW STATE: FAILED\n"));
+			DEBUG2(prपूर्णांकk(KERN_ERR "HW STATE: FAILED\n"));
 			ha->isp_ops->idc_lock(ha);
 			qla4_8xxx_wr_direct(ha, QLA8XXX_CRB_DEV_STATE,
 					    QLA8XXX_DEV_FAILED);
 			ha->isp_ops->idc_unlock(ha);
-		}
+		पूर्ण
 		ret = -ENODEV;
-		goto remove_host;
-	}
+		जाओ हटाओ_host;
+	पूर्ण
 
-	/* Startup the kernel thread for this host adapter. */
-	DEBUG2(printk("scsi: %s: Starting kernel thread for "
+	/* Startup the kernel thपढ़ो क्रम this host adapter. */
+	DEBUG2(prपूर्णांकk("scsi: %s: Starting kernel thread for "
 		      "qla4xxx_dpc\n", __func__));
-	sprintf(buf, "qla4xxx_%lu_dpc", ha->host_no);
-	ha->dpc_thread = create_singlethread_workqueue(buf);
-	if (!ha->dpc_thread) {
-		ql4_printk(KERN_WARNING, ha, "Unable to start DPC thread!\n");
+	प्र_लिखो(buf, "qla4xxx_%lu_dpc", ha->host_no);
+	ha->dpc_thपढ़ो = create_singlethपढ़ो_workqueue(buf);
+	अगर (!ha->dpc_thपढ़ो) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha, "Unable to start DPC thread!\n");
 		ret = -ENODEV;
-		goto remove_host;
-	}
-	INIT_WORK(&ha->dpc_work, qla4xxx_do_dpc);
+		जाओ हटाओ_host;
+	पूर्ण
+	INIT_WORK(&ha->dpc_work, qla4xxx_करो_dpc);
 
 	ha->task_wq = alloc_workqueue("qla4xxx_%lu_task", WQ_MEM_RECLAIM, 1,
 				      ha->host_no);
-	if (!ha->task_wq) {
-		ql4_printk(KERN_WARNING, ha, "Unable to start task thread!\n");
+	अगर (!ha->task_wq) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha, "Unable to start task thread!\n");
 		ret = -ENODEV;
-		goto remove_host;
-	}
+		जाओ हटाओ_host;
+	पूर्ण
 
 	/*
 	 * For ISP-8XXX, request_irqs is called in qla4_8xxx_load_risc
 	 * (which is called indirectly by qla4xxx_initialize_adapter),
-	 * so that irqs will be registered after crbinit but before
-	 * mbx_intr_enable.
+	 * so that irqs will be रेजिस्टरed after crbinit but beक्रमe
+	 * mbx_पूर्णांकr_enable.
 	 */
-	if (is_qla40XX(ha)) {
+	अगर (is_qla40XX(ha)) अणु
 		ret = qla4xxx_request_irqs(ha);
-		if (ret) {
-			ql4_printk(KERN_WARNING, ha, "Failed to reserve "
+		अगर (ret) अणु
+			ql4_prपूर्णांकk(KERN_WARNING, ha, "Failed to reserve "
 			    "interrupt %d already in use.\n", pdev->irq);
-			goto remove_host;
-		}
-	}
+			जाओ हटाओ_host;
+		पूर्ण
+	पूर्ण
 
 	pci_save_state(ha->pdev);
-	ha->isp_ops->enable_intrs(ha);
+	ha->isp_ops->enable_पूर्णांकrs(ha);
 
-	/* Start timer thread. */
-	qla4xxx_start_timer(ha, 1);
+	/* Start समयr thपढ़ो. */
+	qla4xxx_start_समयr(ha, 1);
 
 	set_bit(AF_INIT_DONE, &ha->flags);
 
 	qla4_8xxx_alloc_sysfs_attr(ha);
 
-	printk(KERN_INFO
+	prपूर्णांकk(KERN_INFO
 	       " QLogic iSCSI HBA Driver version: %s\n"
 	       "  QLogic ISP%04x @ %s, host#=%ld, fw=%02d.%02d.%02d.%02d\n",
 	       qla4xxx_version_str, ha->pdev->device, pci_name(ha->pdev),
@@ -8843,29 +8844,29 @@ skip_retry_init:
 	       ha->fw_info.fw_patch, ha->fw_info.fw_build);
 
 	/* Set the driver version */
-	if (is_qla80XX(ha))
+	अगर (is_qla80XX(ha))
 		qla4_8xxx_set_param(ha, SET_DRVR_VERSION);
 
-	if (qla4xxx_setup_boot_info(ha))
-		ql4_printk(KERN_ERR, ha,
+	अगर (qla4xxx_setup_boot_info(ha))
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: No iSCSI boot target configured\n", __func__);
 
 	set_bit(DPC_SYSFS_DDB_EXPORT, &ha->dpc_flags);
-	/* Perform the build ddb list and login to each */
+	/* Perक्रमm the build ddb list and login to each */
 	qla4xxx_build_ddb_list(ha, INIT_ADAPTER);
-	iscsi_host_for_each_session(ha->host, qla4xxx_login_flash_ddb);
-	qla4xxx_wait_login_resp_boot_tgt(ha);
+	iscsi_host_क्रम_each_session(ha->host, qla4xxx_login_flash_ddb);
+	qla4xxx_रुको_login_resp_boot_tgt(ha);
 
 	qla4xxx_create_chap_list(ha);
 
-	qla4xxx_create_ifaces(ha);
-	return 0;
+	qla4xxx_create_अगरaces(ha);
+	वापस 0;
 
-remove_host:
-	scsi_remove_host(ha->host);
+हटाओ_host:
+	scsi_हटाओ_host(ha->host);
 
 probe_failed:
-	qla4xxx_free_adapter(ha);
+	qla4xxx_मुक्त_adapter(ha);
 
 probe_failed_ioconfig:
 	pci_disable_pcie_error_reporting(pdev);
@@ -8874,104 +8875,104 @@ probe_failed_ioconfig:
 probe_disable_device:
 	pci_disable_device(pdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * qla4xxx_prevent_other_port_reinit - prevent other port from re-initialize
- * @ha: pointer to adapter structure
+ * @ha: poपूर्णांकer to adapter काष्ठाure
  *
- * Mark the other ISP-4xxx port to indicate that the driver is being removed,
- * so that the other port will not re-initialize while in the process of
+ * Mark the other ISP-4xxx port to indicate that the driver is being हटाओd,
+ * so that the other port will not re-initialize जबतक in the process of
  * removing the ha due to driver unload or hba hotplug.
  **/
-static void qla4xxx_prevent_other_port_reinit(struct scsi_qla_host *ha)
-{
-	struct scsi_qla_host *other_ha = NULL;
-	struct pci_dev *other_pdev = NULL;
-	int fn = ISP4XXX_PCI_FN_2;
+अटल व्योम qla4xxx_prevent_other_port_reinit(काष्ठा scsi_qla_host *ha)
+अणु
+	काष्ठा scsi_qla_host *other_ha = शून्य;
+	काष्ठा pci_dev *other_pdev = शून्य;
+	पूर्णांक fn = ISP4XXX_PCI_FN_2;
 
-	/*iscsi function numbers for ISP4xxx is 1 and 3*/
-	if (PCI_FUNC(ha->pdev->devfn) & BIT_1)
+	/*iscsi function numbers क्रम ISP4xxx is 1 and 3*/
+	अगर (PCI_FUNC(ha->pdev->devfn) & BIT_1)
 		fn = ISP4XXX_PCI_FN_1;
 
 	other_pdev =
-		pci_get_domain_bus_and_slot(pci_domain_nr(ha->pdev->bus),
+		pci_get_करोमुख्य_bus_and_slot(pci_करोमुख्य_nr(ha->pdev->bus),
 		ha->pdev->bus->number, PCI_DEVFN(PCI_SLOT(ha->pdev->devfn),
 		fn));
 
-	/* Get other_ha if other_pdev is valid and state is enable*/
-	if (other_pdev) {
-		if (atomic_read(&other_pdev->enable_cnt)) {
+	/* Get other_ha अगर other_pdev is valid and state is enable*/
+	अगर (other_pdev) अणु
+		अगर (atomic_पढ़ो(&other_pdev->enable_cnt)) अणु
 			other_ha = pci_get_drvdata(other_pdev);
-			if (other_ha) {
+			अगर (other_ha) अणु
 				set_bit(AF_HA_REMOVAL, &other_ha->flags);
-				DEBUG2(ql4_printk(KERN_INFO, ha, "%s: "
+				DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: "
 				    "Prevent %s reinit\n", __func__,
 				    dev_name(&other_ha->pdev->dev)));
-			}
-		}
+			पूर्ण
+		पूर्ण
 		pci_dev_put(other_pdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qla4xxx_destroy_ddb(struct scsi_qla_host *ha,
-		struct ddb_entry *ddb_entry)
-{
-	struct dev_db_entry *fw_ddb_entry = NULL;
+अटल व्योम qla4xxx_destroy_ddb(काष्ठा scsi_qla_host *ha,
+		काष्ठा ddb_entry *ddb_entry)
+अणु
+	काष्ठा dev_db_entry *fw_ddb_entry = शून्य;
 	dma_addr_t fw_ddb_entry_dma;
-	unsigned long wtime;
-	uint32_t ddb_state;
-	int options;
-	int status;
+	अचिन्हित दीर्घ wसमय;
+	uपूर्णांक32_t ddb_state;
+	पूर्णांक options;
+	पूर्णांक status;
 
 	options = LOGOUT_OPTION_CLOSE_SESSION;
-	if (qla4xxx_session_logout_ddb(ha, ddb_entry, options) == QLA_ERROR) {
-		ql4_printk(KERN_ERR, ha, "%s: Logout failed\n", __func__);
-		goto clear_ddb;
-	}
+	अगर (qla4xxx_session_logout_ddb(ha, ddb_entry, options) == QLA_ERROR) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Logout failed\n", __func__);
+		जाओ clear_ddb;
+	पूर्ण
 
-	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+	fw_ddb_entry = dma_alloc_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 					  &fw_ddb_entry_dma, GFP_KERNEL);
-	if (!fw_ddb_entry) {
-		ql4_printk(KERN_ERR, ha,
+	अगर (!fw_ddb_entry) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha,
 			   "%s: Unable to allocate dma buffer\n", __func__);
-		goto clear_ddb;
-	}
+		जाओ clear_ddb;
+	पूर्ण
 
-	wtime = jiffies + (HZ * LOGOUT_TOV);
-	do {
+	wसमय = jअगरfies + (HZ * LOGOUT_TOV);
+	करो अणु
 		status = qla4xxx_get_fwddb_entry(ha, ddb_entry->fw_ddb_index,
 						 fw_ddb_entry, fw_ddb_entry_dma,
-						 NULL, NULL, &ddb_state, NULL,
-						 NULL, NULL);
-		if (status == QLA_ERROR)
-			goto free_ddb;
+						 शून्य, शून्य, &ddb_state, शून्य,
+						 शून्य, शून्य);
+		अगर (status == QLA_ERROR)
+			जाओ मुक्त_ddb;
 
-		if ((ddb_state == DDB_DS_NO_CONNECTION_ACTIVE) ||
+		अगर ((ddb_state == DDB_DS_NO_CONNECTION_ACTIVE) ||
 		    (ddb_state == DDB_DS_SESSION_FAILED))
-			goto free_ddb;
+			जाओ मुक्त_ddb;
 
-		schedule_timeout_uninterruptible(HZ);
-	} while ((time_after(wtime, jiffies)));
+		schedule_समयout_unपूर्णांकerruptible(HZ);
+	पूर्ण जबतक ((समय_after(wसमय, jअगरfies)));
 
-free_ddb:
-	dma_free_coherent(&ha->pdev->dev, sizeof(*fw_ddb_entry),
+मुक्त_ddb:
+	dma_मुक्त_coherent(&ha->pdev->dev, माप(*fw_ddb_entry),
 			  fw_ddb_entry, fw_ddb_entry_dma);
 clear_ddb:
 	qla4xxx_clear_ddb_entry(ha, ddb_entry->fw_ddb_index);
-}
+पूर्ण
 
-static void qla4xxx_destroy_fw_ddb_session(struct scsi_qla_host *ha)
-{
-	struct ddb_entry *ddb_entry;
-	int idx;
+अटल व्योम qla4xxx_destroy_fw_ddb_session(काष्ठा scsi_qla_host *ha)
+अणु
+	काष्ठा ddb_entry *ddb_entry;
+	पूर्णांक idx;
 
-	for (idx = 0; idx < MAX_DDB_ENTRIES; idx++) {
+	क्रम (idx = 0; idx < MAX_DDB_ENTRIES; idx++) अणु
 
 		ddb_entry = qla4xxx_lookup_ddb_by_fw_index(ha, idx);
-		if ((ddb_entry != NULL) &&
-		    (ddb_entry->ddb_type == FLASH_DDB)) {
+		अगर ((ddb_entry != शून्य) &&
+		    (ddb_entry->ddb_type == FLASH_DDB)) अणु
 
 			qla4xxx_destroy_ddb(ha, ddb_entry);
 			/*
@@ -8981,73 +8982,73 @@ static void qla4xxx_destroy_fw_ddb_session(struct scsi_qla_host *ha)
 			 * session
 			 **/
 			try_module_get(qla4xxx_iscsi_transport.owner);
-			iscsi_destroy_endpoint(ddb_entry->conn->ep);
-			qla4xxx_free_ddb(ha, ddb_entry);
-			iscsi_session_teardown(ddb_entry->sess);
-		}
-	}
-}
+			iscsi_destroy_endpoपूर्णांक(ddb_entry->conn->ep);
+			qla4xxx_मुक्त_ddb(ha, ddb_entry);
+			iscsi_session_tearकरोwn(ddb_entry->sess);
+		पूर्ण
+	पूर्ण
+पूर्ण
 /**
- * qla4xxx_remove_adapter - callback function to remove adapter.
- * @pdev: PCI device pointer
+ * qla4xxx_हटाओ_adapter - callback function to हटाओ adapter.
+ * @pdev: PCI device poपूर्णांकer
  **/
-static void qla4xxx_remove_adapter(struct pci_dev *pdev)
-{
-	struct scsi_qla_host *ha;
+अटल व्योम qla4xxx_हटाओ_adapter(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा scsi_qla_host *ha;
 
 	/*
 	 * If the PCI device is disabled then it means probe_adapter had
-	 * failed and resources already cleaned up on probe_adapter exit.
+	 * failed and resources alपढ़ोy cleaned up on probe_adapter निकास.
 	 */
-	if (!pci_is_enabled(pdev))
-		return;
+	अगर (!pci_is_enabled(pdev))
+		वापस;
 
 	ha = pci_get_drvdata(pdev);
 
-	if (is_qla40XX(ha))
+	अगर (is_qla40XX(ha))
 		qla4xxx_prevent_other_port_reinit(ha);
 
-	/* destroy iface from sysfs */
-	qla4xxx_destroy_ifaces(ha);
+	/* destroy अगरace from sysfs */
+	qla4xxx_destroy_अगरaces(ha);
 
-	if ((!ql4xdisablesysfsboot) && ha->boot_kset)
+	अगर ((!ql4xdisablesysfsboot) && ha->boot_kset)
 		iscsi_boot_destroy_kset(ha->boot_kset);
 
 	qla4xxx_destroy_fw_ddb_session(ha);
-	qla4_8xxx_free_sysfs_attr(ha);
+	qla4_8xxx_मुक्त_sysfs_attr(ha);
 
-	qla4xxx_sysfs_ddb_remove(ha);
-	scsi_remove_host(ha->host);
+	qla4xxx_sysfs_ddb_हटाओ(ha);
+	scsi_हटाओ_host(ha->host);
 
-	qla4xxx_free_adapter(ha);
+	qla4xxx_मुक्त_adapter(ha);
 
 	scsi_host_put(ha->host);
 
 	pci_disable_pcie_error_reporting(pdev);
 	pci_disable_device(pdev);
-}
+पूर्ण
 
 /**
  * qla4xxx_config_dma_addressing() - Configure OS DMA addressing method.
  * @ha: HA context
  */
-static void qla4xxx_config_dma_addressing(struct scsi_qla_host *ha)
-{
-	/* Update our PCI device dma_mask for full 64 bit mask */
-	if (dma_set_mask_and_coherent(&ha->pdev->dev, DMA_BIT_MASK(64))) {
+अटल व्योम qla4xxx_config_dma_addressing(काष्ठा scsi_qla_host *ha)
+अणु
+	/* Update our PCI device dma_mask क्रम full 64 bit mask */
+	अगर (dma_set_mask_and_coherent(&ha->pdev->dev, DMA_BIT_MASK(64))) अणु
 		dev_dbg(&ha->pdev->dev,
 			  "Failed to set 64 bit PCI consistent mask; "
 			   "using 32 bit.\n");
 		dma_set_mask_and_coherent(&ha->pdev->dev, DMA_BIT_MASK(32));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int qla4xxx_slave_alloc(struct scsi_device *sdev)
-{
-	struct iscsi_cls_session *cls_sess;
-	struct iscsi_session *sess;
-	struct ddb_entry *ddb;
-	int queue_depth = QL4_DEF_QDEPTH;
+अटल पूर्णांक qla4xxx_slave_alloc(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा iscsi_cls_session *cls_sess;
+	काष्ठा iscsi_session *sess;
+	काष्ठा ddb_entry *ddb;
+	पूर्णांक queue_depth = QL4_DEF_QDEPTH;
 
 	cls_sess = starget_to_session(sdev->sdev_target);
 	sess = cls_sess->dd_data;
@@ -9055,647 +9056,647 @@ static int qla4xxx_slave_alloc(struct scsi_device *sdev)
 
 	sdev->hostdata = ddb;
 
-	if (ql4xmaxqdepth != 0 && ql4xmaxqdepth <= 0xffffU)
+	अगर (ql4xmaxqdepth != 0 && ql4xmaxqdepth <= 0xffffU)
 		queue_depth = ql4xmaxqdepth;
 
 	scsi_change_queue_depth(sdev, queue_depth);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * qla4xxx_del_from_active_array - returns an active srb
- * @ha: Pointer to host adapter structure.
- * @index: index into the active_array
+ * qla4xxx_del_from_active_array - वापसs an active srb
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
+ * @index: index पूर्णांकo the active_array
  *
- * This routine removes and returns the srb at the specified index
+ * This routine हटाओs and वापसs the srb at the specअगरied index
  **/
-struct srb *qla4xxx_del_from_active_array(struct scsi_qla_host *ha,
-    uint32_t index)
-{
-	struct srb *srb = NULL;
-	struct scsi_cmnd *cmd = NULL;
+काष्ठा srb *qla4xxx_del_from_active_array(काष्ठा scsi_qla_host *ha,
+    uपूर्णांक32_t index)
+अणु
+	काष्ठा srb *srb = शून्य;
+	काष्ठा scsi_cmnd *cmd = शून्य;
 
 	cmd = scsi_host_find_tag(ha->host, index);
-	if (!cmd)
-		return srb;
+	अगर (!cmd)
+		वापस srb;
 
-	srb = (struct srb *)CMD_SP(cmd);
-	if (!srb)
-		return srb;
+	srb = (काष्ठा srb *)CMD_SP(cmd);
+	अगर (!srb)
+		वापस srb;
 
 	/* update counters */
-	if (srb->flags & SRB_DMA_VALID) {
+	अगर (srb->flags & SRB_DMA_VALID) अणु
 		ha->iocb_cnt -= srb->iocb_cnt;
-		if (srb->cmd)
+		अगर (srb->cmd)
 			srb->cmd->host_scribble =
-				(unsigned char *)(unsigned long) MAX_SRBS;
-	}
-	return srb;
-}
+				(अचिन्हित अक्षर *)(अचिन्हित दीर्घ) MAX_SRBS;
+	पूर्ण
+	वापस srb;
+पूर्ण
 
 /**
- * qla4xxx_eh_wait_on_command - waits for command to be returned by firmware
- * @ha: Pointer to host adapter structure.
- * @cmd: Scsi Command to wait on.
+ * qla4xxx_eh_रुको_on_command - रुकोs क्रम command to be वापसed by firmware
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure.
+ * @cmd: Scsi Command to रुको on.
  *
- * This routine waits for the command to be returned by the Firmware
- * for some max time.
+ * This routine रुकोs क्रम the command to be वापसed by the Firmware
+ * क्रम some max समय.
  **/
-static int qla4xxx_eh_wait_on_command(struct scsi_qla_host *ha,
-				      struct scsi_cmnd *cmd)
-{
-	int done = 0;
-	struct srb *rp;
-	uint32_t max_wait_time = EH_WAIT_CMD_TOV;
-	int ret = SUCCESS;
+अटल पूर्णांक qla4xxx_eh_रुको_on_command(काष्ठा scsi_qla_host *ha,
+				      काष्ठा scsi_cmnd *cmd)
+अणु
+	पूर्णांक करोne = 0;
+	काष्ठा srb *rp;
+	uपूर्णांक32_t max_रुको_समय = EH_WAIT_CMD_TOV;
+	पूर्णांक ret = SUCCESS;
 
-	/* Dont wait on command if PCI error is being handled
+	/* Dont रुको on command अगर PCI error is being handled
 	 * by PCI AER driver
 	 */
-	if (unlikely(pci_channel_offline(ha->pdev)) ||
-	    (test_bit(AF_EEH_BUSY, &ha->flags))) {
-		ql4_printk(KERN_WARNING, ha, "scsi%ld: Return from %s\n",
+	अगर (unlikely(pci_channel_offline(ha->pdev)) ||
+	    (test_bit(AF_EEH_BUSY, &ha->flags))) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha, "scsi%ld: Return from %s\n",
 		    ha->host_no, __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	do {
-		/* Checking to see if its returned to OS */
-		rp = (struct srb *) CMD_SP(cmd);
-		if (rp == NULL) {
-			done++;
-			break;
-		}
+	करो अणु
+		/* Checking to see अगर its वापसed to OS */
+		rp = (काष्ठा srb *) CMD_SP(cmd);
+		अगर (rp == शून्य) अणु
+			करोne++;
+			अवरोध;
+		पूर्ण
 
 		msleep(2000);
-	} while (max_wait_time--);
+	पूर्ण जबतक (max_रुको_समय--);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
 /**
- * qla4xxx_wait_for_hba_online - waits for HBA to come online
- * @ha: Pointer to host adapter structure
+ * qla4xxx_रुको_क्रम_hba_online - रुकोs क्रम HBA to come online
+ * @ha: Poपूर्णांकer to host adapter काष्ठाure
  **/
-static int qla4xxx_wait_for_hba_online(struct scsi_qla_host *ha)
-{
-	unsigned long wait_online;
+अटल पूर्णांक qla4xxx_रुको_क्रम_hba_online(काष्ठा scsi_qla_host *ha)
+अणु
+	अचिन्हित दीर्घ रुको_online;
 
-	wait_online = jiffies + (HBA_ONLINE_TOV * HZ);
-	while (time_before(jiffies, wait_online)) {
+	रुको_online = jअगरfies + (HBA_ONLINE_TOV * HZ);
+	जबतक (समय_beक्रमe(jअगरfies, रुको_online)) अणु
 
-		if (adapter_up(ha))
-			return QLA_SUCCESS;
+		अगर (adapter_up(ha))
+			वापस QLA_SUCCESS;
 
 		msleep(2000);
-	}
+	पूर्ण
 
-	return QLA_ERROR;
-}
+	वापस QLA_ERROR;
+पूर्ण
 
 /**
- * qla4xxx_eh_wait_for_commands - wait for active cmds to finish.
- * @ha: pointer to HBA
- * @stgt: pointer to SCSI target
- * @sdev: pointer to SCSI device
+ * qla4xxx_eh_रुको_क्रम_commands - रुको क्रम active cmds to finish.
+ * @ha: poपूर्णांकer to HBA
+ * @stgt: poपूर्णांकer to SCSI target
+ * @sdev: poपूर्णांकer to SCSI device
  *
- * This function waits for all outstanding commands to a lun to complete. It
- * returns 0 if all pending commands are returned and 1 otherwise.
+ * This function रुकोs क्रम all outstanding commands to a lun to complete. It
+ * वापसs 0 अगर all pending commands are वापसed and 1 otherwise.
  **/
-static int qla4xxx_eh_wait_for_commands(struct scsi_qla_host *ha,
-					struct scsi_target *stgt,
-					struct scsi_device *sdev)
-{
-	int cnt;
-	int status = 0;
-	struct scsi_cmnd *cmd;
+अटल पूर्णांक qla4xxx_eh_रुको_क्रम_commands(काष्ठा scsi_qla_host *ha,
+					काष्ठा scsi_target *stgt,
+					काष्ठा scsi_device *sdev)
+अणु
+	पूर्णांक cnt;
+	पूर्णांक status = 0;
+	काष्ठा scsi_cmnd *cmd;
 
 	/*
-	 * Waiting for all commands for the designated target or dev
+	 * Waiting क्रम all commands क्रम the designated target or dev
 	 * in the active array
 	 */
-	for (cnt = 0; cnt < ha->host->can_queue; cnt++) {
+	क्रम (cnt = 0; cnt < ha->host->can_queue; cnt++) अणु
 		cmd = scsi_host_find_tag(ha->host, cnt);
-		if (cmd && stgt == scsi_target(cmd->device) &&
-		    (!sdev || sdev == cmd->device)) {
-			if (!qla4xxx_eh_wait_on_command(ha, cmd)) {
+		अगर (cmd && stgt == scsi_target(cmd->device) &&
+		    (!sdev || sdev == cmd->device)) अणु
+			अगर (!qla4xxx_eh_रुको_on_command(ha, cmd)) अणु
 				status++;
-				break;
-			}
-		}
-	}
-	return status;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /**
- * qla4xxx_eh_abort - callback for abort task.
- * @cmd: Pointer to Linux's SCSI command structure
+ * qla4xxx_eh_पात - callback क्रम पात task.
+ * @cmd: Poपूर्णांकer to Linux's SCSI command काष्ठाure
  *
- * This routine is called by the Linux OS to abort the specified
+ * This routine is called by the Linux OS to पात the specअगरied
  * command.
  **/
-static int qla4xxx_eh_abort(struct scsi_cmnd *cmd)
-{
-	struct scsi_qla_host *ha = to_qla_host(cmd->device->host);
-	unsigned int id = cmd->device->id;
-	uint64_t lun = cmd->device->lun;
-	unsigned long flags;
-	struct srb *srb = NULL;
-	int ret = SUCCESS;
-	int wait = 0;
-	int rval;
+अटल पूर्णांक qla4xxx_eh_पात(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(cmd->device->host);
+	अचिन्हित पूर्णांक id = cmd->device->id;
+	uपूर्णांक64_t lun = cmd->device->lun;
+	अचिन्हित दीर्घ flags;
+	काष्ठा srb *srb = शून्य;
+	पूर्णांक ret = SUCCESS;
+	पूर्णांक रुको = 0;
+	पूर्णांक rval;
 
-	ql4_printk(KERN_INFO, ha, "scsi%ld:%d:%llu: Abort command issued cmd=%p, cdb=0x%x\n",
+	ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld:%d:%llu: Abort command issued cmd=%p, cdb=0x%x\n",
 		   ha->host_no, id, lun, cmd, cmd->cmnd[0]);
 
 	rval = qla4xxx_isp_check_reg(ha);
-	if (rval != QLA_SUCCESS) {
-		ql4_printk(KERN_INFO, ha, "PCI/Register disconnect, exiting.\n");
-		return FAILED;
-	}
+	अगर (rval != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "PCI/Register disconnect, exiting.\n");
+		वापस FAILED;
+	पूर्ण
 
 	spin_lock_irqsave(&ha->hardware_lock, flags);
-	srb = (struct srb *) CMD_SP(cmd);
-	if (!srb) {
+	srb = (काष्ठा srb *) CMD_SP(cmd);
+	अगर (!srb) अणु
 		spin_unlock_irqrestore(&ha->hardware_lock, flags);
-		ql4_printk(KERN_INFO, ha, "scsi%ld:%d:%llu: Specified command has already completed.\n",
+		ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld:%d:%llu: Specified command has already completed.\n",
 			   ha->host_no, id, lun);
-		return SUCCESS;
-	}
+		वापस SUCCESS;
+	पूर्ण
 	kref_get(&srb->srb_ref);
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
 
-	if (qla4xxx_abort_task(ha, srb) != QLA_SUCCESS) {
-		DEBUG3(printk("scsi%ld:%d:%llu: Abort_task mbx failed.\n",
+	अगर (qla4xxx_पात_task(ha, srb) != QLA_SUCCESS) अणु
+		DEBUG3(prपूर्णांकk("scsi%ld:%d:%llu: Abort_task mbx failed.\n",
 		    ha->host_no, id, lun));
 		ret = FAILED;
-	} else {
-		DEBUG3(printk("scsi%ld:%d:%llu: Abort_task mbx success.\n",
+	पूर्ण अन्यथा अणु
+		DEBUG3(prपूर्णांकk("scsi%ld:%d:%llu: Abort_task mbx success.\n",
 		    ha->host_no, id, lun));
-		wait = 1;
-	}
+		रुको = 1;
+	पूर्ण
 
 	kref_put(&srb->srb_ref, qla4xxx_srb_compl);
 
-	/* Wait for command to complete */
-	if (wait) {
-		if (!qla4xxx_eh_wait_on_command(ha, cmd)) {
-			DEBUG2(printk("scsi%ld:%d:%llu: Abort handler timed out\n",
+	/* Wait क्रम command to complete */
+	अगर (रुको) अणु
+		अगर (!qla4xxx_eh_रुको_on_command(ha, cmd)) अणु
+			DEBUG2(prपूर्णांकk("scsi%ld:%d:%llu: Abort handler timed out\n",
 			    ha->host_no, id, lun));
 			ret = FAILED;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ql4_printk(KERN_INFO, ha,
+	ql4_prपूर्णांकk(KERN_INFO, ha,
 	    "scsi%ld:%d:%llu: Abort command - %s\n",
 	    ha->host_no, id, lun, (ret == SUCCESS) ? "succeeded" : "failed");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * qla4xxx_eh_device_reset - callback for target reset.
- * @cmd: Pointer to Linux's SCSI command structure
+ * qla4xxx_eh_device_reset - callback क्रम target reset.
+ * @cmd: Poपूर्णांकer to Linux's SCSI command काष्ठाure
  *
  * This routine is called by the Linux OS to reset all luns on the
- * specified target.
+ * specअगरied target.
  **/
-static int qla4xxx_eh_device_reset(struct scsi_cmnd *cmd)
-{
-	struct scsi_qla_host *ha = to_qla_host(cmd->device->host);
-	struct ddb_entry *ddb_entry = cmd->device->hostdata;
-	int ret = FAILED, stat;
-	int rval;
+अटल पूर्णांक qla4xxx_eh_device_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(cmd->device->host);
+	काष्ठा ddb_entry *ddb_entry = cmd->device->hostdata;
+	पूर्णांक ret = FAILED, stat;
+	पूर्णांक rval;
 
-	if (!ddb_entry)
-		return ret;
+	अगर (!ddb_entry)
+		वापस ret;
 
 	ret = iscsi_block_scsi_eh(cmd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = FAILED;
 
-	ql4_printk(KERN_INFO, ha,
+	ql4_prपूर्णांकk(KERN_INFO, ha,
 		   "scsi%ld:%d:%d:%llu: DEVICE RESET ISSUED.\n", ha->host_no,
 		   cmd->device->channel, cmd->device->id, cmd->device->lun);
 
-	DEBUG2(printk(KERN_INFO
+	DEBUG2(prपूर्णांकk(KERN_INFO
 		      "scsi%ld: DEVICE_RESET cmd=%p jiffies = 0x%lx, to=%x,"
 		      "dpc_flags=%lx, status=%x allowed=%d\n", ha->host_no,
-		      cmd, jiffies, cmd->request->timeout / HZ,
+		      cmd, jअगरfies, cmd->request->समयout / HZ,
 		      ha->dpc_flags, cmd->result, cmd->allowed));
 
 	rval = qla4xxx_isp_check_reg(ha);
-	if (rval != QLA_SUCCESS) {
-		ql4_printk(KERN_INFO, ha, "PCI/Register disconnect, exiting.\n");
-		return FAILED;
-	}
+	अगर (rval != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "PCI/Register disconnect, exiting.\n");
+		वापस FAILED;
+	पूर्ण
 
-	/* FIXME: wait for hba to go online */
+	/* FIXME: रुको क्रम hba to go online */
 	stat = qla4xxx_reset_lun(ha, ddb_entry, cmd->device->lun);
-	if (stat != QLA_SUCCESS) {
-		ql4_printk(KERN_INFO, ha, "DEVICE RESET FAILED. %d\n", stat);
-		goto eh_dev_reset_done;
-	}
+	अगर (stat != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "DEVICE RESET FAILED. %d\n", stat);
+		जाओ eh_dev_reset_करोne;
+	पूर्ण
 
-	if (qla4xxx_eh_wait_for_commands(ha, scsi_target(cmd->device),
-					 cmd->device)) {
-		ql4_printk(KERN_INFO, ha,
+	अगर (qla4xxx_eh_रुको_क्रम_commands(ha, scsi_target(cmd->device),
+					 cmd->device)) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha,
 			   "DEVICE RESET FAILED - waiting for "
 			   "commands.\n");
-		goto eh_dev_reset_done;
-	}
+		जाओ eh_dev_reset_करोne;
+	पूर्ण
 
 	/* Send marker. */
-	if (qla4xxx_send_marker_iocb(ha, ddb_entry, cmd->device->lun,
+	अगर (qla4xxx_send_marker_iocb(ha, ddb_entry, cmd->device->lun,
 		MM_LUN_RESET) != QLA_SUCCESS)
-		goto eh_dev_reset_done;
+		जाओ eh_dev_reset_करोne;
 
-	ql4_printk(KERN_INFO, ha,
+	ql4_prपूर्णांकk(KERN_INFO, ha,
 		   "scsi(%ld:%d:%d:%llu): DEVICE RESET SUCCEEDED.\n",
 		   ha->host_no, cmd->device->channel, cmd->device->id,
 		   cmd->device->lun);
 
 	ret = SUCCESS;
 
-eh_dev_reset_done:
+eh_dev_reset_करोne:
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * qla4xxx_eh_target_reset - callback for target reset.
- * @cmd: Pointer to Linux's SCSI command structure
+ * qla4xxx_eh_target_reset - callback क्रम target reset.
+ * @cmd: Poपूर्णांकer to Linux's SCSI command काष्ठाure
  *
  * This routine is called by the Linux OS to reset the target.
  **/
-static int qla4xxx_eh_target_reset(struct scsi_cmnd *cmd)
-{
-	struct scsi_qla_host *ha = to_qla_host(cmd->device->host);
-	struct ddb_entry *ddb_entry = cmd->device->hostdata;
-	int stat, ret;
-	int rval;
+अटल पूर्णांक qla4xxx_eh_target_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(cmd->device->host);
+	काष्ठा ddb_entry *ddb_entry = cmd->device->hostdata;
+	पूर्णांक stat, ret;
+	पूर्णांक rval;
 
-	if (!ddb_entry)
-		return FAILED;
+	अगर (!ddb_entry)
+		वापस FAILED;
 
 	ret = iscsi_block_scsi_eh(cmd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	starget_printk(KERN_INFO, scsi_target(cmd->device),
+	starget_prपूर्णांकk(KERN_INFO, scsi_target(cmd->device),
 		       "WARM TARGET RESET ISSUED.\n");
 
-	DEBUG2(printk(KERN_INFO
+	DEBUG2(prपूर्णांकk(KERN_INFO
 		      "scsi%ld: TARGET_DEVICE_RESET cmd=%p jiffies = 0x%lx, "
 		      "to=%x,dpc_flags=%lx, status=%x allowed=%d\n",
-		      ha->host_no, cmd, jiffies, cmd->request->timeout / HZ,
+		      ha->host_no, cmd, jअगरfies, cmd->request->समयout / HZ,
 		      ha->dpc_flags, cmd->result, cmd->allowed));
 
 	rval = qla4xxx_isp_check_reg(ha);
-	if (rval != QLA_SUCCESS) {
-		ql4_printk(KERN_INFO, ha, "PCI/Register disconnect, exiting.\n");
-		return FAILED;
-	}
+	अगर (rval != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "PCI/Register disconnect, exiting.\n");
+		वापस FAILED;
+	पूर्ण
 
 	stat = qla4xxx_reset_target(ha, ddb_entry);
-	if (stat != QLA_SUCCESS) {
-		starget_printk(KERN_INFO, scsi_target(cmd->device),
+	अगर (stat != QLA_SUCCESS) अणु
+		starget_prपूर्णांकk(KERN_INFO, scsi_target(cmd->device),
 			       "WARM TARGET RESET FAILED.\n");
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
-	if (qla4xxx_eh_wait_for_commands(ha, scsi_target(cmd->device),
-					 NULL)) {
-		starget_printk(KERN_INFO, scsi_target(cmd->device),
+	अगर (qla4xxx_eh_रुको_क्रम_commands(ha, scsi_target(cmd->device),
+					 शून्य)) अणु
+		starget_prपूर्णांकk(KERN_INFO, scsi_target(cmd->device),
 			       "WARM TARGET DEVICE RESET FAILED - "
 			       "waiting for commands.\n");
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
 	/* Send marker. */
-	if (qla4xxx_send_marker_iocb(ha, ddb_entry, cmd->device->lun,
-		MM_TGT_WARM_RESET) != QLA_SUCCESS) {
-		starget_printk(KERN_INFO, scsi_target(cmd->device),
+	अगर (qla4xxx_send_marker_iocb(ha, ddb_entry, cmd->device->lun,
+		MM_TGT_WARM_RESET) != QLA_SUCCESS) अणु
+		starget_prपूर्णांकk(KERN_INFO, scsi_target(cmd->device),
 			       "WARM TARGET DEVICE RESET FAILED - "
 			       "marker iocb failed.\n");
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
-	starget_printk(KERN_INFO, scsi_target(cmd->device),
+	starget_prपूर्णांकk(KERN_INFO, scsi_target(cmd->device),
 		       "WARM TARGET RESET SUCCEEDED.\n");
-	return SUCCESS;
-}
+	वापस SUCCESS;
+पूर्ण
 
 /**
- * qla4xxx_is_eh_active - check if error handler is running
- * @shost: Pointer to SCSI Host struct
+ * qla4xxx_is_eh_active - check अगर error handler is running
+ * @shost: Poपूर्णांकer to SCSI Host काष्ठा
  *
- * This routine finds that if reset host is called in EH
+ * This routine finds that अगर reset host is called in EH
  * scenario or from some application like sg_reset
  **/
-static int qla4xxx_is_eh_active(struct Scsi_Host *shost)
-{
-	if (shost->shost_state == SHOST_RECOVERY)
-		return 1;
-	return 0;
-}
+अटल पूर्णांक qla4xxx_is_eh_active(काष्ठा Scsi_Host *shost)
+अणु
+	अगर (shost->shost_state == SHOST_RECOVERY)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /**
  * qla4xxx_eh_host_reset - kernel callback
- * @cmd: Pointer to Linux's SCSI command structure
+ * @cmd: Poपूर्णांकer to Linux's SCSI command काष्ठाure
  *
- * This routine is invoked by the Linux kernel to perform fatal error
- * recovery on the specified adapter.
+ * This routine is invoked by the Linux kernel to perक्रमm fatal error
+ * recovery on the specअगरied adapter.
  **/
-static int qla4xxx_eh_host_reset(struct scsi_cmnd *cmd)
-{
-	int return_status = FAILED;
-	struct scsi_qla_host *ha;
-	int rval;
+अटल पूर्णांक qla4xxx_eh_host_reset(काष्ठा scsi_cmnd *cmd)
+अणु
+	पूर्णांक वापस_status = FAILED;
+	काष्ठा scsi_qla_host *ha;
+	पूर्णांक rval;
 
 	ha = to_qla_host(cmd->device->host);
 
 	rval = qla4xxx_isp_check_reg(ha);
-	if (rval != QLA_SUCCESS) {
-		ql4_printk(KERN_INFO, ha, "PCI/Register disconnect, exiting.\n");
-		return FAILED;
-	}
+	अगर (rval != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "PCI/Register disconnect, exiting.\n");
+		वापस FAILED;
+	पूर्ण
 
-	if ((is_qla8032(ha) || is_qla8042(ha)) && ql4xdontresethba)
-		qla4_83xx_set_idc_dontreset(ha);
+	अगर ((is_qla8032(ha) || is_qla8042(ha)) && ql4xकरोntresethba)
+		qla4_83xx_set_idc_करोntreset(ha);
 
 	/*
-	 * For ISP8324 and ISP8042, if IDC_CTRL DONTRESET_BIT0 is set by other
+	 * For ISP8324 and ISP8042, अगर IDC_CTRL DONTRESET_BIT0 is set by other
 	 * protocol drivers, we should not set device_state to NEED_RESET
 	 */
-	if (ql4xdontresethba ||
+	अगर (ql4xकरोntresethba ||
 	    ((is_qla8032(ha) || is_qla8042(ha)) &&
-	     qla4_83xx_idc_dontreset(ha))) {
-		DEBUG2(printk("scsi%ld: %s: Don't Reset HBA\n",
+	     qla4_83xx_idc_करोntreset(ha))) अणु
+		DEBUG2(prपूर्णांकk("scsi%ld: %s: Don't Reset HBA\n",
 		     ha->host_no, __func__));
 
 		/* Clear outstanding srb in queues */
-		if (qla4xxx_is_eh_active(cmd->device->host))
-			qla4xxx_abort_active_cmds(ha, DID_ABORT << 16);
+		अगर (qla4xxx_is_eh_active(cmd->device->host))
+			qla4xxx_पात_active_cmds(ha, DID_ABORT << 16);
 
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
-	ql4_printk(KERN_INFO, ha,
+	ql4_prपूर्णांकk(KERN_INFO, ha,
 		   "scsi(%ld:%d:%d:%llu): HOST RESET ISSUED.\n", ha->host_no,
 		   cmd->device->channel, cmd->device->id, cmd->device->lun);
 
-	if (qla4xxx_wait_for_hba_online(ha) != QLA_SUCCESS) {
-		DEBUG2(printk("scsi%ld:%d: %s: Unable to reset host.  Adapter "
+	अगर (qla4xxx_रुको_क्रम_hba_online(ha) != QLA_SUCCESS) अणु
+		DEBUG2(prपूर्णांकk("scsi%ld:%d: %s: Unable to reset host.  Adapter "
 			      "DEAD.\n", ha->host_no, cmd->device->channel,
 			      __func__));
 
-		return FAILED;
-	}
+		वापस FAILED;
+	पूर्ण
 
-	if (!test_bit(DPC_RESET_HA, &ha->dpc_flags)) {
-		if (is_qla80XX(ha))
+	अगर (!test_bit(DPC_RESET_HA, &ha->dpc_flags)) अणु
+		अगर (is_qla80XX(ha))
 			set_bit(DPC_RESET_HA_FW_CONTEXT, &ha->dpc_flags);
-		else
+		अन्यथा
 			set_bit(DPC_RESET_HA, &ha->dpc_flags);
-	}
+	पूर्ण
 
-	if (qla4xxx_recover_adapter(ha) == QLA_SUCCESS)
-		return_status = SUCCESS;
+	अगर (qla4xxx_recover_adapter(ha) == QLA_SUCCESS)
+		वापस_status = SUCCESS;
 
-	ql4_printk(KERN_INFO, ha, "HOST RESET %s.\n",
-		   return_status == FAILED ? "FAILED" : "SUCCEEDED");
+	ql4_prपूर्णांकk(KERN_INFO, ha, "HOST RESET %s.\n",
+		   वापस_status == FAILED ? "FAILED" : "SUCCEEDED");
 
-	return return_status;
-}
+	वापस वापस_status;
+पूर्ण
 
-static int qla4xxx_context_reset(struct scsi_qla_host *ha)
-{
-	uint32_t mbox_cmd[MBOX_REG_COUNT];
-	uint32_t mbox_sts[MBOX_REG_COUNT];
-	struct addr_ctrl_blk_def *acb = NULL;
-	uint32_t acb_len = sizeof(struct addr_ctrl_blk_def);
-	int rval = QLA_SUCCESS;
+अटल पूर्णांक qla4xxx_context_reset(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक32_t mbox_cmd[MBOX_REG_COUNT];
+	uपूर्णांक32_t mbox_sts[MBOX_REG_COUNT];
+	काष्ठा addr_ctrl_blk_def *acb = शून्य;
+	uपूर्णांक32_t acb_len = माप(काष्ठा addr_ctrl_blk_def);
+	पूर्णांक rval = QLA_SUCCESS;
 	dma_addr_t acb_dma;
 
 	acb = dma_alloc_coherent(&ha->pdev->dev,
-				 sizeof(struct addr_ctrl_blk_def),
+				 माप(काष्ठा addr_ctrl_blk_def),
 				 &acb_dma, GFP_KERNEL);
-	if (!acb) {
-		ql4_printk(KERN_ERR, ha, "%s: Unable to alloc acb\n",
+	अगर (!acb) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "%s: Unable to alloc acb\n",
 			   __func__);
 		rval = -ENOMEM;
-		goto exit_port_reset;
-	}
+		जाओ निकास_port_reset;
+	पूर्ण
 
-	memset(acb, 0, acb_len);
+	स_रखो(acb, 0, acb_len);
 
 	rval = qla4xxx_get_acb(ha, acb_dma, PRIMARI_ACB, acb_len);
-	if (rval != QLA_SUCCESS) {
+	अगर (rval != QLA_SUCCESS) अणु
 		rval = -EIO;
-		goto exit_free_acb;
-	}
+		जाओ निकास_मुक्त_acb;
+	पूर्ण
 
 	rval = qla4xxx_disable_acb(ha);
-	if (rval != QLA_SUCCESS) {
+	अगर (rval != QLA_SUCCESS) अणु
 		rval = -EIO;
-		goto exit_free_acb;
-	}
+		जाओ निकास_मुक्त_acb;
+	पूर्ण
 
-	wait_for_completion_timeout(&ha->disable_acb_comp,
+	रुको_क्रम_completion_समयout(&ha->disable_acb_comp,
 				    DISABLE_ACB_TOV * HZ);
 
 	rval = qla4xxx_set_acb(ha, &mbox_cmd[0], &mbox_sts[0], acb_dma);
-	if (rval != QLA_SUCCESS) {
+	अगर (rval != QLA_SUCCESS) अणु
 		rval = -EIO;
-		goto exit_free_acb;
-	}
+		जाओ निकास_मुक्त_acb;
+	पूर्ण
 
-exit_free_acb:
-	dma_free_coherent(&ha->pdev->dev, sizeof(struct addr_ctrl_blk_def),
+निकास_मुक्त_acb:
+	dma_मुक्त_coherent(&ha->pdev->dev, माप(काष्ठा addr_ctrl_blk_def),
 			  acb, acb_dma);
-exit_port_reset:
-	DEBUG2(ql4_printk(KERN_INFO, ha, "%s %s\n", __func__,
+निकास_port_reset:
+	DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s %s\n", __func__,
 			  rval == QLA_SUCCESS ? "SUCCEEDED" : "FAILED"));
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int qla4xxx_host_reset(struct Scsi_Host *shost, int reset_type)
-{
-	struct scsi_qla_host *ha = to_qla_host(shost);
-	int rval = QLA_SUCCESS;
-	uint32_t idc_ctrl;
+अटल पूर्णांक qla4xxx_host_reset(काष्ठा Scsi_Host *shost, पूर्णांक reset_type)
+अणु
+	काष्ठा scsi_qla_host *ha = to_qla_host(shost);
+	पूर्णांक rval = QLA_SUCCESS;
+	uपूर्णांक32_t idc_ctrl;
 
-	if (ql4xdontresethba) {
-		DEBUG2(ql4_printk(KERN_INFO, ha, "%s: Don't Reset HBA\n",
+	अगर (ql4xकरोntresethba) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: Don't Reset HBA\n",
 				  __func__));
 		rval = -EPERM;
-		goto exit_host_reset;
-	}
+		जाओ निकास_host_reset;
+	पूर्ण
 
-	if (test_bit(DPC_RESET_HA, &ha->dpc_flags))
-		goto recover_adapter;
+	अगर (test_bit(DPC_RESET_HA, &ha->dpc_flags))
+		जाओ recover_adapter;
 
-	switch (reset_type) {
-	case SCSI_ADAPTER_RESET:
+	चयन (reset_type) अणु
+	हाल SCSI_ADAPTER_RESET:
 		set_bit(DPC_RESET_HA, &ha->dpc_flags);
-		break;
-	case SCSI_FIRMWARE_RESET:
-		if (!test_bit(DPC_RESET_HA, &ha->dpc_flags)) {
-			if (is_qla80XX(ha))
+		अवरोध;
+	हाल SCSI_FIRMWARE_RESET:
+		अगर (!test_bit(DPC_RESET_HA, &ha->dpc_flags)) अणु
+			अगर (is_qla80XX(ha))
 				/* set firmware context reset */
 				set_bit(DPC_RESET_HA_FW_CONTEXT,
 					&ha->dpc_flags);
-			else {
+			अन्यथा अणु
 				rval = qla4xxx_context_reset(ha);
-				goto exit_host_reset;
-			}
-		}
-		break;
-	}
+				जाओ निकास_host_reset;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 recover_adapter:
-	/* For ISP8324 and ISP8042 set graceful reset bit in IDC_DRV_CTRL if
+	/* For ISP8324 and ISP8042 set graceful reset bit in IDC_DRV_CTRL अगर
 	 * reset is issued by application */
-	if ((is_qla8032(ha) || is_qla8042(ha)) &&
-	    test_bit(DPC_RESET_HA, &ha->dpc_flags)) {
+	अगर ((is_qla8032(ha) || is_qla8042(ha)) &&
+	    test_bit(DPC_RESET_HA, &ha->dpc_flags)) अणु
 		idc_ctrl = qla4_83xx_rd_reg(ha, QLA83XX_IDC_DRV_CTRL);
 		qla4_83xx_wr_reg(ha, QLA83XX_IDC_DRV_CTRL,
 				 (idc_ctrl | GRACEFUL_RESET_BIT1));
-	}
+	पूर्ण
 
 	rval = qla4xxx_recover_adapter(ha);
-	if (rval != QLA_SUCCESS) {
-		DEBUG2(ql4_printk(KERN_INFO, ha, "%s: recover adapter fail\n",
+	अगर (rval != QLA_SUCCESS) अणु
+		DEBUG2(ql4_prपूर्णांकk(KERN_INFO, ha, "%s: recover adapter fail\n",
 				  __func__));
 		rval = -EIO;
-	}
+	पूर्ण
 
-exit_host_reset:
-	return rval;
-}
+निकास_host_reset:
+	वापस rval;
+पूर्ण
 
 /* PCI AER driver recovers from all correctable errors w/o
- * driver intervention. For uncorrectable errors PCI AER
+ * driver पूर्णांकervention. For uncorrectable errors PCI AER
  * driver calls the following device driver's callbacks
  *
  * - Fatal Errors - link_reset
  * - Non-Fatal Errors - driver's error_detected() which
- * returns CAN_RECOVER, NEED_RESET or DISCONNECT.
+ * वापसs CAN_RECOVER, NEED_RESET or DISCONNECT.
  *
  * PCI AER driver calls
  * CAN_RECOVER - driver's mmio_enabled(), mmio_enabled()
- *               returns RECOVERED or NEED_RESET if fw_hung
+ *               वापसs RECOVERED or NEED_RESET अगर fw_hung
  * NEED_RESET - driver's slot_reset()
  * DISCONNECT - device is dead & cannot recover
  * RECOVERED - driver's resume()
  */
-static pci_ers_result_t
-qla4xxx_pci_error_detected(struct pci_dev *pdev, pci_channel_state_t state)
-{
-	struct scsi_qla_host *ha = pci_get_drvdata(pdev);
+अटल pci_ers_result_t
+qla4xxx_pci_error_detected(काष्ठा pci_dev *pdev, pci_channel_state_t state)
+अणु
+	काष्ठा scsi_qla_host *ha = pci_get_drvdata(pdev);
 
-	ql4_printk(KERN_WARNING, ha, "scsi%ld: %s: error detected:state %x\n",
+	ql4_prपूर्णांकk(KERN_WARNING, ha, "scsi%ld: %s: error detected:state %x\n",
 	    ha->host_no, __func__, state);
 
-	if (!is_aer_supported(ha))
-		return PCI_ERS_RESULT_NONE;
+	अगर (!is_aer_supported(ha))
+		वापस PCI_ERS_RESULT_NONE;
 
-	switch (state) {
-	case pci_channel_io_normal:
+	चयन (state) अणु
+	हाल pci_channel_io_normal:
 		clear_bit(AF_EEH_BUSY, &ha->flags);
-		return PCI_ERS_RESULT_CAN_RECOVER;
-	case pci_channel_io_frozen:
+		वापस PCI_ERS_RESULT_CAN_RECOVER;
+	हाल pci_channel_io_frozen:
 		set_bit(AF_EEH_BUSY, &ha->flags);
 		qla4xxx_mailbox_premature_completion(ha);
-		qla4xxx_free_irqs(ha);
+		qla4xxx_मुक्त_irqs(ha);
 		pci_disable_device(pdev);
 		/* Return back all IOs */
-		qla4xxx_abort_active_cmds(ha, DID_RESET << 16);
-		return PCI_ERS_RESULT_NEED_RESET;
-	case pci_channel_io_perm_failure:
+		qla4xxx_पात_active_cmds(ha, DID_RESET << 16);
+		वापस PCI_ERS_RESULT_NEED_RESET;
+	हाल pci_channel_io_perm_failure:
 		set_bit(AF_EEH_BUSY, &ha->flags);
 		set_bit(AF_PCI_CHANNEL_IO_PERM_FAILURE, &ha->flags);
-		qla4xxx_abort_active_cmds(ha, DID_NO_CONNECT << 16);
-		return PCI_ERS_RESULT_DISCONNECT;
-	}
-	return PCI_ERS_RESULT_NEED_RESET;
-}
+		qla4xxx_पात_active_cmds(ha, DID_NO_CONNECT << 16);
+		वापस PCI_ERS_RESULT_DISCONNECT;
+	पूर्ण
+	वापस PCI_ERS_RESULT_NEED_RESET;
+पूर्ण
 
 /**
- * qla4xxx_pci_mmio_enabled() - gets called if
- * qla4xxx_pci_error_detected() returns PCI_ERS_RESULT_CAN_RECOVER
- * and read/write to the device still works.
- * @pdev: PCI device pointer
+ * qla4xxx_pci_mmio_enabled() - माला_लो called अगर
+ * qla4xxx_pci_error_detected() वापसs PCI_ERS_RESULT_CAN_RECOVER
+ * and पढ़ो/ग_लिखो to the device still works.
+ * @pdev: PCI device poपूर्णांकer
  **/
-static pci_ers_result_t
-qla4xxx_pci_mmio_enabled(struct pci_dev *pdev)
-{
-	struct scsi_qla_host *ha = pci_get_drvdata(pdev);
+अटल pci_ers_result_t
+qla4xxx_pci_mmio_enabled(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा scsi_qla_host *ha = pci_get_drvdata(pdev);
 
-	if (!is_aer_supported(ha))
-		return PCI_ERS_RESULT_NONE;
+	अगर (!is_aer_supported(ha))
+		वापस PCI_ERS_RESULT_NONE;
 
-	return PCI_ERS_RESULT_RECOVERED;
-}
+	वापस PCI_ERS_RESULT_RECOVERED;
+पूर्ण
 
-static uint32_t qla4_8xxx_error_recovery(struct scsi_qla_host *ha)
-{
-	uint32_t rval = QLA_ERROR;
-	int fn;
-	struct pci_dev *other_pdev = NULL;
+अटल uपूर्णांक32_t qla4_8xxx_error_recovery(काष्ठा scsi_qla_host *ha)
+अणु
+	uपूर्णांक32_t rval = QLA_ERROR;
+	पूर्णांक fn;
+	काष्ठा pci_dev *other_pdev = शून्य;
 
-	ql4_printk(KERN_WARNING, ha, "scsi%ld: In %s\n", ha->host_no, __func__);
+	ql4_prपूर्णांकk(KERN_WARNING, ha, "scsi%ld: In %s\n", ha->host_no, __func__);
 
 	set_bit(DPC_RESET_ACTIVE, &ha->dpc_flags);
 
-	if (test_bit(AF_ONLINE, &ha->flags)) {
+	अगर (test_bit(AF_ONLINE, &ha->flags)) अणु
 		clear_bit(AF_ONLINE, &ha->flags);
 		clear_bit(AF_LINK_UP, &ha->flags);
-		iscsi_host_for_each_session(ha->host, qla4xxx_fail_session);
+		iscsi_host_क्रम_each_session(ha->host, qla4xxx_fail_session);
 		qla4xxx_process_aen(ha, FLUSH_DDB_CHANGED_AENS);
-	}
+	पूर्ण
 
 	fn = PCI_FUNC(ha->pdev->devfn);
-	if (is_qla8022(ha)) {
-		while (fn > 0) {
+	अगर (is_qla8022(ha)) अणु
+		जबतक (fn > 0) अणु
 			fn--;
-			ql4_printk(KERN_INFO, ha, "scsi%ld: %s: Finding PCI device at func %x\n",
+			ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: Finding PCI device at func %x\n",
 				   ha->host_no, __func__, fn);
-			/* Get the pci device given the domain, bus,
+			/* Get the pci device given the करोमुख्य, bus,
 			 * slot/function number */
-			other_pdev = pci_get_domain_bus_and_slot(
-					   pci_domain_nr(ha->pdev->bus),
+			other_pdev = pci_get_करोमुख्य_bus_and_slot(
+					   pci_करोमुख्य_nr(ha->pdev->bus),
 					   ha->pdev->bus->number,
 					   PCI_DEVFN(PCI_SLOT(ha->pdev->devfn),
 					   fn));
 
-			if (!other_pdev)
-				continue;
+			अगर (!other_pdev)
+				जारी;
 
-			if (atomic_read(&other_pdev->enable_cnt)) {
-				ql4_printk(KERN_INFO, ha, "scsi%ld: %s: Found PCI func in enabled state%x\n",
+			अगर (atomic_पढ़ो(&other_pdev->enable_cnt)) अणु
+				ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: Found PCI func in enabled state%x\n",
 					   ha->host_no, __func__, fn);
 				pci_dev_put(other_pdev);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			pci_dev_put(other_pdev);
-		}
-	} else {
-		/* this case is meant for ISP83xx/ISP84xx only */
-		if (qla4_83xx_can_perform_reset(ha)) {
-			/* reset fn as iSCSI is going to perform the reset */
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* this हाल is meant क्रम ISP83xx/ISP84xx only */
+		अगर (qla4_83xx_can_perक्रमm_reset(ha)) अणु
+			/* reset fn as iSCSI is going to perक्रमm the reset */
 			fn = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* The first function on the card, the reset owner will
 	 * start & initialize the firmware. The other functions
 	 * on the card will reset the firmware context
 	 */
-	if (!fn) {
-		ql4_printk(KERN_INFO, ha, "scsi%ld: %s: devfn being reset "
+	अगर (!fn) अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: devfn being reset "
 		    "0x%x is the owner\n", ha->host_no, __func__,
 		    ha->pdev->devfn);
 
@@ -9705,78 +9706,78 @@ static uint32_t qla4_8xxx_error_recovery(struct scsi_qla_host *ha)
 		ha->isp_ops->idc_unlock(ha);
 
 		rval = qla4_8xxx_update_idc_reg(ha);
-		if (rval == QLA_ERROR) {
-			ql4_printk(KERN_INFO, ha, "scsi%ld: %s: HW State: FAILED\n",
+		अगर (rval == QLA_ERROR) अणु
+			ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: HW State: FAILED\n",
 				   ha->host_no, __func__);
 			ha->isp_ops->idc_lock(ha);
 			qla4_8xxx_wr_direct(ha, QLA8XXX_CRB_DEV_STATE,
 					    QLA8XXX_DEV_FAILED);
 			ha->isp_ops->idc_unlock(ha);
-			goto exit_error_recovery;
-		}
+			जाओ निकास_error_recovery;
+		पूर्ण
 
 		clear_bit(AF_FW_RECOVERY, &ha->flags);
 		rval = qla4xxx_initialize_adapter(ha, RESET_ADAPTER);
 
-		if (rval != QLA_SUCCESS) {
-			ql4_printk(KERN_INFO, ha, "scsi%ld: %s: HW State: "
+		अगर (rval != QLA_SUCCESS) अणु
+			ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: HW State: "
 			    "FAILED\n", ha->host_no, __func__);
-			qla4xxx_free_irqs(ha);
+			qla4xxx_मुक्त_irqs(ha);
 			ha->isp_ops->idc_lock(ha);
 			qla4_8xxx_clear_drv_active(ha);
 			qla4_8xxx_wr_direct(ha, QLA8XXX_CRB_DEV_STATE,
 					    QLA8XXX_DEV_FAILED);
 			ha->isp_ops->idc_unlock(ha);
-		} else {
-			ql4_printk(KERN_INFO, ha, "scsi%ld: %s: HW State: "
+		पूर्ण अन्यथा अणु
+			ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: HW State: "
 			    "READY\n", ha->host_no, __func__);
 			ha->isp_ops->idc_lock(ha);
 			qla4_8xxx_wr_direct(ha, QLA8XXX_CRB_DEV_STATE,
 					    QLA8XXX_DEV_READY);
-			/* Clear driver state register */
+			/* Clear driver state रेजिस्टर */
 			qla4_8xxx_wr_direct(ha, QLA8XXX_CRB_DRV_STATE, 0);
 			qla4_8xxx_set_drv_active(ha);
 			ha->isp_ops->idc_unlock(ha);
-			ha->isp_ops->enable_intrs(ha);
-		}
-	} else {
-		ql4_printk(KERN_INFO, ha, "scsi%ld: %s: devfn 0x%x is not "
+			ha->isp_ops->enable_पूर्णांकrs(ha);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ql4_prपूर्णांकk(KERN_INFO, ha, "scsi%ld: %s: devfn 0x%x is not "
 		    "the reset owner\n", ha->host_no, __func__,
 		    ha->pdev->devfn);
-		if ((qla4_8xxx_rd_direct(ha, QLA8XXX_CRB_DEV_STATE) ==
-		     QLA8XXX_DEV_READY)) {
+		अगर ((qla4_8xxx_rd_direct(ha, QLA8XXX_CRB_DEV_STATE) ==
+		     QLA8XXX_DEV_READY)) अणु
 			clear_bit(AF_FW_RECOVERY, &ha->flags);
 			rval = qla4xxx_initialize_adapter(ha, RESET_ADAPTER);
-			if (rval == QLA_SUCCESS)
-				ha->isp_ops->enable_intrs(ha);
-			else
-				qla4xxx_free_irqs(ha);
+			अगर (rval == QLA_SUCCESS)
+				ha->isp_ops->enable_पूर्णांकrs(ha);
+			अन्यथा
+				qla4xxx_मुक्त_irqs(ha);
 
 			ha->isp_ops->idc_lock(ha);
 			qla4_8xxx_set_drv_active(ha);
 			ha->isp_ops->idc_unlock(ha);
-		}
-	}
-exit_error_recovery:
+		पूर्ण
+	पूर्ण
+निकास_error_recovery:
 	clear_bit(DPC_RESET_ACTIVE, &ha->dpc_flags);
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static pci_ers_result_t
-qla4xxx_pci_slot_reset(struct pci_dev *pdev)
-{
+अटल pci_ers_result_t
+qla4xxx_pci_slot_reset(काष्ठा pci_dev *pdev)
+अणु
 	pci_ers_result_t ret = PCI_ERS_RESULT_DISCONNECT;
-	struct scsi_qla_host *ha = pci_get_drvdata(pdev);
-	int rc;
+	काष्ठा scsi_qla_host *ha = pci_get_drvdata(pdev);
+	पूर्णांक rc;
 
-	ql4_printk(KERN_WARNING, ha, "scsi%ld: %s: slot_reset\n",
+	ql4_prपूर्णांकk(KERN_WARNING, ha, "scsi%ld: %s: slot_reset\n",
 	    ha->host_no, __func__);
 
-	if (!is_aer_supported(ha))
-		return PCI_ERS_RESULT_NONE;
+	अगर (!is_aer_supported(ha))
+		वापस PCI_ERS_RESULT_NONE;
 
 	/* Restore the saved state of PCIe device -
-	 * BAR registers, PCI Config space, PCIX, MSI,
+	 * BAR रेजिस्टरs, PCI Config space, PCIX, MSI,
 	 * IOV states
 	 */
 	pci_restore_state(pdev);
@@ -9786,159 +9787,159 @@ qla4xxx_pci_slot_reset(struct pci_dev *pdev)
 	 */
 	pci_save_state(pdev);
 
-	/* Initialize device or resume if in suspended state */
+	/* Initialize device or resume अगर in suspended state */
 	rc = pci_enable_device(pdev);
-	if (rc) {
-		ql4_printk(KERN_WARNING, ha, "scsi%ld: %s: Can't re-enable "
+	अगर (rc) अणु
+		ql4_prपूर्णांकk(KERN_WARNING, ha, "scsi%ld: %s: Can't re-enable "
 		    "device after reset\n", ha->host_no, __func__);
-		goto exit_slot_reset;
-	}
+		जाओ निकास_slot_reset;
+	पूर्ण
 
-	ha->isp_ops->disable_intrs(ha);
+	ha->isp_ops->disable_पूर्णांकrs(ha);
 
-	if (is_qla80XX(ha)) {
-		if (qla4_8xxx_error_recovery(ha) == QLA_SUCCESS) {
+	अगर (is_qla80XX(ha)) अणु
+		अगर (qla4_8xxx_error_recovery(ha) == QLA_SUCCESS) अणु
 			ret = PCI_ERS_RESULT_RECOVERED;
-			goto exit_slot_reset;
-		} else
-			goto exit_slot_reset;
-	}
+			जाओ निकास_slot_reset;
+		पूर्ण अन्यथा
+			जाओ निकास_slot_reset;
+	पूर्ण
 
-exit_slot_reset:
-	ql4_printk(KERN_WARNING, ha, "scsi%ld: %s: Return=%x\n"
+निकास_slot_reset:
+	ql4_prपूर्णांकk(KERN_WARNING, ha, "scsi%ld: %s: Return=%x\n"
 	    "device after reset\n", ha->host_no, __func__, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-qla4xxx_pci_resume(struct pci_dev *pdev)
-{
-	struct scsi_qla_host *ha = pci_get_drvdata(pdev);
-	int ret;
+अटल व्योम
+qla4xxx_pci_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा scsi_qla_host *ha = pci_get_drvdata(pdev);
+	पूर्णांक ret;
 
-	ql4_printk(KERN_WARNING, ha, "scsi%ld: %s: pci_resume\n",
+	ql4_prपूर्णांकk(KERN_WARNING, ha, "scsi%ld: %s: pci_resume\n",
 	    ha->host_no, __func__);
 
-	ret = qla4xxx_wait_for_hba_online(ha);
-	if (ret != QLA_SUCCESS) {
-		ql4_printk(KERN_ERR, ha, "scsi%ld: %s: the device failed to "
+	ret = qla4xxx_रुको_क्रम_hba_online(ha);
+	अगर (ret != QLA_SUCCESS) अणु
+		ql4_prपूर्णांकk(KERN_ERR, ha, "scsi%ld: %s: the device failed to "
 		    "resume I/O from slot/link_reset\n", ha->host_no,
 		     __func__);
-	}
+	पूर्ण
 
 	clear_bit(AF_EEH_BUSY, &ha->flags);
-}
+पूर्ण
 
-static const struct pci_error_handlers qla4xxx_err_handler = {
+अटल स्थिर काष्ठा pci_error_handlers qla4xxx_err_handler = अणु
 	.error_detected = qla4xxx_pci_error_detected,
 	.mmio_enabled = qla4xxx_pci_mmio_enabled,
 	.slot_reset = qla4xxx_pci_slot_reset,
 	.resume = qla4xxx_pci_resume,
-};
+पूर्ण;
 
-static struct pci_device_id qla4xxx_pci_tbl[] = {
-	{
-		.vendor		= PCI_VENDOR_ID_QLOGIC,
+अटल काष्ठा pci_device_id qla4xxx_pci_tbl[] = अणु
+	अणु
+		.venकरोr		= PCI_VENDOR_ID_QLOGIC,
 		.device		= PCI_DEVICE_ID_QLOGIC_ISP4010,
-		.subvendor	= PCI_ANY_ID,
+		.subvenकरोr	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
-	},
-	{
-		.vendor		= PCI_VENDOR_ID_QLOGIC,
+	पूर्ण,
+	अणु
+		.venकरोr		= PCI_VENDOR_ID_QLOGIC,
 		.device		= PCI_DEVICE_ID_QLOGIC_ISP4022,
-		.subvendor	= PCI_ANY_ID,
+		.subvenकरोr	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
-	},
-	{
-		.vendor		= PCI_VENDOR_ID_QLOGIC,
+	पूर्ण,
+	अणु
+		.venकरोr		= PCI_VENDOR_ID_QLOGIC,
 		.device		= PCI_DEVICE_ID_QLOGIC_ISP4032,
-		.subvendor	= PCI_ANY_ID,
+		.subvenकरोr	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
-	},
-	{
-		.vendor         = PCI_VENDOR_ID_QLOGIC,
+	पूर्ण,
+	अणु
+		.venकरोr         = PCI_VENDOR_ID_QLOGIC,
 		.device         = PCI_DEVICE_ID_QLOGIC_ISP8022,
-		.subvendor      = PCI_ANY_ID,
+		.subvenकरोr      = PCI_ANY_ID,
 		.subdevice      = PCI_ANY_ID,
-	},
-	{
-		.vendor		= PCI_VENDOR_ID_QLOGIC,
+	पूर्ण,
+	अणु
+		.venकरोr		= PCI_VENDOR_ID_QLOGIC,
 		.device		= PCI_DEVICE_ID_QLOGIC_ISP8324,
-		.subvendor	= PCI_ANY_ID,
+		.subvenकरोr	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
-	},
-	{
-		.vendor		= PCI_VENDOR_ID_QLOGIC,
+	पूर्ण,
+	अणु
+		.venकरोr		= PCI_VENDOR_ID_QLOGIC,
 		.device		= PCI_DEVICE_ID_QLOGIC_ISP8042,
-		.subvendor	= PCI_ANY_ID,
+		.subvenकरोr	= PCI_ANY_ID,
 		.subdevice	= PCI_ANY_ID,
-	},
-	{0, 0},
-};
+	पूर्ण,
+	अणु0, 0पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, qla4xxx_pci_tbl);
 
-static struct pci_driver qla4xxx_pci_driver = {
+अटल काष्ठा pci_driver qla4xxx_pci_driver = अणु
 	.name		= DRIVER_NAME,
 	.id_table	= qla4xxx_pci_tbl,
 	.probe		= qla4xxx_probe_adapter,
-	.remove		= qla4xxx_remove_adapter,
+	.हटाओ		= qla4xxx_हटाओ_adapter,
 	.err_handler = &qla4xxx_err_handler,
-};
+पूर्ण;
 
-static int __init qla4xxx_module_init(void)
-{
-	int ret;
+अटल पूर्णांक __init qla4xxx_module_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (ql4xqfulltracking)
-		qla4xxx_driver_template.track_queue_depth = 1;
+	अगर (ql4xqfulltracking)
+		qla4xxx_driver_ढाँचा.track_queue_depth = 1;
 
-	/* Allocate cache for SRBs. */
-	srb_cachep = kmem_cache_create("qla4xxx_srbs", sizeof(struct srb), 0,
-				       SLAB_HWCACHE_ALIGN, NULL);
-	if (srb_cachep == NULL) {
-		printk(KERN_ERR
+	/* Allocate cache क्रम SRBs. */
+	srb_cachep = kmem_cache_create("qla4xxx_srbs", माप(काष्ठा srb), 0,
+				       SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (srb_cachep == शून्य) अणु
+		prपूर्णांकk(KERN_ERR
 		       "%s: Unable to allocate SRB cache..."
 		       "Failing load!\n", DRIVER_NAME);
 		ret = -ENOMEM;
-		goto no_srp_cache;
-	}
+		जाओ no_srp_cache;
+	पूर्ण
 
 	/* Derive version string. */
-	strcpy(qla4xxx_version_str, QLA4XXX_DRIVER_VERSION);
-	if (ql4xextended_error_logging)
-		strcat(qla4xxx_version_str, "-debug");
+	म_नकल(qla4xxx_version_str, QLA4XXX_DRIVER_VERSION);
+	अगर (ql4xextended_error_logging)
+		म_जोड़ो(qla4xxx_version_str, "-debug");
 
 	qla4xxx_scsi_transport =
-		iscsi_register_transport(&qla4xxx_iscsi_transport);
-	if (!qla4xxx_scsi_transport){
+		iscsi_रेजिस्टर_transport(&qla4xxx_iscsi_transport);
+	अगर (!qla4xxx_scsi_transport)अणु
 		ret = -ENODEV;
-		goto release_srb_cache;
-	}
+		जाओ release_srb_cache;
+	पूर्ण
 
-	ret = pci_register_driver(&qla4xxx_pci_driver);
-	if (ret)
-		goto unregister_transport;
+	ret = pci_रेजिस्टर_driver(&qla4xxx_pci_driver);
+	अगर (ret)
+		जाओ unरेजिस्टर_transport;
 
-	printk(KERN_INFO "QLogic iSCSI HBA Driver\n");
-	return 0;
+	prपूर्णांकk(KERN_INFO "QLogic iSCSI HBA Driver\n");
+	वापस 0;
 
-unregister_transport:
-	iscsi_unregister_transport(&qla4xxx_iscsi_transport);
+unरेजिस्टर_transport:
+	iscsi_unरेजिस्टर_transport(&qla4xxx_iscsi_transport);
 release_srb_cache:
 	kmem_cache_destroy(srb_cachep);
 no_srp_cache:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit qla4xxx_module_exit(void)
-{
-	pci_unregister_driver(&qla4xxx_pci_driver);
-	iscsi_unregister_transport(&qla4xxx_iscsi_transport);
+अटल व्योम __निकास qla4xxx_module_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&qla4xxx_pci_driver);
+	iscsi_unरेजिस्टर_transport(&qla4xxx_iscsi_transport);
 	kmem_cache_destroy(srb_cachep);
-}
+पूर्ण
 
 module_init(qla4xxx_module_init);
-module_exit(qla4xxx_module_exit);
+module_निकास(qla4xxx_module_निकास);
 
 MODULE_AUTHOR("QLogic Corporation");
 MODULE_DESCRIPTION("QLogic iSCSI HBA Driver");

@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * via686a.c - Part of lm_sensors, Linux kernel modules
- *	       for hardware monitoring
+ *	       क्रम hardware monitoring
  *
- * Copyright (c) 1998 - 2002  Frodo Looijaard <frodol@dds.nl>,
- *			      Kyösti Mälkki <kmalkki@cc.hut.fi>,
+ * Copyright (c) 1998 - 2002  Froकरो Looijaard <froकरोl@dds.nl>,
+ *			      Kyथघsti Mथअlkki <kmalkki@cc.hut.fi>,
  *			      Mark Studebaker <mdsxyz123@yahoo.com>,
- *			      and Bob Dougherty <bobd@stanford.edu>
+ *			      and Bob Dougherty <bobd@stanक्रमd.edu>
  *
  * (Some conversion-factor data were contributed by Jonathan Teh Soon Yew
  * <j.teh@iname.com> and Alex van Kaam <darkside@chello.nl>.)
@@ -18,83 +19,83 @@
  * Warning - only supports a single device.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include <linux/jiffies.h>
-#include <linux/platform_device.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
-#include <linux/sysfs.h>
-#include <linux/acpi.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/पन.स>
 
 /*
- * If force_addr is set to anything different from 0, we forcibly enable
+ * If क्रमce_addr is set to anything dअगरferent from 0, we क्रमcibly enable
  * the device at the given address.
  */
-static unsigned short force_addr;
-module_param(force_addr, ushort, 0);
-MODULE_PARM_DESC(force_addr,
+अटल अचिन्हित लघु क्रमce_addr;
+module_param(क्रमce_addr, uलघु, 0);
+MODULE_PARM_DESC(क्रमce_addr,
 		 "Initialize the base address of the sensors");
 
-static struct platform_device *pdev;
+अटल काष्ठा platक्रमm_device *pdev;
 
 /*
- * The Via 686a southbridge has a LM78-like chip integrated on the same IC.
+ * The Via 686a southbridge has a LM78-like chip पूर्णांकegrated on the same IC.
  * This driver is a customized copy of lm78.c
  */
 
-/* Many VIA686A constants specified below */
+/* Many VIA686A स्थिरants specअगरied below */
 
 /* Length of ISA address segment */
-#define VIA686A_EXTENT		0x80
-#define VIA686A_BASE_REG	0x70
-#define VIA686A_ENABLE_REG	0x74
+#घोषणा VIA686A_EXTENT		0x80
+#घोषणा VIA686A_BASE_REG	0x70
+#घोषणा VIA686A_ENABLE_REG	0x74
 
-/* The VIA686A registers */
+/* The VIA686A रेजिस्टरs */
 /* ins numbered 0-4 */
-#define VIA686A_REG_IN_MAX(nr)	(0x2b + ((nr) * 2))
-#define VIA686A_REG_IN_MIN(nr)	(0x2c + ((nr) * 2))
-#define VIA686A_REG_IN(nr)	(0x22 + (nr))
+#घोषणा VIA686A_REG_IN_MAX(nr)	(0x2b + ((nr) * 2))
+#घोषणा VIA686A_REG_IN_MIN(nr)	(0x2c + ((nr) * 2))
+#घोषणा VIA686A_REG_IN(nr)	(0x22 + (nr))
 
 /* fans numbered 1-2 */
-#define VIA686A_REG_FAN_MIN(nr)	(0x3a + (nr))
-#define VIA686A_REG_FAN(nr)	(0x28 + (nr))
+#घोषणा VIA686A_REG_FAN_MIN(nr)	(0x3a + (nr))
+#घोषणा VIA686A_REG_FAN(nr)	(0x28 + (nr))
 
 /* temps numbered 1-3 */
-static const u8 VIA686A_REG_TEMP[]	= { 0x20, 0x21, 0x1f };
-static const u8 VIA686A_REG_TEMP_OVER[]	= { 0x39, 0x3d, 0x1d };
-static const u8 VIA686A_REG_TEMP_HYST[]	= { 0x3a, 0x3e, 0x1e };
+अटल स्थिर u8 VIA686A_REG_TEMP[]	= अणु 0x20, 0x21, 0x1f पूर्ण;
+अटल स्थिर u8 VIA686A_REG_TEMP_OVER[]	= अणु 0x39, 0x3d, 0x1d पूर्ण;
+अटल स्थिर u8 VIA686A_REG_TEMP_HYST[]	= अणु 0x3a, 0x3e, 0x1e पूर्ण;
 /* bits 7-6 */
-#define VIA686A_REG_TEMP_LOW1	0x4b
+#घोषणा VIA686A_REG_TEMP_LOW1	0x4b
 /* 2 = bits 5-4, 3 = bits 7-6 */
-#define VIA686A_REG_TEMP_LOW23	0x49
+#घोषणा VIA686A_REG_TEMP_LOW23	0x49
 
-#define VIA686A_REG_ALARM1	0x41
-#define VIA686A_REG_ALARM2	0x42
-#define VIA686A_REG_FANDIV	0x47
-#define VIA686A_REG_CONFIG	0x40
+#घोषणा VIA686A_REG_ALARM1	0x41
+#घोषणा VIA686A_REG_ALARM2	0x42
+#घोषणा VIA686A_REG_FANDIV	0x47
+#घोषणा VIA686A_REG_CONFIG	0x40
 /*
- * The following register sets temp interrupt mode (bits 1-0 for temp1,
- * 3-2 for temp2, 5-4 for temp3).  Modes are:
- * 00 interrupt stays as long as value is out-of-range
- * 01 interrupt is cleared once register is read (default)
+ * The following रेजिस्टर sets temp पूर्णांकerrupt mode (bits 1-0 क्रम temp1,
+ * 3-2 क्रम temp2, 5-4 क्रम temp3).  Modes are:
+ * 00 पूर्णांकerrupt stays as दीर्घ as value is out-of-range
+ * 01 पूर्णांकerrupt is cleared once रेजिस्टर is पढ़ो (शेष)
  * 10 comparator mode- like 00, but ignores hysteresis
  * 11 same as 00
  */
-#define VIA686A_REG_TEMP_MODE		0x4b
+#घोषणा VIA686A_REG_TEMP_MODE		0x4b
 /* We'll just assume that you want to set all 3 simultaneously: */
-#define VIA686A_TEMP_MODE_MASK		0x3F
-#define VIA686A_TEMP_MODE_CONTINUOUS	0x00
+#घोषणा VIA686A_TEMP_MODE_MASK		0x3F
+#घोषणा VIA686A_TEMP_MODE_CONTINUOUS	0x00
 
 /*
- * Conversions. Limit checking is only done on the TO_REG
+ * Conversions. Limit checking is only करोne on the TO_REG
  * variants.
  *
  ******** VOLTAGE CONVERSIONS (Bob Dougherty) ********
@@ -111,95 +112,95 @@ static const u8 VIA686A_REG_TEMP_HYST[]	= { 0x3a, 0x3e, 0x1e };
  * (These conversions were contributed by Jonathan Teh Soon Yew
  * <j.teh@iname.com>)
  */
-static inline u8 IN_TO_REG(long val, int in_num)
-{
+अटल अंतरभूत u8 IN_TO_REG(दीर्घ val, पूर्णांक in_num)
+अणु
 	/*
-	 * To avoid floating point, we multiply constants by 10 (100 for +12V).
-	 * Rounding is done (120500 is actually 133000 - 12500).
-	 * Remember that val is expressed in 0.001V/bit, which is why we divide
-	 * by an additional 10000 (100000 for +12V): 1000 for val and 10 (100)
-	 * for the constants.
+	 * To aव्योम भग्नing poपूर्णांक, we multiply स्थिरants by 10 (100 क्रम +12V).
+	 * Rounding is करोne (120500 is actually 133000 - 12500).
+	 * Remember that val is expressed in 0.001V/bit, which is why we भागide
+	 * by an additional 10000 (100000 क्रम +12V): 1000 क्रम val and 10 (100)
+	 * क्रम the स्थिरants.
 	 */
-	if (in_num <= 1)
-		return (u8) clamp_val((val * 21024 - 1205000) / 250000, 0, 255);
-	else if (in_num == 2)
-		return (u8) clamp_val((val * 15737 - 1205000) / 250000, 0, 255);
-	else if (in_num == 3)
-		return (u8) clamp_val((val * 10108 - 1205000) / 250000, 0, 255);
-	else
-		return (u8) clamp_val((val * 41714 - 12050000) / 2500000, 0,
+	अगर (in_num <= 1)
+		वापस (u8) clamp_val((val * 21024 - 1205000) / 250000, 0, 255);
+	अन्यथा अगर (in_num == 2)
+		वापस (u8) clamp_val((val * 15737 - 1205000) / 250000, 0, 255);
+	अन्यथा अगर (in_num == 3)
+		वापस (u8) clamp_val((val * 10108 - 1205000) / 250000, 0, 255);
+	अन्यथा
+		वापस (u8) clamp_val((val * 41714 - 12050000) / 2500000, 0,
 				      255);
-}
+पूर्ण
 
-static inline long IN_FROM_REG(u8 val, int in_num)
-{
+अटल अंतरभूत दीर्घ IN_FROM_REG(u8 val, पूर्णांक in_num)
+अणु
 	/*
-	 * To avoid floating point, we multiply constants by 10 (100 for +12V).
-	 * We also multiply them by 1000 because we want 0.001V/bit for the
-	 * output value. Rounding is done.
+	 * To aव्योम भग्नing poपूर्णांक, we multiply स्थिरants by 10 (100 क्रम +12V).
+	 * We also multiply them by 1000 because we want 0.001V/bit क्रम the
+	 * output value. Rounding is करोne.
 	 */
-	if (in_num <= 1)
-		return (long) ((250000 * val + 1330000 + 21024 / 2) / 21024);
-	else if (in_num == 2)
-		return (long) ((250000 * val + 1330000 + 15737 / 2) / 15737);
-	else if (in_num == 3)
-		return (long) ((250000 * val + 1330000 + 10108 / 2) / 10108);
-	else
-		return (long) ((2500000 * val + 13300000 + 41714 / 2) / 41714);
-}
+	अगर (in_num <= 1)
+		वापस (दीर्घ) ((250000 * val + 1330000 + 21024 / 2) / 21024);
+	अन्यथा अगर (in_num == 2)
+		वापस (दीर्घ) ((250000 * val + 1330000 + 15737 / 2) / 15737);
+	अन्यथा अगर (in_num == 3)
+		वापस (दीर्घ) ((250000 * val + 1330000 + 10108 / 2) / 10108);
+	अन्यथा
+		वापस (दीर्घ) ((2500000 * val + 13300000 + 41714 / 2) / 41714);
+पूर्ण
 
 /********* FAN RPM CONVERSIONS ********/
 /*
- * Higher register values = slower fans (the fan's strobe gates a counter).
+ * Higher रेजिस्टर values = slower fans (the fan's strobe gates a counter).
  * But this chip saturates back at 0, not at 255 like all the other chips.
  * So, 0 means 0 RPM
  */
-static inline u8 FAN_TO_REG(long rpm, int div)
-{
-	if (rpm == 0)
-		return 0;
+अटल अंतरभूत u8 FAN_TO_REG(दीर्घ rpm, पूर्णांक भाग)
+अणु
+	अगर (rpm == 0)
+		वापस 0;
 	rpm = clamp_val(rpm, 1, 1000000);
-	return clamp_val((1350000 + rpm * div / 2) / (rpm * div), 1, 255);
-}
+	वापस clamp_val((1350000 + rpm * भाग / 2) / (rpm * भाग), 1, 255);
+पूर्ण
 
-#define FAN_FROM_REG(val, div) ((val) == 0 ? 0 : (val) == 255 ? 0 : 1350000 / \
-				((val) * (div)))
+#घोषणा FAN_FROM_REG(val, भाग) ((val) == 0 ? 0 : (val) == 255 ? 0 : 1350000 / \
+				((val) * (भाग)))
 
 /******** TEMP CONVERSIONS (Bob Dougherty) *********/
 /*
  * linear fits from HWMon.cpp (Copyright 1998-2000 Jonathan Teh Soon Yew)
- *	if(temp<169)
- *		return double(temp)*0.427-32.08;
- *	else if(temp>=169 && temp<=202)
- *		return double(temp)*0.582-58.16;
- *	else
- *		return double(temp)*0.924-127.33;
+ *	अगर(temp<169)
+ *		वापस द्विगुन(temp)*0.427-32.08;
+ *	अन्यथा अगर(temp>=169 && temp<=202)
+ *		वापस द्विगुन(temp)*0.582-58.16;
+ *	अन्यथा
+ *		वापस द्विगुन(temp)*0.924-127.33;
  *
- * A fifth-order polynomial fits the unofficial data (provided by Alex van
+ * A fअगरth-order polynomial fits the unofficial data (provided by Alex van
  * Kaam <darkside@chello.nl>) a bit better.  It also give more reasonable
  * numbers on my machine (ie. they agree with what my BIOS tells me).
- * Here's the fifth-order fit to the 8-bit data:
+ * Here's the fअगरth-order fit to the 8-bit data:
  * temp = 1.625093e-10*val^5 - 1.001632e-07*val^4 + 2.457653e-05*val^3 -
  *	2.967619e-03*val^2 + 2.175144e-01*val - 7.090067e+0.
  *
- * (2000-10-25- RFD: thanks to Uwe Andersen <uandersen@mayah.com> for
- * finding my typos in this formula!)
+ * (2000-10-25- RFD: thanks to Uwe Andersen <uandersen@mayah.com> क्रम
+ * finding my typos in this क्रमmula!)
  *
  * Alas, none of the elegant function-fit solutions will work because we
- * aren't allowed to use floating point in the kernel and doing it with
- * integers doesn't provide enough precision.  So we'll do boring old
+ * aren't allowed to use भग्नing poपूर्णांक in the kernel and करोing it with
+ * पूर्णांकegers करोesn't provide enough precision.  So we'll करो boring old
  * look-up table stuff.  The unofficial data (see below) have effectively
  * 7-bit resolution (they are rounded to the nearest degree).  I'm assuming
  * that the transfer function of the device is monotonic and smooth, so a
  * smooth function fit to the data will allow us to get better precision.
- * I used the 5th-order poly fit described above and solved for
- * VIA register values 0-255.  I *10 before rounding, so we get tenth-degree
- * precision.  (I could have done all 1024 values for our 10-bit readings,
+ * I used the 5th-order poly fit described above and solved क्रम
+ * VIA रेजिस्टर values 0-255.  I *10 beक्रमe rounding, so we get tenth-degree
+ * precision.  (I could have करोne all 1024 values क्रम our 10-bit पढ़ोings,
  * but the function is very linear in the useful range (0-80 deg C), so
- * we'll just use linear interpolation for 10-bit readings.)  So, temp_lut
- * is the temp at via register values 0-255:
+ * we'll just use linear पूर्णांकerpolation क्रम 10-bit पढ़ोings.)  So, temp_lut
+ * is the temp at via रेजिस्टर values 0-255:
  */
-static const s16 temp_lut[] = {
+अटल स्थिर s16 temp_lut[] = अणु
 	-709, -688, -667, -646, -627, -607, -589, -570, -553, -536, -519,
 	-503, -487, -471, -456, -442, -428, -414, -400, -387, -375,
 	-362, -350, -339, -327, -316, -305, -295, -285, -275, -265,
@@ -222,12 +223,12 @@ static const s16 temp_lut[] = {
 	870, 883, 898, 912, 927, 943, 958, 975, 991, 1008, 1026, 1044,
 	1062, 1081, 1101, 1121, 1141, 1162, 1184, 1206, 1229, 1252,
 	1276, 1301, 1326, 1352, 1378, 1406, 1434, 1462
-};
+पूर्ण;
 
 /*
  * the original LUT values from Alex van Kaam <darkside@chello.nl>
- * (for via register values 12-240):
- * {-50,-49,-47,-45,-43,-41,-39,-38,-37,-35,-34,-33,-32,-31,
+ * (क्रम via रेजिस्टर values 12-240):
+ * अणु-50,-49,-47,-45,-43,-41,-39,-38,-37,-35,-34,-33,-32,-31,
  * -30,-29,-28,-27,-26,-25,-24,-24,-23,-22,-21,-20,-20,-19,-18,-17,-17,-16,-15,
  * -15,-14,-14,-13,-12,-12,-11,-11,-10,-9,-9,-8,-8,-7,-7,-6,-6,-5,-5,-4,-4,-3,
  * -3,-2,-2,-1,-1,0,0,1,1,1,3,3,3,4,4,4,5,5,5,6,6,7,7,8,8,9,9,9,10,10,11,11,12,
@@ -236,18 +237,18 @@ static const s16 temp_lut[] = {
  * 33,34,34,35,35,35,36,36,37,37,38,38,39,39,40,40,41,41,42,42,43,43,44,44,45,
  * 45,46,46,47,48,48,49,49,50,51,51,52,52,53,53,54,55,55,56,57,57,58,59,59,60,
  * 61,62,62,63,64,65,66,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,83,84,
- * 85,86,88,89,91,92,94,96,97,99,101,103,105,107,109,110};
+ * 85,86,88,89,91,92,94,96,97,99,101,103,105,107,109,110पूर्ण;
  *
  *
- * Here's the reverse LUT.  I got it by doing a 6-th order poly fit (needed
- * an extra term for a good fit to these inverse data!) and then
- * solving for each temp value from -50 to 110 (the useable range for
+ * Here's the reverse LUT.  I got it by करोing a 6-th order poly fit (needed
+ * an extra term क्रम a good fit to these inverse data!) and then
+ * solving क्रम each temp value from -50 to 110 (the useable range क्रम
  * this chip).  Here's the fit:
  * viaRegVal = -1.160370e-10*val^6 +3.193693e-08*val^5 - 1.464447e-06*val^4
  * - 2.525453e-04*val^3 + 1.424593e-02*val^2 + 2.148941e+00*val +7.275808e+01)
  * Note that n=161:
  */
-static const u8 via_lut[] = {
+अटल स्थिर u8 via_lut[] = अणु
 	12, 12, 13, 14, 14, 15, 16, 16, 17, 18, 18, 19, 20, 20, 21, 22, 23,
 	23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 39, 40,
 	41, 43, 45, 46, 48, 49, 51, 53, 55, 57, 59, 60, 62, 64, 66,
@@ -261,51 +262,51 @@ static const u8 via_lut[] = {
 	225, 226, 226, 227, 228, 228, 229, 230, 230, 231, 232, 232,
 	233, 233, 234, 235, 235, 236, 236, 237, 237, 238, 238, 239,
 	239, 240
-};
+पूर्ण;
 
 /*
- * Converting temps to (8-bit) hyst and over registers
- * No interpolation here.
+ * Converting temps to (8-bit) hyst and over रेजिस्टरs
+ * No पूर्णांकerpolation here.
  * The +50 is because the temps start at -50
  */
-static inline u8 TEMP_TO_REG(long val)
-{
-	return via_lut[val <= -50000 ? 0 : val >= 110000 ? 160 :
+अटल अंतरभूत u8 TEMP_TO_REG(दीर्घ val)
+अणु
+	वापस via_lut[val <= -50000 ? 0 : val >= 110000 ? 160 :
 		      (val < 0 ? val - 500 : val + 500) / 1000 + 50];
-}
+पूर्ण
 
-/* for 8-bit temperature hyst and over registers */
-#define TEMP_FROM_REG(val)	((long)temp_lut[val] * 100)
+/* क्रम 8-bit temperature hyst and over रेजिस्टरs */
+#घोषणा TEMP_FROM_REG(val)	((दीर्घ)temp_lut[val] * 100)
 
-/* for 10-bit temperature readings */
-static inline long TEMP_FROM_REG10(u16 val)
-{
+/* क्रम 10-bit temperature पढ़ोings */
+अटल अंतरभूत दीर्घ TEMP_FROM_REG10(u16 val)
+अणु
 	u16 eight_bits = val >> 2;
 	u16 two_bits = val & 3;
 
-	/* no interpolation for these */
-	if (two_bits == 0 || eight_bits == 255)
-		return TEMP_FROM_REG(eight_bits);
+	/* no पूर्णांकerpolation क्रम these */
+	अगर (two_bits == 0 || eight_bits == 255)
+		वापस TEMP_FROM_REG(eight_bits);
 
-	/* do some linear interpolation */
-	return (temp_lut[eight_bits] * (4 - two_bits) +
+	/* करो some linear पूर्णांकerpolation */
+	वापस (temp_lut[eight_bits] * (4 - two_bits) +
 		temp_lut[eight_bits + 1] * two_bits) * 25;
-}
+पूर्ण
 
-#define DIV_FROM_REG(val) (1 << (val))
-#define DIV_TO_REG(val) ((val) == 8 ? 3 : (val) == 4 ? 2 : (val) == 1 ? 0 : 1)
+#घोषणा DIV_FROM_REG(val) (1 << (val))
+#घोषणा DIV_TO_REG(val) ((val) == 8 ? 3 : (val) == 4 ? 2 : (val) == 1 ? 0 : 1)
 
 /*
- * For each registered chip, we need to keep some data in memory.
- * The structure is dynamically allocated.
+ * For each रेजिस्टरed chip, we need to keep some data in memory.
+ * The काष्ठाure is dynamically allocated.
  */
-struct via686a_data {
-	unsigned short addr;
-	const char *name;
-	struct device *hwmon_dev;
-	struct mutex update_lock;
-	char valid;		/* !=0 if following fields are valid */
-	unsigned long last_updated;	/* In jiffies */
+काष्ठा via686a_data अणु
+	अचिन्हित लघु addr;
+	स्थिर अक्षर *name;
+	काष्ठा device *hwmon_dev;
+	काष्ठा mutex update_lock;
+	अक्षर valid;		/* !=0 अगर following fields are valid */
+	अचिन्हित दीर्घ last_updated;	/* In jअगरfies */
 
 	u8 in[5];		/* Register value */
 	u8 in_max[5];		/* Register value */
@@ -315,293 +316,293 @@ struct via686a_data {
 	u16 temp[3];		/* Register value 10 bit */
 	u8 temp_over[3];	/* Register value */
 	u8 temp_hyst[3];	/* Register value */
-	u8 fan_div[2];		/* Register encoding, shifted right */
+	u8 fan_भाग[2];		/* Register encoding, shअगरted right */
 	u16 alarms;		/* Register encoding, combined */
-};
+पूर्ण;
 
-static struct pci_dev *s_bridge;	/* pointer to the (only) via686a */
+अटल काष्ठा pci_dev *s_bridge;	/* poपूर्णांकer to the (only) via686a */
 
-static int via686a_probe(struct platform_device *pdev);
-static int via686a_remove(struct platform_device *pdev);
+अटल पूर्णांक via686a_probe(काष्ठा platक्रमm_device *pdev);
+अटल पूर्णांक via686a_हटाओ(काष्ठा platक्रमm_device *pdev);
 
-static inline int via686a_read_value(struct via686a_data *data, u8 reg)
-{
-	return inb_p(data->addr + reg);
-}
+अटल अंतरभूत पूर्णांक via686a_पढ़ो_value(काष्ठा via686a_data *data, u8 reg)
+अणु
+	वापस inb_p(data->addr + reg);
+पूर्ण
 
-static inline void via686a_write_value(struct via686a_data *data, u8 reg,
+अटल अंतरभूत व्योम via686a_ग_लिखो_value(काष्ठा via686a_data *data, u8 reg,
 				       u8 value)
-{
+अणु
 	outb_p(value, data->addr + reg);
-}
+पूर्ण
 
-static struct via686a_data *via686a_update_device(struct device *dev);
-static void via686a_init_device(struct via686a_data *data);
+अटल काष्ठा via686a_data *via686a_update_device(काष्ठा device *dev);
+अटल व्योम via686a_init_device(काष्ठा via686a_data *data);
 
 /* following are the sysfs callback functions */
 
 /* 7 voltage sensors */
-static ssize_t in_show(struct device *dev, struct device_attribute *da,
-		       char *buf) {
-	struct via686a_data *data = via686a_update_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	return sprintf(buf, "%ld\n", IN_FROM_REG(data->in[nr], nr));
-}
+अटल sमाप_प्रकार in_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+		       अक्षर *buf) अणु
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	वापस प्र_लिखो(buf, "%ld\n", IN_FROM_REG(data->in[nr], nr));
+पूर्ण
 
-static ssize_t in_min_show(struct device *dev, struct device_attribute *da,
-			   char *buf) {
-	struct via686a_data *data = via686a_update_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	return sprintf(buf, "%ld\n", IN_FROM_REG(data->in_min[nr], nr));
-}
+अटल sमाप_प्रकार in_min_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			   अक्षर *buf) अणु
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	वापस प्र_लिखो(buf, "%ld\n", IN_FROM_REG(data->in_min[nr], nr));
+पूर्ण
 
-static ssize_t in_max_show(struct device *dev, struct device_attribute *da,
-			   char *buf) {
-	struct via686a_data *data = via686a_update_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	return sprintf(buf, "%ld\n", IN_FROM_REG(data->in_max[nr], nr));
-}
+अटल sमाप_प्रकार in_max_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			   अक्षर *buf) अणु
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	वापस प्र_लिखो(buf, "%ld\n", IN_FROM_REG(data->in_max[nr], nr));
+पूर्ण
 
-static ssize_t in_min_store(struct device *dev, struct device_attribute *da,
-			    const char *buf, size_t count) {
-	struct via686a_data *data = dev_get_drvdata(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	unsigned long val;
-	int err;
+अटल sमाप_प्रकार in_min_store(काष्ठा device *dev, काष्ठा device_attribute *da,
+			    स्थिर अक्षर *buf, माप_प्रकार count) अणु
+	काष्ठा via686a_data *data = dev_get_drvdata(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	अचिन्हित दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 	data->in_min[nr] = IN_TO_REG(val, nr);
-	via686a_write_value(data, VIA686A_REG_IN_MIN(nr),
+	via686a_ग_लिखो_value(data, VIA686A_REG_IN_MIN(nr),
 			data->in_min[nr]);
 	mutex_unlock(&data->update_lock);
-	return count;
-}
-static ssize_t in_max_store(struct device *dev, struct device_attribute *da,
-			    const char *buf, size_t count) {
-	struct via686a_data *data = dev_get_drvdata(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	unsigned long val;
-	int err;
+	वापस count;
+पूर्ण
+अटल sमाप_प्रकार in_max_store(काष्ठा device *dev, काष्ठा device_attribute *da,
+			    स्थिर अक्षर *buf, माप_प्रकार count) अणु
+	काष्ठा via686a_data *data = dev_get_drvdata(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	अचिन्हित दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 	data->in_max[nr] = IN_TO_REG(val, nr);
-	via686a_write_value(data, VIA686A_REG_IN_MAX(nr),
+	via686a_ग_लिखो_value(data, VIA686A_REG_IN_MAX(nr),
 			data->in_max[nr]);
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static SENSOR_DEVICE_ATTR_RO(in0_input, in, 0);
-static SENSOR_DEVICE_ATTR_RW(in0_min, in_min, 0);
-static SENSOR_DEVICE_ATTR_RW(in0_max, in_max, 0);
-static SENSOR_DEVICE_ATTR_RO(in1_input, in, 1);
-static SENSOR_DEVICE_ATTR_RW(in1_min, in_min, 1);
-static SENSOR_DEVICE_ATTR_RW(in1_max, in_max, 1);
-static SENSOR_DEVICE_ATTR_RO(in2_input, in, 2);
-static SENSOR_DEVICE_ATTR_RW(in2_min, in_min, 2);
-static SENSOR_DEVICE_ATTR_RW(in2_max, in_max, 2);
-static SENSOR_DEVICE_ATTR_RO(in3_input, in, 3);
-static SENSOR_DEVICE_ATTR_RW(in3_min, in_min, 3);
-static SENSOR_DEVICE_ATTR_RW(in3_max, in_max, 3);
-static SENSOR_DEVICE_ATTR_RO(in4_input, in, 4);
-static SENSOR_DEVICE_ATTR_RW(in4_min, in_min, 4);
-static SENSOR_DEVICE_ATTR_RW(in4_max, in_max, 4);
+अटल SENSOR_DEVICE_ATTR_RO(in0_input, in, 0);
+अटल SENSOR_DEVICE_ATTR_RW(in0_min, in_min, 0);
+अटल SENSOR_DEVICE_ATTR_RW(in0_max, in_max, 0);
+अटल SENSOR_DEVICE_ATTR_RO(in1_input, in, 1);
+अटल SENSOR_DEVICE_ATTR_RW(in1_min, in_min, 1);
+अटल SENSOR_DEVICE_ATTR_RW(in1_max, in_max, 1);
+अटल SENSOR_DEVICE_ATTR_RO(in2_input, in, 2);
+अटल SENSOR_DEVICE_ATTR_RW(in2_min, in_min, 2);
+अटल SENSOR_DEVICE_ATTR_RW(in2_max, in_max, 2);
+अटल SENSOR_DEVICE_ATTR_RO(in3_input, in, 3);
+अटल SENSOR_DEVICE_ATTR_RW(in3_min, in_min, 3);
+अटल SENSOR_DEVICE_ATTR_RW(in3_max, in_max, 3);
+अटल SENSOR_DEVICE_ATTR_RO(in4_input, in, 4);
+अटल SENSOR_DEVICE_ATTR_RW(in4_min, in_min, 4);
+अटल SENSOR_DEVICE_ATTR_RW(in4_max, in_max, 4);
 
 /* 3 temperatures */
-static ssize_t temp_show(struct device *dev, struct device_attribute *da,
-			 char *buf) {
-	struct via686a_data *data = via686a_update_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	return sprintf(buf, "%ld\n", TEMP_FROM_REG10(data->temp[nr]));
-}
-static ssize_t temp_over_show(struct device *dev, struct device_attribute *da,
-			      char *buf) {
-	struct via686a_data *data = via686a_update_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	return sprintf(buf, "%ld\n", TEMP_FROM_REG(data->temp_over[nr]));
-}
-static ssize_t temp_hyst_show(struct device *dev, struct device_attribute *da,
-			      char *buf) {
-	struct via686a_data *data = via686a_update_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	return sprintf(buf, "%ld\n", TEMP_FROM_REG(data->temp_hyst[nr]));
-}
-static ssize_t temp_over_store(struct device *dev,
-			       struct device_attribute *da, const char *buf,
-			       size_t count) {
-	struct via686a_data *data = dev_get_drvdata(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	long val;
-	int err;
+अटल sमाप_प्रकार temp_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			 अक्षर *buf) अणु
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	वापस प्र_लिखो(buf, "%ld\n", TEMP_FROM_REG10(data->temp[nr]));
+पूर्ण
+अटल sमाप_प्रकार temp_over_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			      अक्षर *buf) अणु
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	वापस प्र_लिखो(buf, "%ld\n", TEMP_FROM_REG(data->temp_over[nr]));
+पूर्ण
+अटल sमाप_प्रकार temp_hyst_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			      अक्षर *buf) अणु
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	वापस प्र_लिखो(buf, "%ld\n", TEMP_FROM_REG(data->temp_hyst[nr]));
+पूर्ण
+अटल sमाप_प्रकार temp_over_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *da, स्थिर अक्षर *buf,
+			       माप_प्रकार count) अणु
+	काष्ठा via686a_data *data = dev_get_drvdata(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtol(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_दीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 	data->temp_over[nr] = TEMP_TO_REG(val);
-	via686a_write_value(data, VIA686A_REG_TEMP_OVER[nr],
+	via686a_ग_लिखो_value(data, VIA686A_REG_TEMP_OVER[nr],
 			    data->temp_over[nr]);
 	mutex_unlock(&data->update_lock);
-	return count;
-}
-static ssize_t temp_hyst_store(struct device *dev,
-			       struct device_attribute *da, const char *buf,
-			       size_t count) {
-	struct via686a_data *data = dev_get_drvdata(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	long val;
-	int err;
+	वापस count;
+पूर्ण
+अटल sमाप_प्रकार temp_hyst_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *da, स्थिर अक्षर *buf,
+			       माप_प्रकार count) अणु
+	काष्ठा via686a_data *data = dev_get_drvdata(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtol(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_दीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 	data->temp_hyst[nr] = TEMP_TO_REG(val);
-	via686a_write_value(data, VIA686A_REG_TEMP_HYST[nr],
+	via686a_ग_लिखो_value(data, VIA686A_REG_TEMP_HYST[nr],
 			    data->temp_hyst[nr]);
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static SENSOR_DEVICE_ATTR_RO(temp1_input, temp, 0);
-static SENSOR_DEVICE_ATTR_RW(temp1_max, temp_over, 0);
-static SENSOR_DEVICE_ATTR_RW(temp1_max_hyst, temp_hyst, 0);
-static SENSOR_DEVICE_ATTR_RO(temp2_input, temp, 1);
-static SENSOR_DEVICE_ATTR_RW(temp2_max, temp_over, 1);
-static SENSOR_DEVICE_ATTR_RW(temp2_max_hyst, temp_hyst, 1);
-static SENSOR_DEVICE_ATTR_RO(temp3_input, temp, 2);
-static SENSOR_DEVICE_ATTR_RW(temp3_max, temp_over, 2);
-static SENSOR_DEVICE_ATTR_RW(temp3_max_hyst, temp_hyst, 2);
+अटल SENSOR_DEVICE_ATTR_RO(temp1_input, temp, 0);
+अटल SENSOR_DEVICE_ATTR_RW(temp1_max, temp_over, 0);
+अटल SENSOR_DEVICE_ATTR_RW(temp1_max_hyst, temp_hyst, 0);
+अटल SENSOR_DEVICE_ATTR_RO(temp2_input, temp, 1);
+अटल SENSOR_DEVICE_ATTR_RW(temp2_max, temp_over, 1);
+अटल SENSOR_DEVICE_ATTR_RW(temp2_max_hyst, temp_hyst, 1);
+अटल SENSOR_DEVICE_ATTR_RO(temp3_input, temp, 2);
+अटल SENSOR_DEVICE_ATTR_RW(temp3_max, temp_over, 2);
+अटल SENSOR_DEVICE_ATTR_RW(temp3_max_hyst, temp_hyst, 2);
 
 /* 2 Fans */
-static ssize_t fan_show(struct device *dev, struct device_attribute *da,
-			char *buf) {
-	struct via686a_data *data = via686a_update_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	return sprintf(buf, "%d\n", FAN_FROM_REG(data->fan[nr],
-				DIV_FROM_REG(data->fan_div[nr])));
-}
-static ssize_t fan_min_show(struct device *dev, struct device_attribute *da,
-			    char *buf) {
-	struct via686a_data *data = via686a_update_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	return sprintf(buf, "%d\n",
+अटल sमाप_प्रकार fan_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			अक्षर *buf) अणु
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	वापस प्र_लिखो(buf, "%d\n", FAN_FROM_REG(data->fan[nr],
+				DIV_FROM_REG(data->fan_भाग[nr])));
+पूर्ण
+अटल sमाप_प्रकार fan_min_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			    अक्षर *buf) अणु
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	वापस प्र_लिखो(buf, "%d\n",
 		FAN_FROM_REG(data->fan_min[nr],
-			     DIV_FROM_REG(data->fan_div[nr])));
-}
-static ssize_t fan_div_show(struct device *dev, struct device_attribute *da,
-			    char *buf) {
-	struct via686a_data *data = via686a_update_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	return sprintf(buf, "%d\n", DIV_FROM_REG(data->fan_div[nr]));
-}
-static ssize_t fan_min_store(struct device *dev, struct device_attribute *da,
-			     const char *buf, size_t count) {
-	struct via686a_data *data = dev_get_drvdata(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	unsigned long val;
-	int err;
+			     DIV_FROM_REG(data->fan_भाग[nr])));
+पूर्ण
+अटल sमाप_प्रकार fan_भाग_show(काष्ठा device *dev, काष्ठा device_attribute *da,
+			    अक्षर *buf) अणु
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	वापस प्र_लिखो(buf, "%d\n", DIV_FROM_REG(data->fan_भाग[nr]));
+पूर्ण
+अटल sमाप_प्रकार fan_min_store(काष्ठा device *dev, काष्ठा device_attribute *da,
+			     स्थिर अक्षर *buf, माप_प्रकार count) अणु
+	काष्ठा via686a_data *data = dev_get_drvdata(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	अचिन्हित दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
-
-	mutex_lock(&data->update_lock);
-	data->fan_min[nr] = FAN_TO_REG(val, DIV_FROM_REG(data->fan_div[nr]));
-	via686a_write_value(data, VIA686A_REG_FAN_MIN(nr+1), data->fan_min[nr]);
-	mutex_unlock(&data->update_lock);
-	return count;
-}
-static ssize_t fan_div_store(struct device *dev, struct device_attribute *da,
-			     const char *buf, size_t count) {
-	struct via686a_data *data = dev_get_drvdata(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int nr = attr->index;
-	int old;
-	unsigned long val;
-	int err;
-
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
-	old = via686a_read_value(data, VIA686A_REG_FANDIV);
-	data->fan_div[nr] = DIV_TO_REG(val);
-	old = (old & 0x0f) | (data->fan_div[1] << 6) | (data->fan_div[0] << 4);
-	via686a_write_value(data, VIA686A_REG_FANDIV, old);
+	data->fan_min[nr] = FAN_TO_REG(val, DIV_FROM_REG(data->fan_भाग[nr]));
+	via686a_ग_लिखो_value(data, VIA686A_REG_FAN_MIN(nr+1), data->fan_min[nr]);
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
+अटल sमाप_प्रकार fan_भाग_store(काष्ठा device *dev, काष्ठा device_attribute *da,
+			     स्थिर अक्षर *buf, माप_प्रकार count) अणु
+	काष्ठा via686a_data *data = dev_get_drvdata(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक nr = attr->index;
+	पूर्णांक old;
+	अचिन्हित दीर्घ val;
+	पूर्णांक err;
 
-static SENSOR_DEVICE_ATTR_RO(fan1_input, fan, 0);
-static SENSOR_DEVICE_ATTR_RW(fan1_min, fan_min, 0);
-static SENSOR_DEVICE_ATTR_RW(fan1_div, fan_div, 0);
-static SENSOR_DEVICE_ATTR_RO(fan2_input, fan, 1);
-static SENSOR_DEVICE_ATTR_RW(fan2_min, fan_min, 1);
-static SENSOR_DEVICE_ATTR_RW(fan2_div, fan_div, 1);
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
+
+	mutex_lock(&data->update_lock);
+	old = via686a_पढ़ो_value(data, VIA686A_REG_FANDIV);
+	data->fan_भाग[nr] = DIV_TO_REG(val);
+	old = (old & 0x0f) | (data->fan_भाग[1] << 6) | (data->fan_भाग[0] << 4);
+	via686a_ग_लिखो_value(data, VIA686A_REG_FANDIV, old);
+	mutex_unlock(&data->update_lock);
+	वापस count;
+पूर्ण
+
+अटल SENSOR_DEVICE_ATTR_RO(fan1_input, fan, 0);
+अटल SENSOR_DEVICE_ATTR_RW(fan1_min, fan_min, 0);
+अटल SENSOR_DEVICE_ATTR_RW(fan1_भाग, fan_भाग, 0);
+अटल SENSOR_DEVICE_ATTR_RO(fan2_input, fan, 1);
+अटल SENSOR_DEVICE_ATTR_RW(fan2_min, fan_min, 1);
+अटल SENSOR_DEVICE_ATTR_RW(fan2_भाग, fan_भाग, 1);
 
 /* Alarms */
-static ssize_t alarms_show(struct device *dev, struct device_attribute *attr,
-			   char *buf)
-{
-	struct via686a_data *data = via686a_update_device(dev);
-	return sprintf(buf, "%u\n", data->alarms);
-}
+अटल sमाप_प्रकार alarms_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	वापस प्र_लिखो(buf, "%u\n", data->alarms);
+पूर्ण
 
-static DEVICE_ATTR_RO(alarms);
+अटल DEVICE_ATTR_RO(alarms);
 
-static ssize_t alarm_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	int bitnr = to_sensor_dev_attr(attr)->index;
-	struct via686a_data *data = via686a_update_device(dev);
-	return sprintf(buf, "%u\n", (data->alarms >> bitnr) & 1);
-}
-static SENSOR_DEVICE_ATTR_RO(in0_alarm, alarm, 0);
-static SENSOR_DEVICE_ATTR_RO(in1_alarm, alarm, 1);
-static SENSOR_DEVICE_ATTR_RO(in2_alarm, alarm, 2);
-static SENSOR_DEVICE_ATTR_RO(in3_alarm, alarm, 3);
-static SENSOR_DEVICE_ATTR_RO(in4_alarm, alarm, 8);
-static SENSOR_DEVICE_ATTR_RO(temp1_alarm, alarm, 4);
-static SENSOR_DEVICE_ATTR_RO(temp2_alarm, alarm, 11);
-static SENSOR_DEVICE_ATTR_RO(temp3_alarm, alarm, 15);
-static SENSOR_DEVICE_ATTR_RO(fan1_alarm, alarm, 6);
-static SENSOR_DEVICE_ATTR_RO(fan2_alarm, alarm, 7);
+अटल sमाप_प्रकार alarm_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	पूर्णांक bitnr = to_sensor_dev_attr(attr)->index;
+	काष्ठा via686a_data *data = via686a_update_device(dev);
+	वापस प्र_लिखो(buf, "%u\n", (data->alarms >> bitnr) & 1);
+पूर्ण
+अटल SENSOR_DEVICE_ATTR_RO(in0_alarm, alarm, 0);
+अटल SENSOR_DEVICE_ATTR_RO(in1_alarm, alarm, 1);
+अटल SENSOR_DEVICE_ATTR_RO(in2_alarm, alarm, 2);
+अटल SENSOR_DEVICE_ATTR_RO(in3_alarm, alarm, 3);
+अटल SENSOR_DEVICE_ATTR_RO(in4_alarm, alarm, 8);
+अटल SENSOR_DEVICE_ATTR_RO(temp1_alarm, alarm, 4);
+अटल SENSOR_DEVICE_ATTR_RO(temp2_alarm, alarm, 11);
+अटल SENSOR_DEVICE_ATTR_RO(temp3_alarm, alarm, 15);
+अटल SENSOR_DEVICE_ATTR_RO(fan1_alarm, alarm, 6);
+अटल SENSOR_DEVICE_ATTR_RO(fan2_alarm, alarm, 7);
 
-static ssize_t name_show(struct device *dev, struct device_attribute
-			 *devattr, char *buf)
-{
-	struct via686a_data *data = dev_get_drvdata(dev);
-	return sprintf(buf, "%s\n", data->name);
-}
-static DEVICE_ATTR_RO(name);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute
+			 *devattr, अक्षर *buf)
+अणु
+	काष्ठा via686a_data *data = dev_get_drvdata(dev);
+	वापस प्र_लिखो(buf, "%s\n", data->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static struct attribute *via686a_attributes[] = {
+अटल काष्ठा attribute *via686a_attributes[] = अणु
 	&sensor_dev_attr_in0_input.dev_attr.attr,
 	&sensor_dev_attr_in1_input.dev_attr.attr,
 	&sensor_dev_attr_in2_input.dev_attr.attr,
@@ -640,50 +641,50 @@ static struct attribute *via686a_attributes[] = {
 	&sensor_dev_attr_fan2_input.dev_attr.attr,
 	&sensor_dev_attr_fan1_min.dev_attr.attr,
 	&sensor_dev_attr_fan2_min.dev_attr.attr,
-	&sensor_dev_attr_fan1_div.dev_attr.attr,
-	&sensor_dev_attr_fan2_div.dev_attr.attr,
+	&sensor_dev_attr_fan1_भाग.dev_attr.attr,
+	&sensor_dev_attr_fan2_भाग.dev_attr.attr,
 	&sensor_dev_attr_fan1_alarm.dev_attr.attr,
 	&sensor_dev_attr_fan2_alarm.dev_attr.attr,
 
 	&dev_attr_alarms.attr,
 	&dev_attr_name.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group via686a_group = {
+अटल स्थिर काष्ठा attribute_group via686a_group = अणु
 	.attrs = via686a_attributes,
-};
+पूर्ण;
 
-static struct platform_driver via686a_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver via686a_driver = अणु
+	.driver = अणु
 		.name	= "via686a",
-	},
+	पूर्ण,
 	.probe		= via686a_probe,
-	.remove		= via686a_remove,
-};
+	.हटाओ		= via686a_हटाओ,
+पूर्ण;
 
 /* This is called when the module is loaded */
-static int via686a_probe(struct platform_device *pdev)
-{
-	struct via686a_data *data;
-	struct resource *res;
-	int err;
+अटल पूर्णांक via686a_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा via686a_data *data;
+	काष्ठा resource *res;
+	पूर्णांक err;
 
 	/* Reserve the ISA region */
-	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	if (!devm_request_region(&pdev->dev, res->start, VIA686A_EXTENT,
-				 via686a_driver.driver.name)) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
+	अगर (!devm_request_region(&pdev->dev, res->start, VIA686A_EXTENT,
+				 via686a_driver.driver.name)) अणु
 		dev_err(&pdev->dev, "Region 0x%lx-0x%lx already in use!\n",
-			(unsigned long)res->start, (unsigned long)res->end);
-		return -ENODEV;
-	}
+			(अचिन्हित दीर्घ)res->start, (अचिन्हित दीर्घ)res->end);
+		वापस -ENODEV;
+	पूर्ण
 
-	data = devm_kzalloc(&pdev->dev, sizeof(struct via686a_data),
+	data = devm_kzalloc(&pdev->dev, माप(काष्ठा via686a_data),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 	data->addr = res->start;
 	data->name = "via686a";
 	mutex_init(&data->update_lock);
@@ -693,257 +694,257 @@ static int via686a_probe(struct platform_device *pdev)
 
 	/* Register sysfs hooks */
 	err = sysfs_create_group(&pdev->dev.kobj, &via686a_group);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	data->hwmon_dev = hwmon_device_register(&pdev->dev);
-	if (IS_ERR(data->hwmon_dev)) {
+	data->hwmon_dev = hwmon_device_रेजिस्टर(&pdev->dev);
+	अगर (IS_ERR(data->hwmon_dev)) अणु
 		err = PTR_ERR(data->hwmon_dev);
-		goto exit_remove_files;
-	}
+		जाओ निकास_हटाओ_files;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-exit_remove_files:
-	sysfs_remove_group(&pdev->dev.kobj, &via686a_group);
-	return err;
-}
+निकास_हटाओ_files:
+	sysfs_हटाओ_group(&pdev->dev.kobj, &via686a_group);
+	वापस err;
+पूर्ण
 
-static int via686a_remove(struct platform_device *pdev)
-{
-	struct via686a_data *data = platform_get_drvdata(pdev);
+अटल पूर्णांक via686a_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा via686a_data *data = platक्रमm_get_drvdata(pdev);
 
-	hwmon_device_unregister(data->hwmon_dev);
-	sysfs_remove_group(&pdev->dev.kobj, &via686a_group);
+	hwmon_device_unरेजिस्टर(data->hwmon_dev);
+	sysfs_हटाओ_group(&pdev->dev.kobj, &via686a_group);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void via686a_update_fan_div(struct via686a_data *data)
-{
-	int reg = via686a_read_value(data, VIA686A_REG_FANDIV);
-	data->fan_div[0] = (reg >> 4) & 0x03;
-	data->fan_div[1] = reg >> 6;
-}
+अटल व्योम via686a_update_fan_भाग(काष्ठा via686a_data *data)
+अणु
+	पूर्णांक reg = via686a_पढ़ो_value(data, VIA686A_REG_FANDIV);
+	data->fan_भाग[0] = (reg >> 4) & 0x03;
+	data->fan_भाग[1] = reg >> 6;
+पूर्ण
 
-static void via686a_init_device(struct via686a_data *data)
-{
+अटल व्योम via686a_init_device(काष्ठा via686a_data *data)
+अणु
 	u8 reg;
 
 	/* Start monitoring */
-	reg = via686a_read_value(data, VIA686A_REG_CONFIG);
-	via686a_write_value(data, VIA686A_REG_CONFIG, (reg | 0x01) & 0x7F);
+	reg = via686a_पढ़ो_value(data, VIA686A_REG_CONFIG);
+	via686a_ग_लिखो_value(data, VIA686A_REG_CONFIG, (reg | 0x01) & 0x7F);
 
-	/* Configure temp interrupt mode for continuous-interrupt operation */
-	reg = via686a_read_value(data, VIA686A_REG_TEMP_MODE);
-	via686a_write_value(data, VIA686A_REG_TEMP_MODE,
+	/* Configure temp पूर्णांकerrupt mode क्रम continuous-पूर्णांकerrupt operation */
+	reg = via686a_पढ़ो_value(data, VIA686A_REG_TEMP_MODE);
+	via686a_ग_लिखो_value(data, VIA686A_REG_TEMP_MODE,
 			    (reg & ~VIA686A_TEMP_MODE_MASK)
 			    | VIA686A_TEMP_MODE_CONTINUOUS);
 
-	/* Pre-read fan clock divisor values */
-	via686a_update_fan_div(data);
-}
+	/* Pre-पढ़ो fan घड़ी भागisor values */
+	via686a_update_fan_भाग(data);
+पूर्ण
 
-static struct via686a_data *via686a_update_device(struct device *dev)
-{
-	struct via686a_data *data = dev_get_drvdata(dev);
-	int i;
+अटल काष्ठा via686a_data *via686a_update_device(काष्ठा device *dev)
+अणु
+	काष्ठा via686a_data *data = dev_get_drvdata(dev);
+	पूर्णांक i;
 
 	mutex_lock(&data->update_lock);
 
-	if (time_after(jiffies, data->last_updated + HZ + HZ / 2)
-	    || !data->valid) {
-		for (i = 0; i <= 4; i++) {
+	अगर (समय_after(jअगरfies, data->last_updated + HZ + HZ / 2)
+	    || !data->valid) अणु
+		क्रम (i = 0; i <= 4; i++) अणु
 			data->in[i] =
-			    via686a_read_value(data, VIA686A_REG_IN(i));
-			data->in_min[i] = via686a_read_value(data,
+			    via686a_पढ़ो_value(data, VIA686A_REG_IN(i));
+			data->in_min[i] = via686a_पढ़ो_value(data,
 							     VIA686A_REG_IN_MIN
 							     (i));
 			data->in_max[i] =
-			    via686a_read_value(data, VIA686A_REG_IN_MAX(i));
-		}
-		for (i = 1; i <= 2; i++) {
+			    via686a_पढ़ो_value(data, VIA686A_REG_IN_MAX(i));
+		पूर्ण
+		क्रम (i = 1; i <= 2; i++) अणु
 			data->fan[i - 1] =
-			    via686a_read_value(data, VIA686A_REG_FAN(i));
-			data->fan_min[i - 1] = via686a_read_value(data,
+			    via686a_पढ़ो_value(data, VIA686A_REG_FAN(i));
+			data->fan_min[i - 1] = via686a_पढ़ो_value(data,
 						     VIA686A_REG_FAN_MIN(i));
-		}
-		for (i = 0; i <= 2; i++) {
-			data->temp[i] = via686a_read_value(data,
+		पूर्ण
+		क्रम (i = 0; i <= 2; i++) अणु
+			data->temp[i] = via686a_पढ़ो_value(data,
 						 VIA686A_REG_TEMP[i]) << 2;
 			data->temp_over[i] =
-			    via686a_read_value(data,
+			    via686a_पढ़ो_value(data,
 					       VIA686A_REG_TEMP_OVER[i]);
 			data->temp_hyst[i] =
-			    via686a_read_value(data,
+			    via686a_पढ़ो_value(data,
 					       VIA686A_REG_TEMP_HYST[i]);
-		}
+		पूर्ण
 		/*
 		 * add in lower 2 bits
 		 * temp1 uses bits 7-6 of VIA686A_REG_TEMP_LOW1
 		 * temp2 uses bits 5-4 of VIA686A_REG_TEMP_LOW23
 		 * temp3 uses bits 7-6 of VIA686A_REG_TEMP_LOW23
 		 */
-		data->temp[0] |= (via686a_read_value(data,
+		data->temp[0] |= (via686a_पढ़ो_value(data,
 						     VIA686A_REG_TEMP_LOW1)
 				  & 0xc0) >> 6;
 		data->temp[1] |=
-		    (via686a_read_value(data, VIA686A_REG_TEMP_LOW23) &
+		    (via686a_पढ़ो_value(data, VIA686A_REG_TEMP_LOW23) &
 		     0x30) >> 4;
 		data->temp[2] |=
-		    (via686a_read_value(data, VIA686A_REG_TEMP_LOW23) &
+		    (via686a_पढ़ो_value(data, VIA686A_REG_TEMP_LOW23) &
 		     0xc0) >> 6;
 
-		via686a_update_fan_div(data);
+		via686a_update_fan_भाग(data);
 		data->alarms =
-		    via686a_read_value(data,
+		    via686a_पढ़ो_value(data,
 				       VIA686A_REG_ALARM1) |
-		    (via686a_read_value(data, VIA686A_REG_ALARM2) << 8);
-		data->last_updated = jiffies;
+		    (via686a_पढ़ो_value(data, VIA686A_REG_ALARM2) << 8);
+		data->last_updated = jअगरfies;
 		data->valid = 1;
-	}
+	पूर्ण
 
 	mutex_unlock(&data->update_lock);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static const struct pci_device_id via686a_pci_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C686_4) },
-	{ }
-};
+अटल स्थिर काष्ठा pci_device_id via686a_pci_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C686_4) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, via686a_pci_ids);
 
-static int via686a_device_add(unsigned short address)
-{
-	struct resource res = {
+अटल पूर्णांक via686a_device_add(अचिन्हित लघु address)
+अणु
+	काष्ठा resource res = अणु
 		.start	= address,
 		.end	= address + VIA686A_EXTENT - 1,
 		.name	= "via686a",
 		.flags	= IORESOURCE_IO,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
 	err = acpi_check_resource_conflict(&res);
-	if (err)
-		goto exit;
+	अगर (err)
+		जाओ निकास;
 
-	pdev = platform_device_alloc("via686a", address);
-	if (!pdev) {
+	pdev = platक्रमm_device_alloc("via686a", address);
+	अगर (!pdev) अणु
 		err = -ENOMEM;
 		pr_err("Device allocation failed\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	err = platform_device_add_resources(pdev, &res, 1);
-	if (err) {
+	err = platक्रमm_device_add_resources(pdev, &res, 1);
+	अगर (err) अणु
 		pr_err("Device resource addition failed (%d)\n", err);
-		goto exit_device_put;
-	}
+		जाओ निकास_device_put;
+	पूर्ण
 
-	err = platform_device_add(pdev);
-	if (err) {
+	err = platक्रमm_device_add(pdev);
+	अगर (err) अणु
 		pr_err("Device addition failed (%d)\n", err);
-		goto exit_device_put;
-	}
+		जाओ निकास_device_put;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-exit_device_put:
-	platform_device_put(pdev);
-exit:
-	return err;
-}
+निकास_device_put:
+	platक्रमm_device_put(pdev);
+निकास:
+	वापस err;
+पूर्ण
 
-static int via686a_pci_probe(struct pci_dev *dev,
-				       const struct pci_device_id *id)
-{
+अटल पूर्णांक via686a_pci_probe(काष्ठा pci_dev *dev,
+				       स्थिर काष्ठा pci_device_id *id)
+अणु
 	u16 address, val;
 
-	if (force_addr) {
-		address = force_addr & ~(VIA686A_EXTENT - 1);
+	अगर (क्रमce_addr) अणु
+		address = क्रमce_addr & ~(VIA686A_EXTENT - 1);
 		dev_warn(&dev->dev, "Forcing ISA address 0x%x\n", address);
-		if (PCIBIOS_SUCCESSFUL !=
-		    pci_write_config_word(dev, VIA686A_BASE_REG, address | 1))
-			return -ENODEV;
-	}
-	if (PCIBIOS_SUCCESSFUL !=
-	    pci_read_config_word(dev, VIA686A_BASE_REG, &val))
-		return -ENODEV;
+		अगर (PCIBIOS_SUCCESSFUL !=
+		    pci_ग_लिखो_config_word(dev, VIA686A_BASE_REG, address | 1))
+			वापस -ENODEV;
+	पूर्ण
+	अगर (PCIBIOS_SUCCESSFUL !=
+	    pci_पढ़ो_config_word(dev, VIA686A_BASE_REG, &val))
+		वापस -ENODEV;
 
 	address = val & ~(VIA686A_EXTENT - 1);
-	if (address == 0) {
+	अगर (address == 0) अणु
 		dev_err(&dev->dev,
 			"base address not set - upgrade BIOS or use force_addr=0xaddr\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (PCIBIOS_SUCCESSFUL !=
-	    pci_read_config_word(dev, VIA686A_ENABLE_REG, &val))
-		return -ENODEV;
-	if (!(val & 0x0001)) {
-		if (!force_addr) {
+	अगर (PCIBIOS_SUCCESSFUL !=
+	    pci_पढ़ो_config_word(dev, VIA686A_ENABLE_REG, &val))
+		वापस -ENODEV;
+	अगर (!(val & 0x0001)) अणु
+		अगर (!क्रमce_addr) अणु
 			dev_warn(&dev->dev,
 				 "Sensors disabled, enable with force_addr=0x%x\n",
 				 address);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		dev_warn(&dev->dev, "Enabling sensors\n");
-		if (PCIBIOS_SUCCESSFUL !=
-		    pci_write_config_word(dev, VIA686A_ENABLE_REG,
+		अगर (PCIBIOS_SUCCESSFUL !=
+		    pci_ग_लिखो_config_word(dev, VIA686A_ENABLE_REG,
 					  val | 0x0001))
-			return -ENODEV;
-	}
+			वापस -ENODEV;
+	पूर्ण
 
-	if (platform_driver_register(&via686a_driver))
-		goto exit;
+	अगर (platक्रमm_driver_रेजिस्टर(&via686a_driver))
+		जाओ निकास;
 
 	/* Sets global pdev as a side effect */
-	if (via686a_device_add(address))
-		goto exit_unregister;
+	अगर (via686a_device_add(address))
+		जाओ निकास_unरेजिस्टर;
 
 	/*
-	 * Always return failure here.  This is to allow other drivers to bind
-	 * to this pci device.  We don't really want to have control over the
-	 * pci device, we only wanted to read as few register values from it.
+	 * Always वापस failure here.  This is to allow other drivers to bind
+	 * to this pci device.  We करोn't really want to have control over the
+	 * pci device, we only wanted to पढ़ो as few रेजिस्टर values from it.
 	 */
 	s_bridge = pci_dev_get(dev);
-	return -ENODEV;
+	वापस -ENODEV;
 
-exit_unregister:
-	platform_driver_unregister(&via686a_driver);
-exit:
-	return -ENODEV;
-}
+निकास_unरेजिस्टर:
+	platक्रमm_driver_unरेजिस्टर(&via686a_driver);
+निकास:
+	वापस -ENODEV;
+पूर्ण
 
-static struct pci_driver via686a_pci_driver = {
+अटल काष्ठा pci_driver via686a_pci_driver = अणु
 	.name		= "via686a",
 	.id_table	= via686a_pci_ids,
 	.probe		= via686a_pci_probe,
-};
+पूर्ण;
 
-static int __init sm_via686a_init(void)
-{
-	return pci_register_driver(&via686a_pci_driver);
-}
+अटल पूर्णांक __init sm_via686a_init(व्योम)
+अणु
+	वापस pci_रेजिस्टर_driver(&via686a_pci_driver);
+पूर्ण
 
-static void __exit sm_via686a_exit(void)
-{
-	pci_unregister_driver(&via686a_pci_driver);
-	if (s_bridge != NULL) {
-		platform_device_unregister(pdev);
-		platform_driver_unregister(&via686a_driver);
+अटल व्योम __निकास sm_via686a_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&via686a_pci_driver);
+	अगर (s_bridge != शून्य) अणु
+		platक्रमm_device_unरेजिस्टर(pdev);
+		platक्रमm_driver_unरेजिस्टर(&via686a_driver);
 		pci_dev_put(s_bridge);
-		s_bridge = NULL;
-	}
-}
+		s_bridge = शून्य;
+	पूर्ण
+पूर्ण
 
-MODULE_AUTHOR("Kyösti Mälkki <kmalkki@cc.hut.fi>, "
+MODULE_AUTHOR("Kyथघsti Mथअlkki <kmalkki@cc.hut.fi>, "
 	      "Mark Studebaker <mdsxyz123@yahoo.com> "
 	      "and Bob Dougherty <bobd@stanford.edu>");
 MODULE_DESCRIPTION("VIA 686A Sensor device");
 MODULE_LICENSE("GPL");
 
 module_init(sm_via686a_init);
-module_exit(sm_via686a_exit);
+module_निकास(sm_via686a_निकास);

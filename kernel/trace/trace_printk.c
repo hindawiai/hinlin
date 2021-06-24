@@ -1,400 +1,401 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * trace binary printk
+ * trace binary prपूर्णांकk
  *
  * Copyright (C) 2008 Lai Jiangshan <laijs@cn.fujitsu.com>
  *
  */
-#include <linux/seq_file.h>
-#include <linux/security.h>
-#include <linux/uaccess.h>
-#include <linux/kernel.h>
-#include <linux/ftrace.h>
-#include <linux/string.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/ctype.h>
-#include <linux/list.h>
-#include <linux/slab.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/security.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
 
-#include "trace.h"
+#समावेश "trace.h"
 
-#ifdef CONFIG_MODULES
+#अगर_घोषित CONFIG_MODULES
 
 /*
- * modules trace_printk()'s formats are autosaved in struct trace_bprintk_fmt
- * which are queued on trace_bprintk_fmt_list.
+ * modules trace_prपूर्णांकk()'s क्रमmats are स्वतःsaved in काष्ठा trace_bprपूर्णांकk_fmt
+ * which are queued on trace_bprपूर्णांकk_fmt_list.
  */
-static LIST_HEAD(trace_bprintk_fmt_list);
+अटल LIST_HEAD(trace_bprपूर्णांकk_fmt_list);
 
-/* serialize accesses to trace_bprintk_fmt_list */
-static DEFINE_MUTEX(btrace_mutex);
+/* serialize accesses to trace_bprपूर्णांकk_fmt_list */
+अटल DEFINE_MUTEX(btrace_mutex);
 
-struct trace_bprintk_fmt {
-	struct list_head list;
-	const char *fmt;
-};
+काष्ठा trace_bprपूर्णांकk_fmt अणु
+	काष्ठा list_head list;
+	स्थिर अक्षर *fmt;
+पूर्ण;
 
-static inline struct trace_bprintk_fmt *lookup_format(const char *fmt)
-{
-	struct trace_bprintk_fmt *pos;
+अटल अंतरभूत काष्ठा trace_bprपूर्णांकk_fmt *lookup_क्रमmat(स्थिर अक्षर *fmt)
+अणु
+	काष्ठा trace_bprपूर्णांकk_fmt *pos;
 
-	if (!fmt)
-		return ERR_PTR(-EINVAL);
+	अगर (!fmt)
+		वापस ERR_PTR(-EINVAL);
 
-	list_for_each_entry(pos, &trace_bprintk_fmt_list, list) {
-		if (!strcmp(pos->fmt, fmt))
-			return pos;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(pos, &trace_bprपूर्णांकk_fmt_list, list) अणु
+		अगर (!म_भेद(pos->fmt, fmt))
+			वापस pos;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static
-void hold_module_trace_bprintk_format(const char **start, const char **end)
-{
-	const char **iter;
-	char *fmt;
+अटल
+व्योम hold_module_trace_bprपूर्णांकk_क्रमmat(स्थिर अक्षर **start, स्थिर अक्षर **end)
+अणु
+	स्थिर अक्षर **iter;
+	अक्षर *fmt;
 
-	/* allocate the trace_printk per cpu buffers */
-	if (start != end)
-		trace_printk_init_buffers();
+	/* allocate the trace_prपूर्णांकk per cpu buffers */
+	अगर (start != end)
+		trace_prपूर्णांकk_init_buffers();
 
 	mutex_lock(&btrace_mutex);
-	for (iter = start; iter < end; iter++) {
-		struct trace_bprintk_fmt *tb_fmt = lookup_format(*iter);
-		if (tb_fmt) {
-			if (!IS_ERR(tb_fmt))
+	क्रम (iter = start; iter < end; iter++) अणु
+		काष्ठा trace_bprपूर्णांकk_fmt *tb_fmt = lookup_क्रमmat(*iter);
+		अगर (tb_fmt) अणु
+			अगर (!IS_ERR(tb_fmt))
 				*iter = tb_fmt->fmt;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		fmt = NULL;
-		tb_fmt = kmalloc(sizeof(*tb_fmt), GFP_KERNEL);
-		if (tb_fmt) {
-			fmt = kmalloc(strlen(*iter) + 1, GFP_KERNEL);
-			if (fmt) {
-				list_add_tail(&tb_fmt->list, &trace_bprintk_fmt_list);
-				strcpy(fmt, *iter);
+		fmt = शून्य;
+		tb_fmt = kदो_स्मृति(माप(*tb_fmt), GFP_KERNEL);
+		अगर (tb_fmt) अणु
+			fmt = kदो_स्मृति(म_माप(*iter) + 1, GFP_KERNEL);
+			अगर (fmt) अणु
+				list_add_tail(&tb_fmt->list, &trace_bprपूर्णांकk_fmt_list);
+				म_नकल(fmt, *iter);
 				tb_fmt->fmt = fmt;
-			} else
-				kfree(tb_fmt);
-		}
+			पूर्ण अन्यथा
+				kमुक्त(tb_fmt);
+		पूर्ण
 		*iter = fmt;
 
-	}
+	पूर्ण
 	mutex_unlock(&btrace_mutex);
-}
+पूर्ण
 
-static int module_trace_bprintk_format_notify(struct notifier_block *self,
-		unsigned long val, void *data)
-{
-	struct module *mod = data;
-	if (mod->num_trace_bprintk_fmt) {
-		const char **start = mod->trace_bprintk_fmt_start;
-		const char **end = start + mod->num_trace_bprintk_fmt;
+अटल पूर्णांक module_trace_bprपूर्णांकk_क्रमmat_notअगरy(काष्ठा notअगरier_block *self,
+		अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	काष्ठा module *mod = data;
+	अगर (mod->num_trace_bprपूर्णांकk_fmt) अणु
+		स्थिर अक्षर **start = mod->trace_bprपूर्णांकk_fmt_start;
+		स्थिर अक्षर **end = start + mod->num_trace_bprपूर्णांकk_fmt;
 
-		if (val == MODULE_STATE_COMING)
-			hold_module_trace_bprintk_format(start, end);
-	}
-	return NOTIFY_OK;
-}
+		अगर (val == MODULE_STATE_COMING)
+			hold_module_trace_bprपूर्णांकk_क्रमmat(start, end);
+	पूर्ण
+	वापस NOTIFY_OK;
+पूर्ण
 
 /*
- * The debugfs/tracing/printk_formats file maps the addresses with
- * the ASCII formats that are used in the bprintk events in the
+ * The debugfs/tracing/prपूर्णांकk_क्रमmats file maps the addresses with
+ * the ASCII क्रमmats that are used in the bprपूर्णांकk events in the
  * buffer. For userspace tools to be able to decode the events from
- * the buffer, they need to be able to map the address with the format.
+ * the buffer, they need to be able to map the address with the क्रमmat.
  *
- * The addresses of the bprintk formats are in their own section
- * __trace_printk_fmt. But for modules we copy them into a link list.
- * The code to print the formats and their addresses passes around the
- * address of the fmt string. If the fmt address passed into the seq
- * functions is within the kernel core __trace_printk_fmt section, then
- * it simply uses the next pointer in the list.
+ * The addresses of the bprपूर्णांकk क्रमmats are in their own section
+ * __trace_prपूर्णांकk_fmt. But क्रम modules we copy them पूर्णांकo a link list.
+ * The code to prपूर्णांक the क्रमmats and their addresses passes around the
+ * address of the fmt string. If the fmt address passed पूर्णांकo the seq
+ * functions is within the kernel core __trace_prपूर्णांकk_fmt section, then
+ * it simply uses the next poपूर्णांकer in the list.
  *
- * When the fmt pointer is outside the kernel core __trace_printk_fmt
- * section, then we need to read the link list pointers. The trick is
+ * When the fmt poपूर्णांकer is outside the kernel core __trace_prपूर्णांकk_fmt
+ * section, then we need to पढ़ो the link list poपूर्णांकers. The trick is
  * we pass the address of the string to the seq function just like
- * we do for the kernel core formats. To get back the structure that
- * holds the format, we simply use container_of() and then go to the
- * next format in the list.
+ * we करो क्रम the kernel core क्रमmats. To get back the काष्ठाure that
+ * holds the क्रमmat, we simply use container_of() and then go to the
+ * next क्रमmat in the list.
  */
-static const char **
-find_next_mod_format(int start_index, void *v, const char **fmt, loff_t *pos)
-{
-	struct trace_bprintk_fmt *mod_fmt;
+अटल स्थिर अक्षर **
+find_next_mod_क्रमmat(पूर्णांक start_index, व्योम *v, स्थिर अक्षर **fmt, loff_t *pos)
+अणु
+	काष्ठा trace_bprपूर्णांकk_fmt *mod_fmt;
 
-	if (list_empty(&trace_bprintk_fmt_list))
-		return NULL;
+	अगर (list_empty(&trace_bprपूर्णांकk_fmt_list))
+		वापस शून्य;
 
 	/*
-	 * v will point to the address of the fmt record from t_next
-	 * v will be NULL from t_start.
-	 * If this is the first pointer or called from start
+	 * v will poपूर्णांक to the address of the fmt record from t_next
+	 * v will be शून्य from t_start.
+	 * If this is the first poपूर्णांकer or called from start
 	 * then we need to walk the list.
 	 */
-	if (!v || start_index == *pos) {
-		struct trace_bprintk_fmt *p;
+	अगर (!v || start_index == *pos) अणु
+		काष्ठा trace_bprपूर्णांकk_fmt *p;
 
 		/* search the module list */
-		list_for_each_entry(p, &trace_bprintk_fmt_list, list) {
-			if (start_index == *pos)
-				return &p->fmt;
+		list_क्रम_each_entry(p, &trace_bprपूर्णांकk_fmt_list, list) अणु
+			अगर (start_index == *pos)
+				वापस &p->fmt;
 			start_index++;
-		}
+		पूर्ण
 		/* pos > index */
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
-	 * v points to the address of the fmt field in the mod list
-	 * structure that holds the module print format.
+	 * v poपूर्णांकs to the address of the fmt field in the mod list
+	 * काष्ठाure that holds the module prपूर्णांक क्रमmat.
 	 */
 	mod_fmt = container_of(v, typeof(*mod_fmt), fmt);
-	if (mod_fmt->list.next == &trace_bprintk_fmt_list)
-		return NULL;
+	अगर (mod_fmt->list.next == &trace_bprपूर्णांकk_fmt_list)
+		वापस शून्य;
 
 	mod_fmt = container_of(mod_fmt->list.next, typeof(*mod_fmt), list);
 
-	return &mod_fmt->fmt;
-}
+	वापस &mod_fmt->fmt;
+पूर्ण
 
-static void format_mod_start(void)
-{
+अटल व्योम क्रमmat_mod_start(व्योम)
+अणु
 	mutex_lock(&btrace_mutex);
-}
+पूर्ण
 
-static void format_mod_stop(void)
-{
+अटल व्योम क्रमmat_mod_stop(व्योम)
+अणु
 	mutex_unlock(&btrace_mutex);
-}
+पूर्ण
 
-#else /* !CONFIG_MODULES */
-__init static int
-module_trace_bprintk_format_notify(struct notifier_block *self,
-		unsigned long val, void *data)
-{
-	return NOTIFY_OK;
-}
-static inline const char **
-find_next_mod_format(int start_index, void *v, const char **fmt, loff_t *pos)
-{
-	return NULL;
-}
-static inline void format_mod_start(void) { }
-static inline void format_mod_stop(void) { }
-#endif /* CONFIG_MODULES */
+#अन्यथा /* !CONFIG_MODULES */
+__init अटल पूर्णांक
+module_trace_bprपूर्णांकk_क्रमmat_notअगरy(काष्ठा notअगरier_block *self,
+		अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	वापस NOTIFY_OK;
+पूर्ण
+अटल अंतरभूत स्थिर अक्षर **
+find_next_mod_क्रमmat(पूर्णांक start_index, व्योम *v, स्थिर अक्षर **fmt, loff_t *pos)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत व्योम क्रमmat_mod_start(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम क्रमmat_mod_stop(व्योम) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_MODULES */
 
-static bool __read_mostly trace_printk_enabled = true;
+अटल bool __पढ़ो_mostly trace_prपूर्णांकk_enabled = true;
 
-void trace_printk_control(bool enabled)
-{
-	trace_printk_enabled = enabled;
-}
+व्योम trace_prपूर्णांकk_control(bool enabled)
+अणु
+	trace_prपूर्णांकk_enabled = enabled;
+पूर्ण
 
-__initdata_or_module static
-struct notifier_block module_trace_bprintk_format_nb = {
-	.notifier_call = module_trace_bprintk_format_notify,
-};
+__initdata_or_module अटल
+काष्ठा notअगरier_block module_trace_bprपूर्णांकk_क्रमmat_nb = अणु
+	.notअगरier_call = module_trace_bprपूर्णांकk_क्रमmat_notअगरy,
+पूर्ण;
 
-int __trace_bprintk(unsigned long ip, const char *fmt, ...)
-{
-	int ret;
-	va_list ap;
+पूर्णांक __trace_bprपूर्णांकk(अचिन्हित दीर्घ ip, स्थिर अक्षर *fmt, ...)
+अणु
+	पूर्णांक ret;
+	बहु_सूची ap;
 
-	if (unlikely(!fmt))
-		return 0;
+	अगर (unlikely(!fmt))
+		वापस 0;
 
-	if (!trace_printk_enabled)
-		return 0;
+	अगर (!trace_prपूर्णांकk_enabled)
+		वापस 0;
 
-	va_start(ap, fmt);
-	ret = trace_vbprintk(ip, fmt, ap);
-	va_end(ap);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(__trace_bprintk);
+	बहु_शुरू(ap, fmt);
+	ret = trace_vbprपूर्णांकk(ip, fmt, ap);
+	बहु_पूर्ण(ap);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(__trace_bprपूर्णांकk);
 
-int __ftrace_vbprintk(unsigned long ip, const char *fmt, va_list ap)
-{
-	if (unlikely(!fmt))
-		return 0;
+पूर्णांक __ftrace_vbprपूर्णांकk(अचिन्हित दीर्घ ip, स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
+	अगर (unlikely(!fmt))
+		वापस 0;
 
-	if (!trace_printk_enabled)
-		return 0;
+	अगर (!trace_prपूर्णांकk_enabled)
+		वापस 0;
 
-	return trace_vbprintk(ip, fmt, ap);
-}
-EXPORT_SYMBOL_GPL(__ftrace_vbprintk);
+	वापस trace_vbprपूर्णांकk(ip, fmt, ap);
+पूर्ण
+EXPORT_SYMBOL_GPL(__ftrace_vbprपूर्णांकk);
 
-int __trace_printk(unsigned long ip, const char *fmt, ...)
-{
-	int ret;
-	va_list ap;
+पूर्णांक __trace_prपूर्णांकk(अचिन्हित दीर्घ ip, स्थिर अक्षर *fmt, ...)
+अणु
+	पूर्णांक ret;
+	बहु_सूची ap;
 
-	if (!trace_printk_enabled)
-		return 0;
+	अगर (!trace_prपूर्णांकk_enabled)
+		वापस 0;
 
-	va_start(ap, fmt);
-	ret = trace_vprintk(ip, fmt, ap);
-	va_end(ap);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(__trace_printk);
+	बहु_शुरू(ap, fmt);
+	ret = trace_vprपूर्णांकk(ip, fmt, ap);
+	बहु_पूर्ण(ap);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(__trace_prपूर्णांकk);
 
-int __ftrace_vprintk(unsigned long ip, const char *fmt, va_list ap)
-{
-	if (!trace_printk_enabled)
-		return 0;
+पूर्णांक __ftrace_vprपूर्णांकk(अचिन्हित दीर्घ ip, स्थिर अक्षर *fmt, बहु_सूची ap)
+अणु
+	अगर (!trace_prपूर्णांकk_enabled)
+		वापस 0;
 
-	return trace_vprintk(ip, fmt, ap);
-}
-EXPORT_SYMBOL_GPL(__ftrace_vprintk);
+	वापस trace_vprपूर्णांकk(ip, fmt, ap);
+पूर्ण
+EXPORT_SYMBOL_GPL(__ftrace_vprपूर्णांकk);
 
-bool trace_is_tracepoint_string(const char *str)
-{
-	const char **ptr = __start___tracepoint_str;
+bool trace_is_tracepoपूर्णांक_string(स्थिर अक्षर *str)
+अणु
+	स्थिर अक्षर **ptr = __start___tracepoपूर्णांक_str;
 
-	for (ptr = __start___tracepoint_str; ptr < __stop___tracepoint_str; ptr++) {
-		if (str == *ptr)
-			return true;
-	}
-	return false;
-}
+	क्रम (ptr = __start___tracepoपूर्णांक_str; ptr < __stop___tracepoपूर्णांक_str; ptr++) अणु
+		अगर (str == *ptr)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static const char **find_next(void *v, loff_t *pos)
-{
-	const char **fmt = v;
-	int start_index;
-	int last_index;
+अटल स्थिर अक्षर **find_next(व्योम *v, loff_t *pos)
+अणु
+	स्थिर अक्षर **fmt = v;
+	पूर्णांक start_index;
+	पूर्णांक last_index;
 
-	start_index = __stop___trace_bprintk_fmt - __start___trace_bprintk_fmt;
+	start_index = __stop___trace_bprपूर्णांकk_fmt - __start___trace_bprपूर्णांकk_fmt;
 
-	if (*pos < start_index)
-		return __start___trace_bprintk_fmt + *pos;
+	अगर (*pos < start_index)
+		वापस __start___trace_bprपूर्णांकk_fmt + *pos;
 
 	/*
-	 * The __tracepoint_str section is treated the same as the
-	 * __trace_printk_fmt section. The difference is that the
-	 * __trace_printk_fmt section should only be used by trace_printk()
-	 * in a debugging environment, as if anything exists in that section
+	 * The __tracepoपूर्णांक_str section is treated the same as the
+	 * __trace_prपूर्णांकk_fmt section. The dअगरference is that the
+	 * __trace_prपूर्णांकk_fmt section should only be used by trace_prपूर्णांकk()
+	 * in a debugging environment, as अगर anything exists in that section
 	 * the trace_prink() helper buffers are allocated, which would just
 	 * waste space in a production environment.
 	 *
-	 * The __tracepoint_str sections on the other hand are used by
-	 * tracepoints which need to map pointers to their strings to
-	 * the ASCII text for userspace.
+	 * The __tracepoपूर्णांक_str sections on the other hand are used by
+	 * tracepoपूर्णांकs which need to map poपूर्णांकers to their strings to
+	 * the ASCII text क्रम userspace.
 	 */
 	last_index = start_index;
-	start_index = __stop___tracepoint_str - __start___tracepoint_str;
+	start_index = __stop___tracepoपूर्णांक_str - __start___tracepoपूर्णांक_str;
 
-	if (*pos < last_index + start_index)
-		return __start___tracepoint_str + (*pos - last_index);
+	अगर (*pos < last_index + start_index)
+		वापस __start___tracepoपूर्णांक_str + (*pos - last_index);
 
 	start_index += last_index;
-	return find_next_mod_format(start_index, v, fmt, pos);
-}
+	वापस find_next_mod_क्रमmat(start_index, v, fmt, pos);
+पूर्ण
 
-static void *
-t_start(struct seq_file *m, loff_t *pos)
-{
-	format_mod_start();
-	return find_next(NULL, pos);
-}
+अटल व्योम *
+t_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	क्रमmat_mod_start();
+	वापस find_next(शून्य, pos);
+पूर्ण
 
-static void *t_next(struct seq_file *m, void * v, loff_t *pos)
-{
+अटल व्योम *t_next(काष्ठा seq_file *m, व्योम * v, loff_t *pos)
+अणु
 	(*pos)++;
-	return find_next(v, pos);
-}
+	वापस find_next(v, pos);
+पूर्ण
 
-static int t_show(struct seq_file *m, void *v)
-{
-	const char **fmt = v;
-	const char *str = *fmt;
-	int i;
+अटल पूर्णांक t_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	स्थिर अक्षर **fmt = v;
+	स्थिर अक्षर *str = *fmt;
+	पूर्णांक i;
 
-	if (!*fmt)
-		return 0;
+	अगर (!*fmt)
+		वापस 0;
 
-	seq_printf(m, "0x%lx : \"", *(unsigned long *)fmt);
+	seq_म_लिखो(m, "0x%lx : \"", *(अचिन्हित दीर्घ *)fmt);
 
 	/*
-	 * Tabs and new lines need to be converted.
+	 * Tअसल and new lines need to be converted.
 	 */
-	for (i = 0; str[i]; i++) {
-		switch (str[i]) {
-		case '\n':
-			seq_puts(m, "\\n");
-			break;
-		case '\t':
-			seq_puts(m, "\\t");
-			break;
-		case '\\':
-			seq_putc(m, '\\');
-			break;
-		case '"':
-			seq_puts(m, "\\\"");
-			break;
-		default:
-			seq_putc(m, str[i]);
-		}
-	}
-	seq_puts(m, "\"\n");
+	क्रम (i = 0; str[i]; i++) अणु
+		चयन (str[i]) अणु
+		हाल '\n':
+			seq_माला_दो(m, "\\n");
+			अवरोध;
+		हाल '\t':
+			seq_माला_दो(m, "\\t");
+			अवरोध;
+		हाल '\\':
+			seq_अ_दो(m, '\\');
+			अवरोध;
+		हाल '"':
+			seq_माला_दो(m, "\\\"");
+			अवरोध;
+		शेष:
+			seq_अ_दो(m, str[i]);
+		पूर्ण
+	पूर्ण
+	seq_माला_दो(m, "\"\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void t_stop(struct seq_file *m, void *p)
-{
-	format_mod_stop();
-}
+अटल व्योम t_stop(काष्ठा seq_file *m, व्योम *p)
+अणु
+	क्रमmat_mod_stop();
+पूर्ण
 
-static const struct seq_operations show_format_seq_ops = {
+अटल स्थिर काष्ठा seq_operations show_क्रमmat_seq_ops = अणु
 	.start = t_start,
 	.next = t_next,
 	.show = t_show,
 	.stop = t_stop,
-};
+पूर्ण;
 
-static int
-ftrace_formats_open(struct inode *inode, struct file *file)
-{
-	int ret;
+अटल पूर्णांक
+ftrace_क्रमmats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret;
 
-	ret = security_locked_down(LOCKDOWN_TRACEFS);
-	if (ret)
-		return ret;
+	ret = security_locked_करोwn(LOCKDOWN_TRACEFS);
+	अगर (ret)
+		वापस ret;
 
-	return seq_open(file, &show_format_seq_ops);
-}
+	वापस seq_खोलो(file, &show_क्रमmat_seq_ops);
+पूर्ण
 
-static const struct file_operations ftrace_formats_fops = {
-	.open = ftrace_formats_open,
-	.read = seq_read,
+अटल स्थिर काष्ठा file_operations ftrace_क्रमmats_fops = अणु
+	.खोलो = ftrace_क्रमmats_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = seq_release,
-};
+पूर्ण;
 
-static __init int init_trace_printk_function_export(void)
-{
-	int ret;
+अटल __init पूर्णांक init_trace_prपूर्णांकk_function_export(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = tracing_init_dentry();
-	if (ret)
-		return 0;
+	अगर (ret)
+		वापस 0;
 
-	trace_create_file("printk_formats", 0444, NULL,
-				    NULL, &ftrace_formats_fops);
+	trace_create_file("printk_formats", 0444, शून्य,
+				    शून्य, &ftrace_क्रमmats_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-fs_initcall(init_trace_printk_function_export);
+fs_initcall(init_trace_prपूर्णांकk_function_export);
 
-static __init int init_trace_printk(void)
-{
-	return register_module_notifier(&module_trace_bprintk_format_nb);
-}
+अटल __init पूर्णांक init_trace_prपूर्णांकk(व्योम)
+अणु
+	वापस रेजिस्टर_module_notअगरier(&module_trace_bprपूर्णांकk_क्रमmat_nb);
+पूर्ण
 
-early_initcall(init_trace_printk);
+early_initcall(init_trace_prपूर्णांकk);

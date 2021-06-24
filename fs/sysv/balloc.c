@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/sysv/balloc.c
  *
- *  minix/bitmap.c
+ *  minix/biपंचांगap.c
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  ext/freelists.c
+ *  ext/मुक्तlists.c
  *  Copyright (C) 1992  Remy Card (card@masi.ibp.fr)
  *
  *  xenix/alloc.c
@@ -17,224 +18,224 @@
  *  sysv/balloc.c
  *  Copyright (C) 1993  Bruno Haible
  *
- *  This file contains code for allocating/freeing blocks.
+ *  This file contains code क्रम allocating/मुक्तing blocks.
  */
 
-#include <linux/buffer_head.h>
-#include <linux/string.h>
-#include "sysv.h"
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/माला.स>
+#समावेश "sysv.h"
 
-/* We don't trust the value of
-   sb->sv_sbd2->s_tfree = *sb->sv_free_blocks
+/* We करोn't trust the value of
+   sb->sv_sbd2->s_tमुक्त = *sb->sv_मुक्त_blocks
    but we nevertheless keep it up to date. */
 
-static inline sysv_zone_t *get_chunk(struct super_block *sb, struct buffer_head *bh)
-{
-	char *bh_data = bh->b_data;
+अटल अंतरभूत sysv_zone_t *get_chunk(काष्ठा super_block *sb, काष्ठा buffer_head *bh)
+अणु
+	अक्षर *bh_data = bh->b_data;
 
-	if (SYSV_SB(sb)->s_type == FSTYPE_SYSV4)
-		return (sysv_zone_t*)(bh_data+4);
-	else
-		return (sysv_zone_t*)(bh_data+2);
-}
+	अगर (SYSV_SB(sb)->s_type == FSTYPE_SYSV4)
+		वापस (sysv_zone_t*)(bh_data+4);
+	अन्यथा
+		वापस (sysv_zone_t*)(bh_data+2);
+पूर्ण
 
 /* NOTE NOTE NOTE: nr is a block number _as_ _stored_ _on_ _disk_ */
 
-void sysv_free_block(struct super_block * sb, sysv_zone_t nr)
-{
-	struct sysv_sb_info * sbi = SYSV_SB(sb);
-	struct buffer_head * bh;
+व्योम sysv_मुक्त_block(काष्ठा super_block * sb, sysv_zone_t nr)
+अणु
+	काष्ठा sysv_sb_info * sbi = SYSV_SB(sb);
+	काष्ठा buffer_head * bh;
 	sysv_zone_t *blocks = sbi->s_bcache;
-	unsigned count;
-	unsigned block = fs32_to_cpu(sbi, nr);
+	अचिन्हित count;
+	अचिन्हित block = fs32_to_cpu(sbi, nr);
 
 	/*
-	 * This code does not work at all for AFS (it has a bitmap
-	 * free list).  As AFS is supposed to be read-only no one
-	 * should call this for an AFS filesystem anyway...
+	 * This code करोes not work at all क्रम AFS (it has a biपंचांगap
+	 * मुक्त list).  As AFS is supposed to be पढ़ो-only no one
+	 * should call this क्रम an AFS fileप्रणाली anyway...
 	 */
-	if (sbi->s_type == FSTYPE_AFS)
-		return;
+	अगर (sbi->s_type == FSTYPE_AFS)
+		वापस;
 
-	if (block < sbi->s_firstdatazone || block >= sbi->s_nzones) {
-		printk("sysv_free_block: trying to free block not in datazone\n");
-		return;
-	}
+	अगर (block < sbi->s_firstdatazone || block >= sbi->s_nzones) अणु
+		prपूर्णांकk("sysv_free_block: trying to free block not in datazone\n");
+		वापस;
+	पूर्ण
 
 	mutex_lock(&sbi->s_lock);
 	count = fs16_to_cpu(sbi, *sbi->s_bcache_count);
 
-	if (count > sbi->s_flc_size) {
-		printk("sysv_free_block: flc_count > flc_size\n");
+	अगर (count > sbi->s_flc_size) अणु
+		prपूर्णांकk("sysv_free_block: flc_count > flc_size\n");
 		mutex_unlock(&sbi->s_lock);
-		return;
-	}
-	/* If the free list head in super-block is full, it is copied
-	 * into this block being freed, ditto if it's completely empty
+		वापस;
+	पूर्ण
+	/* If the मुक्त list head in super-block is full, it is copied
+	 * पूर्णांकo this block being मुक्तd, ditto अगर it's completely empty
 	 * (applies only on Coherent).
 	 */
-	if (count == sbi->s_flc_size || count == 0) {
+	अगर (count == sbi->s_flc_size || count == 0) अणु
 		block += sbi->s_block_base;
 		bh = sb_getblk(sb, block);
-		if (!bh) {
-			printk("sysv_free_block: getblk() failed\n");
+		अगर (!bh) अणु
+			prपूर्णांकk("sysv_free_block: getblk() failed\n");
 			mutex_unlock(&sbi->s_lock);
-			return;
-		}
-		memset(bh->b_data, 0, sb->s_blocksize);
+			वापस;
+		पूर्ण
+		स_रखो(bh->b_data, 0, sb->s_blocksize);
 		*(__fs16*)bh->b_data = cpu_to_fs16(sbi, count);
-		memcpy(get_chunk(sb,bh), blocks, count * sizeof(sysv_zone_t));
+		स_नकल(get_chunk(sb,bh), blocks, count * माप(sysv_zone_t));
 		mark_buffer_dirty(bh);
 		set_buffer_uptodate(bh);
-		brelse(bh);
+		brअन्यथा(bh);
 		count = 0;
-	}
+	पूर्ण
 	sbi->s_bcache[count++] = nr;
 
 	*sbi->s_bcache_count = cpu_to_fs16(sbi, count);
-	fs32_add(sbi, sbi->s_free_blocks, 1);
+	fs32_add(sbi, sbi->s_मुक्त_blocks, 1);
 	dirty_sb(sb);
 	mutex_unlock(&sbi->s_lock);
-}
+पूर्ण
 
-sysv_zone_t sysv_new_block(struct super_block * sb)
-{
-	struct sysv_sb_info *sbi = SYSV_SB(sb);
-	unsigned int block;
+sysv_zone_t sysv_new_block(काष्ठा super_block * sb)
+अणु
+	काष्ठा sysv_sb_info *sbi = SYSV_SB(sb);
+	अचिन्हित पूर्णांक block;
 	sysv_zone_t nr;
-	struct buffer_head * bh;
-	unsigned count;
+	काष्ठा buffer_head * bh;
+	अचिन्हित count;
 
 	mutex_lock(&sbi->s_lock);
 	count = fs16_to_cpu(sbi, *sbi->s_bcache_count);
 
-	if (count == 0) /* Applies only to Coherent FS */
-		goto Enospc;
+	अगर (count == 0) /* Applies only to Coherent FS */
+		जाओ Enospc;
 	nr = sbi->s_bcache[--count];
-	if (nr == 0)  /* Applies only to Xenix FS, SystemV FS */
-		goto Enospc;
+	अगर (nr == 0)  /* Applies only to Xenix FS, SystemV FS */
+		जाओ Enospc;
 
 	block = fs32_to_cpu(sbi, nr);
 
 	*sbi->s_bcache_count = cpu_to_fs16(sbi, count);
 
-	if (block < sbi->s_firstdatazone || block >= sbi->s_nzones) {
-		printk("sysv_new_block: new block %d is not in data zone\n",
+	अगर (block < sbi->s_firstdatazone || block >= sbi->s_nzones) अणु
+		prपूर्णांकk("sysv_new_block: new block %d is not in data zone\n",
 			block);
-		goto Enospc;
-	}
+		जाओ Enospc;
+	पूर्ण
 
-	if (count == 0) { /* the last block continues the free list */
-		unsigned count;
+	अगर (count == 0) अणु /* the last block जारीs the मुक्त list */
+		अचिन्हित count;
 
 		block += sbi->s_block_base;
-		if (!(bh = sb_bread(sb, block))) {
-			printk("sysv_new_block: cannot read free-list block\n");
-			/* retry this same block next time */
+		अगर (!(bh = sb_bपढ़ो(sb, block))) अणु
+			prपूर्णांकk("sysv_new_block: cannot read free-list block\n");
+			/* retry this same block next समय */
 			*sbi->s_bcache_count = cpu_to_fs16(sbi, 1);
-			goto Enospc;
-		}
+			जाओ Enospc;
+		पूर्ण
 		count = fs16_to_cpu(sbi, *(__fs16*)bh->b_data);
-		if (count > sbi->s_flc_size) {
-			printk("sysv_new_block: free-list block with >flc_size entries\n");
-			brelse(bh);
-			goto Enospc;
-		}
+		अगर (count > sbi->s_flc_size) अणु
+			prपूर्णांकk("sysv_new_block: free-list block with >flc_size entries\n");
+			brअन्यथा(bh);
+			जाओ Enospc;
+		पूर्ण
 		*sbi->s_bcache_count = cpu_to_fs16(sbi, count);
-		memcpy(sbi->s_bcache, get_chunk(sb, bh),
-				count * sizeof(sysv_zone_t));
-		brelse(bh);
-	}
-	/* Now the free list head in the superblock is valid again. */
-	fs32_add(sbi, sbi->s_free_blocks, -1);
+		स_नकल(sbi->s_bcache, get_chunk(sb, bh),
+				count * माप(sysv_zone_t));
+		brअन्यथा(bh);
+	पूर्ण
+	/* Now the मुक्त list head in the superblock is valid again. */
+	fs32_add(sbi, sbi->s_मुक्त_blocks, -1);
 	dirty_sb(sb);
 	mutex_unlock(&sbi->s_lock);
-	return nr;
+	वापस nr;
 
 Enospc:
 	mutex_unlock(&sbi->s_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long sysv_count_free_blocks(struct super_block * sb)
-{
-	struct sysv_sb_info * sbi = SYSV_SB(sb);
-	int sb_count;
-	int count;
-	struct buffer_head * bh = NULL;
+अचिन्हित दीर्घ sysv_count_मुक्त_blocks(काष्ठा super_block * sb)
+अणु
+	काष्ठा sysv_sb_info * sbi = SYSV_SB(sb);
+	पूर्णांक sb_count;
+	पूर्णांक count;
+	काष्ठा buffer_head * bh = शून्य;
 	sysv_zone_t *blocks;
-	unsigned block;
-	int n;
+	अचिन्हित block;
+	पूर्णांक n;
 
 	/*
-	 * This code does not work at all for AFS (it has a bitmap
-	 * free list).  As AFS is supposed to be read-only we just
-	 * lie and say it has no free block at all.
+	 * This code करोes not work at all क्रम AFS (it has a biपंचांगap
+	 * मुक्त list).  As AFS is supposed to be पढ़ो-only we just
+	 * lie and say it has no मुक्त block at all.
 	 */
-	if (sbi->s_type == FSTYPE_AFS)
-		return 0;
+	अगर (sbi->s_type == FSTYPE_AFS)
+		वापस 0;
 
 	mutex_lock(&sbi->s_lock);
-	sb_count = fs32_to_cpu(sbi, *sbi->s_free_blocks);
+	sb_count = fs32_to_cpu(sbi, *sbi->s_मुक्त_blocks);
 
-	if (0)
-		goto trust_sb;
+	अगर (0)
+		जाओ trust_sb;
 
 	/* this causes a lot of disk traffic ... */
 	count = 0;
 	n = fs16_to_cpu(sbi, *sbi->s_bcache_count);
 	blocks = sbi->s_bcache;
-	while (1) {
+	जबतक (1) अणु
 		sysv_zone_t zone;
-		if (n > sbi->s_flc_size)
-			goto E2big;
+		अगर (n > sbi->s_flc_size)
+			जाओ E2big;
 		zone = 0;
-		while (n && (zone = blocks[--n]) != 0)
+		जबतक (n && (zone = blocks[--n]) != 0)
 			count++;
-		if (zone == 0)
-			break;
+		अगर (zone == 0)
+			अवरोध;
 
 		block = fs32_to_cpu(sbi, zone);
-		if (bh)
-			brelse(bh);
+		अगर (bh)
+			brअन्यथा(bh);
 
-		if (block < sbi->s_firstdatazone || block >= sbi->s_nzones)
-			goto Einval;
+		अगर (block < sbi->s_firstdatazone || block >= sbi->s_nzones)
+			जाओ Einval;
 		block += sbi->s_block_base;
-		bh = sb_bread(sb, block);
-		if (!bh)
-			goto Eio;
+		bh = sb_bपढ़ो(sb, block);
+		अगर (!bh)
+			जाओ Eio;
 		n = fs16_to_cpu(sbi, *(__fs16*)bh->b_data);
 		blocks = get_chunk(sb, bh);
-	}
-	if (bh)
-		brelse(bh);
-	if (count != sb_count)
-		goto Ecount;
-done:
+	पूर्ण
+	अगर (bh)
+		brअन्यथा(bh);
+	अगर (count != sb_count)
+		जाओ Ecount;
+करोne:
 	mutex_unlock(&sbi->s_lock);
-	return count;
+	वापस count;
 
 Einval:
-	printk("sysv_count_free_blocks: new block %d is not in data zone\n",
+	prपूर्णांकk("sysv_count_free_blocks: new block %d is not in data zone\n",
 		block);
-	goto trust_sb;
+	जाओ trust_sb;
 Eio:
-	printk("sysv_count_free_blocks: cannot read free-list block\n");
-	goto trust_sb;
+	prपूर्णांकk("sysv_count_free_blocks: cannot read free-list block\n");
+	जाओ trust_sb;
 E2big:
-	printk("sysv_count_free_blocks: >flc_size entries in free-list block\n");
-	if (bh)
-		brelse(bh);
+	prपूर्णांकk("sysv_count_free_blocks: >flc_size entries in free-list block\n");
+	अगर (bh)
+		brअन्यथा(bh);
 trust_sb:
 	count = sb_count;
-	goto done;
+	जाओ करोne;
 Ecount:
-	printk("sysv_count_free_blocks: free block count was %d, "
+	prपूर्णांकk("sysv_count_free_blocks: free block count was %d, "
 		"correcting to %d\n", sb_count, count);
-	if (!sb_rdonly(sb)) {
-		*sbi->s_free_blocks = cpu_to_fs32(sbi, count);
+	अगर (!sb_rकरोnly(sb)) अणु
+		*sbi->s_मुक्त_blocks = cpu_to_fs32(sbi, count);
 		dirty_sb(sb);
-	}
-	goto done;
-}
+	पूर्ण
+	जाओ करोne;
+पूर्ण

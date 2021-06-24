@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (c) 2020 Facebook */
-#include <vmlinux.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_core_read.h>
-#include <bpf/bpf_tracing.h>
-#include "pid_iter.h"
+#समावेश <vmlinux.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_core_पढ़ो.h>
+#समावेश <bpf/bpf_tracing.h>
+#समावेश "pid_iter.h"
 
-/* keep in sync with the definition in main.h */
-enum bpf_obj_type {
+/* keep in sync with the definition in मुख्य.h */
+क्रमागत bpf_obj_type अणु
 	BPF_OBJ_UNKNOWN,
 	BPF_OBJ_PROG,
 	BPF_OBJ_MAP,
 	BPF_OBJ_LINK,
 	BPF_OBJ_BTF,
-};
+पूर्ण;
 
-extern const void bpf_link_fops __ksym;
-extern const void bpf_map_fops __ksym;
-extern const void bpf_prog_fops __ksym;
-extern const void btf_fops __ksym;
+बाह्य स्थिर व्योम bpf_link_fops __ksym;
+बाह्य स्थिर व्योम bpf_map_fops __ksym;
+बाह्य स्थिर व्योम bpf_prog_fops __ksym;
+बाह्य स्थिर व्योम btf_fops __ksym;
 
-const volatile enum bpf_obj_type obj_type = BPF_OBJ_UNKNOWN;
+स्थिर अस्थिर क्रमागत bpf_obj_type obj_type = BPF_OBJ_UNKNOWN;
 
-static __always_inline __u32 get_obj_id(void *ent, enum bpf_obj_type type)
-{
-	switch (type) {
-	case BPF_OBJ_PROG:
-		return BPF_CORE_READ((struct bpf_prog *)ent, aux, id);
-	case BPF_OBJ_MAP:
-		return BPF_CORE_READ((struct bpf_map *)ent, id);
-	case BPF_OBJ_BTF:
-		return BPF_CORE_READ((struct btf *)ent, id);
-	case BPF_OBJ_LINK:
-		return BPF_CORE_READ((struct bpf_link *)ent, id);
-	default:
-		return 0;
-	}
-}
+अटल __always_अंतरभूत __u32 get_obj_id(व्योम *ent, क्रमागत bpf_obj_type type)
+अणु
+	चयन (type) अणु
+	हाल BPF_OBJ_PROG:
+		वापस BPF_CORE_READ((काष्ठा bpf_prog *)ent, aux, id);
+	हाल BPF_OBJ_MAP:
+		वापस BPF_CORE_READ((काष्ठा bpf_map *)ent, id);
+	हाल BPF_OBJ_BTF:
+		वापस BPF_CORE_READ((काष्ठा btf *)ent, id);
+	हाल BPF_OBJ_LINK:
+		वापस BPF_CORE_READ((काष्ठा bpf_link *)ent, id);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 SEC("iter/task_file")
-int iter(struct bpf_iter__task_file *ctx)
-{
-	struct file *file = ctx->file;
-	struct task_struct *task = ctx->task;
-	struct pid_iter_entry e;
-	const void *fops;
+पूर्णांक iter(काष्ठा bpf_iter__task_file *ctx)
+अणु
+	काष्ठा file *file = ctx->file;
+	काष्ठा task_काष्ठा *task = ctx->task;
+	काष्ठा pid_iter_entry e;
+	स्थिर व्योम *fops;
 
-	if (!file || !task)
-		return 0;
+	अगर (!file || !task)
+		वापस 0;
 
-	switch (obj_type) {
-	case BPF_OBJ_PROG:
+	चयन (obj_type) अणु
+	हाल BPF_OBJ_PROG:
 		fops = &bpf_prog_fops;
-		break;
-	case BPF_OBJ_MAP:
+		अवरोध;
+	हाल BPF_OBJ_MAP:
 		fops = &bpf_map_fops;
-		break;
-	case BPF_OBJ_BTF:
+		अवरोध;
+	हाल BPF_OBJ_BTF:
 		fops = &btf_fops;
-		break;
-	case BPF_OBJ_LINK:
+		अवरोध;
+	हाल BPF_OBJ_LINK:
 		fops = &bpf_link_fops;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	if (file->f_op != fops)
-		return 0;
+	अगर (file->f_op != fops)
+		वापस 0;
 
 	e.pid = task->tgid;
-	e.id = get_obj_id(file->private_data, obj_type);
-	bpf_probe_read_kernel(&e.comm, sizeof(e.comm),
+	e.id = get_obj_id(file->निजी_data, obj_type);
+	bpf_probe_पढ़ो_kernel(&e.comm, माप(e.comm),
 			      task->group_leader->comm);
-	bpf_seq_write(ctx->meta->seq, &e, sizeof(e));
+	bpf_seq_ग_लिखो(ctx->meta->seq, &e, माप(e));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char LICENSE[] SEC("license") = "Dual BSD/GPL";
+अक्षर LICENSE[] SEC("license") = "Dual BSD/GPL";

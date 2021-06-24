@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * dlmglue.c
  *
- * Code which implements an OCFS2 specific interface to our DLM.
+ * Code which implements an OCFS2 specअगरic पूर्णांकerface to our DLM.
  *
  * Copyright (C) 2003, 2004 Oracle.  All rights reserved.
  */
 
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/highmem.h>
-#include <linux/mm.h>
-#include <linux/kthread.h>
-#include <linux/pagemap.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/time.h>
-#include <linux/quotaops.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/sched/संकेत.स>
 
-#define MLOG_MASK_PREFIX ML_DLM_GLUE
-#include <cluster/masklog.h>
+#घोषणा MLOG_MASK_PREFIX ML_DLM_GLUE
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
-#include "ocfs2_lockingver.h"
+#समावेश "ocfs2.h"
+#समावेश "ocfs2_lockingver.h"
 
-#include "alloc.h"
-#include "dcache.h"
-#include "dlmglue.h"
-#include "extent_map.h"
-#include "file.h"
-#include "heartbeat.h"
-#include "inode.h"
-#include "journal.h"
-#include "stackglue.h"
-#include "slot_map.h"
-#include "super.h"
-#include "uptodate.h"
-#include "quota.h"
-#include "refcounttree.h"
-#include "acl.h"
+#समावेश "alloc.h"
+#समावेश "dcache.h"
+#समावेश "dlmglue.h"
+#समावेश "extent_map.h"
+#समावेश "file.h"
+#समावेश "heartbeat.h"
+#समावेश "inode.h"
+#समावेश "journal.h"
+#समावेश "stackglue.h"
+#समावेश "slot_map.h"
+#समावेश "super.h"
+#समावेश "uptodate.h"
+#समावेश "quota.h"
+#समावेश "refcounttree.h"
+#समावेश "acl.h"
 
-#include "buffer_head_io.h"
+#समावेश "buffer_head_io.h"
 
-struct ocfs2_mask_waiter {
-	struct list_head	mw_item;
-	int			mw_status;
-	struct completion	mw_complete;
-	unsigned long		mw_mask;
-	unsigned long		mw_goal;
-#ifdef CONFIG_OCFS2_FS_STATS
-	ktime_t			mw_lock_start;
-#endif
-};
+काष्ठा ocfs2_mask_रुकोer अणु
+	काष्ठा list_head	mw_item;
+	पूर्णांक			mw_status;
+	काष्ठा completion	mw_complete;
+	अचिन्हित दीर्घ		mw_mask;
+	अचिन्हित दीर्घ		mw_goal;
+#अगर_घोषित CONFIG_OCFS2_FS_STATS
+	kसमय_प्रकार			mw_lock_start;
+#पूर्ण_अगर
+पूर्ण;
 
-static struct ocfs2_super *ocfs2_get_dentry_osb(struct ocfs2_lock_res *lockres);
-static struct ocfs2_super *ocfs2_get_inode_osb(struct ocfs2_lock_res *lockres);
-static struct ocfs2_super *ocfs2_get_file_osb(struct ocfs2_lock_res *lockres);
-static struct ocfs2_super *ocfs2_get_qinfo_osb(struct ocfs2_lock_res *lockres);
+अटल काष्ठा ocfs2_super *ocfs2_get_dentry_osb(काष्ठा ocfs2_lock_res *lockres);
+अटल काष्ठा ocfs2_super *ocfs2_get_inode_osb(काष्ठा ocfs2_lock_res *lockres);
+अटल काष्ठा ocfs2_super *ocfs2_get_file_osb(काष्ठा ocfs2_lock_res *lockres);
+अटल काष्ठा ocfs2_super *ocfs2_get_qinfo_osb(काष्ठा ocfs2_lock_res *lockres);
 
 /*
- * Return value from ->downconvert_worker functions.
+ * Return value from ->करोwnconvert_worker functions.
  *
  * These control the precise actions of ocfs2_unblock_lock()
  * and ocfs2_process_blocked_lock()
  *
  */
-enum ocfs2_unblock_action {
-	UNBLOCK_CONTINUE	= 0, /* Continue downconvert */
-	UNBLOCK_CONTINUE_POST	= 1, /* Continue downconvert, fire
+क्रमागत ocfs2_unblock_action अणु
+	UNBLOCK_CONTINUE	= 0, /* Continue करोwnconvert */
+	UNBLOCK_CONTINUE_POST	= 1, /* Continue करोwnconvert, fire
 				      * ->post_unlock callback */
-	UNBLOCK_STOP_POST	= 2, /* Do not downconvert, fire
+	UNBLOCK_STOP_POST	= 2, /* Do not करोwnconvert, fire
 				      * ->post_unlock() callback. */
-};
+पूर्ण;
 
-struct ocfs2_unblock_ctl {
-	int requeue;
-	enum ocfs2_unblock_action unblock_action;
-};
+काष्ठा ocfs2_unblock_ctl अणु
+	पूर्णांक requeue;
+	क्रमागत ocfs2_unblock_action unblock_action;
+पूर्ण;
 
 /* Lockdep class keys */
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-static struct lock_class_key lockdep_keys[OCFS2_NUM_LOCK_TYPES];
-#endif
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+अटल काष्ठा lock_class_key lockdep_keys[OCFS2_NUM_LOCK_TYPES];
+#पूर्ण_अगर
 
-static int ocfs2_check_meta_downconvert(struct ocfs2_lock_res *lockres,
-					int new_level);
-static void ocfs2_set_meta_lvb(struct ocfs2_lock_res *lockres);
+अटल पूर्णांक ocfs2_check_meta_करोwnconvert(काष्ठा ocfs2_lock_res *lockres,
+					पूर्णांक new_level);
+अटल व्योम ocfs2_set_meta_lvb(काष्ठा ocfs2_lock_res *lockres);
 
-static int ocfs2_data_convert_worker(struct ocfs2_lock_res *lockres,
-				     int blocking);
+अटल पूर्णांक ocfs2_data_convert_worker(काष्ठा ocfs2_lock_res *lockres,
+				     पूर्णांक blocking);
 
-static int ocfs2_dentry_convert_worker(struct ocfs2_lock_res *lockres,
-				       int blocking);
+अटल पूर्णांक ocfs2_dentry_convert_worker(काष्ठा ocfs2_lock_res *lockres,
+				       पूर्णांक blocking);
 
-static void ocfs2_dentry_post_unlock(struct ocfs2_super *osb,
-				     struct ocfs2_lock_res *lockres);
+अटल व्योम ocfs2_dentry_post_unlock(काष्ठा ocfs2_super *osb,
+				     काष्ठा ocfs2_lock_res *lockres);
 
-static void ocfs2_set_qinfo_lvb(struct ocfs2_lock_res *lockres);
+अटल व्योम ocfs2_set_qinfo_lvb(काष्ठा ocfs2_lock_res *lockres);
 
-static int ocfs2_check_refcount_downconvert(struct ocfs2_lock_res *lockres,
-					    int new_level);
-static int ocfs2_refcount_convert_worker(struct ocfs2_lock_res *lockres,
-					 int blocking);
+अटल पूर्णांक ocfs2_check_refcount_करोwnconvert(काष्ठा ocfs2_lock_res *lockres,
+					    पूर्णांक new_level);
+अटल पूर्णांक ocfs2_refcount_convert_worker(काष्ठा ocfs2_lock_res *lockres,
+					 पूर्णांक blocking);
 
-#define mlog_meta_lvb(__level, __lockres) ocfs2_dump_meta_lvb_info(__level, __PRETTY_FUNCTION__, __LINE__, __lockres)
+#घोषणा mlog_meta_lvb(__level, __lockres) ocfs2_dump_meta_lvb_info(__level, __PRETTY_FUNCTION__, __LINE__, __lockres)
 
 /* This aids in debugging situations where a bad LVB might be involved. */
-static void ocfs2_dump_meta_lvb_info(u64 level,
-				     const char *function,
-				     unsigned int line,
-				     struct ocfs2_lock_res *lockres)
-{
-	struct ocfs2_meta_lvb *lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
+अटल व्योम ocfs2_dump_meta_lvb_info(u64 level,
+				     स्थिर अक्षर *function,
+				     अचिन्हित पूर्णांक line,
+				     काष्ठा ocfs2_lock_res *lockres)
+अणु
+	काष्ठा ocfs2_meta_lvb *lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
 
 	mlog(level, "LVB information for %s (called from %s:%u):\n",
 	     lockres->l_name, function, line);
@@ -120,398 +121,398 @@ static void ocfs2_dump_meta_lvb_info(u64 level,
 	     lvb->lvb_version, be32_to_cpu(lvb->lvb_iclusters),
 	     be32_to_cpu(lvb->lvb_igeneration));
 	mlog(level, "size: %llu, uid %u, gid %u, mode 0x%x\n",
-	     (unsigned long long)be64_to_cpu(lvb->lvb_isize),
+	     (अचिन्हित दीर्घ दीर्घ)be64_to_cpu(lvb->lvb_isize),
 	     be32_to_cpu(lvb->lvb_iuid), be32_to_cpu(lvb->lvb_igid),
 	     be16_to_cpu(lvb->lvb_imode));
 	mlog(level, "nlink %u, atime_packed 0x%llx, ctime_packed 0x%llx, "
 	     "mtime_packed 0x%llx iattr 0x%x\n", be16_to_cpu(lvb->lvb_inlink),
-	     (long long)be64_to_cpu(lvb->lvb_iatime_packed),
-	     (long long)be64_to_cpu(lvb->lvb_ictime_packed),
-	     (long long)be64_to_cpu(lvb->lvb_imtime_packed),
+	     (दीर्घ दीर्घ)be64_to_cpu(lvb->lvb_iaसमय_packed),
+	     (दीर्घ दीर्घ)be64_to_cpu(lvb->lvb_iस_समय_packed),
+	     (दीर्घ दीर्घ)be64_to_cpu(lvb->lvb_imसमय_packed),
 	     be32_to_cpu(lvb->lvb_iattr));
-}
+पूर्ण
 
 
 /*
  * OCFS2 Lock Resource Operations
  *
- * These fine tune the behavior of the generic dlmglue locking infrastructure.
+ * These fine tune the behavior of the generic dlmglue locking infraकाष्ठाure.
  *
- * The most basic of lock types can point ->l_priv to their respective
- * struct ocfs2_super and allow the default actions to manage things.
+ * The most basic of lock types can poपूर्णांक ->l_priv to their respective
+ * काष्ठा ocfs2_super and allow the शेष actions to manage things.
  *
  * Right now, each lock type also needs to implement an init function,
  * and trivial lock/unlock wrappers. ocfs2_simple_drop_lockres()
- * should be called when the lock is no longer needed (i.e., object
- * destruction time).
+ * should be called when the lock is no दीर्घer needed (i.e., object
+ * deकाष्ठाion समय).
  */
-struct ocfs2_lock_res_ops {
+काष्ठा ocfs2_lock_res_ops अणु
 	/*
-	 * Translate an ocfs2_lock_res * into an ocfs2_super *. Define
-	 * this callback if ->l_priv is not an ocfs2_super pointer
+	 * Translate an ocfs2_lock_res * पूर्णांकo an ocfs2_super *. Define
+	 * this callback अगर ->l_priv is not an ocfs2_super poपूर्णांकer
 	 */
-	struct ocfs2_super * (*get_osb)(struct ocfs2_lock_res *);
+	काष्ठा ocfs2_super * (*get_osb)(काष्ठा ocfs2_lock_res *);
 
 	/*
-	 * Optionally called in the downconvert thread after a
-	 * successful downconvert. The lockres will not be referenced
-	 * after this callback is called, so it is safe to free
+	 * Optionally called in the करोwnconvert thपढ़ो after a
+	 * successful करोwnconvert. The lockres will not be referenced
+	 * after this callback is called, so it is safe to मुक्त
 	 * memory, etc.
 	 *
 	 * The exact semantics of when this is called are controlled
-	 * by ->downconvert_worker()
+	 * by ->करोwnconvert_worker()
 	 */
-	void (*post_unlock)(struct ocfs2_super *, struct ocfs2_lock_res *);
+	व्योम (*post_unlock)(काष्ठा ocfs2_super *, काष्ठा ocfs2_lock_res *);
 
 	/*
 	 * Allow a lock type to add checks to determine whether it is
-	 * safe to downconvert a lock. Return 0 to re-queue the
-	 * downconvert at a later time, nonzero to continue.
+	 * safe to करोwnconvert a lock. Return 0 to re-queue the
+	 * करोwnconvert at a later समय, nonzero to जारी.
 	 *
-	 * For most locks, the default checks that there are no
+	 * For most locks, the शेष checks that there are no
 	 * incompatible holders are sufficient.
 	 *
 	 * Called with the lockres spinlock held.
 	 */
-	int (*check_downconvert)(struct ocfs2_lock_res *, int);
+	पूर्णांक (*check_करोwnconvert)(काष्ठा ocfs2_lock_res *, पूर्णांक);
 
 	/*
 	 * Allows a lock type to populate the lock value block. This
-	 * is called on downconvert, and when we drop a lock.
+	 * is called on करोwnconvert, and when we drop a lock.
 	 *
 	 * Locks that want to use this should set LOCK_TYPE_USES_LVB
 	 * in the flags field.
 	 *
 	 * Called with the lockres spinlock held.
 	 */
-	void (*set_lvb)(struct ocfs2_lock_res *);
+	व्योम (*set_lvb)(काष्ठा ocfs2_lock_res *);
 
 	/*
-	 * Called from the downconvert thread when it is determined
-	 * that a lock will be downconverted. This is called without
-	 * any locks held so the function can do work that might
+	 * Called from the करोwnconvert thपढ़ो when it is determined
+	 * that a lock will be करोwnconverted. This is called without
+	 * any locks held so the function can करो work that might
 	 * schedule (syncing out data, etc).
 	 *
-	 * This should return any one of the ocfs2_unblock_action
-	 * values, depending on what it wants the thread to do.
+	 * This should वापस any one of the ocfs2_unblock_action
+	 * values, depending on what it wants the thपढ़ो to करो.
 	 */
-	int (*downconvert_worker)(struct ocfs2_lock_res *, int);
+	पूर्णांक (*करोwnconvert_worker)(काष्ठा ocfs2_lock_res *, पूर्णांक);
 
 	/*
-	 * LOCK_TYPE_* flags which describe the specific requirements
-	 * of a lock type. Descriptions of each individual flag follow.
+	 * LOCK_TYPE_* flags which describe the specअगरic requirements
+	 * of a lock type. Descriptions of each inभागidual flag follow.
 	 */
-	int flags;
-};
+	पूर्णांक flags;
+पूर्ण;
 
 /*
  * Some locks want to "refresh" potentially stale data when a
  * meaningful (PRMODE or EXMODE) lock level is first obtained. If this
  * flag is set, the OCFS2_LOCK_NEEDS_REFRESH flag will be set on the
- * individual lockres l_flags member from the ast function. It is
+ * inभागidual lockres l_flags member from the ast function. It is
  * expected that the locking wrapper will clear the
- * OCFS2_LOCK_NEEDS_REFRESH flag when done.
+ * OCFS2_LOCK_NEEDS_REFRESH flag when करोne.
  */
-#define LOCK_TYPE_REQUIRES_REFRESH 0x1
+#घोषणा LOCK_TYPE_REQUIRES_REFRESH 0x1
 
 /*
  * Indicate that a lock type makes use of the lock value block. The
  * ->set_lvb lock type callback must be defined.
  */
-#define LOCK_TYPE_USES_LVB		0x2
+#घोषणा LOCK_TYPE_USES_LVB		0x2
 
-static struct ocfs2_lock_res_ops ocfs2_inode_rw_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_inode_rw_lops = अणु
 	.get_osb	= ocfs2_get_inode_osb,
 	.flags		= 0,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_inode_inode_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_inode_inode_lops = अणु
 	.get_osb	= ocfs2_get_inode_osb,
-	.check_downconvert = ocfs2_check_meta_downconvert,
+	.check_करोwnconvert = ocfs2_check_meta_करोwnconvert,
 	.set_lvb	= ocfs2_set_meta_lvb,
-	.downconvert_worker = ocfs2_data_convert_worker,
+	.करोwnconvert_worker = ocfs2_data_convert_worker,
 	.flags		= LOCK_TYPE_REQUIRES_REFRESH|LOCK_TYPE_USES_LVB,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_super_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_super_lops = अणु
 	.flags		= LOCK_TYPE_REQUIRES_REFRESH,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_rename_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_नाम_lops = अणु
 	.flags		= 0,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_nfs_sync_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_nfs_sync_lops = अणु
 	.flags		= 0,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_trim_fs_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_trim_fs_lops = अणु
 	.flags		= LOCK_TYPE_REQUIRES_REFRESH|LOCK_TYPE_USES_LVB,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_orphan_scan_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_orphan_scan_lops = अणु
 	.flags		= LOCK_TYPE_REQUIRES_REFRESH|LOCK_TYPE_USES_LVB,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_dentry_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_dentry_lops = अणु
 	.get_osb	= ocfs2_get_dentry_osb,
 	.post_unlock	= ocfs2_dentry_post_unlock,
-	.downconvert_worker = ocfs2_dentry_convert_worker,
+	.करोwnconvert_worker = ocfs2_dentry_convert_worker,
 	.flags		= 0,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_inode_open_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_inode_खोलो_lops = अणु
 	.get_osb	= ocfs2_get_inode_osb,
 	.flags		= 0,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_flock_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_flock_lops = अणु
 	.get_osb	= ocfs2_get_file_osb,
 	.flags		= 0,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_qinfo_lops = {
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_qinfo_lops = अणु
 	.set_lvb	= ocfs2_set_qinfo_lvb,
 	.get_osb	= ocfs2_get_qinfo_osb,
 	.flags		= LOCK_TYPE_REQUIRES_REFRESH | LOCK_TYPE_USES_LVB,
-};
+पूर्ण;
 
-static struct ocfs2_lock_res_ops ocfs2_refcount_block_lops = {
-	.check_downconvert = ocfs2_check_refcount_downconvert,
-	.downconvert_worker = ocfs2_refcount_convert_worker,
+अटल काष्ठा ocfs2_lock_res_ops ocfs2_refcount_block_lops = अणु
+	.check_करोwnconvert = ocfs2_check_refcount_करोwnconvert,
+	.करोwnconvert_worker = ocfs2_refcount_convert_worker,
 	.flags		= 0,
-};
+पूर्ण;
 
-static inline int ocfs2_is_inode_lock(struct ocfs2_lock_res *lockres)
-{
-	return lockres->l_type == OCFS2_LOCK_TYPE_META ||
+अटल अंतरभूत पूर्णांक ocfs2_is_inode_lock(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	वापस lockres->l_type == OCFS2_LOCK_TYPE_META ||
 		lockres->l_type == OCFS2_LOCK_TYPE_RW ||
 		lockres->l_type == OCFS2_LOCK_TYPE_OPEN;
-}
+पूर्ण
 
-static inline struct ocfs2_lock_res *ocfs2_lksb_to_lock_res(struct ocfs2_dlm_lksb *lksb)
-{
-	return container_of(lksb, struct ocfs2_lock_res, l_lksb);
-}
+अटल अंतरभूत काष्ठा ocfs2_lock_res *ocfs2_lksb_to_lock_res(काष्ठा ocfs2_dlm_lksb *lksb)
+अणु
+	वापस container_of(lksb, काष्ठा ocfs2_lock_res, l_lksb);
+पूर्ण
 
-static inline struct inode *ocfs2_lock_res_inode(struct ocfs2_lock_res *lockres)
-{
+अटल अंतरभूत काष्ठा inode *ocfs2_lock_res_inode(काष्ठा ocfs2_lock_res *lockres)
+अणु
 	BUG_ON(!ocfs2_is_inode_lock(lockres));
 
-	return (struct inode *) lockres->l_priv;
-}
+	वापस (काष्ठा inode *) lockres->l_priv;
+पूर्ण
 
-static inline struct ocfs2_dentry_lock *ocfs2_lock_res_dl(struct ocfs2_lock_res *lockres)
-{
+अटल अंतरभूत काष्ठा ocfs2_dentry_lock *ocfs2_lock_res_dl(काष्ठा ocfs2_lock_res *lockres)
+अणु
 	BUG_ON(lockres->l_type != OCFS2_LOCK_TYPE_DENTRY);
 
-	return (struct ocfs2_dentry_lock *)lockres->l_priv;
-}
+	वापस (काष्ठा ocfs2_dentry_lock *)lockres->l_priv;
+पूर्ण
 
-static inline struct ocfs2_mem_dqinfo *ocfs2_lock_res_qinfo(struct ocfs2_lock_res *lockres)
-{
+अटल अंतरभूत काष्ठा ocfs2_mem_dqinfo *ocfs2_lock_res_qinfo(काष्ठा ocfs2_lock_res *lockres)
+अणु
 	BUG_ON(lockres->l_type != OCFS2_LOCK_TYPE_QINFO);
 
-	return (struct ocfs2_mem_dqinfo *)lockres->l_priv;
-}
+	वापस (काष्ठा ocfs2_mem_dqinfo *)lockres->l_priv;
+पूर्ण
 
-static inline struct ocfs2_refcount_tree *
-ocfs2_lock_res_refcount_tree(struct ocfs2_lock_res *res)
-{
-	return container_of(res, struct ocfs2_refcount_tree, rf_lockres);
-}
+अटल अंतरभूत काष्ठा ocfs2_refcount_tree *
+ocfs2_lock_res_refcount_tree(काष्ठा ocfs2_lock_res *res)
+अणु
+	वापस container_of(res, काष्ठा ocfs2_refcount_tree, rf_lockres);
+पूर्ण
 
-static inline struct ocfs2_super *ocfs2_get_lockres_osb(struct ocfs2_lock_res *lockres)
-{
-	if (lockres->l_ops->get_osb)
-		return lockres->l_ops->get_osb(lockres);
+अटल अंतरभूत काष्ठा ocfs2_super *ocfs2_get_lockres_osb(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	अगर (lockres->l_ops->get_osb)
+		वापस lockres->l_ops->get_osb(lockres);
 
-	return (struct ocfs2_super *)lockres->l_priv;
-}
+	वापस (काष्ठा ocfs2_super *)lockres->l_priv;
+पूर्ण
 
-static int ocfs2_lock_create(struct ocfs2_super *osb,
-			     struct ocfs2_lock_res *lockres,
-			     int level,
+अटल पूर्णांक ocfs2_lock_create(काष्ठा ocfs2_super *osb,
+			     काष्ठा ocfs2_lock_res *lockres,
+			     पूर्णांक level,
 			     u32 dlm_flags);
-static inline int ocfs2_may_continue_on_blocked_lock(struct ocfs2_lock_res *lockres,
-						     int wanted);
-static void __ocfs2_cluster_unlock(struct ocfs2_super *osb,
-				   struct ocfs2_lock_res *lockres,
-				   int level, unsigned long caller_ip);
-static inline void ocfs2_cluster_unlock(struct ocfs2_super *osb,
-					struct ocfs2_lock_res *lockres,
-					int level)
-{
+अटल अंतरभूत पूर्णांक ocfs2_may_जारी_on_blocked_lock(काष्ठा ocfs2_lock_res *lockres,
+						     पूर्णांक wanted);
+अटल व्योम __ocfs2_cluster_unlock(काष्ठा ocfs2_super *osb,
+				   काष्ठा ocfs2_lock_res *lockres,
+				   पूर्णांक level, अचिन्हित दीर्घ caller_ip);
+अटल अंतरभूत व्योम ocfs2_cluster_unlock(काष्ठा ocfs2_super *osb,
+					काष्ठा ocfs2_lock_res *lockres,
+					पूर्णांक level)
+अणु
 	__ocfs2_cluster_unlock(osb, lockres, level, _RET_IP_);
-}
+पूर्ण
 
-static inline void ocfs2_generic_handle_downconvert_action(struct ocfs2_lock_res *lockres);
-static inline void ocfs2_generic_handle_convert_action(struct ocfs2_lock_res *lockres);
-static inline void ocfs2_generic_handle_attach_action(struct ocfs2_lock_res *lockres);
-static int ocfs2_generic_handle_bast(struct ocfs2_lock_res *lockres, int level);
-static void ocfs2_schedule_blocked_lock(struct ocfs2_super *osb,
-					struct ocfs2_lock_res *lockres);
-static inline void ocfs2_recover_from_dlm_error(struct ocfs2_lock_res *lockres,
-						int convert);
-#define ocfs2_log_dlm_error(_func, _err, _lockres) do {					\
-	if ((_lockres)->l_type != OCFS2_LOCK_TYPE_DENTRY)				\
+अटल अंतरभूत व्योम ocfs2_generic_handle_करोwnconvert_action(काष्ठा ocfs2_lock_res *lockres);
+अटल अंतरभूत व्योम ocfs2_generic_handle_convert_action(काष्ठा ocfs2_lock_res *lockres);
+अटल अंतरभूत व्योम ocfs2_generic_handle_attach_action(काष्ठा ocfs2_lock_res *lockres);
+अटल पूर्णांक ocfs2_generic_handle_bast(काष्ठा ocfs2_lock_res *lockres, पूर्णांक level);
+अटल व्योम ocfs2_schedule_blocked_lock(काष्ठा ocfs2_super *osb,
+					काष्ठा ocfs2_lock_res *lockres);
+अटल अंतरभूत व्योम ocfs2_recover_from_dlm_error(काष्ठा ocfs2_lock_res *lockres,
+						पूर्णांक convert);
+#घोषणा ocfs2_log_dlm_error(_func, _err, _lockres) करो अणु					\
+	अगर ((_lockres)->l_type != OCFS2_LOCK_TYPE_DENTRY)				\
 		mlog(ML_ERROR, "DLM error %d while calling %s on resource %s\n",	\
 		     _err, _func, _lockres->l_name);					\
-	else										\
+	अन्यथा										\
 		mlog(ML_ERROR, "DLM error %d while calling %s on resource %.*s%08x\n",	\
 		     _err, _func, OCFS2_DENTRY_LOCK_INO_START - 1, (_lockres)->l_name,	\
-		     (unsigned int)ocfs2_get_dentry_lock_ino(_lockres));		\
-} while (0)
-static int ocfs2_downconvert_thread(void *arg);
-static void ocfs2_downconvert_on_unlock(struct ocfs2_super *osb,
-					struct ocfs2_lock_res *lockres);
-static int ocfs2_inode_lock_update(struct inode *inode,
-				  struct buffer_head **bh);
-static void ocfs2_drop_osb_locks(struct ocfs2_super *osb);
-static inline int ocfs2_highest_compat_lock_level(int level);
-static unsigned int ocfs2_prepare_downconvert(struct ocfs2_lock_res *lockres,
-					      int new_level);
-static int ocfs2_downconvert_lock(struct ocfs2_super *osb,
-				  struct ocfs2_lock_res *lockres,
-				  int new_level,
-				  int lvb,
-				  unsigned int generation);
-static int ocfs2_prepare_cancel_convert(struct ocfs2_super *osb,
-				        struct ocfs2_lock_res *lockres);
-static int ocfs2_cancel_convert(struct ocfs2_super *osb,
-				struct ocfs2_lock_res *lockres);
+		     (अचिन्हित पूर्णांक)ocfs2_get_dentry_lock_ino(_lockres));		\
+पूर्ण जबतक (0)
+अटल पूर्णांक ocfs2_करोwnconvert_thपढ़ो(व्योम *arg);
+अटल व्योम ocfs2_करोwnconvert_on_unlock(काष्ठा ocfs2_super *osb,
+					काष्ठा ocfs2_lock_res *lockres);
+अटल पूर्णांक ocfs2_inode_lock_update(काष्ठा inode *inode,
+				  काष्ठा buffer_head **bh);
+अटल व्योम ocfs2_drop_osb_locks(काष्ठा ocfs2_super *osb);
+अटल अंतरभूत पूर्णांक ocfs2_highest_compat_lock_level(पूर्णांक level);
+अटल अचिन्हित पूर्णांक ocfs2_prepare_करोwnconvert(काष्ठा ocfs2_lock_res *lockres,
+					      पूर्णांक new_level);
+अटल पूर्णांक ocfs2_करोwnconvert_lock(काष्ठा ocfs2_super *osb,
+				  काष्ठा ocfs2_lock_res *lockres,
+				  पूर्णांक new_level,
+				  पूर्णांक lvb,
+				  अचिन्हित पूर्णांक generation);
+अटल पूर्णांक ocfs2_prepare_cancel_convert(काष्ठा ocfs2_super *osb,
+				        काष्ठा ocfs2_lock_res *lockres);
+अटल पूर्णांक ocfs2_cancel_convert(काष्ठा ocfs2_super *osb,
+				काष्ठा ocfs2_lock_res *lockres);
 
 
-static void ocfs2_build_lock_name(enum ocfs2_lock_type type,
+अटल व्योम ocfs2_build_lock_name(क्रमागत ocfs2_lock_type type,
 				  u64 blkno,
 				  u32 generation,
-				  char *name)
-{
-	int len;
+				  अक्षर *name)
+अणु
+	पूर्णांक len;
 
 	BUG_ON(type >= OCFS2_NUM_LOCK_TYPES);
 
-	len = snprintf(name, OCFS2_LOCK_ID_MAX_LEN, "%c%s%016llx%08x",
-		       ocfs2_lock_type_char(type), OCFS2_LOCK_ID_PAD,
-		       (long long)blkno, generation);
+	len = snम_लिखो(name, OCFS2_LOCK_ID_MAX_LEN, "%c%s%016llx%08x",
+		       ocfs2_lock_type_अक्षर(type), OCFS2_LOCK_ID_PAD,
+		       (दीर्घ दीर्घ)blkno, generation);
 
 	BUG_ON(len != (OCFS2_LOCK_ID_MAX_LEN - 1));
 
 	mlog(0, "built lock resource with name: %s\n", name);
-}
+पूर्ण
 
-static DEFINE_SPINLOCK(ocfs2_dlm_tracking_lock);
+अटल DEFINE_SPINLOCK(ocfs2_dlm_tracking_lock);
 
-static void ocfs2_add_lockres_tracking(struct ocfs2_lock_res *res,
-				       struct ocfs2_dlm_debug *dlm_debug)
-{
+अटल व्योम ocfs2_add_lockres_tracking(काष्ठा ocfs2_lock_res *res,
+				       काष्ठा ocfs2_dlm_debug *dlm_debug)
+अणु
 	mlog(0, "Add tracking for lockres %s\n", res->l_name);
 
 	spin_lock(&ocfs2_dlm_tracking_lock);
 	list_add(&res->l_debug_list, &dlm_debug->d_lockres_tracking);
 	spin_unlock(&ocfs2_dlm_tracking_lock);
-}
+पूर्ण
 
-static void ocfs2_remove_lockres_tracking(struct ocfs2_lock_res *res)
-{
+अटल व्योम ocfs2_हटाओ_lockres_tracking(काष्ठा ocfs2_lock_res *res)
+अणु
 	spin_lock(&ocfs2_dlm_tracking_lock);
-	if (!list_empty(&res->l_debug_list))
+	अगर (!list_empty(&res->l_debug_list))
 		list_del_init(&res->l_debug_list);
 	spin_unlock(&ocfs2_dlm_tracking_lock);
-}
+पूर्ण
 
-#ifdef CONFIG_OCFS2_FS_STATS
-static void ocfs2_init_lock_stats(struct ocfs2_lock_res *res)
-{
+#अगर_घोषित CONFIG_OCFS2_FS_STATS
+अटल व्योम ocfs2_init_lock_stats(काष्ठा ocfs2_lock_res *res)
+अणु
 	res->l_lock_refresh = 0;
-	res->l_lock_wait = 0;
-	memset(&res->l_lock_prmode, 0, sizeof(struct ocfs2_lock_stats));
-	memset(&res->l_lock_exmode, 0, sizeof(struct ocfs2_lock_stats));
-}
+	res->l_lock_रुको = 0;
+	स_रखो(&res->l_lock_prmode, 0, माप(काष्ठा ocfs2_lock_stats));
+	स_रखो(&res->l_lock_exmode, 0, माप(काष्ठा ocfs2_lock_stats));
+पूर्ण
 
-static void ocfs2_update_lock_stats(struct ocfs2_lock_res *res, int level,
-				    struct ocfs2_mask_waiter *mw, int ret)
-{
+अटल व्योम ocfs2_update_lock_stats(काष्ठा ocfs2_lock_res *res, पूर्णांक level,
+				    काष्ठा ocfs2_mask_रुकोer *mw, पूर्णांक ret)
+अणु
 	u32 usec;
-	ktime_t kt;
-	struct ocfs2_lock_stats *stats;
+	kसमय_प्रकार kt;
+	काष्ठा ocfs2_lock_stats *stats;
 
-	if (level == LKM_PRMODE)
+	अगर (level == LKM_PRMODE)
 		stats = &res->l_lock_prmode;
-	else if (level == LKM_EXMODE)
+	अन्यथा अगर (level == LKM_EXMODE)
 		stats = &res->l_lock_exmode;
-	else
-		return;
+	अन्यथा
+		वापस;
 
-	kt = ktime_sub(ktime_get(), mw->mw_lock_start);
-	usec = ktime_to_us(kt);
+	kt = kसमय_sub(kसमय_get(), mw->mw_lock_start);
+	usec = kसमय_प्रकारo_us(kt);
 
-	stats->ls_gets++;
-	stats->ls_total += ktime_to_ns(kt);
+	stats->ls_माला_लो++;
+	stats->ls_total += kसमय_प्रकारo_ns(kt);
 	/* overflow */
-	if (unlikely(stats->ls_gets == 0)) {
-		stats->ls_gets++;
-		stats->ls_total = ktime_to_ns(kt);
-	}
+	अगर (unlikely(stats->ls_माला_लो == 0)) अणु
+		stats->ls_माला_लो++;
+		stats->ls_total = kसमय_प्रकारo_ns(kt);
+	पूर्ण
 
-	if (stats->ls_max < usec)
+	अगर (stats->ls_max < usec)
 		stats->ls_max = usec;
 
-	if (ret)
+	अगर (ret)
 		stats->ls_fail++;
 
-	stats->ls_last = ktime_to_us(ktime_get_real());
-}
+	stats->ls_last = kसमय_प्रकारo_us(kसमय_get_real());
+पूर्ण
 
-static inline void ocfs2_track_lock_refresh(struct ocfs2_lock_res *lockres)
-{
+अटल अंतरभूत व्योम ocfs2_track_lock_refresh(काष्ठा ocfs2_lock_res *lockres)
+अणु
 	lockres->l_lock_refresh++;
-}
+पूर्ण
 
-static inline void ocfs2_track_lock_wait(struct ocfs2_lock_res *lockres)
-{
-	struct ocfs2_mask_waiter *mw;
+अटल अंतरभूत व्योम ocfs2_track_lock_रुको(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	काष्ठा ocfs2_mask_रुकोer *mw;
 
-	if (list_empty(&lockres->l_mask_waiters)) {
-		lockres->l_lock_wait = 0;
-		return;
-	}
+	अगर (list_empty(&lockres->l_mask_रुकोers)) अणु
+		lockres->l_lock_रुको = 0;
+		वापस;
+	पूर्ण
 
-	mw = list_first_entry(&lockres->l_mask_waiters,
-				struct ocfs2_mask_waiter, mw_item);
-	lockres->l_lock_wait =
-			ktime_to_us(ktime_mono_to_real(mw->mw_lock_start));
-}
+	mw = list_first_entry(&lockres->l_mask_रुकोers,
+				काष्ठा ocfs2_mask_रुकोer, mw_item);
+	lockres->l_lock_रुको =
+			kसमय_प्रकारo_us(kसमय_mono_to_real(mw->mw_lock_start));
+पूर्ण
 
-static inline void ocfs2_init_start_time(struct ocfs2_mask_waiter *mw)
-{
-	mw->mw_lock_start = ktime_get();
-}
-#else
-static inline void ocfs2_init_lock_stats(struct ocfs2_lock_res *res)
-{
-}
-static inline void ocfs2_update_lock_stats(struct ocfs2_lock_res *res,
-			   int level, struct ocfs2_mask_waiter *mw, int ret)
-{
-}
-static inline void ocfs2_track_lock_refresh(struct ocfs2_lock_res *lockres)
-{
-}
-static inline void ocfs2_track_lock_wait(struct ocfs2_lock_res *lockres)
-{
-}
-static inline void ocfs2_init_start_time(struct ocfs2_mask_waiter *mw)
-{
-}
-#endif
+अटल अंतरभूत व्योम ocfs2_init_start_समय(काष्ठा ocfs2_mask_रुकोer *mw)
+अणु
+	mw->mw_lock_start = kसमय_get();
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम ocfs2_init_lock_stats(काष्ठा ocfs2_lock_res *res)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ocfs2_update_lock_stats(काष्ठा ocfs2_lock_res *res,
+			   पूर्णांक level, काष्ठा ocfs2_mask_रुकोer *mw, पूर्णांक ret)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ocfs2_track_lock_refresh(काष्ठा ocfs2_lock_res *lockres)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ocfs2_track_lock_रुको(काष्ठा ocfs2_lock_res *lockres)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम ocfs2_init_start_समय(काष्ठा ocfs2_mask_रुकोer *mw)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static void ocfs2_lock_res_init_common(struct ocfs2_super *osb,
-				       struct ocfs2_lock_res *res,
-				       enum ocfs2_lock_type type,
-				       struct ocfs2_lock_res_ops *ops,
-				       void *priv)
-{
+अटल व्योम ocfs2_lock_res_init_common(काष्ठा ocfs2_super *osb,
+				       काष्ठा ocfs2_lock_res *res,
+				       क्रमागत ocfs2_lock_type type,
+				       काष्ठा ocfs2_lock_res_ops *ops,
+				       व्योम *priv)
+अणु
 	res->l_type          = type;
 	res->l_ops           = ops;
 	res->l_priv          = priv;
@@ -527,209 +528,209 @@ static void ocfs2_lock_res_init_common(struct ocfs2_super *osb,
 	ocfs2_add_lockres_tracking(res, osb->osb_dlm_debug);
 
 	ocfs2_init_lock_stats(res);
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-	if (type != OCFS2_LOCK_TYPE_OPEN)
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+	अगर (type != OCFS2_LOCK_TYPE_OPEN)
 		lockdep_init_map(&res->l_lockdep_map, ocfs2_lock_type_strings[type],
 				 &lockdep_keys[type], 0);
-	else
-		res->l_lockdep_map.key = NULL;
-#endif
-}
+	अन्यथा
+		res->l_lockdep_map.key = शून्य;
+#पूर्ण_अगर
+पूर्ण
 
-void ocfs2_lock_res_init_once(struct ocfs2_lock_res *res)
-{
+व्योम ocfs2_lock_res_init_once(काष्ठा ocfs2_lock_res *res)
+अणु
 	/* This also clears out the lock status block */
-	memset(res, 0, sizeof(struct ocfs2_lock_res));
+	स_रखो(res, 0, माप(काष्ठा ocfs2_lock_res));
 	spin_lock_init(&res->l_lock);
-	init_waitqueue_head(&res->l_event);
+	init_रुकोqueue_head(&res->l_event);
 	INIT_LIST_HEAD(&res->l_blocked_list);
-	INIT_LIST_HEAD(&res->l_mask_waiters);
+	INIT_LIST_HEAD(&res->l_mask_रुकोers);
 	INIT_LIST_HEAD(&res->l_holders);
-}
+पूर्ण
 
-void ocfs2_inode_lock_res_init(struct ocfs2_lock_res *res,
-			       enum ocfs2_lock_type type,
-			       unsigned int generation,
-			       struct inode *inode)
-{
-	struct ocfs2_lock_res_ops *ops;
+व्योम ocfs2_inode_lock_res_init(काष्ठा ocfs2_lock_res *res,
+			       क्रमागत ocfs2_lock_type type,
+			       अचिन्हित पूर्णांक generation,
+			       काष्ठा inode *inode)
+अणु
+	काष्ठा ocfs2_lock_res_ops *ops;
 
-	switch(type) {
-		case OCFS2_LOCK_TYPE_RW:
+	चयन(type) अणु
+		हाल OCFS2_LOCK_TYPE_RW:
 			ops = &ocfs2_inode_rw_lops;
-			break;
-		case OCFS2_LOCK_TYPE_META:
+			अवरोध;
+		हाल OCFS2_LOCK_TYPE_META:
 			ops = &ocfs2_inode_inode_lops;
-			break;
-		case OCFS2_LOCK_TYPE_OPEN:
-			ops = &ocfs2_inode_open_lops;
-			break;
-		default:
+			अवरोध;
+		हाल OCFS2_LOCK_TYPE_OPEN:
+			ops = &ocfs2_inode_खोलो_lops;
+			अवरोध;
+		शेष:
 			mlog_bug_on_msg(1, "type: %d\n", type);
-			ops = NULL; /* thanks, gcc */
-			break;
-	}
+			ops = शून्य; /* thanks, gcc */
+			अवरोध;
+	पूर्ण
 
 	ocfs2_build_lock_name(type, OCFS2_I(inode)->ip_blkno,
 			      generation, res->l_name);
 	ocfs2_lock_res_init_common(OCFS2_SB(inode->i_sb), res, type, ops, inode);
-}
+पूर्ण
 
-static struct ocfs2_super *ocfs2_get_inode_osb(struct ocfs2_lock_res *lockres)
-{
-	struct inode *inode = ocfs2_lock_res_inode(lockres);
+अटल काष्ठा ocfs2_super *ocfs2_get_inode_osb(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	काष्ठा inode *inode = ocfs2_lock_res_inode(lockres);
 
-	return OCFS2_SB(inode->i_sb);
-}
+	वापस OCFS2_SB(inode->i_sb);
+पूर्ण
 
-static struct ocfs2_super *ocfs2_get_qinfo_osb(struct ocfs2_lock_res *lockres)
-{
-	struct ocfs2_mem_dqinfo *info = lockres->l_priv;
+अटल काष्ठा ocfs2_super *ocfs2_get_qinfo_osb(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	काष्ठा ocfs2_mem_dqinfo *info = lockres->l_priv;
 
-	return OCFS2_SB(info->dqi_gi.dqi_sb);
-}
+	वापस OCFS2_SB(info->dqi_gi.dqi_sb);
+पूर्ण
 
-static struct ocfs2_super *ocfs2_get_file_osb(struct ocfs2_lock_res *lockres)
-{
-	struct ocfs2_file_private *fp = lockres->l_priv;
+अटल काष्ठा ocfs2_super *ocfs2_get_file_osb(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	काष्ठा ocfs2_file_निजी *fp = lockres->l_priv;
 
-	return OCFS2_SB(fp->fp_file->f_mapping->host->i_sb);
-}
+	वापस OCFS2_SB(fp->fp_file->f_mapping->host->i_sb);
+पूर्ण
 
-static __u64 ocfs2_get_dentry_lock_ino(struct ocfs2_lock_res *lockres)
-{
+अटल __u64 ocfs2_get_dentry_lock_ino(काष्ठा ocfs2_lock_res *lockres)
+अणु
 	__be64 inode_blkno_be;
 
-	memcpy(&inode_blkno_be, &lockres->l_name[OCFS2_DENTRY_LOCK_INO_START],
-	       sizeof(__be64));
+	स_नकल(&inode_blkno_be, &lockres->l_name[OCFS2_DENTRY_LOCK_INO_START],
+	       माप(__be64));
 
-	return be64_to_cpu(inode_blkno_be);
-}
+	वापस be64_to_cpu(inode_blkno_be);
+पूर्ण
 
-static struct ocfs2_super *ocfs2_get_dentry_osb(struct ocfs2_lock_res *lockres)
-{
-	struct ocfs2_dentry_lock *dl = lockres->l_priv;
+अटल काष्ठा ocfs2_super *ocfs2_get_dentry_osb(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	काष्ठा ocfs2_dentry_lock *dl = lockres->l_priv;
 
-	return OCFS2_SB(dl->dl_inode->i_sb);
-}
+	वापस OCFS2_SB(dl->dl_inode->i_sb);
+पूर्ण
 
-void ocfs2_dentry_lock_res_init(struct ocfs2_dentry_lock *dl,
-				u64 parent, struct inode *inode)
-{
-	int len;
+व्योम ocfs2_dentry_lock_res_init(काष्ठा ocfs2_dentry_lock *dl,
+				u64 parent, काष्ठा inode *inode)
+अणु
+	पूर्णांक len;
 	u64 inode_blkno = OCFS2_I(inode)->ip_blkno;
 	__be64 inode_blkno_be = cpu_to_be64(inode_blkno);
-	struct ocfs2_lock_res *lockres = &dl->dl_lockres;
+	काष्ठा ocfs2_lock_res *lockres = &dl->dl_lockres;
 
 	ocfs2_lock_res_init_once(lockres);
 
 	/*
-	 * Unfortunately, the standard lock naming scheme won't work
+	 * Unक्रमtunately, the standard lock naming scheme won't work
 	 * here because we have two 16 byte values to use. Instead,
 	 * we'll stuff the inode number as a binary value. We still
-	 * want error prints to show something without garbling the
-	 * display, so drop a null byte in there before the inode
+	 * want error prपूर्णांकs to show something without garbling the
+	 * display, so drop a null byte in there beक्रमe the inode
 	 * number. A future version of OCFS2 will likely use all
-	 * binary lock names. The stringified names have been a
-	 * tremendous aid in debugging, but now that the debugfs
-	 * interface exists, we can mangle things there if need be.
+	 * binary lock names. The stringअगरied names have been a
+	 * tremenकरोus aid in debugging, but now that the debugfs
+	 * पूर्णांकerface exists, we can mangle things there अगर need be.
 	 *
 	 * NOTE: We also drop the standard "pad" value (the total lock
 	 * name size stays the same though - the last part is all
-	 * zeros due to the memset in ocfs2_lock_res_init_once()
+	 * zeros due to the स_रखो in ocfs2_lock_res_init_once()
 	 */
-	len = snprintf(lockres->l_name, OCFS2_DENTRY_LOCK_INO_START,
+	len = snम_लिखो(lockres->l_name, OCFS2_DENTRY_LOCK_INO_START,
 		       "%c%016llx",
-		       ocfs2_lock_type_char(OCFS2_LOCK_TYPE_DENTRY),
-		       (long long)parent);
+		       ocfs2_lock_type_अक्षर(OCFS2_LOCK_TYPE_DENTRY),
+		       (दीर्घ दीर्घ)parent);
 
 	BUG_ON(len != (OCFS2_DENTRY_LOCK_INO_START - 1));
 
-	memcpy(&lockres->l_name[OCFS2_DENTRY_LOCK_INO_START], &inode_blkno_be,
-	       sizeof(__be64));
+	स_नकल(&lockres->l_name[OCFS2_DENTRY_LOCK_INO_START], &inode_blkno_be,
+	       माप(__be64));
 
 	ocfs2_lock_res_init_common(OCFS2_SB(inode->i_sb), lockres,
 				   OCFS2_LOCK_TYPE_DENTRY, &ocfs2_dentry_lops,
 				   dl);
-}
+पूर्ण
 
-static void ocfs2_super_lock_res_init(struct ocfs2_lock_res *res,
-				      struct ocfs2_super *osb)
-{
-	/* Superblock lockres doesn't come from a slab so we call init
+अटल व्योम ocfs2_super_lock_res_init(काष्ठा ocfs2_lock_res *res,
+				      काष्ठा ocfs2_super *osb)
+अणु
+	/* Superblock lockres करोesn't come from a slab so we call init
 	 * once on it manually.  */
 	ocfs2_lock_res_init_once(res);
 	ocfs2_build_lock_name(OCFS2_LOCK_TYPE_SUPER, OCFS2_SUPER_BLOCK_BLKNO,
 			      0, res->l_name);
 	ocfs2_lock_res_init_common(osb, res, OCFS2_LOCK_TYPE_SUPER,
 				   &ocfs2_super_lops, osb);
-}
+पूर्ण
 
-static void ocfs2_rename_lock_res_init(struct ocfs2_lock_res *res,
-				       struct ocfs2_super *osb)
-{
-	/* Rename lockres doesn't come from a slab so we call init
+अटल व्योम ocfs2_नाम_lock_res_init(काष्ठा ocfs2_lock_res *res,
+				       काष्ठा ocfs2_super *osb)
+अणु
+	/* Rename lockres करोesn't come from a slab so we call init
 	 * once on it manually.  */
 	ocfs2_lock_res_init_once(res);
 	ocfs2_build_lock_name(OCFS2_LOCK_TYPE_RENAME, 0, 0, res->l_name);
 	ocfs2_lock_res_init_common(osb, res, OCFS2_LOCK_TYPE_RENAME,
-				   &ocfs2_rename_lops, osb);
-}
+				   &ocfs2_नाम_lops, osb);
+पूर्ण
 
-static void ocfs2_nfs_sync_lock_res_init(struct ocfs2_lock_res *res,
-					 struct ocfs2_super *osb)
-{
-	/* nfs_sync lockres doesn't come from a slab so we call init
+अटल व्योम ocfs2_nfs_sync_lock_res_init(काष्ठा ocfs2_lock_res *res,
+					 काष्ठा ocfs2_super *osb)
+अणु
+	/* nfs_sync lockres करोesn't come from a slab so we call init
 	 * once on it manually.  */
 	ocfs2_lock_res_init_once(res);
 	ocfs2_build_lock_name(OCFS2_LOCK_TYPE_NFS_SYNC, 0, 0, res->l_name);
 	ocfs2_lock_res_init_common(osb, res, OCFS2_LOCK_TYPE_NFS_SYNC,
 				   &ocfs2_nfs_sync_lops, osb);
-}
+पूर्ण
 
-static void ocfs2_nfs_sync_lock_init(struct ocfs2_super *osb)
-{
+अटल व्योम ocfs2_nfs_sync_lock_init(काष्ठा ocfs2_super *osb)
+अणु
 	ocfs2_nfs_sync_lock_res_init(&osb->osb_nfs_sync_lockres, osb);
 	init_rwsem(&osb->nfs_sync_rwlock);
-}
+पूर्ण
 
-void ocfs2_trim_fs_lock_res_init(struct ocfs2_super *osb)
-{
-	struct ocfs2_lock_res *lockres = &osb->osb_trim_fs_lockres;
+व्योम ocfs2_trim_fs_lock_res_init(काष्ठा ocfs2_super *osb)
+अणु
+	काष्ठा ocfs2_lock_res *lockres = &osb->osb_trim_fs_lockres;
 
-	/* Only one trimfs thread are allowed to work at the same time. */
+	/* Only one trimfs thपढ़ो are allowed to work at the same समय. */
 	mutex_lock(&osb->obs_trim_fs_mutex);
 
 	ocfs2_lock_res_init_once(lockres);
 	ocfs2_build_lock_name(OCFS2_LOCK_TYPE_TRIM_FS, 0, 0, lockres->l_name);
 	ocfs2_lock_res_init_common(osb, lockres, OCFS2_LOCK_TYPE_TRIM_FS,
 				   &ocfs2_trim_fs_lops, osb);
-}
+पूर्ण
 
-void ocfs2_trim_fs_lock_res_uninit(struct ocfs2_super *osb)
-{
-	struct ocfs2_lock_res *lockres = &osb->osb_trim_fs_lockres;
+व्योम ocfs2_trim_fs_lock_res_uninit(काष्ठा ocfs2_super *osb)
+अणु
+	काष्ठा ocfs2_lock_res *lockres = &osb->osb_trim_fs_lockres;
 
 	ocfs2_simple_drop_lockres(osb, lockres);
-	ocfs2_lock_res_free(lockres);
+	ocfs2_lock_res_मुक्त(lockres);
 
 	mutex_unlock(&osb->obs_trim_fs_mutex);
-}
+पूर्ण
 
-static void ocfs2_orphan_scan_lock_res_init(struct ocfs2_lock_res *res,
-					    struct ocfs2_super *osb)
-{
+अटल व्योम ocfs2_orphan_scan_lock_res_init(काष्ठा ocfs2_lock_res *res,
+					    काष्ठा ocfs2_super *osb)
+अणु
 	ocfs2_lock_res_init_once(res);
 	ocfs2_build_lock_name(OCFS2_LOCK_TYPE_ORPHAN_SCAN, 0, 0, res->l_name);
 	ocfs2_lock_res_init_common(osb, res, OCFS2_LOCK_TYPE_ORPHAN_SCAN,
 				   &ocfs2_orphan_scan_lops, osb);
-}
+पूर्ण
 
-void ocfs2_file_lock_res_init(struct ocfs2_lock_res *lockres,
-			      struct ocfs2_file_private *fp)
-{
-	struct inode *inode = fp->fp_file->f_mapping->host;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
+व्योम ocfs2_file_lock_res_init(काष्ठा ocfs2_lock_res *lockres,
+			      काष्ठा ocfs2_file_निजी *fp)
+अणु
+	काष्ठा inode *inode = fp->fp_file->f_mapping->host;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
 
 	ocfs2_lock_res_init_once(lockres);
 	ocfs2_build_lock_name(OCFS2_LOCK_TYPE_FLOCK, oi->ip_blkno,
@@ -738,41 +739,41 @@ void ocfs2_file_lock_res_init(struct ocfs2_lock_res *lockres,
 				   OCFS2_LOCK_TYPE_FLOCK, &ocfs2_flock_lops,
 				   fp);
 	lockres->l_flags |= OCFS2_LOCK_NOCACHE;
-}
+पूर्ण
 
-void ocfs2_qinfo_lock_res_init(struct ocfs2_lock_res *lockres,
-			       struct ocfs2_mem_dqinfo *info)
-{
+व्योम ocfs2_qinfo_lock_res_init(काष्ठा ocfs2_lock_res *lockres,
+			       काष्ठा ocfs2_mem_dqinfo *info)
+अणु
 	ocfs2_lock_res_init_once(lockres);
 	ocfs2_build_lock_name(OCFS2_LOCK_TYPE_QINFO, info->dqi_gi.dqi_type,
 			      0, lockres->l_name);
 	ocfs2_lock_res_init_common(OCFS2_SB(info->dqi_gi.dqi_sb), lockres,
 				   OCFS2_LOCK_TYPE_QINFO, &ocfs2_qinfo_lops,
 				   info);
-}
+पूर्ण
 
-void ocfs2_refcount_lock_res_init(struct ocfs2_lock_res *lockres,
-				  struct ocfs2_super *osb, u64 ref_blkno,
-				  unsigned int generation)
-{
+व्योम ocfs2_refcount_lock_res_init(काष्ठा ocfs2_lock_res *lockres,
+				  काष्ठा ocfs2_super *osb, u64 ref_blkno,
+				  अचिन्हित पूर्णांक generation)
+अणु
 	ocfs2_lock_res_init_once(lockres);
 	ocfs2_build_lock_name(OCFS2_LOCK_TYPE_REFCOUNT, ref_blkno,
 			      generation, lockres->l_name);
 	ocfs2_lock_res_init_common(osb, lockres, OCFS2_LOCK_TYPE_REFCOUNT,
 				   &ocfs2_refcount_block_lops, osb);
-}
+पूर्ण
 
-void ocfs2_lock_res_free(struct ocfs2_lock_res *res)
-{
-	if (!(res->l_flags & OCFS2_LOCK_INITIALIZED))
-		return;
+व्योम ocfs2_lock_res_मुक्त(काष्ठा ocfs2_lock_res *res)
+अणु
+	अगर (!(res->l_flags & OCFS2_LOCK_INITIALIZED))
+		वापस;
 
-	ocfs2_remove_lockres_tracking(res);
+	ocfs2_हटाओ_lockres_tracking(res);
 
 	mlog_bug_on_msg(!list_empty(&res->l_blocked_list),
 			"Lockres %s is on the blocked list\n",
 			res->l_name);
-	mlog_bug_on_msg(!list_empty(&res->l_mask_waiters),
+	mlog_bug_on_msg(!list_empty(&res->l_mask_रुकोers),
 			"Lockres %s has mask waiters pending\n",
 			res->l_name);
 	mlog_bug_on_msg(spin_is_locked(&res->l_lock),
@@ -785,186 +786,186 @@ void ocfs2_lock_res_free(struct ocfs2_lock_res *res)
 			"Lockres %s has %u ex holders\n",
 			res->l_name, res->l_ex_holders);
 
-	/* Need to clear out the lock status block for the dlm */
-	memset(&res->l_lksb, 0, sizeof(res->l_lksb));
+	/* Need to clear out the lock status block क्रम the dlm */
+	स_रखो(&res->l_lksb, 0, माप(res->l_lksb));
 
 	res->l_flags = 0UL;
-}
+पूर्ण
 
 /*
- * Keep a list of processes who have interest in a lockres.
- * Note: this is now only uesed for check recursive cluster locking.
+ * Keep a list of processes who have पूर्णांकerest in a lockres.
+ * Note: this is now only uesed क्रम check recursive cluster locking.
  */
-static inline void ocfs2_add_holder(struct ocfs2_lock_res *lockres,
-				   struct ocfs2_lock_holder *oh)
-{
+अटल अंतरभूत व्योम ocfs2_add_holder(काष्ठा ocfs2_lock_res *lockres,
+				   काष्ठा ocfs2_lock_holder *oh)
+अणु
 	INIT_LIST_HEAD(&oh->oh_list);
 	oh->oh_owner_pid = get_pid(task_pid(current));
 
 	spin_lock(&lockres->l_lock);
 	list_add_tail(&oh->oh_list, &lockres->l_holders);
 	spin_unlock(&lockres->l_lock);
-}
+पूर्ण
 
-static struct ocfs2_lock_holder *
-ocfs2_pid_holder(struct ocfs2_lock_res *lockres,
-		struct pid *pid)
-{
-	struct ocfs2_lock_holder *oh;
+अटल काष्ठा ocfs2_lock_holder *
+ocfs2_pid_holder(काष्ठा ocfs2_lock_res *lockres,
+		काष्ठा pid *pid)
+अणु
+	काष्ठा ocfs2_lock_holder *oh;
 
 	spin_lock(&lockres->l_lock);
-	list_for_each_entry(oh, &lockres->l_holders, oh_list) {
-		if (oh->oh_owner_pid == pid) {
+	list_क्रम_each_entry(oh, &lockres->l_holders, oh_list) अणु
+		अगर (oh->oh_owner_pid == pid) अणु
 			spin_unlock(&lockres->l_lock);
-			return oh;
-		}
-	}
+			वापस oh;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&lockres->l_lock);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline void ocfs2_remove_holder(struct ocfs2_lock_res *lockres,
-				       struct ocfs2_lock_holder *oh)
-{
+अटल अंतरभूत व्योम ocfs2_हटाओ_holder(काष्ठा ocfs2_lock_res *lockres,
+				       काष्ठा ocfs2_lock_holder *oh)
+अणु
 	spin_lock(&lockres->l_lock);
 	list_del(&oh->oh_list);
 	spin_unlock(&lockres->l_lock);
 
 	put_pid(oh->oh_owner_pid);
-}
+पूर्ण
 
 
-static inline void ocfs2_inc_holders(struct ocfs2_lock_res *lockres,
-				     int level)
-{
+अटल अंतरभूत व्योम ocfs2_inc_holders(काष्ठा ocfs2_lock_res *lockres,
+				     पूर्णांक level)
+अणु
 	BUG_ON(!lockres);
 
-	switch(level) {
-	case DLM_LOCK_EX:
+	चयन(level) अणु
+	हाल DLM_LOCK_EX:
 		lockres->l_ex_holders++;
-		break;
-	case DLM_LOCK_PR:
+		अवरोध;
+	हाल DLM_LOCK_PR:
 		lockres->l_ro_holders++;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void ocfs2_dec_holders(struct ocfs2_lock_res *lockres,
-				     int level)
-{
+अटल अंतरभूत व्योम ocfs2_dec_holders(काष्ठा ocfs2_lock_res *lockres,
+				     पूर्णांक level)
+अणु
 	BUG_ON(!lockres);
 
-	switch(level) {
-	case DLM_LOCK_EX:
+	चयन(level) अणु
+	हाल DLM_LOCK_EX:
 		BUG_ON(!lockres->l_ex_holders);
 		lockres->l_ex_holders--;
-		break;
-	case DLM_LOCK_PR:
+		अवरोध;
+	हाल DLM_LOCK_PR:
 		BUG_ON(!lockres->l_ro_holders);
 		lockres->l_ro_holders--;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* WARNING: This function lives in a world where the only three lock
  * levels are EX, PR, and NL. It *will* have to be adjusted when more
  * lock types are added. */
-static inline int ocfs2_highest_compat_lock_level(int level)
-{
-	int new_level = DLM_LOCK_EX;
+अटल अंतरभूत पूर्णांक ocfs2_highest_compat_lock_level(पूर्णांक level)
+अणु
+	पूर्णांक new_level = DLM_LOCK_EX;
 
-	if (level == DLM_LOCK_EX)
+	अगर (level == DLM_LOCK_EX)
 		new_level = DLM_LOCK_NL;
-	else if (level == DLM_LOCK_PR)
+	अन्यथा अगर (level == DLM_LOCK_PR)
 		new_level = DLM_LOCK_PR;
-	return new_level;
-}
+	वापस new_level;
+पूर्ण
 
-static void lockres_set_flags(struct ocfs2_lock_res *lockres,
-			      unsigned long newflags)
-{
-	struct ocfs2_mask_waiter *mw, *tmp;
+अटल व्योम lockres_set_flags(काष्ठा ocfs2_lock_res *lockres,
+			      अचिन्हित दीर्घ newflags)
+अणु
+	काष्ठा ocfs2_mask_रुकोer *mw, *पंचांगp;
 
- 	assert_spin_locked(&lockres->l_lock);
+ 	निश्चित_spin_locked(&lockres->l_lock);
 
 	lockres->l_flags = newflags;
 
-	list_for_each_entry_safe(mw, tmp, &lockres->l_mask_waiters, mw_item) {
-		if ((lockres->l_flags & mw->mw_mask) != mw->mw_goal)
-			continue;
+	list_क्रम_each_entry_safe(mw, पंचांगp, &lockres->l_mask_रुकोers, mw_item) अणु
+		अगर ((lockres->l_flags & mw->mw_mask) != mw->mw_goal)
+			जारी;
 
 		list_del_init(&mw->mw_item);
 		mw->mw_status = 0;
 		complete(&mw->mw_complete);
-		ocfs2_track_lock_wait(lockres);
-	}
-}
-static void lockres_or_flags(struct ocfs2_lock_res *lockres, unsigned long or)
-{
+		ocfs2_track_lock_रुको(lockres);
+	पूर्ण
+पूर्ण
+अटल व्योम lockres_or_flags(काष्ठा ocfs2_lock_res *lockres, अचिन्हित दीर्घ or)
+अणु
 	lockres_set_flags(lockres, lockres->l_flags | or);
-}
-static void lockres_clear_flags(struct ocfs2_lock_res *lockres,
-				unsigned long clear)
-{
+पूर्ण
+अटल व्योम lockres_clear_flags(काष्ठा ocfs2_lock_res *lockres,
+				अचिन्हित दीर्घ clear)
+अणु
 	lockres_set_flags(lockres, lockres->l_flags & ~clear);
-}
+पूर्ण
 
-static inline void ocfs2_generic_handle_downconvert_action(struct ocfs2_lock_res *lockres)
-{
+अटल अंतरभूत व्योम ocfs2_generic_handle_करोwnconvert_action(काष्ठा ocfs2_lock_res *lockres)
+अणु
 	BUG_ON(!(lockres->l_flags & OCFS2_LOCK_BUSY));
 	BUG_ON(!(lockres->l_flags & OCFS2_LOCK_ATTACHED));
 	BUG_ON(!(lockres->l_flags & OCFS2_LOCK_BLOCKED));
 	BUG_ON(lockres->l_blocking <= DLM_LOCK_NL);
 
 	lockres->l_level = lockres->l_requested;
-	if (lockres->l_level <=
-	    ocfs2_highest_compat_lock_level(lockres->l_blocking)) {
+	अगर (lockres->l_level <=
+	    ocfs2_highest_compat_lock_level(lockres->l_blocking)) अणु
 		lockres->l_blocking = DLM_LOCK_NL;
 		lockres_clear_flags(lockres, OCFS2_LOCK_BLOCKED);
-	}
+	पूर्ण
 	lockres_clear_flags(lockres, OCFS2_LOCK_BUSY);
-}
+पूर्ण
 
-static inline void ocfs2_generic_handle_convert_action(struct ocfs2_lock_res *lockres)
-{
+अटल अंतरभूत व्योम ocfs2_generic_handle_convert_action(काष्ठा ocfs2_lock_res *lockres)
+अणु
 	BUG_ON(!(lockres->l_flags & OCFS2_LOCK_BUSY));
 	BUG_ON(!(lockres->l_flags & OCFS2_LOCK_ATTACHED));
 
-	/* Convert from RO to EX doesn't really need anything as our
-	 * information is already up to data. Convert from NL to
+	/* Convert from RO to EX करोesn't really need anything as our
+	 * inक्रमmation is alपढ़ोy up to data. Convert from NL to
 	 * *anything* however should mark ourselves as needing an
 	 * update */
-	if (lockres->l_level == DLM_LOCK_NL &&
+	अगर (lockres->l_level == DLM_LOCK_NL &&
 	    lockres->l_ops->flags & LOCK_TYPE_REQUIRES_REFRESH)
 		lockres_or_flags(lockres, OCFS2_LOCK_NEEDS_REFRESH);
 
 	lockres->l_level = lockres->l_requested;
 
 	/*
-	 * We set the OCFS2_LOCK_UPCONVERT_FINISHING flag before clearing
-	 * the OCFS2_LOCK_BUSY flag to prevent the dc thread from
-	 * downconverting the lock before the upconvert has fully completed.
-	 * Do not prevent the dc thread from downconverting if NONBLOCK lock
-	 * had already returned.
+	 * We set the OCFS2_LOCK_UPCONVERT_FINISHING flag beक्रमe clearing
+	 * the OCFS2_LOCK_BUSY flag to prevent the dc thपढ़ो from
+	 * करोwnconverting the lock beक्रमe the upconvert has fully completed.
+	 * Do not prevent the dc thपढ़ो from करोwnconverting अगर NONBLOCK lock
+	 * had alपढ़ोy वापसed.
 	 */
-	if (!(lockres->l_flags & OCFS2_LOCK_NONBLOCK_FINISHED))
+	अगर (!(lockres->l_flags & OCFS2_LOCK_NONBLOCK_FINISHED))
 		lockres_or_flags(lockres, OCFS2_LOCK_UPCONVERT_FINISHING);
-	else
+	अन्यथा
 		lockres_clear_flags(lockres, OCFS2_LOCK_NONBLOCK_FINISHED);
 
 	lockres_clear_flags(lockres, OCFS2_LOCK_BUSY);
-}
+पूर्ण
 
-static inline void ocfs2_generic_handle_attach_action(struct ocfs2_lock_res *lockres)
-{
+अटल अंतरभूत व्योम ocfs2_generic_handle_attach_action(काष्ठा ocfs2_lock_res *lockres)
+अणु
 	BUG_ON((!(lockres->l_flags & OCFS2_LOCK_BUSY)));
 	BUG_ON(lockres->l_flags & OCFS2_LOCK_ATTACHED);
 
-	if (lockres->l_requested > DLM_LOCK_NL &&
+	अगर (lockres->l_requested > DLM_LOCK_NL &&
 	    !(lockres->l_flags & OCFS2_LOCK_LOCAL) &&
 	    lockres->l_ops->flags & LOCK_TYPE_REQUIRES_REFRESH)
 		lockres_or_flags(lockres, OCFS2_LOCK_NEEDS_REFRESH);
@@ -972,56 +973,56 @@ static inline void ocfs2_generic_handle_attach_action(struct ocfs2_lock_res *loc
 	lockres->l_level = lockres->l_requested;
 	lockres_or_flags(lockres, OCFS2_LOCK_ATTACHED);
 	lockres_clear_flags(lockres, OCFS2_LOCK_BUSY);
-}
+पूर्ण
 
-static int ocfs2_generic_handle_bast(struct ocfs2_lock_res *lockres,
-				     int level)
-{
-	int needs_downconvert = 0;
+अटल पूर्णांक ocfs2_generic_handle_bast(काष्ठा ocfs2_lock_res *lockres,
+				     पूर्णांक level)
+अणु
+	पूर्णांक needs_करोwnconvert = 0;
 
-	assert_spin_locked(&lockres->l_lock);
+	निश्चित_spin_locked(&lockres->l_lock);
 
-	if (level > lockres->l_blocking) {
-		/* only schedule a downconvert if we haven't already scheduled
+	अगर (level > lockres->l_blocking) अणु
+		/* only schedule a करोwnconvert अगर we haven't alपढ़ोy scheduled
 		 * one that goes low enough to satisfy the level we're
-		 * blocking.  this also catches the case where we get
+		 * blocking.  this also catches the हाल where we get
 		 * duplicate BASTs */
-		if (ocfs2_highest_compat_lock_level(level) <
+		अगर (ocfs2_highest_compat_lock_level(level) <
 		    ocfs2_highest_compat_lock_level(lockres->l_blocking))
-			needs_downconvert = 1;
+			needs_करोwnconvert = 1;
 
 		lockres->l_blocking = level;
-	}
+	पूर्ण
 
 	mlog(ML_BASTS, "lockres %s, block %d, level %d, l_block %d, dwn %d\n",
 	     lockres->l_name, level, lockres->l_level, lockres->l_blocking,
-	     needs_downconvert);
+	     needs_करोwnconvert);
 
-	if (needs_downconvert)
+	अगर (needs_करोwnconvert)
 		lockres_or_flags(lockres, OCFS2_LOCK_BLOCKED);
-	mlog(0, "needs_downconvert = %d\n", needs_downconvert);
-	return needs_downconvert;
-}
+	mlog(0, "needs_downconvert = %d\n", needs_करोwnconvert);
+	वापस needs_करोwnconvert;
+पूर्ण
 
 /*
  * OCFS2_LOCK_PENDING and l_pending_gen.
  *
- * Why does OCFS2_LOCK_PENDING exist?  To close a race between setting
+ * Why करोes OCFS2_LOCK_PENDING exist?  To बंद a race between setting
  * OCFS2_LOCK_BUSY and calling ocfs2_dlm_lock().  See ocfs2_unblock_lock()
- * for more details on the race.
+ * क्रम more details on the race.
  *
- * OCFS2_LOCK_PENDING closes the race quite nicely.  However, it introduces
- * a race on itself.  In o2dlm, we can get the ast before ocfs2_dlm_lock()
- * returns.  The ast clears OCFS2_LOCK_BUSY, and must therefore clear
- * OCFS2_LOCK_PENDING at the same time.  When ocfs2_dlm_lock() returns,
- * the caller is going to try to clear PENDING again.  If nothing else is
- * happening, __lockres_clear_pending() sees PENDING is unset and does
+ * OCFS2_LOCK_PENDING बंदs the race quite nicely.  However, it पूर्णांकroduces
+ * a race on itself.  In o2dlm, we can get the ast beक्रमe ocfs2_dlm_lock()
+ * वापसs.  The ast clears OCFS2_LOCK_BUSY, and must thereक्रमe clear
+ * OCFS2_LOCK_PENDING at the same समय.  When ocfs2_dlm_lock() वापसs,
+ * the caller is going to try to clear PENDING again.  If nothing अन्यथा is
+ * happening, __lockres_clear_pending() sees PENDING is unset and करोes
  * nothing.
  *
- * But what if another path (eg downconvert thread) has just started a
+ * But what अगर another path (eg करोwnconvert thपढ़ो) has just started a
  * new locking action?  The other path has re-set PENDING.  Our path
- * cannot clear PENDING, because that will re-open the original race
- * window.
+ * cannot clear PENDING, because that will re-खोलो the original race
+ * winकरोw.
  *
  * [Example]
  *
@@ -1031,90 +1032,90 @@ static int ocfs2_generic_handle_bast(struct ocfs2_lock_res *lockres,
  *   set PENDING
  *   drop l_lock
  *   ocfs2_dlm_lock()
- *    ocfs2_locking_ast()		ocfs2_downconvert_thread()
+ *    ocfs2_locking_ast()		ocfs2_करोwnconvert_thपढ़ो()
  *     clear PENDING			 ocfs2_unblock_lock()
  *					  take_l_lock
  *					  !BUSY
- *					  ocfs2_prepare_downconvert()
+ *					  ocfs2_prepare_करोwnconvert()
  *					   set BUSY
  *					   set PENDING
  *					  drop l_lock
  *   take l_lock
  *   clear PENDING
  *   drop l_lock
- *			<window>
+ *			<winकरोw>
  *					  ocfs2_dlm_lock()
  *
- * So as you can see, we now have a window where l_lock is not held,
+ * So as you can see, we now have a winकरोw where l_lock is not held,
  * PENDING is not set, and ocfs2_dlm_lock() has not been called.
  *
  * The core problem is that ocfs2_cluster_lock() has cleared the PENDING
- * set by ocfs2_prepare_downconvert().  That wasn't nice.
+ * set by ocfs2_prepare_करोwnconvert().  That wasn't nice.
  *
- * To solve this we introduce l_pending_gen.  A call to
- * lockres_clear_pending() will only do so when it is passed a generation
- * number that matches the lockres.  lockres_set_pending() will return the
+ * To solve this we पूर्णांकroduce l_pending_gen.  A call to
+ * lockres_clear_pending() will only करो so when it is passed a generation
+ * number that matches the lockres.  lockres_set_pending() will वापस the
  * current generation number.  When ocfs2_cluster_lock() goes to clear
  * PENDING, it passes the generation it got from set_pending().  In our
  * example above, the generation numbers will *not* match.  Thus,
  * ocfs2_cluster_lock() will not clear the PENDING set by
- * ocfs2_prepare_downconvert().
+ * ocfs2_prepare_करोwnconvert().
  */
 
-/* Unlocked version for ocfs2_locking_ast() */
-static void __lockres_clear_pending(struct ocfs2_lock_res *lockres,
-				    unsigned int generation,
-				    struct ocfs2_super *osb)
-{
-	assert_spin_locked(&lockres->l_lock);
+/* Unlocked version क्रम ocfs2_locking_ast() */
+अटल व्योम __lockres_clear_pending(काष्ठा ocfs2_lock_res *lockres,
+				    अचिन्हित पूर्णांक generation,
+				    काष्ठा ocfs2_super *osb)
+अणु
+	निश्चित_spin_locked(&lockres->l_lock);
 
 	/*
 	 * The ast and locking functions can race us here.  The winner
 	 * will clear pending, the loser will not.
 	 */
-	if (!(lockres->l_flags & OCFS2_LOCK_PENDING) ||
+	अगर (!(lockres->l_flags & OCFS2_LOCK_PENDING) ||
 	    (lockres->l_pending_gen != generation))
-		return;
+		वापस;
 
 	lockres_clear_flags(lockres, OCFS2_LOCK_PENDING);
 	lockres->l_pending_gen++;
 
 	/*
-	 * The downconvert thread may have skipped us because we
+	 * The करोwnconvert thपढ़ो may have skipped us because we
 	 * were PENDING.  Wake it up.
 	 */
-	if (lockres->l_flags & OCFS2_LOCK_BLOCKED)
-		ocfs2_wake_downconvert_thread(osb);
-}
+	अगर (lockres->l_flags & OCFS2_LOCK_BLOCKED)
+		ocfs2_wake_करोwnconvert_thपढ़ो(osb);
+पूर्ण
 
-/* Locked version for callers of ocfs2_dlm_lock() */
-static void lockres_clear_pending(struct ocfs2_lock_res *lockres,
-				  unsigned int generation,
-				  struct ocfs2_super *osb)
-{
-	unsigned long flags;
+/* Locked version क्रम callers of ocfs2_dlm_lock() */
+अटल व्योम lockres_clear_pending(काष्ठा ocfs2_lock_res *lockres,
+				  अचिन्हित पूर्णांक generation,
+				  काष्ठा ocfs2_super *osb)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 	__lockres_clear_pending(lockres, generation, osb);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
-}
+पूर्ण
 
-static unsigned int lockres_set_pending(struct ocfs2_lock_res *lockres)
-{
-	assert_spin_locked(&lockres->l_lock);
+अटल अचिन्हित पूर्णांक lockres_set_pending(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	निश्चित_spin_locked(&lockres->l_lock);
 	BUG_ON(!(lockres->l_flags & OCFS2_LOCK_BUSY));
 
 	lockres_or_flags(lockres, OCFS2_LOCK_PENDING);
 
-	return lockres->l_pending_gen;
-}
+	वापस lockres->l_pending_gen;
+पूर्ण
 
-static void ocfs2_blocking_ast(struct ocfs2_dlm_lksb *lksb, int level)
-{
-	struct ocfs2_lock_res *lockres = ocfs2_lksb_to_lock_res(lksb);
-	struct ocfs2_super *osb = ocfs2_get_lockres_osb(lockres);
-	int needs_downconvert;
-	unsigned long flags;
+अटल व्योम ocfs2_blocking_ast(काष्ठा ocfs2_dlm_lksb *lksb, पूर्णांक level)
+अणु
+	काष्ठा ocfs2_lock_res *lockres = ocfs2_lksb_to_lock_res(lksb);
+	काष्ठा ocfs2_super *osb = ocfs2_get_lockres_osb(lockres);
+	पूर्णांक needs_करोwnconvert;
+	अचिन्हित दीर्घ flags;
 
 	BUG_ON(level <= DLM_LOCK_NL);
 
@@ -1123,75 +1124,75 @@ static void ocfs2_blocking_ast(struct ocfs2_dlm_lksb *lksb, int level)
 	     ocfs2_lock_type_string(lockres->l_type));
 
 	/*
-	 * We can skip the bast for locks which don't enable caching -
-	 * they'll be dropped at the earliest possible time anyway.
+	 * We can skip the bast क्रम locks which करोn't enable caching -
+	 * they'll be dropped at the earliest possible समय anyway.
 	 */
-	if (lockres->l_flags & OCFS2_LOCK_NOCACHE)
-		return;
+	अगर (lockres->l_flags & OCFS2_LOCK_NOCACHE)
+		वापस;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
-	needs_downconvert = ocfs2_generic_handle_bast(lockres, level);
-	if (needs_downconvert)
+	needs_करोwnconvert = ocfs2_generic_handle_bast(lockres, level);
+	अगर (needs_करोwnconvert)
 		ocfs2_schedule_blocked_lock(osb, lockres);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
 	wake_up(&lockres->l_event);
 
-	ocfs2_wake_downconvert_thread(osb);
-}
+	ocfs2_wake_करोwnconvert_thपढ़ो(osb);
+पूर्ण
 
-static void ocfs2_locking_ast(struct ocfs2_dlm_lksb *lksb)
-{
-	struct ocfs2_lock_res *lockres = ocfs2_lksb_to_lock_res(lksb);
-	struct ocfs2_super *osb = ocfs2_get_lockres_osb(lockres);
-	unsigned long flags;
-	int status;
+अटल व्योम ocfs2_locking_ast(काष्ठा ocfs2_dlm_lksb *lksb)
+अणु
+	काष्ठा ocfs2_lock_res *lockres = ocfs2_lksb_to_lock_res(lksb);
+	काष्ठा ocfs2_super *osb = ocfs2_get_lockres_osb(lockres);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक status;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 
 	status = ocfs2_dlm_lock_status(&lockres->l_lksb);
 
-	if (status == -EAGAIN) {
+	अगर (status == -EAGAIN) अणु
 		lockres_clear_flags(lockres, OCFS2_LOCK_BUSY);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (status) {
+	अगर (status) अणु
 		mlog(ML_ERROR, "lockres %s: lksb status value of %d!\n",
 		     lockres->l_name, status);
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mlog(ML_BASTS, "AST fired for lockres %s, action %d, unlock %d, "
 	     "level %d => %d\n", lockres->l_name, lockres->l_action,
 	     lockres->l_unlock_action, lockres->l_level, lockres->l_requested);
 
-	switch(lockres->l_action) {
-	case OCFS2_AST_ATTACH:
+	चयन(lockres->l_action) अणु
+	हाल OCFS2_AST_ATTACH:
 		ocfs2_generic_handle_attach_action(lockres);
 		lockres_clear_flags(lockres, OCFS2_LOCK_LOCAL);
-		break;
-	case OCFS2_AST_CONVERT:
+		अवरोध;
+	हाल OCFS2_AST_CONVERT:
 		ocfs2_generic_handle_convert_action(lockres);
-		break;
-	case OCFS2_AST_DOWNCONVERT:
-		ocfs2_generic_handle_downconvert_action(lockres);
-		break;
-	default:
+		अवरोध;
+	हाल OCFS2_AST_DOWNCONVERT:
+		ocfs2_generic_handle_करोwnconvert_action(lockres);
+		अवरोध;
+	शेष:
 		mlog(ML_ERROR, "lockres %s: AST fired with invalid action: %u, "
 		     "flags 0x%lx, unlock: %u\n",
 		     lockres->l_name, lockres->l_action, lockres->l_flags,
 		     lockres->l_unlock_action);
 		BUG();
-	}
+	पूर्ण
 out:
-	/* set it to something invalid so if we get called again we
+	/* set it to something invalid so अगर we get called again we
 	 * can catch it. */
 	lockres->l_action = OCFS2_AST_INVALID;
 
 	/* Did we try to cancel this lock?  Clear that state */
-	if (lockres->l_unlock_action == OCFS2_UNLOCK_CANCEL_CONVERT)
+	अगर (lockres->l_unlock_action == OCFS2_UNLOCK_CANCEL_CONVERT)
 		lockres->l_unlock_action = OCFS2_UNLOCK_INVALID;
 
 	/*
@@ -1204,60 +1205,60 @@ out:
 
 	wake_up(&lockres->l_event);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
-}
+पूर्ण
 
-static void ocfs2_unlock_ast(struct ocfs2_dlm_lksb *lksb, int error)
-{
-	struct ocfs2_lock_res *lockres = ocfs2_lksb_to_lock_res(lksb);
-	unsigned long flags;
+अटल व्योम ocfs2_unlock_ast(काष्ठा ocfs2_dlm_lksb *lksb, पूर्णांक error)
+अणु
+	काष्ठा ocfs2_lock_res *lockres = ocfs2_lksb_to_lock_res(lksb);
+	अचिन्हित दीर्घ flags;
 
 	mlog(ML_BASTS, "UNLOCK AST fired for lockres %s, action = %d\n",
 	     lockres->l_name, lockres->l_unlock_action);
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
-	if (error) {
+	अगर (error) अणु
 		mlog(ML_ERROR, "Dlm passes error %d for lock %s, "
 		     "unlock_action %d\n", error, lockres->l_name,
 		     lockres->l_unlock_action);
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch(lockres->l_unlock_action) {
-	case OCFS2_UNLOCK_CANCEL_CONVERT:
+	चयन(lockres->l_unlock_action) अणु
+	हाल OCFS2_UNLOCK_CANCEL_CONVERT:
 		mlog(0, "Cancel convert success for %s\n", lockres->l_name);
 		lockres->l_action = OCFS2_AST_INVALID;
-		/* Downconvert thread may have requeued this lock, we
+		/* Downconvert thपढ़ो may have requeued this lock, we
 		 * need to wake it. */
-		if (lockres->l_flags & OCFS2_LOCK_BLOCKED)
-			ocfs2_wake_downconvert_thread(ocfs2_get_lockres_osb(lockres));
-		break;
-	case OCFS2_UNLOCK_DROP_LOCK:
+		अगर (lockres->l_flags & OCFS2_LOCK_BLOCKED)
+			ocfs2_wake_करोwnconvert_thपढ़ो(ocfs2_get_lockres_osb(lockres));
+		अवरोध;
+	हाल OCFS2_UNLOCK_DROP_LOCK:
 		lockres->l_level = DLM_LOCK_IV;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	lockres_clear_flags(lockres, OCFS2_LOCK_BUSY);
 	lockres->l_unlock_action = OCFS2_UNLOCK_INVALID;
 	wake_up(&lockres->l_event);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
-}
+पूर्ण
 
 /*
- * This is the filesystem locking protocol.  It provides the lock handling
- * hooks for the underlying DLM.  It has a maximum version number.
- * The version number allows interoperability with systems running at
+ * This is the fileप्रणाली locking protocol.  It provides the lock handling
+ * hooks क्रम the underlying DLM.  It has a maximum version number.
+ * The version number allows पूर्णांकeroperability with प्रणालीs running at
  * the same major number and an equal or smaller minor number.
  *
- * Whenever the filesystem does new things with locks (adds or removes a
- * lock, orders them differently, does different things underneath a lock),
+ * Whenever the fileप्रणाली करोes new things with locks (adds or हटाओs a
+ * lock, orders them dअगरferently, करोes dअगरferent things underneath a lock),
  * the version must be changed.  The protocol is negotiated when joining
- * the dlm domain.  A node may join the domain if its major version is
+ * the dlm करोमुख्य.  A node may join the करोमुख्य अगर its major version is
  * identical to all other nodes and its minor version is greater than
  * or equal to all other nodes.  When its minor version is greater than
- * the other nodes, it will run at the minor version specified by the
+ * the other nodes, it will run at the minor version specअगरied by the
  * other nodes.
  *
  * If a locking change is made that will not be compatible with older
@@ -1265,63 +1266,63 @@ static void ocfs2_unlock_ast(struct ocfs2_dlm_lksb *lksb, int error)
  * to zero.  If a change merely adds a behavior that can be disabled when
  * speaking to older versions, the minor version must be increased.  If a
  * change adds a fully backwards compatible change (eg, LVB changes that
- * are just ignored by older versions), the version does not need to be
+ * are just ignored by older versions), the version करोes not need to be
  * updated.
  */
-static struct ocfs2_locking_protocol lproto = {
-	.lp_max_version = {
+अटल काष्ठा ocfs2_locking_protocol lproto = अणु
+	.lp_max_version = अणु
 		.pv_major = OCFS2_LOCKING_PROTOCOL_MAJOR,
 		.pv_minor = OCFS2_LOCKING_PROTOCOL_MINOR,
-	},
+	पूर्ण,
 	.lp_lock_ast		= ocfs2_locking_ast,
 	.lp_blocking_ast	= ocfs2_blocking_ast,
 	.lp_unlock_ast		= ocfs2_unlock_ast,
-};
+पूर्ण;
 
-void ocfs2_set_locking_protocol(void)
-{
+व्योम ocfs2_set_locking_protocol(व्योम)
+अणु
 	ocfs2_stack_glue_set_max_proto_version(&lproto.lp_max_version);
-}
+पूर्ण
 
-static inline void ocfs2_recover_from_dlm_error(struct ocfs2_lock_res *lockres,
-						int convert)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम ocfs2_recover_from_dlm_error(काष्ठा ocfs2_lock_res *lockres,
+						पूर्णांक convert)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 	lockres_clear_flags(lockres, OCFS2_LOCK_BUSY);
 	lockres_clear_flags(lockres, OCFS2_LOCK_UPCONVERT_FINISHING);
-	if (convert)
+	अगर (convert)
 		lockres->l_action = OCFS2_AST_INVALID;
-	else
+	अन्यथा
 		lockres->l_unlock_action = OCFS2_UNLOCK_INVALID;
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
 	wake_up(&lockres->l_event);
-}
+पूर्ण
 
 /* Note: If we detect another process working on the lock (i.e.,
  * OCFS2_LOCK_BUSY), we'll bail out returning 0. It's up to the caller
- * to do the right thing in that case.
+ * to करो the right thing in that हाल.
  */
-static int ocfs2_lock_create(struct ocfs2_super *osb,
-			     struct ocfs2_lock_res *lockres,
-			     int level,
+अटल पूर्णांक ocfs2_lock_create(काष्ठा ocfs2_super *osb,
+			     काष्ठा ocfs2_lock_res *lockres,
+			     पूर्णांक level,
 			     u32 dlm_flags)
-{
-	int ret = 0;
-	unsigned long flags;
-	unsigned int gen;
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक gen;
 
 	mlog(0, "lock %s, level = %d, flags = %u\n", lockres->l_name, level,
 	     dlm_flags);
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
-	if ((lockres->l_flags & OCFS2_LOCK_ATTACHED) ||
-	    (lockres->l_flags & OCFS2_LOCK_BUSY)) {
+	अगर ((lockres->l_flags & OCFS2_LOCK_ATTACHED) ||
+	    (lockres->l_flags & OCFS2_LOCK_BUSY)) अणु
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	lockres->l_action = OCFS2_AST_ATTACH;
 	lockres->l_requested = level;
@@ -1336,234 +1337,234 @@ static int ocfs2_lock_create(struct ocfs2_super *osb,
 			     lockres->l_name,
 			     OCFS2_LOCK_ID_MAX_LEN - 1);
 	lockres_clear_pending(lockres, gen, osb);
-	if (ret) {
+	अगर (ret) अणु
 		ocfs2_log_dlm_error("ocfs2_dlm_lock", ret, lockres);
 		ocfs2_recover_from_dlm_error(lockres, 1);
-	}
+	पूर्ण
 
 	mlog(0, "lock %s, return from ocfs2_dlm_lock\n", lockres->l_name);
 
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int ocfs2_check_wait_flag(struct ocfs2_lock_res *lockres,
-					int flag)
-{
-	unsigned long flags;
-	int ret;
+अटल अंतरभूत पूर्णांक ocfs2_check_रुको_flag(काष्ठा ocfs2_lock_res *lockres,
+					पूर्णांक flag)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 	ret = lockres->l_flags & flag;
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void ocfs2_wait_on_busy_lock(struct ocfs2_lock_res *lockres)
+अटल अंतरभूत व्योम ocfs2_रुको_on_busy_lock(काष्ठा ocfs2_lock_res *lockres)
 
-{
-	wait_event(lockres->l_event,
-		   !ocfs2_check_wait_flag(lockres, OCFS2_LOCK_BUSY));
-}
+अणु
+	रुको_event(lockres->l_event,
+		   !ocfs2_check_रुको_flag(lockres, OCFS2_LOCK_BUSY));
+पूर्ण
 
-static inline void ocfs2_wait_on_refreshing_lock(struct ocfs2_lock_res *lockres)
+अटल अंतरभूत व्योम ocfs2_रुको_on_refreshing_lock(काष्ठा ocfs2_lock_res *lockres)
 
-{
-	wait_event(lockres->l_event,
-		   !ocfs2_check_wait_flag(lockres, OCFS2_LOCK_REFRESHING));
-}
+अणु
+	रुको_event(lockres->l_event,
+		   !ocfs2_check_रुको_flag(lockres, OCFS2_LOCK_REFRESHING));
+पूर्ण
 
-/* predict what lock level we'll be dropping down to on behalf
- * of another node, and return true if the currently wanted
+/* predict what lock level we'll be dropping करोwn to on behalf
+ * of another node, and वापस true अगर the currently wanted
  * level will be compatible with it. */
-static inline int ocfs2_may_continue_on_blocked_lock(struct ocfs2_lock_res *lockres,
-						     int wanted)
-{
+अटल अंतरभूत पूर्णांक ocfs2_may_जारी_on_blocked_lock(काष्ठा ocfs2_lock_res *lockres,
+						     पूर्णांक wanted)
+अणु
 	BUG_ON(!(lockres->l_flags & OCFS2_LOCK_BLOCKED));
 
-	return wanted <= ocfs2_highest_compat_lock_level(lockres->l_blocking);
-}
+	वापस wanted <= ocfs2_highest_compat_lock_level(lockres->l_blocking);
+पूर्ण
 
-static void ocfs2_init_mask_waiter(struct ocfs2_mask_waiter *mw)
-{
+अटल व्योम ocfs2_init_mask_रुकोer(काष्ठा ocfs2_mask_रुकोer *mw)
+अणु
 	INIT_LIST_HEAD(&mw->mw_item);
 	init_completion(&mw->mw_complete);
-	ocfs2_init_start_time(mw);
-}
+	ocfs2_init_start_समय(mw);
+पूर्ण
 
-static int ocfs2_wait_for_mask(struct ocfs2_mask_waiter *mw)
-{
-	wait_for_completion(&mw->mw_complete);
-	/* Re-arm the completion in case we want to wait on it again */
+अटल पूर्णांक ocfs2_रुको_क्रम_mask(काष्ठा ocfs2_mask_रुकोer *mw)
+अणु
+	रुको_क्रम_completion(&mw->mw_complete);
+	/* Re-arm the completion in हाल we want to रुको on it again */
 	reinit_completion(&mw->mw_complete);
-	return mw->mw_status;
-}
+	वापस mw->mw_status;
+पूर्ण
 
-static void lockres_add_mask_waiter(struct ocfs2_lock_res *lockres,
-				    struct ocfs2_mask_waiter *mw,
-				    unsigned long mask,
-				    unsigned long goal)
-{
+अटल व्योम lockres_add_mask_रुकोer(काष्ठा ocfs2_lock_res *lockres,
+				    काष्ठा ocfs2_mask_रुकोer *mw,
+				    अचिन्हित दीर्घ mask,
+				    अचिन्हित दीर्घ goal)
+अणु
 	BUG_ON(!list_empty(&mw->mw_item));
 
-	assert_spin_locked(&lockres->l_lock);
+	निश्चित_spin_locked(&lockres->l_lock);
 
-	list_add_tail(&mw->mw_item, &lockres->l_mask_waiters);
+	list_add_tail(&mw->mw_item, &lockres->l_mask_रुकोers);
 	mw->mw_mask = mask;
 	mw->mw_goal = goal;
-	ocfs2_track_lock_wait(lockres);
-}
+	ocfs2_track_lock_रुको(lockres);
+पूर्ण
 
-/* returns 0 if the mw that was removed was already satisfied, -EBUSY
- * if the mask still hadn't reached its goal */
-static int __lockres_remove_mask_waiter(struct ocfs2_lock_res *lockres,
-				      struct ocfs2_mask_waiter *mw)
-{
-	int ret = 0;
+/* वापसs 0 अगर the mw that was हटाओd was alपढ़ोy satisfied, -EBUSY
+ * अगर the mask still hadn't reached its goal */
+अटल पूर्णांक __lockres_हटाओ_mask_रुकोer(काष्ठा ocfs2_lock_res *lockres,
+				      काष्ठा ocfs2_mask_रुकोer *mw)
+अणु
+	पूर्णांक ret = 0;
 
-	assert_spin_locked(&lockres->l_lock);
-	if (!list_empty(&mw->mw_item)) {
-		if ((lockres->l_flags & mw->mw_mask) != mw->mw_goal)
+	निश्चित_spin_locked(&lockres->l_lock);
+	अगर (!list_empty(&mw->mw_item)) अणु
+		अगर ((lockres->l_flags & mw->mw_mask) != mw->mw_goal)
 			ret = -EBUSY;
 
 		list_del_init(&mw->mw_item);
 		init_completion(&mw->mw_complete);
-		ocfs2_track_lock_wait(lockres);
-	}
+		ocfs2_track_lock_रुको(lockres);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lockres_remove_mask_waiter(struct ocfs2_lock_res *lockres,
-				      struct ocfs2_mask_waiter *mw)
-{
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक lockres_हटाओ_mask_रुकोer(काष्ठा ocfs2_lock_res *lockres,
+				      काष्ठा ocfs2_mask_रुकोer *mw)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
-	ret = __lockres_remove_mask_waiter(lockres, mw);
+	ret = __lockres_हटाओ_mask_रुकोer(lockres, mw);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static int ocfs2_wait_for_mask_interruptible(struct ocfs2_mask_waiter *mw,
-					     struct ocfs2_lock_res *lockres)
-{
-	int ret;
+अटल पूर्णांक ocfs2_रुको_क्रम_mask_पूर्णांकerruptible(काष्ठा ocfs2_mask_रुकोer *mw,
+					     काष्ठा ocfs2_lock_res *lockres)
+अणु
+	पूर्णांक ret;
 
-	ret = wait_for_completion_interruptible(&mw->mw_complete);
-	if (ret)
-		lockres_remove_mask_waiter(lockres, mw);
-	else
+	ret = रुको_क्रम_completion_पूर्णांकerruptible(&mw->mw_complete);
+	अगर (ret)
+		lockres_हटाओ_mask_रुकोer(lockres, mw);
+	अन्यथा
 		ret = mw->mw_status;
-	/* Re-arm the completion in case we want to wait on it again */
+	/* Re-arm the completion in हाल we want to रुको on it again */
 	reinit_completion(&mw->mw_complete);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __ocfs2_cluster_lock(struct ocfs2_super *osb,
-				struct ocfs2_lock_res *lockres,
-				int level,
+अटल पूर्णांक __ocfs2_cluster_lock(काष्ठा ocfs2_super *osb,
+				काष्ठा ocfs2_lock_res *lockres,
+				पूर्णांक level,
 				u32 lkm_flags,
-				int arg_flags,
-				int l_subclass,
-				unsigned long caller_ip)
-{
-	struct ocfs2_mask_waiter mw;
-	int wait, catch_signals = !(osb->s_mount_opt & OCFS2_MOUNT_NOINTR);
-	int ret = 0; /* gcc doesn't realize wait = 1 guarantees ret is set */
-	unsigned long flags;
-	unsigned int gen;
-	int noqueue_attempted = 0;
-	int dlm_locked = 0;
-	int kick_dc = 0;
+				पूर्णांक arg_flags,
+				पूर्णांक l_subclass,
+				अचिन्हित दीर्घ caller_ip)
+अणु
+	काष्ठा ocfs2_mask_रुकोer mw;
+	पूर्णांक रुको, catch_संकेतs = !(osb->s_mount_opt & OCFS2_MOUNT_NOINTR);
+	पूर्णांक ret = 0; /* gcc करोesn't realize रुको = 1 guarantees ret is set */
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक gen;
+	पूर्णांक noqueue_attempted = 0;
+	पूर्णांक dlm_locked = 0;
+	पूर्णांक kick_dc = 0;
 
-	if (!(lockres->l_flags & OCFS2_LOCK_INITIALIZED)) {
-		mlog_errno(-EINVAL);
-		return -EINVAL;
-	}
+	अगर (!(lockres->l_flags & OCFS2_LOCK_INITIALIZED)) अणु
+		mlog_त्रुटि_सं(-EINVAL);
+		वापस -EINVAL;
+	पूर्ण
 
-	ocfs2_init_mask_waiter(&mw);
+	ocfs2_init_mask_रुकोer(&mw);
 
-	if (lockres->l_ops->flags & LOCK_TYPE_USES_LVB)
+	अगर (lockres->l_ops->flags & LOCK_TYPE_USES_LVB)
 		lkm_flags |= DLM_LKF_VALBLK;
 
 again:
-	wait = 0;
+	रुको = 0;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 
-	if (catch_signals && signal_pending(current)) {
+	अगर (catch_संकेतs && संकेत_pending(current)) अणु
 		ret = -ERESTARTSYS;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	mlog_bug_on_msg(lockres->l_flags & OCFS2_LOCK_FREEING,
 			"Cluster lock called on freeing lockres %s! flags "
 			"0x%lx\n", lockres->l_name, lockres->l_flags);
 
 	/* We only compare against the currently granted level
-	 * here. If the lock is blocked waiting on a downconvert,
+	 * here. If the lock is blocked रुकोing on a करोwnconvert,
 	 * we'll get caught below. */
-	if (lockres->l_flags & OCFS2_LOCK_BUSY &&
-	    level > lockres->l_level) {
-		/* is someone sitting in dlm_lock? If so, wait on
+	अगर (lockres->l_flags & OCFS2_LOCK_BUSY &&
+	    level > lockres->l_level) अणु
+		/* is someone sitting in dlm_lock? If so, रुको on
 		 * them. */
-		lockres_add_mask_waiter(lockres, &mw, OCFS2_LOCK_BUSY, 0);
-		wait = 1;
-		goto unlock;
-	}
+		lockres_add_mask_रुकोer(lockres, &mw, OCFS2_LOCK_BUSY, 0);
+		रुको = 1;
+		जाओ unlock;
+	पूर्ण
 
-	if (lockres->l_flags & OCFS2_LOCK_UPCONVERT_FINISHING) {
+	अगर (lockres->l_flags & OCFS2_LOCK_UPCONVERT_FINISHING) अणु
 		/*
 		 * We've upconverted. If the lock now has a level we can
 		 * work with, we take it. If, however, the lock is not at the
 		 * required level, we go thru the full cycle. One way this could
-		 * happen is if a process requesting an upconvert to PR is
-		 * closely followed by another requesting upconvert to an EX.
+		 * happen is अगर a process requesting an upconvert to PR is
+		 * बंदly followed by another requesting upconvert to an EX.
 		 * If the process requesting EX lands here, we want it to
-		 * continue attempting to upconvert and let the process
+		 * जारी attempting to upconvert and let the process
 		 * requesting PR take the lock.
 		 * If multiple processes request upconvert to PR, the first one
 		 * here will take the lock. The others will have to go thru the
 		 * OCFS2_LOCK_BLOCKED check to ensure that there is no pending
-		 * downconvert request.
+		 * करोwnconvert request.
 		 */
-		if (level <= lockres->l_level)
-			goto update_holders;
-	}
+		अगर (level <= lockres->l_level)
+			जाओ update_holders;
+	पूर्ण
 
-	if (lockres->l_flags & OCFS2_LOCK_BLOCKED &&
-	    !ocfs2_may_continue_on_blocked_lock(lockres, level)) {
+	अगर (lockres->l_flags & OCFS2_LOCK_BLOCKED &&
+	    !ocfs2_may_जारी_on_blocked_lock(lockres, level)) अणु
 		/* is the lock is currently blocked on behalf of
 		 * another node */
-		lockres_add_mask_waiter(lockres, &mw, OCFS2_LOCK_BLOCKED, 0);
-		wait = 1;
-		goto unlock;
-	}
+		lockres_add_mask_रुकोer(lockres, &mw, OCFS2_LOCK_BLOCKED, 0);
+		रुको = 1;
+		जाओ unlock;
+	पूर्ण
 
-	if (level > lockres->l_level) {
-		if (noqueue_attempted > 0) {
+	अगर (level > lockres->l_level) अणु
+		अगर (noqueue_attempted > 0) अणु
 			ret = -EAGAIN;
-			goto unlock;
-		}
-		if (lkm_flags & DLM_LKF_NOQUEUE)
+			जाओ unlock;
+		पूर्ण
+		अगर (lkm_flags & DLM_LKF_NOQUEUE)
 			noqueue_attempted = 1;
 
-		if (lockres->l_action != OCFS2_AST_INVALID)
+		अगर (lockres->l_action != OCFS2_AST_INVALID)
 			mlog(ML_ERROR, "lockres %s has action %u pending\n",
 			     lockres->l_name, lockres->l_action);
 
-		if (!(lockres->l_flags & OCFS2_LOCK_ATTACHED)) {
+		अगर (!(lockres->l_flags & OCFS2_LOCK_ATTACHED)) अणु
 			lockres->l_action = OCFS2_AST_ATTACH;
 			lkm_flags &= ~DLM_LKF_CONVERT;
-		} else {
+		पूर्ण अन्यथा अणु
 			lockres->l_action = OCFS2_AST_CONVERT;
 			lkm_flags |= DLM_LKF_CONVERT;
-		}
+		पूर्ण
 
 		lockres->l_requested = level;
 		lockres_or_flags(lockres, OCFS2_LOCK_BUSY);
@@ -1584,30 +1585,30 @@ again:
 				     lockres->l_name,
 				     OCFS2_LOCK_ID_MAX_LEN - 1);
 		lockres_clear_pending(lockres, gen, osb);
-		if (ret) {
-			if (!(lkm_flags & DLM_LKF_NOQUEUE) ||
-			    (ret != -EAGAIN)) {
+		अगर (ret) अणु
+			अगर (!(lkm_flags & DLM_LKF_NOQUEUE) ||
+			    (ret != -EAGAIN)) अणु
 				ocfs2_log_dlm_error("ocfs2_dlm_lock",
 						    ret, lockres);
-			}
+			पूर्ण
 			ocfs2_recover_from_dlm_error(lockres, 1);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		dlm_locked = 1;
 
 		mlog(0, "lock %s, successful return from ocfs2_dlm_lock\n",
 		     lockres->l_name);
 
-		/* At this point we've gone inside the dlm and need to
+		/* At this poपूर्णांक we've gone inside the dlm and need to
 		 * complete our work regardless. */
-		catch_signals = 0;
+		catch_संकेतs = 0;
 
-		/* wait for busy to clear and carry on */
-		goto again;
-	}
+		/* रुको क्रम busy to clear and carry on */
+		जाओ again;
+	पूर्ण
 
 update_holders:
-	/* Ok, if we get here then we're good to go. */
+	/* Ok, अगर we get here then we're good to go. */
 	ocfs2_inc_holders(lockres, level);
 
 	ret = 0;
@@ -1618,90 +1619,90 @@ unlock:
 	kick_dc = (lockres->l_flags & OCFS2_LOCK_BLOCKED);
 
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
-	if (kick_dc)
-		ocfs2_wake_downconvert_thread(osb);
+	अगर (kick_dc)
+		ocfs2_wake_करोwnconvert_thपढ़ो(osb);
 out:
 	/*
 	 * This is helping work around a lock inversion between the page lock
-	 * and dlm locks.  One path holds the page lock while calling aops
-	 * which block acquiring dlm locks.  The voting thread holds dlm
-	 * locks while acquiring page locks while down converting data locks.
+	 * and dlm locks.  One path holds the page lock जबतक calling aops
+	 * which block acquiring dlm locks.  The voting thपढ़ो holds dlm
+	 * locks जबतक acquiring page locks जबतक करोwn converting data locks.
 	 * This block is helping an aop path notice the inversion and back
-	 * off to unlock its page lock before trying the dlm lock again.
+	 * off to unlock its page lock beक्रमe trying the dlm lock again.
 	 */
-	if (wait && arg_flags & OCFS2_LOCK_NONBLOCK &&
-	    mw.mw_mask & (OCFS2_LOCK_BUSY|OCFS2_LOCK_BLOCKED)) {
-		wait = 0;
+	अगर (रुको && arg_flags & OCFS2_LOCK_NONBLOCK &&
+	    mw.mw_mask & (OCFS2_LOCK_BUSY|OCFS2_LOCK_BLOCKED)) अणु
+		रुको = 0;
 		spin_lock_irqsave(&lockres->l_lock, flags);
-		if (__lockres_remove_mask_waiter(lockres, &mw)) {
-			if (dlm_locked)
+		अगर (__lockres_हटाओ_mask_रुकोer(lockres, &mw)) अणु
+			अगर (dlm_locked)
 				lockres_or_flags(lockres,
 					OCFS2_LOCK_NONBLOCK_FINISHED);
 			spin_unlock_irqrestore(&lockres->l_lock, flags);
 			ret = -EAGAIN;
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_unlock_irqrestore(&lockres->l_lock, flags);
-			goto again;
-		}
-	}
-	if (wait) {
-		ret = ocfs2_wait_for_mask(&mw);
-		if (ret == 0)
-			goto again;
-		mlog_errno(ret);
-	}
+			जाओ again;
+		पूर्ण
+	पूर्ण
+	अगर (रुको) अणु
+		ret = ocfs2_रुको_क्रम_mask(&mw);
+		अगर (ret == 0)
+			जाओ again;
+		mlog_त्रुटि_सं(ret);
+	पूर्ण
 	ocfs2_update_lock_stats(lockres, level, &mw, ret);
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-	if (!ret && lockres->l_lockdep_map.key != NULL) {
-		if (level == DLM_LOCK_PR)
-			rwsem_acquire_read(&lockres->l_lockdep_map, l_subclass,
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+	अगर (!ret && lockres->l_lockdep_map.key != शून्य) अणु
+		अगर (level == DLM_LOCK_PR)
+			rwsem_acquire_पढ़ो(&lockres->l_lockdep_map, l_subclass,
 				!!(arg_flags & OCFS2_META_LOCK_NOQUEUE),
 				caller_ip);
-		else
+		अन्यथा
 			rwsem_acquire(&lockres->l_lockdep_map, l_subclass,
 				!!(arg_flags & OCFS2_META_LOCK_NOQUEUE),
 				caller_ip);
-	}
-#endif
-	return ret;
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-static inline int ocfs2_cluster_lock(struct ocfs2_super *osb,
-				     struct ocfs2_lock_res *lockres,
-				     int level,
+अटल अंतरभूत पूर्णांक ocfs2_cluster_lock(काष्ठा ocfs2_super *osb,
+				     काष्ठा ocfs2_lock_res *lockres,
+				     पूर्णांक level,
 				     u32 lkm_flags,
-				     int arg_flags)
-{
-	return __ocfs2_cluster_lock(osb, lockres, level, lkm_flags, arg_flags,
+				     पूर्णांक arg_flags)
+अणु
+	वापस __ocfs2_cluster_lock(osb, lockres, level, lkm_flags, arg_flags,
 				    0, _RET_IP_);
-}
+पूर्ण
 
 
-static void __ocfs2_cluster_unlock(struct ocfs2_super *osb,
-				   struct ocfs2_lock_res *lockres,
-				   int level,
-				   unsigned long caller_ip)
-{
-	unsigned long flags;
+अटल व्योम __ocfs2_cluster_unlock(काष्ठा ocfs2_super *osb,
+				   काष्ठा ocfs2_lock_res *lockres,
+				   पूर्णांक level,
+				   अचिन्हित दीर्घ caller_ip)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 	ocfs2_dec_holders(lockres, level);
-	ocfs2_downconvert_on_unlock(osb, lockres);
+	ocfs2_करोwnconvert_on_unlock(osb, lockres);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-	if (lockres->l_lockdep_map.key != NULL)
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+	अगर (lockres->l_lockdep_map.key != शून्य)
 		rwsem_release(&lockres->l_lockdep_map, caller_ip);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static int ocfs2_create_new_lock(struct ocfs2_super *osb,
-				 struct ocfs2_lock_res *lockres,
-				 int ex,
-				 int local)
-{
-	int level =  ex ? DLM_LOCK_EX : DLM_LOCK_PR;
-	unsigned long flags;
+अटल पूर्णांक ocfs2_create_new_lock(काष्ठा ocfs2_super *osb,
+				 काष्ठा ocfs2_lock_res *lockres,
+				 पूर्णांक ex,
+				 पूर्णांक local)
+अणु
+	पूर्णांक level =  ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+	अचिन्हित दीर्घ flags;
 	u32 lkm_flags = local ? DLM_LKF_LOCAL : 0;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
@@ -1709,234 +1710,234 @@ static int ocfs2_create_new_lock(struct ocfs2_super *osb,
 	lockres_or_flags(lockres, OCFS2_LOCK_LOCAL);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
-	return ocfs2_lock_create(osb, lockres, level, lkm_flags);
-}
+	वापस ocfs2_lock_create(osb, lockres, level, lkm_flags);
+पूर्ण
 
 /* Grants us an EX lock on the data and metadata resources, skipping
  * the normal cluster directory lookup. Use this ONLY on newly created
  * inodes which other nodes can't possibly see, and which haven't been
- * hashed in the inode hash yet. This can give us a good performance
+ * hashed in the inode hash yet. This can give us a good perक्रमmance
  * increase as it'll skip the network broadcast normally associated
  * with creating a new lock resource. */
-int ocfs2_create_new_inode_locks(struct inode *inode)
-{
-	int ret;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+पूर्णांक ocfs2_create_new_inode_locks(काष्ठा inode *inode)
+अणु
+	पूर्णांक ret;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	BUG_ON(!ocfs2_inode_is_new(inode));
 
-	mlog(0, "Inode %llu\n", (unsigned long long)OCFS2_I(inode)->ip_blkno);
+	mlog(0, "Inode %llu\n", (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
 
-	/* NOTE: That we don't increment any of the holder counts, nor
-	 * do we add anything to a journal handle. Since this is
-	 * supposed to be a new inode which the cluster doesn't know
+	/* NOTE: That we करोn't increment any of the holder counts, nor
+	 * करो we add anything to a journal handle. Since this is
+	 * supposed to be a new inode which the cluster करोesn't know
 	 * about yet, there is no need to.  As far as the LVB handling
 	 * is concerned, this is basically like acquiring an EX lock
 	 * on a resource which has an invalid one -- we'll set it
 	 * valid when we release the EX. */
 
 	ret = ocfs2_create_new_lock(osb, &OCFS2_I(inode)->ip_rw_lockres, 1, 1);
-	if (ret) {
-		mlog_errno(ret);
-		goto bail;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ bail;
+	पूर्ण
 
 	/*
-	 * We don't want to use DLM_LKF_LOCAL on a meta data lock as they
-	 * don't use a generation in their lock names.
+	 * We करोn't want to use DLM_LKF_LOCAL on a meta data lock as they
+	 * करोn't use a generation in their lock names.
 	 */
 	ret = ocfs2_create_new_lock(osb, &OCFS2_I(inode)->ip_inode_lockres, 1, 0);
-	if (ret) {
-		mlog_errno(ret);
-		goto bail;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ bail;
+	पूर्ण
 
-	ret = ocfs2_create_new_lock(osb, &OCFS2_I(inode)->ip_open_lockres, 0, 0);
-	if (ret)
-		mlog_errno(ret);
+	ret = ocfs2_create_new_lock(osb, &OCFS2_I(inode)->ip_खोलो_lockres, 0, 0);
+	अगर (ret)
+		mlog_त्रुटि_सं(ret);
 
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_rw_lock(struct inode *inode, int write)
-{
-	int status, level;
-	struct ocfs2_lock_res *lockres;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+पूर्णांक ocfs2_rw_lock(काष्ठा inode *inode, पूर्णांक ग_लिखो)
+अणु
+	पूर्णांक status, level;
+	काष्ठा ocfs2_lock_res *lockres;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	mlog(0, "inode %llu take %s RW lock\n",
-	     (unsigned long long)OCFS2_I(inode)->ip_blkno,
-	     write ? "EXMODE" : "PRMODE");
+	     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+	     ग_लिखो ? "EXMODE" : "PRMODE");
 
-	if (ocfs2_mount_local(osb))
-		return 0;
+	अगर (ocfs2_mount_local(osb))
+		वापस 0;
 
 	lockres = &OCFS2_I(inode)->ip_rw_lockres;
 
-	level = write ? DLM_LOCK_EX : DLM_LOCK_PR;
+	level = ग_लिखो ? DLM_LOCK_EX : DLM_LOCK_PR;
 
 	status = ocfs2_cluster_lock(osb, lockres, level, 0, 0);
-	if (status < 0)
-		mlog_errno(status);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ocfs2_try_rw_lock(struct inode *inode, int write)
-{
-	int status, level;
-	struct ocfs2_lock_res *lockres;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+पूर्णांक ocfs2_try_rw_lock(काष्ठा inode *inode, पूर्णांक ग_लिखो)
+अणु
+	पूर्णांक status, level;
+	काष्ठा ocfs2_lock_res *lockres;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	mlog(0, "inode %llu try to take %s RW lock\n",
-	     (unsigned long long)OCFS2_I(inode)->ip_blkno,
-	     write ? "EXMODE" : "PRMODE");
+	     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+	     ग_लिखो ? "EXMODE" : "PRMODE");
 
-	if (ocfs2_mount_local(osb))
-		return 0;
+	अगर (ocfs2_mount_local(osb))
+		वापस 0;
 
 	lockres = &OCFS2_I(inode)->ip_rw_lockres;
 
-	level = write ? DLM_LOCK_EX : DLM_LOCK_PR;
+	level = ग_लिखो ? DLM_LOCK_EX : DLM_LOCK_PR;
 
 	status = ocfs2_cluster_lock(osb, lockres, level, DLM_LKF_NOQUEUE, 0);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void ocfs2_rw_unlock(struct inode *inode, int write)
-{
-	int level = write ? DLM_LOCK_EX : DLM_LOCK_PR;
-	struct ocfs2_lock_res *lockres = &OCFS2_I(inode)->ip_rw_lockres;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+व्योम ocfs2_rw_unlock(काष्ठा inode *inode, पूर्णांक ग_लिखो)
+अणु
+	पूर्णांक level = ग_लिखो ? DLM_LOCK_EX : DLM_LOCK_PR;
+	काष्ठा ocfs2_lock_res *lockres = &OCFS2_I(inode)->ip_rw_lockres;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	mlog(0, "inode %llu drop %s RW lock\n",
-	     (unsigned long long)OCFS2_I(inode)->ip_blkno,
-	     write ? "EXMODE" : "PRMODE");
+	     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+	     ग_लिखो ? "EXMODE" : "PRMODE");
 
-	if (!ocfs2_mount_local(osb))
+	अगर (!ocfs2_mount_local(osb))
 		ocfs2_cluster_unlock(osb, lockres, level);
-}
+पूर्ण
 
 /*
- * ocfs2_open_lock always get PR mode lock.
+ * ocfs2_खोलो_lock always get PR mode lock.
  */
-int ocfs2_open_lock(struct inode *inode)
-{
-	int status = 0;
-	struct ocfs2_lock_res *lockres;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+पूर्णांक ocfs2_खोलो_lock(काष्ठा inode *inode)
+अणु
+	पूर्णांक status = 0;
+	काष्ठा ocfs2_lock_res *lockres;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	mlog(0, "inode %llu take PRMODE open lock\n",
-	     (unsigned long long)OCFS2_I(inode)->ip_blkno);
+	     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
 
-	if (ocfs2_is_hard_readonly(osb) || ocfs2_mount_local(osb))
-		goto out;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb) || ocfs2_mount_local(osb))
+		जाओ out;
 
-	lockres = &OCFS2_I(inode)->ip_open_lockres;
+	lockres = &OCFS2_I(inode)->ip_खोलो_lockres;
 
 	status = ocfs2_cluster_lock(osb, lockres, DLM_LOCK_PR, 0, 0);
-	if (status < 0)
-		mlog_errno(status);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ocfs2_try_open_lock(struct inode *inode, int write)
-{
-	int status = 0, level;
-	struct ocfs2_lock_res *lockres;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+पूर्णांक ocfs2_try_खोलो_lock(काष्ठा inode *inode, पूर्णांक ग_लिखो)
+अणु
+	पूर्णांक status = 0, level;
+	काष्ठा ocfs2_lock_res *lockres;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	mlog(0, "inode %llu try to take %s open lock\n",
-	     (unsigned long long)OCFS2_I(inode)->ip_blkno,
-	     write ? "EXMODE" : "PRMODE");
+	     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
+	     ग_लिखो ? "EXMODE" : "PRMODE");
 
-	if (ocfs2_is_hard_readonly(osb)) {
-		if (write)
+	अगर (ocfs2_is_hard_पढ़ोonly(osb)) अणु
+		अगर (ग_लिखो)
 			status = -EROFS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ocfs2_mount_local(osb))
-		goto out;
+	अगर (ocfs2_mount_local(osb))
+		जाओ out;
 
-	lockres = &OCFS2_I(inode)->ip_open_lockres;
+	lockres = &OCFS2_I(inode)->ip_खोलो_lockres;
 
-	level = write ? DLM_LOCK_EX : DLM_LOCK_PR;
+	level = ग_लिखो ? DLM_LOCK_EX : DLM_LOCK_PR;
 
 	/*
-	 * The file system may already holding a PRMODE/EXMODE open lock.
-	 * Since we pass DLM_LKF_NOQUEUE, the request won't block waiting on
+	 * The file प्रणाली may alपढ़ोy holding a PRMODE/EXMODE खोलो lock.
+	 * Since we pass DLM_LKF_NOQUEUE, the request won't block रुकोing on
 	 * other nodes and the -EAGAIN will indicate to the caller that
 	 * this inode is still in use.
 	 */
 	status = ocfs2_cluster_lock(osb, lockres, level, DLM_LKF_NOQUEUE, 0);
 
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- * ocfs2_open_unlock unlock PR and EX mode open locks.
+ * ocfs2_खोलो_unlock unlock PR and EX mode खोलो locks.
  */
-void ocfs2_open_unlock(struct inode *inode)
-{
-	struct ocfs2_lock_res *lockres = &OCFS2_I(inode)->ip_open_lockres;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+व्योम ocfs2_खोलो_unlock(काष्ठा inode *inode)
+अणु
+	काष्ठा ocfs2_lock_res *lockres = &OCFS2_I(inode)->ip_खोलो_lockres;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	mlog(0, "inode %llu drop open lock\n",
-	     (unsigned long long)OCFS2_I(inode)->ip_blkno);
+	     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
 
-	if (ocfs2_mount_local(osb))
-		goto out;
+	अगर (ocfs2_mount_local(osb))
+		जाओ out;
 
-	if(lockres->l_ro_holders)
+	अगर(lockres->l_ro_holders)
 		ocfs2_cluster_unlock(osb, lockres, DLM_LOCK_PR);
-	if(lockres->l_ex_holders)
+	अगर(lockres->l_ex_holders)
 		ocfs2_cluster_unlock(osb, lockres, DLM_LOCK_EX);
 
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-static int ocfs2_flock_handle_signal(struct ocfs2_lock_res *lockres,
-				     int level)
-{
-	int ret;
-	struct ocfs2_super *osb = ocfs2_get_lockres_osb(lockres);
-	unsigned long flags;
-	struct ocfs2_mask_waiter mw;
+अटल पूर्णांक ocfs2_flock_handle_संकेत(काष्ठा ocfs2_lock_res *lockres,
+				     पूर्णांक level)
+अणु
+	पूर्णांक ret;
+	काष्ठा ocfs2_super *osb = ocfs2_get_lockres_osb(lockres);
+	अचिन्हित दीर्घ flags;
+	काष्ठा ocfs2_mask_रुकोer mw;
 
-	ocfs2_init_mask_waiter(&mw);
+	ocfs2_init_mask_रुकोer(&mw);
 
 retry_cancel:
 	spin_lock_irqsave(&lockres->l_lock, flags);
-	if (lockres->l_flags & OCFS2_LOCK_BUSY) {
+	अगर (lockres->l_flags & OCFS2_LOCK_BUSY) अणु
 		ret = ocfs2_prepare_cancel_convert(osb, lockres);
-		if (ret) {
+		अगर (ret) अणु
 			spin_unlock_irqrestore(&lockres->l_lock, flags);
 			ret = ocfs2_cancel_convert(osb, lockres);
-			if (ret < 0) {
-				mlog_errno(ret);
-				goto out;
-			}
-			goto retry_cancel;
-		}
-		lockres_add_mask_waiter(lockres, &mw, OCFS2_LOCK_BUSY, 0);
+			अगर (ret < 0) अणु
+				mlog_त्रुटि_सं(ret);
+				जाओ out;
+			पूर्ण
+			जाओ retry_cancel;
+		पूर्ण
+		lockres_add_mask_रुकोer(lockres, &mw, OCFS2_LOCK_BUSY, 0);
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
 
-		ocfs2_wait_for_mask(&mw);
-		goto retry_cancel;
-	}
+		ocfs2_रुको_क्रम_mask(&mw);
+		जाओ retry_cancel;
+	पूर्ण
 
 	ret = -ERESTARTSYS;
 	/*
-	 * We may still have gotten the lock, in which case there's no
-	 * point to restarting the syscall.
+	 * We may still have gotten the lock, in which हाल there's no
+	 * poपूर्णांक to restarting the syscall.
 	 */
-	if (lockres->l_level == level)
+	अगर (lockres->l_level == level)
 		ret = 0;
 
 	mlog(0, "Cancel returning %d. flags: 0x%lx, level: %d, act: %d\n", ret,
@@ -1945,143 +1946,143 @@ retry_cancel:
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * ocfs2_file_lock() and ocfs2_file_unlock() map to a single pair of
  * flock() calls. The locking approach this requires is sufficiently
- * different from all other cluster lock types that we implement a
+ * dअगरferent from all other cluster lock types that we implement a
  * separate path to the "low-level" dlm calls. In particular:
  *
- * - No optimization of lock levels is done - we take at exactly
+ * - No optimization of lock levels is करोne - we take at exactly
  *   what's been requested.
  *
- * - No lock caching is employed. We immediately downconvert to
- *   no-lock at unlock time. This also means flock locks never go on
+ * - No lock caching is employed. We immediately करोwnconvert to
+ *   no-lock at unlock समय. This also means flock locks never go on
  *   the blocking list).
  *
  * - Since userspace can trivially deadlock itself with flock, we make
  *   sure to allow cancellation of a misbehaving applications flock()
  *   request.
  *
- * - Access to any flock lockres doesn't require concurrency, so we
- *   can simplify the code by requiring the caller to guarantee
+ * - Access to any flock lockres करोesn't require concurrency, so we
+ *   can simplअगरy the code by requiring the caller to guarantee
  *   serialization of dlmglue flock calls.
  */
-int ocfs2_file_lock(struct file *file, int ex, int trylock)
-{
-	int ret, level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
-	unsigned int lkm_flags = trylock ? DLM_LKF_NOQUEUE : 0;
-	unsigned long flags;
-	struct ocfs2_file_private *fp = file->private_data;
-	struct ocfs2_lock_res *lockres = &fp->fp_flock;
-	struct ocfs2_super *osb = OCFS2_SB(file->f_mapping->host->i_sb);
-	struct ocfs2_mask_waiter mw;
+पूर्णांक ocfs2_file_lock(काष्ठा file *file, पूर्णांक ex, पूर्णांक trylock)
+अणु
+	पूर्णांक ret, level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+	अचिन्हित पूर्णांक lkm_flags = trylock ? DLM_LKF_NOQUEUE : 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ocfs2_file_निजी *fp = file->निजी_data;
+	काष्ठा ocfs2_lock_res *lockres = &fp->fp_flock;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(file->f_mapping->host->i_sb);
+	काष्ठा ocfs2_mask_रुकोer mw;
 
-	ocfs2_init_mask_waiter(&mw);
+	ocfs2_init_mask_रुकोer(&mw);
 
-	if ((lockres->l_flags & OCFS2_LOCK_BUSY) ||
-	    (lockres->l_level > DLM_LOCK_NL)) {
+	अगर ((lockres->l_flags & OCFS2_LOCK_BUSY) ||
+	    (lockres->l_level > DLM_LOCK_NL)) अणु
 		mlog(ML_ERROR,
 		     "File lock \"%s\" has busy or locked state: flags: 0x%lx, "
 		     "level: %u\n", lockres->l_name, lockres->l_flags,
 		     lockres->l_level);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
-	if (!(lockres->l_flags & OCFS2_LOCK_ATTACHED)) {
-		lockres_add_mask_waiter(lockres, &mw, OCFS2_LOCK_BUSY, 0);
+	अगर (!(lockres->l_flags & OCFS2_LOCK_ATTACHED)) अणु
+		lockres_add_mask_रुकोer(lockres, &mw, OCFS2_LOCK_BUSY, 0);
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
 
 		/*
 		 * Get the lock at NLMODE to start - that way we
-		 * can cancel the upconvert request if need be.
+		 * can cancel the upconvert request अगर need be.
 		 */
 		ret = ocfs2_lock_create(osb, lockres, DLM_LOCK_NL, 0);
-		if (ret < 0) {
-			mlog_errno(ret);
-			goto out;
-		}
+		अगर (ret < 0) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 
-		ret = ocfs2_wait_for_mask(&mw);
-		if (ret) {
-			mlog_errno(ret);
-			goto out;
-		}
+		ret = ocfs2_रुको_क्रम_mask(&mw);
+		अगर (ret) अणु
+			mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
 		spin_lock_irqsave(&lockres->l_lock, flags);
-	}
+	पूर्ण
 
 	lockres->l_action = OCFS2_AST_CONVERT;
 	lkm_flags |= DLM_LKF_CONVERT;
 	lockres->l_requested = level;
 	lockres_or_flags(lockres, OCFS2_LOCK_BUSY);
 
-	lockres_add_mask_waiter(lockres, &mw, OCFS2_LOCK_BUSY, 0);
+	lockres_add_mask_रुकोer(lockres, &mw, OCFS2_LOCK_BUSY, 0);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
 	ret = ocfs2_dlm_lock(osb->cconn, level, &lockres->l_lksb, lkm_flags,
 			     lockres->l_name, OCFS2_LOCK_ID_MAX_LEN - 1);
-	if (ret) {
-		if (!trylock || (ret != -EAGAIN)) {
+	अगर (ret) अणु
+		अगर (!trylock || (ret != -EAGAIN)) अणु
 			ocfs2_log_dlm_error("ocfs2_dlm_lock", ret, lockres);
 			ret = -EINVAL;
-		}
+		पूर्ण
 
 		ocfs2_recover_from_dlm_error(lockres, 1);
-		lockres_remove_mask_waiter(lockres, &mw);
-		goto out;
-	}
+		lockres_हटाओ_mask_रुकोer(lockres, &mw);
+		जाओ out;
+	पूर्ण
 
-	ret = ocfs2_wait_for_mask_interruptible(&mw, lockres);
-	if (ret == -ERESTARTSYS) {
+	ret = ocfs2_रुको_क्रम_mask_पूर्णांकerruptible(&mw, lockres);
+	अगर (ret == -ERESTARTSYS) अणु
 		/*
 		 * Userspace can cause deadlock itself with
 		 * flock(). Current behavior locally is to allow the
-		 * deadlock, but abort the system call if a signal is
+		 * deadlock, but पात the प्रणाली call अगर a संकेत is
 		 * received. We follow this example, otherwise a
 		 * poorly written program could sit in kernel until
 		 * reboot.
 		 *
-		 * Handling this is a bit more complicated for Ocfs2
-		 * though. We can't exit this function with an
+		 * Handling this is a bit more complicated क्रम Ocfs2
+		 * though. We can't निकास this function with an
 		 * outstanding lock request, so a cancel convert is
-		 * required. We intentionally overwrite 'ret' - if the
+		 * required. We पूर्णांकentionally overग_लिखो 'ret' - अगर the
 		 * cancel fails and the lock was granted, it's easier
 		 * to just bubble success back up to the user.
 		 */
-		ret = ocfs2_flock_handle_signal(lockres, level);
-	} else if (!ret && (level > lockres->l_level)) {
+		ret = ocfs2_flock_handle_संकेत(lockres, level);
+	पूर्ण अन्यथा अगर (!ret && (level > lockres->l_level)) अणु
 		/* Trylock failed asynchronously */
 		BUG_ON(!trylock);
 		ret = -EAGAIN;
-	}
+	पूर्ण
 
 out:
 
 	mlog(0, "Lock: \"%s\" ex: %d, trylock: %d, returns: %d\n",
 	     lockres->l_name, ex, trylock, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ocfs2_file_unlock(struct file *file)
-{
-	int ret;
-	unsigned int gen;
-	unsigned long flags;
-	struct ocfs2_file_private *fp = file->private_data;
-	struct ocfs2_lock_res *lockres = &fp->fp_flock;
-	struct ocfs2_super *osb = OCFS2_SB(file->f_mapping->host->i_sb);
-	struct ocfs2_mask_waiter mw;
+व्योम ocfs2_file_unlock(काष्ठा file *file)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक gen;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ocfs2_file_निजी *fp = file->निजी_data;
+	काष्ठा ocfs2_lock_res *lockres = &fp->fp_flock;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(file->f_mapping->host->i_sb);
+	काष्ठा ocfs2_mask_रुकोer mw;
 
-	ocfs2_init_mask_waiter(&mw);
+	ocfs2_init_mask_रुकोer(&mw);
 
-	if (!(lockres->l_flags & OCFS2_LOCK_ATTACHED))
-		return;
+	अगर (!(lockres->l_flags & OCFS2_LOCK_ATTACHED))
+		वापस;
 
-	if (lockres->l_level == DLM_LOCK_NL)
-		return;
+	अगर (lockres->l_level == DLM_LOCK_NL)
+		वापस;
 
 	mlog(0, "Unlock: \"%s\" flags: 0x%lx, level: %d, act: %d\n",
 	     lockres->l_name, lockres->l_flags, lockres->l_level,
@@ -2089,197 +2090,197 @@ void ocfs2_file_unlock(struct file *file)
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 	/*
-	 * Fake a blocking ast for the downconvert code.
+	 * Fake a blocking ast क्रम the करोwnconvert code.
 	 */
 	lockres_or_flags(lockres, OCFS2_LOCK_BLOCKED);
 	lockres->l_blocking = DLM_LOCK_EX;
 
-	gen = ocfs2_prepare_downconvert(lockres, DLM_LOCK_NL);
-	lockres_add_mask_waiter(lockres, &mw, OCFS2_LOCK_BUSY, 0);
+	gen = ocfs2_prepare_करोwnconvert(lockres, DLM_LOCK_NL);
+	lockres_add_mask_रुकोer(lockres, &mw, OCFS2_LOCK_BUSY, 0);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
-	ret = ocfs2_downconvert_lock(osb, lockres, DLM_LOCK_NL, 0, gen);
-	if (ret) {
-		mlog_errno(ret);
-		return;
-	}
+	ret = ocfs2_करोwnconvert_lock(osb, lockres, DLM_LOCK_NL, 0, gen);
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		वापस;
+	पूर्ण
 
-	ret = ocfs2_wait_for_mask(&mw);
-	if (ret)
-		mlog_errno(ret);
-}
+	ret = ocfs2_रुको_क्रम_mask(&mw);
+	अगर (ret)
+		mlog_त्रुटि_सं(ret);
+पूर्ण
 
-static void ocfs2_downconvert_on_unlock(struct ocfs2_super *osb,
-					struct ocfs2_lock_res *lockres)
-{
-	int kick = 0;
+अटल व्योम ocfs2_करोwnconvert_on_unlock(काष्ठा ocfs2_super *osb,
+					काष्ठा ocfs2_lock_res *lockres)
+अणु
+	पूर्णांक kick = 0;
 
-	/* If we know that another node is waiting on our lock, kick
-	 * the downconvert thread * pre-emptively when we reach a release
+	/* If we know that another node is रुकोing on our lock, kick
+	 * the करोwnconvert thपढ़ो * pre-emptively when we reach a release
 	 * condition. */
-	if (lockres->l_flags & OCFS2_LOCK_BLOCKED) {
-		switch(lockres->l_blocking) {
-		case DLM_LOCK_EX:
-			if (!lockres->l_ex_holders && !lockres->l_ro_holders)
+	अगर (lockres->l_flags & OCFS2_LOCK_BLOCKED) अणु
+		चयन(lockres->l_blocking) अणु
+		हाल DLM_LOCK_EX:
+			अगर (!lockres->l_ex_holders && !lockres->l_ro_holders)
 				kick = 1;
-			break;
-		case DLM_LOCK_PR:
-			if (!lockres->l_ex_holders)
+			अवरोध;
+		हाल DLM_LOCK_PR:
+			अगर (!lockres->l_ex_holders)
 				kick = 1;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			BUG();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (kick)
-		ocfs2_wake_downconvert_thread(osb);
-}
+	अगर (kick)
+		ocfs2_wake_करोwnconvert_thपढ़ो(osb);
+पूर्ण
 
-#define OCFS2_SEC_BITS   34
-#define OCFS2_SEC_SHIFT  (64 - OCFS2_SEC_BITS)
-#define OCFS2_NSEC_MASK  ((1ULL << OCFS2_SEC_SHIFT) - 1)
+#घोषणा OCFS2_SEC_BITS   34
+#घोषणा OCFS2_SEC_SHIFT  (64 - OCFS2_SEC_BITS)
+#घोषणा OCFS2_NSEC_MASK  ((1ULL << OCFS2_SEC_SHIFT) - 1)
 
-/* LVB only has room for 64 bits of time here so we pack it for
+/* LVB only has room क्रम 64 bits of समय here so we pack it क्रम
  * now. */
-static u64 ocfs2_pack_timespec(struct timespec64 *spec)
-{
+अटल u64 ocfs2_pack_बारpec(काष्ठा बारpec64 *spec)
+अणु
 	u64 res;
-	u64 sec = clamp_t(time64_t, spec->tv_sec, 0, 0x3ffffffffull);
+	u64 sec = clamp_t(समय64_t, spec->tv_sec, 0, 0x3ffffffffull);
 	u32 nsec = spec->tv_nsec;
 
 	res = (sec << OCFS2_SEC_SHIFT) | (nsec & OCFS2_NSEC_MASK);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-/* Call this with the lockres locked. I am reasonably sure we don't
+/* Call this with the lockres locked. I am reasonably sure we करोn't
  * need ip_lock in this function as anyone who would be changing those
  * values is supposed to be blocked in ocfs2_inode_lock right now. */
-static void __ocfs2_stuff_meta_lvb(struct inode *inode)
-{
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_lock_res *lockres = &oi->ip_inode_lockres;
-	struct ocfs2_meta_lvb *lvb;
+अटल व्योम __ocfs2_stuff_meta_lvb(काष्ठा inode *inode)
+अणु
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_lock_res *lockres = &oi->ip_inode_lockres;
+	काष्ठा ocfs2_meta_lvb *lvb;
 
 	lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
 
 	/*
 	 * Invalidate the LVB of a deleted inode - this way other
-	 * nodes are forced to go to disk and discover the new inode
+	 * nodes are क्रमced to go to disk and discover the new inode
 	 * status.
 	 */
-	if (oi->ip_flags & OCFS2_INODE_DELETED) {
+	अगर (oi->ip_flags & OCFS2_INODE_DELETED) अणु
 		lvb->lvb_version = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	lvb->lvb_version   = OCFS2_LVB_VERSION;
-	lvb->lvb_isize	   = cpu_to_be64(i_size_read(inode));
+	lvb->lvb_isize	   = cpu_to_be64(i_size_पढ़ो(inode));
 	lvb->lvb_iclusters = cpu_to_be32(oi->ip_clusters);
-	lvb->lvb_iuid      = cpu_to_be32(i_uid_read(inode));
-	lvb->lvb_igid      = cpu_to_be32(i_gid_read(inode));
+	lvb->lvb_iuid      = cpu_to_be32(i_uid_पढ़ो(inode));
+	lvb->lvb_igid      = cpu_to_be32(i_gid_पढ़ो(inode));
 	lvb->lvb_imode     = cpu_to_be16(inode->i_mode);
 	lvb->lvb_inlink    = cpu_to_be16(inode->i_nlink);
-	lvb->lvb_iatime_packed  =
-		cpu_to_be64(ocfs2_pack_timespec(&inode->i_atime));
-	lvb->lvb_ictime_packed =
-		cpu_to_be64(ocfs2_pack_timespec(&inode->i_ctime));
-	lvb->lvb_imtime_packed =
-		cpu_to_be64(ocfs2_pack_timespec(&inode->i_mtime));
+	lvb->lvb_iaसमय_packed  =
+		cpu_to_be64(ocfs2_pack_बारpec(&inode->i_aसमय));
+	lvb->lvb_iस_समय_packed =
+		cpu_to_be64(ocfs2_pack_बारpec(&inode->i_स_समय));
+	lvb->lvb_imसमय_packed =
+		cpu_to_be64(ocfs2_pack_बारpec(&inode->i_mसमय));
 	lvb->lvb_iattr    = cpu_to_be32(oi->ip_attr);
 	lvb->lvb_idynfeatures = cpu_to_be16(oi->ip_dyn_features);
 	lvb->lvb_igeneration = cpu_to_be32(inode->i_generation);
 
 out:
 	mlog_meta_lvb(0, lockres);
-}
+पूर्ण
 
-static void ocfs2_unpack_timespec(struct timespec64 *spec,
-				  u64 packed_time)
-{
-	spec->tv_sec = packed_time >> OCFS2_SEC_SHIFT;
-	spec->tv_nsec = packed_time & OCFS2_NSEC_MASK;
-}
+अटल व्योम ocfs2_unpack_बारpec(काष्ठा बारpec64 *spec,
+				  u64 packed_समय)
+अणु
+	spec->tv_sec = packed_समय >> OCFS2_SEC_SHIFT;
+	spec->tv_nsec = packed_समय & OCFS2_NSEC_MASK;
+पूर्ण
 
-static int ocfs2_refresh_inode_from_lvb(struct inode *inode)
-{
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_lock_res *lockres = &oi->ip_inode_lockres;
-	struct ocfs2_meta_lvb *lvb;
+अटल पूर्णांक ocfs2_refresh_inode_from_lvb(काष्ठा inode *inode)
+अणु
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_lock_res *lockres = &oi->ip_inode_lockres;
+	काष्ठा ocfs2_meta_lvb *lvb;
 
 	mlog_meta_lvb(0, lockres);
 
 	lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
-	if (inode_wrong_type(inode, be16_to_cpu(lvb->lvb_imode)))
-		return -ESTALE;
+	अगर (inode_wrong_type(inode, be16_to_cpu(lvb->lvb_imode)))
+		वापस -ESTALE;
 
 	/* We're safe here without the lockres lock... */
 	spin_lock(&oi->ip_lock);
 	oi->ip_clusters = be32_to_cpu(lvb->lvb_iclusters);
-	i_size_write(inode, be64_to_cpu(lvb->lvb_isize));
+	i_size_ग_लिखो(inode, be64_to_cpu(lvb->lvb_isize));
 
 	oi->ip_attr = be32_to_cpu(lvb->lvb_iattr);
 	oi->ip_dyn_features = be16_to_cpu(lvb->lvb_idynfeatures);
 	ocfs2_set_inode_flags(inode);
 
-	/* fast-symlinks are a special case */
-	if (S_ISLNK(inode->i_mode) && !oi->ip_clusters)
+	/* fast-symlinks are a special हाल */
+	अगर (S_ISLNK(inode->i_mode) && !oi->ip_clusters)
 		inode->i_blocks = 0;
-	else
+	अन्यथा
 		inode->i_blocks = ocfs2_inode_sector_count(inode);
 
-	i_uid_write(inode, be32_to_cpu(lvb->lvb_iuid));
-	i_gid_write(inode, be32_to_cpu(lvb->lvb_igid));
+	i_uid_ग_लिखो(inode, be32_to_cpu(lvb->lvb_iuid));
+	i_gid_ग_लिखो(inode, be32_to_cpu(lvb->lvb_igid));
 	inode->i_mode    = be16_to_cpu(lvb->lvb_imode);
 	set_nlink(inode, be16_to_cpu(lvb->lvb_inlink));
-	ocfs2_unpack_timespec(&inode->i_atime,
-			      be64_to_cpu(lvb->lvb_iatime_packed));
-	ocfs2_unpack_timespec(&inode->i_mtime,
-			      be64_to_cpu(lvb->lvb_imtime_packed));
-	ocfs2_unpack_timespec(&inode->i_ctime,
-			      be64_to_cpu(lvb->lvb_ictime_packed));
+	ocfs2_unpack_बारpec(&inode->i_aसमय,
+			      be64_to_cpu(lvb->lvb_iaसमय_packed));
+	ocfs2_unpack_बारpec(&inode->i_mसमय,
+			      be64_to_cpu(lvb->lvb_imसमय_packed));
+	ocfs2_unpack_बारpec(&inode->i_स_समय,
+			      be64_to_cpu(lvb->lvb_iस_समय_packed));
 	spin_unlock(&oi->ip_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int ocfs2_meta_lvb_is_trustable(struct inode *inode,
-					      struct ocfs2_lock_res *lockres)
-{
-	struct ocfs2_meta_lvb *lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
+अटल अंतरभूत पूर्णांक ocfs2_meta_lvb_is_trustable(काष्ठा inode *inode,
+					      काष्ठा ocfs2_lock_res *lockres)
+अणु
+	काष्ठा ocfs2_meta_lvb *lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
 
-	if (ocfs2_dlm_lvb_valid(&lockres->l_lksb)
+	अगर (ocfs2_dlm_lvb_valid(&lockres->l_lksb)
 	    && lvb->lvb_version == OCFS2_LVB_VERSION
 	    && be32_to_cpu(lvb->lvb_igeneration) == inode->i_generation)
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /* Determine whether a lock resource needs to be refreshed, and
- * arbitrate who gets to refresh it.
+ * arbitrate who माला_लो to refresh it.
  *
  *   0 means no refresh needed.
  *
  *   > 0 means you need to refresh this and you MUST call
  *   ocfs2_complete_lock_res_refresh afterwards. */
-static int ocfs2_should_refresh_lock_res(struct ocfs2_lock_res *lockres)
-{
-	unsigned long flags;
-	int status = 0;
+अटल पूर्णांक ocfs2_should_refresh_lock_res(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक status = 0;
 
 refresh_check:
 	spin_lock_irqsave(&lockres->l_lock, flags);
-	if (!(lockres->l_flags & OCFS2_LOCK_NEEDS_REFRESH)) {
+	अगर (!(lockres->l_flags & OCFS2_LOCK_NEEDS_REFRESH)) अणु
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (lockres->l_flags & OCFS2_LOCK_REFRESHING) {
+	अगर (lockres->l_flags & OCFS2_LOCK_REFRESHING) अणु
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
 
-		ocfs2_wait_on_refreshing_lock(lockres);
-		goto refresh_check;
-	}
+		ocfs2_रुको_on_refreshing_lock(lockres);
+		जाओ refresh_check;
+	पूर्ण
 
 	/* Ok, I'll be the one to refresh this lock. */
 	lockres_or_flags(lockres, OCFS2_LOCK_REFRESHING);
@@ -2288,364 +2289,364 @@ refresh_check:
 	status = 1;
 bail:
 	mlog(0, "status %d\n", status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* If status is non zero, I'll mark it as not being in refresh
  * anymroe, but i won't clear the needs refresh flag. */
-static inline void ocfs2_complete_lock_res_refresh(struct ocfs2_lock_res *lockres,
-						   int status)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम ocfs2_complete_lock_res_refresh(काष्ठा ocfs2_lock_res *lockres,
+						   पूर्णांक status)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 	lockres_clear_flags(lockres, OCFS2_LOCK_REFRESHING);
-	if (!status)
+	अगर (!status)
 		lockres_clear_flags(lockres, OCFS2_LOCK_NEEDS_REFRESH);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
 	wake_up(&lockres->l_event);
-}
+पूर्ण
 
-/* may or may not return a bh if it went to disk. */
-static int ocfs2_inode_lock_update(struct inode *inode,
-				  struct buffer_head **bh)
-{
-	int status = 0;
-	struct ocfs2_inode_info *oi = OCFS2_I(inode);
-	struct ocfs2_lock_res *lockres = &oi->ip_inode_lockres;
-	struct ocfs2_dinode *fe;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+/* may or may not वापस a bh अगर it went to disk. */
+अटल पूर्णांक ocfs2_inode_lock_update(काष्ठा inode *inode,
+				  काष्ठा buffer_head **bh)
+अणु
+	पूर्णांक status = 0;
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(inode);
+	काष्ठा ocfs2_lock_res *lockres = &oi->ip_inode_lockres;
+	काष्ठा ocfs2_dinode *fe;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (ocfs2_mount_local(osb))
-		goto bail;
+	अगर (ocfs2_mount_local(osb))
+		जाओ bail;
 
 	spin_lock(&oi->ip_lock);
-	if (oi->ip_flags & OCFS2_INODE_DELETED) {
+	अगर (oi->ip_flags & OCFS2_INODE_DELETED) अणु
 		mlog(0, "Orphaned inode %llu was deleted while we "
 		     "were waiting on a lock. ip_flags = 0x%x\n",
-		     (unsigned long long)oi->ip_blkno, oi->ip_flags);
+		     (अचिन्हित दीर्घ दीर्घ)oi->ip_blkno, oi->ip_flags);
 		spin_unlock(&oi->ip_lock);
 		status = -ENOENT;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 	spin_unlock(&oi->ip_lock);
 
-	if (!ocfs2_should_refresh_lock_res(lockres))
-		goto bail;
+	अगर (!ocfs2_should_refresh_lock_res(lockres))
+		जाओ bail;
 
-	/* This will discard any caching information we might have had
-	 * for the inode metadata. */
+	/* This will discard any caching inक्रमmation we might have had
+	 * क्रम the inode metadata. */
 	ocfs2_metadata_cache_purge(INODE_CACHE(inode));
 
 	ocfs2_extent_map_trunc(inode, 0);
 
-	if (ocfs2_meta_lvb_is_trustable(inode, lockres)) {
+	अगर (ocfs2_meta_lvb_is_trustable(inode, lockres)) अणु
 		mlog(0, "Trusting LVB on inode %llu\n",
-		     (unsigned long long)oi->ip_blkno);
+		     (अचिन्हित दीर्घ दीर्घ)oi->ip_blkno);
 		status = ocfs2_refresh_inode_from_lvb(inode);
-		goto bail_refresh;
-	} else {
+		जाओ bail_refresh;
+	पूर्ण अन्यथा अणु
 		/* Boo, we have to go to disk. */
-		/* read bh, cast, ocfs2_refresh_inode */
-		status = ocfs2_read_inode_block(inode, bh);
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail_refresh;
-		}
-		fe = (struct ocfs2_dinode *) (*bh)->b_data;
-		if (inode_wrong_type(inode, le16_to_cpu(fe->i_mode))) {
+		/* पढ़ो bh, cast, ocfs2_refresh_inode */
+		status = ocfs2_पढ़ो_inode_block(inode, bh);
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail_refresh;
+		पूर्ण
+		fe = (काष्ठा ocfs2_dinode *) (*bh)->b_data;
+		अगर (inode_wrong_type(inode, le16_to_cpu(fe->i_mode))) अणु
 			status = -ESTALE;
-			goto bail_refresh;
-		}
+			जाओ bail_refresh;
+		पूर्ण
 
 		/* This is a good chance to make sure we're not
-		 * locking an invalid object.  ocfs2_read_inode_block()
-		 * already checked that the inode block is sane.
+		 * locking an invalid object.  ocfs2_पढ़ो_inode_block()
+		 * alपढ़ोy checked that the inode block is sane.
 		 *
 		 * We bug on a stale inode here because we checked
 		 * above whether it was wiped from disk. The wiping
 		 * node provides a guarantee that we receive that
-		 * message and can mark the inode before dropping any
+		 * message and can mark the inode beक्रमe dropping any
 		 * locks associated with it. */
 		mlog_bug_on_msg(inode->i_generation !=
 				le32_to_cpu(fe->i_generation),
 				"Invalid dinode %llu disk generation: %u "
 				"inode->i_generation: %u\n",
-				(unsigned long long)oi->ip_blkno,
+				(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
 				le32_to_cpu(fe->i_generation),
 				inode->i_generation);
-		mlog_bug_on_msg(le64_to_cpu(fe->i_dtime) ||
+		mlog_bug_on_msg(le64_to_cpu(fe->i_dसमय) ||
 				!(fe->i_flags & cpu_to_le32(OCFS2_VALID_FL)),
 				"Stale dinode %llu dtime: %llu flags: 0x%x\n",
-				(unsigned long long)oi->ip_blkno,
-				(unsigned long long)le64_to_cpu(fe->i_dtime),
+				(अचिन्हित दीर्घ दीर्घ)oi->ip_blkno,
+				(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(fe->i_dसमय),
 				le32_to_cpu(fe->i_flags));
 
 		ocfs2_refresh_inode(inode, fe);
 		ocfs2_track_lock_refresh(lockres);
-	}
+	पूर्ण
 
 	status = 0;
 bail_refresh:
 	ocfs2_complete_lock_res_refresh(lockres, status);
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_assign_bh(struct inode *inode,
-			   struct buffer_head **ret_bh,
-			   struct buffer_head *passed_bh)
-{
-	int status;
+अटल पूर्णांक ocfs2_assign_bh(काष्ठा inode *inode,
+			   काष्ठा buffer_head **ret_bh,
+			   काष्ठा buffer_head *passed_bh)
+अणु
+	पूर्णांक status;
 
-	if (passed_bh) {
-		/* Ok, the update went to disk for us, use the
-		 * returned bh. */
+	अगर (passed_bh) अणु
+		/* Ok, the update went to disk क्रम us, use the
+		 * वापसed bh. */
 		*ret_bh = passed_bh;
 		get_bh(*ret_bh);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	status = ocfs2_read_inode_block(inode, ret_bh);
-	if (status < 0)
-		mlog_errno(status);
+	status = ocfs2_पढ़ो_inode_block(inode, ret_bh);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- * returns < 0 error if the callback will never be called, otherwise
+ * वापसs < 0 error अगर the callback will never be called, otherwise
  * the result of the lock will be communicated via the callback.
  */
-int ocfs2_inode_lock_full_nested(struct inode *inode,
-				 struct buffer_head **ret_bh,
-				 int ex,
-				 int arg_flags,
-				 int subclass)
-{
-	int status, level, acquired;
+पूर्णांक ocfs2_inode_lock_full_nested(काष्ठा inode *inode,
+				 काष्ठा buffer_head **ret_bh,
+				 पूर्णांक ex,
+				 पूर्णांक arg_flags,
+				 पूर्णांक subclass)
+अणु
+	पूर्णांक status, level, acquired;
 	u32 dlm_flags;
-	struct ocfs2_lock_res *lockres = NULL;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct buffer_head *local_bh = NULL;
+	काष्ठा ocfs2_lock_res *lockres = शून्य;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा buffer_head *local_bh = शून्य;
 
 	mlog(0, "inode %llu, take %s META lock\n",
-	     (unsigned long long)OCFS2_I(inode)->ip_blkno,
+	     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
 	     ex ? "EXMODE" : "PRMODE");
 
 	status = 0;
 	acquired = 0;
-	/* We'll allow faking a readonly metadata lock for
+	/* We'll allow faking a पढ़ोonly metadata lock क्रम
 	 * rodevices. */
-	if (ocfs2_is_hard_readonly(osb)) {
-		if (ex)
+	अगर (ocfs2_is_hard_पढ़ोonly(osb)) अणु
+		अगर (ex)
 			status = -EROFS;
-		goto getbh;
-	}
+		जाओ getbh;
+	पूर्ण
 
-	if ((arg_flags & OCFS2_META_LOCK_GETBH) ||
+	अगर ((arg_flags & OCFS2_META_LOCK_GETBH) ||
 	    ocfs2_mount_local(osb))
-		goto update;
+		जाओ update;
 
-	if (!(arg_flags & OCFS2_META_LOCK_RECOVERY))
-		ocfs2_wait_for_recovery(osb);
+	अगर (!(arg_flags & OCFS2_META_LOCK_RECOVERY))
+		ocfs2_रुको_क्रम_recovery(osb);
 
 	lockres = &OCFS2_I(inode)->ip_inode_lockres;
 	level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
 	dlm_flags = 0;
-	if (arg_flags & OCFS2_META_LOCK_NOQUEUE)
+	अगर (arg_flags & OCFS2_META_LOCK_NOQUEUE)
 		dlm_flags |= DLM_LKF_NOQUEUE;
 
 	status = __ocfs2_cluster_lock(osb, lockres, level, dlm_flags,
 				      arg_flags, subclass, _RET_IP_);
-	if (status < 0) {
-		if (status != -EAGAIN)
-			mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		अगर (status != -EAGAIN)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	/* Notify the error cleanup path to drop the cluster lock. */
+	/* Notअगरy the error cleanup path to drop the cluster lock. */
 	acquired = 1;
 
-	/* We wait twice because a node may have died while we were in
-	 * the lower dlm layers. The second time though, we've
-	 * committed to owning this lock so we don't allow signals to
-	 * abort the operation. */
-	if (!(arg_flags & OCFS2_META_LOCK_RECOVERY))
-		ocfs2_wait_for_recovery(osb);
+	/* We रुको twice because a node may have died जबतक we were in
+	 * the lower dlm layers. The second समय though, we've
+	 * committed to owning this lock so we करोn't allow संकेतs to
+	 * पात the operation. */
+	अगर (!(arg_flags & OCFS2_META_LOCK_RECOVERY))
+		ocfs2_रुको_क्रम_recovery(osb);
 
 update:
 	/*
-	 * We only see this flag if we're being called from
-	 * ocfs2_read_locked_inode(). It means we're locking an inode
+	 * We only see this flag अगर we're being called from
+	 * ocfs2_पढ़ो_locked_inode(). It means we're locking an inode
 	 * which hasn't been populated yet, so clear the refresh flag
 	 * and let the caller handle it.
 	 */
-	if (inode->i_state & I_NEW) {
+	अगर (inode->i_state & I_NEW) अणु
 		status = 0;
-		if (lockres)
+		अगर (lockres)
 			ocfs2_complete_lock_res_refresh(lockres, 0);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	/* This is fun. The caller may want a bh back, or it may
 	 * not. ocfs2_inode_lock_update definitely wants one in, but
-	 * may or may not read one, depending on what's in the
+	 * may or may not पढ़ो one, depending on what's in the
 	 * LVB. The result of all of this is that we've *only* gone to
-	 * disk if we have to, so the complexity is worthwhile. */
+	 * disk अगर we have to, so the complनिकासy is worthजबतक. */
 	status = ocfs2_inode_lock_update(inode, &local_bh);
-	if (status < 0) {
-		if (status != -ENOENT)
-			mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		अगर (status != -ENOENT)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 getbh:
-	if (ret_bh) {
+	अगर (ret_bh) अणु
 		status = ocfs2_assign_bh(inode, ret_bh, local_bh);
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail;
-		}
-	}
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
 bail:
-	if (status < 0) {
-		if (ret_bh && (*ret_bh)) {
-			brelse(*ret_bh);
-			*ret_bh = NULL;
-		}
-		if (acquired)
+	अगर (status < 0) अणु
+		अगर (ret_bh && (*ret_bh)) अणु
+			brअन्यथा(*ret_bh);
+			*ret_bh = शून्य;
+		पूर्ण
+		अगर (acquired)
 			ocfs2_inode_unlock(inode, ex);
-	}
+	पूर्ण
 
-	brelse(local_bh);
-	return status;
-}
+	brअन्यथा(local_bh);
+	वापस status;
+पूर्ण
 
 /*
  * This is working around a lock inversion between tasks acquiring DLM
- * locks while holding a page lock and the downconvert thread which
- * blocks dlm lock acquiry while acquiring page locks.
+ * locks जबतक holding a page lock and the करोwnconvert thपढ़ो which
+ * blocks dlm lock acquiry जबतक acquiring page locks.
  *
- * ** These _with_page variantes are only intended to be called from aop
- * methods that hold page locks and return a very specific *positive* error
- * code that aop methods pass up to the VFS -- test for errors with != 0. **
+ * ** These _with_page variantes are only पूर्णांकended to be called from aop
+ * methods that hold page locks and वापस a very specअगरic *positive* error
+ * code that aop methods pass up to the VFS -- test क्रम errors with != 0. **
  *
- * The DLM is called such that it returns -EAGAIN if it would have
- * blocked waiting for the downconvert thread.  In that case we unlock
- * our page so the downconvert thread can make progress.  Once we've
- * done this we have to return AOP_TRUNCATED_PAGE so the aop method
- * that called us can bubble that back up into the VFS who will then
+ * The DLM is called such that it वापसs -EAGAIN अगर it would have
+ * blocked रुकोing क्रम the करोwnconvert thपढ़ो.  In that हाल we unlock
+ * our page so the करोwnconvert thपढ़ो can make progress.  Once we've
+ * करोne this we have to वापस AOP_TRUNCATED_PAGE so the aop method
+ * that called us can bubble that back up पूर्णांकo the VFS who will then
  * immediately retry the aop call.
  */
-int ocfs2_inode_lock_with_page(struct inode *inode,
-			      struct buffer_head **ret_bh,
-			      int ex,
-			      struct page *page)
-{
-	int ret;
+पूर्णांक ocfs2_inode_lock_with_page(काष्ठा inode *inode,
+			      काष्ठा buffer_head **ret_bh,
+			      पूर्णांक ex,
+			      काष्ठा page *page)
+अणु
+	पूर्णांक ret;
 
 	ret = ocfs2_inode_lock_full(inode, ret_bh, ex, OCFS2_LOCK_NONBLOCK);
-	if (ret == -EAGAIN) {
+	अगर (ret == -EAGAIN) अणु
 		unlock_page(page);
 		/*
-		 * If we can't get inode lock immediately, we should not return
+		 * If we can't get inode lock immediately, we should not वापस
 		 * directly here, since this will lead to a softlockup problem.
 		 * The method is to get a blocking lock and immediately unlock
-		 * before returning, this can avoid CPU resource waste due to
+		 * beक्रमe वापसing, this can aव्योम CPU resource waste due to
 		 * lots of retries, and benefits fairness in getting lock.
 		 */
-		if (ocfs2_inode_lock(inode, ret_bh, ex) == 0)
+		अगर (ocfs2_inode_lock(inode, ret_bh, ex) == 0)
 			ocfs2_inode_unlock(inode, ex);
 		ret = AOP_TRUNCATED_PAGE;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_inode_lock_atime(struct inode *inode,
-			  struct vfsmount *vfsmnt,
-			  int *level, int wait)
-{
-	int ret;
+पूर्णांक ocfs2_inode_lock_aसमय(काष्ठा inode *inode,
+			  काष्ठा vfsmount *vfsmnt,
+			  पूर्णांक *level, पूर्णांक रुको)
+अणु
+	पूर्णांक ret;
 
-	if (wait)
-		ret = ocfs2_inode_lock(inode, NULL, 0);
-	else
-		ret = ocfs2_try_inode_lock(inode, NULL, 0);
+	अगर (रुको)
+		ret = ocfs2_inode_lock(inode, शून्य, 0);
+	अन्यथा
+		ret = ocfs2_try_inode_lock(inode, शून्य, 0);
 
-	if (ret < 0) {
-		if (ret != -EAGAIN)
-			mlog_errno(ret);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		अगर (ret != -EAGAIN)
+			mlog_त्रुटि_सं(ret);
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * If we should update atime, we will get EX lock,
+	 * If we should update aसमय, we will get EX lock,
 	 * otherwise we just get PR lock.
 	 */
-	if (ocfs2_should_update_atime(inode, vfsmnt)) {
-		struct buffer_head *bh = NULL;
+	अगर (ocfs2_should_update_aसमय(inode, vfsmnt)) अणु
+		काष्ठा buffer_head *bh = शून्य;
 
 		ocfs2_inode_unlock(inode, 0);
-		if (wait)
+		अगर (रुको)
 			ret = ocfs2_inode_lock(inode, &bh, 1);
-		else
+		अन्यथा
 			ret = ocfs2_try_inode_lock(inode, &bh, 1);
 
-		if (ret < 0) {
-			if (ret != -EAGAIN)
-				mlog_errno(ret);
-			return ret;
-		}
+		अगर (ret < 0) अणु
+			अगर (ret != -EAGAIN)
+				mlog_त्रुटि_सं(ret);
+			वापस ret;
+		पूर्ण
 		*level = 1;
-		if (ocfs2_should_update_atime(inode, vfsmnt))
-			ocfs2_update_inode_atime(inode, bh);
-		brelse(bh);
-	} else
+		अगर (ocfs2_should_update_aसमय(inode, vfsmnt))
+			ocfs2_update_inode_aसमय(inode, bh);
+		brअन्यथा(bh);
+	पूर्ण अन्यथा
 		*level = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ocfs2_inode_unlock(struct inode *inode,
-		       int ex)
-{
-	int level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
-	struct ocfs2_lock_res *lockres = &OCFS2_I(inode)->ip_inode_lockres;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+व्योम ocfs2_inode_unlock(काष्ठा inode *inode,
+		       पूर्णांक ex)
+अणु
+	पूर्णांक level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+	काष्ठा ocfs2_lock_res *lockres = &OCFS2_I(inode)->ip_inode_lockres;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	mlog(0, "inode %llu drop %s META lock\n",
-	     (unsigned long long)OCFS2_I(inode)->ip_blkno,
+	     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno,
 	     ex ? "EXMODE" : "PRMODE");
 
-	if (!ocfs2_is_hard_readonly(osb) &&
+	अगर (!ocfs2_is_hard_पढ़ोonly(osb) &&
 	    !ocfs2_mount_local(osb))
 		ocfs2_cluster_unlock(osb, lockres, level);
-}
+पूर्ण
 
 /*
- * This _tracker variantes are introduced to deal with the recursive cluster
+ * This _tracker variantes are पूर्णांकroduced to deal with the recursive cluster
  * locking issue. The idea is to keep track of a lock holder on the stack of
  * the current process. If there's a lock holder on the stack, we know the
- * task context is already protected by cluster locking. Currently, they're
+ * task context is alपढ़ोy रक्षित by cluster locking. Currently, they're
  * used in some VFS entry routines.
  *
- * return < 0 on error, return == 0 if there's no lock holder on the stack
- * before this call, return == 1 if this call would be a recursive locking.
- * return == -1 if this lock attempt will cause an upgrade which is forbidden.
+ * वापस < 0 on error, वापस == 0 अगर there's no lock holder on the stack
+ * beक्रमe this call, वापस == 1 अगर this call would be a recursive locking.
+ * वापस == -1 अगर this lock attempt will cause an upgrade which is क्रमbidden.
  *
- * When taking lock levels into account,we face some different situations.
+ * When taking lock levels पूर्णांकo account,we face some dअगरferent situations.
  *
  * 1. no lock is held
- *    In this case, just lock the inode as requested and return 0
+ *    In this हाल, just lock the inode as requested and वापस 0
  *
  * 2. We are holding a lock
- *    For this situation, things diverges into several cases
+ *    For this situation, things भागerges पूर्णांकo several हालs
  *
- *    wanted     holding	     what to do
+ *    wanted     holding	     what to करो
  *    ex		ex	    see 2.1 below
  *    ex		pr	    see 2.2 below
  *    pr		ex	    see 2.1 below
@@ -2654,526 +2655,526 @@ void ocfs2_inode_unlock(struct inode *inode,
  *    2.1 lock level that is been held is compatible
  *    with the wanted level, so no lock action will be tacken.
  *
- *    2.2 Otherwise, an upgrade is needed, but it is forbidden.
+ *    2.2 Otherwise, an upgrade is needed, but it is क्रमbidden.
  *
- * Reason why upgrade within a process is forbidden is that
+ * Reason why upgrade within a process is क्रमbidden is that
  * lock upgrade may cause dead lock. The following illustrates
  * how it happens.
  *
- *         thread on node1                             thread on node2
+ *         thपढ़ो on node1                             thपढ़ो on node2
  * ocfs2_inode_lock_tracker(ex=0)
  *
  *                                <======   ocfs2_inode_lock_tracker(ex=1)
  *
  * ocfs2_inode_lock_tracker(ex=1)
  */
-int ocfs2_inode_lock_tracker(struct inode *inode,
-			     struct buffer_head **ret_bh,
-			     int ex,
-			     struct ocfs2_lock_holder *oh)
-{
-	int status = 0;
-	struct ocfs2_lock_res *lockres;
-	struct ocfs2_lock_holder *tmp_oh;
-	struct pid *pid = task_pid(current);
+पूर्णांक ocfs2_inode_lock_tracker(काष्ठा inode *inode,
+			     काष्ठा buffer_head **ret_bh,
+			     पूर्णांक ex,
+			     काष्ठा ocfs2_lock_holder *oh)
+अणु
+	पूर्णांक status = 0;
+	काष्ठा ocfs2_lock_res *lockres;
+	काष्ठा ocfs2_lock_holder *पंचांगp_oh;
+	काष्ठा pid *pid = task_pid(current);
 
 
 	lockres = &OCFS2_I(inode)->ip_inode_lockres;
-	tmp_oh = ocfs2_pid_holder(lockres, pid);
+	पंचांगp_oh = ocfs2_pid_holder(lockres, pid);
 
-	if (!tmp_oh) {
+	अगर (!पंचांगp_oh) अणु
 		/*
-		 * This corresponds to the case 1.
-		 * We haven't got any lock before.
+		 * This corresponds to the हाल 1.
+		 * We haven't got any lock beक्रमe.
 		 */
 		status = ocfs2_inode_lock_full(inode, ret_bh, ex, 0);
-		if (status < 0) {
-			if (status != -ENOENT)
-				mlog_errno(status);
-			return status;
-		}
+		अगर (status < 0) अणु
+			अगर (status != -ENOENT)
+				mlog_त्रुटि_सं(status);
+			वापस status;
+		पूर्ण
 
 		oh->oh_ex = ex;
 		ocfs2_add_holder(lockres, oh);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (unlikely(ex && !tmp_oh->oh_ex)) {
+	अगर (unlikely(ex && !पंचांगp_oh->oh_ex)) अणु
 		/*
-		 * case 2.2 upgrade may cause dead lock, forbid it.
+		 * हाल 2.2 upgrade may cause dead lock, क्रमbid it.
 		 */
 		mlog(ML_ERROR, "Recursive locking is not permitted to "
 		     "upgrade to EX level from PR level.\n");
 		dump_stack();
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 *  case 2.1 OCFS2_META_LOCK_GETBH flag make ocfs2_inode_lock_full.
+	 *  हाल 2.1 OCFS2_META_LOCK_GETBH flag make ocfs2_inode_lock_full.
 	 *  ignore the lock level and just update it.
 	 */
-	if (ret_bh) {
+	अगर (ret_bh) अणु
 		status = ocfs2_inode_lock_full(inode, ret_bh, ex,
 					       OCFS2_META_LOCK_GETBH);
-		if (status < 0) {
-			if (status != -ENOENT)
-				mlog_errno(status);
-			return status;
-		}
-	}
-	return tmp_oh ? 1 : 0;
-}
+		अगर (status < 0) अणु
+			अगर (status != -ENOENT)
+				mlog_त्रुटि_सं(status);
+			वापस status;
+		पूर्ण
+	पूर्ण
+	वापस पंचांगp_oh ? 1 : 0;
+पूर्ण
 
-void ocfs2_inode_unlock_tracker(struct inode *inode,
-				int ex,
-				struct ocfs2_lock_holder *oh,
-				int had_lock)
-{
-	struct ocfs2_lock_res *lockres;
+व्योम ocfs2_inode_unlock_tracker(काष्ठा inode *inode,
+				पूर्णांक ex,
+				काष्ठा ocfs2_lock_holder *oh,
+				पूर्णांक had_lock)
+अणु
+	काष्ठा ocfs2_lock_res *lockres;
 
 	lockres = &OCFS2_I(inode)->ip_inode_lockres;
-	/* had_lock means that the currect process already takes the cluster
+	/* had_lock means that the currect process alपढ़ोy takes the cluster
 	 * lock previously.
-	 * If had_lock is 1, we have nothing to do here.
+	 * If had_lock is 1, we have nothing to करो here.
 	 * If had_lock is 0, we will release the lock.
 	 */
-	if (!had_lock) {
+	अगर (!had_lock) अणु
 		ocfs2_inode_unlock(inode, oh->oh_ex);
-		ocfs2_remove_holder(lockres, oh);
-	}
-}
+		ocfs2_हटाओ_holder(lockres, oh);
+	पूर्ण
+पूर्ण
 
-int ocfs2_orphan_scan_lock(struct ocfs2_super *osb, u32 *seqno)
-{
-	struct ocfs2_lock_res *lockres;
-	struct ocfs2_orphan_scan_lvb *lvb;
-	int status = 0;
+पूर्णांक ocfs2_orphan_scan_lock(काष्ठा ocfs2_super *osb, u32 *seqno)
+अणु
+	काष्ठा ocfs2_lock_res *lockres;
+	काष्ठा ocfs2_orphan_scan_lvb *lvb;
+	पूर्णांक status = 0;
 
-	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb))
+		वापस -EROFS;
 
-	if (ocfs2_mount_local(osb))
-		return 0;
+	अगर (ocfs2_mount_local(osb))
+		वापस 0;
 
 	lockres = &osb->osb_orphan_scan.os_lockres;
 	status = ocfs2_cluster_lock(osb, lockres, DLM_LOCK_EX, 0, 0);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
 	lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
-	if (ocfs2_dlm_lvb_valid(&lockres->l_lksb) &&
+	अगर (ocfs2_dlm_lvb_valid(&lockres->l_lksb) &&
 	    lvb->lvb_version == OCFS2_ORPHAN_LVB_VERSION)
 		*seqno = be32_to_cpu(lvb->lvb_os_seqno);
-	else
+	अन्यथा
 		*seqno = osb->osb_orphan_scan.os_seqno + 1;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void ocfs2_orphan_scan_unlock(struct ocfs2_super *osb, u32 seqno)
-{
-	struct ocfs2_lock_res *lockres;
-	struct ocfs2_orphan_scan_lvb *lvb;
+व्योम ocfs2_orphan_scan_unlock(काष्ठा ocfs2_super *osb, u32 seqno)
+अणु
+	काष्ठा ocfs2_lock_res *lockres;
+	काष्ठा ocfs2_orphan_scan_lvb *lvb;
 
-	if (!ocfs2_is_hard_readonly(osb) && !ocfs2_mount_local(osb)) {
+	अगर (!ocfs2_is_hard_पढ़ोonly(osb) && !ocfs2_mount_local(osb)) अणु
 		lockres = &osb->osb_orphan_scan.os_lockres;
 		lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
 		lvb->lvb_version = OCFS2_ORPHAN_LVB_VERSION;
 		lvb->lvb_os_seqno = cpu_to_be32(seqno);
 		ocfs2_cluster_unlock(osb, lockres, DLM_LOCK_EX);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int ocfs2_super_lock(struct ocfs2_super *osb,
-		     int ex)
-{
-	int status = 0;
-	int level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
-	struct ocfs2_lock_res *lockres = &osb->osb_super_lockres;
+पूर्णांक ocfs2_super_lock(काष्ठा ocfs2_super *osb,
+		     पूर्णांक ex)
+अणु
+	पूर्णांक status = 0;
+	पूर्णांक level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+	काष्ठा ocfs2_lock_res *lockres = &osb->osb_super_lockres;
 
-	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb))
+		वापस -EROFS;
 
-	if (ocfs2_mount_local(osb))
-		goto bail;
+	अगर (ocfs2_mount_local(osb))
+		जाओ bail;
 
 	status = ocfs2_cluster_lock(osb, lockres, level, 0, 0);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	/* The super block lock path is really in the best position to
 	 * know when resources covered by the lock need to be
-	 * refreshed, so we do it here. Of course, making sense of
+	 * refreshed, so we करो it here. Of course, making sense of
 	 * everything is up to the caller :) */
 	status = ocfs2_should_refresh_lock_res(lockres);
-	if (status) {
+	अगर (status) अणु
 		status = ocfs2_refresh_slot_info(osb);
 
 		ocfs2_complete_lock_res_refresh(lockres, status);
 
-		if (status < 0) {
+		अगर (status < 0) अणु
 			ocfs2_cluster_unlock(osb, lockres, level);
-			mlog_errno(status);
-		}
+			mlog_त्रुटि_सं(status);
+		पूर्ण
 		ocfs2_track_lock_refresh(lockres);
-	}
+	पूर्ण
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void ocfs2_super_unlock(struct ocfs2_super *osb,
-			int ex)
-{
-	int level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
-	struct ocfs2_lock_res *lockres = &osb->osb_super_lockres;
+व्योम ocfs2_super_unlock(काष्ठा ocfs2_super *osb,
+			पूर्णांक ex)
+अणु
+	पूर्णांक level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+	काष्ठा ocfs2_lock_res *lockres = &osb->osb_super_lockres;
 
-	if (!ocfs2_mount_local(osb))
+	अगर (!ocfs2_mount_local(osb))
 		ocfs2_cluster_unlock(osb, lockres, level);
-}
+पूर्ण
 
-int ocfs2_rename_lock(struct ocfs2_super *osb)
-{
-	int status;
-	struct ocfs2_lock_res *lockres = &osb->osb_rename_lockres;
+पूर्णांक ocfs2_नाम_lock(काष्ठा ocfs2_super *osb)
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_lock_res *lockres = &osb->osb_नाम_lockres;
 
-	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb))
+		वापस -EROFS;
 
-	if (ocfs2_mount_local(osb))
-		return 0;
+	अगर (ocfs2_mount_local(osb))
+		वापस 0;
 
 	status = ocfs2_cluster_lock(osb, lockres, DLM_LOCK_EX, 0, 0);
-	if (status < 0)
-		mlog_errno(status);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void ocfs2_rename_unlock(struct ocfs2_super *osb)
-{
-	struct ocfs2_lock_res *lockres = &osb->osb_rename_lockres;
+व्योम ocfs2_नाम_unlock(काष्ठा ocfs2_super *osb)
+अणु
+	काष्ठा ocfs2_lock_res *lockres = &osb->osb_नाम_lockres;
 
-	if (!ocfs2_mount_local(osb))
+	अगर (!ocfs2_mount_local(osb))
 		ocfs2_cluster_unlock(osb, lockres, DLM_LOCK_EX);
-}
+पूर्ण
 
-int ocfs2_nfs_sync_lock(struct ocfs2_super *osb, int ex)
-{
-	int status;
-	struct ocfs2_lock_res *lockres = &osb->osb_nfs_sync_lockres;
+पूर्णांक ocfs2_nfs_sync_lock(काष्ठा ocfs2_super *osb, पूर्णांक ex)
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_lock_res *lockres = &osb->osb_nfs_sync_lockres;
 
-	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb))
+		वापस -EROFS;
 
-	if (ex)
-		down_write(&osb->nfs_sync_rwlock);
-	else
-		down_read(&osb->nfs_sync_rwlock);
+	अगर (ex)
+		करोwn_ग_लिखो(&osb->nfs_sync_rwlock);
+	अन्यथा
+		करोwn_पढ़ो(&osb->nfs_sync_rwlock);
 
-	if (ocfs2_mount_local(osb))
-		return 0;
+	अगर (ocfs2_mount_local(osb))
+		वापस 0;
 
 	status = ocfs2_cluster_lock(osb, lockres, ex ? LKM_EXMODE : LKM_PRMODE,
 				    0, 0);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		mlog(ML_ERROR, "lock on nfs sync lock failed %d\n", status);
 
-		if (ex)
-			up_write(&osb->nfs_sync_rwlock);
-		else
-			up_read(&osb->nfs_sync_rwlock);
-	}
+		अगर (ex)
+			up_ग_लिखो(&osb->nfs_sync_rwlock);
+		अन्यथा
+			up_पढ़ो(&osb->nfs_sync_rwlock);
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void ocfs2_nfs_sync_unlock(struct ocfs2_super *osb, int ex)
-{
-	struct ocfs2_lock_res *lockres = &osb->osb_nfs_sync_lockres;
+व्योम ocfs2_nfs_sync_unlock(काष्ठा ocfs2_super *osb, पूर्णांक ex)
+अणु
+	काष्ठा ocfs2_lock_res *lockres = &osb->osb_nfs_sync_lockres;
 
-	if (!ocfs2_mount_local(osb))
+	अगर (!ocfs2_mount_local(osb))
 		ocfs2_cluster_unlock(osb, lockres,
 				     ex ? LKM_EXMODE : LKM_PRMODE);
-	if (ex)
-		up_write(&osb->nfs_sync_rwlock);
-	else
-		up_read(&osb->nfs_sync_rwlock);
-}
+	अगर (ex)
+		up_ग_लिखो(&osb->nfs_sync_rwlock);
+	अन्यथा
+		up_पढ़ो(&osb->nfs_sync_rwlock);
+पूर्ण
 
-int ocfs2_trim_fs_lock(struct ocfs2_super *osb,
-		       struct ocfs2_trim_fs_info *info, int trylock)
-{
-	int status;
-	struct ocfs2_trim_fs_lvb *lvb;
-	struct ocfs2_lock_res *lockres = &osb->osb_trim_fs_lockres;
+पूर्णांक ocfs2_trim_fs_lock(काष्ठा ocfs2_super *osb,
+		       काष्ठा ocfs2_trim_fs_info *info, पूर्णांक trylock)
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_trim_fs_lvb *lvb;
+	काष्ठा ocfs2_lock_res *lockres = &osb->osb_trim_fs_lockres;
 
-	if (info)
+	अगर (info)
 		info->tf_valid = 0;
 
-	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb))
+		वापस -EROFS;
 
-	if (ocfs2_mount_local(osb))
-		return 0;
+	अगर (ocfs2_mount_local(osb))
+		वापस 0;
 
 	status = ocfs2_cluster_lock(osb, lockres, DLM_LOCK_EX,
 				    trylock ? DLM_LKF_NOQUEUE : 0, 0);
-	if (status < 0) {
-		if (status != -EAGAIN)
-			mlog_errno(status);
-		return status;
-	}
+	अगर (status < 0) अणु
+		अगर (status != -EAGAIN)
+			mlog_त्रुटि_सं(status);
+		वापस status;
+	पूर्ण
 
-	if (info) {
+	अगर (info) अणु
 		lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
-		if (ocfs2_dlm_lvb_valid(&lockres->l_lksb) &&
-		    lvb->lvb_version == OCFS2_TRIMFS_LVB_VERSION) {
+		अगर (ocfs2_dlm_lvb_valid(&lockres->l_lksb) &&
+		    lvb->lvb_version == OCFS2_TRIMFS_LVB_VERSION) अणु
 			info->tf_valid = 1;
 			info->tf_success = lvb->lvb_success;
-			info->tf_nodenum = be32_to_cpu(lvb->lvb_nodenum);
+			info->tf_nodक्रमागत = be32_to_cpu(lvb->lvb_nodक्रमागत);
 			info->tf_start = be64_to_cpu(lvb->lvb_start);
 			info->tf_len = be64_to_cpu(lvb->lvb_len);
 			info->tf_minlen = be64_to_cpu(lvb->lvb_minlen);
 			info->tf_trimlen = be64_to_cpu(lvb->lvb_trimlen);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void ocfs2_trim_fs_unlock(struct ocfs2_super *osb,
-			  struct ocfs2_trim_fs_info *info)
-{
-	struct ocfs2_trim_fs_lvb *lvb;
-	struct ocfs2_lock_res *lockres = &osb->osb_trim_fs_lockres;
+व्योम ocfs2_trim_fs_unlock(काष्ठा ocfs2_super *osb,
+			  काष्ठा ocfs2_trim_fs_info *info)
+अणु
+	काष्ठा ocfs2_trim_fs_lvb *lvb;
+	काष्ठा ocfs2_lock_res *lockres = &osb->osb_trim_fs_lockres;
 
-	if (ocfs2_mount_local(osb))
-		return;
+	अगर (ocfs2_mount_local(osb))
+		वापस;
 
-	if (info) {
+	अगर (info) अणु
 		lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
 		lvb->lvb_version = OCFS2_TRIMFS_LVB_VERSION;
 		lvb->lvb_success = info->tf_success;
-		lvb->lvb_nodenum = cpu_to_be32(info->tf_nodenum);
+		lvb->lvb_nodक्रमागत = cpu_to_be32(info->tf_nodक्रमागत);
 		lvb->lvb_start = cpu_to_be64(info->tf_start);
 		lvb->lvb_len = cpu_to_be64(info->tf_len);
 		lvb->lvb_minlen = cpu_to_be64(info->tf_minlen);
 		lvb->lvb_trimlen = cpu_to_be64(info->tf_trimlen);
-	}
+	पूर्ण
 
 	ocfs2_cluster_unlock(osb, lockres, DLM_LOCK_EX);
-}
+पूर्ण
 
-int ocfs2_dentry_lock(struct dentry *dentry, int ex)
-{
-	int ret;
-	int level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
-	struct ocfs2_dentry_lock *dl = dentry->d_fsdata;
-	struct ocfs2_super *osb = OCFS2_SB(dentry->d_sb);
+पूर्णांक ocfs2_dentry_lock(काष्ठा dentry *dentry, पूर्णांक ex)
+अणु
+	पूर्णांक ret;
+	पूर्णांक level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+	काष्ठा ocfs2_dentry_lock *dl = dentry->d_fsdata;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(dentry->d_sb);
 
 	BUG_ON(!dl);
 
-	if (ocfs2_is_hard_readonly(osb)) {
-		if (ex)
-			return -EROFS;
-		return 0;
-	}
+	अगर (ocfs2_is_hard_पढ़ोonly(osb)) अणु
+		अगर (ex)
+			वापस -EROFS;
+		वापस 0;
+	पूर्ण
 
-	if (ocfs2_mount_local(osb))
-		return 0;
+	अगर (ocfs2_mount_local(osb))
+		वापस 0;
 
 	ret = ocfs2_cluster_lock(osb, &dl->dl_lockres, level, 0, 0);
-	if (ret < 0)
-		mlog_errno(ret);
+	अगर (ret < 0)
+		mlog_त्रुटि_सं(ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ocfs2_dentry_unlock(struct dentry *dentry, int ex)
-{
-	int level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
-	struct ocfs2_dentry_lock *dl = dentry->d_fsdata;
-	struct ocfs2_super *osb = OCFS2_SB(dentry->d_sb);
+व्योम ocfs2_dentry_unlock(काष्ठा dentry *dentry, पूर्णांक ex)
+अणु
+	पूर्णांक level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+	काष्ठा ocfs2_dentry_lock *dl = dentry->d_fsdata;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(dentry->d_sb);
 
-	if (!ocfs2_is_hard_readonly(osb) && !ocfs2_mount_local(osb))
+	अगर (!ocfs2_is_hard_पढ़ोonly(osb) && !ocfs2_mount_local(osb))
 		ocfs2_cluster_unlock(osb, &dl->dl_lockres, level);
-}
+पूर्ण
 
-/* Reference counting of the dlm debug structure. We want this because
- * open references on the debug inodes can live on after a mount, so
+/* Reference counting of the dlm debug काष्ठाure. We want this because
+ * खोलो references on the debug inodes can live on after a mount, so
  * we can't rely on the ocfs2_super to always exist. */
-static void ocfs2_dlm_debug_free(struct kref *kref)
-{
-	struct ocfs2_dlm_debug *dlm_debug;
+अटल व्योम ocfs2_dlm_debug_मुक्त(काष्ठा kref *kref)
+अणु
+	काष्ठा ocfs2_dlm_debug *dlm_debug;
 
-	dlm_debug = container_of(kref, struct ocfs2_dlm_debug, d_refcnt);
+	dlm_debug = container_of(kref, काष्ठा ocfs2_dlm_debug, d_refcnt);
 
-	kfree(dlm_debug);
-}
+	kमुक्त(dlm_debug);
+पूर्ण
 
-void ocfs2_put_dlm_debug(struct ocfs2_dlm_debug *dlm_debug)
-{
-	if (dlm_debug)
-		kref_put(&dlm_debug->d_refcnt, ocfs2_dlm_debug_free);
-}
+व्योम ocfs2_put_dlm_debug(काष्ठा ocfs2_dlm_debug *dlm_debug)
+अणु
+	अगर (dlm_debug)
+		kref_put(&dlm_debug->d_refcnt, ocfs2_dlm_debug_मुक्त);
+पूर्ण
 
-static void ocfs2_get_dlm_debug(struct ocfs2_dlm_debug *debug)
-{
+अटल व्योम ocfs2_get_dlm_debug(काष्ठा ocfs2_dlm_debug *debug)
+अणु
 	kref_get(&debug->d_refcnt);
-}
+पूर्ण
 
-struct ocfs2_dlm_debug *ocfs2_new_dlm_debug(void)
-{
-	struct ocfs2_dlm_debug *dlm_debug;
+काष्ठा ocfs2_dlm_debug *ocfs2_new_dlm_debug(व्योम)
+अणु
+	काष्ठा ocfs2_dlm_debug *dlm_debug;
 
-	dlm_debug = kmalloc(sizeof(struct ocfs2_dlm_debug), GFP_KERNEL);
-	if (!dlm_debug) {
-		mlog_errno(-ENOMEM);
-		goto out;
-	}
+	dlm_debug = kदो_स्मृति(माप(काष्ठा ocfs2_dlm_debug), GFP_KERNEL);
+	अगर (!dlm_debug) अणु
+		mlog_त्रुटि_सं(-ENOMEM);
+		जाओ out;
+	पूर्ण
 
 	kref_init(&dlm_debug->d_refcnt);
 	INIT_LIST_HEAD(&dlm_debug->d_lockres_tracking);
 	dlm_debug->d_filter_secs = 0;
 out:
-	return dlm_debug;
-}
+	वापस dlm_debug;
+पूर्ण
 
-/* Access to this is arbitrated for us via seq_file->sem. */
-struct ocfs2_dlm_seq_priv {
-	struct ocfs2_dlm_debug *p_dlm_debug;
-	struct ocfs2_lock_res p_iter_res;
-	struct ocfs2_lock_res p_tmp_res;
-};
+/* Access to this is arbitrated क्रम us via seq_file->sem. */
+काष्ठा ocfs2_dlm_seq_priv अणु
+	काष्ठा ocfs2_dlm_debug *p_dlm_debug;
+	काष्ठा ocfs2_lock_res p_iter_res;
+	काष्ठा ocfs2_lock_res p_पंचांगp_res;
+पूर्ण;
 
-static struct ocfs2_lock_res *ocfs2_dlm_next_res(struct ocfs2_lock_res *start,
-						 struct ocfs2_dlm_seq_priv *priv)
-{
-	struct ocfs2_lock_res *iter, *ret = NULL;
-	struct ocfs2_dlm_debug *dlm_debug = priv->p_dlm_debug;
+अटल काष्ठा ocfs2_lock_res *ocfs2_dlm_next_res(काष्ठा ocfs2_lock_res *start,
+						 काष्ठा ocfs2_dlm_seq_priv *priv)
+अणु
+	काष्ठा ocfs2_lock_res *iter, *ret = शून्य;
+	काष्ठा ocfs2_dlm_debug *dlm_debug = priv->p_dlm_debug;
 
-	assert_spin_locked(&ocfs2_dlm_tracking_lock);
+	निश्चित_spin_locked(&ocfs2_dlm_tracking_lock);
 
-	list_for_each_entry(iter, &start->l_debug_list, l_debug_list) {
+	list_क्रम_each_entry(iter, &start->l_debug_list, l_debug_list) अणु
 		/* discover the head of the list */
-		if (&iter->l_debug_list == &dlm_debug->d_lockres_tracking) {
+		अगर (&iter->l_debug_list == &dlm_debug->d_lockres_tracking) अणु
 			mlog(0, "End of list found, %p\n", ret);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* We track our "dummy" iteration lockres' by a NULL
+		/* We track our "dummy" iteration lockres' by a शून्य
 		 * l_ops field. */
-		if (iter->l_ops != NULL) {
+		अगर (iter->l_ops != शून्य) अणु
 			ret = iter;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void *ocfs2_dlm_seq_start(struct seq_file *m, loff_t *pos)
-{
-	struct ocfs2_dlm_seq_priv *priv = m->private;
-	struct ocfs2_lock_res *iter;
+अटल व्योम *ocfs2_dlm_seq_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	काष्ठा ocfs2_dlm_seq_priv *priv = m->निजी;
+	काष्ठा ocfs2_lock_res *iter;
 
 	spin_lock(&ocfs2_dlm_tracking_lock);
 	iter = ocfs2_dlm_next_res(&priv->p_iter_res, priv);
-	if (iter) {
-		/* Since lockres' have the lifetime of their container
+	अगर (iter) अणु
+		/* Since lockres' have the lअगरeसमय of their container
 		 * (which can be inodes, ocfs2_supers, etc) we want to
-		 * copy this out to a temporary lockres while still
+		 * copy this out to a temporary lockres जबतक still
 		 * under the spinlock. Obviously after this we can't
-		 * trust any pointers on the copy returned, but that's
-		 * ok as the information we want isn't typically held
+		 * trust any poपूर्णांकers on the copy वापसed, but that's
+		 * ok as the inक्रमmation we want isn't typically held
 		 * in them. */
-		priv->p_tmp_res = *iter;
-		iter = &priv->p_tmp_res;
-	}
+		priv->p_पंचांगp_res = *iter;
+		iter = &priv->p_पंचांगp_res;
+	पूर्ण
 	spin_unlock(&ocfs2_dlm_tracking_lock);
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
-static void ocfs2_dlm_seq_stop(struct seq_file *m, void *v)
-{
-}
+अटल व्योम ocfs2_dlm_seq_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+पूर्ण
 
-static void *ocfs2_dlm_seq_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	struct ocfs2_dlm_seq_priv *priv = m->private;
-	struct ocfs2_lock_res *iter = v;
-	struct ocfs2_lock_res *dummy = &priv->p_iter_res;
+अटल व्योम *ocfs2_dlm_seq_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा ocfs2_dlm_seq_priv *priv = m->निजी;
+	काष्ठा ocfs2_lock_res *iter = v;
+	काष्ठा ocfs2_lock_res *dummy = &priv->p_iter_res;
 
 	spin_lock(&ocfs2_dlm_tracking_lock);
 	iter = ocfs2_dlm_next_res(iter, priv);
 	list_del_init(&dummy->l_debug_list);
-	if (iter) {
+	अगर (iter) अणु
 		list_add(&dummy->l_debug_list, &iter->l_debug_list);
-		priv->p_tmp_res = *iter;
-		iter = &priv->p_tmp_res;
-	}
+		priv->p_पंचांगp_res = *iter;
+		iter = &priv->p_पंचांगp_res;
+	पूर्ण
 	spin_unlock(&ocfs2_dlm_tracking_lock);
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
 /*
- * Version is used by debugfs.ocfs2 to determine the format being used
+ * Version is used by debugfs.ocfs2 to determine the क्रमmat being used
  *
  * New in version 2
- *	- Lock stats printed
+ *	- Lock stats prपूर्णांकed
  * New in version 3
- *	- Max time in lock stats is in usecs (instead of nsecs)
+ *	- Max समय in lock stats is in usecs (instead of nsecs)
  * New in version 4
- *	- Add last pr/ex unlock times and first lock wait time in usecs
+ *	- Add last pr/ex unlock बार and first lock रुको समय in usecs
  */
-#define OCFS2_DLM_DEBUG_STR_VERSION 4
-static int ocfs2_dlm_seq_show(struct seq_file *m, void *v)
-{
-	int i;
-	char *lvb;
-	struct ocfs2_lock_res *lockres = v;
-#ifdef CONFIG_OCFS2_FS_STATS
+#घोषणा OCFS2_DLM_DEBUG_STR_VERSION 4
+अटल पूर्णांक ocfs2_dlm_seq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक i;
+	अक्षर *lvb;
+	काष्ठा ocfs2_lock_res *lockres = v;
+#अगर_घोषित CONFIG_OCFS2_FS_STATS
 	u64 now, last;
-	struct ocfs2_dlm_debug *dlm_debug =
-			((struct ocfs2_dlm_seq_priv *)m->private)->p_dlm_debug;
-#endif
+	काष्ठा ocfs2_dlm_debug *dlm_debug =
+			((काष्ठा ocfs2_dlm_seq_priv *)m->निजी)->p_dlm_debug;
+#पूर्ण_अगर
 
-	if (!lockres)
-		return -EINVAL;
+	अगर (!lockres)
+		वापस -EINVAL;
 
-#ifdef CONFIG_OCFS2_FS_STATS
-	if (!lockres->l_lock_wait && dlm_debug->d_filter_secs) {
-		now = ktime_to_us(ktime_get_real());
-		if (lockres->l_lock_prmode.ls_last >
+#अगर_घोषित CONFIG_OCFS2_FS_STATS
+	अगर (!lockres->l_lock_रुको && dlm_debug->d_filter_secs) अणु
+		now = kसमय_प्रकारo_us(kसमय_get_real());
+		अगर (lockres->l_lock_prmode.ls_last >
 		    lockres->l_lock_exmode.ls_last)
 			last = lockres->l_lock_prmode.ls_last;
-		else
+		अन्यथा
 			last = lockres->l_lock_exmode.ls_last;
 		/*
 		 * Use d_filter_secs field to filter lock resources dump,
-		 * the default d_filter_secs(0) value filters nothing,
+		 * the शेष d_filter_secs(0) value filters nothing,
 		 * otherwise, only dump the last N seconds active lock
 		 * resources.
 		 */
-		if (div_u64(now - last, 1000000) > dlm_debug->d_filter_secs)
-			return 0;
-	}
-#endif
+		अगर (भाग_u64(now - last, 1000000) > dlm_debug->d_filter_secs)
+			वापस 0;
+	पूर्ण
+#पूर्ण_अगर
 
-	seq_printf(m, "0x%x\t", OCFS2_DLM_DEBUG_STR_VERSION);
+	seq_म_लिखो(m, "0x%x\t", OCFS2_DLM_DEBUG_STR_VERSION);
 
-	if (lockres->l_type == OCFS2_LOCK_TYPE_DENTRY)
-		seq_printf(m, "%.*s%08x\t", OCFS2_DENTRY_LOCK_INO_START - 1,
+	अगर (lockres->l_type == OCFS2_LOCK_TYPE_DENTRY)
+		seq_म_लिखो(m, "%.*s%08x\t", OCFS2_DENTRY_LOCK_INO_START - 1,
 			   lockres->l_name,
-			   (unsigned int)ocfs2_get_dentry_lock_ino(lockres));
-	else
-		seq_printf(m, "%.*s\t", OCFS2_LOCK_ID_MAX_LEN, lockres->l_name);
+			   (अचिन्हित पूर्णांक)ocfs2_get_dentry_lock_ino(lockres));
+	अन्यथा
+		seq_म_लिखो(m, "%.*s\t", OCFS2_LOCK_ID_MAX_LEN, lockres->l_name);
 
-	seq_printf(m, "%d\t"
+	seq_म_लिखो(m, "%d\t"
 		   "0x%lx\t"
 		   "0x%x\t"
 		   "0x%x\t"
@@ -3192,12 +3193,12 @@ static int ocfs2_dlm_seq_show(struct seq_file *m, void *v)
 
 	/* Dump the raw LVB */
 	lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
-	for(i = 0; i < DLM_LVB_LEN; i++)
-		seq_printf(m, "0x%x\t", lvb[i]);
+	क्रम(i = 0; i < DLM_LVB_LEN; i++)
+		seq_म_लिखो(m, "0x%x\t", lvb[i]);
 
-#ifdef CONFIG_OCFS2_FS_STATS
-# define lock_num_prmode(_l)		((_l)->l_lock_prmode.ls_gets)
-# define lock_num_exmode(_l)		((_l)->l_lock_exmode.ls_gets)
+#अगर_घोषित CONFIG_OCFS2_FS_STATS
+# define lock_num_prmode(_l)		((_l)->l_lock_prmode.ls_माला_लो)
+# define lock_num_exmode(_l)		((_l)->l_lock_exmode.ls_माला_लो)
 # define lock_num_prmode_failed(_l)	((_l)->l_lock_prmode.ls_fail)
 # define lock_num_exmode_failed(_l)	((_l)->l_lock_exmode.ls_fail)
 # define lock_total_prmode(_l)		((_l)->l_lock_prmode.ls_total)
@@ -3207,8 +3208,8 @@ static int ocfs2_dlm_seq_show(struct seq_file *m, void *v)
 # define lock_refresh(_l)		((_l)->l_lock_refresh)
 # define lock_last_prmode(_l)		((_l)->l_lock_prmode.ls_last)
 # define lock_last_exmode(_l)		((_l)->l_lock_exmode.ls_last)
-# define lock_wait(_l)			((_l)->l_lock_wait)
-#else
+# define lock_रुको(_l)			((_l)->l_lock_रुको)
+#अन्यथा
 # define lock_num_prmode(_l)		(0)
 # define lock_num_exmode(_l)		(0)
 # define lock_num_prmode_failed(_l)	(0)
@@ -3220,10 +3221,10 @@ static int ocfs2_dlm_seq_show(struct seq_file *m, void *v)
 # define lock_refresh(_l)		(0)
 # define lock_last_prmode(_l)		(0ULL)
 # define lock_last_exmode(_l)		(0ULL)
-# define lock_wait(_l)			(0ULL)
-#endif
-	/* The following seq_print was added in version 2 of this output */
-	seq_printf(m, "%u\t"
+# define lock_रुको(_l)			(0ULL)
+#पूर्ण_अगर
+	/* The following seq_prपूर्णांक was added in version 2 of this output */
+	seq_म_लिखो(m, "%u\t"
 		   "%u\t"
 		   "%u\t"
 		   "%u\t"
@@ -3246,43 +3247,43 @@ static int ocfs2_dlm_seq_show(struct seq_file *m, void *v)
 		   lock_refresh(lockres),
 		   lock_last_prmode(lockres),
 		   lock_last_exmode(lockres),
-		   lock_wait(lockres));
+		   lock_रुको(lockres));
 
 	/* End the line */
-	seq_printf(m, "\n");
-	return 0;
-}
+	seq_म_लिखो(m, "\n");
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations ocfs2_dlm_seq_ops = {
+अटल स्थिर काष्ठा seq_operations ocfs2_dlm_seq_ops = अणु
 	.start =	ocfs2_dlm_seq_start,
 	.stop =		ocfs2_dlm_seq_stop,
 	.next =		ocfs2_dlm_seq_next,
 	.show =		ocfs2_dlm_seq_show,
-};
+पूर्ण;
 
-static int ocfs2_dlm_debug_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	struct ocfs2_dlm_seq_priv *priv = seq->private;
-	struct ocfs2_lock_res *res = &priv->p_iter_res;
+अटल पूर्णांक ocfs2_dlm_debug_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा ocfs2_dlm_seq_priv *priv = seq->निजी;
+	काष्ठा ocfs2_lock_res *res = &priv->p_iter_res;
 
-	ocfs2_remove_lockres_tracking(res);
+	ocfs2_हटाओ_lockres_tracking(res);
 	ocfs2_put_dlm_debug(priv->p_dlm_debug);
-	return seq_release_private(inode, file);
-}
+	वापस seq_release_निजी(inode, file);
+पूर्ण
 
-static int ocfs2_dlm_debug_open(struct inode *inode, struct file *file)
-{
-	struct ocfs2_dlm_seq_priv *priv;
-	struct ocfs2_super *osb;
+अटल पूर्णांक ocfs2_dlm_debug_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा ocfs2_dlm_seq_priv *priv;
+	काष्ठा ocfs2_super *osb;
 
-	priv = __seq_open_private(file, &ocfs2_dlm_seq_ops, sizeof(*priv));
-	if (!priv) {
-		mlog_errno(-ENOMEM);
-		return -ENOMEM;
-	}
+	priv = __seq_खोलो_निजी(file, &ocfs2_dlm_seq_ops, माप(*priv));
+	अगर (!priv) अणु
+		mlog_त्रुटि_सं(-ENOMEM);
+		वापस -ENOMEM;
+	पूर्ण
 
-	osb = inode->i_private;
+	osb = inode->i_निजी;
 	ocfs2_get_dlm_debug(osb->osb_dlm_debug);
 	priv->p_dlm_debug = osb->osb_dlm_debug;
 	INIT_LIST_HEAD(&priv->p_iter_res.l_debug_list);
@@ -3290,19 +3291,19 @@ static int ocfs2_dlm_debug_open(struct inode *inode, struct file *file)
 	ocfs2_add_lockres_tracking(&priv->p_iter_res,
 				   priv->p_dlm_debug);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations ocfs2_dlm_debug_fops = {
-	.open =		ocfs2_dlm_debug_open,
+अटल स्थिर काष्ठा file_operations ocfs2_dlm_debug_fops = अणु
+	.खोलो =		ocfs2_dlm_debug_खोलो,
 	.release =	ocfs2_dlm_debug_release,
-	.read =		seq_read,
+	.पढ़ो =		seq_पढ़ो,
 	.llseek =	seq_lseek,
-};
+पूर्ण;
 
-static void ocfs2_dlm_init_debug(struct ocfs2_super *osb)
-{
-	struct ocfs2_dlm_debug *dlm_debug = osb->osb_dlm_debug;
+अटल व्योम ocfs2_dlm_init_debug(काष्ठा ocfs2_super *osb)
+अणु
+	काष्ठा ocfs2_dlm_debug *dlm_debug = osb->osb_dlm_debug;
 
 	debugfs_create_file("locking_state", S_IFREG|S_IRUSR,
 			    osb->osb_debug_root, osb, &ocfs2_dlm_debug_fops);
@@ -3310,116 +3311,116 @@ static void ocfs2_dlm_init_debug(struct ocfs2_super *osb)
 	debugfs_create_u32("locking_filter", 0600, osb->osb_debug_root,
 			   &dlm_debug->d_filter_secs);
 	ocfs2_get_dlm_debug(dlm_debug);
-}
+पूर्ण
 
-static void ocfs2_dlm_shutdown_debug(struct ocfs2_super *osb)
-{
-	struct ocfs2_dlm_debug *dlm_debug = osb->osb_dlm_debug;
+अटल व्योम ocfs2_dlm_shutकरोwn_debug(काष्ठा ocfs2_super *osb)
+अणु
+	काष्ठा ocfs2_dlm_debug *dlm_debug = osb->osb_dlm_debug;
 
-	if (dlm_debug)
+	अगर (dlm_debug)
 		ocfs2_put_dlm_debug(dlm_debug);
-}
+पूर्ण
 
-int ocfs2_dlm_init(struct ocfs2_super *osb)
-{
-	int status = 0;
-	struct ocfs2_cluster_connection *conn = NULL;
+पूर्णांक ocfs2_dlm_init(काष्ठा ocfs2_super *osb)
+अणु
+	पूर्णांक status = 0;
+	काष्ठा ocfs2_cluster_connection *conn = शून्य;
 
-	if (ocfs2_mount_local(osb)) {
+	अगर (ocfs2_mount_local(osb)) अणु
 		osb->node_num = 0;
-		goto local;
-	}
+		जाओ local;
+	पूर्ण
 
 	ocfs2_dlm_init_debug(osb);
 
-	/* launch downconvert thread */
-	osb->dc_task = kthread_run(ocfs2_downconvert_thread, osb, "ocfs2dc-%s",
+	/* launch करोwnconvert thपढ़ो */
+	osb->dc_task = kthपढ़ो_run(ocfs2_करोwnconvert_thपढ़ो, osb, "ocfs2dc-%s",
 			osb->uuid_str);
-	if (IS_ERR(osb->dc_task)) {
+	अगर (IS_ERR(osb->dc_task)) अणु
 		status = PTR_ERR(osb->dc_task);
-		osb->dc_task = NULL;
-		mlog_errno(status);
-		goto bail;
-	}
+		osb->dc_task = शून्य;
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	/* for now, uuid == domain */
+	/* क्रम now, uuid == करोमुख्य */
 	status = ocfs2_cluster_connect(osb->osb_cluster_stack,
 				       osb->osb_cluster_name,
-				       strlen(osb->osb_cluster_name),
+				       म_माप(osb->osb_cluster_name),
 				       osb->uuid_str,
-				       strlen(osb->uuid_str),
-				       &lproto, ocfs2_do_node_down, osb,
+				       म_माप(osb->uuid_str),
+				       &lproto, ocfs2_करो_node_करोwn, osb,
 				       &conn);
-	if (status) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	status = ocfs2_cluster_this_node(conn, &osb->node_num);
-	if (status < 0) {
-		mlog_errno(status);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
 		mlog(ML_ERROR,
 		     "could not find this host's node number\n");
 		ocfs2_cluster_disconnect(conn, 0);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 local:
 	ocfs2_super_lock_res_init(&osb->osb_super_lockres, osb);
-	ocfs2_rename_lock_res_init(&osb->osb_rename_lockres, osb);
+	ocfs2_नाम_lock_res_init(&osb->osb_नाम_lockres, osb);
 	ocfs2_nfs_sync_lock_init(osb);
 	ocfs2_orphan_scan_lock_res_init(&osb->osb_orphan_scan.os_lockres, osb);
 
 	osb->cconn = conn;
 bail:
-	if (status < 0) {
-		ocfs2_dlm_shutdown_debug(osb);
-		if (osb->dc_task)
-			kthread_stop(osb->dc_task);
-	}
+	अगर (status < 0) अणु
+		ocfs2_dlm_shutकरोwn_debug(osb);
+		अगर (osb->dc_task)
+			kthपढ़ो_stop(osb->dc_task);
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void ocfs2_dlm_shutdown(struct ocfs2_super *osb,
-			int hangup_pending)
-{
+व्योम ocfs2_dlm_shutकरोwn(काष्ठा ocfs2_super *osb,
+			पूर्णांक hangup_pending)
+अणु
 	ocfs2_drop_osb_locks(osb);
 
 	/*
 	 * Now that we have dropped all locks and ocfs2_dismount_volume()
 	 * has disabled recovery, the DLM won't be talking to us.  It's
-	 * safe to tear things down before disconnecting the cluster.
+	 * safe to tear things करोwn beक्रमe disconnecting the cluster.
 	 */
 
-	if (osb->dc_task) {
-		kthread_stop(osb->dc_task);
-		osb->dc_task = NULL;
-	}
+	अगर (osb->dc_task) अणु
+		kthपढ़ो_stop(osb->dc_task);
+		osb->dc_task = शून्य;
+	पूर्ण
 
-	ocfs2_lock_res_free(&osb->osb_super_lockres);
-	ocfs2_lock_res_free(&osb->osb_rename_lockres);
-	ocfs2_lock_res_free(&osb->osb_nfs_sync_lockres);
-	ocfs2_lock_res_free(&osb->osb_orphan_scan.os_lockres);
+	ocfs2_lock_res_मुक्त(&osb->osb_super_lockres);
+	ocfs2_lock_res_मुक्त(&osb->osb_नाम_lockres);
+	ocfs2_lock_res_मुक्त(&osb->osb_nfs_sync_lockres);
+	ocfs2_lock_res_मुक्त(&osb->osb_orphan_scan.os_lockres);
 
 	ocfs2_cluster_disconnect(osb->cconn, hangup_pending);
-	osb->cconn = NULL;
+	osb->cconn = शून्य;
 
-	ocfs2_dlm_shutdown_debug(osb);
-}
+	ocfs2_dlm_shutकरोwn_debug(osb);
+पूर्ण
 
-static int ocfs2_drop_lock(struct ocfs2_super *osb,
-			   struct ocfs2_lock_res *lockres)
-{
-	int ret;
-	unsigned long flags;
+अटल पूर्णांक ocfs2_drop_lock(काष्ठा ocfs2_super *osb,
+			   काष्ठा ocfs2_lock_res *lockres)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 	u32 lkm_flags = 0;
 
 	/* We didn't get anywhere near actually using this lockres. */
-	if (!(lockres->l_flags & OCFS2_LOCK_INITIALIZED))
-		goto out;
+	अगर (!(lockres->l_flags & OCFS2_LOCK_INITIALIZED))
+		जाओ out;
 
-	if (lockres->l_ops->flags & LOCK_TYPE_USES_LVB)
+	अगर (lockres->l_ops->flags & LOCK_TYPE_USES_LVB)
 		lkm_flags |= DLM_LKF_VALBLK;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
@@ -3428,7 +3429,7 @@ static int ocfs2_drop_lock(struct ocfs2_super *osb,
 			"lockres %s, flags 0x%lx\n",
 			lockres->l_name, lockres->l_flags);
 
-	while (lockres->l_flags & OCFS2_LOCK_BUSY) {
+	जबतक (lockres->l_flags & OCFS2_LOCK_BUSY) अणु
 		mlog(0, "waiting on busy lock \"%s\": flags = %lx, action = "
 		     "%u, unlock_action = %u\n",
 		     lockres->l_name, lockres->l_flags, lockres->l_action,
@@ -3436,35 +3437,35 @@ static int ocfs2_drop_lock(struct ocfs2_super *osb,
 
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
 
-		/* XXX: Today we just wait on any busy
+		/* XXX: Today we just रुको on any busy
 		 * locks... Perhaps we need to cancel converts in the
 		 * future? */
-		ocfs2_wait_on_busy_lock(lockres);
+		ocfs2_रुको_on_busy_lock(lockres);
 
 		spin_lock_irqsave(&lockres->l_lock, flags);
-	}
+	पूर्ण
 
-	if (lockres->l_ops->flags & LOCK_TYPE_USES_LVB) {
-		if (lockres->l_flags & OCFS2_LOCK_ATTACHED &&
+	अगर (lockres->l_ops->flags & LOCK_TYPE_USES_LVB) अणु
+		अगर (lockres->l_flags & OCFS2_LOCK_ATTACHED &&
 		    lockres->l_level == DLM_LOCK_EX &&
 		    !(lockres->l_flags & OCFS2_LOCK_NEEDS_REFRESH))
 			lockres->l_ops->set_lvb(lockres);
-	}
+	पूर्ण
 
-	if (lockres->l_flags & OCFS2_LOCK_BUSY)
+	अगर (lockres->l_flags & OCFS2_LOCK_BUSY)
 		mlog(ML_ERROR, "destroying busy lock: \"%s\"\n",
 		     lockres->l_name);
-	if (lockres->l_flags & OCFS2_LOCK_BLOCKED)
+	अगर (lockres->l_flags & OCFS2_LOCK_BLOCKED)
 		mlog(0, "destroying blocked lock: \"%s\"\n", lockres->l_name);
 
-	if (!(lockres->l_flags & OCFS2_LOCK_ATTACHED)) {
+	अगर (!(lockres->l_flags & OCFS2_LOCK_ATTACHED)) अणु
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	lockres_clear_flags(lockres, OCFS2_LOCK_ATTACHED);
 
-	/* make sure we never get here while waiting for an ast to
+	/* make sure we never get here जबतक रुकोing क्रम an ast to
 	 * fire. */
 	BUG_ON(lockres->l_action != OCFS2_AST_INVALID);
 
@@ -3476,56 +3477,56 @@ static int ocfs2_drop_lock(struct ocfs2_super *osb,
 	mlog(0, "lock %s\n", lockres->l_name);
 
 	ret = ocfs2_dlm_unlock(osb->cconn, &lockres->l_lksb, lkm_flags);
-	if (ret) {
+	अगर (ret) अणु
 		ocfs2_log_dlm_error("ocfs2_dlm_unlock", ret, lockres);
 		mlog(ML_ERROR, "lockres flags: %lu\n", lockres->l_flags);
 		ocfs2_dlm_dump_lksb(&lockres->l_lksb);
 		BUG();
-	}
+	पूर्ण
 	mlog(0, "lock %s, successful return from ocfs2_dlm_unlock\n",
 	     lockres->l_name);
 
-	ocfs2_wait_on_busy_lock(lockres);
+	ocfs2_रुको_on_busy_lock(lockres);
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ocfs2_process_blocked_lock(struct ocfs2_super *osb,
-				       struct ocfs2_lock_res *lockres);
+अटल व्योम ocfs2_process_blocked_lock(काष्ठा ocfs2_super *osb,
+				       काष्ठा ocfs2_lock_res *lockres);
 
-/* Mark the lockres as being dropped. It will no longer be
- * queued if blocking, but we still may have to wait on it
- * being dequeued from the downconvert thread before we can consider
+/* Mark the lockres as being dropped. It will no दीर्घer be
+ * queued अगर blocking, but we still may have to रुको on it
+ * being dequeued from the करोwnconvert thपढ़ो beक्रमe we can consider
  * it safe to drop.
  *
  * You can *not* attempt to call cluster_lock on this lockres anymore. */
-void ocfs2_mark_lockres_freeing(struct ocfs2_super *osb,
-				struct ocfs2_lock_res *lockres)
-{
-	int status;
-	struct ocfs2_mask_waiter mw;
-	unsigned long flags, flags2;
+व्योम ocfs2_mark_lockres_मुक्तing(काष्ठा ocfs2_super *osb,
+				काष्ठा ocfs2_lock_res *lockres)
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_mask_रुकोer mw;
+	अचिन्हित दीर्घ flags, flags2;
 
-	ocfs2_init_mask_waiter(&mw);
+	ocfs2_init_mask_रुकोer(&mw);
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 	lockres->l_flags |= OCFS2_LOCK_FREEING;
-	if (lockres->l_flags & OCFS2_LOCK_QUEUED && current == osb->dc_task) {
+	अगर (lockres->l_flags & OCFS2_LOCK_QUEUED && current == osb->dc_task) अणु
 		/*
-		 * We know the downconvert is queued but not in progress
-		 * because we are the downconvert thread and processing
-		 * different lock. So we can just remove the lock from the
+		 * We know the करोwnconvert is queued but not in progress
+		 * because we are the करोwnconvert thपढ़ो and processing
+		 * dअगरferent lock. So we can just हटाओ the lock from the
 		 * queue. This is not only an optimization but also a way
-		 * to avoid the following deadlock:
+		 * to aव्योम the following deadlock:
 		 *   ocfs2_dentry_post_unlock()
 		 *     ocfs2_dentry_lock_put()
 		 *       ocfs2_drop_dentry_lock()
 		 *         iput()
 		 *           ocfs2_evict_inode()
 		 *             ocfs2_clear_inode()
-		 *               ocfs2_mark_lockres_freeing()
-		 *                 ... blocks waiting for OCFS2_LOCK_QUEUED
-		 *                 since we are the downconvert thread which
+		 *               ocfs2_mark_lockres_मुक्तing()
+		 *                 ... blocks रुकोing क्रम OCFS2_LOCK_QUEUED
+		 *                 since we are the करोwnconvert thपढ़ो which
 		 *                 should clear the flag.
 		 */
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
@@ -3534,100 +3535,100 @@ void ocfs2_mark_lockres_freeing(struct ocfs2_super *osb,
 		osb->blocked_lock_count--;
 		spin_unlock_irqrestore(&osb->dc_task_lock, flags2);
 		/*
-		 * Warn if we recurse into another post_unlock call.  Strictly
-		 * speaking it isn't a problem but we need to be careful if
-		 * that happens (stack overflow, deadlocks, ...) so warn if
-		 * ocfs2 grows a path for which this can happen.
+		 * Warn अगर we recurse पूर्णांकo another post_unlock call.  Strictly
+		 * speaking it isn't a problem but we need to be careful अगर
+		 * that happens (stack overflow, deadlocks, ...) so warn अगर
+		 * ocfs2 grows a path क्रम which this can happen.
 		 */
 		WARN_ON_ONCE(lockres->l_ops->post_unlock);
-		/* Since the lock is freeing we don't do much in the fn below */
+		/* Since the lock is मुक्तing we करोn't करो much in the fn below */
 		ocfs2_process_blocked_lock(osb, lockres);
-		return;
-	}
-	while (lockres->l_flags & OCFS2_LOCK_QUEUED) {
-		lockres_add_mask_waiter(lockres, &mw, OCFS2_LOCK_QUEUED, 0);
+		वापस;
+	पूर्ण
+	जबतक (lockres->l_flags & OCFS2_LOCK_QUEUED) अणु
+		lockres_add_mask_रुकोer(lockres, &mw, OCFS2_LOCK_QUEUED, 0);
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
 
 		mlog(0, "Waiting on lockres %s\n", lockres->l_name);
 
-		status = ocfs2_wait_for_mask(&mw);
-		if (status)
-			mlog_errno(status);
+		status = ocfs2_रुको_क्रम_mask(&mw);
+		अगर (status)
+			mlog_त्रुटि_सं(status);
 
 		spin_lock_irqsave(&lockres->l_lock, flags);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
-}
+पूर्ण
 
-void ocfs2_simple_drop_lockres(struct ocfs2_super *osb,
-			       struct ocfs2_lock_res *lockres)
-{
-	int ret;
+व्योम ocfs2_simple_drop_lockres(काष्ठा ocfs2_super *osb,
+			       काष्ठा ocfs2_lock_res *lockres)
+अणु
+	पूर्णांक ret;
 
-	ocfs2_mark_lockres_freeing(osb, lockres);
+	ocfs2_mark_lockres_मुक्तing(osb, lockres);
 	ret = ocfs2_drop_lock(osb, lockres);
-	if (ret)
-		mlog_errno(ret);
-}
+	अगर (ret)
+		mlog_त्रुटि_सं(ret);
+पूर्ण
 
-static void ocfs2_drop_osb_locks(struct ocfs2_super *osb)
-{
+अटल व्योम ocfs2_drop_osb_locks(काष्ठा ocfs2_super *osb)
+अणु
 	ocfs2_simple_drop_lockres(osb, &osb->osb_super_lockres);
-	ocfs2_simple_drop_lockres(osb, &osb->osb_rename_lockres);
+	ocfs2_simple_drop_lockres(osb, &osb->osb_नाम_lockres);
 	ocfs2_simple_drop_lockres(osb, &osb->osb_nfs_sync_lockres);
 	ocfs2_simple_drop_lockres(osb, &osb->osb_orphan_scan.os_lockres);
-}
+पूर्ण
 
-int ocfs2_drop_inode_locks(struct inode *inode)
-{
-	int status, err;
+पूर्णांक ocfs2_drop_inode_locks(काष्ठा inode *inode)
+अणु
+	पूर्णांक status, err;
 
-	/* No need to call ocfs2_mark_lockres_freeing here -
-	 * ocfs2_clear_inode has done it for us. */
+	/* No need to call ocfs2_mark_lockres_मुक्तing here -
+	 * ocfs2_clear_inode has करोne it क्रम us. */
 
 	err = ocfs2_drop_lock(OCFS2_SB(inode->i_sb),
-			      &OCFS2_I(inode)->ip_open_lockres);
-	if (err < 0)
-		mlog_errno(err);
+			      &OCFS2_I(inode)->ip_खोलो_lockres);
+	अगर (err < 0)
+		mlog_त्रुटि_सं(err);
 
 	status = err;
 
 	err = ocfs2_drop_lock(OCFS2_SB(inode->i_sb),
 			      &OCFS2_I(inode)->ip_inode_lockres);
-	if (err < 0)
-		mlog_errno(err);
-	if (err < 0 && !status)
+	अगर (err < 0)
+		mlog_त्रुटि_सं(err);
+	अगर (err < 0 && !status)
 		status = err;
 
 	err = ocfs2_drop_lock(OCFS2_SB(inode->i_sb),
 			      &OCFS2_I(inode)->ip_rw_lockres);
-	if (err < 0)
-		mlog_errno(err);
-	if (err < 0 && !status)
+	अगर (err < 0)
+		mlog_त्रुटि_सं(err);
+	अगर (err < 0 && !status)
 		status = err;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static unsigned int ocfs2_prepare_downconvert(struct ocfs2_lock_res *lockres,
-					      int new_level)
-{
-	assert_spin_locked(&lockres->l_lock);
+अटल अचिन्हित पूर्णांक ocfs2_prepare_करोwnconvert(काष्ठा ocfs2_lock_res *lockres,
+					      पूर्णांक new_level)
+अणु
+	निश्चित_spin_locked(&lockres->l_lock);
 
 	BUG_ON(lockres->l_blocking <= DLM_LOCK_NL);
 
-	if (lockres->l_level <= new_level) {
+	अगर (lockres->l_level <= new_level) अणु
 		mlog(ML_ERROR, "lockres %s, lvl %d <= %d, blcklst %d, mask %d, "
 		     "type %d, flags 0x%lx, hold %d %d, act %d %d, req %d, "
 		     "block %d, pgen %d\n", lockres->l_name, lockres->l_level,
 		     new_level, list_empty(&lockres->l_blocked_list),
-		     list_empty(&lockres->l_mask_waiters), lockres->l_type,
+		     list_empty(&lockres->l_mask_रुकोers), lockres->l_type,
 		     lockres->l_flags, lockres->l_ro_holders,
 		     lockres->l_ex_holders, lockres->l_action,
 		     lockres->l_unlock_action, lockres->l_requested,
 		     lockres->l_blocking, lockres->l_pending_gen);
 		BUG();
-	}
+	पूर्ण
 
 	mlog(ML_BASTS, "lockres %s, level %d => %d, blocking %d\n",
 	     lockres->l_name, lockres->l_level, new_level, lockres->l_blocking);
@@ -3635,32 +3636,32 @@ static unsigned int ocfs2_prepare_downconvert(struct ocfs2_lock_res *lockres,
 	lockres->l_action = OCFS2_AST_DOWNCONVERT;
 	lockres->l_requested = new_level;
 	lockres_or_flags(lockres, OCFS2_LOCK_BUSY);
-	return lockres_set_pending(lockres);
-}
+	वापस lockres_set_pending(lockres);
+पूर्ण
 
-static int ocfs2_downconvert_lock(struct ocfs2_super *osb,
-				  struct ocfs2_lock_res *lockres,
-				  int new_level,
-				  int lvb,
-				  unsigned int generation)
-{
-	int ret;
+अटल पूर्णांक ocfs2_करोwnconvert_lock(काष्ठा ocfs2_super *osb,
+				  काष्ठा ocfs2_lock_res *lockres,
+				  पूर्णांक new_level,
+				  पूर्णांक lvb,
+				  अचिन्हित पूर्णांक generation)
+अणु
+	पूर्णांक ret;
 	u32 dlm_flags = DLM_LKF_CONVERT;
 
 	mlog(ML_BASTS, "lockres %s, level %d => %d\n", lockres->l_name,
 	     lockres->l_level, new_level);
 
 	/*
-	 * On DLM_LKF_VALBLK, fsdlm behaves differently with o2cb. It always
-	 * expects DLM_LKF_VALBLK being set if the LKB has LVB, so that
+	 * On DLM_LKF_VALBLK, fsdlm behaves dअगरferently with o2cb. It always
+	 * expects DLM_LKF_VALBLK being set अगर the LKB has LVB, so that
 	 * we can recover correctly from node failure. Otherwise, we may get
 	 * invalid LVB in LKB, but without DLM_SBF_VALNOTVALID being set.
 	 */
-	if (ocfs2_userspace_stack(osb) &&
+	अगर (ocfs2_userspace_stack(osb) &&
 	    lockres->l_ops->flags & LOCK_TYPE_USES_LVB)
 		lvb = 1;
 
-	if (lvb)
+	अगर (lvb)
 		dlm_flags |= DLM_LKF_VALBLK;
 
 	ret = ocfs2_dlm_lock(osb->cconn,
@@ -3670,35 +3671,35 @@ static int ocfs2_downconvert_lock(struct ocfs2_super *osb,
 			     lockres->l_name,
 			     OCFS2_LOCK_ID_MAX_LEN - 1);
 	lockres_clear_pending(lockres, generation, osb);
-	if (ret) {
+	अगर (ret) अणु
 		ocfs2_log_dlm_error("ocfs2_dlm_lock", ret, lockres);
 		ocfs2_recover_from_dlm_error(lockres, 1);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	ret = 0;
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* returns 1 when the caller should unlock and call ocfs2_dlm_unlock */
-static int ocfs2_prepare_cancel_convert(struct ocfs2_super *osb,
-				        struct ocfs2_lock_res *lockres)
-{
-	assert_spin_locked(&lockres->l_lock);
+/* वापसs 1 when the caller should unlock and call ocfs2_dlm_unlock */
+अटल पूर्णांक ocfs2_prepare_cancel_convert(काष्ठा ocfs2_super *osb,
+				        काष्ठा ocfs2_lock_res *lockres)
+अणु
+	निश्चित_spin_locked(&lockres->l_lock);
 
-	if (lockres->l_unlock_action == OCFS2_UNLOCK_CANCEL_CONVERT) {
-		/* If we're already trying to cancel a lock conversion
+	अगर (lockres->l_unlock_action == OCFS2_UNLOCK_CANCEL_CONVERT) अणु
+		/* If we're alपढ़ोy trying to cancel a lock conversion
 		 * then just drop the spinlock and allow the caller to
 		 * requeue this lock. */
 		mlog(ML_BASTS, "lockres %s, skip convert\n", lockres->l_name);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* were we in a convert when we got the bast fire? */
 	BUG_ON(lockres->l_action != OCFS2_AST_CONVERT &&
 	       lockres->l_action != OCFS2_AST_DOWNCONVERT);
-	/* set things up for the unlockast to know to just
+	/* set things up क्रम the unlockast to know to just
 	 * clear out the ast_action and unset busy, etc. */
 	lockres->l_unlock_action = OCFS2_UNLOCK_CANCEL_CONVERT;
 
@@ -3708,360 +3709,360 @@ static int ocfs2_prepare_cancel_convert(struct ocfs2_super *osb,
 
 	mlog(ML_BASTS, "lockres %s\n", lockres->l_name);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int ocfs2_cancel_convert(struct ocfs2_super *osb,
-				struct ocfs2_lock_res *lockres)
-{
-	int ret;
+अटल पूर्णांक ocfs2_cancel_convert(काष्ठा ocfs2_super *osb,
+				काष्ठा ocfs2_lock_res *lockres)
+अणु
+	पूर्णांक ret;
 
 	ret = ocfs2_dlm_unlock(osb->cconn, &lockres->l_lksb,
 			       DLM_LKF_CANCEL);
-	if (ret) {
+	अगर (ret) अणु
 		ocfs2_log_dlm_error("ocfs2_dlm_unlock", ret, lockres);
 		ocfs2_recover_from_dlm_error(lockres, 0);
-	}
+	पूर्ण
 
 	mlog(ML_BASTS, "lockres %s\n", lockres->l_name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_unblock_lock(struct ocfs2_super *osb,
-			      struct ocfs2_lock_res *lockres,
-			      struct ocfs2_unblock_ctl *ctl)
-{
-	unsigned long flags;
-	int blocking;
-	int new_level;
-	int level;
-	int ret = 0;
-	int set_lvb = 0;
-	unsigned int gen;
+अटल पूर्णांक ocfs2_unblock_lock(काष्ठा ocfs2_super *osb,
+			      काष्ठा ocfs2_lock_res *lockres,
+			      काष्ठा ocfs2_unblock_ctl *ctl)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक blocking;
+	पूर्णांक new_level;
+	पूर्णांक level;
+	पूर्णांक ret = 0;
+	पूर्णांक set_lvb = 0;
+	अचिन्हित पूर्णांक gen;
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 
 recheck:
 	/*
-	 * Is it still blocking? If not, we have no more work to do.
+	 * Is it still blocking? If not, we have no more work to करो.
 	 */
-	if (!(lockres->l_flags & OCFS2_LOCK_BLOCKED)) {
+	अगर (!(lockres->l_flags & OCFS2_LOCK_BLOCKED)) अणु
 		BUG_ON(lockres->l_blocking != DLM_LOCK_NL);
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
 		ret = 0;
-		goto leave;
-	}
+		जाओ leave;
+	पूर्ण
 
-	if (lockres->l_flags & OCFS2_LOCK_BUSY) {
+	अगर (lockres->l_flags & OCFS2_LOCK_BUSY) अणु
 		/* XXX
 		 * This is a *big* race.  The OCFS2_LOCK_PENDING flag
-		 * exists entirely for one reason - another thread has set
+		 * exists entirely क्रम one reason - another thपढ़ो has set
 		 * OCFS2_LOCK_BUSY, but has *NOT* yet called dlm_lock().
 		 *
-		 * If we do ocfs2_cancel_convert() before the other thread
-		 * calls dlm_lock(), our cancel will do nothing.  We will
+		 * If we करो ocfs2_cancel_convert() beक्रमe the other thपढ़ो
+		 * calls dlm_lock(), our cancel will करो nothing.  We will
 		 * get no ast, and we will have no way of knowing the
-		 * cancel failed.  Meanwhile, the other thread will call
-		 * into dlm_lock() and wait...forever.
+		 * cancel failed.  Meanजबतक, the other thपढ़ो will call
+		 * पूर्णांकo dlm_lock() and रुको...क्रमever.
 		 *
-		 * Why forever?  Because another node has asked for the
+		 * Why क्रमever?  Because another node has asked क्रम the
 		 * lock first; that's why we're here in unblock_lock().
 		 *
 		 * The solution is OCFS2_LOCK_PENDING.  When PENDING is
 		 * set, we just requeue the unblock.  Only when the other
-		 * thread has called dlm_lock() and cleared PENDING will
+		 * thपढ़ो has called dlm_lock() and cleared PENDING will
 		 * we then cancel their request.
 		 *
 		 * All callers of dlm_lock() must set OCFS2_DLM_PENDING
-		 * at the same time they set OCFS2_DLM_BUSY.  They must
-		 * clear OCFS2_DLM_PENDING after dlm_lock() returns.
+		 * at the same समय they set OCFS2_DLM_BUSY.  They must
+		 * clear OCFS2_DLM_PENDING after dlm_lock() वापसs.
 		 */
-		if (lockres->l_flags & OCFS2_LOCK_PENDING) {
+		अगर (lockres->l_flags & OCFS2_LOCK_PENDING) अणु
 			mlog(ML_BASTS, "lockres %s, ReQ: Pending\n",
 			     lockres->l_name);
-			goto leave_requeue;
-		}
+			जाओ leave_requeue;
+		पूर्ण
 
 		ctl->requeue = 1;
 		ret = ocfs2_prepare_cancel_convert(osb, lockres);
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
-		if (ret) {
+		अगर (ret) अणु
 			ret = ocfs2_cancel_convert(osb, lockres);
-			if (ret < 0)
-				mlog_errno(ret);
-		}
-		goto leave;
-	}
+			अगर (ret < 0)
+				mlog_त्रुटि_सं(ret);
+		पूर्ण
+		जाओ leave;
+	पूर्ण
 
 	/*
 	 * This prevents livelocks. OCFS2_LOCK_UPCONVERT_FINISHING flag is
-	 * set when the ast is received for an upconvert just before the
-	 * OCFS2_LOCK_BUSY flag is cleared. Now if the fs received a bast
-	 * on the heels of the ast, we want to delay the downconvert just
-	 * enough to allow the up requestor to do its task. Because this
-	 * lock is in the blocked queue, the lock will be downconverted
-	 * as soon as the requestor is done with the lock.
+	 * set when the ast is received क्रम an upconvert just beक्रमe the
+	 * OCFS2_LOCK_BUSY flag is cleared. Now अगर the fs received a bast
+	 * on the heels of the ast, we want to delay the करोwnconvert just
+	 * enough to allow the up requestor to करो its task. Because this
+	 * lock is in the blocked queue, the lock will be करोwnconverted
+	 * as soon as the requestor is करोne with the lock.
 	 */
-	if (lockres->l_flags & OCFS2_LOCK_UPCONVERT_FINISHING)
-		goto leave_requeue;
+	अगर (lockres->l_flags & OCFS2_LOCK_UPCONVERT_FINISHING)
+		जाओ leave_requeue;
 
 	/*
 	 * How can we block and yet be at NL?  We were trying to upconvert
 	 * from NL and got canceled.  The code comes back here, and now
 	 * we notice and clear BLOCKING.
 	 */
-	if (lockres->l_level == DLM_LOCK_NL) {
+	अगर (lockres->l_level == DLM_LOCK_NL) अणु
 		BUG_ON(lockres->l_ex_holders || lockres->l_ro_holders);
 		mlog(ML_BASTS, "lockres %s, Aborting dc\n", lockres->l_name);
 		lockres->l_blocking = DLM_LOCK_NL;
 		lockres_clear_flags(lockres, OCFS2_LOCK_BLOCKED);
 		spin_unlock_irqrestore(&lockres->l_lock, flags);
-		goto leave;
-	}
+		जाओ leave;
+	पूर्ण
 
-	/* if we're blocking an exclusive and we have *any* holders,
+	/* अगर we're blocking an exclusive and we have *any* holders,
 	 * then requeue. */
-	if ((lockres->l_blocking == DLM_LOCK_EX)
-	    && (lockres->l_ex_holders || lockres->l_ro_holders)) {
+	अगर ((lockres->l_blocking == DLM_LOCK_EX)
+	    && (lockres->l_ex_holders || lockres->l_ro_holders)) अणु
 		mlog(ML_BASTS, "lockres %s, ReQ: EX/PR Holders %u,%u\n",
 		     lockres->l_name, lockres->l_ex_holders,
 		     lockres->l_ro_holders);
-		goto leave_requeue;
-	}
+		जाओ leave_requeue;
+	पूर्ण
 
 	/* If it's a PR we're blocking, then only
-	 * requeue if we've got any EX holders */
-	if (lockres->l_blocking == DLM_LOCK_PR &&
-	    lockres->l_ex_holders) {
+	 * requeue अगर we've got any EX holders */
+	अगर (lockres->l_blocking == DLM_LOCK_PR &&
+	    lockres->l_ex_holders) अणु
 		mlog(ML_BASTS, "lockres %s, ReQ: EX Holders %u\n",
 		     lockres->l_name, lockres->l_ex_holders);
-		goto leave_requeue;
-	}
+		जाओ leave_requeue;
+	पूर्ण
 
 	/*
-	 * Can we get a lock in this state if the holder counts are
+	 * Can we get a lock in this state अगर the holder counts are
 	 * zero? The meta data unblock code used to check this.
 	 */
-	if ((lockres->l_ops->flags & LOCK_TYPE_REQUIRES_REFRESH)
-	    && (lockres->l_flags & OCFS2_LOCK_REFRESHING)) {
+	अगर ((lockres->l_ops->flags & LOCK_TYPE_REQUIRES_REFRESH)
+	    && (lockres->l_flags & OCFS2_LOCK_REFRESHING)) अणु
 		mlog(ML_BASTS, "lockres %s, ReQ: Lock Refreshing\n",
 		     lockres->l_name);
-		goto leave_requeue;
-	}
+		जाओ leave_requeue;
+	पूर्ण
 
 	new_level = ocfs2_highest_compat_lock_level(lockres->l_blocking);
 
-	if (lockres->l_ops->check_downconvert
-	    && !lockres->l_ops->check_downconvert(lockres, new_level)) {
+	अगर (lockres->l_ops->check_करोwnconvert
+	    && !lockres->l_ops->check_करोwnconvert(lockres, new_level)) अणु
 		mlog(ML_BASTS, "lockres %s, ReQ: Checkpointing\n",
 		     lockres->l_name);
-		goto leave_requeue;
-	}
+		जाओ leave_requeue;
+	पूर्ण
 
 	/* If we get here, then we know that there are no more
-	 * incompatible holders (and anyone asking for an incompatible
-	 * lock is blocked). We can now downconvert the lock */
-	if (!lockres->l_ops->downconvert_worker)
-		goto downconvert;
+	 * incompatible holders (and anyone asking क्रम an incompatible
+	 * lock is blocked). We can now करोwnconvert the lock */
+	अगर (!lockres->l_ops->करोwnconvert_worker)
+		जाओ करोwnconvert;
 
-	/* Some lockres types want to do a bit of work before
-	 * downconverting a lock. Allow that here. The worker function
+	/* Some lockres types want to करो a bit of work beक्रमe
+	 * करोwnconverting a lock. Allow that here. The worker function
 	 * may sleep, so we save off a copy of what we're blocking as
-	 * it may change while we're not holding the spin lock. */
+	 * it may change जबतक we're not holding the spin lock. */
 	blocking = lockres->l_blocking;
 	level = lockres->l_level;
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
-	ctl->unblock_action = lockres->l_ops->downconvert_worker(lockres, blocking);
+	ctl->unblock_action = lockres->l_ops->करोwnconvert_worker(lockres, blocking);
 
-	if (ctl->unblock_action == UNBLOCK_STOP_POST) {
+	अगर (ctl->unblock_action == UNBLOCK_STOP_POST) अणु
 		mlog(ML_BASTS, "lockres %s, UNBLOCK_STOP_POST\n",
 		     lockres->l_name);
-		goto leave;
-	}
+		जाओ leave;
+	पूर्ण
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
-	if ((blocking != lockres->l_blocking) || (level != lockres->l_level)) {
+	अगर ((blocking != lockres->l_blocking) || (level != lockres->l_level)) अणु
 		/* If this changed underneath us, then we can't drop
 		 * it just yet. */
 		mlog(ML_BASTS, "lockres %s, block=%d:%d, level=%d:%d, "
 		     "Recheck\n", lockres->l_name, blocking,
 		     lockres->l_blocking, level, lockres->l_level);
-		goto recheck;
-	}
+		जाओ recheck;
+	पूर्ण
 
-downconvert:
+करोwnconvert:
 	ctl->requeue = 0;
 
-	if (lockres->l_ops->flags & LOCK_TYPE_USES_LVB) {
-		if (lockres->l_level == DLM_LOCK_EX)
+	अगर (lockres->l_ops->flags & LOCK_TYPE_USES_LVB) अणु
+		अगर (lockres->l_level == DLM_LOCK_EX)
 			set_lvb = 1;
 
 		/*
-		 * We only set the lvb if the lock has been fully
+		 * We only set the lvb अगर the lock has been fully
 		 * refreshed - otherwise we risk setting stale
 		 * data. Otherwise, there's no need to actually clear
 		 * out the lvb here as it's value is still valid.
 		 */
-		if (set_lvb && !(lockres->l_flags & OCFS2_LOCK_NEEDS_REFRESH))
+		अगर (set_lvb && !(lockres->l_flags & OCFS2_LOCK_NEEDS_REFRESH))
 			lockres->l_ops->set_lvb(lockres);
-	}
+	पूर्ण
 
-	gen = ocfs2_prepare_downconvert(lockres, new_level);
+	gen = ocfs2_prepare_करोwnconvert(lockres, new_level);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
-	ret = ocfs2_downconvert_lock(osb, lockres, new_level, set_lvb,
+	ret = ocfs2_करोwnconvert_lock(osb, lockres, new_level, set_lvb,
 				     gen);
 
 leave:
-	if (ret)
-		mlog_errno(ret);
-	return ret;
+	अगर (ret)
+		mlog_त्रुटि_सं(ret);
+	वापस ret;
 
 leave_requeue:
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 	ctl->requeue = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_data_convert_worker(struct ocfs2_lock_res *lockres,
-				     int blocking)
-{
-	struct inode *inode;
-	struct address_space *mapping;
-	struct ocfs2_inode_info *oi;
+अटल पूर्णांक ocfs2_data_convert_worker(काष्ठा ocfs2_lock_res *lockres,
+				     पूर्णांक blocking)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा address_space *mapping;
+	काष्ठा ocfs2_inode_info *oi;
 
        	inode = ocfs2_lock_res_inode(lockres);
 	mapping = inode->i_mapping;
 
-	if (S_ISDIR(inode->i_mode)) {
+	अगर (S_ISसूची(inode->i_mode)) अणु
 		oi = OCFS2_I(inode);
 		oi->ip_dir_lock_gen++;
 		mlog(0, "generation: %u\n", oi->ip_dir_lock_gen);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!S_ISREG(inode->i_mode))
-		goto out;
+	अगर (!S_ISREG(inode->i_mode))
+		जाओ out;
 
 	/*
-	 * We need this before the filemap_fdatawrite() so that it can
+	 * We need this beक्रमe the filemap_fdataग_लिखो() so that it can
 	 * transfer the dirty bit from the PTE to the
-	 * page. Unfortunately this means that even for EX->PR
-	 * downconverts, we'll lose our mappings and have to build
+	 * page. Unक्रमtunately this means that even क्रम EX->PR
+	 * करोwnconverts, we'll lose our mappings and have to build
 	 * them up again.
 	 */
 	unmap_mapping_range(mapping, 0, 0, 0);
 
-	if (filemap_fdatawrite(mapping)) {
+	अगर (filemap_fdataग_लिखो(mapping)) अणु
 		mlog(ML_ERROR, "Could not sync inode %llu for downconvert!",
-		     (unsigned long long)OCFS2_I(inode)->ip_blkno);
-	}
+		     (अचिन्हित दीर्घ दीर्घ)OCFS2_I(inode)->ip_blkno);
+	पूर्ण
 	sync_mapping_buffers(mapping);
-	if (blocking == DLM_LOCK_EX) {
+	अगर (blocking == DLM_LOCK_EX) अणु
 		truncate_inode_pages(mapping, 0);
-	} else {
-		/* We only need to wait on the I/O if we're not also
-		 * truncating pages because truncate_inode_pages waits
-		 * for us above. We don't truncate pages if we're
+	पूर्ण अन्यथा अणु
+		/* We only need to रुको on the I/O अगर we're not also
+		 * truncating pages because truncate_inode_pages रुकोs
+		 * क्रम us above. We करोn't truncate pages if we're
 		 * blocking anything < EXMODE because we want to keep
-		 * them around in that case. */
-		filemap_fdatawait(mapping);
-	}
+		 * them around in that हाल. */
+		filemap_fdataरुको(mapping);
+	पूर्ण
 
-	forget_all_cached_acls(inode);
+	क्रमget_all_cached_acls(inode);
 
 out:
-	return UNBLOCK_CONTINUE;
-}
+	वापस UNBLOCK_CONTINUE;
+पूर्ण
 
-static int ocfs2_ci_checkpointed(struct ocfs2_caching_info *ci,
-				 struct ocfs2_lock_res *lockres,
-				 int new_level)
-{
-	int checkpointed = ocfs2_ci_fully_checkpointed(ci);
+अटल पूर्णांक ocfs2_ci_checkpoपूर्णांकed(काष्ठा ocfs2_caching_info *ci,
+				 काष्ठा ocfs2_lock_res *lockres,
+				 पूर्णांक new_level)
+अणु
+	पूर्णांक checkpoपूर्णांकed = ocfs2_ci_fully_checkpoपूर्णांकed(ci);
 
 	BUG_ON(new_level != DLM_LOCK_NL && new_level != DLM_LOCK_PR);
-	BUG_ON(lockres->l_level != DLM_LOCK_EX && !checkpointed);
+	BUG_ON(lockres->l_level != DLM_LOCK_EX && !checkpoपूर्णांकed);
 
-	if (checkpointed)
-		return 1;
+	अगर (checkpoपूर्णांकed)
+		वापस 1;
 
-	ocfs2_start_checkpoint(OCFS2_SB(ocfs2_metadata_cache_get_super(ci)));
-	return 0;
-}
+	ocfs2_start_checkpoपूर्णांक(OCFS2_SB(ocfs2_metadata_cache_get_super(ci)));
+	वापस 0;
+पूर्ण
 
-static int ocfs2_check_meta_downconvert(struct ocfs2_lock_res *lockres,
-					int new_level)
-{
-	struct inode *inode = ocfs2_lock_res_inode(lockres);
+अटल पूर्णांक ocfs2_check_meta_करोwnconvert(काष्ठा ocfs2_lock_res *lockres,
+					पूर्णांक new_level)
+अणु
+	काष्ठा inode *inode = ocfs2_lock_res_inode(lockres);
 
-	return ocfs2_ci_checkpointed(INODE_CACHE(inode), lockres, new_level);
-}
+	वापस ocfs2_ci_checkpoपूर्णांकed(INODE_CACHE(inode), lockres, new_level);
+पूर्ण
 
-static void ocfs2_set_meta_lvb(struct ocfs2_lock_res *lockres)
-{
-	struct inode *inode = ocfs2_lock_res_inode(lockres);
+अटल व्योम ocfs2_set_meta_lvb(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	काष्ठा inode *inode = ocfs2_lock_res_inode(lockres);
 
 	__ocfs2_stuff_meta_lvb(inode);
-}
+पूर्ण
 
 /*
  * Does the final reference drop on our dentry lock. Right now this
- * happens in the downconvert thread, but we could choose to simplify the
+ * happens in the करोwnconvert thपढ़ो, but we could choose to simplअगरy the
  * dlmglue API and push these off to the ocfs2_wq in the future.
  */
-static void ocfs2_dentry_post_unlock(struct ocfs2_super *osb,
-				     struct ocfs2_lock_res *lockres)
-{
-	struct ocfs2_dentry_lock *dl = ocfs2_lock_res_dl(lockres);
+अटल व्योम ocfs2_dentry_post_unlock(काष्ठा ocfs2_super *osb,
+				     काष्ठा ocfs2_lock_res *lockres)
+अणु
+	काष्ठा ocfs2_dentry_lock *dl = ocfs2_lock_res_dl(lockres);
 	ocfs2_dentry_lock_put(osb, dl);
-}
+पूर्ण
 
 /*
- * d_delete() matching dentries before the lock downconvert.
+ * d_delete() matching dentries beक्रमe the lock करोwnconvert.
  *
- * At this point, any process waiting to destroy the
+ * At this poपूर्णांक, any process रुकोing to destroy the
  * dentry_lock due to last ref count is stopped by the
  * OCFS2_LOCK_QUEUED flag.
  *
  * We have two potential problems
  *
- * 1) If we do the last reference drop on our dentry_lock (via dput)
- *    we'll wind up in ocfs2_release_dentry_lock(), waiting on
- *    the downconvert to finish. Instead we take an elevated
+ * 1) If we करो the last reference drop on our dentry_lock (via dput)
+ *    we'll wind up in ocfs2_release_dentry_lock(), रुकोing on
+ *    the करोwnconvert to finish. Instead we take an elevated
  *    reference and push the drop until after we've completed our
  *    unblock processing.
  *
  * 2) There might be another process with a final reference,
- *    waiting on us to finish processing. If this is the case, we
- *    detect it and exit out - there's no more dentries anyway.
+ *    रुकोing on us to finish processing. If this is the हाल, we
+ *    detect it and निकास out - there's no more dentries anyway.
  */
-static int ocfs2_dentry_convert_worker(struct ocfs2_lock_res *lockres,
-				       int blocking)
-{
-	struct ocfs2_dentry_lock *dl = ocfs2_lock_res_dl(lockres);
-	struct ocfs2_inode_info *oi = OCFS2_I(dl->dl_inode);
-	struct dentry *dentry;
-	unsigned long flags;
-	int extra_ref = 0;
+अटल पूर्णांक ocfs2_dentry_convert_worker(काष्ठा ocfs2_lock_res *lockres,
+				       पूर्णांक blocking)
+अणु
+	काष्ठा ocfs2_dentry_lock *dl = ocfs2_lock_res_dl(lockres);
+	काष्ठा ocfs2_inode_info *oi = OCFS2_I(dl->dl_inode);
+	काष्ठा dentry *dentry;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक extra_ref = 0;
 
 	/*
-	 * This node is blocking another node from getting a read
-	 * lock. This happens when we've renamed within a
-	 * directory. We've forced the other nodes to d_delete(), but
+	 * This node is blocking another node from getting a पढ़ो
+	 * lock. This happens when we've नामd within a
+	 * directory. We've क्रमced the other nodes to d_delete(), but
 	 * we never actually dropped our lock because it's still
-	 * valid. The downconvert code will retain a PR for this node,
-	 * so there's no further work to do.
+	 * valid. The करोwnconvert code will retain a PR क्रम this node,
+	 * so there's no further work to करो.
 	 */
-	if (blocking == DLM_LOCK_PR)
-		return UNBLOCK_CONTINUE;
+	अगर (blocking == DLM_LOCK_PR)
+		वापस UNBLOCK_CONTINUE;
 
 	/*
 	 * Mark this inode as potentially orphaned. The code in
 	 * ocfs2_delete_inode() will figure out whether it actually
-	 * needs to be freed or not.
+	 * needs to be मुक्तd or not.
 	 */
 	spin_lock(&oi->ip_lock);
 	oi->ip_flags |= OCFS2_INODE_MAYBE_ORPHANED;
@@ -4075,87 +4076,87 @@ static int ocfs2_dentry_convert_worker(struct ocfs2_lock_res *lockres,
 	 */
 	spin_lock_irqsave(&lockres->l_lock, flags);
 	spin_lock(&dentry_attach_lock);
-	if (!(lockres->l_flags & OCFS2_LOCK_FREEING)
-	    && dl->dl_count) {
+	अगर (!(lockres->l_flags & OCFS2_LOCK_FREEING)
+	    && dl->dl_count) अणु
 		dl->dl_count++;
 		extra_ref = 1;
-	}
+	पूर्ण
 	spin_unlock(&dentry_attach_lock);
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
 	mlog(0, "extra_ref = %d\n", extra_ref);
 
 	/*
-	 * We have a process waiting on us in ocfs2_dentry_iput(),
+	 * We have a process रुकोing on us in ocfs2_dentry_iput(),
 	 * which means we can't have any more outstanding
-	 * aliases. There's no need to do any more work.
+	 * aliases. There's no need to करो any more work.
 	 */
-	if (!extra_ref)
-		return UNBLOCK_CONTINUE;
+	अगर (!extra_ref)
+		वापस UNBLOCK_CONTINUE;
 
 	spin_lock(&dentry_attach_lock);
-	while (1) {
+	जबतक (1) अणु
 		dentry = ocfs2_find_local_alias(dl->dl_inode,
 						dl->dl_parent_blkno, 1);
-		if (!dentry)
-			break;
+		अगर (!dentry)
+			अवरोध;
 		spin_unlock(&dentry_attach_lock);
 
-		if (S_ISDIR(dl->dl_inode->i_mode))
+		अगर (S_ISसूची(dl->dl_inode->i_mode))
 			shrink_dcache_parent(dentry);
 
 		mlog(0, "d_delete(%pd);\n", dentry);
 
 		/*
-		 * The following dcache calls may do an
-		 * iput(). Normally we don't want that from the
-		 * downconverting thread, but in this case it's ok
-		 * because the requesting node already has an
+		 * The following dcache calls may करो an
+		 * iput(). Normally we करोn't want that from the
+		 * करोwnconverting thपढ़ो, but in this हाल it's ok
+		 * because the requesting node alपढ़ोy has an
 		 * exclusive lock on the inode, so it can't be queued
-		 * for a downconvert.
+		 * क्रम a करोwnconvert.
 		 */
 		d_delete(dentry);
 		dput(dentry);
 
 		spin_lock(&dentry_attach_lock);
-	}
+	पूर्ण
 	spin_unlock(&dentry_attach_lock);
 
 	/*
 	 * If we are the last holder of this dentry lock, there is no
-	 * reason to downconvert so skip straight to the unlock.
+	 * reason to करोwnconvert so skip straight to the unlock.
 	 */
-	if (dl->dl_count == 1)
-		return UNBLOCK_STOP_POST;
+	अगर (dl->dl_count == 1)
+		वापस UNBLOCK_STOP_POST;
 
-	return UNBLOCK_CONTINUE_POST;
-}
+	वापस UNBLOCK_CONTINUE_POST;
+पूर्ण
 
-static int ocfs2_check_refcount_downconvert(struct ocfs2_lock_res *lockres,
-					    int new_level)
-{
-	struct ocfs2_refcount_tree *tree =
+अटल पूर्णांक ocfs2_check_refcount_करोwnconvert(काष्ठा ocfs2_lock_res *lockres,
+					    पूर्णांक new_level)
+अणु
+	काष्ठा ocfs2_refcount_tree *tree =
 				ocfs2_lock_res_refcount_tree(lockres);
 
-	return ocfs2_ci_checkpointed(&tree->rf_ci, lockres, new_level);
-}
+	वापस ocfs2_ci_checkpoपूर्णांकed(&tree->rf_ci, lockres, new_level);
+पूर्ण
 
-static int ocfs2_refcount_convert_worker(struct ocfs2_lock_res *lockres,
-					 int blocking)
-{
-	struct ocfs2_refcount_tree *tree =
+अटल पूर्णांक ocfs2_refcount_convert_worker(काष्ठा ocfs2_lock_res *lockres,
+					 पूर्णांक blocking)
+अणु
+	काष्ठा ocfs2_refcount_tree *tree =
 				ocfs2_lock_res_refcount_tree(lockres);
 
 	ocfs2_metadata_cache_purge(&tree->rf_ci);
 
-	return UNBLOCK_CONTINUE;
-}
+	वापस UNBLOCK_CONTINUE;
+पूर्ण
 
-static void ocfs2_set_qinfo_lvb(struct ocfs2_lock_res *lockres)
-{
-	struct ocfs2_qinfo_lvb *lvb;
-	struct ocfs2_mem_dqinfo *oinfo = ocfs2_lock_res_qinfo(lockres);
-	struct mem_dqinfo *info = sb_dqinfo(oinfo->dqi_gi.dqi_sb,
+अटल व्योम ocfs2_set_qinfo_lvb(काष्ठा ocfs2_lock_res *lockres)
+अणु
+	काष्ठा ocfs2_qinfo_lvb *lvb;
+	काष्ठा ocfs2_mem_dqinfo *oinfo = ocfs2_lock_res_qinfo(lockres);
+	काष्ठा mem_dqinfo *info = sb_dqinfo(oinfo->dqi_gi.dqi_sb,
 					    oinfo->dqi_gi.dqi_type);
 
 	lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
@@ -4164,137 +4165,137 @@ static void ocfs2_set_qinfo_lvb(struct ocfs2_lock_res *lockres)
 	lvb->lvb_igrace = cpu_to_be32(info->dqi_igrace);
 	lvb->lvb_syncms = cpu_to_be32(oinfo->dqi_syncms);
 	lvb->lvb_blocks = cpu_to_be32(oinfo->dqi_gi.dqi_blocks);
-	lvb->lvb_free_blk = cpu_to_be32(oinfo->dqi_gi.dqi_free_blk);
-	lvb->lvb_free_entry = cpu_to_be32(oinfo->dqi_gi.dqi_free_entry);
-}
+	lvb->lvb_मुक्त_blk = cpu_to_be32(oinfo->dqi_gi.dqi_मुक्त_blk);
+	lvb->lvb_मुक्त_entry = cpu_to_be32(oinfo->dqi_gi.dqi_मुक्त_entry);
+पूर्ण
 
-void ocfs2_qinfo_unlock(struct ocfs2_mem_dqinfo *oinfo, int ex)
-{
-	struct ocfs2_lock_res *lockres = &oinfo->dqi_gqlock;
-	struct ocfs2_super *osb = OCFS2_SB(oinfo->dqi_gi.dqi_sb);
-	int level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+व्योम ocfs2_qinfo_unlock(काष्ठा ocfs2_mem_dqinfo *oinfo, पूर्णांक ex)
+अणु
+	काष्ठा ocfs2_lock_res *lockres = &oinfo->dqi_gqlock;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(oinfo->dqi_gi.dqi_sb);
+	पूर्णांक level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
 
-	if (!ocfs2_is_hard_readonly(osb) && !ocfs2_mount_local(osb))
+	अगर (!ocfs2_is_hard_पढ़ोonly(osb) && !ocfs2_mount_local(osb))
 		ocfs2_cluster_unlock(osb, lockres, level);
-}
+पूर्ण
 
-static int ocfs2_refresh_qinfo(struct ocfs2_mem_dqinfo *oinfo)
-{
-	struct mem_dqinfo *info = sb_dqinfo(oinfo->dqi_gi.dqi_sb,
+अटल पूर्णांक ocfs2_refresh_qinfo(काष्ठा ocfs2_mem_dqinfo *oinfo)
+अणु
+	काष्ठा mem_dqinfo *info = sb_dqinfo(oinfo->dqi_gi.dqi_sb,
 					    oinfo->dqi_gi.dqi_type);
-	struct ocfs2_lock_res *lockres = &oinfo->dqi_gqlock;
-	struct ocfs2_qinfo_lvb *lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
-	struct buffer_head *bh = NULL;
-	struct ocfs2_global_disk_dqinfo *gdinfo;
-	int status = 0;
+	काष्ठा ocfs2_lock_res *lockres = &oinfo->dqi_gqlock;
+	काष्ठा ocfs2_qinfo_lvb *lvb = ocfs2_dlm_lvb(&lockres->l_lksb);
+	काष्ठा buffer_head *bh = शून्य;
+	काष्ठा ocfs2_global_disk_dqinfo *gdinfo;
+	पूर्णांक status = 0;
 
-	if (ocfs2_dlm_lvb_valid(&lockres->l_lksb) &&
-	    lvb->lvb_version == OCFS2_QINFO_LVB_VERSION) {
+	अगर (ocfs2_dlm_lvb_valid(&lockres->l_lksb) &&
+	    lvb->lvb_version == OCFS2_QINFO_LVB_VERSION) अणु
 		info->dqi_bgrace = be32_to_cpu(lvb->lvb_bgrace);
 		info->dqi_igrace = be32_to_cpu(lvb->lvb_igrace);
 		oinfo->dqi_syncms = be32_to_cpu(lvb->lvb_syncms);
 		oinfo->dqi_gi.dqi_blocks = be32_to_cpu(lvb->lvb_blocks);
-		oinfo->dqi_gi.dqi_free_blk = be32_to_cpu(lvb->lvb_free_blk);
-		oinfo->dqi_gi.dqi_free_entry =
-					be32_to_cpu(lvb->lvb_free_entry);
-	} else {
-		status = ocfs2_read_quota_phys_block(oinfo->dqi_gqinode,
+		oinfo->dqi_gi.dqi_मुक्त_blk = be32_to_cpu(lvb->lvb_मुक्त_blk);
+		oinfo->dqi_gi.dqi_मुक्त_entry =
+					be32_to_cpu(lvb->lvb_मुक्त_entry);
+	पूर्ण अन्यथा अणु
+		status = ocfs2_पढ़ो_quota_phys_block(oinfo->dqi_gqinode,
 						     oinfo->dqi_giblk, &bh);
-		if (status) {
-			mlog_errno(status);
-			goto bail;
-		}
-		gdinfo = (struct ocfs2_global_disk_dqinfo *)
+		अगर (status) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+		gdinfo = (काष्ठा ocfs2_global_disk_dqinfo *)
 					(bh->b_data + OCFS2_GLOBAL_INFO_OFF);
 		info->dqi_bgrace = le32_to_cpu(gdinfo->dqi_bgrace);
 		info->dqi_igrace = le32_to_cpu(gdinfo->dqi_igrace);
 		oinfo->dqi_syncms = le32_to_cpu(gdinfo->dqi_syncms);
 		oinfo->dqi_gi.dqi_blocks = le32_to_cpu(gdinfo->dqi_blocks);
-		oinfo->dqi_gi.dqi_free_blk = le32_to_cpu(gdinfo->dqi_free_blk);
-		oinfo->dqi_gi.dqi_free_entry =
-					le32_to_cpu(gdinfo->dqi_free_entry);
-		brelse(bh);
+		oinfo->dqi_gi.dqi_मुक्त_blk = le32_to_cpu(gdinfo->dqi_मुक्त_blk);
+		oinfo->dqi_gi.dqi_मुक्त_entry =
+					le32_to_cpu(gdinfo->dqi_मुक्त_entry);
+		brअन्यथा(bh);
 		ocfs2_track_lock_refresh(lockres);
-	}
+	पूर्ण
 
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* Lock quota info, this function expects at least shared lock on the quota file
  * so that we can safely refresh quota info from disk. */
-int ocfs2_qinfo_lock(struct ocfs2_mem_dqinfo *oinfo, int ex)
-{
-	struct ocfs2_lock_res *lockres = &oinfo->dqi_gqlock;
-	struct ocfs2_super *osb = OCFS2_SB(oinfo->dqi_gi.dqi_sb);
-	int level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
-	int status = 0;
+पूर्णांक ocfs2_qinfo_lock(काष्ठा ocfs2_mem_dqinfo *oinfo, पूर्णांक ex)
+अणु
+	काष्ठा ocfs2_lock_res *lockres = &oinfo->dqi_gqlock;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(oinfo->dqi_gi.dqi_sb);
+	पूर्णांक level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+	पूर्णांक status = 0;
 
 	/* On RO devices, locking really isn't needed... */
-	if (ocfs2_is_hard_readonly(osb)) {
-		if (ex)
+	अगर (ocfs2_is_hard_पढ़ोonly(osb)) अणु
+		अगर (ex)
 			status = -EROFS;
-		goto bail;
-	}
-	if (ocfs2_mount_local(osb))
-		goto bail;
+		जाओ bail;
+	पूर्ण
+	अगर (ocfs2_mount_local(osb))
+		जाओ bail;
 
 	status = ocfs2_cluster_lock(osb, lockres, level, 0, 0);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
-	if (!ocfs2_should_refresh_lock_res(lockres))
-		goto bail;
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
+	अगर (!ocfs2_should_refresh_lock_res(lockres))
+		जाओ bail;
 	/* OK, we have the lock but we need to refresh the quota info */
 	status = ocfs2_refresh_qinfo(oinfo);
-	if (status)
+	अगर (status)
 		ocfs2_qinfo_unlock(oinfo, ex);
 	ocfs2_complete_lock_res_refresh(lockres, status);
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ocfs2_refcount_lock(struct ocfs2_refcount_tree *ref_tree, int ex)
-{
-	int status;
-	int level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
-	struct ocfs2_lock_res *lockres = &ref_tree->rf_lockres;
-	struct ocfs2_super *osb = lockres->l_priv;
+पूर्णांक ocfs2_refcount_lock(काष्ठा ocfs2_refcount_tree *ref_tree, पूर्णांक ex)
+अणु
+	पूर्णांक status;
+	पूर्णांक level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+	काष्ठा ocfs2_lock_res *lockres = &ref_tree->rf_lockres;
+	काष्ठा ocfs2_super *osb = lockres->l_priv;
 
 
-	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+	अगर (ocfs2_is_hard_पढ़ोonly(osb))
+		वापस -EROFS;
 
-	if (ocfs2_mount_local(osb))
-		return 0;
+	अगर (ocfs2_mount_local(osb))
+		वापस 0;
 
 	status = ocfs2_cluster_lock(osb, lockres, level, 0, 0);
-	if (status < 0)
-		mlog_errno(status);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void ocfs2_refcount_unlock(struct ocfs2_refcount_tree *ref_tree, int ex)
-{
-	int level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
-	struct ocfs2_lock_res *lockres = &ref_tree->rf_lockres;
-	struct ocfs2_super *osb = lockres->l_priv;
+व्योम ocfs2_refcount_unlock(काष्ठा ocfs2_refcount_tree *ref_tree, पूर्णांक ex)
+अणु
+	पूर्णांक level = ex ? DLM_LOCK_EX : DLM_LOCK_PR;
+	काष्ठा ocfs2_lock_res *lockres = &ref_tree->rf_lockres;
+	काष्ठा ocfs2_super *osb = lockres->l_priv;
 
-	if (!ocfs2_mount_local(osb))
+	अगर (!ocfs2_mount_local(osb))
 		ocfs2_cluster_unlock(osb, lockres, level);
-}
+पूर्ण
 
-static void ocfs2_process_blocked_lock(struct ocfs2_super *osb,
-				       struct ocfs2_lock_res *lockres)
-{
-	int status;
-	struct ocfs2_unblock_ctl ctl = {0, 0,};
-	unsigned long flags;
+अटल व्योम ocfs2_process_blocked_lock(काष्ठा ocfs2_super *osb,
+				       काष्ठा ocfs2_lock_res *lockres)
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_unblock_ctl ctl = अणु0, 0,पूर्ण;
+	अचिन्हित दीर्घ flags;
 
 	/* Our reference to the lockres in this function can be
-	 * considered valid until we remove the OCFS2_LOCK_QUEUED
+	 * considered valid until we हटाओ the OCFS2_LOCK_QUEUED
 	 * flag. */
 
 	BUG_ON(!lockres);
@@ -4302,84 +4303,84 @@ static void ocfs2_process_blocked_lock(struct ocfs2_super *osb,
 
 	mlog(ML_BASTS, "lockres %s blocked\n", lockres->l_name);
 
-	/* Detect whether a lock has been marked as going away while
-	 * the downconvert thread was processing other things. A lock can
+	/* Detect whether a lock has been marked as going away जबतक
+	 * the करोwnconvert thपढ़ो was processing other things. A lock can
 	 * still be marked with OCFS2_LOCK_FREEING after this check,
-	 * but short circuiting here will still save us some
-	 * performance. */
+	 * but लघु circuiting here will still save us some
+	 * perक्रमmance. */
 	spin_lock_irqsave(&lockres->l_lock, flags);
-	if (lockres->l_flags & OCFS2_LOCK_FREEING)
-		goto unqueue;
+	अगर (lockres->l_flags & OCFS2_LOCK_FREEING)
+		जाओ unqueue;
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
 	status = ocfs2_unblock_lock(osb, lockres, &ctl);
-	if (status < 0)
-		mlog_errno(status);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
 unqueue:
-	if (lockres->l_flags & OCFS2_LOCK_FREEING || !ctl.requeue) {
+	अगर (lockres->l_flags & OCFS2_LOCK_FREEING || !ctl.requeue) अणु
 		lockres_clear_flags(lockres, OCFS2_LOCK_QUEUED);
-	} else
+	पूर्ण अन्यथा
 		ocfs2_schedule_blocked_lock(osb, lockres);
 
 	mlog(ML_BASTS, "lockres %s, requeue = %s.\n", lockres->l_name,
 	     ctl.requeue ? "yes" : "no");
 	spin_unlock_irqrestore(&lockres->l_lock, flags);
 
-	if (ctl.unblock_action != UNBLOCK_CONTINUE
+	अगर (ctl.unblock_action != UNBLOCK_CONTINUE
 	    && lockres->l_ops->post_unlock)
 		lockres->l_ops->post_unlock(osb, lockres);
-}
+पूर्ण
 
-static void ocfs2_schedule_blocked_lock(struct ocfs2_super *osb,
-					struct ocfs2_lock_res *lockres)
-{
-	unsigned long flags;
+अटल व्योम ocfs2_schedule_blocked_lock(काष्ठा ocfs2_super *osb,
+					काष्ठा ocfs2_lock_res *lockres)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	assert_spin_locked(&lockres->l_lock);
+	निश्चित_spin_locked(&lockres->l_lock);
 
-	if (lockres->l_flags & OCFS2_LOCK_FREEING) {
-		/* Do not schedule a lock for downconvert when it's on
-		 * the way to destruction - any nodes wanting access
+	अगर (lockres->l_flags & OCFS2_LOCK_FREEING) अणु
+		/* Do not schedule a lock क्रम करोwnconvert when it's on
+		 * the way to deकाष्ठाion - any nodes wanting access
 		 * to the resource will get it soon. */
 		mlog(ML_BASTS, "lockres %s won't be scheduled: flags 0x%lx\n",
 		     lockres->l_name, lockres->l_flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	lockres_or_flags(lockres, OCFS2_LOCK_QUEUED);
 
 	spin_lock_irqsave(&osb->dc_task_lock, flags);
-	if (list_empty(&lockres->l_blocked_list)) {
+	अगर (list_empty(&lockres->l_blocked_list)) अणु
 		list_add_tail(&lockres->l_blocked_list,
 			      &osb->blocked_lock_list);
 		osb->blocked_lock_count++;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&osb->dc_task_lock, flags);
-}
+पूर्ण
 
-static void ocfs2_downconvert_thread_do_work(struct ocfs2_super *osb)
-{
-	unsigned long processed;
-	unsigned long flags;
-	struct ocfs2_lock_res *lockres;
+अटल व्योम ocfs2_करोwnconvert_thपढ़ो_करो_work(काष्ठा ocfs2_super *osb)
+अणु
+	अचिन्हित दीर्घ processed;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ocfs2_lock_res *lockres;
 
 	spin_lock_irqsave(&osb->dc_task_lock, flags);
-	/* grab this early so we know to try again if a state change and
+	/* grab this early so we know to try again अगर a state change and
 	 * wake happens part-way through our work  */
 	osb->dc_work_sequence = osb->dc_wake_sequence;
 
 	processed = osb->blocked_lock_count;
 	/*
 	 * blocked lock processing in this loop might call iput which can
-	 * remove items off osb->blocked_lock_list. Downconvert up to
-	 * 'processed' number of locks, but stop short if we had some
-	 * removed in ocfs2_mark_lockres_freeing when downconverting.
+	 * हटाओ items off osb->blocked_lock_list. Downconvert up to
+	 * 'processed' number of locks, but stop लघु अगर we had some
+	 * हटाओd in ocfs2_mark_lockres_मुक्तing when करोwnconverting.
 	 */
-	while (processed && !list_empty(&osb->blocked_lock_list)) {
+	जबतक (processed && !list_empty(&osb->blocked_lock_list)) अणु
 		lockres = list_entry(osb->blocked_lock_list.next,
-				     struct ocfs2_lock_res, l_blocked_list);
+				     काष्ठा ocfs2_lock_res, l_blocked_list);
 		list_del_init(&lockres->l_blocked_list);
 		osb->blocked_lock_count--;
 		spin_unlock_irqrestore(&osb->dc_task_lock, flags);
@@ -4390,66 +4391,66 @@ static void ocfs2_downconvert_thread_do_work(struct ocfs2_super *osb)
 		ocfs2_process_blocked_lock(osb, lockres);
 
 		spin_lock_irqsave(&osb->dc_task_lock, flags);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&osb->dc_task_lock, flags);
-}
+पूर्ण
 
-static int ocfs2_downconvert_thread_lists_empty(struct ocfs2_super *osb)
-{
-	int empty = 0;
-	unsigned long flags;
+अटल पूर्णांक ocfs2_करोwnconvert_thपढ़ो_lists_empty(काष्ठा ocfs2_super *osb)
+अणु
+	पूर्णांक empty = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&osb->dc_task_lock, flags);
-	if (list_empty(&osb->blocked_lock_list))
+	अगर (list_empty(&osb->blocked_lock_list))
 		empty = 1;
 
 	spin_unlock_irqrestore(&osb->dc_task_lock, flags);
-	return empty;
-}
+	वापस empty;
+पूर्ण
 
-static int ocfs2_downconvert_thread_should_wake(struct ocfs2_super *osb)
-{
-	int should_wake = 0;
-	unsigned long flags;
+अटल पूर्णांक ocfs2_करोwnconvert_thपढ़ो_should_wake(काष्ठा ocfs2_super *osb)
+अणु
+	पूर्णांक should_wake = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&osb->dc_task_lock, flags);
-	if (osb->dc_work_sequence != osb->dc_wake_sequence)
+	अगर (osb->dc_work_sequence != osb->dc_wake_sequence)
 		should_wake = 1;
 	spin_unlock_irqrestore(&osb->dc_task_lock, flags);
 
-	return should_wake;
-}
+	वापस should_wake;
+पूर्ण
 
-static int ocfs2_downconvert_thread(void *arg)
-{
-	struct ocfs2_super *osb = arg;
+अटल पूर्णांक ocfs2_करोwnconvert_thपढ़ो(व्योम *arg)
+अणु
+	काष्ठा ocfs2_super *osb = arg;
 
 	/* only quit once we've been asked to stop and there is no more
 	 * work available */
-	while (!(kthread_should_stop() &&
-		ocfs2_downconvert_thread_lists_empty(osb))) {
+	जबतक (!(kthपढ़ो_should_stop() &&
+		ocfs2_करोwnconvert_thपढ़ो_lists_empty(osb))) अणु
 
-		wait_event_interruptible(osb->dc_event,
-					 ocfs2_downconvert_thread_should_wake(osb) ||
-					 kthread_should_stop());
+		रुको_event_पूर्णांकerruptible(osb->dc_event,
+					 ocfs2_करोwnconvert_thपढ़ो_should_wake(osb) ||
+					 kthपढ़ो_should_stop());
 
 		mlog(0, "downconvert_thread: awoken\n");
 
-		ocfs2_downconvert_thread_do_work(osb);
-	}
+		ocfs2_करोwnconvert_thपढ़ो_करो_work(osb);
+	पूर्ण
 
-	osb->dc_task = NULL;
-	return 0;
-}
+	osb->dc_task = शून्य;
+	वापस 0;
+पूर्ण
 
-void ocfs2_wake_downconvert_thread(struct ocfs2_super *osb)
-{
-	unsigned long flags;
+व्योम ocfs2_wake_करोwnconvert_thपढ़ो(काष्ठा ocfs2_super *osb)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&osb->dc_task_lock, flags);
-	/* make sure the voting thread gets a swipe at whatever changes
+	/* make sure the voting thपढ़ो माला_लो a swipe at whatever changes
 	 * the caller may have made to the voting state */
 	osb->dc_wake_sequence++;
 	spin_unlock_irqrestore(&osb->dc_task_lock, flags);
 	wake_up(&osb->dc_event);
-}
+पूर्ण

@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright 2019 NXP.
  */
 
-#include <linux/err.h>
-#include <linux/device.h>
-#include <linux/firmware/imx/sci.h>
-#include <linux/init.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
+#समावेश <linux/err.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firmware/imx/sci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
 
-#define DEBOUNCE_TIME				30
-#define REPEAT_INTERVAL				60
+#घोषणा DEBOUNCE_TIME				30
+#घोषणा REPEAT_INTERVAL				60
 
-#define SC_IRQ_BUTTON				1
-#define SC_IRQ_GROUP_WAKE			3
+#घोषणा SC_IRQ_BUTTON				1
+#घोषणा SC_IRQ_GROUP_WAKE			3
 
-#define IMX_SC_MISC_FUNC_GET_BUTTON_STATUS	18
+#घोषणा IMX_SC_MISC_FUNC_GET_BUTTON_STATUS	18
 
-struct imx_key_drv_data {
+काष्ठा imx_key_drv_data अणु
 	u32 keycode;
 	bool keystate;  /* true: pressed, false: released */
-	struct delayed_work check_work;
-	struct input_dev *input;
-	struct imx_sc_ipc *key_ipc_handle;
-	struct notifier_block key_notifier;
-};
+	काष्ठा delayed_work check_work;
+	काष्ठा input_dev *input;
+	काष्ठा imx_sc_ipc *key_ipc_handle;
+	काष्ठा notअगरier_block key_notअगरier;
+पूर्ण;
 
-struct imx_sc_msg_key {
-	struct imx_sc_rpc_msg hdr;
+काष्ठा imx_sc_msg_key अणु
+	काष्ठा imx_sc_rpc_msg hdr;
 	u32 state;
-};
+पूर्ण;
 
-static int imx_sc_key_notify(struct notifier_block *nb,
-			     unsigned long event, void *group)
-{
-	struct imx_key_drv_data *priv =
+अटल पूर्णांक imx_sc_key_notअगरy(काष्ठा notअगरier_block *nb,
+			     अचिन्हित दीर्घ event, व्योम *group)
+अणु
+	काष्ठा imx_key_drv_data *priv =
 				 container_of(nb,
-					      struct imx_key_drv_data,
-					      key_notifier);
+					      काष्ठा imx_key_drv_data,
+					      key_notअगरier);
 
-	if ((event & SC_IRQ_BUTTON) && (*(u8 *)group == SC_IRQ_GROUP_WAKE)) {
+	अगर ((event & SC_IRQ_BUTTON) && (*(u8 *)group == SC_IRQ_GROUP_WAKE)) अणु
 		schedule_delayed_work(&priv->check_work,
-				      msecs_to_jiffies(DEBOUNCE_TIME));
+				      msecs_to_jअगरfies(DEBOUNCE_TIME));
 		pm_wakeup_event(priv->input->dev.parent, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void imx_sc_check_for_events(struct work_struct *work)
-{
-	struct imx_key_drv_data *priv =
+अटल व्योम imx_sc_check_क्रम_events(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा imx_key_drv_data *priv =
 				 container_of(work,
-					      struct imx_key_drv_data,
+					      काष्ठा imx_key_drv_data,
 					      check_work.work);
-	struct input_dev *input = priv->input;
-	struct imx_sc_msg_key msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
+	काष्ठा input_dev *input = priv->input;
+	काष्ठा imx_sc_msg_key msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
 	bool state;
-	int error;
+	पूर्णांक error;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_MISC;
@@ -73,10 +74,10 @@ static void imx_sc_check_for_events(struct work_struct *work)
 	hdr->size = 1;
 
 	error = imx_scu_call_rpc(priv->key_ipc_handle, &msg, true);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&input->dev, "read imx sc key failed, error %d\n", error);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * The response data from SCU firmware is 4 bytes,
@@ -86,55 +87,55 @@ static void imx_sc_check_for_events(struct work_struct *work)
 	 */
 	state = (bool)(msg.state & 0xff);
 
-	if (state ^ priv->keystate) {
+	अगर (state ^ priv->keystate) अणु
 		priv->keystate = state;
 		input_event(input, EV_KEY, priv->keycode, state);
 		input_sync(input);
-		if (!priv->keystate)
+		अगर (!priv->keystate)
 			pm_relax(priv->input->dev.parent);
-	}
+	पूर्ण
 
-	if (state)
+	अगर (state)
 		schedule_delayed_work(&priv->check_work,
-				      msecs_to_jiffies(REPEAT_INTERVAL));
-}
+				      msecs_to_jअगरfies(REPEAT_INTERVAL));
+पूर्ण
 
-static void imx_sc_key_action(void *data)
-{
-	struct imx_key_drv_data *priv = data;
+अटल व्योम imx_sc_key_action(व्योम *data)
+अणु
+	काष्ठा imx_key_drv_data *priv = data;
 
 	imx_scu_irq_group_enable(SC_IRQ_GROUP_WAKE, SC_IRQ_BUTTON, false);
-	imx_scu_irq_unregister_notifier(&priv->key_notifier);
+	imx_scu_irq_unरेजिस्टर_notअगरier(&priv->key_notअगरier);
 	cancel_delayed_work_sync(&priv->check_work);
-}
+पूर्ण
 
-static int imx_sc_key_probe(struct platform_device *pdev)
-{
-	struct imx_key_drv_data *priv;
-	struct input_dev *input;
-	int error;
+अटल पूर्णांक imx_sc_key_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा imx_key_drv_data *priv;
+	काष्ठा input_dev *input;
+	पूर्णांक error;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	error = imx_scu_get_handle(&priv->key_ipc_handle);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (device_property_read_u32(&pdev->dev, "linux,keycodes",
-				     &priv->keycode)) {
+	अगर (device_property_पढ़ो_u32(&pdev->dev, "linux,keycodes",
+				     &priv->keycode)) अणु
 		dev_err(&pdev->dev, "missing linux,keycodes property\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	INIT_DELAYED_WORK(&priv->check_work, imx_sc_check_for_events);
+	INIT_DELAYED_WORK(&priv->check_work, imx_sc_check_क्रम_events);
 
 	input = devm_input_allocate_device(&pdev->dev);
-	if (!input) {
+	अगर (!input) अणु
 		dev_err(&pdev->dev, "failed to allocate the input device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	input->name = pdev->name;
 	input->phys = "imx-sc-key/input0";
@@ -142,48 +143,48 @@ static int imx_sc_key_probe(struct platform_device *pdev)
 
 	input_set_capability(input, EV_KEY, priv->keycode);
 
-	error = input_register_device(input);
-	if (error) {
+	error = input_रेजिस्टर_device(input);
+	अगर (error) अणु
 		dev_err(&pdev->dev, "failed to register input device\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	priv->input = input;
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	error = imx_scu_irq_group_enable(SC_IRQ_GROUP_WAKE, SC_IRQ_BUTTON,
 					 true);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev, "failed to enable scu group irq\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = devm_add_action_or_reset(&pdev->dev, imx_sc_key_action, &priv);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	priv->key_notifier.notifier_call = imx_sc_key_notify;
-	error = imx_scu_irq_register_notifier(&priv->key_notifier);
-	if (error)
+	priv->key_notअगरier.notअगरier_call = imx_sc_key_notअगरy;
+	error = imx_scu_irq_रेजिस्टर_notअगरier(&priv->key_notअगरier);
+	अगर (error)
 		dev_err(&pdev->dev, "failed to register scu notifier\n");
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct of_device_id imx_sc_key_ids[] = {
-	{ .compatible = "fsl,imx-sc-key" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx_sc_key_ids[] = अणु
+	अणु .compatible = "fsl,imx-sc-key" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, imx_sc_key_ids);
 
-static struct platform_driver imx_sc_key_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx_sc_key_driver = अणु
+	.driver = अणु
 		.name = "imx-sc-key",
 		.of_match_table = imx_sc_key_ids,
-	},
+	पूर्ण,
 	.probe = imx_sc_key_probe,
-};
-module_platform_driver(imx_sc_key_driver);
+पूर्ण;
+module_platक्रमm_driver(imx_sc_key_driver);
 
 MODULE_AUTHOR("Anson Huang <Anson.Huang@nxp.com>");
 MODULE_DESCRIPTION("i.MX System Controller Key Driver");

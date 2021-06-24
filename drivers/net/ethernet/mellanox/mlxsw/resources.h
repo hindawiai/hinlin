@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2016-2018 Mellanox Technologies. All rights reserved */
 
-#ifndef _MLXSW_RESOURCES_H
-#define _MLXSW_RESOURCES_H
+#अगर_अघोषित _MLXSW_RESOURCES_H
+#घोषणा _MLXSW_RESOURCES_H
 
-#include <linux/kernel.h>
-#include <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
 
-enum mlxsw_res_id {
+क्रमागत mlxsw_res_id अणु
 	MLXSW_RES_ID_KVD_SIZE,
 	MLXSW_RES_ID_KVD_SINGLE_MIN_SIZE,
 	MLXSW_RES_ID_KVD_DOUBLE_MIN_SIZE,
@@ -64,9 +65,9 @@ enum mlxsw_res_id {
 	MLXSW_RES_ID_KVD_LINEAR_SIZE,
 
 	__MLXSW_RES_ID_MAX,
-};
+पूर्ण;
 
-static u16 mlxsw_res_ids[] = {
+अटल u16 mlxsw_res_ids[] = अणु
 	[MLXSW_RES_ID_KVD_SIZE] = 0x1001,
 	[MLXSW_RES_ID_KVD_SINGLE_MIN_SIZE] = 0x1002,
 	[MLXSW_RES_ID_KVD_DOUBLE_MIN_SIZE] = 0x1003,
@@ -114,53 +115,53 @@ static u16 mlxsw_res_ids[] = {
 	[MLXSW_RES_ID_MAX_LPM_TREES] = 0x2C30,
 	[MLXSW_RES_ID_MAX_NVE_MC_ENTRIES_IPV4] = 0x2E02,
 	[MLXSW_RES_ID_MAX_NVE_MC_ENTRIES_IPV6] = 0x2E03,
-};
+पूर्ण;
 
-struct mlxsw_res {
+काष्ठा mlxsw_res अणु
 	bool valid[__MLXSW_RES_ID_MAX];
 	u64 values[__MLXSW_RES_ID_MAX];
-};
+पूर्ण;
 
-static inline bool mlxsw_res_valid(struct mlxsw_res *res,
-				   enum mlxsw_res_id res_id)
-{
-	return res->valid[res_id];
-}
+अटल अंतरभूत bool mlxsw_res_valid(काष्ठा mlxsw_res *res,
+				   क्रमागत mlxsw_res_id res_id)
+अणु
+	वापस res->valid[res_id];
+पूर्ण
 
-#define MLXSW_RES_VALID(res, short_res_id)			\
-	mlxsw_res_valid(res, MLXSW_RES_ID_##short_res_id)
+#घोषणा MLXSW_RES_VALID(res, लघु_res_id)			\
+	mlxsw_res_valid(res, MLXSW_RES_ID_##लघु_res_id)
 
-static inline u64 mlxsw_res_get(struct mlxsw_res *res,
-				enum mlxsw_res_id res_id)
-{
-	if (WARN_ON(!res->valid[res_id]))
-		return 0;
-	return res->values[res_id];
-}
+अटल अंतरभूत u64 mlxsw_res_get(काष्ठा mlxsw_res *res,
+				क्रमागत mlxsw_res_id res_id)
+अणु
+	अगर (WARN_ON(!res->valid[res_id]))
+		वापस 0;
+	वापस res->values[res_id];
+पूर्ण
 
-#define MLXSW_RES_GET(res, short_res_id)			\
-	mlxsw_res_get(res, MLXSW_RES_ID_##short_res_id)
+#घोषणा MLXSW_RES_GET(res, लघु_res_id)			\
+	mlxsw_res_get(res, MLXSW_RES_ID_##लघु_res_id)
 
-static inline void mlxsw_res_set(struct mlxsw_res *res,
-				 enum mlxsw_res_id res_id, u64 value)
-{
+अटल अंतरभूत व्योम mlxsw_res_set(काष्ठा mlxsw_res *res,
+				 क्रमागत mlxsw_res_id res_id, u64 value)
+अणु
 	res->valid[res_id] = true;
 	res->values[res_id] = value;
-}
+पूर्ण
 
-#define MLXSW_RES_SET(res, short_res_id, value)			\
-	mlxsw_res_set(res, MLXSW_RES_ID_##short_res_id, value)
+#घोषणा MLXSW_RES_SET(res, लघु_res_id, value)			\
+	mlxsw_res_set(res, MLXSW_RES_ID_##लघु_res_id, value)
 
-static inline void mlxsw_res_parse(struct mlxsw_res *res, u16 id, u64 value)
-{
-	int i;
+अटल अंतरभूत व्योम mlxsw_res_parse(काष्ठा mlxsw_res *res, u16 id, u64 value)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(mlxsw_res_ids); i++) {
-		if (mlxsw_res_ids[i] == id) {
+	क्रम (i = 0; i < ARRAY_SIZE(mlxsw_res_ids); i++) अणु
+		अगर (mlxsw_res_ids[i] == id) अणु
 			mlxsw_res_set(res, i, value);
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर

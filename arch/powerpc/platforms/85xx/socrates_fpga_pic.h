@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  Copyright (C) 2008 Ilya Yanok, Emcraft Systems
  */
 
-#ifndef SOCRATES_FPGA_PIC_H
-#define SOCRATES_FPGA_PIC_H
+#अगर_अघोषित SOCRATES_FPGA_PIC_H
+#घोषणा SOCRATES_FPGA_PIC_H
 
-void socrates_fpga_pic_init(struct device_node *pic);
+व्योम socrates_fpga_pic_init(काष्ठा device_node *pic);
 
-#endif
+#पूर्ण_अगर

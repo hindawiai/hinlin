@@ -1,73 +1,74 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
 
-#include "i915_drv.h"
-#include "gt/intel_gt_requests.h"
+#समावेश "i915_drv.h"
+#समावेश "gt/intel_gt_requests.h"
 
-#include "../i915_selftest.h"
-#include "igt_flush_test.h"
-#include "igt_live_test.h"
+#समावेश "../i915_selftest.h"
+#समावेश "igt_flush_test.h"
+#समावेश "igt_live_test.h"
 
-int igt_live_test_begin(struct igt_live_test *t,
-			struct drm_i915_private *i915,
-			const char *func,
-			const char *name)
-{
-	struct intel_gt *gt = &i915->gt;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	int err;
+पूर्णांक igt_live_test_begin(काष्ठा igt_live_test *t,
+			काष्ठा drm_i915_निजी *i915,
+			स्थिर अक्षर *func,
+			स्थिर अक्षर *name)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = &i915->gt;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err;
 
 	t->i915 = i915;
 	t->func = func;
 	t->name = name;
 
-	err = intel_gt_wait_for_idle(gt, MAX_SCHEDULE_TIMEOUT);
-	if (err) {
+	err = पूर्णांकel_gt_रुको_क्रम_idle(gt, MAX_SCHEDULE_TIMEOUT);
+	अगर (err) अणु
 		pr_err("%s(%s): failed to idle before, with err=%d!",
 		       func, name, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	t->reset_global = i915_reset_count(&i915->gpu_error);
 
-	for_each_engine(engine, gt, id)
+	क्रम_each_engine(engine, gt, id)
 		t->reset_engine[id] =
 			i915_reset_engine_count(&i915->gpu_error, engine);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int igt_live_test_end(struct igt_live_test *t)
-{
-	struct drm_i915_private *i915 = t->i915;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+पूर्णांक igt_live_test_end(काष्ठा igt_live_test *t)
+अणु
+	काष्ठा drm_i915_निजी *i915 = t->i915;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
-	if (igt_flush_test(i915))
-		return -EIO;
+	अगर (igt_flush_test(i915))
+		वापस -EIO;
 
-	if (t->reset_global != i915_reset_count(&i915->gpu_error)) {
+	अगर (t->reset_global != i915_reset_count(&i915->gpu_error)) अणु
 		pr_err("%s(%s): GPU was reset %d times!\n",
 		       t->func, t->name,
 		       i915_reset_count(&i915->gpu_error) - t->reset_global);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	for_each_engine(engine, &i915->gt, id) {
-		if (t->reset_engine[id] ==
+	क्रम_each_engine(engine, &i915->gt, id) अणु
+		अगर (t->reset_engine[id] ==
 		    i915_reset_engine_count(&i915->gpu_error, engine))
-			continue;
+			जारी;
 
 		pr_err("%s(%s): engine '%s' was reset %d times!\n",
 		       t->func, t->name, engine->name,
 		       i915_reset_engine_count(&i915->gpu_error, engine) -
 		       t->reset_engine[id]);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

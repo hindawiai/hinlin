@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-typedef void(*test_ubsan_fp)(void);
+प्रकार व्योम(*test_ubsan_fp)(व्योम);
 
-#define UBSAN_TEST(config, ...)	do {					\
+#घोषणा UBSAN_TEST(config, ...)	करो अणु					\
 		pr_info("%s " __VA_ARGS__ "%s(%s=%s)\n", __func__,	\
-			sizeof(" " __VA_ARGS__) > 2 ? " " : "",		\
+			माप(" " __VA_ARGS__) > 2 ? " " : "",		\
 			#config, IS_ENABLED(config) ? "y" : "n");	\
-	} while (0)
+	पूर्ण जबतक (0)
 
-static void test_ubsan_divrem_overflow(void)
-{
-	volatile int val = 16;
-	volatile int val2 = 0;
+अटल व्योम test_ubsan_भागrem_overflow(व्योम)
+अणु
+	अस्थिर पूर्णांक val = 16;
+	अस्थिर पूर्णांक val2 = 0;
 
 	UBSAN_TEST(CONFIG_UBSAN_DIV_ZERO);
 	val /= val2;
-}
+पूर्ण
 
-static void test_ubsan_shift_out_of_bounds(void)
-{
-	volatile int neg = -1, wrap = 4;
-	int val1 = 10;
-	int val2 = INT_MAX;
+अटल व्योम test_ubsan_shअगरt_out_of_bounds(व्योम)
+अणु
+	अस्थिर पूर्णांक neg = -1, wrap = 4;
+	पूर्णांक val1 = 10;
+	पूर्णांक val2 = पूर्णांक_उच्च;
 
 	UBSAN_TEST(CONFIG_UBSAN_SHIFT, "negative exponent");
 	val1 <<= neg;
 
 	UBSAN_TEST(CONFIG_UBSAN_SHIFT, "left overflow");
 	val2 <<= wrap;
-}
+पूर्ण
 
-static void test_ubsan_out_of_bounds(void)
-{
-	volatile int i = 4, j = 5, k = -1;
-	volatile char above[4] = { }; /* Protect surrounding memory. */
-	volatile int arr[4];
-	volatile char below[4] = { }; /* Protect surrounding memory. */
+अटल व्योम test_ubsan_out_of_bounds(व्योम)
+अणु
+	अस्थिर पूर्णांक i = 4, j = 5, k = -1;
+	अस्थिर अक्षर above[4] = अणु पूर्ण; /* Protect surrounding memory. */
+	अस्थिर पूर्णांक arr[4];
+	अस्थिर अक्षर below[4] = अणु पूर्ण; /* Protect surrounding memory. */
 
 	above[0] = below[0];
 
@@ -47,23 +48,23 @@ static void test_ubsan_out_of_bounds(void)
 
 	UBSAN_TEST(CONFIG_UBSAN_BOUNDS, "below");
 	arr[k] = i;
-}
+पूर्ण
 
-enum ubsan_test_enum {
+क्रमागत ubsan_test_क्रमागत अणु
 	UBSAN_TEST_ZERO = 0,
 	UBSAN_TEST_ONE,
 	UBSAN_TEST_MAX,
-};
+पूर्ण;
 
-static void test_ubsan_load_invalid_value(void)
-{
-	volatile char *dst, *src;
+अटल व्योम test_ubsan_load_invalid_value(व्योम)
+अणु
+	अस्थिर अक्षर *dst, *src;
 	bool val, val2, *ptr;
-	enum ubsan_test_enum eval, eval2, *eptr;
-	unsigned char c = 0xff;
+	क्रमागत ubsan_test_क्रमागत eval, eval2, *eptr;
+	अचिन्हित अक्षर c = 0xff;
 
 	UBSAN_TEST(CONFIG_UBSAN_BOOL, "bool");
-	dst = (char *)&val;
+	dst = (अक्षर *)&val;
 	src = &c;
 	*dst = *src;
 
@@ -71,74 +72,74 @@ static void test_ubsan_load_invalid_value(void)
 	val2 = val;
 
 	UBSAN_TEST(CONFIG_UBSAN_ENUM, "enum");
-	dst = (char *)&eval;
+	dst = (अक्षर *)&eval;
 	src = &c;
 	*dst = *src;
 
 	eptr = &eval2;
 	eval2 = eval;
-}
+पूर्ण
 
-static void test_ubsan_null_ptr_deref(void)
-{
-	volatile int *ptr = NULL;
-	int val;
+अटल व्योम test_ubsan_null_ptr_deref(व्योम)
+अणु
+	अस्थिर पूर्णांक *ptr = शून्य;
+	पूर्णांक val;
 
 	UBSAN_TEST(CONFIG_UBSAN_OBJECT_SIZE);
 	val = *ptr;
-}
+पूर्ण
 
-static void test_ubsan_misaligned_access(void)
-{
-	volatile char arr[5] __aligned(4) = {1, 2, 3, 4, 5};
-	volatile int *ptr, val = 6;
+अटल व्योम test_ubsan_misaligned_access(व्योम)
+अणु
+	अस्थिर अक्षर arr[5] __aligned(4) = अणु1, 2, 3, 4, 5पूर्ण;
+	अस्थिर पूर्णांक *ptr, val = 6;
 
 	UBSAN_TEST(CONFIG_UBSAN_ALIGNMENT);
-	ptr = (int *)(arr + 1);
+	ptr = (पूर्णांक *)(arr + 1);
 	*ptr = val;
-}
+पूर्ण
 
-static void test_ubsan_object_size_mismatch(void)
-{
-	/* "((aligned(8)))" helps this not into be misaligned for ptr-access. */
-	volatile int val __aligned(8) = 4;
-	volatile long long *ptr, val2;
+अटल व्योम test_ubsan_object_size_mismatch(व्योम)
+अणु
+	/* "((aligned(8)))" helps this not पूर्णांकo be misaligned क्रम ptr-access. */
+	अस्थिर पूर्णांक val __aligned(8) = 4;
+	अस्थिर दीर्घ दीर्घ *ptr, val2;
 
 	UBSAN_TEST(CONFIG_UBSAN_OBJECT_SIZE);
-	ptr = (long long *)&val;
+	ptr = (दीर्घ दीर्घ *)&val;
 	val2 = *ptr;
-}
+पूर्ण
 
-static const test_ubsan_fp test_ubsan_array[] = {
-	test_ubsan_shift_out_of_bounds,
+अटल स्थिर test_ubsan_fp test_ubsan_array[] = अणु
+	test_ubsan_shअगरt_out_of_bounds,
 	test_ubsan_out_of_bounds,
 	test_ubsan_load_invalid_value,
 	test_ubsan_misaligned_access,
 	test_ubsan_object_size_mismatch,
-};
+पूर्ण;
 
 /* Excluded because they Oops the module. */
-static const test_ubsan_fp skip_ubsan_array[] = {
-	test_ubsan_divrem_overflow,
+अटल स्थिर test_ubsan_fp skip_ubsan_array[] = अणु
+	test_ubsan_भागrem_overflow,
 	test_ubsan_null_ptr_deref,
-};
+पूर्ण;
 
-static int __init test_ubsan_init(void)
-{
-	unsigned int i;
+अटल पूर्णांक __init test_ubsan_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(test_ubsan_array); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(test_ubsan_array); i++)
 		test_ubsan_array[i]();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 module_init(test_ubsan_init);
 
-static void __exit test_ubsan_exit(void)
-{
-	/* do nothing */
-}
-module_exit(test_ubsan_exit);
+अटल व्योम __निकास test_ubsan_निकास(व्योम)
+अणु
+	/* करो nothing */
+पूर्ण
+module_निकास(test_ubsan_निकास);
 
 MODULE_AUTHOR("Jinbum Park <jinb.park7@gmail.com>");
 MODULE_LICENSE("GPL v2");

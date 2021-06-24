@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  * Copyright 2019 Raptor Engineering, LLC
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,97 +25,97 @@
  *
  */
 
-#ifndef _OS_TYPES_H_
-#define _OS_TYPES_H_
+#अगर_अघोषित _OS_TYPES_H_
+#घोषणा _OS_TYPES_H_
 
-#include <linux/kgdb.h>
-#include <linux/kref.h>
-#include <linux/types.h>
-#include <linux/slab.h>
+#समावेश <linux/kgdb.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-#include <drm/drm_print.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "cgs_common.h"
+#समावेश "cgs_common.h"
 
-#if defined(__BIG_ENDIAN) && !defined(BIGENDIAN_CPU)
-#define BIGENDIAN_CPU
-#elif defined(__LITTLE_ENDIAN) && !defined(LITTLEENDIAN_CPU)
-#define LITTLEENDIAN_CPU
-#endif
+#अगर defined(__BIG_ENDIAN) && !defined(BIGENDIAN_CPU)
+#घोषणा BIGENDIAN_CPU
+#या_अगर defined(__LITTLE_ENDIAN) && !defined(LITTLEENDIAN_CPU)
+#घोषणा LITTLEENDIAN_CPU
+#पूर्ण_अगर
 
-#undef FRAME_SIZE
+#अघोषित FRAME_SIZE
 
-#define dm_output_to_console(fmt, ...) DRM_DEBUG_KMS(fmt, ##__VA_ARGS__)
+#घोषणा dm_output_to_console(fmt, ...) DRM_DEBUG_KMS(fmt, ##__VA_ARGS__)
 
-#define dm_error(fmt, ...) DRM_ERROR(fmt, ##__VA_ARGS__)
+#घोषणा dm_error(fmt, ...) DRM_ERROR(fmt, ##__VA_ARGS__)
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-#if defined(CONFIG_X86)
-#include <asm/fpu/api.h>
-#define DC_FP_START() kernel_fpu_begin()
-#define DC_FP_END() kernel_fpu_end()
-#elif defined(CONFIG_PPC64)
-#include <asm/switch_to.h>
-#include <asm/cputable.h>
-#define DC_FP_START() { \
-	if (cpu_has_feature(CPU_FTR_VSX_COMP)) { \
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+#अगर defined(CONFIG_X86)
+#समावेश <यंत्र/fpu/api.h>
+#घोषणा DC_FP_START() kernel_fpu_begin()
+#घोषणा DC_FP_END() kernel_fpu_end()
+#या_अगर defined(CONFIG_PPC64)
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <यंत्र/cputable.h>
+#घोषणा DC_FP_START() अणु \
+	अगर (cpu_has_feature(CPU_FTR_VSX_COMP)) अणु \
 		preempt_disable(); \
 		enable_kernel_vsx(); \
-	} else if (cpu_has_feature(CPU_FTR_ALTIVEC_COMP)) { \
+	पूर्ण अन्यथा अगर (cpu_has_feature(CPU_FTR_ALTIVEC_COMP)) अणु \
 		preempt_disable(); \
 		enable_kernel_altivec(); \
-	} else if (!cpu_has_feature(CPU_FTR_FPU_UNAVAILABLE)) { \
+	पूर्ण अन्यथा अगर (!cpu_has_feature(CPU_FTR_FPU_UNAVAILABLE)) अणु \
 		preempt_disable(); \
 		enable_kernel_fp(); \
-	} \
-}
-#define DC_FP_END() { \
-	if (cpu_has_feature(CPU_FTR_VSX_COMP)) { \
+	पूर्ण \
+पूर्ण
+#घोषणा DC_FP_END() अणु \
+	अगर (cpu_has_feature(CPU_FTR_VSX_COMP)) अणु \
 		disable_kernel_vsx(); \
 		preempt_enable(); \
-	} else if (cpu_has_feature(CPU_FTR_ALTIVEC_COMP)) { \
+	पूर्ण अन्यथा अगर (cpu_has_feature(CPU_FTR_ALTIVEC_COMP)) अणु \
 		disable_kernel_altivec(); \
 		preempt_enable(); \
-	} else if (!cpu_has_feature(CPU_FTR_FPU_UNAVAILABLE)) { \
+	पूर्ण अन्यथा अगर (!cpu_has_feature(CPU_FTR_FPU_UNAVAILABLE)) अणु \
 		disable_kernel_fp(); \
 		preempt_enable(); \
-	} \
-}
-#endif
-#endif
+	पूर्ण \
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर
 
 /*
  *
  * general debug capabilities
  *
  */
-#ifdef CONFIG_DEBUG_KERNEL_DC
-#define dc_breakpoint()		kgdb_breakpoint()
-#else
-#define dc_breakpoint()		do {} while (0)
-#endif
+#अगर_घोषित CONFIG_DEBUG_KERNEL_DC
+#घोषणा dc_अवरोधpoपूर्णांक()		kgdb_अवरोधpoपूर्णांक()
+#अन्यथा
+#घोषणा dc_अवरोधpoपूर्णांक()		करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#define ASSERT_CRITICAL(expr) do {		\
-		if (WARN_ON(!(expr)))		\
-			dc_breakpoint();	\
-	} while (0)
+#घोषणा ASSERT_CRITICAL(expr) करो अणु		\
+		अगर (WARN_ON(!(expr)))		\
+			dc_अवरोधpoपूर्णांक();	\
+	पूर्ण जबतक (0)
 
-#define ASSERT(expr) do {			\
-		if (WARN_ON_ONCE(!(expr)))	\
-			dc_breakpoint();	\
-	} while (0)
+#घोषणा ASSERT(expr) करो अणु			\
+		अगर (WARN_ON_ONCE(!(expr)))	\
+			dc_अवरोधpoपूर्णांक();	\
+	पूर्ण जबतक (0)
 
-#define BREAK_TO_DEBUGGER() \
-	do { \
+#घोषणा BREAK_TO_DEBUGGER() \
+	करो अणु \
 		DRM_DEBUG_DRIVER("%s():%d\n", __func__, __LINE__); \
-		dc_breakpoint(); \
-	} while (0)
+		dc_अवरोधpoपूर्णांक(); \
+	पूर्ण जबतक (0)
 
-#define DC_ERR(...)  do { \
+#घोषणा DC_ERR(...)  करो अणु \
 	dm_error(__VA_ARGS__); \
 	BREAK_TO_DEBUGGER(); \
-} while (0)
+पूर्ण जबतक (0)
 
-#endif /* _OS_TYPES_H_ */
+#पूर्ण_अगर /* _OS_TYPES_H_ */

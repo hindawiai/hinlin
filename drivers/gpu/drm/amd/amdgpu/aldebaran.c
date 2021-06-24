@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2021 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,368 +22,368 @@
  *
  */
 
-#include "aldebaran.h"
-#include "amdgpu_reset.h"
-#include "amdgpu_amdkfd.h"
-#include "amdgpu_dpm.h"
-#include "amdgpu_job.h"
-#include "amdgpu_ring.h"
-#include "amdgpu_ras.h"
-#include "amdgpu_psp.h"
-#include "amdgpu_xgmi.h"
+#समावेश "aldebaran.h"
+#समावेश "amdgpu_reset.h"
+#समावेश "amdgpu_amdkfd.h"
+#समावेश "amdgpu_dpm.h"
+#समावेश "amdgpu_job.h"
+#समावेश "amdgpu_ring.h"
+#समावेश "amdgpu_ras.h"
+#समावेश "amdgpu_psp.h"
+#समावेश "amdgpu_xgmi.h"
 
-static struct amdgpu_reset_handler *
-aldebaran_get_reset_handler(struct amdgpu_reset_control *reset_ctl,
-			    struct amdgpu_reset_context *reset_context)
-{
-	struct amdgpu_reset_handler *handler;
-	struct amdgpu_device *adev = (struct amdgpu_device *)reset_ctl->handle;
+अटल काष्ठा amdgpu_reset_handler *
+aldebaran_get_reset_handler(काष्ठा amdgpu_reset_control *reset_ctl,
+			    काष्ठा amdgpu_reset_context *reset_context)
+अणु
+	काष्ठा amdgpu_reset_handler *handler;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)reset_ctl->handle;
 
-	if (reset_context->method != AMD_RESET_METHOD_NONE) {
+	अगर (reset_context->method != AMD_RESET_METHOD_NONE) अणु
 		dev_dbg(adev->dev, "Getting reset handler for method %d\n",
 			reset_context->method);
-		list_for_each_entry(handler, &reset_ctl->reset_handlers,
-				     handler_list) {
-			if (handler->reset_method == reset_context->method)
-				return handler;
-		}
-	}
+		list_क्रम_each_entry(handler, &reset_ctl->reset_handlers,
+				     handler_list) अणु
+			अगर (handler->reset_method == reset_context->method)
+				वापस handler;
+		पूर्ण
+	पूर्ण
 
-	if (adev->gmc.xgmi.connected_to_cpu) {
-		list_for_each_entry(handler, &reset_ctl->reset_handlers,
-				     handler_list) {
-			if (handler->reset_method == AMD_RESET_METHOD_MODE2) {
+	अगर (adev->gmc.xgmi.connected_to_cpu) अणु
+		list_क्रम_each_entry(handler, &reset_ctl->reset_handlers,
+				     handler_list) अणु
+			अगर (handler->reset_method == AMD_RESET_METHOD_MODE2) अणु
 				reset_context->method = AMD_RESET_METHOD_MODE2;
-				return handler;
-			}
-		}
-	}
+				वापस handler;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	dev_dbg(adev->dev, "Reset handler not found!\n");
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int aldebaran_mode2_suspend_ip(struct amdgpu_device *adev)
-{
-	int r, i;
+अटल पूर्णांक aldebaran_mode2_suspend_ip(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r, i;
 
 	amdgpu_device_set_pg_state(adev, AMD_PG_STATE_UNGATE);
 	amdgpu_device_set_cg_state(adev, AMD_CG_STATE_UNGATE);
 
-	for (i = adev->num_ip_blocks - 1; i >= 0; i--) {
-		if (!(adev->ip_blocks[i].version->type ==
+	क्रम (i = adev->num_ip_blocks - 1; i >= 0; i--) अणु
+		अगर (!(adev->ip_blocks[i].version->type ==
 			      AMD_IP_BLOCK_TYPE_GFX ||
 		      adev->ip_blocks[i].version->type ==
 			      AMD_IP_BLOCK_TYPE_SDMA))
-			continue;
+			जारी;
 
 		r = adev->ip_blocks[i].version->funcs->suspend(adev);
 
-		if (r) {
+		अगर (r) अणु
 			dev_err(adev->dev,
 				"suspend of IP block <%s> failed %d\n",
 				adev->ip_blocks[i].version->funcs->name, r);
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		adev->ip_blocks[i].status.hw = false;
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int
-aldebaran_mode2_prepare_hwcontext(struct amdgpu_reset_control *reset_ctl,
-				  struct amdgpu_reset_context *reset_context)
-{
-	int r = 0;
-	struct amdgpu_device *adev = (struct amdgpu_device *)reset_ctl->handle;
+अटल पूर्णांक
+aldebaran_mode2_prepare_hwcontext(काष्ठा amdgpu_reset_control *reset_ctl,
+				  काष्ठा amdgpu_reset_context *reset_context)
+अणु
+	पूर्णांक r = 0;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)reset_ctl->handle;
 
 	dev_dbg(adev->dev, "Aldebaran prepare hw context\n");
-	/* Don't suspend on bare metal if we are not going to HW reset the ASIC */
-	if (!amdgpu_sriov_vf(adev))
+	/* Don't suspend on bare metal अगर we are not going to HW reset the ASIC */
+	अगर (!amdgpu_sriov_vf(adev))
 		r = aldebaran_mode2_suspend_ip(adev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void aldebaran_async_reset(struct work_struct *work)
-{
-	struct amdgpu_reset_handler *handler;
-	struct amdgpu_reset_control *reset_ctl =
-		container_of(work, struct amdgpu_reset_control, reset_work);
-	struct amdgpu_device *adev = (struct amdgpu_device *)reset_ctl->handle;
+अटल व्योम aldebaran_async_reset(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा amdgpu_reset_handler *handler;
+	काष्ठा amdgpu_reset_control *reset_ctl =
+		container_of(work, काष्ठा amdgpu_reset_control, reset_work);
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)reset_ctl->handle;
 
-	list_for_each_entry(handler, &reset_ctl->reset_handlers,
-			     handler_list) {
-		if (handler->reset_method == reset_ctl->active_reset) {
+	list_क्रम_each_entry(handler, &reset_ctl->reset_handlers,
+			     handler_list) अणु
+		अगर (handler->reset_method == reset_ctl->active_reset) अणु
 			dev_dbg(adev->dev, "Resetting device\n");
-			handler->do_reset(adev);
-			break;
-		}
-	}
-}
+			handler->करो_reset(adev);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int aldebaran_mode2_reset(struct amdgpu_device *adev)
-{
+अटल पूर्णांक aldebaran_mode2_reset(काष्ठा amdgpu_device *adev)
+अणु
 	/* disable BM */
 	pci_clear_master(adev->pdev);
 	adev->asic_reset_res = amdgpu_dpm_mode2_reset(adev);
-	return adev->asic_reset_res;
-}
+	वापस adev->asic_reset_res;
+पूर्ण
 
-static int
-aldebaran_mode2_perform_reset(struct amdgpu_reset_control *reset_ctl,
-			      struct amdgpu_reset_context *reset_context)
-{
-	struct amdgpu_device *tmp_adev = NULL;
-	struct amdgpu_device *adev = (struct amdgpu_device *)reset_ctl->handle;
-	int r = 0;
+अटल पूर्णांक
+aldebaran_mode2_perक्रमm_reset(काष्ठा amdgpu_reset_control *reset_ctl,
+			      काष्ठा amdgpu_reset_context *reset_context)
+अणु
+	काष्ठा amdgpu_device *पंचांगp_adev = शून्य;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)reset_ctl->handle;
+	पूर्णांक r = 0;
 
 	dev_dbg(adev->dev, "aldebaran perform hw reset\n");
-	if (reset_context->hive == NULL) {
-		/* Wrong context, return error */
-		return -EINVAL;
-	}
+	अगर (reset_context->hive == शून्य) अणु
+		/* Wrong context, वापस error */
+		वापस -EINVAL;
+	पूर्ण
 
-	list_for_each_entry(tmp_adev, &reset_context->hive->device_list,
-			     gmc.xgmi.head) {
-		mutex_lock(&tmp_adev->reset_cntl->reset_lock);
-		tmp_adev->reset_cntl->active_reset = AMD_RESET_METHOD_MODE2;
-	}
+	list_क्रम_each_entry(पंचांगp_adev, &reset_context->hive->device_list,
+			     gmc.xgmi.head) अणु
+		mutex_lock(&पंचांगp_adev->reset_cntl->reset_lock);
+		पंचांगp_adev->reset_cntl->active_reset = AMD_RESET_METHOD_MODE2;
+	पूर्ण
 	/*
-	 * Mode2 reset doesn't need any sync between nodes in XGMI hive, instead launch
+	 * Mode2 reset करोesn't need any sync between nodes in XGMI hive, instead launch
 	 * them together so that they can be completed asynchronously on multiple nodes
 	 */
-	list_for_each_entry(tmp_adev, &reset_context->hive->device_list,
-			     gmc.xgmi.head) {
+	list_क्रम_each_entry(पंचांगp_adev, &reset_context->hive->device_list,
+			     gmc.xgmi.head) अणु
 		/* For XGMI run all resets in parallel to speed up the process */
-		if (tmp_adev->gmc.xgmi.num_physical_nodes > 1) {
-			if (!queue_work(system_unbound_wq,
-					&tmp_adev->reset_cntl->reset_work))
+		अगर (पंचांगp_adev->gmc.xgmi.num_physical_nodes > 1) अणु
+			अगर (!queue_work(प्रणाली_unbound_wq,
+					&पंचांगp_adev->reset_cntl->reset_work))
 				r = -EALREADY;
-		} else
-			r = aldebaran_mode2_reset(tmp_adev);
-		if (r) {
-			dev_err(tmp_adev->dev,
+		पूर्ण अन्यथा
+			r = aldebaran_mode2_reset(पंचांगp_adev);
+		अगर (r) अणु
+			dev_err(पंचांगp_adev->dev,
 				"ASIC reset failed with error, %d for drm dev, %s",
-				r, adev_to_drm(tmp_adev)->unique);
-			break;
-		}
-	}
+				r, adev_to_drm(पंचांगp_adev)->unique);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* For XGMI wait for all resets to complete before proceed */
-	if (!r) {
-		list_for_each_entry(tmp_adev,
+	/* For XGMI रुको क्रम all resets to complete beक्रमe proceed */
+	अगर (!r) अणु
+		list_क्रम_each_entry(पंचांगp_adev,
 				     &reset_context->hive->device_list,
-				     gmc.xgmi.head) {
-			if (tmp_adev->gmc.xgmi.num_physical_nodes > 1) {
-				flush_work(&tmp_adev->reset_cntl->reset_work);
-				r = tmp_adev->asic_reset_res;
-				if (r)
-					break;
-			}
-		}
-	}
+				     gmc.xgmi.head) अणु
+			अगर (पंचांगp_adev->gmc.xgmi.num_physical_nodes > 1) अणु
+				flush_work(&पंचांगp_adev->reset_cntl->reset_work);
+				r = पंचांगp_adev->asic_reset_res;
+				अगर (r)
+					अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(tmp_adev, &reset_context->hive->device_list,
-			     gmc.xgmi.head) {
-		mutex_unlock(&tmp_adev->reset_cntl->reset_lock);
-		tmp_adev->reset_cntl->active_reset = AMD_RESET_METHOD_NONE;
-	}
+	list_क्रम_each_entry(पंचांगp_adev, &reset_context->hive->device_list,
+			     gmc.xgmi.head) अणु
+		mutex_unlock(&पंचांगp_adev->reset_cntl->reset_lock);
+		पंचांगp_adev->reset_cntl->active_reset = AMD_RESET_METHOD_NONE;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int aldebaran_mode2_restore_ip(struct amdgpu_device *adev)
-{
-	struct amdgpu_firmware_info *ucode_list[AMDGPU_UCODE_ID_MAXIMUM];
-	struct amdgpu_firmware_info *ucode;
-	struct amdgpu_ip_block *cmn_block;
-	int ucode_count = 0;
-	int i, r;
+अटल पूर्णांक aldebaran_mode2_restore_ip(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_firmware_info *ucode_list[AMDGPU_UCODE_ID_MAXIMUM];
+	काष्ठा amdgpu_firmware_info *ucode;
+	काष्ठा amdgpu_ip_block *cmn_block;
+	पूर्णांक ucode_count = 0;
+	पूर्णांक i, r;
 
 	dev_dbg(adev->dev, "Reloading ucodes after reset\n");
-	for (i = 0; i < adev->firmware.max_ucodes; i++) {
+	क्रम (i = 0; i < adev->firmware.max_ucodes; i++) अणु
 		ucode = &adev->firmware.ucode[i];
-		if (!ucode->fw)
-			continue;
-		switch (ucode->ucode_id) {
-		case AMDGPU_UCODE_ID_SDMA0:
-		case AMDGPU_UCODE_ID_SDMA1:
-		case AMDGPU_UCODE_ID_SDMA2:
-		case AMDGPU_UCODE_ID_SDMA3:
-		case AMDGPU_UCODE_ID_SDMA4:
-		case AMDGPU_UCODE_ID_SDMA5:
-		case AMDGPU_UCODE_ID_SDMA6:
-		case AMDGPU_UCODE_ID_SDMA7:
-		case AMDGPU_UCODE_ID_CP_MEC1:
-		case AMDGPU_UCODE_ID_CP_MEC1_JT:
-		case AMDGPU_UCODE_ID_RLC_RESTORE_LIST_CNTL:
-		case AMDGPU_UCODE_ID_RLC_RESTORE_LIST_GPM_MEM:
-		case AMDGPU_UCODE_ID_RLC_RESTORE_LIST_SRM_MEM:
-		case AMDGPU_UCODE_ID_RLC_G:
+		अगर (!ucode->fw)
+			जारी;
+		चयन (ucode->ucode_id) अणु
+		हाल AMDGPU_UCODE_ID_SDMA0:
+		हाल AMDGPU_UCODE_ID_SDMA1:
+		हाल AMDGPU_UCODE_ID_SDMA2:
+		हाल AMDGPU_UCODE_ID_SDMA3:
+		हाल AMDGPU_UCODE_ID_SDMA4:
+		हाल AMDGPU_UCODE_ID_SDMA5:
+		हाल AMDGPU_UCODE_ID_SDMA6:
+		हाल AMDGPU_UCODE_ID_SDMA7:
+		हाल AMDGPU_UCODE_ID_CP_MEC1:
+		हाल AMDGPU_UCODE_ID_CP_MEC1_JT:
+		हाल AMDGPU_UCODE_ID_RLC_RESTORE_LIST_CNTL:
+		हाल AMDGPU_UCODE_ID_RLC_RESTORE_LIST_GPM_MEM:
+		हाल AMDGPU_UCODE_ID_RLC_RESTORE_LIST_SRM_MEM:
+		हाल AMDGPU_UCODE_ID_RLC_G:
 			ucode_list[ucode_count++] = ucode;
-			break;
-		default:
-			break;
-		};
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण;
+	पूर्ण
 
 	/* Reinit NBIF block */
 	cmn_block =
 		amdgpu_device_ip_get_ip_block(adev, AMD_IP_BLOCK_TYPE_COMMON);
-	if (unlikely(!cmn_block)) {
+	अगर (unlikely(!cmn_block)) अणु
 		dev_err(adev->dev, "Failed to get BIF handle\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	r = cmn_block->version->funcs->resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* Reinit GFXHUB */
 	adev->gfxhub.funcs->init(adev);
 	r = adev->gfxhub.funcs->gart_enable(adev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(adev->dev, "GFXHUB gart reenable failed after reset\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	/* Reload GFX firmware */
 	r = psp_load_fw_list(&adev->psp, ucode_list, ucode_count);
-	if (r) {
+	अगर (r) अणु
 		dev_err(adev->dev, "GFX ucode load failed after reset\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	/* Resume RLC, FW needs RLC alive to complete reset process */
 	adev->gfx.rlc.funcs->resume(adev);
 
-	/* Wait for FW reset event complete */
-	r = smu_wait_for_event(adev, SMU_EVENT_RESET_COMPLETE, 0);
-	if (r) {
+	/* Wait क्रम FW reset event complete */
+	r = smu_रुको_क्रम_event(adev, SMU_EVENT_RESET_COMPLETE, 0);
+	अगर (r) अणु
 		dev_err(adev->dev,
 			"Failed to get response from firmware after reset\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	for (i = 0; i < adev->num_ip_blocks; i++) {
-		if (!(adev->ip_blocks[i].version->type ==
+	क्रम (i = 0; i < adev->num_ip_blocks; i++) अणु
+		अगर (!(adev->ip_blocks[i].version->type ==
 			      AMD_IP_BLOCK_TYPE_GFX ||
 		      adev->ip_blocks[i].version->type ==
 			      AMD_IP_BLOCK_TYPE_SDMA))
-			continue;
+			जारी;
 		r = adev->ip_blocks[i].version->funcs->resume(adev);
-		if (r) {
+		अगर (r) अणु
 			dev_err(adev->dev,
 				"resume of IP block <%s> failed %d\n",
 				adev->ip_blocks[i].version->funcs->name, r);
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		adev->ip_blocks[i].status.hw = true;
-	}
+	पूर्ण
 
-	for (i = 0; i < adev->num_ip_blocks; i++) {
-		if (!(adev->ip_blocks[i].version->type ==
+	क्रम (i = 0; i < adev->num_ip_blocks; i++) अणु
+		अगर (!(adev->ip_blocks[i].version->type ==
 			      AMD_IP_BLOCK_TYPE_GFX ||
 		      adev->ip_blocks[i].version->type ==
 			      AMD_IP_BLOCK_TYPE_SDMA ||
 		      adev->ip_blocks[i].version->type ==
 			      AMD_IP_BLOCK_TYPE_COMMON))
-			continue;
+			जारी;
 
-		if (adev->ip_blocks[i].version->funcs->late_init) {
+		अगर (adev->ip_blocks[i].version->funcs->late_init) अणु
 			r = adev->ip_blocks[i].version->funcs->late_init(
-				(void *)adev);
-			if (r) {
+				(व्योम *)adev);
+			अगर (r) अणु
 				dev_err(adev->dev,
 					"late_init of IP block <%s> failed %d after reset\n",
 					adev->ip_blocks[i].version->funcs->name,
 					r);
-				return r;
-			}
-		}
+				वापस r;
+			पूर्ण
+		पूर्ण
 		adev->ip_blocks[i].status.late_initialized = true;
-	}
+	पूर्ण
 
 	amdgpu_device_set_cg_state(adev, AMD_CG_STATE_GATE);
 	amdgpu_device_set_pg_state(adev, AMD_PG_STATE_GATE);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int
-aldebaran_mode2_restore_hwcontext(struct amdgpu_reset_control *reset_ctl,
-				  struct amdgpu_reset_context *reset_context)
-{
-	int r;
-	struct amdgpu_device *tmp_adev = NULL;
+अटल पूर्णांक
+aldebaran_mode2_restore_hwcontext(काष्ठा amdgpu_reset_control *reset_ctl,
+				  काष्ठा amdgpu_reset_context *reset_context)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *पंचांगp_adev = शून्य;
 
-	if (reset_context->hive == NULL) {
-		/* Wrong context, return error */
-		return -EINVAL;
-	}
+	अगर (reset_context->hive == शून्य) अणु
+		/* Wrong context, वापस error */
+		वापस -EINVAL;
+	पूर्ण
 
-	list_for_each_entry(tmp_adev, &reset_context->hive->device_list,
-			     gmc.xgmi.head) {
-		dev_info(tmp_adev->dev,
+	list_क्रम_each_entry(पंचांगp_adev, &reset_context->hive->device_list,
+			     gmc.xgmi.head) अणु
+		dev_info(पंचांगp_adev->dev,
 			 "GPU reset succeeded, trying to resume\n");
-		r = aldebaran_mode2_restore_ip(tmp_adev);
-		if (r)
-			goto end;
+		r = aldebaran_mode2_restore_ip(पंचांगp_adev);
+		अगर (r)
+			जाओ end;
 
 		/*
-		 * Add this ASIC as tracked as reset was already
+		 * Add this ASIC as tracked as reset was alपढ़ोy
 		 * complete successfully.
 		 */
-		amdgpu_register_gpu_instance(tmp_adev);
+		amdgpu_रेजिस्टर_gpu_instance(पंचांगp_adev);
 
 		/* Resume RAS */
-		amdgpu_ras_resume(tmp_adev);
+		amdgpu_ras_resume(पंचांगp_adev);
 
 		/* Update PSP FW topology after reset */
-		if (reset_context->hive &&
-		    tmp_adev->gmc.xgmi.num_physical_nodes > 1)
+		अगर (reset_context->hive &&
+		    पंचांगp_adev->gmc.xgmi.num_physical_nodes > 1)
 			r = amdgpu_xgmi_update_topology(reset_context->hive,
-							tmp_adev);
+							पंचांगp_adev);
 
-		if (!r) {
-			amdgpu_irq_gpu_reset_resume_helper(tmp_adev);
+		अगर (!r) अणु
+			amdgpu_irq_gpu_reset_resume_helper(पंचांगp_adev);
 
-			r = amdgpu_ib_ring_tests(tmp_adev);
-			if (r) {
-				dev_err(tmp_adev->dev,
+			r = amdgpu_ib_ring_tests(पंचांगp_adev);
+			अगर (r) अणु
+				dev_err(पंचांगp_adev->dev,
 					"ib ring test failed (%d).\n", r);
 				r = -EAGAIN;
-				tmp_adev->asic_reset_res = r;
-				goto end;
-			}
-		}
-	}
+				पंचांगp_adev->asic_reset_res = r;
+				जाओ end;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 end:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static struct amdgpu_reset_handler aldebaran_mode2_handler = {
+अटल काष्ठा amdgpu_reset_handler aldebaran_mode2_handler = अणु
 	.reset_method		= AMD_RESET_METHOD_MODE2,
-	.prepare_env		= NULL,
+	.prepare_env		= शून्य,
 	.prepare_hwcontext	= aldebaran_mode2_prepare_hwcontext,
-	.perform_reset		= aldebaran_mode2_perform_reset,
+	.perक्रमm_reset		= aldebaran_mode2_perक्रमm_reset,
 	.restore_hwcontext	= aldebaran_mode2_restore_hwcontext,
-	.restore_env		= NULL,
-	.do_reset		= aldebaran_mode2_reset,
-};
+	.restore_env		= शून्य,
+	.करो_reset		= aldebaran_mode2_reset,
+पूर्ण;
 
-int aldebaran_reset_init(struct amdgpu_device *adev)
-{
-	struct amdgpu_reset_control *reset_ctl;
+पूर्णांक aldebaran_reset_init(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_reset_control *reset_ctl;
 
-	reset_ctl = kzalloc(sizeof(*reset_ctl), GFP_KERNEL);
-	if (!reset_ctl)
-		return -ENOMEM;
+	reset_ctl = kzalloc(माप(*reset_ctl), GFP_KERNEL);
+	अगर (!reset_ctl)
+		वापस -ENOMEM;
 
 	reset_ctl->handle = adev;
 	reset_ctl->async_reset = aldebaran_async_reset;
@@ -396,12 +397,12 @@ int aldebaran_reset_init(struct amdgpu_device *adev)
 
 	adev->reset_cntl = reset_ctl;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aldebaran_reset_fini(struct amdgpu_device *adev)
-{
-	kfree(adev->reset_cntl);
-	adev->reset_cntl = NULL;
-	return 0;
-}
+पूर्णांक aldebaran_reset_fini(काष्ठा amdgpu_device *adev)
+अणु
+	kमुक्त(adev->reset_cntl);
+	adev->reset_cntl = शून्य;
+	वापस 0;
+पूर्ण

@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the  BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the  BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
- *		Routing netlink socket interface: protocol independent part.
+ *		Routing netlink socket पूर्णांकerface: protocol independent part.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
@@ -12,874 +13,874 @@
  *	Vitaly E. Lavrov		RTA_OK arithmetics was wrong.
  */
 
-#include <linux/bitops.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/kernel.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/capability.h>
-#include <linux/skbuff.h>
-#include <linux/init.h>
-#include <linux/security.h>
-#include <linux/mutex.h>
-#include <linux/if_addr.h>
-#include <linux/if_bridge.h>
-#include <linux/if_vlan.h>
-#include <linux/pci.h>
-#include <linux/etherdevice.h>
-#include <linux/bpf.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/init.h>
+#समावेश <linux/security.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/अगर_addr.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/bpf.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <net/ip.h>
-#include <net/protocol.h>
-#include <net/arp.h>
-#include <net/route.h>
-#include <net/udp.h>
-#include <net/tcp.h>
-#include <net/sock.h>
-#include <net/pkt_sched.h>
-#include <net/fib_rules.h>
-#include <net/rtnetlink.h>
-#include <net/net_namespace.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/ip.h>
+#समावेश <net/protocol.h>
+#समावेश <net/arp.h>
+#समावेश <net/route.h>
+#समावेश <net/udp.h>
+#समावेश <net/tcp.h>
+#समावेश <net/sock.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/fib_rules.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/net_namespace.h>
 
-#define RTNL_MAX_TYPE		50
-#define RTNL_SLAVE_MAX_TYPE	40
+#घोषणा RTNL_MAX_TYPE		50
+#घोषणा RTNL_SLAVE_MAX_TYPE	40
 
-struct rtnl_link {
-	rtnl_doit_func		doit;
+काष्ठा rtnl_link अणु
+	rtnl_करोit_func		करोit;
 	rtnl_dumpit_func	dumpit;
-	struct module		*owner;
-	unsigned int		flags;
-	struct rcu_head		rcu;
-};
+	काष्ठा module		*owner;
+	अचिन्हित पूर्णांक		flags;
+	काष्ठा rcu_head		rcu;
+पूर्ण;
 
-static DEFINE_MUTEX(rtnl_mutex);
+अटल DEFINE_MUTEX(rtnl_mutex);
 
-void rtnl_lock(void)
-{
+व्योम rtnl_lock(व्योम)
+अणु
 	mutex_lock(&rtnl_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL(rtnl_lock);
 
-int rtnl_lock_killable(void)
-{
-	return mutex_lock_killable(&rtnl_mutex);
-}
-EXPORT_SYMBOL(rtnl_lock_killable);
+पूर्णांक rtnl_lock_समाप्तable(व्योम)
+अणु
+	वापस mutex_lock_समाप्तable(&rtnl_mutex);
+पूर्ण
+EXPORT_SYMBOL(rtnl_lock_समाप्तable);
 
-static struct sk_buff *defer_kfree_skb_list;
-void rtnl_kfree_skbs(struct sk_buff *head, struct sk_buff *tail)
-{
-	if (head && tail) {
-		tail->next = defer_kfree_skb_list;
-		defer_kfree_skb_list = head;
-	}
-}
-EXPORT_SYMBOL(rtnl_kfree_skbs);
+अटल काष्ठा sk_buff *defer_kमुक्त_skb_list;
+व्योम rtnl_kमुक्त_skbs(काष्ठा sk_buff *head, काष्ठा sk_buff *tail)
+अणु
+	अगर (head && tail) अणु
+		tail->next = defer_kमुक्त_skb_list;
+		defer_kमुक्त_skb_list = head;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(rtnl_kमुक्त_skbs);
 
-void __rtnl_unlock(void)
-{
-	struct sk_buff *head = defer_kfree_skb_list;
+व्योम __rtnl_unlock(व्योम)
+अणु
+	काष्ठा sk_buff *head = defer_kमुक्त_skb_list;
 
-	defer_kfree_skb_list = NULL;
+	defer_kमुक्त_skb_list = शून्य;
 
 	mutex_unlock(&rtnl_mutex);
 
-	while (head) {
-		struct sk_buff *next = head->next;
+	जबतक (head) अणु
+		काष्ठा sk_buff *next = head->next;
 
-		kfree_skb(head);
+		kमुक्त_skb(head);
 		cond_resched();
 		head = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void rtnl_unlock(void)
-{
-	/* This fellow will unlock it for us. */
-	netdev_run_todo();
-}
+व्योम rtnl_unlock(व्योम)
+अणु
+	/* This fellow will unlock it क्रम us. */
+	netdev_run_toकरो();
+पूर्ण
 EXPORT_SYMBOL(rtnl_unlock);
 
-int rtnl_trylock(void)
-{
-	return mutex_trylock(&rtnl_mutex);
-}
+पूर्णांक rtnl_trylock(व्योम)
+अणु
+	वापस mutex_trylock(&rtnl_mutex);
+पूर्ण
 EXPORT_SYMBOL(rtnl_trylock);
 
-int rtnl_is_locked(void)
-{
-	return mutex_is_locked(&rtnl_mutex);
-}
+पूर्णांक rtnl_is_locked(व्योम)
+अणु
+	वापस mutex_is_locked(&rtnl_mutex);
+पूर्ण
 EXPORT_SYMBOL(rtnl_is_locked);
 
 bool refcount_dec_and_rtnl_lock(refcount_t *r)
-{
-	return refcount_dec_and_mutex_lock(r, &rtnl_mutex);
-}
+अणु
+	वापस refcount_dec_and_mutex_lock(r, &rtnl_mutex);
+पूर्ण
 EXPORT_SYMBOL(refcount_dec_and_rtnl_lock);
 
-#ifdef CONFIG_PROVE_LOCKING
-bool lockdep_rtnl_is_held(void)
-{
-	return lockdep_is_held(&rtnl_mutex);
-}
+#अगर_घोषित CONFIG_PROVE_LOCKING
+bool lockdep_rtnl_is_held(व्योम)
+अणु
+	वापस lockdep_is_held(&rtnl_mutex);
+पूर्ण
 EXPORT_SYMBOL(lockdep_rtnl_is_held);
-#endif /* #ifdef CONFIG_PROVE_LOCKING */
+#पूर्ण_अगर /* #अगर_घोषित CONFIG_PROVE_LOCKING */
 
-static struct rtnl_link __rcu *__rcu *rtnl_msg_handlers[RTNL_FAMILY_MAX + 1];
+अटल काष्ठा rtnl_link __rcu *__rcu *rtnl_msg_handlers[RTNL_FAMILY_MAX + 1];
 
-static inline int rtm_msgindex(int msgtype)
-{
-	int msgindex = msgtype - RTM_BASE;
+अटल अंतरभूत पूर्णांक rपंचांग_msgindex(पूर्णांक msgtype)
+अणु
+	पूर्णांक msgindex = msgtype - RTM_BASE;
 
 	/*
-	 * msgindex < 0 implies someone tried to register a netlink
+	 * msgindex < 0 implies someone tried to रेजिस्टर a netlink
 	 * control code. msgindex >= RTM_NR_MSGTYPES may indicate that
 	 * the message type has not been added to linux/rtnetlink.h
 	 */
 	BUG_ON(msgindex < 0 || msgindex >= RTM_NR_MSGTYPES);
 
-	return msgindex;
-}
+	वापस msgindex;
+पूर्ण
 
-static struct rtnl_link *rtnl_get_link(int protocol, int msgtype)
-{
-	struct rtnl_link __rcu **tab;
+अटल काष्ठा rtnl_link *rtnl_get_link(पूर्णांक protocol, पूर्णांक msgtype)
+अणु
+	काष्ठा rtnl_link __rcu **tab;
 
-	if (protocol >= ARRAY_SIZE(rtnl_msg_handlers))
+	अगर (protocol >= ARRAY_SIZE(rtnl_msg_handlers))
 		protocol = PF_UNSPEC;
 
 	tab = rcu_dereference_rtnl(rtnl_msg_handlers[protocol]);
-	if (!tab)
+	अगर (!tab)
 		tab = rcu_dereference_rtnl(rtnl_msg_handlers[PF_UNSPEC]);
 
-	return rcu_dereference_rtnl(tab[msgtype]);
-}
+	वापस rcu_dereference_rtnl(tab[msgtype]);
+पूर्ण
 
-static int rtnl_register_internal(struct module *owner,
-				  int protocol, int msgtype,
-				  rtnl_doit_func doit, rtnl_dumpit_func dumpit,
-				  unsigned int flags)
-{
-	struct rtnl_link *link, *old;
-	struct rtnl_link __rcu **tab;
-	int msgindex;
-	int ret = -ENOBUFS;
+अटल पूर्णांक rtnl_रेजिस्टर_पूर्णांकernal(काष्ठा module *owner,
+				  पूर्णांक protocol, पूर्णांक msgtype,
+				  rtnl_करोit_func करोit, rtnl_dumpit_func dumpit,
+				  अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा rtnl_link *link, *old;
+	काष्ठा rtnl_link __rcu **tab;
+	पूर्णांक msgindex;
+	पूर्णांक ret = -ENOBUFS;
 
 	BUG_ON(protocol < 0 || protocol > RTNL_FAMILY_MAX);
-	msgindex = rtm_msgindex(msgtype);
+	msgindex = rपंचांग_msgindex(msgtype);
 
 	rtnl_lock();
 	tab = rtnl_dereference(rtnl_msg_handlers[protocol]);
-	if (tab == NULL) {
-		tab = kcalloc(RTM_NR_MSGTYPES, sizeof(void *), GFP_KERNEL);
-		if (!tab)
-			goto unlock;
+	अगर (tab == शून्य) अणु
+		tab = kसुस्मृति(RTM_NR_MSGTYPES, माप(व्योम *), GFP_KERNEL);
+		अगर (!tab)
+			जाओ unlock;
 
 		/* ensures we see the 0 stores */
-		rcu_assign_pointer(rtnl_msg_handlers[protocol], tab);
-	}
+		rcu_assign_poपूर्णांकer(rtnl_msg_handlers[protocol], tab);
+	पूर्ण
 
 	old = rtnl_dereference(tab[msgindex]);
-	if (old) {
-		link = kmemdup(old, sizeof(*old), GFP_KERNEL);
-		if (!link)
-			goto unlock;
-	} else {
-		link = kzalloc(sizeof(*link), GFP_KERNEL);
-		if (!link)
-			goto unlock;
-	}
+	अगर (old) अणु
+		link = kmemdup(old, माप(*old), GFP_KERNEL);
+		अगर (!link)
+			जाओ unlock;
+	पूर्ण अन्यथा अणु
+		link = kzalloc(माप(*link), GFP_KERNEL);
+		अगर (!link)
+			जाओ unlock;
+	पूर्ण
 
 	WARN_ON(link->owner && link->owner != owner);
 	link->owner = owner;
 
-	WARN_ON(doit && link->doit && link->doit != doit);
-	if (doit)
-		link->doit = doit;
+	WARN_ON(करोit && link->करोit && link->करोit != करोit);
+	अगर (करोit)
+		link->करोit = करोit;
 	WARN_ON(dumpit && link->dumpit && link->dumpit != dumpit);
-	if (dumpit)
+	अगर (dumpit)
 		link->dumpit = dumpit;
 
 	link->flags |= flags;
 
 	/* publish protocol:msgtype */
-	rcu_assign_pointer(tab[msgindex], link);
+	rcu_assign_poपूर्णांकer(tab[msgindex], link);
 	ret = 0;
-	if (old)
-		kfree_rcu(old, rcu);
+	अगर (old)
+		kमुक्त_rcu(old, rcu);
 unlock:
 	rtnl_unlock();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * rtnl_register_module - Register a rtnetlink message type
+ * rtnl_रेजिस्टर_module - Register a rtnetlink message type
  *
- * @owner: module registering the hook (THIS_MODULE)
+ * @owner: module रेजिस्टरing the hook (THIS_MODULE)
  * @protocol: Protocol family or PF_UNSPEC
  * @msgtype: rtnetlink message type
- * @doit: Function pointer called for each request message
- * @dumpit: Function pointer called for each dump request (NLM_F_DUMP) message
- * @flags: rtnl_link_flags to modifiy behaviour of doit/dumpit functions
+ * @करोit: Function poपूर्णांकer called क्रम each request message
+ * @dumpit: Function poपूर्णांकer called क्रम each dump request (NLM_F_DUMP) message
+ * @flags: rtnl_link_flags to modअगरiy behaviour of करोit/dumpit functions
  *
- * Like rtnl_register, but for use by removable modules.
+ * Like rtnl_रेजिस्टर, but क्रम use by removable modules.
  */
-int rtnl_register_module(struct module *owner,
-			 int protocol, int msgtype,
-			 rtnl_doit_func doit, rtnl_dumpit_func dumpit,
-			 unsigned int flags)
-{
-	return rtnl_register_internal(owner, protocol, msgtype,
-				      doit, dumpit, flags);
-}
-EXPORT_SYMBOL_GPL(rtnl_register_module);
+पूर्णांक rtnl_रेजिस्टर_module(काष्ठा module *owner,
+			 पूर्णांक protocol, पूर्णांक msgtype,
+			 rtnl_करोit_func करोit, rtnl_dumpit_func dumpit,
+			 अचिन्हित पूर्णांक flags)
+अणु
+	वापस rtnl_रेजिस्टर_पूर्णांकernal(owner, protocol, msgtype,
+				      करोit, dumpit, flags);
+पूर्ण
+EXPORT_SYMBOL_GPL(rtnl_रेजिस्टर_module);
 
 /**
- * rtnl_register - Register a rtnetlink message type
+ * rtnl_रेजिस्टर - Register a rtnetlink message type
  * @protocol: Protocol family or PF_UNSPEC
  * @msgtype: rtnetlink message type
- * @doit: Function pointer called for each request message
- * @dumpit: Function pointer called for each dump request (NLM_F_DUMP) message
- * @flags: rtnl_link_flags to modifiy behaviour of doit/dumpit functions
+ * @करोit: Function poपूर्णांकer called क्रम each request message
+ * @dumpit: Function poपूर्णांकer called क्रम each dump request (NLM_F_DUMP) message
+ * @flags: rtnl_link_flags to modअगरiy behaviour of करोit/dumpit functions
  *
- * Registers the specified function pointers (at least one of them has
- * to be non-NULL) to be called whenever a request message for the
- * specified protocol family and message type is received.
+ * Registers the specअगरied function poपूर्णांकers (at least one of them has
+ * to be non-शून्य) to be called whenever a request message क्रम the
+ * specअगरied protocol family and message type is received.
  *
  * The special protocol family PF_UNSPEC may be used to define fallback
- * function pointers for the case when no entry for the specific protocol
+ * function poपूर्णांकers क्रम the हाल when no entry क्रम the specअगरic protocol
  * family exists.
  */
-void rtnl_register(int protocol, int msgtype,
-		   rtnl_doit_func doit, rtnl_dumpit_func dumpit,
-		   unsigned int flags)
-{
-	int err;
+व्योम rtnl_रेजिस्टर(पूर्णांक protocol, पूर्णांक msgtype,
+		   rtnl_करोit_func करोit, rtnl_dumpit_func dumpit,
+		   अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक err;
 
-	err = rtnl_register_internal(NULL, protocol, msgtype, doit, dumpit,
+	err = rtnl_रेजिस्टर_पूर्णांकernal(शून्य, protocol, msgtype, करोit, dumpit,
 				     flags);
-	if (err)
+	अगर (err)
 		pr_err("Unable to register rtnetlink message handler, "
 		       "protocol = %d, message type = %d\n", protocol, msgtype);
-}
+पूर्ण
 
 /**
- * rtnl_unregister - Unregister a rtnetlink message type
+ * rtnl_unरेजिस्टर - Unरेजिस्टर a rtnetlink message type
  * @protocol: Protocol family or PF_UNSPEC
  * @msgtype: rtnetlink message type
  *
  * Returns 0 on success or a negative error code.
  */
-int rtnl_unregister(int protocol, int msgtype)
-{
-	struct rtnl_link __rcu **tab;
-	struct rtnl_link *link;
-	int msgindex;
+पूर्णांक rtnl_unरेजिस्टर(पूर्णांक protocol, पूर्णांक msgtype)
+अणु
+	काष्ठा rtnl_link __rcu **tab;
+	काष्ठा rtnl_link *link;
+	पूर्णांक msgindex;
 
 	BUG_ON(protocol < 0 || protocol > RTNL_FAMILY_MAX);
-	msgindex = rtm_msgindex(msgtype);
+	msgindex = rपंचांग_msgindex(msgtype);
 
 	rtnl_lock();
 	tab = rtnl_dereference(rtnl_msg_handlers[protocol]);
-	if (!tab) {
+	अगर (!tab) अणु
 		rtnl_unlock();
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	link = rtnl_dereference(tab[msgindex]);
-	rcu_assign_pointer(tab[msgindex], NULL);
+	rcu_assign_poपूर्णांकer(tab[msgindex], शून्य);
 	rtnl_unlock();
 
-	kfree_rcu(link, rcu);
+	kमुक्त_rcu(link, rcu);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(rtnl_unregister);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(rtnl_unरेजिस्टर);
 
 /**
- * rtnl_unregister_all - Unregister all rtnetlink message type of a protocol
+ * rtnl_unरेजिस्टर_all - Unरेजिस्टर all rtnetlink message type of a protocol
  * @protocol : Protocol family or PF_UNSPEC
  *
- * Identical to calling rtnl_unregster() for all registered message types
+ * Identical to calling rtnl_unregster() क्रम all रेजिस्टरed message types
  * of a certain protocol family.
  */
-void rtnl_unregister_all(int protocol)
-{
-	struct rtnl_link __rcu **tab;
-	struct rtnl_link *link;
-	int msgindex;
+व्योम rtnl_unरेजिस्टर_all(पूर्णांक protocol)
+अणु
+	काष्ठा rtnl_link __rcu **tab;
+	काष्ठा rtnl_link *link;
+	पूर्णांक msgindex;
 
 	BUG_ON(protocol < 0 || protocol > RTNL_FAMILY_MAX);
 
 	rtnl_lock();
 	tab = rtnl_dereference(rtnl_msg_handlers[protocol]);
-	if (!tab) {
+	अगर (!tab) अणु
 		rtnl_unlock();
-		return;
-	}
-	RCU_INIT_POINTER(rtnl_msg_handlers[protocol], NULL);
-	for (msgindex = 0; msgindex < RTM_NR_MSGTYPES; msgindex++) {
+		वापस;
+	पूर्ण
+	RCU_INIT_POINTER(rtnl_msg_handlers[protocol], शून्य);
+	क्रम (msgindex = 0; msgindex < RTM_NR_MSGTYPES; msgindex++) अणु
 		link = rtnl_dereference(tab[msgindex]);
-		if (!link)
-			continue;
+		अगर (!link)
+			जारी;
 
-		rcu_assign_pointer(tab[msgindex], NULL);
-		kfree_rcu(link, rcu);
-	}
+		rcu_assign_poपूर्णांकer(tab[msgindex], शून्य);
+		kमुक्त_rcu(link, rcu);
+	पूर्ण
 	rtnl_unlock();
 
 	synchronize_net();
 
-	kfree(tab);
-}
-EXPORT_SYMBOL_GPL(rtnl_unregister_all);
+	kमुक्त(tab);
+पूर्ण
+EXPORT_SYMBOL_GPL(rtnl_unरेजिस्टर_all);
 
-static LIST_HEAD(link_ops);
+अटल LIST_HEAD(link_ops);
 
-static const struct rtnl_link_ops *rtnl_link_ops_get(const char *kind)
-{
-	const struct rtnl_link_ops *ops;
+अटल स्थिर काष्ठा rtnl_link_ops *rtnl_link_ops_get(स्थिर अक्षर *kind)
+अणु
+	स्थिर काष्ठा rtnl_link_ops *ops;
 
-	list_for_each_entry(ops, &link_ops, list) {
-		if (!strcmp(ops->kind, kind))
-			return ops;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(ops, &link_ops, list) अणु
+		अगर (!म_भेद(ops->kind, kind))
+			वापस ops;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * __rtnl_link_register - Register rtnl_link_ops with rtnetlink.
- * @ops: struct rtnl_link_ops * to register
+ * __rtnl_link_रेजिस्टर - Register rtnl_link_ops with rtnetlink.
+ * @ops: काष्ठा rtnl_link_ops * to रेजिस्टर
  *
  * The caller must hold the rtnl_mutex. This function should be used
  * by drivers that create devices during module initialization. It
- * must be called before registering the devices.
+ * must be called beक्रमe रेजिस्टरing the devices.
  *
  * Returns 0 on success or a negative error code.
  */
-int __rtnl_link_register(struct rtnl_link_ops *ops)
-{
-	if (rtnl_link_ops_get(ops->kind))
-		return -EEXIST;
+पूर्णांक __rtnl_link_रेजिस्टर(काष्ठा rtnl_link_ops *ops)
+अणु
+	अगर (rtnl_link_ops_get(ops->kind))
+		वापस -EEXIST;
 
-	/* The check for setup is here because if ops
-	 * does not have that filled up, it is not possible
-	 * to use the ops for creating device. So do not
+	/* The check क्रम setup is here because अगर ops
+	 * करोes not have that filled up, it is not possible
+	 * to use the ops क्रम creating device. So करो not
 	 * fill up dellink as well. That disables rtnl_dellink.
 	 */
-	if (ops->setup && !ops->dellink)
-		ops->dellink = unregister_netdevice_queue;
+	अगर (ops->setup && !ops->dellink)
+		ops->dellink = unरेजिस्टर_netdevice_queue;
 
 	list_add_tail(&ops->list, &link_ops);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(__rtnl_link_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(__rtnl_link_रेजिस्टर);
 
 /**
- * rtnl_link_register - Register rtnl_link_ops with rtnetlink.
- * @ops: struct rtnl_link_ops * to register
+ * rtnl_link_रेजिस्टर - Register rtnl_link_ops with rtnetlink.
+ * @ops: काष्ठा rtnl_link_ops * to रेजिस्टर
  *
  * Returns 0 on success or a negative error code.
  */
-int rtnl_link_register(struct rtnl_link_ops *ops)
-{
-	int err;
+पूर्णांक rtnl_link_रेजिस्टर(काष्ठा rtnl_link_ops *ops)
+अणु
+	पूर्णांक err;
 
-	/* Sanity-check max sizes to avoid stack buffer overflow. */
-	if (WARN_ON(ops->maxtype > RTNL_MAX_TYPE ||
+	/* Sanity-check max sizes to aव्योम stack buffer overflow. */
+	अगर (WARN_ON(ops->maxtype > RTNL_MAX_TYPE ||
 		    ops->slave_maxtype > RTNL_SLAVE_MAX_TYPE))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	rtnl_lock();
-	err = __rtnl_link_register(ops);
+	err = __rtnl_link_रेजिस्टर(ops);
 	rtnl_unlock();
-	return err;
-}
-EXPORT_SYMBOL_GPL(rtnl_link_register);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(rtnl_link_रेजिस्टर);
 
-static void __rtnl_kill_links(struct net *net, struct rtnl_link_ops *ops)
-{
-	struct net_device *dev;
-	LIST_HEAD(list_kill);
+अटल व्योम __rtnl_समाप्त_links(काष्ठा net *net, काष्ठा rtnl_link_ops *ops)
+अणु
+	काष्ठा net_device *dev;
+	LIST_HEAD(list_समाप्त);
 
-	for_each_netdev(net, dev) {
-		if (dev->rtnl_link_ops == ops)
-			ops->dellink(dev, &list_kill);
-	}
-	unregister_netdevice_many(&list_kill);
-}
+	क्रम_each_netdev(net, dev) अणु
+		अगर (dev->rtnl_link_ops == ops)
+			ops->dellink(dev, &list_समाप्त);
+	पूर्ण
+	unरेजिस्टर_netdevice_many(&list_समाप्त);
+पूर्ण
 
 /**
- * __rtnl_link_unregister - Unregister rtnl_link_ops from rtnetlink.
- * @ops: struct rtnl_link_ops * to unregister
+ * __rtnl_link_unरेजिस्टर - Unरेजिस्टर rtnl_link_ops from rtnetlink.
+ * @ops: काष्ठा rtnl_link_ops * to unरेजिस्टर
  *
  * The caller must hold the rtnl_mutex and guarantee net_namespace_list
- * integrity (hold pernet_ops_rwsem for writing to close the race
+ * पूर्णांकegrity (hold pernet_ops_rwsem क्रम writing to बंद the race
  * with setup_net() and cleanup_net()).
  */
-void __rtnl_link_unregister(struct rtnl_link_ops *ops)
-{
-	struct net *net;
+व्योम __rtnl_link_unरेजिस्टर(काष्ठा rtnl_link_ops *ops)
+अणु
+	काष्ठा net *net;
 
-	for_each_net(net) {
-		__rtnl_kill_links(net, ops);
-	}
+	क्रम_each_net(net) अणु
+		__rtnl_समाप्त_links(net, ops);
+	पूर्ण
 	list_del(&ops->list);
-}
-EXPORT_SYMBOL_GPL(__rtnl_link_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(__rtnl_link_unरेजिस्टर);
 
 /* Return with the rtnl_lock held when there are no network
- * devices unregistering in any network namespace.
+ * devices unरेजिस्टरing in any network namespace.
  */
-static void rtnl_lock_unregistering_all(void)
-{
-	struct net *net;
-	bool unregistering;
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+अटल व्योम rtnl_lock_unरेजिस्टरing_all(व्योम)
+अणु
+	काष्ठा net *net;
+	bool unरेजिस्टरing;
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
 
-	add_wait_queue(&netdev_unregistering_wq, &wait);
-	for (;;) {
-		unregistering = false;
+	add_रुको_queue(&netdev_unरेजिस्टरing_wq, &रुको);
+	क्रम (;;) अणु
+		unरेजिस्टरing = false;
 		rtnl_lock();
-		/* We held write locked pernet_ops_rwsem, and parallel
+		/* We held ग_लिखो locked pernet_ops_rwsem, and parallel
 		 * setup_net() and cleanup_net() are not possible.
 		 */
-		for_each_net(net) {
-			if (net->dev_unreg_count > 0) {
-				unregistering = true;
-				break;
-			}
-		}
-		if (!unregistering)
-			break;
+		क्रम_each_net(net) अणु
+			अगर (net->dev_unreg_count > 0) अणु
+				unरेजिस्टरing = true;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (!unरेजिस्टरing)
+			अवरोध;
 		__rtnl_unlock();
 
-		wait_woken(&wait, TASK_UNINTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
-	}
-	remove_wait_queue(&netdev_unregistering_wq, &wait);
-}
+		रुको_woken(&रुको, TASK_UNINTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
+	पूर्ण
+	हटाओ_रुको_queue(&netdev_unरेजिस्टरing_wq, &रुको);
+पूर्ण
 
 /**
- * rtnl_link_unregister - Unregister rtnl_link_ops from rtnetlink.
- * @ops: struct rtnl_link_ops * to unregister
+ * rtnl_link_unरेजिस्टर - Unरेजिस्टर rtnl_link_ops from rtnetlink.
+ * @ops: काष्ठा rtnl_link_ops * to unरेजिस्टर
  */
-void rtnl_link_unregister(struct rtnl_link_ops *ops)
-{
+व्योम rtnl_link_unरेजिस्टर(काष्ठा rtnl_link_ops *ops)
+अणु
 	/* Close the race with setup_net() and cleanup_net() */
-	down_write(&pernet_ops_rwsem);
-	rtnl_lock_unregistering_all();
-	__rtnl_link_unregister(ops);
+	करोwn_ग_लिखो(&pernet_ops_rwsem);
+	rtnl_lock_unरेजिस्टरing_all();
+	__rtnl_link_unरेजिस्टर(ops);
 	rtnl_unlock();
-	up_write(&pernet_ops_rwsem);
-}
-EXPORT_SYMBOL_GPL(rtnl_link_unregister);
+	up_ग_लिखो(&pernet_ops_rwsem);
+पूर्ण
+EXPORT_SYMBOL_GPL(rtnl_link_unरेजिस्टर);
 
-static size_t rtnl_link_get_slave_info_data_size(const struct net_device *dev)
-{
-	struct net_device *master_dev;
-	const struct rtnl_link_ops *ops;
-	size_t size = 0;
+अटल माप_प्रकार rtnl_link_get_slave_info_data_size(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device *master_dev;
+	स्थिर काष्ठा rtnl_link_ops *ops;
+	माप_प्रकार size = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	master_dev = netdev_master_upper_dev_get_rcu((struct net_device *)dev);
-	if (!master_dev)
-		goto out;
+	master_dev = netdev_master_upper_dev_get_rcu((काष्ठा net_device *)dev);
+	अगर (!master_dev)
+		जाओ out;
 
 	ops = master_dev->rtnl_link_ops;
-	if (!ops || !ops->get_slave_size)
-		goto out;
+	अगर (!ops || !ops->get_slave_size)
+		जाओ out;
 	/* IFLA_INFO_SLAVE_DATA + nested data */
-	size = nla_total_size(sizeof(struct nlattr)) +
+	size = nla_total_size(माप(काष्ठा nlattr)) +
 	       ops->get_slave_size(master_dev, dev);
 
 out:
-	rcu_read_unlock();
-	return size;
-}
+	rcu_पढ़ो_unlock();
+	वापस size;
+पूर्ण
 
-static size_t rtnl_link_get_size(const struct net_device *dev)
-{
-	const struct rtnl_link_ops *ops = dev->rtnl_link_ops;
-	size_t size;
+अटल माप_प्रकार rtnl_link_get_size(स्थिर काष्ठा net_device *dev)
+अणु
+	स्थिर काष्ठा rtnl_link_ops *ops = dev->rtnl_link_ops;
+	माप_प्रकार size;
 
-	if (!ops)
-		return 0;
+	अगर (!ops)
+		वापस 0;
 
-	size = nla_total_size(sizeof(struct nlattr)) + /* IFLA_LINKINFO */
-	       nla_total_size(strlen(ops->kind) + 1);  /* IFLA_INFO_KIND */
+	size = nla_total_size(माप(काष्ठा nlattr)) + /* IFLA_LINKINFO */
+	       nla_total_size(म_माप(ops->kind) + 1);  /* IFLA_INFO_KIND */
 
-	if (ops->get_size)
+	अगर (ops->get_size)
 		/* IFLA_INFO_DATA + nested data */
-		size += nla_total_size(sizeof(struct nlattr)) +
+		size += nla_total_size(माप(काष्ठा nlattr)) +
 			ops->get_size(dev);
 
-	if (ops->get_xstats_size)
+	अगर (ops->get_xstats_size)
 		/* IFLA_INFO_XSTATS */
 		size += nla_total_size(ops->get_xstats_size(dev));
 
 	size += rtnl_link_get_slave_info_data_size(dev);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static LIST_HEAD(rtnl_af_ops);
+अटल LIST_HEAD(rtnl_af_ops);
 
-static const struct rtnl_af_ops *rtnl_af_lookup(const int family)
-{
-	const struct rtnl_af_ops *ops;
+अटल स्थिर काष्ठा rtnl_af_ops *rtnl_af_lookup(स्थिर पूर्णांक family)
+अणु
+	स्थिर काष्ठा rtnl_af_ops *ops;
 
-	list_for_each_entry_rcu(ops, &rtnl_af_ops, list) {
-		if (ops->family == family)
-			return ops;
-	}
+	list_क्रम_each_entry_rcu(ops, &rtnl_af_ops, list) अणु
+		अगर (ops->family == family)
+			वापस ops;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * rtnl_af_register - Register rtnl_af_ops with rtnetlink.
- * @ops: struct rtnl_af_ops * to register
+ * rtnl_af_रेजिस्टर - Register rtnl_af_ops with rtnetlink.
+ * @ops: काष्ठा rtnl_af_ops * to रेजिस्टर
  *
  * Returns 0 on success or a negative error code.
  */
-void rtnl_af_register(struct rtnl_af_ops *ops)
-{
+व्योम rtnl_af_रेजिस्टर(काष्ठा rtnl_af_ops *ops)
+अणु
 	rtnl_lock();
 	list_add_tail_rcu(&ops->list, &rtnl_af_ops);
 	rtnl_unlock();
-}
-EXPORT_SYMBOL_GPL(rtnl_af_register);
+पूर्ण
+EXPORT_SYMBOL_GPL(rtnl_af_रेजिस्टर);
 
 /**
- * rtnl_af_unregister - Unregister rtnl_af_ops from rtnetlink.
- * @ops: struct rtnl_af_ops * to unregister
+ * rtnl_af_unरेजिस्टर - Unरेजिस्टर rtnl_af_ops from rtnetlink.
+ * @ops: काष्ठा rtnl_af_ops * to unरेजिस्टर
  */
-void rtnl_af_unregister(struct rtnl_af_ops *ops)
-{
+व्योम rtnl_af_unरेजिस्टर(काष्ठा rtnl_af_ops *ops)
+अणु
 	rtnl_lock();
 	list_del_rcu(&ops->list);
 	rtnl_unlock();
 
 	synchronize_rcu();
-}
-EXPORT_SYMBOL_GPL(rtnl_af_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(rtnl_af_unरेजिस्टर);
 
-static size_t rtnl_link_get_af_size(const struct net_device *dev,
+अटल माप_प्रकार rtnl_link_get_af_size(स्थिर काष्ठा net_device *dev,
 				    u32 ext_filter_mask)
-{
-	struct rtnl_af_ops *af_ops;
-	size_t size;
+अणु
+	काष्ठा rtnl_af_ops *af_ops;
+	माप_प्रकार size;
 
 	/* IFLA_AF_SPEC */
-	size = nla_total_size(sizeof(struct nlattr));
+	size = nla_total_size(माप(काष्ठा nlattr));
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(af_ops, &rtnl_af_ops, list) {
-		if (af_ops->get_link_af_size) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(af_ops, &rtnl_af_ops, list) अणु
+		अगर (af_ops->get_link_af_size) अणु
 			/* AF_* + nested data */
-			size += nla_total_size(sizeof(struct nlattr)) +
+			size += nla_total_size(माप(काष्ठा nlattr)) +
 				af_ops->get_link_af_size(dev, ext_filter_mask);
-		}
-	}
-	rcu_read_unlock();
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static bool rtnl_have_link_slave_info(const struct net_device *dev)
-{
-	struct net_device *master_dev;
+अटल bool rtnl_have_link_slave_info(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device *master_dev;
 	bool ret = false;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	master_dev = netdev_master_upper_dev_get_rcu((struct net_device *)dev);
-	if (master_dev && master_dev->rtnl_link_ops)
+	master_dev = netdev_master_upper_dev_get_rcu((काष्ठा net_device *)dev);
+	अगर (master_dev && master_dev->rtnl_link_ops)
 		ret = true;
-	rcu_read_unlock();
-	return ret;
-}
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
-static int rtnl_link_slave_info_fill(struct sk_buff *skb,
-				     const struct net_device *dev)
-{
-	struct net_device *master_dev;
-	const struct rtnl_link_ops *ops;
-	struct nlattr *slave_data;
-	int err;
+अटल पूर्णांक rtnl_link_slave_info_fill(काष्ठा sk_buff *skb,
+				     स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device *master_dev;
+	स्थिर काष्ठा rtnl_link_ops *ops;
+	काष्ठा nlattr *slave_data;
+	पूर्णांक err;
 
-	master_dev = netdev_master_upper_dev_get((struct net_device *) dev);
-	if (!master_dev)
-		return 0;
+	master_dev = netdev_master_upper_dev_get((काष्ठा net_device *) dev);
+	अगर (!master_dev)
+		वापस 0;
 	ops = master_dev->rtnl_link_ops;
-	if (!ops)
-		return 0;
-	if (nla_put_string(skb, IFLA_INFO_SLAVE_KIND, ops->kind) < 0)
-		return -EMSGSIZE;
-	if (ops->fill_slave_info) {
+	अगर (!ops)
+		वापस 0;
+	अगर (nla_put_string(skb, IFLA_INFO_SLAVE_KIND, ops->kind) < 0)
+		वापस -EMSGSIZE;
+	अगर (ops->fill_slave_info) अणु
 		slave_data = nla_nest_start_noflag(skb, IFLA_INFO_SLAVE_DATA);
-		if (!slave_data)
-			return -EMSGSIZE;
+		अगर (!slave_data)
+			वापस -EMSGSIZE;
 		err = ops->fill_slave_info(skb, master_dev, dev);
-		if (err < 0)
-			goto err_cancel_slave_data;
+		अगर (err < 0)
+			जाओ err_cancel_slave_data;
 		nla_nest_end(skb, slave_data);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 err_cancel_slave_data:
 	nla_nest_cancel(skb, slave_data);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtnl_link_info_fill(struct sk_buff *skb,
-			       const struct net_device *dev)
-{
-	const struct rtnl_link_ops *ops = dev->rtnl_link_ops;
-	struct nlattr *data;
-	int err;
+अटल पूर्णांक rtnl_link_info_fill(काष्ठा sk_buff *skb,
+			       स्थिर काष्ठा net_device *dev)
+अणु
+	स्थिर काष्ठा rtnl_link_ops *ops = dev->rtnl_link_ops;
+	काष्ठा nlattr *data;
+	पूर्णांक err;
 
-	if (!ops)
-		return 0;
-	if (nla_put_string(skb, IFLA_INFO_KIND, ops->kind) < 0)
-		return -EMSGSIZE;
-	if (ops->fill_xstats) {
+	अगर (!ops)
+		वापस 0;
+	अगर (nla_put_string(skb, IFLA_INFO_KIND, ops->kind) < 0)
+		वापस -EMSGSIZE;
+	अगर (ops->fill_xstats) अणु
 		err = ops->fill_xstats(skb, dev);
-		if (err < 0)
-			return err;
-	}
-	if (ops->fill_info) {
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	अगर (ops->fill_info) अणु
 		data = nla_nest_start_noflag(skb, IFLA_INFO_DATA);
-		if (data == NULL)
-			return -EMSGSIZE;
+		अगर (data == शून्य)
+			वापस -EMSGSIZE;
 		err = ops->fill_info(skb, dev);
-		if (err < 0)
-			goto err_cancel_data;
+		अगर (err < 0)
+			जाओ err_cancel_data;
 		nla_nest_end(skb, data);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 err_cancel_data:
 	nla_nest_cancel(skb, data);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtnl_link_fill(struct sk_buff *skb, const struct net_device *dev)
-{
-	struct nlattr *linkinfo;
-	int err = -EMSGSIZE;
+अटल पूर्णांक rtnl_link_fill(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा nlattr *linkinfo;
+	पूर्णांक err = -EMSGSIZE;
 
 	linkinfo = nla_nest_start_noflag(skb, IFLA_LINKINFO);
-	if (linkinfo == NULL)
-		goto out;
+	अगर (linkinfo == शून्य)
+		जाओ out;
 
 	err = rtnl_link_info_fill(skb, dev);
-	if (err < 0)
-		goto err_cancel_link;
+	अगर (err < 0)
+		जाओ err_cancel_link;
 
 	err = rtnl_link_slave_info_fill(skb, dev);
-	if (err < 0)
-		goto err_cancel_link;
+	अगर (err < 0)
+		जाओ err_cancel_link;
 
 	nla_nest_end(skb, linkinfo);
-	return 0;
+	वापस 0;
 
 err_cancel_link:
 	nla_nest_cancel(skb, linkinfo);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int rtnetlink_send(struct sk_buff *skb, struct net *net, u32 pid, unsigned int group, int echo)
-{
-	struct sock *rtnl = net->rtnl;
-	int err = 0;
+पूर्णांक rtnetlink_send(काष्ठा sk_buff *skb, काष्ठा net *net, u32 pid, अचिन्हित पूर्णांक group, पूर्णांक echo)
+अणु
+	काष्ठा sock *rtnl = net->rtnl;
+	पूर्णांक err = 0;
 
 	NETLINK_CB(skb).dst_group = group;
-	if (echo)
+	अगर (echo)
 		refcount_inc(&skb->users);
 	netlink_broadcast(rtnl, skb, pid, group, GFP_KERNEL);
-	if (echo)
+	अगर (echo)
 		err = netlink_unicast(rtnl, skb, pid, MSG_DONTWAIT);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int rtnl_unicast(struct sk_buff *skb, struct net *net, u32 pid)
-{
-	struct sock *rtnl = net->rtnl;
+पूर्णांक rtnl_unicast(काष्ठा sk_buff *skb, काष्ठा net *net, u32 pid)
+अणु
+	काष्ठा sock *rtnl = net->rtnl;
 
-	return nlmsg_unicast(rtnl, skb, pid);
-}
+	वापस nlmsg_unicast(rtnl, skb, pid);
+पूर्ण
 EXPORT_SYMBOL(rtnl_unicast);
 
-void rtnl_notify(struct sk_buff *skb, struct net *net, u32 pid, u32 group,
-		 struct nlmsghdr *nlh, gfp_t flags)
-{
-	struct sock *rtnl = net->rtnl;
-	int report = 0;
+व्योम rtnl_notअगरy(काष्ठा sk_buff *skb, काष्ठा net *net, u32 pid, u32 group,
+		 काष्ठा nlmsghdr *nlh, gfp_t flags)
+अणु
+	काष्ठा sock *rtnl = net->rtnl;
+	पूर्णांक report = 0;
 
-	if (nlh)
+	अगर (nlh)
 		report = nlmsg_report(nlh);
 
-	nlmsg_notify(rtnl, skb, pid, group, report, flags);
-}
-EXPORT_SYMBOL(rtnl_notify);
+	nlmsg_notअगरy(rtnl, skb, pid, group, report, flags);
+पूर्ण
+EXPORT_SYMBOL(rtnl_notअगरy);
 
-void rtnl_set_sk_err(struct net *net, u32 group, int error)
-{
-	struct sock *rtnl = net->rtnl;
+व्योम rtnl_set_sk_err(काष्ठा net *net, u32 group, पूर्णांक error)
+अणु
+	काष्ठा sock *rtnl = net->rtnl;
 
 	netlink_set_err(rtnl, 0, group, error);
-}
+पूर्ण
 EXPORT_SYMBOL(rtnl_set_sk_err);
 
-int rtnetlink_put_metrics(struct sk_buff *skb, u32 *metrics)
-{
-	struct nlattr *mx;
-	int i, valid = 0;
+पूर्णांक rtnetlink_put_metrics(काष्ठा sk_buff *skb, u32 *metrics)
+अणु
+	काष्ठा nlattr *mx;
+	पूर्णांक i, valid = 0;
 
-	/* nothing is dumped for dst_default_metrics, so just skip the loop */
-	if (metrics == dst_default_metrics.metrics)
-		return 0;
+	/* nothing is dumped क्रम dst_शेष_metrics, so just skip the loop */
+	अगर (metrics == dst_शेष_metrics.metrics)
+		वापस 0;
 
 	mx = nla_nest_start_noflag(skb, RTA_METRICS);
-	if (mx == NULL)
-		return -ENOBUFS;
+	अगर (mx == शून्य)
+		वापस -ENOBUFS;
 
-	for (i = 0; i < RTAX_MAX; i++) {
-		if (metrics[i]) {
-			if (i == RTAX_CC_ALGO - 1) {
-				char tmp[TCP_CA_NAME_MAX], *name;
+	क्रम (i = 0; i < RTAX_MAX; i++) अणु
+		अगर (metrics[i]) अणु
+			अगर (i == RTAX_CC_ALGO - 1) अणु
+				अक्षर पंचांगp[TCP_CA_NAME_MAX], *name;
 
-				name = tcp_ca_get_name_by_key(metrics[i], tmp);
-				if (!name)
-					continue;
-				if (nla_put_string(skb, i + 1, name))
-					goto nla_put_failure;
-			} else if (i == RTAX_FEATURES - 1) {
+				name = tcp_ca_get_name_by_key(metrics[i], पंचांगp);
+				अगर (!name)
+					जारी;
+				अगर (nla_put_string(skb, i + 1, name))
+					जाओ nla_put_failure;
+			पूर्ण अन्यथा अगर (i == RTAX_FEATURES - 1) अणु
 				u32 user_features = metrics[i] & RTAX_FEATURE_MASK;
 
-				if (!user_features)
-					continue;
+				अगर (!user_features)
+					जारी;
 				BUILD_BUG_ON(RTAX_FEATURE_MASK & DST_FEATURE_MASK);
-				if (nla_put_u32(skb, i + 1, user_features))
-					goto nla_put_failure;
-			} else {
-				if (nla_put_u32(skb, i + 1, metrics[i]))
-					goto nla_put_failure;
-			}
+				अगर (nla_put_u32(skb, i + 1, user_features))
+					जाओ nla_put_failure;
+			पूर्ण अन्यथा अणु
+				अगर (nla_put_u32(skb, i + 1, metrics[i]))
+					जाओ nla_put_failure;
+			पूर्ण
 			valid++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!valid) {
+	अगर (!valid) अणु
 		nla_nest_cancel(skb, mx);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return nla_nest_end(skb, mx);
+	वापस nla_nest_end(skb, mx);
 
 nla_put_failure:
 	nla_nest_cancel(skb, mx);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 EXPORT_SYMBOL(rtnetlink_put_metrics);
 
-int rtnl_put_cacheinfo(struct sk_buff *skb, struct dst_entry *dst, u32 id,
-		       long expires, u32 error)
-{
-	struct rta_cacheinfo ci = {
+पूर्णांक rtnl_put_cacheinfo(काष्ठा sk_buff *skb, काष्ठा dst_entry *dst, u32 id,
+		       दीर्घ expires, u32 error)
+अणु
+	काष्ठा rta_cacheinfo ci = अणु
 		.rta_error = error,
 		.rta_id =  id,
-	};
+	पूर्ण;
 
-	if (dst) {
-		ci.rta_lastuse = jiffies_delta_to_clock_t(jiffies - dst->lastuse);
+	अगर (dst) अणु
+		ci.rta_lastuse = jअगरfies_delta_to_घड़ी_प्रकार(jअगरfies - dst->lastuse);
 		ci.rta_used = dst->__use;
-		ci.rta_clntref = atomic_read(&dst->__refcnt);
-	}
-	if (expires) {
-		unsigned long clock;
+		ci.rta_clntref = atomic_पढ़ो(&dst->__refcnt);
+	पूर्ण
+	अगर (expires) अणु
+		अचिन्हित दीर्घ घड़ी;
 
-		clock = jiffies_to_clock_t(abs(expires));
-		clock = min_t(unsigned long, clock, INT_MAX);
-		ci.rta_expires = (expires > 0) ? clock : -clock;
-	}
-	return nla_put(skb, RTA_CACHEINFO, sizeof(ci), &ci);
-}
+		घड़ी = jअगरfies_to_घड़ी_प्रकार(असल(expires));
+		घड़ी = min_t(अचिन्हित दीर्घ, घड़ी, पूर्णांक_उच्च);
+		ci.rta_expires = (expires > 0) ? घड़ी : -घड़ी;
+	पूर्ण
+	वापस nla_put(skb, RTA_CACHEINFO, माप(ci), &ci);
+पूर्ण
 EXPORT_SYMBOL_GPL(rtnl_put_cacheinfo);
 
-static void set_operstate(struct net_device *dev, unsigned char transition)
-{
-	unsigned char operstate = dev->operstate;
+अटल व्योम set_operstate(काष्ठा net_device *dev, अचिन्हित अक्षर transition)
+अणु
+	अचिन्हित अक्षर operstate = dev->operstate;
 
-	switch (transition) {
-	case IF_OPER_UP:
-		if ((operstate == IF_OPER_DORMANT ||
+	चयन (transition) अणु
+	हाल IF_OPER_UP:
+		अगर ((operstate == IF_OPER_DORMANT ||
 		     operstate == IF_OPER_TESTING ||
 		     operstate == IF_OPER_UNKNOWN) &&
-		    !netif_dormant(dev) && !netif_testing(dev))
+		    !netअगर_करोrmant(dev) && !netअगर_testing(dev))
 			operstate = IF_OPER_UP;
-		break;
+		अवरोध;
 
-	case IF_OPER_TESTING:
-		if (operstate == IF_OPER_UP ||
+	हाल IF_OPER_TESTING:
+		अगर (operstate == IF_OPER_UP ||
 		    operstate == IF_OPER_UNKNOWN)
 			operstate = IF_OPER_TESTING;
-		break;
+		अवरोध;
 
-	case IF_OPER_DORMANT:
-		if (operstate == IF_OPER_UP ||
+	हाल IF_OPER_DORMANT:
+		अगर (operstate == IF_OPER_UP ||
 		    operstate == IF_OPER_UNKNOWN)
 			operstate = IF_OPER_DORMANT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (dev->operstate != operstate) {
-		write_lock_bh(&dev_base_lock);
+	अगर (dev->operstate != operstate) अणु
+		ग_लिखो_lock_bh(&dev_base_lock);
 		dev->operstate = operstate;
-		write_unlock_bh(&dev_base_lock);
+		ग_लिखो_unlock_bh(&dev_base_lock);
 		netdev_state_change(dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int rtnl_dev_get_flags(const struct net_device *dev)
-{
-	return (dev->flags & ~(IFF_PROMISC | IFF_ALLMULTI)) |
+अटल अचिन्हित पूर्णांक rtnl_dev_get_flags(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस (dev->flags & ~(IFF_PROMISC | IFF_ALLMULTI)) |
 	       (dev->gflags & (IFF_PROMISC | IFF_ALLMULTI));
-}
+पूर्ण
 
-static unsigned int rtnl_dev_combine_flags(const struct net_device *dev,
-					   const struct ifinfomsg *ifm)
-{
-	unsigned int flags = ifm->ifi_flags;
+अटल अचिन्हित पूर्णांक rtnl_dev_combine_flags(स्थिर काष्ठा net_device *dev,
+					   स्थिर काष्ठा अगरinfomsg *अगरm)
+अणु
+	अचिन्हित पूर्णांक flags = अगरm->अगरi_flags;
 
-	/* bugwards compatibility: ifi_change == 0 is treated as ~0 */
-	if (ifm->ifi_change)
-		flags = (flags & ifm->ifi_change) |
-			(rtnl_dev_get_flags(dev) & ~ifm->ifi_change);
+	/* bugwards compatibility: अगरi_change == 0 is treated as ~0 */
+	अगर (अगरm->अगरi_change)
+		flags = (flags & अगरm->अगरi_change) |
+			(rtnl_dev_get_flags(dev) & ~अगरm->अगरi_change);
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static void copy_rtnl_link_stats(struct rtnl_link_stats *a,
-				 const struct rtnl_link_stats64 *b)
-{
+अटल व्योम copy_rtnl_link_stats(काष्ठा rtnl_link_stats *a,
+				 स्थिर काष्ठा rtnl_link_stats64 *b)
+अणु
 	a->rx_packets = b->rx_packets;
 	a->tx_packets = b->tx_packets;
 	a->rx_bytes = b->rx_bytes;
@@ -896,132 +897,132 @@ static void copy_rtnl_link_stats(struct rtnl_link_stats *a,
 	a->rx_over_errors = b->rx_over_errors;
 	a->rx_crc_errors = b->rx_crc_errors;
 	a->rx_frame_errors = b->rx_frame_errors;
-	a->rx_fifo_errors = b->rx_fifo_errors;
+	a->rx_fअगरo_errors = b->rx_fअगरo_errors;
 	a->rx_missed_errors = b->rx_missed_errors;
 
-	a->tx_aborted_errors = b->tx_aborted_errors;
+	a->tx_पातed_errors = b->tx_पातed_errors;
 	a->tx_carrier_errors = b->tx_carrier_errors;
-	a->tx_fifo_errors = b->tx_fifo_errors;
+	a->tx_fअगरo_errors = b->tx_fअगरo_errors;
 	a->tx_heartbeat_errors = b->tx_heartbeat_errors;
-	a->tx_window_errors = b->tx_window_errors;
+	a->tx_winकरोw_errors = b->tx_winकरोw_errors;
 
 	a->rx_compressed = b->rx_compressed;
 	a->tx_compressed = b->tx_compressed;
 
 	a->rx_nohandler = b->rx_nohandler;
-}
+पूर्ण
 
 /* All VF info */
-static inline int rtnl_vfinfo_size(const struct net_device *dev,
+अटल अंतरभूत पूर्णांक rtnl_vfinfo_size(स्थिर काष्ठा net_device *dev,
 				   u32 ext_filter_mask)
-{
-	if (dev->dev.parent && (ext_filter_mask & RTEXT_FILTER_VF)) {
-		int num_vfs = dev_num_vf(dev->dev.parent);
-		size_t size = nla_total_size(0);
+अणु
+	अगर (dev->dev.parent && (ext_filter_mask & RTEXT_FILTER_VF)) अणु
+		पूर्णांक num_vfs = dev_num_vf(dev->dev.parent);
+		माप_प्रकार size = nla_total_size(0);
 		size += num_vfs *
 			(nla_total_size(0) +
-			 nla_total_size(sizeof(struct ifla_vf_mac)) +
-			 nla_total_size(sizeof(struct ifla_vf_broadcast)) +
-			 nla_total_size(sizeof(struct ifla_vf_vlan)) +
+			 nla_total_size(माप(काष्ठा अगरla_vf_mac)) +
+			 nla_total_size(माप(काष्ठा अगरla_vf_broadcast)) +
+			 nla_total_size(माप(काष्ठा अगरla_vf_vlan)) +
 			 nla_total_size(0) + /* nest IFLA_VF_VLAN_LIST */
 			 nla_total_size(MAX_VLAN_LIST_LEN *
-					sizeof(struct ifla_vf_vlan_info)) +
-			 nla_total_size(sizeof(struct ifla_vf_spoofchk)) +
-			 nla_total_size(sizeof(struct ifla_vf_tx_rate)) +
-			 nla_total_size(sizeof(struct ifla_vf_rate)) +
-			 nla_total_size(sizeof(struct ifla_vf_link_state)) +
-			 nla_total_size(sizeof(struct ifla_vf_rss_query_en)) +
+					माप(काष्ठा अगरla_vf_vlan_info)) +
+			 nla_total_size(माप(काष्ठा अगरla_vf_spoofchk)) +
+			 nla_total_size(माप(काष्ठा अगरla_vf_tx_rate)) +
+			 nla_total_size(माप(काष्ठा अगरla_vf_rate)) +
+			 nla_total_size(माप(काष्ठा अगरla_vf_link_state)) +
+			 nla_total_size(माप(काष्ठा अगरla_vf_rss_query_en)) +
 			 nla_total_size(0) + /* nest IFLA_VF_STATS */
 			 /* IFLA_VF_STATS_RX_PACKETS */
-			 nla_total_size_64bit(sizeof(__u64)) +
+			 nla_total_size_64bit(माप(__u64)) +
 			 /* IFLA_VF_STATS_TX_PACKETS */
-			 nla_total_size_64bit(sizeof(__u64)) +
+			 nla_total_size_64bit(माप(__u64)) +
 			 /* IFLA_VF_STATS_RX_BYTES */
-			 nla_total_size_64bit(sizeof(__u64)) +
+			 nla_total_size_64bit(माप(__u64)) +
 			 /* IFLA_VF_STATS_TX_BYTES */
-			 nla_total_size_64bit(sizeof(__u64)) +
+			 nla_total_size_64bit(माप(__u64)) +
 			 /* IFLA_VF_STATS_BROADCAST */
-			 nla_total_size_64bit(sizeof(__u64)) +
+			 nla_total_size_64bit(माप(__u64)) +
 			 /* IFLA_VF_STATS_MULTICAST */
-			 nla_total_size_64bit(sizeof(__u64)) +
+			 nla_total_size_64bit(माप(__u64)) +
 			 /* IFLA_VF_STATS_RX_DROPPED */
-			 nla_total_size_64bit(sizeof(__u64)) +
+			 nla_total_size_64bit(माप(__u64)) +
 			 /* IFLA_VF_STATS_TX_DROPPED */
-			 nla_total_size_64bit(sizeof(__u64)) +
-			 nla_total_size(sizeof(struct ifla_vf_trust)));
-		return size;
-	} else
-		return 0;
-}
+			 nla_total_size_64bit(माप(__u64)) +
+			 nla_total_size(माप(काष्ठा अगरla_vf_trust)));
+		वापस size;
+	पूर्ण अन्यथा
+		वापस 0;
+पूर्ण
 
-static size_t rtnl_port_size(const struct net_device *dev,
+अटल माप_प्रकार rtnl_port_size(स्थिर काष्ठा net_device *dev,
 			     u32 ext_filter_mask)
-{
-	size_t port_size = nla_total_size(4)		/* PORT_VF */
-		+ nla_total_size(PORT_PROFILE_MAX)	/* PORT_PROFILE */
+अणु
+	माप_प्रकार port_size = nla_total_size(4)		/* PORT_VF */
+		+ nla_total_size(PORT_PROखाता_MAX)	/* PORT_PROखाता */
 		+ nla_total_size(PORT_UUID_MAX)		/* PORT_INSTANCE_UUID */
 		+ nla_total_size(PORT_UUID_MAX)		/* PORT_HOST_UUID */
 		+ nla_total_size(1)			/* PROT_VDP_REQUEST */
 		+ nla_total_size(2);			/* PORT_VDP_RESPONSE */
-	size_t vf_ports_size = nla_total_size(sizeof(struct nlattr));
-	size_t vf_port_size = nla_total_size(sizeof(struct nlattr))
+	माप_प्रकार vf_ports_size = nla_total_size(माप(काष्ठा nlattr));
+	माप_प्रकार vf_port_size = nla_total_size(माप(काष्ठा nlattr))
 		+ port_size;
-	size_t port_self_size = nla_total_size(sizeof(struct nlattr))
+	माप_प्रकार port_self_size = nla_total_size(माप(काष्ठा nlattr))
 		+ port_size;
 
-	if (!dev->netdev_ops->ndo_get_vf_port || !dev->dev.parent ||
+	अगर (!dev->netdev_ops->nकरो_get_vf_port || !dev->dev.parent ||
 	    !(ext_filter_mask & RTEXT_FILTER_VF))
-		return 0;
-	if (dev_num_vf(dev->dev.parent))
-		return port_self_size + vf_ports_size +
+		वापस 0;
+	अगर (dev_num_vf(dev->dev.parent))
+		वापस port_self_size + vf_ports_size +
 			vf_port_size * dev_num_vf(dev->dev.parent);
-	else
-		return port_self_size;
-}
+	अन्यथा
+		वापस port_self_size;
+पूर्ण
 
-static size_t rtnl_xdp_size(void)
-{
-	size_t xdp_size = nla_total_size(0) +	/* nest IFLA_XDP */
+अटल माप_प्रकार rtnl_xdp_size(व्योम)
+अणु
+	माप_प्रकार xdp_size = nla_total_size(0) +	/* nest IFLA_XDP */
 			  nla_total_size(1) +	/* XDP_ATTACHED */
 			  nla_total_size(4) +	/* XDP_PROG_ID (or 1st mode) */
 			  nla_total_size(4);	/* XDP_<mode>_PROG_ID */
 
-	return xdp_size;
-}
+	वापस xdp_size;
+पूर्ण
 
-static size_t rtnl_prop_list_size(const struct net_device *dev)
-{
-	struct netdev_name_node *name_node;
-	size_t size;
+अटल माप_प्रकार rtnl_prop_list_size(स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा netdev_name_node *name_node;
+	माप_प्रकार size;
 
-	if (list_empty(&dev->name_node->list))
-		return 0;
+	अगर (list_empty(&dev->name_node->list))
+		वापस 0;
 	size = nla_total_size(0);
-	list_for_each_entry(name_node, &dev->name_node->list, list)
+	list_क्रम_each_entry(name_node, &dev->name_node->list, list)
 		size += nla_total_size(ALTIFNAMSIZ);
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static size_t rtnl_proto_down_size(const struct net_device *dev)
-{
-	size_t size = nla_total_size(1);
+अटल माप_प्रकार rtnl_proto_करोwn_size(स्थिर काष्ठा net_device *dev)
+अणु
+	माप_प्रकार size = nla_total_size(1);
 
-	if (dev->proto_down_reason)
+	अगर (dev->proto_करोwn_reason)
 		size += nla_total_size(0) + nla_total_size(4);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static noinline size_t if_nlmsg_size(const struct net_device *dev,
+अटल noअंतरभूत माप_प्रकार अगर_nlmsg_size(स्थिर काष्ठा net_device *dev,
 				     u32 ext_filter_mask)
-{
-	return NLMSG_ALIGN(sizeof(struct ifinfomsg))
+अणु
+	वापस NLMSG_ALIGN(माप(काष्ठा अगरinfomsg))
 	       + nla_total_size(IFNAMSIZ) /* IFLA_IFNAME */
 	       + nla_total_size(IFALIASZ) /* IFLA_IFALIAS */
 	       + nla_total_size(IFNAMSIZ) /* IFLA_QDISC */
-	       + nla_total_size_64bit(sizeof(struct rtnl_link_ifmap))
-	       + nla_total_size(sizeof(struct rtnl_link_stats))
-	       + nla_total_size_64bit(sizeof(struct rtnl_link_stats64))
+	       + nla_total_size_64bit(माप(काष्ठा rtnl_link_अगरmap))
+	       + nla_total_size(माप(काष्ठा rtnl_link_stats))
+	       + nla_total_size_64bit(माप(काष्ठा rtnl_link_stats64))
 	       + nla_total_size(MAX_ADDR_LEN) /* IFLA_ADDRESS */
 	       + nla_total_size(MAX_ADDR_LEN) /* IFLA_BROADCAST */
 	       + nla_total_size(4) /* IFLA_TXQLEN */
@@ -1053,7 +1054,7 @@ static noinline size_t if_nlmsg_size(const struct net_device *dev,
 	       + nla_total_size(4)  /* IFLA_EVENT */
 	       + nla_total_size(4)  /* IFLA_NEW_NETNSID */
 	       + nla_total_size(4)  /* IFLA_NEW_IFINDEX */
-	       + rtnl_proto_down_size(dev)  /* proto down */
+	       + rtnl_proto_करोwn_size(dev)  /* proto करोwn */
 	       + nla_total_size(4)  /* IFLA_TARGET_NETNSID */
 	       + nla_total_size(4)  /* IFLA_CARRIER_UP_COUNT */
 	       + nla_total_size(4)  /* IFLA_CARRIER_DOWN_COUNT */
@@ -1062,186 +1063,186 @@ static noinline size_t if_nlmsg_size(const struct net_device *dev,
 	       + rtnl_prop_list_size(dev)
 	       + nla_total_size(MAX_ADDR_LEN) /* IFLA_PERM_ADDRESS */
 	       + 0;
-}
+पूर्ण
 
-static int rtnl_vf_ports_fill(struct sk_buff *skb, struct net_device *dev)
-{
-	struct nlattr *vf_ports;
-	struct nlattr *vf_port;
-	int vf;
-	int err;
+अटल पूर्णांक rtnl_vf_ports_fill(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा nlattr *vf_ports;
+	काष्ठा nlattr *vf_port;
+	पूर्णांक vf;
+	पूर्णांक err;
 
 	vf_ports = nla_nest_start_noflag(skb, IFLA_VF_PORTS);
-	if (!vf_ports)
-		return -EMSGSIZE;
+	अगर (!vf_ports)
+		वापस -EMSGSIZE;
 
-	for (vf = 0; vf < dev_num_vf(dev->dev.parent); vf++) {
+	क्रम (vf = 0; vf < dev_num_vf(dev->dev.parent); vf++) अणु
 		vf_port = nla_nest_start_noflag(skb, IFLA_VF_PORT);
-		if (!vf_port)
-			goto nla_put_failure;
-		if (nla_put_u32(skb, IFLA_PORT_VF, vf))
-			goto nla_put_failure;
-		err = dev->netdev_ops->ndo_get_vf_port(dev, vf, skb);
-		if (err == -EMSGSIZE)
-			goto nla_put_failure;
-		if (err) {
+		अगर (!vf_port)
+			जाओ nla_put_failure;
+		अगर (nla_put_u32(skb, IFLA_PORT_VF, vf))
+			जाओ nla_put_failure;
+		err = dev->netdev_ops->nकरो_get_vf_port(dev, vf, skb);
+		अगर (err == -EMSGSIZE)
+			जाओ nla_put_failure;
+		अगर (err) अणु
 			nla_nest_cancel(skb, vf_port);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		nla_nest_end(skb, vf_port);
-	}
+	पूर्ण
 
 	nla_nest_end(skb, vf_ports);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, vf_ports);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int rtnl_port_self_fill(struct sk_buff *skb, struct net_device *dev)
-{
-	struct nlattr *port_self;
-	int err;
+अटल पूर्णांक rtnl_port_self_fill(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा nlattr *port_self;
+	पूर्णांक err;
 
 	port_self = nla_nest_start_noflag(skb, IFLA_PORT_SELF);
-	if (!port_self)
-		return -EMSGSIZE;
+	अगर (!port_self)
+		वापस -EMSGSIZE;
 
-	err = dev->netdev_ops->ndo_get_vf_port(dev, PORT_SELF_VF, skb);
-	if (err) {
+	err = dev->netdev_ops->nकरो_get_vf_port(dev, PORT_SELF_VF, skb);
+	अगर (err) अणु
 		nla_nest_cancel(skb, port_self);
-		return (err == -EMSGSIZE) ? err : 0;
-	}
+		वापस (err == -EMSGSIZE) ? err : 0;
+	पूर्ण
 
 	nla_nest_end(skb, port_self);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_port_fill(struct sk_buff *skb, struct net_device *dev,
+अटल पूर्णांक rtnl_port_fill(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
 			  u32 ext_filter_mask)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
-	if (!dev->netdev_ops->ndo_get_vf_port || !dev->dev.parent ||
+	अगर (!dev->netdev_ops->nकरो_get_vf_port || !dev->dev.parent ||
 	    !(ext_filter_mask & RTEXT_FILTER_VF))
-		return 0;
+		वापस 0;
 
 	err = rtnl_port_self_fill(skb, dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (dev_num_vf(dev->dev.parent)) {
+	अगर (dev_num_vf(dev->dev.parent)) अणु
 		err = rtnl_vf_ports_fill(skb, dev);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_phys_port_id_fill(struct sk_buff *skb, struct net_device *dev)
-{
-	int err;
-	struct netdev_phys_item_id ppid;
+अटल पूर्णांक rtnl_phys_port_id_fill(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	पूर्णांक err;
+	काष्ठा netdev_phys_item_id ppid;
 
 	err = dev_get_phys_port_id(dev, &ppid);
-	if (err) {
-		if (err == -EOPNOTSUPP)
-			return 0;
-		return err;
-	}
+	अगर (err) अणु
+		अगर (err == -EOPNOTSUPP)
+			वापस 0;
+		वापस err;
+	पूर्ण
 
-	if (nla_put(skb, IFLA_PHYS_PORT_ID, ppid.id_len, ppid.id))
-		return -EMSGSIZE;
+	अगर (nla_put(skb, IFLA_PHYS_PORT_ID, ppid.id_len, ppid.id))
+		वापस -EMSGSIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_phys_port_name_fill(struct sk_buff *skb, struct net_device *dev)
-{
-	char name[IFNAMSIZ];
-	int err;
+अटल पूर्णांक rtnl_phys_port_name_fill(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	अक्षर name[IFNAMSIZ];
+	पूर्णांक err;
 
-	err = dev_get_phys_port_name(dev, name, sizeof(name));
-	if (err) {
-		if (err == -EOPNOTSUPP)
-			return 0;
-		return err;
-	}
+	err = dev_get_phys_port_name(dev, name, माप(name));
+	अगर (err) अणु
+		अगर (err == -EOPNOTSUPP)
+			वापस 0;
+		वापस err;
+	पूर्ण
 
-	if (nla_put_string(skb, IFLA_PHYS_PORT_NAME, name))
-		return -EMSGSIZE;
+	अगर (nla_put_string(skb, IFLA_PHYS_PORT_NAME, name))
+		वापस -EMSGSIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_phys_switch_id_fill(struct sk_buff *skb, struct net_device *dev)
-{
-	struct netdev_phys_item_id ppid = { };
-	int err;
+अटल पूर्णांक rtnl_phys_चयन_id_fill(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा netdev_phys_item_id ppid = अणु पूर्ण;
+	पूर्णांक err;
 
 	err = dev_get_port_parent_id(dev, &ppid, false);
-	if (err) {
-		if (err == -EOPNOTSUPP)
-			return 0;
-		return err;
-	}
+	अगर (err) अणु
+		अगर (err == -EOPNOTSUPP)
+			वापस 0;
+		वापस err;
+	पूर्ण
 
-	if (nla_put(skb, IFLA_PHYS_SWITCH_ID, ppid.id_len, ppid.id))
-		return -EMSGSIZE;
+	अगर (nla_put(skb, IFLA_PHYS_SWITCH_ID, ppid.id_len, ppid.id))
+		वापस -EMSGSIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static noinline_for_stack int rtnl_fill_stats(struct sk_buff *skb,
-					      struct net_device *dev)
-{
-	struct rtnl_link_stats64 *sp;
-	struct nlattr *attr;
+अटल noअंतरभूत_क्रम_stack पूर्णांक rtnl_fill_stats(काष्ठा sk_buff *skb,
+					      काष्ठा net_device *dev)
+अणु
+	काष्ठा rtnl_link_stats64 *sp;
+	काष्ठा nlattr *attr;
 
 	attr = nla_reserve_64bit(skb, IFLA_STATS64,
-				 sizeof(struct rtnl_link_stats64), IFLA_PAD);
-	if (!attr)
-		return -EMSGSIZE;
+				 माप(काष्ठा rtnl_link_stats64), IFLA_PAD);
+	अगर (!attr)
+		वापस -EMSGSIZE;
 
 	sp = nla_data(attr);
 	dev_get_stats(dev, sp);
 
 	attr = nla_reserve(skb, IFLA_STATS,
-			   sizeof(struct rtnl_link_stats));
-	if (!attr)
-		return -EMSGSIZE;
+			   माप(काष्ठा rtnl_link_stats));
+	अगर (!attr)
+		वापस -EMSGSIZE;
 
 	copy_rtnl_link_stats(nla_data(attr), sp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static noinline_for_stack int rtnl_fill_vfinfo(struct sk_buff *skb,
-					       struct net_device *dev,
-					       int vfs_num,
-					       struct nlattr *vfinfo)
-{
-	struct ifla_vf_rss_query_en vf_rss_query_en;
-	struct nlattr *vf, *vfstats, *vfvlanlist;
-	struct ifla_vf_link_state vf_linkstate;
-	struct ifla_vf_vlan_info vf_vlan_info;
-	struct ifla_vf_spoofchk vf_spoofchk;
-	struct ifla_vf_tx_rate vf_tx_rate;
-	struct ifla_vf_stats vf_stats;
-	struct ifla_vf_trust vf_trust;
-	struct ifla_vf_vlan vf_vlan;
-	struct ifla_vf_rate vf_rate;
-	struct ifla_vf_mac vf_mac;
-	struct ifla_vf_broadcast vf_broadcast;
-	struct ifla_vf_info ivi;
-	struct ifla_vf_guid node_guid;
-	struct ifla_vf_guid port_guid;
+अटल noअंतरभूत_क्रम_stack पूर्णांक rtnl_fill_vfinfo(काष्ठा sk_buff *skb,
+					       काष्ठा net_device *dev,
+					       पूर्णांक vfs_num,
+					       काष्ठा nlattr *vfinfo)
+अणु
+	काष्ठा अगरla_vf_rss_query_en vf_rss_query_en;
+	काष्ठा nlattr *vf, *vख_स्थितिs, *vfvlanlist;
+	काष्ठा अगरla_vf_link_state vf_linkstate;
+	काष्ठा अगरla_vf_vlan_info vf_vlan_info;
+	काष्ठा अगरla_vf_spoofchk vf_spoofchk;
+	काष्ठा अगरla_vf_tx_rate vf_tx_rate;
+	काष्ठा अगरla_vf_stats vf_stats;
+	काष्ठा अगरla_vf_trust vf_trust;
+	काष्ठा अगरla_vf_vlan vf_vlan;
+	काष्ठा अगरla_vf_rate vf_rate;
+	काष्ठा अगरla_vf_mac vf_mac;
+	काष्ठा अगरla_vf_broadcast vf_broadcast;
+	काष्ठा अगरla_vf_info ivi;
+	काष्ठा अगरla_vf_guid node_guid;
+	काष्ठा अगरla_vf_guid port_guid;
 
-	memset(&ivi, 0, sizeof(ivi));
+	स_रखो(&ivi, 0, माप(ivi));
 
 	/* Not all SR-IOV capable drivers support the
 	 * spoofcheck and "RSS query enable" query.  Preset to
@@ -1251,18 +1252,18 @@ static noinline_for_stack int rtnl_fill_vfinfo(struct sk_buff *skb,
 	ivi.spoofchk = -1;
 	ivi.rss_query_en = -1;
 	ivi.trusted = -1;
-	/* The default value for VF link state is "auto"
+	/* The शेष value क्रम VF link state is "auto"
 	 * IFLA_VF_LINK_STATE_AUTO which equals zero
 	 */
 	ivi.linkstate = 0;
-	/* VLAN Protocol by default is 802.1Q */
+	/* VLAN Protocol by शेष is 802.1Q */
 	ivi.vlan_proto = htons(ETH_P_8021Q);
-	if (dev->netdev_ops->ndo_get_vf_config(dev, vfs_num, &ivi))
-		return 0;
+	अगर (dev->netdev_ops->nकरो_get_vf_config(dev, vfs_num, &ivi))
+		वापस 0;
 
-	memset(&vf_vlan_info, 0, sizeof(vf_vlan_info));
-	memset(&node_guid, 0, sizeof(node_guid));
-	memset(&port_guid, 0, sizeof(port_guid));
+	स_रखो(&vf_vlan_info, 0, माप(vf_vlan_info));
+	स_रखो(&node_guid, 0, माप(node_guid));
+	स_रखो(&port_guid, 0, माप(port_guid));
 
 	vf_mac.vf =
 		vf_vlan.vf =
@@ -1276,8 +1277,8 @@ static noinline_for_stack int rtnl_fill_vfinfo(struct sk_buff *skb,
 		node_guid.vf =
 		port_guid.vf = ivi.vf;
 
-	memcpy(vf_mac.mac, ivi.mac, sizeof(ivi.mac));
-	memcpy(vf_broadcast.broadcast, dev->broadcast, dev->addr_len);
+	स_नकल(vf_mac.mac, ivi.mac, माप(ivi.mac));
+	स_नकल(vf_broadcast.broadcast, dev->broadcast, dev->addr_len);
 	vf_vlan.vlan = ivi.vlan;
 	vf_vlan.qos = ivi.qos;
 	vf_vlan_info.vlan = ivi.vlan;
@@ -1291,52 +1292,52 @@ static noinline_for_stack int rtnl_fill_vfinfo(struct sk_buff *skb,
 	vf_rss_query_en.setting = ivi.rss_query_en;
 	vf_trust.setting = ivi.trusted;
 	vf = nla_nest_start_noflag(skb, IFLA_VF_INFO);
-	if (!vf)
-		goto nla_put_vfinfo_failure;
-	if (nla_put(skb, IFLA_VF_MAC, sizeof(vf_mac), &vf_mac) ||
-	    nla_put(skb, IFLA_VF_BROADCAST, sizeof(vf_broadcast), &vf_broadcast) ||
-	    nla_put(skb, IFLA_VF_VLAN, sizeof(vf_vlan), &vf_vlan) ||
-	    nla_put(skb, IFLA_VF_RATE, sizeof(vf_rate),
+	अगर (!vf)
+		जाओ nla_put_vfinfo_failure;
+	अगर (nla_put(skb, IFLA_VF_MAC, माप(vf_mac), &vf_mac) ||
+	    nla_put(skb, IFLA_VF_BROADCAST, माप(vf_broadcast), &vf_broadcast) ||
+	    nla_put(skb, IFLA_VF_VLAN, माप(vf_vlan), &vf_vlan) ||
+	    nla_put(skb, IFLA_VF_RATE, माप(vf_rate),
 		    &vf_rate) ||
-	    nla_put(skb, IFLA_VF_TX_RATE, sizeof(vf_tx_rate),
+	    nla_put(skb, IFLA_VF_TX_RATE, माप(vf_tx_rate),
 		    &vf_tx_rate) ||
-	    nla_put(skb, IFLA_VF_SPOOFCHK, sizeof(vf_spoofchk),
+	    nla_put(skb, IFLA_VF_SPOOFCHK, माप(vf_spoofchk),
 		    &vf_spoofchk) ||
-	    nla_put(skb, IFLA_VF_LINK_STATE, sizeof(vf_linkstate),
+	    nla_put(skb, IFLA_VF_LINK_STATE, माप(vf_linkstate),
 		    &vf_linkstate) ||
 	    nla_put(skb, IFLA_VF_RSS_QUERY_EN,
-		    sizeof(vf_rss_query_en),
+		    माप(vf_rss_query_en),
 		    &vf_rss_query_en) ||
 	    nla_put(skb, IFLA_VF_TRUST,
-		    sizeof(vf_trust), &vf_trust))
-		goto nla_put_vf_failure;
+		    माप(vf_trust), &vf_trust))
+		जाओ nla_put_vf_failure;
 
-	if (dev->netdev_ops->ndo_get_vf_guid &&
-	    !dev->netdev_ops->ndo_get_vf_guid(dev, vfs_num, &node_guid,
-					      &port_guid)) {
-		if (nla_put(skb, IFLA_VF_IB_NODE_GUID, sizeof(node_guid),
+	अगर (dev->netdev_ops->nकरो_get_vf_guid &&
+	    !dev->netdev_ops->nकरो_get_vf_guid(dev, vfs_num, &node_guid,
+					      &port_guid)) अणु
+		अगर (nla_put(skb, IFLA_VF_IB_NODE_GUID, माप(node_guid),
 			    &node_guid) ||
-		    nla_put(skb, IFLA_VF_IB_PORT_GUID, sizeof(port_guid),
+		    nla_put(skb, IFLA_VF_IB_PORT_GUID, माप(port_guid),
 			    &port_guid))
-			goto nla_put_vf_failure;
-	}
+			जाओ nla_put_vf_failure;
+	पूर्ण
 	vfvlanlist = nla_nest_start_noflag(skb, IFLA_VF_VLAN_LIST);
-	if (!vfvlanlist)
-		goto nla_put_vf_failure;
-	if (nla_put(skb, IFLA_VF_VLAN_INFO, sizeof(vf_vlan_info),
-		    &vf_vlan_info)) {
+	अगर (!vfvlanlist)
+		जाओ nla_put_vf_failure;
+	अगर (nla_put(skb, IFLA_VF_VLAN_INFO, माप(vf_vlan_info),
+		    &vf_vlan_info)) अणु
 		nla_nest_cancel(skb, vfvlanlist);
-		goto nla_put_vf_failure;
-	}
+		जाओ nla_put_vf_failure;
+	पूर्ण
 	nla_nest_end(skb, vfvlanlist);
-	memset(&vf_stats, 0, sizeof(vf_stats));
-	if (dev->netdev_ops->ndo_get_vf_stats)
-		dev->netdev_ops->ndo_get_vf_stats(dev, vfs_num,
+	स_रखो(&vf_stats, 0, माप(vf_stats));
+	अगर (dev->netdev_ops->nकरो_get_vf_stats)
+		dev->netdev_ops->nकरो_get_vf_stats(dev, vfs_num,
 						&vf_stats);
-	vfstats = nla_nest_start_noflag(skb, IFLA_VF_STATS);
-	if (!vfstats)
-		goto nla_put_vf_failure;
-	if (nla_put_u64_64bit(skb, IFLA_VF_STATS_RX_PACKETS,
+	vख_स्थितिs = nla_nest_start_noflag(skb, IFLA_VF_STATS);
+	अगर (!vख_स्थितिs)
+		जाओ nla_put_vf_failure;
+	अगर (nla_put_u64_64bit(skb, IFLA_VF_STATS_RX_PACKETS,
 			      vf_stats.rx_packets, IFLA_VF_STATS_PAD) ||
 	    nla_put_u64_64bit(skb, IFLA_VF_STATS_TX_PACKETS,
 			      vf_stats.tx_packets, IFLA_VF_STATS_PAD) ||
@@ -1351,383 +1352,383 @@ static noinline_for_stack int rtnl_fill_vfinfo(struct sk_buff *skb,
 	    nla_put_u64_64bit(skb, IFLA_VF_STATS_RX_DROPPED,
 			      vf_stats.rx_dropped, IFLA_VF_STATS_PAD) ||
 	    nla_put_u64_64bit(skb, IFLA_VF_STATS_TX_DROPPED,
-			      vf_stats.tx_dropped, IFLA_VF_STATS_PAD)) {
-		nla_nest_cancel(skb, vfstats);
-		goto nla_put_vf_failure;
-	}
-	nla_nest_end(skb, vfstats);
+			      vf_stats.tx_dropped, IFLA_VF_STATS_PAD)) अणु
+		nla_nest_cancel(skb, vख_स्थितिs);
+		जाओ nla_put_vf_failure;
+	पूर्ण
+	nla_nest_end(skb, vख_स्थितिs);
 	nla_nest_end(skb, vf);
-	return 0;
+	वापस 0;
 
 nla_put_vf_failure:
 	nla_nest_cancel(skb, vf);
 nla_put_vfinfo_failure:
 	nla_nest_cancel(skb, vfinfo);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static noinline_for_stack int rtnl_fill_vf(struct sk_buff *skb,
-					   struct net_device *dev,
+अटल noअंतरभूत_क्रम_stack पूर्णांक rtnl_fill_vf(काष्ठा sk_buff *skb,
+					   काष्ठा net_device *dev,
 					   u32 ext_filter_mask)
-{
-	struct nlattr *vfinfo;
-	int i, num_vfs;
+अणु
+	काष्ठा nlattr *vfinfo;
+	पूर्णांक i, num_vfs;
 
-	if (!dev->dev.parent || ((ext_filter_mask & RTEXT_FILTER_VF) == 0))
-		return 0;
+	अगर (!dev->dev.parent || ((ext_filter_mask & RTEXT_FILTER_VF) == 0))
+		वापस 0;
 
 	num_vfs = dev_num_vf(dev->dev.parent);
-	if (nla_put_u32(skb, IFLA_NUM_VF, num_vfs))
-		return -EMSGSIZE;
+	अगर (nla_put_u32(skb, IFLA_NUM_VF, num_vfs))
+		वापस -EMSGSIZE;
 
-	if (!dev->netdev_ops->ndo_get_vf_config)
-		return 0;
+	अगर (!dev->netdev_ops->nकरो_get_vf_config)
+		वापस 0;
 
 	vfinfo = nla_nest_start_noflag(skb, IFLA_VFINFO_LIST);
-	if (!vfinfo)
-		return -EMSGSIZE;
+	अगर (!vfinfo)
+		वापस -EMSGSIZE;
 
-	for (i = 0; i < num_vfs; i++) {
-		if (rtnl_fill_vfinfo(skb, dev, i, vfinfo))
-			return -EMSGSIZE;
-	}
+	क्रम (i = 0; i < num_vfs; i++) अणु
+		अगर (rtnl_fill_vfinfo(skb, dev, i, vfinfo))
+			वापस -EMSGSIZE;
+	पूर्ण
 
 	nla_nest_end(skb, vfinfo);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_fill_link_ifmap(struct sk_buff *skb, struct net_device *dev)
-{
-	struct rtnl_link_ifmap map;
+अटल पूर्णांक rtnl_fill_link_अगरmap(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा rtnl_link_अगरmap map;
 
-	memset(&map, 0, sizeof(map));
+	स_रखो(&map, 0, माप(map));
 	map.mem_start   = dev->mem_start;
 	map.mem_end     = dev->mem_end;
 	map.base_addr   = dev->base_addr;
 	map.irq         = dev->irq;
 	map.dma         = dev->dma;
-	map.port        = dev->if_port;
+	map.port        = dev->अगर_port;
 
-	if (nla_put_64bit(skb, IFLA_MAP, sizeof(map), &map, IFLA_PAD))
-		return -EMSGSIZE;
+	अगर (nla_put_64bit(skb, IFLA_MAP, माप(map), &map, IFLA_PAD))
+		वापस -EMSGSIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 rtnl_xdp_prog_skb(struct net_device *dev)
-{
-	const struct bpf_prog *generic_xdp_prog;
+अटल u32 rtnl_xdp_prog_skb(काष्ठा net_device *dev)
+अणु
+	स्थिर काष्ठा bpf_prog *generic_xdp_prog;
 
 	ASSERT_RTNL();
 
 	generic_xdp_prog = rtnl_dereference(dev->xdp_prog);
-	if (!generic_xdp_prog)
-		return 0;
-	return generic_xdp_prog->aux->id;
-}
+	अगर (!generic_xdp_prog)
+		वापस 0;
+	वापस generic_xdp_prog->aux->id;
+पूर्ण
 
-static u32 rtnl_xdp_prog_drv(struct net_device *dev)
-{
-	return dev_xdp_prog_id(dev, XDP_MODE_DRV);
-}
+अटल u32 rtnl_xdp_prog_drv(काष्ठा net_device *dev)
+अणु
+	वापस dev_xdp_prog_id(dev, XDP_MODE_DRV);
+पूर्ण
 
-static u32 rtnl_xdp_prog_hw(struct net_device *dev)
-{
-	return dev_xdp_prog_id(dev, XDP_MODE_HW);
-}
+अटल u32 rtnl_xdp_prog_hw(काष्ठा net_device *dev)
+अणु
+	वापस dev_xdp_prog_id(dev, XDP_MODE_HW);
+पूर्ण
 
-static int rtnl_xdp_report_one(struct sk_buff *skb, struct net_device *dev,
+अटल पूर्णांक rtnl_xdp_report_one(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
 			       u32 *prog_id, u8 *mode, u8 tgt_mode, u32 attr,
-			       u32 (*get_prog_id)(struct net_device *dev))
-{
+			       u32 (*get_prog_id)(काष्ठा net_device *dev))
+अणु
 	u32 curr_id;
-	int err;
+	पूर्णांक err;
 
 	curr_id = get_prog_id(dev);
-	if (!curr_id)
-		return 0;
+	अगर (!curr_id)
+		वापस 0;
 
 	*prog_id = curr_id;
 	err = nla_put_u32(skb, attr, curr_id);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (*mode != XDP_ATTACHED_NONE)
+	अगर (*mode != XDP_ATTACHED_NONE)
 		*mode = XDP_ATTACHED_MULTI;
-	else
+	अन्यथा
 		*mode = tgt_mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_xdp_fill(struct sk_buff *skb, struct net_device *dev)
-{
-	struct nlattr *xdp;
+अटल पूर्णांक rtnl_xdp_fill(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा nlattr *xdp;
 	u32 prog_id;
-	int err;
+	पूर्णांक err;
 	u8 mode;
 
 	xdp = nla_nest_start_noflag(skb, IFLA_XDP);
-	if (!xdp)
-		return -EMSGSIZE;
+	अगर (!xdp)
+		वापस -EMSGSIZE;
 
 	prog_id = 0;
 	mode = XDP_ATTACHED_NONE;
 	err = rtnl_xdp_report_one(skb, dev, &prog_id, &mode, XDP_ATTACHED_SKB,
 				  IFLA_XDP_SKB_PROG_ID, rtnl_xdp_prog_skb);
-	if (err)
-		goto err_cancel;
+	अगर (err)
+		जाओ err_cancel;
 	err = rtnl_xdp_report_one(skb, dev, &prog_id, &mode, XDP_ATTACHED_DRV,
 				  IFLA_XDP_DRV_PROG_ID, rtnl_xdp_prog_drv);
-	if (err)
-		goto err_cancel;
+	अगर (err)
+		जाओ err_cancel;
 	err = rtnl_xdp_report_one(skb, dev, &prog_id, &mode, XDP_ATTACHED_HW,
 				  IFLA_XDP_HW_PROG_ID, rtnl_xdp_prog_hw);
-	if (err)
-		goto err_cancel;
+	अगर (err)
+		जाओ err_cancel;
 
 	err = nla_put_u8(skb, IFLA_XDP_ATTACHED, mode);
-	if (err)
-		goto err_cancel;
+	अगर (err)
+		जाओ err_cancel;
 
-	if (prog_id && mode != XDP_ATTACHED_MULTI) {
+	अगर (prog_id && mode != XDP_ATTACHED_MULTI) अणु
 		err = nla_put_u32(skb, IFLA_XDP_PROG_ID, prog_id);
-		if (err)
-			goto err_cancel;
-	}
+		अगर (err)
+			जाओ err_cancel;
+	पूर्ण
 
 	nla_nest_end(skb, xdp);
-	return 0;
+	वापस 0;
 
 err_cancel:
 	nla_nest_cancel(skb, xdp);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u32 rtnl_get_event(unsigned long event)
-{
+अटल u32 rtnl_get_event(अचिन्हित दीर्घ event)
+अणु
 	u32 rtnl_event_type = IFLA_EVENT_NONE;
 
-	switch (event) {
-	case NETDEV_REBOOT:
+	चयन (event) अणु
+	हाल NETDEV_REBOOT:
 		rtnl_event_type = IFLA_EVENT_REBOOT;
-		break;
-	case NETDEV_FEAT_CHANGE:
+		अवरोध;
+	हाल NETDEV_FEAT_CHANGE:
 		rtnl_event_type = IFLA_EVENT_FEATURES;
-		break;
-	case NETDEV_BONDING_FAILOVER:
+		अवरोध;
+	हाल NETDEV_BONDING_FAILOVER:
 		rtnl_event_type = IFLA_EVENT_BONDING_FAILOVER;
-		break;
-	case NETDEV_NOTIFY_PEERS:
+		अवरोध;
+	हाल NETDEV_NOTIFY_PEERS:
 		rtnl_event_type = IFLA_EVENT_NOTIFY_PEERS;
-		break;
-	case NETDEV_RESEND_IGMP:
+		अवरोध;
+	हाल NETDEV_RESEND_IGMP:
 		rtnl_event_type = IFLA_EVENT_IGMP_RESEND;
-		break;
-	case NETDEV_CHANGEINFODATA:
+		अवरोध;
+	हाल NETDEV_CHANGEINFODATA:
 		rtnl_event_type = IFLA_EVENT_BONDING_OPTIONS;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return rtnl_event_type;
-}
+	वापस rtnl_event_type;
+पूर्ण
 
-static int put_master_ifindex(struct sk_buff *skb, struct net_device *dev)
-{
-	const struct net_device *upper_dev;
-	int ret = 0;
+अटल पूर्णांक put_master_अगरindex(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	स्थिर काष्ठा net_device *upper_dev;
+	पूर्णांक ret = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	upper_dev = netdev_master_upper_dev_get_rcu(dev);
-	if (upper_dev)
-		ret = nla_put_u32(skb, IFLA_MASTER, upper_dev->ifindex);
+	अगर (upper_dev)
+		ret = nla_put_u32(skb, IFLA_MASTER, upper_dev->अगरindex);
 
-	rcu_read_unlock();
-	return ret;
-}
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
-static int nla_put_iflink(struct sk_buff *skb, const struct net_device *dev,
-			  bool force)
-{
-	int ifindex = dev_get_iflink(dev);
+अटल पूर्णांक nla_put_अगरlink(काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *dev,
+			  bool क्रमce)
+अणु
+	पूर्णांक अगरindex = dev_get_अगरlink(dev);
 
-	if (force || dev->ifindex != ifindex)
-		return nla_put_u32(skb, IFLA_LINK, ifindex);
+	अगर (क्रमce || dev->अगरindex != अगरindex)
+		वापस nla_put_u32(skb, IFLA_LINK, अगरindex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static noinline_for_stack int nla_put_ifalias(struct sk_buff *skb,
-					      struct net_device *dev)
-{
-	char buf[IFALIASZ];
-	int ret;
+अटल noअंतरभूत_क्रम_stack पूर्णांक nla_put_अगरalias(काष्ठा sk_buff *skb,
+					      काष्ठा net_device *dev)
+अणु
+	अक्षर buf[IFALIASZ];
+	पूर्णांक ret;
 
-	ret = dev_get_alias(dev, buf, sizeof(buf));
-	return ret > 0 ? nla_put_string(skb, IFLA_IFALIAS, buf) : 0;
-}
+	ret = dev_get_alias(dev, buf, माप(buf));
+	वापस ret > 0 ? nla_put_string(skb, IFLA_IFALIAS, buf) : 0;
+पूर्ण
 
-static int rtnl_fill_link_netnsid(struct sk_buff *skb,
-				  const struct net_device *dev,
-				  struct net *src_net, gfp_t gfp)
-{
-	bool put_iflink = false;
+अटल पूर्णांक rtnl_fill_link_netnsid(काष्ठा sk_buff *skb,
+				  स्थिर काष्ठा net_device *dev,
+				  काष्ठा net *src_net, gfp_t gfp)
+अणु
+	bool put_अगरlink = false;
 
-	if (dev->rtnl_link_ops && dev->rtnl_link_ops->get_link_net) {
-		struct net *link_net = dev->rtnl_link_ops->get_link_net(dev);
+	अगर (dev->rtnl_link_ops && dev->rtnl_link_ops->get_link_net) अणु
+		काष्ठा net *link_net = dev->rtnl_link_ops->get_link_net(dev);
 
-		if (!net_eq(dev_net(dev), link_net)) {
-			int id = peernet2id_alloc(src_net, link_net, gfp);
+		अगर (!net_eq(dev_net(dev), link_net)) अणु
+			पूर्णांक id = peernet2id_alloc(src_net, link_net, gfp);
 
-			if (nla_put_s32(skb, IFLA_LINK_NETNSID, id))
-				return -EMSGSIZE;
+			अगर (nla_put_s32(skb, IFLA_LINK_NETNSID, id))
+				वापस -EMSGSIZE;
 
-			put_iflink = true;
-		}
-	}
+			put_अगरlink = true;
+		पूर्ण
+	पूर्ण
 
-	return nla_put_iflink(skb, dev, put_iflink);
-}
+	वापस nla_put_अगरlink(skb, dev, put_अगरlink);
+पूर्ण
 
-static int rtnl_fill_link_af(struct sk_buff *skb,
-			     const struct net_device *dev,
+अटल पूर्णांक rtnl_fill_link_af(काष्ठा sk_buff *skb,
+			     स्थिर काष्ठा net_device *dev,
 			     u32 ext_filter_mask)
-{
-	const struct rtnl_af_ops *af_ops;
-	struct nlattr *af_spec;
+अणु
+	स्थिर काष्ठा rtnl_af_ops *af_ops;
+	काष्ठा nlattr *af_spec;
 
 	af_spec = nla_nest_start_noflag(skb, IFLA_AF_SPEC);
-	if (!af_spec)
-		return -EMSGSIZE;
+	अगर (!af_spec)
+		वापस -EMSGSIZE;
 
-	list_for_each_entry_rcu(af_ops, &rtnl_af_ops, list) {
-		struct nlattr *af;
-		int err;
+	list_क्रम_each_entry_rcu(af_ops, &rtnl_af_ops, list) अणु
+		काष्ठा nlattr *af;
+		पूर्णांक err;
 
-		if (!af_ops->fill_link_af)
-			continue;
+		अगर (!af_ops->fill_link_af)
+			जारी;
 
 		af = nla_nest_start_noflag(skb, af_ops->family);
-		if (!af)
-			return -EMSGSIZE;
+		अगर (!af)
+			वापस -EMSGSIZE;
 
 		err = af_ops->fill_link_af(skb, dev, ext_filter_mask);
 		/*
-		 * Caller may return ENODATA to indicate that there
+		 * Caller may वापस ENODATA to indicate that there
 		 * was no data to be dumped. This is not an error, it
 		 * means we should trim the attribute header and
-		 * continue.
+		 * जारी.
 		 */
-		if (err == -ENODATA)
+		अगर (err == -ENODATA)
 			nla_nest_cancel(skb, af);
-		else if (err < 0)
-			return -EMSGSIZE;
+		अन्यथा अगर (err < 0)
+			वापस -EMSGSIZE;
 
 		nla_nest_end(skb, af);
-	}
+	पूर्ण
 
 	nla_nest_end(skb, af_spec);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_fill_alt_ifnames(struct sk_buff *skb,
-				 const struct net_device *dev)
-{
-	struct netdev_name_node *name_node;
-	int count = 0;
+अटल पूर्णांक rtnl_fill_alt_अगरnames(काष्ठा sk_buff *skb,
+				 स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा netdev_name_node *name_node;
+	पूर्णांक count = 0;
 
-	list_for_each_entry(name_node, &dev->name_node->list, list) {
-		if (nla_put_string(skb, IFLA_ALT_IFNAME, name_node->name))
-			return -EMSGSIZE;
+	list_क्रम_each_entry(name_node, &dev->name_node->list, list) अणु
+		अगर (nla_put_string(skb, IFLA_ALT_IFNAME, name_node->name))
+			वापस -EMSGSIZE;
 		count++;
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static int rtnl_fill_prop_list(struct sk_buff *skb,
-			       const struct net_device *dev)
-{
-	struct nlattr *prop_list;
-	int ret;
+अटल पूर्णांक rtnl_fill_prop_list(काष्ठा sk_buff *skb,
+			       स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा nlattr *prop_list;
+	पूर्णांक ret;
 
 	prop_list = nla_nest_start(skb, IFLA_PROP_LIST);
-	if (!prop_list)
-		return -EMSGSIZE;
+	अगर (!prop_list)
+		वापस -EMSGSIZE;
 
-	ret = rtnl_fill_alt_ifnames(skb, dev);
-	if (ret <= 0)
-		goto nest_cancel;
+	ret = rtnl_fill_alt_अगरnames(skb, dev);
+	अगर (ret <= 0)
+		जाओ nest_cancel;
 
 	nla_nest_end(skb, prop_list);
-	return 0;
+	वापस 0;
 
 nest_cancel:
 	nla_nest_cancel(skb, prop_list);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rtnl_fill_proto_down(struct sk_buff *skb,
-				const struct net_device *dev)
-{
-	struct nlattr *pr;
+अटल पूर्णांक rtnl_fill_proto_करोwn(काष्ठा sk_buff *skb,
+				स्थिर काष्ठा net_device *dev)
+अणु
+	काष्ठा nlattr *pr;
 	u32 preason;
 
-	if (nla_put_u8(skb, IFLA_PROTO_DOWN, dev->proto_down))
-		goto nla_put_failure;
+	अगर (nla_put_u8(skb, IFLA_PROTO_DOWN, dev->proto_करोwn))
+		जाओ nla_put_failure;
 
-	preason = dev->proto_down_reason;
-	if (!preason)
-		return 0;
+	preason = dev->proto_करोwn_reason;
+	अगर (!preason)
+		वापस 0;
 
 	pr = nla_nest_start(skb, IFLA_PROTO_DOWN_REASON);
-	if (!pr)
-		return -EMSGSIZE;
+	अगर (!pr)
+		वापस -EMSGSIZE;
 
-	if (nla_put_u32(skb, IFLA_PROTO_DOWN_REASON_VALUE, preason)) {
+	अगर (nla_put_u32(skb, IFLA_PROTO_DOWN_REASON_VALUE, preason)) अणु
 		nla_nest_cancel(skb, pr);
-		goto nla_put_failure;
-	}
+		जाओ nla_put_failure;
+	पूर्ण
 
 	nla_nest_end(skb, pr);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int rtnl_fill_ifinfo(struct sk_buff *skb,
-			    struct net_device *dev, struct net *src_net,
-			    int type, u32 pid, u32 seq, u32 change,
-			    unsigned int flags, u32 ext_filter_mask,
-			    u32 event, int *new_nsid, int new_ifindex,
-			    int tgt_netnsid, gfp_t gfp)
-{
-	struct ifinfomsg *ifm;
-	struct nlmsghdr *nlh;
+अटल पूर्णांक rtnl_fill_अगरinfo(काष्ठा sk_buff *skb,
+			    काष्ठा net_device *dev, काष्ठा net *src_net,
+			    पूर्णांक type, u32 pid, u32 seq, u32 change,
+			    अचिन्हित पूर्णांक flags, u32 ext_filter_mask,
+			    u32 event, पूर्णांक *new_nsid, पूर्णांक new_अगरindex,
+			    पूर्णांक tgt_netnsid, gfp_t gfp)
+अणु
+	काष्ठा अगरinfomsg *अगरm;
+	काष्ठा nlmsghdr *nlh;
 
 	ASSERT_RTNL();
-	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ifm), flags);
-	if (nlh == NULL)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, type, माप(*अगरm), flags);
+	अगर (nlh == शून्य)
+		वापस -EMSGSIZE;
 
-	ifm = nlmsg_data(nlh);
-	ifm->ifi_family = AF_UNSPEC;
-	ifm->__ifi_pad = 0;
-	ifm->ifi_type = dev->type;
-	ifm->ifi_index = dev->ifindex;
-	ifm->ifi_flags = dev_get_flags(dev);
-	ifm->ifi_change = change;
+	अगरm = nlmsg_data(nlh);
+	अगरm->अगरi_family = AF_UNSPEC;
+	अगरm->__अगरi_pad = 0;
+	अगरm->अगरi_type = dev->type;
+	अगरm->अगरi_index = dev->अगरindex;
+	अगरm->अगरi_flags = dev_get_flags(dev);
+	अगरm->अगरi_change = change;
 
-	if (tgt_netnsid >= 0 && nla_put_s32(skb, IFLA_TARGET_NETNSID, tgt_netnsid))
-		goto nla_put_failure;
+	अगर (tgt_netnsid >= 0 && nla_put_s32(skb, IFLA_TARGET_NETNSID, tgt_netnsid))
+		जाओ nla_put_failure;
 
-	if (nla_put_string(skb, IFLA_IFNAME, dev->name) ||
+	अगर (nla_put_string(skb, IFLA_IFNAME, dev->name) ||
 	    nla_put_u32(skb, IFLA_TXQLEN, dev->tx_queue_len) ||
 	    nla_put_u8(skb, IFLA_OPERSTATE,
-		       netif_running(dev) ? dev->operstate : IF_OPER_DOWN) ||
+		       netअगर_running(dev) ? dev->operstate : IF_OPER_DOWN) ||
 	    nla_put_u8(skb, IFLA_LINKMODE, dev->link_mode) ||
 	    nla_put_u32(skb, IFLA_MTU, dev->mtu) ||
 	    nla_put_u32(skb, IFLA_MIN_MTU, dev->min_mtu) ||
@@ -1737,412 +1738,412 @@ static int rtnl_fill_ifinfo(struct sk_buff *skb,
 	    nla_put_u32(skb, IFLA_NUM_TX_QUEUES, dev->num_tx_queues) ||
 	    nla_put_u32(skb, IFLA_GSO_MAX_SEGS, dev->gso_max_segs) ||
 	    nla_put_u32(skb, IFLA_GSO_MAX_SIZE, dev->gso_max_size) ||
-#ifdef CONFIG_RPS
+#अगर_घोषित CONFIG_RPS
 	    nla_put_u32(skb, IFLA_NUM_RX_QUEUES, dev->num_rx_queues) ||
-#endif
-	    put_master_ifindex(skb, dev) ||
-	    nla_put_u8(skb, IFLA_CARRIER, netif_carrier_ok(dev)) ||
+#पूर्ण_अगर
+	    put_master_अगरindex(skb, dev) ||
+	    nla_put_u8(skb, IFLA_CARRIER, netअगर_carrier_ok(dev)) ||
 	    (dev->qdisc &&
 	     nla_put_string(skb, IFLA_QDISC, dev->qdisc->ops->id)) ||
-	    nla_put_ifalias(skb, dev) ||
+	    nla_put_अगरalias(skb, dev) ||
 	    nla_put_u32(skb, IFLA_CARRIER_CHANGES,
-			atomic_read(&dev->carrier_up_count) +
-			atomic_read(&dev->carrier_down_count)) ||
+			atomic_पढ़ो(&dev->carrier_up_count) +
+			atomic_पढ़ो(&dev->carrier_करोwn_count)) ||
 	    nla_put_u32(skb, IFLA_CARRIER_UP_COUNT,
-			atomic_read(&dev->carrier_up_count)) ||
+			atomic_पढ़ो(&dev->carrier_up_count)) ||
 	    nla_put_u32(skb, IFLA_CARRIER_DOWN_COUNT,
-			atomic_read(&dev->carrier_down_count)))
-		goto nla_put_failure;
+			atomic_पढ़ो(&dev->carrier_करोwn_count)))
+		जाओ nla_put_failure;
 
-	if (rtnl_fill_proto_down(skb, dev))
-		goto nla_put_failure;
+	अगर (rtnl_fill_proto_करोwn(skb, dev))
+		जाओ nla_put_failure;
 
-	if (event != IFLA_EVENT_NONE) {
-		if (nla_put_u32(skb, IFLA_EVENT, event))
-			goto nla_put_failure;
-	}
+	अगर (event != IFLA_EVENT_NONE) अणु
+		अगर (nla_put_u32(skb, IFLA_EVENT, event))
+			जाओ nla_put_failure;
+	पूर्ण
 
-	if (rtnl_fill_link_ifmap(skb, dev))
-		goto nla_put_failure;
+	अगर (rtnl_fill_link_अगरmap(skb, dev))
+		जाओ nla_put_failure;
 
-	if (dev->addr_len) {
-		if (nla_put(skb, IFLA_ADDRESS, dev->addr_len, dev->dev_addr) ||
+	अगर (dev->addr_len) अणु
+		अगर (nla_put(skb, IFLA_ADDRESS, dev->addr_len, dev->dev_addr) ||
 		    nla_put(skb, IFLA_BROADCAST, dev->addr_len, dev->broadcast))
-			goto nla_put_failure;
-	}
+			जाओ nla_put_failure;
+	पूर्ण
 
-	if (rtnl_phys_port_id_fill(skb, dev))
-		goto nla_put_failure;
+	अगर (rtnl_phys_port_id_fill(skb, dev))
+		जाओ nla_put_failure;
 
-	if (rtnl_phys_port_name_fill(skb, dev))
-		goto nla_put_failure;
+	अगर (rtnl_phys_port_name_fill(skb, dev))
+		जाओ nla_put_failure;
 
-	if (rtnl_phys_switch_id_fill(skb, dev))
-		goto nla_put_failure;
+	अगर (rtnl_phys_चयन_id_fill(skb, dev))
+		जाओ nla_put_failure;
 
-	if (rtnl_fill_stats(skb, dev))
-		goto nla_put_failure;
+	अगर (rtnl_fill_stats(skb, dev))
+		जाओ nla_put_failure;
 
-	if (rtnl_fill_vf(skb, dev, ext_filter_mask))
-		goto nla_put_failure;
+	अगर (rtnl_fill_vf(skb, dev, ext_filter_mask))
+		जाओ nla_put_failure;
 
-	if (rtnl_port_fill(skb, dev, ext_filter_mask))
-		goto nla_put_failure;
+	अगर (rtnl_port_fill(skb, dev, ext_filter_mask))
+		जाओ nla_put_failure;
 
-	if (rtnl_xdp_fill(skb, dev))
-		goto nla_put_failure;
+	अगर (rtnl_xdp_fill(skb, dev))
+		जाओ nla_put_failure;
 
-	if (dev->rtnl_link_ops || rtnl_have_link_slave_info(dev)) {
-		if (rtnl_link_fill(skb, dev) < 0)
-			goto nla_put_failure;
-	}
+	अगर (dev->rtnl_link_ops || rtnl_have_link_slave_info(dev)) अणु
+		अगर (rtnl_link_fill(skb, dev) < 0)
+			जाओ nla_put_failure;
+	पूर्ण
 
-	if (rtnl_fill_link_netnsid(skb, dev, src_net, gfp))
-		goto nla_put_failure;
+	अगर (rtnl_fill_link_netnsid(skb, dev, src_net, gfp))
+		जाओ nla_put_failure;
 
-	if (new_nsid &&
+	अगर (new_nsid &&
 	    nla_put_s32(skb, IFLA_NEW_NETNSID, *new_nsid) < 0)
-		goto nla_put_failure;
-	if (new_ifindex &&
-	    nla_put_s32(skb, IFLA_NEW_IFINDEX, new_ifindex) < 0)
-		goto nla_put_failure;
+		जाओ nla_put_failure;
+	अगर (new_अगरindex &&
+	    nla_put_s32(skb, IFLA_NEW_IFINDEX, new_अगरindex) < 0)
+		जाओ nla_put_failure;
 
-	if (memchr_inv(dev->perm_addr, '\0', dev->addr_len) &&
+	अगर (स_प्रथम_inv(dev->perm_addr, '\0', dev->addr_len) &&
 	    nla_put(skb, IFLA_PERM_ADDRESS, dev->addr_len, dev->perm_addr))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	rcu_read_lock();
-	if (rtnl_fill_link_af(skb, dev, ext_filter_mask))
-		goto nla_put_failure_rcu;
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	अगर (rtnl_fill_link_af(skb, dev, ext_filter_mask))
+		जाओ nla_put_failure_rcu;
+	rcu_पढ़ो_unlock();
 
-	if (rtnl_fill_prop_list(skb, dev))
-		goto nla_put_failure;
+	अगर (rtnl_fill_prop_list(skb, dev))
+		जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 nla_put_failure_rcu:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static const struct nla_policy ifla_policy[IFLA_MAX+1] = {
-	[IFLA_IFNAME]		= { .type = NLA_STRING, .len = IFNAMSIZ-1 },
-	[IFLA_ADDRESS]		= { .type = NLA_BINARY, .len = MAX_ADDR_LEN },
-	[IFLA_BROADCAST]	= { .type = NLA_BINARY, .len = MAX_ADDR_LEN },
-	[IFLA_MAP]		= { .len = sizeof(struct rtnl_link_ifmap) },
-	[IFLA_MTU]		= { .type = NLA_U32 },
-	[IFLA_LINK]		= { .type = NLA_U32 },
-	[IFLA_MASTER]		= { .type = NLA_U32 },
-	[IFLA_CARRIER]		= { .type = NLA_U8 },
-	[IFLA_TXQLEN]		= { .type = NLA_U32 },
-	[IFLA_WEIGHT]		= { .type = NLA_U32 },
-	[IFLA_OPERSTATE]	= { .type = NLA_U8 },
-	[IFLA_LINKMODE]		= { .type = NLA_U8 },
-	[IFLA_LINKINFO]		= { .type = NLA_NESTED },
-	[IFLA_NET_NS_PID]	= { .type = NLA_U32 },
-	[IFLA_NET_NS_FD]	= { .type = NLA_U32 },
+अटल स्थिर काष्ठा nla_policy अगरla_policy[IFLA_MAX+1] = अणु
+	[IFLA_IFNAME]		= अणु .type = NLA_STRING, .len = IFNAMSIZ-1 पूर्ण,
+	[IFLA_ADDRESS]		= अणु .type = NLA_BINARY, .len = MAX_ADDR_LEN पूर्ण,
+	[IFLA_BROADCAST]	= अणु .type = NLA_BINARY, .len = MAX_ADDR_LEN पूर्ण,
+	[IFLA_MAP]		= अणु .len = माप(काष्ठा rtnl_link_अगरmap) पूर्ण,
+	[IFLA_MTU]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_LINK]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_MASTER]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_CARRIER]		= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_TXQLEN]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_WEIGHT]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_OPERSTATE]	= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_LINKMODE]		= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_LINKINFO]		= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_NET_NS_PID]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_NET_NS_FD]	= अणु .type = NLA_U32 पूर्ण,
 	/* IFLA_IFALIAS is a string, but policy is set to NLA_BINARY to
-	 * allow 0-length string (needed to remove an alias).
+	 * allow 0-length string (needed to हटाओ an alias).
 	 */
-	[IFLA_IFALIAS]	        = { .type = NLA_BINARY, .len = IFALIASZ - 1 },
-	[IFLA_VFINFO_LIST]	= {. type = NLA_NESTED },
-	[IFLA_VF_PORTS]		= { .type = NLA_NESTED },
-	[IFLA_PORT_SELF]	= { .type = NLA_NESTED },
-	[IFLA_AF_SPEC]		= { .type = NLA_NESTED },
-	[IFLA_EXT_MASK]		= { .type = NLA_U32 },
-	[IFLA_PROMISCUITY]	= { .type = NLA_U32 },
-	[IFLA_NUM_TX_QUEUES]	= { .type = NLA_U32 },
-	[IFLA_NUM_RX_QUEUES]	= { .type = NLA_U32 },
-	[IFLA_GSO_MAX_SEGS]	= { .type = NLA_U32 },
-	[IFLA_GSO_MAX_SIZE]	= { .type = NLA_U32 },
-	[IFLA_PHYS_PORT_ID]	= { .type = NLA_BINARY, .len = MAX_PHYS_ITEM_ID_LEN },
-	[IFLA_CARRIER_CHANGES]	= { .type = NLA_U32 },  /* ignored */
-	[IFLA_PHYS_SWITCH_ID]	= { .type = NLA_BINARY, .len = MAX_PHYS_ITEM_ID_LEN },
-	[IFLA_LINK_NETNSID]	= { .type = NLA_S32 },
-	[IFLA_PROTO_DOWN]	= { .type = NLA_U8 },
-	[IFLA_XDP]		= { .type = NLA_NESTED },
-	[IFLA_EVENT]		= { .type = NLA_U32 },
-	[IFLA_GROUP]		= { .type = NLA_U32 },
-	[IFLA_TARGET_NETNSID]	= { .type = NLA_S32 },
-	[IFLA_CARRIER_UP_COUNT]	= { .type = NLA_U32 },
-	[IFLA_CARRIER_DOWN_COUNT] = { .type = NLA_U32 },
-	[IFLA_MIN_MTU]		= { .type = NLA_U32 },
-	[IFLA_MAX_MTU]		= { .type = NLA_U32 },
-	[IFLA_PROP_LIST]	= { .type = NLA_NESTED },
-	[IFLA_ALT_IFNAME]	= { .type = NLA_STRING,
-				    .len = ALTIFNAMSIZ - 1 },
-	[IFLA_PERM_ADDRESS]	= { .type = NLA_REJECT },
-	[IFLA_PROTO_DOWN_REASON] = { .type = NLA_NESTED },
+	[IFLA_IFALIAS]	        = अणु .type = NLA_BINARY, .len = IFALIASZ - 1 पूर्ण,
+	[IFLA_VFINFO_LIST]	= अणु. type = NLA_NESTED पूर्ण,
+	[IFLA_VF_PORTS]		= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_PORT_SELF]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_AF_SPEC]		= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_EXT_MASK]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_PROMISCUITY]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_NUM_TX_QUEUES]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_NUM_RX_QUEUES]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_GSO_MAX_SEGS]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_GSO_MAX_SIZE]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_PHYS_PORT_ID]	= अणु .type = NLA_BINARY, .len = MAX_PHYS_ITEM_ID_LEN पूर्ण,
+	[IFLA_CARRIER_CHANGES]	= अणु .type = NLA_U32 पूर्ण,  /* ignored */
+	[IFLA_PHYS_SWITCH_ID]	= अणु .type = NLA_BINARY, .len = MAX_PHYS_ITEM_ID_LEN पूर्ण,
+	[IFLA_LINK_NETNSID]	= अणु .type = NLA_S32 पूर्ण,
+	[IFLA_PROTO_DOWN]	= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_XDP]		= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_EVENT]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_GROUP]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_TARGET_NETNSID]	= अणु .type = NLA_S32 पूर्ण,
+	[IFLA_CARRIER_UP_COUNT]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_CARRIER_DOWN_COUNT] = अणु .type = NLA_U32 पूर्ण,
+	[IFLA_MIN_MTU]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_MAX_MTU]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_PROP_LIST]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_ALT_IFNAME]	= अणु .type = NLA_STRING,
+				    .len = ALTIFNAMSIZ - 1 पूर्ण,
+	[IFLA_PERM_ADDRESS]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_PROTO_DOWN_REASON] = अणु .type = NLA_NESTED पूर्ण,
 	[IFLA_NEW_IFINDEX]	= NLA_POLICY_MIN(NLA_S32, 1),
-};
+पूर्ण;
 
-static const struct nla_policy ifla_info_policy[IFLA_INFO_MAX+1] = {
-	[IFLA_INFO_KIND]	= { .type = NLA_STRING },
-	[IFLA_INFO_DATA]	= { .type = NLA_NESTED },
-	[IFLA_INFO_SLAVE_KIND]	= { .type = NLA_STRING },
-	[IFLA_INFO_SLAVE_DATA]	= { .type = NLA_NESTED },
-};
+अटल स्थिर काष्ठा nla_policy अगरla_info_policy[IFLA_INFO_MAX+1] = अणु
+	[IFLA_INFO_KIND]	= अणु .type = NLA_STRING पूर्ण,
+	[IFLA_INFO_DATA]	= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_INFO_SLAVE_KIND]	= अणु .type = NLA_STRING पूर्ण,
+	[IFLA_INFO_SLAVE_DATA]	= अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
-static const struct nla_policy ifla_vf_policy[IFLA_VF_MAX+1] = {
-	[IFLA_VF_MAC]		= { .len = sizeof(struct ifla_vf_mac) },
-	[IFLA_VF_BROADCAST]	= { .type = NLA_REJECT },
-	[IFLA_VF_VLAN]		= { .len = sizeof(struct ifla_vf_vlan) },
-	[IFLA_VF_VLAN_LIST]     = { .type = NLA_NESTED },
-	[IFLA_VF_TX_RATE]	= { .len = sizeof(struct ifla_vf_tx_rate) },
-	[IFLA_VF_SPOOFCHK]	= { .len = sizeof(struct ifla_vf_spoofchk) },
-	[IFLA_VF_RATE]		= { .len = sizeof(struct ifla_vf_rate) },
-	[IFLA_VF_LINK_STATE]	= { .len = sizeof(struct ifla_vf_link_state) },
-	[IFLA_VF_RSS_QUERY_EN]	= { .len = sizeof(struct ifla_vf_rss_query_en) },
-	[IFLA_VF_STATS]		= { .type = NLA_NESTED },
-	[IFLA_VF_TRUST]		= { .len = sizeof(struct ifla_vf_trust) },
-	[IFLA_VF_IB_NODE_GUID]	= { .len = sizeof(struct ifla_vf_guid) },
-	[IFLA_VF_IB_PORT_GUID]	= { .len = sizeof(struct ifla_vf_guid) },
-};
+अटल स्थिर काष्ठा nla_policy अगरla_vf_policy[IFLA_VF_MAX+1] = अणु
+	[IFLA_VF_MAC]		= अणु .len = माप(काष्ठा अगरla_vf_mac) पूर्ण,
+	[IFLA_VF_BROADCAST]	= अणु .type = NLA_REJECT पूर्ण,
+	[IFLA_VF_VLAN]		= अणु .len = माप(काष्ठा अगरla_vf_vlan) पूर्ण,
+	[IFLA_VF_VLAN_LIST]     = अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_VF_TX_RATE]	= अणु .len = माप(काष्ठा अगरla_vf_tx_rate) पूर्ण,
+	[IFLA_VF_SPOOFCHK]	= अणु .len = माप(काष्ठा अगरla_vf_spoofchk) पूर्ण,
+	[IFLA_VF_RATE]		= अणु .len = माप(काष्ठा अगरla_vf_rate) पूर्ण,
+	[IFLA_VF_LINK_STATE]	= अणु .len = माप(काष्ठा अगरla_vf_link_state) पूर्ण,
+	[IFLA_VF_RSS_QUERY_EN]	= अणु .len = माप(काष्ठा अगरla_vf_rss_query_en) पूर्ण,
+	[IFLA_VF_STATS]		= अणु .type = NLA_NESTED पूर्ण,
+	[IFLA_VF_TRUST]		= अणु .len = माप(काष्ठा अगरla_vf_trust) पूर्ण,
+	[IFLA_VF_IB_NODE_GUID]	= अणु .len = माप(काष्ठा अगरla_vf_guid) पूर्ण,
+	[IFLA_VF_IB_PORT_GUID]	= अणु .len = माप(काष्ठा अगरla_vf_guid) पूर्ण,
+पूर्ण;
 
-static const struct nla_policy ifla_port_policy[IFLA_PORT_MAX+1] = {
-	[IFLA_PORT_VF]		= { .type = NLA_U32 },
-	[IFLA_PORT_PROFILE]	= { .type = NLA_STRING,
-				    .len = PORT_PROFILE_MAX },
-	[IFLA_PORT_INSTANCE_UUID] = { .type = NLA_BINARY,
-				      .len = PORT_UUID_MAX },
-	[IFLA_PORT_HOST_UUID]	= { .type = NLA_STRING,
-				    .len = PORT_UUID_MAX },
-	[IFLA_PORT_REQUEST]	= { .type = NLA_U8, },
-	[IFLA_PORT_RESPONSE]	= { .type = NLA_U16, },
+अटल स्थिर काष्ठा nla_policy अगरla_port_policy[IFLA_PORT_MAX+1] = अणु
+	[IFLA_PORT_VF]		= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_PORT_PROखाता]	= अणु .type = NLA_STRING,
+				    .len = PORT_PROखाता_MAX पूर्ण,
+	[IFLA_PORT_INSTANCE_UUID] = अणु .type = NLA_BINARY,
+				      .len = PORT_UUID_MAX पूर्ण,
+	[IFLA_PORT_HOST_UUID]	= अणु .type = NLA_STRING,
+				    .len = PORT_UUID_MAX पूर्ण,
+	[IFLA_PORT_REQUEST]	= अणु .type = NLA_U8, पूर्ण,
+	[IFLA_PORT_RESPONSE]	= अणु .type = NLA_U16, पूर्ण,
 
 	/* Unused, but we need to keep it here since user space could
 	 * fill it. It's also broken with regard to NLA_BINARY use in
-	 * combination with structs.
+	 * combination with काष्ठाs.
 	 */
-	[IFLA_PORT_VSI_TYPE]	= { .type = NLA_BINARY,
-				    .len = sizeof(struct ifla_port_vsi) },
-};
+	[IFLA_PORT_VSI_TYPE]	= अणु .type = NLA_BINARY,
+				    .len = माप(काष्ठा अगरla_port_vsi) पूर्ण,
+पूर्ण;
 
-static const struct nla_policy ifla_xdp_policy[IFLA_XDP_MAX + 1] = {
-	[IFLA_XDP_UNSPEC]	= { .strict_start_type = IFLA_XDP_EXPECTED_FD },
-	[IFLA_XDP_FD]		= { .type = NLA_S32 },
-	[IFLA_XDP_EXPECTED_FD]	= { .type = NLA_S32 },
-	[IFLA_XDP_ATTACHED]	= { .type = NLA_U8 },
-	[IFLA_XDP_FLAGS]	= { .type = NLA_U32 },
-	[IFLA_XDP_PROG_ID]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy अगरla_xdp_policy[IFLA_XDP_MAX + 1] = अणु
+	[IFLA_XDP_UNSPEC]	= अणु .strict_start_type = IFLA_XDP_EXPECTED_FD पूर्ण,
+	[IFLA_XDP_FD]		= अणु .type = NLA_S32 पूर्ण,
+	[IFLA_XDP_EXPECTED_FD]	= अणु .type = NLA_S32 पूर्ण,
+	[IFLA_XDP_ATTACHED]	= अणु .type = NLA_U8 पूर्ण,
+	[IFLA_XDP_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_XDP_PROG_ID]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static const struct rtnl_link_ops *linkinfo_to_kind_ops(const struct nlattr *nla)
-{
-	const struct rtnl_link_ops *ops = NULL;
-	struct nlattr *linfo[IFLA_INFO_MAX + 1];
+अटल स्थिर काष्ठा rtnl_link_ops *linkinfo_to_kind_ops(स्थिर काष्ठा nlattr *nla)
+अणु
+	स्थिर काष्ठा rtnl_link_ops *ops = शून्य;
+	काष्ठा nlattr *linfo[IFLA_INFO_MAX + 1];
 
-	if (nla_parse_nested_deprecated(linfo, IFLA_INFO_MAX, nla, ifla_info_policy, NULL) < 0)
-		return NULL;
+	अगर (nla_parse_nested_deprecated(linfo, IFLA_INFO_MAX, nla, अगरla_info_policy, शून्य) < 0)
+		वापस शून्य;
 
-	if (linfo[IFLA_INFO_KIND]) {
-		char kind[MODULE_NAME_LEN];
+	अगर (linfo[IFLA_INFO_KIND]) अणु
+		अक्षर kind[MODULE_NAME_LEN];
 
-		nla_strscpy(kind, linfo[IFLA_INFO_KIND], sizeof(kind));
+		nla_strscpy(kind, linfo[IFLA_INFO_KIND], माप(kind));
 		ops = rtnl_link_ops_get(kind);
-	}
+	पूर्ण
 
-	return ops;
-}
+	वापस ops;
+पूर्ण
 
-static bool link_master_filtered(struct net_device *dev, int master_idx)
-{
-	struct net_device *master;
+अटल bool link_master_filtered(काष्ठा net_device *dev, पूर्णांक master_idx)
+अणु
+	काष्ठा net_device *master;
 
-	if (!master_idx)
-		return false;
+	अगर (!master_idx)
+		वापस false;
 
 	master = netdev_master_upper_dev_get(dev);
-	if (!master || master->ifindex != master_idx)
-		return true;
+	अगर (!master || master->अगरindex != master_idx)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool link_kind_filtered(const struct net_device *dev,
-			       const struct rtnl_link_ops *kind_ops)
-{
-	if (kind_ops && dev->rtnl_link_ops != kind_ops)
-		return true;
+अटल bool link_kind_filtered(स्थिर काष्ठा net_device *dev,
+			       स्थिर काष्ठा rtnl_link_ops *kind_ops)
+अणु
+	अगर (kind_ops && dev->rtnl_link_ops != kind_ops)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool link_dump_filtered(struct net_device *dev,
-			       int master_idx,
-			       const struct rtnl_link_ops *kind_ops)
-{
-	if (link_master_filtered(dev, master_idx) ||
+अटल bool link_dump_filtered(काष्ठा net_device *dev,
+			       पूर्णांक master_idx,
+			       स्थिर काष्ठा rtnl_link_ops *kind_ops)
+अणु
+	अगर (link_master_filtered(dev, master_idx) ||
 	    link_kind_filtered(dev, kind_ops))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * rtnl_get_net_ns_capable - Get netns if sufficiently privileged.
+ * rtnl_get_net_ns_capable - Get netns अगर sufficiently privileged.
  * @sk: netlink socket
- * @netnsid: network namespace identifier
+ * @netnsid: network namespace identअगरier
  *
- * Returns the network namespace identified by netnsid on success or an error
- * pointer on failure.
+ * Returns the network namespace identअगरied by netnsid on success or an error
+ * poपूर्णांकer on failure.
  */
-struct net *rtnl_get_net_ns_capable(struct sock *sk, int netnsid)
-{
-	struct net *net;
+काष्ठा net *rtnl_get_net_ns_capable(काष्ठा sock *sk, पूर्णांक netnsid)
+अणु
+	काष्ठा net *net;
 
 	net = get_net_ns_by_id(sock_net(sk), netnsid);
-	if (!net)
-		return ERR_PTR(-EINVAL);
+	अगर (!net)
+		वापस ERR_PTR(-EINVAL);
 
 	/* For now, the caller is required to have CAP_NET_ADMIN in
 	 * the user namespace owning the target net ns.
 	 */
-	if (!sk_ns_capable(sk, net->user_ns, CAP_NET_ADMIN)) {
+	अगर (!sk_ns_capable(sk, net->user_ns, CAP_NET_ADMIN)) अणु
 		put_net(net);
-		return ERR_PTR(-EACCES);
-	}
-	return net;
-}
+		वापस ERR_PTR(-EACCES);
+	पूर्ण
+	वापस net;
+पूर्ण
 EXPORT_SYMBOL_GPL(rtnl_get_net_ns_capable);
 
-static int rtnl_valid_dump_ifinfo_req(const struct nlmsghdr *nlh,
-				      bool strict_check, struct nlattr **tb,
-				      struct netlink_ext_ack *extack)
-{
-	int hdrlen;
+अटल पूर्णांक rtnl_valid_dump_अगरinfo_req(स्थिर काष्ठा nlmsghdr *nlh,
+				      bool strict_check, काष्ठा nlattr **tb,
+				      काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक hdrlen;
 
-	if (strict_check) {
-		struct ifinfomsg *ifm;
+	अगर (strict_check) अणु
+		काष्ठा अगरinfomsg *अगरm;
 
-		if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
+		अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरm))) अणु
 			NL_SET_ERR_MSG(extack, "Invalid header for link dump");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		ifm = nlmsg_data(nlh);
-		if (ifm->__ifi_pad || ifm->ifi_type || ifm->ifi_flags ||
-		    ifm->ifi_change) {
+		अगरm = nlmsg_data(nlh);
+		अगर (अगरm->__अगरi_pad || अगरm->अगरi_type || अगरm->अगरi_flags ||
+		    अगरm->अगरi_change) अणु
 			NL_SET_ERR_MSG(extack, "Invalid values in header for link dump request");
-			return -EINVAL;
-		}
-		if (ifm->ifi_index) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (अगरm->अगरi_index) अणु
 			NL_SET_ERR_MSG(extack, "Filter by device index not supported for link dumps");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		return nlmsg_parse_deprecated_strict(nlh, sizeof(*ifm), tb,
-						     IFLA_MAX, ifla_policy,
+		वापस nlmsg_parse_deprecated_strict(nlh, माप(*अगरm), tb,
+						     IFLA_MAX, अगरla_policy,
 						     extack);
-	}
+	पूर्ण
 
-	/* A hack to preserve kernel<->userspace interface.
-	 * The correct header is ifinfomsg. It is consistent with rtnl_getlink.
-	 * However, before Linux v3.9 the code here assumed rtgenmsg and that's
+	/* A hack to preserve kernel<->userspace पूर्णांकerface.
+	 * The correct header is अगरinfomsg. It is consistent with rtnl_getlink.
+	 * However, beक्रमe Linux v3.9 the code here assumed rtgenmsg and that's
 	 * what iproute2 < v3.9.0 used.
 	 * We can detect the old iproute2. Even including the IFLA_EXT_MASK
-	 * attribute, its netlink message is shorter than struct ifinfomsg.
+	 * attribute, its netlink message is लघुer than काष्ठा अगरinfomsg.
 	 */
-	hdrlen = nlmsg_len(nlh) < sizeof(struct ifinfomsg) ?
-		 sizeof(struct rtgenmsg) : sizeof(struct ifinfomsg);
+	hdrlen = nlmsg_len(nlh) < माप(काष्ठा अगरinfomsg) ?
+		 माप(काष्ठा rtgenmsg) : माप(काष्ठा अगरinfomsg);
 
-	return nlmsg_parse_deprecated(nlh, hdrlen, tb, IFLA_MAX, ifla_policy,
+	वापस nlmsg_parse_deprecated(nlh, hdrlen, tb, IFLA_MAX, अगरla_policy,
 				      extack);
-}
+पूर्ण
 
-static int rtnl_dump_ifinfo(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct netlink_ext_ack *extack = cb->extack;
-	const struct nlmsghdr *nlh = cb->nlh;
-	struct net *net = sock_net(skb->sk);
-	struct net *tgt_net = net;
-	int h, s_h;
-	int idx = 0, s_idx;
-	struct net_device *dev;
-	struct hlist_head *head;
-	struct nlattr *tb[IFLA_MAX+1];
+अटल पूर्णांक rtnl_dump_अगरinfo(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा netlink_ext_ack *extack = cb->extack;
+	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा net *tgt_net = net;
+	पूर्णांक h, s_h;
+	पूर्णांक idx = 0, s_idx;
+	काष्ठा net_device *dev;
+	काष्ठा hlist_head *head;
+	काष्ठा nlattr *tb[IFLA_MAX+1];
 	u32 ext_filter_mask = 0;
-	const struct rtnl_link_ops *kind_ops = NULL;
-	unsigned int flags = NLM_F_MULTI;
-	int master_idx = 0;
-	int netnsid = -1;
-	int err, i;
+	स्थिर काष्ठा rtnl_link_ops *kind_ops = शून्य;
+	अचिन्हित पूर्णांक flags = NLM_F_MULTI;
+	पूर्णांक master_idx = 0;
+	पूर्णांक netnsid = -1;
+	पूर्णांक err, i;
 
 	s_h = cb->args[0];
 	s_idx = cb->args[1];
 
-	err = rtnl_valid_dump_ifinfo_req(nlh, cb->strict_check, tb, extack);
-	if (err < 0) {
-		if (cb->strict_check)
-			return err;
+	err = rtnl_valid_dump_अगरinfo_req(nlh, cb->strict_check, tb, extack);
+	अगर (err < 0) अणु
+		अगर (cb->strict_check)
+			वापस err;
 
-		goto walk_entries;
-	}
+		जाओ walk_entries;
+	पूर्ण
 
-	for (i = 0; i <= IFLA_MAX; ++i) {
-		if (!tb[i])
-			continue;
+	क्रम (i = 0; i <= IFLA_MAX; ++i) अणु
+		अगर (!tb[i])
+			जारी;
 
 		/* new attributes should only be added with strict checking */
-		switch (i) {
-		case IFLA_TARGET_NETNSID:
+		चयन (i) अणु
+		हाल IFLA_TARGET_NETNSID:
 			netnsid = nla_get_s32(tb[i]);
 			tgt_net = rtnl_get_net_ns_capable(skb->sk, netnsid);
-			if (IS_ERR(tgt_net)) {
+			अगर (IS_ERR(tgt_net)) अणु
 				NL_SET_ERR_MSG(extack, "Invalid target network namespace id");
-				return PTR_ERR(tgt_net);
-			}
-			break;
-		case IFLA_EXT_MASK:
+				वापस PTR_ERR(tgt_net);
+			पूर्ण
+			अवरोध;
+		हाल IFLA_EXT_MASK:
 			ext_filter_mask = nla_get_u32(tb[i]);
-			break;
-		case IFLA_MASTER:
+			अवरोध;
+		हाल IFLA_MASTER:
 			master_idx = nla_get_u32(tb[i]);
-			break;
-		case IFLA_LINKINFO:
+			अवरोध;
+		हाल IFLA_LINKINFO:
 			kind_ops = linkinfo_to_kind_ops(tb[i]);
-			break;
-		default:
-			if (cb->strict_check) {
+			अवरोध;
+		शेष:
+			अगर (cb->strict_check) अणु
 				NL_SET_ERR_MSG(extack, "Unsupported attribute in link dump request");
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (master_idx || kind_ops)
+	अगर (master_idx || kind_ops)
 		flags |= NLM_F_DUMP_FILTERED;
 
 walk_entries:
-	for (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) {
+	क्रम (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) अणु
 		idx = 0;
 		head = &tgt_net->dev_index_head[h];
-		hlist_for_each_entry(dev, head, index_hlist) {
-			if (link_dump_filtered(dev, master_idx, kind_ops))
-				goto cont;
-			if (idx < s_idx)
-				goto cont;
-			err = rtnl_fill_ifinfo(skb, dev, net,
+		hlist_क्रम_each_entry(dev, head, index_hlist) अणु
+			अगर (link_dump_filtered(dev, master_idx, kind_ops))
+				जाओ cont;
+			अगर (idx < s_idx)
+				जाओ cont;
+			err = rtnl_fill_अगरinfo(skb, dev, net,
 					       RTM_NEWLINK,
 					       NETLINK_CB(cb->skb).portid,
 					       nlh->nlmsg_seq, 0, flags,
-					       ext_filter_mask, 0, NULL, 0,
+					       ext_filter_mask, 0, शून्य, 0,
 					       netnsid, GFP_KERNEL);
 
-			if (err < 0) {
-				if (likely(skb->len))
-					goto out;
+			अगर (err < 0) अणु
+				अगर (likely(skb->len))
+					जाओ out;
 
-				goto out_err;
-			}
+				जाओ out_err;
+			पूर्ण
 cont:
 			idx++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
 	err = skb->len;
 out_err:
@@ -2150,34 +2151,34 @@ out_err:
 	cb->args[0] = h;
 	cb->seq = tgt_net->dev_base_seq;
 	nl_dump_check_consistent(cb, nlmsg_hdr(skb));
-	if (netnsid >= 0)
+	अगर (netnsid >= 0)
 		put_net(tgt_net);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int rtnl_nla_parse_ifla(struct nlattr **tb, const struct nlattr *head, int len,
-			struct netlink_ext_ack *exterr)
-{
-	return nla_parse_deprecated(tb, IFLA_MAX, head, len, ifla_policy,
+पूर्णांक rtnl_nla_parse_अगरla(काष्ठा nlattr **tb, स्थिर काष्ठा nlattr *head, पूर्णांक len,
+			काष्ठा netlink_ext_ack *exterr)
+अणु
+	वापस nla_parse_deprecated(tb, IFLA_MAX, head, len, अगरla_policy,
 				    exterr);
-}
-EXPORT_SYMBOL(rtnl_nla_parse_ifla);
+पूर्ण
+EXPORT_SYMBOL(rtnl_nla_parse_अगरla);
 
-struct net *rtnl_link_get_net(struct net *src_net, struct nlattr *tb[])
-{
-	struct net *net;
+काष्ठा net *rtnl_link_get_net(काष्ठा net *src_net, काष्ठा nlattr *tb[])
+अणु
+	काष्ठा net *net;
 	/* Examine the link attributes and figure out which
 	 * network namespace we are talking about.
 	 */
-	if (tb[IFLA_NET_NS_PID])
+	अगर (tb[IFLA_NET_NS_PID])
 		net = get_net_ns_by_pid(nla_get_u32(tb[IFLA_NET_NS_PID]));
-	else if (tb[IFLA_NET_NS_FD])
+	अन्यथा अगर (tb[IFLA_NET_NS_FD])
 		net = get_net_ns_by_fd(nla_get_u32(tb[IFLA_NET_NS_FD]));
-	else
+	अन्यथा
 		net = get_net(src_net);
-	return net;
-}
+	वापस net;
+पूर्ण
 EXPORT_SYMBOL(rtnl_link_get_net);
 
 /* Figure out which network namespace we are talking about by
@@ -2187,1687 +2188,1687 @@ EXPORT_SYMBOL(rtnl_link_get_net);
  * 2. IFLA_NET_NS_FD
  * 3. IFLA_TARGET_NETNSID
  */
-static struct net *rtnl_link_get_net_by_nlattr(struct net *src_net,
-					       struct nlattr *tb[])
-{
-	struct net *net;
+अटल काष्ठा net *rtnl_link_get_net_by_nlattr(काष्ठा net *src_net,
+					       काष्ठा nlattr *tb[])
+अणु
+	काष्ठा net *net;
 
-	if (tb[IFLA_NET_NS_PID] || tb[IFLA_NET_NS_FD])
-		return rtnl_link_get_net(src_net, tb);
+	अगर (tb[IFLA_NET_NS_PID] || tb[IFLA_NET_NS_FD])
+		वापस rtnl_link_get_net(src_net, tb);
 
-	if (!tb[IFLA_TARGET_NETNSID])
-		return get_net(src_net);
+	अगर (!tb[IFLA_TARGET_NETNSID])
+		वापस get_net(src_net);
 
 	net = get_net_ns_by_id(src_net, nla_get_u32(tb[IFLA_TARGET_NETNSID]));
-	if (!net)
-		return ERR_PTR(-EINVAL);
+	अगर (!net)
+		वापस ERR_PTR(-EINVAL);
 
-	return net;
-}
+	वापस net;
+पूर्ण
 
-static struct net *rtnl_link_get_net_capable(const struct sk_buff *skb,
-					     struct net *src_net,
-					     struct nlattr *tb[], int cap)
-{
-	struct net *net;
+अटल काष्ठा net *rtnl_link_get_net_capable(स्थिर काष्ठा sk_buff *skb,
+					     काष्ठा net *src_net,
+					     काष्ठा nlattr *tb[], पूर्णांक cap)
+अणु
+	काष्ठा net *net;
 
 	net = rtnl_link_get_net_by_nlattr(src_net, tb);
-	if (IS_ERR(net))
-		return net;
+	अगर (IS_ERR(net))
+		वापस net;
 
-	if (!netlink_ns_capable(skb, net->user_ns, cap)) {
+	अगर (!netlink_ns_capable(skb, net->user_ns, cap)) अणु
 		put_net(net);
-		return ERR_PTR(-EPERM);
-	}
+		वापस ERR_PTR(-EPERM);
+	पूर्ण
 
-	return net;
-}
+	वापस net;
+पूर्ण
 
-/* Verify that rtnetlink requests do not pass additional properties
- * potentially referring to different network namespaces.
+/* Verअगरy that rtnetlink requests करो not pass additional properties
+ * potentially referring to dअगरferent network namespaces.
  */
-static int rtnl_ensure_unique_netns(struct nlattr *tb[],
-				    struct netlink_ext_ack *extack,
+अटल पूर्णांक rtnl_ensure_unique_netns(काष्ठा nlattr *tb[],
+				    काष्ठा netlink_ext_ack *extack,
 				    bool netns_id_only)
-{
+अणु
 
-	if (netns_id_only) {
-		if (!tb[IFLA_NET_NS_PID] && !tb[IFLA_NET_NS_FD])
-			return 0;
+	अगर (netns_id_only) अणु
+		अगर (!tb[IFLA_NET_NS_PID] && !tb[IFLA_NET_NS_FD])
+			वापस 0;
 
 		NL_SET_ERR_MSG(extack, "specified netns attribute not supported");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (tb[IFLA_TARGET_NETNSID] && (tb[IFLA_NET_NS_PID] || tb[IFLA_NET_NS_FD]))
-		goto invalid_attr;
+	अगर (tb[IFLA_TARGET_NETNSID] && (tb[IFLA_NET_NS_PID] || tb[IFLA_NET_NS_FD]))
+		जाओ invalid_attr;
 
-	if (tb[IFLA_NET_NS_PID] && (tb[IFLA_TARGET_NETNSID] || tb[IFLA_NET_NS_FD]))
-		goto invalid_attr;
+	अगर (tb[IFLA_NET_NS_PID] && (tb[IFLA_TARGET_NETNSID] || tb[IFLA_NET_NS_FD]))
+		जाओ invalid_attr;
 
-	if (tb[IFLA_NET_NS_FD] && (tb[IFLA_TARGET_NETNSID] || tb[IFLA_NET_NS_PID]))
-		goto invalid_attr;
+	अगर (tb[IFLA_NET_NS_FD] && (tb[IFLA_TARGET_NETNSID] || tb[IFLA_NET_NS_PID]))
+		जाओ invalid_attr;
 
-	return 0;
+	वापस 0;
 
 invalid_attr:
 	NL_SET_ERR_MSG(extack, "multiple netns identifying attributes specified");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int validate_linkmsg(struct net_device *dev, struct nlattr *tb[])
-{
-	if (dev) {
-		if (tb[IFLA_ADDRESS] &&
+अटल पूर्णांक validate_linkmsg(काष्ठा net_device *dev, काष्ठा nlattr *tb[])
+अणु
+	अगर (dev) अणु
+		अगर (tb[IFLA_ADDRESS] &&
 		    nla_len(tb[IFLA_ADDRESS]) < dev->addr_len)
-			return -EINVAL;
+			वापस -EINVAL;
 
-		if (tb[IFLA_BROADCAST] &&
+		अगर (tb[IFLA_BROADCAST] &&
 		    nla_len(tb[IFLA_BROADCAST]) < dev->addr_len)
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	if (tb[IFLA_AF_SPEC]) {
-		struct nlattr *af;
-		int rem, err;
+	अगर (tb[IFLA_AF_SPEC]) अणु
+		काष्ठा nlattr *af;
+		पूर्णांक rem, err;
 
-		nla_for_each_nested(af, tb[IFLA_AF_SPEC], rem) {
-			const struct rtnl_af_ops *af_ops;
+		nla_क्रम_each_nested(af, tb[IFLA_AF_SPEC], rem) अणु
+			स्थिर काष्ठा rtnl_af_ops *af_ops;
 
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			af_ops = rtnl_af_lookup(nla_type(af));
-			if (!af_ops) {
-				rcu_read_unlock();
-				return -EAFNOSUPPORT;
-			}
+			अगर (!af_ops) अणु
+				rcu_पढ़ो_unlock();
+				वापस -EAFNOSUPPORT;
+			पूर्ण
 
-			if (!af_ops->set_link_af) {
-				rcu_read_unlock();
-				return -EOPNOTSUPP;
-			}
+			अगर (!af_ops->set_link_af) अणु
+				rcu_पढ़ो_unlock();
+				वापस -EOPNOTSUPP;
+			पूर्ण
 
-			if (af_ops->validate_link_af) {
+			अगर (af_ops->validate_link_af) अणु
 				err = af_ops->validate_link_af(dev, af);
-				if (err < 0) {
-					rcu_read_unlock();
-					return err;
-				}
-			}
+				अगर (err < 0) अणु
+					rcu_पढ़ो_unlock();
+					वापस err;
+				पूर्ण
+			पूर्ण
 
-			rcu_read_unlock();
-		}
-	}
+			rcu_पढ़ो_unlock();
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int handle_infiniband_guid(struct net_device *dev, struct ifla_vf_guid *ivt,
-				  int guid_type)
-{
-	const struct net_device_ops *ops = dev->netdev_ops;
+अटल पूर्णांक handle_infiniband_guid(काष्ठा net_device *dev, काष्ठा अगरla_vf_guid *ivt,
+				  पूर्णांक guid_type)
+अणु
+	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
 
-	return ops->ndo_set_vf_guid(dev, ivt->vf, ivt->guid, guid_type);
-}
+	वापस ops->nकरो_set_vf_guid(dev, ivt->vf, ivt->guid, guid_type);
+पूर्ण
 
-static int handle_vf_guid(struct net_device *dev, struct ifla_vf_guid *ivt, int guid_type)
-{
-	if (dev->type != ARPHRD_INFINIBAND)
-		return -EOPNOTSUPP;
+अटल पूर्णांक handle_vf_guid(काष्ठा net_device *dev, काष्ठा अगरla_vf_guid *ivt, पूर्णांक guid_type)
+अणु
+	अगर (dev->type != ARPHRD_INFINIBAND)
+		वापस -EOPNOTSUPP;
 
-	return handle_infiniband_guid(dev, ivt, guid_type);
-}
+	वापस handle_infiniband_guid(dev, ivt, guid_type);
+पूर्ण
 
-static int do_setvfinfo(struct net_device *dev, struct nlattr **tb)
-{
-	const struct net_device_ops *ops = dev->netdev_ops;
-	int err = -EINVAL;
+अटल पूर्णांक करो_setvfinfo(काष्ठा net_device *dev, काष्ठा nlattr **tb)
+अणु
+	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
+	पूर्णांक err = -EINVAL;
 
-	if (tb[IFLA_VF_MAC]) {
-		struct ifla_vf_mac *ivm = nla_data(tb[IFLA_VF_MAC]);
+	अगर (tb[IFLA_VF_MAC]) अणु
+		काष्ठा अगरla_vf_mac *ivm = nla_data(tb[IFLA_VF_MAC]);
 
-		if (ivm->vf >= INT_MAX)
-			return -EINVAL;
+		अगर (ivm->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
 		err = -EOPNOTSUPP;
-		if (ops->ndo_set_vf_mac)
-			err = ops->ndo_set_vf_mac(dev, ivm->vf,
+		अगर (ops->nकरो_set_vf_mac)
+			err = ops->nकरो_set_vf_mac(dev, ivm->vf,
 						  ivm->mac);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_VF_VLAN]) {
-		struct ifla_vf_vlan *ivv = nla_data(tb[IFLA_VF_VLAN]);
+	अगर (tb[IFLA_VF_VLAN]) अणु
+		काष्ठा अगरla_vf_vlan *ivv = nla_data(tb[IFLA_VF_VLAN]);
 
-		if (ivv->vf >= INT_MAX)
-			return -EINVAL;
+		अगर (ivv->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
 		err = -EOPNOTSUPP;
-		if (ops->ndo_set_vf_vlan)
-			err = ops->ndo_set_vf_vlan(dev, ivv->vf, ivv->vlan,
+		अगर (ops->nकरो_set_vf_vlan)
+			err = ops->nकरो_set_vf_vlan(dev, ivv->vf, ivv->vlan,
 						   ivv->qos,
 						   htons(ETH_P_8021Q));
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_VF_VLAN_LIST]) {
-		struct ifla_vf_vlan_info *ivvl[MAX_VLAN_LIST_LEN];
-		struct nlattr *attr;
-		int rem, len = 0;
+	अगर (tb[IFLA_VF_VLAN_LIST]) अणु
+		काष्ठा अगरla_vf_vlan_info *ivvl[MAX_VLAN_LIST_LEN];
+		काष्ठा nlattr *attr;
+		पूर्णांक rem, len = 0;
 
 		err = -EOPNOTSUPP;
-		if (!ops->ndo_set_vf_vlan)
-			return err;
+		अगर (!ops->nकरो_set_vf_vlan)
+			वापस err;
 
-		nla_for_each_nested(attr, tb[IFLA_VF_VLAN_LIST], rem) {
-			if (nla_type(attr) != IFLA_VF_VLAN_INFO ||
-			    nla_len(attr) < NLA_HDRLEN) {
-				return -EINVAL;
-			}
-			if (len >= MAX_VLAN_LIST_LEN)
-				return -EOPNOTSUPP;
+		nla_क्रम_each_nested(attr, tb[IFLA_VF_VLAN_LIST], rem) अणु
+			अगर (nla_type(attr) != IFLA_VF_VLAN_INFO ||
+			    nla_len(attr) < NLA_HDRLEN) अणु
+				वापस -EINVAL;
+			पूर्ण
+			अगर (len >= MAX_VLAN_LIST_LEN)
+				वापस -EOPNOTSUPP;
 			ivvl[len] = nla_data(attr);
 
 			len++;
-		}
-		if (len == 0)
-			return -EINVAL;
+		पूर्ण
+		अगर (len == 0)
+			वापस -EINVAL;
 
-		if (ivvl[0]->vf >= INT_MAX)
-			return -EINVAL;
-		err = ops->ndo_set_vf_vlan(dev, ivvl[0]->vf, ivvl[0]->vlan,
+		अगर (ivvl[0]->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
+		err = ops->nकरो_set_vf_vlan(dev, ivvl[0]->vf, ivvl[0]->vlan,
 					   ivvl[0]->qos, ivvl[0]->vlan_proto);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_VF_TX_RATE]) {
-		struct ifla_vf_tx_rate *ivt = nla_data(tb[IFLA_VF_TX_RATE]);
-		struct ifla_vf_info ivf;
+	अगर (tb[IFLA_VF_TX_RATE]) अणु
+		काष्ठा अगरla_vf_tx_rate *ivt = nla_data(tb[IFLA_VF_TX_RATE]);
+		काष्ठा अगरla_vf_info ivf;
 
-		if (ivt->vf >= INT_MAX)
-			return -EINVAL;
+		अगर (ivt->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
 		err = -EOPNOTSUPP;
-		if (ops->ndo_get_vf_config)
-			err = ops->ndo_get_vf_config(dev, ivt->vf, &ivf);
-		if (err < 0)
-			return err;
+		अगर (ops->nकरो_get_vf_config)
+			err = ops->nकरो_get_vf_config(dev, ivt->vf, &ivf);
+		अगर (err < 0)
+			वापस err;
 
 		err = -EOPNOTSUPP;
-		if (ops->ndo_set_vf_rate)
-			err = ops->ndo_set_vf_rate(dev, ivt->vf,
+		अगर (ops->nकरो_set_vf_rate)
+			err = ops->nकरो_set_vf_rate(dev, ivt->vf,
 						   ivf.min_tx_rate,
 						   ivt->rate);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_VF_RATE]) {
-		struct ifla_vf_rate *ivt = nla_data(tb[IFLA_VF_RATE]);
+	अगर (tb[IFLA_VF_RATE]) अणु
+		काष्ठा अगरla_vf_rate *ivt = nla_data(tb[IFLA_VF_RATE]);
 
-		if (ivt->vf >= INT_MAX)
-			return -EINVAL;
+		अगर (ivt->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
 		err = -EOPNOTSUPP;
-		if (ops->ndo_set_vf_rate)
-			err = ops->ndo_set_vf_rate(dev, ivt->vf,
+		अगर (ops->nकरो_set_vf_rate)
+			err = ops->nकरो_set_vf_rate(dev, ivt->vf,
 						   ivt->min_tx_rate,
 						   ivt->max_tx_rate);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_VF_SPOOFCHK]) {
-		struct ifla_vf_spoofchk *ivs = nla_data(tb[IFLA_VF_SPOOFCHK]);
+	अगर (tb[IFLA_VF_SPOOFCHK]) अणु
+		काष्ठा अगरla_vf_spoofchk *ivs = nla_data(tb[IFLA_VF_SPOOFCHK]);
 
-		if (ivs->vf >= INT_MAX)
-			return -EINVAL;
+		अगर (ivs->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
 		err = -EOPNOTSUPP;
-		if (ops->ndo_set_vf_spoofchk)
-			err = ops->ndo_set_vf_spoofchk(dev, ivs->vf,
+		अगर (ops->nकरो_set_vf_spoofchk)
+			err = ops->nकरो_set_vf_spoofchk(dev, ivs->vf,
 						       ivs->setting);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_VF_LINK_STATE]) {
-		struct ifla_vf_link_state *ivl = nla_data(tb[IFLA_VF_LINK_STATE]);
+	अगर (tb[IFLA_VF_LINK_STATE]) अणु
+		काष्ठा अगरla_vf_link_state *ivl = nla_data(tb[IFLA_VF_LINK_STATE]);
 
-		if (ivl->vf >= INT_MAX)
-			return -EINVAL;
+		अगर (ivl->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
 		err = -EOPNOTSUPP;
-		if (ops->ndo_set_vf_link_state)
-			err = ops->ndo_set_vf_link_state(dev, ivl->vf,
+		अगर (ops->nकरो_set_vf_link_state)
+			err = ops->nकरो_set_vf_link_state(dev, ivl->vf,
 							 ivl->link_state);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_VF_RSS_QUERY_EN]) {
-		struct ifla_vf_rss_query_en *ivrssq_en;
+	अगर (tb[IFLA_VF_RSS_QUERY_EN]) अणु
+		काष्ठा अगरla_vf_rss_query_en *ivrssq_en;
 
 		err = -EOPNOTSUPP;
 		ivrssq_en = nla_data(tb[IFLA_VF_RSS_QUERY_EN]);
-		if (ivrssq_en->vf >= INT_MAX)
-			return -EINVAL;
-		if (ops->ndo_set_vf_rss_query_en)
-			err = ops->ndo_set_vf_rss_query_en(dev, ivrssq_en->vf,
+		अगर (ivrssq_en->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
+		अगर (ops->nकरो_set_vf_rss_query_en)
+			err = ops->nकरो_set_vf_rss_query_en(dev, ivrssq_en->vf,
 							   ivrssq_en->setting);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_VF_TRUST]) {
-		struct ifla_vf_trust *ivt = nla_data(tb[IFLA_VF_TRUST]);
+	अगर (tb[IFLA_VF_TRUST]) अणु
+		काष्ठा अगरla_vf_trust *ivt = nla_data(tb[IFLA_VF_TRUST]);
 
-		if (ivt->vf >= INT_MAX)
-			return -EINVAL;
+		अगर (ivt->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
 		err = -EOPNOTSUPP;
-		if (ops->ndo_set_vf_trust)
-			err = ops->ndo_set_vf_trust(dev, ivt->vf, ivt->setting);
-		if (err < 0)
-			return err;
-	}
+		अगर (ops->nकरो_set_vf_trust)
+			err = ops->nकरो_set_vf_trust(dev, ivt->vf, ivt->setting);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (tb[IFLA_VF_IB_NODE_GUID]) {
-		struct ifla_vf_guid *ivt = nla_data(tb[IFLA_VF_IB_NODE_GUID]);
+	अगर (tb[IFLA_VF_IB_NODE_GUID]) अणु
+		काष्ठा अगरla_vf_guid *ivt = nla_data(tb[IFLA_VF_IB_NODE_GUID]);
 
-		if (ivt->vf >= INT_MAX)
-			return -EINVAL;
-		if (!ops->ndo_set_vf_guid)
-			return -EOPNOTSUPP;
-		return handle_vf_guid(dev, ivt, IFLA_VF_IB_NODE_GUID);
-	}
+		अगर (ivt->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
+		अगर (!ops->nकरो_set_vf_guid)
+			वापस -EOPNOTSUPP;
+		वापस handle_vf_guid(dev, ivt, IFLA_VF_IB_NODE_GUID);
+	पूर्ण
 
-	if (tb[IFLA_VF_IB_PORT_GUID]) {
-		struct ifla_vf_guid *ivt = nla_data(tb[IFLA_VF_IB_PORT_GUID]);
+	अगर (tb[IFLA_VF_IB_PORT_GUID]) अणु
+		काष्ठा अगरla_vf_guid *ivt = nla_data(tb[IFLA_VF_IB_PORT_GUID]);
 
-		if (ivt->vf >= INT_MAX)
-			return -EINVAL;
-		if (!ops->ndo_set_vf_guid)
-			return -EOPNOTSUPP;
+		अगर (ivt->vf >= पूर्णांक_उच्च)
+			वापस -EINVAL;
+		अगर (!ops->nकरो_set_vf_guid)
+			वापस -EOPNOTSUPP;
 
-		return handle_vf_guid(dev, ivt, IFLA_VF_IB_PORT_GUID);
-	}
+		वापस handle_vf_guid(dev, ivt, IFLA_VF_IB_PORT_GUID);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int do_set_master(struct net_device *dev, int ifindex,
-			 struct netlink_ext_ack *extack)
-{
-	struct net_device *upper_dev = netdev_master_upper_dev_get(dev);
-	const struct net_device_ops *ops;
-	int err;
+अटल पूर्णांक करो_set_master(काष्ठा net_device *dev, पूर्णांक अगरindex,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net_device *upper_dev = netdev_master_upper_dev_get(dev);
+	स्थिर काष्ठा net_device_ops *ops;
+	पूर्णांक err;
 
-	if (upper_dev) {
-		if (upper_dev->ifindex == ifindex)
-			return 0;
+	अगर (upper_dev) अणु
+		अगर (upper_dev->अगरindex == अगरindex)
+			वापस 0;
 		ops = upper_dev->netdev_ops;
-		if (ops->ndo_del_slave) {
-			err = ops->ndo_del_slave(upper_dev, dev);
-			if (err)
-				return err;
-		} else {
-			return -EOPNOTSUPP;
-		}
-	}
+		अगर (ops->nकरो_del_slave) अणु
+			err = ops->nकरो_del_slave(upper_dev, dev);
+			अगर (err)
+				वापस err;
+		पूर्ण अन्यथा अणु
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	if (ifindex) {
-		upper_dev = __dev_get_by_index(dev_net(dev), ifindex);
-		if (!upper_dev)
-			return -EINVAL;
+	अगर (अगरindex) अणु
+		upper_dev = __dev_get_by_index(dev_net(dev), अगरindex);
+		अगर (!upper_dev)
+			वापस -EINVAL;
 		ops = upper_dev->netdev_ops;
-		if (ops->ndo_add_slave) {
-			err = ops->ndo_add_slave(upper_dev, dev, extack);
-			if (err)
-				return err;
-		} else {
-			return -EOPNOTSUPP;
-		}
-	}
-	return 0;
-}
+		अगर (ops->nकरो_add_slave) अणु
+			err = ops->nकरो_add_slave(upper_dev, dev, extack);
+			अगर (err)
+				वापस err;
+		पूर्ण अन्यथा अणु
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct nla_policy ifla_proto_down_reason_policy[IFLA_PROTO_DOWN_REASON_VALUE + 1] = {
-	[IFLA_PROTO_DOWN_REASON_MASK]	= { .type = NLA_U32 },
-	[IFLA_PROTO_DOWN_REASON_VALUE]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy अगरla_proto_करोwn_reason_policy[IFLA_PROTO_DOWN_REASON_VALUE + 1] = अणु
+	[IFLA_PROTO_DOWN_REASON_MASK]	= अणु .type = NLA_U32 पूर्ण,
+	[IFLA_PROTO_DOWN_REASON_VALUE]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int do_set_proto_down(struct net_device *dev,
-			     struct nlattr *nl_proto_down,
-			     struct nlattr *nl_proto_down_reason,
-			     struct netlink_ext_ack *extack)
-{
-	struct nlattr *pdreason[IFLA_PROTO_DOWN_REASON_MAX + 1];
-	const struct net_device_ops *ops = dev->netdev_ops;
-	unsigned long mask = 0;
+अटल पूर्णांक करो_set_proto_करोwn(काष्ठा net_device *dev,
+			     काष्ठा nlattr *nl_proto_करोwn,
+			     काष्ठा nlattr *nl_proto_करोwn_reason,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *pdreason[IFLA_PROTO_DOWN_REASON_MAX + 1];
+	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
+	अचिन्हित दीर्घ mask = 0;
 	u32 value;
-	bool proto_down;
-	int err;
+	bool proto_करोwn;
+	पूर्णांक err;
 
-	if (!ops->ndo_change_proto_down) {
+	अगर (!ops->nकरो_change_proto_करोwn) अणु
 		NL_SET_ERR_MSG(extack,  "Protodown not supported by device");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (nl_proto_down_reason) {
+	अगर (nl_proto_करोwn_reason) अणु
 		err = nla_parse_nested_deprecated(pdreason,
 						  IFLA_PROTO_DOWN_REASON_MAX,
-						  nl_proto_down_reason,
-						  ifla_proto_down_reason_policy,
-						  NULL);
-		if (err < 0)
-			return err;
+						  nl_proto_करोwn_reason,
+						  अगरla_proto_करोwn_reason_policy,
+						  शून्य);
+		अगर (err < 0)
+			वापस err;
 
-		if (!pdreason[IFLA_PROTO_DOWN_REASON_VALUE]) {
+		अगर (!pdreason[IFLA_PROTO_DOWN_REASON_VALUE]) अणु
 			NL_SET_ERR_MSG(extack, "Invalid protodown reason value");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		value = nla_get_u32(pdreason[IFLA_PROTO_DOWN_REASON_VALUE]);
 
-		if (pdreason[IFLA_PROTO_DOWN_REASON_MASK])
+		अगर (pdreason[IFLA_PROTO_DOWN_REASON_MASK])
 			mask = nla_get_u32(pdreason[IFLA_PROTO_DOWN_REASON_MASK]);
 
-		dev_change_proto_down_reason(dev, mask, value);
-	}
+		dev_change_proto_करोwn_reason(dev, mask, value);
+	पूर्ण
 
-	if (nl_proto_down) {
-		proto_down = nla_get_u8(nl_proto_down);
+	अगर (nl_proto_करोwn) अणु
+		proto_करोwn = nla_get_u8(nl_proto_करोwn);
 
-		/* Dont turn off protodown if there are active reasons */
-		if (!proto_down && dev->proto_down_reason) {
+		/* Dont turn off protoकरोwn अगर there are active reasons */
+		अगर (!proto_करोwn && dev->proto_करोwn_reason) अणु
 			NL_SET_ERR_MSG(extack, "Cannot clear protodown, active reasons");
-			return -EBUSY;
-		}
-		err = dev_change_proto_down(dev,
-					    proto_down);
-		if (err)
-			return err;
-	}
+			वापस -EBUSY;
+		पूर्ण
+		err = dev_change_proto_करोwn(dev,
+					    proto_करोwn);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define DO_SETLINK_MODIFIED	0x01
-/* notify flag means notify + modified. */
-#define DO_SETLINK_NOTIFY	0x03
-static int do_setlink(const struct sk_buff *skb,
-		      struct net_device *dev, struct ifinfomsg *ifm,
-		      struct netlink_ext_ack *extack,
-		      struct nlattr **tb, char *ifname, int status)
-{
-	const struct net_device_ops *ops = dev->netdev_ops;
-	int err;
+#घोषणा DO_SETLINK_MODIFIED	0x01
+/* notअगरy flag means notअगरy + modअगरied. */
+#घोषणा DO_SETLINK_NOTIFY	0x03
+अटल पूर्णांक करो_setlink(स्थिर काष्ठा sk_buff *skb,
+		      काष्ठा net_device *dev, काष्ठा अगरinfomsg *अगरm,
+		      काष्ठा netlink_ext_ack *extack,
+		      काष्ठा nlattr **tb, अक्षर *अगरname, पूर्णांक status)
+अणु
+	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
+	पूर्णांक err;
 
 	err = validate_linkmsg(dev, tb);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (tb[IFLA_NET_NS_PID] || tb[IFLA_NET_NS_FD] || tb[IFLA_TARGET_NETNSID]) {
-		struct net *net;
-		int new_ifindex;
+	अगर (tb[IFLA_NET_NS_PID] || tb[IFLA_NET_NS_FD] || tb[IFLA_TARGET_NETNSID]) अणु
+		काष्ठा net *net;
+		पूर्णांक new_अगरindex;
 
 		net = rtnl_link_get_net_capable(skb, dev_net(dev),
 						tb, CAP_NET_ADMIN);
-		if (IS_ERR(net)) {
+		अगर (IS_ERR(net)) अणु
 			err = PTR_ERR(net);
-			goto errout;
-		}
+			जाओ errout;
+		पूर्ण
 
-		if (tb[IFLA_NEW_IFINDEX])
-			new_ifindex = nla_get_s32(tb[IFLA_NEW_IFINDEX]);
-		else
-			new_ifindex = 0;
+		अगर (tb[IFLA_NEW_IFINDEX])
+			new_अगरindex = nla_get_s32(tb[IFLA_NEW_IFINDEX]);
+		अन्यथा
+			new_अगरindex = 0;
 
-		err = __dev_change_net_namespace(dev, net, ifname, new_ifindex);
+		err = __dev_change_net_namespace(dev, net, अगरname, new_अगरindex);
 		put_net(net);
-		if (err)
-			goto errout;
+		अगर (err)
+			जाओ errout;
 		status |= DO_SETLINK_MODIFIED;
-	}
+	पूर्ण
 
-	if (tb[IFLA_MAP]) {
-		struct rtnl_link_ifmap *u_map;
-		struct ifmap k_map;
+	अगर (tb[IFLA_MAP]) अणु
+		काष्ठा rtnl_link_अगरmap *u_map;
+		काष्ठा अगरmap k_map;
 
-		if (!ops->ndo_set_config) {
+		अगर (!ops->nकरो_set_config) अणु
 			err = -EOPNOTSUPP;
-			goto errout;
-		}
+			जाओ errout;
+		पूर्ण
 
-		if (!netif_device_present(dev)) {
+		अगर (!netअगर_device_present(dev)) अणु
 			err = -ENODEV;
-			goto errout;
-		}
+			जाओ errout;
+		पूर्ण
 
 		u_map = nla_data(tb[IFLA_MAP]);
-		k_map.mem_start = (unsigned long) u_map->mem_start;
-		k_map.mem_end = (unsigned long) u_map->mem_end;
-		k_map.base_addr = (unsigned short) u_map->base_addr;
-		k_map.irq = (unsigned char) u_map->irq;
-		k_map.dma = (unsigned char) u_map->dma;
-		k_map.port = (unsigned char) u_map->port;
+		k_map.mem_start = (अचिन्हित दीर्घ) u_map->mem_start;
+		k_map.mem_end = (अचिन्हित दीर्घ) u_map->mem_end;
+		k_map.base_addr = (अचिन्हित लघु) u_map->base_addr;
+		k_map.irq = (अचिन्हित अक्षर) u_map->irq;
+		k_map.dma = (अचिन्हित अक्षर) u_map->dma;
+		k_map.port = (अचिन्हित अक्षर) u_map->port;
 
-		err = ops->ndo_set_config(dev, &k_map);
-		if (err < 0)
-			goto errout;
+		err = ops->nकरो_set_config(dev, &k_map);
+		अगर (err < 0)
+			जाओ errout;
 
 		status |= DO_SETLINK_NOTIFY;
-	}
+	पूर्ण
 
-	if (tb[IFLA_ADDRESS]) {
-		struct sockaddr *sa;
-		int len;
+	अगर (tb[IFLA_ADDRESS]) अणु
+		काष्ठा sockaddr *sa;
+		पूर्णांक len;
 
-		len = sizeof(sa_family_t) + max_t(size_t, dev->addr_len,
-						  sizeof(*sa));
-		sa = kmalloc(len, GFP_KERNEL);
-		if (!sa) {
+		len = माप(sa_family_t) + max_t(माप_प्रकार, dev->addr_len,
+						  माप(*sa));
+		sa = kदो_स्मृति(len, GFP_KERNEL);
+		अगर (!sa) अणु
 			err = -ENOMEM;
-			goto errout;
-		}
+			जाओ errout;
+		पूर्ण
 		sa->sa_family = dev->type;
-		memcpy(sa->sa_data, nla_data(tb[IFLA_ADDRESS]),
+		स_नकल(sa->sa_data, nla_data(tb[IFLA_ADDRESS]),
 		       dev->addr_len);
 		err = dev_set_mac_address_user(dev, sa, extack);
-		kfree(sa);
-		if (err)
-			goto errout;
+		kमुक्त(sa);
+		अगर (err)
+			जाओ errout;
 		status |= DO_SETLINK_MODIFIED;
-	}
+	पूर्ण
 
-	if (tb[IFLA_MTU]) {
+	अगर (tb[IFLA_MTU]) अणु
 		err = dev_set_mtu_ext(dev, nla_get_u32(tb[IFLA_MTU]), extack);
-		if (err < 0)
-			goto errout;
+		अगर (err < 0)
+			जाओ errout;
 		status |= DO_SETLINK_MODIFIED;
-	}
+	पूर्ण
 
-	if (tb[IFLA_GROUP]) {
+	अगर (tb[IFLA_GROUP]) अणु
 		dev_set_group(dev, nla_get_u32(tb[IFLA_GROUP]));
 		status |= DO_SETLINK_NOTIFY;
-	}
+	पूर्ण
 
 	/*
-	 * Interface selected by interface index but interface
+	 * Interface selected by पूर्णांकerface index but पूर्णांकerface
 	 * name provided implies that a name change has been
 	 * requested.
 	 */
-	if (ifm->ifi_index > 0 && ifname[0]) {
-		err = dev_change_name(dev, ifname);
-		if (err < 0)
-			goto errout;
+	अगर (अगरm->अगरi_index > 0 && अगरname[0]) अणु
+		err = dev_change_name(dev, अगरname);
+		अगर (err < 0)
+			जाओ errout;
 		status |= DO_SETLINK_MODIFIED;
-	}
+	पूर्ण
 
-	if (tb[IFLA_IFALIAS]) {
+	अगर (tb[IFLA_IFALIAS]) अणु
 		err = dev_set_alias(dev, nla_data(tb[IFLA_IFALIAS]),
 				    nla_len(tb[IFLA_IFALIAS]));
-		if (err < 0)
-			goto errout;
+		अगर (err < 0)
+			जाओ errout;
 		status |= DO_SETLINK_NOTIFY;
-	}
+	पूर्ण
 
-	if (tb[IFLA_BROADCAST]) {
-		nla_memcpy(dev->broadcast, tb[IFLA_BROADCAST], dev->addr_len);
-		call_netdevice_notifiers(NETDEV_CHANGEADDR, dev);
-	}
+	अगर (tb[IFLA_BROADCAST]) अणु
+		nla_स_नकल(dev->broadcast, tb[IFLA_BROADCAST], dev->addr_len);
+		call_netdevice_notअगरiers(NETDEV_CHANGEADDR, dev);
+	पूर्ण
 
-	if (ifm->ifi_flags || ifm->ifi_change) {
-		err = dev_change_flags(dev, rtnl_dev_combine_flags(dev, ifm),
+	अगर (अगरm->अगरi_flags || अगरm->अगरi_change) अणु
+		err = dev_change_flags(dev, rtnl_dev_combine_flags(dev, अगरm),
 				       extack);
-		if (err < 0)
-			goto errout;
-	}
+		अगर (err < 0)
+			जाओ errout;
+	पूर्ण
 
-	if (tb[IFLA_MASTER]) {
-		err = do_set_master(dev, nla_get_u32(tb[IFLA_MASTER]), extack);
-		if (err)
-			goto errout;
+	अगर (tb[IFLA_MASTER]) अणु
+		err = करो_set_master(dev, nla_get_u32(tb[IFLA_MASTER]), extack);
+		अगर (err)
+			जाओ errout;
 		status |= DO_SETLINK_MODIFIED;
-	}
+	पूर्ण
 
-	if (tb[IFLA_CARRIER]) {
+	अगर (tb[IFLA_CARRIER]) अणु
 		err = dev_change_carrier(dev, nla_get_u8(tb[IFLA_CARRIER]));
-		if (err)
-			goto errout;
+		अगर (err)
+			जाओ errout;
 		status |= DO_SETLINK_MODIFIED;
-	}
+	पूर्ण
 
-	if (tb[IFLA_TXQLEN]) {
-		unsigned int value = nla_get_u32(tb[IFLA_TXQLEN]);
+	अगर (tb[IFLA_TXQLEN]) अणु
+		अचिन्हित पूर्णांक value = nla_get_u32(tb[IFLA_TXQLEN]);
 
 		err = dev_change_tx_queue_len(dev, value);
-		if (err)
-			goto errout;
+		अगर (err)
+			जाओ errout;
 		status |= DO_SETLINK_MODIFIED;
-	}
+	पूर्ण
 
-	if (tb[IFLA_GSO_MAX_SIZE]) {
+	अगर (tb[IFLA_GSO_MAX_SIZE]) अणु
 		u32 max_size = nla_get_u32(tb[IFLA_GSO_MAX_SIZE]);
 
-		if (max_size > GSO_MAX_SIZE) {
+		अगर (max_size > GSO_MAX_SIZE) अणु
 			err = -EINVAL;
-			goto errout;
-		}
+			जाओ errout;
+		पूर्ण
 
-		if (dev->gso_max_size ^ max_size) {
-			netif_set_gso_max_size(dev, max_size);
+		अगर (dev->gso_max_size ^ max_size) अणु
+			netअगर_set_gso_max_size(dev, max_size);
 			status |= DO_SETLINK_MODIFIED;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (tb[IFLA_GSO_MAX_SEGS]) {
+	अगर (tb[IFLA_GSO_MAX_SEGS]) अणु
 		u32 max_segs = nla_get_u32(tb[IFLA_GSO_MAX_SEGS]);
 
-		if (max_segs > GSO_MAX_SEGS) {
+		अगर (max_segs > GSO_MAX_SEGS) अणु
 			err = -EINVAL;
-			goto errout;
-		}
+			जाओ errout;
+		पूर्ण
 
-		if (dev->gso_max_segs ^ max_segs) {
+		अगर (dev->gso_max_segs ^ max_segs) अणु
 			dev->gso_max_segs = max_segs;
 			status |= DO_SETLINK_MODIFIED;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (tb[IFLA_OPERSTATE])
+	अगर (tb[IFLA_OPERSTATE])
 		set_operstate(dev, nla_get_u8(tb[IFLA_OPERSTATE]));
 
-	if (tb[IFLA_LINKMODE]) {
-		unsigned char value = nla_get_u8(tb[IFLA_LINKMODE]);
+	अगर (tb[IFLA_LINKMODE]) अणु
+		अचिन्हित अक्षर value = nla_get_u8(tb[IFLA_LINKMODE]);
 
-		write_lock_bh(&dev_base_lock);
-		if (dev->link_mode ^ value)
+		ग_लिखो_lock_bh(&dev_base_lock);
+		अगर (dev->link_mode ^ value)
 			status |= DO_SETLINK_NOTIFY;
 		dev->link_mode = value;
-		write_unlock_bh(&dev_base_lock);
-	}
+		ग_लिखो_unlock_bh(&dev_base_lock);
+	पूर्ण
 
-	if (tb[IFLA_VFINFO_LIST]) {
-		struct nlattr *vfinfo[IFLA_VF_MAX + 1];
-		struct nlattr *attr;
-		int rem;
+	अगर (tb[IFLA_VFINFO_LIST]) अणु
+		काष्ठा nlattr *vfinfo[IFLA_VF_MAX + 1];
+		काष्ठा nlattr *attr;
+		पूर्णांक rem;
 
-		nla_for_each_nested(attr, tb[IFLA_VFINFO_LIST], rem) {
-			if (nla_type(attr) != IFLA_VF_INFO ||
-			    nla_len(attr) < NLA_HDRLEN) {
+		nla_क्रम_each_nested(attr, tb[IFLA_VFINFO_LIST], rem) अणु
+			अगर (nla_type(attr) != IFLA_VF_INFO ||
+			    nla_len(attr) < NLA_HDRLEN) अणु
 				err = -EINVAL;
-				goto errout;
-			}
+				जाओ errout;
+			पूर्ण
 			err = nla_parse_nested_deprecated(vfinfo, IFLA_VF_MAX,
 							  attr,
-							  ifla_vf_policy,
-							  NULL);
-			if (err < 0)
-				goto errout;
-			err = do_setvfinfo(dev, vfinfo);
-			if (err < 0)
-				goto errout;
+							  अगरla_vf_policy,
+							  शून्य);
+			अगर (err < 0)
+				जाओ errout;
+			err = करो_setvfinfo(dev, vfinfo);
+			अगर (err < 0)
+				जाओ errout;
 			status |= DO_SETLINK_NOTIFY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	err = 0;
 
-	if (tb[IFLA_VF_PORTS]) {
-		struct nlattr *port[IFLA_PORT_MAX+1];
-		struct nlattr *attr;
-		int vf;
-		int rem;
+	अगर (tb[IFLA_VF_PORTS]) अणु
+		काष्ठा nlattr *port[IFLA_PORT_MAX+1];
+		काष्ठा nlattr *attr;
+		पूर्णांक vf;
+		पूर्णांक rem;
 
 		err = -EOPNOTSUPP;
-		if (!ops->ndo_set_vf_port)
-			goto errout;
+		अगर (!ops->nकरो_set_vf_port)
+			जाओ errout;
 
-		nla_for_each_nested(attr, tb[IFLA_VF_PORTS], rem) {
-			if (nla_type(attr) != IFLA_VF_PORT ||
-			    nla_len(attr) < NLA_HDRLEN) {
+		nla_क्रम_each_nested(attr, tb[IFLA_VF_PORTS], rem) अणु
+			अगर (nla_type(attr) != IFLA_VF_PORT ||
+			    nla_len(attr) < NLA_HDRLEN) अणु
 				err = -EINVAL;
-				goto errout;
-			}
+				जाओ errout;
+			पूर्ण
 			err = nla_parse_nested_deprecated(port, IFLA_PORT_MAX,
 							  attr,
-							  ifla_port_policy,
-							  NULL);
-			if (err < 0)
-				goto errout;
-			if (!port[IFLA_PORT_VF]) {
+							  अगरla_port_policy,
+							  शून्य);
+			अगर (err < 0)
+				जाओ errout;
+			अगर (!port[IFLA_PORT_VF]) अणु
 				err = -EOPNOTSUPP;
-				goto errout;
-			}
+				जाओ errout;
+			पूर्ण
 			vf = nla_get_u32(port[IFLA_PORT_VF]);
-			err = ops->ndo_set_vf_port(dev, vf, port);
-			if (err < 0)
-				goto errout;
+			err = ops->nकरो_set_vf_port(dev, vf, port);
+			अगर (err < 0)
+				जाओ errout;
 			status |= DO_SETLINK_NOTIFY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	err = 0;
 
-	if (tb[IFLA_PORT_SELF]) {
-		struct nlattr *port[IFLA_PORT_MAX+1];
+	अगर (tb[IFLA_PORT_SELF]) अणु
+		काष्ठा nlattr *port[IFLA_PORT_MAX+1];
 
 		err = nla_parse_nested_deprecated(port, IFLA_PORT_MAX,
 						  tb[IFLA_PORT_SELF],
-						  ifla_port_policy, NULL);
-		if (err < 0)
-			goto errout;
+						  अगरla_port_policy, शून्य);
+		अगर (err < 0)
+			जाओ errout;
 
 		err = -EOPNOTSUPP;
-		if (ops->ndo_set_vf_port)
-			err = ops->ndo_set_vf_port(dev, PORT_SELF_VF, port);
-		if (err < 0)
-			goto errout;
+		अगर (ops->nकरो_set_vf_port)
+			err = ops->nकरो_set_vf_port(dev, PORT_SELF_VF, port);
+		अगर (err < 0)
+			जाओ errout;
 		status |= DO_SETLINK_NOTIFY;
-	}
+	पूर्ण
 
-	if (tb[IFLA_AF_SPEC]) {
-		struct nlattr *af;
-		int rem;
+	अगर (tb[IFLA_AF_SPEC]) अणु
+		काष्ठा nlattr *af;
+		पूर्णांक rem;
 
-		nla_for_each_nested(af, tb[IFLA_AF_SPEC], rem) {
-			const struct rtnl_af_ops *af_ops;
+		nla_क्रम_each_nested(af, tb[IFLA_AF_SPEC], rem) अणु
+			स्थिर काष्ठा rtnl_af_ops *af_ops;
 
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 
 			BUG_ON(!(af_ops = rtnl_af_lookup(nla_type(af))));
 
 			err = af_ops->set_link_af(dev, af, extack);
-			if (err < 0) {
-				rcu_read_unlock();
-				goto errout;
-			}
+			अगर (err < 0) अणु
+				rcu_पढ़ो_unlock();
+				जाओ errout;
+			पूर्ण
 
-			rcu_read_unlock();
+			rcu_पढ़ो_unlock();
 			status |= DO_SETLINK_NOTIFY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	err = 0;
 
-	if (tb[IFLA_PROTO_DOWN] || tb[IFLA_PROTO_DOWN_REASON]) {
-		err = do_set_proto_down(dev, tb[IFLA_PROTO_DOWN],
+	अगर (tb[IFLA_PROTO_DOWN] || tb[IFLA_PROTO_DOWN_REASON]) अणु
+		err = करो_set_proto_करोwn(dev, tb[IFLA_PROTO_DOWN],
 					tb[IFLA_PROTO_DOWN_REASON], extack);
-		if (err)
-			goto errout;
+		अगर (err)
+			जाओ errout;
 		status |= DO_SETLINK_NOTIFY;
-	}
+	पूर्ण
 
-	if (tb[IFLA_XDP]) {
-		struct nlattr *xdp[IFLA_XDP_MAX + 1];
+	अगर (tb[IFLA_XDP]) अणु
+		काष्ठा nlattr *xdp[IFLA_XDP_MAX + 1];
 		u32 xdp_flags = 0;
 
 		err = nla_parse_nested_deprecated(xdp, IFLA_XDP_MAX,
 						  tb[IFLA_XDP],
-						  ifla_xdp_policy, NULL);
-		if (err < 0)
-			goto errout;
+						  अगरla_xdp_policy, शून्य);
+		अगर (err < 0)
+			जाओ errout;
 
-		if (xdp[IFLA_XDP_ATTACHED] || xdp[IFLA_XDP_PROG_ID]) {
+		अगर (xdp[IFLA_XDP_ATTACHED] || xdp[IFLA_XDP_PROG_ID]) अणु
 			err = -EINVAL;
-			goto errout;
-		}
+			जाओ errout;
+		पूर्ण
 
-		if (xdp[IFLA_XDP_FLAGS]) {
+		अगर (xdp[IFLA_XDP_FLAGS]) अणु
 			xdp_flags = nla_get_u32(xdp[IFLA_XDP_FLAGS]);
-			if (xdp_flags & ~XDP_FLAGS_MASK) {
+			अगर (xdp_flags & ~XDP_FLAGS_MASK) अणु
 				err = -EINVAL;
-				goto errout;
-			}
-			if (hweight32(xdp_flags & XDP_FLAGS_MODES) > 1) {
+				जाओ errout;
+			पूर्ण
+			अगर (hweight32(xdp_flags & XDP_FLAGS_MODES) > 1) अणु
 				err = -EINVAL;
-				goto errout;
-			}
-		}
+				जाओ errout;
+			पूर्ण
+		पूर्ण
 
-		if (xdp[IFLA_XDP_FD]) {
-			int expected_fd = -1;
+		अगर (xdp[IFLA_XDP_FD]) अणु
+			पूर्णांक expected_fd = -1;
 
-			if (xdp_flags & XDP_FLAGS_REPLACE) {
-				if (!xdp[IFLA_XDP_EXPECTED_FD]) {
+			अगर (xdp_flags & XDP_FLAGS_REPLACE) अणु
+				अगर (!xdp[IFLA_XDP_EXPECTED_FD]) अणु
 					err = -EINVAL;
-					goto errout;
-				}
+					जाओ errout;
+				पूर्ण
 				expected_fd =
 					nla_get_s32(xdp[IFLA_XDP_EXPECTED_FD]);
-			}
+			पूर्ण
 
 			err = dev_change_xdp_fd(dev, extack,
 						nla_get_s32(xdp[IFLA_XDP_FD]),
 						expected_fd,
 						xdp_flags);
-			if (err)
-				goto errout;
+			अगर (err)
+				जाओ errout;
 			status |= DO_SETLINK_NOTIFY;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 errout:
-	if (status & DO_SETLINK_MODIFIED) {
-		if ((status & DO_SETLINK_NOTIFY) == DO_SETLINK_NOTIFY)
+	अगर (status & DO_SETLINK_MODIFIED) अणु
+		अगर ((status & DO_SETLINK_NOTIFY) == DO_SETLINK_NOTIFY)
 			netdev_state_change(dev);
 
-		if (err < 0)
+		अगर (err < 0)
 			net_warn_ratelimited("A link change request failed with some changes committed already. Interface %s may have been left with an inconsistent configuration, please check.\n",
 					     dev->name);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct net_device *rtnl_dev_get(struct net *net,
-				       struct nlattr *ifname_attr,
-				       struct nlattr *altifname_attr,
-				       char *ifname)
-{
-	char buffer[ALTIFNAMSIZ];
+अटल काष्ठा net_device *rtnl_dev_get(काष्ठा net *net,
+				       काष्ठा nlattr *अगरname_attr,
+				       काष्ठा nlattr *altअगरname_attr,
+				       अक्षर *अगरname)
+अणु
+	अक्षर buffer[ALTIFNAMSIZ];
 
-	if (!ifname) {
-		ifname = buffer;
-		if (ifname_attr)
-			nla_strscpy(ifname, ifname_attr, IFNAMSIZ);
-		else if (altifname_attr)
-			nla_strscpy(ifname, altifname_attr, ALTIFNAMSIZ);
-		else
-			return NULL;
-	}
+	अगर (!अगरname) अणु
+		अगरname = buffer;
+		अगर (अगरname_attr)
+			nla_strscpy(अगरname, अगरname_attr, IFNAMSIZ);
+		अन्यथा अगर (altअगरname_attr)
+			nla_strscpy(अगरname, altअगरname_attr, ALTIFNAMSIZ);
+		अन्यथा
+			वापस शून्य;
+	पूर्ण
 
-	return __dev_get_by_name(net, ifname);
-}
+	वापस __dev_get_by_name(net, अगरname);
+पूर्ण
 
-static int rtnl_setlink(struct sk_buff *skb, struct nlmsghdr *nlh,
-			struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct ifinfomsg *ifm;
-	struct net_device *dev;
-	int err;
-	struct nlattr *tb[IFLA_MAX+1];
-	char ifname[IFNAMSIZ];
+अटल पूर्णांक rtnl_setlink(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा अगरinfomsg *अगरm;
+	काष्ठा net_device *dev;
+	पूर्णांक err;
+	काष्ठा nlattr *tb[IFLA_MAX+1];
+	अक्षर अगरname[IFNAMSIZ];
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFLA_MAX,
-				     ifla_policy, extack);
-	if (err < 0)
-		goto errout;
+	err = nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFLA_MAX,
+				     अगरla_policy, extack);
+	अगर (err < 0)
+		जाओ errout;
 
 	err = rtnl_ensure_unique_netns(tb, extack, false);
-	if (err < 0)
-		goto errout;
+	अगर (err < 0)
+		जाओ errout;
 
-	if (tb[IFLA_IFNAME])
-		nla_strscpy(ifname, tb[IFLA_IFNAME], IFNAMSIZ);
-	else
-		ifname[0] = '\0';
+	अगर (tb[IFLA_IFNAME])
+		nla_strscpy(अगरname, tb[IFLA_IFNAME], IFNAMSIZ);
+	अन्यथा
+		अगरname[0] = '\0';
 
 	err = -EINVAL;
-	ifm = nlmsg_data(nlh);
-	if (ifm->ifi_index > 0)
-		dev = __dev_get_by_index(net, ifm->ifi_index);
-	else if (tb[IFLA_IFNAME] || tb[IFLA_ALT_IFNAME])
-		dev = rtnl_dev_get(net, NULL, tb[IFLA_ALT_IFNAME], ifname);
-	else
-		goto errout;
+	अगरm = nlmsg_data(nlh);
+	अगर (अगरm->अगरi_index > 0)
+		dev = __dev_get_by_index(net, अगरm->अगरi_index);
+	अन्यथा अगर (tb[IFLA_IFNAME] || tb[IFLA_ALT_IFNAME])
+		dev = rtnl_dev_get(net, शून्य, tb[IFLA_ALT_IFNAME], अगरname);
+	अन्यथा
+		जाओ errout;
 
-	if (dev == NULL) {
+	अगर (dev == शून्य) अणु
 		err = -ENODEV;
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	err = do_setlink(skb, dev, ifm, extack, tb, ifname, 0);
+	err = करो_setlink(skb, dev, अगरm, extack, tb, अगरname, 0);
 errout:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtnl_group_dellink(const struct net *net, int group)
-{
-	struct net_device *dev, *aux;
-	LIST_HEAD(list_kill);
+अटल पूर्णांक rtnl_group_dellink(स्थिर काष्ठा net *net, पूर्णांक group)
+अणु
+	काष्ठा net_device *dev, *aux;
+	LIST_HEAD(list_समाप्त);
 	bool found = false;
 
-	if (!group)
-		return -EPERM;
+	अगर (!group)
+		वापस -EPERM;
 
-	for_each_netdev(net, dev) {
-		if (dev->group == group) {
-			const struct rtnl_link_ops *ops;
+	क्रम_each_netdev(net, dev) अणु
+		अगर (dev->group == group) अणु
+			स्थिर काष्ठा rtnl_link_ops *ops;
 
 			found = true;
 			ops = dev->rtnl_link_ops;
-			if (!ops || !ops->dellink)
-				return -EOPNOTSUPP;
-		}
-	}
+			अगर (!ops || !ops->dellink)
+				वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	if (!found)
-		return -ENODEV;
+	अगर (!found)
+		वापस -ENODEV;
 
-	for_each_netdev_safe(net, dev, aux) {
-		if (dev->group == group) {
-			const struct rtnl_link_ops *ops;
+	क्रम_each_netdev_safe(net, dev, aux) अणु
+		अगर (dev->group == group) अणु
+			स्थिर काष्ठा rtnl_link_ops *ops;
 
 			ops = dev->rtnl_link_ops;
-			ops->dellink(dev, &list_kill);
-		}
-	}
-	unregister_netdevice_many(&list_kill);
+			ops->dellink(dev, &list_समाप्त);
+		पूर्ण
+	पूर्ण
+	unरेजिस्टर_netdevice_many(&list_समाप्त);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rtnl_delete_link(struct net_device *dev)
-{
-	const struct rtnl_link_ops *ops;
-	LIST_HEAD(list_kill);
+पूर्णांक rtnl_delete_link(काष्ठा net_device *dev)
+अणु
+	स्थिर काष्ठा rtnl_link_ops *ops;
+	LIST_HEAD(list_समाप्त);
 
 	ops = dev->rtnl_link_ops;
-	if (!ops || !ops->dellink)
-		return -EOPNOTSUPP;
+	अगर (!ops || !ops->dellink)
+		वापस -EOPNOTSUPP;
 
-	ops->dellink(dev, &list_kill);
-	unregister_netdevice_many(&list_kill);
+	ops->dellink(dev, &list_समाप्त);
+	unरेजिस्टर_netdevice_many(&list_समाप्त);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rtnl_delete_link);
 
-static int rtnl_dellink(struct sk_buff *skb, struct nlmsghdr *nlh,
-			struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct net *tgt_net = net;
-	struct net_device *dev = NULL;
-	struct ifinfomsg *ifm;
-	struct nlattr *tb[IFLA_MAX+1];
-	int err;
-	int netnsid = -1;
+अटल पूर्णांक rtnl_dellink(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा net *tgt_net = net;
+	काष्ठा net_device *dev = शून्य;
+	काष्ठा अगरinfomsg *अगरm;
+	काष्ठा nlattr *tb[IFLA_MAX+1];
+	पूर्णांक err;
+	पूर्णांक netnsid = -1;
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFLA_MAX,
-				     ifla_policy, extack);
-	if (err < 0)
-		return err;
+	err = nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFLA_MAX,
+				     अगरla_policy, extack);
+	अगर (err < 0)
+		वापस err;
 
 	err = rtnl_ensure_unique_netns(tb, extack, true);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (tb[IFLA_TARGET_NETNSID]) {
+	अगर (tb[IFLA_TARGET_NETNSID]) अणु
 		netnsid = nla_get_s32(tb[IFLA_TARGET_NETNSID]);
 		tgt_net = rtnl_get_net_ns_capable(NETLINK_CB(skb).sk, netnsid);
-		if (IS_ERR(tgt_net))
-			return PTR_ERR(tgt_net);
-	}
+		अगर (IS_ERR(tgt_net))
+			वापस PTR_ERR(tgt_net);
+	पूर्ण
 
 	err = -EINVAL;
-	ifm = nlmsg_data(nlh);
-	if (ifm->ifi_index > 0)
-		dev = __dev_get_by_index(tgt_net, ifm->ifi_index);
-	else if (tb[IFLA_IFNAME] || tb[IFLA_ALT_IFNAME])
+	अगरm = nlmsg_data(nlh);
+	अगर (अगरm->अगरi_index > 0)
+		dev = __dev_get_by_index(tgt_net, अगरm->अगरi_index);
+	अन्यथा अगर (tb[IFLA_IFNAME] || tb[IFLA_ALT_IFNAME])
 		dev = rtnl_dev_get(net, tb[IFLA_IFNAME],
-				   tb[IFLA_ALT_IFNAME], NULL);
-	else if (tb[IFLA_GROUP])
+				   tb[IFLA_ALT_IFNAME], शून्य);
+	अन्यथा अगर (tb[IFLA_GROUP])
 		err = rtnl_group_dellink(tgt_net, nla_get_u32(tb[IFLA_GROUP]));
-	else
-		goto out;
+	अन्यथा
+		जाओ out;
 
-	if (!dev) {
-		if (tb[IFLA_IFNAME] || ifm->ifi_index > 0)
+	अगर (!dev) अणु
+		अगर (tb[IFLA_IFNAME] || अगरm->अगरi_index > 0)
 			err = -ENODEV;
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = rtnl_delete_link(dev);
 
 out:
-	if (netnsid >= 0)
+	अगर (netnsid >= 0)
 		put_net(tgt_net);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int rtnl_configure_link(struct net_device *dev, const struct ifinfomsg *ifm)
-{
-	unsigned int old_flags;
-	int err;
+पूर्णांक rtnl_configure_link(काष्ठा net_device *dev, स्थिर काष्ठा अगरinfomsg *अगरm)
+अणु
+	अचिन्हित पूर्णांक old_flags;
+	पूर्णांक err;
 
 	old_flags = dev->flags;
-	if (ifm && (ifm->ifi_flags || ifm->ifi_change)) {
-		err = __dev_change_flags(dev, rtnl_dev_combine_flags(dev, ifm),
-					 NULL);
-		if (err < 0)
-			return err;
-	}
+	अगर (अगरm && (अगरm->अगरi_flags || अगरm->अगरi_change)) अणु
+		err = __dev_change_flags(dev, rtnl_dev_combine_flags(dev, अगरm),
+					 शून्य);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (dev->rtnl_link_state == RTNL_LINK_INITIALIZED) {
-		__dev_notify_flags(dev, old_flags, (old_flags ^ dev->flags));
-	} else {
+	अगर (dev->rtnl_link_state == RTNL_LINK_INITIALIZED) अणु
+		__dev_notअगरy_flags(dev, old_flags, (old_flags ^ dev->flags));
+	पूर्ण अन्यथा अणु
 		dev->rtnl_link_state = RTNL_LINK_INITIALIZED;
-		__dev_notify_flags(dev, old_flags, ~0U);
-	}
-	return 0;
-}
+		__dev_notअगरy_flags(dev, old_flags, ~0U);
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rtnl_configure_link);
 
-struct net_device *rtnl_create_link(struct net *net, const char *ifname,
-				    unsigned char name_assign_type,
-				    const struct rtnl_link_ops *ops,
-				    struct nlattr *tb[],
-				    struct netlink_ext_ack *extack)
-{
-	struct net_device *dev;
-	unsigned int num_tx_queues = 1;
-	unsigned int num_rx_queues = 1;
+काष्ठा net_device *rtnl_create_link(काष्ठा net *net, स्थिर अक्षर *अगरname,
+				    अचिन्हित अक्षर name_assign_type,
+				    स्थिर काष्ठा rtnl_link_ops *ops,
+				    काष्ठा nlattr *tb[],
+				    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net_device *dev;
+	अचिन्हित पूर्णांक num_tx_queues = 1;
+	अचिन्हित पूर्णांक num_rx_queues = 1;
 
-	if (tb[IFLA_NUM_TX_QUEUES])
+	अगर (tb[IFLA_NUM_TX_QUEUES])
 		num_tx_queues = nla_get_u32(tb[IFLA_NUM_TX_QUEUES]);
-	else if (ops->get_num_tx_queues)
+	अन्यथा अगर (ops->get_num_tx_queues)
 		num_tx_queues = ops->get_num_tx_queues();
 
-	if (tb[IFLA_NUM_RX_QUEUES])
+	अगर (tb[IFLA_NUM_RX_QUEUES])
 		num_rx_queues = nla_get_u32(tb[IFLA_NUM_RX_QUEUES]);
-	else if (ops->get_num_rx_queues)
+	अन्यथा अगर (ops->get_num_rx_queues)
 		num_rx_queues = ops->get_num_rx_queues();
 
-	if (num_tx_queues < 1 || num_tx_queues > 4096) {
+	अगर (num_tx_queues < 1 || num_tx_queues > 4096) अणु
 		NL_SET_ERR_MSG(extack, "Invalid number of transmit queues");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (num_rx_queues < 1 || num_rx_queues > 4096) {
+	अगर (num_rx_queues < 1 || num_rx_queues > 4096) अणु
 		NL_SET_ERR_MSG(extack, "Invalid number of receive queues");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	dev = alloc_netdev_mqs(ops->priv_size, ifname, name_assign_type,
+	dev = alloc_netdev_mqs(ops->priv_size, अगरname, name_assign_type,
 			       ops->setup, num_tx_queues, num_rx_queues);
-	if (!dev)
-		return ERR_PTR(-ENOMEM);
+	अगर (!dev)
+		वापस ERR_PTR(-ENOMEM);
 
 	dev_net_set(dev, net);
 	dev->rtnl_link_ops = ops;
 	dev->rtnl_link_state = RTNL_LINK_INITIALIZING;
 
-	if (tb[IFLA_MTU]) {
+	अगर (tb[IFLA_MTU]) अणु
 		u32 mtu = nla_get_u32(tb[IFLA_MTU]);
-		int err;
+		पूर्णांक err;
 
 		err = dev_validate_mtu(dev, mtu, extack);
-		if (err) {
-			free_netdev(dev);
-			return ERR_PTR(err);
-		}
+		अगर (err) अणु
+			मुक्त_netdev(dev);
+			वापस ERR_PTR(err);
+		पूर्ण
 		dev->mtu = mtu;
-	}
-	if (tb[IFLA_ADDRESS]) {
-		memcpy(dev->dev_addr, nla_data(tb[IFLA_ADDRESS]),
+	पूर्ण
+	अगर (tb[IFLA_ADDRESS]) अणु
+		स_नकल(dev->dev_addr, nla_data(tb[IFLA_ADDRESS]),
 				nla_len(tb[IFLA_ADDRESS]));
 		dev->addr_assign_type = NET_ADDR_SET;
-	}
-	if (tb[IFLA_BROADCAST])
-		memcpy(dev->broadcast, nla_data(tb[IFLA_BROADCAST]),
+	पूर्ण
+	अगर (tb[IFLA_BROADCAST])
+		स_नकल(dev->broadcast, nla_data(tb[IFLA_BROADCAST]),
 				nla_len(tb[IFLA_BROADCAST]));
-	if (tb[IFLA_TXQLEN])
+	अगर (tb[IFLA_TXQLEN])
 		dev->tx_queue_len = nla_get_u32(tb[IFLA_TXQLEN]);
-	if (tb[IFLA_OPERSTATE])
+	अगर (tb[IFLA_OPERSTATE])
 		set_operstate(dev, nla_get_u8(tb[IFLA_OPERSTATE]));
-	if (tb[IFLA_LINKMODE])
+	अगर (tb[IFLA_LINKMODE])
 		dev->link_mode = nla_get_u8(tb[IFLA_LINKMODE]);
-	if (tb[IFLA_GROUP])
+	अगर (tb[IFLA_GROUP])
 		dev_set_group(dev, nla_get_u32(tb[IFLA_GROUP]));
-	if (tb[IFLA_GSO_MAX_SIZE])
-		netif_set_gso_max_size(dev, nla_get_u32(tb[IFLA_GSO_MAX_SIZE]));
-	if (tb[IFLA_GSO_MAX_SEGS])
+	अगर (tb[IFLA_GSO_MAX_SIZE])
+		netअगर_set_gso_max_size(dev, nla_get_u32(tb[IFLA_GSO_MAX_SIZE]));
+	अगर (tb[IFLA_GSO_MAX_SEGS])
 		dev->gso_max_segs = nla_get_u32(tb[IFLA_GSO_MAX_SEGS]);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 EXPORT_SYMBOL(rtnl_create_link);
 
-static int rtnl_group_changelink(const struct sk_buff *skb,
-		struct net *net, int group,
-		struct ifinfomsg *ifm,
-		struct netlink_ext_ack *extack,
-		struct nlattr **tb)
-{
-	struct net_device *dev, *aux;
-	int err;
+अटल पूर्णांक rtnl_group_changelink(स्थिर काष्ठा sk_buff *skb,
+		काष्ठा net *net, पूर्णांक group,
+		काष्ठा अगरinfomsg *अगरm,
+		काष्ठा netlink_ext_ack *extack,
+		काष्ठा nlattr **tb)
+अणु
+	काष्ठा net_device *dev, *aux;
+	पूर्णांक err;
 
-	for_each_netdev_safe(net, dev, aux) {
-		if (dev->group == group) {
-			err = do_setlink(skb, dev, ifm, extack, tb, NULL, 0);
-			if (err < 0)
-				return err;
-		}
-	}
+	क्रम_each_netdev_safe(net, dev, aux) अणु
+		अगर (dev->group == group) अणु
+			err = करो_setlink(skb, dev, अगरm, extack, tb, शून्य, 0);
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __rtnl_newlink(struct sk_buff *skb, struct nlmsghdr *nlh,
-			  struct nlattr **attr, struct netlink_ext_ack *extack)
-{
-	struct nlattr *slave_attr[RTNL_SLAVE_MAX_TYPE + 1];
-	unsigned char name_assign_type = NET_NAME_USER;
-	struct nlattr *linkinfo[IFLA_INFO_MAX + 1];
-	const struct rtnl_link_ops *m_ops = NULL;
-	struct net_device *master_dev = NULL;
-	struct net *net = sock_net(skb->sk);
-	const struct rtnl_link_ops *ops;
-	struct nlattr *tb[IFLA_MAX + 1];
-	struct net *dest_net, *link_net;
-	struct nlattr **slave_data;
-	char kind[MODULE_NAME_LEN];
-	struct net_device *dev;
-	struct ifinfomsg *ifm;
-	char ifname[IFNAMSIZ];
-	struct nlattr **data;
-	int err;
+अटल पूर्णांक __rtnl_newlink(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			  काष्ठा nlattr **attr, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *slave_attr[RTNL_SLAVE_MAX_TYPE + 1];
+	अचिन्हित अक्षर name_assign_type = NET_NAME_USER;
+	काष्ठा nlattr *linkinfo[IFLA_INFO_MAX + 1];
+	स्थिर काष्ठा rtnl_link_ops *m_ops = शून्य;
+	काष्ठा net_device *master_dev = शून्य;
+	काष्ठा net *net = sock_net(skb->sk);
+	स्थिर काष्ठा rtnl_link_ops *ops;
+	काष्ठा nlattr *tb[IFLA_MAX + 1];
+	काष्ठा net *dest_net, *link_net;
+	काष्ठा nlattr **slave_data;
+	अक्षर kind[MODULE_NAME_LEN];
+	काष्ठा net_device *dev;
+	काष्ठा अगरinfomsg *अगरm;
+	अक्षर अगरname[IFNAMSIZ];
+	काष्ठा nlattr **data;
+	पूर्णांक err;
 
-#ifdef CONFIG_MODULES
+#अगर_घोषित CONFIG_MODULES
 replay:
-#endif
-	err = nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFLA_MAX,
-				     ifla_policy, extack);
-	if (err < 0)
-		return err;
+#पूर्ण_अगर
+	err = nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFLA_MAX,
+				     अगरla_policy, extack);
+	अगर (err < 0)
+		वापस err;
 
 	err = rtnl_ensure_unique_netns(tb, extack, false);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (tb[IFLA_IFNAME])
-		nla_strscpy(ifname, tb[IFLA_IFNAME], IFNAMSIZ);
-	else
-		ifname[0] = '\0';
+	अगर (tb[IFLA_IFNAME])
+		nla_strscpy(अगरname, tb[IFLA_IFNAME], IFNAMSIZ);
+	अन्यथा
+		अगरname[0] = '\0';
 
-	ifm = nlmsg_data(nlh);
-	if (ifm->ifi_index > 0)
-		dev = __dev_get_by_index(net, ifm->ifi_index);
-	else if (tb[IFLA_IFNAME] || tb[IFLA_ALT_IFNAME])
-		dev = rtnl_dev_get(net, NULL, tb[IFLA_ALT_IFNAME], ifname);
-	else
-		dev = NULL;
+	अगरm = nlmsg_data(nlh);
+	अगर (अगरm->अगरi_index > 0)
+		dev = __dev_get_by_index(net, अगरm->अगरi_index);
+	अन्यथा अगर (tb[IFLA_IFNAME] || tb[IFLA_ALT_IFNAME])
+		dev = rtnl_dev_get(net, शून्य, tb[IFLA_ALT_IFNAME], अगरname);
+	अन्यथा
+		dev = शून्य;
 
-	if (dev) {
+	अगर (dev) अणु
 		master_dev = netdev_master_upper_dev_get(dev);
-		if (master_dev)
+		अगर (master_dev)
 			m_ops = master_dev->rtnl_link_ops;
-	}
+	पूर्ण
 
 	err = validate_linkmsg(dev, tb);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (tb[IFLA_LINKINFO]) {
+	अगर (tb[IFLA_LINKINFO]) अणु
 		err = nla_parse_nested_deprecated(linkinfo, IFLA_INFO_MAX,
 						  tb[IFLA_LINKINFO],
-						  ifla_info_policy, NULL);
-		if (err < 0)
-			return err;
-	} else
-		memset(linkinfo, 0, sizeof(linkinfo));
+						  अगरla_info_policy, शून्य);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण अन्यथा
+		स_रखो(linkinfo, 0, माप(linkinfo));
 
-	if (linkinfo[IFLA_INFO_KIND]) {
-		nla_strscpy(kind, linkinfo[IFLA_INFO_KIND], sizeof(kind));
+	अगर (linkinfo[IFLA_INFO_KIND]) अणु
+		nla_strscpy(kind, linkinfo[IFLA_INFO_KIND], माप(kind));
 		ops = rtnl_link_ops_get(kind);
-	} else {
+	पूर्ण अन्यथा अणु
 		kind[0] = '\0';
-		ops = NULL;
-	}
+		ops = शून्य;
+	पूर्ण
 
-	data = NULL;
-	if (ops) {
-		if (ops->maxtype > RTNL_MAX_TYPE)
-			return -EINVAL;
+	data = शून्य;
+	अगर (ops) अणु
+		अगर (ops->maxtype > RTNL_MAX_TYPE)
+			वापस -EINVAL;
 
-		if (ops->maxtype && linkinfo[IFLA_INFO_DATA]) {
+		अगर (ops->maxtype && linkinfo[IFLA_INFO_DATA]) अणु
 			err = nla_parse_nested_deprecated(attr, ops->maxtype,
 							  linkinfo[IFLA_INFO_DATA],
 							  ops->policy, extack);
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 			data = attr;
-		}
-		if (ops->validate) {
+		पूर्ण
+		अगर (ops->validate) अणु
 			err = ops->validate(tb, data, extack);
-			if (err < 0)
-				return err;
-		}
-	}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	slave_data = NULL;
-	if (m_ops) {
-		if (m_ops->slave_maxtype > RTNL_SLAVE_MAX_TYPE)
-			return -EINVAL;
+	slave_data = शून्य;
+	अगर (m_ops) अणु
+		अगर (m_ops->slave_maxtype > RTNL_SLAVE_MAX_TYPE)
+			वापस -EINVAL;
 
-		if (m_ops->slave_maxtype &&
-		    linkinfo[IFLA_INFO_SLAVE_DATA]) {
+		अगर (m_ops->slave_maxtype &&
+		    linkinfo[IFLA_INFO_SLAVE_DATA]) अणु
 			err = nla_parse_nested_deprecated(slave_attr,
 							  m_ops->slave_maxtype,
 							  linkinfo[IFLA_INFO_SLAVE_DATA],
 							  m_ops->slave_policy,
 							  extack);
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 			slave_data = slave_attr;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (dev) {
-		int status = 0;
+	अगर (dev) अणु
+		पूर्णांक status = 0;
 
-		if (nlh->nlmsg_flags & NLM_F_EXCL)
-			return -EEXIST;
-		if (nlh->nlmsg_flags & NLM_F_REPLACE)
-			return -EOPNOTSUPP;
+		अगर (nlh->nlmsg_flags & NLM_F_EXCL)
+			वापस -EEXIST;
+		अगर (nlh->nlmsg_flags & NLM_F_REPLACE)
+			वापस -EOPNOTSUPP;
 
-		if (linkinfo[IFLA_INFO_DATA]) {
-			if (!ops || ops != dev->rtnl_link_ops ||
+		अगर (linkinfo[IFLA_INFO_DATA]) अणु
+			अगर (!ops || ops != dev->rtnl_link_ops ||
 			    !ops->changelink)
-				return -EOPNOTSUPP;
+				वापस -EOPNOTSUPP;
 
 			err = ops->changelink(dev, tb, data, extack);
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 			status |= DO_SETLINK_NOTIFY;
-		}
+		पूर्ण
 
-		if (linkinfo[IFLA_INFO_SLAVE_DATA]) {
-			if (!m_ops || !m_ops->slave_changelink)
-				return -EOPNOTSUPP;
+		अगर (linkinfo[IFLA_INFO_SLAVE_DATA]) अणु
+			अगर (!m_ops || !m_ops->slave_changelink)
+				वापस -EOPNOTSUPP;
 
 			err = m_ops->slave_changelink(master_dev, dev, tb,
 						      slave_data, extack);
-			if (err < 0)
-				return err;
+			अगर (err < 0)
+				वापस err;
 			status |= DO_SETLINK_NOTIFY;
-		}
+		पूर्ण
 
-		return do_setlink(skb, dev, ifm, extack, tb, ifname, status);
-	}
+		वापस करो_setlink(skb, dev, अगरm, extack, tb, अगरname, status);
+	पूर्ण
 
-	if (!(nlh->nlmsg_flags & NLM_F_CREATE)) {
-		if (ifm->ifi_index == 0 && tb[IFLA_GROUP])
-			return rtnl_group_changelink(skb, net,
+	अगर (!(nlh->nlmsg_flags & NLM_F_CREATE)) अणु
+		अगर (अगरm->अगरi_index == 0 && tb[IFLA_GROUP])
+			वापस rtnl_group_changelink(skb, net,
 						nla_get_u32(tb[IFLA_GROUP]),
-						ifm, extack, tb);
-		return -ENODEV;
-	}
+						अगरm, extack, tb);
+		वापस -ENODEV;
+	पूर्ण
 
-	if (tb[IFLA_MAP] || tb[IFLA_PROTINFO])
-		return -EOPNOTSUPP;
+	अगर (tb[IFLA_MAP] || tb[IFLA_PROTINFO])
+		वापस -EOPNOTSUPP;
 
-	if (!ops) {
-#ifdef CONFIG_MODULES
-		if (kind[0]) {
+	अगर (!ops) अणु
+#अगर_घोषित CONFIG_MODULES
+		अगर (kind[0]) अणु
 			__rtnl_unlock();
 			request_module("rtnl-link-%s", kind);
 			rtnl_lock();
 			ops = rtnl_link_ops_get(kind);
-			if (ops)
-				goto replay;
-		}
-#endif
+			अगर (ops)
+				जाओ replay;
+		पूर्ण
+#पूर्ण_अगर
 		NL_SET_ERR_MSG(extack, "Unknown device type");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!ops->setup)
-		return -EOPNOTSUPP;
+	अगर (!ops->setup)
+		वापस -EOPNOTSUPP;
 
-	if (!ifname[0]) {
-		snprintf(ifname, IFNAMSIZ, "%s%%d", ops->kind);
+	अगर (!अगरname[0]) अणु
+		snम_लिखो(अगरname, IFNAMSIZ, "%s%%d", ops->kind);
 		name_assign_type = NET_NAME_ENUM;
-	}
+	पूर्ण
 
 	dest_net = rtnl_link_get_net_capable(skb, net, tb, CAP_NET_ADMIN);
-	if (IS_ERR(dest_net))
-		return PTR_ERR(dest_net);
+	अगर (IS_ERR(dest_net))
+		वापस PTR_ERR(dest_net);
 
-	if (tb[IFLA_LINK_NETNSID]) {
-		int id = nla_get_s32(tb[IFLA_LINK_NETNSID]);
+	अगर (tb[IFLA_LINK_NETNSID]) अणु
+		पूर्णांक id = nla_get_s32(tb[IFLA_LINK_NETNSID]);
 
 		link_net = get_net_ns_by_id(dest_net, id);
-		if (!link_net) {
+		अगर (!link_net) अणु
 			NL_SET_ERR_MSG(extack, "Unknown network namespace id");
 			err =  -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		err = -EPERM;
-		if (!netlink_ns_capable(skb, link_net->user_ns, CAP_NET_ADMIN))
-			goto out;
-	} else {
-		link_net = NULL;
-	}
+		अगर (!netlink_ns_capable(skb, link_net->user_ns, CAP_NET_ADMIN))
+			जाओ out;
+	पूर्ण अन्यथा अणु
+		link_net = शून्य;
+	पूर्ण
 
-	dev = rtnl_create_link(link_net ? : dest_net, ifname,
+	dev = rtnl_create_link(link_net ? : dest_net, अगरname,
 			       name_assign_type, ops, tb, extack);
-	if (IS_ERR(dev)) {
+	अगर (IS_ERR(dev)) अणु
 		err = PTR_ERR(dev);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	dev->ifindex = ifm->ifi_index;
+	dev->अगरindex = अगरm->अगरi_index;
 
-	if (ops->newlink)
+	अगर (ops->newlink)
 		err = ops->newlink(link_net ? : net, dev, tb, data, extack);
-	else
-		err = register_netdevice(dev);
-	if (err < 0) {
-		free_netdev(dev);
-		goto out;
-	}
+	अन्यथा
+		err = रेजिस्टर_netdevice(dev);
+	अगर (err < 0) अणु
+		मुक्त_netdev(dev);
+		जाओ out;
+	पूर्ण
 
-	err = rtnl_configure_link(dev, ifm);
-	if (err < 0)
-		goto out_unregister;
-	if (link_net) {
-		err = dev_change_net_namespace(dev, dest_net, ifname);
-		if (err < 0)
-			goto out_unregister;
-	}
-	if (tb[IFLA_MASTER]) {
-		err = do_set_master(dev, nla_get_u32(tb[IFLA_MASTER]), extack);
-		if (err)
-			goto out_unregister;
-	}
+	err = rtnl_configure_link(dev, अगरm);
+	अगर (err < 0)
+		जाओ out_unरेजिस्टर;
+	अगर (link_net) अणु
+		err = dev_change_net_namespace(dev, dest_net, अगरname);
+		अगर (err < 0)
+			जाओ out_unरेजिस्टर;
+	पूर्ण
+	अगर (tb[IFLA_MASTER]) अणु
+		err = करो_set_master(dev, nla_get_u32(tb[IFLA_MASTER]), extack);
+		अगर (err)
+			जाओ out_unरेजिस्टर;
+	पूर्ण
 out:
-	if (link_net)
+	अगर (link_net)
 		put_net(link_net);
 	put_net(dest_net);
-	return err;
-out_unregister:
-	if (ops->newlink) {
-		LIST_HEAD(list_kill);
+	वापस err;
+out_unरेजिस्टर:
+	अगर (ops->newlink) अणु
+		LIST_HEAD(list_समाप्त);
 
-		ops->dellink(dev, &list_kill);
-		unregister_netdevice_many(&list_kill);
-	} else {
-		unregister_netdevice(dev);
-	}
-	goto out;
-}
+		ops->dellink(dev, &list_समाप्त);
+		unरेजिस्टर_netdevice_many(&list_समाप्त);
+	पूर्ण अन्यथा अणु
+		unरेजिस्टर_netdevice(dev);
+	पूर्ण
+	जाओ out;
+पूर्ण
 
-static int rtnl_newlink(struct sk_buff *skb, struct nlmsghdr *nlh,
-			struct netlink_ext_ack *extack)
-{
-	struct nlattr **attr;
-	int ret;
+अटल पूर्णांक rtnl_newlink(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr **attr;
+	पूर्णांक ret;
 
-	attr = kmalloc_array(RTNL_MAX_TYPE + 1, sizeof(*attr), GFP_KERNEL);
-	if (!attr)
-		return -ENOMEM;
+	attr = kदो_स्मृति_array(RTNL_MAX_TYPE + 1, माप(*attr), GFP_KERNEL);
+	अगर (!attr)
+		वापस -ENOMEM;
 
 	ret = __rtnl_newlink(skb, nlh, attr, extack);
-	kfree(attr);
-	return ret;
-}
+	kमुक्त(attr);
+	वापस ret;
+पूर्ण
 
-static int rtnl_valid_getlink_req(struct sk_buff *skb,
-				  const struct nlmsghdr *nlh,
-				  struct nlattr **tb,
-				  struct netlink_ext_ack *extack)
-{
-	struct ifinfomsg *ifm;
-	int i, err;
+अटल पूर्णांक rtnl_valid_getlink_req(काष्ठा sk_buff *skb,
+				  स्थिर काष्ठा nlmsghdr *nlh,
+				  काष्ठा nlattr **tb,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा अगरinfomsg *अगरm;
+	पूर्णांक i, err;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरm))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid header for get link");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!netlink_strict_get_check(skb))
-		return nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFLA_MAX,
-					      ifla_policy, extack);
+	अगर (!netlink_strict_get_check(skb))
+		वापस nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFLA_MAX,
+					      अगरla_policy, extack);
 
-	ifm = nlmsg_data(nlh);
-	if (ifm->__ifi_pad || ifm->ifi_type || ifm->ifi_flags ||
-	    ifm->ifi_change) {
+	अगरm = nlmsg_data(nlh);
+	अगर (अगरm->__अगरi_pad || अगरm->अगरi_type || अगरm->अगरi_flags ||
+	    अगरm->अगरi_change) अणु
 		NL_SET_ERR_MSG(extack, "Invalid values in header for get link request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*ifm), tb, IFLA_MAX,
-					    ifla_policy, extack);
-	if (err)
-		return err;
+	err = nlmsg_parse_deprecated_strict(nlh, माप(*अगरm), tb, IFLA_MAX,
+					    अगरla_policy, extack);
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i <= IFLA_MAX; i++) {
-		if (!tb[i])
-			continue;
+	क्रम (i = 0; i <= IFLA_MAX; i++) अणु
+		अगर (!tb[i])
+			जारी;
 
-		switch (i) {
-		case IFLA_IFNAME:
-		case IFLA_ALT_IFNAME:
-		case IFLA_EXT_MASK:
-		case IFLA_TARGET_NETNSID:
-			break;
-		default:
+		चयन (i) अणु
+		हाल IFLA_IFNAME:
+		हाल IFLA_ALT_IFNAME:
+		हाल IFLA_EXT_MASK:
+		हाल IFLA_TARGET_NETNSID:
+			अवरोध;
+		शेष:
 			NL_SET_ERR_MSG(extack, "Unsupported attribute in get link request");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_getlink(struct sk_buff *skb, struct nlmsghdr *nlh,
-			struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct net *tgt_net = net;
-	struct ifinfomsg *ifm;
-	struct nlattr *tb[IFLA_MAX+1];
-	struct net_device *dev = NULL;
-	struct sk_buff *nskb;
-	int netnsid = -1;
-	int err;
+अटल पूर्णांक rtnl_getlink(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा net *tgt_net = net;
+	काष्ठा अगरinfomsg *अगरm;
+	काष्ठा nlattr *tb[IFLA_MAX+1];
+	काष्ठा net_device *dev = शून्य;
+	काष्ठा sk_buff *nskb;
+	पूर्णांक netnsid = -1;
+	पूर्णांक err;
 	u32 ext_filter_mask = 0;
 
 	err = rtnl_valid_getlink_req(skb, nlh, tb, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = rtnl_ensure_unique_netns(tb, extack, true);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (tb[IFLA_TARGET_NETNSID]) {
+	अगर (tb[IFLA_TARGET_NETNSID]) अणु
 		netnsid = nla_get_s32(tb[IFLA_TARGET_NETNSID]);
 		tgt_net = rtnl_get_net_ns_capable(NETLINK_CB(skb).sk, netnsid);
-		if (IS_ERR(tgt_net))
-			return PTR_ERR(tgt_net);
-	}
+		अगर (IS_ERR(tgt_net))
+			वापस PTR_ERR(tgt_net);
+	पूर्ण
 
-	if (tb[IFLA_EXT_MASK])
+	अगर (tb[IFLA_EXT_MASK])
 		ext_filter_mask = nla_get_u32(tb[IFLA_EXT_MASK]);
 
 	err = -EINVAL;
-	ifm = nlmsg_data(nlh);
-	if (ifm->ifi_index > 0)
-		dev = __dev_get_by_index(tgt_net, ifm->ifi_index);
-	else if (tb[IFLA_IFNAME] || tb[IFLA_ALT_IFNAME])
+	अगरm = nlmsg_data(nlh);
+	अगर (अगरm->अगरi_index > 0)
+		dev = __dev_get_by_index(tgt_net, अगरm->अगरi_index);
+	अन्यथा अगर (tb[IFLA_IFNAME] || tb[IFLA_ALT_IFNAME])
 		dev = rtnl_dev_get(tgt_net, tb[IFLA_IFNAME],
-				   tb[IFLA_ALT_IFNAME], NULL);
-	else
-		goto out;
+				   tb[IFLA_ALT_IFNAME], शून्य);
+	अन्यथा
+		जाओ out;
 
 	err = -ENODEV;
-	if (dev == NULL)
-		goto out;
+	अगर (dev == शून्य)
+		जाओ out;
 
 	err = -ENOBUFS;
-	nskb = nlmsg_new(if_nlmsg_size(dev, ext_filter_mask), GFP_KERNEL);
-	if (nskb == NULL)
-		goto out;
+	nskb = nlmsg_new(अगर_nlmsg_size(dev, ext_filter_mask), GFP_KERNEL);
+	अगर (nskb == शून्य)
+		जाओ out;
 
-	err = rtnl_fill_ifinfo(nskb, dev, net,
+	err = rtnl_fill_अगरinfo(nskb, dev, net,
 			       RTM_NEWLINK, NETLINK_CB(skb).portid,
 			       nlh->nlmsg_seq, 0, 0, ext_filter_mask,
-			       0, NULL, 0, netnsid, GFP_KERNEL);
-	if (err < 0) {
-		/* -EMSGSIZE implies BUG in if_nlmsg_size */
+			       0, शून्य, 0, netnsid, GFP_KERNEL);
+	अगर (err < 0) अणु
+		/* -EMSGSIZE implies BUG in अगर_nlmsg_size */
 		WARN_ON(err == -EMSGSIZE);
-		kfree_skb(nskb);
-	} else
+		kमुक्त_skb(nskb);
+	पूर्ण अन्यथा
 		err = rtnl_unicast(nskb, net, NETLINK_CB(skb).portid);
 out:
-	if (netnsid >= 0)
+	अगर (netnsid >= 0)
 		put_net(tgt_net);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtnl_alt_ifname(int cmd, struct net_device *dev, struct nlattr *attr,
-			   bool *changed, struct netlink_ext_ack *extack)
-{
-	char *alt_ifname;
-	int err;
+अटल पूर्णांक rtnl_alt_अगरname(पूर्णांक cmd, काष्ठा net_device *dev, काष्ठा nlattr *attr,
+			   bool *changed, काष्ठा netlink_ext_ack *extack)
+अणु
+	अक्षर *alt_अगरname;
+	पूर्णांक err;
 
-	err = nla_validate(attr, attr->nla_len, IFLA_MAX, ifla_policy, extack);
-	if (err)
-		return err;
+	err = nla_validate(attr, attr->nla_len, IFLA_MAX, अगरla_policy, extack);
+	अगर (err)
+		वापस err;
 
-	alt_ifname = nla_strdup(attr, GFP_KERNEL);
-	if (!alt_ifname)
-		return -ENOMEM;
+	alt_अगरname = nla_strdup(attr, GFP_KERNEL);
+	अगर (!alt_अगरname)
+		वापस -ENOMEM;
 
-	if (cmd == RTM_NEWLINKPROP) {
-		err = netdev_name_node_alt_create(dev, alt_ifname);
-		if (!err)
-			alt_ifname = NULL;
-	} else if (cmd == RTM_DELLINKPROP) {
-		err = netdev_name_node_alt_destroy(dev, alt_ifname);
-	} else {
+	अगर (cmd == RTM_NEWLINKPROP) अणु
+		err = netdev_name_node_alt_create(dev, alt_अगरname);
+		अगर (!err)
+			alt_अगरname = शून्य;
+	पूर्ण अन्यथा अगर (cmd == RTM_DELLINKPROP) अणु
+		err = netdev_name_node_alt_destroy(dev, alt_अगरname);
+	पूर्ण अन्यथा अणु
 		WARN_ON_ONCE(1);
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	kfree(alt_ifname);
-	if (!err)
+	kमुक्त(alt_अगरname);
+	अगर (!err)
 		*changed = true;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtnl_linkprop(int cmd, struct sk_buff *skb, struct nlmsghdr *nlh,
-			 struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct nlattr *tb[IFLA_MAX + 1];
-	struct net_device *dev;
-	struct ifinfomsg *ifm;
+अटल पूर्णांक rtnl_linkprop(पूर्णांक cmd, काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा nlattr *tb[IFLA_MAX + 1];
+	काष्ठा net_device *dev;
+	काष्ठा अगरinfomsg *अगरm;
 	bool changed = false;
-	struct nlattr *attr;
-	int err, rem;
+	काष्ठा nlattr *attr;
+	पूर्णांक err, rem;
 
-	err = nlmsg_parse(nlh, sizeof(*ifm), tb, IFLA_MAX, ifla_policy, extack);
-	if (err)
-		return err;
+	err = nlmsg_parse(nlh, माप(*अगरm), tb, IFLA_MAX, अगरla_policy, extack);
+	अगर (err)
+		वापस err;
 
 	err = rtnl_ensure_unique_netns(tb, extack, true);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	ifm = nlmsg_data(nlh);
-	if (ifm->ifi_index > 0)
-		dev = __dev_get_by_index(net, ifm->ifi_index);
-	else if (tb[IFLA_IFNAME] || tb[IFLA_ALT_IFNAME])
+	अगरm = nlmsg_data(nlh);
+	अगर (अगरm->अगरi_index > 0)
+		dev = __dev_get_by_index(net, अगरm->अगरi_index);
+	अन्यथा अगर (tb[IFLA_IFNAME] || tb[IFLA_ALT_IFNAME])
 		dev = rtnl_dev_get(net, tb[IFLA_IFNAME],
-				   tb[IFLA_ALT_IFNAME], NULL);
-	else
-		return -EINVAL;
+				   tb[IFLA_ALT_IFNAME], शून्य);
+	अन्यथा
+		वापस -EINVAL;
 
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
-	if (!tb[IFLA_PROP_LIST])
-		return 0;
+	अगर (!tb[IFLA_PROP_LIST])
+		वापस 0;
 
-	nla_for_each_nested(attr, tb[IFLA_PROP_LIST], rem) {
-		switch (nla_type(attr)) {
-		case IFLA_ALT_IFNAME:
-			err = rtnl_alt_ifname(cmd, dev, attr, &changed, extack);
-			if (err)
-				return err;
-			break;
-		}
-	}
+	nla_क्रम_each_nested(attr, tb[IFLA_PROP_LIST], rem) अणु
+		चयन (nla_type(attr)) अणु
+		हाल IFLA_ALT_IFNAME:
+			err = rtnl_alt_अगरname(cmd, dev, attr, &changed, extack);
+			अगर (err)
+				वापस err;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (changed)
+	अगर (changed)
 		netdev_state_change(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_newlinkprop(struct sk_buff *skb, struct nlmsghdr *nlh,
-			    struct netlink_ext_ack *extack)
-{
-	return rtnl_linkprop(RTM_NEWLINKPROP, skb, nlh, extack);
-}
+अटल पूर्णांक rtnl_newlinkprop(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस rtnl_linkprop(RTM_NEWLINKPROP, skb, nlh, extack);
+पूर्ण
 
-static int rtnl_dellinkprop(struct sk_buff *skb, struct nlmsghdr *nlh,
-			    struct netlink_ext_ack *extack)
-{
-	return rtnl_linkprop(RTM_DELLINKPROP, skb, nlh, extack);
-}
+अटल पूर्णांक rtnl_dellinkprop(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस rtnl_linkprop(RTM_DELLINKPROP, skb, nlh, extack);
+पूर्ण
 
-static u32 rtnl_calcit(struct sk_buff *skb, struct nlmsghdr *nlh)
-{
-	struct net *net = sock_net(skb->sk);
-	size_t min_ifinfo_dump_size = 0;
-	struct nlattr *tb[IFLA_MAX+1];
+अटल u32 rtnl_calcit(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	माप_प्रकार min_अगरinfo_dump_size = 0;
+	काष्ठा nlattr *tb[IFLA_MAX+1];
 	u32 ext_filter_mask = 0;
-	struct net_device *dev;
-	int hdrlen;
+	काष्ठा net_device *dev;
+	पूर्णांक hdrlen;
 
-	/* Same kernel<->userspace interface hack as in rtnl_dump_ifinfo. */
-	hdrlen = nlmsg_len(nlh) < sizeof(struct ifinfomsg) ?
-		 sizeof(struct rtgenmsg) : sizeof(struct ifinfomsg);
+	/* Same kernel<->userspace पूर्णांकerface hack as in rtnl_dump_अगरinfo. */
+	hdrlen = nlmsg_len(nlh) < माप(काष्ठा अगरinfomsg) ?
+		 माप(काष्ठा rtgenmsg) : माप(काष्ठा अगरinfomsg);
 
-	if (nlmsg_parse_deprecated(nlh, hdrlen, tb, IFLA_MAX, ifla_policy, NULL) >= 0) {
-		if (tb[IFLA_EXT_MASK])
+	अगर (nlmsg_parse_deprecated(nlh, hdrlen, tb, IFLA_MAX, अगरla_policy, शून्य) >= 0) अणु
+		अगर (tb[IFLA_EXT_MASK])
 			ext_filter_mask = nla_get_u32(tb[IFLA_EXT_MASK]);
-	}
+	पूर्ण
 
-	if (!ext_filter_mask)
-		return NLMSG_GOODSIZE;
+	अगर (!ext_filter_mask)
+		वापस NLMSG_GOODSIZE;
 	/*
 	 * traverse the list of net devices and compute the minimum
 	 * buffer size based upon the filter mask.
 	 */
-	rcu_read_lock();
-	for_each_netdev_rcu(net, dev) {
-		min_ifinfo_dump_size = max(min_ifinfo_dump_size,
-					   if_nlmsg_size(dev, ext_filter_mask));
-	}
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_rcu(net, dev) अणु
+		min_अगरinfo_dump_size = max(min_अगरinfo_dump_size,
+					   अगर_nlmsg_size(dev, ext_filter_mask));
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return nlmsg_total_size(min_ifinfo_dump_size);
-}
+	वापस nlmsg_total_size(min_अगरinfo_dump_size);
+पूर्ण
 
-static int rtnl_dump_all(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	int idx;
-	int s_idx = cb->family;
-	int type = cb->nlh->nlmsg_type - RTM_BASE;
-	int ret = 0;
+अटल पूर्णांक rtnl_dump_all(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	पूर्णांक idx;
+	पूर्णांक s_idx = cb->family;
+	पूर्णांक type = cb->nlh->nlmsg_type - RTM_BASE;
+	पूर्णांक ret = 0;
 
-	if (s_idx == 0)
+	अगर (s_idx == 0)
 		s_idx = 1;
 
-	for (idx = 1; idx <= RTNL_FAMILY_MAX; idx++) {
-		struct rtnl_link __rcu **tab;
-		struct rtnl_link *link;
+	क्रम (idx = 1; idx <= RTNL_FAMILY_MAX; idx++) अणु
+		काष्ठा rtnl_link __rcu **tab;
+		काष्ठा rtnl_link *link;
 		rtnl_dumpit_func dumpit;
 
-		if (idx < s_idx || idx == PF_PACKET)
-			continue;
+		अगर (idx < s_idx || idx == PF_PACKET)
+			जारी;
 
-		if (type < 0 || type >= RTM_NR_MSGTYPES)
-			continue;
+		अगर (type < 0 || type >= RTM_NR_MSGTYPES)
+			जारी;
 
 		tab = rcu_dereference_rtnl(rtnl_msg_handlers[idx]);
-		if (!tab)
-			continue;
+		अगर (!tab)
+			जारी;
 
 		link = rcu_dereference_rtnl(tab[type]);
-		if (!link)
-			continue;
+		अगर (!link)
+			जारी;
 
 		dumpit = link->dumpit;
-		if (!dumpit)
-			continue;
+		अगर (!dumpit)
+			जारी;
 
-		if (idx > s_idx) {
-			memset(&cb->args[0], 0, sizeof(cb->args));
+		अगर (idx > s_idx) अणु
+			स_रखो(&cb->args[0], 0, माप(cb->args));
 			cb->prev_seq = 0;
 			cb->seq = 0;
-		}
+		पूर्ण
 		ret = dumpit(skb, cb);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 	cb->family = idx;
 
-	return skb->len ? : ret;
-}
+	वापस skb->len ? : ret;
+पूर्ण
 
-struct sk_buff *rtmsg_ifinfo_build_skb(int type, struct net_device *dev,
-				       unsigned int change,
-				       u32 event, gfp_t flags, int *new_nsid,
-				       int new_ifindex)
-{
-	struct net *net = dev_net(dev);
-	struct sk_buff *skb;
-	int err = -ENOBUFS;
-	size_t if_info_size;
+काष्ठा sk_buff *rपंचांगsg_अगरinfo_build_skb(पूर्णांक type, काष्ठा net_device *dev,
+				       अचिन्हित पूर्णांक change,
+				       u32 event, gfp_t flags, पूर्णांक *new_nsid,
+				       पूर्णांक new_अगरindex)
+अणु
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = -ENOBUFS;
+	माप_प्रकार अगर_info_size;
 
-	skb = nlmsg_new((if_info_size = if_nlmsg_size(dev, 0)), flags);
-	if (skb == NULL)
-		goto errout;
+	skb = nlmsg_new((अगर_info_size = अगर_nlmsg_size(dev, 0)), flags);
+	अगर (skb == शून्य)
+		जाओ errout;
 
-	err = rtnl_fill_ifinfo(skb, dev, dev_net(dev),
+	err = rtnl_fill_अगरinfo(skb, dev, dev_net(dev),
 			       type, 0, 0, change, 0, 0, event,
-			       new_nsid, new_ifindex, -1, flags);
-	if (err < 0) {
-		/* -EMSGSIZE implies BUG in if_nlmsg_size() */
+			       new_nsid, new_अगरindex, -1, flags);
+	अगर (err < 0) अणु
+		/* -EMSGSIZE implies BUG in अगर_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kfree_skb(skb);
-		goto errout;
-	}
-	return skb;
+		kमुक्त_skb(skb);
+		जाओ errout;
+	पूर्ण
+	वापस skb;
 errout:
-	if (err < 0)
+	अगर (err < 0)
 		rtnl_set_sk_err(net, RTNLGRP_LINK, err);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void rtmsg_ifinfo_send(struct sk_buff *skb, struct net_device *dev, gfp_t flags)
-{
-	struct net *net = dev_net(dev);
+व्योम rपंचांगsg_अगरinfo_send(काष्ठा sk_buff *skb, काष्ठा net_device *dev, gfp_t flags)
+अणु
+	काष्ठा net *net = dev_net(dev);
 
-	rtnl_notify(skb, net, 0, RTNLGRP_LINK, NULL, flags);
-}
+	rtnl_notअगरy(skb, net, 0, RTNLGRP_LINK, शून्य, flags);
+पूर्ण
 
-static void rtmsg_ifinfo_event(int type, struct net_device *dev,
-			       unsigned int change, u32 event,
-			       gfp_t flags, int *new_nsid, int new_ifindex)
-{
-	struct sk_buff *skb;
+अटल व्योम rपंचांगsg_अगरinfo_event(पूर्णांक type, काष्ठा net_device *dev,
+			       अचिन्हित पूर्णांक change, u32 event,
+			       gfp_t flags, पूर्णांक *new_nsid, पूर्णांक new_अगरindex)
+अणु
+	काष्ठा sk_buff *skb;
 
-	if (dev->reg_state != NETREG_REGISTERED)
-		return;
+	अगर (dev->reg_state != NETREG_REGISTERED)
+		वापस;
 
-	skb = rtmsg_ifinfo_build_skb(type, dev, change, event, flags, new_nsid,
-				     new_ifindex);
-	if (skb)
-		rtmsg_ifinfo_send(skb, dev, flags);
-}
+	skb = rपंचांगsg_अगरinfo_build_skb(type, dev, change, event, flags, new_nsid,
+				     new_अगरindex);
+	अगर (skb)
+		rपंचांगsg_अगरinfo_send(skb, dev, flags);
+पूर्ण
 
-void rtmsg_ifinfo(int type, struct net_device *dev, unsigned int change,
+व्योम rपंचांगsg_अगरinfo(पूर्णांक type, काष्ठा net_device *dev, अचिन्हित पूर्णांक change,
 		  gfp_t flags)
-{
-	rtmsg_ifinfo_event(type, dev, change, rtnl_get_event(0), flags,
-			   NULL, 0);
-}
+अणु
+	rपंचांगsg_अगरinfo_event(type, dev, change, rtnl_get_event(0), flags,
+			   शून्य, 0);
+पूर्ण
 
-void rtmsg_ifinfo_newnet(int type, struct net_device *dev, unsigned int change,
-			 gfp_t flags, int *new_nsid, int new_ifindex)
-{
-	rtmsg_ifinfo_event(type, dev, change, rtnl_get_event(0), flags,
-			   new_nsid, new_ifindex);
-}
+व्योम rपंचांगsg_अगरinfo_newnet(पूर्णांक type, काष्ठा net_device *dev, अचिन्हित पूर्णांक change,
+			 gfp_t flags, पूर्णांक *new_nsid, पूर्णांक new_अगरindex)
+अणु
+	rपंचांगsg_अगरinfo_event(type, dev, change, rtnl_get_event(0), flags,
+			   new_nsid, new_अगरindex);
+पूर्ण
 
-static int nlmsg_populate_fdb_fill(struct sk_buff *skb,
-				   struct net_device *dev,
+अटल पूर्णांक nlmsg_populate_fdb_fill(काष्ठा sk_buff *skb,
+				   काष्ठा net_device *dev,
 				   u8 *addr, u16 vid, u32 pid, u32 seq,
-				   int type, unsigned int flags,
-				   int nlflags, u16 ndm_state)
-{
-	struct nlmsghdr *nlh;
-	struct ndmsg *ndm;
+				   पूर्णांक type, अचिन्हित पूर्णांक flags,
+				   पूर्णांक nlflags, u16 ndm_state)
+अणु
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा ndmsg *ndm;
 
-	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ndm), nlflags);
-	if (!nlh)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, type, माप(*ndm), nlflags);
+	अगर (!nlh)
+		वापस -EMSGSIZE;
 
 	ndm = nlmsg_data(nlh);
 	ndm->ndm_family  = AF_BRIDGE;
@@ -3875,335 +3876,335 @@ static int nlmsg_populate_fdb_fill(struct sk_buff *skb,
 	ndm->ndm_pad2    = 0;
 	ndm->ndm_flags	 = flags;
 	ndm->ndm_type	 = 0;
-	ndm->ndm_ifindex = dev->ifindex;
+	ndm->ndm_अगरindex = dev->अगरindex;
 	ndm->ndm_state   = ndm_state;
 
-	if (nla_put(skb, NDA_LLADDR, ETH_ALEN, addr))
-		goto nla_put_failure;
-	if (vid)
-		if (nla_put(skb, NDA_VLAN, sizeof(u16), &vid))
-			goto nla_put_failure;
+	अगर (nla_put(skb, NDA_LLADDR, ETH_ALEN, addr))
+		जाओ nla_put_failure;
+	अगर (vid)
+		अगर (nla_put(skb, NDA_VLAN, माप(u16), &vid))
+			जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static inline size_t rtnl_fdb_nlmsg_size(void)
-{
-	return NLMSG_ALIGN(sizeof(struct ndmsg)) +
+अटल अंतरभूत माप_प्रकार rtnl_fdb_nlmsg_size(व्योम)
+अणु
+	वापस NLMSG_ALIGN(माप(काष्ठा ndmsg)) +
 	       nla_total_size(ETH_ALEN) +	/* NDA_LLADDR */
-	       nla_total_size(sizeof(u16)) +	/* NDA_VLAN */
+	       nla_total_size(माप(u16)) +	/* NDA_VLAN */
 	       0;
-}
+पूर्ण
 
-static void rtnl_fdb_notify(struct net_device *dev, u8 *addr, u16 vid, int type,
+अटल व्योम rtnl_fdb_notअगरy(काष्ठा net_device *dev, u8 *addr, u16 vid, पूर्णांक type,
 			    u16 ndm_state)
-{
-	struct net *net = dev_net(dev);
-	struct sk_buff *skb;
-	int err = -ENOBUFS;
+अणु
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = -ENOBUFS;
 
 	skb = nlmsg_new(rtnl_fdb_nlmsg_size(), GFP_ATOMIC);
-	if (!skb)
-		goto errout;
+	अगर (!skb)
+		जाओ errout;
 
 	err = nlmsg_populate_fdb_fill(skb, dev, addr, vid,
 				      0, 0, type, NTF_SELF, 0, ndm_state);
-	if (err < 0) {
-		kfree_skb(skb);
-		goto errout;
-	}
+	अगर (err < 0) अणु
+		kमुक्त_skb(skb);
+		जाओ errout;
+	पूर्ण
 
-	rtnl_notify(skb, net, 0, RTNLGRP_NEIGH, NULL, GFP_ATOMIC);
-	return;
+	rtnl_notअगरy(skb, net, 0, RTNLGRP_NEIGH, शून्य, GFP_ATOMIC);
+	वापस;
 errout:
 	rtnl_set_sk_err(net, RTNLGRP_NEIGH, err);
-}
+पूर्ण
 
 /*
- * ndo_dflt_fdb_add - default netdevice operation to add an FDB entry
+ * nकरो_dflt_fdb_add - शेष netdevice operation to add an FDB entry
  */
-int ndo_dflt_fdb_add(struct ndmsg *ndm,
-		     struct nlattr *tb[],
-		     struct net_device *dev,
-		     const unsigned char *addr, u16 vid,
+पूर्णांक nकरो_dflt_fdb_add(काष्ठा ndmsg *ndm,
+		     काष्ठा nlattr *tb[],
+		     काष्ठा net_device *dev,
+		     स्थिर अचिन्हित अक्षर *addr, u16 vid,
 		     u16 flags)
-{
-	int err = -EINVAL;
+अणु
+	पूर्णांक err = -EINVAL;
 
 	/* If aging addresses are supported device will need to
-	 * implement its own handler for this.
+	 * implement its own handler क्रम this.
 	 */
-	if (ndm->ndm_state && !(ndm->ndm_state & NUD_PERMANENT)) {
+	अगर (ndm->ndm_state && !(ndm->ndm_state & NUD_PERMANENT)) अणु
 		pr_info("%s: FDB only supports static addresses\n", dev->name);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (vid) {
+	अगर (vid) अणु
 		pr_info("%s: vlans aren't supported yet for dev_uc|mc_add()\n", dev->name);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (is_unicast_ether_addr(addr) || is_link_local_ether_addr(addr))
+	अगर (is_unicast_ether_addr(addr) || is_link_local_ether_addr(addr))
 		err = dev_uc_add_excl(dev, addr);
-	else if (is_multicast_ether_addr(addr))
+	अन्यथा अगर (is_multicast_ether_addr(addr))
 		err = dev_mc_add_excl(dev, addr);
 
-	/* Only return duplicate errors if NLM_F_EXCL is set */
-	if (err == -EEXIST && !(flags & NLM_F_EXCL))
+	/* Only वापस duplicate errors अगर NLM_F_EXCL is set */
+	अगर (err == -EEXIST && !(flags & NLM_F_EXCL))
 		err = 0;
 
-	return err;
-}
-EXPORT_SYMBOL(ndo_dflt_fdb_add);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(nकरो_dflt_fdb_add);
 
-static int fdb_vid_parse(struct nlattr *vlan_attr, u16 *p_vid,
-			 struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक fdb_vid_parse(काष्ठा nlattr *vlan_attr, u16 *p_vid,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
 	u16 vid = 0;
 
-	if (vlan_attr) {
-		if (nla_len(vlan_attr) != sizeof(u16)) {
+	अगर (vlan_attr) अणु
+		अगर (nla_len(vlan_attr) != माप(u16)) अणु
 			NL_SET_ERR_MSG(extack, "invalid vlan attribute size");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		vid = nla_get_u16(vlan_attr);
 
-		if (!vid || vid >= VLAN_VID_MASK) {
+		अगर (!vid || vid >= VLAN_VID_MASK) अणु
 			NL_SET_ERR_MSG(extack, "invalid vlan id");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 	*p_vid = vid;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_fdb_add(struct sk_buff *skb, struct nlmsghdr *nlh,
-			struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct ndmsg *ndm;
-	struct nlattr *tb[NDA_MAX+1];
-	struct net_device *dev;
+अटल पूर्णांक rtnl_fdb_add(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा ndmsg *ndm;
+	काष्ठा nlattr *tb[NDA_MAX+1];
+	काष्ठा net_device *dev;
 	u8 *addr;
 	u16 vid;
-	int err;
+	पूर्णांक err;
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*ndm), tb, NDA_MAX, NULL,
+	err = nlmsg_parse_deprecated(nlh, माप(*ndm), tb, NDA_MAX, शून्य,
 				     extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	ndm = nlmsg_data(nlh);
-	if (ndm->ndm_ifindex == 0) {
+	अगर (ndm->ndm_अगरindex == 0) अणु
 		NL_SET_ERR_MSG(extack, "invalid ifindex");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dev = __dev_get_by_index(net, ndm->ndm_ifindex);
-	if (dev == NULL) {
+	dev = __dev_get_by_index(net, ndm->ndm_अगरindex);
+	अगर (dev == शून्य) अणु
 		NL_SET_ERR_MSG(extack, "unknown ifindex");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!tb[NDA_LLADDR] || nla_len(tb[NDA_LLADDR]) != ETH_ALEN) {
+	अगर (!tb[NDA_LLADDR] || nla_len(tb[NDA_LLADDR]) != ETH_ALEN) अणु
 		NL_SET_ERR_MSG(extack, "invalid address");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (dev->type != ARPHRD_ETHER) {
+	अगर (dev->type != ARPHRD_ETHER) अणु
 		NL_SET_ERR_MSG(extack, "FDB add only supported for Ethernet devices");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	addr = nla_data(tb[NDA_LLADDR]);
 
 	err = fdb_vid_parse(tb[NDA_VLAN], &vid, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = -EOPNOTSUPP;
 
-	/* Support fdb on master device the net/bridge default case */
-	if ((!ndm->ndm_flags || ndm->ndm_flags & NTF_MASTER) &&
-	    netif_is_bridge_port(dev)) {
-		struct net_device *br_dev = netdev_master_upper_dev_get(dev);
-		const struct net_device_ops *ops = br_dev->netdev_ops;
+	/* Support fdb on master device the net/bridge शेष हाल */
+	अगर ((!ndm->ndm_flags || ndm->ndm_flags & NTF_MASTER) &&
+	    netअगर_is_bridge_port(dev)) अणु
+		काष्ठा net_device *br_dev = netdev_master_upper_dev_get(dev);
+		स्थिर काष्ठा net_device_ops *ops = br_dev->netdev_ops;
 
-		err = ops->ndo_fdb_add(ndm, tb, dev, addr, vid,
+		err = ops->nकरो_fdb_add(ndm, tb, dev, addr, vid,
 				       nlh->nlmsg_flags, extack);
-		if (err)
-			goto out;
-		else
+		अगर (err)
+			जाओ out;
+		अन्यथा
 			ndm->ndm_flags &= ~NTF_MASTER;
-	}
+	पूर्ण
 
 	/* Embedded bridge, macvlan, and any other device support */
-	if ((ndm->ndm_flags & NTF_SELF)) {
-		if (dev->netdev_ops->ndo_fdb_add)
-			err = dev->netdev_ops->ndo_fdb_add(ndm, tb, dev, addr,
+	अगर ((ndm->ndm_flags & NTF_SELF)) अणु
+		अगर (dev->netdev_ops->nकरो_fdb_add)
+			err = dev->netdev_ops->nकरो_fdb_add(ndm, tb, dev, addr,
 							   vid,
 							   nlh->nlmsg_flags,
 							   extack);
-		else
-			err = ndo_dflt_fdb_add(ndm, tb, dev, addr, vid,
+		अन्यथा
+			err = nकरो_dflt_fdb_add(ndm, tb, dev, addr, vid,
 					       nlh->nlmsg_flags);
 
-		if (!err) {
-			rtnl_fdb_notify(dev, addr, vid, RTM_NEWNEIGH,
+		अगर (!err) अणु
+			rtnl_fdb_notअगरy(dev, addr, vid, RTM_NEWNEIGH,
 					ndm->ndm_state);
 			ndm->ndm_flags &= ~NTF_SELF;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * ndo_dflt_fdb_del - default netdevice operation to delete an FDB entry
+ * nकरो_dflt_fdb_del - शेष netdevice operation to delete an FDB entry
  */
-int ndo_dflt_fdb_del(struct ndmsg *ndm,
-		     struct nlattr *tb[],
-		     struct net_device *dev,
-		     const unsigned char *addr, u16 vid)
-{
-	int err = -EINVAL;
+पूर्णांक nकरो_dflt_fdb_del(काष्ठा ndmsg *ndm,
+		     काष्ठा nlattr *tb[],
+		     काष्ठा net_device *dev,
+		     स्थिर अचिन्हित अक्षर *addr, u16 vid)
+अणु
+	पूर्णांक err = -EINVAL;
 
 	/* If aging addresses are supported device will need to
-	 * implement its own handler for this.
+	 * implement its own handler क्रम this.
 	 */
-	if (!(ndm->ndm_state & NUD_PERMANENT)) {
+	अगर (!(ndm->ndm_state & NUD_PERMANENT)) अणु
 		pr_info("%s: FDB only supports static addresses\n", dev->name);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (is_unicast_ether_addr(addr) || is_link_local_ether_addr(addr))
+	अगर (is_unicast_ether_addr(addr) || is_link_local_ether_addr(addr))
 		err = dev_uc_del(dev, addr);
-	else if (is_multicast_ether_addr(addr))
+	अन्यथा अगर (is_multicast_ether_addr(addr))
 		err = dev_mc_del(dev, addr);
 
-	return err;
-}
-EXPORT_SYMBOL(ndo_dflt_fdb_del);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(nकरो_dflt_fdb_del);
 
-static int rtnl_fdb_del(struct sk_buff *skb, struct nlmsghdr *nlh,
-			struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct ndmsg *ndm;
-	struct nlattr *tb[NDA_MAX+1];
-	struct net_device *dev;
+अटल पूर्णांक rtnl_fdb_del(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा ndmsg *ndm;
+	काष्ठा nlattr *tb[NDA_MAX+1];
+	काष्ठा net_device *dev;
 	__u8 *addr;
-	int err;
+	पूर्णांक err;
 	u16 vid;
 
-	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!netlink_capable(skb, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*ndm), tb, NDA_MAX, NULL,
+	err = nlmsg_parse_deprecated(nlh, माप(*ndm), tb, NDA_MAX, शून्य,
 				     extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	ndm = nlmsg_data(nlh);
-	if (ndm->ndm_ifindex == 0) {
+	अगर (ndm->ndm_अगरindex == 0) अणु
 		NL_SET_ERR_MSG(extack, "invalid ifindex");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dev = __dev_get_by_index(net, ndm->ndm_ifindex);
-	if (dev == NULL) {
+	dev = __dev_get_by_index(net, ndm->ndm_अगरindex);
+	अगर (dev == शून्य) अणु
 		NL_SET_ERR_MSG(extack, "unknown ifindex");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!tb[NDA_LLADDR] || nla_len(tb[NDA_LLADDR]) != ETH_ALEN) {
+	अगर (!tb[NDA_LLADDR] || nla_len(tb[NDA_LLADDR]) != ETH_ALEN) अणु
 		NL_SET_ERR_MSG(extack, "invalid address");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (dev->type != ARPHRD_ETHER) {
+	अगर (dev->type != ARPHRD_ETHER) अणु
 		NL_SET_ERR_MSG(extack, "FDB delete only supported for Ethernet devices");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	addr = nla_data(tb[NDA_LLADDR]);
 
 	err = fdb_vid_parse(tb[NDA_VLAN], &vid, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = -EOPNOTSUPP;
 
-	/* Support fdb on master device the net/bridge default case */
-	if ((!ndm->ndm_flags || ndm->ndm_flags & NTF_MASTER) &&
-	    netif_is_bridge_port(dev)) {
-		struct net_device *br_dev = netdev_master_upper_dev_get(dev);
-		const struct net_device_ops *ops = br_dev->netdev_ops;
+	/* Support fdb on master device the net/bridge शेष हाल */
+	अगर ((!ndm->ndm_flags || ndm->ndm_flags & NTF_MASTER) &&
+	    netअगर_is_bridge_port(dev)) अणु
+		काष्ठा net_device *br_dev = netdev_master_upper_dev_get(dev);
+		स्थिर काष्ठा net_device_ops *ops = br_dev->netdev_ops;
 
-		if (ops->ndo_fdb_del)
-			err = ops->ndo_fdb_del(ndm, tb, dev, addr, vid);
+		अगर (ops->nकरो_fdb_del)
+			err = ops->nकरो_fdb_del(ndm, tb, dev, addr, vid);
 
-		if (err)
-			goto out;
-		else
+		अगर (err)
+			जाओ out;
+		अन्यथा
 			ndm->ndm_flags &= ~NTF_MASTER;
-	}
+	पूर्ण
 
 	/* Embedded bridge, macvlan, and any other device support */
-	if (ndm->ndm_flags & NTF_SELF) {
-		if (dev->netdev_ops->ndo_fdb_del)
-			err = dev->netdev_ops->ndo_fdb_del(ndm, tb, dev, addr,
+	अगर (ndm->ndm_flags & NTF_SELF) अणु
+		अगर (dev->netdev_ops->nकरो_fdb_del)
+			err = dev->netdev_ops->nकरो_fdb_del(ndm, tb, dev, addr,
 							   vid);
-		else
-			err = ndo_dflt_fdb_del(ndm, tb, dev, addr, vid);
+		अन्यथा
+			err = nकरो_dflt_fdb_del(ndm, tb, dev, addr, vid);
 
-		if (!err) {
-			rtnl_fdb_notify(dev, addr, vid, RTM_DELNEIGH,
+		अगर (!err) अणु
+			rtnl_fdb_notअगरy(dev, addr, vid, RTM_DELNEIGH,
 					ndm->ndm_state);
 			ndm->ndm_flags &= ~NTF_SELF;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int nlmsg_populate_fdb(struct sk_buff *skb,
-			      struct netlink_callback *cb,
-			      struct net_device *dev,
-			      int *idx,
-			      struct netdev_hw_addr_list *list)
-{
-	struct netdev_hw_addr *ha;
-	int err;
+अटल पूर्णांक nlmsg_populate_fdb(काष्ठा sk_buff *skb,
+			      काष्ठा netlink_callback *cb,
+			      काष्ठा net_device *dev,
+			      पूर्णांक *idx,
+			      काष्ठा netdev_hw_addr_list *list)
+अणु
+	काष्ठा netdev_hw_addr *ha;
+	पूर्णांक err;
 	u32 portid, seq;
 
 	portid = NETLINK_CB(cb->skb).portid;
 	seq = cb->nlh->nlmsg_seq;
 
-	list_for_each_entry(ha, &list->list, list) {
-		if (*idx < cb->args[2])
-			goto skip;
+	list_क्रम_each_entry(ha, &list->list, list) अणु
+		अगर (*idx < cb->args[2])
+			जाओ skip;
 
 		err = nlmsg_populate_fdb_fill(skb, dev, ha->addr, 0,
 					      portid, seq,
 					      RTM_NEWNEIGH, NTF_SELF,
 					      NLM_F_MULTI, NUD_PERMANENT);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 skip:
 		*idx += 1;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * ndo_dflt_fdb_dump - default netdevice operation to dump an FDB table.
+ * nकरो_dflt_fdb_dump - शेष netdevice operation to dump an FDB table.
  * @skb: socket buffer to store message in
  * @cb: netlink callback
  * @dev: netdevice
@@ -4213,453 +4214,453 @@ skip:
  * Default netdevice operation to dump the existing unicast address list.
  * Returns number of addresses from list put in skb.
  */
-int ndo_dflt_fdb_dump(struct sk_buff *skb,
-		      struct netlink_callback *cb,
-		      struct net_device *dev,
-		      struct net_device *filter_dev,
-		      int *idx)
-{
-	int err;
+पूर्णांक nकरो_dflt_fdb_dump(काष्ठा sk_buff *skb,
+		      काष्ठा netlink_callback *cb,
+		      काष्ठा net_device *dev,
+		      काष्ठा net_device *filter_dev,
+		      पूर्णांक *idx)
+अणु
+	पूर्णांक err;
 
-	if (dev->type != ARPHRD_ETHER)
-		return -EINVAL;
+	अगर (dev->type != ARPHRD_ETHER)
+		वापस -EINVAL;
 
-	netif_addr_lock_bh(dev);
+	netअगर_addr_lock_bh(dev);
 	err = nlmsg_populate_fdb(skb, cb, dev, idx, &dev->uc);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	err = nlmsg_populate_fdb(skb, cb, dev, idx, &dev->mc);
 out:
-	netif_addr_unlock_bh(dev);
-	return err;
-}
-EXPORT_SYMBOL(ndo_dflt_fdb_dump);
+	netअगर_addr_unlock_bh(dev);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(nकरो_dflt_fdb_dump);
 
-static int valid_fdb_dump_strict(const struct nlmsghdr *nlh,
-				 int *br_idx, int *brport_idx,
-				 struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[NDA_MAX + 1];
-	struct ndmsg *ndm;
-	int err, i;
+अटल पूर्णांक valid_fdb_dump_strict(स्थिर काष्ठा nlmsghdr *nlh,
+				 पूर्णांक *br_idx, पूर्णांक *brport_idx,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[NDA_MAX + 1];
+	काष्ठा ndmsg *ndm;
+	पूर्णांक err, i;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ndm))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*ndm))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid header for fdb dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ndm = nlmsg_data(nlh);
-	if (ndm->ndm_pad1  || ndm->ndm_pad2  || ndm->ndm_state ||
-	    ndm->ndm_flags || ndm->ndm_type) {
+	अगर (ndm->ndm_pad1  || ndm->ndm_pad2  || ndm->ndm_state ||
+	    ndm->ndm_flags || ndm->ndm_type) अणु
 		NL_SET_ERR_MSG(extack, "Invalid values in header for fdb dump request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct ndmsg), tb,
-					    NDA_MAX, NULL, extack);
-	if (err < 0)
-		return err;
+	err = nlmsg_parse_deprecated_strict(nlh, माप(काष्ठा ndmsg), tb,
+					    NDA_MAX, शून्य, extack);
+	अगर (err < 0)
+		वापस err;
 
-	*brport_idx = ndm->ndm_ifindex;
-	for (i = 0; i <= NDA_MAX; ++i) {
-		if (!tb[i])
-			continue;
+	*brport_idx = ndm->ndm_अगरindex;
+	क्रम (i = 0; i <= NDA_MAX; ++i) अणु
+		अगर (!tb[i])
+			जारी;
 
-		switch (i) {
-		case NDA_IFINDEX:
-			if (nla_len(tb[i]) != sizeof(u32)) {
+		चयन (i) अणु
+		हाल NDA_IFINDEX:
+			अगर (nla_len(tb[i]) != माप(u32)) अणु
 				NL_SET_ERR_MSG(extack, "Invalid IFINDEX attribute in fdb dump request");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			*brport_idx = nla_get_u32(tb[NDA_IFINDEX]);
-			break;
-		case NDA_MASTER:
-			if (nla_len(tb[i]) != sizeof(u32)) {
+			अवरोध;
+		हाल NDA_MASTER:
+			अगर (nla_len(tb[i]) != माप(u32)) अणु
 				NL_SET_ERR_MSG(extack, "Invalid MASTER attribute in fdb dump request");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			*br_idx = nla_get_u32(tb[NDA_MASTER]);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			NL_SET_ERR_MSG(extack, "Unsupported attribute in fdb dump request");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int valid_fdb_dump_legacy(const struct nlmsghdr *nlh,
-				 int *br_idx, int *brport_idx,
-				 struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_MAX+1];
-	int err;
+अटल पूर्णांक valid_fdb_dump_legacy(स्थिर काष्ठा nlmsghdr *nlh,
+				 पूर्णांक *br_idx, पूर्णांक *brport_idx,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_MAX+1];
+	पूर्णांक err;
 
-	/* A hack to preserve kernel<->userspace interface.
-	 * Before Linux v4.12 this code accepted ndmsg since iproute2 v3.3.0.
-	 * However, ndmsg is shorter than ifinfomsg thus nlmsg_parse() bails.
-	 * So, check for ndmsg with an optional u32 attribute (not used here).
-	 * Fortunately these sizes don't conflict with the size of ifinfomsg
+	/* A hack to preserve kernel<->userspace पूर्णांकerface.
+	 * Beक्रमe Linux v4.12 this code accepted ndmsg since iproute2 v3.3.0.
+	 * However, ndmsg is लघुer than अगरinfomsg thus nlmsg_parse() bails.
+	 * So, check क्रम ndmsg with an optional u32 attribute (not used here).
+	 * Fortunately these sizes करोn't conflict with the size of अगरinfomsg
 	 * with an optional attribute.
 	 */
-	if (nlmsg_len(nlh) != sizeof(struct ndmsg) &&
-	    (nlmsg_len(nlh) != sizeof(struct ndmsg) +
-	     nla_attr_size(sizeof(u32)))) {
-		struct ifinfomsg *ifm;
+	अगर (nlmsg_len(nlh) != माप(काष्ठा ndmsg) &&
+	    (nlmsg_len(nlh) != माप(काष्ठा ndmsg) +
+	     nla_attr_size(माप(u32)))) अणु
+		काष्ठा अगरinfomsg *अगरm;
 
-		err = nlmsg_parse_deprecated(nlh, sizeof(struct ifinfomsg),
-					     tb, IFLA_MAX, ifla_policy,
+		err = nlmsg_parse_deprecated(nlh, माप(काष्ठा अगरinfomsg),
+					     tb, IFLA_MAX, अगरla_policy,
 					     extack);
-		if (err < 0) {
-			return -EINVAL;
-		} else if (err == 0) {
-			if (tb[IFLA_MASTER])
+		अगर (err < 0) अणु
+			वापस -EINVAL;
+		पूर्ण अन्यथा अगर (err == 0) अणु
+			अगर (tb[IFLA_MASTER])
 				*br_idx = nla_get_u32(tb[IFLA_MASTER]);
-		}
+		पूर्ण
 
-		ifm = nlmsg_data(nlh);
-		*brport_idx = ifm->ifi_index;
-	}
-	return 0;
-}
+		अगरm = nlmsg_data(nlh);
+		*brport_idx = अगरm->अगरi_index;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int rtnl_fdb_dump(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct net_device *dev;
-	struct net_device *br_dev = NULL;
-	const struct net_device_ops *ops = NULL;
-	const struct net_device_ops *cops = NULL;
-	struct net *net = sock_net(skb->sk);
-	struct hlist_head *head;
-	int brport_idx = 0;
-	int br_idx = 0;
-	int h, s_h;
-	int idx = 0, s_idx;
-	int err = 0;
-	int fidx = 0;
+अटल पूर्णांक rtnl_fdb_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा net_device *br_dev = शून्य;
+	स्थिर काष्ठा net_device_ops *ops = शून्य;
+	स्थिर काष्ठा net_device_ops *cops = शून्य;
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा hlist_head *head;
+	पूर्णांक brport_idx = 0;
+	पूर्णांक br_idx = 0;
+	पूर्णांक h, s_h;
+	पूर्णांक idx = 0, s_idx;
+	पूर्णांक err = 0;
+	पूर्णांक fidx = 0;
 
-	if (cb->strict_check)
+	अगर (cb->strict_check)
 		err = valid_fdb_dump_strict(cb->nlh, &br_idx, &brport_idx,
 					    cb->extack);
-	else
+	अन्यथा
 		err = valid_fdb_dump_legacy(cb->nlh, &br_idx, &brport_idx,
 					    cb->extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (br_idx) {
+	अगर (br_idx) अणु
 		br_dev = __dev_get_by_index(net, br_idx);
-		if (!br_dev)
-			return -ENODEV;
+		अगर (!br_dev)
+			वापस -ENODEV;
 
 		ops = br_dev->netdev_ops;
-	}
+	पूर्ण
 
 	s_h = cb->args[0];
 	s_idx = cb->args[1];
 
-	for (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) {
+	क्रम (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) अणु
 		idx = 0;
 		head = &net->dev_index_head[h];
-		hlist_for_each_entry(dev, head, index_hlist) {
+		hlist_क्रम_each_entry(dev, head, index_hlist) अणु
 
-			if (brport_idx && (dev->ifindex != brport_idx))
-				continue;
+			अगर (brport_idx && (dev->अगरindex != brport_idx))
+				जारी;
 
-			if (!br_idx) { /* user did not specify a specific bridge */
-				if (netif_is_bridge_port(dev)) {
+			अगर (!br_idx) अणु /* user did not specअगरy a specअगरic bridge */
+				अगर (netअगर_is_bridge_port(dev)) अणु
 					br_dev = netdev_master_upper_dev_get(dev);
 					cops = br_dev->netdev_ops;
-				}
-			} else {
-				if (dev != br_dev &&
-				    !netif_is_bridge_port(dev))
-					continue;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (dev != br_dev &&
+				    !netअगर_is_bridge_port(dev))
+					जारी;
 
-				if (br_dev != netdev_master_upper_dev_get(dev) &&
+				अगर (br_dev != netdev_master_upper_dev_get(dev) &&
 				    !(dev->priv_flags & IFF_EBRIDGE))
-					continue;
+					जारी;
 				cops = ops;
-			}
+			पूर्ण
 
-			if (idx < s_idx)
-				goto cont;
+			अगर (idx < s_idx)
+				जाओ cont;
 
-			if (netif_is_bridge_port(dev)) {
-				if (cops && cops->ndo_fdb_dump) {
-					err = cops->ndo_fdb_dump(skb, cb,
+			अगर (netअगर_is_bridge_port(dev)) अणु
+				अगर (cops && cops->nकरो_fdb_dump) अणु
+					err = cops->nकरो_fdb_dump(skb, cb,
 								br_dev, dev,
 								&fidx);
-					if (err == -EMSGSIZE)
-						goto out;
-				}
-			}
+					अगर (err == -EMSGSIZE)
+						जाओ out;
+				पूर्ण
+			पूर्ण
 
-			if (dev->netdev_ops->ndo_fdb_dump)
-				err = dev->netdev_ops->ndo_fdb_dump(skb, cb,
-								    dev, NULL,
+			अगर (dev->netdev_ops->nकरो_fdb_dump)
+				err = dev->netdev_ops->nकरो_fdb_dump(skb, cb,
+								    dev, शून्य,
 								    &fidx);
-			else
-				err = ndo_dflt_fdb_dump(skb, cb, dev, NULL,
+			अन्यथा
+				err = nकरो_dflt_fdb_dump(skb, cb, dev, शून्य,
 							&fidx);
-			if (err == -EMSGSIZE)
-				goto out;
+			अगर (err == -EMSGSIZE)
+				जाओ out;
 
-			cops = NULL;
+			cops = शून्य;
 
-			/* reset fdb offset to 0 for rest of the interfaces */
+			/* reset fdb offset to 0 क्रम rest of the पूर्णांकerfaces */
 			cb->args[2] = 0;
 			fidx = 0;
 cont:
 			idx++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	cb->args[0] = h;
 	cb->args[1] = idx;
 	cb->args[2] = fidx;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static int valid_fdb_get_strict(const struct nlmsghdr *nlh,
-				struct nlattr **tb, u8 *ndm_flags,
-				int *br_idx, int *brport_idx, u8 **addr,
-				u16 *vid, struct netlink_ext_ack *extack)
-{
-	struct ndmsg *ndm;
-	int err, i;
+अटल पूर्णांक valid_fdb_get_strict(स्थिर काष्ठा nlmsghdr *nlh,
+				काष्ठा nlattr **tb, u8 *ndm_flags,
+				पूर्णांक *br_idx, पूर्णांक *brport_idx, u8 **addr,
+				u16 *vid, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ndmsg *ndm;
+	पूर्णांक err, i;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ndm))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*ndm))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid header for fdb get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ndm = nlmsg_data(nlh);
-	if (ndm->ndm_pad1  || ndm->ndm_pad2  || ndm->ndm_state ||
-	    ndm->ndm_type) {
+	अगर (ndm->ndm_pad1  || ndm->ndm_pad2  || ndm->ndm_state ||
+	    ndm->ndm_type) अणु
 		NL_SET_ERR_MSG(extack, "Invalid values in header for fdb get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ndm->ndm_flags & ~(NTF_MASTER | NTF_SELF)) {
+	अगर (ndm->ndm_flags & ~(NTF_MASTER | NTF_SELF)) अणु
 		NL_SET_ERR_MSG(extack, "Invalid flags in header for fdb get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct ndmsg), tb,
+	err = nlmsg_parse_deprecated_strict(nlh, माप(काष्ठा ndmsg), tb,
 					    NDA_MAX, nda_policy, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	*ndm_flags = ndm->ndm_flags;
-	*brport_idx = ndm->ndm_ifindex;
-	for (i = 0; i <= NDA_MAX; ++i) {
-		if (!tb[i])
-			continue;
+	*brport_idx = ndm->ndm_अगरindex;
+	क्रम (i = 0; i <= NDA_MAX; ++i) अणु
+		अगर (!tb[i])
+			जारी;
 
-		switch (i) {
-		case NDA_MASTER:
+		चयन (i) अणु
+		हाल NDA_MASTER:
 			*br_idx = nla_get_u32(tb[i]);
-			break;
-		case NDA_LLADDR:
-			if (nla_len(tb[i]) != ETH_ALEN) {
+			अवरोध;
+		हाल NDA_LLADDR:
+			अगर (nla_len(tb[i]) != ETH_ALEN) अणु
 				NL_SET_ERR_MSG(extack, "Invalid address in fdb get request");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			*addr = nla_data(tb[i]);
-			break;
-		case NDA_VLAN:
+			अवरोध;
+		हाल NDA_VLAN:
 			err = fdb_vid_parse(tb[i], vid, extack);
-			if (err)
-				return err;
-			break;
-		case NDA_VNI:
-			break;
-		default:
+			अगर (err)
+				वापस err;
+			अवरोध;
+		हाल NDA_VNI:
+			अवरोध;
+		शेष:
 			NL_SET_ERR_MSG(extack, "Unsupported attribute in fdb get request");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_fdb_get(struct sk_buff *in_skb, struct nlmsghdr *nlh,
-			struct netlink_ext_ack *extack)
-{
-	struct net_device *dev = NULL, *br_dev = NULL;
-	const struct net_device_ops *ops = NULL;
-	struct net *net = sock_net(in_skb->sk);
-	struct nlattr *tb[NDA_MAX + 1];
-	struct sk_buff *skb;
-	int brport_idx = 0;
+अटल पूर्णांक rtnl_fdb_get(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *nlh,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net_device *dev = शून्य, *br_dev = शून्य;
+	स्थिर काष्ठा net_device_ops *ops = शून्य;
+	काष्ठा net *net = sock_net(in_skb->sk);
+	काष्ठा nlattr *tb[NDA_MAX + 1];
+	काष्ठा sk_buff *skb;
+	पूर्णांक brport_idx = 0;
 	u8 ndm_flags = 0;
-	int br_idx = 0;
-	u8 *addr = NULL;
+	पूर्णांक br_idx = 0;
+	u8 *addr = शून्य;
 	u16 vid = 0;
-	int err;
+	पूर्णांक err;
 
 	err = valid_fdb_get_strict(nlh, tb, &ndm_flags, &br_idx,
 				   &brport_idx, &addr, &vid, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!addr) {
+	अगर (!addr) अणु
 		NL_SET_ERR_MSG(extack, "Missing lookup address for fdb get request");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (brport_idx) {
+	अगर (brport_idx) अणु
 		dev = __dev_get_by_index(net, brport_idx);
-		if (!dev) {
+		अगर (!dev) अणु
 			NL_SET_ERR_MSG(extack, "Unknown device ifindex");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	if (br_idx) {
-		if (dev) {
+	अगर (br_idx) अणु
+		अगर (dev) अणु
 			NL_SET_ERR_MSG(extack, "Master and device are mutually exclusive");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		br_dev = __dev_get_by_index(net, br_idx);
-		if (!br_dev) {
+		अगर (!br_dev) अणु
 			NL_SET_ERR_MSG(extack, "Invalid master ifindex");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ops = br_dev->netdev_ops;
-	}
+	पूर्ण
 
-	if (dev) {
-		if (!ndm_flags || (ndm_flags & NTF_MASTER)) {
-			if (!netif_is_bridge_port(dev)) {
+	अगर (dev) अणु
+		अगर (!ndm_flags || (ndm_flags & NTF_MASTER)) अणु
+			अगर (!netअगर_is_bridge_port(dev)) अणु
 				NL_SET_ERR_MSG(extack, "Device is not a bridge port");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			br_dev = netdev_master_upper_dev_get(dev);
-			if (!br_dev) {
+			अगर (!br_dev) अणु
 				NL_SET_ERR_MSG(extack, "Master of device not found");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			ops = br_dev->netdev_ops;
-		} else {
-			if (!(ndm_flags & NTF_SELF)) {
+		पूर्ण अन्यथा अणु
+			अगर (!(ndm_flags & NTF_SELF)) अणु
 				NL_SET_ERR_MSG(extack, "Missing NTF_SELF");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			ops = dev->netdev_ops;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!br_dev && !dev) {
+	अगर (!br_dev && !dev) अणु
 		NL_SET_ERR_MSG(extack, "No device specified");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!ops || !ops->ndo_fdb_get) {
+	अगर (!ops || !ops->nकरो_fdb_get) अणु
 		NL_SET_ERR_MSG(extack, "Fdb get operation not supported by device");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	skb = nlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
-	if (!skb)
-		return -ENOBUFS;
+	अगर (!skb)
+		वापस -ENOBUFS;
 
-	if (br_dev)
+	अगर (br_dev)
 		dev = br_dev;
-	err = ops->ndo_fdb_get(skb, tb, dev, addr, vid,
+	err = ops->nकरो_fdb_get(skb, tb, dev, addr, vid,
 			       NETLINK_CB(in_skb).portid,
 			       nlh->nlmsg_seq, extack);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	return rtnl_unicast(skb, net, NETLINK_CB(in_skb).portid);
+	वापस rtnl_unicast(skb, net, NETLINK_CB(in_skb).portid);
 out:
-	kfree_skb(skb);
-	return err;
-}
+	kमुक्त_skb(skb);
+	वापस err;
+पूर्ण
 
-static int brport_nla_put_flag(struct sk_buff *skb, u32 flags, u32 mask,
-			       unsigned int attrnum, unsigned int flag)
-{
-	if (mask & flag)
-		return nla_put_u8(skb, attrnum, !!(flags & flag));
-	return 0;
-}
+अटल पूर्णांक brport_nla_put_flag(काष्ठा sk_buff *skb, u32 flags, u32 mask,
+			       अचिन्हित पूर्णांक attrnum, अचिन्हित पूर्णांक flag)
+अणु
+	अगर (mask & flag)
+		वापस nla_put_u8(skb, attrnum, !!(flags & flag));
+	वापस 0;
+पूर्ण
 
-int ndo_dflt_bridge_getlink(struct sk_buff *skb, u32 pid, u32 seq,
-			    struct net_device *dev, u16 mode,
-			    u32 flags, u32 mask, int nlflags,
+पूर्णांक nकरो_dflt_bridge_getlink(काष्ठा sk_buff *skb, u32 pid, u32 seq,
+			    काष्ठा net_device *dev, u16 mode,
+			    u32 flags, u32 mask, पूर्णांक nlflags,
 			    u32 filter_mask,
-			    int (*vlan_fill)(struct sk_buff *skb,
-					     struct net_device *dev,
+			    पूर्णांक (*vlan_fill)(काष्ठा sk_buff *skb,
+					     काष्ठा net_device *dev,
 					     u32 filter_mask))
-{
-	struct nlmsghdr *nlh;
-	struct ifinfomsg *ifm;
-	struct nlattr *br_afspec;
-	struct nlattr *protinfo;
-	u8 operstate = netif_running(dev) ? dev->operstate : IF_OPER_DOWN;
-	struct net_device *br_dev = netdev_master_upper_dev_get(dev);
-	int err = 0;
+अणु
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा अगरinfomsg *अगरm;
+	काष्ठा nlattr *br_afspec;
+	काष्ठा nlattr *protinfo;
+	u8 operstate = netअगर_running(dev) ? dev->operstate : IF_OPER_DOWN;
+	काष्ठा net_device *br_dev = netdev_master_upper_dev_get(dev);
+	पूर्णांक err = 0;
 
-	nlh = nlmsg_put(skb, pid, seq, RTM_NEWLINK, sizeof(*ifm), nlflags);
-	if (nlh == NULL)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, RTM_NEWLINK, माप(*अगरm), nlflags);
+	अगर (nlh == शून्य)
+		वापस -EMSGSIZE;
 
-	ifm = nlmsg_data(nlh);
-	ifm->ifi_family = AF_BRIDGE;
-	ifm->__ifi_pad = 0;
-	ifm->ifi_type = dev->type;
-	ifm->ifi_index = dev->ifindex;
-	ifm->ifi_flags = dev_get_flags(dev);
-	ifm->ifi_change = 0;
+	अगरm = nlmsg_data(nlh);
+	अगरm->अगरi_family = AF_BRIDGE;
+	अगरm->__अगरi_pad = 0;
+	अगरm->अगरi_type = dev->type;
+	अगरm->अगरi_index = dev->अगरindex;
+	अगरm->अगरi_flags = dev_get_flags(dev);
+	अगरm->अगरi_change = 0;
 
 
-	if (nla_put_string(skb, IFLA_IFNAME, dev->name) ||
+	अगर (nla_put_string(skb, IFLA_IFNAME, dev->name) ||
 	    nla_put_u32(skb, IFLA_MTU, dev->mtu) ||
 	    nla_put_u8(skb, IFLA_OPERSTATE, operstate) ||
 	    (br_dev &&
-	     nla_put_u32(skb, IFLA_MASTER, br_dev->ifindex)) ||
+	     nla_put_u32(skb, IFLA_MASTER, br_dev->अगरindex)) ||
 	    (dev->addr_len &&
 	     nla_put(skb, IFLA_ADDRESS, dev->addr_len, dev->dev_addr)) ||
-	    (dev->ifindex != dev_get_iflink(dev) &&
-	     nla_put_u32(skb, IFLA_LINK, dev_get_iflink(dev))))
-		goto nla_put_failure;
+	    (dev->अगरindex != dev_get_अगरlink(dev) &&
+	     nla_put_u32(skb, IFLA_LINK, dev_get_अगरlink(dev))))
+		जाओ nla_put_failure;
 
 	br_afspec = nla_nest_start_noflag(skb, IFLA_AF_SPEC);
-	if (!br_afspec)
-		goto nla_put_failure;
+	अगर (!br_afspec)
+		जाओ nla_put_failure;
 
-	if (nla_put_u16(skb, IFLA_BRIDGE_FLAGS, BRIDGE_FLAGS_SELF)) {
+	अगर (nla_put_u16(skb, IFLA_BRIDGE_FLAGS, BRIDGE_FLAGS_SELF)) अणु
 		nla_nest_cancel(skb, br_afspec);
-		goto nla_put_failure;
-	}
+		जाओ nla_put_failure;
+	पूर्ण
 
-	if (mode != BRIDGE_MODE_UNDEF) {
-		if (nla_put_u16(skb, IFLA_BRIDGE_MODE, mode)) {
+	अगर (mode != BRIDGE_MODE_UNDEF) अणु
+		अगर (nla_put_u16(skb, IFLA_BRIDGE_MODE, mode)) अणु
 			nla_nest_cancel(skb, br_afspec);
-			goto nla_put_failure;
-		}
-	}
-	if (vlan_fill) {
+			जाओ nla_put_failure;
+		पूर्ण
+	पूर्ण
+	अगर (vlan_fill) अणु
 		err = vlan_fill(skb, dev, filter_mask);
-		if (err) {
+		अगर (err) अणु
 			nla_nest_cancel(skb, br_afspec);
-			goto nla_put_failure;
-		}
-	}
+			जाओ nla_put_failure;
+		पूर्ण
+	पूर्ण
 	nla_nest_end(skb, br_afspec);
 
 	protinfo = nla_nest_start(skb, IFLA_PROTINFO);
-	if (!protinfo)
-		goto nla_put_failure;
+	अगर (!protinfo)
+		जाओ nla_put_failure;
 
-	if (brport_nla_put_flag(skb, flags, mask,
+	अगर (brport_nla_put_flag(skb, flags, mask,
 				IFLA_BRPORT_MODE, BR_HAIRPIN_MODE) ||
 	    brport_nla_put_flag(skb, flags, mask,
 				IFLA_BRPORT_GUARD, BR_BPDU_GUARD) ||
@@ -4679,736 +4680,736 @@ int ndo_dflt_bridge_getlink(struct sk_buff *skb, u32 pid, u32 seq,
 	    brport_nla_put_flag(skb, flags, mask,
 				IFLA_BRPORT_MCAST_FLOOD, BR_MCAST_FLOOD) ||
 	    brport_nla_put_flag(skb, flags, mask,
-				IFLA_BRPORT_BCAST_FLOOD, BR_BCAST_FLOOD)) {
+				IFLA_BRPORT_BCAST_FLOOD, BR_BCAST_FLOOD)) अणु
 		nla_nest_cancel(skb, protinfo);
-		goto nla_put_failure;
-	}
+		जाओ nla_put_failure;
+	पूर्ण
 
 	nla_nest_end(skb, protinfo);
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return err ? err : -EMSGSIZE;
-}
-EXPORT_SYMBOL_GPL(ndo_dflt_bridge_getlink);
+	वापस err ? err : -EMSGSIZE;
+पूर्ण
+EXPORT_SYMBOL_GPL(nकरो_dflt_bridge_getlink);
 
-static int valid_bridge_getlink_req(const struct nlmsghdr *nlh,
+अटल पूर्णांक valid_bridge_getlink_req(स्थिर काष्ठा nlmsghdr *nlh,
 				    bool strict_check, u32 *filter_mask,
-				    struct netlink_ext_ack *extack)
-{
-	struct nlattr *tb[IFLA_MAX+1];
-	int err, i;
+				    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nlattr *tb[IFLA_MAX+1];
+	पूर्णांक err, i;
 
-	if (strict_check) {
-		struct ifinfomsg *ifm;
+	अगर (strict_check) अणु
+		काष्ठा अगरinfomsg *अगरm;
 
-		if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
+		अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरm))) अणु
 			NL_SET_ERR_MSG(extack, "Invalid header for bridge link dump");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		ifm = nlmsg_data(nlh);
-		if (ifm->__ifi_pad || ifm->ifi_type || ifm->ifi_flags ||
-		    ifm->ifi_change || ifm->ifi_index) {
+		अगरm = nlmsg_data(nlh);
+		अगर (अगरm->__अगरi_pad || अगरm->अगरi_type || अगरm->अगरi_flags ||
+		    अगरm->अगरi_change || अगरm->अगरi_index) अणु
 			NL_SET_ERR_MSG(extack, "Invalid values in header for bridge link dump request");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		err = nlmsg_parse_deprecated_strict(nlh,
-						    sizeof(struct ifinfomsg),
-						    tb, IFLA_MAX, ifla_policy,
+						    माप(काष्ठा अगरinfomsg),
+						    tb, IFLA_MAX, अगरla_policy,
 						    extack);
-	} else {
-		err = nlmsg_parse_deprecated(nlh, sizeof(struct ifinfomsg),
-					     tb, IFLA_MAX, ifla_policy,
+	पूर्ण अन्यथा अणु
+		err = nlmsg_parse_deprecated(nlh, माप(काष्ठा अगरinfomsg),
+					     tb, IFLA_MAX, अगरla_policy,
 					     extack);
-	}
-	if (err < 0)
-		return err;
+	पूर्ण
+	अगर (err < 0)
+		वापस err;
 
 	/* new attributes should only be added with strict checking */
-	for (i = 0; i <= IFLA_MAX; ++i) {
-		if (!tb[i])
-			continue;
+	क्रम (i = 0; i <= IFLA_MAX; ++i) अणु
+		अगर (!tb[i])
+			जारी;
 
-		switch (i) {
-		case IFLA_EXT_MASK:
+		चयन (i) अणु
+		हाल IFLA_EXT_MASK:
 			*filter_mask = nla_get_u32(tb[i]);
-			break;
-		default:
-			if (strict_check) {
+			अवरोध;
+		शेष:
+			अगर (strict_check) अणु
 				NL_SET_ERR_MSG(extack, "Unsupported attribute in bridge link dump request");
-				return -EINVAL;
-			}
-		}
-	}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_bridge_getlink(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	const struct nlmsghdr *nlh = cb->nlh;
-	struct net *net = sock_net(skb->sk);
-	struct net_device *dev;
-	int idx = 0;
+अटल पूर्णांक rtnl_bridge_getlink(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा net_device *dev;
+	पूर्णांक idx = 0;
 	u32 portid = NETLINK_CB(cb->skb).portid;
 	u32 seq = nlh->nlmsg_seq;
 	u32 filter_mask = 0;
-	int err;
+	पूर्णांक err;
 
 	err = valid_bridge_getlink_req(nlh, cb->strict_check, &filter_mask,
 				       cb->extack);
-	if (err < 0 && cb->strict_check)
-		return err;
+	अगर (err < 0 && cb->strict_check)
+		वापस err;
 
-	rcu_read_lock();
-	for_each_netdev_rcu(net, dev) {
-		const struct net_device_ops *ops = dev->netdev_ops;
-		struct net_device *br_dev = netdev_master_upper_dev_get(dev);
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_rcu(net, dev) अणु
+		स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
+		काष्ठा net_device *br_dev = netdev_master_upper_dev_get(dev);
 
-		if (br_dev && br_dev->netdev_ops->ndo_bridge_getlink) {
-			if (idx >= cb->args[0]) {
-				err = br_dev->netdev_ops->ndo_bridge_getlink(
+		अगर (br_dev && br_dev->netdev_ops->nकरो_bridge_getlink) अणु
+			अगर (idx >= cb->args[0]) अणु
+				err = br_dev->netdev_ops->nकरो_bridge_getlink(
 						skb, portid, seq, dev,
 						filter_mask, NLM_F_MULTI);
-				if (err < 0 && err != -EOPNOTSUPP) {
-					if (likely(skb->len))
-						break;
+				अगर (err < 0 && err != -EOPNOTSUPP) अणु
+					अगर (likely(skb->len))
+						अवरोध;
 
-					goto out_err;
-				}
-			}
+					जाओ out_err;
+				पूर्ण
+			पूर्ण
 			idx++;
-		}
+		पूर्ण
 
-		if (ops->ndo_bridge_getlink) {
-			if (idx >= cb->args[0]) {
-				err = ops->ndo_bridge_getlink(skb, portid,
+		अगर (ops->nकरो_bridge_getlink) अणु
+			अगर (idx >= cb->args[0]) अणु
+				err = ops->nकरो_bridge_getlink(skb, portid,
 							      seq, dev,
 							      filter_mask,
 							      NLM_F_MULTI);
-				if (err < 0 && err != -EOPNOTSUPP) {
-					if (likely(skb->len))
-						break;
+				अगर (err < 0 && err != -EOPNOTSUPP) अणु
+					अगर (likely(skb->len))
+						अवरोध;
 
-					goto out_err;
-				}
-			}
+					जाओ out_err;
+				पूर्ण
+			पूर्ण
 			idx++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	err = skb->len;
 out_err:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	cb->args[0] = idx;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline size_t bridge_nlmsg_size(void)
-{
-	return NLMSG_ALIGN(sizeof(struct ifinfomsg))
+अटल अंतरभूत माप_प्रकार bridge_nlmsg_size(व्योम)
+अणु
+	वापस NLMSG_ALIGN(माप(काष्ठा अगरinfomsg))
 		+ nla_total_size(IFNAMSIZ)	/* IFLA_IFNAME */
 		+ nla_total_size(MAX_ADDR_LEN)	/* IFLA_ADDRESS */
-		+ nla_total_size(sizeof(u32))	/* IFLA_MASTER */
-		+ nla_total_size(sizeof(u32))	/* IFLA_MTU */
-		+ nla_total_size(sizeof(u32))	/* IFLA_LINK */
-		+ nla_total_size(sizeof(u32))	/* IFLA_OPERSTATE */
-		+ nla_total_size(sizeof(u8))	/* IFLA_PROTINFO */
-		+ nla_total_size(sizeof(struct nlattr))	/* IFLA_AF_SPEC */
-		+ nla_total_size(sizeof(u16))	/* IFLA_BRIDGE_FLAGS */
-		+ nla_total_size(sizeof(u16));	/* IFLA_BRIDGE_MODE */
-}
+		+ nla_total_size(माप(u32))	/* IFLA_MASTER */
+		+ nla_total_size(माप(u32))	/* IFLA_MTU */
+		+ nla_total_size(माप(u32))	/* IFLA_LINK */
+		+ nla_total_size(माप(u32))	/* IFLA_OPERSTATE */
+		+ nla_total_size(माप(u8))	/* IFLA_PROTINFO */
+		+ nla_total_size(माप(काष्ठा nlattr))	/* IFLA_AF_SPEC */
+		+ nla_total_size(माप(u16))	/* IFLA_BRIDGE_FLAGS */
+		+ nla_total_size(माप(u16));	/* IFLA_BRIDGE_MODE */
+पूर्ण
 
-static int rtnl_bridge_notify(struct net_device *dev)
-{
-	struct net *net = dev_net(dev);
-	struct sk_buff *skb;
-	int err = -EOPNOTSUPP;
+अटल पूर्णांक rtnl_bridge_notअगरy(काष्ठा net_device *dev)
+अणु
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = -EOPNOTSUPP;
 
-	if (!dev->netdev_ops->ndo_bridge_getlink)
-		return 0;
+	अगर (!dev->netdev_ops->nकरो_bridge_getlink)
+		वापस 0;
 
 	skb = nlmsg_new(bridge_nlmsg_size(), GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		err = -ENOMEM;
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
-	err = dev->netdev_ops->ndo_bridge_getlink(skb, 0, 0, dev, 0, 0);
-	if (err < 0)
-		goto errout;
+	err = dev->netdev_ops->nकरो_bridge_getlink(skb, 0, 0, dev, 0, 0);
+	अगर (err < 0)
+		जाओ errout;
 
-	/* Notification info is only filled for bridge ports, not the bridge
-	 * device itself. Therefore, a zero notification length is valid and
+	/* Notअगरication info is only filled क्रम bridge ports, not the bridge
+	 * device itself. Thereक्रमe, a zero notअगरication length is valid and
 	 * should not result in an error.
 	 */
-	if (!skb->len)
-		goto errout;
+	अगर (!skb->len)
+		जाओ errout;
 
-	rtnl_notify(skb, net, 0, RTNLGRP_LINK, NULL, GFP_ATOMIC);
-	return 0;
+	rtnl_notअगरy(skb, net, 0, RTNLGRP_LINK, शून्य, GFP_ATOMIC);
+	वापस 0;
 errout:
 	WARN_ON(err == -EMSGSIZE);
-	kfree_skb(skb);
-	if (err)
+	kमुक्त_skb(skb);
+	अगर (err)
 		rtnl_set_sk_err(net, RTNLGRP_LINK, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtnl_bridge_setlink(struct sk_buff *skb, struct nlmsghdr *nlh,
-			       struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct ifinfomsg *ifm;
-	struct net_device *dev;
-	struct nlattr *br_spec, *attr = NULL;
-	int rem, err = -EOPNOTSUPP;
+अटल पूर्णांक rtnl_bridge_setlink(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा अगरinfomsg *अगरm;
+	काष्ठा net_device *dev;
+	काष्ठा nlattr *br_spec, *attr = शून्य;
+	पूर्णांक rem, err = -EOPNOTSUPP;
 	u16 flags = 0;
 	bool have_flags = false;
 
-	if (nlmsg_len(nlh) < sizeof(*ifm))
-		return -EINVAL;
+	अगर (nlmsg_len(nlh) < माप(*अगरm))
+		वापस -EINVAL;
 
-	ifm = nlmsg_data(nlh);
-	if (ifm->ifi_family != AF_BRIDGE)
-		return -EPFNOSUPPORT;
+	अगरm = nlmsg_data(nlh);
+	अगर (अगरm->अगरi_family != AF_BRIDGE)
+		वापस -EPFNOSUPPORT;
 
-	dev = __dev_get_by_index(net, ifm->ifi_index);
-	if (!dev) {
+	dev = __dev_get_by_index(net, अगरm->अगरi_index);
+	अगर (!dev) अणु
 		NL_SET_ERR_MSG(extack, "unknown ifindex");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	br_spec = nlmsg_find_attr(nlh, sizeof(struct ifinfomsg), IFLA_AF_SPEC);
-	if (br_spec) {
-		nla_for_each_nested(attr, br_spec, rem) {
-			if (nla_type(attr) == IFLA_BRIDGE_FLAGS) {
-				if (nla_len(attr) < sizeof(flags))
-					return -EINVAL;
+	br_spec = nlmsg_find_attr(nlh, माप(काष्ठा अगरinfomsg), IFLA_AF_SPEC);
+	अगर (br_spec) अणु
+		nla_क्रम_each_nested(attr, br_spec, rem) अणु
+			अगर (nla_type(attr) == IFLA_BRIDGE_FLAGS) अणु
+				अगर (nla_len(attr) < माप(flags))
+					वापस -EINVAL;
 
 				have_flags = true;
 				flags = nla_get_u16(attr);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!flags || (flags & BRIDGE_FLAGS_MASTER)) {
-		struct net_device *br_dev = netdev_master_upper_dev_get(dev);
+	अगर (!flags || (flags & BRIDGE_FLAGS_MASTER)) अणु
+		काष्ठा net_device *br_dev = netdev_master_upper_dev_get(dev);
 
-		if (!br_dev || !br_dev->netdev_ops->ndo_bridge_setlink) {
+		अगर (!br_dev || !br_dev->netdev_ops->nकरो_bridge_setlink) अणु
 			err = -EOPNOTSUPP;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		err = br_dev->netdev_ops->ndo_bridge_setlink(dev, nlh, flags,
+		err = br_dev->netdev_ops->nकरो_bridge_setlink(dev, nlh, flags,
 							     extack);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		flags &= ~BRIDGE_FLAGS_MASTER;
-	}
+	पूर्ण
 
-	if ((flags & BRIDGE_FLAGS_SELF)) {
-		if (!dev->netdev_ops->ndo_bridge_setlink)
+	अगर ((flags & BRIDGE_FLAGS_SELF)) अणु
+		अगर (!dev->netdev_ops->nकरो_bridge_setlink)
 			err = -EOPNOTSUPP;
-		else
-			err = dev->netdev_ops->ndo_bridge_setlink(dev, nlh,
+		अन्यथा
+			err = dev->netdev_ops->nकरो_bridge_setlink(dev, nlh,
 								  flags,
 								  extack);
-		if (!err) {
+		अगर (!err) अणु
 			flags &= ~BRIDGE_FLAGS_SELF;
 
-			/* Generate event to notify upper layer of bridge
+			/* Generate event to notअगरy upper layer of bridge
 			 * change
 			 */
-			err = rtnl_bridge_notify(dev);
-		}
-	}
+			err = rtnl_bridge_notअगरy(dev);
+		पूर्ण
+	पूर्ण
 
-	if (have_flags)
-		memcpy(nla_data(attr), &flags, sizeof(flags));
+	अगर (have_flags)
+		स_नकल(nla_data(attr), &flags, माप(flags));
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtnl_bridge_dellink(struct sk_buff *skb, struct nlmsghdr *nlh,
-			       struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct ifinfomsg *ifm;
-	struct net_device *dev;
-	struct nlattr *br_spec, *attr = NULL;
-	int rem, err = -EOPNOTSUPP;
+अटल पूर्णांक rtnl_bridge_dellink(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा अगरinfomsg *अगरm;
+	काष्ठा net_device *dev;
+	काष्ठा nlattr *br_spec, *attr = शून्य;
+	पूर्णांक rem, err = -EOPNOTSUPP;
 	u16 flags = 0;
 	bool have_flags = false;
 
-	if (nlmsg_len(nlh) < sizeof(*ifm))
-		return -EINVAL;
+	अगर (nlmsg_len(nlh) < माप(*अगरm))
+		वापस -EINVAL;
 
-	ifm = nlmsg_data(nlh);
-	if (ifm->ifi_family != AF_BRIDGE)
-		return -EPFNOSUPPORT;
+	अगरm = nlmsg_data(nlh);
+	अगर (अगरm->अगरi_family != AF_BRIDGE)
+		वापस -EPFNOSUPPORT;
 
-	dev = __dev_get_by_index(net, ifm->ifi_index);
-	if (!dev) {
+	dev = __dev_get_by_index(net, अगरm->अगरi_index);
+	अगर (!dev) अणु
 		NL_SET_ERR_MSG(extack, "unknown ifindex");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	br_spec = nlmsg_find_attr(nlh, sizeof(struct ifinfomsg), IFLA_AF_SPEC);
-	if (br_spec) {
-		nla_for_each_nested(attr, br_spec, rem) {
-			if (nla_type(attr) == IFLA_BRIDGE_FLAGS) {
-				if (nla_len(attr) < sizeof(flags))
-					return -EINVAL;
+	br_spec = nlmsg_find_attr(nlh, माप(काष्ठा अगरinfomsg), IFLA_AF_SPEC);
+	अगर (br_spec) अणु
+		nla_क्रम_each_nested(attr, br_spec, rem) अणु
+			अगर (nla_type(attr) == IFLA_BRIDGE_FLAGS) अणु
+				अगर (nla_len(attr) < माप(flags))
+					वापस -EINVAL;
 
 				have_flags = true;
 				flags = nla_get_u16(attr);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!flags || (flags & BRIDGE_FLAGS_MASTER)) {
-		struct net_device *br_dev = netdev_master_upper_dev_get(dev);
+	अगर (!flags || (flags & BRIDGE_FLAGS_MASTER)) अणु
+		काष्ठा net_device *br_dev = netdev_master_upper_dev_get(dev);
 
-		if (!br_dev || !br_dev->netdev_ops->ndo_bridge_dellink) {
+		अगर (!br_dev || !br_dev->netdev_ops->nकरो_bridge_dellink) अणु
 			err = -EOPNOTSUPP;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		err = br_dev->netdev_ops->ndo_bridge_dellink(dev, nlh, flags);
-		if (err)
-			goto out;
+		err = br_dev->netdev_ops->nकरो_bridge_dellink(dev, nlh, flags);
+		अगर (err)
+			जाओ out;
 
 		flags &= ~BRIDGE_FLAGS_MASTER;
-	}
+	पूर्ण
 
-	if ((flags & BRIDGE_FLAGS_SELF)) {
-		if (!dev->netdev_ops->ndo_bridge_dellink)
+	अगर ((flags & BRIDGE_FLAGS_SELF)) अणु
+		अगर (!dev->netdev_ops->nकरो_bridge_dellink)
 			err = -EOPNOTSUPP;
-		else
-			err = dev->netdev_ops->ndo_bridge_dellink(dev, nlh,
+		अन्यथा
+			err = dev->netdev_ops->nकरो_bridge_dellink(dev, nlh,
 								  flags);
 
-		if (!err) {
+		अगर (!err) अणु
 			flags &= ~BRIDGE_FLAGS_SELF;
 
-			/* Generate event to notify upper layer of bridge
+			/* Generate event to notअगरy upper layer of bridge
 			 * change
 			 */
-			err = rtnl_bridge_notify(dev);
-		}
-	}
+			err = rtnl_bridge_notअगरy(dev);
+		पूर्ण
+	पूर्ण
 
-	if (have_flags)
-		memcpy(nla_data(attr), &flags, sizeof(flags));
+	अगर (have_flags)
+		स_नकल(nla_data(attr), &flags, माप(flags));
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool stats_attr_valid(unsigned int mask, int attrid, int idxattr)
-{
-	return (mask & IFLA_STATS_FILTER_BIT(attrid)) &&
+अटल bool stats_attr_valid(अचिन्हित पूर्णांक mask, पूर्णांक attrid, पूर्णांक idxattr)
+अणु
+	वापस (mask & IFLA_STATS_FILTER_BIT(attrid)) &&
 	       (!idxattr || idxattr == attrid);
-}
+पूर्ण
 
-#define IFLA_OFFLOAD_XSTATS_FIRST (IFLA_OFFLOAD_XSTATS_UNSPEC + 1)
-static int rtnl_get_offload_stats_attr_size(int attr_id)
-{
-	switch (attr_id) {
-	case IFLA_OFFLOAD_XSTATS_CPU_HIT:
-		return sizeof(struct rtnl_link_stats64);
-	}
+#घोषणा IFLA_OFFLOAD_XSTATS_FIRST (IFLA_OFFLOAD_XSTATS_UNSPEC + 1)
+अटल पूर्णांक rtnl_get_offload_stats_attr_size(पूर्णांक attr_id)
+अणु
+	चयन (attr_id) अणु
+	हाल IFLA_OFFLOAD_XSTATS_CPU_HIT:
+		वापस माप(काष्ठा rtnl_link_stats64);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_get_offload_stats(struct sk_buff *skb, struct net_device *dev,
-				  int *prividx)
-{
-	struct nlattr *attr = NULL;
-	int attr_id, size;
-	void *attr_data;
-	int err;
+अटल पूर्णांक rtnl_get_offload_stats(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+				  पूर्णांक *prividx)
+अणु
+	काष्ठा nlattr *attr = शून्य;
+	पूर्णांक attr_id, size;
+	व्योम *attr_data;
+	पूर्णांक err;
 
-	if (!(dev->netdev_ops && dev->netdev_ops->ndo_has_offload_stats &&
-	      dev->netdev_ops->ndo_get_offload_stats))
-		return -ENODATA;
+	अगर (!(dev->netdev_ops && dev->netdev_ops->nकरो_has_offload_stats &&
+	      dev->netdev_ops->nकरो_get_offload_stats))
+		वापस -ENODATA;
 
-	for (attr_id = IFLA_OFFLOAD_XSTATS_FIRST;
-	     attr_id <= IFLA_OFFLOAD_XSTATS_MAX; attr_id++) {
-		if (attr_id < *prividx)
-			continue;
+	क्रम (attr_id = IFLA_OFFLOAD_XSTATS_FIRST;
+	     attr_id <= IFLA_OFFLOAD_XSTATS_MAX; attr_id++) अणु
+		अगर (attr_id < *prividx)
+			जारी;
 
 		size = rtnl_get_offload_stats_attr_size(attr_id);
-		if (!size)
-			continue;
+		अगर (!size)
+			जारी;
 
-		if (!dev->netdev_ops->ndo_has_offload_stats(dev, attr_id))
-			continue;
+		अगर (!dev->netdev_ops->nकरो_has_offload_stats(dev, attr_id))
+			जारी;
 
 		attr = nla_reserve_64bit(skb, attr_id, size,
 					 IFLA_OFFLOAD_XSTATS_UNSPEC);
-		if (!attr)
-			goto nla_put_failure;
+		अगर (!attr)
+			जाओ nla_put_failure;
 
 		attr_data = nla_data(attr);
-		memset(attr_data, 0, size);
-		err = dev->netdev_ops->ndo_get_offload_stats(attr_id, dev,
+		स_रखो(attr_data, 0, size);
+		err = dev->netdev_ops->nकरो_get_offload_stats(attr_id, dev,
 							     attr_data);
-		if (err)
-			goto get_offload_stats_failure;
-	}
+		अगर (err)
+			जाओ get_offload_stats_failure;
+	पूर्ण
 
-	if (!attr)
-		return -ENODATA;
+	अगर (!attr)
+		वापस -ENODATA;
 
 	*prividx = 0;
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	err = -EMSGSIZE;
 get_offload_stats_failure:
 	*prividx = attr_id;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtnl_get_offload_stats_size(const struct net_device *dev)
-{
-	int nla_size = 0;
-	int attr_id;
-	int size;
+अटल पूर्णांक rtnl_get_offload_stats_size(स्थिर काष्ठा net_device *dev)
+अणु
+	पूर्णांक nla_size = 0;
+	पूर्णांक attr_id;
+	पूर्णांक size;
 
-	if (!(dev->netdev_ops && dev->netdev_ops->ndo_has_offload_stats &&
-	      dev->netdev_ops->ndo_get_offload_stats))
-		return 0;
+	अगर (!(dev->netdev_ops && dev->netdev_ops->nकरो_has_offload_stats &&
+	      dev->netdev_ops->nकरो_get_offload_stats))
+		वापस 0;
 
-	for (attr_id = IFLA_OFFLOAD_XSTATS_FIRST;
-	     attr_id <= IFLA_OFFLOAD_XSTATS_MAX; attr_id++) {
-		if (!dev->netdev_ops->ndo_has_offload_stats(dev, attr_id))
-			continue;
+	क्रम (attr_id = IFLA_OFFLOAD_XSTATS_FIRST;
+	     attr_id <= IFLA_OFFLOAD_XSTATS_MAX; attr_id++) अणु
+		अगर (!dev->netdev_ops->nकरो_has_offload_stats(dev, attr_id))
+			जारी;
 		size = rtnl_get_offload_stats_attr_size(attr_id);
 		nla_size += nla_total_size_64bit(size);
-	}
+	पूर्ण
 
-	if (nla_size != 0)
+	अगर (nla_size != 0)
 		nla_size += nla_total_size(0);
 
-	return nla_size;
-}
+	वापस nla_size;
+पूर्ण
 
-static int rtnl_fill_statsinfo(struct sk_buff *skb, struct net_device *dev,
-			       int type, u32 pid, u32 seq, u32 change,
-			       unsigned int flags, unsigned int filter_mask,
-			       int *idxattr, int *prividx)
-{
-	struct if_stats_msg *ifsm;
-	struct nlmsghdr *nlh;
-	struct nlattr *attr;
-	int s_prividx = *prividx;
-	int err;
+अटल पूर्णांक rtnl_fill_statsinfo(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+			       पूर्णांक type, u32 pid, u32 seq, u32 change,
+			       अचिन्हित पूर्णांक flags, अचिन्हित पूर्णांक filter_mask,
+			       पूर्णांक *idxattr, पूर्णांक *prividx)
+अणु
+	काष्ठा अगर_stats_msg *अगरsm;
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा nlattr *attr;
+	पूर्णांक s_prividx = *prividx;
+	पूर्णांक err;
 
 	ASSERT_RTNL();
 
-	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ifsm), flags);
-	if (!nlh)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, type, माप(*अगरsm), flags);
+	अगर (!nlh)
+		वापस -EMSGSIZE;
 
-	ifsm = nlmsg_data(nlh);
-	ifsm->family = PF_UNSPEC;
-	ifsm->pad1 = 0;
-	ifsm->pad2 = 0;
-	ifsm->ifindex = dev->ifindex;
-	ifsm->filter_mask = filter_mask;
+	अगरsm = nlmsg_data(nlh);
+	अगरsm->family = PF_UNSPEC;
+	अगरsm->pad1 = 0;
+	अगरsm->pad2 = 0;
+	अगरsm->अगरindex = dev->अगरindex;
+	अगरsm->filter_mask = filter_mask;
 
-	if (stats_attr_valid(filter_mask, IFLA_STATS_LINK_64, *idxattr)) {
-		struct rtnl_link_stats64 *sp;
+	अगर (stats_attr_valid(filter_mask, IFLA_STATS_LINK_64, *idxattr)) अणु
+		काष्ठा rtnl_link_stats64 *sp;
 
 		attr = nla_reserve_64bit(skb, IFLA_STATS_LINK_64,
-					 sizeof(struct rtnl_link_stats64),
+					 माप(काष्ठा rtnl_link_stats64),
 					 IFLA_STATS_UNSPEC);
-		if (!attr)
-			goto nla_put_failure;
+		अगर (!attr)
+			जाओ nla_put_failure;
 
 		sp = nla_data(attr);
 		dev_get_stats(dev, sp);
-	}
+	पूर्ण
 
-	if (stats_attr_valid(filter_mask, IFLA_STATS_LINK_XSTATS, *idxattr)) {
-		const struct rtnl_link_ops *ops = dev->rtnl_link_ops;
+	अगर (stats_attr_valid(filter_mask, IFLA_STATS_LINK_XSTATS, *idxattr)) अणु
+		स्थिर काष्ठा rtnl_link_ops *ops = dev->rtnl_link_ops;
 
-		if (ops && ops->fill_linkxstats) {
+		अगर (ops && ops->fill_linkxstats) अणु
 			*idxattr = IFLA_STATS_LINK_XSTATS;
 			attr = nla_nest_start_noflag(skb,
 						     IFLA_STATS_LINK_XSTATS);
-			if (!attr)
-				goto nla_put_failure;
+			अगर (!attr)
+				जाओ nla_put_failure;
 
 			err = ops->fill_linkxstats(skb, dev, prividx, *idxattr);
 			nla_nest_end(skb, attr);
-			if (err)
-				goto nla_put_failure;
+			अगर (err)
+				जाओ nla_put_failure;
 			*idxattr = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (stats_attr_valid(filter_mask, IFLA_STATS_LINK_XSTATS_SLAVE,
-			     *idxattr)) {
-		const struct rtnl_link_ops *ops = NULL;
-		const struct net_device *master;
+	अगर (stats_attr_valid(filter_mask, IFLA_STATS_LINK_XSTATS_SLAVE,
+			     *idxattr)) अणु
+		स्थिर काष्ठा rtnl_link_ops *ops = शून्य;
+		स्थिर काष्ठा net_device *master;
 
 		master = netdev_master_upper_dev_get(dev);
-		if (master)
+		अगर (master)
 			ops = master->rtnl_link_ops;
-		if (ops && ops->fill_linkxstats) {
+		अगर (ops && ops->fill_linkxstats) अणु
 			*idxattr = IFLA_STATS_LINK_XSTATS_SLAVE;
 			attr = nla_nest_start_noflag(skb,
 						     IFLA_STATS_LINK_XSTATS_SLAVE);
-			if (!attr)
-				goto nla_put_failure;
+			अगर (!attr)
+				जाओ nla_put_failure;
 
 			err = ops->fill_linkxstats(skb, dev, prividx, *idxattr);
 			nla_nest_end(skb, attr);
-			if (err)
-				goto nla_put_failure;
+			अगर (err)
+				जाओ nla_put_failure;
 			*idxattr = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (stats_attr_valid(filter_mask, IFLA_STATS_LINK_OFFLOAD_XSTATS,
-			     *idxattr)) {
+	अगर (stats_attr_valid(filter_mask, IFLA_STATS_LINK_OFFLOAD_XSTATS,
+			     *idxattr)) अणु
 		*idxattr = IFLA_STATS_LINK_OFFLOAD_XSTATS;
 		attr = nla_nest_start_noflag(skb,
 					     IFLA_STATS_LINK_OFFLOAD_XSTATS);
-		if (!attr)
-			goto nla_put_failure;
+		अगर (!attr)
+			जाओ nla_put_failure;
 
 		err = rtnl_get_offload_stats(skb, dev, prividx);
-		if (err == -ENODATA)
+		अगर (err == -ENODATA)
 			nla_nest_cancel(skb, attr);
-		else
+		अन्यथा
 			nla_nest_end(skb, attr);
 
-		if (err && err != -ENODATA)
-			goto nla_put_failure;
+		अगर (err && err != -ENODATA)
+			जाओ nla_put_failure;
 		*idxattr = 0;
-	}
+	पूर्ण
 
-	if (stats_attr_valid(filter_mask, IFLA_STATS_AF_SPEC, *idxattr)) {
-		struct rtnl_af_ops *af_ops;
+	अगर (stats_attr_valid(filter_mask, IFLA_STATS_AF_SPEC, *idxattr)) अणु
+		काष्ठा rtnl_af_ops *af_ops;
 
 		*idxattr = IFLA_STATS_AF_SPEC;
 		attr = nla_nest_start_noflag(skb, IFLA_STATS_AF_SPEC);
-		if (!attr)
-			goto nla_put_failure;
+		अगर (!attr)
+			जाओ nla_put_failure;
 
-		rcu_read_lock();
-		list_for_each_entry_rcu(af_ops, &rtnl_af_ops, list) {
-			if (af_ops->fill_stats_af) {
-				struct nlattr *af;
-				int err;
+		rcu_पढ़ो_lock();
+		list_क्रम_each_entry_rcu(af_ops, &rtnl_af_ops, list) अणु
+			अगर (af_ops->fill_stats_af) अणु
+				काष्ठा nlattr *af;
+				पूर्णांक err;
 
 				af = nla_nest_start_noflag(skb,
 							   af_ops->family);
-				if (!af) {
-					rcu_read_unlock();
-					goto nla_put_failure;
-				}
+				अगर (!af) अणु
+					rcu_पढ़ो_unlock();
+					जाओ nla_put_failure;
+				पूर्ण
 				err = af_ops->fill_stats_af(skb, dev);
 
-				if (err == -ENODATA) {
+				अगर (err == -ENODATA) अणु
 					nla_nest_cancel(skb, af);
-				} else if (err < 0) {
-					rcu_read_unlock();
-					goto nla_put_failure;
-				}
+				पूर्ण अन्यथा अगर (err < 0) अणु
+					rcu_पढ़ो_unlock();
+					जाओ nla_put_failure;
+				पूर्ण
 
 				nla_nest_end(skb, af);
-			}
-		}
-		rcu_read_unlock();
+			पूर्ण
+		पूर्ण
+		rcu_पढ़ो_unlock();
 
 		nla_nest_end(skb, attr);
 
 		*idxattr = 0;
-	}
+	पूर्ण
 
 	nlmsg_end(skb, nlh);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	/* not a multi message or no progress mean a real error */
-	if (!(flags & NLM_F_MULTI) || s_prividx == *prividx)
+	अगर (!(flags & NLM_F_MULTI) || s_prividx == *prividx)
 		nlmsg_cancel(skb, nlh);
-	else
+	अन्यथा
 		nlmsg_end(skb, nlh);
 
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static size_t if_nlmsg_stats_size(const struct net_device *dev,
+अटल माप_प्रकार अगर_nlmsg_stats_size(स्थिर काष्ठा net_device *dev,
 				  u32 filter_mask)
-{
-	size_t size = 0;
+अणु
+	माप_प्रकार size = 0;
 
-	if (stats_attr_valid(filter_mask, IFLA_STATS_LINK_64, 0))
-		size += nla_total_size_64bit(sizeof(struct rtnl_link_stats64));
+	अगर (stats_attr_valid(filter_mask, IFLA_STATS_LINK_64, 0))
+		size += nla_total_size_64bit(माप(काष्ठा rtnl_link_stats64));
 
-	if (stats_attr_valid(filter_mask, IFLA_STATS_LINK_XSTATS, 0)) {
-		const struct rtnl_link_ops *ops = dev->rtnl_link_ops;
-		int attr = IFLA_STATS_LINK_XSTATS;
+	अगर (stats_attr_valid(filter_mask, IFLA_STATS_LINK_XSTATS, 0)) अणु
+		स्थिर काष्ठा rtnl_link_ops *ops = dev->rtnl_link_ops;
+		पूर्णांक attr = IFLA_STATS_LINK_XSTATS;
 
-		if (ops && ops->get_linkxstats_size) {
+		अगर (ops && ops->get_linkxstats_size) अणु
 			size += nla_total_size(ops->get_linkxstats_size(dev,
 									attr));
-			/* for IFLA_STATS_LINK_XSTATS */
+			/* क्रम IFLA_STATS_LINK_XSTATS */
 			size += nla_total_size(0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (stats_attr_valid(filter_mask, IFLA_STATS_LINK_XSTATS_SLAVE, 0)) {
-		struct net_device *_dev = (struct net_device *)dev;
-		const struct rtnl_link_ops *ops = NULL;
-		const struct net_device *master;
+	अगर (stats_attr_valid(filter_mask, IFLA_STATS_LINK_XSTATS_SLAVE, 0)) अणु
+		काष्ठा net_device *_dev = (काष्ठा net_device *)dev;
+		स्थिर काष्ठा rtnl_link_ops *ops = शून्य;
+		स्थिर काष्ठा net_device *master;
 
-		/* netdev_master_upper_dev_get can't take const */
+		/* netdev_master_upper_dev_get can't take स्थिर */
 		master = netdev_master_upper_dev_get(_dev);
-		if (master)
+		अगर (master)
 			ops = master->rtnl_link_ops;
-		if (ops && ops->get_linkxstats_size) {
-			int attr = IFLA_STATS_LINK_XSTATS_SLAVE;
+		अगर (ops && ops->get_linkxstats_size) अणु
+			पूर्णांक attr = IFLA_STATS_LINK_XSTATS_SLAVE;
 
 			size += nla_total_size(ops->get_linkxstats_size(dev,
 									attr));
-			/* for IFLA_STATS_LINK_XSTATS_SLAVE */
+			/* क्रम IFLA_STATS_LINK_XSTATS_SLAVE */
 			size += nla_total_size(0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (stats_attr_valid(filter_mask, IFLA_STATS_LINK_OFFLOAD_XSTATS, 0))
+	अगर (stats_attr_valid(filter_mask, IFLA_STATS_LINK_OFFLOAD_XSTATS, 0))
 		size += rtnl_get_offload_stats_size(dev);
 
-	if (stats_attr_valid(filter_mask, IFLA_STATS_AF_SPEC, 0)) {
-		struct rtnl_af_ops *af_ops;
+	अगर (stats_attr_valid(filter_mask, IFLA_STATS_AF_SPEC, 0)) अणु
+		काष्ठा rtnl_af_ops *af_ops;
 
-		/* for IFLA_STATS_AF_SPEC */
+		/* क्रम IFLA_STATS_AF_SPEC */
 		size += nla_total_size(0);
 
-		rcu_read_lock();
-		list_for_each_entry_rcu(af_ops, &rtnl_af_ops, list) {
-			if (af_ops->get_stats_af_size) {
+		rcu_पढ़ो_lock();
+		list_क्रम_each_entry_rcu(af_ops, &rtnl_af_ops, list) अणु
+			अगर (af_ops->get_stats_af_size) अणु
 				size += nla_total_size(
 					af_ops->get_stats_af_size(dev));
 
-				/* for AF_* */
+				/* क्रम AF_* */
 				size += nla_total_size(0);
-			}
-		}
-		rcu_read_unlock();
-	}
+			पूर्ण
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int rtnl_valid_stats_req(const struct nlmsghdr *nlh, bool strict_check,
-				bool is_dump, struct netlink_ext_ack *extack)
-{
-	struct if_stats_msg *ifsm;
+अटल पूर्णांक rtnl_valid_stats_req(स्थिर काष्ठा nlmsghdr *nlh, bool strict_check,
+				bool is_dump, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा अगर_stats_msg *अगरsm;
 
-	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifsm))) {
+	अगर (nlh->nlmsg_len < nlmsg_msg_size(माप(*अगरsm))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid header for stats dump");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!strict_check)
-		return 0;
+	अगर (!strict_check)
+		वापस 0;
 
-	ifsm = nlmsg_data(nlh);
+	अगरsm = nlmsg_data(nlh);
 
 	/* only requests using strict checks can pass data to influence
 	 * the dump. The legacy exception is filter_mask.
 	 */
-	if (ifsm->pad1 || ifsm->pad2 || (is_dump && ifsm->ifindex)) {
+	अगर (अगरsm->pad1 || अगरsm->pad2 || (is_dump && अगरsm->अगरindex)) अणु
 		NL_SET_ERR_MSG(extack, "Invalid values in header for stats dump request");
-		return -EINVAL;
-	}
-	if (nlmsg_attrlen(nlh, sizeof(*ifsm))) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (nlmsg_attrlen(nlh, माप(*अगरsm))) अणु
 		NL_SET_ERR_MSG(extack, "Invalid attributes after stats header");
-		return -EINVAL;
-	}
-	if (ifsm->filter_mask >= IFLA_STATS_FILTER_BIT(IFLA_STATS_MAX + 1)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (अगरsm->filter_mask >= IFLA_STATS_FILTER_BIT(IFLA_STATS_MAX + 1)) अणु
 		NL_SET_ERR_MSG(extack, "Invalid stats requested through filter mask");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtnl_stats_get(struct sk_buff *skb, struct nlmsghdr *nlh,
-			  struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct net_device *dev = NULL;
-	int idxattr = 0, prividx = 0;
-	struct if_stats_msg *ifsm;
-	struct sk_buff *nskb;
+अटल पूर्णांक rtnl_stats_get(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा net_device *dev = शून्य;
+	पूर्णांक idxattr = 0, prividx = 0;
+	काष्ठा अगर_stats_msg *अगरsm;
+	काष्ठा sk_buff *nskb;
 	u32 filter_mask;
-	int err;
+	पूर्णांक err;
 
 	err = rtnl_valid_stats_req(nlh, netlink_strict_get_check(skb),
 				   false, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	ifsm = nlmsg_data(nlh);
-	if (ifsm->ifindex > 0)
-		dev = __dev_get_by_index(net, ifsm->ifindex);
-	else
-		return -EINVAL;
+	अगरsm = nlmsg_data(nlh);
+	अगर (अगरsm->अगरindex > 0)
+		dev = __dev_get_by_index(net, अगरsm->अगरindex);
+	अन्यथा
+		वापस -EINVAL;
 
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
-	filter_mask = ifsm->filter_mask;
-	if (!filter_mask)
-		return -EINVAL;
+	filter_mask = अगरsm->filter_mask;
+	अगर (!filter_mask)
+		वापस -EINVAL;
 
-	nskb = nlmsg_new(if_nlmsg_stats_size(dev, filter_mask), GFP_KERNEL);
-	if (!nskb)
-		return -ENOBUFS;
+	nskb = nlmsg_new(अगर_nlmsg_stats_size(dev, filter_mask), GFP_KERNEL);
+	अगर (!nskb)
+		वापस -ENOBUFS;
 
 	err = rtnl_fill_statsinfo(nskb, dev, RTM_NEWSTATS,
 				  NETLINK_CB(skb).portid, nlh->nlmsg_seq, 0,
 				  0, filter_mask, &idxattr, &prividx);
-	if (err < 0) {
-		/* -EMSGSIZE implies BUG in if_nlmsg_stats_size */
+	अगर (err < 0) अणु
+		/* -EMSGSIZE implies BUG in अगर_nlmsg_stats_size */
 		WARN_ON(err == -EMSGSIZE);
-		kfree_skb(nskb);
-	} else {
+		kमुक्त_skb(nskb);
+	पूर्ण अन्यथा अणु
 		err = rtnl_unicast(nskb, net, NETLINK_CB(skb).portid);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtnl_stats_dump(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct netlink_ext_ack *extack = cb->extack;
-	int h, s_h, err, s_idx, s_idxattr, s_prividx;
-	struct net *net = sock_net(skb->sk);
-	unsigned int flags = NLM_F_MULTI;
-	struct if_stats_msg *ifsm;
-	struct hlist_head *head;
-	struct net_device *dev;
+अटल पूर्णांक rtnl_stats_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा netlink_ext_ack *extack = cb->extack;
+	पूर्णांक h, s_h, err, s_idx, s_idxattr, s_prividx;
+	काष्ठा net *net = sock_net(skb->sk);
+	अचिन्हित पूर्णांक flags = NLM_F_MULTI;
+	काष्ठा अगर_stats_msg *अगरsm;
+	काष्ठा hlist_head *head;
+	काष्ठा net_device *dev;
 	u32 filter_mask = 0;
-	int idx = 0;
+	पूर्णांक idx = 0;
 
 	s_h = cb->args[0];
 	s_idx = cb->args[1];
@@ -5418,22 +5419,22 @@ static int rtnl_stats_dump(struct sk_buff *skb, struct netlink_callback *cb)
 	cb->seq = net->dev_base_seq;
 
 	err = rtnl_valid_stats_req(cb->nlh, cb->strict_check, true, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	ifsm = nlmsg_data(cb->nlh);
-	filter_mask = ifsm->filter_mask;
-	if (!filter_mask) {
+	अगरsm = nlmsg_data(cb->nlh);
+	filter_mask = अगरsm->filter_mask;
+	अगर (!filter_mask) अणु
 		NL_SET_ERR_MSG(extack, "Filter mask must be set for stats dump");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) {
+	क्रम (h = s_h; h < NETDEV_HASHENTRIES; h++, s_idx = 0) अणु
 		idx = 0;
 		head = &net->dev_index_head[h];
-		hlist_for_each_entry(dev, head, index_hlist) {
-			if (idx < s_idx)
-				goto cont;
+		hlist_क्रम_each_entry(dev, head, index_hlist) अणु
+			अगर (idx < s_idx)
+				जाओ cont;
 			err = rtnl_fill_statsinfo(skb, dev, RTM_NEWSTATS,
 						  NETLINK_CB(cb->skb).portid,
 						  cb->nlh->nlmsg_seq, 0,
@@ -5444,247 +5445,247 @@ static int rtnl_stats_dump(struct sk_buff *skb, struct netlink_callback *cb)
 			 */
 			WARN_ON((err == -EMSGSIZE) && (skb->len == 0));
 
-			if (err < 0)
-				goto out;
+			अगर (err < 0)
+				जाओ out;
 			s_prividx = 0;
 			s_idxattr = 0;
 			nl_dump_check_consistent(cb, nlmsg_hdr(skb));
 cont:
 			idx++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
 	cb->args[3] = s_prividx;
 	cb->args[2] = s_idxattr;
 	cb->args[1] = idx;
 	cb->args[0] = h;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
 /* Process one rtnetlink message. */
 
-static int rtnetlink_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh,
-			     struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct rtnl_link *link;
-	struct module *owner;
-	int err = -EOPNOTSUPP;
-	rtnl_doit_func doit;
-	unsigned int flags;
-	int kind;
-	int family;
-	int type;
+अटल पूर्णांक rtnetlink_rcv_msg(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा rtnl_link *link;
+	काष्ठा module *owner;
+	पूर्णांक err = -EOPNOTSUPP;
+	rtnl_करोit_func करोit;
+	अचिन्हित पूर्णांक flags;
+	पूर्णांक kind;
+	पूर्णांक family;
+	पूर्णांक type;
 
 	type = nlh->nlmsg_type;
-	if (type > RTM_MAX)
-		return -EOPNOTSUPP;
+	अगर (type > RTM_MAX)
+		वापस -EOPNOTSUPP;
 
 	type -= RTM_BASE;
 
 	/* All the messages must have at least 1 byte length */
-	if (nlmsg_len(nlh) < sizeof(struct rtgenmsg))
-		return 0;
+	अगर (nlmsg_len(nlh) < माप(काष्ठा rtgenmsg))
+		वापस 0;
 
-	family = ((struct rtgenmsg *)nlmsg_data(nlh))->rtgen_family;
+	family = ((काष्ठा rtgenmsg *)nlmsg_data(nlh))->rtgen_family;
 	kind = type&3;
 
-	if (kind != 2 && !netlink_net_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (kind != 2 && !netlink_net_capable(skb, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	rcu_read_lock();
-	if (kind == 2 && nlh->nlmsg_flags&NLM_F_DUMP) {
-		struct sock *rtnl;
+	rcu_पढ़ो_lock();
+	अगर (kind == 2 && nlh->nlmsg_flags&NLM_F_DUMP) अणु
+		काष्ठा sock *rtnl;
 		rtnl_dumpit_func dumpit;
 		u32 min_dump_alloc = 0;
 
 		link = rtnl_get_link(family, type);
-		if (!link || !link->dumpit) {
+		अगर (!link || !link->dumpit) अणु
 			family = PF_UNSPEC;
 			link = rtnl_get_link(family, type);
-			if (!link || !link->dumpit)
-				goto err_unlock;
-		}
+			अगर (!link || !link->dumpit)
+				जाओ err_unlock;
+		पूर्ण
 		owner = link->owner;
 		dumpit = link->dumpit;
 
-		if (type == RTM_GETLINK - RTM_BASE)
+		अगर (type == RTM_GETLINK - RTM_BASE)
 			min_dump_alloc = rtnl_calcit(skb, nlh);
 
 		err = 0;
-		/* need to do this before rcu_read_unlock() */
-		if (!try_module_get(owner))
+		/* need to करो this beक्रमe rcu_पढ़ो_unlock() */
+		अगर (!try_module_get(owner))
 			err = -EPROTONOSUPPORT;
 
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
 		rtnl = net->rtnl;
-		if (err == 0) {
-			struct netlink_dump_control c = {
+		अगर (err == 0) अणु
+			काष्ठा netlink_dump_control c = अणु
 				.dump		= dumpit,
 				.min_dump_alloc	= min_dump_alloc,
 				.module		= owner,
-			};
+			पूर्ण;
 			err = netlink_dump_start(rtnl, skb, nlh, &c);
 			/* netlink_dump_start() will keep a reference on
-			 * module if dump is still in progress.
+			 * module अगर dump is still in progress.
 			 */
 			module_put(owner);
-		}
-		return err;
-	}
+		पूर्ण
+		वापस err;
+	पूर्ण
 
 	link = rtnl_get_link(family, type);
-	if (!link || !link->doit) {
+	अगर (!link || !link->करोit) अणु
 		family = PF_UNSPEC;
 		link = rtnl_get_link(PF_UNSPEC, type);
-		if (!link || !link->doit)
-			goto out_unlock;
-	}
+		अगर (!link || !link->करोit)
+			जाओ out_unlock;
+	पूर्ण
 
 	owner = link->owner;
-	if (!try_module_get(owner)) {
+	अगर (!try_module_get(owner)) अणु
 		err = -EPROTONOSUPPORT;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	flags = link->flags;
-	if (flags & RTNL_FLAG_DOIT_UNLOCKED) {
-		doit = link->doit;
-		rcu_read_unlock();
-		if (doit)
-			err = doit(skb, nlh, extack);
+	अगर (flags & RTNL_FLAG_DOIT_UNLOCKED) अणु
+		करोit = link->करोit;
+		rcu_पढ़ो_unlock();
+		अगर (करोit)
+			err = करोit(skb, nlh, extack);
 		module_put(owner);
-		return err;
-	}
-	rcu_read_unlock();
+		वापस err;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	rtnl_lock();
 	link = rtnl_get_link(family, type);
-	if (link && link->doit)
-		err = link->doit(skb, nlh, extack);
+	अगर (link && link->करोit)
+		err = link->करोit(skb, nlh, extack);
 	rtnl_unlock();
 
 	module_put(owner);
 
-	return err;
+	वापस err;
 
 out_unlock:
-	rcu_read_unlock();
-	return err;
+	rcu_पढ़ो_unlock();
+	वापस err;
 
 err_unlock:
-	rcu_read_unlock();
-	return -EOPNOTSUPP;
-}
+	rcu_पढ़ो_unlock();
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static void rtnetlink_rcv(struct sk_buff *skb)
-{
+अटल व्योम rtnetlink_rcv(काष्ठा sk_buff *skb)
+अणु
 	netlink_rcv_skb(skb, &rtnetlink_rcv_msg);
-}
+पूर्ण
 
-static int rtnetlink_bind(struct net *net, int group)
-{
-	switch (group) {
-	case RTNLGRP_IPV4_MROUTE_R:
-	case RTNLGRP_IPV6_MROUTE_R:
-		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
-		break;
-	}
-	return 0;
-}
+अटल पूर्णांक rtnetlink_bind(काष्ठा net *net, पूर्णांक group)
+अणु
+	चयन (group) अणु
+	हाल RTNLGRP_IPV4_MROUTE_R:
+	हाल RTNLGRP_IPV6_MROUTE_R:
+		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			वापस -EPERM;
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int rtnetlink_event(struct notifier_block *this, unsigned long event, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+अटल पूर्णांक rtnetlink_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
 
-	switch (event) {
-	case NETDEV_REBOOT:
-	case NETDEV_CHANGEMTU:
-	case NETDEV_CHANGEADDR:
-	case NETDEV_CHANGENAME:
-	case NETDEV_FEAT_CHANGE:
-	case NETDEV_BONDING_FAILOVER:
-	case NETDEV_POST_TYPE_CHANGE:
-	case NETDEV_NOTIFY_PEERS:
-	case NETDEV_CHANGEUPPER:
-	case NETDEV_RESEND_IGMP:
-	case NETDEV_CHANGEINFODATA:
-	case NETDEV_CHANGELOWERSTATE:
-	case NETDEV_CHANGE_TX_QUEUE_LEN:
-		rtmsg_ifinfo_event(RTM_NEWLINK, dev, 0, rtnl_get_event(event),
-				   GFP_KERNEL, NULL, 0);
-		break;
-	default:
-		break;
-	}
-	return NOTIFY_DONE;
-}
+	चयन (event) अणु
+	हाल NETDEV_REBOOT:
+	हाल NETDEV_CHANGEMTU:
+	हाल NETDEV_CHANGEADDR:
+	हाल NETDEV_CHANGENAME:
+	हाल NETDEV_FEAT_CHANGE:
+	हाल NETDEV_BONDING_FAILOVER:
+	हाल NETDEV_POST_TYPE_CHANGE:
+	हाल NETDEV_NOTIFY_PEERS:
+	हाल NETDEV_CHANGEUPPER:
+	हाल NETDEV_RESEND_IGMP:
+	हाल NETDEV_CHANGEINFODATA:
+	हाल NETDEV_CHANGELOWERSTATE:
+	हाल NETDEV_CHANGE_TX_QUEUE_LEN:
+		rपंचांगsg_अगरinfo_event(RTM_NEWLINK, dev, 0, rtnl_get_event(event),
+				   GFP_KERNEL, शून्य, 0);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block rtnetlink_dev_notifier = {
-	.notifier_call	= rtnetlink_event,
-};
+अटल काष्ठा notअगरier_block rtnetlink_dev_notअगरier = अणु
+	.notअगरier_call	= rtnetlink_event,
+पूर्ण;
 
 
-static int __net_init rtnetlink_net_init(struct net *net)
-{
-	struct sock *sk;
-	struct netlink_kernel_cfg cfg = {
+अटल पूर्णांक __net_init rtnetlink_net_init(काष्ठा net *net)
+अणु
+	काष्ठा sock *sk;
+	काष्ठा netlink_kernel_cfg cfg = अणु
 		.groups		= RTNLGRP_MAX,
 		.input		= rtnetlink_rcv,
 		.cb_mutex	= &rtnl_mutex,
 		.flags		= NL_CFG_F_NONROOT_RECV,
 		.bind		= rtnetlink_bind,
-	};
+	पूर्ण;
 
 	sk = netlink_kernel_create(net, NETLINK_ROUTE, &cfg);
-	if (!sk)
-		return -ENOMEM;
+	अगर (!sk)
+		वापस -ENOMEM;
 	net->rtnl = sk;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit rtnetlink_net_exit(struct net *net)
-{
+अटल व्योम __net_निकास rtnetlink_net_निकास(काष्ठा net *net)
+अणु
 	netlink_kernel_release(net->rtnl);
-	net->rtnl = NULL;
-}
+	net->rtnl = शून्य;
+पूर्ण
 
-static struct pernet_operations rtnetlink_net_ops = {
+अटल काष्ठा pernet_operations rtnetlink_net_ops = अणु
 	.init = rtnetlink_net_init,
-	.exit = rtnetlink_net_exit,
-};
+	.निकास = rtnetlink_net_निकास,
+पूर्ण;
 
-void __init rtnetlink_init(void)
-{
-	if (register_pernet_subsys(&rtnetlink_net_ops))
+व्योम __init rtnetlink_init(व्योम)
+अणु
+	अगर (रेजिस्टर_pernet_subsys(&rtnetlink_net_ops))
 		panic("rtnetlink_init: cannot initialize rtnetlink\n");
 
-	register_netdevice_notifier(&rtnetlink_dev_notifier);
+	रेजिस्टर_netdevice_notअगरier(&rtnetlink_dev_notअगरier);
 
-	rtnl_register(PF_UNSPEC, RTM_GETLINK, rtnl_getlink,
-		      rtnl_dump_ifinfo, 0);
-	rtnl_register(PF_UNSPEC, RTM_SETLINK, rtnl_setlink, NULL, 0);
-	rtnl_register(PF_UNSPEC, RTM_NEWLINK, rtnl_newlink, NULL, 0);
-	rtnl_register(PF_UNSPEC, RTM_DELLINK, rtnl_dellink, NULL, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETLINK, rtnl_getlink,
+		      rtnl_dump_अगरinfo, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_SETLINK, rtnl_setlink, शून्य, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_NEWLINK, rtnl_newlink, शून्य, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_DELLINK, rtnl_dellink, शून्य, 0);
 
-	rtnl_register(PF_UNSPEC, RTM_GETADDR, NULL, rtnl_dump_all, 0);
-	rtnl_register(PF_UNSPEC, RTM_GETROUTE, NULL, rtnl_dump_all, 0);
-	rtnl_register(PF_UNSPEC, RTM_GETNETCONF, NULL, rtnl_dump_all, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETADDR, शून्य, rtnl_dump_all, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETROUTE, शून्य, rtnl_dump_all, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETNETCONF, शून्य, rtnl_dump_all, 0);
 
-	rtnl_register(PF_UNSPEC, RTM_NEWLINKPROP, rtnl_newlinkprop, NULL, 0);
-	rtnl_register(PF_UNSPEC, RTM_DELLINKPROP, rtnl_dellinkprop, NULL, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_NEWLINKPROP, rtnl_newlinkprop, शून्य, 0);
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_DELLINKPROP, rtnl_dellinkprop, शून्य, 0);
 
-	rtnl_register(PF_BRIDGE, RTM_NEWNEIGH, rtnl_fdb_add, NULL, 0);
-	rtnl_register(PF_BRIDGE, RTM_DELNEIGH, rtnl_fdb_del, NULL, 0);
-	rtnl_register(PF_BRIDGE, RTM_GETNEIGH, rtnl_fdb_get, rtnl_fdb_dump, 0);
+	rtnl_रेजिस्टर(PF_BRIDGE, RTM_NEWNEIGH, rtnl_fdb_add, शून्य, 0);
+	rtnl_रेजिस्टर(PF_BRIDGE, RTM_DELNEIGH, rtnl_fdb_del, शून्य, 0);
+	rtnl_रेजिस्टर(PF_BRIDGE, RTM_GETNEIGH, rtnl_fdb_get, rtnl_fdb_dump, 0);
 
-	rtnl_register(PF_BRIDGE, RTM_GETLINK, NULL, rtnl_bridge_getlink, 0);
-	rtnl_register(PF_BRIDGE, RTM_DELLINK, rtnl_bridge_dellink, NULL, 0);
-	rtnl_register(PF_BRIDGE, RTM_SETLINK, rtnl_bridge_setlink, NULL, 0);
+	rtnl_रेजिस्टर(PF_BRIDGE, RTM_GETLINK, शून्य, rtnl_bridge_getlink, 0);
+	rtnl_रेजिस्टर(PF_BRIDGE, RTM_DELLINK, rtnl_bridge_dellink, शून्य, 0);
+	rtnl_रेजिस्टर(PF_BRIDGE, RTM_SETLINK, rtnl_bridge_setlink, शून्य, 0);
 
-	rtnl_register(PF_UNSPEC, RTM_GETSTATS, rtnl_stats_get, rtnl_stats_dump,
+	rtnl_रेजिस्टर(PF_UNSPEC, RTM_GETSTATS, rtnl_stats_get, rtnl_stats_dump,
 		      0);
-}
+पूर्ण

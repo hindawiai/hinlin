@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/reset-controller.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/reset-controller.h>
 
-#include "reset.h"
+#समावेश "reset.h"
 
-#define rcdev_to_unit(rcdev) container_of(rcdev, struct mmp_clk_reset_unit, rcdev)
+#घोषणा rcdev_to_unit(rcdev) container_of(rcdev, काष्ठा mmp_clk_reset_unit, rcdev)
 
-static int mmp_of_reset_xlate(struct reset_controller_dev *rcdev,
-			  const struct of_phandle_args *reset_spec)
-{
-	struct mmp_clk_reset_unit *unit = rcdev_to_unit(rcdev);
-	struct mmp_clk_reset_cell *cell;
-	int i;
+अटल पूर्णांक mmp_of_reset_xlate(काष्ठा reset_controller_dev *rcdev,
+			  स्थिर काष्ठा of_phandle_args *reset_spec)
+अणु
+	काष्ठा mmp_clk_reset_unit *unit = rcdev_to_unit(rcdev);
+	काष्ठा mmp_clk_reset_cell *cell;
+	पूर्णांक i;
 
-	if (WARN_ON(reset_spec->args_count != rcdev->of_reset_n_cells))
-		return -EINVAL;
+	अगर (WARN_ON(reset_spec->args_count != rcdev->of_reset_n_cells))
+		वापस -EINVAL;
 
-	for (i = 0; i < rcdev->nr_resets; i++) {
+	क्रम (i = 0; i < rcdev->nr_resets; i++) अणु
 		cell = &unit->cells[i];
-		if (cell->clk_id == reset_spec->args[0])
-			break;
-	}
+		अगर (cell->clk_id == reset_spec->args[0])
+			अवरोध;
+	पूर्ण
 
-	if (i == rcdev->nr_resets)
-		return -EINVAL;
+	अगर (i == rcdev->nr_resets)
+		वापस -EINVAL;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int mmp_clk_reset_assert(struct reset_controller_dev *rcdev,
-				unsigned long id)
-{
-	struct mmp_clk_reset_unit *unit = rcdev_to_unit(rcdev);
-	struct mmp_clk_reset_cell *cell;
-	unsigned long flags = 0;
+अटल पूर्णांक mmp_clk_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
+				अचिन्हित दीर्घ id)
+अणु
+	काष्ठा mmp_clk_reset_unit *unit = rcdev_to_unit(rcdev);
+	काष्ठा mmp_clk_reset_cell *cell;
+	अचिन्हित दीर्घ flags = 0;
 	u32 val;
 
 	cell = &unit->cells[id];
-	if (cell->lock)
+	अगर (cell->lock)
 		spin_lock_irqsave(cell->lock, flags);
 
-	val = readl(cell->reg);
+	val = पढ़ोl(cell->reg);
 	val |= cell->bits;
-	writel(val, cell->reg);
+	ग_लिखोl(val, cell->reg);
 
-	if (cell->lock)
+	अगर (cell->lock)
 		spin_unlock_irqrestore(cell->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mmp_clk_reset_deassert(struct reset_controller_dev *rcdev,
-				unsigned long id)
-{
-	struct mmp_clk_reset_unit *unit = rcdev_to_unit(rcdev);
-	struct mmp_clk_reset_cell *cell;
-	unsigned long flags = 0;
+अटल पूर्णांक mmp_clk_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
+				अचिन्हित दीर्घ id)
+अणु
+	काष्ठा mmp_clk_reset_unit *unit = rcdev_to_unit(rcdev);
+	काष्ठा mmp_clk_reset_cell *cell;
+	अचिन्हित दीर्घ flags = 0;
 	u32 val;
 
 	cell = &unit->cells[id];
-	if (cell->lock)
+	अगर (cell->lock)
 		spin_lock_irqsave(cell->lock, flags);
 
-	val = readl(cell->reg);
+	val = पढ़ोl(cell->reg);
 	val &= ~cell->bits;
-	writel(val, cell->reg);
+	ग_लिखोl(val, cell->reg);
 
-	if (cell->lock)
+	अगर (cell->lock)
 		spin_unlock_irqrestore(cell->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct reset_control_ops mmp_clk_reset_ops = {
-	.assert		= mmp_clk_reset_assert,
-	.deassert	= mmp_clk_reset_deassert,
-};
+अटल स्थिर काष्ठा reset_control_ops mmp_clk_reset_ops = अणु
+	.निश्चित		= mmp_clk_reset_निश्चित,
+	.deनिश्चित	= mmp_clk_reset_deनिश्चित,
+पूर्ण;
 
-void mmp_clk_reset_register(struct device_node *np,
-			struct mmp_clk_reset_cell *cells, int nr_resets)
-{
-	struct mmp_clk_reset_unit *unit;
+व्योम mmp_clk_reset_रेजिस्टर(काष्ठा device_node *np,
+			काष्ठा mmp_clk_reset_cell *cells, पूर्णांक nr_resets)
+अणु
+	काष्ठा mmp_clk_reset_unit *unit;
 
-	unit = kzalloc(sizeof(*unit), GFP_KERNEL);
-	if (!unit)
-		return;
+	unit = kzalloc(माप(*unit), GFP_KERNEL);
+	अगर (!unit)
+		वापस;
 
 	unit->cells = cells;
 	unit->rcdev.of_reset_n_cells = 1;
@@ -96,5 +97,5 @@ void mmp_clk_reset_register(struct device_node *np,
 	unit->rcdev.of_node = np;
 	unit->rcdev.of_xlate = mmp_of_reset_xlate;
 
-	reset_controller_register(&unit->rcdev);
-}
+	reset_controller_रेजिस्टर(&unit->rcdev);
+पूर्ण

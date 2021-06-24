@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * check_initial_reg_state.c - check that execve sets the correct state
  * Copyright (c) 2014-2016 Andrew Lutomirski
  */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <stdio.h>
+#समावेश <मानकपन.स>
 
-unsigned long ax, bx, cx, dx, si, di, bp, sp, flags;
-unsigned long r8, r9, r10, r11, r12, r13, r14, r15;
+अचिन्हित दीर्घ ax, bx, cx, dx, si, di, bp, sp, flags;
+अचिन्हित दीर्घ r8, r9, r10, r11, r12, r13, r14, r15;
 
-asm (
+यंत्र (
 	".pushsection .text\n\t"
 	".type real_start, @function\n\t"
 	".global real_start\n\t"
 	"real_start:\n\t"
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 	"mov %rax, ax\n\t"
 	"mov %rbx, bx\n\t"
 	"mov %rcx, cx\n\t"
@@ -35,7 +36,7 @@ asm (
 	"mov %r15, r15\n\t"
 	"pushfq\n\t"
 	"popq flags\n\t"
-#else
+#अन्यथा
 	"mov %eax, ax\n\t"
 	"mov %ebx, bx\n\t"
 	"mov %ecx, cx\n\t"
@@ -46,27 +47,27 @@ asm (
 	"mov %esp, sp\n\t"
 	"pushfl\n\t"
 	"popl flags\n\t"
-#endif
+#पूर्ण_अगर
 	"jmp _start\n\t"
 	".size real_start, . - real_start\n\t"
 	".popsection");
 
-int main()
-{
-	int nerrs = 0;
+पूर्णांक मुख्य()
+अणु
+	पूर्णांक nerrs = 0;
 
-	if (sp == 0) {
-		printf("[FAIL]\tTest was built incorrectly\n");
-		return 1;
-	}
+	अगर (sp == 0) अणु
+		म_लिखो("[FAIL]\tTest was built incorrectly\n");
+		वापस 1;
+	पूर्ण
 
-	if (ax || bx || cx || dx || si || di || bp
-#ifdef __x86_64__
+	अगर (ax || bx || cx || dx || si || di || bp
+#अगर_घोषित __x86_64__
 	    || r8 || r9 || r10 || r11 || r12 || r13 || r14 || r15
-#endif
-		) {
-		printf("[FAIL]\tAll GPRs except SP should be 0\n");
-#define SHOW(x) printf("\t" #x " = 0x%lx\n", x);
+#पूर्ण_अगर
+		) अणु
+		म_लिखो("[FAIL]\tAll GPRs except SP should be 0\n");
+#घोषणा SHOW(x) म_लिखो("\t" #x " = 0x%lx\n", x);
 		SHOW(ax);
 		SHOW(bx);
 		SHOW(cx);
@@ -75,7 +76,7 @@ int main()
 		SHOW(di);
 		SHOW(bp);
 		SHOW(sp);
-#ifdef __x86_64__
+#अगर_घोषित __x86_64__
 		SHOW(r8);
 		SHOW(r9);
 		SHOW(r10);
@@ -84,18 +85,18 @@ int main()
 		SHOW(r13);
 		SHOW(r14);
 		SHOW(r15);
-#endif
+#पूर्ण_अगर
 		nerrs++;
-	} else {
-		printf("[OK]\tAll GPRs except SP are 0\n");
-	}
+	पूर्ण अन्यथा अणु
+		म_लिखो("[OK]\tAll GPRs except SP are 0\n");
+	पूर्ण
 
-	if (flags != 0x202) {
-		printf("[FAIL]\tFLAGS is 0x%lx, but it should be 0x202\n", flags);
+	अगर (flags != 0x202) अणु
+		म_लिखो("[FAIL]\tFLAGS is 0x%lx, but it should be 0x202\n", flags);
 		nerrs++;
-	} else {
-		printf("[OK]\tFLAGS is 0x202\n");
-	}
+	पूर्ण अन्यथा अणु
+		म_लिखो("[OK]\tFLAGS is 0x202\n");
+	पूर्ण
 
-	return nerrs ? 1 : 0;
-}
+	वापस nerrs ? 1 : 0;
+पूर्ण

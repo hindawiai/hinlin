@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include "k3-psil-priv.h"
+#समावेश "k3-psil-priv.h"
 
-#define PSIL_PDMA_XY_TR(x)				\
-	{						\
-		.thread_id = x,				\
-		.ep_config = {				\
+#घोषणा PSIL_PDMA_XY_TR(x)				\
+	अणु						\
+		.thपढ़ो_id = x,				\
+		.ep_config = अणु				\
 			.ep_type = PSIL_EP_PDMA_XY,	\
-		},					\
-	}
+		पूर्ण,					\
+	पूर्ण
 
-#define PSIL_PDMA_XY_PKT(x)				\
-	{						\
-		.thread_id = x,				\
-		.ep_config = {				\
+#घोषणा PSIL_PDMA_XY_PKT(x)				\
+	अणु						\
+		.thपढ़ो_id = x,				\
+		.ep_config = अणु				\
 			.ep_type = PSIL_EP_PDMA_XY,	\
 			.pkt_mode = 1,			\
-		},					\
-	}
+		पूर्ण,					\
+	पूर्ण
 
-#define PSIL_PDMA_MCASP(x)				\
-	{						\
-		.thread_id = x,				\
-		.ep_config = {				\
+#घोषणा PSIL_PDMA_MCASP(x)				\
+	अणु						\
+		.thपढ़ो_id = x,				\
+		.ep_config = अणु				\
 			.ep_type = PSIL_EP_PDMA_XY,	\
 			.pdma_acc32 = 1,		\
 			.pdma_burst = 1,		\
-		},					\
-	}
+		पूर्ण,					\
+	पूर्ण
 
-#define PSIL_ETHERNET(x)				\
-	{						\
-		.thread_id = x,				\
-		.ep_config = {				\
+#घोषणा PSIL_ETHERNET(x)				\
+	अणु						\
+		.thपढ़ो_id = x,				\
+		.ep_config = अणु				\
 			.ep_type = PSIL_EP_NATIVE,	\
 			.pkt_mode = 1,			\
 			.needs_epib = 1,		\
 			.psd_size = 16,			\
-		},					\
-	}
+		पूर्ण,					\
+	पूर्ण
 
-#define PSIL_SA2UL(x, tx)				\
-	{						\
-		.thread_id = x,				\
-		.ep_config = {				\
+#घोषणा PSIL_SA2UL(x, tx)				\
+	अणु						\
+		.thपढ़ो_id = x,				\
+		.ep_config = अणु				\
 			.ep_type = PSIL_EP_NATIVE,	\
 			.pkt_mode = 1,			\
 			.needs_epib = 1,		\
 			.psd_size = 64,			\
 			.notdpkt = tx,			\
-		},					\
-	}
+		पूर्ण,					\
+	पूर्ण
 
-/* PSI-L source thread IDs, used for RX (DMA_DEV_TO_MEM) */
-static struct psil_ep j721e_src_ep_map[] = {
+/* PSI-L source thपढ़ो IDs, used क्रम RX (DMA_DEV_TO_MEM) */
+अटल काष्ठा psil_ep j721e_src_ep_map[] = अणु
 	/* SA2UL */
 	PSIL_SA2UL(0x4000, 0),
 	PSIL_SA2UL(0x4001, 0),
@@ -168,10 +169,10 @@ static struct psil_ep j721e_src_ep_map[] = {
 	PSIL_SA2UL(0x7501, 0),
 	PSIL_SA2UL(0x7502, 0),
 	PSIL_SA2UL(0x7503, 0),
-};
+पूर्ण;
 
-/* PSI-L destination thread IDs, used for TX (DMA_MEM_TO_DEV) */
-static struct psil_ep j721e_dst_ep_map[] = {
+/* PSI-L destination thपढ़ो IDs, used क्रम TX (DMA_MEM_TO_DEV) */
+अटल काष्ठा psil_ep j721e_dst_ep_map[] = अणु
 	/* SA2UL */
 	PSIL_SA2UL(0xc000, 1),
 	PSIL_SA2UL(0xc001, 1),
@@ -214,12 +215,12 @@ static struct psil_ep j721e_dst_ep_map[] = {
 	/* SA2UL */
 	PSIL_SA2UL(0xf500, 1),
 	PSIL_SA2UL(0xf501, 1),
-};
+पूर्ण;
 
-struct psil_ep_map j721e_ep_map = {
+काष्ठा psil_ep_map j721e_ep_map = अणु
 	.name = "j721e",
 	.src = j721e_src_ep_map,
 	.src_count = ARRAY_SIZE(j721e_src_ep_map),
 	.dst = j721e_dst_ep_map,
 	.dst_count = ARRAY_SIZE(j721e_dst_ep_map),
-};
+पूर्ण;

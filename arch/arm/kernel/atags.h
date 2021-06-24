@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-void convert_to_tag_list(struct tag *tags);
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+व्योम convert_to_tag_list(काष्ठा tag *tags);
 
-#ifdef CONFIG_ATAGS
-const struct machine_desc *setup_machine_tags(void *__atags_vaddr,
-	unsigned int machine_nr);
-#else
-static inline const struct machine_desc * __init __noreturn
-setup_machine_tags(void *__atags_vaddr, unsigned int machine_nr)
-{
-	early_print("no ATAGS support: can't continue\n");
-	while (true);
+#अगर_घोषित CONFIG_ATAGS
+स्थिर काष्ठा machine_desc *setup_machine_tags(व्योम *__atags_vaddr,
+	अचिन्हित पूर्णांक machine_nr);
+#अन्यथा
+अटल अंतरभूत स्थिर काष्ठा machine_desc * __init __noवापस
+setup_machine_tags(व्योम *__atags_vaddr, अचिन्हित पूर्णांक machine_nr)
+अणु
+	early_prपूर्णांक("no ATAGS support: can't continue\n");
+	जबतक (true);
 	unreachable();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

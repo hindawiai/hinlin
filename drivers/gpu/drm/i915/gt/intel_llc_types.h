@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef INTEL_LLC_TYPES_H
-#define INTEL_LLC_TYPES_H
+#अगर_अघोषित INTEL_LLC_TYPES_H
+#घोषणा INTEL_LLC_TYPES_H
 
-struct intel_llc {
-};
+काष्ठा पूर्णांकel_llc अणु
+पूर्ण;
 
-#endif /* INTEL_LLC_TYPES_H */
+#पूर्ण_अगर /* INTEL_LLC_TYPES_H */

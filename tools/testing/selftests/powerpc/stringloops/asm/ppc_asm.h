@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PPC_ASM_H
-#define _PPC_ASM_H
-#include <ppc-asm.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PPC_ASM_H
+#घोषणा _PPC_ASM_H
+#समावेश <ppc-यंत्र.h>
 
-#ifndef r1
-#define r1 sp
-#endif
+#अगर_अघोषित r1
+#घोषणा r1 sp
+#पूर्ण_अगर
 
-#define _GLOBAL(A) FUNC_START(test_ ## A)
-#define _GLOBAL_TOC(A) FUNC_START(test_ ## A)
+#घोषणा _GLOBAL(A) FUNC_START(test_ ## A)
+#घोषणा _GLOBAL_TOC(A) FUNC_START(test_ ## A)
 
-#define CONFIG_ALTIVEC
+#घोषणा CONFIG_ALTIVEC
 
-#define R14 r14
-#define R15 r15
-#define R16 r16
-#define R17 r17
-#define R18 r18
-#define R19 r19
-#define R20 r20
-#define R21 r21
-#define R22 r22
-#define R29 r29
-#define R30 r30
-#define R31 r31
+#घोषणा R14 r14
+#घोषणा R15 r15
+#घोषणा R16 r16
+#घोषणा R17 r17
+#घोषणा R18 r18
+#घोषणा R19 r19
+#घोषणा R20 r20
+#घोषणा R21 r21
+#घोषणा R22 r22
+#घोषणा R29 r29
+#घोषणा R30 r30
+#घोषणा R31 r31
 
-#define STACKFRAMESIZE	256
-#define STK_REG(i)	(112 + ((i)-14)*8)
+#घोषणा STACKFRAMESIZE	256
+#घोषणा STK_REG(i)	(112 + ((i)-14)*8)
 
-#define BEGIN_FTR_SECTION
-#define END_FTR_SECTION_IFSET(val)
-#endif
+#घोषणा BEGIN_FTR_SECTION
+#घोषणा END_FTR_SECTION_IFSET(val)
+#पूर्ण_अगर

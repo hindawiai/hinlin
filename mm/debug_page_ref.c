@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/mm_types.h>
-#include <linux/tracepoint.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/mm_types.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/page_ref.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/page_ref.h>
 
-void __page_ref_set(struct page *page, int v)
-{
+व्योम __page_ref_set(काष्ठा page *page, पूर्णांक v)
+अणु
 	trace_page_ref_set(page, v);
-}
+पूर्ण
 EXPORT_SYMBOL(__page_ref_set);
 EXPORT_TRACEPOINT_SYMBOL(page_ref_set);
 
-void __page_ref_mod(struct page *page, int v)
-{
+व्योम __page_ref_mod(काष्ठा page *page, पूर्णांक v)
+अणु
 	trace_page_ref_mod(page, v);
-}
+पूर्ण
 EXPORT_SYMBOL(__page_ref_mod);
 EXPORT_TRACEPOINT_SYMBOL(page_ref_mod);
 
-void __page_ref_mod_and_test(struct page *page, int v, int ret)
-{
+व्योम __page_ref_mod_and_test(काष्ठा page *page, पूर्णांक v, पूर्णांक ret)
+अणु
 	trace_page_ref_mod_and_test(page, v, ret);
-}
+पूर्ण
 EXPORT_SYMBOL(__page_ref_mod_and_test);
 EXPORT_TRACEPOINT_SYMBOL(page_ref_mod_and_test);
 
-void __page_ref_mod_and_return(struct page *page, int v, int ret)
-{
-	trace_page_ref_mod_and_return(page, v, ret);
-}
-EXPORT_SYMBOL(__page_ref_mod_and_return);
-EXPORT_TRACEPOINT_SYMBOL(page_ref_mod_and_return);
+व्योम __page_ref_mod_and_वापस(काष्ठा page *page, पूर्णांक v, पूर्णांक ret)
+अणु
+	trace_page_ref_mod_and_वापस(page, v, ret);
+पूर्ण
+EXPORT_SYMBOL(__page_ref_mod_and_वापस);
+EXPORT_TRACEPOINT_SYMBOL(page_ref_mod_and_वापस);
 
-void __page_ref_mod_unless(struct page *page, int v, int u)
-{
+व्योम __page_ref_mod_unless(काष्ठा page *page, पूर्णांक v, पूर्णांक u)
+अणु
 	trace_page_ref_mod_unless(page, v, u);
-}
+पूर्ण
 EXPORT_SYMBOL(__page_ref_mod_unless);
 EXPORT_TRACEPOINT_SYMBOL(page_ref_mod_unless);
 
-void __page_ref_freeze(struct page *page, int v, int ret)
-{
-	trace_page_ref_freeze(page, v, ret);
-}
-EXPORT_SYMBOL(__page_ref_freeze);
-EXPORT_TRACEPOINT_SYMBOL(page_ref_freeze);
+व्योम __page_ref_मुक्तze(काष्ठा page *page, पूर्णांक v, पूर्णांक ret)
+अणु
+	trace_page_ref_मुक्तze(page, v, ret);
+पूर्ण
+EXPORT_SYMBOL(__page_ref_मुक्तze);
+EXPORT_TRACEPOINT_SYMBOL(page_ref_मुक्तze);
 
-void __page_ref_unfreeze(struct page *page, int v)
-{
-	trace_page_ref_unfreeze(page, v);
-}
-EXPORT_SYMBOL(__page_ref_unfreeze);
-EXPORT_TRACEPOINT_SYMBOL(page_ref_unfreeze);
+व्योम __page_ref_unमुक्तze(काष्ठा page *page, पूर्णांक v)
+अणु
+	trace_page_ref_unमुक्तze(page, v);
+पूर्ण
+EXPORT_SYMBOL(__page_ref_unमुक्तze);
+EXPORT_TRACEPOINT_SYMBOL(page_ref_unमुक्तze);

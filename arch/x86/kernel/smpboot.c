@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
  /*
  *	x86 SMP booting functions
  *
  *	(c) 1995 Alan Cox, Building #3 <alan@lxorguk.ukuu.org.uk>
  *	(c) 1998, 1999, 2000, 2009 Ingo Molnar <mingo@redhat.com>
- *	Copyright 2001 Andi Kleen, SuSE Labs.
+ *	Copyright 2001 Andi Kleen, SuSE Lअसल.
  *
  *	Much of the core SMP work is based on previous work by Thomas Radke, to
  *	whom a great many thanks are extended.
  *
- *	Thanks to Intel for making available several different Pentium,
+ *	Thanks to Intel क्रम making available several dअगरferent Pentium,
  *	Pentium Pro and Pentium-II/Xeon MP machines.
  *	Original development of Linux SMP code supported by Caldera.
  *
  *	Fixes
  *		Felix Koop	:	NR_CPUS used properly
- *		Jose Renau	:	Handle single CPU case.
+ *		Jose Renau	:	Handle single CPU हाल.
  *		Alan Cox	:	By repeated request 8) - Total BogoMIPS report.
- *		Greg Wright	:	Fix for kernel stacks panic.
+ *		Greg Wright	:	Fix क्रम kernel stacks panic.
  *		Erich Boleyn	:	MP v1.4 and additional changes.
- *	Matthias Sattler	:	Changes for 2.1 kernel map.
- *	Michel Lespinasse	:	Changes for 2.1 kernel map.
+ *	Matthias Sattler	:	Changes क्रम 2.1 kernel map.
+ *	Michel Lespinasse	:	Changes क्रम 2.1 kernel map.
  *	Michael Chastain	:	Change trampoline.S to gnu as.
  *		Alan Cox	:	Dumb bug: 'B' step PPro's are fine
- *		Ingo Molnar	:	Added APIC timers, based on code
+ *		Ingo Molnar	:	Added APIC समयrs, based on code
  *					from Jose Renau
- *		Ingo Molnar	:	various cleanups and rewrites
+ *		Ingo Molnar	:	various cleanups and reग_लिखोs
  *		Tigran Aivazian	:	fixed "0.00 in /proc/uptime on SMP" bug.
- *	Maciej W. Rozycki	:	Bits for genuine 82489DX APICs
- *	Andi Kleen		:	Changed for SMP boot into long mode.
- *		Martin J. Bligh	: 	Added support for multi-quad systems
+ *	Maciej W. Rozycki	:	Bits क्रम genuine 82489DX APICs
+ *	Andi Kleen		:	Changed क्रम SMP boot पूर्णांकo दीर्घ mode.
+ *		Martin J. Bligh	: 	Added support क्रम multi-quad प्रणालीs
  *		Dave Jones	:	Report invalid combinations of Athlon CPUs.
- *		Rusty Russell	:	Hacked into shape for new "hotplug" boot process.
+ *		Rusty Russell	:	Hacked पूर्णांकo shape क्रम new "hotplug" boot process.
  *      Andi Kleen              :       Converted to new state machine.
  *	Ashok Raj		: 	CPU hotplug support
- *	Glauber Costa		:	i386 and x86_64 integration
+ *	Glauber Costa		:	i386 and x86_64 पूर्णांकegration
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/smp.h>
-#include <linux/export.h>
-#include <linux/sched.h>
-#include <linux/sched/topology.h>
-#include <linux/sched/hotplug.h>
-#include <linux/sched/task_stack.h>
-#include <linux/percpu.h>
-#include <linux/memblock.h>
-#include <linux/err.h>
-#include <linux/nmi.h>
-#include <linux/tboot.h>
-#include <linux/gfp.h>
-#include <linux/cpuidle.h>
-#include <linux/numa.h>
-#include <linux/pgtable.h>
-#include <linux/overflow.h>
-#include <linux/syscore_ops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/topology.h>
+#समावेश <linux/sched/hotplug.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/err.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/tboot.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/numa.h>
+#समावेश <linux/pgtable.h>
+#समावेश <linux/overflow.h>
+#समावेश <linux/syscore_ops.h>
 
-#include <asm/acpi.h>
-#include <asm/desc.h>
-#include <asm/nmi.h>
-#include <asm/irq.h>
-#include <asm/realmode.h>
-#include <asm/cpu.h>
-#include <asm/numa.h>
-#include <asm/tlbflush.h>
-#include <asm/mtrr.h>
-#include <asm/mwait.h>
-#include <asm/apic.h>
-#include <asm/io_apic.h>
-#include <asm/fpu/internal.h>
-#include <asm/setup.h>
-#include <asm/uv/uv.h>
-#include <linux/mc146818rtc.h>
-#include <asm/i8259.h>
-#include <asm/misc.h>
-#include <asm/qspinlock.h>
-#include <asm/intel-family.h>
-#include <asm/cpu_device_id.h>
-#include <asm/spec-ctrl.h>
-#include <asm/hw_irq.h>
-#include <asm/stackprotector.h>
+#समावेश <यंत्र/acpi.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/nmi.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/realmode.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/numa.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/mtrr.h>
+#समावेश <यंत्र/mरुको.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/io_apic.h>
+#समावेश <यंत्र/fpu/पूर्णांकernal.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/uv/uv.h>
+#समावेश <linux/mc146818rtc.h>
+#समावेश <यंत्र/i8259.h>
+#समावेश <यंत्र/misc.h>
+#समावेश <यंत्र/qspinlock.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/spec-ctrl.h>
+#समावेश <यंत्र/hw_irq.h>
+#समावेश <यंत्र/stackprotector.h>
 
-#ifdef CONFIG_ACPI_CPPC_LIB
-#include <acpi/cppc_acpi.h>
-#endif
+#अगर_घोषित CONFIG_ACPI_CPPC_LIB
+#समावेश <acpi/cppc_acpi.h>
+#पूर्ण_अगर
 
 /* representing HT siblings of each logical CPU */
 DEFINE_PER_CPU_READ_MOSTLY(cpumask_var_t, cpu_sibling_map);
@@ -102,92 +103,92 @@ EXPORT_PER_CPU_SYMBOL(cpu_die_map);
 DEFINE_PER_CPU_READ_MOSTLY(cpumask_var_t, cpu_llc_shared_map);
 
 /* Per CPU bogomips and other parameters */
-DEFINE_PER_CPU_READ_MOSTLY(struct cpuinfo_x86, cpu_info);
+DEFINE_PER_CPU_READ_MOSTLY(काष्ठा cpuinfo_x86, cpu_info);
 EXPORT_PER_CPU_SYMBOL(cpu_info);
 
 /* Logical package management. We might want to allocate that dynamically */
-unsigned int __max_logical_packages __read_mostly;
+अचिन्हित पूर्णांक __max_logical_packages __पढ़ो_mostly;
 EXPORT_SYMBOL(__max_logical_packages);
-static unsigned int logical_packages __read_mostly;
-static unsigned int logical_die __read_mostly;
+अटल अचिन्हित पूर्णांक logical_packages __पढ़ो_mostly;
+अटल अचिन्हित पूर्णांक logical_die __पढ़ो_mostly;
 
-/* Maximum number of SMT threads on any online core */
-int __read_mostly __max_smt_threads = 1;
+/* Maximum number of SMT thपढ़ोs on any online core */
+पूर्णांक __पढ़ो_mostly __max_smt_thपढ़ोs = 1;
 
-/* Flag to indicate if a complete sched domain rebuild is required */
+/* Flag to indicate अगर a complete sched करोमुख्य rebuild is required */
 bool x86_topology_update;
 
-int arch_update_cpu_topology(void)
-{
-	int retval = x86_topology_update;
+पूर्णांक arch_update_cpu_topology(व्योम)
+अणु
+	पूर्णांक retval = x86_topology_update;
 
 	x86_topology_update = false;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static inline void smpboot_setup_warm_reset_vector(unsigned long start_eip)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम smpboot_setup_warm_reset_vector(अचिन्हित दीर्घ start_eip)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rtc_lock, flags);
 	CMOS_WRITE(0xa, 0xf);
 	spin_unlock_irqrestore(&rtc_lock, flags);
-	*((volatile unsigned short *)phys_to_virt(TRAMPOLINE_PHYS_HIGH)) =
+	*((अस्थिर अचिन्हित लघु *)phys_to_virt(TRAMPOLINE_PHYS_HIGH)) =
 							start_eip >> 4;
-	*((volatile unsigned short *)phys_to_virt(TRAMPOLINE_PHYS_LOW)) =
+	*((अस्थिर अचिन्हित लघु *)phys_to_virt(TRAMPOLINE_PHYS_LOW)) =
 							start_eip & 0xf;
-}
+पूर्ण
 
-static inline void smpboot_restore_warm_reset_vector(void)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम smpboot_restore_warm_reset_vector(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * Paranoid:  Set warm reset code and vector here back
-	 * to default values.
+	 * to शेष values.
 	 */
 	spin_lock_irqsave(&rtc_lock, flags);
 	CMOS_WRITE(0, 0xf);
 	spin_unlock_irqrestore(&rtc_lock, flags);
 
-	*((volatile u32 *)phys_to_virt(TRAMPOLINE_PHYS_LOW)) = 0;
-}
+	*((अस्थिर u32 *)phys_to_virt(TRAMPOLINE_PHYS_LOW)) = 0;
+पूर्ण
 
-static void init_freq_invariance(bool secondary, bool cppc_ready);
+अटल व्योम init_freq_invariance(bool secondary, bool cppc_पढ़ोy);
 
 /*
- * Report back to the Boot Processor during boot time or to the caller processor
+ * Report back to the Boot Processor during boot समय or to the caller processor
  * during CPU online.
  */
-static void smp_callin(void)
-{
-	int cpuid;
+अटल व्योम smp_callin(व्योम)
+अणु
+	पूर्णांक cpuid;
 
 	/*
 	 * If waken up by an INIT in an 82489DX configuration
-	 * cpu_callout_mask guarantees we don't get here before
-	 * an INIT_deassert IPI reaches our local APIC, so it is
+	 * cpu_callout_mask guarantees we करोn't get here beक्रमe
+	 * an INIT_deनिश्चित IPI reaches our local APIC, so it is
 	 * now safe to touch our local APIC.
 	 */
 	cpuid = smp_processor_id();
 
 	/*
 	 * the boot CPU has finished the init stage and is spinning
-	 * on callin_map until we finish. We are free to set up this
+	 * on callin_map until we finish. We are मुक्त to set up this
 	 * CPU, first the APIC. (this is probably redundant on most
 	 * boards)
 	 */
 	apic_ap_setup();
 
 	/*
-	 * Save our processor parameters. Note: this information
-	 * is needed for clock calibration.
+	 * Save our processor parameters. Note: this inक्रमmation
+	 * is needed क्रम घड़ी calibration.
 	 */
 	smp_store_cpu_info(cpuid);
 
 	/*
-	 * The topology information must be up to date before
-	 * calibrate_delay() and notify_cpu_starting().
+	 * The topology inक्रमmation must be up to date beक्रमe
+	 * calibrate_delay() and notअगरy_cpu_starting().
 	 */
 	set_cpu_sibling_map(raw_smp_processor_id());
 
@@ -195,53 +196,53 @@ static void smp_callin(void)
 
 	/*
 	 * Get our bogomips.
-	 * Update loops_per_jiffy in cpu_data. Previous call to
-	 * smp_store_cpu_info() stored a value that is close but not as
+	 * Update loops_per_jअगरfy in cpu_data. Previous call to
+	 * smp_store_cpu_info() stored a value that is बंद but not as
 	 * accurate as the value just calculated.
 	 */
 	calibrate_delay();
-	cpu_data(cpuid).loops_per_jiffy = loops_per_jiffy;
+	cpu_data(cpuid).loops_per_jअगरfy = loops_per_jअगरfy;
 	pr_debug("Stack at about %p\n", &cpuid);
 
 	wmb();
 
-	notify_cpu_starting(cpuid);
+	notअगरy_cpu_starting(cpuid);
 
 	/*
-	 * Allow the master to continue.
+	 * Allow the master to जारी.
 	 */
 	cpumask_set_cpu(cpuid, cpu_callin_mask);
-}
+पूर्ण
 
-static int cpu0_logical_apicid;
-static int enable_start_cpu0;
+अटल पूर्णांक cpu0_logical_apicid;
+अटल पूर्णांक enable_start_cpu0;
 /*
  * Activate a secondary processor.
  */
-static void notrace start_secondary(void *unused)
-{
+अटल व्योम notrace start_secondary(व्योम *unused)
+अणु
 	/*
 	 * Don't put *anything* except direct CPU state initialization
-	 * before cpu_init(), SMP booting is too fragile that we want to
-	 * limit the things done here to the most necessary things.
+	 * beक्रमe cpu_init(), SMP booting is too fragile that we want to
+	 * limit the things करोne here to the most necessary things.
 	 */
 	cr4_init();
 
-#ifdef CONFIG_X86_32
-	/* switch away from the initial page table */
+#अगर_घोषित CONFIG_X86_32
+	/* चयन away from the initial page table */
 	load_cr3(swapper_pg_dir);
 	__flush_tlb_all();
-#endif
+#पूर्ण_अगर
 	cpu_init_exception_handling();
 	cpu_init();
 	rcu_cpu_starting(raw_smp_processor_id());
-	x86_cpuinit.early_percpu_clock_init();
+	x86_cpuinit.early_percpu_घड़ी_init();
 	preempt_disable();
 	smp_callin();
 
 	enable_start_cpu0 = 0;
 
-	/* otherwise gcc will move up smp_processor_id before the cpu_init */
+	/* otherwise gcc will move up smp_processor_id beक्रमe the cpu_init */
 	barrier();
 	/*
 	 * Check TSC synchronization with the boot CPU:
@@ -253,7 +254,7 @@ static void notrace start_secondary(void *unused)
 	/*
 	 * Lock vector_lock, set CPU online and bring the vector
 	 * allocator online. Online must be set with vector_lock held
-	 * to prevent a concurrent irq setup/teardown from seeing a
+	 * to prevent a concurrent irq setup/tearकरोwn from seeing a
 	 * half valid vector space.
 	 */
 	lock_vector_lock();
@@ -261,548 +262,548 @@ static void notrace start_secondary(void *unused)
 	lapic_online();
 	unlock_vector_lock();
 	cpu_set_state_online(smp_processor_id());
-	x86_platform.nmi_init();
+	x86_platक्रमm.nmi_init();
 
-	/* enable local interrupts */
+	/* enable local पूर्णांकerrupts */
 	local_irq_enable();
 
-	x86_cpuinit.setup_percpu_clockev();
+	x86_cpuinit.setup_percpu_घड़ीev();
 
 	wmb();
 	cpu_startup_entry(CPUHP_AP_ONLINE_IDLE);
-}
+पूर्ण
 
 /**
- * topology_is_primary_thread - Check whether CPU is the primary SMT thread
+ * topology_is_primary_thपढ़ो - Check whether CPU is the primary SMT thपढ़ो
  * @cpu:	CPU to check
  */
-bool topology_is_primary_thread(unsigned int cpu)
-{
-	return apic_id_is_primary_thread(per_cpu(x86_cpu_to_apicid, cpu));
-}
+bool topology_is_primary_thपढ़ो(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस apic_id_is_primary_thपढ़ो(per_cpu(x86_cpu_to_apicid, cpu));
+पूर्ण
 
 /**
  * topology_smt_supported - Check whether SMT is supported by the CPUs
  */
-bool topology_smt_supported(void)
-{
-	return smp_num_siblings > 1;
-}
+bool topology_smt_supported(व्योम)
+अणु
+	वापस smp_num_siblings > 1;
+पूर्ण
 
 /**
  * topology_phys_to_logical_pkg - Map a physical package id to a logical
  *
- * Returns logical package id or -1 if not found
+ * Returns logical package id or -1 अगर not found
  */
-int topology_phys_to_logical_pkg(unsigned int phys_pkg)
-{
-	int cpu;
+पूर्णांक topology_phys_to_logical_pkg(अचिन्हित पूर्णांक phys_pkg)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
-		struct cpuinfo_x86 *c = &cpu_data(cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
 
-		if (c->initialized && c->phys_proc_id == phys_pkg)
-			return c->logical_proc_id;
-	}
-	return -1;
-}
+		अगर (c->initialized && c->phys_proc_id == phys_pkg)
+			वापस c->logical_proc_id;
+	पूर्ण
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL(topology_phys_to_logical_pkg);
 /**
  * topology_phys_to_logical_die - Map a physical die id to logical
  *
- * Returns logical die id or -1 if not found
+ * Returns logical die id or -1 अगर not found
  */
-int topology_phys_to_logical_die(unsigned int die_id, unsigned int cur_cpu)
-{
-	int cpu;
-	int proc_id = cpu_data(cur_cpu).phys_proc_id;
+पूर्णांक topology_phys_to_logical_die(अचिन्हित पूर्णांक die_id, अचिन्हित पूर्णांक cur_cpu)
+अणु
+	पूर्णांक cpu;
+	पूर्णांक proc_id = cpu_data(cur_cpu).phys_proc_id;
 
-	for_each_possible_cpu(cpu) {
-		struct cpuinfo_x86 *c = &cpu_data(cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
 
-		if (c->initialized && c->cpu_die_id == die_id &&
+		अगर (c->initialized && c->cpu_die_id == die_id &&
 		    c->phys_proc_id == proc_id)
-			return c->logical_die_id;
-	}
-	return -1;
-}
+			वापस c->logical_die_id;
+	पूर्ण
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL(topology_phys_to_logical_die);
 
 /**
  * topology_update_package_map - Update the physical to logical package map
  * @pkg:	The physical package id as retrieved via CPUID
- * @cpu:	The cpu for which this is updated
+ * @cpu:	The cpu क्रम which this is updated
  */
-int topology_update_package_map(unsigned int pkg, unsigned int cpu)
-{
-	int new;
+पूर्णांक topology_update_package_map(अचिन्हित पूर्णांक pkg, अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक new;
 
-	/* Already available somewhere? */
+	/* Alपढ़ोy available somewhere? */
 	new = topology_phys_to_logical_pkg(pkg);
-	if (new >= 0)
-		goto found;
+	अगर (new >= 0)
+		जाओ found;
 
 	new = logical_packages++;
-	if (new != pkg) {
+	अगर (new != pkg) अणु
 		pr_info("CPU %u Converting physical %u to logical package %u\n",
 			cpu, pkg, new);
-	}
+	पूर्ण
 found:
 	cpu_data(cpu).logical_proc_id = new;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /**
  * topology_update_die_map - Update the physical to logical die map
  * @die:	The die id as retrieved via CPUID
- * @cpu:	The cpu for which this is updated
+ * @cpu:	The cpu क्रम which this is updated
  */
-int topology_update_die_map(unsigned int die, unsigned int cpu)
-{
-	int new;
+पूर्णांक topology_update_die_map(अचिन्हित पूर्णांक die, अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक new;
 
-	/* Already available somewhere? */
+	/* Alपढ़ोy available somewhere? */
 	new = topology_phys_to_logical_die(die, cpu);
-	if (new >= 0)
-		goto found;
+	अगर (new >= 0)
+		जाओ found;
 
 	new = logical_die++;
-	if (new != die) {
+	अगर (new != die) अणु
 		pr_info("CPU %u Converting physical %u to logical die %u\n",
 			cpu, die, new);
-	}
+	पूर्ण
 found:
 	cpu_data(cpu).logical_die_id = new;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init smp_store_boot_cpu_info(void)
-{
-	int id = 0; /* CPU 0 */
-	struct cpuinfo_x86 *c = &cpu_data(id);
+व्योम __init smp_store_boot_cpu_info(व्योम)
+अणु
+	पूर्णांक id = 0; /* CPU 0 */
+	काष्ठा cpuinfo_x86 *c = &cpu_data(id);
 
 	*c = boot_cpu_data;
 	c->cpu_index = id;
 	topology_update_package_map(c->phys_proc_id, id);
 	topology_update_die_map(c->cpu_die_id, id);
 	c->initialized = true;
-}
+पूर्ण
 
 /*
- * The bootstrap kernel entry code has set these up. Save them for
+ * The bootstrap kernel entry code has set these up. Save them क्रम
  * a given CPU
  */
-void smp_store_cpu_info(int id)
-{
-	struct cpuinfo_x86 *c = &cpu_data(id);
+व्योम smp_store_cpu_info(पूर्णांक id)
+अणु
+	काष्ठा cpuinfo_x86 *c = &cpu_data(id);
 
 	/* Copy boot_cpu_data only on the first bringup */
-	if (!c->initialized)
+	अगर (!c->initialized)
 		*c = boot_cpu_data;
 	c->cpu_index = id;
 	/*
-	 * During boot time, CPU0 has this setup already. Save the info when
+	 * During boot समय, CPU0 has this setup alपढ़ोy. Save the info when
 	 * bringing up AP or offlined CPU0.
 	 */
-	identify_secondary_cpu(c);
+	identअगरy_secondary_cpu(c);
 	c->initialized = true;
-}
+पूर्ण
 
-static bool
-topology_same_node(struct cpuinfo_x86 *c, struct cpuinfo_x86 *o)
-{
-	int cpu1 = c->cpu_index, cpu2 = o->cpu_index;
+अटल bool
+topology_same_node(काष्ठा cpuinfo_x86 *c, काष्ठा cpuinfo_x86 *o)
+अणु
+	पूर्णांक cpu1 = c->cpu_index, cpu2 = o->cpu_index;
 
-	return (cpu_to_node(cpu1) == cpu_to_node(cpu2));
-}
+	वापस (cpu_to_node(cpu1) == cpu_to_node(cpu2));
+पूर्ण
 
-static bool
-topology_sane(struct cpuinfo_x86 *c, struct cpuinfo_x86 *o, const char *name)
-{
-	int cpu1 = c->cpu_index, cpu2 = o->cpu_index;
+अटल bool
+topology_sane(काष्ठा cpuinfo_x86 *c, काष्ठा cpuinfo_x86 *o, स्थिर अक्षर *name)
+अणु
+	पूर्णांक cpu1 = c->cpu_index, cpu2 = o->cpu_index;
 
-	return !WARN_ONCE(!topology_same_node(c, o),
+	वापस !WARN_ONCE(!topology_same_node(c, o),
 		"sched: CPU #%d's %s-sibling CPU #%d is not on the same node! "
 		"[node: %d != %d]. Ignoring dependency.\n",
 		cpu1, name, cpu2, cpu_to_node(cpu1), cpu_to_node(cpu2));
-}
+पूर्ण
 
-#define link_mask(mfunc, c1, c2)					\
-do {									\
+#घोषणा link_mask(mfunc, c1, c2)					\
+करो अणु									\
 	cpumask_set_cpu((c1), mfunc(c2));				\
 	cpumask_set_cpu((c2), mfunc(c1));				\
-} while (0)
+पूर्ण जबतक (0)
 
-static bool match_smt(struct cpuinfo_x86 *c, struct cpuinfo_x86 *o)
-{
-	if (boot_cpu_has(X86_FEATURE_TOPOEXT)) {
-		int cpu1 = c->cpu_index, cpu2 = o->cpu_index;
+अटल bool match_smt(काष्ठा cpuinfo_x86 *c, काष्ठा cpuinfo_x86 *o)
+अणु
+	अगर (boot_cpu_has(X86_FEATURE_TOPOEXT)) अणु
+		पूर्णांक cpu1 = c->cpu_index, cpu2 = o->cpu_index;
 
-		if (c->phys_proc_id == o->phys_proc_id &&
+		अगर (c->phys_proc_id == o->phys_proc_id &&
 		    c->cpu_die_id == o->cpu_die_id &&
-		    per_cpu(cpu_llc_id, cpu1) == per_cpu(cpu_llc_id, cpu2)) {
-			if (c->cpu_core_id == o->cpu_core_id)
-				return topology_sane(c, o, "smt");
+		    per_cpu(cpu_llc_id, cpu1) == per_cpu(cpu_llc_id, cpu2)) अणु
+			अगर (c->cpu_core_id == o->cpu_core_id)
+				वापस topology_sane(c, o, "smt");
 
-			if ((c->cu_id != 0xff) &&
+			अगर ((c->cu_id != 0xff) &&
 			    (o->cu_id != 0xff) &&
 			    (c->cu_id == o->cu_id))
-				return topology_sane(c, o, "smt");
-		}
+				वापस topology_sane(c, o, "smt");
+		पूर्ण
 
-	} else if (c->phys_proc_id == o->phys_proc_id &&
+	पूर्ण अन्यथा अगर (c->phys_proc_id == o->phys_proc_id &&
 		   c->cpu_die_id == o->cpu_die_id &&
-		   c->cpu_core_id == o->cpu_core_id) {
-		return topology_sane(c, o, "smt");
-	}
+		   c->cpu_core_id == o->cpu_core_id) अणु
+		वापस topology_sane(c, o, "smt");
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool match_die(struct cpuinfo_x86 *c, struct cpuinfo_x86 *o)
-{
-	if (c->phys_proc_id == o->phys_proc_id &&
+अटल bool match_die(काष्ठा cpuinfo_x86 *c, काष्ठा cpuinfo_x86 *o)
+अणु
+	अगर (c->phys_proc_id == o->phys_proc_id &&
 	    c->cpu_die_id == o->cpu_die_id)
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
 /*
- * Unlike the other levels, we do not enforce keeping a
+ * Unlike the other levels, we करो not enक्रमce keeping a
  * multicore group inside a NUMA node.  If this happens, we will
  * discard the MC level of the topology later.
  */
-static bool match_pkg(struct cpuinfo_x86 *c, struct cpuinfo_x86 *o)
-{
-	if (c->phys_proc_id == o->phys_proc_id)
-		return true;
-	return false;
-}
+अटल bool match_pkg(काष्ठा cpuinfo_x86 *c, काष्ठा cpuinfo_x86 *o)
+अणु
+	अगर (c->phys_proc_id == o->phys_proc_id)
+		वापस true;
+	वापस false;
+पूर्ण
 
 /*
- * Define intel_cod_cpu[] for Intel COD (Cluster-on-Die) CPUs.
+ * Define पूर्णांकel_cod_cpu[] क्रम Intel COD (Cluster-on-Die) CPUs.
  *
- * Any Intel CPU that has multiple nodes per package and does not
- * match intel_cod_cpu[] has the SNC (Sub-NUMA Cluster) topology.
+ * Any Intel CPU that has multiple nodes per package and करोes not
+ * match पूर्णांकel_cod_cpu[] has the SNC (Sub-NUMA Cluster) topology.
  *
- * When in SNC mode, these CPUs enumerate an LLC that is shared
- * by multiple NUMA nodes. The LLC is shared for off-package data
- * access but private to the NUMA node (half of the package) for
- * on-package access. CPUID (the source of the information about
- * the LLC) can only enumerate the cache as shared or unshared,
+ * When in SNC mode, these CPUs क्रमागतerate an LLC that is shared
+ * by multiple NUMA nodes. The LLC is shared क्रम off-package data
+ * access but निजी to the NUMA node (half of the package) क्रम
+ * on-package access. CPUID (the source of the inक्रमmation about
+ * the LLC) can only क्रमागतerate the cache as shared or unshared,
  * but not this particular configuration.
  */
 
-static const struct x86_cpu_id intel_cod_cpu[] = {
+अटल स्थिर काष्ठा x86_cpu_id पूर्णांकel_cod_cpu[] = अणु
 	X86_MATCH_INTEL_FAM6_MODEL(HASWELL_X, 0),	/* COD */
 	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL_X, 0),	/* COD */
 	X86_MATCH_INTEL_FAM6_MODEL(ANY, 1),		/* SNC */
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static bool match_llc(struct cpuinfo_x86 *c, struct cpuinfo_x86 *o)
-{
-	const struct x86_cpu_id *id = x86_match_cpu(intel_cod_cpu);
-	int cpu1 = c->cpu_index, cpu2 = o->cpu_index;
-	bool intel_snc = id && id->driver_data;
+अटल bool match_llc(काष्ठा cpuinfo_x86 *c, काष्ठा cpuinfo_x86 *o)
+अणु
+	स्थिर काष्ठा x86_cpu_id *id = x86_match_cpu(पूर्णांकel_cod_cpu);
+	पूर्णांक cpu1 = c->cpu_index, cpu2 = o->cpu_index;
+	bool पूर्णांकel_snc = id && id->driver_data;
 
-	/* Do not match if we do not have a valid APICID for cpu: */
-	if (per_cpu(cpu_llc_id, cpu1) == BAD_APICID)
-		return false;
+	/* Do not match अगर we करो not have a valid APICID क्रम cpu: */
+	अगर (per_cpu(cpu_llc_id, cpu1) == BAD_APICID)
+		वापस false;
 
-	/* Do not match if LLC id does not match: */
-	if (per_cpu(cpu_llc_id, cpu1) != per_cpu(cpu_llc_id, cpu2))
-		return false;
+	/* Do not match अगर LLC id करोes not match: */
+	अगर (per_cpu(cpu_llc_id, cpu1) != per_cpu(cpu_llc_id, cpu2))
+		वापस false;
 
 	/*
 	 * Allow the SNC topology without warning. Return of false
 	 * means 'c' does not share the LLC of 'o'. This will be
 	 * reflected to userspace.
 	 */
-	if (match_pkg(c, o) && !topology_same_node(c, o) && intel_snc)
-		return false;
+	अगर (match_pkg(c, o) && !topology_same_node(c, o) && पूर्णांकel_snc)
+		वापस false;
 
-	return topology_sane(c, o, "llc");
-}
+	वापस topology_sane(c, o, "llc");
+पूर्ण
 
 
-#if defined(CONFIG_SCHED_SMT) || defined(CONFIG_SCHED_MC)
-static inline int x86_sched_itmt_flags(void)
-{
-	return sysctl_sched_itmt_enabled ? SD_ASYM_PACKING : 0;
-}
+#अगर defined(CONFIG_SCHED_SMT) || defined(CONFIG_SCHED_MC)
+अटल अंतरभूत पूर्णांक x86_sched_iपंचांगt_flags(व्योम)
+अणु
+	वापस sysctl_sched_iपंचांगt_enabled ? SD_ASYM_PACKING : 0;
+पूर्ण
 
-#ifdef CONFIG_SCHED_MC
-static int x86_core_flags(void)
-{
-	return cpu_core_flags() | x86_sched_itmt_flags();
-}
-#endif
-#ifdef CONFIG_SCHED_SMT
-static int x86_smt_flags(void)
-{
-	return cpu_smt_flags() | x86_sched_itmt_flags();
-}
-#endif
-#endif
+#अगर_घोषित CONFIG_SCHED_MC
+अटल पूर्णांक x86_core_flags(व्योम)
+अणु
+	वापस cpu_core_flags() | x86_sched_iपंचांगt_flags();
+पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SCHED_SMT
+अटल पूर्णांक x86_smt_flags(व्योम)
+अणु
+	वापस cpu_smt_flags() | x86_sched_iपंचांगt_flags();
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-static struct sched_domain_topology_level x86_numa_in_package_topology[] = {
-#ifdef CONFIG_SCHED_SMT
-	{ cpu_smt_mask, x86_smt_flags, SD_INIT_NAME(SMT) },
-#endif
-#ifdef CONFIG_SCHED_MC
-	{ cpu_coregroup_mask, x86_core_flags, SD_INIT_NAME(MC) },
-#endif
-	{ NULL, },
-};
+अटल काष्ठा sched_करोमुख्य_topology_level x86_numa_in_package_topology[] = अणु
+#अगर_घोषित CONFIG_SCHED_SMT
+	अणु cpu_smt_mask, x86_smt_flags, SD_INIT_NAME(SMT) पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SCHED_MC
+	अणु cpu_coregroup_mask, x86_core_flags, SD_INIT_NAME(MC) पूर्ण,
+#पूर्ण_अगर
+	अणु शून्य, पूर्ण,
+पूर्ण;
 
-static struct sched_domain_topology_level x86_topology[] = {
-#ifdef CONFIG_SCHED_SMT
-	{ cpu_smt_mask, x86_smt_flags, SD_INIT_NAME(SMT) },
-#endif
-#ifdef CONFIG_SCHED_MC
-	{ cpu_coregroup_mask, x86_core_flags, SD_INIT_NAME(MC) },
-#endif
-	{ cpu_cpu_mask, SD_INIT_NAME(DIE) },
-	{ NULL, },
-};
+अटल काष्ठा sched_करोमुख्य_topology_level x86_topology[] = अणु
+#अगर_घोषित CONFIG_SCHED_SMT
+	अणु cpu_smt_mask, x86_smt_flags, SD_INIT_NAME(SMT) पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SCHED_MC
+	अणु cpu_coregroup_mask, x86_core_flags, SD_INIT_NAME(MC) पूर्ण,
+#पूर्ण_अगर
+	अणु cpu_cpu_mask, SD_INIT_NAME(DIE) पूर्ण,
+	अणु शून्य, पूर्ण,
+पूर्ण;
 
 /*
- * Set if a package/die has multiple NUMA nodes inside.
+ * Set अगर a package/die has multiple NUMA nodes inside.
  * AMD Magny-Cours, Intel Cluster-on-Die, and Intel
  * Sub-NUMA Clustering have this.
  */
-static bool x86_has_numa_in_package;
+अटल bool x86_has_numa_in_package;
 
-void set_cpu_sibling_map(int cpu)
-{
+व्योम set_cpu_sibling_map(पूर्णांक cpu)
+अणु
 	bool has_smt = smp_num_siblings > 1;
 	bool has_mp = has_smt || boot_cpu_data.x86_max_cores > 1;
-	struct cpuinfo_x86 *c = &cpu_data(cpu);
-	struct cpuinfo_x86 *o;
-	int i, threads;
+	काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
+	काष्ठा cpuinfo_x86 *o;
+	पूर्णांक i, thपढ़ोs;
 
 	cpumask_set_cpu(cpu, cpu_sibling_setup_mask);
 
-	if (!has_mp) {
+	अगर (!has_mp) अणु
 		cpumask_set_cpu(cpu, topology_sibling_cpumask(cpu));
 		cpumask_set_cpu(cpu, cpu_llc_shared_mask(cpu));
 		cpumask_set_cpu(cpu, topology_core_cpumask(cpu));
 		cpumask_set_cpu(cpu, topology_die_cpumask(cpu));
 		c->booted_cores = 1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for_each_cpu(i, cpu_sibling_setup_mask) {
+	क्रम_each_cpu(i, cpu_sibling_setup_mask) अणु
 		o = &cpu_data(i);
 
-		if (match_pkg(c, o) && !topology_same_node(c, o))
+		अगर (match_pkg(c, o) && !topology_same_node(c, o))
 			x86_has_numa_in_package = true;
 
-		if ((i == cpu) || (has_smt && match_smt(c, o)))
+		अगर ((i == cpu) || (has_smt && match_smt(c, o)))
 			link_mask(topology_sibling_cpumask, cpu, i);
 
-		if ((i == cpu) || (has_mp && match_llc(c, o)))
+		अगर ((i == cpu) || (has_mp && match_llc(c, o)))
 			link_mask(cpu_llc_shared_mask, cpu, i);
 
-		if ((i == cpu) || (has_mp && match_die(c, o)))
+		अगर ((i == cpu) || (has_mp && match_die(c, o)))
 			link_mask(topology_die_cpumask, cpu, i);
-	}
+	पूर्ण
 
-	threads = cpumask_weight(topology_sibling_cpumask(cpu));
-	if (threads > __max_smt_threads)
-		__max_smt_threads = threads;
+	thपढ़ोs = cpumask_weight(topology_sibling_cpumask(cpu));
+	अगर (thपढ़ोs > __max_smt_thपढ़ोs)
+		__max_smt_thपढ़ोs = thपढ़ोs;
 
 	/*
 	 * This needs a separate iteration over the cpus because we rely on all
 	 * topology_sibling_cpumask links to be set-up.
 	 */
-	for_each_cpu(i, cpu_sibling_setup_mask) {
+	क्रम_each_cpu(i, cpu_sibling_setup_mask) अणु
 		o = &cpu_data(i);
 
-		if ((i == cpu) || (has_mp && match_pkg(c, o))) {
+		अगर ((i == cpu) || (has_mp && match_pkg(c, o))) अणु
 			link_mask(topology_core_cpumask, cpu, i);
 
 			/*
 			 *  Does this new cpu bringup a new core?
 			 */
-			if (threads == 1) {
+			अगर (thपढ़ोs == 1) अणु
 				/*
-				 * for each core in package, increment
-				 * the booted_cores for this new cpu
+				 * क्रम each core in package, increment
+				 * the booted_cores क्रम this new cpu
 				 */
-				if (cpumask_first(
+				अगर (cpumask_first(
 				    topology_sibling_cpumask(i)) == i)
 					c->booted_cores++;
 				/*
-				 * increment the core count for all
+				 * increment the core count क्रम all
 				 * the other cpus in this package
 				 */
-				if (i != cpu)
+				अगर (i != cpu)
 					cpu_data(i).booted_cores++;
-			} else if (i != cpu && !c->booted_cores)
+			पूर्ण अन्यथा अगर (i != cpu && !c->booted_cores)
 				c->booted_cores = cpu_data(i).booted_cores;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* maps the cpu to the sched domain representing multi-core */
-const struct cpumask *cpu_coregroup_mask(int cpu)
-{
-	return cpu_llc_shared_mask(cpu);
-}
+/* maps the cpu to the sched करोमुख्य representing multi-core */
+स्थिर काष्ठा cpumask *cpu_coregroup_mask(पूर्णांक cpu)
+अणु
+	वापस cpu_llc_shared_mask(cpu);
+पूर्ण
 
-static void impress_friends(void)
-{
-	int cpu;
-	unsigned long bogosum = 0;
+अटल व्योम impress_मित्रs(व्योम)
+अणु
+	पूर्णांक cpu;
+	अचिन्हित दीर्घ bogosum = 0;
 	/*
-	 * Allow the user to impress friends.
+	 * Allow the user to impress मित्रs.
 	 */
 	pr_debug("Before bogomips\n");
-	for_each_possible_cpu(cpu)
-		if (cpumask_test_cpu(cpu, cpu_callout_mask))
-			bogosum += cpu_data(cpu).loops_per_jiffy;
+	क्रम_each_possible_cpu(cpu)
+		अगर (cpumask_test_cpu(cpu, cpu_callout_mask))
+			bogosum += cpu_data(cpu).loops_per_jअगरfy;
 	pr_info("Total of %d processors activated (%lu.%02lu BogoMIPS)\n",
 		num_online_cpus(),
 		bogosum/(500000/HZ),
 		(bogosum/(5000/HZ))%100);
 
 	pr_debug("Before bogocount - setting activated=1\n");
-}
+पूर्ण
 
-void __inquire_remote_apic(int apicid)
-{
-	unsigned i, regs[] = { APIC_ID >> 4, APIC_LVR >> 4, APIC_SPIV >> 4 };
-	const char * const names[] = { "ID", "VERSION", "SPIV" };
-	int timeout;
+व्योम __inquire_remote_apic(पूर्णांक apicid)
+अणु
+	अचिन्हित i, regs[] = अणु APIC_ID >> 4, APIC_LVR >> 4, APIC_SPIV >> 4 पूर्ण;
+	स्थिर अक्षर * स्थिर names[] = अणु "ID", "VERSION", "SPIV" पूर्ण;
+	पूर्णांक समयout;
 	u32 status;
 
 	pr_info("Inquiring remote APIC 0x%x...\n", apicid);
 
-	for (i = 0; i < ARRAY_SIZE(regs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(regs); i++) अणु
 		pr_info("... APIC 0x%x %s: ", apicid, names[i]);
 
 		/*
-		 * Wait for idle.
+		 * Wait क्रम idle.
 		 */
-		status = safe_apic_wait_icr_idle();
-		if (status)
+		status = safe_apic_रुको_icr_idle();
+		अगर (status)
 			pr_cont("a previous APIC delivery may have failed\n");
 
-		apic_icr_write(APIC_DM_REMRD | regs[i], apicid);
+		apic_icr_ग_लिखो(APIC_DM_REMRD | regs[i], apicid);
 
-		timeout = 0;
-		do {
+		समयout = 0;
+		करो अणु
 			udelay(100);
-			status = apic_read(APIC_ICR) & APIC_ICR_RR_MASK;
-		} while (status == APIC_ICR_RR_INPROG && timeout++ < 1000);
+			status = apic_पढ़ो(APIC_ICR) & APIC_ICR_RR_MASK;
+		पूर्ण जबतक (status == APIC_ICR_RR_INPROG && समयout++ < 1000);
 
-		switch (status) {
-		case APIC_ICR_RR_VALID:
-			status = apic_read(APIC_RRR);
+		चयन (status) अणु
+		हाल APIC_ICR_RR_VALID:
+			status = apic_पढ़ो(APIC_RRR);
 			pr_cont("%08x\n", status);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_cont("failed\n");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * The Multiprocessor Specification 1.4 (1997) example code suggests
- * that there should be a 10ms delay between the BSP asserting INIT
- * and de-asserting INIT, when starting a remote processor.
+ * The Multiprocessor Specअगरication 1.4 (1997) example code suggests
+ * that there should be a 10ms delay between the BSP निश्चितing INIT
+ * and de-निश्चितing INIT, when starting a remote processor.
  * But that slows boot and resume on modern processors, which include
- * many cores and don't require that delay.
+ * many cores and करोn't require that delay.
  *
  * Cmdline "init_cpu_udelay=" is available to over-ride this delay.
- * Modern processor families are quirked to remove the delay entirely.
+ * Modern processor families are quirked to हटाओ the delay entirely.
  */
-#define UDELAY_10MS_DEFAULT 10000
+#घोषणा UDELAY_10MS_DEFAULT 10000
 
-static unsigned int init_udelay = UINT_MAX;
+अटल अचिन्हित पूर्णांक init_udelay = अच_पूर्णांक_उच्च;
 
-static int __init cpu_init_udelay(char *str)
-{
+अटल पूर्णांक __init cpu_init_udelay(अक्षर *str)
+अणु
 	get_option(&str, &init_udelay);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("cpu_init_udelay", cpu_init_udelay);
 
-static void __init smp_quirk_init_udelay(void)
-{
-	/* if cmdline changed it from default, leave it alone */
-	if (init_udelay != UINT_MAX)
-		return;
+अटल व्योम __init smp_quirk_init_udelay(व्योम)
+अणु
+	/* अगर cmdline changed it from शेष, leave it alone */
+	अगर (init_udelay != अच_पूर्णांक_उच्च)
+		वापस;
 
-	/* if modern processor, use no delay */
-	if (((boot_cpu_data.x86_vendor == X86_VENDOR_INTEL) && (boot_cpu_data.x86 == 6)) ||
-	    ((boot_cpu_data.x86_vendor == X86_VENDOR_HYGON) && (boot_cpu_data.x86 >= 0x18)) ||
-	    ((boot_cpu_data.x86_vendor == X86_VENDOR_AMD) && (boot_cpu_data.x86 >= 0xF))) {
+	/* अगर modern processor, use no delay */
+	अगर (((boot_cpu_data.x86_venकरोr == X86_VENDOR_INTEL) && (boot_cpu_data.x86 == 6)) ||
+	    ((boot_cpu_data.x86_venकरोr == X86_VENDOR_HYGON) && (boot_cpu_data.x86 >= 0x18)) ||
+	    ((boot_cpu_data.x86_venकरोr == X86_VENDOR_AMD) && (boot_cpu_data.x86 >= 0xF))) अणु
 		init_udelay = 0;
-		return;
-	}
-	/* else, use legacy delay */
+		वापस;
+	पूर्ण
+	/* अन्यथा, use legacy delay */
 	init_udelay = UDELAY_10MS_DEFAULT;
-}
+पूर्ण
 
 /*
  * Poke the other CPU in the eye via NMI to wake it up. Remember that the normal
- * INIT, INIT, STARTUP sequence will reset the chip hard for us, and this
- * won't ... remember to clear down the APIC, etc later.
+ * INIT, INIT, STARTUP sequence will reset the chip hard क्रम us, and this
+ * won't ... remember to clear करोwn the APIC, etc later.
  */
-int
-wakeup_secondary_cpu_via_nmi(int apicid, unsigned long start_eip)
-{
+पूर्णांक
+wakeup_secondary_cpu_via_nmi(पूर्णांक apicid, अचिन्हित दीर्घ start_eip)
+अणु
 	u32 dm = apic->dest_mode_logical ? APIC_DEST_LOGICAL : APIC_DEST_PHYSICAL;
-	unsigned long send_status, accept_status = 0;
-	int maxlvt;
+	अचिन्हित दीर्घ send_status, accept_status = 0;
+	पूर्णांक maxlvt;
 
 	/* Target chip */
 	/* Boot on the stack */
 	/* Kick the second */
-	apic_icr_write(APIC_DM_NMI | dm, apicid);
+	apic_icr_ग_लिखो(APIC_DM_NMI | dm, apicid);
 
 	pr_debug("Waiting for send to finish...\n");
-	send_status = safe_apic_wait_icr_idle();
+	send_status = safe_apic_रुको_icr_idle();
 
 	/*
-	 * Give the other CPU some time to accept the IPI.
+	 * Give the other CPU some समय to accept the IPI.
 	 */
 	udelay(200);
-	if (APIC_INTEGRATED(boot_cpu_apic_version)) {
+	अगर (APIC_INTEGRATED(boot_cpu_apic_version)) अणु
 		maxlvt = lapic_get_maxlvt();
-		if (maxlvt > 3)			/* Due to the Pentium erratum 3AP.  */
-			apic_write(APIC_ESR, 0);
-		accept_status = (apic_read(APIC_ESR) & 0xEF);
-	}
+		अगर (maxlvt > 3)			/* Due to the Pentium erratum 3AP.  */
+			apic_ग_लिखो(APIC_ESR, 0);
+		accept_status = (apic_पढ़ो(APIC_ESR) & 0xEF);
+	पूर्ण
 	pr_debug("NMI sent\n");
 
-	if (send_status)
+	अगर (send_status)
 		pr_err("APIC never delivered???\n");
-	if (accept_status)
+	अगर (accept_status)
 		pr_err("APIC delivery error (%lx)\n", accept_status);
 
-	return (send_status | accept_status);
-}
+	वापस (send_status | accept_status);
+पूर्ण
 
-static int
-wakeup_secondary_cpu_via_init(int phys_apicid, unsigned long start_eip)
-{
-	unsigned long send_status = 0, accept_status = 0;
-	int maxlvt, num_starts, j;
+अटल पूर्णांक
+wakeup_secondary_cpu_via_init(पूर्णांक phys_apicid, अचिन्हित दीर्घ start_eip)
+अणु
+	अचिन्हित दीर्घ send_status = 0, accept_status = 0;
+	पूर्णांक maxlvt, num_starts, j;
 
 	maxlvt = lapic_get_maxlvt();
 
 	/*
 	 * Be paranoid about clearing APIC errors.
 	 */
-	if (APIC_INTEGRATED(boot_cpu_apic_version)) {
-		if (maxlvt > 3)		/* Due to the Pentium erratum 3AP.  */
-			apic_write(APIC_ESR, 0);
-		apic_read(APIC_ESR);
-	}
+	अगर (APIC_INTEGRATED(boot_cpu_apic_version)) अणु
+		अगर (maxlvt > 3)		/* Due to the Pentium erratum 3AP.  */
+			apic_ग_लिखो(APIC_ESR, 0);
+		apic_पढ़ो(APIC_ESR);
+	पूर्ण
 
 	pr_debug("Asserting INIT\n");
 
@@ -812,11 +813,11 @@ wakeup_secondary_cpu_via_init(int phys_apicid, unsigned long start_eip)
 	/*
 	 * Send IPI
 	 */
-	apic_icr_write(APIC_INT_LEVELTRIG | APIC_INT_ASSERT | APIC_DM_INIT,
+	apic_icr_ग_लिखो(APIC_INT_LEVELTRIG | APIC_INT_ASSERT | APIC_DM_INIT,
 		       phys_apicid);
 
 	pr_debug("Waiting for send to finish...\n");
-	send_status = safe_apic_wait_icr_idle();
+	send_status = safe_apic_रुको_icr_idle();
 
 	udelay(init_udelay);
 
@@ -824,10 +825,10 @@ wakeup_secondary_cpu_via_init(int phys_apicid, unsigned long start_eip)
 
 	/* Target chip */
 	/* Send IPI */
-	apic_icr_write(APIC_INT_LEVELTRIG | APIC_DM_INIT, phys_apicid);
+	apic_icr_ग_लिखो(APIC_INT_LEVELTRIG | APIC_DM_INIT, phys_apicid);
 
 	pr_debug("Waiting for send to finish...\n");
-	send_status = safe_apic_wait_icr_idle();
+	send_status = safe_apic_रुको_icr_idle();
 
 	mb();
 
@@ -835,11 +836,11 @@ wakeup_secondary_cpu_via_init(int phys_apicid, unsigned long start_eip)
 	 * Should we send STARTUP IPIs ?
 	 *
 	 * Determine this based on the APIC version.
-	 * If we don't have an integrated APIC, don't send the STARTUP IPIs.
+	 * If we करोn't have an integrated APIC, don't send the STARTUP IPIs.
 	 */
-	if (APIC_INTEGRATED(boot_cpu_apic_version))
+	अगर (APIC_INTEGRATED(boot_cpu_apic_version))
 		num_starts = 2;
-	else
+	अन्यथा
 		num_starts = 0;
 
 	/*
@@ -847,11 +848,11 @@ wakeup_secondary_cpu_via_init(int phys_apicid, unsigned long start_eip)
 	 */
 	pr_debug("#startup loops: %d\n", num_starts);
 
-	for (j = 1; j <= num_starts; j++) {
+	क्रम (j = 1; j <= num_starts; j++) अणु
 		pr_debug("Sending STARTUP #%d\n", j);
-		if (maxlvt > 3)		/* Due to the Pentium erratum 3AP.  */
-			apic_write(APIC_ESR, 0);
-		apic_read(APIC_ESR);
+		अगर (maxlvt > 3)		/* Due to the Pentium erratum 3AP.  */
+			apic_ग_लिखो(APIC_ESR, 0);
+		apic_पढ़ो(APIC_ESR);
 		pr_debug("After apic_write\n");
 
 		/*
@@ -861,200 +862,200 @@ wakeup_secondary_cpu_via_init(int phys_apicid, unsigned long start_eip)
 		/* Target chip */
 		/* Boot on the stack */
 		/* Kick the second */
-		apic_icr_write(APIC_DM_STARTUP | (start_eip >> 12),
+		apic_icr_ग_लिखो(APIC_DM_STARTUP | (start_eip >> 12),
 			       phys_apicid);
 
 		/*
-		 * Give the other CPU some time to accept the IPI.
+		 * Give the other CPU some समय to accept the IPI.
 		 */
-		if (init_udelay == 0)
+		अगर (init_udelay == 0)
 			udelay(10);
-		else
+		अन्यथा
 			udelay(300);
 
 		pr_debug("Startup point 1\n");
 
 		pr_debug("Waiting for send to finish...\n");
-		send_status = safe_apic_wait_icr_idle();
+		send_status = safe_apic_रुको_icr_idle();
 
 		/*
-		 * Give the other CPU some time to accept the IPI.
+		 * Give the other CPU some समय to accept the IPI.
 		 */
-		if (init_udelay == 0)
+		अगर (init_udelay == 0)
 			udelay(10);
-		else
+		अन्यथा
 			udelay(200);
 
-		if (maxlvt > 3)		/* Due to the Pentium erratum 3AP.  */
-			apic_write(APIC_ESR, 0);
-		accept_status = (apic_read(APIC_ESR) & 0xEF);
-		if (send_status || accept_status)
-			break;
-	}
+		अगर (maxlvt > 3)		/* Due to the Pentium erratum 3AP.  */
+			apic_ग_लिखो(APIC_ESR, 0);
+		accept_status = (apic_पढ़ो(APIC_ESR) & 0xEF);
+		अगर (send_status || accept_status)
+			अवरोध;
+	पूर्ण
 	pr_debug("After Startup\n");
 
-	if (send_status)
+	अगर (send_status)
 		pr_err("APIC never delivered???\n");
-	if (accept_status)
+	अगर (accept_status)
 		pr_err("APIC delivery error (%lx)\n", accept_status);
 
-	return (send_status | accept_status);
-}
+	वापस (send_status | accept_status);
+पूर्ण
 
-/* reduce the number of lines printed when booting a large cpu count system */
-static void announce_cpu(int cpu, int apicid)
-{
-	static int current_node = NUMA_NO_NODE;
-	int node = early_cpu_to_node(cpu);
-	static int width, node_width;
+/* reduce the number of lines prपूर्णांकed when booting a large cpu count प्रणाली */
+अटल व्योम announce_cpu(पूर्णांक cpu, पूर्णांक apicid)
+अणु
+	अटल पूर्णांक current_node = NUMA_NO_NODE;
+	पूर्णांक node = early_cpu_to_node(cpu);
+	अटल पूर्णांक width, node_width;
 
-	if (!width)
+	अगर (!width)
 		width = num_digits(num_possible_cpus()) + 1; /* + '#' sign */
 
-	if (!node_width)
+	अगर (!node_width)
 		node_width = num_digits(num_possible_nodes()) + 1; /* + '#' */
 
-	if (cpu == 1)
-		printk(KERN_INFO "x86: Booting SMP configuration:\n");
+	अगर (cpu == 1)
+		prपूर्णांकk(KERN_INFO "x86: Booting SMP configuration:\n");
 
-	if (system_state < SYSTEM_RUNNING) {
-		if (node != current_node) {
-			if (current_node > (-1))
+	अगर (प्रणाली_state < SYSTEM_RUNNING) अणु
+		अगर (node != current_node) अणु
+			अगर (current_node > (-1))
 				pr_cont("\n");
 			current_node = node;
 
-			printk(KERN_INFO ".... node %*s#%d, CPUs:  ",
+			prपूर्णांकk(KERN_INFO ".... node %*s#%d, CPUs:  ",
 			       node_width - num_digits(node), " ", node);
-		}
+		पूर्ण
 
-		/* Add padding for the BSP */
-		if (cpu == 1)
+		/* Add padding क्रम the BSP */
+		अगर (cpu == 1)
 			pr_cont("%*s", width + 1, " ");
 
 		pr_cont("%*s#%d", width - num_digits(cpu), " ", cpu);
 
-	} else
+	पूर्ण अन्यथा
 		pr_info("Booting Node %d Processor %d APIC 0x%x\n",
 			node, cpu, apicid);
-}
+पूर्ण
 
-static int wakeup_cpu0_nmi(unsigned int cmd, struct pt_regs *regs)
-{
-	int cpu;
+अटल पूर्णांक wakeup_cpu0_nmi(अचिन्हित पूर्णांक cmd, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक cpu;
 
 	cpu = smp_processor_id();
-	if (cpu == 0 && !cpu_online(cpu) && enable_start_cpu0)
-		return NMI_HANDLED;
+	अगर (cpu == 0 && !cpu_online(cpu) && enable_start_cpu0)
+		वापस NMI_HANDLED;
 
-	return NMI_DONE;
-}
+	वापस NMI_DONE;
+पूर्ण
 
 /*
  * Wake up AP by INIT, INIT, STARTUP sequence.
  *
- * Instead of waiting for STARTUP after INITs, BSP will execute the BIOS
- * boot-strap code which is not a desired behavior for waking up BSP. To
- * void the boot-strap code, wake up CPU0 by NMI instead.
+ * Instead of रुकोing क्रम STARTUP after INITs, BSP will execute the BIOS
+ * boot-strap code which is not a desired behavior क्रम waking up BSP. To
+ * व्योम the boot-strap code, wake up CPU0 by NMI instead.
  *
  * This works to wake up soft offlined CPU0 only. If CPU0 is hard offlined
- * (i.e. physically hot removed and then hot added), NMI won't wake it up.
- * We'll change this code in the future to wake up hard offlined CPU0 if
- * real platform and request are available.
+ * (i.e. physically hot हटाओd and then hot added), NMI won't wake it up.
+ * We'll change this code in the future to wake up hard offlined CPU0 अगर
+ * real platक्रमm and request are available.
  */
-static int
-wakeup_cpu_via_init_nmi(int cpu, unsigned long start_ip, int apicid,
-	       int *cpu0_nmi_registered)
-{
-	int id;
-	int boot_error;
+अटल पूर्णांक
+wakeup_cpu_via_init_nmi(पूर्णांक cpu, अचिन्हित दीर्घ start_ip, पूर्णांक apicid,
+	       पूर्णांक *cpu0_nmi_रेजिस्टरed)
+अणु
+	पूर्णांक id;
+	पूर्णांक boot_error;
 
 	preempt_disable();
 
 	/*
 	 * Wake up AP by INIT, INIT, STARTUP sequence.
 	 */
-	if (cpu) {
+	अगर (cpu) अणु
 		boot_error = wakeup_secondary_cpu_via_init(apicid, start_ip);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Wake up BSP by nmi.
 	 *
 	 * Register a NMI handler to help wake up CPU0.
 	 */
-	boot_error = register_nmi_handler(NMI_LOCAL,
+	boot_error = रेजिस्टर_nmi_handler(NMI_LOCAL,
 					  wakeup_cpu0_nmi, 0, "wake_cpu0");
 
-	if (!boot_error) {
+	अगर (!boot_error) अणु
 		enable_start_cpu0 = 1;
-		*cpu0_nmi_registered = 1;
+		*cpu0_nmi_रेजिस्टरed = 1;
 		id = apic->dest_mode_logical ? cpu0_logical_apicid : apicid;
 		boot_error = wakeup_secondary_cpu_via_nmi(id, start_ip);
-	}
+	पूर्ण
 
 out:
 	preempt_enable();
 
-	return boot_error;
-}
+	वापस boot_error;
+पूर्ण
 
-int common_cpu_up(unsigned int cpu, struct task_struct *idle)
-{
-	int ret;
+पूर्णांक common_cpu_up(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	पूर्णांक ret;
 
-	/* Just in case we booted with a single CPU. */
+	/* Just in हाल we booted with a single CPU. */
 	alternatives_enable_smp();
 
 	per_cpu(current_task, cpu) = idle;
 	cpu_init_stack_canary(cpu, idle);
 
-	/* Initialize the interrupt stack(s) */
+	/* Initialize the पूर्णांकerrupt stack(s) */
 	ret = irq_init_percpu_irqstack(cpu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-#ifdef CONFIG_X86_32
-	/* Stack for startup_32 can be just as for start_secondary onwards */
+#अगर_घोषित CONFIG_X86_32
+	/* Stack क्रम startup_32 can be just as क्रम start_secondary onwards */
 	per_cpu(cpu_current_top_of_stack, cpu) = task_top_of_stack(idle);
-#else
+#अन्यथा
 	initial_gs = per_cpu_offset(cpu);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
- * NOTE - on most systems this is a PHYSICAL apic ID, but on multiquad
+ * NOTE - on most प्रणालीs this is a PHYSICAL apic ID, but on multiquad
  * (ie clustered apic addressing mode), this is a LOGICAL apic ID.
- * Returns zero if CPU booted OK, else error code from
+ * Returns zero अगर CPU booted OK, अन्यथा error code from
  * ->wakeup_secondary_cpu.
  */
-static int do_boot_cpu(int apicid, int cpu, struct task_struct *idle,
-		       int *cpu0_nmi_registered)
-{
+अटल पूर्णांक करो_boot_cpu(पूर्णांक apicid, पूर्णांक cpu, काष्ठा task_काष्ठा *idle,
+		       पूर्णांक *cpu0_nmi_रेजिस्टरed)
+अणु
 	/* start_ip had better be page-aligned! */
-	unsigned long start_ip = real_mode_header->trampoline_start;
+	अचिन्हित दीर्घ start_ip = real_mode_header->trampoline_start;
 
-	unsigned long boot_error = 0;
-	unsigned long timeout;
+	अचिन्हित दीर्घ boot_error = 0;
+	अचिन्हित दीर्घ समयout;
 
-	idle->thread.sp = (unsigned long)task_pt_regs(idle);
-	early_gdt_descr.address = (unsigned long)get_cpu_gdt_rw(cpu);
-	initial_code = (unsigned long)start_secondary;
-	initial_stack  = idle->thread.sp;
+	idle->thपढ़ो.sp = (अचिन्हित दीर्घ)task_pt_regs(idle);
+	early_gdt_descr.address = (अचिन्हित दीर्घ)get_cpu_gdt_rw(cpu);
+	initial_code = (अचिन्हित दीर्घ)start_secondary;
+	initial_stack  = idle->thपढ़ो.sp;
 
-	/* Enable the espfix hack for this CPU */
+	/* Enable the espfix hack क्रम this CPU */
 	init_espfix_ap(cpu);
 
 	/* So we see what's up */
 	announce_cpu(cpu, apicid);
 
 	/*
-	 * This grunge runs the startup process for
+	 * This grunge runs the startup process क्रम
 	 * the targeted processor.
 	 */
 
-	if (x86_platform.legacy.warm_reset) {
+	अगर (x86_platक्रमm.legacy.warm_reset) अणु
 
 		pr_debug("Setting warm reset code and vector.\n");
 
@@ -1062,167 +1063,167 @@ static int do_boot_cpu(int apicid, int cpu, struct task_struct *idle,
 		/*
 		 * Be paranoid about clearing APIC errors.
 		*/
-		if (APIC_INTEGRATED(boot_cpu_apic_version)) {
-			apic_write(APIC_ESR, 0);
-			apic_read(APIC_ESR);
-		}
-	}
+		अगर (APIC_INTEGRATED(boot_cpu_apic_version)) अणु
+			apic_ग_लिखो(APIC_ESR, 0);
+			apic_पढ़ो(APIC_ESR);
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * AP might wait on cpu_callout_mask in cpu_init() with
-	 * cpu_initialized_mask set if previous attempt to online
-	 * it timed-out. Clear cpu_initialized_mask so that after
+	 * AP might रुको on cpu_callout_mask in cpu_init() with
+	 * cpu_initialized_mask set अगर previous attempt to online
+	 * it समयd-out. Clear cpu_initialized_mask so that after
 	 * INIT/SIPI it could start with a clean state.
 	 */
 	cpumask_clear_cpu(cpu, cpu_initialized_mask);
 	smp_mb();
 
 	/*
-	 * Wake up a CPU in difference cases:
-	 * - Use the method in the APIC driver if it's defined
+	 * Wake up a CPU in dअगरference हालs:
+	 * - Use the method in the APIC driver अगर it's defined
 	 * Otherwise,
-	 * - Use an INIT boot APIC message for APs or NMI for BSP.
+	 * - Use an INIT boot APIC message क्रम APs or NMI क्रम BSP.
 	 */
-	if (apic->wakeup_secondary_cpu)
+	अगर (apic->wakeup_secondary_cpu)
 		boot_error = apic->wakeup_secondary_cpu(apicid, start_ip);
-	else
+	अन्यथा
 		boot_error = wakeup_cpu_via_init_nmi(cpu, start_ip, apicid,
-						     cpu0_nmi_registered);
+						     cpu0_nmi_रेजिस्टरed);
 
-	if (!boot_error) {
+	अगर (!boot_error) अणु
 		/*
-		 * Wait 10s total for first sign of life from AP
+		 * Wait 10s total क्रम first sign of lअगरe from AP
 		 */
 		boot_error = -1;
-		timeout = jiffies + 10*HZ;
-		while (time_before(jiffies, timeout)) {
-			if (cpumask_test_cpu(cpu, cpu_initialized_mask)) {
+		समयout = jअगरfies + 10*HZ;
+		जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+			अगर (cpumask_test_cpu(cpu, cpu_initialized_mask)) अणु
 				/*
 				 * Tell AP to proceed with initialization
 				 */
 				cpumask_set_cpu(cpu, cpu_callout_mask);
 				boot_error = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			schedule();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!boot_error) {
+	अगर (!boot_error) अणु
 		/*
 		 * Wait till AP completes initial initialization
 		 */
-		while (!cpumask_test_cpu(cpu, cpu_callin_mask)) {
+		जबतक (!cpumask_test_cpu(cpu, cpu_callin_mask)) अणु
 			/*
-			 * Allow other tasks to run while we wait for the
+			 * Allow other tasks to run जबतक we रुको क्रम the
 			 * AP to come online. This also gives a chance
-			 * for the MTRR work(triggered by the AP coming online)
+			 * क्रम the MTRR work(triggered by the AP coming online)
 			 * to be completed in the stop machine context.
 			 */
 			schedule();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (x86_platform.legacy.warm_reset) {
+	अगर (x86_platक्रमm.legacy.warm_reset) अणु
 		/*
 		 * Cleanup possible dangling ends...
 		 */
 		smpboot_restore_warm_reset_vector();
-	}
+	पूर्ण
 
-	return boot_error;
-}
+	वापस boot_error;
+पूर्ण
 
-int native_cpu_up(unsigned int cpu, struct task_struct *tidle)
-{
-	int apicid = apic->cpu_present_to_apicid(cpu);
-	int cpu0_nmi_registered = 0;
-	unsigned long flags;
-	int err, ret = 0;
+पूर्णांक native_cpu_up(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *tidle)
+अणु
+	पूर्णांक apicid = apic->cpu_present_to_apicid(cpu);
+	पूर्णांक cpu0_nmi_रेजिस्टरed = 0;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err, ret = 0;
 
-	lockdep_assert_irqs_enabled();
+	lockdep_निश्चित_irqs_enabled();
 
 	pr_debug("++++++++++++++++++++=_---CPU UP  %u\n", cpu);
 
-	if (apicid == BAD_APICID ||
+	अगर (apicid == BAD_APICID ||
 	    !physid_isset(apicid, phys_cpu_present_map) ||
-	    !apic->apic_id_valid(apicid)) {
+	    !apic->apic_id_valid(apicid)) अणु
 		pr_err("%s: bad cpu %d\n", __func__, cpu);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Already booted CPU?
+	 * Alपढ़ोy booted CPU?
 	 */
-	if (cpumask_test_cpu(cpu, cpu_callin_mask)) {
+	अगर (cpumask_test_cpu(cpu, cpu_callin_mask)) अणु
 		pr_debug("do_boot_cpu %d Already started\n", cpu);
-		return -ENOSYS;
-	}
+		वापस -ENOSYS;
+	पूर्ण
 
 	/*
-	 * Save current MTRR state in case it was changed since early boot
+	 * Save current MTRR state in हाल it was changed since early boot
 	 * (e.g. by the ACPI SMI) to initialize new CPUs with MTRRs in sync:
 	 */
 	mtrr_save_state();
 
 	/* x86 CPUs take themselves offline, so delayed offline is OK. */
 	err = cpu_check_up_prepare(cpu);
-	if (err && err != -EBUSY)
-		return err;
+	अगर (err && err != -EBUSY)
+		वापस err;
 
 	/* the FPU context is blank, nobody can own it */
-	per_cpu(fpu_fpregs_owner_ctx, cpu) = NULL;
+	per_cpu(fpu_fpregs_owner_ctx, cpu) = शून्य;
 
 	err = common_cpu_up(cpu, tidle);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = do_boot_cpu(apicid, cpu, tidle, &cpu0_nmi_registered);
-	if (err) {
+	err = करो_boot_cpu(apicid, cpu, tidle, &cpu0_nmi_रेजिस्टरed);
+	अगर (err) अणु
 		pr_err("do_boot_cpu failed(%d) to wakeup CPU#%u\n", err, cpu);
 		ret = -EIO;
-		goto unreg_nmi;
-	}
+		जाओ unreg_nmi;
+	पूर्ण
 
 	/*
 	 * Check TSC synchronization with the AP (keep irqs disabled
-	 * while doing so):
+	 * जबतक करोing so):
 	 */
 	local_irq_save(flags);
 	check_tsc_sync_source(cpu);
 	local_irq_restore(flags);
 
-	while (!cpu_online(cpu)) {
+	जबतक (!cpu_online(cpu)) अणु
 		cpu_relax();
-		touch_nmi_watchdog();
-	}
+		touch_nmi_watchकरोg();
+	पूर्ण
 
 unreg_nmi:
 	/*
 	 * Clean up the nmi handler. Do this after the callin and callout sync
-	 * to avoid impact of possible long unregister time.
+	 * to aव्योम impact of possible दीर्घ unरेजिस्टर समय.
 	 */
-	if (cpu0_nmi_registered)
-		unregister_nmi_handler(NMI_LOCAL, "wake_cpu0");
+	अगर (cpu0_nmi_रेजिस्टरed)
+		unरेजिस्टर_nmi_handler(NMI_LOCAL, "wake_cpu0");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * arch_disable_smp_support() - disables SMP support for x86 at runtime
+ * arch_disable_smp_support() - disables SMP support क्रम x86 at runसमय
  */
-void arch_disable_smp_support(void)
-{
+व्योम arch_disable_smp_support(व्योम)
+अणु
 	disable_ioapic_support();
-}
+पूर्ण
 
 /*
  * Fall back to non SMP mode after errors.
  *
  * RED-PEN audit/test this more. I bet there is more state messed up here.
  */
-static __init void disable_smp(void)
-{
+अटल __init व्योम disable_smp(व्योम)
+अणु
 	pr_info("SMP disabled\n");
 
 	disable_ioapic_support();
@@ -1230,118 +1231,118 @@ static __init void disable_smp(void)
 	init_cpu_present(cpumask_of(0));
 	init_cpu_possible(cpumask_of(0));
 
-	if (smp_found_config)
+	अगर (smp_found_config)
 		physid_set_mask_of_physid(boot_cpu_physical_apicid, &phys_cpu_present_map);
-	else
+	अन्यथा
 		physid_set_mask_of_physid(0, &phys_cpu_present_map);
 	cpumask_set_cpu(0, topology_sibling_cpumask(0));
 	cpumask_set_cpu(0, topology_core_cpumask(0));
 	cpumask_set_cpu(0, topology_die_cpumask(0));
-}
+पूर्ण
 
 /*
  * Various sanity checks.
  */
-static void __init smp_sanity_check(void)
-{
+अटल व्योम __init smp_sanity_check(व्योम)
+अणु
 	preempt_disable();
 
-#if !defined(CONFIG_X86_BIGSMP) && defined(CONFIG_X86_32)
-	if (def_to_bigsmp && nr_cpu_ids > 8) {
-		unsigned int cpu;
-		unsigned nr;
+#अगर !defined(CONFIG_X86_BIGSMP) && defined(CONFIG_X86_32)
+	अगर (def_to_bigsmp && nr_cpu_ids > 8) अणु
+		अचिन्हित पूर्णांक cpu;
+		अचिन्हित nr;
 
 		pr_warn("More than 8 CPUs detected - skipping them\n"
 			"Use CONFIG_X86_BIGSMP\n");
 
 		nr = 0;
-		for_each_present_cpu(cpu) {
-			if (nr >= 8)
+		क्रम_each_present_cpu(cpu) अणु
+			अगर (nr >= 8)
 				set_cpu_present(cpu, false);
 			nr++;
-		}
+		पूर्ण
 
 		nr = 0;
-		for_each_possible_cpu(cpu) {
-			if (nr >= 8)
+		क्रम_each_possible_cpu(cpu) अणु
+			अगर (nr >= 8)
 				set_cpu_possible(cpu, false);
 			nr++;
-		}
+		पूर्ण
 
 		nr_cpu_ids = 8;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (!physid_isset(hard_smp_processor_id(), phys_cpu_present_map)) {
+	अगर (!physid_isset(hard_smp_processor_id(), phys_cpu_present_map)) अणु
 		pr_warn("weird, boot CPU (#%d) not listed by the BIOS\n",
 			hard_smp_processor_id());
 
 		physid_set(hard_smp_processor_id(), phys_cpu_present_map);
-	}
+	पूर्ण
 
 	/*
 	 * Should not be necessary because the MP table should list the boot
-	 * CPU too, but we do it for the sake of robustness anyway.
+	 * CPU too, but we करो it क्रम the sake of robustness anyway.
 	 */
-	if (!apic->check_phys_apicid_present(boot_cpu_physical_apicid)) {
+	अगर (!apic->check_phys_apicid_present(boot_cpu_physical_apicid)) अणु
 		pr_notice("weird, boot CPU (#%d) not listed by the BIOS\n",
 			  boot_cpu_physical_apicid);
 		physid_set(hard_smp_processor_id(), phys_cpu_present_map);
-	}
+	पूर्ण
 	preempt_enable();
-}
+पूर्ण
 
-static void __init smp_cpu_index_default(void)
-{
-	int i;
-	struct cpuinfo_x86 *c;
+अटल व्योम __init smp_cpu_index_शेष(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा cpuinfo_x86 *c;
 
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		c = &cpu_data(i);
 		/* mark all to hotplug */
 		c->cpu_index = nr_cpu_ids;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init smp_get_logical_apicid(void)
-{
-	if (x2apic_mode)
-		cpu0_logical_apicid = apic_read(APIC_LDR);
-	else
-		cpu0_logical_apicid = GET_APIC_LOGICAL_ID(apic_read(APIC_LDR));
-}
+अटल व्योम __init smp_get_logical_apicid(व्योम)
+अणु
+	अगर (x2apic_mode)
+		cpu0_logical_apicid = apic_पढ़ो(APIC_LDR);
+	अन्यथा
+		cpu0_logical_apicid = GET_APIC_LOGICAL_ID(apic_पढ़ो(APIC_LDR));
+पूर्ण
 
 /*
- * Prepare for SMP bootup.
+ * Prepare क्रम SMP bootup.
  * @max_cpus: configured maximum number of CPUs, It is a legacy parameter
- *            for common interface support.
+ *            क्रम common पूर्णांकerface support.
  */
-void __init native_smp_prepare_cpus(unsigned int max_cpus)
-{
-	unsigned int i;
+व्योम __init native_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	smp_cpu_index_default();
+	smp_cpu_index_शेष();
 
 	/*
-	 * Setup boot CPU information
+	 * Setup boot CPU inक्रमmation
 	 */
 	smp_store_boot_cpu_info(); /* Final full version of the data */
 	cpumask_copy(cpu_callin_mask, cpumask_of(0));
 	mb();
 
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		zalloc_cpumask_var(&per_cpu(cpu_sibling_map, i), GFP_KERNEL);
 		zalloc_cpumask_var(&per_cpu(cpu_core_map, i), GFP_KERNEL);
 		zalloc_cpumask_var(&per_cpu(cpu_die_map, i), GFP_KERNEL);
 		zalloc_cpumask_var(&per_cpu(cpu_llc_shared_map, i), GFP_KERNEL);
-	}
+	पूर्ण
 
 	/*
-	 * Set 'default' x86 topology, this matches default_topology() in that
+	 * Set 'default' x86 topology, this matches शेष_topology() in that
 	 * it has NUMA nodes as a topology level. See also
-	 * native_smp_cpus_done().
+	 * native_smp_cpus_करोne().
 	 *
-	 * Must be done before set_cpus_sibling_map() is ran.
+	 * Must be करोne beक्रमe set_cpus_sibling_map() is ran.
 	 */
 	set_sched_topology(x86_topology);
 
@@ -1349,214 +1350,214 @@ void __init native_smp_prepare_cpus(unsigned int max_cpus)
 	init_freq_invariance(false, false);
 	smp_sanity_check();
 
-	switch (apic_intr_mode) {
-	case APIC_PIC:
-	case APIC_VIRTUAL_WIRE_NO_CONFIG:
+	चयन (apic_पूर्णांकr_mode) अणु
+	हाल APIC_PIC:
+	हाल APIC_VIRTUAL_WIRE_NO_CONFIG:
 		disable_smp();
-		return;
-	case APIC_SYMMETRIC_IO_NO_ROUTING:
+		वापस;
+	हाल APIC_SYMMETRIC_IO_NO_ROUTING:
 		disable_smp();
-		/* Setup local timer */
-		x86_init.timers.setup_percpu_clockev();
-		return;
-	case APIC_VIRTUAL_WIRE:
-	case APIC_SYMMETRIC_IO:
-		break;
-	}
+		/* Setup local समयr */
+		x86_init.समयrs.setup_percpu_घड़ीev();
+		वापस;
+	हाल APIC_VIRTUAL_WIRE:
+	हाल APIC_SYMMETRIC_IO:
+		अवरोध;
+	पूर्ण
 
-	/* Setup local timer */
-	x86_init.timers.setup_percpu_clockev();
+	/* Setup local समयr */
+	x86_init.समयrs.setup_percpu_घड़ीev();
 
 	smp_get_logical_apicid();
 
 	pr_info("CPU0: ");
-	print_cpu_info(&cpu_data(0));
+	prपूर्णांक_cpu_info(&cpu_data(0));
 
-	uv_system_init();
+	uv_प्रणाली_init();
 
 	set_mtrr_aps_delayed_init();
 
 	smp_quirk_init_udelay();
 
 	speculative_store_bypass_ht_init();
-}
+पूर्ण
 
-void arch_thaw_secondary_cpus_begin(void)
-{
+व्योम arch_thaw_secondary_cpus_begin(व्योम)
+अणु
 	set_mtrr_aps_delayed_init();
-}
+पूर्ण
 
-void arch_thaw_secondary_cpus_end(void)
-{
+व्योम arch_thaw_secondary_cpus_end(व्योम)
+अणु
 	mtrr_aps_init();
-}
+पूर्ण
 
 /*
- * Early setup to make printk work.
+ * Early setup to make prपूर्णांकk work.
  */
-void __init native_smp_prepare_boot_cpu(void)
-{
-	int me = smp_processor_id();
-	switch_to_new_gdt(me);
-	/* already set me in cpu_online_mask in boot_cpu_init() */
+व्योम __init native_smp_prepare_boot_cpu(व्योम)
+अणु
+	पूर्णांक me = smp_processor_id();
+	चयन_to_new_gdt(me);
+	/* alपढ़ोy set me in cpu_online_mask in boot_cpu_init() */
 	cpumask_set_cpu(me, cpu_callout_mask);
 	cpu_set_state_online(me);
 	native_pv_lock_init();
-}
+पूर्ण
 
-void __init calculate_max_logical_packages(void)
-{
-	int ncpus;
+व्योम __init calculate_max_logical_packages(व्योम)
+अणु
+	पूर्णांक ncpus;
 
 	/*
-	 * Today neither Intel nor AMD support heterogeneous systems so
+	 * Today neither Intel nor AMD support heterogeneous प्रणालीs so
 	 * extrapolate the boot cpu's data to all packages.
 	 */
-	ncpus = cpu_data(0).booted_cores * topology_max_smt_threads();
+	ncpus = cpu_data(0).booted_cores * topology_max_smt_thपढ़ोs();
 	__max_logical_packages = DIV_ROUND_UP(total_cpus, ncpus);
 	pr_info("Max logical packages: %u\n", __max_logical_packages);
-}
+पूर्ण
 
-void __init native_smp_cpus_done(unsigned int max_cpus)
-{
+व्योम __init native_smp_cpus_करोne(अचिन्हित पूर्णांक max_cpus)
+अणु
 	pr_debug("Boot done\n");
 
 	calculate_max_logical_packages();
 
-	if (x86_has_numa_in_package)
+	अगर (x86_has_numa_in_package)
 		set_sched_topology(x86_numa_in_package_topology);
 
 	nmi_selftest();
-	impress_friends();
+	impress_मित्रs();
 	mtrr_aps_init();
-}
+पूर्ण
 
-static int __initdata setup_possible_cpus = -1;
-static int __init _setup_possible_cpus(char *str)
-{
+अटल पूर्णांक __initdata setup_possible_cpus = -1;
+अटल पूर्णांक __init _setup_possible_cpus(अक्षर *str)
+अणु
 	get_option(&str, &setup_possible_cpus);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("possible_cpus", _setup_possible_cpus);
 
 
 /*
- * cpu_possible_mask should be static, it cannot change as cpu's
- * are onlined, or offlined. The reason is per-cpu data-structures
- * are allocated by some modules at init time, and don't expect to
- * do this dynamically on cpu arrival/departure.
+ * cpu_possible_mask should be अटल, it cannot change as cpu's
+ * are onlined, or offlined. The reason is per-cpu data-काष्ठाures
+ * are allocated by some modules at init समय, and करोn't expect to
+ * करो this dynamically on cpu arrival/departure.
  * cpu_present_mask on the other hand can change dynamically.
- * In case when cpu_hotplug is not compiled, then we resort to current
+ * In हाल when cpu_hotplug is not compiled, then we resort to current
  * behaviour, which is cpu_possible == cpu_present.
  * - Ashok Raj
  *
  * Three ways to find out the number of additional hotplug CPUs:
- * - If the BIOS specified disabled CPUs in ACPI/mptables use that.
- * - The user can overwrite it with possible_cpus=NUM
- * - Otherwise don't reserve additional CPUs.
- * We do this because additional CPUs waste a lot of memory.
+ * - If the BIOS specअगरied disabled CPUs in ACPI/mptables use that.
+ * - The user can overग_लिखो it with possible_cpus=NUM
+ * - Otherwise करोn't reserve additional CPUs.
+ * We करो this because additional CPUs waste a lot of memory.
  * -AK
  */
-__init void prefill_possible_map(void)
-{
-	int i, possible;
+__init व्योम prefill_possible_map(व्योम)
+अणु
+	पूर्णांक i, possible;
 
 	/* No boot processor was found in mptable or ACPI MADT */
-	if (!num_processors) {
-		if (boot_cpu_has(X86_FEATURE_APIC)) {
-			int apicid = boot_cpu_physical_apicid;
-			int cpu = hard_smp_processor_id();
+	अगर (!num_processors) अणु
+		अगर (boot_cpu_has(X86_FEATURE_APIC)) अणु
+			पूर्णांक apicid = boot_cpu_physical_apicid;
+			पूर्णांक cpu = hard_smp_processor_id();
 
 			pr_warn("Boot CPU (id %d) not listed by BIOS\n", cpu);
 
-			/* Make sure boot cpu is enumerated */
-			if (apic->cpu_present_to_apicid(0) == BAD_APICID &&
+			/* Make sure boot cpu is क्रमागतerated */
+			अगर (apic->cpu_present_to_apicid(0) == BAD_APICID &&
 			    apic->apic_id_valid(apicid))
 				generic_processor_info(apicid, boot_cpu_apic_version);
-		}
+		पूर्ण
 
-		if (!num_processors)
+		अगर (!num_processors)
 			num_processors = 1;
-	}
+	पूर्ण
 
 	i = setup_max_cpus ?: 1;
-	if (setup_possible_cpus == -1) {
+	अगर (setup_possible_cpus == -1) अणु
 		possible = num_processors;
-#ifdef CONFIG_HOTPLUG_CPU
-		if (setup_max_cpus)
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+		अगर (setup_max_cpus)
 			possible += disabled_cpus;
-#else
-		if (possible > i)
+#अन्यथा
+		अगर (possible > i)
 			possible = i;
-#endif
-	} else
+#पूर्ण_अगर
+	पूर्ण अन्यथा
 		possible = setup_possible_cpus;
 
-	total_cpus = max_t(int, possible, num_processors + disabled_cpus);
+	total_cpus = max_t(पूर्णांक, possible, num_processors + disabled_cpus);
 
 	/* nr_cpu_ids could be reduced via nr_cpus= */
-	if (possible > nr_cpu_ids) {
+	अगर (possible > nr_cpu_ids) अणु
 		pr_warn("%d Processors exceeds NR_CPUS limit of %u\n",
 			possible, nr_cpu_ids);
 		possible = nr_cpu_ids;
-	}
+	पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-	if (!setup_max_cpus)
-#endif
-	if (possible > i) {
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+	अगर (!setup_max_cpus)
+#पूर्ण_अगर
+	अगर (possible > i) अणु
 		pr_warn("%d Processors exceeds max_cpus limit of %u\n",
 			possible, setup_max_cpus);
 		possible = i;
-	}
+	पूर्ण
 
 	nr_cpu_ids = possible;
 
 	pr_info("Allowing %d CPUs, %d hotplug CPUs\n",
-		possible, max_t(int, possible - num_processors, 0));
+		possible, max_t(पूर्णांक, possible - num_processors, 0));
 
 	reset_cpu_possible_mask();
 
-	for (i = 0; i < possible; i++)
+	क्रम (i = 0; i < possible; i++)
 		set_cpu_possible(i, true);
-}
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 
-/* Recompute SMT state for all CPUs on offline */
-static void recompute_smt_state(void)
-{
-	int max_threads, cpu;
+/* Recompute SMT state क्रम all CPUs on offline */
+अटल व्योम recompute_smt_state(व्योम)
+अणु
+	पूर्णांक max_thपढ़ोs, cpu;
 
-	max_threads = 0;
-	for_each_online_cpu (cpu) {
-		int threads = cpumask_weight(topology_sibling_cpumask(cpu));
+	max_thपढ़ोs = 0;
+	क्रम_each_online_cpu (cpu) अणु
+		पूर्णांक thपढ़ोs = cpumask_weight(topology_sibling_cpumask(cpu));
 
-		if (threads > max_threads)
-			max_threads = threads;
-	}
-	__max_smt_threads = max_threads;
-}
+		अगर (thपढ़ोs > max_thपढ़ोs)
+			max_thपढ़ोs = thपढ़ोs;
+	पूर्ण
+	__max_smt_thपढ़ोs = max_thपढ़ोs;
+पूर्ण
 
-static void remove_siblinginfo(int cpu)
-{
-	int sibling;
-	struct cpuinfo_x86 *c = &cpu_data(cpu);
+अटल व्योम हटाओ_siblinginfo(पूर्णांक cpu)
+अणु
+	पूर्णांक sibling;
+	काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
 
-	for_each_cpu(sibling, topology_core_cpumask(cpu)) {
+	क्रम_each_cpu(sibling, topology_core_cpumask(cpu)) अणु
 		cpumask_clear_cpu(cpu, topology_core_cpumask(sibling));
 		/*/
-		 * last thread sibling in this cpu core going down
+		 * last thपढ़ो sibling in this cpu core going करोwn
 		 */
-		if (cpumask_weight(topology_sibling_cpumask(cpu)) == 1)
+		अगर (cpumask_weight(topology_sibling_cpumask(cpu)) == 1)
 			cpu_data(sibling).booted_cores--;
-	}
+	पूर्ण
 
-	for_each_cpu(sibling, topology_die_cpumask(cpu))
+	क्रम_each_cpu(sibling, topology_die_cpumask(cpu))
 		cpumask_clear_cpu(cpu, topology_die_cpumask(sibling));
-	for_each_cpu(sibling, topology_sibling_cpumask(cpu))
+	क्रम_each_cpu(sibling, topology_sibling_cpumask(cpu))
 		cpumask_clear_cpu(cpu, topology_sibling_cpumask(sibling));
-	for_each_cpu(sibling, cpu_llc_shared_mask(cpu))
+	क्रम_each_cpu(sibling, cpu_llc_shared_mask(cpu))
 		cpumask_clear_cpu(cpu, cpu_llc_shared_mask(sibling));
 	cpumask_clear(cpu_llc_shared_mask(cpu));
 	cpumask_clear(topology_sibling_cpumask(cpu));
@@ -1566,39 +1567,39 @@ static void remove_siblinginfo(int cpu)
 	c->booted_cores = 0;
 	cpumask_clear_cpu(cpu, cpu_sibling_setup_mask);
 	recompute_smt_state();
-}
+पूर्ण
 
-static void remove_cpu_from_maps(int cpu)
-{
+अटल व्योम हटाओ_cpu_from_maps(पूर्णांक cpu)
+अणु
 	set_cpu_online(cpu, false);
 	cpumask_clear_cpu(cpu, cpu_callout_mask);
 	cpumask_clear_cpu(cpu, cpu_callin_mask);
 	/* was set by cpu_init() */
 	cpumask_clear_cpu(cpu, cpu_initialized_mask);
-	numa_remove_cpu(cpu);
-}
+	numa_हटाओ_cpu(cpu);
+पूर्ण
 
-void cpu_disable_common(void)
-{
-	int cpu = smp_processor_id();
+व्योम cpu_disable_common(व्योम)
+अणु
+	पूर्णांक cpu = smp_processor_id();
 
-	remove_siblinginfo(cpu);
+	हटाओ_siblinginfo(cpu);
 
-	/* It's now safe to remove this processor from the online map */
+	/* It's now safe to हटाओ this processor from the online map */
 	lock_vector_lock();
-	remove_cpu_from_maps(cpu);
+	हटाओ_cpu_from_maps(cpu);
 	unlock_vector_lock();
 	fixup_irqs();
 	lapic_offline();
-}
+पूर्ण
 
-int native_cpu_disable(void)
-{
-	int ret;
+पूर्णांक native_cpu_disable(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = lapic_can_unplug_cpu();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	cpu_disable_common();
 
@@ -1610,534 +1611,534 @@ int native_cpu_disable(void)
          * Disabling the APIC must happen after cpu_disable_common()
          * which invokes fixup_irqs().
          *
-         * Disabling the APIC preserves already set bits in IRR, but
-         * an interrupt arriving after disabling the local APIC does not
+         * Disabling the APIC preserves alपढ़ोy set bits in IRR, but
+         * an पूर्णांकerrupt arriving after disabling the local APIC करोes not
          * set the corresponding IRR bit.
          *
-         * fixup_irqs() scans IRR for set bits so it can raise a not
-         * yet handled interrupt on the new destination CPU via an IPI
-         * but obviously it can't do so for IRR bits which are not set.
-         * IOW, interrupts arriving after disabling the local APIC will
+         * fixup_irqs() scans IRR क्रम set bits so it can उठाओ a not
+         * yet handled पूर्णांकerrupt on the new destination CPU via an IPI
+         * but obviously it can't करो so क्रम IRR bits which are not set.
+         * IOW, पूर्णांकerrupts arriving after disabling the local APIC will
          * be lost.
          */
 	apic_soft_disable();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int common_cpu_die(unsigned int cpu)
-{
-	int ret = 0;
+पूर्णांक common_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक ret = 0;
 
-	/* We don't do anything here: idle task is faking death itself. */
+	/* We करोn't करो anything here: idle task is faking death itself. */
 
 	/* They ack this in play_dead() by setting CPU_DEAD */
-	if (cpu_wait_death(cpu, 5)) {
-		if (system_state == SYSTEM_RUNNING)
+	अगर (cpu_रुको_death(cpu, 5)) अणु
+		अगर (प्रणाली_state == SYSTEM_RUNNING)
 			pr_info("CPU %u is now offline\n", cpu);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("CPU %u didn't die...\n", cpu);
 		ret = -1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void native_cpu_die(unsigned int cpu)
-{
+व्योम native_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
 	common_cpu_die(cpu);
-}
+पूर्ण
 
-void play_dead_common(void)
-{
-	idle_task_exit();
+व्योम play_dead_common(व्योम)
+अणु
+	idle_task_निकास();
 
 	/* Ack it */
-	(void)cpu_report_death();
+	(व्योम)cpu_report_death();
 
 	/*
 	 * With physical CPU hotplug, we should halt the cpu
 	 */
 	local_irq_disable();
-}
+पूर्ण
 
 /**
- * cond_wakeup_cpu0 - Wake up CPU0 if needed.
+ * cond_wakeup_cpu0 - Wake up CPU0 अगर needed.
  *
  * If NMI wants to wake up CPU0, start CPU0.
  */
-void cond_wakeup_cpu0(void)
-{
-	if (smp_processor_id() == 0 && enable_start_cpu0)
+व्योम cond_wakeup_cpu0(व्योम)
+अणु
+	अगर (smp_processor_id() == 0 && enable_start_cpu0)
 		start_cpu0();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(cond_wakeup_cpu0);
 
 /*
- * We need to flush the caches before going to sleep, lest we have
+ * We need to flush the caches beक्रमe going to sleep, lest we have
  * dirty data in our caches when we come back up.
  */
-static inline void mwait_play_dead(void)
-{
-	unsigned int eax, ebx, ecx, edx;
-	unsigned int highest_cstate = 0;
-	unsigned int highest_subcstate = 0;
-	void *mwait_ptr;
-	int i;
+अटल अंतरभूत व्योम mरुको_play_dead(व्योम)
+अणु
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx;
+	अचिन्हित पूर्णांक highest_cstate = 0;
+	अचिन्हित पूर्णांक highest_subcstate = 0;
+	व्योम *mरुको_ptr;
+	पूर्णांक i;
 
-	if (boot_cpu_data.x86_vendor == X86_VENDOR_AMD ||
-	    boot_cpu_data.x86_vendor == X86_VENDOR_HYGON)
-		return;
-	if (!this_cpu_has(X86_FEATURE_MWAIT))
-		return;
-	if (!this_cpu_has(X86_FEATURE_CLFLUSH))
-		return;
-	if (__this_cpu_read(cpu_info.cpuid_level) < CPUID_MWAIT_LEAF)
-		return;
+	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_AMD ||
+	    boot_cpu_data.x86_venकरोr == X86_VENDOR_HYGON)
+		वापस;
+	अगर (!this_cpu_has(X86_FEATURE_MWAIT))
+		वापस;
+	अगर (!this_cpu_has(X86_FEATURE_CLFLUSH))
+		वापस;
+	अगर (__this_cpu_पढ़ो(cpu_info.cpuid_level) < CPUID_MWAIT_LEAF)
+		वापस;
 
 	eax = CPUID_MWAIT_LEAF;
 	ecx = 0;
 	native_cpuid(&eax, &ebx, &ecx, &edx);
 
 	/*
-	 * eax will be 0 if EDX enumeration is not valid.
+	 * eax will be 0 अगर EDX क्रमागतeration is not valid.
 	 * Initialized below to cstate, sub_cstate value when EDX is valid.
 	 */
-	if (!(ecx & CPUID5_ECX_EXTENSIONS_SUPPORTED)) {
+	अगर (!(ecx & CPUID5_ECX_EXTENSIONS_SUPPORTED)) अणु
 		eax = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		edx >>= MWAIT_SUBSTATE_SIZE;
-		for (i = 0; i < 7 && edx; i++, edx >>= MWAIT_SUBSTATE_SIZE) {
-			if (edx & MWAIT_SUBSTATE_MASK) {
+		क्रम (i = 0; i < 7 && edx; i++, edx >>= MWAIT_SUBSTATE_SIZE) अणु
+			अगर (edx & MWAIT_SUBSTATE_MASK) अणु
 				highest_cstate = i;
 				highest_subcstate = edx & MWAIT_SUBSTATE_MASK;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		eax = (highest_cstate << MWAIT_SUBSTATE_SIZE) |
 			(highest_subcstate - 1);
-	}
+	पूर्ण
 
 	/*
 	 * This should be a memory location in a cache line which is
 	 * unlikely to be touched by other processors.  The actual
-	 * content is immaterial as it is not actually modified in any way.
+	 * content is immaterial as it is not actually modअगरied in any way.
 	 */
-	mwait_ptr = &current_thread_info()->flags;
+	mरुको_ptr = &current_thपढ़ो_info()->flags;
 
 	wbinvd();
 
-	while (1) {
+	जबतक (1) अणु
 		/*
-		 * The CLFLUSH is a workaround for erratum AAI65 for
+		 * The CLFLUSH is a workaround क्रम erratum AAI65 क्रम
 		 * the Xeon 7400 series.  It's not clear it is actually
-		 * needed, but it should be harmless in either case.
+		 * needed, but it should be harmless in either हाल.
 		 * The WBINVD is insufficient due to the spurious-wakeup
-		 * case where we return around the loop.
+		 * हाल where we वापस around the loop.
 		 */
 		mb();
-		clflush(mwait_ptr);
+		clflush(mरुको_ptr);
 		mb();
-		__monitor(mwait_ptr, 0, 0);
+		__monitor(mरुको_ptr, 0, 0);
 		mb();
-		__mwait(eax, 0);
+		__mरुको(eax, 0);
 
 		cond_wakeup_cpu0();
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hlt_play_dead(void)
-{
-	if (__this_cpu_read(cpu_info.x86) >= 4)
+व्योम hlt_play_dead(व्योम)
+अणु
+	अगर (__this_cpu_पढ़ो(cpu_info.x86) >= 4)
 		wbinvd();
 
-	while (1) {
+	जबतक (1) अणु
 		native_halt();
 
 		cond_wakeup_cpu0();
-	}
-}
+	पूर्ण
+पूर्ण
 
-void native_play_dead(void)
-{
+व्योम native_play_dead(व्योम)
+अणु
 	play_dead_common();
-	tboot_shutdown(TB_SHUTDOWN_WFS);
+	tboot_shutकरोwn(TB_SHUTDOWN_WFS);
 
-	mwait_play_dead();	/* Only returns on failure */
-	if (cpuidle_play_dead())
+	mरुको_play_dead();	/* Only वापसs on failure */
+	अगर (cpuidle_play_dead())
 		hlt_play_dead();
-}
+पूर्ण
 
-#else /* ... !CONFIG_HOTPLUG_CPU */
-int native_cpu_disable(void)
-{
-	return -ENOSYS;
-}
+#अन्यथा /* ... !CONFIG_HOTPLUG_CPU */
+पूर्णांक native_cpu_disable(व्योम)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-void native_cpu_die(unsigned int cpu)
-{
+व्योम native_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
 	/* We said "no" in __cpu_disable */
 	BUG();
-}
+पूर्ण
 
-void native_play_dead(void)
-{
+व्योम native_play_dead(व्योम)
+अणु
 	BUG();
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 /*
  * APERF/MPERF frequency ratio computation.
  *
- * The scheduler wants to do frequency invariant accounting and needs a <1
- * ratio to account for the 'current' frequency, corresponding to
+ * The scheduler wants to करो frequency invariant accounting and needs a <1
+ * ratio to account क्रम the 'current' frequency, corresponding to
  * freq_curr / freq_max.
  *
  * Since the frequency freq_curr on x86 is controlled by micro-controller and
- * our P-state setting is little more than a request/hint, we need to observe
- * the effective frequency 'BusyMHz', i.e. the average frequency over a time
- * interval after discarding idle time. This is given by:
+ * our P-state setting is little more than a request/hपूर्णांक, we need to observe
+ * the effective frequency 'BusyMHz', i.e. the average frequency over a समय
+ * पूर्णांकerval after discarding idle समय. This is given by:
  *
  *   BusyMHz = delta_APERF / delta_MPERF * freq_base
  *
  * where freq_base is the max non-turbo P-state.
  *
  * The freq_max term has to be set to a somewhat arbitrary value, because we
- * can't know which turbo states will be available at a given point in time:
+ * can't know which turbo states will be available at a given poपूर्णांक in समय:
  * it all depends on the thermal headroom of the entire package. We set it to
  * the turbo level with 4 cores active.
  *
  * Benchmarks show that's a good compromise between the 1C turbo ratio
- * (freq_curr/freq_max would rarely reach 1) and something close to freq_base,
+ * (freq_curr/freq_max would rarely reach 1) and something बंद to freq_base,
  * which would ignore the entire turbo range (a conspicuous part, making
  * freq_curr/freq_max always maxed out).
  *
  * An exception to the heuristic above is the Atom uarch, where we choose the
- * highest turbo level for freq_max since Atom's are generally oriented towards
- * power efficiency.
+ * highest turbo level क्रम freq_max since Atom's are generally oriented towards
+ * घातer efficiency.
  *
  * Setting freq_max to anything less than the 1C turbo ratio makes the ratio
- * freq_curr / freq_max to eventually grow >1, in which case we clip it to 1.
+ * freq_curr / freq_max to eventually grow >1, in which हाल we clip it to 1.
  */
 
 DEFINE_STATIC_KEY_FALSE(arch_scale_freq_key);
 
-static DEFINE_PER_CPU(u64, arch_prev_aperf);
-static DEFINE_PER_CPU(u64, arch_prev_mperf);
-static u64 arch_turbo_freq_ratio = SCHED_CAPACITY_SCALE;
-static u64 arch_max_freq_ratio = SCHED_CAPACITY_SCALE;
+अटल DEFINE_PER_CPU(u64, arch_prev_aperf);
+अटल DEFINE_PER_CPU(u64, arch_prev_mperf);
+अटल u64 arch_turbo_freq_ratio = SCHED_CAPACITY_SCALE;
+अटल u64 arch_max_freq_ratio = SCHED_CAPACITY_SCALE;
 
-void arch_set_max_freq_ratio(bool turbo_disabled)
-{
+व्योम arch_set_max_freq_ratio(bool turbo_disabled)
+अणु
 	arch_max_freq_ratio = turbo_disabled ? SCHED_CAPACITY_SCALE :
 					arch_turbo_freq_ratio;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(arch_set_max_freq_ratio);
 
-static bool turbo_disabled(void)
-{
+अटल bool turbo_disabled(व्योम)
+अणु
 	u64 misc_en;
-	int err;
+	पूर्णांक err;
 
 	err = rdmsrl_safe(MSR_IA32_MISC_ENABLE, &misc_en);
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
-	return (misc_en & MSR_IA32_MISC_ENABLE_TURBO_DISABLE);
-}
+	वापस (misc_en & MSR_IA32_MISC_ENABLE_TURBO_DISABLE);
+पूर्ण
 
-static bool slv_set_max_freq_ratio(u64 *base_freq, u64 *turbo_freq)
-{
-	int err;
+अटल bool slv_set_max_freq_ratio(u64 *base_freq, u64 *turbo_freq)
+अणु
+	पूर्णांक err;
 
 	err = rdmsrl_safe(MSR_ATOM_CORE_RATIOS, base_freq);
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
 	err = rdmsrl_safe(MSR_ATOM_CORE_TURBO_RATIOS, turbo_freq);
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
 	*base_freq = (*base_freq >> 16) & 0x3F;     /* max P state */
 	*turbo_freq = *turbo_freq & 0x3F;           /* 1C turbo    */
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#define X86_MATCH(model)					\
+#घोषणा X86_MATCH(model)					\
 	X86_MATCH_VENDOR_FAM_MODEL_FEATURE(INTEL, 6,		\
-		INTEL_FAM6_##model, X86_FEATURE_APERFMPERF, NULL)
+		INTEL_FAM6_##model, X86_FEATURE_APERFMPERF, शून्य)
 
-static const struct x86_cpu_id has_knl_turbo_ratio_limits[] = {
+अटल स्थिर काष्ठा x86_cpu_id has_knl_turbo_ratio_limits[] = अणु
 	X86_MATCH(XEON_PHI_KNL),
 	X86_MATCH(XEON_PHI_KNM),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static const struct x86_cpu_id has_skx_turbo_ratio_limits[] = {
+अटल स्थिर काष्ठा x86_cpu_id has_skx_turbo_ratio_limits[] = अणु
 	X86_MATCH(SKYLAKE_X),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static const struct x86_cpu_id has_glm_turbo_ratio_limits[] = {
+अटल स्थिर काष्ठा x86_cpu_id has_glm_turbo_ratio_limits[] = अणु
 	X86_MATCH(ATOM_GOLDMONT),
 	X86_MATCH(ATOM_GOLDMONT_D),
 	X86_MATCH(ATOM_GOLDMONT_PLUS),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static bool knl_set_max_freq_ratio(u64 *base_freq, u64 *turbo_freq,
-				int num_delta_fratio)
-{
-	int fratio, delta_fratio, found;
-	int err, i;
+अटल bool knl_set_max_freq_ratio(u64 *base_freq, u64 *turbo_freq,
+				पूर्णांक num_delta_fratio)
+अणु
+	पूर्णांक fratio, delta_fratio, found;
+	पूर्णांक err, i;
 	u64 msr;
 
 	err = rdmsrl_safe(MSR_PLATFORM_INFO, base_freq);
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
 	*base_freq = (*base_freq >> 8) & 0xFF;	    /* max P state */
 
 	err = rdmsrl_safe(MSR_TURBO_RATIO_LIMIT, &msr);
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
 	fratio = (msr >> 8) & 0xFF;
 	i = 16;
 	found = 0;
-	do {
-		if (found >= num_delta_fratio) {
+	करो अणु
+		अगर (found >= num_delta_fratio) अणु
 			*turbo_freq = fratio;
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
 		delta_fratio = (msr >> (i + 5)) & 0x7;
 
-		if (delta_fratio) {
+		अगर (delta_fratio) अणु
 			found += 1;
 			fratio -= delta_fratio;
-		}
+		पूर्ण
 
 		i += 8;
-	} while (i < 64);
+	पूर्ण जबतक (i < 64);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool skx_set_max_freq_ratio(u64 *base_freq, u64 *turbo_freq, int size)
-{
+अटल bool skx_set_max_freq_ratio(u64 *base_freq, u64 *turbo_freq, पूर्णांक size)
+अणु
 	u64 ratios, counts;
 	u32 group_size;
-	int err, i;
+	पूर्णांक err, i;
 
 	err = rdmsrl_safe(MSR_PLATFORM_INFO, base_freq);
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
 	*base_freq = (*base_freq >> 8) & 0xFF;      /* max P state */
 
 	err = rdmsrl_safe(MSR_TURBO_RATIO_LIMIT, &ratios);
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
 	err = rdmsrl_safe(MSR_TURBO_RATIO_LIMIT1, &counts);
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
-	for (i = 0; i < 64; i += 8) {
+	क्रम (i = 0; i < 64; i += 8) अणु
 		group_size = (counts >> i) & 0xFF;
-		if (group_size >= size) {
+		अगर (group_size >= size) अणु
 			*turbo_freq = (ratios >> i) & 0xFF;
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool core_set_max_freq_ratio(u64 *base_freq, u64 *turbo_freq)
-{
+अटल bool core_set_max_freq_ratio(u64 *base_freq, u64 *turbo_freq)
+अणु
 	u64 msr;
-	int err;
+	पूर्णांक err;
 
 	err = rdmsrl_safe(MSR_PLATFORM_INFO, base_freq);
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
 	err = rdmsrl_safe(MSR_TURBO_RATIO_LIMIT, &msr);
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
 	*base_freq = (*base_freq >> 8) & 0xFF;    /* max P state */
 	*turbo_freq = (msr >> 24) & 0xFF;         /* 4C turbo    */
 
 	/* The CPU may have less than 4 cores */
-	if (!*turbo_freq)
+	अगर (!*turbo_freq)
 		*turbo_freq = msr & 0xFF;         /* 1C turbo    */
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool intel_set_max_freq_ratio(void)
-{
+अटल bool पूर्णांकel_set_max_freq_ratio(व्योम)
+अणु
 	u64 base_freq, turbo_freq;
 	u64 turbo_ratio;
 
-	if (slv_set_max_freq_ratio(&base_freq, &turbo_freq))
-		goto out;
+	अगर (slv_set_max_freq_ratio(&base_freq, &turbo_freq))
+		जाओ out;
 
-	if (x86_match_cpu(has_glm_turbo_ratio_limits) &&
+	अगर (x86_match_cpu(has_glm_turbo_ratio_limits) &&
 	    skx_set_max_freq_ratio(&base_freq, &turbo_freq, 1))
-		goto out;
+		जाओ out;
 
-	if (x86_match_cpu(has_knl_turbo_ratio_limits) &&
+	अगर (x86_match_cpu(has_knl_turbo_ratio_limits) &&
 	    knl_set_max_freq_ratio(&base_freq, &turbo_freq, 1))
-		goto out;
+		जाओ out;
 
-	if (x86_match_cpu(has_skx_turbo_ratio_limits) &&
+	अगर (x86_match_cpu(has_skx_turbo_ratio_limits) &&
 	    skx_set_max_freq_ratio(&base_freq, &turbo_freq, 4))
-		goto out;
+		जाओ out;
 
-	if (core_set_max_freq_ratio(&base_freq, &turbo_freq))
-		goto out;
+	अगर (core_set_max_freq_ratio(&base_freq, &turbo_freq))
+		जाओ out;
 
-	return false;
+	वापस false;
 
 out:
 	/*
 	 * Some hypervisors advertise X86_FEATURE_APERFMPERF
 	 * but then fill all MSR's with zeroes.
-	 * Some CPUs have turbo boost but don't declare any turbo ratio
+	 * Some CPUs have turbo boost but करोn't declare any turbo ratio
 	 * in MSR_TURBO_RATIO_LIMIT.
 	 */
-	if (!base_freq || !turbo_freq) {
+	अगर (!base_freq || !turbo_freq) अणु
 		pr_debug("Couldn't determine cpu base or turbo frequency, necessary for scale-invariant accounting.\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	turbo_ratio = div_u64(turbo_freq * SCHED_CAPACITY_SCALE, base_freq);
-	if (!turbo_ratio) {
+	turbo_ratio = भाग_u64(turbo_freq * SCHED_CAPACITY_SCALE, base_freq);
+	अगर (!turbo_ratio) अणु
 		pr_debug("Non-zero turbo and base frequencies led to a 0 ratio.\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	arch_turbo_freq_ratio = turbo_ratio;
 	arch_set_max_freq_ratio(turbo_disabled());
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#ifdef CONFIG_ACPI_CPPC_LIB
-static bool amd_set_max_freq_ratio(void)
-{
-	struct cppc_perf_caps perf_caps;
+#अगर_घोषित CONFIG_ACPI_CPPC_LIB
+अटल bool amd_set_max_freq_ratio(व्योम)
+अणु
+	काष्ठा cppc_perf_caps perf_caps;
 	u64 highest_perf, nominal_perf;
 	u64 perf_ratio;
-	int rc;
+	पूर्णांक rc;
 
 	rc = cppc_get_perf_caps(0, &perf_caps);
-	if (rc) {
+	अगर (rc) अणु
 		pr_debug("Could not retrieve perf counters (%d)\n", rc);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	highest_perf = amd_get_highest_perf();
 	nominal_perf = perf_caps.nominal_perf;
 
-	if (!highest_perf || !nominal_perf) {
+	अगर (!highest_perf || !nominal_perf) अणु
 		pr_debug("Could not retrieve highest or nominal performance\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	perf_ratio = div_u64(highest_perf * SCHED_CAPACITY_SCALE, nominal_perf);
-	/* midpoint between max_boost and max_P */
+	perf_ratio = भाग_u64(highest_perf * SCHED_CAPACITY_SCALE, nominal_perf);
+	/* midpoपूर्णांक between max_boost and max_P */
 	perf_ratio = (perf_ratio + SCHED_CAPACITY_SCALE) >> 1;
-	if (!perf_ratio) {
+	अगर (!perf_ratio) अणु
 		pr_debug("Non-zero highest/nominal perf values led to a 0 ratio\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	arch_turbo_freq_ratio = perf_ratio;
 	arch_set_max_freq_ratio(false);
 
-	return true;
-}
-#else
-static bool amd_set_max_freq_ratio(void)
-{
-	return false;
-}
-#endif
+	वापस true;
+पूर्ण
+#अन्यथा
+अटल bool amd_set_max_freq_ratio(व्योम)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static void init_counter_refs(void)
-{
+अटल व्योम init_counter_refs(व्योम)
+अणु
 	u64 aperf, mperf;
 
 	rdmsrl(MSR_IA32_APERF, aperf);
 	rdmsrl(MSR_IA32_MPERF, mperf);
 
-	this_cpu_write(arch_prev_aperf, aperf);
-	this_cpu_write(arch_prev_mperf, mperf);
-}
+	this_cpu_ग_लिखो(arch_prev_aperf, aperf);
+	this_cpu_ग_लिखो(arch_prev_mperf, mperf);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static struct syscore_ops freq_invariance_syscore_ops = {
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल काष्ठा syscore_ops freq_invariance_syscore_ops = अणु
 	.resume = init_counter_refs,
-};
+पूर्ण;
 
-static void register_freq_invariance_syscore_ops(void)
-{
-	/* Bail out if registered already. */
-	if (freq_invariance_syscore_ops.node.prev)
-		return;
+अटल व्योम रेजिस्टर_freq_invariance_syscore_ops(व्योम)
+अणु
+	/* Bail out अगर रेजिस्टरed alपढ़ोy. */
+	अगर (freq_invariance_syscore_ops.node.prev)
+		वापस;
 
-	register_syscore_ops(&freq_invariance_syscore_ops);
-}
-#else
-static inline void register_freq_invariance_syscore_ops(void) {}
-#endif
+	रेजिस्टर_syscore_ops(&freq_invariance_syscore_ops);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम रेजिस्टर_freq_invariance_syscore_ops(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-static void init_freq_invariance(bool secondary, bool cppc_ready)
-{
+अटल व्योम init_freq_invariance(bool secondary, bool cppc_पढ़ोy)
+अणु
 	bool ret = false;
 
-	if (!boot_cpu_has(X86_FEATURE_APERFMPERF))
-		return;
+	अगर (!boot_cpu_has(X86_FEATURE_APERFMPERF))
+		वापस;
 
-	if (secondary) {
-		if (static_branch_likely(&arch_scale_freq_key)) {
+	अगर (secondary) अणु
+		अगर (अटल_branch_likely(&arch_scale_freq_key)) अणु
 			init_counter_refs();
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	if (boot_cpu_data.x86_vendor == X86_VENDOR_INTEL)
-		ret = intel_set_max_freq_ratio();
-	else if (boot_cpu_data.x86_vendor == X86_VENDOR_AMD) {
-		if (!cppc_ready) {
-			return;
-		}
+	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_INTEL)
+		ret = पूर्णांकel_set_max_freq_ratio();
+	अन्यथा अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_AMD) अणु
+		अगर (!cppc_पढ़ोy) अणु
+			वापस;
+		पूर्ण
 		ret = amd_set_max_freq_ratio();
-	}
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		init_counter_refs();
-		static_branch_enable(&arch_scale_freq_key);
-		register_freq_invariance_syscore_ops();
+		अटल_branch_enable(&arch_scale_freq_key);
+		रेजिस्टर_freq_invariance_syscore_ops();
 		pr_info("Estimated ratio of average max frequency by base frequency (times 1024): %llu\n", arch_max_freq_ratio);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_debug("Couldn't determine max cpu frequency, necessary for scale-invariant accounting.\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_ACPI_CPPC_LIB
-static DEFINE_MUTEX(freq_invariance_lock);
+#अगर_घोषित CONFIG_ACPI_CPPC_LIB
+अटल DEFINE_MUTEX(freq_invariance_lock);
 
-void init_freq_invariance_cppc(void)
-{
-	static bool secondary;
+व्योम init_freq_invariance_cppc(व्योम)
+अणु
+	अटल bool secondary;
 
 	mutex_lock(&freq_invariance_lock);
 
@@ -2145,59 +2146,59 @@ void init_freq_invariance_cppc(void)
 	secondary = true;
 
 	mutex_unlock(&freq_invariance_lock);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void disable_freq_invariance_workfn(struct work_struct *work)
-{
-	static_branch_disable(&arch_scale_freq_key);
-}
+अटल व्योम disable_freq_invariance_workfn(काष्ठा work_काष्ठा *work)
+अणु
+	अटल_branch_disable(&arch_scale_freq_key);
+पूर्ण
 
-static DECLARE_WORK(disable_freq_invariance_work,
+अटल DECLARE_WORK(disable_freq_invariance_work,
 		    disable_freq_invariance_workfn);
 
-DEFINE_PER_CPU(unsigned long, arch_freq_scale) = SCHED_CAPACITY_SCALE;
+DEFINE_PER_CPU(अचिन्हित दीर्घ, arch_freq_scale) = SCHED_CAPACITY_SCALE;
 
-void arch_scale_freq_tick(void)
-{
+व्योम arch_scale_freq_tick(व्योम)
+अणु
 	u64 freq_scale = SCHED_CAPACITY_SCALE;
 	u64 aperf, mperf;
 	u64 acnt, mcnt;
 
-	if (!arch_scale_freq_invariant())
-		return;
+	अगर (!arch_scale_freq_invariant())
+		वापस;
 
 	rdmsrl(MSR_IA32_APERF, aperf);
 	rdmsrl(MSR_IA32_MPERF, mperf);
 
-	acnt = aperf - this_cpu_read(arch_prev_aperf);
-	mcnt = mperf - this_cpu_read(arch_prev_mperf);
+	acnt = aperf - this_cpu_पढ़ो(arch_prev_aperf);
+	mcnt = mperf - this_cpu_पढ़ो(arch_prev_mperf);
 
-	this_cpu_write(arch_prev_aperf, aperf);
-	this_cpu_write(arch_prev_mperf, mperf);
+	this_cpu_ग_लिखो(arch_prev_aperf, aperf);
+	this_cpu_ग_लिखो(arch_prev_mperf, mperf);
 
-	if (check_shl_overflow(acnt, 2*SCHED_CAPACITY_SHIFT, &acnt))
-		goto error;
+	अगर (check_shl_overflow(acnt, 2*SCHED_CAPACITY_SHIFT, &acnt))
+		जाओ error;
 
-	if (check_mul_overflow(mcnt, arch_max_freq_ratio, &mcnt) || !mcnt)
-		goto error;
+	अगर (check_mul_overflow(mcnt, arch_max_freq_ratio, &mcnt) || !mcnt)
+		जाओ error;
 
-	freq_scale = div64_u64(acnt, mcnt);
-	if (!freq_scale)
-		goto error;
+	freq_scale = भाग64_u64(acnt, mcnt);
+	अगर (!freq_scale)
+		जाओ error;
 
-	if (freq_scale > SCHED_CAPACITY_SCALE)
+	अगर (freq_scale > SCHED_CAPACITY_SCALE)
 		freq_scale = SCHED_CAPACITY_SCALE;
 
-	this_cpu_write(arch_freq_scale, freq_scale);
-	return;
+	this_cpu_ग_लिखो(arch_freq_scale, freq_scale);
+	वापस;
 
 error:
 	pr_warn("Scheduler frequency invariance went wobbly, disabling!\n");
 	schedule_work(&disable_freq_invariance_work);
-}
-#else
-static inline void init_freq_invariance(bool secondary, bool cppc_ready)
-{
-}
-#endif /* CONFIG_X86_64 */
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम init_freq_invariance(bool secondary, bool cppc_पढ़ोy)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_X86_64 */

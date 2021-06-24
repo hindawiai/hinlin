@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,16 +23,16 @@
  * Author: Huang Rui
  *
  */
-#ifndef __PSP_V3_1_H__
-#define __PSP_V3_1_H__
+#अगर_अघोषित __PSP_V3_1_H__
+#घोषणा __PSP_V3_1_H__
 
-#include "amdgpu_psp.h"
+#समावेश "amdgpu_psp.h"
 
-enum { PSP_DIRECTORY_TABLE_ENTRIES = 4 };
-enum { PSP_BINARY_ALIGNMENT = 64 };
-enum { PSP_BOOTLOADER_1_MEG_ALIGNMENT = 0x100000 };
-enum { PSP_BOOTLOADER_8_MEM_ALIGNMENT = 0x800000 };
+क्रमागत अणु PSP_सूचीECTORY_TABLE_ENTRIES = 4 पूर्ण;
+क्रमागत अणु PSP_BINARY_ALIGNMENT = 64 पूर्ण;
+क्रमागत अणु PSP_BOOTLOADER_1_MEG_ALIGNMENT = 0x100000 पूर्ण;
+क्रमागत अणु PSP_BOOTLOADER_8_MEM_ALIGNMENT = 0x800000 पूर्ण;
 
-void psp_v3_1_set_psp_funcs(struct psp_context *psp);
+व्योम psp_v3_1_set_psp_funcs(काष्ठा psp_context *psp);
 
-#endif
+#पूर्ण_अगर

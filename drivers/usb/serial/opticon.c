@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Opticon USB barcode to serial driver
  *
  * Copyright (C) 2011 - 2012 Johan Hovold <jhovold@gmail.com>
  * Copyright (C) 2011 Martin Jansen <martin.jansen@opticon.com>
- * Copyright (C) 2008 - 2009 Greg Kroah-Hartman <gregkh@suse.de>
+ * Copyright (C) 2008 - 2009 Greg Kroah-Harपंचांगan <gregkh@suse.de>
  * Copyright (C) 2008 - 2009 Novell Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/slab.h>
-#include <linux/tty_flip.h>
-#include <linux/serial.h>
-#include <linux/module.h>
-#include <linux/usb.h>
-#include <linux/usb/serial.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/serial.h>
+#समावेश <linux/uaccess.h>
 
-#define CONTROL_RTS			0x02
-#define RESEND_CTS_STATE	0x03
+#घोषणा CONTROL_RTS			0x02
+#घोषणा RESEND_CTS_STATE	0x03
 
-/* max number of write urbs in flight */
-#define URB_UPPER_LIMIT	8
+/* max number of ग_लिखो urbs in flight */
+#घोषणा URB_UPPER_LIMIT	8
 
-/* This driver works for the Opticon 1D barcode reader
+/* This driver works क्रम the Opticon 1D barcode पढ़ोer
  * an examples of 1D barcode types are EAN, UPC, Code39, IATA etc.. */
-#define DRIVER_DESC	"Opticon USB barcode to serial driver (1D)"
+#घोषणा DRIVER_DESC	"Opticon USB barcode to serial driver (1D)"
 
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(0x065a, 0x0009) },
-	{ },
-};
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(0x065a, 0x0009) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, id_table);
 
-/* This structure holds all of the individual device information */
-struct opticon_private {
+/* This काष्ठाure holds all of the inभागidual device inक्रमmation */
+काष्ठा opticon_निजी अणु
 	spinlock_t lock;	/* protects the following flags */
 	bool rts;
 	bool cts;
-	int outstanding_urbs;
-	int outstanding_bytes;
+	पूर्णांक outstanding_urbs;
+	पूर्णांक outstanding_bytes;
 
-	struct usb_anchor anchor;
-};
+	काष्ठा usb_anchor anchor;
+पूर्ण;
 
 
-static void opticon_process_data_packet(struct usb_serial_port *port,
-					const unsigned char *buf, size_t len)
-{
+अटल व्योम opticon_process_data_packet(काष्ठा usb_serial_port *port,
+					स्थिर अचिन्हित अक्षर *buf, माप_प्रकार len)
+अणु
 	tty_insert_flip_string(&port->port, buf, len);
 	tty_flip_buffer_push(&port->port);
-}
+पूर्ण
 
-static void opticon_process_status_packet(struct usb_serial_port *port,
-					const unsigned char *buf, size_t len)
-{
-	struct opticon_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
+अटल व्योम opticon_process_status_packet(काष्ठा usb_serial_port *port,
+					स्थिर अचिन्हित अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा opticon_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	if (buf[0] == 0x00)
+	अगर (buf[0] == 0x00)
 		priv->cts = false;
-	else
+	अन्यथा
 		priv->cts = true;
 	spin_unlock_irqrestore(&priv->lock, flags);
-}
+पूर्ण
 
-static void opticon_process_read_urb(struct urb *urb)
-{
-	struct usb_serial_port *port = urb->context;
-	const unsigned char *hdr = urb->transfer_buffer;
-	const unsigned char *data = hdr + 2;
-	size_t data_len = urb->actual_length - 2;
+अटल व्योम opticon_process_पढ़ो_urb(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_serial_port *port = urb->context;
+	स्थिर अचिन्हित अक्षर *hdr = urb->transfer_buffer;
+	स्थिर अचिन्हित अक्षर *data = hdr + 2;
+	माप_प्रकार data_len = urb->actual_length - 2;
 
-	if (urb->actual_length <= 2) {
+	अगर (urb->actual_length <= 2) अणु
 		dev_dbg(&port->dev, "malformed packet received: %d bytes\n",
 							urb->actual_length);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/*
 	 * Data from the device comes with a 2 byte header:
 	 *
@@ -87,49 +88,49 @@ static void opticon_process_read_urb(struct urb *urb)
 	 *      This is real data to be sent to the tty layer
 	 * <0x00><0x01>level
 	 *      This is a CTS level change, the third byte is the CTS
-	 *      value (0 for low, 1 for high).
+	 *      value (0 क्रम low, 1 क्रम high).
 	 */
-	if ((hdr[0] == 0x00) && (hdr[1] == 0x00)) {
+	अगर ((hdr[0] == 0x00) && (hdr[1] == 0x00)) अणु
 		opticon_process_data_packet(port, data, data_len);
-	} else if ((hdr[0] == 0x00) && (hdr[1] == 0x01)) {
+	पूर्ण अन्यथा अगर ((hdr[0] == 0x00) && (hdr[1] == 0x01)) अणु
 		opticon_process_status_packet(port, data, data_len);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&port->dev, "unknown packet received: %02x %02x\n",
 							hdr[0], hdr[1]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int send_control_msg(struct usb_serial_port *port, u8 requesttype,
+अटल पूर्णांक send_control_msg(काष्ठा usb_serial_port *port, u8 requesttype,
 				u8 val)
-{
-	struct usb_serial *serial = port->serial;
-	int retval;
+अणु
+	काष्ठा usb_serial *serial = port->serial;
+	पूर्णांक retval;
 	u8 *buffer;
 
 	buffer = kzalloc(1, GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	buffer[0] = val;
-	/* Send the message to the vendor control endpoint
+	/* Send the message to the venकरोr control endpoपूर्णांक
 	 * of the connected device */
 	retval = usb_control_msg(serial->dev, usb_sndctrlpipe(serial->dev, 0),
 				requesttype,
-				USB_DIR_OUT|USB_TYPE_VENDOR|USB_RECIP_INTERFACE,
+				USB_सूची_OUT|USB_TYPE_VENDOR|USB_RECIP_INTERFACE,
 				0, 0, buffer, 1, USB_CTRL_SET_TIMEOUT);
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	if (retval < 0)
-		return retval;
+	अगर (retval < 0)
+		वापस retval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int opticon_open(struct tty_struct *tty, struct usb_serial_port *port)
-{
-	struct opticon_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
-	int res;
+अटल पूर्णांक opticon_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा opticon_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक res;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	priv->rts = false;
@@ -138,43 +139,43 @@ static int opticon_open(struct tty_struct *tty, struct usb_serial_port *port)
 	/* Clear RTS line */
 	send_control_msg(port, CONTROL_RTS, 0);
 
-	/* clear the halt status of the endpoint */
-	usb_clear_halt(port->serial->dev, port->read_urb->pipe);
+	/* clear the halt status of the endpoपूर्णांक */
+	usb_clear_halt(port->serial->dev, port->पढ़ो_urb->pipe);
 
-	res = usb_serial_generic_open(tty, port);
-	if (res)
-		return res;
+	res = usb_serial_generic_खोलो(tty, port);
+	अगर (res)
+		वापस res;
 
-	/* Request CTS line state, sometimes during opening the current
+	/* Request CTS line state, someबार during खोलोing the current
 	 * CTS state can be missed. */
 	send_control_msg(port, RESEND_CTS_STATE, 1);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void opticon_close(struct usb_serial_port *port)
-{
-	struct opticon_private *priv = usb_get_serial_port_data(port);
+अटल व्योम opticon_बंद(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा opticon_निजी *priv = usb_get_serial_port_data(port);
 
-	usb_kill_anchored_urbs(&priv->anchor);
+	usb_समाप्त_anchored_urbs(&priv->anchor);
 
-	usb_serial_generic_close(port);
-}
+	usb_serial_generic_बंद(port);
+पूर्ण
 
-static void opticon_write_control_callback(struct urb *urb)
-{
-	struct usb_serial_port *port = urb->context;
-	struct opticon_private *priv = usb_get_serial_port_data(port);
-	int status = urb->status;
-	unsigned long flags;
+अटल व्योम opticon_ग_लिखो_control_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_serial_port *port = urb->context;
+	काष्ठा opticon_निजी *priv = usb_get_serial_port_data(port);
+	पूर्णांक status = urb->status;
+	अचिन्हित दीर्घ flags;
 
-	/* free up the transfer buffer, as usb_free_urb() does not do this */
-	kfree(urb->transfer_buffer);
+	/* मुक्त up the transfer buffer, as usb_मुक्त_urb() करोes not करो this */
+	kमुक्त(urb->transfer_buffer);
 
-	/* setup packet may be set if we're using it for writing */
-	kfree(urb->setup_packet);
+	/* setup packet may be set अगर we're using it क्रम writing */
+	kमुक्त(urb->setup_packet);
 
-	if (status)
+	अगर (status)
 		dev_dbg(&port->dev,
 			"%s - non-zero urb status received: %d\n",
 			__func__, status);
@@ -184,49 +185,49 @@ static void opticon_write_control_callback(struct urb *urb)
 	priv->outstanding_bytes -= urb->transfer_buffer_length;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	usb_serial_port_softint(port);
-}
+	usb_serial_port_softपूर्णांक(port);
+पूर्ण
 
-static int opticon_write(struct tty_struct *tty, struct usb_serial_port *port,
-			 const unsigned char *buf, int count)
-{
-	struct opticon_private *priv = usb_get_serial_port_data(port);
-	struct usb_serial *serial = port->serial;
-	struct urb *urb;
-	unsigned char *buffer;
-	unsigned long flags;
-	struct usb_ctrlrequest *dr;
-	int ret = -ENOMEM;
+अटल पूर्णांक opticon_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port,
+			 स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	काष्ठा opticon_निजी *priv = usb_get_serial_port_data(port);
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा urb *urb;
+	अचिन्हित अक्षर *buffer;
+	अचिन्हित दीर्घ flags;
+	काष्ठा usb_ctrlrequest *dr;
+	पूर्णांक ret = -ENOMEM;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	if (priv->outstanding_urbs > URB_UPPER_LIMIT) {
+	अगर (priv->outstanding_urbs > URB_UPPER_LIMIT) अणु
 		spin_unlock_irqrestore(&priv->lock, flags);
 		dev_dbg(&port->dev, "%s - write limit hit\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	priv->outstanding_urbs++;
 	priv->outstanding_bytes += count;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	buffer = kmalloc(count, GFP_ATOMIC);
-	if (!buffer)
-		goto error_no_buffer;
+	buffer = kदो_स्मृति(count, GFP_ATOMIC);
+	अगर (!buffer)
+		जाओ error_no_buffer;
 
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	if (!urb)
-		goto error_no_urb;
+	अगर (!urb)
+		जाओ error_no_urb;
 
-	memcpy(buffer, buf, count);
+	स_नकल(buffer, buf, count);
 
 	usb_serial_debug_data(&port->dev, __func__, count, buffer);
 
-	/* The connected devices do not have a bulk write endpoint,
-	 * to transmit data to de barcode device the control endpoint is used */
-	dr = kmalloc(sizeof(struct usb_ctrlrequest), GFP_ATOMIC);
-	if (!dr)
-		goto error_no_dr;
+	/* The connected devices करो not have a bulk ग_लिखो endpoपूर्णांक,
+	 * to transmit data to de barcode device the control endpoपूर्णांक is used */
+	dr = kदो_स्मृति(माप(काष्ठा usb_ctrlrequest), GFP_ATOMIC);
+	अगर (!dr)
+		जाओ error_no_dr;
 
-	dr->bRequestType = USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_DIR_OUT;
+	dr->bRequestType = USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_सूची_OUT;
 	dr->bRequest = 0x01;
 	dr->wValue = 0;
 	dr->wIndex = 0;
@@ -234,173 +235,173 @@ static int opticon_write(struct tty_struct *tty, struct usb_serial_port *port,
 
 	usb_fill_control_urb(urb, serial->dev,
 		usb_sndctrlpipe(serial->dev, 0),
-		(unsigned char *)dr, buffer, count,
-		opticon_write_control_callback, port);
+		(अचिन्हित अक्षर *)dr, buffer, count,
+		opticon_ग_लिखो_control_callback, port);
 
 	usb_anchor_urb(urb, &priv->anchor);
 
-	/* send it down the pipe */
+	/* send it करोwn the pipe */
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&port->dev, "failed to submit write urb: %d\n", ret);
 		usb_unanchor_urb(urb);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* we are done with this urb, so let the host driver
-	 * really free it when it is finished with it */
-	usb_free_urb(urb);
+	/* we are करोne with this urb, so let the host driver
+	 * really मुक्त it when it is finished with it */
+	usb_मुक्त_urb(urb);
 
-	return count;
+	वापस count;
 error:
-	kfree(dr);
+	kमुक्त(dr);
 error_no_dr:
-	usb_free_urb(urb);
+	usb_मुक्त_urb(urb);
 error_no_urb:
-	kfree(buffer);
+	kमुक्त(buffer);
 error_no_buffer:
 	spin_lock_irqsave(&priv->lock, flags);
 	--priv->outstanding_urbs;
 	priv->outstanding_bytes -= count;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opticon_write_room(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct opticon_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
+अटल पूर्णांक opticon_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा opticon_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * We really can take almost anything the user throws at us
 	 * but let's pick a nice big number to tell the tty
-	 * layer that we have lots of free space, unless we don't.
+	 * layer that we have lots of मुक्त space, unless we करोn't.
 	 */
 	spin_lock_irqsave(&priv->lock, flags);
-	if (priv->outstanding_urbs > URB_UPPER_LIMIT * 2 / 3) {
+	अगर (priv->outstanding_urbs > URB_UPPER_LIMIT * 2 / 3) अणु
 		spin_unlock_irqrestore(&priv->lock, flags);
 		dev_dbg(&port->dev, "%s - write limit hit\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return 2048;
-}
+	वापस 2048;
+पूर्ण
 
-static int opticon_chars_in_buffer(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct opticon_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
-	int count;
+अटल पूर्णांक opticon_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा opticon_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	count = priv->outstanding_bytes;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int opticon_tiocmget(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct opticon_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
-	int result = 0;
+अटल पूर्णांक opticon_tiocmget(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा opticon_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result = 0;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	if (priv->rts)
+	अगर (priv->rts)
 		result |= TIOCM_RTS;
-	if (priv->cts)
+	अगर (priv->cts)
 		result |= TIOCM_CTS;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
 	dev_dbg(&port->dev, "%s - %x\n", __func__, result);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int opticon_tiocmset(struct tty_struct *tty,
-			   unsigned int set, unsigned int clear)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct opticon_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
+अटल पूर्णांक opticon_tiocmset(काष्ठा tty_काष्ठा *tty,
+			   अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा opticon_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
 	bool rts;
 	bool changed = false;
-	int ret;
+	पूर्णांक ret;
 
 	/* We only support RTS so we only handle that */
 	spin_lock_irqsave(&priv->lock, flags);
 
 	rts = priv->rts;
-	if (set & TIOCM_RTS)
+	अगर (set & TIOCM_RTS)
 		priv->rts = true;
-	if (clear & TIOCM_RTS)
+	अगर (clear & TIOCM_RTS)
 		priv->rts = false;
 	changed = rts ^ priv->rts;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	if (!changed)
-		return 0;
+	अगर (!changed)
+		वापस 0;
 
 	ret = send_control_msg(port, CONTROL_RTS, !rts);
-	if (ret)
-		return usb_translate_errors(ret);
+	अगर (ret)
+		वापस usb_translate_errors(ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int opticon_port_probe(struct usb_serial_port *port)
-{
-	struct opticon_private *priv;
+अटल पूर्णांक opticon_port_probe(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा opticon_निजी *priv;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	spin_lock_init(&priv->lock);
 	init_usb_anchor(&priv->anchor);
 
 	usb_set_serial_port_data(port, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void opticon_port_remove(struct usb_serial_port *port)
-{
-	struct opticon_private *priv = usb_get_serial_port_data(port);
+अटल व्योम opticon_port_हटाओ(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा opticon_निजी *priv = usb_get_serial_port_data(port);
 
-	kfree(priv);
-}
+	kमुक्त(priv);
+पूर्ण
 
-static struct usb_serial_driver opticon_device = {
-	.driver = {
+अटल काष्ठा usb_serial_driver opticon_device = अणु
+	.driver = अणु
 		.owner =	THIS_MODULE,
 		.name =		"opticon",
-	},
+	पूर्ण,
 	.id_table =		id_table,
 	.num_ports =		1,
 	.num_bulk_in =		1,
 	.bulk_in_size =		256,
 	.port_probe =		opticon_port_probe,
-	.port_remove =		opticon_port_remove,
-	.open =			opticon_open,
-	.close =		opticon_close,
-	.write =		opticon_write,
-	.write_room = 		opticon_write_room,
-	.chars_in_buffer =	opticon_chars_in_buffer,
+	.port_हटाओ =		opticon_port_हटाओ,
+	.खोलो =			opticon_खोलो,
+	.बंद =		opticon_बंद,
+	.ग_लिखो =		opticon_ग_लिखो,
+	.ग_लिखो_room = 		opticon_ग_लिखो_room,
+	.अक्षरs_in_buffer =	opticon_अक्षरs_in_buffer,
 	.throttle =		usb_serial_generic_throttle,
 	.unthrottle =		usb_serial_generic_unthrottle,
 	.tiocmget =		opticon_tiocmget,
 	.tiocmset =		opticon_tiocmset,
-	.process_read_urb =	opticon_process_read_urb,
-};
+	.process_पढ़ो_urb =	opticon_process_पढ़ो_urb,
+पूर्ण;
 
-static struct usb_serial_driver * const serial_drivers[] = {
-	&opticon_device, NULL
-};
+अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
+	&opticon_device, शून्य
+पूर्ण;
 
 module_usb_serial_driver(serial_drivers, id_table);
 

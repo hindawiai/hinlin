@@ -1,92 +1,93 @@
+<शैली गुरु>
 /* 
         pd.c    (c) 1997-8  Grant R. Guenther <grant@torque.net>
                             Under the terms of the GNU General Public License.
 
-        This is the high-level driver for parallel port IDE hard
+        This is the high-level driver क्रम parallel port IDE hard
         drives based on chips supported by the paride module.
 
-	By default, the driver will autoprobe for a single parallel
-	port IDE drive, but if their individual parameters are
-        specified, the driver can handle up to 4 drives.
+	By शेष, the driver will स्वतःprobe क्रम a single parallel
+	port IDE drive, but अगर their inभागidual parameters are
+        specअगरied, the driver can handle up to 4 drives.
 
         The behaviour of the pd driver can be altered by setting
         some parameters from the insmod command line.  The following
         parameters are adjustable:
  
 	    drive0  	These four arguments can be arrays of	    
-	    drive1	1-8 integers as follows:
+	    drive1	1-8 पूर्णांकegers as follows:
 	    drive2
 	    drive3	<prt>,<pro>,<uni>,<mod>,<geo>,<sby>,<dly>,<slv>
 
 			Where,
 
-		<prt>	is the base of the parallel port address for
+		<prt>	is the base of the parallel port address क्रम
 			the corresponding drive.  (required)
 
-		<pro>   is the protocol number for the adapter that
+		<pro>   is the protocol number क्रम the adapter that
 			supports this drive.  These numbers are
                         logged by 'paride' when the protocol modules
-			are initialised.  (0 if not given)
+			are initialised.  (0 अगर not given)
 
-		<uni>   for those adapters that support chained
-			devices, this is the unit selector for the
+		<uni>   क्रम those adapters that support chained
+			devices, this is the unit selector क्रम the
 		        chain of devices on the given port.  It should
-			be zero for devices that don't support chaining.
-			(0 if not given)
+			be zero क्रम devices that करोn't support chaining.
+			(0 अगर not given)
 
 		<mod>   this can be -1 to choose the best mode, or one
 		        of the mode numbers supported by the adapter.
-			(-1 if not given)
+			(-1 अगर not given)
 
-		<geo>   this defaults to 0 to indicate that the driver
+		<geo>   this शेषs to 0 to indicate that the driver
 			should use the CHS geometry provided by the drive
 			itself.  If set to 1, the driver will provide
 			a logical geometry with 64 heads and 32 sectors
 			per track, to be consistent with most SCSI
-		        drivers.  (0 if not given)
+		        drivers.  (0 अगर not given)
 
-		<sby>   set this to zero to disable the power saving
-			standby mode, if needed.  (1 if not given)
+		<sby>   set this to zero to disable the घातer saving
+			standby mode, अगर needed.  (1 अगर not given)
 
 		<dly>   some parallel ports require the driver to 
-			go more slowly.  -1 sets a default value that
+			go more slowly.  -1 sets a शेष value that
 			should work with the chosen protocol.  Otherwise,
-			set this to a small integer, the larger it is
-			the slower the port i/o.  In some cases, setting
-			this to zero will speed up the device. (default -1)
+			set this to a small पूर्णांकeger, the larger it is
+			the slower the port i/o.  In some हालs, setting
+			this to zero will speed up the device. (शेष -1)
 
 		<slv>   IDE disks can be jumpered to master or slave.
                         Set this to 0 to choose the master drive, 1 to
-                        choose the slave, -1 (the default) to choose the
+                        choose the slave, -1 (the शेष) to choose the
                         first drive found.
 			
 
             major       You may use this parameter to override the
-                        default major number (45) that this driver
+                        शेष major number (45) that this driver
                         will use.  Be sure to change the device
                         name as well.
 
-            name        This parameter is a character string that
-                        contains the name the kernel will use for this
-                        device (in /proc output, for instance).
-			(default "pd")
+            name        This parameter is a अक्षरacter string that
+                        contains the name the kernel will use क्रम this
+                        device (in /proc output, क्रम instance).
+			(शेष "pd")
 
 	    cluster	The driver will attempt to aggregate requests
-			for adjacent blocks into larger multi-block
+			क्रम adjacent blocks पूर्णांकo larger multi-block
 			clusters.  The maximum cluster size (in 512
 			byte sectors) is set with this parameter.
-			(default 64)
+			(शेष 64)
 
 	    verbose	This parameter controls the amount of logging
-			that the driver will do.  Set it to 0 for 
-			normal operation, 1 to see autoprobe progress
+			that the driver will करो.  Set it to 0 क्रम 
+			normal operation, 1 to see स्वतःprobe progress
 			messages, or 2 to see additional debugging
-			output.  (default 0)
+			output.  (शेष 0)
 
             nice        This parameter controls the driver's use of
-                        idle CPU time, at the expense of some speed.
+                        idle CPU समय, at the expense of some speed.
 
-        If this driver is built into the kernel, you can use kernel
+        If this driver is built पूर्णांकo the kernel, you can use kernel
         the following command line parameters, with the same values
         as the corresponding module parameters listed above:
 
@@ -114,591 +115,591 @@
 
 */
 
-#define PD_VERSION      "1.05"
-#define PD_MAJOR	45
-#define PD_NAME		"pd"
-#define PD_UNITS	4
+#घोषणा PD_VERSION      "1.05"
+#घोषणा PD_MAJOR	45
+#घोषणा PD_NAME		"pd"
+#घोषणा PD_UNITS	4
 
 /* Here are things one can override from the insmod command.
-   Most are autoprobed by paride unless set here.  Verbose is off
-   by default.
+   Most are स्वतःprobed by paride unless set here.  Verbose is off
+   by शेष.
 
 */
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-static int verbose = 0;
-static int major = PD_MAJOR;
-static char *name = PD_NAME;
-static int cluster = 64;
-static int nice = 0;
-static int disable = 0;
+अटल पूर्णांक verbose = 0;
+अटल पूर्णांक major = PD_MAJOR;
+अटल अक्षर *name = PD_NAME;
+अटल पूर्णांक cluster = 64;
+अटल पूर्णांक nice = 0;
+अटल पूर्णांक disable = 0;
 
-static int drive0[8] = { 0, 0, 0, -1, 0, 1, -1, -1 };
-static int drive1[8] = { 0, 0, 0, -1, 0, 1, -1, -1 };
-static int drive2[8] = { 0, 0, 0, -1, 0, 1, -1, -1 };
-static int drive3[8] = { 0, 0, 0, -1, 0, 1, -1, -1 };
+अटल पूर्णांक drive0[8] = अणु 0, 0, 0, -1, 0, 1, -1, -1 पूर्ण;
+अटल पूर्णांक drive1[8] = अणु 0, 0, 0, -1, 0, 1, -1, -1 पूर्ण;
+अटल पूर्णांक drive2[8] = अणु 0, 0, 0, -1, 0, 1, -1, -1 पूर्ण;
+अटल पूर्णांक drive3[8] = अणु 0, 0, 0, -1, 0, 1, -1, -1 पूर्ण;
 
-static int (*drives[4])[8] = {&drive0, &drive1, &drive2, &drive3};
+अटल पूर्णांक (*drives[4])[8] = अणु&drive0, &drive1, &drive2, &drive3पूर्ण;
 
-enum {D_PRT, D_PRO, D_UNI, D_MOD, D_GEO, D_SBY, D_DLY, D_SLV};
+क्रमागत अणुD_PRT, D_PRO, D_UNI, D_MOD, D_GEO, D_SBY, D_DLY, D_SLVपूर्ण;
 
 /* end of parameters */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/gfp.h>
-#include <linux/fs.h>
-#include <linux/delay.h>
-#include <linux/hdreg.h>
-#include <linux/cdrom.h>	/* for the eject ioctl */
-#include <linux/blk-mq.h>
-#include <linux/blkpg.h>
-#include <linux/kernel.h>
-#include <linux/mutex.h>
-#include <linux/uaccess.h>
-#include <linux/workqueue.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/cdrom.h>	/* क्रम the eject ioctl */
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/blkpg.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/workqueue.h>
 
-static DEFINE_MUTEX(pd_mutex);
-static DEFINE_SPINLOCK(pd_lock);
+अटल DEFINE_MUTEX(pd_mutex);
+अटल DEFINE_SPINLOCK(pd_lock);
 
-module_param(verbose, int, 0);
-module_param(major, int, 0);
-module_param(name, charp, 0);
-module_param(cluster, int, 0);
-module_param(nice, int, 0);
-module_param_array(drive0, int, NULL, 0);
-module_param_array(drive1, int, NULL, 0);
-module_param_array(drive2, int, NULL, 0);
-module_param_array(drive3, int, NULL, 0);
+module_param(verbose, पूर्णांक, 0);
+module_param(major, पूर्णांक, 0);
+module_param(name, अक्षरp, 0);
+module_param(cluster, पूर्णांक, 0);
+module_param(nice, पूर्णांक, 0);
+module_param_array(drive0, पूर्णांक, शून्य, 0);
+module_param_array(drive1, पूर्णांक, शून्य, 0);
+module_param_array(drive2, पूर्णांक, शून्य, 0);
+module_param_array(drive3, पूर्णांक, शून्य, 0);
 
-#include "paride.h"
+#समावेश "paride.h"
 
-#define PD_BITS    4
+#घोषणा PD_BITS    4
 
-/* numbers for "SCSI" geometry */
+/* numbers क्रम "SCSI" geometry */
 
-#define PD_LOG_HEADS    64
-#define PD_LOG_SECTS    32
+#घोषणा PD_LOG_HEADS    64
+#घोषणा PD_LOG_SECTS    32
 
-#define PD_ID_OFF       54
-#define PD_ID_LEN       14
+#घोषणा PD_ID_OFF       54
+#घोषणा PD_ID_LEN       14
 
-#define PD_MAX_RETRIES  5
-#define PD_TMO          800	/* interrupt timeout in jiffies */
-#define PD_SPIN_DEL     50	/* spin delay in micro-seconds  */
+#घोषणा PD_MAX_RETRIES  5
+#घोषणा PD_TMO          800	/* पूर्णांकerrupt समयout in jअगरfies */
+#घोषणा PD_SPIN_DEL     50	/* spin delay in micro-seconds  */
 
-#define PD_SPIN         (1000000*PD_TMO)/(HZ*PD_SPIN_DEL)
+#घोषणा PD_SPIN         (1000000*PD_TMO)/(HZ*PD_SPIN_DEL)
 
-#define STAT_ERR        0x00001
-#define STAT_INDEX      0x00002
-#define STAT_ECC        0x00004
-#define STAT_DRQ        0x00008
-#define STAT_SEEK       0x00010
-#define STAT_WRERR      0x00020
-#define STAT_READY      0x00040
-#define STAT_BUSY       0x00080
+#घोषणा STAT_ERR        0x00001
+#घोषणा STAT_INDEX      0x00002
+#घोषणा STAT_ECC        0x00004
+#घोषणा STAT_DRQ        0x00008
+#घोषणा STAT_SEEK       0x00010
+#घोषणा STAT_WRERR      0x00020
+#घोषणा STAT_READY      0x00040
+#घोषणा STAT_BUSY       0x00080
 
-#define ERR_AMNF        0x00100
-#define ERR_TK0NF       0x00200
-#define ERR_ABRT        0x00400
-#define ERR_MCR         0x00800
-#define ERR_IDNF        0x01000
-#define ERR_MC          0x02000
-#define ERR_UNC         0x04000
-#define ERR_TMO         0x10000
+#घोषणा ERR_AMNF        0x00100
+#घोषणा ERR_TK0NF       0x00200
+#घोषणा ERR_ABRT        0x00400
+#घोषणा ERR_MCR         0x00800
+#घोषणा ERR_IDNF        0x01000
+#घोषणा ERR_MC          0x02000
+#घोषणा ERR_UNC         0x04000
+#घोषणा ERR_TMO         0x10000
 
-#define IDE_READ        	0x20
-#define IDE_WRITE       	0x30
-#define IDE_READ_VRFY		0x40
-#define IDE_INIT_DEV_PARMS	0x91
-#define IDE_STANDBY     	0x96
-#define IDE_ACKCHANGE   	0xdb
-#define IDE_DOORLOCK    	0xde
-#define IDE_DOORUNLOCK  	0xdf
-#define IDE_IDENTIFY    	0xec
-#define IDE_EJECT		0xed
+#घोषणा IDE_READ        	0x20
+#घोषणा IDE_WRITE       	0x30
+#घोषणा IDE_READ_VRFY		0x40
+#घोषणा IDE_INIT_DEV_PARMS	0x91
+#घोषणा IDE_STANDBY     	0x96
+#घोषणा IDE_ACKCHANGE   	0xdb
+#घोषणा IDE_DOORLOCK    	0xde
+#घोषणा IDE_DOORUNLOCK  	0xdf
+#घोषणा IDE_IDENTIFY    	0xec
+#घोषणा IDE_EJECT		0xed
 
-#define PD_NAMELEN	8
+#घोषणा PD_NAMELEN	8
 
-struct pd_unit {
-	struct pi_adapter pia;	/* interface to paride layer */
-	struct pi_adapter *pi;
-	int access;		/* count of active opens ... */
-	int capacity;		/* Size of this volume in sectors */
-	int heads;		/* physical geometry */
-	int sectors;
-	int cylinders;
-	int can_lba;
-	int drive;		/* master=0 slave=1 */
-	int changed;		/* Have we seen a disk change ? */
-	int removable;		/* removable media device  ?  */
-	int standby;
-	int alt_geom;
-	char name[PD_NAMELEN];	/* pda, pdb, etc ... */
-	struct gendisk *gd;
-	struct blk_mq_tag_set tag_set;
-	struct list_head rq_list;
-};
+काष्ठा pd_unit अणु
+	काष्ठा pi_adapter pia;	/* पूर्णांकerface to paride layer */
+	काष्ठा pi_adapter *pi;
+	पूर्णांक access;		/* count of active खोलोs ... */
+	पूर्णांक capacity;		/* Size of this volume in sectors */
+	पूर्णांक heads;		/* physical geometry */
+	पूर्णांक sectors;
+	पूर्णांक cylinders;
+	पूर्णांक can_lba;
+	पूर्णांक drive;		/* master=0 slave=1 */
+	पूर्णांक changed;		/* Have we seen a disk change ? */
+	पूर्णांक removable;		/* removable media device  ?  */
+	पूर्णांक standby;
+	पूर्णांक alt_geom;
+	अक्षर name[PD_NAMELEN];	/* pda, pdb, etc ... */
+	काष्ठा gendisk *gd;
+	काष्ठा blk_mq_tag_set tag_set;
+	काष्ठा list_head rq_list;
+पूर्ण;
 
-static struct pd_unit pd[PD_UNITS];
+अटल काष्ठा pd_unit pd[PD_UNITS];
 
-struct pd_req {
-	/* for REQ_OP_DRV_IN: */
-	enum action (*func)(struct pd_unit *disk);
-};
+काष्ठा pd_req अणु
+	/* क्रम REQ_OP_DRV_IN: */
+	क्रमागत action (*func)(काष्ठा pd_unit *disk);
+पूर्ण;
 
-static char pd_scratch[512];	/* scratch block buffer */
+अटल अक्षर pd_scratch[512];	/* scratch block buffer */
 
-static char *pd_errs[17] = { "ERR", "INDEX", "ECC", "DRQ", "SEEK", "WRERR",
+अटल अक्षर *pd_errs[17] = अणु "ERR", "INDEX", "ECC", "DRQ", "SEEK", "WRERR",
 	"READY", "BUSY", "AMNF", "TK0NF", "ABRT", "MCR",
 	"IDNF", "MC", "UNC", "???", "TMO"
-};
+पूर्ण;
 
-static void *par_drv;		/* reference of parport driver */
+अटल व्योम *par_drv;		/* reference of parport driver */
 
-static inline int status_reg(struct pd_unit *disk)
-{
-	return pi_read_regr(disk->pi, 1, 6);
-}
+अटल अंतरभूत पूर्णांक status_reg(काष्ठा pd_unit *disk)
+अणु
+	वापस pi_पढ़ो_regr(disk->pi, 1, 6);
+पूर्ण
 
-static inline int read_reg(struct pd_unit *disk, int reg)
-{
-	return pi_read_regr(disk->pi, 0, reg);
-}
+अटल अंतरभूत पूर्णांक पढ़ो_reg(काष्ठा pd_unit *disk, पूर्णांक reg)
+अणु
+	वापस pi_पढ़ो_regr(disk->pi, 0, reg);
+पूर्ण
 
-static inline void write_status(struct pd_unit *disk, int val)
-{
-	pi_write_regr(disk->pi, 1, 6, val);
-}
+अटल अंतरभूत व्योम ग_लिखो_status(काष्ठा pd_unit *disk, पूर्णांक val)
+अणु
+	pi_ग_लिखो_regr(disk->pi, 1, 6, val);
+पूर्ण
 
-static inline void write_reg(struct pd_unit *disk, int reg, int val)
-{
-	pi_write_regr(disk->pi, 0, reg, val);
-}
+अटल अंतरभूत व्योम ग_लिखो_reg(काष्ठा pd_unit *disk, पूर्णांक reg, पूर्णांक val)
+अणु
+	pi_ग_लिखो_regr(disk->pi, 0, reg, val);
+पूर्ण
 
-static inline u8 DRIVE(struct pd_unit *disk)
-{
-	return 0xa0+0x10*disk->drive;
-}
+अटल अंतरभूत u8 DRIVE(काष्ठा pd_unit *disk)
+अणु
+	वापस 0xa0+0x10*disk->drive;
+पूर्ण
 
-/*  ide command interface */
+/*  ide command पूर्णांकerface */
 
-static void pd_print_error(struct pd_unit *disk, char *msg, int status)
-{
-	int i;
+अटल व्योम pd_prपूर्णांक_error(काष्ठा pd_unit *disk, अक्षर *msg, पूर्णांक status)
+अणु
+	पूर्णांक i;
 
-	printk("%s: %s: status = 0x%x =", disk->name, msg, status);
-	for (i = 0; i < ARRAY_SIZE(pd_errs); i++)
-		if (status & (1 << i))
-			printk(" %s", pd_errs[i]);
-	printk("\n");
-}
+	prपूर्णांकk("%s: %s: status = 0x%x =", disk->name, msg, status);
+	क्रम (i = 0; i < ARRAY_SIZE(pd_errs); i++)
+		अगर (status & (1 << i))
+			prपूर्णांकk(" %s", pd_errs[i]);
+	prपूर्णांकk("\n");
+पूर्ण
 
-static void pd_reset(struct pd_unit *disk)
-{				/* called only for MASTER drive */
-	write_status(disk, 4);
+अटल व्योम pd_reset(काष्ठा pd_unit *disk)
+अणु				/* called only क्रम MASTER drive */
+	ग_लिखो_status(disk, 4);
 	udelay(50);
-	write_status(disk, 0);
+	ग_लिखो_status(disk, 0);
 	udelay(250);
-}
+पूर्ण
 
-#define DBMSG(msg)	((verbose>1)?(msg):NULL)
+#घोषणा DBMSG(msg)	((verbose>1)?(msg):शून्य)
 
-static int pd_wait_for(struct pd_unit *disk, int w, char *msg)
-{				/* polled wait */
-	int k, r, e;
+अटल पूर्णांक pd_रुको_क्रम(काष्ठा pd_unit *disk, पूर्णांक w, अक्षर *msg)
+अणु				/* polled रुको */
+	पूर्णांक k, r, e;
 
 	k = 0;
-	while (k < PD_SPIN) {
+	जबतक (k < PD_SPIN) अणु
 		r = status_reg(disk);
 		k++;
-		if (((r & w) == w) && !(r & STAT_BUSY))
-			break;
+		अगर (((r & w) == w) && !(r & STAT_BUSY))
+			अवरोध;
 		udelay(PD_SPIN_DEL);
-	}
-	e = (read_reg(disk, 1) << 8) + read_reg(disk, 7);
-	if (k >= PD_SPIN)
+	पूर्ण
+	e = (पढ़ो_reg(disk, 1) << 8) + पढ़ो_reg(disk, 7);
+	अगर (k >= PD_SPIN)
 		e |= ERR_TMO;
-	if ((e & (STAT_ERR | ERR_TMO)) && (msg != NULL))
-		pd_print_error(disk, msg, e);
-	return e;
-}
+	अगर ((e & (STAT_ERR | ERR_TMO)) && (msg != शून्य))
+		pd_prपूर्णांक_error(disk, msg, e);
+	वापस e;
+पूर्ण
 
-static void pd_send_command(struct pd_unit *disk, int n, int s, int h, int c0, int c1, int func)
-{
-	write_reg(disk, 6, DRIVE(disk) + h);
-	write_reg(disk, 1, 0);		/* the IDE task file */
-	write_reg(disk, 2, n);
-	write_reg(disk, 3, s);
-	write_reg(disk, 4, c0);
-	write_reg(disk, 5, c1);
-	write_reg(disk, 7, func);
+अटल व्योम pd_send_command(काष्ठा pd_unit *disk, पूर्णांक n, पूर्णांक s, पूर्णांक h, पूर्णांक c0, पूर्णांक c1, पूर्णांक func)
+अणु
+	ग_लिखो_reg(disk, 6, DRIVE(disk) + h);
+	ग_लिखो_reg(disk, 1, 0);		/* the IDE task file */
+	ग_लिखो_reg(disk, 2, n);
+	ग_लिखो_reg(disk, 3, s);
+	ग_लिखो_reg(disk, 4, c0);
+	ग_लिखो_reg(disk, 5, c1);
+	ग_लिखो_reg(disk, 7, func);
 
 	udelay(1);
-}
+पूर्ण
 
-static void pd_ide_command(struct pd_unit *disk, int func, int block, int count)
-{
-	int c1, c0, h, s;
+अटल व्योम pd_ide_command(काष्ठा pd_unit *disk, पूर्णांक func, पूर्णांक block, पूर्णांक count)
+अणु
+	पूर्णांक c1, c0, h, s;
 
-	if (disk->can_lba) {
+	अगर (disk->can_lba) अणु
 		s = block & 255;
 		c0 = (block >>= 8) & 255;
 		c1 = (block >>= 8) & 255;
 		h = ((block >>= 8) & 15) + 0x40;
-	} else {
+	पूर्ण अन्यथा अणु
 		s = (block % disk->sectors) + 1;
 		h = (block /= disk->sectors) % disk->heads;
 		c0 = (block /= disk->heads) % 256;
 		c1 = (block >>= 8);
-	}
+	पूर्ण
 	pd_send_command(disk, count, s, h, c0, c1, func);
-}
+पूर्ण
 
 /* The i/o request engine */
 
-enum action {Fail = 0, Ok = 1, Hold, Wait};
+क्रमागत action अणुFail = 0, Ok = 1, Hold, Waitपूर्ण;
 
-static struct request *pd_req;	/* current request */
-static enum action (*phase)(void);
+अटल काष्ठा request *pd_req;	/* current request */
+अटल क्रमागत action (*phase)(व्योम);
 
-static void run_fsm(void);
+अटल व्योम run_fsm(व्योम);
 
-static void ps_tq_int(struct work_struct *work);
+अटल व्योम ps_tq_पूर्णांक(काष्ठा work_काष्ठा *work);
 
-static DECLARE_DELAYED_WORK(fsm_tq, ps_tq_int);
+अटल DECLARE_DELAYED_WORK(fsm_tq, ps_tq_पूर्णांक);
 
-static void schedule_fsm(void)
-{
-	if (!nice)
+अटल व्योम schedule_fsm(व्योम)
+अणु
+	अगर (!nice)
 		schedule_delayed_work(&fsm_tq, 0);
-	else
+	अन्यथा
 		schedule_delayed_work(&fsm_tq, nice-1);
-}
+पूर्ण
 
-static void ps_tq_int(struct work_struct *work)
-{
+अटल व्योम ps_tq_पूर्णांक(काष्ठा work_काष्ठा *work)
+अणु
 	run_fsm();
-}
+पूर्ण
 
-static enum action do_pd_io_start(void);
-static enum action pd_special(void);
-static enum action do_pd_read_start(void);
-static enum action do_pd_write_start(void);
-static enum action do_pd_read_drq(void);
-static enum action do_pd_write_done(void);
+अटल क्रमागत action करो_pd_io_start(व्योम);
+अटल क्रमागत action pd_special(व्योम);
+अटल क्रमागत action करो_pd_पढ़ो_start(व्योम);
+अटल क्रमागत action करो_pd_ग_लिखो_start(व्योम);
+अटल क्रमागत action करो_pd_पढ़ो_drq(व्योम);
+अटल क्रमागत action करो_pd_ग_लिखो_करोne(व्योम);
 
-static int pd_queue;
-static int pd_claimed;
+अटल पूर्णांक pd_queue;
+अटल पूर्णांक pd_claimed;
 
-static struct pd_unit *pd_current; /* current request's drive */
-static PIA *pi_current; /* current request's PIA */
+अटल काष्ठा pd_unit *pd_current; /* current request's drive */
+अटल PIA *pi_current; /* current request's PIA */
 
-static int set_next_request(void)
-{
-	struct gendisk *disk;
-	struct request_queue *q;
-	int old_pos = pd_queue;
+अटल पूर्णांक set_next_request(व्योम)
+अणु
+	काष्ठा gendisk *disk;
+	काष्ठा request_queue *q;
+	पूर्णांक old_pos = pd_queue;
 
-	do {
+	करो अणु
 		disk = pd[pd_queue].gd;
-		q = disk ? disk->queue : NULL;
-		if (++pd_queue == PD_UNITS)
+		q = disk ? disk->queue : शून्य;
+		अगर (++pd_queue == PD_UNITS)
 			pd_queue = 0;
-		if (q) {
-			struct pd_unit *disk = q->queuedata;
+		अगर (q) अणु
+			काष्ठा pd_unit *disk = q->queuedata;
 
-			if (list_empty(&disk->rq_list))
-				continue;
+			अगर (list_empty(&disk->rq_list))
+				जारी;
 
 			pd_req = list_first_entry(&disk->rq_list,
-							struct request,
+							काष्ठा request,
 							queuelist);
 			list_del_init(&pd_req->queuelist);
 			blk_mq_start_request(pd_req);
-			break;
-		}
-	} while (pd_queue != old_pos);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (pd_queue != old_pos);
 
-	return pd_req != NULL;
-}
+	वापस pd_req != शून्य;
+पूर्ण
 
-static void run_fsm(void)
-{
-	while (1) {
-		enum action res;
-		int stop = 0;
+अटल व्योम run_fsm(व्योम)
+अणु
+	जबतक (1) अणु
+		क्रमागत action res;
+		पूर्णांक stop = 0;
 
-		if (!phase) {
-			pd_current = pd_req->rq_disk->private_data;
+		अगर (!phase) अणु
+			pd_current = pd_req->rq_disk->निजी_data;
 			pi_current = pd_current->pi;
-			phase = do_pd_io_start;
-		}
+			phase = करो_pd_io_start;
+		पूर्ण
 
-		switch (pd_claimed) {
-			case 0:
+		चयन (pd_claimed) अणु
+			हाल 0:
 				pd_claimed = 1;
-				if (!pi_schedule_claimed(pi_current, run_fsm))
-					return;
+				अगर (!pi_schedule_claimed(pi_current, run_fsm))
+					वापस;
 				fallthrough;
-			case 1:
+			हाल 1:
 				pd_claimed = 2;
 				pi_current->proto->connect(pi_current);
-		}
+		पूर्ण
 
-		switch(res = phase()) {
-			case Ok: case Fail: {
+		चयन(res = phase()) अणु
+			हाल Ok: हाल Fail: अणु
 				blk_status_t err;
 
 				err = res == Ok ? 0 : BLK_STS_IOERR;
 				pi_disconnect(pi_current);
 				pd_claimed = 0;
-				phase = NULL;
+				phase = शून्य;
 				spin_lock_irq(&pd_lock);
-				if (!blk_update_request(pd_req, err,
-						blk_rq_cur_bytes(pd_req))) {
+				अगर (!blk_update_request(pd_req, err,
+						blk_rq_cur_bytes(pd_req))) अणु
 					__blk_mq_end_request(pd_req, err);
-					pd_req = NULL;
+					pd_req = शून्य;
 					stop = !set_next_request();
-				}
+				पूर्ण
 				spin_unlock_irq(&pd_lock);
-				if (stop)
-					return;
-				}
+				अगर (stop)
+					वापस;
+				पूर्ण
 				fallthrough;
-			case Hold:
+			हाल Hold:
 				schedule_fsm();
-				return;
-			case Wait:
+				वापस;
+			हाल Wait:
 				pi_disconnect(pi_current);
 				pd_claimed = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int pd_retries = 0;	/* i/o error retry count */
-static int pd_block;		/* address of next requested block */
-static int pd_count;		/* number of blocks still to do */
-static int pd_run;		/* sectors in current cluster */
-static char *pd_buf;		/* buffer for request in progress */
+अटल पूर्णांक pd_retries = 0;	/* i/o error retry count */
+अटल पूर्णांक pd_block;		/* address of next requested block */
+अटल पूर्णांक pd_count;		/* number of blocks still to करो */
+अटल पूर्णांक pd_run;		/* sectors in current cluster */
+अटल अक्षर *pd_buf;		/* buffer क्रम request in progress */
 
-static enum action do_pd_io_start(void)
-{
-	switch (req_op(pd_req)) {
-	case REQ_OP_DRV_IN:
+अटल क्रमागत action करो_pd_io_start(व्योम)
+अणु
+	चयन (req_op(pd_req)) अणु
+	हाल REQ_OP_DRV_IN:
 		phase = pd_special;
-		return pd_special();
-	case REQ_OP_READ:
-	case REQ_OP_WRITE:
+		वापस pd_special();
+	हाल REQ_OP_READ:
+	हाल REQ_OP_WRITE:
 		pd_block = blk_rq_pos(pd_req);
 		pd_count = blk_rq_cur_sectors(pd_req);
-		if (pd_block + pd_count > get_capacity(pd_req->rq_disk))
-			return Fail;
+		अगर (pd_block + pd_count > get_capacity(pd_req->rq_disk))
+			वापस Fail;
 		pd_run = blk_rq_sectors(pd_req);
 		pd_buf = bio_data(pd_req->bio);
 		pd_retries = 0;
-		if (req_op(pd_req) == REQ_OP_READ)
-			return do_pd_read_start();
-		else
-			return do_pd_write_start();
-	}
-	return Fail;
-}
+		अगर (req_op(pd_req) == REQ_OP_READ)
+			वापस करो_pd_पढ़ो_start();
+		अन्यथा
+			वापस करो_pd_ग_लिखो_start();
+	पूर्ण
+	वापस Fail;
+पूर्ण
 
-static enum action pd_special(void)
-{
-	struct pd_req *req = blk_mq_rq_to_pdu(pd_req);
+अटल क्रमागत action pd_special(व्योम)
+अणु
+	काष्ठा pd_req *req = blk_mq_rq_to_pdu(pd_req);
 
-	return req->func(pd_current);
-}
+	वापस req->func(pd_current);
+पूर्ण
 
-static int pd_next_buf(void)
-{
-	unsigned long saved_flags;
+अटल पूर्णांक pd_next_buf(व्योम)
+अणु
+	अचिन्हित दीर्घ saved_flags;
 
 	pd_count--;
 	pd_run--;
 	pd_buf += 512;
 	pd_block++;
-	if (!pd_run)
-		return 1;
-	if (pd_count)
-		return 0;
+	अगर (!pd_run)
+		वापस 1;
+	अगर (pd_count)
+		वापस 0;
 	spin_lock_irqsave(&pd_lock, saved_flags);
-	if (!blk_update_request(pd_req, 0, blk_rq_cur_bytes(pd_req))) {
+	अगर (!blk_update_request(pd_req, 0, blk_rq_cur_bytes(pd_req))) अणु
 		__blk_mq_end_request(pd_req, 0);
-		pd_req = NULL;
+		pd_req = शून्य;
 		pd_count = 0;
-		pd_buf = NULL;
-	} else {
+		pd_buf = शून्य;
+	पूर्ण अन्यथा अणु
 		pd_count = blk_rq_cur_sectors(pd_req);
 		pd_buf = bio_data(pd_req->bio);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&pd_lock, saved_flags);
-	return !pd_count;
-}
+	वापस !pd_count;
+पूर्ण
 
-static unsigned long pd_timeout;
+अटल अचिन्हित दीर्घ pd_समयout;
 
-static enum action do_pd_read_start(void)
-{
-	if (pd_wait_for(pd_current, STAT_READY, "do_pd_read") & STAT_ERR) {
-		if (pd_retries < PD_MAX_RETRIES) {
+अटल क्रमागत action करो_pd_पढ़ो_start(व्योम)
+अणु
+	अगर (pd_रुको_क्रम(pd_current, STAT_READY, "do_pd_read") & STAT_ERR) अणु
+		अगर (pd_retries < PD_MAX_RETRIES) अणु
 			pd_retries++;
-			return Wait;
-		}
-		return Fail;
-	}
+			वापस Wait;
+		पूर्ण
+		वापस Fail;
+	पूर्ण
 	pd_ide_command(pd_current, IDE_READ, pd_block, pd_run);
-	phase = do_pd_read_drq;
-	pd_timeout = jiffies + PD_TMO;
-	return Hold;
-}
+	phase = करो_pd_पढ़ो_drq;
+	pd_समयout = jअगरfies + PD_TMO;
+	वापस Hold;
+पूर्ण
 
-static enum action do_pd_write_start(void)
-{
-	if (pd_wait_for(pd_current, STAT_READY, "do_pd_write") & STAT_ERR) {
-		if (pd_retries < PD_MAX_RETRIES) {
+अटल क्रमागत action करो_pd_ग_लिखो_start(व्योम)
+अणु
+	अगर (pd_रुको_क्रम(pd_current, STAT_READY, "do_pd_write") & STAT_ERR) अणु
+		अगर (pd_retries < PD_MAX_RETRIES) अणु
 			pd_retries++;
-			return Wait;
-		}
-		return Fail;
-	}
+			वापस Wait;
+		पूर्ण
+		वापस Fail;
+	पूर्ण
 	pd_ide_command(pd_current, IDE_WRITE, pd_block, pd_run);
-	while (1) {
-		if (pd_wait_for(pd_current, STAT_DRQ, "do_pd_write_drq") & STAT_ERR) {
-			if (pd_retries < PD_MAX_RETRIES) {
+	जबतक (1) अणु
+		अगर (pd_रुको_क्रम(pd_current, STAT_DRQ, "do_pd_write_drq") & STAT_ERR) अणु
+			अगर (pd_retries < PD_MAX_RETRIES) अणु
 				pd_retries++;
-				return Wait;
-			}
-			return Fail;
-		}
-		pi_write_block(pd_current->pi, pd_buf, 512);
-		if (pd_next_buf())
-			break;
-	}
-	phase = do_pd_write_done;
-	pd_timeout = jiffies + PD_TMO;
-	return Hold;
-}
+				वापस Wait;
+			पूर्ण
+			वापस Fail;
+		पूर्ण
+		pi_ग_लिखो_block(pd_current->pi, pd_buf, 512);
+		अगर (pd_next_buf())
+			अवरोध;
+	पूर्ण
+	phase = करो_pd_ग_लिखो_करोne;
+	pd_समयout = jअगरfies + PD_TMO;
+	वापस Hold;
+पूर्ण
 
-static inline int pd_ready(void)
-{
-	return !(status_reg(pd_current) & STAT_BUSY);
-}
+अटल अंतरभूत पूर्णांक pd_पढ़ोy(व्योम)
+अणु
+	वापस !(status_reg(pd_current) & STAT_BUSY);
+पूर्ण
 
-static enum action do_pd_read_drq(void)
-{
-	if (!pd_ready() && !time_after_eq(jiffies, pd_timeout))
-		return Hold;
+अटल क्रमागत action करो_pd_पढ़ो_drq(व्योम)
+अणु
+	अगर (!pd_पढ़ोy() && !समय_after_eq(jअगरfies, pd_समयout))
+		वापस Hold;
 
-	while (1) {
-		if (pd_wait_for(pd_current, STAT_DRQ, "do_pd_read_drq") & STAT_ERR) {
-			if (pd_retries < PD_MAX_RETRIES) {
+	जबतक (1) अणु
+		अगर (pd_रुको_क्रम(pd_current, STAT_DRQ, "do_pd_read_drq") & STAT_ERR) अणु
+			अगर (pd_retries < PD_MAX_RETRIES) अणु
 				pd_retries++;
-				phase = do_pd_read_start;
-				return Wait;
-			}
-			return Fail;
-		}
-		pi_read_block(pd_current->pi, pd_buf, 512);
-		if (pd_next_buf())
-			break;
-	}
-	return Ok;
-}
+				phase = करो_pd_पढ़ो_start;
+				वापस Wait;
+			पूर्ण
+			वापस Fail;
+		पूर्ण
+		pi_पढ़ो_block(pd_current->pi, pd_buf, 512);
+		अगर (pd_next_buf())
+			अवरोध;
+	पूर्ण
+	वापस Ok;
+पूर्ण
 
-static enum action do_pd_write_done(void)
-{
-	if (!pd_ready() && !time_after_eq(jiffies, pd_timeout))
-		return Hold;
+अटल क्रमागत action करो_pd_ग_लिखो_करोne(व्योम)
+अणु
+	अगर (!pd_पढ़ोy() && !समय_after_eq(jअगरfies, pd_समयout))
+		वापस Hold;
 
-	if (pd_wait_for(pd_current, STAT_READY, "do_pd_write_done") & STAT_ERR) {
-		if (pd_retries < PD_MAX_RETRIES) {
+	अगर (pd_रुको_क्रम(pd_current, STAT_READY, "do_pd_write_done") & STAT_ERR) अणु
+		अगर (pd_retries < PD_MAX_RETRIES) अणु
 			pd_retries++;
-			phase = do_pd_write_start;
-			return Wait;
-		}
-		return Fail;
-	}
-	return Ok;
-}
+			phase = करो_pd_ग_लिखो_start;
+			वापस Wait;
+		पूर्ण
+		वापस Fail;
+	पूर्ण
+	वापस Ok;
+पूर्ण
 
 /* special io requests */
 
-/* According to the ATA standard, the default CHS geometry should be
+/* According to the ATA standard, the शेष CHS geometry should be
    available following a reset.  Some Western Digital drives come up
    in a mode where only LBA addresses are accepted until the device
    parameters are initialised.
 */
 
-static void pd_init_dev_parms(struct pd_unit *disk)
-{
-	pd_wait_for(disk, 0, DBMSG("before init_dev_parms"));
+अटल व्योम pd_init_dev_parms(काष्ठा pd_unit *disk)
+अणु
+	pd_रुको_क्रम(disk, 0, DBMSG("before init_dev_parms"));
 	pd_send_command(disk, disk->sectors, 0, disk->heads - 1, 0, 0,
 			IDE_INIT_DEV_PARMS);
 	udelay(300);
-	pd_wait_for(disk, 0, "Initialise device parameters");
-}
+	pd_रुको_क्रम(disk, 0, "Initialise device parameters");
+पूर्ण
 
-static enum action pd_door_lock(struct pd_unit *disk)
-{
-	if (!(pd_wait_for(disk, STAT_READY, "Lock") & STAT_ERR)) {
+अटल क्रमागत action pd_करोor_lock(काष्ठा pd_unit *disk)
+अणु
+	अगर (!(pd_रुको_क्रम(disk, STAT_READY, "Lock") & STAT_ERR)) अणु
 		pd_send_command(disk, 1, 0, 0, 0, 0, IDE_DOORLOCK);
-		pd_wait_for(disk, STAT_READY, "Lock done");
-	}
-	return Ok;
-}
+		pd_रुको_क्रम(disk, STAT_READY, "Lock done");
+	पूर्ण
+	वापस Ok;
+पूर्ण
 
-static enum action pd_door_unlock(struct pd_unit *disk)
-{
-	if (!(pd_wait_for(disk, STAT_READY, "Lock") & STAT_ERR)) {
+अटल क्रमागत action pd_करोor_unlock(काष्ठा pd_unit *disk)
+अणु
+	अगर (!(pd_रुको_क्रम(disk, STAT_READY, "Lock") & STAT_ERR)) अणु
 		pd_send_command(disk, 1, 0, 0, 0, 0, IDE_DOORUNLOCK);
-		pd_wait_for(disk, STAT_READY, "Lock done");
-	}
-	return Ok;
-}
+		pd_रुको_क्रम(disk, STAT_READY, "Lock done");
+	पूर्ण
+	वापस Ok;
+पूर्ण
 
-static enum action pd_eject(struct pd_unit *disk)
-{
-	pd_wait_for(disk, 0, DBMSG("before unlock on eject"));
+अटल क्रमागत action pd_eject(काष्ठा pd_unit *disk)
+अणु
+	pd_रुको_क्रम(disk, 0, DBMSG("before unlock on eject"));
 	pd_send_command(disk, 1, 0, 0, 0, 0, IDE_DOORUNLOCK);
-	pd_wait_for(disk, 0, DBMSG("after unlock on eject"));
-	pd_wait_for(disk, 0, DBMSG("before eject"));
+	pd_रुको_क्रम(disk, 0, DBMSG("after unlock on eject"));
+	pd_रुको_क्रम(disk, 0, DBMSG("before eject"));
 	pd_send_command(disk, 0, 0, 0, 0, 0, IDE_EJECT);
-	pd_wait_for(disk, 0, DBMSG("after eject"));
-	return Ok;
-}
+	pd_रुको_क्रम(disk, 0, DBMSG("after eject"));
+	वापस Ok;
+पूर्ण
 
-static enum action pd_media_check(struct pd_unit *disk)
-{
-	int r = pd_wait_for(disk, STAT_READY, DBMSG("before media_check"));
-	if (!(r & STAT_ERR)) {
+अटल क्रमागत action pd_media_check(काष्ठा pd_unit *disk)
+अणु
+	पूर्णांक r = pd_रुको_क्रम(disk, STAT_READY, DBMSG("before media_check"));
+	अगर (!(r & STAT_ERR)) अणु
 		pd_send_command(disk, 1, 1, 0, 0, 0, IDE_READ_VRFY);
-		r = pd_wait_for(disk, STAT_READY, DBMSG("RDY after READ_VRFY"));
-	} else
-		disk->changed = 1;	/* say changed if other error */
-	if (r & ERR_MC) {
+		r = pd_रुको_क्रम(disk, STAT_READY, DBMSG("RDY after READ_VRFY"));
+	पूर्ण अन्यथा
+		disk->changed = 1;	/* say changed अगर other error */
+	अगर (r & ERR_MC) अणु
 		disk->changed = 1;
 		pd_send_command(disk, 1, 0, 0, 0, 0, IDE_ACKCHANGE);
-		pd_wait_for(disk, STAT_READY, DBMSG("RDY after ACKCHANGE"));
+		pd_रुको_क्रम(disk, STAT_READY, DBMSG("RDY after ACKCHANGE"));
 		pd_send_command(disk, 1, 1, 0, 0, 0, IDE_READ_VRFY);
-		r = pd_wait_for(disk, STAT_READY, DBMSG("RDY after VRFY"));
-	}
-	return Ok;
-}
+		r = pd_रुको_क्रम(disk, STAT_READY, DBMSG("RDY after VRFY"));
+	पूर्ण
+	वापस Ok;
+पूर्ण
 
-static void pd_standby_off(struct pd_unit *disk)
-{
-	pd_wait_for(disk, 0, DBMSG("before STANDBY"));
+अटल व्योम pd_standby_off(काष्ठा pd_unit *disk)
+अणु
+	pd_रुको_क्रम(disk, 0, DBMSG("before STANDBY"));
 	pd_send_command(disk, 0, 0, 0, 0, 0, IDE_STANDBY);
-	pd_wait_for(disk, 0, DBMSG("after STANDBY"));
-}
+	pd_रुको_क्रम(disk, 0, DBMSG("after STANDBY"));
+पूर्ण
 
-static enum action pd_identify(struct pd_unit *disk)
-{
-	int j;
-	char id[PD_ID_LEN + 1];
+अटल क्रमागत action pd_identअगरy(काष्ठा pd_unit *disk)
+अणु
+	पूर्णांक j;
+	अक्षर id[PD_ID_LEN + 1];
 
 /* WARNING:  here there may be dragons.  reset() applies to both drives,
    but we call it only on probing the MASTER. This should allow most
@@ -706,327 +707,327 @@ static enum action pd_identify(struct pd_unit *disk)
    settings on the SLAVE drive.
 */
 
-	if (disk->drive == 0)
+	अगर (disk->drive == 0)
 		pd_reset(disk);
 
-	write_reg(disk, 6, DRIVE(disk));
-	pd_wait_for(disk, 0, DBMSG("before IDENT"));
+	ग_लिखो_reg(disk, 6, DRIVE(disk));
+	pd_रुको_क्रम(disk, 0, DBMSG("before IDENT"));
 	pd_send_command(disk, 1, 0, 0, 0, 0, IDE_IDENTIFY);
 
-	if (pd_wait_for(disk, STAT_DRQ, DBMSG("IDENT DRQ")) & STAT_ERR)
-		return Fail;
-	pi_read_block(disk->pi, pd_scratch, 512);
+	अगर (pd_रुको_क्रम(disk, STAT_DRQ, DBMSG("IDENT DRQ")) & STAT_ERR)
+		वापस Fail;
+	pi_पढ़ो_block(disk->pi, pd_scratch, 512);
 	disk->can_lba = pd_scratch[99] & 2;
 	disk->sectors = le16_to_cpu(*(__le16 *) (pd_scratch + 12));
 	disk->heads = le16_to_cpu(*(__le16 *) (pd_scratch + 6));
 	disk->cylinders = le16_to_cpu(*(__le16 *) (pd_scratch + 2));
-	if (disk->can_lba)
+	अगर (disk->can_lba)
 		disk->capacity = le32_to_cpu(*(__le32 *) (pd_scratch + 120));
-	else
+	अन्यथा
 		disk->capacity = disk->sectors * disk->heads * disk->cylinders;
 
-	for (j = 0; j < PD_ID_LEN; j++)
+	क्रम (j = 0; j < PD_ID_LEN; j++)
 		id[j ^ 1] = pd_scratch[j + PD_ID_OFF];
 	j = PD_ID_LEN - 1;
-	while ((j >= 0) && (id[j] <= 0x20))
+	जबतक ((j >= 0) && (id[j] <= 0x20))
 		j--;
 	j++;
 	id[j] = 0;
 
 	disk->removable = pd_scratch[0] & 0x80;
 
-	printk("%s: %s, %s, %d blocks [%dM], (%d/%d/%d), %s media\n",
+	prपूर्णांकk("%s: %s, %s, %d blocks [%dM], (%d/%d/%d), %s media\n",
 	       disk->name, id,
 	       disk->drive ? "slave" : "master",
 	       disk->capacity, disk->capacity / 2048,
 	       disk->cylinders, disk->heads, disk->sectors,
 	       disk->removable ? "removable" : "fixed");
 
-	if (disk->capacity)
+	अगर (disk->capacity)
 		pd_init_dev_parms(disk);
-	if (!disk->standby)
+	अगर (!disk->standby)
 		pd_standby_off(disk);
 
-	return Ok;
-}
+	वापस Ok;
+पूर्ण
 
 /* end of io request engine */
 
-static blk_status_t pd_queue_rq(struct blk_mq_hw_ctx *hctx,
-				const struct blk_mq_queue_data *bd)
-{
-	struct pd_unit *disk = hctx->queue->queuedata;
+अटल blk_status_t pd_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
+				स्थिर काष्ठा blk_mq_queue_data *bd)
+अणु
+	काष्ठा pd_unit *disk = hctx->queue->queuedata;
 
 	spin_lock_irq(&pd_lock);
-	if (!pd_req) {
+	अगर (!pd_req) अणु
 		pd_req = bd->rq;
 		blk_mq_start_request(pd_req);
-	} else
+	पूर्ण अन्यथा
 		list_add_tail(&bd->rq->queuelist, &disk->rq_list);
 	spin_unlock_irq(&pd_lock);
 
 	run_fsm();
-	return BLK_STS_OK;
-}
+	वापस BLK_STS_OK;
+पूर्ण
 
-static int pd_special_command(struct pd_unit *disk,
-		      enum action (*func)(struct pd_unit *disk))
-{
-	struct request *rq;
-	struct pd_req *req;
+अटल पूर्णांक pd_special_command(काष्ठा pd_unit *disk,
+		      क्रमागत action (*func)(काष्ठा pd_unit *disk))
+अणु
+	काष्ठा request *rq;
+	काष्ठा pd_req *req;
 
 	rq = blk_get_request(disk->gd->queue, REQ_OP_DRV_IN, 0);
-	if (IS_ERR(rq))
-		return PTR_ERR(rq);
+	अगर (IS_ERR(rq))
+		वापस PTR_ERR(rq);
 	req = blk_mq_rq_to_pdu(rq);
 
 	req->func = func;
 	blk_execute_rq(disk->gd, rq, 0);
 	blk_put_request(rq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* kernel glue structures */
+/* kernel glue काष्ठाures */
 
-static int pd_open(struct block_device *bdev, fmode_t mode)
-{
-	struct pd_unit *disk = bdev->bd_disk->private_data;
+अटल पूर्णांक pd_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
+अणु
+	काष्ठा pd_unit *disk = bdev->bd_disk->निजी_data;
 
 	mutex_lock(&pd_mutex);
 	disk->access++;
 
-	if (disk->removable) {
+	अगर (disk->removable) अणु
 		pd_special_command(disk, pd_media_check);
-		pd_special_command(disk, pd_door_lock);
-	}
+		pd_special_command(disk, pd_करोor_lock);
+	पूर्ण
 	mutex_unlock(&pd_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pd_getgeo(struct block_device *bdev, struct hd_geometry *geo)
-{
-	struct pd_unit *disk = bdev->bd_disk->private_data;
+अटल पूर्णांक pd_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
+अणु
+	काष्ठा pd_unit *disk = bdev->bd_disk->निजी_data;
 
-	if (disk->alt_geom) {
+	अगर (disk->alt_geom) अणु
 		geo->heads = PD_LOG_HEADS;
 		geo->sectors = PD_LOG_SECTS;
 		geo->cylinders = disk->capacity / (geo->heads * geo->sectors);
-	} else {
+	पूर्ण अन्यथा अणु
 		geo->heads = disk->heads;
 		geo->sectors = disk->sectors;
 		geo->cylinders = disk->cylinders;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pd_ioctl(struct block_device *bdev, fmode_t mode,
-	 unsigned int cmd, unsigned long arg)
-{
-	struct pd_unit *disk = bdev->bd_disk->private_data;
+अटल पूर्णांक pd_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+	 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा pd_unit *disk = bdev->bd_disk->निजी_data;
 
-	switch (cmd) {
-	case CDROMEJECT:
+	चयन (cmd) अणु
+	हाल CDROMEJECT:
 		mutex_lock(&pd_mutex);
-		if (disk->access == 1)
+		अगर (disk->access == 1)
 			pd_special_command(disk, pd_eject);
 		mutex_unlock(&pd_mutex);
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void pd_release(struct gendisk *p, fmode_t mode)
-{
-	struct pd_unit *disk = p->private_data;
+अटल व्योम pd_release(काष्ठा gendisk *p, भ_शेषe_t mode)
+अणु
+	काष्ठा pd_unit *disk = p->निजी_data;
 
 	mutex_lock(&pd_mutex);
-	if (!--disk->access && disk->removable)
-		pd_special_command(disk, pd_door_unlock);
+	अगर (!--disk->access && disk->removable)
+		pd_special_command(disk, pd_करोor_unlock);
 	mutex_unlock(&pd_mutex);
-}
+पूर्ण
 
-static unsigned int pd_check_events(struct gendisk *p, unsigned int clearing)
-{
-	struct pd_unit *disk = p->private_data;
-	int r;
-	if (!disk->removable)
-		return 0;
+अटल अचिन्हित पूर्णांक pd_check_events(काष्ठा gendisk *p, अचिन्हित पूर्णांक clearing)
+अणु
+	काष्ठा pd_unit *disk = p->निजी_data;
+	पूर्णांक r;
+	अगर (!disk->removable)
+		वापस 0;
 	pd_special_command(disk, pd_media_check);
 	r = disk->changed;
 	disk->changed = 0;
-	return r ? DISK_EVENT_MEDIA_CHANGE : 0;
-}
+	वापस r ? DISK_EVENT_MEDIA_CHANGE : 0;
+पूर्ण
 
-static const struct block_device_operations pd_fops = {
+अटल स्थिर काष्ठा block_device_operations pd_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= pd_open,
+	.खोलो		= pd_खोलो,
 	.release	= pd_release,
 	.ioctl		= pd_ioctl,
 	.compat_ioctl	= pd_ioctl,
 	.getgeo		= pd_getgeo,
 	.check_events	= pd_check_events,
-};
+पूर्ण;
 
 /* probing */
 
-static const struct blk_mq_ops pd_mq_ops = {
+अटल स्थिर काष्ठा blk_mq_ops pd_mq_ops = अणु
 	.queue_rq	= pd_queue_rq,
-};
+पूर्ण;
 
-static void pd_probe_drive(struct pd_unit *disk)
-{
-	struct gendisk *p;
+अटल व्योम pd_probe_drive(काष्ठा pd_unit *disk)
+अणु
+	काष्ठा gendisk *p;
 
 	p = alloc_disk(1 << PD_BITS);
-	if (!p)
-		return;
+	अगर (!p)
+		वापस;
 
-	strcpy(p->disk_name, disk->name);
+	म_नकल(p->disk_name, disk->name);
 	p->fops = &pd_fops;
 	p->major = major;
 	p->first_minor = (disk - pd) << PD_BITS;
 	p->events = DISK_EVENT_MEDIA_CHANGE;
 	disk->gd = p;
-	p->private_data = disk;
+	p->निजी_data = disk;
 
-	memset(&disk->tag_set, 0, sizeof(disk->tag_set));
+	स_रखो(&disk->tag_set, 0, माप(disk->tag_set));
 	disk->tag_set.ops = &pd_mq_ops;
-	disk->tag_set.cmd_size = sizeof(struct pd_req);
+	disk->tag_set.cmd_size = माप(काष्ठा pd_req);
 	disk->tag_set.nr_hw_queues = 1;
 	disk->tag_set.nr_maps = 1;
 	disk->tag_set.queue_depth = 2;
 	disk->tag_set.numa_node = NUMA_NO_NODE;
 	disk->tag_set.flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_BLOCKING;
 
-	if (blk_mq_alloc_tag_set(&disk->tag_set))
-		return;
+	अगर (blk_mq_alloc_tag_set(&disk->tag_set))
+		वापस;
 
 	p->queue = blk_mq_init_queue(&disk->tag_set);
-	if (IS_ERR(p->queue)) {
-		blk_mq_free_tag_set(&disk->tag_set);
-		p->queue = NULL;
-		return;
-	}
+	अगर (IS_ERR(p->queue)) अणु
+		blk_mq_मुक्त_tag_set(&disk->tag_set);
+		p->queue = शून्य;
+		वापस;
+	पूर्ण
 
 	p->queue->queuedata = disk;
 	blk_queue_max_hw_sectors(p->queue, cluster);
 	blk_queue_bounce_limit(p->queue, BLK_BOUNCE_HIGH);
 
-	if (disk->drive == -1) {
-		for (disk->drive = 0; disk->drive <= 1; disk->drive++)
-			if (pd_special_command(disk, pd_identify) == 0)
-				return;
-	} else if (pd_special_command(disk, pd_identify) == 0)
-		return;
-	disk->gd = NULL;
+	अगर (disk->drive == -1) अणु
+		क्रम (disk->drive = 0; disk->drive <= 1; disk->drive++)
+			अगर (pd_special_command(disk, pd_identअगरy) == 0)
+				वापस;
+	पूर्ण अन्यथा अगर (pd_special_command(disk, pd_identअगरy) == 0)
+		वापस;
+	disk->gd = शून्य;
 	put_disk(p);
-}
+पूर्ण
 
-static int pd_detect(void)
-{
-	int found = 0, unit, pd_drive_count = 0;
-	struct pd_unit *disk;
+अटल पूर्णांक pd_detect(व्योम)
+अणु
+	पूर्णांक found = 0, unit, pd_drive_count = 0;
+	काष्ठा pd_unit *disk;
 
-	for (unit = 0; unit < PD_UNITS; unit++) {
-		int *parm = *drives[unit];
-		struct pd_unit *disk = pd + unit;
+	क्रम (unit = 0; unit < PD_UNITS; unit++) अणु
+		पूर्णांक *parm = *drives[unit];
+		काष्ठा pd_unit *disk = pd + unit;
 		disk->pi = &disk->pia;
 		disk->access = 0;
 		disk->changed = 1;
 		disk->capacity = 0;
 		disk->drive = parm[D_SLV];
-		snprintf(disk->name, PD_NAMELEN, "%s%c", name, 'a'+unit);
+		snम_लिखो(disk->name, PD_NAMELEN, "%s%c", name, 'a'+unit);
 		disk->alt_geom = parm[D_GEO];
 		disk->standby = parm[D_SBY];
-		if (parm[D_PRT])
+		अगर (parm[D_PRT])
 			pd_drive_count++;
 		INIT_LIST_HEAD(&disk->rq_list);
-	}
+	पूर्ण
 
-	par_drv = pi_register_driver(name);
-	if (!par_drv) {
+	par_drv = pi_रेजिस्टर_driver(name);
+	अगर (!par_drv) अणु
 		pr_err("failed to register %s driver\n", name);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (pd_drive_count == 0) { /* nothing spec'd - so autoprobe for 1 */
+	अगर (pd_drive_count == 0) अणु /* nothing spec'd - so स्वतःprobe क्रम 1 */
 		disk = pd;
-		if (pi_init(disk->pi, 1, -1, -1, -1, -1, -1, pd_scratch,
-			    PI_PD, verbose, disk->name)) {
+		अगर (pi_init(disk->pi, 1, -1, -1, -1, -1, -1, pd_scratch,
+			    PI_PD, verbose, disk->name)) अणु
 			pd_probe_drive(disk);
-			if (!disk->gd)
+			अगर (!disk->gd)
 				pi_release(disk->pi);
-		}
+		पूर्ण
 
-	} else {
-		for (unit = 0, disk = pd; unit < PD_UNITS; unit++, disk++) {
-			int *parm = *drives[unit];
-			if (!parm[D_PRT])
-				continue;
-			if (pi_init(disk->pi, 0, parm[D_PRT], parm[D_MOD],
+	पूर्ण अन्यथा अणु
+		क्रम (unit = 0, disk = pd; unit < PD_UNITS; unit++, disk++) अणु
+			पूर्णांक *parm = *drives[unit];
+			अगर (!parm[D_PRT])
+				जारी;
+			अगर (pi_init(disk->pi, 0, parm[D_PRT], parm[D_MOD],
 				     parm[D_UNI], parm[D_PRO], parm[D_DLY],
-				     pd_scratch, PI_PD, verbose, disk->name)) {
+				     pd_scratch, PI_PD, verbose, disk->name)) अणु
 				pd_probe_drive(disk);
-				if (!disk->gd)
+				अगर (!disk->gd)
 					pi_release(disk->pi);
-			}
-		}
-	}
-	for (unit = 0, disk = pd; unit < PD_UNITS; unit++, disk++) {
-		if (disk->gd) {
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	क्रम (unit = 0, disk = pd; unit < PD_UNITS; unit++, disk++) अणु
+		अगर (disk->gd) अणु
 			set_capacity(disk->gd, disk->capacity);
 			add_disk(disk->gd);
 			found = 1;
-		}
-	}
-	if (!found) {
-		printk("%s: no valid drive found\n", name);
-		pi_unregister_driver(par_drv);
-	}
-	return found;
-}
+		पूर्ण
+	पूर्ण
+	अगर (!found) अणु
+		prपूर्णांकk("%s: no valid drive found\n", name);
+		pi_unरेजिस्टर_driver(par_drv);
+	पूर्ण
+	वापस found;
+पूर्ण
 
-static int __init pd_init(void)
-{
-	if (disable)
-		goto out1;
+अटल पूर्णांक __init pd_init(व्योम)
+अणु
+	अगर (disable)
+		जाओ out1;
 
-	if (register_blkdev(major, name))
-		goto out1;
+	अगर (रेजिस्टर_blkdev(major, name))
+		जाओ out1;
 
-	printk("%s: %s version %s, major %d, cluster %d, nice %d\n",
+	prपूर्णांकk("%s: %s version %s, major %d, cluster %d, nice %d\n",
 	       name, name, PD_VERSION, major, cluster, nice);
-	if (!pd_detect())
-		goto out2;
+	अगर (!pd_detect())
+		जाओ out2;
 
-	return 0;
+	वापस 0;
 
 out2:
-	unregister_blkdev(major, name);
+	unरेजिस्टर_blkdev(major, name);
 out1:
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void __exit pd_exit(void)
-{
-	struct pd_unit *disk;
-	int unit;
-	unregister_blkdev(major, name);
-	for (unit = 0, disk = pd; unit < PD_UNITS; unit++, disk++) {
-		struct gendisk *p = disk->gd;
-		if (p) {
-			disk->gd = NULL;
+अटल व्योम __निकास pd_निकास(व्योम)
+अणु
+	काष्ठा pd_unit *disk;
+	पूर्णांक unit;
+	unरेजिस्टर_blkdev(major, name);
+	क्रम (unit = 0, disk = pd; unit < PD_UNITS; unit++, disk++) अणु
+		काष्ठा gendisk *p = disk->gd;
+		अगर (p) अणु
+			disk->gd = शून्य;
 			del_gendisk(p);
 			blk_cleanup_queue(p->queue);
-			blk_mq_free_tag_set(&disk->tag_set);
+			blk_mq_मुक्त_tag_set(&disk->tag_set);
 			put_disk(p);
 			pi_release(disk->pi);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 MODULE_LICENSE("GPL");
 module_init(pd_init)
-module_exit(pd_exit)
+module_निकास(pd_निकास)

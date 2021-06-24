@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * R8A77995 processor support - PFC hardware block.
  *
@@ -11,12 +12,12 @@
  * Copyright (C) 2015  Renesas Electronics Corporation
  */
 
-#include <linux/errno.h>
-#include <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
 
-#include "sh_pfc.h"
+#समावेश "sh_pfc.h"
 
-#define CPU_ALL_GP(fn, sfx)			\
+#घोषणा CPU_ALL_GP(fn, sfx)			\
 		PORT_GP_9(0,  fn, sfx),		\
 		PORT_GP_32(1, fn, sfx),		\
 		PORT_GP_32(2, fn, sfx),		\
@@ -26,289 +27,289 @@
 		PORT_GP_14(6, fn, sfx)
 
 /*
- * F_() : just information
- * FM() : macro for FN_xxx / xxx_MARK
+ * F_() : just inक्रमmation
+ * FM() : macro क्रम FN_xxx / xxx_MARK
  */
 
 /* GPSR0 */
-#define GPSR0_8		F_(MLB_SIG,		IP0_27_24)
-#define GPSR0_7		F_(MLB_DAT,		IP0_23_20)
-#define GPSR0_6		F_(MLB_CLK,		IP0_19_16)
-#define GPSR0_5		F_(MSIOF2_RXD,		IP0_15_12)
-#define GPSR0_4		F_(MSIOF2_TXD,		IP0_11_8)
-#define GPSR0_3		F_(MSIOF2_SCK,		IP0_7_4)
-#define GPSR0_2		F_(IRQ0_A,		IP0_3_0)
-#define GPSR0_1		FM(USB0_OVC)
-#define GPSR0_0		FM(USB0_PWEN)
+#घोषणा GPSR0_8		F_(MLB_SIG,		IP0_27_24)
+#घोषणा GPSR0_7		F_(MLB_DAT,		IP0_23_20)
+#घोषणा GPSR0_6		F_(MLB_CLK,		IP0_19_16)
+#घोषणा GPSR0_5		F_(MSIOF2_RXD,		IP0_15_12)
+#घोषणा GPSR0_4		F_(MSIOF2_TXD,		IP0_11_8)
+#घोषणा GPSR0_3		F_(MSIOF2_SCK,		IP0_7_4)
+#घोषणा GPSR0_2		F_(IRQ0_A,		IP0_3_0)
+#घोषणा GPSR0_1		FM(USB0_OVC)
+#घोषणा GPSR0_0		FM(USB0_PWEN)
 
 /* GPSR1 */
-#define GPSR1_31	F_(QPOLB,		IP4_27_24)
-#define GPSR1_30	F_(QPOLA,		IP4_23_20)
-#define GPSR1_29	F_(DU_CDE,		IP4_19_16)
-#define GPSR1_28	F_(DU_DISP_CDE,		IP4_15_12)
-#define GPSR1_27	F_(DU_DISP,		IP4_11_8)
-#define GPSR1_26	F_(DU_VSYNC,		IP4_7_4)
-#define GPSR1_25	F_(DU_HSYNC,		IP4_3_0)
-#define GPSR1_24	F_(DU_DOTCLKOUT0,	IP3_31_28)
-#define GPSR1_23	F_(DU_DR7,		IP3_27_24)
-#define GPSR1_22	F_(DU_DR6,		IP3_23_20)
-#define GPSR1_21	F_(DU_DR5,		IP3_19_16)
-#define GPSR1_20	F_(DU_DR4,		IP3_15_12)
-#define GPSR1_19	F_(DU_DR3,		IP3_11_8)
-#define GPSR1_18	F_(DU_DR2,		IP3_7_4)
-#define GPSR1_17	F_(DU_DR1,		IP3_3_0)
-#define GPSR1_16	F_(DU_DR0,		IP2_31_28)
-#define GPSR1_15	F_(DU_DG7,		IP2_27_24)
-#define GPSR1_14	F_(DU_DG6,		IP2_23_20)
-#define GPSR1_13	F_(DU_DG5,		IP2_19_16)
-#define GPSR1_12	F_(DU_DG4,		IP2_15_12)
-#define GPSR1_11	F_(DU_DG3,		IP2_11_8)
-#define GPSR1_10	F_(DU_DG2,		IP2_7_4)
-#define GPSR1_9		F_(DU_DG1,		IP2_3_0)
-#define GPSR1_8		F_(DU_DG0,		IP1_31_28)
-#define GPSR1_7		F_(DU_DB7,		IP1_27_24)
-#define GPSR1_6		F_(DU_DB6,		IP1_23_20)
-#define GPSR1_5		F_(DU_DB5,		IP1_19_16)
-#define GPSR1_4		F_(DU_DB4,		IP1_15_12)
-#define GPSR1_3		F_(DU_DB3,		IP1_11_8)
-#define GPSR1_2		F_(DU_DB2,		IP1_7_4)
-#define GPSR1_1		F_(DU_DB1,		IP1_3_0)
-#define GPSR1_0		F_(DU_DB0,		IP0_31_28)
+#घोषणा GPSR1_31	F_(QPOLB,		IP4_27_24)
+#घोषणा GPSR1_30	F_(QPOLA,		IP4_23_20)
+#घोषणा GPSR1_29	F_(DU_CDE,		IP4_19_16)
+#घोषणा GPSR1_28	F_(DU_DISP_CDE,		IP4_15_12)
+#घोषणा GPSR1_27	F_(DU_DISP,		IP4_11_8)
+#घोषणा GPSR1_26	F_(DU_VSYNC,		IP4_7_4)
+#घोषणा GPSR1_25	F_(DU_HSYNC,		IP4_3_0)
+#घोषणा GPSR1_24	F_(DU_DOTCLKOUT0,	IP3_31_28)
+#घोषणा GPSR1_23	F_(DU_DR7,		IP3_27_24)
+#घोषणा GPSR1_22	F_(DU_DR6,		IP3_23_20)
+#घोषणा GPSR1_21	F_(DU_DR5,		IP3_19_16)
+#घोषणा GPSR1_20	F_(DU_DR4,		IP3_15_12)
+#घोषणा GPSR1_19	F_(DU_DR3,		IP3_11_8)
+#घोषणा GPSR1_18	F_(DU_DR2,		IP3_7_4)
+#घोषणा GPSR1_17	F_(DU_DR1,		IP3_3_0)
+#घोषणा GPSR1_16	F_(DU_DR0,		IP2_31_28)
+#घोषणा GPSR1_15	F_(DU_DG7,		IP2_27_24)
+#घोषणा GPSR1_14	F_(DU_DG6,		IP2_23_20)
+#घोषणा GPSR1_13	F_(DU_DG5,		IP2_19_16)
+#घोषणा GPSR1_12	F_(DU_DG4,		IP2_15_12)
+#घोषणा GPSR1_11	F_(DU_DG3,		IP2_11_8)
+#घोषणा GPSR1_10	F_(DU_DG2,		IP2_7_4)
+#घोषणा GPSR1_9		F_(DU_DG1,		IP2_3_0)
+#घोषणा GPSR1_8		F_(DU_DG0,		IP1_31_28)
+#घोषणा GPSR1_7		F_(DU_DB7,		IP1_27_24)
+#घोषणा GPSR1_6		F_(DU_DB6,		IP1_23_20)
+#घोषणा GPSR1_5		F_(DU_DB5,		IP1_19_16)
+#घोषणा GPSR1_4		F_(DU_DB4,		IP1_15_12)
+#घोषणा GPSR1_3		F_(DU_DB3,		IP1_11_8)
+#घोषणा GPSR1_2		F_(DU_DB2,		IP1_7_4)
+#घोषणा GPSR1_1		F_(DU_DB1,		IP1_3_0)
+#घोषणा GPSR1_0		F_(DU_DB0,		IP0_31_28)
 
 /* GPSR2 */
-#define GPSR2_31	F_(NFCE_N,		IP8_19_16)
-#define GPSR2_30	F_(NFCLE,		IP8_15_12)
-#define GPSR2_29	F_(NFALE,		IP8_11_8)
-#define GPSR2_28	F_(VI4_CLKENB,		IP8_7_4)
-#define GPSR2_27	F_(VI4_FIELD,		IP8_3_0)
-#define GPSR2_26	F_(VI4_HSYNC_N,		IP7_31_28)
-#define GPSR2_25	F_(VI4_VSYNC_N,		IP7_27_24)
-#define GPSR2_24	F_(VI4_DATA23,		IP7_23_20)
-#define GPSR2_23	F_(VI4_DATA22,		IP7_19_16)
-#define GPSR2_22	F_(VI4_DATA21,		IP7_15_12)
-#define GPSR2_21	F_(VI4_DATA20,		IP7_11_8)
-#define GPSR2_20	F_(VI4_DATA19,		IP7_7_4)
-#define GPSR2_19	F_(VI4_DATA18,		IP7_3_0)
-#define GPSR2_18	F_(VI4_DATA17,		IP6_31_28)
-#define GPSR2_17	F_(VI4_DATA16,		IP6_27_24)
-#define GPSR2_16	F_(VI4_DATA15,		IP6_23_20)
-#define GPSR2_15	F_(VI4_DATA14,		IP6_19_16)
-#define GPSR2_14	F_(VI4_DATA13,		IP6_15_12)
-#define GPSR2_13	F_(VI4_DATA12,		IP6_11_8)
-#define GPSR2_12	F_(VI4_DATA11,		IP6_7_4)
-#define GPSR2_11	F_(VI4_DATA10,		IP6_3_0)
-#define GPSR2_10	F_(VI4_DATA9,		IP5_31_28)
-#define GPSR2_9		F_(VI4_DATA8,		IP5_27_24)
-#define GPSR2_8		F_(VI4_DATA7,		IP5_23_20)
-#define GPSR2_7		F_(VI4_DATA6,		IP5_19_16)
-#define GPSR2_6		F_(VI4_DATA5,		IP5_15_12)
-#define GPSR2_5		FM(VI4_DATA4)
-#define GPSR2_4		F_(VI4_DATA3,		IP5_11_8)
-#define GPSR2_3		F_(VI4_DATA2,		IP5_7_4)
-#define GPSR2_2		F_(VI4_DATA1,		IP5_3_0)
-#define GPSR2_1		F_(VI4_DATA0,		IP4_31_28)
-#define GPSR2_0		FM(VI4_CLK)
+#घोषणा GPSR2_31	F_(NFCE_N,		IP8_19_16)
+#घोषणा GPSR2_30	F_(NFCLE,		IP8_15_12)
+#घोषणा GPSR2_29	F_(NFALE,		IP8_11_8)
+#घोषणा GPSR2_28	F_(VI4_CLKENB,		IP8_7_4)
+#घोषणा GPSR2_27	F_(VI4_FIELD,		IP8_3_0)
+#घोषणा GPSR2_26	F_(VI4_HSYNC_N,		IP7_31_28)
+#घोषणा GPSR2_25	F_(VI4_VSYNC_N,		IP7_27_24)
+#घोषणा GPSR2_24	F_(VI4_DATA23,		IP7_23_20)
+#घोषणा GPSR2_23	F_(VI4_DATA22,		IP7_19_16)
+#घोषणा GPSR2_22	F_(VI4_DATA21,		IP7_15_12)
+#घोषणा GPSR2_21	F_(VI4_DATA20,		IP7_11_8)
+#घोषणा GPSR2_20	F_(VI4_DATA19,		IP7_7_4)
+#घोषणा GPSR2_19	F_(VI4_DATA18,		IP7_3_0)
+#घोषणा GPSR2_18	F_(VI4_DATA17,		IP6_31_28)
+#घोषणा GPSR2_17	F_(VI4_DATA16,		IP6_27_24)
+#घोषणा GPSR2_16	F_(VI4_DATA15,		IP6_23_20)
+#घोषणा GPSR2_15	F_(VI4_DATA14,		IP6_19_16)
+#घोषणा GPSR2_14	F_(VI4_DATA13,		IP6_15_12)
+#घोषणा GPSR2_13	F_(VI4_DATA12,		IP6_11_8)
+#घोषणा GPSR2_12	F_(VI4_DATA11,		IP6_7_4)
+#घोषणा GPSR2_11	F_(VI4_DATA10,		IP6_3_0)
+#घोषणा GPSR2_10	F_(VI4_DATA9,		IP5_31_28)
+#घोषणा GPSR2_9		F_(VI4_DATA8,		IP5_27_24)
+#घोषणा GPSR2_8		F_(VI4_DATA7,		IP5_23_20)
+#घोषणा GPSR2_7		F_(VI4_DATA6,		IP5_19_16)
+#घोषणा GPSR2_6		F_(VI4_DATA5,		IP5_15_12)
+#घोषणा GPSR2_5		FM(VI4_DATA4)
+#घोषणा GPSR2_4		F_(VI4_DATA3,		IP5_11_8)
+#घोषणा GPSR2_3		F_(VI4_DATA2,		IP5_7_4)
+#घोषणा GPSR2_2		F_(VI4_DATA1,		IP5_3_0)
+#घोषणा GPSR2_1		F_(VI4_DATA0,		IP4_31_28)
+#घोषणा GPSR2_0		FM(VI4_CLK)
 
 /* GPSR3 */
-#define GPSR3_9		F_(NFDATA7,		IP9_31_28)
-#define GPSR3_8		F_(NFDATA6,		IP9_27_24)
-#define GPSR3_7		F_(NFDATA5,		IP9_23_20)
-#define GPSR3_6		F_(NFDATA4,		IP9_19_16)
-#define GPSR3_5		F_(NFDATA3,		IP9_15_12)
-#define GPSR3_4		F_(NFDATA2,		IP9_11_8)
-#define GPSR3_3		F_(NFDATA1,		IP9_7_4)
-#define GPSR3_2		F_(NFDATA0,		IP9_3_0)
-#define GPSR3_1		F_(NFWE_N,		IP8_31_28)
-#define GPSR3_0		F_(NFRE_N,		IP8_27_24)
+#घोषणा GPSR3_9		F_(NFDATA7,		IP9_31_28)
+#घोषणा GPSR3_8		F_(NFDATA6,		IP9_27_24)
+#घोषणा GPSR3_7		F_(NFDATA5,		IP9_23_20)
+#घोषणा GPSR3_6		F_(NFDATA4,		IP9_19_16)
+#घोषणा GPSR3_5		F_(NFDATA3,		IP9_15_12)
+#घोषणा GPSR3_4		F_(NFDATA2,		IP9_11_8)
+#घोषणा GPSR3_3		F_(NFDATA1,		IP9_7_4)
+#घोषणा GPSR3_2		F_(NFDATA0,		IP9_3_0)
+#घोषणा GPSR3_1		F_(NFWE_N,		IP8_31_28)
+#घोषणा GPSR3_0		F_(NFRE_N,		IP8_27_24)
 
 /* GPSR4 */
-#define GPSR4_31	F_(CAN0_RX_A,		IP12_27_24)
-#define GPSR4_30	F_(CAN1_TX_A,		IP13_7_4)
-#define GPSR4_29	F_(CAN1_RX_A,		IP13_3_0)
-#define GPSR4_28	F_(CAN0_TX_A,		IP12_31_28)
-#define GPSR4_27	FM(TX2)
-#define GPSR4_26	FM(RX2)
-#define GPSR4_25	F_(SCK2,		IP12_11_8)
-#define GPSR4_24	F_(TX1_A,		IP12_7_4)
-#define GPSR4_23	F_(RX1_A,		IP12_3_0)
-#define GPSR4_22	F_(SCK1_A,		IP11_31_28)
-#define GPSR4_21	F_(TX0_A,		IP11_27_24)
-#define GPSR4_20	F_(RX0_A,		IP11_23_20)
-#define GPSR4_19	F_(SCK0_A,		IP11_19_16)
-#define GPSR4_18	F_(MSIOF1_RXD,		IP11_15_12)
-#define GPSR4_17	F_(MSIOF1_TXD,		IP11_11_8)
-#define GPSR4_16	F_(MSIOF1_SCK,		IP11_7_4)
-#define GPSR4_15	FM(MSIOF0_RXD)
-#define GPSR4_14	FM(MSIOF0_TXD)
-#define GPSR4_13	FM(MSIOF0_SYNC)
-#define GPSR4_12	FM(MSIOF0_SCK)
-#define GPSR4_11	F_(SDA1,		IP11_3_0)
-#define GPSR4_10	F_(SCL1,		IP10_31_28)
-#define GPSR4_9		FM(SDA0)
-#define GPSR4_8		FM(SCL0)
-#define GPSR4_7		F_(SSI_WS4_A,		IP10_27_24)
-#define GPSR4_6		F_(SSI_SDATA4_A,	IP10_23_20)
-#define GPSR4_5		F_(SSI_SCK4_A,		IP10_19_16)
-#define GPSR4_4		F_(SSI_WS34,		IP10_15_12)
-#define GPSR4_3		F_(SSI_SDATA3,		IP10_11_8)
-#define GPSR4_2		F_(SSI_SCK34,		IP10_7_4)
-#define GPSR4_1		F_(AUDIO_CLKA,		IP10_3_0)
-#define GPSR4_0		F_(NFRB_N,		IP8_23_20)
+#घोषणा GPSR4_31	F_(CAN0_RX_A,		IP12_27_24)
+#घोषणा GPSR4_30	F_(CAN1_TX_A,		IP13_7_4)
+#घोषणा GPSR4_29	F_(CAN1_RX_A,		IP13_3_0)
+#घोषणा GPSR4_28	F_(CAN0_TX_A,		IP12_31_28)
+#घोषणा GPSR4_27	FM(TX2)
+#घोषणा GPSR4_26	FM(RX2)
+#घोषणा GPSR4_25	F_(SCK2,		IP12_11_8)
+#घोषणा GPSR4_24	F_(TX1_A,		IP12_7_4)
+#घोषणा GPSR4_23	F_(RX1_A,		IP12_3_0)
+#घोषणा GPSR4_22	F_(SCK1_A,		IP11_31_28)
+#घोषणा GPSR4_21	F_(TX0_A,		IP11_27_24)
+#घोषणा GPSR4_20	F_(RX0_A,		IP11_23_20)
+#घोषणा GPSR4_19	F_(SCK0_A,		IP11_19_16)
+#घोषणा GPSR4_18	F_(MSIOF1_RXD,		IP11_15_12)
+#घोषणा GPSR4_17	F_(MSIOF1_TXD,		IP11_11_8)
+#घोषणा GPSR4_16	F_(MSIOF1_SCK,		IP11_7_4)
+#घोषणा GPSR4_15	FM(MSIOF0_RXD)
+#घोषणा GPSR4_14	FM(MSIOF0_TXD)
+#घोषणा GPSR4_13	FM(MSIOF0_SYNC)
+#घोषणा GPSR4_12	FM(MSIOF0_SCK)
+#घोषणा GPSR4_11	F_(SDA1,		IP11_3_0)
+#घोषणा GPSR4_10	F_(SCL1,		IP10_31_28)
+#घोषणा GPSR4_9		FM(SDA0)
+#घोषणा GPSR4_8		FM(SCL0)
+#घोषणा GPSR4_7		F_(SSI_WS4_A,		IP10_27_24)
+#घोषणा GPSR4_6		F_(SSI_SDATA4_A,	IP10_23_20)
+#घोषणा GPSR4_5		F_(SSI_SCK4_A,		IP10_19_16)
+#घोषणा GPSR4_4		F_(SSI_WS34,		IP10_15_12)
+#घोषणा GPSR4_3		F_(SSI_SDATA3,		IP10_11_8)
+#घोषणा GPSR4_2		F_(SSI_SCK34,		IP10_7_4)
+#घोषणा GPSR4_1		F_(AUDIO_CLKA,		IP10_3_0)
+#घोषणा GPSR4_0		F_(NFRB_N,		IP8_23_20)
 
 /* GPSR5 */
-#define GPSR5_20	FM(AVB0_LINK)
-#define GPSR5_19	FM(AVB0_PHY_INT)
-#define GPSR5_18	FM(AVB0_MAGIC)
-#define GPSR5_17	FM(AVB0_MDC)
-#define GPSR5_16	FM(AVB0_MDIO)
-#define GPSR5_15	FM(AVB0_TXCREFCLK)
-#define GPSR5_14	FM(AVB0_TD3)
-#define GPSR5_13	FM(AVB0_TD2)
-#define GPSR5_12	FM(AVB0_TD1)
-#define GPSR5_11	FM(AVB0_TD0)
-#define GPSR5_10	FM(AVB0_TXC)
-#define GPSR5_9		FM(AVB0_TX_CTL)
-#define GPSR5_8		FM(AVB0_RD3)
-#define GPSR5_7		FM(AVB0_RD2)
-#define GPSR5_6		FM(AVB0_RD1)
-#define GPSR5_5		FM(AVB0_RD0)
-#define GPSR5_4		FM(AVB0_RXC)
-#define GPSR5_3		FM(AVB0_RX_CTL)
-#define GPSR5_2		F_(CAN_CLK,		IP12_23_20)
-#define GPSR5_1		F_(TPU0TO1_A,		IP12_19_16)
-#define GPSR5_0		F_(TPU0TO0_A,		IP12_15_12)
+#घोषणा GPSR5_20	FM(AVB0_LINK)
+#घोषणा GPSR5_19	FM(AVB0_PHY_INT)
+#घोषणा GPSR5_18	FM(AVB0_MAGIC)
+#घोषणा GPSR5_17	FM(AVB0_MDC)
+#घोषणा GPSR5_16	FM(AVB0_MDIO)
+#घोषणा GPSR5_15	FM(AVB0_TXCREFCLK)
+#घोषणा GPSR5_14	FM(AVB0_TD3)
+#घोषणा GPSR5_13	FM(AVB0_TD2)
+#घोषणा GPSR5_12	FM(AVB0_TD1)
+#घोषणा GPSR5_11	FM(AVB0_TD0)
+#घोषणा GPSR5_10	FM(AVB0_TXC)
+#घोषणा GPSR5_9		FM(AVB0_TX_CTL)
+#घोषणा GPSR5_8		FM(AVB0_RD3)
+#घोषणा GPSR5_7		FM(AVB0_RD2)
+#घोषणा GPSR5_6		FM(AVB0_RD1)
+#घोषणा GPSR5_5		FM(AVB0_RD0)
+#घोषणा GPSR5_4		FM(AVB0_RXC)
+#घोषणा GPSR5_3		FM(AVB0_RX_CTL)
+#घोषणा GPSR5_2		F_(CAN_CLK,		IP12_23_20)
+#घोषणा GPSR5_1		F_(TPU0TO1_A,		IP12_19_16)
+#घोषणा GPSR5_0		F_(TPU0TO0_A,		IP12_15_12)
 
 /* GPSR6 */
-#define GPSR6_13	FM(RPC_INT_N)
-#define GPSR6_12	FM(RPC_RESET_N)
-#define GPSR6_11	FM(QSPI1_SSL)
-#define GPSR6_10	FM(QSPI1_IO3)
-#define GPSR6_9		FM(QSPI1_IO2)
-#define GPSR6_8		FM(QSPI1_MISO_IO1)
-#define GPSR6_7		FM(QSPI1_MOSI_IO0)
-#define GPSR6_6		FM(QSPI1_SPCLK)
-#define GPSR6_5		FM(QSPI0_SSL)
-#define GPSR6_4		FM(QSPI0_IO3)
-#define GPSR6_3		FM(QSPI0_IO2)
-#define GPSR6_2		FM(QSPI0_MISO_IO1)
-#define GPSR6_1		FM(QSPI0_MOSI_IO0)
-#define GPSR6_0		FM(QSPI0_SPCLK)
+#घोषणा GPSR6_13	FM(RPC_INT_N)
+#घोषणा GPSR6_12	FM(RPC_RESET_N)
+#घोषणा GPSR6_11	FM(QSPI1_SSL)
+#घोषणा GPSR6_10	FM(QSPI1_IO3)
+#घोषणा GPSR6_9		FM(QSPI1_IO2)
+#घोषणा GPSR6_8		FM(QSPI1_MISO_IO1)
+#घोषणा GPSR6_7		FM(QSPI1_MOSI_IO0)
+#घोषणा GPSR6_6		FM(QSPI1_SPCLK)
+#घोषणा GPSR6_5		FM(QSPI0_SSL)
+#घोषणा GPSR6_4		FM(QSPI0_IO3)
+#घोषणा GPSR6_3		FM(QSPI0_IO2)
+#घोषणा GPSR6_2		FM(QSPI0_MISO_IO1)
+#घोषणा GPSR6_1		FM(QSPI0_MOSI_IO0)
+#घोषणा GPSR6_0		FM(QSPI0_SPCLK)
 
 /* IPSRx */		/* 0 */			/* 1 */			/* 2 */			/* 3 */		/* 4 */			/* 5 */		/* 6  - F */
-#define IP0_3_0		FM(IRQ0_A)		FM(MSIOF2_SYNC_B)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP0_7_4		FM(MSIOF2_SCK)		F_(0, 0)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP0_11_8	FM(MSIOF2_TXD)		FM(SCL3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP0_15_12	FM(MSIOF2_RXD)		FM(SDA3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP0_19_16	FM(MLB_CLK)		FM(MSIOF2_SYNC_A)	FM(SCK5_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP0_23_20	FM(MLB_DAT)		FM(MSIOF2_SS1)		FM(RX5_A)		FM(SCL3_B)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP0_27_24	FM(MLB_SIG)		FM(MSIOF2_SS2)		FM(TX5_A)		FM(SDA3_B)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP0_31_28	FM(DU_DB0)		FM(LCDOUT0)		FM(MSIOF3_TXD_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP1_3_0		FM(DU_DB1)		FM(LCDOUT1)		FM(MSIOF3_RXD_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP1_7_4		FM(DU_DB2)		FM(LCDOUT2)		FM(IRQ0_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP1_11_8	FM(DU_DB3)		FM(LCDOUT3)		FM(SCK5_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP1_15_12	FM(DU_DB4)		FM(LCDOUT4)		FM(RX5_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP1_19_16	FM(DU_DB5)		FM(LCDOUT5)		FM(TX5_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP1_23_20	FM(DU_DB6)		FM(LCDOUT6)		FM(MSIOF3_SS1_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP1_27_24	FM(DU_DB7)		FM(LCDOUT7)		FM(MSIOF3_SS2_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP1_31_28	FM(DU_DG0)		FM(LCDOUT8)		FM(MSIOF3_SCK_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP2_3_0		FM(DU_DG1)		FM(LCDOUT9)		FM(MSIOF3_SYNC_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP2_7_4		FM(DU_DG2)		FM(LCDOUT10)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP2_11_8	FM(DU_DG3)		FM(LCDOUT11)		FM(IRQ1_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP2_15_12	FM(DU_DG4)		FM(LCDOUT12)		FM(HSCK3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP2_19_16	FM(DU_DG5)		FM(LCDOUT13)		FM(HTX3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP2_23_20	FM(DU_DG6)		FM(LCDOUT14)		FM(HRX3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP2_27_24	FM(DU_DG7)		FM(LCDOUT15)		FM(SCK4_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP2_31_28	FM(DU_DR0)		FM(LCDOUT16)		FM(RX4_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP3_3_0		FM(DU_DR1)		FM(LCDOUT17)		FM(TX4_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP3_7_4		FM(DU_DR2)		FM(LCDOUT18)		FM(PWM0_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP3_11_8	FM(DU_DR3)		FM(LCDOUT19)		FM(PWM1_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP3_15_12	FM(DU_DR4)		FM(LCDOUT20)		FM(TCLK2_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP3_19_16	FM(DU_DR5)		FM(LCDOUT21)		FM(NMI)			F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP3_23_20	FM(DU_DR6)		FM(LCDOUT22)		FM(PWM2_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP3_27_24	FM(DU_DR7)		FM(LCDOUT23)		FM(TCLK1_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP3_31_28	FM(DU_DOTCLKOUT0)	FM(QCLK)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP0_3_0		FM(IRQ0_A)		FM(MSIOF2_SYNC_B)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP0_7_4		FM(MSIOF2_SCK)		F_(0, 0)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP0_11_8	FM(MSIOF2_TXD)		FM(SCL3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP0_15_12	FM(MSIOF2_RXD)		FM(SDA3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP0_19_16	FM(MLB_CLK)		FM(MSIOF2_SYNC_A)	FM(SCK5_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP0_23_20	FM(MLB_DAT)		FM(MSIOF2_SS1)		FM(RX5_A)		FM(SCL3_B)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP0_27_24	FM(MLB_SIG)		FM(MSIOF2_SS2)		FM(TX5_A)		FM(SDA3_B)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP0_31_28	FM(DU_DB0)		FM(LCDOUT0)		FM(MSIOF3_TXD_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP1_3_0		FM(DU_DB1)		FM(LCDOUT1)		FM(MSIOF3_RXD_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP1_7_4		FM(DU_DB2)		FM(LCDOUT2)		FM(IRQ0_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP1_11_8	FM(DU_DB3)		FM(LCDOUT3)		FM(SCK5_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP1_15_12	FM(DU_DB4)		FM(LCDOUT4)		FM(RX5_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP1_19_16	FM(DU_DB5)		FM(LCDOUT5)		FM(TX5_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP1_23_20	FM(DU_DB6)		FM(LCDOUT6)		FM(MSIOF3_SS1_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP1_27_24	FM(DU_DB7)		FM(LCDOUT7)		FM(MSIOF3_SS2_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP1_31_28	FM(DU_DG0)		FM(LCDOUT8)		FM(MSIOF3_SCK_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP2_3_0		FM(DU_DG1)		FM(LCDOUT9)		FM(MSIOF3_SYNC_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP2_7_4		FM(DU_DG2)		FM(LCDOUT10)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP2_11_8	FM(DU_DG3)		FM(LCDOUT11)		FM(IRQ1_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP2_15_12	FM(DU_DG4)		FM(LCDOUT12)		FM(HSCK3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP2_19_16	FM(DU_DG5)		FM(LCDOUT13)		FM(HTX3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP2_23_20	FM(DU_DG6)		FM(LCDOUT14)		FM(HRX3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP2_27_24	FM(DU_DG7)		FM(LCDOUT15)		FM(SCK4_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP2_31_28	FM(DU_DR0)		FM(LCDOUT16)		FM(RX4_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP3_3_0		FM(DU_DR1)		FM(LCDOUT17)		FM(TX4_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP3_7_4		FM(DU_DR2)		FM(LCDOUT18)		FM(PWM0_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP3_11_8	FM(DU_DR3)		FM(LCDOUT19)		FM(PWM1_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP3_15_12	FM(DU_DR4)		FM(LCDOUT20)		FM(TCLK2_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP3_19_16	FM(DU_DR5)		FM(LCDOUT21)		FM(NMI)			F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP3_23_20	FM(DU_DR6)		FM(LCDOUT22)		FM(PWM2_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP3_27_24	FM(DU_DR7)		FM(LCDOUT23)		FM(TCLK1_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP3_31_28	FM(DU_DOTCLKOUT0)	FM(QCLK)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
 
 /* IPSRx */		/* 0 */			/* 1 */			/* 2 */			/* 3 */		/* 4 */			/* 5 */		/* 6  - F */
-#define IP4_3_0		FM(DU_HSYNC)		FM(QSTH_QHS)		FM(IRQ3_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP4_7_4		FM(DU_VSYNC)		FM(QSTVA_QVS)		FM(IRQ4_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP4_11_8	FM(DU_DISP)		FM(QSTVB_QVE)		FM(PWM3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP4_15_12	FM(DU_DISP_CDE)		FM(QCPV_QDE)		FM(IRQ2_B)		FM(DU_DOTCLKIN1)F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP4_19_16	FM(DU_CDE)		FM(QSTB_QHE)		FM(SCK3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP4_23_20	FM(QPOLA)		F_(0, 0)		FM(RX3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP4_27_24	FM(QPOLB)		F_(0, 0)		FM(TX3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP4_31_28	FM(VI4_DATA0)		FM(PWM0_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP5_3_0		FM(VI4_DATA1)		FM(PWM1_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP5_7_4		FM(VI4_DATA2)		FM(PWM2_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP5_11_8	FM(VI4_DATA3)		FM(PWM3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP5_15_12	FM(VI4_DATA5)		FM(SCK4_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP5_19_16	FM(VI4_DATA6)		FM(IRQ2_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP5_23_20	FM(VI4_DATA7)		FM(TCLK2_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP5_27_24	FM(VI4_DATA8)		F_(0, 0)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP5_31_28	FM(VI4_DATA9)		FM(MSIOF3_SS2_A)	FM(IRQ1_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP6_3_0		FM(VI4_DATA10)		FM(RX4_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP6_7_4		FM(VI4_DATA11)		FM(TX4_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP6_11_8	FM(VI4_DATA12)		FM(TCLK1_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP6_15_12	FM(VI4_DATA13)		FM(MSIOF3_SS1_A)	FM(HCTS3_N)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP6_19_16	FM(VI4_DATA14)		FM(SSI_SCK4_B)		FM(HRTS3_N)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP6_23_20	FM(VI4_DATA15)		FM(SSI_SDATA4_B)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP6_27_24	FM(VI4_DATA16)		FM(HRX3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP6_31_28	FM(VI4_DATA17)		FM(HTX3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP7_3_0		FM(VI4_DATA18)		FM(HSCK3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP7_7_4		FM(VI4_DATA19)		FM(SSI_WS4_B)		F_(0, 0)		F_(0, 0)	FM(NFDATA15)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP7_11_8	FM(VI4_DATA20)		FM(MSIOF3_SYNC_A)	F_(0, 0)		F_(0, 0)	FM(NFDATA14)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP7_15_12	FM(VI4_DATA21)		FM(MSIOF3_TXD_A)	F_(0, 0)		F_(0, 0)	FM(NFDATA13)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP7_19_16	FM(VI4_DATA22)		FM(MSIOF3_RXD_A)	F_(0, 0)		F_(0, 0)	FM(NFDATA12)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP7_23_20	FM(VI4_DATA23)		FM(MSIOF3_SCK_A)	F_(0, 0)		F_(0, 0)	FM(NFDATA11)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP7_27_24	FM(VI4_VSYNC_N)		FM(SCK1_B)		F_(0, 0)		F_(0, 0)	FM(NFDATA10)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP7_31_28	FM(VI4_HSYNC_N)		FM(RX1_B)		F_(0, 0)		F_(0, 0)	FM(NFDATA9)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP4_3_0		FM(DU_HSYNC)		FM(QSTH_QHS)		FM(IRQ3_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP4_7_4		FM(DU_VSYNC)		FM(QSTVA_QVS)		FM(IRQ4_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP4_11_8	FM(DU_DISP)		FM(QSTVB_QVE)		FM(PWM3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP4_15_12	FM(DU_DISP_CDE)		FM(QCPV_QDE)		FM(IRQ2_B)		FM(DU_DOTCLKIN1)F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP4_19_16	FM(DU_CDE)		FM(QSTB_QHE)		FM(SCK3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP4_23_20	FM(QPOLA)		F_(0, 0)		FM(RX3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP4_27_24	FM(QPOLB)		F_(0, 0)		FM(TX3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP4_31_28	FM(VI4_DATA0)		FM(PWM0_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP5_3_0		FM(VI4_DATA1)		FM(PWM1_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP5_7_4		FM(VI4_DATA2)		FM(PWM2_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP5_11_8	FM(VI4_DATA3)		FM(PWM3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP5_15_12	FM(VI4_DATA5)		FM(SCK4_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP5_19_16	FM(VI4_DATA6)		FM(IRQ2_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP5_23_20	FM(VI4_DATA7)		FM(TCLK2_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP5_27_24	FM(VI4_DATA8)		F_(0, 0)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP5_31_28	FM(VI4_DATA9)		FM(MSIOF3_SS2_A)	FM(IRQ1_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP6_3_0		FM(VI4_DATA10)		FM(RX4_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP6_7_4		FM(VI4_DATA11)		FM(TX4_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP6_11_8	FM(VI4_DATA12)		FM(TCLK1_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP6_15_12	FM(VI4_DATA13)		FM(MSIOF3_SS1_A)	FM(HCTS3_N)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP6_19_16	FM(VI4_DATA14)		FM(SSI_SCK4_B)		FM(HRTS3_N)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP6_23_20	FM(VI4_DATA15)		FM(SSI_SDATA4_B)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP6_27_24	FM(VI4_DATA16)		FM(HRX3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP6_31_28	FM(VI4_DATA17)		FM(HTX3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP7_3_0		FM(VI4_DATA18)		FM(HSCK3_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP7_7_4		FM(VI4_DATA19)		FM(SSI_WS4_B)		F_(0, 0)		F_(0, 0)	FM(NFDATA15)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP7_11_8	FM(VI4_DATA20)		FM(MSIOF3_SYNC_A)	F_(0, 0)		F_(0, 0)	FM(NFDATA14)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP7_15_12	FM(VI4_DATA21)		FM(MSIOF3_TXD_A)	F_(0, 0)		F_(0, 0)	FM(NFDATA13)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP7_19_16	FM(VI4_DATA22)		FM(MSIOF3_RXD_A)	F_(0, 0)		F_(0, 0)	FM(NFDATA12)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP7_23_20	FM(VI4_DATA23)		FM(MSIOF3_SCK_A)	F_(0, 0)		F_(0, 0)	FM(NFDATA11)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP7_27_24	FM(VI4_VSYNC_N)		FM(SCK1_B)		F_(0, 0)		F_(0, 0)	FM(NFDATA10)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP7_31_28	FM(VI4_HSYNC_N)		FM(RX1_B)		F_(0, 0)		F_(0, 0)	FM(NFDATA9)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
 
 /* IPSRx */		/* 0 */			/* 1 */			/* 2 */			/* 3 */		/* 4 */			/* 5 */		/* 6  - F */
-#define IP8_3_0		FM(VI4_FIELD)		FM(AUDIO_CLKB)		FM(IRQ5_A)		FM(SCIF_CLK)	FM(NFDATA8)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP8_7_4		FM(VI4_CLKENB)		FM(TX1_B)		F_(0, 0)		F_(0, 0)	FM(NFWP_N)		FM(DVC_MUTE_A)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP8_11_8	FM(NFALE)		FM(SCL2_B)		FM(IRQ3_B)		FM(PWM0_C)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP8_15_12	FM(NFCLE)		FM(SDA2_B)		FM(SCK3_A)		FM(PWM1_C)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP8_19_16	FM(NFCE_N)		F_(0, 0)		FM(RX3_A)		FM(PWM2_C)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP8_23_20	FM(NFRB_N)		F_(0, 0)		FM(TX3_A)		FM(PWM3_C)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP8_27_24	FM(NFRE_N)		FM(MMC_CMD)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP8_31_28	FM(NFWE_N)		FM(MMC_CLK)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP9_3_0		FM(NFDATA0)		FM(MMC_D0)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP9_7_4		FM(NFDATA1)		FM(MMC_D1)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP9_11_8	FM(NFDATA2)		FM(MMC_D2)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP9_15_12	FM(NFDATA3)		FM(MMC_D3)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP9_19_16	FM(NFDATA4)		FM(MMC_D4)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP9_23_20	FM(NFDATA5)		FM(MMC_D5)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP9_27_24	FM(NFDATA6)		FM(MMC_D6)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP9_31_28	FM(NFDATA7)		FM(MMC_D7)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP10_3_0	FM(AUDIO_CLKA)		F_(0, 0)		F_(0, 0)		F_(0, 0)	F_(0, 0)		FM(DVC_MUTE_B)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP10_7_4	FM(SSI_SCK34)		FM(FSO_CFE_0_N_A)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP10_11_8	FM(SSI_SDATA3)		FM(FSO_CFE_1_N_A)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP10_15_12	FM(SSI_WS34)		FM(FSO_TOE_N_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP10_19_16	FM(SSI_SCK4_A)		FM(HSCK0)		FM(AUDIO_CLKOUT)	FM(CAN0_RX_B)	FM(IRQ4_B)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP10_23_20	FM(SSI_SDATA4_A)	FM(HTX0)		FM(SCL2_A)		FM(CAN1_RX_B)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP10_27_24	FM(SSI_WS4_A)		FM(HRX0)		FM(SDA2_A)		FM(CAN1_TX_B)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP10_31_28	FM(SCL1)		FM(CTS1_N)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP11_3_0	FM(SDA1)		FM(RTS1_N)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP11_7_4	FM(MSIOF1_SCK)		FM(AVB0_AVTP_PPS_B)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP11_11_8	FM(MSIOF1_TXD)		FM(AVB0_AVTP_CAPTURE_B)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP11_15_12	FM(MSIOF1_RXD)		FM(AVB0_AVTP_MATCH_B)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP11_19_16	FM(SCK0_A)		FM(MSIOF1_SYNC)		FM(FSO_CFE_0_N_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP11_23_20	FM(RX0_A)		FM(MSIOF0_SS1)		FM(FSO_CFE_1_N_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP11_27_24	FM(TX0_A)		FM(MSIOF0_SS2)		FM(FSO_TOE_N_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP11_31_28	FM(SCK1_A)		FM(MSIOF1_SS2)		FM(TPU0TO2_B)		FM(CAN0_TX_B)	FM(AUDIO_CLKOUT1)	F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP8_3_0		FM(VI4_FIELD)		FM(AUDIO_CLKB)		FM(IRQ5_A)		FM(SCIF_CLK)	FM(NFDATA8)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP8_7_4		FM(VI4_CLKENB)		FM(TX1_B)		F_(0, 0)		F_(0, 0)	FM(NFWP_N)		FM(DVC_MUTE_A)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP8_11_8	FM(NFALE)		FM(SCL2_B)		FM(IRQ3_B)		FM(PWM0_C)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP8_15_12	FM(NFCLE)		FM(SDA2_B)		FM(SCK3_A)		FM(PWM1_C)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP8_19_16	FM(NFCE_N)		F_(0, 0)		FM(RX3_A)		FM(PWM2_C)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP8_23_20	FM(NFRB_N)		F_(0, 0)		FM(TX3_A)		FM(PWM3_C)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP8_27_24	FM(NFRE_N)		FM(MMC_CMD)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP8_31_28	FM(NFWE_N)		FM(MMC_CLK)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP9_3_0		FM(NFDATA0)		FM(MMC_D0)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP9_7_4		FM(NFDATA1)		FM(MMC_D1)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP9_11_8	FM(NFDATA2)		FM(MMC_D2)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP9_15_12	FM(NFDATA3)		FM(MMC_D3)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP9_19_16	FM(NFDATA4)		FM(MMC_D4)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP9_23_20	FM(NFDATA5)		FM(MMC_D5)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP9_27_24	FM(NFDATA6)		FM(MMC_D6)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP9_31_28	FM(NFDATA7)		FM(MMC_D7)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP10_3_0	FM(AUDIO_CLKA)		F_(0, 0)		F_(0, 0)		F_(0, 0)	F_(0, 0)		FM(DVC_MUTE_B)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP10_7_4	FM(SSI_SCK34)		FM(FSO_CFE_0_N_A)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP10_11_8	FM(SSI_SDATA3)		FM(FSO_CFE_1_N_A)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP10_15_12	FM(SSI_WS34)		FM(FSO_TOE_N_A)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP10_19_16	FM(SSI_SCK4_A)		FM(HSCK0)		FM(AUDIO_CLKOUT)	FM(CAN0_RX_B)	FM(IRQ4_B)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP10_23_20	FM(SSI_SDATA4_A)	FM(HTX0)		FM(SCL2_A)		FM(CAN1_RX_B)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP10_27_24	FM(SSI_WS4_A)		FM(HRX0)		FM(SDA2_A)		FM(CAN1_TX_B)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP10_31_28	FM(SCL1)		FM(CTS1_N)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP11_3_0	FM(SDA1)		FM(RTS1_N)		F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP11_7_4	FM(MSIOF1_SCK)		FM(AVB0_AVTP_PPS_B)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP11_11_8	FM(MSIOF1_TXD)		FM(AVB0_AVTP_CAPTURE_B)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP11_15_12	FM(MSIOF1_RXD)		FM(AVB0_AVTP_MATCH_B)	F_(0, 0)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP11_19_16	FM(SCK0_A)		FM(MSIOF1_SYNC)		FM(FSO_CFE_0_N_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP11_23_20	FM(RX0_A)		FM(MSIOF0_SS1)		FM(FSO_CFE_1_N_B)	F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP11_27_24	FM(TX0_A)		FM(MSIOF0_SS2)		FM(FSO_TOE_N_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP11_31_28	FM(SCK1_A)		FM(MSIOF1_SS2)		FM(TPU0TO2_B)		FM(CAN0_TX_B)	FM(AUDIO_CLKOUT1)	F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
 
 /* IPSRx */		/* 0 */			/* 1 */			/* 2 */			/* 3 */		/* 4 */			/* 5 */		/* 6  - F */
-#define IP12_3_0	FM(RX1_A)		FM(CTS0_N)		FM(TPU0TO0_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP12_7_4	FM(TX1_A)		FM(RTS0_N)		FM(TPU0TO1_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP12_11_8	FM(SCK2)		FM(MSIOF1_SS1)		FM(TPU0TO3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP12_15_12	FM(TPU0TO0_A)		FM(AVB0_AVTP_CAPTURE_A)	FM(HCTS0_N)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP12_19_16	FM(TPU0TO1_A)		FM(AVB0_AVTP_MATCH_A)	FM(HRTS0_N)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP12_23_20	FM(CAN_CLK)		FM(AVB0_AVTP_PPS_A)	FM(SCK0_B)		FM(IRQ5_B)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP12_27_24	FM(CAN0_RX_A)		FM(CANFD0_RX)		FM(RX0_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP12_31_28	FM(CAN0_TX_A)		FM(CANFD0_TX)		FM(TX0_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP13_3_0	FM(CAN1_RX_A)		FM(CANFD1_RX)		FM(TPU0TO2_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
-#define IP13_7_4	FM(CAN1_TX_A)		FM(CANFD1_TX)		FM(TPU0TO3_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP12_3_0	FM(RX1_A)		FM(CTS0_N)		FM(TPU0TO0_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP12_7_4	FM(TX1_A)		FM(RTS0_N)		FM(TPU0TO1_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP12_11_8	FM(SCK2)		FM(MSIOF1_SS1)		FM(TPU0TO3_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP12_15_12	FM(TPU0TO0_A)		FM(AVB0_AVTP_CAPTURE_A)	FM(HCTS0_N)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP12_19_16	FM(TPU0TO1_A)		FM(AVB0_AVTP_MATCH_A)	FM(HRTS0_N)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP12_23_20	FM(CAN_CLK)		FM(AVB0_AVTP_PPS_A)	FM(SCK0_B)		FM(IRQ5_B)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP12_27_24	FM(CAN0_RX_A)		FM(CANFD0_RX)		FM(RX0_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP12_31_28	FM(CAN0_TX_A)		FM(CANFD0_TX)		FM(TX0_B)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP13_3_0	FM(CAN1_RX_A)		FM(CANFD1_RX)		FM(TPU0TO2_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
+#घोषणा IP13_7_4	FM(CAN1_TX_A)		FM(CANFD1_TX)		FM(TPU0TO3_A)		F_(0, 0)	F_(0, 0)		F_(0, 0)	F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0) F_(0, 0)
 
-#define PINMUX_GPSR	\
+#घोषणा PINMUX_GPSR	\
 \
 		GPSR1_31	GPSR2_31			GPSR4_31		 \
 		GPSR1_30	GPSR2_30			GPSR4_30		 \
@@ -343,7 +344,7 @@ GPSR0_2		GPSR1_2		GPSR2_2		GPSR3_2		GPSR4_2		GPSR5_2		GPSR6_2 \
 GPSR0_1		GPSR1_1		GPSR2_1		GPSR3_1		GPSR4_1		GPSR5_1		GPSR6_1 \
 GPSR0_0		GPSR1_0		GPSR2_0		GPSR3_0		GPSR4_0		GPSR5_0		GPSR6_0
 
-#define PINMUX_IPSR				\
+#घोषणा PINMUX_IPSR				\
 \
 FM(IP0_3_0)	IP0_3_0		FM(IP1_3_0)	IP1_3_0		FM(IP2_3_0)	IP2_3_0		FM(IP3_3_0)	IP3_3_0 \
 FM(IP0_7_4)	IP0_7_4		FM(IP1_7_4)	IP1_7_4		FM(IP2_7_4)	IP2_7_4		FM(IP3_7_4)	IP3_7_4 \
@@ -382,41 +383,41 @@ FM(IP12_27_24)	IP12_27_24 \
 FM(IP12_31_28)	IP12_31_28 \
 
 /* The bit numbering in MOD_SEL fields is reversed */
-#define REV4(f0, f1, f2, f3)			f0 f2 f1 f3
+#घोषणा REV4(f0, f1, f2, f3)			f0 f2 f1 f3
 
 /* MOD_SEL0 */			/* 0 */			/* 1 */			/* 2 */			/* 3 */
-#define MOD_SEL0_30		FM(SEL_MSIOF2_0)	FM(SEL_MSIOF2_1)
-#define MOD_SEL0_29		FM(SEL_I2C3_0)		FM(SEL_I2C3_1)
-#define MOD_SEL0_28		FM(SEL_SCIF5_0)		FM(SEL_SCIF5_1)
-#define MOD_SEL0_27		FM(SEL_MSIOF3_0)	FM(SEL_MSIOF3_1)
-#define MOD_SEL0_26		FM(SEL_HSCIF3_0)	FM(SEL_HSCIF3_1)
-#define MOD_SEL0_25		FM(SEL_SCIF4_0)		FM(SEL_SCIF4_1)
-#define MOD_SEL0_24_23	   REV4(FM(SEL_PWM0_0),		FM(SEL_PWM0_1),		FM(SEL_PWM0_2),		F_(0, 0))
-#define MOD_SEL0_22_21	   REV4(FM(SEL_PWM1_0),		FM(SEL_PWM1_1),		FM(SEL_PWM1_2),		F_(0, 0))
-#define MOD_SEL0_20_19	   REV4(FM(SEL_PWM2_0),		FM(SEL_PWM2_1),		FM(SEL_PWM2_2),		F_(0, 0))
-#define MOD_SEL0_18_17	   REV4(FM(SEL_PWM3_0),		FM(SEL_PWM3_1),		FM(SEL_PWM3_2),		F_(0, 0))
-#define MOD_SEL0_15		FM(SEL_IRQ_0_0)		FM(SEL_IRQ_0_1)
-#define MOD_SEL0_14		FM(SEL_IRQ_1_0)		FM(SEL_IRQ_1_1)
-#define MOD_SEL0_13		FM(SEL_IRQ_2_0)		FM(SEL_IRQ_2_1)
-#define MOD_SEL0_12		FM(SEL_IRQ_3_0)		FM(SEL_IRQ_3_1)
-#define MOD_SEL0_11		FM(SEL_IRQ_4_0)		FM(SEL_IRQ_4_1)
-#define MOD_SEL0_10		FM(SEL_IRQ_5_0)		FM(SEL_IRQ_5_1)
-#define MOD_SEL0_5		FM(SEL_TMU_0_0)		FM(SEL_TMU_0_1)
-#define MOD_SEL0_4		FM(SEL_TMU_1_0)		FM(SEL_TMU_1_1)
-#define MOD_SEL0_3		FM(SEL_SCIF3_0)		FM(SEL_SCIF3_1)
-#define MOD_SEL0_2		FM(SEL_SCIF1_0)		FM(SEL_SCIF1_1)
-#define MOD_SEL0_1		FM(SEL_SCU_0)		FM(SEL_SCU_1)
-#define MOD_SEL0_0		FM(SEL_RFSO_0)		FM(SEL_RFSO_1)
+#घोषणा MOD_SEL0_30		FM(SEL_MSIOF2_0)	FM(SEL_MSIOF2_1)
+#घोषणा MOD_SEL0_29		FM(SEL_I2C3_0)		FM(SEL_I2C3_1)
+#घोषणा MOD_SEL0_28		FM(SEL_SCIF5_0)		FM(SEL_SCIF5_1)
+#घोषणा MOD_SEL0_27		FM(SEL_MSIOF3_0)	FM(SEL_MSIOF3_1)
+#घोषणा MOD_SEL0_26		FM(SEL_HSCIF3_0)	FM(SEL_HSCIF3_1)
+#घोषणा MOD_SEL0_25		FM(SEL_SCIF4_0)		FM(SEL_SCIF4_1)
+#घोषणा MOD_SEL0_24_23	   REV4(FM(SEL_PWM0_0),		FM(SEL_PWM0_1),		FM(SEL_PWM0_2),		F_(0, 0))
+#घोषणा MOD_SEL0_22_21	   REV4(FM(SEL_PWM1_0),		FM(SEL_PWM1_1),		FM(SEL_PWM1_2),		F_(0, 0))
+#घोषणा MOD_SEL0_20_19	   REV4(FM(SEL_PWM2_0),		FM(SEL_PWM2_1),		FM(SEL_PWM2_2),		F_(0, 0))
+#घोषणा MOD_SEL0_18_17	   REV4(FM(SEL_PWM3_0),		FM(SEL_PWM3_1),		FM(SEL_PWM3_2),		F_(0, 0))
+#घोषणा MOD_SEL0_15		FM(SEL_IRQ_0_0)		FM(SEL_IRQ_0_1)
+#घोषणा MOD_SEL0_14		FM(SEL_IRQ_1_0)		FM(SEL_IRQ_1_1)
+#घोषणा MOD_SEL0_13		FM(SEL_IRQ_2_0)		FM(SEL_IRQ_2_1)
+#घोषणा MOD_SEL0_12		FM(SEL_IRQ_3_0)		FM(SEL_IRQ_3_1)
+#घोषणा MOD_SEL0_11		FM(SEL_IRQ_4_0)		FM(SEL_IRQ_4_1)
+#घोषणा MOD_SEL0_10		FM(SEL_IRQ_5_0)		FM(SEL_IRQ_5_1)
+#घोषणा MOD_SEL0_5		FM(SEL_TMU_0_0)		FM(SEL_TMU_0_1)
+#घोषणा MOD_SEL0_4		FM(SEL_TMU_1_0)		FM(SEL_TMU_1_1)
+#घोषणा MOD_SEL0_3		FM(SEL_SCIF3_0)		FM(SEL_SCIF3_1)
+#घोषणा MOD_SEL0_2		FM(SEL_SCIF1_0)		FM(SEL_SCIF1_1)
+#घोषणा MOD_SEL0_1		FM(SEL_SCU_0)		FM(SEL_SCU_1)
+#घोषणा MOD_SEL0_0		FM(SEL_RFSO_0)		FM(SEL_RFSO_1)
 
-#define MOD_SEL1_31		FM(SEL_CAN0_0)		FM(SEL_CAN0_1)
-#define MOD_SEL1_30		FM(SEL_CAN1_0)		FM(SEL_CAN1_1)
-#define MOD_SEL1_29		FM(SEL_I2C2_0)		FM(SEL_I2C2_1)
-#define MOD_SEL1_28		FM(SEL_ETHERAVB_0)	FM(SEL_ETHERAVB_1)
-#define MOD_SEL1_27		FM(SEL_SCIF0_0)		FM(SEL_SCIF0_1)
-#define MOD_SEL1_26		FM(SEL_SSIF4_0)		FM(SEL_SSIF4_1)
+#घोषणा MOD_SEL1_31		FM(SEL_CAN0_0)		FM(SEL_CAN0_1)
+#घोषणा MOD_SEL1_30		FM(SEL_CAN1_0)		FM(SEL_CAN1_1)
+#घोषणा MOD_SEL1_29		FM(SEL_I2C2_0)		FM(SEL_I2C2_1)
+#घोषणा MOD_SEL1_28		FM(SEL_ETHERAVB_0)	FM(SEL_ETHERAVB_1)
+#घोषणा MOD_SEL1_27		FM(SEL_SCIF0_0)		FM(SEL_SCIF0_1)
+#घोषणा MOD_SEL1_26		FM(SEL_SSIF4_0)		FM(SEL_SSIF4_1)
 
 
-#define PINMUX_MOD_SELS	\
+#घोषणा PINMUX_MOD_SELS	\
 \
 		MOD_SEL1_31 \
 MOD_SEL0_30	MOD_SEL1_30 \
@@ -442,36 +443,36 @@ MOD_SEL0_2 \
 MOD_SEL0_1 \
 MOD_SEL0_0
 
-enum {
+क्रमागत अणु
 	PINMUX_RESERVED = 0,
 
 	PINMUX_DATA_BEGIN,
 	GP_ALL(DATA),
 	PINMUX_DATA_END,
 
-#define F_(x, y)
-#define FM(x)	FN_##x,
+#घोषणा F_(x, y)
+#घोषणा FM(x)	FN_##x,
 	PINMUX_FUNCTION_BEGIN,
 	GP_ALL(FN),
 	PINMUX_GPSR
 	PINMUX_IPSR
 	PINMUX_MOD_SELS
 	PINMUX_FUNCTION_END,
-#undef F_
-#undef FM
+#अघोषित F_
+#अघोषित FM
 
-#define F_(x, y)
-#define FM(x)	x##_MARK,
+#घोषणा F_(x, y)
+#घोषणा FM(x)	x##_MARK,
 	PINMUX_MARK_BEGIN,
 	PINMUX_GPSR
 	PINMUX_IPSR
 	PINMUX_MOD_SELS
 	PINMUX_MARK_END,
-#undef F_
-#undef FM
-};
+#अघोषित F_
+#अघोषित FM
+पूर्ण;
 
-static const u16 pinmux_data[] = {
+अटल स्थिर u16 pinmux_data[] = अणु
 	PINMUX_DATA_GP_ALL(),
 
 	PINMUX_SINGLE(USB0_OVC),
@@ -928,72 +929,72 @@ static const u16 pinmux_data[] = {
 	PINMUX_IPSR_MSEL(IP13_7_4,	CAN1_TX_A, SEL_CAN1_0),
 	PINMUX_IPSR_GPSR(IP13_7_4,	CANFD1_TX),
 	PINMUX_IPSR_GPSR(IP13_7_4,	TPU0TO3_A),
-};
+पूर्ण;
 
-static const struct sh_pfc_pin pinmux_pins[] = {
+अटल स्थिर काष्ठा sh_pfc_pin pinmux_pins[] = अणु
 	PINMUX_GPIO_GP_ALL(),
-};
+पूर्ण;
 
 /* - AUDIO CLOCK ------------------------------------------------------------- */
-static const unsigned int audio_clk_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक audio_clk_a_pins[] = अणु
 	/* CLK A */
 	RCAR_GP_PIN(4, 1),
-};
-static const unsigned int audio_clk_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक audio_clk_a_mux[] = अणु
 	AUDIO_CLKA_MARK,
-};
-static const unsigned int audio_clk_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक audio_clk_b_pins[] = अणु
 	/* CLK B */
 	RCAR_GP_PIN(2, 27),
-};
-static const unsigned int audio_clk_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक audio_clk_b_mux[] = अणु
 	AUDIO_CLKB_MARK,
-};
-static const unsigned int audio_clkout_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक audio_clkout_pins[] = अणु
 	/* CLKOUT */
 	RCAR_GP_PIN(4, 5),
-};
-static const unsigned int audio_clkout_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक audio_clkout_mux[] = अणु
 	AUDIO_CLKOUT_MARK,
-};
-static const unsigned int audio_clkout1_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक audio_clkout1_pins[] = अणु
 	/* CLKOUT1 */
 	RCAR_GP_PIN(4, 22),
-};
-static const unsigned int audio_clkout1_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक audio_clkout1_mux[] = अणु
 	AUDIO_CLKOUT1_MARK,
-};
+पूर्ण;
 
 /* - EtherAVB --------------------------------------------------------------- */
-static const unsigned int avb0_link_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक avb0_link_pins[] = अणु
 	/* AVB0_LINK */
 	RCAR_GP_PIN(5, 20),
-};
-static const unsigned int avb0_link_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_link_mux[] = अणु
 	AVB0_LINK_MARK,
-};
-static const unsigned int avb0_magic_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_magic_pins[] = अणु
 	/* AVB0_MAGIC */
 	RCAR_GP_PIN(5, 18),
-};
-static const unsigned int avb0_magic_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_magic_mux[] = अणु
 	AVB0_MAGIC_MARK,
-};
-static const unsigned int avb0_phy_int_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_phy_पूर्णांक_pins[] = अणु
 	/* AVB0_PHY_INT */
 	RCAR_GP_PIN(5, 19),
-};
-static const unsigned int avb0_phy_int_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_phy_पूर्णांक_mux[] = अणु
 	AVB0_PHY_INT_MARK,
-};
-static const unsigned int avb0_mdio_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_mdio_pins[] = अणु
 	/* AVB0_MDC, AVB0_MDIO */
 	RCAR_GP_PIN(5, 17), RCAR_GP_PIN(5, 16),
-};
-static const unsigned int avb0_mdio_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_mdio_mux[] = अणु
 	AVB0_MDC_MARK, AVB0_MDIO_MARK,
-};
-static const unsigned int avb0_mii_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_mii_pins[] = अणु
 	/*
 	 * AVB0_TX_CTL, AVB0_TXC, AVB0_TD0,
 	 * AVB0_TD1, AVB0_TD2, AVB0_TD3,
@@ -1006,114 +1007,114 @@ static const unsigned int avb0_mii_pins[] = {
 	RCAR_GP_PIN(5, 3), RCAR_GP_PIN(5, 4), RCAR_GP_PIN(5, 5),
 	RCAR_GP_PIN(5, 6), RCAR_GP_PIN(5, 7), RCAR_GP_PIN(5, 8),
 	RCAR_GP_PIN(5, 15),
-};
-static const unsigned int avb0_mii_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_mii_mux[] = अणु
 	AVB0_TX_CTL_MARK, AVB0_TXC_MARK, AVB0_TD0_MARK,
 	AVB0_TD1_MARK, AVB0_TD2_MARK, AVB0_TD3_MARK,
 	AVB0_RX_CTL_MARK, AVB0_RXC_MARK, AVB0_RD0_MARK,
 	AVB0_RD1_MARK, AVB0_RD2_MARK, AVB0_RD3_MARK,
 	AVB0_TXCREFCLK_MARK,
-};
-static const unsigned int avb0_avtp_pps_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_pps_a_pins[] = अणु
 	/* AVB0_AVTP_PPS_A */
 	RCAR_GP_PIN(5, 2),
-};
-static const unsigned int avb0_avtp_pps_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_pps_a_mux[] = अणु
 	AVB0_AVTP_PPS_A_MARK,
-};
-static const unsigned int avb0_avtp_match_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_match_a_pins[] = अणु
 	/* AVB0_AVTP_MATCH_A */
 	RCAR_GP_PIN(5, 1),
-};
-static const unsigned int avb0_avtp_match_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_match_a_mux[] = अणु
 	AVB0_AVTP_MATCH_A_MARK,
-};
-static const unsigned int avb0_avtp_capture_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_capture_a_pins[] = अणु
 	/* AVB0_AVTP_CAPTURE_A */
 	RCAR_GP_PIN(5, 0),
-};
-static const unsigned int avb0_avtp_capture_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_capture_a_mux[] = अणु
 	AVB0_AVTP_CAPTURE_A_MARK,
-};
-static const unsigned int avb0_avtp_pps_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_pps_b_pins[] = अणु
 	/* AVB0_AVTP_PPS_B */
 	RCAR_GP_PIN(4, 16),
-};
-static const unsigned int avb0_avtp_pps_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_pps_b_mux[] = अणु
 	AVB0_AVTP_PPS_B_MARK,
-};
-static const unsigned int avb0_avtp_match_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_match_b_pins[] = अणु
 	/*  AVB0_AVTP_MATCH_B */
 	RCAR_GP_PIN(4, 18),
-};
-static const unsigned int avb0_avtp_match_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_match_b_mux[] = अणु
 	AVB0_AVTP_MATCH_B_MARK,
-};
-static const unsigned int avb0_avtp_capture_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_capture_b_pins[] = अणु
 	/* AVB0_AVTP_CAPTURE_B */
 	RCAR_GP_PIN(4, 17),
-};
-static const unsigned int avb0_avtp_capture_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक avb0_avtp_capture_b_mux[] = अणु
 	AVB0_AVTP_CAPTURE_B_MARK,
-};
+पूर्ण;
 
 /* - CAN ------------------------------------------------------------------ */
-static const unsigned int can0_data_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक can0_data_a_pins[] = अणु
 	/* TX, RX */
 	RCAR_GP_PIN(4, 28), RCAR_GP_PIN(4, 31),
-};
-static const unsigned int can0_data_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_data_a_mux[] = अणु
 	CAN0_TX_A_MARK, CAN0_RX_A_MARK,
-};
-static const unsigned int can0_data_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_data_b_pins[] = अणु
 	/* TX, RX */
 	RCAR_GP_PIN(4, 22), RCAR_GP_PIN(4, 5),
-};
-static const unsigned int can0_data_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_data_b_mux[] = अणु
 	CAN0_TX_B_MARK, CAN0_RX_B_MARK,
-};
-static const unsigned int can1_data_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_data_a_pins[] = अणु
 	/* TX, RX */
 	RCAR_GP_PIN(4, 30), RCAR_GP_PIN(4, 29),
-};
-static const unsigned int can1_data_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_data_a_mux[] = अणु
 	CAN1_TX_A_MARK, CAN1_RX_A_MARK,
-};
-static const unsigned int can1_data_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_data_b_pins[] = अणु
 	/* TX, RX */
 	RCAR_GP_PIN(4, 7), RCAR_GP_PIN(4, 6),
-};
-static const unsigned int can1_data_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_data_b_mux[] = अणु
 	CAN1_TX_B_MARK, CAN1_RX_B_MARK,
-};
+पूर्ण;
 
 /* - CAN Clock -------------------------------------------------------------- */
-static const unsigned int can_clk_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक can_clk_pins[] = अणु
 	/* CLK */
 	RCAR_GP_PIN(5, 2),
-};
-static const unsigned int can_clk_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can_clk_mux[] = अणु
 	CAN_CLK_MARK,
-};
+पूर्ण;
 
 /* - CAN FD ----------------------------------------------------------------- */
-static const unsigned int canfd0_data_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक canfd0_data_pins[] = अणु
 	/* TX, RX */
 	RCAR_GP_PIN(4, 28), RCAR_GP_PIN(4, 31),
-};
-static const unsigned int canfd0_data_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक canfd0_data_mux[] = अणु
 	CANFD0_TX_MARK, CANFD0_RX_MARK,
-};
-static const unsigned int canfd1_data_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक canfd1_data_pins[] = अणु
 	/* TX, RX */
 	RCAR_GP_PIN(4, 30), RCAR_GP_PIN(4, 29),
-};
-static const unsigned int canfd1_data_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक canfd1_data_mux[] = अणु
 	CANFD1_TX_MARK, CANFD1_RX_MARK,
-};
+पूर्ण;
 
 /* - DU --------------------------------------------------------------------- */
-static const unsigned int du_rgb666_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक du_rgb666_pins[] = अणु
 	/* R[7:2], G[7:2], B[7:2] */
 	RCAR_GP_PIN(1, 23), RCAR_GP_PIN(1, 22), RCAR_GP_PIN(1, 21),
 	RCAR_GP_PIN(1, 20), RCAR_GP_PIN(1, 19), RCAR_GP_PIN(1, 18),
@@ -1121,16 +1122,16 @@ static const unsigned int du_rgb666_pins[] = {
 	RCAR_GP_PIN(1, 12), RCAR_GP_PIN(1, 11), RCAR_GP_PIN(1, 10),
 	RCAR_GP_PIN(1, 7),  RCAR_GP_PIN(1, 6),  RCAR_GP_PIN(1, 5),
 	RCAR_GP_PIN(1, 4),  RCAR_GP_PIN(1, 3),  RCAR_GP_PIN(1, 2),
-};
-static const unsigned int du_rgb666_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_rgb666_mux[] = अणु
 	DU_DR7_MARK, DU_DR6_MARK, DU_DR5_MARK, DU_DR4_MARK,
 	DU_DR3_MARK, DU_DR2_MARK,
 	DU_DG7_MARK, DU_DG6_MARK, DU_DG5_MARK, DU_DG4_MARK,
 	DU_DG3_MARK, DU_DG2_MARK,
 	DU_DB7_MARK, DU_DB6_MARK, DU_DB5_MARK, DU_DB4_MARK,
 	DU_DB3_MARK, DU_DB2_MARK,
-};
-static const unsigned int du_rgb888_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_rgb888_pins[] = अणु
 	/* R[7:0], G[7:0], B[7:0] */
 	RCAR_GP_PIN(1, 23), RCAR_GP_PIN(1, 22), RCAR_GP_PIN(1, 21),
 	RCAR_GP_PIN(1, 20), RCAR_GP_PIN(1, 19), RCAR_GP_PIN(1, 18),
@@ -1141,774 +1142,774 @@ static const unsigned int du_rgb888_pins[] = {
 	RCAR_GP_PIN(1, 7),  RCAR_GP_PIN(1, 6),  RCAR_GP_PIN(1, 5),
 	RCAR_GP_PIN(1, 4),  RCAR_GP_PIN(1, 3),  RCAR_GP_PIN(1, 2),
 	RCAR_GP_PIN(1, 1),  RCAR_GP_PIN(1, 0),
-};
-static const unsigned int du_rgb888_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_rgb888_mux[] = अणु
 	DU_DR7_MARK, DU_DR6_MARK, DU_DR5_MARK, DU_DR4_MARK,
 	DU_DR3_MARK, DU_DR2_MARK, DU_DR1_MARK, DU_DR0_MARK,
 	DU_DG7_MARK, DU_DG6_MARK, DU_DG5_MARK, DU_DG4_MARK,
 	DU_DG3_MARK, DU_DG2_MARK, DU_DG1_MARK, DU_DG0_MARK,
 	DU_DB7_MARK, DU_DB6_MARK, DU_DB5_MARK, DU_DB4_MARK,
 	DU_DB3_MARK, DU_DB2_MARK, DU_DB1_MARK, DU_DB0_MARK,
-};
-static const unsigned int du_clk_in_1_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_clk_in_1_pins[] = अणु
 	/* CLKIN */
 	RCAR_GP_PIN(1, 28),
-};
-static const unsigned int du_clk_in_1_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_clk_in_1_mux[] = अणु
 	DU_DOTCLKIN1_MARK
-};
-static const unsigned int du_clk_out_0_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_clk_out_0_pins[] = अणु
 	/* CLKOUT */
 	RCAR_GP_PIN(1, 24),
-};
-static const unsigned int du_clk_out_0_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_clk_out_0_mux[] = अणु
 	DU_DOTCLKOUT0_MARK
-};
-static const unsigned int du_sync_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_sync_pins[] = अणु
 	/* VSYNC, HSYNC */
 	RCAR_GP_PIN(1, 26), RCAR_GP_PIN(1, 25),
-};
-static const unsigned int du_sync_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_sync_mux[] = अणु
 	DU_VSYNC_MARK, DU_HSYNC_MARK
-};
-static const unsigned int du_disp_cde_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_disp_cde_pins[] = अणु
 	/* DISP_CDE */
 	RCAR_GP_PIN(1, 28),
-};
-static const unsigned int du_disp_cde_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_disp_cde_mux[] = अणु
 	DU_DISP_CDE_MARK,
-};
-static const unsigned int du_cde_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_cde_pins[] = अणु
 	/* CDE */
 	RCAR_GP_PIN(1, 29),
-};
-static const unsigned int du_cde_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_cde_mux[] = अणु
 	DU_CDE_MARK,
-};
-static const unsigned int du_disp_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_disp_pins[] = अणु
 	/* DISP */
 	RCAR_GP_PIN(1, 27),
-};
-static const unsigned int du_disp_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक du_disp_mux[] = अणु
 	DU_DISP_MARK,
-};
+पूर्ण;
 
 /* - I2C -------------------------------------------------------------------- */
-static const unsigned int i2c0_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक i2c0_pins[] = अणु
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 8), RCAR_GP_PIN(4, 9),
-};
-static const unsigned int i2c0_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_mux[] = अणु
 	SCL0_MARK, SDA0_MARK,
-};
-static const unsigned int i2c1_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_pins[] = अणु
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 10), RCAR_GP_PIN(4, 11),
-};
-static const unsigned int i2c1_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_mux[] = अणु
 	SCL1_MARK, SDA1_MARK,
-};
-static const unsigned int i2c2_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c2_a_pins[] = अणु
 	/* SCL, SDA */
 	RCAR_GP_PIN(4, 6), RCAR_GP_PIN(4, 7),
-};
-static const unsigned int i2c2_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c2_a_mux[] = अणु
 	SCL2_A_MARK, SDA2_A_MARK,
-};
-static const unsigned int i2c2_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c2_b_pins[] = अणु
 	/* SCL, SDA */
 	RCAR_GP_PIN(2, 29), RCAR_GP_PIN(2, 30),
-};
-static const unsigned int i2c2_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c2_b_mux[] = अणु
 	SCL2_B_MARK, SDA2_B_MARK,
-};
-static const unsigned int i2c3_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c3_a_pins[] = अणु
 	/* SCL, SDA */
 	RCAR_GP_PIN(0, 4), RCAR_GP_PIN(0, 5),
-};
-static const unsigned int i2c3_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c3_a_mux[] = अणु
 	SCL3_A_MARK, SDA3_A_MARK,
-};
-static const unsigned int i2c3_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c3_b_pins[] = अणु
 	/* SCL, SDA */
 	RCAR_GP_PIN(0, 7), RCAR_GP_PIN(0, 8),
-};
-static const unsigned int i2c3_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c3_b_mux[] = अणु
 	SCL3_B_MARK, SDA3_B_MARK,
-};
+पूर्ण;
 
 /* - MMC ------------------------------------------------------------------- */
-static const unsigned int mmc_data1_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक mmc_data1_pins[] = अणु
 	/* D0 */
 	RCAR_GP_PIN(3, 2),
-};
-static const unsigned int mmc_data1_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mmc_data1_mux[] = अणु
 	MMC_D0_MARK,
-};
-static const unsigned int mmc_data4_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mmc_data4_pins[] = अणु
 	/* D[0:3] */
 	RCAR_GP_PIN(3, 2), RCAR_GP_PIN(3, 3),
 	RCAR_GP_PIN(3, 4), RCAR_GP_PIN(3, 5),
-};
-static const unsigned int mmc_data4_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mmc_data4_mux[] = अणु
 	MMC_D0_MARK, MMC_D1_MARK,
 	MMC_D2_MARK, MMC_D3_MARK,
-};
-static const unsigned int mmc_data8_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mmc_data8_pins[] = अणु
 	/* D[0:7] */
 	RCAR_GP_PIN(3, 2), RCAR_GP_PIN(3, 3),
 	RCAR_GP_PIN(3, 4), RCAR_GP_PIN(3, 5),
 	RCAR_GP_PIN(3, 6), RCAR_GP_PIN(3, 7),
 	RCAR_GP_PIN(3, 8), RCAR_GP_PIN(3, 9),
-};
-static const unsigned int mmc_data8_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mmc_data8_mux[] = अणु
 	MMC_D0_MARK, MMC_D1_MARK,
 	MMC_D2_MARK, MMC_D3_MARK,
 	MMC_D4_MARK, MMC_D5_MARK,
 	MMC_D6_MARK, MMC_D7_MARK,
-};
-static const unsigned int mmc_ctrl_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mmc_ctrl_pins[] = अणु
 	/* CLK, CMD */
 	RCAR_GP_PIN(3, 1), RCAR_GP_PIN(3, 0),
-};
-static const unsigned int mmc_ctrl_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mmc_ctrl_mux[] = अणु
 	MMC_CLK_MARK, MMC_CMD_MARK,
-};
+पूर्ण;
 
 /* - MSIOF0 ----------------------------------------------------------------- */
-static const unsigned int msiof0_clk_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_clk_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(4, 12),
-};
+पूर्ण;
 
-static const unsigned int msiof0_clk_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_clk_mux[] = अणु
 	MSIOF0_SCK_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof0_sync_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_sync_pins[] = अणु
 	/* SYNC */
 	RCAR_GP_PIN(4, 13),
-};
+पूर्ण;
 
-static const unsigned int msiof0_sync_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_sync_mux[] = अणु
 	MSIOF0_SYNC_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof0_ss1_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_ss1_pins[] = अणु
 	/* SS1 */
 	RCAR_GP_PIN(4, 20),
-};
+पूर्ण;
 
-static const unsigned int msiof0_ss1_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_ss1_mux[] = अणु
 	MSIOF0_SS1_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof0_ss2_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_ss2_pins[] = अणु
 	/* SS2 */
 	RCAR_GP_PIN(4, 21),
-};
+पूर्ण;
 
-static const unsigned int msiof0_ss2_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_ss2_mux[] = अणु
 	MSIOF0_SS2_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof0_txd_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_txd_pins[] = अणु
 	/* TXD */
 	RCAR_GP_PIN(4, 14),
-};
+पूर्ण;
 
-static const unsigned int msiof0_txd_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_txd_mux[] = अणु
 	MSIOF0_TXD_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof0_rxd_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_rxd_pins[] = अणु
 	/* RXD */
 	RCAR_GP_PIN(4, 15),
-};
+पूर्ण;
 
-static const unsigned int msiof0_rxd_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof0_rxd_mux[] = अणु
 	MSIOF0_RXD_MARK,
-};
+पूर्ण;
 
 /* - MSIOF1 ----------------------------------------------------------------- */
-static const unsigned int msiof1_clk_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_clk_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(4, 16),
-};
+पूर्ण;
 
-static const unsigned int msiof1_clk_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_clk_mux[] = अणु
 	MSIOF1_SCK_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof1_sync_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_sync_pins[] = अणु
 	/* SYNC */
 	RCAR_GP_PIN(4, 19),
-};
+पूर्ण;
 
-static const unsigned int msiof1_sync_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_sync_mux[] = अणु
 	MSIOF1_SYNC_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof1_ss1_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_ss1_pins[] = अणु
 	/* SS1 */
 	RCAR_GP_PIN(4, 25),
-};
+पूर्ण;
 
-static const unsigned int msiof1_ss1_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_ss1_mux[] = अणु
 	MSIOF1_SS1_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof1_ss2_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_ss2_pins[] = अणु
 	/* SS2 */
 	RCAR_GP_PIN(4, 22),
-};
+पूर्ण;
 
-static const unsigned int msiof1_ss2_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_ss2_mux[] = अणु
 	MSIOF1_SS2_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof1_txd_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_txd_pins[] = अणु
 	/* TXD */
 	RCAR_GP_PIN(4, 17),
-};
+पूर्ण;
 
-static const unsigned int msiof1_txd_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_txd_mux[] = अणु
 	MSIOF1_TXD_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof1_rxd_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_rxd_pins[] = अणु
 	/* RXD */
 	RCAR_GP_PIN(4, 18),
-};
+पूर्ण;
 
-static const unsigned int msiof1_rxd_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof1_rxd_mux[] = अणु
 	MSIOF1_RXD_MARK,
-};
+पूर्ण;
 
 /* - MSIOF2 ----------------------------------------------------------------- */
-static const unsigned int msiof2_clk_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_clk_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(0, 3),
-};
+पूर्ण;
 
-static const unsigned int msiof2_clk_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_clk_mux[] = अणु
 	MSIOF2_SCK_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof2_sync_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_sync_a_pins[] = अणु
 	/* SYNC */
 	RCAR_GP_PIN(0, 6),
-};
+पूर्ण;
 
-static const unsigned int msiof2_sync_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_sync_a_mux[] = अणु
 	MSIOF2_SYNC_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof2_sync_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_sync_b_pins[] = अणु
 	/* SYNC */
 	RCAR_GP_PIN(0, 2),
-};
+पूर्ण;
 
-static const unsigned int msiof2_sync_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_sync_b_mux[] = अणु
 	MSIOF2_SYNC_B_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof2_ss1_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_ss1_pins[] = अणु
 	/* SS1 */
 	RCAR_GP_PIN(0, 7),
-};
+पूर्ण;
 
-static const unsigned int msiof2_ss1_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_ss1_mux[] = अणु
 	MSIOF2_SS1_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof2_ss2_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_ss2_pins[] = अणु
 	/* SS2 */
 	RCAR_GP_PIN(0, 8),
-};
+पूर्ण;
 
-static const unsigned int msiof2_ss2_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_ss2_mux[] = अणु
 	MSIOF2_SS2_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof2_txd_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_txd_pins[] = अणु
 	/* TXD */
 	RCAR_GP_PIN(0, 4),
-};
+पूर्ण;
 
-static const unsigned int msiof2_txd_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_txd_mux[] = अणु
 	MSIOF2_TXD_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof2_rxd_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_rxd_pins[] = अणु
 	/* RXD */
 	RCAR_GP_PIN(0, 5),
-};
+पूर्ण;
 
-static const unsigned int msiof2_rxd_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof2_rxd_mux[] = अणु
 	MSIOF2_RXD_MARK,
-};
+पूर्ण;
 
 /* - MSIOF3 ----------------------------------------------------------------- */
-static const unsigned int msiof3_clk_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_clk_a_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(2, 24),
-};
+पूर्ण;
 
-static const unsigned int msiof3_clk_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_clk_a_mux[] = अणु
 	MSIOF3_SCK_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_sync_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_sync_a_pins[] = अणु
 	/* SYNC */
 	RCAR_GP_PIN(2, 21),
-};
+पूर्ण;
 
-static const unsigned int msiof3_sync_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_sync_a_mux[] = अणु
 	MSIOF3_SYNC_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_ss1_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_ss1_a_pins[] = अणु
 	/* SS1 */
 	RCAR_GP_PIN(2, 14),
-};
+पूर्ण;
 
-static const unsigned int msiof3_ss1_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_ss1_a_mux[] = अणु
 	MSIOF3_SS1_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_ss2_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_ss2_a_pins[] = अणु
 	/* SS2 */
 	RCAR_GP_PIN(2, 10),
-};
+पूर्ण;
 
-static const unsigned int msiof3_ss2_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_ss2_a_mux[] = अणु
 	MSIOF3_SS2_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_txd_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_txd_a_pins[] = अणु
 	/* TXD */
 	RCAR_GP_PIN(2, 22),
-};
+पूर्ण;
 
-static const unsigned int msiof3_txd_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_txd_a_mux[] = अणु
 	MSIOF3_TXD_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_rxd_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_rxd_a_pins[] = अणु
 	/* RXD */
 	RCAR_GP_PIN(2, 23),
-};
+पूर्ण;
 
-static const unsigned int msiof3_rxd_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_rxd_a_mux[] = अणु
 	MSIOF3_RXD_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_clk_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_clk_b_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(1, 8),
-};
+पूर्ण;
 
-static const unsigned int msiof3_clk_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_clk_b_mux[] = अणु
 	MSIOF3_SCK_B_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_sync_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_sync_b_pins[] = अणु
 	/* SYNC */
 	RCAR_GP_PIN(1, 9),
-};
+पूर्ण;
 
-static const unsigned int msiof3_sync_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_sync_b_mux[] = अणु
 	MSIOF3_SYNC_B_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_ss1_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_ss1_b_pins[] = अणु
 	/* SS1 */
 	RCAR_GP_PIN(1, 6),
-};
+पूर्ण;
 
-static const unsigned int msiof3_ss1_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_ss1_b_mux[] = अणु
 	MSIOF3_SS1_B_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_ss2_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_ss2_b_pins[] = अणु
 	/* SS2 */
 	RCAR_GP_PIN(1, 7),
-};
+पूर्ण;
 
-static const unsigned int msiof3_ss2_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_ss2_b_mux[] = अणु
 	MSIOF3_SS2_B_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_txd_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_txd_b_pins[] = अणु
 	/* TXD */
 	RCAR_GP_PIN(1, 0),
-};
+पूर्ण;
 
-static const unsigned int msiof3_txd_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_txd_b_mux[] = अणु
 	MSIOF3_TXD_B_MARK,
-};
+पूर्ण;
 
-static const unsigned int msiof3_rxd_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_rxd_b_pins[] = अणु
 	/* RXD */
 	RCAR_GP_PIN(1, 1),
-};
+पूर्ण;
 
-static const unsigned int msiof3_rxd_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक msiof3_rxd_b_mux[] = अणु
 	MSIOF3_RXD_B_MARK,
-};
+पूर्ण;
 
 /* - PWM0 ------------------------------------------------------------------ */
-static const unsigned int pwm0_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm0_a_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(2, 1),
-};
+पूर्ण;
 
-static const unsigned int pwm0_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm0_a_mux[] = अणु
 	PWM0_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int pwm0_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm0_b_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(1, 18),
-};
+पूर्ण;
 
-static const unsigned int pwm0_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm0_b_mux[] = अणु
 	PWM0_B_MARK,
-};
+पूर्ण;
 
-static const unsigned int pwm0_c_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm0_c_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(2, 29),
-};
+पूर्ण;
 
-static const unsigned int pwm0_c_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm0_c_mux[] = अणु
 	PWM0_C_MARK,
-};
+पूर्ण;
 
 /* - PWM1 ------------------------------------------------------------------ */
-static const unsigned int pwm1_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm1_a_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(2, 2),
-};
+पूर्ण;
 
-static const unsigned int pwm1_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm1_a_mux[] = अणु
 	PWM1_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int pwm1_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm1_b_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(1, 19),
-};
+पूर्ण;
 
-static const unsigned int pwm1_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm1_b_mux[] = अणु
 	PWM1_B_MARK,
-};
+पूर्ण;
 
-static const unsigned int pwm1_c_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm1_c_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(2, 30),
-};
+पूर्ण;
 
-static const unsigned int pwm1_c_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm1_c_mux[] = अणु
 	PWM1_C_MARK,
-};
+पूर्ण;
 
 /* - PWM2 ------------------------------------------------------------------ */
-static const unsigned int pwm2_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm2_a_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(2, 3),
-};
+पूर्ण;
 
-static const unsigned int pwm2_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm2_a_mux[] = अणु
 	PWM2_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int pwm2_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm2_b_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(1, 22),
-};
+पूर्ण;
 
-static const unsigned int pwm2_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm2_b_mux[] = अणु
 	PWM2_B_MARK,
-};
+पूर्ण;
 
-static const unsigned int pwm2_c_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm2_c_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(2, 31),
-};
+पूर्ण;
 
-static const unsigned int pwm2_c_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm2_c_mux[] = अणु
 	PWM2_C_MARK,
-};
+पूर्ण;
 
 /* - PWM3 ------------------------------------------------------------------ */
-static const unsigned int pwm3_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm3_a_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(2, 4),
-};
+पूर्ण;
 
-static const unsigned int pwm3_a_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm3_a_mux[] = अणु
 	PWM3_A_MARK,
-};
+पूर्ण;
 
-static const unsigned int pwm3_b_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm3_b_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(1, 27),
-};
+पूर्ण;
 
-static const unsigned int pwm3_b_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm3_b_mux[] = अणु
 	PWM3_B_MARK,
-};
+पूर्ण;
 
-static const unsigned int pwm3_c_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm3_c_pins[] = अणु
 	/* PWM */
 	RCAR_GP_PIN(4, 0),
-};
+पूर्ण;
 
-static const unsigned int pwm3_c_mux[] = {
+अटल स्थिर अचिन्हित पूर्णांक pwm3_c_mux[] = अणु
 	PWM3_C_MARK,
-};
+पूर्ण;
 
 /* - SCIF0 ------------------------------------------------------------------ */
-static const unsigned int scif0_data_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_a_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(4, 20), RCAR_GP_PIN(4, 21),
-};
-static const unsigned int scif0_data_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_a_mux[] = अणु
 	RX0_A_MARK, TX0_A_MARK,
-};
-static const unsigned int scif0_clk_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर0_clk_a_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(4, 19),
-};
-static const unsigned int scif0_clk_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर0_clk_a_mux[] = अणु
 	SCK0_A_MARK,
-};
-static const unsigned int scif0_data_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_b_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(4, 31), RCAR_GP_PIN(4, 28),
-};
-static const unsigned int scif0_data_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर0_data_b_mux[] = अणु
 	RX0_B_MARK, TX0_B_MARK,
-};
-static const unsigned int scif0_clk_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर0_clk_b_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(5, 2),
-};
-static const unsigned int scif0_clk_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर0_clk_b_mux[] = अणु
 	SCK0_B_MARK,
-};
-static const unsigned int scif0_ctrl_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर0_ctrl_pins[] = अणु
 	/* RTS, CTS */
 	RCAR_GP_PIN(4, 24), RCAR_GP_PIN(4, 23),
-};
-static const unsigned int scif0_ctrl_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर0_ctrl_mux[] = अणु
 	RTS0_N_MARK, CTS0_N_MARK,
-};
+पूर्ण;
 /* - SCIF1 ------------------------------------------------------------------ */
-static const unsigned int scif1_data_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक scअगर1_data_a_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(4, 23), RCAR_GP_PIN(4, 24),
-};
-static const unsigned int scif1_data_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर1_data_a_mux[] = अणु
 	RX1_A_MARK, TX1_A_MARK,
-};
-static const unsigned int scif1_clk_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर1_clk_a_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(4, 22),
-};
-static const unsigned int scif1_clk_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर1_clk_a_mux[] = अणु
 	SCK1_A_MARK,
-};
-static const unsigned int scif1_data_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर1_data_b_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(2, 26), RCAR_GP_PIN(2, 28),
-};
-static const unsigned int scif1_data_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर1_data_b_mux[] = अणु
 	RX1_B_MARK, TX1_B_MARK,
-};
-static const unsigned int scif1_clk_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर1_clk_b_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(2, 25),
-};
-static const unsigned int scif1_clk_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर1_clk_b_mux[] = अणु
 	SCK1_B_MARK,
-};
-static const unsigned int scif1_ctrl_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर1_ctrl_pins[] = अणु
 	/* RTS, CTS */
 	RCAR_GP_PIN(4, 11), RCAR_GP_PIN(4, 10),
-};
-static const unsigned int scif1_ctrl_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर1_ctrl_mux[] = अणु
 	RTS1_N_MARK, CTS1_N_MARK,
-};
+पूर्ण;
 
 /* - SCIF2 ------------------------------------------------------------------ */
-static const unsigned int scif2_data_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक scअगर2_data_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(4, 26), RCAR_GP_PIN(4, 27),
-};
-static const unsigned int scif2_data_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर2_data_mux[] = अणु
 	RX2_MARK, TX2_MARK,
-};
-static const unsigned int scif2_clk_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर2_clk_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(4, 25),
-};
-static const unsigned int scif2_clk_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर2_clk_mux[] = अणु
 	SCK2_MARK,
-};
+पूर्ण;
 /* - SCIF3 ------------------------------------------------------------------ */
-static const unsigned int scif3_data_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक scअगर3_data_a_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(2, 31), RCAR_GP_PIN(4, 00),
-};
-static const unsigned int scif3_data_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर3_data_a_mux[] = अणु
 	RX3_A_MARK, TX3_A_MARK,
-};
-static const unsigned int scif3_clk_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर3_clk_a_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(2, 30),
-};
-static const unsigned int scif3_clk_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर3_clk_a_mux[] = अणु
 	SCK3_A_MARK,
-};
-static const unsigned int scif3_data_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर3_data_b_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(1, 30), RCAR_GP_PIN(1, 31),
-};
-static const unsigned int scif3_data_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर3_data_b_mux[] = अणु
 	RX3_B_MARK, TX3_B_MARK,
-};
-static const unsigned int scif3_clk_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर3_clk_b_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(1, 29),
-};
-static const unsigned int scif3_clk_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर3_clk_b_mux[] = अणु
 	SCK3_B_MARK,
-};
+पूर्ण;
 /* - SCIF4 ------------------------------------------------------------------ */
-static const unsigned int scif4_data_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_a_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(2, 11), RCAR_GP_PIN(2, 12),
-};
-static const unsigned int scif4_data_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_a_mux[] = अणु
 	RX4_A_MARK, TX4_A_MARK,
-};
-static const unsigned int scif4_clk_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर4_clk_a_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(2, 6),
-};
-static const unsigned int scif4_clk_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर4_clk_a_mux[] = अणु
 	SCK4_A_MARK,
-};
-static const unsigned int scif4_data_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_b_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(1, 16), RCAR_GP_PIN(1, 17),
-};
-static const unsigned int scif4_data_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर4_data_b_mux[] = अणु
 	RX4_B_MARK, TX4_B_MARK,
-};
-static const unsigned int scif4_clk_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर4_clk_b_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(1, 15),
-};
-static const unsigned int scif4_clk_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर4_clk_b_mux[] = अणु
 	SCK4_B_MARK,
-};
+पूर्ण;
 /* - SCIF5 ------------------------------------------------------------------ */
-static const unsigned int scif5_data_a_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_a_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(0, 7), RCAR_GP_PIN(0, 8),
-};
-static const unsigned int scif5_data_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_a_mux[] = अणु
 	RX5_A_MARK, TX5_A_MARK,
-};
-static const unsigned int scif5_clk_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर5_clk_a_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(0, 6),
-};
-static const unsigned int scif5_clk_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर5_clk_a_mux[] = अणु
 	SCK5_A_MARK,
-};
-static const unsigned int scif5_data_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_b_pins[] = अणु
 	/* RX, TX */
 	RCAR_GP_PIN(1, 4), RCAR_GP_PIN(1, 5),
-};
-static const unsigned int scif5_data_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर5_data_b_mux[] = अणु
 	RX5_B_MARK, TX5_B_MARK,
-};
-static const unsigned int scif5_clk_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर5_clk_b_pins[] = अणु
 	/* SCK */
 	RCAR_GP_PIN(1, 3),
-};
-static const unsigned int scif5_clk_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर5_clk_b_mux[] = अणु
 	SCK5_B_MARK,
-};
+पूर्ण;
 /* - SCIF Clock ------------------------------------------------------------- */
-static const unsigned int scif_clk_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक scअगर_clk_pins[] = अणु
 	/* SCIF_CLK */
 	RCAR_GP_PIN(2, 27),
-};
-static const unsigned int scif_clk_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक scअगर_clk_mux[] = अणु
 	SCIF_CLK_MARK,
-};
+पूर्ण;
 
 /* - SSI ---------------------------------------------------------------*/
-static const unsigned int ssi3_data_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक ssi3_data_pins[] = अणु
 	/* SDATA */
 	RCAR_GP_PIN(4, 3),
-};
-static const unsigned int ssi3_data_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi3_data_mux[] = अणु
 	SSI_SDATA3_MARK,
-};
-static const unsigned int ssi34_ctrl_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi34_ctrl_pins[] = अणु
 	/* SCK,  WS */
 	RCAR_GP_PIN(4, 2), RCAR_GP_PIN(4, 4),
-};
-static const unsigned int ssi34_ctrl_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi34_ctrl_mux[] = अणु
 	SSI_SCK34_MARK, SSI_WS34_MARK,
-};
-static const unsigned int ssi4_ctrl_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi4_ctrl_a_pins[] = अणु
 	/* SCK, WS */
 	RCAR_GP_PIN(4, 5), RCAR_GP_PIN(4, 7),
-};
-static const unsigned int ssi4_ctrl_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi4_ctrl_a_mux[] = अणु
 	SSI_SCK4_A_MARK, SSI_WS4_A_MARK,
-};
-static const unsigned int ssi4_data_a_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi4_data_a_pins[] = अणु
 	/* SDATA */
 	RCAR_GP_PIN(4, 6),
-};
-static const unsigned int ssi4_data_a_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi4_data_a_mux[] = अणु
 	SSI_SDATA4_A_MARK,
-};
-static const unsigned int ssi4_ctrl_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi4_ctrl_b_pins[] = अणु
 	/* SCK, WS */
 	RCAR_GP_PIN(2, 15), RCAR_GP_PIN(2, 20),
-};
-static const unsigned int ssi4_ctrl_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi4_ctrl_b_mux[] = अणु
 	SSI_SCK4_B_MARK, SSI_WS4_B_MARK,
-};
-static const unsigned int ssi4_data_b_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi4_data_b_pins[] = अणु
 	/* SDATA */
 	RCAR_GP_PIN(2, 16),
-};
-static const unsigned int ssi4_data_b_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ssi4_data_b_mux[] = अणु
 	SSI_SDATA4_B_MARK,
-};
+पूर्ण;
 
 /* - USB0 ------------------------------------------------------------------- */
-static const unsigned int usb0_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक usb0_pins[] = अणु
 	/* PWEN, OVC */
 	RCAR_GP_PIN(0, 0), RCAR_GP_PIN(0, 1),
-};
-static const unsigned int usb0_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक usb0_mux[] = अणु
 	USB0_PWEN_MARK, USB0_OVC_MARK,
-};
+पूर्ण;
 
 /* - VIN4 ------------------------------------------------------------------- */
-static const unsigned int vin4_data18_pins[] = {
+अटल स्थिर अचिन्हित पूर्णांक vin4_data18_pins[] = अणु
 	RCAR_GP_PIN(2, 3), RCAR_GP_PIN(2, 4),
 	RCAR_GP_PIN(2, 5), RCAR_GP_PIN(2, 6),
 	RCAR_GP_PIN(2, 7), RCAR_GP_PIN(2, 8),
@@ -1918,8 +1919,8 @@ static const unsigned int vin4_data18_pins[] = {
 	RCAR_GP_PIN(2, 19), RCAR_GP_PIN(2, 20),
 	RCAR_GP_PIN(2, 21), RCAR_GP_PIN(2, 22),
 	RCAR_GP_PIN(2, 23), RCAR_GP_PIN(2, 24),
-};
-static const unsigned int vin4_data18_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक vin4_data18_mux[] = अणु
 	VI4_DATA2_MARK, VI4_DATA3_MARK,
 	VI4_DATA4_MARK, VI4_DATA5_MARK,
 	VI4_DATA6_MARK, VI4_DATA7_MARK,
@@ -1929,9 +1930,9 @@ static const unsigned int vin4_data18_mux[] = {
 	VI4_DATA18_MARK, VI4_DATA19_MARK,
 	VI4_DATA20_MARK, VI4_DATA21_MARK,
 	VI4_DATA22_MARK, VI4_DATA23_MARK,
-};
-static const union vin_data vin4_data_pins = {
-	.data24 = {
+पूर्ण;
+अटल स्थिर जोड़ vin_data vin4_data_pins = अणु
+	.data24 = अणु
 		RCAR_GP_PIN(2, 1), RCAR_GP_PIN(2, 2),
 		RCAR_GP_PIN(2, 3), RCAR_GP_PIN(2, 4),
 		RCAR_GP_PIN(2, 5), RCAR_GP_PIN(2, 6),
@@ -1944,10 +1945,10 @@ static const union vin_data vin4_data_pins = {
 		RCAR_GP_PIN(2, 19), RCAR_GP_PIN(2, 20),
 		RCAR_GP_PIN(2, 21), RCAR_GP_PIN(2, 22),
 		RCAR_GP_PIN(2, 23), RCAR_GP_PIN(2, 24),
-	},
-};
-static const union vin_data vin4_data_mux = {
-	.data24 = {
+	पूर्ण,
+पूर्ण;
+अटल स्थिर जोड़ vin_data vin4_data_mux = अणु
+	.data24 = अणु
 		VI4_DATA0_MARK, VI4_DATA1_MARK,
 		VI4_DATA2_MARK, VI4_DATA3_MARK,
 		VI4_DATA4_MARK, VI4_DATA5_MARK,
@@ -1960,45 +1961,45 @@ static const union vin_data vin4_data_mux = {
 		VI4_DATA18_MARK, VI4_DATA19_MARK,
 		VI4_DATA20_MARK, VI4_DATA21_MARK,
 		VI4_DATA22_MARK, VI4_DATA23_MARK,
-	},
-};
-static const unsigned int vin4_sync_pins[] = {
+	पूर्ण,
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक vin4_sync_pins[] = अणु
 	/* HSYNC#, VSYNC# */
 	RCAR_GP_PIN(2, 26), RCAR_GP_PIN(2, 25),
-};
-static const unsigned int vin4_sync_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक vin4_sync_mux[] = अणु
 	VI4_HSYNC_N_MARK, VI4_VSYNC_N_MARK,
-};
-static const unsigned int vin4_field_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक vin4_field_pins[] = अणु
 	/* FIELD */
 	RCAR_GP_PIN(2, 27),
-};
-static const unsigned int vin4_field_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक vin4_field_mux[] = अणु
 	VI4_FIELD_MARK,
-};
-static const unsigned int vin4_clkenb_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक vin4_clkenb_pins[] = अणु
 	/* CLKENB */
 	RCAR_GP_PIN(2, 28),
-};
-static const unsigned int vin4_clkenb_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक vin4_clkenb_mux[] = अणु
 	VI4_CLKENB_MARK,
-};
-static const unsigned int vin4_clk_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक vin4_clk_pins[] = अणु
 	/* CLK */
 	RCAR_GP_PIN(2, 0),
-};
-static const unsigned int vin4_clk_mux[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक vin4_clk_mux[] = अणु
 	VI4_CLK_MARK,
-};
+पूर्ण;
 
-static const struct sh_pfc_pin_group pinmux_groups[] = {
+अटल स्थिर काष्ठा sh_pfc_pin_group pinmux_groups[] = अणु
 	SH_PFC_PIN_GROUP(audio_clk_a),
 	SH_PFC_PIN_GROUP(audio_clk_b),
 	SH_PFC_PIN_GROUP(audio_clkout),
 	SH_PFC_PIN_GROUP(audio_clkout1),
 	SH_PFC_PIN_GROUP(avb0_link),
 	SH_PFC_PIN_GROUP(avb0_magic),
-	SH_PFC_PIN_GROUP(avb0_phy_int),
+	SH_PFC_PIN_GROUP(avb0_phy_पूर्णांक),
 	SH_PFC_PIN_GROUP_ALIAS(avb0_mdc, avb0_mdio),	/* Deprecated */
 	SH_PFC_PIN_GROUP(avb0_mdio),
 	SH_PFC_PIN_GROUP(avb0_mii),
@@ -2076,31 +2077,31 @@ static const struct sh_pfc_pin_group pinmux_groups[] = {
 	SH_PFC_PIN_GROUP(pwm3_a),
 	SH_PFC_PIN_GROUP(pwm3_b),
 	SH_PFC_PIN_GROUP(pwm3_c),
-	SH_PFC_PIN_GROUP(scif0_data_a),
-	SH_PFC_PIN_GROUP(scif0_clk_a),
-	SH_PFC_PIN_GROUP(scif0_data_b),
-	SH_PFC_PIN_GROUP(scif0_clk_b),
-	SH_PFC_PIN_GROUP(scif0_ctrl),
-	SH_PFC_PIN_GROUP(scif1_data_a),
-	SH_PFC_PIN_GROUP(scif1_clk_a),
-	SH_PFC_PIN_GROUP(scif1_data_b),
-	SH_PFC_PIN_GROUP(scif1_clk_b),
-	SH_PFC_PIN_GROUP(scif1_ctrl),
-	SH_PFC_PIN_GROUP(scif2_data),
-	SH_PFC_PIN_GROUP(scif2_clk),
-	SH_PFC_PIN_GROUP(scif3_data_a),
-	SH_PFC_PIN_GROUP(scif3_clk_a),
-	SH_PFC_PIN_GROUP(scif3_data_b),
-	SH_PFC_PIN_GROUP(scif3_clk_b),
-	SH_PFC_PIN_GROUP(scif4_data_a),
-	SH_PFC_PIN_GROUP(scif4_clk_a),
-	SH_PFC_PIN_GROUP(scif4_data_b),
-	SH_PFC_PIN_GROUP(scif4_clk_b),
-	SH_PFC_PIN_GROUP(scif5_data_a),
-	SH_PFC_PIN_GROUP(scif5_clk_a),
-	SH_PFC_PIN_GROUP(scif5_data_b),
-	SH_PFC_PIN_GROUP(scif5_clk_b),
-	SH_PFC_PIN_GROUP(scif_clk),
+	SH_PFC_PIN_GROUP(scअगर0_data_a),
+	SH_PFC_PIN_GROUP(scअगर0_clk_a),
+	SH_PFC_PIN_GROUP(scअगर0_data_b),
+	SH_PFC_PIN_GROUP(scअगर0_clk_b),
+	SH_PFC_PIN_GROUP(scअगर0_ctrl),
+	SH_PFC_PIN_GROUP(scअगर1_data_a),
+	SH_PFC_PIN_GROUP(scअगर1_clk_a),
+	SH_PFC_PIN_GROUP(scअगर1_data_b),
+	SH_PFC_PIN_GROUP(scअगर1_clk_b),
+	SH_PFC_PIN_GROUP(scअगर1_ctrl),
+	SH_PFC_PIN_GROUP(scअगर2_data),
+	SH_PFC_PIN_GROUP(scअगर2_clk),
+	SH_PFC_PIN_GROUP(scअगर3_data_a),
+	SH_PFC_PIN_GROUP(scअगर3_clk_a),
+	SH_PFC_PIN_GROUP(scअगर3_data_b),
+	SH_PFC_PIN_GROUP(scअगर3_clk_b),
+	SH_PFC_PIN_GROUP(scअगर4_data_a),
+	SH_PFC_PIN_GROUP(scअगर4_clk_a),
+	SH_PFC_PIN_GROUP(scअगर4_data_b),
+	SH_PFC_PIN_GROUP(scअगर4_clk_b),
+	SH_PFC_PIN_GROUP(scअगर5_data_a),
+	SH_PFC_PIN_GROUP(scअगर5_clk_a),
+	SH_PFC_PIN_GROUP(scअगर5_data_b),
+	SH_PFC_PIN_GROUP(scअगर5_clk_b),
+	SH_PFC_PIN_GROUP(scअगर_clk),
 	SH_PFC_PIN_GROUP(ssi3_data),
 	SH_PFC_PIN_GROUP(ssi34_ctrl),
 	SH_PFC_PIN_GROUP(ssi4_ctrl_a),
@@ -2119,16 +2120,16 @@ static const struct sh_pfc_pin_group pinmux_groups[] = {
 	SH_PFC_PIN_GROUP(vin4_field),
 	SH_PFC_PIN_GROUP(vin4_clkenb),
 	SH_PFC_PIN_GROUP(vin4_clk),
-};
+पूर्ण;
 
-static const char * const audio_clk_groups[] = {
+अटल स्थिर अक्षर * स्थिर audio_clk_groups[] = अणु
 	"audio_clk_a",
 	"audio_clk_b",
 	"audio_clkout",
 	"audio_clkout1",
-};
+पूर्ण;
 
-static const char * const avb0_groups[] = {
+अटल स्थिर अक्षर * स्थिर avb0_groups[] = अणु
 	"avb0_link",
 	"avb0_magic",
 	"avb0_phy_int",
@@ -2141,28 +2142,28 @@ static const char * const avb0_groups[] = {
 	"avb0_avtp_pps_b",
 	"avb0_avtp_match_b",
 	"avb0_avtp_capture_b",
-};
+पूर्ण;
 
-static const char * const can0_groups[] = {
+अटल स्थिर अक्षर * स्थिर can0_groups[] = अणु
 	"can0_data_a",
 	"can0_data_b",
-};
-static const char * const can1_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर can1_groups[] = अणु
 	"can1_data_a",
 	"can1_data_b",
-};
-static const char * const can_clk_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर can_clk_groups[] = अणु
 	"can_clk",
-};
+पूर्ण;
 
-static const char * const canfd0_groups[] = {
+अटल स्थिर अक्षर * स्थिर canfd0_groups[] = अणु
 	"canfd0_data",
-};
-static const char * const canfd1_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर canfd1_groups[] = अणु
 	"canfd1_data",
-};
+पूर्ण;
 
-static const char * const du_groups[] = {
+अटल स्थिर अक्षर * स्थिर du_groups[] = अणु
 	"du_rgb666",
 	"du_rgb888",
 	"du_clk_in_1",
@@ -2171,116 +2172,116 @@ static const char * const du_groups[] = {
 	"du_disp_cde",
 	"du_cde",
 	"du_disp",
-};
+पूर्ण;
 
-static const char * const i2c0_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c0_groups[] = अणु
 	"i2c0",
-};
-static const char * const i2c1_groups[] = {
+पूर्ण;
+अटल स्थिर अक्षर * स्थिर i2c1_groups[] = अणु
 	"i2c1",
-};
+पूर्ण;
 
-static const char * const i2c2_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c2_groups[] = अणु
 	"i2c2_a",
 	"i2c2_b",
-};
+पूर्ण;
 
-static const char * const i2c3_groups[] = {
+अटल स्थिर अक्षर * स्थिर i2c3_groups[] = अणु
 	"i2c3_a",
 	"i2c3_b",
-};
+पूर्ण;
 
-static const char * const mmc_groups[] = {
+अटल स्थिर अक्षर * स्थिर mmc_groups[] = अणु
 	"mmc_data1",
 	"mmc_data4",
 	"mmc_data8",
 	"mmc_ctrl",
-};
+पूर्ण;
 
-static const char * const pwm0_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm0_groups[] = अणु
 	"pwm0_a",
 	"pwm0_b",
 	"pwm0_c",
-};
+पूर्ण;
 
-static const char * const pwm1_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm1_groups[] = अणु
 	"pwm1_a",
 	"pwm1_b",
 	"pwm1_c",
-};
+पूर्ण;
 
-static const char * const pwm2_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm2_groups[] = अणु
 	"pwm2_a",
 	"pwm2_b",
 	"pwm2_c",
-};
+पूर्ण;
 
-static const char * const pwm3_groups[] = {
+अटल स्थिर अक्षर * स्थिर pwm3_groups[] = अणु
 	"pwm3_a",
 	"pwm3_b",
 	"pwm3_c",
-};
+पूर्ण;
 
-static const char * const scif0_groups[] = {
+अटल स्थिर अक्षर * स्थिर scअगर0_groups[] = अणु
 	"scif0_data_a",
 	"scif0_clk_a",
 	"scif0_data_b",
 	"scif0_clk_b",
 	"scif0_ctrl",
-};
+पूर्ण;
 
-static const char * const scif1_groups[] = {
+अटल स्थिर अक्षर * स्थिर scअगर1_groups[] = अणु
 	"scif1_data_a",
 	"scif1_clk_a",
 	"scif1_data_b",
 	"scif1_clk_b",
 	"scif1_ctrl",
-};
+पूर्ण;
 
-static const char * const scif2_groups[] = {
+अटल स्थिर अक्षर * स्थिर scअगर2_groups[] = अणु
 	"scif2_data",
 	"scif2_clk",
-};
+पूर्ण;
 
-static const char * const scif3_groups[] = {
+अटल स्थिर अक्षर * स्थिर scअगर3_groups[] = अणु
 	"scif3_data_a",
 	"scif3_clk_a",
 	"scif3_data_b",
 	"scif3_clk_b",
-};
+पूर्ण;
 
-static const char * const scif4_groups[] = {
+अटल स्थिर अक्षर * स्थिर scअगर4_groups[] = अणु
 	"scif4_data_a",
 	"scif4_clk_a",
 	"scif4_data_b",
 	"scif4_clk_b",
-};
+पूर्ण;
 
-static const char * const scif5_groups[] = {
+अटल स्थिर अक्षर * स्थिर scअगर5_groups[] = अणु
 	"scif5_data_a",
 	"scif5_clk_a",
 	"scif5_data_b",
 	"scif5_clk_b",
-};
+पूर्ण;
 
-static const char * const scif_clk_groups[] = {
+अटल स्थिर अक्षर * स्थिर scअगर_clk_groups[] = अणु
 	"scif_clk",
-};
+पूर्ण;
 
-static const char * const ssi_groups[] = {
+अटल स्थिर अक्षर * स्थिर ssi_groups[] = अणु
 	"ssi3_data",
 	"ssi34_ctrl",
 	"ssi4_ctrl_a",
 	"ssi4_data_a",
 	"ssi4_ctrl_b",
 	"ssi4_data_b",
-};
+पूर्ण;
 
-static const char * const usb0_groups[] = {
+अटल स्थिर अक्षर * स्थिर usb0_groups[] = अणु
 	"usb0",
-};
+पूर्ण;
 
-static const char * const vin4_groups[] = {
+अटल स्थिर अक्षर * स्थिर vin4_groups[] = अणु
 	"vin4_data8",
 	"vin4_data10",
 	"vin4_data12",
@@ -2292,27 +2293,27 @@ static const char * const vin4_groups[] = {
 	"vin4_field",
 	"vin4_clkenb",
 	"vin4_clk",
-};
+पूर्ण;
 
-static const char * const msiof0_groups[] = {
+अटल स्थिर अक्षर * स्थिर msiof0_groups[] = अणु
 	"msiof0_clk",
 	"msiof0_sync",
 	"msiof0_ss1",
 	"msiof0_ss2",
 	"msiof0_txd",
 	"msiof0_rxd",
-};
+पूर्ण;
 
-static const char * const msiof1_groups[] = {
+अटल स्थिर अक्षर * स्थिर msiof1_groups[] = अणु
 	"msiof1_clk",
 	"msiof1_sync",
 	"msiof1_ss1",
 	"msiof1_ss2",
 	"msiof1_txd",
 	"msiof1_rxd",
-};
+पूर्ण;
 
-static const char * const msiof2_groups[] = {
+अटल स्थिर अक्षर * स्थिर msiof2_groups[] = अणु
 	"msiof2_clk",
 	"msiof2_sync_a",
 	"msiof2_sync_b",
@@ -2320,9 +2321,9 @@ static const char * const msiof2_groups[] = {
 	"msiof2_ss2",
 	"msiof2_txd",
 	"msiof2_rxd",
-};
+पूर्ण;
 
-static const char * const msiof3_groups[] = {
+अटल स्थिर अक्षर * स्थिर msiof3_groups[] = अणु
 	"msiof3_clk_a",
 	"msiof3_sync_a",
 	"msiof3_ss1_a",
@@ -2335,9 +2336,9 @@ static const char * const msiof3_groups[] = {
 	"msiof3_ss2_b",
 	"msiof3_txd_b",
 	"msiof3_rxd_b",
-};
+पूर्ण;
 
-static const struct sh_pfc_function pinmux_functions[] = {
+अटल स्थिर काष्ठा sh_pfc_function pinmux_functions[] = अणु
 	SH_PFC_FUNCTION(audio_clk),
 	SH_PFC_FUNCTION(avb0),
 	SH_PFC_FUNCTION(can0),
@@ -2359,22 +2360,22 @@ static const struct sh_pfc_function pinmux_functions[] = {
 	SH_PFC_FUNCTION(pwm1),
 	SH_PFC_FUNCTION(pwm2),
 	SH_PFC_FUNCTION(pwm3),
-	SH_PFC_FUNCTION(scif0),
-	SH_PFC_FUNCTION(scif1),
-	SH_PFC_FUNCTION(scif2),
-	SH_PFC_FUNCTION(scif3),
-	SH_PFC_FUNCTION(scif4),
-	SH_PFC_FUNCTION(scif5),
-	SH_PFC_FUNCTION(scif_clk),
+	SH_PFC_FUNCTION(scअगर0),
+	SH_PFC_FUNCTION(scअगर1),
+	SH_PFC_FUNCTION(scअगर2),
+	SH_PFC_FUNCTION(scअगर3),
+	SH_PFC_FUNCTION(scअगर4),
+	SH_PFC_FUNCTION(scअगर5),
+	SH_PFC_FUNCTION(scअगर_clk),
 	SH_PFC_FUNCTION(ssi),
 	SH_PFC_FUNCTION(usb0),
 	SH_PFC_FUNCTION(vin4),
-};
+पूर्ण;
 
-static const struct pinmux_cfg_reg pinmux_config_regs[] = {
-#define F_(x, y)	FN_##y
-#define FM(x)		FN_##x
-	{ PINMUX_CFG_REG("GPSR0", 0xe6060100, 32, 1, GROUP(
+अटल स्थिर काष्ठा pinmux_cfg_reg pinmux_config_regs[] = अणु
+#घोषणा F_(x, y)	FN_##y
+#घोषणा FM(x)		FN_##x
+	अणु PINMUX_CFG_REG("GPSR0", 0xe6060100, 32, 1, GROUP(
 		0, 0,
 		0, 0,
 		0, 0,
@@ -2407,8 +2408,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_0_2_FN,	GPSR0_2,
 		GP_0_1_FN,	GPSR0_1,
 		GP_0_0_FN,	GPSR0_0, ))
-	},
-	{ PINMUX_CFG_REG("GPSR1", 0xe6060104, 32, 1, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("GPSR1", 0xe6060104, 32, 1, GROUP(
 		GP_1_31_FN,	GPSR1_31,
 		GP_1_30_FN,	GPSR1_30,
 		GP_1_29_FN,	GPSR1_29,
@@ -2441,8 +2442,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_1_2_FN,	GPSR1_2,
 		GP_1_1_FN,	GPSR1_1,
 		GP_1_0_FN,	GPSR1_0, ))
-	},
-	{ PINMUX_CFG_REG("GPSR2", 0xe6060108, 32, 1, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("GPSR2", 0xe6060108, 32, 1, GROUP(
 		GP_2_31_FN,	GPSR2_31,
 		GP_2_30_FN,	GPSR2_30,
 		GP_2_29_FN,	GPSR2_29,
@@ -2475,8 +2476,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_2_2_FN,	GPSR2_2,
 		GP_2_1_FN,	GPSR2_1,
 		GP_2_0_FN,	GPSR2_0, ))
-	},
-	{ PINMUX_CFG_REG("GPSR3", 0xe606010c, 32, 1, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("GPSR3", 0xe606010c, 32, 1, GROUP(
 		0, 0,
 		0, 0,
 		0, 0,
@@ -2509,8 +2510,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_3_2_FN,	GPSR3_2,
 		GP_3_1_FN,	GPSR3_1,
 		GP_3_0_FN,	GPSR3_0, ))
-	},
-	{ PINMUX_CFG_REG("GPSR4", 0xe6060110, 32, 1, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("GPSR4", 0xe6060110, 32, 1, GROUP(
 		GP_4_31_FN,	GPSR4_31,
 		GP_4_30_FN,	GPSR4_30,
 		GP_4_29_FN,	GPSR4_29,
@@ -2543,8 +2544,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_4_2_FN,	GPSR4_2,
 		GP_4_1_FN,	GPSR4_1,
 		GP_4_0_FN,	GPSR4_0, ))
-	},
-	{ PINMUX_CFG_REG("GPSR5", 0xe6060114, 32, 1, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("GPSR5", 0xe6060114, 32, 1, GROUP(
 		0, 0,
 		0, 0,
 		0, 0,
@@ -2577,8 +2578,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_5_2_FN,	GPSR5_2,
 		GP_5_1_FN,	GPSR5_1,
 		GP_5_0_FN,	GPSR5_0, ))
-	},
-	{ PINMUX_CFG_REG("GPSR6", 0xe6060118, 32, 1, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("GPSR6", 0xe6060118, 32, 1, GROUP(
 		0, 0,
 		0, 0,
 		0, 0,
@@ -2611,13 +2612,13 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		GP_6_2_FN,	GPSR6_2,
 		GP_6_1_FN,	GPSR6_1,
 		GP_6_0_FN,	GPSR6_0, ))
-	},
-#undef F_
-#undef FM
+	पूर्ण,
+#अघोषित F_
+#अघोषित FM
 
-#define F_(x, y)	x,
-#define FM(x)		FN_##x,
-	{ PINMUX_CFG_REG("IPSR0", 0xe6060200, 32, 4, GROUP(
+#घोषणा F_(x, y)	x,
+#घोषणा FM(x)		FN_##x,
+	अणु PINMUX_CFG_REG("IPSR0", 0xe6060200, 32, 4, GROUP(
 		IP0_31_28
 		IP0_27_24
 		IP0_23_20
@@ -2626,8 +2627,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP0_11_8
 		IP0_7_4
 		IP0_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR1", 0xe6060204, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR1", 0xe6060204, 32, 4, GROUP(
 		IP1_31_28
 		IP1_27_24
 		IP1_23_20
@@ -2636,8 +2637,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP1_11_8
 		IP1_7_4
 		IP1_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR2", 0xe6060208, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR2", 0xe6060208, 32, 4, GROUP(
 		IP2_31_28
 		IP2_27_24
 		IP2_23_20
@@ -2646,8 +2647,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP2_11_8
 		IP2_7_4
 		IP2_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR3", 0xe606020c, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR3", 0xe606020c, 32, 4, GROUP(
 		IP3_31_28
 		IP3_27_24
 		IP3_23_20
@@ -2656,8 +2657,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP3_11_8
 		IP3_7_4
 		IP3_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR4", 0xe6060210, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR4", 0xe6060210, 32, 4, GROUP(
 		IP4_31_28
 		IP4_27_24
 		IP4_23_20
@@ -2666,8 +2667,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP4_11_8
 		IP4_7_4
 		IP4_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR5", 0xe6060214, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR5", 0xe6060214, 32, 4, GROUP(
 		IP5_31_28
 		IP5_27_24
 		IP5_23_20
@@ -2676,8 +2677,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP5_11_8
 		IP5_7_4
 		IP5_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR6", 0xe6060218, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR6", 0xe6060218, 32, 4, GROUP(
 		IP6_31_28
 		IP6_27_24
 		IP6_23_20
@@ -2686,8 +2687,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP6_11_8
 		IP6_7_4
 		IP6_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR7", 0xe606021c, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR7", 0xe606021c, 32, 4, GROUP(
 		IP7_31_28
 		IP7_27_24
 		IP7_23_20
@@ -2696,8 +2697,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP7_11_8
 		IP7_7_4
 		IP7_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR8", 0xe6060220, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR8", 0xe6060220, 32, 4, GROUP(
 		IP8_31_28
 		IP8_27_24
 		IP8_23_20
@@ -2706,8 +2707,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP8_11_8
 		IP8_7_4
 		IP8_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR9", 0xe6060224, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR9", 0xe6060224, 32, 4, GROUP(
 		IP9_31_28
 		IP9_27_24
 		IP9_23_20
@@ -2716,8 +2717,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP9_11_8
 		IP9_7_4
 		IP9_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR10", 0xe6060228, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR10", 0xe6060228, 32, 4, GROUP(
 		IP10_31_28
 		IP10_27_24
 		IP10_23_20
@@ -2726,8 +2727,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP10_11_8
 		IP10_7_4
 		IP10_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR11", 0xe606022c, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR11", 0xe606022c, 32, 4, GROUP(
 		IP11_31_28
 		IP11_27_24
 		IP11_23_20
@@ -2736,8 +2737,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP11_11_8
 		IP11_7_4
 		IP11_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR12", 0xe6060230, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR12", 0xe6060230, 32, 4, GROUP(
 		IP12_31_28
 		IP12_27_24
 		IP12_23_20
@@ -2746,8 +2747,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		IP12_11_8
 		IP12_7_4
 		IP12_3_0 ))
-	},
-	{ PINMUX_CFG_REG("IPSR13", 0xe6060234, 32, 4, GROUP(
+	पूर्ण,
+	अणु PINMUX_CFG_REG("IPSR13", 0xe6060234, 32, 4, GROUP(
 		/* IP13_31_28 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		/* IP13_27_24 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		/* IP13_23_20 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2756,13 +2757,13 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		/* IP13_11_8  */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		IP13_7_4
 		IP13_3_0 ))
-	},
-#undef F_
-#undef FM
+	पूर्ण,
+#अघोषित F_
+#अघोषित FM
 
-#define F_(x, y)	x,
-#define FM(x)		FN_##x,
-	{ PINMUX_CFG_REG_VAR("MOD_SEL0", 0xe6060500, 32,
+#घोषणा F_(x, y)	x,
+#घोषणा FM(x)		FN_##x,
+	अणु PINMUX_CFG_REG_VAR("MOD_SEL0", 0xe6060500, 32,
 			     GROUP(1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1,
 				   1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1),
 			     GROUP(
@@ -2794,8 +2795,8 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		MOD_SEL0_2
 		MOD_SEL0_1
 		MOD_SEL0_0 ))
-	},
-	{ PINMUX_CFG_REG_VAR("MOD_SEL1", 0xe6060504, 32,
+	पूर्ण,
+	अणु PINMUX_CFG_REG_VAR("MOD_SEL1", 0xe6060504, 32,
 			     GROUP(1, 1, 1, 1, 1, 1, 2, 4, 4, 4, 4, 4, 4),
 			     GROUP(
 		MOD_SEL1_31
@@ -2818,41 +2819,41 @@ static const struct pinmux_cfg_reg pinmux_config_regs[] = {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		/* RESERVED 3, 2, 1, 0  */
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ))
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int r8a77995_pin_to_pocctrl(struct sh_pfc *pfc, unsigned int pin, u32 *pocctrl)
-{
-	int bit = -EINVAL;
+अटल पूर्णांक r8a77995_pin_to_pocctrl(काष्ठा sh_pfc *pfc, अचिन्हित पूर्णांक pin, u32 *pocctrl)
+अणु
+	पूर्णांक bit = -EINVAL;
 
 	*pocctrl = 0xe6060380;
 
-	if (pin >= RCAR_GP_PIN(3, 0) && pin <= RCAR_GP_PIN(3, 9))
+	अगर (pin >= RCAR_GP_PIN(3, 0) && pin <= RCAR_GP_PIN(3, 9))
 		bit = 29 - (pin - RCAR_GP_PIN(3, 0));
 
-	return bit;
-}
+	वापस bit;
+पूर्ण
 
-enum ioctrl_regs {
+क्रमागत ioctrl_regs अणु
 	TDSELCTRL,
-};
+पूर्ण;
 
-static const struct pinmux_ioctrl_reg pinmux_ioctrl_regs[] = {
-	[TDSELCTRL] = { 0xe60603c0, },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा pinmux_ioctrl_reg pinmux_ioctrl_regs[] = अणु
+	[TDSELCTRL] = अणु 0xe60603c0, पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 
-static const struct sh_pfc_soc_operations r8a77995_pinmux_ops = {
+अटल स्थिर काष्ठा sh_pfc_soc_operations r8a77995_pinmux_ops = अणु
 	.pin_to_pocctrl = r8a77995_pin_to_pocctrl,
-};
+पूर्ण;
 
-const struct sh_pfc_soc_info r8a77995_pinmux_info = {
+स्थिर काष्ठा sh_pfc_soc_info r8a77995_pinmux_info = अणु
 	.name = "r8a77995_pfc",
 	.ops = &r8a77995_pinmux_ops,
 	.unlock_reg = 0xe6060000, /* PMMR */
 
-	.function = { PINMUX_FUNCTION_BEGIN, PINMUX_FUNCTION_END },
+	.function = अणु PINMUX_FUNCTION_BEGIN, PINMUX_FUNCTION_END पूर्ण,
 
 	.pins = pinmux_pins,
 	.nr_pins = ARRAY_SIZE(pinmux_pins),
@@ -2866,4 +2867,4 @@ const struct sh_pfc_soc_info r8a77995_pinmux_info = {
 
 	.pinmux_data = pinmux_data,
 	.pinmux_data_size = ARRAY_SIZE(pinmux_data),
-};
+पूर्ण;

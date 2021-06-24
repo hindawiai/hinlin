@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cadence CDNSP DRD Driver.
  *
@@ -8,482 +9,482 @@
  *
  */
 
-#include <linux/usb/composite.h>
-#include <linux/usb/gadget.h>
-#include <linux/list.h>
+#समावेश <linux/usb/composite.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/list.h>
 
-#include "cdnsp-gadget.h"
-#include "cdnsp-trace.h"
+#समावेश "cdnsp-gadget.h"
+#समावेश "cdnsp-trace.h"
 
-static void cdnsp_ep0_stall(struct cdnsp_device *pdev)
-{
-	struct cdnsp_request *preq;
-	struct cdnsp_ep *pep;
+अटल व्योम cdnsp_ep0_stall(काष्ठा cdnsp_device *pdev)
+अणु
+	काष्ठा cdnsp_request *preq;
+	काष्ठा cdnsp_ep *pep;
 
 	pep = &pdev->eps[0];
 	preq = next_request(&pep->pending_list);
 
-	if (pdev->three_stage_setup) {
-		cdnsp_halt_endpoint(pdev, pep, true);
+	अगर (pdev->three_stage_setup) अणु
+		cdnsp_halt_endpoपूर्णांक(pdev, pep, true);
 
-		if (preq)
+		अगर (preq)
 			cdnsp_gadget_giveback(pep, preq, -ECONNRESET);
-	} else {
+	पूर्ण अन्यथा अणु
 		pep->ep_state |= EP0_HALTED_STATUS;
 
-		if (preq)
+		अगर (preq)
 			list_del(&preq->list);
 
 		cdnsp_status_stage(pdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cdnsp_ep0_delegate_req(struct cdnsp_device *pdev,
-				  struct usb_ctrlrequest *ctrl)
-{
-	int ret;
+अटल पूर्णांक cdnsp_ep0_delegate_req(काष्ठा cdnsp_device *pdev,
+				  काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	पूर्णांक ret;
 
 	spin_unlock(&pdev->lock);
 	ret = pdev->gadget_driver->setup(&pdev->gadget, ctrl);
 	spin_lock(&pdev->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cdnsp_ep0_set_config(struct cdnsp_device *pdev,
-				struct usb_ctrlrequest *ctrl)
-{
-	enum usb_device_state state = pdev->gadget.state;
+अटल पूर्णांक cdnsp_ep0_set_config(काष्ठा cdnsp_device *pdev,
+				काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	क्रमागत usb_device_state state = pdev->gadget.state;
 	u32 cfg;
-	int ret;
+	पूर्णांक ret;
 
 	cfg = le16_to_cpu(ctrl->wValue);
 
-	switch (state) {
-	case USB_STATE_ADDRESS:
+	चयन (state) अणु
+	हाल USB_STATE_ADDRESS:
 		trace_cdnsp_ep0_set_config("from Address state");
-		break;
-	case USB_STATE_CONFIGURED:
+		अवरोध;
+	हाल USB_STATE_CONFIGURED:
 		trace_cdnsp_ep0_set_config("from Configured state");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(pdev->dev, "Set Configuration - bad device state\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = cdnsp_ep0_delegate_req(pdev, ctrl);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!cfg)
+	अगर (!cfg)
 		usb_gadget_set_state(&pdev->gadget, USB_STATE_ADDRESS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdnsp_ep0_set_address(struct cdnsp_device *pdev,
-				 struct usb_ctrlrequest *ctrl)
-{
-	enum usb_device_state state = pdev->gadget.state;
-	struct cdnsp_slot_ctx *slot_ctx;
-	unsigned int slot_state;
-	int ret;
+अटल पूर्णांक cdnsp_ep0_set_address(काष्ठा cdnsp_device *pdev,
+				 काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	क्रमागत usb_device_state state = pdev->gadget.state;
+	काष्ठा cdnsp_slot_ctx *slot_ctx;
+	अचिन्हित पूर्णांक slot_state;
+	पूर्णांक ret;
 	u32 addr;
 
 	addr = le16_to_cpu(ctrl->wValue);
 
-	if (addr > 127) {
+	अगर (addr > 127) अणु
 		dev_err(pdev->dev, "Invalid device address %d\n", addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	slot_ctx = cdnsp_get_slot_ctx(&pdev->out_ctx);
 
-	if (state == USB_STATE_CONFIGURED) {
+	अगर (state == USB_STATE_CONFIGURED) अणु
 		dev_err(pdev->dev, "Can't Set Address from Configured State\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pdev->device_address = le16_to_cpu(ctrl->wValue);
 
 	slot_ctx = cdnsp_get_slot_ctx(&pdev->out_ctx);
 	slot_state = GET_SLOT_STATE(le32_to_cpu(slot_ctx->dev_state));
-	if (slot_state == SLOT_STATE_ADDRESSED)
+	अगर (slot_state == SLOT_STATE_ADDRESSED)
 		cdnsp_reset_device(pdev);
 
 	/*set device address*/
 	ret = cdnsp_setup_device(pdev, SETUP_CONTEXT_ADDRESS);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (addr)
+	अगर (addr)
 		usb_gadget_set_state(&pdev->gadget, USB_STATE_ADDRESS);
-	else
+	अन्यथा
 		usb_gadget_set_state(&pdev->gadget, USB_STATE_DEFAULT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cdnsp_status_stage(struct cdnsp_device *pdev)
-{
+पूर्णांक cdnsp_status_stage(काष्ठा cdnsp_device *pdev)
+अणु
 	pdev->ep0_stage = CDNSP_STATUS_STAGE;
 	pdev->ep0_preq.request.length = 0;
 
-	return cdnsp_ep_enqueue(pdev->ep0_preq.pep, &pdev->ep0_preq);
-}
+	वापस cdnsp_ep_enqueue(pdev->ep0_preq.pep, &pdev->ep0_preq);
+पूर्ण
 
-static int cdnsp_w_index_to_ep_index(u16 wIndex)
-{
-	if (!(wIndex & USB_ENDPOINT_NUMBER_MASK))
-		return 0;
+अटल पूर्णांक cdnsp_w_index_to_ep_index(u16 wIndex)
+अणु
+	अगर (!(wIndex & USB_ENDPOINT_NUMBER_MASK))
+		वापस 0;
 
-	return ((wIndex & USB_ENDPOINT_NUMBER_MASK) * 2) +
-		(wIndex & USB_ENDPOINT_DIR_MASK ? 1 : 0) - 1;
-}
+	वापस ((wIndex & USB_ENDPOINT_NUMBER_MASK) * 2) +
+		(wIndex & USB_ENDPOINT_सूची_MASK ? 1 : 0) - 1;
+पूर्ण
 
-static int cdnsp_ep0_handle_status(struct cdnsp_device *pdev,
-				   struct usb_ctrlrequest *ctrl)
-{
-	struct cdnsp_ep *pep;
+अटल पूर्णांक cdnsp_ep0_handle_status(काष्ठा cdnsp_device *pdev,
+				   काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा cdnsp_ep *pep;
 	__le16 *response;
-	int ep_sts = 0;
+	पूर्णांक ep_sts = 0;
 	u16 status = 0;
 	u32 recipient;
 
 	recipient = ctrl->bRequestType & USB_RECIP_MASK;
 
-	switch (recipient) {
-	case USB_RECIP_DEVICE:
-		status = pdev->gadget.is_selfpowered;
+	चयन (recipient) अणु
+	हाल USB_RECIP_DEVICE:
+		status = pdev->gadget.is_selfघातered;
 		status |= pdev->may_wakeup << USB_DEVICE_REMOTE_WAKEUP;
 
-		if (pdev->gadget.speed >= USB_SPEED_SUPER) {
+		अगर (pdev->gadget.speed >= USB_SPEED_SUPER) अणु
 			status |= pdev->u1_allowed << USB_DEV_STAT_U1_ENABLED;
 			status |= pdev->u2_allowed << USB_DEV_STAT_U2_ENABLED;
-		}
-		break;
-	case USB_RECIP_INTERFACE:
+		पूर्ण
+		अवरोध;
+	हाल USB_RECIP_INTERFACE:
 		/*
 		 * Function Remote Wake Capable	D0
 		 * Function Remote Wakeup	D1
 		 */
-		return cdnsp_ep0_delegate_req(pdev, ctrl);
-	case USB_RECIP_ENDPOINT:
+		वापस cdnsp_ep0_delegate_req(pdev, ctrl);
+	हाल USB_RECIP_ENDPOINT:
 		ep_sts = cdnsp_w_index_to_ep_index(le16_to_cpu(ctrl->wIndex));
 		pep = &pdev->eps[ep_sts];
 		ep_sts = GET_EP_CTX_STATE(pep->out_ctx);
 
-		/* check if endpoint is stalled */
-		if (ep_sts == EP_STATE_HALTED)
+		/* check अगर endpoपूर्णांक is stalled */
+		अगर (ep_sts == EP_STATE_HALTED)
 			status =  BIT(USB_ENDPOINT_HALT);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	response = (__le16 *)pdev->setup_buf;
 	*response = cpu_to_le16(status);
 
-	pdev->ep0_preq.request.length = sizeof(*response);
+	pdev->ep0_preq.request.length = माप(*response);
 	pdev->ep0_preq.request.buf = pdev->setup_buf;
 
-	return cdnsp_ep_enqueue(pdev->ep0_preq.pep, &pdev->ep0_preq);
-}
+	वापस cdnsp_ep_enqueue(pdev->ep0_preq.pep, &pdev->ep0_preq);
+पूर्ण
 
-static void cdnsp_enter_test_mode(struct cdnsp_device *pdev)
-{
+अटल व्योम cdnsp_enter_test_mode(काष्ठा cdnsp_device *pdev)
+अणु
 	u32 temp;
 
-	temp = readl(&pdev->active_port->regs->portpmsc) & ~GENMASK(31, 28);
+	temp = पढ़ोl(&pdev->active_port->regs->portpmsc) & ~GENMASK(31, 28);
 	temp |= PORT_TEST_MODE(pdev->test_mode);
-	writel(temp, &pdev->active_port->regs->portpmsc);
-}
+	ग_लिखोl(temp, &pdev->active_port->regs->portpmsc);
+पूर्ण
 
-static int cdnsp_ep0_handle_feature_device(struct cdnsp_device *pdev,
-					   struct usb_ctrlrequest *ctrl,
-					   int set)
-{
-	enum usb_device_state state;
-	enum usb_device_speed speed;
-	u16 tmode;
+अटल पूर्णांक cdnsp_ep0_handle_feature_device(काष्ठा cdnsp_device *pdev,
+					   काष्ठा usb_ctrlrequest *ctrl,
+					   पूर्णांक set)
+अणु
+	क्रमागत usb_device_state state;
+	क्रमागत usb_device_speed speed;
+	u16 पंचांगode;
 
 	state = pdev->gadget.state;
 	speed = pdev->gadget.speed;
 
-	switch (le16_to_cpu(ctrl->wValue)) {
-	case USB_DEVICE_REMOTE_WAKEUP:
+	चयन (le16_to_cpu(ctrl->wValue)) अणु
+	हाल USB_DEVICE_REMOTE_WAKEUP:
 		pdev->may_wakeup = !!set;
 		trace_cdnsp_may_wakeup(set);
-		break;
-	case USB_DEVICE_U1_ENABLE:
-		if (state != USB_STATE_CONFIGURED || speed < USB_SPEED_SUPER)
-			return -EINVAL;
+		अवरोध;
+	हाल USB_DEVICE_U1_ENABLE:
+		अगर (state != USB_STATE_CONFIGURED || speed < USB_SPEED_SUPER)
+			वापस -EINVAL;
 
 		pdev->u1_allowed = !!set;
 		trace_cdnsp_u1(set);
-		break;
-	case USB_DEVICE_U2_ENABLE:
-		if (state != USB_STATE_CONFIGURED || speed < USB_SPEED_SUPER)
-			return -EINVAL;
+		अवरोध;
+	हाल USB_DEVICE_U2_ENABLE:
+		अगर (state != USB_STATE_CONFIGURED || speed < USB_SPEED_SUPER)
+			वापस -EINVAL;
 
 		pdev->u2_allowed = !!set;
 		trace_cdnsp_u2(set);
-		break;
-	case USB_DEVICE_LTM_ENABLE:
-		return -EINVAL;
-	case USB_DEVICE_TEST_MODE:
-		if (state != USB_STATE_CONFIGURED || speed > USB_SPEED_HIGH)
-			return -EINVAL;
+		अवरोध;
+	हाल USB_DEVICE_LTM_ENABLE:
+		वापस -EINVAL;
+	हाल USB_DEVICE_TEST_MODE:
+		अगर (state != USB_STATE_CONFIGURED || speed > USB_SPEED_HIGH)
+			वापस -EINVAL;
 
-		tmode = le16_to_cpu(ctrl->wIndex);
+		पंचांगode = le16_to_cpu(ctrl->wIndex);
 
-		if (!set || (tmode & 0xff) != 0)
-			return -EINVAL;
+		अगर (!set || (पंचांगode & 0xff) != 0)
+			वापस -EINVAL;
 
-		tmode = tmode >> 8;
+		पंचांगode = पंचांगode >> 8;
 
-		if (tmode > USB_TEST_FORCE_ENABLE || tmode < USB_TEST_J)
-			return -EINVAL;
+		अगर (पंचांगode > USB_TEST_FORCE_ENABLE || पंचांगode < USB_TEST_J)
+			वापस -EINVAL;
 
-		pdev->test_mode = tmode;
+		pdev->test_mode = पंचांगode;
 
 		/*
-		 * Test mode must be set before Status Stage but controller
+		 * Test mode must be set beक्रमe Status Stage but controller
 		 * will start testing sequence after Status Stage.
 		 */
 		cdnsp_enter_test_mode(pdev);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdnsp_ep0_handle_feature_intf(struct cdnsp_device *pdev,
-					 struct usb_ctrlrequest *ctrl,
-					 int set)
-{
+अटल पूर्णांक cdnsp_ep0_handle_feature_पूर्णांकf(काष्ठा cdnsp_device *pdev,
+					 काष्ठा usb_ctrlrequest *ctrl,
+					 पूर्णांक set)
+अणु
 	u16 wValue, wIndex;
-	int ret;
+	पूर्णांक ret;
 
 	wValue = le16_to_cpu(ctrl->wValue);
 	wIndex = le16_to_cpu(ctrl->wIndex);
 
-	switch (wValue) {
-	case USB_INTRF_FUNC_SUSPEND:
+	चयन (wValue) अणु
+	हाल USB_INTRF_FUNC_SUSPEND:
 		ret = cdnsp_ep0_delegate_req(pdev, ctrl);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/*
 		 * Remote wakeup is enabled when any function within a device
-		 * is enabled for function remote wakeup.
+		 * is enabled क्रम function remote wakeup.
 		 */
-		if (wIndex & USB_INTRF_FUNC_SUSPEND_RW)
+		अगर (wIndex & USB_INTRF_FUNC_SUSPEND_RW)
 			pdev->may_wakeup++;
-		else
-			if (pdev->may_wakeup > 0)
+		अन्यथा
+			अगर (pdev->may_wakeup > 0)
 				pdev->may_wakeup--;
 
-		return 0;
-	default:
-		return -EINVAL;
-	}
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdnsp_ep0_handle_feature_endpoint(struct cdnsp_device *pdev,
-					     struct usb_ctrlrequest *ctrl,
-					     int set)
-{
-	struct cdnsp_ep *pep;
+अटल पूर्णांक cdnsp_ep0_handle_feature_endpoपूर्णांक(काष्ठा cdnsp_device *pdev,
+					     काष्ठा usb_ctrlrequest *ctrl,
+					     पूर्णांक set)
+अणु
+	काष्ठा cdnsp_ep *pep;
 	u16 wValue;
 
 	wValue = le16_to_cpu(ctrl->wValue);
 	pep = &pdev->eps[cdnsp_w_index_to_ep_index(le16_to_cpu(ctrl->wIndex))];
 
-	switch (wValue) {
-	case USB_ENDPOINT_HALT:
-		if (!set && (pep->ep_state & EP_WEDGE)) {
+	चयन (wValue) अणु
+	हाल USB_ENDPOINT_HALT:
+		अगर (!set && (pep->ep_state & EP_WEDGE)) अणु
 			/* Resets Sequence Number */
-			cdnsp_halt_endpoint(pdev, pep, 0);
-			cdnsp_halt_endpoint(pdev, pep, 1);
-			break;
-		}
+			cdnsp_halt_endpoपूर्णांक(pdev, pep, 0);
+			cdnsp_halt_endpoपूर्णांक(pdev, pep, 1);
+			अवरोध;
+		पूर्ण
 
-		return cdnsp_halt_endpoint(pdev, pep, set);
-	default:
+		वापस cdnsp_halt_endpoपूर्णांक(pdev, pep, set);
+	शेष:
 		dev_warn(pdev->dev, "WARN Incorrect wValue %04x\n", wValue);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdnsp_ep0_handle_feature(struct cdnsp_device *pdev,
-				    struct usb_ctrlrequest *ctrl,
-				    int set)
-{
-	switch (ctrl->bRequestType & USB_RECIP_MASK) {
-	case USB_RECIP_DEVICE:
-		return cdnsp_ep0_handle_feature_device(pdev, ctrl, set);
-	case USB_RECIP_INTERFACE:
-		return cdnsp_ep0_handle_feature_intf(pdev, ctrl, set);
-	case USB_RECIP_ENDPOINT:
-		return cdnsp_ep0_handle_feature_endpoint(pdev, ctrl, set);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक cdnsp_ep0_handle_feature(काष्ठा cdnsp_device *pdev,
+				    काष्ठा usb_ctrlrequest *ctrl,
+				    पूर्णांक set)
+अणु
+	चयन (ctrl->bRequestType & USB_RECIP_MASK) अणु
+	हाल USB_RECIP_DEVICE:
+		वापस cdnsp_ep0_handle_feature_device(pdev, ctrl, set);
+	हाल USB_RECIP_INTERFACE:
+		वापस cdnsp_ep0_handle_feature_पूर्णांकf(pdev, ctrl, set);
+	हाल USB_RECIP_ENDPOINT:
+		वापस cdnsp_ep0_handle_feature_endpoपूर्णांक(pdev, ctrl, set);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int cdnsp_ep0_set_sel(struct cdnsp_device *pdev,
-			     struct usb_ctrlrequest *ctrl)
-{
-	enum usb_device_state state = pdev->gadget.state;
+अटल पूर्णांक cdnsp_ep0_set_sel(काष्ठा cdnsp_device *pdev,
+			     काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	क्रमागत usb_device_state state = pdev->gadget.state;
 	u16 wLength;
 
-	if (state == USB_STATE_DEFAULT)
-		return -EINVAL;
+	अगर (state == USB_STATE_DEFAULT)
+		वापस -EINVAL;
 
 	wLength = le16_to_cpu(ctrl->wLength);
 
-	if (wLength != 6) {
+	अगर (wLength != 6) अणु
 		dev_err(pdev->dev, "Set SEL should be 6 bytes, got %d\n",
 			wLength);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * To handle Set SEL we need to receive 6 bytes from Host. So let's
-	 * queue a usb_request for 6 bytes.
+	 * queue a usb_request क्रम 6 bytes.
 	 */
 	pdev->ep0_preq.request.length = 6;
 	pdev->ep0_preq.request.buf = pdev->setup_buf;
 
-	return cdnsp_ep_enqueue(pdev->ep0_preq.pep, &pdev->ep0_preq);
-}
+	वापस cdnsp_ep_enqueue(pdev->ep0_preq.pep, &pdev->ep0_preq);
+पूर्ण
 
-static int cdnsp_ep0_set_isoch_delay(struct cdnsp_device *pdev,
-				     struct usb_ctrlrequest *ctrl)
-{
-	if (le16_to_cpu(ctrl->wIndex) || le16_to_cpu(ctrl->wLength))
-		return -EINVAL;
+अटल पूर्णांक cdnsp_ep0_set_isoch_delay(काष्ठा cdnsp_device *pdev,
+				     काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	अगर (le16_to_cpu(ctrl->wIndex) || le16_to_cpu(ctrl->wLength))
+		वापस -EINVAL;
 
 	pdev->gadget.isoch_delay = le16_to_cpu(ctrl->wValue);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdnsp_ep0_std_request(struct cdnsp_device *pdev,
-				 struct usb_ctrlrequest *ctrl)
-{
-	int ret;
+अटल पूर्णांक cdnsp_ep0_std_request(काष्ठा cdnsp_device *pdev,
+				 काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	पूर्णांक ret;
 
-	switch (ctrl->bRequest) {
-	case USB_REQ_GET_STATUS:
+	चयन (ctrl->bRequest) अणु
+	हाल USB_REQ_GET_STATUS:
 		ret = cdnsp_ep0_handle_status(pdev, ctrl);
-		break;
-	case USB_REQ_CLEAR_FEATURE:
+		अवरोध;
+	हाल USB_REQ_CLEAR_FEATURE:
 		ret = cdnsp_ep0_handle_feature(pdev, ctrl, 0);
-		break;
-	case USB_REQ_SET_FEATURE:
+		अवरोध;
+	हाल USB_REQ_SET_FEATURE:
 		ret = cdnsp_ep0_handle_feature(pdev, ctrl, 1);
-		break;
-	case USB_REQ_SET_ADDRESS:
+		अवरोध;
+	हाल USB_REQ_SET_ADDRESS:
 		ret = cdnsp_ep0_set_address(pdev, ctrl);
-		break;
-	case USB_REQ_SET_CONFIGURATION:
+		अवरोध;
+	हाल USB_REQ_SET_CONFIGURATION:
 		ret = cdnsp_ep0_set_config(pdev, ctrl);
-		break;
-	case USB_REQ_SET_SEL:
+		अवरोध;
+	हाल USB_REQ_SET_SEL:
 		ret = cdnsp_ep0_set_sel(pdev, ctrl);
-		break;
-	case USB_REQ_SET_ISOCH_DELAY:
+		अवरोध;
+	हाल USB_REQ_SET_ISOCH_DELAY:
 		ret = cdnsp_ep0_set_isoch_delay(pdev, ctrl);
-		break;
-	case USB_REQ_SET_INTERFACE:
+		अवरोध;
+	हाल USB_REQ_SET_INTERFACE:
 		/*
-		 * Add request into pending list to block sending status stage
+		 * Add request पूर्णांकo pending list to block sending status stage
 		 * by libcomposite.
 		 */
 		list_add_tail(&pdev->ep0_preq.list,
 			      &pdev->ep0_preq.pep->pending_list);
 
 		ret = cdnsp_ep0_delegate_req(pdev, ctrl);
-		if (ret == -EBUSY)
+		अगर (ret == -EBUSY)
 			ret = 0;
 
 		list_del(&pdev->ep0_preq.list);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = cdnsp_ep0_delegate_req(pdev, ctrl);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void cdnsp_setup_analyze(struct cdnsp_device *pdev)
-{
-	struct usb_ctrlrequest *ctrl = &pdev->setup;
-	int ret = 0;
+व्योम cdnsp_setup_analyze(काष्ठा cdnsp_device *pdev)
+अणु
+	काष्ठा usb_ctrlrequest *ctrl = &pdev->setup;
+	पूर्णांक ret = 0;
 	u16 len;
 
 	trace_cdnsp_ctrl_req(ctrl);
 
-	if (!pdev->gadget_driver)
-		goto out;
+	अगर (!pdev->gadget_driver)
+		जाओ out;
 
-	if (pdev->gadget.state == USB_STATE_NOTATTACHED) {
+	अगर (pdev->gadget.state == USB_STATE_NOTATTACHED) अणु
 		dev_err(pdev->dev, "ERR: Setup detected in unattached state\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Restore the ep0 to Stopped/Running state. */
-	if (pdev->eps[0].ep_state & EP_HALTED) {
+	अगर (pdev->eps[0].ep_state & EP_HALTED) अणु
 		trace_cdnsp_ep0_halted("Restore to normal state");
-		cdnsp_halt_endpoint(pdev, &pdev->eps[0], 0);
-	}
+		cdnsp_halt_endpoपूर्णांक(pdev, &pdev->eps[0], 0);
+	पूर्ण
 
 	/*
 	 * Finishing previous SETUP transfer by removing request from
-	 * list and informing upper layer
+	 * list and inक्रमming upper layer
 	 */
-	if (!list_empty(&pdev->eps[0].pending_list)) {
-		struct cdnsp_request	*req;
+	अगर (!list_empty(&pdev->eps[0].pending_list)) अणु
+		काष्ठा cdnsp_request	*req;
 
 		trace_cdnsp_ep0_request("Remove previous");
 		req = next_request(&pdev->eps[0].pending_list);
 		cdnsp_ep_dequeue(&pdev->eps[0], req);
-	}
+	पूर्ण
 
 	len = le16_to_cpu(ctrl->wLength);
-	if (!len) {
+	अगर (!len) अणु
 		pdev->three_stage_setup = false;
 		pdev->ep0_expect_in = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		pdev->three_stage_setup = true;
-		pdev->ep0_expect_in = !!(ctrl->bRequestType & USB_DIR_IN);
-	}
+		pdev->ep0_expect_in = !!(ctrl->bRequestType & USB_सूची_IN);
+	पूर्ण
 
-	if ((ctrl->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD)
+	अगर ((ctrl->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD)
 		ret = cdnsp_ep0_std_request(pdev, ctrl);
-	else
+	अन्यथा
 		ret = cdnsp_ep0_delegate_req(pdev, ctrl);
 
-	if (!len)
+	अगर (!len)
 		pdev->ep0_stage = CDNSP_STATUS_STAGE;
 
-	if (ret == USB_GADGET_DELAYED_STATUS) {
+	अगर (ret == USB_GADGET_DELAYED_STATUS) अणु
 		trace_cdnsp_ep0_status_stage("delayed");
-		return;
-	}
+		वापस;
+	पूर्ण
 out:
-	if (ret < 0)
+	अगर (ret < 0)
 		cdnsp_ep0_stall(pdev);
-	else if (pdev->ep0_stage == CDNSP_STATUS_STAGE)
+	अन्यथा अगर (pdev->ep0_stage == CDNSP_STATUS_STAGE)
 		cdnsp_status_stage(pdev);
-}
+पूर्ण

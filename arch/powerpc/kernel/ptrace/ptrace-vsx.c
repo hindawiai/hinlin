@@ -1,148 +1,149 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/regset.h>
+#समावेश <linux/regset.h>
 
-#include <asm/switch_to.h>
+#समावेश <यंत्र/चयन_to.h>
 
-#include "ptrace-decl.h"
-
-/*
- * Regardless of transactions, 'fp_state' holds the current running
- * value of all FPR registers and 'ckfp_state' holds the last checkpointed
- * value of all FPR registers for the current transaction.
- *
- * Userspace interface buffer layout:
- *
- * struct data {
- *	u64	fpr[32];
- *	u64	fpscr;
- * };
- */
-int fpr_get(struct task_struct *target, const struct user_regset *regset,
-	    struct membuf to)
-{
-	u64 buf[33];
-	int i;
-
-	flush_fp_to_thread(target);
-
-	/* copy to local buffer then write that out */
-	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.TS_FPR(i);
-	buf[32] = target->thread.fp_state.fpscr;
-	return membuf_write(&to, buf, 33 * sizeof(u64));
-}
+#समावेश "ptrace-decl.h"
 
 /*
  * Regardless of transactions, 'fp_state' holds the current running
- * value of all FPR registers and 'ckfp_state' holds the last checkpointed
- * value of all FPR registers for the current transaction.
+ * value of all FPR रेजिस्टरs and 'ckfp_state' holds the last checkpoपूर्णांकed
+ * value of all FPR रेजिस्टरs क्रम the current transaction.
  *
- * Userspace interface buffer layout:
+ * Userspace पूर्णांकerface buffer layout:
  *
- * struct data {
+ * काष्ठा data अणु
  *	u64	fpr[32];
  *	u64	fpscr;
- * };
+ * पूर्ण;
+ */
+पूर्णांक fpr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	    काष्ठा membuf to)
+अणु
+	u64 buf[33];
+	पूर्णांक i;
+
+	flush_fp_to_thपढ़ो(target);
+
+	/* copy to local buffer then ग_लिखो that out */
+	क्रम (i = 0; i < 32 ; i++)
+		buf[i] = target->thपढ़ो.TS_FPR(i);
+	buf[32] = target->thपढ़ो.fp_state.fpscr;
+	वापस membuf_ग_लिखो(&to, buf, 33 * माप(u64));
+पूर्ण
+
+/*
+ * Regardless of transactions, 'fp_state' holds the current running
+ * value of all FPR रेजिस्टरs and 'ckfp_state' holds the last checkpoपूर्णांकed
+ * value of all FPR रेजिस्टरs क्रम the current transaction.
+ *
+ * Userspace पूर्णांकerface buffer layout:
+ *
+ * काष्ठा data अणु
+ *	u64	fpr[32];
+ *	u64	fpscr;
+ * पूर्ण;
  *
  */
-int fpr_set(struct task_struct *target, const struct user_regset *regset,
-	    unsigned int pos, unsigned int count,
-	    const void *kbuf, const void __user *ubuf)
-{
+पूर्णांक fpr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	    अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+	    स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
 	u64 buf[33];
-	int i;
+	पूर्णांक i;
 
-	flush_fp_to_thread(target);
+	flush_fp_to_thपढ़ो(target);
 
-	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.TS_FPR(i);
-	buf[32] = target->thread.fp_state.fpscr;
+	क्रम (i = 0; i < 32 ; i++)
+		buf[i] = target->thपढ़ो.TS_FPR(i);
+	buf[32] = target->thपढ़ो.fp_state.fpscr;
 
-	/* copy to local buffer then write that out */
+	/* copy to local buffer then ग_लिखो that out */
 	i = user_regset_copyin(&pos, &count, &kbuf, &ubuf, buf, 0, -1);
-	if (i)
-		return i;
+	अगर (i)
+		वापस i;
 
-	for (i = 0; i < 32 ; i++)
-		target->thread.TS_FPR(i) = buf[i];
-	target->thread.fp_state.fpscr = buf[32];
-	return 0;
-}
+	क्रम (i = 0; i < 32 ; i++)
+		target->thपढ़ो.TS_FPR(i) = buf[i];
+	target->thपढ़ो.fp_state.fpscr = buf[32];
+	वापस 0;
+पूर्ण
 
 /*
  * Currently to set and and get all the vsx state, you need to call
  * the fp and VMX calls as well.  This only get/sets the lower 32
- * 128bit VSX registers.
+ * 128bit VSX रेजिस्टरs.
  */
 
-int vsr_active(struct task_struct *target, const struct user_regset *regset)
-{
-	flush_vsx_to_thread(target);
-	return target->thread.used_vsr ? regset->n : 0;
-}
+पूर्णांक vsr_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	flush_vsx_to_thपढ़ो(target);
+	वापस target->thपढ़ो.used_vsr ? regset->n : 0;
+पूर्ण
 
 /*
  * Regardless of transactions, 'fp_state' holds the current running
- * value of all FPR registers and 'ckfp_state' holds the last
- * checkpointed value of all FPR registers for the current
+ * value of all FPR रेजिस्टरs and 'ckfp_state' holds the last
+ * checkpoपूर्णांकed value of all FPR रेजिस्टरs क्रम the current
  * transaction.
  *
- * Userspace interface buffer layout:
+ * Userspace पूर्णांकerface buffer layout:
  *
- * struct data {
+ * काष्ठा data अणु
  *	u64	vsx[32];
- * };
+ * पूर्ण;
  */
-int vsr_get(struct task_struct *target, const struct user_regset *regset,
-	    struct membuf to)
-{
+पूर्णांक vsr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	    काष्ठा membuf to)
+अणु
 	u64 buf[32];
-	int i;
+	पूर्णांक i;
 
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
-	flush_vsx_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
+	flush_vsx_to_thपढ़ो(target);
 
-	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.fp_state.fpr[i][TS_VSRLOWOFFSET];
+	क्रम (i = 0; i < 32 ; i++)
+		buf[i] = target->thपढ़ो.fp_state.fpr[i][TS_VSRLOWOFFSET];
 
-	return membuf_write(&to, buf, 32 * sizeof(double));
-}
+	वापस membuf_ग_लिखो(&to, buf, 32 * माप(द्विगुन));
+पूर्ण
 
 /*
  * Regardless of transactions, 'fp_state' holds the current running
- * value of all FPR registers and 'ckfp_state' holds the last
- * checkpointed value of all FPR registers for the current
+ * value of all FPR रेजिस्टरs and 'ckfp_state' holds the last
+ * checkpoपूर्णांकed value of all FPR रेजिस्टरs क्रम the current
  * transaction.
  *
- * Userspace interface buffer layout:
+ * Userspace पूर्णांकerface buffer layout:
  *
- * struct data {
+ * काष्ठा data अणु
  *	u64	vsx[32];
- * };
+ * पूर्ण;
  */
-int vsr_set(struct task_struct *target, const struct user_regset *regset,
-	    unsigned int pos, unsigned int count,
-	    const void *kbuf, const void __user *ubuf)
-{
+पूर्णांक vsr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	    अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+	    स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
 	u64 buf[32];
-	int ret, i;
+	पूर्णांक ret, i;
 
-	flush_tmregs_to_thread(target);
-	flush_fp_to_thread(target);
-	flush_altivec_to_thread(target);
-	flush_vsx_to_thread(target);
+	flush_पंचांगregs_to_thपढ़ो(target);
+	flush_fp_to_thपढ़ो(target);
+	flush_altivec_to_thपढ़ो(target);
+	flush_vsx_to_thपढ़ो(target);
 
-	for (i = 0; i < 32 ; i++)
-		buf[i] = target->thread.fp_state.fpr[i][TS_VSRLOWOFFSET];
+	क्रम (i = 0; i < 32 ; i++)
+		buf[i] = target->thपढ़ो.fp_state.fpr[i][TS_VSRLOWOFFSET];
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 buf, 0, 32 * sizeof(double));
-	if (!ret)
-		for (i = 0; i < 32 ; i++)
-			target->thread.fp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
+				 buf, 0, 32 * माप(द्विगुन));
+	अगर (!ret)
+		क्रम (i = 0; i < 32 ; i++)
+			target->thपढ़ो.fp_state.fpr[i][TS_VSRLOWOFFSET] = buf[i];
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

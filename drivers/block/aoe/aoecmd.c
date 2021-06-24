@@ -1,395 +1,396 @@
-/* Copyright (c) 2013 Coraid, Inc.  See COPYING for GPL terms. */
+<शैली गुरु>
+/* Copyright (c) 2013 Coraid, Inc.  See COPYING क्रम GPL terms. */
 /*
  * aoecmd.c
- * Filesystem request handling methods
+ * Fileप्रणाली request handling methods
  */
 
-#include <linux/ata.h>
-#include <linux/slab.h>
-#include <linux/hdreg.h>
-#include <linux/blk-mq.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/genhd.h>
-#include <linux/moduleparam.h>
-#include <linux/workqueue.h>
-#include <linux/kthread.h>
-#include <net/net_namespace.h>
-#include <asm/unaligned.h>
-#include <linux/uio.h>
-#include "aoe.h"
+#समावेश <linux/ata.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <net/net_namespace.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/uपन.स>
+#समावेश "aoe.h"
 
-#define MAXIOC (8192)	/* default meant to avoid most soft lockups */
+#घोषणा MAXIOC (8192)	/* शेष meant to aव्योम most soft lockups */
 
-static void ktcomplete(struct frame *, struct sk_buff *);
-static int count_targets(struct aoedev *d, int *untainted);
+अटल व्योम ktcomplete(काष्ठा frame *, काष्ठा sk_buff *);
+अटल पूर्णांक count_tarमाला_लो(काष्ठा aoedev *d, पूर्णांक *untaपूर्णांकed);
 
-static struct buf *nextbuf(struct aoedev *);
+अटल काष्ठा buf *nextbuf(काष्ठा aoedev *);
 
-static int aoe_deadsecs = 60 * 3;
-module_param(aoe_deadsecs, int, 0644);
+अटल पूर्णांक aoe_deadsecs = 60 * 3;
+module_param(aoe_deadsecs, पूर्णांक, 0644);
 MODULE_PARM_DESC(aoe_deadsecs, "After aoe_deadsecs seconds, give up and fail dev.");
 
-static int aoe_maxout = 64;
-module_param(aoe_maxout, int, 0644);
+अटल पूर्णांक aoe_maxout = 64;
+module_param(aoe_maxout, पूर्णांक, 0644);
 MODULE_PARM_DESC(aoe_maxout,
 	"Only aoe_maxout outstanding packets for every MAC on eX.Y.");
 
 /* The number of online cpus during module initialization gives us a
- * convenient heuristic cap on the parallelism used for ktio threads
- * doing I/O completion.  It is not important that the cap equal the
- * actual number of running CPUs at any given time, but because of CPU
+ * convenient heuristic cap on the parallelism used क्रम ktio thपढ़ोs
+ * करोing I/O completion.  It is not important that the cap equal the
+ * actual number of running CPUs at any given समय, but because of CPU
  * hotplug, we take care to use ncpus instead of using
  * num_online_cpus() after module initialization.
  */
-static int ncpus;
+अटल पूर्णांक ncpus;
 
-/* mutex lock used for synchronization while thread spawning */
-static DEFINE_MUTEX(ktio_spawn_lock);
+/* mutex lock used क्रम synchronization जबतक thपढ़ो spawning */
+अटल DEFINE_MUTEX(ktio_spawn_lock);
 
-static wait_queue_head_t *ktiowq;
-static struct ktstate *kts;
+अटल रुको_queue_head_t *ktiowq;
+अटल काष्ठा ktstate *kts;
 
 /* io completion queue */
-struct iocq_ktio {
-	struct list_head head;
+काष्ठा iocq_ktio अणु
+	काष्ठा list_head head;
 	spinlock_t lock;
-};
-static struct iocq_ktio *iocq;
+पूर्ण;
+अटल काष्ठा iocq_ktio *iocq;
 
-static struct page *empty_page;
+अटल काष्ठा page *empty_page;
 
-static struct sk_buff *
-new_skb(ulong len)
-{
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *
+new_skb(uदीर्घ len)
+अणु
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(len + MAX_HEADER, GFP_ATOMIC);
-	if (skb) {
+	अगर (skb) अणु
 		skb_reserve(skb, MAX_HEADER);
 		skb_reset_mac_header(skb);
 		skb_reset_network_header(skb);
-		skb->protocol = __constant_htons(ETH_P_AOE);
-		skb_checksum_none_assert(skb);
-	}
-	return skb;
-}
+		skb->protocol = __स्थिरant_htons(ETH_P_AOE);
+		skb_checksum_none_निश्चित(skb);
+	पूर्ण
+	वापस skb;
+पूर्ण
 
-static struct frame *
-getframe_deferred(struct aoedev *d, u32 tag)
-{
-	struct list_head *head, *pos, *nx;
-	struct frame *f;
+अटल काष्ठा frame *
+getframe_deferred(काष्ठा aoedev *d, u32 tag)
+अणु
+	काष्ठा list_head *head, *pos, *nx;
+	काष्ठा frame *f;
 
 	head = &d->rexmitq;
-	list_for_each_safe(pos, nx, head) {
-		f = list_entry(pos, struct frame, head);
-		if (f->tag == tag) {
+	list_क्रम_each_safe(pos, nx, head) अणु
+		f = list_entry(pos, काष्ठा frame, head);
+		अगर (f->tag == tag) अणु
 			list_del(pos);
-			return f;
-		}
-	}
-	return NULL;
-}
+			वापस f;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct frame *
-getframe(struct aoedev *d, u32 tag)
-{
-	struct frame *f;
-	struct list_head *head, *pos, *nx;
+अटल काष्ठा frame *
+getframe(काष्ठा aoedev *d, u32 tag)
+अणु
+	काष्ठा frame *f;
+	काष्ठा list_head *head, *pos, *nx;
 	u32 n;
 
 	n = tag % NFACTIVE;
 	head = &d->factive[n];
-	list_for_each_safe(pos, nx, head) {
-		f = list_entry(pos, struct frame, head);
-		if (f->tag == tag) {
+	list_क्रम_each_safe(pos, nx, head) अणु
+		f = list_entry(pos, काष्ठा frame, head);
+		अगर (f->tag == tag) अणु
 			list_del(pos);
-			return f;
-		}
-	}
-	return NULL;
-}
+			वापस f;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * Leave the top bit clear so we have tagspace for userland.
- * The bottom 16 bits are the xmit tick for rexmit/rttavg processing.
+ * Leave the top bit clear so we have tagspace क्रम userland.
+ * The bottom 16 bits are the xmit tick क्रम rexmit/rttavg processing.
  * This driver reserves tag -1 to mean "unused frame."
  */
-static int
-newtag(struct aoedev *d)
-{
-	register ulong n;
+अटल पूर्णांक
+newtag(काष्ठा aoedev *d)
+अणु
+	रेजिस्टर uदीर्घ n;
 
-	n = jiffies & 0xffff;
-	return n |= (++d->lasttag & 0x7fff) << 16;
-}
+	n = jअगरfies & 0xffff;
+	वापस n |= (++d->lasttag & 0x7fff) << 16;
+पूर्ण
 
-static u32
-aoehdr_atainit(struct aoedev *d, struct aoetgt *t, struct aoe_hdr *h)
-{
+अटल u32
+aoehdr_atainit(काष्ठा aoedev *d, काष्ठा aoetgt *t, काष्ठा aoe_hdr *h)
+अणु
 	u32 host_tag = newtag(d);
 
-	memcpy(h->src, t->ifp->nd->dev_addr, sizeof h->src);
-	memcpy(h->dst, t->addr, sizeof h->dst);
-	h->type = __constant_cpu_to_be16(ETH_P_AOE);
+	स_नकल(h->src, t->अगरp->nd->dev_addr, माप h->src);
+	स_नकल(h->dst, t->addr, माप h->dst);
+	h->type = __स्थिरant_cpu_to_be16(ETH_P_AOE);
 	h->verfl = AOE_HVER;
 	h->major = cpu_to_be16(d->aoemajor);
 	h->minor = d->aoeminor;
 	h->cmd = AOECMD_ATA;
 	h->tag = cpu_to_be32(host_tag);
 
-	return host_tag;
-}
+	वापस host_tag;
+पूर्ण
 
-static inline void
-put_lba(struct aoe_atahdr *ah, sector_t lba)
-{
+अटल अंतरभूत व्योम
+put_lba(काष्ठा aoe_atahdr *ah, sector_t lba)
+अणु
 	ah->lba0 = lba;
 	ah->lba1 = lba >>= 8;
 	ah->lba2 = lba >>= 8;
 	ah->lba3 = lba >>= 8;
 	ah->lba4 = lba >>= 8;
 	ah->lba5 = lba >>= 8;
-}
+पूर्ण
 
-static struct aoeif *
-ifrotate(struct aoetgt *t)
-{
-	struct aoeif *ifp;
+अटल काष्ठा aoeअगर *
+अगरrotate(काष्ठा aoetgt *t)
+अणु
+	काष्ठा aoeअगर *अगरp;
 
-	ifp = t->ifp;
-	ifp++;
-	if (ifp >= &t->ifs[NAOEIFS] || ifp->nd == NULL)
-		ifp = t->ifs;
-	if (ifp->nd == NULL)
-		return NULL;
-	return t->ifp = ifp;
-}
+	अगरp = t->अगरp;
+	अगरp++;
+	अगर (अगरp >= &t->अगरs[NAOEIFS] || अगरp->nd == शून्य)
+		अगरp = t->अगरs;
+	अगर (अगरp->nd == शून्य)
+		वापस शून्य;
+	वापस t->अगरp = अगरp;
+पूर्ण
 
-static void
-skb_pool_put(struct aoedev *d, struct sk_buff *skb)
-{
+अटल व्योम
+skb_pool_put(काष्ठा aoedev *d, काष्ठा sk_buff *skb)
+अणु
 	__skb_queue_tail(&d->skbpool, skb);
-}
+पूर्ण
 
-static struct sk_buff *
-skb_pool_get(struct aoedev *d)
-{
-	struct sk_buff *skb = skb_peek(&d->skbpool);
+अटल काष्ठा sk_buff *
+skb_pool_get(काष्ठा aoedev *d)
+अणु
+	काष्ठा sk_buff *skb = skb_peek(&d->skbpool);
 
-	if (skb && atomic_read(&skb_shinfo(skb)->dataref) == 1) {
+	अगर (skb && atomic_पढ़ो(&skb_shinfo(skb)->dataref) == 1) अणु
 		__skb_unlink(skb, &d->skbpool);
-		return skb;
-	}
-	if (skb_queue_len(&d->skbpool) < NSKBPOOLMAX &&
+		वापस skb;
+	पूर्ण
+	अगर (skb_queue_len(&d->skbpool) < NSKBPOOLMAX &&
 	    (skb = new_skb(ETH_ZLEN)))
-		return skb;
+		वापस skb;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void
-aoe_freetframe(struct frame *f)
-{
-	struct aoetgt *t;
+व्योम
+aoe_मुक्तtframe(काष्ठा frame *f)
+अणु
+	काष्ठा aoetgt *t;
 
 	t = f->t;
-	f->buf = NULL;
-	memset(&f->iter, 0, sizeof(f->iter));
-	f->r_skb = NULL;
+	f->buf = शून्य;
+	स_रखो(&f->iter, 0, माप(f->iter));
+	f->r_skb = शून्य;
 	f->flags = 0;
-	list_add(&f->head, &t->ffree);
-}
+	list_add(&f->head, &t->fमुक्त);
+पूर्ण
 
-static struct frame *
-newtframe(struct aoedev *d, struct aoetgt *t)
-{
-	struct frame *f;
-	struct sk_buff *skb;
-	struct list_head *pos;
+अटल काष्ठा frame *
+newtframe(काष्ठा aoedev *d, काष्ठा aoetgt *t)
+अणु
+	काष्ठा frame *f;
+	काष्ठा sk_buff *skb;
+	काष्ठा list_head *pos;
 
-	if (list_empty(&t->ffree)) {
-		if (t->falloc >= NSKBPOOLMAX*2)
-			return NULL;
-		f = kcalloc(1, sizeof(*f), GFP_ATOMIC);
-		if (f == NULL)
-			return NULL;
+	अगर (list_empty(&t->fमुक्त)) अणु
+		अगर (t->falloc >= NSKBPOOLMAX*2)
+			वापस शून्य;
+		f = kसुस्मृति(1, माप(*f), GFP_ATOMIC);
+		अगर (f == शून्य)
+			वापस शून्य;
 		t->falloc++;
 		f->t = t;
-	} else {
-		pos = t->ffree.next;
+	पूर्ण अन्यथा अणु
+		pos = t->fमुक्त.next;
 		list_del(pos);
-		f = list_entry(pos, struct frame, head);
-	}
+		f = list_entry(pos, काष्ठा frame, head);
+	पूर्ण
 
 	skb = f->skb;
-	if (skb == NULL) {
+	अगर (skb == शून्य) अणु
 		f->skb = skb = new_skb(ETH_ZLEN);
-		if (!skb) {
-bail:			aoe_freetframe(f);
-			return NULL;
-		}
-	}
+		अगर (!skb) अणु
+bail:			aoe_मुक्तtframe(f);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (atomic_read(&skb_shinfo(skb)->dataref) != 1) {
+	अगर (atomic_पढ़ो(&skb_shinfo(skb)->dataref) != 1) अणु
 		skb = skb_pool_get(d);
-		if (skb == NULL)
-			goto bail;
+		अगर (skb == शून्य)
+			जाओ bail;
 		skb_pool_put(d, f->skb);
 		f->skb = skb;
-	}
+	पूर्ण
 
 	skb->truesize -= skb->data_len;
 	skb_shinfo(skb)->nr_frags = skb->data_len = 0;
 	skb_trim(skb, 0);
-	return f;
-}
+	वापस f;
+पूर्ण
 
-static struct frame *
-newframe(struct aoedev *d)
-{
-	struct frame *f;
-	struct aoetgt *t, **tt;
-	int totout = 0;
-	int use_tainted;
-	int has_untainted;
+अटल काष्ठा frame *
+newframe(काष्ठा aoedev *d)
+अणु
+	काष्ठा frame *f;
+	काष्ठा aoetgt *t, **tt;
+	पूर्णांक totout = 0;
+	पूर्णांक use_taपूर्णांकed;
+	पूर्णांक has_untaपूर्णांकed;
 
-	if (!d->targets || !d->targets[0]) {
-		printk(KERN_ERR "aoe: NULL TARGETS!\n");
-		return NULL;
-	}
+	अगर (!d->tarमाला_लो || !d->tarमाला_लो[0]) अणु
+		prपूर्णांकk(KERN_ERR "aoe: NULL TARGETS!\n");
+		वापस शून्य;
+	पूर्ण
 	tt = d->tgt;	/* last used target */
-	for (use_tainted = 0, has_untainted = 0;;) {
+	क्रम (use_taपूर्णांकed = 0, has_untaपूर्णांकed = 0;;) अणु
 		tt++;
-		if (tt >= &d->targets[d->ntargets] || !*tt)
-			tt = d->targets;
+		अगर (tt >= &d->tarमाला_लो[d->ntarमाला_लो] || !*tt)
+			tt = d->tarमाला_लो;
 		t = *tt;
-		if (!t->taint) {
-			has_untainted = 1;
+		अगर (!t->taपूर्णांक) अणु
+			has_untaपूर्णांकed = 1;
 			totout += t->nout;
-		}
-		if (t->nout < t->maxout
-		&& (use_tainted || !t->taint)
-		&& t->ifp->nd) {
+		पूर्ण
+		अगर (t->nout < t->maxout
+		&& (use_taपूर्णांकed || !t->taपूर्णांक)
+		&& t->अगरp->nd) अणु
 			f = newtframe(d, t);
-			if (f) {
-				ifrotate(t);
+			अगर (f) अणु
+				अगरrotate(t);
 				d->tgt = tt;
-				return f;
-			}
-		}
-		if (tt == d->tgt) {	/* we've looped and found nada */
-			if (!use_tainted && !has_untainted)
-				use_tainted = 1;
-			else
-				break;
-		}
-	}
-	if (totout == 0) {
+				वापस f;
+			पूर्ण
+		पूर्ण
+		अगर (tt == d->tgt) अणु	/* we've looped and found nada */
+			अगर (!use_taपूर्णांकed && !has_untaपूर्णांकed)
+				use_taपूर्णांकed = 1;
+			अन्यथा
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (totout == 0) अणु
 		d->kicked++;
 		d->flags |= DEVFL_KICKME;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void
-skb_fillup(struct sk_buff *skb, struct bio *bio, struct bvec_iter iter)
-{
-	int frag = 0;
-	struct bio_vec bv;
+अटल व्योम
+skb_fillup(काष्ठा sk_buff *skb, काष्ठा bio *bio, काष्ठा bvec_iter iter)
+अणु
+	पूर्णांक frag = 0;
+	काष्ठा bio_vec bv;
 
-	__bio_for_each_segment(bv, bio, iter, iter)
+	__bio_क्रम_each_segment(bv, bio, iter, iter)
 		skb_fill_page_desc(skb, frag++, bv.bv_page,
 				   bv.bv_offset, bv.bv_len);
-}
+पूर्ण
 
-static void
-fhash(struct frame *f)
-{
-	struct aoedev *d = f->t->d;
+अटल व्योम
+fhash(काष्ठा frame *f)
+अणु
+	काष्ठा aoedev *d = f->t->d;
 	u32 n;
 
 	n = f->tag % NFACTIVE;
 	list_add_tail(&f->head, &d->factive[n]);
-}
+पूर्ण
 
-static void
-ata_rw_frameinit(struct frame *f)
-{
-	struct aoetgt *t;
-	struct aoe_hdr *h;
-	struct aoe_atahdr *ah;
-	struct sk_buff *skb;
-	char writebit, extbit;
+अटल व्योम
+ata_rw_frameinit(काष्ठा frame *f)
+अणु
+	काष्ठा aoetgt *t;
+	काष्ठा aoe_hdr *h;
+	काष्ठा aoe_atahdr *ah;
+	काष्ठा sk_buff *skb;
+	अक्षर ग_लिखोbit, extbit;
 
 	skb = f->skb;
-	h = (struct aoe_hdr *) skb_mac_header(skb);
-	ah = (struct aoe_atahdr *) (h + 1);
-	skb_put(skb, sizeof(*h) + sizeof(*ah));
-	memset(h, 0, skb->len);
+	h = (काष्ठा aoe_hdr *) skb_mac_header(skb);
+	ah = (काष्ठा aoe_atahdr *) (h + 1);
+	skb_put(skb, माप(*h) + माप(*ah));
+	स_रखो(h, 0, skb->len);
 
-	writebit = 0x10;
+	ग_लिखोbit = 0x10;
 	extbit = 0x4;
 
 	t = f->t;
 	f->tag = aoehdr_atainit(t->d, t, h);
 	fhash(f);
 	t->nout++;
-	f->waited = 0;
-	f->waited_total = 0;
+	f->रुकोed = 0;
+	f->रुकोed_total = 0;
 
 	/* set up ata header */
 	ah->scnt = f->iter.bi_size >> 9;
 	put_lba(ah, f->iter.bi_sector);
-	if (t->d->flags & DEVFL_EXT) {
+	अगर (t->d->flags & DEVFL_EXT) अणु
 		ah->aflags |= AOEAFL_EXT;
-	} else {
+	पूर्ण अन्यथा अणु
 		extbit = 0;
 		ah->lba3 &= 0x0f;
 		ah->lba3 |= 0xe0;	/* LBA bit + obsolete 0xa0 */
-	}
-	if (f->buf && bio_data_dir(f->buf->bio) == WRITE) {
+	पूर्ण
+	अगर (f->buf && bio_data_dir(f->buf->bio) == WRITE) अणु
 		skb_fillup(skb, f->buf->bio, f->iter);
 		ah->aflags |= AOEAFL_WRITE;
 		skb->len += f->iter.bi_size;
 		skb->data_len = f->iter.bi_size;
 		skb->truesize += f->iter.bi_size;
 		t->wpkts++;
-	} else {
+	पूर्ण अन्यथा अणु
 		t->rpkts++;
-		writebit = 0;
-	}
+		ग_लिखोbit = 0;
+	पूर्ण
 
-	ah->cmdstat = ATA_CMD_PIO_READ | writebit | extbit;
-	skb->dev = t->ifp->nd;
-}
+	ah->cmdstat = ATA_CMD_PIO_READ | ग_लिखोbit | extbit;
+	skb->dev = t->अगरp->nd;
+पूर्ण
 
-static int
-aoecmd_ata_rw(struct aoedev *d)
-{
-	struct frame *f;
-	struct buf *buf;
-	struct sk_buff *skb;
-	struct sk_buff_head queue;
+अटल पूर्णांक
+aoecmd_ata_rw(काष्ठा aoedev *d)
+अणु
+	काष्ठा frame *f;
+	काष्ठा buf *buf;
+	काष्ठा sk_buff *skb;
+	काष्ठा sk_buff_head queue;
 
 	buf = nextbuf(d);
-	if (buf == NULL)
-		return 0;
+	अगर (buf == शून्य)
+		वापस 0;
 	f = newframe(d);
-	if (f == NULL)
-		return 0;
+	अगर (f == शून्य)
+		वापस 0;
 
 	/* initialize the headers & frame */
 	f->buf = buf;
 	f->iter = buf->iter;
-	f->iter.bi_size = min_t(unsigned long,
+	f->iter.bi_size = min_t(अचिन्हित दीर्घ,
 				d->maxbcnt ?: DEFAULTBCNT,
 				f->iter.bi_size);
 	bio_advance_iter(buf->bio, &buf->iter, f->iter.bi_size);
 
-	if (!buf->iter.bi_size)
-		d->ip.buf = NULL;
+	अगर (!buf->iter.bi_size)
+		d->ip.buf = शून्य;
 
 	/* mark all tracking fields and load out */
 	buf->nframesout += 1;
@@ -397,460 +398,460 @@ aoecmd_ata_rw(struct aoedev *d)
 	ata_rw_frameinit(f);
 
 	skb = skb_clone(f->skb, GFP_ATOMIC);
-	if (skb) {
-		f->sent = ktime_get();
+	अगर (skb) अणु
+		f->sent = kसमय_get();
 		__skb_queue_head_init(&queue);
 		__skb_queue_tail(&queue, skb);
 		aoenet_xmit(&queue);
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /* some callers cannot sleep, and they can call this function,
- * transmitting the packets later, when interrupts are on
+ * transmitting the packets later, when पूर्णांकerrupts are on
  */
-static void
-aoecmd_cfg_pkts(ushort aoemajor, unsigned char aoeminor, struct sk_buff_head *queue)
-{
-	struct aoe_hdr *h;
-	struct aoe_cfghdr *ch;
-	struct sk_buff *skb;
-	struct net_device *ifp;
+अटल व्योम
+aoecmd_cfg_pkts(uलघु aoemajor, अचिन्हित अक्षर aoeminor, काष्ठा sk_buff_head *queue)
+अणु
+	काष्ठा aoe_hdr *h;
+	काष्ठा aoe_cfghdr *ch;
+	काष्ठा sk_buff *skb;
+	काष्ठा net_device *अगरp;
 
-	rcu_read_lock();
-	for_each_netdev_rcu(&init_net, ifp) {
-		dev_hold(ifp);
-		if (!is_aoe_netif(ifp))
-			goto cont;
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_rcu(&init_net, अगरp) अणु
+		dev_hold(अगरp);
+		अगर (!is_aoe_netअगर(अगरp))
+			जाओ cont;
 
-		skb = new_skb(sizeof *h + sizeof *ch);
-		if (skb == NULL) {
-			printk(KERN_INFO "aoe: skb alloc failure\n");
-			goto cont;
-		}
-		skb_put(skb, sizeof *h + sizeof *ch);
-		skb->dev = ifp;
+		skb = new_skb(माप *h + माप *ch);
+		अगर (skb == शून्य) अणु
+			prपूर्णांकk(KERN_INFO "aoe: skb alloc failure\n");
+			जाओ cont;
+		पूर्ण
+		skb_put(skb, माप *h + माप *ch);
+		skb->dev = अगरp;
 		__skb_queue_tail(queue, skb);
-		h = (struct aoe_hdr *) skb_mac_header(skb);
-		memset(h, 0, sizeof *h + sizeof *ch);
+		h = (काष्ठा aoe_hdr *) skb_mac_header(skb);
+		स_रखो(h, 0, माप *h + माप *ch);
 
-		memset(h->dst, 0xff, sizeof h->dst);
-		memcpy(h->src, ifp->dev_addr, sizeof h->src);
-		h->type = __constant_cpu_to_be16(ETH_P_AOE);
+		स_रखो(h->dst, 0xff, माप h->dst);
+		स_नकल(h->src, अगरp->dev_addr, माप h->src);
+		h->type = __स्थिरant_cpu_to_be16(ETH_P_AOE);
 		h->verfl = AOE_HVER;
 		h->major = cpu_to_be16(aoemajor);
 		h->minor = aoeminor;
 		h->cmd = AOECMD_CFG;
 
 cont:
-		dev_put(ifp);
-	}
-	rcu_read_unlock();
-}
+		dev_put(अगरp);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void
-resend(struct aoedev *d, struct frame *f)
-{
-	struct sk_buff *skb;
-	struct sk_buff_head queue;
-	struct aoe_hdr *h;
-	struct aoetgt *t;
-	char buf[128];
+अटल व्योम
+resend(काष्ठा aoedev *d, काष्ठा frame *f)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा sk_buff_head queue;
+	काष्ठा aoe_hdr *h;
+	काष्ठा aoetgt *t;
+	अक्षर buf[128];
 	u32 n;
 
 	t = f->t;
 	n = newtag(d);
 	skb = f->skb;
-	if (ifrotate(t) == NULL) {
+	अगर (अगरrotate(t) == शून्य) अणु
 		/* probably can't happen, but set it up to fail anyway */
 		pr_info("aoe: resend: no interfaces to rotate to.\n");
-		ktcomplete(f, NULL);
-		return;
-	}
-	h = (struct aoe_hdr *) skb_mac_header(skb);
+		ktcomplete(f, शून्य);
+		वापस;
+	पूर्ण
+	h = (काष्ठा aoe_hdr *) skb_mac_header(skb);
 
-	if (!(f->flags & FFL_PROBE)) {
-		snprintf(buf, sizeof(buf),
+	अगर (!(f->flags & FFL_PROBE)) अणु
+		snम_लिखो(buf, माप(buf),
 			"%15s e%ld.%d oldtag=%08x@%08lx newtag=%08x s=%pm d=%pm nout=%d\n",
 			"retransmit", d->aoemajor, d->aoeminor,
-			f->tag, jiffies, n,
+			f->tag, jअगरfies, n,
 			h->src, h->dst, t->nout);
 		aoechr_error(buf);
-	}
+	पूर्ण
 
 	f->tag = n;
 	fhash(f);
 	h->tag = cpu_to_be32(n);
-	memcpy(h->dst, t->addr, sizeof h->dst);
-	memcpy(h->src, t->ifp->nd->dev_addr, sizeof h->src);
+	स_नकल(h->dst, t->addr, माप h->dst);
+	स_नकल(h->src, t->अगरp->nd->dev_addr, माप h->src);
 
-	skb->dev = t->ifp->nd;
+	skb->dev = t->अगरp->nd;
 	skb = skb_clone(skb, GFP_ATOMIC);
-	if (skb == NULL)
-		return;
-	f->sent = ktime_get();
+	अगर (skb == शून्य)
+		वापस;
+	f->sent = kसमय_get();
 	__skb_queue_head_init(&queue);
 	__skb_queue_tail(&queue, skb);
 	aoenet_xmit(&queue);
-}
+पूर्ण
 
-static int
-tsince_hr(struct frame *f)
-{
-	u64 delta = ktime_to_ns(ktime_sub(ktime_get(), f->sent));
+अटल पूर्णांक
+tsince_hr(काष्ठा frame *f)
+अणु
+	u64 delta = kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(), f->sent));
 
-	/* delta is normally under 4.2 seconds, avoid 64-bit division */
-	if (likely(delta <= UINT_MAX))
-		return (u32)delta / NSEC_PER_USEC;
+	/* delta is normally under 4.2 seconds, aव्योम 64-bit भागision */
+	अगर (likely(delta <= अच_पूर्णांक_उच्च))
+		वापस (u32)delta / NSEC_PER_USEC;
 
-	/* avoid overflow after 71 minutes */
-	if (delta > ((u64)INT_MAX * NSEC_PER_USEC))
-		return INT_MAX;
+	/* aव्योम overflow after 71 minutes */
+	अगर (delta > ((u64)पूर्णांक_उच्च * NSEC_PER_USEC))
+		वापस पूर्णांक_उच्च;
 
-	return div_u64(delta, NSEC_PER_USEC);
-}
+	वापस भाग_u64(delta, NSEC_PER_USEC);
+पूर्ण
 
-static int
+अटल पूर्णांक
 tsince(u32 tag)
-{
-	int n;
+अणु
+	पूर्णांक n;
 
-	n = jiffies & 0xffff;
+	n = jअगरfies & 0xffff;
 	n -= tag & 0xffff;
-	if (n < 0)
+	अगर (n < 0)
 		n += 1<<16;
-	return jiffies_to_usecs(n + 1);
-}
+	वापस jअगरfies_to_usecs(n + 1);
+पूर्ण
 
-static struct aoeif *
-getif(struct aoetgt *t, struct net_device *nd)
-{
-	struct aoeif *p, *e;
+अटल काष्ठा aoeअगर *
+getअगर(काष्ठा aoetgt *t, काष्ठा net_device *nd)
+अणु
+	काष्ठा aoeअगर *p, *e;
 
-	p = t->ifs;
+	p = t->अगरs;
 	e = p + NAOEIFS;
-	for (; p < e; p++)
-		if (p->nd == nd)
-			return p;
-	return NULL;
-}
+	क्रम (; p < e; p++)
+		अगर (p->nd == nd)
+			वापस p;
+	वापस शून्य;
+पूर्ण
 
-static void
-ejectif(struct aoetgt *t, struct aoeif *ifp)
-{
-	struct aoeif *e;
-	struct net_device *nd;
-	ulong n;
+अटल व्योम
+ejectअगर(काष्ठा aoetgt *t, काष्ठा aoeअगर *अगरp)
+अणु
+	काष्ठा aoeअगर *e;
+	काष्ठा net_device *nd;
+	uदीर्घ n;
 
-	nd = ifp->nd;
-	e = t->ifs + NAOEIFS - 1;
-	n = (e - ifp) * sizeof *ifp;
-	memmove(ifp, ifp+1, n);
-	e->nd = NULL;
+	nd = अगरp->nd;
+	e = t->अगरs + NAOEIFS - 1;
+	n = (e - अगरp) * माप *अगरp;
+	स_हटाओ(अगरp, अगरp+1, n);
+	e->nd = शून्य;
 	dev_put(nd);
-}
+पूर्ण
 
-static struct frame *
-reassign_frame(struct frame *f)
-{
-	struct frame *nf;
-	struct sk_buff *skb;
+अटल काष्ठा frame *
+reassign_frame(काष्ठा frame *f)
+अणु
+	काष्ठा frame *nf;
+	काष्ठा sk_buff *skb;
 
 	nf = newframe(f->t->d);
-	if (!nf)
-		return NULL;
-	if (nf->t == f->t) {
-		aoe_freetframe(nf);
-		return NULL;
-	}
+	अगर (!nf)
+		वापस शून्य;
+	अगर (nf->t == f->t) अणु
+		aoe_मुक्तtframe(nf);
+		वापस शून्य;
+	पूर्ण
 
 	skb = nf->skb;
 	nf->skb = f->skb;
 	nf->buf = f->buf;
 	nf->iter = f->iter;
-	nf->waited = 0;
-	nf->waited_total = f->waited_total;
+	nf->रुकोed = 0;
+	nf->रुकोed_total = f->रुकोed_total;
 	nf->sent = f->sent;
 	f->skb = skb;
 
-	return nf;
-}
+	वापस nf;
+पूर्ण
 
-static void
-probe(struct aoetgt *t)
-{
-	struct aoedev *d;
-	struct frame *f;
-	struct sk_buff *skb;
-	struct sk_buff_head queue;
-	size_t n, m;
-	int frag;
+अटल व्योम
+probe(काष्ठा aoetgt *t)
+अणु
+	काष्ठा aoedev *d;
+	काष्ठा frame *f;
+	काष्ठा sk_buff *skb;
+	काष्ठा sk_buff_head queue;
+	माप_प्रकार n, m;
+	पूर्णांक frag;
 
 	d = t->d;
 	f = newtframe(d, t);
-	if (!f) {
+	अगर (!f) अणु
 		pr_err("%s %pm for e%ld.%d: %s\n",
 			"aoe: cannot probe remote address",
 			t->addr,
-			(long) d->aoemajor, d->aoeminor,
+			(दीर्घ) d->aoemajor, d->aoeminor,
 			"no frame available");
-		return;
-	}
+		वापस;
+	पूर्ण
 	f->flags |= FFL_PROBE;
-	ifrotate(t);
+	अगरrotate(t);
 	f->iter.bi_size = t->d->maxbcnt ? t->d->maxbcnt : DEFAULTBCNT;
 	ata_rw_frameinit(f);
 	skb = f->skb;
-	for (frag = 0, n = f->iter.bi_size; n > 0; ++frag, n -= m) {
-		if (n < PAGE_SIZE)
+	क्रम (frag = 0, n = f->iter.bi_size; n > 0; ++frag, n -= m) अणु
+		अगर (n < PAGE_SIZE)
 			m = n;
-		else
+		अन्यथा
 			m = PAGE_SIZE;
 		skb_fill_page_desc(skb, frag, empty_page, 0, m);
-	}
+	पूर्ण
 	skb->len += f->iter.bi_size;
 	skb->data_len = f->iter.bi_size;
 	skb->truesize += f->iter.bi_size;
 
 	skb = skb_clone(f->skb, GFP_ATOMIC);
-	if (skb) {
-		f->sent = ktime_get();
+	अगर (skb) अणु
+		f->sent = kसमय_get();
 		__skb_queue_head_init(&queue);
 		__skb_queue_tail(&queue, skb);
 		aoenet_xmit(&queue);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static long
-rto(struct aoedev *d)
-{
-	long t;
+अटल दीर्घ
+rto(काष्ठा aoedev *d)
+अणु
+	दीर्घ t;
 
 	t = 2 * d->rttavg >> RTTSCALE;
 	t += 8 * d->rttdev >> RTTDSCALE;
-	if (t == 0)
+	अगर (t == 0)
 		t = 1;
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-static void
-rexmit_deferred(struct aoedev *d)
-{
-	struct aoetgt *t;
-	struct frame *f;
-	struct frame *nf;
-	struct list_head *pos, *nx, *head;
-	int since;
-	int untainted;
+अटल व्योम
+rexmit_deferred(काष्ठा aoedev *d)
+अणु
+	काष्ठा aoetgt *t;
+	काष्ठा frame *f;
+	काष्ठा frame *nf;
+	काष्ठा list_head *pos, *nx, *head;
+	पूर्णांक since;
+	पूर्णांक untaपूर्णांकed;
 
-	count_targets(d, &untainted);
+	count_tarमाला_लो(d, &untaपूर्णांकed);
 
 	head = &d->rexmitq;
-	list_for_each_safe(pos, nx, head) {
-		f = list_entry(pos, struct frame, head);
+	list_क्रम_each_safe(pos, nx, head) अणु
+		f = list_entry(pos, काष्ठा frame, head);
 		t = f->t;
-		if (t->taint) {
-			if (!(f->flags & FFL_PROBE)) {
+		अगर (t->taपूर्णांक) अणु
+			अगर (!(f->flags & FFL_PROBE)) अणु
 				nf = reassign_frame(f);
-				if (nf) {
-					if (t->nout_probes == 0
-					&& untainted > 0) {
+				अगर (nf) अणु
+					अगर (t->nout_probes == 0
+					&& untaपूर्णांकed > 0) अणु
 						probe(t);
 						t->nout_probes++;
-					}
+					पूर्ण
 					list_replace(&f->head, &nf->head);
 					pos = &nf->head;
-					aoe_freetframe(f);
+					aoe_मुक्तtframe(f);
 					f = nf;
 					t = f->t;
-				}
-			} else if (untainted < 1) {
-				/* don't probe w/o other untainted aoetgts */
-				goto stop_probe;
-			} else if (tsince_hr(f) < t->taint * rto(d)) {
-				/* reprobe slowly when taint is high */
-				continue;
-			}
-		} else if (f->flags & FFL_PROBE) {
-stop_probe:		/* don't probe untainted aoetgts */
+				पूर्ण
+			पूर्ण अन्यथा अगर (untaपूर्णांकed < 1) अणु
+				/* करोn't probe w/o other untaपूर्णांकed aoetgts */
+				जाओ stop_probe;
+			पूर्ण अन्यथा अगर (tsince_hr(f) < t->taपूर्णांक * rto(d)) अणु
+				/* reprobe slowly when taपूर्णांक is high */
+				जारी;
+			पूर्ण
+		पूर्ण अन्यथा अगर (f->flags & FFL_PROBE) अणु
+stop_probe:		/* करोn't probe untaपूर्णांकed aoetgts */
 			list_del(pos);
-			aoe_freetframe(f);
+			aoe_मुक्तtframe(f);
 			/* leaving d->kicked, because this is routine */
 			f->t->d->flags |= DEVFL_KICKME;
-			continue;
-		}
-		if (t->nout >= t->maxout)
-			continue;
+			जारी;
+		पूर्ण
+		अगर (t->nout >= t->maxout)
+			जारी;
 		list_del(pos);
 		t->nout++;
-		if (f->flags & FFL_PROBE)
+		अगर (f->flags & FFL_PROBE)
 			t->nout_probes++;
 		since = tsince_hr(f);
-		f->waited += since;
-		f->waited_total += since;
+		f->रुकोed += since;
+		f->रुकोed_total += since;
 		resend(d, f);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* An aoetgt accumulates demerits quickly, and successful
  * probing redeems the aoetgt slowly.
  */
-static void
-scorn(struct aoetgt *t)
-{
-	int n;
+अटल व्योम
+scorn(काष्ठा aoetgt *t)
+अणु
+	पूर्णांक n;
 
-	n = t->taint++;
-	t->taint += t->taint * 2;
-	if (n > t->taint)
-		t->taint = n;
-	if (t->taint > MAX_TAINT)
-		t->taint = MAX_TAINT;
-}
+	n = t->taपूर्णांक++;
+	t->taपूर्णांक += t->taपूर्णांक * 2;
+	अगर (n > t->taपूर्णांक)
+		t->taपूर्णांक = n;
+	अगर (t->taपूर्णांक > MAX_TAINT)
+		t->taपूर्णांक = MAX_TAINT;
+पूर्ण
 
-static int
-count_targets(struct aoedev *d, int *untainted)
-{
-	int i, good;
+अटल पूर्णांक
+count_tarमाला_लो(काष्ठा aoedev *d, पूर्णांक *untaपूर्णांकed)
+अणु
+	पूर्णांक i, good;
 
-	for (i = good = 0; i < d->ntargets && d->targets[i]; ++i)
-		if (d->targets[i]->taint == 0)
+	क्रम (i = good = 0; i < d->ntarमाला_लो && d->tarमाला_लो[i]; ++i)
+		अगर (d->tarमाला_लो[i]->taपूर्णांक == 0)
 			good++;
 
-	if (untainted)
-		*untainted = good;
-	return i;
-}
+	अगर (untaपूर्णांकed)
+		*untaपूर्णांकed = good;
+	वापस i;
+पूर्ण
 
-static void
-rexmit_timer(struct timer_list *timer)
-{
-	struct aoedev *d;
-	struct aoetgt *t;
-	struct aoeif *ifp;
-	struct frame *f;
-	struct list_head *head, *pos, *nx;
+अटल व्योम
+rexmit_समयr(काष्ठा समयr_list *समयr)
+अणु
+	काष्ठा aoedev *d;
+	काष्ठा aoetgt *t;
+	काष्ठा aoeअगर *अगरp;
+	काष्ठा frame *f;
+	काष्ठा list_head *head, *pos, *nx;
 	LIST_HEAD(flist);
-	register long timeout;
-	ulong flags, n;
-	int i;
-	int utgts;	/* number of aoetgt descriptors (not slots) */
-	int since;
+	रेजिस्टर दीर्घ समयout;
+	uदीर्घ flags, n;
+	पूर्णांक i;
+	पूर्णांक utgts;	/* number of aoetgt descriptors (not slots) */
+	पूर्णांक since;
 
-	d = from_timer(d, timer, timer);
+	d = from_समयr(d, समयr, समयr);
 
 	spin_lock_irqsave(&d->lock, flags);
 
-	/* timeout based on observed timings and variations */
-	timeout = rto(d);
+	/* समयout based on observed timings and variations */
+	समयout = rto(d);
 
-	utgts = count_targets(d, NULL);
+	utgts = count_tarमाला_लो(d, शून्य);
 
-	if (d->flags & DEVFL_TKILL) {
+	अगर (d->flags & DEVFL_TKILL) अणु
 		spin_unlock_irqrestore(&d->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* collect all frames to rexmit into flist */
-	for (i = 0; i < NFACTIVE; i++) {
+	/* collect all frames to rexmit पूर्णांकo flist */
+	क्रम (i = 0; i < NFACTIVE; i++) अणु
 		head = &d->factive[i];
-		list_for_each_safe(pos, nx, head) {
-			f = list_entry(pos, struct frame, head);
-			if (tsince_hr(f) < timeout)
-				break;	/* end of expired frames */
-			/* move to flist for later processing */
+		list_क्रम_each_safe(pos, nx, head) अणु
+			f = list_entry(pos, काष्ठा frame, head);
+			अगर (tsince_hr(f) < समयout)
+				अवरोध;	/* end of expired frames */
+			/* move to flist क्रम later processing */
 			list_move_tail(pos, &flist);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* process expired frames */
-	while (!list_empty(&flist)) {
+	जबतक (!list_empty(&flist)) अणु
 		pos = flist.next;
-		f = list_entry(pos, struct frame, head);
+		f = list_entry(pos, काष्ठा frame, head);
 		since = tsince_hr(f);
-		n = f->waited_total + since;
+		n = f->रुकोed_total + since;
 		n /= USEC_PER_SEC;
-		if (aoe_deadsecs
+		अगर (aoe_deadsecs
 		&& n > aoe_deadsecs
-		&& !(f->flags & FFL_PROBE)) {
-			/* Waited too long.  Device failure.
-			 * Hang all frames on first hash bucket for downdev
+		&& !(f->flags & FFL_PROBE)) अणु
+			/* Waited too दीर्घ.  Device failure.
+			 * Hang all frames on first hash bucket क्रम करोwndev
 			 * to clean up.
 			 */
 			list_splice(&flist, &d->factive[0]);
-			aoedev_downdev(d);
-			goto out;
-		}
+			aoedev_करोwndev(d);
+			जाओ out;
+		पूर्ण
 
 		t = f->t;
-		n = f->waited + since;
+		n = f->रुकोed + since;
 		n /= USEC_PER_SEC;
-		if (aoe_deadsecs && utgts > 0
+		अगर (aoe_deadsecs && utgts > 0
 		&& (n > aoe_deadsecs / utgts || n > HARD_SCORN_SECS))
-			scorn(t); /* avoid this target */
+			scorn(t); /* aव्योम this target */
 
-		if (t->maxout != 1) {
+		अगर (t->maxout != 1) अणु
 			t->ssthresh = t->maxout / 2;
 			t->maxout = 1;
-		}
+		पूर्ण
 
-		if (f->flags & FFL_PROBE) {
+		अगर (f->flags & FFL_PROBE) अणु
 			t->nout_probes--;
-		} else {
-			ifp = getif(t, f->skb->dev);
-			if (ifp && ++ifp->lost > (t->nframes << 1)
-			&& (ifp != t->ifs || t->ifs[1].nd)) {
-				ejectif(t, ifp);
-				ifp = NULL;
-			}
-		}
+		पूर्ण अन्यथा अणु
+			अगरp = getअगर(t, f->skb->dev);
+			अगर (अगरp && ++अगरp->lost > (t->nframes << 1)
+			&& (अगरp != t->अगरs || t->अगरs[1].nd)) अणु
+				ejectअगर(t, अगरp);
+				अगरp = शून्य;
+			पूर्ण
+		पूर्ण
 		list_move_tail(pos, &d->rexmitq);
 		t->nout--;
-	}
+	पूर्ण
 	rexmit_deferred(d);
 
 out:
-	if ((d->flags & DEVFL_KICKME) && d->blkq) {
+	अगर ((d->flags & DEVFL_KICKME) && d->blkq) अणु
 		d->flags &= ~DEVFL_KICKME;
 		blk_mq_run_hw_queues(d->blkq, true);
-	}
+	पूर्ण
 
-	d->timer.expires = jiffies + TIMERTICK;
-	add_timer(&d->timer);
+	d->समयr.expires = jअगरfies + TIMERTICK;
+	add_समयr(&d->समयr);
 
 	spin_unlock_irqrestore(&d->lock, flags);
-}
+पूर्ण
 
-static void
-bufinit(struct buf *buf, struct request *rq, struct bio *bio)
-{
-	memset(buf, 0, sizeof(*buf));
+अटल व्योम
+bufinit(काष्ठा buf *buf, काष्ठा request *rq, काष्ठा bio *bio)
+अणु
+	स_रखो(buf, 0, माप(*buf));
 	buf->rq = rq;
 	buf->bio = bio;
 	buf->iter = bio->bi_iter;
-}
+पूर्ण
 
-static struct buf *
-nextbuf(struct aoedev *d)
-{
-	struct request *rq;
-	struct request_queue *q;
-	struct aoe_req *req;
-	struct buf *buf;
-	struct bio *bio;
+अटल काष्ठा buf *
+nextbuf(काष्ठा aoedev *d)
+अणु
+	काष्ठा request *rq;
+	काष्ठा request_queue *q;
+	काष्ठा aoe_req *req;
+	काष्ठा buf *buf;
+	काष्ठा bio *bio;
 
 	q = d->blkq;
-	if (q == NULL)
-		return NULL;	/* initializing */
-	if (d->ip.buf)
-		return d->ip.buf;
+	अगर (q == शून्य)
+		वापस शून्य;	/* initializing */
+	अगर (d->ip.buf)
+		वापस d->ip.buf;
 	rq = d->ip.rq;
-	if (rq == NULL) {
-		rq = list_first_entry_or_null(&d->rq_list, struct request,
+	अगर (rq == शून्य) अणु
+		rq = list_first_entry_or_null(&d->rq_list, काष्ठा request,
 						queuelist);
-		if (rq == NULL)
-			return NULL;
+		अगर (rq == शून्य)
+			वापस शून्य;
 		list_del_init(&rq->queuelist);
 		blk_mq_start_request(rq);
 		d->ip.rq = rq;
@@ -858,66 +859,66 @@ nextbuf(struct aoedev *d)
 
 		req = blk_mq_rq_to_pdu(rq);
 		req->nr_bios = 0;
-		__rq_for_each_bio(bio, rq)
+		__rq_क्रम_each_bio(bio, rq)
 			req->nr_bios++;
-	}
+	पूर्ण
 	buf = mempool_alloc(d->bufpool, GFP_ATOMIC);
-	if (buf == NULL) {
+	अगर (buf == शून्य) अणु
 		pr_err("aoe: nextbuf: unable to mempool_alloc!\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	bio = d->ip.nxbio;
 	bufinit(buf, rq, bio);
 	bio = bio->bi_next;
 	d->ip.nxbio = bio;
-	if (bio == NULL)
-		d->ip.rq = NULL;
-	return d->ip.buf = buf;
-}
+	अगर (bio == शून्य)
+		d->ip.rq = शून्य;
+	वापस d->ip.buf = buf;
+पूर्ण
 
 /* enters with d->lock held */
-void
-aoecmd_work(struct aoedev *d)
-{
+व्योम
+aoecmd_work(काष्ठा aoedev *d)
+अणु
 	rexmit_deferred(d);
-	while (aoecmd_ata_rw(d))
+	जबतक (aoecmd_ata_rw(d))
 		;
-}
+पूर्ण
 
-/* this function performs work that has been deferred until sleeping is OK
+/* this function perक्रमms work that has been deferred until sleeping is OK
  */
-void
-aoecmd_sleepwork(struct work_struct *work)
-{
-	struct aoedev *d = container_of(work, struct aoedev, work);
+व्योम
+aoecmd_sleepwork(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा aoedev *d = container_of(work, काष्ठा aoedev, work);
 
-	if (d->flags & DEVFL_GDALLOC)
+	अगर (d->flags & DEVFL_GDALLOC)
 		aoeblk_gdalloc(d);
 
-	if (d->flags & DEVFL_NEWSIZE) {
-		set_capacity_and_notify(d->gd, d->ssize);
+	अगर (d->flags & DEVFL_NEWSIZE) अणु
+		set_capacity_and_notअगरy(d->gd, d->ssize);
 
 		spin_lock_irq(&d->lock);
 		d->flags |= DEVFL_UP;
 		d->flags &= ~DEVFL_NEWSIZE;
 		spin_unlock_irq(&d->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-ata_ident_fixstring(u16 *id, int ns)
-{
+अटल व्योम
+ata_ident_fixstring(u16 *id, पूर्णांक ns)
+अणु
 	u16 s;
 
-	while (ns-- > 0) {
+	जबतक (ns-- > 0) अणु
 		s = *id;
 		*id++ = s >> 8 | s << 8;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-ataid_complete(struct aoedev *d, struct aoetgt *t, unsigned char *id)
-{
+अटल व्योम
+ataid_complete(काष्ठा aoedev *d, काष्ठा aoetgt *t, अचिन्हित अक्षर *id)
+अणु
 	u64 ssize;
 	u16 n;
 
@@ -927,7 +928,7 @@ ataid_complete(struct aoedev *d, struct aoetgt *t, unsigned char *id)
 	/* word 86: command set/feature enabled */
 	n |= get_unaligned_le16(&id[86 << 1]);
 
-	if (n & (1<<10)) {	/* bit 10: LBA 48 */
+	अगर (n & (1<<10)) अणु	/* bit 10: LBA 48 */
 		d->flags |= DEVFL_EXT;
 
 		/* word 100: number lba48 sectors */
@@ -938,7 +939,7 @@ ataid_complete(struct aoedev *d, struct aoetgt *t, unsigned char *id)
 		d->geo.cylinders /= (255 * 63);
 		d->geo.heads = 255;
 		d->geo.sectors = 63;
-	} else {
+	पूर्ण अन्यथा अणु
 		d->flags &= ~DEVFL_EXT;
 
 		/* number lba28 sectors */
@@ -948,399 +949,399 @@ ataid_complete(struct aoedev *d, struct aoetgt *t, unsigned char *id)
 		d->geo.cylinders = get_unaligned_le16(&id[54 << 1]);
 		d->geo.heads = get_unaligned_le16(&id[55 << 1]);
 		d->geo.sectors = get_unaligned_le16(&id[56 << 1]);
-	}
+	पूर्ण
 
 	ata_ident_fixstring((u16 *) &id[10<<1], 10);	/* serial */
 	ata_ident_fixstring((u16 *) &id[23<<1], 4);	/* firmware */
 	ata_ident_fixstring((u16 *) &id[27<<1], 20);	/* model */
-	memcpy(d->ident, id, sizeof(d->ident));
+	स_नकल(d->ident, id, माप(d->ident));
 
-	if (d->ssize != ssize)
-		printk(KERN_INFO
+	अगर (d->ssize != ssize)
+		prपूर्णांकk(KERN_INFO
 			"aoe: %pm e%ld.%d v%04x has %llu sectors\n",
 			t->addr,
 			d->aoemajor, d->aoeminor,
-			d->fw_ver, (long long)ssize);
+			d->fw_ver, (दीर्घ दीर्घ)ssize);
 	d->ssize = ssize;
 	d->geo.start = 0;
-	if (d->flags & (DEVFL_GDALLOC|DEVFL_NEWSIZE))
-		return;
-	if (d->gd != NULL)
+	अगर (d->flags & (DEVFL_GDALLOC|DEVFL_NEWSIZE))
+		वापस;
+	अगर (d->gd != शून्य)
 		d->flags |= DEVFL_NEWSIZE;
-	else
+	अन्यथा
 		d->flags |= DEVFL_GDALLOC;
 	schedule_work(&d->work);
-}
+पूर्ण
 
-static void
-calc_rttavg(struct aoedev *d, struct aoetgt *t, int rtt)
-{
-	register long n;
+अटल व्योम
+calc_rttavg(काष्ठा aoedev *d, काष्ठा aoetgt *t, पूर्णांक rtt)
+अणु
+	रेजिस्टर दीर्घ n;
 
 	n = rtt;
 
-	/* cf. Congestion Avoidance and Control, Jacobson & Karels, 1988 */
+	/* cf. Congestion Aव्योमance and Control, Jacobson & Karels, 1988 */
 	n -= d->rttavg >> RTTSCALE;
 	d->rttavg += n;
-	if (n < 0)
+	अगर (n < 0)
 		n = -n;
 	n -= d->rttdev >> RTTDSCALE;
 	d->rttdev += n;
 
-	if (!t || t->maxout >= t->nframes)
-		return;
-	if (t->maxout < t->ssthresh)
+	अगर (!t || t->maxout >= t->nframes)
+		वापस;
+	अगर (t->maxout < t->ssthresh)
 		t->maxout += 1;
-	else if (t->nout == t->maxout && t->next_cwnd-- == 0) {
+	अन्यथा अगर (t->nout == t->maxout && t->next_cwnd-- == 0) अणु
 		t->maxout += 1;
 		t->next_cwnd = t->maxout;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct aoetgt *
-gettgt(struct aoedev *d, char *addr)
-{
-	struct aoetgt **t, **e;
+अटल काष्ठा aoetgt *
+gettgt(काष्ठा aoedev *d, अक्षर *addr)
+अणु
+	काष्ठा aoetgt **t, **e;
 
-	t = d->targets;
-	e = t + d->ntargets;
-	for (; t < e && *t; t++)
-		if (memcmp((*t)->addr, addr, sizeof((*t)->addr)) == 0)
-			return *t;
-	return NULL;
-}
+	t = d->tarमाला_लो;
+	e = t + d->ntarमाला_लो;
+	क्रम (; t < e && *t; t++)
+		अगर (स_भेद((*t)->addr, addr, माप((*t)->addr)) == 0)
+			वापस *t;
+	वापस शून्य;
+पूर्ण
 
-static void
-bvcpy(struct sk_buff *skb, struct bio *bio, struct bvec_iter iter, long cnt)
-{
-	int soff = 0;
-	struct bio_vec bv;
+अटल व्योम
+bvcpy(काष्ठा sk_buff *skb, काष्ठा bio *bio, काष्ठा bvec_iter iter, दीर्घ cnt)
+अणु
+	पूर्णांक soff = 0;
+	काष्ठा bio_vec bv;
 
 	iter.bi_size = cnt;
 
-	__bio_for_each_segment(bv, bio, iter, iter) {
-		char *p = kmap_atomic(bv.bv_page) + bv.bv_offset;
+	__bio_क्रम_each_segment(bv, bio, iter, iter) अणु
+		अक्षर *p = kmap_atomic(bv.bv_page) + bv.bv_offset;
 		skb_copy_bits(skb, soff, p, bv.bv_len);
 		kunmap_atomic(p);
 		soff += bv.bv_len;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-aoe_end_request(struct aoedev *d, struct request *rq, int fastfail)
-{
-	struct bio *bio;
-	int bok;
-	struct request_queue *q;
+व्योम
+aoe_end_request(काष्ठा aoedev *d, काष्ठा request *rq, पूर्णांक fastfail)
+अणु
+	काष्ठा bio *bio;
+	पूर्णांक bok;
+	काष्ठा request_queue *q;
 	blk_status_t err = BLK_STS_OK;
 
 	q = d->blkq;
-	if (rq == d->ip.rq)
-		d->ip.rq = NULL;
-	do {
+	अगर (rq == d->ip.rq)
+		d->ip.rq = शून्य;
+	करो अणु
 		bio = rq->bio;
 		bok = !fastfail && !bio->bi_status;
-		if (!bok)
+		अगर (!bok)
 			err = BLK_STS_IOERR;
-	} while (blk_update_request(rq, bok ? BLK_STS_OK : BLK_STS_IOERR, bio->bi_iter.bi_size));
+	पूर्ण जबतक (blk_update_request(rq, bok ? BLK_STS_OK : BLK_STS_IOERR, bio->bi_iter.bi_size));
 
 	__blk_mq_end_request(rq, err);
 
 	/* cf. https://lore.kernel.org/lkml/20061031071040.GS14055@kernel.dk/ */
-	if (!fastfail)
+	अगर (!fastfail)
 		blk_mq_run_hw_queues(q, true);
-}
+पूर्ण
 
-static void
-aoe_end_buf(struct aoedev *d, struct buf *buf)
-{
-	struct request *rq = buf->rq;
-	struct aoe_req *req = blk_mq_rq_to_pdu(rq);
+अटल व्योम
+aoe_end_buf(काष्ठा aoedev *d, काष्ठा buf *buf)
+अणु
+	काष्ठा request *rq = buf->rq;
+	काष्ठा aoe_req *req = blk_mq_rq_to_pdu(rq);
 
-	if (buf == d->ip.buf)
-		d->ip.buf = NULL;
-	mempool_free(buf, d->bufpool);
-	if (--req->nr_bios == 0)
+	अगर (buf == d->ip.buf)
+		d->ip.buf = शून्य;
+	mempool_मुक्त(buf, d->bufpool);
+	अगर (--req->nr_bios == 0)
 		aoe_end_request(d, rq, 0);
-}
+पूर्ण
 
-static void
-ktiocomplete(struct frame *f)
-{
-	struct aoe_hdr *hin, *hout;
-	struct aoe_atahdr *ahin, *ahout;
-	struct buf *buf;
-	struct sk_buff *skb;
-	struct aoetgt *t;
-	struct aoeif *ifp;
-	struct aoedev *d;
-	long n;
-	int untainted;
+अटल व्योम
+ktiocomplete(काष्ठा frame *f)
+अणु
+	काष्ठा aoe_hdr *hin, *hout;
+	काष्ठा aoe_atahdr *ahin, *ahout;
+	काष्ठा buf *buf;
+	काष्ठा sk_buff *skb;
+	काष्ठा aoetgt *t;
+	काष्ठा aoeअगर *अगरp;
+	काष्ठा aoedev *d;
+	दीर्घ n;
+	पूर्णांक untaपूर्णांकed;
 
-	if (f == NULL)
-		return;
+	अगर (f == शून्य)
+		वापस;
 
 	t = f->t;
 	d = t->d;
 	skb = f->r_skb;
 	buf = f->buf;
-	if (f->flags & FFL_PROBE)
-		goto out;
-	if (!skb)		/* just fail the buf. */
-		goto noskb;
+	अगर (f->flags & FFL_PROBE)
+		जाओ out;
+	अगर (!skb)		/* just fail the buf. */
+		जाओ noskb;
 
-	hout = (struct aoe_hdr *) skb_mac_header(f->skb);
-	ahout = (struct aoe_atahdr *) (hout+1);
+	hout = (काष्ठा aoe_hdr *) skb_mac_header(f->skb);
+	ahout = (काष्ठा aoe_atahdr *) (hout+1);
 
-	hin = (struct aoe_hdr *) skb->data;
-	skb_pull(skb, sizeof(*hin));
-	ahin = (struct aoe_atahdr *) skb->data;
-	skb_pull(skb, sizeof(*ahin));
-	if (ahin->cmdstat & 0xa9) {	/* these bits cleared on success */
+	hin = (काष्ठा aoe_hdr *) skb->data;
+	skb_pull(skb, माप(*hin));
+	ahin = (काष्ठा aoe_atahdr *) skb->data;
+	skb_pull(skb, माप(*ahin));
+	अगर (ahin->cmdstat & 0xa9) अणु	/* these bits cleared on success */
 		pr_err("aoe: ata error cmd=%2.2Xh stat=%2.2Xh from e%ld.%d\n",
 			ahout->cmdstat, ahin->cmdstat,
 			d->aoemajor, d->aoeminor);
-noskb:		if (buf)
+noskb:		अगर (buf)
 			buf->bio->bi_status = BLK_STS_IOERR;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	n = ahout->scnt << 9;
-	switch (ahout->cmdstat) {
-	case ATA_CMD_PIO_READ:
-	case ATA_CMD_PIO_READ_EXT:
-		if (skb->len < n) {
+	चयन (ahout->cmdstat) अणु
+	हाल ATA_CMD_PIO_READ:
+	हाल ATA_CMD_PIO_READ_EXT:
+		अगर (skb->len < n) अणु
 			pr_err("%s e%ld.%d.  skb->len=%d need=%ld\n",
 				"aoe: runt data size in read from",
-				(long) d->aoemajor, d->aoeminor,
+				(दीर्घ) d->aoemajor, d->aoeminor,
 			       skb->len, n);
 			buf->bio->bi_status = BLK_STS_IOERR;
-			break;
-		}
-		if (n > f->iter.bi_size) {
+			अवरोध;
+		पूर्ण
+		अगर (n > f->iter.bi_size) अणु
 			pr_err_ratelimited("%s e%ld.%d.  bytes=%ld need=%u\n",
 				"aoe: too-large data size in read from",
-				(long) d->aoemajor, d->aoeminor,
+				(दीर्घ) d->aoemajor, d->aoeminor,
 				n, f->iter.bi_size);
 			buf->bio->bi_status = BLK_STS_IOERR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		bvcpy(skb, f->buf->bio, f->iter, n);
 		fallthrough;
-	case ATA_CMD_PIO_WRITE:
-	case ATA_CMD_PIO_WRITE_EXT:
+	हाल ATA_CMD_PIO_WRITE:
+	हाल ATA_CMD_PIO_WRITE_EXT:
 		spin_lock_irq(&d->lock);
-		ifp = getif(t, skb->dev);
-		if (ifp)
-			ifp->lost = 0;
+		अगरp = getअगर(t, skb->dev);
+		अगर (अगरp)
+			अगरp->lost = 0;
 		spin_unlock_irq(&d->lock);
-		break;
-	case ATA_CMD_ID_ATA:
-		if (skb->len < 512) {
+		अवरोध;
+	हाल ATA_CMD_ID_ATA:
+		अगर (skb->len < 512) अणु
 			pr_info("%s e%ld.%d.  skb->len=%d need=512\n",
 				"aoe: runt data size in ataid from",
-				(long) d->aoemajor, d->aoeminor,
+				(दीर्घ) d->aoemajor, d->aoeminor,
 				skb->len);
-			break;
-		}
-		if (skb_linearize(skb))
-			break;
+			अवरोध;
+		पूर्ण
+		अगर (skb_linearize(skb))
+			अवरोध;
 		spin_lock_irq(&d->lock);
 		ataid_complete(d, t, skb->data);
 		spin_unlock_irq(&d->lock);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_info("aoe: unrecognized ata command %2.2Xh for %d.%d\n",
 			ahout->cmdstat,
 			be16_to_cpu(get_unaligned(&hin->major)),
 			hin->minor);
-	}
+	पूर्ण
 out:
 	spin_lock_irq(&d->lock);
-	if (t->taint > 0
-	&& --t->taint > 0
-	&& t->nout_probes == 0) {
-		count_targets(d, &untainted);
-		if (untainted > 0) {
+	अगर (t->taपूर्णांक > 0
+	&& --t->taपूर्णांक > 0
+	&& t->nout_probes == 0) अणु
+		count_tarमाला_लो(d, &untaपूर्णांकed);
+		अगर (untaपूर्णांकed > 0) अणु
 			probe(t);
 			t->nout_probes++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	aoe_freetframe(f);
+	aoe_मुक्तtframe(f);
 
-	if (buf && --buf->nframesout == 0 && buf->iter.bi_size == 0)
+	अगर (buf && --buf->nframesout == 0 && buf->iter.bi_size == 0)
 		aoe_end_buf(d, buf);
 
 	spin_unlock_irq(&d->lock);
 	aoedev_put(d);
-	dev_kfree_skb(skb);
-}
+	dev_kमुक्त_skb(skb);
+पूर्ण
 
 /* Enters with iocq.lock held.
- * Returns true iff responses needing processing remain.
+ * Returns true अगरf responses needing processing reमुख्य.
  */
-static int
-ktio(int id)
-{
-	struct frame *f;
-	struct list_head *pos;
-	int i;
-	int actual_id;
+अटल पूर्णांक
+ktio(पूर्णांक id)
+अणु
+	काष्ठा frame *f;
+	काष्ठा list_head *pos;
+	पूर्णांक i;
+	पूर्णांक actual_id;
 
-	for (i = 0; ; ++i) {
-		if (i == MAXIOC)
-			return 1;
-		if (list_empty(&iocq[id].head))
-			return 0;
+	क्रम (i = 0; ; ++i) अणु
+		अगर (i == MAXIOC)
+			वापस 1;
+		अगर (list_empty(&iocq[id].head))
+			वापस 0;
 		pos = iocq[id].head.next;
 		list_del(pos);
-		f = list_entry(pos, struct frame, head);
+		f = list_entry(pos, काष्ठा frame, head);
 		spin_unlock_irq(&iocq[id].lock);
 		ktiocomplete(f);
 
-		/* Figure out if extra threads are required. */
+		/* Figure out अगर extra thपढ़ोs are required. */
 		actual_id = f->t->d->aoeminor % ncpus;
 
-		if (!kts[actual_id].active) {
+		अगर (!kts[actual_id].active) अणु
 			BUG_ON(id != 0);
 			mutex_lock(&ktio_spawn_lock);
-			if (!kts[actual_id].active
+			अगर (!kts[actual_id].active
 				&& aoe_ktstart(&kts[actual_id]) == 0)
 				kts[actual_id].active = 1;
 			mutex_unlock(&ktio_spawn_lock);
-		}
+		पूर्ण
 		spin_lock_irq(&iocq[id].lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-kthread(void *vp)
-{
-	struct ktstate *k;
-	DECLARE_WAITQUEUE(wait, current);
-	int more;
+अटल पूर्णांक
+kthपढ़ो(व्योम *vp)
+अणु
+	काष्ठा ktstate *k;
+	DECLARE_WAITQUEUE(रुको, current);
+	पूर्णांक more;
 
 	k = vp;
 	current->flags |= PF_NOFREEZE;
 	set_user_nice(current, -10);
 	complete(&k->rendez);	/* tell spawner we're running */
-	do {
+	करो अणु
 		spin_lock_irq(k->lock);
 		more = k->fn(k->id);
-		if (!more) {
-			add_wait_queue(k->waitq, &wait);
+		अगर (!more) अणु
+			add_रुको_queue(k->रुकोq, &रुको);
 			__set_current_state(TASK_INTERRUPTIBLE);
-		}
+		पूर्ण
 		spin_unlock_irq(k->lock);
-		if (!more) {
+		अगर (!more) अणु
 			schedule();
-			remove_wait_queue(k->waitq, &wait);
-		} else
+			हटाओ_रुको_queue(k->रुकोq, &रुको);
+		पूर्ण अन्यथा
 			cond_resched();
-	} while (!kthread_should_stop());
+	पूर्ण जबतक (!kthपढ़ो_should_stop());
 	complete(&k->rendez);	/* tell spawner we're stopping */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-aoe_ktstop(struct ktstate *k)
-{
-	kthread_stop(k->task);
-	wait_for_completion(&k->rendez);
-}
+व्योम
+aoe_ktstop(काष्ठा ktstate *k)
+अणु
+	kthपढ़ो_stop(k->task);
+	रुको_क्रम_completion(&k->rendez);
+पूर्ण
 
-int
-aoe_ktstart(struct ktstate *k)
-{
-	struct task_struct *task;
+पूर्णांक
+aoe_ktstart(काष्ठा ktstate *k)
+अणु
+	काष्ठा task_काष्ठा *task;
 
 	init_completion(&k->rendez);
-	task = kthread_run(kthread, k, "%s", k->name);
-	if (task == NULL || IS_ERR(task))
-		return -ENOMEM;
+	task = kthपढ़ो_run(kthपढ़ो, k, "%s", k->name);
+	अगर (task == शून्य || IS_ERR(task))
+		वापस -ENOMEM;
 	k->task = task;
-	wait_for_completion(&k->rendez); /* allow kthread to start */
-	init_completion(&k->rendez);	/* for waiting for exit later */
-	return 0;
-}
+	रुको_क्रम_completion(&k->rendez); /* allow kthपढ़ो to start */
+	init_completion(&k->rendez);	/* क्रम रुकोing क्रम निकास later */
+	वापस 0;
+पूर्ण
 
-/* pass it off to kthreads for processing */
-static void
-ktcomplete(struct frame *f, struct sk_buff *skb)
-{
-	int id;
-	ulong flags;
+/* pass it off to kthपढ़ोs क्रम processing */
+अटल व्योम
+ktcomplete(काष्ठा frame *f, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक id;
+	uदीर्घ flags;
 
 	f->r_skb = skb;
 	id = f->t->d->aoeminor % ncpus;
 	spin_lock_irqsave(&iocq[id].lock, flags);
-	if (!kts[id].active) {
+	अगर (!kts[id].active) अणु
 		spin_unlock_irqrestore(&iocq[id].lock, flags);
-		/* The thread with id has not been spawned yet,
-		 * so delegate the work to the main thread and
-		 * try spawning a new thread.
+		/* The thपढ़ो with id has not been spawned yet,
+		 * so delegate the work to the मुख्य thपढ़ो and
+		 * try spawning a new thपढ़ो.
 		 */
 		id = 0;
 		spin_lock_irqsave(&iocq[id].lock, flags);
-	}
+	पूर्ण
 	list_add_tail(&f->head, &iocq[id].head);
 	spin_unlock_irqrestore(&iocq[id].lock, flags);
 	wake_up(&ktiowq[id]);
-}
+पूर्ण
 
-struct sk_buff *
-aoecmd_ata_rsp(struct sk_buff *skb)
-{
-	struct aoedev *d;
-	struct aoe_hdr *h;
-	struct frame *f;
+काष्ठा sk_buff *
+aoecmd_ata_rsp(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा aoedev *d;
+	काष्ठा aoe_hdr *h;
+	काष्ठा frame *f;
 	u32 n;
-	ulong flags;
-	char ebuf[128];
+	uदीर्घ flags;
+	अक्षर ebuf[128];
 	u16 aoemajor;
 
-	h = (struct aoe_hdr *) skb->data;
+	h = (काष्ठा aoe_hdr *) skb->data;
 	aoemajor = be16_to_cpu(get_unaligned(&h->major));
 	d = aoedev_by_aoeaddr(aoemajor, h->minor, 0);
-	if (d == NULL) {
-		snprintf(ebuf, sizeof ebuf, "aoecmd_ata_rsp: ata response "
+	अगर (d == शून्य) अणु
+		snम_लिखो(ebuf, माप ebuf, "aoecmd_ata_rsp: ata response "
 			"for unknown device %d.%d\n",
 			aoemajor, h->minor);
 		aoechr_error(ebuf);
-		return skb;
-	}
+		वापस skb;
+	पूर्ण
 
 	spin_lock_irqsave(&d->lock, flags);
 
 	n = be32_to_cpu(get_unaligned(&h->tag));
 	f = getframe(d, n);
-	if (f) {
+	अगर (f) अणु
 		calc_rttavg(d, f->t, tsince_hr(f));
 		f->t->nout--;
-		if (f->flags & FFL_PROBE)
+		अगर (f->flags & FFL_PROBE)
 			f->t->nout_probes--;
-	} else {
+	पूर्ण अन्यथा अणु
 		f = getframe_deferred(d, n);
-		if (f) {
-			calc_rttavg(d, NULL, tsince_hr(f));
-		} else {
-			calc_rttavg(d, NULL, tsince(n));
+		अगर (f) अणु
+			calc_rttavg(d, शून्य, tsince_hr(f));
+		पूर्ण अन्यथा अणु
+			calc_rttavg(d, शून्य, tsince(n));
 			spin_unlock_irqrestore(&d->lock, flags);
 			aoedev_put(d);
-			snprintf(ebuf, sizeof(ebuf),
+			snम_लिखो(ebuf, माप(ebuf),
 				 "%15s e%d.%d    tag=%08x@%08lx s=%pm d=%pm\n",
 				 "unexpected rsp",
 				 get_unaligned_be16(&h->major),
 				 h->minor,
 				 get_unaligned_be32(&h->tag),
-				 jiffies,
+				 jअगरfies,
 				 h->src,
 				 h->dst);
 			aoechr_error(ebuf);
-			return skb;
-		}
-	}
+			वापस skb;
+		पूर्ण
+	पूर्ण
 	aoecmd_work(d);
 
 	spin_unlock_irqrestore(&d->lock, flags);
@@ -1348,407 +1349,407 @@ aoecmd_ata_rsp(struct sk_buff *skb)
 	ktcomplete(f, skb);
 
 	/*
-	 * Note here that we do not perform an aoedev_put, as we are
-	 * leaving this reference for the ktio to release.
+	 * Note here that we करो not perक्रमm an aoedev_put, as we are
+	 * leaving this reference क्रम the ktio to release.
 	 */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void
-aoecmd_cfg(ushort aoemajor, unsigned char aoeminor)
-{
-	struct sk_buff_head queue;
+व्योम
+aoecmd_cfg(uलघु aoemajor, अचिन्हित अक्षर aoeminor)
+अणु
+	काष्ठा sk_buff_head queue;
 
 	__skb_queue_head_init(&queue);
 	aoecmd_cfg_pkts(aoemajor, aoeminor, &queue);
 	aoenet_xmit(&queue);
-}
+पूर्ण
 
-struct sk_buff *
-aoecmd_ata_id(struct aoedev *d)
-{
-	struct aoe_hdr *h;
-	struct aoe_atahdr *ah;
-	struct frame *f;
-	struct sk_buff *skb;
-	struct aoetgt *t;
+काष्ठा sk_buff *
+aoecmd_ata_id(काष्ठा aoedev *d)
+अणु
+	काष्ठा aoe_hdr *h;
+	काष्ठा aoe_atahdr *ah;
+	काष्ठा frame *f;
+	काष्ठा sk_buff *skb;
+	काष्ठा aoetgt *t;
 
 	f = newframe(d);
-	if (f == NULL)
-		return NULL;
+	अगर (f == शून्य)
+		वापस शून्य;
 
 	t = *d->tgt;
 
 	/* initialize the headers & frame */
 	skb = f->skb;
-	h = (struct aoe_hdr *) skb_mac_header(skb);
-	ah = (struct aoe_atahdr *) (h+1);
-	skb_put(skb, sizeof *h + sizeof *ah);
-	memset(h, 0, skb->len);
+	h = (काष्ठा aoe_hdr *) skb_mac_header(skb);
+	ah = (काष्ठा aoe_atahdr *) (h+1);
+	skb_put(skb, माप *h + माप *ah);
+	स_रखो(h, 0, skb->len);
 	f->tag = aoehdr_atainit(d, t, h);
 	fhash(f);
 	t->nout++;
-	f->waited = 0;
-	f->waited_total = 0;
+	f->रुकोed = 0;
+	f->रुकोed_total = 0;
 
 	/* set up ata header */
 	ah->scnt = 1;
 	ah->cmdstat = ATA_CMD_ID_ATA;
 	ah->lba3 = 0xa0;
 
-	skb->dev = t->ifp->nd;
+	skb->dev = t->अगरp->nd;
 
 	d->rttavg = RTTAVG_INIT;
 	d->rttdev = RTTDEV_INIT;
-	d->timer.function = rexmit_timer;
+	d->समयr.function = rexmit_समयr;
 
 	skb = skb_clone(skb, GFP_ATOMIC);
-	if (skb)
-		f->sent = ktime_get();
+	अगर (skb)
+		f->sent = kसमय_get();
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct aoetgt **
-grow_targets(struct aoedev *d)
-{
-	ulong oldn, newn;
-	struct aoetgt **tt;
+अटल काष्ठा aoetgt **
+grow_tarमाला_लो(काष्ठा aoedev *d)
+अणु
+	uदीर्घ oldn, newn;
+	काष्ठा aoetgt **tt;
 
-	oldn = d->ntargets;
+	oldn = d->ntarमाला_लो;
 	newn = oldn * 2;
-	tt = kcalloc(newn, sizeof(*d->targets), GFP_ATOMIC);
-	if (!tt)
-		return NULL;
-	memmove(tt, d->targets, sizeof(*d->targets) * oldn);
-	d->tgt = tt + (d->tgt - d->targets);
-	kfree(d->targets);
-	d->targets = tt;
-	d->ntargets = newn;
+	tt = kसुस्मृति(newn, माप(*d->tarमाला_लो), GFP_ATOMIC);
+	अगर (!tt)
+		वापस शून्य;
+	स_हटाओ(tt, d->tarमाला_लो, माप(*d->tarमाला_लो) * oldn);
+	d->tgt = tt + (d->tgt - d->tarमाला_लो);
+	kमुक्त(d->tarमाला_लो);
+	d->tarमाला_लो = tt;
+	d->ntarमाला_लो = newn;
 
-	return &d->targets[oldn];
-}
+	वापस &d->tarमाला_लो[oldn];
+पूर्ण
 
-static struct aoetgt *
-addtgt(struct aoedev *d, char *addr, ulong nframes)
-{
-	struct aoetgt *t, **tt, **te;
+अटल काष्ठा aoetgt *
+addtgt(काष्ठा aoedev *d, अक्षर *addr, uदीर्घ nframes)
+अणु
+	काष्ठा aoetgt *t, **tt, **te;
 
-	tt = d->targets;
-	te = tt + d->ntargets;
-	for (; tt < te && *tt; tt++)
+	tt = d->tarमाला_लो;
+	te = tt + d->ntarमाला_लो;
+	क्रम (; tt < te && *tt; tt++)
 		;
 
-	if (tt == te) {
-		tt = grow_targets(d);
-		if (!tt)
-			goto nomem;
-	}
-	t = kzalloc(sizeof(*t), GFP_ATOMIC);
-	if (!t)
-		goto nomem;
+	अगर (tt == te) अणु
+		tt = grow_tarमाला_लो(d);
+		अगर (!tt)
+			जाओ nomem;
+	पूर्ण
+	t = kzalloc(माप(*t), GFP_ATOMIC);
+	अगर (!t)
+		जाओ nomem;
 	t->nframes = nframes;
 	t->d = d;
-	memcpy(t->addr, addr, sizeof t->addr);
-	t->ifp = t->ifs;
+	स_नकल(t->addr, addr, माप t->addr);
+	t->अगरp = t->अगरs;
 	aoecmd_wreset(t);
 	t->maxout = t->nframes / 2;
-	INIT_LIST_HEAD(&t->ffree);
-	return *tt = t;
+	INIT_LIST_HEAD(&t->fमुक्त);
+	वापस *tt = t;
 
  nomem:
 	pr_info("aoe: cannot allocate memory to add target\n");
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void
-setdbcnt(struct aoedev *d)
-{
-	struct aoetgt **t, **e;
-	int bcnt = 0;
+अटल व्योम
+setdbcnt(काष्ठा aoedev *d)
+अणु
+	काष्ठा aoetgt **t, **e;
+	पूर्णांक bcnt = 0;
 
-	t = d->targets;
-	e = t + d->ntargets;
-	for (; t < e && *t; t++)
-		if (bcnt == 0 || bcnt > (*t)->minbcnt)
+	t = d->tarमाला_लो;
+	e = t + d->ntarमाला_लो;
+	क्रम (; t < e && *t; t++)
+		अगर (bcnt == 0 || bcnt > (*t)->minbcnt)
 			bcnt = (*t)->minbcnt;
-	if (bcnt != d->maxbcnt) {
+	अगर (bcnt != d->maxbcnt) अणु
 		d->maxbcnt = bcnt;
 		pr_info("aoe: e%ld.%d: setting %d byte data frames\n",
 			d->aoemajor, d->aoeminor, bcnt);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-setifbcnt(struct aoetgt *t, struct net_device *nd, int bcnt)
-{
-	struct aoedev *d;
-	struct aoeif *p, *e;
-	int minbcnt;
+अटल व्योम
+setअगरbcnt(काष्ठा aoetgt *t, काष्ठा net_device *nd, पूर्णांक bcnt)
+अणु
+	काष्ठा aoedev *d;
+	काष्ठा aoeअगर *p, *e;
+	पूर्णांक minbcnt;
 
 	d = t->d;
 	minbcnt = bcnt;
-	p = t->ifs;
+	p = t->अगरs;
 	e = p + NAOEIFS;
-	for (; p < e; p++) {
-		if (p->nd == NULL)
-			break;		/* end of the valid interfaces */
-		if (p->nd == nd) {
+	क्रम (; p < e; p++) अणु
+		अगर (p->nd == शून्य)
+			अवरोध;		/* end of the valid पूर्णांकerfaces */
+		अगर (p->nd == nd) अणु
 			p->bcnt = bcnt;	/* we're updating */
-			nd = NULL;
-		} else if (minbcnt > p->bcnt)
-			minbcnt = p->bcnt; /* find the min interface */
-	}
-	if (nd) {
-		if (p == e) {
+			nd = शून्य;
+		पूर्ण अन्यथा अगर (minbcnt > p->bcnt)
+			minbcnt = p->bcnt; /* find the min पूर्णांकerface */
+	पूर्ण
+	अगर (nd) अणु
+		अगर (p == e) अणु
 			pr_err("aoe: device setifbcnt failure; too many interfaces.\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		dev_hold(nd);
 		p->nd = nd;
 		p->bcnt = bcnt;
-	}
+	पूर्ण
 	t->minbcnt = minbcnt;
 	setdbcnt(d);
-}
+पूर्ण
 
-void
-aoecmd_cfg_rsp(struct sk_buff *skb)
-{
-	struct aoedev *d;
-	struct aoe_hdr *h;
-	struct aoe_cfghdr *ch;
-	struct aoetgt *t;
-	ulong flags, aoemajor;
-	struct sk_buff *sl;
-	struct sk_buff_head queue;
+व्योम
+aoecmd_cfg_rsp(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा aoedev *d;
+	काष्ठा aoe_hdr *h;
+	काष्ठा aoe_cfghdr *ch;
+	काष्ठा aoetgt *t;
+	uदीर्घ flags, aoemajor;
+	काष्ठा sk_buff *sl;
+	काष्ठा sk_buff_head queue;
 	u16 n;
 
-	sl = NULL;
-	h = (struct aoe_hdr *) skb_mac_header(skb);
-	ch = (struct aoe_cfghdr *) (h+1);
+	sl = शून्य;
+	h = (काष्ठा aoe_hdr *) skb_mac_header(skb);
+	ch = (काष्ठा aoe_cfghdr *) (h+1);
 
 	/*
-	 * Enough people have their dip switches set backwards to
-	 * warrant a loud message for this special case.
+	 * Enough people have their dip चयनes set backwards to
+	 * warrant a loud message क्रम this special हाल.
 	 */
 	aoemajor = get_unaligned_be16(&h->major);
-	if (aoemajor == 0xfff) {
-		printk(KERN_ERR "aoe: Warning: shelf address is all ones.  "
+	अगर (aoemajor == 0xfff) अणु
+		prपूर्णांकk(KERN_ERR "aoe: Warning: shelf address is all ones.  "
 			"Check shelf dip switches.\n");
-		return;
-	}
-	if (aoemajor == 0xffff) {
+		वापस;
+	पूर्ण
+	अगर (aoemajor == 0xffff) अणु
 		pr_info("aoe: e%ld.%d: broadcast shelf number invalid\n",
-			aoemajor, (int) h->minor);
-		return;
-	}
-	if (h->minor == 0xff) {
+			aoemajor, (पूर्णांक) h->minor);
+		वापस;
+	पूर्ण
+	अगर (h->minor == 0xff) अणु
 		pr_info("aoe: e%ld.%d: broadcast slot number invalid\n",
-			aoemajor, (int) h->minor);
-		return;
-	}
+			aoemajor, (पूर्णांक) h->minor);
+		वापस;
+	पूर्ण
 
 	n = be16_to_cpu(ch->bufcnt);
-	if (n > aoe_maxout)	/* keep it reasonable */
+	अगर (n > aoe_maxout)	/* keep it reasonable */
 		n = aoe_maxout;
 
 	d = aoedev_by_aoeaddr(aoemajor, h->minor, 1);
-	if (d == NULL) {
+	अगर (d == शून्य) अणु
 		pr_info("aoe: device allocation failure\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&d->lock, flags);
 
 	t = gettgt(d, h->src);
-	if (t) {
+	अगर (t) अणु
 		t->nframes = n;
-		if (n < t->maxout)
+		अगर (n < t->maxout)
 			aoecmd_wreset(t);
-	} else {
+	पूर्ण अन्यथा अणु
 		t = addtgt(d, h->src, n);
-		if (!t)
-			goto bail;
-	}
+		अगर (!t)
+			जाओ bail;
+	पूर्ण
 	n = skb->dev->mtu;
-	n -= sizeof(struct aoe_hdr) + sizeof(struct aoe_atahdr);
+	n -= माप(काष्ठा aoe_hdr) + माप(काष्ठा aoe_atahdr);
 	n /= 512;
-	if (n > ch->scnt)
+	अगर (n > ch->scnt)
 		n = ch->scnt;
 	n = n ? n * 512 : DEFAULTBCNT;
-	setifbcnt(t, skb->dev, n);
+	setअगरbcnt(t, skb->dev, n);
 
-	/* don't change users' perspective */
-	if (d->nopen == 0) {
+	/* करोn't change users' perspective */
+	अगर (d->nखोलो == 0) अणु
 		d->fw_ver = be16_to_cpu(ch->fwver);
 		sl = aoecmd_ata_id(d);
-	}
+	पूर्ण
 bail:
 	spin_unlock_irqrestore(&d->lock, flags);
 	aoedev_put(d);
-	if (sl) {
+	अगर (sl) अणु
 		__skb_queue_head_init(&queue);
 		__skb_queue_tail(&queue, sl);
 		aoenet_xmit(&queue);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-aoecmd_wreset(struct aoetgt *t)
-{
+व्योम
+aoecmd_wreset(काष्ठा aoetgt *t)
+अणु
 	t->maxout = 1;
 	t->ssthresh = t->nframes / 2;
 	t->next_cwnd = t->nframes;
-}
+पूर्ण
 
-void
-aoecmd_cleanslate(struct aoedev *d)
-{
-	struct aoetgt **t, **te;
+व्योम
+aoecmd_cleanslate(काष्ठा aoedev *d)
+अणु
+	काष्ठा aoetgt **t, **te;
 
 	d->rttavg = RTTAVG_INIT;
 	d->rttdev = RTTDEV_INIT;
 	d->maxbcnt = 0;
 
-	t = d->targets;
-	te = t + d->ntargets;
-	for (; t < te && *t; t++)
+	t = d->tarमाला_लो;
+	te = t + d->ntarमाला_लो;
+	क्रम (; t < te && *t; t++)
 		aoecmd_wreset(*t);
-}
+पूर्ण
 
-void
-aoe_failbuf(struct aoedev *d, struct buf *buf)
-{
-	if (buf == NULL)
-		return;
+व्योम
+aoe_failbuf(काष्ठा aoedev *d, काष्ठा buf *buf)
+अणु
+	अगर (buf == शून्य)
+		वापस;
 	buf->iter.bi_size = 0;
 	buf->bio->bi_status = BLK_STS_IOERR;
-	if (buf->nframesout == 0)
+	अगर (buf->nframesout == 0)
 		aoe_end_buf(d, buf);
-}
+पूर्ण
 
-void
-aoe_flush_iocq(void)
-{
-	int i;
+व्योम
+aoe_flush_iocq(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ncpus; i++) {
-		if (kts[i].active)
+	क्रम (i = 0; i < ncpus; i++) अणु
+		अगर (kts[i].active)
 			aoe_flush_iocq_by_index(i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-aoe_flush_iocq_by_index(int id)
-{
-	struct frame *f;
-	struct aoedev *d;
+व्योम
+aoe_flush_iocq_by_index(पूर्णांक id)
+अणु
+	काष्ठा frame *f;
+	काष्ठा aoedev *d;
 	LIST_HEAD(flist);
-	struct list_head *pos;
-	struct sk_buff *skb;
-	ulong flags;
+	काष्ठा list_head *pos;
+	काष्ठा sk_buff *skb;
+	uदीर्घ flags;
 
 	spin_lock_irqsave(&iocq[id].lock, flags);
 	list_splice_init(&iocq[id].head, &flist);
 	spin_unlock_irqrestore(&iocq[id].lock, flags);
-	while (!list_empty(&flist)) {
+	जबतक (!list_empty(&flist)) अणु
 		pos = flist.next;
 		list_del(pos);
-		f = list_entry(pos, struct frame, head);
+		f = list_entry(pos, काष्ठा frame, head);
 		d = f->t->d;
 		skb = f->r_skb;
 		spin_lock_irqsave(&d->lock, flags);
-		if (f->buf) {
+		अगर (f->buf) अणु
 			f->buf->nframesout--;
 			aoe_failbuf(d, f->buf);
-		}
-		aoe_freetframe(f);
+		पूर्ण
+		aoe_मुक्तtframe(f);
 		spin_unlock_irqrestore(&d->lock, flags);
-		dev_kfree_skb(skb);
+		dev_kमुक्त_skb(skb);
 		aoedev_put(d);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int __init
-aoecmd_init(void)
-{
-	void *p;
-	int i;
-	int ret;
+पूर्णांक __init
+aoecmd_init(व्योम)
+अणु
+	व्योम *p;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	/* get_zeroed_page returns page with ref count 1 */
-	p = (void *) get_zeroed_page(GFP_KERNEL);
-	if (!p)
-		return -ENOMEM;
+	/* get_zeroed_page वापसs page with ref count 1 */
+	p = (व्योम *) get_zeroed_page(GFP_KERNEL);
+	अगर (!p)
+		वापस -ENOMEM;
 	empty_page = virt_to_page(p);
 
 	ncpus = num_online_cpus();
 
-	iocq = kcalloc(ncpus, sizeof(struct iocq_ktio), GFP_KERNEL);
-	if (!iocq)
-		return -ENOMEM;
+	iocq = kसुस्मृति(ncpus, माप(काष्ठा iocq_ktio), GFP_KERNEL);
+	अगर (!iocq)
+		वापस -ENOMEM;
 
-	kts = kcalloc(ncpus, sizeof(struct ktstate), GFP_KERNEL);
-	if (!kts) {
+	kts = kसुस्मृति(ncpus, माप(काष्ठा ktstate), GFP_KERNEL);
+	अगर (!kts) अणु
 		ret = -ENOMEM;
-		goto kts_fail;
-	}
+		जाओ kts_fail;
+	पूर्ण
 
-	ktiowq = kcalloc(ncpus, sizeof(wait_queue_head_t), GFP_KERNEL);
-	if (!ktiowq) {
+	ktiowq = kसुस्मृति(ncpus, माप(रुको_queue_head_t), GFP_KERNEL);
+	अगर (!ktiowq) अणु
 		ret = -ENOMEM;
-		goto ktiowq_fail;
-	}
+		जाओ ktiowq_fail;
+	पूर्ण
 
 	mutex_init(&ktio_spawn_lock);
 
-	for (i = 0; i < ncpus; i++) {
+	क्रम (i = 0; i < ncpus; i++) अणु
 		INIT_LIST_HEAD(&iocq[i].head);
 		spin_lock_init(&iocq[i].lock);
-		init_waitqueue_head(&ktiowq[i]);
-		snprintf(kts[i].name, sizeof(kts[i].name), "aoe_ktio%d", i);
+		init_रुकोqueue_head(&ktiowq[i]);
+		snम_लिखो(kts[i].name, माप(kts[i].name), "aoe_ktio%d", i);
 		kts[i].fn = ktio;
-		kts[i].waitq = &ktiowq[i];
+		kts[i].रुकोq = &ktiowq[i];
 		kts[i].lock = &iocq[i].lock;
 		kts[i].id = i;
 		kts[i].active = 0;
-	}
+	पूर्ण
 	kts[0].active = 1;
-	if (aoe_ktstart(&kts[0])) {
+	अगर (aoe_ktstart(&kts[0])) अणु
 		ret = -ENOMEM;
-		goto ktstart_fail;
-	}
-	return 0;
+		जाओ ktstart_fail;
+	पूर्ण
+	वापस 0;
 
 ktstart_fail:
-	kfree(ktiowq);
+	kमुक्त(ktiowq);
 ktiowq_fail:
-	kfree(kts);
+	kमुक्त(kts);
 kts_fail:
-	kfree(iocq);
+	kमुक्त(iocq);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-aoecmd_exit(void)
-{
-	int i;
+व्योम
+aoecmd_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ncpus; i++)
-		if (kts[i].active)
+	क्रम (i = 0; i < ncpus; i++)
+		अगर (kts[i].active)
 			aoe_ktstop(&kts[i]);
 
 	aoe_flush_iocq();
 
-	/* Free up the iocq and thread speicific configuration
+	/* Free up the iocq and thपढ़ो speicअगरic configuration
 	* allocated during startup.
 	*/
-	kfree(iocq);
-	kfree(kts);
-	kfree(ktiowq);
+	kमुक्त(iocq);
+	kमुक्त(kts);
+	kमुक्त(ktiowq);
 
-	free_page((unsigned long) page_address(empty_page));
-	empty_page = NULL;
-}
+	मुक्त_page((अचिन्हित दीर्घ) page_address(empty_page));
+	empty_page = शून्य;
+पूर्ण

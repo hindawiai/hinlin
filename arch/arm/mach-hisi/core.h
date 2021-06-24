@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __HISILICON_CORE_H
-#define __HISILICON_CORE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __HISILICON_CORE_H
+#घोषणा __HISILICON_CORE_H
 
-#include <linux/reboot.h>
+#समावेश <linux/reboot.h>
 
-extern void hi3xxx_set_cpu_jump(int cpu, void *jump_addr);
-extern int hi3xxx_get_cpu_jump(int cpu);
-extern void secondary_startup(void);
+बाह्य व्योम hi3xxx_set_cpu_jump(पूर्णांक cpu, व्योम *jump_addr);
+बाह्य पूर्णांक hi3xxx_get_cpu_jump(पूर्णांक cpu);
+बाह्य व्योम secondary_startup(व्योम);
 
-extern void hi3xxx_cpu_die(unsigned int cpu);
-extern int hi3xxx_cpu_kill(unsigned int cpu);
-extern void hi3xxx_set_cpu(int cpu, bool enable);
+बाह्य व्योम hi3xxx_cpu_die(अचिन्हित पूर्णांक cpu);
+बाह्य पूर्णांक hi3xxx_cpu_समाप्त(अचिन्हित पूर्णांक cpu);
+बाह्य व्योम hi3xxx_set_cpu(पूर्णांक cpu, bool enable);
 
-extern void hix5hd2_set_cpu(int cpu, bool enable);
-extern void hix5hd2_cpu_die(unsigned int cpu);
+बाह्य व्योम hix5hd2_set_cpu(पूर्णांक cpu, bool enable);
+बाह्य व्योम hix5hd2_cpu_die(अचिन्हित पूर्णांक cpu);
 
-extern void hip01_set_cpu(int cpu, bool enable);
-#endif
+बाह्य व्योम hip01_set_cpu(पूर्णांक cpu, bool enable);
+#पूर्ण_अगर

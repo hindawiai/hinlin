@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <uapi/linux/unistd.h>
-#include <linux/kbuild.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <uapi/linux/unistd.h>
+#समावेश <linux/kbuild.h>
 
-#define SYSNR(_NR) DEFINE(SYS ## _NR, _NR)
+#घोषणा SYSNR(_NR) DEFINE(SYS ## _NR, _NR)
 
-void syscall_defines(void)
-{
+व्योम syscall_defines(व्योम)
+अणु
 	COMMENT("Linux system call numbers.");
-	SYSNR(__NR_write);
-	SYSNR(__NR_read);
-#ifdef __NR_mmap2
+	SYSNR(__NR_ग_लिखो);
+	SYSNR(__NR_पढ़ो);
+#अगर_घोषित __NR_mmap2
 	SYSNR(__NR_mmap2);
-#endif
-#ifdef __NR_mmap
+#पूर्ण_अगर
+#अगर_घोषित __NR_mmap
 	SYSNR(__NR_mmap);
-#endif
+#पूर्ण_अगर
 
-}
+पूर्ण

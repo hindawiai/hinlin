@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2020 Invensense, Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/mutex.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/iio/iio.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/iio/iपन.स>
 
-#include "inv_icm42600.h"
-#include "inv_icm42600_temp.h"
+#समावेश "inv_icm42600.h"
+#समावेश "inv_icm42600_temp.h"
 
-static int inv_icm42600_temp_read(struct inv_icm42600_state *st, int16_t *temp)
-{
-	struct device *dev = regmap_get_device(st->map);
+अटल पूर्णांक inv_icm42600_temp_पढ़ो(काष्ठा inv_icm42600_state *st, पूर्णांक16_t *temp)
+अणु
+	काष्ठा device *dev = regmap_get_device(st->map);
 	__be16 *raw;
-	int ret;
+	पूर्णांक ret;
 
-	pm_runtime_get_sync(dev);
+	pm_runसमय_get_sync(dev);
 	mutex_lock(&st->lock);
 
-	ret = inv_icm42600_set_temp_conf(st, true, NULL);
-	if (ret)
-		goto exit;
+	ret = inv_icm42600_set_temp_conf(st, true, शून्य);
+	अगर (ret)
+		जाओ निकास;
 
 	raw = (__be16 *)&st->buffer[0];
-	ret = regmap_bulk_read(st->map, INV_ICM42600_REG_TEMP_DATA, raw, sizeof(*raw));
-	if (ret)
-		goto exit;
+	ret = regmap_bulk_पढ़ो(st->map, INV_ICM42600_REG_TEMP_DATA, raw, माप(*raw));
+	अगर (ret)
+		जाओ निकास;
 
-	*temp = (int16_t)be16_to_cpup(raw);
-	if (*temp == INV_ICM42600_DATA_INVALID)
+	*temp = (पूर्णांक16_t)be16_to_cpup(raw);
+	अगर (*temp == INV_ICM42600_DATA_INVALID)
 		ret = -EINVAL;
 
-exit:
+निकास:
 	mutex_unlock(&st->lock);
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int inv_icm42600_temp_read_raw(struct iio_dev *indio_dev,
-			       struct iio_chan_spec const *chan,
-			       int *val, int *val2, long mask)
-{
-	struct inv_icm42600_state *st = iio_device_get_drvdata(indio_dev);
-	int16_t temp;
-	int ret;
+पूर्णांक inv_icm42600_temp_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			       काष्ठा iio_chan_spec स्थिर *chan,
+			       पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा inv_icm42600_state *st = iio_device_get_drvdata(indio_dev);
+	पूर्णांक16_t temp;
+	पूर्णांक ret;
 
-	if (chan->type != IIO_TEMP)
-		return -EINVAL;
+	अगर (chan->type != IIO_TEMP)
+		वापस -EINVAL;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		ret = iio_device_claim_direct_mode(indio_dev);
-		if (ret)
-			return ret;
-		ret = inv_icm42600_temp_read(st, &temp);
+		अगर (ret)
+			वापस ret;
+		ret = inv_icm42600_temp_पढ़ो(st, &temp);
 		iio_device_release_direct_mode(indio_dev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		*val = temp;
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 	/*
-	 * T°C = (temp / 132.48) + 25
-	 * Tm°C = 1000 * ((temp * 100 / 13248) + 25)
+	 * TतओC = (temp / 132.48) + 25
+	 * TmतओC = 1000 * ((temp * 100 / 13248) + 25)
 	 * scale: 100000 / 13248 ~= 7.548309
 	 * offset: 25000
 	 */
-	case IIO_CHAN_INFO_SCALE:
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = 7;
 		*val2 = 548309;
-		return IIO_VAL_INT_PLUS_MICRO;
-	case IIO_CHAN_INFO_OFFSET:
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	हाल IIO_CHAN_INFO_OFFSET:
 		*val = 25000;
-		return IIO_VAL_INT;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_INT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण

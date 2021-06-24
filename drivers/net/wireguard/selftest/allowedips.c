@@ -1,264 +1,265 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  *
- * This contains some basic static unit tests for the allowedips data structure.
+ * This contains some basic अटल unit tests क्रम the allowedips data काष्ठाure.
  * It also has two additional modes that are disabled and meant to be used by
  * folks directly playing with this file. If you define the macro
- * DEBUG_PRINT_TRIE_GRAPHVIZ to be 1, then every time there's a full tree in
- * memory, it will be printed out as KERN_DEBUG in a format that can be passed
- * to graphviz (the dot command) to visualize it. If you define the macro
+ * DEBUG_PRINT_TRIE_GRAPHVIZ to be 1, then every समय there's a full tree in
+ * memory, it will be prपूर्णांकed out as KERN_DEBUG in a क्रमmat that can be passed
+ * to graphviz (the करोt command) to visualize it. If you define the macro
  * DEBUG_RANDOM_TRIE to be 1, then there will be an extremely costly set of
- * randomized tests done against a trivial implementation, which may take
+ * अक्रमomized tests करोne against a trivial implementation, which may take
  * upwards of a half-hour to complete. There's no set of users who should be
  * enabling these, and the only developers that should go anywhere near these
- * nobs are the ones who are reading this comment.
+ * nobs are the ones who are पढ़ोing this comment.
  */
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 
-#include <linux/siphash.h>
+#समावेश <linux/siphash.h>
 
-static __init void print_node(struct allowedips_node *node, u8 bits)
-{
-	char *fmt_connection = KERN_DEBUG "\t\"%p/%d\" -> \"%p/%d\";\n";
-	char *fmt_declaration = KERN_DEBUG "\t\"%p/%d\"[style=%s, color=\"#%06x\"];\n";
+अटल __init व्योम prपूर्णांक_node(काष्ठा allowedips_node *node, u8 bits)
+अणु
+	अक्षर *fmt_connection = KERN_DEBUG "\t\"%p/%d\" -> \"%p/%d\";\n";
+	अक्षर *fmt_declaration = KERN_DEBUG "\t\"%p/%d\"[style=%s, color=\"#%06x\"];\n";
 	u8 ip1[16], ip2[16], cidr1, cidr2;
-	char *style = "dotted";
+	अक्षर *style = "dotted";
 	u32 color = 0;
 
-	if (node == NULL)
-		return;
-	if (bits == 32) {
+	अगर (node == शून्य)
+		वापस;
+	अगर (bits == 32) अणु
 		fmt_connection = KERN_DEBUG "\t\"%pI4/%d\" -> \"%pI4/%d\";\n";
 		fmt_declaration = KERN_DEBUG "\t\"%pI4/%d\"[style=%s, color=\"#%06x\"];\n";
-	} else if (bits == 128) {
+	पूर्ण अन्यथा अगर (bits == 128) अणु
 		fmt_connection = KERN_DEBUG "\t\"%pI6/%d\" -> \"%pI6/%d\";\n";
 		fmt_declaration = KERN_DEBUG "\t\"%pI6/%d\"[style=%s, color=\"#%06x\"];\n";
-	}
-	if (node->peer) {
-		hsiphash_key_t key = { { 0 } };
+	पूर्ण
+	अगर (node->peer) अणु
+		hsiphash_key_t key = अणु अणु 0 पूर्ण पूर्ण;
 
-		memcpy(&key, &node->peer, sizeof(node->peer));
+		स_नकल(&key, &node->peer, माप(node->peer));
 		color = hsiphash_1u32(0xdeadbeef, &key) % 200 << 16 |
 			hsiphash_1u32(0xbabecafe, &key) % 200 << 8 |
 			hsiphash_1u32(0xabad1dea, &key) % 200;
 		style = "bold";
-	}
-	wg_allowedips_read_node(node, ip1, &cidr1);
-	printk(fmt_declaration, ip1, cidr1, style, color);
-	if (node->bit[0]) {
-		wg_allowedips_read_node(rcu_dereference_raw(node->bit[0]), ip2, &cidr2);
-		printk(fmt_connection, ip1, cidr1, ip2, cidr2);
-	}
-	if (node->bit[1]) {
-		wg_allowedips_read_node(rcu_dereference_raw(node->bit[1]), ip2, &cidr2);
-		printk(fmt_connection, ip1, cidr1, ip2, cidr2);
-	}
-	if (node->bit[0])
-		print_node(rcu_dereference_raw(node->bit[0]), bits);
-	if (node->bit[1])
-		print_node(rcu_dereference_raw(node->bit[1]), bits);
-}
+	पूर्ण
+	wg_allowedips_पढ़ो_node(node, ip1, &cidr1);
+	prपूर्णांकk(fmt_declaration, ip1, cidr1, style, color);
+	अगर (node->bit[0]) अणु
+		wg_allowedips_पढ़ो_node(rcu_dereference_raw(node->bit[0]), ip2, &cidr2);
+		prपूर्णांकk(fmt_connection, ip1, cidr1, ip2, cidr2);
+	पूर्ण
+	अगर (node->bit[1]) अणु
+		wg_allowedips_पढ़ो_node(rcu_dereference_raw(node->bit[1]), ip2, &cidr2);
+		prपूर्णांकk(fmt_connection, ip1, cidr1, ip2, cidr2);
+	पूर्ण
+	अगर (node->bit[0])
+		prपूर्णांक_node(rcu_dereference_raw(node->bit[0]), bits);
+	अगर (node->bit[1])
+		prपूर्णांक_node(rcu_dereference_raw(node->bit[1]), bits);
+पूर्ण
 
-static __init void print_tree(struct allowedips_node __rcu *top, u8 bits)
-{
-	printk(KERN_DEBUG "digraph trie {\n");
-	print_node(rcu_dereference_raw(top), bits);
-	printk(KERN_DEBUG "}\n");
-}
+अटल __init व्योम prपूर्णांक_tree(काष्ठा allowedips_node __rcu *top, u8 bits)
+अणु
+	prपूर्णांकk(KERN_DEBUG "digraph trie {\n");
+	prपूर्णांक_node(rcu_dereference_raw(top), bits);
+	prपूर्णांकk(KERN_DEBUG "}\n");
+पूर्ण
 
-enum {
+क्रमागत अणु
 	NUM_PEERS = 2000,
 	NUM_RAND_ROUTES = 400,
 	NUM_MUTATED_ROUTES = 100,
 	NUM_QUERIES = NUM_RAND_ROUTES * NUM_MUTATED_ROUTES * 30
-};
+पूर्ण;
 
-struct horrible_allowedips {
-	struct hlist_head head;
-};
+काष्ठा horrible_allowedips अणु
+	काष्ठा hlist_head head;
+पूर्ण;
 
-struct horrible_allowedips_node {
-	struct hlist_node table;
-	union nf_inet_addr ip;
-	union nf_inet_addr mask;
+काष्ठा horrible_allowedips_node अणु
+	काष्ठा hlist_node table;
+	जोड़ nf_inet_addr ip;
+	जोड़ nf_inet_addr mask;
 	u8 ip_version;
-	void *value;
-};
+	व्योम *value;
+पूर्ण;
 
-static __init void horrible_allowedips_init(struct horrible_allowedips *table)
-{
+अटल __init व्योम horrible_allowedips_init(काष्ठा horrible_allowedips *table)
+अणु
 	INIT_HLIST_HEAD(&table->head);
-}
+पूर्ण
 
-static __init void horrible_allowedips_free(struct horrible_allowedips *table)
-{
-	struct horrible_allowedips_node *node;
-	struct hlist_node *h;
+अटल __init व्योम horrible_allowedips_मुक्त(काष्ठा horrible_allowedips *table)
+अणु
+	काष्ठा horrible_allowedips_node *node;
+	काष्ठा hlist_node *h;
 
-	hlist_for_each_entry_safe(node, h, &table->head, table) {
+	hlist_क्रम_each_entry_safe(node, h, &table->head, table) अणु
 		hlist_del(&node->table);
-		kfree(node);
-	}
-}
+		kमुक्त(node);
+	पूर्ण
+पूर्ण
 
-static __init inline union nf_inet_addr horrible_cidr_to_mask(u8 cidr)
-{
-	union nf_inet_addr mask;
+अटल __init अंतरभूत जोड़ nf_inet_addr horrible_cidr_to_mask(u8 cidr)
+अणु
+	जोड़ nf_inet_addr mask;
 
-	memset(&mask, 0, sizeof(mask));
-	memset(&mask.all, 0xff, cidr / 8);
-	if (cidr % 32)
-		mask.all[cidr / 32] = (__force u32)htonl(
+	स_रखो(&mask, 0, माप(mask));
+	स_रखो(&mask.all, 0xff, cidr / 8);
+	अगर (cidr % 32)
+		mask.all[cidr / 32] = (__क्रमce u32)htonl(
 			(0xFFFFFFFFUL << (32 - (cidr % 32))) & 0xFFFFFFFFUL);
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static __init inline u8 horrible_mask_to_cidr(union nf_inet_addr subnet)
-{
-	return hweight32(subnet.all[0]) + hweight32(subnet.all[1]) +
+अटल __init अंतरभूत u8 horrible_mask_to_cidr(जोड़ nf_inet_addr subnet)
+अणु
+	वापस hweight32(subnet.all[0]) + hweight32(subnet.all[1]) +
 	       hweight32(subnet.all[2]) + hweight32(subnet.all[3]);
-}
+पूर्ण
 
-static __init inline void
-horrible_mask_self(struct horrible_allowedips_node *node)
-{
-	if (node->ip_version == 4) {
+अटल __init अंतरभूत व्योम
+horrible_mask_self(काष्ठा horrible_allowedips_node *node)
+अणु
+	अगर (node->ip_version == 4) अणु
 		node->ip.ip &= node->mask.ip;
-	} else if (node->ip_version == 6) {
+	पूर्ण अन्यथा अगर (node->ip_version == 6) अणु
 		node->ip.ip6[0] &= node->mask.ip6[0];
 		node->ip.ip6[1] &= node->mask.ip6[1];
 		node->ip.ip6[2] &= node->mask.ip6[2];
 		node->ip.ip6[3] &= node->mask.ip6[3];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static __init inline bool
-horrible_match_v4(const struct horrible_allowedips_node *node, struct in_addr *ip)
-{
-	return (ip->s_addr & node->mask.ip) == node->ip.ip;
-}
+अटल __init अंतरभूत bool
+horrible_match_v4(स्थिर काष्ठा horrible_allowedips_node *node, काष्ठा in_addr *ip)
+अणु
+	वापस (ip->s_addr & node->mask.ip) == node->ip.ip;
+पूर्ण
 
-static __init inline bool
-horrible_match_v6(const struct horrible_allowedips_node *node, struct in6_addr *ip)
-{
-	return (ip->in6_u.u6_addr32[0] & node->mask.ip6[0]) == node->ip.ip6[0] &&
+अटल __init अंतरभूत bool
+horrible_match_v6(स्थिर काष्ठा horrible_allowedips_node *node, काष्ठा in6_addr *ip)
+अणु
+	वापस (ip->in6_u.u6_addr32[0] & node->mask.ip6[0]) == node->ip.ip6[0] &&
 	       (ip->in6_u.u6_addr32[1] & node->mask.ip6[1]) == node->ip.ip6[1] &&
 	       (ip->in6_u.u6_addr32[2] & node->mask.ip6[2]) == node->ip.ip6[2] &&
 	       (ip->in6_u.u6_addr32[3] & node->mask.ip6[3]) == node->ip.ip6[3];
-}
+पूर्ण
 
-static __init void
-horrible_insert_ordered(struct horrible_allowedips *table, struct horrible_allowedips_node *node)
-{
-	struct horrible_allowedips_node *other = NULL, *where = NULL;
+अटल __init व्योम
+horrible_insert_ordered(काष्ठा horrible_allowedips *table, काष्ठा horrible_allowedips_node *node)
+अणु
+	काष्ठा horrible_allowedips_node *other = शून्य, *where = शून्य;
 	u8 my_cidr = horrible_mask_to_cidr(node->mask);
 
-	hlist_for_each_entry(other, &table->head, table) {
-		if (other->ip_version == node->ip_version &&
-		    !memcmp(&other->mask, &node->mask, sizeof(union nf_inet_addr)) &&
-		    !memcmp(&other->ip, &node->ip, sizeof(union nf_inet_addr))) {
+	hlist_क्रम_each_entry(other, &table->head, table) अणु
+		अगर (other->ip_version == node->ip_version &&
+		    !स_भेद(&other->mask, &node->mask, माप(जोड़ nf_inet_addr)) &&
+		    !स_भेद(&other->ip, &node->ip, माप(जोड़ nf_inet_addr))) अणु
 			other->value = node->value;
-			kfree(node);
-			return;
-		}
-	}
-	hlist_for_each_entry(other, &table->head, table) {
+			kमुक्त(node);
+			वापस;
+		पूर्ण
+	पूर्ण
+	hlist_क्रम_each_entry(other, &table->head, table) अणु
 		where = other;
-		if (horrible_mask_to_cidr(other->mask) <= my_cidr)
-			break;
-	}
-	if (!other && !where)
+		अगर (horrible_mask_to_cidr(other->mask) <= my_cidr)
+			अवरोध;
+	पूर्ण
+	अगर (!other && !where)
 		hlist_add_head(&node->table, &table->head);
-	else if (!other)
+	अन्यथा अगर (!other)
 		hlist_add_behind(&node->table, &where->table);
-	else
-		hlist_add_before(&node->table, &where->table);
-}
+	अन्यथा
+		hlist_add_beक्रमe(&node->table, &where->table);
+पूर्ण
 
-static __init int
-horrible_allowedips_insert_v4(struct horrible_allowedips *table,
-			      struct in_addr *ip, u8 cidr, void *value)
-{
-	struct horrible_allowedips_node *node = kzalloc(sizeof(*node), GFP_KERNEL);
+अटल __init पूर्णांक
+horrible_allowedips_insert_v4(काष्ठा horrible_allowedips *table,
+			      काष्ठा in_addr *ip, u8 cidr, व्योम *value)
+अणु
+	काष्ठा horrible_allowedips_node *node = kzalloc(माप(*node), GFP_KERNEL);
 
-	if (unlikely(!node))
-		return -ENOMEM;
+	अगर (unlikely(!node))
+		वापस -ENOMEM;
 	node->ip.in = *ip;
 	node->mask = horrible_cidr_to_mask(cidr);
 	node->ip_version = 4;
 	node->value = value;
 	horrible_mask_self(node);
 	horrible_insert_ordered(table, node);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __init int
-horrible_allowedips_insert_v6(struct horrible_allowedips *table,
-			      struct in6_addr *ip, u8 cidr, void *value)
-{
-	struct horrible_allowedips_node *node = kzalloc(sizeof(*node), GFP_KERNEL);
+अटल __init पूर्णांक
+horrible_allowedips_insert_v6(काष्ठा horrible_allowedips *table,
+			      काष्ठा in6_addr *ip, u8 cidr, व्योम *value)
+अणु
+	काष्ठा horrible_allowedips_node *node = kzalloc(माप(*node), GFP_KERNEL);
 
-	if (unlikely(!node))
-		return -ENOMEM;
+	अगर (unlikely(!node))
+		वापस -ENOMEM;
 	node->ip.in6 = *ip;
 	node->mask = horrible_cidr_to_mask(cidr);
 	node->ip_version = 6;
 	node->value = value;
 	horrible_mask_self(node);
 	horrible_insert_ordered(table, node);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __init void *
-horrible_allowedips_lookup_v4(struct horrible_allowedips *table, struct in_addr *ip)
-{
-	struct horrible_allowedips_node *node;
+अटल __init व्योम *
+horrible_allowedips_lookup_v4(काष्ठा horrible_allowedips *table, काष्ठा in_addr *ip)
+अणु
+	काष्ठा horrible_allowedips_node *node;
 
-	hlist_for_each_entry(node, &table->head, table) {
-		if (node->ip_version == 4 && horrible_match_v4(node, ip))
-			return node->value;
-	}
-	return NULL;
-}
+	hlist_क्रम_each_entry(node, &table->head, table) अणु
+		अगर (node->ip_version == 4 && horrible_match_v4(node, ip))
+			वापस node->value;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static __init void *
-horrible_allowedips_lookup_v6(struct horrible_allowedips *table, struct in6_addr *ip)
-{
-	struct horrible_allowedips_node *node;
+अटल __init व्योम *
+horrible_allowedips_lookup_v6(काष्ठा horrible_allowedips *table, काष्ठा in6_addr *ip)
+अणु
+	काष्ठा horrible_allowedips_node *node;
 
-	hlist_for_each_entry(node, &table->head, table) {
-		if (node->ip_version == 6 && horrible_match_v6(node, ip))
-			return node->value;
-	}
-	return NULL;
-}
+	hlist_क्रम_each_entry(node, &table->head, table) अणु
+		अगर (node->ip_version == 6 && horrible_match_v6(node, ip))
+			वापस node->value;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 
-static __init void
-horrible_allowedips_remove_by_value(struct horrible_allowedips *table, void *value)
-{
-	struct horrible_allowedips_node *node;
-	struct hlist_node *h;
+अटल __init व्योम
+horrible_allowedips_हटाओ_by_value(काष्ठा horrible_allowedips *table, व्योम *value)
+अणु
+	काष्ठा horrible_allowedips_node *node;
+	काष्ठा hlist_node *h;
 
-	hlist_for_each_entry_safe(node, h, &table->head, table) {
-		if (node->value != value)
-			continue;
+	hlist_क्रम_each_entry_safe(node, h, &table->head, table) अणु
+		अगर (node->value != value)
+			जारी;
 		hlist_del(&node->table);
-		kfree(node);
-	}
+		kमुक्त(node);
+	पूर्ण
 
-}
+पूर्ण
 
-static __init bool randomized_test(void)
-{
-	unsigned int i, j, k, mutate_amount, cidr;
+अटल __init bool अक्रमomized_test(व्योम)
+अणु
+	अचिन्हित पूर्णांक i, j, k, mutate_amount, cidr;
 	u8 ip[16], mutate_mask[16], mutated[16];
-	struct wg_peer **peers, *peer;
-	struct horrible_allowedips h;
+	काष्ठा wg_peer **peers, *peer;
+	काष्ठा horrible_allowedips h;
 	DEFINE_MUTEX(mutex);
-	struct allowedips t;
+	काष्ठा allowedips t;
 	bool ret = false;
 
 	mutex_init(&mutex);
@@ -266,249 +267,249 @@ static __init bool randomized_test(void)
 	wg_allowedips_init(&t);
 	horrible_allowedips_init(&h);
 
-	peers = kcalloc(NUM_PEERS, sizeof(*peers), GFP_KERNEL);
-	if (unlikely(!peers)) {
+	peers = kसुस्मृति(NUM_PEERS, माप(*peers), GFP_KERNEL);
+	अगर (unlikely(!peers)) अणु
 		pr_err("allowedips random self-test malloc: FAIL\n");
-		goto free;
-	}
-	for (i = 0; i < NUM_PEERS; ++i) {
-		peers[i] = kzalloc(sizeof(*peers[i]), GFP_KERNEL);
-		if (unlikely(!peers[i])) {
+		जाओ मुक्त;
+	पूर्ण
+	क्रम (i = 0; i < NUM_PEERS; ++i) अणु
+		peers[i] = kzalloc(माप(*peers[i]), GFP_KERNEL);
+		अगर (unlikely(!peers[i])) अणु
 			pr_err("allowedips random self-test malloc: FAIL\n");
-			goto free;
-		}
+			जाओ मुक्त;
+		पूर्ण
 		kref_init(&peers[i]->refcount);
 		INIT_LIST_HEAD(&peers[i]->allowedips_list);
-	}
+	पूर्ण
 
 	mutex_lock(&mutex);
 
-	for (i = 0; i < NUM_RAND_ROUTES; ++i) {
-		prandom_bytes(ip, 4);
-		cidr = prandom_u32_max(32) + 1;
-		peer = peers[prandom_u32_max(NUM_PEERS)];
-		if (wg_allowedips_insert_v4(&t, (struct in_addr *)ip, cidr,
-					    peer, &mutex) < 0) {
+	क्रम (i = 0; i < NUM_RAND_ROUTES; ++i) अणु
+		pअक्रमom_bytes(ip, 4);
+		cidr = pअक्रमom_u32_max(32) + 1;
+		peer = peers[pअक्रमom_u32_max(NUM_PEERS)];
+		अगर (wg_allowedips_insert_v4(&t, (काष्ठा in_addr *)ip, cidr,
+					    peer, &mutex) < 0) अणु
 			pr_err("allowedips random self-test malloc: FAIL\n");
-			goto free_locked;
-		}
-		if (horrible_allowedips_insert_v4(&h, (struct in_addr *)ip,
-						  cidr, peer) < 0) {
+			जाओ मुक्त_locked;
+		पूर्ण
+		अगर (horrible_allowedips_insert_v4(&h, (काष्ठा in_addr *)ip,
+						  cidr, peer) < 0) अणु
 			pr_err("allowedips random self-test malloc: FAIL\n");
-			goto free_locked;
-		}
-		for (j = 0; j < NUM_MUTATED_ROUTES; ++j) {
-			memcpy(mutated, ip, 4);
-			prandom_bytes(mutate_mask, 4);
-			mutate_amount = prandom_u32_max(32);
-			for (k = 0; k < mutate_amount / 8; ++k)
+			जाओ मुक्त_locked;
+		पूर्ण
+		क्रम (j = 0; j < NUM_MUTATED_ROUTES; ++j) अणु
+			स_नकल(mutated, ip, 4);
+			pअक्रमom_bytes(mutate_mask, 4);
+			mutate_amount = pअक्रमom_u32_max(32);
+			क्रम (k = 0; k < mutate_amount / 8; ++k)
 				mutate_mask[k] = 0xff;
 			mutate_mask[k] = 0xff
 					 << ((8 - (mutate_amount % 8)) % 8);
-			for (; k < 4; ++k)
+			क्रम (; k < 4; ++k)
 				mutate_mask[k] = 0;
-			for (k = 0; k < 4; ++k)
+			क्रम (k = 0; k < 4; ++k)
 				mutated[k] = (mutated[k] & mutate_mask[k]) |
 					     (~mutate_mask[k] &
-					      prandom_u32_max(256));
-			cidr = prandom_u32_max(32) + 1;
-			peer = peers[prandom_u32_max(NUM_PEERS)];
-			if (wg_allowedips_insert_v4(&t,
-						    (struct in_addr *)mutated,
-						    cidr, peer, &mutex) < 0) {
+					      pअक्रमom_u32_max(256));
+			cidr = pअक्रमom_u32_max(32) + 1;
+			peer = peers[pअक्रमom_u32_max(NUM_PEERS)];
+			अगर (wg_allowedips_insert_v4(&t,
+						    (काष्ठा in_addr *)mutated,
+						    cidr, peer, &mutex) < 0) अणु
 				pr_err("allowedips random self-test malloc: FAIL\n");
-				goto free_locked;
-			}
-			if (horrible_allowedips_insert_v4(&h,
-				(struct in_addr *)mutated, cidr, peer)) {
+				जाओ मुक्त_locked;
+			पूर्ण
+			अगर (horrible_allowedips_insert_v4(&h,
+				(काष्ठा in_addr *)mutated, cidr, peer)) अणु
 				pr_err("allowedips random self-test malloc: FAIL\n");
-				goto free_locked;
-			}
-		}
-	}
+				जाओ मुक्त_locked;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < NUM_RAND_ROUTES; ++i) {
-		prandom_bytes(ip, 16);
-		cidr = prandom_u32_max(128) + 1;
-		peer = peers[prandom_u32_max(NUM_PEERS)];
-		if (wg_allowedips_insert_v6(&t, (struct in6_addr *)ip, cidr,
-					    peer, &mutex) < 0) {
+	क्रम (i = 0; i < NUM_RAND_ROUTES; ++i) अणु
+		pअक्रमom_bytes(ip, 16);
+		cidr = pअक्रमom_u32_max(128) + 1;
+		peer = peers[pअक्रमom_u32_max(NUM_PEERS)];
+		अगर (wg_allowedips_insert_v6(&t, (काष्ठा in6_addr *)ip, cidr,
+					    peer, &mutex) < 0) अणु
 			pr_err("allowedips random self-test malloc: FAIL\n");
-			goto free_locked;
-		}
-		if (horrible_allowedips_insert_v6(&h, (struct in6_addr *)ip,
-						  cidr, peer) < 0) {
+			जाओ मुक्त_locked;
+		पूर्ण
+		अगर (horrible_allowedips_insert_v6(&h, (काष्ठा in6_addr *)ip,
+						  cidr, peer) < 0) अणु
 			pr_err("allowedips random self-test malloc: FAIL\n");
-			goto free_locked;
-		}
-		for (j = 0; j < NUM_MUTATED_ROUTES; ++j) {
-			memcpy(mutated, ip, 16);
-			prandom_bytes(mutate_mask, 16);
-			mutate_amount = prandom_u32_max(128);
-			for (k = 0; k < mutate_amount / 8; ++k)
+			जाओ मुक्त_locked;
+		पूर्ण
+		क्रम (j = 0; j < NUM_MUTATED_ROUTES; ++j) अणु
+			स_नकल(mutated, ip, 16);
+			pअक्रमom_bytes(mutate_mask, 16);
+			mutate_amount = pअक्रमom_u32_max(128);
+			क्रम (k = 0; k < mutate_amount / 8; ++k)
 				mutate_mask[k] = 0xff;
 			mutate_mask[k] = 0xff
 					 << ((8 - (mutate_amount % 8)) % 8);
-			for (; k < 4; ++k)
+			क्रम (; k < 4; ++k)
 				mutate_mask[k] = 0;
-			for (k = 0; k < 4; ++k)
+			क्रम (k = 0; k < 4; ++k)
 				mutated[k] = (mutated[k] & mutate_mask[k]) |
 					     (~mutate_mask[k] &
-					      prandom_u32_max(256));
-			cidr = prandom_u32_max(128) + 1;
-			peer = peers[prandom_u32_max(NUM_PEERS)];
-			if (wg_allowedips_insert_v6(&t,
-						    (struct in6_addr *)mutated,
-						    cidr, peer, &mutex) < 0) {
+					      pअक्रमom_u32_max(256));
+			cidr = pअक्रमom_u32_max(128) + 1;
+			peer = peers[pअक्रमom_u32_max(NUM_PEERS)];
+			अगर (wg_allowedips_insert_v6(&t,
+						    (काष्ठा in6_addr *)mutated,
+						    cidr, peer, &mutex) < 0) अणु
 				pr_err("allowedips random self-test malloc: FAIL\n");
-				goto free_locked;
-			}
-			if (horrible_allowedips_insert_v6(
-				    &h, (struct in6_addr *)mutated, cidr,
-				    peer)) {
+				जाओ मुक्त_locked;
+			पूर्ण
+			अगर (horrible_allowedips_insert_v6(
+				    &h, (काष्ठा in6_addr *)mutated, cidr,
+				    peer)) अणु
 				pr_err("allowedips random self-test malloc: FAIL\n");
-				goto free_locked;
-			}
-		}
-	}
+				जाओ मुक्त_locked;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&mutex);
 
-	if (IS_ENABLED(DEBUG_PRINT_TRIE_GRAPHVIZ)) {
-		print_tree(t.root4, 32);
-		print_tree(t.root6, 128);
-	}
+	अगर (IS_ENABLED(DEBUG_PRINT_TRIE_GRAPHVIZ)) अणु
+		prपूर्णांक_tree(t.root4, 32);
+		prपूर्णांक_tree(t.root6, 128);
+	पूर्ण
 
-	for (j = 0;; ++j) {
-		for (i = 0; i < NUM_QUERIES; ++i) {
-			prandom_bytes(ip, 4);
-			if (lookup(t.root4, 32, ip) != horrible_allowedips_lookup_v4(&h, (struct in_addr *)ip)) {
-				horrible_allowedips_lookup_v4(&h, (struct in_addr *)ip);
+	क्रम (j = 0;; ++j) अणु
+		क्रम (i = 0; i < NUM_QUERIES; ++i) अणु
+			pअक्रमom_bytes(ip, 4);
+			अगर (lookup(t.root4, 32, ip) != horrible_allowedips_lookup_v4(&h, (काष्ठा in_addr *)ip)) अणु
+				horrible_allowedips_lookup_v4(&h, (काष्ठा in_addr *)ip);
 				pr_err("allowedips random v4 self-test: FAIL\n");
-				goto free;
-			}
-			prandom_bytes(ip, 16);
-			if (lookup(t.root6, 128, ip) != horrible_allowedips_lookup_v6(&h, (struct in6_addr *)ip)) {
+				जाओ मुक्त;
+			पूर्ण
+			pअक्रमom_bytes(ip, 16);
+			अगर (lookup(t.root6, 128, ip) != horrible_allowedips_lookup_v6(&h, (काष्ठा in6_addr *)ip)) अणु
 				pr_err("allowedips random v6 self-test: FAIL\n");
-				goto free;
-			}
-		}
-		if (j >= NUM_PEERS)
-			break;
+				जाओ मुक्त;
+			पूर्ण
+		पूर्ण
+		अगर (j >= NUM_PEERS)
+			अवरोध;
 		mutex_lock(&mutex);
-		wg_allowedips_remove_by_peer(&t, peers[j], &mutex);
+		wg_allowedips_हटाओ_by_peer(&t, peers[j], &mutex);
 		mutex_unlock(&mutex);
-		horrible_allowedips_remove_by_value(&h, peers[j]);
-	}
+		horrible_allowedips_हटाओ_by_value(&h, peers[j]);
+	पूर्ण
 
-	if (t.root4 || t.root6) {
+	अगर (t.root4 || t.root6) अणु
 		pr_err("allowedips random self-test removal: FAIL\n");
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
 	ret = true;
 
-free:
+मुक्त:
 	mutex_lock(&mutex);
-free_locked:
-	wg_allowedips_free(&t, &mutex);
+मुक्त_locked:
+	wg_allowedips_मुक्त(&t, &mutex);
 	mutex_unlock(&mutex);
-	horrible_allowedips_free(&h);
-	if (peers) {
-		for (i = 0; i < NUM_PEERS; ++i)
-			kfree(peers[i]);
-	}
-	kfree(peers);
-	return ret;
-}
+	horrible_allowedips_मुक्त(&h);
+	अगर (peers) अणु
+		क्रम (i = 0; i < NUM_PEERS; ++i)
+			kमुक्त(peers[i]);
+	पूर्ण
+	kमुक्त(peers);
+	वापस ret;
+पूर्ण
 
-static __init inline struct in_addr *ip4(u8 a, u8 b, u8 c, u8 d)
-{
-	static struct in_addr ip;
+अटल __init अंतरभूत काष्ठा in_addr *ip4(u8 a, u8 b, u8 c, u8 d)
+अणु
+	अटल काष्ठा in_addr ip;
 	u8 *split = (u8 *)&ip;
 
 	split[0] = a;
 	split[1] = b;
 	split[2] = c;
 	split[3] = d;
-	return &ip;
-}
+	वापस &ip;
+पूर्ण
 
-static __init inline struct in6_addr *ip6(u32 a, u32 b, u32 c, u32 d)
-{
-	static struct in6_addr ip;
+अटल __init अंतरभूत काष्ठा in6_addr *ip6(u32 a, u32 b, u32 c, u32 d)
+अणु
+	अटल काष्ठा in6_addr ip;
 	__be32 *split = (__be32 *)&ip;
 
 	split[0] = cpu_to_be32(a);
 	split[1] = cpu_to_be32(b);
 	split[2] = cpu_to_be32(c);
 	split[3] = cpu_to_be32(d);
-	return &ip;
-}
+	वापस &ip;
+पूर्ण
 
-static __init struct wg_peer *init_peer(void)
-{
-	struct wg_peer *peer = kzalloc(sizeof(*peer), GFP_KERNEL);
+अटल __init काष्ठा wg_peer *init_peer(व्योम)
+अणु
+	काष्ठा wg_peer *peer = kzalloc(माप(*peer), GFP_KERNEL);
 
-	if (!peer)
-		return NULL;
+	अगर (!peer)
+		वापस शून्य;
 	kref_init(&peer->refcount);
 	INIT_LIST_HEAD(&peer->allowedips_list);
-	return peer;
-}
+	वापस peer;
+पूर्ण
 
-#define insert(version, mem, ipa, ipb, ipc, ipd, cidr)                       \
+#घोषणा insert(version, mem, ipa, ipb, ipc, ipd, cidr)                       \
 	wg_allowedips_insert_v##version(&t, ip##version(ipa, ipb, ipc, ipd), \
 					cidr, mem, &mutex)
 
-#define maybe_fail() do {                                               \
+#घोषणा maybe_fail() करो अणु                                               \
 		++i;                                                    \
-		if (!_s) {                                              \
+		अगर (!_s) अणु                                              \
 			pr_info("allowedips self-test %zu: FAIL\n", i); \
 			success = false;                                \
-		}                                                       \
-	} while (0)
+		पूर्ण                                                       \
+	पूर्ण जबतक (0)
 
-#define test(version, mem, ipa, ipb, ipc, ipd) do {                          \
+#घोषणा test(version, mem, ipa, ipb, ipc, ipd) करो अणु                          \
 		bool _s = lookup(t.root##version, (version) == 4 ? 32 : 128, \
 				 ip##version(ipa, ipb, ipc, ipd)) == (mem);  \
 		maybe_fail();                                                \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define test_negative(version, mem, ipa, ipb, ipc, ipd) do {                 \
+#घोषणा test_negative(version, mem, ipa, ipb, ipc, ipd) करो अणु                 \
 		bool _s = lookup(t.root##version, (version) == 4 ? 32 : 128, \
 				 ip##version(ipa, ipb, ipc, ipd)) != (mem);  \
 		maybe_fail();                                                \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define test_boolean(cond) do {   \
+#घोषणा test_boolean(cond) करो अणु   \
 		bool _s = (cond); \
 		maybe_fail();     \
-	} while (0)
+	पूर्ण जबतक (0)
 
-bool __init wg_allowedips_selftest(void)
-{
+bool __init wg_allowedips_selftest(व्योम)
+अणु
 	bool found_a = false, found_b = false, found_c = false, found_d = false,
 	     found_e = false, found_other = false;
-	struct wg_peer *a = init_peer(), *b = init_peer(), *c = init_peer(),
+	काष्ठा wg_peer *a = init_peer(), *b = init_peer(), *c = init_peer(),
 		       *d = init_peer(), *e = init_peer(), *f = init_peer(),
 		       *g = init_peer(), *h = init_peer();
-	struct allowedips_node *iter_node;
+	काष्ठा allowedips_node *iter_node;
 	bool success = false;
-	struct allowedips t;
+	काष्ठा allowedips t;
 	DEFINE_MUTEX(mutex);
-	struct in6_addr ip;
-	size_t i = 0, count = 0;
+	काष्ठा in6_addr ip;
+	माप_प्रकार i = 0, count = 0;
 	__be64 part;
 
 	mutex_init(&mutex);
 	mutex_lock(&mutex);
 	wg_allowedips_init(&t);
 
-	if (!a || !b || !c || !d || !e || !f || !g || !h) {
+	अगर (!a || !b || !c || !d || !e || !f || !g || !h) अणु
 		pr_err("allowedips self-test malloc: FAIL\n");
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
 	insert(4, a, 192, 168, 4, 0, 24);
 	insert(4, b, 192, 168, 4, 4, 32);
@@ -538,10 +539,10 @@ bool __init wg_allowedips_selftest(void)
 	insert(4, c, 10, 1, 0, 8, 29);
 	insert(4, d, 10, 1, 0, 16, 29);
 
-	if (IS_ENABLED(DEBUG_PRINT_TRIE_GRAPHVIZ)) {
-		print_tree(t.root4, 32);
-		print_tree(t.root6, 128);
-	}
+	अगर (IS_ENABLED(DEBUG_PRINT_TRIE_GRAPHVIZ)) अणु
+		prपूर्णांक_tree(t.root4, 32);
+		prपूर्णांक_tree(t.root6, 128);
+	पूर्ण
 
 	success = true;
 
@@ -579,31 +580,31 @@ bool __init wg_allowedips_selftest(void)
 	insert(4, a, 128, 0, 0, 0, 32);
 	insert(4, a, 192, 0, 0, 0, 32);
 	insert(4, a, 255, 0, 0, 0, 32);
-	wg_allowedips_remove_by_peer(&t, a, &mutex);
+	wg_allowedips_हटाओ_by_peer(&t, a, &mutex);
 	test_negative(4, a, 1, 0, 0, 0);
 	test_negative(4, a, 64, 0, 0, 0);
 	test_negative(4, a, 128, 0, 0, 0);
 	test_negative(4, a, 192, 0, 0, 0);
 	test_negative(4, a, 255, 0, 0, 0);
 
-	wg_allowedips_free(&t, &mutex);
+	wg_allowedips_मुक्त(&t, &mutex);
 	wg_allowedips_init(&t);
 	insert(4, a, 192, 168, 0, 0, 16);
 	insert(4, a, 192, 168, 0, 0, 24);
-	wg_allowedips_remove_by_peer(&t, a, &mutex);
+	wg_allowedips_हटाओ_by_peer(&t, a, &mutex);
 	test_negative(4, a, 192, 168, 0, 1);
 
-	/* These will hit the WARN_ON(len >= 128) in free_node if something
+	/* These will hit the WARN_ON(len >= 128) in मुक्त_node अगर something
 	 * goes wrong.
 	 */
-	for (i = 0; i < 128; ++i) {
+	क्रम (i = 0; i < 128; ++i) अणु
 		part = cpu_to_be64(~(1LLU << (i % 64)));
-		memset(&ip, 0xff, 16);
-		memcpy((u8 *)&ip + (i < 64) * 8, &part, 8);
+		स_रखो(&ip, 0xff, 16);
+		स_नकल((u8 *)&ip + (i < 64) * 8, &part, 8);
 		wg_allowedips_insert_v6(&t, &ip, 128, a, &mutex);
-	}
+	पूर्ण
 
-	wg_allowedips_free(&t, &mutex);
+	wg_allowedips_मुक्त(&t, &mutex);
 
 	wg_allowedips_init(&t);
 	insert(4, a, 192, 95, 5, 93, 27);
@@ -611,33 +612,33 @@ bool __init wg_allowedips_selftest(void)
 	insert(4, a, 10, 1, 0, 20, 29);
 	insert(6, a, 0x26075300, 0x6d8a6bf8, 0xdab1f1df, 0xc05f1523, 83);
 	insert(6, a, 0x26075300, 0x6d8a6bf8, 0xdab1f1df, 0xc05f1523, 21);
-	list_for_each_entry(iter_node, &a->allowedips_list, peer_list) {
+	list_क्रम_each_entry(iter_node, &a->allowedips_list, peer_list) अणु
 		u8 cidr, ip[16] __aligned(__alignof(u64));
-		int family = wg_allowedips_read_node(iter_node, ip, &cidr);
+		पूर्णांक family = wg_allowedips_पढ़ो_node(iter_node, ip, &cidr);
 
 		count++;
 
-		if (cidr == 27 && family == AF_INET &&
-		    !memcmp(ip, ip4(192, 95, 5, 64), sizeof(struct in_addr)))
+		अगर (cidr == 27 && family == AF_INET &&
+		    !स_भेद(ip, ip4(192, 95, 5, 64), माप(काष्ठा in_addr)))
 			found_a = true;
-		else if (cidr == 128 && family == AF_INET6 &&
-			 !memcmp(ip, ip6(0x26075300, 0x60006b00, 0, 0xc05f0543),
-				 sizeof(struct in6_addr)))
+		अन्यथा अगर (cidr == 128 && family == AF_INET6 &&
+			 !स_भेद(ip, ip6(0x26075300, 0x60006b00, 0, 0xc05f0543),
+				 माप(काष्ठा in6_addr)))
 			found_b = true;
-		else if (cidr == 29 && family == AF_INET &&
-			 !memcmp(ip, ip4(10, 1, 0, 16), sizeof(struct in_addr)))
+		अन्यथा अगर (cidr == 29 && family == AF_INET &&
+			 !स_भेद(ip, ip4(10, 1, 0, 16), माप(काष्ठा in_addr)))
 			found_c = true;
-		else if (cidr == 83 && family == AF_INET6 &&
-			 !memcmp(ip, ip6(0x26075300, 0x6d8a6bf8, 0xdab1e000, 0),
-				 sizeof(struct in6_addr)))
+		अन्यथा अगर (cidr == 83 && family == AF_INET6 &&
+			 !स_भेद(ip, ip6(0x26075300, 0x6d8a6bf8, 0xdab1e000, 0),
+				 माप(काष्ठा in6_addr)))
 			found_d = true;
-		else if (cidr == 21 && family == AF_INET6 &&
-			 !memcmp(ip, ip6(0x26075000, 0, 0, 0),
-				 sizeof(struct in6_addr)))
+		अन्यथा अगर (cidr == 21 && family == AF_INET6 &&
+			 !स_भेद(ip, ip6(0x26075000, 0, 0, 0),
+				 माप(काष्ठा in6_addr)))
 			found_e = true;
-		else
+		अन्यथा
 			found_other = true;
-	}
+	पूर्ण
 	test_boolean(count == 5);
 	test_boolean(found_a);
 	test_boolean(found_b);
@@ -646,31 +647,31 @@ bool __init wg_allowedips_selftest(void)
 	test_boolean(found_e);
 	test_boolean(!found_other);
 
-	if (IS_ENABLED(DEBUG_RANDOM_TRIE) && success)
-		success = randomized_test();
+	अगर (IS_ENABLED(DEBUG_RANDOM_TRIE) && success)
+		success = अक्रमomized_test();
 
-	if (success)
+	अगर (success)
 		pr_info("allowedips self-tests: pass\n");
 
-free:
-	wg_allowedips_free(&t, &mutex);
-	kfree(a);
-	kfree(b);
-	kfree(c);
-	kfree(d);
-	kfree(e);
-	kfree(f);
-	kfree(g);
-	kfree(h);
+मुक्त:
+	wg_allowedips_मुक्त(&t, &mutex);
+	kमुक्त(a);
+	kमुक्त(b);
+	kमुक्त(c);
+	kमुक्त(d);
+	kमुक्त(e);
+	kमुक्त(f);
+	kमुक्त(g);
+	kमुक्त(h);
 	mutex_unlock(&mutex);
 
-	return success;
-}
+	वापस success;
+पूर्ण
 
-#undef test_negative
-#undef test
-#undef remove
-#undef insert
-#undef init_peer
+#अघोषित test_negative
+#अघोषित test
+#अघोषित हटाओ
+#अघोषित insert
+#अघोषित init_peer
 
-#endif
+#पूर्ण_अगर

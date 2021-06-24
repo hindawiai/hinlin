@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Hardware spinlock framework
  *
@@ -7,100 +8,100 @@
  * Contact: Ohad Ben-Cohen <ohad@wizery.com>
  */
 
-#define pr_fmt(fmt)    "%s: " fmt, __func__
+#घोषणा pr_fmt(fmt)    "%s: " fmt, __func__
 
-#include <linux/delay.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/err.h>
-#include <linux/jiffies.h>
-#include <linux/radix-tree.h>
-#include <linux/hwspinlock.h>
-#include <linux/pm_runtime.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/err.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/radix-tree.h>
+#समावेश <linux/hwspinlock.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
 
-#include "hwspinlock_internal.h"
+#समावेश "hwspinlock_internal.h"
 
 /* retry delay used in atomic context */
-#define HWSPINLOCK_RETRY_DELAY_US	100
+#घोषणा HWSPINLOCK_RETRY_DELAY_US	100
 
 /* radix tree tags */
-#define HWSPINLOCK_UNUSED	(0) /* tags an hwspinlock as unused */
+#घोषणा HWSPINLOCK_UNUSED	(0) /* tags an hwspinlock as unused */
 
 /*
- * A radix tree is used to maintain the available hwspinlock instances.
- * The tree associates hwspinlock pointers with their integer key id,
+ * A radix tree is used to मुख्यtain the available hwspinlock instances.
+ * The tree associates hwspinlock poपूर्णांकers with their पूर्णांकeger key id,
  * and provides easy-to-use API which makes the hwspinlock core code simple
- * and easy to read.
+ * and easy to पढ़ो.
  *
  * Radix trees are quick on lookups, and reasonably efficient in terms of
  * storage, especially with high density usages such as this framework
- * requires (a continuous range of integer keys, beginning with zero, is
+ * requires (a continuous range of पूर्णांकeger keys, beginning with zero, is
  * used as the ID's of the hwspinlock instances).
  *
  * The radix tree API supports tagging items in the tree, which this
  * framework uses to mark unused hwspinlock instances (see the
  * HWSPINLOCK_UNUSED tag above). As a result, the process of querying the
- * tree, looking for an unused hwspinlock instance, is now reduced to a
+ * tree, looking क्रम an unused hwspinlock instance, is now reduced to a
  * single radix tree API call.
  */
-static RADIX_TREE(hwspinlock_tree, GFP_KERNEL);
+अटल RADIX_TREE(hwspinlock_tree, GFP_KERNEL);
 
 /*
  * Synchronization of access to the tree is achieved using this mutex,
  * as the radix-tree API requires that users provide all synchronisation.
  * A mutex is needed because we're using non-atomic radix tree allocations.
  */
-static DEFINE_MUTEX(hwspinlock_tree_lock);
+अटल DEFINE_MUTEX(hwspinlock_tree_lock);
 
 
 /**
- * __hwspin_trylock() - attempt to lock a specific hwspinlock
+ * __hwspin_trylock() - attempt to lock a specअगरic hwspinlock
  * @hwlock: an hwspinlock which we want to trylock
- * @mode: controls whether local interrupts are disabled or not
- * @flags: a pointer where the caller's interrupt state will be saved at (if
+ * @mode: controls whether local पूर्णांकerrupts are disabled or not
+ * @flags: a poपूर्णांकer where the caller's पूर्णांकerrupt state will be saved at (अगर
  *         requested)
  *
  * This function attempts to lock an hwspinlock, and will immediately
- * fail if the hwspinlock is already taken.
+ * fail अगर the hwspinlock is alपढ़ोy taken.
  *
  * Caution: If the mode is HWLOCK_RAW, that means user must protect the routine
  * of getting hardware lock with mutex or spinlock. Since in some scenarios,
- * user need some time-consuming or sleepable operations under the hardware
+ * user need some समय-consuming or sleepable operations under the hardware
  * lock, they need one sleepable lock (like mutex) to protect the operations.
  *
  * If the mode is neither HWLOCK_IN_ATOMIC nor HWLOCK_RAW, upon a successful
- * return from this function, preemption (and possibly interrupts) is disabled,
+ * वापस from this function, preemption (and possibly पूर्णांकerrupts) is disabled,
  * so the caller must not sleep, and is advised to release the hwspinlock as
  * soon as possible. This is required in order to minimize remote cores polling
- * on the hardware interconnect.
+ * on the hardware पूर्णांकerconnect.
  *
- * The user decides whether local interrupts are disabled or not, and if yes,
+ * The user decides whether local पूर्णांकerrupts are disabled or not, and अगर yes,
  * whether he wants their previous state to be saved. It is up to the user
  * to choose the appropriate @mode of operation, exactly the same way users
  * should decide between spin_trylock, spin_trylock_irq and
  * spin_trylock_irqsave.
  *
- * Returns 0 if we successfully locked the hwspinlock or -EBUSY if
- * the hwspinlock was already taken.
+ * Returns 0 अगर we successfully locked the hwspinlock or -EBUSY अगर
+ * the hwspinlock was alपढ़ोy taken.
  * This function will never sleep.
  */
-int __hwspin_trylock(struct hwspinlock *hwlock, int mode, unsigned long *flags)
-{
-	int ret;
+पूर्णांक __hwspin_trylock(काष्ठा hwspinlock *hwlock, पूर्णांक mode, अचिन्हित दीर्घ *flags)
+अणु
+	पूर्णांक ret;
 
-	if (WARN_ON(!hwlock || (!flags && mode == HWLOCK_IRQSTATE)))
-		return -EINVAL;
+	अगर (WARN_ON(!hwlock || (!flags && mode == HWLOCK_IRQSTATE)))
+		वापस -EINVAL;
 
 	/*
-	 * This spin_lock{_irq, _irqsave} serves three purposes:
+	 * This spin_lockअणु_irq, _irqsaveपूर्ण serves three purposes:
 	 *
-	 * 1. Disable preemption, in order to minimize the period of time
+	 * 1. Disable preemption, in order to minimize the period of समय
 	 *    in which the hwspinlock is taken. This is important in order
-	 *    to minimize the possible polling on the hardware interconnect
+	 *    to minimize the possible polling on the hardware पूर्णांकerconnect
 	 *    by a remote user of this lock.
 	 * 2. Make the hwspinlock SMP-safe (so we can take it from
 	 *    additional contexts on the local host).
@@ -108,55 +109,55 @@ int __hwspin_trylock(struct hwspinlock *hwlock, int mode, unsigned long *flags)
 	 *    problems with hwspinlock usage (e.g. scheduler checks like
 	 *    'scheduling while atomic' etc.)
 	 */
-	switch (mode) {
-	case HWLOCK_IRQSTATE:
+	चयन (mode) अणु
+	हाल HWLOCK_IRQSTATE:
 		ret = spin_trylock_irqsave(&hwlock->lock, *flags);
-		break;
-	case HWLOCK_IRQ:
+		अवरोध;
+	हाल HWLOCK_IRQ:
 		ret = spin_trylock_irq(&hwlock->lock);
-		break;
-	case HWLOCK_RAW:
-	case HWLOCK_IN_ATOMIC:
+		अवरोध;
+	हाल HWLOCK_RAW:
+	हाल HWLOCK_IN_ATOMIC:
 		ret = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = spin_trylock(&hwlock->lock);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* is lock already taken by another context on the local cpu ? */
-	if (!ret)
-		return -EBUSY;
+	/* is lock alपढ़ोy taken by another context on the local cpu ? */
+	अगर (!ret)
+		वापस -EBUSY;
 
 	/* try to take the hwspinlock device */
 	ret = hwlock->bank->ops->trylock(hwlock);
 
-	/* if hwlock is already taken, undo spin_trylock_* and exit */
-	if (!ret) {
-		switch (mode) {
-		case HWLOCK_IRQSTATE:
+	/* अगर hwlock is alपढ़ोy taken, unकरो spin_trylock_* and निकास */
+	अगर (!ret) अणु
+		चयन (mode) अणु
+		हाल HWLOCK_IRQSTATE:
 			spin_unlock_irqrestore(&hwlock->lock, *flags);
-			break;
-		case HWLOCK_IRQ:
+			अवरोध;
+		हाल HWLOCK_IRQ:
 			spin_unlock_irq(&hwlock->lock);
-			break;
-		case HWLOCK_RAW:
-		case HWLOCK_IN_ATOMIC:
-			/* Nothing to do */
-			break;
-		default:
+			अवरोध;
+		हाल HWLOCK_RAW:
+		हाल HWLOCK_IN_ATOMIC:
+			/* Nothing to करो */
+			अवरोध;
+		शेष:
 			spin_unlock(&hwlock->lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/*
 	 * We can be sure the other core's memory operations
 	 * are observable to us only _after_ we successfully take
 	 * the hwspinlock, and we must make sure that subsequent memory
-	 * operations (both reads and writes) will not be reordered before
+	 * operations (both पढ़ोs and ग_लिखोs) will not be reordered beक्रमe
 	 * we actually took the hwspinlock.
 	 *
 	 * Note: the implicit memory barrier of the spinlock above is too
@@ -164,112 +165,112 @@ int __hwspin_trylock(struct hwspinlock *hwlock, int mode, unsigned long *flags)
 	 */
 	mb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(__hwspin_trylock);
 
 /**
- * __hwspin_lock_timeout() - lock an hwspinlock with timeout limit
+ * __hwspin_lock_समयout() - lock an hwspinlock with समयout limit
  * @hwlock: the hwspinlock to be locked
- * @timeout: timeout value in msecs
- * @mode: mode which controls whether local interrupts are disabled or not
- * @flags: a pointer to where the caller's interrupt state will be saved at (if
+ * @समयout: समयout value in msecs
+ * @mode: mode which controls whether local पूर्णांकerrupts are disabled or not
+ * @flags: a poपूर्णांकer to where the caller's पूर्णांकerrupt state will be saved at (अगर
  *         requested)
  *
  * This function locks the given @hwlock. If the @hwlock
- * is already taken, the function will busy loop waiting for it to
- * be released, but give up after @timeout msecs have elapsed.
+ * is alपढ़ोy taken, the function will busy loop रुकोing क्रम it to
+ * be released, but give up after @समयout msecs have elapsed.
  *
  * Caution: If the mode is HWLOCK_RAW, that means user must protect the routine
  * of getting hardware lock with mutex or spinlock. Since in some scenarios,
- * user need some time-consuming or sleepable operations under the hardware
+ * user need some समय-consuming or sleepable operations under the hardware
  * lock, they need one sleepable lock (like mutex) to protect the operations.
  *
- * If the mode is HWLOCK_IN_ATOMIC (called from an atomic context) the timeout
- * is handled with busy-waiting delays, hence shall not exceed few msecs.
+ * If the mode is HWLOCK_IN_ATOMIC (called from an atomic context) the समयout
+ * is handled with busy-रुकोing delays, hence shall not exceed few msecs.
  *
  * If the mode is neither HWLOCK_IN_ATOMIC nor HWLOCK_RAW, upon a successful
- * return from this function, preemption (and possibly interrupts) is disabled,
+ * वापस from this function, preemption (and possibly पूर्णांकerrupts) is disabled,
  * so the caller must not sleep, and is advised to release the hwspinlock as
  * soon as possible. This is required in order to minimize remote cores polling
- * on the hardware interconnect.
+ * on the hardware पूर्णांकerconnect.
  *
- * The user decides whether local interrupts are disabled or not, and if yes,
+ * The user decides whether local पूर्णांकerrupts are disabled or not, and अगर yes,
  * whether he wants their previous state to be saved. It is up to the user
  * to choose the appropriate @mode of operation, exactly the same way users
  * should decide between spin_lock, spin_lock_irq and spin_lock_irqsave.
  *
  * Returns 0 when the @hwlock was successfully taken, and an appropriate
- * error code otherwise (most notably -ETIMEDOUT if the @hwlock is still
- * busy after @timeout msecs). The function will never sleep.
+ * error code otherwise (most notably -ETIMEDOUT अगर the @hwlock is still
+ * busy after @समयout msecs). The function will never sleep.
  */
-int __hwspin_lock_timeout(struct hwspinlock *hwlock, unsigned int to,
-					int mode, unsigned long *flags)
-{
-	int ret;
-	unsigned long expire, atomic_delay = 0;
+पूर्णांक __hwspin_lock_समयout(काष्ठा hwspinlock *hwlock, अचिन्हित पूर्णांक to,
+					पूर्णांक mode, अचिन्हित दीर्घ *flags)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ expire, atomic_delay = 0;
 
-	expire = msecs_to_jiffies(to) + jiffies;
+	expire = msecs_to_jअगरfies(to) + jअगरfies;
 
-	for (;;) {
+	क्रम (;;) अणु
 		/* Try to take the hwspinlock */
 		ret = __hwspin_trylock(hwlock, mode, flags);
-		if (ret != -EBUSY)
-			break;
+		अगर (ret != -EBUSY)
+			अवरोध;
 
 		/*
-		 * The lock is already taken, let's check if the user wants
+		 * The lock is alपढ़ोy taken, let's check अगर the user wants
 		 * us to try again
 		 */
-		if (mode == HWLOCK_IN_ATOMIC) {
+		अगर (mode == HWLOCK_IN_ATOMIC) अणु
 			udelay(HWSPINLOCK_RETRY_DELAY_US);
 			atomic_delay += HWSPINLOCK_RETRY_DELAY_US;
-			if (atomic_delay > to * 1000)
-				return -ETIMEDOUT;
-		} else {
-			if (time_is_before_eq_jiffies(expire))
-				return -ETIMEDOUT;
-		}
+			अगर (atomic_delay > to * 1000)
+				वापस -ETIMEDOUT;
+		पूर्ण अन्यथा अणु
+			अगर (समय_is_beक्रमe_eq_jअगरfies(expire))
+				वापस -ETIMEDOUT;
+		पूर्ण
 
 		/*
-		 * Allow platform-specific relax handlers to prevent
-		 * hogging the interconnect (no sleeping, though)
+		 * Allow platक्रमm-specअगरic relax handlers to prevent
+		 * hogging the पूर्णांकerconnect (no sleeping, though)
 		 */
-		if (hwlock->bank->ops->relax)
+		अगर (hwlock->bank->ops->relax)
 			hwlock->bank->ops->relax(hwlock);
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(__hwspin_lock_timeout);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(__hwspin_lock_समयout);
 
 /**
- * __hwspin_unlock() - unlock a specific hwspinlock
+ * __hwspin_unlock() - unlock a specअगरic hwspinlock
  * @hwlock: a previously-acquired hwspinlock which we want to unlock
- * @mode: controls whether local interrupts needs to be restored or not
- * @flags: previous caller's interrupt state to restore (if requested)
+ * @mode: controls whether local पूर्णांकerrupts needs to be restored or not
+ * @flags: previous caller's पूर्णांकerrupt state to restore (अगर requested)
  *
- * This function will unlock a specific hwspinlock, enable preemption and
- * (possibly) enable interrupts or restore their previous state.
- * @hwlock must be already locked before calling this function: it is a bug
- * to call unlock on a @hwlock that is already unlocked.
+ * This function will unlock a specअगरic hwspinlock, enable preemption and
+ * (possibly) enable पूर्णांकerrupts or restore their previous state.
+ * @hwlock must be alपढ़ोy locked beक्रमe calling this function: it is a bug
+ * to call unlock on a @hwlock that is alपढ़ोy unlocked.
  *
- * The user decides whether local interrupts should be enabled or not, and
- * if yes, whether he wants their previous state to be restored. It is up
+ * The user decides whether local पूर्णांकerrupts should be enabled or not, and
+ * अगर yes, whether he wants their previous state to be restored. It is up
  * to the user to choose the appropriate @mode of operation, exactly the
  * same way users decide between spin_unlock, spin_unlock_irq and
  * spin_unlock_irqrestore.
  *
  * The function will never sleep.
  */
-void __hwspin_unlock(struct hwspinlock *hwlock, int mode, unsigned long *flags)
-{
-	if (WARN_ON(!hwlock || (!flags && mode == HWLOCK_IRQSTATE)))
-		return;
+व्योम __hwspin_unlock(काष्ठा hwspinlock *hwlock, पूर्णांक mode, अचिन्हित दीर्घ *flags)
+अणु
+	अगर (WARN_ON(!hwlock || (!flags && mode == HWLOCK_IRQSTATE)))
+		वापस;
 
 	/*
-	 * We must make sure that memory operations (both reads and writes),
-	 * done before unlocking the hwspinlock, will not be reordered
+	 * We must make sure that memory operations (both पढ़ोs and ग_लिखोs),
+	 * करोne beक्रमe unlocking the hwspinlock, will not be reordered
 	 * after the lock is released.
 	 *
 	 * That's the purpose of this explicit memory barrier.
@@ -277,420 +278,420 @@ void __hwspin_unlock(struct hwspinlock *hwlock, int mode, unsigned long *flags)
 	 * Note: the memory barrier induced by the spin_unlock below is too
 	 * late; the other core is going to access memory soon after it will
 	 * take the hwspinlock, and by then we want to be sure our memory
-	 * operations are already observable.
+	 * operations are alपढ़ोy observable.
 	 */
 	mb();
 
 	hwlock->bank->ops->unlock(hwlock);
 
-	/* Undo the spin_trylock{_irq, _irqsave} called while locking */
-	switch (mode) {
-	case HWLOCK_IRQSTATE:
+	/* Unकरो the spin_trylockअणु_irq, _irqsaveपूर्ण called जबतक locking */
+	चयन (mode) अणु
+	हाल HWLOCK_IRQSTATE:
 		spin_unlock_irqrestore(&hwlock->lock, *flags);
-		break;
-	case HWLOCK_IRQ:
+		अवरोध;
+	हाल HWLOCK_IRQ:
 		spin_unlock_irq(&hwlock->lock);
-		break;
-	case HWLOCK_RAW:
-	case HWLOCK_IN_ATOMIC:
-		/* Nothing to do */
-		break;
-	default:
+		अवरोध;
+	हाल HWLOCK_RAW:
+	हाल HWLOCK_IN_ATOMIC:
+		/* Nothing to करो */
+		अवरोध;
+	शेष:
 		spin_unlock(&hwlock->lock);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(__hwspin_unlock);
 
 /**
- * of_hwspin_lock_simple_xlate - translate hwlock_spec to return a lock id
+ * of_hwspin_lock_simple_xlate - translate hwlock_spec to वापस a lock id
  * @bank: the hwspinlock device bank
- * @hwlock_spec: hwlock specifier as found in the device tree
+ * @hwlock_spec: hwlock specअगरier as found in the device tree
  *
- * This is a simple translation function, suitable for hwspinlock platform
- * drivers that only has a lock specifier length of 1.
+ * This is a simple translation function, suitable क्रम hwspinlock platक्रमm
+ * drivers that only has a lock specअगरier length of 1.
  *
- * Returns a relative index of the lock within a specified bank on success,
- * or -EINVAL on invalid specifier cell count.
+ * Returns a relative index of the lock within a specअगरied bank on success,
+ * or -EINVAL on invalid specअगरier cell count.
  */
-static inline int
-of_hwspin_lock_simple_xlate(const struct of_phandle_args *hwlock_spec)
-{
-	if (WARN_ON(hwlock_spec->args_count != 1))
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक
+of_hwspin_lock_simple_xlate(स्थिर काष्ठा of_phandle_args *hwlock_spec)
+अणु
+	अगर (WARN_ON(hwlock_spec->args_count != 1))
+		वापस -EINVAL;
 
-	return hwlock_spec->args[0];
-}
+	वापस hwlock_spec->args[0];
+पूर्ण
 
 /**
- * of_hwspin_lock_get_id() - get lock id for an OF phandle-based specific lock
- * @np: device node from which to request the specific hwlock
+ * of_hwspin_lock_get_id() - get lock id क्रम an OF phandle-based specअगरic lock
+ * @np: device node from which to request the specअगरic hwlock
  * @index: index of the hwlock in the list of values
  *
- * This function provides a means for DT users of the hwspinlock module to
- * get the global lock id of a specific hwspinlock using the phandle of the
+ * This function provides a means क्रम DT users of the hwspinlock module to
+ * get the global lock id of a specअगरic hwspinlock using the phandle of the
  * hwspinlock device, so that it can be requested using the normal
- * hwspin_lock_request_specific() API.
+ * hwspin_lock_request_specअगरic() API.
  *
- * Returns the global lock id number on success, -EPROBE_DEFER if the hwspinlock
- * device is not yet registered, -EINVAL on invalid args specifier value or an
- * appropriate error as returned from the OF parsing of the DT client node.
+ * Returns the global lock id number on success, -EPROBE_DEFER अगर the hwspinlock
+ * device is not yet रेजिस्टरed, -EINVAL on invalid args specअगरier value or an
+ * appropriate error as वापसed from the OF parsing of the DT client node.
  */
-int of_hwspin_lock_get_id(struct device_node *np, int index)
-{
-	struct of_phandle_args args;
-	struct hwspinlock *hwlock;
-	struct radix_tree_iter iter;
-	void **slot;
-	int id;
-	int ret;
+पूर्णांक of_hwspin_lock_get_id(काष्ठा device_node *np, पूर्णांक index)
+अणु
+	काष्ठा of_phandle_args args;
+	काष्ठा hwspinlock *hwlock;
+	काष्ठा radix_tree_iter iter;
+	व्योम **slot;
+	पूर्णांक id;
+	पूर्णांक ret;
 
 	ret = of_parse_phandle_with_args(np, "hwlocks", "#hwlock-cells", index,
 					 &args);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!of_device_is_available(args.np)) {
+	अगर (!of_device_is_available(args.np)) अणु
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Find the hwspinlock device: we need its base_id */
 	ret = -EPROBE_DEFER;
-	rcu_read_lock();
-	radix_tree_for_each_slot(slot, &hwspinlock_tree, &iter, 0) {
+	rcu_पढ़ो_lock();
+	radix_tree_क्रम_each_slot(slot, &hwspinlock_tree, &iter, 0) अणु
 		hwlock = radix_tree_deref_slot(slot);
-		if (unlikely(!hwlock))
-			continue;
-		if (radix_tree_deref_retry(hwlock)) {
+		अगर (unlikely(!hwlock))
+			जारी;
+		अगर (radix_tree_deref_retry(hwlock)) अणु
 			slot = radix_tree_iter_retry(&iter);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (hwlock->bank->dev->of_node == args.np) {
+		अगर (hwlock->bank->dev->of_node == args.np) अणु
 			ret = 0;
-			break;
-		}
-	}
-	rcu_read_unlock();
-	if (ret < 0)
-		goto out;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	अगर (ret < 0)
+		जाओ out;
 
 	id = of_hwspin_lock_simple_xlate(&args);
-	if (id < 0 || id >= hwlock->bank->num_locks) {
+	अगर (id < 0 || id >= hwlock->bank->num_locks) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	id += hwlock->bank->base_id;
 
 out:
 	of_node_put(args.np);
-	return ret ? ret : id;
-}
+	वापस ret ? ret : id;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_hwspin_lock_get_id);
 
 /**
- * of_hwspin_lock_get_id_byname() - get lock id for an specified hwlock name
- * @np: device node from which to request the specific hwlock
+ * of_hwspin_lock_get_id_byname() - get lock id क्रम an specअगरied hwlock name
+ * @np: device node from which to request the specअगरic hwlock
  * @name: hwlock name
  *
- * This function provides a means for DT users of the hwspinlock module to
- * get the global lock id of a specific hwspinlock using the specified name of
+ * This function provides a means क्रम DT users of the hwspinlock module to
+ * get the global lock id of a specअगरic hwspinlock using the specअगरied name of
  * the hwspinlock device, so that it can be requested using the normal
- * hwspin_lock_request_specific() API.
+ * hwspin_lock_request_specअगरic() API.
  *
- * Returns the global lock id number on success, -EPROBE_DEFER if the hwspinlock
- * device is not yet registered, -EINVAL on invalid args specifier value or an
- * appropriate error as returned from the OF parsing of the DT client node.
+ * Returns the global lock id number on success, -EPROBE_DEFER अगर the hwspinlock
+ * device is not yet रेजिस्टरed, -EINVAL on invalid args specअगरier value or an
+ * appropriate error as वापसed from the OF parsing of the DT client node.
  */
-int of_hwspin_lock_get_id_byname(struct device_node *np, const char *name)
-{
-	int index;
+पूर्णांक of_hwspin_lock_get_id_byname(काष्ठा device_node *np, स्थिर अक्षर *name)
+अणु
+	पूर्णांक index;
 
-	if (!name)
-		return -EINVAL;
+	अगर (!name)
+		वापस -EINVAL;
 
 	index = of_property_match_string(np, "hwlock-names", name);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
-	return of_hwspin_lock_get_id(np, index);
-}
+	वापस of_hwspin_lock_get_id(np, index);
+पूर्ण
 EXPORT_SYMBOL_GPL(of_hwspin_lock_get_id_byname);
 
-static int hwspin_lock_register_single(struct hwspinlock *hwlock, int id)
-{
-	struct hwspinlock *tmp;
-	int ret;
+अटल पूर्णांक hwspin_lock_रेजिस्टर_single(काष्ठा hwspinlock *hwlock, पूर्णांक id)
+अणु
+	काष्ठा hwspinlock *पंचांगp;
+	पूर्णांक ret;
 
 	mutex_lock(&hwspinlock_tree_lock);
 
 	ret = radix_tree_insert(&hwspinlock_tree, id, hwlock);
-	if (ret) {
-		if (ret == -EEXIST)
+	अगर (ret) अणु
+		अगर (ret == -EEXIST)
 			pr_err("hwspinlock id %d already exists!\n", id);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* mark this hwspinlock as available */
-	tmp = radix_tree_tag_set(&hwspinlock_tree, id, HWSPINLOCK_UNUSED);
+	पंचांगp = radix_tree_tag_set(&hwspinlock_tree, id, HWSPINLOCK_UNUSED);
 
 	/* self-sanity check which should never fail */
-	WARN_ON(tmp != hwlock);
+	WARN_ON(पंचांगp != hwlock);
 
 out:
 	mutex_unlock(&hwspinlock_tree_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct hwspinlock *hwspin_lock_unregister_single(unsigned int id)
-{
-	struct hwspinlock *hwlock = NULL;
-	int ret;
+अटल काष्ठा hwspinlock *hwspin_lock_unरेजिस्टर_single(अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा hwspinlock *hwlock = शून्य;
+	पूर्णांक ret;
 
 	mutex_lock(&hwspinlock_tree_lock);
 
 	/* make sure the hwspinlock is not in use (tag is set) */
 	ret = radix_tree_tag_get(&hwspinlock_tree, id, HWSPINLOCK_UNUSED);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		pr_err("hwspinlock %d still in use (or not present)\n", id);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hwlock = radix_tree_delete(&hwspinlock_tree, id);
-	if (!hwlock) {
+	अगर (!hwlock) अणु
 		pr_err("failed to delete hwspinlock %d\n", id);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
 	mutex_unlock(&hwspinlock_tree_lock);
-	return hwlock;
-}
+	वापस hwlock;
+पूर्ण
 
 /**
- * hwspin_lock_register() - register a new hw spinlock device
+ * hwspin_lock_रेजिस्टर() - रेजिस्टर a new hw spinlock device
  * @bank: the hwspinlock device, which usually provides numerous hw locks
  * @dev: the backing device
- * @ops: hwspinlock handlers for this device
+ * @ops: hwspinlock handlers क्रम this device
  * @base_id: id of the first hardware spinlock in this bank
  * @num_locks: number of hwspinlocks provided by this device
  *
- * This function should be called from the underlying platform-specific
- * implementation, to register a new hwspinlock device instance.
+ * This function should be called from the underlying platक्रमm-specअगरic
+ * implementation, to रेजिस्टर a new hwspinlock device instance.
  *
  * Should be called from a process context (might sleep)
  *
  * Returns 0 on success, or an appropriate error code on failure
  */
-int hwspin_lock_register(struct hwspinlock_device *bank, struct device *dev,
-		const struct hwspinlock_ops *ops, int base_id, int num_locks)
-{
-	struct hwspinlock *hwlock;
-	int ret = 0, i;
+पूर्णांक hwspin_lock_रेजिस्टर(काष्ठा hwspinlock_device *bank, काष्ठा device *dev,
+		स्थिर काष्ठा hwspinlock_ops *ops, पूर्णांक base_id, पूर्णांक num_locks)
+अणु
+	काष्ठा hwspinlock *hwlock;
+	पूर्णांक ret = 0, i;
 
-	if (!bank || !ops || !dev || !num_locks || !ops->trylock ||
-							!ops->unlock) {
+	अगर (!bank || !ops || !dev || !num_locks || !ops->trylock ||
+							!ops->unlock) अणु
 		pr_err("invalid parameters\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bank->dev = dev;
 	bank->ops = ops;
 	bank->base_id = base_id;
 	bank->num_locks = num_locks;
 
-	for (i = 0; i < num_locks; i++) {
+	क्रम (i = 0; i < num_locks; i++) अणु
 		hwlock = &bank->lock[i];
 
 		spin_lock_init(&hwlock->lock);
 		hwlock->bank = bank;
 
-		ret = hwspin_lock_register_single(hwlock, base_id + i);
-		if (ret)
-			goto reg_failed;
-	}
+		ret = hwspin_lock_रेजिस्टर_single(hwlock, base_id + i);
+		अगर (ret)
+			जाओ reg_failed;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 reg_failed:
-	while (--i >= 0)
-		hwspin_lock_unregister_single(base_id + i);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(hwspin_lock_register);
+	जबतक (--i >= 0)
+		hwspin_lock_unरेजिस्टर_single(base_id + i);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(hwspin_lock_रेजिस्टर);
 
 /**
- * hwspin_lock_unregister() - unregister an hw spinlock device
+ * hwspin_lock_unरेजिस्टर() - unरेजिस्टर an hw spinlock device
  * @bank: the hwspinlock device, which usually provides numerous hw locks
  *
- * This function should be called from the underlying platform-specific
- * implementation, to unregister an existing (and unused) hwspinlock.
+ * This function should be called from the underlying platक्रमm-specअगरic
+ * implementation, to unरेजिस्टर an existing (and unused) hwspinlock.
  *
  * Should be called from a process context (might sleep)
  *
  * Returns 0 on success, or an appropriate error code on failure
  */
-int hwspin_lock_unregister(struct hwspinlock_device *bank)
-{
-	struct hwspinlock *hwlock, *tmp;
-	int i;
+पूर्णांक hwspin_lock_unरेजिस्टर(काष्ठा hwspinlock_device *bank)
+अणु
+	काष्ठा hwspinlock *hwlock, *पंचांगp;
+	पूर्णांक i;
 
-	for (i = 0; i < bank->num_locks; i++) {
+	क्रम (i = 0; i < bank->num_locks; i++) अणु
 		hwlock = &bank->lock[i];
 
-		tmp = hwspin_lock_unregister_single(bank->base_id + i);
-		if (!tmp)
-			return -EBUSY;
+		पंचांगp = hwspin_lock_unरेजिस्टर_single(bank->base_id + i);
+		अगर (!पंचांगp)
+			वापस -EBUSY;
 
 		/* self-sanity check that should never fail */
-		WARN_ON(tmp != hwlock);
-	}
+		WARN_ON(पंचांगp != hwlock);
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(hwspin_lock_unregister);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(hwspin_lock_unरेजिस्टर);
 
-static void devm_hwspin_lock_unreg(struct device *dev, void *res)
-{
-	hwspin_lock_unregister(*(struct hwspinlock_device **)res);
-}
+अटल व्योम devm_hwspin_lock_unreg(काष्ठा device *dev, व्योम *res)
+अणु
+	hwspin_lock_unरेजिस्टर(*(काष्ठा hwspinlock_device **)res);
+पूर्ण
 
-static int devm_hwspin_lock_device_match(struct device *dev, void *res,
-					 void *data)
-{
-	struct hwspinlock_device **bank = res;
+अटल पूर्णांक devm_hwspin_lock_device_match(काष्ठा device *dev, व्योम *res,
+					 व्योम *data)
+अणु
+	काष्ठा hwspinlock_device **bank = res;
 
-	if (WARN_ON(!bank || !*bank))
-		return 0;
+	अगर (WARN_ON(!bank || !*bank))
+		वापस 0;
 
-	return *bank == data;
-}
+	वापस *bank == data;
+पूर्ण
 
 /**
- * devm_hwspin_lock_unregister() - unregister an hw spinlock device for
+ * devm_hwspin_lock_unरेजिस्टर() - unरेजिस्टर an hw spinlock device क्रम
  *				   a managed device
  * @dev: the backing device
  * @bank: the hwspinlock device, which usually provides numerous hw locks
  *
- * This function should be called from the underlying platform-specific
- * implementation, to unregister an existing (and unused) hwspinlock.
+ * This function should be called from the underlying platक्रमm-specअगरic
+ * implementation, to unरेजिस्टर an existing (and unused) hwspinlock.
  *
  * Should be called from a process context (might sleep)
  *
  * Returns 0 on success, or an appropriate error code on failure
  */
-int devm_hwspin_lock_unregister(struct device *dev,
-				struct hwspinlock_device *bank)
-{
-	int ret;
+पूर्णांक devm_hwspin_lock_unरेजिस्टर(काष्ठा device *dev,
+				काष्ठा hwspinlock_device *bank)
+अणु
+	पूर्णांक ret;
 
 	ret = devres_release(dev, devm_hwspin_lock_unreg,
 			     devm_hwspin_lock_device_match, bank);
 	WARN_ON(ret);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(devm_hwspin_lock_unregister);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_hwspin_lock_unरेजिस्टर);
 
 /**
- * devm_hwspin_lock_register() - register a new hw spinlock device for
+ * devm_hwspin_lock_रेजिस्टर() - रेजिस्टर a new hw spinlock device क्रम
  *				 a managed device
  * @dev: the backing device
  * @bank: the hwspinlock device, which usually provides numerous hw locks
- * @ops: hwspinlock handlers for this device
+ * @ops: hwspinlock handlers क्रम this device
  * @base_id: id of the first hardware spinlock in this bank
  * @num_locks: number of hwspinlocks provided by this device
  *
- * This function should be called from the underlying platform-specific
- * implementation, to register a new hwspinlock device instance.
+ * This function should be called from the underlying platक्रमm-specअगरic
+ * implementation, to रेजिस्टर a new hwspinlock device instance.
  *
  * Should be called from a process context (might sleep)
  *
  * Returns 0 on success, or an appropriate error code on failure
  */
-int devm_hwspin_lock_register(struct device *dev,
-			      struct hwspinlock_device *bank,
-			      const struct hwspinlock_ops *ops,
-			      int base_id, int num_locks)
-{
-	struct hwspinlock_device **ptr;
-	int ret;
+पूर्णांक devm_hwspin_lock_रेजिस्टर(काष्ठा device *dev,
+			      काष्ठा hwspinlock_device *bank,
+			      स्थिर काष्ठा hwspinlock_ops *ops,
+			      पूर्णांक base_id, पूर्णांक num_locks)
+अणु
+	काष्ठा hwspinlock_device **ptr;
+	पूर्णांक ret;
 
-	ptr = devres_alloc(devm_hwspin_lock_unreg, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	ptr = devres_alloc(devm_hwspin_lock_unreg, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस -ENOMEM;
 
-	ret = hwspin_lock_register(bank, dev, ops, base_id, num_locks);
-	if (!ret) {
+	ret = hwspin_lock_रेजिस्टर(bank, dev, ops, base_id, num_locks);
+	अगर (!ret) अणु
 		*ptr = bank;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(devm_hwspin_lock_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_hwspin_lock_रेजिस्टर);
 
 /**
- * __hwspin_lock_request() - tag an hwspinlock as used and power it up
+ * __hwspin_lock_request() - tag an hwspinlock as used and घातer it up
  *
- * This is an internal function that prepares an hwspinlock instance
- * before it is given to the user. The function assumes that
+ * This is an पूर्णांकernal function that prepares an hwspinlock instance
+ * beक्रमe it is given to the user. The function assumes that
  * hwspinlock_tree_lock is taken.
  *
  * Returns 0 or positive to indicate success, and a negative value to
  * indicate an error (with the appropriate error code)
  */
-static int __hwspin_lock_request(struct hwspinlock *hwlock)
-{
-	struct device *dev = hwlock->bank->dev;
-	struct hwspinlock *tmp;
-	int ret;
+अटल पूर्णांक __hwspin_lock_request(काष्ठा hwspinlock *hwlock)
+अणु
+	काष्ठा device *dev = hwlock->bank->dev;
+	काष्ठा hwspinlock *पंचांगp;
+	पूर्णांक ret;
 
-	/* prevent underlying implementation from being removed */
-	if (!try_module_get(dev->driver->owner)) {
+	/* prevent underlying implementation from being हटाओd */
+	अगर (!try_module_get(dev->driver->owner)) अणु
 		dev_err(dev, "%s: can't get owner\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* notify PM core that power is now needed */
-	ret = pm_runtime_get_sync(dev);
-	if (ret < 0 && ret != -EACCES) {
+	/* notअगरy PM core that घातer is now needed */
+	ret = pm_runसमय_get_sync(dev);
+	अगर (ret < 0 && ret != -EACCES) अणु
 		dev_err(dev, "%s: can't power on device\n", __func__);
-		pm_runtime_put_noidle(dev);
+		pm_runसमय_put_noidle(dev);
 		module_put(dev->driver->owner);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = 0;
 
 	/* mark hwspinlock as used, should not fail */
-	tmp = radix_tree_tag_clear(&hwspinlock_tree, hwlock_to_id(hwlock),
+	पंचांगp = radix_tree_tag_clear(&hwspinlock_tree, hwlock_to_id(hwlock),
 							HWSPINLOCK_UNUSED);
 
 	/* self-sanity check that should never fail */
-	WARN_ON(tmp != hwlock);
+	WARN_ON(पंचांगp != hwlock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * hwspin_lock_get_id() - retrieve id number of a given hwspinlock
  * @hwlock: a valid hwspinlock instance
  *
- * Returns the id number of a given @hwlock, or -EINVAL if @hwlock is invalid.
+ * Returns the id number of a given @hwlock, or -EINVAL अगर @hwlock is invalid.
  */
-int hwspin_lock_get_id(struct hwspinlock *hwlock)
-{
-	if (!hwlock) {
+पूर्णांक hwspin_lock_get_id(काष्ठा hwspinlock *hwlock)
+अणु
+	अगर (!hwlock) अणु
 		pr_err("invalid hwlock\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return hwlock_to_id(hwlock);
-}
+	वापस hwlock_to_id(hwlock);
+पूर्ण
 EXPORT_SYMBOL_GPL(hwspin_lock_get_id);
 
 /**
@@ -699,114 +700,114 @@ EXPORT_SYMBOL_GPL(hwspin_lock_get_id);
  * This function should be called by users of the hwspinlock device,
  * in order to dynamically assign them an unused hwspinlock.
  * Usually the user of this lock will then have to communicate the lock's id
- * to the remote core before it can be used for synchronization (to get the
+ * to the remote core beक्रमe it can be used क्रम synchronization (to get the
  * id of a given hwlock, use hwspin_lock_get_id()).
  *
  * Should be called from a process context (might sleep)
  *
- * Returns the address of the assigned hwspinlock, or NULL on error
+ * Returns the address of the asचिन्हित hwspinlock, or शून्य on error
  */
-struct hwspinlock *hwspin_lock_request(void)
-{
-	struct hwspinlock *hwlock;
-	int ret;
+काष्ठा hwspinlock *hwspin_lock_request(व्योम)
+अणु
+	काष्ठा hwspinlock *hwlock;
+	पूर्णांक ret;
 
 	mutex_lock(&hwspinlock_tree_lock);
 
-	/* look for an unused lock */
-	ret = radix_tree_gang_lookup_tag(&hwspinlock_tree, (void **)&hwlock,
+	/* look क्रम an unused lock */
+	ret = radix_tree_gang_lookup_tag(&hwspinlock_tree, (व्योम **)&hwlock,
 						0, 1, HWSPINLOCK_UNUSED);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		pr_warn("a free hwspinlock is not available\n");
-		hwlock = NULL;
-		goto out;
-	}
+		hwlock = शून्य;
+		जाओ out;
+	पूर्ण
 
 	/* sanity check that should never fail */
 	WARN_ON(ret > 1);
 
-	/* mark as used and power up */
+	/* mark as used and घातer up */
 	ret = __hwspin_lock_request(hwlock);
-	if (ret < 0)
-		hwlock = NULL;
+	अगर (ret < 0)
+		hwlock = शून्य;
 
 out:
 	mutex_unlock(&hwspinlock_tree_lock);
-	return hwlock;
-}
+	वापस hwlock;
+पूर्ण
 EXPORT_SYMBOL_GPL(hwspin_lock_request);
 
 /**
- * hwspin_lock_request_specific() - request for a specific hwspinlock
- * @id: index of the specific hwspinlock that is requested
+ * hwspin_lock_request_specअगरic() - request क्रम a specअगरic hwspinlock
+ * @id: index of the specअगरic hwspinlock that is requested
  *
  * This function should be called by users of the hwspinlock module,
- * in order to assign them a specific hwspinlock.
+ * in order to assign them a specअगरic hwspinlock.
  * Usually early board code will be calling this function in order to
- * reserve specific hwspinlock ids for predefined purposes.
+ * reserve specअगरic hwspinlock ids क्रम predefined purposes.
  *
  * Should be called from a process context (might sleep)
  *
- * Returns the address of the assigned hwspinlock, or NULL on error
+ * Returns the address of the asचिन्हित hwspinlock, or शून्य on error
  */
-struct hwspinlock *hwspin_lock_request_specific(unsigned int id)
-{
-	struct hwspinlock *hwlock;
-	int ret;
+काष्ठा hwspinlock *hwspin_lock_request_specअगरic(अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा hwspinlock *hwlock;
+	पूर्णांक ret;
 
 	mutex_lock(&hwspinlock_tree_lock);
 
 	/* make sure this hwspinlock exists */
 	hwlock = radix_tree_lookup(&hwspinlock_tree, id);
-	if (!hwlock) {
+	अगर (!hwlock) अणु
 		pr_warn("hwspinlock %u does not exist\n", id);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* sanity check (this shouldn't happen) */
 	WARN_ON(hwlock_to_id(hwlock) != id);
 
 	/* make sure this hwspinlock is unused */
 	ret = radix_tree_tag_get(&hwspinlock_tree, id, HWSPINLOCK_UNUSED);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		pr_warn("hwspinlock %u is already in use\n", id);
-		hwlock = NULL;
-		goto out;
-	}
+		hwlock = शून्य;
+		जाओ out;
+	पूर्ण
 
-	/* mark as used and power up */
+	/* mark as used and घातer up */
 	ret = __hwspin_lock_request(hwlock);
-	if (ret < 0)
-		hwlock = NULL;
+	अगर (ret < 0)
+		hwlock = शून्य;
 
 out:
 	mutex_unlock(&hwspinlock_tree_lock);
-	return hwlock;
-}
-EXPORT_SYMBOL_GPL(hwspin_lock_request_specific);
+	वापस hwlock;
+पूर्ण
+EXPORT_SYMBOL_GPL(hwspin_lock_request_specअगरic);
 
 /**
- * hwspin_lock_free() - free a specific hwspinlock
- * @hwlock: the specific hwspinlock to free
+ * hwspin_lock_मुक्त() - मुक्त a specअगरic hwspinlock
+ * @hwlock: the specअगरic hwspinlock to मुक्त
  *
- * This function mark @hwlock as free again.
+ * This function mark @hwlock as मुक्त again.
  * Should only be called with an @hwlock that was retrieved from
- * an earlier call to hwspin_lock_request{_specific}.
+ * an earlier call to hwspin_lock_requestअणु_specअगरicपूर्ण.
  *
  * Should be called from a process context (might sleep)
  *
  * Returns 0 on success, or an appropriate error code on failure
  */
-int hwspin_lock_free(struct hwspinlock *hwlock)
-{
-	struct device *dev;
-	struct hwspinlock *tmp;
-	int ret;
+पूर्णांक hwspin_lock_मुक्त(काष्ठा hwspinlock *hwlock)
+अणु
+	काष्ठा device *dev;
+	काष्ठा hwspinlock *पंचांगp;
+	पूर्णांक ret;
 
-	if (!hwlock) {
+	अगर (!hwlock) अणु
 		pr_err("invalid hwlock\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev = hwlock->bank->dev;
 	mutex_lock(&hwspinlock_tree_lock);
@@ -814,140 +815,140 @@ int hwspin_lock_free(struct hwspinlock *hwlock)
 	/* make sure the hwspinlock is used */
 	ret = radix_tree_tag_get(&hwspinlock_tree, hwlock_to_id(hwlock),
 							HWSPINLOCK_UNUSED);
-	if (ret == 1) {
+	अगर (ret == 1) अणु
 		dev_err(dev, "%s: hwlock is already free\n", __func__);
 		dump_stack();
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* notify the underlying device that power is not needed */
-	pm_runtime_put(dev);
+	/* notअगरy the underlying device that घातer is not needed */
+	pm_runसमय_put(dev);
 
 	/* mark this hwspinlock as available */
-	tmp = radix_tree_tag_set(&hwspinlock_tree, hwlock_to_id(hwlock),
+	पंचांगp = radix_tree_tag_set(&hwspinlock_tree, hwlock_to_id(hwlock),
 							HWSPINLOCK_UNUSED);
 
 	/* sanity check (this shouldn't happen) */
-	WARN_ON(tmp != hwlock);
+	WARN_ON(पंचांगp != hwlock);
 
 	module_put(dev->driver->owner);
 
 out:
 	mutex_unlock(&hwspinlock_tree_lock);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(hwspin_lock_free);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(hwspin_lock_मुक्त);
 
-static int devm_hwspin_lock_match(struct device *dev, void *res, void *data)
-{
-	struct hwspinlock **hwlock = res;
+अटल पूर्णांक devm_hwspin_lock_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा hwspinlock **hwlock = res;
 
-	if (WARN_ON(!hwlock || !*hwlock))
-		return 0;
+	अगर (WARN_ON(!hwlock || !*hwlock))
+		वापस 0;
 
-	return *hwlock == data;
-}
+	वापस *hwlock == data;
+पूर्ण
 
-static void devm_hwspin_lock_release(struct device *dev, void *res)
-{
-	hwspin_lock_free(*(struct hwspinlock **)res);
-}
+अटल व्योम devm_hwspin_lock_release(काष्ठा device *dev, व्योम *res)
+अणु
+	hwspin_lock_मुक्त(*(काष्ठा hwspinlock **)res);
+पूर्ण
 
 /**
- * devm_hwspin_lock_free() - free a specific hwspinlock for a managed device
- * @dev: the device to free the specific hwspinlock
- * @hwlock: the specific hwspinlock to free
+ * devm_hwspin_lock_मुक्त() - मुक्त a specअगरic hwspinlock क्रम a managed device
+ * @dev: the device to मुक्त the specअगरic hwspinlock
+ * @hwlock: the specअगरic hwspinlock to मुक्त
  *
- * This function mark @hwlock as free again.
+ * This function mark @hwlock as मुक्त again.
  * Should only be called with an @hwlock that was retrieved from
- * an earlier call to hwspin_lock_request{_specific}.
+ * an earlier call to hwspin_lock_requestअणु_specअगरicपूर्ण.
  *
  * Should be called from a process context (might sleep)
  *
  * Returns 0 on success, or an appropriate error code on failure
  */
-int devm_hwspin_lock_free(struct device *dev, struct hwspinlock *hwlock)
-{
-	int ret;
+पूर्णांक devm_hwspin_lock_मुक्त(काष्ठा device *dev, काष्ठा hwspinlock *hwlock)
+अणु
+	पूर्णांक ret;
 
 	ret = devres_release(dev, devm_hwspin_lock_release,
 			     devm_hwspin_lock_match, hwlock);
 	WARN_ON(ret);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(devm_hwspin_lock_free);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_hwspin_lock_मुक्त);
 
 /**
- * devm_hwspin_lock_request() - request an hwspinlock for a managed device
+ * devm_hwspin_lock_request() - request an hwspinlock क्रम a managed device
  * @dev: the device to request an hwspinlock
  *
  * This function should be called by users of the hwspinlock device,
  * in order to dynamically assign them an unused hwspinlock.
  * Usually the user of this lock will then have to communicate the lock's id
- * to the remote core before it can be used for synchronization (to get the
+ * to the remote core beक्रमe it can be used क्रम synchronization (to get the
  * id of a given hwlock, use hwspin_lock_get_id()).
  *
  * Should be called from a process context (might sleep)
  *
- * Returns the address of the assigned hwspinlock, or NULL on error
+ * Returns the address of the asचिन्हित hwspinlock, or शून्य on error
  */
-struct hwspinlock *devm_hwspin_lock_request(struct device *dev)
-{
-	struct hwspinlock **ptr, *hwlock;
+काष्ठा hwspinlock *devm_hwspin_lock_request(काष्ठा device *dev)
+अणु
+	काष्ठा hwspinlock **ptr, *hwlock;
 
-	ptr = devres_alloc(devm_hwspin_lock_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return NULL;
+	ptr = devres_alloc(devm_hwspin_lock_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस शून्य;
 
 	hwlock = hwspin_lock_request();
-	if (hwlock) {
+	अगर (hwlock) अणु
 		*ptr = hwlock;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return hwlock;
-}
+	वापस hwlock;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_hwspin_lock_request);
 
 /**
- * devm_hwspin_lock_request_specific() - request for a specific hwspinlock for
+ * devm_hwspin_lock_request_specअगरic() - request क्रम a specअगरic hwspinlock क्रम
  *					 a managed device
- * @dev: the device to request the specific hwspinlock
- * @id: index of the specific hwspinlock that is requested
+ * @dev: the device to request the specअगरic hwspinlock
+ * @id: index of the specअगरic hwspinlock that is requested
  *
  * This function should be called by users of the hwspinlock module,
- * in order to assign them a specific hwspinlock.
+ * in order to assign them a specअगरic hwspinlock.
  * Usually early board code will be calling this function in order to
- * reserve specific hwspinlock ids for predefined purposes.
+ * reserve specअगरic hwspinlock ids क्रम predefined purposes.
  *
  * Should be called from a process context (might sleep)
  *
- * Returns the address of the assigned hwspinlock, or NULL on error
+ * Returns the address of the asचिन्हित hwspinlock, or शून्य on error
  */
-struct hwspinlock *devm_hwspin_lock_request_specific(struct device *dev,
-						     unsigned int id)
-{
-	struct hwspinlock **ptr, *hwlock;
+काष्ठा hwspinlock *devm_hwspin_lock_request_specअगरic(काष्ठा device *dev,
+						     अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा hwspinlock **ptr, *hwlock;
 
-	ptr = devres_alloc(devm_hwspin_lock_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return NULL;
+	ptr = devres_alloc(devm_hwspin_lock_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस शून्य;
 
-	hwlock = hwspin_lock_request_specific(id);
-	if (hwlock) {
+	hwlock = hwspin_lock_request_specअगरic(id);
+	अगर (hwlock) अणु
 		*ptr = hwlock;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return hwlock;
-}
-EXPORT_SYMBOL_GPL(devm_hwspin_lock_request_specific);
+	वापस hwlock;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_hwspin_lock_request_specअगरic);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Hardware spinlock interface");

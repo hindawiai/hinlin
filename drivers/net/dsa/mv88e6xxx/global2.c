@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Marvell 88E6xxx Switch Global 2 Registers support
  *
@@ -8,515 +9,515 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
-#include <linux/bitfield.h>
-#include <linux/interrupt.h>
-#include <linux/irqdomain.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqकरोमुख्य.h>
 
-#include "chip.h"
-#include "global1.h" /* for MV88E6XXX_G1_STS_IRQ_DEVICE */
-#include "global2.h"
+#समावेश "chip.h"
+#समावेश "global1.h" /* क्रम MV88E6XXX_G1_STS_IRQ_DEVICE */
+#समावेश "global2.h"
 
-int mv88e6xxx_g2_read(struct mv88e6xxx_chip *chip, int reg, u16 *val)
-{
-	return mv88e6xxx_read(chip, chip->info->global2_addr, reg, val);
-}
+पूर्णांक mv88e6xxx_g2_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक reg, u16 *val)
+अणु
+	वापस mv88e6xxx_पढ़ो(chip, chip->info->global2_addr, reg, val);
+पूर्ण
 
-int mv88e6xxx_g2_write(struct mv88e6xxx_chip *chip, int reg, u16 val)
-{
-	return mv88e6xxx_write(chip, chip->info->global2_addr, reg, val);
-}
+पूर्णांक mv88e6xxx_g2_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक reg, u16 val)
+अणु
+	वापस mv88e6xxx_ग_लिखो(chip, chip->info->global2_addr, reg, val);
+पूर्ण
 
-int mv88e6xxx_g2_wait_bit(struct mv88e6xxx_chip *chip, int reg, int
-			  bit, int val)
-{
-	return mv88e6xxx_wait_bit(chip, chip->info->global2_addr, reg,
+पूर्णांक mv88e6xxx_g2_रुको_bit(काष्ठा mv88e6xxx_chip *chip, पूर्णांक reg, पूर्णांक
+			  bit, पूर्णांक val)
+अणु
+	वापस mv88e6xxx_रुको_bit(chip, chip->info->global2_addr, reg,
 				  bit, val);
-}
+पूर्ण
 
 /* Offset 0x00: Interrupt Source Register */
 
-static int mv88e6xxx_g2_int_source(struct mv88e6xxx_chip *chip, u16 *src)
-{
+अटल पूर्णांक mv88e6xxx_g2_पूर्णांक_source(काष्ठा mv88e6xxx_chip *chip, u16 *src)
+अणु
 	/* Read (and clear most of) the Interrupt Source bits */
-	return mv88e6xxx_g2_read(chip, MV88E6XXX_G2_INT_SRC, src);
-}
+	वापस mv88e6xxx_g2_पढ़ो(chip, MV88E6XXX_G2_INT_SRC, src);
+पूर्ण
 
 /* Offset 0x01: Interrupt Mask Register */
 
-static int mv88e6xxx_g2_int_mask(struct mv88e6xxx_chip *chip, u16 mask)
-{
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_INT_MASK, mask);
-}
+अटल पूर्णांक mv88e6xxx_g2_पूर्णांक_mask(काष्ठा mv88e6xxx_chip *chip, u16 mask)
+अणु
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_INT_MASK, mask);
+पूर्ण
 
 /* Offset 0x02: Management Enable 2x */
 
-static int mv88e6xxx_g2_mgmt_enable_2x(struct mv88e6xxx_chip *chip, u16 en2x)
-{
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_MGMT_EN_2X, en2x);
-}
+अटल पूर्णांक mv88e6xxx_g2_mgmt_enable_2x(काष्ठा mv88e6xxx_chip *chip, u16 en2x)
+अणु
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_MGMT_EN_2X, en2x);
+पूर्ण
 
 /* Offset 0x03: Management Enable 0x */
 
-static int mv88e6xxx_g2_mgmt_enable_0x(struct mv88e6xxx_chip *chip, u16 en0x)
-{
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_MGMT_EN_0X, en0x);
-}
+अटल पूर्णांक mv88e6xxx_g2_mgmt_enable_0x(काष्ठा mv88e6xxx_chip *chip, u16 en0x)
+अणु
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_MGMT_EN_0X, en0x);
+पूर्ण
 
 /* Offset 0x05: Switch Management Register */
 
-static int mv88e6xxx_g2_switch_mgmt_rsvd2cpu(struct mv88e6xxx_chip *chip,
+अटल पूर्णांक mv88e6xxx_g2_चयन_mgmt_rsvd2cpu(काष्ठा mv88e6xxx_chip *chip,
 					     bool enable)
-{
+अणु
 	u16 val;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_read(chip, MV88E6XXX_G2_SWITCH_MGMT, &val);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_पढ़ो(chip, MV88E6XXX_G2_SWITCH_MGMT, &val);
+	अगर (err)
+		वापस err;
 
-	if (enable)
+	अगर (enable)
 		val |= MV88E6XXX_G2_SWITCH_MGMT_RSVD2CPU;
-	else
+	अन्यथा
 		val &= ~MV88E6XXX_G2_SWITCH_MGMT_RSVD2CPU;
 
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_SWITCH_MGMT, val);
-}
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_SWITCH_MGMT, val);
+पूर्ण
 
-int mv88e6185_g2_mgmt_rsvd2cpu(struct mv88e6xxx_chip *chip)
-{
-	int err;
+पूर्णांक mv88e6185_g2_mgmt_rsvd2cpu(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	पूर्णांक err;
 
 	/* Consider the frames with reserved multicast destination
 	 * addresses matching 01:80:c2:00:00:0x as MGMT.
 	 */
 	err = mv88e6xxx_g2_mgmt_enable_0x(chip, 0xffff);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_switch_mgmt_rsvd2cpu(chip, true);
-}
+	वापस mv88e6xxx_g2_चयन_mgmt_rsvd2cpu(chip, true);
+पूर्ण
 
-int mv88e6352_g2_mgmt_rsvd2cpu(struct mv88e6xxx_chip *chip)
-{
-	int err;
+पूर्णांक mv88e6352_g2_mgmt_rsvd2cpu(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	पूर्णांक err;
 
 	/* Consider the frames with reserved multicast destination
 	 * addresses matching 01:80:c2:00:00:2x as MGMT.
 	 */
 	err = mv88e6xxx_g2_mgmt_enable_2x(chip, 0xffff);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6185_g2_mgmt_rsvd2cpu(chip);
-}
+	वापस mv88e6185_g2_mgmt_rsvd2cpu(chip);
+पूर्ण
 
-/* Offset 0x06: Device Mapping Table register */
+/* Offset 0x06: Device Mapping Table रेजिस्टर */
 
-int mv88e6xxx_g2_device_mapping_write(struct mv88e6xxx_chip *chip, int target,
-				      int port)
-{
+पूर्णांक mv88e6xxx_g2_device_mapping_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक target,
+				      पूर्णांक port)
+अणु
 	u16 val = (target << 8) | (port & 0x1f);
 	/* Modern chips use 5 bits to define a device mapping port,
 	 * but bit 4 is reserved on older chips, so it is safe to use.
 	 */
 
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_DEVICE_MAPPING,
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_DEVICE_MAPPING,
 				  MV88E6XXX_G2_DEVICE_MAPPING_UPDATE | val);
-}
+पूर्ण
 
-/* Offset 0x07: Trunk Mask Table register */
+/* Offset 0x07: Trunk Mask Table रेजिस्टर */
 
-int mv88e6xxx_g2_trunk_mask_write(struct mv88e6xxx_chip *chip, int num,
+पूर्णांक mv88e6xxx_g2_trunk_mask_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक num,
 				  bool hash, u16 mask)
-{
+अणु
 	u16 val = (num << 12) | (mask & mv88e6xxx_port_mask(chip));
 
-	if (hash)
+	अगर (hash)
 		val |= MV88E6XXX_G2_TRUNK_MASK_HASH;
 
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_TRUNK_MASK,
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_TRUNK_MASK,
 				  MV88E6XXX_G2_TRUNK_MASK_UPDATE | val);
-}
+पूर्ण
 
-/* Offset 0x08: Trunk Mapping Table register */
+/* Offset 0x08: Trunk Mapping Table रेजिस्टर */
 
-int mv88e6xxx_g2_trunk_mapping_write(struct mv88e6xxx_chip *chip, int id,
+पूर्णांक mv88e6xxx_g2_trunk_mapping_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक id,
 				     u16 map)
-{
-	const u16 port_mask = BIT(mv88e6xxx_num_ports(chip)) - 1;
+अणु
+	स्थिर u16 port_mask = BIT(mv88e6xxx_num_ports(chip)) - 1;
 	u16 val = (id << 11) | (map & port_mask);
 
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_TRUNK_MAPPING,
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_TRUNK_MAPPING,
 				  MV88E6XXX_G2_TRUNK_MAPPING_UPDATE | val);
-}
+पूर्ण
 
-int mv88e6xxx_g2_trunk_clear(struct mv88e6xxx_chip *chip)
-{
-	const u16 port_mask = BIT(mv88e6xxx_num_ports(chip)) - 1;
-	int i, err;
+पूर्णांक mv88e6xxx_g2_trunk_clear(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	स्थिर u16 port_mask = BIT(mv88e6xxx_num_ports(chip)) - 1;
+	पूर्णांक i, err;
 
 	/* Clear all eight possible Trunk Mask vectors */
-	for (i = 0; i < 8; ++i) {
-		err = mv88e6xxx_g2_trunk_mask_write(chip, i, false, port_mask);
-		if (err)
-			return err;
-	}
+	क्रम (i = 0; i < 8; ++i) अणु
+		err = mv88e6xxx_g2_trunk_mask_ग_लिखो(chip, i, false, port_mask);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	/* Clear all sixteen possible Trunk ID routing vectors */
-	for (i = 0; i < 16; ++i) {
-		err = mv88e6xxx_g2_trunk_mapping_write(chip, i, 0);
-		if (err)
-			return err;
-	}
+	क्रम (i = 0; i < 16; ++i) अणु
+		err = mv88e6xxx_g2_trunk_mapping_ग_लिखो(chip, i, 0);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Offset 0x09: Ingress Rate Command register
- * Offset 0x0A: Ingress Rate Data register
+/* Offset 0x09: Ingress Rate Command रेजिस्टर
+ * Offset 0x0A: Ingress Rate Data रेजिस्टर
  */
 
-static int mv88e6xxx_g2_irl_wait(struct mv88e6xxx_chip *chip)
-{
-	int bit = __bf_shf(MV88E6XXX_G2_IRL_CMD_BUSY);
+अटल पूर्णांक mv88e6xxx_g2_irl_रुको(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	पूर्णांक bit = __bf_shf(MV88E6XXX_G2_IRL_CMD_BUSY);
 
-	return mv88e6xxx_g2_wait_bit(chip, MV88E6XXX_G2_IRL_CMD, bit, 0);
-}
+	वापस mv88e6xxx_g2_रुको_bit(chip, MV88E6XXX_G2_IRL_CMD, bit, 0);
+पूर्ण
 
-static int mv88e6xxx_g2_irl_op(struct mv88e6xxx_chip *chip, u16 op, int port,
-			       int res, int reg)
-{
-	int err;
+अटल पूर्णांक mv88e6xxx_g2_irl_op(काष्ठा mv88e6xxx_chip *chip, u16 op, पूर्णांक port,
+			       पूर्णांक res, पूर्णांक reg)
+अणु
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_write(chip, MV88E6XXX_G2_IRL_CMD,
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_IRL_CMD,
 				 MV88E6XXX_G2_IRL_CMD_BUSY | op | (port << 8) |
 				 (res << 5) | reg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_irl_wait(chip);
-}
+	वापस mv88e6xxx_g2_irl_रुको(chip);
+पूर्ण
 
-int mv88e6352_g2_irl_init_all(struct mv88e6xxx_chip *chip, int port)
-{
-	return mv88e6xxx_g2_irl_op(chip, MV88E6352_G2_IRL_CMD_OP_INIT_ALL, port,
+पूर्णांक mv88e6352_g2_irl_init_all(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
+अणु
+	वापस mv88e6xxx_g2_irl_op(chip, MV88E6352_G2_IRL_CMD_OP_INIT_ALL, port,
 				   0, 0);
-}
+पूर्ण
 
-int mv88e6390_g2_irl_init_all(struct mv88e6xxx_chip *chip, int port)
-{
-	return mv88e6xxx_g2_irl_op(chip, MV88E6390_G2_IRL_CMD_OP_INIT_ALL, port,
+पूर्णांक mv88e6390_g2_irl_init_all(काष्ठा mv88e6xxx_chip *chip, पूर्णांक port)
+अणु
+	वापस mv88e6xxx_g2_irl_op(chip, MV88E6390_G2_IRL_CMD_OP_INIT_ALL, port,
 				   0, 0);
-}
+पूर्ण
 
 /* Offset 0x0B: Cross-chip Port VLAN (Addr) Register
  * Offset 0x0C: Cross-chip Port VLAN Data Register
  */
 
-static int mv88e6xxx_g2_pvt_op_wait(struct mv88e6xxx_chip *chip)
-{
-	int bit = __bf_shf(MV88E6XXX_G2_PVT_ADDR_BUSY);
+अटल पूर्णांक mv88e6xxx_g2_pvt_op_रुको(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	पूर्णांक bit = __bf_shf(MV88E6XXX_G2_PVT_ADDR_BUSY);
 
-	return mv88e6xxx_g2_wait_bit(chip, MV88E6XXX_G2_PVT_ADDR, bit, 0);
-}
+	वापस mv88e6xxx_g2_रुको_bit(chip, MV88E6XXX_G2_PVT_ADDR, bit, 0);
+पूर्ण
 
-static int mv88e6xxx_g2_pvt_op(struct mv88e6xxx_chip *chip, int src_dev,
-			       int src_port, u16 op)
-{
-	int err;
+अटल पूर्णांक mv88e6xxx_g2_pvt_op(काष्ठा mv88e6xxx_chip *chip, पूर्णांक src_dev,
+			       पूर्णांक src_port, u16 op)
+अणु
+	पूर्णांक err;
 
-	/* 9-bit Cross-chip PVT pointer: with MV88E6XXX_G2_MISC_5_BIT_PORT
+	/* 9-bit Cross-chip PVT poपूर्णांकer: with MV88E6XXX_G2_MISC_5_BIT_PORT
 	 * cleared, source device is 5-bit, source port is 4-bit.
 	 */
 	op |= MV88E6XXX_G2_PVT_ADDR_BUSY;
 	op |= (src_dev & 0x1f) << 4;
 	op |= (src_port & 0xf);
 
-	err = mv88e6xxx_g2_write(chip, MV88E6XXX_G2_PVT_ADDR, op);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_PVT_ADDR, op);
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_pvt_op_wait(chip);
-}
+	वापस mv88e6xxx_g2_pvt_op_रुको(chip);
+पूर्ण
 
-int mv88e6xxx_g2_pvt_read(struct mv88e6xxx_chip *chip, int src_dev,
-			  int src_port, u16 *data)
-{
-	int err;
+पूर्णांक mv88e6xxx_g2_pvt_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक src_dev,
+			  पूर्णांक src_port, u16 *data)
+अणु
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_pvt_op_wait(chip);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_pvt_op_रुको(chip);
+	अगर (err)
+		वापस err;
 
 	err = mv88e6xxx_g2_pvt_op(chip, src_dev, src_port,
 				  MV88E6XXX_G2_PVT_ADDR_OP_READ);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_read(chip, MV88E6XXX_G2_PVT_DATA, data);
-}
+	वापस mv88e6xxx_g2_पढ़ो(chip, MV88E6XXX_G2_PVT_DATA, data);
+पूर्ण
 
-int mv88e6xxx_g2_pvt_write(struct mv88e6xxx_chip *chip, int src_dev,
-			   int src_port, u16 data)
-{
-	int err;
+पूर्णांक mv88e6xxx_g2_pvt_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक src_dev,
+			   पूर्णांक src_port, u16 data)
+अणु
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_pvt_op_wait(chip);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_pvt_op_रुको(chip);
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_g2_write(chip, MV88E6XXX_G2_PVT_DATA, data);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_PVT_DATA, data);
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_pvt_op(chip, src_dev, src_port,
+	वापस mv88e6xxx_g2_pvt_op(chip, src_dev, src_port,
 				   MV88E6XXX_G2_PVT_ADDR_OP_WRITE_PVLAN);
-}
+पूर्ण
 
-/* Offset 0x0D: Switch MAC/WoL/WoF register */
+/* Offset 0x0D: Switch MAC/WoL/WoF रेजिस्टर */
 
-static int mv88e6xxx_g2_switch_mac_write(struct mv88e6xxx_chip *chip,
-					 unsigned int pointer, u8 data)
-{
-	u16 val = (pointer << 8) | data;
+अटल पूर्णांक mv88e6xxx_g2_चयन_mac_ग_लिखो(काष्ठा mv88e6xxx_chip *chip,
+					 अचिन्हित पूर्णांक poपूर्णांकer, u8 data)
+अणु
+	u16 val = (poपूर्णांकer << 8) | data;
 
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_SWITCH_MAC,
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_SWITCH_MAC,
 				  MV88E6XXX_G2_SWITCH_MAC_UPDATE | val);
-}
+पूर्ण
 
-int mv88e6xxx_g2_set_switch_mac(struct mv88e6xxx_chip *chip, u8 *addr)
-{
-	int i, err;
+पूर्णांक mv88e6xxx_g2_set_चयन_mac(काष्ठा mv88e6xxx_chip *chip, u8 *addr)
+अणु
+	पूर्णांक i, err;
 
-	for (i = 0; i < 6; i++) {
-		err = mv88e6xxx_g2_switch_mac_write(chip, i, addr[i]);
-		if (err)
-			break;
-	}
+	क्रम (i = 0; i < 6; i++) अणु
+		err = mv88e6xxx_g2_चयन_mac_ग_लिखो(chip, i, addr[i]);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Offset 0x0E: ATU Statistics */
 
-int mv88e6xxx_g2_atu_stats_set(struct mv88e6xxx_chip *chip, u16 kind, u16 bin)
-{
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_ATU_STATS,
+पूर्णांक mv88e6xxx_g2_atu_stats_set(काष्ठा mv88e6xxx_chip *chip, u16 kind, u16 bin)
+अणु
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_ATU_STATS,
 				  kind | bin);
-}
+पूर्ण
 
-int mv88e6xxx_g2_atu_stats_get(struct mv88e6xxx_chip *chip, u16 *stats)
-{
-	return mv88e6xxx_g2_read(chip, MV88E6XXX_G2_ATU_STATS, stats);
-}
+पूर्णांक mv88e6xxx_g2_atu_stats_get(काष्ठा mv88e6xxx_chip *chip, u16 *stats)
+अणु
+	वापस mv88e6xxx_g2_पढ़ो(chip, MV88E6XXX_G2_ATU_STATS, stats);
+पूर्ण
 
 /* Offset 0x0F: Priority Override Table */
 
-static int mv88e6xxx_g2_pot_write(struct mv88e6xxx_chip *chip, int pointer,
+अटल पूर्णांक mv88e6xxx_g2_pot_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक poपूर्णांकer,
 				  u8 data)
-{
-	u16 val = (pointer << 8) | (data & 0x7);
+अणु
+	u16 val = (poपूर्णांकer << 8) | (data & 0x7);
 
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_PRIO_OVERRIDE,
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_PRIO_OVERRIDE,
 				  MV88E6XXX_G2_PRIO_OVERRIDE_UPDATE | val);
-}
+पूर्ण
 
-int mv88e6xxx_g2_pot_clear(struct mv88e6xxx_chip *chip)
-{
-	int i, err;
+पूर्णांक mv88e6xxx_g2_pot_clear(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	पूर्णांक i, err;
 
 	/* Clear all sixteen possible Priority Override entries */
-	for (i = 0; i < 16; i++) {
-		err = mv88e6xxx_g2_pot_write(chip, i, 0);
-		if (err)
-			break;
-	}
+	क्रम (i = 0; i < 16; i++) अणु
+		err = mv88e6xxx_g2_pot_ग_लिखो(chip, i, 0);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Offset 0x14: EEPROM Command
- * Offset 0x15: EEPROM Data (for 16-bit data access)
- * Offset 0x15: EEPROM Addr (for 8-bit data access)
+ * Offset 0x15: EEPROM Data (क्रम 16-bit data access)
+ * Offset 0x15: EEPROM Addr (क्रम 8-bit data access)
  */
 
-static int mv88e6xxx_g2_eeprom_wait(struct mv88e6xxx_chip *chip)
-{
-	int bit = __bf_shf(MV88E6XXX_G2_EEPROM_CMD_BUSY);
-	int err;
+अटल पूर्णांक mv88e6xxx_g2_eeprom_रुको(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	पूर्णांक bit = __bf_shf(MV88E6XXX_G2_EEPROM_CMD_BUSY);
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_wait_bit(chip, MV88E6XXX_G2_EEPROM_CMD, bit, 0);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_रुको_bit(chip, MV88E6XXX_G2_EEPROM_CMD, bit, 0);
+	अगर (err)
+		वापस err;
 
 	bit = __bf_shf(MV88E6XXX_G2_EEPROM_CMD_RUNNING);
 
-	return mv88e6xxx_g2_wait_bit(chip, MV88E6XXX_G2_EEPROM_CMD, bit, 0);
-}
+	वापस mv88e6xxx_g2_रुको_bit(chip, MV88E6XXX_G2_EEPROM_CMD, bit, 0);
+पूर्ण
 
-static int mv88e6xxx_g2_eeprom_cmd(struct mv88e6xxx_chip *chip, u16 cmd)
-{
-	int err;
+अटल पूर्णांक mv88e6xxx_g2_eeprom_cmd(काष्ठा mv88e6xxx_chip *chip, u16 cmd)
+अणु
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_write(chip, MV88E6XXX_G2_EEPROM_CMD,
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_EEPROM_CMD,
 				 MV88E6XXX_G2_EEPROM_CMD_BUSY | cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_eeprom_wait(chip);
-}
+	वापस mv88e6xxx_g2_eeprom_रुको(chip);
+पूर्ण
 
-static int mv88e6xxx_g2_eeprom_read8(struct mv88e6xxx_chip *chip,
+अटल पूर्णांक mv88e6xxx_g2_eeprom_पढ़ो8(काष्ठा mv88e6xxx_chip *chip,
 				     u16 addr, u8 *data)
-{
+अणु
 	u16 cmd = MV88E6XXX_G2_EEPROM_CMD_OP_READ;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_eeprom_wait(chip);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_eeprom_रुको(chip);
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_g2_write(chip, MV88E6390_G2_EEPROM_ADDR, addr);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6390_G2_EEPROM_ADDR, addr);
+	अगर (err)
+		वापस err;
 
 	err = mv88e6xxx_g2_eeprom_cmd(chip, cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_g2_read(chip, MV88E6XXX_G2_EEPROM_CMD, &cmd);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_पढ़ो(chip, MV88E6XXX_G2_EEPROM_CMD, &cmd);
+	अगर (err)
+		वापस err;
 
 	*data = cmd & 0xff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mv88e6xxx_g2_eeprom_write8(struct mv88e6xxx_chip *chip,
+अटल पूर्णांक mv88e6xxx_g2_eeprom_ग_लिखो8(काष्ठा mv88e6xxx_chip *chip,
 				      u16 addr, u8 data)
-{
+अणु
 	u16 cmd = MV88E6XXX_G2_EEPROM_CMD_OP_WRITE |
 		MV88E6XXX_G2_EEPROM_CMD_WRITE_EN;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_eeprom_wait(chip);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_eeprom_रुको(chip);
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_g2_write(chip, MV88E6390_G2_EEPROM_ADDR, addr);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6390_G2_EEPROM_ADDR, addr);
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_eeprom_cmd(chip, cmd | data);
-}
+	वापस mv88e6xxx_g2_eeprom_cmd(chip, cmd | data);
+पूर्ण
 
-static int mv88e6xxx_g2_eeprom_read16(struct mv88e6xxx_chip *chip,
+अटल पूर्णांक mv88e6xxx_g2_eeprom_पढ़ो16(काष्ठा mv88e6xxx_chip *chip,
 				      u8 addr, u16 *data)
-{
+अणु
 	u16 cmd = MV88E6XXX_G2_EEPROM_CMD_OP_READ | addr;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_eeprom_wait(chip);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_eeprom_रुको(chip);
+	अगर (err)
+		वापस err;
 
 	err = mv88e6xxx_g2_eeprom_cmd(chip, cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_read(chip, MV88E6352_G2_EEPROM_DATA, data);
-}
+	वापस mv88e6xxx_g2_पढ़ो(chip, MV88E6352_G2_EEPROM_DATA, data);
+पूर्ण
 
-static int mv88e6xxx_g2_eeprom_write16(struct mv88e6xxx_chip *chip,
+अटल पूर्णांक mv88e6xxx_g2_eeprom_ग_लिखो16(काष्ठा mv88e6xxx_chip *chip,
 				       u8 addr, u16 data)
-{
+अणु
 	u16 cmd = MV88E6XXX_G2_EEPROM_CMD_OP_WRITE | addr;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_eeprom_wait(chip);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_eeprom_रुको(chip);
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_g2_write(chip, MV88E6352_G2_EEPROM_DATA, data);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6352_G2_EEPROM_DATA, data);
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_eeprom_cmd(chip, cmd);
-}
+	वापस mv88e6xxx_g2_eeprom_cmd(chip, cmd);
+पूर्ण
 
-int mv88e6xxx_g2_get_eeprom8(struct mv88e6xxx_chip *chip,
-			     struct ethtool_eeprom *eeprom, u8 *data)
-{
-	unsigned int offset = eeprom->offset;
-	unsigned int len = eeprom->len;
-	int err;
+पूर्णांक mv88e6xxx_g2_get_eeprom8(काष्ठा mv88e6xxx_chip *chip,
+			     काष्ठा ethtool_eeprom *eeprom, u8 *data)
+अणु
+	अचिन्हित पूर्णांक offset = eeprom->offset;
+	अचिन्हित पूर्णांक len = eeprom->len;
+	पूर्णांक err;
 
 	eeprom->len = 0;
 
-	while (len) {
-		err = mv88e6xxx_g2_eeprom_read8(chip, offset, data);
-		if (err)
-			return err;
+	जबतक (len) अणु
+		err = mv88e6xxx_g2_eeprom_पढ़ो8(chip, offset, data);
+		अगर (err)
+			वापस err;
 
 		eeprom->len++;
 		offset++;
 		data++;
 		len--;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6xxx_g2_set_eeprom8(struct mv88e6xxx_chip *chip,
-			     struct ethtool_eeprom *eeprom, u8 *data)
-{
-	unsigned int offset = eeprom->offset;
-	unsigned int len = eeprom->len;
-	int err;
+पूर्णांक mv88e6xxx_g2_set_eeprom8(काष्ठा mv88e6xxx_chip *chip,
+			     काष्ठा ethtool_eeprom *eeprom, u8 *data)
+अणु
+	अचिन्हित पूर्णांक offset = eeprom->offset;
+	अचिन्हित पूर्णांक len = eeprom->len;
+	पूर्णांक err;
 
 	eeprom->len = 0;
 
-	while (len) {
-		err = mv88e6xxx_g2_eeprom_write8(chip, offset, *data);
-		if (err)
-			return err;
+	जबतक (len) अणु
+		err = mv88e6xxx_g2_eeprom_ग_लिखो8(chip, offset, *data);
+		अगर (err)
+			वापस err;
 
 		eeprom->len++;
 		offset++;
 		data++;
 		len--;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6xxx_g2_get_eeprom16(struct mv88e6xxx_chip *chip,
-			      struct ethtool_eeprom *eeprom, u8 *data)
-{
-	unsigned int offset = eeprom->offset;
-	unsigned int len = eeprom->len;
+पूर्णांक mv88e6xxx_g2_get_eeprom16(काष्ठा mv88e6xxx_chip *chip,
+			      काष्ठा ethtool_eeprom *eeprom, u8 *data)
+अणु
+	अचिन्हित पूर्णांक offset = eeprom->offset;
+	अचिन्हित पूर्णांक len = eeprom->len;
 	u16 val;
-	int err;
+	पूर्णांक err;
 
 	eeprom->len = 0;
 
-	if (offset & 1) {
-		err = mv88e6xxx_g2_eeprom_read16(chip, offset >> 1, &val);
-		if (err)
-			return err;
+	अगर (offset & 1) अणु
+		err = mv88e6xxx_g2_eeprom_पढ़ो16(chip, offset >> 1, &val);
+		अगर (err)
+			वापस err;
 
 		*data++ = (val >> 8) & 0xff;
 
 		offset++;
 		len--;
 		eeprom->len++;
-	}
+	पूर्ण
 
-	while (len >= 2) {
-		err = mv88e6xxx_g2_eeprom_read16(chip, offset >> 1, &val);
-		if (err)
-			return err;
+	जबतक (len >= 2) अणु
+		err = mv88e6xxx_g2_eeprom_पढ़ो16(chip, offset >> 1, &val);
+		अगर (err)
+			वापस err;
 
 		*data++ = val & 0xff;
 		*data++ = (val >> 8) & 0xff;
@@ -524,671 +525,671 @@ int mv88e6xxx_g2_get_eeprom16(struct mv88e6xxx_chip *chip,
 		offset += 2;
 		len -= 2;
 		eeprom->len += 2;
-	}
+	पूर्ण
 
-	if (len) {
-		err = mv88e6xxx_g2_eeprom_read16(chip, offset >> 1, &val);
-		if (err)
-			return err;
+	अगर (len) अणु
+		err = mv88e6xxx_g2_eeprom_पढ़ो16(chip, offset >> 1, &val);
+		अगर (err)
+			वापस err;
 
 		*data++ = val & 0xff;
 
 		offset++;
 		len--;
 		eeprom->len++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mv88e6xxx_g2_set_eeprom16(struct mv88e6xxx_chip *chip,
-			      struct ethtool_eeprom *eeprom, u8 *data)
-{
-	unsigned int offset = eeprom->offset;
-	unsigned int len = eeprom->len;
+पूर्णांक mv88e6xxx_g2_set_eeprom16(काष्ठा mv88e6xxx_chip *chip,
+			      काष्ठा ethtool_eeprom *eeprom, u8 *data)
+अणु
+	अचिन्हित पूर्णांक offset = eeprom->offset;
+	अचिन्हित पूर्णांक len = eeprom->len;
 	u16 val;
-	int err;
+	पूर्णांक err;
 
 	/* Ensure the RO WriteEn bit is set */
-	err = mv88e6xxx_g2_read(chip, MV88E6XXX_G2_EEPROM_CMD, &val);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_पढ़ो(chip, MV88E6XXX_G2_EEPROM_CMD, &val);
+	अगर (err)
+		वापस err;
 
-	if (!(val & MV88E6XXX_G2_EEPROM_CMD_WRITE_EN))
-		return -EROFS;
+	अगर (!(val & MV88E6XXX_G2_EEPROM_CMD_WRITE_EN))
+		वापस -EROFS;
 
 	eeprom->len = 0;
 
-	if (offset & 1) {
-		err = mv88e6xxx_g2_eeprom_read16(chip, offset >> 1, &val);
-		if (err)
-			return err;
+	अगर (offset & 1) अणु
+		err = mv88e6xxx_g2_eeprom_पढ़ो16(chip, offset >> 1, &val);
+		अगर (err)
+			वापस err;
 
 		val = (*data++ << 8) | (val & 0xff);
 
-		err = mv88e6xxx_g2_eeprom_write16(chip, offset >> 1, val);
-		if (err)
-			return err;
+		err = mv88e6xxx_g2_eeprom_ग_लिखो16(chip, offset >> 1, val);
+		अगर (err)
+			वापस err;
 
 		offset++;
 		len--;
 		eeprom->len++;
-	}
+	पूर्ण
 
-	while (len >= 2) {
+	जबतक (len >= 2) अणु
 		val = *data++;
 		val |= *data++ << 8;
 
-		err = mv88e6xxx_g2_eeprom_write16(chip, offset >> 1, val);
-		if (err)
-			return err;
+		err = mv88e6xxx_g2_eeprom_ग_लिखो16(chip, offset >> 1, val);
+		अगर (err)
+			वापस err;
 
 		offset += 2;
 		len -= 2;
 		eeprom->len += 2;
-	}
+	पूर्ण
 
-	if (len) {
-		err = mv88e6xxx_g2_eeprom_read16(chip, offset >> 1, &val);
-		if (err)
-			return err;
+	अगर (len) अणु
+		err = mv88e6xxx_g2_eeprom_पढ़ो16(chip, offset >> 1, &val);
+		अगर (err)
+			वापस err;
 
 		val = (val & 0xff00) | *data++;
 
-		err = mv88e6xxx_g2_eeprom_write16(chip, offset >> 1, val);
-		if (err)
-			return err;
+		err = mv88e6xxx_g2_eeprom_ग_लिखो16(chip, offset >> 1, val);
+		अगर (err)
+			वापस err;
 
 		offset++;
 		len--;
 		eeprom->len++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Offset 0x18: SMI PHY Command Register
  * Offset 0x19: SMI PHY Data Register
  */
 
-static int mv88e6xxx_g2_smi_phy_wait(struct mv88e6xxx_chip *chip)
-{
-	int bit = __bf_shf(MV88E6XXX_G2_SMI_PHY_CMD_BUSY);
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_रुको(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	पूर्णांक bit = __bf_shf(MV88E6XXX_G2_SMI_PHY_CMD_BUSY);
 
-	return mv88e6xxx_g2_wait_bit(chip, MV88E6XXX_G2_SMI_PHY_CMD, bit, 0);
-}
+	वापस mv88e6xxx_g2_रुको_bit(chip, MV88E6XXX_G2_SMI_PHY_CMD, bit, 0);
+पूर्ण
 
-static int mv88e6xxx_g2_smi_phy_cmd(struct mv88e6xxx_chip *chip, u16 cmd)
-{
-	int err;
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_cmd(काष्ठा mv88e6xxx_chip *chip, u16 cmd)
+अणु
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_write(chip, MV88E6XXX_G2_SMI_PHY_CMD,
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_SMI_PHY_CMD,
 				 MV88E6XXX_G2_SMI_PHY_CMD_BUSY | cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_smi_phy_wait(chip);
-}
+	वापस mv88e6xxx_g2_smi_phy_रुको(chip);
+पूर्ण
 
-static int mv88e6xxx_g2_smi_phy_access(struct mv88e6xxx_chip *chip,
-				       bool external, bool c45, u16 op, int dev,
-				       int reg)
-{
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_access(काष्ठा mv88e6xxx_chip *chip,
+				       bool बाह्यal, bool c45, u16 op, पूर्णांक dev,
+				       पूर्णांक reg)
+अणु
 	u16 cmd = op;
 
-	if (external)
+	अगर (बाह्यal)
 		cmd |= MV88E6390_G2_SMI_PHY_CMD_FUNC_EXTERNAL;
-	else
+	अन्यथा
 		cmd |= MV88E6390_G2_SMI_PHY_CMD_FUNC_INTERNAL; /* empty mask */
 
-	if (c45)
+	अगर (c45)
 		cmd |= MV88E6XXX_G2_SMI_PHY_CMD_MODE_45; /* empty mask */
-	else
+	अन्यथा
 		cmd |= MV88E6XXX_G2_SMI_PHY_CMD_MODE_22;
 
 	dev <<= __bf_shf(MV88E6XXX_G2_SMI_PHY_CMD_DEV_ADDR_MASK);
 	cmd |= dev & MV88E6XXX_G2_SMI_PHY_CMD_DEV_ADDR_MASK;
 	cmd |= reg & MV88E6XXX_G2_SMI_PHY_CMD_REG_ADDR_MASK;
 
-	return mv88e6xxx_g2_smi_phy_cmd(chip, cmd);
-}
+	वापस mv88e6xxx_g2_smi_phy_cmd(chip, cmd);
+पूर्ण
 
-static int mv88e6xxx_g2_smi_phy_access_c22(struct mv88e6xxx_chip *chip,
-					   bool external, u16 op, int dev,
-					   int reg)
-{
-	return mv88e6xxx_g2_smi_phy_access(chip, external, false, op, dev, reg);
-}
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_access_c22(काष्ठा mv88e6xxx_chip *chip,
+					   bool बाह्यal, u16 op, पूर्णांक dev,
+					   पूर्णांक reg)
+अणु
+	वापस mv88e6xxx_g2_smi_phy_access(chip, बाह्यal, false, op, dev, reg);
+पूर्ण
 
 /* IEEE 802.3 Clause 22 Read Data Register */
-static int mv88e6xxx_g2_smi_phy_read_data_c22(struct mv88e6xxx_chip *chip,
-					      bool external, int dev, int reg,
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_पढ़ो_data_c22(काष्ठा mv88e6xxx_chip *chip,
+					      bool बाह्यal, पूर्णांक dev, पूर्णांक reg,
 					      u16 *data)
-{
+अणु
 	u16 op = MV88E6XXX_G2_SMI_PHY_CMD_OP_22_READ_DATA;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_smi_phy_wait(chip);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_smi_phy_रुको(chip);
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_g2_smi_phy_access_c22(chip, external, op, dev, reg);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_smi_phy_access_c22(chip, बाह्यal, op, dev, reg);
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_read(chip, MV88E6XXX_G2_SMI_PHY_DATA, data);
-}
+	वापस mv88e6xxx_g2_पढ़ो(chip, MV88E6XXX_G2_SMI_PHY_DATA, data);
+पूर्ण
 
 /* IEEE 802.3 Clause 22 Write Data Register */
-static int mv88e6xxx_g2_smi_phy_write_data_c22(struct mv88e6xxx_chip *chip,
-					       bool external, int dev, int reg,
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_ग_लिखो_data_c22(काष्ठा mv88e6xxx_chip *chip,
+					       bool बाह्यal, पूर्णांक dev, पूर्णांक reg,
 					       u16 data)
-{
+अणु
 	u16 op = MV88E6XXX_G2_SMI_PHY_CMD_OP_22_WRITE_DATA;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_smi_phy_wait(chip);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_smi_phy_रुको(chip);
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_g2_write(chip, MV88E6XXX_G2_SMI_PHY_DATA, data);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_SMI_PHY_DATA, data);
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_smi_phy_access_c22(chip, external, op, dev, reg);
-}
+	वापस mv88e6xxx_g2_smi_phy_access_c22(chip, बाह्यal, op, dev, reg);
+पूर्ण
 
-static int mv88e6xxx_g2_smi_phy_access_c45(struct mv88e6xxx_chip *chip,
-					   bool external, u16 op, int port,
-					   int dev)
-{
-	return mv88e6xxx_g2_smi_phy_access(chip, external, true, op, port, dev);
-}
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_access_c45(काष्ठा mv88e6xxx_chip *chip,
+					   bool बाह्यal, u16 op, पूर्णांक port,
+					   पूर्णांक dev)
+अणु
+	वापस mv88e6xxx_g2_smi_phy_access(chip, बाह्यal, true, op, port, dev);
+पूर्ण
 
 /* IEEE 802.3 Clause 45 Write Address Register */
-static int mv88e6xxx_g2_smi_phy_write_addr_c45(struct mv88e6xxx_chip *chip,
-					       bool external, int port, int dev,
-					       int addr)
-{
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_ग_लिखो_addr_c45(काष्ठा mv88e6xxx_chip *chip,
+					       bool बाह्यal, पूर्णांक port, पूर्णांक dev,
+					       पूर्णांक addr)
+अणु
 	u16 op = MV88E6XXX_G2_SMI_PHY_CMD_OP_45_WRITE_ADDR;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_smi_phy_wait(chip);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_smi_phy_रुको(chip);
+	अगर (err)
+		वापस err;
 
-	err = mv88e6xxx_g2_write(chip, MV88E6XXX_G2_SMI_PHY_DATA, addr);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_SMI_PHY_DATA, addr);
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_smi_phy_access_c45(chip, external, op, port, dev);
-}
+	वापस mv88e6xxx_g2_smi_phy_access_c45(chip, बाह्यal, op, port, dev);
+पूर्ण
 
 /* IEEE 802.3 Clause 45 Read Data Register */
-static int mv88e6xxx_g2_smi_phy_read_data_c45(struct mv88e6xxx_chip *chip,
-					      bool external, int port, int dev,
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_पढ़ो_data_c45(काष्ठा mv88e6xxx_chip *chip,
+					      bool बाह्यal, पूर्णांक port, पूर्णांक dev,
 					      u16 *data)
-{
+अणु
 	u16 op = MV88E6XXX_G2_SMI_PHY_CMD_OP_45_READ_DATA;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_smi_phy_access_c45(chip, external, op, port, dev);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_smi_phy_access_c45(chip, बाह्यal, op, port, dev);
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_read(chip, MV88E6XXX_G2_SMI_PHY_DATA, data);
-}
+	वापस mv88e6xxx_g2_पढ़ो(chip, MV88E6XXX_G2_SMI_PHY_DATA, data);
+पूर्ण
 
-static int mv88e6xxx_g2_smi_phy_read_c45(struct mv88e6xxx_chip *chip,
-					 bool external, int port, int reg,
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_पढ़ो_c45(काष्ठा mv88e6xxx_chip *chip,
+					 bool बाह्यal, पूर्णांक port, पूर्णांक reg,
 					 u16 *data)
-{
-	int dev = (reg >> 16) & 0x1f;
-	int addr = reg & 0xffff;
-	int err;
+अणु
+	पूर्णांक dev = (reg >> 16) & 0x1f;
+	पूर्णांक addr = reg & 0xffff;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_smi_phy_write_addr_c45(chip, external, port, dev,
+	err = mv88e6xxx_g2_smi_phy_ग_लिखो_addr_c45(chip, बाह्यal, port, dev,
 						  addr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_smi_phy_read_data_c45(chip, external, port, dev,
+	वापस mv88e6xxx_g2_smi_phy_पढ़ो_data_c45(chip, बाह्यal, port, dev,
 						  data);
-}
+पूर्ण
 
 /* IEEE 802.3 Clause 45 Write Data Register */
-static int mv88e6xxx_g2_smi_phy_write_data_c45(struct mv88e6xxx_chip *chip,
-					       bool external, int port, int dev,
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_ग_लिखो_data_c45(काष्ठा mv88e6xxx_chip *chip,
+					       bool बाह्यal, पूर्णांक port, पूर्णांक dev,
 					       u16 data)
-{
+अणु
 	u16 op = MV88E6XXX_G2_SMI_PHY_CMD_OP_45_WRITE_DATA;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_write(chip, MV88E6XXX_G2_SMI_PHY_DATA, data);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_SMI_PHY_DATA, data);
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_smi_phy_access_c45(chip, external, op, port, dev);
-}
+	वापस mv88e6xxx_g2_smi_phy_access_c45(chip, बाह्यal, op, port, dev);
+पूर्ण
 
-static int mv88e6xxx_g2_smi_phy_write_c45(struct mv88e6xxx_chip *chip,
-					  bool external, int port, int reg,
+अटल पूर्णांक mv88e6xxx_g2_smi_phy_ग_लिखो_c45(काष्ठा mv88e6xxx_chip *chip,
+					  bool बाह्यal, पूर्णांक port, पूर्णांक reg,
 					  u16 data)
-{
-	int dev = (reg >> 16) & 0x1f;
-	int addr = reg & 0xffff;
-	int err;
+अणु
+	पूर्णांक dev = (reg >> 16) & 0x1f;
+	पूर्णांक addr = reg & 0xffff;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_smi_phy_write_addr_c45(chip, external, port, dev,
+	err = mv88e6xxx_g2_smi_phy_ग_लिखो_addr_c45(chip, बाह्यal, port, dev,
 						  addr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return mv88e6xxx_g2_smi_phy_write_data_c45(chip, external, port, dev,
+	वापस mv88e6xxx_g2_smi_phy_ग_लिखो_data_c45(chip, बाह्यal, port, dev,
 						   data);
-}
+पूर्ण
 
-int mv88e6xxx_g2_smi_phy_read(struct mv88e6xxx_chip *chip, struct mii_bus *bus,
-			      int addr, int reg, u16 *val)
-{
-	struct mv88e6xxx_mdio_bus *mdio_bus = bus->priv;
-	bool external = mdio_bus->external;
+पूर्णांक mv88e6xxx_g2_smi_phy_पढ़ो(काष्ठा mv88e6xxx_chip *chip, काष्ठा mii_bus *bus,
+			      पूर्णांक addr, पूर्णांक reg, u16 *val)
+अणु
+	काष्ठा mv88e6xxx_mdio_bus *mdio_bus = bus->priv;
+	bool बाह्यal = mdio_bus->बाह्यal;
 
-	if (reg & MII_ADDR_C45)
-		return mv88e6xxx_g2_smi_phy_read_c45(chip, external, addr, reg,
+	अगर (reg & MII_ADDR_C45)
+		वापस mv88e6xxx_g2_smi_phy_पढ़ो_c45(chip, बाह्यal, addr, reg,
 						     val);
 
-	return mv88e6xxx_g2_smi_phy_read_data_c22(chip, external, addr, reg,
+	वापस mv88e6xxx_g2_smi_phy_पढ़ो_data_c22(chip, बाह्यal, addr, reg,
 						  val);
-}
+पूर्ण
 
-int mv88e6xxx_g2_smi_phy_write(struct mv88e6xxx_chip *chip, struct mii_bus *bus,
-			       int addr, int reg, u16 val)
-{
-	struct mv88e6xxx_mdio_bus *mdio_bus = bus->priv;
-	bool external = mdio_bus->external;
+पूर्णांक mv88e6xxx_g2_smi_phy_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, काष्ठा mii_bus *bus,
+			       पूर्णांक addr, पूर्णांक reg, u16 val)
+अणु
+	काष्ठा mv88e6xxx_mdio_bus *mdio_bus = bus->priv;
+	bool बाह्यal = mdio_bus->बाह्यal;
 
-	if (reg & MII_ADDR_C45)
-		return mv88e6xxx_g2_smi_phy_write_c45(chip, external, addr, reg,
+	अगर (reg & MII_ADDR_C45)
+		वापस mv88e6xxx_g2_smi_phy_ग_लिखो_c45(chip, बाह्यal, addr, reg,
 						      val);
 
-	return mv88e6xxx_g2_smi_phy_write_data_c22(chip, external, addr, reg,
+	वापस mv88e6xxx_g2_smi_phy_ग_लिखो_data_c22(chip, बाह्यal, addr, reg,
 						   val);
-}
+पूर्ण
 
-/* Offset 0x1B: Watchdog Control */
-static int mv88e6097_watchdog_action(struct mv88e6xxx_chip *chip, int irq)
-{
+/* Offset 0x1B: Watchकरोg Control */
+अटल पूर्णांक mv88e6097_watchकरोg_action(काष्ठा mv88e6xxx_chip *chip, पूर्णांक irq)
+अणु
 	u16 reg;
 
-	mv88e6xxx_g2_read(chip, MV88E6352_G2_WDOG_CTL, &reg);
+	mv88e6xxx_g2_पढ़ो(chip, MV88E6352_G2_WDOG_CTL, &reg);
 
 	dev_info(chip->dev, "Watchdog event: 0x%04x", reg);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void mv88e6097_watchdog_free(struct mv88e6xxx_chip *chip)
-{
+अटल व्योम mv88e6097_watchकरोg_मुक्त(काष्ठा mv88e6xxx_chip *chip)
+अणु
 	u16 reg;
 
-	mv88e6xxx_g2_read(chip, MV88E6352_G2_WDOG_CTL, &reg);
+	mv88e6xxx_g2_पढ़ो(chip, MV88E6352_G2_WDOG_CTL, &reg);
 
 	reg &= ~(MV88E6352_G2_WDOG_CTL_EGRESS_ENABLE |
 		 MV88E6352_G2_WDOG_CTL_QC_ENABLE);
 
-	mv88e6xxx_g2_write(chip, MV88E6352_G2_WDOG_CTL, reg);
-}
+	mv88e6xxx_g2_ग_लिखो(chip, MV88E6352_G2_WDOG_CTL, reg);
+पूर्ण
 
-static int mv88e6097_watchdog_setup(struct mv88e6xxx_chip *chip)
-{
-	return mv88e6xxx_g2_write(chip, MV88E6352_G2_WDOG_CTL,
+अटल पूर्णांक mv88e6097_watchकरोg_setup(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6352_G2_WDOG_CTL,
 				  MV88E6352_G2_WDOG_CTL_EGRESS_ENABLE |
 				  MV88E6352_G2_WDOG_CTL_QC_ENABLE |
 				  MV88E6352_G2_WDOG_CTL_SWRESET);
-}
+पूर्ण
 
-const struct mv88e6xxx_irq_ops mv88e6097_watchdog_ops = {
-	.irq_action = mv88e6097_watchdog_action,
-	.irq_setup = mv88e6097_watchdog_setup,
-	.irq_free = mv88e6097_watchdog_free,
-};
+स्थिर काष्ठा mv88e6xxx_irq_ops mv88e6097_watchकरोg_ops = अणु
+	.irq_action = mv88e6097_watchकरोg_action,
+	.irq_setup = mv88e6097_watchकरोg_setup,
+	.irq_मुक्त = mv88e6097_watchकरोg_मुक्त,
+पूर्ण;
 
-static void mv88e6250_watchdog_free(struct mv88e6xxx_chip *chip)
-{
+अटल व्योम mv88e6250_watchकरोg_मुक्त(काष्ठा mv88e6xxx_chip *chip)
+अणु
 	u16 reg;
 
-	mv88e6xxx_g2_read(chip, MV88E6250_G2_WDOG_CTL, &reg);
+	mv88e6xxx_g2_पढ़ो(chip, MV88E6250_G2_WDOG_CTL, &reg);
 
 	reg &= ~(MV88E6250_G2_WDOG_CTL_EGRESS_ENABLE |
 		 MV88E6250_G2_WDOG_CTL_QC_ENABLE);
 
-	mv88e6xxx_g2_write(chip, MV88E6250_G2_WDOG_CTL, reg);
-}
+	mv88e6xxx_g2_ग_लिखो(chip, MV88E6250_G2_WDOG_CTL, reg);
+पूर्ण
 
-static int mv88e6250_watchdog_setup(struct mv88e6xxx_chip *chip)
-{
-	return mv88e6xxx_g2_write(chip, MV88E6250_G2_WDOG_CTL,
+अटल पूर्णांक mv88e6250_watchकरोg_setup(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6250_G2_WDOG_CTL,
 				  MV88E6250_G2_WDOG_CTL_EGRESS_ENABLE |
 				  MV88E6250_G2_WDOG_CTL_QC_ENABLE |
 				  MV88E6250_G2_WDOG_CTL_SWRESET);
-}
+पूर्ण
 
-const struct mv88e6xxx_irq_ops mv88e6250_watchdog_ops = {
-	.irq_action = mv88e6097_watchdog_action,
-	.irq_setup = mv88e6250_watchdog_setup,
-	.irq_free = mv88e6250_watchdog_free,
-};
+स्थिर काष्ठा mv88e6xxx_irq_ops mv88e6250_watchकरोg_ops = अणु
+	.irq_action = mv88e6097_watchकरोg_action,
+	.irq_setup = mv88e6250_watchकरोg_setup,
+	.irq_मुक्त = mv88e6250_watchकरोg_मुक्त,
+पूर्ण;
 
-static int mv88e6390_watchdog_setup(struct mv88e6xxx_chip *chip)
-{
-	return mv88e6xxx_g2_write(chip, MV88E6390_G2_WDOG_CTL,
+अटल पूर्णांक mv88e6390_watchकरोg_setup(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6390_G2_WDOG_CTL,
 				  MV88E6390_G2_WDOG_CTL_UPDATE |
 				  MV88E6390_G2_WDOG_CTL_PTR_INT_ENABLE |
 				  MV88E6390_G2_WDOG_CTL_CUT_THROUGH |
 				  MV88E6390_G2_WDOG_CTL_QUEUE_CONTROLLER |
 				  MV88E6390_G2_WDOG_CTL_EGRESS |
 				  MV88E6390_G2_WDOG_CTL_FORCE_IRQ);
-}
+पूर्ण
 
-static int mv88e6390_watchdog_action(struct mv88e6xxx_chip *chip, int irq)
-{
+अटल पूर्णांक mv88e6390_watchकरोg_action(काष्ठा mv88e6xxx_chip *chip, पूर्णांक irq)
+अणु
 	u16 reg;
 
-	mv88e6xxx_g2_write(chip, MV88E6390_G2_WDOG_CTL,
+	mv88e6xxx_g2_ग_लिखो(chip, MV88E6390_G2_WDOG_CTL,
 			   MV88E6390_G2_WDOG_CTL_PTR_EVENT);
-	mv88e6xxx_g2_read(chip, MV88E6390_G2_WDOG_CTL, &reg);
+	mv88e6xxx_g2_पढ़ो(chip, MV88E6390_G2_WDOG_CTL, &reg);
 
 	dev_info(chip->dev, "Watchdog event: 0x%04x",
 		 reg & MV88E6390_G2_WDOG_CTL_DATA_MASK);
 
-	mv88e6xxx_g2_write(chip, MV88E6390_G2_WDOG_CTL,
+	mv88e6xxx_g2_ग_लिखो(chip, MV88E6390_G2_WDOG_CTL,
 			   MV88E6390_G2_WDOG_CTL_PTR_HISTORY);
-	mv88e6xxx_g2_read(chip, MV88E6390_G2_WDOG_CTL, &reg);
+	mv88e6xxx_g2_पढ़ो(chip, MV88E6390_G2_WDOG_CTL, &reg);
 
 	dev_info(chip->dev, "Watchdog history: 0x%04x",
 		 reg & MV88E6390_G2_WDOG_CTL_DATA_MASK);
 
-	/* Trigger a software reset to try to recover the switch */
-	if (chip->info->ops->reset)
+	/* Trigger a software reset to try to recover the चयन */
+	अगर (chip->info->ops->reset)
 		chip->info->ops->reset(chip);
 
-	mv88e6390_watchdog_setup(chip);
+	mv88e6390_watchकरोg_setup(chip);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void mv88e6390_watchdog_free(struct mv88e6xxx_chip *chip)
-{
-	mv88e6xxx_g2_write(chip, MV88E6390_G2_WDOG_CTL,
+अटल व्योम mv88e6390_watchकरोg_मुक्त(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	mv88e6xxx_g2_ग_लिखो(chip, MV88E6390_G2_WDOG_CTL,
 			   MV88E6390_G2_WDOG_CTL_UPDATE |
 			   MV88E6390_G2_WDOG_CTL_PTR_INT_ENABLE);
-}
+पूर्ण
 
-const struct mv88e6xxx_irq_ops mv88e6390_watchdog_ops = {
-	.irq_action = mv88e6390_watchdog_action,
-	.irq_setup = mv88e6390_watchdog_setup,
-	.irq_free = mv88e6390_watchdog_free,
-};
+स्थिर काष्ठा mv88e6xxx_irq_ops mv88e6390_watchकरोg_ops = अणु
+	.irq_action = mv88e6390_watchकरोg_action,
+	.irq_setup = mv88e6390_watchकरोg_setup,
+	.irq_मुक्त = mv88e6390_watchकरोg_मुक्त,
+पूर्ण;
 
-static irqreturn_t mv88e6xxx_g2_watchdog_thread_fn(int irq, void *dev_id)
-{
-	struct mv88e6xxx_chip *chip = dev_id;
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t mv88e6xxx_g2_watchकरोg_thपढ़ो_fn(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mv88e6xxx_chip *chip = dev_id;
+	irqवापस_t ret = IRQ_NONE;
 
 	mv88e6xxx_reg_lock(chip);
-	if (chip->info->ops->watchdog_ops->irq_action)
-		ret = chip->info->ops->watchdog_ops->irq_action(chip, irq);
+	अगर (chip->info->ops->watchकरोg_ops->irq_action)
+		ret = chip->info->ops->watchकरोg_ops->irq_action(chip, irq);
 	mv88e6xxx_reg_unlock(chip);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mv88e6xxx_g2_watchdog_free(struct mv88e6xxx_chip *chip)
-{
+अटल व्योम mv88e6xxx_g2_watchकरोg_मुक्त(काष्ठा mv88e6xxx_chip *chip)
+अणु
 	mv88e6xxx_reg_lock(chip);
-	if (chip->info->ops->watchdog_ops->irq_free)
-		chip->info->ops->watchdog_ops->irq_free(chip);
+	अगर (chip->info->ops->watchकरोg_ops->irq_मुक्त)
+		chip->info->ops->watchकरोg_ops->irq_मुक्त(chip);
 	mv88e6xxx_reg_unlock(chip);
 
-	free_irq(chip->watchdog_irq, chip);
-	irq_dispose_mapping(chip->watchdog_irq);
-}
+	मुक्त_irq(chip->watchकरोg_irq, chip);
+	irq_dispose_mapping(chip->watchकरोg_irq);
+पूर्ण
 
-static int mv88e6xxx_g2_watchdog_setup(struct mv88e6xxx_chip *chip)
-{
-	int err;
+अटल पूर्णांक mv88e6xxx_g2_watchकरोg_setup(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	पूर्णांक err;
 
-	chip->watchdog_irq = irq_find_mapping(chip->g2_irq.domain,
+	chip->watchकरोg_irq = irq_find_mapping(chip->g2_irq.करोमुख्य,
 					      MV88E6XXX_G2_INT_SOURCE_WATCHDOG);
-	if (chip->watchdog_irq < 0)
-		return chip->watchdog_irq;
+	अगर (chip->watchकरोg_irq < 0)
+		वापस chip->watchकरोg_irq;
 
-	snprintf(chip->watchdog_irq_name, sizeof(chip->watchdog_irq_name),
+	snम_लिखो(chip->watchकरोg_irq_name, माप(chip->watchकरोg_irq_name),
 		 "mv88e6xxx-%s-watchdog", dev_name(chip->dev));
 
-	err = request_threaded_irq(chip->watchdog_irq, NULL,
-				   mv88e6xxx_g2_watchdog_thread_fn,
+	err = request_thपढ़ोed_irq(chip->watchकरोg_irq, शून्य,
+				   mv88e6xxx_g2_watchकरोg_thपढ़ो_fn,
 				   IRQF_ONESHOT | IRQF_TRIGGER_FALLING,
-				   chip->watchdog_irq_name, chip);
-	if (err)
-		return err;
+				   chip->watchकरोg_irq_name, chip);
+	अगर (err)
+		वापस err;
 
 	mv88e6xxx_reg_lock(chip);
-	if (chip->info->ops->watchdog_ops->irq_setup)
-		err = chip->info->ops->watchdog_ops->irq_setup(chip);
+	अगर (chip->info->ops->watchकरोg_ops->irq_setup)
+		err = chip->info->ops->watchकरोg_ops->irq_setup(chip);
 	mv88e6xxx_reg_unlock(chip);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Offset 0x1D: Misc Register */
 
-static int mv88e6xxx_g2_misc_5_bit_port(struct mv88e6xxx_chip *chip,
+अटल पूर्णांक mv88e6xxx_g2_misc_5_bit_port(काष्ठा mv88e6xxx_chip *chip,
 					bool port_5_bit)
-{
+अणु
 	u16 val;
-	int err;
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_read(chip, MV88E6XXX_G2_MISC, &val);
-	if (err)
-		return err;
+	err = mv88e6xxx_g2_पढ़ो(chip, MV88E6XXX_G2_MISC, &val);
+	अगर (err)
+		वापस err;
 
-	if (port_5_bit)
+	अगर (port_5_bit)
 		val |= MV88E6XXX_G2_MISC_5_BIT_PORT;
-	else
+	अन्यथा
 		val &= ~MV88E6XXX_G2_MISC_5_BIT_PORT;
 
-	return mv88e6xxx_g2_write(chip, MV88E6XXX_G2_MISC, val);
-}
+	वापस mv88e6xxx_g2_ग_लिखो(chip, MV88E6XXX_G2_MISC, val);
+पूर्ण
 
-int mv88e6xxx_g2_misc_4_bit_port(struct mv88e6xxx_chip *chip)
-{
-	return mv88e6xxx_g2_misc_5_bit_port(chip, false);
-}
+पूर्णांक mv88e6xxx_g2_misc_4_bit_port(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	वापस mv88e6xxx_g2_misc_5_bit_port(chip, false);
+पूर्ण
 
-static void mv88e6xxx_g2_irq_mask(struct irq_data *d)
-{
-	struct mv88e6xxx_chip *chip = irq_data_get_irq_chip_data(d);
-	unsigned int n = d->hwirq;
+अटल व्योम mv88e6xxx_g2_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा mv88e6xxx_chip *chip = irq_data_get_irq_chip_data(d);
+	अचिन्हित पूर्णांक n = d->hwirq;
 
 	chip->g2_irq.masked |= (1 << n);
-}
+पूर्ण
 
-static void mv88e6xxx_g2_irq_unmask(struct irq_data *d)
-{
-	struct mv88e6xxx_chip *chip = irq_data_get_irq_chip_data(d);
-	unsigned int n = d->hwirq;
+अटल व्योम mv88e6xxx_g2_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा mv88e6xxx_chip *chip = irq_data_get_irq_chip_data(d);
+	अचिन्हित पूर्णांक n = d->hwirq;
 
 	chip->g2_irq.masked &= ~(1 << n);
-}
+पूर्ण
 
-static irqreturn_t mv88e6xxx_g2_irq_thread_fn(int irq, void *dev_id)
-{
-	struct mv88e6xxx_chip *chip = dev_id;
-	unsigned int nhandled = 0;
-	unsigned int sub_irq;
-	unsigned int n;
-	int err;
+अटल irqवापस_t mv88e6xxx_g2_irq_thपढ़ो_fn(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mv88e6xxx_chip *chip = dev_id;
+	अचिन्हित पूर्णांक nhandled = 0;
+	अचिन्हित पूर्णांक sub_irq;
+	अचिन्हित पूर्णांक n;
+	पूर्णांक err;
 	u16 reg;
 
 	mv88e6xxx_reg_lock(chip);
-	err = mv88e6xxx_g2_int_source(chip, &reg);
+	err = mv88e6xxx_g2_पूर्णांक_source(chip, &reg);
 	mv88e6xxx_reg_unlock(chip);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	for (n = 0; n < 16; ++n) {
-		if (reg & (1 << n)) {
-			sub_irq = irq_find_mapping(chip->g2_irq.domain, n);
+	क्रम (n = 0; n < 16; ++n) अणु
+		अगर (reg & (1 << n)) अणु
+			sub_irq = irq_find_mapping(chip->g2_irq.करोमुख्य, n);
 			handle_nested_irq(sub_irq);
 			++nhandled;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	return (nhandled > 0 ? IRQ_HANDLED : IRQ_NONE);
-}
+	वापस (nhandled > 0 ? IRQ_HANDLED : IRQ_NONE);
+पूर्ण
 
-static void mv88e6xxx_g2_irq_bus_lock(struct irq_data *d)
-{
-	struct mv88e6xxx_chip *chip = irq_data_get_irq_chip_data(d);
+अटल व्योम mv88e6xxx_g2_irq_bus_lock(काष्ठा irq_data *d)
+अणु
+	काष्ठा mv88e6xxx_chip *chip = irq_data_get_irq_chip_data(d);
 
 	mv88e6xxx_reg_lock(chip);
-}
+पूर्ण
 
-static void mv88e6xxx_g2_irq_bus_sync_unlock(struct irq_data *d)
-{
-	struct mv88e6xxx_chip *chip = irq_data_get_irq_chip_data(d);
-	int err;
+अटल व्योम mv88e6xxx_g2_irq_bus_sync_unlock(काष्ठा irq_data *d)
+अणु
+	काष्ठा mv88e6xxx_chip *chip = irq_data_get_irq_chip_data(d);
+	पूर्णांक err;
 
-	err = mv88e6xxx_g2_int_mask(chip, ~chip->g2_irq.masked);
-	if (err)
+	err = mv88e6xxx_g2_पूर्णांक_mask(chip, ~chip->g2_irq.masked);
+	अगर (err)
 		dev_err(chip->dev, "failed to mask interrupts\n");
 
 	mv88e6xxx_reg_unlock(chip);
-}
+पूर्ण
 
-static const struct irq_chip mv88e6xxx_g2_irq_chip = {
+अटल स्थिर काष्ठा irq_chip mv88e6xxx_g2_irq_chip = अणु
 	.name			= "mv88e6xxx-g2",
 	.irq_mask		= mv88e6xxx_g2_irq_mask,
 	.irq_unmask		= mv88e6xxx_g2_irq_unmask,
 	.irq_bus_lock		= mv88e6xxx_g2_irq_bus_lock,
 	.irq_bus_sync_unlock	= mv88e6xxx_g2_irq_bus_sync_unlock,
-};
+पूर्ण;
 
-static int mv88e6xxx_g2_irq_domain_map(struct irq_domain *d,
-				       unsigned int irq,
+अटल पूर्णांक mv88e6xxx_g2_irq_करोमुख्य_map(काष्ठा irq_करोमुख्य *d,
+				       अचिन्हित पूर्णांक irq,
 				       irq_hw_number_t hwirq)
-{
-	struct mv88e6xxx_chip *chip = d->host_data;
+अणु
+	काष्ठा mv88e6xxx_chip *chip = d->host_data;
 
 	irq_set_chip_data(irq, d->host_data);
 	irq_set_chip_and_handler(irq, &chip->g2_irq.chip, handle_level_irq);
 	irq_set_noprobe(irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops mv88e6xxx_g2_irq_domain_ops = {
-	.map	= mv88e6xxx_g2_irq_domain_map,
-	.xlate	= irq_domain_xlate_twocell,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops mv88e6xxx_g2_irq_करोमुख्य_ops = अणु
+	.map	= mv88e6xxx_g2_irq_करोमुख्य_map,
+	.xlate	= irq_करोमुख्य_xlate_twocell,
+पूर्ण;
 
-void mv88e6xxx_g2_irq_free(struct mv88e6xxx_chip *chip)
-{
-	int irq, virq;
+व्योम mv88e6xxx_g2_irq_मुक्त(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	पूर्णांक irq, virq;
 
-	mv88e6xxx_g2_watchdog_free(chip);
+	mv88e6xxx_g2_watchकरोg_मुक्त(chip);
 
-	free_irq(chip->device_irq, chip);
+	मुक्त_irq(chip->device_irq, chip);
 	irq_dispose_mapping(chip->device_irq);
 
-	for (irq = 0; irq < 16; irq++) {
-		virq = irq_find_mapping(chip->g2_irq.domain, irq);
+	क्रम (irq = 0; irq < 16; irq++) अणु
+		virq = irq_find_mapping(chip->g2_irq.करोमुख्य, irq);
 		irq_dispose_mapping(virq);
-	}
+	पूर्ण
 
-	irq_domain_remove(chip->g2_irq.domain);
-}
+	irq_करोमुख्य_हटाओ(chip->g2_irq.करोमुख्य);
+पूर्ण
 
-int mv88e6xxx_g2_irq_setup(struct mv88e6xxx_chip *chip)
-{
-	int err, irq, virq;
+पूर्णांक mv88e6xxx_g2_irq_setup(काष्ठा mv88e6xxx_chip *chip)
+अणु
+	पूर्णांक err, irq, virq;
 
 	chip->g2_irq.masked = ~0;
 	mv88e6xxx_reg_lock(chip);
-	err = mv88e6xxx_g2_int_mask(chip, ~chip->g2_irq.masked);
+	err = mv88e6xxx_g2_पूर्णांक_mask(chip, ~chip->g2_irq.masked);
 	mv88e6xxx_reg_unlock(chip);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	chip->g2_irq.domain = irq_domain_add_simple(
-		chip->dev->of_node, 16, 0, &mv88e6xxx_g2_irq_domain_ops, chip);
-	if (!chip->g2_irq.domain)
-		return -ENOMEM;
+	chip->g2_irq.करोमुख्य = irq_करोमुख्य_add_simple(
+		chip->dev->of_node, 16, 0, &mv88e6xxx_g2_irq_करोमुख्य_ops, chip);
+	अगर (!chip->g2_irq.करोमुख्य)
+		वापस -ENOMEM;
 
-	for (irq = 0; irq < 16; irq++)
-		irq_create_mapping(chip->g2_irq.domain, irq);
+	क्रम (irq = 0; irq < 16; irq++)
+		irq_create_mapping(chip->g2_irq.करोमुख्य, irq);
 
 	chip->g2_irq.chip = mv88e6xxx_g2_irq_chip;
 
-	chip->device_irq = irq_find_mapping(chip->g1_irq.domain,
+	chip->device_irq = irq_find_mapping(chip->g1_irq.करोमुख्य,
 					    MV88E6XXX_G1_STS_IRQ_DEVICE);
-	if (chip->device_irq < 0) {
+	अगर (chip->device_irq < 0) अणु
 		err = chip->device_irq;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	snprintf(chip->device_irq_name, sizeof(chip->device_irq_name),
+	snम_लिखो(chip->device_irq_name, माप(chip->device_irq_name),
 		 "mv88e6xxx-%s-g2", dev_name(chip->dev));
 
-	err = request_threaded_irq(chip->device_irq, NULL,
-				   mv88e6xxx_g2_irq_thread_fn,
+	err = request_thपढ़ोed_irq(chip->device_irq, शून्य,
+				   mv88e6xxx_g2_irq_thपढ़ो_fn,
 				   IRQF_ONESHOT, chip->device_irq_name, chip);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	return mv88e6xxx_g2_watchdog_setup(chip);
+	वापस mv88e6xxx_g2_watchकरोg_setup(chip);
 
 out:
-	for (irq = 0; irq < 16; irq++) {
-		virq = irq_find_mapping(chip->g2_irq.domain, irq);
+	क्रम (irq = 0; irq < 16; irq++) अणु
+		virq = irq_find_mapping(chip->g2_irq.करोमुख्य, irq);
 		irq_dispose_mapping(virq);
-	}
+	पूर्ण
 
-	irq_domain_remove(chip->g2_irq.domain);
+	irq_करोमुख्य_हटाओ(chip->g2_irq.करोमुख्य);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mv88e6xxx_g2_irq_mdio_setup(struct mv88e6xxx_chip *chip,
-				struct mii_bus *bus)
-{
-	int phy, irq, err, err_phy;
+पूर्णांक mv88e6xxx_g2_irq_mdio_setup(काष्ठा mv88e6xxx_chip *chip,
+				काष्ठा mii_bus *bus)
+अणु
+	पूर्णांक phy, irq, err, err_phy;
 
-	for (phy = 0; phy < chip->info->num_internal_phys; phy++) {
-		irq = irq_find_mapping(chip->g2_irq.domain, phy);
-		if (irq < 0) {
+	क्रम (phy = 0; phy < chip->info->num_पूर्णांकernal_phys; phy++) अणु
+		irq = irq_find_mapping(chip->g2_irq.करोमुख्य, phy);
+		अगर (irq < 0) अणु
 			err = irq;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		bus->irq[chip->info->phy_base_addr + phy] = irq;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 out:
 	err_phy = phy;
 
-	for (phy = 0; phy < err_phy; phy++)
+	क्रम (phy = 0; phy < err_phy; phy++)
 		irq_dispose_mapping(bus->irq[phy]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mv88e6xxx_g2_irq_mdio_free(struct mv88e6xxx_chip *chip,
-				struct mii_bus *bus)
-{
-	int phy;
+व्योम mv88e6xxx_g2_irq_mdio_मुक्त(काष्ठा mv88e6xxx_chip *chip,
+				काष्ठा mii_bus *bus)
+अणु
+	पूर्णांक phy;
 
-	for (phy = 0; phy < chip->info->num_internal_phys; phy++)
+	क्रम (phy = 0; phy < chip->info->num_पूर्णांकernal_phys; phy++)
 		irq_dispose_mapping(bus->irq[phy]);
-}
+पूर्ण

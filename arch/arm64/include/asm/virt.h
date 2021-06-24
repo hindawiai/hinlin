@@ -1,133 +1,134 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
-#ifndef __ASM__VIRT_H
-#define __ASM__VIRT_H
+#अगर_अघोषित __ASM__VIRT_H
+#घोषणा __ASM__VIRT_H
 
 /*
- * The arm64 hcall implementation uses x0 to specify the hcall
+ * The arm64 hcall implementation uses x0 to specअगरy the hcall
  * number. A value less than HVC_STUB_HCALL_NR indicates a special
  * hcall, such as set vector. Any other value is handled in a
- * hypervisor specific way.
+ * hypervisor specअगरic way.
  *
  * The hypercall is allowed to clobber any of the caller-saved
- * registers (x0-x18), so it is advisable to use it through the
+ * रेजिस्टरs (x0-x18), so it is advisable to use it through the
  * indirection of a function call (as implemented in hyp-stub.S).
  */
 
 /*
- * HVC_SET_VECTORS - Set the value of the vbar_el2 register.
+ * HVC_SET_VECTORS - Set the value of the vbar_el2 रेजिस्टर.
  *
  * @x1: Physical address of the new vector table.
  */
-#define HVC_SET_VECTORS 0
+#घोषणा HVC_SET_VECTORS 0
 
 /*
  * HVC_SOFT_RESTART - CPU soft reset, used by the cpu_soft_restart routine.
  */
-#define HVC_SOFT_RESTART 1
+#घोषणा HVC_SOFT_RESTART 1
 
 /*
  * HVC_RESET_VECTORS - Restore the vectors to the original HYP stubs
  */
-#define HVC_RESET_VECTORS 2
+#घोषणा HVC_RESET_VECTORS 2
 
 /*
- * HVC_VHE_RESTART - Upgrade the CPU from EL1 to EL2, if possible
+ * HVC_VHE_RESTART - Upgrade the CPU from EL1 to EL2, अगर possible
  */
-#define HVC_VHE_RESTART	3
+#घोषणा HVC_VHE_RESTART	3
 
 /* Max number of HYP stub hypercalls */
-#define HVC_STUB_HCALL_NR 4
+#घोषणा HVC_STUB_HCALL_NR 4
 
-/* Error returned when an invalid stub number is passed into x0 */
-#define HVC_STUB_ERR	0xbadca11
+/* Error वापसed when an invalid stub number is passed पूर्णांकo x0 */
+#घोषणा HVC_STUB_ERR	0xbadca11
 
-#define BOOT_CPU_MODE_EL1	(0xe11)
-#define BOOT_CPU_MODE_EL2	(0xe12)
+#घोषणा BOOT_CPU_MODE_EL1	(0xe11)
+#घोषणा BOOT_CPU_MODE_EL2	(0xe12)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/ptrace.h>
-#include <asm/sections.h>
-#include <asm/sysreg.h>
-#include <asm/cpufeature.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/sysreg.h>
+#समावेश <यंत्र/cpufeature.h>
 
 /*
  * __boot_cpu_mode records what mode CPUs were booted in.
  * A correctly-implemented bootloader must start all CPUs in the same mode:
- * In this case, both 32bit halves of __boot_cpu_mode will contain the
- * same value (either 0 if booted in EL1, BOOT_CPU_MODE_EL2 if booted in EL2).
+ * In this हाल, both 32bit halves of __boot_cpu_mode will contain the
+ * same value (either 0 अगर booted in EL1, BOOT_CPU_MODE_EL2 अगर booted in EL2).
  *
- * Should the bootloader fail to do this, the two values will be different.
+ * Should the bootloader fail to करो this, the two values will be dअगरferent.
  * This allows the kernel to flag an error when the secondaries have come up.
  */
-extern u32 __boot_cpu_mode[2];
+बाह्य u32 __boot_cpu_mode[2];
 
-void __hyp_set_vectors(phys_addr_t phys_vector_base);
-void __hyp_reset_vectors(void);
+व्योम __hyp_set_vectors(phys_addr_t phys_vector_base);
+व्योम __hyp_reset_vectors(व्योम);
 
-DECLARE_STATIC_KEY_FALSE(kvm_protected_mode_initialized);
+DECLARE_STATIC_KEY_FALSE(kvm_रक्षित_mode_initialized);
 
 /* Reports the availability of HYP mode */
-static inline bool is_hyp_mode_available(void)
-{
+अटल अंतरभूत bool is_hyp_mode_available(व्योम)
+अणु
 	/*
-	 * If KVM protected mode is initialized, all CPUs must have been booted
-	 * in EL2. Avoid checking __boot_cpu_mode as CPUs now come up in EL1.
+	 * If KVM रक्षित mode is initialized, all CPUs must have been booted
+	 * in EL2. Aव्योम checking __boot_cpu_mode as CPUs now come up in EL1.
 	 */
-	if (IS_ENABLED(CONFIG_KVM) &&
-	    static_branch_likely(&kvm_protected_mode_initialized))
-		return true;
+	अगर (IS_ENABLED(CONFIG_KVM) &&
+	    अटल_branch_likely(&kvm_रक्षित_mode_initialized))
+		वापस true;
 
-	return (__boot_cpu_mode[0] == BOOT_CPU_MODE_EL2 &&
+	वापस (__boot_cpu_mode[0] == BOOT_CPU_MODE_EL2 &&
 		__boot_cpu_mode[1] == BOOT_CPU_MODE_EL2);
-}
+पूर्ण
 
-/* Check if the bootloader has booted CPUs in different modes */
-static inline bool is_hyp_mode_mismatched(void)
-{
+/* Check अगर the bootloader has booted CPUs in dअगरferent modes */
+अटल अंतरभूत bool is_hyp_mode_mismatched(व्योम)
+अणु
 	/*
-	 * If KVM protected mode is initialized, all CPUs must have been booted
-	 * in EL2. Avoid checking __boot_cpu_mode as CPUs now come up in EL1.
+	 * If KVM रक्षित mode is initialized, all CPUs must have been booted
+	 * in EL2. Aव्योम checking __boot_cpu_mode as CPUs now come up in EL1.
 	 */
-	if (IS_ENABLED(CONFIG_KVM) &&
-	    static_branch_likely(&kvm_protected_mode_initialized))
-		return false;
+	अगर (IS_ENABLED(CONFIG_KVM) &&
+	    अटल_branch_likely(&kvm_रक्षित_mode_initialized))
+		वापस false;
 
-	return __boot_cpu_mode[0] != __boot_cpu_mode[1];
-}
+	वापस __boot_cpu_mode[0] != __boot_cpu_mode[1];
+पूर्ण
 
-static inline bool is_kernel_in_hyp_mode(void)
-{
-	return read_sysreg(CurrentEL) == CurrentEL_EL2;
-}
+अटल अंतरभूत bool is_kernel_in_hyp_mode(व्योम)
+अणु
+	वापस पढ़ो_sysreg(CurrentEL) == CurrentEL_EL2;
+पूर्ण
 
-static __always_inline bool has_vhe(void)
-{
+अटल __always_अंतरभूत bool has_vhe(व्योम)
+अणु
 	/*
 	 * Code only run in VHE/NVHE hyp context can assume VHE is present or
-	 * absent. Otherwise fall back to caps.
+	 * असलent. Otherwise fall back to caps.
 	 */
-	if (is_vhe_hyp_code())
-		return true;
-	else if (is_nvhe_hyp_code())
-		return false;
-	else
-		return cpus_have_final_cap(ARM64_HAS_VIRT_HOST_EXTN);
-}
+	अगर (is_vhe_hyp_code())
+		वापस true;
+	अन्यथा अगर (is_nvhe_hyp_code())
+		वापस false;
+	अन्यथा
+		वापस cpus_have_final_cap(ARM64_HAS_VIRT_HOST_EXTN);
+पूर्ण
 
-static __always_inline bool is_protected_kvm_enabled(void)
-{
-	if (is_vhe_hyp_code())
-		return false;
-	else
-		return cpus_have_final_cap(ARM64_KVM_PROTECTED_MODE);
-}
+अटल __always_अंतरभूत bool is_रक्षित_kvm_enabled(व्योम)
+अणु
+	अगर (is_vhe_hyp_code())
+		वापस false;
+	अन्यथा
+		वापस cpus_have_final_cap(ARM64_KVM_PROTECTED_MODE);
+पूर्ण
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* ! __ASM__VIRT_H */
+#पूर्ण_अगर /* ! __ASM__VIRT_H */

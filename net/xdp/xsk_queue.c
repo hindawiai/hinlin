@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0
-/* XDP user-space ring structure
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* XDP user-space ring काष्ठाure
  * Copyright(c) 2018 Intel Corporation.
  */
 
-#include <linux/log2.h>
-#include <linux/slab.h>
-#include <linux/overflow.h>
-#include <net/xdp_sock_drv.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/overflow.h>
+#समावेश <net/xdp_sock_drv.h>
 
-#include "xsk_queue.h"
+#समावेश "xsk_queue.h"
 
-static size_t xskq_get_ring_size(struct xsk_queue *q, bool umem_queue)
-{
-	struct xdp_umem_ring *umem_ring;
-	struct xdp_rxtx_ring *rxtx_ring;
+अटल माप_प्रकार xskq_get_ring_size(काष्ठा xsk_queue *q, bool umem_queue)
+अणु
+	काष्ठा xdp_umem_ring *umem_ring;
+	काष्ठा xdp_rxtx_ring *rxtx_ring;
 
-	if (umem_queue)
-		return struct_size(umem_ring, desc, q->nentries);
-	return struct_size(rxtx_ring, desc, q->nentries);
-}
+	अगर (umem_queue)
+		वापस काष्ठा_size(umem_ring, desc, q->nentries);
+	वापस काष्ठा_size(rxtx_ring, desc, q->nentries);
+पूर्ण
 
-struct xsk_queue *xskq_create(u32 nentries, bool umem_queue)
-{
-	struct xsk_queue *q;
+काष्ठा xsk_queue *xskq_create(u32 nentries, bool umem_queue)
+अणु
+	काष्ठा xsk_queue *q;
 	gfp_t gfp_flags;
-	size_t size;
+	माप_प्रकार size;
 
-	q = kzalloc(sizeof(*q), GFP_KERNEL);
-	if (!q)
-		return NULL;
+	q = kzalloc(माप(*q), GFP_KERNEL);
+	अगर (!q)
+		वापस शून्य;
 
 	q->nentries = nentries;
 	q->ring_mask = nentries - 1;
@@ -37,21 +38,21 @@ struct xsk_queue *xskq_create(u32 nentries, bool umem_queue)
 		    __GFP_COMP  | __GFP_NORETRY;
 	size = xskq_get_ring_size(q, umem_queue);
 
-	q->ring = (struct xdp_ring *)__get_free_pages(gfp_flags,
+	q->ring = (काष्ठा xdp_ring *)__get_मुक्त_pages(gfp_flags,
 						      get_order(size));
-	if (!q->ring) {
-		kfree(q);
-		return NULL;
-	}
+	अगर (!q->ring) अणु
+		kमुक्त(q);
+		वापस शून्य;
+	पूर्ण
 
-	return q;
-}
+	वापस q;
+पूर्ण
 
-void xskq_destroy(struct xsk_queue *q)
-{
-	if (!q)
-		return;
+व्योम xskq_destroy(काष्ठा xsk_queue *q)
+अणु
+	अगर (!q)
+		वापस;
 
-	page_frag_free(q->ring);
-	kfree(q);
-}
+	page_frag_मुक्त(q->ring);
+	kमुक्त(q);
+पूर्ण

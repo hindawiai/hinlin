@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2019 Facebook */
 
-#include <stdbool.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <stdbool.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-struct s {
-	int a;
-	long long b;
-} __attribute__((packed));
+काष्ठा s अणु
+	पूर्णांक a;
+	दीर्घ दीर्घ b;
+पूर्ण __attribute__((packed));
 
 /* .data section */
-int in1 = -1;
-long long in2 = -1;
+पूर्णांक in1 = -1;
+दीर्घ दीर्घ in2 = -1;
 
 /* .bss section */
-char in3 = '\0';
-long long in4 __attribute__((aligned(64))) = 0;
-struct s in5 = {};
+अक्षर in3 = '\0';
+दीर्घ दीर्घ in4 __attribute__((aligned(64))) = 0;
+काष्ठा s in5 = अणुपूर्ण;
 
 /* .rodata section */
-const volatile struct {
-	const int in6;
-} in = {};
+स्थिर अस्थिर काष्ठा अणु
+	स्थिर पूर्णांक in6;
+पूर्ण in = अणुपूर्ण;
 
 /* .data section */
-int out1 = -1;
-long long out2 = -1;
+पूर्णांक out1 = -1;
+दीर्घ दीर्घ out2 = -1;
 
 /* .bss section */
-char out3 = 0;
-long long out4 = 0;
-int out6 = 0;
+अक्षर out3 = 0;
+दीर्घ दीर्घ out4 = 0;
+पूर्णांक out6 = 0;
 
-extern bool CONFIG_BPF_SYSCALL __kconfig;
-extern int LINUX_KERNEL_VERSION __kconfig;
+बाह्य bool CONFIG_BPF_SYSCALL __kconfig;
+बाह्य पूर्णांक LINUX_KERNEL_VERSION __kconfig;
 bool bpf_syscall = 0;
-int kern_ver = 0;
+पूर्णांक kern_ver = 0;
 
 SEC("raw_tp/sys_enter")
-int handler(const void *ctx)
-{
-	static volatile struct s out5;
+पूर्णांक handler(स्थिर व्योम *ctx)
+अणु
+	अटल अस्थिर काष्ठा s out5;
 
 	out1 = in1;
 	out2 = in2;
@@ -53,7 +54,7 @@ int handler(const void *ctx)
 	bpf_syscall = CONFIG_BPF_SYSCALL;
 	kern_ver = LINUX_KERNEL_VERSION;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Common hwbus abstraction layer interface for cw1200 wireless driver
+ * Common hwbus असलtraction layer पूर्णांकerface क्रम cw1200 wireless driver
  *
  * Copyright (c) 2010, ST-Ericsson
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
-#ifndef CW1200_HWBUS_H
-#define CW1200_HWBUS_H
+#अगर_अघोषित CW1200_HWBUS_H
+#घोषणा CW1200_HWBUS_H
 
-struct hwbus_priv;
+काष्ठा hwbus_priv;
 
-void cw1200_irq_handler(struct cw1200_common *priv);
+व्योम cw1200_irq_handler(काष्ठा cw1200_common *priv);
 
 /* This MUST be wrapped with hwbus_ops->lock/unlock! */
-int __cw1200_irq_enable(struct cw1200_common *priv, int enable);
+पूर्णांक __cw1200_irq_enable(काष्ठा cw1200_common *priv, पूर्णांक enable);
 
-struct hwbus_ops {
-	int (*hwbus_memcpy_fromio)(struct hwbus_priv *self, unsigned int addr,
-					void *dst, int count);
-	int (*hwbus_memcpy_toio)(struct hwbus_priv *self, unsigned int addr,
-					const void *src, int count);
-	void (*lock)(struct hwbus_priv *self);
-	void (*unlock)(struct hwbus_priv *self);
-	size_t (*align_size)(struct hwbus_priv *self, size_t size);
-	int (*power_mgmt)(struct hwbus_priv *self, bool suspend);
-};
+काष्ठा hwbus_ops अणु
+	पूर्णांक (*hwbus_स_नकल_fromio)(काष्ठा hwbus_priv *self, अचिन्हित पूर्णांक addr,
+					व्योम *dst, पूर्णांक count);
+	पूर्णांक (*hwbus_स_नकल_toio)(काष्ठा hwbus_priv *self, अचिन्हित पूर्णांक addr,
+					स्थिर व्योम *src, पूर्णांक count);
+	व्योम (*lock)(काष्ठा hwbus_priv *self);
+	व्योम (*unlock)(काष्ठा hwbus_priv *self);
+	माप_प्रकार (*align_size)(काष्ठा hwbus_priv *self, माप_प्रकार size);
+	पूर्णांक (*घातer_mgmt)(काष्ठा hwbus_priv *self, bool suspend);
+पूर्ण;
 
-#endif /* CW1200_HWBUS_H */
+#पूर्ण_अगर /* CW1200_HWBUS_H */

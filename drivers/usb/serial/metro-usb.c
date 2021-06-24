@@ -1,303 +1,304 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
-  Some of this code is credited to Linux USB open source files that are
+  Some of this code is credited to Linux USB खोलो source files that are
   distributed with Linux.
 
   Copyright:	2007 Metrologic Instruments. All rights reserved.
   Copyright:	2011 Azimut Ltd. <http://azimutrzn.ru/>
 */
 
-#include <linux/kernel.h>
-#include <linux/tty.h>
-#include <linux/module.h>
-#include <linux/usb.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/tty_driver.h>
-#include <linux/tty_flip.h>
-#include <linux/moduleparam.h>
-#include <linux/spinlock.h>
-#include <linux/uaccess.h>
-#include <linux/usb/serial.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/usb/serial.h>
 
-#define DRIVER_DESC "Metrologic Instruments Inc. - USB-POS driver"
+#घोषणा DRIVER_DESC "Metrologic Instruments Inc. - USB-POS driver"
 
-/* Product information. */
-#define FOCUS_VENDOR_ID			0x0C2E
-#define FOCUS_PRODUCT_ID_BI		0x0720
-#define FOCUS_PRODUCT_ID_UNI		0x0700
+/* Product inक्रमmation. */
+#घोषणा FOCUS_VENDOR_ID			0x0C2E
+#घोषणा FOCUS_PRODUCT_ID_BI		0x0720
+#घोषणा FOCUS_PRODUCT_ID_UNI		0x0700
 
-#define METROUSB_SET_REQUEST_TYPE	0x40
-#define METROUSB_SET_MODEM_CTRL_REQUEST	10
-#define METROUSB_SET_BREAK_REQUEST	0x40
-#define METROUSB_MCR_NONE		0x08	/* Deactivate DTR and RTS. */
-#define METROUSB_MCR_RTS		0x0a	/* Activate RTS. */
-#define METROUSB_MCR_DTR		0x09	/* Activate DTR. */
-#define WDR_TIMEOUT			5000	/* default urb timeout. */
+#घोषणा METROUSB_SET_REQUEST_TYPE	0x40
+#घोषणा METROUSB_SET_MODEM_CTRL_REQUEST	10
+#घोषणा METROUSB_SET_BREAK_REQUEST	0x40
+#घोषणा METROUSB_MCR_NONE		0x08	/* Deactivate DTR and RTS. */
+#घोषणा METROUSB_MCR_RTS		0x0a	/* Activate RTS. */
+#घोषणा METROUSB_MCR_DTR		0x09	/* Activate DTR. */
+#घोषणा WDR_TIMEOUT			5000	/* शेष urb समयout. */
 
-/* Private data structure. */
-struct metrousb_private {
+/* Private data काष्ठाure. */
+काष्ठा metrousb_निजी अणु
 	spinlock_t lock;
-	int throttled;
-	unsigned long control_state;
-};
+	पूर्णांक throttled;
+	अचिन्हित दीर्घ control_state;
+पूर्ण;
 
 /* Device table list. */
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(FOCUS_VENDOR_ID, FOCUS_PRODUCT_ID_BI) },
-	{ USB_DEVICE(FOCUS_VENDOR_ID, FOCUS_PRODUCT_ID_UNI) },
-	{ USB_DEVICE_INTERFACE_CLASS(0x0c2e, 0x0730, 0xff) },	/* MS7820 */
-	{ }, /* Terminating entry. */
-};
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(FOCUS_VENDOR_ID, FOCUS_PRODUCT_ID_BI) पूर्ण,
+	अणु USB_DEVICE(FOCUS_VENDOR_ID, FOCUS_PRODUCT_ID_UNI) पूर्ण,
+	अणु USB_DEVICE_INTERFACE_CLASS(0x0c2e, 0x0730, 0xff) पूर्ण,	/* MS7820 */
+	अणु पूर्ण, /* Terminating entry. */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, id_table);
 
-/* UNI-Directional mode commands for device configure */
-#define UNI_CMD_OPEN	0x80
-#define UNI_CMD_CLOSE	0xFF
+/* UNI-Directional mode commands क्रम device configure */
+#घोषणा UNI_CMD_OPEN	0x80
+#घोषणा UNI_CMD_CLOSE	0xFF
 
-static int metrousb_is_unidirectional_mode(struct usb_serial *serial)
-{
+अटल पूर्णांक metrousb_is_unidirectional_mode(काष्ठा usb_serial *serial)
+अणु
 	u16 product_id = le16_to_cpu(serial->dev->descriptor.idProduct);
 
-	return product_id == FOCUS_PRODUCT_ID_UNI;
-}
+	वापस product_id == FOCUS_PRODUCT_ID_UNI;
+पूर्ण
 
-static int metrousb_calc_num_ports(struct usb_serial *serial,
-				   struct usb_serial_endpoints *epds)
-{
-	if (metrousb_is_unidirectional_mode(serial)) {
-		if (epds->num_interrupt_out == 0) {
-			dev_err(&serial->interface->dev, "interrupt-out endpoint missing\n");
-			return -ENODEV;
-		}
-	}
+अटल पूर्णांक metrousb_calc_num_ports(काष्ठा usb_serial *serial,
+				   काष्ठा usb_serial_endpoपूर्णांकs *epds)
+अणु
+	अगर (metrousb_is_unidirectional_mode(serial)) अणु
+		अगर (epds->num_पूर्णांकerrupt_out == 0) अणु
+			dev_err(&serial->पूर्णांकerface->dev, "interrupt-out endpoint missing\n");
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int metrousb_send_unidirectional_cmd(u8 cmd, struct usb_serial_port *port)
-{
-	int ret;
-	int actual_len;
-	u8 *buffer_cmd = NULL;
+अटल पूर्णांक metrousb_send_unidirectional_cmd(u8 cmd, काष्ठा usb_serial_port *port)
+अणु
+	पूर्णांक ret;
+	पूर्णांक actual_len;
+	u8 *buffer_cmd = शून्य;
 
-	if (!metrousb_is_unidirectional_mode(port->serial))
-		return 0;
+	अगर (!metrousb_is_unidirectional_mode(port->serial))
+		वापस 0;
 
-	buffer_cmd = kzalloc(sizeof(cmd), GFP_KERNEL);
-	if (!buffer_cmd)
-		return -ENOMEM;
+	buffer_cmd = kzalloc(माप(cmd), GFP_KERNEL);
+	अगर (!buffer_cmd)
+		वापस -ENOMEM;
 
 	*buffer_cmd = cmd;
 
-	ret = usb_interrupt_msg(port->serial->dev,
-		usb_sndintpipe(port->serial->dev, port->interrupt_out_endpointAddress),
-		buffer_cmd, sizeof(cmd),
+	ret = usb_पूर्णांकerrupt_msg(port->serial->dev,
+		usb_sndपूर्णांकpipe(port->serial->dev, port->पूर्णांकerrupt_out_endpoपूर्णांकAddress),
+		buffer_cmd, माप(cmd),
 		&actual_len, USB_CTRL_SET_TIMEOUT);
 
-	kfree(buffer_cmd);
+	kमुक्त(buffer_cmd);
 
-	if (ret < 0)
-		return ret;
-	else if (actual_len != sizeof(cmd))
-		return -EIO;
-	return 0;
-}
+	अगर (ret < 0)
+		वापस ret;
+	अन्यथा अगर (actual_len != माप(cmd))
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static void metrousb_read_int_callback(struct urb *urb)
-{
-	struct usb_serial_port *port = urb->context;
-	struct metrousb_private *metro_priv = usb_get_serial_port_data(port);
-	unsigned char *data = urb->transfer_buffer;
-	int throttled = 0;
-	int result = 0;
-	unsigned long flags = 0;
+अटल व्योम metrousb_पढ़ो_पूर्णांक_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा usb_serial_port *port = urb->context;
+	काष्ठा metrousb_निजी *metro_priv = usb_get_serial_port_data(port);
+	अचिन्हित अक्षर *data = urb->transfer_buffer;
+	पूर्णांक throttled = 0;
+	पूर्णांक result = 0;
+	अचिन्हित दीर्घ flags = 0;
 
 	dev_dbg(&port->dev, "%s\n", __func__);
 
-	switch (urb->status) {
-	case 0:
-		/* Success status, read from the port. */
-		break;
-	case -ECONNRESET:
-	case -ENOENT:
-	case -ESHUTDOWN:
+	चयन (urb->status) अणु
+	हाल 0:
+		/* Success status, पढ़ो from the port. */
+		अवरोध;
+	हाल -ECONNRESET:
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
 		/* urb has been terminated. */
 		dev_dbg(&port->dev,
 			"%s - urb shutting down, error code=%d\n",
 			__func__, urb->status);
-		return;
-	default:
+		वापस;
+	शेष:
 		dev_dbg(&port->dev,
 			"%s - non-zero urb received, error code=%d\n",
 			__func__, urb->status);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 
-	/* Set the data read from the usb port into the serial port buffer. */
-	if (urb->actual_length) {
+	/* Set the data पढ़ो from the usb port पूर्णांकo the serial port buffer. */
+	अगर (urb->actual_length) अणु
 		/* Loop through the data copying each byte to the tty layer. */
 		tty_insert_flip_string(&port->port, data, urb->actual_length);
 
 		/* Force the data to the tty layer. */
 		tty_flip_buffer_push(&port->port);
-	}
+	पूर्ण
 
 	/* Set any port variables. */
 	spin_lock_irqsave(&metro_priv->lock, flags);
 	throttled = metro_priv->throttled;
 	spin_unlock_irqrestore(&metro_priv->lock, flags);
 
-	if (throttled)
-		return;
-exit:
+	अगर (throttled)
+		वापस;
+निकास:
 	/* Try to resubmit the urb. */
 	result = usb_submit_urb(urb, GFP_ATOMIC);
-	if (result)
+	अगर (result)
 		dev_err(&port->dev,
 			"%s - failed submitting interrupt in urb, error code=%d\n",
 			__func__, result);
-}
+पूर्ण
 
-static void metrousb_cleanup(struct usb_serial_port *port)
-{
-	usb_kill_urb(port->interrupt_in_urb);
+अटल व्योम metrousb_cleanup(काष्ठा usb_serial_port *port)
+अणु
+	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
 
 	metrousb_send_unidirectional_cmd(UNI_CMD_CLOSE, port);
-}
+पूर्ण
 
-static int metrousb_open(struct tty_struct *tty, struct usb_serial_port *port)
-{
-	struct usb_serial *serial = port->serial;
-	struct metrousb_private *metro_priv = usb_get_serial_port_data(port);
-	unsigned long flags = 0;
-	int result = 0;
+अटल पूर्णांक metrousb_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा metrousb_निजी *metro_priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक result = 0;
 
-	/* Set the private data information for the port. */
+	/* Set the निजी data inक्रमmation क्रम the port. */
 	spin_lock_irqsave(&metro_priv->lock, flags);
 	metro_priv->control_state = 0;
 	metro_priv->throttled = 0;
 	spin_unlock_irqrestore(&metro_priv->lock, flags);
 
 	/* Clear the urb pipe. */
-	usb_clear_halt(serial->dev, port->interrupt_in_urb->pipe);
+	usb_clear_halt(serial->dev, port->पूर्णांकerrupt_in_urb->pipe);
 
-	/* Start reading from the device */
-	usb_fill_int_urb(port->interrupt_in_urb, serial->dev,
-			  usb_rcvintpipe(serial->dev, port->interrupt_in_endpointAddress),
-			   port->interrupt_in_urb->transfer_buffer,
-			   port->interrupt_in_urb->transfer_buffer_length,
-			   metrousb_read_int_callback, port, 1);
-	result = usb_submit_urb(port->interrupt_in_urb, GFP_KERNEL);
+	/* Start पढ़ोing from the device */
+	usb_fill_पूर्णांक_urb(port->पूर्णांकerrupt_in_urb, serial->dev,
+			  usb_rcvपूर्णांकpipe(serial->dev, port->पूर्णांकerrupt_in_endpoपूर्णांकAddress),
+			   port->पूर्णांकerrupt_in_urb->transfer_buffer,
+			   port->पूर्णांकerrupt_in_urb->transfer_buffer_length,
+			   metrousb_पढ़ो_पूर्णांक_callback, port, 1);
+	result = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_KERNEL);
 
-	if (result) {
+	अगर (result) अणु
 		dev_err(&port->dev,
 			"%s - failed submitting interrupt in urb, error code=%d\n",
 			__func__, result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	/* Send activate cmd to device */
 	result = metrousb_send_unidirectional_cmd(UNI_CMD_OPEN, port);
-	if (result) {
+	अगर (result) अणु
 		dev_err(&port->dev,
 			"%s - failed to configure device, error code=%d\n",
 			__func__, result);
-		goto err_kill_urb;
-	}
+		जाओ err_समाप्त_urb;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_kill_urb:
-	usb_kill_urb(port->interrupt_in_urb);
+err_समाप्त_urb:
+	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int metrousb_set_modem_ctrl(struct usb_serial *serial, unsigned int control_state)
-{
-	int retval = 0;
-	unsigned char mcr = METROUSB_MCR_NONE;
+अटल पूर्णांक metrousb_set_modem_ctrl(काष्ठा usb_serial *serial, अचिन्हित पूर्णांक control_state)
+अणु
+	पूर्णांक retval = 0;
+	अचिन्हित अक्षर mcr = METROUSB_MCR_NONE;
 
 	dev_dbg(&serial->dev->dev, "%s - control state = %d\n",
 		__func__, control_state);
 
 	/* Set the modem control value. */
-	if (control_state & TIOCM_DTR)
+	अगर (control_state & TIOCM_DTR)
 		mcr |= METROUSB_MCR_DTR;
-	if (control_state & TIOCM_RTS)
+	अगर (control_state & TIOCM_RTS)
 		mcr |= METROUSB_MCR_RTS;
 
 	/* Send the command to the usb port. */
 	retval = usb_control_msg(serial->dev, usb_sndctrlpipe(serial->dev, 0),
 				METROUSB_SET_REQUEST_TYPE, METROUSB_SET_MODEM_CTRL_REQUEST,
-				control_state, 0, NULL, 0, WDR_TIMEOUT);
-	if (retval < 0)
+				control_state, 0, शून्य, 0, WDR_TIMEOUT);
+	अगर (retval < 0)
 		dev_err(&serial->dev->dev,
 			"%s - set modem ctrl=0x%x failed, error code=%d\n",
 			__func__, mcr, retval);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int metrousb_port_probe(struct usb_serial_port *port)
-{
-	struct metrousb_private *metro_priv;
+अटल पूर्णांक metrousb_port_probe(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा metrousb_निजी *metro_priv;
 
-	metro_priv = kzalloc(sizeof(*metro_priv), GFP_KERNEL);
-	if (!metro_priv)
-		return -ENOMEM;
+	metro_priv = kzalloc(माप(*metro_priv), GFP_KERNEL);
+	अगर (!metro_priv)
+		वापस -ENOMEM;
 
 	spin_lock_init(&metro_priv->lock);
 
 	usb_set_serial_port_data(port, metro_priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void metrousb_port_remove(struct usb_serial_port *port)
-{
-	struct metrousb_private *metro_priv;
+अटल व्योम metrousb_port_हटाओ(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा metrousb_निजी *metro_priv;
 
 	metro_priv = usb_get_serial_port_data(port);
-	kfree(metro_priv);
-}
+	kमुक्त(metro_priv);
+पूर्ण
 
-static void metrousb_throttle(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct metrousb_private *metro_priv = usb_get_serial_port_data(port);
-	unsigned long flags = 0;
+अटल व्योम metrousb_throttle(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा metrousb_निजी *metro_priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags = 0;
 
-	/* Set the private information for the port to stop reading data. */
+	/* Set the निजी inक्रमmation क्रम the port to stop पढ़ोing data. */
 	spin_lock_irqsave(&metro_priv->lock, flags);
 	metro_priv->throttled = 1;
 	spin_unlock_irqrestore(&metro_priv->lock, flags);
-}
+पूर्ण
 
-static int metrousb_tiocmget(struct tty_struct *tty)
-{
-	unsigned long control_state = 0;
-	struct usb_serial_port *port = tty->driver_data;
-	struct metrousb_private *metro_priv = usb_get_serial_port_data(port);
-	unsigned long flags = 0;
+अटल पूर्णांक metrousb_tiocmget(काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित दीर्घ control_state = 0;
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा metrousb_निजी *metro_priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags = 0;
 
 	spin_lock_irqsave(&metro_priv->lock, flags);
 	control_state = metro_priv->control_state;
 	spin_unlock_irqrestore(&metro_priv->lock, flags);
 
-	return control_state;
-}
+	वापस control_state;
+पूर्ण
 
-static int metrousb_tiocmset(struct tty_struct *tty,
-			     unsigned int set, unsigned int clear)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct usb_serial *serial = port->serial;
-	struct metrousb_private *metro_priv = usb_get_serial_port_data(port);
-	unsigned long flags = 0;
-	unsigned long control_state = 0;
+अटल पूर्णांक metrousb_tiocmset(काष्ठा tty_काष्ठा *tty,
+			     अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा metrousb_निजी *metro_priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags = 0;
+	अचिन्हित दीर्घ control_state = 0;
 
 	dev_dbg(&port->dev, "%s - set=%d, clear=%d\n", __func__, set, clear);
 
@@ -305,64 +306,64 @@ static int metrousb_tiocmset(struct tty_struct *tty,
 	control_state = metro_priv->control_state;
 
 	/* Set the RTS and DTR values. */
-	if (set & TIOCM_RTS)
+	अगर (set & TIOCM_RTS)
 		control_state |= TIOCM_RTS;
-	if (set & TIOCM_DTR)
+	अगर (set & TIOCM_DTR)
 		control_state |= TIOCM_DTR;
-	if (clear & TIOCM_RTS)
+	अगर (clear & TIOCM_RTS)
 		control_state &= ~TIOCM_RTS;
-	if (clear & TIOCM_DTR)
+	अगर (clear & TIOCM_DTR)
 		control_state &= ~TIOCM_DTR;
 
 	metro_priv->control_state = control_state;
 	spin_unlock_irqrestore(&metro_priv->lock, flags);
-	return metrousb_set_modem_ctrl(serial, control_state);
-}
+	वापस metrousb_set_modem_ctrl(serial, control_state);
+पूर्ण
 
-static void metrousb_unthrottle(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct metrousb_private *metro_priv = usb_get_serial_port_data(port);
-	unsigned long flags = 0;
-	int result = 0;
+अटल व्योम metrousb_unthrottle(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा metrousb_निजी *metro_priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags = 0;
+	पूर्णांक result = 0;
 
-	/* Set the private information for the port to resume reading data. */
+	/* Set the निजी inक्रमmation क्रम the port to resume पढ़ोing data. */
 	spin_lock_irqsave(&metro_priv->lock, flags);
 	metro_priv->throttled = 0;
 	spin_unlock_irqrestore(&metro_priv->lock, flags);
 
-	/* Submit the urb to read from the port. */
-	result = usb_submit_urb(port->interrupt_in_urb, GFP_ATOMIC);
-	if (result)
+	/* Submit the urb to पढ़ो from the port. */
+	result = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_ATOMIC);
+	अगर (result)
 		dev_err(&port->dev,
 			"failed submitting interrupt in urb error code=%d\n",
 			result);
-}
+पूर्ण
 
-static struct usb_serial_driver metrousb_device = {
-	.driver = {
+अटल काष्ठा usb_serial_driver metrousb_device = अणु
+	.driver = अणु
 		.owner =	THIS_MODULE,
 		.name =		"metro-usb",
-	},
+	पूर्ण,
 	.description		= "Metrologic USB to Serial",
 	.id_table		= id_table,
-	.num_interrupt_in	= 1,
+	.num_पूर्णांकerrupt_in	= 1,
 	.calc_num_ports		= metrousb_calc_num_ports,
-	.open			= metrousb_open,
-	.close			= metrousb_cleanup,
-	.read_int_callback	= metrousb_read_int_callback,
+	.खोलो			= metrousb_खोलो,
+	.बंद			= metrousb_cleanup,
+	.पढ़ो_पूर्णांक_callback	= metrousb_पढ़ो_पूर्णांक_callback,
 	.port_probe		= metrousb_port_probe,
-	.port_remove		= metrousb_port_remove,
+	.port_हटाओ		= metrousb_port_हटाओ,
 	.throttle		= metrousb_throttle,
 	.unthrottle		= metrousb_unthrottle,
 	.tiocmget		= metrousb_tiocmget,
 	.tiocmset		= metrousb_tiocmset,
-};
+पूर्ण;
 
-static struct usb_serial_driver * const serial_drivers[] = {
+अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
 	&metrousb_device,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 module_usb_serial_driver(serial_drivers, id_table);
 

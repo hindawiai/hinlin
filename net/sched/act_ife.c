@@ -1,943 +1,944 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * net/sched/ife.c	Inter-FE action based on ForCES WG InterFE LFB
+ * net/sched/अगरe.c	Inter-FE action based on ForCES WG InterFE LFB
  *
  *		Refer to:
- *		draft-ietf-forces-interfelfb-03
+ *		draft-ietf-क्रमces-पूर्णांकerfelfb-03
  *		and
  *		netdev01 paper:
- *		"Distributing Linux Traffic Control Classifier-Action
- *		Subsystem"
+ *		"Distributing Linux Traffic Control Classअगरier-Action
+ *		Subप्रणाली"
  *		Authors: Jamal Hadi Salim and Damascene M. Joachimpillai
  *
  * copyright Jamal Hadi Salim (2015)
 */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <net/net_namespace.h>
-#include <net/netlink.h>
-#include <net/pkt_sched.h>
-#include <net/pkt_cls.h>
-#include <uapi/linux/tc_act/tc_ife.h>
-#include <net/tc_act/tc_ife.h>
-#include <linux/etherdevice.h>
-#include <net/ife.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netlink.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <uapi/linux/tc_act/tc_अगरe.h>
+#समावेश <net/tc_act/tc_अगरe.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <net/अगरe.h>
 
-static unsigned int ife_net_id;
-static int max_metacnt = IFE_META_MAX + 1;
-static struct tc_action_ops act_ife_ops;
+अटल अचिन्हित पूर्णांक अगरe_net_id;
+अटल पूर्णांक max_metacnt = IFE_META_MAX + 1;
+अटल काष्ठा tc_action_ops act_अगरe_ops;
 
-static const struct nla_policy ife_policy[TCA_IFE_MAX + 1] = {
-	[TCA_IFE_PARMS] = { .len = sizeof(struct tc_ife)},
-	[TCA_IFE_DMAC] = { .len = ETH_ALEN},
-	[TCA_IFE_SMAC] = { .len = ETH_ALEN},
-	[TCA_IFE_TYPE] = { .type = NLA_U16},
-};
+अटल स्थिर काष्ठा nla_policy अगरe_policy[TCA_IFE_MAX + 1] = अणु
+	[TCA_IFE_PARMS] = अणु .len = माप(काष्ठा tc_अगरe)पूर्ण,
+	[TCA_IFE_DMAC] = अणु .len = ETH_ALENपूर्ण,
+	[TCA_IFE_SMAC] = अणु .len = ETH_ALENपूर्ण,
+	[TCA_IFE_TYPE] = अणु .type = NLA_U16पूर्ण,
+पूर्ण;
 
-int ife_encode_meta_u16(u16 metaval, void *skbdata, struct tcf_meta_info *mi)
-{
+पूर्णांक अगरe_encode_meta_u16(u16 metaval, व्योम *skbdata, काष्ठा tcf_meta_info *mi)
+अणु
 	u16 edata = 0;
 
-	if (mi->metaval)
+	अगर (mi->metaval)
 		edata = *(u16 *)mi->metaval;
-	else if (metaval)
+	अन्यथा अगर (metaval)
 		edata = metaval;
 
-	if (!edata) /* will not encode */
-		return 0;
+	अगर (!edata) /* will not encode */
+		वापस 0;
 
 	edata = htons(edata);
-	return ife_tlv_meta_encode(skbdata, mi->metaid, 2, &edata);
-}
-EXPORT_SYMBOL_GPL(ife_encode_meta_u16);
+	वापस अगरe_tlv_meta_encode(skbdata, mi->metaid, 2, &edata);
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_encode_meta_u16);
 
-int ife_get_meta_u32(struct sk_buff *skb, struct tcf_meta_info *mi)
-{
-	if (mi->metaval)
-		return nla_put_u32(skb, mi->metaid, *(u32 *)mi->metaval);
-	else
-		return nla_put(skb, mi->metaid, 0, NULL);
-}
-EXPORT_SYMBOL_GPL(ife_get_meta_u32);
+पूर्णांक अगरe_get_meta_u32(काष्ठा sk_buff *skb, काष्ठा tcf_meta_info *mi)
+अणु
+	अगर (mi->metaval)
+		वापस nla_put_u32(skb, mi->metaid, *(u32 *)mi->metaval);
+	अन्यथा
+		वापस nla_put(skb, mi->metaid, 0, शून्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_get_meta_u32);
 
-int ife_check_meta_u32(u32 metaval, struct tcf_meta_info *mi)
-{
-	if (metaval || mi->metaval)
-		return 8; /* T+L+V == 2+2+4 */
+पूर्णांक अगरe_check_meta_u32(u32 metaval, काष्ठा tcf_meta_info *mi)
+अणु
+	अगर (metaval || mi->metaval)
+		वापस 8; /* T+L+V == 2+2+4 */
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ife_check_meta_u32);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_check_meta_u32);
 
-int ife_check_meta_u16(u16 metaval, struct tcf_meta_info *mi)
-{
-	if (metaval || mi->metaval)
-		return 8; /* T+L+(V) == 2+2+(2+2bytepad) */
+पूर्णांक अगरe_check_meta_u16(u16 metaval, काष्ठा tcf_meta_info *mi)
+अणु
+	अगर (metaval || mi->metaval)
+		वापस 8; /* T+L+(V) == 2+2+(2+2bytepad) */
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ife_check_meta_u16);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_check_meta_u16);
 
-int ife_encode_meta_u32(u32 metaval, void *skbdata, struct tcf_meta_info *mi)
-{
+पूर्णांक अगरe_encode_meta_u32(u32 metaval, व्योम *skbdata, काष्ठा tcf_meta_info *mi)
+अणु
 	u32 edata = metaval;
 
-	if (mi->metaval)
+	अगर (mi->metaval)
 		edata = *(u32 *)mi->metaval;
-	else if (metaval)
+	अन्यथा अगर (metaval)
 		edata = metaval;
 
-	if (!edata) /* will not encode */
-		return 0;
+	अगर (!edata) /* will not encode */
+		वापस 0;
 
 	edata = htonl(edata);
-	return ife_tlv_meta_encode(skbdata, mi->metaid, 4, &edata);
-}
-EXPORT_SYMBOL_GPL(ife_encode_meta_u32);
+	वापस अगरe_tlv_meta_encode(skbdata, mi->metaid, 4, &edata);
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_encode_meta_u32);
 
-int ife_get_meta_u16(struct sk_buff *skb, struct tcf_meta_info *mi)
-{
-	if (mi->metaval)
-		return nla_put_u16(skb, mi->metaid, *(u16 *)mi->metaval);
-	else
-		return nla_put(skb, mi->metaid, 0, NULL);
-}
-EXPORT_SYMBOL_GPL(ife_get_meta_u16);
+पूर्णांक अगरe_get_meta_u16(काष्ठा sk_buff *skb, काष्ठा tcf_meta_info *mi)
+अणु
+	अगर (mi->metaval)
+		वापस nla_put_u16(skb, mi->metaid, *(u16 *)mi->metaval);
+	अन्यथा
+		वापस nla_put(skb, mi->metaid, 0, शून्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_get_meta_u16);
 
-int ife_alloc_meta_u32(struct tcf_meta_info *mi, void *metaval, gfp_t gfp)
-{
-	mi->metaval = kmemdup(metaval, sizeof(u32), gfp);
-	if (!mi->metaval)
-		return -ENOMEM;
+पूर्णांक अगरe_alloc_meta_u32(काष्ठा tcf_meta_info *mi, व्योम *metaval, gfp_t gfp)
+अणु
+	mi->metaval = kmemdup(metaval, माप(u32), gfp);
+	अगर (!mi->metaval)
+		वापस -ENOMEM;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ife_alloc_meta_u32);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_alloc_meta_u32);
 
-int ife_alloc_meta_u16(struct tcf_meta_info *mi, void *metaval, gfp_t gfp)
-{
-	mi->metaval = kmemdup(metaval, sizeof(u16), gfp);
-	if (!mi->metaval)
-		return -ENOMEM;
+पूर्णांक अगरe_alloc_meta_u16(काष्ठा tcf_meta_info *mi, व्योम *metaval, gfp_t gfp)
+अणु
+	mi->metaval = kmemdup(metaval, माप(u16), gfp);
+	अगर (!mi->metaval)
+		वापस -ENOMEM;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ife_alloc_meta_u16);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_alloc_meta_u16);
 
-void ife_release_meta_gen(struct tcf_meta_info *mi)
-{
-	kfree(mi->metaval);
-}
-EXPORT_SYMBOL_GPL(ife_release_meta_gen);
+व्योम अगरe_release_meta_gen(काष्ठा tcf_meta_info *mi)
+अणु
+	kमुक्त(mi->metaval);
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_release_meta_gen);
 
-int ife_validate_meta_u32(void *val, int len)
-{
-	if (len == sizeof(u32))
-		return 0;
+पूर्णांक अगरe_validate_meta_u32(व्योम *val, पूर्णांक len)
+अणु
+	अगर (len == माप(u32))
+		वापस 0;
 
-	return -EINVAL;
-}
-EXPORT_SYMBOL_GPL(ife_validate_meta_u32);
+	वापस -EINVAL;
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_validate_meta_u32);
 
-int ife_validate_meta_u16(void *val, int len)
-{
+पूर्णांक अगरe_validate_meta_u16(व्योम *val, पूर्णांक len)
+अणु
 	/* length will not include padding */
-	if (len == sizeof(u16))
-		return 0;
+	अगर (len == माप(u16))
+		वापस 0;
 
-	return -EINVAL;
-}
-EXPORT_SYMBOL_GPL(ife_validate_meta_u16);
+	वापस -EINVAL;
+पूर्ण
+EXPORT_SYMBOL_GPL(अगरe_validate_meta_u16);
 
-static LIST_HEAD(ifeoplist);
-static DEFINE_RWLOCK(ife_mod_lock);
+अटल LIST_HEAD(अगरeoplist);
+अटल DEFINE_RWLOCK(अगरe_mod_lock);
 
-static struct tcf_meta_ops *find_ife_oplist(u16 metaid)
-{
-	struct tcf_meta_ops *o;
+अटल काष्ठा tcf_meta_ops *find_अगरe_oplist(u16 metaid)
+अणु
+	काष्ठा tcf_meta_ops *o;
 
-	read_lock(&ife_mod_lock);
-	list_for_each_entry(o, &ifeoplist, list) {
-		if (o->metaid == metaid) {
-			if (!try_module_get(o->owner))
-				o = NULL;
-			read_unlock(&ife_mod_lock);
-			return o;
-		}
-	}
-	read_unlock(&ife_mod_lock);
+	पढ़ो_lock(&अगरe_mod_lock);
+	list_क्रम_each_entry(o, &अगरeoplist, list) अणु
+		अगर (o->metaid == metaid) अणु
+			अगर (!try_module_get(o->owner))
+				o = शून्य;
+			पढ़ो_unlock(&अगरe_mod_lock);
+			वापस o;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&अगरe_mod_lock);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int register_ife_op(struct tcf_meta_ops *mops)
-{
-	struct tcf_meta_ops *m;
+पूर्णांक रेजिस्टर_अगरe_op(काष्ठा tcf_meta_ops *mops)
+अणु
+	काष्ठा tcf_meta_ops *m;
 
-	if (!mops->metaid || !mops->metatype || !mops->name ||
+	अगर (!mops->metaid || !mops->metatype || !mops->name ||
 	    !mops->check_presence || !mops->encode || !mops->decode ||
 	    !mops->get || !mops->alloc)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	write_lock(&ife_mod_lock);
+	ग_लिखो_lock(&अगरe_mod_lock);
 
-	list_for_each_entry(m, &ifeoplist, list) {
-		if (m->metaid == mops->metaid ||
-		    (strcmp(mops->name, m->name) == 0)) {
-			write_unlock(&ife_mod_lock);
-			return -EEXIST;
-		}
-	}
+	list_क्रम_each_entry(m, &अगरeoplist, list) अणु
+		अगर (m->metaid == mops->metaid ||
+		    (म_भेद(mops->name, m->name) == 0)) अणु
+			ग_लिखो_unlock(&अगरe_mod_lock);
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
 
-	if (!mops->release)
-		mops->release = ife_release_meta_gen;
+	अगर (!mops->release)
+		mops->release = अगरe_release_meta_gen;
 
-	list_add_tail(&mops->list, &ifeoplist);
-	write_unlock(&ife_mod_lock);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(unregister_ife_op);
+	list_add_tail(&mops->list, &अगरeoplist);
+	ग_लिखो_unlock(&अगरe_mod_lock);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_अगरe_op);
 
-int unregister_ife_op(struct tcf_meta_ops *mops)
-{
-	struct tcf_meta_ops *m;
-	int err = -ENOENT;
+पूर्णांक unरेजिस्टर_अगरe_op(काष्ठा tcf_meta_ops *mops)
+अणु
+	काष्ठा tcf_meta_ops *m;
+	पूर्णांक err = -ENOENT;
 
-	write_lock(&ife_mod_lock);
-	list_for_each_entry(m, &ifeoplist, list) {
-		if (m->metaid == mops->metaid) {
+	ग_लिखो_lock(&अगरe_mod_lock);
+	list_क्रम_each_entry(m, &अगरeoplist, list) अणु
+		अगर (m->metaid == mops->metaid) अणु
 			list_del(&mops->list);
 			err = 0;
-			break;
-		}
-	}
-	write_unlock(&ife_mod_lock);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock(&अगरe_mod_lock);
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(register_ife_op);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_अगरe_op);
 
-static int ife_validate_metatype(struct tcf_meta_ops *ops, void *val, int len)
-{
-	int ret = 0;
-	/* XXX: unfortunately cant use nla_policy at this point
-	* because a length of 0 is valid in the case of
-	* "allow". "use" semantics do enforce for proper
+अटल पूर्णांक अगरe_validate_metatype(काष्ठा tcf_meta_ops *ops, व्योम *val, पूर्णांक len)
+अणु
+	पूर्णांक ret = 0;
+	/* XXX: unक्रमtunately cant use nla_policy at this poपूर्णांक
+	* because a length of 0 is valid in the हाल of
+	* "allow". "use" semantics करो enक्रमce क्रम proper
 	* length and i couldve use nla_policy but it makes it hard
-	* to use it just for that..
+	* to use it just क्रम that..
 	*/
-	if (ops->validate)
-		return ops->validate(val, len);
+	अगर (ops->validate)
+		वापस ops->validate(val, len);
 
-	if (ops->metatype == NLA_U32)
-		ret = ife_validate_meta_u32(val, len);
-	else if (ops->metatype == NLA_U16)
-		ret = ife_validate_meta_u16(val, len);
+	अगर (ops->metatype == NLA_U32)
+		ret = अगरe_validate_meta_u32(val, len);
+	अन्यथा अगर (ops->metatype == NLA_U16)
+		ret = अगरe_validate_meta_u16(val, len);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_MODULES
-static const char *ife_meta_id2name(u32 metaid)
-{
-	switch (metaid) {
-	case IFE_META_SKBMARK:
-		return "skbmark";
-	case IFE_META_PRIO:
-		return "skbprio";
-	case IFE_META_TCINDEX:
-		return "tcindex";
-	default:
-		return "unknown";
-	}
-}
-#endif
+#अगर_घोषित CONFIG_MODULES
+अटल स्थिर अक्षर *अगरe_meta_id2name(u32 metaid)
+अणु
+	चयन (metaid) अणु
+	हाल IFE_META_SKBMARK:
+		वापस "skbmark";
+	हाल IFE_META_PRIO:
+		वापस "skbprio";
+	हाल IFE_META_TCINDEX:
+		वापस "tcindex";
+	शेष:
+		वापस "unknown";
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-/* called when adding new meta information
+/* called when adding new meta inक्रमmation
 */
-static int load_metaops_and_vet(u32 metaid, void *val, int len, bool rtnl_held)
-{
-	struct tcf_meta_ops *ops = find_ife_oplist(metaid);
-	int ret = 0;
+अटल पूर्णांक load_metaops_and_vet(u32 metaid, व्योम *val, पूर्णांक len, bool rtnl_held)
+अणु
+	काष्ठा tcf_meta_ops *ops = find_अगरe_oplist(metaid);
+	पूर्णांक ret = 0;
 
-	if (!ops) {
+	अगर (!ops) अणु
 		ret = -ENOENT;
-#ifdef CONFIG_MODULES
-		if (rtnl_held)
+#अगर_घोषित CONFIG_MODULES
+		अगर (rtnl_held)
 			rtnl_unlock();
-		request_module("ife-meta-%s", ife_meta_id2name(metaid));
-		if (rtnl_held)
+		request_module("ife-meta-%s", अगरe_meta_id2name(metaid));
+		अगर (rtnl_held)
 			rtnl_lock();
-		ops = find_ife_oplist(metaid);
-#endif
-	}
+		ops = find_अगरe_oplist(metaid);
+#पूर्ण_अगर
+	पूर्ण
 
-	if (ops) {
+	अगर (ops) अणु
 		ret = 0;
-		if (len)
-			ret = ife_validate_metatype(ops, val, len);
+		अगर (len)
+			ret = अगरe_validate_metatype(ops, val, len);
 
 		module_put(ops->owner);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* called when adding new meta information
+/* called when adding new meta inक्रमmation
 */
-static int __add_metainfo(const struct tcf_meta_ops *ops,
-			  struct tcf_ife_info *ife, u32 metaid, void *metaval,
-			  int len, bool atomic, bool exists)
-{
-	struct tcf_meta_info *mi = NULL;
-	int ret = 0;
+अटल पूर्णांक __add_metainfo(स्थिर काष्ठा tcf_meta_ops *ops,
+			  काष्ठा tcf_अगरe_info *अगरe, u32 metaid, व्योम *metaval,
+			  पूर्णांक len, bool atomic, bool exists)
+अणु
+	काष्ठा tcf_meta_info *mi = शून्य;
+	पूर्णांक ret = 0;
 
-	mi = kzalloc(sizeof(*mi), atomic ? GFP_ATOMIC : GFP_KERNEL);
-	if (!mi)
-		return -ENOMEM;
+	mi = kzalloc(माप(*mi), atomic ? GFP_ATOMIC : GFP_KERNEL);
+	अगर (!mi)
+		वापस -ENOMEM;
 
 	mi->metaid = metaid;
 	mi->ops = ops;
-	if (len > 0) {
+	अगर (len > 0) अणु
 		ret = ops->alloc(mi, metaval, atomic ? GFP_ATOMIC : GFP_KERNEL);
-		if (ret != 0) {
-			kfree(mi);
-			return ret;
-		}
-	}
+		अगर (ret != 0) अणु
+			kमुक्त(mi);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (exists)
-		spin_lock_bh(&ife->tcf_lock);
-	list_add_tail(&mi->metalist, &ife->metalist);
-	if (exists)
-		spin_unlock_bh(&ife->tcf_lock);
+	अगर (exists)
+		spin_lock_bh(&अगरe->tcf_lock);
+	list_add_tail(&mi->metalist, &अगरe->metalist);
+	अगर (exists)
+		spin_unlock_bh(&अगरe->tcf_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int add_metainfo_and_get_ops(const struct tcf_meta_ops *ops,
-				    struct tcf_ife_info *ife, u32 metaid,
+अटल पूर्णांक add_metainfo_and_get_ops(स्थिर काष्ठा tcf_meta_ops *ops,
+				    काष्ठा tcf_अगरe_info *अगरe, u32 metaid,
 				    bool exists)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	if (!try_module_get(ops->owner))
-		return -ENOENT;
-	ret = __add_metainfo(ops, ife, metaid, NULL, 0, true, exists);
-	if (ret)
+	अगर (!try_module_get(ops->owner))
+		वापस -ENOENT;
+	ret = __add_metainfo(ops, अगरe, metaid, शून्य, 0, true, exists);
+	अगर (ret)
 		module_put(ops->owner);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int add_metainfo(struct tcf_ife_info *ife, u32 metaid, void *metaval,
-			int len, bool exists)
-{
-	const struct tcf_meta_ops *ops = find_ife_oplist(metaid);
-	int ret;
+अटल पूर्णांक add_metainfo(काष्ठा tcf_अगरe_info *अगरe, u32 metaid, व्योम *metaval,
+			पूर्णांक len, bool exists)
+अणु
+	स्थिर काष्ठा tcf_meta_ops *ops = find_अगरe_oplist(metaid);
+	पूर्णांक ret;
 
-	if (!ops)
-		return -ENOENT;
-	ret = __add_metainfo(ops, ife, metaid, metaval, len, false, exists);
-	if (ret)
-		/*put back what find_ife_oplist took */
+	अगर (!ops)
+		वापस -ENOENT;
+	ret = __add_metainfo(ops, अगरe, metaid, metaval, len, false, exists);
+	अगर (ret)
+		/*put back what find_अगरe_oplist took */
 		module_put(ops->owner);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int use_all_metadata(struct tcf_ife_info *ife, bool exists)
-{
-	struct tcf_meta_ops *o;
-	int rc = 0;
-	int installed = 0;
+अटल पूर्णांक use_all_metadata(काष्ठा tcf_अगरe_info *अगरe, bool exists)
+अणु
+	काष्ठा tcf_meta_ops *o;
+	पूर्णांक rc = 0;
+	पूर्णांक installed = 0;
 
-	read_lock(&ife_mod_lock);
-	list_for_each_entry(o, &ifeoplist, list) {
-		rc = add_metainfo_and_get_ops(o, ife, o->metaid, exists);
-		if (rc == 0)
+	पढ़ो_lock(&अगरe_mod_lock);
+	list_क्रम_each_entry(o, &अगरeoplist, list) अणु
+		rc = add_metainfo_and_get_ops(o, अगरe, o->metaid, exists);
+		अगर (rc == 0)
 			installed += 1;
-	}
-	read_unlock(&ife_mod_lock);
+	पूर्ण
+	पढ़ो_unlock(&अगरe_mod_lock);
 
-	if (installed)
-		return 0;
-	else
-		return -EINVAL;
-}
+	अगर (installed)
+		वापस 0;
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static int dump_metalist(struct sk_buff *skb, struct tcf_ife_info *ife)
-{
-	struct tcf_meta_info *e;
-	struct nlattr *nest;
-	unsigned char *b = skb_tail_pointer(skb);
-	int total_encoded = 0;
+अटल पूर्णांक dump_metalist(काष्ठा sk_buff *skb, काष्ठा tcf_अगरe_info *अगरe)
+अणु
+	काष्ठा tcf_meta_info *e;
+	काष्ठा nlattr *nest;
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	पूर्णांक total_encoded = 0;
 
 	/*can only happen on decode */
-	if (list_empty(&ife->metalist))
-		return 0;
+	अगर (list_empty(&अगरe->metalist))
+		वापस 0;
 
 	nest = nla_nest_start_noflag(skb, TCA_IFE_METALST);
-	if (!nest)
-		goto out_nlmsg_trim;
+	अगर (!nest)
+		जाओ out_nlmsg_trim;
 
-	list_for_each_entry(e, &ife->metalist, metalist) {
-		if (!e->ops->get(skb, e))
+	list_क्रम_each_entry(e, &अगरe->metalist, metalist) अणु
+		अगर (!e->ops->get(skb, e))
 			total_encoded += 1;
-	}
+	पूर्ण
 
-	if (!total_encoded)
-		goto out_nlmsg_trim;
+	अगर (!total_encoded)
+		जाओ out_nlmsg_trim;
 
 	nla_nest_end(skb, nest);
 
-	return 0;
+	वापस 0;
 
 out_nlmsg_trim:
 	nlmsg_trim(skb, b);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-/* under ife->tcf_lock */
-static void _tcf_ife_cleanup(struct tc_action *a)
-{
-	struct tcf_ife_info *ife = to_ife(a);
-	struct tcf_meta_info *e, *n;
+/* under अगरe->tcf_lock */
+अटल व्योम _tcf_अगरe_cleanup(काष्ठा tc_action *a)
+अणु
+	काष्ठा tcf_अगरe_info *अगरe = to_अगरe(a);
+	काष्ठा tcf_meta_info *e, *n;
 
-	list_for_each_entry_safe(e, n, &ife->metalist, metalist) {
+	list_क्रम_each_entry_safe(e, n, &अगरe->metalist, metalist) अणु
 		list_del(&e->metalist);
-		if (e->metaval) {
-			if (e->ops->release)
+		अगर (e->metaval) अणु
+			अगर (e->ops->release)
 				e->ops->release(e);
-			else
-				kfree(e->metaval);
-		}
+			अन्यथा
+				kमुक्त(e->metaval);
+		पूर्ण
 		module_put(e->ops->owner);
-		kfree(e);
-	}
-}
+		kमुक्त(e);
+	पूर्ण
+पूर्ण
 
-static void tcf_ife_cleanup(struct tc_action *a)
-{
-	struct tcf_ife_info *ife = to_ife(a);
-	struct tcf_ife_params *p;
+अटल व्योम tcf_अगरe_cleanup(काष्ठा tc_action *a)
+अणु
+	काष्ठा tcf_अगरe_info *अगरe = to_अगरe(a);
+	काष्ठा tcf_अगरe_params *p;
 
-	spin_lock_bh(&ife->tcf_lock);
-	_tcf_ife_cleanup(a);
-	spin_unlock_bh(&ife->tcf_lock);
+	spin_lock_bh(&अगरe->tcf_lock);
+	_tcf_अगरe_cleanup(a);
+	spin_unlock_bh(&अगरe->tcf_lock);
 
-	p = rcu_dereference_protected(ife->params, 1);
-	if (p)
-		kfree_rcu(p, rcu);
-}
+	p = rcu_dereference_रक्षित(अगरe->params, 1);
+	अगर (p)
+		kमुक्त_rcu(p, rcu);
+पूर्ण
 
-static int load_metalist(struct nlattr **tb, bool rtnl_held)
-{
-	int i;
+अटल पूर्णांक load_metalist(काष्ठा nlattr **tb, bool rtnl_held)
+अणु
+	पूर्णांक i;
 
-	for (i = 1; i < max_metacnt; i++) {
-		if (tb[i]) {
-			void *val = nla_data(tb[i]);
-			int len = nla_len(tb[i]);
-			int rc;
+	क्रम (i = 1; i < max_metacnt; i++) अणु
+		अगर (tb[i]) अणु
+			व्योम *val = nla_data(tb[i]);
+			पूर्णांक len = nla_len(tb[i]);
+			पूर्णांक rc;
 
 			rc = load_metaops_and_vet(i, val, len, rtnl_held);
-			if (rc != 0)
-				return rc;
-		}
-	}
+			अगर (rc != 0)
+				वापस rc;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int populate_metalist(struct tcf_ife_info *ife, struct nlattr **tb,
+अटल पूर्णांक populate_metalist(काष्ठा tcf_अगरe_info *अगरe, काष्ठा nlattr **tb,
 			     bool exists, bool rtnl_held)
-{
-	int len = 0;
-	int rc = 0;
-	int i = 0;
-	void *val;
+अणु
+	पूर्णांक len = 0;
+	पूर्णांक rc = 0;
+	पूर्णांक i = 0;
+	व्योम *val;
 
-	for (i = 1; i < max_metacnt; i++) {
-		if (tb[i]) {
+	क्रम (i = 1; i < max_metacnt; i++) अणु
+		अगर (tb[i]) अणु
 			val = nla_data(tb[i]);
 			len = nla_len(tb[i]);
 
-			rc = add_metainfo(ife, i, val, len, exists);
-			if (rc)
-				return rc;
-		}
-	}
+			rc = add_metainfo(अगरe, i, val, len, exists);
+			अगर (rc)
+				वापस rc;
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int tcf_ife_init(struct net *net, struct nlattr *nla,
-			struct nlattr *est, struct tc_action **a,
-			int ovr, int bind, bool rtnl_held,
-			struct tcf_proto *tp, u32 flags,
-			struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, ife_net_id);
-	struct nlattr *tb[TCA_IFE_MAX + 1];
-	struct nlattr *tb2[IFE_META_MAX + 1];
-	struct tcf_chain *goto_ch = NULL;
-	struct tcf_ife_params *p;
-	struct tcf_ife_info *ife;
-	u16 ife_type = ETH_P_IFE;
-	struct tc_ife *parm;
-	u8 *daddr = NULL;
-	u8 *saddr = NULL;
+अटल पूर्णांक tcf_अगरe_init(काष्ठा net *net, काष्ठा nlattr *nla,
+			काष्ठा nlattr *est, काष्ठा tc_action **a,
+			पूर्णांक ovr, पूर्णांक bind, bool rtnl_held,
+			काष्ठा tcf_proto *tp, u32 flags,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, अगरe_net_id);
+	काष्ठा nlattr *tb[TCA_IFE_MAX + 1];
+	काष्ठा nlattr *tb2[IFE_META_MAX + 1];
+	काष्ठा tcf_chain *जाओ_ch = शून्य;
+	काष्ठा tcf_अगरe_params *p;
+	काष्ठा tcf_अगरe_info *अगरe;
+	u16 अगरe_type = ETH_P_IFE;
+	काष्ठा tc_अगरe *parm;
+	u8 *daddr = शून्य;
+	u8 *saddr = शून्य;
 	bool exists = false;
-	int ret = 0;
+	पूर्णांक ret = 0;
 	u32 index;
-	int err;
+	पूर्णांक err;
 
-	if (!nla) {
+	अगर (!nla) अणु
 		NL_SET_ERR_MSG_MOD(extack, "IFE requires attributes to be passed");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	err = nla_parse_nested_deprecated(tb, TCA_IFE_MAX, nla, ife_policy,
-					  NULL);
-	if (err < 0)
-		return err;
+	err = nla_parse_nested_deprecated(tb, TCA_IFE_MAX, nla, अगरe_policy,
+					  शून्य);
+	अगर (err < 0)
+		वापस err;
 
-	if (!tb[TCA_IFE_PARMS])
-		return -EINVAL;
+	अगर (!tb[TCA_IFE_PARMS])
+		वापस -EINVAL;
 
 	parm = nla_data(tb[TCA_IFE_PARMS]);
 
 	/* IFE_DECODE is 0 and indicates the opposite of IFE_ENCODE because
-	 * they cannot run as the same time. Check on all other values which
+	 * they cannot run as the same समय. Check on all other values which
 	 * are not supported right now.
 	 */
-	if (parm->flags & ~IFE_ENCODE)
-		return -EINVAL;
+	अगर (parm->flags & ~IFE_ENCODE)
+		वापस -EINVAL;
 
-	p = kzalloc(sizeof(*p), GFP_KERNEL);
-	if (!p)
-		return -ENOMEM;
+	p = kzalloc(माप(*p), GFP_KERNEL);
+	अगर (!p)
+		वापस -ENOMEM;
 
-	if (tb[TCA_IFE_METALST]) {
+	अगर (tb[TCA_IFE_METALST]) अणु
 		err = nla_parse_nested_deprecated(tb2, IFE_META_MAX,
-						  tb[TCA_IFE_METALST], NULL,
-						  NULL);
-		if (err) {
-			kfree(p);
-			return err;
-		}
+						  tb[TCA_IFE_METALST], शून्य,
+						  शून्य);
+		अगर (err) अणु
+			kमुक्त(p);
+			वापस err;
+		पूर्ण
 		err = load_metalist(tb2, rtnl_held);
-		if (err) {
-			kfree(p);
-			return err;
-		}
-	}
+		अगर (err) अणु
+			kमुक्त(p);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	index = parm->index;
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
-	if (err < 0) {
-		kfree(p);
-		return err;
-	}
+	अगर (err < 0) अणु
+		kमुक्त(p);
+		वापस err;
+	पूर्ण
 	exists = err;
-	if (exists && bind) {
-		kfree(p);
-		return 0;
-	}
+	अगर (exists && bind) अणु
+		kमुक्त(p);
+		वापस 0;
+	पूर्ण
 
-	if (!exists) {
-		ret = tcf_idr_create(tn, index, est, a, &act_ife_ops,
+	अगर (!exists) अणु
+		ret = tcf_idr_create(tn, index, est, a, &act_अगरe_ops,
 				     bind, true, 0);
-		if (ret) {
+		अगर (ret) अणु
 			tcf_idr_cleanup(tn, index);
-			kfree(p);
-			return ret;
-		}
+			kमुक्त(p);
+			वापस ret;
+		पूर्ण
 		ret = ACT_P_CREATED;
-	} else if (!ovr) {
+	पूर्ण अन्यथा अगर (!ovr) अणु
 		tcf_idr_release(*a, bind);
-		kfree(p);
-		return -EEXIST;
-	}
+		kमुक्त(p);
+		वापस -EEXIST;
+	पूर्ण
 
-	ife = to_ife(*a);
-	if (ret == ACT_P_CREATED)
-		INIT_LIST_HEAD(&ife->metalist);
+	अगरe = to_अगरe(*a);
+	अगर (ret == ACT_P_CREATED)
+		INIT_LIST_HEAD(&अगरe->metalist);
 
-	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
-	if (err < 0)
-		goto release_idr;
+	err = tcf_action_check_ctrlact(parm->action, tp, &जाओ_ch, extack);
+	अगर (err < 0)
+		जाओ release_idr;
 
 	p->flags = parm->flags;
 
-	if (parm->flags & IFE_ENCODE) {
-		if (tb[TCA_IFE_TYPE])
-			ife_type = nla_get_u16(tb[TCA_IFE_TYPE]);
-		if (tb[TCA_IFE_DMAC])
+	अगर (parm->flags & IFE_ENCODE) अणु
+		अगर (tb[TCA_IFE_TYPE])
+			अगरe_type = nla_get_u16(tb[TCA_IFE_TYPE]);
+		अगर (tb[TCA_IFE_DMAC])
 			daddr = nla_data(tb[TCA_IFE_DMAC]);
-		if (tb[TCA_IFE_SMAC])
+		अगर (tb[TCA_IFE_SMAC])
 			saddr = nla_data(tb[TCA_IFE_SMAC]);
-	}
+	पूर्ण
 
-	if (parm->flags & IFE_ENCODE) {
-		if (daddr)
+	अगर (parm->flags & IFE_ENCODE) अणु
+		अगर (daddr)
 			ether_addr_copy(p->eth_dst, daddr);
-		else
+		अन्यथा
 			eth_zero_addr(p->eth_dst);
 
-		if (saddr)
+		अगर (saddr)
 			ether_addr_copy(p->eth_src, saddr);
-		else
+		अन्यथा
 			eth_zero_addr(p->eth_src);
 
-		p->eth_type = ife_type;
-	}
+		p->eth_type = अगरe_type;
+	पूर्ण
 
-	if (tb[TCA_IFE_METALST]) {
-		err = populate_metalist(ife, tb2, exists, rtnl_held);
-		if (err)
-			goto metadata_parse_err;
-	} else {
-		/* if no passed metadata allow list or passed allow-all
+	अगर (tb[TCA_IFE_METALST]) अणु
+		err = populate_metalist(अगरe, tb2, exists, rtnl_held);
+		अगर (err)
+			जाओ metadata_parse_err;
+	पूर्ण अन्यथा अणु
+		/* अगर no passed metadata allow list or passed allow-all
 		 * then here we process by adding as many supported metadatum
-		 * as we can. You better have at least one else we are
+		 * as we can. You better have at least one अन्यथा we are
 		 * going to bail out
 		 */
-		err = use_all_metadata(ife, exists);
-		if (err)
-			goto metadata_parse_err;
-	}
+		err = use_all_metadata(अगरe, exists);
+		अगर (err)
+			जाओ metadata_parse_err;
+	पूर्ण
 
-	if (exists)
-		spin_lock_bh(&ife->tcf_lock);
-	/* protected by tcf_lock when modifying existing action */
-	goto_ch = tcf_action_set_ctrlact(*a, parm->action, goto_ch);
-	p = rcu_replace_pointer(ife->params, p, 1);
+	अगर (exists)
+		spin_lock_bh(&अगरe->tcf_lock);
+	/* रक्षित by tcf_lock when modअगरying existing action */
+	जाओ_ch = tcf_action_set_ctrlact(*a, parm->action, जाओ_ch);
+	p = rcu_replace_poपूर्णांकer(अगरe->params, p, 1);
 
-	if (exists)
-		spin_unlock_bh(&ife->tcf_lock);
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
-	if (p)
-		kfree_rcu(p, rcu);
+	अगर (exists)
+		spin_unlock_bh(&अगरe->tcf_lock);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
+	अगर (p)
+		kमुक्त_rcu(p, rcu);
 
-	return ret;
+	वापस ret;
 metadata_parse_err:
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
 release_idr:
-	kfree(p);
+	kमुक्त(p);
 	tcf_idr_release(*a, bind);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tcf_ife_dump(struct sk_buff *skb, struct tc_action *a, int bind,
-			int ref)
-{
-	unsigned char *b = skb_tail_pointer(skb);
-	struct tcf_ife_info *ife = to_ife(a);
-	struct tcf_ife_params *p;
-	struct tc_ife opt = {
-		.index = ife->tcf_index,
-		.refcnt = refcount_read(&ife->tcf_refcnt) - ref,
-		.bindcnt = atomic_read(&ife->tcf_bindcnt) - bind,
-	};
-	struct tcf_t t;
+अटल पूर्णांक tcf_अगरe_dump(काष्ठा sk_buff *skb, काष्ठा tc_action *a, पूर्णांक bind,
+			पूर्णांक ref)
+अणु
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	काष्ठा tcf_अगरe_info *अगरe = to_अगरe(a);
+	काष्ठा tcf_अगरe_params *p;
+	काष्ठा tc_अगरe opt = अणु
+		.index = अगरe->tcf_index,
+		.refcnt = refcount_पढ़ो(&अगरe->tcf_refcnt) - ref,
+		.bindcnt = atomic_पढ़ो(&अगरe->tcf_bindcnt) - bind,
+	पूर्ण;
+	काष्ठा tcf_t t;
 
-	spin_lock_bh(&ife->tcf_lock);
-	opt.action = ife->tcf_action;
-	p = rcu_dereference_protected(ife->params,
-				      lockdep_is_held(&ife->tcf_lock));
+	spin_lock_bh(&अगरe->tcf_lock);
+	opt.action = अगरe->tcf_action;
+	p = rcu_dereference_रक्षित(अगरe->params,
+				      lockdep_is_held(&अगरe->tcf_lock));
 	opt.flags = p->flags;
 
-	if (nla_put(skb, TCA_IFE_PARMS, sizeof(opt), &opt))
-		goto nla_put_failure;
+	अगर (nla_put(skb, TCA_IFE_PARMS, माप(opt), &opt))
+		जाओ nla_put_failure;
 
-	tcf_tm_dump(&t, &ife->tcf_tm);
-	if (nla_put_64bit(skb, TCA_IFE_TM, sizeof(t), &t, TCA_IFE_PAD))
-		goto nla_put_failure;
+	tcf_पंचांग_dump(&t, &अगरe->tcf_पंचांग);
+	अगर (nla_put_64bit(skb, TCA_IFE_TM, माप(t), &t, TCA_IFE_PAD))
+		जाओ nla_put_failure;
 
-	if (!is_zero_ether_addr(p->eth_dst)) {
-		if (nla_put(skb, TCA_IFE_DMAC, ETH_ALEN, p->eth_dst))
-			goto nla_put_failure;
-	}
+	अगर (!is_zero_ether_addr(p->eth_dst)) अणु
+		अगर (nla_put(skb, TCA_IFE_DMAC, ETH_ALEN, p->eth_dst))
+			जाओ nla_put_failure;
+	पूर्ण
 
-	if (!is_zero_ether_addr(p->eth_src)) {
-		if (nla_put(skb, TCA_IFE_SMAC, ETH_ALEN, p->eth_src))
-			goto nla_put_failure;
-	}
+	अगर (!is_zero_ether_addr(p->eth_src)) अणु
+		अगर (nla_put(skb, TCA_IFE_SMAC, ETH_ALEN, p->eth_src))
+			जाओ nla_put_failure;
+	पूर्ण
 
-	if (nla_put(skb, TCA_IFE_TYPE, 2, &p->eth_type))
-		goto nla_put_failure;
+	अगर (nla_put(skb, TCA_IFE_TYPE, 2, &p->eth_type))
+		जाओ nla_put_failure;
 
-	if (dump_metalist(skb, ife)) {
+	अगर (dump_metalist(skb, अगरe)) अणु
 		/*ignore failure to dump metalist */
 		pr_info("Failed to dump metalist\n");
-	}
+	पूर्ण
 
-	spin_unlock_bh(&ife->tcf_lock);
-	return skb->len;
+	spin_unlock_bh(&अगरe->tcf_lock);
+	वापस skb->len;
 
 nla_put_failure:
-	spin_unlock_bh(&ife->tcf_lock);
+	spin_unlock_bh(&अगरe->tcf_lock);
 	nlmsg_trim(skb, b);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int find_decode_metaid(struct sk_buff *skb, struct tcf_ife_info *ife,
-			      u16 metaid, u16 mlen, void *mdata)
-{
-	struct tcf_meta_info *e;
+अटल पूर्णांक find_decode_metaid(काष्ठा sk_buff *skb, काष्ठा tcf_अगरe_info *अगरe,
+			      u16 metaid, u16 mlen, व्योम *mdata)
+अणु
+	काष्ठा tcf_meta_info *e;
 
 	/* XXX: use hash to speed up */
-	list_for_each_entry(e, &ife->metalist, metalist) {
-		if (metaid == e->metaid) {
-			if (e->ops) {
-				/* We check for decode presence already */
-				return e->ops->decode(skb, mdata, mlen);
-			}
-		}
-	}
+	list_क्रम_each_entry(e, &अगरe->metalist, metalist) अणु
+		अगर (metaid == e->metaid) अणु
+			अगर (e->ops) अणु
+				/* We check क्रम decode presence alपढ़ोy */
+				वापस e->ops->decode(skb, mdata, mlen);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static int tcf_ife_decode(struct sk_buff *skb, const struct tc_action *a,
-			  struct tcf_result *res)
-{
-	struct tcf_ife_info *ife = to_ife(a);
-	int action = ife->tcf_action;
-	u8 *ifehdr_end;
+अटल पूर्णांक tcf_अगरe_decode(काष्ठा sk_buff *skb, स्थिर काष्ठा tc_action *a,
+			  काष्ठा tcf_result *res)
+अणु
+	काष्ठा tcf_अगरe_info *अगरe = to_अगरe(a);
+	पूर्णांक action = अगरe->tcf_action;
+	u8 *अगरehdr_end;
 	u8 *tlv_data;
 	u16 metalen;
 
-	bstats_cpu_update(this_cpu_ptr(ife->common.cpu_bstats), skb);
-	tcf_lastuse_update(&ife->tcf_tm);
+	bstats_cpu_update(this_cpu_ptr(अगरe->common.cpu_bstats), skb);
+	tcf_lastuse_update(&अगरe->tcf_पंचांग);
 
-	if (skb_at_tc_ingress(skb))
+	अगर (skb_at_tc_ingress(skb))
 		skb_push(skb, skb->dev->hard_header_len);
 
-	tlv_data = ife_decode(skb, &metalen);
-	if (unlikely(!tlv_data)) {
-		qstats_drop_inc(this_cpu_ptr(ife->common.cpu_qstats));
-		return TC_ACT_SHOT;
-	}
+	tlv_data = अगरe_decode(skb, &metalen);
+	अगर (unlikely(!tlv_data)) अणु
+		qstats_drop_inc(this_cpu_ptr(अगरe->common.cpu_qstats));
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	ifehdr_end = tlv_data + metalen;
-	for (; tlv_data < ifehdr_end; tlv_data = ife_tlv_meta_next(tlv_data)) {
+	अगरehdr_end = tlv_data + metalen;
+	क्रम (; tlv_data < अगरehdr_end; tlv_data = अगरe_tlv_meta_next(tlv_data)) अणु
 		u8 *curr_data;
 		u16 mtype;
 		u16 dlen;
 
-		curr_data = ife_tlv_meta_decode(tlv_data, ifehdr_end, &mtype,
-						&dlen, NULL);
-		if (!curr_data) {
-			qstats_drop_inc(this_cpu_ptr(ife->common.cpu_qstats));
-			return TC_ACT_SHOT;
-		}
+		curr_data = अगरe_tlv_meta_decode(tlv_data, अगरehdr_end, &mtype,
+						&dlen, शून्य);
+		अगर (!curr_data) अणु
+			qstats_drop_inc(this_cpu_ptr(अगरe->common.cpu_qstats));
+			वापस TC_ACT_SHOT;
+		पूर्ण
 
-		if (find_decode_metaid(skb, ife, mtype, dlen, curr_data)) {
+		अगर (find_decode_metaid(skb, अगरe, mtype, dlen, curr_data)) अणु
 			/* abuse overlimits to count when we receive metadata
-			 * but dont have an ops for it
+			 * but करोnt have an ops क्रम it
 			 */
 			pr_info_ratelimited("Unknown metaid %d dlen %d\n",
 					    mtype, dlen);
-			qstats_overlimit_inc(this_cpu_ptr(ife->common.cpu_qstats));
-		}
-	}
+			qstats_overlimit_inc(this_cpu_ptr(अगरe->common.cpu_qstats));
+		पूर्ण
+	पूर्ण
 
-	if (WARN_ON(tlv_data != ifehdr_end)) {
-		qstats_drop_inc(this_cpu_ptr(ife->common.cpu_qstats));
-		return TC_ACT_SHOT;
-	}
+	अगर (WARN_ON(tlv_data != अगरehdr_end)) अणु
+		qstats_drop_inc(this_cpu_ptr(अगरe->common.cpu_qstats));
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
 	skb->protocol = eth_type_trans(skb, skb->dev);
 	skb_reset_network_header(skb);
 
-	return action;
-}
+	वापस action;
+पूर्ण
 
-/*XXX: check if we can do this at install time instead of current
+/*XXX: check अगर we can करो this at install समय instead of current
  * send data path
 **/
-static int ife_get_sz(struct sk_buff *skb, struct tcf_ife_info *ife)
-{
-	struct tcf_meta_info *e, *n;
-	int tot_run_sz = 0, run_sz = 0;
+अटल पूर्णांक अगरe_get_sz(काष्ठा sk_buff *skb, काष्ठा tcf_अगरe_info *अगरe)
+अणु
+	काष्ठा tcf_meta_info *e, *n;
+	पूर्णांक tot_run_sz = 0, run_sz = 0;
 
-	list_for_each_entry_safe(e, n, &ife->metalist, metalist) {
-		if (e->ops->check_presence) {
+	list_क्रम_each_entry_safe(e, n, &अगरe->metalist, metalist) अणु
+		अगर (e->ops->check_presence) अणु
 			run_sz = e->ops->check_presence(skb, e);
 			tot_run_sz += run_sz;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return tot_run_sz;
-}
+	वापस tot_run_sz;
+पूर्ण
 
-static int tcf_ife_encode(struct sk_buff *skb, const struct tc_action *a,
-			  struct tcf_result *res, struct tcf_ife_params *p)
-{
-	struct tcf_ife_info *ife = to_ife(a);
-	int action = ife->tcf_action;
-	struct ethhdr *oethh;	/* outer ether header */
-	struct tcf_meta_info *e;
+अटल पूर्णांक tcf_अगरe_encode(काष्ठा sk_buff *skb, स्थिर काष्ठा tc_action *a,
+			  काष्ठा tcf_result *res, काष्ठा tcf_अगरe_params *p)
+अणु
+	काष्ठा tcf_अगरe_info *अगरe = to_अगरe(a);
+	पूर्णांक action = अगरe->tcf_action;
+	काष्ठा ethhdr *oethh;	/* outer ether header */
+	काष्ठा tcf_meta_info *e;
 	/*
-	   OUTERHDR:TOTMETALEN:{TLVHDR:Metadatum:TLVHDR..}:ORIGDATA
+	   OUTERHDR:TOTMETALEN:अणुTLVHDR:Metadatum:TLVHDR..पूर्ण:ORIGDATA
 	   where ORIGDATA = original ethernet header ...
 	 */
-	u16 metalen = ife_get_sz(skb, ife);
-	int hdrm = metalen + skb->dev->hard_header_len + IFE_METAHDRLEN;
-	unsigned int skboff = 0;
-	int new_len = skb->len + hdrm;
+	u16 metalen = अगरe_get_sz(skb, अगरe);
+	पूर्णांक hdrm = metalen + skb->dev->hard_header_len + IFE_METAHDRLEN;
+	अचिन्हित पूर्णांक skboff = 0;
+	पूर्णांक new_len = skb->len + hdrm;
 	bool exceed_mtu = false;
-	void *ife_meta;
-	int err = 0;
+	व्योम *अगरe_meta;
+	पूर्णांक err = 0;
 
-	if (!skb_at_tc_ingress(skb)) {
-		if (new_len > skb->dev->mtu)
+	अगर (!skb_at_tc_ingress(skb)) अणु
+		अगर (new_len > skb->dev->mtu)
 			exceed_mtu = true;
-	}
+	पूर्ण
 
-	bstats_cpu_update(this_cpu_ptr(ife->common.cpu_bstats), skb);
-	tcf_lastuse_update(&ife->tcf_tm);
+	bstats_cpu_update(this_cpu_ptr(अगरe->common.cpu_bstats), skb);
+	tcf_lastuse_update(&अगरe->tcf_पंचांग);
 
-	if (!metalen) {		/* no metadata to send */
+	अगर (!metalen) अणु		/* no metadata to send */
 		/* abuse overlimits to count when we allow packet
 		 * with no metadata
 		 */
-		qstats_overlimit_inc(this_cpu_ptr(ife->common.cpu_qstats));
-		return action;
-	}
+		qstats_overlimit_inc(this_cpu_ptr(अगरe->common.cpu_qstats));
+		वापस action;
+	पूर्ण
 	/* could be stupid policy setup or mtu config
 	 * so lets be conservative.. */
-	if ((action == TC_ACT_SHOT) || exceed_mtu) {
-		qstats_drop_inc(this_cpu_ptr(ife->common.cpu_qstats));
-		return TC_ACT_SHOT;
-	}
+	अगर ((action == TC_ACT_SHOT) || exceed_mtu) अणु
+		qstats_drop_inc(this_cpu_ptr(अगरe->common.cpu_qstats));
+		वापस TC_ACT_SHOT;
+	पूर्ण
 
-	if (skb_at_tc_ingress(skb))
+	अगर (skb_at_tc_ingress(skb))
 		skb_push(skb, skb->dev->hard_header_len);
 
-	ife_meta = ife_encode(skb, metalen);
+	अगरe_meta = अगरe_encode(skb, metalen);
 
-	spin_lock(&ife->tcf_lock);
+	spin_lock(&अगरe->tcf_lock);
 
-	/* XXX: we dont have a clever way of telling encode to
-	 * not repeat some of the computations that are done by
+	/* XXX: we करोnt have a clever way of telling encode to
+	 * not repeat some of the computations that are करोne by
 	 * ops->presence_check...
 	 */
-	list_for_each_entry(e, &ife->metalist, metalist) {
-		if (e->ops->encode) {
-			err = e->ops->encode(skb, (void *)(ife_meta + skboff),
+	list_क्रम_each_entry(e, &अगरe->metalist, metalist) अणु
+		अगर (e->ops->encode) अणु
+			err = e->ops->encode(skb, (व्योम *)(अगरe_meta + skboff),
 					     e);
-		}
-		if (err < 0) {
-			/* too corrupt to keep around if overwritten */
-			spin_unlock(&ife->tcf_lock);
-			qstats_drop_inc(this_cpu_ptr(ife->common.cpu_qstats));
-			return TC_ACT_SHOT;
-		}
+		पूर्ण
+		अगर (err < 0) अणु
+			/* too corrupt to keep around अगर overwritten */
+			spin_unlock(&अगरe->tcf_lock);
+			qstats_drop_inc(this_cpu_ptr(अगरe->common.cpu_qstats));
+			वापस TC_ACT_SHOT;
+		पूर्ण
 		skboff += err;
-	}
-	spin_unlock(&ife->tcf_lock);
-	oethh = (struct ethhdr *)skb->data;
+	पूर्ण
+	spin_unlock(&अगरe->tcf_lock);
+	oethh = (काष्ठा ethhdr *)skb->data;
 
-	if (!is_zero_ether_addr(p->eth_src))
+	अगर (!is_zero_ether_addr(p->eth_src))
 		ether_addr_copy(oethh->h_source, p->eth_src);
-	if (!is_zero_ether_addr(p->eth_dst))
+	अगर (!is_zero_ether_addr(p->eth_dst))
 		ether_addr_copy(oethh->h_dest, p->eth_dst);
 	oethh->h_proto = htons(p->eth_type);
 
-	if (skb_at_tc_ingress(skb))
+	अगर (skb_at_tc_ingress(skb))
 		skb_pull(skb, skb->dev->hard_header_len);
 
-	return action;
-}
+	वापस action;
+पूर्ण
 
-static int tcf_ife_act(struct sk_buff *skb, const struct tc_action *a,
-		       struct tcf_result *res)
-{
-	struct tcf_ife_info *ife = to_ife(a);
-	struct tcf_ife_params *p;
-	int ret;
+अटल पूर्णांक tcf_अगरe_act(काष्ठा sk_buff *skb, स्थिर काष्ठा tc_action *a,
+		       काष्ठा tcf_result *res)
+अणु
+	काष्ठा tcf_अगरe_info *अगरe = to_अगरe(a);
+	काष्ठा tcf_अगरe_params *p;
+	पूर्णांक ret;
 
-	p = rcu_dereference_bh(ife->params);
-	if (p->flags & IFE_ENCODE) {
-		ret = tcf_ife_encode(skb, a, res, p);
-		return ret;
-	}
+	p = rcu_dereference_bh(अगरe->params);
+	अगर (p->flags & IFE_ENCODE) अणु
+		ret = tcf_अगरe_encode(skb, a, res, p);
+		वापस ret;
+	पूर्ण
 
-	return tcf_ife_decode(skb, a, res);
-}
+	वापस tcf_अगरe_decode(skb, a, res);
+पूर्ण
 
-static int tcf_ife_walker(struct net *net, struct sk_buff *skb,
-			  struct netlink_callback *cb, int type,
-			  const struct tc_action_ops *ops,
-			  struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, ife_net_id);
+अटल पूर्णांक tcf_अगरe_walker(काष्ठा net *net, काष्ठा sk_buff *skb,
+			  काष्ठा netlink_callback *cb, पूर्णांक type,
+			  स्थिर काष्ठा tc_action_ops *ops,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, अगरe_net_id);
 
-	return tcf_generic_walker(tn, skb, cb, type, ops, extack);
-}
+	वापस tcf_generic_walker(tn, skb, cb, type, ops, extack);
+पूर्ण
 
-static int tcf_ife_search(struct net *net, struct tc_action **a, u32 index)
-{
-	struct tc_action_net *tn = net_generic(net, ife_net_id);
+अटल पूर्णांक tcf_अगरe_search(काष्ठा net *net, काष्ठा tc_action **a, u32 index)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, अगरe_net_id);
 
-	return tcf_idr_search(tn, a, index);
-}
+	वापस tcf_idr_search(tn, a, index);
+पूर्ण
 
-static struct tc_action_ops act_ife_ops = {
+अटल काष्ठा tc_action_ops act_अगरe_ops = अणु
 	.kind = "ife",
 	.id = TCA_ID_IFE,
 	.owner = THIS_MODULE,
-	.act = tcf_ife_act,
-	.dump = tcf_ife_dump,
-	.cleanup = tcf_ife_cleanup,
-	.init = tcf_ife_init,
-	.walk = tcf_ife_walker,
-	.lookup = tcf_ife_search,
-	.size =	sizeof(struct tcf_ife_info),
-};
+	.act = tcf_अगरe_act,
+	.dump = tcf_अगरe_dump,
+	.cleanup = tcf_अगरe_cleanup,
+	.init = tcf_अगरe_init,
+	.walk = tcf_अगरe_walker,
+	.lookup = tcf_अगरe_search,
+	.size =	माप(काष्ठा tcf_अगरe_info),
+पूर्ण;
 
-static __net_init int ife_init_net(struct net *net)
-{
-	struct tc_action_net *tn = net_generic(net, ife_net_id);
+अटल __net_init पूर्णांक अगरe_init_net(काष्ठा net *net)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, अगरe_net_id);
 
-	return tc_action_net_init(net, tn, &act_ife_ops);
-}
+	वापस tc_action_net_init(net, tn, &act_अगरe_ops);
+पूर्ण
 
-static void __net_exit ife_exit_net(struct list_head *net_list)
-{
-	tc_action_net_exit(net_list, ife_net_id);
-}
+अटल व्योम __net_निकास अगरe_निकास_net(काष्ठा list_head *net_list)
+अणु
+	tc_action_net_निकास(net_list, अगरe_net_id);
+पूर्ण
 
-static struct pernet_operations ife_net_ops = {
-	.init = ife_init_net,
-	.exit_batch = ife_exit_net,
-	.id   = &ife_net_id,
-	.size = sizeof(struct tc_action_net),
-};
+अटल काष्ठा pernet_operations अगरe_net_ops = अणु
+	.init = अगरe_init_net,
+	.निकास_batch = अगरe_निकास_net,
+	.id   = &अगरe_net_id,
+	.size = माप(काष्ठा tc_action_net),
+पूर्ण;
 
-static int __init ife_init_module(void)
-{
-	return tcf_register_action(&act_ife_ops, &ife_net_ops);
-}
+अटल पूर्णांक __init अगरe_init_module(व्योम)
+अणु
+	वापस tcf_रेजिस्टर_action(&act_अगरe_ops, &अगरe_net_ops);
+पूर्ण
 
-static void __exit ife_cleanup_module(void)
-{
-	tcf_unregister_action(&act_ife_ops, &ife_net_ops);
-}
+अटल व्योम __निकास अगरe_cleanup_module(व्योम)
+अणु
+	tcf_unरेजिस्टर_action(&act_अगरe_ops, &अगरe_net_ops);
+पूर्ण
 
-module_init(ife_init_module);
-module_exit(ife_cleanup_module);
+module_init(अगरe_init_module);
+module_निकास(अगरe_cleanup_module);
 
 MODULE_AUTHOR("Jamal Hadi Salim(2015)");
 MODULE_DESCRIPTION("Inter-FE LFB action");

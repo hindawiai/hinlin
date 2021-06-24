@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/ufs/balloc.c
  *
@@ -6,253 +7,253 @@
  * Daniel Pirkl <daniel.pirkl@email.cz>
  * Charles University, Faculty of Mathematics and Physics
  *
- * UFS2 write support Evgeniy Dushistov <dushistov@mail.ru>, 2007
+ * UFS2 ग_लिखो support Evgeniy Dushistov <dushistov@mail.ru>, 2007
  */
 
-#include <linux/fs.h>
-#include <linux/stat.h>
-#include <linux/time.h>
-#include <linux/string.h>
-#include <linux/buffer_head.h>
-#include <linux/capability.h>
-#include <linux/bitops.h>
-#include <linux/bio.h>
-#include <asm/byteorder.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/bपन.स>
+#समावेश <यंत्र/byteorder.h>
 
-#include "ufs_fs.h"
-#include "ufs.h"
-#include "swab.h"
-#include "util.h"
+#समावेश "ufs_fs.h"
+#समावेश "ufs.h"
+#समावेश "swab.h"
+#समावेश "util.h"
 
-#define INVBLOCK ((u64)-1L)
+#घोषणा INVBLOCK ((u64)-1L)
 
-static u64 ufs_add_fragments(struct inode *, u64, unsigned, unsigned);
-static u64 ufs_alloc_fragments(struct inode *, unsigned, u64, unsigned, int *);
-static u64 ufs_alloccg_block(struct inode *, struct ufs_cg_private_info *, u64, int *);
-static u64 ufs_bitmap_search (struct super_block *, struct ufs_cg_private_info *, u64, unsigned);
-static unsigned char ufs_fragtable_8fpb[], ufs_fragtable_other[];
-static void ufs_clusteracct(struct super_block *, struct ufs_cg_private_info *, unsigned, int);
+अटल u64 ufs_add_fragments(काष्ठा inode *, u64, अचिन्हित, अचिन्हित);
+अटल u64 ufs_alloc_fragments(काष्ठा inode *, अचिन्हित, u64, अचिन्हित, पूर्णांक *);
+अटल u64 ufs_alloccg_block(काष्ठा inode *, काष्ठा ufs_cg_निजी_info *, u64, पूर्णांक *);
+अटल u64 ufs_biपंचांगap_search (काष्ठा super_block *, काष्ठा ufs_cg_निजी_info *, u64, अचिन्हित);
+अटल अचिन्हित अक्षर ufs_fragtable_8fpb[], ufs_fragtable_other[];
+अटल व्योम ufs_clusteracct(काष्ठा super_block *, काष्ठा ufs_cg_निजी_info *, अचिन्हित, पूर्णांक);
 
 /*
  * Free 'count' fragments from fragment number 'fragment'
  */
-void ufs_free_fragments(struct inode *inode, u64 fragment, unsigned count)
-{
-	struct super_block * sb;
-	struct ufs_sb_private_info * uspi;
-	struct ufs_cg_private_info * ucpi;
-	struct ufs_cylinder_group * ucg;
-	unsigned cgno, bit, end_bit, bbase, blkmap, i;
+व्योम ufs_मुक्त_fragments(काष्ठा inode *inode, u64 fragment, अचिन्हित count)
+अणु
+	काष्ठा super_block * sb;
+	काष्ठा ufs_sb_निजी_info * uspi;
+	काष्ठा ufs_cg_निजी_info * ucpi;
+	काष्ठा ufs_cylinder_group * ucg;
+	अचिन्हित cgno, bit, end_bit, bbase, blkmap, i;
 	u64 blkno;
 	
 	sb = inode->i_sb;
 	uspi = UFS_SB(sb)->s_uspi;
 	
 	UFSD("ENTER, fragment %llu, count %u\n",
-	     (unsigned long long)fragment, count);
+	     (अचिन्हित दीर्घ दीर्घ)fragment, count);
 	
-	if (ufs_fragnum(fragment) + count > uspi->s_fpg)
+	अगर (ufs_fragnum(fragment) + count > uspi->s_fpg)
 		ufs_error (sb, "ufs_free_fragments", "internal error");
 
 	mutex_lock(&UFS_SB(sb)->s_lock);
 	
 	cgno = ufs_dtog(uspi, fragment);
 	bit = ufs_dtogd(uspi, fragment);
-	if (cgno >= uspi->s_ncg) {
+	अगर (cgno >= uspi->s_ncg) अणु
 		ufs_panic (sb, "ufs_free_fragments", "freeing blocks are outside device");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 		
 	ucpi = ufs_load_cylinder (sb, cgno);
-	if (!ucpi) 
-		goto failed;
+	अगर (!ucpi) 
+		जाओ failed;
 	ucg = ubh_get_ucg (UCPI_UBH(ucpi));
-	if (!ufs_cg_chkmagic(sb, ucg)) {
+	अगर (!ufs_cg_chkmagic(sb, ucg)) अणु
 		ufs_panic (sb, "ufs_free_fragments", "internal error, bad magic number on cg %u", cgno);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	end_bit = bit + count;
 	bbase = ufs_blknum (bit);
-	blkmap = ubh_blkmap (UCPI_UBH(ucpi), ucpi->c_freeoff, bbase);
+	blkmap = ubh_blkmap (UCPI_UBH(ucpi), ucpi->c_मुक्तoff, bbase);
 	ufs_fragacct (sb, blkmap, ucg->cg_frsum, -1);
-	for (i = bit; i < end_bit; i++) {
-		if (ubh_isclr (UCPI_UBH(ucpi), ucpi->c_freeoff, i))
-			ubh_setbit (UCPI_UBH(ucpi), ucpi->c_freeoff, i);
-		else 
+	क्रम (i = bit; i < end_bit; i++) अणु
+		अगर (ubh_isclr (UCPI_UBH(ucpi), ucpi->c_मुक्तoff, i))
+			ubh_setbit (UCPI_UBH(ucpi), ucpi->c_मुक्तoff, i);
+		अन्यथा 
 			ufs_error (sb, "ufs_free_fragments",
 				   "bit already cleared for fragment %u", i);
-	}
+	पूर्ण
 
-	inode_sub_bytes(inode, count << uspi->s_fshift);
-	fs32_add(sb, &ucg->cg_cs.cs_nffree, count);
-	uspi->cs_total.cs_nffree += count;
-	fs32_add(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nffree, count);
-	blkmap = ubh_blkmap (UCPI_UBH(ucpi), ucpi->c_freeoff, bbase);
+	inode_sub_bytes(inode, count << uspi->s_fshअगरt);
+	fs32_add(sb, &ucg->cg_cs.cs_nfमुक्त, count);
+	uspi->cs_total.cs_nfमुक्त += count;
+	fs32_add(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nfमुक्त, count);
+	blkmap = ubh_blkmap (UCPI_UBH(ucpi), ucpi->c_मुक्तoff, bbase);
 	ufs_fragacct(sb, blkmap, ucg->cg_frsum, 1);
 
 	/*
-	 * Trying to reassemble free fragments into block
+	 * Trying to reassemble मुक्त fragments पूर्णांकo block
 	 */
 	blkno = ufs_fragstoblks (bbase);
-	if (ubh_isblockset(UCPI_UBH(ucpi), ucpi->c_freeoff, blkno)) {
-		fs32_sub(sb, &ucg->cg_cs.cs_nffree, uspi->s_fpb);
-		uspi->cs_total.cs_nffree -= uspi->s_fpb;
-		fs32_sub(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nffree, uspi->s_fpb);
-		if ((UFS_SB(sb)->s_flags & UFS_CG_MASK) == UFS_CG_44BSD)
+	अगर (ubh_isblockset(UCPI_UBH(ucpi), ucpi->c_मुक्तoff, blkno)) अणु
+		fs32_sub(sb, &ucg->cg_cs.cs_nfमुक्त, uspi->s_fpb);
+		uspi->cs_total.cs_nfमुक्त -= uspi->s_fpb;
+		fs32_sub(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nfमुक्त, uspi->s_fpb);
+		अगर ((UFS_SB(sb)->s_flags & UFS_CG_MASK) == UFS_CG_44BSD)
 			ufs_clusteracct (sb, ucpi, blkno, 1);
-		fs32_add(sb, &ucg->cg_cs.cs_nbfree, 1);
-		uspi->cs_total.cs_nbfree++;
-		fs32_add(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nbfree, 1);
-		if (uspi->fs_magic != UFS2_MAGIC) {
-			unsigned cylno = ufs_cbtocylno (bbase);
+		fs32_add(sb, &ucg->cg_cs.cs_nbमुक्त, 1);
+		uspi->cs_total.cs_nbमुक्त++;
+		fs32_add(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nbमुक्त, 1);
+		अगर (uspi->fs_magic != UFS2_MAGIC) अणु
+			अचिन्हित cylno = ufs_cbtocylno (bbase);
 
 			fs16_add(sb, &ubh_cg_blks(ucpi, cylno,
 						  ufs_cbtorpos(bbase)), 1);
 			fs32_add(sb, &ubh_cg_blktot(ucpi, cylno), 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	
 	ubh_mark_buffer_dirty (USPI_UBH(uspi));
 	ubh_mark_buffer_dirty (UCPI_UBH(ucpi));
-	if (sb->s_flags & SB_SYNCHRONOUS)
+	अगर (sb->s_flags & SB_SYNCHRONOUS)
 		ubh_sync_block(UCPI_UBH(ucpi));
 	ufs_mark_sb_dirty(sb);
 
 	mutex_unlock(&UFS_SB(sb)->s_lock);
 	UFSD("EXIT\n");
-	return;
+	वापस;
 
 failed:
 	mutex_unlock(&UFS_SB(sb)->s_lock);
 	UFSD("EXIT (FAILED)\n");
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
- * Free 'count' fragments from fragment number 'fragment' (free whole blocks)
+ * Free 'count' fragments from fragment number 'fragment' (मुक्त whole blocks)
  */
-void ufs_free_blocks(struct inode *inode, u64 fragment, unsigned count)
-{
-	struct super_block * sb;
-	struct ufs_sb_private_info * uspi;
-	struct ufs_cg_private_info * ucpi;
-	struct ufs_cylinder_group * ucg;
-	unsigned overflow, cgno, bit, end_bit, i;
+व्योम ufs_मुक्त_blocks(काष्ठा inode *inode, u64 fragment, अचिन्हित count)
+अणु
+	काष्ठा super_block * sb;
+	काष्ठा ufs_sb_निजी_info * uspi;
+	काष्ठा ufs_cg_निजी_info * ucpi;
+	काष्ठा ufs_cylinder_group * ucg;
+	अचिन्हित overflow, cgno, bit, end_bit, i;
 	u64 blkno;
 	
 	sb = inode->i_sb;
 	uspi = UFS_SB(sb)->s_uspi;
 
 	UFSD("ENTER, fragment %llu, count %u\n",
-	     (unsigned long long)fragment, count);
+	     (अचिन्हित दीर्घ दीर्घ)fragment, count);
 	
-	if ((fragment & uspi->s_fpbmask) || (count & uspi->s_fpbmask)) {
+	अगर ((fragment & uspi->s_fpbmask) || (count & uspi->s_fpbmask)) अणु
 		ufs_error (sb, "ufs_free_blocks", "internal error, "
 			   "fragment %llu, count %u\n",
-			   (unsigned long long)fragment, count);
-		goto failed;
-	}
+			   (अचिन्हित दीर्घ दीर्घ)fragment, count);
+		जाओ failed;
+	पूर्ण
 
 	mutex_lock(&UFS_SB(sb)->s_lock);
 	
-do_more:
+करो_more:
 	overflow = 0;
 	cgno = ufs_dtog(uspi, fragment);
 	bit = ufs_dtogd(uspi, fragment);
-	if (cgno >= uspi->s_ncg) {
+	अगर (cgno >= uspi->s_ncg) अणु
 		ufs_panic (sb, "ufs_free_blocks", "freeing blocks are outside device");
-		goto failed_unlock;
-	}
+		जाओ failed_unlock;
+	पूर्ण
 	end_bit = bit + count;
-	if (end_bit > uspi->s_fpg) {
+	अगर (end_bit > uspi->s_fpg) अणु
 		overflow = bit + count - uspi->s_fpg;
 		count -= overflow;
 		end_bit -= overflow;
-	}
+	पूर्ण
 
 	ucpi = ufs_load_cylinder (sb, cgno);
-	if (!ucpi) 
-		goto failed_unlock;
+	अगर (!ucpi) 
+		जाओ failed_unlock;
 	ucg = ubh_get_ucg (UCPI_UBH(ucpi));
-	if (!ufs_cg_chkmagic(sb, ucg)) {
+	अगर (!ufs_cg_chkmagic(sb, ucg)) अणु
 		ufs_panic (sb, "ufs_free_blocks", "internal error, bad magic number on cg %u", cgno);
-		goto failed_unlock;
-	}
+		जाओ failed_unlock;
+	पूर्ण
 
-	for (i = bit; i < end_bit; i += uspi->s_fpb) {
+	क्रम (i = bit; i < end_bit; i += uspi->s_fpb) अणु
 		blkno = ufs_fragstoblks(i);
-		if (ubh_isblockset(UCPI_UBH(ucpi), ucpi->c_freeoff, blkno)) {
+		अगर (ubh_isblockset(UCPI_UBH(ucpi), ucpi->c_मुक्तoff, blkno)) अणु
 			ufs_error(sb, "ufs_free_blocks", "freeing free fragment");
-		}
-		ubh_setblock(UCPI_UBH(ucpi), ucpi->c_freeoff, blkno);
-		inode_sub_bytes(inode, uspi->s_fpb << uspi->s_fshift);
-		if ((UFS_SB(sb)->s_flags & UFS_CG_MASK) == UFS_CG_44BSD)
+		पूर्ण
+		ubh_setblock(UCPI_UBH(ucpi), ucpi->c_मुक्तoff, blkno);
+		inode_sub_bytes(inode, uspi->s_fpb << uspi->s_fshअगरt);
+		अगर ((UFS_SB(sb)->s_flags & UFS_CG_MASK) == UFS_CG_44BSD)
 			ufs_clusteracct (sb, ucpi, blkno, 1);
 
-		fs32_add(sb, &ucg->cg_cs.cs_nbfree, 1);
-		uspi->cs_total.cs_nbfree++;
-		fs32_add(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nbfree, 1);
+		fs32_add(sb, &ucg->cg_cs.cs_nbमुक्त, 1);
+		uspi->cs_total.cs_nbमुक्त++;
+		fs32_add(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nbमुक्त, 1);
 
-		if (uspi->fs_magic != UFS2_MAGIC) {
-			unsigned cylno = ufs_cbtocylno(i);
+		अगर (uspi->fs_magic != UFS2_MAGIC) अणु
+			अचिन्हित cylno = ufs_cbtocylno(i);
 
 			fs16_add(sb, &ubh_cg_blks(ucpi, cylno,
 						  ufs_cbtorpos(i)), 1);
 			fs32_add(sb, &ubh_cg_blktot(ucpi, cylno), 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ubh_mark_buffer_dirty (USPI_UBH(uspi));
 	ubh_mark_buffer_dirty (UCPI_UBH(ucpi));
-	if (sb->s_flags & SB_SYNCHRONOUS)
+	अगर (sb->s_flags & SB_SYNCHRONOUS)
 		ubh_sync_block(UCPI_UBH(ucpi));
 
-	if (overflow) {
+	अगर (overflow) अणु
 		fragment += count;
 		count = overflow;
-		goto do_more;
-	}
+		जाओ करो_more;
+	पूर्ण
 
 	ufs_mark_sb_dirty(sb);
 	mutex_unlock(&UFS_SB(sb)->s_lock);
 	UFSD("EXIT\n");
-	return;
+	वापस;
 
 failed_unlock:
 	mutex_unlock(&UFS_SB(sb)->s_lock);
 failed:
 	UFSD("EXIT (FAILED)\n");
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
- * Modify inode page cache in such way:
+ * Modअगरy inode page cache in such way:
  * have - blocks with b_blocknr equal to oldb...oldb+count-1
  * get - blocks with b_blocknr equal to newb...newb+count-1
  * also we suppose that oldb...oldb+count-1 blocks
  * situated at the end of file.
  *
- * We can come here from ufs_writepage or ufs_prepare_write,
- * locked_page is argument of these functions, so we already lock it.
+ * We can come here from ufs_ग_लिखोpage or ufs_prepare_ग_लिखो,
+ * locked_page is argument of these functions, so we alपढ़ोy lock it.
  */
-static void ufs_change_blocknr(struct inode *inode, sector_t beg,
-			       unsigned int count, sector_t oldb,
-			       sector_t newb, struct page *locked_page)
-{
-	const unsigned blks_per_page =
+अटल व्योम ufs_change_blocknr(काष्ठा inode *inode, sector_t beg,
+			       अचिन्हित पूर्णांक count, sector_t oldb,
+			       sector_t newb, काष्ठा page *locked_page)
+अणु
+	स्थिर अचिन्हित blks_per_page =
 		1 << (PAGE_SHIFT - inode->i_blkbits);
-	const unsigned mask = blks_per_page - 1;
-	struct address_space * const mapping = inode->i_mapping;
+	स्थिर अचिन्हित mask = blks_per_page - 1;
+	काष्ठा address_space * स्थिर mapping = inode->i_mapping;
 	pgoff_t index, cur_index, last_index;
-	unsigned pos, j, lblock;
+	अचिन्हित pos, j, lblock;
 	sector_t end, i;
-	struct page *page;
-	struct buffer_head *head, *bh;
+	काष्ठा page *page;
+	काष्ठा buffer_head *head, *bh;
 
 	UFSD("ENTER, ino %lu, count %u, oldb %llu, newb %llu\n",
 	      inode->i_ino, count,
-	     (unsigned long long)oldb, (unsigned long long)newb);
+	     (अचिन्हित दीर्घ दीर्घ)oldb, (अचिन्हित दीर्घ दीर्घ)newb);
 
 	BUG_ON(!locked_page);
 	BUG_ON(!PageLocked(locked_page));
@@ -260,100 +261,100 @@ static void ufs_change_blocknr(struct inode *inode, sector_t beg,
 	cur_index = locked_page->index;
 	end = count + beg;
 	last_index = end >> (PAGE_SHIFT - inode->i_blkbits);
-	for (i = beg; i < end; i = (i | mask) + 1) {
+	क्रम (i = beg; i < end; i = (i | mask) + 1) अणु
 		index = i >> (PAGE_SHIFT - inode->i_blkbits);
 
-		if (likely(cur_index != index)) {
+		अगर (likely(cur_index != index)) अणु
 			page = ufs_get_locked_page(mapping, index);
-			if (!page)/* it was truncated */
-				continue;
-			if (IS_ERR(page)) {/* or EIO */
+			अगर (!page)/* it was truncated */
+				जारी;
+			अगर (IS_ERR(page)) अणु/* or EIO */
 				ufs_error(inode->i_sb, __func__,
 					  "read of page %llu failed\n",
-					  (unsigned long long)index);
-				continue;
-			}
-		} else
+					  (अचिन्हित दीर्घ दीर्घ)index);
+				जारी;
+			पूर्ण
+		पूर्ण अन्यथा
 			page = locked_page;
 
 		head = page_buffers(page);
 		bh = head;
 		pos = i & mask;
-		for (j = 0; j < pos; ++j)
+		क्रम (j = 0; j < pos; ++j)
 			bh = bh->b_this_page;
 
 
-		if (unlikely(index == last_index))
+		अगर (unlikely(index == last_index))
 			lblock = end & mask;
-		else
+		अन्यथा
 			lblock = blks_per_page;
 
-		do {
-			if (j >= lblock)
-				break;
+		करो अणु
+			अगर (j >= lblock)
+				अवरोध;
 			pos = (i - beg) + j;
 
-			if (!buffer_mapped(bh))
+			अगर (!buffer_mapped(bh))
 					map_bh(bh, inode->i_sb, oldb + pos);
-			if (!buffer_uptodate(bh)) {
+			अगर (!buffer_uptodate(bh)) अणु
 				ll_rw_block(REQ_OP_READ, 0, 1, &bh);
-				wait_on_buffer(bh);
-				if (!buffer_uptodate(bh)) {
+				रुको_on_buffer(bh);
+				अगर (!buffer_uptodate(bh)) अणु
 					ufs_error(inode->i_sb, __func__,
 						  "read of block failed\n");
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
 			UFSD(" change from %llu to %llu, pos %u\n",
-			     (unsigned long long)(pos + oldb),
-			     (unsigned long long)(pos + newb), pos);
+			     (अचिन्हित दीर्घ दीर्घ)(pos + oldb),
+			     (अचिन्हित दीर्घ दीर्घ)(pos + newb), pos);
 
 			bh->b_blocknr = newb + pos;
 			clean_bdev_bh_alias(bh);
 			mark_buffer_dirty(bh);
 			++j;
 			bh = bh->b_this_page;
-		} while (bh != head);
+		पूर्ण जबतक (bh != head);
 
-		if (likely(cur_index != index))
+		अगर (likely(cur_index != index))
 			ufs_put_locked_page(page);
- 	}
+ 	पूर्ण
 	UFSD("EXIT\n");
-}
+पूर्ण
 
-static void ufs_clear_frags(struct inode *inode, sector_t beg, unsigned int n,
-			    int sync)
-{
-	struct buffer_head *bh;
+अटल व्योम ufs_clear_frags(काष्ठा inode *inode, sector_t beg, अचिन्हित पूर्णांक n,
+			    पूर्णांक sync)
+अणु
+	काष्ठा buffer_head *bh;
 	sector_t end = beg + n;
 
-	for (; beg < end; ++beg) {
+	क्रम (; beg < end; ++beg) अणु
 		bh = sb_getblk(inode->i_sb, beg);
 		lock_buffer(bh);
-		memset(bh->b_data, 0, inode->i_sb->s_blocksize);
+		स_रखो(bh->b_data, 0, inode->i_sb->s_blocksize);
 		set_buffer_uptodate(bh);
 		mark_buffer_dirty(bh);
 		unlock_buffer(bh);
-		if (IS_SYNC(inode) || sync)
+		अगर (IS_SYNC(inode) || sync)
 			sync_dirty_buffer(bh);
-		brelse(bh);
-	}
-}
+		brअन्यथा(bh);
+	पूर्ण
+पूर्ण
 
-u64 ufs_new_fragments(struct inode *inode, void *p, u64 fragment,
-			   u64 goal, unsigned count, int *err,
-			   struct page *locked_page)
-{
-	struct super_block * sb;
-	struct ufs_sb_private_info * uspi;
-	struct ufs_super_block_first * usb1;
-	unsigned cgno, oldcount, newcount;
-	u64 tmp, request, result;
+u64 ufs_new_fragments(काष्ठा inode *inode, व्योम *p, u64 fragment,
+			   u64 goal, अचिन्हित count, पूर्णांक *err,
+			   काष्ठा page *locked_page)
+अणु
+	काष्ठा super_block * sb;
+	काष्ठा ufs_sb_निजी_info * uspi;
+	काष्ठा ufs_super_block_first * usb1;
+	अचिन्हित cgno, oldcount, newcount;
+	u64 पंचांगp, request, result;
 	
 	UFSD("ENTER, ino %lu, fragment %llu, goal %llu, count %u\n",
-	     inode->i_ino, (unsigned long long)fragment,
-	     (unsigned long long)goal, count);
+	     inode->i_ino, (अचिन्हित दीर्घ दीर्घ)fragment,
+	     (अचिन्हित दीर्घ दीर्घ)goal, count);
 	
 	sb = inode->i_sb;
 	uspi = UFS_SB(sb)->s_uspi;
@@ -361,241 +362,241 @@ u64 ufs_new_fragments(struct inode *inode, void *p, u64 fragment,
 	*err = -ENOSPC;
 
 	mutex_lock(&UFS_SB(sb)->s_lock);
-	tmp = ufs_data_ptr_to_cpu(sb, p);
+	पंचांगp = ufs_data_ptr_to_cpu(sb, p);
 
-	if (count + ufs_fragnum(fragment) > uspi->s_fpb) {
+	अगर (count + ufs_fragnum(fragment) > uspi->s_fpb) अणु
 		ufs_warning(sb, "ufs_new_fragments", "internal warning"
 			    " fragment %llu, count %u",
-			    (unsigned long long)fragment, count);
+			    (अचिन्हित दीर्घ दीर्घ)fragment, count);
 		count = uspi->s_fpb - ufs_fragnum(fragment); 
-	}
+	पूर्ण
 	oldcount = ufs_fragnum (fragment);
 	newcount = oldcount + count;
 
 	/*
-	 * Somebody else has just allocated our fragments
+	 * Somebody अन्यथा has just allocated our fragments
 	 */
-	if (oldcount) {
-		if (!tmp) {
+	अगर (oldcount) अणु
+		अगर (!पंचांगp) अणु
 			ufs_error(sb, "ufs_new_fragments", "internal error, "
 				  "fragment %llu, tmp %llu\n",
-				  (unsigned long long)fragment,
-				  (unsigned long long)tmp);
+				  (अचिन्हित दीर्घ दीर्घ)fragment,
+				  (अचिन्हित दीर्घ दीर्घ)पंचांगp);
 			mutex_unlock(&UFS_SB(sb)->s_lock);
-			return INVBLOCK;
-		}
-		if (fragment < UFS_I(inode)->i_lastfrag) {
+			वापस INVBLOCK;
+		पूर्ण
+		अगर (fragment < UFS_I(inode)->i_lastfrag) अणु
 			UFSD("EXIT (ALREADY ALLOCATED)\n");
 			mutex_unlock(&UFS_SB(sb)->s_lock);
-			return 0;
-		}
-	}
-	else {
-		if (tmp) {
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	अन्यथा अणु
+		अगर (पंचांगp) अणु
 			UFSD("EXIT (ALREADY ALLOCATED)\n");
 			mutex_unlock(&UFS_SB(sb)->s_lock);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * There is not enough space for user on the device
+	 * There is not enough space क्रम user on the device
 	 */
-	if (unlikely(ufs_freefrags(uspi) <= uspi->s_root_blocks)) {
-		if (!capable(CAP_SYS_RESOURCE)) {
+	अगर (unlikely(ufs_मुक्तfrags(uspi) <= uspi->s_root_blocks)) अणु
+		अगर (!capable(CAP_SYS_RESOURCE)) अणु
 			mutex_unlock(&UFS_SB(sb)->s_lock);
 			UFSD("EXIT (FAILED)\n");
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (goal >= uspi->s_size) 
+	अगर (goal >= uspi->s_size) 
 		goal = 0;
-	if (goal == 0) 
+	अगर (goal == 0) 
 		cgno = ufs_inotocg (inode->i_ino);
-	else
+	अन्यथा
 		cgno = ufs_dtog(uspi, goal);
 	 
 	/*
 	 * allocate new fragment
 	 */
-	if (oldcount == 0) {
+	अगर (oldcount == 0) अणु
 		result = ufs_alloc_fragments (inode, cgno, goal, count, err);
-		if (result) {
+		अगर (result) अणु
 			ufs_clear_frags(inode, result + oldcount,
-					newcount - oldcount, locked_page != NULL);
+					newcount - oldcount, locked_page != शून्य);
 			*err = 0;
-			write_seqlock(&UFS_I(inode)->meta_lock);
+			ग_लिखो_seqlock(&UFS_I(inode)->meta_lock);
 			ufs_cpu_to_data_ptr(sb, p, result);
 			UFS_I(inode)->i_lastfrag =
 				max(UFS_I(inode)->i_lastfrag, fragment + count);
-			write_sequnlock(&UFS_I(inode)->meta_lock);
-		}
+			ग_लिखो_sequnlock(&UFS_I(inode)->meta_lock);
+		पूर्ण
 		mutex_unlock(&UFS_SB(sb)->s_lock);
-		UFSD("EXIT, result %llu\n", (unsigned long long)result);
-		return result;
-	}
+		UFSD("EXIT, result %llu\n", (अचिन्हित दीर्घ दीर्घ)result);
+		वापस result;
+	पूर्ण
 
 	/*
 	 * resize block
 	 */
-	result = ufs_add_fragments(inode, tmp, oldcount, newcount);
-	if (result) {
+	result = ufs_add_fragments(inode, पंचांगp, oldcount, newcount);
+	अगर (result) अणु
 		*err = 0;
-		read_seqlock_excl(&UFS_I(inode)->meta_lock);
+		पढ़ो_seqlock_excl(&UFS_I(inode)->meta_lock);
 		UFS_I(inode)->i_lastfrag = max(UFS_I(inode)->i_lastfrag,
 						fragment + count);
-		read_sequnlock_excl(&UFS_I(inode)->meta_lock);
+		पढ़ो_sequnlock_excl(&UFS_I(inode)->meta_lock);
 		ufs_clear_frags(inode, result + oldcount, newcount - oldcount,
-				locked_page != NULL);
+				locked_page != शून्य);
 		mutex_unlock(&UFS_SB(sb)->s_lock);
-		UFSD("EXIT, result %llu\n", (unsigned long long)result);
-		return result;
-	}
+		UFSD("EXIT, result %llu\n", (अचिन्हित दीर्घ दीर्घ)result);
+		वापस result;
+	पूर्ण
 
 	/*
 	 * allocate new block and move data
 	 */
-	if (fs32_to_cpu(sb, usb1->fs_optim) == UFS_OPTSPACE) {
+	अगर (fs32_to_cpu(sb, usb1->fs_optim) == UFS_OPTSPACE) अणु
 		request = newcount;
-		if (uspi->cs_total.cs_nffree < uspi->s_space_to_time)
+		अगर (uspi->cs_total.cs_nfमुक्त < uspi->s_space_to_समय)
 			usb1->fs_optim = cpu_to_fs32(sb, UFS_OPTTIME);
-	} else {
+	पूर्ण अन्यथा अणु
 		request = uspi->s_fpb;
-		if (uspi->cs_total.cs_nffree > uspi->s_time_to_space)
+		अगर (uspi->cs_total.cs_nfमुक्त > uspi->s_समय_प्रकारo_space)
 			usb1->fs_optim = cpu_to_fs32(sb, UFS_OPTSPACE);
-	}
+	पूर्ण
 	result = ufs_alloc_fragments (inode, cgno, goal, request, err);
-	if (result) {
+	अगर (result) अणु
 		ufs_clear_frags(inode, result + oldcount, newcount - oldcount,
-				locked_page != NULL);
+				locked_page != शून्य);
 		mutex_unlock(&UFS_SB(sb)->s_lock);
 		ufs_change_blocknr(inode, fragment - oldcount, oldcount,
-				   uspi->s_sbbase + tmp,
+				   uspi->s_sbbase + पंचांगp,
 				   uspi->s_sbbase + result, locked_page);
 		*err = 0;
-		write_seqlock(&UFS_I(inode)->meta_lock);
+		ग_लिखो_seqlock(&UFS_I(inode)->meta_lock);
 		ufs_cpu_to_data_ptr(sb, p, result);
 		UFS_I(inode)->i_lastfrag = max(UFS_I(inode)->i_lastfrag,
 						fragment + count);
-		write_sequnlock(&UFS_I(inode)->meta_lock);
-		if (newcount < request)
-			ufs_free_fragments (inode, result + newcount, request - newcount);
-		ufs_free_fragments (inode, tmp, oldcount);
-		UFSD("EXIT, result %llu\n", (unsigned long long)result);
-		return result;
-	}
+		ग_लिखो_sequnlock(&UFS_I(inode)->meta_lock);
+		अगर (newcount < request)
+			ufs_मुक्त_fragments (inode, result + newcount, request - newcount);
+		ufs_मुक्त_fragments (inode, पंचांगp, oldcount);
+		UFSD("EXIT, result %llu\n", (अचिन्हित दीर्घ दीर्घ)result);
+		वापस result;
+	पूर्ण
 
 	mutex_unlock(&UFS_SB(sb)->s_lock);
 	UFSD("EXIT (FAILED)\n");
-	return 0;
-}		
+	वापस 0;
+पूर्ण		
 
-static bool try_add_frags(struct inode *inode, unsigned frags)
-{
-	unsigned size = frags * i_blocksize(inode);
+अटल bool try_add_frags(काष्ठा inode *inode, अचिन्हित frags)
+अणु
+	अचिन्हित size = frags * i_blocksize(inode);
 	spin_lock(&inode->i_lock);
 	__inode_add_bytes(inode, size);
-	if (unlikely((u32)inode->i_blocks != inode->i_blocks)) {
+	अगर (unlikely((u32)inode->i_blocks != inode->i_blocks)) अणु
 		__inode_sub_bytes(inode, size);
 		spin_unlock(&inode->i_lock);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	spin_unlock(&inode->i_lock);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static u64 ufs_add_fragments(struct inode *inode, u64 fragment,
-			     unsigned oldcount, unsigned newcount)
-{
-	struct super_block * sb;
-	struct ufs_sb_private_info * uspi;
-	struct ufs_cg_private_info * ucpi;
-	struct ufs_cylinder_group * ucg;
-	unsigned cgno, fragno, fragoff, count, fragsize, i;
+अटल u64 ufs_add_fragments(काष्ठा inode *inode, u64 fragment,
+			     अचिन्हित oldcount, अचिन्हित newcount)
+अणु
+	काष्ठा super_block * sb;
+	काष्ठा ufs_sb_निजी_info * uspi;
+	काष्ठा ufs_cg_निजी_info * ucpi;
+	काष्ठा ufs_cylinder_group * ucg;
+	अचिन्हित cgno, fragno, fragoff, count, fragsize, i;
 	
 	UFSD("ENTER, fragment %llu, oldcount %u, newcount %u\n",
-	     (unsigned long long)fragment, oldcount, newcount);
+	     (अचिन्हित दीर्घ दीर्घ)fragment, oldcount, newcount);
 	
 	sb = inode->i_sb;
 	uspi = UFS_SB(sb)->s_uspi;
 	count = newcount - oldcount;
 	
 	cgno = ufs_dtog(uspi, fragment);
-	if (fs32_to_cpu(sb, UFS_SB(sb)->fs_cs(cgno).cs_nffree) < count)
-		return 0;
-	if ((ufs_fragnum (fragment) + newcount) > uspi->s_fpb)
-		return 0;
+	अगर (fs32_to_cpu(sb, UFS_SB(sb)->fs_cs(cgno).cs_nfमुक्त) < count)
+		वापस 0;
+	अगर ((ufs_fragnum (fragment) + newcount) > uspi->s_fpb)
+		वापस 0;
 	ucpi = ufs_load_cylinder (sb, cgno);
-	if (!ucpi)
-		return 0;
+	अगर (!ucpi)
+		वापस 0;
 	ucg = ubh_get_ucg (UCPI_UBH(ucpi));
-	if (!ufs_cg_chkmagic(sb, ucg)) {
+	अगर (!ufs_cg_chkmagic(sb, ucg)) अणु
 		ufs_panic (sb, "ufs_add_fragments",
 			"internal error, bad magic number on cg %u", cgno);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	fragno = ufs_dtogd(uspi, fragment);
 	fragoff = ufs_fragnum (fragno);
-	for (i = oldcount; i < newcount; i++)
-		if (ubh_isclr (UCPI_UBH(ucpi), ucpi->c_freeoff, fragno + i))
-			return 0;
+	क्रम (i = oldcount; i < newcount; i++)
+		अगर (ubh_isclr (UCPI_UBH(ucpi), ucpi->c_मुक्तoff, fragno + i))
+			वापस 0;
 
-	if (!try_add_frags(inode, count))
-		return 0;
+	अगर (!try_add_frags(inode, count))
+		वापस 0;
 	/*
 	 * Block can be extended
 	 */
-	ucg->cg_time = ufs_get_seconds(sb);
-	for (i = newcount; i < (uspi->s_fpb - fragoff); i++)
-		if (ubh_isclr (UCPI_UBH(ucpi), ucpi->c_freeoff, fragno + i))
-			break;
+	ucg->cg_समय = ufs_get_seconds(sb);
+	क्रम (i = newcount; i < (uspi->s_fpb - fragoff); i++)
+		अगर (ubh_isclr (UCPI_UBH(ucpi), ucpi->c_मुक्तoff, fragno + i))
+			अवरोध;
 	fragsize = i - oldcount;
-	if (!fs32_to_cpu(sb, ucg->cg_frsum[fragsize]))
+	अगर (!fs32_to_cpu(sb, ucg->cg_frsum[fragsize]))
 		ufs_panic (sb, "ufs_add_fragments",
 			"internal error or corrupted bitmap on cg %u", cgno);
 	fs32_sub(sb, &ucg->cg_frsum[fragsize], 1);
-	if (fragsize != count)
+	अगर (fragsize != count)
 		fs32_add(sb, &ucg->cg_frsum[fragsize - count], 1);
-	for (i = oldcount; i < newcount; i++)
-		ubh_clrbit (UCPI_UBH(ucpi), ucpi->c_freeoff, fragno + i);
+	क्रम (i = oldcount; i < newcount; i++)
+		ubh_clrbit (UCPI_UBH(ucpi), ucpi->c_मुक्तoff, fragno + i);
 
-	fs32_sub(sb, &ucg->cg_cs.cs_nffree, count);
-	fs32_sub(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nffree, count);
-	uspi->cs_total.cs_nffree -= count;
+	fs32_sub(sb, &ucg->cg_cs.cs_nfमुक्त, count);
+	fs32_sub(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nfमुक्त, count);
+	uspi->cs_total.cs_nfमुक्त -= count;
 	
 	ubh_mark_buffer_dirty (USPI_UBH(uspi));
 	ubh_mark_buffer_dirty (UCPI_UBH(ucpi));
-	if (sb->s_flags & SB_SYNCHRONOUS)
+	अगर (sb->s_flags & SB_SYNCHRONOUS)
 		ubh_sync_block(UCPI_UBH(ucpi));
 	ufs_mark_sb_dirty(sb);
 
-	UFSD("EXIT, fragment %llu\n", (unsigned long long)fragment);
+	UFSD("EXIT, fragment %llu\n", (अचिन्हित दीर्घ दीर्घ)fragment);
 	
-	return fragment;
-}
+	वापस fragment;
+पूर्ण
 
-#define UFS_TEST_FREE_SPACE_CG \
-	ucg = (struct ufs_cylinder_group *) UFS_SB(sb)->s_ucg[cgno]->b_data; \
-	if (fs32_to_cpu(sb, ucg->cg_cs.cs_nbfree)) \
-		goto cg_found; \
-	for (k = count; k < uspi->s_fpb; k++) \
-		if (fs32_to_cpu(sb, ucg->cg_frsum[k])) \
-			goto cg_found; 
+#घोषणा UFS_TEST_FREE_SPACE_CG \
+	ucg = (काष्ठा ufs_cylinder_group *) UFS_SB(sb)->s_ucg[cgno]->b_data; \
+	अगर (fs32_to_cpu(sb, ucg->cg_cs.cs_nbमुक्त)) \
+		जाओ cg_found; \
+	क्रम (k = count; k < uspi->s_fpb; k++) \
+		अगर (fs32_to_cpu(sb, ucg->cg_frsum[k])) \
+			जाओ cg_found; 
 
-static u64 ufs_alloc_fragments(struct inode *inode, unsigned cgno,
-			       u64 goal, unsigned count, int *err)
-{
-	struct super_block * sb;
-	struct ufs_sb_private_info * uspi;
-	struct ufs_cg_private_info * ucpi;
-	struct ufs_cylinder_group * ucg;
-	unsigned oldcg, i, j, k, allocsize;
+अटल u64 ufs_alloc_fragments(काष्ठा inode *inode, अचिन्हित cgno,
+			       u64 goal, अचिन्हित count, पूर्णांक *err)
+अणु
+	काष्ठा super_block * sb;
+	काष्ठा ufs_sb_निजी_info * uspi;
+	काष्ठा ufs_cg_निजी_info * ucpi;
+	काष्ठा ufs_cylinder_group * ucg;
+	अचिन्हित oldcg, i, j, k, allocsize;
 	u64 result;
 	
 	UFSD("ENTER, ino %lu, cgno %u, goal %llu, count %u\n",
-	     inode->i_ino, cgno, (unsigned long long)goal, count);
+	     inode->i_ino, cgno, (अचिन्हित दीर्घ दीर्घ)goal, count);
 
 	sb = inode->i_sb;
 	uspi = UFS_SB(sb)->s_uspi;
@@ -609,236 +610,236 @@ static u64 ufs_alloc_fragments(struct inode *inode, unsigned cgno,
 	/*
 	 * 2. quadratic rehash
 	 */
-	for (j = 1; j < uspi->s_ncg; j *= 2) {
+	क्रम (j = 1; j < uspi->s_ncg; j *= 2) अणु
 		cgno += j;
-		if (cgno >= uspi->s_ncg) 
+		अगर (cgno >= uspi->s_ncg) 
 			cgno -= uspi->s_ncg;
 		UFS_TEST_FREE_SPACE_CG
-	}
+	पूर्ण
 
 	/*
-	 * 3. brute force search
+	 * 3. brute क्रमce search
 	 * We start at i = 2 ( 0 is checked at 1.step, 1 at 2.step )
 	 */
 	cgno = (oldcg + 1) % uspi->s_ncg;
-	for (j = 2; j < uspi->s_ncg; j++) {
+	क्रम (j = 2; j < uspi->s_ncg; j++) अणु
 		cgno++;
-		if (cgno >= uspi->s_ncg)
+		अगर (cgno >= uspi->s_ncg)
 			cgno = 0;
 		UFS_TEST_FREE_SPACE_CG
-	}
+	पूर्ण
 	
 	UFSD("EXIT (FAILED)\n");
-	return 0;
+	वापस 0;
 
 cg_found:
 	ucpi = ufs_load_cylinder (sb, cgno);
-	if (!ucpi)
-		return 0;
+	अगर (!ucpi)
+		वापस 0;
 	ucg = ubh_get_ucg (UCPI_UBH(ucpi));
-	if (!ufs_cg_chkmagic(sb, ucg)) 
+	अगर (!ufs_cg_chkmagic(sb, ucg)) 
 		ufs_panic (sb, "ufs_alloc_fragments",
 			"internal error, bad magic number on cg %u", cgno);
-	ucg->cg_time = ufs_get_seconds(sb);
+	ucg->cg_समय = ufs_get_seconds(sb);
 
-	if (count == uspi->s_fpb) {
+	अगर (count == uspi->s_fpb) अणु
 		result = ufs_alloccg_block (inode, ucpi, goal, err);
-		if (result == INVBLOCK)
-			return 0;
-		goto succed;
-	}
+		अगर (result == INVBLOCK)
+			वापस 0;
+		जाओ succed;
+	पूर्ण
 
-	for (allocsize = count; allocsize < uspi->s_fpb; allocsize++)
-		if (fs32_to_cpu(sb, ucg->cg_frsum[allocsize]) != 0)
-			break;
+	क्रम (allocsize = count; allocsize < uspi->s_fpb; allocsize++)
+		अगर (fs32_to_cpu(sb, ucg->cg_frsum[allocsize]) != 0)
+			अवरोध;
 	
-	if (allocsize == uspi->s_fpb) {
+	अगर (allocsize == uspi->s_fpb) अणु
 		result = ufs_alloccg_block (inode, ucpi, goal, err);
-		if (result == INVBLOCK)
-			return 0;
+		अगर (result == INVBLOCK)
+			वापस 0;
 		goal = ufs_dtogd(uspi, result);
-		for (i = count; i < uspi->s_fpb; i++)
-			ubh_setbit (UCPI_UBH(ucpi), ucpi->c_freeoff, goal + i);
+		क्रम (i = count; i < uspi->s_fpb; i++)
+			ubh_setbit (UCPI_UBH(ucpi), ucpi->c_मुक्तoff, goal + i);
 		i = uspi->s_fpb - count;
 
-		inode_sub_bytes(inode, i << uspi->s_fshift);
-		fs32_add(sb, &ucg->cg_cs.cs_nffree, i);
-		uspi->cs_total.cs_nffree += i;
-		fs32_add(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nffree, i);
+		inode_sub_bytes(inode, i << uspi->s_fshअगरt);
+		fs32_add(sb, &ucg->cg_cs.cs_nfमुक्त, i);
+		uspi->cs_total.cs_nfमुक्त += i;
+		fs32_add(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nfमुक्त, i);
 		fs32_add(sb, &ucg->cg_frsum[i], 1);
-		goto succed;
-	}
+		जाओ succed;
+	पूर्ण
 
-	result = ufs_bitmap_search (sb, ucpi, goal, allocsize);
-	if (result == INVBLOCK)
-		return 0;
-	if (!try_add_frags(inode, count))
-		return 0;
-	for (i = 0; i < count; i++)
-		ubh_clrbit (UCPI_UBH(ucpi), ucpi->c_freeoff, result + i);
+	result = ufs_biपंचांगap_search (sb, ucpi, goal, allocsize);
+	अगर (result == INVBLOCK)
+		वापस 0;
+	अगर (!try_add_frags(inode, count))
+		वापस 0;
+	क्रम (i = 0; i < count; i++)
+		ubh_clrbit (UCPI_UBH(ucpi), ucpi->c_मुक्तoff, result + i);
 	
-	fs32_sub(sb, &ucg->cg_cs.cs_nffree, count);
-	uspi->cs_total.cs_nffree -= count;
-	fs32_sub(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nffree, count);
+	fs32_sub(sb, &ucg->cg_cs.cs_nfमुक्त, count);
+	uspi->cs_total.cs_nfमुक्त -= count;
+	fs32_sub(sb, &UFS_SB(sb)->fs_cs(cgno).cs_nfमुक्त, count);
 	fs32_sub(sb, &ucg->cg_frsum[allocsize], 1);
 
-	if (count != allocsize)
+	अगर (count != allocsize)
 		fs32_add(sb, &ucg->cg_frsum[allocsize - count], 1);
 
 succed:
 	ubh_mark_buffer_dirty (USPI_UBH(uspi));
 	ubh_mark_buffer_dirty (UCPI_UBH(ucpi));
-	if (sb->s_flags & SB_SYNCHRONOUS)
+	अगर (sb->s_flags & SB_SYNCHRONOUS)
 		ubh_sync_block(UCPI_UBH(ucpi));
 	ufs_mark_sb_dirty(sb);
 
 	result += cgno * uspi->s_fpg;
-	UFSD("EXIT3, result %llu\n", (unsigned long long)result);
-	return result;
-}
+	UFSD("EXIT3, result %llu\n", (अचिन्हित दीर्घ दीर्घ)result);
+	वापस result;
+पूर्ण
 
-static u64 ufs_alloccg_block(struct inode *inode,
-			     struct ufs_cg_private_info *ucpi,
-			     u64 goal, int *err)
-{
-	struct super_block * sb;
-	struct ufs_sb_private_info * uspi;
-	struct ufs_cylinder_group * ucg;
+अटल u64 ufs_alloccg_block(काष्ठा inode *inode,
+			     काष्ठा ufs_cg_निजी_info *ucpi,
+			     u64 goal, पूर्णांक *err)
+अणु
+	काष्ठा super_block * sb;
+	काष्ठा ufs_sb_निजी_info * uspi;
+	काष्ठा ufs_cylinder_group * ucg;
 	u64 result, blkno;
 
-	UFSD("ENTER, goal %llu\n", (unsigned long long)goal);
+	UFSD("ENTER, goal %llu\n", (अचिन्हित दीर्घ दीर्घ)goal);
 
 	sb = inode->i_sb;
 	uspi = UFS_SB(sb)->s_uspi;
 	ucg = ubh_get_ucg(UCPI_UBH(ucpi));
 
-	if (goal == 0) {
+	अगर (goal == 0) अणु
 		goal = ucpi->c_rotor;
-		goto norot;
-	}
+		जाओ norot;
+	पूर्ण
 	goal = ufs_blknum (goal);
 	goal = ufs_dtogd(uspi, goal);
 	
 	/*
 	 * If the requested block is available, use it.
 	 */
-	if (ubh_isblockset(UCPI_UBH(ucpi), ucpi->c_freeoff, ufs_fragstoblks(goal))) {
+	अगर (ubh_isblockset(UCPI_UBH(ucpi), ucpi->c_मुक्तoff, ufs_fragstoblks(goal))) अणु
 		result = goal;
-		goto gotit;
-	}
+		जाओ gotit;
+	पूर्ण
 	
 norot:	
-	result = ufs_bitmap_search (sb, ucpi, goal, uspi->s_fpb);
-	if (result == INVBLOCK)
-		return INVBLOCK;
+	result = ufs_biपंचांगap_search (sb, ucpi, goal, uspi->s_fpb);
+	अगर (result == INVBLOCK)
+		वापस INVBLOCK;
 	ucpi->c_rotor = result;
 gotit:
-	if (!try_add_frags(inode, uspi->s_fpb))
-		return 0;
+	अगर (!try_add_frags(inode, uspi->s_fpb))
+		वापस 0;
 	blkno = ufs_fragstoblks(result);
-	ubh_clrblock (UCPI_UBH(ucpi), ucpi->c_freeoff, blkno);
-	if ((UFS_SB(sb)->s_flags & UFS_CG_MASK) == UFS_CG_44BSD)
+	ubh_clrblock (UCPI_UBH(ucpi), ucpi->c_मुक्तoff, blkno);
+	अगर ((UFS_SB(sb)->s_flags & UFS_CG_MASK) == UFS_CG_44BSD)
 		ufs_clusteracct (sb, ucpi, blkno, -1);
 
-	fs32_sub(sb, &ucg->cg_cs.cs_nbfree, 1);
-	uspi->cs_total.cs_nbfree--;
-	fs32_sub(sb, &UFS_SB(sb)->fs_cs(ucpi->c_cgx).cs_nbfree, 1);
+	fs32_sub(sb, &ucg->cg_cs.cs_nbमुक्त, 1);
+	uspi->cs_total.cs_nbमुक्त--;
+	fs32_sub(sb, &UFS_SB(sb)->fs_cs(ucpi->c_cgx).cs_nbमुक्त, 1);
 
-	if (uspi->fs_magic != UFS2_MAGIC) {
-		unsigned cylno = ufs_cbtocylno((unsigned)result);
+	अगर (uspi->fs_magic != UFS2_MAGIC) अणु
+		अचिन्हित cylno = ufs_cbtocylno((अचिन्हित)result);
 
 		fs16_sub(sb, &ubh_cg_blks(ucpi, cylno,
-					  ufs_cbtorpos((unsigned)result)), 1);
+					  ufs_cbtorpos((अचिन्हित)result)), 1);
 		fs32_sub(sb, &ubh_cg_blktot(ucpi, cylno), 1);
-	}
+	पूर्ण
 	
-	UFSD("EXIT, result %llu\n", (unsigned long long)result);
+	UFSD("EXIT, result %llu\n", (अचिन्हित दीर्घ दीर्घ)result);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static unsigned ubh_scanc(struct ufs_sb_private_info *uspi,
-			  struct ufs_buffer_head *ubh,
-			  unsigned begin, unsigned size,
-			  unsigned char *table, unsigned char mask)
-{
-	unsigned rest, offset;
-	unsigned char *cp;
+अटल अचिन्हित ubh_scanc(काष्ठा ufs_sb_निजी_info *uspi,
+			  काष्ठा ufs_buffer_head *ubh,
+			  अचिन्हित begin, अचिन्हित size,
+			  अचिन्हित अक्षर *table, अचिन्हित अक्षर mask)
+अणु
+	अचिन्हित rest, offset;
+	अचिन्हित अक्षर *cp;
 	
 
 	offset = begin & ~uspi->s_fmask;
-	begin >>= uspi->s_fshift;
-	for (;;) {
-		if ((offset + size) < uspi->s_fsize)
+	begin >>= uspi->s_fshअगरt;
+	क्रम (;;) अणु
+		अगर ((offset + size) < uspi->s_fsize)
 			rest = size;
-		else
+		अन्यथा
 			rest = uspi->s_fsize - offset;
 		size -= rest;
 		cp = ubh->bh[begin]->b_data + offset;
-		while ((table[*cp++] & mask) == 0 && --rest)
+		जबतक ((table[*cp++] & mask) == 0 && --rest)
 			;
-		if (rest || !size)
-			break;
+		अगर (rest || !size)
+			अवरोध;
 		begin++;
 		offset = 0;
-	}
-	return (size + rest);
-}
+	पूर्ण
+	वापस (size + rest);
+पूर्ण
 
 /*
- * Find a block of the specified size in the specified cylinder group.
- * @sp: pointer to super block
- * @ucpi: pointer to cylinder group info
+ * Find a block of the specअगरied size in the specअगरied cylinder group.
+ * @sp: poपूर्णांकer to super block
+ * @ucpi: poपूर्णांकer to cylinder group info
  * @goal: near which block we want find new one
- * @count: specified size
+ * @count: specअगरied size
  */
-static u64 ufs_bitmap_search(struct super_block *sb,
-			     struct ufs_cg_private_info *ucpi,
-			     u64 goal, unsigned count)
-{
+अटल u64 ufs_biपंचांगap_search(काष्ठा super_block *sb,
+			     काष्ठा ufs_cg_निजी_info *ucpi,
+			     u64 goal, अचिन्हित count)
+अणु
 	/*
-	 * Bit patterns for identifying fragments in the block map
+	 * Bit patterns क्रम identअगरying fragments in the block map
 	 * used as ((map & mask_arr) == want_arr)
 	 */
-	static const int mask_arr[9] = {
+	अटल स्थिर पूर्णांक mask_arr[9] = अणु
 		0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff, 0x1ff, 0x3ff
-	};
-	static const int want_arr[9] = {
+	पूर्ण;
+	अटल स्थिर पूर्णांक want_arr[9] = अणु
 		0x0, 0x2, 0x6, 0xe, 0x1e, 0x3e, 0x7e, 0xfe, 0x1fe
-	};
-	struct ufs_sb_private_info *uspi = UFS_SB(sb)->s_uspi;
-	unsigned start, length, loc;
-	unsigned pos, want, blockmap, mask, end;
+	पूर्ण;
+	काष्ठा ufs_sb_निजी_info *uspi = UFS_SB(sb)->s_uspi;
+	अचिन्हित start, length, loc;
+	अचिन्हित pos, want, blockmap, mask, end;
 	u64 result;
 
 	UFSD("ENTER, cg %u, goal %llu, count %u\n", ucpi->c_cgx,
-	     (unsigned long long)goal, count);
+	     (अचिन्हित दीर्घ दीर्घ)goal, count);
 
-	if (goal)
+	अगर (goal)
 		start = ufs_dtogd(uspi, goal) >> 3;
-	else
+	अन्यथा
 		start = ucpi->c_frotor >> 3;
 		
 	length = ((uspi->s_fpg + 7) >> 3) - start;
-	loc = ubh_scanc(uspi, UCPI_UBH(ucpi), ucpi->c_freeoff + start, length,
+	loc = ubh_scanc(uspi, UCPI_UBH(ucpi), ucpi->c_मुक्तoff + start, length,
 		(uspi->s_fpb == 8) ? ufs_fragtable_8fpb : ufs_fragtable_other,
 		1 << (count - 1 + (uspi->s_fpb & 7))); 
-	if (loc == 0) {
+	अगर (loc == 0) अणु
 		length = start + 1;
-		loc = ubh_scanc(uspi, UCPI_UBH(ucpi), ucpi->c_freeoff, length,
+		loc = ubh_scanc(uspi, UCPI_UBH(ucpi), ucpi->c_मुक्तoff, length,
 				(uspi->s_fpb == 8) ? ufs_fragtable_8fpb :
 				ufs_fragtable_other,
 				1 << (count - 1 + (uspi->s_fpb & 7)));
-		if (loc == 0) {
+		अगर (loc == 0) अणु
 			ufs_error(sb, "ufs_bitmap_search",
 				  "bitmap corrupted on cg %u, start %u,"
 				  " length %u, count %u, freeoff %u\n",
 				  ucpi->c_cgx, start, length, count,
-				  ucpi->c_freeoff);
-			return INVBLOCK;
-		}
+				  ucpi->c_मुक्तoff);
+			वापस INVBLOCK;
+		पूर्ण
 		start = 0;
-	}
+	पूर्ण
 	result = (start + length - loc) << 3;
 	ucpi->c_frotor = result;
 
@@ -846,83 +847,83 @@ static u64 ufs_bitmap_search(struct super_block *sb,
 	 * found the byte in the map
 	 */
 
-	for (end = result + 8; result < end; result += uspi->s_fpb) {
-		blockmap = ubh_blkmap(UCPI_UBH(ucpi), ucpi->c_freeoff, result);
+	क्रम (end = result + 8; result < end; result += uspi->s_fpb) अणु
+		blockmap = ubh_blkmap(UCPI_UBH(ucpi), ucpi->c_मुक्तoff, result);
 		blockmap <<= 1;
 		mask = mask_arr[count];
 		want = want_arr[count];
-		for (pos = 0; pos <= uspi->s_fpb - count; pos++) {
-			if ((blockmap & mask) == want) {
+		क्रम (pos = 0; pos <= uspi->s_fpb - count; pos++) अणु
+			अगर ((blockmap & mask) == want) अणु
 				UFSD("EXIT, result %llu\n",
-				     (unsigned long long)result);
-				return result + pos;
- 			}
+				     (अचिन्हित दीर्घ दीर्घ)result);
+				वापस result + pos;
+ 			पूर्ण
 			mask <<= 1;
 			want <<= 1;
- 		}
- 	}
+ 		पूर्ण
+ 	पूर्ण
 
 	ufs_error(sb, "ufs_bitmap_search", "block not in map on cg %u\n",
 		  ucpi->c_cgx);
 	UFSD("EXIT (FAILED)\n");
-	return INVBLOCK;
-}
+	वापस INVBLOCK;
+पूर्ण
 
-static void ufs_clusteracct(struct super_block * sb,
-	struct ufs_cg_private_info * ucpi, unsigned blkno, int cnt)
-{
-	struct ufs_sb_private_info * uspi;
-	int i, start, end, forw, back;
+अटल व्योम ufs_clusteracct(काष्ठा super_block * sb,
+	काष्ठा ufs_cg_निजी_info * ucpi, अचिन्हित blkno, पूर्णांक cnt)
+अणु
+	काष्ठा ufs_sb_निजी_info * uspi;
+	पूर्णांक i, start, end, क्रमw, back;
 	
 	uspi = UFS_SB(sb)->s_uspi;
-	if (uspi->s_contigsumsize <= 0)
-		return;
+	अगर (uspi->s_contigsumsize <= 0)
+		वापस;
 
-	if (cnt > 0)
+	अगर (cnt > 0)
 		ubh_setbit(UCPI_UBH(ucpi), ucpi->c_clusteroff, blkno);
-	else
+	अन्यथा
 		ubh_clrbit(UCPI_UBH(ucpi), ucpi->c_clusteroff, blkno);
 
 	/*
-	 * Find the size of the cluster going forward.
+	 * Find the size of the cluster going क्रमward.
 	 */
 	start = blkno + 1;
 	end = start + uspi->s_contigsumsize;
-	if ( end >= ucpi->c_nclusterblks)
+	अगर ( end >= ucpi->c_nclusterblks)
 		end = ucpi->c_nclusterblks;
 	i = ubh_find_next_zero_bit (UCPI_UBH(ucpi), ucpi->c_clusteroff, end, start);
-	if (i > end)
+	अगर (i > end)
 		i = end;
-	forw = i - start;
+	क्रमw = i - start;
 	
 	/*
 	 * Find the size of the cluster going backward.
 	 */
 	start = blkno - 1;
 	end = start - uspi->s_contigsumsize;
-	if (end < 0 ) 
+	अगर (end < 0 ) 
 		end = -1;
 	i = ubh_find_last_zero_bit (UCPI_UBH(ucpi), ucpi->c_clusteroff, start, end);
-	if ( i < end) 
+	अगर ( i < end) 
 		i = end;
 	back = start - i;
 	
 	/*
-	 * Account for old cluster and the possibly new forward and
+	 * Account क्रम old cluster and the possibly new क्रमward and
 	 * back clusters.
 	 */
-	i = back + forw + 1;
-	if (i > uspi->s_contigsumsize)
+	i = back + क्रमw + 1;
+	अगर (i > uspi->s_contigsumsize)
 		i = uspi->s_contigsumsize;
 	fs32_add(sb, (__fs32*)ubh_get_addr(UCPI_UBH(ucpi), ucpi->c_clustersumoff + (i << 2)), cnt);
-	if (back > 0)
+	अगर (back > 0)
 		fs32_sub(sb, (__fs32*)ubh_get_addr(UCPI_UBH(ucpi), ucpi->c_clustersumoff + (back << 2)), cnt);
-	if (forw > 0)
-		fs32_sub(sb, (__fs32*)ubh_get_addr(UCPI_UBH(ucpi), ucpi->c_clustersumoff + (forw << 2)), cnt);
-}
+	अगर (क्रमw > 0)
+		fs32_sub(sb, (__fs32*)ubh_get_addr(UCPI_UBH(ucpi), ucpi->c_clustersumoff + (क्रमw << 2)), cnt);
+पूर्ण
 
 
-static unsigned char ufs_fragtable_8fpb[] = {
+अटल अचिन्हित अक्षर ufs_fragtable_8fpb[] = अणु
 	0x00, 0x01, 0x01, 0x02, 0x01, 0x01, 0x02, 0x04, 0x01, 0x01, 0x01, 0x03, 0x02, 0x03, 0x04, 0x08,
 	0x01, 0x01, 0x01, 0x03, 0x01, 0x01, 0x03, 0x05, 0x02, 0x03, 0x03, 0x02, 0x04, 0x05, 0x08, 0x10,
 	0x01, 0x01, 0x01, 0x03, 0x01, 0x01, 0x03, 0x05, 0x01, 0x01, 0x01, 0x03, 0x03, 0x03, 0x05, 0x09,
@@ -939,9 +940,9 @@ static unsigned char ufs_fragtable_8fpb[] = {
 	0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x07, 0x02, 0x03, 0x03, 0x02, 0x06, 0x07, 0x0A, 0x12,
 	0x04, 0x05, 0x05, 0x06, 0x05, 0x05, 0x06, 0x04, 0x05, 0x05, 0x05, 0x07, 0x06, 0x07, 0x04, 0x0C,
 	0x08, 0x09, 0x09, 0x0A, 0x09, 0x09, 0x0A, 0x0C, 0x10, 0x11, 0x11, 0x12, 0x20, 0x21, 0x40, 0x80,
-};
+पूर्ण;
 
-static unsigned char ufs_fragtable_other[] = {
+अटल अचिन्हित अक्षर ufs_fragtable_other[] = अणु
 	0x00, 0x16, 0x16, 0x2A, 0x16, 0x16, 0x26, 0x4E, 0x16, 0x16, 0x16, 0x3E, 0x2A, 0x3E, 0x4E, 0x8A,
 	0x16, 0x16, 0x16, 0x3E, 0x16, 0x16, 0x36, 0x5E, 0x16, 0x16, 0x16, 0x3E, 0x3E, 0x3E, 0x5E, 0x9E,
 	0x16, 0x16, 0x16, 0x3E, 0x16, 0x16, 0x36, 0x5E, 0x16, 0x16, 0x16, 0x3E, 0x3E, 0x3E, 0x5E, 0x9E,
@@ -958,4 +959,4 @@ static unsigned char ufs_fragtable_other[] = {
 	0x3E, 0x3E, 0x3E, 0x3E, 0x3E, 0x3E, 0x3E, 0x7E,	0x3E, 0x3E, 0x3E, 0x3E, 0x3E, 0x3E, 0x7E, 0xBE,
 	0x4E, 0x5E, 0x5E, 0x6E, 0x5E, 0x5E, 0x6E, 0x4E, 0x5E, 0x5E, 0x5E, 0x7E, 0x6E, 0x7E, 0x4E, 0xCE,
 	0x8A, 0x9E, 0x9E, 0xAA, 0x9E, 0x9E, 0xAE, 0xCE, 0x9E, 0x9E, 0x9E, 0xBE, 0xAA, 0xBE, 0xCE, 0x8A,
-};
+पूर्ण;

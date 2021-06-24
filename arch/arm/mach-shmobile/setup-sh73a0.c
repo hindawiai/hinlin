@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * sh73a0 processor support
  *
@@ -6,34 +7,34 @@
  * Copyright (C) 2010  Magnus Damm
  * Copyright (C) 2008  Yoshihiro Shimoda
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/delay.h>
-#include <linux/input.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पन.स>
 
-#include <asm/hardware/cache-l2x0.h>
-#include <asm/mach/map.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/time.h>
+#समावेश <यंत्र/hardware/cache-l2x0.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/समय.स>
 
-#include "common.h"
-#include "sh73a0.h"
+#समावेश "common.h"
+#समावेश "sh73a0.h"
 
-static void __init sh73a0_generic_init(void)
-{
-#ifdef CONFIG_CACHE_L2X0
+अटल व्योम __init sh73a0_generic_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_CACHE_L2X0
 	/* Shared attribute override enable, 64K*8way */
 	l2x0_init(ioremap(0xf0100000, PAGE_SIZE), 0x00400000, 0xc20f0fff);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static const char *const sh73a0_boards_compat_dt[] __initconst = {
+अटल स्थिर अक्षर *स्थिर sh73a0_boards_compat_dt[] __initस्थिर = अणु
 	"renesas,sh73a0",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(SH73A0_DT, "Generic SH73A0 (Flattened Device Tree)")
 	.smp		= smp_ops(sh73a0_smp_ops),

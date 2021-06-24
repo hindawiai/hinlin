@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2012-2019 ARM Limited (or its affiliates). */
 
-#ifndef __CC_DEBUGFS_H__
-#define __CC_DEBUGFS_H__
+#अगर_अघोषित __CC_DEBUGFS_H__
+#घोषणा __CC_DEBUGFS_H__
 
-#ifdef CONFIG_DEBUG_FS
-void cc_debugfs_global_init(void);
-void cc_debugfs_global_fini(void);
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम cc_debugfs_global_init(व्योम);
+व्योम cc_debugfs_global_fini(व्योम);
 
-int cc_debugfs_init(struct cc_drvdata *drvdata);
-void cc_debugfs_fini(struct cc_drvdata *drvdata);
+पूर्णांक cc_debugfs_init(काष्ठा cc_drvdata *drvdata);
+व्योम cc_debugfs_fini(काष्ठा cc_drvdata *drvdata);
 
-#else
+#अन्यथा
 
-static inline void cc_debugfs_global_init(void) {}
-static inline void cc_debugfs_global_fini(void) {}
+अटल अंतरभूत व्योम cc_debugfs_global_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम cc_debugfs_global_fini(व्योम) अणुपूर्ण
 
-static inline int cc_debugfs_init(struct cc_drvdata *drvdata)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक cc_debugfs_init(काष्ठा cc_drvdata *drvdata)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void cc_debugfs_fini(struct cc_drvdata *drvdata) {}
+अटल अंतरभूत व्योम cc_debugfs_fini(काष्ठा cc_drvdata *drvdata) अणुपूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /*__CC_SYSFS_H__*/
+#पूर्ण_अगर /*__CC_SYSFS_H__*/

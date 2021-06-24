@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Netlink routines for CIFS
+ * Netlink routines क्रम CIFS
  *
  * Copyright (c) 2020 Samuel Cabrero <scabrero@suse.de>
  */
 
-#ifndef _CIFS_NETLINK_H
-#define _CIFS_NETLINK_H
+#अगर_अघोषित _CIFS_NETLINK_H
+#घोषणा _CIFS_NETLINK_H
 
-extern struct genl_family cifs_genl_family;
+बाह्य काष्ठा genl_family cअगरs_genl_family;
 
-extern int cifs_genl_init(void);
-extern void cifs_genl_exit(void);
+बाह्य पूर्णांक cअगरs_genl_init(व्योम);
+बाह्य व्योम cअगरs_genl_निकास(व्योम);
 
-#endif /* _CIFS_NETLINK_H */
+#पूर्ण_अगर /* _CIFS_NETLINK_H */

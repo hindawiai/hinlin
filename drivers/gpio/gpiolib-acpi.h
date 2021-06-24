@@ -1,102 +1,103 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * ACPI helpers for GPIO API
+ * ACPI helpers क्रम GPIO API
  *
  * Copyright (C) 2012,2019 Intel Corporation
  */
 
-#ifndef GPIOLIB_ACPI_H
-#define GPIOLIB_ACPI_H
+#अगर_अघोषित GPIOLIB_ACPI_H
+#घोषणा GPIOLIB_ACPI_H
 
-struct acpi_device;
+काष्ठा acpi_device;
 
 /**
- * struct acpi_gpio_info - ACPI GPIO specific information
+ * काष्ठा acpi_gpio_info - ACPI GPIO specअगरic inक्रमmation
  * @adev: reference to ACPI device which consumes GPIO resource
  * @flags: GPIO initialization flags
- * @gpioint: if %true this GPIO is of type GpioInt otherwise type is GpioIo
+ * @gpioपूर्णांक: अगर %true this GPIO is of type GpioInt otherwise type is GpioIo
  * @pin_config: pin bias as provided by ACPI
- * @polarity: interrupt polarity as provided by ACPI
+ * @polarity: पूर्णांकerrupt polarity as provided by ACPI
  * @triggering: triggering type as provided by ACPI
- * @debounce: debounce timeout as provided by ACPI
- * @quirks: Linux specific quirks as provided by struct acpi_gpio_mapping
+ * @debounce: debounce समयout as provided by ACPI
+ * @quirks: Linux specअगरic quirks as provided by काष्ठा acpi_gpio_mapping
  */
-struct acpi_gpio_info {
-	struct acpi_device *adev;
-	enum gpiod_flags flags;
-	bool gpioint;
-	int pin_config;
-	int polarity;
-	int triggering;
-	unsigned int debounce;
-	unsigned int quirks;
-};
+काष्ठा acpi_gpio_info अणु
+	काष्ठा acpi_device *adev;
+	क्रमागत gpiod_flags flags;
+	bool gpioपूर्णांक;
+	पूर्णांक pin_config;
+	पूर्णांक polarity;
+	पूर्णांक triggering;
+	अचिन्हित पूर्णांक debounce;
+	अचिन्हित पूर्णांक quirks;
+पूर्ण;
 
-#ifdef CONFIG_ACPI
-void acpi_gpiochip_add(struct gpio_chip *chip);
-void acpi_gpiochip_remove(struct gpio_chip *chip);
+#अगर_घोषित CONFIG_ACPI
+व्योम acpi_gpiochip_add(काष्ठा gpio_chip *chip);
+व्योम acpi_gpiochip_हटाओ(काष्ठा gpio_chip *chip);
 
-void acpi_gpio_dev_init(struct gpio_chip *gc, struct gpio_device *gdev);
+व्योम acpi_gpio_dev_init(काष्ठा gpio_chip *gc, काष्ठा gpio_device *gdev);
 
-void acpi_gpiochip_request_interrupts(struct gpio_chip *chip);
-void acpi_gpiochip_free_interrupts(struct gpio_chip *chip);
+व्योम acpi_gpiochip_request_पूर्णांकerrupts(काष्ठा gpio_chip *chip);
+व्योम acpi_gpiochip_मुक्त_पूर्णांकerrupts(काष्ठा gpio_chip *chip);
 
-int acpi_gpio_update_gpiod_flags(enum gpiod_flags *flags,
-				 struct acpi_gpio_info *info);
-int acpi_gpio_update_gpiod_lookup_flags(unsigned long *lookupflags,
-					struct acpi_gpio_info *info);
+पूर्णांक acpi_gpio_update_gpiod_flags(क्रमागत gpiod_flags *flags,
+				 काष्ठा acpi_gpio_info *info);
+पूर्णांक acpi_gpio_update_gpiod_lookup_flags(अचिन्हित दीर्घ *lookupflags,
+					काष्ठा acpi_gpio_info *info);
 
-struct gpio_desc *acpi_find_gpio(struct device *dev,
-				 const char *con_id,
-				 unsigned int idx,
-				 enum gpiod_flags *dflags,
-				 unsigned long *lookupflags);
-struct gpio_desc *acpi_node_get_gpiod(struct fwnode_handle *fwnode,
-				      const char *propname, int index,
-				      struct acpi_gpio_info *info);
+काष्ठा gpio_desc *acpi_find_gpio(काष्ठा device *dev,
+				 स्थिर अक्षर *con_id,
+				 अचिन्हित पूर्णांक idx,
+				 क्रमागत gpiod_flags *dflags,
+				 अचिन्हित दीर्घ *lookupflags);
+काष्ठा gpio_desc *acpi_node_get_gpiod(काष्ठा fwnode_handle *fwnode,
+				      स्थिर अक्षर *propname, पूर्णांक index,
+				      काष्ठा acpi_gpio_info *info);
 
-int acpi_gpio_count(struct device *dev, const char *con_id);
-#else
-static inline void acpi_gpiochip_add(struct gpio_chip *chip) { }
-static inline void acpi_gpiochip_remove(struct gpio_chip *chip) { }
+पूर्णांक acpi_gpio_count(काष्ठा device *dev, स्थिर अक्षर *con_id);
+#अन्यथा
+अटल अंतरभूत व्योम acpi_gpiochip_add(काष्ठा gpio_chip *chip) अणु पूर्ण
+अटल अंतरभूत व्योम acpi_gpiochip_हटाओ(काष्ठा gpio_chip *chip) अणु पूर्ण
 
-static inline void acpi_gpio_dev_init(struct gpio_chip *gc, struct gpio_device *gdev) { }
+अटल अंतरभूत व्योम acpi_gpio_dev_init(काष्ठा gpio_chip *gc, काष्ठा gpio_device *gdev) अणु पूर्ण
 
-static inline void
-acpi_gpiochip_request_interrupts(struct gpio_chip *chip) { }
+अटल अंतरभूत व्योम
+acpi_gpiochip_request_पूर्णांकerrupts(काष्ठा gpio_chip *chip) अणु पूर्ण
 
-static inline void
-acpi_gpiochip_free_interrupts(struct gpio_chip *chip) { }
+अटल अंतरभूत व्योम
+acpi_gpiochip_मुक्त_पूर्णांकerrupts(काष्ठा gpio_chip *chip) अणु पूर्ण
 
-static inline int
-acpi_gpio_update_gpiod_flags(enum gpiod_flags *flags, struct acpi_gpio_info *info)
-{
-	return 0;
-}
-static inline int
-acpi_gpio_update_gpiod_lookup_flags(unsigned long *lookupflags,
-				    struct acpi_gpio_info *info)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक
+acpi_gpio_update_gpiod_flags(क्रमागत gpiod_flags *flags, काष्ठा acpi_gpio_info *info)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक
+acpi_gpio_update_gpiod_lookup_flags(अचिन्हित दीर्घ *lookupflags,
+				    काष्ठा acpi_gpio_info *info)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct gpio_desc *
-acpi_find_gpio(struct device *dev, const char *con_id,
-	       unsigned int idx, enum gpiod_flags *dflags,
-	       unsigned long *lookupflags)
-{
-	return ERR_PTR(-ENOENT);
-}
-static inline struct gpio_desc *
-acpi_node_get_gpiod(struct fwnode_handle *fwnode, const char *propname,
-		    int index, struct acpi_gpio_info *info)
-{
-	return ERR_PTR(-ENXIO);
-}
-static inline int acpi_gpio_count(struct device *dev, const char *con_id)
-{
-	return -ENODEV;
-}
-#endif
+अटल अंतरभूत काष्ठा gpio_desc *
+acpi_find_gpio(काष्ठा device *dev, स्थिर अक्षर *con_id,
+	       अचिन्हित पूर्णांक idx, क्रमागत gpiod_flags *dflags,
+	       अचिन्हित दीर्घ *lookupflags)
+अणु
+	वापस ERR_PTR(-ENOENT);
+पूर्ण
+अटल अंतरभूत काष्ठा gpio_desc *
+acpi_node_get_gpiod(काष्ठा fwnode_handle *fwnode, स्थिर अक्षर *propname,
+		    पूर्णांक index, काष्ठा acpi_gpio_info *info)
+अणु
+	वापस ERR_PTR(-ENXIO);
+पूर्ण
+अटल अंतरभूत पूर्णांक acpi_gpio_count(काष्ठा device *dev, स्थिर अक्षर *con_id)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* GPIOLIB_ACPI_H */
+#पूर्ण_अगर /* GPIOLIB_ACPI_H */

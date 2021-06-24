@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Hisilicon HiP04 clock driver
+ * Hisilicon HiP04 घड़ी driver
  *
  * Copyright (c) 2013-2014 Hisilicon Limited.
  * Copyright (c) 2013-2014 Linaro Limited.
@@ -8,35 +9,35 @@
  * Author: Haojian Zhuang <haojian.zhuang@linaro.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/slab.h>
 
-#include <dt-bindings/clock/hip04-clock.h>
+#समावेश <dt-bindings/घड़ी/hip04-घड़ी.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-/* fixed rate clocks */
-static struct hisi_fixed_rate_clock hip04_fixed_rate_clks[] __initdata = {
-	{ HIP04_OSC50M,   "osc50m",   NULL, 0, 50000000, },
-	{ HIP04_CLK_50M,  "clk50m",   NULL, 0, 50000000, },
-	{ HIP04_CLK_168M, "clk168m",  NULL, 0, 168750000, },
-};
+/* fixed rate घड़ीs */
+अटल काष्ठा hisi_fixed_rate_घड़ी hip04_fixed_rate_clks[] __initdata = अणु
+	अणु HIP04_OSC50M,   "osc50m",   शून्य, 0, 50000000, पूर्ण,
+	अणु HIP04_CLK_50M,  "clk50m",   शून्य, 0, 50000000, पूर्ण,
+	अणु HIP04_CLK_168M, "clk168m",  शून्य, 0, 168750000, पूर्ण,
+पूर्ण;
 
-static void __init hip04_clk_init(struct device_node *np)
-{
-	struct hisi_clock_data *clk_data;
+अटल व्योम __init hip04_clk_init(काष्ठा device_node *np)
+अणु
+	काष्ठा hisi_घड़ी_data *clk_data;
 
 	clk_data = hisi_clk_init(np, HIP04_NR_CLKS);
-	if (!clk_data)
-		return;
+	अगर (!clk_data)
+		वापस;
 
-	hisi_clk_register_fixed_rate(hip04_fixed_rate_clks,
+	hisi_clk_रेजिस्टर_fixed_rate(hip04_fixed_rate_clks,
 				     ARRAY_SIZE(hip04_fixed_rate_clks),
 				     clk_data);
-}
+पूर्ण
 CLK_OF_DECLARE(hip04_clk, "hisilicon,hip04-clock", hip04_clk_init);

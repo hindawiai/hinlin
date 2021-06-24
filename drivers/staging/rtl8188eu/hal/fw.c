@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2009-2013  Realtek Corporation.
  *
- * Contact Information:
+ * Contact Inक्रमmation:
  * wlanfae <wlanfae@realtek.com>
  * Realtek Corporation, No. 2, Innovation Road II, Hsinchu Science Park,
  * Hsinchu 300, Taiwan.
@@ -12,191 +13,191 @@
  *
  *****************************************************************************/
 
-#include "fw.h"
-#include "drv_types.h"
-#include "usb_ops_linux.h"
-#include "rtl8188e_spec.h"
-#include "rtl8188e_hal.h"
+#समावेश "fw.h"
+#समावेश "drv_types.h"
+#समावेश "usb_ops_linux.h"
+#समावेश "rtl8188e_spec.h"
+#समावेश "rtl8188e_hal.h"
 
-#include <linux/firmware.h>
-#include <linux/slab.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/slab.h>
 
-static void _rtl88e_enable_fw_download(struct adapter *adapt, bool enable)
-{
-	u8 tmp;
+अटल व्योम _rtl88e_enable_fw_करोwnload(काष्ठा adapter *adapt, bool enable)
+अणु
+	u8 पंचांगp;
 
-	if (enable) {
-		tmp = usb_read8(adapt, REG_MCUFWDL);
-		usb_write8(adapt, REG_MCUFWDL, tmp | 0x01);
+	अगर (enable) अणु
+		पंचांगp = usb_पढ़ो8(adapt, REG_MCUFWDL);
+		usb_ग_लिखो8(adapt, REG_MCUFWDL, पंचांगp | 0x01);
 
-		tmp = usb_read8(adapt, REG_MCUFWDL + 2);
-		usb_write8(adapt, REG_MCUFWDL + 2, tmp & 0xf7);
-	} else {
-		tmp = usb_read8(adapt, REG_MCUFWDL);
-		usb_write8(adapt, REG_MCUFWDL, tmp & 0xfe);
+		पंचांगp = usb_पढ़ो8(adapt, REG_MCUFWDL + 2);
+		usb_ग_लिखो8(adapt, REG_MCUFWDL + 2, पंचांगp & 0xf7);
+	पूर्ण अन्यथा अणु
+		पंचांगp = usb_पढ़ो8(adapt, REG_MCUFWDL);
+		usb_ग_लिखो8(adapt, REG_MCUFWDL, पंचांगp & 0xfe);
 
-		usb_write8(adapt, REG_MCUFWDL + 1, 0x00);
-	}
-}
+		usb_ग_लिखो8(adapt, REG_MCUFWDL + 1, 0x00);
+	पूर्ण
+पूर्ण
 
-static void _rtl88e_fw_block_write(struct adapter *adapt,
-				   const u8 *buffer, u32 size)
-{
-	u32 blk_sz = sizeof(u32);
-	const u8 *byte_buffer;
-	const u32 *dword_buffer = (u32 *)buffer;
-	u32 i, write_address, blk_cnt, remain;
+अटल व्योम _rtl88e_fw_block_ग_लिखो(काष्ठा adapter *adapt,
+				   स्थिर u8 *buffer, u32 size)
+अणु
+	u32 blk_sz = माप(u32);
+	स्थिर u8 *byte_buffer;
+	स्थिर u32 *dword_buffer = (u32 *)buffer;
+	u32 i, ग_लिखो_address, blk_cnt, reमुख्य;
 
 	blk_cnt = size / blk_sz;
-	remain = size % blk_sz;
+	reमुख्य = size % blk_sz;
 
-	write_address = FW_8192C_START_ADDRESS;
+	ग_लिखो_address = FW_8192C_START_ADDRESS;
 
-	for (i = 0; i < blk_cnt; i++, write_address += blk_sz)
-		usb_write32(adapt, write_address, dword_buffer[i]);
+	क्रम (i = 0; i < blk_cnt; i++, ग_लिखो_address += blk_sz)
+		usb_ग_लिखो32(adapt, ग_लिखो_address, dword_buffer[i]);
 
 	byte_buffer = buffer + blk_cnt * blk_sz;
-	for (i = 0; i < remain; i++, write_address++)
-		usb_write8(adapt, write_address, byte_buffer[i]);
-}
+	क्रम (i = 0; i < reमुख्य; i++, ग_लिखो_address++)
+		usb_ग_लिखो8(adapt, ग_लिखो_address, byte_buffer[i]);
+पूर्ण
 
-static void _rtl88e_fw_page_write(struct adapter *adapt,
-				  u32 page, const u8 *buffer, u32 size)
-{
+अटल व्योम _rtl88e_fw_page_ग_लिखो(काष्ठा adapter *adapt,
+				  u32 page, स्थिर u8 *buffer, u32 size)
+अणु
 	u8 value8;
 	u8 u8page = (u8)(page & 0x07);
 
-	value8 = (usb_read8(adapt, REG_MCUFWDL + 2) & 0xF8) | u8page;
+	value8 = (usb_पढ़ो8(adapt, REG_MCUFWDL + 2) & 0xF8) | u8page;
 
-	usb_write8(adapt, (REG_MCUFWDL + 2), value8);
-	_rtl88e_fw_block_write(adapt, buffer, size);
-}
+	usb_ग_लिखो8(adapt, (REG_MCUFWDL + 2), value8);
+	_rtl88e_fw_block_ग_लिखो(adapt, buffer, size);
+पूर्ण
 
-static void _rtl88e_write_fw(struct adapter *adapt, u8 *buffer, u32 size)
-{
+अटल व्योम _rtl88e_ग_लिखो_fw(काष्ठा adapter *adapt, u8 *buffer, u32 size)
+अणु
 	u8 *buf_ptr = buffer;
-	u32 page_no, remain;
+	u32 page_no, reमुख्य;
 	u32 page, offset;
 
 	page_no = size / FW_8192C_PAGE_SIZE;
-	remain = size % FW_8192C_PAGE_SIZE;
+	reमुख्य = size % FW_8192C_PAGE_SIZE;
 
-	for (page = 0; page < page_no; page++) {
+	क्रम (page = 0; page < page_no; page++) अणु
 		offset = page * FW_8192C_PAGE_SIZE;
-		_rtl88e_fw_page_write(adapt, page, (buf_ptr + offset),
+		_rtl88e_fw_page_ग_लिखो(adapt, page, (buf_ptr + offset),
 				      FW_8192C_PAGE_SIZE);
-	}
+	पूर्ण
 
-	if (remain) {
+	अगर (reमुख्य) अणु
 		offset = page_no * FW_8192C_PAGE_SIZE;
 		page = page_no;
-		_rtl88e_fw_page_write(adapt, page, (buf_ptr + offset), remain);
-	}
-}
+		_rtl88e_fw_page_ग_लिखो(adapt, page, (buf_ptr + offset), reमुख्य);
+	पूर्ण
+पूर्ण
 
-static void rtl88e_firmware_selfreset(struct adapter *adapt)
-{
-	u8 u1b_tmp;
+अटल व्योम rtl88e_firmware_selfreset(काष्ठा adapter *adapt)
+अणु
+	u8 u1b_पंचांगp;
 
-	u1b_tmp = usb_read8(adapt, REG_SYS_FUNC_EN + 1);
-	usb_write8(adapt, REG_SYS_FUNC_EN + 1, (u1b_tmp & (~BIT(2))));
-	usb_write8(adapt, REG_SYS_FUNC_EN + 1, (u1b_tmp | BIT(2)));
-}
+	u1b_पंचांगp = usb_पढ़ो8(adapt, REG_SYS_FUNC_EN + 1);
+	usb_ग_लिखो8(adapt, REG_SYS_FUNC_EN + 1, (u1b_पंचांगp & (~BIT(2))));
+	usb_ग_लिखो8(adapt, REG_SYS_FUNC_EN + 1, (u1b_पंचांगp | BIT(2)));
+पूर्ण
 
-static int _rtl88e_fw_free_to_go(struct adapter *adapt)
-{
-	int err = -EIO;
+अटल पूर्णांक _rtl88e_fw_मुक्त_to_go(काष्ठा adapter *adapt)
+अणु
+	पूर्णांक err = -EIO;
 	u32 counter = 0;
 	u32 value32;
 
-	do {
-		value32 = usb_read32(adapt, REG_MCUFWDL);
-		if (value32 & FWDL_CHKSUM_RPT)
-			break;
-	} while (counter++ < POLLING_READY_TIMEOUT_COUNT);
+	करो अणु
+		value32 = usb_पढ़ो32(adapt, REG_MCUFWDL);
+		अगर (value32 & FWDL_CHKSUM_RPT)
+			अवरोध;
+	पूर्ण जबतक (counter++ < POLLING_READY_TIMEOUT_COUNT);
 
-	if (counter >= POLLING_READY_TIMEOUT_COUNT)
-		goto exit;
+	अगर (counter >= POLLING_READY_TIMEOUT_COUNT)
+		जाओ निकास;
 
-	value32 = usb_read32(adapt, REG_MCUFWDL);
+	value32 = usb_पढ़ो32(adapt, REG_MCUFWDL);
 	value32 |= MCUFWDL_RDY;
 	value32 &= ~WINTINI_RDY;
-	usb_write32(adapt, REG_MCUFWDL, value32);
+	usb_ग_लिखो32(adapt, REG_MCUFWDL, value32);
 
 	rtl88e_firmware_selfreset(adapt);
 	counter = 0;
 
-	do {
-		value32 = usb_read32(adapt, REG_MCUFWDL);
-		if (value32 & WINTINI_RDY) {
+	करो अणु
+		value32 = usb_पढ़ो32(adapt, REG_MCUFWDL);
+		अगर (value32 & WINTINI_RDY) अणु
 			err = 0;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		udelay(FW_8192C_POLLING_DELAY);
 
-	} while (counter++ < POLLING_READY_TIMEOUT_COUNT);
+	पूर्ण जबतक (counter++ < POLLING_READY_TIMEOUT_COUNT);
 
-exit:
-	return err;
-}
+निकास:
+	वापस err;
+पूर्ण
 
-int rtl88eu_download_fw(struct adapter *adapt)
-{
-	struct dvobj_priv *dvobj = adapter_to_dvobj(adapt);
-	struct device *device = dvobj_to_dev(dvobj);
-	const struct firmware *fw;
-	static const char fw_name[] = "rtlwifi/rtl8188eufw.bin";
-	struct rtl92c_firmware_header *pfwheader = NULL;
-	u8 *download_data, *fw_data;
-	size_t download_size;
-	unsigned int trailing_zeros_length;
+पूर्णांक rtl88eu_करोwnload_fw(काष्ठा adapter *adapt)
+अणु
+	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(adapt);
+	काष्ठा device *device = dvobj_to_dev(dvobj);
+	स्थिर काष्ठा firmware *fw;
+	अटल स्थिर अक्षर fw_name[] = "rtlwifi/rtl8188eufw.bin";
+	काष्ठा rtl92c_firmware_header *pfwheader = शून्य;
+	u8 *करोwnload_data, *fw_data;
+	माप_प्रकार करोwnload_size;
+	अचिन्हित पूर्णांक trailing_zeros_length;
 
-	if (request_firmware(&fw, fw_name, device)) {
+	अगर (request_firmware(&fw, fw_name, device)) अणु
 		dev_err(device, "Firmware %s not available\n", fw_name);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	if (fw->size > FW_8188E_SIZE) {
+	अगर (fw->size > FW_8188E_SIZE) अणु
 		dev_err(device, "Firmware size exceed 0x%X. Check it.\n",
 			FW_8188E_SIZE);
 		release_firmware(fw);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	trailing_zeros_length = (4 - fw->size % 4) % 4;
 
-	fw_data = kmalloc(fw->size + trailing_zeros_length, GFP_KERNEL);
-	if (!fw_data) {
+	fw_data = kदो_स्मृति(fw->size + trailing_zeros_length, GFP_KERNEL);
+	अगर (!fw_data) अणु
 		release_firmware(fw);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(fw_data, fw->data, fw->size);
-	memset(fw_data + fw->size, 0, trailing_zeros_length);
+	स_नकल(fw_data, fw->data, fw->size);
+	स_रखो(fw_data + fw->size, 0, trailing_zeros_length);
 
-	pfwheader = (struct rtl92c_firmware_header *)fw_data;
+	pfwheader = (काष्ठा rtl92c_firmware_header *)fw_data;
 
-	if (IS_FW_HEADER_EXIST(pfwheader)) {
-		download_data = fw_data + 32;
-		download_size = fw->size + trailing_zeros_length - 32;
-	} else {
-		download_data = fw_data;
-		download_size = fw->size + trailing_zeros_length;
-	}
+	अगर (IS_FW_HEADER_EXIST(pfwheader)) अणु
+		करोwnload_data = fw_data + 32;
+		करोwnload_size = fw->size + trailing_zeros_length - 32;
+	पूर्ण अन्यथा अणु
+		करोwnload_data = fw_data;
+		करोwnload_size = fw->size + trailing_zeros_length;
+	पूर्ण
 
 	release_firmware(fw);
 
-	if (usb_read8(adapt, REG_MCUFWDL) & RAM_DL_SEL) {
-		usb_write8(adapt, REG_MCUFWDL, 0);
+	अगर (usb_पढ़ो8(adapt, REG_MCUFWDL) & RAM_DL_SEL) अणु
+		usb_ग_लिखो8(adapt, REG_MCUFWDL, 0);
 		rtl88e_firmware_selfreset(adapt);
-	}
-	_rtl88e_enable_fw_download(adapt, true);
-	usb_write8(adapt, REG_MCUFWDL,
-		   usb_read8(adapt, REG_MCUFWDL) | FWDL_CHKSUM_RPT);
-	_rtl88e_write_fw(adapt, download_data, download_size);
-	_rtl88e_enable_fw_download(adapt, false);
+	पूर्ण
+	_rtl88e_enable_fw_करोwnload(adapt, true);
+	usb_ग_लिखो8(adapt, REG_MCUFWDL,
+		   usb_पढ़ो8(adapt, REG_MCUFWDL) | FWDL_CHKSUM_RPT);
+	_rtl88e_ग_लिखो_fw(adapt, करोwnload_data, करोwnload_size);
+	_rtl88e_enable_fw_करोwnload(adapt, false);
 
-	kfree(fw_data);
-	return _rtl88e_fw_free_to_go(adapt);
-}
+	kमुक्त(fw_data);
+	वापस _rtl88e_fw_मुक्त_to_go(adapt);
+पूर्ण

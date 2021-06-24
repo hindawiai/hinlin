@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *    Architecture-specific kernel symbols
+ *    Architecture-specअगरic kernel symbols
  *
- *    Copyright (C) 2000-2001 Richard Hirst <rhirst with parisc-linux.org>
+ *    Copyright (C) 2000-2001 Riअक्षरd Hirst <rhirst with parisc-linux.org>
  *    Copyright (C) 2001 Dave Kennedy
  *    Copyright (C) 2001 Paul Bame <bame at parisc-linux.org>
  *    Copyright (C) 2001-2003 Grant Grundler <grundler with parisc-linux.org>
  *    Copyright (C) 2002-2003 Matthew Wilcox <willy at parisc-linux.org>
- *    Copyright (C) 2002 Randolph Chung <tausq at parisc-linux.org>
+ *    Copyright (C) 2002 Ranकरोlph Chung <tausq at parisc-linux.org>
  *    Copyright (C) 2002-2007 Helge Deller <deller with parisc-linux.org>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/syscalls.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/syscalls.h>
 
-#include <linux/string.h>
-EXPORT_SYMBOL(memset);
-EXPORT_SYMBOL(strlen);
-EXPORT_SYMBOL(strcpy);
-EXPORT_SYMBOL(strncpy);
-EXPORT_SYMBOL(strcat);
+#समावेश <linux/माला.स>
+EXPORT_SYMBOL(स_रखो);
+EXPORT_SYMBOL(म_माप);
+EXPORT_SYMBOL(म_नकल);
+EXPORT_SYMBOL(म_नकलन);
+EXPORT_SYMBOL(म_जोड़ो);
 
-#include <linux/atomic.h>
+#समावेश <linux/atomic.h>
 EXPORT_SYMBOL(__xchg8);
 EXPORT_SYMBOL(__xchg32);
 EXPORT_SYMBOL(__cmpxchg_u32);
 EXPORT_SYMBOL(__cmpxchg_u64);
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 EXPORT_SYMBOL(__atomic_hash);
-#endif
-#ifdef CONFIG_64BIT
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_64BIT
 EXPORT_SYMBOL(__xchg64);
-#endif
+#पूर्ण_अगर
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 EXPORT_SYMBOL(lclear_user);
 EXPORT_SYMBOL(lstrnlen_user);
 
-#ifndef CONFIG_64BIT
+#अगर_अघोषित CONFIG_64BIT
 /* Needed so insmod can set dp value */
-extern int $global$;
+बाह्य पूर्णांक $global$;
 EXPORT_SYMBOL($global$);
-#endif
+#पूर्ण_अगर
 
-#include <asm/io.h>
-EXPORT_SYMBOL(memcpy_toio);
-EXPORT_SYMBOL(memcpy_fromio);
-EXPORT_SYMBOL(memset_io);
+#समावेश <यंत्र/पन.स>
+EXPORT_SYMBOL(स_नकल_toio);
+EXPORT_SYMBOL(स_नकल_fromio);
+EXPORT_SYMBOL(स_रखो_io);
 
-extern void $$divI(void);
-extern void $$divU(void);
-extern void $$remI(void);
-extern void $$remU(void);
-extern void $$mulI(void);
-extern void $$divU_3(void);
-extern void $$divU_5(void);
-extern void $$divU_6(void);
-extern void $$divU_9(void);
-extern void $$divU_10(void);
-extern void $$divU_12(void);
-extern void $$divU_7(void);
-extern void $$divU_14(void);
-extern void $$divU_15(void);
-extern void $$divI_3(void);
-extern void $$divI_5(void);
-extern void $$divI_6(void);
-extern void $$divI_7(void);
-extern void $$divI_9(void);
-extern void $$divI_10(void);
-extern void $$divI_12(void);
-extern void $$divI_14(void);
-extern void $$divI_15(void);
+बाह्य व्योम $$भागI(व्योम);
+बाह्य व्योम $$भागU(व्योम);
+बाह्य व्योम $$remI(व्योम);
+बाह्य व्योम $$remU(व्योम);
+बाह्य व्योम $$mulI(व्योम);
+बाह्य व्योम $$भागU_3(व्योम);
+बाह्य व्योम $$भागU_5(व्योम);
+बाह्य व्योम $$भागU_6(व्योम);
+बाह्य व्योम $$भागU_9(व्योम);
+बाह्य व्योम $$भागU_10(व्योम);
+बाह्य व्योम $$भागU_12(व्योम);
+बाह्य व्योम $$भागU_7(व्योम);
+बाह्य व्योम $$भागU_14(व्योम);
+बाह्य व्योम $$भागU_15(व्योम);
+बाह्य व्योम $$भागI_3(व्योम);
+बाह्य व्योम $$भागI_5(व्योम);
+बाह्य व्योम $$भागI_6(व्योम);
+बाह्य व्योम $$भागI_7(व्योम);
+बाह्य व्योम $$भागI_9(व्योम);
+बाह्य व्योम $$भागI_10(व्योम);
+बाह्य व्योम $$भागI_12(व्योम);
+बाह्य व्योम $$भागI_14(व्योम);
+बाह्य व्योम $$भागI_15(व्योम);
 
-EXPORT_SYMBOL($$divI);
-EXPORT_SYMBOL($$divU);
+EXPORT_SYMBOL($$भागI);
+EXPORT_SYMBOL($$भागU);
 EXPORT_SYMBOL($$remI);
 EXPORT_SYMBOL($$remU);
 EXPORT_SYMBOL($$mulI);
-EXPORT_SYMBOL($$divU_3);
-EXPORT_SYMBOL($$divU_5);
-EXPORT_SYMBOL($$divU_6);
-EXPORT_SYMBOL($$divU_9);
-EXPORT_SYMBOL($$divU_10);
-EXPORT_SYMBOL($$divU_12);
-EXPORT_SYMBOL($$divU_7);
-EXPORT_SYMBOL($$divU_14);
-EXPORT_SYMBOL($$divU_15);
-EXPORT_SYMBOL($$divI_3);
-EXPORT_SYMBOL($$divI_5);
-EXPORT_SYMBOL($$divI_6);
-EXPORT_SYMBOL($$divI_7);
-EXPORT_SYMBOL($$divI_9);
-EXPORT_SYMBOL($$divI_10);
-EXPORT_SYMBOL($$divI_12);
-EXPORT_SYMBOL($$divI_14);
-EXPORT_SYMBOL($$divI_15);
+EXPORT_SYMBOL($$भागU_3);
+EXPORT_SYMBOL($$भागU_5);
+EXPORT_SYMBOL($$भागU_6);
+EXPORT_SYMBOL($$भागU_9);
+EXPORT_SYMBOL($$भागU_10);
+EXPORT_SYMBOL($$भागU_12);
+EXPORT_SYMBOL($$भागU_7);
+EXPORT_SYMBOL($$भागU_14);
+EXPORT_SYMBOL($$भागU_15);
+EXPORT_SYMBOL($$भागI_3);
+EXPORT_SYMBOL($$भागI_5);
+EXPORT_SYMBOL($$भागI_6);
+EXPORT_SYMBOL($$भागI_7);
+EXPORT_SYMBOL($$भागI_9);
+EXPORT_SYMBOL($$भागI_10);
+EXPORT_SYMBOL($$भागI_12);
+EXPORT_SYMBOL($$भागI_14);
+EXPORT_SYMBOL($$भागI_15);
 
-extern void __ashrdi3(void);
-extern void __ashldi3(void);
-extern void __lshrdi3(void);
-extern void __muldi3(void);
-extern void __ucmpdi2(void);
+बाह्य व्योम __ashrdi3(व्योम);
+बाह्य व्योम __ashldi3(व्योम);
+बाह्य व्योम __lshrdi3(व्योम);
+बाह्य व्योम __muldi3(व्योम);
+बाह्य व्योम __ucmpdi2(व्योम);
 
 EXPORT_SYMBOL(__ashrdi3);
 EXPORT_SYMBOL(__ashldi3);
@@ -109,31 +110,31 @@ EXPORT_SYMBOL(__lshrdi3);
 EXPORT_SYMBOL(__muldi3);
 EXPORT_SYMBOL(__ucmpdi2);
 
-asmlinkage void * __canonicalize_funcptr_for_compare(void *);
-EXPORT_SYMBOL(__canonicalize_funcptr_for_compare);
+यंत्रlinkage व्योम * __canonicalize_funcptr_क्रम_compare(व्योम *);
+EXPORT_SYMBOL(__canonicalize_funcptr_क्रम_compare);
 
-#ifdef CONFIG_64BIT
-extern void __divdi3(void);
-extern void __udivdi3(void);
-extern void __umoddi3(void);
-extern void __moddi3(void);
+#अगर_घोषित CONFIG_64BIT
+बाह्य व्योम __भागdi3(व्योम);
+बाह्य व्योम __uभागdi3(व्योम);
+बाह्य व्योम __umoddi3(व्योम);
+बाह्य व्योम __moddi3(व्योम);
 
-EXPORT_SYMBOL(__divdi3);
-EXPORT_SYMBOL(__udivdi3);
+EXPORT_SYMBOL(__भागdi3);
+EXPORT_SYMBOL(__uभागdi3);
 EXPORT_SYMBOL(__umoddi3);
 EXPORT_SYMBOL(__moddi3);
-#endif
+#पूर्ण_अगर
 
-#ifndef CONFIG_64BIT
-extern void $$dyncall(void);
+#अगर_अघोषित CONFIG_64BIT
+बाह्य व्योम $$dyncall(व्योम);
 EXPORT_SYMBOL($$dyncall);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_FUNCTION_TRACER
-extern void _mcount(void);
+#अगर_घोषित CONFIG_FUNCTION_TRACER
+बाह्य व्योम _mcount(व्योम);
 EXPORT_SYMBOL(_mcount);
-#endif
+#पूर्ण_अगर
 
-/* from pacache.S -- needed for clear/copy_page */
-EXPORT_SYMBOL(clear_page_asm);
-EXPORT_SYMBOL(copy_page_asm);
+/* from pacache.S -- needed क्रम clear/copy_page */
+EXPORT_SYMBOL(clear_page_यंत्र);
+EXPORT_SYMBOL(copy_page_यंत्र);

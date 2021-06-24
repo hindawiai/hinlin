@@ -1,130 +1,131 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/mm.h>
-#include <linux/rmap.h>
-#include <linux/hugetlb.h>
-#include <linux/swap.h>
-#include <linux/swapops.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/mm.h>
+#समावेश <linux/rmap.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/swapops.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static inline bool not_found(struct page_vma_mapped_walk *pvmw)
-{
-	page_vma_mapped_walk_done(pvmw);
-	return false;
-}
+अटल अंतरभूत bool not_found(काष्ठा page_vma_mapped_walk *pvmw)
+अणु
+	page_vma_mapped_walk_करोne(pvmw);
+	वापस false;
+पूर्ण
 
-static bool map_pte(struct page_vma_mapped_walk *pvmw)
-{
+अटल bool map_pte(काष्ठा page_vma_mapped_walk *pvmw)
+अणु
 	pvmw->pte = pte_offset_map(pvmw->pmd, pvmw->address);
-	if (!(pvmw->flags & PVMW_SYNC)) {
-		if (pvmw->flags & PVMW_MIGRATION) {
-			if (!is_swap_pte(*pvmw->pte))
-				return false;
-		} else {
+	अगर (!(pvmw->flags & PVMW_SYNC)) अणु
+		अगर (pvmw->flags & PVMW_MIGRATION) अणु
+			अगर (!is_swap_pte(*pvmw->pte))
+				वापस false;
+		पूर्ण अन्यथा अणु
 			/*
-			 * We get here when we are trying to unmap a private
+			 * We get here when we are trying to unmap a निजी
 			 * device page from the process address space. Such
 			 * page is not CPU accessible and thus is mapped as
-			 * a special swap entry, nonetheless it still does
-			 * count as a valid regular mapping for the page (and
+			 * a special swap entry, nonetheless it still करोes
+			 * count as a valid regular mapping क्रम the page (and
 			 * is accounted as such in page maps count).
 			 *
-			 * So handle this special case as if it was a normal
-			 * page mapping ie lock CPU page table and returns
+			 * So handle this special हाल as अगर it was a normal
+			 * page mapping ie lock CPU page table and वापसs
 			 * true.
 			 *
-			 * For more details on device private memory see HMM
+			 * For more details on device निजी memory see HMM
 			 * (include/linux/hmm.h or mm/hmm.c).
 			 */
-			if (is_swap_pte(*pvmw->pte)) {
+			अगर (is_swap_pte(*pvmw->pte)) अणु
 				swp_entry_t entry;
 
 				/* Handle un-addressable ZONE_DEVICE memory */
 				entry = pte_to_swp_entry(*pvmw->pte);
-				if (!is_device_private_entry(entry))
-					return false;
-			} else if (!pte_present(*pvmw->pte))
-				return false;
-		}
-	}
+				अगर (!is_device_निजी_entry(entry))
+					वापस false;
+			पूर्ण अन्यथा अगर (!pte_present(*pvmw->pte))
+				वापस false;
+		पूर्ण
+	पूर्ण
 	pvmw->ptl = pte_lockptr(pvmw->vma->vm_mm, pvmw->pmd);
 	spin_lock(pvmw->ptl);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool pfn_is_match(struct page *page, unsigned long pfn)
-{
-	unsigned long page_pfn = page_to_pfn(page);
+अटल अंतरभूत bool pfn_is_match(काष्ठा page *page, अचिन्हित दीर्घ pfn)
+अणु
+	अचिन्हित दीर्घ page_pfn = page_to_pfn(page);
 
 	/* normal page and hugetlbfs page */
-	if (!PageTransCompound(page) || PageHuge(page))
-		return page_pfn == pfn;
+	अगर (!PageTransCompound(page) || PageHuge(page))
+		वापस page_pfn == pfn;
 
 	/* THP can be referenced by any subpage */
-	return pfn >= page_pfn && pfn - page_pfn < thp_nr_pages(page);
-}
+	वापस pfn >= page_pfn && pfn - page_pfn < thp_nr_pages(page);
+पूर्ण
 
 /**
- * check_pte - check if @pvmw->page is mapped at the @pvmw->pte
- * @pvmw: page_vma_mapped_walk struct, includes a pair pte and page for checking
+ * check_pte - check अगर @pvmw->page is mapped at the @pvmw->pte
+ * @pvmw: page_vma_mapped_walk काष्ठा, includes a pair pte and page क्रम checking
  *
  * page_vma_mapped_walk() found a place where @pvmw->page is *potentially*
  * mapped. check_pte() has to validate this.
  *
- * pvmw->pte may point to empty PTE, swap PTE or PTE pointing to
+ * pvmw->pte may poपूर्णांक to empty PTE, swap PTE or PTE poपूर्णांकing to
  * arbitrary page.
  *
- * If PVMW_MIGRATION flag is set, returns true if @pvmw->pte contains migration
- * entry that points to @pvmw->page or any subpage in case of THP.
+ * If PVMW_MIGRATION flag is set, वापसs true अगर @pvmw->pte contains migration
+ * entry that poपूर्णांकs to @pvmw->page or any subpage in हाल of THP.
  *
- * If PVMW_MIGRATION flag is not set, returns true if pvmw->pte points to
- * pvmw->page or any subpage in case of THP.
+ * If PVMW_MIGRATION flag is not set, वापसs true अगर pvmw->pte poपूर्णांकs to
+ * pvmw->page or any subpage in हाल of THP.
  *
- * Otherwise, return false.
+ * Otherwise, वापस false.
  *
  */
-static bool check_pte(struct page_vma_mapped_walk *pvmw)
-{
-	unsigned long pfn;
+अटल bool check_pte(काष्ठा page_vma_mapped_walk *pvmw)
+अणु
+	अचिन्हित दीर्घ pfn;
 
-	if (pvmw->flags & PVMW_MIGRATION) {
+	अगर (pvmw->flags & PVMW_MIGRATION) अणु
 		swp_entry_t entry;
-		if (!is_swap_pte(*pvmw->pte))
-			return false;
+		अगर (!is_swap_pte(*pvmw->pte))
+			वापस false;
 		entry = pte_to_swp_entry(*pvmw->pte);
 
-		if (!is_migration_entry(entry))
-			return false;
+		अगर (!is_migration_entry(entry))
+			वापस false;
 
 		pfn = migration_entry_to_pfn(entry);
-	} else if (is_swap_pte(*pvmw->pte)) {
+	पूर्ण अन्यथा अगर (is_swap_pte(*pvmw->pte)) अणु
 		swp_entry_t entry;
 
 		/* Handle un-addressable ZONE_DEVICE memory */
 		entry = pte_to_swp_entry(*pvmw->pte);
-		if (!is_device_private_entry(entry))
-			return false;
+		अगर (!is_device_निजी_entry(entry))
+			वापस false;
 
-		pfn = device_private_entry_to_pfn(entry);
-	} else {
-		if (!pte_present(*pvmw->pte))
-			return false;
+		pfn = device_निजी_entry_to_pfn(entry);
+	पूर्ण अन्यथा अणु
+		अगर (!pte_present(*pvmw->pte))
+			वापस false;
 
 		pfn = pte_pfn(*pvmw->pte);
-	}
+	पूर्ण
 
-	return pfn_is_match(pvmw->page, pfn);
-}
+	वापस pfn_is_match(pvmw->page, pfn);
+पूर्ण
 
 /**
- * page_vma_mapped_walk - check if @pvmw->page is mapped in @pvmw->vma at
+ * page_vma_mapped_walk - check अगर @pvmw->page is mapped in @pvmw->vma at
  * @pvmw->address
- * @pvmw: pointer to struct page_vma_mapped_walk. page, vma, address and flags
- * must be set. pmd, pte and ptl must be NULL.
+ * @pvmw: poपूर्णांकer to काष्ठा page_vma_mapped_walk. page, vma, address and flags
+ * must be set. pmd, pte and ptl must be शून्य.
  *
- * Returns true if the page is mapped in the vma. @pvmw->pmd and @pvmw->pte point
+ * Returns true अगर the page is mapped in the vma. @pvmw->pmd and @pvmw->pte poपूर्णांक
  * to relevant page table entries. @pvmw->ptl is locked. @pvmw->address is
- * adjusted if needed (for PTE-mapped THPs).
+ * adjusted अगर needed (क्रम PTE-mapped THPs).
  *
  * If @pvmw->pmd is set but @pvmw->pte is not, you have found PMD-mapped page
  * (usually THP). For PTE-mapped THP, you should run page_vma_mapped_walk() in
@@ -132,157 +133,157 @@ static bool check_pte(struct page_vma_mapped_walk *pvmw)
  *
  * For HugeTLB pages, @pvmw->pte is set to the relevant page table entry
  * regardless of which page table level the page is mapped at. @pvmw->pmd is
- * NULL.
+ * शून्य.
  *
- * Returns false if there are no more page table entries for the page in
+ * Returns false अगर there are no more page table entries क्रम the page in
  * the vma. @pvmw->ptl is unlocked and @pvmw->pte is unmapped.
  *
- * If you need to stop the walk before page_vma_mapped_walk() returned false,
- * use page_vma_mapped_walk_done(). It will do the housekeeping.
+ * If you need to stop the walk beक्रमe page_vma_mapped_walk() वापसed false,
+ * use page_vma_mapped_walk_करोne(). It will करो the housekeeping.
  */
-bool page_vma_mapped_walk(struct page_vma_mapped_walk *pvmw)
-{
-	struct mm_struct *mm = pvmw->vma->vm_mm;
-	struct page *page = pvmw->page;
+bool page_vma_mapped_walk(काष्ठा page_vma_mapped_walk *pvmw)
+अणु
+	काष्ठा mm_काष्ठा *mm = pvmw->vma->vm_mm;
+	काष्ठा page *page = pvmw->page;
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t pmde;
 
 	/* The only possible pmd mapping has been handled on last iteration */
-	if (pvmw->pmd && !pvmw->pte)
-		return not_found(pvmw);
+	अगर (pvmw->pmd && !pvmw->pte)
+		वापस not_found(pvmw);
 
-	if (pvmw->pte)
-		goto next_pte;
+	अगर (pvmw->pte)
+		जाओ next_pte;
 
-	if (unlikely(PageHuge(pvmw->page))) {
-		/* when pud is not present, pte will be NULL */
+	अगर (unlikely(PageHuge(pvmw->page))) अणु
+		/* when pud is not present, pte will be शून्य */
 		pvmw->pte = huge_pte_offset(mm, pvmw->address, page_size(page));
-		if (!pvmw->pte)
-			return false;
+		अगर (!pvmw->pte)
+			वापस false;
 
 		pvmw->ptl = huge_pte_lockptr(page_hstate(page), mm, pvmw->pte);
 		spin_lock(pvmw->ptl);
-		if (!check_pte(pvmw))
-			return not_found(pvmw);
-		return true;
-	}
+		अगर (!check_pte(pvmw))
+			वापस not_found(pvmw);
+		वापस true;
+	पूर्ण
 restart:
 	pgd = pgd_offset(mm, pvmw->address);
-	if (!pgd_present(*pgd))
-		return false;
+	अगर (!pgd_present(*pgd))
+		वापस false;
 	p4d = p4d_offset(pgd, pvmw->address);
-	if (!p4d_present(*p4d))
-		return false;
+	अगर (!p4d_present(*p4d))
+		वापस false;
 	pud = pud_offset(p4d, pvmw->address);
-	if (!pud_present(*pud))
-		return false;
+	अगर (!pud_present(*pud))
+		वापस false;
 	pvmw->pmd = pmd_offset(pud, pvmw->address);
 	/*
-	 * Make sure the pmd value isn't cached in a register by the
+	 * Make sure the pmd value isn't cached in a रेजिस्टर by the
 	 * compiler and used as a stale value after we've observed a
 	 * subsequent update.
 	 */
 	pmde = READ_ONCE(*pvmw->pmd);
-	if (pmd_trans_huge(pmde) || is_pmd_migration_entry(pmde)) {
+	अगर (pmd_trans_huge(pmde) || is_pmd_migration_entry(pmde)) अणु
 		pvmw->ptl = pmd_lock(mm, pvmw->pmd);
-		if (likely(pmd_trans_huge(*pvmw->pmd))) {
-			if (pvmw->flags & PVMW_MIGRATION)
-				return not_found(pvmw);
-			if (pmd_page(*pvmw->pmd) != page)
-				return not_found(pvmw);
-			return true;
-		} else if (!pmd_present(*pvmw->pmd)) {
-			if (thp_migration_supported()) {
-				if (!(pvmw->flags & PVMW_MIGRATION))
-					return not_found(pvmw);
-				if (is_migration_entry(pmd_to_swp_entry(*pvmw->pmd))) {
+		अगर (likely(pmd_trans_huge(*pvmw->pmd))) अणु
+			अगर (pvmw->flags & PVMW_MIGRATION)
+				वापस not_found(pvmw);
+			अगर (pmd_page(*pvmw->pmd) != page)
+				वापस not_found(pvmw);
+			वापस true;
+		पूर्ण अन्यथा अगर (!pmd_present(*pvmw->pmd)) अणु
+			अगर (thp_migration_supported()) अणु
+				अगर (!(pvmw->flags & PVMW_MIGRATION))
+					वापस not_found(pvmw);
+				अगर (is_migration_entry(pmd_to_swp_entry(*pvmw->pmd))) अणु
 					swp_entry_t entry = pmd_to_swp_entry(*pvmw->pmd);
 
-					if (migration_entry_to_page(entry) != page)
-						return not_found(pvmw);
-					return true;
-				}
-			}
-			return not_found(pvmw);
-		} else {
+					अगर (migration_entry_to_page(entry) != page)
+						वापस not_found(pvmw);
+					वापस true;
+				पूर्ण
+			पूर्ण
+			वापस not_found(pvmw);
+		पूर्ण अन्यथा अणु
 			/* THP pmd was split under us: handle on pte level */
 			spin_unlock(pvmw->ptl);
-			pvmw->ptl = NULL;
-		}
-	} else if (!pmd_present(pmde)) {
+			pvmw->ptl = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अगर (!pmd_present(pmde)) अणु
 		/*
 		 * If PVMW_SYNC, take and drop THP pmd lock so that we
-		 * cannot return prematurely, while zap_huge_pmd() has
+		 * cannot वापस prematurely, जबतक zap_huge_pmd() has
 		 * cleared *pmd but not decremented compound_mapcount().
 		 */
-		if ((pvmw->flags & PVMW_SYNC) &&
-		    PageTransCompound(pvmw->page)) {
+		अगर ((pvmw->flags & PVMW_SYNC) &&
+		    PageTransCompound(pvmw->page)) अणु
 			spinlock_t *ptl = pmd_lock(mm, pvmw->pmd);
 
 			spin_unlock(ptl);
-		}
-		return false;
-	}
-	if (!map_pte(pvmw))
-		goto next_pte;
-	while (1) {
-		unsigned long end;
+		पूर्ण
+		वापस false;
+	पूर्ण
+	अगर (!map_pte(pvmw))
+		जाओ next_pte;
+	जबतक (1) अणु
+		अचिन्हित दीर्घ end;
 
-		if (check_pte(pvmw))
-			return true;
+		अगर (check_pte(pvmw))
+			वापस true;
 next_pte:
-		/* Seek to next pte only makes sense for THP */
-		if (!PageTransHuge(pvmw->page) || PageHuge(pvmw->page))
-			return not_found(pvmw);
+		/* Seek to next pte only makes sense क्रम THP */
+		अगर (!PageTransHuge(pvmw->page) || PageHuge(pvmw->page))
+			वापस not_found(pvmw);
 		end = vma_address_end(pvmw->page, pvmw->vma);
-		do {
+		करो अणु
 			pvmw->address += PAGE_SIZE;
-			if (pvmw->address >= end)
-				return not_found(pvmw);
+			अगर (pvmw->address >= end)
+				वापस not_found(pvmw);
 			/* Did we cross page table boundary? */
-			if (pvmw->address % PMD_SIZE == 0) {
+			अगर (pvmw->address % PMD_SIZE == 0) अणु
 				pte_unmap(pvmw->pte);
-				if (pvmw->ptl) {
+				अगर (pvmw->ptl) अणु
 					spin_unlock(pvmw->ptl);
-					pvmw->ptl = NULL;
-				}
-				goto restart;
-			} else {
+					pvmw->ptl = शून्य;
+				पूर्ण
+				जाओ restart;
+			पूर्ण अन्यथा अणु
 				pvmw->pte++;
-			}
-		} while (pte_none(*pvmw->pte));
+			पूर्ण
+		पूर्ण जबतक (pte_none(*pvmw->pte));
 
-		if (!pvmw->ptl) {
+		अगर (!pvmw->ptl) अणु
 			pvmw->ptl = pte_lockptr(mm, pvmw->pmd);
 			spin_lock(pvmw->ptl);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * page_mapped_in_vma - check whether a page is really mapped in a VMA
  * @page: the page to test
  * @vma: the VMA to test
  *
- * Returns 1 if the page is mapped into the page tables of the VMA, 0
- * if the page is not mapped into the page tables of this VMA.  Only
- * valid for normal file or anonymous VMAs.
+ * Returns 1 अगर the page is mapped पूर्णांकo the page tables of the VMA, 0
+ * अगर the page is not mapped पूर्णांकo the page tables of this VMA.  Only
+ * valid क्रम normal file or anonymous VMAs.
  */
-int page_mapped_in_vma(struct page *page, struct vm_area_struct *vma)
-{
-	struct page_vma_mapped_walk pvmw = {
+पूर्णांक page_mapped_in_vma(काष्ठा page *page, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा page_vma_mapped_walk pvmw = अणु
 		.page = page,
 		.vma = vma,
 		.flags = PVMW_SYNC,
-	};
+	पूर्ण;
 
 	pvmw.address = vma_address(page, vma);
-	if (pvmw.address == -EFAULT)
-		return 0;
-	if (!page_vma_mapped_walk(&pvmw))
-		return 0;
-	page_vma_mapped_walk_done(&pvmw);
-	return 1;
-}
+	अगर (pvmw.address == -EFAULT)
+		वापस 0;
+	अगर (!page_vma_mapped_walk(&pvmw))
+		वापस 0;
+	page_vma_mapped_walk_करोne(&pvmw);
+	वापस 1;
+पूर्ण

@@ -1,66 +1,67 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  linux/fs/adfs/dir_f.h
  *
  *  Copyright (C) 1999 Russell King
  *
- *  Structures of directories on the F format disk
+ *  Structures of directories on the F क्रमmat disk
  */
-#ifndef ADFS_DIR_F_H
-#define ADFS_DIR_F_H
+#अगर_अघोषित ADFS_सूची_F_H
+#घोषणा ADFS_सूची_F_H
 
 /*
  * Directory header
  */
-struct adfs_dirheader {
-	__u8 startmasseq;
+काष्ठा adfs_dirheader अणु
+	__u8 starपंचांगasseq;
 	__u8 startname[4];
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-#define ADFS_NEWDIR_SIZE	2048
-#define ADFS_NUM_DIR_ENTRIES	77
+#घोषणा ADFS_NEWसूची_SIZE	2048
+#घोषणा ADFS_NUM_सूची_ENTRIES	77
 
 /*
  * Directory entries
  */
-struct adfs_direntry {
-#define ADFS_F_NAME_LEN 10
-	char dirobname[ADFS_F_NAME_LEN];
+काष्ठा adfs_direntry अणु
+#घोषणा ADFS_F_NAME_LEN 10
+	अक्षर dirobname[ADFS_F_NAME_LEN];
 	__u8 dirload[4];
 	__u8 direxec[4];
 	__u8 dirlen[4];
 	__u8 dirinddiscadd[3];
 	__u8 newdiratts;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
 /*
  * Directory tail
  */
-struct adfs_olddirtail {
-	__u8 dirlastmask;
-	char dirname[10];
+काष्ठा adfs_olddirtail अणु
+	__u8 dirlasपंचांगask;
+	अक्षर स_नाम[10];
 	__u8 dirparent[3];
-	char dirtitle[19];
+	अक्षर dirtitle[19];
 	__u8 reserved[14];
 	__u8 endmasseq;
 	__u8 endname[4];
 	__u8 dircheckbyte;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-struct adfs_newdirtail {
-	__u8 dirlastmask;
+काष्ठा adfs_newdirtail अणु
+	__u8 dirlasपंचांगask;
 	__u8 reserved[2];
 	__u8 dirparent[3];
-	char dirtitle[19];
-	char dirname[10];
+	अक्षर dirtitle[19];
+	अक्षर स_नाम[10];
 	__u8 endmasseq;
 	__u8 endname[4];
 	__u8 dircheckbyte;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-union adfs_dirtail {
-	struct adfs_olddirtail old;
-	struct adfs_newdirtail new;
-};
+जोड़ adfs_dirtail अणु
+	काष्ठा adfs_olddirtail old;
+	काष्ठा adfs_newdirtail new;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

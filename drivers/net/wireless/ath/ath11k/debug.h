@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: BSD-3-Clause-Clear */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause-Clear */
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ATH11K_DEBUG_H_
-#define _ATH11K_DEBUG_H_
+#अगर_अघोषित _ATH11K_DEBUG_H_
+#घोषणा _ATH11K_DEBUG_H_
 
-#include "trace.h"
-#include "debugfs.h"
+#समावेश "trace.h"
+#समावेश "debugfs.h"
 
-enum ath11k_debug_mask {
+क्रमागत ath11k_debug_mask अणु
 	ATH11K_DBG_AHB		= 0x00000001,
 	ATH11K_DBG_WMI		= 0x00000002,
 	ATH11K_DBG_HTC		= 0x00000004,
@@ -26,42 +27,42 @@ enum ath11k_debug_mask {
 	ATH11K_DBG_DP_TX	= 0x00001000,
 	ATH11K_DBG_DP_RX	= 0x00002000,
 	ATH11K_DBG_ANY		= 0xffffffff,
-};
+पूर्ण;
 
-__printf(2, 3) void ath11k_info(struct ath11k_base *ab, const char *fmt, ...);
-__printf(2, 3) void ath11k_err(struct ath11k_base *ab, const char *fmt, ...);
-__printf(2, 3) void ath11k_warn(struct ath11k_base *ab, const char *fmt, ...);
+__म_लिखो(2, 3) व्योम ath11k_info(काष्ठा ath11k_base *ab, स्थिर अक्षर *fmt, ...);
+__म_लिखो(2, 3) व्योम ath11k_err(काष्ठा ath11k_base *ab, स्थिर अक्षर *fmt, ...);
+__म_लिखो(2, 3) व्योम ath11k_warn(काष्ठा ath11k_base *ab, स्थिर अक्षर *fmt, ...);
 
-extern unsigned int ath11k_debug_mask;
+बाह्य अचिन्हित पूर्णांक ath11k_debug_mask;
 
-#ifdef CONFIG_ATH11K_DEBUG
-__printf(3, 4) void __ath11k_dbg(struct ath11k_base *ab,
-				 enum ath11k_debug_mask mask,
-				 const char *fmt, ...);
-void ath11k_dbg_dump(struct ath11k_base *ab,
-		     enum ath11k_debug_mask mask,
-		     const char *msg, const char *prefix,
-		     const void *buf, size_t len);
-#else /* CONFIG_ATH11K_DEBUG */
-static inline int __ath11k_dbg(struct ath11k_base *ab,
-			       enum ath11k_debug_mask dbg_mask,
-			       const char *fmt, ...)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_ATH11K_DEBUG
+__म_लिखो(3, 4) व्योम __ath11k_dbg(काष्ठा ath11k_base *ab,
+				 क्रमागत ath11k_debug_mask mask,
+				 स्थिर अक्षर *fmt, ...);
+व्योम ath11k_dbg_dump(काष्ठा ath11k_base *ab,
+		     क्रमागत ath11k_debug_mask mask,
+		     स्थिर अक्षर *msg, स्थिर अक्षर *prefix,
+		     स्थिर व्योम *buf, माप_प्रकार len);
+#अन्यथा /* CONFIG_ATH11K_DEBUG */
+अटल अंतरभूत पूर्णांक __ath11k_dbg(काष्ठा ath11k_base *ab,
+			       क्रमागत ath11k_debug_mask dbg_mask,
+			       स्थिर अक्षर *fmt, ...)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void ath11k_dbg_dump(struct ath11k_base *ab,
-				   enum ath11k_debug_mask mask,
-				   const char *msg, const char *prefix,
-				   const void *buf, size_t len)
-{
-}
-#endif /* CONFIG_ATH11K_DEBUG */
+अटल अंतरभूत व्योम ath11k_dbg_dump(काष्ठा ath11k_base *ab,
+				   क्रमागत ath11k_debug_mask mask,
+				   स्थिर अक्षर *msg, स्थिर अक्षर *prefix,
+				   स्थिर व्योम *buf, माप_प्रकार len)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ATH11K_DEBUG */
 
-#define ath11k_dbg(ar, dbg_mask, fmt, ...)			\
-do {								\
-	if (ath11k_debug_mask & dbg_mask)			\
+#घोषणा ath11k_dbg(ar, dbg_mask, fmt, ...)			\
+करो अणु								\
+	अगर (ath11k_debug_mask & dbg_mask)			\
 		__ath11k_dbg(ar, dbg_mask, fmt, ##__VA_ARGS__);	\
-} while (0)
+पूर्ण जबतक (0)
 
-#endif /* _ATH11K_DEBUG_H_ */
+#पूर्ण_अगर /* _ATH11K_DEBUG_H_ */

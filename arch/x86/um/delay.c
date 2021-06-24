@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2011 Richard Weinberger <richrd@nod.at>
+ * Copyright (C) 2011 Riअक्षरd Weinberger <richrd@nod.at>
  * Mostly copied from arch/x86/lib/delay.c
  */
 
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <asm/param.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/param.h>
 
-void __delay(unsigned long loops)
-{
-	asm volatile(
+व्योम __delay(अचिन्हित दीर्घ loops)
+अणु
+	यंत्र अस्थिर(
 		"test %0,%0\n"
 		"jz 3f\n"
 		"jmp 1f\n"
@@ -24,34 +25,34 @@ void __delay(unsigned long loops)
 		" jnz 2b\n"
 		"3: dec %0\n"
 
-		: /* we don't need output */
+		: /* we करोn't need output */
 		: "a" (loops)
 	);
-}
+पूर्ण
 EXPORT_SYMBOL(__delay);
 
-inline void __const_udelay(unsigned long xloops)
-{
-	int d0;
+अंतरभूत व्योम __स्थिर_udelay(अचिन्हित दीर्घ xloops)
+अणु
+	पूर्णांक d0;
 
 	xloops *= 4;
-	asm("mull %%edx"
+	यंत्र("mull %%edx"
 		: "=d" (xloops), "=&a" (d0)
 		: "1" (xloops), "0"
-		(loops_per_jiffy * (HZ/4)));
+		(loops_per_jअगरfy * (HZ/4)));
 
 	__delay(++xloops);
-}
-EXPORT_SYMBOL(__const_udelay);
+पूर्ण
+EXPORT_SYMBOL(__स्थिर_udelay);
 
-void __udelay(unsigned long usecs)
-{
-	__const_udelay(usecs * 0x000010c7); /* 2**32 / 1000000 (rounded up) */
-}
+व्योम __udelay(अचिन्हित दीर्घ usecs)
+अणु
+	__स्थिर_udelay(usecs * 0x000010c7); /* 2**32 / 1000000 (rounded up) */
+पूर्ण
 EXPORT_SYMBOL(__udelay);
 
-void __ndelay(unsigned long nsecs)
-{
-	__const_udelay(nsecs * 0x00005); /* 2**32 / 1000000000 (rounded up) */
-}
+व्योम __ndelay(अचिन्हित दीर्घ nsecs)
+अणु
+	__स्थिर_udelay(nsecs * 0x00005); /* 2**32 / 1000000000 (rounded up) */
+पूर्ण
 EXPORT_SYMBOL(__ndelay);

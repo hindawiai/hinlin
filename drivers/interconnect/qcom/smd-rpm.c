@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * RPM over SMD communication wrapper for interconnects
+ * RPM over SMD communication wrapper क्रम पूर्णांकerconnects
  *
  * Copyright (C) 2019 Linaro Ltd
  * Author: Georgi Djakov <georgi.djakov@linaro.org>
  */
 
-#include <linux/interconnect-provider.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/soc/qcom/smd-rpm.h>
+#समावेश <linux/पूर्णांकerconnect-provider.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/soc/qcom/smd-rpm.h>
 
-#include "smd-rpm.h"
+#समावेश "smd-rpm.h"
 
-#define RPM_KEY_BW		0x00007762
+#घोषणा RPM_KEY_BW		0x00007762
 
-static struct qcom_smd_rpm *icc_smd_rpm;
+अटल काष्ठा qcom_smd_rpm *icc_smd_rpm;
 
-struct icc_rpm_smd_req {
+काष्ठा icc_rpm_smd_req अणु
 	__le32 key;
 	__le32 nbytes;
 	__le32 value;
-};
+पूर्ण;
 
-bool qcom_icc_rpm_smd_available(void)
-{
-	return !!icc_smd_rpm;
-}
+bool qcom_icc_rpm_smd_available(व्योम)
+अणु
+	वापस !!icc_smd_rpm;
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_icc_rpm_smd_available);
 
-int qcom_icc_rpm_smd_send(int ctx, int rsc_type, int id, u32 val)
-{
-	struct icc_rpm_smd_req req = {
+पूर्णांक qcom_icc_rpm_smd_send(पूर्णांक ctx, पूर्णांक rsc_type, पूर्णांक id, u32 val)
+अणु
+	काष्ठा icc_rpm_smd_req req = अणु
 		.key = cpu_to_le32(RPM_KEY_BW),
-		.nbytes = cpu_to_le32(sizeof(u32)),
+		.nbytes = cpu_to_le32(माप(u32)),
 		.value = cpu_to_le32(val),
-	};
+	पूर्ण;
 
-	return qcom_rpm_smd_write(icc_smd_rpm, ctx, rsc_type, id, &req,
-				  sizeof(req));
-}
+	वापस qcom_rpm_smd_ग_लिखो(icc_smd_rpm, ctx, rsc_type, id, &req,
+				  माप(req));
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_icc_rpm_smd_send);
 
-static int qcom_icc_rpm_smd_remove(struct platform_device *pdev)
-{
-	icc_smd_rpm = NULL;
+अटल पूर्णांक qcom_icc_rpm_smd_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	icc_smd_rpm = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_icc_rpm_smd_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक qcom_icc_rpm_smd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	icc_smd_rpm = dev_get_drvdata(pdev->dev.parent);
 
-	if (!icc_smd_rpm) {
+	अगर (!icc_smd_rpm) अणु
 		dev_err(&pdev->dev, "unable to retrieve handle to RPM\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver qcom_interconnect_rpm_smd_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver qcom_पूर्णांकerconnect_rpm_smd_driver = अणु
+	.driver = अणु
 		.name		= "icc_smd_rpm",
-	},
+	पूर्ण,
 	.probe = qcom_icc_rpm_smd_probe,
-	.remove = qcom_icc_rpm_smd_remove,
-};
-module_platform_driver(qcom_interconnect_rpm_smd_driver);
+	.हटाओ = qcom_icc_rpm_smd_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(qcom_पूर्णांकerconnect_rpm_smd_driver);
 MODULE_AUTHOR("Georgi Djakov <georgi.djakov@linaro.org>");
 MODULE_DESCRIPTION("Qualcomm SMD RPM interconnect proxy driver");
 MODULE_LICENSE("GPL v2");

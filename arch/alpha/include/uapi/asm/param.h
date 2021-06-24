@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_ASM_ALPHA_PARAM_H
-#define _UAPI_ASM_ALPHA_PARAM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_ASM_ALPHA_PARAM_H
+#घोषणा _UAPI_ASM_ALPHA_PARAM_H
 
-#define HZ		1024
+#घोषणा HZ		1024
 
-#define EXEC_PAGESIZE	8192
+#घोषणा EXEC_PAGESIZE	8192
 
-#ifndef NOGROUP
-#define NOGROUP		(-1)
-#endif
+#अगर_अघोषित NOGROUP
+#घोषणा NOGROUP		(-1)
+#पूर्ण_अगर
 
-#define MAXHOSTNAMELEN	64	/* max length of hostname */
+#घोषणा MAXHOSTNAMELEN	64	/* max length of hostname */
 
-#endif /* _UAPI_ASM_ALPHA_PARAM_H */
+#पूर्ण_अगर /* _UAPI_ASM_ALPHA_PARAM_H */

@@ -1,125 +1,126 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI__LINUX_MROUTE_H
-#define _UAPI__LINUX_MROUTE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI__LINUX_MROUTE_H
+#घोषणा _UAPI__LINUX_MROUTE_H
 
-#include <linux/sockios.h>
-#include <linux/types.h>
-#include <linux/in.h>		/* For struct in_addr. */
+#समावेश <linux/sockios.h>
+#समावेश <linux/types.h>
+#समावेश <linux/in.h>		/* For काष्ठा in_addr. */
 
 /* Based on the MROUTING 3.5 defines primarily to keep
  * source compatibility with BSD.
  *
- * See the mrouted code for the original history.
+ * See the mrouted code क्रम the original history.
  *
- * Protocol Independent Multicast (PIM) data structures included
+ * Protocol Independent Multicast (PIM) data काष्ठाures included
  * Carlos Picoto (cap@di.fc.ul.pt)
  */
 
-#define MRT_BASE	200
-#define MRT_INIT	(MRT_BASE)	/* Activate the kernel mroute code 	*/
-#define MRT_DONE	(MRT_BASE+1)	/* Shutdown the kernel mroute		*/
-#define MRT_ADD_VIF	(MRT_BASE+2)	/* Add a virtual interface		*/
-#define MRT_DEL_VIF	(MRT_BASE+3)	/* Delete a virtual interface		*/
-#define MRT_ADD_MFC	(MRT_BASE+4)	/* Add a multicast forwarding entry	*/
-#define MRT_DEL_MFC	(MRT_BASE+5)	/* Delete a multicast forwarding entry	*/
-#define MRT_VERSION	(MRT_BASE+6)	/* Get the kernel multicast version	*/
-#define MRT_ASSERT	(MRT_BASE+7)	/* Activate PIM assert mode		*/
-#define MRT_PIM		(MRT_BASE+8)	/* enable PIM code			*/
-#define MRT_TABLE	(MRT_BASE+9)	/* Specify mroute table ID		*/
-#define MRT_ADD_MFC_PROXY	(MRT_BASE+10)	/* Add a (*,*|G) mfc entry	*/
-#define MRT_DEL_MFC_PROXY	(MRT_BASE+11)	/* Del a (*,*|G) mfc entry	*/
-#define MRT_FLUSH	(MRT_BASE+12)	/* Flush all mfc entries and/or vifs	*/
-#define MRT_MAX		(MRT_BASE+12)
+#घोषणा MRT_BASE	200
+#घोषणा MRT_INIT	(MRT_BASE)	/* Activate the kernel mroute code 	*/
+#घोषणा MRT_DONE	(MRT_BASE+1)	/* Shutकरोwn the kernel mroute		*/
+#घोषणा MRT_ADD_VIF	(MRT_BASE+2)	/* Add a भव पूर्णांकerface		*/
+#घोषणा MRT_DEL_VIF	(MRT_BASE+3)	/* Delete a भव पूर्णांकerface		*/
+#घोषणा MRT_ADD_MFC	(MRT_BASE+4)	/* Add a multicast क्रमwarding entry	*/
+#घोषणा MRT_DEL_MFC	(MRT_BASE+5)	/* Delete a multicast क्रमwarding entry	*/
+#घोषणा MRT_VERSION	(MRT_BASE+6)	/* Get the kernel multicast version	*/
+#घोषणा MRT_ASSERT	(MRT_BASE+7)	/* Activate PIM निश्चित mode		*/
+#घोषणा MRT_PIM		(MRT_BASE+8)	/* enable PIM code			*/
+#घोषणा MRT_TABLE	(MRT_BASE+9)	/* Specअगरy mroute table ID		*/
+#घोषणा MRT_ADD_MFC_PROXY	(MRT_BASE+10)	/* Add a (*,*|G) mfc entry	*/
+#घोषणा MRT_DEL_MFC_PROXY	(MRT_BASE+11)	/* Del a (*,*|G) mfc entry	*/
+#घोषणा MRT_FLUSH	(MRT_BASE+12)	/* Flush all mfc entries and/or vअगरs	*/
+#घोषणा MRT_MAX		(MRT_BASE+12)
 
-#define SIOCGETVIFCNT	SIOCPROTOPRIVATE	/* IP protocol privates */
-#define SIOCGETSGCNT	(SIOCPROTOPRIVATE+1)
-#define SIOCGETRPF	(SIOCPROTOPRIVATE+2)
+#घोषणा SIOCGETVIFCNT	SIOCPROTOPRIVATE	/* IP protocol निजीs */
+#घोषणा SIOCGETSGCNT	(SIOCPROTOPRIVATE+1)
+#घोषणा SIOCGETRPF	(SIOCPROTOPRIVATE+2)
 
 /* MRT_FLUSH optional flags */
-#define MRT_FLUSH_MFC	1	/* Flush multicast entries */
-#define MRT_FLUSH_MFC_STATIC	2	/* Flush static multicast entries */
-#define MRT_FLUSH_VIFS	4	/* Flush multicast vifs */
-#define MRT_FLUSH_VIFS_STATIC	8	/* Flush static multicast vifs */
+#घोषणा MRT_FLUSH_MFC	1	/* Flush multicast entries */
+#घोषणा MRT_FLUSH_MFC_STATIC	2	/* Flush अटल multicast entries */
+#घोषणा MRT_FLUSH_VIFS	4	/* Flush multicast vअगरs */
+#घोषणा MRT_FLUSH_VIFS_STATIC	8	/* Flush अटल multicast vअगरs */
 
-#define MAXVIFS		32
-typedef unsigned long vifbitmap_t;	/* User mode code depends on this lot */
-typedef unsigned short vifi_t;
-#define ALL_VIFS	((vifi_t)(-1))
+#घोषणा MAXVIFS		32
+प्रकार अचिन्हित दीर्घ vअगरbiपंचांगap_t;	/* User mode code depends on this lot */
+प्रकार अचिन्हित लघु vअगरi_t;
+#घोषणा ALL_VIFS	((vअगरi_t)(-1))
 
 /* Same idea as select */
 
-#define VIFM_SET(n,m)	((m)|=(1<<(n)))
-#define VIFM_CLR(n,m)	((m)&=~(1<<(n)))
-#define VIFM_ISSET(n,m)	((m)&(1<<(n)))
-#define VIFM_CLRALL(m)	((m)=0)
-#define VIFM_COPY(mfrom,mto)	((mto)=(mfrom))
-#define VIFM_SAME(m1,m2)	((m1)==(m2))
+#घोषणा VIFM_SET(n,m)	((m)|=(1<<(n)))
+#घोषणा VIFM_CLR(n,m)	((m)&=~(1<<(n)))
+#घोषणा VIFM_ISSET(n,m)	((m)&(1<<(n)))
+#घोषणा VIFM_CLRALL(m)	((m)=0)
+#घोषणा VIFM_COPY(mfrom,mto)	((mto)=(mfrom))
+#घोषणा VIFM_SAME(m1,m2)	((m1)==(m2))
 
-/* Passed by mrouted for an MRT_ADD_VIF - again we use the
- * mrouted 3.6 structures for compatibility
+/* Passed by mrouted क्रम an MRT_ADD_VIF - again we use the
+ * mrouted 3.6 काष्ठाures क्रम compatibility
  */
-struct vifctl {
-	vifi_t	vifc_vifi;		/* Index of VIF */
-	unsigned char vifc_flags;	/* VIFF_ flags */
-	unsigned char vifc_threshold;	/* ttl limit */
-	unsigned int vifc_rate_limit;	/* Rate limiter values (NI) */
-	union {
-		struct in_addr vifc_lcl_addr;     /* Local interface address */
-		int            vifc_lcl_ifindex;  /* Local interface index   */
-	};
-	struct in_addr vifc_rmt_addr;	/* IPIP tunnel addr */
-};
+काष्ठा vअगरctl अणु
+	vअगरi_t	vअगरc_vअगरi;		/* Index of VIF */
+	अचिन्हित अक्षर vअगरc_flags;	/* VIFF_ flags */
+	अचिन्हित अक्षर vअगरc_threshold;	/* ttl limit */
+	अचिन्हित पूर्णांक vअगरc_rate_limit;	/* Rate limiter values (NI) */
+	जोड़ अणु
+		काष्ठा in_addr vअगरc_lcl_addr;     /* Local पूर्णांकerface address */
+		पूर्णांक            vअगरc_lcl_अगरindex;  /* Local पूर्णांकerface index   */
+	पूर्ण;
+	काष्ठा in_addr vअगरc_rmt_addr;	/* IPIP tunnel addr */
+पूर्ण;
 
-#define VIFF_TUNNEL		0x1	/* IPIP tunnel */
-#define VIFF_SRCRT		0x2	/* NI */
-#define VIFF_REGISTER		0x4	/* register vif	*/
-#define VIFF_USE_IFINDEX	0x8	/* use vifc_lcl_ifindex instead of
-					   vifc_lcl_addr to find an interface */
+#घोषणा VIFF_TUNNEL		0x1	/* IPIP tunnel */
+#घोषणा VIFF_SRCRT		0x2	/* NI */
+#घोषणा VIFF_REGISTER		0x4	/* रेजिस्टर vअगर	*/
+#घोषणा VIFF_USE_IFINDEX	0x8	/* use vअगरc_lcl_अगरindex instead of
+					   vअगरc_lcl_addr to find an पूर्णांकerface */
 
-/* Cache manipulation structures for mrouted and PIMd */
-struct mfcctl {
-	struct in_addr mfcc_origin;		/* Origin of mcast	*/
-	struct in_addr mfcc_mcastgrp;		/* Group in question	*/
-	vifi_t	mfcc_parent;			/* Where it arrived	*/
-	unsigned char mfcc_ttls[MAXVIFS];	/* Where it is going	*/
-	unsigned int mfcc_pkt_cnt;		/* pkt count for src-grp */
-	unsigned int mfcc_byte_cnt;
-	unsigned int mfcc_wrong_if;
-	int	     mfcc_expire;
-};
+/* Cache manipulation काष्ठाures क्रम mrouted and PIMd */
+काष्ठा mfcctl अणु
+	काष्ठा in_addr mfcc_origin;		/* Origin of mcast	*/
+	काष्ठा in_addr mfcc_mcastgrp;		/* Group in question	*/
+	vअगरi_t	mfcc_parent;			/* Where it arrived	*/
+	अचिन्हित अक्षर mfcc_ttls[MAXVIFS];	/* Where it is going	*/
+	अचिन्हित पूर्णांक mfcc_pkt_cnt;		/* pkt count क्रम src-grp */
+	अचिन्हित पूर्णांक mfcc_byte_cnt;
+	अचिन्हित पूर्णांक mfcc_wrong_अगर;
+	पूर्णांक	     mfcc_expire;
+पूर्ण;
 
-/*  Group count retrieval for mrouted */
-struct sioc_sg_req {
-	struct in_addr src;
-	struct in_addr grp;
-	unsigned long pktcnt;
-	unsigned long bytecnt;
-	unsigned long wrong_if;
-};
+/*  Group count retrieval क्रम mrouted */
+काष्ठा sioc_sg_req अणु
+	काष्ठा in_addr src;
+	काष्ठा in_addr grp;
+	अचिन्हित दीर्घ pktcnt;
+	अचिन्हित दीर्घ bytecnt;
+	अचिन्हित दीर्घ wrong_अगर;
+पूर्ण;
 
-/* To get vif packet counts */
-struct sioc_vif_req {
-	vifi_t	vifi;		/* Which iface */
-	unsigned long icount;	/* In packets */
-	unsigned long ocount;	/* Out packets */
-	unsigned long ibytes;	/* In bytes */
-	unsigned long obytes;	/* Out bytes */
-};
+/* To get vअगर packet counts */
+काष्ठा sioc_vअगर_req अणु
+	vअगरi_t	vअगरi;		/* Which अगरace */
+	अचिन्हित दीर्घ icount;	/* In packets */
+	अचिन्हित दीर्घ ocount;	/* Out packets */
+	अचिन्हित दीर्घ ibytes;	/* In bytes */
+	अचिन्हित दीर्घ obytes;	/* Out bytes */
+पूर्ण;
 
-/* This is the format the mroute daemon expects to see IGMP control
+/* This is the क्रमmat the mroute daemon expects to see IGMP control
  * data. Magically happens to be like an IP packet as per the original
  */
-struct igmpmsg {
+काष्ठा igmpmsg अणु
 	__u32 unused1,unused2;
-	unsigned char im_msgtype;		/* What is this */
-	unsigned char im_mbz;			/* Must be zero */
-	unsigned char im_vif;			/* Low 8 bits of Interface */
-	unsigned char im_vif_hi;		/* High 8 bits of Interface */
-	struct in_addr im_src,im_dst;
-};
+	अचिन्हित अक्षर im_msgtype;		/* What is this */
+	अचिन्हित अक्षर im_mbz;			/* Must be zero */
+	अचिन्हित अक्षर im_vअगर;			/* Low 8 bits of Interface */
+	अचिन्हित अक्षर im_vअगर_hi;		/* High 8 bits of Interface */
+	काष्ठा in_addr im_src,im_dst;
+पूर्ण;
 
 /* ipmr netlink table attributes */
-enum {
+क्रमागत अणु
 	IPMRA_TABLE_UNSPEC,
 	IPMRA_TABLE_ID,
 	IPMRA_TABLE_CACHE_RES_QUEUE_LEN,
@@ -129,23 +130,23 @@ enum {
 	IPMRA_TABLE_VIFS,
 	IPMRA_TABLE_MROUTE_DO_WRVIFWHOLE,
 	__IPMRA_TABLE_MAX
-};
-#define IPMRA_TABLE_MAX (__IPMRA_TABLE_MAX - 1)
+पूर्ण;
+#घोषणा IPMRA_TABLE_MAX (__IPMRA_TABLE_MAX - 1)
 
-/* ipmr netlink vif attribute format
+/* ipmr netlink vअगर attribute क्रमmat
  * [ IPMRA_TABLE_VIFS ] - nested attribute
  *   [ IPMRA_VIF ] - nested attribute
  *     [ IPMRA_VIFA_xxx ]
  */
-enum {
+क्रमागत अणु
 	IPMRA_VIF_UNSPEC,
 	IPMRA_VIF,
 	__IPMRA_VIF_MAX
-};
-#define IPMRA_VIF_MAX (__IPMRA_VIF_MAX - 1)
+पूर्ण;
+#घोषणा IPMRA_VIF_MAX (__IPMRA_VIF_MAX - 1)
 
-/* vif-specific attributes */
-enum {
+/* vअगर-specअगरic attributes */
+क्रमागत अणु
 	IPMRA_VIFA_UNSPEC,
 	IPMRA_VIFA_IFINDEX,
 	IPMRA_VIFA_VIF_ID,
@@ -158,11 +159,11 @@ enum {
 	IPMRA_VIFA_REMOTE_ADDR,
 	IPMRA_VIFA_PAD,
 	__IPMRA_VIFA_MAX
-};
-#define IPMRA_VIFA_MAX (__IPMRA_VIFA_MAX - 1)
+पूर्ण;
+#घोषणा IPMRA_VIFA_MAX (__IPMRA_VIFA_MAX - 1)
 
 /* ipmr netlink cache report attributes */
-enum {
+क्रमागत अणु
 	IPMRA_CREPORT_UNSPEC,
 	IPMRA_CREPORT_MSGTYPE,
 	IPMRA_CREPORT_VIF_ID,
@@ -171,17 +172,17 @@ enum {
 	IPMRA_CREPORT_PKT,
 	IPMRA_CREPORT_TABLE,
 	__IPMRA_CREPORT_MAX
-};
-#define IPMRA_CREPORT_MAX (__IPMRA_CREPORT_MAX - 1)
+पूर्ण;
+#घोषणा IPMRA_CREPORT_MAX (__IPMRA_CREPORT_MAX - 1)
 
 /* That's all usermode folks */
 
-#define MFC_ASSERT_THRESH (3*HZ)		/* Maximal freq. of asserts */
+#घोषणा MFC_ASSERT_THRESH (3*HZ)		/* Maximal freq. of निश्चितs */
 
-/* Pseudo messages used by mrouted */
-#define IGMPMSG_NOCACHE		1		/* Kern cache fill request to mrouted */
-#define IGMPMSG_WRONGVIF	2		/* For PIM assert processing (unused) */
-#define IGMPMSG_WHOLEPKT	3		/* For PIM Register processing */
-#define IGMPMSG_WRVIFWHOLE	4		/* For PIM Register and assert processing */
+/* Pseuकरो messages used by mrouted */
+#घोषणा IGMPMSG_NOCACHE		1		/* Kern cache fill request to mrouted */
+#घोषणा IGMPMSG_WRONGVIF	2		/* For PIM निश्चित processing (unused) */
+#घोषणा IGMPMSG_WHOLEPKT	3		/* For PIM Register processing */
+#घोषणा IGMPMSG_WRVIFWHOLE	4		/* For PIM Register and निश्चित processing */
 
-#endif /* _UAPI__LINUX_MROUTE_H */
+#पूर्ण_अगर /* _UAPI__LINUX_MROUTE_H */

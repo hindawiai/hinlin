@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Support for common PCI multi-I/O cards (which is most of them)
+ * Support क्रम common PCI multi-I/O cards (which is most of them)
  *
  * Copyright (C) 2001  Tim Waugh <twaugh@redhat.com>
  *
  * Multi-function PCI cards are supposed to present separate logical
- * devices on the bus.  A common thing to do seems to be to just use
- * one logical device with lots of base address registers for both
- * parallel ports and serial ports.  This driver is for dealing with
+ * devices on the bus.  A common thing to करो seems to be to just use
+ * one logical device with lots of base address रेजिस्टरs क्रम both
+ * parallel ports and serial ports.  This driver is क्रम dealing with
  * that.
  */
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/parport.h>
-#include <linux/parport_pc.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/parport.h>
+#समावेश <linux/parport_pc.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
 
-#include <linux/8250_pci.h>
+#समावेश <linux/8250_pci.h>
 
-enum parport_pc_pci_cards {
+क्रमागत parport_pc_pci_cards अणु
 	titan_110l = 0,
 	titan_210l,
-	netmos_9xx5_combo,
-	netmos_9855,
-	netmos_9855_2p,
-	netmos_9900,
-	netmos_9900_2p,
-	netmos_99xx_1p,
+	neपंचांगos_9xx5_combo,
+	neपंचांगos_9855,
+	neपंचांगos_9855_2p,
+	neपंचांगos_9900,
+	neपंचांगos_9900_2p,
+	neपंचांगos_99xx_1p,
 	avlab_1s1p,
 	avlab_1s2p,
 	avlab_2s1p,
@@ -38,24 +39,24 @@ enum parport_pc_pci_cards {
 	siig_2p1s_20x,
 	siig_1s1p_20x,
 	siig_2s1p_20x,
-	timedia_4078a,
-	timedia_4079h,
-	timedia_4085h,
-	timedia_4088a,
-	timedia_4089a,
-	timedia_4095a,
-	timedia_4096a,
-	timedia_4078u,
-	timedia_4079a,
-	timedia_4085u,
-	timedia_4079r,
-	timedia_4079s,
-	timedia_4079d,
-	timedia_4079e,
-	timedia_4079f,
-	timedia_9079a,
-	timedia_9079b,
-	timedia_9079c,
+	समयdia_4078a,
+	समयdia_4079h,
+	समयdia_4085h,
+	समयdia_4088a,
+	समयdia_4089a,
+	समयdia_4095a,
+	समयdia_4096a,
+	समयdia_4078u,
+	समयdia_4079a,
+	समयdia_4085u,
+	समयdia_4079r,
+	समयdia_4079s,
+	समयdia_4079d,
+	समयdia_4079e,
+	समयdia_4079f,
+	समयdia_9079a,
+	समयdia_9079b,
+	समयdia_9079c,
 	wch_ch353_1s1p,
 	wch_ch353_2s1p,
 	wch_ch382_0s1p,
@@ -65,653 +66,653 @@ enum parport_pc_pci_cards {
 	sunix_5069a,
 	sunix_5079a,
 	sunix_5099a,
-};
+पूर्ण;
 
-/* each element directly indexed from enum list, above */
-struct parport_pc_pci {
-	int numports;
-	struct { /* BAR (base address registers) numbers in the config
+/* each element directly indexed from क्रमागत list, above */
+काष्ठा parport_pc_pci अणु
+	पूर्णांक numports;
+	काष्ठा अणु /* BAR (base address रेजिस्टरs) numbers in the config
                     space header */
-		int lo;
-		int hi; /* -1 if not there, >6 for offset-method (max
+		पूर्णांक lo;
+		पूर्णांक hi; /* -1 अगर not there, >6 क्रम offset-method (max
                            BAR is 6) */
-	} addr[4];
+	पूर्ण addr[4];
 
 	/* If set, this is called immediately after pci_enable_device.
-	 * If it returns non-zero, no probing will take place and the
+	 * If it वापसs non-zero, no probing will take place and the
 	 * ports will not be used. */
-	int (*preinit_hook) (struct pci_dev *pdev, struct parport_pc_pci *card,
-				int autoirq, int autodma);
+	पूर्णांक (*preinit_hook) (काष्ठा pci_dev *pdev, काष्ठा parport_pc_pci *card,
+				पूर्णांक स्वतःirq, पूर्णांक स्वतःdma);
 
-	/* If set, this is called after probing for ports.  If 'failed'
+	/* If set, this is called after probing क्रम ports.  If 'failed'
 	 * is non-zero we couldn't use any of the ports. */
-	void (*postinit_hook) (struct pci_dev *pdev,
-				struct parport_pc_pci *card, int failed);
-};
+	व्योम (*postinit_hook) (काष्ठा pci_dev *pdev,
+				काष्ठा parport_pc_pci *card, पूर्णांक failed);
+पूर्ण;
 
-static int netmos_parallel_init(struct pci_dev *dev, struct parport_pc_pci *par,
-				int autoirq, int autodma)
-{
-	/* the rule described below doesn't hold for this device */
-	if (dev->device == PCI_DEVICE_ID_NETMOS_9835 &&
-			dev->subsystem_vendor == PCI_VENDOR_ID_IBM &&
-			dev->subsystem_device == 0x0299)
-		return -ENODEV;
+अटल पूर्णांक neपंचांगos_parallel_init(काष्ठा pci_dev *dev, काष्ठा parport_pc_pci *par,
+				पूर्णांक स्वतःirq, पूर्णांक स्वतःdma)
+अणु
+	/* the rule described below करोesn't hold क्रम this device */
+	अगर (dev->device == PCI_DEVICE_ID_NETMOS_9835 &&
+			dev->subप्रणाली_venकरोr == PCI_VENDOR_ID_IBM &&
+			dev->subप्रणाली_device == 0x0299)
+		वापस -ENODEV;
 
-	if (dev->device == PCI_DEVICE_ID_NETMOS_9912) {
+	अगर (dev->device == PCI_DEVICE_ID_NETMOS_9912) अणु
 		par->numports = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Netmos uses the subdevice ID to indicate the number of parallel
-		 * and serial ports.  The form is 0x00PS, where <P> is the number of
+		 * Neपंचांगos uses the subdevice ID to indicate the number of parallel
+		 * and serial ports.  The क्रमm is 0x00PS, where <P> is the number of
 		 * parallel ports and <S> is the number of serial ports.
 		 */
-		par->numports = (dev->subsystem_device & 0xf0) >> 4;
-		if (par->numports > ARRAY_SIZE(par->addr))
+		par->numports = (dev->subप्रणाली_device & 0xf0) >> 4;
+		अगर (par->numports > ARRAY_SIZE(par->addr))
 			par->numports = ARRAY_SIZE(par->addr);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct parport_pc_pci cards[] = {
-	/* titan_110l */		{ 1, { { 3, -1 }, } },
-	/* titan_210l */		{ 1, { { 3, -1 }, } },
-	/* netmos_9xx5_combo */		{ 1, { { 2, -1 }, }, netmos_parallel_init },
-	/* netmos_9855 */		{ 1, { { 0, -1 }, }, netmos_parallel_init },
-	/* netmos_9855_2p */		{ 2, { { 0, -1 }, { 2, -1 }, } },
-	/* netmos_9900 */		{1, { { 3, 4 }, }, netmos_parallel_init },
-	/* netmos_9900_2p */		{2, { { 0, 1 }, { 3, 4 }, } },
-	/* netmos_99xx_1p */		{1, { { 0, 1 }, } },
-	/* avlab_1s1p     */		{ 1, { { 1, 2}, } },
-	/* avlab_1s2p     */		{ 2, { { 1, 2}, { 3, 4 },} },
-	/* avlab_2s1p     */		{ 1, { { 2, 3}, } },
-	/* siig_1s1p_10x */		{ 1, { { 3, 4 }, } },
-	/* siig_2s1p_10x */		{ 1, { { 4, 5 }, } },
-	/* siig_2p1s_20x */		{ 2, { { 1, 2 }, { 3, 4 }, } },
-	/* siig_1s1p_20x */		{ 1, { { 1, 2 }, } },
-	/* siig_2s1p_20x */		{ 1, { { 2, 3 }, } },
-	/* timedia_4078a */		{ 1, { { 2, -1 }, } },
-	/* timedia_4079h */             { 1, { { 2, 3 }, } },
-	/* timedia_4085h */             { 2, { { 2, -1 }, { 4, -1 }, } },
-	/* timedia_4088a */             { 2, { { 2, 3 }, { 4, 5 }, } },
-	/* timedia_4089a */             { 2, { { 2, 3 }, { 4, 5 }, } },
-	/* timedia_4095a */             { 2, { { 2, 3 }, { 4, 5 }, } },
-	/* timedia_4096a */             { 2, { { 2, 3 }, { 4, 5 }, } },
-	/* timedia_4078u */             { 1, { { 2, -1 }, } },
-	/* timedia_4079a */             { 1, { { 2, 3 }, } },
-	/* timedia_4085u */             { 2, { { 2, -1 }, { 4, -1 }, } },
-	/* timedia_4079r */             { 1, { { 2, 3 }, } },
-	/* timedia_4079s */             { 1, { { 2, 3 }, } },
-	/* timedia_4079d */             { 1, { { 2, 3 }, } },
-	/* timedia_4079e */             { 1, { { 2, 3 }, } },
-	/* timedia_4079f */             { 1, { { 2, 3 }, } },
-	/* timedia_9079a */             { 1, { { 2, 3 }, } },
-	/* timedia_9079b */             { 1, { { 2, 3 }, } },
-	/* timedia_9079c */             { 1, { { 2, 3 }, } },
-	/* wch_ch353_1s1p*/             { 1, { { 1, -1}, } },
-	/* wch_ch353_2s1p*/             { 1, { { 2, -1}, } },
-	/* wch_ch382_0s1p*/		{ 1, { { 2, -1}, } },
-	/* wch_ch382_2s1p*/             { 1, { { 2, -1}, } },
-	/* brainboxes_5s1p */           { 1, { { 3, -1 }, } },
-	/* sunix_4008a */		{ 1, { { 1, 2 }, } },
-	/* sunix_5069a */		{ 1, { { 1, 2 }, } },
-	/* sunix_5079a */		{ 1, { { 1, 2 }, } },
-	/* sunix_5099a */		{ 1, { { 1, 2 }, } },
-};
+अटल काष्ठा parport_pc_pci cards[] = अणु
+	/* titan_110l */		अणु 1, अणु अणु 3, -1 पूर्ण, पूर्ण पूर्ण,
+	/* titan_210l */		अणु 1, अणु अणु 3, -1 पूर्ण, पूर्ण पूर्ण,
+	/* neपंचांगos_9xx5_combo */		अणु 1, अणु अणु 2, -1 पूर्ण, पूर्ण, neपंचांगos_parallel_init पूर्ण,
+	/* neपंचांगos_9855 */		अणु 1, अणु अणु 0, -1 पूर्ण, पूर्ण, neपंचांगos_parallel_init पूर्ण,
+	/* neपंचांगos_9855_2p */		अणु 2, अणु अणु 0, -1 पूर्ण, अणु 2, -1 पूर्ण, पूर्ण पूर्ण,
+	/* neपंचांगos_9900 */		अणु1, अणु अणु 3, 4 पूर्ण, पूर्ण, neपंचांगos_parallel_init पूर्ण,
+	/* neपंचांगos_9900_2p */		अणु2, अणु अणु 0, 1 पूर्ण, अणु 3, 4 पूर्ण, पूर्ण पूर्ण,
+	/* neपंचांगos_99xx_1p */		अणु1, अणु अणु 0, 1 पूर्ण, पूर्ण पूर्ण,
+	/* avlab_1s1p     */		अणु 1, अणु अणु 1, 2पूर्ण, पूर्ण पूर्ण,
+	/* avlab_1s2p     */		अणु 2, अणु अणु 1, 2पूर्ण, अणु 3, 4 पूर्ण,पूर्ण पूर्ण,
+	/* avlab_2s1p     */		अणु 1, अणु अणु 2, 3पूर्ण, पूर्ण पूर्ण,
+	/* siig_1s1p_10x */		अणु 1, अणु अणु 3, 4 पूर्ण, पूर्ण पूर्ण,
+	/* siig_2s1p_10x */		अणु 1, अणु अणु 4, 5 पूर्ण, पूर्ण पूर्ण,
+	/* siig_2p1s_20x */		अणु 2, अणु अणु 1, 2 पूर्ण, अणु 3, 4 पूर्ण, पूर्ण पूर्ण,
+	/* siig_1s1p_20x */		अणु 1, अणु अणु 1, 2 पूर्ण, पूर्ण पूर्ण,
+	/* siig_2s1p_20x */		अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4078a */		अणु 1, अणु अणु 2, -1 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4079h */             अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4085h */             अणु 2, अणु अणु 2, -1 पूर्ण, अणु 4, -1 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4088a */             अणु 2, अणु अणु 2, 3 पूर्ण, अणु 4, 5 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4089a */             अणु 2, अणु अणु 2, 3 पूर्ण, अणु 4, 5 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4095a */             अणु 2, अणु अणु 2, 3 पूर्ण, अणु 4, 5 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4096a */             अणु 2, अणु अणु 2, 3 पूर्ण, अणु 4, 5 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4078u */             अणु 1, अणु अणु 2, -1 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4079a */             अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4085u */             अणु 2, अणु अणु 2, -1 पूर्ण, अणु 4, -1 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4079r */             अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4079s */             अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4079d */             अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4079e */             अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_4079f */             अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_9079a */             अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_9079b */             अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* समयdia_9079c */             अणु 1, अणु अणु 2, 3 पूर्ण, पूर्ण पूर्ण,
+	/* wch_ch353_1s1p*/             अणु 1, अणु अणु 1, -1पूर्ण, पूर्ण पूर्ण,
+	/* wch_ch353_2s1p*/             अणु 1, अणु अणु 2, -1पूर्ण, पूर्ण पूर्ण,
+	/* wch_ch382_0s1p*/		अणु 1, अणु अणु 2, -1पूर्ण, पूर्ण पूर्ण,
+	/* wch_ch382_2s1p*/             अणु 1, अणु अणु 2, -1पूर्ण, पूर्ण पूर्ण,
+	/* brainboxes_5s1p */           अणु 1, अणु अणु 3, -1 पूर्ण, पूर्ण पूर्ण,
+	/* sunix_4008a */		अणु 1, अणु अणु 1, 2 पूर्ण, पूर्ण पूर्ण,
+	/* sunix_5069a */		अणु 1, अणु अणु 1, 2 पूर्ण, पूर्ण पूर्ण,
+	/* sunix_5079a */		अणु 1, अणु अणु 1, 2 पूर्ण, पूर्ण पूर्ण,
+	/* sunix_5099a */		अणु 1, अणु अणु 1, 2 पूर्ण, पूर्ण पूर्ण,
+पूर्ण;
 
-static struct pci_device_id parport_serial_pci_tbl[] = {
+अटल काष्ठा pci_device_id parport_serial_pci_tbl[] = अणु
 	/* PCI cards */
-	{ PCI_VENDOR_ID_TITAN, PCI_DEVICE_ID_TITAN_110L,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, titan_110l },
-	{ PCI_VENDOR_ID_TITAN, PCI_DEVICE_ID_TITAN_210L,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, titan_210l },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9735,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, netmos_9xx5_combo },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9745,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, netmos_9xx5_combo },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9835,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, netmos_9xx5_combo },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9845,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, netmos_9xx5_combo },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9855,
-	  0x1000, 0x0020, 0, 0, netmos_9855_2p },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9855,
-	  0x1000, 0x0022, 0, 0, netmos_9855_2p },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9855,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, netmos_9855 },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9900,
-	  0xA000, 0x3011, 0, 0, netmos_9900 },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9900,
-	  0xA000, 0x3012, 0, 0, netmos_9900 },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9900,
-	  0xA000, 0x3020, 0, 0, netmos_9900_2p },
-	{ PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9912,
-	  0xA000, 0x2000, 0, 0, netmos_99xx_1p },
+	अणु PCI_VENDOR_ID_TITAN, PCI_DEVICE_ID_TITAN_110L,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, titan_110l पूर्ण,
+	अणु PCI_VENDOR_ID_TITAN, PCI_DEVICE_ID_TITAN_210L,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, titan_210l पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9735,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, neपंचांगos_9xx5_combo पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9745,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, neपंचांगos_9xx5_combo पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9835,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, neपंचांगos_9xx5_combo पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9845,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, neपंचांगos_9xx5_combo पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9855,
+	  0x1000, 0x0020, 0, 0, neपंचांगos_9855_2p पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9855,
+	  0x1000, 0x0022, 0, 0, neपंचांगos_9855_2p पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9855,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, neपंचांगos_9855 पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9900,
+	  0xA000, 0x3011, 0, 0, neपंचांगos_9900 पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9900,
+	  0xA000, 0x3012, 0, 0, neपंचांगos_9900 पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9900,
+	  0xA000, 0x3020, 0, 0, neपंचांगos_9900_2p पूर्ण,
+	अणु PCI_VENDOR_ID_NETMOS, PCI_DEVICE_ID_NETMOS_9912,
+	  0xA000, 0x2000, 0, 0, neपंचांगos_99xx_1p पूर्ण,
 	/* PCI_VENDOR_ID_AVLAB/Intek21 has another bunch of cards ...*/
-	{ PCI_VENDOR_ID_AFAVLAB, 0x2110,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s1p },
-	{ PCI_VENDOR_ID_AFAVLAB, 0x2111,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s1p },
-	{ PCI_VENDOR_ID_AFAVLAB, 0x2112,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s1p },
-	{ PCI_VENDOR_ID_AFAVLAB, 0x2140,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s2p },
-	{ PCI_VENDOR_ID_AFAVLAB, 0x2141,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s2p },
-	{ PCI_VENDOR_ID_AFAVLAB, 0x2142,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s2p },
-	{ PCI_VENDOR_ID_AFAVLAB, 0x2160,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_2s1p },
-	{ PCI_VENDOR_ID_AFAVLAB, 0x2161,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_2s1p },
-	{ PCI_VENDOR_ID_AFAVLAB, 0x2162,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_2s1p },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_10x_550,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1s1p_10x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_10x_650,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1s1p_10x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_10x_850,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1s1p_10x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_10x_550,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_10x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_10x_650,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_10x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_10x_850,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_10x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2P1S_20x_550,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2p1s_20x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2P1S_20x_650,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2p1s_20x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2P1S_20x_850,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2p1s_20x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_20x_550,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_20x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_20x_650,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1s1p_20x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_20x_850,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1s1p_20x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_20x_550,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_20x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_20x_650,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_20x },
-	{ PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_20x_850,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_20x },
-	/* PCI_VENDOR_ID_TIMEDIA/SUNIX has many differing cards ...*/
-	{ 0x1409, 0x7168, 0x1409, 0x4078, 0, 0, timedia_4078a },
-	{ 0x1409, 0x7168, 0x1409, 0x4079, 0, 0, timedia_4079h },
-	{ 0x1409, 0x7168, 0x1409, 0x4085, 0, 0, timedia_4085h },
-	{ 0x1409, 0x7168, 0x1409, 0x4088, 0, 0, timedia_4088a },
-	{ 0x1409, 0x7168, 0x1409, 0x4089, 0, 0, timedia_4089a },
-	{ 0x1409, 0x7168, 0x1409, 0x4095, 0, 0, timedia_4095a },
-	{ 0x1409, 0x7168, 0x1409, 0x4096, 0, 0, timedia_4096a },
-	{ 0x1409, 0x7168, 0x1409, 0x5078, 0, 0, timedia_4078u },
-	{ 0x1409, 0x7168, 0x1409, 0x5079, 0, 0, timedia_4079a },
-	{ 0x1409, 0x7168, 0x1409, 0x5085, 0, 0, timedia_4085u },
-	{ 0x1409, 0x7168, 0x1409, 0x6079, 0, 0, timedia_4079r },
-	{ 0x1409, 0x7168, 0x1409, 0x7079, 0, 0, timedia_4079s },
-	{ 0x1409, 0x7168, 0x1409, 0x8079, 0, 0, timedia_4079d },
-	{ 0x1409, 0x7168, 0x1409, 0x9079, 0, 0, timedia_4079e },
-	{ 0x1409, 0x7168, 0x1409, 0xa079, 0, 0, timedia_4079f },
-	{ 0x1409, 0x7168, 0x1409, 0xb079, 0, 0, timedia_9079a },
-	{ 0x1409, 0x7168, 0x1409, 0xc079, 0, 0, timedia_9079b },
-	{ 0x1409, 0x7168, 0x1409, 0xd079, 0, 0, timedia_9079c },
+	अणु PCI_VENDOR_ID_AFAVLAB, 0x2110,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s1p पूर्ण,
+	अणु PCI_VENDOR_ID_AFAVLAB, 0x2111,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s1p पूर्ण,
+	अणु PCI_VENDOR_ID_AFAVLAB, 0x2112,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s1p पूर्ण,
+	अणु PCI_VENDOR_ID_AFAVLAB, 0x2140,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s2p पूर्ण,
+	अणु PCI_VENDOR_ID_AFAVLAB, 0x2141,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s2p पूर्ण,
+	अणु PCI_VENDOR_ID_AFAVLAB, 0x2142,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_1s2p पूर्ण,
+	अणु PCI_VENDOR_ID_AFAVLAB, 0x2160,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_2s1p पूर्ण,
+	अणु PCI_VENDOR_ID_AFAVLAB, 0x2161,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_2s1p पूर्ण,
+	अणु PCI_VENDOR_ID_AFAVLAB, 0x2162,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, avlab_2s1p पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_10x_550,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1s1p_10x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_10x_650,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1s1p_10x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_10x_850,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1s1p_10x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_10x_550,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_10x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_10x_650,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_10x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_10x_850,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_10x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2P1S_20x_550,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2p1s_20x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2P1S_20x_650,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2p1s_20x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2P1S_20x_850,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2p1s_20x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_20x_550,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_20x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_20x_650,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1s1p_20x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_1S1P_20x_850,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_1s1p_20x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_20x_550,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_20x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_20x_650,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_20x पूर्ण,
+	अणु PCI_VENDOR_ID_SIIG, PCI_DEVICE_ID_SIIG_2S1P_20x_850,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, siig_2s1p_20x पूर्ण,
+	/* PCI_VENDOR_ID_TIMEDIA/SUNIX has many dअगरfering cards ...*/
+	अणु 0x1409, 0x7168, 0x1409, 0x4078, 0, 0, समयdia_4078a पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x4079, 0, 0, समयdia_4079h पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x4085, 0, 0, समयdia_4085h पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x4088, 0, 0, समयdia_4088a पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x4089, 0, 0, समयdia_4089a पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x4095, 0, 0, समयdia_4095a पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x4096, 0, 0, समयdia_4096a पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x5078, 0, 0, समयdia_4078u पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x5079, 0, 0, समयdia_4079a पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x5085, 0, 0, समयdia_4085u पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x6079, 0, 0, समयdia_4079r पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x7079, 0, 0, समयdia_4079s पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x8079, 0, 0, समयdia_4079d पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0x9079, 0, 0, समयdia_4079e पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0xa079, 0, 0, समयdia_4079f पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0xb079, 0, 0, समयdia_9079a पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0xc079, 0, 0, समयdia_9079b पूर्ण,
+	अणु 0x1409, 0x7168, 0x1409, 0xd079, 0, 0, समयdia_9079c पूर्ण,
 
 	/* WCH CARDS */
-	{ 0x4348, 0x5053, PCI_ANY_ID, PCI_ANY_ID, 0, 0, wch_ch353_1s1p},
-	{ 0x4348, 0x7053, 0x4348, 0x3253, 0, 0, wch_ch353_2s1p},
-	{ 0x1c00, 0x3050, 0x1c00, 0x3050, 0, 0, wch_ch382_0s1p},
-	{ 0x1c00, 0x3250, 0x1c00, 0x3250, 0, 0, wch_ch382_2s1p},
+	अणु 0x4348, 0x5053, PCI_ANY_ID, PCI_ANY_ID, 0, 0, wch_ch353_1s1pपूर्ण,
+	अणु 0x4348, 0x7053, 0x4348, 0x3253, 0, 0, wch_ch353_2s1pपूर्ण,
+	अणु 0x1c00, 0x3050, 0x1c00, 0x3050, 0, 0, wch_ch382_0s1pपूर्ण,
+	अणु 0x1c00, 0x3250, 0x1c00, 0x3250, 0, 0, wch_ch382_2s1pपूर्ण,
 
 	/* BrainBoxes PX272/PX306 MIO card */
-	{ PCI_VENDOR_ID_INTASHIELD, 0x4100,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, brainboxes_5s1p },
+	अणु PCI_VENDOR_ID_INTASHIELD, 0x4100,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, brainboxes_5s1p पूर्ण,
 
 	/* Sunix boards */
-	{ PCI_VENDOR_ID_SUNIX, PCI_DEVICE_ID_SUNIX_1999, PCI_VENDOR_ID_SUNIX,
-	  0x0100, 0, 0, sunix_4008a },
-	{ PCI_VENDOR_ID_SUNIX, PCI_DEVICE_ID_SUNIX_1999, PCI_VENDOR_ID_SUNIX,
-	  0x0101, 0, 0, sunix_5069a },
-	{ PCI_VENDOR_ID_SUNIX, PCI_DEVICE_ID_SUNIX_1999, PCI_VENDOR_ID_SUNIX,
-	  0x0102, 0, 0, sunix_5079a },
-	{ PCI_VENDOR_ID_SUNIX, PCI_DEVICE_ID_SUNIX_1999, PCI_VENDOR_ID_SUNIX,
-	  0x0104, 0, 0, sunix_5099a },
+	अणु PCI_VENDOR_ID_SUNIX, PCI_DEVICE_ID_SUNIX_1999, PCI_VENDOR_ID_SUNIX,
+	  0x0100, 0, 0, sunix_4008a पूर्ण,
+	अणु PCI_VENDOR_ID_SUNIX, PCI_DEVICE_ID_SUNIX_1999, PCI_VENDOR_ID_SUNIX,
+	  0x0101, 0, 0, sunix_5069a पूर्ण,
+	अणु PCI_VENDOR_ID_SUNIX, PCI_DEVICE_ID_SUNIX_1999, PCI_VENDOR_ID_SUNIX,
+	  0x0102, 0, 0, sunix_5079a पूर्ण,
+	अणु PCI_VENDOR_ID_SUNIX, PCI_DEVICE_ID_SUNIX_1999, PCI_VENDOR_ID_SUNIX,
+	  0x0104, 0, 0, sunix_5099a पूर्ण,
 
-	{ 0, } /* terminate list */
-};
+	अणु 0, पूर्ण /* terminate list */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci,parport_serial_pci_tbl);
 
 /*
  * This table describes the serial "geometry" of these boards.  Any
- * quirks for these can be found in drivers/serial/8250_pci.c
+ * quirks क्रम these can be found in drivers/serial/8250_pci.c
  *
  * Cards not tested are marked n/t
- * If you have one of these cards and it works for you, please tell me..
+ * If you have one of these cards and it works क्रम you, please tell me..
  */
-static struct pciserial_board pci_parport_serial_boards[] = {
-	[titan_110l] = {
+अटल काष्ठा pciserial_board pci_parport_serial_boards[] = अणु
+	[titan_110l] = अणु
 		.flags		= FL_BASE1 | FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[titan_210l] = {
+	पूर्ण,
+	[titan_210l] = अणु
 		.flags		= FL_BASE1 | FL_BASE_BARS,
 		.num_ports	= 2,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[netmos_9xx5_combo] = {
+	पूर्ण,
+	[neपंचांगos_9xx5_combo] = अणु
 		.flags		= FL_BASE0 | FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 115200,
 		.uart_offset	= 8,
-	},
-	[netmos_9855] = {
+	पूर्ण,
+	[neपंचांगos_9855] = अणु
 		.flags		= FL_BASE2 | FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 115200,
 		.uart_offset	= 8,
-	},
-	[netmos_9855_2p] = {
+	पूर्ण,
+	[neपंचांगos_9855_2p] = अणु
 		.flags		= FL_BASE4 | FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 115200,
 		.uart_offset	= 8,
-	},
-	[netmos_9900] = { /* n/t */
+	पूर्ण,
+	[neपंचांगos_9900] = अणु /* n/t */
 		.flags		= FL_BASE0 | FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 115200,
 		.uart_offset	= 8,
-	},
-	[netmos_9900_2p] = { /* parallel only */ /* n/t */
+	पूर्ण,
+	[neपंचांगos_9900_2p] = अणु /* parallel only */ /* n/t */
 		.flags		= FL_BASE0,
 		.num_ports	= 0,
 		.base_baud	= 115200,
 		.uart_offset	= 8,
-	},
-	[netmos_99xx_1p] = { /* parallel only */ /* n/t */
+	पूर्ण,
+	[neपंचांगos_99xx_1p] = अणु /* parallel only */ /* n/t */
 		.flags		= FL_BASE0,
 		.num_ports	= 0,
 		.base_baud	= 115200,
 		.uart_offset	= 8,
-	},
-	[avlab_1s1p] = { /* n/t */
+	पूर्ण,
+	[avlab_1s1p] = अणु /* n/t */
 		.flags		= FL_BASE0 | FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 115200,
 		.uart_offset	= 8,
-	},
-	[avlab_1s2p] = { /* n/t */
+	पूर्ण,
+	[avlab_1s2p] = अणु /* n/t */
 		.flags		= FL_BASE0 | FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 115200,
 		.uart_offset	= 8,
-	},
-	[avlab_2s1p] = { /* n/t */
+	पूर्ण,
+	[avlab_2s1p] = अणु /* n/t */
 		.flags		= FL_BASE0 | FL_BASE_BARS,
 		.num_ports	= 2,
 		.base_baud	= 115200,
 		.uart_offset	= 8,
-	},
-	[siig_1s1p_10x] = {
+	पूर्ण,
+	[siig_1s1p_10x] = अणु
 		.flags		= FL_BASE2,
 		.num_ports	= 1,
 		.base_baud	= 460800,
 		.uart_offset	= 8,
-	},
-	[siig_2s1p_10x] = {
+	पूर्ण,
+	[siig_2s1p_10x] = अणु
 		.flags		= FL_BASE2,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[siig_2p1s_20x] = {
+	पूर्ण,
+	[siig_2p1s_20x] = अणु
 		.flags		= FL_BASE0,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[siig_1s1p_20x] = {
+	पूर्ण,
+	[siig_1s1p_20x] = अणु
 		.flags		= FL_BASE0,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[siig_2s1p_20x] = {
+	पूर्ण,
+	[siig_2s1p_20x] = अणु
 		.flags		= FL_BASE0,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4078a] = {
+	पूर्ण,
+	[समयdia_4078a] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4079h] = {
+	पूर्ण,
+	[समयdia_4079h] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4085h] = {
+	पूर्ण,
+	[समयdia_4085h] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4088a] = {
+	पूर्ण,
+	[समयdia_4088a] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4089a] = {
+	पूर्ण,
+	[समयdia_4089a] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4095a] = {
+	पूर्ण,
+	[समयdia_4095a] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4096a] = {
+	पूर्ण,
+	[समयdia_4096a] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4078u] = {
+	पूर्ण,
+	[समयdia_4078u] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4079a] = {
+	पूर्ण,
+	[समयdia_4079a] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4085u] = {
+	पूर्ण,
+	[समयdia_4085u] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4079r] = {
+	पूर्ण,
+	[समयdia_4079r] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4079s] = {
+	पूर्ण,
+	[समयdia_4079s] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4079d] = {
+	पूर्ण,
+	[समयdia_4079d] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4079e] = {
+	पूर्ण,
+	[समयdia_4079e] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_4079f] = {
+	पूर्ण,
+	[समयdia_4079f] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_9079a] = {
+	पूर्ण,
+	[समयdia_9079a] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_9079b] = {
+	पूर्ण,
+	[समयdia_9079b] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[timedia_9079c] = {
+	पूर्ण,
+	[समयdia_9079c] = अणु
 		.flags		= FL_BASE0|FL_BASE_BARS,
 		.num_ports	= 1,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[wch_ch353_1s1p] = {
+	पूर्ण,
+	[wch_ch353_1s1p] = अणु
 		.flags          = FL_BASE0|FL_BASE_BARS,
 		.num_ports      = 1,
 		.base_baud      = 115200,
 		.uart_offset    = 8,
-	},
-	[wch_ch353_2s1p] = {
+	पूर्ण,
+	[wch_ch353_2s1p] = अणु
 		.flags          = FL_BASE0|FL_BASE_BARS,
 		.num_ports      = 2,
 		.base_baud      = 115200,
 		.uart_offset    = 8,
-	},
-	[wch_ch382_0s1p] = {
+	पूर्ण,
+	[wch_ch382_0s1p] = अणु
 		.flags          = FL_BASE0,
 		.num_ports      = 0,
 		.base_baud      = 115200,
 		.uart_offset    = 8,
-	},
-	[wch_ch382_2s1p] = {
+	पूर्ण,
+	[wch_ch382_2s1p] = अणु
 		.flags          = FL_BASE0,
 		.num_ports      = 2,
 		.base_baud      = 115200,
 		.uart_offset    = 8,
 		.first_offset   = 0xC0,
-	},
-	[brainboxes_5s1p] = {
+	पूर्ण,
+	[brainboxes_5s1p] = अणु
 		.flags		= FL_BASE2,
 		.num_ports	= 5,
 		.base_baud	= 921600,
 		.uart_offset	= 8,
-	},
-	[sunix_4008a] = {
+	पूर्ण,
+	[sunix_4008a] = अणु
 		.num_ports	= 0,
-	},
-	[sunix_5069a] = {
+	पूर्ण,
+	[sunix_5069a] = अणु
 		.num_ports	= 1,
 		.base_baud      = 921600,
 		.uart_offset	= 0x8,
-	},
-	[sunix_5079a] = {
+	पूर्ण,
+	[sunix_5079a] = अणु
 		.num_ports	= 2,
 		.base_baud      = 921600,
 		.uart_offset	= 0x8,
-	},
-	[sunix_5099a] = {
+	पूर्ण,
+	[sunix_5099a] = अणु
 		.num_ports	= 4,
 		.base_baud      = 921600,
 		.uart_offset	= 0x8,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct parport_serial_private {
-	struct serial_private	*serial;
-	int num_par;
-	struct parport *port[PARPORT_MAX];
-	struct parport_pc_pci par;
-};
+काष्ठा parport_serial_निजी अणु
+	काष्ठा serial_निजी	*serial;
+	पूर्णांक num_par;
+	काष्ठा parport *port[PARPORT_MAX];
+	काष्ठा parport_pc_pci par;
+पूर्ण;
 
 /* Register the serial port(s) of a PCI card. */
-static int serial_register(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	struct parport_serial_private *priv = pci_get_drvdata (dev);
-	struct pciserial_board *board;
-	struct serial_private *serial;
+अटल पूर्णांक serial_रेजिस्टर(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा parport_serial_निजी *priv = pci_get_drvdata (dev);
+	काष्ठा pciserial_board *board;
+	काष्ठा serial_निजी *serial;
 
 	board = &pci_parport_serial_boards[id->driver_data];
-	if (board->num_ports == 0)
-		return 0;
+	अगर (board->num_ports == 0)
+		वापस 0;
 
 	serial = pciserial_init_ports(dev, board);
-	if (IS_ERR(serial))
-		return PTR_ERR(serial);
+	अगर (IS_ERR(serial))
+		वापस PTR_ERR(serial);
 
 	priv->serial = serial;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Register the parallel port(s) of a PCI card. */
-static int parport_register(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	struct parport_pc_pci *card;
-	struct parport_serial_private *priv = pci_get_drvdata (dev);
-	int n, success = 0;
+अटल पूर्णांक parport_रेजिस्टर(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा parport_pc_pci *card;
+	काष्ठा parport_serial_निजी *priv = pci_get_drvdata (dev);
+	पूर्णांक n, success = 0;
 
 	priv->par = cards[id->driver_data];
 	card = &priv->par;
-	if (card->preinit_hook &&
+	अगर (card->preinit_hook &&
 	    card->preinit_hook (dev, card, PARPORT_IRQ_NONE, PARPORT_DMA_NONE))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	for (n = 0; n < card->numports; n++) {
-		struct parport *port;
-		int lo = card->addr[n].lo;
-		int hi = card->addr[n].hi;
-		unsigned long io_lo, io_hi;
-		int irq;
+	क्रम (n = 0; n < card->numports; n++) अणु
+		काष्ठा parport *port;
+		पूर्णांक lo = card->addr[n].lo;
+		पूर्णांक hi = card->addr[n].hi;
+		अचिन्हित दीर्घ io_lo, io_hi;
+		पूर्णांक irq;
 
-		if (priv->num_par == ARRAY_SIZE (priv->port)) {
+		अगर (priv->num_par == ARRAY_SIZE (priv->port)) अणु
 			dev_warn(&dev->dev,
 				 "only %zu parallel ports supported (%d reported)\n",
 				 ARRAY_SIZE(priv->port), card->numports);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		io_lo = pci_resource_start (dev, lo);
 		io_hi = 0;
-		if ((hi >= 0) && (hi <= 6))
+		अगर ((hi >= 0) && (hi <= 6))
 			io_hi = pci_resource_start (dev, hi);
-		else if (hi > 6)
-			io_lo += hi; /* Reinterpret the meaning of
+		अन्यथा अगर (hi > 6)
+			io_lo += hi; /* Reपूर्णांकerpret the meaning of
                                         "hi" as an offset (see SYBA
                                         def.) */
-		/* TODO: test if sharing interrupts works */
+		/* TODO: test अगर sharing पूर्णांकerrupts works */
 		irq = dev->irq;
-		if (irq == IRQ_NONE) {
+		अगर (irq == IRQ_NONE) अणु
 			dev_dbg(&dev->dev,
 				"PCI parallel port detected: I/O at %#lx(%#lx)\n",
 				io_lo, io_hi);
 			irq = PARPORT_IRQ_NONE;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_dbg(&dev->dev,
 				"PCI parallel port detected: I/O at %#lx(%#lx), IRQ %d\n",
 				io_lo, io_hi, irq);
-		}
+		पूर्ण
 		port = parport_pc_probe_port (io_lo, io_hi, irq,
 			      PARPORT_DMA_NONE, &dev->dev, IRQF_SHARED);
-		if (port) {
+		अगर (port) अणु
 			priv->port[priv->num_par++] = port;
 			success = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (card->postinit_hook)
+	अगर (card->postinit_hook)
 		card->postinit_hook (dev, card, !success);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int parport_serial_pci_probe(struct pci_dev *dev,
-				    const struct pci_device_id *id)
-{
-	struct parport_serial_private *priv;
-	int err;
+अटल पूर्णांक parport_serial_pci_probe(काष्ठा pci_dev *dev,
+				    स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा parport_serial_निजी *priv;
+	पूर्णांक err;
 
-	priv = devm_kzalloc(&dev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&dev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	pci_set_drvdata (dev, priv);
 
 	err = pcim_enable_device(dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = parport_register(dev, id);
-	if (err)
-		return err;
+	err = parport_रेजिस्टर(dev, id);
+	अगर (err)
+		वापस err;
 
-	err = serial_register(dev, id);
-	if (err) {
-		int i;
-		for (i = 0; i < priv->num_par; i++)
-			parport_pc_unregister_port (priv->port[i]);
-		return err;
-	}
+	err = serial_रेजिस्टर(dev, id);
+	अगर (err) अणु
+		पूर्णांक i;
+		क्रम (i = 0; i < priv->num_par; i++)
+			parport_pc_unरेजिस्टर_port (priv->port[i]);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void parport_serial_pci_remove(struct pci_dev *dev)
-{
-	struct parport_serial_private *priv = pci_get_drvdata (dev);
-	int i;
+अटल व्योम parport_serial_pci_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा parport_serial_निजी *priv = pci_get_drvdata (dev);
+	पूर्णांक i;
 
 	// Serial ports
-	if (priv->serial)
-		pciserial_remove_ports(priv->serial);
+	अगर (priv->serial)
+		pciserial_हटाओ_ports(priv->serial);
 
 	// Parallel ports
-	for (i = 0; i < priv->num_par; i++)
-		parport_pc_unregister_port (priv->port[i]);
+	क्रम (i = 0; i < priv->num_par; i++)
+		parport_pc_unरेजिस्टर_port (priv->port[i]);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int __maybe_unused parport_serial_pci_suspend(struct device *dev)
-{
-	struct parport_serial_private *priv = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused parport_serial_pci_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा parport_serial_निजी *priv = dev_get_drvdata(dev);
 
-	if (priv->serial)
+	अगर (priv->serial)
 		pciserial_suspend_ports(priv->serial);
 
 	/* FIXME: What about parport? */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused parport_serial_pci_resume(struct device *dev)
-{
-	struct parport_serial_private *priv = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused parport_serial_pci_resume(काष्ठा device *dev)
+अणु
+	काष्ठा parport_serial_निजी *priv = dev_get_drvdata(dev);
 
-	if (priv->serial)
+	अगर (priv->serial)
 		pciserial_resume_ports(priv->serial);
 
 	/* FIXME: What about parport? */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(parport_serial_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(parport_serial_pm_ops,
 			 parport_serial_pci_suspend, parport_serial_pci_resume);
 
-static struct pci_driver parport_serial_pci_driver = {
+अटल काष्ठा pci_driver parport_serial_pci_driver = अणु
 	.name		= "parport_serial",
 	.id_table	= parport_serial_pci_tbl,
 	.probe		= parport_serial_pci_probe,
-	.remove		= parport_serial_pci_remove,
-	.driver         = {
+	.हटाओ		= parport_serial_pci_हटाओ,
+	.driver         = अणु
 		.pm     = &parport_serial_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_pci_driver(parport_serial_pci_driver);
 
 MODULE_AUTHOR("Tim Waugh <twaugh@redhat.com>");

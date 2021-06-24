@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <libelf.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <libelf.h>
 
-int main(void)
-{
-	size_t dst;
+पूर्णांक मुख्य(व्योम)
+अणु
+	माप_प्रकार dst;
 
-	return elf_getphdrnum(0, &dst);
-}
+	वापस elf_getphdrnum(0, &dst);
+पूर्ण

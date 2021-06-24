@@ -1,572 +1,573 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) by Paul Barton-Davis 1998-1999
  */
 
-/* The low level driver for the WaveFront ICS2115 MIDI interface(s)
+/* The low level driver क्रम the WaveFront ICS2115 MIDI पूर्णांकerface(s)
  *
  * Note that there is also an MPU-401 emulation (actually, a UART-401
  * emulation) on the CS4232 on the Tropez and Tropez Plus. This code
- * has nothing to do with that interface at all.
+ * has nothing to करो with that पूर्णांकerface at all.
  *
- * The interface is essentially just a UART-401, but is has the
- * interesting property of supporting what Turtle Beach called
+ * The पूर्णांकerface is essentially just a UART-401, but is has the
+ * पूर्णांकeresting property of supporting what Turtle Beach called
  * "Virtual MIDI" mode. In this mode, there are effectively *two*
- * MIDI buses accessible via the interface, one that is routed
- * solely to/from the external WaveFront synthesizer and the other
- * corresponding to the pin/socket connector used to link external
+ * MIDI buses accessible via the पूर्णांकerface, one that is routed
+ * solely to/from the बाह्यal WaveFront synthesizer and the other
+ * corresponding to the pin/socket connector used to link बाह्यal
  * MIDI devices to the board.
  *
  * This driver fully supports this mode, allowing two distinct MIDI
  * busses to be used completely independently, giving 32 channels of
- * MIDI routing, 16 to the WaveFront synth and 16 to the external MIDI
+ * MIDI routing, 16 to the WaveFront synth and 16 to the बाह्यal MIDI
  * bus. The devices are named /dev/snd/midiCnD0 and /dev/snd/midiCnD1,
  * where `n' is the card number. Note that the device numbers may be
- * something other than 0 and 1 if the CS4232 UART/MPU-401 interface
+ * something other than 0 and 1 अगर the CS4232 UART/MPU-401 पूर्णांकerface
  * is enabled.
  *
- * Switching between the two is accomplished externally by the driver
- * using the two otherwise unused MIDI bytes. See the code for more details.
+ * Switching between the two is accomplished बाह्यally by the driver
+ * using the two otherwise unused MIDI bytes. See the code क्रम more details.
  *
  * NOTE: VIRTUAL MIDI MODE IS ON BY DEFAULT (see lowlevel/isa/wavefront.c)
  *
- * The main reason to turn off Virtual MIDI mode is when you want to
- * tightly couple the WaveFront synth with an external MIDI
+ * The मुख्य reason to turn off Virtual MIDI mode is when you want to
+ * tightly couple the WaveFront synth with an बाह्यal MIDI
  * device. You won't be able to distinguish the source of any MIDI
- * data except via SysEx ID, but thats probably OK, since for the most
+ * data except via SysEx ID, but thats probably OK, since क्रम the most
  * part, the WaveFront won't be sending any MIDI data at all.
  *  
- * The main reason to turn on Virtual MIDI Mode is to provide two
+ * The मुख्य reason to turn on Virtual MIDI Mode is to provide two
  * completely independent 16-channel MIDI buses, one to the
- * WaveFront and one to any external MIDI devices. Given the 32
+ * WaveFront and one to any बाह्यal MIDI devices. Given the 32
  * voice nature of the WaveFront, its pretty easy to find a use
- * for all 16 channels driving just that synth.
+ * क्रम all 16 channels driving just that synth.
  *  
  */
 
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/time.h>
-#include <linux/wait.h>
-#include <sound/core.h>
-#include <sound/snd_wavefront.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/रुको.h>
+#समावेश <sound/core.h>
+#समावेश <sound/snd_wavefront.h>
 
-static inline int 
+अटल अंतरभूत पूर्णांक 
 wf_mpu_status (snd_wavefront_midi_t *midi)
 
-{
-	return inb (midi->mpu_status_port);
-}
+अणु
+	वापस inb (midi->mpu_status_port);
+पूर्ण
 
-static inline int 
+अटल अंतरभूत पूर्णांक 
 input_avail (snd_wavefront_midi_t *midi)
 
-{
-	return !(wf_mpu_status(midi) & INPUT_AVAIL);
-}
+अणु
+	वापस !(wf_mpu_status(midi) & INPUT_AVAIL);
+पूर्ण
 
-static inline int
-output_ready (snd_wavefront_midi_t *midi)
+अटल अंतरभूत पूर्णांक
+output_पढ़ोy (snd_wavefront_midi_t *midi)
 
-{
-	return !(wf_mpu_status(midi) & OUTPUT_READY);
-}
+अणु
+	वापस !(wf_mpu_status(midi) & OUTPUT_READY);
+पूर्ण
 
-static inline int 
-read_data (snd_wavefront_midi_t *midi)
+अटल अंतरभूत पूर्णांक 
+पढ़ो_data (snd_wavefront_midi_t *midi)
 
-{
-	return inb (midi->mpu_data_port);
-}
+अणु
+	वापस inb (midi->mpu_data_port);
+पूर्ण
 
-static inline void 
-write_data (snd_wavefront_midi_t *midi, unsigned char byte)
+अटल अंतरभूत व्योम 
+ग_लिखो_data (snd_wavefront_midi_t *midi, अचिन्हित अक्षर byte)
 
-{
+अणु
 	outb (byte, midi->mpu_data_port);
-}
+पूर्ण
 
-static snd_wavefront_midi_t *
-get_wavefront_midi (struct snd_rawmidi_substream *substream)
+अटल snd_wavefront_midi_t *
+get_wavefront_midi (काष्ठा snd_rawmidi_substream *substream)
 
-{
-	struct snd_card *card;
+अणु
+	काष्ठा snd_card *card;
 	snd_wavefront_card_t *acard;
 
-	if (substream == NULL || substream->rmidi == NULL) 
-	        return NULL;
+	अगर (substream == शून्य || substream->rmidi == शून्य) 
+	        वापस शून्य;
 
 	card = substream->rmidi->card;
 
-	if (card == NULL) 
-	        return NULL;
+	अगर (card == शून्य) 
+	        वापस शून्य;
 
-	if (card->private_data == NULL) 
- 	        return NULL;
+	अगर (card->निजी_data == शून्य) 
+ 	        वापस शून्य;
 
-	acard = card->private_data;
+	acard = card->निजी_data;
 
-	return &acard->wavefront.midi;
-}
+	वापस &acard->wavefront.midi;
+पूर्ण
 
-static void snd_wavefront_midi_output_write(snd_wavefront_card_t *card)
-{
+अटल व्योम snd_wavefront_midi_output_ग_लिखो(snd_wavefront_card_t *card)
+अणु
 	snd_wavefront_midi_t *midi = &card->wavefront.midi;
 	snd_wavefront_mpu_id  mpu;
-	unsigned long flags;
-	unsigned char midi_byte;
-	int max = 256, mask = 1;
-	int timeout;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर midi_byte;
+	पूर्णांक max = 256, mask = 1;
+	पूर्णांक समयout;
 
 	/* Its not OK to try to change the status of "virtuality" of
-	   the MIDI interface while we're outputting stuff.  See
-	   snd_wavefront_midi_{enable,disable}_virtual () for the
+	   the MIDI पूर्णांकerface जबतक we're outputting stuff.  See
+	   snd_wavefront_midi_अणुenable,disableपूर्ण_भव () क्रम the
 	   other half of this.  
 
 	   The first loop attempts to flush any data from the
 	   current output device, and then the second 
-	   emits the switch byte (if necessary), and starts
-	   outputting data for the output device currently in use.
+	   emits the चयन byte (अगर necessary), and starts
+	   outputting data क्रम the output device currently in use.
 	*/
 
-	if (midi->substream_output[midi->output_mpu] == NULL) {
-		goto __second;
-	}
+	अगर (midi->substream_output[midi->output_mpu] == शून्य) अणु
+		जाओ __second;
+	पूर्ण
 
-	while (max > 0) {
+	जबतक (max > 0) अणु
 
 		/* XXX fix me - no hard timing loops allowed! */
 
-		for (timeout = 30000; timeout > 0; timeout--) {
-			if (output_ready (midi))
-				break;
-		}
+		क्रम (समयout = 30000; समयout > 0; समयout--) अणु
+			अगर (output_पढ़ोy (midi))
+				अवरोध;
+		पूर्ण
 	
-		spin_lock_irqsave (&midi->virtual, flags);
-		if ((midi->mode[midi->output_mpu] & MPU401_MODE_OUTPUT) == 0) {
-			spin_unlock_irqrestore (&midi->virtual, flags);
-			goto __second;
-		}
-		if (output_ready (midi)) {
-			if (snd_rawmidi_transmit(midi->substream_output[midi->output_mpu], &midi_byte, 1) == 1) {
-				if (!midi->isvirtual ||
+		spin_lock_irqsave (&midi->भव, flags);
+		अगर ((midi->mode[midi->output_mpu] & MPU401_MODE_OUTPUT) == 0) अणु
+			spin_unlock_irqrestore (&midi->भव, flags);
+			जाओ __second;
+		पूर्ण
+		अगर (output_पढ़ोy (midi)) अणु
+			अगर (snd_rawmidi_transmit(midi->substream_output[midi->output_mpu], &midi_byte, 1) == 1) अणु
+				अगर (!midi->isभव ||
 					(midi_byte != WF_INTERNAL_SWITCH &&
 					 midi_byte != WF_EXTERNAL_SWITCH))
-					write_data(midi, midi_byte);
+					ग_लिखो_data(midi, midi_byte);
 				max--;
-			} else {
-				if (midi->istimer) {
-					if (--midi->istimer <= 0)
-						del_timer(&midi->timer);
-				}
+			पूर्ण अन्यथा अणु
+				अगर (midi->isसमयr) अणु
+					अगर (--midi->isसमयr <= 0)
+						del_समयr(&midi->समयr);
+				पूर्ण
 				midi->mode[midi->output_mpu] &= ~MPU401_MODE_OUTPUT_TRIGGER;
-				spin_unlock_irqrestore (&midi->virtual, flags);
-				goto __second;
-			}
-		} else {
-			spin_unlock_irqrestore (&midi->virtual, flags);
-			return;
-		}
-		spin_unlock_irqrestore (&midi->virtual, flags);
-	}
+				spin_unlock_irqrestore (&midi->भव, flags);
+				जाओ __second;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			spin_unlock_irqrestore (&midi->भव, flags);
+			वापस;
+		पूर्ण
+		spin_unlock_irqrestore (&midi->भव, flags);
+	पूर्ण
 
       __second:
 
-	if (midi->substream_output[!midi->output_mpu] == NULL) {
-		return;
-	}
+	अगर (midi->substream_output[!midi->output_mpu] == शून्य) अणु
+		वापस;
+	पूर्ण
 
-	while (max > 0) {
+	जबतक (max > 0) अणु
 
 		/* XXX fix me - no hard timing loops allowed! */
 
-		for (timeout = 30000; timeout > 0; timeout--) {
-			if (output_ready (midi))
-				break;
-		}
+		क्रम (समयout = 30000; समयout > 0; समयout--) अणु
+			अगर (output_पढ़ोy (midi))
+				अवरोध;
+		पूर्ण
 	
-		spin_lock_irqsave (&midi->virtual, flags);
-		if (!midi->isvirtual)
+		spin_lock_irqsave (&midi->भव, flags);
+		अगर (!midi->isभव)
 			mask = 0;
 		mpu = midi->output_mpu ^ mask;
-		mask = 0;	/* don't invert the value from now */
-		if ((midi->mode[mpu] & MPU401_MODE_OUTPUT) == 0) {
-			spin_unlock_irqrestore (&midi->virtual, flags);
-			return;
-		}
-		if (snd_rawmidi_transmit_empty(midi->substream_output[mpu]))
-			goto __timer;
-		if (output_ready (midi)) {
-			if (mpu != midi->output_mpu) {
-				write_data(midi, mpu == internal_mpu ?
+		mask = 0;	/* करोn't invert the value from now */
+		अगर ((midi->mode[mpu] & MPU401_MODE_OUTPUT) == 0) अणु
+			spin_unlock_irqrestore (&midi->भव, flags);
+			वापस;
+		पूर्ण
+		अगर (snd_rawmidi_transmit_empty(midi->substream_output[mpu]))
+			जाओ __समयr;
+		अगर (output_पढ़ोy (midi)) अणु
+			अगर (mpu != midi->output_mpu) अणु
+				ग_लिखो_data(midi, mpu == पूर्णांकernal_mpu ?
 							WF_INTERNAL_SWITCH :
 							WF_EXTERNAL_SWITCH);
 				midi->output_mpu = mpu;
-			} else if (snd_rawmidi_transmit(midi->substream_output[mpu], &midi_byte, 1) == 1) {
-				if (!midi->isvirtual ||
+			पूर्ण अन्यथा अगर (snd_rawmidi_transmit(midi->substream_output[mpu], &midi_byte, 1) == 1) अणु
+				अगर (!midi->isभव ||
 					(midi_byte != WF_INTERNAL_SWITCH &&
 					 midi_byte != WF_EXTERNAL_SWITCH))
-					write_data(midi, midi_byte);
+					ग_लिखो_data(midi, midi_byte);
 				max--;
-			} else {
-			      __timer:
-				if (midi->istimer) {
-					if (--midi->istimer <= 0)
-						del_timer(&midi->timer);
-				}
+			पूर्ण अन्यथा अणु
+			      __समयr:
+				अगर (midi->isसमयr) अणु
+					अगर (--midi->isसमयr <= 0)
+						del_समयr(&midi->समयr);
+				पूर्ण
 				midi->mode[mpu] &= ~MPU401_MODE_OUTPUT_TRIGGER;
-				spin_unlock_irqrestore (&midi->virtual, flags);
-				return;
-			}
-		} else {
-			spin_unlock_irqrestore (&midi->virtual, flags);
-			return;
-		}
-		spin_unlock_irqrestore (&midi->virtual, flags);
-	}
-}
+				spin_unlock_irqrestore (&midi->भव, flags);
+				वापस;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			spin_unlock_irqrestore (&midi->भव, flags);
+			वापस;
+		पूर्ण
+		spin_unlock_irqrestore (&midi->भव, flags);
+	पूर्ण
+पूर्ण
 
-static int snd_wavefront_midi_input_open(struct snd_rawmidi_substream *substream)
-{
-	unsigned long flags;
+अटल पूर्णांक snd_wavefront_midi_input_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	अचिन्हित दीर्घ flags;
 	snd_wavefront_midi_t *midi;
 	snd_wavefront_mpu_id mpu;
 
-	if (snd_BUG_ON(!substream || !substream->rmidi))
-		return -ENXIO;
-	if (snd_BUG_ON(!substream->rmidi->private_data))
-		return -ENXIO;
+	अगर (snd_BUG_ON(!substream || !substream->rmidi))
+		वापस -ENXIO;
+	अगर (snd_BUG_ON(!substream->rmidi->निजी_data))
+		वापस -ENXIO;
 
-	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->private_data);
+	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->निजी_data);
 
-	if ((midi = get_wavefront_midi (substream)) == NULL)
-	        return -EIO;
+	अगर ((midi = get_wavefront_midi (substream)) == शून्य)
+	        वापस -EIO;
 
-	spin_lock_irqsave (&midi->open, flags);
+	spin_lock_irqsave (&midi->खोलो, flags);
 	midi->mode[mpu] |= MPU401_MODE_INPUT;
 	midi->substream_input[mpu] = substream;
-	spin_unlock_irqrestore (&midi->open, flags);
+	spin_unlock_irqrestore (&midi->खोलो, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_wavefront_midi_output_open(struct snd_rawmidi_substream *substream)
-{
-	unsigned long flags;
+अटल पूर्णांक snd_wavefront_midi_output_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	अचिन्हित दीर्घ flags;
 	snd_wavefront_midi_t *midi;
 	snd_wavefront_mpu_id mpu;
 
-	if (snd_BUG_ON(!substream || !substream->rmidi))
-		return -ENXIO;
-	if (snd_BUG_ON(!substream->rmidi->private_data))
-		return -ENXIO;
+	अगर (snd_BUG_ON(!substream || !substream->rmidi))
+		वापस -ENXIO;
+	अगर (snd_BUG_ON(!substream->rmidi->निजी_data))
+		वापस -ENXIO;
 
-	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->private_data);
+	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->निजी_data);
 
-	if ((midi = get_wavefront_midi (substream)) == NULL)
-	        return -EIO;
+	अगर ((midi = get_wavefront_midi (substream)) == शून्य)
+	        वापस -EIO;
 
-	spin_lock_irqsave (&midi->open, flags);
+	spin_lock_irqsave (&midi->खोलो, flags);
 	midi->mode[mpu] |= MPU401_MODE_OUTPUT;
 	midi->substream_output[mpu] = substream;
-	spin_unlock_irqrestore (&midi->open, flags);
+	spin_unlock_irqrestore (&midi->खोलो, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_wavefront_midi_input_close(struct snd_rawmidi_substream *substream)
-{
-	unsigned long flags;
+अटल पूर्णांक snd_wavefront_midi_input_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	अचिन्हित दीर्घ flags;
 	snd_wavefront_midi_t *midi;
 	snd_wavefront_mpu_id mpu;
 
-	if (snd_BUG_ON(!substream || !substream->rmidi))
-		return -ENXIO;
-	if (snd_BUG_ON(!substream->rmidi->private_data))
-		return -ENXIO;
+	अगर (snd_BUG_ON(!substream || !substream->rmidi))
+		वापस -ENXIO;
+	अगर (snd_BUG_ON(!substream->rmidi->निजी_data))
+		वापस -ENXIO;
 
-	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->private_data);
+	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->निजी_data);
 
-	if ((midi = get_wavefront_midi (substream)) == NULL)
-	        return -EIO;
+	अगर ((midi = get_wavefront_midi (substream)) == शून्य)
+	        वापस -EIO;
 
-	spin_lock_irqsave (&midi->open, flags);
+	spin_lock_irqsave (&midi->खोलो, flags);
 	midi->mode[mpu] &= ~MPU401_MODE_INPUT;
-	spin_unlock_irqrestore (&midi->open, flags);
+	spin_unlock_irqrestore (&midi->खोलो, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_wavefront_midi_output_close(struct snd_rawmidi_substream *substream)
-{
-	unsigned long flags;
+अटल पूर्णांक snd_wavefront_midi_output_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	अचिन्हित दीर्घ flags;
 	snd_wavefront_midi_t *midi;
 	snd_wavefront_mpu_id mpu;
 
-	if (snd_BUG_ON(!substream || !substream->rmidi))
-		return -ENXIO;
-	if (snd_BUG_ON(!substream->rmidi->private_data))
-		return -ENXIO;
+	अगर (snd_BUG_ON(!substream || !substream->rmidi))
+		वापस -ENXIO;
+	अगर (snd_BUG_ON(!substream->rmidi->निजी_data))
+		वापस -ENXIO;
 
-	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->private_data);
+	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->निजी_data);
 
-	if ((midi = get_wavefront_midi (substream)) == NULL)
-	        return -EIO;
+	अगर ((midi = get_wavefront_midi (substream)) == शून्य)
+	        वापस -EIO;
 
-	spin_lock_irqsave (&midi->open, flags);
+	spin_lock_irqsave (&midi->खोलो, flags);
 	midi->mode[mpu] &= ~MPU401_MODE_OUTPUT;
-	spin_unlock_irqrestore (&midi->open, flags);
-	return 0;
-}
+	spin_unlock_irqrestore (&midi->खोलो, flags);
+	वापस 0;
+पूर्ण
 
-static void snd_wavefront_midi_input_trigger(struct snd_rawmidi_substream *substream, int up)
-{
-	unsigned long flags;
+अटल व्योम snd_wavefront_midi_input_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
+अणु
+	अचिन्हित दीर्घ flags;
 	snd_wavefront_midi_t *midi;
 	snd_wavefront_mpu_id mpu;
 
-	if (substream == NULL || substream->rmidi == NULL) 
-	        return;
+	अगर (substream == शून्य || substream->rmidi == शून्य) 
+	        वापस;
 
-	if (substream->rmidi->private_data == NULL)
-	        return;
+	अगर (substream->rmidi->निजी_data == शून्य)
+	        वापस;
 
-	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->private_data);
+	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->निजी_data);
 
-	if ((midi = get_wavefront_midi (substream)) == NULL) {
-		return;
-	}
+	अगर ((midi = get_wavefront_midi (substream)) == शून्य) अणु
+		वापस;
+	पूर्ण
 
-	spin_lock_irqsave (&midi->virtual, flags);
-	if (up) {
+	spin_lock_irqsave (&midi->भव, flags);
+	अगर (up) अणु
 		midi->mode[mpu] |= MPU401_MODE_INPUT_TRIGGER;
-	} else {
+	पूर्ण अन्यथा अणु
 		midi->mode[mpu] &= ~MPU401_MODE_INPUT_TRIGGER;
-	}
-	spin_unlock_irqrestore (&midi->virtual, flags);
-}
+	पूर्ण
+	spin_unlock_irqrestore (&midi->भव, flags);
+पूर्ण
 
-static void snd_wavefront_midi_output_timer(struct timer_list *t)
-{
-	snd_wavefront_midi_t *midi = from_timer(midi, t, timer);
-	snd_wavefront_card_t *card = midi->timer_card;
-	unsigned long flags;
+अटल व्योम snd_wavefront_midi_output_समयr(काष्ठा समयr_list *t)
+अणु
+	snd_wavefront_midi_t *midi = from_समयr(midi, t, समयr);
+	snd_wavefront_card_t *card = midi->समयr_card;
+	अचिन्हित दीर्घ flags;
 	
-	spin_lock_irqsave (&midi->virtual, flags);
-	mod_timer(&midi->timer, 1 + jiffies);
-	spin_unlock_irqrestore (&midi->virtual, flags);
-	snd_wavefront_midi_output_write(card);
-}
+	spin_lock_irqsave (&midi->भव, flags);
+	mod_समयr(&midi->समयr, 1 + jअगरfies);
+	spin_unlock_irqrestore (&midi->भव, flags);
+	snd_wavefront_midi_output_ग_लिखो(card);
+पूर्ण
 
-static void snd_wavefront_midi_output_trigger(struct snd_rawmidi_substream *substream, int up)
-{
-	unsigned long flags;
+अटल व्योम snd_wavefront_midi_output_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
+अणु
+	अचिन्हित दीर्घ flags;
 	snd_wavefront_midi_t *midi;
 	snd_wavefront_mpu_id mpu;
 
-	if (substream == NULL || substream->rmidi == NULL) 
-	        return;
+	अगर (substream == शून्य || substream->rmidi == शून्य) 
+	        वापस;
 
-	if (substream->rmidi->private_data == NULL)
-	        return;
+	अगर (substream->rmidi->निजी_data == शून्य)
+	        वापस;
 
-	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->private_data);
+	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->निजी_data);
 
-	if ((midi = get_wavefront_midi (substream)) == NULL) {
-		return;
-	}
+	अगर ((midi = get_wavefront_midi (substream)) == शून्य) अणु
+		वापस;
+	पूर्ण
 
-	spin_lock_irqsave (&midi->virtual, flags);
-	if (up) {
-		if ((midi->mode[mpu] & MPU401_MODE_OUTPUT_TRIGGER) == 0) {
-			if (!midi->istimer) {
-				timer_setup(&midi->timer,
-					    snd_wavefront_midi_output_timer,
+	spin_lock_irqsave (&midi->भव, flags);
+	अगर (up) अणु
+		अगर ((midi->mode[mpu] & MPU401_MODE_OUTPUT_TRIGGER) == 0) अणु
+			अगर (!midi->isसमयr) अणु
+				समयr_setup(&midi->समयr,
+					    snd_wavefront_midi_output_समयr,
 					    0);
-				mod_timer(&midi->timer, 1 + jiffies);
-			}
-			midi->istimer++;
+				mod_समयr(&midi->समयr, 1 + jअगरfies);
+			पूर्ण
+			midi->isसमयr++;
 			midi->mode[mpu] |= MPU401_MODE_OUTPUT_TRIGGER;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		midi->mode[mpu] &= ~MPU401_MODE_OUTPUT_TRIGGER;
-	}
-	spin_unlock_irqrestore (&midi->virtual, flags);
+	पूर्ण
+	spin_unlock_irqrestore (&midi->भव, flags);
 
-	if (up)
-		snd_wavefront_midi_output_write((snd_wavefront_card_t *)substream->rmidi->card->private_data);
-}
+	अगर (up)
+		snd_wavefront_midi_output_ग_लिखो((snd_wavefront_card_t *)substream->rmidi->card->निजी_data);
+पूर्ण
 
-void
-snd_wavefront_midi_interrupt (snd_wavefront_card_t *card)
+व्योम
+snd_wavefront_midi_पूर्णांकerrupt (snd_wavefront_card_t *card)
 
-{
-	unsigned long flags;
+अणु
+	अचिन्हित दीर्घ flags;
 	snd_wavefront_midi_t *midi;
-	static struct snd_rawmidi_substream *substream = NULL;
-	static int mpu = external_mpu; 
-	int max = 128;
-	unsigned char byte;
+	अटल काष्ठा snd_rawmidi_substream *substream = शून्य;
+	अटल पूर्णांक mpu = बाह्यal_mpu; 
+	पूर्णांक max = 128;
+	अचिन्हित अक्षर byte;
 
 	midi = &card->wavefront.midi;
 
-	if (!input_avail (midi)) { /* not for us */
-		snd_wavefront_midi_output_write(card);
-		return;
-	}
+	अगर (!input_avail (midi)) अणु /* not क्रम us */
+		snd_wavefront_midi_output_ग_लिखो(card);
+		वापस;
+	पूर्ण
 
-	spin_lock_irqsave (&midi->virtual, flags);
-	while (--max) {
+	spin_lock_irqsave (&midi->भव, flags);
+	जबतक (--max) अणु
 
-		if (input_avail (midi)) {
-			byte = read_data (midi);
+		अगर (input_avail (midi)) अणु
+			byte = पढ़ो_data (midi);
 
-			if (midi->isvirtual) {				
-				if (byte == WF_EXTERNAL_SWITCH) {
-					substream = midi->substream_input[external_mpu];
-					mpu = external_mpu;
-				} else if (byte == WF_INTERNAL_SWITCH) { 
-					substream = midi->substream_output[internal_mpu];
-					mpu = internal_mpu;
-				} /* else just leave it as it is */
-			} else {
-				substream = midi->substream_input[internal_mpu];
-				mpu = internal_mpu;
-			}
+			अगर (midi->isभव) अणु				
+				अगर (byte == WF_EXTERNAL_SWITCH) अणु
+					substream = midi->substream_input[बाह्यal_mpu];
+					mpu = बाह्यal_mpu;
+				पूर्ण अन्यथा अगर (byte == WF_INTERNAL_SWITCH) अणु 
+					substream = midi->substream_output[पूर्णांकernal_mpu];
+					mpu = पूर्णांकernal_mpu;
+				पूर्ण /* अन्यथा just leave it as it is */
+			पूर्ण अन्यथा अणु
+				substream = midi->substream_input[पूर्णांकernal_mpu];
+				mpu = पूर्णांकernal_mpu;
+			पूर्ण
 
-			if (substream == NULL) {
-				continue;
-			}
+			अगर (substream == शून्य) अणु
+				जारी;
+			पूर्ण
 
-			if (midi->mode[mpu] & MPU401_MODE_INPUT_TRIGGER) {
+			अगर (midi->mode[mpu] & MPU401_MODE_INPUT_TRIGGER) अणु
 				snd_rawmidi_receive(substream, &byte, 1);
-			}
-		} else {
-			break;
-		}
-	} 
-	spin_unlock_irqrestore (&midi->virtual, flags);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण 
+	spin_unlock_irqrestore (&midi->भव, flags);
 
-	snd_wavefront_midi_output_write(card);
-}
+	snd_wavefront_midi_output_ग_लिखो(card);
+पूर्ण
 
-void
-snd_wavefront_midi_enable_virtual (snd_wavefront_card_t *card)
+व्योम
+snd_wavefront_midi_enable_भव (snd_wavefront_card_t *card)
 
-{
-	unsigned long flags;
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave (&card->wavefront.midi.virtual, flags);
-	card->wavefront.midi.isvirtual = 1;
-	card->wavefront.midi.output_mpu = internal_mpu;
-	card->wavefront.midi.input_mpu = internal_mpu;
-	spin_unlock_irqrestore (&card->wavefront.midi.virtual, flags);
-}
+	spin_lock_irqsave (&card->wavefront.midi.भव, flags);
+	card->wavefront.midi.isभव = 1;
+	card->wavefront.midi.output_mpu = पूर्णांकernal_mpu;
+	card->wavefront.midi.input_mpu = पूर्णांकernal_mpu;
+	spin_unlock_irqrestore (&card->wavefront.midi.भव, flags);
+पूर्ण
 
-void
-snd_wavefront_midi_disable_virtual (snd_wavefront_card_t *card)
+व्योम
+snd_wavefront_midi_disable_भव (snd_wavefront_card_t *card)
 
-{
-	unsigned long flags;
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave (&card->wavefront.midi.virtual, flags);
-	// snd_wavefront_midi_input_close (card->ics2115_external_rmidi);
-	// snd_wavefront_midi_output_close (card->ics2115_external_rmidi);
-	card->wavefront.midi.isvirtual = 0;
-	spin_unlock_irqrestore (&card->wavefront.midi.virtual, flags);
-}
+	spin_lock_irqsave (&card->wavefront.midi.भव, flags);
+	// snd_wavefront_midi_input_बंद (card->ics2115_बाह्यal_rmidi);
+	// snd_wavefront_midi_output_बंद (card->ics2115_बाह्यal_rmidi);
+	card->wavefront.midi.isभव = 0;
+	spin_unlock_irqrestore (&card->wavefront.midi.भव, flags);
+पूर्ण
 
-int
+पूर्णांक
 snd_wavefront_midi_start (snd_wavefront_card_t *card)
 
-{
-	int ok, i;
-	unsigned char rbuf[4], wbuf[4];
+अणु
+	पूर्णांक ok, i;
+	अचिन्हित अक्षर rbuf[4], wbuf[4];
 	snd_wavefront_t *dev;
 	snd_wavefront_midi_t *midi;
 
 	dev = &card->wavefront;
 	midi = &dev->midi;
 
-	/* The ICS2115 MPU-401 interface doesn't do anything
-	   until its set into UART mode.
+	/* The ICS2115 MPU-401 पूर्णांकerface करोesn't करो anything
+	   until its set पूर्णांकo UART mode.
 	*/
 
 	/* XXX fix me - no hard timing loops allowed! */
 
-	for (i = 0; i < 30000 && !output_ready (midi); i++);
+	क्रम (i = 0; i < 30000 && !output_पढ़ोy (midi); i++);
 
-	if (!output_ready (midi)) {
-		snd_printk ("MIDI interface not ready for command\n");
-		return -1;
-	}
+	अगर (!output_पढ़ोy (midi)) अणु
+		snd_prपूर्णांकk ("MIDI interface not ready for command\n");
+		वापस -1;
+	पूर्ण
 
-	/* Any interrupts received from now on
+	/* Any पूर्णांकerrupts received from now on
 	   are owned by the MIDI side of things.
 	*/
 
-	dev->interrupts_are_midi = 1;
+	dev->पूर्णांकerrupts_are_midi = 1;
 	
 	outb (UART_MODE_ON, midi->mpu_command_port);
 
-	for (ok = 0, i = 50000; i > 0 && !ok; i--) {
-		if (input_avail (midi)) {
-			if (read_data (midi) == MPU_ACK) {
+	क्रम (ok = 0, i = 50000; i > 0 && !ok; i--) अणु
+		अगर (input_avail (midi)) अणु
+			अगर (पढ़ो_data (midi) == MPU_ACK) अणु
 				ok = 1;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!ok) {
-		snd_printk ("cannot set UART mode for MIDI interface");
-		dev->interrupts_are_midi = 0;
-		return -1;
-	}
+	अगर (!ok) अणु
+		snd_prपूर्णांकk ("cannot set UART mode for MIDI interface");
+		dev->पूर्णांकerrupts_are_midi = 0;
+		वापस -1;
+	पूर्ण
 
-	/* Route external MIDI to WaveFront synth (by default) */
+	/* Route बाह्यal MIDI to WaveFront synth (by शेष) */
     
-	if (snd_wavefront_cmd (dev, WFC_MISYNTH_ON, rbuf, wbuf)) {
-		snd_printk ("can't enable MIDI-IN-2-synth routing.\n");
+	अगर (snd_wavefront_cmd (dev, WFC_MISYNTH_ON, rbuf, wbuf)) अणु
+		snd_prपूर्णांकk ("can't enable MIDI-IN-2-synth routing.\n");
 		/* XXX error ? */
-	}
+	पूर्ण
 
 	/* Turn on Virtual MIDI, but first *always* turn it off,
 	   since otherwise consecutive reloads of the driver will
 	   never cause the hardware to generate the initial "internal" or 
 	   "external" source bytes in the MIDI data stream. This
-	   is pretty important, since the internal hardware generally will
+	   is pretty important, since the पूर्णांकernal hardware generally will
 	   be used to generate none or very little MIDI output, and
-	   thus the only source of MIDI data is actually external. Without
-	   the switch bytes, the driver will think it all comes from
-	   the internal interface. Duh.
+	   thus the only source of MIDI data is actually बाह्यal. Without
+	   the चयन bytes, the driver will think it all comes from
+	   the पूर्णांकernal पूर्णांकerface. Duh.
 	*/
 
-	if (snd_wavefront_cmd (dev, WFC_VMIDI_OFF, rbuf, wbuf)) { 
-		snd_printk ("virtual MIDI mode not disabled\n");
-		return 0; /* We're OK, but missing the external MIDI dev */
-	}
+	अगर (snd_wavefront_cmd (dev, WFC_VMIDI_OFF, rbuf, wbuf)) अणु 
+		snd_prपूर्णांकk ("virtual MIDI mode not disabled\n");
+		वापस 0; /* We're OK, but missing the बाह्यal MIDI dev */
+	पूर्ण
 
-	snd_wavefront_midi_enable_virtual (card);
+	snd_wavefront_midi_enable_भव (card);
 
-	if (snd_wavefront_cmd (dev, WFC_VMIDI_ON, rbuf, wbuf)) {
-		snd_printk ("cannot enable virtual MIDI mode.\n");
-		snd_wavefront_midi_disable_virtual (card);
-	} 
-	return 0;
-}
+	अगर (snd_wavefront_cmd (dev, WFC_VMIDI_ON, rbuf, wbuf)) अणु
+		snd_prपूर्णांकk ("cannot enable virtual MIDI mode.\n");
+		snd_wavefront_midi_disable_भव (card);
+	पूर्ण 
+	वापस 0;
+पूर्ण
 
-const struct snd_rawmidi_ops snd_wavefront_midi_output =
-{
-	.open =		snd_wavefront_midi_output_open,
-	.close =	snd_wavefront_midi_output_close,
+स्थिर काष्ठा snd_rawmidi_ops snd_wavefront_midi_output =
+अणु
+	.खोलो =		snd_wavefront_midi_output_खोलो,
+	.बंद =	snd_wavefront_midi_output_बंद,
 	.trigger =	snd_wavefront_midi_output_trigger,
-};
+पूर्ण;
 
-const struct snd_rawmidi_ops snd_wavefront_midi_input =
-{
-	.open =		snd_wavefront_midi_input_open,
-	.close =	snd_wavefront_midi_input_close,
+स्थिर काष्ठा snd_rawmidi_ops snd_wavefront_midi_input =
+अणु
+	.खोलो =		snd_wavefront_midi_input_खोलो,
+	.बंद =	snd_wavefront_midi_input_बंद,
 	.trigger =	snd_wavefront_midi_input_trigger,
-};
+पूर्ण;
 

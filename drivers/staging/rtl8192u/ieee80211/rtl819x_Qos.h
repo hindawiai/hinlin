@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __INC_QOS_TYPE_H
-#define __INC_QOS_TYPE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __INC_QOS_TYPE_H
+#घोषणा __INC_QOS_TYPE_H
 
 /*
  * ACI/AIFSN Field.
  * Ref: WMM spec 2.2.2: WME Parameter Element, p.12.
  * Note: 1 Byte Length
  */
-struct aci_aifsn {
-	u8	aifsn:4;
+काष्ठा aci_aअगरsn अणु
+	u8	aअगरsn:4;
 	u8	acm:1;
 	u8	aci:2;
 	u8:1;
-};
+पूर्ण;
 
 /*
  * Direction Field Values.
  * Ref: WMM spec 2.2.11: WME TSPEC Element, p.18.
  */
-enum direction_value {
-	DIR_UP			= 0,		// 0x00	// UpLink
-	DIR_DOWN		= 1,		// 0x01	// DownLink
-	DIR_DIRECT		= 2,		// 0x10	// DirectLink
-	DIR_BI_DIR		= 3,		// 0x11	// Bi-Direction
-};
+क्रमागत direction_value अणु
+	सूची_UP			= 0,		// 0x00	// UpLink
+	सूची_DOWN		= 1,		// 0x01	// DownLink
+	सूची_सूचीECT		= 2,		// 0x10	// DirectLink
+	सूची_BI_सूची		= 3,		// 0x11	// Bi-Direction
+पूर्ण;
 
 /*
  * TS Info field in WMM TSPEC Element.
  * Ref:
  *	1. WMM spec 2.2.11: WME TSPEC Element, p.18.
  *	2. 8185 QoS code: QOS_TSINFO [def. in QoS_mp.h]
- * Note: sizeof 3 Bytes
+ * Note: माप 3 Bytes
  */
-struct qos_tsinfo {
+काष्ठा qos_tsinfo अणु
 	u16		uc_traffic_type:1;	        //WMM is reserved
 	u16		uc_tsid:4;
 	u16		uc_direction:2;
@@ -43,22 +44,22 @@ struct qos_tsinfo {
 	u16		uc_ts_info_ack_policy:2;	//WMM is reserved
 	u8		uc_schedule:1;		        //WMM is reserved
 	u8:7;
-};
+पूर्ण;
 
 /*
  * WMM TSPEC Body.
  * Ref: WMM spec 2.2.11: WME TSPEC Element, p.16.
- * Note: sizeof 55 bytes
+ * Note: माप 55 bytes
  */
-struct tspec_body {
-	struct qos_tsinfo	ts_info;	//u8	TSInfo[3];
+काष्ठा tspec_body अणु
+	काष्ठा qos_tsinfo	ts_info;	//u8	TSInfo[3];
 	u16	nominal_msd_usize;
 	u16	max_msd_usize;
 	u32	min_service_itv;
 	u32	max_service_itv;
 	u32	inactivity_itv;
 	u32	suspen_itv;
-	u32	service_start_time;
+	u32	service_start_समय;
 	u32	min_data_rate;
 	u32	mean_data_rate;
 	u32	peak_data_rate;
@@ -66,17 +67,17 @@ struct tspec_body {
 	u32	delay_bound;
 	u32	min_phy_rate;
 	u16	surplus_bandwidth_allowance;
-	u16	medium_time;
-};
+	u16	medium_समय;
+पूर्ण;
 
 /*
  *      802.11 Management frame Status Code field
  */
-struct octet_string {
+काष्ठा octet_string अणु
 	u8		*octet;
 	u16             length;
-};
+पूर्ण;
 
-#define is_ac_valid(ac)			(((ac) <= 7) ? true : false)
+#घोषणा is_ac_valid(ac)			(((ac) <= 7) ? true : false)
 
-#endif // #ifndef __INC_QOS_TYPE_H
+#पूर्ण_अगर // #अगर_अघोषित __INC_QOS_TYPE_H

@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_CONNTRACK_DCCP_H
-#define _NF_CONNTRACK_DCCP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_CONNTRACK_DCCP_H
+#घोषणा _NF_CONNTRACK_DCCP_H
 
 /* Exposed to userspace over nfnetlink */
-enum ct_dccp_states {
+क्रमागत ct_dccp_states अणु
 	CT_DCCP_NONE,
 	CT_DCCP_REQUEST,
 	CT_DCCP_RESPOND,
@@ -15,24 +16,24 @@ enum ct_dccp_states {
 	CT_DCCP_IGNORE,
 	CT_DCCP_INVALID,
 	__CT_DCCP_MAX
-};
-#define CT_DCCP_MAX		(__CT_DCCP_MAX - 1)
+पूर्ण;
+#घोषणा CT_DCCP_MAX		(__CT_DCCP_MAX - 1)
 
-enum ct_dccp_roles {
+क्रमागत ct_dccp_roles अणु
 	CT_DCCP_ROLE_CLIENT,
 	CT_DCCP_ROLE_SERVER,
 	__CT_DCCP_ROLE_MAX
-};
-#define CT_DCCP_ROLE_MAX	(__CT_DCCP_ROLE_MAX - 1)
+पूर्ण;
+#घोषणा CT_DCCP_ROLE_MAX	(__CT_DCCP_ROLE_MAX - 1)
 
-#include <linux/netfilter/nf_conntrack_tuple_common.h>
+#समावेश <linux/netfilter/nf_conntrack_tuple_common.h>
 
-struct nf_ct_dccp {
-	u_int8_t	role[IP_CT_DIR_MAX];
-	u_int8_t	state;
-	u_int8_t	last_pkt;
-	u_int8_t	last_dir;
-	u_int64_t	handshake_seq;
-};
+काष्ठा nf_ct_dccp अणु
+	u_पूर्णांक8_t	role[IP_CT_सूची_MAX];
+	u_पूर्णांक8_t	state;
+	u_पूर्णांक8_t	last_pkt;
+	u_पूर्णांक8_t	last_dir;
+	u_पूर्णांक64_t	handshake_seq;
+पूर्ण;
 
-#endif /* _NF_CONNTRACK_DCCP_H */
+#पूर्ण_अगर /* _NF_CONNTRACK_DCCP_H */

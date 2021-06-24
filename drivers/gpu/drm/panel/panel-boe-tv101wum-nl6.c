@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2018 MediaTek Inc.
  * Author: Jitao Shi <jitao.shi@mediatek.com>
  */
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <drm/drm_connector.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_mipi_dsi.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_connector.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_panel.h>
 
-#include <video/mipi_display.h>
+#समावेश <video/mipi_display.h>
 
-struct panel_desc {
-	const struct drm_display_mode *modes;
-	unsigned int bpc;
+काष्ठा panel_desc अणु
+	स्थिर काष्ठा drm_display_mode *modes;
+	अचिन्हित पूर्णांक bpc;
 
 	/**
 	 * @width_mm: width of the panel's active display area
 	 * @height_mm: height of the panel's active display area
 	 */
-	struct {
-		unsigned int width_mm;
-		unsigned int height_mm;
-	} size;
+	काष्ठा अणु
+		अचिन्हित पूर्णांक width_mm;
+		अचिन्हित पूर्णांक height_mm;
+	पूर्ण size;
 
-	unsigned long mode_flags;
-	enum mipi_dsi_pixel_format format;
-	const struct panel_init_cmd *init_cmds;
-	unsigned int lanes;
-	bool discharge_on_disable;
-};
+	अचिन्हित दीर्घ mode_flags;
+	क्रमागत mipi_dsi_pixel_क्रमmat क्रमmat;
+	स्थिर काष्ठा panel_init_cmd *init_cmds;
+	अचिन्हित पूर्णांक lanes;
+	bool disअक्षरge_on_disable;
+पूर्ण;
 
-struct boe_panel {
-	struct drm_panel base;
-	struct mipi_dsi_device *dsi;
+काष्ठा boe_panel अणु
+	काष्ठा drm_panel base;
+	काष्ठा mipi_dsi_device *dsi;
 
-	const struct panel_desc *desc;
+	स्थिर काष्ठा panel_desc *desc;
 
-	enum drm_panel_orientation orientation;
-	struct regulator *pp1800;
-	struct regulator *avee;
-	struct regulator *avdd;
-	struct gpio_desc *enable_gpio;
+	क्रमागत drm_panel_orientation orientation;
+	काष्ठा regulator *pp1800;
+	काष्ठा regulator *avee;
+	काष्ठा regulator *avdd;
+	काष्ठा gpio_desc *enable_gpio;
 
 	bool prepared;
-};
+पूर्ण;
 
-enum dsi_cmd_type {
+क्रमागत dsi_cmd_type अणु
 	INIT_DCS_CMD,
 	DELAY_CMD,
-};
+पूर्ण;
 
-struct panel_init_cmd {
-	enum dsi_cmd_type type;
-	size_t len;
-	const char *data;
-};
+काष्ठा panel_init_cmd अणु
+	क्रमागत dsi_cmd_type type;
+	माप_प्रकार len;
+	स्थिर अक्षर *data;
+पूर्ण;
 
-#define _INIT_DCS_CMD(...) { \
+#घोषणा _INIT_DCS_CMD(...) अणु \
 	.type = INIT_DCS_CMD, \
-	.len = sizeof((char[]){__VA_ARGS__}), \
-	.data = (char[]){__VA_ARGS__} }
+	.len = माप((अक्षर[])अणु__VA_ARGS__पूर्ण), \
+	.data = (अक्षर[])अणु__VA_ARGS__पूर्ण पूर्ण
 
-#define _INIT_DELAY_CMD(...) { \
+#घोषणा _INIT_DELAY_CMD(...) अणु \
 	.type = DELAY_CMD,\
-	.len = sizeof((char[]){__VA_ARGS__}), \
-	.data = (char[]){__VA_ARGS__} }
+	.len = माप((अक्षर[])अणु__VA_ARGS__पूर्ण), \
+	.data = (अक्षर[])अणु__VA_ARGS__पूर्ण पूर्ण
 
-static const struct panel_init_cmd boe_init_cmd[] = {
+अटल स्थिर काष्ठा panel_init_cmd boe_init_cmd[] = अणु
 	_INIT_DELAY_CMD(24),
 	_INIT_DCS_CMD(0xB0, 0x05),
 	_INIT_DCS_CMD(0xB1, 0xE5),
@@ -367,19 +368,19 @@ static const struct panel_init_cmd boe_init_cmd[] = {
 	_INIT_DCS_CMD(0xB0, 0x04),
 	_INIT_DCS_CMD(0xB8, 0x68),
 	_INIT_DELAY_CMD(150),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct panel_init_cmd auo_kd101n80_45na_init_cmd[] = {
+अटल स्थिर काष्ठा panel_init_cmd auo_kd101n80_45na_init_cmd[] = अणु
 	_INIT_DELAY_CMD(24),
 	_INIT_DCS_CMD(0x11),
 	_INIT_DELAY_CMD(120),
 	_INIT_DCS_CMD(0x29),
 	_INIT_DELAY_CMD(120),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct panel_init_cmd auo_b101uan08_3_init_cmd[] = {
+अटल स्थिर काष्ठा panel_init_cmd auo_b101uan08_3_init_cmd[] = अणु
 	_INIT_DELAY_CMD(24),
 	_INIT_DCS_CMD(0xB0, 0x01),
 	_INIT_DCS_CMD(0xC0, 0x48),
@@ -423,131 +424,131 @@ static const struct panel_init_cmd auo_b101uan08_3_init_cmd[] = {
 	_INIT_DCS_CMD(0xE6, 0x41),
 	_INIT_DCS_CMD(0xE7, 0x41),
 	_INIT_DELAY_CMD(150),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-static inline struct boe_panel *to_boe_panel(struct drm_panel *panel)
-{
-	return container_of(panel, struct boe_panel, base);
-}
+अटल अंतरभूत काष्ठा boe_panel *to_boe_panel(काष्ठा drm_panel *panel)
+अणु
+	वापस container_of(panel, काष्ठा boe_panel, base);
+पूर्ण
 
-static int boe_panel_init_dcs_cmd(struct boe_panel *boe)
-{
-	struct mipi_dsi_device *dsi = boe->dsi;
-	struct drm_panel *panel = &boe->base;
-	int i, err = 0;
+अटल पूर्णांक boe_panel_init_dcs_cmd(काष्ठा boe_panel *boe)
+अणु
+	काष्ठा mipi_dsi_device *dsi = boe->dsi;
+	काष्ठा drm_panel *panel = &boe->base;
+	पूर्णांक i, err = 0;
 
-	if (boe->desc->init_cmds) {
-		const struct panel_init_cmd *init_cmds = boe->desc->init_cmds;
+	अगर (boe->desc->init_cmds) अणु
+		स्थिर काष्ठा panel_init_cmd *init_cmds = boe->desc->init_cmds;
 
-		for (i = 0; init_cmds[i].len != 0; i++) {
-			const struct panel_init_cmd *cmd = &init_cmds[i];
+		क्रम (i = 0; init_cmds[i].len != 0; i++) अणु
+			स्थिर काष्ठा panel_init_cmd *cmd = &init_cmds[i];
 
-			switch (cmd->type) {
-			case DELAY_CMD:
+			चयन (cmd->type) अणु
+			हाल DELAY_CMD:
 				msleep(cmd->data[0]);
 				err = 0;
-				break;
+				अवरोध;
 
-			case INIT_DCS_CMD:
-				err = mipi_dsi_dcs_write(dsi, cmd->data[0],
-							 cmd->len <= 1 ? NULL :
+			हाल INIT_DCS_CMD:
+				err = mipi_dsi_dcs_ग_लिखो(dsi, cmd->data[0],
+							 cmd->len <= 1 ? शून्य :
 							 &cmd->data[1],
 							 cmd->len - 1);
-				break;
+				अवरोध;
 
-			default:
+			शेष:
 				err = -EINVAL;
-			}
+			पूर्ण
 
-			if (err < 0) {
+			अगर (err < 0) अणु
 				dev_err(panel->dev,
 					"failed to write command %u\n", i);
-				return err;
-			}
-		}
-	}
-	return 0;
-}
+				वापस err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int boe_panel_enter_sleep_mode(struct boe_panel *boe)
-{
-	struct mipi_dsi_device *dsi = boe->dsi;
-	int ret;
+अटल पूर्णांक boe_panel_enter_sleep_mode(काष्ठा boe_panel *boe)
+अणु
+	काष्ठा mipi_dsi_device *dsi = boe->dsi;
+	पूर्णांक ret;
 
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
 	ret = mipi_dsi_dcs_set_display_off(dsi);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int boe_panel_unprepare(struct drm_panel *panel)
-{
-	struct boe_panel *boe = to_boe_panel(panel);
-	int ret;
+अटल पूर्णांक boe_panel_unprepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा boe_panel *boe = to_boe_panel(panel);
+	पूर्णांक ret;
 
-	if (!boe->prepared)
-		return 0;
+	अगर (!boe->prepared)
+		वापस 0;
 
 	ret = boe_panel_enter_sleep_mode(boe);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(panel->dev, "failed to set panel off: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	msleep(150);
 
-	if (boe->desc->discharge_on_disable) {
+	अगर (boe->desc->disअक्षरge_on_disable) अणु
 		regulator_disable(boe->avee);
 		regulator_disable(boe->avdd);
 		usleep_range(5000, 7000);
 		gpiod_set_value(boe->enable_gpio, 0);
 		usleep_range(5000, 7000);
 		regulator_disable(boe->pp1800);
-	} else {
+	पूर्ण अन्यथा अणु
 		gpiod_set_value(boe->enable_gpio, 0);
 		usleep_range(500, 1000);
 		regulator_disable(boe->avee);
 		regulator_disable(boe->avdd);
 		usleep_range(5000, 7000);
 		regulator_disable(boe->pp1800);
-	}
+	पूर्ण
 
 	boe->prepared = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int boe_panel_prepare(struct drm_panel *panel)
-{
-	struct boe_panel *boe = to_boe_panel(panel);
-	int ret;
+अटल पूर्णांक boe_panel_prepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा boe_panel *boe = to_boe_panel(panel);
+	पूर्णांक ret;
 
-	if (boe->prepared)
-		return 0;
+	अगर (boe->prepared)
+		वापस 0;
 
 	gpiod_set_value(boe->enable_gpio, 0);
 	usleep_range(1000, 1500);
 
 	ret = regulator_enable(boe->pp1800);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	usleep_range(3000, 5000);
 
 	ret = regulator_enable(boe->avdd);
-	if (ret < 0)
-		goto poweroff1v8;
+	अगर (ret < 0)
+		जाओ घातeroff1v8;
 	ret = regulator_enable(boe->avee);
-	if (ret < 0)
-		goto poweroffavdd;
+	अगर (ret < 0)
+		जाओ घातeroffavdd;
 
 	usleep_range(5000, 10000);
 
@@ -559,35 +560,35 @@ static int boe_panel_prepare(struct drm_panel *panel)
 	usleep_range(6000, 10000);
 
 	ret = boe_panel_init_dcs_cmd(boe);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(panel->dev, "failed to init panel: %d\n", ret);
-		goto poweroff;
-	}
+		जाओ घातeroff;
+	पूर्ण
 
 	boe->prepared = true;
 
-	return 0;
+	वापस 0;
 
-poweroff:
+घातeroff:
 	regulator_disable(boe->avee);
-poweroffavdd:
+घातeroffavdd:
 	regulator_disable(boe->avdd);
-poweroff1v8:
+घातeroff1v8:
 	usleep_range(5000, 7000);
 	regulator_disable(boe->pp1800);
 	gpiod_set_value(boe->enable_gpio, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int boe_panel_enable(struct drm_panel *panel)
-{
+अटल पूर्णांक boe_panel_enable(काष्ठा drm_panel *panel)
+अणु
 	msleep(130);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_display_mode boe_tv101wum_nl6_default_mode = {
-	.clock = 159425,
+अटल स्थिर काष्ठा drm_display_mode boe_tv101wum_nl6_शेष_mode = अणु
+	.घड़ी = 159425,
 	.hdisplay = 1200,
 	.hsync_start = 1200 + 100,
 	.hsync_end = 1200 + 100 + 40,
@@ -596,25 +597,25 @@ static const struct drm_display_mode boe_tv101wum_nl6_default_mode = {
 	.vsync_start = 1920 + 10,
 	.vsync_end = 1920 + 10 + 14,
 	.vtotal = 1920 + 10 + 14 + 4,
-};
+पूर्ण;
 
-static const struct panel_desc boe_tv101wum_nl6_desc = {
-	.modes = &boe_tv101wum_nl6_default_mode,
+अटल स्थिर काष्ठा panel_desc boe_tv101wum_nl6_desc = अणु
+	.modes = &boe_tv101wum_nl6_शेष_mode,
 	.bpc = 8,
-	.size = {
+	.size = अणु
 		.width_mm = 135,
 		.height_mm = 216,
-	},
+	पूर्ण,
 	.lanes = 4,
-	.format = MIPI_DSI_FMT_RGB888,
+	.क्रमmat = MIPI_DSI_FMT_RGB888,
 	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 		      MIPI_DSI_MODE_LPM,
 	.init_cmds = boe_init_cmd,
-	.discharge_on_disable = false,
-};
+	.disअक्षरge_on_disable = false,
+पूर्ण;
 
-static const struct drm_display_mode auo_kd101n80_45na_default_mode = {
-	.clock = 157000,
+अटल स्थिर काष्ठा drm_display_mode auo_kd101n80_45na_शेष_mode = अणु
+	.घड़ी = 157000,
 	.hdisplay = 1200,
 	.hsync_start = 1200 + 60,
 	.hsync_end = 1200 + 60 + 24,
@@ -623,25 +624,25 @@ static const struct drm_display_mode auo_kd101n80_45na_default_mode = {
 	.vsync_start = 1920 + 16,
 	.vsync_end = 1920 + 16 + 4,
 	.vtotal = 1920 + 16 + 4 + 16,
-};
+पूर्ण;
 
-static const struct panel_desc auo_kd101n80_45na_desc = {
-	.modes = &auo_kd101n80_45na_default_mode,
+अटल स्थिर काष्ठा panel_desc auo_kd101n80_45na_desc = अणु
+	.modes = &auo_kd101n80_45na_शेष_mode,
 	.bpc = 8,
-	.size = {
+	.size = अणु
 		.width_mm = 135,
 		.height_mm = 216,
-	},
+	पूर्ण,
 	.lanes = 4,
-	.format = MIPI_DSI_FMT_RGB888,
+	.क्रमmat = MIPI_DSI_FMT_RGB888,
 	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 		      MIPI_DSI_MODE_LPM,
 	.init_cmds = auo_kd101n80_45na_init_cmd,
-	.discharge_on_disable = true,
-};
+	.disअक्षरge_on_disable = true,
+पूर्ण;
 
-static const struct drm_display_mode boe_tv101wum_n53_default_mode = {
-	.clock = 159916,
+अटल स्थिर काष्ठा drm_display_mode boe_tv101wum_n53_शेष_mode = अणु
+	.घड़ी = 159916,
 	.hdisplay = 1200,
 	.hsync_start = 1200 + 80,
 	.hsync_end = 1200 + 80 + 24,
@@ -651,24 +652,24 @@ static const struct drm_display_mode boe_tv101wum_n53_default_mode = {
 	.vsync_end = 1920 + 20 + 4,
 	.vtotal = 1920 + 20 + 4 + 10,
 	.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
-};
+पूर्ण;
 
-static const struct panel_desc boe_tv101wum_n53_desc = {
-	.modes = &boe_tv101wum_n53_default_mode,
+अटल स्थिर काष्ठा panel_desc boe_tv101wum_n53_desc = अणु
+	.modes = &boe_tv101wum_n53_शेष_mode,
 	.bpc = 8,
-	.size = {
+	.size = अणु
 		.width_mm = 135,
 		.height_mm = 216,
-	},
+	पूर्ण,
 	.lanes = 4,
-	.format = MIPI_DSI_FMT_RGB888,
+	.क्रमmat = MIPI_DSI_FMT_RGB888,
 	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 		      MIPI_DSI_MODE_LPM,
 	.init_cmds = boe_init_cmd,
-};
+पूर्ण;
 
-static const struct drm_display_mode auo_b101uan08_3_default_mode = {
-	.clock = 159667,
+अटल स्थिर काष्ठा drm_display_mode auo_b101uan08_3_शेष_mode = अणु
+	.घड़ी = 159667,
 	.hdisplay = 1200,
 	.hsync_start = 1200 + 60,
 	.hsync_end = 1200 + 60 + 4,
@@ -678,24 +679,24 @@ static const struct drm_display_mode auo_b101uan08_3_default_mode = {
 	.vsync_end = 1920 + 34 + 2,
 	.vtotal = 1920 + 34 + 2 + 24,
 	.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
-};
+पूर्ण;
 
-static const struct panel_desc auo_b101uan08_3_desc = {
-	.modes = &auo_b101uan08_3_default_mode,
+अटल स्थिर काष्ठा panel_desc auo_b101uan08_3_desc = अणु
+	.modes = &auo_b101uan08_3_शेष_mode,
 	.bpc = 8,
-	.size = {
+	.size = अणु
 		.width_mm = 135,
 		.height_mm = 216,
-	},
+	पूर्ण,
 	.lanes = 4,
-	.format = MIPI_DSI_FMT_RGB888,
+	.क्रमmat = MIPI_DSI_FMT_RGB888,
 	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 		      MIPI_DSI_MODE_LPM,
 	.init_cmds = auo_b101uan08_3_init_cmd,
-};
+पूर्ण;
 
-static const struct drm_display_mode boe_tv105wum_nw0_default_mode = {
-	.clock = 159916,
+अटल स्थिर काष्ठा drm_display_mode boe_tv105wum_nw0_शेष_mode = अणु
+	.घड़ी = 159916,
 	.hdisplay = 1200,
 	.hsync_start = 1200 + 80,
 	.hsync_end = 1200 + 80 + 24,
@@ -705,35 +706,35 @@ static const struct drm_display_mode boe_tv105wum_nw0_default_mode = {
 	.vsync_end = 1920 + 20 + 4,
 	.vtotal = 1920 + 20 + 4 + 10,
 	.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
-};
+पूर्ण;
 
-static const struct panel_desc boe_tv105wum_nw0_desc = {
-	.modes = &boe_tv105wum_nw0_default_mode,
+अटल स्थिर काष्ठा panel_desc boe_tv105wum_nw0_desc = अणु
+	.modes = &boe_tv105wum_nw0_शेष_mode,
 	.bpc = 8,
-	.size = {
+	.size = अणु
 		.width_mm = 141,
 		.height_mm = 226,
-	},
+	पूर्ण,
 	.lanes = 4,
-	.format = MIPI_DSI_FMT_RGB888,
+	.क्रमmat = MIPI_DSI_FMT_RGB888,
 	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 		      MIPI_DSI_MODE_LPM,
 	.init_cmds = boe_init_cmd,
-};
+पूर्ण;
 
-static int boe_panel_get_modes(struct drm_panel *panel,
-			       struct drm_connector *connector)
-{
-	struct boe_panel *boe = to_boe_panel(panel);
-	const struct drm_display_mode *m = boe->desc->modes;
-	struct drm_display_mode *mode;
+अटल पूर्णांक boe_panel_get_modes(काष्ठा drm_panel *panel,
+			       काष्ठा drm_connector *connector)
+अणु
+	काष्ठा boe_panel *boe = to_boe_panel(panel);
+	स्थिर काष्ठा drm_display_mode *m = boe->desc->modes;
+	काष्ठा drm_display_mode *mode;
 
 	mode = drm_mode_duplicate(connector->dev, m);
-	if (!mode) {
+	अगर (!mode) अणु
 		dev_err(panel->dev, "failed to add mode %ux%u@%u\n",
 			m->hdisplay, m->vdisplay, drm_mode_vrefresh(m));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	mode->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
 	drm_mode_set_name(mode);
@@ -744,145 +745,145 @@ static int boe_panel_get_modes(struct drm_panel *panel,
 	connector->display_info.bpc = boe->desc->bpc;
 	drm_connector_set_panel_orientation(connector, boe->orientation);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct drm_panel_funcs boe_panel_funcs = {
+अटल स्थिर काष्ठा drm_panel_funcs boe_panel_funcs = अणु
 	.unprepare = boe_panel_unprepare,
 	.prepare = boe_panel_prepare,
 	.enable = boe_panel_enable,
 	.get_modes = boe_panel_get_modes,
-};
+पूर्ण;
 
-static int boe_panel_add(struct boe_panel *boe)
-{
-	struct device *dev = &boe->dsi->dev;
-	int err;
+अटल पूर्णांक boe_panel_add(काष्ठा boe_panel *boe)
+अणु
+	काष्ठा device *dev = &boe->dsi->dev;
+	पूर्णांक err;
 
 	boe->avdd = devm_regulator_get(dev, "avdd");
-	if (IS_ERR(boe->avdd))
-		return PTR_ERR(boe->avdd);
+	अगर (IS_ERR(boe->avdd))
+		वापस PTR_ERR(boe->avdd);
 
 	boe->avee = devm_regulator_get(dev, "avee");
-	if (IS_ERR(boe->avee))
-		return PTR_ERR(boe->avee);
+	अगर (IS_ERR(boe->avee))
+		वापस PTR_ERR(boe->avee);
 
 	boe->pp1800 = devm_regulator_get(dev, "pp1800");
-	if (IS_ERR(boe->pp1800))
-		return PTR_ERR(boe->pp1800);
+	अगर (IS_ERR(boe->pp1800))
+		वापस PTR_ERR(boe->pp1800);
 
 	boe->enable_gpio = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
-	if (IS_ERR(boe->enable_gpio)) {
+	अगर (IS_ERR(boe->enable_gpio)) अणु
 		dev_err(dev, "cannot get reset-gpios %ld\n",
 			PTR_ERR(boe->enable_gpio));
-		return PTR_ERR(boe->enable_gpio);
-	}
+		वापस PTR_ERR(boe->enable_gpio);
+	पूर्ण
 
 	gpiod_set_value(boe->enable_gpio, 0);
 
 	drm_panel_init(&boe->base, dev, &boe_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
 	err = of_drm_get_panel_orientation(dev->of_node, &boe->orientation);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "%pOF: failed to get orientation %d\n", dev->of_node, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = drm_panel_of_backlight(&boe->base);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	boe->base.funcs = &boe_panel_funcs;
 	boe->base.dev = &boe->dsi->dev;
 
 	drm_panel_add(&boe->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int boe_panel_probe(struct mipi_dsi_device *dsi)
-{
-	struct boe_panel *boe;
-	int ret;
-	const struct panel_desc *desc;
+अटल पूर्णांक boe_panel_probe(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा boe_panel *boe;
+	पूर्णांक ret;
+	स्थिर काष्ठा panel_desc *desc;
 
-	boe = devm_kzalloc(&dsi->dev, sizeof(*boe), GFP_KERNEL);
-	if (!boe)
-		return -ENOMEM;
+	boe = devm_kzalloc(&dsi->dev, माप(*boe), GFP_KERNEL);
+	अगर (!boe)
+		वापस -ENOMEM;
 
 	desc = of_device_get_match_data(&dsi->dev);
 	dsi->lanes = desc->lanes;
-	dsi->format = desc->format;
+	dsi->क्रमmat = desc->क्रमmat;
 	dsi->mode_flags = desc->mode_flags;
 	boe->desc = desc;
 	boe->dsi = dsi;
 	ret = boe_panel_add(boe);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	mipi_dsi_set_drvdata(dsi, boe);
 
 	ret = mipi_dsi_attach(dsi);
-	if (ret)
-		drm_panel_remove(&boe->base);
+	अगर (ret)
+		drm_panel_हटाओ(&boe->base);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void boe_panel_shutdown(struct mipi_dsi_device *dsi)
-{
-	struct boe_panel *boe = mipi_dsi_get_drvdata(dsi);
+अटल व्योम boe_panel_shutकरोwn(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा boe_panel *boe = mipi_dsi_get_drvdata(dsi);
 
 	drm_panel_disable(&boe->base);
 	drm_panel_unprepare(&boe->base);
-}
+पूर्ण
 
-static int boe_panel_remove(struct mipi_dsi_device *dsi)
-{
-	struct boe_panel *boe = mipi_dsi_get_drvdata(dsi);
-	int ret;
+अटल पूर्णांक boe_panel_हटाओ(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा boe_panel *boe = mipi_dsi_get_drvdata(dsi);
+	पूर्णांक ret;
 
-	boe_panel_shutdown(dsi);
+	boe_panel_shutकरोwn(dsi);
 
 	ret = mipi_dsi_detach(dsi);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&dsi->dev, "failed to detach from DSI host: %d\n", ret);
 
-	if (boe->base.dev)
-		drm_panel_remove(&boe->base);
+	अगर (boe->base.dev)
+		drm_panel_हटाओ(&boe->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id boe_of_match[] = {
-	{ .compatible = "boe,tv101wum-nl6",
+अटल स्थिर काष्ठा of_device_id boe_of_match[] = अणु
+	अणु .compatible = "boe,tv101wum-nl6",
 	  .data = &boe_tv101wum_nl6_desc
-	},
-	{ .compatible = "auo,kd101n80-45na",
+	पूर्ण,
+	अणु .compatible = "auo,kd101n80-45na",
 	  .data = &auo_kd101n80_45na_desc
-	},
-	{ .compatible = "boe,tv101wum-n53",
+	पूर्ण,
+	अणु .compatible = "boe,tv101wum-n53",
 	  .data = &boe_tv101wum_n53_desc
-	},
-	{ .compatible = "auo,b101uan08.3",
+	पूर्ण,
+	अणु .compatible = "auo,b101uan08.3",
 	  .data = &auo_b101uan08_3_desc
-	},
-	{ .compatible = "boe,tv105wum-nw0",
+	पूर्ण,
+	अणु .compatible = "boe,tv105wum-nw0",
 	  .data = &boe_tv105wum_nw0_desc
-	},
-	{ /* sentinel */ }
-};
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, boe_of_match);
 
-static struct mipi_dsi_driver boe_panel_driver = {
-	.driver = {
+अटल काष्ठा mipi_dsi_driver boe_panel_driver = अणु
+	.driver = अणु
 		.name = "panel-boe-tv101wum-nl6",
 		.of_match_table = boe_of_match,
-	},
+	पूर्ण,
 	.probe = boe_panel_probe,
-	.remove = boe_panel_remove,
-	.shutdown = boe_panel_shutdown,
-};
+	.हटाओ = boe_panel_हटाओ,
+	.shutकरोwn = boe_panel_shutकरोwn,
+पूर्ण;
 module_mipi_dsi_driver(boe_panel_driver);
 
 MODULE_AUTHOR("Jitao Shi <jitao.shi@mediatek.com>");

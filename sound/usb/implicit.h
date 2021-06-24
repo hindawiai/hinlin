@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
-#ifndef __USBAUDIO_IMPLICIT_H
-#define __USBAUDIO_IMPLICIT_H
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#अगर_अघोषित __USBAUDIO_IMPLICIT_H
+#घोषणा __USBAUDIO_IMPLICIT_H
 
-int snd_usb_parse_implicit_fb_quirk(struct snd_usb_audio *chip,
-				    struct audioformat *fmt,
-				    struct usb_host_interface *alts);
-const struct audioformat *
-snd_usb_find_implicit_fb_sync_format(struct snd_usb_audio *chip,
-				     const struct audioformat *target,
-				     const struct snd_pcm_hw_params *params,
-				     int stream);
+पूर्णांक snd_usb_parse_implicit_fb_quirk(काष्ठा snd_usb_audio *chip,
+				    काष्ठा audioक्रमmat *fmt,
+				    काष्ठा usb_host_पूर्णांकerface *alts);
+स्थिर काष्ठा audioक्रमmat *
+snd_usb_find_implicit_fb_sync_क्रमmat(काष्ठा snd_usb_audio *chip,
+				     स्थिर काष्ठा audioक्रमmat *target,
+				     स्थिर काष्ठा snd_pcm_hw_params *params,
+				     पूर्णांक stream);
 
-#endif /* __USBAUDIO_IMPLICIT_H */
+#पूर्ण_अगर /* __USBAUDIO_IMPLICIT_H */

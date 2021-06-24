@@ -1,136 +1,137 @@
-// SPDX-License-Identifier: GPL-2.0
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/umh.h>
-#include <linux/bpfilter.h>
-#include <linux/sched.h>
-#include <linux/sched/signal.h>
-#include <linux/fs.h>
-#include <linux/file.h>
-#include "msgfmt.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/umh.h>
+#समावेश <linux/bpfilter.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/file.h>
+#समावेश "msgfmt.h"
 
-extern char bpfilter_umh_start;
-extern char bpfilter_umh_end;
+बाह्य अक्षर bpfilter_umh_start;
+बाह्य अक्षर bpfilter_umh_end;
 
-static void shutdown_umh(void)
-{
-	struct umd_info *info = &bpfilter_ops.info;
-	struct pid *tgid = info->tgid;
+अटल व्योम shutकरोwn_umh(व्योम)
+अणु
+	काष्ठा umd_info *info = &bpfilter_ops.info;
+	काष्ठा pid *tgid = info->tgid;
 
-	if (tgid) {
-		kill_pid(tgid, SIGKILL, 1);
-		wait_event(tgid->wait_pidfd, thread_group_exited(tgid));
+	अगर (tgid) अणु
+		समाप्त_pid(tgid, SIGKILL, 1);
+		रुको_event(tgid->रुको_pidfd, thपढ़ो_group_निकासed(tgid));
 		bpfilter_umh_cleanup(info);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __stop_umh(void)
-{
-	if (IS_ENABLED(CONFIG_INET))
-		shutdown_umh();
-}
+अटल व्योम __stop_umh(व्योम)
+अणु
+	अगर (IS_ENABLED(CONFIG_INET))
+		shutकरोwn_umh();
+पूर्ण
 
-static int bpfilter_send_req(struct mbox_request *req)
-{
-	struct mbox_reply reply;
+अटल पूर्णांक bpfilter_send_req(काष्ठा mbox_request *req)
+अणु
+	काष्ठा mbox_reply reply;
 	loff_t pos = 0;
-	ssize_t n;
+	sमाप_प्रकार n;
 
-	if (!bpfilter_ops.info.tgid)
-		return -EFAULT;
+	अगर (!bpfilter_ops.info.tgid)
+		वापस -EFAULT;
 	pos = 0;
-	n = kernel_write(bpfilter_ops.info.pipe_to_umh, req, sizeof(*req),
+	n = kernel_ग_लिखो(bpfilter_ops.info.pipe_to_umh, req, माप(*req),
 			   &pos);
-	if (n != sizeof(*req)) {
+	अगर (n != माप(*req)) अणु
 		pr_err("write fail %zd\n", n);
-		goto stop;
-	}
+		जाओ stop;
+	पूर्ण
 	pos = 0;
-	n = kernel_read(bpfilter_ops.info.pipe_from_umh, &reply, sizeof(reply),
+	n = kernel_पढ़ो(bpfilter_ops.info.pipe_from_umh, &reply, माप(reply),
 			&pos);
-	if (n != sizeof(reply)) {
+	अगर (n != माप(reply)) अणु
 		pr_err("read fail %zd\n", n);
-		goto stop;
-	}
-	return reply.status;
+		जाओ stop;
+	पूर्ण
+	वापस reply.status;
 stop:
 	__stop_umh();
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-static int bpfilter_process_sockopt(struct sock *sk, int optname,
-				    sockptr_t optval, unsigned int optlen,
+अटल पूर्णांक bpfilter_process_sockopt(काष्ठा sock *sk, पूर्णांक optname,
+				    sockptr_t optval, अचिन्हित पूर्णांक optlen,
 				    bool is_set)
-{
-	struct mbox_request req = {
+अणु
+	काष्ठा mbox_request req = अणु
 		.is_set		= is_set,
 		.pid		= current->pid,
 		.cmd		= optname,
-		.addr		= (uintptr_t)optval.user,
+		.addr		= (uपूर्णांकptr_t)optval.user,
 		.len		= optlen,
-	};
-	if (uaccess_kernel() || sockptr_is_kernel(optval)) {
+	पूर्ण;
+	अगर (uaccess_kernel() || sockptr_is_kernel(optval)) अणु
 		pr_err("kernel access not supported\n");
-		return -EFAULT;
-	}
-	return bpfilter_send_req(&req);
-}
+		वापस -EFAULT;
+	पूर्ण
+	वापस bpfilter_send_req(&req);
+पूर्ण
 
-static int start_umh(void)
-{
-	struct mbox_request req = { .pid = current->pid };
-	int err;
+अटल पूर्णांक start_umh(व्योम)
+अणु
+	काष्ठा mbox_request req = अणु .pid = current->pid पूर्ण;
+	पूर्णांक err;
 
-	/* fork usermode process */
-	err = fork_usermode_driver(&bpfilter_ops.info);
-	if (err)
-		return err;
+	/* विभाजन usermode process */
+	err = विभाजन_usermode_driver(&bpfilter_ops.info);
+	अगर (err)
+		वापस err;
 	pr_info("Loaded bpfilter_umh pid %d\n", pid_nr(bpfilter_ops.info.tgid));
 
 	/* health check that usermode process started correctly */
-	if (bpfilter_send_req(&req) != 0) {
-		shutdown_umh();
-		return -EFAULT;
-	}
+	अगर (bpfilter_send_req(&req) != 0) अणु
+		shutकरोwn_umh();
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init load_umh(void)
-{
-	int err;
+अटल पूर्णांक __init load_umh(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = umd_load_blob(&bpfilter_ops.info,
 			    &bpfilter_umh_start,
 			    &bpfilter_umh_end - &bpfilter_umh_start);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&bpfilter_ops.lock);
 	err = start_umh();
-	if (!err && IS_ENABLED(CONFIG_INET)) {
+	अगर (!err && IS_ENABLED(CONFIG_INET)) अणु
 		bpfilter_ops.sockopt = &bpfilter_process_sockopt;
 		bpfilter_ops.start = &start_umh;
-	}
+	पूर्ण
 	mutex_unlock(&bpfilter_ops.lock);
-	if (err)
+	अगर (err)
 		umd_unload_blob(&bpfilter_ops.info);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit fini_umh(void)
-{
+अटल व्योम __निकास fini_umh(व्योम)
+अणु
 	mutex_lock(&bpfilter_ops.lock);
-	if (IS_ENABLED(CONFIG_INET)) {
-		shutdown_umh();
-		bpfilter_ops.start = NULL;
-		bpfilter_ops.sockopt = NULL;
-	}
+	अगर (IS_ENABLED(CONFIG_INET)) अणु
+		shutकरोwn_umh();
+		bpfilter_ops.start = शून्य;
+		bpfilter_ops.sockopt = शून्य;
+	पूर्ण
 	mutex_unlock(&bpfilter_ops.lock);
 
 	umd_unload_blob(&bpfilter_ops.info);
-}
+पूर्ण
 module_init(load_umh);
-module_exit(fini_umh);
+module_निकास(fini_umh);
 MODULE_LICENSE("GPL");

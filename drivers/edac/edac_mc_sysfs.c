@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * edac_mc kernel module
  * (C) 2005-2007 Linux Networx (http://lnxi.com)
@@ -5,93 +6,93 @@
  * This file may be distributed under the terms of the
  * GNU General Public License.
  *
- * Written Doug Thompson <norsk5@xmission.com> www.softwarebitmaker.com
+ * Written Doug Thompson <norsk5@xmission.com> www.softwarebiपंचांगaker.com
  *
  * (c) 2012-2013 - Mauro Carvalho Chehab
- *	The entire API were re-written, and ported to use struct device
+ *	The entire API were re-written, and ported to use काष्ठा device
  *
  */
 
-#include <linux/ctype.h>
-#include <linux/slab.h>
-#include <linux/edac.h>
-#include <linux/bug.h>
-#include <linux/pm_runtime.h>
-#include <linux/uaccess.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/edac.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/uaccess.h>
 
-#include "edac_mc.h"
-#include "edac_module.h"
+#समावेश "edac_mc.h"
+#समावेश "edac_module.h"
 
 /* MC EDAC Controls, setable by module parameter, and sysfs */
-static int edac_mc_log_ue = 1;
-static int edac_mc_log_ce = 1;
-static int edac_mc_panic_on_ue;
-static unsigned int edac_mc_poll_msec = 1000;
+अटल पूर्णांक edac_mc_log_ue = 1;
+अटल पूर्णांक edac_mc_log_ce = 1;
+अटल पूर्णांक edac_mc_panic_on_ue;
+अटल अचिन्हित पूर्णांक edac_mc_poll_msec = 1000;
 
-/* Getter functions for above */
-int edac_mc_get_log_ue(void)
-{
-	return edac_mc_log_ue;
-}
+/* Getter functions क्रम above */
+पूर्णांक edac_mc_get_log_ue(व्योम)
+अणु
+	वापस edac_mc_log_ue;
+पूर्ण
 
-int edac_mc_get_log_ce(void)
-{
-	return edac_mc_log_ce;
-}
+पूर्णांक edac_mc_get_log_ce(व्योम)
+अणु
+	वापस edac_mc_log_ce;
+पूर्ण
 
-int edac_mc_get_panic_on_ue(void)
-{
-	return edac_mc_panic_on_ue;
-}
+पूर्णांक edac_mc_get_panic_on_ue(व्योम)
+अणु
+	वापस edac_mc_panic_on_ue;
+पूर्ण
 
 /* this is temporary */
-unsigned int edac_mc_get_poll_msec(void)
-{
-	return edac_mc_poll_msec;
-}
+अचिन्हित पूर्णांक edac_mc_get_poll_msec(व्योम)
+अणु
+	वापस edac_mc_poll_msec;
+पूर्ण
 
-static int edac_set_poll_msec(const char *val, const struct kernel_param *kp)
-{
-	unsigned int i;
-	int ret;
+अटल पूर्णांक edac_set_poll_msec(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	if (!val)
-		return -EINVAL;
+	अगर (!val)
+		वापस -EINVAL;
 
-	ret = kstrtouint(val, 0, &i);
-	if (ret)
-		return ret;
+	ret = kstrtouपूर्णांक(val, 0, &i);
+	अगर (ret)
+		वापस ret;
 
-	if (i < 1000)
-		return -EINVAL;
+	अगर (i < 1000)
+		वापस -EINVAL;
 
-	*((unsigned int *)kp->arg) = i;
+	*((अचिन्हित पूर्णांक *)kp->arg) = i;
 
-	/* notify edac_mc engine to reset the poll period */
+	/* notअगरy edac_mc engine to reset the poll period */
 	edac_mc_reset_delay_period(i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Parameter declarations for above */
-module_param(edac_mc_panic_on_ue, int, 0644);
+/* Parameter declarations क्रम above */
+module_param(edac_mc_panic_on_ue, पूर्णांक, 0644);
 MODULE_PARM_DESC(edac_mc_panic_on_ue, "Panic on uncorrected error: 0=off 1=on");
-module_param(edac_mc_log_ue, int, 0644);
+module_param(edac_mc_log_ue, पूर्णांक, 0644);
 MODULE_PARM_DESC(edac_mc_log_ue,
 		 "Log uncorrectable error to console: 0=off 1=on");
-module_param(edac_mc_log_ce, int, 0644);
+module_param(edac_mc_log_ce, पूर्णांक, 0644);
 MODULE_PARM_DESC(edac_mc_log_ce,
 		 "Log correctable error to console: 0=off 1=on");
-module_param_call(edac_mc_poll_msec, edac_set_poll_msec, param_get_uint,
+module_param_call(edac_mc_poll_msec, edac_set_poll_msec, param_get_uपूर्णांक,
 		  &edac_mc_poll_msec, 0644);
 MODULE_PARM_DESC(edac_mc_poll_msec, "Polling period in milliseconds");
 
-static struct device *mci_pdev;
+अटल काष्ठा device *mci_pdev;
 
 /*
- * various constants for Memory Controllers
+ * various स्थिरants क्रम Memory Controllers
  */
-static const char * const dev_types[] = {
+अटल स्थिर अक्षर * स्थिर dev_types[] = अणु
 	[DEV_UNKNOWN] = "Unknown",
 	[DEV_X1] = "x1",
 	[DEV_X2] = "x2",
@@ -100,9 +101,9 @@ static const char * const dev_types[] = {
 	[DEV_X16] = "x16",
 	[DEV_X32] = "x32",
 	[DEV_X64] = "x64"
-};
+पूर्ण;
 
-static const char * const edac_caps[] = {
+अटल स्थिर अक्षर * स्थिर edac_caps[] = अणु
 	[EDAC_UNKNOWN] = "Unknown",
 	[EDAC_NONE] = "None",
 	[EDAC_RESERVED] = "Reserved",
@@ -113,170 +114,170 @@ static const char * const edac_caps[] = {
 	[EDAC_S4ECD4ED] = "S4ECD4ED",
 	[EDAC_S8ECD8ED] = "S8ECD8ED",
 	[EDAC_S16ECD16ED] = "S16ECD16ED"
-};
+पूर्ण;
 
-#ifdef CONFIG_EDAC_LEGACY_SYSFS
+#अगर_घोषित CONFIG_EDAC_LEGACY_SYSFS
 /*
- * EDAC sysfs CSROW data structures and methods
+ * EDAC sysfs CSROW data काष्ठाures and methods
  */
 
-#define to_csrow(k) container_of(k, struct csrow_info, dev)
+#घोषणा to_csrow(k) container_of(k, काष्ठा csrow_info, dev)
 
 /*
- * We need it to avoid namespace conflicts between the legacy API
+ * We need it to aव्योम namespace conflicts between the legacy API
  * and the per-dimm/per-rank one
  */
-#define DEVICE_ATTR_LEGACY(_name, _mode, _show, _store) \
-	static struct device_attribute dev_attr_legacy_##_name = __ATTR(_name, _mode, _show, _store)
+#घोषणा DEVICE_ATTR_LEGACY(_name, _mode, _show, _store) \
+	अटल काष्ठा device_attribute dev_attr_legacy_##_name = __ATTR(_name, _mode, _show, _store)
 
-struct dev_ch_attribute {
-	struct device_attribute attr;
-	unsigned int channel;
-};
+काष्ठा dev_ch_attribute अणु
+	काष्ठा device_attribute attr;
+	अचिन्हित पूर्णांक channel;
+पूर्ण;
 
-#define DEVICE_CHANNEL(_name, _mode, _show, _store, _var) \
-	static struct dev_ch_attribute dev_attr_legacy_##_name = \
-		{ __ATTR(_name, _mode, _show, _store), (_var) }
+#घोषणा DEVICE_CHANNEL(_name, _mode, _show, _store, _var) \
+	अटल काष्ठा dev_ch_attribute dev_attr_legacy_##_name = \
+		अणु __ATTR(_name, _mode, _show, _store), (_var) पूर्ण
 
-#define to_channel(k) (container_of(k, struct dev_ch_attribute, attr)->channel)
+#घोषणा to_channel(k) (container_of(k, काष्ठा dev_ch_attribute, attr)->channel)
 
-/* Set of more default csrow<id> attribute show/store functions */
-static ssize_t csrow_ue_count_show(struct device *dev,
-				   struct device_attribute *mattr, char *data)
-{
-	struct csrow_info *csrow = to_csrow(dev);
+/* Set of more शेष csrow<id> attribute show/store functions */
+अटल sमाप_प्रकार csrow_ue_count_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा csrow_info *csrow = to_csrow(dev);
 
-	return sprintf(data, "%u\n", csrow->ue_count);
-}
+	वापस प्र_लिखो(data, "%u\n", csrow->ue_count);
+पूर्ण
 
-static ssize_t csrow_ce_count_show(struct device *dev,
-				   struct device_attribute *mattr, char *data)
-{
-	struct csrow_info *csrow = to_csrow(dev);
+अटल sमाप_प्रकार csrow_ce_count_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा csrow_info *csrow = to_csrow(dev);
 
-	return sprintf(data, "%u\n", csrow->ce_count);
-}
+	वापस प्र_लिखो(data, "%u\n", csrow->ce_count);
+पूर्ण
 
-static ssize_t csrow_size_show(struct device *dev,
-			       struct device_attribute *mattr, char *data)
-{
-	struct csrow_info *csrow = to_csrow(dev);
-	int i;
+अटल sमाप_प्रकार csrow_size_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा csrow_info *csrow = to_csrow(dev);
+	पूर्णांक i;
 	u32 nr_pages = 0;
 
-	for (i = 0; i < csrow->nr_channels; i++)
+	क्रम (i = 0; i < csrow->nr_channels; i++)
 		nr_pages += csrow->channels[i]->dimm->nr_pages;
-	return sprintf(data, "%u\n", PAGES_TO_MiB(nr_pages));
-}
+	वापस प्र_लिखो(data, "%u\n", PAGES_TO_MiB(nr_pages));
+पूर्ण
 
-static ssize_t csrow_mem_type_show(struct device *dev,
-				   struct device_attribute *mattr, char *data)
-{
-	struct csrow_info *csrow = to_csrow(dev);
+अटल sमाप_प्रकार csrow_mem_type_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा csrow_info *csrow = to_csrow(dev);
 
-	return sprintf(data, "%s\n", edac_mem_types[csrow->channels[0]->dimm->mtype]);
-}
+	वापस प्र_लिखो(data, "%s\n", edac_mem_types[csrow->channels[0]->dimm->mtype]);
+पूर्ण
 
-static ssize_t csrow_dev_type_show(struct device *dev,
-				   struct device_attribute *mattr, char *data)
-{
-	struct csrow_info *csrow = to_csrow(dev);
+अटल sमाप_प्रकार csrow_dev_type_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा csrow_info *csrow = to_csrow(dev);
 
-	return sprintf(data, "%s\n", dev_types[csrow->channels[0]->dimm->dtype]);
-}
+	वापस प्र_लिखो(data, "%s\n", dev_types[csrow->channels[0]->dimm->dtype]);
+पूर्ण
 
-static ssize_t csrow_edac_mode_show(struct device *dev,
-				    struct device_attribute *mattr,
-				    char *data)
-{
-	struct csrow_info *csrow = to_csrow(dev);
+अटल sमाप_प्रकार csrow_edac_mode_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *mattr,
+				    अक्षर *data)
+अणु
+	काष्ठा csrow_info *csrow = to_csrow(dev);
 
-	return sprintf(data, "%s\n", edac_caps[csrow->channels[0]->dimm->edac_mode]);
-}
+	वापस प्र_लिखो(data, "%s\n", edac_caps[csrow->channels[0]->dimm->edac_mode]);
+पूर्ण
 
-/* show/store functions for DIMM Label attributes */
-static ssize_t channel_dimm_label_show(struct device *dev,
-				       struct device_attribute *mattr,
-				       char *data)
-{
-	struct csrow_info *csrow = to_csrow(dev);
-	unsigned int chan = to_channel(mattr);
-	struct rank_info *rank = csrow->channels[chan];
+/* show/store functions क्रम DIMM Label attributes */
+अटल sमाप_प्रकार channel_dimm_label_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *mattr,
+				       अक्षर *data)
+अणु
+	काष्ठा csrow_info *csrow = to_csrow(dev);
+	अचिन्हित पूर्णांक chan = to_channel(mattr);
+	काष्ठा rank_info *rank = csrow->channels[chan];
 
-	/* if field has not been initialized, there is nothing to send */
-	if (!rank->dimm->label[0])
-		return 0;
+	/* अगर field has not been initialized, there is nothing to send */
+	अगर (!rank->dimm->label[0])
+		वापस 0;
 
-	return snprintf(data, sizeof(rank->dimm->label) + 1, "%s\n",
+	वापस snम_लिखो(data, माप(rank->dimm->label) + 1, "%s\n",
 			rank->dimm->label);
-}
+पूर्ण
 
-static ssize_t channel_dimm_label_store(struct device *dev,
-					struct device_attribute *mattr,
-					const char *data, size_t count)
-{
-	struct csrow_info *csrow = to_csrow(dev);
-	unsigned int chan = to_channel(mattr);
-	struct rank_info *rank = csrow->channels[chan];
-	size_t copy_count = count;
+अटल sमाप_प्रकार channel_dimm_label_store(काष्ठा device *dev,
+					काष्ठा device_attribute *mattr,
+					स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा csrow_info *csrow = to_csrow(dev);
+	अचिन्हित पूर्णांक chan = to_channel(mattr);
+	काष्ठा rank_info *rank = csrow->channels[chan];
+	माप_प्रकार copy_count = count;
 
-	if (count == 0)
-		return -EINVAL;
+	अगर (count == 0)
+		वापस -EINVAL;
 
-	if (data[count - 1] == '\0' || data[count - 1] == '\n')
+	अगर (data[count - 1] == '\0' || data[count - 1] == '\n')
 		copy_count -= 1;
 
-	if (copy_count == 0 || copy_count >= sizeof(rank->dimm->label))
-		return -EINVAL;
+	अगर (copy_count == 0 || copy_count >= माप(rank->dimm->label))
+		वापस -EINVAL;
 
-	strncpy(rank->dimm->label, data, copy_count);
+	म_नकलन(rank->dimm->label, data, copy_count);
 	rank->dimm->label[copy_count] = '\0';
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-/* show function for dynamic chX_ce_count attribute */
-static ssize_t channel_ce_count_show(struct device *dev,
-				     struct device_attribute *mattr, char *data)
-{
-	struct csrow_info *csrow = to_csrow(dev);
-	unsigned int chan = to_channel(mattr);
-	struct rank_info *rank = csrow->channels[chan];
+/* show function क्रम dynamic chX_ce_count attribute */
+अटल sमाप_प्रकार channel_ce_count_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा csrow_info *csrow = to_csrow(dev);
+	अचिन्हित पूर्णांक chan = to_channel(mattr);
+	काष्ठा rank_info *rank = csrow->channels[chan];
 
-	return sprintf(data, "%u\n", rank->ce_count);
-}
+	वापस प्र_लिखो(data, "%u\n", rank->ce_count);
+पूर्ण
 
 /* cwrow<id>/attribute files */
-DEVICE_ATTR_LEGACY(size_mb, S_IRUGO, csrow_size_show, NULL);
-DEVICE_ATTR_LEGACY(dev_type, S_IRUGO, csrow_dev_type_show, NULL);
-DEVICE_ATTR_LEGACY(mem_type, S_IRUGO, csrow_mem_type_show, NULL);
-DEVICE_ATTR_LEGACY(edac_mode, S_IRUGO, csrow_edac_mode_show, NULL);
-DEVICE_ATTR_LEGACY(ue_count, S_IRUGO, csrow_ue_count_show, NULL);
-DEVICE_ATTR_LEGACY(ce_count, S_IRUGO, csrow_ce_count_show, NULL);
+DEVICE_ATTR_LEGACY(size_mb, S_IRUGO, csrow_size_show, शून्य);
+DEVICE_ATTR_LEGACY(dev_type, S_IRUGO, csrow_dev_type_show, शून्य);
+DEVICE_ATTR_LEGACY(mem_type, S_IRUGO, csrow_mem_type_show, शून्य);
+DEVICE_ATTR_LEGACY(edac_mode, S_IRUGO, csrow_edac_mode_show, शून्य);
+DEVICE_ATTR_LEGACY(ue_count, S_IRUGO, csrow_ue_count_show, शून्य);
+DEVICE_ATTR_LEGACY(ce_count, S_IRUGO, csrow_ce_count_show, शून्य);
 
-/* default attributes of the CSROW<id> object */
-static struct attribute *csrow_attrs[] = {
+/* शेष attributes of the CSROW<id> object */
+अटल काष्ठा attribute *csrow_attrs[] = अणु
 	&dev_attr_legacy_dev_type.attr,
 	&dev_attr_legacy_mem_type.attr,
 	&dev_attr_legacy_edac_mode.attr,
 	&dev_attr_legacy_size_mb.attr,
 	&dev_attr_legacy_ue_count.attr,
 	&dev_attr_legacy_ce_count.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group csrow_attr_grp = {
+अटल स्थिर काष्ठा attribute_group csrow_attr_grp = अणु
 	.attrs	= csrow_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *csrow_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *csrow_attr_groups[] = अणु
 	&csrow_attr_grp,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct device_type csrow_attr_type = {
+अटल स्थिर काष्ठा device_type csrow_attr_type = अणु
 	.groups		= csrow_attr_groups,
-};
+पूर्ण;
 
 /*
  * possible dynamic channel DIMM Label attribute files
@@ -300,7 +301,7 @@ DEVICE_CHANNEL(ch7_dimm_label, S_IRUGO | S_IWUSR,
 	channel_dimm_label_show, channel_dimm_label_store, 7);
 
 /* Total possible dynamic DIMM Label attribute file table */
-static struct attribute *dynamic_csrow_dimm_attr[] = {
+अटल काष्ठा attribute *dynamic_csrow_dimm_attr[] = अणु
 	&dev_attr_legacy_ch0_dimm_label.attr.attr,
 	&dev_attr_legacy_ch1_dimm_label.attr.attr,
 	&dev_attr_legacy_ch2_dimm_label.attr.attr,
@@ -309,29 +310,29 @@ static struct attribute *dynamic_csrow_dimm_attr[] = {
 	&dev_attr_legacy_ch5_dimm_label.attr.attr,
 	&dev_attr_legacy_ch6_dimm_label.attr.attr,
 	&dev_attr_legacy_ch7_dimm_label.attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /* possible dynamic channel ce_count attribute files */
 DEVICE_CHANNEL(ch0_ce_count, S_IRUGO,
-		   channel_ce_count_show, NULL, 0);
+		   channel_ce_count_show, शून्य, 0);
 DEVICE_CHANNEL(ch1_ce_count, S_IRUGO,
-		   channel_ce_count_show, NULL, 1);
+		   channel_ce_count_show, शून्य, 1);
 DEVICE_CHANNEL(ch2_ce_count, S_IRUGO,
-		   channel_ce_count_show, NULL, 2);
+		   channel_ce_count_show, शून्य, 2);
 DEVICE_CHANNEL(ch3_ce_count, S_IRUGO,
-		   channel_ce_count_show, NULL, 3);
+		   channel_ce_count_show, शून्य, 3);
 DEVICE_CHANNEL(ch4_ce_count, S_IRUGO,
-		   channel_ce_count_show, NULL, 4);
+		   channel_ce_count_show, शून्य, 4);
 DEVICE_CHANNEL(ch5_ce_count, S_IRUGO,
-		   channel_ce_count_show, NULL, 5);
+		   channel_ce_count_show, शून्य, 5);
 DEVICE_CHANNEL(ch6_ce_count, S_IRUGO,
-		   channel_ce_count_show, NULL, 6);
+		   channel_ce_count_show, शून्य, 6);
 DEVICE_CHANNEL(ch7_ce_count, S_IRUGO,
-		   channel_ce_count_show, NULL, 7);
+		   channel_ce_count_show, शून्य, 7);
 
 /* Total possible dynamic ce_count attribute file table */
-static struct attribute *dynamic_csrow_ce_count_attr[] = {
+अटल काष्ठा attribute *dynamic_csrow_ce_count_attr[] = अणु
 	&dev_attr_legacy_ch0_ce_count.attr.attr,
 	&dev_attr_legacy_ch1_ce_count.attr.attr,
 	&dev_attr_legacy_ch2_ce_count.attr.attr,
@@ -340,70 +341,70 @@ static struct attribute *dynamic_csrow_ce_count_attr[] = {
 	&dev_attr_legacy_ch5_ce_count.attr.attr,
 	&dev_attr_legacy_ch6_ce_count.attr.attr,
 	&dev_attr_legacy_ch7_ce_count.attr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t csrow_dev_is_visible(struct kobject *kobj,
-				    struct attribute *attr, int idx)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct csrow_info *csrow = container_of(dev, struct csrow_info, dev);
+अटल umode_t csrow_dev_is_visible(काष्ठा kobject *kobj,
+				    काष्ठा attribute *attr, पूर्णांक idx)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा csrow_info *csrow = container_of(dev, काष्ठा csrow_info, dev);
 
-	if (idx >= csrow->nr_channels)
-		return 0;
+	अगर (idx >= csrow->nr_channels)
+		वापस 0;
 
-	if (idx >= ARRAY_SIZE(dynamic_csrow_ce_count_attr) - 1) {
+	अगर (idx >= ARRAY_SIZE(dynamic_csrow_ce_count_attr) - 1) अणु
 		WARN_ONCE(1, "idx: %d\n", idx);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Only expose populated DIMMs */
-	if (!csrow->channels[idx]->dimm->nr_pages)
-		return 0;
+	अगर (!csrow->channels[idx]->dimm->nr_pages)
+		वापस 0;
 
-	return attr->mode;
-}
+	वापस attr->mode;
+पूर्ण
 
 
-static const struct attribute_group csrow_dev_dimm_group = {
+अटल स्थिर काष्ठा attribute_group csrow_dev_dimm_group = अणु
 	.attrs = dynamic_csrow_dimm_attr,
 	.is_visible = csrow_dev_is_visible,
-};
+पूर्ण;
 
-static const struct attribute_group csrow_dev_ce_count_group = {
+अटल स्थिर काष्ठा attribute_group csrow_dev_ce_count_group = अणु
 	.attrs = dynamic_csrow_ce_count_attr,
 	.is_visible = csrow_dev_is_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *csrow_dev_groups[] = {
+अटल स्थिर काष्ठा attribute_group *csrow_dev_groups[] = अणु
 	&csrow_dev_dimm_group,
 	&csrow_dev_ce_count_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static void csrow_release(struct device *dev)
-{
+अटल व्योम csrow_release(काष्ठा device *dev)
+अणु
 	/*
-	 * Nothing to do, just unregister sysfs here. The mci
+	 * Nothing to करो, just unरेजिस्टर sysfs here. The mci
 	 * device owns the data and will also release it.
 	 */
-}
+पूर्ण
 
-static inline int nr_pages_per_csrow(struct csrow_info *csrow)
-{
-	int chan, nr_pages = 0;
+अटल अंतरभूत पूर्णांक nr_pages_per_csrow(काष्ठा csrow_info *csrow)
+अणु
+	पूर्णांक chan, nr_pages = 0;
 
-	for (chan = 0; chan < csrow->nr_channels; chan++)
+	क्रम (chan = 0; chan < csrow->nr_channels; chan++)
 		nr_pages += csrow->channels[chan]->dimm->nr_pages;
 
-	return nr_pages;
-}
+	वापस nr_pages;
+पूर्ण
 
-/* Create a CSROW object under specifed edac_mc_device */
-static int edac_create_csrow_object(struct mem_ctl_info *mci,
-				    struct csrow_info *csrow, int index)
-{
-	int err;
+/* Create a CSROW object under specअगरed edac_mc_device */
+अटल पूर्णांक edac_create_csrow_object(काष्ठा mem_ctl_info *mci,
+				    काष्ठा csrow_info *csrow, पूर्णांक index)
+अणु
+	पूर्णांक err;
 
 	csrow->dev.type = &csrow_attr_type;
 	csrow->dev.groups = csrow_dev_groups;
@@ -415,172 +416,172 @@ static int edac_create_csrow_object(struct mem_ctl_info *mci,
 	dev_set_drvdata(&csrow->dev, csrow);
 
 	err = device_add(&csrow->dev);
-	if (err) {
+	अगर (err) अणु
 		edac_dbg(1, "failure: create device %s\n", dev_name(&csrow->dev));
 		put_device(&csrow->dev);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	edac_dbg(0, "device %s created\n", dev_name(&csrow->dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Create a CSROW object under specifed edac_mc_device */
-static int edac_create_csrow_objects(struct mem_ctl_info *mci)
-{
-	int err, i;
-	struct csrow_info *csrow;
+/* Create a CSROW object under specअगरed edac_mc_device */
+अटल पूर्णांक edac_create_csrow_objects(काष्ठा mem_ctl_info *mci)
+अणु
+	पूर्णांक err, i;
+	काष्ठा csrow_info *csrow;
 
-	for (i = 0; i < mci->nr_csrows; i++) {
+	क्रम (i = 0; i < mci->nr_csrows; i++) अणु
 		csrow = mci->csrows[i];
-		if (!nr_pages_per_csrow(csrow))
-			continue;
+		अगर (!nr_pages_per_csrow(csrow))
+			जारी;
 		err = edac_create_csrow_object(mci, mci->csrows[i], i);
-		if (err < 0)
-			goto error;
-	}
-	return 0;
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
+	वापस 0;
 
 error:
-	for (--i; i >= 0; i--) {
-		if (device_is_registered(&mci->csrows[i]->dev))
-			device_unregister(&mci->csrows[i]->dev);
-	}
+	क्रम (--i; i >= 0; i--) अणु
+		अगर (device_is_रेजिस्टरed(&mci->csrows[i]->dev))
+			device_unरेजिस्टर(&mci->csrows[i]->dev);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void edac_delete_csrow_objects(struct mem_ctl_info *mci)
-{
-	int i;
+अटल व्योम edac_delete_csrow_objects(काष्ठा mem_ctl_info *mci)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mci->nr_csrows; i++) {
-		if (device_is_registered(&mci->csrows[i]->dev))
-			device_unregister(&mci->csrows[i]->dev);
-	}
-}
+	क्रम (i = 0; i < mci->nr_csrows; i++) अणु
+		अगर (device_is_रेजिस्टरed(&mci->csrows[i]->dev))
+			device_unरेजिस्टर(&mci->csrows[i]->dev);
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
  * Per-dimm (or per-rank) devices
  */
 
-#define to_dimm(k) container_of(k, struct dimm_info, dev)
+#घोषणा to_dimm(k) container_of(k, काष्ठा dimm_info, dev)
 
-/* show/store functions for DIMM Label attributes */
-static ssize_t dimmdev_location_show(struct device *dev,
-				     struct device_attribute *mattr, char *data)
-{
-	struct dimm_info *dimm = to_dimm(dev);
-	ssize_t count;
+/* show/store functions क्रम DIMM Label attributes */
+अटल sमाप_प्रकार dimmdev_location_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा dimm_info *dimm = to_dimm(dev);
+	sमाप_प्रकार count;
 
 	count = edac_dimm_info_location(dimm, data, PAGE_SIZE);
-	count += scnprintf(data + count, PAGE_SIZE - count, "\n");
+	count += scnम_लिखो(data + count, PAGE_SIZE - count, "\n");
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t dimmdev_label_show(struct device *dev,
-				  struct device_attribute *mattr, char *data)
-{
-	struct dimm_info *dimm = to_dimm(dev);
+अटल sमाप_प्रकार dimmdev_label_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा dimm_info *dimm = to_dimm(dev);
 
-	/* if field has not been initialized, there is nothing to send */
-	if (!dimm->label[0])
-		return 0;
+	/* अगर field has not been initialized, there is nothing to send */
+	अगर (!dimm->label[0])
+		वापस 0;
 
-	return snprintf(data, sizeof(dimm->label) + 1, "%s\n", dimm->label);
-}
+	वापस snम_लिखो(data, माप(dimm->label) + 1, "%s\n", dimm->label);
+पूर्ण
 
-static ssize_t dimmdev_label_store(struct device *dev,
-				   struct device_attribute *mattr,
-				   const char *data,
-				   size_t count)
-{
-	struct dimm_info *dimm = to_dimm(dev);
-	size_t copy_count = count;
+अटल sमाप_प्रकार dimmdev_label_store(काष्ठा device *dev,
+				   काष्ठा device_attribute *mattr,
+				   स्थिर अक्षर *data,
+				   माप_प्रकार count)
+अणु
+	काष्ठा dimm_info *dimm = to_dimm(dev);
+	माप_प्रकार copy_count = count;
 
-	if (count == 0)
-		return -EINVAL;
+	अगर (count == 0)
+		वापस -EINVAL;
 
-	if (data[count - 1] == '\0' || data[count - 1] == '\n')
+	अगर (data[count - 1] == '\0' || data[count - 1] == '\n')
 		copy_count -= 1;
 
-	if (copy_count == 0 || copy_count >= sizeof(dimm->label))
-		return -EINVAL;
+	अगर (copy_count == 0 || copy_count >= माप(dimm->label))
+		वापस -EINVAL;
 
-	strncpy(dimm->label, data, copy_count);
+	म_नकलन(dimm->label, data, copy_count);
 	dimm->label[copy_count] = '\0';
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t dimmdev_size_show(struct device *dev,
-				 struct device_attribute *mattr, char *data)
-{
-	struct dimm_info *dimm = to_dimm(dev);
+अटल sमाप_प्रकार dimmdev_size_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा dimm_info *dimm = to_dimm(dev);
 
-	return sprintf(data, "%u\n", PAGES_TO_MiB(dimm->nr_pages));
-}
+	वापस प्र_लिखो(data, "%u\n", PAGES_TO_MiB(dimm->nr_pages));
+पूर्ण
 
-static ssize_t dimmdev_mem_type_show(struct device *dev,
-				     struct device_attribute *mattr, char *data)
-{
-	struct dimm_info *dimm = to_dimm(dev);
+अटल sमाप_प्रकार dimmdev_mem_type_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा dimm_info *dimm = to_dimm(dev);
 
-	return sprintf(data, "%s\n", edac_mem_types[dimm->mtype]);
-}
+	वापस प्र_लिखो(data, "%s\n", edac_mem_types[dimm->mtype]);
+पूर्ण
 
-static ssize_t dimmdev_dev_type_show(struct device *dev,
-				     struct device_attribute *mattr, char *data)
-{
-	struct dimm_info *dimm = to_dimm(dev);
+अटल sमाप_प्रकार dimmdev_dev_type_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *mattr, अक्षर *data)
+अणु
+	काष्ठा dimm_info *dimm = to_dimm(dev);
 
-	return sprintf(data, "%s\n", dev_types[dimm->dtype]);
-}
+	वापस प्र_लिखो(data, "%s\n", dev_types[dimm->dtype]);
+पूर्ण
 
-static ssize_t dimmdev_edac_mode_show(struct device *dev,
-				      struct device_attribute *mattr,
-				      char *data)
-{
-	struct dimm_info *dimm = to_dimm(dev);
+अटल sमाप_प्रकार dimmdev_edac_mode_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *mattr,
+				      अक्षर *data)
+अणु
+	काष्ठा dimm_info *dimm = to_dimm(dev);
 
-	return sprintf(data, "%s\n", edac_caps[dimm->edac_mode]);
-}
+	वापस प्र_लिखो(data, "%s\n", edac_caps[dimm->edac_mode]);
+पूर्ण
 
-static ssize_t dimmdev_ce_count_show(struct device *dev,
-				      struct device_attribute *mattr,
-				      char *data)
-{
-	struct dimm_info *dimm = to_dimm(dev);
+अटल sमाप_प्रकार dimmdev_ce_count_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *mattr,
+				      अक्षर *data)
+अणु
+	काष्ठा dimm_info *dimm = to_dimm(dev);
 
-	return sprintf(data, "%u\n", dimm->ce_count);
-}
+	वापस प्र_लिखो(data, "%u\n", dimm->ce_count);
+पूर्ण
 
-static ssize_t dimmdev_ue_count_show(struct device *dev,
-				      struct device_attribute *mattr,
-				      char *data)
-{
-	struct dimm_info *dimm = to_dimm(dev);
+अटल sमाप_प्रकार dimmdev_ue_count_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *mattr,
+				      अक्षर *data)
+अणु
+	काष्ठा dimm_info *dimm = to_dimm(dev);
 
-	return sprintf(data, "%u\n", dimm->ue_count);
-}
+	वापस प्र_लिखो(data, "%u\n", dimm->ue_count);
+पूर्ण
 
 /* dimm/rank attribute files */
-static DEVICE_ATTR(dimm_label, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(dimm_label, S_IRUGO | S_IWUSR,
 		   dimmdev_label_show, dimmdev_label_store);
-static DEVICE_ATTR(dimm_location, S_IRUGO, dimmdev_location_show, NULL);
-static DEVICE_ATTR(size, S_IRUGO, dimmdev_size_show, NULL);
-static DEVICE_ATTR(dimm_mem_type, S_IRUGO, dimmdev_mem_type_show, NULL);
-static DEVICE_ATTR(dimm_dev_type, S_IRUGO, dimmdev_dev_type_show, NULL);
-static DEVICE_ATTR(dimm_edac_mode, S_IRUGO, dimmdev_edac_mode_show, NULL);
-static DEVICE_ATTR(dimm_ce_count, S_IRUGO, dimmdev_ce_count_show, NULL);
-static DEVICE_ATTR(dimm_ue_count, S_IRUGO, dimmdev_ue_count_show, NULL);
+अटल DEVICE_ATTR(dimm_location, S_IRUGO, dimmdev_location_show, शून्य);
+अटल DEVICE_ATTR(size, S_IRUGO, dimmdev_size_show, शून्य);
+अटल DEVICE_ATTR(dimm_mem_type, S_IRUGO, dimmdev_mem_type_show, शून्य);
+अटल DEVICE_ATTR(dimm_dev_type, S_IRUGO, dimmdev_dev_type_show, शून्य);
+अटल DEVICE_ATTR(dimm_edac_mode, S_IRUGO, dimmdev_edac_mode_show, शून्य);
+अटल DEVICE_ATTR(dimm_ce_count, S_IRUGO, dimmdev_ce_count_show, शून्य);
+अटल DEVICE_ATTR(dimm_ue_count, S_IRUGO, dimmdev_ue_count_show, शून्य);
 
 /* attributes of the dimm<id>/rank<id> object */
-static struct attribute *dimm_attrs[] = {
+अटल काष्ठा attribute *dimm_attrs[] = अणु
 	&dev_attr_dimm_label.attr,
 	&dev_attr_dimm_location.attr,
 	&dev_attr_size.attr,
@@ -589,35 +590,35 @@ static struct attribute *dimm_attrs[] = {
 	&dev_attr_dimm_edac_mode.attr,
 	&dev_attr_dimm_ce_count.attr,
 	&dev_attr_dimm_ue_count.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group dimm_attr_grp = {
+अटल स्थिर काष्ठा attribute_group dimm_attr_grp = अणु
 	.attrs	= dimm_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *dimm_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *dimm_attr_groups[] = अणु
 	&dimm_attr_grp,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct device_type dimm_attr_type = {
+अटल स्थिर काष्ठा device_type dimm_attr_type = अणु
 	.groups		= dimm_attr_groups,
-};
+पूर्ण;
 
-static void dimm_release(struct device *dev)
-{
+अटल व्योम dimm_release(काष्ठा device *dev)
+अणु
 	/*
-	 * Nothing to do, just unregister sysfs here. The mci
+	 * Nothing to करो, just unरेजिस्टर sysfs here. The mci
 	 * device owns the data and will also release it.
 	 */
-}
+पूर्ण
 
-/* Create a DIMM object under specifed memory controller device */
-static int edac_create_dimm_object(struct mem_ctl_info *mci,
-				   struct dimm_info *dimm)
-{
-	int err;
+/* Create a DIMM object under specअगरed memory controller device */
+अटल पूर्णांक edac_create_dimm_object(काष्ठा mem_ctl_info *mci,
+				   काष्ठा dimm_info *dimm)
+अणु
+	पूर्णांक err;
 	dimm->mci = mci;
 
 	dimm->dev.type = &dimm_attr_type;
@@ -625,236 +626,236 @@ static int edac_create_dimm_object(struct mem_ctl_info *mci,
 	device_initialize(&dimm->dev);
 
 	dimm->dev.parent = &mci->dev;
-	if (mci->csbased)
+	अगर (mci->csbased)
 		dev_set_name(&dimm->dev, "rank%d", dimm->idx);
-	else
+	अन्यथा
 		dev_set_name(&dimm->dev, "dimm%d", dimm->idx);
 	dev_set_drvdata(&dimm->dev, dimm);
-	pm_runtime_forbid(&mci->dev);
+	pm_runसमय_क्रमbid(&mci->dev);
 
 	err = device_add(&dimm->dev);
-	if (err) {
+	अगर (err) अणु
 		edac_dbg(1, "failure: create device %s\n", dev_name(&dimm->dev));
 		put_device(&dimm->dev);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_EDAC_DEBUG)) {
-		char location[80];
+	अगर (IS_ENABLED(CONFIG_EDAC_DEBUG)) अणु
+		अक्षर location[80];
 
-		edac_dimm_info_location(dimm, location, sizeof(location));
+		edac_dimm_info_location(dimm, location, माप(location));
 		edac_dbg(0, "device %s created at location %s\n",
 			dev_name(&dimm->dev), location);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Memory controller device
  */
 
-#define to_mci(k) container_of(k, struct mem_ctl_info, dev)
+#घोषणा to_mci(k) container_of(k, काष्ठा mem_ctl_info, dev)
 
-static ssize_t mci_reset_counters_store(struct device *dev,
-					struct device_attribute *mattr,
-					const char *data, size_t count)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct dimm_info *dimm;
-	int row, chan;
+अटल sमाप_प्रकार mci_reset_counters_store(काष्ठा device *dev,
+					काष्ठा device_attribute *mattr,
+					स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा dimm_info *dimm;
+	पूर्णांक row, chan;
 
 	mci->ue_mc = 0;
 	mci->ce_mc = 0;
 	mci->ue_noinfo_count = 0;
 	mci->ce_noinfo_count = 0;
 
-	for (row = 0; row < mci->nr_csrows; row++) {
-		struct csrow_info *ri = mci->csrows[row];
+	क्रम (row = 0; row < mci->nr_csrows; row++) अणु
+		काष्ठा csrow_info *ri = mci->csrows[row];
 
 		ri->ue_count = 0;
 		ri->ce_count = 0;
 
-		for (chan = 0; chan < ri->nr_channels; chan++)
+		क्रम (chan = 0; chan < ri->nr_channels; chan++)
 			ri->channels[chan]->ce_count = 0;
-	}
+	पूर्ण
 
-	mci_for_each_dimm(mci, dimm) {
+	mci_क्रम_each_dimm(mci, dimm) अणु
 		dimm->ue_count = 0;
 		dimm->ce_count = 0;
-	}
+	पूर्ण
 
-	mci->start_time = jiffies;
-	return count;
-}
+	mci->start_समय = jअगरfies;
+	वापस count;
+पूर्ण
 
-/* Memory scrubbing interface:
+/* Memory scrubbing पूर्णांकerface:
  *
  * A MC driver can limit the scrubbing bandwidth based on the CPU type.
- * Therefore, ->set_sdram_scrub_rate should be made to return the actual
+ * Thereक्रमe, ->set_sdram_scrub_rate should be made to वापस the actual
  * bandwidth that is accepted or 0 when scrubbing is to be disabled.
  *
- * Negative value still means that an error has occurred while setting
+ * Negative value still means that an error has occurred जबतक setting
  * the scrub rate.
  */
-static ssize_t mci_sdram_scrub_rate_store(struct device *dev,
-					  struct device_attribute *mattr,
-					  const char *data, size_t count)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	unsigned long bandwidth = 0;
-	int new_bw = 0;
+अटल sमाप_प्रकार mci_sdram_scrub_rate_store(काष्ठा device *dev,
+					  काष्ठा device_attribute *mattr,
+					  स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	अचिन्हित दीर्घ bandwidth = 0;
+	पूर्णांक new_bw = 0;
 
-	if (kstrtoul(data, 10, &bandwidth) < 0)
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(data, 10, &bandwidth) < 0)
+		वापस -EINVAL;
 
 	new_bw = mci->set_sdram_scrub_rate(mci, bandwidth);
-	if (new_bw < 0) {
-		edac_printk(KERN_WARNING, EDAC_MC,
+	अगर (new_bw < 0) अणु
+		edac_prपूर्णांकk(KERN_WARNING, EDAC_MC,
 			    "Error setting scrub rate to: %lu\n", bandwidth);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * ->get_sdram_scrub_rate() return value semantics same as above.
+ * ->get_sdram_scrub_rate() वापस value semantics same as above.
  */
-static ssize_t mci_sdram_scrub_rate_show(struct device *dev,
-					 struct device_attribute *mattr,
-					 char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	int bandwidth = 0;
+अटल sमाप_प्रकार mci_sdram_scrub_rate_show(काष्ठा device *dev,
+					 काष्ठा device_attribute *mattr,
+					 अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	पूर्णांक bandwidth = 0;
 
 	bandwidth = mci->get_sdram_scrub_rate(mci);
-	if (bandwidth < 0) {
-		edac_printk(KERN_DEBUG, EDAC_MC, "Error reading scrub rate\n");
-		return bandwidth;
-	}
+	अगर (bandwidth < 0) अणु
+		edac_prपूर्णांकk(KERN_DEBUG, EDAC_MC, "Error reading scrub rate\n");
+		वापस bandwidth;
+	पूर्ण
 
-	return sprintf(data, "%d\n", bandwidth);
-}
+	वापस प्र_लिखो(data, "%d\n", bandwidth);
+पूर्ण
 
-/* default attribute files for the MCI object */
-static ssize_t mci_ue_count_show(struct device *dev,
-				 struct device_attribute *mattr,
-				 char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
+/* शेष attribute files क्रम the MCI object */
+अटल sमाप_प्रकार mci_ue_count_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *mattr,
+				 अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
 
-	return sprintf(data, "%d\n", mci->ue_mc);
-}
+	वापस प्र_लिखो(data, "%d\n", mci->ue_mc);
+पूर्ण
 
-static ssize_t mci_ce_count_show(struct device *dev,
-				 struct device_attribute *mattr,
-				 char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
+अटल sमाप_प्रकार mci_ce_count_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *mattr,
+				 अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
 
-	return sprintf(data, "%d\n", mci->ce_mc);
-}
+	वापस प्र_लिखो(data, "%d\n", mci->ce_mc);
+पूर्ण
 
-static ssize_t mci_ce_noinfo_show(struct device *dev,
-				  struct device_attribute *mattr,
-				  char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
+अटल sमाप_प्रकार mci_ce_noinfo_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *mattr,
+				  अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
 
-	return sprintf(data, "%d\n", mci->ce_noinfo_count);
-}
+	वापस प्र_लिखो(data, "%d\n", mci->ce_noinfo_count);
+पूर्ण
 
-static ssize_t mci_ue_noinfo_show(struct device *dev,
-				  struct device_attribute *mattr,
-				  char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
+अटल sमाप_प्रकार mci_ue_noinfo_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *mattr,
+				  अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
 
-	return sprintf(data, "%d\n", mci->ue_noinfo_count);
-}
+	वापस प्र_लिखो(data, "%d\n", mci->ue_noinfo_count);
+पूर्ण
 
-static ssize_t mci_seconds_show(struct device *dev,
-				struct device_attribute *mattr,
-				char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
+अटल sमाप_प्रकार mci_seconds_show(काष्ठा device *dev,
+				काष्ठा device_attribute *mattr,
+				अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
 
-	return sprintf(data, "%ld\n", (jiffies - mci->start_time) / HZ);
-}
+	वापस प्र_लिखो(data, "%ld\n", (jअगरfies - mci->start_समय) / HZ);
+पूर्ण
 
-static ssize_t mci_ctl_name_show(struct device *dev,
-				 struct device_attribute *mattr,
-				 char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
+अटल sमाप_प्रकार mci_ctl_name_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *mattr,
+				 अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
 
-	return sprintf(data, "%s\n", mci->ctl_name);
-}
+	वापस प्र_लिखो(data, "%s\n", mci->ctl_name);
+पूर्ण
 
-static ssize_t mci_size_mb_show(struct device *dev,
-				struct device_attribute *mattr,
-				char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	int total_pages = 0, csrow_idx, j;
+अटल sमाप_प्रकार mci_size_mb_show(काष्ठा device *dev,
+				काष्ठा device_attribute *mattr,
+				अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	पूर्णांक total_pages = 0, csrow_idx, j;
 
-	for (csrow_idx = 0; csrow_idx < mci->nr_csrows; csrow_idx++) {
-		struct csrow_info *csrow = mci->csrows[csrow_idx];
+	क्रम (csrow_idx = 0; csrow_idx < mci->nr_csrows; csrow_idx++) अणु
+		काष्ठा csrow_info *csrow = mci->csrows[csrow_idx];
 
-		for (j = 0; j < csrow->nr_channels; j++) {
-			struct dimm_info *dimm = csrow->channels[j]->dimm;
+		क्रम (j = 0; j < csrow->nr_channels; j++) अणु
+			काष्ठा dimm_info *dimm = csrow->channels[j]->dimm;
 
 			total_pages += dimm->nr_pages;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return sprintf(data, "%u\n", PAGES_TO_MiB(total_pages));
-}
+	वापस प्र_लिखो(data, "%u\n", PAGES_TO_MiB(total_pages));
+पूर्ण
 
-static ssize_t mci_max_location_show(struct device *dev,
-				     struct device_attribute *mattr,
-				     char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	int len = PAGE_SIZE;
-	char *p = data;
-	int i, n;
+अटल sमाप_प्रकार mci_max_location_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *mattr,
+				     अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	पूर्णांक len = PAGE_SIZE;
+	अक्षर *p = data;
+	पूर्णांक i, n;
 
-	for (i = 0; i < mci->n_layers; i++) {
-		n = scnprintf(p, len, "%s %d ",
+	क्रम (i = 0; i < mci->n_layers; i++) अणु
+		n = scnम_लिखो(p, len, "%s %d ",
 			      edac_layer_name[mci->layers[i].type],
 			      mci->layers[i].size - 1);
 		len -= n;
-		if (len <= 0)
-			goto out;
+		अगर (len <= 0)
+			जाओ out;
 
 		p += n;
-	}
+	पूर्ण
 
-	p += scnprintf(p, len, "\n");
+	p += scnम_लिखो(p, len, "\n");
 out:
-	return p - data;
-}
+	वापस p - data;
+पूर्ण
 
-/* default Control file */
-static DEVICE_ATTR(reset_counters, S_IWUSR, NULL, mci_reset_counters_store);
+/* शेष Control file */
+अटल DEVICE_ATTR(reset_counters, S_IWUSR, शून्य, mci_reset_counters_store);
 
-/* default Attribute files */
-static DEVICE_ATTR(mc_name, S_IRUGO, mci_ctl_name_show, NULL);
-static DEVICE_ATTR(size_mb, S_IRUGO, mci_size_mb_show, NULL);
-static DEVICE_ATTR(seconds_since_reset, S_IRUGO, mci_seconds_show, NULL);
-static DEVICE_ATTR(ue_noinfo_count, S_IRUGO, mci_ue_noinfo_show, NULL);
-static DEVICE_ATTR(ce_noinfo_count, S_IRUGO, mci_ce_noinfo_show, NULL);
-static DEVICE_ATTR(ue_count, S_IRUGO, mci_ue_count_show, NULL);
-static DEVICE_ATTR(ce_count, S_IRUGO, mci_ce_count_show, NULL);
-static DEVICE_ATTR(max_location, S_IRUGO, mci_max_location_show, NULL);
+/* शेष Attribute files */
+अटल DEVICE_ATTR(mc_name, S_IRUGO, mci_ctl_name_show, शून्य);
+अटल DEVICE_ATTR(size_mb, S_IRUGO, mci_size_mb_show, शून्य);
+अटल DEVICE_ATTR(seconds_since_reset, S_IRUGO, mci_seconds_show, शून्य);
+अटल DEVICE_ATTR(ue_noinfo_count, S_IRUGO, mci_ue_noinfo_show, शून्य);
+अटल DEVICE_ATTR(ce_noinfo_count, S_IRUGO, mci_ce_noinfo_show, शून्य);
+अटल DEVICE_ATTR(ue_count, S_IRUGO, mci_ue_count_show, शून्य);
+अटल DEVICE_ATTR(ce_count, S_IRUGO, mci_ce_count_show, शून्य);
+अटल DEVICE_ATTR(max_location, S_IRUGO, mci_max_location_show, शून्य);
 
 /* memory scrubber attribute file */
-static DEVICE_ATTR(sdram_scrub_rate, 0, mci_sdram_scrub_rate_show,
+अटल DEVICE_ATTR(sdram_scrub_rate, 0, mci_sdram_scrub_rate_show,
 	    mci_sdram_scrub_rate_store); /* umode set later in is_visible */
 
-static struct attribute *mci_attrs[] = {
+अटल काष्ठा attribute *mci_attrs[] = अणु
 	&dev_attr_reset_counters.attr,
 	&dev_attr_mc_name.attr,
 	&dev_attr_size_mb.attr,
@@ -865,38 +866,38 @@ static struct attribute *mci_attrs[] = {
 	&dev_attr_ce_count.attr,
 	&dev_attr_max_location.attr,
 	&dev_attr_sdram_scrub_rate.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t mci_attr_is_visible(struct kobject *kobj,
-				   struct attribute *attr, int idx)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct mem_ctl_info *mci = to_mci(dev);
+अटल umode_t mci_attr_is_visible(काष्ठा kobject *kobj,
+				   काष्ठा attribute *attr, पूर्णांक idx)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
 	umode_t mode = 0;
 
-	if (attr != &dev_attr_sdram_scrub_rate.attr)
-		return attr->mode;
-	if (mci->get_sdram_scrub_rate)
+	अगर (attr != &dev_attr_sdram_scrub_rate.attr)
+		वापस attr->mode;
+	अगर (mci->get_sdram_scrub_rate)
 		mode |= S_IRUGO;
-	if (mci->set_sdram_scrub_rate)
+	अगर (mci->set_sdram_scrub_rate)
 		mode |= S_IWUSR;
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static const struct attribute_group mci_attr_grp = {
+अटल स्थिर काष्ठा attribute_group mci_attr_grp = अणु
 	.attrs	= mci_attrs,
 	.is_visible = mci_attr_is_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *mci_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *mci_attr_groups[] = अणु
 	&mci_attr_grp,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct device_type mci_attr_type = {
+अटल स्थिर काष्ठा device_type mci_attr_type = अणु
 	.groups		= mci_attr_groups,
-};
+पूर्ण;
 
 /*
  * Create a new Memory Controller kobject instance,
@@ -906,126 +907,126 @@ static const struct device_type mci_attr_type = {
  *	0	Success
  *	!0	Failure
  */
-int edac_create_sysfs_mci_device(struct mem_ctl_info *mci,
-				 const struct attribute_group **groups)
-{
-	struct dimm_info *dimm;
-	int err;
+पूर्णांक edac_create_sysfs_mci_device(काष्ठा mem_ctl_info *mci,
+				 स्थिर काष्ठा attribute_group **groups)
+अणु
+	काष्ठा dimm_info *dimm;
+	पूर्णांक err;
 
-	/* get the /sys/devices/system/edac subsys reference */
+	/* get the /sys/devices/प्रणाली/edac subsys reference */
 	mci->dev.type = &mci_attr_type;
 	mci->dev.parent = mci_pdev;
 	mci->dev.groups = groups;
 	dev_set_name(&mci->dev, "mc%d", mci->mc_idx);
 	dev_set_drvdata(&mci->dev, mci);
-	pm_runtime_forbid(&mci->dev);
+	pm_runसमय_क्रमbid(&mci->dev);
 
 	err = device_add(&mci->dev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		edac_dbg(1, "failure: create device %s\n", dev_name(&mci->dev));
-		/* no put_device() here, free mci with _edac_mc_free() */
-		return err;
-	}
+		/* no put_device() here, मुक्त mci with _edac_mc_मुक्त() */
+		वापस err;
+	पूर्ण
 
 	edac_dbg(0, "device %s created\n", dev_name(&mci->dev));
 
 	/*
 	 * Create the dimm/rank devices
 	 */
-	mci_for_each_dimm(mci, dimm) {
+	mci_क्रम_each_dimm(mci, dimm) अणु
 		/* Only expose populated DIMMs */
-		if (!dimm->nr_pages)
-			continue;
+		अगर (!dimm->nr_pages)
+			जारी;
 
 		err = edac_create_dimm_object(mci, dimm);
-		if (err)
-			goto fail;
-	}
+		अगर (err)
+			जाओ fail;
+	पूर्ण
 
-#ifdef CONFIG_EDAC_LEGACY_SYSFS
+#अगर_घोषित CONFIG_EDAC_LEGACY_SYSFS
 	err = edac_create_csrow_objects(mci);
-	if (err < 0)
-		goto fail;
-#endif
+	अगर (err < 0)
+		जाओ fail;
+#पूर्ण_अगर
 
 	edac_create_debugfs_nodes(mci);
-	return 0;
+	वापस 0;
 
 fail:
-	edac_remove_sysfs_mci_device(mci);
+	edac_हटाओ_sysfs_mci_device(mci);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * remove a Memory Controller instance
+ * हटाओ a Memory Controller instance
  */
-void edac_remove_sysfs_mci_device(struct mem_ctl_info *mci)
-{
-	struct dimm_info *dimm;
+व्योम edac_हटाओ_sysfs_mci_device(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा dimm_info *dimm;
 
-	if (!device_is_registered(&mci->dev))
-		return;
+	अगर (!device_is_रेजिस्टरed(&mci->dev))
+		वापस;
 
 	edac_dbg(0, "\n");
 
-#ifdef CONFIG_EDAC_DEBUG
-	edac_debugfs_remove_recursive(mci->debugfs);
-#endif
-#ifdef CONFIG_EDAC_LEGACY_SYSFS
+#अगर_घोषित CONFIG_EDAC_DEBUG
+	edac_debugfs_हटाओ_recursive(mci->debugfs);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_EDAC_LEGACY_SYSFS
 	edac_delete_csrow_objects(mci);
-#endif
+#पूर्ण_अगर
 
-	mci_for_each_dimm(mci, dimm) {
-		if (!device_is_registered(&dimm->dev))
-			continue;
+	mci_क्रम_each_dimm(mci, dimm) अणु
+		अगर (!device_is_रेजिस्टरed(&dimm->dev))
+			जारी;
 		edac_dbg(1, "unregistering device %s\n", dev_name(&dimm->dev));
-		device_unregister(&dimm->dev);
-	}
+		device_unरेजिस्टर(&dimm->dev);
+	पूर्ण
 
-	/* only remove the device, but keep mci */
+	/* only हटाओ the device, but keep mci */
 	device_del(&mci->dev);
-}
+पूर्ण
 
-static void mc_attr_release(struct device *dev)
-{
+अटल व्योम mc_attr_release(काष्ठा device *dev)
+अणु
 	/*
-	 * There's no container structure here, as this is just the mci
+	 * There's no container काष्ठाure here, as this is just the mci
 	 * parent device, used to create the /sys/devices/mc sysfs node.
 	 * So, there are no attributes on it.
 	 */
 	edac_dbg(1, "device %s released\n", dev_name(dev));
-	kfree(dev);
-}
+	kमुक्त(dev);
+पूर्ण
 
 /*
- * Init/exit code for the module. Basically, creates/removes /sys/class/rc
+ * Init/निकास code क्रम the module. Basically, creates/हटाओs /sys/class/rc
  */
-int __init edac_mc_sysfs_init(void)
-{
-	int err;
+पूर्णांक __init edac_mc_sysfs_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	mci_pdev = kzalloc(sizeof(*mci_pdev), GFP_KERNEL);
-	if (!mci_pdev)
-		return -ENOMEM;
+	mci_pdev = kzalloc(माप(*mci_pdev), GFP_KERNEL);
+	अगर (!mci_pdev)
+		वापस -ENOMEM;
 
 	mci_pdev->bus = edac_get_sysfs_subsys();
 	mci_pdev->release = mc_attr_release;
 	mci_pdev->init_name = "mc";
 
-	err = device_register(mci_pdev);
-	if (err < 0) {
+	err = device_रेजिस्टर(mci_pdev);
+	अगर (err < 0) अणु
 		edac_dbg(1, "failure: create device %s\n", dev_name(mci_pdev));
 		put_device(mci_pdev);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	edac_dbg(0, "device %s created\n", dev_name(mci_pdev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void edac_mc_sysfs_exit(void)
-{
-	device_unregister(mci_pdev);
-}
+व्योम edac_mc_sysfs_निकास(व्योम)
+अणु
+	device_unरेजिस्टर(mci_pdev);
+पूर्ण

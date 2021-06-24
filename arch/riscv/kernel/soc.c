@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  */
-#include <linux/init.h>
-#include <linux/libfdt.h>
-#include <linux/pgtable.h>
-#include <asm/soc.h>
+#समावेश <linux/init.h>
+#समावेश <linux/libfdt.h>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/soc.h>
 
 /*
- * This is called extremly early, before parse_dtb(), to allow initializing
- * SoC hardware before memory or any device driver initialization.
+ * This is called extremly early, beक्रमe parse_dtb(), to allow initializing
+ * SoC hardware beक्रमe memory or any device driver initialization.
  */
-void __init soc_early_init(void)
-{
-	void (*early_fn)(const void *fdt);
-	const struct of_device_id *s;
-	const void *fdt = dtb_early_va;
+व्योम __init soc_early_init(व्योम)
+अणु
+	व्योम (*early_fn)(स्थिर व्योम *fdt);
+	स्थिर काष्ठा of_device_id *s;
+	स्थिर व्योम *fdt = dtb_early_va;
 
-	for (s = (void *)&__soc_early_init_table_start;
-	     (void *)s < (void *)&__soc_early_init_table_end; s++) {
-		if (!fdt_node_check_compatible(fdt, 0, s->compatible)) {
+	क्रम (s = (व्योम *)&__soc_early_init_table_start;
+	     (व्योम *)s < (व्योम *)&__soc_early_init_table_end; s++) अणु
+		अगर (!fdt_node_check_compatible(fdt, 0, s->compatible)) अणु
 			early_fn = s->data;
 			early_fn(fdt);
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण

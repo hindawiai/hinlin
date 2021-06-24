@@ -1,108 +1,109 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * ethtool.h: Defines for Linux ethtool.
+ * ethtool.h: Defines क्रम Linux ethtool.
  *
  * Copyright (C) 1998 David S. Miller (davem@redhat.com)
  * Copyright 2001 Jeff Garzik <jgarzik@pobox.com>
- * Portions Copyright 2001 Sun Microsystems (thockin@sun.com)
- * Portions Copyright 2002 Intel (eli.kupermann@intel.com,
- *                                christopher.leech@intel.com,
- *                                scott.feldman@intel.com)
- * Portions Copyright (C) Sun Microsystems 2008
+ * Portions Copyright 2001 Sun Microप्रणालीs (thockin@sun.com)
+ * Portions Copyright 2002 Intel (eli.kupermann@पूर्णांकel.com,
+ *                                christopher.leech@पूर्णांकel.com,
+ *                                scott.feldman@पूर्णांकel.com)
+ * Portions Copyright (C) Sun Microप्रणालीs 2008
  */
 
-#ifndef _UAPI_LINUX_ETHTOOL_H
-#define _UAPI_LINUX_ETHTOOL_H
+#अगर_अघोषित _UAPI_LINUX_ETHTOOL_H
+#घोषणा _UAPI_LINUX_ETHTOOL_H
 
-#include <linux/const.h>
-#include <linux/types.h>
-#include <linux/if_ether.h>
+#समावेश <linux/स्थिर.h>
+#समावेश <linux/types.h>
+#समावेश <linux/अगर_ether.h>
 
-#ifndef __KERNEL__
-#include <limits.h> /* for INT_MAX */
-#endif
+#अगर_अघोषित __KERNEL__
+#समावेश <सीमा.स> /* क्रम पूर्णांक_उच्च */
+#पूर्ण_अगर
 
-/* All structures exposed to userland should be defined such that they
- * have the same layout for 32-bit and 64-bit userland.
+/* All काष्ठाures exposed to userland should be defined such that they
+ * have the same layout क्रम 32-bit and 64-bit userland.
  */
 
 /* Note on reserved space.
  * Reserved fields must not be accessed directly by user space because
- * they may be replaced by a different field in the future. They must
- * be initialized to zero before making the request, e.g. via memset
- * of the entire structure or implicitly by not being set in a structure
+ * they may be replaced by a dअगरferent field in the future. They must
+ * be initialized to zero beक्रमe making the request, e.g. via स_रखो
+ * of the entire काष्ठाure or implicitly by not being set in a काष्ठाure
  * initializer.
  */
 
 /**
- * struct ethtool_cmd - DEPRECATED, link control and status
- * This structure is DEPRECATED, please use struct ethtool_link_settings.
+ * काष्ठा ethtool_cmd - DEPRECATED, link control and status
+ * This काष्ठाure is DEPRECATED, please use काष्ठा ethtool_link_settings.
  * @cmd: Command number = %ETHTOOL_GSET or %ETHTOOL_SSET
- * @supported: Bitmask of %SUPPORTED_* flags for the link modes,
- *	physical connectors and other link features for which the
- *	interface supports autonegotiation or auto-detection.
+ * @supported: Biपंचांगask of %SUPPORTED_* flags क्रम the link modes,
+ *	physical connectors and other link features क्रम which the
+ *	पूर्णांकerface supports स्वतःnegotiation or स्वतः-detection.
  *	Read-only.
- * @advertising: Bitmask of %ADVERTISED_* flags for the link modes,
+ * @advertising: Biपंचांगask of %ADVERTISED_* flags क्रम the link modes,
  *	physical connectors and other link features that are
- *	advertised through autonegotiation or enabled for
- *	auto-detection.
- * @speed: Low bits of the speed, 1Mb units, 0 to INT_MAX or SPEED_UNKNOWN
+ *	advertised through स्वतःnegotiation or enabled क्रम
+ *	स्वतः-detection.
+ * @speed: Low bits of the speed, 1Mb units, 0 to पूर्णांक_उच्च or SPEED_UNKNOWN
  * @duplex: Duplex mode; one of %DUPLEX_*
  * @port: Physical connector type; one of %PORT_*
- * @phy_address: MDIO address of PHY (transceiver); 0 or 255 if not
+ * @phy_address: MDIO address of PHY (transceiver); 0 or 255 अगर not
  *	applicable.  For clause 45 PHYs this is the PRTAD.
- * @transceiver: Historically used to distinguish different possible
+ * @transceiver: Historically used to distinguish dअगरferent possible
  *	PHY types, but not in a consistent way.  Deprecated.
- * @autoneg: Enable/disable autonegotiation and auto-detection;
+ * @स्वतःneg: Enable/disable स्वतःnegotiation and स्वतः-detection;
  *	either %AUTONEG_DISABLE or %AUTONEG_ENABLE
- * @mdio_support: Bitmask of %ETH_MDIO_SUPPORTS_* flags for the MDIO
- *	protocols supported by the interface; 0 if unknown.
+ * @mdio_support: Biपंचांगask of %ETH_MDIO_SUPPORTS_* flags क्रम the MDIO
+ *	protocols supported by the पूर्णांकerface; 0 अगर unknown.
  *	Read-only.
  * @maxtxpkt: Historically used to report TX IRQ coalescing; now
- *	obsoleted by &struct ethtool_coalesce.  Read-only; deprecated.
+ *	obsoleted by &काष्ठा ethtool_coalesce.  Read-only; deprecated.
  * @maxrxpkt: Historically used to report RX IRQ coalescing; now
- *	obsoleted by &struct ethtool_coalesce.  Read-only; deprecated.
- * @speed_hi: High bits of the speed, 1Mb units, 0 to INT_MAX or SPEED_UNKNOWN
+ *	obsoleted by &काष्ठा ethtool_coalesce.  Read-only; deprecated.
+ * @speed_hi: High bits of the speed, 1Mb units, 0 to पूर्णांक_उच्च or SPEED_UNKNOWN
  * @eth_tp_mdix: Ethernet twisted-pair MDI(-X) status; one of
  *	%ETH_TP_MDI_*.  If the status is unknown or not applicable, the
  *	value will be %ETH_TP_MDI_INVALID.  Read-only.
  * @eth_tp_mdix_ctrl: Ethernet twisted pair MDI(-X) control; one of
- *	%ETH_TP_MDI_*.  If MDI(-X) control is not implemented, reads
- *	yield %ETH_TP_MDI_INVALID and writes may be ignored or rejected.
- *	When written successfully, the link should be renegotiated if
+ *	%ETH_TP_MDI_*.  If MDI(-X) control is not implemented, पढ़ोs
+ *	yield %ETH_TP_MDI_INVALID and ग_लिखोs may be ignored or rejected.
+ *	When written successfully, the link should be renegotiated अगर
  *	necessary.
- * @lp_advertising: Bitmask of %ADVERTISED_* flags for the link modes
+ * @lp_advertising: Biपंचांगask of %ADVERTISED_* flags क्रम the link modes
  *	and other link features that the link partner advertised
- *	through autonegotiation; 0 if unknown or not applicable.
+ *	through स्वतःnegotiation; 0 अगर unknown or not applicable.
  *	Read-only.
- * @reserved: Reserved for future use; see the note on reserved space.
+ * @reserved: Reserved क्रम future use; see the note on reserved space.
  *
  * The link speed in Mbps is split between @speed and @speed_hi.  Use
  * the ethtool_cmd_speed() and ethtool_cmd_speed_set() functions to
  * access it.
  *
- * If autonegotiation is disabled, the speed and @duplex represent the
- * fixed link mode and are writable if the driver supports multiple
- * link modes.  If it is enabled then they are read-only; if the link
- * is up they represent the negotiated link mode; if the link is down,
+ * If स्वतःnegotiation is disabled, the speed and @duplex represent the
+ * fixed link mode and are writable अगर the driver supports multiple
+ * link modes.  If it is enabled then they are पढ़ो-only; अगर the link
+ * is up they represent the negotiated link mode; अगर the link is करोwn,
  * the speed is 0, %SPEED_UNKNOWN or the highest enabled speed and
  * @duplex is %DUPLEX_UNKNOWN or the best enabled duplex mode.
  *
- * Some hardware interfaces may have multiple PHYs and/or physical
- * connectors fitted or do not allow the driver to detect which are
- * fitted.  For these interfaces @port and/or @phy_address may be
- * writable, possibly dependent on @autoneg being %AUTONEG_DISABLE.
- * Otherwise, attempts to write different values may be ignored or
+ * Some hardware पूर्णांकerfaces may have multiple PHYs and/or physical
+ * connectors fitted or करो not allow the driver to detect which are
+ * fitted.  For these पूर्णांकerfaces @port and/or @phy_address may be
+ * writable, possibly dependent on @स्वतःneg being %AUTONEG_DISABLE.
+ * Otherwise, attempts to ग_लिखो dअगरferent values may be ignored or
  * rejected.
  *
- * Users should assume that all fields not marked read-only are
+ * Users should assume that all fields not marked पढ़ो-only are
  * writable and subject to validation by the driver.  They should use
- * %ETHTOOL_GSET to get the current values before making specific
+ * %ETHTOOL_GSET to get the current values beक्रमe making specअगरic
  * changes and then applying them with %ETHTOOL_SSET.
  *
  * Deprecated fields should be ignored by both users and drivers.
  */
-struct ethtool_cmd {
+काष्ठा ethtool_cmd अणु
 	__u32	cmd;
 	__u32	supported;
 	__u32	advertising;
@@ -111,7 +112,7 @@ struct ethtool_cmd {
 	__u8	port;
 	__u8	phy_address;
 	__u8	transceiver;
-	__u8	autoneg;
+	__u8	स्वतःneg;
 	__u8	mdio_support;
 	__u32	maxtxpkt;
 	__u32	maxrxpkt;
@@ -120,61 +121,61 @@ struct ethtool_cmd {
 	__u8	eth_tp_mdix_ctrl;
 	__u32	lp_advertising;
 	__u32	reserved[2];
-};
+पूर्ण;
 
-static inline void ethtool_cmd_speed_set(struct ethtool_cmd *ep,
+अटल अंतरभूत व्योम ethtool_cmd_speed_set(काष्ठा ethtool_cmd *ep,
 					 __u32 speed)
-{
+अणु
 	ep->speed = (__u16)(speed & 0xFFFF);
 	ep->speed_hi = (__u16)(speed >> 16);
-}
+पूर्ण
 
-static inline __u32 ethtool_cmd_speed(const struct ethtool_cmd *ep)
-{
-	return (ep->speed_hi << 16) | ep->speed;
-}
+अटल अंतरभूत __u32 ethtool_cmd_speed(स्थिर काष्ठा ethtool_cmd *ep)
+अणु
+	वापस (ep->speed_hi << 16) | ep->speed;
+पूर्ण
 
-/* Device supports clause 22 register access to PHY or peripherals
- * using the interface defined in <linux/mii.h>.  This should not be
- * set if there are known to be no such peripherals present or if
- * the driver only emulates clause 22 registers for compatibility.
+/* Device supports clause 22 रेजिस्टर access to PHY or peripherals
+ * using the पूर्णांकerface defined in <linux/mii.h>.  This should not be
+ * set अगर there are known to be no such peripherals present or अगर
+ * the driver only emulates clause 22 रेजिस्टरs क्रम compatibility.
  */
-#define ETH_MDIO_SUPPORTS_C22	1
+#घोषणा ETH_MDIO_SUPPORTS_C22	1
 
-/* Device supports clause 45 register access to PHY or peripherals
- * using the interface defined in <linux/mii.h> and <linux/mdio.h>.
- * This should not be set if there are known to be no such peripherals
+/* Device supports clause 45 रेजिस्टर access to PHY or peripherals
+ * using the पूर्णांकerface defined in <linux/mii.h> and <linux/mdपन.स>.
+ * This should not be set अगर there are known to be no such peripherals
  * present.
  */
-#define ETH_MDIO_SUPPORTS_C45	2
+#घोषणा ETH_MDIO_SUPPORTS_C45	2
 
-#define ETHTOOL_FWVERS_LEN	32
-#define ETHTOOL_BUSINFO_LEN	32
-#define ETHTOOL_EROMVERS_LEN	32
+#घोषणा ETHTOOL_FWVERS_LEN	32
+#घोषणा ETHTOOL_BUSINFO_LEN	32
+#घोषणा ETHTOOL_EROMVERS_LEN	32
 
 /**
- * struct ethtool_drvinfo - general driver and device information
+ * काष्ठा ethtool_drvinfo - general driver and device inक्रमmation
  * @cmd: Command number = %ETHTOOL_GDRVINFO
- * @driver: Driver short name.  This should normally match the name
- *	in its bus driver structure (e.g. pci_driver::name).  Must
+ * @driver: Driver लघु name.  This should normally match the name
+ *	in its bus driver काष्ठाure (e.g. pci_driver::name).  Must
  *	not be an empty string.
  * @version: Driver version string; may be an empty string
  * @fw_version: Firmware version string; may be an empty string
  * @erom_version: Expansion ROM version string; may be an empty string
  * @bus_info: Device bus address.  This should match the dev_name()
- *	string for the underlying bus device, if there is one.  May be
+ *	string क्रम the underlying bus device, अगर there is one.  May be
  *	an empty string.
- * @reserved2: Reserved for future use; see the note on reserved space.
- * @n_priv_flags: Number of flags valid for %ETHTOOL_GPFLAGS and
+ * @reserved2: Reserved क्रम future use; see the note on reserved space.
+ * @n_priv_flags: Number of flags valid क्रम %ETHTOOL_GPFLAGS and
  *	%ETHTOOL_SPFLAGS commands; also the number of strings in the
  *	%ETH_SS_PRIV_FLAGS set
- * @n_stats: Number of u64 statistics returned by the %ETHTOOL_GSTATS
+ * @n_stats: Number of u64 statistics वापसed by the %ETHTOOL_GSTATS
  *	command; also the number of strings in the %ETH_SS_STATS set
- * @testinfo_len: Number of results returned by the %ETHTOOL_TEST
+ * @testinfo_len: Number of results वापसed by the %ETHTOOL_TEST
  *	command; also the number of strings in the %ETH_SS_TEST set
  * @eedump_len: Size of EEPROM accessible through the %ETHTOOL_GEEPROM
  *	and %ETHTOOL_SEEPROM commands, in bytes
- * @regdump_len: Size of register dump returned by the %ETHTOOL_GREGS
+ * @regdump_len: Size of रेजिस्टर dump वापसed by the %ETHTOOL_GREGS
  *	command, in bytes
  *
  * Users can use the %ETHTOOL_GSSET_INFO command to get the number of
@@ -184,61 +185,61 @@ static inline __u32 ethtool_cmd_speed(const struct ethtool_cmd *ep)
  * @bus_info in their get_drvinfo() implementation.  The ethtool
  * core fills in the other fields using other driver operations.
  */
-struct ethtool_drvinfo {
+काष्ठा ethtool_drvinfo अणु
 	__u32	cmd;
-	char	driver[32];
-	char	version[32];
-	char	fw_version[ETHTOOL_FWVERS_LEN];
-	char	bus_info[ETHTOOL_BUSINFO_LEN];
-	char	erom_version[ETHTOOL_EROMVERS_LEN];
-	char	reserved2[12];
+	अक्षर	driver[32];
+	अक्षर	version[32];
+	अक्षर	fw_version[ETHTOOL_FWVERS_LEN];
+	अक्षर	bus_info[ETHTOOL_BUSINFO_LEN];
+	अक्षर	erom_version[ETHTOOL_EROMVERS_LEN];
+	अक्षर	reserved2[12];
 	__u32	n_priv_flags;
 	__u32	n_stats;
 	__u32	testinfo_len;
 	__u32	eedump_len;
 	__u32	regdump_len;
-};
+पूर्ण;
 
-#define SOPASS_MAX	6
+#घोषणा SOPASS_MAX	6
 
 /**
- * struct ethtool_wolinfo - Wake-On-Lan configuration
+ * काष्ठा ethtool_wolinfo - Wake-On-Lan configuration
  * @cmd: Command number = %ETHTOOL_GWOL or %ETHTOOL_SWOL
- * @supported: Bitmask of %WAKE_* flags for supported Wake-On-Lan modes.
+ * @supported: Biपंचांगask of %WAKE_* flags क्रम supported Wake-On-Lan modes.
  *	Read-only.
- * @wolopts: Bitmask of %WAKE_* flags for enabled Wake-On-Lan modes.
- * @sopass: SecureOn(tm) password; meaningful only if %WAKE_MAGICSECURE
+ * @wolopts: Biपंचांगask of %WAKE_* flags क्रम enabled Wake-On-Lan modes.
+ * @sopass: SecureOn(पंचांग) password; meaningful only अगर %WAKE_MAGICSECURE
  *	is set in @wolopts.
  */
-struct ethtool_wolinfo {
+काष्ठा ethtool_wolinfo अणु
 	__u32	cmd;
 	__u32	supported;
 	__u32	wolopts;
 	__u8	sopass[SOPASS_MAX];
-};
+पूर्ण;
 
-/* for passing single values */
-struct ethtool_value {
+/* क्रम passing single values */
+काष्ठा ethtool_value अणु
 	__u32	cmd;
 	__u32	data;
-};
+पूर्ण;
 
-#define PFC_STORM_PREVENTION_AUTO	0xffff
-#define PFC_STORM_PREVENTION_DISABLE	0
+#घोषणा PFC_STORM_PREVENTION_AUTO	0xffff
+#घोषणा PFC_STORM_PREVENTION_DISABLE	0
 
-enum tunable_id {
+क्रमागत tunable_id अणु
 	ETHTOOL_ID_UNSPEC,
 	ETHTOOL_RX_COPYBREAK,
 	ETHTOOL_TX_COPYBREAK,
-	ETHTOOL_PFC_PREVENTION_TOUT, /* timeout in msecs */
+	ETHTOOL_PFC_PREVENTION_TOUT, /* समयout in msecs */
 	/*
 	 * Add your fresh new tunable attribute above and remember to update
 	 * tunable_strings[] in net/core/ethtool.c
 	 */
 	__ETHTOOL_TUNABLE_COUNT,
-};
+पूर्ण;
 
-enum tunable_type_id {
+क्रमागत tunable_type_id अणु
 	ETHTOOL_TUNABLE_UNSPEC,
 	ETHTOOL_TUNABLE_U8,
 	ETHTOOL_TUNABLE_U16,
@@ -249,48 +250,48 @@ enum tunable_type_id {
 	ETHTOOL_TUNABLE_S16,
 	ETHTOOL_TUNABLE_S32,
 	ETHTOOL_TUNABLE_S64,
-};
+पूर्ण;
 
-struct ethtool_tunable {
+काष्ठा ethtool_tunable अणु
 	__u32	cmd;
 	__u32	id;
 	__u32	type_id;
 	__u32	len;
-	void	*data[0];
-};
+	व्योम	*data[0];
+पूर्ण;
 
-#define DOWNSHIFT_DEV_DEFAULT_COUNT	0xff
-#define DOWNSHIFT_DEV_DISABLE		0
+#घोषणा DOWNSHIFT_DEV_DEFAULT_COUNT	0xff
+#घोषणा DOWNSHIFT_DEV_DISABLE		0
 
-/* Time in msecs after which link is reported as down
- * 0 = lowest time supported by the PHY
- * 0xff = off, link down detection according to standard
+/* Time in msecs after which link is reported as करोwn
+ * 0 = lowest समय supported by the PHY
+ * 0xff = off, link करोwn detection according to standard
  */
-#define ETHTOOL_PHY_FAST_LINK_DOWN_ON	0
-#define ETHTOOL_PHY_FAST_LINK_DOWN_OFF	0xff
+#घोषणा ETHTOOL_PHY_FAST_LINK_DOWN_ON	0
+#घोषणा ETHTOOL_PHY_FAST_LINK_DOWN_OFF	0xff
 
 /* Energy Detect Power Down (EDPD) is a feature supported by some PHYs, where
- * the PHY's RX & TX blocks are put into a low-power mode when there is no
+ * the PHY's RX & TX blocks are put पूर्णांकo a low-घातer mode when there is no
  * link detected (typically cable is un-plugged). For RX, only a minimal
- * link-detection is available, and for TX the PHY wakes up to send link pulses
- * to avoid any lock-ups in case the peer PHY may also be running in EDPD mode.
+ * link-detection is available, and क्रम TX the PHY wakes up to send link pulses
+ * to aव्योम any lock-ups in हाल the peer PHY may also be running in EDPD mode.
  *
- * Some PHYs may support configuration of the wake-up interval for TX pulses,
+ * Some PHYs may support configuration of the wake-up पूर्णांकerval क्रम TX pulses,
  * and some PHYs may support only disabling TX pulses entirely. For the latter
  * a special value is required (ETHTOOL_PHY_EDPD_NO_TX) so that this can be
  * configured from userspace (should the user want it).
  *
- * The interval units for TX wake-up are in milliseconds, since this should
- * cover a reasonable range of intervals:
- *  - from 1 millisecond, which does not sound like much of a power-saver
- *  - to ~65 seconds which is quite a lot to wait for a link to come up when
+ * The पूर्णांकerval units क्रम TX wake-up are in milliseconds, since this should
+ * cover a reasonable range of पूर्णांकervals:
+ *  - from 1 millisecond, which करोes not sound like much of a घातer-saver
+ *  - to ~65 seconds which is quite a lot to रुको क्रम a link to come up when
  *    plugging a cable
  */
-#define ETHTOOL_PHY_EDPD_DFLT_TX_MSECS		0xffff
-#define ETHTOOL_PHY_EDPD_NO_TX			0xfffe
-#define ETHTOOL_PHY_EDPD_DISABLE		0
+#घोषणा ETHTOOL_PHY_EDPD_DFLT_TX_MSECS		0xffff
+#घोषणा ETHTOOL_PHY_EDPD_NO_TX			0xfffe
+#घोषणा ETHTOOL_PHY_EDPD_DISABLE		0
 
-enum phy_tunable_id {
+क्रमागत phy_tunable_id अणु
 	ETHTOOL_PHY_ID_UNSPEC,
 	ETHTOOL_PHY_DOWNSHIFT,
 	ETHTOOL_PHY_FAST_LINK_DOWN,
@@ -300,75 +301,75 @@ enum phy_tunable_id {
 	 * phy_tunable_strings[] in net/core/ethtool.c
 	 */
 	__ETHTOOL_PHY_TUNABLE_COUNT,
-};
+पूर्ण;
 
 /**
- * struct ethtool_regs - hardware register dump
+ * काष्ठा ethtool_regs - hardware रेजिस्टर dump
  * @cmd: Command number = %ETHTOOL_GREGS
- * @version: Dump format version.  This is driver-specific and may
- *	distinguish different chips/revisions.  Drivers must use new
- *	version numbers whenever the dump format changes in an
+ * @version: Dump क्रमmat version.  This is driver-specअगरic and may
+ *	distinguish dअगरferent chips/revisions.  Drivers must use new
+ *	version numbers whenever the dump क्रमmat changes in an
  *	incompatible way.
- * @len: On entry, the real length of @data.  On return, the number of
+ * @len: On entry, the real length of @data.  On वापस, the number of
  *	bytes used.
- * @data: Buffer for the register dump
+ * @data: Buffer क्रम the रेजिस्टर dump
  *
  * Users should use %ETHTOOL_GDRVINFO to find the maximum length of
- * a register dump for the interface.  They must allocate the buffer
- * immediately following this structure.
+ * a रेजिस्टर dump क्रम the पूर्णांकerface.  They must allocate the buffer
+ * immediately following this काष्ठाure.
  */
-struct ethtool_regs {
+काष्ठा ethtool_regs अणु
 	__u32	cmd;
 	__u32	version;
 	__u32	len;
 	__u8	data[0];
-};
+पूर्ण;
 
 /**
- * struct ethtool_eeprom - EEPROM dump
+ * काष्ठा ethtool_eeprom - EEPROM dump
  * @cmd: Command number = %ETHTOOL_GEEPROM, %ETHTOOL_GMODULEEEPROM or
  *	%ETHTOOL_SEEPROM
  * @magic: A 'magic cookie' value to guard against accidental changes.
  *	The value passed in to %ETHTOOL_SEEPROM must match the value
- *	returned by %ETHTOOL_GEEPROM for the same device.  This is
+ *	वापसed by %ETHTOOL_GEEPROM क्रम the same device.  This is
  *	unused when @cmd is %ETHTOOL_GMODULEEEPROM.
- * @offset: Offset within the EEPROM to begin reading/writing, in bytes
- * @len: On entry, number of bytes to read/write.  On successful
- *	return, number of bytes actually read/written.  In case of
- *	error, this may indicate at what point the error occurred.
- * @data: Buffer to read/write from
+ * @offset: Offset within the EEPROM to begin पढ़ोing/writing, in bytes
+ * @len: On entry, number of bytes to पढ़ो/ग_लिखो.  On successful
+ *	वापस, number of bytes actually पढ़ो/written.  In हाल of
+ *	error, this may indicate at what poपूर्णांक the error occurred.
+ * @data: Buffer to पढ़ो/ग_लिखो from
  *
  * Users may use %ETHTOOL_GDRVINFO or %ETHTOOL_GMODULEINFO to find
  * the length of an on-board or module EEPROM, respectively.  They
- * must allocate the buffer immediately following this structure.
+ * must allocate the buffer immediately following this काष्ठाure.
  */
-struct ethtool_eeprom {
+काष्ठा ethtool_eeprom अणु
 	__u32	cmd;
 	__u32	magic;
 	__u32	offset;
 	__u32	len;
 	__u8	data[0];
-};
+पूर्ण;
 
 /**
- * struct ethtool_eee - Energy Efficient Ethernet information
- * @cmd: ETHTOOL_{G,S}EEE
- * @supported: Mask of %SUPPORTED_* flags for the speed/duplex combinations
- *	for which there is EEE support.
- * @advertised: Mask of %ADVERTISED_* flags for the speed/duplex combinations
+ * काष्ठा ethtool_eee - Energy Efficient Ethernet inक्रमmation
+ * @cmd: ETHTOOL_अणुG,Sपूर्णEEE
+ * @supported: Mask of %SUPPORTED_* flags क्रम the speed/duplex combinations
+ *	क्रम which there is EEE support.
+ * @advertised: Mask of %ADVERTISED_* flags क्रम the speed/duplex combinations
  *	advertised as eee capable.
- * @lp_advertised: Mask of %ADVERTISED_* flags for the speed/duplex
+ * @lp_advertised: Mask of %ADVERTISED_* flags क्रम the speed/duplex
  *	combinations advertised by the link partner as eee capable.
- * @eee_active: Result of the eee auto negotiation.
+ * @eee_active: Result of the eee स्वतः negotiation.
  * @eee_enabled: EEE configured mode (enabled/disabled).
- * @tx_lpi_enabled: Whether the interface should assert its tx lpi, given
+ * @tx_lpi_enabled: Whether the पूर्णांकerface should निश्चित its tx lpi, given
  *	that eee was negotiated.
- * @tx_lpi_timer: Time in microseconds the interface delays prior to asserting
+ * @tx_lpi_समयr: Time in microseconds the पूर्णांकerface delays prior to निश्चितing
  *	its tx lpi (after reaching 'idle' state). Effective only when eee
  *	was negotiated and tx_lpi_enabled was set.
- * @reserved: Reserved for future use; see the note on reserved space.
+ * @reserved: Reserved क्रम future use; see the note on reserved space.
  */
-struct ethtool_eee {
+काष्ठा ethtool_eee अणु
 	__u32	cmd;
 	__u32	supported;
 	__u32	advertised;
@@ -376,89 +377,89 @@ struct ethtool_eee {
 	__u32	eee_active;
 	__u32	eee_enabled;
 	__u32	tx_lpi_enabled;
-	__u32	tx_lpi_timer;
+	__u32	tx_lpi_समयr;
 	__u32	reserved[2];
-};
+पूर्ण;
 
 /**
- * struct ethtool_modinfo - plugin module eeprom information
+ * काष्ठा ethtool_modinfo - plugin module eeprom inक्रमmation
  * @cmd: %ETHTOOL_GMODULEINFO
- * @type: Standard the module information conforms to %ETH_MODULE_SFF_xxxx
+ * @type: Standard the module inक्रमmation conक्रमms to %ETH_MODULE_SFF_xxxx
  * @eeprom_len: Length of the eeprom
- * @reserved: Reserved for future use; see the note on reserved space.
+ * @reserved: Reserved क्रम future use; see the note on reserved space.
  *
- * This structure is used to return the information to
- * properly size memory for a subsequent call to %ETHTOOL_GMODULEEEPROM.
- * The type code indicates the eeprom data format
+ * This काष्ठाure is used to वापस the inक्रमmation to
+ * properly size memory क्रम a subsequent call to %ETHTOOL_GMODULEEEPROM.
+ * The type code indicates the eeprom data क्रमmat
  */
-struct ethtool_modinfo {
+काष्ठा ethtool_modinfo अणु
 	__u32   cmd;
 	__u32   type;
 	__u32   eeprom_len;
 	__u32   reserved[8];
-};
+पूर्ण;
 
 /**
- * struct ethtool_coalesce - coalescing parameters for IRQs and stats updates
- * @cmd: ETHTOOL_{G,S}COALESCE
- * @rx_coalesce_usecs: How many usecs to delay an RX interrupt after
+ * काष्ठा ethtool_coalesce - coalescing parameters क्रम IRQs and stats updates
+ * @cmd: ETHTOOL_अणुG,Sपूर्णCOALESCE
+ * @rx_coalesce_usecs: How many usecs to delay an RX पूर्णांकerrupt after
  *	a packet arrives.
  * @rx_max_coalesced_frames: Maximum number of packets to receive
- *	before an RX interrupt.
+ *	beक्रमe an RX पूर्णांकerrupt.
  * @rx_coalesce_usecs_irq: Same as @rx_coalesce_usecs, except that
- *	this value applies while an IRQ is being serviced by the host.
+ *	this value applies जबतक an IRQ is being serviced by the host.
  * @rx_max_coalesced_frames_irq: Same as @rx_max_coalesced_frames,
- *	except that this value applies while an IRQ is being serviced
+ *	except that this value applies जबतक an IRQ is being serviced
  *	by the host.
- * @tx_coalesce_usecs: How many usecs to delay a TX interrupt after
+ * @tx_coalesce_usecs: How many usecs to delay a TX पूर्णांकerrupt after
  *	a packet is sent.
  * @tx_max_coalesced_frames: Maximum number of packets to be sent
- *	before a TX interrupt.
+ *	beक्रमe a TX पूर्णांकerrupt.
  * @tx_coalesce_usecs_irq: Same as @tx_coalesce_usecs, except that
- *	this value applies while an IRQ is being serviced by the host.
+ *	this value applies जबतक an IRQ is being serviced by the host.
  * @tx_max_coalesced_frames_irq: Same as @tx_max_coalesced_frames,
- *	except that this value applies while an IRQ is being serviced
+ *	except that this value applies जबतक an IRQ is being serviced
  *	by the host.
  * @stats_block_coalesce_usecs: How many usecs to delay in-memory
- *	statistics block updates.  Some drivers do not have an
- *	in-memory statistic block, and in such cases this value is
+ *	statistics block updates.  Some drivers करो not have an
+ *	in-memory statistic block, and in such हालs this value is
  *	ignored.  This value must not be zero.
  * @use_adaptive_rx_coalesce: Enable adaptive RX coalescing.
  * @use_adaptive_tx_coalesce: Enable adaptive TX coalescing.
- * @pkt_rate_low: Threshold for low packet rate (packets per second).
- * @rx_coalesce_usecs_low: How many usecs to delay an RX interrupt after
+ * @pkt_rate_low: Threshold क्रम low packet rate (packets per second).
+ * @rx_coalesce_usecs_low: How many usecs to delay an RX पूर्णांकerrupt after
  *	a packet arrives, when the packet rate is below @pkt_rate_low.
  * @rx_max_coalesced_frames_low: Maximum number of packets to be received
- *	before an RX interrupt, when the packet rate is below @pkt_rate_low.
- * @tx_coalesce_usecs_low: How many usecs to delay a TX interrupt after
+ *	beक्रमe an RX पूर्णांकerrupt, when the packet rate is below @pkt_rate_low.
+ * @tx_coalesce_usecs_low: How many usecs to delay a TX पूर्णांकerrupt after
  *	a packet is sent, when the packet rate is below @pkt_rate_low.
- * @tx_max_coalesced_frames_low: Maximum nuumber of packets to be sent before
- *	a TX interrupt, when the packet rate is below @pkt_rate_low.
- * @pkt_rate_high: Threshold for high packet rate (packets per second).
- * @rx_coalesce_usecs_high: How many usecs to delay an RX interrupt after
+ * @tx_max_coalesced_frames_low: Maximum nuumber of packets to be sent beक्रमe
+ *	a TX पूर्णांकerrupt, when the packet rate is below @pkt_rate_low.
+ * @pkt_rate_high: Threshold क्रम high packet rate (packets per second).
+ * @rx_coalesce_usecs_high: How many usecs to delay an RX पूर्णांकerrupt after
  *	a packet arrives, when the packet rate is above @pkt_rate_high.
  * @rx_max_coalesced_frames_high: Maximum number of packets to be received
- *	before an RX interrupt, when the packet rate is above @pkt_rate_high.
- * @tx_coalesce_usecs_high: How many usecs to delay a TX interrupt after
+ *	beक्रमe an RX पूर्णांकerrupt, when the packet rate is above @pkt_rate_high.
+ * @tx_coalesce_usecs_high: How many usecs to delay a TX पूर्णांकerrupt after
  *	a packet is sent, when the packet rate is above @pkt_rate_high.
- * @tx_max_coalesced_frames_high: Maximum number of packets to be sent before
- *	a TX interrupt, when the packet rate is above @pkt_rate_high.
- * @rate_sample_interval: How often to do adaptive coalescing packet rate
+ * @tx_max_coalesced_frames_high: Maximum number of packets to be sent beक्रमe
+ *	a TX पूर्णांकerrupt, when the packet rate is above @pkt_rate_high.
+ * @rate_sample_पूर्णांकerval: How often to करो adaptive coalescing packet rate
  *	sampling, measured in seconds.  Must not be zero.
  *
- * Each pair of (usecs, max_frames) fields specifies that interrupts
+ * Each pair of (usecs, max_frames) fields specअगरies that पूर्णांकerrupts
  * should be coalesced until
- *	(usecs > 0 && time_since_first_completion >= usecs) ||
+ *	(usecs > 0 && समय_since_first_completion >= usecs) ||
  *	(max_frames > 0 && completed_frames >= max_frames)
  *
  * It is illegal to set both usecs and max_frames to zero as this
- * would cause interrupts to never be generated.  To disable
+ * would cause पूर्णांकerrupts to never be generated.  To disable
  * coalescing, set usecs = 0 and max_frames = 1.
  *
  * Some implementations ignore the value of max_frames and use the
- * condition time_since_first_completion >= usecs
+ * condition समय_since_first_completion >= usecs
  *
- * This is deprecated.  Drivers for hardware that does not support
+ * This is deprecated.  Drivers क्रम hardware that करोes not support
  * counting completions should validate that max_frames == !rx_usecs.
  *
  * Adaptive RX/TX coalescing is an algorithm implemented by some
@@ -469,9 +470,9 @@ struct ethtool_modinfo {
  *
  * When the packet rate is below @pkt_rate_high but above
  * @pkt_rate_low (both measured in packets per second) the
- * normal {rx,tx}_* coalescing parameters are used.
+ * normal अणुrx,txपूर्ण_* coalescing parameters are used.
  */
-struct ethtool_coalesce {
+काष्ठा ethtool_coalesce अणु
 	__u32	cmd;
 	__u32	rx_coalesce_usecs;
 	__u32	rx_max_coalesced_frames;
@@ -494,11 +495,11 @@ struct ethtool_coalesce {
 	__u32	rx_max_coalesced_frames_high;
 	__u32	tx_coalesce_usecs_high;
 	__u32	tx_max_coalesced_frames_high;
-	__u32	rate_sample_interval;
-};
+	__u32	rate_sample_पूर्णांकerval;
+पूर्ण;
 
 /**
- * struct ethtool_ringparam - RX/TX ring parameters
+ * काष्ठा ethtool_ringparam - RX/TX ring parameters
  * @cmd: Command number = %ETHTOOL_GRINGPARAM or %ETHTOOL_SRINGPARAM
  * @rx_max_pending: Maximum supported number of pending entries per
  *	RX ring.  Read-only.
@@ -516,13 +517,13 @@ struct ethtool_coalesce {
  * @tx_pending: Current maximum supported number of pending entries
  *	per TX ring
  *
- * If the interface does not have separate RX mini and/or jumbo rings,
+ * If the पूर्णांकerface करोes not have separate RX mini and/or jumbo rings,
  * @rx_mini_max_pending and/or @rx_jumbo_max_pending will be 0.
  *
- * There may also be driver-dependent minimum values for the number
+ * There may also be driver-dependent minimum values क्रम the number
  * of entries per ring.
  */
-struct ethtool_ringparam {
+काष्ठा ethtool_ringparam अणु
 	__u32	cmd;
 	__u32	rx_max_pending;
 	__u32	rx_mini_max_pending;
@@ -532,11 +533,11 @@ struct ethtool_ringparam {
 	__u32	rx_mini_pending;
 	__u32	rx_jumbo_pending;
 	__u32	tx_pending;
-};
+पूर्ण;
 
 /**
- * struct ethtool_channels - configuring number of network channel
- * @cmd: ETHTOOL_{G,S}CHANNELS
+ * काष्ठा ethtool_channels - configuring number of network channel
+ * @cmd: ETHTOOL_अणुG,Sपूर्णCHANNELS
  * @max_rx: Read only. Maximum number of receive channel the driver support.
  * @max_tx: Read only. Maximum number of transmit channel the driver support.
  * @max_other: Read only. Maximum number of other channel the driver support.
@@ -550,7 +551,7 @@ struct ethtool_ringparam {
  * This can be used to configure RX, TX and other channels.
  */
 
-struct ethtool_channels {
+काष्ठा ethtool_channels अणु
 	__u32	cmd;
 	__u32	max_rx;
 	__u32	max_tx;
@@ -560,39 +561,39 @@ struct ethtool_channels {
 	__u32	tx_count;
 	__u32	other_count;
 	__u32	combined_count;
-};
+पूर्ण;
 
 /**
- * struct ethtool_pauseparam - Ethernet pause (flow control) parameters
+ * काष्ठा ethtool_छोड़ोparam - Ethernet छोड़ो (flow control) parameters
  * @cmd: Command number = %ETHTOOL_GPAUSEPARAM or %ETHTOOL_SPAUSEPARAM
- * @autoneg: Flag to enable autonegotiation of pause frame use
- * @rx_pause: Flag to enable reception of pause frames
- * @tx_pause: Flag to enable transmission of pause frames
+ * @स्वतःneg: Flag to enable स्वतःnegotiation of छोड़ो frame use
+ * @rx_छोड़ो: Flag to enable reception of छोड़ो frames
+ * @tx_छोड़ो: Flag to enable transmission of छोड़ो frames
  *
- * Drivers should reject a non-zero setting of @autoneg when
- * autoneogotiation is disabled (or not supported) for the link.
+ * Drivers should reject a non-zero setting of @स्वतःneg when
+ * स्वतःneogotiation is disabled (or not supported) क्रम the link.
  *
- * If the link is autonegotiated, drivers should use
+ * If the link is स्वतःnegotiated, drivers should use
  * mii_advertise_flowctrl() or similar code to set the advertised
- * pause frame capabilities based on the @rx_pause and @tx_pause flags,
- * even if @autoneg is zero.  They should also allow the advertised
- * pause frame capabilities to be controlled directly through the
- * advertising field of &struct ethtool_cmd.
+ * छोड़ो frame capabilities based on the @rx_छोड़ो and @tx_छोड़ो flags,
+ * even अगर @स्वतःneg is zero.  They should also allow the advertised
+ * छोड़ो frame capabilities to be controlled directly through the
+ * advertising field of &काष्ठा ethtool_cmd.
  *
- * If @autoneg is non-zero, the MAC is configured to send and/or
- * receive pause frames according to the result of autonegotiation.
- * Otherwise, it is configured directly based on the @rx_pause and
- * @tx_pause flags.
+ * If @स्वतःneg is non-zero, the MAC is configured to send and/or
+ * receive छोड़ो frames according to the result of स्वतःnegotiation.
+ * Otherwise, it is configured directly based on the @rx_छोड़ो and
+ * @tx_छोड़ो flags.
  */
-struct ethtool_pauseparam {
+काष्ठा ethtool_छोड़ोparam अणु
 	__u32	cmd;
-	__u32	autoneg;
-	__u32	rx_pause;
-	__u32	tx_pause;
-};
+	__u32	स्वतःneg;
+	__u32	rx_छोड़ो;
+	__u32	tx_छोड़ो;
+पूर्ण;
 
 /* Link extended state */
-enum ethtool_link_ext_state {
+क्रमागत ethtool_link_ext_state अणु
 	ETHTOOL_LINK_EXT_STATE_AUTONEG,
 	ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE,
 	ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
@@ -603,71 +604,71 @@ enum ethtool_link_ext_state {
 	ETHTOOL_LINK_EXT_STATE_CALIBRATION_FAILURE,
 	ETHTOOL_LINK_EXT_STATE_POWER_BUDGET_EXCEEDED,
 	ETHTOOL_LINK_EXT_STATE_OVERHEAT,
-};
+पूर्ण;
 
-/* More information in addition to ETHTOOL_LINK_EXT_STATE_AUTONEG. */
-enum ethtool_link_ext_substate_autoneg {
+/* More inक्रमmation in addition to ETHTOOL_LINK_EXT_STATE_AUTONEG. */
+क्रमागत ethtool_link_ext_substate_स्वतःneg अणु
 	ETHTOOL_LINK_EXT_SUBSTATE_AN_NO_PARTNER_DETECTED = 1,
 	ETHTOOL_LINK_EXT_SUBSTATE_AN_ACK_NOT_RECEIVED,
 	ETHTOOL_LINK_EXT_SUBSTATE_AN_NEXT_PAGE_EXCHANGE_FAILED,
 	ETHTOOL_LINK_EXT_SUBSTATE_AN_NO_PARTNER_DETECTED_FORCE_MODE,
 	ETHTOOL_LINK_EXT_SUBSTATE_AN_FEC_MISMATCH_DURING_OVERRIDE,
 	ETHTOOL_LINK_EXT_SUBSTATE_AN_NO_HCD,
-};
+पूर्ण;
 
-/* More information in addition to ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE.
+/* More inक्रमmation in addition to ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE.
  */
-enum ethtool_link_ext_substate_link_training {
+क्रमागत ethtool_link_ext_substate_link_training अणु
 	ETHTOOL_LINK_EXT_SUBSTATE_LT_KR_FRAME_LOCK_NOT_ACQUIRED = 1,
 	ETHTOOL_LINK_EXT_SUBSTATE_LT_KR_LINK_INHIBIT_TIMEOUT,
 	ETHTOOL_LINK_EXT_SUBSTATE_LT_KR_LINK_PARTNER_DID_NOT_SET_RECEIVER_READY,
 	ETHTOOL_LINK_EXT_SUBSTATE_LT_REMOTE_FAULT,
-};
+पूर्ण;
 
-/* More information in addition to ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH.
+/* More inक्रमmation in addition to ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH.
  */
-enum ethtool_link_ext_substate_link_logical_mismatch {
+क्रमागत ethtool_link_ext_substate_link_logical_mismatch अणु
 	ETHTOOL_LINK_EXT_SUBSTATE_LLM_PCS_DID_NOT_ACQUIRE_BLOCK_LOCK = 1,
 	ETHTOOL_LINK_EXT_SUBSTATE_LLM_PCS_DID_NOT_ACQUIRE_AM_LOCK,
 	ETHTOOL_LINK_EXT_SUBSTATE_LLM_PCS_DID_NOT_GET_ALIGN_STATUS,
 	ETHTOOL_LINK_EXT_SUBSTATE_LLM_FC_FEC_IS_NOT_LOCKED,
 	ETHTOOL_LINK_EXT_SUBSTATE_LLM_RS_FEC_IS_NOT_LOCKED,
-};
+पूर्ण;
 
-/* More information in addition to ETHTOOL_LINK_EXT_STATE_BAD_SIGNAL_INTEGRITY.
+/* More inक्रमmation in addition to ETHTOOL_LINK_EXT_STATE_BAD_SIGNAL_INTEGRITY.
  */
-enum ethtool_link_ext_substate_bad_signal_integrity {
+क्रमागत ethtool_link_ext_substate_bad_संकेत_पूर्णांकegrity अणु
 	ETHTOOL_LINK_EXT_SUBSTATE_BSI_LARGE_NUMBER_OF_PHYSICAL_ERRORS = 1,
 	ETHTOOL_LINK_EXT_SUBSTATE_BSI_UNSUPPORTED_RATE,
-};
+पूर्ण;
 
-/* More information in addition to ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE. */
-enum ethtool_link_ext_substate_cable_issue {
+/* More inक्रमmation in addition to ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE. */
+क्रमागत ethtool_link_ext_substate_cable_issue अणु
 	ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLE = 1,
 	ETHTOOL_LINK_EXT_SUBSTATE_CI_CABLE_TEST_FAILURE,
-};
+पूर्ण;
 
-#define ETH_GSTRING_LEN		32
+#घोषणा ETH_GSTRING_LEN		32
 
 /**
- * enum ethtool_stringset - string set ID
- * @ETH_SS_TEST: Self-test result names, for use with %ETHTOOL_TEST
- * @ETH_SS_STATS: Statistic names, for use with %ETHTOOL_GSTATS
- * @ETH_SS_PRIV_FLAGS: Driver private flag names, for use with
+ * क्रमागत ethtool_stringset - string set ID
+ * @ETH_SS_TEST: Self-test result names, क्रम use with %ETHTOOL_TEST
+ * @ETH_SS_STATS: Statistic names, क्रम use with %ETHTOOL_GSTATS
+ * @ETH_SS_PRIV_FLAGS: Driver निजी flag names, क्रम use with
  *	%ETHTOOL_GPFLAGS and %ETHTOOL_SPFLAGS
  * @ETH_SS_NTUPLE_FILTERS: Previously used with %ETHTOOL_GRXNTUPLE;
  *	now deprecated
  * @ETH_SS_FEATURES: Device feature names
  * @ETH_SS_RSS_HASH_FUNCS: RSS hush function names
  * @ETH_SS_TUNABLES: tunable names
- * @ETH_SS_PHY_STATS: Statistic names, for use with %ETHTOOL_GPHYSTATS
+ * @ETH_SS_PHY_STATS: Statistic names, क्रम use with %ETHTOOL_GPHYSTATS
  * @ETH_SS_PHY_TUNABLES: PHY tunable names
  * @ETH_SS_LINK_MODES: link mode names
  * @ETH_SS_MSG_CLASSES: debug message class names
  * @ETH_SS_WOL_MODES: wake-on-lan modes
  * @ETH_SS_SOF_TIMESTAMPING: SOF_TIMESTAMPING_* flags
- * @ETH_SS_TS_TX_TYPES: timestamping Tx types
- * @ETH_SS_TS_RX_FILTERS: timestamping Rx filters
+ * @ETH_SS_TS_TX_TYPES: बारtamping Tx types
+ * @ETH_SS_TS_RX_FILTERS: बारtamping Rx filters
  * @ETH_SS_UDP_TUNNEL_TYPES: UDP tunnel types
  * @ETH_SS_STATS_STD: standardized stats
  * @ETH_SS_STATS_ETH_PHY: names of IEEE 802.3 PHY statistics
@@ -677,7 +678,7 @@ enum ethtool_link_ext_substate_cable_issue {
  *
  * @ETH_SS_COUNT: number of defined string sets
  */
-enum ethtool_stringset {
+क्रमागत ethtool_stringset अणु
 	ETH_SS_TEST		= 0,
 	ETH_SS_STATS,
 	ETH_SS_PRIV_FLAGS,
@@ -700,189 +701,189 @@ enum ethtool_stringset {
 	ETH_SS_STATS_ETH_CTRL,
 	ETH_SS_STATS_RMON,
 
-	/* add new constants above here */
+	/* add new स्थिरants above here */
 	ETH_SS_COUNT
-};
+पूर्ण;
 
 /**
- * struct ethtool_gstrings - string set for data tagging
+ * काष्ठा ethtool_gstrings - string set क्रम data tagging
  * @cmd: Command number = %ETHTOOL_GSTRINGS
- * @string_set: String set ID; one of &enum ethtool_stringset
- * @len: On return, the number of strings in the string set
- * @data: Buffer for strings.  Each string is null-padded to a size of
+ * @string_set: String set ID; one of &क्रमागत ethtool_stringset
+ * @len: On वापस, the number of strings in the string set
+ * @data: Buffer क्रम strings.  Each string is null-padded to a size of
  *	%ETH_GSTRING_LEN.
  *
  * Users must use %ETHTOOL_GSSET_INFO to find the number of strings in
  * the string set.  They must allocate a buffer of the appropriate
- * size immediately following this structure.
+ * size immediately following this काष्ठाure.
  */
-struct ethtool_gstrings {
+काष्ठा ethtool_gstrings अणु
 	__u32	cmd;
 	__u32	string_set;
 	__u32	len;
 	__u8	data[0];
-};
+पूर्ण;
 
 /**
- * struct ethtool_sset_info - string set information
+ * काष्ठा ethtool_sset_info - string set inक्रमmation
  * @cmd: Command number = %ETHTOOL_GSSET_INFO
- * @reserved: Reserved for future use; see the note on reserved space.
- * @sset_mask: On entry, a bitmask of string sets to query, with bits
- *	numbered according to &enum ethtool_stringset.  On return, a
- *	bitmask of those string sets queried that are supported.
- * @data: Buffer for string set sizes.  On return, this contains the
+ * @reserved: Reserved क्रम future use; see the note on reserved space.
+ * @sset_mask: On entry, a biपंचांगask of string sets to query, with bits
+ *	numbered according to &क्रमागत ethtool_stringset.  On वापस, a
+ *	biपंचांगask of those string sets queried that are supported.
+ * @data: Buffer क्रम string set sizes.  On वापस, this contains the
  *	size of each string set that was queried and supported, in
  *	order of ID.
  *
  * Example: The user passes in @sset_mask = 0x7 (sets 0, 1, 2) and on
- * return @sset_mask == 0x6 (sets 1, 2).  Then @data[0] contains the
+ * वापस @sset_mask == 0x6 (sets 1, 2).  Then @data[0] contains the
  * size of set 1 and @data[1] contains the size of set 2.
  *
  * Users must allocate a buffer of the appropriate size (4 * number of
- * sets queried) immediately following this structure.
+ * sets queried) immediately following this काष्ठाure.
  */
-struct ethtool_sset_info {
+काष्ठा ethtool_sset_info अणु
 	__u32	cmd;
 	__u32	reserved;
 	__u64	sset_mask;
 	__u32	data[0];
-};
+पूर्ण;
 
 /**
- * enum ethtool_test_flags - flags definition of ethtool_test
- * @ETH_TEST_FL_OFFLINE: if set perform online and offline tests, otherwise
+ * क्रमागत ethtool_test_flags - flags definition of ethtool_test
+ * @ETH_TEST_FL_OFFLINE: अगर set perक्रमm online and offline tests, otherwise
  *	only online tests.
- * @ETH_TEST_FL_FAILED: Driver set this flag if test fails.
- * @ETH_TEST_FL_EXTERNAL_LB: Application request to perform external loopback
+ * @ETH_TEST_FL_FAILED: Driver set this flag अगर test fails.
+ * @ETH_TEST_FL_EXTERNAL_LB: Application request to perक्रमm बाह्यal loopback
  *	test.
- * @ETH_TEST_FL_EXTERNAL_LB_DONE: Driver performed the external loopback test
+ * @ETH_TEST_FL_EXTERNAL_LB_DONE: Driver perक्रमmed the बाह्यal loopback test
  */
 
-enum ethtool_test_flags {
+क्रमागत ethtool_test_flags अणु
 	ETH_TEST_FL_OFFLINE	= (1 << 0),
 	ETH_TEST_FL_FAILED	= (1 << 1),
 	ETH_TEST_FL_EXTERNAL_LB	= (1 << 2),
 	ETH_TEST_FL_EXTERNAL_LB_DONE	= (1 << 3),
-};
+पूर्ण;
 
 /**
- * struct ethtool_test - device self-test invocation
+ * काष्ठा ethtool_test - device self-test invocation
  * @cmd: Command number = %ETHTOOL_TEST
- * @flags: A bitmask of flags from &enum ethtool_test_flags.  Some
+ * @flags: A biपंचांगask of flags from &क्रमागत ethtool_test_flags.  Some
  *	flags may be set by the user on entry; others may be set by
- *	the driver on return.
- * @reserved: Reserved for future use; see the note on reserved space.
- * @len: On return, the number of test results
+ *	the driver on वापस.
+ * @reserved: Reserved क्रम future use; see the note on reserved space.
+ * @len: On वापस, the number of test results
  * @data: Array of test results
  *
  * Users must use %ETHTOOL_GSSET_INFO or %ETHTOOL_GDRVINFO to find the
- * number of test results that will be returned.  They must allocate a
+ * number of test results that will be वापसed.  They must allocate a
  * buffer of the appropriate size (8 * number of results) immediately
- * following this structure.
+ * following this काष्ठाure.
  */
-struct ethtool_test {
+काष्ठा ethtool_test अणु
 	__u32	cmd;
 	__u32	flags;
 	__u32	reserved;
 	__u32	len;
 	__u64	data[0];
-};
+पूर्ण;
 
 /**
- * struct ethtool_stats - device-specific statistics
+ * काष्ठा ethtool_stats - device-specअगरic statistics
  * @cmd: Command number = %ETHTOOL_GSTATS
- * @n_stats: On return, the number of statistics
+ * @n_stats: On वापस, the number of statistics
  * @data: Array of statistics
  *
  * Users must use %ETHTOOL_GSSET_INFO or %ETHTOOL_GDRVINFO to find the
- * number of statistics that will be returned.  They must allocate a
+ * number of statistics that will be वापसed.  They must allocate a
  * buffer of the appropriate size (8 * number of statistics)
- * immediately following this structure.
+ * immediately following this काष्ठाure.
  */
-struct ethtool_stats {
+काष्ठा ethtool_stats अणु
 	__u32	cmd;
 	__u32	n_stats;
 	__u64	data[0];
-};
+पूर्ण;
 
 /**
- * struct ethtool_perm_addr - permanent hardware address
+ * काष्ठा ethtool_perm_addr - permanent hardware address
  * @cmd: Command number = %ETHTOOL_GPERMADDR
- * @size: On entry, the size of the buffer.  On return, the size of the
- *	address.  The command fails if the buffer is too small.
- * @data: Buffer for the address
+ * @size: On entry, the size of the buffer.  On वापस, the size of the
+ *	address.  The command fails अगर the buffer is too small.
+ * @data: Buffer क्रम the address
  *
- * Users must allocate the buffer immediately following this structure.
- * A buffer size of %MAX_ADDR_LEN should be sufficient for any address
+ * Users must allocate the buffer immediately following this काष्ठाure.
+ * A buffer size of %MAX_ADDR_LEN should be sufficient क्रम any address
  * type.
  */
-struct ethtool_perm_addr {
+काष्ठा ethtool_perm_addr अणु
 	__u32	cmd;
 	__u32	size;
 	__u8	data[0];
-};
+पूर्ण;
 
-/* boolean flags controlling per-interface behavior characteristics.
- * When reading, the flag indicates whether or not a certain behavior
+/* boolean flags controlling per-पूर्णांकerface behavior अक्षरacteristics.
+ * When पढ़ोing, the flag indicates whether or not a certain behavior
  * is enabled/present.  When writing, the flag indicates whether
  * or not the driver should turn on (set) or off (clear) a behavior.
  *
- * Some behaviors may read-only (unconditionally absent or present).
- * If such is the case, return EINVAL in the set-flags operation if the
- * flag differs from the read-only value.
+ * Some behaviors may पढ़ो-only (unconditionally असलent or present).
+ * If such is the हाल, वापस EINVAL in the set-flags operation अगर the
+ * flag dअगरfers from the पढ़ो-only value.
  */
-enum ethtool_flags {
+क्रमागत ethtool_flags अणु
 	ETH_FLAG_TXVLAN		= (1 << 7),	/* TX VLAN offload enabled */
 	ETH_FLAG_RXVLAN		= (1 << 8),	/* RX VLAN offload enabled */
 	ETH_FLAG_LRO		= (1 << 15),	/* LRO is enabled */
 	ETH_FLAG_NTUPLE		= (1 << 27),	/* N-tuple filters enabled */
 	ETH_FLAG_RXHASH		= (1 << 28),
-};
+पूर्ण;
 
-/* The following structures are for supporting RX network flow
- * classification and RX n-tuple configuration. Note, all multibyte
+/* The following काष्ठाures are क्रम supporting RX network flow
+ * classअगरication and RX n-tuple configuration. Note, all multibyte
  * fields, e.g., ip4src, ip4dst, psrc, pdst, spi, etc. are expected to
  * be in network byte order.
  */
 
 /**
- * struct ethtool_tcpip4_spec - flow specification for TCP/IPv4 etc.
+ * काष्ठा ethtool_tcpip4_spec - flow specअगरication क्रम TCP/IPv4 etc.
  * @ip4src: Source host
  * @ip4dst: Destination host
  * @psrc: Source port
  * @pdst: Destination port
  * @tos: Type-of-service
  *
- * This can be used to specify a TCP/IPv4, UDP/IPv4 or SCTP/IPv4 flow.
+ * This can be used to specअगरy a TCP/IPv4, UDP/IPv4 or SCTP/IPv4 flow.
  */
-struct ethtool_tcpip4_spec {
+काष्ठा ethtool_tcpip4_spec अणु
 	__be32	ip4src;
 	__be32	ip4dst;
 	__be16	psrc;
 	__be16	pdst;
 	__u8    tos;
-};
+पूर्ण;
 
 /**
- * struct ethtool_ah_espip4_spec - flow specification for IPsec/IPv4
+ * काष्ठा ethtool_ah_espip4_spec - flow specअगरication क्रम IPsec/IPv4
  * @ip4src: Source host
  * @ip4dst: Destination host
  * @spi: Security parameters index
  * @tos: Type-of-service
  *
- * This can be used to specify an IPsec transport or tunnel over IPv4.
+ * This can be used to specअगरy an IPsec transport or tunnel over IPv4.
  */
-struct ethtool_ah_espip4_spec {
+काष्ठा ethtool_ah_espip4_spec अणु
 	__be32	ip4src;
 	__be32	ip4dst;
 	__be32	spi;
 	__u8    tos;
-};
+पूर्ण;
 
-#define	ETH_RX_NFC_IP4	1
+#घोषणा	ETH_RX_NFC_IP4	1
 
 /**
- * struct ethtool_usrip4_spec - general flow specification for IPv4
+ * काष्ठा ethtool_usrip4_spec - general flow specअगरication क्रम IPv4
  * @ip4src: Source host
  * @ip4dst: Destination host
  * @l4_4_bytes: First 4 bytes of transport (layer 4) header
@@ -890,278 +891,278 @@ struct ethtool_ah_espip4_spec {
  * @ip_ver: Value must be %ETH_RX_NFC_IP4; mask must be 0
  * @proto: Transport protocol number; mask must be 0
  */
-struct ethtool_usrip4_spec {
+काष्ठा ethtool_usrip4_spec अणु
 	__be32	ip4src;
 	__be32	ip4dst;
 	__be32	l4_4_bytes;
 	__u8    tos;
 	__u8    ip_ver;
 	__u8    proto;
-};
+पूर्ण;
 
 /**
- * struct ethtool_tcpip6_spec - flow specification for TCP/IPv6 etc.
+ * काष्ठा ethtool_tcpip6_spec - flow specअगरication क्रम TCP/IPv6 etc.
  * @ip6src: Source host
  * @ip6dst: Destination host
  * @psrc: Source port
  * @pdst: Destination port
  * @tclass: Traffic Class
  *
- * This can be used to specify a TCP/IPv6, UDP/IPv6 or SCTP/IPv6 flow.
+ * This can be used to specअगरy a TCP/IPv6, UDP/IPv6 or SCTP/IPv6 flow.
  */
-struct ethtool_tcpip6_spec {
+काष्ठा ethtool_tcpip6_spec अणु
 	__be32	ip6src[4];
 	__be32	ip6dst[4];
 	__be16	psrc;
 	__be16	pdst;
 	__u8    tclass;
-};
+पूर्ण;
 
 /**
- * struct ethtool_ah_espip6_spec - flow specification for IPsec/IPv6
+ * काष्ठा ethtool_ah_espip6_spec - flow specअगरication क्रम IPsec/IPv6
  * @ip6src: Source host
  * @ip6dst: Destination host
  * @spi: Security parameters index
  * @tclass: Traffic Class
  *
- * This can be used to specify an IPsec transport or tunnel over IPv6.
+ * This can be used to specअगरy an IPsec transport or tunnel over IPv6.
  */
-struct ethtool_ah_espip6_spec {
+काष्ठा ethtool_ah_espip6_spec अणु
 	__be32	ip6src[4];
 	__be32	ip6dst[4];
 	__be32	spi;
 	__u8    tclass;
-};
+पूर्ण;
 
 /**
- * struct ethtool_usrip6_spec - general flow specification for IPv6
+ * काष्ठा ethtool_usrip6_spec - general flow specअगरication क्रम IPv6
  * @ip6src: Source host
  * @ip6dst: Destination host
  * @l4_4_bytes: First 4 bytes of transport (layer 4) header
  * @tclass: Traffic Class
  * @l4_proto: Transport protocol number (nexthdr after any Extension Headers)
  */
-struct ethtool_usrip6_spec {
+काष्ठा ethtool_usrip6_spec अणु
 	__be32	ip6src[4];
 	__be32	ip6dst[4];
 	__be32	l4_4_bytes;
 	__u8    tclass;
 	__u8    l4_proto;
-};
+पूर्ण;
 
-union ethtool_flow_union {
-	struct ethtool_tcpip4_spec		tcp_ip4_spec;
-	struct ethtool_tcpip4_spec		udp_ip4_spec;
-	struct ethtool_tcpip4_spec		sctp_ip4_spec;
-	struct ethtool_ah_espip4_spec		ah_ip4_spec;
-	struct ethtool_ah_espip4_spec		esp_ip4_spec;
-	struct ethtool_usrip4_spec		usr_ip4_spec;
-	struct ethtool_tcpip6_spec		tcp_ip6_spec;
-	struct ethtool_tcpip6_spec		udp_ip6_spec;
-	struct ethtool_tcpip6_spec		sctp_ip6_spec;
-	struct ethtool_ah_espip6_spec		ah_ip6_spec;
-	struct ethtool_ah_espip6_spec		esp_ip6_spec;
-	struct ethtool_usrip6_spec		usr_ip6_spec;
-	struct ethhdr				ether_spec;
+जोड़ ethtool_flow_जोड़ अणु
+	काष्ठा ethtool_tcpip4_spec		tcp_ip4_spec;
+	काष्ठा ethtool_tcpip4_spec		udp_ip4_spec;
+	काष्ठा ethtool_tcpip4_spec		sctp_ip4_spec;
+	काष्ठा ethtool_ah_espip4_spec		ah_ip4_spec;
+	काष्ठा ethtool_ah_espip4_spec		esp_ip4_spec;
+	काष्ठा ethtool_usrip4_spec		usr_ip4_spec;
+	काष्ठा ethtool_tcpip6_spec		tcp_ip6_spec;
+	काष्ठा ethtool_tcpip6_spec		udp_ip6_spec;
+	काष्ठा ethtool_tcpip6_spec		sctp_ip6_spec;
+	काष्ठा ethtool_ah_espip6_spec		ah_ip6_spec;
+	काष्ठा ethtool_ah_espip6_spec		esp_ip6_spec;
+	काष्ठा ethtool_usrip6_spec		usr_ip6_spec;
+	काष्ठा ethhdr				ether_spec;
 	__u8					hdata[52];
-};
+पूर्ण;
 
 /**
- * struct ethtool_flow_ext - additional RX flow fields
+ * काष्ठा ethtool_flow_ext - additional RX flow fields
  * @h_dest: destination MAC address
  * @vlan_etype: VLAN EtherType
- * @vlan_tci: VLAN tag control information
+ * @vlan_tci: VLAN tag control inक्रमmation
  * @data: user defined data
- * @padding: Reserved for future use; see the note on reserved space.
+ * @padding: Reserved क्रम future use; see the note on reserved space.
  *
- * Note, @vlan_etype, @vlan_tci, and @data are only valid if %FLOW_EXT
- * is set in &struct ethtool_rx_flow_spec @flow_type.
- * @h_dest is valid if %FLOW_MAC_EXT is set.
+ * Note, @vlan_etype, @vlan_tci, and @data are only valid अगर %FLOW_EXT
+ * is set in &काष्ठा ethtool_rx_flow_spec @flow_type.
+ * @h_dest is valid अगर %FLOW_MAC_EXT is set.
  */
-struct ethtool_flow_ext {
+काष्ठा ethtool_flow_ext अणु
 	__u8		padding[2];
-	unsigned char	h_dest[ETH_ALEN];
+	अचिन्हित अक्षर	h_dest[ETH_ALEN];
 	__be16		vlan_etype;
 	__be16		vlan_tci;
 	__be32		data[2];
-};
+पूर्ण;
 
 /**
- * struct ethtool_rx_flow_spec - classification rule for RX flows
- * @flow_type: Type of match to perform, e.g. %TCP_V4_FLOW
+ * काष्ठा ethtool_rx_flow_spec - classअगरication rule क्रम RX flows
+ * @flow_type: Type of match to perक्रमm, e.g. %TCP_V4_FLOW
  * @h_u: Flow fields to match (dependent on @flow_type)
  * @h_ext: Additional fields to match
- * @m_u: Masks for flow field bits to be matched
- * @m_ext: Masks for additional field bits to be matched
+ * @m_u: Masks क्रम flow field bits to be matched
+ * @m_ext: Masks क्रम additional field bits to be matched
  *	Note, all additional fields must be ignored unless @flow_type
  *	includes the %FLOW_EXT or %FLOW_MAC_EXT flag
- *	(see &struct ethtool_flow_ext description).
+ *	(see &काष्ठा ethtool_flow_ext description).
  * @ring_cookie: RX ring/queue index to deliver to, or %RX_CLS_FLOW_DISC
- *	if packets should be discarded, or %RX_CLS_FLOW_WAKE if the
- *	packets should be used for Wake-on-LAN with %WAKE_FILTER
+ *	अगर packets should be discarded, or %RX_CLS_FLOW_WAKE अगर the
+ *	packets should be used क्रम Wake-on-LAN with %WAKE_FILTER
  * @location: Location of rule in the table.  Locations must be
  *	numbered such that a flow matching multiple rules will be
- *	classified according to the first (lowest numbered) rule.
+ *	classअगरied according to the first (lowest numbered) rule.
  */
-struct ethtool_rx_flow_spec {
+काष्ठा ethtool_rx_flow_spec अणु
 	__u32		flow_type;
-	union ethtool_flow_union h_u;
-	struct ethtool_flow_ext h_ext;
-	union ethtool_flow_union m_u;
-	struct ethtool_flow_ext m_ext;
+	जोड़ ethtool_flow_जोड़ h_u;
+	काष्ठा ethtool_flow_ext h_ext;
+	जोड़ ethtool_flow_जोड़ m_u;
+	काष्ठा ethtool_flow_ext m_ext;
 	__u64		ring_cookie;
 	__u32		location;
-};
+पूर्ण;
 
-/* How rings are laid out when accessing virtual functions or
- * offloaded queues is device specific. To allow users to do flow
- * steering and specify these queues the ring cookie is partitioned
- * into a 32bit queue index with an 8 bit virtual function id.
- * This also leaves the 3bytes for further specifiers. It is possible
- * future devices may support more than 256 virtual functions if
+/* How rings are laid out when accessing भव functions or
+ * offloaded queues is device specअगरic. To allow users to करो flow
+ * steering and specअगरy these queues the ring cookie is partitioned
+ * पूर्णांकo a 32bit queue index with an 8 bit भव function id.
+ * This also leaves the 3bytes क्रम further specअगरiers. It is possible
+ * future devices may support more than 256 भव functions अगर
  * devices start supporting PCIe w/ARI. However at the moment I
- * do not know of any devices that support this so I do not reserve
- * space for this at this time. If a future patch consumes the next
+ * करो not know of any devices that support this so I करो not reserve
+ * space क्रम this at this समय. If a future patch consumes the next
  * byte it should be aware of this possibility.
  */
-#define ETHTOOL_RX_FLOW_SPEC_RING	0x00000000FFFFFFFFLL
-#define ETHTOOL_RX_FLOW_SPEC_RING_VF	0x000000FF00000000LL
-#define ETHTOOL_RX_FLOW_SPEC_RING_VF_OFF 32
-static inline __u64 ethtool_get_flow_spec_ring(__u64 ring_cookie)
-{
-	return ETHTOOL_RX_FLOW_SPEC_RING & ring_cookie;
-}
+#घोषणा ETHTOOL_RX_FLOW_SPEC_RING	0x00000000FFFFFFFFLL
+#घोषणा ETHTOOL_RX_FLOW_SPEC_RING_VF	0x000000FF00000000LL
+#घोषणा ETHTOOL_RX_FLOW_SPEC_RING_VF_OFF 32
+अटल अंतरभूत __u64 ethtool_get_flow_spec_ring(__u64 ring_cookie)
+अणु
+	वापस ETHTOOL_RX_FLOW_SPEC_RING & ring_cookie;
+पूर्ण
 
-static inline __u64 ethtool_get_flow_spec_ring_vf(__u64 ring_cookie)
-{
-	return (ETHTOOL_RX_FLOW_SPEC_RING_VF & ring_cookie) >>
+अटल अंतरभूत __u64 ethtool_get_flow_spec_ring_vf(__u64 ring_cookie)
+अणु
+	वापस (ETHTOOL_RX_FLOW_SPEC_RING_VF & ring_cookie) >>
 				ETHTOOL_RX_FLOW_SPEC_RING_VF_OFF;
-}
+पूर्ण
 
 /**
- * struct ethtool_rxnfc - command to get or set RX flow classification rules
- * @cmd: Specific command number - %ETHTOOL_GRXFH, %ETHTOOL_SRXFH,
+ * काष्ठा ethtool_rxnfc - command to get or set RX flow classअगरication rules
+ * @cmd: Specअगरic command number - %ETHTOOL_GRXFH, %ETHTOOL_SRXFH,
  *	%ETHTOOL_GRXRINGS, %ETHTOOL_GRXCLSRLCNT, %ETHTOOL_GRXCLSRULE,
  *	%ETHTOOL_GRXCLSRLALL, %ETHTOOL_SRXCLSRLDEL or %ETHTOOL_SRXCLSRLINS
  * @flow_type: Type of flow to be affected, e.g. %TCP_V4_FLOW
  * @data: Command-dependent value
- * @fs: Flow classification rule
+ * @fs: Flow classअगरication rule
  * @rss_context: RSS context to be affected
  * @rule_cnt: Number of rules to be affected
  * @rule_locs: Array of used rule locations
  *
- * For %ETHTOOL_GRXFH and %ETHTOOL_SRXFH, @data is a bitmask indicating
+ * For %ETHTOOL_GRXFH and %ETHTOOL_SRXFH, @data is a biपंचांगask indicating
  * the fields included in the flow hash, e.g. %RXH_IP_SRC.  The following
- * structure fields must not be used, except that if @flow_type includes
+ * काष्ठाure fields must not be used, except that अगर @flow_type includes
  * the %FLOW_RSS flag, then @rss_context determines which RSS context to
  * act on.
  *
  * For %ETHTOOL_GRXRINGS, @data is set to the number of RX rings/queues
- * on return.
+ * on वापस.
  *
  * For %ETHTOOL_GRXCLSRLCNT, @rule_cnt is set to the number of defined
- * rules on return.  If @data is non-zero on return then it is the
- * size of the rule table, plus the flag %RX_CLS_LOC_SPECIAL if the
+ * rules on वापस.  If @data is non-zero on वापस then it is the
+ * size of the rule table, plus the flag %RX_CLS_LOC_SPECIAL अगर the
  * driver supports any special location values.  If that flag is not
  * set in @data then special location values should not be used.
  *
- * For %ETHTOOL_GRXCLSRULE, @fs.@location specifies the location of an
- * existing rule on entry and @fs contains the rule on return; if
+ * For %ETHTOOL_GRXCLSRULE, @fs.@location specअगरies the location of an
+ * existing rule on entry and @fs contains the rule on वापस; अगर
  * @fs.@flow_type includes the %FLOW_RSS flag, then @rss_context is
  * filled with the RSS context ID associated with the rule.
  *
- * For %ETHTOOL_GRXCLSRLALL, @rule_cnt specifies the array size of the
- * user buffer for @rule_locs on entry.  On return, @data is the size
+ * For %ETHTOOL_GRXCLSRLALL, @rule_cnt specअगरies the array size of the
+ * user buffer क्रम @rule_locs on entry.  On वापस, @data is the size
  * of the rule table, @rule_cnt is the number of defined rules, and
  * @rule_locs contains the locations of the defined rules.  Drivers
  * must use the second parameter to get_rxnfc() instead of @rule_locs.
  *
- * For %ETHTOOL_SRXCLSRLINS, @fs specifies the rule to add or update.
- * @fs.@location either specifies the location to use or is a special
- * location value with %RX_CLS_LOC_SPECIAL flag set.  On return,
+ * For %ETHTOOL_SRXCLSRLINS, @fs specअगरies the rule to add or update.
+ * @fs.@location either specअगरies the location to use or is a special
+ * location value with %RX_CLS_LOC_SPECIAL flag set.  On वापस,
  * @fs.@location is the actual rule location.  If @fs.@flow_type
  * includes the %FLOW_RSS flag, @rss_context is the RSS context ID to
- * use for flow spreading traffic which matches this rule.  The value
+ * use क्रम flow spपढ़ोing traffic which matches this rule.  The value
  * from the rxfh indirection table will be added to @fs.@ring_cookie
  * to choose which ring to deliver to.
  *
- * For %ETHTOOL_SRXCLSRLDEL, @fs.@location specifies the location of an
+ * For %ETHTOOL_SRXCLSRLDEL, @fs.@location specअगरies the location of an
  * existing rule on entry.
  *
- * A driver supporting the special location values for
+ * A driver supporting the special location values क्रम
  * %ETHTOOL_SRXCLSRLINS may add the rule at any suitable unused
- * location, and may remove a rule at a later location (lower
+ * location, and may हटाओ a rule at a later location (lower
  * priority) that matches exactly the same set of flows.  The special
  * values are %RX_CLS_LOC_ANY, selecting any location;
  * %RX_CLS_LOC_FIRST, selecting the first suitable location (maximum
  * priority); and %RX_CLS_LOC_LAST, selecting the last suitable
  * location (minimum priority).  Additional special values may be
- * defined in future and drivers must return -%EINVAL for any
+ * defined in future and drivers must वापस -%EINVAL क्रम any
  * unrecognised value.
  */
-struct ethtool_rxnfc {
+काष्ठा ethtool_rxnfc अणु
 	__u32				cmd;
 	__u32				flow_type;
 	__u64				data;
-	struct ethtool_rx_flow_spec	fs;
-	union {
+	काष्ठा ethtool_rx_flow_spec	fs;
+	जोड़ अणु
 		__u32			rule_cnt;
 		__u32			rss_context;
-	};
+	पूर्ण;
 	__u32				rule_locs[0];
-};
+पूर्ण;
 
 
 /**
- * struct ethtool_rxfh_indir - command to get or set RX flow hash indirection
- * @cmd: Specific command number - %ETHTOOL_GRXFHINDIR or %ETHTOOL_SRXFHINDIR
+ * काष्ठा ethtool_rxfh_indir - command to get or set RX flow hash indirection
+ * @cmd: Specअगरic command number - %ETHTOOL_GRXFHINसूची or %ETHTOOL_SRXFHINसूची
  * @size: On entry, the array size of the user buffer, which may be zero.
- *	On return from %ETHTOOL_GRXFHINDIR, the array size of the hardware
+ *	On वापस from %ETHTOOL_GRXFHINसूची, the array size of the hardware
  *	indirection table.
- * @ring_index: RX ring/queue index for each hash value
+ * @ring_index: RX ring/queue index क्रम each hash value
  *
- * For %ETHTOOL_GRXFHINDIR, a @size of zero means that only the size
- * should be returned.  For %ETHTOOL_SRXFHINDIR, a @size of zero means
- * the table should be reset to default values.  This last feature
+ * For %ETHTOOL_GRXFHINसूची, a @size of zero means that only the size
+ * should be वापसed.  For %ETHTOOL_SRXFHINसूची, a @size of zero means
+ * the table should be reset to शेष values.  This last feature
  * is not supported by the original implementations.
  */
-struct ethtool_rxfh_indir {
+काष्ठा ethtool_rxfh_indir अणु
 	__u32	cmd;
 	__u32	size;
 	__u32	ring_index[0];
-};
+पूर्ण;
 
 /**
- * struct ethtool_rxfh - command to get/set RX flow hash indir or/and hash key.
- * @cmd: Specific command number - %ETHTOOL_GRSSH or %ETHTOOL_SRSSH
- * @rss_context: RSS context identifier.  Context 0 is the default for normal
- *	traffic; other contexts can be referenced as the destination for RX flow
- *	classification rules.  %ETH_RXFH_CONTEXT_ALLOC is used with command
- *	%ETHTOOL_SRSSH to allocate a new RSS context; on return this field will
+ * काष्ठा ethtool_rxfh - command to get/set RX flow hash indir or/and hash key.
+ * @cmd: Specअगरic command number - %ETHTOOL_GRSSH or %ETHTOOL_SRSSH
+ * @rss_context: RSS context identअगरier.  Context 0 is the शेष क्रम normal
+ *	traffic; other contexts can be referenced as the destination क्रम RX flow
+ *	classअगरication rules.  %ETH_RXFH_CONTEXT_ALLOC is used with command
+ *	%ETHTOOL_SRSSH to allocate a new RSS context; on वापस this field will
  *	contain the ID of the newly allocated context.
- * @indir_size: On entry, the array size of the user buffer for the
- *	indirection table, which may be zero, or (for %ETHTOOL_SRSSH),
- *	%ETH_RXFH_INDIR_NO_CHANGE.  On return from %ETHTOOL_GRSSH,
+ * @indir_size: On entry, the array size of the user buffer क्रम the
+ *	indirection table, which may be zero, or (क्रम %ETHTOOL_SRSSH),
+ *	%ETH_RXFH_INसूची_NO_CHANGE.  On वापस from %ETHTOOL_GRSSH,
  *	the array size of the hardware indirection table.
- * @key_size: On entry, the array size of the user buffer for the hash key,
- *	which may be zero.  On return from %ETHTOOL_GRSSH, the size of the
+ * @key_size: On entry, the array size of the user buffer क्रम the hash key,
+ *	which may be zero.  On वापस from %ETHTOOL_GRSSH, the size of the
  *	hardware hash key.
  * @hfunc: Defines the current RSS hash function used by HW (or to be set to).
  *	Valid values are one of the %ETH_RSS_HASH_*.
- * @rsvd8: Reserved for future use; see the note on reserved space.
- * @rsvd32: Reserved for future use; see the note on reserved space.
- * @rss_config: RX ring/queue index for each hash value i.e., indirection table
+ * @rsvd8: Reserved क्रम future use; see the note on reserved space.
+ * @rsvd32: Reserved क्रम future use; see the note on reserved space.
+ * @rss_config: RX ring/queue index क्रम each hash value i.e., indirection table
  *	of @indir_size __u32 elements, followed by hash key of @key_size
  *	bytes.
  *
  * For %ETHTOOL_GRSSH, a @indir_size and key_size of zero means that only the
- * size should be returned.  For %ETHTOOL_SRSSH, an @indir_size of
- * %ETH_RXFH_INDIR_NO_CHANGE means that indir table setting is not requested
- * and a @indir_size of zero means the indir table should be reset to default
- * values (if @rss_context == 0) or that the RSS context should be deleted.
+ * size should be वापसed.  For %ETHTOOL_SRSSH, an @indir_size of
+ * %ETH_RXFH_INसूची_NO_CHANGE means that indir table setting is not requested
+ * and a @indir_size of zero means the indir table should be reset to शेष
+ * values (अगर @rss_context == 0) or that the RSS context should be deleted.
  * An hfunc of zero means that hash function setting is not requested.
  */
-struct ethtool_rxfh {
+काष्ठा ethtool_rxfh अणु
 	__u32   cmd;
 	__u32	rss_context;
 	__u32   indir_size;
@@ -1170,38 +1171,38 @@ struct ethtool_rxfh {
 	__u8	rsvd8[3];
 	__u32	rsvd32;
 	__u32   rss_config[0];
-};
-#define ETH_RXFH_CONTEXT_ALLOC		0xffffffff
-#define ETH_RXFH_INDIR_NO_CHANGE	0xffffffff
+पूर्ण;
+#घोषणा ETH_RXFH_CONTEXT_ALLOC		0xffffffff
+#घोषणा ETH_RXFH_INसूची_NO_CHANGE	0xffffffff
 
 /**
- * struct ethtool_rx_ntuple_flow_spec - specification for RX flow filter
- * @flow_type: Type of match to perform, e.g. %TCP_V4_FLOW
+ * काष्ठा ethtool_rx_ntuple_flow_spec - specअगरication क्रम RX flow filter
+ * @flow_type: Type of match to perक्रमm, e.g. %TCP_V4_FLOW
  * @h_u: Flow field values to match (dependent on @flow_type)
- * @m_u: Masks for flow field value bits to be ignored
+ * @m_u: Masks क्रम flow field value bits to be ignored
  * @vlan_tag: VLAN tag to match
- * @vlan_tag_mask: Mask for VLAN tag bits to be ignored
+ * @vlan_tag_mask: Mask क्रम VLAN tag bits to be ignored
  * @data: Driver-dependent data to match
- * @data_mask: Mask for driver-dependent data bits to be ignored
+ * @data_mask: Mask क्रम driver-dependent data bits to be ignored
  * @action: RX ring/queue index to deliver to (non-negative) or other action
  *	(negative, e.g. %ETHTOOL_RXNTUPLE_ACTION_DROP)
  *
  * For flow types %TCP_V4_FLOW, %UDP_V4_FLOW and %SCTP_V4_FLOW, where
- * a field value and mask are both zero this is treated as if all mask
+ * a field value and mask are both zero this is treated as अगर all mask
  * bits are set i.e. the field is ignored.
  */
-struct ethtool_rx_ntuple_flow_spec {
+काष्ठा ethtool_rx_ntuple_flow_spec अणु
 	__u32		 flow_type;
-	union {
-		struct ethtool_tcpip4_spec		tcp_ip4_spec;
-		struct ethtool_tcpip4_spec		udp_ip4_spec;
-		struct ethtool_tcpip4_spec		sctp_ip4_spec;
-		struct ethtool_ah_espip4_spec		ah_ip4_spec;
-		struct ethtool_ah_espip4_spec		esp_ip4_spec;
-		struct ethtool_usrip4_spec		usr_ip4_spec;
-		struct ethhdr				ether_spec;
+	जोड़ अणु
+		काष्ठा ethtool_tcpip4_spec		tcp_ip4_spec;
+		काष्ठा ethtool_tcpip4_spec		udp_ip4_spec;
+		काष्ठा ethtool_tcpip4_spec		sctp_ip4_spec;
+		काष्ठा ethtool_ah_espip4_spec		ah_ip4_spec;
+		काष्ठा ethtool_ah_espip4_spec		esp_ip4_spec;
+		काष्ठा ethtool_usrip4_spec		usr_ip4_spec;
+		काष्ठा ethhdr				ether_spec;
 		__u8					hdata[72];
-	} h_u, m_u;
+	पूर्ण h_u, m_u;
 
 	__u16	        vlan_tag;
 	__u16	        vlan_tag_mask;
@@ -1209,137 +1210,137 @@ struct ethtool_rx_ntuple_flow_spec {
 	__u64		data_mask;
 
 	__s32		action;
-#define ETHTOOL_RXNTUPLE_ACTION_DROP	(-1)	/* drop packet */
-#define ETHTOOL_RXNTUPLE_ACTION_CLEAR	(-2)	/* clear filter */
-};
+#घोषणा ETHTOOL_RXNTUPLE_ACTION_DROP	(-1)	/* drop packet */
+#घोषणा ETHTOOL_RXNTUPLE_ACTION_CLEAR	(-2)	/* clear filter */
+पूर्ण;
 
 /**
- * struct ethtool_rx_ntuple - command to set or clear RX flow filter
+ * काष्ठा ethtool_rx_ntuple - command to set or clear RX flow filter
  * @cmd: Command number - %ETHTOOL_SRXNTUPLE
- * @fs: Flow filter specification
+ * @fs: Flow filter specअगरication
  */
-struct ethtool_rx_ntuple {
+काष्ठा ethtool_rx_ntuple अणु
 	__u32					cmd;
-	struct ethtool_rx_ntuple_flow_spec	fs;
-};
+	काष्ठा ethtool_rx_ntuple_flow_spec	fs;
+पूर्ण;
 
-#define ETHTOOL_FLASH_MAX_FILENAME	128
-enum ethtool_flash_op_type {
+#घोषणा ETHTOOL_FLASH_MAX_खाताNAME	128
+क्रमागत ethtool_flash_op_type अणु
 	ETHTOOL_FLASH_ALL_REGIONS	= 0,
-};
+पूर्ण;
 
-/* for passing firmware flashing related parameters */
-struct ethtool_flash {
+/* क्रम passing firmware flashing related parameters */
+काष्ठा ethtool_flash अणु
 	__u32	cmd;
 	__u32	region;
-	char	data[ETHTOOL_FLASH_MAX_FILENAME];
-};
+	अक्षर	data[ETHTOOL_FLASH_MAX_खाताNAME];
+पूर्ण;
 
 /**
- * struct ethtool_dump - used for retrieving, setting device dump
+ * काष्ठा ethtool_dump - used क्रम retrieving, setting device dump
  * @cmd: Command number - %ETHTOOL_GET_DUMP_FLAG, %ETHTOOL_GET_DUMP_DATA, or
  * 	%ETHTOOL_SET_DUMP
  * @version: FW version of the dump, filled in by driver
- * @flag: driver dependent flag for dump setting, filled in by driver during
- *        get and filled in by ethtool for set operation.
+ * @flag: driver dependent flag क्रम dump setting, filled in by driver during
+ *        get and filled in by ethtool क्रम set operation.
  *        flag must be initialized by macro ETH_FW_DUMP_DISABLE value when
  *        firmware dump is disabled.
  * @len: length of dump data, used as the length of the user buffer on entry to
- * 	 %ETHTOOL_GET_DUMP_DATA and this is returned as dump length by driver
- * 	 for %ETHTOOL_GET_DUMP_FLAG command
- * @data: data collected for get dump data operation
+ * 	 %ETHTOOL_GET_DUMP_DATA and this is वापसed as dump length by driver
+ * 	 क्रम %ETHTOOL_GET_DUMP_FLAG command
+ * @data: data collected क्रम get dump data operation
  */
-struct ethtool_dump {
+काष्ठा ethtool_dump अणु
 	__u32	cmd;
 	__u32	version;
 	__u32	flag;
 	__u32	len;
 	__u8	data[0];
-};
+पूर्ण;
 
-#define ETH_FW_DUMP_DISABLE 0
+#घोषणा ETH_FW_DUMP_DISABLE 0
 
-/* for returning and changing feature sets */
+/* क्रम वापसing and changing feature sets */
 
 /**
- * struct ethtool_get_features_block - block with state of 32 features
+ * काष्ठा ethtool_get_features_block - block with state of 32 features
  * @available: mask of changeable features
- * @requested: mask of features requested to be enabled if possible
+ * @requested: mask of features requested to be enabled अगर possible
  * @active: mask of currently enabled features
- * @never_changed: mask of features not changeable for any device
+ * @never_changed: mask of features not changeable क्रम any device
  */
-struct ethtool_get_features_block {
+काष्ठा ethtool_get_features_block अणु
 	__u32	available;
 	__u32	requested;
 	__u32	active;
 	__u32	never_changed;
-};
+पूर्ण;
 
 /**
- * struct ethtool_gfeatures - command to get state of device's features
+ * काष्ठा ethtool_gfeatures - command to get state of device's features
  * @cmd: command number = %ETHTOOL_GFEATURES
  * @size: On entry, the number of elements in the features[] array;
- *	on return, the number of elements in features[] needed to hold
+ *	on वापस, the number of elements in features[] needed to hold
  *	all features
  * @features: state of features
  */
-struct ethtool_gfeatures {
+काष्ठा ethtool_gfeatures अणु
 	__u32	cmd;
 	__u32	size;
-	struct ethtool_get_features_block features[0];
-};
+	काष्ठा ethtool_get_features_block features[0];
+पूर्ण;
 
 /**
- * struct ethtool_set_features_block - block with request for 32 features
+ * काष्ठा ethtool_set_features_block - block with request क्रम 32 features
  * @valid: mask of features to be changed
  * @requested: values of features to be changed
  */
-struct ethtool_set_features_block {
+काष्ठा ethtool_set_features_block अणु
 	__u32	valid;
 	__u32	requested;
-};
+पूर्ण;
 
 /**
- * struct ethtool_sfeatures - command to request change in device's features
+ * काष्ठा ethtool_sfeatures - command to request change in device's features
  * @cmd: command number = %ETHTOOL_SFEATURES
  * @size: array size of the features[] array
  * @features: feature change masks
  */
-struct ethtool_sfeatures {
+काष्ठा ethtool_sfeatures अणु
 	__u32	cmd;
 	__u32	size;
-	struct ethtool_set_features_block features[0];
-};
+	काष्ठा ethtool_set_features_block features[0];
+पूर्ण;
 
 /**
- * struct ethtool_ts_info - holds a device's timestamping and PHC association
+ * काष्ठा ethtool_ts_info - holds a device's बारtamping and PHC association
  * @cmd: command number = %ETHTOOL_GET_TS_INFO
- * @so_timestamping: bit mask of the sum of the supported SO_TIMESTAMPING flags
- * @phc_index: device index of the associated PHC, or -1 if there is none
- * @tx_types: bit mask of the supported hwtstamp_tx_types enumeration values
- * @tx_reserved: Reserved for future use; see the note on reserved space.
- * @rx_filters: bit mask of the supported hwtstamp_rx_filters enumeration values
- * @rx_reserved: Reserved for future use; see the note on reserved space.
+ * @so_बारtamping: bit mask of the sum of the supported SO_TIMESTAMPING flags
+ * @phc_index: device index of the associated PHC, or -1 अगर there is none
+ * @tx_types: bit mask of the supported hwtstamp_tx_types क्रमागतeration values
+ * @tx_reserved: Reserved क्रम future use; see the note on reserved space.
+ * @rx_filters: bit mask of the supported hwtstamp_rx_filters क्रमागतeration values
+ * @rx_reserved: Reserved क्रम future use; see the note on reserved space.
  *
  * The bits in the 'tx_types' and 'rx_filters' fields correspond to
- * the 'hwtstamp_tx_types' and 'hwtstamp_rx_filters' enumeration values,
- * respectively.  For example, if the device supports HWTSTAMP_TX_ON,
+ * the 'hwtstamp_tx_types' and 'hwtstamp_rx_filters' क्रमागतeration values,
+ * respectively.  For example, अगर the device supports HWTSTAMP_TX_ON,
  * then (1 << HWTSTAMP_TX_ON) in 'tx_types' will be set.
  *
  * Drivers should only report the filters they actually support without
- * upscaling in the SIOCSHWTSTAMP ioctl. If the SIOCSHWSTAMP request for
+ * upscaling in the SIOCSHWTSTAMP ioctl. If the SIOCSHWSTAMP request क्रम
  * HWTSTAMP_FILTER_V1_SYNC is supported by HWTSTAMP_FILTER_V1_EVENT, then the
  * driver should only report HWTSTAMP_FILTER_V1_EVENT in this op.
  */
-struct ethtool_ts_info {
+काष्ठा ethtool_ts_info अणु
 	__u32	cmd;
-	__u32	so_timestamping;
+	__u32	so_बारtamping;
 	__s32	phc_index;
 	__u32	tx_types;
 	__u32	tx_reserved[3];
 	__u32	rx_filters;
 	__u32	rx_reserved[3];
-};
+पूर्ण;
 
 /*
  * %ETHTOOL_SFEATURES changes features present in features[].valid to the
@@ -1348,13 +1349,13 @@ struct ethtool_ts_info {
  *
  * Returns %EINVAL when .valid contains undefined or never-changeable bits
  * or size is not equal to required number of features words (32-bit blocks).
- * Returns >= 0 if request was completed; bits set in the value mean:
+ * Returns >= 0 अगर request was completed; bits set in the value mean:
  *   %ETHTOOL_F_UNSUPPORTED - there were bits set in .valid that are not
  *	changeable (not present in %ETHTOOL_GFEATURES' features[].available)
  *	those bits were ignored.
  *   %ETHTOOL_F_WISH - some or all changes requested were recorded but the
  *      resulting state of bits masked by .valid is not equal to .requested.
- *      Probably there are other device-specific constraints on some features
+ *      Probably there are other device-specअगरic स्थिरraपूर्णांकs on some features
  *      in the set. When %ETHTOOL_F_UNSUPPORTED is set, .valid is considered
  *      here as though ignored bits were cleared.
  *   %ETHTOOL_F_COMPAT - some or all changes requested were made by calling
@@ -1363,202 +1364,202 @@ struct ethtool_ts_info {
  *
  * Meaning of bits in the masks are obtained by %ETHTOOL_GSSET_INFO (number of
  * bits in the arrays - always multiple of 32) and %ETHTOOL_GSTRINGS commands
- * for ETH_SS_FEATURES string set. First entry in the table corresponds to least
- * significant bit in features[0] fields. Empty strings mark undefined features.
+ * क्रम ETH_SS_FEATURES string set. First entry in the table corresponds to least
+ * signअगरicant bit in features[0] fields. Empty strings mark undefined features.
  */
-enum ethtool_sfeatures_retval_bits {
+क्रमागत ethtool_sfeatures_retval_bits अणु
 	ETHTOOL_F_UNSUPPORTED__BIT,
 	ETHTOOL_F_WISH__BIT,
 	ETHTOOL_F_COMPAT__BIT,
-};
+पूर्ण;
 
-#define ETHTOOL_F_UNSUPPORTED   (1 << ETHTOOL_F_UNSUPPORTED__BIT)
-#define ETHTOOL_F_WISH          (1 << ETHTOOL_F_WISH__BIT)
-#define ETHTOOL_F_COMPAT        (1 << ETHTOOL_F_COMPAT__BIT)
+#घोषणा ETHTOOL_F_UNSUPPORTED   (1 << ETHTOOL_F_UNSUPPORTED__BIT)
+#घोषणा ETHTOOL_F_WISH          (1 << ETHTOOL_F_WISH__BIT)
+#घोषणा ETHTOOL_F_COMPAT        (1 << ETHTOOL_F_COMPAT__BIT)
 
-#define MAX_NUM_QUEUE		4096
+#घोषणा MAX_NUM_QUEUE		4096
 
 /**
- * struct ethtool_per_queue_op - apply sub command to the queues in mask.
+ * काष्ठा ethtool_per_queue_op - apply sub command to the queues in mask.
  * @cmd: ETHTOOL_PERQUEUE
  * @sub_command: the sub command which apply to each queues
- * @queue_mask: Bitmap of the queues which sub command apply to
- * @data: A complete command structure following for each of the queues addressed
+ * @queue_mask: Biपंचांगap of the queues which sub command apply to
+ * @data: A complete command काष्ठाure following क्रम each of the queues addressed
  */
-struct ethtool_per_queue_op {
+काष्ठा ethtool_per_queue_op अणु
 	__u32	cmd;
 	__u32	sub_command;
 	__u32	queue_mask[__KERNEL_DIV_ROUND_UP(MAX_NUM_QUEUE, 32)];
-	char	data[];
-};
+	अक्षर	data[];
+पूर्ण;
 
 /**
- * struct ethtool_fecparam - Ethernet Forward Error Correction parameters
+ * काष्ठा ethtool_fecparam - Ethernet Forward Error Correction parameters
  * @cmd: Command number = %ETHTOOL_GFECPARAM or %ETHTOOL_SFECPARAM
  * @active_fec: FEC mode which is active on the port, single bit set, GET only.
- * @fec: Bitmask of configured FEC modes.
- * @reserved: Reserved for future extensions, ignore on GET, write 0 for SET.
+ * @fec: Biपंचांगask of configured FEC modes.
+ * @reserved: Reserved क्रम future extensions, ignore on GET, ग_लिखो 0 क्रम SET.
  *
  * Note that @reserved was never validated on input and ethtool user space
- * left it uninitialized when calling SET. Hence going forward it can only be
- * used to return a value to userspace with GET.
+ * left it uninitialized when calling SET. Hence going क्रमward it can only be
+ * used to वापस a value to userspace with GET.
  *
- * FEC modes supported by the device can be read via %ETHTOOL_GLINKSETTINGS.
- * FEC settings are configured by link autonegotiation whenever it's enabled.
- * With autoneg on %ETHTOOL_GFECPARAM can be used to read the current mode.
+ * FEC modes supported by the device can be पढ़ो via %ETHTOOL_GLINKSETTINGS.
+ * FEC settings are configured by link स्वतःnegotiation whenever it's enabled.
+ * With स्वतःneg on %ETHTOOL_GFECPARAM can be used to पढ़ो the current mode.
  *
- * When autoneg is disabled %ETHTOOL_SFECPARAM controls the FEC settings.
+ * When स्वतःneg is disabled %ETHTOOL_SFECPARAM controls the FEC settings.
  * It is recommended that drivers only accept a single bit set in @fec.
  * When multiple bits are set in @fec drivers may pick mode in an implementation
  * dependent way. Drivers should reject mixing %ETHTOOL_FEC_AUTO_BIT with other
- * FEC modes, because it's unclear whether in this case other modes constrain
+ * FEC modes, because it's unclear whether in this हाल other modes स्थिरrain
  * AUTO or are independent choices.
- * Drivers must reject SET requests if they support none of the requested modes.
+ * Drivers must reject SET requests अगर they support none of the requested modes.
  *
- * If device does not support FEC drivers may use %ETHTOOL_FEC_NONE instead
- * of returning %EOPNOTSUPP from %ETHTOOL_GFECPARAM.
+ * If device करोes not support FEC drivers may use %ETHTOOL_FEC_NONE instead
+ * of वापसing %EOPNOTSUPP from %ETHTOOL_GFECPARAM.
  *
- * See enum ethtool_fec_config_bits for definition of valid bits for both
+ * See क्रमागत ethtool_fec_config_bits क्रम definition of valid bits क्रम both
  * @fec and @active_fec.
  */
-struct ethtool_fecparam {
+काष्ठा ethtool_fecparam अणु
 	__u32   cmd;
-	/* bitmask of FEC modes */
+	/* biपंचांगask of FEC modes */
 	__u32   active_fec;
 	__u32   fec;
 	__u32   reserved;
-};
+पूर्ण;
 
 /**
- * enum ethtool_fec_config_bits - flags definition of ethtool_fec_configuration
+ * क्रमागत ethtool_fec_config_bits - flags definition of ethtool_fec_configuration
  * @ETHTOOL_FEC_NONE_BIT: FEC mode configuration is not supported. Should not
  *			be used together with other bits. GET only.
- * @ETHTOOL_FEC_AUTO_BIT: Select default/best FEC mode automatically, usually
- *			based link mode and SFP parameters read from module's
- *			EEPROM. This bit does _not_ mean autonegotiation.
+ * @ETHTOOL_FEC_AUTO_BIT: Select शेष/best FEC mode स्वतःmatically, usually
+ *			based link mode and SFP parameters पढ़ो from module's
+ *			EEPROM. This bit करोes _not_ mean स्वतःnegotiation.
  * @ETHTOOL_FEC_OFF_BIT: No FEC Mode
  * @ETHTOOL_FEC_RS_BIT: Reed-Solomon FEC Mode
  * @ETHTOOL_FEC_BASER_BIT: Base-R/Reed-Solomon FEC Mode
  * @ETHTOOL_FEC_LLRS_BIT: Low Latency Reed Solomon FEC Mode (25G/50G Ethernet
  *			Consortium)
  */
-enum ethtool_fec_config_bits {
+क्रमागत ethtool_fec_config_bits अणु
 	ETHTOOL_FEC_NONE_BIT,
 	ETHTOOL_FEC_AUTO_BIT,
 	ETHTOOL_FEC_OFF_BIT,
 	ETHTOOL_FEC_RS_BIT,
 	ETHTOOL_FEC_BASER_BIT,
 	ETHTOOL_FEC_LLRS_BIT,
-};
+पूर्ण;
 
-#define ETHTOOL_FEC_NONE		(1 << ETHTOOL_FEC_NONE_BIT)
-#define ETHTOOL_FEC_AUTO		(1 << ETHTOOL_FEC_AUTO_BIT)
-#define ETHTOOL_FEC_OFF			(1 << ETHTOOL_FEC_OFF_BIT)
-#define ETHTOOL_FEC_RS			(1 << ETHTOOL_FEC_RS_BIT)
-#define ETHTOOL_FEC_BASER		(1 << ETHTOOL_FEC_BASER_BIT)
-#define ETHTOOL_FEC_LLRS		(1 << ETHTOOL_FEC_LLRS_BIT)
+#घोषणा ETHTOOL_FEC_NONE		(1 << ETHTOOL_FEC_NONE_BIT)
+#घोषणा ETHTOOL_FEC_AUTO		(1 << ETHTOOL_FEC_AUTO_BIT)
+#घोषणा ETHTOOL_FEC_OFF			(1 << ETHTOOL_FEC_OFF_BIT)
+#घोषणा ETHTOOL_FEC_RS			(1 << ETHTOOL_FEC_RS_BIT)
+#घोषणा ETHTOOL_FEC_BASER		(1 << ETHTOOL_FEC_BASER_BIT)
+#घोषणा ETHTOOL_FEC_LLRS		(1 << ETHTOOL_FEC_LLRS_BIT)
 
 /* CMDs currently supported */
-#define ETHTOOL_GSET		0x00000001 /* DEPRECATED, Get settings.
+#घोषणा ETHTOOL_GSET		0x00000001 /* DEPRECATED, Get settings.
 					    * Please use ETHTOOL_GLINKSETTINGS
 					    */
-#define ETHTOOL_SSET		0x00000002 /* DEPRECATED, Set settings.
+#घोषणा ETHTOOL_SSET		0x00000002 /* DEPRECATED, Set settings.
 					    * Please use ETHTOOL_SLINKSETTINGS
 					    */
-#define ETHTOOL_GDRVINFO	0x00000003 /* Get driver info. */
-#define ETHTOOL_GREGS		0x00000004 /* Get NIC registers. */
-#define ETHTOOL_GWOL		0x00000005 /* Get wake-on-lan options. */
-#define ETHTOOL_SWOL		0x00000006 /* Set wake-on-lan options. */
-#define ETHTOOL_GMSGLVL		0x00000007 /* Get driver message level */
-#define ETHTOOL_SMSGLVL		0x00000008 /* Set driver msg level. */
-#define ETHTOOL_NWAY_RST	0x00000009 /* Restart autonegotiation. */
-/* Get link status for host, i.e. whether the interface *and* the
- * physical port (if there is one) are up (ethtool_value). */
-#define ETHTOOL_GLINK		0x0000000a
-#define ETHTOOL_GEEPROM		0x0000000b /* Get EEPROM data */
-#define ETHTOOL_SEEPROM		0x0000000c /* Set EEPROM data. */
-#define ETHTOOL_GCOALESCE	0x0000000e /* Get coalesce config */
-#define ETHTOOL_SCOALESCE	0x0000000f /* Set coalesce config. */
-#define ETHTOOL_GRINGPARAM	0x00000010 /* Get ring parameters */
-#define ETHTOOL_SRINGPARAM	0x00000011 /* Set ring parameters. */
-#define ETHTOOL_GPAUSEPARAM	0x00000012 /* Get pause parameters */
-#define ETHTOOL_SPAUSEPARAM	0x00000013 /* Set pause parameters. */
-#define ETHTOOL_GRXCSUM		0x00000014 /* Get RX hw csum enable (ethtool_value) */
-#define ETHTOOL_SRXCSUM		0x00000015 /* Set RX hw csum enable (ethtool_value) */
-#define ETHTOOL_GTXCSUM		0x00000016 /* Get TX hw csum enable (ethtool_value) */
-#define ETHTOOL_STXCSUM		0x00000017 /* Set TX hw csum enable (ethtool_value) */
-#define ETHTOOL_GSG		0x00000018 /* Get scatter-gather enable
+#घोषणा ETHTOOL_GDRVINFO	0x00000003 /* Get driver info. */
+#घोषणा ETHTOOL_GREGS		0x00000004 /* Get NIC रेजिस्टरs. */
+#घोषणा ETHTOOL_GWOL		0x00000005 /* Get wake-on-lan options. */
+#घोषणा ETHTOOL_SWOL		0x00000006 /* Set wake-on-lan options. */
+#घोषणा ETHTOOL_GMSGLVL		0x00000007 /* Get driver message level */
+#घोषणा ETHTOOL_SMSGLVL		0x00000008 /* Set driver msg level. */
+#घोषणा ETHTOOL_NWAY_RST	0x00000009 /* Restart स्वतःnegotiation. */
+/* Get link status क्रम host, i.e. whether the पूर्णांकerface *and* the
+ * physical port (अगर there is one) are up (ethtool_value). */
+#घोषणा ETHTOOL_GLINK		0x0000000a
+#घोषणा ETHTOOL_GEEPROM		0x0000000b /* Get EEPROM data */
+#घोषणा ETHTOOL_SEEPROM		0x0000000c /* Set EEPROM data. */
+#घोषणा ETHTOOL_GCOALESCE	0x0000000e /* Get coalesce config */
+#घोषणा ETHTOOL_SCOALESCE	0x0000000f /* Set coalesce config. */
+#घोषणा ETHTOOL_GRINGPARAM	0x00000010 /* Get ring parameters */
+#घोषणा ETHTOOL_SRINGPARAM	0x00000011 /* Set ring parameters. */
+#घोषणा ETHTOOL_GPAUSEPARAM	0x00000012 /* Get छोड़ो parameters */
+#घोषणा ETHTOOL_SPAUSEPARAM	0x00000013 /* Set छोड़ो parameters. */
+#घोषणा ETHTOOL_GRXCSUM		0x00000014 /* Get RX hw csum enable (ethtool_value) */
+#घोषणा ETHTOOL_SRXCSUM		0x00000015 /* Set RX hw csum enable (ethtool_value) */
+#घोषणा ETHTOOL_GTXCSUM		0x00000016 /* Get TX hw csum enable (ethtool_value) */
+#घोषणा ETHTOOL_STXCSUM		0x00000017 /* Set TX hw csum enable (ethtool_value) */
+#घोषणा ETHTOOL_GSG		0x00000018 /* Get scatter-gather enable
 					    * (ethtool_value) */
-#define ETHTOOL_SSG		0x00000019 /* Set scatter-gather enable
+#घोषणा ETHTOOL_SSG		0x00000019 /* Set scatter-gather enable
 					    * (ethtool_value). */
-#define ETHTOOL_TEST		0x0000001a /* execute NIC self-test. */
-#define ETHTOOL_GSTRINGS	0x0000001b /* get specified string set */
-#define ETHTOOL_PHYS_ID		0x0000001c /* identify the NIC */
-#define ETHTOOL_GSTATS		0x0000001d /* get NIC-specific statistics */
-#define ETHTOOL_GTSO		0x0000001e /* Get TSO enable (ethtool_value) */
-#define ETHTOOL_STSO		0x0000001f /* Set TSO enable (ethtool_value) */
-#define ETHTOOL_GPERMADDR	0x00000020 /* Get permanent hardware address */
-#define ETHTOOL_GUFO		0x00000021 /* Get UFO enable (ethtool_value) */
-#define ETHTOOL_SUFO		0x00000022 /* Set UFO enable (ethtool_value) */
-#define ETHTOOL_GGSO		0x00000023 /* Get GSO enable (ethtool_value) */
-#define ETHTOOL_SGSO		0x00000024 /* Set GSO enable (ethtool_value) */
-#define ETHTOOL_GFLAGS		0x00000025 /* Get flags bitmap(ethtool_value) */
-#define ETHTOOL_SFLAGS		0x00000026 /* Set flags bitmap(ethtool_value) */
-#define ETHTOOL_GPFLAGS		0x00000027 /* Get driver-private flags bitmap */
-#define ETHTOOL_SPFLAGS		0x00000028 /* Set driver-private flags bitmap */
+#घोषणा ETHTOOL_TEST		0x0000001a /* execute NIC self-test. */
+#घोषणा ETHTOOL_GSTRINGS	0x0000001b /* get specअगरied string set */
+#घोषणा ETHTOOL_PHYS_ID		0x0000001c /* identअगरy the NIC */
+#घोषणा ETHTOOL_GSTATS		0x0000001d /* get NIC-specअगरic statistics */
+#घोषणा ETHTOOL_GTSO		0x0000001e /* Get TSO enable (ethtool_value) */
+#घोषणा ETHTOOL_STSO		0x0000001f /* Set TSO enable (ethtool_value) */
+#घोषणा ETHTOOL_GPERMADDR	0x00000020 /* Get permanent hardware address */
+#घोषणा ETHTOOL_GUFO		0x00000021 /* Get UFO enable (ethtool_value) */
+#घोषणा ETHTOOL_SUFO		0x00000022 /* Set UFO enable (ethtool_value) */
+#घोषणा ETHTOOL_GGSO		0x00000023 /* Get GSO enable (ethtool_value) */
+#घोषणा ETHTOOL_SGSO		0x00000024 /* Set GSO enable (ethtool_value) */
+#घोषणा ETHTOOL_GFLAGS		0x00000025 /* Get flags biपंचांगap(ethtool_value) */
+#घोषणा ETHTOOL_SFLAGS		0x00000026 /* Set flags biपंचांगap(ethtool_value) */
+#घोषणा ETHTOOL_GPFLAGS		0x00000027 /* Get driver-निजी flags biपंचांगap */
+#घोषणा ETHTOOL_SPFLAGS		0x00000028 /* Set driver-निजी flags biपंचांगap */
 
-#define ETHTOOL_GRXFH		0x00000029 /* Get RX flow hash configuration */
-#define ETHTOOL_SRXFH		0x0000002a /* Set RX flow hash configuration */
-#define ETHTOOL_GGRO		0x0000002b /* Get GRO enable (ethtool_value) */
-#define ETHTOOL_SGRO		0x0000002c /* Set GRO enable (ethtool_value) */
-#define ETHTOOL_GRXRINGS	0x0000002d /* Get RX rings available for LB */
-#define ETHTOOL_GRXCLSRLCNT	0x0000002e /* Get RX class rule count */
-#define ETHTOOL_GRXCLSRULE	0x0000002f /* Get RX classification rule */
-#define ETHTOOL_GRXCLSRLALL	0x00000030 /* Get all RX classification rule */
-#define ETHTOOL_SRXCLSRLDEL	0x00000031 /* Delete RX classification rule */
-#define ETHTOOL_SRXCLSRLINS	0x00000032 /* Insert RX classification rule */
-#define ETHTOOL_FLASHDEV	0x00000033 /* Flash firmware to device */
-#define ETHTOOL_RESET		0x00000034 /* Reset hardware */
-#define ETHTOOL_SRXNTUPLE	0x00000035 /* Add an n-tuple filter to device */
-#define ETHTOOL_GRXNTUPLE	0x00000036 /* deprecated */
-#define ETHTOOL_GSSET_INFO	0x00000037 /* Get string set info */
-#define ETHTOOL_GRXFHINDIR	0x00000038 /* Get RX flow hash indir'n table */
-#define ETHTOOL_SRXFHINDIR	0x00000039 /* Set RX flow hash indir'n table */
+#घोषणा ETHTOOL_GRXFH		0x00000029 /* Get RX flow hash configuration */
+#घोषणा ETHTOOL_SRXFH		0x0000002a /* Set RX flow hash configuration */
+#घोषणा ETHTOOL_GGRO		0x0000002b /* Get GRO enable (ethtool_value) */
+#घोषणा ETHTOOL_SGRO		0x0000002c /* Set GRO enable (ethtool_value) */
+#घोषणा ETHTOOL_GRXRINGS	0x0000002d /* Get RX rings available क्रम LB */
+#घोषणा ETHTOOL_GRXCLSRLCNT	0x0000002e /* Get RX class rule count */
+#घोषणा ETHTOOL_GRXCLSRULE	0x0000002f /* Get RX classअगरication rule */
+#घोषणा ETHTOOL_GRXCLSRLALL	0x00000030 /* Get all RX classअगरication rule */
+#घोषणा ETHTOOL_SRXCLSRLDEL	0x00000031 /* Delete RX classअगरication rule */
+#घोषणा ETHTOOL_SRXCLSRLINS	0x00000032 /* Insert RX classअगरication rule */
+#घोषणा ETHTOOL_FLASHDEV	0x00000033 /* Flash firmware to device */
+#घोषणा ETHTOOL_RESET		0x00000034 /* Reset hardware */
+#घोषणा ETHTOOL_SRXNTUPLE	0x00000035 /* Add an n-tuple filter to device */
+#घोषणा ETHTOOL_GRXNTUPLE	0x00000036 /* deprecated */
+#घोषणा ETHTOOL_GSSET_INFO	0x00000037 /* Get string set info */
+#घोषणा ETHTOOL_GRXFHINसूची	0x00000038 /* Get RX flow hash indir'n table */
+#घोषणा ETHTOOL_SRXFHINसूची	0x00000039 /* Set RX flow hash indir'n table */
 
-#define ETHTOOL_GFEATURES	0x0000003a /* Get device offload settings */
-#define ETHTOOL_SFEATURES	0x0000003b /* Change device offload settings */
-#define ETHTOOL_GCHANNELS	0x0000003c /* Get no of channels */
-#define ETHTOOL_SCHANNELS	0x0000003d /* Set no of channels */
-#define ETHTOOL_SET_DUMP	0x0000003e /* Set dump settings */
-#define ETHTOOL_GET_DUMP_FLAG	0x0000003f /* Get dump settings */
-#define ETHTOOL_GET_DUMP_DATA	0x00000040 /* Get dump data */
-#define ETHTOOL_GET_TS_INFO	0x00000041 /* Get time stamping and PHC info */
-#define ETHTOOL_GMODULEINFO	0x00000042 /* Get plug-in module information */
-#define ETHTOOL_GMODULEEEPROM	0x00000043 /* Get plug-in module eeprom */
-#define ETHTOOL_GEEE		0x00000044 /* Get EEE settings */
-#define ETHTOOL_SEEE		0x00000045 /* Set EEE settings */
+#घोषणा ETHTOOL_GFEATURES	0x0000003a /* Get device offload settings */
+#घोषणा ETHTOOL_SFEATURES	0x0000003b /* Change device offload settings */
+#घोषणा ETHTOOL_GCHANNELS	0x0000003c /* Get no of channels */
+#घोषणा ETHTOOL_SCHANNELS	0x0000003d /* Set no of channels */
+#घोषणा ETHTOOL_SET_DUMP	0x0000003e /* Set dump settings */
+#घोषणा ETHTOOL_GET_DUMP_FLAG	0x0000003f /* Get dump settings */
+#घोषणा ETHTOOL_GET_DUMP_DATA	0x00000040 /* Get dump data */
+#घोषणा ETHTOOL_GET_TS_INFO	0x00000041 /* Get समय stamping and PHC info */
+#घोषणा ETHTOOL_GMODULEINFO	0x00000042 /* Get plug-in module inक्रमmation */
+#घोषणा ETHTOOL_GMODULEEEPROM	0x00000043 /* Get plug-in module eeprom */
+#घोषणा ETHTOOL_GEEE		0x00000044 /* Get EEE settings */
+#घोषणा ETHTOOL_SEEE		0x00000045 /* Set EEE settings */
 
-#define ETHTOOL_GRSSH		0x00000046 /* Get RX flow hash configuration */
-#define ETHTOOL_SRSSH		0x00000047 /* Set RX flow hash configuration */
-#define ETHTOOL_GTUNABLE	0x00000048 /* Get tunable configuration */
-#define ETHTOOL_STUNABLE	0x00000049 /* Set tunable configuration */
-#define ETHTOOL_GPHYSTATS	0x0000004a /* get PHY-specific statistics */
+#घोषणा ETHTOOL_GRSSH		0x00000046 /* Get RX flow hash configuration */
+#घोषणा ETHTOOL_SRSSH		0x00000047 /* Set RX flow hash configuration */
+#घोषणा ETHTOOL_GTUNABLE	0x00000048 /* Get tunable configuration */
+#घोषणा ETHTOOL_STUNABLE	0x00000049 /* Set tunable configuration */
+#घोषणा ETHTOOL_GPHYSTATS	0x0000004a /* get PHY-specअगरic statistics */
 
-#define ETHTOOL_PERQUEUE	0x0000004b /* Set per queue options */
+#घोषणा ETHTOOL_PERQUEUE	0x0000004b /* Set per queue options */
 
-#define ETHTOOL_GLINKSETTINGS	0x0000004c /* Get ethtool_link_settings */
-#define ETHTOOL_SLINKSETTINGS	0x0000004d /* Set ethtool_link_settings */
-#define ETHTOOL_PHY_GTUNABLE	0x0000004e /* Get PHY tunable configuration */
-#define ETHTOOL_PHY_STUNABLE	0x0000004f /* Set PHY tunable configuration */
-#define ETHTOOL_GFECPARAM	0x00000050 /* Get FEC settings */
-#define ETHTOOL_SFECPARAM	0x00000051 /* Set FEC settings */
+#घोषणा ETHTOOL_GLINKSETTINGS	0x0000004c /* Get ethtool_link_settings */
+#घोषणा ETHTOOL_SLINKSETTINGS	0x0000004d /* Set ethtool_link_settings */
+#घोषणा ETHTOOL_PHY_GTUNABLE	0x0000004e /* Get PHY tunable configuration */
+#घोषणा ETHTOOL_PHY_STUNABLE	0x0000004f /* Set PHY tunable configuration */
+#घोषणा ETHTOOL_GFECPARAM	0x00000050 /* Get FEC settings */
+#घोषणा ETHTOOL_SFECPARAM	0x00000051 /* Set FEC settings */
 
 /* compatibility with older code */
-#define SPARC_ETH_GSET		ETHTOOL_GSET
-#define SPARC_ETH_SSET		ETHTOOL_SSET
+#घोषणा SPARC_ETH_GSET		ETHTOOL_GSET
+#घोषणा SPARC_ETH_SSET		ETHTOOL_SSET
 
 /* Link mode bit indices */
-enum ethtool_link_mode_bit_indices {
+क्रमागत ethtool_link_mode_bit_indices अणु
 	ETHTOOL_LINK_MODE_10baseT_Half_BIT	= 0,
 	ETHTOOL_LINK_MODE_10baseT_Full_BIT	= 1,
 	ETHTOOL_LINK_MODE_100baseT_Half_BIT	= 2,
@@ -1592,9 +1593,9 @@ enum ethtool_link_mode_bit_indices {
 	ETHTOOL_LINK_MODE_56000baseLR4_Full_BIT	= 30,
 	ETHTOOL_LINK_MODE_25000baseCR_Full_BIT	= 31,
 
-	/* Last allowed bit for __ETHTOOL_LINK_MODE_LEGACY_MASK is bit
-	 * 31. Please do NOT define any SUPPORTED_* or ADVERTISED_*
-	 * macro for bits > 31. The only way to use indices > 31 is to
+	/* Last allowed bit क्रम __ETHTOOL_LINK_MODE_LEGACY_MASK is bit
+	 * 31. Please करो NOT define any SUPPORTED_* or ADVERTISED_*
+	 * macro क्रम bits > 31. The only way to use indices > 31 is to
 	 * use the new ETHTOOL_GLINKSETTINGS/ETHTOOL_SLINKSETTINGS API.
 	 */
 
@@ -1661,260 +1662,260 @@ enum ethtool_link_mode_bit_indices {
 	ETHTOOL_LINK_MODE_100baseFX_Full_BIT		 = 91,
 	/* must be last entry */
 	__ETHTOOL_LINK_MODE_MASK_NBITS
-};
+पूर्ण;
 
-#define __ETHTOOL_LINK_MODE_LEGACY_MASK(base_name)	\
+#घोषणा __ETHTOOL_LINK_MODE_LEGACY_MASK(base_name)	\
 	(1UL << (ETHTOOL_LINK_MODE_ ## base_name ## _BIT))
 
 /* DEPRECATED macros. Please migrate to
- * ETHTOOL_GLINKSETTINGS/ETHTOOL_SLINKSETTINGS API. Please do NOT
- * define any new SUPPORTED_* macro for bits > 31.
+ * ETHTOOL_GLINKSETTINGS/ETHTOOL_SLINKSETTINGS API. Please करो NOT
+ * define any new SUPPORTED_* macro क्रम bits > 31.
  */
-#define SUPPORTED_10baseT_Half		__ETHTOOL_LINK_MODE_LEGACY_MASK(10baseT_Half)
-#define SUPPORTED_10baseT_Full		__ETHTOOL_LINK_MODE_LEGACY_MASK(10baseT_Full)
-#define SUPPORTED_100baseT_Half		__ETHTOOL_LINK_MODE_LEGACY_MASK(100baseT_Half)
-#define SUPPORTED_100baseT_Full		__ETHTOOL_LINK_MODE_LEGACY_MASK(100baseT_Full)
-#define SUPPORTED_1000baseT_Half	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseT_Half)
-#define SUPPORTED_1000baseT_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseT_Full)
-#define SUPPORTED_Autoneg		__ETHTOOL_LINK_MODE_LEGACY_MASK(Autoneg)
-#define SUPPORTED_TP			__ETHTOOL_LINK_MODE_LEGACY_MASK(TP)
-#define SUPPORTED_AUI			__ETHTOOL_LINK_MODE_LEGACY_MASK(AUI)
-#define SUPPORTED_MII			__ETHTOOL_LINK_MODE_LEGACY_MASK(MII)
-#define SUPPORTED_FIBRE			__ETHTOOL_LINK_MODE_LEGACY_MASK(FIBRE)
-#define SUPPORTED_BNC			__ETHTOOL_LINK_MODE_LEGACY_MASK(BNC)
-#define SUPPORTED_10000baseT_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseT_Full)
-#define SUPPORTED_Pause			__ETHTOOL_LINK_MODE_LEGACY_MASK(Pause)
-#define SUPPORTED_Asym_Pause		__ETHTOOL_LINK_MODE_LEGACY_MASK(Asym_Pause)
-#define SUPPORTED_2500baseX_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(2500baseX_Full)
-#define SUPPORTED_Backplane		__ETHTOOL_LINK_MODE_LEGACY_MASK(Backplane)
-#define SUPPORTED_1000baseKX_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseKX_Full)
-#define SUPPORTED_10000baseKX4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseKX4_Full)
-#define SUPPORTED_10000baseKR_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseKR_Full)
-#define SUPPORTED_10000baseR_FEC	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseR_FEC)
-#define SUPPORTED_20000baseMLD2_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(20000baseMLD2_Full)
-#define SUPPORTED_20000baseKR2_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(20000baseKR2_Full)
-#define SUPPORTED_40000baseKR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseKR4_Full)
-#define SUPPORTED_40000baseCR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseCR4_Full)
-#define SUPPORTED_40000baseSR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseSR4_Full)
-#define SUPPORTED_40000baseLR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseLR4_Full)
-#define SUPPORTED_56000baseKR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseKR4_Full)
-#define SUPPORTED_56000baseCR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseCR4_Full)
-#define SUPPORTED_56000baseSR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseSR4_Full)
-#define SUPPORTED_56000baseLR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseLR4_Full)
-/* Please do not define any new SUPPORTED_* macro for bits > 31, see
+#घोषणा SUPPORTED_10baseT_Half		__ETHTOOL_LINK_MODE_LEGACY_MASK(10baseT_Half)
+#घोषणा SUPPORTED_10baseT_Full		__ETHTOOL_LINK_MODE_LEGACY_MASK(10baseT_Full)
+#घोषणा SUPPORTED_100baseT_Half		__ETHTOOL_LINK_MODE_LEGACY_MASK(100baseT_Half)
+#घोषणा SUPPORTED_100baseT_Full		__ETHTOOL_LINK_MODE_LEGACY_MASK(100baseT_Full)
+#घोषणा SUPPORTED_1000baseT_Half	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseT_Half)
+#घोषणा SUPPORTED_1000baseT_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseT_Full)
+#घोषणा SUPPORTED_Autoneg		__ETHTOOL_LINK_MODE_LEGACY_MASK(Autoneg)
+#घोषणा SUPPORTED_TP			__ETHTOOL_LINK_MODE_LEGACY_MASK(TP)
+#घोषणा SUPPORTED_AUI			__ETHTOOL_LINK_MODE_LEGACY_MASK(AUI)
+#घोषणा SUPPORTED_MII			__ETHTOOL_LINK_MODE_LEGACY_MASK(MII)
+#घोषणा SUPPORTED_FIBRE			__ETHTOOL_LINK_MODE_LEGACY_MASK(FIBRE)
+#घोषणा SUPPORTED_BNC			__ETHTOOL_LINK_MODE_LEGACY_MASK(BNC)
+#घोषणा SUPPORTED_10000baseT_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseT_Full)
+#घोषणा SUPPORTED_Pause			__ETHTOOL_LINK_MODE_LEGACY_MASK(Pause)
+#घोषणा SUPPORTED_Asym_Pause		__ETHTOOL_LINK_MODE_LEGACY_MASK(Asym_Pause)
+#घोषणा SUPPORTED_2500baseX_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(2500baseX_Full)
+#घोषणा SUPPORTED_Backplane		__ETHTOOL_LINK_MODE_LEGACY_MASK(Backplane)
+#घोषणा SUPPORTED_1000baseKX_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseKX_Full)
+#घोषणा SUPPORTED_10000baseKX4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseKX4_Full)
+#घोषणा SUPPORTED_10000baseKR_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseKR_Full)
+#घोषणा SUPPORTED_10000baseR_FEC	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseR_FEC)
+#घोषणा SUPPORTED_20000baseMLD2_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(20000baseMLD2_Full)
+#घोषणा SUPPORTED_20000baseKR2_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(20000baseKR2_Full)
+#घोषणा SUPPORTED_40000baseKR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseKR4_Full)
+#घोषणा SUPPORTED_40000baseCR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseCR4_Full)
+#घोषणा SUPPORTED_40000baseSR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseSR4_Full)
+#घोषणा SUPPORTED_40000baseLR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseLR4_Full)
+#घोषणा SUPPORTED_56000baseKR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseKR4_Full)
+#घोषणा SUPPORTED_56000baseCR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseCR4_Full)
+#घोषणा SUPPORTED_56000baseSR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseSR4_Full)
+#घोषणा SUPPORTED_56000baseLR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseLR4_Full)
+/* Please करो not define any new SUPPORTED_* macro क्रम bits > 31, see
  * notice above.
  */
 
 /*
  * DEPRECATED macros. Please migrate to
- * ETHTOOL_GLINKSETTINGS/ETHTOOL_SLINKSETTINGS API. Please do NOT
- * define any new ADERTISE_* macro for bits > 31.
+ * ETHTOOL_GLINKSETTINGS/ETHTOOL_SLINKSETTINGS API. Please करो NOT
+ * define any new ADERTISE_* macro क्रम bits > 31.
  */
-#define ADVERTISED_10baseT_Half		__ETHTOOL_LINK_MODE_LEGACY_MASK(10baseT_Half)
-#define ADVERTISED_10baseT_Full		__ETHTOOL_LINK_MODE_LEGACY_MASK(10baseT_Full)
-#define ADVERTISED_100baseT_Half	__ETHTOOL_LINK_MODE_LEGACY_MASK(100baseT_Half)
-#define ADVERTISED_100baseT_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(100baseT_Full)
-#define ADVERTISED_1000baseT_Half	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseT_Half)
-#define ADVERTISED_1000baseT_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseT_Full)
-#define ADVERTISED_Autoneg		__ETHTOOL_LINK_MODE_LEGACY_MASK(Autoneg)
-#define ADVERTISED_TP			__ETHTOOL_LINK_MODE_LEGACY_MASK(TP)
-#define ADVERTISED_AUI			__ETHTOOL_LINK_MODE_LEGACY_MASK(AUI)
-#define ADVERTISED_MII			__ETHTOOL_LINK_MODE_LEGACY_MASK(MII)
-#define ADVERTISED_FIBRE		__ETHTOOL_LINK_MODE_LEGACY_MASK(FIBRE)
-#define ADVERTISED_BNC			__ETHTOOL_LINK_MODE_LEGACY_MASK(BNC)
-#define ADVERTISED_10000baseT_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseT_Full)
-#define ADVERTISED_Pause		__ETHTOOL_LINK_MODE_LEGACY_MASK(Pause)
-#define ADVERTISED_Asym_Pause		__ETHTOOL_LINK_MODE_LEGACY_MASK(Asym_Pause)
-#define ADVERTISED_2500baseX_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(2500baseX_Full)
-#define ADVERTISED_Backplane		__ETHTOOL_LINK_MODE_LEGACY_MASK(Backplane)
-#define ADVERTISED_1000baseKX_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseKX_Full)
-#define ADVERTISED_10000baseKX4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseKX4_Full)
-#define ADVERTISED_10000baseKR_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseKR_Full)
-#define ADVERTISED_10000baseR_FEC	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseR_FEC)
-#define ADVERTISED_20000baseMLD2_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(20000baseMLD2_Full)
-#define ADVERTISED_20000baseKR2_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(20000baseKR2_Full)
-#define ADVERTISED_40000baseKR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseKR4_Full)
-#define ADVERTISED_40000baseCR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseCR4_Full)
-#define ADVERTISED_40000baseSR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseSR4_Full)
-#define ADVERTISED_40000baseLR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseLR4_Full)
-#define ADVERTISED_56000baseKR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseKR4_Full)
-#define ADVERTISED_56000baseCR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseCR4_Full)
-#define ADVERTISED_56000baseSR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseSR4_Full)
-#define ADVERTISED_56000baseLR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseLR4_Full)
-/* Please do not define any new ADVERTISED_* macro for bits > 31, see
+#घोषणा ADVERTISED_10baseT_Half		__ETHTOOL_LINK_MODE_LEGACY_MASK(10baseT_Half)
+#घोषणा ADVERTISED_10baseT_Full		__ETHTOOL_LINK_MODE_LEGACY_MASK(10baseT_Full)
+#घोषणा ADVERTISED_100baseT_Half	__ETHTOOL_LINK_MODE_LEGACY_MASK(100baseT_Half)
+#घोषणा ADVERTISED_100baseT_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(100baseT_Full)
+#घोषणा ADVERTISED_1000baseT_Half	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseT_Half)
+#घोषणा ADVERTISED_1000baseT_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseT_Full)
+#घोषणा ADVERTISED_Autoneg		__ETHTOOL_LINK_MODE_LEGACY_MASK(Autoneg)
+#घोषणा ADVERTISED_TP			__ETHTOOL_LINK_MODE_LEGACY_MASK(TP)
+#घोषणा ADVERTISED_AUI			__ETHTOOL_LINK_MODE_LEGACY_MASK(AUI)
+#घोषणा ADVERTISED_MII			__ETHTOOL_LINK_MODE_LEGACY_MASK(MII)
+#घोषणा ADVERTISED_FIBRE		__ETHTOOL_LINK_MODE_LEGACY_MASK(FIBRE)
+#घोषणा ADVERTISED_BNC			__ETHTOOL_LINK_MODE_LEGACY_MASK(BNC)
+#घोषणा ADVERTISED_10000baseT_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseT_Full)
+#घोषणा ADVERTISED_Pause		__ETHTOOL_LINK_MODE_LEGACY_MASK(Pause)
+#घोषणा ADVERTISED_Asym_Pause		__ETHTOOL_LINK_MODE_LEGACY_MASK(Asym_Pause)
+#घोषणा ADVERTISED_2500baseX_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(2500baseX_Full)
+#घोषणा ADVERTISED_Backplane		__ETHTOOL_LINK_MODE_LEGACY_MASK(Backplane)
+#घोषणा ADVERTISED_1000baseKX_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(1000baseKX_Full)
+#घोषणा ADVERTISED_10000baseKX4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseKX4_Full)
+#घोषणा ADVERTISED_10000baseKR_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseKR_Full)
+#घोषणा ADVERTISED_10000baseR_FEC	__ETHTOOL_LINK_MODE_LEGACY_MASK(10000baseR_FEC)
+#घोषणा ADVERTISED_20000baseMLD2_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(20000baseMLD2_Full)
+#घोषणा ADVERTISED_20000baseKR2_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(20000baseKR2_Full)
+#घोषणा ADVERTISED_40000baseKR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseKR4_Full)
+#घोषणा ADVERTISED_40000baseCR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseCR4_Full)
+#घोषणा ADVERTISED_40000baseSR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseSR4_Full)
+#घोषणा ADVERTISED_40000baseLR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(40000baseLR4_Full)
+#घोषणा ADVERTISED_56000baseKR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseKR4_Full)
+#घोषणा ADVERTISED_56000baseCR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseCR4_Full)
+#घोषणा ADVERTISED_56000baseSR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseSR4_Full)
+#घोषणा ADVERTISED_56000baseLR4_Full	__ETHTOOL_LINK_MODE_LEGACY_MASK(56000baseLR4_Full)
+/* Please करो not define any new ADVERTISED_* macro क्रम bits > 31, see
  * notice above.
  */
 
-/* The following are all involved in forcing a particular link
- * mode for the device for setting things.  When getting the
+/* The following are all involved in क्रमcing a particular link
+ * mode क्रम the device क्रम setting things.  When getting the
  * devices settings, these indicate the current mode and whether
- * it was forced up into this mode or autonegotiated.
+ * it was क्रमced up पूर्णांकo this mode or स्वतःnegotiated.
  */
 
-/* The forced speed, in units of 1Mb. All values 0 to INT_MAX are legal.
+/* The क्रमced speed, in units of 1Mb. All values 0 to पूर्णांक_उच्च are legal.
  * Update drivers/net/phy/phy.c:phy_speed_to_str() and
  * drivers/net/bonding/bond_3ad.c:__get_link_speed() when adding new values.
  */
-#define SPEED_10		10
-#define SPEED_100		100
-#define SPEED_1000		1000
-#define SPEED_2500		2500
-#define SPEED_5000		5000
-#define SPEED_10000		10000
-#define SPEED_14000		14000
-#define SPEED_20000		20000
-#define SPEED_25000		25000
-#define SPEED_40000		40000
-#define SPEED_50000		50000
-#define SPEED_56000		56000
-#define SPEED_100000		100000
-#define SPEED_200000		200000
-#define SPEED_400000		400000
+#घोषणा SPEED_10		10
+#घोषणा SPEED_100		100
+#घोषणा SPEED_1000		1000
+#घोषणा SPEED_2500		2500
+#घोषणा SPEED_5000		5000
+#घोषणा SPEED_10000		10000
+#घोषणा SPEED_14000		14000
+#घोषणा SPEED_20000		20000
+#घोषणा SPEED_25000		25000
+#घोषणा SPEED_40000		40000
+#घोषणा SPEED_50000		50000
+#घोषणा SPEED_56000		56000
+#घोषणा SPEED_100000		100000
+#घोषणा SPEED_200000		200000
+#घोषणा SPEED_400000		400000
 
-#define SPEED_UNKNOWN		-1
+#घोषणा SPEED_UNKNOWN		-1
 
-static inline int ethtool_validate_speed(__u32 speed)
-{
-	return speed <= INT_MAX || speed == (__u32)SPEED_UNKNOWN;
-}
+अटल अंतरभूत पूर्णांक ethtool_validate_speed(__u32 speed)
+अणु
+	वापस speed <= पूर्णांक_उच्च || speed == (__u32)SPEED_UNKNOWN;
+पूर्ण
 
 /* Duplex, half or full. */
-#define DUPLEX_HALF		0x00
-#define DUPLEX_FULL		0x01
-#define DUPLEX_UNKNOWN		0xff
+#घोषणा DUPLEX_HALF		0x00
+#घोषणा DUPLEX_FULL		0x01
+#घोषणा DUPLEX_UNKNOWN		0xff
 
-static inline int ethtool_validate_duplex(__u8 duplex)
-{
-	switch (duplex) {
-	case DUPLEX_HALF:
-	case DUPLEX_FULL:
-	case DUPLEX_UNKNOWN:
-		return 1;
-	}
+अटल अंतरभूत पूर्णांक ethtool_validate_duplex(__u8 duplex)
+अणु
+	चयन (duplex) अणु
+	हाल DUPLEX_HALF:
+	हाल DUPLEX_FULL:
+	हाल DUPLEX_UNKNOWN:
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define MASTER_SLAVE_CFG_UNSUPPORTED		0
-#define MASTER_SLAVE_CFG_UNKNOWN		1
-#define MASTER_SLAVE_CFG_MASTER_PREFERRED	2
-#define MASTER_SLAVE_CFG_SLAVE_PREFERRED	3
-#define MASTER_SLAVE_CFG_MASTER_FORCE		4
-#define MASTER_SLAVE_CFG_SLAVE_FORCE		5
-#define MASTER_SLAVE_STATE_UNSUPPORTED		0
-#define MASTER_SLAVE_STATE_UNKNOWN		1
-#define MASTER_SLAVE_STATE_MASTER		2
-#define MASTER_SLAVE_STATE_SLAVE		3
-#define MASTER_SLAVE_STATE_ERR			4
+#घोषणा MASTER_SLAVE_CFG_UNSUPPORTED		0
+#घोषणा MASTER_SLAVE_CFG_UNKNOWN		1
+#घोषणा MASTER_SLAVE_CFG_MASTER_PREFERRED	2
+#घोषणा MASTER_SLAVE_CFG_SLAVE_PREFERRED	3
+#घोषणा MASTER_SLAVE_CFG_MASTER_FORCE		4
+#घोषणा MASTER_SLAVE_CFG_SLAVE_FORCE		5
+#घोषणा MASTER_SLAVE_STATE_UNSUPPORTED		0
+#घोषणा MASTER_SLAVE_STATE_UNKNOWN		1
+#घोषणा MASTER_SLAVE_STATE_MASTER		2
+#घोषणा MASTER_SLAVE_STATE_SLAVE		3
+#घोषणा MASTER_SLAVE_STATE_ERR			4
 
 /* Which connector port. */
-#define PORT_TP			0x00
-#define PORT_AUI		0x01
-#define PORT_MII		0x02
-#define PORT_FIBRE		0x03
-#define PORT_BNC		0x04
-#define PORT_DA			0x05
-#define PORT_NONE		0xef
-#define PORT_OTHER		0xff
+#घोषणा PORT_TP			0x00
+#घोषणा PORT_AUI		0x01
+#घोषणा PORT_MII		0x02
+#घोषणा PORT_FIBRE		0x03
+#घोषणा PORT_BNC		0x04
+#घोषणा PORT_DA			0x05
+#घोषणा PORT_NONE		0xef
+#घोषणा PORT_OTHER		0xff
 
 /* Which transceiver to use. */
-#define XCVR_INTERNAL		0x00 /* PHY and MAC are in the same package */
-#define XCVR_EXTERNAL		0x01 /* PHY and MAC are in different packages */
-#define XCVR_DUMMY1		0x02
-#define XCVR_DUMMY2		0x03
-#define XCVR_DUMMY3		0x04
+#घोषणा XCVR_INTERNAL		0x00 /* PHY and MAC are in the same package */
+#घोषणा XCVR_EXTERNAL		0x01 /* PHY and MAC are in dअगरferent packages */
+#घोषणा XCVR_DUMMY1		0x02
+#घोषणा XCVR_DUMMY2		0x03
+#घोषणा XCVR_DUMMY3		0x04
 
-/* Enable or disable autonegotiation. */
-#define AUTONEG_DISABLE		0x00
-#define AUTONEG_ENABLE		0x01
+/* Enable or disable स्वतःnegotiation. */
+#घोषणा AUTONEG_DISABLE		0x00
+#घोषणा AUTONEG_ENABLE		0x01
 
-/* MDI or MDI-X status/control - if MDI/MDI_X/AUTO is set then
+/* MDI or MDI-X status/control - अगर MDI/MDI_X/AUTO is set then
  * the driver is required to renegotiate link
  */
-#define ETH_TP_MDI_INVALID	0x00 /* status: unknown; control: unsupported */
-#define ETH_TP_MDI		0x01 /* status: MDI;     control: force MDI */
-#define ETH_TP_MDI_X		0x02 /* status: MDI-X;   control: force MDI-X */
-#define ETH_TP_MDI_AUTO		0x03 /*                  control: auto-select */
+#घोषणा ETH_TP_MDI_INVALID	0x00 /* status: unknown; control: unsupported */
+#घोषणा ETH_TP_MDI		0x01 /* status: MDI;     control: क्रमce MDI */
+#घोषणा ETH_TP_MDI_X		0x02 /* status: MDI-X;   control: क्रमce MDI-X */
+#घोषणा ETH_TP_MDI_AUTO		0x03 /*                  control: स्वतः-select */
 
 /* Wake-On-Lan options. */
-#define WAKE_PHY		(1 << 0)
-#define WAKE_UCAST		(1 << 1)
-#define WAKE_MCAST		(1 << 2)
-#define WAKE_BCAST		(1 << 3)
-#define WAKE_ARP		(1 << 4)
-#define WAKE_MAGIC		(1 << 5)
-#define WAKE_MAGICSECURE	(1 << 6) /* only meaningful if WAKE_MAGIC */
-#define WAKE_FILTER		(1 << 7)
+#घोषणा WAKE_PHY		(1 << 0)
+#घोषणा WAKE_UCAST		(1 << 1)
+#घोषणा WAKE_MCAST		(1 << 2)
+#घोषणा WAKE_BCAST		(1 << 3)
+#घोषणा WAKE_ARP		(1 << 4)
+#घोषणा WAKE_MAGIC		(1 << 5)
+#घोषणा WAKE_MAGICSECURE	(1 << 6) /* only meaningful अगर WAKE_MAGIC */
+#घोषणा WAKE_FILTER		(1 << 7)
 
-#define WOL_MODE_COUNT		8
+#घोषणा WOL_MODE_COUNT		8
 
 /* L2-L4 network traffic flow types */
-#define	TCP_V4_FLOW	0x01	/* hash or spec (tcp_ip4_spec) */
-#define	UDP_V4_FLOW	0x02	/* hash or spec (udp_ip4_spec) */
-#define	SCTP_V4_FLOW	0x03	/* hash or spec (sctp_ip4_spec) */
-#define	AH_ESP_V4_FLOW	0x04	/* hash only */
-#define	TCP_V6_FLOW	0x05	/* hash or spec (tcp_ip6_spec; nfc only) */
-#define	UDP_V6_FLOW	0x06	/* hash or spec (udp_ip6_spec; nfc only) */
-#define	SCTP_V6_FLOW	0x07	/* hash or spec (sctp_ip6_spec; nfc only) */
-#define	AH_ESP_V6_FLOW	0x08	/* hash only */
-#define	AH_V4_FLOW	0x09	/* hash or spec (ah_ip4_spec) */
-#define	ESP_V4_FLOW	0x0a	/* hash or spec (esp_ip4_spec) */
-#define	AH_V6_FLOW	0x0b	/* hash or spec (ah_ip6_spec; nfc only) */
-#define	ESP_V6_FLOW	0x0c	/* hash or spec (esp_ip6_spec; nfc only) */
-#define	IPV4_USER_FLOW	0x0d	/* spec only (usr_ip4_spec) */
-#define	IP_USER_FLOW	IPV4_USER_FLOW
-#define	IPV6_USER_FLOW	0x0e	/* spec only (usr_ip6_spec; nfc only) */
-#define	IPV4_FLOW	0x10	/* hash only */
-#define	IPV6_FLOW	0x11	/* hash only */
-#define	ETHER_FLOW	0x12	/* spec only (ether_spec) */
-/* Flag to enable additional fields in struct ethtool_rx_flow_spec */
-#define	FLOW_EXT	0x80000000
-#define	FLOW_MAC_EXT	0x40000000
-/* Flag to enable RSS spreading of traffic matching rule (nfc only) */
-#define	FLOW_RSS	0x20000000
+#घोषणा	TCP_V4_FLOW	0x01	/* hash or spec (tcp_ip4_spec) */
+#घोषणा	UDP_V4_FLOW	0x02	/* hash or spec (udp_ip4_spec) */
+#घोषणा	SCTP_V4_FLOW	0x03	/* hash or spec (sctp_ip4_spec) */
+#घोषणा	AH_ESP_V4_FLOW	0x04	/* hash only */
+#घोषणा	TCP_V6_FLOW	0x05	/* hash or spec (tcp_ip6_spec; nfc only) */
+#घोषणा	UDP_V6_FLOW	0x06	/* hash or spec (udp_ip6_spec; nfc only) */
+#घोषणा	SCTP_V6_FLOW	0x07	/* hash or spec (sctp_ip6_spec; nfc only) */
+#घोषणा	AH_ESP_V6_FLOW	0x08	/* hash only */
+#घोषणा	AH_V4_FLOW	0x09	/* hash or spec (ah_ip4_spec) */
+#घोषणा	ESP_V4_FLOW	0x0a	/* hash or spec (esp_ip4_spec) */
+#घोषणा	AH_V6_FLOW	0x0b	/* hash or spec (ah_ip6_spec; nfc only) */
+#घोषणा	ESP_V6_FLOW	0x0c	/* hash or spec (esp_ip6_spec; nfc only) */
+#घोषणा	IPV4_USER_FLOW	0x0d	/* spec only (usr_ip4_spec) */
+#घोषणा	IP_USER_FLOW	IPV4_USER_FLOW
+#घोषणा	IPV6_USER_FLOW	0x0e	/* spec only (usr_ip6_spec; nfc only) */
+#घोषणा	IPV4_FLOW	0x10	/* hash only */
+#घोषणा	IPV6_FLOW	0x11	/* hash only */
+#घोषणा	ETHER_FLOW	0x12	/* spec only (ether_spec) */
+/* Flag to enable additional fields in काष्ठा ethtool_rx_flow_spec */
+#घोषणा	FLOW_EXT	0x80000000
+#घोषणा	FLOW_MAC_EXT	0x40000000
+/* Flag to enable RSS spपढ़ोing of traffic matching rule (nfc only) */
+#घोषणा	FLOW_RSS	0x20000000
 
 /* L3-L4 network traffic flow hash options */
-#define	RXH_L2DA	(1 << 1)
-#define	RXH_VLAN	(1 << 2)
-#define	RXH_L3_PROTO	(1 << 3)
-#define	RXH_IP_SRC	(1 << 4)
-#define	RXH_IP_DST	(1 << 5)
-#define	RXH_L4_B_0_1	(1 << 6) /* src port in case of TCP/UDP/SCTP */
-#define	RXH_L4_B_2_3	(1 << 7) /* dst port in case of TCP/UDP/SCTP */
-#define	RXH_DISCARD	(1 << 31)
+#घोषणा	RXH_L2DA	(1 << 1)
+#घोषणा	RXH_VLAN	(1 << 2)
+#घोषणा	RXH_L3_PROTO	(1 << 3)
+#घोषणा	RXH_IP_SRC	(1 << 4)
+#घोषणा	RXH_IP_DST	(1 << 5)
+#घोषणा	RXH_L4_B_0_1	(1 << 6) /* src port in हाल of TCP/UDP/SCTP */
+#घोषणा	RXH_L4_B_2_3	(1 << 7) /* dst port in हाल of TCP/UDP/SCTP */
+#घोषणा	RXH_DISCARD	(1 << 31)
 
-#define	RX_CLS_FLOW_DISC	0xffffffffffffffffULL
-#define RX_CLS_FLOW_WAKE	0xfffffffffffffffeULL
+#घोषणा	RX_CLS_FLOW_DISC	0xffffffffffffffffULL
+#घोषणा RX_CLS_FLOW_WAKE	0xfffffffffffffffeULL
 
-/* Special RX classification rule insert location values */
-#define RX_CLS_LOC_SPECIAL	0x80000000	/* flag */
-#define RX_CLS_LOC_ANY		0xffffffff
-#define RX_CLS_LOC_FIRST	0xfffffffe
-#define RX_CLS_LOC_LAST		0xfffffffd
+/* Special RX classअगरication rule insert location values */
+#घोषणा RX_CLS_LOC_SPECIAL	0x80000000	/* flag */
+#घोषणा RX_CLS_LOC_ANY		0xffffffff
+#घोषणा RX_CLS_LOC_FIRST	0xfffffffe
+#घोषणा RX_CLS_LOC_LAST		0xfffffffd
 
-/* EEPROM Standards for plug in modules */
-#define ETH_MODULE_SFF_8079		0x1
-#define ETH_MODULE_SFF_8079_LEN		256
-#define ETH_MODULE_SFF_8472		0x2
-#define ETH_MODULE_SFF_8472_LEN		512
-#define ETH_MODULE_SFF_8636		0x3
-#define ETH_MODULE_SFF_8636_LEN		256
-#define ETH_MODULE_SFF_8436		0x4
-#define ETH_MODULE_SFF_8436_LEN		256
+/* EEPROM Standards क्रम plug in modules */
+#घोषणा ETH_MODULE_SFF_8079		0x1
+#घोषणा ETH_MODULE_SFF_8079_LEN		256
+#घोषणा ETH_MODULE_SFF_8472		0x2
+#घोषणा ETH_MODULE_SFF_8472_LEN		512
+#घोषणा ETH_MODULE_SFF_8636		0x3
+#घोषणा ETH_MODULE_SFF_8636_LEN		256
+#घोषणा ETH_MODULE_SFF_8436		0x4
+#घोषणा ETH_MODULE_SFF_8436_LEN		256
 
-#define ETH_MODULE_SFF_8636_MAX_LEN     640
-#define ETH_MODULE_SFF_8436_MAX_LEN     640
+#घोषणा ETH_MODULE_SFF_8636_MAX_LEN     640
+#घोषणा ETH_MODULE_SFF_8436_MAX_LEN     640
 
 /* Reset flags */
-/* The reset() operation must clear the flags for the components which
- * were actually reset.  On successful return, the flags indicate the
- * components which were not reset, either because they do not exist
+/* The reset() operation must clear the flags क्रम the components which
+ * were actually reset.  On successful वापस, the flags indicate the
+ * components which were not reset, either because they करो not exist
  * in the hardware or because they cannot be reset independently.  The
  * driver must never reset any components that were not requested.
  */
-enum ethtool_reset_flags {
-	/* These flags represent components dedicated to the interface
-	 * the command is addressed to.  Shift any flag left by
+क्रमागत ethtool_reset_flags अणु
+	/* These flags represent components dedicated to the पूर्णांकerface
+	 * the command is addressed to.  Shअगरt any flag left by
 	 * ETH_RESET_SHARED_SHIFT to reset a shared component of the
 	 * same type.
 	 */
@@ -1930,121 +1931,121 @@ enum ethtool_reset_flags {
 	ETH_RESET_AP		= 1 << 8,	/* Application processor */
 
 	ETH_RESET_DEDICATED	= 0x0000ffff,	/* All components dedicated to
-						 * this interface */
+						 * this पूर्णांकerface */
 	ETH_RESET_ALL		= 0xffffffff,	/* All components used by this
-						 * interface, even if shared */
-};
-#define ETH_RESET_SHARED_SHIFT	16
+						 * पूर्णांकerface, even अगर shared */
+पूर्ण;
+#घोषणा ETH_RESET_SHARED_SHIFT	16
 
 
 /**
- * struct ethtool_link_settings - link control and status
+ * काष्ठा ethtool_link_settings - link control and status
  *
  * IMPORTANT, Backward compatibility notice: When implementing new
  *	user-space tools, please first try %ETHTOOL_GLINKSETTINGS, and
- *	if it succeeds use %ETHTOOL_SLINKSETTINGS to change link
- *	settings; do not use %ETHTOOL_SSET if %ETHTOOL_GLINKSETTINGS
+ *	अगर it succeeds use %ETHTOOL_SLINKSETTINGS to change link
+ *	settings; करो not use %ETHTOOL_SSET अगर %ETHTOOL_GLINKSETTINGS
  *	succeeded: stick to %ETHTOOL_GLINKSETTINGS/%SLINKSETTINGS in
- *	that case.  Conversely, if %ETHTOOL_GLINKSETTINGS fails, use
+ *	that हाल.  Conversely, अगर %ETHTOOL_GLINKSETTINGS fails, use
  *	%ETHTOOL_GSET to query and %ETHTOOL_SSET to change link
- *	settings; do not use %ETHTOOL_SLINKSETTINGS if
+ *	settings; करो not use %ETHTOOL_SLINKSETTINGS अगर
  *	%ETHTOOL_GLINKSETTINGS failed: stick to
- *	%ETHTOOL_GSET/%ETHTOOL_SSET in that case.
+ *	%ETHTOOL_GSET/%ETHTOOL_SSET in that हाल.
  *
  * @cmd: Command number = %ETHTOOL_GLINKSETTINGS or %ETHTOOL_SLINKSETTINGS
  * @speed: Link speed (Mbps)
  * @duplex: Duplex mode; one of %DUPLEX_*
  * @port: Physical connector type; one of %PORT_*
- * @phy_address: MDIO address of PHY (transceiver); 0 or 255 if not
+ * @phy_address: MDIO address of PHY (transceiver); 0 or 255 अगर not
  *	applicable.  For clause 45 PHYs this is the PRTAD.
- * @autoneg: Enable/disable autonegotiation and auto-detection;
+ * @स्वतःneg: Enable/disable स्वतःnegotiation and स्वतः-detection;
  *	either %AUTONEG_DISABLE or %AUTONEG_ENABLE
- * @mdio_support: Bitmask of %ETH_MDIO_SUPPORTS_* flags for the MDIO
- *	protocols supported by the interface; 0 if unknown.
+ * @mdio_support: Biपंचांगask of %ETH_MDIO_SUPPORTS_* flags क्रम the MDIO
+ *	protocols supported by the पूर्णांकerface; 0 अगर unknown.
  *	Read-only.
  * @eth_tp_mdix: Ethernet twisted-pair MDI(-X) status; one of
  *	%ETH_TP_MDI_*.  If the status is unknown or not applicable, the
  *	value will be %ETH_TP_MDI_INVALID.  Read-only.
  * @eth_tp_mdix_ctrl: Ethernet twisted pair MDI(-X) control; one of
- *	%ETH_TP_MDI_*.  If MDI(-X) control is not implemented, reads
- *	yield %ETH_TP_MDI_INVALID and writes may be ignored or rejected.
- *	When written successfully, the link should be renegotiated if
+ *	%ETH_TP_MDI_*.  If MDI(-X) control is not implemented, पढ़ोs
+ *	yield %ETH_TP_MDI_INVALID and ग_लिखोs may be ignored or rejected.
+ *	When written successfully, the link should be renegotiated अगर
  *	necessary.
- * @link_mode_masks_nwords: Number of 32-bit words for each of the
- *	supported, advertising, lp_advertising link mode bitmaps. For
+ * @link_mode_masks_nwords: Number of 32-bit words क्रम each of the
+ *	supported, advertising, lp_advertising link mode biपंचांगaps. For
  *	%ETHTOOL_GLINKSETTINGS: on entry, number of words passed by user
- *	(>= 0); on return, if handshake in progress, negative if
- *	request size unsupported by kernel: absolute value indicates
+ *	(>= 0); on वापस, अगर handshake in progress, negative अगर
+ *	request size unsupported by kernel: असलolute value indicates
  *	kernel expected size and all the other fields but cmd
  *	are 0; otherwise (handshake completed), strictly positive
  *	to indicate size used by kernel and cmd field stays
  *	%ETHTOOL_GLINKSETTINGS, all other fields populated by driver. For
  *	%ETHTOOL_SLINKSETTINGS: must be valid on entry, ie. a positive
- *	value returned previously by %ETHTOOL_GLINKSETTINGS, otherwise
+ *	value वापसed previously by %ETHTOOL_GLINKSETTINGS, otherwise
  *	refused. For drivers: ignore this field (use kernel's
  *	__ETHTOOL_LINK_MODE_MASK_NBITS instead), any change to it will
  *	be overwritten by kernel.
- * @supported: Bitmap with each bit meaning given by
- *	%ethtool_link_mode_bit_indices for the link modes, physical
- *	connectors and other link features for which the interface
- *	supports autonegotiation or auto-detection.  Read-only.
- * @advertising: Bitmap with each bit meaning given by
- *	%ethtool_link_mode_bit_indices for the link modes, physical
+ * @supported: Biपंचांगap with each bit meaning given by
+ *	%ethtool_link_mode_bit_indices क्रम the link modes, physical
+ *	connectors and other link features क्रम which the पूर्णांकerface
+ *	supports स्वतःnegotiation or स्वतः-detection.  Read-only.
+ * @advertising: Biपंचांगap with each bit meaning given by
+ *	%ethtool_link_mode_bit_indices क्रम the link modes, physical
  *	connectors and other link features that are advertised through
- *	autonegotiation or enabled for auto-detection.
- * @lp_advertising: Bitmap with each bit meaning given by
- *	%ethtool_link_mode_bit_indices for the link modes, and other
+ *	स्वतःnegotiation or enabled क्रम स्वतः-detection.
+ * @lp_advertising: Biपंचांगap with each bit meaning given by
+ *	%ethtool_link_mode_bit_indices क्रम the link modes, and other
  *	link features that the link partner advertised through
- *	autonegotiation; 0 if unknown or not applicable.  Read-only.
- * @transceiver: Used to distinguish different possible PHY types,
+ *	स्वतःnegotiation; 0 अगर unknown or not applicable.  Read-only.
+ * @transceiver: Used to distinguish dअगरferent possible PHY types,
  *	reported consistently by PHYLIB.  Read-only.
  * @master_slave_cfg: Master/slave port mode.
  * @master_slave_state: Master/slave port state.
- * @reserved: Reserved for future use; see the note on reserved space.
- * @reserved1: Reserved for future use; see the note on reserved space.
- * @link_mode_masks: Variable length bitmaps.
+ * @reserved: Reserved क्रम future use; see the note on reserved space.
+ * @reserved1: Reserved क्रम future use; see the note on reserved space.
+ * @link_mode_masks: Variable length biपंचांगaps.
  *
- * If autonegotiation is disabled, the speed and @duplex represent the
- * fixed link mode and are writable if the driver supports multiple
- * link modes.  If it is enabled then they are read-only; if the link
- * is up they represent the negotiated link mode; if the link is down,
+ * If स्वतःnegotiation is disabled, the speed and @duplex represent the
+ * fixed link mode and are writable अगर the driver supports multiple
+ * link modes.  If it is enabled then they are पढ़ो-only; अगर the link
+ * is up they represent the negotiated link mode; अगर the link is करोwn,
  * the speed is 0, %SPEED_UNKNOWN or the highest enabled speed and
  * @duplex is %DUPLEX_UNKNOWN or the best enabled duplex mode.
  *
- * Some hardware interfaces may have multiple PHYs and/or physical
- * connectors fitted or do not allow the driver to detect which are
- * fitted.  For these interfaces @port and/or @phy_address may be
- * writable, possibly dependent on @autoneg being %AUTONEG_DISABLE.
- * Otherwise, attempts to write different values may be ignored or
+ * Some hardware पूर्णांकerfaces may have multiple PHYs and/or physical
+ * connectors fitted or करो not allow the driver to detect which are
+ * fitted.  For these पूर्णांकerfaces @port and/or @phy_address may be
+ * writable, possibly dependent on @स्वतःneg being %AUTONEG_DISABLE.
+ * Otherwise, attempts to ग_लिखो dअगरferent values may be ignored or
  * rejected.
  *
  * Deprecated %ethtool_cmd fields transceiver, maxtxpkt and maxrxpkt
  * are not available in %ethtool_link_settings. These fields will be
  * always set to zero in %ETHTOOL_GSET reply and %ETHTOOL_SSET will
- * fail if any of them is set to non-zero value.
+ * fail अगर any of them is set to non-zero value.
  *
- * Users should assume that all fields not marked read-only are
+ * Users should assume that all fields not marked पढ़ो-only are
  * writable and subject to validation by the driver.  They should use
- * %ETHTOOL_GLINKSETTINGS to get the current values before making specific
+ * %ETHTOOL_GLINKSETTINGS to get the current values beक्रमe making specअगरic
  * changes and then applying them with %ETHTOOL_SLINKSETTINGS.
  *
  * Drivers that implement %get_link_ksettings and/or
  * %set_link_ksettings should ignore the @cmd
  * and @link_mode_masks_nwords fields (any change to them overwritten
- * by kernel), and rely only on kernel's internal
+ * by kernel), and rely only on kernel's पूर्णांकernal
  * %__ETHTOOL_LINK_MODE_MASK_NBITS and
  * %ethtool_link_mode_mask_t. Drivers that implement
  * %set_link_ksettings() should validate all fields other than @cmd
- * and @link_mode_masks_nwords that are not described as read-only or
- * deprecated, and must ignore all fields described as read-only.
+ * and @link_mode_masks_nwords that are not described as पढ़ो-only or
+ * deprecated, and must ignore all fields described as पढ़ो-only.
  */
-struct ethtool_link_settings {
+काष्ठा ethtool_link_settings अणु
 	__u32	cmd;
 	__u32	speed;
 	__u8	duplex;
 	__u8	port;
 	__u8	phy_address;
-	__u8	autoneg;
+	__u8	स्वतःneg;
 	__u8	mdio_support;
 	__u8	eth_tp_mdix;
 	__u8	eth_tp_mdix_ctrl;
@@ -2060,5 +2061,5 @@ struct ethtool_link_settings {
 	 * __u32 map_advertising[link_mode_masks_nwords];
 	 * __u32 map_lp_advertising[link_mode_masks_nwords];
 	 */
-};
-#endif /* _UAPI_LINUX_ETHTOOL_H */
+पूर्ण;
+#पूर्ण_अगर /* _UAPI_LINUX_ETHTOOL_H */

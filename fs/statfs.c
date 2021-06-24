@@ -1,406 +1,407 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/syscalls.h>
-#include <linux/export.h>
-#include <linux/fs.h>
-#include <linux/file.h>
-#include <linux/mount.h>
-#include <linux/namei.h>
-#include <linux/statfs.h>
-#include <linux/security.h>
-#include <linux/uaccess.h>
-#include <linux/compat.h>
-#include "internal.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/syscalls.h>
+#समावेश <linux/export.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/file.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/statfs.h>
+#समावेश <linux/security.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/compat.h>
+#समावेश "internal.h"
 
-static int flags_by_mnt(int mnt_flags)
-{
-	int flags = 0;
+अटल पूर्णांक flags_by_mnt(पूर्णांक mnt_flags)
+अणु
+	पूर्णांक flags = 0;
 
-	if (mnt_flags & MNT_READONLY)
+	अगर (mnt_flags & MNT_READONLY)
 		flags |= ST_RDONLY;
-	if (mnt_flags & MNT_NOSUID)
+	अगर (mnt_flags & MNT_NOSUID)
 		flags |= ST_NOSUID;
-	if (mnt_flags & MNT_NODEV)
+	अगर (mnt_flags & MNT_NODEV)
 		flags |= ST_NODEV;
-	if (mnt_flags & MNT_NOEXEC)
+	अगर (mnt_flags & MNT_NOEXEC)
 		flags |= ST_NOEXEC;
-	if (mnt_flags & MNT_NOATIME)
+	अगर (mnt_flags & MNT_NOATIME)
 		flags |= ST_NOATIME;
-	if (mnt_flags & MNT_NODIRATIME)
-		flags |= ST_NODIRATIME;
-	if (mnt_flags & MNT_RELATIME)
+	अगर (mnt_flags & MNT_NOसूचीATIME)
+		flags |= ST_NOसूचीATIME;
+	अगर (mnt_flags & MNT_RELATIME)
 		flags |= ST_RELATIME;
-	if (mnt_flags & MNT_NOSYMFOLLOW)
+	अगर (mnt_flags & MNT_NOSYMFOLLOW)
 		flags |= ST_NOSYMFOLLOW;
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static int flags_by_sb(int s_flags)
-{
-	int flags = 0;
-	if (s_flags & SB_SYNCHRONOUS)
+अटल पूर्णांक flags_by_sb(पूर्णांक s_flags)
+अणु
+	पूर्णांक flags = 0;
+	अगर (s_flags & SB_SYNCHRONOUS)
 		flags |= ST_SYNCHRONOUS;
-	if (s_flags & SB_MANDLOCK)
+	अगर (s_flags & SB_MANDLOCK)
 		flags |= ST_MANDLOCK;
-	if (s_flags & SB_RDONLY)
+	अगर (s_flags & SB_RDONLY)
 		flags |= ST_RDONLY;
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static int calculate_f_flags(struct vfsmount *mnt)
-{
-	return ST_VALID | flags_by_mnt(mnt->mnt_flags) |
+अटल पूर्णांक calculate_f_flags(काष्ठा vfsmount *mnt)
+अणु
+	वापस ST_VALID | flags_by_mnt(mnt->mnt_flags) |
 		flags_by_sb(mnt->mnt_sb->s_flags);
-}
+पूर्ण
 
-static int statfs_by_dentry(struct dentry *dentry, struct kstatfs *buf)
-{
-	int retval;
+अटल पूर्णांक statfs_by_dentry(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
+अणु
+	पूर्णांक retval;
 
-	if (!dentry->d_sb->s_op->statfs)
-		return -ENOSYS;
+	अगर (!dentry->d_sb->s_op->statfs)
+		वापस -ENOSYS;
 
-	memset(buf, 0, sizeof(*buf));
+	स_रखो(buf, 0, माप(*buf));
 	retval = security_sb_statfs(dentry);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 	retval = dentry->d_sb->s_op->statfs(dentry, buf);
-	if (retval == 0 && buf->f_frsize == 0)
+	अगर (retval == 0 && buf->f_frsize == 0)
 		buf->f_frsize = buf->f_bsize;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-int vfs_get_fsid(struct dentry *dentry, __kernel_fsid_t *fsid)
-{
-	struct kstatfs st;
-	int error;
+पूर्णांक vfs_get_fsid(काष्ठा dentry *dentry, __kernel_fsid_t *fsid)
+अणु
+	काष्ठा kstatfs st;
+	पूर्णांक error;
 
 	error = statfs_by_dentry(dentry, &st);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	*fsid = st.f_fsid;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vfs_get_fsid);
 
-int vfs_statfs(const struct path *path, struct kstatfs *buf)
-{
-	int error;
+पूर्णांक vfs_statfs(स्थिर काष्ठा path *path, काष्ठा kstatfs *buf)
+अणु
+	पूर्णांक error;
 
 	error = statfs_by_dentry(path->dentry, buf);
-	if (!error)
+	अगर (!error)
 		buf->f_flags = calculate_f_flags(path->mnt);
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL(vfs_statfs);
 
-int user_statfs(const char __user *pathname, struct kstatfs *st)
-{
-	struct path path;
-	int error;
-	unsigned int lookup_flags = LOOKUP_FOLLOW|LOOKUP_AUTOMOUNT;
+पूर्णांक user_statfs(स्थिर अक्षर __user *pathname, काष्ठा kstatfs *st)
+अणु
+	काष्ठा path path;
+	पूर्णांक error;
+	अचिन्हित पूर्णांक lookup_flags = LOOKUP_FOLLOW|LOOKUP_AUTOMOUNT;
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
-	if (!error) {
+	अगर (!error) अणु
 		error = vfs_statfs(&path, st);
 		path_put(&path);
-		if (retry_estale(error, lookup_flags)) {
+		अगर (retry_estale(error, lookup_flags)) अणु
 			lookup_flags |= LOOKUP_REVAL;
-			goto retry;
-		}
-	}
-	return error;
-}
+			जाओ retry;
+		पूर्ण
+	पूर्ण
+	वापस error;
+पूर्ण
 
-int fd_statfs(int fd, struct kstatfs *st)
-{
-	struct fd f = fdget_raw(fd);
-	int error = -EBADF;
-	if (f.file) {
+पूर्णांक fd_statfs(पूर्णांक fd, काष्ठा kstatfs *st)
+अणु
+	काष्ठा fd f = fdget_raw(fd);
+	पूर्णांक error = -EBADF;
+	अगर (f.file) अणु
 		error = vfs_statfs(&f.file->f_path, st);
 		fdput(f);
-	}
-	return error;
-}
+	पूर्ण
+	वापस error;
+पूर्ण
 
-static int do_statfs_native(struct kstatfs *st, struct statfs __user *p)
-{
-	struct statfs buf;
+अटल पूर्णांक करो_statfs_native(काष्ठा kstatfs *st, काष्ठा statfs __user *p)
+अणु
+	काष्ठा statfs buf;
 
-	if (sizeof(buf) == sizeof(*st))
-		memcpy(&buf, st, sizeof(*st));
-	else {
-		if (sizeof buf.f_blocks == 4) {
-			if ((st->f_blocks | st->f_bfree | st->f_bavail |
+	अगर (माप(buf) == माप(*st))
+		स_नकल(&buf, st, माप(*st));
+	अन्यथा अणु
+		अगर (माप buf.f_blocks == 4) अणु
+			अगर ((st->f_blocks | st->f_bमुक्त | st->f_bavail |
 			     st->f_bsize | st->f_frsize) &
 			    0xffffffff00000000ULL)
-				return -EOVERFLOW;
+				वापस -EOVERFLOW;
 			/*
-			 * f_files and f_ffree may be -1; it's okay to stuff
-			 * that into 32 bits
+			 * f_files and f_fमुक्त may be -1; it's okay to stuff
+			 * that पूर्णांकo 32 bits
 			 */
-			if (st->f_files != -1 &&
+			अगर (st->f_files != -1 &&
 			    (st->f_files & 0xffffffff00000000ULL))
-				return -EOVERFLOW;
-			if (st->f_ffree != -1 &&
-			    (st->f_ffree & 0xffffffff00000000ULL))
-				return -EOVERFLOW;
-		}
+				वापस -EOVERFLOW;
+			अगर (st->f_fमुक्त != -1 &&
+			    (st->f_fमुक्त & 0xffffffff00000000ULL))
+				वापस -EOVERFLOW;
+		पूर्ण
 
 		buf.f_type = st->f_type;
 		buf.f_bsize = st->f_bsize;
 		buf.f_blocks = st->f_blocks;
-		buf.f_bfree = st->f_bfree;
+		buf.f_bमुक्त = st->f_bमुक्त;
 		buf.f_bavail = st->f_bavail;
 		buf.f_files = st->f_files;
-		buf.f_ffree = st->f_ffree;
+		buf.f_fमुक्त = st->f_fमुक्त;
 		buf.f_fsid = st->f_fsid;
 		buf.f_namelen = st->f_namelen;
 		buf.f_frsize = st->f_frsize;
 		buf.f_flags = st->f_flags;
-		memset(buf.f_spare, 0, sizeof(buf.f_spare));
-	}
-	if (copy_to_user(p, &buf, sizeof(buf)))
-		return -EFAULT;
-	return 0;
-}
+		स_रखो(buf.f_spare, 0, माप(buf.f_spare));
+	पूर्ण
+	अगर (copy_to_user(p, &buf, माप(buf)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int do_statfs64(struct kstatfs *st, struct statfs64 __user *p)
-{
-	struct statfs64 buf;
-	if (sizeof(buf) == sizeof(*st))
-		memcpy(&buf, st, sizeof(*st));
-	else {
+अटल पूर्णांक करो_statfs64(काष्ठा kstatfs *st, काष्ठा statfs64 __user *p)
+अणु
+	काष्ठा statfs64 buf;
+	अगर (माप(buf) == माप(*st))
+		स_नकल(&buf, st, माप(*st));
+	अन्यथा अणु
 		buf.f_type = st->f_type;
 		buf.f_bsize = st->f_bsize;
 		buf.f_blocks = st->f_blocks;
-		buf.f_bfree = st->f_bfree;
+		buf.f_bमुक्त = st->f_bमुक्त;
 		buf.f_bavail = st->f_bavail;
 		buf.f_files = st->f_files;
-		buf.f_ffree = st->f_ffree;
+		buf.f_fमुक्त = st->f_fमुक्त;
 		buf.f_fsid = st->f_fsid;
 		buf.f_namelen = st->f_namelen;
 		buf.f_frsize = st->f_frsize;
 		buf.f_flags = st->f_flags;
-		memset(buf.f_spare, 0, sizeof(buf.f_spare));
-	}
-	if (copy_to_user(p, &buf, sizeof(buf)))
-		return -EFAULT;
-	return 0;
-}
+		स_रखो(buf.f_spare, 0, माप(buf.f_spare));
+	पूर्ण
+	अगर (copy_to_user(p, &buf, माप(buf)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-SYSCALL_DEFINE2(statfs, const char __user *, pathname, struct statfs __user *, buf)
-{
-	struct kstatfs st;
-	int error = user_statfs(pathname, &st);
-	if (!error)
-		error = do_statfs_native(&st, buf);
-	return error;
-}
+SYSCALL_DEFINE2(statfs, स्थिर अक्षर __user *, pathname, काष्ठा statfs __user *, buf)
+अणु
+	काष्ठा kstatfs st;
+	पूर्णांक error = user_statfs(pathname, &st);
+	अगर (!error)
+		error = करो_statfs_native(&st, buf);
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE3(statfs64, const char __user *, pathname, size_t, sz, struct statfs64 __user *, buf)
-{
-	struct kstatfs st;
-	int error;
-	if (sz != sizeof(*buf))
-		return -EINVAL;
+SYSCALL_DEFINE3(statfs64, स्थिर अक्षर __user *, pathname, माप_प्रकार, sz, काष्ठा statfs64 __user *, buf)
+अणु
+	काष्ठा kstatfs st;
+	पूर्णांक error;
+	अगर (sz != माप(*buf))
+		वापस -EINVAL;
 	error = user_statfs(pathname, &st);
-	if (!error)
-		error = do_statfs64(&st, buf);
-	return error;
-}
+	अगर (!error)
+		error = करो_statfs64(&st, buf);
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE2(fstatfs, unsigned int, fd, struct statfs __user *, buf)
-{
-	struct kstatfs st;
-	int error = fd_statfs(fd, &st);
-	if (!error)
-		error = do_statfs_native(&st, buf);
-	return error;
-}
+SYSCALL_DEFINE2(ख_स्थितिfs, अचिन्हित पूर्णांक, fd, काष्ठा statfs __user *, buf)
+अणु
+	काष्ठा kstatfs st;
+	पूर्णांक error = fd_statfs(fd, &st);
+	अगर (!error)
+		error = करो_statfs_native(&st, buf);
+	वापस error;
+पूर्ण
 
-SYSCALL_DEFINE3(fstatfs64, unsigned int, fd, size_t, sz, struct statfs64 __user *, buf)
-{
-	struct kstatfs st;
-	int error;
+SYSCALL_DEFINE3(ख_स्थितिfs64, अचिन्हित पूर्णांक, fd, माप_प्रकार, sz, काष्ठा statfs64 __user *, buf)
+अणु
+	काष्ठा kstatfs st;
+	पूर्णांक error;
 
-	if (sz != sizeof(*buf))
-		return -EINVAL;
+	अगर (sz != माप(*buf))
+		वापस -EINVAL;
 
 	error = fd_statfs(fd, &st);
-	if (!error)
-		error = do_statfs64(&st, buf);
-	return error;
-}
+	अगर (!error)
+		error = करो_statfs64(&st, buf);
+	वापस error;
+पूर्ण
 
-static int vfs_ustat(dev_t dev, struct kstatfs *sbuf)
-{
-	struct super_block *s = user_get_super(dev, false);
-	int err;
-	if (!s)
-		return -EINVAL;
+अटल पूर्णांक vfs_ustat(dev_t dev, काष्ठा kstatfs *sbuf)
+अणु
+	काष्ठा super_block *s = user_get_super(dev, false);
+	पूर्णांक err;
+	अगर (!s)
+		वापस -EINVAL;
 
 	err = statfs_by_dentry(s->s_root, sbuf);
 	drop_super(s);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-SYSCALL_DEFINE2(ustat, unsigned, dev, struct ustat __user *, ubuf)
-{
-	struct ustat tmp;
-	struct kstatfs sbuf;
-	int err = vfs_ustat(new_decode_dev(dev), &sbuf);
-	if (err)
-		return err;
+SYSCALL_DEFINE2(ustat, अचिन्हित, dev, काष्ठा ustat __user *, ubuf)
+अणु
+	काष्ठा ustat पंचांगp;
+	काष्ठा kstatfs sbuf;
+	पूर्णांक err = vfs_ustat(new_decode_dev(dev), &sbuf);
+	अगर (err)
+		वापस err;
 
-	memset(&tmp,0,sizeof(struct ustat));
-	tmp.f_tfree = sbuf.f_bfree;
-	if (IS_ENABLED(CONFIG_ARCH_32BIT_USTAT_F_TINODE))
-		tmp.f_tinode = min_t(u64, sbuf.f_ffree, UINT_MAX);
-	else
-		tmp.f_tinode = sbuf.f_ffree;
+	स_रखो(&पंचांगp,0,माप(काष्ठा ustat));
+	पंचांगp.f_tमुक्त = sbuf.f_bमुक्त;
+	अगर (IS_ENABLED(CONFIG_ARCH_32BIT_USTAT_F_TINODE))
+		पंचांगp.f_tinode = min_t(u64, sbuf.f_fमुक्त, अच_पूर्णांक_उच्च);
+	अन्यथा
+		पंचांगp.f_tinode = sbuf.f_fमुक्त;
 
-	return copy_to_user(ubuf, &tmp, sizeof(struct ustat)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(ubuf, &पंचांगp, माप(काष्ठा ustat)) ? -EFAULT : 0;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static int put_compat_statfs(struct compat_statfs __user *ubuf, struct kstatfs *kbuf)
-{
-	struct compat_statfs buf;
-	if (sizeof ubuf->f_blocks == 4) {
-		if ((kbuf->f_blocks | kbuf->f_bfree | kbuf->f_bavail |
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक put_compat_statfs(काष्ठा compat_statfs __user *ubuf, काष्ठा kstatfs *kbuf)
+अणु
+	काष्ठा compat_statfs buf;
+	अगर (माप ubuf->f_blocks == 4) अणु
+		अगर ((kbuf->f_blocks | kbuf->f_bमुक्त | kbuf->f_bavail |
 		     kbuf->f_bsize | kbuf->f_frsize) & 0xffffffff00000000ULL)
-			return -EOVERFLOW;
-		/* f_files and f_ffree may be -1; it's okay
-		 * to stuff that into 32 bits */
-		if (kbuf->f_files != 0xffffffffffffffffULL
+			वापस -EOVERFLOW;
+		/* f_files and f_fमुक्त may be -1; it's okay
+		 * to stuff that पूर्णांकo 32 bits */
+		अगर (kbuf->f_files != 0xffffffffffffffffULL
 		 && (kbuf->f_files & 0xffffffff00000000ULL))
-			return -EOVERFLOW;
-		if (kbuf->f_ffree != 0xffffffffffffffffULL
-		 && (kbuf->f_ffree & 0xffffffff00000000ULL))
-			return -EOVERFLOW;
-	}
-	memset(&buf, 0, sizeof(struct compat_statfs));
+			वापस -EOVERFLOW;
+		अगर (kbuf->f_fमुक्त != 0xffffffffffffffffULL
+		 && (kbuf->f_fमुक्त & 0xffffffff00000000ULL))
+			वापस -EOVERFLOW;
+	पूर्ण
+	स_रखो(&buf, 0, माप(काष्ठा compat_statfs));
 	buf.f_type = kbuf->f_type;
 	buf.f_bsize = kbuf->f_bsize;
 	buf.f_blocks = kbuf->f_blocks;
-	buf.f_bfree = kbuf->f_bfree;
+	buf.f_bमुक्त = kbuf->f_bमुक्त;
 	buf.f_bavail = kbuf->f_bavail;
 	buf.f_files = kbuf->f_files;
-	buf.f_ffree = kbuf->f_ffree;
+	buf.f_fमुक्त = kbuf->f_fमुक्त;
 	buf.f_namelen = kbuf->f_namelen;
 	buf.f_fsid.val[0] = kbuf->f_fsid.val[0];
 	buf.f_fsid.val[1] = kbuf->f_fsid.val[1];
 	buf.f_frsize = kbuf->f_frsize;
 	buf.f_flags = kbuf->f_flags;
-	if (copy_to_user(ubuf, &buf, sizeof(struct compat_statfs)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(ubuf, &buf, माप(काष्ठा compat_statfs)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 /*
  * The following statfs calls are copies of code from fs/statfs.c and
- * should be checked against those from time to time
+ * should be checked against those from समय to समय
  */
-COMPAT_SYSCALL_DEFINE2(statfs, const char __user *, pathname, struct compat_statfs __user *, buf)
-{
-	struct kstatfs tmp;
-	int error = user_statfs(pathname, &tmp);
-	if (!error)
-		error = put_compat_statfs(buf, &tmp);
-	return error;
-}
+COMPAT_SYSCALL_DEFINE2(statfs, स्थिर अक्षर __user *, pathname, काष्ठा compat_statfs __user *, buf)
+अणु
+	काष्ठा kstatfs पंचांगp;
+	पूर्णांक error = user_statfs(pathname, &पंचांगp);
+	अगर (!error)
+		error = put_compat_statfs(buf, &पंचांगp);
+	वापस error;
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE2(fstatfs, unsigned int, fd, struct compat_statfs __user *, buf)
-{
-	struct kstatfs tmp;
-	int error = fd_statfs(fd, &tmp);
-	if (!error)
-		error = put_compat_statfs(buf, &tmp);
-	return error;
-}
+COMPAT_SYSCALL_DEFINE2(ख_स्थितिfs, अचिन्हित पूर्णांक, fd, काष्ठा compat_statfs __user *, buf)
+अणु
+	काष्ठा kstatfs पंचांगp;
+	पूर्णांक error = fd_statfs(fd, &पंचांगp);
+	अगर (!error)
+		error = put_compat_statfs(buf, &पंचांगp);
+	वापस error;
+पूर्ण
 
-static int put_compat_statfs64(struct compat_statfs64 __user *ubuf, struct kstatfs *kbuf)
-{
-	struct compat_statfs64 buf;
+अटल पूर्णांक put_compat_statfs64(काष्ठा compat_statfs64 __user *ubuf, काष्ठा kstatfs *kbuf)
+अणु
+	काष्ठा compat_statfs64 buf;
 
-	if ((kbuf->f_bsize | kbuf->f_frsize) & 0xffffffff00000000ULL)
-		return -EOVERFLOW;
+	अगर ((kbuf->f_bsize | kbuf->f_frsize) & 0xffffffff00000000ULL)
+		वापस -EOVERFLOW;
 
-	memset(&buf, 0, sizeof(struct compat_statfs64));
+	स_रखो(&buf, 0, माप(काष्ठा compat_statfs64));
 	buf.f_type = kbuf->f_type;
 	buf.f_bsize = kbuf->f_bsize;
 	buf.f_blocks = kbuf->f_blocks;
-	buf.f_bfree = kbuf->f_bfree;
+	buf.f_bमुक्त = kbuf->f_bमुक्त;
 	buf.f_bavail = kbuf->f_bavail;
 	buf.f_files = kbuf->f_files;
-	buf.f_ffree = kbuf->f_ffree;
+	buf.f_fमुक्त = kbuf->f_fमुक्त;
 	buf.f_namelen = kbuf->f_namelen;
 	buf.f_fsid.val[0] = kbuf->f_fsid.val[0];
 	buf.f_fsid.val[1] = kbuf->f_fsid.val[1];
 	buf.f_frsize = kbuf->f_frsize;
 	buf.f_flags = kbuf->f_flags;
-	if (copy_to_user(ubuf, &buf, sizeof(struct compat_statfs64)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(ubuf, &buf, माप(काष्ठा compat_statfs64)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-int kcompat_sys_statfs64(const char __user * pathname, compat_size_t sz, struct compat_statfs64 __user * buf)
-{
-	struct kstatfs tmp;
-	int error;
+पूर्णांक kcompat_sys_statfs64(स्थिर अक्षर __user * pathname, compat_माप_प्रकार sz, काष्ठा compat_statfs64 __user * buf)
+अणु
+	काष्ठा kstatfs पंचांगp;
+	पूर्णांक error;
 
-	if (sz != sizeof(*buf))
-		return -EINVAL;
+	अगर (sz != माप(*buf))
+		वापस -EINVAL;
 
-	error = user_statfs(pathname, &tmp);
-	if (!error)
-		error = put_compat_statfs64(buf, &tmp);
-	return error;
-}
+	error = user_statfs(pathname, &पंचांगp);
+	अगर (!error)
+		error = put_compat_statfs64(buf, &पंचांगp);
+	वापस error;
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE3(statfs64, const char __user *, pathname, compat_size_t, sz, struct compat_statfs64 __user *, buf)
-{
-	return kcompat_sys_statfs64(pathname, sz, buf);
-}
+COMPAT_SYSCALL_DEFINE3(statfs64, स्थिर अक्षर __user *, pathname, compat_माप_प्रकार, sz, काष्ठा compat_statfs64 __user *, buf)
+अणु
+	वापस kcompat_sys_statfs64(pathname, sz, buf);
+पूर्ण
 
-int kcompat_sys_fstatfs64(unsigned int fd, compat_size_t sz, struct compat_statfs64 __user * buf)
-{
-	struct kstatfs tmp;
-	int error;
+पूर्णांक kcompat_sys_ख_स्थितिfs64(अचिन्हित पूर्णांक fd, compat_माप_प्रकार sz, काष्ठा compat_statfs64 __user * buf)
+अणु
+	काष्ठा kstatfs पंचांगp;
+	पूर्णांक error;
 
-	if (sz != sizeof(*buf))
-		return -EINVAL;
+	अगर (sz != माप(*buf))
+		वापस -EINVAL;
 
-	error = fd_statfs(fd, &tmp);
-	if (!error)
-		error = put_compat_statfs64(buf, &tmp);
-	return error;
-}
+	error = fd_statfs(fd, &पंचांगp);
+	अगर (!error)
+		error = put_compat_statfs64(buf, &पंचांगp);
+	वापस error;
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE3(fstatfs64, unsigned int, fd, compat_size_t, sz, struct compat_statfs64 __user *, buf)
-{
-	return kcompat_sys_fstatfs64(fd, sz, buf);
-}
+COMPAT_SYSCALL_DEFINE3(ख_स्थितिfs64, अचिन्हित पूर्णांक, fd, compat_माप_प्रकार, sz, काष्ठा compat_statfs64 __user *, buf)
+अणु
+	वापस kcompat_sys_ख_स्थितिfs64(fd, sz, buf);
+पूर्ण
 
 /*
- * This is a copy of sys_ustat, just dealing with a structure layout.
- * Given how simple this syscall is that apporach is more maintainable
+ * This is a copy of sys_ustat, just dealing with a काष्ठाure layout.
+ * Given how simple this syscall is that apporach is more मुख्यtainable
  * than the various conversion hacks.
  */
-COMPAT_SYSCALL_DEFINE2(ustat, unsigned, dev, struct compat_ustat __user *, u)
-{
-	struct compat_ustat tmp;
-	struct kstatfs sbuf;
-	int err = vfs_ustat(new_decode_dev(dev), &sbuf);
-	if (err)
-		return err;
+COMPAT_SYSCALL_DEFINE2(ustat, अचिन्हित, dev, काष्ठा compat_ustat __user *, u)
+अणु
+	काष्ठा compat_ustat पंचांगp;
+	काष्ठा kstatfs sbuf;
+	पूर्णांक err = vfs_ustat(new_decode_dev(dev), &sbuf);
+	अगर (err)
+		वापस err;
 
-	memset(&tmp, 0, sizeof(struct compat_ustat));
-	tmp.f_tfree = sbuf.f_bfree;
-	tmp.f_tinode = sbuf.f_ffree;
-	if (copy_to_user(u, &tmp, sizeof(struct compat_ustat)))
-		return -EFAULT;
-	return 0;
-}
-#endif
+	स_रखो(&पंचांगp, 0, माप(काष्ठा compat_ustat));
+	पंचांगp.f_tमुक्त = sbuf.f_bमुक्त;
+	पंचांगp.f_tinode = sbuf.f_fमुक्त;
+	अगर (copy_to_user(u, &पंचांगp, माप(काष्ठा compat_ustat)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर

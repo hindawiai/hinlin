@@ -1,566 +1,567 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Stage 1 of the trace events.
  *
- * Override the macros in the event tracepoint header <trace/events/XXX.h>
+ * Override the macros in the event tracepoपूर्णांक header <trace/events/XXX.h>
  * to include the following:
  *
- * struct trace_event_raw_<call> {
- *	struct trace_entry		ent;
+ * काष्ठा trace_event_raw_<call> अणु
+ *	काष्ठा trace_entry		ent;
  *	<type>				<item>;
  *	<type2>				<item2>[<len>];
  *	[...]
- * };
+ * पूर्ण;
  *
  * The <type> <item> is created by the __field(type, item) macro or
  * the __array(type2, item2, len) macro.
- * We simply do "type item;", and that will create the fields
- * in the structure.
+ * We simply करो "type item;", and that will create the fields
+ * in the काष्ठाure.
  */
 
-#include <linux/trace_events.h>
+#समावेश <linux/trace_events.h>
 
-#ifndef TRACE_SYSTEM_VAR
-#define TRACE_SYSTEM_VAR TRACE_SYSTEM
-#endif
+#अगर_अघोषित TRACE_SYSTEM_VAR
+#घोषणा TRACE_SYSTEM_VAR TRACE_SYSTEM
+#पूर्ण_अगर
 
-#define __app__(x, y) str__##x##y
-#define __app(x, y) __app__(x, y)
+#घोषणा __app__(x, y) str__##x##y
+#घोषणा __app(x, y) __app__(x, y)
 
-#define TRACE_SYSTEM_STRING __app(TRACE_SYSTEM_VAR,__trace_system_name)
+#घोषणा TRACE_SYSTEM_STRING __app(TRACE_SYSTEM_VAR,__trace_प्रणाली_name)
 
-#define TRACE_MAKE_SYSTEM_STR()				\
-	static const char TRACE_SYSTEM_STRING[] =	\
-		__stringify(TRACE_SYSTEM)
+#घोषणा TRACE_MAKE_SYSTEM_STR()				\
+	अटल स्थिर अक्षर TRACE_SYSTEM_STRING[] =	\
+		__stringअगरy(TRACE_SYSTEM)
 
 TRACE_MAKE_SYSTEM_STR();
 
-#undef TRACE_DEFINE_ENUM
-#define TRACE_DEFINE_ENUM(a)				\
-	static struct trace_eval_map __used __initdata	\
+#अघोषित TRACE_DEFINE_ENUM
+#घोषणा TRACE_DEFINE_ENUM(a)				\
+	अटल काष्ठा trace_eval_map __used __initdata	\
 	__##TRACE_SYSTEM##_##a =			\
-	{						\
-		.system = TRACE_SYSTEM_STRING,		\
+	अणु						\
+		.प्रणाली = TRACE_SYSTEM_STRING,		\
 		.eval_string = #a,			\
 		.eval_value = a				\
-	};						\
-	static struct trace_eval_map __used		\
+	पूर्ण;						\
+	अटल काष्ठा trace_eval_map __used		\
 	__section("_ftrace_eval_map")			\
 	*TRACE_SYSTEM##_##a = &__##TRACE_SYSTEM##_##a
 
-#undef TRACE_DEFINE_SIZEOF
-#define TRACE_DEFINE_SIZEOF(a)				\
-	static struct trace_eval_map __used __initdata	\
+#अघोषित TRACE_DEFINE_SIZखातापूर्ण
+#घोषणा TRACE_DEFINE_SIZखातापूर्ण(a)				\
+	अटल काष्ठा trace_eval_map __used __initdata	\
 	__##TRACE_SYSTEM##_##a =			\
-	{						\
-		.system = TRACE_SYSTEM_STRING,		\
+	अणु						\
+		.प्रणाली = TRACE_SYSTEM_STRING,		\
 		.eval_string = "sizeof(" #a ")",	\
-		.eval_value = sizeof(a)			\
-	};						\
-	static struct trace_eval_map __used		\
+		.eval_value = माप(a)			\
+	पूर्ण;						\
+	अटल काष्ठा trace_eval_map __used		\
 	__section("_ftrace_eval_map")			\
 	*TRACE_SYSTEM##_##a = &__##TRACE_SYSTEM##_##a
 
 /*
  * DECLARE_EVENT_CLASS can be used to add a generic function
- * handlers for events. That is, if all events have the same
- * parameters and just have distinct trace points.
- * Each tracepoint can be defined with DEFINE_EVENT and that
- * will map the DECLARE_EVENT_CLASS to the tracepoint.
+ * handlers क्रम events. That is, अगर all events have the same
+ * parameters and just have distinct trace poपूर्णांकs.
+ * Each tracepoपूर्णांक can be defined with DEFINE_EVENT and that
+ * will map the DECLARE_EVENT_CLASS to the tracepoपूर्णांक.
  *
- * TRACE_EVENT is a one to one mapping between tracepoint and template.
+ * TRACE_EVENT is a one to one mapping between tracepoपूर्णांक and ढाँचा.
  */
-#undef TRACE_EVENT
-#define TRACE_EVENT(name, proto, args, tstruct, assign, print) \
+#अघोषित TRACE_EVENT
+#घोषणा TRACE_EVENT(name, proto, args, tकाष्ठा, assign, prपूर्णांक) \
 	DECLARE_EVENT_CLASS(name,			       \
 			     PARAMS(proto),		       \
 			     PARAMS(args),		       \
-			     PARAMS(tstruct),		       \
+			     PARAMS(tकाष्ठा),		       \
 			     PARAMS(assign),		       \
-			     PARAMS(print));		       \
+			     PARAMS(prपूर्णांक));		       \
 	DEFINE_EVENT(name, name, PARAMS(proto), PARAMS(args));
 
 
-#undef __field
-#define __field(type, item)		type	item;
+#अघोषित __field
+#घोषणा __field(type, item)		type	item;
 
-#undef __field_ext
-#define __field_ext(type, item, filter_type)	type	item;
+#अघोषित __field_ext
+#घोषणा __field_ext(type, item, filter_type)	type	item;
 
-#undef __field_struct
-#define __field_struct(type, item)	type	item;
+#अघोषित __field_काष्ठा
+#घोषणा __field_काष्ठा(type, item)	type	item;
 
-#undef __field_struct_ext
-#define __field_struct_ext(type, item, filter_type)	type	item;
+#अघोषित __field_काष्ठा_ext
+#घोषणा __field_काष्ठा_ext(type, item, filter_type)	type	item;
 
-#undef __array
-#define __array(type, item, len)	type	item[len];
+#अघोषित __array
+#घोषणा __array(type, item, len)	type	item[len];
 
-#undef __dynamic_array
-#define __dynamic_array(type, item, len) u32 __data_loc_##item;
+#अघोषित __dynamic_array
+#घोषणा __dynamic_array(type, item, len) u32 __data_loc_##item;
 
-#undef __string
-#define __string(item, src) __dynamic_array(char, item, -1)
+#अघोषित __string
+#घोषणा __string(item, src) __dynamic_array(अक्षर, item, -1)
 
-#undef __bitmask
-#define __bitmask(item, nr_bits) __dynamic_array(char, item, -1)
+#अघोषित __biपंचांगask
+#घोषणा __biपंचांगask(item, nr_bits) __dynamic_array(अक्षर, item, -1)
 
-#undef TP_STRUCT__entry
-#define TP_STRUCT__entry(args...) args
+#अघोषित TP_STRUCT__entry
+#घोषणा TP_STRUCT__entry(args...) args
 
-#undef DECLARE_EVENT_CLASS
-#define DECLARE_EVENT_CLASS(name, proto, args, tstruct, assign, print)	\
-	struct trace_event_raw_##name {					\
-		struct trace_entry	ent;				\
-		tstruct							\
-		char			__data[0];			\
-	};								\
+#अघोषित DECLARE_EVENT_CLASS
+#घोषणा DECLARE_EVENT_CLASS(name, proto, args, tकाष्ठा, assign, prपूर्णांक)	\
+	काष्ठा trace_event_raw_##name अणु					\
+		काष्ठा trace_entry	ent;				\
+		tकाष्ठा							\
+		अक्षर			__data[0];			\
+	पूर्ण;								\
 									\
-	static struct trace_event_class event_class_##name;
+	अटल काष्ठा trace_event_class event_class_##name;
 
-#undef DEFINE_EVENT
-#define DEFINE_EVENT(template, name, proto, args)	\
-	static struct trace_event_call	__used		\
+#अघोषित DEFINE_EVENT
+#घोषणा DEFINE_EVENT(ढाँचा, name, proto, args)	\
+	अटल काष्ठा trace_event_call	__used		\
 	__attribute__((__aligned__(4))) event_##name
 
-#undef DEFINE_EVENT_FN
-#define DEFINE_EVENT_FN(template, name, proto, args, reg, unreg)	\
-	DEFINE_EVENT(template, name, PARAMS(proto), PARAMS(args))
+#अघोषित DEFINE_EVENT_FN
+#घोषणा DEFINE_EVENT_FN(ढाँचा, name, proto, args, reg, unreg)	\
+	DEFINE_EVENT(ढाँचा, name, PARAMS(proto), PARAMS(args))
 
-#undef DEFINE_EVENT_PRINT
-#define DEFINE_EVENT_PRINT(template, name, proto, args, print)	\
-	DEFINE_EVENT(template, name, PARAMS(proto), PARAMS(args))
+#अघोषित DEFINE_EVENT_PRINT
+#घोषणा DEFINE_EVENT_PRINT(ढाँचा, name, proto, args, prपूर्णांक)	\
+	DEFINE_EVENT(ढाँचा, name, PARAMS(proto), PARAMS(args))
 
 /* Callbacks are meaningless to ftrace. */
-#undef TRACE_EVENT_FN
-#define TRACE_EVENT_FN(name, proto, args, tstruct,			\
-		assign, print, reg, unreg)				\
+#अघोषित TRACE_EVENT_FN
+#घोषणा TRACE_EVENT_FN(name, proto, args, tकाष्ठा,			\
+		assign, prपूर्णांक, reg, unreg)				\
 	TRACE_EVENT(name, PARAMS(proto), PARAMS(args),			\
-		PARAMS(tstruct), PARAMS(assign), PARAMS(print))		\
+		PARAMS(tकाष्ठा), PARAMS(assign), PARAMS(prपूर्णांक))		\
 
-#undef TRACE_EVENT_FN_COND
-#define TRACE_EVENT_FN_COND(name, proto, args, cond, tstruct,	\
-		assign, print, reg, unreg)				\
+#अघोषित TRACE_EVENT_FN_COND
+#घोषणा TRACE_EVENT_FN_COND(name, proto, args, cond, tकाष्ठा,	\
+		assign, prपूर्णांक, reg, unreg)				\
 	TRACE_EVENT_CONDITION(name, PARAMS(proto), PARAMS(args), PARAMS(cond),		\
-		PARAMS(tstruct), PARAMS(assign), PARAMS(print))		\
+		PARAMS(tकाष्ठा), PARAMS(assign), PARAMS(prपूर्णांक))		\
 
-#undef TRACE_EVENT_FLAGS
-#define TRACE_EVENT_FLAGS(name, value)					\
+#अघोषित TRACE_EVENT_FLAGS
+#घोषणा TRACE_EVENT_FLAGS(name, value)					\
 	__TRACE_EVENT_FLAGS(name, value)
 
-#undef TRACE_EVENT_PERF_PERM
-#define TRACE_EVENT_PERF_PERM(name, expr...)				\
+#अघोषित TRACE_EVENT_PERF_PERM
+#घोषणा TRACE_EVENT_PERF_PERM(name, expr...)				\
 	__TRACE_EVENT_PERF_PERM(name, expr)
 
-#include TRACE_INCLUDE(TRACE_INCLUDE_FILE)
+#समावेश TRACE_INCLUDE(TRACE_INCLUDE_खाता)
 
 /*
  * Stage 2 of the trace events.
  *
  * Include the following:
  *
- * struct trace_event_data_offsets_<call> {
+ * काष्ठा trace_event_data_offsets_<call> अणु
  *	u32				<item1>;
  *	u32				<item2>;
  *	[...]
- * };
+ * पूर्ण;
  *
  * The __dynamic_array() macro will create each u32 <item>, this is
  * to keep the offset of each array from the beginning of the event.
  * The size of an array is also encoded, in the higher 16 bits of <item>.
  */
 
-#undef TRACE_DEFINE_ENUM
-#define TRACE_DEFINE_ENUM(a)
+#अघोषित TRACE_DEFINE_ENUM
+#घोषणा TRACE_DEFINE_ENUM(a)
 
-#undef TRACE_DEFINE_SIZEOF
-#define TRACE_DEFINE_SIZEOF(a)
+#अघोषित TRACE_DEFINE_SIZखातापूर्ण
+#घोषणा TRACE_DEFINE_SIZखातापूर्ण(a)
 
-#undef __field
-#define __field(type, item)
+#अघोषित __field
+#घोषणा __field(type, item)
 
-#undef __field_ext
-#define __field_ext(type, item, filter_type)
+#अघोषित __field_ext
+#घोषणा __field_ext(type, item, filter_type)
 
-#undef __field_struct
-#define __field_struct(type, item)
+#अघोषित __field_काष्ठा
+#घोषणा __field_काष्ठा(type, item)
 
-#undef __field_struct_ext
-#define __field_struct_ext(type, item, filter_type)
+#अघोषित __field_काष्ठा_ext
+#घोषणा __field_काष्ठा_ext(type, item, filter_type)
 
-#undef __array
-#define __array(type, item, len)
+#अघोषित __array
+#घोषणा __array(type, item, len)
 
-#undef __dynamic_array
-#define __dynamic_array(type, item, len)	u32 item;
+#अघोषित __dynamic_array
+#घोषणा __dynamic_array(type, item, len)	u32 item;
 
-#undef __string
-#define __string(item, src) __dynamic_array(char, item, -1)
+#अघोषित __string
+#घोषणा __string(item, src) __dynamic_array(अक्षर, item, -1)
 
-#undef __bitmask
-#define __bitmask(item, nr_bits) __dynamic_array(unsigned long, item, -1)
+#अघोषित __biपंचांगask
+#घोषणा __biपंचांगask(item, nr_bits) __dynamic_array(अचिन्हित दीर्घ, item, -1)
 
-#undef DECLARE_EVENT_CLASS
-#define DECLARE_EVENT_CLASS(call, proto, args, tstruct, assign, print)	\
-	struct trace_event_data_offsets_##call {			\
-		tstruct;						\
-	};
+#अघोषित DECLARE_EVENT_CLASS
+#घोषणा DECLARE_EVENT_CLASS(call, proto, args, tकाष्ठा, assign, prपूर्णांक)	\
+	काष्ठा trace_event_data_offsets_##call अणु			\
+		tकाष्ठा;						\
+	पूर्ण;
 
-#undef DEFINE_EVENT
-#define DEFINE_EVENT(template, name, proto, args)
+#अघोषित DEFINE_EVENT
+#घोषणा DEFINE_EVENT(ढाँचा, name, proto, args)
 
-#undef DEFINE_EVENT_PRINT
-#define DEFINE_EVENT_PRINT(template, name, proto, args, print)
+#अघोषित DEFINE_EVENT_PRINT
+#घोषणा DEFINE_EVENT_PRINT(ढाँचा, name, proto, args, prपूर्णांक)
 
-#undef TRACE_EVENT_FLAGS
-#define TRACE_EVENT_FLAGS(event, flag)
+#अघोषित TRACE_EVENT_FLAGS
+#घोषणा TRACE_EVENT_FLAGS(event, flag)
 
-#undef TRACE_EVENT_PERF_PERM
-#define TRACE_EVENT_PERF_PERM(event, expr...)
+#अघोषित TRACE_EVENT_PERF_PERM
+#घोषणा TRACE_EVENT_PERF_PERM(event, expr...)
 
-#include TRACE_INCLUDE(TRACE_INCLUDE_FILE)
+#समावेश TRACE_INCLUDE(TRACE_INCLUDE_खाता)
 
 /*
  * Stage 3 of the trace events.
  *
- * Override the macros in the event tracepoint header <trace/events/XXX.h>
+ * Override the macros in the event tracepoपूर्णांक header <trace/events/XXX.h>
  * to include the following:
  *
- * enum print_line_t
- * trace_raw_output_<call>(struct trace_iterator *iter, int flags)
- * {
- *	struct trace_seq *s = &iter->seq;
- *	struct trace_event_raw_<call> *field; <-- defined in stage 1
- *	struct trace_seq *p = &iter->tmp_seq;
+ * क्रमागत prपूर्णांक_line_t
+ * trace_raw_output_<call>(काष्ठा trace_iterator *iter, पूर्णांक flags)
+ * अणु
+ *	काष्ठा trace_seq *s = &iter->seq;
+ *	काष्ठा trace_event_raw_<call> *field; <-- defined in stage 1
+ *	काष्ठा trace_seq *p = &iter->पंचांगp_seq;
  *
- * -------(for event)-------
+ * -------(क्रम event)-------
  *
- *	struct trace_entry *entry;
+ *	काष्ठा trace_entry *entry;
  *
  *	entry = iter->ent;
  *
- *	if (entry->type != event_<call>->event.type) {
+ *	अगर (entry->type != event_<call>->event.type) अणु
  *		WARN_ON_ONCE(1);
- *		return TRACE_TYPE_UNHANDLED;
- *	}
+ *		वापस TRACE_TYPE_UNHANDLED;
+ *	पूर्ण
  *
  *	field = (typeof(field))entry;
  *
  *	trace_seq_init(p);
- *	return trace_output_call(iter, <call>, <TP_printk> "\n");
+ *	वापस trace_output_call(iter, <call>, <TP_prपूर्णांकk> "\n");
  *
- * ------(or, for event class)------
+ * ------(or, क्रम event class)------
  *
- *	int ret;
+ *	पूर्णांक ret;
  *
  *	field = (typeof(field))iter->ent;
  *
  *	ret = trace_raw_output_prep(iter, trace_event);
- *	if (ret != TRACE_TYPE_HANDLED)
- *		return ret;
+ *	अगर (ret != TRACE_TYPE_HANDLED)
+ *		वापस ret;
  *
- *	trace_event_printf(iter, <TP_printk> "\n");
+ *	trace_event_म_लिखो(iter, <TP_prपूर्णांकk> "\n");
  *
- *	return trace_handle_return(s);
+ *	वापस trace_handle_वापस(s);
  * -------
- *  }
+ *  पूर्ण
  *
- * This is the method used to print the raw event to the trace
- * output format. Note, this is not needed if the data is read
+ * This is the method used to prपूर्णांक the raw event to the trace
+ * output क्रमmat. Note, this is not needed अगर the data is पढ़ो
  * in binary.
  */
 
-#undef __entry
-#define __entry field
+#अघोषित __entry
+#घोषणा __entry field
 
-#undef TP_printk
-#define TP_printk(fmt, args...) fmt "\n", args
+#अघोषित TP_prपूर्णांकk
+#घोषणा TP_prपूर्णांकk(fmt, args...) fmt "\n", args
 
-#undef __get_dynamic_array
-#define __get_dynamic_array(field)	\
-		((void *)__entry + (__entry->__data_loc_##field & 0xffff))
+#अघोषित __get_dynamic_array
+#घोषणा __get_dynamic_array(field)	\
+		((व्योम *)__entry + (__entry->__data_loc_##field & 0xffff))
 
-#undef __get_dynamic_array_len
-#define __get_dynamic_array_len(field)	\
+#अघोषित __get_dynamic_array_len
+#घोषणा __get_dynamic_array_len(field)	\
 		((__entry->__data_loc_##field >> 16) & 0xffff)
 
-#undef __get_str
-#define __get_str(field) ((char *)__get_dynamic_array(field))
+#अघोषित __get_str
+#घोषणा __get_str(field) ((अक्षर *)__get_dynamic_array(field))
 
-#undef __get_bitmask
-#define __get_bitmask(field)						\
-	({								\
-		void *__bitmask = __get_dynamic_array(field);		\
-		unsigned int __bitmask_size;				\
-		__bitmask_size = __get_dynamic_array_len(field);	\
-		trace_print_bitmask_seq(p, __bitmask, __bitmask_size);	\
-	})
+#अघोषित __get_biपंचांगask
+#घोषणा __get_biपंचांगask(field)						\
+	(अणु								\
+		व्योम *__biपंचांगask = __get_dynamic_array(field);		\
+		अचिन्हित पूर्णांक __biपंचांगask_size;				\
+		__biपंचांगask_size = __get_dynamic_array_len(field);	\
+		trace_prपूर्णांक_biपंचांगask_seq(p, __biपंचांगask, __biपंचांगask_size);	\
+	पूर्ण)
 
-#undef __print_flags
-#define __print_flags(flag, delim, flag_array...)			\
-	({								\
-		static const struct trace_print_flags __flags[] =	\
-			{ flag_array, { -1, NULL }};			\
-		trace_print_flags_seq(p, delim, flag, __flags);	\
-	})
+#अघोषित __prपूर्णांक_flags
+#घोषणा __prपूर्णांक_flags(flag, delim, flag_array...)			\
+	(अणु								\
+		अटल स्थिर काष्ठा trace_prपूर्णांक_flags __flags[] =	\
+			अणु flag_array, अणु -1, शून्य पूर्णपूर्ण;			\
+		trace_prपूर्णांक_flags_seq(p, delim, flag, __flags);	\
+	पूर्ण)
 
-#undef __print_symbolic
-#define __print_symbolic(value, symbol_array...)			\
-	({								\
-		static const struct trace_print_flags symbols[] =	\
-			{ symbol_array, { -1, NULL }};			\
-		trace_print_symbols_seq(p, value, symbols);		\
-	})
+#अघोषित __prपूर्णांक_symbolic
+#घोषणा __prपूर्णांक_symbolic(value, symbol_array...)			\
+	(अणु								\
+		अटल स्थिर काष्ठा trace_prपूर्णांक_flags symbols[] =	\
+			अणु symbol_array, अणु -1, शून्य पूर्णपूर्ण;			\
+		trace_prपूर्णांक_symbols_seq(p, value, symbols);		\
+	पूर्ण)
 
-#undef __print_flags_u64
-#undef __print_symbolic_u64
-#if BITS_PER_LONG == 32
-#define __print_flags_u64(flag, delim, flag_array...)			\
-	({								\
-		static const struct trace_print_flags_u64 __flags[] =	\
-			{ flag_array, { -1, NULL } };			\
-		trace_print_flags_seq_u64(p, delim, flag, __flags);	\
-	})
+#अघोषित __prपूर्णांक_flags_u64
+#अघोषित __prपूर्णांक_symbolic_u64
+#अगर BITS_PER_LONG == 32
+#घोषणा __prपूर्णांक_flags_u64(flag, delim, flag_array...)			\
+	(अणु								\
+		अटल स्थिर काष्ठा trace_prपूर्णांक_flags_u64 __flags[] =	\
+			अणु flag_array, अणु -1, शून्य पूर्ण पूर्ण;			\
+		trace_prपूर्णांक_flags_seq_u64(p, delim, flag, __flags);	\
+	पूर्ण)
 
-#define __print_symbolic_u64(value, symbol_array...)			\
-	({								\
-		static const struct trace_print_flags_u64 symbols[] =	\
-			{ symbol_array, { -1, NULL } };			\
-		trace_print_symbols_seq_u64(p, value, symbols);	\
-	})
-#else
-#define __print_flags_u64(flag, delim, flag_array...)			\
-			__print_flags(flag, delim, flag_array)
+#घोषणा __prपूर्णांक_symbolic_u64(value, symbol_array...)			\
+	(अणु								\
+		अटल स्थिर काष्ठा trace_prपूर्णांक_flags_u64 symbols[] =	\
+			अणु symbol_array, अणु -1, शून्य पूर्ण पूर्ण;			\
+		trace_prपूर्णांक_symbols_seq_u64(p, value, symbols);	\
+	पूर्ण)
+#अन्यथा
+#घोषणा __prपूर्णांक_flags_u64(flag, delim, flag_array...)			\
+			__prपूर्णांक_flags(flag, delim, flag_array)
 
-#define __print_symbolic_u64(value, symbol_array...)			\
-			__print_symbolic(value, symbol_array)
-#endif
+#घोषणा __prपूर्णांक_symbolic_u64(value, symbol_array...)			\
+			__prपूर्णांक_symbolic(value, symbol_array)
+#पूर्ण_अगर
 
-#undef __print_hex
-#define __print_hex(buf, buf_len)					\
-	trace_print_hex_seq(p, buf, buf_len, false)
+#अघोषित __prपूर्णांक_hex
+#घोषणा __prपूर्णांक_hex(buf, buf_len)					\
+	trace_prपूर्णांक_hex_seq(p, buf, buf_len, false)
 
-#undef __print_hex_str
-#define __print_hex_str(buf, buf_len)					\
-	trace_print_hex_seq(p, buf, buf_len, true)
+#अघोषित __prपूर्णांक_hex_str
+#घोषणा __prपूर्णांक_hex_str(buf, buf_len)					\
+	trace_prपूर्णांक_hex_seq(p, buf, buf_len, true)
 
-#undef __print_array
-#define __print_array(array, count, el_size)				\
-	({								\
+#अघोषित __prपूर्णांक_array
+#घोषणा __prपूर्णांक_array(array, count, el_size)				\
+	(अणु								\
 		BUILD_BUG_ON(el_size != 1 && el_size != 2 &&		\
 			     el_size != 4 && el_size != 8);		\
-		trace_print_array_seq(p, array, count, el_size);	\
-	})
+		trace_prपूर्णांक_array_seq(p, array, count, el_size);	\
+	पूर्ण)
 
-#undef __print_hex_dump
-#define __print_hex_dump(prefix_str, prefix_type,			\
+#अघोषित __prपूर्णांक_hex_dump
+#घोषणा __prपूर्णांक_hex_dump(prefix_str, prefix_type,			\
 			 rowsize, groupsize, buf, len, ascii)		\
-	trace_print_hex_dump_seq(p, prefix_str, prefix_type,		\
+	trace_prपूर्णांक_hex_dump_seq(p, prefix_str, prefix_type,		\
 				 rowsize, groupsize, buf, len, ascii)
 
-#undef DECLARE_EVENT_CLASS
-#define DECLARE_EVENT_CLASS(call, proto, args, tstruct, assign, print)	\
-static notrace enum print_line_t					\
-trace_raw_output_##call(struct trace_iterator *iter, int flags,		\
-			struct trace_event *trace_event)		\
-{									\
-	struct trace_seq *s = &iter->seq;				\
-	struct trace_seq __maybe_unused *p = &iter->tmp_seq;		\
-	struct trace_event_raw_##call *field;				\
-	int ret;							\
+#अघोषित DECLARE_EVENT_CLASS
+#घोषणा DECLARE_EVENT_CLASS(call, proto, args, tकाष्ठा, assign, prपूर्णांक)	\
+अटल notrace क्रमागत prपूर्णांक_line_t					\
+trace_raw_output_##call(काष्ठा trace_iterator *iter, पूर्णांक flags,		\
+			काष्ठा trace_event *trace_event)		\
+अणु									\
+	काष्ठा trace_seq *s = &iter->seq;				\
+	काष्ठा trace_seq __maybe_unused *p = &iter->पंचांगp_seq;		\
+	काष्ठा trace_event_raw_##call *field;				\
+	पूर्णांक ret;							\
 									\
 	field = (typeof(field))iter->ent;				\
 									\
 	ret = trace_raw_output_prep(iter, trace_event);			\
-	if (ret != TRACE_TYPE_HANDLED)					\
-		return ret;						\
+	अगर (ret != TRACE_TYPE_HANDLED)					\
+		वापस ret;						\
 									\
-	trace_event_printf(iter, print);				\
+	trace_event_म_लिखो(iter, prपूर्णांक);				\
 									\
-	return trace_handle_return(s);					\
-}									\
-static struct trace_event_functions trace_event_type_funcs_##call = {	\
+	वापस trace_handle_वापस(s);					\
+पूर्ण									\
+अटल काष्ठा trace_event_functions trace_event_type_funcs_##call = अणु	\
 	.trace			= trace_raw_output_##call,		\
-};
+पूर्ण;
 
-#undef DEFINE_EVENT_PRINT
-#define DEFINE_EVENT_PRINT(template, call, proto, args, print)		\
-static notrace enum print_line_t					\
-trace_raw_output_##call(struct trace_iterator *iter, int flags,		\
-			 struct trace_event *event)			\
-{									\
-	struct trace_event_raw_##template *field;			\
-	struct trace_entry *entry;					\
-	struct trace_seq *p = &iter->tmp_seq;				\
+#अघोषित DEFINE_EVENT_PRINT
+#घोषणा DEFINE_EVENT_PRINT(ढाँचा, call, proto, args, prपूर्णांक)		\
+अटल notrace क्रमागत prपूर्णांक_line_t					\
+trace_raw_output_##call(काष्ठा trace_iterator *iter, पूर्णांक flags,		\
+			 काष्ठा trace_event *event)			\
+अणु									\
+	काष्ठा trace_event_raw_##ढाँचा *field;			\
+	काष्ठा trace_entry *entry;					\
+	काष्ठा trace_seq *p = &iter->पंचांगp_seq;				\
 									\
 	entry = iter->ent;						\
 									\
-	if (entry->type != event_##call.event.type) {			\
+	अगर (entry->type != event_##call.event.type) अणु			\
 		WARN_ON_ONCE(1);					\
-		return TRACE_TYPE_UNHANDLED;				\
-	}								\
+		वापस TRACE_TYPE_UNHANDLED;				\
+	पूर्ण								\
 									\
 	field = (typeof(field))entry;					\
 									\
 	trace_seq_init(p);						\
-	return trace_output_call(iter, #call, print);			\
-}									\
-static struct trace_event_functions trace_event_type_funcs_##call = {	\
+	वापस trace_output_call(iter, #call, prपूर्णांक);			\
+पूर्ण									\
+अटल काष्ठा trace_event_functions trace_event_type_funcs_##call = अणु	\
 	.trace			= trace_raw_output_##call,		\
-};
+पूर्ण;
 
-#include TRACE_INCLUDE(TRACE_INCLUDE_FILE)
+#समावेश TRACE_INCLUDE(TRACE_INCLUDE_खाता)
 
-#undef __field_ext
-#define __field_ext(_type, _item, _filter_type) {			\
+#अघोषित __field_ext
+#घोषणा __field_ext(_type, _item, _filter_type) अणु			\
 	.type = #_type, .name = #_item,					\
-	.size = sizeof(_type), .align = __alignof__(_type),		\
-	.is_signed = is_signed_type(_type), .filter_type = _filter_type },
+	.size = माप(_type), .align = __alignof__(_type),		\
+	.is_चिन्हित = is_चिन्हित_type(_type), .filter_type = _filter_type पूर्ण,
 
-#undef __field_struct_ext
-#define __field_struct_ext(_type, _item, _filter_type) {		\
+#अघोषित __field_काष्ठा_ext
+#घोषणा __field_काष्ठा_ext(_type, _item, _filter_type) अणु		\
 	.type = #_type, .name = #_item,					\
-	.size = sizeof(_type), .align = __alignof__(_type),		\
-	0, .filter_type = _filter_type },
+	.size = माप(_type), .align = __alignof__(_type),		\
+	0, .filter_type = _filter_type पूर्ण,
 
-#undef __field
-#define __field(type, item)	__field_ext(type, item, FILTER_OTHER)
+#अघोषित __field
+#घोषणा __field(type, item)	__field_ext(type, item, FILTER_OTHER)
 
-#undef __field_struct
-#define __field_struct(type, item) __field_struct_ext(type, item, FILTER_OTHER)
+#अघोषित __field_काष्ठा
+#घोषणा __field_काष्ठा(type, item) __field_काष्ठा_ext(type, item, FILTER_OTHER)
 
-#undef __array
-#define __array(_type, _item, _len) {					\
-	.type = #_type"["__stringify(_len)"]", .name = #_item,		\
-	.size = sizeof(_type[_len]), .align = __alignof__(_type),	\
-	.is_signed = is_signed_type(_type), .filter_type = FILTER_OTHER },
+#अघोषित __array
+#घोषणा __array(_type, _item, _len) अणु					\
+	.type = #_type"["__stringअगरy(_len)"]", .name = #_item,		\
+	.size = माप(_type[_len]), .align = __alignof__(_type),	\
+	.is_चिन्हित = is_चिन्हित_type(_type), .filter_type = FILTER_OTHER पूर्ण,
 
-#undef __dynamic_array
-#define __dynamic_array(_type, _item, _len) {				\
+#अघोषित __dynamic_array
+#घोषणा __dynamic_array(_type, _item, _len) अणु				\
 	.type = "__data_loc " #_type "[]", .name = #_item,		\
 	.size = 4, .align = 4,						\
-	.is_signed = is_signed_type(_type), .filter_type = FILTER_OTHER },
+	.is_चिन्हित = is_चिन्हित_type(_type), .filter_type = FILTER_OTHER पूर्ण,
 
-#undef __string
-#define __string(item, src) __dynamic_array(char, item, -1)
+#अघोषित __string
+#घोषणा __string(item, src) __dynamic_array(अक्षर, item, -1)
 
-#undef __bitmask
-#define __bitmask(item, nr_bits) __dynamic_array(unsigned long, item, -1)
+#अघोषित __biपंचांगask
+#घोषणा __biपंचांगask(item, nr_bits) __dynamic_array(अचिन्हित दीर्घ, item, -1)
 
-#undef DECLARE_EVENT_CLASS
-#define DECLARE_EVENT_CLASS(call, proto, args, tstruct, func, print)	\
-static struct trace_event_fields trace_event_fields_##call[] = {	\
-	tstruct								\
-	{} };
+#अघोषित DECLARE_EVENT_CLASS
+#घोषणा DECLARE_EVENT_CLASS(call, proto, args, tकाष्ठा, func, prपूर्णांक)	\
+अटल काष्ठा trace_event_fields trace_event_fields_##call[] = अणु	\
+	tकाष्ठा								\
+	अणुपूर्ण पूर्ण;
 
-#undef DEFINE_EVENT_PRINT
-#define DEFINE_EVENT_PRINT(template, name, proto, args, print)
+#अघोषित DEFINE_EVENT_PRINT
+#घोषणा DEFINE_EVENT_PRINT(ढाँचा, name, proto, args, prपूर्णांक)
 
-#include TRACE_INCLUDE(TRACE_INCLUDE_FILE)
+#समावेश TRACE_INCLUDE(TRACE_INCLUDE_खाता)
 
 /*
  * remember the offset of each array from the beginning of the event.
  */
 
-#undef __entry
-#define __entry entry
+#अघोषित __entry
+#घोषणा __entry entry
 
-#undef __field
-#define __field(type, item)
+#अघोषित __field
+#घोषणा __field(type, item)
 
-#undef __field_ext
-#define __field_ext(type, item, filter_type)
+#अघोषित __field_ext
+#घोषणा __field_ext(type, item, filter_type)
 
-#undef __field_struct
-#define __field_struct(type, item)
+#अघोषित __field_काष्ठा
+#घोषणा __field_काष्ठा(type, item)
 
-#undef __field_struct_ext
-#define __field_struct_ext(type, item, filter_type)
+#अघोषित __field_काष्ठा_ext
+#घोषणा __field_काष्ठा_ext(type, item, filter_type)
 
-#undef __array
-#define __array(type, item, len)
+#अघोषित __array
+#घोषणा __array(type, item, len)
 
-#undef __dynamic_array
-#define __dynamic_array(type, item, len)				\
-	__item_length = (len) * sizeof(type);				\
+#अघोषित __dynamic_array
+#घोषणा __dynamic_array(type, item, len)				\
+	__item_length = (len) * माप(type);				\
 	__data_offsets->item = __data_size +				\
-			       offsetof(typeof(*entry), __data);	\
+			       दुरत्व(typeof(*entry), __data);	\
 	__data_offsets->item |= __item_length << 16;			\
 	__data_size += __item_length;
 
-#undef __string
-#define __string(item, src) __dynamic_array(char, item,			\
-		    strlen((src) ? (const char *)(src) : "(null)") + 1)
+#अघोषित __string
+#घोषणा __string(item, src) __dynamic_array(अक्षर, item,			\
+		    म_माप((src) ? (स्थिर अक्षर *)(src) : "(null)") + 1)
 
 /*
- * __bitmask_size_in_bytes_raw is the number of bytes needed to hold
+ * __biपंचांगask_size_in_bytes_raw is the number of bytes needed to hold
  * num_possible_cpus().
  */
-#define __bitmask_size_in_bytes_raw(nr_bits)	\
+#घोषणा __biपंचांगask_size_in_bytes_raw(nr_bits)	\
 	(((nr_bits) + 7) / 8)
 
-#define __bitmask_size_in_longs(nr_bits)			\
-	((__bitmask_size_in_bytes_raw(nr_bits) +		\
+#घोषणा __biपंचांगask_size_in_दीर्घs(nr_bits)			\
+	((__biपंचांगask_size_in_bytes_raw(nr_bits) +		\
 	  ((BITS_PER_LONG / 8) - 1)) / (BITS_PER_LONG / 8))
 
 /*
- * __bitmask_size_in_bytes is the number of bytes needed to hold
- * num_possible_cpus() padded out to the nearest long. This is what
+ * __biपंचांगask_size_in_bytes is the number of bytes needed to hold
+ * num_possible_cpus() padded out to the nearest दीर्घ. This is what
  * is saved in the buffer, just to be consistent.
  */
-#define __bitmask_size_in_bytes(nr_bits)				\
-	(__bitmask_size_in_longs(nr_bits) * (BITS_PER_LONG / 8))
+#घोषणा __biपंचांगask_size_in_bytes(nr_bits)				\
+	(__biपंचांगask_size_in_दीर्घs(nr_bits) * (BITS_PER_LONG / 8))
 
-#undef __bitmask
-#define __bitmask(item, nr_bits) __dynamic_array(unsigned long, item,	\
-					 __bitmask_size_in_longs(nr_bits))
+#अघोषित __biपंचांगask
+#घोषणा __biपंचांगask(item, nr_bits) __dynamic_array(अचिन्हित दीर्घ, item,	\
+					 __biपंचांगask_size_in_दीर्घs(nr_bits))
 
-#undef DECLARE_EVENT_CLASS
-#define DECLARE_EVENT_CLASS(call, proto, args, tstruct, assign, print)	\
-static inline notrace int trace_event_get_offsets_##call(		\
-	struct trace_event_data_offsets_##call *__data_offsets, proto)	\
-{									\
-	int __data_size = 0;						\
-	int __maybe_unused __item_length;				\
-	struct trace_event_raw_##call __maybe_unused *entry;		\
+#अघोषित DECLARE_EVENT_CLASS
+#घोषणा DECLARE_EVENT_CLASS(call, proto, args, tकाष्ठा, assign, prपूर्णांक)	\
+अटल अंतरभूत notrace पूर्णांक trace_event_get_offsets_##call(		\
+	काष्ठा trace_event_data_offsets_##call *__data_offsets, proto)	\
+अणु									\
+	पूर्णांक __data_size = 0;						\
+	पूर्णांक __maybe_unused __item_length;				\
+	काष्ठा trace_event_raw_##call __maybe_unused *entry;		\
 									\
-	tstruct;							\
+	tकाष्ठा;							\
 									\
-	return __data_size;						\
-}
+	वापस __data_size;						\
+पूर्ण
 
-#include TRACE_INCLUDE(TRACE_INCLUDE_FILE)
+#समावेश TRACE_INCLUDE(TRACE_INCLUDE_खाता)
 
 /*
  * Stage 4 of the trace events.
  *
- * Override the macros in the event tracepoint header <trace/events/XXX.h>
+ * Override the macros in the event tracepoपूर्णांक header <trace/events/XXX.h>
  * to include the following:
  *
  * For those macros defined with TRACE_EVENT:
  *
- * static struct trace_event_call event_<call>;
+ * अटल काष्ठा trace_event_call event_<call>;
  *
- * static void trace_event_raw_event_<call>(void *__data, proto)
- * {
- *	struct trace_event_file *trace_file = __data;
- *	struct trace_event_call *event_call = trace_file->event_call;
- *	struct trace_event_data_offsets_<call> __maybe_unused __data_offsets;
- *	unsigned long eflags = trace_file->flags;
- *	enum event_trigger_type __tt = ETT_NONE;
- *	struct ring_buffer_event *event;
- *	struct trace_event_raw_<call> *entry; <-- defined in stage 1
- *	struct trace_buffer *buffer;
- *	unsigned long irq_flags;
- *	int __data_size;
- *	int pc;
+ * अटल व्योम trace_event_raw_event_<call>(व्योम *__data, proto)
+ * अणु
+ *	काष्ठा trace_event_file *trace_file = __data;
+ *	काष्ठा trace_event_call *event_call = trace_file->event_call;
+ *	काष्ठा trace_event_data_offsets_<call> __maybe_unused __data_offsets;
+ *	अचिन्हित दीर्घ eflags = trace_file->flags;
+ *	क्रमागत event_trigger_type __tt = ETT_NONE;
+ *	काष्ठा ring_buffer_event *event;
+ *	काष्ठा trace_event_raw_<call> *entry; <-- defined in stage 1
+ *	काष्ठा trace_buffer *buffer;
+ *	अचिन्हित दीर्घ irq_flags;
+ *	पूर्णांक __data_size;
+ *	पूर्णांक pc;
  *
- *	if (!(eflags & EVENT_FILE_FL_TRIGGER_COND)) {
- *		if (eflags & EVENT_FILE_FL_TRIGGER_MODE)
- *			event_triggers_call(trace_file, NULL);
- *		if (eflags & EVENT_FILE_FL_SOFT_DISABLED)
- *			return;
- *	}
+ *	अगर (!(eflags & EVENT_खाता_FL_TRIGGER_COND)) अणु
+ *		अगर (eflags & EVENT_खाता_FL_TRIGGER_MODE)
+ *			event_triggers_call(trace_file, शून्य);
+ *		अगर (eflags & EVENT_खाता_FL_SOFT_DISABLED)
+ *			वापस;
+ *	पूर्ण
  *
  *	local_save_flags(irq_flags);
  *	pc = preempt_count();
@@ -569,220 +570,220 @@ static inline notrace int trace_event_get_offsets_##call(		\
  *
  *	event = trace_event_buffer_lock_reserve(&buffer, trace_file,
  *				  event_<call>->event.type,
- *				  sizeof(*entry) + __data_size,
+ *				  माप(*entry) + __data_size,
  *				  irq_flags, pc);
- *	if (!event)
- *		return;
+ *	अगर (!event)
+ *		वापस;
  *	entry	= ring_buffer_event_data(event);
  *
- *	{ <assign>; }  <-- Here we assign the entries by the __field and
+ *	अणु <assign>; पूर्ण  <-- Here we assign the entries by the __field and
  *			   __array macros.
  *
- *	if (eflags & EVENT_FILE_FL_TRIGGER_COND)
+ *	अगर (eflags & EVENT_खाता_FL_TRIGGER_COND)
  *		__tt = event_triggers_call(trace_file, entry);
  *
- *	if (test_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT,
+ *	अगर (test_bit(EVENT_खाता_FL_SOFT_DISABLED_BIT,
  *		     &trace_file->flags))
  *		ring_buffer_discard_commit(buffer, event);
- *	else if (!filter_check_discard(trace_file, entry, buffer, event))
+ *	अन्यथा अगर (!filter_check_discard(trace_file, entry, buffer, event))
  *		trace_buffer_unlock_commit(buffer, event, irq_flags, pc);
  *
- *	if (__tt)
+ *	अगर (__tt)
  *		event_triggers_post_call(trace_file, __tt);
- * }
+ * पूर्ण
  *
- * static struct trace_event ftrace_event_type_<call> = {
+ * अटल काष्ठा trace_event ftrace_event_type_<call> = अणु
  *	.trace			= trace_raw_output_<call>, <-- stage 2
- * };
+ * पूर्ण;
  *
- * static char print_fmt_<call>[] = <TP_printk>;
+ * अटल अक्षर prपूर्णांक_fmt_<call>[] = <TP_prपूर्णांकk>;
  *
- * static struct trace_event_class __used event_class_<template> = {
- *	.system			= "<system>",
+ * अटल काष्ठा trace_event_class __used event_class_<ढाँचा> = अणु
+ *	.प्रणाली			= "<system>",
  *	.fields_array		= trace_event_fields_<call>,
  *	.fields			= LIST_HEAD_INIT(event_class_##call.fields),
  *	.raw_init		= trace_event_raw_init,
  *	.probe			= trace_event_raw_event_##call,
  *	.reg			= trace_event_reg,
- * };
+ * पूर्ण;
  *
- * static struct trace_event_call event_<call> = {
- *	.class			= event_class_<template>,
- *	{
- *		.tp			= &__tracepoint_<call>,
- *	},
+ * अटल काष्ठा trace_event_call event_<call> = अणु
+ *	.class			= event_class_<ढाँचा>,
+ *	अणु
+ *		.tp			= &__tracepoपूर्णांक_<call>,
+ *	पूर्ण,
  *	.event			= &ftrace_event_type_<call>,
- *	.print_fmt		= print_fmt_<call>,
+ *	.prपूर्णांक_fmt		= prपूर्णांक_fmt_<call>,
  *	.flags			= TRACE_EVENT_FL_TRACEPOINT,
- * };
- * // its only safe to use pointers when doing linker tricks to
+ * पूर्ण;
+ * // its only safe to use poपूर्णांकers when करोing linker tricks to
  * // create an array.
- * static struct trace_event_call __used
+ * अटल काष्ठा trace_event_call __used
  * __section("_ftrace_events") *__event_<call> = &event_<call>;
  *
  */
 
-#ifdef CONFIG_PERF_EVENTS
+#अगर_घोषित CONFIG_PERF_EVENTS
 
-#define _TRACE_PERF_PROTO(call, proto)					\
-	static notrace void						\
-	perf_trace_##call(void *__data, proto);
+#घोषणा _TRACE_PERF_PROTO(call, proto)					\
+	अटल notrace व्योम						\
+	perf_trace_##call(व्योम *__data, proto);
 
-#define _TRACE_PERF_INIT(call)						\
+#घोषणा _TRACE_PERF_INIT(call)						\
 	.perf_probe		= perf_trace_##call,
 
-#else
-#define _TRACE_PERF_PROTO(call, proto)
-#define _TRACE_PERF_INIT(call)
-#endif /* CONFIG_PERF_EVENTS */
+#अन्यथा
+#घोषणा _TRACE_PERF_PROTO(call, proto)
+#घोषणा _TRACE_PERF_INIT(call)
+#पूर्ण_अगर /* CONFIG_PERF_EVENTS */
 
-#undef __entry
-#define __entry entry
+#अघोषित __entry
+#घोषणा __entry entry
 
-#undef __field
-#define __field(type, item)
+#अघोषित __field
+#घोषणा __field(type, item)
 
-#undef __field_struct
-#define __field_struct(type, item)
+#अघोषित __field_काष्ठा
+#घोषणा __field_काष्ठा(type, item)
 
-#undef __array
-#define __array(type, item, len)
+#अघोषित __array
+#घोषणा __array(type, item, len)
 
-#undef __dynamic_array
-#define __dynamic_array(type, item, len)				\
+#अघोषित __dynamic_array
+#घोषणा __dynamic_array(type, item, len)				\
 	__entry->__data_loc_##item = __data_offsets.item;
 
-#undef __string
-#define __string(item, src) __dynamic_array(char, item, -1)
+#अघोषित __string
+#घोषणा __string(item, src) __dynamic_array(अक्षर, item, -1)
 
-#undef __assign_str
-#define __assign_str(dst, src)						\
-	strcpy(__get_str(dst), (src) ? (const char *)(src) : "(null)");
+#अघोषित __assign_str
+#घोषणा __assign_str(dst, src)						\
+	म_नकल(__get_str(dst), (src) ? (स्थिर अक्षर *)(src) : "(null)");
 
-#undef __bitmask
-#define __bitmask(item, nr_bits) __dynamic_array(unsigned long, item, -1)
+#अघोषित __biपंचांगask
+#घोषणा __biपंचांगask(item, nr_bits) __dynamic_array(अचिन्हित दीर्घ, item, -1)
 
-#undef __get_bitmask
-#define __get_bitmask(field) (char *)__get_dynamic_array(field)
+#अघोषित __get_biपंचांगask
+#घोषणा __get_biपंचांगask(field) (अक्षर *)__get_dynamic_array(field)
 
-#undef __assign_bitmask
-#define __assign_bitmask(dst, src, nr_bits)					\
-	memcpy(__get_bitmask(dst), (src), __bitmask_size_in_bytes(nr_bits))
+#अघोषित __assign_biपंचांगask
+#घोषणा __assign_biपंचांगask(dst, src, nr_bits)					\
+	स_नकल(__get_biपंचांगask(dst), (src), __biपंचांगask_size_in_bytes(nr_bits))
 
-#undef TP_fast_assign
-#define TP_fast_assign(args...) args
+#अघोषित TP_fast_assign
+#घोषणा TP_fast_assign(args...) args
 
-#undef __perf_count
-#define __perf_count(c)	(c)
+#अघोषित __perf_count
+#घोषणा __perf_count(c)	(c)
 
-#undef __perf_task
-#define __perf_task(t)	(t)
+#अघोषित __perf_task
+#घोषणा __perf_task(t)	(t)
 
-#undef DECLARE_EVENT_CLASS
-#define DECLARE_EVENT_CLASS(call, proto, args, tstruct, assign, print)	\
+#अघोषित DECLARE_EVENT_CLASS
+#घोषणा DECLARE_EVENT_CLASS(call, proto, args, tकाष्ठा, assign, prपूर्णांक)	\
 									\
-static notrace void							\
-trace_event_raw_event_##call(void *__data, proto)			\
-{									\
-	struct trace_event_file *trace_file = __data;			\
-	struct trace_event_data_offsets_##call __maybe_unused __data_offsets;\
-	struct trace_event_buffer fbuffer;				\
-	struct trace_event_raw_##call *entry;				\
-	int __data_size;						\
+अटल notrace व्योम							\
+trace_event_raw_event_##call(व्योम *__data, proto)			\
+अणु									\
+	काष्ठा trace_event_file *trace_file = __data;			\
+	काष्ठा trace_event_data_offsets_##call __maybe_unused __data_offsets;\
+	काष्ठा trace_event_buffer fbuffer;				\
+	काष्ठा trace_event_raw_##call *entry;				\
+	पूर्णांक __data_size;						\
 									\
-	if (trace_trigger_soft_disabled(trace_file))			\
-		return;							\
+	अगर (trace_trigger_soft_disabled(trace_file))			\
+		वापस;							\
 									\
 	__data_size = trace_event_get_offsets_##call(&__data_offsets, args); \
 									\
 	entry = trace_event_buffer_reserve(&fbuffer, trace_file,	\
-				 sizeof(*entry) + __data_size);		\
+				 माप(*entry) + __data_size);		\
 									\
-	if (!entry)							\
-		return;							\
+	अगर (!entry)							\
+		वापस;							\
 									\
-	tstruct								\
+	tकाष्ठा								\
 									\
-	{ assign; }							\
+	अणु assign; पूर्ण							\
 									\
 	trace_event_buffer_commit(&fbuffer);				\
-}
+पूर्ण
 /*
- * The ftrace_test_probe is compiled out, it is only here as a build time check
- * to make sure that if the tracepoint handling changes, the ftrace probe will
+ * The ftrace_test_probe is compiled out, it is only here as a build समय check
+ * to make sure that अगर the tracepoपूर्णांक handling changes, the ftrace probe will
  * fail to compile unless it too is updated.
  */
 
-#undef DEFINE_EVENT
-#define DEFINE_EVENT(template, call, proto, args)			\
-static inline void ftrace_test_probe_##call(void)			\
-{									\
-	check_trace_callback_type_##call(trace_event_raw_event_##template); \
-}
+#अघोषित DEFINE_EVENT
+#घोषणा DEFINE_EVENT(ढाँचा, call, proto, args)			\
+अटल अंतरभूत व्योम ftrace_test_probe_##call(व्योम)			\
+अणु									\
+	check_trace_callback_type_##call(trace_event_raw_event_##ढाँचा); \
+पूर्ण
 
-#include TRACE_INCLUDE(TRACE_INCLUDE_FILE)
+#समावेश TRACE_INCLUDE(TRACE_INCLUDE_खाता)
 
-#undef __entry
-#define __entry REC
+#अघोषित __entry
+#घोषणा __entry REC
 
-#undef __print_flags
-#undef __print_symbolic
-#undef __print_hex
-#undef __print_hex_str
-#undef __get_dynamic_array
-#undef __get_dynamic_array_len
-#undef __get_str
-#undef __get_bitmask
-#undef __print_array
-#undef __print_hex_dump
+#अघोषित __prपूर्णांक_flags
+#अघोषित __prपूर्णांक_symbolic
+#अघोषित __prपूर्णांक_hex
+#अघोषित __prपूर्णांक_hex_str
+#अघोषित __get_dynamic_array
+#अघोषित __get_dynamic_array_len
+#अघोषित __get_str
+#अघोषित __get_biपंचांगask
+#अघोषित __prपूर्णांक_array
+#अघोषित __prपूर्णांक_hex_dump
 
-#undef TP_printk
-#define TP_printk(fmt, args...) "\"" fmt "\", "  __stringify(args)
+#अघोषित TP_prपूर्णांकk
+#घोषणा TP_prपूर्णांकk(fmt, args...) "\"" fmt "\", "  __stringअगरy(args)
 
-#undef DECLARE_EVENT_CLASS
-#define DECLARE_EVENT_CLASS(call, proto, args, tstruct, assign, print)	\
+#अघोषित DECLARE_EVENT_CLASS
+#घोषणा DECLARE_EVENT_CLASS(call, proto, args, tकाष्ठा, assign, prपूर्णांक)	\
 _TRACE_PERF_PROTO(call, PARAMS(proto));					\
-static char print_fmt_##call[] = print;					\
-static struct trace_event_class __used __refdata event_class_##call = { \
-	.system			= TRACE_SYSTEM_STRING,			\
+अटल अक्षर prपूर्णांक_fmt_##call[] = prपूर्णांक;					\
+अटल काष्ठा trace_event_class __used __refdata event_class_##call = अणु \
+	.प्रणाली			= TRACE_SYSTEM_STRING,			\
 	.fields_array		= trace_event_fields_##call,		\
 	.fields			= LIST_HEAD_INIT(event_class_##call.fields),\
 	.raw_init		= trace_event_raw_init,			\
 	.probe			= trace_event_raw_event_##call,		\
 	.reg			= trace_event_reg,			\
 	_TRACE_PERF_INIT(call)						\
-};
+पूर्ण;
 
-#undef DEFINE_EVENT
-#define DEFINE_EVENT(template, call, proto, args)			\
+#अघोषित DEFINE_EVENT
+#घोषणा DEFINE_EVENT(ढाँचा, call, proto, args)			\
 									\
-static struct trace_event_call __used event_##call = {			\
-	.class			= &event_class_##template,		\
-	{								\
-		.tp			= &__tracepoint_##call,		\
-	},								\
-	.event.funcs		= &trace_event_type_funcs_##template,	\
-	.print_fmt		= print_fmt_##template,			\
+अटल काष्ठा trace_event_call __used event_##call = अणु			\
+	.class			= &event_class_##ढाँचा,		\
+	अणु								\
+		.tp			= &__tracepoपूर्णांक_##call,		\
+	पूर्ण,								\
+	.event.funcs		= &trace_event_type_funcs_##ढाँचा,	\
+	.prपूर्णांक_fmt		= prपूर्णांक_fmt_##ढाँचा,			\
 	.flags			= TRACE_EVENT_FL_TRACEPOINT,		\
-};									\
-static struct trace_event_call __used					\
+पूर्ण;									\
+अटल काष्ठा trace_event_call __used					\
 __section("_ftrace_events") *__event_##call = &event_##call
 
-#undef DEFINE_EVENT_PRINT
-#define DEFINE_EVENT_PRINT(template, call, proto, args, print)		\
+#अघोषित DEFINE_EVENT_PRINT
+#घोषणा DEFINE_EVENT_PRINT(ढाँचा, call, proto, args, prपूर्णांक)		\
 									\
-static char print_fmt_##call[] = print;					\
+अटल अक्षर prपूर्णांक_fmt_##call[] = prपूर्णांक;					\
 									\
-static struct trace_event_call __used event_##call = {			\
-	.class			= &event_class_##template,		\
-	{								\
-		.tp			= &__tracepoint_##call,		\
-	},								\
+अटल काष्ठा trace_event_call __used event_##call = अणु			\
+	.class			= &event_class_##ढाँचा,		\
+	अणु								\
+		.tp			= &__tracepoपूर्णांक_##call,		\
+	पूर्ण,								\
 	.event.funcs		= &trace_event_type_funcs_##call,	\
-	.print_fmt		= print_fmt_##call,			\
+	.prपूर्णांक_fmt		= prपूर्णांक_fmt_##call,			\
 	.flags			= TRACE_EVENT_FL_TRACEPOINT,		\
-};									\
-static struct trace_event_call __used					\
+पूर्ण;									\
+अटल काष्ठा trace_event_call __used					\
 __section("_ftrace_events") *__event_##call = &event_##call
 
-#include TRACE_INCLUDE(TRACE_INCLUDE_FILE)
+#समावेश TRACE_INCLUDE(TRACE_INCLUDE_खाता)

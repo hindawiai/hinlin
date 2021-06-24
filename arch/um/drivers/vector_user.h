@@ -1,109 +1,110 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2002 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#ifndef __UM_VECTOR_USER_H
-#define __UM_VECTOR_USER_H
+#अगर_अघोषित __UM_VECTOR_USER_H
+#घोषणा __UM_VECTOR_USER_H
 
-#define MAXVARGS	20
+#घोषणा MAXVARGS	20
 
-#define TOKEN_IFNAME "ifname"
+#घोषणा TOKEN_IFNAME "ifname"
 
-#define TRANS_RAW "raw"
-#define TRANS_RAW_LEN strlen(TRANS_RAW)
+#घोषणा TRANS_RAW "raw"
+#घोषणा TRANS_RAW_LEN म_माप(TRANS_RAW)
 
-#define TRANS_TAP "tap"
-#define TRANS_TAP_LEN strlen(TRANS_TAP)
+#घोषणा TRANS_TAP "tap"
+#घोषणा TRANS_TAP_LEN म_माप(TRANS_TAP)
 
-#define TRANS_GRE "gre"
-#define TRANS_GRE_LEN strlen(TRANS_GRE)
+#घोषणा TRANS_GRE "gre"
+#घोषणा TRANS_GRE_LEN म_माप(TRANS_GRE)
 
-#define TRANS_L2TPV3 "l2tpv3"
-#define TRANS_L2TPV3_LEN strlen(TRANS_L2TPV3)
+#घोषणा TRANS_L2TPV3 "l2tpv3"
+#घोषणा TRANS_L2TPV3_LEN म_माप(TRANS_L2TPV3)
 
-#define TRANS_HYBRID "hybrid"
-#define TRANS_HYBRID_LEN strlen(TRANS_HYBRID)
+#घोषणा TRANS_HYBRID "hybrid"
+#घोषणा TRANS_HYBRID_LEN म_माप(TRANS_HYBRID)
 
-#define TRANS_BESS "bess"
-#define TRANS_BESS_LEN strlen(TRANS_BESS)
+#घोषणा TRANS_BESS "bess"
+#घोषणा TRANS_BESS_LEN म_माप(TRANS_BESS)
 
-#define DEFAULT_BPF_LEN 6
+#घोषणा DEFAULT_BPF_LEN 6
 
-#ifndef IPPROTO_GRE
-#define IPPROTO_GRE 0x2F
-#endif
+#अगर_अघोषित IPPROTO_GRE
+#घोषणा IPPROTO_GRE 0x2F
+#पूर्ण_अगर
 
-#define GRE_MODE_CHECKSUM	cpu_to_be16(8 << 12)	/* checksum */
-#define GRE_MODE_RESERVED	cpu_to_be16(4 << 12)	/* unused */
-#define GRE_MODE_KEY		cpu_to_be16(2 << 12)	/* KEY present */
-#define GRE_MODE_SEQUENCE	cpu_to_be16(1 << 12)	/* sequence */
+#घोषणा GRE_MODE_CHECKSUM	cpu_to_be16(8 << 12)	/* checksum */
+#घोषणा GRE_MODE_RESERVED	cpu_to_be16(4 << 12)	/* unused */
+#घोषणा GRE_MODE_KEY		cpu_to_be16(2 << 12)	/* KEY present */
+#घोषणा GRE_MODE_SEQUENCE	cpu_to_be16(1 << 12)	/* sequence */
 
-#define GRE_IRB cpu_to_be16(0x6558)
+#घोषणा GRE_IRB cpu_to_be16(0x6558)
 
-#define L2TPV3_DATA_PACKET 0x30000
+#घोषणा L2TPV3_DATA_PACKET 0x30000
 
-/* IANA-assigned IP protocol ID for L2TPv3 */
+/* IANA-asचिन्हित IP protocol ID क्रम L2TPv3 */
 
-#ifndef IPPROTO_L2TP
-#define IPPROTO_L2TP 0x73
-#endif
+#अगर_अघोषित IPPROTO_L2TP
+#घोषणा IPPROTO_L2TP 0x73
+#पूर्ण_अगर
 
-struct arglist {
-	int	numargs;
-	char	*tokens[MAXVARGS];
-	char	*values[MAXVARGS];
-};
+काष्ठा arglist अणु
+	पूर्णांक	numargs;
+	अक्षर	*tokens[MAXVARGS];
+	अक्षर	*values[MAXVARGS];
+पूर्ण;
 
-/* Separating read and write FDs allows us to have different
- * rx and tx method. Example - read tap via raw socket using
- * recvmmsg, write using legacy tap write calls
+/* Separating पढ़ो and ग_लिखो FDs allows us to have dअगरferent
+ * rx and tx method. Example - पढ़ो tap via raw socket using
+ * recvmmsg, ग_लिखो using legacy tap ग_लिखो calls
  */
 
-struct vector_fds {
-	int rx_fd;
-	int tx_fd;
-	void *remote_addr;
-	int remote_addr_size;
-};
+काष्ठा vector_fds अणु
+	पूर्णांक rx_fd;
+	पूर्णांक tx_fd;
+	व्योम *remote_addr;
+	पूर्णांक remote_addr_size;
+पूर्ण;
 
-#define VECTOR_READ	1
-#define VECTOR_WRITE	(1 < 1)
-#define VECTOR_HEADERS	(1 < 2)
+#घोषणा VECTOR_READ	1
+#घोषणा VECTOR_WRITE	(1 < 1)
+#घोषणा VECTOR_HEADERS	(1 < 2)
 
-extern struct arglist *uml_parse_vector_ifspec(char *arg);
+बाह्य काष्ठा arglist *uml_parse_vector_अगरspec(अक्षर *arg);
 
-extern struct vector_fds *uml_vector_user_open(
-	int unit,
-	struct arglist *parsed
+बाह्य काष्ठा vector_fds *uml_vector_user_खोलो(
+	पूर्णांक unit,
+	काष्ठा arglist *parsed
 );
 
-extern char *uml_vector_fetch_arg(
-	struct arglist *ifspec,
-	char *token
+बाह्य अक्षर *uml_vector_fetch_arg(
+	काष्ठा arglist *अगरspec,
+	अक्षर *token
 );
 
-extern int uml_vector_recvmsg(int fd, void *hdr, int flags);
-extern int uml_vector_sendmsg(int fd, void *hdr, int flags);
-extern int uml_vector_writev(int fd, void *hdr, int iovcount);
-extern int uml_vector_sendmmsg(
-	int fd, void *msgvec,
-	unsigned int vlen,
-	unsigned int flags
+बाह्य पूर्णांक uml_vector_recvmsg(पूर्णांक fd, व्योम *hdr, पूर्णांक flags);
+बाह्य पूर्णांक uml_vector_sendmsg(पूर्णांक fd, व्योम *hdr, पूर्णांक flags);
+बाह्य पूर्णांक uml_vector_ग_लिखोv(पूर्णांक fd, व्योम *hdr, पूर्णांक iovcount);
+बाह्य पूर्णांक uml_vector_sendmmsg(
+	पूर्णांक fd, व्योम *msgvec,
+	अचिन्हित पूर्णांक vlen,
+	अचिन्हित पूर्णांक flags
 );
-extern int uml_vector_recvmmsg(
-	int fd,
-	void *msgvec,
-	unsigned int vlen,
-	unsigned int flags
+बाह्य पूर्णांक uml_vector_recvmmsg(
+	पूर्णांक fd,
+	व्योम *msgvec,
+	अचिन्हित पूर्णांक vlen,
+	अचिन्हित पूर्णांक flags
 );
-extern void *uml_vector_default_bpf(void *mac);
-extern void *uml_vector_user_bpf(char *filename);
-extern int uml_vector_attach_bpf(int fd, void *bpf);
-extern int uml_vector_detach_bpf(int fd, void *bpf);
-extern bool uml_raw_enable_qdisc_bypass(int fd);
-extern bool uml_raw_enable_vnet_headers(int fd);
-extern bool uml_tap_enable_vnet_headers(int fd);
+बाह्य व्योम *uml_vector_शेष_bpf(व्योम *mac);
+बाह्य व्योम *uml_vector_user_bpf(अक्षर *filename);
+बाह्य पूर्णांक uml_vector_attach_bpf(पूर्णांक fd, व्योम *bpf);
+बाह्य पूर्णांक uml_vector_detach_bpf(पूर्णांक fd, व्योम *bpf);
+बाह्य bool uml_raw_enable_qdisc_bypass(पूर्णांक fd);
+बाह्य bool uml_raw_enable_vnet_headers(पूर्णांक fd);
+बाह्य bool uml_tap_enable_vnet_headers(पूर्णांक fd);
 
 
-#endif
+#पूर्ण_अगर

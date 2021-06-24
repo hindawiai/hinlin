@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TI da8xx DDR2/mDDR controller driver
  *
@@ -8,160 +9,160 @@
  *   Bartosz Golaszewski <bgolaszewski@baylibre.com>
  */
 
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
 
 /*
- * REVISIT: Linux doesn't have a good framework for the kind of performance
+ * REVISIT: Linux करोesn't have a good framework क्रम the kind of perक्रमmance
  * knobs this driver controls. We can't use device tree properties as it deals
- * with hardware configuration rather than description. We also don't want to
- * commit to maintaining some random sysfs attributes.
+ * with hardware configuration rather than description. We also करोn't want to
+ * commit to मुख्यtaining some अक्रमom sysfs attributes.
  *
- * For now we just hardcode the register values for the boards that need
- * some changes (as is the case for the LCD controller on da850-lcdk - the
- * first board we support here). When linux gets an appropriate framework,
+ * For now we just hardcode the रेजिस्टर values क्रम the boards that need
+ * some changes (as is the हाल क्रम the LCD controller on da850-lcdk - the
+ * first board we support here). When linux माला_लो an appropriate framework,
  * we'll easily convert the driver to it.
  */
 
-struct da8xx_ddrctl_config_knob {
-	const char *name;
+काष्ठा da8xx_ddrctl_config_knob अणु
+	स्थिर अक्षर *name;
 	u32 reg;
 	u32 mask;
-	u32 shift;
-};
+	u32 shअगरt;
+पूर्ण;
 
-static const struct da8xx_ddrctl_config_knob da8xx_ddrctl_knobs[] = {
-	{
+अटल स्थिर काष्ठा da8xx_ddrctl_config_knob da8xx_ddrctl_knobs[] = अणु
+	अणु
 		.name = "da850-pbbpr",
 		.reg = 0x20,
 		.mask = 0xffffff00,
-		.shift = 0,
-	},
-};
+		.shअगरt = 0,
+	पूर्ण,
+पूर्ण;
 
-struct da8xx_ddrctl_setting {
-	const char *name;
+काष्ठा da8xx_ddrctl_setting अणु
+	स्थिर अक्षर *name;
 	u32 val;
-};
+पूर्ण;
 
-struct da8xx_ddrctl_board_settings {
-	const char *board;
-	const struct da8xx_ddrctl_setting *settings;
-};
+काष्ठा da8xx_ddrctl_board_settings अणु
+	स्थिर अक्षर *board;
+	स्थिर काष्ठा da8xx_ddrctl_setting *settings;
+पूर्ण;
 
-static const struct da8xx_ddrctl_setting da850_lcdk_ddrctl_settings[] = {
-	{
+अटल स्थिर काष्ठा da8xx_ddrctl_setting da850_lcdk_ddrctl_settings[] = अणु
+	अणु
 		.name = "da850-pbbpr",
 		.val = 0x20,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static const struct da8xx_ddrctl_board_settings da8xx_ddrctl_board_confs[] = {
-	{
+अटल स्थिर काष्ठा da8xx_ddrctl_board_settings da8xx_ddrctl_board_confs[] = अणु
+	अणु
 		.board = "ti,da850-lcdk",
 		.settings = da850_lcdk_ddrctl_settings,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct da8xx_ddrctl_config_knob *
-da8xx_ddrctl_match_knob(const struct da8xx_ddrctl_setting *setting)
-{
-	const struct da8xx_ddrctl_config_knob *knob;
-	int i;
+अटल स्थिर काष्ठा da8xx_ddrctl_config_knob *
+da8xx_ddrctl_match_knob(स्थिर काष्ठा da8xx_ddrctl_setting *setting)
+अणु
+	स्थिर काष्ठा da8xx_ddrctl_config_knob *knob;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(da8xx_ddrctl_knobs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(da8xx_ddrctl_knobs); i++) अणु
 		knob = &da8xx_ddrctl_knobs[i];
 
-		if (strcmp(knob->name, setting->name) == 0)
-			return knob;
-	}
+		अगर (म_भेद(knob->name, setting->name) == 0)
+			वापस knob;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static const struct da8xx_ddrctl_setting *da8xx_ddrctl_get_board_settings(void)
-{
-	const struct da8xx_ddrctl_board_settings *board_settings;
-	int i;
+अटल स्थिर काष्ठा da8xx_ddrctl_setting *da8xx_ddrctl_get_board_settings(व्योम)
+अणु
+	स्थिर काष्ठा da8xx_ddrctl_board_settings *board_settings;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(da8xx_ddrctl_board_confs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(da8xx_ddrctl_board_confs); i++) अणु
 		board_settings = &da8xx_ddrctl_board_confs[i];
 
-		if (of_machine_is_compatible(board_settings->board))
-			return board_settings->settings;
-	}
+		अगर (of_machine_is_compatible(board_settings->board))
+			वापस board_settings->settings;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int da8xx_ddrctl_probe(struct platform_device *pdev)
-{
-	const struct da8xx_ddrctl_config_knob *knob;
-	const struct da8xx_ddrctl_setting *setting;
-	struct resource *res;
-	void __iomem *ddrctl;
-	struct device *dev;
+अटल पूर्णांक da8xx_ddrctl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा da8xx_ddrctl_config_knob *knob;
+	स्थिर काष्ठा da8xx_ddrctl_setting *setting;
+	काष्ठा resource *res;
+	व्योम __iomem *ddrctl;
+	काष्ठा device *dev;
 	u32 reg;
 
 	dev = &pdev->dev;
 
 	setting = da8xx_ddrctl_get_board_settings();
-	if (!setting) {
+	अगर (!setting) अणु
 		dev_err(dev, "no settings defined for this board\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	ddrctl = devm_ioremap_resource(dev, res);
-	if (IS_ERR(ddrctl)) {
+	अगर (IS_ERR(ddrctl)) अणु
 		dev_err(dev, "unable to map memory controller registers\n");
-		return PTR_ERR(ddrctl);
-	}
+		वापस PTR_ERR(ddrctl);
+	पूर्ण
 
-	for (; setting->name; setting++) {
+	क्रम (; setting->name; setting++) अणु
 		knob = da8xx_ddrctl_match_knob(setting);
-		if (!knob) {
+		अगर (!knob) अणु
 			dev_warn(dev,
 				 "no such config option: %s\n", setting->name);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (knob->reg + sizeof(u32) > resource_size(res)) {
+		अगर (knob->reg + माप(u32) > resource_size(res)) अणु
 			dev_warn(dev,
 				 "register offset of '%s' exceeds mapped memory size\n",
 				 knob->name);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		reg = readl(ddrctl + knob->reg);
+		reg = पढ़ोl(ddrctl + knob->reg);
 		reg &= knob->mask;
-		reg |= setting->val << knob->shift;
+		reg |= setting->val << knob->shअगरt;
 
 		dev_dbg(dev, "writing 0x%08x to %s\n", reg, setting->name);
 
-		writel(reg, ddrctl + knob->reg);
-	}
+		ग_लिखोl(reg, ddrctl + knob->reg);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id da8xx_ddrctl_of_match[] = {
-	{ .compatible = "ti,da850-ddr-controller", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id da8xx_ddrctl_of_match[] = अणु
+	अणु .compatible = "ti,da850-ddr-controller", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver da8xx_ddrctl_driver = {
+अटल काष्ठा platक्रमm_driver da8xx_ddrctl_driver = अणु
 	.probe = da8xx_ddrctl_probe,
-	.driver = {
+	.driver = अणु
 		.name = "da850-ddr-controller",
 		.of_match_table = da8xx_ddrctl_of_match,
-	},
-};
-module_platform_driver(da8xx_ddrctl_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(da8xx_ddrctl_driver);
 
 MODULE_AUTHOR("Bartosz Golaszewski <bgolaszewski@baylibre.com>");
 MODULE_DESCRIPTION("TI da8xx DDR2/mDDR controller driver");

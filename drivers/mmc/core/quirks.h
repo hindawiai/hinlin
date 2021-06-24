@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  This file contains work-arounds for many known SD/MMC
+ *  This file contains work-arounds क्रम many known SD/MMC
  *  and SDIO hardware bugs.
  *
  *  Copyright (c) 2011 Andrei Warkentin <andreiw@motorola.com>
@@ -10,36 +11,36 @@
  *
  */
 
-#include <linux/mmc/sdio_ids.h>
+#समावेश <linux/mmc/sdio_ids.h>
 
-#include "card.h"
+#समावेश "card.h"
 
-static const struct mmc_fixup __maybe_unused mmc_blk_fixups[] = {
-#define INAND_CMD38_ARG_EXT_CSD  113
-#define INAND_CMD38_ARG_ERASE    0x00
-#define INAND_CMD38_ARG_TRIM     0x01
-#define INAND_CMD38_ARG_SECERASE 0x80
-#define INAND_CMD38_ARG_SECTRIM1 0x81
-#define INAND_CMD38_ARG_SECTRIM2 0x88
+अटल स्थिर काष्ठा mmc_fixup __maybe_unused mmc_blk_fixups[] = अणु
+#घोषणा Iन_अंकD_CMD38_ARG_EXT_CSD  113
+#घोषणा Iन_अंकD_CMD38_ARG_ERASE    0x00
+#घोषणा Iन_अंकD_CMD38_ARG_TRIM     0x01
+#घोषणा Iन_अंकD_CMD38_ARG_SECERASE 0x80
+#घोषणा Iन_अंकD_CMD38_ARG_SECTRIM1 0x81
+#घोषणा Iन_अंकD_CMD38_ARG_SECTRIM2 0x88
 	/* CMD38 argument is passed through EXT_CSD[113] */
 	MMC_FIXUP("SEM02G", CID_MANFID_SANDISK, 0x100, add_quirk,
-		  MMC_QUIRK_INAND_CMD38),
+		  MMC_QUIRK_Iन_अंकD_CMD38),
 	MMC_FIXUP("SEM04G", CID_MANFID_SANDISK, 0x100, add_quirk,
-		  MMC_QUIRK_INAND_CMD38),
+		  MMC_QUIRK_Iन_अंकD_CMD38),
 	MMC_FIXUP("SEM08G", CID_MANFID_SANDISK, 0x100, add_quirk,
-		  MMC_QUIRK_INAND_CMD38),
+		  MMC_QUIRK_Iन_अंकD_CMD38),
 	MMC_FIXUP("SEM16G", CID_MANFID_SANDISK, 0x100, add_quirk,
-		  MMC_QUIRK_INAND_CMD38),
+		  MMC_QUIRK_Iन_अंकD_CMD38),
 	MMC_FIXUP("SEM32G", CID_MANFID_SANDISK, 0x100, add_quirk,
-		  MMC_QUIRK_INAND_CMD38),
+		  MMC_QUIRK_Iन_अंकD_CMD38),
 
 	/*
-	 * Some MMC cards experience performance degradation with CMD23
+	 * Some MMC cards experience perक्रमmance degradation with CMD23
 	 * instead of CMD12-bounded multiblock transfers. For now we'll
 	 * black list what's bad...
 	 * - Certain Toshiba cards.
 	 *
-	 * N.B. This doesn't affect SD cards.
+	 * N.B. This करोesn't affect SD cards.
 	 */
 	MMC_FIXUP("SDMB-32", CID_MANFID_SANDISK, CID_OEMID_ANY, add_quirk_mmc,
 		  MMC_QUIRK_BLK_NO_CMD23),
@@ -53,7 +54,7 @@ static const struct mmc_fixup __maybe_unused mmc_blk_fixups[] = {
 		  MMC_QUIRK_BLK_NO_CMD23),
 
 	/*
-	 * Some SD cards lockup while using CMD23 multiblock transfers.
+	 * Some SD cards lockup जबतक using CMD23 multiblock transfers.
 	 */
 	MMC_FIXUP("AF SD", CID_MANFID_ATP, CID_OEMID_ANY, add_quirk_sd,
 		  MMC_QUIRK_BLK_NO_CMD23),
@@ -61,7 +62,7 @@ static const struct mmc_fixup __maybe_unused mmc_blk_fixups[] = {
 		  MMC_QUIRK_BLK_NO_CMD23),
 
 	/*
-	 * Some MMC cards need longer data read timeout than indicated in CSD.
+	 * Some MMC cards need दीर्घer data पढ़ो समयout than indicated in CSD.
 	 */
 	MMC_FIXUP(CID_NAME_ANY, CID_MANFID_MICRON, 0x200, add_quirk_mmc,
 		  MMC_QUIRK_LONG_READ_TIME),
@@ -69,7 +70,7 @@ static const struct mmc_fixup __maybe_unused mmc_blk_fixups[] = {
 		  MMC_QUIRK_LONG_READ_TIME),
 
 	/*
-	 * On these Samsung MoviNAND parts, performing secure erase or
+	 * On these Samsung Moviन_अंकD parts, perक्रमming secure erase or
 	 * secure trim can result in unrecoverable corruption due to a
 	 * firmware bug.
 	 */
@@ -91,7 +92,7 @@ static const struct mmc_fixup __maybe_unused mmc_blk_fixups[] = {
 		  MMC_QUIRK_SEC_ERASE_TRIM_BROKEN),
 
 	/*
-	 *  On Some Kingston eMMCs, performing trim can result in
+	 *  On Some Kingston eMMCs, perक्रमming trim can result in
 	 *  unrecoverable data conrruption occasionally due to a firmware bug.
 	 */
 	MMC_FIXUP("V10008", CID_MANFID_KINGSTON, CID_OEMID_ANY, add_quirk_mmc,
@@ -100,27 +101,27 @@ static const struct mmc_fixup __maybe_unused mmc_blk_fixups[] = {
 		  MMC_QUIRK_TRIM_BROKEN),
 
 	END_FIXUP
-};
+पूर्ण;
 
-static const struct mmc_fixup __maybe_unused mmc_ext_csd_fixups[] = {
+अटल स्थिर काष्ठा mmc_fixup __maybe_unused mmc_ext_csd_fixups[] = अणु
 	/*
 	 * Certain Hynix eMMC 4.41 cards might get broken when HPI feature
-	 * is used so disable the HPI feature for such buggy cards.
+	 * is used so disable the HPI feature क्रम such buggy cards.
 	 */
 	MMC_FIXUP_EXT_CSD_REV(CID_NAME_ANY, CID_MANFID_HYNIX,
 			      0x014a, add_quirk, MMC_QUIRK_BROKEN_HPI, 5),
 	/*
 	 * Certain Micron (Numonyx) eMMC 4.5 cards might get broken when HPI
-	 * feature is used so disable the HPI feature for such buggy cards.
+	 * feature is used so disable the HPI feature क्रम such buggy cards.
 	 */
 	MMC_FIXUP_EXT_CSD_REV(CID_NAME_ANY, CID_MANFID_NUMONYX,
 			      0x014e, add_quirk, MMC_QUIRK_BROKEN_HPI, 6),
 
 	END_FIXUP
-};
+पूर्ण;
 
 
-static const struct mmc_fixup __maybe_unused sdio_fixup_methods[] = {
+अटल स्थिर काष्ठा mmc_fixup __maybe_unused sdio_fixup_methods[] = अणु
 	SDIO_FIXUP(SDIO_VENDOR_ID_TI_WL1251, SDIO_DEVICE_ID_TI_WL1251,
 		   add_quirk, MMC_QUIRK_NONSTD_FUNC_IF),
 
@@ -143,31 +144,31 @@ static const struct mmc_fixup __maybe_unused sdio_fixup_methods[] = {
 		   add_limit_rate_quirk, 150000000),
 
 	END_FIXUP
-};
+पूर्ण;
 
-static inline void mmc_fixup_device(struct mmc_card *card,
-				    const struct mmc_fixup *table)
-{
-	const struct mmc_fixup *f;
+अटल अंतरभूत व्योम mmc_fixup_device(काष्ठा mmc_card *card,
+				    स्थिर काष्ठा mmc_fixup *table)
+अणु
+	स्थिर काष्ठा mmc_fixup *f;
 	u64 rev = cid_rev_card(card);
 
-	for (f = table; f->vendor_fixup; f++) {
-		if ((f->manfid == CID_MANFID_ANY ||
+	क्रम (f = table; f->venकरोr_fixup; f++) अणु
+		अगर ((f->manfid == CID_MANFID_ANY ||
 		     f->manfid == card->cid.manfid) &&
 		    (f->oemid == CID_OEMID_ANY ||
 		     f->oemid == card->cid.oemid) &&
 		    (f->name == CID_NAME_ANY ||
-		     !strncmp(f->name, card->cid.prod_name,
-			      sizeof(card->cid.prod_name))) &&
-		    (f->cis_vendor == card->cis.vendor ||
-		     f->cis_vendor == (u16) SDIO_ANY_ID) &&
+		     !म_भेदन(f->name, card->cid.prod_name,
+			      माप(card->cid.prod_name))) &&
+		    (f->cis_venकरोr == card->cis.venकरोr ||
+		     f->cis_venकरोr == (u16) SDIO_ANY_ID) &&
 		    (f->cis_device == card->cis.device ||
 		     f->cis_device == (u16) SDIO_ANY_ID) &&
 		    (f->ext_csd_rev == EXT_CSD_REV_ANY ||
 		     f->ext_csd_rev == card->ext_csd.rev) &&
-		    rev >= f->rev_start && rev <= f->rev_end) {
-			dev_dbg(&card->dev, "calling %ps\n", f->vendor_fixup);
-			f->vendor_fixup(card, f->data);
-		}
-	}
-}
+		    rev >= f->rev_start && rev <= f->rev_end) अणु
+			dev_dbg(&card->dev, "calling %ps\n", f->venकरोr_fixup);
+			f->venकरोr_fixup(card, f->data);
+		पूर्ण
+	पूर्ण
+पूर्ण

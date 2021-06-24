@@ -1,145 +1,146 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cache Monitoring Technology (CMT) test
  *
  * Copyright (C) 2018 Intel Corporation
  *
  * Authors:
- *    Sai Praneeth Prakhya <sai.praneeth.prakhya@intel.com>,
- *    Fenghua Yu <fenghua.yu@intel.com>
+ *    Sai Praneeth Prakhya <sai.praneeth.prakhya@पूर्णांकel.com>,
+ *    Fenghua Yu <fenghua.yu@पूर्णांकel.com>
  */
-#include "resctrl.h"
-#include <unistd.h>
+#समावेश "resctrl.h"
+#समावेश <unistd.h>
 
-#define RESULT_FILE_NAME	"result_cmt"
-#define NUM_OF_RUNS		5
-#define MAX_DIFF		2000000
-#define MAX_DIFF_PERCENT	15
+#घोषणा RESULT_खाता_NAME	"result_cmt"
+#घोषणा NUM_OF_RUNS		5
+#घोषणा MAX_DIFF		2000000
+#घोषणा MAX_DIFF_PERCENT	15
 
-static int count_of_bits;
-static char cbm_mask[256];
-static unsigned long long_mask;
-static unsigned long cache_size;
+अटल पूर्णांक count_of_bits;
+अटल अक्षर cbm_mask[256];
+अटल अचिन्हित दीर्घ दीर्घ_mask;
+अटल अचिन्हित दीर्घ cache_size;
 
-static int cmt_setup(int num, ...)
-{
-	struct resctrl_val_param *p;
-	va_list param;
+अटल पूर्णांक cmt_setup(पूर्णांक num, ...)
+अणु
+	काष्ठा resctrl_val_param *p;
+	बहु_सूची param;
 
-	va_start(param, num);
-	p = va_arg(param, struct resctrl_val_param *);
-	va_end(param);
+	बहु_शुरू(param, num);
+	p = बहु_तर्क(param, काष्ठा resctrl_val_param *);
+	बहु_पूर्ण(param);
 
-	/* Run NUM_OF_RUNS times */
-	if (p->num_of_runs >= NUM_OF_RUNS)
-		return -1;
+	/* Run NUM_OF_RUNS बार */
+	अगर (p->num_of_runs >= NUM_OF_RUNS)
+		वापस -1;
 
 	p->num_of_runs++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_results(struct resctrl_val_param *param, int no_of_bits)
-{
-	char *token_array[8], temp[512];
-	unsigned long sum_llc_occu_resc = 0;
-	int runs = 0;
-	FILE *fp;
+अटल पूर्णांक check_results(काष्ठा resctrl_val_param *param, पूर्णांक no_of_bits)
+अणु
+	अक्षर *token_array[8], temp[512];
+	अचिन्हित दीर्घ sum_llc_occu_resc = 0;
+	पूर्णांक runs = 0;
+	खाता *fp;
 
-	ksft_print_msg("Checking for pass/fail\n");
-	fp = fopen(param->filename, "r");
-	if (!fp) {
-		perror("# Error in opening file\n");
+	ksft_prपूर्णांक_msg("Checking for pass/fail\n");
+	fp = ख_खोलो(param->filename, "r");
+	अगर (!fp) अणु
+		लिखो_त्रुटि("# Error in opening file\n");
 
-		return errno;
-	}
+		वापस त्रुटि_सं;
+	पूर्ण
 
-	while (fgets(temp, sizeof(temp), fp)) {
-		char *token = strtok(temp, ":\t");
-		int fields = 0;
+	जबतक (ख_माला_लो(temp, माप(temp), fp)) अणु
+		अक्षर *token = म_मोहर(temp, ":\t");
+		पूर्णांक fields = 0;
 
-		while (token) {
+		जबतक (token) अणु
 			token_array[fields++] = token;
-			token = strtok(NULL, ":\t");
-		}
+			token = म_मोहर(शून्य, ":\t");
+		पूर्ण
 
 		/* Field 3 is llc occ resc value */
-		if (runs > 0)
-			sum_llc_occu_resc += strtoul(token_array[3], NULL, 0);
+		अगर (runs > 0)
+			sum_llc_occu_resc += म_से_अदीर्घ(token_array[3], शून्य, 0);
 		runs++;
-	}
-	fclose(fp);
+	पूर्ण
+	ख_बंद(fp);
 
-	return show_cache_info(sum_llc_occu_resc, no_of_bits, param->span,
+	वापस show_cache_info(sum_llc_occu_resc, no_of_bits, param->span,
 			       MAX_DIFF, MAX_DIFF_PERCENT, NUM_OF_RUNS,
 			       true, true);
-}
+पूर्ण
 
-void cmt_test_cleanup(void)
-{
-	remove(RESULT_FILE_NAME);
-}
+व्योम cmt_test_cleanup(व्योम)
+अणु
+	हटाओ(RESULT_खाता_NAME);
+पूर्ण
 
-int cmt_resctrl_val(int cpu_no, int n, char **benchmark_cmd)
-{
-	int ret, mum_resctrlfs;
+पूर्णांक cmt_resctrl_val(पूर्णांक cpu_no, पूर्णांक n, अक्षर **benchmark_cmd)
+अणु
+	पूर्णांक ret, mum_resctrlfs;
 
 	cache_size = 0;
 	mum_resctrlfs = 1;
 
 	ret = remount_resctrlfs(mum_resctrlfs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!validate_resctrl_feature_request(CMT_STR))
-		return -1;
+	अगर (!validate_resctrl_feature_request(CMT_STR))
+		वापस -1;
 
 	ret = get_cbm_mask("L3", cbm_mask);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	long_mask = strtoul(cbm_mask, NULL, 16);
+	दीर्घ_mask = म_से_अदीर्घ(cbm_mask, शून्य, 16);
 
 	ret = get_cache_size(cpu_no, "L3", &cache_size);
-	if (ret)
-		return ret;
-	ksft_print_msg("Cache size :%lu\n", cache_size);
+	अगर (ret)
+		वापस ret;
+	ksft_prपूर्णांक_msg("Cache size :%lu\n", cache_size);
 
-	count_of_bits = count_bits(long_mask);
+	count_of_bits = count_bits(दीर्घ_mask);
 
-	if (n < 1 || n > count_of_bits) {
-		ksft_print_msg("Invalid input value for numbr_of_bits n!\n");
-		ksft_print_msg("Please enter value in range 1 to %d\n", count_of_bits);
-		return -1;
-	}
+	अगर (n < 1 || n > count_of_bits) अणु
+		ksft_prपूर्णांक_msg("Invalid input value for numbr_of_bits n!\n");
+		ksft_prपूर्णांक_msg("Please enter value in range 1 to %d\n", count_of_bits);
+		वापस -1;
+	पूर्ण
 
-	struct resctrl_val_param param = {
+	काष्ठा resctrl_val_param param = अणु
 		.resctrl_val	= CMT_STR,
 		.ctrlgrp	= "c1",
 		.mongrp		= "m1",
 		.cpu_no		= cpu_no,
 		.mum_resctrlfs	= 0,
-		.filename	= RESULT_FILE_NAME,
-		.mask		= ~(long_mask << n) & long_mask,
+		.filename	= RESULT_खाता_NAME,
+		.mask		= ~(दीर्घ_mask << n) & दीर्घ_mask,
 		.span		= cache_size * n / count_of_bits,
 		.num_of_runs	= 0,
 		.setup		= cmt_setup,
-	};
+	पूर्ण;
 
-	if (strcmp(benchmark_cmd[0], "fill_buf") == 0)
-		sprintf(benchmark_cmd[1], "%lu", param.span);
+	अगर (म_भेद(benchmark_cmd[0], "fill_buf") == 0)
+		प्र_लिखो(benchmark_cmd[1], "%lu", param.span);
 
-	remove(RESULT_FILE_NAME);
+	हटाओ(RESULT_खाता_NAME);
 
 	ret = resctrl_val(benchmark_cmd, &param);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = check_results(&param, n);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	cmt_test_cleanup();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,557 +1,558 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *    Copyright IBM Corp. 2007, 2011
  *    Author(s): Heiko Carstens <heiko.carstens@de.ibm.com>
  */
 
-#define KMSG_COMPONENT "cpu"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "cpu"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/workqueue.h>
-#include <linux/memblock.h>
-#include <linux/uaccess.h>
-#include <linux/sysctl.h>
-#include <linux/cpuset.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/sched/topology.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/cpu.h>
-#include <linux/smp.h>
-#include <linux/mm.h>
-#include <linux/nodemask.h>
-#include <linux/node.h>
-#include <asm/sysinfo.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/cpuset.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/topology.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/node.h>
+#समावेश <यंत्र/sysinfo.h>
 
-#define PTF_HORIZONTAL	(0UL)
-#define PTF_VERTICAL	(1UL)
-#define PTF_CHECK	(2UL)
+#घोषणा PTF_HORIZONTAL	(0UL)
+#घोषणा PTF_VERTICAL	(1UL)
+#घोषणा PTF_CHECK	(2UL)
 
-enum {
+क्रमागत अणु
 	TOPOLOGY_MODE_HW,
 	TOPOLOGY_MODE_SINGLE,
 	TOPOLOGY_MODE_PACKAGE,
 	TOPOLOGY_MODE_UNINITIALIZED
-};
+पूर्ण;
 
-struct mask_info {
-	struct mask_info *next;
-	unsigned char id;
+काष्ठा mask_info अणु
+	काष्ठा mask_info *next;
+	अचिन्हित अक्षर id;
 	cpumask_t mask;
-};
+पूर्ण;
 
-static int topology_mode = TOPOLOGY_MODE_UNINITIALIZED;
-static void set_topology_timer(void);
-static void topology_work_fn(struct work_struct *work);
-static struct sysinfo_15_1_x *tl_info;
+अटल पूर्णांक topology_mode = TOPOLOGY_MODE_UNINITIALIZED;
+अटल व्योम set_topology_समयr(व्योम);
+अटल व्योम topology_work_fn(काष्ठा work_काष्ठा *work);
+अटल काष्ठा sysinfo_15_1_x *tl_info;
 
-static DECLARE_WORK(topology_work, topology_work_fn);
+अटल DECLARE_WORK(topology_work, topology_work_fn);
 
 /*
  * Socket/Book linked lists and cpu_topology updates are
- * protected by "sched_domains_mutex".
+ * रक्षित by "sched_domains_mutex".
  */
-static struct mask_info socket_info;
-static struct mask_info book_info;
-static struct mask_info drawer_info;
+अटल काष्ठा mask_info socket_info;
+अटल काष्ठा mask_info book_info;
+अटल काष्ठा mask_info drawer_info;
 
-struct cpu_topology_s390 cpu_topology[NR_CPUS];
+काष्ठा cpu_topology_s390 cpu_topology[NR_CPUS];
 EXPORT_SYMBOL_GPL(cpu_topology);
 
-static void cpu_group_map(cpumask_t *dst, struct mask_info *info, unsigned int cpu)
-{
-	static cpumask_t mask;
+अटल व्योम cpu_group_map(cpumask_t *dst, काष्ठा mask_info *info, अचिन्हित पूर्णांक cpu)
+अणु
+	अटल cpumask_t mask;
 
 	cpumask_copy(&mask, cpumask_of(cpu));
-	switch (topology_mode) {
-	case TOPOLOGY_MODE_HW:
-		while (info) {
-			if (cpumask_test_cpu(cpu, &info->mask)) {
+	चयन (topology_mode) अणु
+	हाल TOPOLOGY_MODE_HW:
+		जबतक (info) अणु
+			अगर (cpumask_test_cpu(cpu, &info->mask)) अणु
 				cpumask_copy(&mask, &info->mask);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			info = info->next;
-		}
-		break;
-	case TOPOLOGY_MODE_PACKAGE:
+		पूर्ण
+		अवरोध;
+	हाल TOPOLOGY_MODE_PACKAGE:
 		cpumask_copy(&mask, cpu_present_mask);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fallthrough;
-	case TOPOLOGY_MODE_SINGLE:
+	हाल TOPOLOGY_MODE_SINGLE:
 		cpumask_copy(&mask, cpumask_of(cpu));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	cpumask_and(&mask, &mask, cpu_online_mask);
 	cpumask_copy(dst, &mask);
-}
+पूर्ण
 
-static void cpu_thread_map(cpumask_t *dst, unsigned int cpu)
-{
-	static cpumask_t mask;
-	int i;
+अटल व्योम cpu_thपढ़ो_map(cpumask_t *dst, अचिन्हित पूर्णांक cpu)
+अणु
+	अटल cpumask_t mask;
+	पूर्णांक i;
 
 	cpumask_copy(&mask, cpumask_of(cpu));
-	if (topology_mode != TOPOLOGY_MODE_HW)
-		goto out;
+	अगर (topology_mode != TOPOLOGY_MODE_HW)
+		जाओ out;
 	cpu -= cpu % (smp_cpu_mtid + 1);
-	for (i = 0; i <= smp_cpu_mtid; i++)
-		if (cpu_present(cpu + i))
+	क्रम (i = 0; i <= smp_cpu_mtid; i++)
+		अगर (cpu_present(cpu + i))
 			cpumask_set_cpu(cpu + i, &mask);
 	cpumask_and(&mask, &mask, cpu_online_mask);
 out:
 	cpumask_copy(dst, &mask);
-}
+पूर्ण
 
-#define TOPOLOGY_CORE_BITS	64
+#घोषणा TOPOLOGY_CORE_BITS	64
 
-static void add_cpus_to_mask(struct topology_core *tl_core,
-			     struct mask_info *drawer,
-			     struct mask_info *book,
-			     struct mask_info *socket)
-{
-	struct cpu_topology_s390 *topo;
-	unsigned int core;
+अटल व्योम add_cpus_to_mask(काष्ठा topology_core *tl_core,
+			     काष्ठा mask_info *drawer,
+			     काष्ठा mask_info *book,
+			     काष्ठा mask_info *socket)
+अणु
+	काष्ठा cpu_topology_s390 *topo;
+	अचिन्हित पूर्णांक core;
 
-	for_each_set_bit(core, &tl_core->mask, TOPOLOGY_CORE_BITS) {
-		unsigned int rcore;
-		int lcpu, i;
+	क्रम_each_set_bit(core, &tl_core->mask, TOPOLOGY_CORE_BITS) अणु
+		अचिन्हित पूर्णांक rcore;
+		पूर्णांक lcpu, i;
 
 		rcore = TOPOLOGY_CORE_BITS - 1 - core + tl_core->origin;
-		lcpu = smp_find_processor_id(rcore << smp_cpu_mt_shift);
-		if (lcpu < 0)
-			continue;
-		for (i = 0; i <= smp_cpu_mtid; i++) {
+		lcpu = smp_find_processor_id(rcore << smp_cpu_mt_shअगरt);
+		अगर (lcpu < 0)
+			जारी;
+		क्रम (i = 0; i <= smp_cpu_mtid; i++) अणु
 			topo = &cpu_topology[lcpu + i];
 			topo->drawer_id = drawer->id;
 			topo->book_id = book->id;
 			topo->socket_id = socket->id;
 			topo->core_id = rcore;
-			topo->thread_id = lcpu + i;
+			topo->thपढ़ो_id = lcpu + i;
 			topo->dedicated = tl_core->d;
 			cpumask_set_cpu(lcpu + i, &drawer->mask);
 			cpumask_set_cpu(lcpu + i, &book->mask);
 			cpumask_set_cpu(lcpu + i, &socket->mask);
 			smp_cpu_set_polarization(lcpu + i, tl_core->pp);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void clear_masks(void)
-{
-	struct mask_info *info;
+अटल व्योम clear_masks(व्योम)
+अणु
+	काष्ठा mask_info *info;
 
 	info = &socket_info;
-	while (info) {
+	जबतक (info) अणु
 		cpumask_clear(&info->mask);
 		info = info->next;
-	}
+	पूर्ण
 	info = &book_info;
-	while (info) {
+	जबतक (info) अणु
 		cpumask_clear(&info->mask);
 		info = info->next;
-	}
+	पूर्ण
 	info = &drawer_info;
-	while (info) {
+	जबतक (info) अणु
 		cpumask_clear(&info->mask);
 		info = info->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static union topology_entry *next_tle(union topology_entry *tle)
-{
-	if (!tle->nl)
-		return (union topology_entry *)((struct topology_core *)tle + 1);
-	return (union topology_entry *)((struct topology_container *)tle + 1);
-}
+अटल जोड़ topology_entry *next_tle(जोड़ topology_entry *tle)
+अणु
+	अगर (!tle->nl)
+		वापस (जोड़ topology_entry *)((काष्ठा topology_core *)tle + 1);
+	वापस (जोड़ topology_entry *)((काष्ठा topology_container *)tle + 1);
+पूर्ण
 
-static void tl_to_masks(struct sysinfo_15_1_x *info)
-{
-	struct mask_info *socket = &socket_info;
-	struct mask_info *book = &book_info;
-	struct mask_info *drawer = &drawer_info;
-	union topology_entry *tle, *end;
+अटल व्योम tl_to_masks(काष्ठा sysinfo_15_1_x *info)
+अणु
+	काष्ठा mask_info *socket = &socket_info;
+	काष्ठा mask_info *book = &book_info;
+	काष्ठा mask_info *drawer = &drawer_info;
+	जोड़ topology_entry *tle, *end;
 
 	clear_masks();
 	tle = info->tle;
-	end = (union topology_entry *)((unsigned long)info + info->length);
-	while (tle < end) {
-		switch (tle->nl) {
-		case 3:
+	end = (जोड़ topology_entry *)((अचिन्हित दीर्घ)info + info->length);
+	जबतक (tle < end) अणु
+		चयन (tle->nl) अणु
+		हाल 3:
 			drawer = drawer->next;
 			drawer->id = tle->container.id;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			book = book->next;
 			book->id = tle->container.id;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			socket = socket->next;
 			socket->id = tle->container.id;
-			break;
-		case 0:
+			अवरोध;
+		हाल 0:
 			add_cpus_to_mask(&tle->cpu, drawer, book, socket);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			clear_masks();
-			return;
-		}
+			वापस;
+		पूर्ण
 		tle = next_tle(tle);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void topology_update_polarization_simple(void)
-{
-	int cpu;
+अटल व्योम topology_update_polarization_simple(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		smp_cpu_set_polarization(cpu, POLARIZATION_HRZ);
-}
+पूर्ण
 
-static int ptf(unsigned long fc)
-{
-	int rc;
+अटल पूर्णांक ptf(अचिन्हित दीर्घ fc)
+अणु
+	पूर्णांक rc;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		"	.insn	rre,0xb9a20000,%1,%1\n"
 		"	ipm	%0\n"
 		"	srl	%0,28\n"
 		: "=d" (rc)
 		: "d" (fc)  : "cc");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int topology_set_cpu_management(int fc)
-{
-	int cpu, rc;
+पूर्णांक topology_set_cpu_management(पूर्णांक fc)
+अणु
+	पूर्णांक cpu, rc;
 
-	if (!MACHINE_HAS_TOPOLOGY)
-		return -EOPNOTSUPP;
-	if (fc)
+	अगर (!MACHINE_HAS_TOPOLOGY)
+		वापस -EOPNOTSUPP;
+	अगर (fc)
 		rc = ptf(PTF_VERTICAL);
-	else
+	अन्यथा
 		rc = ptf(PTF_HORIZONTAL);
-	if (rc)
-		return -EBUSY;
-	for_each_possible_cpu(cpu)
+	अगर (rc)
+		वापस -EBUSY;
+	क्रम_each_possible_cpu(cpu)
 		smp_cpu_set_polarization(cpu, POLARIZATION_UNKNOWN);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void update_cpu_masks(void)
-{
-	struct cpu_topology_s390 *topo, *topo_package, *topo_sibling;
-	int cpu, sibling, pkg_first, smt_first, id;
+व्योम update_cpu_masks(व्योम)
+अणु
+	काष्ठा cpu_topology_s390 *topo, *topo_package, *topo_sibling;
+	पूर्णांक cpu, sibling, pkg_first, smt_first, id;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		topo = &cpu_topology[cpu];
-		cpu_thread_map(&topo->thread_mask, cpu);
+		cpu_thपढ़ो_map(&topo->thपढ़ो_mask, cpu);
 		cpu_group_map(&topo->core_mask, &socket_info, cpu);
 		cpu_group_map(&topo->book_mask, &book_info, cpu);
 		cpu_group_map(&topo->drawer_mask, &drawer_info, cpu);
 		topo->booted_cores = 0;
-		if (topology_mode != TOPOLOGY_MODE_HW) {
+		अगर (topology_mode != TOPOLOGY_MODE_HW) अणु
 			id = topology_mode == TOPOLOGY_MODE_PACKAGE ? 0 : cpu;
-			topo->thread_id = cpu;
+			topo->thपढ़ो_id = cpu;
 			topo->core_id = cpu;
 			topo->socket_id = id;
 			topo->book_id = id;
 			topo->drawer_id = id;
-		}
-	}
-	for_each_online_cpu(cpu) {
+		पूर्ण
+	पूर्ण
+	क्रम_each_online_cpu(cpu) अणु
 		topo = &cpu_topology[cpu];
 		pkg_first = cpumask_first(&topo->core_mask);
 		topo_package = &cpu_topology[pkg_first];
-		if (cpu == pkg_first) {
-			for_each_cpu(sibling, &topo->core_mask) {
+		अगर (cpu == pkg_first) अणु
+			क्रम_each_cpu(sibling, &topo->core_mask) अणु
 				topo_sibling = &cpu_topology[sibling];
-				smt_first = cpumask_first(&topo_sibling->thread_mask);
-				if (sibling == smt_first)
+				smt_first = cpumask_first(&topo_sibling->thपढ़ो_mask);
+				अगर (sibling == smt_first)
 					topo_package->booted_cores++;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			topo->booted_cores = topo_package->booted_cores;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void store_topology(struct sysinfo_15_1_x *info)
-{
+व्योम store_topology(काष्ठा sysinfo_15_1_x *info)
+अणु
 	stsi(info, 15, 1, topology_mnest_limit());
-}
+पूर्ण
 
-static void __arch_update_dedicated_flag(void *arg)
-{
-	if (topology_cpu_dedicated(smp_processor_id()))
+अटल व्योम __arch_update_dedicated_flag(व्योम *arg)
+अणु
+	अगर (topology_cpu_dedicated(smp_processor_id()))
 		set_cpu_flag(CIF_DEDICATED_CPU);
-	else
+	अन्यथा
 		clear_cpu_flag(CIF_DEDICATED_CPU);
-}
+पूर्ण
 
-static int __arch_update_cpu_topology(void)
-{
-	struct sysinfo_15_1_x *info = tl_info;
-	int rc = 0;
+अटल पूर्णांक __arch_update_cpu_topology(व्योम)
+अणु
+	काष्ठा sysinfo_15_1_x *info = tl_info;
+	पूर्णांक rc = 0;
 
 	mutex_lock(&smp_cpu_state_mutex);
-	if (MACHINE_HAS_TOPOLOGY) {
+	अगर (MACHINE_HAS_TOPOLOGY) अणु
 		rc = 1;
 		store_topology(info);
 		tl_to_masks(info);
-	}
+	पूर्ण
 	update_cpu_masks();
-	if (!MACHINE_HAS_TOPOLOGY)
+	अगर (!MACHINE_HAS_TOPOLOGY)
 		topology_update_polarization_simple();
 	mutex_unlock(&smp_cpu_state_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int arch_update_cpu_topology(void)
-{
-	struct device *dev;
-	int cpu, rc;
+पूर्णांक arch_update_cpu_topology(व्योम)
+अणु
+	काष्ठा device *dev;
+	पूर्णांक cpu, rc;
 
 	rc = __arch_update_cpu_topology();
-	on_each_cpu(__arch_update_dedicated_flag, NULL, 0);
-	for_each_online_cpu(cpu) {
+	on_each_cpu(__arch_update_dedicated_flag, शून्य, 0);
+	क्रम_each_online_cpu(cpu) अणु
 		dev = get_cpu_device(cpu);
-		if (dev)
+		अगर (dev)
 			kobject_uevent(&dev->kobj, KOBJ_CHANGE);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void topology_work_fn(struct work_struct *work)
-{
-	rebuild_sched_domains();
-}
+अटल व्योम topology_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	rebuild_sched_करोमुख्यs();
+पूर्ण
 
-void topology_schedule_update(void)
-{
+व्योम topology_schedule_update(व्योम)
+अणु
 	schedule_work(&topology_work);
-}
+पूर्ण
 
-static void topology_flush_work(void)
-{
+अटल व्योम topology_flush_work(व्योम)
+अणु
 	flush_work(&topology_work);
-}
+पूर्ण
 
-static void topology_timer_fn(struct timer_list *unused)
-{
-	if (ptf(PTF_CHECK))
+अटल व्योम topology_समयr_fn(काष्ठा समयr_list *unused)
+अणु
+	अगर (ptf(PTF_CHECK))
 		topology_schedule_update();
-	set_topology_timer();
-}
+	set_topology_समयr();
+पूर्ण
 
-static struct timer_list topology_timer;
+अटल काष्ठा समयr_list topology_समयr;
 
-static atomic_t topology_poll = ATOMIC_INIT(0);
+अटल atomic_t topology_poll = ATOMIC_INIT(0);
 
-static void set_topology_timer(void)
-{
-	if (atomic_add_unless(&topology_poll, -1, 0))
-		mod_timer(&topology_timer, jiffies + msecs_to_jiffies(100));
-	else
-		mod_timer(&topology_timer, jiffies + msecs_to_jiffies(60 * MSEC_PER_SEC));
-}
+अटल व्योम set_topology_समयr(व्योम)
+अणु
+	अगर (atomic_add_unless(&topology_poll, -1, 0))
+		mod_समयr(&topology_समयr, jअगरfies + msecs_to_jअगरfies(100));
+	अन्यथा
+		mod_समयr(&topology_समयr, jअगरfies + msecs_to_jअगरfies(60 * MSEC_PER_SEC));
+पूर्ण
 
-void topology_expect_change(void)
-{
-	if (!MACHINE_HAS_TOPOLOGY)
-		return;
-	/* This is racy, but it doesn't matter since it is just a heuristic.
-	 * Worst case is that we poll in a higher frequency for a bit longer.
+व्योम topology_expect_change(व्योम)
+अणु
+	अगर (!MACHINE_HAS_TOPOLOGY)
+		वापस;
+	/* This is racy, but it करोesn't matter since it is just a heuristic.
+	 * Worst हाल is that we poll in a higher frequency क्रम a bit दीर्घer.
 	 */
-	if (atomic_read(&topology_poll) > 60)
-		return;
+	अगर (atomic_पढ़ो(&topology_poll) > 60)
+		वापस;
 	atomic_add(60, &topology_poll);
-	set_topology_timer();
-}
+	set_topology_समयr();
+पूर्ण
 
-static int cpu_management;
+अटल पूर्णांक cpu_management;
 
-static ssize_t dispatching_show(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
-	ssize_t count;
+अटल sमाप_प्रकार dispatching_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	sमाप_प्रकार count;
 
 	mutex_lock(&smp_cpu_state_mutex);
-	count = sprintf(buf, "%d\n", cpu_management);
+	count = प्र_लिखो(buf, "%d\n", cpu_management);
 	mutex_unlock(&smp_cpu_state_mutex);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t dispatching_store(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf,
-				 size_t count)
-{
-	int val, rc;
-	char delim;
+अटल sमाप_प्रकार dispatching_store(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf,
+				 माप_प्रकार count)
+अणु
+	पूर्णांक val, rc;
+	अक्षर delim;
 
-	if (sscanf(buf, "%d %c", &val, &delim) != 1)
-		return -EINVAL;
-	if (val != 0 && val != 1)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%d %c", &val, &delim) != 1)
+		वापस -EINVAL;
+	अगर (val != 0 && val != 1)
+		वापस -EINVAL;
 	rc = 0;
 	get_online_cpus();
 	mutex_lock(&smp_cpu_state_mutex);
-	if (cpu_management == val)
-		goto out;
+	अगर (cpu_management == val)
+		जाओ out;
 	rc = topology_set_cpu_management(val);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 	cpu_management = val;
 	topology_expect_change();
 out:
 	mutex_unlock(&smp_cpu_state_mutex);
 	put_online_cpus();
-	return rc ? rc : count;
-}
-static DEVICE_ATTR_RW(dispatching);
+	वापस rc ? rc : count;
+पूर्ण
+अटल DEVICE_ATTR_RW(dispatching);
 
-static ssize_t cpu_polarization_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	int cpu = dev->id;
-	ssize_t count;
+अटल sमाप_प्रकार cpu_polarization_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक cpu = dev->id;
+	sमाप_प्रकार count;
 
 	mutex_lock(&smp_cpu_state_mutex);
-	switch (smp_cpu_get_polarization(cpu)) {
-	case POLARIZATION_HRZ:
-		count = sprintf(buf, "horizontal\n");
-		break;
-	case POLARIZATION_VL:
-		count = sprintf(buf, "vertical:low\n");
-		break;
-	case POLARIZATION_VM:
-		count = sprintf(buf, "vertical:medium\n");
-		break;
-	case POLARIZATION_VH:
-		count = sprintf(buf, "vertical:high\n");
-		break;
-	default:
-		count = sprintf(buf, "unknown\n");
-		break;
-	}
+	चयन (smp_cpu_get_polarization(cpu)) अणु
+	हाल POLARIZATION_HRZ:
+		count = प्र_लिखो(buf, "horizontal\n");
+		अवरोध;
+	हाल POLARIZATION_VL:
+		count = प्र_लिखो(buf, "vertical:low\n");
+		अवरोध;
+	हाल POLARIZATION_VM:
+		count = प्र_लिखो(buf, "vertical:medium\n");
+		अवरोध;
+	हाल POLARIZATION_VH:
+		count = प्र_लिखो(buf, "vertical:high\n");
+		अवरोध;
+	शेष:
+		count = प्र_लिखो(buf, "unknown\n");
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&smp_cpu_state_mutex);
-	return count;
-}
-static DEVICE_ATTR(polarization, 0444, cpu_polarization_show, NULL);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR(polarization, 0444, cpu_polarization_show, शून्य);
 
-static struct attribute *topology_cpu_attrs[] = {
+अटल काष्ठा attribute *topology_cpu_attrs[] = अणु
 	&dev_attr_polarization.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group topology_cpu_attr_group = {
+अटल काष्ठा attribute_group topology_cpu_attr_group = अणु
 	.attrs = topology_cpu_attrs,
-};
+पूर्ण;
 
-static ssize_t cpu_dedicated_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	int cpu = dev->id;
-	ssize_t count;
+अटल sमाप_प्रकार cpu_dedicated_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक cpu = dev->id;
+	sमाप_प्रकार count;
 
 	mutex_lock(&smp_cpu_state_mutex);
-	count = sprintf(buf, "%d\n", topology_cpu_dedicated(cpu));
+	count = प्र_लिखो(buf, "%d\n", topology_cpu_dedicated(cpu));
 	mutex_unlock(&smp_cpu_state_mutex);
-	return count;
-}
-static DEVICE_ATTR(dedicated, 0444, cpu_dedicated_show, NULL);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR(dedicated, 0444, cpu_dedicated_show, शून्य);
 
-static struct attribute *topology_extra_cpu_attrs[] = {
+अटल काष्ठा attribute *topology_extra_cpu_attrs[] = अणु
 	&dev_attr_dedicated.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute_group topology_extra_cpu_attr_group = {
+अटल काष्ठा attribute_group topology_extra_cpu_attr_group = अणु
 	.attrs = topology_extra_cpu_attrs,
-};
+पूर्ण;
 
-int topology_cpu_init(struct cpu *cpu)
-{
-	int rc;
+पूर्णांक topology_cpu_init(काष्ठा cpu *cpu)
+अणु
+	पूर्णांक rc;
 
 	rc = sysfs_create_group(&cpu->dev.kobj, &topology_cpu_attr_group);
-	if (rc || !MACHINE_HAS_TOPOLOGY)
-		return rc;
+	अगर (rc || !MACHINE_HAS_TOPOLOGY)
+		वापस rc;
 	rc = sysfs_create_group(&cpu->dev.kobj, &topology_extra_cpu_attr_group);
-	if (rc)
-		sysfs_remove_group(&cpu->dev.kobj, &topology_cpu_attr_group);
-	return rc;
-}
+	अगर (rc)
+		sysfs_हटाओ_group(&cpu->dev.kobj, &topology_cpu_attr_group);
+	वापस rc;
+पूर्ण
 
-static const struct cpumask *cpu_thread_mask(int cpu)
-{
-	return &cpu_topology[cpu].thread_mask;
-}
+अटल स्थिर काष्ठा cpumask *cpu_thपढ़ो_mask(पूर्णांक cpu)
+अणु
+	वापस &cpu_topology[cpu].thपढ़ो_mask;
+पूर्ण
 
 
-const struct cpumask *cpu_coregroup_mask(int cpu)
-{
-	return &cpu_topology[cpu].core_mask;
-}
+स्थिर काष्ठा cpumask *cpu_coregroup_mask(पूर्णांक cpu)
+अणु
+	वापस &cpu_topology[cpu].core_mask;
+पूर्ण
 
-static const struct cpumask *cpu_book_mask(int cpu)
-{
-	return &cpu_topology[cpu].book_mask;
-}
+अटल स्थिर काष्ठा cpumask *cpu_book_mask(पूर्णांक cpu)
+अणु
+	वापस &cpu_topology[cpu].book_mask;
+पूर्ण
 
-static const struct cpumask *cpu_drawer_mask(int cpu)
-{
-	return &cpu_topology[cpu].drawer_mask;
-}
+अटल स्थिर काष्ठा cpumask *cpu_drawer_mask(पूर्णांक cpu)
+अणु
+	वापस &cpu_topology[cpu].drawer_mask;
+पूर्ण
 
-static struct sched_domain_topology_level s390_topology[] = {
-	{ cpu_thread_mask, cpu_smt_flags, SD_INIT_NAME(SMT) },
-	{ cpu_coregroup_mask, cpu_core_flags, SD_INIT_NAME(MC) },
-	{ cpu_book_mask, SD_INIT_NAME(BOOK) },
-	{ cpu_drawer_mask, SD_INIT_NAME(DRAWER) },
-	{ cpu_cpu_mask, SD_INIT_NAME(DIE) },
-	{ NULL, },
-};
+अटल काष्ठा sched_करोमुख्य_topology_level s390_topology[] = अणु
+	अणु cpu_thपढ़ो_mask, cpu_smt_flags, SD_INIT_NAME(SMT) पूर्ण,
+	अणु cpu_coregroup_mask, cpu_core_flags, SD_INIT_NAME(MC) पूर्ण,
+	अणु cpu_book_mask, SD_INIT_NAME(BOOK) पूर्ण,
+	अणु cpu_drawer_mask, SD_INIT_NAME(DRAWER) पूर्ण,
+	अणु cpu_cpu_mask, SD_INIT_NAME(DIE) पूर्ण,
+	अणु शून्य, पूर्ण,
+पूर्ण;
 
-static void __init alloc_masks(struct sysinfo_15_1_x *info,
-			       struct mask_info *mask, int offset)
-{
-	int i, nr_masks;
+अटल व्योम __init alloc_masks(काष्ठा sysinfo_15_1_x *info,
+			       काष्ठा mask_info *mask, पूर्णांक offset)
+अणु
+	पूर्णांक i, nr_masks;
 
 	nr_masks = info->mag[TOPOLOGY_NR_MAG - offset];
-	for (i = 0; i < info->mnest - offset; i++)
+	क्रम (i = 0; i < info->mnest - offset; i++)
 		nr_masks *= info->mag[TOPOLOGY_NR_MAG - offset - 1 - i];
 	nr_masks = max(nr_masks, 1);
-	for (i = 0; i < nr_masks; i++) {
-		mask->next = memblock_alloc(sizeof(*mask->next), 8);
-		if (!mask->next)
+	क्रम (i = 0; i < nr_masks; i++) अणु
+		mask->next = memblock_alloc(माप(*mask->next), 8);
+		अगर (!mask->next)
 			panic("%s: Failed to allocate %zu bytes align=0x%x\n",
-			      __func__, sizeof(*mask->next), 8);
+			      __func__, माप(*mask->next), 8);
 		mask = mask->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init topology_init_early(void)
-{
-	struct sysinfo_15_1_x *info;
+व्योम __init topology_init_early(व्योम)
+अणु
+	काष्ठा sysinfo_15_1_x *info;
 
 	set_sched_topology(s390_topology);
-	if (topology_mode == TOPOLOGY_MODE_UNINITIALIZED) {
-		if (MACHINE_HAS_TOPOLOGY)
+	अगर (topology_mode == TOPOLOGY_MODE_UNINITIALIZED) अणु
+		अगर (MACHINE_HAS_TOPOLOGY)
 			topology_mode = TOPOLOGY_MODE_HW;
-		else
+		अन्यथा
 			topology_mode = TOPOLOGY_MODE_SINGLE;
-	}
-	if (!MACHINE_HAS_TOPOLOGY)
-		goto out;
+	पूर्ण
+	अगर (!MACHINE_HAS_TOPOLOGY)
+		जाओ out;
 	tl_info = memblock_alloc(PAGE_SIZE, PAGE_SIZE);
-	if (!tl_info)
+	अगर (!tl_info)
 		panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 		      __func__, PAGE_SIZE, PAGE_SIZE);
 	info = tl_info;
@@ -564,91 +565,91 @@ void __init topology_init_early(void)
 	alloc_masks(info, &drawer_info, 3);
 out:
 	__arch_update_cpu_topology();
-	__arch_update_dedicated_flag(NULL);
-}
+	__arch_update_dedicated_flag(शून्य);
+पूर्ण
 
-static inline int topology_get_mode(int enabled)
-{
-	if (!enabled)
-		return TOPOLOGY_MODE_SINGLE;
-	return MACHINE_HAS_TOPOLOGY ? TOPOLOGY_MODE_HW : TOPOLOGY_MODE_PACKAGE;
-}
+अटल अंतरभूत पूर्णांक topology_get_mode(पूर्णांक enabled)
+अणु
+	अगर (!enabled)
+		वापस TOPOLOGY_MODE_SINGLE;
+	वापस MACHINE_HAS_TOPOLOGY ? TOPOLOGY_MODE_HW : TOPOLOGY_MODE_PACKAGE;
+पूर्ण
 
-static inline int topology_is_enabled(void)
-{
-	return topology_mode != TOPOLOGY_MODE_SINGLE;
-}
+अटल अंतरभूत पूर्णांक topology_is_enabled(व्योम)
+अणु
+	वापस topology_mode != TOPOLOGY_MODE_SINGLE;
+पूर्ण
 
-static int __init topology_setup(char *str)
-{
+अटल पूर्णांक __init topology_setup(अक्षर *str)
+अणु
 	bool enabled;
-	int rc;
+	पूर्णांक rc;
 
 	rc = kstrtobool(str, &enabled);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	topology_mode = topology_get_mode(enabled);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("topology", topology_setup);
 
-static int topology_ctl_handler(struct ctl_table *ctl, int write,
-				void *buffer, size_t *lenp, loff_t *ppos)
-{
-	int enabled = topology_is_enabled();
-	int new_mode;
-	int rc;
-	struct ctl_table ctl_entry = {
+अटल पूर्णांक topology_ctl_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+				व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक enabled = topology_is_enabled();
+	पूर्णांक new_mode;
+	पूर्णांक rc;
+	काष्ठा ctl_table ctl_entry = अणु
 		.procname	= ctl->procname,
 		.data		= &enabled,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE,
-	};
+	पूर्ण;
 
-	rc = proc_douintvec_minmax(&ctl_entry, write, buffer, lenp, ppos);
-	if (rc < 0 || !write)
-		return rc;
+	rc = proc_करोuपूर्णांकvec_minmax(&ctl_entry, ग_लिखो, buffer, lenp, ppos);
+	अगर (rc < 0 || !ग_लिखो)
+		वापस rc;
 
 	mutex_lock(&smp_cpu_state_mutex);
 	new_mode = topology_get_mode(enabled);
-	if (topology_mode != new_mode) {
+	अगर (topology_mode != new_mode) अणु
 		topology_mode = new_mode;
 		topology_schedule_update();
-	}
+	पूर्ण
 	mutex_unlock(&smp_cpu_state_mutex);
 	topology_flush_work();
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct ctl_table topology_ctl_table[] = {
-	{
+अटल काष्ठा ctl_table topology_ctl_table[] = अणु
+	अणु
 		.procname	= "topology",
 		.mode		= 0644,
 		.proc_handler	= topology_ctl_handler,
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct ctl_table topology_dir_table[] = {
-	{
+अटल काष्ठा ctl_table topology_dir_table[] = अणु
+	अणु
 		.procname	= "s390",
 		.maxlen		= 0,
 		.mode		= 0555,
 		.child		= topology_ctl_table,
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int __init topology_init(void)
-{
-	timer_setup(&topology_timer, topology_timer_fn, TIMER_DEFERRABLE);
-	if (MACHINE_HAS_TOPOLOGY)
-		set_topology_timer();
-	else
+अटल पूर्णांक __init topology_init(व्योम)
+अणु
+	समयr_setup(&topology_समयr, topology_समयr_fn, TIMER_DEFERRABLE);
+	अगर (MACHINE_HAS_TOPOLOGY)
+		set_topology_समयr();
+	अन्यथा
 		topology_update_polarization_simple();
-	register_sysctl_table(topology_dir_table);
-	return device_create_file(cpu_subsys.dev_root, &dev_attr_dispatching);
-}
+	रेजिस्टर_sysctl_table(topology_dir_table);
+	वापस device_create_file(cpu_subsys.dev_root, &dev_attr_dispatching);
+पूर्ण
 device_initcall(topology_init);

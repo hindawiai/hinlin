@@ -1,90 +1,91 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Intel Merrifield SoC pinctrl driver
+ * Intel Merrअगरield SoC pinctrl driver
  *
  * Copyright (C) 2016, Intel Corporation
- * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
  */
 
-#include <linux/bits.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define MRFLD_FAMILY_NR			64
-#define MRFLD_FAMILY_LEN		0x400
+#घोषणा MRFLD_FAMILY_NR			64
+#घोषणा MRFLD_FAMILY_LEN		0x400
 
-#define SLEW_OFFSET			0x000
-#define BUFCFG_OFFSET			0x100
-#define MISC_OFFSET			0x300
+#घोषणा SLEW_OFFSET			0x000
+#घोषणा BUFCFG_OFFSET			0x100
+#घोषणा MISC_OFFSET			0x300
 
-#define BUFCFG_PINMODE_SHIFT		0
-#define BUFCFG_PINMODE_MASK		GENMASK(2, 0)
-#define BUFCFG_PINMODE_GPIO		0
-#define BUFCFG_PUPD_VAL_SHIFT		4
-#define BUFCFG_PUPD_VAL_MASK		GENMASK(5, 4)
-#define BUFCFG_PUPD_VAL_2K		0
-#define BUFCFG_PUPD_VAL_20K		1
-#define BUFCFG_PUPD_VAL_50K		2
-#define BUFCFG_PUPD_VAL_910		3
-#define BUFCFG_PU_EN			BIT(8)
-#define BUFCFG_PD_EN			BIT(9)
-#define BUFCFG_Px_EN_MASK		GENMASK(9, 8)
-#define BUFCFG_SLEWSEL			BIT(10)
-#define BUFCFG_OVINEN			BIT(12)
-#define BUFCFG_OVINEN_EN		BIT(13)
-#define BUFCFG_OVINEN_MASK		GENMASK(13, 12)
-#define BUFCFG_OVOUTEN			BIT(14)
-#define BUFCFG_OVOUTEN_EN		BIT(15)
-#define BUFCFG_OVOUTEN_MASK		GENMASK(15, 14)
-#define BUFCFG_INDATAOV_VAL		BIT(16)
-#define BUFCFG_INDATAOV_EN		BIT(17)
-#define BUFCFG_INDATAOV_MASK		GENMASK(17, 16)
-#define BUFCFG_OUTDATAOV_VAL		BIT(18)
-#define BUFCFG_OUTDATAOV_EN		BIT(19)
-#define BUFCFG_OUTDATAOV_MASK		GENMASK(19, 18)
-#define BUFCFG_OD_EN			BIT(21)
+#घोषणा BUFCFG_PINMODE_SHIFT		0
+#घोषणा BUFCFG_PINMODE_MASK		GENMASK(2, 0)
+#घोषणा BUFCFG_PINMODE_GPIO		0
+#घोषणा BUFCFG_PUPD_VAL_SHIFT		4
+#घोषणा BUFCFG_PUPD_VAL_MASK		GENMASK(5, 4)
+#घोषणा BUFCFG_PUPD_VAL_2K		0
+#घोषणा BUFCFG_PUPD_VAL_20K		1
+#घोषणा BUFCFG_PUPD_VAL_50K		2
+#घोषणा BUFCFG_PUPD_VAL_910		3
+#घोषणा BUFCFG_PU_EN			BIT(8)
+#घोषणा BUFCFG_PD_EN			BIT(9)
+#घोषणा BUFCFG_Px_EN_MASK		GENMASK(9, 8)
+#घोषणा BUFCFG_SLEWSEL			BIT(10)
+#घोषणा BUFCFG_OVINEN			BIT(12)
+#घोषणा BUFCFG_OVINEN_EN		BIT(13)
+#घोषणा BUFCFG_OVINEN_MASK		GENMASK(13, 12)
+#घोषणा BUFCFG_OVOUTEN			BIT(14)
+#घोषणा BUFCFG_OVOUTEN_EN		BIT(15)
+#घोषणा BUFCFG_OVOUTEN_MASK		GENMASK(15, 14)
+#घोषणा BUFCFG_INDATAOV_VAL		BIT(16)
+#घोषणा BUFCFG_INDATAOV_EN		BIT(17)
+#घोषणा BUFCFG_INDATAOV_MASK		GENMASK(17, 16)
+#घोषणा BUFCFG_OUTDATAOV_VAL		BIT(18)
+#घोषणा BUFCFG_OUTDATAOV_EN		BIT(19)
+#घोषणा BUFCFG_OUTDATAOV_MASK		GENMASK(19, 18)
+#घोषणा BUFCFG_OD_EN			BIT(21)
 
 /**
- * struct mrfld_family - Intel pin family description
- * @barno: MMIO BAR number where registers for this family reside
+ * काष्ठा mrfld_family - Intel pin family description
+ * @barno: MMIO BAR number where रेजिस्टरs क्रम this family reside
  * @pin_base: Starting pin of pins in this family
  * @npins: Number of pins in this family
- * @protected: True if family is protected by access
- * @regs: family specific common registers
+ * @रक्षित: True अगर family is रक्षित by access
+ * @regs: family specअगरic common रेजिस्टरs
  */
-struct mrfld_family {
-	unsigned int barno;
-	unsigned int pin_base;
-	size_t npins;
-	bool protected;
-	void __iomem *regs;
-};
+काष्ठा mrfld_family अणु
+	अचिन्हित पूर्णांक barno;
+	अचिन्हित पूर्णांक pin_base;
+	माप_प्रकार npins;
+	bool रक्षित;
+	व्योम __iomem *regs;
+पूर्ण;
 
-#define MRFLD_FAMILY(b, s, e)				\
-	{						\
+#घोषणा MRFLD_FAMILY(b, s, e)				\
+	अणु						\
 		.barno = (b),				\
 		.pin_base = (s),			\
 		.npins = (e) - (s) + 1,			\
-	}
+	पूर्ण
 
-#define MRFLD_FAMILY_PROTECTED(b, s, e)			\
-	{						\
+#घोषणा MRFLD_FAMILY_PROTECTED(b, s, e)			\
+	अणु						\
 		.barno = (b),				\
 		.pin_base = (s),			\
 		.npins = (e) - (s) + 1,			\
-		.protected = true,			\
-	}
+		.रक्षित = true,			\
+	पूर्ण
 
-static const struct pinctrl_pin_desc mrfld_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc mrfld_pins[] = अणु
 	/* Family 0: OCP2SSC (0 pins) */
 	/* Family 1: ULPI (13 pins) */
 	PINCTRL_PIN(0, "ULPI_CLK"),
@@ -337,20 +338,20 @@ static const struct pinctrl_pin_desc mrfld_pins[] = {
 	/* Family 16: USB3 (0 pins) */
 	/* Family 17: HSIC (0 pins) */
 	/* Family 18: Broadcast (0 pins) */
-};
+पूर्ण;
 
-static const unsigned int mrfld_sdio_pins[] = { 50, 51, 52, 53, 54, 55, 56 };
-static const unsigned int mrfld_i2s2_pins[] = { 75, 76, 77, 78 };
-static const unsigned int mrfld_spi5_pins[] = { 90, 91, 92, 93, 94, 95, 96 };
-static const unsigned int mrfld_uart0_pins[] = { 115, 116, 117, 118 };
-static const unsigned int mrfld_uart1_pins[] = { 119, 120, 121, 122 };
-static const unsigned int mrfld_uart2_pins[] = { 123, 124, 125, 126 };
-static const unsigned int mrfld_pwm0_pins[] = { 144 };
-static const unsigned int mrfld_pwm1_pins[] = { 145 };
-static const unsigned int mrfld_pwm2_pins[] = { 132 };
-static const unsigned int mrfld_pwm3_pins[] = { 133 };
+अटल स्थिर अचिन्हित पूर्णांक mrfld_sdio_pins[] = अणु 50, 51, 52, 53, 54, 55, 56 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mrfld_i2s2_pins[] = अणु 75, 76, 77, 78 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mrfld_spi5_pins[] = अणु 90, 91, 92, 93, 94, 95, 96 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mrfld_uart0_pins[] = अणु 115, 116, 117, 118 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mrfld_uart1_pins[] = अणु 119, 120, 121, 122 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mrfld_uart2_pins[] = अणु 123, 124, 125, 126 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mrfld_pwm0_pins[] = अणु 144 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mrfld_pwm1_pins[] = अणु 145 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mrfld_pwm2_pins[] = अणु 132 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mrfld_pwm3_pins[] = अणु 133 पूर्ण;
 
-static const struct intel_pingroup mrfld_groups[] = {
+अटल स्थिर काष्ठा पूर्णांकel_pingroup mrfld_groups[] = अणु
 	PIN_GROUP("sdio_grp", mrfld_sdio_pins, 1),
 	PIN_GROUP("i2s2_grp", mrfld_i2s2_pins, 1),
 	PIN_GROUP("spi5_grp", mrfld_spi5_pins, 1),
@@ -361,20 +362,20 @@ static const struct intel_pingroup mrfld_groups[] = {
 	PIN_GROUP("pwm1_grp", mrfld_pwm1_pins, 1),
 	PIN_GROUP("pwm2_grp", mrfld_pwm2_pins, 1),
 	PIN_GROUP("pwm3_grp", mrfld_pwm3_pins, 1),
-};
+पूर्ण;
 
-static const char * const mrfld_sdio_groups[] = { "sdio_grp" };
-static const char * const mrfld_i2s2_groups[] = { "i2s2_grp" };
-static const char * const mrfld_spi5_groups[] = { "spi5_grp" };
-static const char * const mrfld_uart0_groups[] = { "uart0_grp" };
-static const char * const mrfld_uart1_groups[] = { "uart1_grp" };
-static const char * const mrfld_uart2_groups[] = { "uart2_grp" };
-static const char * const mrfld_pwm0_groups[] = { "pwm0_grp" };
-static const char * const mrfld_pwm1_groups[] = { "pwm1_grp" };
-static const char * const mrfld_pwm2_groups[] = { "pwm2_grp" };
-static const char * const mrfld_pwm3_groups[] = { "pwm3_grp" };
+अटल स्थिर अक्षर * स्थिर mrfld_sdio_groups[] = अणु "sdio_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर mrfld_i2s2_groups[] = अणु "i2s2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर mrfld_spi5_groups[] = अणु "spi5_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर mrfld_uart0_groups[] = अणु "uart0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर mrfld_uart1_groups[] = अणु "uart1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर mrfld_uart2_groups[] = अणु "uart2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर mrfld_pwm0_groups[] = अणु "pwm0_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर mrfld_pwm1_groups[] = अणु "pwm1_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर mrfld_pwm2_groups[] = अणु "pwm2_grp" पूर्ण;
+अटल स्थिर अक्षर * स्थिर mrfld_pwm3_groups[] = अणु "pwm3_grp" पूर्ण;
 
-static const struct intel_function mrfld_functions[] = {
+अटल स्थिर काष्ठा पूर्णांकel_function mrfld_functions[] = अणु
 	FUNCTION("sdio", mrfld_sdio_groups),
 	FUNCTION("i2s2", mrfld_i2s2_groups),
 	FUNCTION("spi5", mrfld_spi5_groups),
@@ -385,9 +386,9 @@ static const struct intel_function mrfld_functions[] = {
 	FUNCTION("pwm1", mrfld_pwm1_groups),
 	FUNCTION("pwm2", mrfld_pwm2_groups),
 	FUNCTION("pwm3", mrfld_pwm3_groups),
-};
+पूर्ण;
 
-static const struct mrfld_family mrfld_families[] = {
+अटल स्थिर काष्ठा mrfld_family mrfld_families[] = अणु
 	MRFLD_FAMILY(1, 0, 12),
 	MRFLD_FAMILY(2, 13, 36),
 	MRFLD_FAMILY(3, 37, 56),
@@ -403,14 +404,14 @@ static const struct mrfld_family mrfld_families[] = {
 	MRFLD_FAMILY(13, 195, 214),
 	MRFLD_FAMILY(14, 215, 227),
 	MRFLD_FAMILY(15, 228, 232),
-};
+पूर्ण;
 
 /**
- * struct mrfld_pinctrl - Intel Merrifield pinctrl private structure
- * @dev: Pointer to the device structure
- * @lock: Lock to serialize register access
+ * काष्ठा mrfld_pinctrl - Intel Merrअगरield pinctrl निजी काष्ठाure
+ * @dev: Poपूर्णांकer to the device काष्ठाure
+ * @lock: Lock to serialize रेजिस्टर access
  * @pctldesc: Pin controller description
- * @pctldev: Pointer to the pin controller device
+ * @pctldev: Poपूर्णांकer to the pin controller device
  * @families: Array of families this pinctrl handles
  * @nfamilies: Number of families in the array
  * @functions: Array of functions
@@ -420,515 +421,515 @@ static const struct mrfld_family mrfld_families[] = {
  * @pins: Array of pins this pinctrl controls
  * @npins: Number of pins in the array
  */
-struct mrfld_pinctrl {
-	struct device *dev;
+काष्ठा mrfld_pinctrl अणु
+	काष्ठा device *dev;
 	raw_spinlock_t lock;
-	struct pinctrl_desc pctldesc;
-	struct pinctrl_dev *pctldev;
+	काष्ठा pinctrl_desc pctldesc;
+	काष्ठा pinctrl_dev *pctldev;
 
 	/* Pin controller configuration */
-	const struct mrfld_family *families;
-	size_t nfamilies;
-	const struct intel_function *functions;
-	size_t nfunctions;
-	const struct intel_pingroup *groups;
-	size_t ngroups;
-	const struct pinctrl_pin_desc *pins;
-	size_t npins;
-};
+	स्थिर काष्ठा mrfld_family *families;
+	माप_प्रकार nfamilies;
+	स्थिर काष्ठा पूर्णांकel_function *functions;
+	माप_प्रकार nfunctions;
+	स्थिर काष्ठा पूर्णांकel_pingroup *groups;
+	माप_प्रकार ngroups;
+	स्थिर काष्ठा pinctrl_pin_desc *pins;
+	माप_प्रकार npins;
+पूर्ण;
 
-#define pin_to_bufno(f, p)		((p) - (f)->pin_base)
+#घोषणा pin_to_bufno(f, p)		((p) - (f)->pin_base)
 
-static const struct mrfld_family *mrfld_get_family(struct mrfld_pinctrl *mp,
-						   unsigned int pin)
-{
-	const struct mrfld_family *family;
-	unsigned int i;
+अटल स्थिर काष्ठा mrfld_family *mrfld_get_family(काष्ठा mrfld_pinctrl *mp,
+						   अचिन्हित पूर्णांक pin)
+अणु
+	स्थिर काष्ठा mrfld_family *family;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < mp->nfamilies; i++) {
+	क्रम (i = 0; i < mp->nfamilies; i++) अणु
 		family = &mp->families[i];
-		if (pin >= family->pin_base &&
+		अगर (pin >= family->pin_base &&
 		    pin < family->pin_base + family->npins)
-			return family;
-	}
+			वापस family;
+	पूर्ण
 
 	dev_warn(mp->dev, "failed to find family for pin %u\n", pin);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool mrfld_buf_available(struct mrfld_pinctrl *mp, unsigned int pin)
-{
-	const struct mrfld_family *family;
-
-	family = mrfld_get_family(mp, pin);
-	if (!family)
-		return false;
-
-	return !family->protected;
-}
-
-static void __iomem *mrfld_get_bufcfg(struct mrfld_pinctrl *mp, unsigned int pin)
-{
-	const struct mrfld_family *family;
-	unsigned int bufno;
+अटल bool mrfld_buf_available(काष्ठा mrfld_pinctrl *mp, अचिन्हित पूर्णांक pin)
+अणु
+	स्थिर काष्ठा mrfld_family *family;
 
 	family = mrfld_get_family(mp, pin);
-	if (!family)
-		return NULL;
+	अगर (!family)
+		वापस false;
+
+	वापस !family->रक्षित;
+पूर्ण
+
+अटल व्योम __iomem *mrfld_get_bufcfg(काष्ठा mrfld_pinctrl *mp, अचिन्हित पूर्णांक pin)
+अणु
+	स्थिर काष्ठा mrfld_family *family;
+	अचिन्हित पूर्णांक bufno;
+
+	family = mrfld_get_family(mp, pin);
+	अगर (!family)
+		वापस शून्य;
 
 	bufno = pin_to_bufno(family, pin);
-	return family->regs + BUFCFG_OFFSET + bufno * 4;
-}
+	वापस family->regs + BUFCFG_OFFSET + bufno * 4;
+पूर्ण
 
-static int mrfld_read_bufcfg(struct mrfld_pinctrl *mp, unsigned int pin, u32 *value)
-{
-	void __iomem *bufcfg;
+अटल पूर्णांक mrfld_पढ़ो_bufcfg(काष्ठा mrfld_pinctrl *mp, अचिन्हित पूर्णांक pin, u32 *value)
+अणु
+	व्योम __iomem *bufcfg;
 
-	if (!mrfld_buf_available(mp, pin))
-		return -EBUSY;
+	अगर (!mrfld_buf_available(mp, pin))
+		वापस -EBUSY;
 
 	bufcfg = mrfld_get_bufcfg(mp, pin);
-	*value = readl(bufcfg);
+	*value = पढ़ोl(bufcfg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mrfld_update_bufcfg(struct mrfld_pinctrl *mp, unsigned int pin,
+अटल व्योम mrfld_update_bufcfg(काष्ठा mrfld_pinctrl *mp, अचिन्हित पूर्णांक pin,
 				u32 bits, u32 mask)
-{
-	void __iomem *bufcfg;
+अणु
+	व्योम __iomem *bufcfg;
 	u32 value;
 
 	bufcfg = mrfld_get_bufcfg(mp, pin);
-	value = readl(bufcfg);
+	value = पढ़ोl(bufcfg);
 
 	value &= ~mask;
 	value |= bits & mask;
 
-	writel(value, bufcfg);
-}
+	ग_लिखोl(value, bufcfg);
+पूर्ण
 
-static int mrfld_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक mrfld_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
 
-	return mp->ngroups;
-}
+	वापस mp->ngroups;
+पूर्ण
 
-static const char *mrfld_get_group_name(struct pinctrl_dev *pctldev,
-					unsigned int group)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *mrfld_get_group_name(काष्ठा pinctrl_dev *pctldev,
+					अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
 
-	return mp->groups[group].name;
-}
+	वापस mp->groups[group].name;
+पूर्ण
 
-static int mrfld_get_group_pins(struct pinctrl_dev *pctldev, unsigned int group,
-				const unsigned int **pins, unsigned int *npins)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक mrfld_get_group_pins(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक group,
+				स्थिर अचिन्हित पूर्णांक **pins, अचिन्हित पूर्णांक *npins)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = mp->groups[group].pins;
 	*npins = mp->groups[group].npins;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mrfld_pin_dbg_show(struct pinctrl_dev *pctldev, struct seq_file *s,
-			       unsigned int pin)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+अटल व्योम mrfld_pin_dbg_show(काष्ठा pinctrl_dev *pctldev, काष्ठा seq_file *s,
+			       अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
 	u32 value, mode;
-	int ret;
+	पूर्णांक ret;
 
-	ret = mrfld_read_bufcfg(mp, pin, &value);
-	if (ret) {
-		seq_puts(s, "not available");
-		return;
-	}
+	ret = mrfld_पढ़ो_bufcfg(mp, pin, &value);
+	अगर (ret) अणु
+		seq_माला_दो(s, "not available");
+		वापस;
+	पूर्ण
 
 	mode = (value & BUFCFG_PINMODE_MASK) >> BUFCFG_PINMODE_SHIFT;
-	if (!mode)
-		seq_puts(s, "GPIO ");
-	else
-		seq_printf(s, "mode %d ", mode);
+	अगर (!mode)
+		seq_माला_दो(s, "GPIO ");
+	अन्यथा
+		seq_म_लिखो(s, "mode %d ", mode);
 
-	seq_printf(s, "0x%08x", value);
-}
+	seq_म_लिखो(s, "0x%08x", value);
+पूर्ण
 
-static const struct pinctrl_ops mrfld_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops mrfld_pinctrl_ops = अणु
 	.get_groups_count = mrfld_get_groups_count,
 	.get_group_name = mrfld_get_group_name,
 	.get_group_pins = mrfld_get_group_pins,
 	.pin_dbg_show = mrfld_pin_dbg_show,
-};
+पूर्ण;
 
-static int mrfld_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक mrfld_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
 
-	return mp->nfunctions;
-}
+	वापस mp->nfunctions;
+पूर्ण
 
-static const char *mrfld_get_function_name(struct pinctrl_dev *pctldev,
-					   unsigned int function)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *mrfld_get_function_name(काष्ठा pinctrl_dev *pctldev,
+					   अचिन्हित पूर्णांक function)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
 
-	return mp->functions[function].name;
-}
+	वापस mp->functions[function].name;
+पूर्ण
 
-static int mrfld_get_function_groups(struct pinctrl_dev *pctldev,
-				     unsigned int function,
-				     const char * const **groups,
-				     unsigned int * const ngroups)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक mrfld_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+				     अचिन्हित पूर्णांक function,
+				     स्थिर अक्षर * स्थिर **groups,
+				     अचिन्हित पूर्णांक * स्थिर ngroups)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = mp->functions[function].groups;
 	*ngroups = mp->functions[function].ngroups;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mrfld_pinmux_set_mux(struct pinctrl_dev *pctldev,
-				unsigned int function,
-				unsigned int group)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
-	const struct intel_pingroup *grp = &mp->groups[group];
+अटल पूर्णांक mrfld_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित पूर्णांक function,
+				अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा पूर्णांकel_pingroup *grp = &mp->groups[group];
 	u32 bits = grp->mode << BUFCFG_PINMODE_SHIFT;
 	u32 mask = BUFCFG_PINMODE_MASK;
-	unsigned long flags;
-	unsigned int i;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक i;
 
 	/*
 	 * All pins in the groups needs to be accessible and writable
-	 * before we can enable the mux for this group.
+	 * beक्रमe we can enable the mux क्रम this group.
 	 */
-	for (i = 0; i < grp->npins; i++) {
-		if (!mrfld_buf_available(mp, grp->pins[i]))
-			return -EBUSY;
-	}
+	क्रम (i = 0; i < grp->npins; i++) अणु
+		अगर (!mrfld_buf_available(mp, grp->pins[i]))
+			वापस -EBUSY;
+	पूर्ण
 
-	/* Now enable the mux setting for each pin in the group */
+	/* Now enable the mux setting क्रम each pin in the group */
 	raw_spin_lock_irqsave(&mp->lock, flags);
-	for (i = 0; i < grp->npins; i++)
+	क्रम (i = 0; i < grp->npins; i++)
 		mrfld_update_bufcfg(mp, grp->pins[i], bits, mask);
 	raw_spin_unlock_irqrestore(&mp->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mrfld_gpio_request_enable(struct pinctrl_dev *pctldev,
-				     struct pinctrl_gpio_range *range,
-				     unsigned int pin)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक mrfld_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+				     काष्ठा pinctrl_gpio_range *range,
+				     अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
 	u32 bits = BUFCFG_PINMODE_GPIO << BUFCFG_PINMODE_SHIFT;
 	u32 mask = BUFCFG_PINMODE_MASK;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (!mrfld_buf_available(mp, pin))
-		return -EBUSY;
+	अगर (!mrfld_buf_available(mp, pin))
+		वापस -EBUSY;
 
 	raw_spin_lock_irqsave(&mp->lock, flags);
 	mrfld_update_bufcfg(mp, pin, bits, mask);
 	raw_spin_unlock_irqrestore(&mp->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops mrfld_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops mrfld_pinmux_ops = अणु
 	.get_functions_count = mrfld_get_functions_count,
 	.get_function_name = mrfld_get_function_name,
 	.get_function_groups = mrfld_get_function_groups,
 	.set_mux = mrfld_pinmux_set_mux,
 	.gpio_request_enable = mrfld_gpio_request_enable,
-};
+पूर्ण;
 
-static int mrfld_config_get(struct pinctrl_dev *pctldev, unsigned int pin,
-			    unsigned long *config)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param = pinconf_to_config_param(*config);
+अटल पूर्णांक mrfld_config_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			    अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
 	u32 value, term;
 	u16 arg = 0;
-	int ret;
+	पूर्णांक ret;
 
-	ret = mrfld_read_bufcfg(mp, pin, &value);
-	if (ret)
-		return -ENOTSUPP;
+	ret = mrfld_पढ़ो_bufcfg(mp, pin, &value);
+	अगर (ret)
+		वापस -ENOTSUPP;
 
 	term = (value & BUFCFG_PUPD_VAL_MASK) >> BUFCFG_PUPD_VAL_SHIFT;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-		if (value & BUFCFG_Px_EN_MASK)
-			return -EINVAL;
-		break;
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर (value & BUFCFG_Px_EN_MASK)
+			वापस -EINVAL;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if ((value & BUFCFG_Px_EN_MASK) != BUFCFG_PU_EN)
-			return -EINVAL;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर ((value & BUFCFG_Px_EN_MASK) != BUFCFG_PU_EN)
+			वापस -EINVAL;
 
-		switch (term) {
-		case BUFCFG_PUPD_VAL_910:
+		चयन (term) अणु
+		हाल BUFCFG_PUPD_VAL_910:
 			arg = 910;
-			break;
-		case BUFCFG_PUPD_VAL_2K:
+			अवरोध;
+		हाल BUFCFG_PUPD_VAL_2K:
 			arg = 2000;
-			break;
-		case BUFCFG_PUPD_VAL_20K:
+			अवरोध;
+		हाल BUFCFG_PUPD_VAL_20K:
 			arg = 20000;
-			break;
-		case BUFCFG_PUPD_VAL_50K:
+			अवरोध;
+		हाल BUFCFG_PUPD_VAL_50K:
 			arg = 50000;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		if ((value & BUFCFG_Px_EN_MASK) != BUFCFG_PD_EN)
-			return -EINVAL;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		अगर ((value & BUFCFG_Px_EN_MASK) != BUFCFG_PD_EN)
+			वापस -EINVAL;
 
-		switch (term) {
-		case BUFCFG_PUPD_VAL_910:
+		चयन (term) अणु
+		हाल BUFCFG_PUPD_VAL_910:
 			arg = 910;
-			break;
-		case BUFCFG_PUPD_VAL_2K:
+			अवरोध;
+		हाल BUFCFG_PUPD_VAL_2K:
 			arg = 2000;
-			break;
-		case BUFCFG_PUPD_VAL_20K:
+			अवरोध;
+		हाल BUFCFG_PUPD_VAL_20K:
 			arg = 20000;
-			break;
-		case BUFCFG_PUPD_VAL_50K:
+			अवरोध;
+		हाल BUFCFG_PUPD_VAL_50K:
 			arg = 50000;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
-		if (!(value & BUFCFG_OD_EN))
-			return -EINVAL;
-		break;
+	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		अगर (!(value & BUFCFG_OD_EN))
+			वापस -EINVAL;
+		अवरोध;
 
-	case PIN_CONFIG_SLEW_RATE:
-		if (!(value & BUFCFG_SLEWSEL))
+	हाल PIN_CONFIG_SLEW_RATE:
+		अगर (!(value & BUFCFG_SLEWSEL))
 			arg = 0;
-		else
+		अन्यथा
 			arg = 1;
-		break;
+		अवरोध;
 
-	default:
-		return -ENOTSUPP;
-	}
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, arg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mrfld_config_set_pin(struct mrfld_pinctrl *mp, unsigned int pin,
-				unsigned long config)
-{
-	unsigned int param = pinconf_to_config_param(config);
-	unsigned int arg = pinconf_to_config_argument(config);
+अटल पूर्णांक mrfld_config_set_pin(काष्ठा mrfld_pinctrl *mp, अचिन्हित पूर्णांक pin,
+				अचिन्हित दीर्घ config)
+अणु
+	अचिन्हित पूर्णांक param = pinconf_to_config_param(config);
+	अचिन्हित पूर्णांक arg = pinconf_to_config_argument(config);
 	u32 bits = 0, mask = 0;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
 		mask |= BUFCFG_Px_EN_MASK | BUFCFG_PUPD_VAL_MASK;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
+	हाल PIN_CONFIG_BIAS_PULL_UP:
 		mask |= BUFCFG_Px_EN_MASK | BUFCFG_PUPD_VAL_MASK;
 		bits |= BUFCFG_PU_EN;
 
-		/* Set default strength value in case none is given */
-		if (arg == 1)
+		/* Set शेष strength value in हाल none is given */
+		अगर (arg == 1)
 			arg = 20000;
 
-		switch (arg) {
-		case 50000:
+		चयन (arg) अणु
+		हाल 50000:
 			bits |= BUFCFG_PUPD_VAL_50K << BUFCFG_PUPD_VAL_SHIFT;
-			break;
-		case 20000:
+			अवरोध;
+		हाल 20000:
 			bits |= BUFCFG_PUPD_VAL_20K << BUFCFG_PUPD_VAL_SHIFT;
-			break;
-		case 2000:
+			अवरोध;
+		हाल 2000:
 			bits |= BUFCFG_PUPD_VAL_2K << BUFCFG_PUPD_VAL_SHIFT;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		mask |= BUFCFG_Px_EN_MASK | BUFCFG_PUPD_VAL_MASK;
 		bits |= BUFCFG_PD_EN;
 
-		/* Set default strength value in case none is given */
-		if (arg == 1)
+		/* Set शेष strength value in हाल none is given */
+		अगर (arg == 1)
 			arg = 20000;
 
-		switch (arg) {
-		case 50000:
+		चयन (arg) अणु
+		हाल 50000:
 			bits |= BUFCFG_PUPD_VAL_50K << BUFCFG_PUPD_VAL_SHIFT;
-			break;
-		case 20000:
+			अवरोध;
+		हाल 20000:
 			bits |= BUFCFG_PUPD_VAL_20K << BUFCFG_PUPD_VAL_SHIFT;
-			break;
-		case 2000:
+			अवरोध;
+		हाल 2000:
 			bits |= BUFCFG_PUPD_VAL_2K << BUFCFG_PUPD_VAL_SHIFT;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
+	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
 		mask |= BUFCFG_OD_EN;
-		if (arg)
+		अगर (arg)
 			bits |= BUFCFG_OD_EN;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_SLEW_RATE:
+	हाल PIN_CONFIG_SLEW_RATE:
 		mask |= BUFCFG_SLEWSEL;
-		if (arg)
+		अगर (arg)
 			bits |= BUFCFG_SLEWSEL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&mp->lock, flags);
 	mrfld_update_bufcfg(mp, pin, bits, mask);
 	raw_spin_unlock_irqrestore(&mp->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mrfld_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
-			    unsigned long *configs, unsigned int nconfigs)
-{
-	struct mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
-	unsigned int i;
-	int ret;
+अटल पूर्णांक mrfld_config_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			    अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक nconfigs)
+अणु
+	काष्ठा mrfld_pinctrl *mp = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	if (!mrfld_buf_available(mp, pin))
-		return -ENOTSUPP;
+	अगर (!mrfld_buf_available(mp, pin))
+		वापस -ENOTSUPP;
 
-	for (i = 0; i < nconfigs; i++) {
-		switch (pinconf_to_config_param(configs[i])) {
-		case PIN_CONFIG_BIAS_DISABLE:
-		case PIN_CONFIG_BIAS_PULL_UP:
-		case PIN_CONFIG_BIAS_PULL_DOWN:
-		case PIN_CONFIG_DRIVE_OPEN_DRAIN:
-		case PIN_CONFIG_SLEW_RATE:
+	क्रम (i = 0; i < nconfigs; i++) अणु
+		चयन (pinconf_to_config_param(configs[i])) अणु
+		हाल PIN_CONFIG_BIAS_DISABLE:
+		हाल PIN_CONFIG_BIAS_PULL_UP:
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		हाल PIN_CONFIG_SLEW_RATE:
 			ret = mrfld_config_set_pin(mp, pin, configs[i]);
-			if (ret)
-				return ret;
-			break;
+			अगर (ret)
+				वापस ret;
+			अवरोध;
 
-		default:
-			return -ENOTSUPP;
-		}
-	}
+		शेष:
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mrfld_config_group_get(struct pinctrl_dev *pctldev,
-				  unsigned int group, unsigned long *config)
-{
-	const unsigned int *pins;
-	unsigned int npins;
-	int ret;
+अटल पूर्णांक mrfld_config_group_get(काष्ठा pinctrl_dev *pctldev,
+				  अचिन्हित पूर्णांक group, अचिन्हित दीर्घ *config)
+अणु
+	स्थिर अचिन्हित पूर्णांक *pins;
+	अचिन्हित पूर्णांक npins;
+	पूर्णांक ret;
 
 	ret = mrfld_get_group_pins(pctldev, group, &pins, &npins);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = mrfld_config_get(pctldev, pins[0], config);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mrfld_config_group_set(struct pinctrl_dev *pctldev,
-				  unsigned int group, unsigned long *configs,
-				  unsigned int num_configs)
-{
-	const unsigned int *pins;
-	unsigned int npins;
-	int i, ret;
+अटल पूर्णांक mrfld_config_group_set(काष्ठा pinctrl_dev *pctldev,
+				  अचिन्हित पूर्णांक group, अचिन्हित दीर्घ *configs,
+				  अचिन्हित पूर्णांक num_configs)
+अणु
+	स्थिर अचिन्हित पूर्णांक *pins;
+	अचिन्हित पूर्णांक npins;
+	पूर्णांक i, ret;
 
 	ret = mrfld_get_group_pins(pctldev, group, &pins, &npins);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < npins; i++) {
+	क्रम (i = 0; i < npins; i++) अणु
 		ret = mrfld_config_set(pctldev, pins[i], configs, num_configs);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops mrfld_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops mrfld_pinconf_ops = अणु
 	.is_generic = true,
 	.pin_config_get = mrfld_config_get,
 	.pin_config_set = mrfld_config_set,
 	.pin_config_group_get = mrfld_config_group_get,
 	.pin_config_group_set = mrfld_config_group_set,
-};
+पूर्ण;
 
-static const struct pinctrl_desc mrfld_pinctrl_desc = {
+अटल स्थिर काष्ठा pinctrl_desc mrfld_pinctrl_desc = अणु
 	.pctlops = &mrfld_pinctrl_ops,
 	.pmxops = &mrfld_pinmux_ops,
 	.confops = &mrfld_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int mrfld_pinctrl_probe(struct platform_device *pdev)
-{
-	struct mrfld_family *families;
-	struct mrfld_pinctrl *mp;
-	void __iomem *regs;
-	size_t nfamilies;
-	unsigned int i;
+अटल पूर्णांक mrfld_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mrfld_family *families;
+	काष्ठा mrfld_pinctrl *mp;
+	व्योम __iomem *regs;
+	माप_प्रकार nfamilies;
+	अचिन्हित पूर्णांक i;
 
-	mp = devm_kzalloc(&pdev->dev, sizeof(*mp), GFP_KERNEL);
-	if (!mp)
-		return -ENOMEM;
+	mp = devm_kzalloc(&pdev->dev, माप(*mp), GFP_KERNEL);
+	अगर (!mp)
+		वापस -ENOMEM;
 
 	mp->dev = &pdev->dev;
 	raw_spin_lock_init(&mp->lock);
 
-	regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(regs))
-		return PTR_ERR(regs);
+	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(regs))
+		वापस PTR_ERR(regs);
 
 	/*
-	 * Make a copy of the families which we can use to hold pointers
-	 * to the registers.
+	 * Make a copy of the families which we can use to hold poपूर्णांकers
+	 * to the रेजिस्टरs.
 	 */
 	nfamilies = ARRAY_SIZE(mrfld_families),
 	families = devm_kmemdup(&pdev->dev, mrfld_families,
-					    sizeof(mrfld_families),
+					    माप(mrfld_families),
 					    GFP_KERNEL);
-	if (!families)
-		return -ENOMEM;
+	अगर (!families)
+		वापस -ENOMEM;
 
 	/* Splice memory resource by chunk per family */
-	for (i = 0; i < nfamilies; i++) {
-		struct mrfld_family *family = &families[i];
+	क्रम (i = 0; i < nfamilies; i++) अणु
+		काष्ठा mrfld_family *family = &families[i];
 
 		family->regs = regs + family->barno * MRFLD_FAMILY_LEN;
-	}
+	पूर्ण
 
 	mp->families = families;
 	mp->nfamilies = nfamilies;
@@ -941,41 +942,41 @@ static int mrfld_pinctrl_probe(struct platform_device *pdev)
 	mp->pctldesc.pins = mrfld_pins;
 	mp->pctldesc.npins = ARRAY_SIZE(mrfld_pins);
 
-	mp->pctldev = devm_pinctrl_register(&pdev->dev, &mp->pctldesc, mp);
-	if (IS_ERR(mp->pctldev)) {
+	mp->pctldev = devm_pinctrl_रेजिस्टर(&pdev->dev, &mp->pctldesc, mp);
+	अगर (IS_ERR(mp->pctldev)) अणु
 		dev_err(&pdev->dev, "failed to register pinctrl driver\n");
-		return PTR_ERR(mp->pctldev);
-	}
+		वापस PTR_ERR(mp->pctldev);
+	पूर्ण
 
-	platform_set_drvdata(pdev, mp);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, mp);
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id mrfld_acpi_table[] = {
-	{ "INTC1002" },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id mrfld_acpi_table[] = अणु
+	अणु "INTC1002" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, mrfld_acpi_table);
 
-static struct platform_driver mrfld_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver mrfld_pinctrl_driver = अणु
 	.probe = mrfld_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name = "pinctrl-merrifield",
 		.acpi_match_table = mrfld_acpi_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init mrfld_pinctrl_init(void)
-{
-	return platform_driver_register(&mrfld_pinctrl_driver);
-}
+अटल पूर्णांक __init mrfld_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mrfld_pinctrl_driver);
+पूर्ण
 subsys_initcall(mrfld_pinctrl_init);
 
-static void __exit mrfld_pinctrl_exit(void)
-{
-	platform_driver_unregister(&mrfld_pinctrl_driver);
-}
-module_exit(mrfld_pinctrl_exit);
+अटल व्योम __निकास mrfld_pinctrl_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&mrfld_pinctrl_driver);
+पूर्ण
+module_निकास(mrfld_pinctrl_निकास);
 
 MODULE_AUTHOR("Andy Shevchenko <andriy.shevchenko@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Merrifield SoC pinctrl driver");

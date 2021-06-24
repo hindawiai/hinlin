@@ -1,128 +1,129 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  fs/anon_inodes.c
  *
  *  Copyright (C) 2007  Davide Libenzi <davidel@xmailserver.org>
  *
- *  Thanks to Arnd Bergmann for code review and suggestions.
- *  More changes for Thomas Gleixner suggestions.
+ *  Thanks to Arnd Bergmann क्रम code review and suggestions.
+ *  More changes क्रम Thomas Gleixner suggestions.
  *
  */
 
-#include <linux/cred.h>
-#include <linux/file.h>
-#include <linux/poll.h>
-#include <linux/sched.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/mount.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/magic.h>
-#include <linux/anon_inodes.h>
-#include <linux/pseudo_fs.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/file.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/anon_inodes.h>
+#समावेश <linux/pseuकरो_fs.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-static struct vfsmount *anon_inode_mnt __read_mostly;
-static struct inode *anon_inode_inode;
+अटल काष्ठा vfsmount *anon_inode_mnt __पढ़ो_mostly;
+अटल काष्ठा inode *anon_inode_inode;
 
 /*
  * anon_inodefs_dname() is called from d_path().
  */
-static char *anon_inodefs_dname(struct dentry *dentry, char *buffer, int buflen)
-{
-	return dynamic_dname(dentry, buffer, buflen, "anon_inode:%s",
+अटल अक्षर *anon_inodefs_dname(काष्ठा dentry *dentry, अक्षर *buffer, पूर्णांक buflen)
+अणु
+	वापस dynamic_dname(dentry, buffer, buflen, "anon_inode:%s",
 				dentry->d_name.name);
-}
+पूर्ण
 
-static const struct dentry_operations anon_inodefs_dentry_operations = {
+अटल स्थिर काष्ठा dentry_operations anon_inodefs_dentry_operations = अणु
 	.d_dname	= anon_inodefs_dname,
-};
+पूर्ण;
 
-static int anon_inodefs_init_fs_context(struct fs_context *fc)
-{
-	struct pseudo_fs_context *ctx = init_pseudo(fc, ANON_INODE_FS_MAGIC);
-	if (!ctx)
-		return -ENOMEM;
-	ctx->dops = &anon_inodefs_dentry_operations;
-	return 0;
-}
+अटल पूर्णांक anon_inodefs_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	काष्ठा pseuकरो_fs_context *ctx = init_pseuकरो(fc, ANON_INODE_FS_MAGIC);
+	अगर (!ctx)
+		वापस -ENOMEM;
+	ctx->करोps = &anon_inodefs_dentry_operations;
+	वापस 0;
+पूर्ण
 
-static struct file_system_type anon_inode_fs_type = {
+अटल काष्ठा file_प्रणाली_type anon_inode_fs_type = अणु
 	.name		= "anon_inodefs",
 	.init_fs_context = anon_inodefs_init_fs_context,
-	.kill_sb	= kill_anon_super,
-};
+	.समाप्त_sb	= समाप्त_anon_super,
+पूर्ण;
 
-static struct inode *anon_inode_make_secure_inode(
-	const char *name,
-	const struct inode *context_inode)
-{
-	struct inode *inode;
-	const struct qstr qname = QSTR_INIT(name, strlen(name));
-	int error;
+अटल काष्ठा inode *anon_inode_make_secure_inode(
+	स्थिर अक्षर *name,
+	स्थिर काष्ठा inode *context_inode)
+अणु
+	काष्ठा inode *inode;
+	स्थिर काष्ठा qstr qname = QSTR_INIT(name, म_माप(name));
+	पूर्णांक error;
 
 	inode = alloc_anon_inode(anon_inode_mnt->mnt_sb);
-	if (IS_ERR(inode))
-		return inode;
+	अगर (IS_ERR(inode))
+		वापस inode;
 	inode->i_flags &= ~S_PRIVATE;
 	error =	security_inode_init_security_anon(inode, &qname, context_inode);
-	if (error) {
+	अगर (error) अणु
 		iput(inode);
-		return ERR_PTR(error);
-	}
-	return inode;
-}
+		वापस ERR_PTR(error);
+	पूर्ण
+	वापस inode;
+पूर्ण
 
-static struct file *__anon_inode_getfile(const char *name,
-					 const struct file_operations *fops,
-					 void *priv, int flags,
-					 const struct inode *context_inode,
+अटल काष्ठा file *__anon_inode_getfile(स्थिर अक्षर *name,
+					 स्थिर काष्ठा file_operations *fops,
+					 व्योम *priv, पूर्णांक flags,
+					 स्थिर काष्ठा inode *context_inode,
 					 bool secure)
-{
-	struct inode *inode;
-	struct file *file;
+अणु
+	काष्ठा inode *inode;
+	काष्ठा file *file;
 
-	if (fops->owner && !try_module_get(fops->owner))
-		return ERR_PTR(-ENOENT);
+	अगर (fops->owner && !try_module_get(fops->owner))
+		वापस ERR_PTR(-ENOENT);
 
-	if (secure) {
+	अगर (secure) अणु
 		inode =	anon_inode_make_secure_inode(name, context_inode);
-		if (IS_ERR(inode)) {
+		अगर (IS_ERR(inode)) अणु
 			file = ERR_CAST(inode);
-			goto err;
-		}
-	} else {
+			जाओ err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		inode =	anon_inode_inode;
-		if (IS_ERR(inode)) {
+		अगर (IS_ERR(inode)) अणु
 			file = ERR_PTR(-ENODEV);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		/*
 		 * We know the anon_inode inode count is always
 		 * greater than zero, so ihold() is safe.
 		 */
 		ihold(inode);
-	}
+	पूर्ण
 
-	file = alloc_file_pseudo(inode, anon_inode_mnt, name,
+	file = alloc_file_pseuकरो(inode, anon_inode_mnt, name,
 				 flags & (O_ACCMODE | O_NONBLOCK), fops);
-	if (IS_ERR(file))
-		goto err_iput;
+	अगर (IS_ERR(file))
+		जाओ err_iput;
 
 	file->f_mapping = inode->i_mapping;
 
-	file->private_data = priv;
+	file->निजी_data = priv;
 
-	return file;
+	वापस file;
 
 err_iput:
 	iput(inode);
 err:
 	module_put(fops->owner);
-	return file;
-}
+	वापस file;
+पूर्ण
 
 /**
  * anon_inode_getfile - creates a new file instance by hooking it up to an
@@ -130,52 +131,52 @@ err:
  *                      of the file
  *
  * @name:    [in]    name of the "class" of the new file
- * @fops:    [in]    file operations for the new file
- * @priv:    [in]    private data for the new file (will be file's private_data)
+ * @fops:    [in]    file operations क्रम the new file
+ * @priv:    [in]    निजी data क्रम the new file (will be file's निजी_data)
  * @flags:   [in]    flags
  *
- * Creates a new file by hooking it on a single inode. This is useful for files
- * that do not need to have a full-fledged inode in order to operate correctly.
+ * Creates a new file by hooking it on a single inode. This is useful क्रम files
+ * that करो not need to have a full-fledged inode in order to operate correctly.
  * All the files created with anon_inode_getfile() will share a single inode,
- * hence saving memory and avoiding code duplication for the file/inode/dentry
- * setup.  Returns the newly created file* or an error pointer.
+ * hence saving memory and aव्योमing code duplication क्रम the file/inode/dentry
+ * setup.  Returns the newly created file* or an error poपूर्णांकer.
  */
-struct file *anon_inode_getfile(const char *name,
-				const struct file_operations *fops,
-				void *priv, int flags)
-{
-	return __anon_inode_getfile(name, fops, priv, flags, NULL, false);
-}
+काष्ठा file *anon_inode_getfile(स्थिर अक्षर *name,
+				स्थिर काष्ठा file_operations *fops,
+				व्योम *priv, पूर्णांक flags)
+अणु
+	वापस __anon_inode_getfile(name, fops, priv, flags, शून्य, false);
+पूर्ण
 EXPORT_SYMBOL_GPL(anon_inode_getfile);
 
-static int __anon_inode_getfd(const char *name,
-			      const struct file_operations *fops,
-			      void *priv, int flags,
-			      const struct inode *context_inode,
+अटल पूर्णांक __anon_inode_getfd(स्थिर अक्षर *name,
+			      स्थिर काष्ठा file_operations *fops,
+			      व्योम *priv, पूर्णांक flags,
+			      स्थिर काष्ठा inode *context_inode,
 			      bool secure)
-{
-	int error, fd;
-	struct file *file;
+अणु
+	पूर्णांक error, fd;
+	काष्ठा file *file;
 
 	error = get_unused_fd_flags(flags);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 	fd = error;
 
 	file = __anon_inode_getfile(name, fops, priv, flags, context_inode,
 				    secure);
-	if (IS_ERR(file)) {
+	अगर (IS_ERR(file)) अणु
 		error = PTR_ERR(file);
-		goto err_put_unused_fd;
-	}
+		जाओ err_put_unused_fd;
+	पूर्ण
 	fd_install(fd, file);
 
-	return fd;
+	वापस fd;
 
 err_put_unused_fd:
 	put_unused_fd(fd);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * anon_inode_getfd - creates a new file instance by hooking it up to
@@ -183,33 +184,33 @@ err_put_unused_fd:
  *                    the "class" of the file
  *
  * @name:    [in]    name of the "class" of the new file
- * @fops:    [in]    file operations for the new file
- * @priv:    [in]    private data for the new file (will be file's private_data)
+ * @fops:    [in]    file operations क्रम the new file
+ * @priv:    [in]    निजी data क्रम the new file (will be file's निजी_data)
  * @flags:   [in]    flags
  *
  * Creates a new file by hooking it on a single inode. This is
- * useful for files that do not need to have a full-fledged inode in
+ * useful क्रम files that करो not need to have a full-fledged inode in
  * order to operate correctly.  All the files created with
  * anon_inode_getfd() will use the same singleton inode, reducing
- * memory use and avoiding code duplication for the file/inode/dentry
+ * memory use and aव्योमing code duplication क्रम the file/inode/dentry
  * setup.  Returns a newly created file descriptor or an error code.
  */
-int anon_inode_getfd(const char *name, const struct file_operations *fops,
-		     void *priv, int flags)
-{
-	return __anon_inode_getfd(name, fops, priv, flags, NULL, false);
-}
+पूर्णांक anon_inode_getfd(स्थिर अक्षर *name, स्थिर काष्ठा file_operations *fops,
+		     व्योम *priv, पूर्णांक flags)
+अणु
+	वापस __anon_inode_getfd(name, fops, priv, flags, शून्य, false);
+पूर्ण
 EXPORT_SYMBOL_GPL(anon_inode_getfd);
 
 /**
  * anon_inode_getfd_secure - Like anon_inode_getfd(), but creates a new
  * !S_PRIVATE anon inode rather than reuse the singleton anon inode, and calls
  * the inode_init_security_anon() LSM hook. This allows the inode to have its
- * own security context and for a LSM to reject creation of the inode.
+ * own security context and क्रम a LSM to reject creation of the inode.
  *
  * @name:    [in]    name of the "class" of the new file
- * @fops:    [in]    file operations for the new file
- * @priv:    [in]    private data for the new file (will be file's private_data)
+ * @fops:    [in]    file operations क्रम the new file
+ * @priv:    [in]    निजी data क्रम the new file (will be file's निजी_data)
  * @flags:   [in]    flags
  * @context_inode:
  *           [in]    the logical relationship with the new inode (optional)
@@ -217,26 +218,26 @@ EXPORT_SYMBOL_GPL(anon_inode_getfd);
  * The LSM may use @context_inode in inode_init_security_anon(), but a
  * reference to it is not held.
  */
-int anon_inode_getfd_secure(const char *name, const struct file_operations *fops,
-			    void *priv, int flags,
-			    const struct inode *context_inode)
-{
-	return __anon_inode_getfd(name, fops, priv, flags, context_inode, true);
-}
+पूर्णांक anon_inode_getfd_secure(स्थिर अक्षर *name, स्थिर काष्ठा file_operations *fops,
+			    व्योम *priv, पूर्णांक flags,
+			    स्थिर काष्ठा inode *context_inode)
+अणु
+	वापस __anon_inode_getfd(name, fops, priv, flags, context_inode, true);
+पूर्ण
 EXPORT_SYMBOL_GPL(anon_inode_getfd_secure);
 
-static int __init anon_inode_init(void)
-{
+अटल पूर्णांक __init anon_inode_init(व्योम)
+अणु
 	anon_inode_mnt = kern_mount(&anon_inode_fs_type);
-	if (IS_ERR(anon_inode_mnt))
+	अगर (IS_ERR(anon_inode_mnt))
 		panic("anon_inode_init() kernel mount failed (%ld)\n", PTR_ERR(anon_inode_mnt));
 
 	anon_inode_inode = alloc_anon_inode(anon_inode_mnt->mnt_sb);
-	if (IS_ERR(anon_inode_inode))
+	अगर (IS_ERR(anon_inode_inode))
 		panic("anon_inode_init() inode allocation failed (%ld)\n", PTR_ERR(anon_inode_inode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 fs_initcall(anon_inode_init);
 

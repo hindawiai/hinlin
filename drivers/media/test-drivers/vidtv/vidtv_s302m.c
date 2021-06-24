@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Vidtv serves as a reference DVB driver and helps validate the existing APIs
- * in the media subsystem. It can also aid developers working on userspace
+ * in the media subप्रणाली. It can also aid developers working on userspace
  * applications.
  *
- * This file contains the code for an AES3 (also known as AES/EBU) encoder.
- * It is based on EBU Tech 3250 and SMPTE 302M technical documents.
+ * This file contains the code क्रम an AES3 (also known as AES/EBU) encoder.
+ * It is based on EBU Tech 3250 and SMPTE 302M technical करोcuments.
  *
- * This encoder currently supports 16bit AES3 subframes using 16bit signed
- * integers.
+ * This encoder currently supports 16bit AES3 subframes using 16bit चिन्हित
+ * पूर्णांकegers.
  *
- * Note: AU stands for Access Unit, and AAU stands for Audio Access Unit
+ * Note: AU stands क्रम Access Unit, and AAU stands क्रम Audio Access Unit
  *
  * Copyright (C) 2020 Daniel W. S. Almeida
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s, %d: " fmt, __func__, __LINE__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s, %d: " fmt, __func__, __LINE__
 
-#include <linux/bug.h>
-#include <linux/crc32.h>
-#include <linux/fixp-arith.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/math64.h>
-#include <linux/printk.h>
-#include <linux/ratelimit.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/fixp-arith.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/math64.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "vidtv_common.h"
-#include "vidtv_encoder.h"
-#include "vidtv_s302m.h"
+#समावेश "vidtv_common.h"
+#समावेश "vidtv_encoder.h"
+#समावेश "vidtv_s302m.h"
 
-#define S302M_SAMPLING_RATE_HZ 48000
-#define PES_PRIVATE_STREAM_1 0xbd  /* PES: private_stream_1 */
-#define S302M_BLOCK_SZ 192
-#define S302M_SIN_LUT_NUM_ELEM 1024
+#घोषणा S302M_SAMPLING_RATE_HZ 48000
+#घोषणा PES_PRIVATE_STREAM_1 0xbd  /* PES: निजी_stream_1 */
+#घोषणा S302M_BLOCK_SZ 192
+#घोषणा S302M_SIN_LUT_NUM_ELEM 1024
 
 /* these are retrieved empirically from ffmpeg/libavcodec */
-#define FF_S302M_DEFAULT_NUM_FRAMES 1115
-#define FF_S302M_DEFAULT_PTS_INCREMENT 2090
-#define FF_S302M_DEFAULT_PTS_OFFSET 100000
+#घोषणा FF_S302M_DEFAULT_NUM_FRAMES 1115
+#घोषणा FF_S302M_DEFAULT_PTS_INCREMENT 2090
+#घोषणा FF_S302M_DEFAULT_PTS_OFFSET 100000
 
-/* Used by the tone generator: number of samples for PI */
-#define PI		180
+/* Used by the tone generator: number of samples क्रम PI */
+#घोषणा PI		180
 
-static const u8 reverse[256] = {
+अटल स्थिर u8 reverse[256] = अणु
 	/* from ffmpeg */
 	0x00, 0x80, 0x40, 0xC0, 0x20, 0xA0, 0x60, 0xE0, 0x10, 0x90, 0x50, 0xD0,
 	0x30, 0xB0, 0x70, 0xF0, 0x08, 0x88, 0x48, 0xC8, 0x28, 0xA8, 0x68, 0xE8,
@@ -71,138 +72,138 @@ static const u8 reverse[256] = {
 	0x27, 0xA7, 0x67, 0xE7, 0x17, 0x97, 0x57, 0xD7, 0x37, 0xB7, 0x77, 0xF7,
 	0x0F, 0x8F, 0x4F, 0xCF, 0x2F, 0xAF, 0x6F, 0xEF, 0x1F, 0x9F, 0x5F, 0xDF,
 	0x3F, 0xBF, 0x7F, 0xFF,
-};
+पूर्ण;
 
-struct tone_duration {
-	enum musical_notes note;
-	int duration;
-};
+काष्ठा tone_duration अणु
+	क्रमागत musical_notes note;
+	पूर्णांक duration;
+पूर्ण;
 
-#define COMPASS 100 /* beats per minute */
-static const struct tone_duration beethoven_fur_elise[] = {
-	{ NOTE_SILENT, 512},
-	{ NOTE_E_6, 128},  { NOTE_DS_6, 128}, { NOTE_E_6, 128},
-	{ NOTE_DS_6, 128}, { NOTE_E_6, 128},  { NOTE_B_5, 128},
-	{ NOTE_D_6, 128},  { NOTE_C_6, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_C_5, 128},
-	{ NOTE_E_5, 128},  { NOTE_A_5, 128},  { NOTE_E_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_GS_4, 128}, { NOTE_E_5, 128},
-	{ NOTE_GS_5, 128}, { NOTE_B_5, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_E_5, 128},
-	{ NOTE_E_6, 128},  { NOTE_DS_6, 128}, { NOTE_E_6, 128},
-	{ NOTE_DS_6, 128}, { NOTE_E_6, 128},  { NOTE_B_5, 128},
-	{ NOTE_D_6, 128},  { NOTE_C_6, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_C_5, 128},
-	{ NOTE_E_5, 128},  { NOTE_A_5, 128},  { NOTE_E_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_GS_4, 128}, { NOTE_E_5, 128},
-	{ NOTE_C_6, 128},  { NOTE_B_5, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_SILENT, 128},
+#घोषणा COMPASS 100 /* beats per minute */
+अटल स्थिर काष्ठा tone_duration beethoven_fur_elise[] = अणु
+	अणु NOTE_SILENT, 512पूर्ण,
+	अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,
+	अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_B_5, 128पूर्ण,
+	अणु NOTE_D_6, 128पूर्ण,  अणु NOTE_C_6, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_C_5, 128पूर्ण,
+	अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_A_5, 128पूर्ण,  अणु NOTE_E_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_GS_4, 128पूर्ण, अणु NOTE_E_5, 128पूर्ण,
+	अणु NOTE_GS_5, 128पूर्ण, अणु NOTE_B_5, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_E_5, 128पूर्ण,
+	अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,
+	अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_B_5, 128पूर्ण,
+	अणु NOTE_D_6, 128पूर्ण,  अणु NOTE_C_6, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_C_5, 128पूर्ण,
+	अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_A_5, 128पूर्ण,  अणु NOTE_E_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_GS_4, 128पूर्ण, अणु NOTE_E_5, 128पूर्ण,
+	अणु NOTE_C_6, 128पूर्ण,  अणु NOTE_B_5, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_SILENT, 128पूर्ण,
 
-	{ NOTE_E_6, 128},  { NOTE_DS_6, 128}, { NOTE_E_6, 128},
-	{ NOTE_DS_6, 128}, { NOTE_E_6, 128},  { NOTE_B_5, 128},
-	{ NOTE_D_6, 128},  { NOTE_C_6, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_C_5, 128},
-	{ NOTE_E_5, 128},  { NOTE_A_5, 128},  { NOTE_E_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_GS_4, 128}, { NOTE_E_5, 128},
-	{ NOTE_GS_5, 128}, { NOTE_B_5, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_E_5, 128},
-	{ NOTE_E_6, 128},  { NOTE_DS_6, 128}, { NOTE_E_6, 128},
-	{ NOTE_DS_6, 128}, { NOTE_E_6, 128},  { NOTE_B_5, 128},
-	{ NOTE_D_6, 128},  { NOTE_C_6, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_C_5, 128},
-	{ NOTE_E_5, 128},  { NOTE_A_5, 128},  { NOTE_E_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_GS_4, 128}, { NOTE_E_5, 128},
-	{ NOTE_C_6, 128},  { NOTE_B_5, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_B_4, 128},
-	{ NOTE_C_5, 128},  { NOTE_D_5, 128},  { NOTE_C_4, 128},
-	{ NOTE_G_4, 128},  { NOTE_C_5, 128},  { NOTE_G_4, 128},
-	{ NOTE_F_5, 128},  { NOTE_E_5, 128},  { NOTE_G_3, 128},
-	{ NOTE_G_4, 128},  { NOTE_B_3, 128},  { NOTE_F_4, 128},
-	{ NOTE_E_5, 128},  { NOTE_D_5, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_E_4, 128},
-	{ NOTE_D_5, 128},  { NOTE_C_5, 128},  { NOTE_E_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_E_5, 128},  { NOTE_E_5, 128},
-	{ NOTE_E_6, 128},  { NOTE_E_5, 128},  { NOTE_E_6, 128},
-	{ NOTE_E_5, 128},  { NOTE_E_5, 128},  { NOTE_DS_5, 128},
-	{ NOTE_E_5, 128},  { NOTE_DS_6, 128}, { NOTE_E_6, 128},
-	{ NOTE_DS_5, 128}, { NOTE_E_5, 128},  { NOTE_DS_6, 128},
-	{ NOTE_E_6, 128},  { NOTE_DS_6, 128}, { NOTE_E_6, 128},
-	{ NOTE_DS_6, 128}, { NOTE_E_6, 128},  { NOTE_B_5, 128},
-	{ NOTE_D_6, 128},  { NOTE_C_6, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_C_5, 128},
-	{ NOTE_E_5, 128},  { NOTE_A_5, 128},  { NOTE_E_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_GS_4, 128}, { NOTE_E_5, 128},
-	{ NOTE_GS_5, 128}, { NOTE_B_5, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_E_5, 128},
-	{ NOTE_E_6, 128},  { NOTE_DS_6, 128}, { NOTE_E_6, 128},
-	{ NOTE_DS_6, 128}, { NOTE_E_6, 128},  { NOTE_B_5, 128},
-	{ NOTE_D_6, 128},  { NOTE_C_6, 128},  { NOTE_A_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_A_4, 128},  { NOTE_C_5, 128},
-	{ NOTE_E_5, 128},  { NOTE_A_5, 128},  { NOTE_E_3, 128},
-	{ NOTE_E_4, 128},  { NOTE_GS_4, 128}, { NOTE_E_5, 128},
-	{ NOTE_C_6, 128},  { NOTE_B_5, 128},  { NOTE_A_5, 512},
-	{ NOTE_SILENT, 256},
-};
+	अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,
+	अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_B_5, 128पूर्ण,
+	अणु NOTE_D_6, 128पूर्ण,  अणु NOTE_C_6, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_C_5, 128पूर्ण,
+	अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_A_5, 128पूर्ण,  अणु NOTE_E_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_GS_4, 128पूर्ण, अणु NOTE_E_5, 128पूर्ण,
+	अणु NOTE_GS_5, 128पूर्ण, अणु NOTE_B_5, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_E_5, 128पूर्ण,
+	अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,
+	अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_B_5, 128पूर्ण,
+	अणु NOTE_D_6, 128पूर्ण,  अणु NOTE_C_6, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_C_5, 128पूर्ण,
+	अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_A_5, 128पूर्ण,  अणु NOTE_E_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_GS_4, 128पूर्ण, अणु NOTE_E_5, 128पूर्ण,
+	अणु NOTE_C_6, 128पूर्ण,  अणु NOTE_B_5, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_B_4, 128पूर्ण,
+	अणु NOTE_C_5, 128पूर्ण,  अणु NOTE_D_5, 128पूर्ण,  अणु NOTE_C_4, 128पूर्ण,
+	अणु NOTE_G_4, 128पूर्ण,  अणु NOTE_C_5, 128पूर्ण,  अणु NOTE_G_4, 128पूर्ण,
+	अणु NOTE_F_5, 128पूर्ण,  अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_G_3, 128पूर्ण,
+	अणु NOTE_G_4, 128पूर्ण,  अणु NOTE_B_3, 128पूर्ण,  अणु NOTE_F_4, 128पूर्ण,
+	अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_D_5, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_E_4, 128पूर्ण,
+	अणु NOTE_D_5, 128पूर्ण,  अणु NOTE_C_5, 128पूर्ण,  अणु NOTE_E_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_E_5, 128पूर्ण,
+	अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_E_6, 128पूर्ण,
+	अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_DS_5, 128पूर्ण,
+	अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,
+	अणु NOTE_DS_5, 128पूर्ण, अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_DS_6, 128पूर्ण,
+	अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,
+	अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_B_5, 128पूर्ण,
+	अणु NOTE_D_6, 128पूर्ण,  अणु NOTE_C_6, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_C_5, 128पूर्ण,
+	अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_A_5, 128पूर्ण,  अणु NOTE_E_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_GS_4, 128पूर्ण, अणु NOTE_E_5, 128पूर्ण,
+	अणु NOTE_GS_5, 128पूर्ण, अणु NOTE_B_5, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_E_5, 128पूर्ण,
+	अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,
+	अणु NOTE_DS_6, 128पूर्ण, अणु NOTE_E_6, 128पूर्ण,  अणु NOTE_B_5, 128पूर्ण,
+	अणु NOTE_D_6, 128पूर्ण,  अणु NOTE_C_6, 128पूर्ण,  अणु NOTE_A_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_A_4, 128पूर्ण,  अणु NOTE_C_5, 128पूर्ण,
+	अणु NOTE_E_5, 128पूर्ण,  अणु NOTE_A_5, 128पूर्ण,  अणु NOTE_E_3, 128पूर्ण,
+	अणु NOTE_E_4, 128पूर्ण,  अणु NOTE_GS_4, 128पूर्ण, अणु NOTE_E_5, 128पूर्ण,
+	अणु NOTE_C_6, 128पूर्ण,  अणु NOTE_B_5, 128पूर्ण,  अणु NOTE_A_5, 512पूर्ण,
+	अणु NOTE_SILENT, 256पूर्ण,
+पूर्ण;
 
-static struct vidtv_access_unit *vidtv_s302m_access_unit_init(struct vidtv_access_unit *head)
-{
-	struct vidtv_access_unit *au;
+अटल काष्ठा vidtv_access_unit *vidtv_s302m_access_unit_init(काष्ठा vidtv_access_unit *head)
+अणु
+	काष्ठा vidtv_access_unit *au;
 
-	au = kzalloc(sizeof(*au), GFP_KERNEL);
-	if (!au)
-		return NULL;
+	au = kzalloc(माप(*au), GFP_KERNEL);
+	अगर (!au)
+		वापस शून्य;
 
-	if (head) {
-		while (head->next)
+	अगर (head) अणु
+		जबतक (head->next)
 			head = head->next;
 
 		head->next = au;
-	}
+	पूर्ण
 
-	return au;
-}
+	वापस au;
+पूर्ण
 
-static void vidtv_s302m_access_unit_destroy(struct vidtv_encoder *e)
-{
-	struct vidtv_access_unit *head = e->access_units;
-	struct vidtv_access_unit *tmp = NULL;
+अटल व्योम vidtv_s302m_access_unit_destroy(काष्ठा vidtv_encoder *e)
+अणु
+	काष्ठा vidtv_access_unit *head = e->access_units;
+	काष्ठा vidtv_access_unit *पंचांगp = शून्य;
 
-	while (head) {
-		tmp = head;
+	जबतक (head) अणु
+		पंचांगp = head;
 		head = head->next;
-		kfree(tmp);
-	}
+		kमुक्त(पंचांगp);
+	पूर्ण
 
-	e->access_units = NULL;
-}
+	e->access_units = शून्य;
+पूर्ण
 
-static void vidtv_s302m_alloc_au(struct vidtv_encoder *e)
-{
-	struct vidtv_access_unit *sync_au = NULL;
-	struct vidtv_access_unit *temp = NULL;
+अटल व्योम vidtv_s302m_alloc_au(काष्ठा vidtv_encoder *e)
+अणु
+	काष्ठा vidtv_access_unit *sync_au = शून्य;
+	काष्ठा vidtv_access_unit *temp = शून्य;
 
-	if (e->sync && e->sync->is_video_encoder) {
+	अगर (e->sync && e->sync->is_video_encoder) अणु
 		sync_au = e->sync->access_units;
 
-		while (sync_au) {
+		जबतक (sync_au) अणु
 			temp = vidtv_s302m_access_unit_init(e->access_units);
-			if (!e->access_units)
+			अगर (!e->access_units)
 				e->access_units = temp;
 
 			sync_au = sync_au->next;
-		}
+		पूर्ण
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	e->access_units = vidtv_s302m_access_unit_init(NULL);
-}
+	e->access_units = vidtv_s302m_access_unit_init(शून्य);
+पूर्ण
 
-static void
-vidtv_s302m_compute_sample_count_from_video(struct vidtv_encoder *e)
-{
-	struct vidtv_access_unit *sync_au = e->sync->access_units;
-	struct vidtv_access_unit *au = e->access_units;
+अटल व्योम
+vidtv_s302m_compute_sample_count_from_video(काष्ठा vidtv_encoder *e)
+अणु
+	काष्ठा vidtv_access_unit *sync_au = e->sync->access_units;
+	काष्ठा vidtv_access_unit *au = e->access_units;
 	u32 sample_duration_usecs;
 	u32 vau_duration_usecs;
 	u32 s;
@@ -210,40 +211,40 @@ vidtv_s302m_compute_sample_count_from_video(struct vidtv_encoder *e)
 	vau_duration_usecs    = USEC_PER_SEC / e->sync->sampling_rate_hz;
 	sample_duration_usecs = USEC_PER_SEC / e->sampling_rate_hz;
 
-	while (au && sync_au) {
+	जबतक (au && sync_au) अणु
 		s = DIV_ROUND_UP(vau_duration_usecs, sample_duration_usecs);
 		au->num_samples = s;
 		au = au->next;
 		sync_au = sync_au->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vidtv_s302m_compute_pts_from_video(struct vidtv_encoder *e)
-{
-	struct vidtv_access_unit *au = e->access_units;
-	struct vidtv_access_unit *sync_au = e->sync->access_units;
+अटल व्योम vidtv_s302m_compute_pts_from_video(काष्ठा vidtv_encoder *e)
+अणु
+	काष्ठा vidtv_access_unit *au = e->access_units;
+	काष्ठा vidtv_access_unit *sync_au = e->sync->access_units;
 
 	/* use the same pts from the video access unit*/
-	while (au && sync_au) {
+	जबतक (au && sync_au) अणु
 		au->pts = sync_au->pts;
 		au = au->next;
 		sync_au = sync_au->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u16 vidtv_s302m_get_sample(struct vidtv_encoder *e)
-{
+अटल u16 vidtv_s302m_get_sample(काष्ठा vidtv_encoder *e)
+अणु
 	u16 sample;
-	int pos;
-	struct vidtv_s302m_ctx *ctx = e->ctx;
+	पूर्णांक pos;
+	काष्ठा vidtv_s302m_ctx *ctx = e->ctx;
 
-	if (!e->src_buf) {
+	अगर (!e->src_buf) अणु
 		/*
 		 * Simple tone generator: play the tones at the
 		 * beethoven_fur_elise array.
 		 */
-		if (ctx->last_duration <= 0) {
-			if (e->src_buf_offset >= ARRAY_SIZE(beethoven_fur_elise))
+		अगर (ctx->last_duration <= 0) अणु
+			अगर (e->src_buf_offset >= ARRAY_SIZE(beethoven_fur_elise))
 				e->src_buf_offset = 0;
 
 			ctx->last_tone = beethoven_fur_elise[e->src_buf_offset].note;
@@ -251,47 +252,47 @@ static u16 vidtv_s302m_get_sample(struct vidtv_encoder *e)
 					     S302M_SAMPLING_RATE_HZ / COMPASS / 5;
 			e->src_buf_offset++;
 			ctx->note_offset = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			ctx->last_duration--;
-		}
+		पूर्ण
 
-		/* Handle pause notes */
-		if (!ctx->last_tone)
-			return 0x8000;
+		/* Handle छोड़ो notes */
+		अगर (!ctx->last_tone)
+			वापस 0x8000;
 
 		pos = (2 * PI * ctx->note_offset * ctx->last_tone) / S302M_SAMPLING_RATE_HZ;
 		ctx->note_offset++;
 
-		return (fixp_sin32(pos % (2 * PI)) >> 16) + 0x8000;
-	}
+		वापस (fixp_sin32(pos % (2 * PI)) >> 16) + 0x8000;
+	पूर्ण
 
 	/* bug somewhere */
-	if (e->src_buf_offset > e->src_buf_sz) {
+	अगर (e->src_buf_offset > e->src_buf_sz) अणु
 		pr_err_ratelimited("overflow detected: %d > %d, wrapping.\n",
 				   e->src_buf_offset,
 				   e->src_buf_sz);
 
 		e->src_buf_offset = 0;
-	}
+	पूर्ण
 
-	if (e->src_buf_offset >= e->src_buf_sz) {
+	अगर (e->src_buf_offset >= e->src_buf_sz) अणु
 		/* let the source know we are out of data */
-		if (e->last_sample_cb)
+		अगर (e->last_sample_cb)
 			e->last_sample_cb(e->sample_count);
 
 		e->src_buf_offset = 0;
-	}
+	पूर्ण
 
 	sample = *(u16 *)(e->src_buf + e->src_buf_offset);
 
-	return sample;
-}
+	वापस sample;
+पूर्ण
 
-static u32 vidtv_s302m_write_frame(struct vidtv_encoder *e,
+अटल u32 vidtv_s302m_ग_लिखो_frame(काष्ठा vidtv_encoder *e,
 				   u16 sample)
-{
-	struct vidtv_s302m_ctx *ctx = e->ctx;
-	struct vidtv_s302m_frame_16 f = {};
+अणु
+	काष्ठा vidtv_s302m_ctx *ctx = e->ctx;
+	काष्ठा vidtv_s302m_frame_16 f = अणुपूर्ण;
 	u32 nbytes = 0;
 
 	/* from ffmpeg: see s302enc.c */
@@ -310,72 +311,72 @@ static u32 vidtv_s302m_write_frame(struct vidtv_encoder *e,
 	f.data[3] = reverse[f.data[3]];
 	f.data[4] = reverse[f.data[4]];
 
-	nbytes += vidtv_memcpy(e->encoder_buf,
+	nbytes += vidtv_स_नकल(e->encoder_buf,
 			       e->encoder_buf_offset,
 			       VIDTV_S302M_BUF_SZ,
 			       &f,
-			       sizeof(f));
+			       माप(f));
 
 	e->encoder_buf_offset += nbytes;
 
 	ctx->frame_index++;
-	if (ctx->frame_index >= S302M_BLOCK_SZ)
+	अगर (ctx->frame_index >= S302M_BLOCK_SZ)
 		ctx->frame_index = 0;
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static u32 vidtv_s302m_write_h(struct vidtv_encoder *e, u32 p_sz)
-{
-	struct vidtv_smpte_s302m_es h = {};
+अटल u32 vidtv_s302m_ग_लिखो_h(काष्ठा vidtv_encoder *e, u32 p_sz)
+अणु
+	काष्ठा vidtv_smpte_s302m_es h = अणुपूर्ण;
 	u32 nbytes = 0;
 
 	/* 2 channels, ident: 0, 16 bits per sample */
 	h.bitfield = cpu_to_be32((p_sz << 16));
 
-	nbytes += vidtv_memcpy(e->encoder_buf,
+	nbytes += vidtv_स_नकल(e->encoder_buf,
 			       e->encoder_buf_offset,
 			       e->encoder_buf_sz,
 			       &h,
-			       sizeof(h));
+			       माप(h));
 
 	e->encoder_buf_offset += nbytes;
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static void vidtv_s302m_write_frames(struct vidtv_encoder *e)
-{
-	struct vidtv_access_unit *au = e->access_units;
-	struct vidtv_s302m_ctx *ctx = e->ctx;
+अटल व्योम vidtv_s302m_ग_लिखो_frames(काष्ठा vidtv_encoder *e)
+अणु
+	काष्ठा vidtv_access_unit *au = e->access_units;
+	काष्ठा vidtv_s302m_ctx *ctx = e->ctx;
 	u32 nbytes_per_unit = 0;
 	u32 nbytes = 0;
 	u32 au_sz = 0;
 	u16 sample;
 	u32 j;
 
-	while (au) {
+	जबतक (au) अणु
 		au_sz = au->num_samples *
-			sizeof(struct vidtv_s302m_frame_16);
+			माप(काष्ठा vidtv_s302m_frame_16);
 
-		nbytes_per_unit = vidtv_s302m_write_h(e, au_sz);
+		nbytes_per_unit = vidtv_s302m_ग_लिखो_h(e, au_sz);
 
-		for (j = 0; j < au->num_samples; ++j) {
+		क्रम (j = 0; j < au->num_samples; ++j) अणु
 			sample = vidtv_s302m_get_sample(e);
-			nbytes_per_unit += vidtv_s302m_write_frame(e, sample);
+			nbytes_per_unit += vidtv_s302m_ग_लिखो_frame(e, sample);
 
-			if (e->src_buf)
-				e->src_buf_offset += sizeof(u16);
+			अगर (e->src_buf)
+				e->src_buf_offset += माप(u16);
 
 			e->sample_count++;
-		}
+		पूर्ण
 
 		au->nbytes = nbytes_per_unit;
 
-		if (au_sz + sizeof(struct vidtv_smpte_s302m_es) != nbytes_per_unit) {
+		अगर (au_sz + माप(काष्ठा vidtv_smpte_s302m_es) != nbytes_per_unit) अणु
 			pr_warn_ratelimited("write size was %u, expected %zu\n",
 					    nbytes_per_unit,
-					    au_sz + sizeof(struct vidtv_smpte_s302m_es));
-		}
+					    au_sz + माप(काष्ठा vidtv_smpte_s302m_es));
+		पूर्ण
 
 		nbytes += nbytes_per_unit;
 		au->offset = nbytes - nbytes_per_unit;
@@ -384,74 +385,74 @@ static void vidtv_s302m_write_frames(struct vidtv_encoder *e)
 		ctx->au_count++;
 
 		au = au->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void *vidtv_s302m_encode(struct vidtv_encoder *e)
-{
-	struct vidtv_s302m_ctx *ctx = e->ctx;
+अटल व्योम *vidtv_s302m_encode(काष्ठा vidtv_encoder *e)
+अणु
+	काष्ठा vidtv_s302m_ctx *ctx = e->ctx;
 
 	/*
-	 * According to SMPTE 302M, an audio access unit is specified as those
+	 * According to SMPTE 302M, an audio access unit is specअगरied as those
 	 * AES3 words that are associated with a corresponding video frame.
-	 * Therefore, there is one audio access unit for every video access unit
+	 * Thereक्रमe, there is one audio access unit क्रम every video access unit
 	 * in the corresponding video encoder ('sync'), using the same values
-	 * for PTS as used by the video encoder.
+	 * क्रम PTS as used by the video encoder.
 	 *
 	 * Assuming that it is also possible to send audio without any
 	 * associated video, as in a radio-like service, a single audio access unit
-	 * is created with values for 'num_samples' and 'pts' taken empirically from
+	 * is created with values क्रम 'num_samples' and 'pts' taken empirically from
 	 * ffmpeg
 	 */
 
 	vidtv_s302m_access_unit_destroy(e);
 	vidtv_s302m_alloc_au(e);
 
-	if (e->sync && e->sync->is_video_encoder) {
+	अगर (e->sync && e->sync->is_video_encoder) अणु
 		vidtv_s302m_compute_sample_count_from_video(e);
 		vidtv_s302m_compute_pts_from_video(e);
-	} else {
+	पूर्ण अन्यथा अणु
 		e->access_units->num_samples = FF_S302M_DEFAULT_NUM_FRAMES;
 		e->access_units->pts = (ctx->au_count * FF_S302M_DEFAULT_PTS_INCREMENT) +
 				       FF_S302M_DEFAULT_PTS_OFFSET;
-	}
+	पूर्ण
 
-	vidtv_s302m_write_frames(e);
+	vidtv_s302m_ग_लिखो_frames(e);
 
-	return e->encoder_buf;
-}
+	वापस e->encoder_buf;
+पूर्ण
 
-static u32 vidtv_s302m_clear(struct vidtv_encoder *e)
-{
-	struct vidtv_access_unit *au = e->access_units;
+अटल u32 vidtv_s302m_clear(काष्ठा vidtv_encoder *e)
+अणु
+	काष्ठा vidtv_access_unit *au = e->access_units;
 	u32 count = 0;
 
-	while (au) {
+	जबतक (au) अणु
 		count++;
 		au = au->next;
-	}
+	पूर्ण
 
 	vidtv_s302m_access_unit_destroy(e);
-	memset(e->encoder_buf, 0, VIDTV_S302M_BUF_SZ);
+	स_रखो(e->encoder_buf, 0, VIDTV_S302M_BUF_SZ);
 	e->encoder_buf_offset = 0;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-struct vidtv_encoder
-*vidtv_s302m_encoder_init(struct vidtv_s302m_encoder_init_args args)
-{
-	u32 priv_sz = sizeof(struct vidtv_s302m_ctx);
-	struct vidtv_s302m_ctx *ctx;
-	struct vidtv_encoder *e;
+काष्ठा vidtv_encoder
+*vidtv_s302m_encoder_init(काष्ठा vidtv_s302m_encoder_init_args args)
+अणु
+	u32 priv_sz = माप(काष्ठा vidtv_s302m_ctx);
+	काष्ठा vidtv_s302m_ctx *ctx;
+	काष्ठा vidtv_encoder *e;
 
-	e = kzalloc(sizeof(*e), GFP_KERNEL);
-	if (!e)
-		return NULL;
+	e = kzalloc(माप(*e), GFP_KERNEL);
+	अगर (!e)
+		वापस शून्य;
 
 	e->id = S302M;
 
-	if (args.name)
+	अगर (args.name)
 		e->name = kstrdup(args.name, GFP_KERNEL);
 
 	e->encoder_buf = vzalloc(VIDTV_S302M_BUF_SZ);
@@ -460,17 +461,17 @@ struct vidtv_encoder
 
 	e->sample_count = 0;
 
-	e->src_buf = (args.src_buf) ? args.src_buf : NULL;
+	e->src_buf = (args.src_buf) ? args.src_buf : शून्य;
 	e->src_buf_sz = (args.src_buf) ? args.src_buf_sz : 0;
 	e->src_buf_offset = 0;
 
 	e->is_video_encoder = false;
 
 	ctx = kzalloc(priv_sz, GFP_KERNEL);
-	if (!ctx) {
-		kfree(e);
-		return NULL;
-	}
+	अगर (!ctx) अणु
+		kमुक्त(e);
+		वापस शून्य;
+	पूर्ण
 
 	e->ctx = ctx;
 	ctx->last_duration = 0;
@@ -488,28 +489,28 @@ struct vidtv_encoder
 
 	e->destroy = vidtv_s302m_encoder_destroy;
 
-	if (args.head) {
-		while (args.head->next)
+	अगर (args.head) अणु
+		जबतक (args.head->next)
 			args.head = args.head->next;
 
 		args.head->next = e;
-	}
+	पूर्ण
 
-	e->next = NULL;
+	e->next = शून्य;
 
-	return e;
-}
+	वापस e;
+पूर्ण
 
-void vidtv_s302m_encoder_destroy(struct vidtv_encoder *e)
-{
-	if (e->id != S302M) {
+व्योम vidtv_s302m_encoder_destroy(काष्ठा vidtv_encoder *e)
+अणु
+	अगर (e->id != S302M) अणु
 		pr_err_ratelimited("Encoder type mismatch, skipping.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	vidtv_s302m_access_unit_destroy(e);
-	kfree(e->name);
-	vfree(e->encoder_buf);
-	kfree(e->ctx);
-	kfree(e);
-}
+	kमुक्त(e->name);
+	vमुक्त(e->encoder_buf);
+	kमुक्त(e->ctx);
+	kमुक्त(e);
+पूर्ण

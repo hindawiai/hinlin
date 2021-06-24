@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * quota.c - CephFS quota
  *
  * Copyright (C) 2017-2018 SUSE
  */
 
-#include <linux/statfs.h>
+#समावेश <linux/statfs.h>
 
-#include "super.h"
-#include "mds_client.h"
+#समावेश "super.h"
+#समावेश "mds_client.h"
 
-void ceph_adjust_quota_realms_count(struct inode *inode, bool inc)
-{
-	struct ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
-	if (inc)
+व्योम ceph_adjust_quota_realms_count(काष्ठा inode *inode, bool inc)
+अणु
+	काष्ठा ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
+	अगर (inc)
 		atomic64_inc(&mdsc->quotarealms_count);
-	else
+	अन्यथा
 		atomic64_dec(&mdsc->quotarealms_count);
-}
+पूर्ण
 
-static inline bool ceph_has_realms_with_quotas(struct inode *inode)
-{
-	struct super_block *sb = inode->i_sb;
-	struct ceph_mds_client *mdsc = ceph_sb_to_mdsc(sb);
-	struct inode *root = d_inode(sb->s_root);
+अटल अंतरभूत bool ceph_has_realms_with_quotas(काष्ठा inode *inode)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा ceph_mds_client *mdsc = ceph_sb_to_mdsc(sb);
+	काष्ठा inode *root = d_inode(sb->s_root);
 
-	if (atomic64_read(&mdsc->quotarealms_count) > 0)
-		return true;
-	/* if root is the real CephFS root, we don't have quota realms */
-	if (root && ceph_ino(root) == CEPH_INO_ROOT)
-		return false;
-	/* otherwise, we can't know for sure */
-	return true;
-}
+	अगर (atomic64_पढ़ो(&mdsc->quotarealms_count) > 0)
+		वापस true;
+	/* अगर root is the real CephFS root, we करोn't have quota realms */
+	अगर (root && ceph_ino(root) == CEPH_INO_ROOT)
+		वापस false;
+	/* otherwise, we can't know क्रम sure */
+	वापस true;
+पूर्ण
 
-void ceph_handle_quota(struct ceph_mds_client *mdsc,
-		       struct ceph_mds_session *session,
-		       struct ceph_msg *msg)
-{
-	struct super_block *sb = mdsc->fsc->sb;
-	struct ceph_mds_quota *h = msg->front.iov_base;
-	struct ceph_vino vino;
-	struct inode *inode;
-	struct ceph_inode_info *ci;
+व्योम ceph_handle_quota(काष्ठा ceph_mds_client *mdsc,
+		       काष्ठा ceph_mds_session *session,
+		       काष्ठा ceph_msg *msg)
+अणु
+	काष्ठा super_block *sb = mdsc->fsc->sb;
+	काष्ठा ceph_mds_quota *h = msg->front.iov_base;
+	काष्ठा ceph_vino vino;
+	काष्ठा inode *inode;
+	काष्ठा ceph_inode_info *ci;
 
-	if (msg->front.iov_len < sizeof(*h)) {
+	अगर (msg->front.iov_len < माप(*h)) अणु
 		pr_err("%s corrupt message mds%d len %d\n", __func__,
-		       session->s_mds, (int)msg->front.iov_len);
+		       session->s_mds, (पूर्णांक)msg->front.iov_len);
 		ceph_msg_dump(msg);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* increment msg sequence number */
 	mutex_lock(&session->s_mutex);
@@ -60,10 +61,10 @@ void ceph_handle_quota(struct ceph_mds_client *mdsc,
 	vino.ino = le64_to_cpu(h->ino);
 	vino.snap = CEPH_NOSNAP;
 	inode = ceph_find_inode(sb, vino);
-	if (!inode) {
+	अगर (!inode) अणु
 		pr_warn("Failed to find inode %llu\n", vino.ino);
-		return;
-	}
+		वापस;
+	पूर्ण
 	ci = ceph_inode(inode);
 
 	spin_lock(&ci->i_ceph_lock);
@@ -74,445 +75,445 @@ void ceph_handle_quota(struct ceph_mds_client *mdsc,
 		            le64_to_cpu(h->max_files));
 	spin_unlock(&ci->i_ceph_lock);
 
-	/* avoid calling iput_final() in dispatch thread */
+	/* aव्योम calling iput_final() in dispatch thपढ़ो */
 	ceph_async_iput(inode);
-}
+पूर्ण
 
-static struct ceph_quotarealm_inode *
-find_quotarealm_inode(struct ceph_mds_client *mdsc, u64 ino)
-{
-	struct ceph_quotarealm_inode *qri = NULL;
-	struct rb_node **node, *parent = NULL;
+अटल काष्ठा ceph_quotarealm_inode *
+find_quotarealm_inode(काष्ठा ceph_mds_client *mdsc, u64 ino)
+अणु
+	काष्ठा ceph_quotarealm_inode *qri = शून्य;
+	काष्ठा rb_node **node, *parent = शून्य;
 
 	mutex_lock(&mdsc->quotarealms_inodes_mutex);
 	node = &(mdsc->quotarealms_inodes.rb_node);
-	while (*node) {
+	जबतक (*node) अणु
 		parent = *node;
-		qri = container_of(*node, struct ceph_quotarealm_inode, node);
+		qri = container_of(*node, काष्ठा ceph_quotarealm_inode, node);
 
-		if (ino < qri->ino)
+		अगर (ino < qri->ino)
 			node = &((*node)->rb_left);
-		else if (ino > qri->ino)
+		अन्यथा अगर (ino > qri->ino)
 			node = &((*node)->rb_right);
-		else
-			break;
-	}
-	if (!qri || (qri->ino != ino)) {
+		अन्यथा
+			अवरोध;
+	पूर्ण
+	अगर (!qri || (qri->ino != ino)) अणु
 		/* Not found, create a new one and insert it */
-		qri = kmalloc(sizeof(*qri), GFP_KERNEL);
-		if (qri) {
+		qri = kदो_स्मृति(माप(*qri), GFP_KERNEL);
+		अगर (qri) अणु
 			qri->ino = ino;
-			qri->inode = NULL;
-			qri->timeout = 0;
+			qri->inode = शून्य;
+			qri->समयout = 0;
 			mutex_init(&qri->mutex);
 			rb_link_node(&qri->node, parent, node);
 			rb_insert_color(&qri->node, &mdsc->quotarealms_inodes);
-		} else
+		पूर्ण अन्यथा
 			pr_warn("Failed to alloc quotarealms_inode\n");
-	}
+	पूर्ण
 	mutex_unlock(&mdsc->quotarealms_inodes_mutex);
 
-	return qri;
-}
+	वापस qri;
+पूर्ण
 
 /*
  * This function will try to lookup a realm inode which isn't visible in the
- * filesystem mountpoint.  A list of these kind of inodes (not visible) is
- * maintained in the mdsc and freed only when the filesystem is umounted.
+ * fileप्रणाली mountpoपूर्णांक.  A list of these kind of inodes (not visible) is
+ * मुख्यtained in the mdsc and मुक्तd only when the fileप्रणाली is umounted.
  *
- * Note that these inodes are kept in this list even if the lookup fails, which
+ * Note that these inodes are kept in this list even अगर the lookup fails, which
  * allows to prevent useless lookup requests.
  */
-static struct inode *lookup_quotarealm_inode(struct ceph_mds_client *mdsc,
-					     struct super_block *sb,
-					     struct ceph_snap_realm *realm)
-{
-	struct ceph_quotarealm_inode *qri;
-	struct inode *in;
+अटल काष्ठा inode *lookup_quotarealm_inode(काष्ठा ceph_mds_client *mdsc,
+					     काष्ठा super_block *sb,
+					     काष्ठा ceph_snap_realm *realm)
+अणु
+	काष्ठा ceph_quotarealm_inode *qri;
+	काष्ठा inode *in;
 
 	qri = find_quotarealm_inode(mdsc, realm->ino);
-	if (!qri)
-		return NULL;
+	अगर (!qri)
+		वापस शून्य;
 
 	mutex_lock(&qri->mutex);
-	if (qri->inode && ceph_is_any_caps(qri->inode)) {
-		/* A request has already returned the inode */
+	अगर (qri->inode && ceph_is_any_caps(qri->inode)) अणु
+		/* A request has alपढ़ोy वापसed the inode */
 		mutex_unlock(&qri->mutex);
-		return qri->inode;
-	}
-	/* Check if this inode lookup has failed recently */
-	if (qri->timeout &&
-	    time_before_eq(jiffies, qri->timeout)) {
+		वापस qri->inode;
+	पूर्ण
+	/* Check अगर this inode lookup has failed recently */
+	अगर (qri->समयout &&
+	    समय_beक्रमe_eq(jअगरfies, qri->समयout)) अणु
 		mutex_unlock(&qri->mutex);
-		return NULL;
-	}
-	if (qri->inode) {
+		वापस शून्य;
+	पूर्ण
+	अगर (qri->inode) अणु
 		/* get caps */
-		int ret = __ceph_do_getattr(qri->inode, NULL,
+		पूर्णांक ret = __ceph_करो_getattr(qri->inode, शून्य,
 					    CEPH_STAT_CAP_INODE, true);
-		if (ret >= 0)
+		अगर (ret >= 0)
 			in = qri->inode;
-		else
+		अन्यथा
 			in = ERR_PTR(ret);
-	}  else {
+	पूर्ण  अन्यथा अणु
 		in = ceph_lookup_inode(sb, realm->ino);
-	}
+	पूर्ण
 
-	if (IS_ERR(in)) {
-		dout("Can't lookup inode %llx (err: %ld)\n",
+	अगर (IS_ERR(in)) अणु
+		करोut("Can't lookup inode %llx (err: %ld)\n",
 		     realm->ino, PTR_ERR(in));
-		qri->timeout = jiffies + msecs_to_jiffies(60 * 1000); /* XXX */
-	} else {
-		qri->timeout = 0;
+		qri->समयout = jअगरfies + msecs_to_jअगरfies(60 * 1000); /* XXX */
+	पूर्ण अन्यथा अणु
+		qri->समयout = 0;
 		qri->inode = in;
-	}
+	पूर्ण
 	mutex_unlock(&qri->mutex);
 
-	return in;
-}
+	वापस in;
+पूर्ण
 
-void ceph_cleanup_quotarealms_inodes(struct ceph_mds_client *mdsc)
-{
-	struct ceph_quotarealm_inode *qri;
-	struct rb_node *node;
+व्योम ceph_cleanup_quotarealms_inodes(काष्ठा ceph_mds_client *mdsc)
+अणु
+	काष्ठा ceph_quotarealm_inode *qri;
+	काष्ठा rb_node *node;
 
 	/*
 	 * It should now be safe to clean quotarealms_inode tree without holding
 	 * mdsc->quotarealms_inodes_mutex...
 	 */
 	mutex_lock(&mdsc->quotarealms_inodes_mutex);
-	while (!RB_EMPTY_ROOT(&mdsc->quotarealms_inodes)) {
+	जबतक (!RB_EMPTY_ROOT(&mdsc->quotarealms_inodes)) अणु
 		node = rb_first(&mdsc->quotarealms_inodes);
-		qri = rb_entry(node, struct ceph_quotarealm_inode, node);
+		qri = rb_entry(node, काष्ठा ceph_quotarealm_inode, node);
 		rb_erase(node, &mdsc->quotarealms_inodes);
 		iput(qri->inode);
-		kfree(qri);
-	}
+		kमुक्त(qri);
+	पूर्ण
 	mutex_unlock(&mdsc->quotarealms_inodes_mutex);
-}
+पूर्ण
 
 /*
- * This function walks through the snaprealm for an inode and returns the
- * ceph_snap_realm for the first snaprealm that has quotas set (either max_files
- * or max_bytes).  If the root is reached, return the root ceph_snap_realm
+ * This function walks through the snaprealm क्रम an inode and वापसs the
+ * ceph_snap_realm क्रम the first snaprealm that has quotas set (either max_files
+ * or max_bytes).  If the root is reached, वापस the root ceph_snap_realm
  * instead.
  *
- * Note that the caller is responsible for calling ceph_put_snap_realm() on the
- * returned realm.
+ * Note that the caller is responsible क्रम calling ceph_put_snap_realm() on the
+ * वापसed realm.
  *
- * Callers of this function need to hold mdsc->snap_rwsem.  However, if there's
- * a need to do an inode lookup, this rwsem will be temporarily dropped.  Hence
+ * Callers of this function need to hold mdsc->snap_rwsem.  However, अगर there's
+ * a need to करो an inode lookup, this rwsem will be temporarily dropped.  Hence
  * the 'retry' argument: if rwsem needs to be dropped and 'retry' is 'false'
- * this function will return -EAGAIN; otherwise, the snaprealms walk-through
+ * this function will वापस -EAGAIN; otherwise, the snaprealms walk-through
  * will be restarted.
  */
-static struct ceph_snap_realm *get_quota_realm(struct ceph_mds_client *mdsc,
-					       struct inode *inode, bool retry)
-{
-	struct ceph_inode_info *ci = NULL;
-	struct ceph_snap_realm *realm, *next;
-	struct inode *in;
+अटल काष्ठा ceph_snap_realm *get_quota_realm(काष्ठा ceph_mds_client *mdsc,
+					       काष्ठा inode *inode, bool retry)
+अणु
+	काष्ठा ceph_inode_info *ci = शून्य;
+	काष्ठा ceph_snap_realm *realm, *next;
+	काष्ठा inode *in;
 	bool has_quota;
 
-	if (ceph_snap(inode) != CEPH_NOSNAP)
-		return NULL;
+	अगर (ceph_snap(inode) != CEPH_NOSNAP)
+		वापस शून्य;
 
 restart:
 	realm = ceph_inode(inode)->i_snap_realm;
-	if (realm)
+	अगर (realm)
 		ceph_get_snap_realm(mdsc, realm);
-	else
+	अन्यथा
 		pr_err_ratelimited("get_quota_realm: ino (%llx.%llx) "
 				   "null i_snap_realm\n", ceph_vinop(inode));
-	while (realm) {
+	जबतक (realm) अणु
 		bool has_inode;
 
 		spin_lock(&realm->inodes_with_caps_lock);
 		has_inode = realm->inode;
-		in = has_inode ? igrab(realm->inode) : NULL;
+		in = has_inode ? igrab(realm->inode) : शून्य;
 		spin_unlock(&realm->inodes_with_caps_lock);
-		if (has_inode && !in)
-			break;
-		if (!in) {
-			up_read(&mdsc->snap_rwsem);
+		अगर (has_inode && !in)
+			अवरोध;
+		अगर (!in) अणु
+			up_पढ़ो(&mdsc->snap_rwsem);
 			in = lookup_quotarealm_inode(mdsc, inode->i_sb, realm);
-			down_read(&mdsc->snap_rwsem);
-			if (IS_ERR_OR_NULL(in))
-				break;
+			करोwn_पढ़ो(&mdsc->snap_rwsem);
+			अगर (IS_ERR_OR_शून्य(in))
+				अवरोध;
 			ceph_put_snap_realm(mdsc, realm);
-			if (!retry)
-				return ERR_PTR(-EAGAIN);
-			goto restart;
-		}
+			अगर (!retry)
+				वापस ERR_PTR(-EAGAIN);
+			जाओ restart;
+		पूर्ण
 
 		ci = ceph_inode(in);
 		has_quota = __ceph_has_any_quota(ci);
-		/* avoid calling iput_final() while holding mdsc->snap_rwsem */
+		/* aव्योम calling iput_final() जबतक holding mdsc->snap_rwsem */
 		ceph_async_iput(in);
 
 		next = realm->parent;
-		if (has_quota || !next)
-		       return realm;
+		अगर (has_quota || !next)
+		       वापस realm;
 
 		ceph_get_snap_realm(mdsc, next);
 		ceph_put_snap_realm(mdsc, realm);
 		realm = next;
-	}
-	if (realm)
+	पूर्ण
+	अगर (realm)
 		ceph_put_snap_realm(mdsc, realm);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-bool ceph_quota_is_same_realm(struct inode *old, struct inode *new)
-{
-	struct ceph_mds_client *mdsc = ceph_sb_to_mdsc(old->i_sb);
-	struct ceph_snap_realm *old_realm, *new_realm;
+bool ceph_quota_is_same_realm(काष्ठा inode *old, काष्ठा inode *new)
+अणु
+	काष्ठा ceph_mds_client *mdsc = ceph_sb_to_mdsc(old->i_sb);
+	काष्ठा ceph_snap_realm *old_realm, *new_realm;
 	bool is_same;
 
 restart:
 	/*
 	 * We need to lookup 2 quota realms atomically, i.e. with snap_rwsem.
 	 * However, get_quota_realm may drop it temporarily.  By setting the
-	 * 'retry' parameter to 'false', we'll get -EAGAIN if the rwsem was
+	 * 'retry' parameter to 'false', we'll get -EAGAIN अगर the rwsem was
 	 * dropped and we can then restart the whole operation.
 	 */
-	down_read(&mdsc->snap_rwsem);
+	करोwn_पढ़ो(&mdsc->snap_rwsem);
 	old_realm = get_quota_realm(mdsc, old, true);
 	new_realm = get_quota_realm(mdsc, new, false);
-	if (PTR_ERR(new_realm) == -EAGAIN) {
-		up_read(&mdsc->snap_rwsem);
-		if (old_realm)
+	अगर (PTR_ERR(new_realm) == -EAGAIN) अणु
+		up_पढ़ो(&mdsc->snap_rwsem);
+		अगर (old_realm)
 			ceph_put_snap_realm(mdsc, old_realm);
-		goto restart;
-	}
+		जाओ restart;
+	पूर्ण
 	is_same = (old_realm == new_realm);
-	up_read(&mdsc->snap_rwsem);
+	up_पढ़ो(&mdsc->snap_rwsem);
 
-	if (old_realm)
+	अगर (old_realm)
 		ceph_put_snap_realm(mdsc, old_realm);
-	if (new_realm)
+	अगर (new_realm)
 		ceph_put_snap_realm(mdsc, new_realm);
 
-	return is_same;
-}
+	वापस is_same;
+पूर्ण
 
-enum quota_check_op {
-	QUOTA_CHECK_MAX_FILES_OP,	/* check quota max_files limit */
+क्रमागत quota_check_op अणु
+	QUOTA_CHECK_MAX_खाताS_OP,	/* check quota max_files limit */
 	QUOTA_CHECK_MAX_BYTES_OP,	/* check quota max_files limit */
-	QUOTA_CHECK_MAX_BYTES_APPROACHING_OP	/* check if quota max_files
+	QUOTA_CHECK_MAX_BYTES_APPROACHING_OP	/* check अगर quota max_files
 						   limit is approaching */
-};
+पूर्ण;
 
 /*
- * check_quota_exceeded() will walk up the snaprealm hierarchy and, for each
+ * check_quota_exceeded() will walk up the snaprealm hierarchy and, क्रम each
  * realm, it will execute quota check operation defined by the 'op' parameter.
- * The snaprealm walk is interrupted if the quota check detects that the quota
- * is exceeded or if the root inode is reached.
+ * The snaprealm walk is पूर्णांकerrupted अगर the quota check detects that the quota
+ * is exceeded or अगर the root inode is reached.
  */
-static bool check_quota_exceeded(struct inode *inode, enum quota_check_op op,
+अटल bool check_quota_exceeded(काष्ठा inode *inode, क्रमागत quota_check_op op,
 				 loff_t delta)
-{
-	struct ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
-	struct ceph_inode_info *ci;
-	struct ceph_snap_realm *realm, *next;
-	struct inode *in;
+अणु
+	काष्ठा ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
+	काष्ठा ceph_inode_info *ci;
+	काष्ठा ceph_snap_realm *realm, *next;
+	काष्ठा inode *in;
 	u64 max, rvalue;
 	bool exceeded = false;
 
-	if (ceph_snap(inode) != CEPH_NOSNAP)
-		return false;
+	अगर (ceph_snap(inode) != CEPH_NOSNAP)
+		वापस false;
 
-	down_read(&mdsc->snap_rwsem);
+	करोwn_पढ़ो(&mdsc->snap_rwsem);
 restart:
 	realm = ceph_inode(inode)->i_snap_realm;
-	if (realm)
+	अगर (realm)
 		ceph_get_snap_realm(mdsc, realm);
-	else
+	अन्यथा
 		pr_err_ratelimited("check_quota_exceeded: ino (%llx.%llx) "
 				   "null i_snap_realm\n", ceph_vinop(inode));
-	while (realm) {
+	जबतक (realm) अणु
 		bool has_inode;
 
 		spin_lock(&realm->inodes_with_caps_lock);
 		has_inode = realm->inode;
-		in = has_inode ? igrab(realm->inode) : NULL;
+		in = has_inode ? igrab(realm->inode) : शून्य;
 		spin_unlock(&realm->inodes_with_caps_lock);
-		if (has_inode && !in)
-			break;
-		if (!in) {
-			up_read(&mdsc->snap_rwsem);
+		अगर (has_inode && !in)
+			अवरोध;
+		अगर (!in) अणु
+			up_पढ़ो(&mdsc->snap_rwsem);
 			in = lookup_quotarealm_inode(mdsc, inode->i_sb, realm);
-			down_read(&mdsc->snap_rwsem);
-			if (IS_ERR_OR_NULL(in))
-				break;
+			करोwn_पढ़ो(&mdsc->snap_rwsem);
+			अगर (IS_ERR_OR_शून्य(in))
+				अवरोध;
 			ceph_put_snap_realm(mdsc, realm);
-			goto restart;
-		}
+			जाओ restart;
+		पूर्ण
 		ci = ceph_inode(in);
 		spin_lock(&ci->i_ceph_lock);
-		if (op == QUOTA_CHECK_MAX_FILES_OP) {
+		अगर (op == QUOTA_CHECK_MAX_खाताS_OP) अणु
 			max = ci->i_max_files;
 			rvalue = ci->i_rfiles + ci->i_rsubdirs;
-		} else {
+		पूर्ण अन्यथा अणु
 			max = ci->i_max_bytes;
 			rvalue = ci->i_rbytes;
-		}
+		पूर्ण
 		spin_unlock(&ci->i_ceph_lock);
-		switch (op) {
-		case QUOTA_CHECK_MAX_FILES_OP:
-		case QUOTA_CHECK_MAX_BYTES_OP:
+		चयन (op) अणु
+		हाल QUOTA_CHECK_MAX_खाताS_OP:
+		हाल QUOTA_CHECK_MAX_BYTES_OP:
 			exceeded = (max && (rvalue + delta > max));
-			break;
-		case QUOTA_CHECK_MAX_BYTES_APPROACHING_OP:
-			if (max) {
-				if (rvalue >= max)
+			अवरोध;
+		हाल QUOTA_CHECK_MAX_BYTES_APPROACHING_OP:
+			अगर (max) अणु
+				अगर (rvalue >= max)
 					exceeded = true;
-				else {
+				अन्यथा अणु
 					/*
 					 * when we're writing more that 1/16th
 					 * of the available space
 					 */
 					exceeded =
 						(((max - rvalue) >> 4) < delta);
-				}
-			}
-			break;
-		default:
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		शेष:
 			/* Shouldn't happen */
 			pr_warn("Invalid quota check op (%d)\n", op);
-			exceeded = true; /* Just break the loop */
-		}
-		/* avoid calling iput_final() while holding mdsc->snap_rwsem */
+			exceeded = true; /* Just अवरोध the loop */
+		पूर्ण
+		/* aव्योम calling iput_final() जबतक holding mdsc->snap_rwsem */
 		ceph_async_iput(in);
 
 		next = realm->parent;
-		if (exceeded || !next)
-			break;
+		अगर (exceeded || !next)
+			अवरोध;
 		ceph_get_snap_realm(mdsc, next);
 		ceph_put_snap_realm(mdsc, realm);
 		realm = next;
-	}
-	if (realm)
+	पूर्ण
+	अगर (realm)
 		ceph_put_snap_realm(mdsc, realm);
-	up_read(&mdsc->snap_rwsem);
+	up_पढ़ो(&mdsc->snap_rwsem);
 
-	return exceeded;
-}
+	वापस exceeded;
+पूर्ण
 
 /*
- * ceph_quota_is_max_files_exceeded - check if we can create a new file
+ * ceph_quota_is_max_files_exceeded - check अगर we can create a new file
  * @inode:	directory where a new file is being created
  *
- * This functions returns true is max_files quota allows a new file to be
+ * This functions वापसs true is max_files quota allows a new file to be
  * created.  It is necessary to walk through the snaprealm hierarchy (until the
  * FS root) to check all realms with quotas set.
  */
-bool ceph_quota_is_max_files_exceeded(struct inode *inode)
-{
-	if (!ceph_has_realms_with_quotas(inode))
-		return false;
+bool ceph_quota_is_max_files_exceeded(काष्ठा inode *inode)
+अणु
+	अगर (!ceph_has_realms_with_quotas(inode))
+		वापस false;
 
-	WARN_ON(!S_ISDIR(inode->i_mode));
+	WARN_ON(!S_ISसूची(inode->i_mode));
 
-	return check_quota_exceeded(inode, QUOTA_CHECK_MAX_FILES_OP, 1);
-}
-
-/*
- * ceph_quota_is_max_bytes_exceeded - check if we can write to a file
- * @inode:	inode being written
- * @newsize:	new size if write succeeds
- *
- * This functions returns true is max_bytes quota allows a file size to reach
- * @newsize; it returns false otherwise.
- */
-bool ceph_quota_is_max_bytes_exceeded(struct inode *inode, loff_t newsize)
-{
-	loff_t size = i_size_read(inode);
-
-	if (!ceph_has_realms_with_quotas(inode))
-		return false;
-
-	/* return immediately if we're decreasing file size */
-	if (newsize <= size)
-		return false;
-
-	return check_quota_exceeded(inode, QUOTA_CHECK_MAX_BYTES_OP, (newsize - size));
-}
+	वापस check_quota_exceeded(inode, QUOTA_CHECK_MAX_खाताS_OP, 1);
+पूर्ण
 
 /*
- * ceph_quota_is_max_bytes_approaching - check if we're reaching max_bytes
+ * ceph_quota_is_max_bytes_exceeded - check अगर we can ग_लिखो to a file
  * @inode:	inode being written
- * @newsize:	new size if write succeeds
+ * @newsize:	new size अगर ग_लिखो succeeds
  *
- * This function returns true if the new file size @newsize will be consuming
- * more than 1/16th of the available quota space; it returns false otherwise.
+ * This functions वापसs true is max_bytes quota allows a file size to reach
+ * @newsize; it वापसs false otherwise.
  */
-bool ceph_quota_is_max_bytes_approaching(struct inode *inode, loff_t newsize)
-{
+bool ceph_quota_is_max_bytes_exceeded(काष्ठा inode *inode, loff_t newsize)
+अणु
+	loff_t size = i_size_पढ़ो(inode);
+
+	अगर (!ceph_has_realms_with_quotas(inode))
+		वापस false;
+
+	/* वापस immediately अगर we're decreasing file size */
+	अगर (newsize <= size)
+		वापस false;
+
+	वापस check_quota_exceeded(inode, QUOTA_CHECK_MAX_BYTES_OP, (newsize - size));
+पूर्ण
+
+/*
+ * ceph_quota_is_max_bytes_approaching - check अगर we're reaching max_bytes
+ * @inode:	inode being written
+ * @newsize:	new size अगर ग_लिखो succeeds
+ *
+ * This function वापसs true अगर the new file size @newsize will be consuming
+ * more than 1/16th of the available quota space; it वापसs false otherwise.
+ */
+bool ceph_quota_is_max_bytes_approaching(काष्ठा inode *inode, loff_t newsize)
+अणु
 	loff_t size = ceph_inode(inode)->i_reported_size;
 
-	if (!ceph_has_realms_with_quotas(inode))
-		return false;
+	अगर (!ceph_has_realms_with_quotas(inode))
+		वापस false;
 
-	/* return immediately if we're decreasing file size */
-	if (newsize <= size)
-		return false;
+	/* वापस immediately अगर we're decreasing file size */
+	अगर (newsize <= size)
+		वापस false;
 
-	return check_quota_exceeded(inode, QUOTA_CHECK_MAX_BYTES_APPROACHING_OP,
+	वापस check_quota_exceeded(inode, QUOTA_CHECK_MAX_BYTES_APPROACHING_OP,
 				    (newsize - size));
-}
+पूर्ण
 
 /*
- * ceph_quota_update_statfs - if root has quota update statfs with quota status
- * @fsc:	filesystem client instance
+ * ceph_quota_update_statfs - अगर root has quota update statfs with quota status
+ * @fsc:	fileप्रणाली client instance
  * @buf:	statfs to update
  *
- * If the mounted filesystem root has max_bytes quota set, update the filesystem
+ * If the mounted fileप्रणाली root has max_bytes quota set, update the fileप्रणाली
  * statistics with the quota status.
  *
- * This function returns true if the stats have been updated, false otherwise.
+ * This function वापसs true अगर the stats have been updated, false otherwise.
  */
-bool ceph_quota_update_statfs(struct ceph_fs_client *fsc, struct kstatfs *buf)
-{
-	struct ceph_mds_client *mdsc = fsc->mdsc;
-	struct ceph_inode_info *ci;
-	struct ceph_snap_realm *realm;
-	struct inode *in;
-	u64 total = 0, used, free;
+bool ceph_quota_update_statfs(काष्ठा ceph_fs_client *fsc, काष्ठा kstatfs *buf)
+अणु
+	काष्ठा ceph_mds_client *mdsc = fsc->mdsc;
+	काष्ठा ceph_inode_info *ci;
+	काष्ठा ceph_snap_realm *realm;
+	काष्ठा inode *in;
+	u64 total = 0, used, मुक्त;
 	bool is_updated = false;
 
-	down_read(&mdsc->snap_rwsem);
+	करोwn_पढ़ो(&mdsc->snap_rwsem);
 	realm = get_quota_realm(mdsc, d_inode(fsc->sb->s_root), true);
-	up_read(&mdsc->snap_rwsem);
-	if (!realm)
-		return false;
+	up_पढ़ो(&mdsc->snap_rwsem);
+	अगर (!realm)
+		वापस false;
 
 	spin_lock(&realm->inodes_with_caps_lock);
-	in = realm->inode ? igrab(realm->inode) : NULL;
+	in = realm->inode ? igrab(realm->inode) : शून्य;
 	spin_unlock(&realm->inodes_with_caps_lock);
-	if (in) {
+	अगर (in) अणु
 		ci = ceph_inode(in);
 		spin_lock(&ci->i_ceph_lock);
-		if (ci->i_max_bytes) {
+		अगर (ci->i_max_bytes) अणु
 			total = ci->i_max_bytes >> CEPH_BLOCK_SHIFT;
 			used = ci->i_rbytes >> CEPH_BLOCK_SHIFT;
-			/* It is possible for a quota to be exceeded.
-			 * Report 'zero' in that case
+			/* It is possible क्रम a quota to be exceeded.
+			 * Report 'zero' in that हाल
 			 */
-			free = total > used ? total - used : 0;
-		}
+			मुक्त = total > used ? total - used : 0;
+		पूर्ण
 		spin_unlock(&ci->i_ceph_lock);
-		if (total) {
+		अगर (total) अणु
 			buf->f_blocks = total;
-			buf->f_bfree = free;
-			buf->f_bavail = free;
+			buf->f_bमुक्त = मुक्त;
+			buf->f_bavail = मुक्त;
 			is_updated = true;
-		}
+		पूर्ण
 		iput(in);
-	}
+	पूर्ण
 	ceph_put_snap_realm(mdsc, realm);
 
-	return is_updated;
-}
+	वापस is_updated;
+पूर्ण
 

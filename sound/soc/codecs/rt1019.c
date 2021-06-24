@@ -1,181 +1,182 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 //
-// rt1019.c  --  RT1019 ALSA SoC audio amplifier driver
+// rt1019.c  --  RT1019 ALSA SoC audio amplअगरier driver
 // Author: Jack Yu <jack.yu@realtek.com>
 //
 // Copyright(c) 2021 Realtek Semiconductor Corp.
 //
 //
 
-#include <linux/acpi.h>
-#include <linux/fs.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/regmap.h>
-#include <linux/i2c.h>
-#include <linux/platform_device.h>
-#include <linux/firmware.h>
-#include <linux/gpio.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-dapm.h>
-#include <sound/initval.h>
-#include <sound/tlv.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/gpपन.स>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dapm.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/tlv.h>
 
-#include "rl6231.h"
-#include "rt1019.h"
+#समावेश "rl6231.h"
+#समावेश "rt1019.h"
 
-static const struct reg_default rt1019_reg[] = {
-	{ 0x0000, 0x00 },
-	{ 0x0011, 0x04 },
-	{ 0x0013, 0x00 },
-	{ 0x0019, 0x30 },
-	{ 0x001b, 0x01 },
-	{ 0x005c, 0x00 },
-	{ 0x005e, 0x10 },
-	{ 0x005f, 0xec },
-	{ 0x0061, 0x10 },
-	{ 0x0062, 0x19 },
-	{ 0x0066, 0x08 },
-	{ 0x0100, 0x80 },
-	{ 0x0100, 0x51 },
-	{ 0x0102, 0x23 },
-	{ 0x0311, 0x00 },
-	{ 0x0312, 0x3e },
-	{ 0x0313, 0x86 },
-	{ 0x0400, 0x03 },
-	{ 0x0401, 0x02 },
-	{ 0x0402, 0x01 },
-	{ 0x0504, 0xff },
-	{ 0x0505, 0x24 },
-	{ 0x0b00, 0x50 },
-	{ 0x0b01, 0xc3 },
-};
+अटल स्थिर काष्ठा reg_शेष rt1019_reg[] = अणु
+	अणु 0x0000, 0x00 पूर्ण,
+	अणु 0x0011, 0x04 पूर्ण,
+	अणु 0x0013, 0x00 पूर्ण,
+	अणु 0x0019, 0x30 पूर्ण,
+	अणु 0x001b, 0x01 पूर्ण,
+	अणु 0x005c, 0x00 पूर्ण,
+	अणु 0x005e, 0x10 पूर्ण,
+	अणु 0x005f, 0xec पूर्ण,
+	अणु 0x0061, 0x10 पूर्ण,
+	अणु 0x0062, 0x19 पूर्ण,
+	अणु 0x0066, 0x08 पूर्ण,
+	अणु 0x0100, 0x80 पूर्ण,
+	अणु 0x0100, 0x51 पूर्ण,
+	अणु 0x0102, 0x23 पूर्ण,
+	अणु 0x0311, 0x00 पूर्ण,
+	अणु 0x0312, 0x3e पूर्ण,
+	अणु 0x0313, 0x86 पूर्ण,
+	अणु 0x0400, 0x03 पूर्ण,
+	अणु 0x0401, 0x02 पूर्ण,
+	अणु 0x0402, 0x01 पूर्ण,
+	अणु 0x0504, 0xff पूर्ण,
+	अणु 0x0505, 0x24 पूर्ण,
+	अणु 0x0b00, 0x50 पूर्ण,
+	अणु 0x0b01, 0xc3 पूर्ण,
+पूर्ण;
 
-static bool rt1019_volatile_register(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case RT1019_PWR_STRP_2:
-	case RT1019_VER_ID:
-	case RT1019_VEND_ID_1:
-	case RT1019_VEND_ID_2:
-	case RT1019_DEV_ID_1:
-	case RT1019_DEV_ID_2:
-		return true;
+अटल bool rt1019_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल RT1019_PWR_STRP_2:
+	हाल RT1019_VER_ID:
+	हाल RT1019_VEND_ID_1:
+	हाल RT1019_VEND_ID_2:
+	हाल RT1019_DEV_ID_1:
+	हाल RT1019_DEV_ID_2:
+		वापस true;
 
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool rt1019_readable_register(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case RT1019_RESET:
-	case RT1019_IDS_CTRL:
-	case RT1019_ASEL_CTRL:
-	case RT1019_PWR_STRP_2:
-	case RT1019_BEEP_TONE:
-	case RT1019_VER_ID:
-	case RT1019_VEND_ID_1:
-	case RT1019_VEND_ID_2:
-	case RT1019_DEV_ID_1:
-	case RT1019_DEV_ID_2:
-	case RT1019_SDB_CTRL:
-	case RT1019_CLK_TREE_1:
-	case RT1019_CLK_TREE_2:
-	case RT1019_CLK_TREE_3:
-	case RT1019_PLL_1:
-	case RT1019_PLL_2:
-	case RT1019_PLL_3:
-	case RT1019_TDM_1:
-	case RT1019_TDM_2:
-	case RT1019_TDM_3:
-	case RT1019_DMIX_MONO_1:
-	case RT1019_DMIX_MONO_2:
-	case RT1019_BEEP_1:
-	case RT1019_BEEP_2:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool rt1019_पढ़ोable_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल RT1019_RESET:
+	हाल RT1019_IDS_CTRL:
+	हाल RT1019_ASEL_CTRL:
+	हाल RT1019_PWR_STRP_2:
+	हाल RT1019_BEEP_TONE:
+	हाल RT1019_VER_ID:
+	हाल RT1019_VEND_ID_1:
+	हाल RT1019_VEND_ID_2:
+	हाल RT1019_DEV_ID_1:
+	हाल RT1019_DEV_ID_2:
+	हाल RT1019_SDB_CTRL:
+	हाल RT1019_CLK_TREE_1:
+	हाल RT1019_CLK_TREE_2:
+	हाल RT1019_CLK_TREE_3:
+	हाल RT1019_PLL_1:
+	हाल RT1019_PLL_2:
+	हाल RT1019_PLL_3:
+	हाल RT1019_TDM_1:
+	हाल RT1019_TDM_2:
+	हाल RT1019_TDM_3:
+	हाल RT1019_DMIX_MONO_1:
+	हाल RT1019_DMIX_MONO_2:
+	हाल RT1019_BEEP_1:
+	हाल RT1019_BEEP_2:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const DECLARE_TLV_DB_SCALE(dac_vol_tlv, -9525, 75, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(dac_vol_tlv, -9525, 75, 0);
 
-static const char * const rt1019_din_source_select[] = {
+अटल स्थिर अक्षर * स्थिर rt1019_din_source_select[] = अणु
 	"Left",
 	"Right",
 	"Left + Right average",
-};
+पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(rt1019_mono_lr_sel, RT1019_IDS_CTRL, 0,
+अटल SOC_ENUM_SINGLE_DECL(rt1019_mono_lr_sel, RT1019_IDS_CTRL, 0,
 	rt1019_din_source_select);
 
-static const struct snd_kcontrol_new rt1019_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new rt1019_snd_controls[] = अणु
 	SOC_SINGLE_TLV("DAC Playback Volume", RT1019_DMIX_MONO_1, 0,
 		127, 0, dac_vol_tlv),
 	SOC_ENUM("Mono LR Select", rt1019_mono_lr_sel),
-};
+पूर्ण;
 
-static int r1019_dac_event(struct snd_soc_dapm_widget *w,
-	struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+अटल पूर्णांक r1019_dac_event(काष्ठा snd_soc_dapm_widget *w,
+	काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
 
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
-		snd_soc_component_write(component, RT1019_SDB_CTRL, 0xb);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		snd_soc_component_write(component, RT1019_SDB_CTRL, 0xa);
-		break;
-	default:
-		break;
-	}
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_PRE_PMU:
+		snd_soc_component_ग_लिखो(component, RT1019_SDB_CTRL, 0xb);
+		अवरोध;
+	हाल SND_SOC_DAPM_POST_PMD:
+		snd_soc_component_ग_लिखो(component, RT1019_SDB_CTRL, 0xa);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dapm_widget rt1019_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget rt1019_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_AIF_IN("AIFRX", "AIF Playback", 0, SND_SOC_NOPM, 0, 0),
-	SND_SOC_DAPM_DAC_E("DAC", NULL, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_DAC_E("DAC", शून्य, SND_SOC_NOPM, 0, 0,
 		r1019_dac_event, SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_OUTPUT("SPO"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route rt1019_dapm_routes[] = {
-	{ "DAC", NULL, "AIFRX" },
-	{ "SPO", NULL, "DAC" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route rt1019_dapm_routes[] = अणु
+	अणु "DAC", शून्य, "AIFRX" पूर्ण,
+	अणु "SPO", शून्य, "DAC" पूर्ण,
+पूर्ण;
 
-static int rt1019_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct rt1019_priv *rt1019 = snd_soc_component_get_drvdata(component);
-	int pre_div, bclk_ms, frame_size;
-	unsigned int val_len = 0, sys_div_da_filter = 0;
-	unsigned int sys_dac_osr = 0, sys_fifo_clk = 0;
-	unsigned int sys_clk_cal = 0, sys_asrc_in = 0;
+अटल पूर्णांक rt1019_hw_params(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_pcm_hw_params *params, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा rt1019_priv *rt1019 = snd_soc_component_get_drvdata(component);
+	पूर्णांक pre_भाग, bclk_ms, frame_size;
+	अचिन्हित पूर्णांक val_len = 0, sys_भाग_da_filter = 0;
+	अचिन्हित पूर्णांक sys_dac_osr = 0, sys_fअगरo_clk = 0;
+	अचिन्हित पूर्णांक sys_clk_cal = 0, sys_asrc_in = 0;
 
 	rt1019->lrck = params_rate(params);
-	pre_div = rl6231_get_clk_info(rt1019->sysclk, rt1019->lrck);
-	if (pre_div < 0) {
+	pre_भाग = rl6231_get_clk_info(rt1019->sysclk, rt1019->lrck);
+	अगर (pre_भाग < 0) अणु
 		dev_err(component->dev, "Unsupported clock setting\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	frame_size = snd_soc_params_to_frame_size(params);
-	if (frame_size < 0) {
+	अगर (frame_size < 0) अणु
 		dev_err(component->dev, "Unsupported frame size: %d\n", frame_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bclk_ms = frame_size > 32;
 	rt1019->bclk = rt1019->lrck * (32 << bclk_ms);
@@ -183,133 +184,133 @@ static int rt1019_hw_params(struct snd_pcm_substream *substream,
 	dev_dbg(dai->dev, "bclk is %dHz and lrck is %dHz\n",
 		rt1019->bclk, rt1019->lrck);
 	dev_dbg(dai->dev, "bclk_ms is %d and pre_div is %d for iis %d\n",
-				bclk_ms, pre_div, dai->id);
+				bclk_ms, pre_भाग, dai->id);
 
-	switch (pre_div) {
-	case 0:
-		sys_div_da_filter = RT1019_SYS_DIV_DA_FIL_DIV1;
+	चयन (pre_भाग) अणु
+	हाल 0:
+		sys_भाग_da_filter = RT1019_SYS_DIV_DA_FIL_DIV1;
 		sys_dac_osr = RT1019_SYS_DA_OSR_DIV1;
 		sys_asrc_in = RT1019_ASRC_256FS_DIV1;
-		sys_fifo_clk = RT1019_SEL_FIFO_DIV1;
+		sys_fअगरo_clk = RT1019_SEL_FIFO_DIV1;
 		sys_clk_cal = RT1019_SEL_CLK_CAL_DIV1;
-		break;
-	case 1:
-		sys_div_da_filter = RT1019_SYS_DIV_DA_FIL_DIV2;
+		अवरोध;
+	हाल 1:
+		sys_भाग_da_filter = RT1019_SYS_DIV_DA_FIL_DIV2;
 		sys_dac_osr = RT1019_SYS_DA_OSR_DIV2;
 		sys_asrc_in = RT1019_ASRC_256FS_DIV2;
-		sys_fifo_clk = RT1019_SEL_FIFO_DIV2;
+		sys_fअगरo_clk = RT1019_SEL_FIFO_DIV2;
 		sys_clk_cal = RT1019_SEL_CLK_CAL_DIV2;
-		break;
-	case 3:
-		sys_div_da_filter = RT1019_SYS_DIV_DA_FIL_DIV4;
+		अवरोध;
+	हाल 3:
+		sys_भाग_da_filter = RT1019_SYS_DIV_DA_FIL_DIV4;
 		sys_dac_osr = RT1019_SYS_DA_OSR_DIV4;
 		sys_asrc_in = RT1019_ASRC_256FS_DIV4;
-		sys_fifo_clk = RT1019_SEL_FIFO_DIV4;
+		sys_fअगरo_clk = RT1019_SEL_FIFO_DIV4;
 		sys_clk_cal = RT1019_SEL_CLK_CAL_DIV4;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (params_width(params)) {
-	case 16:
-		break;
-	case 20:
+	चयन (params_width(params)) अणु
+	हाल 16:
+		अवरोध;
+	हाल 20:
 		val_len = RT1019_I2S_DL_20;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		val_len = RT1019_I2S_DL_24;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		val_len = RT1019_I2S_DL_32;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		val_len = RT1019_I2S_DL_8;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	snd_soc_component_update_bits(component, RT1019_TDM_2, RT1019_I2S_DL_MASK,
 			val_len);
 	snd_soc_component_update_bits(component, RT1019_CLK_TREE_1,
-			RT1019_SEL_FIFO_MASK, sys_fifo_clk);
+			RT1019_SEL_FIFO_MASK, sys_fअगरo_clk);
 	snd_soc_component_update_bits(component, RT1019_CLK_TREE_2,
 			RT1019_SYS_DIV_DA_FIL_MASK | RT1019_SYS_DA_OSR_MASK |
-			RT1019_ASRC_256FS_MASK, sys_div_da_filter | sys_dac_osr |
+			RT1019_ASRC_256FS_MASK, sys_भाग_da_filter | sys_dac_osr |
 			sys_asrc_in);
 	snd_soc_component_update_bits(component, RT1019_CLK_TREE_3,
 			RT1019_SEL_CLK_CAL_MASK, sys_clk_cal);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt1019_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct snd_soc_component *component = dai->component;
-	unsigned int reg_val = 0, reg_val2 = 0;
+अटल पूर्णांक rt1019_set_dai_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	अचिन्हित पूर्णांक reg_val = 0, reg_val2 = 0;
 
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
 		reg_val2 |= RT1019_TDM_BCLK_INV;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-		break;
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
+		अवरोध;
 
-	case SND_SOC_DAIFMT_LEFT_J:
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		reg_val |= RT1019_I2S_DF_LEFT;
-		break;
+		अवरोध;
 
-	case SND_SOC_DAIFMT_DSP_A:
+	हाल SND_SOC_DAIFMT_DSP_A:
 		reg_val |= RT1019_I2S_DF_PCM_A_R;
-		break;
+		अवरोध;
 
-	case SND_SOC_DAIFMT_DSP_B:
+	हाल SND_SOC_DAIFMT_DSP_B:
 		reg_val |= RT1019_I2S_DF_PCM_B_R;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	snd_soc_component_update_bits(component, RT1019_TDM_2,
 		RT1019_I2S_DF_MASK, reg_val);
 	snd_soc_component_update_bits(component, RT1019_TDM_1,
 		RT1019_TDM_BCLK_MASK, reg_val2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt1019_set_dai_sysclk(struct snd_soc_dai *dai,
-		int clk_id, unsigned int freq, int dir)
-{
-	struct snd_soc_component *component = dai->component;
-	struct rt1019_priv *rt1019 = snd_soc_component_get_drvdata(component);
-	unsigned int reg_val = 0;
+अटल पूर्णांक rt1019_set_dai_sysclk(काष्ठा snd_soc_dai *dai,
+		पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा rt1019_priv *rt1019 = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक reg_val = 0;
 
-	if (freq == rt1019->sysclk && clk_id == rt1019->sysclk_src)
-		return 0;
+	अगर (freq == rt1019->sysclk && clk_id == rt1019->sysclk_src)
+		वापस 0;
 
-	switch (clk_id) {
-	case RT1019_SCLK_S_BCLK:
+	चयन (clk_id) अणु
+	हाल RT1019_SCLK_S_BCLK:
 		reg_val |= RT1019_CLK_SYS_PRE_SEL_BCLK;
-		break;
+		अवरोध;
 
-	case RT1019_SCLK_S_PLL:
+	हाल RT1019_SCLK_S_PLL:
 		reg_val |= RT1019_CLK_SYS_PRE_SEL_PLL;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rt1019->sysclk = freq;
 	rt1019->sysclk_src = clk_id;
@@ -319,49 +320,49 @@ static int rt1019_set_dai_sysclk(struct snd_soc_dai *dai,
 	snd_soc_component_update_bits(component, RT1019_CLK_TREE_1,
 		RT1019_CLK_SYS_PRE_SEL_MASK, reg_val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt1019_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
-			unsigned int freq_in, unsigned int freq_out)
-{
-	struct snd_soc_component *component = dai->component;
-	struct rt1019_priv *rt1019 = snd_soc_component_get_drvdata(component);
-	struct rl6231_pll_code pll_code;
-	int ret;
+अटल पूर्णांक rt1019_set_dai_pll(काष्ठा snd_soc_dai *dai, पूर्णांक pll_id, पूर्णांक source,
+			अचिन्हित पूर्णांक freq_in, अचिन्हित पूर्णांक freq_out)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा rt1019_priv *rt1019 = snd_soc_component_get_drvdata(component);
+	काष्ठा rl6231_pll_code pll_code;
+	पूर्णांक ret;
 
-	if (!freq_in || !freq_out) {
+	अगर (!freq_in || !freq_out) अणु
 		dev_dbg(component->dev, "PLL disabled\n");
 		rt1019->pll_in = 0;
 		rt1019->pll_out = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (source == rt1019->pll_src && freq_in == rt1019->pll_in &&
+	अगर (source == rt1019->pll_src && freq_in == rt1019->pll_in &&
 		freq_out == rt1019->pll_out)
-		return 0;
+		वापस 0;
 
-	switch (source) {
-	case RT1019_PLL_S_BCLK:
+	चयन (source) अणु
+	हाल RT1019_PLL_S_BCLK:
 		snd_soc_component_update_bits(component, RT1019_CLK_TREE_1,
 			RT1019_PLL_SRC_MASK, RT1019_PLL_SRC_SEL_BCLK);
-		break;
+		अवरोध;
 
-	case RT1019_PLL_S_RC25M:
+	हाल RT1019_PLL_S_RC25M:
 		snd_soc_component_update_bits(component, RT1019_CLK_TREE_1,
 			RT1019_PLL_SRC_MASK, RT1019_PLL_SRC_SEL_RC);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(component->dev, "Unknown PLL source %d\n", source);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(component->dev, "Unsupport input clock %d\n", freq_in);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_dbg(component->dev, "bypass=%d m=%d n=%d k=%d\n",
 		pll_code.m_bp, (pll_code.m_bp ? 0 : pll_code.m_code),
@@ -384,223 +385,223 @@ static int rt1019_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 	rt1019->pll_out = freq_out;
 	rt1019->pll_src = source;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt1019_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
-			unsigned int rx_mask, int slots, int slot_width)
-{
-	struct snd_soc_component *component = dai->component;
-	unsigned int val = 0, rx_slotnum;
-	int ret = 0, first_bit;
+अटल पूर्णांक rt1019_set_tdm_slot(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक tx_mask,
+			अचिन्हित पूर्णांक rx_mask, पूर्णांक slots, पूर्णांक slot_width)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	अचिन्हित पूर्णांक val = 0, rx_slotnum;
+	पूर्णांक ret = 0, first_bit;
 
-	switch (slots) {
-	case 4:
+	चयन (slots) अणु
+	हाल 4:
 		val |= RT1019_I2S_TX_4CH;
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		val |= RT1019_I2S_TX_6CH;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		val |= RT1019_I2S_TX_8CH;
-		break;
-	case 2:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल 2:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (slot_width) {
-	case 20:
+	चयन (slot_width) अणु
+	हाल 20:
 		val |= RT1019_I2S_DL_20;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		val |= RT1019_I2S_DL_24;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		val |= RT1019_I2S_DL_32;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		val |= RT1019_I2S_DL_8;
-		break;
-	case 16:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल 16:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Rx slot configuration */
-	rx_slotnum = hweight_long(rx_mask);
-	if (rx_slotnum != 1) {
+	rx_slotnum = hweight_दीर्घ(rx_mask);
+	अगर (rx_slotnum != 1) अणु
 		ret = -EINVAL;
 		dev_err(component->dev, "too many rx slots or zero slot\n");
-		goto _set_tdm_err_;
-	}
-	/* This is an assumption that the system sends stereo audio to the
-	 * amplifier typically. And the stereo audio is placed in slot 0/2/4/6
+		जाओ _set_tdm_err_;
+	पूर्ण
+	/* This is an assumption that the प्रणाली sends stereo audio to the
+	 * amplअगरier typically. And the stereo audio is placed in slot 0/2/4/6
 	 * as the starting slot. The users could select the channel from
 	 * L/R/L+R by "Mono LR Select" control.
 	 */
 	first_bit = __ffs(rx_mask);
-	switch (first_bit) {
-	case 0:
-	case 2:
-	case 4:
-	case 6:
+	चयन (first_bit) अणु
+	हाल 0:
+	हाल 2:
+	हाल 4:
+	हाल 6:
 		snd_soc_component_update_bits(component,
 			RT1019_TDM_3,
 			RT1019_TDM_I2S_TX_L_DAC1_1_MASK |
 			RT1019_TDM_I2S_TX_R_DAC1_1_MASK,
 			(first_bit << RT1019_TDM_I2S_TX_L_DAC1_1_SFT) |
 			((first_bit + 1) << RT1019_TDM_I2S_TX_R_DAC1_1_SFT));
-		break;
-	case 1:
-	case 3:
-	case 5:
-	case 7:
+		अवरोध;
+	हाल 1:
+	हाल 3:
+	हाल 5:
+	हाल 7:
 		snd_soc_component_update_bits(component,
 			RT1019_TDM_3,
 			RT1019_TDM_I2S_TX_L_DAC1_1_MASK |
 			RT1019_TDM_I2S_TX_R_DAC1_1_MASK,
 			((first_bit - 1) << RT1019_TDM_I2S_TX_L_DAC1_1_SFT) |
 			(first_bit << RT1019_TDM_I2S_TX_R_DAC1_1_SFT));
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto _set_tdm_err_;
-	}
+		जाओ _set_tdm_err_;
+	पूर्ण
 
 	snd_soc_component_update_bits(component, RT1019_TDM_2,
 		RT1019_I2S_CH_TX_MASK | RT1019_I2S_DF_MASK, val);
 
 _set_tdm_err_:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rt1019_probe(struct snd_soc_component *component)
-{
-	struct rt1019_priv *rt1019 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक rt1019_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा rt1019_priv *rt1019 = snd_soc_component_get_drvdata(component);
 
 	rt1019->component = component;
-	snd_soc_component_write(component, RT1019_SDB_CTRL, 0xa);
+	snd_soc_component_ग_लिखो(component, RT1019_SDB_CTRL, 0xa);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define RT1019_STEREO_RATES SNDRV_PCM_RATE_8000_192000
-#define RT1019_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | \
+#घोषणा RT1019_STEREO_RATES SNDRV_PCM_RATE_8000_192000
+#घोषणा RT1019_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | \
 			SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S8)
 
-static const struct snd_soc_dai_ops rt1019_aif_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops rt1019_aअगर_dai_ops = अणु
 	.hw_params = rt1019_hw_params,
 	.set_fmt = rt1019_set_dai_fmt,
 	.set_sysclk = rt1019_set_dai_sysclk,
 	.set_pll = rt1019_set_dai_pll,
 	.set_tdm_slot = rt1019_set_tdm_slot,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver rt1019_dai[] = {
-	{
+अटल काष्ठा snd_soc_dai_driver rt1019_dai[] = अणु
+	अणु
 		.name = "rt1019-aif",
 		.id = 0,
-		.playback = {
+		.playback = अणु
 			.stream_name = "AIF Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = RT1019_STEREO_RATES,
-			.formats = RT1019_FORMATS,
-		},
-		.ops = &rt1019_aif_dai_ops,
-	}
-};
+			.क्रमmats = RT1019_FORMATS,
+		पूर्ण,
+		.ops = &rt1019_aअगर_dai_ops,
+	पूर्ण
+पूर्ण;
 
-static const struct snd_soc_component_driver soc_component_dev_rt1019 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_rt1019 = अणु
 	.probe = rt1019_probe,
 	.controls		= rt1019_snd_controls,
 	.num_controls		= ARRAY_SIZE(rt1019_snd_controls),
-	.dapm_widgets		= rt1019_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(rt1019_dapm_widgets),
+	.dapm_widमाला_लो		= rt1019_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(rt1019_dapm_widमाला_लो),
 	.dapm_routes		= rt1019_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(rt1019_dapm_routes),
-};
+पूर्ण;
 
-static const struct regmap_config rt1019_regmap = {
+अटल स्थिर काष्ठा regmap_config rt1019_regmap = अणु
 	.reg_bits = 16,
 	.val_bits = 8,
-	.use_single_read = true,
-	.use_single_write = true,
-	.max_register = RT1019_BEEP_2,
-	.volatile_reg = rt1019_volatile_register,
-	.readable_reg = rt1019_readable_register,
+	.use_single_पढ़ो = true,
+	.use_single_ग_लिखो = true,
+	.max_रेजिस्टर = RT1019_BEEP_2,
+	.अस्थिर_reg = rt1019_अस्थिर_रेजिस्टर,
+	.पढ़ोable_reg = rt1019_पढ़ोable_रेजिस्टर,
 	.cache_type = REGCACHE_RBTREE,
-	.reg_defaults = rt1019_reg,
-	.num_reg_defaults = ARRAY_SIZE(rt1019_reg),
-};
+	.reg_शेषs = rt1019_reg,
+	.num_reg_शेषs = ARRAY_SIZE(rt1019_reg),
+पूर्ण;
 
-static const struct i2c_device_id rt1019_i2c_id[] = {
-	{ "rt1019", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id rt1019_i2c_id[] = अणु
+	अणु "rt1019", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, rt1019_i2c_id);
 
-static const struct of_device_id rt1019_of_match[] = {
-	{ .compatible = "realtek,rt1019", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id rt1019_of_match[] = अणु
+	अणु .compatible = "realtek,rt1019", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rt1019_of_match);
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id rt1019_acpi_match[] = {
-	{ "10EC1019", 0},
-	{ },
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id rt1019_acpi_match[] = अणु
+	अणु "10EC1019", 0पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, rt1019_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static int rt1019_i2c_probe(struct i2c_client *i2c,
-	const struct i2c_device_id *id)
-{
-	struct rt1019_priv *rt1019;
-	int ret;
-	unsigned int val, val2, dev_id;
+अटल पूर्णांक rt1019_i2c_probe(काष्ठा i2c_client *i2c,
+	स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा rt1019_priv *rt1019;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक val, val2, dev_id;
 
-	rt1019 = devm_kzalloc(&i2c->dev, sizeof(struct rt1019_priv),
+	rt1019 = devm_kzalloc(&i2c->dev, माप(काष्ठा rt1019_priv),
 				GFP_KERNEL);
-	if (!rt1019)
-		return -ENOMEM;
+	अगर (!rt1019)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(i2c, rt1019);
 
 	rt1019->regmap = devm_regmap_init_i2c(i2c, &rt1019_regmap);
-	if (IS_ERR(rt1019->regmap)) {
+	अगर (IS_ERR(rt1019->regmap)) अणु
 		ret = PTR_ERR(rt1019->regmap);
 		dev_err(&i2c->dev, "Failed to allocate register map: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	regmap_read(rt1019->regmap, RT1019_DEV_ID_1, &val);
-	regmap_read(rt1019->regmap, RT1019_DEV_ID_2, &val2);
+	regmap_पढ़ो(rt1019->regmap, RT1019_DEV_ID_1, &val);
+	regmap_पढ़ो(rt1019->regmap, RT1019_DEV_ID_2, &val2);
 	dev_id = val << 8 | val2;
-	if (dev_id != RT1019_DEVICE_ID_VAL && dev_id != RT1019_DEVICE_ID_VAL2) {
+	अगर (dev_id != RT1019_DEVICE_ID_VAL && dev_id != RT1019_DEVICE_ID_VAL2) अणु
 		dev_err(&i2c->dev,
 			"Device with ID register 0x%x is not rt1019\n", dev_id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return devm_snd_soc_register_component(&i2c->dev,
+	वापस devm_snd_soc_रेजिस्टर_component(&i2c->dev,
 		&soc_component_dev_rt1019, rt1019_dai, ARRAY_SIZE(rt1019_dai));
-}
+पूर्ण
 
-static struct i2c_driver rt1019_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver rt1019_i2c_driver = अणु
+	.driver = अणु
 		.name = "rt1019",
 		.of_match_table = of_match_ptr(rt1019_of_match),
 		.acpi_match_table = ACPI_PTR(rt1019_acpi_match),
-	},
+	पूर्ण,
 	.probe = rt1019_i2c_probe,
 	.id_table = rt1019_i2c_id,
-};
+पूर्ण;
 module_i2c_driver(rt1019_i2c_driver);
 
 MODULE_DESCRIPTION("ASoC RT1019 driver");

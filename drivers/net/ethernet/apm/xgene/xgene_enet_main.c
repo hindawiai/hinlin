@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Applied Micro X-Gene SoC Ethernet Driver
  *
  * Copyright (c) 2014, Applied Micro Circuits Corporation
@@ -7,78 +8,78 @@
  *	    Keyur Chudgar <kchudgar@apm.com>
  */
 
-#include <linux/gpio.h>
-#include "xgene_enet_main.h"
-#include "xgene_enet_hw.h"
-#include "xgene_enet_sgmac.h"
-#include "xgene_enet_xgmac.h"
+#समावेश <linux/gpपन.स>
+#समावेश "xgene_enet_main.h"
+#समावेश "xgene_enet_hw.h"
+#समावेश "xgene_enet_sgmac.h"
+#समावेश "xgene_enet_xgmac.h"
 
-#define RES_ENET_CSR	0
-#define RES_RING_CSR	1
-#define RES_RING_CMD	2
+#घोषणा RES_ENET_CSR	0
+#घोषणा RES_RING_CSR	1
+#घोषणा RES_RING_CMD	2
 
-static void xgene_enet_init_bufpool(struct xgene_enet_desc_ring *buf_pool)
-{
-	struct xgene_enet_raw_desc16 *raw_desc;
-	int i;
+अटल व्योम xgene_enet_init_bufpool(काष्ठा xgene_enet_desc_ring *buf_pool)
+अणु
+	काष्ठा xgene_enet_raw_desc16 *raw_desc;
+	पूर्णांक i;
 
-	if (!buf_pool)
-		return;
+	अगर (!buf_pool)
+		वापस;
 
-	for (i = 0; i < buf_pool->slots; i++) {
+	क्रम (i = 0; i < buf_pool->slots; i++) अणु
 		raw_desc = &buf_pool->raw_desc16[i];
 
-		/* Hardware expects descriptor in little endian format */
+		/* Hardware expects descriptor in little endian क्रमmat */
 		raw_desc->m0 = cpu_to_le64(i |
 				SET_VAL(FPQNUM, buf_pool->dst_ring_num) |
 				SET_VAL(STASH, 3));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u16 xgene_enet_get_data_len(u64 bufdatalen)
-{
+अटल u16 xgene_enet_get_data_len(u64 bufdatalen)
+अणु
 	u16 hw_len, mask;
 
 	hw_len = GET_VAL(BUFDATALEN, bufdatalen);
 
-	if (unlikely(hw_len == 0x7800)) {
-		return 0;
-	} else if (!(hw_len & BIT(14))) {
+	अगर (unlikely(hw_len == 0x7800)) अणु
+		वापस 0;
+	पूर्ण अन्यथा अगर (!(hw_len & BIT(14))) अणु
 		mask = GENMASK(13, 0);
-		return (hw_len & mask) ? (hw_len & mask) : SIZE_16K;
-	} else if (!(hw_len & GENMASK(13, 12))) {
+		वापस (hw_len & mask) ? (hw_len & mask) : SIZE_16K;
+	पूर्ण अन्यथा अगर (!(hw_len & GENMASK(13, 12))) अणु
 		mask = GENMASK(11, 0);
-		return (hw_len & mask) ? (hw_len & mask) : SIZE_4K;
-	} else {
+		वापस (hw_len & mask) ? (hw_len & mask) : SIZE_4K;
+	पूर्ण अन्यथा अणु
 		mask = GENMASK(11, 0);
-		return (hw_len & mask) ? (hw_len & mask) : SIZE_2K;
-	}
-}
+		वापस (hw_len & mask) ? (hw_len & mask) : SIZE_2K;
+	पूर्ण
+पूर्ण
 
-static u16 xgene_enet_set_data_len(u32 size)
-{
+अटल u16 xgene_enet_set_data_len(u32 size)
+अणु
 	u16 hw_len;
 
 	hw_len =  (size == SIZE_4K) ? BIT(14) : 0;
 
-	return hw_len;
-}
+	वापस hw_len;
+पूर्ण
 
-static int xgene_enet_refill_pagepool(struct xgene_enet_desc_ring *buf_pool,
+अटल पूर्णांक xgene_enet_refill_pagepool(काष्ठा xgene_enet_desc_ring *buf_pool,
 				      u32 nbuf)
-{
-	struct xgene_enet_raw_desc16 *raw_desc;
-	struct xgene_enet_pdata *pdata;
-	struct net_device *ndev;
+अणु
+	काष्ठा xgene_enet_raw_desc16 *raw_desc;
+	काष्ठा xgene_enet_pdata *pdata;
+	काष्ठा net_device *ndev;
 	dma_addr_t dma_addr;
-	struct device *dev;
-	struct page *page;
+	काष्ठा device *dev;
+	काष्ठा page *page;
 	u32 slots, tail;
 	u16 hw_len;
-	int i;
+	पूर्णांक i;
 
-	if (unlikely(!buf_pool))
-		return 0;
+	अगर (unlikely(!buf_pool))
+		वापस 0;
 
 	ndev = buf_pool->ndev;
 	pdata = netdev_priv(ndev);
@@ -86,19 +87,19 @@ static int xgene_enet_refill_pagepool(struct xgene_enet_desc_ring *buf_pool,
 	slots = buf_pool->slots - 1;
 	tail = buf_pool->tail;
 
-	for (i = 0; i < nbuf; i++) {
+	क्रम (i = 0; i < nbuf; i++) अणु
 		raw_desc = &buf_pool->raw_desc16[tail];
 
 		page = dev_alloc_page();
-		if (unlikely(!page))
-			return -ENOMEM;
+		अगर (unlikely(!page))
+			वापस -ENOMEM;
 
 		dma_addr = dma_map_page(dev, page, 0,
 					PAGE_SIZE, DMA_FROM_DEVICE);
-		if (unlikely(dma_mapping_error(dev, dma_addr))) {
+		अगर (unlikely(dma_mapping_error(dev, dma_addr))) अणु
 			put_page(page);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		hw_len = xgene_enet_set_data_len(PAGE_SIZE);
 		raw_desc->m1 = cpu_to_le64(SET_VAL(DATAADDR, dma_addr) |
@@ -107,27 +108,27 @@ static int xgene_enet_refill_pagepool(struct xgene_enet_desc_ring *buf_pool,
 
 		buf_pool->frag_page[tail] = page;
 		tail = (tail + 1) & slots;
-	}
+	पूर्ण
 
 	pdata->ring_ops->wr_cmd(buf_pool, nbuf);
 	buf_pool->tail = tail;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgene_enet_refill_bufpool(struct xgene_enet_desc_ring *buf_pool,
+अटल पूर्णांक xgene_enet_refill_bufpool(काष्ठा xgene_enet_desc_ring *buf_pool,
 				     u32 nbuf)
-{
-	struct sk_buff *skb;
-	struct xgene_enet_raw_desc16 *raw_desc;
-	struct xgene_enet_pdata *pdata;
-	struct net_device *ndev;
-	struct device *dev;
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा xgene_enet_raw_desc16 *raw_desc;
+	काष्ठा xgene_enet_pdata *pdata;
+	काष्ठा net_device *ndev;
+	काष्ठा device *dev;
 	dma_addr_t dma_addr;
 	u32 tail = buf_pool->tail;
 	u32 slots = buf_pool->slots - 1;
 	u16 bufdatalen, len;
-	int i;
+	पूर्णांक i;
 
 	ndev = buf_pool->ndev;
 	dev = ndev_to_dev(buf_pool->ndev);
@@ -136,19 +137,19 @@ static int xgene_enet_refill_bufpool(struct xgene_enet_desc_ring *buf_pool,
 	bufdatalen = BUF_LEN_CODE_2K | (SKB_BUFFER_SIZE & GENMASK(11, 0));
 	len = XGENE_ENET_STD_MTU;
 
-	for (i = 0; i < nbuf; i++) {
+	क्रम (i = 0; i < nbuf; i++) अणु
 		raw_desc = &buf_pool->raw_desc16[tail];
 
 		skb = netdev_alloc_skb_ip_align(ndev, len);
-		if (unlikely(!skb))
-			return -ENOMEM;
+		अगर (unlikely(!skb))
+			वापस -ENOMEM;
 
 		dma_addr = dma_map_single(dev, skb->data, len, DMA_FROM_DEVICE);
-		if (dma_mapping_error(dev, dma_addr)) {
+		अगर (dma_mapping_error(dev, dma_addr)) अणु
 			netdev_err(ndev, "DMA mapping error\n");
-			dev_kfree_skb_any(skb);
-			return -EINVAL;
-		}
+			dev_kमुक्त_skb_any(skb);
+			वापस -EINVAL;
+		पूर्ण
 
 		buf_pool->rx_skb[tail] = skb;
 
@@ -156,84 +157,84 @@ static int xgene_enet_refill_bufpool(struct xgene_enet_desc_ring *buf_pool,
 					   SET_VAL(BUFDATALEN, bufdatalen) |
 					   SET_BIT(COHERENT));
 		tail = (tail + 1) & slots;
-	}
+	पूर्ण
 
 	pdata->ring_ops->wr_cmd(buf_pool, nbuf);
 	buf_pool->tail = tail;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 xgene_enet_hdr_len(const void *data)
-{
-	const struct ethhdr *eth = data;
+अटल u8 xgene_enet_hdr_len(स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा ethhdr *eth = data;
 
-	return (eth->h_proto == htons(ETH_P_8021Q)) ? VLAN_ETH_HLEN : ETH_HLEN;
-}
+	वापस (eth->h_proto == htons(ETH_P_8021Q)) ? VLAN_ETH_HLEN : ETH_HLEN;
+पूर्ण
 
-static void xgene_enet_delete_bufpool(struct xgene_enet_desc_ring *buf_pool)
-{
-	struct device *dev = ndev_to_dev(buf_pool->ndev);
-	struct xgene_enet_raw_desc16 *raw_desc;
+अटल व्योम xgene_enet_delete_bufpool(काष्ठा xgene_enet_desc_ring *buf_pool)
+अणु
+	काष्ठा device *dev = ndev_to_dev(buf_pool->ndev);
+	काष्ठा xgene_enet_raw_desc16 *raw_desc;
 	dma_addr_t dma_addr;
-	int i;
+	पूर्णांक i;
 
 	/* Free up the buffers held by hardware */
-	for (i = 0; i < buf_pool->slots; i++) {
-		if (buf_pool->rx_skb[i]) {
-			dev_kfree_skb_any(buf_pool->rx_skb[i]);
+	क्रम (i = 0; i < buf_pool->slots; i++) अणु
+		अगर (buf_pool->rx_skb[i]) अणु
+			dev_kमुक्त_skb_any(buf_pool->rx_skb[i]);
 
 			raw_desc = &buf_pool->raw_desc16[i];
 			dma_addr = GET_VAL(DATAADDR, le64_to_cpu(raw_desc->m1));
 			dma_unmap_single(dev, dma_addr, XGENE_ENET_MAX_MTU,
 					 DMA_FROM_DEVICE);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void xgene_enet_delete_pagepool(struct xgene_enet_desc_ring *buf_pool)
-{
-	struct device *dev = ndev_to_dev(buf_pool->ndev);
+अटल व्योम xgene_enet_delete_pagepool(काष्ठा xgene_enet_desc_ring *buf_pool)
+अणु
+	काष्ठा device *dev = ndev_to_dev(buf_pool->ndev);
 	dma_addr_t dma_addr;
-	struct page *page;
-	int i;
+	काष्ठा page *page;
+	पूर्णांक i;
 
 	/* Free up the buffers held by hardware */
-	for (i = 0; i < buf_pool->slots; i++) {
+	क्रम (i = 0; i < buf_pool->slots; i++) अणु
 		page = buf_pool->frag_page[i];
-		if (page) {
+		अगर (page) अणु
 			dma_addr = buf_pool->frag_dma_addr[i];
 			dma_unmap_page(dev, dma_addr, PAGE_SIZE,
 				       DMA_FROM_DEVICE);
 			put_page(page);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t xgene_enet_rx_irq(const int irq, void *data)
-{
-	struct xgene_enet_desc_ring *rx_ring = data;
+अटल irqवापस_t xgene_enet_rx_irq(स्थिर पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा xgene_enet_desc_ring *rx_ring = data;
 
-	if (napi_schedule_prep(&rx_ring->napi)) {
+	अगर (napi_schedule_prep(&rx_ring->napi)) अणु
 		disable_irq_nosync(irq);
 		__napi_schedule(&rx_ring->napi);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int xgene_enet_tx_completion(struct xgene_enet_desc_ring *cp_ring,
-				    struct xgene_enet_raw_desc *raw_desc)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(cp_ring->ndev);
-	struct sk_buff *skb;
-	struct device *dev;
+अटल पूर्णांक xgene_enet_tx_completion(काष्ठा xgene_enet_desc_ring *cp_ring,
+				    काष्ठा xgene_enet_raw_desc *raw_desc)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(cp_ring->ndev);
+	काष्ठा sk_buff *skb;
+	काष्ठा device *dev;
 	skb_frag_t *frag;
 	dma_addr_t *frag_dma_addr;
 	u16 skb_index;
 	u8 mss_index;
 	u8 status;
-	int i;
+	पूर्णांक i;
 
 	skb_index = GET_VAL(USERINFO, le64_to_cpu(raw_desc->m0));
 	skb = cp_ring->cp_skb[skb_index];
@@ -244,125 +245,125 @@ static int xgene_enet_tx_completion(struct xgene_enet_desc_ring *cp_ring,
 			 skb_headlen(skb),
 			 DMA_TO_DEVICE);
 
-	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
 		frag = &skb_shinfo(skb)->frags[i];
 		dma_unmap_page(dev, frag_dma_addr[i], skb_frag_size(frag),
 			       DMA_TO_DEVICE);
-	}
+	पूर्ण
 
-	if (GET_BIT(ET, le64_to_cpu(raw_desc->m3))) {
+	अगर (GET_BIT(ET, le64_to_cpu(raw_desc->m3))) अणु
 		mss_index = GET_VAL(MSS, le64_to_cpu(raw_desc->m3));
 		spin_lock(&pdata->mss_lock);
 		pdata->mss_refcnt[mss_index]--;
 		spin_unlock(&pdata->mss_lock);
-	}
+	पूर्ण
 
-	/* Checking for error */
+	/* Checking क्रम error */
 	status = GET_VAL(LERR, le64_to_cpu(raw_desc->m0));
-	if (unlikely(status > 2)) {
+	अगर (unlikely(status > 2)) अणु
 		cp_ring->tx_dropped++;
 		cp_ring->tx_errors++;
-	}
+	पूर्ण
 
-	if (likely(skb)) {
-		dev_kfree_skb_any(skb);
-	} else {
+	अगर (likely(skb)) अणु
+		dev_kमुक्त_skb_any(skb);
+	पूर्ण अन्यथा अणु
 		netdev_err(cp_ring->ndev, "completion skb is NULL\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgene_enet_setup_mss(struct net_device *ndev, u32 mss)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	int mss_index = -EBUSY;
-	int i;
+अटल पूर्णांक xgene_enet_setup_mss(काष्ठा net_device *ndev, u32 mss)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	पूर्णांक mss_index = -EBUSY;
+	पूर्णांक i;
 
 	spin_lock(&pdata->mss_lock);
 
-	/* Reuse the slot if MSS matches */
-	for (i = 0; mss_index < 0 && i < NUM_MSS_REG; i++) {
-		if (pdata->mss[i] == mss) {
+	/* Reuse the slot अगर MSS matches */
+	क्रम (i = 0; mss_index < 0 && i < NUM_MSS_REG; i++) अणु
+		अगर (pdata->mss[i] == mss) अणु
 			pdata->mss_refcnt[i]++;
 			mss_index = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Overwrite the slot with ref_count = 0 */
-	for (i = 0; mss_index < 0 && i < NUM_MSS_REG; i++) {
-		if (!pdata->mss_refcnt[i]) {
+	/* Overग_लिखो the slot with ref_count = 0 */
+	क्रम (i = 0; mss_index < 0 && i < NUM_MSS_REG; i++) अणु
+		अगर (!pdata->mss_refcnt[i]) अणु
 			pdata->mss_refcnt[i]++;
 			pdata->mac_ops->set_mss(pdata, mss, i);
 			pdata->mss[i] = mss;
 			mss_index = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock(&pdata->mss_lock);
 
-	return mss_index;
-}
+	वापस mss_index;
+पूर्ण
 
-static int xgene_enet_work_msg(struct sk_buff *skb, u64 *hopinfo)
-{
-	struct net_device *ndev = skb->dev;
-	struct iphdr *iph;
+अटल पूर्णांक xgene_enet_work_msg(काष्ठा sk_buff *skb, u64 *hopinfo)
+अणु
+	काष्ठा net_device *ndev = skb->dev;
+	काष्ठा iphdr *iph;
 	u8 l3hlen = 0, l4hlen = 0;
 	u8 ethhdr, proto = 0, csum_enable = 0;
 	u32 hdr_len, mss = 0;
 	u32 i, len, nr_frags;
-	int mss_index;
+	पूर्णांक mss_index;
 
 	ethhdr = xgene_enet_hdr_len(skb->data);
 
-	if (unlikely(skb->protocol != htons(ETH_P_IP)) &&
+	अगर (unlikely(skb->protocol != htons(ETH_P_IP)) &&
 	    unlikely(skb->protocol != htons(ETH_P_8021Q)))
-		goto out;
+		जाओ out;
 
-	if (unlikely(!(skb->dev->features & NETIF_F_IP_CSUM)))
-		goto out;
+	अगर (unlikely(!(skb->dev->features & NETIF_F_IP_CSUM)))
+		जाओ out;
 
 	iph = ip_hdr(skb);
-	if (unlikely(ip_is_fragment(iph)))
-		goto out;
+	अगर (unlikely(ip_is_fragment(iph)))
+		जाओ out;
 
-	if (likely(iph->protocol == IPPROTO_TCP)) {
+	अगर (likely(iph->protocol == IPPROTO_TCP)) अणु
 		l4hlen = tcp_hdrlen(skb) >> 2;
 		csum_enable = 1;
 		proto = TSO_IPPROTO_TCP;
-		if (ndev->features & NETIF_F_TSO) {
+		अगर (ndev->features & NETIF_F_TSO) अणु
 			hdr_len = ethhdr + ip_hdrlen(skb) + tcp_hdrlen(skb);
 			mss = skb_shinfo(skb)->gso_size;
 
-			if (skb_is_nonlinear(skb)) {
+			अगर (skb_is_nonlinear(skb)) अणु
 				len = skb_headlen(skb);
 				nr_frags = skb_shinfo(skb)->nr_frags;
 
-				for (i = 0; i < 2 && i < nr_frags; i++)
+				क्रम (i = 0; i < 2 && i < nr_frags; i++)
 					len += skb_frag_size(
 						&skb_shinfo(skb)->frags[i]);
 
 				/* HW requires header must reside in 3 buffer */
-				if (unlikely(hdr_len > len)) {
-					if (skb_linearize(skb))
-						return 0;
-				}
-			}
+				अगर (unlikely(hdr_len > len)) अणु
+					अगर (skb_linearize(skb))
+						वापस 0;
+				पूर्ण
+			पूर्ण
 
-			if (!mss || ((skb->len - hdr_len) <= mss))
-				goto out;
+			अगर (!mss || ((skb->len - hdr_len) <= mss))
+				जाओ out;
 
 			mss_index = xgene_enet_setup_mss(ndev, mss);
-			if (unlikely(mss_index < 0))
-				return -EBUSY;
+			अगर (unlikely(mss_index < 0))
+				वापस -EBUSY;
 
 			*hopinfo |= SET_BIT(ET) | SET_VAL(MSS, mss_index);
-		}
-	} else if (iph->protocol == IPPROTO_UDP) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (iph->protocol == IPPROTO_UDP) अणु
 		l4hlen = UDP_HDR_SIZE;
 		csum_enable = 1;
-	}
+	पूर्ण
 out:
 	l3hlen = ip_hdrlen(skb) >> 2;
 	*hopinfo |= SET_VAL(TCPHDR, l4hlen) |
@@ -373,43 +374,43 @@ out:
 		    SET_BIT(IC) |
 		    SET_BIT(TYPE_ETH_WORK_MESSAGE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u16 xgene_enet_encode_len(u16 len)
-{
-	return (len == BUFLEN_16K) ? 0 : len;
-}
+अटल u16 xgene_enet_encode_len(u16 len)
+अणु
+	वापस (len == BUFLEN_16K) ? 0 : len;
+पूर्ण
 
-static void xgene_set_addr_len(__le64 *desc, u32 idx, dma_addr_t addr, u32 len)
-{
+अटल व्योम xgene_set_addr_len(__le64 *desc, u32 idx, dma_addr_t addr, u32 len)
+अणु
 	desc[idx ^ 1] = cpu_to_le64(SET_VAL(DATAADDR, addr) |
 				    SET_VAL(BUFDATALEN, len));
-}
+पूर्ण
 
-static __le64 *xgene_enet_get_exp_bufs(struct xgene_enet_desc_ring *ring)
-{
+अटल __le64 *xgene_enet_get_exp_bufs(काष्ठा xgene_enet_desc_ring *ring)
+अणु
 	__le64 *exp_bufs;
 
 	exp_bufs = &ring->exp_bufs[ring->exp_buf_tail * MAX_EXP_BUFFS];
-	memset(exp_bufs, 0, sizeof(__le64) * MAX_EXP_BUFFS);
+	स_रखो(exp_bufs, 0, माप(__le64) * MAX_EXP_BUFFS);
 	ring->exp_buf_tail = (ring->exp_buf_tail + 1) & ((ring->slots / 2) - 1);
 
-	return exp_bufs;
-}
+	वापस exp_bufs;
+पूर्ण
 
-static dma_addr_t *xgene_get_frag_dma_array(struct xgene_enet_desc_ring *ring)
-{
-	return &ring->cp_ring->frag_dma_addr[ring->tail * MAX_SKB_FRAGS];
-}
+अटल dma_addr_t *xgene_get_frag_dma_array(काष्ठा xgene_enet_desc_ring *ring)
+अणु
+	वापस &ring->cp_ring->frag_dma_addr[ring->tail * MAX_SKB_FRAGS];
+पूर्ण
 
-static int xgene_enet_setup_tx_desc(struct xgene_enet_desc_ring *tx_ring,
-				    struct sk_buff *skb)
-{
-	struct device *dev = ndev_to_dev(tx_ring->ndev);
-	struct xgene_enet_pdata *pdata = netdev_priv(tx_ring->ndev);
-	struct xgene_enet_raw_desc *raw_desc;
-	__le64 *exp_desc = NULL, *exp_bufs = NULL;
+अटल पूर्णांक xgene_enet_setup_tx_desc(काष्ठा xgene_enet_desc_ring *tx_ring,
+				    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा device *dev = ndev_to_dev(tx_ring->ndev);
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(tx_ring->ndev);
+	काष्ठा xgene_enet_raw_desc *raw_desc;
+	__le64 *exp_desc = शून्य, *exp_bufs = शून्य;
 	dma_addr_t dma_addr, pbuf_addr, *frag_dma_addr;
 	skb_frag_t *frag;
 	u16 tail = tx_ring->tail;
@@ -419,15 +420,15 @@ static int xgene_enet_setup_tx_desc(struct xgene_enet_desc_ring *tx_ring,
 	bool split = false;
 	u32 size, offset, ell_bytes = 0;
 	u32 i, fidx, nr_frags, count = 1;
-	int ret;
+	पूर्णांक ret;
 
 	raw_desc = &tx_ring->raw_desc[tail];
 	tail = (tail + 1) & (tx_ring->slots - 1);
-	memset(raw_desc, 0, sizeof(struct xgene_enet_raw_desc));
+	स_रखो(raw_desc, 0, माप(काष्ठा xgene_enet_raw_desc));
 
 	ret = xgene_enet_work_msg(skb, &hopinfo);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	raw_desc->m3 = cpu_to_le64(SET_VAL(HENQNUM, tx_ring->dst_ring_num) |
 				   hopinfo);
@@ -436,105 +437,105 @@ static int xgene_enet_setup_tx_desc(struct xgene_enet_desc_ring *tx_ring,
 	hw_len = xgene_enet_encode_len(len);
 
 	dma_addr = dma_map_single(dev, skb->data, len, DMA_TO_DEVICE);
-	if (dma_mapping_error(dev, dma_addr)) {
+	अगर (dma_mapping_error(dev, dma_addr)) अणु
 		netdev_err(tx_ring->ndev, "DMA mapping error\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Hardware expects descriptor in little endian format */
+	/* Hardware expects descriptor in little endian क्रमmat */
 	raw_desc->m1 = cpu_to_le64(SET_VAL(DATAADDR, dma_addr) |
 				   SET_VAL(BUFDATALEN, hw_len) |
 				   SET_BIT(COHERENT));
 
-	if (!skb_is_nonlinear(skb))
-		goto out;
+	अगर (!skb_is_nonlinear(skb))
+		जाओ out;
 
 	/* scatter gather */
 	nv = 1;
-	exp_desc = (void *)&tx_ring->raw_desc[tail];
+	exp_desc = (व्योम *)&tx_ring->raw_desc[tail];
 	tail = (tail + 1) & (tx_ring->slots - 1);
-	memset(exp_desc, 0, sizeof(struct xgene_enet_raw_desc));
+	स_रखो(exp_desc, 0, माप(काष्ठा xgene_enet_raw_desc));
 
 	nr_frags = skb_shinfo(skb)->nr_frags;
-	for (i = nr_frags; i < 4 ; i++)
+	क्रम (i = nr_frags; i < 4 ; i++)
 		exp_desc[i ^ 1] = cpu_to_le64(LAST_BUFFER);
 
 	frag_dma_addr = xgene_get_frag_dma_array(tx_ring);
 
-	for (i = 0, fidx = 0; split || (fidx < nr_frags); i++) {
-		if (!split) {
+	क्रम (i = 0, fidx = 0; split || (fidx < nr_frags); i++) अणु
+		अगर (!split) अणु
 			frag = &skb_shinfo(skb)->frags[fidx];
 			size = skb_frag_size(frag);
 			offset = 0;
 
 			pbuf_addr = skb_frag_dma_map(dev, frag, 0, size,
 						     DMA_TO_DEVICE);
-			if (dma_mapping_error(dev, pbuf_addr))
-				return -EINVAL;
+			अगर (dma_mapping_error(dev, pbuf_addr))
+				वापस -EINVAL;
 
 			frag_dma_addr[fidx] = pbuf_addr;
 			fidx++;
 
-			if (size > BUFLEN_16K)
+			अगर (size > BUFLEN_16K)
 				split = true;
-		}
+		पूर्ण
 
-		if (size > BUFLEN_16K) {
+		अगर (size > BUFLEN_16K) अणु
 			len = BUFLEN_16K;
 			size -= BUFLEN_16K;
-		} else {
+		पूर्ण अन्यथा अणु
 			len = size;
 			split = false;
-		}
+		पूर्ण
 
 		dma_addr = pbuf_addr + offset;
 		hw_len = xgene_enet_encode_len(len);
 
-		switch (i) {
-		case 0:
-		case 1:
-		case 2:
+		चयन (i) अणु
+		हाल 0:
+		हाल 1:
+		हाल 2:
 			xgene_set_addr_len(exp_desc, i, dma_addr, hw_len);
-			break;
-		case 3:
-			if (split || (fidx != nr_frags)) {
+			अवरोध;
+		हाल 3:
+			अगर (split || (fidx != nr_frags)) अणु
 				exp_bufs = xgene_enet_get_exp_bufs(tx_ring);
 				xgene_set_addr_len(exp_bufs, idx, dma_addr,
 						   hw_len);
 				idx++;
 				ell_bytes += len;
-			} else {
+			पूर्ण अन्यथा अणु
 				xgene_set_addr_len(exp_desc, i, dma_addr,
 						   hw_len);
-			}
-			break;
-		default:
+			पूर्ण
+			अवरोध;
+		शेष:
 			xgene_set_addr_len(exp_bufs, idx, dma_addr, hw_len);
 			idx++;
 			ell_bytes += len;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (split)
+		अगर (split)
 			offset += BUFLEN_16K;
-	}
+	पूर्ण
 	count++;
 
-	if (idx) {
+	अगर (idx) अणु
 		ll = 1;
 		dma_addr = dma_map_single(dev, exp_bufs,
-					  sizeof(u64) * MAX_EXP_BUFFS,
+					  माप(u64) * MAX_EXP_BUFFS,
 					  DMA_TO_DEVICE);
-		if (dma_mapping_error(dev, dma_addr)) {
-			dev_kfree_skb_any(skb);
-			return -EINVAL;
-		}
+		अगर (dma_mapping_error(dev, dma_addr)) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस -EINVAL;
+		पूर्ण
 		i = ell_bytes >> LL_BYTES_LSB_LEN;
 		exp_desc[2] = cpu_to_le64(SET_VAL(DATAADDR, dma_addr) |
 					  SET_VAL(LL_BYTES_MSB, i) |
 					  SET_VAL(LL_LEN, idx));
 		raw_desc->m2 = cpu_to_le64(SET_VAL(LL_BYTES_LSB, ell_bytes));
-	}
+	पूर्ण
 
 out:
 	raw_desc->m0 = cpu_to_le64(SET_VAL(LL, ll) | SET_VAL(NV, nv) |
@@ -543,92 +544,92 @@ out:
 	pdata->tx_level[tx_ring->cp_ring->index] += count;
 	tx_ring->tail = tail;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static netdev_tx_t xgene_enet_start_xmit(struct sk_buff *skb,
-					 struct net_device *ndev)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	struct xgene_enet_desc_ring *tx_ring;
-	int index = skb->queue_mapping;
+अटल netdev_tx_t xgene_enet_start_xmit(काष्ठा sk_buff *skb,
+					 काष्ठा net_device *ndev)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	काष्ठा xgene_enet_desc_ring *tx_ring;
+	पूर्णांक index = skb->queue_mapping;
 	u32 tx_level = pdata->tx_level[index];
-	int count;
+	पूर्णांक count;
 
 	tx_ring = pdata->tx_ring[index];
-	if (tx_level < pdata->txc_level[index])
+	अगर (tx_level < pdata->txc_level[index])
 		tx_level += ((typeof(pdata->tx_level[index]))~0U);
 
-	if ((tx_level - pdata->txc_level[index]) > pdata->tx_qcnt_hi) {
-		netif_stop_subqueue(ndev, index);
-		return NETDEV_TX_BUSY;
-	}
+	अगर ((tx_level - pdata->txc_level[index]) > pdata->tx_qcnt_hi) अणु
+		netअगर_stop_subqueue(ndev, index);
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (skb_padto(skb, XGENE_MIN_ENET_FRAME_SIZE))
-		return NETDEV_TX_OK;
+	अगर (skb_padto(skb, XGENE_MIN_ENET_FRAME_SIZE))
+		वापस NETDEV_TX_OK;
 
 	count = xgene_enet_setup_tx_desc(tx_ring, skb);
-	if (count == -EBUSY)
-		return NETDEV_TX_BUSY;
+	अगर (count == -EBUSY)
+		वापस NETDEV_TX_BUSY;
 
-	if (count <= 0) {
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	}
+	अगर (count <= 0) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	skb_tx_timestamp(skb);
+	skb_tx_बारtamp(skb);
 
 	tx_ring->tx_packets++;
 	tx_ring->tx_bytes += skb->len;
 
 	pdata->ring_ops->wr_cmd(tx_ring, count);
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void xgene_enet_rx_csum(struct sk_buff *skb)
-{
-	struct net_device *ndev = skb->dev;
-	struct iphdr *iph = ip_hdr(skb);
+अटल व्योम xgene_enet_rx_csum(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *ndev = skb->dev;
+	काष्ठा iphdr *iph = ip_hdr(skb);
 
-	if (!(ndev->features & NETIF_F_RXCSUM))
-		return;
+	अगर (!(ndev->features & NETIF_F_RXCSUM))
+		वापस;
 
-	if (skb->protocol != htons(ETH_P_IP))
-		return;
+	अगर (skb->protocol != htons(ETH_P_IP))
+		वापस;
 
-	if (ip_is_fragment(iph))
-		return;
+	अगर (ip_is_fragment(iph))
+		वापस;
 
-	if (iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_UDP)
-		return;
+	अगर (iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_UDP)
+		वापस;
 
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
-}
+पूर्ण
 
-static void xgene_enet_free_pagepool(struct xgene_enet_desc_ring *buf_pool,
-				     struct xgene_enet_raw_desc *raw_desc,
-				     struct xgene_enet_raw_desc *exp_desc)
-{
-	__le64 *desc = (void *)exp_desc;
+अटल व्योम xgene_enet_मुक्त_pagepool(काष्ठा xgene_enet_desc_ring *buf_pool,
+				     काष्ठा xgene_enet_raw_desc *raw_desc,
+				     काष्ठा xgene_enet_raw_desc *exp_desc)
+अणु
+	__le64 *desc = (व्योम *)exp_desc;
 	dma_addr_t dma_addr;
-	struct device *dev;
-	struct page *page;
+	काष्ठा device *dev;
+	काष्ठा page *page;
 	u16 slots, head;
 	u32 frag_size;
-	int i;
+	पूर्णांक i;
 
-	if (!buf_pool || !raw_desc || !exp_desc ||
+	अगर (!buf_pool || !raw_desc || !exp_desc ||
 	    (!GET_VAL(NV, le64_to_cpu(raw_desc->m0))))
-		return;
+		वापस;
 
 	dev = ndev_to_dev(buf_pool->ndev);
 	slots = buf_pool->slots - 1;
 	head = buf_pool->head;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		frag_size = xgene_enet_get_data_len(le64_to_cpu(desc[i ^ 1]));
-		if (!frag_size)
-			break;
+		अगर (!frag_size)
+			अवरोध;
 
 		dma_addr = GET_VAL(DATAADDR, le64_to_cpu(desc[i ^ 1]));
 		dma_unmap_page(dev, dma_addr, PAGE_SIZE, DMA_FROM_DEVICE);
@@ -636,49 +637,49 @@ static void xgene_enet_free_pagepool(struct xgene_enet_desc_ring *buf_pool,
 		page = buf_pool->frag_page[head];
 		put_page(page);
 
-		buf_pool->frag_page[head] = NULL;
+		buf_pool->frag_page[head] = शून्य;
 		head = (head + 1) & slots;
-	}
+	पूर्ण
 	buf_pool->head = head;
-}
+पूर्ण
 
 /* Errata 10GE_10 and ENET_15 - Fix duplicated HW statistic counters */
-static bool xgene_enet_errata_10GE_10(struct sk_buff *skb, u32 len, u8 status)
-{
-	if (status == INGRESS_CRC &&
+अटल bool xgene_enet_errata_10GE_10(काष्ठा sk_buff *skb, u32 len, u8 status)
+अणु
+	अगर (status == INGRESS_CRC &&
 	    len >= (ETHER_STD_PACKET + 1) &&
 	    len <= (ETHER_STD_PACKET + 4) &&
 	    skb->protocol == htons(ETH_P_8021Q))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* Errata 10GE_8 and ENET_11 - allow packet with length <=64B */
-static bool xgene_enet_errata_10GE_8(struct sk_buff *skb, u32 len, u8 status)
-{
-	if (status == INGRESS_PKT_LEN && len == ETHER_MIN_PACKET) {
-		if (ntohs(eth_hdr(skb)->h_proto) < 46)
-			return true;
-	}
+अटल bool xgene_enet_errata_10GE_8(काष्ठा sk_buff *skb, u32 len, u8 status)
+अणु
+	अगर (status == INGRESS_PKT_LEN && len == ETHER_MIN_PACKET) अणु
+		अगर (ntohs(eth_hdr(skb)->h_proto) < 46)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int xgene_enet_rx_frame(struct xgene_enet_desc_ring *rx_ring,
-			       struct xgene_enet_raw_desc *raw_desc,
-			       struct xgene_enet_raw_desc *exp_desc)
-{
-	struct xgene_enet_desc_ring *buf_pool, *page_pool;
+अटल पूर्णांक xgene_enet_rx_frame(काष्ठा xgene_enet_desc_ring *rx_ring,
+			       काष्ठा xgene_enet_raw_desc *raw_desc,
+			       काष्ठा xgene_enet_raw_desc *exp_desc)
+अणु
+	काष्ठा xgene_enet_desc_ring *buf_pool, *page_pool;
 	u32 datalen, frag_size, skb_index;
-	struct xgene_enet_pdata *pdata;
-	struct net_device *ndev;
+	काष्ठा xgene_enet_pdata *pdata;
+	काष्ठा net_device *ndev;
 	dma_addr_t dma_addr;
-	struct sk_buff *skb;
-	struct device *dev;
-	struct page *page;
+	काष्ठा sk_buff *skb;
+	काष्ठा device *dev;
+	काष्ठा page *page;
 	u16 slots, head;
-	int i, ret = 0;
+	पूर्णांक i, ret = 0;
 	__le64 *desc;
 	u8 status;
 	bool nv;
@@ -693,45 +694,45 @@ static int xgene_enet_rx_frame(struct xgene_enet_desc_ring *rx_ring,
 			 XGENE_ENET_STD_MTU, DMA_FROM_DEVICE);
 	skb_index = GET_VAL(USERINFO, le64_to_cpu(raw_desc->m0));
 	skb = buf_pool->rx_skb[skb_index];
-	buf_pool->rx_skb[skb_index] = NULL;
+	buf_pool->rx_skb[skb_index] = शून्य;
 
 	datalen = xgene_enet_get_data_len(le64_to_cpu(raw_desc->m1));
 	skb_put(skb, datalen);
 	prefetch(skb->data - NET_IP_ALIGN);
 	skb->protocol = eth_type_trans(skb, ndev);
 
-	/* checking for error */
+	/* checking क्रम error */
 	status = (GET_VAL(ELERR, le64_to_cpu(raw_desc->m0)) << LERR_LEN) |
 		  GET_VAL(LERR, le64_to_cpu(raw_desc->m0));
-	if (unlikely(status)) {
-		if (xgene_enet_errata_10GE_8(skb, datalen, status)) {
+	अगर (unlikely(status)) अणु
+		अगर (xgene_enet_errata_10GE_8(skb, datalen, status)) अणु
 			pdata->false_rflr++;
-		} else if (xgene_enet_errata_10GE_10(skb, datalen, status)) {
+		पूर्ण अन्यथा अगर (xgene_enet_errata_10GE_10(skb, datalen, status)) अणु
 			pdata->vlan_rjbr++;
-		} else {
-			dev_kfree_skb_any(skb);
-			xgene_enet_free_pagepool(page_pool, raw_desc, exp_desc);
+		पूर्ण अन्यथा अणु
+			dev_kमुक्त_skb_any(skb);
+			xgene_enet_मुक्त_pagepool(page_pool, raw_desc, exp_desc);
 			xgene_enet_parse_error(rx_ring, status);
 			rx_ring->rx_dropped++;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	nv = GET_VAL(NV, le64_to_cpu(raw_desc->m0));
-	if (!nv) {
-		/* strip off CRC as HW isn't doing this */
+	अगर (!nv) अणु
+		/* strip off CRC as HW isn't करोing this */
 		datalen -= 4;
-		goto skip_jumbo;
-	}
+		जाओ skip_jumbo;
+	पूर्ण
 
 	slots = page_pool->slots - 1;
 	head = page_pool->head;
-	desc = (void *)exp_desc;
+	desc = (व्योम *)exp_desc;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		frag_size = xgene_enet_get_data_len(le64_to_cpu(desc[i ^ 1]));
-		if (!frag_size)
-			break;
+		अगर (!frag_size)
+			अवरोध;
 
 		dma_addr = GET_VAL(DATAADDR, le64_to_cpu(desc[i ^ 1]));
 		dma_unmap_page(dev, dma_addr, PAGE_SIZE, DMA_FROM_DEVICE);
@@ -742,15 +743,15 @@ static int xgene_enet_rx_frame(struct xgene_enet_desc_ring *rx_ring,
 
 		datalen += frag_size;
 
-		page_pool->frag_page[head] = NULL;
+		page_pool->frag_page[head] = शून्य;
 		head = (head + 1) & slots;
-	}
+	पूर्ण
 
 	page_pool->head = head;
 	rx_ring->npagepool -= skb_shinfo(skb)->nr_frags;
 
 skip_jumbo:
-	skb_checksum_none_assert(skb);
+	skb_checksum_none_निश्चित(skb);
 	xgene_enet_rx_csum(skb);
 
 	rx_ring->rx_packets++;
@@ -758,328 +759,328 @@ skip_jumbo:
 	napi_gro_receive(&rx_ring->napi, skb);
 
 out:
-	if (rx_ring->npagepool <= 0) {
+	अगर (rx_ring->npagepool <= 0) अणु
 		ret = xgene_enet_refill_pagepool(page_pool, NUM_NXTBUFPOOL);
 		rx_ring->npagepool = NUM_NXTBUFPOOL;
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (--rx_ring->nbufpool == 0) {
+	अगर (--rx_ring->nbufpool == 0) अणु
 		ret = xgene_enet_refill_bufpool(buf_pool, NUM_BUFPOOL);
 		rx_ring->nbufpool = NUM_BUFPOOL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool is_rx_desc(struct xgene_enet_raw_desc *raw_desc)
-{
-	return GET_VAL(FPQNUM, le64_to_cpu(raw_desc->m0)) ? true : false;
-}
+अटल bool is_rx_desc(काष्ठा xgene_enet_raw_desc *raw_desc)
+अणु
+	वापस GET_VAL(FPQNUM, le64_to_cpu(raw_desc->m0)) ? true : false;
+पूर्ण
 
-static int xgene_enet_process_ring(struct xgene_enet_desc_ring *ring,
-				   int budget)
-{
-	struct net_device *ndev = ring->ndev;
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	struct xgene_enet_raw_desc *raw_desc, *exp_desc;
+अटल पूर्णांक xgene_enet_process_ring(काष्ठा xgene_enet_desc_ring *ring,
+				   पूर्णांक budget)
+अणु
+	काष्ठा net_device *ndev = ring->ndev;
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	काष्ठा xgene_enet_raw_desc *raw_desc, *exp_desc;
 	u16 head = ring->head;
 	u16 slots = ring->slots - 1;
-	int ret, desc_count, count = 0, processed = 0;
+	पूर्णांक ret, desc_count, count = 0, processed = 0;
 	bool is_completion;
 
-	do {
+	करो अणु
 		raw_desc = &ring->raw_desc[head];
 		desc_count = 0;
 		is_completion = false;
-		exp_desc = NULL;
-		if (unlikely(xgene_enet_is_desc_slot_empty(raw_desc)))
-			break;
+		exp_desc = शून्य;
+		अगर (unlikely(xgene_enet_is_desc_slot_empty(raw_desc)))
+			अवरोध;
 
-		/* read fpqnum field after dataaddr field */
+		/* पढ़ो fpqnum field after dataaddr field */
 		dma_rmb();
-		if (GET_BIT(NV, le64_to_cpu(raw_desc->m0))) {
+		अगर (GET_BIT(NV, le64_to_cpu(raw_desc->m0))) अणु
 			head = (head + 1) & slots;
 			exp_desc = &ring->raw_desc[head];
 
-			if (unlikely(xgene_enet_is_desc_slot_empty(exp_desc))) {
+			अगर (unlikely(xgene_enet_is_desc_slot_empty(exp_desc))) अणु
 				head = (head - 1) & slots;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			dma_rmb();
 			count++;
 			desc_count++;
-		}
-		if (is_rx_desc(raw_desc)) {
+		पूर्ण
+		अगर (is_rx_desc(raw_desc)) अणु
 			ret = xgene_enet_rx_frame(ring, raw_desc, exp_desc);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = xgene_enet_tx_completion(ring, raw_desc);
 			is_completion = true;
-		}
+		पूर्ण
 		xgene_enet_mark_desc_slot_empty(raw_desc);
-		if (exp_desc)
+		अगर (exp_desc)
 			xgene_enet_mark_desc_slot_empty(exp_desc);
 
 		head = (head + 1) & slots;
 		count++;
 		desc_count++;
 		processed++;
-		if (is_completion)
+		अगर (is_completion)
 			pdata->txc_level[ring->index] += desc_count;
 
-		if (ret)
-			break;
-	} while (--budget);
+		अगर (ret)
+			अवरोध;
+	पूर्ण जबतक (--budget);
 
-	if (likely(count)) {
+	अगर (likely(count)) अणु
 		pdata->ring_ops->wr_cmd(ring, -count);
 		ring->head = head;
 
-		if (__netif_subqueue_stopped(ndev, ring->index))
-			netif_start_subqueue(ndev, ring->index);
-	}
+		अगर (__netअगर_subqueue_stopped(ndev, ring->index))
+			netअगर_start_subqueue(ndev, ring->index);
+	पूर्ण
 
-	return processed;
-}
+	वापस processed;
+पूर्ण
 
-static int xgene_enet_napi(struct napi_struct *napi, const int budget)
-{
-	struct xgene_enet_desc_ring *ring;
-	int processed;
+अटल पूर्णांक xgene_enet_napi(काष्ठा napi_काष्ठा *napi, स्थिर पूर्णांक budget)
+अणु
+	काष्ठा xgene_enet_desc_ring *ring;
+	पूर्णांक processed;
 
-	ring = container_of(napi, struct xgene_enet_desc_ring, napi);
+	ring = container_of(napi, काष्ठा xgene_enet_desc_ring, napi);
 	processed = xgene_enet_process_ring(ring, budget);
 
-	if (processed != budget) {
-		napi_complete_done(napi, processed);
+	अगर (processed != budget) अणु
+		napi_complete_करोne(napi, processed);
 		enable_irq(ring->irq);
-	}
+	पूर्ण
 
-	return processed;
-}
+	वापस processed;
+पूर्ण
 
-static void xgene_enet_timeout(struct net_device *ndev, unsigned int txqueue)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	struct netdev_queue *txq;
-	int i;
+अटल व्योम xgene_enet_समयout(काष्ठा net_device *ndev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	काष्ठा netdev_queue *txq;
+	पूर्णांक i;
 
 	pdata->mac_ops->reset(pdata);
 
-	for (i = 0; i < pdata->txq_cnt; i++) {
+	क्रम (i = 0; i < pdata->txq_cnt; i++) अणु
 		txq = netdev_get_tx_queue(ndev, i);
-		txq->trans_start = jiffies;
-		netif_tx_start_queue(txq);
-	}
-}
+		txq->trans_start = jअगरfies;
+		netअगर_tx_start_queue(txq);
+	पूर्ण
+पूर्ण
 
-static void xgene_enet_set_irq_name(struct net_device *ndev)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	struct xgene_enet_desc_ring *ring;
-	int i;
+अटल व्योम xgene_enet_set_irq_name(काष्ठा net_device *ndev)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	काष्ठा xgene_enet_desc_ring *ring;
+	पूर्णांक i;
 
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		ring = pdata->rx_ring[i];
-		if (!pdata->cq_cnt) {
-			snprintf(ring->irq_name, IRQ_ID_SIZE, "%s-rx-txc",
+		अगर (!pdata->cq_cnt) अणु
+			snम_लिखो(ring->irq_name, IRQ_ID_SIZE, "%s-rx-txc",
 				 ndev->name);
-		} else {
-			snprintf(ring->irq_name, IRQ_ID_SIZE, "%s-rx-%d",
+		पूर्ण अन्यथा अणु
+			snम_लिखो(ring->irq_name, IRQ_ID_SIZE, "%s-rx-%d",
 				 ndev->name, i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < pdata->cq_cnt; i++) {
+	क्रम (i = 0; i < pdata->cq_cnt; i++) अणु
 		ring = pdata->tx_ring[i]->cp_ring;
-		snprintf(ring->irq_name, IRQ_ID_SIZE, "%s-txc-%d",
+		snम_लिखो(ring->irq_name, IRQ_ID_SIZE, "%s-txc-%d",
 			 ndev->name, i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int xgene_enet_register_irq(struct net_device *ndev)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	struct device *dev = ndev_to_dev(ndev);
-	struct xgene_enet_desc_ring *ring;
-	int ret = 0, i;
+अटल पूर्णांक xgene_enet_रेजिस्टर_irq(काष्ठा net_device *ndev)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	काष्ठा device *dev = ndev_to_dev(ndev);
+	काष्ठा xgene_enet_desc_ring *ring;
+	पूर्णांक ret = 0, i;
 
 	xgene_enet_set_irq_name(ndev);
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		ring = pdata->rx_ring[i];
 		irq_set_status_flags(ring->irq, IRQ_DISABLE_UNLAZY);
 		ret = devm_request_irq(dev, ring->irq, xgene_enet_rx_irq,
 				       0, ring->irq_name, ring);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(ndev, "Failed to request irq %s\n",
 				   ring->irq_name);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < pdata->cq_cnt; i++) {
+	क्रम (i = 0; i < pdata->cq_cnt; i++) अणु
 		ring = pdata->tx_ring[i]->cp_ring;
 		irq_set_status_flags(ring->irq, IRQ_DISABLE_UNLAZY);
 		ret = devm_request_irq(dev, ring->irq, xgene_enet_rx_irq,
 				       0, ring->irq_name, ring);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(ndev, "Failed to request irq %s\n",
 				   ring->irq_name);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void xgene_enet_free_irq(struct net_device *ndev)
-{
-	struct xgene_enet_pdata *pdata;
-	struct xgene_enet_desc_ring *ring;
-	struct device *dev;
-	int i;
+अटल व्योम xgene_enet_मुक्त_irq(काष्ठा net_device *ndev)
+अणु
+	काष्ठा xgene_enet_pdata *pdata;
+	काष्ठा xgene_enet_desc_ring *ring;
+	काष्ठा device *dev;
+	पूर्णांक i;
 
 	pdata = netdev_priv(ndev);
 	dev = ndev_to_dev(ndev);
 
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		ring = pdata->rx_ring[i];
 		irq_clear_status_flags(ring->irq, IRQ_DISABLE_UNLAZY);
-		devm_free_irq(dev, ring->irq, ring);
-	}
+		devm_मुक्त_irq(dev, ring->irq, ring);
+	पूर्ण
 
-	for (i = 0; i < pdata->cq_cnt; i++) {
+	क्रम (i = 0; i < pdata->cq_cnt; i++) अणु
 		ring = pdata->tx_ring[i]->cp_ring;
 		irq_clear_status_flags(ring->irq, IRQ_DISABLE_UNLAZY);
-		devm_free_irq(dev, ring->irq, ring);
-	}
-}
+		devm_मुक्त_irq(dev, ring->irq, ring);
+	पूर्ण
+पूर्ण
 
-static void xgene_enet_napi_enable(struct xgene_enet_pdata *pdata)
-{
-	struct napi_struct *napi;
-	int i;
+अटल व्योम xgene_enet_napi_enable(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा napi_काष्ठा *napi;
+	पूर्णांक i;
 
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		napi = &pdata->rx_ring[i]->napi;
 		napi_enable(napi);
-	}
+	पूर्ण
 
-	for (i = 0; i < pdata->cq_cnt; i++) {
+	क्रम (i = 0; i < pdata->cq_cnt; i++) अणु
 		napi = &pdata->tx_ring[i]->cp_ring->napi;
 		napi_enable(napi);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgene_enet_napi_disable(struct xgene_enet_pdata *pdata)
-{
-	struct napi_struct *napi;
-	int i;
+अटल व्योम xgene_enet_napi_disable(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा napi_काष्ठा *napi;
+	पूर्णांक i;
 
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		napi = &pdata->rx_ring[i]->napi;
 		napi_disable(napi);
-	}
+	पूर्ण
 
-	for (i = 0; i < pdata->cq_cnt; i++) {
+	क्रम (i = 0; i < pdata->cq_cnt; i++) अणु
 		napi = &pdata->tx_ring[i]->cp_ring->napi;
 		napi_disable(napi);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int xgene_enet_open(struct net_device *ndev)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	const struct xgene_mac_ops *mac_ops = pdata->mac_ops;
-	int ret;
+अटल पूर्णांक xgene_enet_खोलो(काष्ठा net_device *ndev)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	स्थिर काष्ठा xgene_mac_ops *mac_ops = pdata->mac_ops;
+	पूर्णांक ret;
 
-	ret = netif_set_real_num_tx_queues(ndev, pdata->txq_cnt);
-	if (ret)
-		return ret;
+	ret = netअगर_set_real_num_tx_queues(ndev, pdata->txq_cnt);
+	अगर (ret)
+		वापस ret;
 
-	ret = netif_set_real_num_rx_queues(ndev, pdata->rxq_cnt);
-	if (ret)
-		return ret;
+	ret = netअगर_set_real_num_rx_queues(ndev, pdata->rxq_cnt);
+	अगर (ret)
+		वापस ret;
 
 	xgene_enet_napi_enable(pdata);
-	ret = xgene_enet_register_irq(ndev);
-	if (ret)
-		return ret;
+	ret = xgene_enet_रेजिस्टर_irq(ndev);
+	अगर (ret)
+		वापस ret;
 
-	if (ndev->phydev) {
+	अगर (ndev->phydev) अणु
 		phy_start(ndev->phydev);
-	} else {
+	पूर्ण अन्यथा अणु
 		schedule_delayed_work(&pdata->link_work, PHY_POLL_LINK_OFF);
-		netif_carrier_off(ndev);
-	}
+		netअगर_carrier_off(ndev);
+	पूर्ण
 
 	mac_ops->tx_enable(pdata);
 	mac_ops->rx_enable(pdata);
-	netif_tx_start_all_queues(ndev);
+	netअगर_tx_start_all_queues(ndev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgene_enet_close(struct net_device *ndev)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	const struct xgene_mac_ops *mac_ops = pdata->mac_ops;
-	int i;
+अटल पूर्णांक xgene_enet_बंद(काष्ठा net_device *ndev)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	स्थिर काष्ठा xgene_mac_ops *mac_ops = pdata->mac_ops;
+	पूर्णांक i;
 
-	netif_tx_stop_all_queues(ndev);
+	netअगर_tx_stop_all_queues(ndev);
 	mac_ops->tx_disable(pdata);
 	mac_ops->rx_disable(pdata);
 
-	if (ndev->phydev)
+	अगर (ndev->phydev)
 		phy_stop(ndev->phydev);
-	else
+	अन्यथा
 		cancel_delayed_work_sync(&pdata->link_work);
 
-	xgene_enet_free_irq(ndev);
+	xgene_enet_मुक्त_irq(ndev);
 	xgene_enet_napi_disable(pdata);
-	for (i = 0; i < pdata->rxq_cnt; i++)
+	क्रम (i = 0; i < pdata->rxq_cnt; i++)
 		xgene_enet_process_ring(pdata->rx_ring[i], -1);
 
-	return 0;
-}
-static void xgene_enet_delete_ring(struct xgene_enet_desc_ring *ring)
-{
-	struct xgene_enet_pdata *pdata;
-	struct device *dev;
+	वापस 0;
+पूर्ण
+अटल व्योम xgene_enet_delete_ring(काष्ठा xgene_enet_desc_ring *ring)
+अणु
+	काष्ठा xgene_enet_pdata *pdata;
+	काष्ठा device *dev;
 
 	pdata = netdev_priv(ring->ndev);
 	dev = ndev_to_dev(ring->ndev);
 
 	pdata->ring_ops->clear(ring);
-	dmam_free_coherent(dev, ring->size, ring->desc_addr, ring->dma);
-}
+	dmam_मुक्त_coherent(dev, ring->size, ring->desc_addr, ring->dma);
+पूर्ण
 
-static void xgene_enet_delete_desc_rings(struct xgene_enet_pdata *pdata)
-{
-	struct xgene_enet_desc_ring *buf_pool, *page_pool;
-	struct xgene_enet_desc_ring *ring;
-	int i;
+अटल व्योम xgene_enet_delete_desc_rings(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा xgene_enet_desc_ring *buf_pool, *page_pool;
+	काष्ठा xgene_enet_desc_ring *ring;
+	पूर्णांक i;
 
-	for (i = 0; i < pdata->txq_cnt; i++) {
+	क्रम (i = 0; i < pdata->txq_cnt; i++) अणु
 		ring = pdata->tx_ring[i];
-		if (ring) {
+		अगर (ring) अणु
 			xgene_enet_delete_ring(ring);
 			pdata->port_ops->clear(pdata, ring);
-			if (pdata->cq_cnt)
+			अगर (pdata->cq_cnt)
 				xgene_enet_delete_ring(ring->cp_ring);
-			pdata->tx_ring[i] = NULL;
-		}
+			pdata->tx_ring[i] = शून्य;
+		पूर्ण
 
-	}
+	पूर्ण
 
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		ring = pdata->rx_ring[i];
-		if (ring) {
+		अगर (ring) अणु
 			page_pool = ring->page_pool;
-			if (page_pool) {
+			अगर (page_pool) अणु
 				xgene_enet_delete_pagepool(page_pool);
 				xgene_enet_delete_ring(page_pool);
 				pdata->port_ops->clear(pdata, page_pool);
-			}
+			पूर्ण
 
 			buf_pool = ring->buf_pool;
 			xgene_enet_delete_bufpool(buf_pool);
@@ -1087,144 +1088,144 @@ static void xgene_enet_delete_desc_rings(struct xgene_enet_pdata *pdata)
 			pdata->port_ops->clear(pdata, buf_pool);
 
 			xgene_enet_delete_ring(ring);
-			pdata->rx_ring[i] = NULL;
-		}
+			pdata->rx_ring[i] = शून्य;
+		पूर्ण
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int xgene_enet_get_ring_size(struct device *dev,
-				    enum xgene_enet_ring_cfgsize cfgsize)
-{
-	int size = -EINVAL;
+अटल पूर्णांक xgene_enet_get_ring_size(काष्ठा device *dev,
+				    क्रमागत xgene_enet_ring_cfgsize cfgsize)
+अणु
+	पूर्णांक size = -EINVAL;
 
-	switch (cfgsize) {
-	case RING_CFGSIZE_512B:
+	चयन (cfgsize) अणु
+	हाल RING_CFGSIZE_512B:
 		size = 0x200;
-		break;
-	case RING_CFGSIZE_2KB:
+		अवरोध;
+	हाल RING_CFGSIZE_2KB:
 		size = 0x800;
-		break;
-	case RING_CFGSIZE_16KB:
+		अवरोध;
+	हाल RING_CFGSIZE_16KB:
 		size = 0x4000;
-		break;
-	case RING_CFGSIZE_64KB:
+		अवरोध;
+	हाल RING_CFGSIZE_64KB:
 		size = 0x10000;
-		break;
-	case RING_CFGSIZE_512KB:
+		अवरोध;
+	हाल RING_CFGSIZE_512KB:
 		size = 0x80000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "Unsupported cfg ring size %d\n", cfgsize);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static void xgene_enet_free_desc_ring(struct xgene_enet_desc_ring *ring)
-{
-	struct xgene_enet_pdata *pdata;
-	struct device *dev;
+अटल व्योम xgene_enet_मुक्त_desc_ring(काष्ठा xgene_enet_desc_ring *ring)
+अणु
+	काष्ठा xgene_enet_pdata *pdata;
+	काष्ठा device *dev;
 
-	if (!ring)
-		return;
+	अगर (!ring)
+		वापस;
 
 	dev = ndev_to_dev(ring->ndev);
 	pdata = netdev_priv(ring->ndev);
 
-	if (ring->desc_addr) {
+	अगर (ring->desc_addr) अणु
 		pdata->ring_ops->clear(ring);
-		dmam_free_coherent(dev, ring->size, ring->desc_addr, ring->dma);
-	}
-	devm_kfree(dev, ring);
-}
+		dmam_मुक्त_coherent(dev, ring->size, ring->desc_addr, ring->dma);
+	पूर्ण
+	devm_kमुक्त(dev, ring);
+पूर्ण
 
-static void xgene_enet_free_desc_rings(struct xgene_enet_pdata *pdata)
-{
-	struct xgene_enet_desc_ring *page_pool;
-	struct device *dev = &pdata->pdev->dev;
-	struct xgene_enet_desc_ring *ring;
-	void *p;
-	int i;
+अटल व्योम xgene_enet_मुक्त_desc_rings(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा xgene_enet_desc_ring *page_pool;
+	काष्ठा device *dev = &pdata->pdev->dev;
+	काष्ठा xgene_enet_desc_ring *ring;
+	व्योम *p;
+	पूर्णांक i;
 
-	for (i = 0; i < pdata->txq_cnt; i++) {
+	क्रम (i = 0; i < pdata->txq_cnt; i++) अणु
 		ring = pdata->tx_ring[i];
-		if (ring) {
-			if (ring->cp_ring && ring->cp_ring->cp_skb)
-				devm_kfree(dev, ring->cp_ring->cp_skb);
+		अगर (ring) अणु
+			अगर (ring->cp_ring && ring->cp_ring->cp_skb)
+				devm_kमुक्त(dev, ring->cp_ring->cp_skb);
 
-			if (ring->cp_ring && pdata->cq_cnt)
-				xgene_enet_free_desc_ring(ring->cp_ring);
+			अगर (ring->cp_ring && pdata->cq_cnt)
+				xgene_enet_मुक्त_desc_ring(ring->cp_ring);
 
-			xgene_enet_free_desc_ring(ring);
-		}
+			xgene_enet_मुक्त_desc_ring(ring);
+		पूर्ण
 
-	}
+	पूर्ण
 
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		ring = pdata->rx_ring[i];
-		if (ring) {
-			if (ring->buf_pool) {
-				if (ring->buf_pool->rx_skb)
-					devm_kfree(dev, ring->buf_pool->rx_skb);
+		अगर (ring) अणु
+			अगर (ring->buf_pool) अणु
+				अगर (ring->buf_pool->rx_skb)
+					devm_kमुक्त(dev, ring->buf_pool->rx_skb);
 
-				xgene_enet_free_desc_ring(ring->buf_pool);
-			}
+				xgene_enet_मुक्त_desc_ring(ring->buf_pool);
+			पूर्ण
 
 			page_pool = ring->page_pool;
-			if (page_pool) {
+			अगर (page_pool) अणु
 				p = page_pool->frag_page;
-				if (p)
-					devm_kfree(dev, p);
+				अगर (p)
+					devm_kमुक्त(dev, p);
 
 				p = page_pool->frag_dma_addr;
-				if (p)
-					devm_kfree(dev, p);
-			}
+				अगर (p)
+					devm_kमुक्त(dev, p);
+			पूर्ण
 
-			xgene_enet_free_desc_ring(ring);
-		}
-	}
-}
+			xgene_enet_मुक्त_desc_ring(ring);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool is_irq_mbox_required(struct xgene_enet_pdata *pdata,
-				 struct xgene_enet_desc_ring *ring)
-{
-	if ((pdata->enet_id == XGENE_ENET2) &&
-	    (xgene_enet_ring_owner(ring->id) == RING_OWNER_CPU)) {
-		return true;
-	}
+अटल bool is_irq_mbox_required(काष्ठा xgene_enet_pdata *pdata,
+				 काष्ठा xgene_enet_desc_ring *ring)
+अणु
+	अगर ((pdata->enet_id == XGENE_ENET2) &&
+	    (xgene_enet_ring_owner(ring->id) == RING_OWNER_CPU)) अणु
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void __iomem *xgene_enet_ring_cmd_base(struct xgene_enet_pdata *pdata,
-					      struct xgene_enet_desc_ring *ring)
-{
-	u8 num_ring_id_shift = pdata->ring_ops->num_ring_id_shift;
+अटल व्योम __iomem *xgene_enet_ring_cmd_base(काष्ठा xgene_enet_pdata *pdata,
+					      काष्ठा xgene_enet_desc_ring *ring)
+अणु
+	u8 num_ring_id_shअगरt = pdata->ring_ops->num_ring_id_shअगरt;
 
-	return pdata->ring_cmd_addr + (ring->num << num_ring_id_shift);
-}
+	वापस pdata->ring_cmd_addr + (ring->num << num_ring_id_shअगरt);
+पूर्ण
 
-static struct xgene_enet_desc_ring *xgene_enet_create_desc_ring(
-			struct net_device *ndev, u32 ring_num,
-			enum xgene_enet_ring_cfgsize cfgsize, u32 ring_id)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	struct device *dev = ndev_to_dev(ndev);
-	struct xgene_enet_desc_ring *ring;
-	void *irq_mbox_addr;
-	int size;
+अटल काष्ठा xgene_enet_desc_ring *xgene_enet_create_desc_ring(
+			काष्ठा net_device *ndev, u32 ring_num,
+			क्रमागत xgene_enet_ring_cfgsize cfgsize, u32 ring_id)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	काष्ठा device *dev = ndev_to_dev(ndev);
+	काष्ठा xgene_enet_desc_ring *ring;
+	व्योम *irq_mbox_addr;
+	पूर्णांक size;
 
 	size = xgene_enet_get_ring_size(dev, cfgsize);
-	if (size < 0)
-		return NULL;
+	अगर (size < 0)
+		वापस शून्य;
 
-	ring = devm_kzalloc(dev, sizeof(struct xgene_enet_desc_ring),
+	ring = devm_kzalloc(dev, माप(काष्ठा xgene_enet_desc_ring),
 			    GFP_KERNEL);
-	if (!ring)
-		return NULL;
+	अगर (!ring)
+		वापस शून्य;
 
 	ring->ndev = ndev;
 	ring->num = ring_num;
@@ -1233,24 +1234,24 @@ static struct xgene_enet_desc_ring *xgene_enet_create_desc_ring(
 
 	ring->desc_addr = dmam_alloc_coherent(dev, size, &ring->dma,
 					      GFP_KERNEL | __GFP_ZERO);
-	if (!ring->desc_addr) {
-		devm_kfree(dev, ring);
-		return NULL;
-	}
+	अगर (!ring->desc_addr) अणु
+		devm_kमुक्त(dev, ring);
+		वापस शून्य;
+	पूर्ण
 	ring->size = size;
 
-	if (is_irq_mbox_required(pdata, ring)) {
+	अगर (is_irq_mbox_required(pdata, ring)) अणु
 		irq_mbox_addr = dmam_alloc_coherent(dev, INTR_MBOX_SIZE,
 						    &ring->irq_mbox_dma,
 						    GFP_KERNEL | __GFP_ZERO);
-		if (!irq_mbox_addr) {
-			dmam_free_coherent(dev, size, ring->desc_addr,
+		अगर (!irq_mbox_addr) अणु
+			dmam_मुक्त_coherent(dev, size, ring->desc_addr,
 					   ring->dma);
-			devm_kfree(dev, ring);
-			return NULL;
-		}
+			devm_kमुक्त(dev, ring);
+			वापस शून्य;
+		पूर्ण
 		ring->irq_mbox_addr = irq_mbox_addr;
-	}
+	पूर्ण
 
 	ring->cmd_base = xgene_enet_ring_cmd_base(pdata, ring);
 	ring->cmd = ring->cmd_base + INC_DEC_CMD_ADDR;
@@ -1258,234 +1259,234 @@ static struct xgene_enet_desc_ring *xgene_enet_create_desc_ring(
 	netdev_dbg(ndev, "ring info: num=%d  size=%d  id=%d  slots=%d\n",
 		   ring->num, ring->size, ring->id, ring->slots);
 
-	return ring;
-}
+	वापस ring;
+पूर्ण
 
-static u16 xgene_enet_get_ring_id(enum xgene_ring_owner owner, u8 bufnum)
-{
-	return (owner << 6) | (bufnum & GENMASK(5, 0));
-}
+अटल u16 xgene_enet_get_ring_id(क्रमागत xgene_ring_owner owner, u8 bufnum)
+अणु
+	वापस (owner << 6) | (bufnum & GENMASK(5, 0));
+पूर्ण
 
-static enum xgene_ring_owner xgene_derive_ring_owner(struct xgene_enet_pdata *p)
-{
-	enum xgene_ring_owner owner;
+अटल क्रमागत xgene_ring_owner xgene_derive_ring_owner(काष्ठा xgene_enet_pdata *p)
+अणु
+	क्रमागत xgene_ring_owner owner;
 
-	if (p->enet_id == XGENE_ENET1) {
-		switch (p->phy_mode) {
-		case PHY_INTERFACE_MODE_SGMII:
+	अगर (p->enet_id == XGENE_ENET1) अणु
+		चयन (p->phy_mode) अणु
+		हाल PHY_INTERFACE_MODE_SGMII:
 			owner = RING_OWNER_ETH0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			owner = (!p->port_id) ? RING_OWNER_ETH0 :
 						RING_OWNER_ETH1;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		owner = (!p->port_id) ? RING_OWNER_ETH0 : RING_OWNER_ETH1;
-	}
+	पूर्ण
 
-	return owner;
-}
+	वापस owner;
+पूर्ण
 
-static u8 xgene_start_cpu_bufnum(struct xgene_enet_pdata *pdata)
-{
-	struct device *dev = &pdata->pdev->dev;
+अटल u8 xgene_start_cpu_bufnum(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा device *dev = &pdata->pdev->dev;
 	u32 cpu_bufnum;
-	int ret;
+	पूर्णांक ret;
 
-	ret = device_property_read_u32(dev, "channel", &cpu_bufnum);
+	ret = device_property_पढ़ो_u32(dev, "channel", &cpu_bufnum);
 
-	return (!ret) ? cpu_bufnum : pdata->cpu_bufnum;
-}
+	वापस (!ret) ? cpu_bufnum : pdata->cpu_bufnum;
+पूर्ण
 
-static int xgene_enet_create_desc_rings(struct net_device *ndev)
-{
-	struct xgene_enet_desc_ring *rx_ring, *tx_ring, *cp_ring;
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	struct xgene_enet_desc_ring *page_pool = NULL;
-	struct xgene_enet_desc_ring *buf_pool = NULL;
-	struct device *dev = ndev_to_dev(ndev);
+अटल पूर्णांक xgene_enet_create_desc_rings(काष्ठा net_device *ndev)
+अणु
+	काष्ठा xgene_enet_desc_ring *rx_ring, *tx_ring, *cp_ring;
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	काष्ठा xgene_enet_desc_ring *page_pool = शून्य;
+	काष्ठा xgene_enet_desc_ring *buf_pool = शून्य;
+	काष्ठा device *dev = ndev_to_dev(ndev);
 	u8 eth_bufnum = pdata->eth_bufnum;
 	u8 bp_bufnum = pdata->bp_bufnum;
 	u16 ring_num = pdata->ring_num;
-	enum xgene_ring_owner owner;
+	क्रमागत xgene_ring_owner owner;
 	dma_addr_t dma_exp_bufs;
 	u16 ring_id, slots;
 	__le64 *exp_bufs;
-	int i, ret, size;
+	पूर्णांक i, ret, size;
 	u8 cpu_bufnum;
 
 	cpu_bufnum = xgene_start_cpu_bufnum(pdata);
 
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		/* allocate rx descriptor ring */
 		owner = xgene_derive_ring_owner(pdata);
 		ring_id = xgene_enet_get_ring_id(RING_OWNER_CPU, cpu_bufnum++);
 		rx_ring = xgene_enet_create_desc_ring(ndev, ring_num++,
 						      RING_CFGSIZE_16KB,
 						      ring_id);
-		if (!rx_ring) {
+		अगर (!rx_ring) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		/* allocate buffer pool for receiving packets */
+		/* allocate buffer pool क्रम receiving packets */
 		owner = xgene_derive_ring_owner(pdata);
 		ring_id = xgene_enet_get_ring_id(owner, bp_bufnum++);
 		buf_pool = xgene_enet_create_desc_ring(ndev, ring_num++,
 						       RING_CFGSIZE_16KB,
 						       ring_id);
-		if (!buf_pool) {
+		अगर (!buf_pool) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		rx_ring->nbufpool = NUM_BUFPOOL;
 		rx_ring->npagepool = NUM_NXTBUFPOOL;
 		rx_ring->irq = pdata->irqs[i];
-		buf_pool->rx_skb = devm_kcalloc(dev, buf_pool->slots,
-						sizeof(struct sk_buff *),
+		buf_pool->rx_skb = devm_kसुस्मृति(dev, buf_pool->slots,
+						माप(काष्ठा sk_buff *),
 						GFP_KERNEL);
-		if (!buf_pool->rx_skb) {
+		अगर (!buf_pool->rx_skb) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		buf_pool->dst_ring_num = xgene_enet_dst_ring_num(buf_pool);
 		rx_ring->buf_pool = buf_pool;
 		pdata->rx_ring[i] = rx_ring;
 
-		if ((pdata->enet_id == XGENE_ENET1 &&  pdata->rxq_cnt > 4) ||
-		    (pdata->enet_id == XGENE_ENET2 &&  pdata->rxq_cnt > 16)) {
-			break;
-		}
+		अगर ((pdata->enet_id == XGENE_ENET1 &&  pdata->rxq_cnt > 4) ||
+		    (pdata->enet_id == XGENE_ENET2 &&  pdata->rxq_cnt > 16)) अणु
+			अवरोध;
+		पूर्ण
 
-		/* allocate next buffer pool for jumbo packets */
+		/* allocate next buffer pool क्रम jumbo packets */
 		owner = xgene_derive_ring_owner(pdata);
 		ring_id = xgene_enet_get_ring_id(owner, bp_bufnum++);
 		page_pool = xgene_enet_create_desc_ring(ndev, ring_num++,
 							RING_CFGSIZE_16KB,
 							ring_id);
-		if (!page_pool) {
+		अगर (!page_pool) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		slots = page_pool->slots;
-		page_pool->frag_page = devm_kcalloc(dev, slots,
-						    sizeof(struct page *),
+		page_pool->frag_page = devm_kसुस्मृति(dev, slots,
+						    माप(काष्ठा page *),
 						    GFP_KERNEL);
-		if (!page_pool->frag_page) {
+		अगर (!page_pool->frag_page) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		page_pool->frag_dma_addr = devm_kcalloc(dev, slots,
-							sizeof(dma_addr_t),
+		page_pool->frag_dma_addr = devm_kसुस्मृति(dev, slots,
+							माप(dma_addr_t),
 							GFP_KERNEL);
-		if (!page_pool->frag_dma_addr) {
+		अगर (!page_pool->frag_dma_addr) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		page_pool->dst_ring_num = xgene_enet_dst_ring_num(page_pool);
 		rx_ring->page_pool = page_pool;
-	}
+	पूर्ण
 
-	for (i = 0; i < pdata->txq_cnt; i++) {
+	क्रम (i = 0; i < pdata->txq_cnt; i++) अणु
 		/* allocate tx descriptor ring */
 		owner = xgene_derive_ring_owner(pdata);
 		ring_id = xgene_enet_get_ring_id(owner, eth_bufnum++);
 		tx_ring = xgene_enet_create_desc_ring(ndev, ring_num++,
 						      RING_CFGSIZE_16KB,
 						      ring_id);
-		if (!tx_ring) {
+		अगर (!tx_ring) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		size = (tx_ring->slots / 2) * sizeof(__le64) * MAX_EXP_BUFFS;
+		size = (tx_ring->slots / 2) * माप(__le64) * MAX_EXP_BUFFS;
 		exp_bufs = dmam_alloc_coherent(dev, size, &dma_exp_bufs,
 					       GFP_KERNEL | __GFP_ZERO);
-		if (!exp_bufs) {
+		अगर (!exp_bufs) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		tx_ring->exp_bufs = exp_bufs;
 
 		pdata->tx_ring[i] = tx_ring;
 
-		if (!pdata->cq_cnt) {
+		अगर (!pdata->cq_cnt) अणु
 			cp_ring = pdata->rx_ring[i];
-		} else {
+		पूर्ण अन्यथा अणु
 			/* allocate tx completion descriptor ring */
 			ring_id = xgene_enet_get_ring_id(RING_OWNER_CPU,
 							 cpu_bufnum++);
 			cp_ring = xgene_enet_create_desc_ring(ndev, ring_num++,
 							      RING_CFGSIZE_16KB,
 							      ring_id);
-			if (!cp_ring) {
+			अगर (!cp_ring) अणु
 				ret = -ENOMEM;
-				goto err;
-			}
+				जाओ err;
+			पूर्ण
 
 			cp_ring->irq = pdata->irqs[pdata->rxq_cnt + i];
 			cp_ring->index = i;
-		}
+		पूर्ण
 
-		cp_ring->cp_skb = devm_kcalloc(dev, tx_ring->slots,
-					       sizeof(struct sk_buff *),
+		cp_ring->cp_skb = devm_kसुस्मृति(dev, tx_ring->slots,
+					       माप(काष्ठा sk_buff *),
 					       GFP_KERNEL);
-		if (!cp_ring->cp_skb) {
+		अगर (!cp_ring->cp_skb) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		size = sizeof(dma_addr_t) * MAX_SKB_FRAGS;
-		cp_ring->frag_dma_addr = devm_kcalloc(dev, tx_ring->slots,
+		size = माप(dma_addr_t) * MAX_SKB_FRAGS;
+		cp_ring->frag_dma_addr = devm_kसुस्मृति(dev, tx_ring->slots,
 						      size, GFP_KERNEL);
-		if (!cp_ring->frag_dma_addr) {
-			devm_kfree(dev, cp_ring->cp_skb);
+		अगर (!cp_ring->frag_dma_addr) अणु
+			devm_kमुक्त(dev, cp_ring->cp_skb);
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		tx_ring->cp_ring = cp_ring;
 		tx_ring->dst_ring_num = xgene_enet_dst_ring_num(cp_ring);
-	}
+	पूर्ण
 
-	if (pdata->ring_ops->coalesce)
+	अगर (pdata->ring_ops->coalesce)
 		pdata->ring_ops->coalesce(pdata->tx_ring[0]);
 	pdata->tx_qcnt_hi = pdata->tx_ring[0]->slots - 128;
 
-	return 0;
+	वापस 0;
 
 err:
-	xgene_enet_free_desc_rings(pdata);
-	return ret;
-}
+	xgene_enet_मुक्त_desc_rings(pdata);
+	वापस ret;
+पूर्ण
 
-static void xgene_enet_get_stats64(
-			struct net_device *ndev,
-			struct rtnl_link_stats64 *stats)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	struct xgene_enet_desc_ring *ring;
-	int i;
+अटल व्योम xgene_enet_get_stats64(
+			काष्ठा net_device *ndev,
+			काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	काष्ठा xgene_enet_desc_ring *ring;
+	पूर्णांक i;
 
-	for (i = 0; i < pdata->txq_cnt; i++) {
+	क्रम (i = 0; i < pdata->txq_cnt; i++) अणु
 		ring = pdata->tx_ring[i];
-		if (ring) {
+		अगर (ring) अणु
 			stats->tx_packets += ring->tx_packets;
 			stats->tx_bytes += ring->tx_bytes;
 			stats->tx_dropped += ring->tx_dropped;
 			stats->tx_errors += ring->tx_errors;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		ring = pdata->rx_ring[i];
-		if (ring) {
+		अगर (ring) अणु
 			stats->rx_packets += ring->rx_packets;
 			stats->rx_bytes += ring->rx_bytes;
 			stats->rx_dropped += ring->rx_dropped;
@@ -1493,299 +1494,299 @@ static void xgene_enet_get_stats64(
 				ring->rx_length_errors +
 				ring->rx_crc_errors +
 				ring->rx_frame_errors +
-				ring->rx_fifo_errors;
+				ring->rx_fअगरo_errors;
 			stats->rx_length_errors += ring->rx_length_errors;
 			stats->rx_crc_errors += ring->rx_crc_errors;
 			stats->rx_frame_errors += ring->rx_frame_errors;
-			stats->rx_fifo_errors += ring->rx_fifo_errors;
-		}
-	}
-}
+			stats->rx_fअगरo_errors += ring->rx_fअगरo_errors;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int xgene_enet_set_mac_address(struct net_device *ndev, void *addr)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	int ret;
+अटल पूर्णांक xgene_enet_set_mac_address(काष्ठा net_device *ndev, व्योम *addr)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	पूर्णांक ret;
 
 	ret = eth_mac_addr(ndev, addr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	pdata->mac_ops->set_mac_addr(pdata);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgene_change_mtu(struct net_device *ndev, int new_mtu)
-{
-	struct xgene_enet_pdata *pdata = netdev_priv(ndev);
-	int frame_size;
+अटल पूर्णांक xgene_change_mtu(काष्ठा net_device *ndev, पूर्णांक new_mtu)
+अणु
+	काष्ठा xgene_enet_pdata *pdata = netdev_priv(ndev);
+	पूर्णांक frame_size;
 
-	if (!netif_running(ndev))
-		return 0;
+	अगर (!netअगर_running(ndev))
+		वापस 0;
 
 	frame_size = (new_mtu > ETH_DATA_LEN) ? (new_mtu + 18) : 0x600;
 
-	xgene_enet_close(ndev);
+	xgene_enet_बंद(ndev);
 	ndev->mtu = new_mtu;
 	pdata->mac_ops->set_framesize(pdata, frame_size);
-	xgene_enet_open(ndev);
+	xgene_enet_खोलो(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops xgene_ndev_ops = {
-	.ndo_open = xgene_enet_open,
-	.ndo_stop = xgene_enet_close,
-	.ndo_start_xmit = xgene_enet_start_xmit,
-	.ndo_tx_timeout = xgene_enet_timeout,
-	.ndo_get_stats64 = xgene_enet_get_stats64,
-	.ndo_change_mtu = xgene_change_mtu,
-	.ndo_set_mac_address = xgene_enet_set_mac_address,
-};
+अटल स्थिर काष्ठा net_device_ops xgene_ndev_ops = अणु
+	.nकरो_खोलो = xgene_enet_खोलो,
+	.nकरो_stop = xgene_enet_बंद,
+	.nकरो_start_xmit = xgene_enet_start_xmit,
+	.nकरो_tx_समयout = xgene_enet_समयout,
+	.nकरो_get_stats64 = xgene_enet_get_stats64,
+	.nकरो_change_mtu = xgene_change_mtu,
+	.nकरो_set_mac_address = xgene_enet_set_mac_address,
+पूर्ण;
 
-#ifdef CONFIG_ACPI
-static void xgene_get_port_id_acpi(struct device *dev,
-				  struct xgene_enet_pdata *pdata)
-{
+#अगर_घोषित CONFIG_ACPI
+अटल व्योम xgene_get_port_id_acpi(काष्ठा device *dev,
+				  काष्ठा xgene_enet_pdata *pdata)
+अणु
 	acpi_status status;
 	u64 temp;
 
-	status = acpi_evaluate_integer(ACPI_HANDLE(dev), "_SUN", NULL, &temp);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_पूर्णांकeger(ACPI_HANDLE(dev), "_SUN", शून्य, &temp);
+	अगर (ACPI_FAILURE(status)) अणु
 		pdata->port_id = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		pdata->port_id = temp;
-	}
+	पूर्ण
 
-	return;
-}
-#endif
+	वापस;
+पूर्ण
+#पूर्ण_अगर
 
-static void xgene_get_port_id_dt(struct device *dev, struct xgene_enet_pdata *pdata)
-{
+अटल व्योम xgene_get_port_id_dt(काष्ठा device *dev, काष्ठा xgene_enet_pdata *pdata)
+अणु
 	u32 id = 0;
 
-	of_property_read_u32(dev->of_node, "port-id", &id);
+	of_property_पढ़ो_u32(dev->of_node, "port-id", &id);
 
 	pdata->port_id = id & BIT(0);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int xgene_get_tx_delay(struct xgene_enet_pdata *pdata)
-{
-	struct device *dev = &pdata->pdev->dev;
-	int delay, ret;
+अटल पूर्णांक xgene_get_tx_delay(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा device *dev = &pdata->pdev->dev;
+	पूर्णांक delay, ret;
 
-	ret = device_property_read_u32(dev, "tx-delay", &delay);
-	if (ret) {
+	ret = device_property_पढ़ो_u32(dev, "tx-delay", &delay);
+	अगर (ret) अणु
 		pdata->tx_delay = 4;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (delay < 0 || delay > 7) {
+	अगर (delay < 0 || delay > 7) अणु
 		dev_err(dev, "Invalid tx-delay specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pdata->tx_delay = delay;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgene_get_rx_delay(struct xgene_enet_pdata *pdata)
-{
-	struct device *dev = &pdata->pdev->dev;
-	int delay, ret;
+अटल पूर्णांक xgene_get_rx_delay(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा device *dev = &pdata->pdev->dev;
+	पूर्णांक delay, ret;
 
-	ret = device_property_read_u32(dev, "rx-delay", &delay);
-	if (ret) {
+	ret = device_property_पढ़ो_u32(dev, "rx-delay", &delay);
+	अगर (ret) अणु
 		pdata->rx_delay = 2;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (delay < 0 || delay > 7) {
+	अगर (delay < 0 || delay > 7) अणु
 		dev_err(dev, "Invalid rx-delay specified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pdata->rx_delay = delay;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgene_enet_get_irqs(struct xgene_enet_pdata *pdata)
-{
-	struct platform_device *pdev = pdata->pdev;
-	int i, ret, max_irqs;
+अटल पूर्णांक xgene_enet_get_irqs(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा platक्रमm_device *pdev = pdata->pdev;
+	पूर्णांक i, ret, max_irqs;
 
-	if (phy_interface_mode_is_rgmii(pdata->phy_mode))
+	अगर (phy_पूर्णांकerface_mode_is_rgmii(pdata->phy_mode))
 		max_irqs = 1;
-	else if (pdata->phy_mode == PHY_INTERFACE_MODE_SGMII)
+	अन्यथा अगर (pdata->phy_mode == PHY_INTERFACE_MODE_SGMII)
 		max_irqs = 2;
-	else
+	अन्यथा
 		max_irqs = XGENE_MAX_ENET_IRQ;
 
-	for (i = 0; i < max_irqs; i++) {
-		ret = platform_get_irq(pdev, i);
-		if (ret <= 0) {
-			if (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) {
+	क्रम (i = 0; i < max_irqs; i++) अणु
+		ret = platक्रमm_get_irq(pdev, i);
+		अगर (ret <= 0) अणु
+			अगर (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) अणु
 				max_irqs = i;
 				pdata->rxq_cnt = max_irqs / 2;
 				pdata->txq_cnt = max_irqs / 2;
 				pdata->cq_cnt = max_irqs / 2;
-				break;
-			}
-			return ret ? : -ENXIO;
-		}
+				अवरोध;
+			पूर्ण
+			वापस ret ? : -ENXIO;
+		पूर्ण
 		pdata->irqs[i] = ret;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgene_enet_check_phy_handle(struct xgene_enet_pdata *pdata)
-{
-	int ret;
+अटल व्योम xgene_enet_check_phy_handle(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	पूर्णांक ret;
 
-	if (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII)
-		return;
+	अगर (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII)
+		वापस;
 
-	if (!IS_ENABLED(CONFIG_MDIO_XGENE))
-		return;
+	अगर (!IS_ENABLED(CONFIG_MDIO_XGENE))
+		वापस;
 
 	ret = xgene_enet_phy_connect(pdata->ndev);
-	if (!ret)
+	अगर (!ret)
 		pdata->mdio_driver = true;
-}
+पूर्ण
 
-static void xgene_enet_gpiod_get(struct xgene_enet_pdata *pdata)
-{
-	struct device *dev = &pdata->pdev->dev;
+अटल व्योम xgene_enet_gpiod_get(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा device *dev = &pdata->pdev->dev;
 
 	pdata->sfp_gpio_en = false;
-	if (pdata->phy_mode != PHY_INTERFACE_MODE_XGMII ||
+	अगर (pdata->phy_mode != PHY_INTERFACE_MODE_XGMII ||
 	    (!device_property_present(dev, "sfp-gpios") &&
 	     !device_property_present(dev, "rxlos-gpios")))
-		return;
+		वापस;
 
 	pdata->sfp_gpio_en = true;
 	pdata->sfp_rdy = gpiod_get(dev, "rxlos", GPIOD_IN);
-	if (IS_ERR(pdata->sfp_rdy))
+	अगर (IS_ERR(pdata->sfp_rdy))
 		pdata->sfp_rdy = gpiod_get(dev, "sfp", GPIOD_IN);
-}
+पूर्ण
 
-static int xgene_enet_get_resources(struct xgene_enet_pdata *pdata)
-{
-	struct platform_device *pdev;
-	struct net_device *ndev;
-	struct device *dev;
-	struct resource *res;
-	void __iomem *base_addr;
+अटल पूर्णांक xgene_enet_get_resources(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा net_device *ndev;
+	काष्ठा device *dev;
+	काष्ठा resource *res;
+	व्योम __iomem *base_addr;
 	u32 offset;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	pdev = pdata->pdev;
 	dev = &pdev->dev;
 	ndev = pdata->ndev;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, RES_ENET_CSR);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, RES_ENET_CSR);
+	अगर (!res) अणु
 		dev_err(dev, "Resource enet_csr not defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	pdata->base_addr = devm_ioremap(dev, res->start, resource_size(res));
-	if (!pdata->base_addr) {
+	अगर (!pdata->base_addr) अणु
 		dev_err(dev, "Unable to retrieve ENET Port CSR region\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, RES_RING_CSR);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, RES_RING_CSR);
+	अगर (!res) अणु
 		dev_err(dev, "Resource ring_csr not defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	pdata->ring_csr_addr = devm_ioremap(dev, res->start,
 							resource_size(res));
-	if (!pdata->ring_csr_addr) {
+	अगर (!pdata->ring_csr_addr) अणु
 		dev_err(dev, "Unable to retrieve ENET Ring CSR region\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, RES_RING_CMD);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, RES_RING_CMD);
+	अगर (!res) अणु
 		dev_err(dev, "Resource ring_cmd not defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	pdata->ring_cmd_addr = devm_ioremap(dev, res->start,
 							resource_size(res));
-	if (!pdata->ring_cmd_addr) {
+	अगर (!pdata->ring_cmd_addr) अणु
 		dev_err(dev, "Unable to retrieve ENET Ring command region\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (dev->of_node)
+	अगर (dev->of_node)
 		xgene_get_port_id_dt(dev, pdata);
-#ifdef CONFIG_ACPI
-	else
+#अगर_घोषित CONFIG_ACPI
+	अन्यथा
 		xgene_get_port_id_acpi(dev, pdata);
-#endif
+#पूर्ण_अगर
 
-	if (!device_get_mac_address(dev, ndev->dev_addr, ETH_ALEN))
-		eth_hw_addr_random(ndev);
+	अगर (!device_get_mac_address(dev, ndev->dev_addr, ETH_ALEN))
+		eth_hw_addr_अक्रमom(ndev);
 
-	memcpy(ndev->perm_addr, ndev->dev_addr, ndev->addr_len);
+	स_नकल(ndev->perm_addr, ndev->dev_addr, ndev->addr_len);
 
 	pdata->phy_mode = device_get_phy_mode(dev);
-	if (pdata->phy_mode < 0) {
+	अगर (pdata->phy_mode < 0) अणु
 		dev_err(dev, "Unable to get phy-connection-type\n");
-		return pdata->phy_mode;
-	}
-	if (!phy_interface_mode_is_rgmii(pdata->phy_mode) &&
+		वापस pdata->phy_mode;
+	पूर्ण
+	अगर (!phy_पूर्णांकerface_mode_is_rgmii(pdata->phy_mode) &&
 	    pdata->phy_mode != PHY_INTERFACE_MODE_SGMII &&
-	    pdata->phy_mode != PHY_INTERFACE_MODE_XGMII) {
+	    pdata->phy_mode != PHY_INTERFACE_MODE_XGMII) अणु
 		dev_err(dev, "Incorrect phy-connection-type specified\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = xgene_get_tx_delay(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = xgene_get_rx_delay(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = xgene_enet_get_irqs(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	xgene_enet_gpiod_get(pdata);
 
-	pdata->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(pdata->clk)) {
-		if (pdata->phy_mode != PHY_INTERFACE_MODE_SGMII) {
-			/* Abort if the clock is defined but couldn't be
-			 * retrived. Always abort if the clock is missing on
-			 * DT system as the driver can't cope with this case.
+	pdata->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(pdata->clk)) अणु
+		अगर (pdata->phy_mode != PHY_INTERFACE_MODE_SGMII) अणु
+			/* Abort अगर the घड़ी is defined but couldn't be
+			 * retrived. Always पात अगर the घड़ी is missing on
+			 * DT प्रणाली as the driver can't cope with this हाल.
 			 */
-			if (PTR_ERR(pdata->clk) != -ENOENT || dev->of_node)
-				return PTR_ERR(pdata->clk);
-			/* Firmware may have set up the clock already. */
+			अगर (PTR_ERR(pdata->clk) != -ENOENT || dev->of_node)
+				वापस PTR_ERR(pdata->clk);
+			/* Firmware may have set up the घड़ी alपढ़ोy. */
 			dev_info(dev, "clocks have been setup already\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pdata->phy_mode != PHY_INTERFACE_MODE_XGMII)
+	अगर (pdata->phy_mode != PHY_INTERFACE_MODE_XGMII)
 		base_addr = pdata->base_addr - (pdata->port_id * MAC_OFFSET);
-	else
+	अन्यथा
 		base_addr = pdata->base_addr;
 	pdata->eth_csr_addr = base_addr + BLOCK_ETH_CSR_OFFSET;
 	pdata->cle.base = base_addr + BLOCK_ETH_CLE_CSR_OFFSET;
-	pdata->eth_ring_if_addr = base_addr + BLOCK_ETH_RING_IF_OFFSET;
+	pdata->eth_ring_अगर_addr = base_addr + BLOCK_ETH_RING_IF_OFFSET;
 	pdata->eth_diag_csr_addr = base_addr + BLOCK_ETH_DIAG_CSR_OFFSET;
-	if (phy_interface_mode_is_rgmii(pdata->phy_mode) ||
-	    pdata->phy_mode == PHY_INTERFACE_MODE_SGMII) {
+	अगर (phy_पूर्णांकerface_mode_is_rgmii(pdata->phy_mode) ||
+	    pdata->phy_mode == PHY_INTERFACE_MODE_SGMII) अणु
 		pdata->mcx_mac_addr = pdata->base_addr + BLOCK_ETH_MAC_OFFSET;
 		pdata->mcx_stats_addr =
 			pdata->base_addr + BLOCK_ETH_STATS_OFFSET;
@@ -1793,39 +1794,39 @@ static int xgene_enet_get_resources(struct xgene_enet_pdata *pdata)
 			  BLOCK_ETH_MAC_CSR_OFFSET :
 			  X2_BLOCK_ETH_MAC_CSR_OFFSET;
 		pdata->mcx_mac_csr_addr = base_addr + offset;
-	} else {
+	पूर्ण अन्यथा अणु
 		pdata->mcx_mac_addr = base_addr + BLOCK_AXG_MAC_OFFSET;
 		pdata->mcx_stats_addr = base_addr + BLOCK_AXG_STATS_OFFSET;
 		pdata->mcx_mac_csr_addr = base_addr + BLOCK_AXG_MAC_CSR_OFFSET;
 		pdata->pcs_addr = base_addr + BLOCK_PCS_OFFSET;
-	}
+	पूर्ण
 	pdata->rx_buff_cnt = NUM_PKT_BUF;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgene_enet_init_hw(struct xgene_enet_pdata *pdata)
-{
-	struct xgene_enet_cle *enet_cle = &pdata->cle;
-	struct xgene_enet_desc_ring *page_pool;
-	struct net_device *ndev = pdata->ndev;
-	struct xgene_enet_desc_ring *buf_pool;
+अटल पूर्णांक xgene_enet_init_hw(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा xgene_enet_cle *enet_cle = &pdata->cle;
+	काष्ठा xgene_enet_desc_ring *page_pool;
+	काष्ठा net_device *ndev = pdata->ndev;
+	काष्ठा xgene_enet_desc_ring *buf_pool;
 	u16 dst_ring_num, ring_id;
-	int i, ret;
+	पूर्णांक i, ret;
 	u32 count;
 
 	ret = pdata->port_ops->reset(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = xgene_enet_create_desc_rings(ndev);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(ndev, "Error in ring configuration\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* setup buffer pool */
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		buf_pool = pdata->rx_ring[i]->buf_pool;
 		xgene_enet_init_bufpool(buf_pool);
 		page_pool = pdata->rx_ring[i]->page_pool;
@@ -1833,19 +1834,19 @@ static int xgene_enet_init_hw(struct xgene_enet_pdata *pdata)
 
 		count = pdata->rx_buff_cnt;
 		ret = xgene_enet_refill_bufpool(buf_pool, count);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		ret = xgene_enet_refill_pagepool(page_pool, count);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
-	}
+	पूर्ण
 
 	dst_ring_num = xgene_enet_dst_ring_num(pdata->rx_ring[0]);
 	buf_pool = pdata->rx_ring[0]->buf_pool;
-	if (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) {
-		/* Initialize and Enable  PreClassifier Tree */
+	अगर (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) अणु
+		/* Initialize and Enable  PreClassअगरier Tree */
 		enet_cle->max_nodes = 512;
 		enet_cle->max_dbptrs = 1024;
 		enet_cle->parsers = 3;
@@ -1854,182 +1855,182 @@ static int xgene_enet_init_hw(struct xgene_enet_pdata *pdata)
 		enet_cle->ptree.start_dbptr = 0;
 		enet_cle->jump_bytes = 8;
 		ret = pdata->cle_ops->cle_init(pdata);
-		if (ret) {
+		अगर (ret) अणु
 			netdev_err(ndev, "Preclass Tree init error\n");
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		dst_ring_num = xgene_enet_dst_ring_num(pdata->rx_ring[0]);
 		buf_pool = pdata->rx_ring[0]->buf_pool;
 		page_pool = pdata->rx_ring[0]->page_pool;
 		ring_id = (page_pool) ? page_pool->id : 0;
 		pdata->port_ops->cle_bypass(pdata, dst_ring_num,
 					    buf_pool->id, ring_id);
-	}
+	पूर्ण
 
 	ndev->max_mtu = XGENE_ENET_MAX_MTU;
 	pdata->phy_speed = SPEED_UNKNOWN;
 	pdata->mac_ops->init(pdata);
 
-	return ret;
+	वापस ret;
 
 err:
 	xgene_enet_delete_desc_rings(pdata);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void xgene_enet_setup_ops(struct xgene_enet_pdata *pdata)
-{
-	switch (pdata->phy_mode) {
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
+अटल व्योम xgene_enet_setup_ops(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	चयन (pdata->phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
 		pdata->mac_ops = &xgene_gmac_ops;
 		pdata->port_ops = &xgene_gport_ops;
 		pdata->rm = RM3;
 		pdata->rxq_cnt = 1;
 		pdata->txq_cnt = 1;
 		pdata->cq_cnt = 0;
-		break;
-	case PHY_INTERFACE_MODE_SGMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_SGMII:
 		pdata->mac_ops = &xgene_sgmac_ops;
 		pdata->port_ops = &xgene_sgport_ops;
 		pdata->rm = RM1;
 		pdata->rxq_cnt = 1;
 		pdata->txq_cnt = 1;
 		pdata->cq_cnt = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pdata->mac_ops = &xgene_xgmac_ops;
 		pdata->port_ops = &xgene_xgport_ops;
 		pdata->cle_ops = &xgene_cle3in_ops;
 		pdata->rm = RM0;
-		if (!pdata->rxq_cnt) {
+		अगर (!pdata->rxq_cnt) अणु
 			pdata->rxq_cnt = XGENE_NUM_RX_RING;
 			pdata->txq_cnt = XGENE_NUM_TX_RING;
 			pdata->cq_cnt = XGENE_NUM_TXC_RING;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (pdata->enet_id == XGENE_ENET1) {
-		switch (pdata->port_id) {
-		case 0:
-			if (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) {
+	अगर (pdata->enet_id == XGENE_ENET1) अणु
+		चयन (pdata->port_id) अणु
+		हाल 0:
+			अगर (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) अणु
 				pdata->cpu_bufnum = X2_START_CPU_BUFNUM_0;
 				pdata->eth_bufnum = X2_START_ETH_BUFNUM_0;
 				pdata->bp_bufnum = X2_START_BP_BUFNUM_0;
 				pdata->ring_num = START_RING_NUM_0;
-			} else {
+			पूर्ण अन्यथा अणु
 				pdata->cpu_bufnum = START_CPU_BUFNUM_0;
 				pdata->eth_bufnum = START_ETH_BUFNUM_0;
 				pdata->bp_bufnum = START_BP_BUFNUM_0;
 				pdata->ring_num = START_RING_NUM_0;
-			}
-			break;
-		case 1:
-			if (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) {
+			पूर्ण
+			अवरोध;
+		हाल 1:
+			अगर (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) अणु
 				pdata->cpu_bufnum = XG_START_CPU_BUFNUM_1;
 				pdata->eth_bufnum = XG_START_ETH_BUFNUM_1;
 				pdata->bp_bufnum = XG_START_BP_BUFNUM_1;
 				pdata->ring_num = XG_START_RING_NUM_1;
-			} else {
+			पूर्ण अन्यथा अणु
 				pdata->cpu_bufnum = START_CPU_BUFNUM_1;
 				pdata->eth_bufnum = START_ETH_BUFNUM_1;
 				pdata->bp_bufnum = START_BP_BUFNUM_1;
 				pdata->ring_num = START_RING_NUM_1;
-			}
-			break;
-		default:
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		pdata->ring_ops = &xgene_ring1_ops;
-	} else {
-		switch (pdata->port_id) {
-		case 0:
+	पूर्ण अन्यथा अणु
+		चयन (pdata->port_id) अणु
+		हाल 0:
 			pdata->cpu_bufnum = X2_START_CPU_BUFNUM_0;
 			pdata->eth_bufnum = X2_START_ETH_BUFNUM_0;
 			pdata->bp_bufnum = X2_START_BP_BUFNUM_0;
 			pdata->ring_num = X2_START_RING_NUM_0;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			pdata->cpu_bufnum = X2_START_CPU_BUFNUM_1;
 			pdata->eth_bufnum = X2_START_ETH_BUFNUM_1;
 			pdata->bp_bufnum = X2_START_BP_BUFNUM_1;
 			pdata->ring_num = X2_START_RING_NUM_1;
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		pdata->rm = RM0;
 		pdata->ring_ops = &xgene_ring2_ops;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgene_enet_napi_add(struct xgene_enet_pdata *pdata)
-{
-	struct napi_struct *napi;
-	int i;
+अटल व्योम xgene_enet_napi_add(काष्ठा xgene_enet_pdata *pdata)
+अणु
+	काष्ठा napi_काष्ठा *napi;
+	पूर्णांक i;
 
-	for (i = 0; i < pdata->rxq_cnt; i++) {
+	क्रम (i = 0; i < pdata->rxq_cnt; i++) अणु
 		napi = &pdata->rx_ring[i]->napi;
-		netif_napi_add(pdata->ndev, napi, xgene_enet_napi,
+		netअगर_napi_add(pdata->ndev, napi, xgene_enet_napi,
 			       NAPI_POLL_WEIGHT);
-	}
+	पूर्ण
 
-	for (i = 0; i < pdata->cq_cnt; i++) {
+	क्रम (i = 0; i < pdata->cq_cnt; i++) अणु
 		napi = &pdata->tx_ring[i]->cp_ring->napi;
-		netif_napi_add(pdata->ndev, napi, xgene_enet_napi,
+		netअगर_napi_add(pdata->ndev, napi, xgene_enet_napi,
 			       NAPI_POLL_WEIGHT);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id xgene_enet_acpi_match[] = {
-	{ "APMC0D05", XGENE_ENET1},
-	{ "APMC0D30", XGENE_ENET1},
-	{ "APMC0D31", XGENE_ENET1},
-	{ "APMC0D3F", XGENE_ENET1},
-	{ "APMC0D26", XGENE_ENET2},
-	{ "APMC0D25", XGENE_ENET2},
-	{ }
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id xgene_enet_acpi_match[] = अणु
+	अणु "APMC0D05", XGENE_ENET1पूर्ण,
+	अणु "APMC0D30", XGENE_ENET1पूर्ण,
+	अणु "APMC0D31", XGENE_ENET1पूर्ण,
+	अणु "APMC0D3F", XGENE_ENET1पूर्ण,
+	अणु "APMC0D26", XGENE_ENET2पूर्ण,
+	अणु "APMC0D25", XGENE_ENET2पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, xgene_enet_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static const struct of_device_id xgene_enet_of_match[] = {
-	{.compatible = "apm,xgene-enet",    .data = (void *)XGENE_ENET1},
-	{.compatible = "apm,xgene1-sgenet", .data = (void *)XGENE_ENET1},
-	{.compatible = "apm,xgene1-xgenet", .data = (void *)XGENE_ENET1},
-	{.compatible = "apm,xgene2-sgenet", .data = (void *)XGENE_ENET2},
-	{.compatible = "apm,xgene2-xgenet", .data = (void *)XGENE_ENET2},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id xgene_enet_of_match[] = अणु
+	अणु.compatible = "apm,xgene-enet",    .data = (व्योम *)XGENE_ENET1पूर्ण,
+	अणु.compatible = "apm,xgene1-sgenet", .data = (व्योम *)XGENE_ENET1पूर्ण,
+	अणु.compatible = "apm,xgene1-xgenet", .data = (व्योम *)XGENE_ENET1पूर्ण,
+	अणु.compatible = "apm,xgene2-sgenet", .data = (व्योम *)XGENE_ENET2पूर्ण,
+	अणु.compatible = "apm,xgene2-xgenet", .data = (व्योम *)XGENE_ENET2पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, xgene_enet_of_match);
 
-static int xgene_enet_probe(struct platform_device *pdev)
-{
-	struct net_device *ndev;
-	struct xgene_enet_pdata *pdata;
-	struct device *dev = &pdev->dev;
-	void (*link_state)(struct work_struct *);
-	const struct of_device_id *of_id;
-	int ret;
+अटल पूर्णांक xgene_enet_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *ndev;
+	काष्ठा xgene_enet_pdata *pdata;
+	काष्ठा device *dev = &pdev->dev;
+	व्योम (*link_state)(काष्ठा work_काष्ठा *);
+	स्थिर काष्ठा of_device_id *of_id;
+	पूर्णांक ret;
 
-	ndev = alloc_etherdev_mqs(sizeof(struct xgene_enet_pdata),
+	ndev = alloc_etherdev_mqs(माप(काष्ठा xgene_enet_pdata),
 				  XGENE_NUM_TX_RING, XGENE_NUM_RX_RING);
-	if (!ndev)
-		return -ENOMEM;
+	अगर (!ndev)
+		वापस -ENOMEM;
 
 	pdata = netdev_priv(ndev);
 
 	pdata->pdev = pdev;
 	pdata->ndev = ndev;
 	SET_NETDEV_DEV(ndev, dev);
-	platform_set_drvdata(pdev, pdata);
+	platक्रमm_set_drvdata(pdev, pdata);
 	ndev->netdev_ops = &xgene_ndev_ops;
 	xgene_enet_set_ethtool_ops(ndev);
 	ndev->features |= NETIF_F_IP_CSUM |
@@ -2038,145 +2039,145 @@ static int xgene_enet_probe(struct platform_device *pdev)
 			  NETIF_F_SG;
 
 	of_id = of_match_device(xgene_enet_of_match, &pdev->dev);
-	if (of_id) {
-		pdata->enet_id = (enum xgene_enet_id)of_id->data;
-	}
-#ifdef CONFIG_ACPI
-	else {
-		const struct acpi_device_id *acpi_id;
+	अगर (of_id) अणु
+		pdata->enet_id = (क्रमागत xgene_enet_id)of_id->data;
+	पूर्ण
+#अगर_घोषित CONFIG_ACPI
+	अन्यथा अणु
+		स्थिर काष्ठा acpi_device_id *acpi_id;
 
 		acpi_id = acpi_match_device(xgene_enet_acpi_match, &pdev->dev);
-		if (acpi_id)
-			pdata->enet_id = (enum xgene_enet_id) acpi_id->driver_data;
-	}
-#endif
-	if (!pdata->enet_id) {
+		अगर (acpi_id)
+			pdata->enet_id = (क्रमागत xgene_enet_id) acpi_id->driver_data;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (!pdata->enet_id) अणु
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = xgene_enet_get_resources(pdata);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	xgene_enet_setup_ops(pdata);
 	spin_lock_init(&pdata->mac_lock);
 
-	if (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) {
+	अगर (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) अणु
 		ndev->features |= NETIF_F_TSO | NETIF_F_RXCSUM;
 		spin_lock_init(&pdata->mss_lock);
-	}
+	पूर्ण
 	ndev->hw_features = ndev->features;
 
 	ret = dma_coerce_mask_and_coherent(dev, DMA_BIT_MASK(64));
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(ndev, "No usable DMA configuration\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	xgene_enet_check_phy_handle(pdata);
 
 	ret = xgene_enet_init_hw(pdata);
-	if (ret)
-		goto err2;
+	अगर (ret)
+		जाओ err2;
 
 	link_state = pdata->mac_ops->link_state;
-	if (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) {
+	अगर (pdata->phy_mode == PHY_INTERFACE_MODE_XGMII) अणु
 		INIT_DELAYED_WORK(&pdata->link_work, link_state);
-	} else if (!pdata->mdio_driver) {
-		if (phy_interface_mode_is_rgmii(pdata->phy_mode))
+	पूर्ण अन्यथा अगर (!pdata->mdio_driver) अणु
+		अगर (phy_पूर्णांकerface_mode_is_rgmii(pdata->phy_mode))
 			ret = xgene_enet_mdio_config(pdata);
-		else
+		अन्यथा
 			INIT_DELAYED_WORK(&pdata->link_work, link_state);
 
-		if (ret)
-			goto err1;
-	}
+		अगर (ret)
+			जाओ err1;
+	पूर्ण
 
 	spin_lock_init(&pdata->stats_lock);
 	ret = xgene_extd_stats_init(pdata);
-	if (ret)
-		goto err1;
+	अगर (ret)
+		जाओ err1;
 
 	xgene_enet_napi_add(pdata);
-	ret = register_netdev(ndev);
-	if (ret) {
+	ret = रेजिस्टर_netdev(ndev);
+	अगर (ret) अणु
 		netdev_err(ndev, "Failed to register netdev\n");
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err1:
 	/*
-	 * If necessary, free_netdev() will call netif_napi_del() and undo
-	 * the effects of xgene_enet_napi_add()'s calls to netif_napi_add().
+	 * If necessary, मुक्त_netdev() will call netअगर_napi_del() and unकरो
+	 * the effects of xgene_enet_napi_add()'s calls to netअगर_napi_add().
 	 */
 
 	xgene_enet_delete_desc_rings(pdata);
 
 err2:
-	if (pdata->mdio_driver)
+	अगर (pdata->mdio_driver)
 		xgene_enet_phy_disconnect(pdata);
-	else if (phy_interface_mode_is_rgmii(pdata->phy_mode))
-		xgene_enet_mdio_remove(pdata);
+	अन्यथा अगर (phy_पूर्णांकerface_mode_is_rgmii(pdata->phy_mode))
+		xgene_enet_mdio_हटाओ(pdata);
 err:
-	free_netdev(ndev);
-	return ret;
-}
+	मुक्त_netdev(ndev);
+	वापस ret;
+पूर्ण
 
-static int xgene_enet_remove(struct platform_device *pdev)
-{
-	struct xgene_enet_pdata *pdata;
-	struct net_device *ndev;
+अटल पूर्णांक xgene_enet_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा xgene_enet_pdata *pdata;
+	काष्ठा net_device *ndev;
 
-	pdata = platform_get_drvdata(pdev);
+	pdata = platक्रमm_get_drvdata(pdev);
 	ndev = pdata->ndev;
 
 	rtnl_lock();
-	if (netif_running(ndev))
-		dev_close(ndev);
+	अगर (netअगर_running(ndev))
+		dev_बंद(ndev);
 	rtnl_unlock();
 
-	if (pdata->mdio_driver)
+	अगर (pdata->mdio_driver)
 		xgene_enet_phy_disconnect(pdata);
-	else if (phy_interface_mode_is_rgmii(pdata->phy_mode))
-		xgene_enet_mdio_remove(pdata);
+	अन्यथा अगर (phy_पूर्णांकerface_mode_is_rgmii(pdata->phy_mode))
+		xgene_enet_mdio_हटाओ(pdata);
 
-	unregister_netdev(ndev);
+	unरेजिस्टर_netdev(ndev);
 	xgene_enet_delete_desc_rings(pdata);
-	pdata->port_ops->shutdown(pdata);
-	free_netdev(ndev);
+	pdata->port_ops->shutकरोwn(pdata);
+	मुक्त_netdev(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgene_enet_shutdown(struct platform_device *pdev)
-{
-	struct xgene_enet_pdata *pdata;
+अटल व्योम xgene_enet_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा xgene_enet_pdata *pdata;
 
-	pdata = platform_get_drvdata(pdev);
-	if (!pdata)
-		return;
+	pdata = platक्रमm_get_drvdata(pdev);
+	अगर (!pdata)
+		वापस;
 
-	if (!pdata->ndev)
-		return;
+	अगर (!pdata->ndev)
+		वापस;
 
-	xgene_enet_remove(pdev);
-}
+	xgene_enet_हटाओ(pdev);
+पूर्ण
 
-static struct platform_driver xgene_enet_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver xgene_enet_driver = अणु
+	.driver = अणु
 		   .name = "xgene-enet",
 		   .of_match_table = of_match_ptr(xgene_enet_of_match),
 		   .acpi_match_table = ACPI_PTR(xgene_enet_acpi_match),
-	},
+	पूर्ण,
 	.probe = xgene_enet_probe,
-	.remove = xgene_enet_remove,
-	.shutdown = xgene_enet_shutdown,
-};
+	.हटाओ = xgene_enet_हटाओ,
+	.shutकरोwn = xgene_enet_shutकरोwn,
+पूर्ण;
 
-module_platform_driver(xgene_enet_driver);
+module_platक्रमm_driver(xgene_enet_driver);
 
 MODULE_DESCRIPTION("APM X-Gene SoC Ethernet driver");
 MODULE_AUTHOR("Iyappan Subramanian <isubramanian@apm.com>");

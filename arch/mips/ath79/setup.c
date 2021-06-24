@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Atheros AR71XX/AR724X/AR913X specific setup
+ *  Atheros AR71XX/AR724X/AR913X specअगरic setup
  *
  *  Copyright (C) 2010-2011 Jaiganesh Narayanan <jnarayanan@atheros.com>
- *  Copyright (C) 2008-2011 Gabor Juhos <juhosg@openwrt.org>
- *  Copyright (C) 2008 Imre Kaloz <kaloz@openwrt.org>
+ *  Copyright (C) 2008-2011 Gabor Juhos <juhosg@खोलोwrt.org>
+ *  Copyright (C) 2008 Imre Kaloz <kaloz@खोलोwrt.org>
  *
  *  Parts of this file are based on Atheros' 2.6.15/2.6.31 BSP
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/memblock.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/of_clk.h>
-#include <linux/of_fdt.h>
-#include <linux/irqchip.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/memblock.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of_clk.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/irqchip.h>
 
-#include <asm/bootinfo.h>
-#include <asm/idle.h>
-#include <asm/time.h>		/* for mips_hpt_frequency */
-#include <asm/reboot.h>		/* for _machine_{restart,halt} */
-#include <asm/prom.h>
-#include <asm/fw/fw.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/idle.h>
+#समावेश <यंत्र/समय.स>		/* क्रम mips_hpt_frequency */
+#समावेश <यंत्र/reboot.h>		/* क्रम _machine_अणुrestart,haltपूर्ण */
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/fw/fw.h>
 
-#include <asm/mach-ath79/ath79.h>
-#include <asm/mach-ath79/ar71xx_regs.h>
-#include "common.h"
+#समावेश <यंत्र/mach-ath79/ath79.h>
+#समावेश <यंत्र/mach-ath79/ar71xx_regs.h>
+#समावेश "common.h"
 
-#define ATH79_SYS_TYPE_LEN	64
+#घोषणा ATH79_SYS_TYPE_LEN	64
 
-static char ath79_sys_type[ATH79_SYS_TYPE_LEN];
+अटल अक्षर ath79_sys_type[ATH79_SYS_TYPE_LEN];
 
-static void ath79_restart(char *command)
-{
+अटल व्योम ath79_restart(अक्षर *command)
+अणु
 	local_irq_disable();
 	ath79_device_reset_set(AR71XX_RESET_FULL_CHIP);
-	for (;;)
-		if (cpu_wait)
-			cpu_wait();
-}
+	क्रम (;;)
+		अगर (cpu_रुको)
+			cpu_रुको();
+पूर्ण
 
-static void ath79_halt(void)
-{
-	while (1)
-		cpu_wait();
-}
+अटल व्योम ath79_halt(व्योम)
+अणु
+	जबतक (1)
+		cpu_रुको();
+पूर्ण
 
-static void __init ath79_detect_sys_type(void)
-{
-	char *chip = "????";
+अटल व्योम __init ath79_detect_sys_type(व्योम)
+अणु
+	अक्षर *chip = "????";
 	u32 id;
 	u32 major;
 	u32 minor;
@@ -61,169 +62,169 @@ static void __init ath79_detect_sys_type(void)
 	id = ath79_reset_rr(AR71XX_RESET_REG_REV_ID);
 	major = id & REV_ID_MAJOR_MASK;
 
-	switch (major) {
-	case REV_ID_MAJOR_AR71XX:
+	चयन (major) अणु
+	हाल REV_ID_MAJOR_AR71XX:
 		minor = id & AR71XX_REV_ID_MINOR_MASK;
 		rev = id >> AR71XX_REV_ID_REVISION_SHIFT;
 		rev &= AR71XX_REV_ID_REVISION_MASK;
-		switch (minor) {
-		case AR71XX_REV_ID_MINOR_AR7130:
+		चयन (minor) अणु
+		हाल AR71XX_REV_ID_MINOR_AR7130:
 			ath79_soc = ATH79_SOC_AR7130;
 			chip = "7130";
-			break;
+			अवरोध;
 
-		case AR71XX_REV_ID_MINOR_AR7141:
+		हाल AR71XX_REV_ID_MINOR_AR7141:
 			ath79_soc = ATH79_SOC_AR7141;
 			chip = "7141";
-			break;
+			अवरोध;
 
-		case AR71XX_REV_ID_MINOR_AR7161:
+		हाल AR71XX_REV_ID_MINOR_AR7161:
 			ath79_soc = ATH79_SOC_AR7161;
 			chip = "7161";
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case REV_ID_MAJOR_AR7240:
+	हाल REV_ID_MAJOR_AR7240:
 		ath79_soc = ATH79_SOC_AR7240;
 		chip = "7240";
 		rev = id & AR724X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_AR7241:
+	हाल REV_ID_MAJOR_AR7241:
 		ath79_soc = ATH79_SOC_AR7241;
 		chip = "7241";
 		rev = id & AR724X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_AR7242:
+	हाल REV_ID_MAJOR_AR7242:
 		ath79_soc = ATH79_SOC_AR7242;
 		chip = "7242";
 		rev = id & AR724X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_AR913X:
+	हाल REV_ID_MAJOR_AR913X:
 		minor = id & AR913X_REV_ID_MINOR_MASK;
 		rev = id >> AR913X_REV_ID_REVISION_SHIFT;
 		rev &= AR913X_REV_ID_REVISION_MASK;
-		switch (minor) {
-		case AR913X_REV_ID_MINOR_AR9130:
+		चयन (minor) अणु
+		हाल AR913X_REV_ID_MINOR_AR9130:
 			ath79_soc = ATH79_SOC_AR9130;
 			chip = "9130";
-			break;
+			अवरोध;
 
-		case AR913X_REV_ID_MINOR_AR9132:
+		हाल AR913X_REV_ID_MINOR_AR9132:
 			ath79_soc = ATH79_SOC_AR9132;
 			chip = "9132";
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case REV_ID_MAJOR_AR9330:
+	हाल REV_ID_MAJOR_AR9330:
 		ath79_soc = ATH79_SOC_AR9330;
 		chip = "9330";
 		rev = id & AR933X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_AR9331:
+	हाल REV_ID_MAJOR_AR9331:
 		ath79_soc = ATH79_SOC_AR9331;
 		chip = "9331";
 		rev = id & AR933X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_AR9341:
+	हाल REV_ID_MAJOR_AR9341:
 		ath79_soc = ATH79_SOC_AR9341;
 		chip = "9341";
 		rev = id & AR934X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_AR9342:
+	हाल REV_ID_MAJOR_AR9342:
 		ath79_soc = ATH79_SOC_AR9342;
 		chip = "9342";
 		rev = id & AR934X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_AR9344:
+	हाल REV_ID_MAJOR_AR9344:
 		ath79_soc = ATH79_SOC_AR9344;
 		chip = "9344";
 		rev = id & AR934X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_QCA9533_V2:
+	हाल REV_ID_MAJOR_QCA9533_V2:
 		ver = 2;
 		ath79_soc_rev = 2;
 		fallthrough;
-	case REV_ID_MAJOR_QCA9533:
+	हाल REV_ID_MAJOR_QCA9533:
 		ath79_soc = ATH79_SOC_QCA9533;
 		chip = "9533";
 		rev = id & QCA953X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_QCA9556:
+	हाल REV_ID_MAJOR_QCA9556:
 		ath79_soc = ATH79_SOC_QCA9556;
 		chip = "9556";
 		rev = id & QCA955X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_QCA9558:
+	हाल REV_ID_MAJOR_QCA9558:
 		ath79_soc = ATH79_SOC_QCA9558;
 		chip = "9558";
 		rev = id & QCA955X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_QCA956X:
+	हाल REV_ID_MAJOR_QCA956X:
 		ath79_soc = ATH79_SOC_QCA956X;
 		chip = "956X";
 		rev = id & QCA956X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	case REV_ID_MAJOR_TP9343:
+	हाल REV_ID_MAJOR_TP9343:
 		ath79_soc = ATH79_SOC_TP9343;
 		chip = "9343";
 		rev = id & QCA956X_REV_ID_REVISION_MASK;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		panic("ath79: unknown SoC, id:0x%08x", id);
-	}
+	पूर्ण
 
-	if (ver == 1)
+	अगर (ver == 1)
 		ath79_soc_rev = rev;
 
-	if (soc_is_qca953x() || soc_is_qca955x() || soc_is_qca956x())
-		sprintf(ath79_sys_type, "Qualcomm Atheros QCA%s ver %u rev %u",
+	अगर (soc_is_qca953x() || soc_is_qca955x() || soc_is_qca956x())
+		प्र_लिखो(ath79_sys_type, "Qualcomm Atheros QCA%s ver %u rev %u",
 			chip, ver, rev);
-	else if (soc_is_tp9343())
-		sprintf(ath79_sys_type, "Qualcomm Atheros TP%s rev %u",
+	अन्यथा अगर (soc_is_tp9343())
+		प्र_लिखो(ath79_sys_type, "Qualcomm Atheros TP%s rev %u",
 			chip, rev);
-	else
-		sprintf(ath79_sys_type, "Atheros AR%s rev %u", chip, rev);
+	अन्यथा
+		प्र_लिखो(ath79_sys_type, "Atheros AR%s rev %u", chip, rev);
 	pr_info("SoC: %s\n", ath79_sys_type);
-}
+पूर्ण
 
-const char *get_system_type(void)
-{
-	return ath79_sys_type;
-}
+स्थिर अक्षर *get_प्रणाली_type(व्योम)
+अणु
+	वापस ath79_sys_type;
+पूर्ण
 
-unsigned int get_c0_compare_int(void)
-{
-	return CP0_LEGACY_COMPARE_IRQ;
-}
+अचिन्हित पूर्णांक get_c0_compare_पूर्णांक(व्योम)
+अणु
+	वापस CP0_LEGACY_COMPARE_IRQ;
+पूर्ण
 
-void __init plat_mem_setup(void)
-{
-	void *dtb;
+व्योम __init plat_mem_setup(व्योम)
+अणु
+	व्योम *dtb;
 
 	set_io_port_base(KSEG1);
 
 	/* Get the position of the FDT passed by the bootloader */
-	dtb = (void *)fw_getenvl("fdt_start");
-	if (dtb == NULL)
+	dtb = (व्योम *)fw_दो_पर्याl("fdt_start");
+	अगर (dtb == शून्य)
 		dtb = get_fdt();
 
-	if (dtb)
-		__dt_setup_arch((void *)KSEG0ADDR(dtb));
+	अगर (dtb)
+		__dt_setup_arch((व्योम *)KSEG0ADDR(dtb));
 
 	ath79_reset_base = ioremap(AR71XX_RESET_BASE,
 					   AR71XX_RESET_SIZE);
@@ -236,28 +237,28 @@ void __init plat_mem_setup(void)
 
 	_machine_restart = ath79_restart;
 	_machine_halt = ath79_halt;
-	pm_power_off = ath79_halt;
-}
+	pm_घातer_off = ath79_halt;
+पूर्ण
 
-void __init plat_time_init(void)
-{
-	struct device_node *np;
-	struct clk *clk;
-	unsigned long cpu_clk_rate;
+व्योम __init plat_समय_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा clk *clk;
+	अचिन्हित दीर्घ cpu_clk_rate;
 
-	of_clk_init(NULL);
+	of_clk_init(शून्य);
 
-	np = of_get_cpu_node(0, NULL);
-	if (!np) {
+	np = of_get_cpu_node(0, शून्य);
+	अगर (!np) अणु
 		pr_err("Failed to get CPU node\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	clk = of_clk_get(np, 0);
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		pr_err("Failed to get CPU clock: %ld\n", PTR_ERR(clk));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cpu_clk_rate = clk_get_rate(clk);
 
@@ -267,14 +268,14 @@ void __init plat_time_init(void)
 	mips_hpt_frequency = cpu_clk_rate / 2;
 
 	clk_put(clk);
-}
+पूर्ण
 
-void __init arch_init_irq(void)
-{
+व्योम __init arch_init_irq(व्योम)
+अणु
 	irqchip_init();
-}
+पूर्ण
 
-void __init device_tree_init(void)
-{
+व्योम __init device_tree_init(व्योम)
+अणु
 	unflatten_and_copy_device_tree();
-}
+पूर्ण

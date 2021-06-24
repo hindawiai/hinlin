@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_MACH_TOPOLOGY_H
-#define _ASM_MACH_TOPOLOGY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_MACH_TOPOLOGY_H
+#घोषणा _ASM_MACH_TOPOLOGY_H
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 
-#define cpu_to_node(cpu)	(cpu_logical_map(cpu) >> 2)
+#घोषणा cpu_to_node(cpu)	(cpu_logical_map(cpu) >> 2)
 
-extern cpumask_t __node_cpumask[];
-#define cpumask_of_node(node)	(&__node_cpumask[node])
+बाह्य cpumask_t __node_cpumask[];
+#घोषणा cpumask_of_node(node)	(&__node_cpumask[node])
 
-struct pci_bus;
-extern int pcibus_to_node(struct pci_bus *);
+काष्ठा pci_bus;
+बाह्य पूर्णांक pcibus_to_node(काष्ठा pci_bus *);
 
-#define cpumask_of_pcibus(bus)	(cpu_online_mask)
+#घोषणा cpumask_of_pcibus(bus)	(cpu_online_mask)
 
-extern unsigned char __node_distances[MAX_NUMNODES][MAX_NUMNODES];
+बाह्य अचिन्हित अक्षर __node_distances[MAX_NUMNODES][MAX_NUMNODES];
 
-#define node_distance(from, to)	(__node_distances[(from)][(to)])
+#घोषणा node_distance(from, to)	(__node_distances[(from)][(to)])
 
-#endif
+#पूर्ण_अगर
 
-#include <asm-generic/topology.h>
+#समावेश <यंत्र-generic/topology.h>
 
-#endif /* _ASM_MACH_TOPOLOGY_H */
+#पूर्ण_अगर /* _ASM_MACH_TOPOLOGY_H */

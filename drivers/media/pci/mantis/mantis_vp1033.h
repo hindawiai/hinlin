@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Mantis VP-1033 driver
 
@@ -6,13 +7,13 @@
 
 */
 
-#ifndef __MANTIS_VP1033_H
-#define __MANTIS_VP1033_H
+#अगर_अघोषित __MANTIS_VP1033_H
+#घोषणा __MANTIS_VP1033_H
 
-#include "mantis_common.h"
+#समावेश "mantis_common.h"
 
-#define MANTIS_VP_1033_DVB_S	0x0016
+#घोषणा MANTIS_VP_1033_DVB_S	0x0016
 
-extern struct mantis_hwconfig vp1033_config;
+बाह्य काष्ठा mantis_hwconfig vp1033_config;
 
-#endif /* __MANTIS_VP1033_H */
+#पूर्ण_अगर /* __MANTIS_VP1033_H */

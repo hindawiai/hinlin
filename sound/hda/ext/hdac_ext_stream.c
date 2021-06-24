@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  hdac-ext-stream.c - HD-audio extended stream operations.
  *
  *  Copyright (C) 2015 Intel Corp
- *  Author: Jeeja KP <jeeja.kp@intel.com>
+ *  Author: Jeeja KP <jeeja.kp@पूर्णांकel.com>
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <sound/pcm.h>
-#include <sound/hda_register.h>
-#include <sound/hdaudio_ext.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/hda_रेजिस्टर.h>
+#समावेश <sound/hdaudio_ext.h>
 
 /**
  * snd_hdac_ext_stream_init - initialize each stream (aka device)
@@ -23,88 +24,88 @@
  * @direction: stream direction (SNDRV_PCM_STREAM_PLAYBACK or SNDRV_PCM_STREAM_CAPTURE)
  * @tag: the tag id to assign
  *
- * initialize the stream, if ppcap is enabled then init those and then
+ * initialize the stream, अगर ppcap is enabled then init those and then
  * invoke hdac stream initialization routine
  */
-void snd_hdac_ext_stream_init(struct hdac_bus *bus,
-				struct hdac_ext_stream *stream,
-				int idx, int direction, int tag)
-{
-	if (bus->ppcap) {
+व्योम snd_hdac_ext_stream_init(काष्ठा hdac_bus *bus,
+				काष्ठा hdac_ext_stream *stream,
+				पूर्णांक idx, पूर्णांक direction, पूर्णांक tag)
+अणु
+	अगर (bus->ppcap) अणु
 		stream->pphc_addr = bus->ppcap + AZX_PPHC_BASE +
 				AZX_PPHC_INTERVAL * idx;
 
 		stream->pplc_addr = bus->ppcap + AZX_PPLC_BASE +
 				AZX_PPLC_MULTI * bus->num_streams +
 				AZX_PPLC_INTERVAL * idx;
-	}
+	पूर्ण
 
-	if (bus->spbcap) {
+	अगर (bus->spbcap) अणु
 		stream->spib_addr = bus->spbcap + AZX_SPB_BASE +
 					AZX_SPB_INTERVAL * idx +
 					AZX_SPB_SPIB;
 
-		stream->fifo_addr = bus->spbcap + AZX_SPB_BASE +
+		stream->fअगरo_addr = bus->spbcap + AZX_SPB_BASE +
 					AZX_SPB_INTERVAL * idx +
 					AZX_SPB_MAXFIFO;
-	}
+	पूर्ण
 
-	if (bus->drsmcap)
+	अगर (bus->drsmcap)
 		stream->dpibr_addr = bus->drsmcap + AZX_DRSM_BASE +
 					AZX_DRSM_INTERVAL * idx;
 
 	stream->decoupled = false;
 	snd_hdac_stream_init(bus, &stream->hstream, idx, direction, tag);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_init);
 
 /**
  * snd_hdac_ext_stream_init_all - create and initialize the stream objects
- *   for an extended hda bus
+ *   क्रम an extended hda bus
  * @bus: HD-audio core bus
- * @start_idx: start index for streams
+ * @start_idx: start index क्रम streams
  * @num_stream: number of streams to initialize
  * @dir: direction of streams
  */
-int snd_hdac_ext_stream_init_all(struct hdac_bus *bus, int start_idx,
-		int num_stream, int dir)
-{
-	int stream_tag = 0;
-	int i, tag, idx = start_idx;
+पूर्णांक snd_hdac_ext_stream_init_all(काष्ठा hdac_bus *bus, पूर्णांक start_idx,
+		पूर्णांक num_stream, पूर्णांक dir)
+अणु
+	पूर्णांक stream_tag = 0;
+	पूर्णांक i, tag, idx = start_idx;
 
-	for (i = 0; i < num_stream; i++) {
-		struct hdac_ext_stream *stream =
-				kzalloc(sizeof(*stream), GFP_KERNEL);
-		if (!stream)
-			return -ENOMEM;
+	क्रम (i = 0; i < num_stream; i++) अणु
+		काष्ठा hdac_ext_stream *stream =
+				kzalloc(माप(*stream), GFP_KERNEL);
+		अगर (!stream)
+			वापस -ENOMEM;
 		tag = ++stream_tag;
 		snd_hdac_ext_stream_init(bus, stream, idx, dir, tag);
 		idx++;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_init_all);
 
 /**
- * snd_hdac_stream_free_all - free hdac extended stream objects
+ * snd_hdac_stream_मुक्त_all - मुक्त hdac extended stream objects
  *
  * @bus: HD-audio core bus
  */
-void snd_hdac_stream_free_all(struct hdac_bus *bus)
-{
-	struct hdac_stream *s, *_s;
-	struct hdac_ext_stream *stream;
+व्योम snd_hdac_stream_मुक्त_all(काष्ठा hdac_bus *bus)
+अणु
+	काष्ठा hdac_stream *s, *_s;
+	काष्ठा hdac_ext_stream *stream;
 
-	list_for_each_entry_safe(s, _s, &bus->stream_list, list) {
+	list_क्रम_each_entry_safe(s, _s, &bus->stream_list, list) अणु
 		stream = stream_to_hdac_ext_stream(s);
 		snd_hdac_ext_stream_decouple(bus, stream, false);
 		list_del(&s->list);
-		kfree(stream);
-	}
-}
-EXPORT_SYMBOL_GPL(snd_hdac_stream_free_all);
+		kमुक्त(stream);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_stream_मुक्त_all);
 
 /**
  * snd_hdac_ext_stream_decouple - decouple the hdac stream
@@ -112,108 +113,108 @@ EXPORT_SYMBOL_GPL(snd_hdac_stream_free_all);
  * @stream: HD-audio ext core stream object to initialize
  * @decouple: flag to decouple
  */
-void snd_hdac_ext_stream_decouple(struct hdac_bus *bus,
-				struct hdac_ext_stream *stream, bool decouple)
-{
-	struct hdac_stream *hstream = &stream->hstream;
+व्योम snd_hdac_ext_stream_decouple(काष्ठा hdac_bus *bus,
+				काष्ठा hdac_ext_stream *stream, bool decouple)
+अणु
+	काष्ठा hdac_stream *hstream = &stream->hstream;
 	u32 val;
-	int mask = AZX_PPCTL_PROCEN(hstream->index);
+	पूर्णांक mask = AZX_PPCTL_PROCEN(hstream->index);
 
 	spin_lock_irq(&bus->reg_lock);
-	val = readw(bus->ppcap + AZX_REG_PP_PPCTL) & mask;
+	val = पढ़ोw(bus->ppcap + AZX_REG_PP_PPCTL) & mask;
 
-	if (decouple && !val)
+	अगर (decouple && !val)
 		snd_hdac_updatel(bus->ppcap, AZX_REG_PP_PPCTL, mask, mask);
-	else if (!decouple && val)
+	अन्यथा अगर (!decouple && val)
 		snd_hdac_updatel(bus->ppcap, AZX_REG_PP_PPCTL, mask, 0);
 
 	stream->decoupled = decouple;
 	spin_unlock_irq(&bus->reg_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_decouple);
 
 /**
  * snd_hdac_ext_link_stream_start - start a stream
  * @stream: HD-audio ext core stream to start
  */
-void snd_hdac_ext_link_stream_start(struct hdac_ext_stream *stream)
-{
+व्योम snd_hdac_ext_link_stream_start(काष्ठा hdac_ext_stream *stream)
+अणु
 	snd_hdac_updatel(stream->pplc_addr, AZX_REG_PPLCCTL,
 			 AZX_PPLCCTL_RUN, AZX_PPLCCTL_RUN);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_link_stream_start);
 
 /**
  * snd_hdac_ext_link_stream_clear - stop a stream DMA
  * @stream: HD-audio ext core stream to stop
  */
-void snd_hdac_ext_link_stream_clear(struct hdac_ext_stream *stream)
-{
+व्योम snd_hdac_ext_link_stream_clear(काष्ठा hdac_ext_stream *stream)
+अणु
 	snd_hdac_updatel(stream->pplc_addr, AZX_REG_PPLCCTL, AZX_PPLCCTL_RUN, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_link_stream_clear);
 
 /**
  * snd_hdac_ext_link_stream_reset - reset a stream
  * @stream: HD-audio ext core stream to reset
  */
-void snd_hdac_ext_link_stream_reset(struct hdac_ext_stream *stream)
-{
-	unsigned char val;
-	int timeout;
+व्योम snd_hdac_ext_link_stream_reset(काष्ठा hdac_ext_stream *stream)
+अणु
+	अचिन्हित अक्षर val;
+	पूर्णांक समयout;
 
 	snd_hdac_ext_link_stream_clear(stream);
 
 	snd_hdac_updatel(stream->pplc_addr, AZX_REG_PPLCCTL,
 			 AZX_PPLCCTL_STRST, AZX_PPLCCTL_STRST);
 	udelay(3);
-	timeout = 50;
-	do {
-		val = readl(stream->pplc_addr + AZX_REG_PPLCCTL) &
+	समयout = 50;
+	करो अणु
+		val = पढ़ोl(stream->pplc_addr + AZX_REG_PPLCCTL) &
 				AZX_PPLCCTL_STRST;
-		if (val)
-			break;
+		अगर (val)
+			अवरोध;
 		udelay(3);
-	} while (--timeout);
+	पूर्ण जबतक (--समयout);
 	val &= ~AZX_PPLCCTL_STRST;
-	writel(val, stream->pplc_addr + AZX_REG_PPLCCTL);
+	ग_लिखोl(val, stream->pplc_addr + AZX_REG_PPLCCTL);
 	udelay(3);
 
-	timeout = 50;
-	/* waiting for hardware to report that the stream is out of reset */
-	do {
-		val = readl(stream->pplc_addr + AZX_REG_PPLCCTL) & AZX_PPLCCTL_STRST;
-		if (!val)
-			break;
+	समयout = 50;
+	/* रुकोing क्रम hardware to report that the stream is out of reset */
+	करो अणु
+		val = पढ़ोl(stream->pplc_addr + AZX_REG_PPLCCTL) & AZX_PPLCCTL_STRST;
+		अगर (!val)
+			अवरोध;
 		udelay(3);
-	} while (--timeout);
+	पूर्ण जबतक (--समयout);
 
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_link_stream_reset);
 
 /**
- * snd_hdac_ext_link_stream_setup -  set up the SD for streaming
+ * snd_hdac_ext_link_stream_setup -  set up the SD क्रम streaming
  * @stream: HD-audio ext core stream to set up
- * @fmt: stream format
+ * @fmt: stream क्रमmat
  */
-int snd_hdac_ext_link_stream_setup(struct hdac_ext_stream *stream, int fmt)
-{
-	struct hdac_stream *hstream = &stream->hstream;
-	unsigned int val;
+पूर्णांक snd_hdac_ext_link_stream_setup(काष्ठा hdac_ext_stream *stream, पूर्णांक fmt)
+अणु
+	काष्ठा hdac_stream *hstream = &stream->hstream;
+	अचिन्हित पूर्णांक val;
 
-	/* make sure the run bit is zero for SD */
+	/* make sure the run bit is zero क्रम SD */
 	snd_hdac_ext_link_stream_clear(stream);
 	/* program the stream_tag */
-	val = readl(stream->pplc_addr + AZX_REG_PPLCCTL);
+	val = पढ़ोl(stream->pplc_addr + AZX_REG_PPLCCTL);
 	val = (val & ~AZX_PPLCCTL_STRM_MASK) |
 		(hstream->stream_tag << AZX_PPLCCTL_STRM_SHIFT);
-	writel(val, stream->pplc_addr + AZX_REG_PPLCCTL);
+	ग_लिखोl(val, stream->pplc_addr + AZX_REG_PPLCCTL);
 
-	/* program the stream format */
-	writew(fmt, stream->pplc_addr + AZX_REG_PPLCFMT);
+	/* program the stream क्रमmat */
+	ग_लिखोw(fmt, stream->pplc_addr + AZX_REG_PPLCFMT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_link_stream_setup);
 
 /**
@@ -221,11 +222,11 @@ EXPORT_SYMBOL_GPL(snd_hdac_ext_link_stream_setup);
  * @link: HD-audio ext link to set up
  * @stream: stream id
  */
-void snd_hdac_ext_link_set_stream_id(struct hdac_ext_link *link,
-				 int stream)
-{
+व्योम snd_hdac_ext_link_set_stream_id(काष्ठा hdac_ext_link *link,
+				 पूर्णांक stream)
+अणु
 	snd_hdac_updatew(link->ml_addr, AZX_REG_ML_LOSIDV, (1 << stream), 1 << stream);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_link_set_stream_id);
 
 /**
@@ -233,195 +234,195 @@ EXPORT_SYMBOL_GPL(snd_hdac_ext_link_set_stream_id);
  * @link: HD-audio ext link to set up
  * @stream: stream id
  */
-void snd_hdac_ext_link_clear_stream_id(struct hdac_ext_link *link,
-				 int stream)
-{
+व्योम snd_hdac_ext_link_clear_stream_id(काष्ठा hdac_ext_link *link,
+				 पूर्णांक stream)
+अणु
 	snd_hdac_updatew(link->ml_addr, AZX_REG_ML_LOSIDV, (1 << stream), 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_link_clear_stream_id);
 
-static struct hdac_ext_stream *
-hdac_ext_link_stream_assign(struct hdac_bus *bus,
-				struct snd_pcm_substream *substream)
-{
-	struct hdac_ext_stream *res = NULL;
-	struct hdac_stream *stream = NULL;
+अटल काष्ठा hdac_ext_stream *
+hdac_ext_link_stream_assign(काष्ठा hdac_bus *bus,
+				काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा hdac_ext_stream *res = शून्य;
+	काष्ठा hdac_stream *stream = शून्य;
 
-	if (!bus->ppcap) {
+	अगर (!bus->ppcap) अणु
 		dev_err(bus->dev, "stream type not supported\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	list_for_each_entry(stream, &bus->stream_list, list) {
-		struct hdac_ext_stream *hstream = container_of(stream,
-						struct hdac_ext_stream,
+	list_क्रम_each_entry(stream, &bus->stream_list, list) अणु
+		काष्ठा hdac_ext_stream *hstream = container_of(stream,
+						काष्ठा hdac_ext_stream,
 						hstream);
-		if (stream->direction != substream->stream)
-			continue;
+		अगर (stream->direction != substream->stream)
+			जारी;
 
-		/* check if decoupled stream and not in use is available */
-		if (hstream->decoupled && !hstream->link_locked) {
+		/* check अगर decoupled stream and not in use is available */
+		अगर (hstream->decoupled && !hstream->link_locked) अणु
 			res = hstream;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!hstream->link_locked) {
+		अगर (!hstream->link_locked) अणु
 			snd_hdac_ext_stream_decouple(bus, hstream, true);
 			res = hstream;
-			break;
-		}
-	}
-	if (res) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (res) अणु
 		spin_lock_irq(&bus->reg_lock);
 		res->link_locked = 1;
 		res->link_substream = substream;
 		spin_unlock_irq(&bus->reg_lock);
-	}
-	return res;
-}
+	पूर्ण
+	वापस res;
+पूर्ण
 
-static struct hdac_ext_stream *
-hdac_ext_host_stream_assign(struct hdac_bus *bus,
-				struct snd_pcm_substream *substream)
-{
-	struct hdac_ext_stream *res = NULL;
-	struct hdac_stream *stream = NULL;
+अटल काष्ठा hdac_ext_stream *
+hdac_ext_host_stream_assign(काष्ठा hdac_bus *bus,
+				काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा hdac_ext_stream *res = शून्य;
+	काष्ठा hdac_stream *stream = शून्य;
 
-	if (!bus->ppcap) {
+	अगर (!bus->ppcap) अणु
 		dev_err(bus->dev, "stream type not supported\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	list_for_each_entry(stream, &bus->stream_list, list) {
-		struct hdac_ext_stream *hstream = container_of(stream,
-						struct hdac_ext_stream,
+	list_क्रम_each_entry(stream, &bus->stream_list, list) अणु
+		काष्ठा hdac_ext_stream *hstream = container_of(stream,
+						काष्ठा hdac_ext_stream,
 						hstream);
-		if (stream->direction != substream->stream)
-			continue;
+		अगर (stream->direction != substream->stream)
+			जारी;
 
-		if (!stream->opened) {
-			if (!hstream->decoupled)
+		अगर (!stream->खोलोed) अणु
+			अगर (!hstream->decoupled)
 				snd_hdac_ext_stream_decouple(bus, hstream, true);
 			res = hstream;
-			break;
-		}
-	}
-	if (res) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (res) अणु
 		spin_lock_irq(&bus->reg_lock);
-		res->hstream.opened = 1;
+		res->hstream.खोलोed = 1;
 		res->hstream.running = 0;
 		res->hstream.substream = substream;
 		spin_unlock_irq(&bus->reg_lock);
-	}
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
- * snd_hdac_ext_stream_assign - assign a stream for the PCM
+ * snd_hdac_ext_stream_assign - assign a stream क्रम the PCM
  * @bus: HD-audio core bus
  * @substream: PCM substream to assign
  * @type: type of stream (coupled, host or link stream)
  *
- * This assigns the stream based on the type (coupled/host/link), for the
- * given PCM substream, assigns it and returns the stream object
+ * This assigns the stream based on the type (coupled/host/link), क्रम the
+ * given PCM substream, assigns it and वापसs the stream object
  *
- * coupled: Looks for an unused stream
- * host: Looks for an unused decoupled host stream
- * link: Looks for an unused decoupled link stream
+ * coupled: Looks क्रम an unused stream
+ * host: Looks क्रम an unused decoupled host stream
+ * link: Looks क्रम an unused decoupled link stream
  *
- * If no stream is free, returns NULL. The function tries to keep using
- * the same stream object when it's used beforehand.  when a stream is
+ * If no stream is मुक्त, वापसs शून्य. The function tries to keep using
+ * the same stream object when it's used beक्रमehand.  when a stream is
  * decoupled, it becomes a host stream and link stream.
  */
-struct hdac_ext_stream *snd_hdac_ext_stream_assign(struct hdac_bus *bus,
-					   struct snd_pcm_substream *substream,
-					   int type)
-{
-	struct hdac_ext_stream *hstream = NULL;
-	struct hdac_stream *stream = NULL;
+काष्ठा hdac_ext_stream *snd_hdac_ext_stream_assign(काष्ठा hdac_bus *bus,
+					   काष्ठा snd_pcm_substream *substream,
+					   पूर्णांक type)
+अणु
+	काष्ठा hdac_ext_stream *hstream = शून्य;
+	काष्ठा hdac_stream *stream = शून्य;
 
-	switch (type) {
-	case HDAC_EXT_STREAM_TYPE_COUPLED:
+	चयन (type) अणु
+	हाल HDAC_EXT_STREAM_TYPE_COUPLED:
 		stream = snd_hdac_stream_assign(bus, substream);
-		if (stream)
+		अगर (stream)
 			hstream = container_of(stream,
-					struct hdac_ext_stream, hstream);
-		return hstream;
+					काष्ठा hdac_ext_stream, hstream);
+		वापस hstream;
 
-	case HDAC_EXT_STREAM_TYPE_HOST:
-		return hdac_ext_host_stream_assign(bus, substream);
+	हाल HDAC_EXT_STREAM_TYPE_HOST:
+		वापस hdac_ext_host_stream_assign(bus, substream);
 
-	case HDAC_EXT_STREAM_TYPE_LINK:
-		return hdac_ext_link_stream_assign(bus, substream);
+	हाल HDAC_EXT_STREAM_TYPE_LINK:
+		वापस hdac_ext_link_stream_assign(bus, substream);
 
-	default:
-		return NULL;
-	}
-}
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_assign);
 
 /**
- * snd_hdac_ext_stream_release - release the assigned stream
+ * snd_hdac_ext_stream_release - release the asचिन्हित stream
  * @stream: HD-audio ext core stream to release
  * @type: type of stream (coupled, host or link stream)
  *
- * Release the stream that has been assigned by snd_hdac_ext_stream_assign().
+ * Release the stream that has been asचिन्हित by snd_hdac_ext_stream_assign().
  */
-void snd_hdac_ext_stream_release(struct hdac_ext_stream *stream, int type)
-{
-	struct hdac_bus *bus = stream->hstream.bus;
+व्योम snd_hdac_ext_stream_release(काष्ठा hdac_ext_stream *stream, पूर्णांक type)
+अणु
+	काष्ठा hdac_bus *bus = stream->hstream.bus;
 
-	switch (type) {
-	case HDAC_EXT_STREAM_TYPE_COUPLED:
+	चयन (type) अणु
+	हाल HDAC_EXT_STREAM_TYPE_COUPLED:
 		snd_hdac_stream_release(&stream->hstream);
-		break;
+		अवरोध;
 
-	case HDAC_EXT_STREAM_TYPE_HOST:
-		if (stream->decoupled && !stream->link_locked)
+	हाल HDAC_EXT_STREAM_TYPE_HOST:
+		अगर (stream->decoupled && !stream->link_locked)
 			snd_hdac_ext_stream_decouple(bus, stream, false);
 		snd_hdac_stream_release(&stream->hstream);
-		break;
+		अवरोध;
 
-	case HDAC_EXT_STREAM_TYPE_LINK:
-		if (stream->decoupled && !stream->hstream.opened)
+	हाल HDAC_EXT_STREAM_TYPE_LINK:
+		अगर (stream->decoupled && !stream->hstream.खोलोed)
 			snd_hdac_ext_stream_decouple(bus, stream, false);
 		spin_lock_irq(&bus->reg_lock);
 		stream->link_locked = 0;
-		stream->link_substream = NULL;
+		stream->link_substream = शून्य;
 		spin_unlock_irq(&bus->reg_lock);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_dbg(bus->dev, "Invalid type %d\n", type);
-	}
+	पूर्ण
 
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_release);
 
 /**
- * snd_hdac_ext_stream_spbcap_enable - enable SPIB for a stream
+ * snd_hdac_ext_stream_spbcap_enable - enable SPIB क्रम a stream
  * @bus: HD-audio core bus
  * @enable: flag to enable/disable SPIB
- * @index: stream index for which SPIB need to be enabled
+ * @index: stream index क्रम which SPIB need to be enabled
  */
-void snd_hdac_ext_stream_spbcap_enable(struct hdac_bus *bus,
-				 bool enable, int index)
-{
+व्योम snd_hdac_ext_stream_spbcap_enable(काष्ठा hdac_bus *bus,
+				 bool enable, पूर्णांक index)
+अणु
 	u32 mask = 0;
 
-	if (!bus->spbcap) {
+	अगर (!bus->spbcap) अणु
 		dev_err(bus->dev, "Address of SPB capability is NULL\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mask |= (1 << index);
 
-	if (enable)
+	अगर (enable)
 		snd_hdac_updatel(bus->spbcap, AZX_REG_SPB_SPBFCCTL, mask, mask);
-	else
+	अन्यथा
 		snd_hdac_updatel(bus->spbcap, AZX_REG_SPB_SPBFCCTL, mask, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_spbcap_enable);
 
 /**
@@ -430,81 +431,81 @@ EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_spbcap_enable);
  * @stream: hdac_ext_stream
  * @value: spib value to set
  */
-int snd_hdac_ext_stream_set_spib(struct hdac_bus *bus,
-				 struct hdac_ext_stream *stream, u32 value)
-{
+पूर्णांक snd_hdac_ext_stream_set_spib(काष्ठा hdac_bus *bus,
+				 काष्ठा hdac_ext_stream *stream, u32 value)
+अणु
 
-	if (!bus->spbcap) {
+	अगर (!bus->spbcap) अणु
 		dev_err(bus->dev, "Address of SPB capability is NULL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	writel(value, stream->spib_addr);
+	ग_लिखोl(value, stream->spib_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_set_spib);
 
 /**
- * snd_hdac_ext_stream_get_spbmaxfifo - gets the spib value of a stream
+ * snd_hdac_ext_stream_get_spbmaxfअगरo - माला_लो the spib value of a stream
  * @bus: HD-audio core bus
  * @stream: hdac_ext_stream
  *
- * Return maxfifo for the stream
+ * Return maxfअगरo क्रम the stream
  */
-int snd_hdac_ext_stream_get_spbmaxfifo(struct hdac_bus *bus,
-				 struct hdac_ext_stream *stream)
-{
+पूर्णांक snd_hdac_ext_stream_get_spbmaxfअगरo(काष्ठा hdac_bus *bus,
+				 काष्ठा hdac_ext_stream *stream)
+अणु
 
-	if (!bus->spbcap) {
+	अगर (!bus->spbcap) अणु
 		dev_err(bus->dev, "Address of SPB capability is NULL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return readl(stream->fifo_addr);
-}
-EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_get_spbmaxfifo);
+	वापस पढ़ोl(stream->fअगरo_addr);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_get_spbmaxfअगरo);
 
 
 /**
- * snd_hdac_ext_stop_streams - stop all stream if running
+ * snd_hdac_ext_stop_streams - stop all stream अगर running
  * @bus: HD-audio core bus
  */
-void snd_hdac_ext_stop_streams(struct hdac_bus *bus)
-{
-	struct hdac_stream *stream;
+व्योम snd_hdac_ext_stop_streams(काष्ठा hdac_bus *bus)
+अणु
+	काष्ठा hdac_stream *stream;
 
-	if (bus->chip_init) {
-		list_for_each_entry(stream, &bus->stream_list, list)
+	अगर (bus->chip_init) अणु
+		list_क्रम_each_entry(stream, &bus->stream_list, list)
 			snd_hdac_stream_stop(stream);
 		snd_hdac_bus_stop_chip(bus);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stop_streams);
 
 /**
- * snd_hdac_ext_stream_drsm_enable - enable DMA resume for a stream
+ * snd_hdac_ext_stream_drsm_enable - enable DMA resume क्रम a stream
  * @bus: HD-audio core bus
  * @enable: flag to enable/disable DRSM
- * @index: stream index for which DRSM need to be enabled
+ * @index: stream index क्रम which DRSM need to be enabled
  */
-void snd_hdac_ext_stream_drsm_enable(struct hdac_bus *bus,
-				bool enable, int index)
-{
+व्योम snd_hdac_ext_stream_drsm_enable(काष्ठा hdac_bus *bus,
+				bool enable, पूर्णांक index)
+अणु
 	u32 mask = 0;
 
-	if (!bus->drsmcap) {
+	अगर (!bus->drsmcap) अणु
 		dev_err(bus->dev, "Address of DRSM capability is NULL\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mask |= (1 << index);
 
-	if (enable)
+	अगर (enable)
 		snd_hdac_updatel(bus->drsmcap, AZX_REG_DRSM_CTL, mask, mask);
-	else
+	अन्यथा
 		snd_hdac_updatel(bus->drsmcap, AZX_REG_DRSM_CTL, mask, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_drsm_enable);
 
 /**
@@ -513,19 +514,19 @@ EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_drsm_enable);
  * @stream: hdac_ext_stream
  * @value: dpib value to set
  */
-int snd_hdac_ext_stream_set_dpibr(struct hdac_bus *bus,
-				 struct hdac_ext_stream *stream, u32 value)
-{
+पूर्णांक snd_hdac_ext_stream_set_dpibr(काष्ठा hdac_bus *bus,
+				 काष्ठा hdac_ext_stream *stream, u32 value)
+अणु
 
-	if (!bus->drsmcap) {
+	अगर (!bus->drsmcap) अणु
 		dev_err(bus->dev, "Address of DRSM capability is NULL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	writel(value, stream->dpibr_addr);
+	ग_लिखोl(value, stream->dpibr_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_set_dpibr);
 
 /**
@@ -533,10 +534,10 @@ EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_set_dpibr);
  * @stream: hdac_ext_stream
  * @value: lpib value to set
  */
-int snd_hdac_ext_stream_set_lpib(struct hdac_ext_stream *stream, u32 value)
-{
-	snd_hdac_stream_writel(&stream->hstream, SD_LPIB, value);
+पूर्णांक snd_hdac_ext_stream_set_lpib(काष्ठा hdac_ext_stream *stream, u32 value)
+अणु
+	snd_hdac_stream_ग_लिखोl(&stream->hstream, SD_LPIB, value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_stream_set_lpib);

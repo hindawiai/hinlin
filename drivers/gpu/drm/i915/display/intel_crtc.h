@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#ifndef _INTEL_CRTC_H_
-#define _INTEL_CRTC_H_
+#अगर_अघोषित _INTEL_CRTC_H_
+#घोषणा _INTEL_CRTC_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum pipe;
-struct drm_i915_private;
-struct intel_crtc;
-struct intel_crtc_state;
+क्रमागत pipe;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_crtc;
+काष्ठा पूर्णांकel_crtc_state;
 
-u32 intel_crtc_max_vblank_count(const struct intel_crtc_state *crtc_state);
-int intel_crtc_init(struct drm_i915_private *dev_priv, enum pipe pipe);
-struct intel_crtc_state *intel_crtc_state_alloc(struct intel_crtc *crtc);
-void intel_crtc_state_reset(struct intel_crtc_state *crtc_state,
-			    struct intel_crtc *crtc);
+u32 पूर्णांकel_crtc_max_vblank_count(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+पूर्णांक पूर्णांकel_crtc_init(काष्ठा drm_i915_निजी *dev_priv, क्रमागत pipe pipe);
+काष्ठा पूर्णांकel_crtc_state *पूर्णांकel_crtc_state_alloc(काष्ठा पूर्णांकel_crtc *crtc);
+व्योम पूर्णांकel_crtc_state_reset(काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			    काष्ठा पूर्णांकel_crtc *crtc);
 
-#endif
+#पूर्ण_अगर

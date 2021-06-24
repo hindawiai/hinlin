@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
- *  sync / sw_sync abstraction
+ *  sync / sw_sync असलtraction
  *  Copyright 2015-2016 Collabora Ltd.
  *
  *  Based on the implementation from the Android Open Source Project,
  *
  *  Copyright 2012 Google, Inc
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a
- *  copy of this software and associated documentation files (the "Software"),
+ *  Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ *  copy of this software and associated करोcumentation files (the "Software"),
  *  to deal in the Software without restriction, including without limitation
- *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- *  Software is furnished to do so, subject to the following conditions:
+ *  Software is furnished to करो so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
@@ -25,197 +26,197 @@
  *  OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <fcntl.h>
-#include <malloc.h>
-#include <poll.h>
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
+#समावेश <fcntl.h>
+#समावेश <दो_स्मृति.h>
+#समावेश <poll.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <माला.स>
+#समावेश <unistd.h>
 
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
 
-#include "sync.h"
-#include "sw_sync.h"
+#समावेश "sync.h"
+#समावेश "sw_sync.h"
 
-#include <linux/sync_file.h>
+#समावेश <linux/sync_file.h>
 
 
 /* SW_SYNC ioctls */
-struct sw_sync_create_fence_data {
+काष्ठा sw_sync_create_fence_data अणु
 	__u32	value;
-	char	name[32];
+	अक्षर	name[32];
 	__s32	fence;
-};
+पूर्ण;
 
-#define SW_SYNC_IOC_MAGIC		'W'
-#define SW_SYNC_IOC_CREATE_FENCE	_IOWR(SW_SYNC_IOC_MAGIC, 0,\
-					      struct sw_sync_create_fence_data)
-#define SW_SYNC_IOC_INC			_IOW(SW_SYNC_IOC_MAGIC, 1, __u32)
+#घोषणा SW_SYNC_IOC_MAGIC		'W'
+#घोषणा SW_SYNC_IOC_CREATE_FENCE	_IOWR(SW_SYNC_IOC_MAGIC, 0,\
+					      काष्ठा sw_sync_create_fence_data)
+#घोषणा SW_SYNC_IOC_INC			_IOW(SW_SYNC_IOC_MAGIC, 1, __u32)
 
 
-int sync_wait(int fd, int timeout)
-{
-	struct pollfd fds;
+पूर्णांक sync_रुको(पूर्णांक fd, पूर्णांक समयout)
+अणु
+	काष्ठा pollfd fds;
 
 	fds.fd = fd;
 	fds.events = POLLIN | POLLERR;
 
-	return poll(&fds, 1, timeout);
-}
+	वापस poll(&fds, 1, समयout);
+पूर्ण
 
-int sync_merge(const char *name, int fd1, int fd2)
-{
-	struct sync_merge_data data = {};
-	int err;
+पूर्णांक sync_merge(स्थिर अक्षर *name, पूर्णांक fd1, पूर्णांक fd2)
+अणु
+	काष्ठा sync_merge_data data = अणुपूर्ण;
+	पूर्णांक err;
 
 	data.fd2 = fd2;
-	strncpy(data.name, name, sizeof(data.name) - 1);
-	data.name[sizeof(data.name) - 1] = '\0';
+	म_नकलन(data.name, name, माप(data.name) - 1);
+	data.name[माप(data.name) - 1] = '\0';
 
 	err = ioctl(fd1, SYNC_IOC_MERGE, &data);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return data.fence;
-}
+	वापस data.fence;
+पूर्ण
 
-static struct sync_file_info *sync_file_info(int fd)
-{
-	struct sync_file_info *info;
-	struct sync_fence_info *fence_info;
-	int err, num_fences;
+अटल काष्ठा sync_file_info *sync_file_info(पूर्णांक fd)
+अणु
+	काष्ठा sync_file_info *info;
+	काष्ठा sync_fence_info *fence_info;
+	पूर्णांक err, num_fences;
 
-	info = calloc(1, sizeof(*info));
-	if (info == NULL)
-		return NULL;
+	info = सुस्मृति(1, माप(*info));
+	अगर (info == शून्य)
+		वापस शून्य;
 
-	err = ioctl(fd, SYNC_IOC_FILE_INFO, info);
-	if (err < 0) {
-		free(info);
-		return NULL;
-	}
+	err = ioctl(fd, SYNC_IOC_खाता_INFO, info);
+	अगर (err < 0) अणु
+		मुक्त(info);
+		वापस शून्य;
+	पूर्ण
 
 	num_fences = info->num_fences;
 
-	if (num_fences) {
+	अगर (num_fences) अणु
 		info->flags = 0;
 		info->num_fences = num_fences;
 
-		fence_info = calloc(num_fences, sizeof(*fence_info));
-		if (!fence_info) {
-			free(info);
-			return NULL;
-		}
+		fence_info = सुस्मृति(num_fences, माप(*fence_info));
+		अगर (!fence_info) अणु
+			मुक्त(info);
+			वापस शून्य;
+		पूर्ण
 
-		info->sync_fence_info = (uint64_t)(unsigned long)fence_info;
+		info->sync_fence_info = (uपूर्णांक64_t)(अचिन्हित दीर्घ)fence_info;
 
-		err = ioctl(fd, SYNC_IOC_FILE_INFO, info);
-		if (err < 0) {
-			free(fence_info);
-			free(info);
-			return NULL;
-		}
-	}
+		err = ioctl(fd, SYNC_IOC_खाता_INFO, info);
+		अगर (err < 0) अणु
+			मुक्त(fence_info);
+			मुक्त(info);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return info;
-}
+	वापस info;
+पूर्ण
 
-static void sync_file_info_free(struct sync_file_info *info)
-{
-	free((void *)(unsigned long)info->sync_fence_info);
-	free(info);
-}
+अटल व्योम sync_file_info_मुक्त(काष्ठा sync_file_info *info)
+अणु
+	मुक्त((व्योम *)(अचिन्हित दीर्घ)info->sync_fence_info);
+	मुक्त(info);
+पूर्ण
 
-int sync_fence_size(int fd)
-{
-	int count;
-	struct sync_file_info *info = sync_file_info(fd);
+पूर्णांक sync_fence_size(पूर्णांक fd)
+अणु
+	पूर्णांक count;
+	काष्ठा sync_file_info *info = sync_file_info(fd);
 
-	if (!info)
-		return 0;
+	अगर (!info)
+		वापस 0;
 
 	count = info->num_fences;
 
-	sync_file_info_free(info);
+	sync_file_info_मुक्त(info);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-int sync_fence_count_with_status(int fd, int status)
-{
-	unsigned int i, count = 0;
-	struct sync_fence_info *fence_info = NULL;
-	struct sync_file_info *info = sync_file_info(fd);
+पूर्णांक sync_fence_count_with_status(पूर्णांक fd, पूर्णांक status)
+अणु
+	अचिन्हित पूर्णांक i, count = 0;
+	काष्ठा sync_fence_info *fence_info = शून्य;
+	काष्ठा sync_file_info *info = sync_file_info(fd);
 
-	if (!info)
-		return -1;
+	अगर (!info)
+		वापस -1;
 
-	fence_info = (struct sync_fence_info *)(unsigned long)info->sync_fence_info;
-	for (i = 0 ; i < info->num_fences ; i++) {
-		if (fence_info[i].status == status)
+	fence_info = (काष्ठा sync_fence_info *)(अचिन्हित दीर्घ)info->sync_fence_info;
+	क्रम (i = 0 ; i < info->num_fences ; i++) अणु
+		अगर (fence_info[i].status == status)
 			count++;
-	}
+	पूर्ण
 
-	sync_file_info_free(info);
+	sync_file_info_मुक्त(info);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-int sw_sync_timeline_create(void)
-{
-	return open("/sys/kernel/debug/sync/sw_sync", O_RDWR);
-}
+पूर्णांक sw_sync_समयline_create(व्योम)
+अणु
+	वापस खोलो("/sys/kernel/debug/sync/sw_sync", O_RDWR);
+पूर्ण
 
-int sw_sync_timeline_inc(int fd, unsigned int count)
-{
+पूर्णांक sw_sync_समयline_inc(पूर्णांक fd, अचिन्हित पूर्णांक count)
+अणु
 	__u32 arg = count;
 
-	return ioctl(fd, SW_SYNC_IOC_INC, &arg);
-}
+	वापस ioctl(fd, SW_SYNC_IOC_INC, &arg);
+पूर्ण
 
-int sw_sync_timeline_is_valid(int fd)
-{
-	int status;
+पूर्णांक sw_sync_समयline_is_valid(पूर्णांक fd)
+अणु
+	पूर्णांक status;
 
-	if (fd == -1)
-		return 0;
+	अगर (fd == -1)
+		वापस 0;
 
 	status = fcntl(fd, F_GETFD, 0);
-	return (status >= 0);
-}
+	वापस (status >= 0);
+पूर्ण
 
-void sw_sync_timeline_destroy(int fd)
-{
-	if (sw_sync_timeline_is_valid(fd))
-		close(fd);
-}
+व्योम sw_sync_समयline_destroy(पूर्णांक fd)
+अणु
+	अगर (sw_sync_समयline_is_valid(fd))
+		बंद(fd);
+पूर्ण
 
-int sw_sync_fence_create(int fd, const char *name, unsigned int value)
-{
-	struct sw_sync_create_fence_data data = {};
-	int err;
+पूर्णांक sw_sync_fence_create(पूर्णांक fd, स्थिर अक्षर *name, अचिन्हित पूर्णांक value)
+अणु
+	काष्ठा sw_sync_create_fence_data data = अणुपूर्ण;
+	पूर्णांक err;
 
 	data.value = value;
-	strncpy(data.name, name, sizeof(data.name) - 1);
-	data.name[sizeof(data.name) - 1] = '\0';
+	म_नकलन(data.name, name, माप(data.name) - 1);
+	data.name[माप(data.name) - 1] = '\0';
 
 	err = ioctl(fd, SW_SYNC_IOC_CREATE_FENCE, &data);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return data.fence;
-}
+	वापस data.fence;
+पूर्ण
 
-int sw_sync_fence_is_valid(int fd)
-{
+पूर्णांक sw_sync_fence_is_valid(पूर्णांक fd)
+अणु
 	/* Same code! */
-	return sw_sync_timeline_is_valid(fd);
-}
+	वापस sw_sync_समयline_is_valid(fd);
+पूर्ण
 
-void sw_sync_fence_destroy(int fd)
-{
-	if (sw_sync_fence_is_valid(fd))
-		close(fd);
-}
+व्योम sw_sync_fence_destroy(पूर्णांक fd)
+अणु
+	अगर (sw_sync_fence_is_valid(fd))
+		बंद(fd);
+पूर्ण

@@ -1,12 +1,13 @@
-#ifndef _ASM_TRACE_COMMON_H
-#define _ASM_TRACE_COMMON_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_TRACE_COMMON_H
+#घोषणा _ASM_TRACE_COMMON_H
 
-#ifdef CONFIG_TRACING
+#अगर_घोषित CONFIG_TRACING
 DECLARE_STATIC_KEY_FALSE(trace_pagefault_key);
-#define trace_pagefault_enabled()			\
-	static_branch_unlikely(&trace_pagefault_key)
-#else
-static inline bool trace_pagefault_enabled(void) { return false; }
-#endif
+#घोषणा trace_pagefault_enabled()			\
+	अटल_branch_unlikely(&trace_pagefault_key)
+#अन्यथा
+अटल अंतरभूत bool trace_pagefault_enabled(व्योम) अणु वापस false; पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

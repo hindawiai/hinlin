@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Line 6 Linux USB driver
  *
  * Copyright (C) 2004-2010 Markus Grabner (grabner@icg.tugraz.at)
  */
 
-#include <linux/slab.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
 
-#include "capture.h"
-#include "driver.h"
-#include "pcm.h"
+#समावेश "capture.h"
+#समावेश "driver.h"
+#समावेश "pcm.h"
 
 /*
-	Find a free URB and submit it.
+	Find a मुक्त URB and submit it.
 	must be called in line6pcm->in.lock context
 */
-static int submit_audio_in_urb(struct snd_line6_pcm *line6pcm)
-{
-	int index;
-	int i, urb_size;
-	int ret;
-	struct urb *urb_in;
+अटल पूर्णांक submit_audio_in_urb(काष्ठा snd_line6_pcm *line6pcm)
+अणु
+	पूर्णांक index;
+	पूर्णांक i, urb_size;
+	पूर्णांक ret;
+	काष्ठा urb *urb_in;
 
 	index = find_first_zero_bit(&line6pcm->in.active_urbs,
 				    line6pcm->line6->iso_buffers);
 
-	if (index < 0 || index >= line6pcm->line6->iso_buffers) {
-		dev_err(line6pcm->line6->ifcdev, "no free URB found\n");
-		return -EINVAL;
-	}
+	अगर (index < 0 || index >= line6pcm->line6->iso_buffers) अणु
+		dev_err(line6pcm->line6->अगरcdev, "no free URB found\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	urb_in = line6pcm->in.urbs[index];
 	urb_size = 0;
 
-	for (i = 0; i < LINE6_ISO_PACKETS; ++i) {
-		struct usb_iso_packet_descriptor *fin =
+	क्रम (i = 0; i < LINE6_ISO_PACKETS; ++i) अणु
+		काष्ठा usb_iso_packet_descriptor *fin =
 		    &urb_in->iso_frame_desc[i];
 		fin->offset = urb_size;
 		fin->length = line6pcm->max_packet_size_in;
 		urb_size += line6pcm->max_packet_size_in;
-	}
+	पूर्ण
 
 	urb_in->transfer_buffer =
 	    line6pcm->in.buffer +
@@ -52,139 +53,139 @@ static int submit_audio_in_urb(struct snd_line6_pcm *line6pcm)
 
 	ret = usb_submit_urb(urb_in, GFP_ATOMIC);
 
-	if (ret == 0)
+	अगर (ret == 0)
 		set_bit(index, &line6pcm->in.active_urbs);
-	else
-		dev_err(line6pcm->line6->ifcdev,
+	अन्यथा
+		dev_err(line6pcm->line6->अगरcdev,
 			"URB in #%d submission failed (%d)\n", index, ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
 	Submit all currently available capture URBs.
 	must be called in line6pcm->in.lock context
 */
-int line6_submit_audio_in_all_urbs(struct snd_line6_pcm *line6pcm)
-{
-	int ret = 0, i;
+पूर्णांक line6_submit_audio_in_all_urbs(काष्ठा snd_line6_pcm *line6pcm)
+अणु
+	पूर्णांक ret = 0, i;
 
-	for (i = 0; i < line6pcm->line6->iso_buffers; ++i) {
+	क्रम (i = 0; i < line6pcm->line6->iso_buffers; ++i) अणु
 		ret = submit_audio_in_urb(line6pcm);
-		if (ret < 0)
-			break;
-	}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
-	Copy data into ALSA capture buffer.
+	Copy data पूर्णांकo ALSA capture buffer.
 */
-void line6_capture_copy(struct snd_line6_pcm *line6pcm, char *fbuf, int fsize)
-{
-	struct snd_pcm_substream *substream =
+व्योम line6_capture_copy(काष्ठा snd_line6_pcm *line6pcm, अक्षर *fbuf, पूर्णांक fsize)
+अणु
+	काष्ठा snd_pcm_substream *substream =
 	    get_substream(line6pcm, SNDRV_PCM_STREAM_CAPTURE);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	const int bytes_per_frame =
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	स्थिर पूर्णांक bytes_per_frame =
 		line6pcm->properties->bytes_per_channel *
 		line6pcm->properties->capture_hw.channels_max;
-	int frames = fsize / bytes_per_frame;
+	पूर्णांक frames = fsize / bytes_per_frame;
 
-	if (runtime == NULL)
-		return;
+	अगर (runसमय == शून्य)
+		वापस;
 
-	if (line6pcm->in.pos_done + frames > runtime->buffer_size) {
+	अगर (line6pcm->in.pos_करोne + frames > runसमय->buffer_size) अणु
 		/*
 		   The transferred area goes over buffer boundary,
 		   copy two separate chunks.
 		 */
-		int len;
+		पूर्णांक len;
 
-		len = runtime->buffer_size - line6pcm->in.pos_done;
+		len = runसमय->buffer_size - line6pcm->in.pos_करोne;
 
-		if (len > 0) {
-			memcpy(runtime->dma_area +
-			       line6pcm->in.pos_done * bytes_per_frame, fbuf,
+		अगर (len > 0) अणु
+			स_नकल(runसमय->dma_area +
+			       line6pcm->in.pos_करोne * bytes_per_frame, fbuf,
 			       len * bytes_per_frame);
-			memcpy(runtime->dma_area, fbuf + len * bytes_per_frame,
+			स_नकल(runसमय->dma_area, fbuf + len * bytes_per_frame,
 			       (frames - len) * bytes_per_frame);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* this is somewhat paranoid */
-			dev_err(line6pcm->line6->ifcdev,
+			dev_err(line6pcm->line6->अगरcdev,
 				"driver bug: len = %d\n", len);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* copy single chunk */
-		memcpy(runtime->dma_area +
-		       line6pcm->in.pos_done * bytes_per_frame, fbuf, fsize);
-	}
+		स_नकल(runसमय->dma_area +
+		       line6pcm->in.pos_करोne * bytes_per_frame, fbuf, fsize);
+	पूर्ण
 
-	line6pcm->in.pos_done += frames;
-	if (line6pcm->in.pos_done >= runtime->buffer_size)
-		line6pcm->in.pos_done -= runtime->buffer_size;
-}
+	line6pcm->in.pos_करोne += frames;
+	अगर (line6pcm->in.pos_करोne >= runसमय->buffer_size)
+		line6pcm->in.pos_करोne -= runसमय->buffer_size;
+पूर्ण
 
-void line6_capture_check_period(struct snd_line6_pcm *line6pcm, int length)
-{
-	struct snd_pcm_substream *substream =
+व्योम line6_capture_check_period(काष्ठा snd_line6_pcm *line6pcm, पूर्णांक length)
+अणु
+	काष्ठा snd_pcm_substream *substream =
 	    get_substream(line6pcm, SNDRV_PCM_STREAM_CAPTURE);
 
 	line6pcm->in.bytes += length;
-	if (line6pcm->in.bytes >= line6pcm->in.period) {
+	अगर (line6pcm->in.bytes >= line6pcm->in.period) अणु
 		line6pcm->in.bytes %= line6pcm->in.period;
 		spin_unlock(&line6pcm->in.lock);
 		snd_pcm_period_elapsed(substream);
 		spin_lock(&line6pcm->in.lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Callback for completed capture URB.
+ * Callback क्रम completed capture URB.
  */
-static void audio_in_callback(struct urb *urb)
-{
-	int i, index, length = 0, shutdown = 0;
-	unsigned long flags;
+अटल व्योम audio_in_callback(काष्ठा urb *urb)
+अणु
+	पूर्णांक i, index, length = 0, shutकरोwn = 0;
+	अचिन्हित दीर्घ flags;
 
-	struct snd_line6_pcm *line6pcm = (struct snd_line6_pcm *)urb->context;
+	काष्ठा snd_line6_pcm *line6pcm = (काष्ठा snd_line6_pcm *)urb->context;
 
 	line6pcm->in.last_frame = urb->start_frame;
 
 	/* find index of URB */
-	for (index = 0; index < line6pcm->line6->iso_buffers; ++index)
-		if (urb == line6pcm->in.urbs[index])
-			break;
+	क्रम (index = 0; index < line6pcm->line6->iso_buffers; ++index)
+		अगर (urb == line6pcm->in.urbs[index])
+			अवरोध;
 
 	spin_lock_irqsave(&line6pcm->in.lock, flags);
 
-	for (i = 0; i < LINE6_ISO_PACKETS; ++i) {
-		char *fbuf;
-		int fsize;
-		struct usb_iso_packet_descriptor *fin = &urb->iso_frame_desc[i];
+	क्रम (i = 0; i < LINE6_ISO_PACKETS; ++i) अणु
+		अक्षर *fbuf;
+		पूर्णांक fsize;
+		काष्ठा usb_iso_packet_descriptor *fin = &urb->iso_frame_desc[i];
 
-		if (fin->status == -EXDEV) {
-			shutdown = 1;
-			break;
-		}
+		अगर (fin->status == -EXDEV) अणु
+			shutकरोwn = 1;
+			अवरोध;
+		पूर्ण
 
 		fbuf = urb->transfer_buffer + fin->offset;
 		fsize = fin->actual_length;
 
-		if (fsize > line6pcm->max_packet_size_in) {
-			dev_err(line6pcm->line6->ifcdev,
+		अगर (fsize > line6pcm->max_packet_size_in) अणु
+			dev_err(line6pcm->line6->अगरcdev,
 				"driver and/or device bug: packet too large (%d > %d)\n",
 				fsize, line6pcm->max_packet_size_in);
-		}
+		पूर्ण
 
 		length += fsize;
 
 		BUILD_BUG_ON_MSG(LINE6_ISO_PACKETS != 1,
 			"The following code assumes LINE6_ISO_PACKETS == 1");
 		/* TODO:
-		 * Also, if iso_buffers != 2, the prev frame is almost random at
+		 * Also, अगर iso_buffers != 2, the prev frame is almost अक्रमom at
 		 * playback side.
-		 * This needs to be redesigned. It should be "stable", but we may
+		 * This needs to be redeचिन्हित. It should be "stable", but we may
 		 * experience sync problems on such high-speed configs.
 		 */
 
@@ -193,87 +194,87 @@ static void audio_in_callback(struct urb *urb)
 			(line6pcm->properties->bytes_per_channel *
 			line6pcm->properties->capture_hw.channels_max);
 
-		if (!test_bit(LINE6_STREAM_IMPULSE, &line6pcm->in.running) &&
+		अगर (!test_bit(LINE6_STREAM_IMPULSE, &line6pcm->in.running) &&
 		    test_bit(LINE6_STREAM_PCM, &line6pcm->in.running) &&
 		    fsize > 0)
 			line6_capture_copy(line6pcm, fbuf, fsize);
-	}
+	पूर्ण
 
 	clear_bit(index, &line6pcm->in.active_urbs);
 
-	if (test_and_clear_bit(index, &line6pcm->in.unlink_urbs))
-		shutdown = 1;
+	अगर (test_and_clear_bit(index, &line6pcm->in.unlink_urbs))
+		shutकरोwn = 1;
 
-	if (!shutdown) {
+	अगर (!shutकरोwn) अणु
 		submit_audio_in_urb(line6pcm);
 
-		if (!test_bit(LINE6_STREAM_IMPULSE, &line6pcm->in.running) &&
+		अगर (!test_bit(LINE6_STREAM_IMPULSE, &line6pcm->in.running) &&
 		    test_bit(LINE6_STREAM_PCM, &line6pcm->in.running))
 			line6_capture_check_period(line6pcm, length);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&line6pcm->in.lock, flags);
-}
+पूर्ण
 
-/* open capture callback */
-static int snd_line6_capture_open(struct snd_pcm_substream *substream)
-{
-	int err;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_line6_pcm *line6pcm = snd_pcm_substream_chip(substream);
+/* खोलो capture callback */
+अटल पूर्णांक snd_line6_capture_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	पूर्णांक err;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_line6_pcm *line6pcm = snd_pcm_substream_chip(substream);
 
-	err = snd_pcm_hw_constraint_ratdens(runtime, 0,
+	err = snd_pcm_hw_स्थिरraपूर्णांक_ratdens(runसमय, 0,
 					    SNDRV_PCM_HW_PARAM_RATE,
 					    &line6pcm->properties->rates);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	line6_pcm_acquire(line6pcm, LINE6_STREAM_CAPTURE_HELPER, false);
 
-	runtime->hw = line6pcm->properties->capture_hw;
-	return 0;
-}
+	runसमय->hw = line6pcm->properties->capture_hw;
+	वापस 0;
+पूर्ण
 
-/* close capture callback */
-static int snd_line6_capture_close(struct snd_pcm_substream *substream)
-{
-	struct snd_line6_pcm *line6pcm = snd_pcm_substream_chip(substream);
+/* बंद capture callback */
+अटल पूर्णांक snd_line6_capture_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_line6_pcm *line6pcm = snd_pcm_substream_chip(substream);
 
 	line6_pcm_release(line6pcm, LINE6_STREAM_CAPTURE_HELPER);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* capture operators */
-const struct snd_pcm_ops snd_line6_capture_ops = {
-	.open = snd_line6_capture_open,
-	.close = snd_line6_capture_close,
+/* capture चालकs */
+स्थिर काष्ठा snd_pcm_ops snd_line6_capture_ops = अणु
+	.खोलो = snd_line6_capture_खोलो,
+	.बंद = snd_line6_capture_बंद,
 	.hw_params = snd_line6_hw_params,
-	.hw_free = snd_line6_hw_free,
+	.hw_मुक्त = snd_line6_hw_मुक्त,
 	.prepare = snd_line6_prepare,
 	.trigger = snd_line6_trigger,
-	.pointer = snd_line6_pointer,
-};
+	.poपूर्णांकer = snd_line6_poपूर्णांकer,
+पूर्ण;
 
-int line6_create_audio_in_urbs(struct snd_line6_pcm *line6pcm)
-{
-	struct usb_line6 *line6 = line6pcm->line6;
-	int i;
+पूर्णांक line6_create_audio_in_urbs(काष्ठा snd_line6_pcm *line6pcm)
+अणु
+	काष्ठा usb_line6 *line6 = line6pcm->line6;
+	पूर्णांक i;
 
-	line6pcm->in.urbs = kcalloc(line6->iso_buffers, sizeof(struct urb *),
+	line6pcm->in.urbs = kसुस्मृति(line6->iso_buffers, माप(काष्ठा urb *),
 				    GFP_KERNEL);
-	if (line6pcm->in.urbs == NULL)
-		return -ENOMEM;
+	अगर (line6pcm->in.urbs == शून्य)
+		वापस -ENOMEM;
 
-	/* create audio URBs and fill in constant values: */
-	for (i = 0; i < line6->iso_buffers; ++i) {
-		struct urb *urb;
+	/* create audio URBs and fill in स्थिरant values: */
+	क्रम (i = 0; i < line6->iso_buffers; ++i) अणु
+		काष्ठा urb *urb;
 
-		/* URB for audio in: */
+		/* URB क्रम audio in: */
 		urb = line6pcm->in.urbs[i] =
 		    usb_alloc_urb(LINE6_ISO_PACKETS, GFP_KERNEL);
 
-		if (urb == NULL)
-			return -ENOMEM;
+		अगर (urb == शून्य)
+			वापस -ENOMEM;
 
 		urb->dev = line6->usbdev;
 		urb->pipe =
@@ -283,12 +284,12 @@ int line6_create_audio_in_urbs(struct snd_line6_pcm *line6pcm)
 		urb->transfer_flags = URB_ISO_ASAP;
 		urb->start_frame = -1;
 		urb->number_of_packets = LINE6_ISO_PACKETS;
-		urb->interval = LINE6_ISO_INTERVAL;
+		urb->पूर्णांकerval = LINE6_ISO_INTERVAL;
 		urb->error_count = 0;
 		urb->complete = audio_in_callback;
-		if (usb_urb_ep_type_check(urb))
-			return -EINVAL;
-	}
+		अगर (usb_urb_ep_type_check(urb))
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

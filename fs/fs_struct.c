@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/export.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/task.h>
-#include <linux/fs.h>
-#include <linux/path.h>
-#include <linux/slab.h>
-#include <linux/fs_struct.h>
-#include "internal.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/export.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/path.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs_काष्ठा.h>
+#समावेश "internal.h"
 
 /*
- * Replace the fs->{rootmnt,root} with {mnt,dentry}. Put the old values.
+ * Replace the fs->अणुrooपंचांगnt,rootपूर्ण with अणुmnt,dentryपूर्ण. Put the old values.
  * It can block.
  */
-void set_fs_root(struct fs_struct *fs, const struct path *path)
-{
-	struct path old_root;
+व्योम set_fs_root(काष्ठा fs_काष्ठा *fs, स्थिर काष्ठा path *path)
+अणु
+	काष्ठा path old_root;
 
 	path_get(path);
 	spin_lock(&fs->lock);
-	write_seqcount_begin(&fs->seq);
+	ग_लिखो_seqcount_begin(&fs->seq);
 	old_root = fs->root;
 	fs->root = *path;
-	write_seqcount_end(&fs->seq);
+	ग_लिखो_seqcount_end(&fs->seq);
 	spin_unlock(&fs->lock);
-	if (old_root.dentry)
+	अगर (old_root.dentry)
 		path_put(&old_root);
-}
+पूर्ण
 
 /*
- * Replace the fs->{pwdmnt,pwd} with {mnt,dentry}. Put the old values.
+ * Replace the fs->अणुpwdmnt,pwdपूर्ण with अणुmnt,dentryपूर्ण. Put the old values.
  * It can block.
  */
-void set_fs_pwd(struct fs_struct *fs, const struct path *path)
-{
-	struct path old_pwd;
+व्योम set_fs_pwd(काष्ठा fs_काष्ठा *fs, स्थिर काष्ठा path *path)
+अणु
+	काष्ठा path old_pwd;
 
 	path_get(path);
 	spin_lock(&fs->lock);
-	write_seqcount_begin(&fs->seq);
+	ग_लिखो_seqcount_begin(&fs->seq);
 	old_pwd = fs->pwd;
 	fs->pwd = *path;
-	write_seqcount_end(&fs->seq);
+	ग_लिखो_seqcount_end(&fs->seq);
 	spin_unlock(&fs->lock);
 
-	if (old_pwd.dentry)
+	अगर (old_pwd.dentry)
 		path_put(&old_pwd);
-}
+पूर्ण
 
-static inline int replace_path(struct path *p, const struct path *old, const struct path *new)
-{
-	if (likely(p->dentry != old->dentry || p->mnt != old->mnt))
-		return 0;
+अटल अंतरभूत पूर्णांक replace_path(काष्ठा path *p, स्थिर काष्ठा path *old, स्थिर काष्ठा path *new)
+अणु
+	अगर (likely(p->dentry != old->dentry || p->mnt != old->mnt))
+		वापस 0;
 	*p = *new;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void chroot_fs_refs(const struct path *old_root, const struct path *new_root)
-{
-	struct task_struct *g, *p;
-	struct fs_struct *fs;
-	int count = 0;
+व्योम chroot_fs_refs(स्थिर काष्ठा path *old_root, स्थिर काष्ठा path *new_root)
+अणु
+	काष्ठा task_काष्ठा *g, *p;
+	काष्ठा fs_काष्ठा *fs;
+	पूर्णांक count = 0;
 
-	read_lock(&tasklist_lock);
-	do_each_thread(g, p) {
+	पढ़ो_lock(&tasklist_lock);
+	करो_each_thपढ़ो(g, p) अणु
 		task_lock(p);
 		fs = p->fs;
-		if (fs) {
-			int hits = 0;
+		अगर (fs) अणु
+			पूर्णांक hits = 0;
 			spin_lock(&fs->lock);
-			write_seqcount_begin(&fs->seq);
+			ग_लिखो_seqcount_begin(&fs->seq);
 			hits += replace_path(&fs->root, old_root, new_root);
 			hits += replace_path(&fs->pwd, old_root, new_root);
-			write_seqcount_end(&fs->seq);
-			while (hits--) {
+			ग_लिखो_seqcount_end(&fs->seq);
+			जबतक (hits--) अणु
 				count++;
 				path_get(new_root);
-			}
+			पूर्ण
 			spin_unlock(&fs->lock);
-		}
+		पूर्ण
 		task_unlock(p);
-	} while_each_thread(g, p);
-	read_unlock(&tasklist_lock);
-	while (count--)
+	पूर्ण जबतक_each_thपढ़ो(g, p);
+	पढ़ो_unlock(&tasklist_lock);
+	जबतक (count--)
 		path_put(old_root);
-}
+पूर्ण
 
-void free_fs_struct(struct fs_struct *fs)
-{
+व्योम मुक्त_fs_काष्ठा(काष्ठा fs_काष्ठा *fs)
+अणु
 	path_put(&fs->root);
 	path_put(&fs->pwd);
-	kmem_cache_free(fs_cachep, fs);
-}
+	kmem_cache_मुक्त(fs_cachep, fs);
+पूर्ण
 
-void exit_fs(struct task_struct *tsk)
-{
-	struct fs_struct *fs = tsk->fs;
+व्योम निकास_fs(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा fs_काष्ठा *fs = tsk->fs;
 
-	if (fs) {
-		int kill;
+	अगर (fs) अणु
+		पूर्णांक समाप्त;
 		task_lock(tsk);
 		spin_lock(&fs->lock);
-		tsk->fs = NULL;
-		kill = !--fs->users;
+		tsk->fs = शून्य;
+		समाप्त = !--fs->users;
 		spin_unlock(&fs->lock);
 		task_unlock(tsk);
-		if (kill)
-			free_fs_struct(fs);
-	}
-}
+		अगर (समाप्त)
+			मुक्त_fs_काष्ठा(fs);
+	पूर्ण
+पूर्ण
 
-struct fs_struct *copy_fs_struct(struct fs_struct *old)
-{
-	struct fs_struct *fs = kmem_cache_alloc(fs_cachep, GFP_KERNEL);
-	/* We don't need to lock fs - think why ;-) */
-	if (fs) {
+काष्ठा fs_काष्ठा *copy_fs_काष्ठा(काष्ठा fs_काष्ठा *old)
+अणु
+	काष्ठा fs_काष्ठा *fs = kmem_cache_alloc(fs_cachep, GFP_KERNEL);
+	/* We करोn't need to lock fs - think why ;-) */
+	अगर (fs) अणु
 		fs->users = 1;
 		fs->in_exec = 0;
 		spin_lock_init(&fs->lock);
@@ -126,43 +127,43 @@ struct fs_struct *copy_fs_struct(struct fs_struct *old)
 		fs->pwd = old->pwd;
 		path_get(&fs->pwd);
 		spin_unlock(&old->lock);
-	}
-	return fs;
-}
+	पूर्ण
+	वापस fs;
+पूर्ण
 
-int unshare_fs_struct(void)
-{
-	struct fs_struct *fs = current->fs;
-	struct fs_struct *new_fs = copy_fs_struct(fs);
-	int kill;
+पूर्णांक unshare_fs_काष्ठा(व्योम)
+अणु
+	काष्ठा fs_काष्ठा *fs = current->fs;
+	काष्ठा fs_काष्ठा *new_fs = copy_fs_काष्ठा(fs);
+	पूर्णांक समाप्त;
 
-	if (!new_fs)
-		return -ENOMEM;
+	अगर (!new_fs)
+		वापस -ENOMEM;
 
 	task_lock(current);
 	spin_lock(&fs->lock);
-	kill = !--fs->users;
+	समाप्त = !--fs->users;
 	current->fs = new_fs;
 	spin_unlock(&fs->lock);
 	task_unlock(current);
 
-	if (kill)
-		free_fs_struct(fs);
+	अगर (समाप्त)
+		मुक्त_fs_काष्ठा(fs);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(unshare_fs_struct);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(unshare_fs_काष्ठा);
 
-int current_umask(void)
-{
-	return current->fs->umask;
-}
+पूर्णांक current_umask(व्योम)
+अणु
+	वापस current->fs->umask;
+पूर्ण
 EXPORT_SYMBOL(current_umask);
 
 /* to be mentioned only in INIT_TASK */
-struct fs_struct init_fs = {
+काष्ठा fs_काष्ठा init_fs = अणु
 	.users		= 1,
 	.lock		= __SPIN_LOCK_UNLOCKED(init_fs.lock),
 	.seq		= SEQCNT_SPINLOCK_ZERO(init_fs.seq, &init_fs.lock),
 	.umask		= 0022,
-};
+पूर्ण;

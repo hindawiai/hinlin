@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2019 MediaTek Inc.
  * Authors:
@@ -6,155 +7,155 @@
  *	Peter Wang <peter.wang@mediatek.com>
  */
 
-#include <linux/arm-smccc.h>
-#include <linux/bitfield.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/phy/phy.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/reset.h>
-#include <linux/soc/mediatek/mtk_sip_svc.h>
+#समावेश <linux/arm-smccc.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/soc/mediatek/mtk_sip_svc.h>
 
-#include "ufshcd.h"
-#include "ufshcd-crypto.h"
-#include "ufshcd-pltfrm.h"
-#include "ufs_quirks.h"
-#include "unipro.h"
-#include "ufs-mediatek.h"
+#समावेश "ufshcd.h"
+#समावेश "ufshcd-crypto.h"
+#समावेश "ufshcd-pltfrm.h"
+#समावेश "ufs_quirks.h"
+#समावेश "unipro.h"
+#समावेश "ufs-mediatek.h"
 
-#define CREATE_TRACE_POINTS
-#include "ufs-mediatek-trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "ufs-mediatek-trace.h"
 
-#define ufs_mtk_smc(cmd, val, res) \
+#घोषणा ufs_mtk_smc(cmd, val, res) \
 	arm_smccc_smc(MTK_SIP_UFS_CONTROL, \
 		      cmd, val, 0, 0, 0, 0, 0, &(res))
 
-#define ufs_mtk_va09_pwr_ctrl(res, on) \
+#घोषणा ufs_mtk_va09_pwr_ctrl(res, on) \
 	ufs_mtk_smc(UFS_MTK_SIP_VA09_PWR_CTRL, on, res)
 
-#define ufs_mtk_crypto_ctrl(res, enable) \
+#घोषणा ufs_mtk_crypto_ctrl(res, enable) \
 	ufs_mtk_smc(UFS_MTK_SIP_CRYPTO_CTRL, enable, res)
 
-#define ufs_mtk_ref_clk_notify(on, res) \
+#घोषणा ufs_mtk_ref_clk_notअगरy(on, res) \
 	ufs_mtk_smc(UFS_MTK_SIP_REF_CLK_NOTIFICATION, on, res)
 
-#define ufs_mtk_device_reset_ctrl(high, res) \
+#घोषणा ufs_mtk_device_reset_ctrl(high, res) \
 	ufs_mtk_smc(UFS_MTK_SIP_DEVICE_RESET, high, res)
 
-static struct ufs_dev_fix ufs_mtk_dev_fixups[] = {
+अटल काष्ठा ufs_dev_fix ufs_mtk_dev_fixups[] = अणु
 	UFS_FIX(UFS_VENDOR_MICRON, UFS_ANY_MODEL,
 		UFS_DEVICE_QUIRK_DELAY_AFTER_LPM),
 	UFS_FIX(UFS_VENDOR_SKHYNIX, "H9HQ21AFAMZDAR",
 		UFS_DEVICE_QUIRK_SUPPORT_EXTENDED_FEATURES),
 	END_FIX
-};
+पूर्ण;
 
-static const struct of_device_id ufs_mtk_of_match[] = {
-	{ .compatible = "mediatek,mt8183-ufshci" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ufs_mtk_of_match[] = अणु
+	अणु .compatible = "mediatek,mt8183-ufshci" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static bool ufs_mtk_is_boost_crypt_enabled(struct ufs_hba *hba)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
+अटल bool ufs_mtk_is_boost_crypt_enabled(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
 
-	return !!(host->caps & UFS_MTK_CAP_BOOST_CRYPT_ENGINE);
-}
+	वापस !!(host->caps & UFS_MTK_CAP_BOOST_CRYPT_ENGINE);
+पूर्ण
 
-static bool ufs_mtk_is_va09_supported(struct ufs_hba *hba)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
+अटल bool ufs_mtk_is_va09_supported(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
 
-	return !!(host->caps & UFS_MTK_CAP_VA09_PWR_CTRL);
-}
+	वापस !!(host->caps & UFS_MTK_CAP_VA09_PWR_CTRL);
+पूर्ण
 
-static bool ufs_mtk_is_broken_vcc(struct ufs_hba *hba)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
+अटल bool ufs_mtk_is_broken_vcc(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
 
-	return !!(host->caps & UFS_MTK_CAP_BROKEN_VCC);
-}
+	वापस !!(host->caps & UFS_MTK_CAP_BROKEN_VCC);
+पूर्ण
 
-static void ufs_mtk_cfg_unipro_cg(struct ufs_hba *hba, bool enable)
-{
-	u32 tmp;
+अटल व्योम ufs_mtk_cfg_unipro_cg(काष्ठा ufs_hba *hba, bool enable)
+अणु
+	u32 पंचांगp;
 
-	if (enable) {
+	अगर (enable) अणु
 		ufshcd_dme_get(hba,
-			       UIC_ARG_MIB(VS_SAVEPOWERCONTROL), &tmp);
-		tmp = tmp |
+			       UIC_ARG_MIB(VS_SAVEPOWERCONTROL), &पंचांगp);
+		पंचांगp = पंचांगp |
 		      (1 << RX_SYMBOL_CLK_GATE_EN) |
 		      (1 << SYS_CLK_GATE_EN) |
 		      (1 << TX_CLK_GATE_EN);
 		ufshcd_dme_set(hba,
-			       UIC_ARG_MIB(VS_SAVEPOWERCONTROL), tmp);
+			       UIC_ARG_MIB(VS_SAVEPOWERCONTROL), पंचांगp);
 
 		ufshcd_dme_get(hba,
-			       UIC_ARG_MIB(VS_DEBUGCLOCKENABLE), &tmp);
-		tmp = tmp & ~(1 << TX_SYMBOL_CLK_REQ_FORCE);
+			       UIC_ARG_MIB(VS_DEBUGCLOCKENABLE), &पंचांगp);
+		पंचांगp = पंचांगp & ~(1 << TX_SYMBOL_CLK_REQ_FORCE);
 		ufshcd_dme_set(hba,
-			       UIC_ARG_MIB(VS_DEBUGCLOCKENABLE), tmp);
-	} else {
+			       UIC_ARG_MIB(VS_DEBUGCLOCKENABLE), पंचांगp);
+	पूर्ण अन्यथा अणु
 		ufshcd_dme_get(hba,
-			       UIC_ARG_MIB(VS_SAVEPOWERCONTROL), &tmp);
-		tmp = tmp & ~((1 << RX_SYMBOL_CLK_GATE_EN) |
+			       UIC_ARG_MIB(VS_SAVEPOWERCONTROL), &पंचांगp);
+		पंचांगp = पंचांगp & ~((1 << RX_SYMBOL_CLK_GATE_EN) |
 			      (1 << SYS_CLK_GATE_EN) |
 			      (1 << TX_CLK_GATE_EN));
 		ufshcd_dme_set(hba,
-			       UIC_ARG_MIB(VS_SAVEPOWERCONTROL), tmp);
+			       UIC_ARG_MIB(VS_SAVEPOWERCONTROL), पंचांगp);
 
 		ufshcd_dme_get(hba,
-			       UIC_ARG_MIB(VS_DEBUGCLOCKENABLE), &tmp);
-		tmp = tmp | (1 << TX_SYMBOL_CLK_REQ_FORCE);
+			       UIC_ARG_MIB(VS_DEBUGCLOCKENABLE), &पंचांगp);
+		पंचांगp = पंचांगp | (1 << TX_SYMBOL_CLK_REQ_FORCE);
 		ufshcd_dme_set(hba,
-			       UIC_ARG_MIB(VS_DEBUGCLOCKENABLE), tmp);
-	}
-}
+			       UIC_ARG_MIB(VS_DEBUGCLOCKENABLE), पंचांगp);
+	पूर्ण
+पूर्ण
 
-static void ufs_mtk_crypto_enable(struct ufs_hba *hba)
-{
-	struct arm_smccc_res res;
+अटल व्योम ufs_mtk_crypto_enable(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा arm_smccc_res res;
 
 	ufs_mtk_crypto_ctrl(res, 1);
-	if (res.a0) {
+	अगर (res.a0) अणु
 		dev_info(hba->dev, "%s: crypto enable failed, err: %lu\n",
 			 __func__, res.a0);
 		hba->caps &= ~UFSHCD_CAP_CRYPTO;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ufs_mtk_host_reset(struct ufs_hba *hba)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
+अटल व्योम ufs_mtk_host_reset(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
 
-	reset_control_assert(host->hci_reset);
-	reset_control_assert(host->crypto_reset);
-	reset_control_assert(host->unipro_reset);
+	reset_control_निश्चित(host->hci_reset);
+	reset_control_निश्चित(host->crypto_reset);
+	reset_control_निश्चित(host->unipro_reset);
 
 	usleep_range(100, 110);
 
-	reset_control_deassert(host->unipro_reset);
-	reset_control_deassert(host->crypto_reset);
-	reset_control_deassert(host->hci_reset);
-}
+	reset_control_deनिश्चित(host->unipro_reset);
+	reset_control_deनिश्चित(host->crypto_reset);
+	reset_control_deनिश्चित(host->hci_reset);
+पूर्ण
 
-static void ufs_mtk_init_reset_control(struct ufs_hba *hba,
-				       struct reset_control **rc,
-				       char *str)
-{
+अटल व्योम ufs_mtk_init_reset_control(काष्ठा ufs_hba *hba,
+				       काष्ठा reset_control **rc,
+				       अक्षर *str)
+अणु
 	*rc = devm_reset_control_get(hba->dev, str);
-	if (IS_ERR(*rc)) {
+	अगर (IS_ERR(*rc)) अणु
 		dev_info(hba->dev, "Failed to get reset control %s: %ld\n",
 			 str, PTR_ERR(*rc));
-		*rc = NULL;
-	}
-}
+		*rc = शून्य;
+	पूर्ण
+पूर्ण
 
-static void ufs_mtk_init_reset(struct ufs_hba *hba)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
+अटल व्योम ufs_mtk_init_reset(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
 
 	ufs_mtk_init_reset_control(hba, &host->hci_reset,
 				   "hci_rst");
@@ -162,513 +163,513 @@ static void ufs_mtk_init_reset(struct ufs_hba *hba)
 				   "unipro_rst");
 	ufs_mtk_init_reset_control(hba, &host->crypto_reset,
 				   "crypto_rst");
-}
+पूर्ण
 
-static int ufs_mtk_hce_enable_notify(struct ufs_hba *hba,
-				     enum ufs_notify_change_status status)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
-	unsigned long flags;
+अटल पूर्णांक ufs_mtk_hce_enable_notअगरy(काष्ठा ufs_hba *hba,
+				     क्रमागत ufs_notअगरy_change_status status)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
+	अचिन्हित दीर्घ flags;
 
-	if (status == PRE_CHANGE) {
-		if (host->unipro_lpm) {
+	अगर (status == PRE_CHANGE) अणु
+		अगर (host->unipro_lpm) अणु
 			hba->vps->hba_enable_delay_us = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			hba->vps->hba_enable_delay_us = 600;
 			ufs_mtk_host_reset(hba);
-		}
+		पूर्ण
 
-		if (hba->caps & UFSHCD_CAP_CRYPTO)
+		अगर (hba->caps & UFSHCD_CAP_CRYPTO)
 			ufs_mtk_crypto_enable(hba);
 
-		if (host->caps & UFS_MTK_CAP_DISABLE_AH8) {
+		अगर (host->caps & UFS_MTK_CAP_DISABLE_AH8) अणु
 			spin_lock_irqsave(hba->host->host_lock, flags);
-			ufshcd_writel(hba, 0,
+			ufshcd_ग_लिखोl(hba, 0,
 				      REG_AUTO_HIBERNATE_IDLE_TIMER);
 			spin_unlock_irqrestore(hba->host->host_lock,
 					       flags);
 
 			hba->capabilities &= ~MASK_AUTO_HIBERN8_SUPPORT;
 			hba->ahit = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ufs_mtk_bind_mphy(struct ufs_hba *hba)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
-	struct device *dev = hba->dev;
-	struct device_node *np = dev->of_node;
-	int err = 0;
+अटल पूर्णांक ufs_mtk_bind_mphy(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
+	काष्ठा device *dev = hba->dev;
+	काष्ठा device_node *np = dev->of_node;
+	पूर्णांक err = 0;
 
 	host->mphy = devm_of_phy_get_by_index(dev, np, 0);
 
-	if (host->mphy == ERR_PTR(-EPROBE_DEFER)) {
+	अगर (host->mphy == ERR_PTR(-EPROBE_DEFER)) अणु
 		/*
-		 * UFS driver might be probed before the phy driver does.
-		 * In that case we would like to return EPROBE_DEFER code.
+		 * UFS driver might be probed beक्रमe the phy driver करोes.
+		 * In that हाल we would like to वापस EPROBE_DEFER code.
 		 */
 		err = -EPROBE_DEFER;
 		dev_info(dev,
 			 "%s: required phy hasn't probed yet. err = %d\n",
 			__func__, err);
-	} else if (IS_ERR(host->mphy)) {
+	पूर्ण अन्यथा अगर (IS_ERR(host->mphy)) अणु
 		err = PTR_ERR(host->mphy);
-		if (err != -ENODEV) {
+		अगर (err != -ENODEV) अणु
 			dev_info(dev, "%s: PHY get failed %d\n", __func__,
 				 err);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (err)
-		host->mphy = NULL;
+	अगर (err)
+		host->mphy = शून्य;
 	/*
-	 * Allow unbound mphy because not every platform needs specific
+	 * Allow unbound mphy because not every platक्रमm needs specअगरic
 	 * mphy control.
 	 */
-	if (err == -ENODEV)
+	अगर (err == -ENODEV)
 		err = 0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ufs_mtk_setup_ref_clk(struct ufs_hba *hba, bool on)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
-	struct arm_smccc_res res;
-	ktime_t timeout, time_checked;
+अटल पूर्णांक ufs_mtk_setup_ref_clk(काष्ठा ufs_hba *hba, bool on)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
+	काष्ठा arm_smccc_res res;
+	kसमय_प्रकार समयout, समय_checked;
 	u32 value;
 
-	if (host->ref_clk_enabled == on)
-		return 0;
+	अगर (host->ref_clk_enabled == on)
+		वापस 0;
 
-	if (on) {
-		ufs_mtk_ref_clk_notify(on, res);
-		ufshcd_delay_us(host->ref_clk_ungating_wait_us, 10);
-		ufshcd_writel(hba, REFCLK_REQUEST, REG_UFS_REFCLK_CTRL);
-	} else {
-		ufshcd_writel(hba, REFCLK_RELEASE, REG_UFS_REFCLK_CTRL);
-	}
+	अगर (on) अणु
+		ufs_mtk_ref_clk_notअगरy(on, res);
+		ufshcd_delay_us(host->ref_clk_ungating_रुको_us, 10);
+		ufshcd_ग_लिखोl(hba, REFCLK_REQUEST, REG_UFS_REFCLK_CTRL);
+	पूर्ण अन्यथा अणु
+		ufshcd_ग_लिखोl(hba, REFCLK_RELEASE, REG_UFS_REFCLK_CTRL);
+	पूर्ण
 
-	/* Wait for ack */
-	timeout = ktime_add_us(ktime_get(), REFCLK_REQ_TIMEOUT_US);
-	do {
-		time_checked = ktime_get();
-		value = ufshcd_readl(hba, REG_UFS_REFCLK_CTRL);
+	/* Wait क्रम ack */
+	समयout = kसमय_add_us(kसमय_get(), REFCLK_REQ_TIMEOUT_US);
+	करो अणु
+		समय_checked = kसमय_get();
+		value = ufshcd_पढ़ोl(hba, REG_UFS_REFCLK_CTRL);
 
 		/* Wait until ack bit equals to req bit */
-		if (((value & REFCLK_ACK) >> 1) == (value & REFCLK_REQUEST))
-			goto out;
+		अगर (((value & REFCLK_ACK) >> 1) == (value & REFCLK_REQUEST))
+			जाओ out;
 
 		usleep_range(100, 200);
-	} while (ktime_before(time_checked, timeout));
+	पूर्ण जबतक (kसमय_beक्रमe(समय_checked, समयout));
 
 	dev_err(hba->dev, "missing ack of refclk req, reg: 0x%x\n", value);
 
-	ufs_mtk_ref_clk_notify(host->ref_clk_enabled, res);
+	ufs_mtk_ref_clk_notअगरy(host->ref_clk_enabled, res);
 
-	return -ETIMEDOUT;
+	वापस -ETIMEDOUT;
 
 out:
 	host->ref_clk_enabled = on;
-	if (!on) {
-		ufshcd_delay_us(host->ref_clk_gating_wait_us, 10);
-		ufs_mtk_ref_clk_notify(on, res);
-	}
+	अगर (!on) अणु
+		ufshcd_delay_us(host->ref_clk_gating_रुको_us, 10);
+		ufs_mtk_ref_clk_notअगरy(on, res);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ufs_mtk_setup_ref_clk_wait_us(struct ufs_hba *hba,
+अटल व्योम ufs_mtk_setup_ref_clk_रुको_us(काष्ठा ufs_hba *hba,
 					  u16 gating_us, u16 ungating_us)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
 
-	if (hba->dev_info.clk_gating_wait_us) {
-		host->ref_clk_gating_wait_us =
-			hba->dev_info.clk_gating_wait_us;
-	} else {
-		host->ref_clk_gating_wait_us = gating_us;
-	}
+	अगर (hba->dev_info.clk_gating_रुको_us) अणु
+		host->ref_clk_gating_रुको_us =
+			hba->dev_info.clk_gating_रुको_us;
+	पूर्ण अन्यथा अणु
+		host->ref_clk_gating_रुको_us = gating_us;
+	पूर्ण
 
-	host->ref_clk_ungating_wait_us = ungating_us;
-}
+	host->ref_clk_ungating_रुको_us = ungating_us;
+पूर्ण
 
-static int ufs_mtk_wait_link_state(struct ufs_hba *hba, u32 state,
-				   unsigned long max_wait_ms)
-{
-	ktime_t timeout, time_checked;
+अटल पूर्णांक ufs_mtk_रुको_link_state(काष्ठा ufs_hba *hba, u32 state,
+				   अचिन्हित दीर्घ max_रुको_ms)
+अणु
+	kसमय_प्रकार समयout, समय_checked;
 	u32 val;
 
-	timeout = ktime_add_ms(ktime_get(), max_wait_ms);
-	do {
-		time_checked = ktime_get();
-		ufshcd_writel(hba, 0x20, REG_UFS_DEBUG_SEL);
-		val = ufshcd_readl(hba, REG_UFS_PROBE);
+	समयout = kसमय_add_ms(kसमय_get(), max_रुको_ms);
+	करो अणु
+		समय_checked = kसमय_get();
+		ufshcd_ग_लिखोl(hba, 0x20, REG_UFS_DEBUG_SEL);
+		val = ufshcd_पढ़ोl(hba, REG_UFS_PROBE);
 		val = val >> 28;
 
-		if (val == state)
-			return 0;
+		अगर (val == state)
+			वापस 0;
 
-		/* Sleep for max. 200us */
+		/* Sleep क्रम max. 200us */
 		usleep_range(100, 200);
-	} while (ktime_before(time_checked, timeout));
+	पूर्ण जबतक (kसमय_beक्रमe(समय_checked, समयout));
 
-	if (val == state)
-		return 0;
+	अगर (val == state)
+		वापस 0;
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int ufs_mtk_mphy_power_on(struct ufs_hba *hba, bool on)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
-	struct phy *mphy = host->mphy;
-	struct arm_smccc_res res;
-	int ret = 0;
+अटल पूर्णांक ufs_mtk_mphy_घातer_on(काष्ठा ufs_hba *hba, bool on)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
+	काष्ठा phy *mphy = host->mphy;
+	काष्ठा arm_smccc_res res;
+	पूर्णांक ret = 0;
 
-	if (!mphy || !(on ^ host->mphy_powered_on))
-		return 0;
+	अगर (!mphy || !(on ^ host->mphy_घातered_on))
+		वापस 0;
 
-	if (on) {
-		if (ufs_mtk_is_va09_supported(hba)) {
+	अगर (on) अणु
+		अगर (ufs_mtk_is_va09_supported(hba)) अणु
 			ret = regulator_enable(host->reg_va09);
-			if (ret < 0)
-				goto out;
-			/* wait 200 us to stablize VA09 */
+			अगर (ret < 0)
+				जाओ out;
+			/* रुको 200 us to stablize VA09 */
 			usleep_range(200, 210);
 			ufs_mtk_va09_pwr_ctrl(res, 1);
-		}
-		phy_power_on(mphy);
-	} else {
-		phy_power_off(mphy);
-		if (ufs_mtk_is_va09_supported(hba)) {
+		पूर्ण
+		phy_घातer_on(mphy);
+	पूर्ण अन्यथा अणु
+		phy_घातer_off(mphy);
+		अगर (ufs_mtk_is_va09_supported(hba)) अणु
 			ufs_mtk_va09_pwr_ctrl(res, 0);
 			ret = regulator_disable(host->reg_va09);
-			if (ret < 0)
-				goto out;
-		}
-	}
+			अगर (ret < 0)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 out:
-	if (ret) {
+	अगर (ret) अणु
 		dev_info(hba->dev,
 			 "failed to %s va09: %d\n",
 			 on ? "enable" : "disable",
 			 ret);
-	} else {
-		host->mphy_powered_on = on;
-	}
+	पूर्ण अन्यथा अणु
+		host->mphy_घातered_on = on;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufs_mtk_get_host_clk(struct device *dev, const char *name,
-				struct clk **clk_out)
-{
-	struct clk *clk;
-	int err = 0;
+अटल पूर्णांक ufs_mtk_get_host_clk(काष्ठा device *dev, स्थिर अक्षर *name,
+				काष्ठा clk **clk_out)
+अणु
+	काष्ठा clk *clk;
+	पूर्णांक err = 0;
 
 	clk = devm_clk_get(dev, name);
-	if (IS_ERR(clk))
+	अगर (IS_ERR(clk))
 		err = PTR_ERR(clk);
-	else
+	अन्यथा
 		*clk_out = clk;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ufs_mtk_boost_crypt(struct ufs_hba *hba, bool boost)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
-	struct ufs_mtk_crypt_cfg *cfg;
-	struct regulator *reg;
-	int volt, ret;
+अटल व्योम ufs_mtk_boost_crypt(काष्ठा ufs_hba *hba, bool boost)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
+	काष्ठा ufs_mtk_crypt_cfg *cfg;
+	काष्ठा regulator *reg;
+	पूर्णांक volt, ret;
 
-	if (!ufs_mtk_is_boost_crypt_enabled(hba))
-		return;
+	अगर (!ufs_mtk_is_boost_crypt_enabled(hba))
+		वापस;
 
 	cfg = host->crypt;
 	volt = cfg->vcore_volt;
 	reg = cfg->reg_vcore;
 
 	ret = clk_prepare_enable(cfg->clk_crypt_mux);
-	if (ret) {
+	अगर (ret) अणु
 		dev_info(hba->dev, "clk_prepare_enable(): %d\n",
 			 ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (boost) {
-		ret = regulator_set_voltage(reg, volt, INT_MAX);
-		if (ret) {
+	अगर (boost) अणु
+		ret = regulator_set_voltage(reg, volt, पूर्णांक_उच्च);
+		अगर (ret) अणु
 			dev_info(hba->dev,
 				 "failed to set vcore to %d\n", volt);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = clk_set_parent(cfg->clk_crypt_mux,
 				     cfg->clk_crypt_perf);
-		if (ret) {
+		अगर (ret) अणु
 			dev_info(hba->dev,
 				 "failed to set clk_crypt_perf\n");
-			regulator_set_voltage(reg, 0, INT_MAX);
-			goto out;
-		}
-	} else {
+			regulator_set_voltage(reg, 0, पूर्णांक_उच्च);
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = clk_set_parent(cfg->clk_crypt_mux,
 				     cfg->clk_crypt_lp);
-		if (ret) {
+		अगर (ret) अणु
 			dev_info(hba->dev,
 				 "failed to set clk_crypt_lp\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		ret = regulator_set_voltage(reg, 0, INT_MAX);
-		if (ret) {
+		ret = regulator_set_voltage(reg, 0, पूर्णांक_उच्च);
+		अगर (ret) अणु
 			dev_info(hba->dev,
 				 "failed to set vcore to MIN\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
 	clk_disable_unprepare(cfg->clk_crypt_mux);
-}
+पूर्ण
 
-static int ufs_mtk_init_host_clk(struct ufs_hba *hba, const char *name,
-				 struct clk **clk)
-{
-	int ret;
+अटल पूर्णांक ufs_mtk_init_host_clk(काष्ठा ufs_hba *hba, स्थिर अक्षर *name,
+				 काष्ठा clk **clk)
+अणु
+	पूर्णांक ret;
 
 	ret = ufs_mtk_get_host_clk(hba->dev, name, clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_info(hba->dev, "%s: failed to get %s: %d", __func__,
 			 name, ret);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ufs_mtk_init_boost_crypt(struct ufs_hba *hba)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
-	struct ufs_mtk_crypt_cfg *cfg;
-	struct device *dev = hba->dev;
-	struct regulator *reg;
+अटल व्योम ufs_mtk_init_boost_crypt(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
+	काष्ठा ufs_mtk_crypt_cfg *cfg;
+	काष्ठा device *dev = hba->dev;
+	काष्ठा regulator *reg;
 	u32 volt;
 
-	host->crypt = devm_kzalloc(dev, sizeof(*(host->crypt)),
+	host->crypt = devm_kzalloc(dev, माप(*(host->crypt)),
 				   GFP_KERNEL);
-	if (!host->crypt)
-		goto disable_caps;
+	अगर (!host->crypt)
+		जाओ disable_caps;
 
 	reg = devm_regulator_get_optional(dev, "dvfsrc-vcore");
-	if (IS_ERR(reg)) {
+	अगर (IS_ERR(reg)) अणु
 		dev_info(dev, "failed to get dvfsrc-vcore: %ld",
 			 PTR_ERR(reg));
-		goto disable_caps;
-	}
+		जाओ disable_caps;
+	पूर्ण
 
-	if (of_property_read_u32(dev->of_node, "boost-crypt-vcore-min",
-				 &volt)) {
+	अगर (of_property_पढ़ो_u32(dev->of_node, "boost-crypt-vcore-min",
+				 &volt)) अणु
 		dev_info(dev, "failed to get boost-crypt-vcore-min");
-		goto disable_caps;
-	}
+		जाओ disable_caps;
+	पूर्ण
 
 	cfg = host->crypt;
-	if (ufs_mtk_init_host_clk(hba, "crypt_mux",
+	अगर (ufs_mtk_init_host_clk(hba, "crypt_mux",
 				  &cfg->clk_crypt_mux))
-		goto disable_caps;
+		जाओ disable_caps;
 
-	if (ufs_mtk_init_host_clk(hba, "crypt_lp",
+	अगर (ufs_mtk_init_host_clk(hba, "crypt_lp",
 				  &cfg->clk_crypt_lp))
-		goto disable_caps;
+		जाओ disable_caps;
 
-	if (ufs_mtk_init_host_clk(hba, "crypt_perf",
+	अगर (ufs_mtk_init_host_clk(hba, "crypt_perf",
 				  &cfg->clk_crypt_perf))
-		goto disable_caps;
+		जाओ disable_caps;
 
 	cfg->reg_vcore = reg;
 	cfg->vcore_volt = volt;
 	host->caps |= UFS_MTK_CAP_BOOST_CRYPT_ENGINE;
 
 disable_caps:
-	return;
-}
+	वापस;
+पूर्ण
 
-static void ufs_mtk_init_va09_pwr_ctrl(struct ufs_hba *hba)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
+अटल व्योम ufs_mtk_init_va09_pwr_ctrl(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
 
 	host->reg_va09 = regulator_get(hba->dev, "va09");
-	if (!host->reg_va09)
+	अगर (!host->reg_va09)
 		dev_info(hba->dev, "failed to get va09");
-	else
+	अन्यथा
 		host->caps |= UFS_MTK_CAP_VA09_PWR_CTRL;
-}
+पूर्ण
 
-static void ufs_mtk_init_host_caps(struct ufs_hba *hba)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
-	struct device_node *np = hba->dev->of_node;
+अटल व्योम ufs_mtk_init_host_caps(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
+	काष्ठा device_node *np = hba->dev->of_node;
 
-	if (of_property_read_bool(np, "mediatek,ufs-boost-crypt"))
+	अगर (of_property_पढ़ो_bool(np, "mediatek,ufs-boost-crypt"))
 		ufs_mtk_init_boost_crypt(hba);
 
-	if (of_property_read_bool(np, "mediatek,ufs-support-va09"))
+	अगर (of_property_पढ़ो_bool(np, "mediatek,ufs-support-va09"))
 		ufs_mtk_init_va09_pwr_ctrl(hba);
 
-	if (of_property_read_bool(np, "mediatek,ufs-disable-ah8"))
+	अगर (of_property_पढ़ो_bool(np, "mediatek,ufs-disable-ah8"))
 		host->caps |= UFS_MTK_CAP_DISABLE_AH8;
 
-	if (of_property_read_bool(np, "mediatek,ufs-broken-vcc"))
+	अगर (of_property_पढ़ो_bool(np, "mediatek,ufs-broken-vcc"))
 		host->caps |= UFS_MTK_CAP_BROKEN_VCC;
 
 	dev_info(hba->dev, "caps: 0x%x", host->caps);
-}
+पूर्ण
 
-static void ufs_mtk_scale_perf(struct ufs_hba *hba, bool up)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
+अटल व्योम ufs_mtk_scale_perf(काष्ठा ufs_hba *hba, bool up)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
 
 	ufs_mtk_boost_crypt(hba, up);
 	ufs_mtk_setup_ref_clk(hba, up);
 
-	if (up)
-		phy_power_on(host->mphy);
-	else
-		phy_power_off(host->mphy);
-}
+	अगर (up)
+		phy_घातer_on(host->mphy);
+	अन्यथा
+		phy_घातer_off(host->mphy);
+पूर्ण
 
 /**
- * ufs_mtk_setup_clocks - enables/disable clocks
+ * ufs_mtk_setup_घड़ीs - enables/disable घड़ीs
  * @hba: host controller instance
- * @on: If true, enable clocks else disable them.
- * @status: PRE_CHANGE or POST_CHANGE notify
+ * @on: If true, enable घड़ीs अन्यथा disable them.
+ * @status: PRE_CHANGE or POST_CHANGE notअगरy
  *
  * Returns 0 on success, non-zero on failure.
  */
-static int ufs_mtk_setup_clocks(struct ufs_hba *hba, bool on,
-				enum ufs_notify_change_status status)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
+अटल पूर्णांक ufs_mtk_setup_घड़ीs(काष्ठा ufs_hba *hba, bool on,
+				क्रमागत ufs_notअगरy_change_status status)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
 	bool clk_pwr_off = false;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/*
-	 * In case ufs_mtk_init() is not yet done, simply ignore.
-	 * This ufs_mtk_setup_clocks() shall be called from
-	 * ufs_mtk_init() after init is done.
+	 * In हाल ufs_mtk_init() is not yet करोne, simply ignore.
+	 * This ufs_mtk_setup_घड़ीs() shall be called from
+	 * ufs_mtk_init() after init is करोne.
 	 */
-	if (!host)
-		return 0;
+	अगर (!host)
+		वापस 0;
 
-	if (!on && status == PRE_CHANGE) {
-		if (ufshcd_is_link_off(hba)) {
+	अगर (!on && status == PRE_CHANGE) अणु
+		अगर (ufshcd_is_link_off(hba)) अणु
 			clk_pwr_off = true;
-		} else if (ufshcd_is_link_hibern8(hba) ||
+		पूर्ण अन्यथा अगर (ufshcd_is_link_hibern8(hba) ||
 			 (!ufshcd_can_hibern8_during_gating(hba) &&
-			 ufshcd_is_auto_hibern8_enabled(hba))) {
+			 ufshcd_is_स्वतः_hibern8_enabled(hba))) अणु
 			/*
-			 * Gate ref-clk and poweroff mphy if link state is in
+			 * Gate ref-clk and घातeroff mphy अगर link state is in
 			 * OFF or Hibern8 by either Auto-Hibern8 or
 			 * ufshcd_link_state_transition().
 			 */
-			ret = ufs_mtk_wait_link_state(hba,
+			ret = ufs_mtk_रुको_link_state(hba,
 						      VS_LINK_HIBERN8,
 						      15);
-			if (!ret)
+			अगर (!ret)
 				clk_pwr_off = true;
-		}
+		पूर्ण
 
-		if (clk_pwr_off)
+		अगर (clk_pwr_off)
 			ufs_mtk_scale_perf(hba, false);
-	} else if (on && status == POST_CHANGE) {
+	पूर्ण अन्यथा अगर (on && status == POST_CHANGE) अणु
 		ufs_mtk_scale_perf(hba, true);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ufs_mtk_get_controller_version(struct ufs_hba *hba)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
-	int ret, ver = 0;
+अटल व्योम ufs_mtk_get_controller_version(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
+	पूर्णांक ret, ver = 0;
 
-	if (host->hw_ver.major)
-		return;
+	अगर (host->hw_ver.major)
+		वापस;
 
-	/* Set default (minimum) version anyway */
+	/* Set शेष (minimum) version anyway */
 	host->hw_ver.major = 2;
 
 	ret = ufshcd_dme_get(hba, UIC_ARG_MIB(PA_LOCALVERINFO), &ver);
-	if (!ret) {
-		if (ver >= UFS_UNIPRO_VER_1_8) {
+	अगर (!ret) अणु
+		अगर (ver >= UFS_UNIPRO_VER_1_8) अणु
 			host->hw_ver.major = 3;
 			/*
-			 * Fix HCI version for some platforms with
+			 * Fix HCI version क्रम some platक्रमms with
 			 * incorrect version
 			 */
-			if (hba->ufs_version < ufshci_version(3, 0))
+			अगर (hba->ufs_version < ufshci_version(3, 0))
 				hba->ufs_version = ufshci_version(3, 0);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static u32 ufs_mtk_get_ufs_hci_version(struct ufs_hba *hba)
-{
-	return hba->ufs_version;
-}
+अटल u32 ufs_mtk_get_ufs_hci_version(काष्ठा ufs_hba *hba)
+अणु
+	वापस hba->ufs_version;
+पूर्ण
 
 /**
  * ufs_mtk_init - find other essential mmio bases
  * @hba: host controller instance
  *
- * Binds PHY with controller and powers up PHY enabling clocks
+ * Binds PHY with controller and घातers up PHY enabling घड़ीs
  * and regulators.
  *
- * Returns -EPROBE_DEFER if binding fails, returns negative error
- * on phy power up failure and returns zero on success.
+ * Returns -EPROBE_DEFER अगर binding fails, वापसs negative error
+ * on phy घातer up failure and वापसs zero on success.
  */
-static int ufs_mtk_init(struct ufs_hba *hba)
-{
-	const struct of_device_id *id;
-	struct device *dev = hba->dev;
-	struct ufs_mtk_host *host;
-	int err = 0;
+अटल पूर्णांक ufs_mtk_init(काष्ठा ufs_hba *hba)
+अणु
+	स्थिर काष्ठा of_device_id *id;
+	काष्ठा device *dev = hba->dev;
+	काष्ठा ufs_mtk_host *host;
+	पूर्णांक err = 0;
 
-	host = devm_kzalloc(dev, sizeof(*host), GFP_KERNEL);
-	if (!host) {
+	host = devm_kzalloc(dev, माप(*host), GFP_KERNEL);
+	अगर (!host) अणु
 		err = -ENOMEM;
 		dev_info(dev, "%s: no memory for mtk ufs host\n", __func__);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	host->hba = hba;
 	ufshcd_set_variant(hba, host);
 
 	id = of_match_device(ufs_mtk_of_match, dev);
-	if (!id) {
+	अगर (!id) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Initialize host capability */
 	ufs_mtk_init_host_caps(hba);
 
 	err = ufs_mtk_bind_mphy(hba);
-	if (err)
-		goto out_variant_clear;
+	अगर (err)
+		जाओ out_variant_clear;
 
 	ufs_mtk_init_reset(hba);
 
-	/* Enable runtime autosuspend */
+	/* Enable runसमय स्वतःsuspend */
 	hba->caps |= UFSHCD_CAP_RPM_AUTOSUSPEND;
 
-	/* Enable clock-gating */
+	/* Enable घड़ी-gating */
 	hba->caps |= UFSHCD_CAP_CLK_GATING;
 
-	/* Enable inline encryption */
+	/* Enable अंतरभूत encryption */
 	hba->caps |= UFSHCD_CAP_CRYPTO;
 
 	/* Enable WriteBooster */
@@ -676,34 +677,34 @@ static int ufs_mtk_init(struct ufs_hba *hba)
 	hba->quirks |= UFSHCI_QUIRK_SKIP_MANUAL_WB_FLUSH_CTRL;
 	hba->vps->wb_flush_threshold = UFS_WB_BUF_REMAIN_PERCENT(80);
 
-	if (host->caps & UFS_MTK_CAP_DISABLE_AH8)
+	अगर (host->caps & UFS_MTK_CAP_DISABLE_AH8)
 		hba->caps |= UFSHCD_CAP_HIBERN8_WITH_CLK_GATING;
 
 	/*
 	 * ufshcd_vops_init() is invoked after
-	 * ufshcd_setup_clock(true) in ufshcd_hba_init() thus
-	 * phy clock setup is skipped.
+	 * ufshcd_setup_घड़ी(true) in ufshcd_hba_init() thus
+	 * phy घड़ी setup is skipped.
 	 *
-	 * Enable phy clocks specifically here.
+	 * Enable phy घड़ीs specअगरically here.
 	 */
-	ufs_mtk_mphy_power_on(hba, true);
-	ufs_mtk_setup_clocks(hba, true, POST_CHANGE);
+	ufs_mtk_mphy_घातer_on(hba, true);
+	ufs_mtk_setup_घड़ीs(hba, true, POST_CHANGE);
 
-	goto out;
+	जाओ out;
 
 out_variant_clear:
-	ufshcd_set_variant(hba, NULL);
+	ufshcd_set_variant(hba, शून्य);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ufs_mtk_pre_pwr_change(struct ufs_hba *hba,
-				  struct ufs_pa_layer_attr *dev_max_params,
-				  struct ufs_pa_layer_attr *dev_req_params)
-{
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
-	struct ufs_dev_params host_cap;
-	int ret;
+अटल पूर्णांक ufs_mtk_pre_pwr_change(काष्ठा ufs_hba *hba,
+				  काष्ठा ufs_pa_layer_attr *dev_max_params,
+				  काष्ठा ufs_pa_layer_attr *dev_req_params)
+अणु
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
+	काष्ठा ufs_dev_params host_cap;
+	पूर्णांक ret;
 
 	ufshcd_init_pwr_dev_param(&host_cap);
 	host_cap.hs_rx_gear = UFS_HS_G4;
@@ -712,285 +713,285 @@ static int ufs_mtk_pre_pwr_change(struct ufs_hba *hba,
 	ret = ufshcd_get_pwr_dev_param(&host_cap,
 				       dev_max_params,
 				       dev_req_params);
-	if (ret) {
+	अगर (ret) अणु
 		pr_info("%s: failed to determine capabilities\n",
 			__func__);
-	}
+	पूर्ण
 
-	if (host->hw_ver.major >= 3) {
+	अगर (host->hw_ver.major >= 3) अणु
 		ret = ufshcd_dme_configure_adapt(hba,
 					   dev_req_params->gear_tx,
 					   PA_INITIAL_ADAPT);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufs_mtk_pwr_change_notify(struct ufs_hba *hba,
-				     enum ufs_notify_change_status stage,
-				     struct ufs_pa_layer_attr *dev_max_params,
-				     struct ufs_pa_layer_attr *dev_req_params)
-{
-	int ret = 0;
+अटल पूर्णांक ufs_mtk_pwr_change_notअगरy(काष्ठा ufs_hba *hba,
+				     क्रमागत ufs_notअगरy_change_status stage,
+				     काष्ठा ufs_pa_layer_attr *dev_max_params,
+				     काष्ठा ufs_pa_layer_attr *dev_req_params)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (stage) {
-	case PRE_CHANGE:
+	चयन (stage) अणु
+	हाल PRE_CHANGE:
 		ret = ufs_mtk_pre_pwr_change(hba, dev_max_params,
 					     dev_req_params);
-		break;
-	case POST_CHANGE:
-		break;
-	default:
+		अवरोध;
+	हाल POST_CHANGE:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufs_mtk_unipro_set_lpm(struct ufs_hba *hba, bool lpm)
-{
-	int ret;
-	struct ufs_mtk_host *host = ufshcd_get_variant(hba);
+अटल पूर्णांक ufs_mtk_unipro_set_lpm(काष्ठा ufs_hba *hba, bool lpm)
+अणु
+	पूर्णांक ret;
+	काष्ठा ufs_mtk_host *host = ufshcd_get_variant(hba);
 
 	ret = ufshcd_dme_set(hba,
 			     UIC_ARG_MIB_SEL(VS_UNIPROPOWERDOWNCONTROL, 0),
 			     lpm ? 1 : 0);
-	if (!ret || !lpm) {
+	अगर (!ret || !lpm) अणु
 		/*
-		 * Forcibly set as non-LPM mode if UIC commands is failed
-		 * to use default hba_enable_delay_us value for re-enabling
+		 * Forcibly set as non-LPM mode अगर UIC commands is failed
+		 * to use शेष hba_enable_delay_us value क्रम re-enabling
 		 * the host.
 		 */
 		host->unipro_lpm = lpm;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufs_mtk_pre_link(struct ufs_hba *hba)
-{
-	int ret;
-	u32 tmp;
+अटल पूर्णांक ufs_mtk_pre_link(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक ret;
+	u32 पंचांगp;
 
 	ufs_mtk_get_controller_version(hba);
 
 	ret = ufs_mtk_unipro_set_lpm(hba, false);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Setting PA_Local_TX_LCC_Enable to 0 before link startup
+	 * Setting PA_Local_TX_LCC_Enable to 0 beक्रमe link startup
 	 * to make sure that both host and device TX LCC are disabled
 	 * once link startup is completed.
 	 */
 	ret = ufshcd_disable_host_tx_lcc(hba);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* disable deep stall */
-	ret = ufshcd_dme_get(hba, UIC_ARG_MIB(VS_SAVEPOWERCONTROL), &tmp);
-	if (ret)
-		return ret;
+	ret = ufshcd_dme_get(hba, UIC_ARG_MIB(VS_SAVEPOWERCONTROL), &पंचांगp);
+	अगर (ret)
+		वापस ret;
 
-	tmp &= ~(1 << 6);
+	पंचांगp &= ~(1 << 6);
 
-	ret = ufshcd_dme_set(hba, UIC_ARG_MIB(VS_SAVEPOWERCONTROL), tmp);
+	ret = ufshcd_dme_set(hba, UIC_ARG_MIB(VS_SAVEPOWERCONTROL), पंचांगp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ufs_mtk_setup_clk_gating(struct ufs_hba *hba)
-{
-	unsigned long flags;
+अटल व्योम ufs_mtk_setup_clk_gating(काष्ठा ufs_hba *hba)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 ah_ms;
 
-	if (ufshcd_is_clkgating_allowed(hba)) {
-		if (ufshcd_is_auto_hibern8_supported(hba) && hba->ahit)
+	अगर (ufshcd_is_clkgating_allowed(hba)) अणु
+		अगर (ufshcd_is_स्वतः_hibern8_supported(hba) && hba->ahit)
 			ah_ms = FIELD_GET(UFSHCI_AHIBERN8_TIMER_MASK,
 					  hba->ahit);
-		else
+		अन्यथा
 			ah_ms = 10;
 		spin_lock_irqsave(hba->host->host_lock, flags);
 		hba->clk_gating.delay_ms = ah_ms + 5;
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ufs_mtk_post_link(struct ufs_hba *hba)
-{
-	/* enable unipro clock gating feature */
+अटल पूर्णांक ufs_mtk_post_link(काष्ठा ufs_hba *hba)
+अणु
+	/* enable unipro घड़ी gating feature */
 	ufs_mtk_cfg_unipro_cg(hba, true);
 
-	/* configure auto-hibern8 timer to 10ms */
-	if (ufshcd_is_auto_hibern8_supported(hba)) {
-		ufshcd_auto_hibern8_update(hba,
+	/* configure स्वतः-hibern8 समयr to 10ms */
+	अगर (ufshcd_is_स्वतः_hibern8_supported(hba)) अणु
+		ufshcd_स्वतः_hibern8_update(hba,
 			FIELD_PREP(UFSHCI_AHIBERN8_TIMER_MASK, 10) |
 			FIELD_PREP(UFSHCI_AHIBERN8_SCALE_MASK, 3));
-	}
+	पूर्ण
 
 	ufs_mtk_setup_clk_gating(hba);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ufs_mtk_link_startup_notify(struct ufs_hba *hba,
-				       enum ufs_notify_change_status stage)
-{
-	int ret = 0;
+अटल पूर्णांक ufs_mtk_link_startup_notअगरy(काष्ठा ufs_hba *hba,
+				       क्रमागत ufs_notअगरy_change_status stage)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (stage) {
-	case PRE_CHANGE:
+	चयन (stage) अणु
+	हाल PRE_CHANGE:
 		ret = ufs_mtk_pre_link(hba);
-		break;
-	case POST_CHANGE:
+		अवरोध;
+	हाल POST_CHANGE:
 		ret = ufs_mtk_post_link(hba);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ufs_mtk_device_reset(struct ufs_hba *hba)
-{
-	struct arm_smccc_res res;
+अटल पूर्णांक ufs_mtk_device_reset(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा arm_smccc_res res;
 
 	ufs_mtk_device_reset_ctrl(0, res);
 
 	/*
-	 * The reset signal is active low. UFS devices shall detect
+	 * The reset संकेत is active low. UFS devices shall detect
 	 * more than or equal to 1us of positive or negative RST_n
 	 * pulse width.
 	 *
-	 * To be on safe side, keep the reset low for at least 10us.
+	 * To be on safe side, keep the reset low क्रम at least 10us.
 	 */
 	usleep_range(10, 15);
 
 	ufs_mtk_device_reset_ctrl(1, res);
 
-	/* Some devices may need time to respond to rst_n */
+	/* Some devices may need समय to respond to rst_n */
 	usleep_range(10000, 15000);
 
 	dev_info(hba->dev, "device reset done\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ufs_mtk_link_set_hpm(struct ufs_hba *hba)
-{
-	int err;
+अटल पूर्णांक ufs_mtk_link_set_hpm(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
 
 	err = ufshcd_hba_enable(hba);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = ufs_mtk_unipro_set_lpm(hba, false);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = ufshcd_uic_hibern8_exit(hba);
-	if (!err)
+	err = ufshcd_uic_hibern8_निकास(hba);
+	अगर (!err)
 		ufshcd_set_link_active(hba);
-	else
-		return err;
+	अन्यथा
+		वापस err;
 
 	err = ufshcd_make_hba_operational(hba);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ufs_mtk_link_set_lpm(struct ufs_hba *hba)
-{
-	int err;
+अटल पूर्णांक ufs_mtk_link_set_lpm(काष्ठा ufs_hba *hba)
+अणु
+	पूर्णांक err;
 
 	err = ufs_mtk_unipro_set_lpm(hba, true);
-	if (err) {
-		/* Resume UniPro state for following error recovery */
+	अगर (err) अणु
+		/* Resume UniPro state क्रम following error recovery */
 		ufs_mtk_unipro_set_lpm(hba, false);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ufs_mtk_vreg_set_lpm(struct ufs_hba *hba, bool lpm)
-{
-	if (!hba->vreg_info.vccq2 || !hba->vreg_info.vcc)
-		return;
+अटल व्योम ufs_mtk_vreg_set_lpm(काष्ठा ufs_hba *hba, bool lpm)
+अणु
+	अगर (!hba->vreg_info.vccq2 || !hba->vreg_info.vcc)
+		वापस;
 
-	if (lpm && !hba->vreg_info.vcc->enabled)
+	अगर (lpm && !hba->vreg_info.vcc->enabled)
 		regulator_set_mode(hba->vreg_info.vccq2->reg,
 				   REGULATOR_MODE_IDLE);
-	else if (!lpm)
+	अन्यथा अगर (!lpm)
 		regulator_set_mode(hba->vreg_info.vccq2->reg,
 				   REGULATOR_MODE_NORMAL);
-}
+पूर्ण
 
-static int ufs_mtk_suspend(struct ufs_hba *hba, enum ufs_pm_op pm_op)
-{
-	int err;
-	struct arm_smccc_res res;
+अटल पूर्णांक ufs_mtk_suspend(काष्ठा ufs_hba *hba, क्रमागत ufs_pm_op pm_op)
+अणु
+	पूर्णांक err;
+	काष्ठा arm_smccc_res res;
 
-	if (ufshcd_is_link_hibern8(hba)) {
+	अगर (ufshcd_is_link_hibern8(hba)) अणु
 		err = ufs_mtk_link_set_lpm(hba);
-		if (err)
-			goto fail;
-	}
+		अगर (err)
+			जाओ fail;
+	पूर्ण
 
-	if (!ufshcd_is_link_active(hba)) {
+	अगर (!ufshcd_is_link_active(hba)) अणु
 		/*
-		 * Make sure no error will be returned to prevent
-		 * ufshcd_suspend() re-enabling regulators while vreg is still
-		 * in low-power mode.
+		 * Make sure no error will be वापसed to prevent
+		 * ufshcd_suspend() re-enabling regulators जबतक vreg is still
+		 * in low-घातer mode.
 		 */
 		ufs_mtk_vreg_set_lpm(hba, true);
-		err = ufs_mtk_mphy_power_on(hba, false);
-		if (err)
-			goto fail;
-	}
+		err = ufs_mtk_mphy_घातer_on(hba, false);
+		अगर (err)
+			जाओ fail;
+	पूर्ण
 
-	if (ufshcd_is_link_off(hba))
+	अगर (ufshcd_is_link_off(hba))
 		ufs_mtk_device_reset_ctrl(0, res);
 
-	return 0;
+	वापस 0;
 fail:
 	/*
-	 * Set link as off state enforcedly to trigger
+	 * Set link as off state enक्रमcedly to trigger
 	 * ufshcd_host_reset_and_restore() in ufshcd_suspend()
-	 * for completed host reset.
+	 * क्रम completed host reset.
 	 */
 	ufshcd_set_link_off(hba);
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static int ufs_mtk_resume(struct ufs_hba *hba, enum ufs_pm_op pm_op)
-{
-	int err;
+अटल पूर्णांक ufs_mtk_resume(काष्ठा ufs_hba *hba, क्रमागत ufs_pm_op pm_op)
+अणु
+	पूर्णांक err;
 
-	err = ufs_mtk_mphy_power_on(hba, true);
-	if (err)
-		goto fail;
+	err = ufs_mtk_mphy_घातer_on(hba, true);
+	अगर (err)
+		जाओ fail;
 
 	ufs_mtk_vreg_set_lpm(hba, false);
 
-	if (ufshcd_is_link_hibern8(hba)) {
+	अगर (ufshcd_is_link_hibern8(hba)) अणु
 		err = ufs_mtk_link_set_hpm(hba);
-		if (err)
-			goto fail;
-	}
+		अगर (err)
+			जाओ fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 fail:
-	return ufshcd_link_recovery(hba);
-}
+	वापस ufshcd_link_recovery(hba);
+पूर्ण
 
-static void ufs_mtk_dbg_register_dump(struct ufs_hba *hba)
-{
+अटल व्योम ufs_mtk_dbg_रेजिस्टर_dump(काष्ठा ufs_hba *hba)
+अणु
 	ufshcd_dump_regs(hba, REG_UFS_REFCLK_CTRL, 0x4, "Ref-Clk Ctrl ");
 
 	ufshcd_dump_regs(hba, REG_UFS_EXTREG, 0x4, "Ext Reg ");
@@ -999,137 +1000,137 @@ static void ufs_mtk_dbg_register_dump(struct ufs_hba *hba)
 			 REG_UFS_REJECT_MON - REG_UFS_MPHYCTRL + 4,
 			 "MPHY Ctrl ");
 
-	/* Direct debugging information to REG_MTK_PROBE */
-	ufshcd_writel(hba, 0x20, REG_UFS_DEBUG_SEL);
+	/* Direct debugging inक्रमmation to REG_MTK_PROBE */
+	ufshcd_ग_लिखोl(hba, 0x20, REG_UFS_DEBUG_SEL);
 	ufshcd_dump_regs(hba, REG_UFS_PROBE, 0x4, "Debug Probe ");
-}
+पूर्ण
 
-static int ufs_mtk_apply_dev_quirks(struct ufs_hba *hba)
-{
-	struct ufs_dev_info *dev_info = &hba->dev_info;
+अटल पूर्णांक ufs_mtk_apply_dev_quirks(काष्ठा ufs_hba *hba)
+अणु
+	काष्ठा ufs_dev_info *dev_info = &hba->dev_info;
 	u16 mid = dev_info->wmanufacturerid;
 
-	if (mid == UFS_VENDOR_SAMSUNG)
+	अगर (mid == UFS_VENDOR_SAMSUNG)
 		ufshcd_dme_set(hba, UIC_ARG_MIB(PA_TACTIVATE), 6);
 
 	/*
-	 * Decide waiting time before gating reference clock and
-	 * after ungating reference clock according to vendors'
+	 * Decide रुकोing समय beक्रमe gating reference घड़ी and
+	 * after ungating reference घड़ी according to venकरोrs'
 	 * requirements.
 	 */
-	if (mid == UFS_VENDOR_SAMSUNG)
-		ufs_mtk_setup_ref_clk_wait_us(hba, 1, 1);
-	else if (mid == UFS_VENDOR_SKHYNIX)
-		ufs_mtk_setup_ref_clk_wait_us(hba, 30, 30);
-	else if (mid == UFS_VENDOR_TOSHIBA)
-		ufs_mtk_setup_ref_clk_wait_us(hba, 100, 32);
+	अगर (mid == UFS_VENDOR_SAMSUNG)
+		ufs_mtk_setup_ref_clk_रुको_us(hba, 1, 1);
+	अन्यथा अगर (mid == UFS_VENDOR_SKHYNIX)
+		ufs_mtk_setup_ref_clk_रुको_us(hba, 30, 30);
+	अन्यथा अगर (mid == UFS_VENDOR_TOSHIBA)
+		ufs_mtk_setup_ref_clk_रुको_us(hba, 100, 32);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ufs_mtk_fixup_dev_quirks(struct ufs_hba *hba)
-{
+अटल व्योम ufs_mtk_fixup_dev_quirks(काष्ठा ufs_hba *hba)
+अणु
 	ufshcd_fixup_dev_quirks(hba, ufs_mtk_dev_fixups);
 
-	if (ufs_mtk_is_broken_vcc(hba) && hba->vreg_info.vcc &&
-	    (hba->dev_quirks & UFS_DEVICE_QUIRK_DELAY_AFTER_LPM)) {
+	अगर (ufs_mtk_is_broken_vcc(hba) && hba->vreg_info.vcc &&
+	    (hba->dev_quirks & UFS_DEVICE_QUIRK_DELAY_AFTER_LPM)) अणु
 		hba->vreg_info.vcc->always_on = true;
 		/*
-		 * VCC will be kept always-on thus we don't
+		 * VCC will be kept always-on thus we करोn't
 		 * need any delay during regulator operations
 		 */
 		hba->dev_quirks &= ~(UFS_DEVICE_QUIRK_DELAY_BEFORE_LPM |
 			UFS_DEVICE_QUIRK_DELAY_AFTER_LPM);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ufs_mtk_event_notify(struct ufs_hba *hba,
-				 enum ufs_event_type evt, void *data)
-{
-	unsigned int val = *(u32 *)data;
+अटल व्योम ufs_mtk_event_notअगरy(काष्ठा ufs_hba *hba,
+				 क्रमागत ufs_event_type evt, व्योम *data)
+अणु
+	अचिन्हित पूर्णांक val = *(u32 *)data;
 
 	trace_ufs_mtk_event(evt, val);
-}
+पूर्ण
 
 /*
- * struct ufs_hba_mtk_vops - UFS MTK specific variant operations
+ * काष्ठा ufs_hba_mtk_vops - UFS MTK specअगरic variant operations
  *
  * The variant operations configure the necessary controller and PHY
  * handshake during initialization.
  */
-static const struct ufs_hba_variant_ops ufs_hba_mtk_vops = {
+अटल स्थिर काष्ठा ufs_hba_variant_ops ufs_hba_mtk_vops = अणु
 	.name                = "mediatek.ufshci",
 	.init                = ufs_mtk_init,
 	.get_ufs_hci_version = ufs_mtk_get_ufs_hci_version,
-	.setup_clocks        = ufs_mtk_setup_clocks,
-	.hce_enable_notify   = ufs_mtk_hce_enable_notify,
-	.link_startup_notify = ufs_mtk_link_startup_notify,
-	.pwr_change_notify   = ufs_mtk_pwr_change_notify,
+	.setup_घड़ीs        = ufs_mtk_setup_घड़ीs,
+	.hce_enable_notअगरy   = ufs_mtk_hce_enable_notअगरy,
+	.link_startup_notअगरy = ufs_mtk_link_startup_notअगरy,
+	.pwr_change_notअगरy   = ufs_mtk_pwr_change_notअगरy,
 	.apply_dev_quirks    = ufs_mtk_apply_dev_quirks,
 	.fixup_dev_quirks    = ufs_mtk_fixup_dev_quirks,
 	.suspend             = ufs_mtk_suspend,
 	.resume              = ufs_mtk_resume,
-	.dbg_register_dump   = ufs_mtk_dbg_register_dump,
+	.dbg_रेजिस्टर_dump   = ufs_mtk_dbg_रेजिस्टर_dump,
 	.device_reset        = ufs_mtk_device_reset,
-	.event_notify        = ufs_mtk_event_notify,
-};
+	.event_notअगरy        = ufs_mtk_event_notअगरy,
+पूर्ण;
 
 /**
  * ufs_mtk_probe - probe routine of the driver
- * @pdev: pointer to Platform device handle
+ * @pdev: poपूर्णांकer to Platक्रमm device handle
  *
- * Return zero for success and non-zero for failure
+ * Return zero क्रम success and non-zero क्रम failure
  */
-static int ufs_mtk_probe(struct platform_device *pdev)
-{
-	int err;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक ufs_mtk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक err;
+	काष्ठा device *dev = &pdev->dev;
 
-	/* perform generic probe */
+	/* perक्रमm generic probe */
 	err = ufshcd_pltfrm_init(pdev, &ufs_hba_mtk_vops);
-	if (err)
+	अगर (err)
 		dev_info(dev, "probe failed %d\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ufs_mtk_remove - set driver_data of the device to NULL
- * @pdev: pointer to platform device handle
+ * ufs_mtk_हटाओ - set driver_data of the device to शून्य
+ * @pdev: poपूर्णांकer to platक्रमm device handle
  *
- * Always return 0
+ * Always वापस 0
  */
-static int ufs_mtk_remove(struct platform_device *pdev)
-{
-	struct ufs_hba *hba =  platform_get_drvdata(pdev);
+अटल पूर्णांक ufs_mtk_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ufs_hba *hba =  platक्रमm_get_drvdata(pdev);
 
-	pm_runtime_get_sync(&(pdev)->dev);
-	ufshcd_remove(hba);
-	return 0;
-}
+	pm_runसमय_get_sync(&(pdev)->dev);
+	ufshcd_हटाओ(hba);
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops ufs_mtk_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops ufs_mtk_pm_ops = अणु
 	.suspend         = ufshcd_pltfrm_suspend,
 	.resume          = ufshcd_pltfrm_resume,
-	.runtime_suspend = ufshcd_pltfrm_runtime_suspend,
-	.runtime_resume  = ufshcd_pltfrm_runtime_resume,
-	.runtime_idle    = ufshcd_pltfrm_runtime_idle,
-};
+	.runसमय_suspend = ufshcd_pltfrm_runसमय_suspend,
+	.runसमय_resume  = ufshcd_pltfrm_runसमय_resume,
+	.runसमय_idle    = ufshcd_pltfrm_runसमय_idle,
+पूर्ण;
 
-static struct platform_driver ufs_mtk_pltform = {
+अटल काष्ठा platक्रमm_driver ufs_mtk_pltक्रमm = अणु
 	.probe      = ufs_mtk_probe,
-	.remove     = ufs_mtk_remove,
-	.shutdown   = ufshcd_pltfrm_shutdown,
-	.driver = {
+	.हटाओ     = ufs_mtk_हटाओ,
+	.shutकरोwn   = ufshcd_pltfrm_shutकरोwn,
+	.driver = अणु
 		.name   = "ufshcd-mtk",
 		.pm     = &ufs_mtk_pm_ops,
 		.of_match_table = ufs_mtk_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 MODULE_AUTHOR("Stanley Chu <stanley.chu@mediatek.com>");
 MODULE_AUTHOR("Peter Wang <peter.wang@mediatek.com>");
 MODULE_DESCRIPTION("MediaTek UFS Host Driver");
 MODULE_LICENSE("GPL v2");
 
-module_platform_driver(ufs_mtk_pltform);
+module_platक्रमm_driver(ufs_mtk_pltक्रमm);

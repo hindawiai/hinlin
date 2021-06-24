@@ -1,9 +1,10 @@
+<शैली गुरु>
 /**
- * \file mga_ioc32.c
+ * \पile mga_ioc32.c
  *
- * 32-bit ioctl compatibility routines for the MGA DRM.
+ * 32-bit ioctl compatibility routines क्रम the MGA DRM.
  *
- * \author Dave Airlie <airlied@linux.ie> with code from patches by Egbert Eich
+ * \चuthor Dave Airlie <airlied@linux.ie> with code from patches by Egbert Eich
  *
  *
  * Copyright (C) Paul Mackerras 2005
@@ -11,12 +12,12 @@
  * Copyright (C) Dave Airlie 2005
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -31,40 +32,40 @@
  * IN THE SOFTWARE.
  */
 
-#include <linux/compat.h>
+#समावेश <linux/compat.h>
 
-#include <drm/drm.h>
-#include <drm/drm_ioctl.h>
+#समावेश <drm/drm.h>
+#समावेश <drm/drm_ioctl.h>
 
-#include "nouveau_ioctl.h"
+#समावेश "nouveau_ioctl.h"
 
 /**
  * Called whenever a 32-bit process running under a 64-bit kernel
- * performs an ioctl on /dev/dri/card<n>.
+ * perक्रमms an ioctl on /dev/dri/card<n>.
  *
- * \param filp file pointer.
+ * \param filp file poपूर्णांकer.
  * \param cmd command.
  * \param arg user argument.
- * \return zero on success or negative number on failure.
+ * \लeturn zero on success or negative number on failure.
  */
-long nouveau_compat_ioctl(struct file *filp, unsigned int cmd,
-			 unsigned long arg)
-{
-	unsigned int nr = DRM_IOCTL_NR(cmd);
-	drm_ioctl_compat_t *fn = NULL;
-	int ret;
+दीर्घ nouveau_compat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
+			 अचिन्हित दीर्घ arg)
+अणु
+	अचिन्हित पूर्णांक nr = DRM_IOCTL_NR(cmd);
+	drm_ioctl_compat_t *fn = शून्य;
+	पूर्णांक ret;
 
-	if (nr < DRM_COMMAND_BASE)
-		return drm_compat_ioctl(filp, cmd, arg);
+	अगर (nr < DRM_COMMAND_BASE)
+		वापस drm_compat_ioctl(filp, cmd, arg);
 
-#if 0
-	if (nr < DRM_COMMAND_BASE + ARRAY_SIZE(mga_compat_ioctls))
+#अगर 0
+	अगर (nr < DRM_COMMAND_BASE + ARRAY_SIZE(mga_compat_ioctls))
 		fn = nouveau_compat_ioctls[nr - DRM_COMMAND_BASE];
-#endif
-	if (fn != NULL)
+#पूर्ण_अगर
+	अगर (fn != शून्य)
 		ret = (*fn)(filp, cmd, arg);
-	else
+	अन्यथा
 		ret = nouveau_drm_ioctl(filp, cmd, arg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

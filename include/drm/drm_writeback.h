@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * (C) COPYRIGHT 2016 ARM Limited. All rights reserved.
  * Author: Brian Starkey <brian.starkey@arm.com>
  *
- * This program is free software and is provided to you under the terms of the
+ * This program is मुक्त software and is provided to you under the terms of the
  * GNU General Public License version 2 as published by the Free Software
  * Foundation, and any use by you of this program is subject to the terms
  * of such GNU licence.
  */
 
-#ifndef __DRM_WRITEBACK_H__
-#define __DRM_WRITEBACK_H__
-#include <drm/drm_connector.h>
-#include <drm/drm_encoder.h>
-#include <linux/workqueue.h>
+#अगर_अघोषित __DRM_WRITEBACK_H__
+#घोषणा __DRM_WRITEBACK_H__
+#समावेश <drm/drm_connector.h>
+#समावेश <drm/drm_encoder.h>
+#समावेश <linux/workqueue.h>
 
 /**
- * struct drm_writeback_connector - DRM writeback connector
+ * काष्ठा drm_ग_लिखोback_connector - DRM ग_लिखोback connector
  */
-struct drm_writeback_connector {
+काष्ठा drm_ग_लिखोback_connector अणु
 	/**
 	 * @base: base drm_connector object
 	 */
-	struct drm_connector base;
+	काष्ठा drm_connector base;
 
 	/**
 	 * @encoder: Internal encoder used by the connector to fulfill
 	 * the DRM framework requirements. The users of the
-	 * @drm_writeback_connector control the behaviour of the @encoder
-	 * by passing the @enc_funcs parameter to drm_writeback_connector_init()
+	 * @drm_ग_लिखोback_connector control the behaviour of the @encoder
+	 * by passing the @enc_funcs parameter to drm_ग_लिखोback_connector_init()
 	 * function.
 	 */
-	struct drm_encoder encoder;
+	काष्ठा drm_encoder encoder;
 
 	/**
-	 * @pixel_formats_blob_ptr:
+	 * @pixel_क्रमmats_blob_ptr:
 	 *
-	 * DRM blob property data for the pixel formats list on writeback
+	 * DRM blob property data क्रम the pixel क्रमmats list on ग_लिखोback
 	 * connectors
-	 * See also drm_writeback_connector_init()
+	 * See also drm_ग_लिखोback_connector_init()
 	 */
-	struct drm_property_blob *pixel_formats_blob_ptr;
+	काष्ठा drm_property_blob *pixel_क्रमmats_blob_ptr;
 
 	/** @job_lock: Protects job_queue */
 	spinlock_t job_lock;
@@ -48,21 +49,21 @@ struct drm_writeback_connector {
 	/**
 	 * @job_queue:
 	 *
-	 * Holds a list of a connector's writeback jobs; the last item is the
-	 * most recent. The first item may be either waiting for the hardware
+	 * Holds a list of a connector's ग_लिखोback jobs; the last item is the
+	 * most recent. The first item may be either रुकोing क्रम the hardware
 	 * to begin writing, or currently being written.
 	 *
-	 * See also: drm_writeback_queue_job() and
-	 * drm_writeback_signal_completion()
+	 * See also: drm_ग_लिखोback_queue_job() and
+	 * drm_ग_लिखोback_संकेत_completion()
 	 */
-	struct list_head job_queue;
+	काष्ठा list_head job_queue;
 
 	/**
 	 * @fence_context:
 	 *
-	 * timeline context used for fence operations.
+	 * समयline context used क्रम fence operations.
 	 */
-	unsigned int fence_context;
+	अचिन्हित पूर्णांक fence_context;
 	/**
 	 * @fence_lock:
 	 *
@@ -72,100 +73,100 @@ struct drm_writeback_connector {
 	/**
 	 * @fence_seqno:
 	 *
-	 * Seqno variable used as monotonic counter for the fences
-	 * created on the connector's timeline.
+	 * Seqno variable used as monotonic counter क्रम the fences
+	 * created on the connector's समयline.
 	 */
-	unsigned long fence_seqno;
+	अचिन्हित दीर्घ fence_seqno;
 	/**
-	 * @timeline_name:
+	 * @समयline_name:
 	 *
-	 * The name of the connector's fence timeline.
+	 * The name of the connector's fence समयline.
 	 */
-	char timeline_name[32];
-};
+	अक्षर समयline_name[32];
+पूर्ण;
 
 /**
- * struct drm_writeback_job - DRM writeback job
+ * काष्ठा drm_ग_लिखोback_job - DRM ग_लिखोback job
  */
-struct drm_writeback_job {
+काष्ठा drm_ग_लिखोback_job अणु
 	/**
 	 * @connector:
 	 *
-	 * Back-pointer to the writeback connector associated with the job
+	 * Back-poपूर्णांकer to the ग_लिखोback connector associated with the job
 	 */
-	struct drm_writeback_connector *connector;
+	काष्ठा drm_ग_लिखोback_connector *connector;
 
 	/**
 	 * @prepared:
 	 *
-	 * Set when the job has been prepared with drm_writeback_prepare_job()
+	 * Set when the job has been prepared with drm_ग_लिखोback_prepare_job()
 	 */
 	bool prepared;
 
 	/**
 	 * @cleanup_work:
 	 *
-	 * Used to allow drm_writeback_signal_completion to defer dropping the
+	 * Used to allow drm_ग_लिखोback_संकेत_completion to defer dropping the
 	 * framebuffer reference to a workqueue
 	 */
-	struct work_struct cleanup_work;
+	काष्ठा work_काष्ठा cleanup_work;
 
 	/**
 	 * @list_entry:
 	 *
-	 * List item for the writeback connector's @job_queue
+	 * List item क्रम the ग_लिखोback connector's @job_queue
 	 */
-	struct list_head list_entry;
+	काष्ठा list_head list_entry;
 
 	/**
 	 * @fb:
 	 *
-	 * Framebuffer to be written to by the writeback connector. Do not set
-	 * directly, use drm_writeback_set_fb()
+	 * Framebuffer to be written to by the ग_लिखोback connector. Do not set
+	 * directly, use drm_ग_लिखोback_set_fb()
 	 */
-	struct drm_framebuffer *fb;
+	काष्ठा drm_framebuffer *fb;
 
 	/**
 	 * @out_fence:
 	 *
-	 * Fence which will signal once the writeback has completed
+	 * Fence which will संकेत once the ग_लिखोback has completed
 	 */
-	struct dma_fence *out_fence;
+	काष्ठा dma_fence *out_fence;
 
 	/**
 	 * @priv:
 	 *
-	 * Driver-private data
+	 * Driver-निजी data
 	 */
-	void *priv;
-};
+	व्योम *priv;
+पूर्ण;
 
-static inline struct drm_writeback_connector *
-drm_connector_to_writeback(struct drm_connector *connector)
-{
-	return container_of(connector, struct drm_writeback_connector, base);
-}
+अटल अंतरभूत काष्ठा drm_ग_लिखोback_connector *
+drm_connector_to_ग_लिखोback(काष्ठा drm_connector *connector)
+अणु
+	वापस container_of(connector, काष्ठा drm_ग_लिखोback_connector, base);
+पूर्ण
 
-int drm_writeback_connector_init(struct drm_device *dev,
-				 struct drm_writeback_connector *wb_connector,
-				 const struct drm_connector_funcs *con_funcs,
-				 const struct drm_encoder_helper_funcs *enc_helper_funcs,
-				 const u32 *formats, int n_formats);
+पूर्णांक drm_ग_लिखोback_connector_init(काष्ठा drm_device *dev,
+				 काष्ठा drm_ग_लिखोback_connector *wb_connector,
+				 स्थिर काष्ठा drm_connector_funcs *con_funcs,
+				 स्थिर काष्ठा drm_encoder_helper_funcs *enc_helper_funcs,
+				 स्थिर u32 *क्रमmats, पूर्णांक n_क्रमmats);
 
-int drm_writeback_set_fb(struct drm_connector_state *conn_state,
-			 struct drm_framebuffer *fb);
+पूर्णांक drm_ग_लिखोback_set_fb(काष्ठा drm_connector_state *conn_state,
+			 काष्ठा drm_framebuffer *fb);
 
-int drm_writeback_prepare_job(struct drm_writeback_job *job);
+पूर्णांक drm_ग_लिखोback_prepare_job(काष्ठा drm_ग_लिखोback_job *job);
 
-void drm_writeback_queue_job(struct drm_writeback_connector *wb_connector,
-			     struct drm_connector_state *conn_state);
+व्योम drm_ग_लिखोback_queue_job(काष्ठा drm_ग_लिखोback_connector *wb_connector,
+			     काष्ठा drm_connector_state *conn_state);
 
-void drm_writeback_cleanup_job(struct drm_writeback_job *job);
+व्योम drm_ग_लिखोback_cleanup_job(काष्ठा drm_ग_लिखोback_job *job);
 
-void
-drm_writeback_signal_completion(struct drm_writeback_connector *wb_connector,
-				int status);
+व्योम
+drm_ग_लिखोback_संकेत_completion(काष्ठा drm_ग_लिखोback_connector *wb_connector,
+				पूर्णांक status);
 
-struct dma_fence *
-drm_writeback_get_out_fence(struct drm_writeback_connector *wb_connector);
-#endif
+काष्ठा dma_fence *
+drm_ग_लिखोback_get_out_fence(काष्ठा drm_ग_लिखोback_connector *wb_connector);
+#पूर्ण_अगर

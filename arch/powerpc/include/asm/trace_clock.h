@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  * Copyright (C) 2015 Naveen N. Rao, IBM Corporation
  */
 
-#ifndef _ASM_PPC_TRACE_CLOCK_H
-#define _ASM_PPC_TRACE_CLOCK_H
+#अगर_अघोषित _ASM_PPC_TRACE_CLOCK_H
+#घोषणा _ASM_PPC_TRACE_CLOCK_H
 
-#include <linux/compiler.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/types.h>
 
-extern u64 notrace trace_clock_ppc_tb(void);
+बाह्य u64 notrace trace_घड़ी_ppc_tb(व्योम);
 
-#define ARCH_TRACE_CLOCKS { trace_clock_ppc_tb, "ppc-tb", 0 },
+#घोषणा ARCH_TRACE_CLOCKS अणु trace_घड़ी_ppc_tb, "ppc-tb", 0 पूर्ण,
 
-#endif  /* _ASM_PPC_TRACE_CLOCK_H */
+#पूर्ण_अगर  /* _ASM_PPC_TRACE_CLOCK_H */

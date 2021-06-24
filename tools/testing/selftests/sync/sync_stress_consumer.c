@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  sync stress test: producer/consumer
  *  Copyright 2015-2016 Collabora Ltd.
@@ -6,12 +7,12 @@
  *
  *  Copyright 2012 Google, Inc
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a
- *  copy of this software and associated documentation files (the "Software"),
+ *  Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ *  copy of this software and associated करोcumentation files (the "Software"),
  *  to deal in the Software without restriction, including without limitation
- *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- *  Software is furnished to do so, subject to the following conditions:
+ *  Software is furnished to करो so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
@@ -25,161 +26,161 @@
  *  OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <pthread.h>
+#समावेश <pthपढ़ो.h>
 
-#include "sync.h"
-#include "sw_sync.h"
-#include "synctest.h"
+#समावेश "sync.h"
+#समावेश "sw_sync.h"
+#समावेश "synctest.h"
 
-/* IMPORTANT NOTE: if you see this test failing on your system, it may be
- * due to a shortage of file descriptors. Please ensure your system has
- * a sensible limit for this test to finish correctly.
+/* IMPORTANT NOTE: अगर you see this test failing on your प्रणाली, it may be
+ * due to a लघुage of file descriptors. Please ensure your प्रणाली has
+ * a sensible limit क्रम this test to finish correctly.
  */
 
 /* Returns 1 on error, 0 on success */
-static int busy_wait_on_fence(int fence)
-{
-	int error, active;
+अटल पूर्णांक busy_रुको_on_fence(पूर्णांक fence)
+अणु
+	पूर्णांक error, active;
 
-	do {
+	करो अणु
 		error = sync_fence_count_with_status(fence, FENCE_STATUS_ERROR);
 		ASSERT(error == 0, "Error occurred on fence\n");
 		active = sync_fence_count_with_status(fence,
 						      FENCE_STATUS_ACTIVE);
-	} while (active);
+	पूर्ण जबतक (active);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct {
-	int iterations;
-	int threads;
-	int counter;
-	int consumer_timeline;
-	int *producer_timelines;
-	pthread_mutex_t lock;
-} test_data_mpsc;
+अटल काष्ठा अणु
+	पूर्णांक iterations;
+	पूर्णांक thपढ़ोs;
+	पूर्णांक counter;
+	पूर्णांक consumer_समयline;
+	पूर्णांक *producer_समयlines;
+	pthपढ़ो_mutex_t lock;
+पूर्ण test_data_mpsc;
 
-static int mpsc_producer_thread(void *d)
-{
-	int id = (long)d;
-	int fence, valid, i;
-	int *producer_timelines = test_data_mpsc.producer_timelines;
-	int consumer_timeline = test_data_mpsc.consumer_timeline;
-	int iterations = test_data_mpsc.iterations;
+अटल पूर्णांक mpsc_producer_thपढ़ो(व्योम *d)
+अणु
+	पूर्णांक id = (दीर्घ)d;
+	पूर्णांक fence, valid, i;
+	पूर्णांक *producer_समयlines = test_data_mpsc.producer_समयlines;
+	पूर्णांक consumer_समयline = test_data_mpsc.consumer_समयline;
+	पूर्णांक iterations = test_data_mpsc.iterations;
 
-	for (i = 0; i < iterations; i++) {
-		fence = sw_sync_fence_create(consumer_timeline, "fence", i);
+	क्रम (i = 0; i < iterations; i++) अणु
+		fence = sw_sync_fence_create(consumer_समयline, "fence", i);
 		valid = sw_sync_fence_is_valid(fence);
 		ASSERT(valid, "Failure creating fence\n");
 
 		/*
-		 * Wait for the consumer to finish. Use alternate
-		 * means of waiting on the fence
+		 * Wait क्रम the consumer to finish. Use alternate
+		 * means of रुकोing on the fence
 		 */
 
-		if ((iterations + id) % 8 != 0) {
-			ASSERT(sync_wait(fence, -1) > 0,
+		अगर ((iterations + id) % 8 != 0) अणु
+			ASSERT(sync_रुको(fence, -1) > 0,
 			       "Failure waiting on fence\n");
-		} else {
-			ASSERT(busy_wait_on_fence(fence) == 0,
+		पूर्ण अन्यथा अणु
+			ASSERT(busy_रुको_on_fence(fence) == 0,
 			       "Failure waiting on fence\n");
-		}
+		पूर्ण
 
 		/*
 		 * Every producer increments the counter, the consumer
 		 * checks and erases it
 		 */
-		pthread_mutex_lock(&test_data_mpsc.lock);
+		pthपढ़ो_mutex_lock(&test_data_mpsc.lock);
 		test_data_mpsc.counter++;
-		pthread_mutex_unlock(&test_data_mpsc.lock);
+		pthपढ़ो_mutex_unlock(&test_data_mpsc.lock);
 
-		ASSERT(sw_sync_timeline_inc(producer_timelines[id], 1) == 0,
+		ASSERT(sw_sync_समयline_inc(producer_समयlines[id], 1) == 0,
 		       "Error advancing producer timeline\n");
 
 		sw_sync_fence_destroy(fence);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mpcs_consumer_thread(void)
-{
-	int fence, merged, tmp, valid, it, i;
-	int *producer_timelines = test_data_mpsc.producer_timelines;
-	int consumer_timeline = test_data_mpsc.consumer_timeline;
-	int iterations = test_data_mpsc.iterations;
-	int n = test_data_mpsc.threads;
+अटल पूर्णांक mpcs_consumer_thपढ़ो(व्योम)
+अणु
+	पूर्णांक fence, merged, पंचांगp, valid, it, i;
+	पूर्णांक *producer_समयlines = test_data_mpsc.producer_समयlines;
+	पूर्णांक consumer_समयline = test_data_mpsc.consumer_समयline;
+	पूर्णांक iterations = test_data_mpsc.iterations;
+	पूर्णांक n = test_data_mpsc.thपढ़ोs;
 
-	for (it = 1; it <= iterations; it++) {
-		fence = sw_sync_fence_create(producer_timelines[0], "name", it);
-		for (i = 1; i < n; i++) {
-			tmp = sw_sync_fence_create(producer_timelines[i],
+	क्रम (it = 1; it <= iterations; it++) अणु
+		fence = sw_sync_fence_create(producer_समयlines[0], "name", it);
+		क्रम (i = 1; i < n; i++) अणु
+			पंचांगp = sw_sync_fence_create(producer_समयlines[i],
 						   "name", it);
-			merged = sync_merge("name", tmp, fence);
-			sw_sync_fence_destroy(tmp);
+			merged = sync_merge("name", पंचांगp, fence);
+			sw_sync_fence_destroy(पंचांगp);
 			sw_sync_fence_destroy(fence);
 			fence = merged;
-		}
+		पूर्ण
 
 		valid = sw_sync_fence_is_valid(fence);
 		ASSERT(valid, "Failure merging fences\n");
 
 		/*
-		 * Make sure we see an increment from every producer thread.
-		 * Vary the means by which we wait.
+		 * Make sure we see an increment from every producer thपढ़ो.
+		 * Vary the means by which we रुको.
 		 */
-		if (iterations % 8 != 0) {
-			ASSERT(sync_wait(fence, -1) > 0,
+		अगर (iterations % 8 != 0) अणु
+			ASSERT(sync_रुको(fence, -1) > 0,
 			       "Producers did not increment as expected\n");
-		} else {
-			ASSERT(busy_wait_on_fence(fence) == 0,
+		पूर्ण अन्यथा अणु
+			ASSERT(busy_रुको_on_fence(fence) == 0,
 			       "Producers did not increment as expected\n");
-		}
+		पूर्ण
 
 		ASSERT(test_data_mpsc.counter == n * it,
 		       "Counter value mismatch!\n");
 
-		/* Release the producer threads */
-		ASSERT(sw_sync_timeline_inc(consumer_timeline, 1) == 0,
+		/* Release the producer thपढ़ोs */
+		ASSERT(sw_sync_समयline_inc(consumer_समयline, 1) == 0,
 		       "Failure releasing producer threads\n");
 
 		sw_sync_fence_destroy(fence);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int test_consumer_stress_multi_producer_single_consumer(void)
-{
-	int iterations = 1 << 12;
-	int n = 5;
-	long i, ret;
-	int producer_timelines[n];
-	int consumer_timeline;
-	pthread_t threads[n];
+पूर्णांक test_consumer_stress_multi_producer_single_consumer(व्योम)
+अणु
+	पूर्णांक iterations = 1 << 12;
+	पूर्णांक n = 5;
+	दीर्घ i, ret;
+	पूर्णांक producer_समयlines[n];
+	पूर्णांक consumer_समयline;
+	pthपढ़ो_t thपढ़ोs[n];
 
-	consumer_timeline = sw_sync_timeline_create();
-	for (i = 0; i < n; i++)
-		producer_timelines[i] = sw_sync_timeline_create();
+	consumer_समयline = sw_sync_समयline_create();
+	क्रम (i = 0; i < n; i++)
+		producer_समयlines[i] = sw_sync_समयline_create();
 
-	test_data_mpsc.producer_timelines = producer_timelines;
-	test_data_mpsc.consumer_timeline = consumer_timeline;
+	test_data_mpsc.producer_समयlines = producer_समयlines;
+	test_data_mpsc.consumer_समयline = consumer_समयline;
 	test_data_mpsc.iterations = iterations;
-	test_data_mpsc.threads = n;
+	test_data_mpsc.thपढ़ोs = n;
 	test_data_mpsc.counter = 0;
-	pthread_mutex_init(&test_data_mpsc.lock, NULL);
+	pthपढ़ो_mutex_init(&test_data_mpsc.lock, शून्य);
 
-	for (i = 0; i < n; i++) {
-		pthread_create(&threads[i], NULL, (void * (*)(void *))
-			       mpsc_producer_thread, (void *)i);
-	}
+	क्रम (i = 0; i < n; i++) अणु
+		pthपढ़ो_create(&thपढ़ोs[i], शून्य, (व्योम * (*)(व्योम *))
+			       mpsc_producer_thपढ़ो, (व्योम *)i);
+	पूर्ण
 
-	/* Consumer thread runs here */
-	ret = mpcs_consumer_thread();
+	/* Consumer thपढ़ो runs here */
+	ret = mpcs_consumer_thपढ़ो();
 
-	for (i = 0; i < n; i++)
-		pthread_join(threads[i], NULL);
+	क्रम (i = 0; i < n; i++)
+		pthपढ़ो_join(thपढ़ोs[i], शून्य);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2006-2008 Nokia Corporation
  *
- * Check MTD device read.
+ * Check MTD device पढ़ो.
  *
  * Author: Adrian Hunter <ext-adrian.hunter@nokia.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/err.h>
-#include <linux/mtd/mtd.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
 
-#include "mtd_test.h"
+#समावेश "mtd_test.h"
 
-static int dev = -EINVAL;
-module_param(dev, int, S_IRUGO);
+अटल पूर्णांक dev = -EINVAL;
+module_param(dev, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(dev, "MTD device number to use");
 
-static struct mtd_info *mtd;
-static unsigned char *iobuf;
-static unsigned char *iobuf1;
-static unsigned char *bbt;
+अटल काष्ठा mtd_info *mtd;
+अटल अचिन्हित अक्षर *iobuf;
+अटल अचिन्हित अक्षर *iobuf1;
+अटल अचिन्हित अक्षर *bbt;
 
-static int pgsize;
-static int ebcnt;
-static int pgcnt;
+अटल पूर्णांक pgsize;
+अटल पूर्णांक ebcnt;
+अटल पूर्णांक pgcnt;
 
-static int read_eraseblock_by_page(int ebnum)
-{
-	int i, ret, err = 0;
+अटल पूर्णांक पढ़ो_eraseblock_by_page(पूर्णांक ebnum)
+अणु
+	पूर्णांक i, ret, err = 0;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
-	void *buf = iobuf;
-	void *oobbuf = iobuf1;
+	व्योम *buf = iobuf;
+	व्योम *oobbuf = iobuf1;
 
-	for (i = 0; i < pgcnt; i++) {
-		memset(buf, 0 , pgsize);
-		ret = mtdtest_read(mtd, addr, pgsize, buf);
-		if (ret) {
-			if (!err)
+	क्रम (i = 0; i < pgcnt; i++) अणु
+		स_रखो(buf, 0 , pgsize);
+		ret = mtdtest_पढ़ो(mtd, addr, pgsize, buf);
+		अगर (ret) अणु
+			अगर (!err)
 				err = ret;
-		}
-		if (mtd->oobsize) {
-			struct mtd_oob_ops ops;
+		पूर्ण
+		अगर (mtd->oobsize) अणु
+			काष्ठा mtd_oob_ops ops;
 
 			ops.mode      = MTD_OPS_PLACE_OOB;
 			ops.len       = 0;
@@ -55,160 +56,160 @@ static int read_eraseblock_by_page(int ebnum)
 			ops.ooblen    = mtd->oobsize;
 			ops.oobretlen = 0;
 			ops.ooboffs   = 0;
-			ops.datbuf    = NULL;
+			ops.datbuf    = शून्य;
 			ops.oobbuf    = oobbuf;
-			ret = mtd_read_oob(mtd, addr, &ops);
-			if ((ret && !mtd_is_bitflip(ret)) ||
-					ops.oobretlen != mtd->oobsize) {
+			ret = mtd_पढ़ो_oob(mtd, addr, &ops);
+			अगर ((ret && !mtd_is_bitflip(ret)) ||
+					ops.oobretlen != mtd->oobsize) अणु
 				pr_err("error: read oob failed at "
-						  "%#llx\n", (long long)addr);
-				if (!err)
+						  "%#llx\n", (दीर्घ दीर्घ)addr);
+				अगर (!err)
 					err = ret;
-				if (!err)
+				अगर (!err)
 					err = -EINVAL;
-			}
+			पूर्ण
 			oobbuf += mtd->oobsize;
-		}
+		पूर्ण
 		addr += pgsize;
 		buf += pgsize;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void dump_eraseblock(int ebnum)
-{
-	int i, j, n;
-	char line[128];
-	int pg, oob;
+अटल व्योम dump_eraseblock(पूर्णांक ebnum)
+अणु
+	पूर्णांक i, j, n;
+	अक्षर line[128];
+	पूर्णांक pg, oob;
 
 	pr_info("dumping eraseblock %d\n", ebnum);
 	n = mtd->erasesize;
-	for (i = 0; i < n;) {
-		char *p = line;
+	क्रम (i = 0; i < n;) अणु
+		अक्षर *p = line;
 
-		p += sprintf(p, "%05x: ", i);
-		for (j = 0; j < 32 && i < n; j++, i++)
-			p += sprintf(p, "%02x", (unsigned int)iobuf[i]);
-		printk(KERN_CRIT "%s\n", line);
+		p += प्र_लिखो(p, "%05x: ", i);
+		क्रम (j = 0; j < 32 && i < n; j++, i++)
+			p += प्र_लिखो(p, "%02x", (अचिन्हित पूर्णांक)iobuf[i]);
+		prपूर्णांकk(KERN_CRIT "%s\n", line);
 		cond_resched();
-	}
-	if (!mtd->oobsize)
-		return;
+	पूर्ण
+	अगर (!mtd->oobsize)
+		वापस;
 	pr_info("dumping oob from eraseblock %d\n", ebnum);
 	n = mtd->oobsize;
-	for (pg = 0, i = 0; pg < pgcnt; pg++)
-		for (oob = 0; oob < n;) {
-			char *p = line;
+	क्रम (pg = 0, i = 0; pg < pgcnt; pg++)
+		क्रम (oob = 0; oob < n;) अणु
+			अक्षर *p = line;
 
-			p += sprintf(p, "%05x: ", i);
-			for (j = 0; j < 32 && oob < n; j++, oob++, i++)
-				p += sprintf(p, "%02x",
-					     (unsigned int)iobuf1[i]);
-			printk(KERN_CRIT "%s\n", line);
+			p += प्र_लिखो(p, "%05x: ", i);
+			क्रम (j = 0; j < 32 && oob < n; j++, oob++, i++)
+				p += प्र_लिखो(p, "%02x",
+					     (अचिन्हित पूर्णांक)iobuf1[i]);
+			prपूर्णांकk(KERN_CRIT "%s\n", line);
 			cond_resched();
-		}
-}
+		पूर्ण
+पूर्ण
 
-static int __init mtd_readtest_init(void)
-{
-	uint64_t tmp;
-	int err, i;
+अटल पूर्णांक __init mtd_पढ़ोtest_init(व्योम)
+अणु
+	uपूर्णांक64_t पंचांगp;
+	पूर्णांक err, i;
 
-	printk(KERN_INFO "\n");
-	printk(KERN_INFO "=================================================\n");
+	prपूर्णांकk(KERN_INFO "\n");
+	prपूर्णांकk(KERN_INFO "=================================================\n");
 
-	if (dev < 0) {
+	अगर (dev < 0) अणु
 		pr_info("Please specify a valid mtd-device via module parameter\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pr_info("MTD device: %d\n", dev);
 
-	mtd = get_mtd_device(NULL, dev);
-	if (IS_ERR(mtd)) {
+	mtd = get_mtd_device(शून्य, dev);
+	अगर (IS_ERR(mtd)) अणु
 		err = PTR_ERR(mtd);
 		pr_err("error: Cannot get MTD device\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (mtd->writesize == 1) {
+	अगर (mtd->ग_लिखोsize == 1) अणु
 		pr_info("not NAND flash, assume page size is 512 "
 		       "bytes.\n");
 		pgsize = 512;
-	} else
-		pgsize = mtd->writesize;
+	पूर्ण अन्यथा
+		pgsize = mtd->ग_लिखोsize;
 
-	tmp = mtd->size;
-	do_div(tmp, mtd->erasesize);
-	ebcnt = tmp;
+	पंचांगp = mtd->size;
+	करो_भाग(पंचांगp, mtd->erasesize);
+	ebcnt = पंचांगp;
 	pgcnt = mtd->erasesize / pgsize;
 
 	pr_info("MTD device size %llu, eraseblock size %u, "
 	       "page size %u, count of eraseblocks %u, pages per "
 	       "eraseblock %u, OOB size %u\n",
-	       (unsigned long long)mtd->size, mtd->erasesize,
+	       (अचिन्हित दीर्घ दीर्घ)mtd->size, mtd->erasesize,
 	       pgsize, ebcnt, pgcnt, mtd->oobsize);
 
 	err = -ENOMEM;
-	iobuf = kmalloc(mtd->erasesize, GFP_KERNEL);
-	if (!iobuf)
-		goto out;
-	iobuf1 = kmalloc(mtd->erasesize, GFP_KERNEL);
-	if (!iobuf1)
-		goto out;
+	iobuf = kदो_स्मृति(mtd->erasesize, GFP_KERNEL);
+	अगर (!iobuf)
+		जाओ out;
+	iobuf1 = kदो_स्मृति(mtd->erasesize, GFP_KERNEL);
+	अगर (!iobuf1)
+		जाओ out;
 
 	bbt = kzalloc(ebcnt, GFP_KERNEL);
-	if (!bbt)
-		goto out;
-	err = mtdtest_scan_for_bad_eraseblocks(mtd, bbt, 0, ebcnt);
-	if (err)
-		goto out;
+	अगर (!bbt)
+		जाओ out;
+	err = mtdtest_scan_क्रम_bad_eraseblocks(mtd, bbt, 0, ebcnt);
+	अगर (err)
+		जाओ out;
 
-	/* Read all eraseblocks 1 page at a time */
+	/* Read all eraseblocks 1 page at a समय */
 	pr_info("testing page read\n");
-	for (i = 0; i < ebcnt; ++i) {
-		int ret;
+	क्रम (i = 0; i < ebcnt; ++i) अणु
+		पूर्णांक ret;
 
-		if (bbt[i])
-			continue;
-		ret = read_eraseblock_by_page(i);
-		if (ret) {
+		अगर (bbt[i])
+			जारी;
+		ret = पढ़ो_eraseblock_by_page(i);
+		अगर (ret) अणु
 			dump_eraseblock(i);
-			if (!err)
+			अगर (!err)
 				err = ret;
-		}
+		पूर्ण
 
 		ret = mtdtest_relax();
-		if (ret) {
+		अगर (ret) अणु
 			err = ret;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (err)
+	अगर (err)
 		pr_info("finished with errors\n");
-	else
+	अन्यथा
 		pr_info("finished\n");
 
 out:
 
-	kfree(iobuf);
-	kfree(iobuf1);
-	kfree(bbt);
+	kमुक्त(iobuf);
+	kमुक्त(iobuf1);
+	kमुक्त(bbt);
 	put_mtd_device(mtd);
-	if (err)
+	अगर (err)
 		pr_info("error %d occurred\n", err);
-	printk(KERN_INFO "=================================================\n");
-	return err;
-}
-module_init(mtd_readtest_init);
+	prपूर्णांकk(KERN_INFO "=================================================\n");
+	वापस err;
+पूर्ण
+module_init(mtd_पढ़ोtest_init);
 
-static void __exit mtd_readtest_exit(void)
-{
-	return;
-}
-module_exit(mtd_readtest_exit);
+अटल व्योम __निकास mtd_पढ़ोtest_निकास(व्योम)
+अणु
+	वापस;
+पूर्ण
+module_निकास(mtd_पढ़ोtest_निकास);
 
 MODULE_DESCRIPTION("Read test module");
 MODULE_AUTHOR("Adrian Hunter");

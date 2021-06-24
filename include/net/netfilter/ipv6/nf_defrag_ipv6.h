@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_DEFRAG_IPV6_H
-#define _NF_DEFRAG_IPV6_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_DEFRAG_IPV6_H
+#घोषणा _NF_DEFRAG_IPV6_H
 
-#include <linux/skbuff.h>
-#include <linux/types.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/types.h>
 
-int nf_defrag_ipv6_enable(struct net *net);
-void nf_defrag_ipv6_disable(struct net *net);
+पूर्णांक nf_defrag_ipv6_enable(काष्ठा net *net);
+व्योम nf_defrag_ipv6_disable(काष्ठा net *net);
 
-int nf_ct_frag6_init(void);
-void nf_ct_frag6_cleanup(void);
-int nf_ct_frag6_gather(struct net *net, struct sk_buff *skb, u32 user);
+पूर्णांक nf_ct_frag6_init(व्योम);
+व्योम nf_ct_frag6_cleanup(व्योम);
+पूर्णांक nf_ct_frag6_gather(काष्ठा net *net, काष्ठा sk_buff *skb, u32 user);
 
-struct inet_frags_ctl;
+काष्ठा inet_frags_ctl;
 
-struct nft_ct_frag6_pernet {
-	struct ctl_table_header *nf_frag_frags_hdr;
-	struct fqdir	*fqdir;
-	unsigned int users;
-};
+काष्ठा nft_ct_frag6_pernet अणु
+	काष्ठा ctl_table_header *nf_frag_frags_hdr;
+	काष्ठा fqdir	*fqdir;
+	अचिन्हित पूर्णांक users;
+पूर्ण;
 
-#endif /* _NF_DEFRAG_IPV6_H */
+#पूर्ण_अगर /* _NF_DEFRAG_IPV6_H */

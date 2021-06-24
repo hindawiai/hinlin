@@ -1,163 +1,164 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  linux/arch/alpha/lib/memcpy.c
+ *  linux/arch/alpha/lib/स_नकल.c
  *
  *  Copyright (C) 1995  Linus Torvalds
  */
 
 /*
- * This is a reasonably optimized memcpy() routine.
+ * This is a reasonably optimized स_नकल() routine.
  */
 
 /*
- * Note that the C code is written to be optimized into good assembly. However,
- * at this point gcc is unable to sanely compile "if (n >= 0)", resulting in a
+ * Note that the C code is written to be optimized पूर्णांकo good assembly. However,
+ * at this poपूर्णांक gcc is unable to sanely compile "if (n >= 0)", resulting in a
  * explicit compare against 0 (instead of just using the proper "blt reg, xx" or
  * "bge reg, xx"). I hope alpha-gcc will be fixed to notice this eventually..
  */
 
-#include <linux/types.h>
-#include <linux/export.h>
+#समावेश <linux/types.h>
+#समावेश <linux/export.h>
 
 /*
- * This should be done in one go with ldq_u*2/mask/stq_u. Do it
+ * This should be करोne in one go with ldq_u*2/mask/stq_u. Do it
  * with a macro so that we can fix it up later..
  */
-#define ALIGN_DEST_TO8_UP(d,s,n) \
-	while (d & 7) { \
-		if (n <= 0) return; \
+#घोषणा ALIGN_DEST_TO8_UP(d,s,n) \
+	जबतक (d & 7) अणु \
+		अगर (n <= 0) वापस; \
 		n--; \
-		*(char *) d = *(char *) s; \
+		*(अक्षर *) d = *(अक्षर *) s; \
 		d++; s++; \
-	}
-#define ALIGN_DEST_TO8_DN(d,s,n) \
-	while (d & 7) { \
-		if (n <= 0) return; \
+	पूर्ण
+#घोषणा ALIGN_DEST_TO8_DN(d,s,n) \
+	जबतक (d & 7) अणु \
+		अगर (n <= 0) वापस; \
 		n--; \
 		d--; s--; \
-		*(char *) d = *(char *) s; \
-	}
+		*(अक्षर *) d = *(अक्षर *) s; \
+	पूर्ण
 
 /*
- * This should similarly be done with ldq_u*2/mask/stq. The destination
- * is aligned, but we don't fill in a full quad-word
+ * This should similarly be करोne with ldq_u*2/mask/stq. The destination
+ * is aligned, but we करोn't fill in a full quad-word
  */
-#define DO_REST_UP(d,s,n) \
-	while (n > 0) { \
+#घोषणा DO_REST_UP(d,s,n) \
+	जबतक (n > 0) अणु \
 		n--; \
-		*(char *) d = *(char *) s; \
+		*(अक्षर *) d = *(अक्षर *) s; \
 		d++; s++; \
-	}
-#define DO_REST_DN(d,s,n) \
-	while (n > 0) { \
+	पूर्ण
+#घोषणा DO_REST_DN(d,s,n) \
+	जबतक (n > 0) अणु \
 		n--; \
 		d--; s--; \
-		*(char *) d = *(char *) s; \
-	}
+		*(अक्षर *) d = *(अक्षर *) s; \
+	पूर्ण
 
 /*
- * This should be done with ldq/mask/stq. The source and destination are
- * aligned, but we don't fill in a full quad-word
+ * This should be करोne with ldq/mask/stq. The source and destination are
+ * aligned, but we करोn't fill in a full quad-word
  */
-#define DO_REST_ALIGNED_UP(d,s,n) DO_REST_UP(d,s,n)
-#define DO_REST_ALIGNED_DN(d,s,n) DO_REST_DN(d,s,n)
+#घोषणा DO_REST_ALIGNED_UP(d,s,n) DO_REST_UP(d,s,n)
+#घोषणा DO_REST_ALIGNED_DN(d,s,n) DO_REST_DN(d,s,n)
 
 /*
- * This does unaligned memory copies. We want to avoid storing to
- * an unaligned address, as that would do a read-modify-write cycle.
- * We also want to avoid double-reading the unaligned reads.
+ * This करोes unaligned memory copies. We want to aव्योम storing to
+ * an unaligned address, as that would करो a पढ़ो-modअगरy-ग_लिखो cycle.
+ * We also want to aव्योम द्विगुन-पढ़ोing the unaligned पढ़ोs.
  *
- * Note the ordering to try to avoid load (and address generation) latencies.
+ * Note the ordering to try to aव्योम load (and address generation) latencies.
  */
-static inline void __memcpy_unaligned_up (unsigned long d, unsigned long s,
-					  long n)
-{
+अटल अंतरभूत व्योम __स_नकल_unaligned_up (अचिन्हित दीर्घ d, अचिन्हित दीर्घ s,
+					  दीर्घ n)
+अणु
 	ALIGN_DEST_TO8_UP(d,s,n);
-	n -= 8;			/* to avoid compare against 8 in the loop */
-	if (n >= 0) {
-		unsigned long low_word, high_word;
-		__asm__("ldq_u %0,%1":"=r" (low_word):"m" (*(unsigned long *) s));
-		do {
-			unsigned long tmp;
-			__asm__("ldq_u %0,%1":"=r" (high_word):"m" (*(unsigned long *)(s+8)));
+	n -= 8;			/* to aव्योम compare against 8 in the loop */
+	अगर (n >= 0) अणु
+		अचिन्हित दीर्घ low_word, high_word;
+		__यंत्र__("ldq_u %0,%1":"=r" (low_word):"m" (*(अचिन्हित दीर्घ *) s));
+		करो अणु
+			अचिन्हित दीर्घ पंचांगp;
+			__यंत्र__("ldq_u %0,%1":"=r" (high_word):"m" (*(अचिन्हित दीर्घ *)(s+8)));
 			n -= 8;
-			__asm__("extql %1,%2,%0"
+			__यंत्र__("extql %1,%2,%0"
 				:"=r" (low_word)
 				:"r" (low_word), "r" (s));
-			__asm__("extqh %1,%2,%0"
-				:"=r" (tmp)
+			__यंत्र__("extqh %1,%2,%0"
+				:"=r" (पंचांगp)
 				:"r" (high_word), "r" (s));
 			s += 8;
-			*(unsigned long *) d = low_word | tmp;
+			*(अचिन्हित दीर्घ *) d = low_word | पंचांगp;
 			d += 8;
 			low_word = high_word;
-		} while (n >= 0);
-	}
+		पूर्ण जबतक (n >= 0);
+	पूर्ण
 	n += 8;
 	DO_REST_UP(d,s,n);
-}
+पूर्ण
 
-static inline void __memcpy_unaligned_dn (unsigned long d, unsigned long s,
-					  long n)
-{
-	/* I don't understand AXP assembler well enough for this. -Tim */
+अटल अंतरभूत व्योम __स_नकल_unaligned_dn (अचिन्हित दीर्घ d, अचिन्हित दीर्घ s,
+					  दीर्घ n)
+अणु
+	/* I करोn't understand AXP assembler well enough क्रम this. -Tim */
 	s += n;
 	d += n;
-	while (n--)
-		* (char *) --d = * (char *) --s;
-}
+	जबतक (n--)
+		* (अक्षर *) --d = * (अक्षर *) --s;
+पूर्ण
 
 /*
- * Hmm.. Strange. The __asm__ here is there to make gcc use an integer register
- * for the load-store. I don't know why, but it would seem that using a floating
- * point register for the move seems to slow things down (very small difference,
+ * Hmm.. Strange. The __यंत्र__ here is there to make gcc use an पूर्णांकeger रेजिस्टर
+ * क्रम the load-store. I करोn't know why, but it would seem that using a भग्नing
+ * poपूर्णांक रेजिस्टर क्रम the move seems to slow things करोwn (very small dअगरference,
  * though).
  *
- * Note the ordering to try to avoid load (and address generation) latencies.
+ * Note the ordering to try to aव्योम load (and address generation) latencies.
  */
-static inline void __memcpy_aligned_up (unsigned long d, unsigned long s,
-					long n)
-{
+अटल अंतरभूत व्योम __स_नकल_aligned_up (अचिन्हित दीर्घ d, अचिन्हित दीर्घ s,
+					दीर्घ n)
+अणु
 	ALIGN_DEST_TO8_UP(d,s,n);
 	n -= 8;
-	while (n >= 0) {
-		unsigned long tmp;
-		__asm__("ldq %0,%1":"=r" (tmp):"m" (*(unsigned long *) s));
+	जबतक (n >= 0) अणु
+		अचिन्हित दीर्घ पंचांगp;
+		__यंत्र__("ldq %0,%1":"=r" (पंचांगp):"m" (*(अचिन्हित दीर्घ *) s));
 		n -= 8;
 		s += 8;
-		*(unsigned long *) d = tmp;
+		*(अचिन्हित दीर्घ *) d = पंचांगp;
 		d += 8;
-	}
+	पूर्ण
 	n += 8;
 	DO_REST_ALIGNED_UP(d,s,n);
-}
-static inline void __memcpy_aligned_dn (unsigned long d, unsigned long s,
-					long n)
-{
+पूर्ण
+अटल अंतरभूत व्योम __स_नकल_aligned_dn (अचिन्हित दीर्घ d, अचिन्हित दीर्घ s,
+					दीर्घ n)
+अणु
 	s += n;
 	d += n;
 	ALIGN_DEST_TO8_DN(d,s,n);
 	n -= 8;
-	while (n >= 0) {
-		unsigned long tmp;
+	जबतक (n >= 0) अणु
+		अचिन्हित दीर्घ पंचांगp;
 		s -= 8;
-		__asm__("ldq %0,%1":"=r" (tmp):"m" (*(unsigned long *) s));
+		__यंत्र__("ldq %0,%1":"=r" (पंचांगp):"m" (*(अचिन्हित दीर्घ *) s));
 		n -= 8;
 		d -= 8;
-		*(unsigned long *) d = tmp;
-	}
+		*(अचिन्हित दीर्घ *) d = पंचांगp;
+	पूर्ण
 	n += 8;
 	DO_REST_ALIGNED_DN(d,s,n);
-}
+पूर्ण
 
-void * memcpy(void * dest, const void *src, size_t n)
-{
-	if (!(((unsigned long) dest ^ (unsigned long) src) & 7)) {
-		__memcpy_aligned_up ((unsigned long) dest, (unsigned long) src,
+व्योम * स_नकल(व्योम * dest, स्थिर व्योम *src, माप_प्रकार n)
+अणु
+	अगर (!(((अचिन्हित दीर्घ) dest ^ (अचिन्हित दीर्घ) src) & 7)) अणु
+		__स_नकल_aligned_up ((अचिन्हित दीर्घ) dest, (अचिन्हित दीर्घ) src,
 				     n);
-		return dest;
-	}
-	__memcpy_unaligned_up ((unsigned long) dest, (unsigned long) src, n);
-	return dest;
-}
-EXPORT_SYMBOL(memcpy);
+		वापस dest;
+	पूर्ण
+	__स_नकल_unaligned_up ((अचिन्हित दीर्घ) dest, (अचिन्हित दीर्घ) src, n);
+	वापस dest;
+पूर्ण
+EXPORT_SYMBOL(स_नकल);

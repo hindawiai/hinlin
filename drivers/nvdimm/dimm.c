@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
-#include <linux/vmalloc.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/sizes.h>
-#include <linux/ndctl.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/nd.h>
-#include "label.h"
-#include "nd.h"
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/ndctl.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/nd.h>
+#समावेश "label.h"
+#समावेश "nd.h"
 
-static int nvdimm_probe(struct device *dev)
-{
-	struct nvdimm_drvdata *ndd;
-	int rc;
+अटल पूर्णांक nvdimm_probe(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_drvdata *ndd;
+	पूर्णांक rc;
 
 	rc = nvdimm_security_setup_events(dev);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(dev, "security event setup failed: %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = nvdimm_check_config_data(dev);
-	if (rc) {
-		/* not required for non-aliased nvdimm, ex. NVDIMM-N */
-		if (rc == -ENOTTY)
+	अगर (rc) अणु
+		/* not required क्रम non-aliased nvdimm, ex. NVDIMM-N */
+		अगर (rc == -ENOTTY)
 			rc = 0;
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/*
 	 * The locked status bit reflects explicit status codes from the
-	 * label reading commands, revalidate it each time the driver is
-	 * activated and re-reads the label area.
+	 * label पढ़ोing commands, revalidate it each समय the driver is
+	 * activated and re-पढ़ोs the label area.
 	 */
 	nvdimm_clear_locked(dev);
 
-	ndd = kzalloc(sizeof(*ndd), GFP_KERNEL);
-	if (!ndd)
-		return -ENOMEM;
+	ndd = kzalloc(माप(*ndd), GFP_KERNEL);
+	अगर (!ndd)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(dev, ndd);
 	ndd->dpa.name = dev_name(dev);
@@ -54,92 +55,92 @@ static int nvdimm_probe(struct device *dev)
 	kref_init(&ndd->kref);
 
 	/*
-	 * Attempt to unlock, if the DIMM supports security commands,
+	 * Attempt to unlock, अगर the DIMM supports security commands,
 	 * otherwise the locked indication is determined by explicit
-	 * status codes from the label reading commands.
+	 * status codes from the label पढ़ोing commands.
 	 */
 	rc = nvdimm_security_unlock(dev);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_dbg(dev, "failed to unlock dimm: %d\n", rc);
 
 
 	/*
-	 * EACCES failures reading the namespace label-area-properties
-	 * are interpreted as the DIMM capacity being locked but the
+	 * EACCES failures पढ़ोing the namespace label-area-properties
+	 * are पूर्णांकerpreted as the DIMM capacity being locked but the
 	 * namespace labels themselves being accessible.
 	 */
 	rc = nvdimm_init_nsarea(ndd);
-	if (rc == -EACCES) {
+	अगर (rc == -EACCES) अणु
 		/*
 		 * See nvdimm_namespace_common_probe() where we fail to
-		 * allow namespaces to probe while the DIMM is locked,
-		 * but we do allow for namespace enumeration.
+		 * allow namespaces to probe जबतक the DIMM is locked,
+		 * but we करो allow क्रम namespace क्रमागतeration.
 		 */
 		nvdimm_set_locked(dev);
 		rc = 0;
-	}
-	if (rc)
-		goto err;
+	पूर्ण
+	अगर (rc)
+		जाओ err;
 
 	/*
-	 * EACCES failures reading the namespace label-data are
-	 * interpreted as the label area being locked in addition to the
+	 * EACCES failures पढ़ोing the namespace label-data are
+	 * पूर्णांकerpreted as the label area being locked in addition to the
 	 * DIMM capacity. We fail the dimm probe to prevent regions from
 	 * attempting to parse the label area.
 	 */
 	rc = nd_label_data_init(ndd);
-	if (rc == -EACCES)
+	अगर (rc == -EACCES)
 		nvdimm_set_locked(dev);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
 	dev_dbg(dev, "config data size: %d\n", ndd->nsarea.config_size);
 
 	nvdimm_bus_lock(dev);
-	if (ndd->ns_current >= 0) {
+	अगर (ndd->ns_current >= 0) अणु
 		rc = nd_label_reserve_dpa(ndd);
-		if (rc == 0)
+		अगर (rc == 0)
 			nvdimm_set_labeling(dev);
-	}
+	पूर्ण
 	nvdimm_bus_unlock(dev);
 
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
  err:
 	put_ndd(ndd);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void nvdimm_remove(struct device *dev)
-{
-	struct nvdimm_drvdata *ndd = dev_get_drvdata(dev);
+अटल व्योम nvdimm_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_drvdata *ndd = dev_get_drvdata(dev);
 
 	nvdimm_bus_lock(dev);
-	dev_set_drvdata(dev, NULL);
+	dev_set_drvdata(dev, शून्य);
 	nvdimm_bus_unlock(dev);
 	put_ndd(ndd);
-}
+पूर्ण
 
-static struct nd_device_driver nvdimm_driver = {
+अटल काष्ठा nd_device_driver nvdimm_driver = अणु
 	.probe = nvdimm_probe,
-	.remove = nvdimm_remove,
-	.drv = {
+	.हटाओ = nvdimm_हटाओ,
+	.drv = अणु
 		.name = "nvdimm",
-	},
+	पूर्ण,
 	.type = ND_DRIVER_DIMM,
-};
+पूर्ण;
 
-int __init nvdimm_init(void)
-{
-	return nd_driver_register(&nvdimm_driver);
-}
+पूर्णांक __init nvdimm_init(व्योम)
+अणु
+	वापस nd_driver_रेजिस्टर(&nvdimm_driver);
+पूर्ण
 
-void nvdimm_exit(void)
-{
-	driver_unregister(&nvdimm_driver.drv);
-}
+व्योम nvdimm_निकास(व्योम)
+अणु
+	driver_unरेजिस्टर(&nvdimm_driver.drv);
+पूर्ण
 
 MODULE_ALIAS_ND_DEVICE(ND_DEVICE_DIMM);

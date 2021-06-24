@@ -1,1 +1,2 @@
-#include "../../boot/video-vesa.c"
+<शैली गुरु>
+#समावेश "../../boot/video-vesa.c"

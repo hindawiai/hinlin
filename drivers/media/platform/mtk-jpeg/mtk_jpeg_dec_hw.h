@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 MediaTek Inc.
  * Author: Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
@@ -6,24 +7,24 @@
  *         Xia Jiang <xia.jiang@mediatek.com>
  */
 
-#ifndef _MTK_JPEG_DEC_HW_H
-#define _MTK_JPEG_DEC_HW_H
+#अगर_अघोषित _MTK_JPEG_DEC_HW_H
+#घोषणा _MTK_JPEG_DEC_HW_H
 
-#include <media/videobuf2-core.h>
+#समावेश <media/videobuf2-core.h>
 
-#include "mtk_jpeg_core.h"
-#include "mtk_jpeg_dec_reg.h"
+#समावेश "mtk_jpeg_core.h"
+#समावेश "mtk_jpeg_dec_reg.h"
 
-enum {
-	MTK_JPEG_DEC_RESULT_EOF_DONE		= 0,
+क्रमागत अणु
+	MTK_JPEG_DEC_RESULT_खातापूर्ण_DONE		= 0,
 	MTK_JPEG_DEC_RESULT_PAUSE		= 1,
 	MTK_JPEG_DEC_RESULT_UNDERFLOW		= 2,
 	MTK_JPEG_DEC_RESULT_OVERFLOW		= 3,
 	MTK_JPEG_DEC_RESULT_ERROR_BS		= 4,
 	MTK_JPEG_DEC_RESULT_ERROR_UNKNOWN	= 6
-};
+पूर्ण;
 
-struct mtk_jpeg_dec_param {
+काष्ठा mtk_jpeg_dec_param अणु
 	u32 pic_w;
 	u32 pic_h;
 	u32 dec_w;
@@ -53,27 +54,27 @@ struct mtk_jpeg_dec_param {
 	u32 uv_size;
 	u32 dec_size;
 	u8 uv_brz_w;
-};
+पूर्ण;
 
-struct mtk_jpeg_bs {
+काष्ठा mtk_jpeg_bs अणु
 	dma_addr_t	str_addr;
 	dma_addr_t	end_addr;
-	size_t		size;
-};
+	माप_प्रकार		size;
+पूर्ण;
 
-struct mtk_jpeg_fb {
+काष्ठा mtk_jpeg_fb अणु
 	dma_addr_t	plane_addr[MTK_JPEG_COMP_MAX];
-	size_t		size;
-};
+	माप_प्रकार		size;
+पूर्ण;
 
-int mtk_jpeg_dec_fill_param(struct mtk_jpeg_dec_param *param);
-u32 mtk_jpeg_dec_get_int_status(void __iomem *dec_reg_base);
-u32 mtk_jpeg_dec_enum_result(u32 irq_result);
-void mtk_jpeg_dec_set_config(void __iomem *base,
-			     struct mtk_jpeg_dec_param *config,
-			     struct mtk_jpeg_bs *bs,
-			     struct mtk_jpeg_fb *fb);
-void mtk_jpeg_dec_reset(void __iomem *dec_reg_base);
-void mtk_jpeg_dec_start(void __iomem *dec_reg_base);
+पूर्णांक mtk_jpeg_dec_fill_param(काष्ठा mtk_jpeg_dec_param *param);
+u32 mtk_jpeg_dec_get_पूर्णांक_status(व्योम __iomem *dec_reg_base);
+u32 mtk_jpeg_dec_क्रमागत_result(u32 irq_result);
+व्योम mtk_jpeg_dec_set_config(व्योम __iomem *base,
+			     काष्ठा mtk_jpeg_dec_param *config,
+			     काष्ठा mtk_jpeg_bs *bs,
+			     काष्ठा mtk_jpeg_fb *fb);
+व्योम mtk_jpeg_dec_reset(व्योम __iomem *dec_reg_base);
+व्योम mtk_jpeg_dec_start(व्योम __iomem *dec_reg_base);
 
-#endif /* _MTK_JPEG_HW_H */
+#पूर्ण_अगर /* _MTK_JPEG_HW_H */

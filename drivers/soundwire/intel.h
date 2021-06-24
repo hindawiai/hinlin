@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause) */
 /* Copyright(c) 2015-17 Intel Corporation. */
 
-#ifndef __SDW_INTEL_LOCAL_H
-#define __SDW_INTEL_LOCAL_H
+#अगर_अघोषित __SDW_INTEL_LOCAL_H
+#घोषणा __SDW_INTEL_LOCAL_H
 
 /**
- * struct sdw_intel_link_res - Soundwire Intel link resource structure,
+ * काष्ठा sdw_पूर्णांकel_link_res - Soundwire Intel link resource काष्ठाure,
  * typically populated by the controller driver.
- * @pdev: platform_device
- * @mmio_base: mmio base of SoundWire registers
- * @registers: Link IO registers base
- * @shim: Audio shim pointer
- * @alh: ALH (Audio Link Hub) pointer
+ * @pdev: platक्रमm_device
+ * @mmio_base: mmio base of SoundWire रेजिस्टरs
+ * @रेजिस्टरs: Link IO रेजिस्टरs base
+ * @shim: Audio shim poपूर्णांकer
+ * @alh: ALH (Audio Link Hub) poपूर्णांकer
  * @irq: Interrupt line
  * @ops: Shim callback ops
- * @dev: device implementing hw_params and free callbacks
- * @shim_lock: mutex to handle access to shared SHIM registers
- * @shim_mask: global pointer to check SHIM register initialization
- * @clock_stop_quirks: mask defining requested behavior on pm_suspend
- * @link_mask: global mask needed for power-up/down sequences
+ * @dev: device implementing hw_params and मुक्त callbacks
+ * @shim_lock: mutex to handle access to shared SHIM रेजिस्टरs
+ * @shim_mask: global poपूर्णांकer to check SHIM रेजिस्टर initialization
+ * @घड़ी_stop_quirks: mask defining requested behavior on pm_suspend
+ * @link_mask: global mask needed क्रम घातer-up/करोwn sequences
  * @cdns: Cadence master descriptor
  * @list: used to walk-through all masters exposed by the same controller
  */
-struct sdw_intel_link_res {
-	struct platform_device *pdev;
-	void __iomem *mmio_base; /* not strictly needed, useful for debug */
-	void __iomem *registers;
-	void __iomem *shim;
-	void __iomem *alh;
-	int irq;
-	const struct sdw_intel_ops *ops;
-	struct device *dev;
-	struct mutex *shim_lock; /* protect shared registers */
+काष्ठा sdw_पूर्णांकel_link_res अणु
+	काष्ठा platक्रमm_device *pdev;
+	व्योम __iomem *mmio_base; /* not strictly needed, useful क्रम debug */
+	व्योम __iomem *रेजिस्टरs;
+	व्योम __iomem *shim;
+	व्योम __iomem *alh;
+	पूर्णांक irq;
+	स्थिर काष्ठा sdw_पूर्णांकel_ops *ops;
+	काष्ठा device *dev;
+	काष्ठा mutex *shim_lock; /* protect shared रेजिस्टरs */
 	u32 *shim_mask;
-	u32 clock_stop_quirks;
+	u32 घड़ी_stop_quirks;
 	u32 link_mask;
-	struct sdw_cdns *cdns;
-	struct list_head list;
-};
+	काष्ठा sdw_cdns *cdns;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct sdw_intel {
-	struct sdw_cdns cdns;
-	int instance;
-	struct sdw_intel_link_res *link_res;
-#ifdef CONFIG_DEBUG_FS
-	struct dentry *debugfs;
-#endif
-};
+काष्ठा sdw_पूर्णांकel अणु
+	काष्ठा sdw_cdns cdns;
+	पूर्णांक instance;
+	काष्ठा sdw_पूर्णांकel_link_res *link_res;
+#अगर_घोषित CONFIG_DEBUG_FS
+	काष्ठा dentry *debugfs;
+#पूर्ण_अगर
+पूर्ण;
 
-int intel_master_startup(struct platform_device *pdev);
-int intel_master_process_wakeen_event(struct platform_device *pdev);
+पूर्णांक पूर्णांकel_master_startup(काष्ठा platक्रमm_device *pdev);
+पूर्णांक पूर्णांकel_master_process_wakeen_event(काष्ठा platक्रमm_device *pdev);
 
-#endif /* __SDW_INTEL_LOCAL_H */
+#पूर्ण_अगर /* __SDW_INTEL_LOCAL_H */

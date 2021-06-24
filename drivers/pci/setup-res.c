@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support routines for initializing a PCI subsystem
+ * Support routines क्रम initializing a PCI subप्रणाली
  *
  * Extruded from code written by
  *      Dave Rusling (david.rusling@reo.mts.dec.com)
  *      David Mosberger (davidm@cs.arizona.edu)
  *	David Miller (davem@redhat.com)
  *
- * Fixed for multiple PCI buses, 1999 Andrea Arcangeli <andrea@suse.de>
+ * Fixed क्रम multiple PCI buses, 1999 Andrea Arcangeli <andrea@suse.de>
  *
  * Nov 2000, Ivan Kokshaysky <ink@jurassic.park.msu.ru>
  *	     Resource sorting
  */
 
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/pci.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/cache.h>
-#include <linux/slab.h>
-#include "pci.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/slab.h>
+#समावेश "pci.h"
 
-static void pci_std_update_resource(struct pci_dev *dev, int resno)
-{
-	struct pci_bus_region region;
+अटल व्योम pci_std_update_resource(काष्ठा pci_dev *dev, पूर्णांक resno)
+अणु
+	काष्ठा pci_bus_region region;
 	bool disable;
 	u16 cmd;
 	u32 new, check, mask;
-	int reg;
-	struct resource *res = dev->resource + resno;
+	पूर्णांक reg;
+	काष्ठा resource *res = dev->resource + resno;
 
 	/* Per SR-IOV spec 3.4.1.11, VF BARs are RO zero */
-	if (dev->is_virtfn)
-		return;
+	अगर (dev->is_virtfn)
+		वापस;
 
 	/*
-	 * Ignore resources for unimplemented BARs and unused resource slots
-	 * for 64 bit BARs.
+	 * Ignore resources क्रम unimplemented BARs and unused resource slots
+	 * क्रम 64 bit BARs.
 	 */
-	if (!res->flags)
-		return;
+	अगर (!res->flags)
+		वापस;
 
-	if (res->flags & IORESOURCE_UNSET)
-		return;
+	अगर (res->flags & IORESOURCE_UNSET)
+		वापस;
 
 	/*
-	 * Ignore non-moveable resources.  This might be legacy resources for
-	 * which no functional BAR register exists or another important
-	 * system resource we shouldn't move around.
+	 * Ignore non-moveable resources.  This might be legacy resources क्रम
+	 * which no functional BAR रेजिस्टर exists or another important
+	 * प्रणाली resource we shouldn't move around.
 	 */
-	if (res->flags & IORESOURCE_PCI_FIXED)
-		return;
+	अगर (res->flags & IORESOURCE_PCI_FIXED)
+		वापस;
 
 	pcibios_resource_to_bus(dev->bus, &region, res);
 	new = region.start;
 
-	if (res->flags & IORESOURCE_IO) {
+	अगर (res->flags & IORESOURCE_IO) अणु
 		mask = (u32)PCI_BASE_ADDRESS_IO_MASK;
 		new |= res->flags & ~PCI_BASE_ADDRESS_IO_MASK;
-	} else if (resno == PCI_ROM_RESOURCE) {
+	पूर्ण अन्यथा अगर (resno == PCI_ROM_RESOURCE) अणु
 		mask = PCI_ROM_ADDRESS_MASK;
-	} else {
+	पूर्ण अन्यथा अणु
 		mask = (u32)PCI_BASE_ADDRESS_MEM_MASK;
 		new |= res->flags & ~PCI_BASE_ADDRESS_MEM_MASK;
-	}
+	पूर्ण
 
-	if (resno < PCI_ROM_RESOURCE) {
+	अगर (resno < PCI_ROM_RESOURCE) अणु
 		reg = PCI_BASE_ADDRESS_0 + 4 * resno;
-	} else if (resno == PCI_ROM_RESOURCE) {
+	पूर्ण अन्यथा अगर (resno == PCI_ROM_RESOURCE) अणु
 
 		/*
-		 * Apparently some Matrox devices have ROM BARs that read
-		 * as zero when disabled, so don't update ROM BARs unless
+		 * Apparently some Matrox devices have ROM BARs that पढ़ो
+		 * as zero when disabled, so करोn't update ROM BARs unless
 		 * they're enabled.  See
 		 * https://lore.kernel.org/r/43147B3D.1030309@vc.cvut.cz/
 		 */
-		if (!(res->flags & IORESOURCE_ROM_ENABLE))
-			return;
+		अगर (!(res->flags & IORESOURCE_ROM_ENABLE))
+			वापस;
 
 		reg = dev->rom_base_reg;
 		new |= PCI_ROM_ADDRESS_ENABLE;
-	} else
-		return;
+	पूर्ण अन्यथा
+		वापस;
 
 	/*
 	 * We can't update a 64-bit BAR atomically, so when possible,
@@ -90,117 +91,117 @@ static void pci_std_update_resource(struct pci_dev *dev, int resno)
 	 * with another device.
 	 */
 	disable = (res->flags & IORESOURCE_MEM_64) && !dev->mmio_always_on;
-	if (disable) {
-		pci_read_config_word(dev, PCI_COMMAND, &cmd);
-		pci_write_config_word(dev, PCI_COMMAND,
+	अगर (disable) अणु
+		pci_पढ़ो_config_word(dev, PCI_COMMAND, &cmd);
+		pci_ग_लिखो_config_word(dev, PCI_COMMAND,
 				      cmd & ~PCI_COMMAND_MEMORY);
-	}
+	पूर्ण
 
-	pci_write_config_dword(dev, reg, new);
-	pci_read_config_dword(dev, reg, &check);
+	pci_ग_लिखो_config_dword(dev, reg, new);
+	pci_पढ़ो_config_dword(dev, reg, &check);
 
-	if ((new ^ check) & mask) {
+	अगर ((new ^ check) & mask) अणु
 		pci_err(dev, "BAR %d: error updating (%#08x != %#08x)\n",
 			resno, new, check);
-	}
+	पूर्ण
 
-	if (res->flags & IORESOURCE_MEM_64) {
+	अगर (res->flags & IORESOURCE_MEM_64) अणु
 		new = region.start >> 16 >> 16;
-		pci_write_config_dword(dev, reg + 4, new);
-		pci_read_config_dword(dev, reg + 4, &check);
-		if (check != new) {
+		pci_ग_लिखो_config_dword(dev, reg + 4, new);
+		pci_पढ़ो_config_dword(dev, reg + 4, &check);
+		अगर (check != new) अणु
 			pci_err(dev, "BAR %d: error updating (high %#08x != %#08x)\n",
 				resno, new, check);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (disable)
-		pci_write_config_word(dev, PCI_COMMAND, cmd);
-}
+	अगर (disable)
+		pci_ग_लिखो_config_word(dev, PCI_COMMAND, cmd);
+पूर्ण
 
-void pci_update_resource(struct pci_dev *dev, int resno)
-{
-	if (resno <= PCI_ROM_RESOURCE)
+व्योम pci_update_resource(काष्ठा pci_dev *dev, पूर्णांक resno)
+अणु
+	अगर (resno <= PCI_ROM_RESOURCE)
 		pci_std_update_resource(dev, resno);
-#ifdef CONFIG_PCI_IOV
-	else if (resno >= PCI_IOV_RESOURCES && resno <= PCI_IOV_RESOURCE_END)
+#अगर_घोषित CONFIG_PCI_IOV
+	अन्यथा अगर (resno >= PCI_IOV_RESOURCES && resno <= PCI_IOV_RESOURCE_END)
 		pci_iov_update_resource(dev, resno);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-int pci_claim_resource(struct pci_dev *dev, int resource)
-{
-	struct resource *res = &dev->resource[resource];
-	struct resource *root, *conflict;
+पूर्णांक pci_claim_resource(काष्ठा pci_dev *dev, पूर्णांक resource)
+अणु
+	काष्ठा resource *res = &dev->resource[resource];
+	काष्ठा resource *root, *conflict;
 
-	if (res->flags & IORESOURCE_UNSET) {
+	अगर (res->flags & IORESOURCE_UNSET) अणु
 		pci_info(dev, "can't claim BAR %d %pR: no address assigned\n",
 			 resource, res);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * If we have a shadow copy in RAM, the PCI device doesn't respond
-	 * to the shadow range, so we don't need to claim it, and upstream
-	 * bridges don't need to route the range to the device.
+	 * If we have a shaकरोw copy in RAM, the PCI device करोesn't respond
+	 * to the shaकरोw range, so we करोn't need to claim it, and upstream
+	 * bridges करोn't need to route the range to the device.
 	 */
-	if (res->flags & IORESOURCE_ROM_SHADOW)
-		return 0;
+	अगर (res->flags & IORESOURCE_ROM_SHADOW)
+		वापस 0;
 
 	root = pci_find_parent_resource(dev, res);
-	if (!root) {
+	अगर (!root) अणु
 		pci_info(dev, "can't claim BAR %d %pR: no compatible bridge window\n",
 			 resource, res);
 		res->flags |= IORESOURCE_UNSET;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	conflict = request_resource_conflict(root, res);
-	if (conflict) {
+	अगर (conflict) अणु
 		pci_info(dev, "can't claim BAR %d %pR: address conflict with %s %pR\n",
 			 resource, res, conflict->name, conflict);
 		res->flags |= IORESOURCE_UNSET;
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(pci_claim_resource);
 
-void pci_disable_bridge_window(struct pci_dev *dev)
-{
+व्योम pci_disable_bridge_winकरोw(काष्ठा pci_dev *dev)
+अणु
 	/* MMIO Base/Limit */
-	pci_write_config_dword(dev, PCI_MEMORY_BASE, 0x0000fff0);
+	pci_ग_लिखो_config_dword(dev, PCI_MEMORY_BASE, 0x0000fff0);
 
 	/* Prefetchable MMIO Base/Limit */
-	pci_write_config_dword(dev, PCI_PREF_LIMIT_UPPER32, 0);
-	pci_write_config_dword(dev, PCI_PREF_MEMORY_BASE, 0x0000fff0);
-	pci_write_config_dword(dev, PCI_PREF_BASE_UPPER32, 0xffffffff);
-}
+	pci_ग_लिखो_config_dword(dev, PCI_PREF_LIMIT_UPPER32, 0);
+	pci_ग_लिखो_config_dword(dev, PCI_PREF_MEMORY_BASE, 0x0000fff0);
+	pci_ग_लिखो_config_dword(dev, PCI_PREF_BASE_UPPER32, 0xffffffff);
+पूर्ण
 
 /*
- * Generic function that returns a value indicating that the device's
- * original BIOS BAR address was not saved and so is not available for
+ * Generic function that वापसs a value indicating that the device's
+ * original BIOS BAR address was not saved and so is not available क्रम
  * reinstatement.
  *
- * Can be over-ridden by architecture specific code that implements
+ * Can be over-ridden by architecture specअगरic code that implements
  * reinstatement functionality rather than leaving it disabled when
  * normal allocation attempts fail.
  */
-resource_size_t __weak pcibios_retrieve_fw_addr(struct pci_dev *dev, int idx)
-{
-	return 0;
-}
+resource_माप_प्रकार __weak pcibios_retrieve_fw_addr(काष्ठा pci_dev *dev, पूर्णांक idx)
+अणु
+	वापस 0;
+पूर्ण
 
-static int pci_revert_fw_address(struct resource *res, struct pci_dev *dev,
-		int resno, resource_size_t size)
-{
-	struct resource *root, *conflict;
-	resource_size_t fw_addr, start, end;
+अटल पूर्णांक pci_revert_fw_address(काष्ठा resource *res, काष्ठा pci_dev *dev,
+		पूर्णांक resno, resource_माप_प्रकार size)
+अणु
+	काष्ठा resource *root, *conflict;
+	resource_माप_प्रकार fw_addr, start, end;
 
 	fw_addr = pcibios_retrieve_fw_addr(dev, resno);
-	if (!fw_addr)
-		return -ENOMEM;
+	अगर (!fw_addr)
+		वापस -ENOMEM;
 
 	start = res->start;
 	end = res->end;
@@ -209,120 +210,120 @@ static int pci_revert_fw_address(struct resource *res, struct pci_dev *dev,
 	res->flags &= ~IORESOURCE_UNSET;
 
 	root = pci_find_parent_resource(dev, res);
-	if (!root) {
-		if (res->flags & IORESOURCE_IO)
+	अगर (!root) अणु
+		अगर (res->flags & IORESOURCE_IO)
 			root = &ioport_resource;
-		else
+		अन्यथा
 			root = &iomem_resource;
-	}
+	पूर्ण
 
 	pci_info(dev, "BAR %d: trying firmware assignment %pR\n",
 		 resno, res);
 	conflict = request_resource_conflict(root, res);
-	if (conflict) {
+	अगर (conflict) अणु
 		pci_info(dev, "BAR %d: %pR conflicts with %s %pR\n",
 			 resno, res, conflict->name, conflict);
 		res->start = start;
 		res->end = end;
 		res->flags |= IORESOURCE_UNSET;
-		return -EBUSY;
-	}
-	return 0;
-}
+		वापस -EBUSY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * We don't have to worry about legacy ISA devices, so nothing to do here.
+ * We करोn't have to worry about legacy ISA devices, so nothing to करो here.
  * This is marked as __weak because multiple architectures define it; it should
  * eventually go away.
  */
-resource_size_t __weak pcibios_align_resource(void *data,
-					      const struct resource *res,
-					      resource_size_t size,
-					      resource_size_t align)
-{
-       return res->start;
-}
+resource_माप_प्रकार __weak pcibios_align_resource(व्योम *data,
+					      स्थिर काष्ठा resource *res,
+					      resource_माप_प्रकार size,
+					      resource_माप_प्रकार align)
+अणु
+       वापस res->start;
+पूर्ण
 
-static int __pci_assign_resource(struct pci_bus *bus, struct pci_dev *dev,
-		int resno, resource_size_t size, resource_size_t align)
-{
-	struct resource *res = dev->resource + resno;
-	resource_size_t min;
-	int ret;
+अटल पूर्णांक __pci_assign_resource(काष्ठा pci_bus *bus, काष्ठा pci_dev *dev,
+		पूर्णांक resno, resource_माप_प्रकार size, resource_माप_प्रकार align)
+अणु
+	काष्ठा resource *res = dev->resource + resno;
+	resource_माप_प्रकार min;
+	पूर्णांक ret;
 
 	min = (res->flags & IORESOURCE_IO) ? PCIBIOS_MIN_IO : PCIBIOS_MIN_MEM;
 
 	/*
-	 * First, try exact prefetching match.  Even if a 64-bit
-	 * prefetchable bridge window is below 4GB, we can't put a 32-bit
+	 * First, try exact prefetching match.  Even अगर a 64-bit
+	 * prefetchable bridge winकरोw is below 4GB, we can't put a 32-bit
 	 * prefetchable resource in it because pbus_size_mem() assumes a
-	 * 64-bit window will contain no 32-bit resources.  If we assign
-	 * things differently than they were sized, not everything will fit.
+	 * 64-bit winकरोw will contain no 32-bit resources.  If we assign
+	 * things dअगरferently than they were sized, not everything will fit.
 	 */
 	ret = pci_bus_alloc_resource(bus, res, size, align, min,
 				     IORESOURCE_PREFETCH | IORESOURCE_MEM_64,
 				     pcibios_align_resource, dev);
-	if (ret == 0)
-		return 0;
+	अगर (ret == 0)
+		वापस 0;
 
 	/*
-	 * If the prefetchable window is only 32 bits wide, we can put
+	 * If the prefetchable winकरोw is only 32 bits wide, we can put
 	 * 64-bit prefetchable resources in it.
 	 */
-	if ((res->flags & (IORESOURCE_PREFETCH | IORESOURCE_MEM_64)) ==
-	     (IORESOURCE_PREFETCH | IORESOURCE_MEM_64)) {
+	अगर ((res->flags & (IORESOURCE_PREFETCH | IORESOURCE_MEM_64)) ==
+	     (IORESOURCE_PREFETCH | IORESOURCE_MEM_64)) अणु
 		ret = pci_bus_alloc_resource(bus, res, size, align, min,
 					     IORESOURCE_PREFETCH,
 					     pcibios_align_resource, dev);
-		if (ret == 0)
-			return 0;
-	}
+		अगर (ret == 0)
+			वापस 0;
+	पूर्ण
 
 	/*
 	 * If we didn't find a better match, we can put any memory resource
-	 * in a non-prefetchable window.  If this resource is 32 bits and
-	 * non-prefetchable, the first call already tried the only possibility
-	 * so we don't need to try again.
+	 * in a non-prefetchable winकरोw.  If this resource is 32 bits and
+	 * non-prefetchable, the first call alपढ़ोy tried the only possibility
+	 * so we करोn't need to try again.
 	 */
-	if (res->flags & (IORESOURCE_PREFETCH | IORESOURCE_MEM_64))
+	अगर (res->flags & (IORESOURCE_PREFETCH | IORESOURCE_MEM_64))
 		ret = pci_bus_alloc_resource(bus, res, size, align, min, 0,
 					     pcibios_align_resource, dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int _pci_assign_resource(struct pci_dev *dev, int resno,
-				resource_size_t size, resource_size_t min_align)
-{
-	struct pci_bus *bus;
-	int ret;
+अटल पूर्णांक _pci_assign_resource(काष्ठा pci_dev *dev, पूर्णांक resno,
+				resource_माप_प्रकार size, resource_माप_प्रकार min_align)
+अणु
+	काष्ठा pci_bus *bus;
+	पूर्णांक ret;
 
 	bus = dev->bus;
-	while ((ret = __pci_assign_resource(bus, dev, resno, size, min_align))) {
-		if (!bus->parent || !bus->self->transparent)
-			break;
+	जबतक ((ret = __pci_assign_resource(bus, dev, resno, size, min_align))) अणु
+		अगर (!bus->parent || !bus->self->transparent)
+			अवरोध;
 		bus = bus->parent;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int pci_assign_resource(struct pci_dev *dev, int resno)
-{
-	struct resource *res = dev->resource + resno;
-	resource_size_t align, size;
-	int ret;
+पूर्णांक pci_assign_resource(काष्ठा pci_dev *dev, पूर्णांक resno)
+अणु
+	काष्ठा resource *res = dev->resource + resno;
+	resource_माप_प्रकार align, size;
+	पूर्णांक ret;
 
-	if (res->flags & IORESOURCE_PCI_FIXED)
-		return 0;
+	अगर (res->flags & IORESOURCE_PCI_FIXED)
+		वापस 0;
 
 	res->flags |= IORESOURCE_UNSET;
 	align = pci_resource_alignment(dev, res);
-	if (!align) {
+	अगर (!align) अणु
 		pci_info(dev, "BAR %d: can't assign %pR (bogus alignment)\n",
 			 resno, res);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	size = resource_size(res);
 	ret = _pci_assign_resource(dev, resno, size, align);
@@ -332,176 +333,176 @@ int pci_assign_resource(struct pci_dev *dev, int resno)
 	 * where firmware left it.  That at least has a chance of
 	 * working, which is better than just leaving it disabled.
 	 */
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pci_info(dev, "BAR %d: no space for %pR\n", resno, res);
 		ret = pci_revert_fw_address(res, dev, resno, size);
-	}
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pci_info(dev, "BAR %d: failed to assign %pR\n", resno, res);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	res->flags &= ~IORESOURCE_UNSET;
 	res->flags &= ~IORESOURCE_STARTALIGN;
 	pci_info(dev, "BAR %d: assigned %pR\n", resno, res);
-	if (resno < PCI_BRIDGE_RESOURCES)
+	अगर (resno < PCI_BRIDGE_RESOURCES)
 		pci_update_resource(dev, resno);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(pci_assign_resource);
 
-int pci_reassign_resource(struct pci_dev *dev, int resno, resource_size_t addsize,
-			resource_size_t min_align)
-{
-	struct resource *res = dev->resource + resno;
-	unsigned long flags;
-	resource_size_t new_size;
-	int ret;
+पूर्णांक pci_reassign_resource(काष्ठा pci_dev *dev, पूर्णांक resno, resource_माप_प्रकार addsize,
+			resource_माप_प्रकार min_align)
+अणु
+	काष्ठा resource *res = dev->resource + resno;
+	अचिन्हित दीर्घ flags;
+	resource_माप_प्रकार new_size;
+	पूर्णांक ret;
 
-	if (res->flags & IORESOURCE_PCI_FIXED)
-		return 0;
+	अगर (res->flags & IORESOURCE_PCI_FIXED)
+		वापस 0;
 
 	flags = res->flags;
 	res->flags |= IORESOURCE_UNSET;
-	if (!res->parent) {
+	अगर (!res->parent) अणु
 		pci_info(dev, "BAR %d: can't reassign an unassigned resource %pR\n",
 			 resno, res);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* already aligned with min_align */
+	/* alपढ़ोy aligned with min_align */
 	new_size = resource_size(res) + addsize;
 	ret = _pci_assign_resource(dev, resno, new_size, min_align);
-	if (ret) {
+	अगर (ret) अणु
 		res->flags = flags;
 		pci_info(dev, "BAR %d: %pR (failed to expand by %#llx)\n",
-			 resno, res, (unsigned long long) addsize);
-		return ret;
-	}
+			 resno, res, (अचिन्हित दीर्घ दीर्घ) addsize);
+		वापस ret;
+	पूर्ण
 
 	res->flags &= ~IORESOURCE_UNSET;
 	res->flags &= ~IORESOURCE_STARTALIGN;
 	pci_info(dev, "BAR %d: reassigned %pR (expanded by %#llx)\n",
-		 resno, res, (unsigned long long) addsize);
-	if (resno < PCI_BRIDGE_RESOURCES)
+		 resno, res, (अचिन्हित दीर्घ दीर्घ) addsize);
+	अगर (resno < PCI_BRIDGE_RESOURCES)
 		pci_update_resource(dev, resno);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pci_release_resource(struct pci_dev *dev, int resno)
-{
-	struct resource *res = dev->resource + resno;
+व्योम pci_release_resource(काष्ठा pci_dev *dev, पूर्णांक resno)
+अणु
+	काष्ठा resource *res = dev->resource + resno;
 
 	pci_info(dev, "BAR %d: releasing %pR\n", resno, res);
 
-	if (!res->parent)
-		return;
+	अगर (!res->parent)
+		वापस;
 
 	release_resource(res);
 	res->end = resource_size(res) - 1;
 	res->start = 0;
 	res->flags |= IORESOURCE_UNSET;
-}
+पूर्ण
 EXPORT_SYMBOL(pci_release_resource);
 
-int pci_resize_resource(struct pci_dev *dev, int resno, int size)
-{
-	struct resource *res = dev->resource + resno;
-	struct pci_host_bridge *host;
-	int old, ret;
+पूर्णांक pci_resize_resource(काष्ठा pci_dev *dev, पूर्णांक resno, पूर्णांक size)
+अणु
+	काष्ठा resource *res = dev->resource + resno;
+	काष्ठा pci_host_bridge *host;
+	पूर्णांक old, ret;
 	u32 sizes;
 	u16 cmd;
 
-	/* Check if we must preserve the firmware's resource assignment */
+	/* Check अगर we must preserve the firmware's resource assignment */
 	host = pci_find_host_bridge(dev->bus);
-	if (host->preserve_config)
-		return -ENOTSUPP;
+	अगर (host->preserve_config)
+		वापस -ENOTSUPP;
 
-	/* Make sure the resource isn't assigned before resizing it. */
-	if (!(res->flags & IORESOURCE_UNSET))
-		return -EBUSY;
+	/* Make sure the resource isn't asचिन्हित beक्रमe resizing it. */
+	अगर (!(res->flags & IORESOURCE_UNSET))
+		वापस -EBUSY;
 
-	pci_read_config_word(dev, PCI_COMMAND, &cmd);
-	if (cmd & PCI_COMMAND_MEMORY)
-		return -EBUSY;
+	pci_पढ़ो_config_word(dev, PCI_COMMAND, &cmd);
+	अगर (cmd & PCI_COMMAND_MEMORY)
+		वापस -EBUSY;
 
 	sizes = pci_rebar_get_possible_sizes(dev, resno);
-	if (!sizes)
-		return -ENOTSUPP;
+	अगर (!sizes)
+		वापस -ENOTSUPP;
 
-	if (!(sizes & BIT(size)))
-		return -EINVAL;
+	अगर (!(sizes & BIT(size)))
+		वापस -EINVAL;
 
 	old = pci_rebar_get_current_size(dev, resno);
-	if (old < 0)
-		return old;
+	अगर (old < 0)
+		वापस old;
 
 	ret = pci_rebar_set_size(dev, resno, size);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	res->end = res->start + pci_rebar_size_to_bytes(size) - 1;
+	res->end = res->start + pci_rebar_माप_प्रकारo_bytes(size) - 1;
 
-	/* Check if the new config works by trying to assign everything. */
-	if (dev->bus->self) {
+	/* Check अगर the new config works by trying to assign everything. */
+	अगर (dev->bus->self) अणु
 		ret = pci_reassign_bridge_resources(dev->bus->self, res->flags);
-		if (ret)
-			goto error_resize;
-	}
-	return 0;
+		अगर (ret)
+			जाओ error_resize;
+	पूर्ण
+	वापस 0;
 
 error_resize:
 	pci_rebar_set_size(dev, resno, old);
-	res->end = res->start + pci_rebar_size_to_bytes(old) - 1;
-	return ret;
-}
+	res->end = res->start + pci_rebar_माप_प्रकारo_bytes(old) - 1;
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(pci_resize_resource);
 
-int pci_enable_resources(struct pci_dev *dev, int mask)
-{
+पूर्णांक pci_enable_resources(काष्ठा pci_dev *dev, पूर्णांक mask)
+अणु
 	u16 cmd, old_cmd;
-	int i;
-	struct resource *r;
+	पूर्णांक i;
+	काष्ठा resource *r;
 
-	pci_read_config_word(dev, PCI_COMMAND, &cmd);
+	pci_पढ़ो_config_word(dev, PCI_COMMAND, &cmd);
 	old_cmd = cmd;
 
-	for (i = 0; i < PCI_NUM_RESOURCES; i++) {
-		if (!(mask & (1 << i)))
-			continue;
+	क्रम (i = 0; i < PCI_NUM_RESOURCES; i++) अणु
+		अगर (!(mask & (1 << i)))
+			जारी;
 
 		r = &dev->resource[i];
 
-		if (!(r->flags & (IORESOURCE_IO | IORESOURCE_MEM)))
-			continue;
-		if ((i == PCI_ROM_RESOURCE) &&
+		अगर (!(r->flags & (IORESOURCE_IO | IORESOURCE_MEM)))
+			जारी;
+		अगर ((i == PCI_ROM_RESOURCE) &&
 				(!(r->flags & IORESOURCE_ROM_ENABLE)))
-			continue;
+			जारी;
 
-		if (r->flags & IORESOURCE_UNSET) {
+		अगर (r->flags & IORESOURCE_UNSET) अणु
 			pci_err(dev, "can't enable device: BAR %d %pR not assigned\n",
 				i, r);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!r->parent) {
+		अगर (!r->parent) अणु
 			pci_err(dev, "can't enable device: BAR %d %pR not claimed\n",
 				i, r);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (r->flags & IORESOURCE_IO)
+		अगर (r->flags & IORESOURCE_IO)
 			cmd |= PCI_COMMAND_IO;
-		if (r->flags & IORESOURCE_MEM)
+		अगर (r->flags & IORESOURCE_MEM)
 			cmd |= PCI_COMMAND_MEMORY;
-	}
+	पूर्ण
 
-	if (cmd != old_cmd) {
+	अगर (cmd != old_cmd) अणु
 		pci_info(dev, "enabling device (%04x -> %04x)\n", old_cmd, cmd);
-		pci_write_config_word(dev, PCI_COMMAND, cmd);
-	}
-	return 0;
-}
+		pci_ग_लिखो_config_word(dev, PCI_COMMAND, cmd);
+	पूर्ण
+	वापस 0;
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Authors:
@@ -6,102 +7,102 @@
  * Copyright (c)  2015 Nordic Semiconductor. All Rights Reserved.
  */
 
-#include <net/6lowpan.h>
+#समावेश <net/6lowpan.h>
 
-#include "6lowpan_i.h"
+#समावेश "6lowpan_i.h"
 
-#define LOWPAN_DEBUGFS_CTX_PFX_NUM_ARGS	8
+#घोषणा LOWPAN_DEBUGFS_CTX_PFX_NUM_ARGS	8
 
-static struct dentry *lowpan_debugfs;
+अटल काष्ठा dentry *lowpan_debugfs;
 
-static int lowpan_ctx_flag_active_set(void *data, u64 val)
-{
-	struct lowpan_iphc_ctx *ctx = data;
+अटल पूर्णांक lowpan_ctx_flag_active_set(व्योम *data, u64 val)
+अणु
+	काष्ठा lowpan_iphc_ctx *ctx = data;
 
-	if (val != 0 && val != 1)
-		return -EINVAL;
+	अगर (val != 0 && val != 1)
+		वापस -EINVAL;
 
-	if (val)
+	अगर (val)
 		set_bit(LOWPAN_IPHC_CTX_FLAG_ACTIVE, &ctx->flags);
-	else
+	अन्यथा
 		clear_bit(LOWPAN_IPHC_CTX_FLAG_ACTIVE, &ctx->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lowpan_ctx_flag_active_get(void *data, u64 *val)
-{
+अटल पूर्णांक lowpan_ctx_flag_active_get(व्योम *data, u64 *val)
+अणु
 	*val = lowpan_iphc_ctx_is_active(data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_DEBUGFS_ATTRIBUTE(lowpan_ctx_flag_active_fops,
 			 lowpan_ctx_flag_active_get,
 			 lowpan_ctx_flag_active_set, "%llu\n");
 
-static int lowpan_ctx_flag_c_set(void *data, u64 val)
-{
-	struct lowpan_iphc_ctx *ctx = data;
+अटल पूर्णांक lowpan_ctx_flag_c_set(व्योम *data, u64 val)
+अणु
+	काष्ठा lowpan_iphc_ctx *ctx = data;
 
-	if (val != 0 && val != 1)
-		return -EINVAL;
+	अगर (val != 0 && val != 1)
+		वापस -EINVAL;
 
-	if (val)
+	अगर (val)
 		set_bit(LOWPAN_IPHC_CTX_FLAG_COMPRESSION, &ctx->flags);
-	else
+	अन्यथा
 		clear_bit(LOWPAN_IPHC_CTX_FLAG_COMPRESSION, &ctx->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lowpan_ctx_flag_c_get(void *data, u64 *val)
-{
+अटल पूर्णांक lowpan_ctx_flag_c_get(व्योम *data, u64 *val)
+अणु
 	*val = lowpan_iphc_ctx_is_compression(data);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_DEBUGFS_ATTRIBUTE(lowpan_ctx_flag_c_fops, lowpan_ctx_flag_c_get,
 			 lowpan_ctx_flag_c_set, "%llu\n");
 
-static int lowpan_ctx_plen_set(void *data, u64 val)
-{
-	struct lowpan_iphc_ctx *ctx = data;
-	struct lowpan_iphc_ctx_table *t =
-		container_of(ctx, struct lowpan_iphc_ctx_table, table[ctx->id]);
+अटल पूर्णांक lowpan_ctx_plen_set(व्योम *data, u64 val)
+अणु
+	काष्ठा lowpan_iphc_ctx *ctx = data;
+	काष्ठा lowpan_iphc_ctx_table *t =
+		container_of(ctx, काष्ठा lowpan_iphc_ctx_table, table[ctx->id]);
 
-	if (val > 128)
-		return -EINVAL;
+	अगर (val > 128)
+		वापस -EINVAL;
 
 	spin_lock_bh(&t->lock);
 	ctx->plen = val;
 	spin_unlock_bh(&t->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lowpan_ctx_plen_get(void *data, u64 *val)
-{
-	struct lowpan_iphc_ctx *ctx = data;
-	struct lowpan_iphc_ctx_table *t =
-		container_of(ctx, struct lowpan_iphc_ctx_table, table[ctx->id]);
+अटल पूर्णांक lowpan_ctx_plen_get(व्योम *data, u64 *val)
+अणु
+	काष्ठा lowpan_iphc_ctx *ctx = data;
+	काष्ठा lowpan_iphc_ctx_table *t =
+		container_of(ctx, काष्ठा lowpan_iphc_ctx_table, table[ctx->id]);
 
 	spin_lock_bh(&t->lock);
 	*val = ctx->plen;
 	spin_unlock_bh(&t->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_DEBUGFS_ATTRIBUTE(lowpan_ctx_plen_fops, lowpan_ctx_plen_get,
 			 lowpan_ctx_plen_set, "%llu\n");
 
-static int lowpan_ctx_pfx_show(struct seq_file *file, void *offset)
-{
-	struct lowpan_iphc_ctx *ctx = file->private;
-	struct lowpan_iphc_ctx_table *t =
-		container_of(ctx, struct lowpan_iphc_ctx_table, table[ctx->id]);
+अटल पूर्णांक lowpan_ctx_pfx_show(काष्ठा seq_file *file, व्योम *offset)
+अणु
+	काष्ठा lowpan_iphc_ctx *ctx = file->निजी;
+	काष्ठा lowpan_iphc_ctx_table *t =
+		container_of(ctx, काष्ठा lowpan_iphc_ctx_table, table[ctx->id]);
 
 	spin_lock_bh(&t->lock);
-	seq_printf(file, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x\n",
+	seq_म_लिखो(file, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x\n",
 		   be16_to_cpu(ctx->pfx.s6_addr16[0]),
 		   be16_to_cpu(ctx->pfx.s6_addr16[1]),
 		   be16_to_cpu(ctx->pfx.s6_addr16[2]),
@@ -112,67 +113,67 @@ static int lowpan_ctx_pfx_show(struct seq_file *file, void *offset)
 		   be16_to_cpu(ctx->pfx.s6_addr16[7]));
 	spin_unlock_bh(&t->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lowpan_ctx_pfx_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, lowpan_ctx_pfx_show, inode->i_private);
-}
+अटल पूर्णांक lowpan_ctx_pfx_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, lowpan_ctx_pfx_show, inode->i_निजी);
+पूर्ण
 
-static ssize_t lowpan_ctx_pfx_write(struct file *fp,
-				    const char __user *user_buf, size_t count,
+अटल sमाप_प्रकार lowpan_ctx_pfx_ग_लिखो(काष्ठा file *fp,
+				    स्थिर अक्षर __user *user_buf, माप_प्रकार count,
 				    loff_t *ppos)
-{
-	char buf[128] = {};
-	struct seq_file *file = fp->private_data;
-	struct lowpan_iphc_ctx *ctx = file->private;
-	struct lowpan_iphc_ctx_table *t =
-		container_of(ctx, struct lowpan_iphc_ctx_table, table[ctx->id]);
-	int status = count, n, i;
-	unsigned int addr[8];
+अणु
+	अक्षर buf[128] = अणुपूर्ण;
+	काष्ठा seq_file *file = fp->निजी_data;
+	काष्ठा lowpan_iphc_ctx *ctx = file->निजी;
+	काष्ठा lowpan_iphc_ctx_table *t =
+		container_of(ctx, काष्ठा lowpan_iphc_ctx_table, table[ctx->id]);
+	पूर्णांक status = count, n, i;
+	अचिन्हित पूर्णांक addr[8];
 
-	if (copy_from_user(&buf, user_buf, min_t(size_t, sizeof(buf) - 1,
-						 count))) {
+	अगर (copy_from_user(&buf, user_buf, min_t(माप_प्रकार, माप(buf) - 1,
+						 count))) अणु
 		status = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	n = sscanf(buf, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
+	n = माला_पूछो(buf, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
 		   &addr[0], &addr[1], &addr[2], &addr[3], &addr[4],
 		   &addr[5], &addr[6], &addr[7]);
-	if (n != LOWPAN_DEBUGFS_CTX_PFX_NUM_ARGS) {
+	अगर (n != LOWPAN_DEBUGFS_CTX_PFX_NUM_ARGS) अणु
 		status = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	spin_lock_bh(&t->lock);
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		ctx->pfx.s6_addr16[i] = cpu_to_be16(addr[i] & 0xffff);
 	spin_unlock_bh(&t->lock);
 
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static const struct file_operations lowpan_ctx_pfx_fops = {
-	.open		= lowpan_ctx_pfx_open,
-	.read		= seq_read,
-	.write		= lowpan_ctx_pfx_write,
+अटल स्थिर काष्ठा file_operations lowpan_ctx_pfx_fops = अणु
+	.खोलो		= lowpan_ctx_pfx_खोलो,
+	.पढ़ो		= seq_पढ़ो,
+	.ग_लिखो		= lowpan_ctx_pfx_ग_लिखो,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-};
+पूर्ण;
 
-static void lowpan_dev_debugfs_ctx_init(struct net_device *dev,
-					struct dentry *ctx, u8 id)
-{
-	struct lowpan_dev *ldev = lowpan_dev(dev);
-	struct dentry *root;
-	char buf[32];
+अटल व्योम lowpan_dev_debugfs_ctx_init(काष्ठा net_device *dev,
+					काष्ठा dentry *ctx, u8 id)
+अणु
+	काष्ठा lowpan_dev *ldev = lowpan_dev(dev);
+	काष्ठा dentry *root;
+	अक्षर buf[32];
 
 	WARN_ON_ONCE(id > LOWPAN_IPHC_CTX_TABLE_SIZE);
 
-	sprintf(buf, "%d", id);
+	प्र_लिखो(buf, "%d", id);
 
 	root = debugfs_create_dir(buf, ctx);
 
@@ -187,91 +188,91 @@ static void lowpan_dev_debugfs_ctx_init(struct net_device *dev,
 
 	debugfs_create_file("prefix_len", 0644, root, &ldev->ctx.table[id],
 			    &lowpan_ctx_plen_fops);
-}
+पूर्ण
 
-static int lowpan_context_show(struct seq_file *file, void *offset)
-{
-	struct lowpan_iphc_ctx_table *t = file->private;
-	int i;
+अटल पूर्णांक lowpan_context_show(काष्ठा seq_file *file, व्योम *offset)
+अणु
+	काष्ठा lowpan_iphc_ctx_table *t = file->निजी;
+	पूर्णांक i;
 
-	seq_printf(file, "%3s|%-43s|%c\n", "cid", "prefix", 'C');
-	seq_puts(file, "-------------------------------------------------\n");
+	seq_म_लिखो(file, "%3s|%-43s|%c\n", "cid", "prefix", 'C');
+	seq_माला_दो(file, "-------------------------------------------------\n");
 
 	spin_lock_bh(&t->lock);
-	for (i = 0; i < LOWPAN_IPHC_CTX_TABLE_SIZE; i++) {
-		if (!lowpan_iphc_ctx_is_active(&t->table[i]))
-			continue;
+	क्रम (i = 0; i < LOWPAN_IPHC_CTX_TABLE_SIZE; i++) अणु
+		अगर (!lowpan_iphc_ctx_is_active(&t->table[i]))
+			जारी;
 
-		seq_printf(file, "%3d|%39pI6c/%-3d|%d\n", t->table[i].id,
+		seq_म_लिखो(file, "%3d|%39pI6c/%-3d|%d\n", t->table[i].id,
 			   &t->table[i].pfx, t->table[i].plen,
 			   lowpan_iphc_ctx_is_compression(&t->table[i]));
-	}
+	पूर्ण
 	spin_unlock_bh(&t->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(lowpan_context);
 
-static int lowpan_short_addr_get(void *data, u64 *val)
-{
-	struct wpan_dev *wdev = data;
+अटल पूर्णांक lowpan_लघु_addr_get(व्योम *data, u64 *val)
+अणु
+	काष्ठा wpan_dev *wdev = data;
 
 	rtnl_lock();
-	*val = le16_to_cpu(wdev->short_addr);
+	*val = le16_to_cpu(wdev->लघु_addr);
 	rtnl_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-DEFINE_DEBUGFS_ATTRIBUTE(lowpan_short_addr_fops, lowpan_short_addr_get, NULL,
+DEFINE_DEBUGFS_ATTRIBUTE(lowpan_लघु_addr_fops, lowpan_लघु_addr_get, शून्य,
 			 "0x%04llx\n");
 
-static void lowpan_dev_debugfs_802154_init(const struct net_device *dev,
-					  struct lowpan_dev *ldev)
-{
-	struct dentry *root;
+अटल व्योम lowpan_dev_debugfs_802154_init(स्थिर काष्ठा net_device *dev,
+					  काष्ठा lowpan_dev *ldev)
+अणु
+	काष्ठा dentry *root;
 
-	if (!lowpan_is_ll(dev, LOWPAN_LLTYPE_IEEE802154))
-		return;
+	अगर (!lowpan_is_ll(dev, LOWPAN_LLTYPE_IEEE802154))
+		वापस;
 
-	root = debugfs_create_dir("ieee802154", ldev->iface_debugfs);
+	root = debugfs_create_dir("ieee802154", ldev->अगरace_debugfs);
 
 	debugfs_create_file("short_addr", 0444, root,
 			    lowpan_802154_dev(dev)->wdev->ieee802154_ptr,
-			    &lowpan_short_addr_fops);
-}
+			    &lowpan_लघु_addr_fops);
+पूर्ण
 
-void lowpan_dev_debugfs_init(struct net_device *dev)
-{
-	struct lowpan_dev *ldev = lowpan_dev(dev);
-	struct dentry *contexts;
-	int i;
+व्योम lowpan_dev_debugfs_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा lowpan_dev *ldev = lowpan_dev(dev);
+	काष्ठा dentry *contexts;
+	पूर्णांक i;
 
 	/* creating the root */
-	ldev->iface_debugfs = debugfs_create_dir(dev->name, lowpan_debugfs);
+	ldev->अगरace_debugfs = debugfs_create_dir(dev->name, lowpan_debugfs);
 
-	contexts = debugfs_create_dir("contexts", ldev->iface_debugfs);
+	contexts = debugfs_create_dir("contexts", ldev->अगरace_debugfs);
 
 	debugfs_create_file("show", 0644, contexts, &lowpan_dev(dev)->ctx,
 			    &lowpan_context_fops);
 
-	for (i = 0; i < LOWPAN_IPHC_CTX_TABLE_SIZE; i++)
+	क्रम (i = 0; i < LOWPAN_IPHC_CTX_TABLE_SIZE; i++)
 		lowpan_dev_debugfs_ctx_init(dev, contexts, i);
 
 	lowpan_dev_debugfs_802154_init(dev, ldev);
-}
+पूर्ण
 
-void lowpan_dev_debugfs_exit(struct net_device *dev)
-{
-	debugfs_remove_recursive(lowpan_dev(dev)->iface_debugfs);
-}
+व्योम lowpan_dev_debugfs_निकास(काष्ठा net_device *dev)
+अणु
+	debugfs_हटाओ_recursive(lowpan_dev(dev)->अगरace_debugfs);
+पूर्ण
 
-void __init lowpan_debugfs_init(void)
-{
-	lowpan_debugfs = debugfs_create_dir("6lowpan", NULL);
-}
+व्योम __init lowpan_debugfs_init(व्योम)
+अणु
+	lowpan_debugfs = debugfs_create_dir("6lowpan", शून्य);
+पूर्ण
 
-void lowpan_debugfs_exit(void)
-{
-	debugfs_remove_recursive(lowpan_debugfs);
-}
+व्योम lowpan_debugfs_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(lowpan_debugfs);
+पूर्ण

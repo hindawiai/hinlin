@@ -1,149 +1,150 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC64_LDC_H
-#define _SPARC64_LDC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC64_LDC_H
+#घोषणा _SPARC64_LDC_H
 
-#include <asm/hypervisor.h>
+#समावेश <यंत्र/hypervisor.h>
 
-extern int ldom_domaining_enabled;
-void ldom_set_var(const char *var, const char *value);
-void ldom_reboot(const char *boot_command);
-void ldom_power_off(void);
+बाह्य पूर्णांक lकरोm_करोमुख्यing_enabled;
+व्योम lकरोm_set_var(स्थिर अक्षर *var, स्थिर अक्षर *value);
+व्योम lकरोm_reboot(स्थिर अक्षर *boot_command);
+व्योम lकरोm_घातer_off(व्योम);
 
 /* The event handler will be evoked when link state changes
  * or data becomes available on the receive side.
  *
- * For non-RAW links, if the LDC_EVENT_RESET event arrives the
- * driver should reset all of it's internal state and reinvoke
+ * For non-RAW links, अगर the LDC_EVENT_RESET event arrives the
+ * driver should reset all of it's पूर्णांकernal state and reinvoke
  * ldc_connect() to try and bring the link up again.
  *
  * For RAW links, ldc_connect() is not used.  Instead the driver
- * just waits for the LDC_EVENT_UP event.
+ * just रुकोs क्रम the LDC_EVENT_UP event.
  */
-struct ldc_channel_config {
-	void (*event)(void *arg, int event);
+काष्ठा ldc_channel_config अणु
+	व्योम (*event)(व्योम *arg, पूर्णांक event);
 
 	u32			mtu;
-	unsigned int		rx_irq;
-	unsigned int		tx_irq;
+	अचिन्हित पूर्णांक		rx_irq;
+	अचिन्हित पूर्णांक		tx_irq;
 	u8			mode;
-#define LDC_MODE_RAW		0x00
-#define LDC_MODE_UNRELIABLE	0x01
-#define LDC_MODE_RESERVED	0x02
-#define LDC_MODE_STREAM		0x03
+#घोषणा LDC_MODE_RAW		0x00
+#घोषणा LDC_MODE_UNRELIABLE	0x01
+#घोषणा LDC_MODE_RESERVED	0x02
+#घोषणा LDC_MODE_STREAM		0x03
 
 	u8			debug;
-#define LDC_DEBUG_HS		0x01
-#define LDC_DEBUG_STATE		0x02
-#define LDC_DEBUG_RX		0x04
-#define LDC_DEBUG_TX		0x08
-#define LDC_DEBUG_DATA		0x10
-};
+#घोषणा LDC_DEBUG_HS		0x01
+#घोषणा LDC_DEBUG_STATE		0x02
+#घोषणा LDC_DEBUG_RX		0x04
+#घोषणा LDC_DEBUG_TX		0x08
+#घोषणा LDC_DEBUG_DATA		0x10
+पूर्ण;
 
-#define LDC_EVENT_RESET		0x01
-#define LDC_EVENT_UP		0x02
-#define LDC_EVENT_DATA_READY	0x04
+#घोषणा LDC_EVENT_RESET		0x01
+#घोषणा LDC_EVENT_UP		0x02
+#घोषणा LDC_EVENT_DATA_READY	0x04
 
-#define LDC_STATE_INVALID	0x00
-#define LDC_STATE_INIT		0x01
-#define LDC_STATE_BOUND		0x02
-#define LDC_STATE_READY		0x03
-#define LDC_STATE_CONNECTED	0x04
+#घोषणा LDC_STATE_INVALID	0x00
+#घोषणा LDC_STATE_INIT		0x01
+#घोषणा LDC_STATE_BOUND		0x02
+#घोषणा LDC_STATE_READY		0x03
+#घोषणा LDC_STATE_CONNECTED	0x04
 
-#define	LDC_PACKET_SIZE		64
+#घोषणा	LDC_PACKET_SIZE		64
 
-struct ldc_channel;
+काष्ठा ldc_channel;
 
-/* Allocate state for a channel.  */
-struct ldc_channel *ldc_alloc(unsigned long id,
-			      const struct ldc_channel_config *cfgp,
-			      void *event_arg,
-			      const char *name);
+/* Allocate state क्रम a channel.  */
+काष्ठा ldc_channel *ldc_alloc(अचिन्हित दीर्घ id,
+			      स्थिर काष्ठा ldc_channel_config *cfgp,
+			      व्योम *event_arg,
+			      स्थिर अक्षर *name);
 
-/* Shut down and free state for a channel.  */
-void ldc_free(struct ldc_channel *lp);
+/* Shut करोwn and मुक्त state क्रम a channel.  */
+व्योम ldc_मुक्त(काष्ठा ldc_channel *lp);
 
 /* Register TX and RX queues of the link with the hypervisor.  */
-int ldc_bind(struct ldc_channel *lp);
-void ldc_unbind(struct ldc_channel *lp);
+पूर्णांक ldc_bind(काष्ठा ldc_channel *lp);
+व्योम ldc_unbind(काष्ठा ldc_channel *lp);
 
-/* For non-RAW protocols we need to complete a handshake before
- * communication can proceed.  ldc_connect() does that, if the
+/* For non-RAW protocols we need to complete a handshake beक्रमe
+ * communication can proceed.  ldc_connect() करोes that, अगर the
  * handshake completes successfully, an LDC_EVENT_UP event will
  * be sent up to the driver.
  */
-int ldc_connect(struct ldc_channel *lp);
-int ldc_disconnect(struct ldc_channel *lp);
+पूर्णांक ldc_connect(काष्ठा ldc_channel *lp);
+पूर्णांक ldc_disconnect(काष्ठा ldc_channel *lp);
 
-int ldc_state(struct ldc_channel *lp);
-void ldc_set_state(struct ldc_channel *lp, u8 state);
-int ldc_mode(struct ldc_channel *lp);
-void __ldc_print(struct ldc_channel *lp, const char *caller);
-int ldc_rx_reset(struct ldc_channel *lp);
+पूर्णांक ldc_state(काष्ठा ldc_channel *lp);
+व्योम ldc_set_state(काष्ठा ldc_channel *lp, u8 state);
+पूर्णांक ldc_mode(काष्ठा ldc_channel *lp);
+व्योम __ldc_prपूर्णांक(काष्ठा ldc_channel *lp, स्थिर अक्षर *caller);
+पूर्णांक ldc_rx_reset(काष्ठा ldc_channel *lp);
 
-#define	ldc_print(chan)	__ldc_print(chan, __func__)
+#घोषणा	ldc_prपूर्णांक(chan)	__ldc_prपूर्णांक(chan, __func__)
 
-/* Read and write operations.  Only valid when the link is up.  */
-int ldc_write(struct ldc_channel *lp, const void *buf,
-	      unsigned int size);
-int ldc_read(struct ldc_channel *lp, void *buf, unsigned int size);
+/* Read and ग_लिखो operations.  Only valid when the link is up.  */
+पूर्णांक ldc_ग_लिखो(काष्ठा ldc_channel *lp, स्थिर व्योम *buf,
+	      अचिन्हित पूर्णांक size);
+पूर्णांक ldc_पढ़ो(काष्ठा ldc_channel *lp, व्योम *buf, अचिन्हित पूर्णांक size);
 
-#define LDC_MAP_SHADOW	0x01
-#define LDC_MAP_DIRECT	0x02
-#define LDC_MAP_IO	0x04
-#define LDC_MAP_R	0x08
-#define LDC_MAP_W	0x10
-#define LDC_MAP_X	0x20
-#define LDC_MAP_RW	(LDC_MAP_R | LDC_MAP_W)
-#define LDC_MAP_RWX	(LDC_MAP_R | LDC_MAP_W | LDC_MAP_X)
-#define LDC_MAP_ALL	0x03f
+#घोषणा LDC_MAP_SHADOW	0x01
+#घोषणा LDC_MAP_सूचीECT	0x02
+#घोषणा LDC_MAP_IO	0x04
+#घोषणा LDC_MAP_R	0x08
+#घोषणा LDC_MAP_W	0x10
+#घोषणा LDC_MAP_X	0x20
+#घोषणा LDC_MAP_RW	(LDC_MAP_R | LDC_MAP_W)
+#घोषणा LDC_MAP_RWX	(LDC_MAP_R | LDC_MAP_W | LDC_MAP_X)
+#घोषणा LDC_MAP_ALL	0x03f
 
-struct ldc_trans_cookie {
+काष्ठा ldc_trans_cookie अणु
 	u64			cookie_addr;
 	u64			cookie_size;
-};
+पूर्ण;
 
-struct scatterlist;
-int ldc_map_sg(struct ldc_channel *lp,
-	       struct scatterlist *sg, int num_sg,
-	       struct ldc_trans_cookie *cookies, int ncookies,
-	       unsigned int map_perm);
+काष्ठा scatterlist;
+पूर्णांक ldc_map_sg(काष्ठा ldc_channel *lp,
+	       काष्ठा scatterlist *sg, पूर्णांक num_sg,
+	       काष्ठा ldc_trans_cookie *cookies, पूर्णांक ncookies,
+	       अचिन्हित पूर्णांक map_perm);
 
-int ldc_map_single(struct ldc_channel *lp,
-		   void *buf, unsigned int len,
-		   struct ldc_trans_cookie *cookies, int ncookies,
-		   unsigned int map_perm);
+पूर्णांक ldc_map_single(काष्ठा ldc_channel *lp,
+		   व्योम *buf, अचिन्हित पूर्णांक len,
+		   काष्ठा ldc_trans_cookie *cookies, पूर्णांक ncookies,
+		   अचिन्हित पूर्णांक map_perm);
 
-void ldc_unmap(struct ldc_channel *lp, struct ldc_trans_cookie *cookies,
-	       int ncookies);
+व्योम ldc_unmap(काष्ठा ldc_channel *lp, काष्ठा ldc_trans_cookie *cookies,
+	       पूर्णांक ncookies);
 
-int ldc_copy(struct ldc_channel *lp, int copy_dir,
-	     void *buf, unsigned int len, unsigned long offset,
-	     struct ldc_trans_cookie *cookies, int ncookies);
+पूर्णांक ldc_copy(काष्ठा ldc_channel *lp, पूर्णांक copy_dir,
+	     व्योम *buf, अचिन्हित पूर्णांक len, अचिन्हित दीर्घ offset,
+	     काष्ठा ldc_trans_cookie *cookies, पूर्णांक ncookies);
 
-static inline int ldc_get_dring_entry(struct ldc_channel *lp,
-				      void *buf, unsigned int len,
-				      unsigned long offset,
-				      struct ldc_trans_cookie *cookies,
-				      int ncookies)
-{
-	return ldc_copy(lp, LDC_COPY_IN, buf, len, offset, cookies, ncookies);
-}
+अटल अंतरभूत पूर्णांक ldc_get_dring_entry(काष्ठा ldc_channel *lp,
+				      व्योम *buf, अचिन्हित पूर्णांक len,
+				      अचिन्हित दीर्घ offset,
+				      काष्ठा ldc_trans_cookie *cookies,
+				      पूर्णांक ncookies)
+अणु
+	वापस ldc_copy(lp, LDC_COPY_IN, buf, len, offset, cookies, ncookies);
+पूर्ण
 
-static inline int ldc_put_dring_entry(struct ldc_channel *lp,
-				      void *buf, unsigned int len,
-				      unsigned long offset,
-				      struct ldc_trans_cookie *cookies,
-				      int ncookies)
-{
-	return ldc_copy(lp, LDC_COPY_OUT, buf, len, offset, cookies, ncookies);
-}
+अटल अंतरभूत पूर्णांक ldc_put_dring_entry(काष्ठा ldc_channel *lp,
+				      व्योम *buf, अचिन्हित पूर्णांक len,
+				      अचिन्हित दीर्घ offset,
+				      काष्ठा ldc_trans_cookie *cookies,
+				      पूर्णांक ncookies)
+अणु
+	वापस ldc_copy(lp, LDC_COPY_OUT, buf, len, offset, cookies, ncookies);
+पूर्ण
 
-void *ldc_alloc_exp_dring(struct ldc_channel *lp, unsigned int len,
-			  struct ldc_trans_cookie *cookies,
-			  int *ncookies, unsigned int map_perm);
+व्योम *ldc_alloc_exp_dring(काष्ठा ldc_channel *lp, अचिन्हित पूर्णांक len,
+			  काष्ठा ldc_trans_cookie *cookies,
+			  पूर्णांक *ncookies, अचिन्हित पूर्णांक map_perm);
 
-void ldc_free_exp_dring(struct ldc_channel *lp, void *buf,
-		        unsigned int len,
-		        struct ldc_trans_cookie *cookies, int ncookies);
+व्योम ldc_मुक्त_exp_dring(काष्ठा ldc_channel *lp, व्योम *buf,
+		        अचिन्हित पूर्णांक len,
+		        काष्ठा ldc_trans_cookie *cookies, पूर्णांक ncookies);
 
-#endif /* _SPARC64_LDC_H */
+#पूर्ण_अगर /* _SPARC64_LDC_H */

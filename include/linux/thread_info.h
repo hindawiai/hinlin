@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* thread_info.h: common low-level thread information accessors
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* thपढ़ो_info.h: common low-level thपढ़ो inक्रमmation accessors
  *
  * Copyright (C) 2002  David Howells (dhowells@redhat.com)
  * - Incorporating suggestions made by Linus Torvalds
  */
 
-#ifndef _LINUX_THREAD_INFO_H
-#define _LINUX_THREAD_INFO_H
+#अगर_अघोषित _LINUX_THREAD_INFO_H
+#घोषणा _LINUX_THREAD_INFO_H
 
-#include <linux/types.h>
-#include <linux/bug.h>
-#include <linux/restart_block.h>
-#include <linux/errno.h>
+#समावेश <linux/types.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/restart_block.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#ifdef CONFIG_THREAD_INFO_IN_TASK
+#अगर_घोषित CONFIG_THREAD_INFO_IN_TASK
 /*
- * For CONFIG_THREAD_INFO_IN_TASK kernels we need <asm/current.h> for the
- * definition of current, but for !CONFIG_THREAD_INFO_IN_TASK kernels,
- * including <asm/current.h> can cause a circular dependency on some platforms.
+ * For CONFIG_THREAD_INFO_IN_TASK kernels we need <यंत्र/current.h> क्रम the
+ * definition of current, but क्रम !CONFIG_THREAD_INFO_IN_TASK kernels,
+ * including <यंत्र/current.h> can cause a circular dependency on some platक्रमms.
  */
-#include <asm/current.h>
-#define current_thread_info() ((struct thread_info *)current)
-#endif
+#समावेश <यंत्र/current.h>
+#घोषणा current_thपढ़ो_info() ((काष्ठा thपढ़ो_info *)current)
+#पूर्ण_अगर
 
-#include <linux/bitops.h>
+#समावेश <linux/bitops.h>
 
 /*
  * For per-arch arch_within_stack_frames() implementations, defined in
- * asm/thread_info.h.
+ * यंत्र/thपढ़ो_info.h.
  */
-enum {
+क्रमागत अणु
 	BAD_STACK = -1,
 	NOT_STACK = 0,
 	GOOD_FRAME,
 	GOOD_STACK,
-};
+पूर्ण;
 
-#ifdef CONFIG_GENERIC_ENTRY
-enum syscall_work_bit {
+#अगर_घोषित CONFIG_GENERIC_ENTRY
+क्रमागत syscall_work_bit अणु
 	SYSCALL_WORK_BIT_SECCOMP,
 	SYSCALL_WORK_BIT_SYSCALL_TRACEPOINT,
 	SYSCALL_WORK_BIT_SYSCALL_TRACE,
@@ -45,183 +46,183 @@ enum syscall_work_bit {
 	SYSCALL_WORK_BIT_SYSCALL_AUDIT,
 	SYSCALL_WORK_BIT_SYSCALL_USER_DISPATCH,
 	SYSCALL_WORK_BIT_SYSCALL_EXIT_TRAP,
-};
+पूर्ण;
 
-#define SYSCALL_WORK_SECCOMP		BIT(SYSCALL_WORK_BIT_SECCOMP)
-#define SYSCALL_WORK_SYSCALL_TRACEPOINT	BIT(SYSCALL_WORK_BIT_SYSCALL_TRACEPOINT)
-#define SYSCALL_WORK_SYSCALL_TRACE	BIT(SYSCALL_WORK_BIT_SYSCALL_TRACE)
-#define SYSCALL_WORK_SYSCALL_EMU	BIT(SYSCALL_WORK_BIT_SYSCALL_EMU)
-#define SYSCALL_WORK_SYSCALL_AUDIT	BIT(SYSCALL_WORK_BIT_SYSCALL_AUDIT)
-#define SYSCALL_WORK_SYSCALL_USER_DISPATCH BIT(SYSCALL_WORK_BIT_SYSCALL_USER_DISPATCH)
-#define SYSCALL_WORK_SYSCALL_EXIT_TRAP	BIT(SYSCALL_WORK_BIT_SYSCALL_EXIT_TRAP)
-#endif
+#घोषणा SYSCALL_WORK_SECCOMP		BIT(SYSCALL_WORK_BIT_SECCOMP)
+#घोषणा SYSCALL_WORK_SYSCALL_TRACEPOINT	BIT(SYSCALL_WORK_BIT_SYSCALL_TRACEPOINT)
+#घोषणा SYSCALL_WORK_SYSCALL_TRACE	BIT(SYSCALL_WORK_BIT_SYSCALL_TRACE)
+#घोषणा SYSCALL_WORK_SYSCALL_EMU	BIT(SYSCALL_WORK_BIT_SYSCALL_EMU)
+#घोषणा SYSCALL_WORK_SYSCALL_AUDIT	BIT(SYSCALL_WORK_BIT_SYSCALL_AUDIT)
+#घोषणा SYSCALL_WORK_SYSCALL_USER_DISPATCH BIT(SYSCALL_WORK_BIT_SYSCALL_USER_DISPATCH)
+#घोषणा SYSCALL_WORK_SYSCALL_EXIT_TRAP	BIT(SYSCALL_WORK_BIT_SYSCALL_EXIT_TRAP)
+#पूर्ण_अगर
 
-#include <asm/thread_info.h>
+#समावेश <यंत्र/thपढ़ो_info.h>
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#ifndef arch_set_restart_data
-#define arch_set_restart_data(restart) do { } while (0)
-#endif
+#अगर_अघोषित arch_set_restart_data
+#घोषणा arch_set_restart_data(restart) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-static inline long set_restart_fn(struct restart_block *restart,
-					long (*fn)(struct restart_block *))
-{
+अटल अंतरभूत दीर्घ set_restart_fn(काष्ठा restart_block *restart,
+					दीर्घ (*fn)(काष्ठा restart_block *))
+अणु
 	restart->fn = fn;
 	arch_set_restart_data(restart);
-	return -ERESTART_RESTARTBLOCK;
-}
+	वापस -ERESTART_RESTARTBLOCK;
+पूर्ण
 
-#ifndef THREAD_ALIGN
-#define THREAD_ALIGN	THREAD_SIZE
-#endif
+#अगर_अघोषित THREAD_ALIGN
+#घोषणा THREAD_ALIGN	THREAD_SIZE
+#पूर्ण_अगर
 
-#define THREADINFO_GFP		(GFP_KERNEL_ACCOUNT | __GFP_ZERO)
+#घोषणा THREADINFO_GFP		(GFP_KERNEL_ACCOUNT | __GFP_ZERO)
 
 /*
  * flag set/clear/test wrappers
- * - pass TIF_xxxx constants to these functions
+ * - pass TIF_xxxx स्थिरants to these functions
  */
 
-static inline void set_ti_thread_flag(struct thread_info *ti, int flag)
-{
-	set_bit(flag, (unsigned long *)&ti->flags);
-}
+अटल अंतरभूत व्योम set_ti_thपढ़ो_flag(काष्ठा thपढ़ो_info *ti, पूर्णांक flag)
+अणु
+	set_bit(flag, (अचिन्हित दीर्घ *)&ti->flags);
+पूर्ण
 
-static inline void clear_ti_thread_flag(struct thread_info *ti, int flag)
-{
-	clear_bit(flag, (unsigned long *)&ti->flags);
-}
+अटल अंतरभूत व्योम clear_ti_thपढ़ो_flag(काष्ठा thपढ़ो_info *ti, पूर्णांक flag)
+अणु
+	clear_bit(flag, (अचिन्हित दीर्घ *)&ti->flags);
+पूर्ण
 
-static inline void update_ti_thread_flag(struct thread_info *ti, int flag,
+अटल अंतरभूत व्योम update_ti_thपढ़ो_flag(काष्ठा thपढ़ो_info *ti, पूर्णांक flag,
 					 bool value)
-{
-	if (value)
-		set_ti_thread_flag(ti, flag);
-	else
-		clear_ti_thread_flag(ti, flag);
-}
+अणु
+	अगर (value)
+		set_ti_thपढ़ो_flag(ti, flag);
+	अन्यथा
+		clear_ti_thपढ़ो_flag(ti, flag);
+पूर्ण
 
-static inline int test_and_set_ti_thread_flag(struct thread_info *ti, int flag)
-{
-	return test_and_set_bit(flag, (unsigned long *)&ti->flags);
-}
+अटल अंतरभूत पूर्णांक test_and_set_ti_thपढ़ो_flag(काष्ठा thपढ़ो_info *ti, पूर्णांक flag)
+अणु
+	वापस test_and_set_bit(flag, (अचिन्हित दीर्घ *)&ti->flags);
+पूर्ण
 
-static inline int test_and_clear_ti_thread_flag(struct thread_info *ti, int flag)
-{
-	return test_and_clear_bit(flag, (unsigned long *)&ti->flags);
-}
+अटल अंतरभूत पूर्णांक test_and_clear_ti_thपढ़ो_flag(काष्ठा thपढ़ो_info *ti, पूर्णांक flag)
+अणु
+	वापस test_and_clear_bit(flag, (अचिन्हित दीर्घ *)&ti->flags);
+पूर्ण
 
-static inline int test_ti_thread_flag(struct thread_info *ti, int flag)
-{
-	return test_bit(flag, (unsigned long *)&ti->flags);
-}
+अटल अंतरभूत पूर्णांक test_ti_thपढ़ो_flag(काष्ठा thपढ़ो_info *ti, पूर्णांक flag)
+अणु
+	वापस test_bit(flag, (अचिन्हित दीर्घ *)&ti->flags);
+पूर्ण
 
-#define set_thread_flag(flag) \
-	set_ti_thread_flag(current_thread_info(), flag)
-#define clear_thread_flag(flag) \
-	clear_ti_thread_flag(current_thread_info(), flag)
-#define update_thread_flag(flag, value) \
-	update_ti_thread_flag(current_thread_info(), flag, value)
-#define test_and_set_thread_flag(flag) \
-	test_and_set_ti_thread_flag(current_thread_info(), flag)
-#define test_and_clear_thread_flag(flag) \
-	test_and_clear_ti_thread_flag(current_thread_info(), flag)
-#define test_thread_flag(flag) \
-	test_ti_thread_flag(current_thread_info(), flag)
+#घोषणा set_thपढ़ो_flag(flag) \
+	set_ti_thपढ़ो_flag(current_thपढ़ो_info(), flag)
+#घोषणा clear_thपढ़ो_flag(flag) \
+	clear_ti_thपढ़ो_flag(current_thपढ़ो_info(), flag)
+#घोषणा update_thपढ़ो_flag(flag, value) \
+	update_ti_thपढ़ो_flag(current_thपढ़ो_info(), flag, value)
+#घोषणा test_and_set_thपढ़ो_flag(flag) \
+	test_and_set_ti_thपढ़ो_flag(current_thपढ़ो_info(), flag)
+#घोषणा test_and_clear_thपढ़ो_flag(flag) \
+	test_and_clear_ti_thपढ़ो_flag(current_thपढ़ो_info(), flag)
+#घोषणा test_thपढ़ो_flag(flag) \
+	test_ti_thपढ़ो_flag(current_thपढ़ो_info(), flag)
 
-#ifdef CONFIG_GENERIC_ENTRY
-#define set_syscall_work(fl) \
-	set_bit(SYSCALL_WORK_BIT_##fl, &current_thread_info()->syscall_work)
-#define test_syscall_work(fl) \
-	test_bit(SYSCALL_WORK_BIT_##fl, &current_thread_info()->syscall_work)
-#define clear_syscall_work(fl) \
-	clear_bit(SYSCALL_WORK_BIT_##fl, &current_thread_info()->syscall_work)
+#अगर_घोषित CONFIG_GENERIC_ENTRY
+#घोषणा set_syscall_work(fl) \
+	set_bit(SYSCALL_WORK_BIT_##fl, &current_thपढ़ो_info()->syscall_work)
+#घोषणा test_syscall_work(fl) \
+	test_bit(SYSCALL_WORK_BIT_##fl, &current_thपढ़ो_info()->syscall_work)
+#घोषणा clear_syscall_work(fl) \
+	clear_bit(SYSCALL_WORK_BIT_##fl, &current_thपढ़ो_info()->syscall_work)
 
-#define set_task_syscall_work(t, fl) \
-	set_bit(SYSCALL_WORK_BIT_##fl, &task_thread_info(t)->syscall_work)
-#define test_task_syscall_work(t, fl) \
-	test_bit(SYSCALL_WORK_BIT_##fl, &task_thread_info(t)->syscall_work)
-#define clear_task_syscall_work(t, fl) \
-	clear_bit(SYSCALL_WORK_BIT_##fl, &task_thread_info(t)->syscall_work)
+#घोषणा set_task_syscall_work(t, fl) \
+	set_bit(SYSCALL_WORK_BIT_##fl, &task_thपढ़ो_info(t)->syscall_work)
+#घोषणा test_task_syscall_work(t, fl) \
+	test_bit(SYSCALL_WORK_BIT_##fl, &task_thपढ़ो_info(t)->syscall_work)
+#घोषणा clear_task_syscall_work(t, fl) \
+	clear_bit(SYSCALL_WORK_BIT_##fl, &task_thपढ़ो_info(t)->syscall_work)
 
-#else /* CONFIG_GENERIC_ENTRY */
+#अन्यथा /* CONFIG_GENERIC_ENTRY */
 
-#define set_syscall_work(fl)						\
-	set_ti_thread_flag(current_thread_info(), TIF_##fl)
-#define test_syscall_work(fl) \
-	test_ti_thread_flag(current_thread_info(), TIF_##fl)
-#define clear_syscall_work(fl) \
-	clear_ti_thread_flag(current_thread_info(), TIF_##fl)
+#घोषणा set_syscall_work(fl)						\
+	set_ti_thपढ़ो_flag(current_thपढ़ो_info(), TIF_##fl)
+#घोषणा test_syscall_work(fl) \
+	test_ti_thपढ़ो_flag(current_thपढ़ो_info(), TIF_##fl)
+#घोषणा clear_syscall_work(fl) \
+	clear_ti_thपढ़ो_flag(current_thपढ़ो_info(), TIF_##fl)
 
-#define set_task_syscall_work(t, fl) \
-	set_ti_thread_flag(task_thread_info(t), TIF_##fl)
-#define test_task_syscall_work(t, fl) \
-	test_ti_thread_flag(task_thread_info(t), TIF_##fl)
-#define clear_task_syscall_work(t, fl) \
-	clear_ti_thread_flag(task_thread_info(t), TIF_##fl)
-#endif /* !CONFIG_GENERIC_ENTRY */
+#घोषणा set_task_syscall_work(t, fl) \
+	set_ti_thपढ़ो_flag(task_thपढ़ो_info(t), TIF_##fl)
+#घोषणा test_task_syscall_work(t, fl) \
+	test_ti_thपढ़ो_flag(task_thपढ़ो_info(t), TIF_##fl)
+#घोषणा clear_task_syscall_work(t, fl) \
+	clear_ti_thपढ़ो_flag(task_thपढ़ो_info(t), TIF_##fl)
+#पूर्ण_अगर /* !CONFIG_GENERIC_ENTRY */
 
-#define tif_need_resched() test_thread_flag(TIF_NEED_RESCHED)
+#घोषणा tअगर_need_resched() test_thपढ़ो_flag(TIF_NEED_RESCHED)
 
-#ifndef CONFIG_HAVE_ARCH_WITHIN_STACK_FRAMES
-static inline int arch_within_stack_frames(const void * const stack,
-					   const void * const stackend,
-					   const void *obj, unsigned long len)
-{
-	return 0;
-}
-#endif
+#अगर_अघोषित CONFIG_HAVE_ARCH_WITHIN_STACK_FRAMES
+अटल अंतरभूत पूर्णांक arch_within_stack_frames(स्थिर व्योम * स्थिर stack,
+					   स्थिर व्योम * स्थिर stackend,
+					   स्थिर व्योम *obj, अचिन्हित दीर्घ len)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_HARDENED_USERCOPY
-extern void __check_object_size(const void *ptr, unsigned long n,
+#अगर_घोषित CONFIG_HARDENED_USERCOPY
+बाह्य व्योम __check_object_size(स्थिर व्योम *ptr, अचिन्हित दीर्घ n,
 					bool to_user);
 
-static __always_inline void check_object_size(const void *ptr, unsigned long n,
+अटल __always_अंतरभूत व्योम check_object_size(स्थिर व्योम *ptr, अचिन्हित दीर्घ n,
 					      bool to_user)
-{
-	if (!__builtin_constant_p(n))
+अणु
+	अगर (!__builtin_स्थिरant_p(n))
 		__check_object_size(ptr, n, to_user);
-}
-#else
-static inline void check_object_size(const void *ptr, unsigned long n,
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम check_object_size(स्थिर व्योम *ptr, अचिन्हित दीर्घ n,
 				     bool to_user)
-{ }
-#endif /* CONFIG_HARDENED_USERCOPY */
+अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_HARDENED_USERCOPY */
 
-extern void __compiletime_error("copy source size is too small")
-__bad_copy_from(void);
-extern void __compiletime_error("copy destination size is too small")
-__bad_copy_to(void);
+बाह्य व्योम __compileसमय_error("copy source size is too small")
+__bad_copy_from(व्योम);
+बाह्य व्योम __compileसमय_error("copy destination size is too small")
+__bad_copy_to(व्योम);
 
-static inline void copy_overflow(int size, unsigned long count)
-{
+अटल अंतरभूत व्योम copy_overflow(पूर्णांक size, अचिन्हित दीर्घ count)
+अणु
 	WARN(1, "Buffer overflow detected (%d < %lu)!\n", size, count);
-}
+पूर्ण
 
-static __always_inline __must_check bool
-check_copy_size(const void *addr, size_t bytes, bool is_source)
-{
-	int sz = __compiletime_object_size(addr);
-	if (unlikely(sz >= 0 && sz < bytes)) {
-		if (!__builtin_constant_p(bytes))
+अटल __always_अंतरभूत __must_check bool
+check_copy_size(स्थिर व्योम *addr, माप_प्रकार bytes, bool is_source)
+अणु
+	पूर्णांक sz = __compileसमय_object_size(addr);
+	अगर (unlikely(sz >= 0 && sz < bytes)) अणु
+		अगर (!__builtin_स्थिरant_p(bytes))
 			copy_overflow(sz, bytes);
-		else if (is_source)
+		अन्यथा अगर (is_source)
 			__bad_copy_from();
-		else
+		अन्यथा
 			__bad_copy_to();
-		return false;
-	}
-	if (WARN_ON_ONCE(bytes > INT_MAX))
-		return false;
+		वापस false;
+	पूर्ण
+	अगर (WARN_ON_ONCE(bytes > पूर्णांक_उच्च))
+		वापस false;
 	check_object_size(addr, bytes, is_source);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#ifndef arch_setup_new_exec
-static inline void arch_setup_new_exec(void) { }
-#endif
+#अगर_अघोषित arch_setup_new_exec
+अटल अंतरभूत व्योम arch_setup_new_exec(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif	/* __KERNEL__ */
+#पूर्ण_अगर	/* __KERNEL__ */
 
-#endif /* _LINUX_THREAD_INFO_H */
+#पूर्ण_अगर /* _LINUX_THREAD_INFO_H */

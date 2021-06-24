@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVIF_IF0002_H__
-#define __NVIF_IF0002_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVIF_IF0002_H__
+#घोषणा __NVIF_IF0002_H__
 
-#define NVIF_PERFMON_V0_QUERY_DOMAIN                                       0x00
-#define NVIF_PERFMON_V0_QUERY_SIGNAL                                       0x01
-#define NVIF_PERFMON_V0_QUERY_SOURCE                                       0x02
+#घोषणा NVIF_PERFMON_V0_QUERY_DOMAIN                                       0x00
+#घोषणा NVIF_PERFMON_V0_QUERY_SIGNAL                                       0x01
+#घोषणा NVIF_PERFMON_V0_QUERY_SOURCE                                       0x02
 
-struct nvif_perfmon_query_domain_v0 {
+काष्ठा nvअगर_perfmon_query_करोमुख्य_v0 अणु
 	__u8  version;
 	__u8  id;
 	__u8  counter_nr;
 	__u8  iter;
-	__u16 signal_nr;
+	__u16 संकेत_nr;
 	__u8  pad05[2];
-	char  name[64];
-};
+	अक्षर  name[64];
+पूर्ण;
 
-struct nvif_perfmon_query_signal_v0 {
+काष्ठा nvअगर_perfmon_query_संकेत_v0 अणु
 	__u8  version;
-	__u8  domain;
+	__u8  करोमुख्य;
 	__u16 iter;
-	__u8  signal;
+	__u8  संकेत;
 	__u8  source_nr;
 	__u8  pad05[2];
-	char  name[64];
-};
+	अक्षर  name[64];
+पूर्ण;
 
-struct nvif_perfmon_query_source_v0 {
+काष्ठा nvअगर_perfmon_query_source_v0 अणु
 	__u8  version;
-	__u8  domain;
-	__u8  signal;
+	__u8  करोमुख्य;
+	__u8  संकेत;
 	__u8  iter;
 	__u8  pad04[4];
 	__u32 source;
 	__u32 mask;
-	char  name[64];
-};
-#endif
+	अक्षर  name[64];
+पूर्ण;
+#पूर्ण_अगर

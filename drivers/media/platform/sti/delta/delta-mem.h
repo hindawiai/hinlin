@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) STMicroelectronics SA 2015
- * Author: Hugues Fruchet <hugues.fruchet@st.com> for STMicroelectronics.
+ * Author: Hugues Fruchet <hugues.fruchet@st.com> क्रम STMicroelectronics.
  */
 
-#ifndef DELTA_MEM_H
-#define DELTA_MEM_H
+#अगर_अघोषित DELTA_MEM_H
+#घोषणा DELTA_MEM_H
 
-int hw_alloc(struct delta_ctx *ctx, u32 size, const char *name,
-	     struct delta_buf *buf);
-void hw_free(struct delta_ctx *ctx, struct delta_buf *buf);
+पूर्णांक hw_alloc(काष्ठा delta_ctx *ctx, u32 size, स्थिर अक्षर *name,
+	     काष्ठा delta_buf *buf);
+व्योम hw_मुक्त(काष्ठा delta_ctx *ctx, काष्ठा delta_buf *buf);
 
-#endif /* DELTA_MEM_H */
+#पूर्ण_अगर /* DELTA_MEM_H */

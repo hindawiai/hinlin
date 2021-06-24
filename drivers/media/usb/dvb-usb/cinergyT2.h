@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * TerraTec Cinergy T2/qanu USB2 DVB-T adapter.
  *
@@ -13,31 +14,31 @@
  *  Protocol Spec published on http://qanu.de/specs/terratec_cinergyT2.pdf
  */
 
-#ifndef _DVB_USB_CINERGYT2_H_
-#define _DVB_USB_CINERGYT2_H_
+#अगर_अघोषित _DVB_USB_CINERGYT2_H_
+#घोषणा _DVB_USB_CINERGYT2_H_
 
-#include <linux/usb/input.h>
+#समावेश <linux/usb/input.h>
 
-#define DVB_USB_LOG_PREFIX "cinergyT2"
-#include "dvb-usb.h"
+#घोषणा DVB_USB_LOG_PREFIX "cinergyT2"
+#समावेश "dvb-usb.h"
 
-#define DRIVER_NAME "TerraTec/qanu USB2.0 Highspeed DVB-T Receiver"
+#घोषणा DRIVER_NAME "TerraTec/qanu USB2.0 Highspeed DVB-T Receiver"
 
-extern int dvb_usb_cinergyt2_debug;
+बाह्य पूर्णांक dvb_usb_cinergyt2_debug;
 
-#define deb_info(args...)  dprintk(dvb_usb_cinergyt2_debug,  0x001, args)
-#define deb_xfer(args...)  dprintk(dvb_usb_cinergyt2_debug,  0x002, args)
-#define deb_pll(args...)   dprintk(dvb_usb_cinergyt2_debug,  0x004, args)
-#define deb_ts(args...)    dprintk(dvb_usb_cinergyt2_debug,  0x008, args)
-#define deb_err(args...)   dprintk(dvb_usb_cinergyt2_debug,  0x010, args)
-#define deb_rc(args...)    dprintk(dvb_usb_cinergyt2_debug,  0x020, args)
-#define deb_fw(args...)    dprintk(dvb_usb_cinergyt2_debug,  0x040, args)
-#define deb_mem(args...)   dprintk(dvb_usb_cinergyt2_debug,  0x080, args)
-#define deb_uxfer(args...) dprintk(dvb_usb_cinergyt2_debug,  0x100, args)
+#घोषणा deb_info(args...)  dprपूर्णांकk(dvb_usb_cinergyt2_debug,  0x001, args)
+#घोषणा deb_xfer(args...)  dprपूर्णांकk(dvb_usb_cinergyt2_debug,  0x002, args)
+#घोषणा deb_pll(args...)   dprपूर्णांकk(dvb_usb_cinergyt2_debug,  0x004, args)
+#घोषणा deb_ts(args...)    dprपूर्णांकk(dvb_usb_cinergyt2_debug,  0x008, args)
+#घोषणा deb_err(args...)   dprपूर्णांकk(dvb_usb_cinergyt2_debug,  0x010, args)
+#घोषणा deb_rc(args...)    dprपूर्णांकk(dvb_usb_cinergyt2_debug,  0x020, args)
+#घोषणा deb_fw(args...)    dprपूर्णांकk(dvb_usb_cinergyt2_debug,  0x040, args)
+#घोषणा deb_mem(args...)   dprपूर्णांकk(dvb_usb_cinergyt2_debug,  0x080, args)
+#घोषणा deb_uxfer(args...) dprपूर्णांकk(dvb_usb_cinergyt2_debug,  0x100, args)
 
 
 
-enum cinergyt2_ep1_cmd {
+क्रमागत cinergyt2_ep1_cmd अणु
 	CINERGYT2_EP1_PID_TABLE_RESET		= 0x01,
 	CINERGYT2_EP1_PID_SETUP			= 0x02,
 	CINERGYT2_EP1_CONTROL_STREAM_TRANSFER	= 0x03,
@@ -48,34 +49,34 @@ enum cinergyt2_ep1_cmd {
 	CINERGYT2_EP1_GET_RC_EVENTS		= 0x08,
 	CINERGYT2_EP1_SLEEP_MODE		= 0x09,
 	CINERGYT2_EP1_GET_FIRMWARE_VERSION	= 0x0A
-};
+पूर्ण;
 
 
-struct dvbt_get_status_msg {
-	uint32_t freq;
-	uint8_t bandwidth;
-	uint16_t tps;
-	uint8_t flags;
+काष्ठा dvbt_get_status_msg अणु
+	uपूर्णांक32_t freq;
+	uपूर्णांक8_t bandwidth;
+	uपूर्णांक16_t tps;
+	uपूर्णांक8_t flags;
 	__le16 gain;
-	uint8_t snr;
+	uपूर्णांक8_t snr;
 	__le32 viterbi_error_rate;
-	uint32_t rs_error_rate;
+	uपूर्णांक32_t rs_error_rate;
 	__le32 uncorrected_block_count;
-	uint8_t lock_bits;
-	uint8_t prev_lock_bits;
-} __attribute__((packed));
+	uपूर्णांक8_t lock_bits;
+	uपूर्णांक8_t prev_lock_bits;
+पूर्ण __attribute__((packed));
 
 
-struct dvbt_set_parameters_msg {
-	uint8_t cmd;
+काष्ठा dvbt_set_parameters_msg अणु
+	uपूर्णांक8_t cmd;
 	__le32 freq;
-	uint8_t bandwidth;
+	uपूर्णांक8_t bandwidth;
 	__le16 tps;
-	uint8_t flags;
-} __attribute__((packed));
+	uपूर्णांक8_t flags;
+पूर्ण __attribute__((packed));
 
 
-extern struct dvb_frontend *cinergyt2_fe_attach(struct dvb_usb_device *d);
+बाह्य काष्ठा dvb_frontend *cinergyt2_fe_attach(काष्ठा dvb_usb_device *d);
 
-#endif /* _DVB_USB_CINERGYT2_H_ */
+#पूर्ण_अगर /* _DVB_USB_CINERGYT2_H_ */
 

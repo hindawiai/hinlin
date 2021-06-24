@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM huge_memory
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM huge_memory
 
-#if !defined(__HUGE_MEMORY_H) || defined(TRACE_HEADER_MULTI_READ)
-#define __HUGE_MEMORY_H
+#अगर !defined(__HUGE_MEMORY_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा __HUGE_MEMORY_H
 
-#include  <linux/tracepoint.h>
+#समावेश  <linux/tracepoपूर्णांक.h>
 
-#define SCAN_STATUS							\
+#घोषणा SCAN_STATUS							\
 	EM( SCAN_FAIL,			"failed")			\
 	EM( SCAN_SUCCEED,		"succeeded")			\
-	EM( SCAN_PMD_NULL,		"pmd_null")			\
+	EM( SCAN_PMD_शून्य,		"pmd_null")			\
 	EM( SCAN_EXCEED_NONE_PTE,	"exceed_none_pte")		\
 	EM( SCAN_EXCEED_SWAP_PTE,	"exceed_swap_pte")		\
 	EM( SCAN_EXCEED_SHARED_PTE,	"exceed_shared_pte")		\
@@ -18,7 +19,7 @@
 	EM( SCAN_PTE_UFFD_WP,		"pte_uffd_wp")			\
 	EM( SCAN_PAGE_RO,		"no_writable_page")		\
 	EM( SCAN_LACK_REFERENCED_PAGE,	"lack_referenced_page")		\
-	EM( SCAN_PAGE_NULL,		"page_null")			\
+	EM( SCAN_PAGE_शून्य,		"page_null")			\
 	EM( SCAN_SCAN_ABORT,		"scan_aborted")			\
 	EM( SCAN_PAGE_COUNT,		"not_suitable_page_count")	\
 	EM( SCAN_PAGE_LRU,		"page_not_in_lru")		\
@@ -26,7 +27,7 @@
 	EM( SCAN_PAGE_ANON,		"page_not_anon")		\
 	EM( SCAN_PAGE_COMPOUND,		"page_compound")		\
 	EM( SCAN_ANY_PROCESS,		"no_process_for_page")		\
-	EM( SCAN_VMA_NULL,		"vma_null")			\
+	EM( SCAN_VMA_शून्य,		"vma_null")			\
 	EM( SCAN_VMA_CHECK,		"vma_check_failed")		\
 	EM( SCAN_ADDRESS_RANGE,		"not_suitable_address_range")	\
 	EM( SCAN_SWAP_CACHE_PAGE,	"page_swap_cache")		\
@@ -36,33 +37,33 @@
 	EM( SCAN_TRUNCATED,		"truncated")			\
 	EMe(SCAN_PAGE_HAS_PRIVATE,	"page_has_private")		\
 
-#undef EM
-#undef EMe
-#define EM(a, b)	TRACE_DEFINE_ENUM(a);
-#define EMe(a, b)	TRACE_DEFINE_ENUM(a);
+#अघोषित EM
+#अघोषित EMe
+#घोषणा EM(a, b)	TRACE_DEFINE_ENUM(a);
+#घोषणा EMe(a, b)	TRACE_DEFINE_ENUM(a);
 
 SCAN_STATUS
 
-#undef EM
-#undef EMe
-#define EM(a, b)	{a, b},
-#define EMe(a, b)	{a, b}
+#अघोषित EM
+#अघोषित EMe
+#घोषणा EM(a, b)	अणुa, bपूर्ण,
+#घोषणा EMe(a, b)	अणुa, bपूर्ण
 
 TRACE_EVENT(mm_khugepaged_scan_pmd,
 
-	TP_PROTO(struct mm_struct *mm, struct page *page, bool writable,
-		 int referenced, int none_or_zero, int status, int unmapped),
+	TP_PROTO(काष्ठा mm_काष्ठा *mm, काष्ठा page *page, bool writable,
+		 पूर्णांक referenced, पूर्णांक none_or_zero, पूर्णांक status, पूर्णांक unmapped),
 
 	TP_ARGS(mm, page, writable, referenced, none_or_zero, status, unmapped),
 
 	TP_STRUCT__entry(
-		__field(struct mm_struct *, mm)
-		__field(unsigned long, pfn)
+		__field(काष्ठा mm_काष्ठा *, mm)
+		__field(अचिन्हित दीर्घ, pfn)
 		__field(bool, writable)
-		__field(int, referenced)
-		__field(int, none_or_zero)
-		__field(int, status)
-		__field(int, unmapped)
+		__field(पूर्णांक, referenced)
+		__field(पूर्णांक, none_or_zero)
+		__field(पूर्णांक, status)
+		__field(पूर्णांक, unmapped)
 	),
 
 	TP_fast_assign(
@@ -75,26 +76,26 @@ TRACE_EVENT(mm_khugepaged_scan_pmd,
 		__entry->unmapped = unmapped;
 	),
 
-	TP_printk("mm=%p, scan_pfn=0x%lx, writable=%d, referenced=%d, none_or_zero=%d, status=%s, unmapped=%d",
+	TP_prपूर्णांकk("mm=%p, scan_pfn=0x%lx, writable=%d, referenced=%d, none_or_zero=%d, status=%s, unmapped=%d",
 		__entry->mm,
 		__entry->pfn,
 		__entry->writable,
 		__entry->referenced,
 		__entry->none_or_zero,
-		__print_symbolic(__entry->status, SCAN_STATUS),
+		__prपूर्णांक_symbolic(__entry->status, SCAN_STATUS),
 		__entry->unmapped)
 );
 
 TRACE_EVENT(mm_collapse_huge_page,
 
-	TP_PROTO(struct mm_struct *mm, int isolated, int status),
+	TP_PROTO(काष्ठा mm_काष्ठा *mm, पूर्णांक isolated, पूर्णांक status),
 
 	TP_ARGS(mm, isolated, status),
 
 	TP_STRUCT__entry(
-		__field(struct mm_struct *, mm)
-		__field(int, isolated)
-		__field(int, status)
+		__field(काष्ठा mm_काष्ठा *, mm)
+		__field(पूर्णांक, isolated)
+		__field(पूर्णांक, status)
 	),
 
 	TP_fast_assign(
@@ -103,25 +104,25 @@ TRACE_EVENT(mm_collapse_huge_page,
 		__entry->status = status;
 	),
 
-	TP_printk("mm=%p, isolated=%d, status=%s",
+	TP_prपूर्णांकk("mm=%p, isolated=%d, status=%s",
 		__entry->mm,
 		__entry->isolated,
-		__print_symbolic(__entry->status, SCAN_STATUS))
+		__prपूर्णांक_symbolic(__entry->status, SCAN_STATUS))
 );
 
 TRACE_EVENT(mm_collapse_huge_page_isolate,
 
-	TP_PROTO(struct page *page, int none_or_zero,
-		 int referenced, bool  writable, int status),
+	TP_PROTO(काष्ठा page *page, पूर्णांक none_or_zero,
+		 पूर्णांक referenced, bool  writable, पूर्णांक status),
 
 	TP_ARGS(page, none_or_zero, referenced, writable, status),
 
 	TP_STRUCT__entry(
-		__field(unsigned long, pfn)
-		__field(int, none_or_zero)
-		__field(int, referenced)
+		__field(अचिन्हित दीर्घ, pfn)
+		__field(पूर्णांक, none_or_zero)
+		__field(पूर्णांक, referenced)
 		__field(bool, writable)
-		__field(int, status)
+		__field(पूर्णांक, status)
 	),
 
 	TP_fast_assign(
@@ -132,25 +133,25 @@ TRACE_EVENT(mm_collapse_huge_page_isolate,
 		__entry->status = status;
 	),
 
-	TP_printk("scan_pfn=0x%lx, none_or_zero=%d, referenced=%d, writable=%d, status=%s",
+	TP_prपूर्णांकk("scan_pfn=0x%lx, none_or_zero=%d, referenced=%d, writable=%d, status=%s",
 		__entry->pfn,
 		__entry->none_or_zero,
 		__entry->referenced,
 		__entry->writable,
-		__print_symbolic(__entry->status, SCAN_STATUS))
+		__prपूर्णांक_symbolic(__entry->status, SCAN_STATUS))
 );
 
 TRACE_EVENT(mm_collapse_huge_page_swapin,
 
-	TP_PROTO(struct mm_struct *mm, int swapped_in, int referenced, int ret),
+	TP_PROTO(काष्ठा mm_काष्ठा *mm, पूर्णांक swapped_in, पूर्णांक referenced, पूर्णांक ret),
 
 	TP_ARGS(mm, swapped_in, referenced, ret),
 
 	TP_STRUCT__entry(
-		__field(struct mm_struct *, mm)
-		__field(int, swapped_in)
-		__field(int, referenced)
-		__field(int, ret)
+		__field(काष्ठा mm_काष्ठा *, mm)
+		__field(पूर्णांक, swapped_in)
+		__field(पूर्णांक, referenced)
+		__field(पूर्णांक, ret)
 	),
 
 	TP_fast_assign(
@@ -160,12 +161,12 @@ TRACE_EVENT(mm_collapse_huge_page_swapin,
 		__entry->ret = ret;
 	),
 
-	TP_printk("mm=%p, swapped_in=%d, referenced=%d, ret=%d",
+	TP_prपूर्णांकk("mm=%p, swapped_in=%d, referenced=%d, ret=%d",
 		__entry->mm,
 		__entry->swapped_in,
 		__entry->referenced,
 		__entry->ret)
 );
 
-#endif /* __HUGE_MEMORY_H */
-#include <trace/define_trace.h>
+#पूर्ण_अगर /* __HUGE_MEMORY_H */
+#समावेश <trace/define_trace.h>

@@ -1,112 +1,113 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * --------------------------------------------------------------------
- * Driver for ST NFC Transceiver ST95HF
+ * Driver क्रम ST NFC Transceiver ST95HF
  * --------------------------------------------------------------------
  * Copyright (C) 2015 STMicroelectronics Pvt. Ltd. All rights reserved.
  */
 
-#include <linux/err.h>
-#include <linux/gpio.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/nfc.h>
-#include <linux/of_gpio.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/property.h>
-#include <linux/regulator/consumer.h>
-#include <linux/wait.h>
-#include <net/nfc/digital.h>
-#include <net/nfc/nfc.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/nfc.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/property.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/रुको.h>
+#समावेश <net/nfc/digital.h>
+#समावेश <net/nfc/nfc.h>
 
-#include "spi.h"
+#समावेश "spi.h"
 
 /* supported protocols */
-#define ST95HF_SUPPORTED_PROT		(NFC_PROTO_ISO14443_MASK | \
+#घोषणा ST95HF_SUPPORTED_PROT		(NFC_PROTO_ISO14443_MASK | \
 					NFC_PROTO_ISO14443_B_MASK | \
 					NFC_PROTO_ISO15693_MASK)
 /* driver capabilities */
-#define ST95HF_CAPABILITIES		NFC_DIGITAL_DRV_CAPS_IN_CRC
+#घोषणा ST95HF_CAPABILITIES		NFC_DIGITAL_DRV_CAPS_IN_CRC
 
 /* Command Send Interface */
 /* ST95HF_COMMAND_SEND CMD Ids */
-#define ECHO_CMD			0x55
-#define WRITE_REGISTER_CMD		0x9
-#define PROTOCOL_SELECT_CMD		0x2
-#define SEND_RECEIVE_CMD		0x4
+#घोषणा ECHO_CMD			0x55
+#घोषणा WRITE_REGISTER_CMD		0x9
+#घोषणा PROTOCOL_SELECT_CMD		0x2
+#घोषणा SEND_RECEIVE_CMD		0x4
 
 /* Select protocol codes */
-#define ISO15693_PROTOCOL_CODE		0x1
-#define ISO14443A_PROTOCOL_CODE		0x2
-#define ISO14443B_PROTOCOL_CODE		0x3
+#घोषणा ISO15693_PROTOCOL_CODE		0x1
+#घोषणा ISO14443A_PROTOCOL_CODE		0x2
+#घोषणा ISO14443B_PROTOCOL_CODE		0x3
 
 /*
  * head room len is 3
- * 1 byte for control byte
- * 1 byte for cmd
- * 1 byte for size
+ * 1 byte क्रम control byte
+ * 1 byte क्रम cmd
+ * 1 byte क्रम size
  */
-#define ST95HF_HEADROOM_LEN		3
+#घोषणा ST95HF_HEADROOM_LEN		3
 
 /*
- * tailroom is 1 for ISO14443A
- * and 0 for ISO14443B/ISO15693,
+ * tailroom is 1 क्रम ISO14443A
+ * and 0 क्रम ISO14443B/ISO15693,
  * hence the max value 1 should be
  * taken.
  */
-#define ST95HF_TAILROOM_LEN		1
+#घोषणा ST95HF_TAILROOM_LEN		1
 
-/* Command Response interface */
-#define MAX_RESPONSE_BUFFER_SIZE	280
-#define ECHORESPONSE			0x55
-#define ST95HF_ERR_MASK			0xF
-#define ST95HF_TIMEOUT_ERROR		0x87
-#define ST95HF_NFCA_CRC_ERR_MASK	0x20
-#define ST95HF_NFCB_CRC_ERR_MASK	0x01
+/* Command Response पूर्णांकerface */
+#घोषणा MAX_RESPONSE_BUFFER_SIZE	280
+#घोषणा ECHORESPONSE			0x55
+#घोषणा ST95HF_ERR_MASK			0xF
+#घोषणा ST95HF_TIMEOUT_ERROR		0x87
+#घोषणा ST95HF_NFCA_CRC_ERR_MASK	0x20
+#घोषणा ST95HF_NFCB_CRC_ERR_MASK	0x01
 
 /* ST95HF transmission flag values */
-#define TRFLAG_NFCA_SHORT_FRAME		0x07
-#define TRFLAG_NFCA_STD_FRAME		0x08
-#define TRFLAG_NFCA_STD_FRAME_CRC	0x28
+#घोषणा TRFLAG_NFCA_SHORT_FRAME		0x07
+#घोषणा TRFLAG_NFCA_STD_FRAME		0x08
+#घोषणा TRFLAG_NFCA_STD_FRAME_CRC	0x28
 
 /* Misc defs */
-#define HIGH				1
-#define LOW				0
-#define ISO14443A_RATS_REQ		0xE0
-#define RATS_TB1_PRESENT_MASK		0x20
-#define RATS_TA1_PRESENT_MASK		0x10
-#define TB1_FWI_MASK			0xF0
-#define WTX_REQ_FROM_TAG		0xF2
+#घोषणा HIGH				1
+#घोषणा LOW				0
+#घोषणा ISO14443A_RATS_REQ		0xE0
+#घोषणा RATS_TB1_PRESENT_MASK		0x20
+#घोषणा RATS_TA1_PRESENT_MASK		0x10
+#घोषणा TB1_FWI_MASK			0xF0
+#घोषणा WTX_REQ_FROM_TAG		0xF2
 
-#define MAX_CMD_LEN			0x7
+#घोषणा MAX_CMD_LEN			0x7
 
-#define MAX_CMD_PARAMS			4
-struct cmd {
-	int cmd_len;
-	unsigned char cmd_id;
-	unsigned char no_cmd_params;
-	unsigned char cmd_params[MAX_CMD_PARAMS];
-	enum req_type req;
-};
+#घोषणा MAX_CMD_PARAMS			4
+काष्ठा cmd अणु
+	पूर्णांक cmd_len;
+	अचिन्हित अक्षर cmd_id;
+	अचिन्हित अक्षर no_cmd_params;
+	अचिन्हित अक्षर cmd_params[MAX_CMD_PARAMS];
+	क्रमागत req_type req;
+पूर्ण;
 
-struct param_list {
-	int param_offset;
-	int new_param_val;
-};
+काष्ठा param_list अणु
+	पूर्णांक param_offset;
+	पूर्णांक new_param_val;
+पूर्ण;
 
 /*
- * List of top-level cmds to be used internally by the driver.
+ * List of top-level cmds to be used पूर्णांकernally by the driver.
  * All these commands are build on top of ST95HF basic commands
  * such as SEND_RECEIVE_CMD, PROTOCOL_SELECT_CMD, etc.
- * These top level cmds are used internally while implementing various ops of
- * digital layer/driver probe or extending the digital framework layer for
- * features that are not yet implemented there, for example, WTX cmd handling.
+ * These top level cmds are used पूर्णांकernally जबतक implementing various ops of
+ * digital layer/driver probe or extending the digital framework layer क्रम
+ * features that are not yet implemented there, क्रम example, WTX cmd handling.
  */
-enum st95hf_cmd_list {
+क्रमागत st95hf_cmd_list अणु
 	CMD_ECHO,
 	CMD_ISO14443A_CONFIG,
 	CMD_ISO14443A_DEMOGAIN,
@@ -116,397 +117,397 @@ enum st95hf_cmd_list {
 	CMD_WTX_RESPONSE,
 	CMD_FIELD_OFF,
 	CMD_ISO15693_PROTOCOL_SELECT,
-};
+पूर्ण;
 
-static const struct cmd cmd_array[] = {
-	[CMD_ECHO] = {
+अटल स्थिर काष्ठा cmd cmd_array[] = अणु
+	[CMD_ECHO] = अणु
 		.cmd_len = 0x2,
 		.cmd_id = ECHO_CMD,
 		.no_cmd_params = 0,
 		.req = SYNC,
-	},
-	[CMD_ISO14443A_CONFIG] = {
+	पूर्ण,
+	[CMD_ISO14443A_CONFIG] = अणु
 		.cmd_len = 0x7,
 		.cmd_id = WRITE_REGISTER_CMD,
 		.no_cmd_params = 0x4,
-		.cmd_params = {0x3A, 0x00, 0x5A, 0x04},
+		.cmd_params = अणु0x3A, 0x00, 0x5A, 0x04पूर्ण,
 		.req = SYNC,
-	},
-	[CMD_ISO14443A_DEMOGAIN] = {
+	पूर्ण,
+	[CMD_ISO14443A_DEMOGAIN] = अणु
 		.cmd_len = 0x7,
 		.cmd_id = WRITE_REGISTER_CMD,
 		.no_cmd_params = 0x4,
-		.cmd_params = {0x68, 0x01, 0x01, 0xDF},
+		.cmd_params = अणु0x68, 0x01, 0x01, 0xDFपूर्ण,
 		.req = SYNC,
-	},
-	[CMD_ISO14443B_DEMOGAIN] = {
+	पूर्ण,
+	[CMD_ISO14443B_DEMOGAIN] = अणु
 		.cmd_len = 0x7,
 		.cmd_id = WRITE_REGISTER_CMD,
 		.no_cmd_params = 0x4,
-		.cmd_params = {0x68, 0x01, 0x01, 0x51},
+		.cmd_params = अणु0x68, 0x01, 0x01, 0x51पूर्ण,
 		.req = SYNC,
-	},
-	[CMD_ISO14443A_PROTOCOL_SELECT] = {
+	पूर्ण,
+	[CMD_ISO14443A_PROTOCOL_SELECT] = अणु
 		.cmd_len = 0x7,
 		.cmd_id = PROTOCOL_SELECT_CMD,
 		.no_cmd_params = 0x4,
-		.cmd_params = {ISO14443A_PROTOCOL_CODE, 0x00, 0x01, 0xA0},
+		.cmd_params = अणुISO14443A_PROTOCOL_CODE, 0x00, 0x01, 0xA0पूर्ण,
 		.req = SYNC,
-	},
-	[CMD_ISO14443B_PROTOCOL_SELECT] = {
+	पूर्ण,
+	[CMD_ISO14443B_PROTOCOL_SELECT] = अणु
 		.cmd_len = 0x7,
 		.cmd_id = PROTOCOL_SELECT_CMD,
 		.no_cmd_params = 0x4,
-		.cmd_params = {ISO14443B_PROTOCOL_CODE, 0x01, 0x03, 0xFF},
+		.cmd_params = अणुISO14443B_PROTOCOL_CODE, 0x01, 0x03, 0xFFपूर्ण,
 		.req = SYNC,
-	},
-	[CMD_WTX_RESPONSE] = {
+	पूर्ण,
+	[CMD_WTX_RESPONSE] = अणु
 		.cmd_len = 0x6,
 		.cmd_id = SEND_RECEIVE_CMD,
 		.no_cmd_params = 0x3,
-		.cmd_params = {0xF2, 0x00, TRFLAG_NFCA_STD_FRAME_CRC},
+		.cmd_params = अणु0xF2, 0x00, TRFLAG_NFCA_STD_FRAME_CRCपूर्ण,
 		.req = ASYNC,
-	},
-	[CMD_FIELD_OFF] = {
+	पूर्ण,
+	[CMD_FIELD_OFF] = अणु
 		.cmd_len = 0x5,
 		.cmd_id = PROTOCOL_SELECT_CMD,
 		.no_cmd_params = 0x2,
-		.cmd_params = {0x0, 0x0},
+		.cmd_params = अणु0x0, 0x0पूर्ण,
 		.req = SYNC,
-	},
-	[CMD_ISO15693_PROTOCOL_SELECT] = {
+	पूर्ण,
+	[CMD_ISO15693_PROTOCOL_SELECT] = अणु
 		.cmd_len = 0x5,
 		.cmd_id = PROTOCOL_SELECT_CMD,
 		.no_cmd_params = 0x2,
-		.cmd_params = {ISO15693_PROTOCOL_CODE, 0x0D},
+		.cmd_params = अणुISO15693_PROTOCOL_CODE, 0x0Dपूर्ण,
 		.req = SYNC,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* st95_digital_cmd_complete_arg stores client context */
-struct st95_digital_cmd_complete_arg {
-	struct sk_buff *skb_resp;
+काष्ठा st95_digital_cmd_complete_arg अणु
+	काष्ठा sk_buff *skb_resp;
 	nfc_digital_cmd_complete_t complete_cb;
-	void *cb_usrarg;
+	व्योम *cb_usrarg;
 	bool rats;
-};
+पूर्ण;
 
 /*
- * structure containing ST95HF driver specific data.
- * @spicontext: structure containing information required
- *	for spi communication between st95hf and host.
+ * काष्ठाure containing ST95HF driver specअगरic data.
+ * @spicontext: काष्ठाure containing inक्रमmation required
+ *	क्रम spi communication between st95hf and host.
  * @ddev: nfc digital device object.
  * @nfcdev: nfc device object.
  * @enable_gpio: gpio used to enable st95hf transceiver.
- * @complete_cb_arg: structure to store various context information
- *	that is passed from nfc requesting thread to the threaded ISR.
- * @st95hf_supply: regulator "consumer" for NFC device.
+ * @complete_cb_arg: काष्ठाure to store various context inक्रमmation
+ *	that is passed from nfc requesting thपढ़ो to the thपढ़ोed ISR.
+ * @st95hf_supply: regulator "consumer" क्रम NFC device.
  * @sendrcv_trflag: last byte of frame send by sendrecv command
  *	of st95hf. This byte contains transmission flag info.
- * @exchange_lock: semaphore used for signaling the st95hf_remove
+ * @exchange_lock: semaphore used क्रम संकेतing the st95hf_हटाओ
  *	function that the last outstanding async nfc request is finished.
- * @rm_lock: mutex for ensuring safe access of nfc digital object
- *	from threaded ISR. Usage of this mutex avoids any race between
- *	deletion of the object from st95hf_remove() and its access from
- *	the threaded ISR.
- * @nfcdev_free: flag to have the state of nfc device object.
+ * @rm_lock: mutex क्रम ensuring safe access of nfc digital object
+ *	from thपढ़ोed ISR. Usage of this mutex aव्योमs any race between
+ *	deletion of the object from st95hf_हटाओ() and its access from
+ *	the thपढ़ोed ISR.
+ * @nfcdev_मुक्त: flag to have the state of nfc device object.
  *	[alive | died]
  * @current_protocol: current nfc protocol.
  * @current_rf_tech: current rf technology.
- * @fwi: frame waiting index, received in reply of RATS according to
+ * @fwi: frame रुकोing index, received in reply of RATS according to
  *	digital protocol.
  */
-struct st95hf_context {
-	struct st95hf_spi_context spicontext;
-	struct nfc_digital_dev *ddev;
-	struct nfc_dev *nfcdev;
-	unsigned int enable_gpio;
-	struct st95_digital_cmd_complete_arg complete_cb_arg;
-	struct regulator *st95hf_supply;
-	unsigned char sendrcv_trflag;
-	struct semaphore exchange_lock;
-	struct mutex rm_lock;
-	bool nfcdev_free;
+काष्ठा st95hf_context अणु
+	काष्ठा st95hf_spi_context spicontext;
+	काष्ठा nfc_digital_dev *ddev;
+	काष्ठा nfc_dev *nfcdev;
+	अचिन्हित पूर्णांक enable_gpio;
+	काष्ठा st95_digital_cmd_complete_arg complete_cb_arg;
+	काष्ठा regulator *st95hf_supply;
+	अचिन्हित अक्षर sendrcv_trflag;
+	काष्ठा semaphore exchange_lock;
+	काष्ठा mutex rm_lock;
+	bool nfcdev_मुक्त;
 	u8 current_protocol;
 	u8 current_rf_tech;
-	int fwi;
-};
+	पूर्णांक fwi;
+पूर्ण;
 
 /*
- * st95hf_send_recv_cmd() is for sending commands to ST95HF
+ * st95hf_send_recv_cmd() is क्रम sending commands to ST95HF
  * that are described in the cmd_array[]. It can optionally
- * receive the response if the cmd request is of type
+ * receive the response अगर the cmd request is of type
  * SYNC. For that to happen caller must pass true to recv_res.
  * For ASYNC request, recv_res is ignored and the
  * function will never try to receive the response on behalf
  * of the caller.
  */
-static int st95hf_send_recv_cmd(struct st95hf_context *st95context,
-				enum st95hf_cmd_list cmd,
-				int no_modif,
-				struct param_list *list_array,
+अटल पूर्णांक st95hf_send_recv_cmd(काष्ठा st95hf_context *st95context,
+				क्रमागत st95hf_cmd_list cmd,
+				पूर्णांक no_modअगर,
+				काष्ठा param_list *list_array,
 				bool recv_res)
-{
-	unsigned char spi_cmd_buffer[MAX_CMD_LEN];
-	int i, ret;
-	struct device *dev = &st95context->spicontext.spidev->dev;
+अणु
+	अचिन्हित अक्षर spi_cmd_buffer[MAX_CMD_LEN];
+	पूर्णांक i, ret;
+	काष्ठा device *dev = &st95context->spicontext.spidev->dev;
 
-	if (cmd_array[cmd].cmd_len > MAX_CMD_LEN)
-		return -EINVAL;
-	if (cmd_array[cmd].no_cmd_params < no_modif)
-		return -EINVAL;
-	if (no_modif && !list_array)
-		return -EINVAL;
+	अगर (cmd_array[cmd].cmd_len > MAX_CMD_LEN)
+		वापस -EINVAL;
+	अगर (cmd_array[cmd].no_cmd_params < no_modअगर)
+		वापस -EINVAL;
+	अगर (no_modअगर && !list_array)
+		वापस -EINVAL;
 
 	spi_cmd_buffer[0] = ST95HF_COMMAND_SEND;
 	spi_cmd_buffer[1] = cmd_array[cmd].cmd_id;
 	spi_cmd_buffer[2] = cmd_array[cmd].no_cmd_params;
 
-	memcpy(&spi_cmd_buffer[3], cmd_array[cmd].cmd_params,
+	स_नकल(&spi_cmd_buffer[3], cmd_array[cmd].cmd_params,
 	       spi_cmd_buffer[2]);
 
-	for (i = 0; i < no_modif; i++) {
-		if (list_array[i].param_offset >= cmd_array[cmd].no_cmd_params)
-			return -EINVAL;
+	क्रम (i = 0; i < no_modअगर; i++) अणु
+		अगर (list_array[i].param_offset >= cmd_array[cmd].no_cmd_params)
+			वापस -EINVAL;
 		spi_cmd_buffer[3 + list_array[i].param_offset] =
 						list_array[i].new_param_val;
-	}
+	पूर्ण
 
 	ret = st95hf_spi_send(&st95context->spicontext,
 			      spi_cmd_buffer,
 			      cmd_array[cmd].cmd_len,
 			      cmd_array[cmd].req);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "st95hf_spi_send failed with error %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (cmd_array[cmd].req == SYNC && recv_res) {
-		unsigned char st95hf_response_arr[2];
+	अगर (cmd_array[cmd].req == SYNC && recv_res) अणु
+		अचिन्हित अक्षर st95hf_response_arr[2];
 
 		ret = st95hf_spi_recv_response(&st95context->spicontext,
 					       st95hf_response_arr);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "spi error from st95hf_spi_recv_response(), err = 0x%x\n",
 				ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (st95hf_response_arr[0]) {
+		अगर (st95hf_response_arr[0]) अणु
 			dev_err(dev, "st95hf error from st95hf_spi_recv_response(), err = 0x%x\n",
 				st95hf_response_arr[0]);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st95hf_echo_command(struct st95hf_context *st95context)
-{
-	int result = 0;
-	unsigned char echo_response;
+अटल पूर्णांक st95hf_echo_command(काष्ठा st95hf_context *st95context)
+अणु
+	पूर्णांक result = 0;
+	अचिन्हित अक्षर echo_response;
 
-	result = st95hf_send_recv_cmd(st95context, CMD_ECHO, 0, NULL, false);
-	if (result)
-		return result;
+	result = st95hf_send_recv_cmd(st95context, CMD_ECHO, 0, शून्य, false);
+	अगर (result)
+		वापस result;
 
 	/* If control reached here, response can be taken */
 	result = st95hf_spi_recv_echo_res(&st95context->spicontext,
 					  &echo_response);
-	if (result) {
+	अगर (result) अणु
 		dev_err(&st95context->spicontext.spidev->dev,
 			"err: echo response receive error = 0x%x\n", result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	if (echo_response == ECHORESPONSE)
-		return 0;
+	अगर (echo_response == ECHORESPONSE)
+		वापस 0;
 
 	dev_err(&st95context->spicontext.spidev->dev, "err: echo res is 0x%x\n",
 		echo_response);
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int secondary_configuration_type4a(struct st95hf_context *stcontext)
-{
-	int result = 0;
-	struct device *dev = &stcontext->nfcdev->dev;
+अटल पूर्णांक secondary_configuration_type4a(काष्ठा st95hf_context *stcontext)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा device *dev = &stcontext->nfcdev->dev;
 
 	/* 14443A config setting after select protocol */
 	result = st95hf_send_recv_cmd(stcontext,
 				      CMD_ISO14443A_CONFIG,
 				      0,
-				      NULL,
+				      शून्य,
 				      true);
-	if (result) {
+	अगर (result) अणु
 		dev_err(dev, "type a config cmd, err = 0x%x\n", result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	/* 14443A demo gain setting */
 	result = st95hf_send_recv_cmd(stcontext,
 				      CMD_ISO14443A_DEMOGAIN,
 				      0,
-				      NULL,
+				      शून्य,
 				      true);
-	if (result)
+	अगर (result)
 		dev_err(dev, "type a demogain cmd, err = 0x%x\n", result);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int secondary_configuration_type4b(struct st95hf_context *stcontext)
-{
-	int result = 0;
-	struct device *dev = &stcontext->nfcdev->dev;
+अटल पूर्णांक secondary_configuration_type4b(काष्ठा st95hf_context *stcontext)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा device *dev = &stcontext->nfcdev->dev;
 
 	result = st95hf_send_recv_cmd(stcontext,
 				      CMD_ISO14443B_DEMOGAIN,
 				      0,
-				      NULL,
+				      शून्य,
 				      true);
-	if (result)
+	अगर (result)
 		dev_err(dev, "type b demogain cmd, err = 0x%x\n", result);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int st95hf_select_protocol(struct st95hf_context *stcontext, int type)
-{
-	int result = 0;
-	struct device *dev;
+अटल पूर्णांक st95hf_select_protocol(काष्ठा st95hf_context *stcontext, पूर्णांक type)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा device *dev;
 
 	dev = &stcontext->nfcdev->dev;
 
-	switch (type) {
-	case NFC_DIGITAL_RF_TECH_106A:
+	चयन (type) अणु
+	हाल NFC_DIGITAL_RF_TECH_106A:
 		stcontext->current_rf_tech = NFC_DIGITAL_RF_TECH_106A;
 		result = st95hf_send_recv_cmd(stcontext,
 					      CMD_ISO14443A_PROTOCOL_SELECT,
 					      0,
-					      NULL,
+					      शून्य,
 					      true);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "protocol sel, err = 0x%x\n",
 				result);
-			return result;
-		}
+			वापस result;
+		पूर्ण
 
-		/* secondary config. for 14443Type 4A after protocol select */
+		/* secondary config. क्रम 14443Type 4A after protocol select */
 		result = secondary_configuration_type4a(stcontext);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "type a secondary config, err = 0x%x\n",
 				result);
-			return result;
-		}
-		break;
-	case NFC_DIGITAL_RF_TECH_106B:
+			वापस result;
+		पूर्ण
+		अवरोध;
+	हाल NFC_DIGITAL_RF_TECH_106B:
 		stcontext->current_rf_tech = NFC_DIGITAL_RF_TECH_106B;
 		result = st95hf_send_recv_cmd(stcontext,
 					      CMD_ISO14443B_PROTOCOL_SELECT,
 					      0,
-					      NULL,
+					      शून्य,
 					      true);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "protocol sel send, err = 0x%x\n",
 				result);
-			return result;
-		}
+			वापस result;
+		पूर्ण
 
 		/*
 		 * delay of 5-6 ms is required after select protocol
-		 * command in case of ISO14443 Type B
+		 * command in हाल of ISO14443 Type B
 		 */
 		usleep_range(50000, 60000);
 
-		/* secondary config. for 14443Type 4B after protocol select */
+		/* secondary config. क्रम 14443Type 4B after protocol select */
 		result = secondary_configuration_type4b(stcontext);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "type b secondary config, err = 0x%x\n",
 				result);
-			return result;
-		}
-		break;
-	case NFC_DIGITAL_RF_TECH_ISO15693:
+			वापस result;
+		पूर्ण
+		अवरोध;
+	हाल NFC_DIGITAL_RF_TECH_ISO15693:
 		stcontext->current_rf_tech = NFC_DIGITAL_RF_TECH_ISO15693;
 		result = st95hf_send_recv_cmd(stcontext,
 					      CMD_ISO15693_PROTOCOL_SELECT,
 					      0,
-					      NULL,
+					      शून्य,
 					      true);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "protocol sel send, err = 0x%x\n",
 				result);
-			return result;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस result;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void st95hf_send_st95enable_negativepulse(struct st95hf_context *st95con)
-{
+अटल व्योम st95hf_send_st95enable_negativepulse(काष्ठा st95hf_context *st95con)
+अणु
 	/* First make irq_in pin high */
 	gpio_set_value(st95con->enable_gpio, HIGH);
 
-	/* wait for 1 milisecond */
+	/* रुको क्रम 1 milisecond */
 	usleep_range(1000, 2000);
 
 	/* Make irq_in pin low */
 	gpio_set_value(st95con->enable_gpio, LOW);
 
-	/* wait for minimum interrupt pulse to make st95 active */
+	/* रुको क्रम minimum पूर्णांकerrupt pulse to make st95 active */
 	usleep_range(1000, 2000);
 
 	/* At end make it high */
 	gpio_set_value(st95con->enable_gpio, HIGH);
-}
+पूर्ण
 
 /*
- * Send a reset sequence over SPI bus (Reset command + wait 3ms +
+ * Send a reset sequence over SPI bus (Reset command + रुको 3ms +
  * negative pulse on st95hf enable gpio
  */
-static int st95hf_send_spi_reset_sequence(struct st95hf_context *st95context)
-{
-	int result = 0;
-	unsigned char reset_cmd = ST95HF_COMMAND_RESET;
+अटल पूर्णांक st95hf_send_spi_reset_sequence(काष्ठा st95hf_context *st95context)
+अणु
+	पूर्णांक result = 0;
+	अचिन्हित अक्षर reset_cmd = ST95HF_COMMAND_RESET;
 
 	result = st95hf_spi_send(&st95context->spicontext,
 				 &reset_cmd,
 				 ST95HF_RESET_CMD_LEN,
 				 ASYNC);
-	if (result) {
+	अगर (result) अणु
 		dev_err(&st95context->spicontext.spidev->dev,
 			"spi reset sequence cmd error = %d", result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	/* wait for 3 milisecond to complete the controller reset process */
+	/* रुको क्रम 3 milisecond to complete the controller reset process */
 	usleep_range(3000, 4000);
 
 	/* send negative pulse to make st95hf active */
 	st95hf_send_st95enable_negativepulse(st95context);
 
-	/* wait for 10 milisecond : HFO setup time */
+	/* रुको क्रम 10 milisecond : HFO setup समय */
 	usleep_range(10000, 20000);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int st95hf_por_sequence(struct st95hf_context *st95context)
-{
-	int nth_attempt = 1;
-	int result;
+अटल पूर्णांक st95hf_por_sequence(काष्ठा st95hf_context *st95context)
+अणु
+	पूर्णांक nth_attempt = 1;
+	पूर्णांक result;
 
 	st95hf_send_st95enable_negativepulse(st95context);
 
 	usleep_range(5000, 6000);
-	do {
+	करो अणु
 		/* send an ECHO command and checks ST95HF response */
 		result = st95hf_echo_command(st95context);
 
@@ -514,110 +515,110 @@ static int st95hf_por_sequence(struct st95hf_context *st95context)
 			"response from echo function = 0x%x, attempt = %d\n",
 			result, nth_attempt);
 
-		if (!result)
-			return 0;
+		अगर (!result)
+			वापस 0;
 
-		/* send an pulse on IRQ in case of the chip is on sleep state */
-		if (nth_attempt == 2)
+		/* send an pulse on IRQ in हाल of the chip is on sleep state */
+		अगर (nth_attempt == 2)
 			st95hf_send_st95enable_negativepulse(st95context);
-		else
+		अन्यथा
 			st95hf_send_spi_reset_sequence(st95context);
 
 		/* delay of 50 milisecond */
 		usleep_range(50000, 51000);
-	} while (nth_attempt++ < 3);
+	पूर्ण जबतक (nth_attempt++ < 3);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int iso14443_config_fdt(struct st95hf_context *st95context, int wtxm)
-{
-	int result = 0;
-	struct device *dev = &st95context->spicontext.spidev->dev;
-	struct nfc_digital_dev *nfcddev = st95context->ddev;
-	unsigned char pp_typeb;
-	struct param_list new_params[2];
+अटल पूर्णांक iso14443_config_fdt(काष्ठा st95hf_context *st95context, पूर्णांक wtxm)
+अणु
+	पूर्णांक result = 0;
+	काष्ठा device *dev = &st95context->spicontext.spidev->dev;
+	काष्ठा nfc_digital_dev *nfcddev = st95context->ddev;
+	अचिन्हित अक्षर pp_typeb;
+	काष्ठा param_list new_params[2];
 
 	pp_typeb = cmd_array[CMD_ISO14443B_PROTOCOL_SELECT].cmd_params[2];
 
-	if (nfcddev->curr_protocol == NFC_PROTO_ISO14443 &&
+	अगर (nfcddev->curr_protocol == NFC_PROTO_ISO14443 &&
 	    st95context->fwi < 4)
 		st95context->fwi = 4;
 
 	new_params[0].param_offset = 2;
-	if (nfcddev->curr_protocol == NFC_PROTO_ISO14443)
+	अगर (nfcddev->curr_protocol == NFC_PROTO_ISO14443)
 		new_params[0].new_param_val = st95context->fwi;
-	else if (nfcddev->curr_protocol == NFC_PROTO_ISO14443_B)
+	अन्यथा अगर (nfcddev->curr_protocol == NFC_PROTO_ISO14443_B)
 		new_params[0].new_param_val = pp_typeb;
 
 	new_params[1].param_offset = 3;
 	new_params[1].new_param_val = wtxm;
 
-	switch (nfcddev->curr_protocol) {
-	case NFC_PROTO_ISO14443:
+	चयन (nfcddev->curr_protocol) अणु
+	हाल NFC_PROTO_ISO14443:
 		result = st95hf_send_recv_cmd(st95context,
 					      CMD_ISO14443A_PROTOCOL_SELECT,
 					      2,
 					      new_params,
 					      true);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "WTX type a sel proto, err = 0x%x\n",
 				result);
-			return result;
-		}
+			वापस result;
+		पूर्ण
 
-		/* secondary config. for 14443Type 4A after protocol select */
+		/* secondary config. क्रम 14443Type 4A after protocol select */
 		result = secondary_configuration_type4a(st95context);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "WTX type a second. config, err = 0x%x\n",
 				result);
-			return result;
-		}
-		break;
-	case NFC_PROTO_ISO14443_B:
+			वापस result;
+		पूर्ण
+		अवरोध;
+	हाल NFC_PROTO_ISO14443_B:
 		result = st95hf_send_recv_cmd(st95context,
 					      CMD_ISO14443B_PROTOCOL_SELECT,
 					      2,
 					      new_params,
 					      true);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "WTX type b sel proto, err = 0x%x\n",
 				result);
-			return result;
-		}
+			वापस result;
+		पूर्ण
 
-		/* secondary config. for 14443Type 4B after protocol select */
+		/* secondary config. क्रम 14443Type 4B after protocol select */
 		result = secondary_configuration_type4b(st95context);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "WTX type b second. config, err = 0x%x\n",
 				result);
-			return result;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस result;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st95hf_handle_wtx(struct st95hf_context *stcontext,
+अटल पूर्णांक st95hf_handle_wtx(काष्ठा st95hf_context *stcontext,
 			     bool new_wtx,
-			     int wtx_val)
-{
-	int result = 0;
-	unsigned char val_mm = 0;
-	struct param_list new_params[1];
-	struct nfc_digital_dev *nfcddev = stcontext->ddev;
-	struct device *dev = &stcontext->nfcdev->dev;
+			     पूर्णांक wtx_val)
+अणु
+	पूर्णांक result = 0;
+	अचिन्हित अक्षर val_mm = 0;
+	काष्ठा param_list new_params[1];
+	काष्ठा nfc_digital_dev *nfcddev = stcontext->ddev;
+	काष्ठा device *dev = &stcontext->nfcdev->dev;
 
-	if (new_wtx) {
+	अगर (new_wtx) अणु
 		result = iso14443_config_fdt(stcontext, wtx_val & 0x3f);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "Config. setting error on WTX req, err = 0x%x\n",
 				result);
-			return result;
-		}
+			वापस result;
+		पूर्ण
 
 		/* Send response of wtx with ASYNC as no response expected */
 		new_params[0].param_offset = 1;
@@ -628,80 +629,80 @@ static int st95hf_handle_wtx(struct st95hf_context *stcontext,
 					      1,
 					      new_params,
 					      false);
-		if (result)
+		अगर (result)
 			dev_err(dev, "WTX response send, err = 0x%x\n", result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	/* if no new wtx, cofigure with default values */
-	if (nfcddev->curr_protocol == NFC_PROTO_ISO14443)
+	/* अगर no new wtx, cofigure with शेष values */
+	अगर (nfcddev->curr_protocol == NFC_PROTO_ISO14443)
 		val_mm = cmd_array[CMD_ISO14443A_PROTOCOL_SELECT].cmd_params[3];
-	else if (nfcddev->curr_protocol == NFC_PROTO_ISO14443_B)
+	अन्यथा अगर (nfcddev->curr_protocol == NFC_PROTO_ISO14443_B)
 		val_mm = cmd_array[CMD_ISO14443B_PROTOCOL_SELECT].cmd_params[3];
 
 	result = iso14443_config_fdt(stcontext, val_mm);
-	if (result)
+	अगर (result)
 		dev_err(dev, "Default config. setting error after WTX processing, err = 0x%x\n",
 			result);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int st95hf_error_handling(struct st95hf_context *stcontext,
-				 struct sk_buff *skb_resp,
-				 int res_len)
-{
-	int result = 0;
-	unsigned char error_byte;
-	struct device *dev = &stcontext->nfcdev->dev;
+अटल पूर्णांक st95hf_error_handling(काष्ठा st95hf_context *stcontext,
+				 काष्ठा sk_buff *skb_resp,
+				 पूर्णांक res_len)
+अणु
+	पूर्णांक result = 0;
+	अचिन्हित अक्षर error_byte;
+	काष्ठा device *dev = &stcontext->nfcdev->dev;
 
-	/* First check ST95HF specific error */
-	if (skb_resp->data[0] & ST95HF_ERR_MASK) {
-		if (skb_resp->data[0] == ST95HF_TIMEOUT_ERROR)
+	/* First check ST95HF specअगरic error */
+	अगर (skb_resp->data[0] & ST95HF_ERR_MASK) अणु
+		अगर (skb_resp->data[0] == ST95HF_TIMEOUT_ERROR)
 			result = -ETIMEDOUT;
-		else
+		अन्यथा
 			result = -EIO;
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	/* Check for CRC err only if CRC is present in the tag response */
-	switch (stcontext->current_rf_tech) {
-	case NFC_DIGITAL_RF_TECH_106A:
-		if (stcontext->sendrcv_trflag == TRFLAG_NFCA_STD_FRAME_CRC) {
+	/* Check क्रम CRC err only अगर CRC is present in the tag response */
+	चयन (stcontext->current_rf_tech) अणु
+	हाल NFC_DIGITAL_RF_TECH_106A:
+		अगर (stcontext->sendrcv_trflag == TRFLAG_NFCA_STD_FRAME_CRC) अणु
 			error_byte = skb_resp->data[res_len - 3];
-			if (error_byte & ST95HF_NFCA_CRC_ERR_MASK) {
+			अगर (error_byte & ST95HF_NFCA_CRC_ERR_MASK) अणु
 				/* CRC error occurred */
 				dev_err(dev, "CRC error, byte received = 0x%x\n",
 					error_byte);
 				result = -EIO;
-			}
-		}
-		break;
-	case NFC_DIGITAL_RF_TECH_106B:
-	case NFC_DIGITAL_RF_TECH_ISO15693:
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल NFC_DIGITAL_RF_TECH_106B:
+	हाल NFC_DIGITAL_RF_TECH_ISO15693:
 		error_byte = skb_resp->data[res_len - 1];
-		if (error_byte & ST95HF_NFCB_CRC_ERR_MASK) {
+		अगर (error_byte & ST95HF_NFCB_CRC_ERR_MASK) अणु
 			/* CRC error occurred */
 			dev_err(dev, "CRC error, byte received = 0x%x\n",
 				error_byte);
 			result = -EIO;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int st95hf_response_handler(struct st95hf_context *stcontext,
-				   struct sk_buff *skb_resp,
-				   int res_len)
-{
-	int result = 0;
-	int skb_len;
-	unsigned char val_mm;
-	struct nfc_digital_dev *nfcddev = stcontext->ddev;
-	struct device *dev = &stcontext->nfcdev->dev;
-	struct st95_digital_cmd_complete_arg *cb_arg;
+अटल पूर्णांक st95hf_response_handler(काष्ठा st95hf_context *stcontext,
+				   काष्ठा sk_buff *skb_resp,
+				   पूर्णांक res_len)
+अणु
+	पूर्णांक result = 0;
+	पूर्णांक skb_len;
+	अचिन्हित अक्षर val_mm;
+	काष्ठा nfc_digital_dev *nfcddev = stcontext->ddev;
+	काष्ठा device *dev = &stcontext->nfcdev->dev;
+	काष्ठा st95_digital_cmd_complete_arg *cb_arg;
 
 	cb_arg = &stcontext->complete_cb_arg;
 
@@ -713,89 +714,89 @@ static int st95hf_response_handler(struct st95hf_context *stcontext,
 
 	skb_len = skb_resp->len;
 
-	/* check if it is case of RATS request reply & FWI is present */
-	if (nfcddev->curr_protocol == NFC_PROTO_ISO14443 && cb_arg->rats &&
-	    (skb_resp->data[1] & RATS_TB1_PRESENT_MASK)) {
-		if (skb_resp->data[1] & RATS_TA1_PRESENT_MASK)
+	/* check अगर it is हाल of RATS request reply & FWI is present */
+	अगर (nfcddev->curr_protocol == NFC_PROTO_ISO14443 && cb_arg->rats &&
+	    (skb_resp->data[1] & RATS_TB1_PRESENT_MASK)) अणु
+		अगर (skb_resp->data[1] & RATS_TA1_PRESENT_MASK)
 			stcontext->fwi =
 				(skb_resp->data[3] & TB1_FWI_MASK) >> 4;
-		else
+		अन्यथा
 			stcontext->fwi =
 				(skb_resp->data[2] & TB1_FWI_MASK) >> 4;
 
 		val_mm = cmd_array[CMD_ISO14443A_PROTOCOL_SELECT].cmd_params[3];
 
 		result = iso14443_config_fdt(stcontext, val_mm);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "error in config_fdt to handle fwi of ATS, error=%d\n",
 				result);
-			return result;
-		}
-	}
+			वापस result;
+		पूर्ण
+	पूर्ण
 	cb_arg->rats = false;
 
-	/* Remove CRC bytes only if received frames data has an eod (CRC) */
-	switch (stcontext->current_rf_tech) {
-	case NFC_DIGITAL_RF_TECH_106A:
-		if (stcontext->sendrcv_trflag == TRFLAG_NFCA_STD_FRAME_CRC)
+	/* Remove CRC bytes only अगर received frames data has an eod (CRC) */
+	चयन (stcontext->current_rf_tech) अणु
+	हाल NFC_DIGITAL_RF_TECH_106A:
+		अगर (stcontext->sendrcv_trflag == TRFLAG_NFCA_STD_FRAME_CRC)
 			skb_trim(skb_resp, (skb_len - 5));
-		else
+		अन्यथा
 			skb_trim(skb_resp, (skb_len - 3));
-		break;
-	case NFC_DIGITAL_RF_TECH_106B:
-	case NFC_DIGITAL_RF_TECH_ISO15693:
+		अवरोध;
+	हाल NFC_DIGITAL_RF_TECH_106B:
+	हाल NFC_DIGITAL_RF_TECH_ISO15693:
 		skb_trim(skb_resp, (skb_len - 3));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static irqreturn_t st95hf_irq_handler(int irq, void  *st95hfcontext)
-{
-	struct st95hf_context *stcontext  =
-		(struct st95hf_context *)st95hfcontext;
+अटल irqवापस_t st95hf_irq_handler(पूर्णांक irq, व्योम  *st95hfcontext)
+अणु
+	काष्ठा st95hf_context *stcontext  =
+		(काष्ठा st95hf_context *)st95hfcontext;
 
-	if (stcontext->spicontext.req_issync) {
-		complete(&stcontext->spicontext.done);
+	अगर (stcontext->spicontext.req_issync) अणु
+		complete(&stcontext->spicontext.करोne);
 		stcontext->spicontext.req_issync = false;
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_WAKE_THREAD;
-}
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static irqreturn_t st95hf_irq_thread_handler(int irq, void  *st95hfcontext)
-{
-	int result = 0;
-	int res_len;
-	static bool wtx;
-	struct device *spidevice;
-	struct sk_buff *skb_resp;
-	struct st95hf_context *stcontext  =
-		(struct st95hf_context *)st95hfcontext;
-	struct st95_digital_cmd_complete_arg *cb_arg;
+अटल irqवापस_t st95hf_irq_thपढ़ो_handler(पूर्णांक irq, व्योम  *st95hfcontext)
+अणु
+	पूर्णांक result = 0;
+	पूर्णांक res_len;
+	अटल bool wtx;
+	काष्ठा device *spidevice;
+	काष्ठा sk_buff *skb_resp;
+	काष्ठा st95hf_context *stcontext  =
+		(काष्ठा st95hf_context *)st95hfcontext;
+	काष्ठा st95_digital_cmd_complete_arg *cb_arg;
 
 	spidevice = &stcontext->spicontext.spidev->dev;
 
 	/*
-	 * check semaphore, if not down() already, then we don't
+	 * check semaphore, अगर not करोwn() alपढ़ोy, then we करोn't
 	 * know in which context the ISR is called and surely it
-	 * will be a bug. Note that down() of the semaphore is done
+	 * will be a bug. Note that करोwn() of the semaphore is करोne
 	 * in the corresponding st95hf_in_send_cmd() and then
 	 * only this ISR should be called. ISR will up() the
-	 * semaphore before leaving. Hence when the ISR is called
-	 * the correct behaviour is down_trylock() should always
-	 * return 1 (indicating semaphore cant be taken and hence no
+	 * semaphore beक्रमe leaving. Hence when the ISR is called
+	 * the correct behaviour is करोwn_trylock() should always
+	 * वापस 1 (indicating semaphore cant be taken and hence no
 	 * change in semaphore count).
 	 * If not, then we up() the semaphore and crash on
 	 * a BUG() !
 	 */
-	if (!down_trylock(&stcontext->exchange_lock)) {
+	अगर (!करोwn_trylock(&stcontext->exchange_lock)) अणु
 		up(&stcontext->exchange_lock);
 		WARN(1, "unknown context in ST95HF ISR");
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	cb_arg = &stcontext->complete_cb_arg;
 	skb_resp = cb_arg->skb_resp;
@@ -803,147 +804,147 @@ static irqreturn_t st95hf_irq_thread_handler(int irq, void  *st95hfcontext)
 	mutex_lock(&stcontext->rm_lock);
 	res_len = st95hf_spi_recv_response(&stcontext->spicontext,
 					   skb_resp->data);
-	if (res_len < 0) {
+	अगर (res_len < 0) अणु
 		dev_err(spidevice, "TISR spi response err = 0x%x\n", res_len);
 		result = res_len;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	/* if stcontext->nfcdev_free is true, it means remove already ran */
-	if (stcontext->nfcdev_free) {
+	/* अगर stcontext->nfcdev_मुक्त is true, it means हटाओ alपढ़ोy ran */
+	अगर (stcontext->nfcdev_मुक्त) अणु
 		result = -ENODEV;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (skb_resp->data[2] == WTX_REQ_FROM_TAG) {
-		/* Request for new FWT from tag */
+	अगर (skb_resp->data[2] == WTX_REQ_FROM_TAG) अणु
+		/* Request क्रम new FWT from tag */
 		result = st95hf_handle_wtx(stcontext, true, skb_resp->data[3]);
-		if (result)
-			goto end;
+		अगर (result)
+			जाओ end;
 
 		wtx = true;
 		mutex_unlock(&stcontext->rm_lock);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	result = st95hf_error_handling(stcontext, skb_resp, res_len);
-	if (result)
-		goto end;
+	अगर (result)
+		जाओ end;
 
 	result = st95hf_response_handler(stcontext, skb_resp, res_len);
-	if (result)
-		goto end;
+	अगर (result)
+		जाओ end;
 
 	/*
-	 * If select protocol is done on wtx req. do select protocol
-	 * again with default values
+	 * If select protocol is करोne on wtx req. करो select protocol
+	 * again with शेष values
 	 */
-	if (wtx) {
+	अगर (wtx) अणु
 		wtx = false;
 		result = st95hf_handle_wtx(stcontext, false, 0);
-		if (result)
-			goto end;
-	}
+		अगर (result)
+			जाओ end;
+	पूर्ण
 
 	/* call digital layer callback */
 	cb_arg->complete_cb(stcontext->ddev, cb_arg->cb_usrarg, skb_resp);
 
-	/* up the semaphore before returning */
+	/* up the semaphore beक्रमe वापसing */
 	up(&stcontext->exchange_lock);
 	mutex_unlock(&stcontext->rm_lock);
 
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 
 end:
-	kfree_skb(skb_resp);
+	kमुक्त_skb(skb_resp);
 	wtx = false;
 	cb_arg->rats = false;
 	skb_resp = ERR_PTR(result);
 	/* call of callback with error */
 	cb_arg->complete_cb(stcontext->ddev, cb_arg->cb_usrarg, skb_resp);
-	/* up the semaphore before returning */
+	/* up the semaphore beक्रमe वापसing */
 	up(&stcontext->exchange_lock);
 	mutex_unlock(&stcontext->rm_lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* NFC ops functions definition */
-static int st95hf_in_configure_hw(struct nfc_digital_dev *ddev,
-				  int type,
-				  int param)
-{
-	struct st95hf_context *stcontext = nfc_digital_get_drvdata(ddev);
+अटल पूर्णांक st95hf_in_configure_hw(काष्ठा nfc_digital_dev *ddev,
+				  पूर्णांक type,
+				  पूर्णांक param)
+अणु
+	काष्ठा st95hf_context *stcontext = nfc_digital_get_drvdata(ddev);
 
-	if (type == NFC_DIGITAL_CONFIG_RF_TECH)
-		return st95hf_select_protocol(stcontext, param);
+	अगर (type == NFC_DIGITAL_CONFIG_RF_TECH)
+		वापस st95hf_select_protocol(stcontext, param);
 
-	if (type == NFC_DIGITAL_CONFIG_FRAMING) {
-		switch (param) {
-		case NFC_DIGITAL_FRAMING_NFCA_SHORT:
+	अगर (type == NFC_DIGITAL_CONFIG_FRAMING) अणु
+		चयन (param) अणु
+		हाल NFC_DIGITAL_FRAMING_NFCA_SHORT:
 			stcontext->sendrcv_trflag = TRFLAG_NFCA_SHORT_FRAME;
-			break;
-		case NFC_DIGITAL_FRAMING_NFCA_STANDARD:
+			अवरोध;
+		हाल NFC_DIGITAL_FRAMING_NFCA_STANDARD:
 			stcontext->sendrcv_trflag = TRFLAG_NFCA_STD_FRAME;
-			break;
-		case NFC_DIGITAL_FRAMING_NFCA_T4T:
-		case NFC_DIGITAL_FRAMING_NFCA_NFC_DEP:
-		case NFC_DIGITAL_FRAMING_NFCA_STANDARD_WITH_CRC_A:
+			अवरोध;
+		हाल NFC_DIGITAL_FRAMING_NFCA_T4T:
+		हाल NFC_DIGITAL_FRAMING_NFCA_NFC_DEP:
+		हाल NFC_DIGITAL_FRAMING_NFCA_STANDARD_WITH_CRC_A:
 			stcontext->sendrcv_trflag = TRFLAG_NFCA_STD_FRAME_CRC;
-			break;
-		case NFC_DIGITAL_FRAMING_NFCB:
-		case NFC_DIGITAL_FRAMING_ISO15693_INVENTORY:
-		case NFC_DIGITAL_FRAMING_ISO15693_T5T:
-			break;
-		}
-	}
+			अवरोध;
+		हाल NFC_DIGITAL_FRAMING_NFCB:
+		हाल NFC_DIGITAL_FRAMING_ISO15693_INVENTORY:
+		हाल NFC_DIGITAL_FRAMING_ISO15693_T5T:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rf_off(struct st95hf_context *stcontext)
-{
-	int rc;
-	struct device *dev;
+अटल पूर्णांक rf_off(काष्ठा st95hf_context *stcontext)
+अणु
+	पूर्णांक rc;
+	काष्ठा device *dev;
 
 	dev = &stcontext->nfcdev->dev;
 
-	rc = st95hf_send_recv_cmd(stcontext, CMD_FIELD_OFF, 0, NULL, true);
-	if (rc)
+	rc = st95hf_send_recv_cmd(stcontext, CMD_FIELD_OFF, 0, शून्य, true);
+	अगर (rc)
 		dev_err(dev, "protocol sel send field off, err = 0x%x\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int st95hf_in_send_cmd(struct nfc_digital_dev *ddev,
-			      struct sk_buff *skb,
-			      u16 timeout,
+अटल पूर्णांक st95hf_in_send_cmd(काष्ठा nfc_digital_dev *ddev,
+			      काष्ठा sk_buff *skb,
+			      u16 समयout,
 			      nfc_digital_cmd_complete_t cb,
-			      void *arg)
-{
-	struct st95hf_context *stcontext = nfc_digital_get_drvdata(ddev);
-	int rc;
-	struct sk_buff *skb_resp;
-	int len_data_to_tag = 0;
+			      व्योम *arg)
+अणु
+	काष्ठा st95hf_context *stcontext = nfc_digital_get_drvdata(ddev);
+	पूर्णांक rc;
+	काष्ठा sk_buff *skb_resp;
+	पूर्णांक len_data_to_tag = 0;
 
 	skb_resp = nfc_alloc_recv_skb(MAX_RESPONSE_BUFFER_SIZE, GFP_KERNEL);
-	if (!skb_resp) {
+	अगर (!skb_resp) अणु
 		rc = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	switch (stcontext->current_rf_tech) {
-	case NFC_DIGITAL_RF_TECH_106A:
+	चयन (stcontext->current_rf_tech) अणु
+	हाल NFC_DIGITAL_RF_TECH_106A:
 		len_data_to_tag = skb->len + 1;
 		skb_put_u8(skb, stcontext->sendrcv_trflag);
-		break;
-	case NFC_DIGITAL_RF_TECH_106B:
-	case NFC_DIGITAL_RF_TECH_ISO15693:
+		अवरोध;
+	हाल NFC_DIGITAL_RF_TECH_106B:
+	हाल NFC_DIGITAL_RF_TECH_ISO15693:
 		len_data_to_tag = skb->len;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -EINVAL;
-		goto free_skb_resp;
-	}
+		जाओ मुक्त_skb_resp;
+	पूर्ण
 
 	skb_push(skb, 3);
 	skb->data[0] = ST95HF_COMMAND_SEND;
@@ -954,93 +955,93 @@ static int st95hf_in_send_cmd(struct nfc_digital_dev *ddev,
 	stcontext->complete_cb_arg.cb_usrarg = arg;
 	stcontext->complete_cb_arg.complete_cb = cb;
 
-	if ((skb->data[3] == ISO14443A_RATS_REQ) &&
+	अगर ((skb->data[3] == ISO14443A_RATS_REQ) &&
 	    ddev->curr_protocol == NFC_PROTO_ISO14443)
 		stcontext->complete_cb_arg.rats = true;
 
 	/*
-	 * down the semaphore to indicate to remove func that an
-	 * ISR is pending, note that it will not block here in any case.
+	 * करोwn the semaphore to indicate to हटाओ func that an
+	 * ISR is pending, note that it will not block here in any हाल.
 	 * If found blocked, it is a BUG!
 	 */
-	rc = down_killable(&stcontext->exchange_lock);
-	if (rc) {
+	rc = करोwn_समाप्तable(&stcontext->exchange_lock);
+	अगर (rc) अणु
 		WARN(1, "Semaphore is not found up in st95hf_in_send_cmd\n");
-		goto free_skb_resp;
-	}
+		जाओ मुक्त_skb_resp;
+	पूर्ण
 
 	rc = st95hf_spi_send(&stcontext->spicontext, skb->data,
 			     skb->len,
 			     ASYNC);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&stcontext->nfcdev->dev,
 			"Error %d trying to perform data_exchange", rc);
-		/* up the semaphore since ISR will never come in this case */
+		/* up the semaphore since ISR will never come in this हाल */
 		up(&stcontext->exchange_lock);
-		goto free_skb_resp;
-	}
+		जाओ मुक्त_skb_resp;
+	पूर्ण
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return rc;
+	वापस rc;
 
-free_skb_resp:
-	kfree_skb(skb_resp);
+मुक्त_skb_resp:
+	kमुक्त_skb(skb_resp);
 error:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* p2p will be supported in a later release ! */
-static int st95hf_tg_configure_hw(struct nfc_digital_dev *ddev,
-				  int type,
-				  int param)
-{
-	return 0;
-}
+अटल पूर्णांक st95hf_tg_configure_hw(काष्ठा nfc_digital_dev *ddev,
+				  पूर्णांक type,
+				  पूर्णांक param)
+अणु
+	वापस 0;
+पूर्ण
 
-static int st95hf_tg_send_cmd(struct nfc_digital_dev *ddev,
-			      struct sk_buff *skb,
-			      u16 timeout,
+अटल पूर्णांक st95hf_tg_send_cmd(काष्ठा nfc_digital_dev *ddev,
+			      काष्ठा sk_buff *skb,
+			      u16 समयout,
 			      nfc_digital_cmd_complete_t cb,
-			      void *arg)
-{
-	return 0;
-}
+			      व्योम *arg)
+अणु
+	वापस 0;
+पूर्ण
 
-static int st95hf_tg_listen(struct nfc_digital_dev *ddev,
-			    u16 timeout,
+अटल पूर्णांक st95hf_tg_listen(काष्ठा nfc_digital_dev *ddev,
+			    u16 समयout,
 			    nfc_digital_cmd_complete_t cb,
-			    void *arg)
-{
-	return 0;
-}
+			    व्योम *arg)
+अणु
+	वापस 0;
+पूर्ण
 
-static int st95hf_tg_get_rf_tech(struct nfc_digital_dev *ddev, u8 *rf_tech)
-{
-	return 0;
-}
+अटल पूर्णांक st95hf_tg_get_rf_tech(काष्ठा nfc_digital_dev *ddev, u8 *rf_tech)
+अणु
+	वापस 0;
+पूर्ण
 
-static int st95hf_switch_rf(struct nfc_digital_dev *ddev, bool on)
-{
+अटल पूर्णांक st95hf_चयन_rf(काष्ठा nfc_digital_dev *ddev, bool on)
+अणु
 	u8 rf_tech;
-	struct st95hf_context *stcontext = nfc_digital_get_drvdata(ddev);
+	काष्ठा st95hf_context *stcontext = nfc_digital_get_drvdata(ddev);
 
 	rf_tech = ddev->curr_rf_tech;
 
-	if (on)
-		/* switch on RF field */
-		return st95hf_select_protocol(stcontext, rf_tech);
+	अगर (on)
+		/* चयन on RF field */
+		वापस st95hf_select_protocol(stcontext, rf_tech);
 
-	/* switch OFF RF field */
-	return rf_off(stcontext);
-}
+	/* चयन OFF RF field */
+	वापस rf_off(stcontext);
+पूर्ण
 
-/* TODO st95hf_abort_cmd */
-static void st95hf_abort_cmd(struct nfc_digital_dev *ddev)
-{
-}
+/* TODO st95hf_पात_cmd */
+अटल व्योम st95hf_पात_cmd(काष्ठा nfc_digital_dev *ddev)
+अणु
+पूर्ण
 
-static struct nfc_digital_ops st95hf_nfc_digital_ops = {
+अटल काष्ठा nfc_digital_ops st95hf_nfc_digital_ops = अणु
 	.in_configure_hw = st95hf_in_configure_hw,
 	.in_send_cmd = st95hf_in_send_cmd,
 
@@ -1049,36 +1050,36 @@ static struct nfc_digital_ops st95hf_nfc_digital_ops = {
 	.tg_send_cmd = st95hf_tg_send_cmd,
 	.tg_get_rf_tech = st95hf_tg_get_rf_tech,
 
-	.switch_rf = st95hf_switch_rf,
-	.abort_cmd = st95hf_abort_cmd,
-};
+	.चयन_rf = st95hf_चयन_rf,
+	.पात_cmd = st95hf_पात_cmd,
+पूर्ण;
 
-static const struct spi_device_id st95hf_id[] = {
-	{ "st95hf", 0 },
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id st95hf_id[] = अणु
+	अणु "st95hf", 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, st95hf_id);
 
-static const struct of_device_id st95hf_spi_of_match[] = {
-        { .compatible = "st,st95hf" },
-        { },
-};
+अटल स्थिर काष्ठा of_device_id st95hf_spi_of_match[] = अणु
+        अणु .compatible = "st,st95hf" पूर्ण,
+        अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, st95hf_spi_of_match);
 
-static int st95hf_probe(struct spi_device *nfc_spi_dev)
-{
-	int ret;
+अटल पूर्णांक st95hf_probe(काष्ठा spi_device *nfc_spi_dev)
+अणु
+	पूर्णांक ret;
 
-	struct st95hf_context *st95context;
-	struct st95hf_spi_context *spicontext;
+	काष्ठा st95hf_context *st95context;
+	काष्ठा st95hf_spi_context *spicontext;
 
 	nfc_info(&nfc_spi_dev->dev, "ST95HF driver probe called.\n");
 
 	st95context = devm_kzalloc(&nfc_spi_dev->dev,
-				   sizeof(struct st95hf_context),
+				   माप(काष्ठा st95hf_context),
 				   GFP_KERNEL);
-	if (!st95context)
-		return -ENOMEM;
+	अगर (!st95context)
+		वापस -ENOMEM;
 
 	spicontext = &st95context->spicontext;
 
@@ -1087,28 +1088,28 @@ static int st95hf_probe(struct spi_device *nfc_spi_dev)
 	st95context->fwi =
 		cmd_array[CMD_ISO14443A_PROTOCOL_SELECT].cmd_params[2];
 
-	if (device_property_present(&nfc_spi_dev->dev, "st95hfvin")) {
+	अगर (device_property_present(&nfc_spi_dev->dev, "st95hfvin")) अणु
 		st95context->st95hf_supply =
 			devm_regulator_get(&nfc_spi_dev->dev,
 					   "st95hfvin");
-		if (IS_ERR(st95context->st95hf_supply)) {
+		अगर (IS_ERR(st95context->st95hf_supply)) अणु
 			dev_err(&nfc_spi_dev->dev, "failed to acquire regulator\n");
-			return PTR_ERR(st95context->st95hf_supply);
-		}
+			वापस PTR_ERR(st95context->st95hf_supply);
+		पूर्ण
 
 		ret = regulator_enable(st95context->st95hf_supply);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&nfc_spi_dev->dev, "failed to enable regulator\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	init_completion(&spicontext->done);
+	init_completion(&spicontext->करोne);
 	mutex_init(&spicontext->spi_lock);
 
 	/*
-	 * Store spicontext in spi device object for using it in
-	 * remove function
+	 * Store spicontext in spi device object क्रम using it in
+	 * हटाओ function
 	 */
 	dev_set_drvdata(&nfc_spi_dev->dev, spicontext);
 
@@ -1116,74 +1117,74 @@ static int st95hf_probe(struct spi_device *nfc_spi_dev)
 		of_get_named_gpio(nfc_spi_dev->dev.of_node,
 				  "enable-gpio",
 				  0);
-	if (!gpio_is_valid(st95context->enable_gpio)) {
+	अगर (!gpio_is_valid(st95context->enable_gpio)) अणु
 		dev_err(&nfc_spi_dev->dev, "No valid enable gpio\n");
 		ret = st95context->enable_gpio;
-		goto err_disable_regulator;
-	}
+		जाओ err_disable_regulator;
+	पूर्ण
 
 	ret = devm_gpio_request_one(&nfc_spi_dev->dev, st95context->enable_gpio,
-				    GPIOF_DIR_OUT | GPIOF_INIT_HIGH,
+				    GPIOF_सूची_OUT | GPIOF_INIT_HIGH,
 				    "enable_gpio");
-	if (ret)
-		goto err_disable_regulator;
+	अगर (ret)
+		जाओ err_disable_regulator;
 
-	if (nfc_spi_dev->irq > 0) {
-		if (devm_request_threaded_irq(&nfc_spi_dev->dev,
+	अगर (nfc_spi_dev->irq > 0) अणु
+		अगर (devm_request_thपढ़ोed_irq(&nfc_spi_dev->dev,
 					      nfc_spi_dev->irq,
 					      st95hf_irq_handler,
-					      st95hf_irq_thread_handler,
+					      st95hf_irq_thपढ़ो_handler,
 					      IRQF_TRIGGER_FALLING,
 					      "st95hf",
-					      (void *)st95context) < 0) {
+					      (व्योम *)st95context) < 0) अणु
 			dev_err(&nfc_spi_dev->dev, "err: irq request for st95hf is failed\n");
 			ret =  -EINVAL;
-			goto err_disable_regulator;
-		}
-	} else {
+			जाओ err_disable_regulator;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(&nfc_spi_dev->dev, "not a valid IRQ associated with ST95HF\n");
 		ret = -EINVAL;
-		goto err_disable_regulator;
-	}
+		जाओ err_disable_regulator;
+	पूर्ण
 
 	/*
-	 * First reset SPI to handle warm reset of the system.
+	 * First reset SPI to handle warm reset of the प्रणाली.
 	 * It will put the ST95HF device in Power ON state
 	 * which make the state of device identical to state
-	 * at the time of cold reset of the system.
+	 * at the समय of cold reset of the प्रणाली.
 	 */
 	ret = st95hf_send_spi_reset_sequence(st95context);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&nfc_spi_dev->dev, "err: spi_reset_sequence failed\n");
-		goto err_disable_regulator;
-	}
+		जाओ err_disable_regulator;
+	पूर्ण
 
 	/* call PowerOnReset sequence of ST95hf to activate it */
 	ret = st95hf_por_sequence(st95context);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&nfc_spi_dev->dev, "err: por seq failed for st95hf\n");
-		goto err_disable_regulator;
-	}
+		जाओ err_disable_regulator;
+	पूर्ण
 
-	/* create NFC dev object and register with NFC Subsystem */
+	/* create NFC dev object and रेजिस्टर with NFC Subप्रणाली */
 	st95context->ddev = nfc_digital_allocate_device(&st95hf_nfc_digital_ops,
 							ST95HF_SUPPORTED_PROT,
 							ST95HF_CAPABILITIES,
 							ST95HF_HEADROOM_LEN,
 							ST95HF_TAILROOM_LEN);
-	if (!st95context->ddev) {
+	अगर (!st95context->ddev) अणु
 		ret = -ENOMEM;
-		goto err_disable_regulator;
-	}
+		जाओ err_disable_regulator;
+	पूर्ण
 
 	st95context->nfcdev = st95context->ddev->nfc_dev;
 	nfc_digital_set_parent_dev(st95context->ddev, &nfc_spi_dev->dev);
 
-	ret =  nfc_digital_register_device(st95context->ddev);
-	if (ret) {
+	ret =  nfc_digital_रेजिस्टर_device(st95context->ddev);
+	अगर (ret) अणु
 		dev_err(&st95context->nfcdev->dev, "st95hf registration failed\n");
-		goto err_free_digital_device;
-	}
+		जाओ err_मुक्त_digital_device;
+	पूर्ण
 
 	/* store st95context in nfc device object */
 	nfc_digital_set_drvdata(st95context->ddev, st95context);
@@ -1191,38 +1192,38 @@ static int st95hf_probe(struct spi_device *nfc_spi_dev)
 	sema_init(&st95context->exchange_lock, 1);
 	mutex_init(&st95context->rm_lock);
 
-	return ret;
+	वापस ret;
 
-err_free_digital_device:
-	nfc_digital_free_device(st95context->ddev);
+err_मुक्त_digital_device:
+	nfc_digital_मुक्त_device(st95context->ddev);
 err_disable_regulator:
-	if (st95context->st95hf_supply)
+	अगर (st95context->st95hf_supply)
 		regulator_disable(st95context->st95hf_supply);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int st95hf_remove(struct spi_device *nfc_spi_dev)
-{
-	int result = 0;
-	unsigned char reset_cmd = ST95HF_COMMAND_RESET;
-	struct st95hf_spi_context *spictx = dev_get_drvdata(&nfc_spi_dev->dev);
+अटल पूर्णांक st95hf_हटाओ(काष्ठा spi_device *nfc_spi_dev)
+अणु
+	पूर्णांक result = 0;
+	अचिन्हित अक्षर reset_cmd = ST95HF_COMMAND_RESET;
+	काष्ठा st95hf_spi_context *spictx = dev_get_drvdata(&nfc_spi_dev->dev);
 
-	struct st95hf_context *stcontext = container_of(spictx,
-							struct st95hf_context,
+	काष्ठा st95hf_context *stcontext = container_of(spictx,
+							काष्ठा st95hf_context,
 							spicontext);
 
 	mutex_lock(&stcontext->rm_lock);
 
-	nfc_digital_unregister_device(stcontext->ddev);
-	nfc_digital_free_device(stcontext->ddev);
-	stcontext->nfcdev_free = true;
+	nfc_digital_unरेजिस्टर_device(stcontext->ddev);
+	nfc_digital_मुक्त_device(stcontext->ddev);
+	stcontext->nfcdev_मुक्त = true;
 
 	mutex_unlock(&stcontext->rm_lock);
 
-	/* if last in_send_cmd's ISR is pending, wait for it to finish */
-	result = down_killable(&stcontext->exchange_lock);
-	if (result == -EINTR)
+	/* अगर last in_send_cmd's ISR is pending, रुको क्रम it to finish */
+	result = करोwn_समाप्तable(&stcontext->exchange_lock);
+	अगर (result == -EINTR)
 		dev_err(&spictx->spidev->dev, "sleep for semaphore interrupted by signal\n");
 
 	/* next reset the ST95HF controller */
@@ -1230,33 +1231,33 @@ static int st95hf_remove(struct spi_device *nfc_spi_dev)
 				 &reset_cmd,
 				 ST95HF_RESET_CMD_LEN,
 				 ASYNC);
-	if (result) {
+	अगर (result) अणु
 		dev_err(&spictx->spidev->dev,
 			"ST95HF reset failed in remove() err = %d\n", result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	/* wait for 3 ms to complete the controller reset process */
+	/* रुको क्रम 3 ms to complete the controller reset process */
 	usleep_range(3000, 4000);
 
 	/* disable regulator */
-	if (stcontext->st95hf_supply)
+	अगर (stcontext->st95hf_supply)
 		regulator_disable(stcontext->st95hf_supply);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /* Register as SPI protocol driver */
-static struct spi_driver st95hf_driver = {
-	.driver = {
+अटल काष्ठा spi_driver st95hf_driver = अणु
+	.driver = अणु
 		.name = "st95hf",
 		.owner = THIS_MODULE,
 		.of_match_table = of_match_ptr(st95hf_spi_of_match),
-	},
+	पूर्ण,
 	.id_table = st95hf_id,
 	.probe = st95hf_probe,
-	.remove = st95hf_remove,
-};
+	.हटाओ = st95hf_हटाओ,
+पूर्ण;
 
 module_spi_driver(st95hf_driver);
 

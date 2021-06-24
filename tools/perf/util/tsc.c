@@ -1,142 +1,143 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include <inttypes.h>
-#include <string.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <माला.स>
 
-#include <linux/compiler.h>
-#include <linux/perf_event.h>
-#include <linux/stddef.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/types.h>
 
-#include <asm/barrier.h>
+#समावेश <यंत्र/barrier.h>
 
-#include "event.h"
-#include "synthetic-events.h"
-#include "debug.h"
-#include "tsc.h"
+#समावेश "event.h"
+#समावेश "synthetic-events.h"
+#समावेश "debug.h"
+#समावेश "tsc.h"
 
-u64 perf_time_to_tsc(u64 ns, struct perf_tsc_conversion *tc)
-{
+u64 perf_समय_प्रकारo_tsc(u64 ns, काष्ठा perf_tsc_conversion *tc)
+अणु
 	u64 t, quot, rem;
 
-	t = ns - tc->time_zero;
-	quot = t / tc->time_mult;
-	rem  = t % tc->time_mult;
-	return (quot << tc->time_shift) +
-	       (rem << tc->time_shift) / tc->time_mult;
-}
+	t = ns - tc->समय_zero;
+	quot = t / tc->समय_mult;
+	rem  = t % tc->समय_mult;
+	वापस (quot << tc->समय_shअगरt) +
+	       (rem << tc->समय_shअगरt) / tc->समय_mult;
+पूर्ण
 
-u64 tsc_to_perf_time(u64 cyc, struct perf_tsc_conversion *tc)
-{
+u64 tsc_to_perf_समय(u64 cyc, काष्ठा perf_tsc_conversion *tc)
+अणु
 	u64 quot, rem;
 
-	if (tc->cap_user_time_short)
-		cyc = tc->time_cycles +
-			((cyc - tc->time_cycles) & tc->time_mask);
+	अगर (tc->cap_user_समय_लघु)
+		cyc = tc->समय_cycles +
+			((cyc - tc->समय_cycles) & tc->समय_mask);
 
-	quot = cyc >> tc->time_shift;
-	rem  = cyc & (((u64)1 << tc->time_shift) - 1);
-	return tc->time_zero + quot * tc->time_mult +
-	       ((rem * tc->time_mult) >> tc->time_shift);
-}
+	quot = cyc >> tc->समय_shअगरt;
+	rem  = cyc & (((u64)1 << tc->समय_shअगरt) - 1);
+	वापस tc->समय_zero + quot * tc->समय_mult +
+	       ((rem * tc->समय_mult) >> tc->समय_shअगरt);
+पूर्ण
 
-int perf_read_tsc_conversion(const struct perf_event_mmap_page *pc,
-			     struct perf_tsc_conversion *tc)
-{
+पूर्णांक perf_पढ़ो_tsc_conversion(स्थिर काष्ठा perf_event_mmap_page *pc,
+			     काष्ठा perf_tsc_conversion *tc)
+अणु
 	u32 seq;
-	int i = 0;
+	पूर्णांक i = 0;
 
-	while (1) {
+	जबतक (1) अणु
 		seq = pc->lock;
 		rmb();
-		tc->time_mult = pc->time_mult;
-		tc->time_shift = pc->time_shift;
-		tc->time_zero = pc->time_zero;
-		tc->time_cycles = pc->time_cycles;
-		tc->time_mask = pc->time_mask;
-		tc->cap_user_time_zero = pc->cap_user_time_zero;
-		tc->cap_user_time_short	= pc->cap_user_time_short;
+		tc->समय_mult = pc->समय_mult;
+		tc->समय_shअगरt = pc->समय_shअगरt;
+		tc->समय_zero = pc->समय_zero;
+		tc->समय_cycles = pc->समय_cycles;
+		tc->समय_mask = pc->समय_mask;
+		tc->cap_user_समय_zero = pc->cap_user_समय_zero;
+		tc->cap_user_समय_लघु	= pc->cap_user_समय_लघु;
 		rmb();
-		if (pc->lock == seq && !(seq & 1))
-			break;
-		if (++i > 10000) {
+		अगर (pc->lock == seq && !(seq & 1))
+			अवरोध;
+		अगर (++i > 10000) अणु
 			pr_debug("failed to get perf_event_mmap_page lock\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (!tc->cap_user_time_zero)
-		return -EOPNOTSUPP;
+	अगर (!tc->cap_user_समय_zero)
+		वापस -EOPNOTSUPP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int perf_event__synth_time_conv(const struct perf_event_mmap_page *pc,
-				struct perf_tool *tool,
+पूर्णांक perf_event__synth_समय_conv(स्थिर काष्ठा perf_event_mmap_page *pc,
+				काष्ठा perf_tool *tool,
 				perf_event__handler_t process,
-				struct machine *machine)
-{
-	union perf_event event = {
-		.time_conv = {
-			.header = {
+				काष्ठा machine *machine)
+अणु
+	जोड़ perf_event event = अणु
+		.समय_conv = अणु
+			.header = अणु
 				.type = PERF_RECORD_TIME_CONV,
-				.size = sizeof(struct perf_record_time_conv),
-			},
-		},
-	};
-	struct perf_tsc_conversion tc;
-	int err;
+				.size = माप(काष्ठा perf_record_समय_conv),
+			पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	काष्ठा perf_tsc_conversion tc;
+	पूर्णांक err;
 
-	if (!pc)
-		return 0;
-	err = perf_read_tsc_conversion(pc, &tc);
-	if (err == -EOPNOTSUPP)
-		return 0;
-	if (err)
-		return err;
+	अगर (!pc)
+		वापस 0;
+	err = perf_पढ़ो_tsc_conversion(pc, &tc);
+	अगर (err == -EOPNOTSUPP)
+		वापस 0;
+	अगर (err)
+		वापस err;
 
 	pr_debug2("Synthesizing TSC conversion information\n");
 
-	event.time_conv.time_mult  = tc.time_mult;
-	event.time_conv.time_shift = tc.time_shift;
-	event.time_conv.time_zero  = tc.time_zero;
-	event.time_conv.time_cycles = tc.time_cycles;
-	event.time_conv.time_mask = tc.time_mask;
-	event.time_conv.cap_user_time_zero = tc.cap_user_time_zero;
-	event.time_conv.cap_user_time_short = tc.cap_user_time_short;
+	event.समय_conv.समय_mult  = tc.समय_mult;
+	event.समय_conv.समय_shअगरt = tc.समय_shअगरt;
+	event.समय_conv.समय_zero  = tc.समय_zero;
+	event.समय_conv.समय_cycles = tc.समय_cycles;
+	event.समय_conv.समय_mask = tc.समय_mask;
+	event.समय_conv.cap_user_समय_zero = tc.cap_user_समय_zero;
+	event.समय_conv.cap_user_समय_लघु = tc.cap_user_समय_लघु;
 
-	return process(tool, &event, NULL, machine);
-}
+	वापस process(tool, &event, शून्य, machine);
+पूर्ण
 
-u64 __weak rdtsc(void)
-{
-	return 0;
-}
+u64 __weak rdtsc(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-size_t perf_event__fprintf_time_conv(union perf_event *event, FILE *fp)
-{
-	struct perf_record_time_conv *tc = (struct perf_record_time_conv *)event;
-	size_t ret;
+माप_प्रकार perf_event__ख_लिखो_समय_conv(जोड़ perf_event *event, खाता *fp)
+अणु
+	काष्ठा perf_record_समय_conv *tc = (काष्ठा perf_record_समय_conv *)event;
+	माप_प्रकार ret;
 
-	ret  = fprintf(fp, "\n... Time Shift      %" PRI_lu64 "\n", tc->time_shift);
-	ret += fprintf(fp, "... Time Muliplier  %" PRI_lu64 "\n", tc->time_mult);
-	ret += fprintf(fp, "... Time Zero       %" PRI_lu64 "\n", tc->time_zero);
+	ret  = ख_लिखो(fp, "\n... Time Shift      %" PRI_lu64 "\n", tc->समय_shअगरt);
+	ret += ख_लिखो(fp, "... Time Muliplier  %" PRI_lu64 "\n", tc->समय_mult);
+	ret += ख_लिखो(fp, "... Time Zero       %" PRI_lu64 "\n", tc->समय_zero);
 
 	/*
-	 * The event TIME_CONV was extended for the fields from "time_cycles"
-	 * when supported cap_user_time_short, for backward compatibility,
-	 * prints the extended fields only if they are contained in the event.
+	 * The event TIME_CONV was extended क्रम the fields from "time_cycles"
+	 * when supported cap_user_समय_लघु, क्रम backward compatibility,
+	 * prपूर्णांकs the extended fields only अगर they are contained in the event.
 	 */
-	if (event_contains(*tc, time_cycles)) {
-		ret += fprintf(fp, "... Time Cycles     %" PRI_lu64 "\n",
-			       tc->time_cycles);
-		ret += fprintf(fp, "... Time Mask       %#" PRI_lx64 "\n",
-			       tc->time_mask);
-		ret += fprintf(fp, "... Cap Time Zero   %" PRId32 "\n",
-			       tc->cap_user_time_zero);
-		ret += fprintf(fp, "... Cap Time Short  %" PRId32 "\n",
-			       tc->cap_user_time_short);
-	}
+	अगर (event_contains(*tc, समय_cycles)) अणु
+		ret += ख_लिखो(fp, "... Time Cycles     %" PRI_lu64 "\n",
+			       tc->समय_cycles);
+		ret += ख_लिखो(fp, "... Time Mask       %#" PRI_lx64 "\n",
+			       tc->समय_mask);
+		ret += ख_लिखो(fp, "... Cap Time Zero   %" PRId32 "\n",
+			       tc->cap_user_समय_zero);
+		ret += ख_लिखो(fp, "... Cap Time Short  %" PRId32 "\n",
+			       tc->cap_user_समय_लघु);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

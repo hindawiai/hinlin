@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_POWERPC_CPU_HAS_FEATURE_H
-#define __ASM_POWERPC_CPU_HAS_FEATURE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_POWERPC_CPU_HAS_FEATURE_H
+#घोषणा __ASM_POWERPC_CPU_HAS_FEATURE_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/bug.h>
-#include <asm/cputable.h>
+#समावेश <linux/bug.h>
+#समावेश <यंत्र/cputable.h>
 
-static __always_inline bool early_cpu_has_feature(unsigned long feature)
-{
-	return !!((CPU_FTRS_ALWAYS & feature) ||
+अटल __always_अंतरभूत bool early_cpu_has_feature(अचिन्हित दीर्घ feature)
+अणु
+	वापस !!((CPU_FTRS_ALWAYS & feature) ||
 		  (CPU_FTRS_POSSIBLE & cur_cpu_spec->cpu_features & feature));
-}
+पूर्ण
 
-#ifdef CONFIG_JUMP_LABEL_FEATURE_CHECKS
-#include <linux/jump_label.h>
+#अगर_घोषित CONFIG_JUMP_LABEL_FEATURE_CHECKS
+#समावेश <linux/jump_label.h>
 
-#define NUM_CPU_FTR_KEYS	BITS_PER_LONG
+#घोषणा NUM_CPU_FTR_KEYS	BITS_PER_LONG
 
-extern struct static_key_true cpu_feature_keys[NUM_CPU_FTR_KEYS];
+बाह्य काष्ठा अटल_key_true cpu_feature_keys[NUM_CPU_FTR_KEYS];
 
-static __always_inline bool cpu_has_feature(unsigned long feature)
-{
-	int i;
+अटल __always_अंतरभूत bool cpu_has_feature(अचिन्हित दीर्घ feature)
+अणु
+	पूर्णांक i;
 
-#ifndef __clang__ /* clang can't cope with this */
-	BUILD_BUG_ON(!__builtin_constant_p(feature));
-#endif
+#अगर_अघोषित __clang__ /* clang can't cope with this */
+	BUILD_BUG_ON(!__builtin_स्थिरant_p(feature));
+#पूर्ण_अगर
 
-#ifdef CONFIG_JUMP_LABEL_FEATURE_CHECK_DEBUG
-	if (!static_key_initialized) {
-		printk("Warning! cpu_has_feature() used prior to jump label init!\n");
+#अगर_घोषित CONFIG_JUMP_LABEL_FEATURE_CHECK_DEBUG
+	अगर (!अटल_key_initialized) अणु
+		prपूर्णांकk("Warning! cpu_has_feature() used prior to jump label init!\n");
 		dump_stack();
-		return early_cpu_has_feature(feature);
-	}
-#endif
+		वापस early_cpu_has_feature(feature);
+	पूर्ण
+#पूर्ण_अगर
 
-	if (CPU_FTRS_ALWAYS & feature)
-		return true;
+	अगर (CPU_FTRS_ALWAYS & feature)
+		वापस true;
 
-	if (!(CPU_FTRS_POSSIBLE & feature))
-		return false;
+	अगर (!(CPU_FTRS_POSSIBLE & feature))
+		वापस false;
 
 	i = __builtin_ctzl(feature);
-	return static_branch_likely(&cpu_feature_keys[i]);
-}
-#else
-static __always_inline bool cpu_has_feature(unsigned long feature)
-{
-	return early_cpu_has_feature(feature);
-}
-#endif
+	वापस अटल_branch_likely(&cpu_feature_keys[i]);
+पूर्ण
+#अन्यथा
+अटल __always_अंतरभूत bool cpu_has_feature(अचिन्हित दीर्घ feature)
+अणु
+	वापस early_cpu_has_feature(feature);
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
-#endif /* __ASM_POWERPC_CPU_HAS_FEATURE_H */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASM_POWERPC_CPU_HAS_FEATURE_H */

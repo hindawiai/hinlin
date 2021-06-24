@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,288 +31,288 @@
  * SOFTWARE.
  */
 
-#include <linux/mlx5/driver.h>
-#include <linux/mlx5/fs.h>
-#include <linux/rbtree.h>
-#include "mlx5_core.h"
-#include "fs_core.h"
-#include "fs_cmd.h"
+#समावेश <linux/mlx5/driver.h>
+#समावेश <linux/mlx5/fs.h>
+#समावेश <linux/rbtree.h>
+#समावेश "mlx5_core.h"
+#समावेश "fs_core.h"
+#समावेश "fs_cmd.h"
 
-#define MLX5_FC_STATS_PERIOD msecs_to_jiffies(1000)
-/* Max number of counters to query in bulk read is 32K */
-#define MLX5_SW_MAX_COUNTERS_BULK BIT(15)
-#define MLX5_FC_POOL_MAX_THRESHOLD BIT(18)
-#define MLX5_FC_POOL_USED_BUFF_RATIO 10
+#घोषणा MLX5_FC_STATS_PERIOD msecs_to_jअगरfies(1000)
+/* Max number of counters to query in bulk पढ़ो is 32K */
+#घोषणा MLX5_SW_MAX_COUNTERS_BULK BIT(15)
+#घोषणा MLX5_FC_POOL_MAX_THRESHOLD BIT(18)
+#घोषणा MLX5_FC_POOL_USED_BUFF_RATIO 10
 
-struct mlx5_fc_cache {
+काष्ठा mlx5_fc_cache अणु
 	u64 packets;
 	u64 bytes;
 	u64 lastuse;
-};
+पूर्ण;
 
-struct mlx5_fc {
-	struct list_head list;
-	struct llist_node addlist;
-	struct llist_node dellist;
+काष्ठा mlx5_fc अणु
+	काष्ठा list_head list;
+	काष्ठा llist_node addlist;
+	काष्ठा llist_node dellist;
 
-	/* last{packets,bytes} members are used when calculating the delta since
-	 * last reading
+	/* lastअणुpackets,bytesपूर्ण members are used when calculating the delta since
+	 * last पढ़ोing
 	 */
 	u64 lastpackets;
 	u64 lastbytes;
 
-	struct mlx5_fc_bulk *bulk;
+	काष्ठा mlx5_fc_bulk *bulk;
 	u32 id;
 	bool aging;
 
-	struct mlx5_fc_cache cache ____cacheline_aligned_in_smp;
-};
+	काष्ठा mlx5_fc_cache cache ____cacheline_aligned_in_smp;
+पूर्ण;
 
-static void mlx5_fc_pool_init(struct mlx5_fc_pool *fc_pool, struct mlx5_core_dev *dev);
-static void mlx5_fc_pool_cleanup(struct mlx5_fc_pool *fc_pool);
-static struct mlx5_fc *mlx5_fc_pool_acquire_counter(struct mlx5_fc_pool *fc_pool);
-static void mlx5_fc_pool_release_counter(struct mlx5_fc_pool *fc_pool, struct mlx5_fc *fc);
+अटल व्योम mlx5_fc_pool_init(काष्ठा mlx5_fc_pool *fc_pool, काष्ठा mlx5_core_dev *dev);
+अटल व्योम mlx5_fc_pool_cleanup(काष्ठा mlx5_fc_pool *fc_pool);
+अटल काष्ठा mlx5_fc *mlx5_fc_pool_acquire_counter(काष्ठा mlx5_fc_pool *fc_pool);
+अटल व्योम mlx5_fc_pool_release_counter(काष्ठा mlx5_fc_pool *fc_pool, काष्ठा mlx5_fc *fc);
 
 /* locking scheme:
  *
  * It is the responsibility of the user to prevent concurrent calls or bad
  * ordering to mlx5_fc_create(), mlx5_fc_destroy() and accessing a reference
- * to struct mlx5_fc.
- * e.g en_tc.c is protected by RTNL lock of its caller, and will never call a
- * dump (access to struct mlx5_fc) after a counter is destroyed.
+ * to काष्ठा mlx5_fc.
+ * e.g en_tc.c is रक्षित by RTNL lock of its caller, and will never call a
+ * dump (access to काष्ठा mlx5_fc) after a counter is destroyed.
  *
  * access to counter list:
  * - create (user context)
  *   - mlx5_fc_create() only adds to an addlist to be used by
  *     mlx5_fc_stats_work(). addlist is a lockless single linked list
- *     that doesn't require any additional synchronization when adding single
+ *     that करोesn't require any additional synchronization when adding single
  *     node.
- *   - spawn thread to do the actual destroy
+ *   - spawn thपढ़ो to करो the actual destroy
  *
  * - destroy (user context)
  *   - add a counter to lockless dellist
- *   - spawn thread to do the actual del
+ *   - spawn thपढ़ो to करो the actual del
  *
  * - dump (user context)
  *   user should not call dump after destroy
  *
- * - query (single thread workqueue context)
+ * - query (single thपढ़ो workqueue context)
  *   destroy/dump - no conflict (see destroy)
  *   query/dump - packets and bytes might be inconsistent (since update is not
  *                atomic)
  *   query/create - no conflict (see create)
- *   since every create/destroy spawn the work, only after necessary time has
- *   elapsed, the thread will actually query the hardware.
+ *   since every create/destroy spawn the work, only after necessary समय has
+ *   elapsed, the thपढ़ो will actually query the hardware.
  */
 
-static struct list_head *mlx5_fc_counters_lookup_next(struct mlx5_core_dev *dev,
+अटल काष्ठा list_head *mlx5_fc_counters_lookup_next(काष्ठा mlx5_core_dev *dev,
 						      u32 id)
-{
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
-	unsigned long next_id = (unsigned long)id + 1;
-	struct mlx5_fc *counter;
-	unsigned long tmp;
+अणु
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+	अचिन्हित दीर्घ next_id = (अचिन्हित दीर्घ)id + 1;
+	काष्ठा mlx5_fc *counter;
+	अचिन्हित दीर्घ पंचांगp;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	/* skip counters that are in idr, but not yet in counters list */
-	idr_for_each_entry_continue_ul(&fc_stats->counters_idr,
-				       counter, tmp, next_id) {
-		if (!list_empty(&counter->list))
-			break;
-	}
-	rcu_read_unlock();
+	idr_क्रम_each_entry_जारी_ul(&fc_stats->counters_idr,
+				       counter, पंचांगp, next_id) अणु
+		अगर (!list_empty(&counter->list))
+			अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return counter ? &counter->list : &fc_stats->counters;
-}
+	वापस counter ? &counter->list : &fc_stats->counters;
+पूर्ण
 
-static void mlx5_fc_stats_insert(struct mlx5_core_dev *dev,
-				 struct mlx5_fc *counter)
-{
-	struct list_head *next = mlx5_fc_counters_lookup_next(dev, counter->id);
+अटल व्योम mlx5_fc_stats_insert(काष्ठा mlx5_core_dev *dev,
+				 काष्ठा mlx5_fc *counter)
+अणु
+	काष्ठा list_head *next = mlx5_fc_counters_lookup_next(dev, counter->id);
 
 	list_add_tail(&counter->list, next);
-}
+पूर्ण
 
-static void mlx5_fc_stats_remove(struct mlx5_core_dev *dev,
-				 struct mlx5_fc *counter)
-{
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+अटल व्योम mlx5_fc_stats_हटाओ(काष्ठा mlx5_core_dev *dev,
+				 काष्ठा mlx5_fc *counter)
+अणु
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
 
 	list_del(&counter->list);
 
 	spin_lock(&fc_stats->counters_idr_lock);
-	WARN_ON(!idr_remove(&fc_stats->counters_idr, counter->id));
+	WARN_ON(!idr_हटाओ(&fc_stats->counters_idr, counter->id));
 	spin_unlock(&fc_stats->counters_idr_lock);
-}
+पूर्ण
 
-static int get_max_bulk_query_len(struct mlx5_core_dev *dev)
-{
-	return min_t(int, MLX5_SW_MAX_COUNTERS_BULK,
+अटल पूर्णांक get_max_bulk_query_len(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस min_t(पूर्णांक, MLX5_SW_MAX_COUNTERS_BULK,
 			  (1 << MLX5_CAP_GEN(dev, log_max_flow_counter_bulk)));
-}
+पूर्ण
 
-static void update_counter_cache(int index, u32 *bulk_raw_data,
-				 struct mlx5_fc_cache *cache)
-{
-	void *stats = MLX5_ADDR_OF(query_flow_counter_out, bulk_raw_data,
+अटल व्योम update_counter_cache(पूर्णांक index, u32 *bulk_raw_data,
+				 काष्ठा mlx5_fc_cache *cache)
+अणु
+	व्योम *stats = MLX5_ADDR_OF(query_flow_counter_out, bulk_raw_data,
 			     flow_statistics[index]);
 	u64 packets = MLX5_GET64(traffic_counter, stats, packets);
 	u64 bytes = MLX5_GET64(traffic_counter, stats, octets);
 
-	if (cache->packets == packets)
-		return;
+	अगर (cache->packets == packets)
+		वापस;
 
 	cache->packets = packets;
 	cache->bytes = bytes;
-	cache->lastuse = jiffies;
-}
+	cache->lastuse = jअगरfies;
+पूर्ण
 
-static void mlx5_fc_stats_query_counter_range(struct mlx5_core_dev *dev,
-					      struct mlx5_fc *first,
+अटल व्योम mlx5_fc_stats_query_counter_range(काष्ठा mlx5_core_dev *dev,
+					      काष्ठा mlx5_fc *first,
 					      u32 last_id)
-{
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+अणु
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
 	bool query_more_counters = (first->id <= last_id);
-	int max_bulk_len = get_max_bulk_query_len(dev);
+	पूर्णांक max_bulk_len = get_max_bulk_query_len(dev);
 	u32 *data = fc_stats->bulk_query_out;
-	struct mlx5_fc *counter = first;
+	काष्ठा mlx5_fc *counter = first;
 	u32 bulk_base_id;
-	int bulk_len;
-	int err;
+	पूर्णांक bulk_len;
+	पूर्णांक err;
 
-	while (query_more_counters) {
+	जबतक (query_more_counters) अणु
 		/* first id must be aligned to 4 when using bulk query */
 		bulk_base_id = counter->id & ~0x3;
 
 		/* number of counters to query inc. the last counter */
-		bulk_len = min_t(int, max_bulk_len,
+		bulk_len = min_t(पूर्णांक, max_bulk_len,
 				 ALIGN(last_id - bulk_base_id + 1, 4));
 
 		err = mlx5_cmd_fc_bulk_query(dev, bulk_base_id, bulk_len,
 					     data);
-		if (err) {
+		अगर (err) अणु
 			mlx5_core_err(dev, "Error doing bulk query: %d\n", err);
-			return;
-		}
+			वापस;
+		पूर्ण
 		query_more_counters = false;
 
-		list_for_each_entry_from(counter, &fc_stats->counters, list) {
-			int counter_index = counter->id - bulk_base_id;
-			struct mlx5_fc_cache *cache = &counter->cache;
+		list_क्रम_each_entry_from(counter, &fc_stats->counters, list) अणु
+			पूर्णांक counter_index = counter->id - bulk_base_id;
+			काष्ठा mlx5_fc_cache *cache = &counter->cache;
 
-			if (counter->id >= bulk_base_id + bulk_len) {
+			अगर (counter->id >= bulk_base_id + bulk_len) अणु
 				query_more_counters = true;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			update_counter_cache(counter_index, data, cache);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void mlx5_fc_free(struct mlx5_core_dev *dev, struct mlx5_fc *counter)
-{
-	mlx5_cmd_fc_free(dev, counter->id);
-	kfree(counter);
-}
+अटल व्योम mlx5_fc_मुक्त(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_fc *counter)
+अणु
+	mlx5_cmd_fc_मुक्त(dev, counter->id);
+	kमुक्त(counter);
+पूर्ण
 
-static void mlx5_fc_release(struct mlx5_core_dev *dev, struct mlx5_fc *counter)
-{
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+अटल व्योम mlx5_fc_release(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_fc *counter)
+अणु
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
 
-	if (counter->bulk)
+	अगर (counter->bulk)
 		mlx5_fc_pool_release_counter(&fc_stats->fc_pool, counter);
-	else
-		mlx5_fc_free(dev, counter);
-}
+	अन्यथा
+		mlx5_fc_मुक्त(dev, counter);
+पूर्ण
 
-static void mlx5_fc_stats_work(struct work_struct *work)
-{
-	struct mlx5_core_dev *dev = container_of(work, struct mlx5_core_dev,
+अटल व्योम mlx5_fc_stats_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mlx5_core_dev *dev = container_of(work, काष्ठा mlx5_core_dev,
 						 priv.fc_stats.work.work);
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
-	/* Take dellist first to ensure that counters cannot be deleted before
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+	/* Take dellist first to ensure that counters cannot be deleted beक्रमe
 	 * they are inserted.
 	 */
-	struct llist_node *dellist = llist_del_all(&fc_stats->dellist);
-	struct llist_node *addlist = llist_del_all(&fc_stats->addlist);
-	struct mlx5_fc *counter = NULL, *last = NULL, *tmp;
-	unsigned long now = jiffies;
+	काष्ठा llist_node *dellist = llist_del_all(&fc_stats->dellist);
+	काष्ठा llist_node *addlist = llist_del_all(&fc_stats->addlist);
+	काष्ठा mlx5_fc *counter = शून्य, *last = शून्य, *पंचांगp;
+	अचिन्हित दीर्घ now = jअगरfies;
 
-	if (addlist || !list_empty(&fc_stats->counters))
+	अगर (addlist || !list_empty(&fc_stats->counters))
 		queue_delayed_work(fc_stats->wq, &fc_stats->work,
-				   fc_stats->sampling_interval);
+				   fc_stats->sampling_पूर्णांकerval);
 
-	llist_for_each_entry(counter, addlist, addlist)
+	llist_क्रम_each_entry(counter, addlist, addlist)
 		mlx5_fc_stats_insert(dev, counter);
 
-	llist_for_each_entry_safe(counter, tmp, dellist, dellist) {
-		mlx5_fc_stats_remove(dev, counter);
+	llist_क्रम_each_entry_safe(counter, पंचांगp, dellist, dellist) अणु
+		mlx5_fc_stats_हटाओ(dev, counter);
 
 		mlx5_fc_release(dev, counter);
-	}
+	पूर्ण
 
-	if (time_before(now, fc_stats->next_query) ||
+	अगर (समय_beक्रमe(now, fc_stats->next_query) ||
 	    list_empty(&fc_stats->counters))
-		return;
-	last = list_last_entry(&fc_stats->counters, struct mlx5_fc, list);
+		वापस;
+	last = list_last_entry(&fc_stats->counters, काष्ठा mlx5_fc, list);
 
-	counter = list_first_entry(&fc_stats->counters, struct mlx5_fc,
+	counter = list_first_entry(&fc_stats->counters, काष्ठा mlx5_fc,
 				   list);
-	if (counter)
+	अगर (counter)
 		mlx5_fc_stats_query_counter_range(dev, counter, last->id);
 
-	fc_stats->next_query = now + fc_stats->sampling_interval;
-}
+	fc_stats->next_query = now + fc_stats->sampling_पूर्णांकerval;
+पूर्ण
 
-static struct mlx5_fc *mlx5_fc_single_alloc(struct mlx5_core_dev *dev)
-{
-	struct mlx5_fc *counter;
-	int err;
+अटल काष्ठा mlx5_fc *mlx5_fc_single_alloc(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_fc *counter;
+	पूर्णांक err;
 
-	counter = kzalloc(sizeof(*counter), GFP_KERNEL);
-	if (!counter)
-		return ERR_PTR(-ENOMEM);
+	counter = kzalloc(माप(*counter), GFP_KERNEL);
+	अगर (!counter)
+		वापस ERR_PTR(-ENOMEM);
 
 	err = mlx5_cmd_fc_alloc(dev, &counter->id);
-	if (err) {
-		kfree(counter);
-		return ERR_PTR(err);
-	}
+	अगर (err) अणु
+		kमुक्त(counter);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return counter;
-}
+	वापस counter;
+पूर्ण
 
-static struct mlx5_fc *mlx5_fc_acquire(struct mlx5_core_dev *dev, bool aging)
-{
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
-	struct mlx5_fc *counter;
+अटल काष्ठा mlx5_fc *mlx5_fc_acquire(काष्ठा mlx5_core_dev *dev, bool aging)
+अणु
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+	काष्ठा mlx5_fc *counter;
 
-	if (aging && MLX5_CAP_GEN(dev, flow_counter_bulk_alloc) != 0) {
+	अगर (aging && MLX5_CAP_GEN(dev, flow_counter_bulk_alloc) != 0) अणु
 		counter = mlx5_fc_pool_acquire_counter(&fc_stats->fc_pool);
-		if (!IS_ERR(counter))
-			return counter;
-	}
+		अगर (!IS_ERR(counter))
+			वापस counter;
+	पूर्ण
 
-	return mlx5_fc_single_alloc(dev);
-}
+	वापस mlx5_fc_single_alloc(dev);
+पूर्ण
 
-struct mlx5_fc *mlx5_fc_create(struct mlx5_core_dev *dev, bool aging)
-{
-	struct mlx5_fc *counter = mlx5_fc_acquire(dev, aging);
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
-	int err;
+काष्ठा mlx5_fc *mlx5_fc_create(काष्ठा mlx5_core_dev *dev, bool aging)
+अणु
+	काष्ठा mlx5_fc *counter = mlx5_fc_acquire(dev, aging);
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+	पूर्णांक err;
 
-	if (IS_ERR(counter))
-		return counter;
+	अगर (IS_ERR(counter))
+		वापस counter;
 
 	INIT_LIST_HEAD(&counter->list);
 	counter->aging = aging;
 
-	if (aging) {
+	अगर (aging) अणु
 		u32 id = counter->id;
 
-		counter->cache.lastuse = jiffies;
+		counter->cache.lastuse = jअगरfies;
 		counter->lastbytes = counter->cache.bytes;
 		counter->lastpackets = counter->cache.packets;
 
@@ -323,50 +324,50 @@ struct mlx5_fc *mlx5_fc_create(struct mlx5_core_dev *dev, bool aging)
 
 		spin_unlock(&fc_stats->counters_idr_lock);
 		idr_preload_end();
-		if (err)
-			goto err_out_alloc;
+		अगर (err)
+			जाओ err_out_alloc;
 
 		llist_add(&counter->addlist, &fc_stats->addlist);
 
 		mod_delayed_work(fc_stats->wq, &fc_stats->work, 0);
-	}
+	पूर्ण
 
-	return counter;
+	वापस counter;
 
 err_out_alloc:
 	mlx5_fc_release(dev, counter);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 EXPORT_SYMBOL(mlx5_fc_create);
 
-u32 mlx5_fc_id(struct mlx5_fc *counter)
-{
-	return counter->id;
-}
+u32 mlx5_fc_id(काष्ठा mlx5_fc *counter)
+अणु
+	वापस counter->id;
+पूर्ण
 EXPORT_SYMBOL(mlx5_fc_id);
 
-void mlx5_fc_destroy(struct mlx5_core_dev *dev, struct mlx5_fc *counter)
-{
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+व्योम mlx5_fc_destroy(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_fc *counter)
+अणु
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
 
-	if (!counter)
-		return;
+	अगर (!counter)
+		वापस;
 
-	if (counter->aging) {
+	अगर (counter->aging) अणु
 		llist_add(&counter->dellist, &fc_stats->dellist);
 		mod_delayed_work(fc_stats->wq, &fc_stats->work, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mlx5_fc_release(dev, counter);
-}
+पूर्ण
 EXPORT_SYMBOL(mlx5_fc_destroy);
 
-int mlx5_init_fc_stats(struct mlx5_core_dev *dev)
-{
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
-	int max_bulk_len;
-	int max_out_len;
+पूर्णांक mlx5_init_fc_stats(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+	पूर्णांक max_bulk_len;
+	पूर्णांक max_out_len;
 
 	spin_lock_init(&fc_stats->counters_idr_lock);
 	idr_init(&fc_stats->counters_idr);
@@ -377,63 +378,63 @@ int mlx5_init_fc_stats(struct mlx5_core_dev *dev)
 	max_bulk_len = get_max_bulk_query_len(dev);
 	max_out_len = mlx5_cmd_fc_get_bulk_query_out_len(max_bulk_len);
 	fc_stats->bulk_query_out = kzalloc(max_out_len, GFP_KERNEL);
-	if (!fc_stats->bulk_query_out)
-		return -ENOMEM;
+	अगर (!fc_stats->bulk_query_out)
+		वापस -ENOMEM;
 
-	fc_stats->wq = create_singlethread_workqueue("mlx5_fc");
-	if (!fc_stats->wq)
-		goto err_wq_create;
+	fc_stats->wq = create_singlethपढ़ो_workqueue("mlx5_fc");
+	अगर (!fc_stats->wq)
+		जाओ err_wq_create;
 
-	fc_stats->sampling_interval = MLX5_FC_STATS_PERIOD;
+	fc_stats->sampling_पूर्णांकerval = MLX5_FC_STATS_PERIOD;
 	INIT_DELAYED_WORK(&fc_stats->work, mlx5_fc_stats_work);
 
 	mlx5_fc_pool_init(&fc_stats->fc_pool, dev);
-	return 0;
+	वापस 0;
 
 err_wq_create:
-	kfree(fc_stats->bulk_query_out);
-	return -ENOMEM;
-}
+	kमुक्त(fc_stats->bulk_query_out);
+	वापस -ENOMEM;
+पूर्ण
 
-void mlx5_cleanup_fc_stats(struct mlx5_core_dev *dev)
-{
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
-	struct llist_node *tmplist;
-	struct mlx5_fc *counter;
-	struct mlx5_fc *tmp;
+व्योम mlx5_cleanup_fc_stats(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+	काष्ठा llist_node *पंचांगplist;
+	काष्ठा mlx5_fc *counter;
+	काष्ठा mlx5_fc *पंचांगp;
 
 	cancel_delayed_work_sync(&dev->priv.fc_stats.work);
 	destroy_workqueue(dev->priv.fc_stats.wq);
-	dev->priv.fc_stats.wq = NULL;
+	dev->priv.fc_stats.wq = शून्य;
 
-	tmplist = llist_del_all(&fc_stats->addlist);
-	llist_for_each_entry_safe(counter, tmp, tmplist, addlist)
+	पंचांगplist = llist_del_all(&fc_stats->addlist);
+	llist_क्रम_each_entry_safe(counter, पंचांगp, पंचांगplist, addlist)
 		mlx5_fc_release(dev, counter);
 
-	list_for_each_entry_safe(counter, tmp, &fc_stats->counters, list)
+	list_क्रम_each_entry_safe(counter, पंचांगp, &fc_stats->counters, list)
 		mlx5_fc_release(dev, counter);
 
 	mlx5_fc_pool_cleanup(&fc_stats->fc_pool);
 	idr_destroy(&fc_stats->counters_idr);
-	kfree(fc_stats->bulk_query_out);
-}
+	kमुक्त(fc_stats->bulk_query_out);
+पूर्ण
 
-int mlx5_fc_query(struct mlx5_core_dev *dev, struct mlx5_fc *counter,
+पूर्णांक mlx5_fc_query(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_fc *counter,
 		  u64 *packets, u64 *bytes)
-{
-	return mlx5_cmd_fc_query(dev, counter->id, packets, bytes);
-}
+अणु
+	वापस mlx5_cmd_fc_query(dev, counter->id, packets, bytes);
+पूर्ण
 EXPORT_SYMBOL(mlx5_fc_query);
 
-u64 mlx5_fc_query_lastuse(struct mlx5_fc *counter)
-{
-	return counter->cache.lastuse;
-}
+u64 mlx5_fc_query_lastuse(काष्ठा mlx5_fc *counter)
+अणु
+	वापस counter->cache.lastuse;
+पूर्ण
 
-void mlx5_fc_query_cached(struct mlx5_fc *counter,
+व्योम mlx5_fc_query_cached(काष्ठा mlx5_fc *counter,
 			  u64 *bytes, u64 *packets, u64 *lastuse)
-{
-	struct mlx5_fc_cache c;
+अणु
+	काष्ठा mlx5_fc_cache c;
 
 	c = counter->cache;
 
@@ -443,132 +444,132 @@ void mlx5_fc_query_cached(struct mlx5_fc *counter,
 
 	counter->lastbytes = c.bytes;
 	counter->lastpackets = c.packets;
-}
+पूर्ण
 
-void mlx5_fc_queue_stats_work(struct mlx5_core_dev *dev,
-			      struct delayed_work *dwork,
-			      unsigned long delay)
-{
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+व्योम mlx5_fc_queue_stats_work(काष्ठा mlx5_core_dev *dev,
+			      काष्ठा delayed_work *dwork,
+			      अचिन्हित दीर्घ delay)
+अणु
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
 
 	queue_delayed_work(fc_stats->wq, dwork, delay);
-}
+पूर्ण
 
-void mlx5_fc_update_sampling_interval(struct mlx5_core_dev *dev,
-				      unsigned long interval)
-{
-	struct mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
+व्योम mlx5_fc_update_sampling_पूर्णांकerval(काष्ठा mlx5_core_dev *dev,
+				      अचिन्हित दीर्घ पूर्णांकerval)
+अणु
+	काष्ठा mlx5_fc_stats *fc_stats = &dev->priv.fc_stats;
 
-	fc_stats->sampling_interval = min_t(unsigned long, interval,
-					    fc_stats->sampling_interval);
-}
+	fc_stats->sampling_पूर्णांकerval = min_t(अचिन्हित दीर्घ, पूर्णांकerval,
+					    fc_stats->sampling_पूर्णांकerval);
+पूर्ण
 
 /* Flow counter bluks */
 
-struct mlx5_fc_bulk {
-	struct list_head pool_list;
+काष्ठा mlx5_fc_bulk अणु
+	काष्ठा list_head pool_list;
 	u32 base_id;
-	int bulk_len;
-	unsigned long *bitmask;
-	struct mlx5_fc fcs[];
-};
+	पूर्णांक bulk_len;
+	अचिन्हित दीर्घ *biपंचांगask;
+	काष्ठा mlx5_fc fcs[];
+पूर्ण;
 
-static void mlx5_fc_init(struct mlx5_fc *counter, struct mlx5_fc_bulk *bulk,
+अटल व्योम mlx5_fc_init(काष्ठा mlx5_fc *counter, काष्ठा mlx5_fc_bulk *bulk,
 			 u32 id)
-{
+अणु
 	counter->bulk = bulk;
 	counter->id = id;
-}
+पूर्ण
 
-static int mlx5_fc_bulk_get_free_fcs_amount(struct mlx5_fc_bulk *bulk)
-{
-	return bitmap_weight(bulk->bitmask, bulk->bulk_len);
-}
+अटल पूर्णांक mlx5_fc_bulk_get_मुक्त_fcs_amount(काष्ठा mlx5_fc_bulk *bulk)
+अणु
+	वापस biपंचांगap_weight(bulk->biपंचांगask, bulk->bulk_len);
+पूर्ण
 
-static struct mlx5_fc_bulk *mlx5_fc_bulk_create(struct mlx5_core_dev *dev)
-{
-	enum mlx5_fc_bulk_alloc_bitmask alloc_bitmask;
-	struct mlx5_fc_bulk *bulk;
-	int err = -ENOMEM;
-	int bulk_len;
+अटल काष्ठा mlx5_fc_bulk *mlx5_fc_bulk_create(काष्ठा mlx5_core_dev *dev)
+अणु
+	क्रमागत mlx5_fc_bulk_alloc_biपंचांगask alloc_biपंचांगask;
+	काष्ठा mlx5_fc_bulk *bulk;
+	पूर्णांक err = -ENOMEM;
+	पूर्णांक bulk_len;
 	u32 base_id;
-	int i;
+	पूर्णांक i;
 
-	alloc_bitmask = MLX5_CAP_GEN(dev, flow_counter_bulk_alloc);
-	bulk_len = alloc_bitmask > 0 ? MLX5_FC_BULK_NUM_FCS(alloc_bitmask) : 1;
+	alloc_biपंचांगask = MLX5_CAP_GEN(dev, flow_counter_bulk_alloc);
+	bulk_len = alloc_biपंचांगask > 0 ? MLX5_FC_BULK_NUM_FCS(alloc_biपंचांगask) : 1;
 
-	bulk = kvzalloc(sizeof(*bulk) + bulk_len * sizeof(struct mlx5_fc),
+	bulk = kvzalloc(माप(*bulk) + bulk_len * माप(काष्ठा mlx5_fc),
 			GFP_KERNEL);
-	if (!bulk)
-		goto err_alloc_bulk;
+	अगर (!bulk)
+		जाओ err_alloc_bulk;
 
-	bulk->bitmask = kvcalloc(BITS_TO_LONGS(bulk_len), sizeof(unsigned long),
+	bulk->biपंचांगask = kvसुस्मृति(BITS_TO_LONGS(bulk_len), माप(अचिन्हित दीर्घ),
 				 GFP_KERNEL);
-	if (!bulk->bitmask)
-		goto err_alloc_bitmask;
+	अगर (!bulk->biपंचांगask)
+		जाओ err_alloc_biपंचांगask;
 
-	err = mlx5_cmd_fc_bulk_alloc(dev, alloc_bitmask, &base_id);
-	if (err)
-		goto err_mlx5_cmd_bulk_alloc;
+	err = mlx5_cmd_fc_bulk_alloc(dev, alloc_biपंचांगask, &base_id);
+	अगर (err)
+		जाओ err_mlx5_cmd_bulk_alloc;
 
 	bulk->base_id = base_id;
 	bulk->bulk_len = bulk_len;
-	for (i = 0; i < bulk_len; i++) {
+	क्रम (i = 0; i < bulk_len; i++) अणु
 		mlx5_fc_init(&bulk->fcs[i], bulk, base_id + i);
-		set_bit(i, bulk->bitmask);
-	}
+		set_bit(i, bulk->biपंचांगask);
+	पूर्ण
 
-	return bulk;
+	वापस bulk;
 
 err_mlx5_cmd_bulk_alloc:
-	kvfree(bulk->bitmask);
-err_alloc_bitmask:
-	kvfree(bulk);
+	kvमुक्त(bulk->biपंचांगask);
+err_alloc_biपंचांगask:
+	kvमुक्त(bulk);
 err_alloc_bulk:
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static int
-mlx5_fc_bulk_destroy(struct mlx5_core_dev *dev, struct mlx5_fc_bulk *bulk)
-{
-	if (mlx5_fc_bulk_get_free_fcs_amount(bulk) < bulk->bulk_len) {
+अटल पूर्णांक
+mlx5_fc_bulk_destroy(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_fc_bulk *bulk)
+अणु
+	अगर (mlx5_fc_bulk_get_मुक्त_fcs_amount(bulk) < bulk->bulk_len) अणु
 		mlx5_core_err(dev, "Freeing bulk before all counters were released\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	mlx5_cmd_fc_free(dev, bulk->base_id);
-	kvfree(bulk->bitmask);
-	kvfree(bulk);
+	mlx5_cmd_fc_मुक्त(dev, bulk->base_id);
+	kvमुक्त(bulk->biपंचांगask);
+	kvमुक्त(bulk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct mlx5_fc *mlx5_fc_bulk_acquire_fc(struct mlx5_fc_bulk *bulk)
-{
-	int free_fc_index = find_first_bit(bulk->bitmask, bulk->bulk_len);
+अटल काष्ठा mlx5_fc *mlx5_fc_bulk_acquire_fc(काष्ठा mlx5_fc_bulk *bulk)
+अणु
+	पूर्णांक मुक्त_fc_index = find_first_bit(bulk->biपंचांगask, bulk->bulk_len);
 
-	if (free_fc_index >= bulk->bulk_len)
-		return ERR_PTR(-ENOSPC);
+	अगर (मुक्त_fc_index >= bulk->bulk_len)
+		वापस ERR_PTR(-ENOSPC);
 
-	clear_bit(free_fc_index, bulk->bitmask);
-	return &bulk->fcs[free_fc_index];
-}
+	clear_bit(मुक्त_fc_index, bulk->biपंचांगask);
+	वापस &bulk->fcs[मुक्त_fc_index];
+पूर्ण
 
-static int mlx5_fc_bulk_release_fc(struct mlx5_fc_bulk *bulk, struct mlx5_fc *fc)
-{
-	int fc_index = fc->id - bulk->base_id;
+अटल पूर्णांक mlx5_fc_bulk_release_fc(काष्ठा mlx5_fc_bulk *bulk, काष्ठा mlx5_fc *fc)
+अणु
+	पूर्णांक fc_index = fc->id - bulk->base_id;
 
-	if (test_bit(fc_index, bulk->bitmask))
-		return -EINVAL;
+	अगर (test_bit(fc_index, bulk->biपंचांगask))
+		वापस -EINVAL;
 
-	set_bit(fc_index, bulk->bitmask);
-	return 0;
-}
+	set_bit(fc_index, bulk->biपंचांगask);
+	वापस 0;
+पूर्ण
 
 /* Flow counters pool API */
 
-static void mlx5_fc_pool_init(struct mlx5_fc_pool *fc_pool, struct mlx5_core_dev *dev)
-{
+अटल व्योम mlx5_fc_pool_init(काष्ठा mlx5_fc_pool *fc_pool, काष्ठा mlx5_core_dev *dev)
+अणु
 	fc_pool->dev = dev;
 	mutex_init(&fc_pool->pool_lock);
 	INIT_LIST_HEAD(&fc_pool->fully_used);
@@ -577,128 +578,128 @@ static void mlx5_fc_pool_init(struct mlx5_fc_pool *fc_pool, struct mlx5_core_dev
 	fc_pool->available_fcs = 0;
 	fc_pool->used_fcs = 0;
 	fc_pool->threshold = 0;
-}
+पूर्ण
 
-static void mlx5_fc_pool_cleanup(struct mlx5_fc_pool *fc_pool)
-{
-	struct mlx5_core_dev *dev = fc_pool->dev;
-	struct mlx5_fc_bulk *bulk;
-	struct mlx5_fc_bulk *tmp;
+अटल व्योम mlx5_fc_pool_cleanup(काष्ठा mlx5_fc_pool *fc_pool)
+अणु
+	काष्ठा mlx5_core_dev *dev = fc_pool->dev;
+	काष्ठा mlx5_fc_bulk *bulk;
+	काष्ठा mlx5_fc_bulk *पंचांगp;
 
-	list_for_each_entry_safe(bulk, tmp, &fc_pool->fully_used, pool_list)
+	list_क्रम_each_entry_safe(bulk, पंचांगp, &fc_pool->fully_used, pool_list)
 		mlx5_fc_bulk_destroy(dev, bulk);
-	list_for_each_entry_safe(bulk, tmp, &fc_pool->partially_used, pool_list)
+	list_क्रम_each_entry_safe(bulk, पंचांगp, &fc_pool->partially_used, pool_list)
 		mlx5_fc_bulk_destroy(dev, bulk);
-	list_for_each_entry_safe(bulk, tmp, &fc_pool->unused, pool_list)
+	list_क्रम_each_entry_safe(bulk, पंचांगp, &fc_pool->unused, pool_list)
 		mlx5_fc_bulk_destroy(dev, bulk);
-}
+पूर्ण
 
-static void mlx5_fc_pool_update_threshold(struct mlx5_fc_pool *fc_pool)
-{
-	fc_pool->threshold = min_t(int, MLX5_FC_POOL_MAX_THRESHOLD,
+अटल व्योम mlx5_fc_pool_update_threshold(काष्ठा mlx5_fc_pool *fc_pool)
+अणु
+	fc_pool->threshold = min_t(पूर्णांक, MLX5_FC_POOL_MAX_THRESHOLD,
 				   fc_pool->used_fcs / MLX5_FC_POOL_USED_BUFF_RATIO);
-}
+पूर्ण
 
-static struct mlx5_fc_bulk *
-mlx5_fc_pool_alloc_new_bulk(struct mlx5_fc_pool *fc_pool)
-{
-	struct mlx5_core_dev *dev = fc_pool->dev;
-	struct mlx5_fc_bulk *new_bulk;
+अटल काष्ठा mlx5_fc_bulk *
+mlx5_fc_pool_alloc_new_bulk(काष्ठा mlx5_fc_pool *fc_pool)
+अणु
+	काष्ठा mlx5_core_dev *dev = fc_pool->dev;
+	काष्ठा mlx5_fc_bulk *new_bulk;
 
 	new_bulk = mlx5_fc_bulk_create(dev);
-	if (!IS_ERR(new_bulk))
+	अगर (!IS_ERR(new_bulk))
 		fc_pool->available_fcs += new_bulk->bulk_len;
 	mlx5_fc_pool_update_threshold(fc_pool);
-	return new_bulk;
-}
+	वापस new_bulk;
+पूर्ण
 
-static void
-mlx5_fc_pool_free_bulk(struct mlx5_fc_pool *fc_pool, struct mlx5_fc_bulk *bulk)
-{
-	struct mlx5_core_dev *dev = fc_pool->dev;
+अटल व्योम
+mlx5_fc_pool_मुक्त_bulk(काष्ठा mlx5_fc_pool *fc_pool, काष्ठा mlx5_fc_bulk *bulk)
+अणु
+	काष्ठा mlx5_core_dev *dev = fc_pool->dev;
 
 	fc_pool->available_fcs -= bulk->bulk_len;
 	mlx5_fc_bulk_destroy(dev, bulk);
 	mlx5_fc_pool_update_threshold(fc_pool);
-}
+पूर्ण
 
-static struct mlx5_fc *
-mlx5_fc_pool_acquire_from_list(struct list_head *src_list,
-			       struct list_head *next_list,
+अटल काष्ठा mlx5_fc *
+mlx5_fc_pool_acquire_from_list(काष्ठा list_head *src_list,
+			       काष्ठा list_head *next_list,
 			       bool move_non_full_bulk)
-{
-	struct mlx5_fc_bulk *bulk;
-	struct mlx5_fc *fc;
+अणु
+	काष्ठा mlx5_fc_bulk *bulk;
+	काष्ठा mlx5_fc *fc;
 
-	if (list_empty(src_list))
-		return ERR_PTR(-ENODATA);
+	अगर (list_empty(src_list))
+		वापस ERR_PTR(-ENODATA);
 
-	bulk = list_first_entry(src_list, struct mlx5_fc_bulk, pool_list);
+	bulk = list_first_entry(src_list, काष्ठा mlx5_fc_bulk, pool_list);
 	fc = mlx5_fc_bulk_acquire_fc(bulk);
-	if (move_non_full_bulk || mlx5_fc_bulk_get_free_fcs_amount(bulk) == 0)
+	अगर (move_non_full_bulk || mlx5_fc_bulk_get_मुक्त_fcs_amount(bulk) == 0)
 		list_move(&bulk->pool_list, next_list);
-	return fc;
-}
+	वापस fc;
+पूर्ण
 
-static struct mlx5_fc *
-mlx5_fc_pool_acquire_counter(struct mlx5_fc_pool *fc_pool)
-{
-	struct mlx5_fc_bulk *new_bulk;
-	struct mlx5_fc *fc;
+अटल काष्ठा mlx5_fc *
+mlx5_fc_pool_acquire_counter(काष्ठा mlx5_fc_pool *fc_pool)
+अणु
+	काष्ठा mlx5_fc_bulk *new_bulk;
+	काष्ठा mlx5_fc *fc;
 
 	mutex_lock(&fc_pool->pool_lock);
 
 	fc = mlx5_fc_pool_acquire_from_list(&fc_pool->partially_used,
 					    &fc_pool->fully_used, false);
-	if (IS_ERR(fc))
+	अगर (IS_ERR(fc))
 		fc = mlx5_fc_pool_acquire_from_list(&fc_pool->unused,
 						    &fc_pool->partially_used,
 						    true);
-	if (IS_ERR(fc)) {
+	अगर (IS_ERR(fc)) अणु
 		new_bulk = mlx5_fc_pool_alloc_new_bulk(fc_pool);
-		if (IS_ERR(new_bulk)) {
+		अगर (IS_ERR(new_bulk)) अणु
 			fc = ERR_CAST(new_bulk);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		fc = mlx5_fc_bulk_acquire_fc(new_bulk);
 		list_add(&new_bulk->pool_list, &fc_pool->partially_used);
-	}
+	पूर्ण
 	fc_pool->available_fcs--;
 	fc_pool->used_fcs++;
 
 out:
 	mutex_unlock(&fc_pool->pool_lock);
-	return fc;
-}
+	वापस fc;
+पूर्ण
 
-static void
-mlx5_fc_pool_release_counter(struct mlx5_fc_pool *fc_pool, struct mlx5_fc *fc)
-{
-	struct mlx5_core_dev *dev = fc_pool->dev;
-	struct mlx5_fc_bulk *bulk = fc->bulk;
-	int bulk_free_fcs_amount;
+अटल व्योम
+mlx5_fc_pool_release_counter(काष्ठा mlx5_fc_pool *fc_pool, काष्ठा mlx5_fc *fc)
+अणु
+	काष्ठा mlx5_core_dev *dev = fc_pool->dev;
+	काष्ठा mlx5_fc_bulk *bulk = fc->bulk;
+	पूर्णांक bulk_मुक्त_fcs_amount;
 
 	mutex_lock(&fc_pool->pool_lock);
 
-	if (mlx5_fc_bulk_release_fc(bulk, fc)) {
+	अगर (mlx5_fc_bulk_release_fc(bulk, fc)) अणु
 		mlx5_core_warn(dev, "Attempted to release a counter which is not acquired\n");
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	fc_pool->available_fcs++;
 	fc_pool->used_fcs--;
 
-	bulk_free_fcs_amount = mlx5_fc_bulk_get_free_fcs_amount(bulk);
-	if (bulk_free_fcs_amount == 1)
+	bulk_मुक्त_fcs_amount = mlx5_fc_bulk_get_मुक्त_fcs_amount(bulk);
+	अगर (bulk_मुक्त_fcs_amount == 1)
 		list_move_tail(&bulk->pool_list, &fc_pool->partially_used);
-	if (bulk_free_fcs_amount == bulk->bulk_len) {
+	अगर (bulk_मुक्त_fcs_amount == bulk->bulk_len) अणु
 		list_del(&bulk->pool_list);
-		if (fc_pool->available_fcs > fc_pool->threshold)
-			mlx5_fc_pool_free_bulk(fc_pool, bulk);
-		else
+		अगर (fc_pool->available_fcs > fc_pool->threshold)
+			mlx5_fc_pool_मुक्त_bulk(fc_pool, bulk);
+		अन्यथा
 			list_add(&bulk->pool_list, &fc_pool->unused);
-	}
+	पूर्ण
 
 unlock:
 	mutex_unlock(&fc_pool->pool_lock);
-}
+पूर्ण

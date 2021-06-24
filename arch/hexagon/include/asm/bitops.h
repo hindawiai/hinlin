@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Bit operations for the Hexagon architecture
+ * Bit operations क्रम the Hexagon architecture
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_BITOPS_H
-#define _ASM_BITOPS_H
+#अगर_अघोषित _ASM_BITOPS_H
+#घोषणा _ASM_BITOPS_H
 
-#include <linux/compiler.h>
-#include <asm/byteorder.h>
-#include <asm/atomic.h>
-#include <asm/barrier.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/atomic.h>
+#समावेश <यंत्र/barrier.h>
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
 /*
- * The offset calculations for these are based on BITS_PER_LONG == 32
- * (i.e. I get to shift by #5-2 (32 bits per long, 4 bytes per access),
+ * The offset calculations क्रम these are based on BITS_PER_LONG == 32
+ * (i.e. I get to shअगरt by #5-2 (32 bits per दीर्घ, 4 bytes per access),
  * mask by 0x0000001F)
  *
- * Typically, R10 is clobbered for address, R11 bit nr, and R12 is temp
+ * Typically, R10 is clobbered क्रम address, R11 bit nr, and R12 is temp
  */
 
 /**
- * test_and_clear_bit - clear a bit and return its old value
+ * test_and_clear_bit - clear a bit and वापस its old value
  * @nr:  bit number to clear
- * @addr:  pointer to memory
+ * @addr:  poपूर्णांकer to memory
  */
-static inline int test_and_clear_bit(int nr, volatile void *addr)
-{
-	int oldval;
+अटल अंतरभूत पूर्णांक test_and_clear_bit(पूर्णांक nr, अस्थिर व्योम *addr)
+अणु
+	पूर्णांक oldval;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 	"	{R10 = %1; R11 = asr(%2,#5); }\n"
 	"	{R10 += asl(R11,#2); R11 = and(%2,#0x1f)}\n"
 	"1:	R12 = memw_locked(R10);\n"
@@ -44,19 +45,19 @@ static inline int test_and_clear_bit(int nr, volatile void *addr)
 	: "r10", "r11", "r12", "p0", "p1", "memory"
 	);
 
-	return oldval;
-}
+	वापस oldval;
+पूर्ण
 
 /**
- * test_and_set_bit - set a bit and return its old value
+ * test_and_set_bit - set a bit and वापस its old value
  * @nr:  bit number to set
- * @addr:  pointer to memory
+ * @addr:  poपूर्णांकer to memory
  */
-static inline int test_and_set_bit(int nr, volatile void *addr)
-{
-	int oldval;
+अटल अंतरभूत पूर्णांक test_and_set_bit(पूर्णांक nr, अस्थिर व्योम *addr)
+अणु
+	पूर्णांक oldval;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 	"	{R10 = %1; R11 = asr(%2,#5); }\n"
 	"	{R10 += asl(R11,#2); R11 = and(%2,#0x1f)}\n"
 	"1:	R12 = memw_locked(R10);\n"
@@ -69,20 +70,20 @@ static inline int test_and_set_bit(int nr, volatile void *addr)
 	);
 
 
-	return oldval;
+	वापस oldval;
 
-}
+पूर्ण
 
 /**
- * test_and_change_bit - toggle a bit and return its old value
+ * test_and_change_bit - toggle a bit and वापस its old value
  * @nr:  bit number to set
- * @addr:  pointer to memory
+ * @addr:  poपूर्णांकer to memory
  */
-static inline int test_and_change_bit(int nr, volatile void *addr)
-{
-	int oldval;
+अटल अंतरभूत पूर्णांक test_and_change_bit(पूर्णांक nr, अस्थिर व्योम *addr)
+अणु
+	पूर्णांक oldval;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 	"	{R10 = %1; R11 = asr(%2,#5); }\n"
 	"	{R10 += asl(R11,#2); R11 = and(%2,#0x1f)}\n"
 	"1:	R12 = memw_locked(R10);\n"
@@ -94,191 +95,191 @@ static inline int test_and_change_bit(int nr, volatile void *addr)
 	: "r10", "r11", "r12", "p0", "p1", "memory"
 	);
 
-	return oldval;
+	वापस oldval;
 
-}
+पूर्ण
 
 /*
- * Atomic, but doesn't care about the return value.
- * Rewrite later to save a cycle or two.
+ * Atomic, but करोesn't care about the वापस value.
+ * Reग_लिखो later to save a cycle or two.
  */
 
-static inline void clear_bit(int nr, volatile void *addr)
-{
+अटल अंतरभूत व्योम clear_bit(पूर्णांक nr, अस्थिर व्योम *addr)
+अणु
 	test_and_clear_bit(nr, addr);
-}
+पूर्ण
 
-static inline void set_bit(int nr, volatile void *addr)
-{
+अटल अंतरभूत व्योम set_bit(पूर्णांक nr, अस्थिर व्योम *addr)
+अणु
 	test_and_set_bit(nr, addr);
-}
+पूर्ण
 
-static inline void change_bit(int nr, volatile void *addr)
-{
+अटल अंतरभूत व्योम change_bit(पूर्णांक nr, अस्थिर व्योम *addr)
+अणु
 	test_and_change_bit(nr, addr);
-}
+पूर्ण
 
 
 /*
  * These are allowed to be non-atomic.  In fact the generic flavors are
- * in non-atomic.h.  Would it be better to use intrinsics for this?
+ * in non-atomic.h.  Would it be better to use पूर्णांकrinsics क्रम this?
  *
- * OK, writes in our architecture do not invalidate LL/SC, so this has to
- * be atomic, particularly for things like slab_lock and slab_unlock.
+ * OK, ग_लिखोs in our architecture करो not invalidate LL/SC, so this has to
+ * be atomic, particularly क्रम things like slab_lock and slab_unlock.
  *
  */
-static inline void __clear_bit(int nr, volatile unsigned long *addr)
-{
+अटल अंतरभूत व्योम __clear_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
 	test_and_clear_bit(nr, addr);
-}
+पूर्ण
 
-static inline void __set_bit(int nr, volatile unsigned long *addr)
-{
+अटल अंतरभूत व्योम __set_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
 	test_and_set_bit(nr, addr);
-}
+पूर्ण
 
-static inline void __change_bit(int nr, volatile unsigned long *addr)
-{
+अटल अंतरभूत व्योम __change_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
 	test_and_change_bit(nr, addr);
-}
+पूर्ण
 
 /*  Apparently, at least some of these are allowed to be non-atomic  */
-static inline int __test_and_clear_bit(int nr, volatile unsigned long *addr)
-{
-	return test_and_clear_bit(nr, addr);
-}
+अटल अंतरभूत पूर्णांक __test_and_clear_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	वापस test_and_clear_bit(nr, addr);
+पूर्ण
 
-static inline int __test_and_set_bit(int nr, volatile unsigned long *addr)
-{
-	return test_and_set_bit(nr, addr);
-}
+अटल अंतरभूत पूर्णांक __test_and_set_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	वापस test_and_set_bit(nr, addr);
+पूर्ण
 
-static inline int __test_and_change_bit(int nr, volatile unsigned long *addr)
-{
-	return test_and_change_bit(nr, addr);
-}
+अटल अंतरभूत पूर्णांक __test_and_change_bit(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	वापस test_and_change_bit(nr, addr);
+पूर्ण
 
-static inline int __test_bit(int nr, const volatile unsigned long *addr)
-{
-	int retval;
+अटल अंतरभूत पूर्णांक __test_bit(पूर्णांक nr, स्थिर अस्थिर अचिन्हित दीर्घ *addr)
+अणु
+	पूर्णांक retval;
 
-	asm volatile(
+	यंत्र अस्थिर(
 	"{P0 = tstbit(%1,%2); if (P0.new) %0 = #1; if (!P0.new) %0 = #0;}\n"
 	: "=&r" (retval)
 	: "r" (addr[BIT_WORD(nr)]), "r" (nr % BITS_PER_LONG)
 	: "p0"
 	);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-#define test_bit(nr, addr) __test_bit(nr, addr)
+#घोषणा test_bit(nr, addr) __test_bit(nr, addr)
 
 /*
  * ffz - find first zero in word.
  * @word: The word to search
  *
- * Undefined if no zero exists, so code should check against ~0UL first.
+ * Undefined अगर no zero exists, so code should check against ~0UL first.
  */
-static inline long ffz(int x)
-{
-	int r;
+अटल अंतरभूत दीर्घ ffz(पूर्णांक x)
+अणु
+	पूर्णांक r;
 
-	asm("%0 = ct1(%1);\n"
+	यंत्र("%0 = ct1(%1);\n"
 		: "=&r" (r)
 		: "r" (x));
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * fls - find last (most-significant) bit set
+ * fls - find last (most-signअगरicant) bit set
  * @x: the word to search
  *
  * This is defined the same way as ffs.
  * Note fls(0) = 0, fls(1) = 1, fls(0x80000000) = 32.
  */
-static inline int fls(unsigned int x)
-{
-	int r;
+अटल अंतरभूत पूर्णांक fls(अचिन्हित पूर्णांक x)
+अणु
+	पूर्णांक r;
 
-	asm("{ %0 = cl0(%1);}\n"
+	यंत्र("{ %0 = cl0(%1);}\n"
 		"%0 = sub(#32,%0);\n"
 		: "=&r" (r)
 		: "r" (x)
 		: "p0");
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * ffs - find first bit set
  * @x: the word to search
  *
  * This is defined the same way as
- * the libc and compiler builtin ffs routines, therefore
- * differs in spirit from the above ffz (man ffs).
+ * the libc and compiler builtin ffs routines, thereक्रमe
+ * dअगरfers in spirit from the above ffz (man ffs).
  */
-static inline int ffs(int x)
-{
-	int r;
+अटल अंतरभूत पूर्णांक ffs(पूर्णांक x)
+अणु
+	पूर्णांक r;
 
-	asm("{ P0 = cmp.eq(%1,#0); %0 = ct0(%1);}\n"
+	यंत्र("{ P0 = cmp.eq(%1,#0); %0 = ct0(%1);}\n"
 		"{ if (P0) %0 = #0; if (!P0) %0 = add(%0,#1);}\n"
 		: "=&r" (r)
 		: "r" (x)
 		: "p0");
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * __ffs - find first bit in word.
  * @word: The word to search
  *
- * Undefined if no bit exists, so code should check against 0 first.
+ * Undefined अगर no bit exists, so code should check against 0 first.
  *
- * bits_per_long assumed to be 32
+ * bits_per_दीर्घ assumed to be 32
  * numbering starts at 0 I think (instead of 1 like ffs)
  */
-static inline unsigned long __ffs(unsigned long word)
-{
-	int num;
+अटल अंतरभूत अचिन्हित दीर्घ __ffs(अचिन्हित दीर्घ word)
+अणु
+	पूर्णांक num;
 
-	asm("%0 = ct0(%1);\n"
+	यंत्र("%0 = ct0(%1);\n"
 		: "=&r" (num)
 		: "r" (word));
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
 /*
- * __fls - find last (most-significant) set bit in a long word
+ * __fls - find last (most-signअगरicant) set bit in a दीर्घ word
  * @word: the word to search
  *
- * Undefined if no set bit exists, so code should check against 0 first.
- * bits_per_long assumed to be 32
+ * Undefined अगर no set bit exists, so code should check against 0 first.
+ * bits_per_दीर्घ assumed to be 32
  */
-static inline unsigned long __fls(unsigned long word)
-{
-	int num;
+अटल अंतरभूत अचिन्हित दीर्घ __fls(अचिन्हित दीर्घ word)
+अणु
+	पूर्णांक num;
 
-	asm("%0 = cl0(%1);\n"
+	यंत्र("%0 = cl0(%1);\n"
 		"%0 = sub(#31,%0);\n"
 		: "=&r" (num)
 		: "r" (word));
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
-#include <asm-generic/bitops/lock.h>
-#include <asm-generic/bitops/find.h>
+#समावेश <यंत्र-generic/bitops/lock.h>
+#समावेश <यंत्र-generic/bitops/find.h>
 
-#include <asm-generic/bitops/fls64.h>
-#include <asm-generic/bitops/sched.h>
-#include <asm-generic/bitops/hweight.h>
+#समावेश <यंत्र-generic/bitops/fls64.h>
+#समावेश <यंत्र-generic/bitops/sched.h>
+#समावेश <यंत्र-generic/bitops/hweight.h>
 
-#include <asm-generic/bitops/le.h>
-#include <asm-generic/bitops/ext2-atomic.h>
+#समावेश <यंत्र-generic/bitops/le.h>
+#समावेश <यंत्र-generic/bitops/ext2-atomic.h>
 
-#endif /* __KERNEL__ */
-#endif
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर

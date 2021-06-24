@@ -1,73 +1,74 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_BITOPS_H
-#define __ASM_SH_BITOPS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_BITOPS_H
+#घोषणा __ASM_SH_BITOPS_H
 
-#ifndef _LINUX_BITOPS_H
-#error only <linux/bitops.h> can be included directly
-#endif
+#अगर_अघोषित _LINUX_BITOPS_H
+#त्रुटि only <linux/bitops.h> can be included directly
+#पूर्ण_अगर
 
 /* For __swab32 */
-#include <asm/byteorder.h>
-#include <asm/barrier.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/barrier.h>
 
-#ifdef CONFIG_GUSA_RB
-#include <asm/bitops-grb.h>
-#elif defined(CONFIG_CPU_SH2A)
-#include <asm-generic/bitops/atomic.h>
-#include <asm/bitops-op32.h>
-#elif defined(CONFIG_CPU_SH4A)
-#include <asm/bitops-llsc.h>
-#elif defined(CONFIG_CPU_J2) && defined(CONFIG_SMP)
-#include <asm/bitops-cas.h>
-#else
-#include <asm-generic/bitops/atomic.h>
-#include <asm-generic/bitops/non-atomic.h>
-#endif
+#अगर_घोषित CONFIG_GUSA_RB
+#समावेश <यंत्र/bitops-grb.h>
+#या_अगर defined(CONFIG_CPU_SH2A)
+#समावेश <यंत्र-generic/bitops/atomic.h>
+#समावेश <यंत्र/bitops-op32.h>
+#या_अगर defined(CONFIG_CPU_SH4A)
+#समावेश <यंत्र/bitops-llsc.h>
+#या_अगर defined(CONFIG_CPU_J2) && defined(CONFIG_SMP)
+#समावेश <यंत्र/bitops-cas.h>
+#अन्यथा
+#समावेश <यंत्र-generic/bitops/atomic.h>
+#समावेश <यंत्र-generic/bitops/non-atomic.h>
+#पूर्ण_अगर
 
-static inline unsigned long ffz(unsigned long word)
-{
-	unsigned long result;
+अटल अंतरभूत अचिन्हित दीर्घ ffz(अचिन्हित दीर्घ word)
+अणु
+	अचिन्हित दीर्घ result;
 
-	__asm__("1:\n\t"
+	__यंत्र__("1:\n\t"
 		"shlr	%1\n\t"
 		"bt/s	1b\n\t"
 		" add	#1, %0"
 		: "=r" (result), "=r" (word)
 		: "0" (~0L), "1" (word)
 		: "t");
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * __ffs - find first bit in word.
  * @word: The word to search
  *
- * Undefined if no bit exists, so code should check against 0 first.
+ * Undefined अगर no bit exists, so code should check against 0 first.
  */
-static inline unsigned long __ffs(unsigned long word)
-{
-	unsigned long result;
+अटल अंतरभूत अचिन्हित दीर्घ __ffs(अचिन्हित दीर्घ word)
+अणु
+	अचिन्हित दीर्घ result;
 
-	__asm__("1:\n\t"
+	__यंत्र__("1:\n\t"
 		"shlr	%1\n\t"
 		"bf/s	1b\n\t"
 		" add	#1, %0"
 		: "=r" (result), "=r" (word)
 		: "0" (~0L), "1" (word)
 		: "t");
-	return result;
-}
+	वापस result;
+पूर्ण
 
-#include <asm-generic/bitops/ffs.h>
-#include <asm-generic/bitops/hweight.h>
-#include <asm-generic/bitops/lock.h>
-#include <asm-generic/bitops/sched.h>
-#include <asm-generic/bitops/ext2-atomic.h>
-#include <asm-generic/bitops/fls.h>
-#include <asm-generic/bitops/__fls.h>
-#include <asm-generic/bitops/fls64.h>
+#समावेश <यंत्र-generic/bitops/ffs.h>
+#समावेश <यंत्र-generic/bitops/hweight.h>
+#समावेश <यंत्र-generic/bitops/lock.h>
+#समावेश <यंत्र-generic/bitops/sched.h>
+#समावेश <यंत्र-generic/bitops/ext2-atomic.h>
+#समावेश <यंत्र-generic/bitops/fls.h>
+#समावेश <यंत्र-generic/bitops/__fls.h>
+#समावेश <यंत्र-generic/bitops/fls64.h>
 
-#include <asm-generic/bitops/le.h>
-#include <asm-generic/bitops/find.h>
+#समावेश <यंत्र-generic/bitops/le.h>
+#समावेश <यंत्र-generic/bitops/find.h>
 
-#endif /* __ASM_SH_BITOPS_H */
+#पूर्ण_अगर /* __ASM_SH_BITOPS_H */

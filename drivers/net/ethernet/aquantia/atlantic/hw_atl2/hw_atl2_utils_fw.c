@@ -1,157 +1,158 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Atlantic Network Driver
  * Copyright (C) 2020 Marvell International Ltd.
  */
 
-#include <linux/iopoll.h>
+#समावेश <linux/iopoll.h>
 
-#include "aq_hw.h"
-#include "aq_hw_utils.h"
-#include "aq_nic.h"
-#include "hw_atl/hw_atl_llh.h"
-#include "hw_atl2_utils.h"
-#include "hw_atl2_llh.h"
-#include "hw_atl2_internal.h"
+#समावेश "aq_hw.h"
+#समावेश "aq_hw_utils.h"
+#समावेश "aq_nic.h"
+#समावेश "hw_atl/hw_atl_llh.h"
+#समावेश "hw_atl2_utils.h"
+#समावेश "hw_atl2_llh.h"
+#समावेश "hw_atl2_internal.h"
 
-#define AQ_A2_FW_READ_TRY_MAX 1000
+#घोषणा AQ_A2_FW_READ_TRY_MAX 1000
 
-#define hw_atl2_shared_buffer_write(HW, ITEM, VARIABLE) \
-{\
-	BUILD_BUG_ON_MSG((offsetof(struct fw_interface_in, ITEM) % \
-			 sizeof(u32)) != 0,\
+#घोषणा hw_atl2_shared_buffer_ग_लिखो(HW, ITEM, VARIABLE) \
+अणु\
+	BUILD_BUG_ON_MSG((दुरत्व(काष्ठा fw_पूर्णांकerface_in, ITEM) % \
+			 माप(u32)) != 0,\
 			 "Unaligned write " # ITEM);\
-	BUILD_BUG_ON_MSG((sizeof(VARIABLE) %  sizeof(u32)) != 0,\
+	BUILD_BUG_ON_MSG((माप(VARIABLE) %  माप(u32)) != 0,\
 			 "Unaligned write length " # ITEM);\
-	hw_atl2_mif_shared_buf_write(HW,\
-		(offsetof(struct fw_interface_in, ITEM) / sizeof(u32)),\
-		(u32 *)&(VARIABLE), sizeof(VARIABLE) / sizeof(u32));\
-}
+	hw_atl2_mअगर_shared_buf_ग_लिखो(HW,\
+		(दुरत्व(काष्ठा fw_पूर्णांकerface_in, ITEM) / माप(u32)),\
+		(u32 *)&(VARIABLE), माप(VARIABLE) / माप(u32));\
+पूर्ण
 
-#define hw_atl2_shared_buffer_get(HW, ITEM, VARIABLE) \
-{\
-	BUILD_BUG_ON_MSG((offsetof(struct fw_interface_in, ITEM) % \
-			 sizeof(u32)) != 0,\
+#घोषणा hw_atl2_shared_buffer_get(HW, ITEM, VARIABLE) \
+अणु\
+	BUILD_BUG_ON_MSG((दुरत्व(काष्ठा fw_पूर्णांकerface_in, ITEM) % \
+			 माप(u32)) != 0,\
 			 "Unaligned get " # ITEM);\
-	BUILD_BUG_ON_MSG((sizeof(VARIABLE) %  sizeof(u32)) != 0,\
+	BUILD_BUG_ON_MSG((माप(VARIABLE) %  माप(u32)) != 0,\
 			 "Unaligned get length " # ITEM);\
-	hw_atl2_mif_shared_buf_get(HW, \
-		(offsetof(struct fw_interface_in, ITEM) / sizeof(u32)),\
+	hw_atl2_mअगर_shared_buf_get(HW, \
+		(दुरत्व(काष्ठा fw_पूर्णांकerface_in, ITEM) / माप(u32)),\
 		(u32 *)&(VARIABLE), \
-		sizeof(VARIABLE) / sizeof(u32));\
-}
+		माप(VARIABLE) / माप(u32));\
+पूर्ण
 
 /* This should never be used on non atomic fields,
- * treat any > u32 read as non atomic.
+ * treat any > u32 पढ़ो as non atomic.
  */
-#define hw_atl2_shared_buffer_read(HW, ITEM, VARIABLE) \
-{\
-	BUILD_BUG_ON_MSG((offsetof(struct fw_interface_out, ITEM) % \
-			 sizeof(u32)) != 0,\
+#घोषणा hw_atl2_shared_buffer_पढ़ो(HW, ITEM, VARIABLE) \
+अणु\
+	BUILD_BUG_ON_MSG((दुरत्व(काष्ठा fw_पूर्णांकerface_out, ITEM) % \
+			 माप(u32)) != 0,\
 			 "Unaligned read " # ITEM);\
-	BUILD_BUG_ON_MSG((sizeof(VARIABLE) %  sizeof(u32)) != 0,\
+	BUILD_BUG_ON_MSG((माप(VARIABLE) %  माप(u32)) != 0,\
 			 "Unaligned read length " # ITEM);\
-	BUILD_BUG_ON_MSG(sizeof(VARIABLE) > sizeof(u32),\
+	BUILD_BUG_ON_MSG(माप(VARIABLE) > माप(u32),\
 			 "Non atomic read " # ITEM);\
-	hw_atl2_mif_shared_buf_read(HW, \
-		(offsetof(struct fw_interface_out, ITEM) / sizeof(u32)),\
-		(u32 *)&(VARIABLE), sizeof(VARIABLE) / sizeof(u32));\
-}
+	hw_atl2_mअगर_shared_buf_पढ़ो(HW, \
+		(दुरत्व(काष्ठा fw_पूर्णांकerface_out, ITEM) / माप(u32)),\
+		(u32 *)&(VARIABLE), माप(VARIABLE) / माप(u32));\
+पूर्ण
 
-#define hw_atl2_shared_buffer_read_safe(HW, ITEM, DATA) \
-({\
-	BUILD_BUG_ON_MSG((offsetof(struct fw_interface_out, ITEM) % \
-			 sizeof(u32)) != 0,\
+#घोषणा hw_atl2_shared_buffer_पढ़ो_safe(HW, ITEM, DATA) \
+(अणु\
+	BUILD_BUG_ON_MSG((दुरत्व(काष्ठा fw_पूर्णांकerface_out, ITEM) % \
+			 माप(u32)) != 0,\
 			 "Unaligned read_safe " # ITEM);\
-	BUILD_BUG_ON_MSG((sizeof(((struct fw_interface_out *)0)->ITEM) % \
-			 sizeof(u32)) != 0,\
+	BUILD_BUG_ON_MSG((माप(((काष्ठा fw_पूर्णांकerface_out *)0)->ITEM) % \
+			 माप(u32)) != 0,\
 			 "Unaligned read_safe length " # ITEM);\
-	hw_atl2_shared_buffer_read_block((HW), \
-		(offsetof(struct fw_interface_out, ITEM) / sizeof(u32)),\
-		sizeof(((struct fw_interface_out *)0)->ITEM) / sizeof(u32),\
+	hw_atl2_shared_buffer_पढ़ो_block((HW), \
+		(दुरत्व(काष्ठा fw_पूर्णांकerface_out, ITEM) / माप(u32)),\
+		माप(((काष्ठा fw_पूर्णांकerface_out *)0)->ITEM) / माप(u32),\
 		(DATA));\
-})
+पूर्ण)
 
-static int hw_atl2_shared_buffer_read_block(struct aq_hw_s *self,
-					    u32 offset, u32 dwords, void *data)
-{
-	struct transaction_counter_s tid1, tid2;
-	int cnt = 0;
+अटल पूर्णांक hw_atl2_shared_buffer_पढ़ो_block(काष्ठा aq_hw_s *self,
+					    u32 offset, u32 dwords, व्योम *data)
+अणु
+	काष्ठा transaction_counter_s tid1, tid2;
+	पूर्णांक cnt = 0;
 
-	do {
-		do {
-			hw_atl2_shared_buffer_read(self, transaction_id, tid1);
+	करो अणु
+		करो अणु
+			hw_atl2_shared_buffer_पढ़ो(self, transaction_id, tid1);
 			cnt++;
-			if (cnt > AQ_A2_FW_READ_TRY_MAX)
-				return -ETIME;
-			if (tid1.transaction_cnt_a != tid1.transaction_cnt_b)
+			अगर (cnt > AQ_A2_FW_READ_TRY_MAX)
+				वापस -ETIME;
+			अगर (tid1.transaction_cnt_a != tid1.transaction_cnt_b)
 				udelay(1);
-		} while (tid1.transaction_cnt_a != tid1.transaction_cnt_b);
+		पूर्ण जबतक (tid1.transaction_cnt_a != tid1.transaction_cnt_b);
 
-		hw_atl2_mif_shared_buf_read(self, offset, (u32 *)data, dwords);
+		hw_atl2_mअगर_shared_buf_पढ़ो(self, offset, (u32 *)data, dwords);
 
-		hw_atl2_shared_buffer_read(self, transaction_id, tid2);
+		hw_atl2_shared_buffer_पढ़ो(self, transaction_id, tid2);
 
 		cnt++;
-		if (cnt > AQ_A2_FW_READ_TRY_MAX)
-			return -ETIME;
-	} while (tid2.transaction_cnt_a != tid2.transaction_cnt_b ||
+		अगर (cnt > AQ_A2_FW_READ_TRY_MAX)
+			वापस -ETIME;
+	पूर्ण जबतक (tid2.transaction_cnt_a != tid2.transaction_cnt_b ||
 		 tid1.transaction_cnt_a != tid2.transaction_cnt_a);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int hw_atl2_shared_buffer_finish_ack(struct aq_hw_s *self)
-{
+अटल अंतरभूत पूर्णांक hw_atl2_shared_buffer_finish_ack(काष्ठा aq_hw_s *self)
+अणु
 	u32 val;
-	int err;
+	पूर्णांक err;
 
-	hw_atl2_mif_host_finished_write_set(self, 1U);
-	err = readx_poll_timeout_atomic(hw_atl2_mif_mcp_finished_read_get,
+	hw_atl2_mअगर_host_finished_ग_लिखो_set(self, 1U);
+	err = पढ़ोx_poll_समयout_atomic(hw_atl2_mअगर_mcp_finished_पढ़ो_get,
 					self, val, val == 0U,
 					100, 100000U);
 	WARN(err, "hw_atl2_shared_buffer_finish_ack");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int aq_a2_fw_init(struct aq_hw_s *self)
-{
-	struct link_control_s link_control;
+अटल पूर्णांक aq_a2_fw_init(काष्ठा aq_hw_s *self)
+अणु
+	काष्ठा link_control_s link_control;
 	u32 mtu;
 	u32 val;
-	int err;
+	पूर्णांक err;
 
 	hw_atl2_shared_buffer_get(self, link_control, link_control);
 	link_control.mode = AQ_HOST_MODE_ACTIVE;
-	hw_atl2_shared_buffer_write(self, link_control, link_control);
+	hw_atl2_shared_buffer_ग_लिखो(self, link_control, link_control);
 
 	hw_atl2_shared_buffer_get(self, mtu, mtu);
 	mtu = HW_ATL2_MTU_JUMBO;
-	hw_atl2_shared_buffer_write(self, mtu, mtu);
+	hw_atl2_shared_buffer_ग_लिखो(self, mtu, mtu);
 
-	hw_atl2_mif_host_finished_write_set(self, 1U);
-	err = readx_poll_timeout_atomic(hw_atl2_mif_mcp_finished_read_get,
+	hw_atl2_mअगर_host_finished_ग_लिखो_set(self, 1U);
+	err = पढ़ोx_poll_समयout_atomic(hw_atl2_mअगर_mcp_finished_पढ़ो_get,
 					self, val, val == 0U,
 					100, 5000000U);
 	WARN(err, "hw_atl2_shared_buffer_finish_ack");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int aq_a2_fw_deinit(struct aq_hw_s *self)
-{
-	struct link_control_s link_control;
+अटल पूर्णांक aq_a2_fw_deinit(काष्ठा aq_hw_s *self)
+अणु
+	काष्ठा link_control_s link_control;
 
 	hw_atl2_shared_buffer_get(self, link_control, link_control);
 	link_control.mode = AQ_HOST_MODE_SHUTDOWN;
-	hw_atl2_shared_buffer_write(self, link_control, link_control);
+	hw_atl2_shared_buffer_ग_लिखो(self, link_control, link_control);
 
-	return hw_atl2_shared_buffer_finish_ack(self);
-}
+	वापस hw_atl2_shared_buffer_finish_ack(self);
+पूर्ण
 
-static void a2_link_speed_mask2fw(u32 speed,
-				  struct link_options_s *link_options)
-{
+अटल व्योम a2_link_speed_mask2fw(u32 speed,
+				  काष्ठा link_options_s *link_options)
+अणु
 	link_options->rate_10G = !!(speed & AQ_NIC_RATE_10G);
 	link_options->rate_5G = !!(speed & AQ_NIC_RATE_5G);
 	link_options->rate_N5G = !!(speed & AQ_NIC_RATE_5GSR);
@@ -164,188 +165,188 @@ static void a2_link_speed_mask2fw(u32 speed,
 	link_options->rate_1G_hd = !!(speed & AQ_NIC_RATE_1G_HALF);
 	link_options->rate_100M_hd = !!(speed & AQ_NIC_RATE_100M_HALF);
 	link_options->rate_10M_hd = !!(speed & AQ_NIC_RATE_10M_HALF);
-}
+पूर्ण
 
-static u32 a2_fw_dev_to_eee_mask(struct device_link_caps_s *device_link_caps)
-{
+अटल u32 a2_fw_dev_to_eee_mask(काष्ठा device_link_caps_s *device_link_caps)
+अणु
 	u32 rate = 0;
 
-	if (device_link_caps->eee_10G)
+	अगर (device_link_caps->eee_10G)
 		rate |= AQ_NIC_RATE_EEE_10G;
-	if (device_link_caps->eee_5G)
+	अगर (device_link_caps->eee_5G)
 		rate |= AQ_NIC_RATE_EEE_5G;
-	if (device_link_caps->eee_2P5G)
+	अगर (device_link_caps->eee_2P5G)
 		rate |= AQ_NIC_RATE_EEE_2G5;
-	if (device_link_caps->eee_1G)
+	अगर (device_link_caps->eee_1G)
 		rate |= AQ_NIC_RATE_EEE_1G;
-	if (device_link_caps->eee_100M)
+	अगर (device_link_caps->eee_100M)
 		rate |= AQ_NIC_RATE_EEE_100M;
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static u32 a2_fw_lkp_to_mask(struct lkp_link_caps_s *lkp_link_caps)
-{
+अटल u32 a2_fw_lkp_to_mask(काष्ठा lkp_link_caps_s *lkp_link_caps)
+अणु
 	u32 rate = 0;
 
-	if (lkp_link_caps->rate_10G)
+	अगर (lkp_link_caps->rate_10G)
 		rate |= AQ_NIC_RATE_10G;
-	if (lkp_link_caps->rate_5G)
+	अगर (lkp_link_caps->rate_5G)
 		rate |= AQ_NIC_RATE_5G;
-	if (lkp_link_caps->rate_N5G)
+	अगर (lkp_link_caps->rate_N5G)
 		rate |= AQ_NIC_RATE_5GSR;
-	if (lkp_link_caps->rate_2P5G)
+	अगर (lkp_link_caps->rate_2P5G)
 		rate |= AQ_NIC_RATE_2G5;
-	if (lkp_link_caps->rate_1G)
+	अगर (lkp_link_caps->rate_1G)
 		rate |= AQ_NIC_RATE_1G;
-	if (lkp_link_caps->rate_1G_hd)
+	अगर (lkp_link_caps->rate_1G_hd)
 		rate |= AQ_NIC_RATE_1G_HALF;
-	if (lkp_link_caps->rate_100M)
+	अगर (lkp_link_caps->rate_100M)
 		rate |= AQ_NIC_RATE_100M;
-	if (lkp_link_caps->rate_100M_hd)
+	अगर (lkp_link_caps->rate_100M_hd)
 		rate |= AQ_NIC_RATE_100M_HALF;
-	if (lkp_link_caps->rate_10M)
+	अगर (lkp_link_caps->rate_10M)
 		rate |= AQ_NIC_RATE_10M;
-	if (lkp_link_caps->rate_10M_hd)
+	अगर (lkp_link_caps->rate_10M_hd)
 		rate |= AQ_NIC_RATE_10M_HALF;
 
-	if (lkp_link_caps->eee_10G)
+	अगर (lkp_link_caps->eee_10G)
 		rate |= AQ_NIC_RATE_EEE_10G;
-	if (lkp_link_caps->eee_5G)
+	अगर (lkp_link_caps->eee_5G)
 		rate |= AQ_NIC_RATE_EEE_5G;
-	if (lkp_link_caps->eee_2P5G)
+	अगर (lkp_link_caps->eee_2P5G)
 		rate |= AQ_NIC_RATE_EEE_2G5;
-	if (lkp_link_caps->eee_1G)
+	अगर (lkp_link_caps->eee_1G)
 		rate |= AQ_NIC_RATE_EEE_1G;
-	if (lkp_link_caps->eee_100M)
+	अगर (lkp_link_caps->eee_100M)
 		rate |= AQ_NIC_RATE_EEE_100M;
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static int aq_a2_fw_set_link_speed(struct aq_hw_s *self, u32 speed)
-{
-	struct link_options_s link_options;
+अटल पूर्णांक aq_a2_fw_set_link_speed(काष्ठा aq_hw_s *self, u32 speed)
+अणु
+	काष्ठा link_options_s link_options;
 
 	hw_atl2_shared_buffer_get(self, link_options, link_options);
 	link_options.link_up = 1U;
 	a2_link_speed_mask2fw(speed, &link_options);
-	hw_atl2_shared_buffer_write(self, link_options, link_options);
+	hw_atl2_shared_buffer_ग_लिखो(self, link_options, link_options);
 
-	return hw_atl2_shared_buffer_finish_ack(self);
-}
+	वापस hw_atl2_shared_buffer_finish_ack(self);
+पूर्ण
 
-static void aq_a2_fw_set_mpi_flow_control(struct aq_hw_s *self,
-					  struct link_options_s *link_options)
-{
+अटल व्योम aq_a2_fw_set_mpi_flow_control(काष्ठा aq_hw_s *self,
+					  काष्ठा link_options_s *link_options)
+अणु
 	u32 flow_control = self->aq_nic_cfg->fc.req;
 
-	link_options->pause_rx = !!(flow_control & AQ_NIC_FC_RX);
-	link_options->pause_tx = !!(flow_control & AQ_NIC_FC_TX);
-}
+	link_options->छोड़ो_rx = !!(flow_control & AQ_NIC_FC_RX);
+	link_options->छोड़ो_tx = !!(flow_control & AQ_NIC_FC_TX);
+पूर्ण
 
-static void aq_a2_fw_upd_eee_rate_bits(struct aq_hw_s *self,
-				       struct link_options_s *link_options,
+अटल व्योम aq_a2_fw_upd_eee_rate_bits(काष्ठा aq_hw_s *self,
+				       काष्ठा link_options_s *link_options,
 				       u32 eee_speeds)
-{
+अणु
 	link_options->eee_10G =  !!(eee_speeds & AQ_NIC_RATE_EEE_10G);
 	link_options->eee_5G = !!(eee_speeds & AQ_NIC_RATE_EEE_5G);
 	link_options->eee_2P5G = !!(eee_speeds & AQ_NIC_RATE_EEE_2G5);
 	link_options->eee_1G = !!(eee_speeds & AQ_NIC_RATE_EEE_1G);
 	link_options->eee_100M = !!(eee_speeds & AQ_NIC_RATE_EEE_100M);
-}
+पूर्ण
 
-static int aq_a2_fw_set_state(struct aq_hw_s *self,
-			      enum hal_atl_utils_fw_state_e state)
-{
-	struct link_options_s link_options;
+अटल पूर्णांक aq_a2_fw_set_state(काष्ठा aq_hw_s *self,
+			      क्रमागत hal_atl_utils_fw_state_e state)
+अणु
+	काष्ठा link_options_s link_options;
 
 	hw_atl2_shared_buffer_get(self, link_options, link_options);
 
-	switch (state) {
-	case MPI_INIT:
+	चयन (state) अणु
+	हाल MPI_INIT:
 		link_options.link_up = 1U;
 		aq_a2_fw_upd_eee_rate_bits(self, &link_options,
 					   self->aq_nic_cfg->eee_speeds);
 		aq_a2_fw_set_mpi_flow_control(self, &link_options);
-		break;
-	case MPI_DEINIT:
+		अवरोध;
+	हाल MPI_DEINIT:
 		link_options.link_up = 0U;
-		break;
-	case MPI_RESET:
-	case MPI_POWER:
+		अवरोध;
+	हाल MPI_RESET:
+	हाल MPI_POWER:
 		/* No actions */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	hw_atl2_shared_buffer_write(self, link_options, link_options);
+	hw_atl2_shared_buffer_ग_लिखो(self, link_options, link_options);
 
-	return hw_atl2_shared_buffer_finish_ack(self);
-}
+	वापस hw_atl2_shared_buffer_finish_ack(self);
+पूर्ण
 
-static int aq_a2_fw_update_link_status(struct aq_hw_s *self)
-{
-	struct lkp_link_caps_s lkp_link_caps;
-	struct link_status_s link_status;
+अटल पूर्णांक aq_a2_fw_update_link_status(काष्ठा aq_hw_s *self)
+अणु
+	काष्ठा lkp_link_caps_s lkp_link_caps;
+	काष्ठा link_status_s link_status;
 
-	hw_atl2_shared_buffer_read(self, link_status, link_status);
+	hw_atl2_shared_buffer_पढ़ो(self, link_status, link_status);
 
-	switch (link_status.link_rate) {
-	case AQ_A2_FW_LINK_RATE_10G:
+	चयन (link_status.link_rate) अणु
+	हाल AQ_A2_FW_LINK_RATE_10G:
 		self->aq_link_status.mbps = 10000;
-		break;
-	case AQ_A2_FW_LINK_RATE_5G:
+		अवरोध;
+	हाल AQ_A2_FW_LINK_RATE_5G:
 		self->aq_link_status.mbps = 5000;
-		break;
-	case AQ_A2_FW_LINK_RATE_2G5:
+		अवरोध;
+	हाल AQ_A2_FW_LINK_RATE_2G5:
 		self->aq_link_status.mbps = 2500;
-		break;
-	case AQ_A2_FW_LINK_RATE_1G:
+		अवरोध;
+	हाल AQ_A2_FW_LINK_RATE_1G:
 		self->aq_link_status.mbps = 1000;
-		break;
-	case AQ_A2_FW_LINK_RATE_100M:
+		अवरोध;
+	हाल AQ_A2_FW_LINK_RATE_100M:
 		self->aq_link_status.mbps = 100;
-		break;
-	case AQ_A2_FW_LINK_RATE_10M:
+		अवरोध;
+	हाल AQ_A2_FW_LINK_RATE_10M:
 		self->aq_link_status.mbps = 10;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		self->aq_link_status.mbps = 0;
-	}
+	पूर्ण
 	self->aq_link_status.full_duplex = link_status.duplex;
 
-	hw_atl2_shared_buffer_read(self, lkp_link_caps, lkp_link_caps);
+	hw_atl2_shared_buffer_पढ़ो(self, lkp_link_caps, lkp_link_caps);
 
 	self->aq_link_status.lp_link_speed_msk =
 				 a2_fw_lkp_to_mask(&lkp_link_caps);
 	self->aq_link_status.lp_flow_control =
-				((lkp_link_caps.pause_rx) ? AQ_NIC_FC_RX : 0) |
-				((lkp_link_caps.pause_tx) ? AQ_NIC_FC_TX : 0);
+				((lkp_link_caps.छोड़ो_rx) ? AQ_NIC_FC_RX : 0) |
+				((lkp_link_caps.छोड़ो_tx) ? AQ_NIC_FC_TX : 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_a2_fw_get_mac_permanent(struct aq_hw_s *self, u8 *mac)
-{
-	struct mac_address_aligned_s mac_address;
+अटल पूर्णांक aq_a2_fw_get_mac_permanent(काष्ठा aq_hw_s *self, u8 *mac)
+अणु
+	काष्ठा mac_address_aligned_s mac_address;
 
 	hw_atl2_shared_buffer_get(self, mac_address, mac_address);
 	ether_addr_copy(mac, (u8 *)mac_address.aligned.mac_address);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_a2_fw_update_stats(struct aq_hw_s *self)
-{
-	struct hw_atl2_priv *priv = (struct hw_atl2_priv *)self->priv;
-	struct statistics_s stats;
+अटल पूर्णांक aq_a2_fw_update_stats(काष्ठा aq_hw_s *self)
+अणु
+	काष्ठा hw_atl2_priv *priv = (काष्ठा hw_atl2_priv *)self->priv;
+	काष्ठा statistics_s stats;
 
-	hw_atl2_shared_buffer_read_safe(self, stats, &stats);
+	hw_atl2_shared_buffer_पढ़ो_safe(self, stats, &stats);
 
-#define AQ_SDELTA(_N_, _F_) (self->curr_stats._N_ += \
+#घोषणा AQ_SDELTA(_N_, _F_) (self->curr_stats._N_ += \
 			stats.msm._F_ - priv->last_stats.msm._F_)
 
-	if (self->aq_link_status.mbps) {
+	अगर (self->aq_link_status.mbps) अणु
 		AQ_SDELTA(uprc, rx_unicast_frames);
 		AQ_SDELTA(mprc, rx_multicast_frames);
 		AQ_SDELTA(bprc, rx_broadcast_frames);
@@ -362,8 +363,8 @@ static int aq_a2_fw_update_stats(struct aq_hw_s *self)
 		AQ_SDELTA(mbtc, tx_multicast_octets);
 		AQ_SDELTA(bbrc, rx_broadcast_octets);
 		AQ_SDELTA(bbtc, tx_broadcast_octets);
-	}
-#undef AQ_SDELTA
+	पूर्ण
+#अघोषित AQ_SDELTA
 	self->curr_stats.dma_pkt_rc =
 		hw_atl_stats_rx_dma_good_pkt_counter_get(self);
 	self->curr_stats.dma_pkt_tc =
@@ -374,66 +375,66 @@ static int aq_a2_fw_update_stats(struct aq_hw_s *self)
 		hw_atl_stats_tx_dma_good_octet_counter_get(self);
 	self->curr_stats.dpc = hw_atl_rpb_rx_dma_drop_pkt_cnt_get(self);
 
-	memcpy(&priv->last_stats, &stats, sizeof(stats));
+	स_नकल(&priv->last_stats, &stats, माप(stats));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_a2_fw_get_phy_temp(struct aq_hw_s *self, int *temp)
-{
-	struct phy_health_monitor_s phy_health_monitor;
+अटल पूर्णांक aq_a2_fw_get_phy_temp(काष्ठा aq_hw_s *self, पूर्णांक *temp)
+अणु
+	काष्ठा phy_health_monitor_s phy_health_monitor;
 
-	hw_atl2_shared_buffer_read_safe(self, phy_health_monitor,
+	hw_atl2_shared_buffer_पढ़ो_safe(self, phy_health_monitor,
 					&phy_health_monitor);
 
-	*temp = (int8_t)phy_health_monitor.phy_temperature * 1000;
-	return 0;
-}
+	*temp = (पूर्णांक8_t)phy_health_monitor.phy_temperature * 1000;
+	वापस 0;
+पूर्ण
 
-static int aq_a2_fw_get_mac_temp(struct aq_hw_s *self, int *temp)
-{
-	/* There's only one temperature sensor on A2, use it for
+अटल पूर्णांक aq_a2_fw_get_mac_temp(काष्ठा aq_hw_s *self, पूर्णांक *temp)
+अणु
+	/* There's only one temperature sensor on A2, use it क्रम
 	 * both MAC and PHY.
 	 */
-	return aq_a2_fw_get_phy_temp(self, temp);
-}
+	वापस aq_a2_fw_get_phy_temp(self, temp);
+पूर्ण
 
-static int aq_a2_fw_set_eee_rate(struct aq_hw_s *self, u32 speed)
-{
-	struct link_options_s link_options;
+अटल पूर्णांक aq_a2_fw_set_eee_rate(काष्ठा aq_hw_s *self, u32 speed)
+अणु
+	काष्ठा link_options_s link_options;
 
 	hw_atl2_shared_buffer_get(self, link_options, link_options);
 
 	aq_a2_fw_upd_eee_rate_bits(self, &link_options, speed);
 
-	hw_atl2_shared_buffer_write(self, link_options, link_options);
+	hw_atl2_shared_buffer_ग_लिखो(self, link_options, link_options);
 
-	return hw_atl2_shared_buffer_finish_ack(self);
-}
+	वापस hw_atl2_shared_buffer_finish_ack(self);
+पूर्ण
 
-static int aq_a2_fw_get_eee_rate(struct aq_hw_s *self, u32 *rate,
+अटल पूर्णांक aq_a2_fw_get_eee_rate(काष्ठा aq_hw_s *self, u32 *rate,
 				 u32 *supported_rates)
-{
-	struct device_link_caps_s device_link_caps;
-	struct lkp_link_caps_s lkp_link_caps;
+अणु
+	काष्ठा device_link_caps_s device_link_caps;
+	काष्ठा lkp_link_caps_s lkp_link_caps;
 
-	hw_atl2_shared_buffer_read(self, device_link_caps, device_link_caps);
-	hw_atl2_shared_buffer_read(self, lkp_link_caps, lkp_link_caps);
+	hw_atl2_shared_buffer_पढ़ो(self, device_link_caps, device_link_caps);
+	hw_atl2_shared_buffer_पढ़ो(self, lkp_link_caps, lkp_link_caps);
 
 	*supported_rates = a2_fw_dev_to_eee_mask(&device_link_caps);
 	*rate = a2_fw_lkp_to_mask(&lkp_link_caps);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_a2_fw_renegotiate(struct aq_hw_s *self)
-{
-	struct link_options_s link_options;
-	int err;
+अटल पूर्णांक aq_a2_fw_renegotiate(काष्ठा aq_hw_s *self)
+अणु
+	काष्ठा link_options_s link_options;
+	पूर्णांक err;
 
 	hw_atl2_shared_buffer_get(self, link_options, link_options);
 	link_options.link_renegotiate = 1U;
-	hw_atl2_shared_buffer_write(self, link_options, link_options);
+	hw_atl2_shared_buffer_ग_लिखो(self, link_options, link_options);
 
 	err = hw_atl2_shared_buffer_finish_ack(self);
 
@@ -441,100 +442,100 @@ static int aq_a2_fw_renegotiate(struct aq_hw_s *self)
 	 * after command completes
 	 */
 	link_options.link_renegotiate = 0U;
-	hw_atl2_shared_buffer_write(self, link_options, link_options);
+	hw_atl2_shared_buffer_ग_लिखो(self, link_options, link_options);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int aq_a2_fw_set_flow_control(struct aq_hw_s *self)
-{
-	struct link_options_s link_options;
+अटल पूर्णांक aq_a2_fw_set_flow_control(काष्ठा aq_hw_s *self)
+अणु
+	काष्ठा link_options_s link_options;
 
 	hw_atl2_shared_buffer_get(self, link_options, link_options);
 
 	aq_a2_fw_set_mpi_flow_control(self, &link_options);
 
-	hw_atl2_shared_buffer_write(self, link_options, link_options);
+	hw_atl2_shared_buffer_ग_लिखो(self, link_options, link_options);
 
-	return hw_atl2_shared_buffer_finish_ack(self);
-}
+	वापस hw_atl2_shared_buffer_finish_ack(self);
+पूर्ण
 
-static u32 aq_a2_fw_get_flow_control(struct aq_hw_s *self, u32 *fcmode)
-{
-	struct link_status_s link_status;
+अटल u32 aq_a2_fw_get_flow_control(काष्ठा aq_hw_s *self, u32 *fcmode)
+अणु
+	काष्ठा link_status_s link_status;
 
-	hw_atl2_shared_buffer_read(self, link_status, link_status);
+	hw_atl2_shared_buffer_पढ़ो(self, link_status, link_status);
 
-	*fcmode = ((link_status.pause_rx) ? AQ_NIC_FC_RX : 0) |
-		  ((link_status.pause_tx) ? AQ_NIC_FC_TX : 0);
-	return 0;
-}
+	*fcmode = ((link_status.छोड़ो_rx) ? AQ_NIC_FC_RX : 0) |
+		  ((link_status.छोड़ो_tx) ? AQ_NIC_FC_TX : 0);
+	वापस 0;
+पूर्ण
 
-static int aq_a2_fw_set_phyloopback(struct aq_hw_s *self, u32 mode, bool enable)
-{
-	struct link_options_s link_options;
+अटल पूर्णांक aq_a2_fw_set_phyloopback(काष्ठा aq_hw_s *self, u32 mode, bool enable)
+अणु
+	काष्ठा link_options_s link_options;
 
 	hw_atl2_shared_buffer_get(self, link_options, link_options);
 
-	switch (mode) {
-	case AQ_HW_LOOPBACK_PHYINT_SYS:
-		link_options.internal_loopback = enable;
-		break;
-	case AQ_HW_LOOPBACK_PHYEXT_SYS:
-		link_options.external_loopback = enable;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (mode) अणु
+	हाल AQ_HW_LOOPBACK_PHYINT_SYS:
+		link_options.पूर्णांकernal_loopback = enable;
+		अवरोध;
+	हाल AQ_HW_LOOPBACK_PHYEXT_SYS:
+		link_options.बाह्यal_loopback = enable;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	hw_atl2_shared_buffer_write(self, link_options, link_options);
+	hw_atl2_shared_buffer_ग_लिखो(self, link_options, link_options);
 
-	return hw_atl2_shared_buffer_finish_ack(self);
-}
+	वापस hw_atl2_shared_buffer_finish_ack(self);
+पूर्ण
 
-u32 hw_atl2_utils_get_fw_version(struct aq_hw_s *self)
-{
-	struct version_s version;
+u32 hw_atl2_utils_get_fw_version(काष्ठा aq_hw_s *self)
+अणु
+	काष्ठा version_s version;
 
-	hw_atl2_shared_buffer_read_safe(self, version, &version);
+	hw_atl2_shared_buffer_पढ़ो_safe(self, version, &version);
 
 	/* A2 FW version is stored in reverse order */
-	return version.mac.major << 24 |
+	वापस version.mac.major << 24 |
 	       version.mac.minor << 16 |
 	       version.mac.build;
-}
+पूर्ण
 
-int hw_atl2_utils_get_action_resolve_table_caps(struct aq_hw_s *self,
+पूर्णांक hw_atl2_utils_get_action_resolve_table_caps(काष्ठा aq_hw_s *self,
 						u8 *base_index, u8 *count)
-{
-	struct filter_caps_s filter_caps;
-	int err;
+अणु
+	काष्ठा filter_caps_s filter_caps;
+	पूर्णांक err;
 
-	err = hw_atl2_shared_buffer_read_safe(self, filter_caps, &filter_caps);
-	if (err)
-		return err;
+	err = hw_atl2_shared_buffer_पढ़ो_safe(self, filter_caps, &filter_caps);
+	अगर (err)
+		वापस err;
 
 	*base_index = filter_caps.rslv_tbl_base_index;
 	*count = filter_caps.rslv_tbl_count;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aq_a2_fw_set_downshift(struct aq_hw_s *self, u32 counter)
-{
-	struct link_options_s link_options;
+अटल पूर्णांक aq_a2_fw_set_करोwnshअगरt(काष्ठा aq_hw_s *self, u32 counter)
+अणु
+	काष्ठा link_options_s link_options;
 
 	hw_atl2_shared_buffer_get(self, link_options, link_options);
-	link_options.downshift = !!counter;
-	link_options.downshift_retry = counter;
-	hw_atl2_shared_buffer_write(self, link_options, link_options);
+	link_options.करोwnshअगरt = !!counter;
+	link_options.करोwnshअगरt_retry = counter;
+	hw_atl2_shared_buffer_ग_लिखो(self, link_options, link_options);
 
-	return hw_atl2_shared_buffer_finish_ack(self);
-}
+	वापस hw_atl2_shared_buffer_finish_ack(self);
+पूर्ण
 
-const struct aq_fw_ops aq_a2_fw_ops = {
+स्थिर काष्ठा aq_fw_ops aq_a2_fw_ops = अणु
 	.init               = aq_a2_fw_init,
 	.deinit             = aq_a2_fw_deinit,
-	.reset              = NULL,
+	.reset              = शून्य,
 	.renegotiate        = aq_a2_fw_renegotiate,
 	.get_mac_permanent  = aq_a2_fw_get_mac_permanent,
 	.set_link_speed     = aq_a2_fw_set_link_speed,
@@ -548,5 +549,5 @@ const struct aq_fw_ops aq_a2_fw_ops = {
 	.set_flow_control   = aq_a2_fw_set_flow_control,
 	.get_flow_control   = aq_a2_fw_get_flow_control,
 	.set_phyloopback    = aq_a2_fw_set_phyloopback,
-	.set_downshift      = aq_a2_fw_set_downshift,
-};
+	.set_करोwnshअगरt      = aq_a2_fw_set_करोwnshअगरt,
+पूर्ण;

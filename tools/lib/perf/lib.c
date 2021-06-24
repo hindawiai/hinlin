@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <unistd.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <linux/kernel.h>
-#include <internal/lib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <unistd.h>
+#समावेश <stdbool.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <पूर्णांकernal/lib.h>
 
-unsigned int page_size;
+अचिन्हित पूर्णांक page_size;
 
-static ssize_t ion(bool is_read, int fd, void *buf, size_t n)
-{
-	void *buf_start = buf;
-	size_t left = n;
+अटल sमाप_प्रकार ion(bool is_पढ़ो, पूर्णांक fd, व्योम *buf, माप_प्रकार n)
+अणु
+	व्योम *buf_start = buf;
+	माप_प्रकार left = n;
 
-	while (left) {
-		/* buf must be treated as const if !is_read. */
-		ssize_t ret = is_read ? read(fd, buf, left) :
-					write(fd, buf, left);
+	जबतक (left) अणु
+		/* buf must be treated as स्थिर अगर !is_पढ़ो. */
+		sमाप_प्रकार ret = is_पढ़ो ? पढ़ो(fd, buf, left) :
+					ग_लिखो(fd, buf, left);
 
-		if (ret < 0 && errno == EINTR)
-			continue;
-		if (ret <= 0)
-			return ret;
+		अगर (ret < 0 && त्रुटि_सं == EINTR)
+			जारी;
+		अगर (ret <= 0)
+			वापस ret;
 
 		left -= ret;
 		buf  += ret;
-	}
+	पूर्ण
 
-	BUG_ON((size_t)(buf - buf_start) != n);
-	return n;
-}
-
-/*
- * Read exactly 'n' bytes or return an error.
- */
-ssize_t readn(int fd, void *buf, size_t n)
-{
-	return ion(true, fd, buf, n);
-}
+	BUG_ON((माप_प्रकार)(buf - buf_start) != n);
+	वापस n;
+पूर्ण
 
 /*
- * Write exactly 'n' bytes or return an error.
+ * Read exactly 'n' bytes or वापस an error.
  */
-ssize_t writen(int fd, const void *buf, size_t n)
-{
-	/* ion does not modify buf. */
-	return ion(false, fd, (void *)buf, n);
-}
+sमाप_प्रकार पढ़ोn(पूर्णांक fd, व्योम *buf, माप_प्रकार n)
+अणु
+	वापस ion(true, fd, buf, n);
+पूर्ण
+
+/*
+ * Write exactly 'n' bytes or वापस an error.
+ */
+sमाप_प्रकार ग_लिखोn(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार n)
+अणु
+	/* ion करोes not modअगरy buf. */
+	वापस ion(false, fd, (व्योम *)buf, n);
+पूर्ण

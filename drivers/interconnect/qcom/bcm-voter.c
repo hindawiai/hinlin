@@ -1,213 +1,214 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
-#include <asm/div64.h>
-#include <linux/interconnect-provider.h>
-#include <linux/list_sort.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश <linux/पूर्णांकerconnect-provider.h>
+#समावेश <linux/list_sort.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <soc/qcom/rpmh.h>
-#include <soc/qcom/tcs.h>
+#समावेश <soc/qcom/rpmh.h>
+#समावेश <soc/qcom/tcs.h>
 
-#include "bcm-voter.h"
-#include "icc-rpmh.h"
+#समावेश "bcm-voter.h"
+#समावेश "icc-rpmh.h"
 
-static LIST_HEAD(bcm_voters);
-static DEFINE_MUTEX(bcm_voter_lock);
+अटल LIST_HEAD(bcm_voters);
+अटल DEFINE_MUTEX(bcm_voter_lock);
 
 /**
- * struct bcm_voter - Bus Clock Manager voter
+ * काष्ठा bcm_voter - Bus Clock Manager voter
  * @dev: reference to the device that communicates with the BCM
  * @np: reference to the device node to match bcm voters
  * @lock: mutex to protect commit and wake/sleep lists in the voter
  * @commit_list: list containing bcms to be committed to hardware
- * @ws_list: list containing bcms that have different wake/sleep votes
+ * @ws_list: list containing bcms that have dअगरferent wake/sleep votes
  * @voter_node: list of bcm voters
- * @tcs_wait: mask for which buckets require TCS completion
+ * @tcs_रुको: mask क्रम which buckets require TCS completion
  */
-struct bcm_voter {
-	struct device *dev;
-	struct device_node *np;
-	struct mutex lock;
-	struct list_head commit_list;
-	struct list_head ws_list;
-	struct list_head voter_node;
-	u32 tcs_wait;
-};
+काष्ठा bcm_voter अणु
+	काष्ठा device *dev;
+	काष्ठा device_node *np;
+	काष्ठा mutex lock;
+	काष्ठा list_head commit_list;
+	काष्ठा list_head ws_list;
+	काष्ठा list_head voter_node;
+	u32 tcs_रुको;
+पूर्ण;
 
-static int cmp_vcd(void *priv, const struct list_head *a, const struct list_head *b)
-{
-	const struct qcom_icc_bcm *bcm_a = list_entry(a, struct qcom_icc_bcm, list);
-	const struct qcom_icc_bcm *bcm_b = list_entry(b, struct qcom_icc_bcm, list);
+अटल पूर्णांक cmp_vcd(व्योम *priv, स्थिर काष्ठा list_head *a, स्थिर काष्ठा list_head *b)
+अणु
+	स्थिर काष्ठा qcom_icc_bcm *bcm_a = list_entry(a, काष्ठा qcom_icc_bcm, list);
+	स्थिर काष्ठा qcom_icc_bcm *bcm_b = list_entry(b, काष्ठा qcom_icc_bcm, list);
 
-	return bcm_a->aux_data.vcd - bcm_b->aux_data.vcd;
-}
+	वापस bcm_a->aux_data.vcd - bcm_b->aux_data.vcd;
+पूर्ण
 
-static u64 bcm_div(u64 num, u32 base)
-{
+अटल u64 bcm_भाग(u64 num, u32 base)
+अणु
 	/* Ensure that small votes aren't lost. */
-	if (num && num < base)
-		return 1;
+	अगर (num && num < base)
+		वापस 1;
 
-	do_div(num, base);
+	करो_भाग(num, base);
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
-static void bcm_aggregate(struct qcom_icc_bcm *bcm)
-{
-	struct qcom_icc_node *node;
-	size_t i, bucket;
-	u64 agg_avg[QCOM_ICC_NUM_BUCKETS] = {0};
-	u64 agg_peak[QCOM_ICC_NUM_BUCKETS] = {0};
+अटल व्योम bcm_aggregate(काष्ठा qcom_icc_bcm *bcm)
+अणु
+	काष्ठा qcom_icc_node *node;
+	माप_प्रकार i, bucket;
+	u64 agg_avg[QCOM_ICC_NUM_BUCKETS] = अणु0पूर्ण;
+	u64 agg_peak[QCOM_ICC_NUM_BUCKETS] = अणु0पूर्ण;
 	u64 temp;
 
-	for (bucket = 0; bucket < QCOM_ICC_NUM_BUCKETS; bucket++) {
-		for (i = 0; i < bcm->num_nodes; i++) {
+	क्रम (bucket = 0; bucket < QCOM_ICC_NUM_BUCKETS; bucket++) अणु
+		क्रम (i = 0; i < bcm->num_nodes; i++) अणु
 			node = bcm->nodes[i];
-			temp = bcm_div(node->sum_avg[bucket] * bcm->aux_data.width,
+			temp = bcm_भाग(node->sum_avg[bucket] * bcm->aux_data.width,
 				       node->buswidth * node->channels);
 			agg_avg[bucket] = max(agg_avg[bucket], temp);
 
-			temp = bcm_div(node->max_peak[bucket] * bcm->aux_data.width,
+			temp = bcm_भाग(node->max_peak[bucket] * bcm->aux_data.width,
 				       node->buswidth);
 			agg_peak[bucket] = max(agg_peak[bucket], temp);
-		}
+		पूर्ण
 
 		temp = agg_avg[bucket] * bcm->vote_scale;
-		bcm->vote_x[bucket] = bcm_div(temp, bcm->aux_data.unit);
+		bcm->vote_x[bucket] = bcm_भाग(temp, bcm->aux_data.unit);
 
 		temp = agg_peak[bucket] * bcm->vote_scale;
-		bcm->vote_y[bucket] = bcm_div(temp, bcm->aux_data.unit);
-	}
+		bcm->vote_y[bucket] = bcm_भाग(temp, bcm->aux_data.unit);
+	पूर्ण
 
-	if (bcm->keepalive && bcm->vote_x[QCOM_ICC_BUCKET_AMC] == 0 &&
-	    bcm->vote_y[QCOM_ICC_BUCKET_AMC] == 0) {
+	अगर (bcm->keepalive && bcm->vote_x[QCOM_ICC_BUCKET_AMC] == 0 &&
+	    bcm->vote_y[QCOM_ICC_BUCKET_AMC] == 0) अणु
 		bcm->vote_x[QCOM_ICC_BUCKET_AMC] = 1;
 		bcm->vote_x[QCOM_ICC_BUCKET_WAKE] = 1;
 		bcm->vote_y[QCOM_ICC_BUCKET_AMC] = 1;
 		bcm->vote_y[QCOM_ICC_BUCKET_WAKE] = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void tcs_cmd_gen(struct tcs_cmd *cmd, u64 vote_x, u64 vote_y,
-			       u32 addr, bool commit, bool wait)
-{
+अटल अंतरभूत व्योम tcs_cmd_gen(काष्ठा tcs_cmd *cmd, u64 vote_x, u64 vote_y,
+			       u32 addr, bool commit, bool रुको)
+अणु
 	bool valid = true;
 
-	if (!cmd)
-		return;
+	अगर (!cmd)
+		वापस;
 
-	memset(cmd, 0, sizeof(*cmd));
+	स_रखो(cmd, 0, माप(*cmd));
 
-	if (vote_x == 0 && vote_y == 0)
+	अगर (vote_x == 0 && vote_y == 0)
 		valid = false;
 
-	if (vote_x > BCM_TCS_CMD_VOTE_MASK)
+	अगर (vote_x > BCM_TCS_CMD_VOTE_MASK)
 		vote_x = BCM_TCS_CMD_VOTE_MASK;
 
-	if (vote_y > BCM_TCS_CMD_VOTE_MASK)
+	अगर (vote_y > BCM_TCS_CMD_VOTE_MASK)
 		vote_y = BCM_TCS_CMD_VOTE_MASK;
 
 	cmd->addr = addr;
 	cmd->data = BCM_TCS_CMD(commit, valid, vote_x, vote_y);
 
 	/*
-	 * Set the wait for completion flag on command that need to be completed
-	 * before the next command.
+	 * Set the रुको क्रम completion flag on command that need to be completed
+	 * beक्रमe the next command.
 	 */
-	cmd->wait = wait;
-}
+	cmd->रुको = रुको;
+पूर्ण
 
-static void tcs_list_gen(struct bcm_voter *voter, int bucket,
-			 struct tcs_cmd tcs_list[MAX_VCD],
-			 int n[MAX_VCD + 1])
-{
-	struct list_head *bcm_list = &voter->commit_list;
-	struct qcom_icc_bcm *bcm;
-	bool commit, wait;
-	size_t idx = 0, batch = 0, cur_vcd_size = 0;
+अटल व्योम tcs_list_gen(काष्ठा bcm_voter *voter, पूर्णांक bucket,
+			 काष्ठा tcs_cmd tcs_list[MAX_VCD],
+			 पूर्णांक n[MAX_VCD + 1])
+अणु
+	काष्ठा list_head *bcm_list = &voter->commit_list;
+	काष्ठा qcom_icc_bcm *bcm;
+	bool commit, रुको;
+	माप_प्रकार idx = 0, batch = 0, cur_vcd_size = 0;
 
-	memset(n, 0, sizeof(int) * (MAX_VCD + 1));
+	स_रखो(n, 0, माप(पूर्णांक) * (MAX_VCD + 1));
 
-	list_for_each_entry(bcm, bcm_list, list) {
+	list_क्रम_each_entry(bcm, bcm_list, list) अणु
 		commit = false;
 		cur_vcd_size++;
-		if ((list_is_last(&bcm->list, bcm_list)) ||
-		    bcm->aux_data.vcd != list_next_entry(bcm, list)->aux_data.vcd) {
+		अगर ((list_is_last(&bcm->list, bcm_list)) ||
+		    bcm->aux_data.vcd != list_next_entry(bcm, list)->aux_data.vcd) अणु
 			commit = true;
 			cur_vcd_size = 0;
-		}
+		पूर्ण
 
-		wait = commit && (voter->tcs_wait & BIT(bucket));
+		रुको = commit && (voter->tcs_रुको & BIT(bucket));
 
 		tcs_cmd_gen(&tcs_list[idx], bcm->vote_x[bucket],
-			    bcm->vote_y[bucket], bcm->addr, commit, wait);
+			    bcm->vote_y[bucket], bcm->addr, commit, रुको);
 		idx++;
 		n[batch]++;
 		/*
-		 * Batch the BCMs in such a way that we do not split them in
+		 * Batch the BCMs in such a way that we करो not split them in
 		 * multiple payloads when they are under the same VCD. This is
 		 * to ensure that every BCM is committed since we only set the
 		 * commit bit on the last BCM request of every VCD.
 		 */
-		if (n[batch] >= MAX_RPMH_PAYLOAD) {
-			if (!commit) {
+		अगर (n[batch] >= MAX_RPMH_PAYLOAD) अणु
+			अगर (!commit) अणु
 				n[batch] -= cur_vcd_size;
 				n[batch + 1] = cur_vcd_size;
-			}
+			पूर्ण
 			batch++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * of_bcm_voter_get - gets a bcm voter handle from DT node
- * @dev: device pointer for the consumer device
- * @name: name for the bcm voter device
+ * of_bcm_voter_get - माला_लो a bcm voter handle from DT node
+ * @dev: device poपूर्णांकer क्रम the consumer device
+ * @name: name क्रम the bcm voter device
  *
- * This function will match a device_node pointer for the phandle
- * specified in the device DT and return a bcm_voter handle on success.
+ * This function will match a device_node poपूर्णांकer क्रम the phandle
+ * specअगरied in the device DT and वापस a bcm_voter handle on success.
  *
- * Returns bcm_voter pointer or ERR_PTR() on error. EPROBE_DEFER is returned
+ * Returns bcm_voter poपूर्णांकer or ERR_PTR() on error. EPROBE_DEFER is वापसed
  * when matching bcm voter is yet to be found.
  */
-struct bcm_voter *of_bcm_voter_get(struct device *dev, const char *name)
-{
-	struct bcm_voter *voter = ERR_PTR(-EPROBE_DEFER);
-	struct bcm_voter *temp;
-	struct device_node *np, *node;
-	int idx = 0;
+काष्ठा bcm_voter *of_bcm_voter_get(काष्ठा device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा bcm_voter *voter = ERR_PTR(-EPROBE_DEFER);
+	काष्ठा bcm_voter *temp;
+	काष्ठा device_node *np, *node;
+	पूर्णांक idx = 0;
 
-	if (!dev || !dev->of_node)
-		return ERR_PTR(-ENODEV);
+	अगर (!dev || !dev->of_node)
+		वापस ERR_PTR(-ENODEV);
 
 	np = dev->of_node;
 
-	if (name) {
+	अगर (name) अणु
 		idx = of_property_match_string(np, "qcom,bcm-voter-names", name);
-		if (idx < 0)
-			return ERR_PTR(idx);
-	}
+		अगर (idx < 0)
+			वापस ERR_PTR(idx);
+	पूर्ण
 
 	node = of_parse_phandle(np, "qcom,bcm-voters", idx);
 
 	mutex_lock(&bcm_voter_lock);
-	list_for_each_entry(temp, &bcm_voters, voter_node) {
-		if (temp->np == node) {
+	list_क्रम_each_entry(temp, &bcm_voters, voter_node) अणु
+		अगर (temp->np == node) अणु
 			voter = temp;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&bcm_voter_lock);
 
 	of_node_put(node);
-	return voter;
-}
+	वापस voter;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_bcm_voter_get);
 
 /**
@@ -215,20 +216,20 @@ EXPORT_SYMBOL_GPL(of_bcm_voter_get);
  * @voter: voter that the bcms are being added to
  * @bcm: bcm to add to the commit and wake sleep list
  */
-void qcom_icc_bcm_voter_add(struct bcm_voter *voter, struct qcom_icc_bcm *bcm)
-{
-	if (!voter)
-		return;
+व्योम qcom_icc_bcm_voter_add(काष्ठा bcm_voter *voter, काष्ठा qcom_icc_bcm *bcm)
+अणु
+	अगर (!voter)
+		वापस;
 
 	mutex_lock(&voter->lock);
-	if (list_empty(&bcm->list))
+	अगर (list_empty(&bcm->list))
 		list_add_tail(&bcm->list, &voter->commit_list);
 
-	if (list_empty(&bcm->ws_list))
+	अगर (list_empty(&bcm->ws_list))
 		list_add_tail(&bcm->ws_list, &voter->ws_list);
 
 	mutex_unlock(&voter->lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_icc_bcm_voter_add);
 
 /**
@@ -238,115 +239,115 @@ EXPORT_SYMBOL_GPL(qcom_icc_bcm_voter_add);
  * This function generates a set of AMC commands and flushes to the BCM device
  * associated with the voter. It conditionally generate WAKE and SLEEP commands
  * based on deltas between WAKE/SLEEP requirements. The ws_list persists
- * through multiple commit requests and bcm nodes are removed only when the
- * requirements for WAKE matches SLEEP.
+ * through multiple commit requests and bcm nodes are हटाओd only when the
+ * requirements क्रम WAKE matches SLEEP.
  *
  * Returns 0 on success, or an appropriate error code otherwise.
  */
-int qcom_icc_bcm_voter_commit(struct bcm_voter *voter)
-{
-	struct qcom_icc_bcm *bcm;
-	struct qcom_icc_bcm *bcm_tmp;
-	int commit_idx[MAX_VCD + 1];
-	struct tcs_cmd cmds[MAX_BCMS];
-	int ret = 0;
+पूर्णांक qcom_icc_bcm_voter_commit(काष्ठा bcm_voter *voter)
+अणु
+	काष्ठा qcom_icc_bcm *bcm;
+	काष्ठा qcom_icc_bcm *bcm_पंचांगp;
+	पूर्णांक commit_idx[MAX_VCD + 1];
+	काष्ठा tcs_cmd cmds[MAX_BCMS];
+	पूर्णांक ret = 0;
 
-	if (!voter)
-		return 0;
+	अगर (!voter)
+		वापस 0;
 
 	mutex_lock(&voter->lock);
-	list_for_each_entry(bcm, &voter->commit_list, list)
+	list_क्रम_each_entry(bcm, &voter->commit_list, list)
 		bcm_aggregate(bcm);
 
 	/*
-	 * Pre sort the BCMs based on VCD for ease of generating a command list
+	 * Pre sort the BCMs based on VCD क्रम ease of generating a command list
 	 * that groups the BCMs with the same VCD together. VCDs are numbered
-	 * with lowest being the most expensive time wise, ensuring that
+	 * with lowest being the most expensive समय wise, ensuring that
 	 * those commands are being sent the earliest in the queue. This needs
 	 * to be sorted every commit since we can't guarantee the order in which
 	 * the BCMs are added to the list.
 	 */
-	list_sort(NULL, &voter->commit_list, cmp_vcd);
+	list_sort(शून्य, &voter->commit_list, cmp_vcd);
 
 	/*
-	 * Construct the command list based on a pre ordered list of BCMs
+	 * Conकाष्ठा the command list based on a pre ordered list of BCMs
 	 * based on VCD.
 	 */
 	tcs_list_gen(voter, QCOM_ICC_BUCKET_AMC, cmds, commit_idx);
-	if (!commit_idx[0])
-		goto out;
+	अगर (!commit_idx[0])
+		जाओ out;
 
 	rpmh_invalidate(voter->dev);
 
-	ret = rpmh_write_batch(voter->dev, RPMH_ACTIVE_ONLY_STATE,
+	ret = rpmh_ग_लिखो_batch(voter->dev, RPMH_ACTIVE_ONLY_STATE,
 			       cmds, commit_idx);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Error sending AMC RPMH requests (%d)\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	list_for_each_entry_safe(bcm, bcm_tmp, &voter->commit_list, list)
+	list_क्रम_each_entry_safe(bcm, bcm_पंचांगp, &voter->commit_list, list)
 		list_del_init(&bcm->list);
 
-	list_for_each_entry_safe(bcm, bcm_tmp, &voter->ws_list, ws_list) {
+	list_क्रम_each_entry_safe(bcm, bcm_पंचांगp, &voter->ws_list, ws_list) अणु
 		/*
-		 * Only generate WAKE and SLEEP commands if a resource's
+		 * Only generate WAKE and SLEEP commands अगर a resource's
 		 * requirements change as the execution environment transitions
-		 * between different power states.
+		 * between dअगरferent घातer states.
 		 */
-		if (bcm->vote_x[QCOM_ICC_BUCKET_WAKE] !=
+		अगर (bcm->vote_x[QCOM_ICC_BUCKET_WAKE] !=
 		    bcm->vote_x[QCOM_ICC_BUCKET_SLEEP] ||
 		    bcm->vote_y[QCOM_ICC_BUCKET_WAKE] !=
 		    bcm->vote_y[QCOM_ICC_BUCKET_SLEEP])
 			list_add_tail(&bcm->list, &voter->commit_list);
-		else
+		अन्यथा
 			list_del_init(&bcm->ws_list);
-	}
+	पूर्ण
 
-	if (list_empty(&voter->commit_list))
-		goto out;
+	अगर (list_empty(&voter->commit_list))
+		जाओ out;
 
-	list_sort(NULL, &voter->commit_list, cmp_vcd);
+	list_sort(शून्य, &voter->commit_list, cmp_vcd);
 
 	tcs_list_gen(voter, QCOM_ICC_BUCKET_WAKE, cmds, commit_idx);
 
-	ret = rpmh_write_batch(voter->dev, RPMH_WAKE_ONLY_STATE, cmds, commit_idx);
-	if (ret) {
+	ret = rpmh_ग_लिखो_batch(voter->dev, RPMH_WAKE_ONLY_STATE, cmds, commit_idx);
+	अगर (ret) अणु
 		pr_err("Error sending WAKE RPMH requests (%d)\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	tcs_list_gen(voter, QCOM_ICC_BUCKET_SLEEP, cmds, commit_idx);
 
-	ret = rpmh_write_batch(voter->dev, RPMH_SLEEP_STATE, cmds, commit_idx);
-	if (ret) {
+	ret = rpmh_ग_लिखो_batch(voter->dev, RPMH_SLEEP_STATE, cmds, commit_idx);
+	अगर (ret) अणु
 		pr_err("Error sending SLEEP RPMH requests (%d)\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	list_for_each_entry_safe(bcm, bcm_tmp, &voter->commit_list, list)
+	list_क्रम_each_entry_safe(bcm, bcm_पंचांगp, &voter->commit_list, list)
 		list_del_init(&bcm->list);
 
 	mutex_unlock(&voter->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_icc_bcm_voter_commit);
 
-static int qcom_icc_bcm_voter_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct bcm_voter *voter;
+अटल पूर्णांक qcom_icc_bcm_voter_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा bcm_voter *voter;
 
-	voter = devm_kzalloc(&pdev->dev, sizeof(*voter), GFP_KERNEL);
-	if (!voter)
-		return -ENOMEM;
+	voter = devm_kzalloc(&pdev->dev, माप(*voter), GFP_KERNEL);
+	अगर (!voter)
+		वापस -ENOMEM;
 
 	voter->dev = &pdev->dev;
 	voter->np = np;
 
-	if (of_property_read_u32(np, "qcom,tcs-wait", &voter->tcs_wait))
-		voter->tcs_wait = QCOM_ICC_TAG_ACTIVE_ONLY;
+	अगर (of_property_पढ़ो_u32(np, "qcom,tcs-wait", &voter->tcs_रुको))
+		voter->tcs_रुको = QCOM_ICC_TAG_ACTIVE_ONLY;
 
 	mutex_init(&voter->lock);
 	INIT_LIST_HEAD(&voter->commit_list);
@@ -356,23 +357,23 @@ static int qcom_icc_bcm_voter_probe(struct platform_device *pdev)
 	list_add_tail(&voter->voter_node, &bcm_voters);
 	mutex_unlock(&bcm_voter_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id bcm_voter_of_match[] = {
-	{ .compatible = "qcom,bcm-voter" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id bcm_voter_of_match[] = अणु
+	अणु .compatible = "qcom,bcm-voter" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bcm_voter_of_match);
 
-static struct platform_driver qcom_icc_bcm_voter_driver = {
+अटल काष्ठा platक्रमm_driver qcom_icc_bcm_voter_driver = अणु
 	.probe = qcom_icc_bcm_voter_probe,
-	.driver = {
+	.driver = अणु
 		.name		= "bcm_voter",
 		.of_match_table = bcm_voter_of_match,
-	},
-};
-module_platform_driver(qcom_icc_bcm_voter_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(qcom_icc_bcm_voter_driver);
 
 MODULE_AUTHOR("David Dai <daidavid1@codeaurora.org>");
 MODULE_DESCRIPTION("Qualcomm BCM Voter interconnect driver");

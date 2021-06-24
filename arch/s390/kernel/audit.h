@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ARCH_S390_KERNEL_AUDIT_H
-#define __ARCH_S390_KERNEL_AUDIT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ARCH_S390_KERNEL_AUDIT_H
+#घोषणा __ARCH_S390_KERNEL_AUDIT_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#ifdef CONFIG_COMPAT
-extern int s390_classify_syscall(unsigned);
-extern __u32 s390_dir_class[];
-extern __u32 s390_write_class[];
-extern __u32 s390_read_class[];
-extern __u32 s390_chattr_class[];
-extern __u32 s390_signal_class[];
-#endif /* CONFIG_COMPAT */
+#अगर_घोषित CONFIG_COMPAT
+बाह्य पूर्णांक s390_classअगरy_syscall(अचिन्हित);
+बाह्य __u32 s390_dir_class[];
+बाह्य __u32 s390_ग_लिखो_class[];
+बाह्य __u32 s390_पढ़ो_class[];
+बाह्य __u32 s390_chattr_class[];
+बाह्य __u32 s390_संकेत_class[];
+#पूर्ण_अगर /* CONFIG_COMPAT */
 
-#endif /* __ARCH_S390_KERNEL_AUDIT_H */
+#पूर्ण_अगर /* __ARCH_S390_KERNEL_AUDIT_H */

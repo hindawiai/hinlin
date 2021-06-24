@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef BTRFS_EXPORT_H
-#define BTRFS_EXPORT_H
+#अगर_अघोषित BTRFS_EXPORT_H
+#घोषणा BTRFS_EXPORT_H
 
-#include <linux/exportfs.h>
+#समावेश <linux/exportfs.h>
 
-extern const struct export_operations btrfs_export_ops;
+बाह्य स्थिर काष्ठा export_operations btrfs_export_ops;
 
-struct btrfs_fid {
+काष्ठा btrfs_fid अणु
 	u64 objectid;
 	u64 root_objectid;
 	u32 gen;
@@ -16,11 +17,11 @@ struct btrfs_fid {
 	u32 parent_gen;
 
 	u64 parent_root_objectid;
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
-struct dentry *btrfs_get_dentry(struct super_block *sb, u64 objectid,
+काष्ठा dentry *btrfs_get_dentry(काष्ठा super_block *sb, u64 objectid,
 				u64 root_objectid, u32 generation,
-				int check_generation);
-struct dentry *btrfs_get_parent(struct dentry *child);
+				पूर्णांक check_generation);
+काष्ठा dentry *btrfs_get_parent(काष्ठा dentry *child);
 
-#endif
+#पूर्ण_अगर

@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2009 Chen Liqin <liqin.chen@sunplusct.com>
- * Copyright (C) 2016 Regents of the University of California
+ * Copyright (C) 2016 Regents of the University of Calअगरornia
  */
 
-#ifndef _ASM_RISCV_DELAY_H
-#define _ASM_RISCV_DELAY_H
+#अगर_अघोषित _ASM_RISCV_DELAY_H
+#घोषणा _ASM_RISCV_DELAY_H
 
-extern unsigned long riscv_timebase;
+बाह्य अचिन्हित दीर्घ riscv_समयbase;
 
-#define udelay udelay
-extern void udelay(unsigned long usecs);
+#घोषणा udelay udelay
+बाह्य व्योम udelay(अचिन्हित दीर्घ usecs);
 
-#define ndelay ndelay
-extern void ndelay(unsigned long nsecs);
+#घोषणा ndelay ndelay
+बाह्य व्योम ndelay(अचिन्हित दीर्घ nsecs);
 
-extern void __delay(unsigned long cycles);
+बाह्य व्योम __delay(अचिन्हित दीर्घ cycles);
 
-#endif /* _ASM_RISCV_DELAY_H */
+#पूर्ण_अगर /* _ASM_RISCV_DELAY_H */

@@ -1,1 +1,2 @@
-#include "../../../../include/linux/idr.h"
+<शैली गुरु>
+#समावेश "../../../../include/linux/idr.h"

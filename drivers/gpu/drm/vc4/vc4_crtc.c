@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Broadcom
  */
@@ -6,50 +7,50 @@
 /**
  * DOC: VC4 CRTC module
  *
- * In VC4, the Pixel Valve is what most closely corresponds to the
+ * In VC4, the Pixel Valve is what most बंदly corresponds to the
  * DRM's concept of a CRTC.  The PV generates video timings from the
- * encoder's clock plus its configuration.  It pulls scaled pixels from
+ * encoder's घड़ी plus its configuration.  It pulls scaled pixels from
  * the HVS at that timing, and feeds it to the encoder.
  *
  * However, the DRM CRTC also collects the configuration of all the
  * DRM planes attached to it.  As a result, the CRTC is also
- * responsible for writing the display list for the HVS channel that
+ * responsible क्रम writing the display list क्रम the HVS channel that
  * the CRTC will use.
  *
- * The 2835 has 3 different pixel valves.  pv0 in the audio power
- * domain feeds DSI0 or DPI, while pv1 feeds DS1 or SMI.  pv2 in the
- * image domain can feed either HDMI or the SDTV controller.  The
- * pixel valve chooses from the CPRMAN clocks (HSM for HDMI, VEC for
+ * The 2835 has 3 dअगरferent pixel valves.  pv0 in the audio घातer
+ * करोमुख्य feeds DSI0 or DPI, जबतक pv1 feeds DS1 or SMI.  pv2 in the
+ * image करोमुख्य can feed either HDMI or the SDTV controller.  The
+ * pixel valve chooses from the CPRMAN घड़ीs (HSM क्रम HDMI, VEC क्रम
  * SDTV, etc.) according to which output type is chosen in the mux.
  *
- * For power management, the pixel valve's registers are all clocked
- * by the AXI clock, while the timings and FIFOs make use of the
- * output-specific clock.  Since the encoders also directly consume
- * the CPRMAN clocks, and know what timings they need, they are the
- * ones that set the clock.
+ * For घातer management, the pixel valve's रेजिस्टरs are all घड़ीed
+ * by the AXI घड़ी, जबतक the timings and FIFOs make use of the
+ * output-specअगरic घड़ी.  Since the encoders also directly consume
+ * the CPRMAN घड़ीs, and know what timings they need, they are the
+ * ones that set the घड़ी.
  */
 
-#include <linux/clk.h>
-#include <linux/component.h>
-#include <linux/of_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/of_device.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_atomic_uapi.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_print.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_atomic_uapi.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "vc4_drv.h"
-#include "vc4_regs.h"
+#समावेश "vc4_drv.h"
+#समावेश "vc4_regs.h"
 
-#define HVS_FIFO_LATENCY_PIX	6
+#घोषणा HVS_FIFO_LATENCY_PIX	6
 
-#define CRTC_WRITE(offset, val) writel(val, vc4_crtc->regs + (offset))
-#define CRTC_READ(offset) readl(vc4_crtc->regs + (offset))
+#घोषणा CRTC_WRITE(offset, val) ग_लिखोl(val, vc4_crtc->regs + (offset))
+#घोषणा CRTC_READ(offset) पढ़ोl(vc4_crtc->regs + (offset))
 
-static const struct debugfs_reg32 crtc_regs[] = {
+अटल स्थिर काष्ठा debugfs_reg32 crtc_regs[] = अणु
 	VC4_REG32(PV_CONTROL),
 	VC4_REG32(PV_V_CONTROL),
 	VC4_REG32(PV_VSYNCD_EVEN),
@@ -63,11 +64,11 @@ static const struct debugfs_reg32 crtc_regs[] = {
 	VC4_REG32(PV_INTSTAT),
 	VC4_REG32(PV_STAT),
 	VC4_REG32(PV_HACT_ACT),
-};
+पूर्ण;
 
-static unsigned int
-vc4_crtc_get_cob_allocation(struct vc4_dev *vc4, unsigned int channel)
-{
+अटल अचिन्हित पूर्णांक
+vc4_crtc_get_cob_allocation(काष्ठा vc4_dev *vc4, अचिन्हित पूर्णांक channel)
+अणु
 	u32 dispbase = HVS_READ(SCALER_DISPBASEX(channel));
 	/* Top/base are supposed to be 4-pixel aligned, but the
 	 * Raspberry Pi firmware fills the low bits (which are
@@ -76,40 +77,40 @@ vc4_crtc_get_cob_allocation(struct vc4_dev *vc4, unsigned int channel)
 	u32 top = VC4_GET_FIELD(dispbase, SCALER_DISPBASEX_TOP) & ~3;
 	u32 base = VC4_GET_FIELD(dispbase, SCALER_DISPBASEX_BASE) & ~3;
 
-	return top - base + 4;
-}
+	वापस top - base + 4;
+पूर्ण
 
-static bool vc4_crtc_get_scanout_position(struct drm_crtc *crtc,
+अटल bool vc4_crtc_get_scanout_position(काष्ठा drm_crtc *crtc,
 					  bool in_vblank_irq,
-					  int *vpos, int *hpos,
-					  ktime_t *stime, ktime_t *etime,
-					  const struct drm_display_mode *mode)
-{
-	struct drm_device *dev = crtc->dev;
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
-	struct vc4_crtc_state *vc4_crtc_state = to_vc4_crtc_state(crtc->state);
-	unsigned int cob_size;
+					  पूर्णांक *vpos, पूर्णांक *hpos,
+					  kसमय_प्रकार *sसमय, kसमय_प्रकार *eसमय,
+					  स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+	काष्ठा vc4_crtc_state *vc4_crtc_state = to_vc4_crtc_state(crtc->state);
+	अचिन्हित पूर्णांक cob_size;
 	u32 val;
-	int fifo_lines;
-	int vblank_lines;
+	पूर्णांक fअगरo_lines;
+	पूर्णांक vblank_lines;
 	bool ret = false;
 
 	/* preempt_disable_rt() should go right here in PREEMPT_RT patchset. */
 
-	/* Get optional system timestamp before query. */
-	if (stime)
-		*stime = ktime_get();
+	/* Get optional प्रणाली बारtamp beक्रमe query. */
+	अगर (sसमय)
+		*sसमय = kसमय_get();
 
 	/*
-	 * Read vertical scanline which is currently composed for our
+	 * Read vertical scanline which is currently composed क्रम our
 	 * pixelvalve by the HVS, and also the scaler status.
 	 */
-	val = HVS_READ(SCALER_DISPSTATX(vc4_crtc_state->assigned_channel));
+	val = HVS_READ(SCALER_DISPSTATX(vc4_crtc_state->asचिन्हित_channel));
 
-	/* Get optional system timestamp after query. */
-	if (etime)
-		*etime = ktime_get();
+	/* Get optional प्रणाली बारtamp after query. */
+	अगर (eसमय)
+		*eसमय = kसमय_get();
 
 	/* preempt_enable_rt() should go right here in PREEMPT_RT patchset. */
 
@@ -117,218 +118,218 @@ static bool vc4_crtc_get_scanout_position(struct drm_crtc *crtc,
 	*vpos = VC4_GET_FIELD(val, SCALER_DISPSTATX_LINE);
 	*hpos = 0;
 
-	if (mode->flags & DRM_MODE_FLAG_INTERLACE) {
+	अगर (mode->flags & DRM_MODE_FLAG_INTERLACE) अणु
 		*vpos /= 2;
 
-		/* Use hpos to correct for field offset in interlaced mode. */
-		if (VC4_GET_FIELD(val, SCALER_DISPSTATX_FRAME_COUNT) % 2)
+		/* Use hpos to correct क्रम field offset in पूर्णांकerlaced mode. */
+		अगर (VC4_GET_FIELD(val, SCALER_DISPSTATX_FRAME_COUNT) % 2)
 			*hpos += mode->crtc_htotal / 2;
-	}
+	पूर्ण
 
-	cob_size = vc4_crtc_get_cob_allocation(vc4, vc4_crtc_state->assigned_channel);
-	/* This is the offset we need for translating hvs -> pv scanout pos. */
-	fifo_lines = cob_size / mode->crtc_hdisplay;
+	cob_size = vc4_crtc_get_cob_allocation(vc4, vc4_crtc_state->asचिन्हित_channel);
+	/* This is the offset we need क्रम translating hvs -> pv scanout pos. */
+	fअगरo_lines = cob_size / mode->crtc_hdisplay;
 
-	if (fifo_lines > 0)
+	अगर (fअगरo_lines > 0)
 		ret = true;
 
-	/* HVS more than fifo_lines into frame for compositing? */
-	if (*vpos > fifo_lines) {
+	/* HVS more than fअगरo_lines पूर्णांकo frame क्रम compositing? */
+	अगर (*vpos > fअगरo_lines) अणु
 		/*
 		 * We are in active scanout and can get some meaningful results
 		 * from HVS. The actual PV scanout can not trail behind more
-		 * than fifo_lines as that is the fifo's capacity. Assume that
+		 * than fअगरo_lines as that is the fअगरo's capacity. Assume that
 		 * in active scanout the HVS and PV work in lockstep wrt. HVS
-		 * refilling the fifo and PV consuming from the fifo, ie.
-		 * whenever the PV consumes and frees up a scanline in the
-		 * fifo, the HVS will immediately refill it, therefore
-		 * incrementing vpos. Therefore we choose HVS read position -
-		 * fifo size in scanlines as a estimate of the real scanout
+		 * refilling the fअगरo and PV consuming from the fअगरo, ie.
+		 * whenever the PV consumes and मुक्तs up a scanline in the
+		 * fअगरo, the HVS will immediately refill it, thereक्रमe
+		 * incrementing vpos. Thereक्रमe we choose HVS पढ़ो position -
+		 * fअगरo size in scanlines as a estimate of the real scanout
 		 * position of the PV.
 		 */
-		*vpos -= fifo_lines + 1;
+		*vpos -= fअगरo_lines + 1;
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Less: This happens when we are in vblank and the HVS, after getting
-	 * the VSTART restart signal from the PV, just started refilling its
-	 * fifo with new lines from the top-most lines of the new framebuffers.
-	 * The PV does not scan out in vblank, so does not remove lines from
-	 * the fifo, so the fifo will be full quickly and the HVS has to pause.
-	 * We can't get meaningful readings wrt. scanline position of the PV
+	 * the VSTART restart संकेत from the PV, just started refilling its
+	 * fअगरo with new lines from the top-most lines of the new framebuffers.
+	 * The PV करोes not scan out in vblank, so करोes not हटाओ lines from
+	 * the fअगरo, so the fअगरo will be full quickly and the HVS has to छोड़ो.
+	 * We can't get meaningful पढ़ोings wrt. scanline position of the PV
 	 * and need to make things up in a approximative but consistent way.
 	 */
 	vblank_lines = mode->vtotal - mode->vdisplay;
 
-	if (in_vblank_irq) {
+	अगर (in_vblank_irq) अणु
 		/*
-		 * Assume the irq handler got called close to first
+		 * Assume the irq handler got called बंद to first
 		 * line of vblank, so PV has about a full vblank
-		 * scanlines to go, and as a base timestamp use the
-		 * one taken at entry into vblank irq handler, so it
-		 * is not affected by random delays due to lock
-		 * contention on event_lock or vblank_time lock in
+		 * scanlines to go, and as a base बारtamp use the
+		 * one taken at entry पूर्णांकo vblank irq handler, so it
+		 * is not affected by अक्रमom delays due to lock
+		 * contention on event_lock or vblank_समय lock in
 		 * the core.
 		 */
 		*vpos = -vblank_lines;
 
-		if (stime)
-			*stime = vc4_crtc->t_vblank;
-		if (etime)
-			*etime = vc4_crtc->t_vblank;
+		अगर (sसमय)
+			*sसमय = vc4_crtc->t_vblank;
+		अगर (eसमय)
+			*eसमय = vc4_crtc->t_vblank;
 
 		/*
-		 * If the HVS fifo is not yet full then we know for certain
+		 * If the HVS fअगरo is not yet full then we know क्रम certain
 		 * we are at the very beginning of vblank, as the hvs just
-		 * started refilling, and the stime and etime timestamps
+		 * started refilling, and the sसमय and eसमय बारtamps
 		 * truly correspond to start of vblank.
 		 *
-		 * Unfortunately there's no way to report this to upper levels
+		 * Unक्रमtunately there's no way to report this to upper levels
 		 * and make it more useful.
 		 */
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * No clue where we are inside vblank. Return a vpos of zero,
-		 * which will cause calling code to just return the etime
-		 * timestamp uncorrected. At least this is no worse than the
+		 * which will cause calling code to just वापस the eसमय
+		 * बारtamp uncorrected. At least this is no worse than the
 		 * standard fallback.
 		 */
 		*vpos = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void vc4_crtc_destroy(struct drm_crtc *crtc)
-{
+व्योम vc4_crtc_destroy(काष्ठा drm_crtc *crtc)
+अणु
 	drm_crtc_cleanup(crtc);
-}
+पूर्ण
 
-static u32 vc4_get_fifo_full_level(struct vc4_crtc *vc4_crtc, u32 format)
-{
-	const struct vc4_crtc_data *crtc_data = vc4_crtc_to_vc4_crtc_data(vc4_crtc);
-	const struct vc4_pv_data *pv_data = vc4_crtc_to_vc4_pv_data(vc4_crtc);
-	struct vc4_dev *vc4 = to_vc4_dev(vc4_crtc->base.dev);
-	u32 fifo_len_bytes = pv_data->fifo_depth;
+अटल u32 vc4_get_fअगरo_full_level(काष्ठा vc4_crtc *vc4_crtc, u32 क्रमmat)
+अणु
+	स्थिर काष्ठा vc4_crtc_data *crtc_data = vc4_crtc_to_vc4_crtc_data(vc4_crtc);
+	स्थिर काष्ठा vc4_pv_data *pv_data = vc4_crtc_to_vc4_pv_data(vc4_crtc);
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(vc4_crtc->base.dev);
+	u32 fअगरo_len_bytes = pv_data->fअगरo_depth;
 
 	/*
-	 * Pixels are pulled from the HVS if the number of bytes is
+	 * Pixels are pulled from the HVS अगर the number of bytes is
 	 * lower than the FIFO full level.
 	 *
 	 * The latency of the pixel fetch mechanism is 6 pixels, so we
 	 * need to convert those 6 pixels in bytes, depending on the
-	 * format, and then subtract that from the length of the FIFO
+	 * क्रमmat, and then subtract that from the length of the FIFO
 	 * to make sure we never end up in a situation where the FIFO
 	 * is full.
 	 */
-	switch (format) {
-	case PV_CONTROL_FORMAT_DSIV_16:
-	case PV_CONTROL_FORMAT_DSIC_16:
-		return fifo_len_bytes - 2 * HVS_FIFO_LATENCY_PIX;
-	case PV_CONTROL_FORMAT_DSIV_18:
-		return fifo_len_bytes - 14;
-	case PV_CONTROL_FORMAT_24:
-	case PV_CONTROL_FORMAT_DSIV_24:
-	default:
+	चयन (क्रमmat) अणु
+	हाल PV_CONTROL_FORMAT_DSIV_16:
+	हाल PV_CONTROL_FORMAT_DSIC_16:
+		वापस fअगरo_len_bytes - 2 * HVS_FIFO_LATENCY_PIX;
+	हाल PV_CONTROL_FORMAT_DSIV_18:
+		वापस fअगरo_len_bytes - 14;
+	हाल PV_CONTROL_FORMAT_24:
+	हाल PV_CONTROL_FORMAT_DSIV_24:
+	शेष:
 		/*
-		 * For some reason, the pixelvalve4 doesn't work with
-		 * the usual formula and will only work with 32.
+		 * For some reason, the pixelvalve4 करोesn't work with
+		 * the usual क्रमmula and will only work with 32.
 		 */
-		if (crtc_data->hvs_output == 5)
-			return 32;
+		अगर (crtc_data->hvs_output == 5)
+			वापस 32;
 
 		/*
 		 * It looks like in some situations, we will overflow
 		 * the PixelValve FIFO (with the bit 10 of PV stat being
 		 * set) and stall the HVS / PV, eventually resulting in
-		 * a page flip timeout.
+		 * a page flip समयout.
 		 *
 		 * Displaying the video overlay during a playback with
 		 * Kodi on an RPi3 seems to be a great solution with a
 		 * failure rate around 50%.
 		 *
 		 * Removing 1 from the FIFO full level however
-		 * seems to completely remove that issue.
+		 * seems to completely हटाओ that issue.
 		 */
-		if (!vc4->hvs->hvs5)
-			return fifo_len_bytes - 3 * HVS_FIFO_LATENCY_PIX - 1;
+		अगर (!vc4->hvs->hvs5)
+			वापस fअगरo_len_bytes - 3 * HVS_FIFO_LATENCY_PIX - 1;
 
-		return fifo_len_bytes - 3 * HVS_FIFO_LATENCY_PIX;
-	}
-}
+		वापस fअगरo_len_bytes - 3 * HVS_FIFO_LATENCY_PIX;
+	पूर्ण
+पूर्ण
 
-static u32 vc4_crtc_get_fifo_full_level_bits(struct vc4_crtc *vc4_crtc,
-					     u32 format)
-{
-	u32 level = vc4_get_fifo_full_level(vc4_crtc, format);
+अटल u32 vc4_crtc_get_fअगरo_full_level_bits(काष्ठा vc4_crtc *vc4_crtc,
+					     u32 क्रमmat)
+अणु
+	u32 level = vc4_get_fअगरo_full_level(vc4_crtc, क्रमmat);
 	u32 ret = 0;
 
 	ret |= VC4_SET_FIELD((level >> 6),
 			     PV5_CONTROL_FIFO_LEVEL_HIGH);
 
-	return ret | VC4_SET_FIELD(level & 0x3f,
+	वापस ret | VC4_SET_FIELD(level & 0x3f,
 				   PV_CONTROL_FIFO_LEVEL);
-}
+पूर्ण
 
 /*
  * Returns the encoder attached to the CRTC.
  *
- * VC4 can only scan out to one encoder at a time, while the DRM core
+ * VC4 can only scan out to one encoder at a समय, जबतक the DRM core
  * allows drivers to push pixels to more than one encoder from the
  * same CRTC.
  */
-static struct drm_encoder *vc4_get_crtc_encoder(struct drm_crtc *crtc)
-{
-	struct drm_connector *connector;
-	struct drm_connector_list_iter conn_iter;
+अटल काष्ठा drm_encoder *vc4_get_crtc_encoder(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_connector *connector;
+	काष्ठा drm_connector_list_iter conn_iter;
 
 	drm_connector_list_iter_begin(crtc->dev, &conn_iter);
-	drm_for_each_connector_iter(connector, &conn_iter) {
-		if (connector->state->crtc == crtc) {
+	drm_क्रम_each_connector_iter(connector, &conn_iter) अणु
+		अगर (connector->state->crtc == crtc) अणु
 			drm_connector_list_iter_end(&conn_iter);
-			return connector->encoder;
-		}
-	}
+			वापस connector->encoder;
+		पूर्ण
+	पूर्ण
 	drm_connector_list_iter_end(&conn_iter);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void vc4_crtc_pixelvalve_reset(struct drm_crtc *crtc)
-{
-	struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+अटल व्योम vc4_crtc_pixelvalve_reset(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
 
-	/* The PV needs to be disabled before it can be flushed */
+	/* The PV needs to be disabled beक्रमe it can be flushed */
 	CRTC_WRITE(PV_CONTROL, CRTC_READ(PV_CONTROL) & ~PV_CONTROL_EN);
 	CRTC_WRITE(PV_CONTROL, CRTC_READ(PV_CONTROL) | PV_CONTROL_FIFO_CLR);
-}
+पूर्ण
 
-static void vc4_crtc_config_pv(struct drm_crtc *crtc)
-{
-	struct drm_device *dev = crtc->dev;
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct drm_encoder *encoder = vc4_get_crtc_encoder(crtc);
-	struct vc4_encoder *vc4_encoder = to_vc4_encoder(encoder);
-	struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
-	const struct vc4_pv_data *pv_data = vc4_crtc_to_vc4_pv_data(vc4_crtc);
-	struct drm_crtc_state *state = crtc->state;
-	struct drm_display_mode *mode = &state->adjusted_mode;
-	bool interlace = mode->flags & DRM_MODE_FLAG_INTERLACE;
+अटल व्योम vc4_crtc_config_pv(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा drm_encoder *encoder = vc4_get_crtc_encoder(crtc);
+	काष्ठा vc4_encoder *vc4_encoder = to_vc4_encoder(encoder);
+	काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+	स्थिर काष्ठा vc4_pv_data *pv_data = vc4_crtc_to_vc4_pv_data(vc4_crtc);
+	काष्ठा drm_crtc_state *state = crtc->state;
+	काष्ठा drm_display_mode *mode = &state->adjusted_mode;
+	bool पूर्णांकerlace = mode->flags & DRM_MODE_FLAG_INTERLACE;
 	u32 pixel_rep = (mode->flags & DRM_MODE_FLAG_DBLCLK) ? 2 : 1;
 	bool is_dsi = (vc4_encoder->type == VC4_ENCODER_TYPE_DSI0 ||
 		       vc4_encoder->type == VC4_ENCODER_TYPE_DSI1);
-	u32 format = is_dsi ? PV_CONTROL_FORMAT_DSIV_24 : PV_CONTROL_FORMAT_24;
-	u8 ppc = pv_data->pixels_per_clock;
+	u32 क्रमmat = is_dsi ? PV_CONTROL_FORMAT_DSIV_24 : PV_CONTROL_FORMAT_24;
+	u8 ppc = pv_data->pixels_per_घड़ी;
 	bool debug_dump_regs = false;
 
-	if (debug_dump_regs) {
-		struct drm_printer p = drm_info_printer(&vc4_crtc->pdev->dev);
+	अगर (debug_dump_regs) अणु
+		काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(&vc4_crtc->pdev->dev);
 		dev_info(&vc4_crtc->pdev->dev, "CRTC %d regs before:\n",
 			 drm_crtc_index(crtc));
-		drm_print_regset32(&p, &vc4_crtc->regset);
-	}
+		drm_prपूर्णांक_regset32(&p, &vc4_crtc->regset);
+	पूर्ण
 
 	vc4_crtc_pixelvalve_reset(crtc);
 
@@ -354,7 +355,7 @@ static void vc4_crtc_config_pv(struct drm_crtc *crtc)
 				 PV_VERTB_VFP) |
 		   VC4_SET_FIELD(mode->crtc_vdisplay, PV_VERTB_VACTIVE));
 
-	if (interlace) {
+	अगर (पूर्णांकerlace) अणु
 		CRTC_WRITE(PV_VERTA_EVEN,
 			   VC4_SET_FIELD(mode->crtc_vtotal -
 					 mode->crtc_vsync_end - 1,
@@ -368,9 +369,9 @@ static void vc4_crtc_config_pv(struct drm_crtc *crtc)
 					 PV_VERTB_VFP) |
 			   VC4_SET_FIELD(mode->crtc_vdisplay, PV_VERTB_VACTIVE));
 
-		/* We set up first field even mode for HDMI.  VEC's
+		/* We set up first field even mode क्रम HDMI.  VEC's
 		 * NTSC mode would want first field odd instead, once
-		 * we support it (to do so, set ODD_FIRST and put the
+		 * we support it (to करो so, set ODD_FIRST and put the
 		 * delay in VSYNCD_EVEN instead).
 		 */
 		CRTC_WRITE(PV_V_CONTROL,
@@ -380,63 +381,63 @@ static void vc4_crtc_config_pv(struct drm_crtc *crtc)
 			   VC4_SET_FIELD(mode->htotal * pixel_rep / 2,
 					 PV_VCONTROL_ODD_DELAY));
 		CRTC_WRITE(PV_VSYNCD_EVEN, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		CRTC_WRITE(PV_V_CONTROL,
 			   PV_VCONTROL_CONTINUOUS |
 			   (is_dsi ? PV_VCONTROL_DSI : 0));
-	}
+	पूर्ण
 
-	if (is_dsi)
+	अगर (is_dsi)
 		CRTC_WRITE(PV_HACT_ACT, mode->hdisplay * pixel_rep);
 
-	if (vc4->hvs->hvs5)
+	अगर (vc4->hvs->hvs5)
 		CRTC_WRITE(PV_MUX_CFG,
 			   VC4_SET_FIELD(PV_MUX_CFG_RGB_PIXEL_MUX_MODE_NO_SWAP,
 					 PV_MUX_CFG_RGB_PIXEL_MUX_MODE));
 
 	CRTC_WRITE(PV_CONTROL, PV_CONTROL_FIFO_CLR |
-		   vc4_crtc_get_fifo_full_level_bits(vc4_crtc, format) |
-		   VC4_SET_FIELD(format, PV_CONTROL_FORMAT) |
+		   vc4_crtc_get_fअगरo_full_level_bits(vc4_crtc, क्रमmat) |
+		   VC4_SET_FIELD(क्रमmat, PV_CONTROL_FORMAT) |
 		   VC4_SET_FIELD(pixel_rep - 1, PV_CONTROL_PIXEL_REP) |
 		   PV_CONTROL_CLR_AT_START |
 		   PV_CONTROL_TRIGGER_UNDERFLOW |
 		   PV_CONTROL_WAIT_HSTART |
-		   VC4_SET_FIELD(vc4_encoder->clock_select,
+		   VC4_SET_FIELD(vc4_encoder->घड़ी_select,
 				 PV_CONTROL_CLK_SELECT));
 
-	if (debug_dump_regs) {
-		struct drm_printer p = drm_info_printer(&vc4_crtc->pdev->dev);
+	अगर (debug_dump_regs) अणु
+		काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(&vc4_crtc->pdev->dev);
 		dev_info(&vc4_crtc->pdev->dev, "CRTC %d regs after:\n",
 			 drm_crtc_index(crtc));
-		drm_print_regset32(&p, &vc4_crtc->regset);
-	}
-}
+		drm_prपूर्णांक_regset32(&p, &vc4_crtc->regset);
+	पूर्ण
+पूर्ण
 
-static void require_hvs_enabled(struct drm_device *dev)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
+अटल व्योम require_hvs_enabled(काष्ठा drm_device *dev)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
 
 	WARN_ON_ONCE((HVS_READ(SCALER_DISPCTRL) & SCALER_DISPCTRL_ENABLE) !=
 		     SCALER_DISPCTRL_ENABLE);
-}
+पूर्ण
 
-static int vc4_crtc_disable(struct drm_crtc *crtc,
-			    struct drm_atomic_state *state,
-			    unsigned int channel)
-{
-	struct drm_encoder *encoder = vc4_get_crtc_encoder(crtc);
-	struct vc4_encoder *vc4_encoder = to_vc4_encoder(encoder);
-	struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
-	struct drm_device *dev = crtc->dev;
-	int ret;
+अटल पूर्णांक vc4_crtc_disable(काष्ठा drm_crtc *crtc,
+			    काष्ठा drm_atomic_state *state,
+			    अचिन्हित पूर्णांक channel)
+अणु
+	काष्ठा drm_encoder *encoder = vc4_get_crtc_encoder(crtc);
+	काष्ठा vc4_encoder *vc4_encoder = to_vc4_encoder(encoder);
+	काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+	काष्ठा drm_device *dev = crtc->dev;
+	पूर्णांक ret;
 
 	CRTC_WRITE(PV_V_CONTROL,
 		   CRTC_READ(PV_V_CONTROL) & ~PV_VCONTROL_VIDEN);
-	ret = wait_for(!(CRTC_READ(PV_V_CONTROL) & PV_VCONTROL_VIDEN), 1);
+	ret = रुको_क्रम(!(CRTC_READ(PV_V_CONTROL) & PV_VCONTROL_VIDEN), 1);
 	WARN_ONCE(ret, "Timeout waiting for !PV_VCONTROL_VIDEN\n");
 
 	/*
-	 * This delay is needed to avoid to get a pixel stuck in an
+	 * This delay is needed to aव्योम to get a pixel stuck in an
 	 * unflushable FIFO between the pixelvalve and the HDMI
 	 * controllers on the BCM2711.
 	 *
@@ -446,104 +447,104 @@ static int vc4_crtc_disable(struct drm_crtc *crtc,
 	 * If it was to be reworked, the stuck pixel happens on a
 	 * BCM2711 when changing mode with a good probability, so a
 	 * script that changes mode on a regular basis should trigger
-	 * the bug after less than 10 attempts. It manifests itself with
-	 * every pixels being shifted by one to the right, and thus the
+	 * the bug after less than 10 attempts. It manअगरests itself with
+	 * every pixels being shअगरted by one to the right, and thus the
 	 * last pixel of a line actually being displayed as the first
 	 * pixel on the next line.
 	 */
 	mdelay(20);
 
-	if (vc4_encoder && vc4_encoder->post_crtc_disable)
+	अगर (vc4_encoder && vc4_encoder->post_crtc_disable)
 		vc4_encoder->post_crtc_disable(encoder, state);
 
 	vc4_crtc_pixelvalve_reset(crtc);
 	vc4_hvs_stop_channel(dev, channel);
 
-	if (vc4_encoder && vc4_encoder->post_crtc_powerdown)
-		vc4_encoder->post_crtc_powerdown(encoder, state);
+	अगर (vc4_encoder && vc4_encoder->post_crtc_घातerकरोwn)
+		vc4_encoder->post_crtc_घातerकरोwn(encoder, state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vc4_crtc_disable_at_boot(struct drm_crtc *crtc)
-{
-	struct drm_device *drm = crtc->dev;
-	struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
-	int channel;
+पूर्णांक vc4_crtc_disable_at_boot(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_device *drm = crtc->dev;
+	काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+	पूर्णांक channel;
 
-	if (!(of_device_is_compatible(vc4_crtc->pdev->dev.of_node,
+	अगर (!(of_device_is_compatible(vc4_crtc->pdev->dev.of_node,
 				      "brcm,bcm2711-pixelvalve2") ||
 	      of_device_is_compatible(vc4_crtc->pdev->dev.of_node,
 				      "brcm,bcm2711-pixelvalve4")))
-		return 0;
+		वापस 0;
 
-	if (!(CRTC_READ(PV_CONTROL) & PV_CONTROL_EN))
-		return 0;
+	अगर (!(CRTC_READ(PV_CONTROL) & PV_CONTROL_EN))
+		वापस 0;
 
-	if (!(CRTC_READ(PV_V_CONTROL) & PV_VCONTROL_VIDEN))
-		return 0;
+	अगर (!(CRTC_READ(PV_V_CONTROL) & PV_VCONTROL_VIDEN))
+		वापस 0;
 
-	channel = vc4_hvs_get_fifo_from_output(drm, vc4_crtc->data->hvs_output);
-	if (channel < 0)
-		return 0;
+	channel = vc4_hvs_get_fअगरo_from_output(drm, vc4_crtc->data->hvs_output);
+	अगर (channel < 0)
+		वापस 0;
 
-	return vc4_crtc_disable(crtc, NULL, channel);
-}
+	वापस vc4_crtc_disable(crtc, शून्य, channel);
+पूर्ण
 
-static void vc4_crtc_atomic_disable(struct drm_crtc *crtc,
-				    struct drm_atomic_state *state)
-{
-	struct drm_crtc_state *old_state = drm_atomic_get_old_crtc_state(state,
+अटल व्योम vc4_crtc_atomic_disable(काष्ठा drm_crtc *crtc,
+				    काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc_state *old_state = drm_atomic_get_old_crtc_state(state,
 									 crtc);
-	struct vc4_crtc_state *old_vc4_state = to_vc4_crtc_state(old_state);
-	struct drm_device *dev = crtc->dev;
+	काष्ठा vc4_crtc_state *old_vc4_state = to_vc4_crtc_state(old_state);
+	काष्ठा drm_device *dev = crtc->dev;
 
 	require_hvs_enabled(dev);
 
-	/* Disable vblank irq handling before crtc is disabled. */
+	/* Disable vblank irq handling beक्रमe crtc is disabled. */
 	drm_crtc_vblank_off(crtc);
 
-	vc4_crtc_disable(crtc, state, old_vc4_state->assigned_channel);
+	vc4_crtc_disable(crtc, state, old_vc4_state->asचिन्हित_channel);
 
 	/*
-	 * Make sure we issue a vblank event after disabling the CRTC if
-	 * someone was waiting it.
+	 * Make sure we issue a vblank event after disabling the CRTC अगर
+	 * someone was रुकोing it.
 	 */
-	if (crtc->state->event) {
-		unsigned long flags;
+	अगर (crtc->state->event) अणु
+		अचिन्हित दीर्घ flags;
 
 		spin_lock_irqsave(&dev->event_lock, flags);
 		drm_crtc_send_vblank_event(crtc, crtc->state->event);
-		crtc->state->event = NULL;
+		crtc->state->event = शून्य;
 		spin_unlock_irqrestore(&dev->event_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vc4_crtc_atomic_enable(struct drm_crtc *crtc,
-				   struct drm_atomic_state *state)
-{
-	struct drm_device *dev = crtc->dev;
-	struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
-	struct drm_encoder *encoder = vc4_get_crtc_encoder(crtc);
-	struct vc4_encoder *vc4_encoder = to_vc4_encoder(encoder);
+अटल व्योम vc4_crtc_atomic_enable(काष्ठा drm_crtc *crtc,
+				   काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+	काष्ठा drm_encoder *encoder = vc4_get_crtc_encoder(crtc);
+	काष्ठा vc4_encoder *vc4_encoder = to_vc4_encoder(encoder);
 
 	require_hvs_enabled(dev);
 
-	/* Enable vblank irq handling before crtc is started otherwise
+	/* Enable vblank irq handling beक्रमe crtc is started otherwise
 	 * drm_crtc_get_vblank() fails in vc4_crtc_update_dlist().
 	 */
 	drm_crtc_vblank_on(crtc);
 
 	vc4_hvs_atomic_enable(crtc, state);
 
-	if (vc4_encoder->pre_crtc_configure)
+	अगर (vc4_encoder->pre_crtc_configure)
 		vc4_encoder->pre_crtc_configure(encoder, state);
 
 	vc4_crtc_config_pv(crtc);
 
 	CRTC_WRITE(PV_CONTROL, CRTC_READ(PV_CONTROL) | PV_CONTROL_EN);
 
-	if (vc4_encoder->pre_crtc_enable)
+	अगर (vc4_encoder->pre_crtc_enable)
 		vc4_encoder->pre_crtc_enable(encoder, state);
 
 	/* When feeding the transposer block the pixelvalve is unneeded and
@@ -552,178 +553,178 @@ static void vc4_crtc_atomic_enable(struct drm_crtc *crtc,
 	CRTC_WRITE(PV_V_CONTROL,
 		   CRTC_READ(PV_V_CONTROL) | PV_VCONTROL_VIDEN);
 
-	if (vc4_encoder->post_crtc_enable)
+	अगर (vc4_encoder->post_crtc_enable)
 		vc4_encoder->post_crtc_enable(encoder, state);
-}
+पूर्ण
 
-static enum drm_mode_status vc4_crtc_mode_valid(struct drm_crtc *crtc,
-						const struct drm_display_mode *mode)
-{
-	/* Do not allow doublescan modes from user space */
-	if (mode->flags & DRM_MODE_FLAG_DBLSCAN) {
+अटल क्रमागत drm_mode_status vc4_crtc_mode_valid(काष्ठा drm_crtc *crtc,
+						स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	/* Do not allow द्विगुनscan modes from user space */
+	अगर (mode->flags & DRM_MODE_FLAG_DBLSCAN) अणु
 		DRM_DEBUG_KMS("[CRTC:%d] Doublescan mode rejected.\n",
 			      crtc->base.id);
-		return MODE_NO_DBLESCAN;
-	}
+		वापस MODE_NO_DBLESCAN;
+	पूर्ण
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-void vc4_crtc_get_margins(struct drm_crtc_state *state,
-			  unsigned int *left, unsigned int *right,
-			  unsigned int *top, unsigned int *bottom)
-{
-	struct vc4_crtc_state *vc4_state = to_vc4_crtc_state(state);
-	struct drm_connector_state *conn_state;
-	struct drm_connector *conn;
-	int i;
+व्योम vc4_crtc_get_margins(काष्ठा drm_crtc_state *state,
+			  अचिन्हित पूर्णांक *left, अचिन्हित पूर्णांक *right,
+			  अचिन्हित पूर्णांक *top, अचिन्हित पूर्णांक *bottom)
+अणु
+	काष्ठा vc4_crtc_state *vc4_state = to_vc4_crtc_state(state);
+	काष्ठा drm_connector_state *conn_state;
+	काष्ठा drm_connector *conn;
+	पूर्णांक i;
 
 	*left = vc4_state->margins.left;
 	*right = vc4_state->margins.right;
 	*top = vc4_state->margins.top;
 	*bottom = vc4_state->margins.bottom;
 
-	/* We have to interate over all new connector states because
-	 * vc4_crtc_get_margins() might be called before
+	/* We have to पूर्णांकerate over all new connector states because
+	 * vc4_crtc_get_margins() might be called beक्रमe
 	 * vc4_crtc_atomic_check() which means margins info in vc4_crtc_state
 	 * might be outdated.
 	 */
-	for_each_new_connector_in_state(state->state, conn, conn_state, i) {
-		if (conn_state->crtc != state->crtc)
-			continue;
+	क्रम_each_new_connector_in_state(state->state, conn, conn_state, i) अणु
+		अगर (conn_state->crtc != state->crtc)
+			जारी;
 
 		*left = conn_state->tv.margins.left;
 		*right = conn_state->tv.margins.right;
 		*top = conn_state->tv.margins.top;
 		*bottom = conn_state->tv.margins.bottom;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int vc4_crtc_atomic_check(struct drm_crtc *crtc,
-				 struct drm_atomic_state *state)
-{
-	struct drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
+अटल पूर्णांक vc4_crtc_atomic_check(काष्ठा drm_crtc *crtc,
+				 काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
 									  crtc);
-	struct vc4_crtc_state *vc4_state = to_vc4_crtc_state(crtc_state);
-	struct drm_connector *conn;
-	struct drm_connector_state *conn_state;
-	int ret, i;
+	काष्ठा vc4_crtc_state *vc4_state = to_vc4_crtc_state(crtc_state);
+	काष्ठा drm_connector *conn;
+	काष्ठा drm_connector_state *conn_state;
+	पूर्णांक ret, i;
 
 	ret = vc4_hvs_atomic_check(crtc, state);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for_each_new_connector_in_state(state, conn, conn_state,
-					i) {
-		if (conn_state->crtc != crtc)
-			continue;
+	क्रम_each_new_connector_in_state(state, conn, conn_state,
+					i) अणु
+		अगर (conn_state->crtc != crtc)
+			जारी;
 
 		vc4_state->margins.left = conn_state->tv.margins.left;
 		vc4_state->margins.right = conn_state->tv.margins.right;
 		vc4_state->margins.top = conn_state->tv.margins.top;
 		vc4_state->margins.bottom = conn_state->tv.margins.bottom;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vc4_enable_vblank(struct drm_crtc *crtc)
-{
-	struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+अटल पूर्णांक vc4_enable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
 
 	CRTC_WRITE(PV_INTEN, PV_INT_VFP_START);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vc4_disable_vblank(struct drm_crtc *crtc)
-{
-	struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+अटल व्योम vc4_disable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
 
 	CRTC_WRITE(PV_INTEN, 0);
-}
+पूर्ण
 
-static void vc4_crtc_handle_page_flip(struct vc4_crtc *vc4_crtc)
-{
-	struct drm_crtc *crtc = &vc4_crtc->base;
-	struct drm_device *dev = crtc->dev;
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct vc4_crtc_state *vc4_state = to_vc4_crtc_state(crtc->state);
-	u32 chan = vc4_state->assigned_channel;
-	unsigned long flags;
+अटल व्योम vc4_crtc_handle_page_flip(काष्ठा vc4_crtc *vc4_crtc)
+अणु
+	काष्ठा drm_crtc *crtc = &vc4_crtc->base;
+	काष्ठा drm_device *dev = crtc->dev;
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा vc4_crtc_state *vc4_state = to_vc4_crtc_state(crtc->state);
+	u32 chan = vc4_state->asचिन्हित_channel;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->event_lock, flags);
-	if (vc4_crtc->event &&
+	अगर (vc4_crtc->event &&
 	    (vc4_state->mm.start == HVS_READ(SCALER_DISPLACTX(chan)) ||
-	     vc4_state->feed_txp)) {
+	     vc4_state->feed_txp)) अणु
 		drm_crtc_send_vblank_event(crtc, vc4_crtc->event);
-		vc4_crtc->event = NULL;
+		vc4_crtc->event = शून्य;
 		drm_crtc_vblank_put(crtc);
 
-		/* Wait for the page flip to unmask the underrun to ensure that
-		 * the display list was updated by the hardware. Before that
+		/* Wait क्रम the page flip to unmask the underrun to ensure that
+		 * the display list was updated by the hardware. Beक्रमe that
 		 * happens, the HVS will be using the previous display list with
-		 * the CRTC and encoder already reconfigured, leading to
+		 * the CRTC and encoder alपढ़ोy reconfigured, leading to
 		 * underruns. This can be seen when reconfiguring the CRTC.
 		 */
 		vc4_hvs_unmask_underrun(dev, chan);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&dev->event_lock, flags);
-}
+पूर्ण
 
-void vc4_crtc_handle_vblank(struct vc4_crtc *crtc)
-{
-	crtc->t_vblank = ktime_get();
+व्योम vc4_crtc_handle_vblank(काष्ठा vc4_crtc *crtc)
+अणु
+	crtc->t_vblank = kसमय_get();
 	drm_crtc_handle_vblank(&crtc->base);
 	vc4_crtc_handle_page_flip(crtc);
-}
+पूर्ण
 
-static irqreturn_t vc4_crtc_irq_handler(int irq, void *data)
-{
-	struct vc4_crtc *vc4_crtc = data;
+अटल irqवापस_t vc4_crtc_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा vc4_crtc *vc4_crtc = data;
 	u32 stat = CRTC_READ(PV_INTSTAT);
-	irqreturn_t ret = IRQ_NONE;
+	irqवापस_t ret = IRQ_NONE;
 
-	if (stat & PV_INT_VFP_START) {
+	अगर (stat & PV_INT_VFP_START) अणु
 		CRTC_WRITE(PV_INTSTAT, PV_INT_VFP_START);
 		vc4_crtc_handle_vblank(vc4_crtc);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct vc4_async_flip_state {
-	struct drm_crtc *crtc;
-	struct drm_framebuffer *fb;
-	struct drm_framebuffer *old_fb;
-	struct drm_pending_vblank_event *event;
+काष्ठा vc4_async_flip_state अणु
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_framebuffer *fb;
+	काष्ठा drm_framebuffer *old_fb;
+	काष्ठा drm_pending_vblank_event *event;
 
-	struct vc4_seqno_cb cb;
-};
+	काष्ठा vc4_seqno_cb cb;
+पूर्ण;
 
-/* Called when the V3D execution for the BO being flipped to is done, so that
- * we can actually update the plane's address to point to it.
+/* Called when the V3D execution क्रम the BO being flipped to is करोne, so that
+ * we can actually update the plane's address to poपूर्णांक to it.
  */
-static void
-vc4_async_page_flip_complete(struct vc4_seqno_cb *cb)
-{
-	struct vc4_async_flip_state *flip_state =
-		container_of(cb, struct vc4_async_flip_state, cb);
-	struct drm_crtc *crtc = flip_state->crtc;
-	struct drm_device *dev = crtc->dev;
-	struct drm_plane *plane = crtc->primary;
+अटल व्योम
+vc4_async_page_flip_complete(काष्ठा vc4_seqno_cb *cb)
+अणु
+	काष्ठा vc4_async_flip_state *flip_state =
+		container_of(cb, काष्ठा vc4_async_flip_state, cb);
+	काष्ठा drm_crtc *crtc = flip_state->crtc;
+	काष्ठा drm_device *dev = crtc->dev;
+	काष्ठा drm_plane *plane = crtc->primary;
 
 	vc4_plane_async_set_fb(plane, flip_state->fb);
-	if (flip_state->event) {
-		unsigned long flags;
+	अगर (flip_state->event) अणु
+		अचिन्हित दीर्घ flags;
 
 		spin_lock_irqsave(&dev->event_lock, flags);
 		drm_crtc_send_vblank_event(crtc, flip_state->event);
 		spin_unlock_irqrestore(&dev->event_lock, flags);
-	}
+	पूर्ण
 
 	drm_crtc_vblank_put(crtc);
 	drm_framebuffer_put(flip_state->fb);
@@ -734,61 +735,61 @@ vc4_async_page_flip_complete(struct vc4_seqno_cb *cb)
 	 * available, so that we can get rid of this hand-made cleanup_fb()
 	 * logic.
 	 */
-	if (flip_state->old_fb) {
-		struct drm_gem_cma_object *cma_bo;
-		struct vc4_bo *bo;
+	अगर (flip_state->old_fb) अणु
+		काष्ठा drm_gem_cma_object *cma_bo;
+		काष्ठा vc4_bo *bo;
 
 		cma_bo = drm_fb_cma_get_gem_obj(flip_state->old_fb, 0);
 		bo = to_vc4_bo(&cma_bo->base);
 		vc4_bo_dec_usecnt(bo);
 		drm_framebuffer_put(flip_state->old_fb);
-	}
+	पूर्ण
 
-	kfree(flip_state);
-}
+	kमुक्त(flip_state);
+पूर्ण
 
 /* Implements async (non-vblank-synced) page flips.
  *
- * The page flip ioctl needs to return immediately, so we grab the
- * modeset semaphore on the pipe, and queue the address update for
- * when V3D is done with the BO being flipped to.
+ * The page flip ioctl needs to वापस immediately, so we grab the
+ * modeset semaphore on the pipe, and queue the address update क्रम
+ * when V3D is करोne with the BO being flipped to.
  */
-static int vc4_async_page_flip(struct drm_crtc *crtc,
-			       struct drm_framebuffer *fb,
-			       struct drm_pending_vblank_event *event,
-			       uint32_t flags)
-{
-	struct drm_device *dev = crtc->dev;
-	struct drm_plane *plane = crtc->primary;
-	int ret = 0;
-	struct vc4_async_flip_state *flip_state;
-	struct drm_gem_cma_object *cma_bo = drm_fb_cma_get_gem_obj(fb, 0);
-	struct vc4_bo *bo = to_vc4_bo(&cma_bo->base);
+अटल पूर्णांक vc4_async_page_flip(काष्ठा drm_crtc *crtc,
+			       काष्ठा drm_framebuffer *fb,
+			       काष्ठा drm_pending_vblank_event *event,
+			       uपूर्णांक32_t flags)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	काष्ठा drm_plane *plane = crtc->primary;
+	पूर्णांक ret = 0;
+	काष्ठा vc4_async_flip_state *flip_state;
+	काष्ठा drm_gem_cma_object *cma_bo = drm_fb_cma_get_gem_obj(fb, 0);
+	काष्ठा vc4_bo *bo = to_vc4_bo(&cma_bo->base);
 
 	/* Increment the BO usecnt here, so that we never end up with an
-	 * unbalanced number of vc4_bo_{dec,inc}_usecnt() calls when the
+	 * unbalanced number of vc4_bo_अणुdec,incपूर्ण_usecnt() calls when the
 	 * plane is later updated through the non-async path.
 	 * FIXME: we should move to generic async-page-flip when it's
 	 * available, so that we can get rid of this hand-made prepare_fb()
 	 * logic.
 	 */
 	ret = vc4_bo_inc_usecnt(bo);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	flip_state = kzalloc(sizeof(*flip_state), GFP_KERNEL);
-	if (!flip_state) {
+	flip_state = kzalloc(माप(*flip_state), GFP_KERNEL);
+	अगर (!flip_state) अणु
 		vc4_bo_dec_usecnt(bo);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	drm_framebuffer_get(fb);
 	flip_state->fb = fb;
 	flip_state->crtc = crtc;
 	flip_state->event = event;
 
-	/* Save the current FB before it's replaced by the new one in
-	 * drm_atomic_set_fb_for_plane(). We'll need the old FB in
+	/* Save the current FB beक्रमe it's replaced by the new one in
+	 * drm_atomic_set_fb_क्रम_plane(). We'll need the old FB in
 	 * vc4_async_page_flip_complete() to decrement the BO usecnt and keep
 	 * it consistent.
 	 * FIXME: we should move to generic async-page-flip when it's
@@ -796,325 +797,325 @@ static int vc4_async_page_flip(struct drm_crtc *crtc,
 	 * logic.
 	 */
 	flip_state->old_fb = plane->state->fb;
-	if (flip_state->old_fb)
+	अगर (flip_state->old_fb)
 		drm_framebuffer_get(flip_state->old_fb);
 
 	WARN_ON(drm_crtc_vblank_get(crtc) != 0);
 
-	/* Immediately update the plane's legacy fb pointer, so that later
+	/* Immediately update the plane's legacy fb poपूर्णांकer, so that later
 	 * modeset prep sees the state that will be present when the semaphore
 	 * is released.
 	 */
-	drm_atomic_set_fb_for_plane(plane->state, fb);
+	drm_atomic_set_fb_क्रम_plane(plane->state, fb);
 
 	vc4_queue_seqno_cb(dev, &flip_state->cb, bo->seqno,
 			   vc4_async_page_flip_complete);
 
 	/* Driver takes ownership of state on successful async commit. */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vc4_page_flip(struct drm_crtc *crtc,
-		  struct drm_framebuffer *fb,
-		  struct drm_pending_vblank_event *event,
-		  uint32_t flags,
-		  struct drm_modeset_acquire_ctx *ctx)
-{
-	if (flags & DRM_MODE_PAGE_FLIP_ASYNC)
-		return vc4_async_page_flip(crtc, fb, event, flags);
-	else
-		return drm_atomic_helper_page_flip(crtc, fb, event, flags, ctx);
-}
+पूर्णांक vc4_page_flip(काष्ठा drm_crtc *crtc,
+		  काष्ठा drm_framebuffer *fb,
+		  काष्ठा drm_pending_vblank_event *event,
+		  uपूर्णांक32_t flags,
+		  काष्ठा drm_modeset_acquire_ctx *ctx)
+अणु
+	अगर (flags & DRM_MODE_PAGE_FLIP_ASYNC)
+		वापस vc4_async_page_flip(crtc, fb, event, flags);
+	अन्यथा
+		वापस drm_atomic_helper_page_flip(crtc, fb, event, flags, ctx);
+पूर्ण
 
-struct drm_crtc_state *vc4_crtc_duplicate_state(struct drm_crtc *crtc)
-{
-	struct vc4_crtc_state *vc4_state, *old_vc4_state;
+काष्ठा drm_crtc_state *vc4_crtc_duplicate_state(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा vc4_crtc_state *vc4_state, *old_vc4_state;
 
-	vc4_state = kzalloc(sizeof(*vc4_state), GFP_KERNEL);
-	if (!vc4_state)
-		return NULL;
+	vc4_state = kzalloc(माप(*vc4_state), GFP_KERNEL);
+	अगर (!vc4_state)
+		वापस शून्य;
 
 	old_vc4_state = to_vc4_crtc_state(crtc->state);
 	vc4_state->feed_txp = old_vc4_state->feed_txp;
 	vc4_state->margins = old_vc4_state->margins;
-	vc4_state->assigned_channel = old_vc4_state->assigned_channel;
+	vc4_state->asचिन्हित_channel = old_vc4_state->asचिन्हित_channel;
 
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &vc4_state->base);
-	return &vc4_state->base;
-}
+	वापस &vc4_state->base;
+पूर्ण
 
-void vc4_crtc_destroy_state(struct drm_crtc *crtc,
-			    struct drm_crtc_state *state)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(crtc->dev);
-	struct vc4_crtc_state *vc4_state = to_vc4_crtc_state(state);
+व्योम vc4_crtc_destroy_state(काष्ठा drm_crtc *crtc,
+			    काष्ठा drm_crtc_state *state)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(crtc->dev);
+	काष्ठा vc4_crtc_state *vc4_state = to_vc4_crtc_state(state);
 
-	if (drm_mm_node_allocated(&vc4_state->mm)) {
-		unsigned long flags;
+	अगर (drm_mm_node_allocated(&vc4_state->mm)) अणु
+		अचिन्हित दीर्घ flags;
 
 		spin_lock_irqsave(&vc4->hvs->mm_lock, flags);
-		drm_mm_remove_node(&vc4_state->mm);
+		drm_mm_हटाओ_node(&vc4_state->mm);
 		spin_unlock_irqrestore(&vc4->hvs->mm_lock, flags);
 
-	}
+	पूर्ण
 
 	drm_atomic_helper_crtc_destroy_state(crtc, state);
-}
+पूर्ण
 
-void vc4_crtc_reset(struct drm_crtc *crtc)
-{
-	struct vc4_crtc_state *vc4_crtc_state;
+व्योम vc4_crtc_reset(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा vc4_crtc_state *vc4_crtc_state;
 
-	if (crtc->state)
+	अगर (crtc->state)
 		vc4_crtc_destroy_state(crtc, crtc->state);
 
-	vc4_crtc_state = kzalloc(sizeof(*vc4_crtc_state), GFP_KERNEL);
-	if (!vc4_crtc_state) {
-		crtc->state = NULL;
-		return;
-	}
+	vc4_crtc_state = kzalloc(माप(*vc4_crtc_state), GFP_KERNEL);
+	अगर (!vc4_crtc_state) अणु
+		crtc->state = शून्य;
+		वापस;
+	पूर्ण
 
-	vc4_crtc_state->assigned_channel = VC4_HVS_CHANNEL_DISABLED;
+	vc4_crtc_state->asचिन्हित_channel = VC4_HVS_CHANNEL_DISABLED;
 	__drm_atomic_helper_crtc_reset(crtc, &vc4_crtc_state->base);
-}
+पूर्ण
 
-static const struct drm_crtc_funcs vc4_crtc_funcs = {
+अटल स्थिर काष्ठा drm_crtc_funcs vc4_crtc_funcs = अणु
 	.set_config = drm_atomic_helper_set_config,
 	.destroy = vc4_crtc_destroy,
 	.page_flip = vc4_page_flip,
-	.set_property = NULL,
-	.cursor_set = NULL, /* handled by drm_mode_cursor_universal */
-	.cursor_move = NULL, /* handled by drm_mode_cursor_universal */
+	.set_property = शून्य,
+	.cursor_set = शून्य, /* handled by drm_mode_cursor_universal */
+	.cursor_move = शून्य, /* handled by drm_mode_cursor_universal */
 	.reset = vc4_crtc_reset,
 	.atomic_duplicate_state = vc4_crtc_duplicate_state,
 	.atomic_destroy_state = vc4_crtc_destroy_state,
 	.enable_vblank = vc4_enable_vblank,
 	.disable_vblank = vc4_disable_vblank,
-	.get_vblank_timestamp = drm_crtc_vblank_helper_get_vblank_timestamp,
-};
+	.get_vblank_बारtamp = drm_crtc_vblank_helper_get_vblank_बारtamp,
+पूर्ण;
 
-static const struct drm_crtc_helper_funcs vc4_crtc_helper_funcs = {
+अटल स्थिर काष्ठा drm_crtc_helper_funcs vc4_crtc_helper_funcs = अणु
 	.mode_valid = vc4_crtc_mode_valid,
 	.atomic_check = vc4_crtc_atomic_check,
 	.atomic_flush = vc4_hvs_atomic_flush,
 	.atomic_enable = vc4_crtc_atomic_enable,
 	.atomic_disable = vc4_crtc_atomic_disable,
 	.get_scanout_position = vc4_crtc_get_scanout_position,
-};
+पूर्ण;
 
-static const struct vc4_pv_data bcm2835_pv0_data = {
-	.base = {
+अटल स्थिर काष्ठा vc4_pv_data bcm2835_pv0_data = अणु
+	.base = अणु
 		.hvs_available_channels = BIT(0),
 		.hvs_output = 0,
-	},
+	पूर्ण,
 	.debugfs_name = "crtc0_regs",
-	.fifo_depth = 64,
-	.pixels_per_clock = 1,
-	.encoder_types = {
+	.fअगरo_depth = 64,
+	.pixels_per_घड़ी = 1,
+	.encoder_types = अणु
 		[PV_CONTROL_CLK_SELECT_DSI] = VC4_ENCODER_TYPE_DSI0,
 		[PV_CONTROL_CLK_SELECT_DPI_SMI_HDMI] = VC4_ENCODER_TYPE_DPI,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct vc4_pv_data bcm2835_pv1_data = {
-	.base = {
+अटल स्थिर काष्ठा vc4_pv_data bcm2835_pv1_data = अणु
+	.base = अणु
 		.hvs_available_channels = BIT(2),
 		.hvs_output = 2,
-	},
+	पूर्ण,
 	.debugfs_name = "crtc1_regs",
-	.fifo_depth = 64,
-	.pixels_per_clock = 1,
-	.encoder_types = {
+	.fअगरo_depth = 64,
+	.pixels_per_घड़ी = 1,
+	.encoder_types = अणु
 		[PV_CONTROL_CLK_SELECT_DSI] = VC4_ENCODER_TYPE_DSI1,
 		[PV_CONTROL_CLK_SELECT_DPI_SMI_HDMI] = VC4_ENCODER_TYPE_SMI,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct vc4_pv_data bcm2835_pv2_data = {
-	.base = {
+अटल स्थिर काष्ठा vc4_pv_data bcm2835_pv2_data = अणु
+	.base = अणु
 		.hvs_available_channels = BIT(1),
 		.hvs_output = 1,
-	},
+	पूर्ण,
 	.debugfs_name = "crtc2_regs",
-	.fifo_depth = 64,
-	.pixels_per_clock = 1,
-	.encoder_types = {
+	.fअगरo_depth = 64,
+	.pixels_per_घड़ी = 1,
+	.encoder_types = अणु
 		[PV_CONTROL_CLK_SELECT_DPI_SMI_HDMI] = VC4_ENCODER_TYPE_HDMI0,
 		[PV_CONTROL_CLK_SELECT_VEC] = VC4_ENCODER_TYPE_VEC,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct vc4_pv_data bcm2711_pv0_data = {
-	.base = {
+अटल स्थिर काष्ठा vc4_pv_data bcm2711_pv0_data = अणु
+	.base = अणु
 		.hvs_available_channels = BIT(0),
 		.hvs_output = 0,
-	},
+	पूर्ण,
 	.debugfs_name = "crtc0_regs",
-	.fifo_depth = 64,
-	.pixels_per_clock = 1,
-	.encoder_types = {
+	.fअगरo_depth = 64,
+	.pixels_per_घड़ी = 1,
+	.encoder_types = अणु
 		[0] = VC4_ENCODER_TYPE_DSI0,
 		[1] = VC4_ENCODER_TYPE_DPI,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct vc4_pv_data bcm2711_pv1_data = {
-	.base = {
+अटल स्थिर काष्ठा vc4_pv_data bcm2711_pv1_data = अणु
+	.base = अणु
 		.hvs_available_channels = BIT(0) | BIT(1) | BIT(2),
 		.hvs_output = 3,
-	},
+	पूर्ण,
 	.debugfs_name = "crtc1_regs",
-	.fifo_depth = 64,
-	.pixels_per_clock = 1,
-	.encoder_types = {
+	.fअगरo_depth = 64,
+	.pixels_per_घड़ी = 1,
+	.encoder_types = अणु
 		[0] = VC4_ENCODER_TYPE_DSI1,
 		[1] = VC4_ENCODER_TYPE_SMI,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct vc4_pv_data bcm2711_pv2_data = {
-	.base = {
+अटल स्थिर काष्ठा vc4_pv_data bcm2711_pv2_data = अणु
+	.base = अणु
 		.hvs_available_channels = BIT(0) | BIT(1) | BIT(2),
 		.hvs_output = 4,
-	},
+	पूर्ण,
 	.debugfs_name = "crtc2_regs",
-	.fifo_depth = 256,
-	.pixels_per_clock = 2,
-	.encoder_types = {
+	.fअगरo_depth = 256,
+	.pixels_per_घड़ी = 2,
+	.encoder_types = अणु
 		[0] = VC4_ENCODER_TYPE_HDMI0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct vc4_pv_data bcm2711_pv3_data = {
-	.base = {
+अटल स्थिर काष्ठा vc4_pv_data bcm2711_pv3_data = अणु
+	.base = अणु
 		.hvs_available_channels = BIT(1),
 		.hvs_output = 1,
-	},
+	पूर्ण,
 	.debugfs_name = "crtc3_regs",
-	.fifo_depth = 64,
-	.pixels_per_clock = 1,
-	.encoder_types = {
+	.fअगरo_depth = 64,
+	.pixels_per_घड़ी = 1,
+	.encoder_types = अणु
 		[0] = VC4_ENCODER_TYPE_VEC,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct vc4_pv_data bcm2711_pv4_data = {
-	.base = {
+अटल स्थिर काष्ठा vc4_pv_data bcm2711_pv4_data = अणु
+	.base = अणु
 		.hvs_available_channels = BIT(0) | BIT(1) | BIT(2),
 		.hvs_output = 5,
-	},
+	पूर्ण,
 	.debugfs_name = "crtc4_regs",
-	.fifo_depth = 64,
-	.pixels_per_clock = 2,
-	.encoder_types = {
+	.fअगरo_depth = 64,
+	.pixels_per_घड़ी = 2,
+	.encoder_types = अणु
 		[0] = VC4_ENCODER_TYPE_HDMI1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct of_device_id vc4_crtc_dt_match[] = {
-	{ .compatible = "brcm,bcm2835-pixelvalve0", .data = &bcm2835_pv0_data },
-	{ .compatible = "brcm,bcm2835-pixelvalve1", .data = &bcm2835_pv1_data },
-	{ .compatible = "brcm,bcm2835-pixelvalve2", .data = &bcm2835_pv2_data },
-	{ .compatible = "brcm,bcm2711-pixelvalve0", .data = &bcm2711_pv0_data },
-	{ .compatible = "brcm,bcm2711-pixelvalve1", .data = &bcm2711_pv1_data },
-	{ .compatible = "brcm,bcm2711-pixelvalve2", .data = &bcm2711_pv2_data },
-	{ .compatible = "brcm,bcm2711-pixelvalve3", .data = &bcm2711_pv3_data },
-	{ .compatible = "brcm,bcm2711-pixelvalve4", .data = &bcm2711_pv4_data },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id vc4_crtc_dt_match[] = अणु
+	अणु .compatible = "brcm,bcm2835-pixelvalve0", .data = &bcm2835_pv0_data पूर्ण,
+	अणु .compatible = "brcm,bcm2835-pixelvalve1", .data = &bcm2835_pv1_data पूर्ण,
+	अणु .compatible = "brcm,bcm2835-pixelvalve2", .data = &bcm2835_pv2_data पूर्ण,
+	अणु .compatible = "brcm,bcm2711-pixelvalve0", .data = &bcm2711_pv0_data पूर्ण,
+	अणु .compatible = "brcm,bcm2711-pixelvalve1", .data = &bcm2711_pv1_data पूर्ण,
+	अणु .compatible = "brcm,bcm2711-pixelvalve2", .data = &bcm2711_pv2_data पूर्ण,
+	अणु .compatible = "brcm,bcm2711-pixelvalve3", .data = &bcm2711_pv3_data पूर्ण,
+	अणु .compatible = "brcm,bcm2711-pixelvalve4", .data = &bcm2711_pv4_data पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void vc4_set_crtc_possible_masks(struct drm_device *drm,
-					struct drm_crtc *crtc)
-{
-	struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
-	const struct vc4_pv_data *pv_data = vc4_crtc_to_vc4_pv_data(vc4_crtc);
-	const enum vc4_encoder_type *encoder_types = pv_data->encoder_types;
-	struct drm_encoder *encoder;
+अटल व्योम vc4_set_crtc_possible_masks(काष्ठा drm_device *drm,
+					काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+	स्थिर काष्ठा vc4_pv_data *pv_data = vc4_crtc_to_vc4_pv_data(vc4_crtc);
+	स्थिर क्रमागत vc4_encoder_type *encoder_types = pv_data->encoder_types;
+	काष्ठा drm_encoder *encoder;
 
-	drm_for_each_encoder(encoder, drm) {
-		struct vc4_encoder *vc4_encoder;
-		int i;
+	drm_क्रम_each_encoder(encoder, drm) अणु
+		काष्ठा vc4_encoder *vc4_encoder;
+		पूर्णांक i;
 
 		vc4_encoder = to_vc4_encoder(encoder);
-		for (i = 0; i < ARRAY_SIZE(pv_data->encoder_types); i++) {
-			if (vc4_encoder->type == encoder_types[i]) {
-				vc4_encoder->clock_select = i;
+		क्रम (i = 0; i < ARRAY_SIZE(pv_data->encoder_types); i++) अणु
+			अगर (vc4_encoder->type == encoder_types[i]) अणु
+				vc4_encoder->घड़ी_select = i;
 				encoder->possible_crtcs |= drm_crtc_mask(crtc);
-				break;
-			}
-		}
-	}
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int vc4_crtc_init(struct drm_device *drm, struct vc4_crtc *vc4_crtc,
-		  const struct drm_crtc_funcs *crtc_funcs,
-		  const struct drm_crtc_helper_funcs *crtc_helper_funcs)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(drm);
-	struct drm_crtc *crtc = &vc4_crtc->base;
-	struct drm_plane *primary_plane;
-	unsigned int i;
+पूर्णांक vc4_crtc_init(काष्ठा drm_device *drm, काष्ठा vc4_crtc *vc4_crtc,
+		  स्थिर काष्ठा drm_crtc_funcs *crtc_funcs,
+		  स्थिर काष्ठा drm_crtc_helper_funcs *crtc_helper_funcs)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(drm);
+	काष्ठा drm_crtc *crtc = &vc4_crtc->base;
+	काष्ठा drm_plane *primary_plane;
+	अचिन्हित पूर्णांक i;
 
 	/* For now, we create just the primary and the legacy cursor
 	 * planes.  We should be able to stack more planes on easily,
-	 * but to do that we would need to compute the bandwidth
+	 * but to करो that we would need to compute the bandwidth
 	 * requirement of the plane configuration, and reject ones
 	 * that will take too much.
 	 */
 	primary_plane = vc4_plane_init(drm, DRM_PLANE_TYPE_PRIMARY);
-	if (IS_ERR(primary_plane)) {
+	अगर (IS_ERR(primary_plane)) अणु
 		dev_err(drm->dev, "failed to construct primary plane\n");
-		return PTR_ERR(primary_plane);
-	}
+		वापस PTR_ERR(primary_plane);
+	पूर्ण
 
-	drm_crtc_init_with_planes(drm, crtc, primary_plane, NULL,
-				  crtc_funcs, NULL);
+	drm_crtc_init_with_planes(drm, crtc, primary_plane, शून्य,
+				  crtc_funcs, शून्य);
 	drm_crtc_helper_add(crtc, crtc_helper_funcs);
 
-	if (!vc4->hvs->hvs5) {
+	अगर (!vc4->hvs->hvs5) अणु
 		drm_mode_crtc_set_gamma_size(crtc, ARRAY_SIZE(vc4_crtc->lut_r));
 
 		drm_crtc_enable_color_mgmt(crtc, 0, false, crtc->gamma_size);
 
-		/* We support CTM, but only for one CRTC at a time. It's therefore
-		 * implemented as private driver state in vc4_kms, not here.
+		/* We support CTM, but only क्रम one CRTC at a समय. It's thereक्रमe
+		 * implemented as निजी driver state in vc4_kms, not here.
 		 */
 		drm_crtc_enable_color_mgmt(crtc, 0, true, crtc->gamma_size);
-	}
+	पूर्ण
 
-	for (i = 0; i < crtc->gamma_size; i++) {
+	क्रम (i = 0; i < crtc->gamma_size; i++) अणु
 		vc4_crtc->lut_r[i] = i;
 		vc4_crtc->lut_g[i] = i;
 		vc4_crtc->lut_b[i] = i;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vc4_crtc_bind(struct device *dev, struct device *master, void *data)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct drm_device *drm = dev_get_drvdata(master);
-	const struct vc4_pv_data *pv_data;
-	struct vc4_crtc *vc4_crtc;
-	struct drm_crtc *crtc;
-	struct drm_plane *destroy_plane, *temp;
-	int ret;
+अटल पूर्णांक vc4_crtc_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा drm_device *drm = dev_get_drvdata(master);
+	स्थिर काष्ठा vc4_pv_data *pv_data;
+	काष्ठा vc4_crtc *vc4_crtc;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_plane *destroy_plane, *temp;
+	पूर्णांक ret;
 
-	vc4_crtc = devm_kzalloc(dev, sizeof(*vc4_crtc), GFP_KERNEL);
-	if (!vc4_crtc)
-		return -ENOMEM;
+	vc4_crtc = devm_kzalloc(dev, माप(*vc4_crtc), GFP_KERNEL);
+	अगर (!vc4_crtc)
+		वापस -ENOMEM;
 	crtc = &vc4_crtc->base;
 
 	pv_data = of_device_get_match_data(dev);
-	if (!pv_data)
-		return -ENODEV;
+	अगर (!pv_data)
+		वापस -ENODEV;
 	vc4_crtc->data = &pv_data->base;
 	vc4_crtc->pdev = pdev;
 
 	vc4_crtc->regs = vc4_ioremap_regs(pdev, 0);
-	if (IS_ERR(vc4_crtc->regs))
-		return PTR_ERR(vc4_crtc->regs);
+	अगर (IS_ERR(vc4_crtc->regs))
+		वापस PTR_ERR(vc4_crtc->regs);
 
 	vc4_crtc->regset.base = vc4_crtc->regs;
 	vc4_crtc->regset.regs = crtc_regs;
@@ -1122,70 +1123,70 @@ static int vc4_crtc_bind(struct device *dev, struct device *master, void *data)
 
 	ret = vc4_crtc_init(drm, vc4_crtc,
 			    &vc4_crtc_funcs, &vc4_crtc_helper_funcs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	vc4_set_crtc_possible_masks(drm, crtc);
 
 	CRTC_WRITE(PV_INTEN, 0);
 	CRTC_WRITE(PV_INTSTAT, PV_INT_VFP_START);
-	ret = devm_request_irq(dev, platform_get_irq(pdev, 0),
+	ret = devm_request_irq(dev, platक्रमm_get_irq(pdev, 0),
 			       vc4_crtc_irq_handler,
 			       IRQF_SHARED,
 			       "vc4 crtc", vc4_crtc);
-	if (ret)
-		goto err_destroy_planes;
+	अगर (ret)
+		जाओ err_destroy_planes;
 
-	platform_set_drvdata(pdev, vc4_crtc);
+	platक्रमm_set_drvdata(pdev, vc4_crtc);
 
 	vc4_debugfs_add_regset32(drm, pv_data->debugfs_name,
 				 &vc4_crtc->regset);
 
-	return 0;
+	वापस 0;
 
 err_destroy_planes:
-	list_for_each_entry_safe(destroy_plane, temp,
-				 &drm->mode_config.plane_list, head) {
-		if (destroy_plane->possible_crtcs == drm_crtc_mask(crtc))
+	list_क्रम_each_entry_safe(destroy_plane, temp,
+				 &drm->mode_config.plane_list, head) अणु
+		अगर (destroy_plane->possible_crtcs == drm_crtc_mask(crtc))
 		    destroy_plane->funcs->destroy(destroy_plane);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vc4_crtc_unbind(struct device *dev, struct device *master,
-			    void *data)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct vc4_crtc *vc4_crtc = dev_get_drvdata(dev);
+अटल व्योम vc4_crtc_unbind(काष्ठा device *dev, काष्ठा device *master,
+			    व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा vc4_crtc *vc4_crtc = dev_get_drvdata(dev);
 
 	vc4_crtc_destroy(&vc4_crtc->base);
 
 	CRTC_WRITE(PV_INTEN, 0);
 
-	platform_set_drvdata(pdev, NULL);
-}
+	platक्रमm_set_drvdata(pdev, शून्य);
+पूर्ण
 
-static const struct component_ops vc4_crtc_ops = {
+अटल स्थिर काष्ठा component_ops vc4_crtc_ops = अणु
 	.bind   = vc4_crtc_bind,
 	.unbind = vc4_crtc_unbind,
-};
+पूर्ण;
 
-static int vc4_crtc_dev_probe(struct platform_device *pdev)
-{
-	return component_add(&pdev->dev, &vc4_crtc_ops);
-}
+अटल पूर्णांक vc4_crtc_dev_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस component_add(&pdev->dev, &vc4_crtc_ops);
+पूर्ण
 
-static int vc4_crtc_dev_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक vc4_crtc_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_del(&pdev->dev, &vc4_crtc_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct platform_driver vc4_crtc_driver = {
+काष्ठा platक्रमm_driver vc4_crtc_driver = अणु
 	.probe = vc4_crtc_dev_probe,
-	.remove = vc4_crtc_dev_remove,
-	.driver = {
+	.हटाओ = vc4_crtc_dev_हटाओ,
+	.driver = अणु
 		.name = "vc4_crtc",
 		.of_match_table = vc4_crtc_dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;

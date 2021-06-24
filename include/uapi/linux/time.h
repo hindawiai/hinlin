@@ -1,75 +1,76 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_TIME_H
-#define _UAPI_LINUX_TIME_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_TIME_H
+#घोषणा _UAPI_LINUX_TIME_H
 
-#include <linux/types.h>
-#include <linux/time_types.h>
+#समावेश <linux/types.h>
+#समावेश <linux/समय_प्रकारypes.h>
 
-#ifndef __KERNEL__
-#ifndef _STRUCT_TIMESPEC
-#define _STRUCT_TIMESPEC
-struct timespec {
-	__kernel_old_time_t	tv_sec;		/* seconds */
-	long			tv_nsec;	/* nanoseconds */
-};
-#endif
+#अगर_अघोषित __KERNEL__
+#अगर_अघोषित _STRUCT_TIMESPEC
+#घोषणा _STRUCT_TIMESPEC
+काष्ठा बारpec अणु
+	__kernel_old_समय_प्रकार	tv_sec;		/* seconds */
+	दीर्घ			tv_nsec;	/* nanoseconds */
+पूर्ण;
+#पूर्ण_अगर
 
-struct timeval {
-	__kernel_old_time_t	tv_sec;		/* seconds */
+काष्ठा समयval अणु
+	__kernel_old_समय_प्रकार	tv_sec;		/* seconds */
 	__kernel_suseconds_t	tv_usec;	/* microseconds */
-};
+पूर्ण;
 
-struct itimerspec {
-	struct timespec it_interval;/* timer period */
-	struct timespec it_value;	/* timer expiration */
-};
+काष्ठा iसमयrspec अणु
+	काष्ठा बारpec it_पूर्णांकerval;/* समयr period */
+	काष्ठा बारpec it_value;	/* समयr expiration */
+पूर्ण;
 
-struct itimerval {
-	struct timeval it_interval;/* timer interval */
-	struct timeval it_value;	/* current value */
-};
-#endif
+काष्ठा iसमयrval अणु
+	काष्ठा समयval it_पूर्णांकerval;/* समयr पूर्णांकerval */
+	काष्ठा समयval it_value;	/* current value */
+पूर्ण;
+#पूर्ण_अगर
 
-struct timezone {
-	int	tz_minuteswest;	/* minutes west of Greenwich */
-	int	tz_dsttime;	/* type of dst correction */
-};
+काष्ठा समयzone अणु
+	पूर्णांक	tz_minuteswest;	/* minutes west of Greenwich */
+	पूर्णांक	tz_dstसमय;	/* type of dst correction */
+पूर्ण;
 
 /*
- * Names of the interval timers, and structure
- * defining a timer setting:
+ * Names of the पूर्णांकerval समयrs, and काष्ठाure
+ * defining a समयr setting:
  */
-#define	ITIMER_REAL		0
-#define	ITIMER_VIRTUAL		1
-#define	ITIMER_PROF		2
+#घोषणा	ITIMER_REAL		0
+#घोषणा	ITIMER_VIRTUAL		1
+#घोषणा	ITIMER_PROF		2
 
 /*
- * The IDs of the various system clocks (for POSIX.1b interval timers):
+ * The IDs of the various प्रणाली घड़ीs (क्रम POSIX.1b पूर्णांकerval समयrs):
  */
-#define CLOCK_REALTIME			0
-#define CLOCK_MONOTONIC			1
-#define CLOCK_PROCESS_CPUTIME_ID	2
-#define CLOCK_THREAD_CPUTIME_ID		3
-#define CLOCK_MONOTONIC_RAW		4
-#define CLOCK_REALTIME_COARSE		5
-#define CLOCK_MONOTONIC_COARSE		6
-#define CLOCK_BOOTTIME			7
-#define CLOCK_REALTIME_ALARM		8
-#define CLOCK_BOOTTIME_ALARM		9
+#घोषणा CLOCK_REALTIME			0
+#घोषणा CLOCK_MONOTONIC			1
+#घोषणा CLOCK_PROCESS_CPUTIME_ID	2
+#घोषणा CLOCK_THREAD_CPUTIME_ID		3
+#घोषणा CLOCK_MONOTONIC_RAW		4
+#घोषणा CLOCK_REALTIME_COARSE		5
+#घोषणा CLOCK_MONOTONIC_COARSE		6
+#घोषणा CLOCK_BOOTTIME			7
+#घोषणा CLOCK_REALTIME_ALARM		8
+#घोषणा CLOCK_BOOTTIME_ALARM		9
 /*
- * The driver implementing this got removed. The clock ID is kept as a
+ * The driver implementing this got हटाओd. The घड़ी ID is kept as a
  * place holder. Do not reuse!
  */
-#define CLOCK_SGI_CYCLE			10
-#define CLOCK_TAI			11
+#घोषणा CLOCK_SGI_CYCLE			10
+#घोषणा CLOCK_TAI			11
 
-#define MAX_CLOCKS			16
-#define CLOCKS_MASK			(CLOCK_REALTIME | CLOCK_MONOTONIC)
-#define CLOCKS_MONO			CLOCK_MONOTONIC
+#घोषणा MAX_CLOCKS			16
+#घोषणा CLOCKS_MASK			(CLOCK_REALTIME | CLOCK_MONOTONIC)
+#घोषणा CLOCKS_MONO			CLOCK_MONOTONIC
 
 /*
- * The various flags for setting POSIX.1b interval timers:
+ * The various flags क्रम setting POSIX.1b पूर्णांकerval समयrs:
  */
-#define TIMER_ABSTIME			0x01
+#घोषणा TIMER_ABSTIME			0x01
 
-#endif /* _UAPI_LINUX_TIME_H */
+#पूर्ण_अगर /* _UAPI_LINUX_TIME_H */

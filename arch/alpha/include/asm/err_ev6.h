@@ -1,6 +1,7 @@
-#ifndef __ALPHA_ERR_EV6_H
-#define __ALPHA_ERR_EV6_H 1
+<शैली गुरु>
+#अगर_अघोषित __ALPHA_ERR_EV6_H
+#घोषणा __ALPHA_ERR_EV6_H 1
 
-/* Dummy include for now. */
+/* Dummy include क्रम now. */
 
-#endif /* __ALPHA_ERR_EV6_H */
+#पूर्ण_अगर /* __ALPHA_ERR_EV6_H */

@@ -1,130 +1,131 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * comedi/drivers/ni_labpc_pci.c
- * Driver for National Instruments Lab-PC PCI-1200
- * Copyright (C) 2001, 2002, 2003 Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Driver क्रम National Instruments Lab-PC PCI-1200
+ * Copyright (C) 2001, 2002, 2003 Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  */
 
 /*
  * Driver: ni_labpc_pci
  * Description: National Instruments Lab-PC PCI-1200
  * Devices: [National Instruments] PCI-1200 (ni_pci-1200)
- * Author: Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Author: Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  * Status: works
  *
- * This is the PCI-specific support split off from the ni_labpc driver.
+ * This is the PCI-specअगरic support split off from the ni_labpc driver.
  *
- * Configuration Options: not applicable, uses PCI auto config
+ * Configuration Options: not applicable, uses PCI स्वतः config
  *
  * NI manuals:
  * 340914a (pci-1200)
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "../comedi_pci.h"
+#समावेश "../comedi_pci.h"
 
-#include "ni_labpc.h"
+#समावेश "ni_labpc.h"
 
-enum labpc_pci_boardid {
+क्रमागत labpc_pci_boardid अणु
 	BOARD_NI_PCI1200,
-};
+पूर्ण;
 
-static const struct labpc_boardinfo labpc_pci_boards[] = {
-	[BOARD_NI_PCI1200] = {
+अटल स्थिर काष्ठा labpc_boardinfo labpc_pci_boards[] = अणु
+	[BOARD_NI_PCI1200] = अणु
 		.name			= "ni_pci-1200",
 		.ai_speed		= 10000,
 		.ai_scan_up		= 1,
 		.has_ao			= 1,
 		.is_labpc1200		= 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* ripped from mite.h and mite_setup2() to avoid mite dependency */
-#define MITE_IODWBSR	0xc0	/* IO Device Window Base Size Register */
-#define WENAB		BIT(7)	/* window enable */
+/* ripped from mite.h and mite_setup2() to aव्योम mite dependency */
+#घोषणा MITE_IODWBSR	0xc0	/* IO Device Winकरोw Base Size Register */
+#घोषणा WENAB		BIT(7)	/* winकरोw enable */
 
-static int labpc_pci_mite_init(struct pci_dev *pcidev)
-{
-	void __iomem *mite_base;
-	u32 main_phys_addr;
+अटल पूर्णांक labpc_pci_mite_init(काष्ठा pci_dev *pcidev)
+अणु
+	व्योम __iomem *mite_base;
+	u32 मुख्य_phys_addr;
 
-	/* ioremap the MITE registers (BAR 0) temporarily */
+	/* ioremap the MITE रेजिस्टरs (BAR 0) temporarily */
 	mite_base = pci_ioremap_bar(pcidev, 0);
-	if (!mite_base)
-		return -ENOMEM;
+	अगर (!mite_base)
+		वापस -ENOMEM;
 
-	/* set data window to main registers (BAR 1) */
-	main_phys_addr = pci_resource_start(pcidev, 1);
-	writel(main_phys_addr | WENAB, mite_base + MITE_IODWBSR);
+	/* set data winकरोw to मुख्य रेजिस्टरs (BAR 1) */
+	मुख्य_phys_addr = pci_resource_start(pcidev, 1);
+	ग_लिखोl(मुख्य_phys_addr | WENAB, mite_base + MITE_IODWBSR);
 
-	/* finished with MITE registers */
+	/* finished with MITE रेजिस्टरs */
 	iounmap(mite_base);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int labpc_pci_auto_attach(struct comedi_device *dev,
-				 unsigned long context)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	const struct labpc_boardinfo *board = NULL;
-	int ret;
+अटल पूर्णांक labpc_pci_स्वतः_attach(काष्ठा comedi_device *dev,
+				 अचिन्हित दीर्घ context)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	स्थिर काष्ठा labpc_boardinfo *board = शून्य;
+	पूर्णांक ret;
 
-	if (context < ARRAY_SIZE(labpc_pci_boards))
+	अगर (context < ARRAY_SIZE(labpc_pci_boards))
 		board = &labpc_pci_boards[context];
-	if (!board)
-		return -ENODEV;
+	अगर (!board)
+		वापस -ENODEV;
 	dev->board_ptr = board;
 	dev->board_name = board->name;
 
 	ret = comedi_pci_enable(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = labpc_pci_mite_init(pcidev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dev->mmio = pci_ioremap_bar(pcidev, 1);
-	if (!dev->mmio)
-		return -ENOMEM;
+	अगर (!dev->mmio)
+		वापस -ENOMEM;
 
-	return labpc_common_attach(dev, pcidev->irq, IRQF_SHARED);
-}
+	वापस labpc_common_attach(dev, pcidev->irq, IRQF_SHARED);
+पूर्ण
 
-static void labpc_pci_detach(struct comedi_device *dev)
-{
+अटल व्योम labpc_pci_detach(काष्ठा comedi_device *dev)
+अणु
 	labpc_common_detach(dev);
 	comedi_pci_detach(dev);
-}
+पूर्ण
 
-static struct comedi_driver labpc_pci_comedi_driver = {
+अटल काष्ठा comedi_driver labpc_pci_comedi_driver = अणु
 	.driver_name	= "labpc_pci",
 	.module		= THIS_MODULE,
-	.auto_attach	= labpc_pci_auto_attach,
+	.स्वतः_attach	= labpc_pci_स्वतः_attach,
 	.detach		= labpc_pci_detach,
-};
+पूर्ण;
 
-static const struct pci_device_id labpc_pci_table[] = {
-	{ PCI_VDEVICE(NI, 0x161), BOARD_NI_PCI1200 },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id labpc_pci_table[] = अणु
+	अणु PCI_VDEVICE(NI, 0x161), BOARD_NI_PCI1200 पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, labpc_pci_table);
 
-static int labpc_pci_probe(struct pci_dev *dev,
-			   const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &labpc_pci_comedi_driver,
+अटल पूर्णांक labpc_pci_probe(काष्ठा pci_dev *dev,
+			   स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &labpc_pci_comedi_driver,
 				      id->driver_data);
-}
+पूर्ण
 
-static struct pci_driver labpc_pci_driver = {
+अटल काष्ठा pci_driver labpc_pci_driver = अणु
 	.name		= "labpc_pci",
 	.id_table	= labpc_pci_table,
 	.probe		= labpc_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(labpc_pci_comedi_driver, labpc_pci_driver);
 
 MODULE_DESCRIPTION("Comedi: National Instruments Lab-PC PCI-1200 driver");

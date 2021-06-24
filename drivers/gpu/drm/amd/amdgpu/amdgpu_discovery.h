@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,17 +22,17 @@
  *
  */
 
-#ifndef __AMDGPU_DISCOVERY__
-#define __AMDGPU_DISCOVERY__
+#अगर_अघोषित __AMDGPU_DISCOVERY__
+#घोषणा __AMDGPU_DISCOVERY__
 
-#define DISCOVERY_TMR_SIZE      (4 << 10)
-#define DISCOVERY_TMR_OFFSET    (64 << 10)
+#घोषणा DISCOVERY_TMR_SIZE      (4 << 10)
+#घोषणा DISCOVERY_TMR_OFFSET    (64 << 10)
 
-void amdgpu_discovery_fini(struct amdgpu_device *adev);
-int amdgpu_discovery_reg_base_init(struct amdgpu_device *adev);
-void amdgpu_discovery_harvest_ip(struct amdgpu_device *adev);
-int amdgpu_discovery_get_ip_version(struct amdgpu_device *adev, int hw_id,
-                                    int *major, int *minor, int *revision);
-int amdgpu_discovery_get_gfx_info(struct amdgpu_device *adev);
+व्योम amdgpu_discovery_fini(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_discovery_reg_base_init(काष्ठा amdgpu_device *adev);
+व्योम amdgpu_discovery_harvest_ip(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_discovery_get_ip_version(काष्ठा amdgpu_device *adev, पूर्णांक hw_id,
+                                    पूर्णांक *major, पूर्णांक *minor, पूर्णांक *revision);
+पूर्णांक amdgpu_discovery_get_gfx_info(काष्ठा amdgpu_device *adev);
 
-#endif /* __AMDGPU_DISCOVERY__ */
+#पूर्ण_अगर /* __AMDGPU_DISCOVERY__ */

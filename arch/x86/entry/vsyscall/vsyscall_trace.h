@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM vsyscall
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM vsyscall
 
-#if !defined(__VSYSCALL_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#define __VSYSCALL_TRACE_H
+#अगर !defined(__VSYSCALL_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा __VSYSCALL_TRACE_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 TRACE_EVENT(emulate_vsyscall,
 
-	    TP_PROTO(int nr),
+	    TP_PROTO(पूर्णांक nr),
 
 	    TP_ARGS(nr),
 
-	    TP_STRUCT__entry(__field(int, nr)),
+	    TP_STRUCT__entry(__field(पूर्णांक, nr)),
 
 	    TP_fast_assign(
 			   __entry->nr = nr;
 			   ),
 
-	    TP_printk("nr = %d", __entry->nr)
+	    TP_prपूर्णांकk("nr = %d", __entry->nr)
 );
 
-#endif
+#पूर्ण_अगर
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH ../../arch/x86/entry/vsyscall/
-#define TRACE_INCLUDE_FILE vsyscall_trace
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH ../../arch/x86/entry/vsyscall/
+#घोषणा TRACE_INCLUDE_खाता vsyscall_trace
+#समावेश <trace/define_trace.h>

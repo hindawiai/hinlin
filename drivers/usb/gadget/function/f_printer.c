@@ -1,462 +1,463 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * f_printer.c - USB printer function driver
+ * f_prपूर्णांकer.c - USB prपूर्णांकer function driver
  *
- * Copied from drivers/usb/gadget/legacy/printer.c,
+ * Copied from drivers/usb/gadget/legacy/prपूर्णांकer.c,
  * which was:
  *
- * printer.c -- Printer gadget driver
+ * prपूर्णांकer.c -- Prपूर्णांकer gadget driver
  *
  * Copyright (C) 2003-2005 David Brownell
  * Copyright (C) 2006 Craig W. Nadler
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/ioport.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/idr.h>
-#include <linux/timer.h>
-#include <linux/list.h>
-#include <linux/interrupt.h>
-#include <linux/device.h>
-#include <linux/moduleparam.h>
-#include <linux/fs.h>
-#include <linux/poll.h>
-#include <linux/types.h>
-#include <linux/ctype.h>
-#include <linux/cdev.h>
-#include <linux/kref.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/device.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/types.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/cdev.h>
+#समावेश <linux/kref.h>
 
-#include <asm/byteorder.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/uaccess.h>
-#include <asm/unaligned.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <linux/usb/ch9.h>
-#include <linux/usb/composite.h>
-#include <linux/usb/gadget.h>
-#include <linux/usb/g_printer.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/composite.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb/g_prपूर्णांकer.h>
 
-#include "u_printer.h"
+#समावेश "u_printer.h"
 
-#define PRINTER_MINORS		4
-#define GET_DEVICE_ID		0
-#define GET_PORT_STATUS		1
-#define SOFT_RESET		2
+#घोषणा PRINTER_MINORS		4
+#घोषणा GET_DEVICE_ID		0
+#घोषणा GET_PORT_STATUS		1
+#घोषणा SOFT_RESET		2
 
-#define DEFAULT_Q_LEN		10 /* same as legacy g_printer gadget */
+#घोषणा DEFAULT_Q_LEN		10 /* same as legacy g_prपूर्णांकer gadget */
 
-static int major, minors;
-static struct class *usb_gadget_class;
-static DEFINE_IDA(printer_ida);
-static DEFINE_MUTEX(printer_ida_lock); /* protects access do printer_ida */
+अटल पूर्णांक major, minors;
+अटल काष्ठा class *usb_gadget_class;
+अटल DEFINE_IDA(prपूर्णांकer_ida);
+अटल DEFINE_MUTEX(prपूर्णांकer_ida_lock); /* protects access करो prपूर्णांकer_ida */
 
 /*-------------------------------------------------------------------------*/
 
-struct printer_dev {
-	spinlock_t		lock;		/* lock this structure */
-	/* lock buffer lists during read/write calls */
-	struct mutex		lock_printer_io;
-	struct usb_gadget	*gadget;
-	s8			interface;
-	struct usb_ep		*in_ep, *out_ep;
-	struct kref             kref;
-	struct list_head	rx_reqs;	/* List of free RX structs */
-	struct list_head	rx_reqs_active;	/* List of Active RX xfers */
-	struct list_head	rx_buffers;	/* List of completed xfers */
-	/* wait until there is data to be read. */
-	wait_queue_head_t	rx_wait;
-	struct list_head	tx_reqs;	/* List of free TX structs */
-	struct list_head	tx_reqs_active; /* List of Active TX xfers */
-	/* Wait until there are write buffers available to use. */
-	wait_queue_head_t	tx_wait;
-	/* Wait until all write buffers have been sent. */
-	wait_queue_head_t	tx_flush_wait;
-	struct usb_request	*current_rx_req;
-	size_t			current_rx_bytes;
+काष्ठा prपूर्णांकer_dev अणु
+	spinlock_t		lock;		/* lock this काष्ठाure */
+	/* lock buffer lists during पढ़ो/ग_लिखो calls */
+	काष्ठा mutex		lock_prपूर्णांकer_io;
+	काष्ठा usb_gadget	*gadget;
+	s8			पूर्णांकerface;
+	काष्ठा usb_ep		*in_ep, *out_ep;
+	काष्ठा kref             kref;
+	काष्ठा list_head	rx_reqs;	/* List of मुक्त RX काष्ठाs */
+	काष्ठा list_head	rx_reqs_active;	/* List of Active RX xfers */
+	काष्ठा list_head	rx_buffers;	/* List of completed xfers */
+	/* रुको until there is data to be पढ़ो. */
+	रुको_queue_head_t	rx_रुको;
+	काष्ठा list_head	tx_reqs;	/* List of मुक्त TX काष्ठाs */
+	काष्ठा list_head	tx_reqs_active; /* List of Active TX xfers */
+	/* Wait until there are ग_लिखो buffers available to use. */
+	रुको_queue_head_t	tx_रुको;
+	/* Wait until all ग_लिखो buffers have been sent. */
+	रुको_queue_head_t	tx_flush_रुको;
+	काष्ठा usb_request	*current_rx_req;
+	माप_प्रकार			current_rx_bytes;
 	u8			*current_rx_buf;
-	u8			printer_status;
-	u8			reset_printer;
-	int			minor;
-	struct cdev		printer_cdev;
-	u8			printer_cdev_open;
-	wait_queue_head_t	wait;
-	unsigned		q_len;
-	char			*pnp_string;	/* We don't own memory! */
-	struct usb_function	function;
-};
+	u8			prपूर्णांकer_status;
+	u8			reset_prपूर्णांकer;
+	पूर्णांक			minor;
+	काष्ठा cdev		prपूर्णांकer_cdev;
+	u8			prपूर्णांकer_cdev_खोलो;
+	रुको_queue_head_t	रुको;
+	अचिन्हित		q_len;
+	अक्षर			*pnp_string;	/* We करोn't own memory! */
+	काष्ठा usb_function	function;
+पूर्ण;
 
-static inline struct printer_dev *func_to_printer(struct usb_function *f)
-{
-	return container_of(f, struct printer_dev, function);
-}
+अटल अंतरभूत काष्ठा prपूर्णांकer_dev *func_to_prपूर्णांकer(काष्ठा usb_function *f)
+अणु
+	वापस container_of(f, काष्ठा prपूर्णांकer_dev, function);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * DESCRIPTORS ... most are static, but strings and (full) configuration
+ * DESCRIPTORS ... most are अटल, but strings and (full) configuration
  * descriptors are built on demand.
  */
 
 /* holds our biggest descriptor */
-#define USB_DESC_BUFSIZE		256
-#define USB_BUFSIZE			8192
+#घोषणा USB_DESC_बफ_मानE		256
+#घोषणा USB_बफ_मानE			8192
 
-static struct usb_interface_descriptor intf_desc = {
-	.bLength =		sizeof(intf_desc),
+अटल काष्ठा usb_पूर्णांकerface_descriptor पूर्णांकf_desc = अणु
+	.bLength =		माप(पूर्णांकf_desc),
 	.bDescriptorType =	USB_DT_INTERFACE,
-	.bNumEndpoints =	2,
+	.bNumEndpoपूर्णांकs =	2,
 	.bInterfaceClass =	USB_CLASS_PRINTER,
-	.bInterfaceSubClass =	1,	/* Printer Sub-Class */
+	.bInterfaceSubClass =	1,	/* Prपूर्णांकer Sub-Class */
 	.bInterfaceProtocol =	2,	/* Bi-Directional */
 	.iInterface =		0
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor fs_ep_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor fs_ep_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor fs_ep_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor fs_ep_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
-	.bEndpointAddress =	USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK
-};
+पूर्ण;
 
-static struct usb_descriptor_header *fs_printer_function[] = {
-	(struct usb_descriptor_header *) &intf_desc,
-	(struct usb_descriptor_header *) &fs_ep_in_desc,
-	(struct usb_descriptor_header *) &fs_ep_out_desc,
-	NULL
-};
+अटल काष्ठा usb_descriptor_header *fs_prपूर्णांकer_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &पूर्णांकf_desc,
+	(काष्ठा usb_descriptor_header *) &fs_ep_in_desc,
+	(काष्ठा usb_descriptor_header *) &fs_ep_out_desc,
+	शून्य
+पूर्ण;
 
 /*
  * usb 2.0 devices need to expose both high speed and full speed
  * descriptors, unless they only run at full speed.
  */
 
-static struct usb_endpoint_descriptor hs_ep_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hs_ep_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512)
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor hs_ep_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hs_ep_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512)
-};
+पूर्ण;
 
-static struct usb_descriptor_header *hs_printer_function[] = {
-	(struct usb_descriptor_header *) &intf_desc,
-	(struct usb_descriptor_header *) &hs_ep_in_desc,
-	(struct usb_descriptor_header *) &hs_ep_out_desc,
-	NULL
-};
+अटल काष्ठा usb_descriptor_header *hs_prपूर्णांकer_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &पूर्णांकf_desc,
+	(काष्ठा usb_descriptor_header *) &hs_ep_in_desc,
+	(काष्ठा usb_descriptor_header *) &hs_ep_out_desc,
+	शून्य
+पूर्ण;
 
 /*
- * Added endpoint descriptors for 3.0 devices
+ * Added endpoपूर्णांक descriptors क्रम 3.0 devices
  */
 
-static struct usb_endpoint_descriptor ss_ep_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor ss_ep_in_desc = अणु
 	.bLength =              USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =      USB_DT_ENDPOINT,
 	.bmAttributes =         USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =       cpu_to_le16(1024),
-};
+पूर्ण;
 
-static struct usb_ss_ep_comp_descriptor ss_ep_in_comp_desc = {
-	.bLength =              sizeof(ss_ep_in_comp_desc),
+अटल काष्ठा usb_ss_ep_comp_descriptor ss_ep_in_comp_desc = अणु
+	.bLength =              माप(ss_ep_in_comp_desc),
 	.bDescriptorType =      USB_DT_SS_ENDPOINT_COMP,
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor ss_ep_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor ss_ep_out_desc = अणु
 	.bLength =              USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =      USB_DT_ENDPOINT,
 	.bmAttributes =         USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =       cpu_to_le16(1024),
-};
+पूर्ण;
 
-static struct usb_ss_ep_comp_descriptor ss_ep_out_comp_desc = {
-	.bLength =              sizeof(ss_ep_out_comp_desc),
+अटल काष्ठा usb_ss_ep_comp_descriptor ss_ep_out_comp_desc = अणु
+	.bLength =              माप(ss_ep_out_comp_desc),
 	.bDescriptorType =      USB_DT_SS_ENDPOINT_COMP,
-};
+पूर्ण;
 
-static struct usb_descriptor_header *ss_printer_function[] = {
-	(struct usb_descriptor_header *) &intf_desc,
-	(struct usb_descriptor_header *) &ss_ep_in_desc,
-	(struct usb_descriptor_header *) &ss_ep_in_comp_desc,
-	(struct usb_descriptor_header *) &ss_ep_out_desc,
-	(struct usb_descriptor_header *) &ss_ep_out_comp_desc,
-	NULL
-};
+अटल काष्ठा usb_descriptor_header *ss_prपूर्णांकer_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &पूर्णांकf_desc,
+	(काष्ठा usb_descriptor_header *) &ss_ep_in_desc,
+	(काष्ठा usb_descriptor_header *) &ss_ep_in_comp_desc,
+	(काष्ठा usb_descriptor_header *) &ss_ep_out_desc,
+	(काष्ठा usb_descriptor_header *) &ss_ep_out_comp_desc,
+	शून्य
+पूर्ण;
 
-/* maxpacket and other transfer characteristics vary by speed. */
-static inline struct usb_endpoint_descriptor *ep_desc(struct usb_gadget *gadget,
-					struct usb_endpoint_descriptor *fs,
-					struct usb_endpoint_descriptor *hs,
-					struct usb_endpoint_descriptor *ss)
-{
-	switch (gadget->speed) {
-	case USB_SPEED_SUPER:
-		return ss;
-	case USB_SPEED_HIGH:
-		return hs;
-	default:
-		return fs;
-	}
-}
+/* maxpacket and other transfer अक्षरacteristics vary by speed. */
+अटल अंतरभूत काष्ठा usb_endpoपूर्णांक_descriptor *ep_desc(काष्ठा usb_gadget *gadget,
+					काष्ठा usb_endpoपूर्णांक_descriptor *fs,
+					काष्ठा usb_endpoपूर्णांक_descriptor *hs,
+					काष्ठा usb_endpoपूर्णांक_descriptor *ss)
+अणु
+	चयन (gadget->speed) अणु
+	हाल USB_SPEED_SUPER:
+		वापस ss;
+	हाल USB_SPEED_HIGH:
+		वापस hs;
+	शेष:
+		वापस fs;
+	पूर्ण
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static void printer_dev_free(struct kref *kref)
-{
-	struct printer_dev *dev = container_of(kref, struct printer_dev, kref);
+अटल व्योम prपूर्णांकer_dev_मुक्त(काष्ठा kref *kref)
+अणु
+	काष्ठा prपूर्णांकer_dev *dev = container_of(kref, काष्ठा prपूर्णांकer_dev, kref);
 
-	kfree(dev);
-}
+	kमुक्त(dev);
+पूर्ण
 
-static struct usb_request *
-printer_req_alloc(struct usb_ep *ep, unsigned len, gfp_t gfp_flags)
-{
-	struct usb_request	*req;
+अटल काष्ठा usb_request *
+prपूर्णांकer_req_alloc(काष्ठा usb_ep *ep, अचिन्हित len, gfp_t gfp_flags)
+अणु
+	काष्ठा usb_request	*req;
 
 	req = usb_ep_alloc_request(ep, gfp_flags);
 
-	if (req != NULL) {
+	अगर (req != शून्य) अणु
 		req->length = len;
-		req->buf = kmalloc(len, gfp_flags);
-		if (req->buf == NULL) {
-			usb_ep_free_request(ep, req);
-			return NULL;
-		}
-	}
+		req->buf = kदो_स्मृति(len, gfp_flags);
+		अगर (req->buf == शून्य) अणु
+			usb_ep_मुक्त_request(ep, req);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
-static void
-printer_req_free(struct usb_ep *ep, struct usb_request *req)
-{
-	if (ep != NULL && req != NULL) {
-		kfree(req->buf);
-		usb_ep_free_request(ep, req);
-	}
-}
+अटल व्योम
+prपूर्णांकer_req_मुक्त(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	अगर (ep != शून्य && req != शून्य) अणु
+		kमुक्त(req->buf);
+		usb_ep_मुक्त_request(ep, req);
+	पूर्ण
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static void rx_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct printer_dev	*dev = ep->driver_data;
-	int			status = req->status;
-	unsigned long		flags;
+अटल व्योम rx_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev = ep->driver_data;
+	पूर्णांक			status = req->status;
+	अचिन्हित दीर्घ		flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
 
 	list_del_init(&req->list);	/* Remode from Active List */
 
-	switch (status) {
+	चयन (status) अणु
 
 	/* normal completion */
-	case 0:
-		if (req->actual > 0) {
+	हाल 0:
+		अगर (req->actual > 0) अणु
 			list_add_tail(&req->list, &dev->rx_buffers);
 			DBG(dev, "G_Printer : rx length %d\n", req->actual);
-		} else {
+		पूर्ण अन्यथा अणु
 			list_add(&req->list, &dev->rx_reqs);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	/* software-driven interface shutdown */
-	case -ECONNRESET:		/* unlink */
-	case -ESHUTDOWN:		/* disconnect etc */
+	/* software-driven पूर्णांकerface shutकरोwn */
+	हाल -ECONNRESET:		/* unlink */
+	हाल -ESHUTDOWN:		/* disconnect etc */
 		VDBG(dev, "rx shutdown, code %d\n", status);
 		list_add(&req->list, &dev->rx_reqs);
-		break;
+		अवरोध;
 
-	/* for hardware automagic (such as pxa) */
-	case -ECONNABORTED:		/* endpoint reset */
+	/* क्रम hardware स्वतःmagic (such as pxa) */
+	हाल -ECONNABORTED:		/* endpoपूर्णांक reset */
 		DBG(dev, "rx %s reset\n", ep->name);
 		list_add(&req->list, &dev->rx_reqs);
-		break;
+		अवरोध;
 
 	/* data overrun */
-	case -EOVERFLOW:
+	हाल -EOVERFLOW:
 		fallthrough;
 
-	default:
+	शेष:
 		DBG(dev, "rx status %d\n", status);
 		list_add(&req->list, &dev->rx_reqs);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	wake_up_interruptible(&dev->rx_wait);
+	wake_up_पूर्णांकerruptible(&dev->rx_रुको);
 	spin_unlock_irqrestore(&dev->lock, flags);
-}
+पूर्ण
 
-static void tx_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct printer_dev	*dev = ep->driver_data;
+अटल व्योम tx_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev = ep->driver_data;
 
-	switch (req->status) {
-	default:
+	चयन (req->status) अणु
+	शेष:
 		VDBG(dev, "tx err %d\n", req->status);
 		fallthrough;
-	case -ECONNRESET:		/* unlink */
-	case -ESHUTDOWN:		/* disconnect etc */
-		break;
-	case 0:
-		break;
-	}
+	हाल -ECONNRESET:		/* unlink */
+	हाल -ESHUTDOWN:		/* disconnect etc */
+		अवरोध;
+	हाल 0:
+		अवरोध;
+	पूर्ण
 
 	spin_lock(&dev->lock);
-	/* Take the request struct off the active list and put it on the
-	 * free list.
+	/* Take the request काष्ठा off the active list and put it on the
+	 * मुक्त list.
 	 */
 	list_del_init(&req->list);
 	list_add(&req->list, &dev->tx_reqs);
-	wake_up_interruptible(&dev->tx_wait);
-	if (likely(list_empty(&dev->tx_reqs_active)))
-		wake_up_interruptible(&dev->tx_flush_wait);
+	wake_up_पूर्णांकerruptible(&dev->tx_रुको);
+	अगर (likely(list_empty(&dev->tx_reqs_active)))
+		wake_up_पूर्णांकerruptible(&dev->tx_flush_रुको);
 
 	spin_unlock(&dev->lock);
-}
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static int
-printer_open(struct inode *inode, struct file *fd)
-{
-	struct printer_dev	*dev;
-	unsigned long		flags;
-	int			ret = -EBUSY;
+अटल पूर्णांक
+prपूर्णांकer_खोलो(काष्ठा inode *inode, काष्ठा file *fd)
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev;
+	अचिन्हित दीर्घ		flags;
+	पूर्णांक			ret = -EBUSY;
 
-	dev = container_of(inode->i_cdev, struct printer_dev, printer_cdev);
+	dev = container_of(inode->i_cdev, काष्ठा prपूर्णांकer_dev, prपूर्णांकer_cdev);
 
 	spin_lock_irqsave(&dev->lock, flags);
 
-	if (dev->interface < 0) {
+	अगर (dev->पूर्णांकerface < 0) अणु
 		spin_unlock_irqrestore(&dev->lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!dev->printer_cdev_open) {
-		dev->printer_cdev_open = 1;
-		fd->private_data = dev;
+	अगर (!dev->prपूर्णांकer_cdev_खोलो) अणु
+		dev->prपूर्णांकer_cdev_खोलो = 1;
+		fd->निजी_data = dev;
 		ret = 0;
-		/* Change the printer status to show that it's on-line. */
-		dev->printer_status |= PRINTER_SELECTED;
-	}
+		/* Change the prपूर्णांकer status to show that it's on-line. */
+		dev->prपूर्णांकer_status |= PRINTER_SELECTED;
+	पूर्ण
 
 	spin_unlock_irqrestore(&dev->lock, flags);
 
 	kref_get(&dev->kref);
 	DBG(dev, "printer_open returned %x\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-printer_close(struct inode *inode, struct file *fd)
-{
-	struct printer_dev	*dev = fd->private_data;
-	unsigned long		flags;
+अटल पूर्णांक
+prपूर्णांकer_बंद(काष्ठा inode *inode, काष्ठा file *fd)
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev = fd->निजी_data;
+	अचिन्हित दीर्घ		flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	dev->printer_cdev_open = 0;
-	fd->private_data = NULL;
-	/* Change printer status to show that the printer is off-line. */
-	dev->printer_status &= ~PRINTER_SELECTED;
+	dev->prपूर्णांकer_cdev_खोलो = 0;
+	fd->निजी_data = शून्य;
+	/* Change prपूर्णांकer status to show that the prपूर्णांकer is off-line. */
+	dev->prपूर्णांकer_status &= ~PRINTER_SELECTED;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	kref_put(&dev->kref, printer_dev_free);
+	kref_put(&dev->kref, prपूर्णांकer_dev_मुक्त);
 	DBG(dev, "printer_close\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* This function must be called with interrupts turned off. */
-static void
-setup_rx_reqs(struct printer_dev *dev)
-{
-	struct usb_request              *req;
+/* This function must be called with पूर्णांकerrupts turned off. */
+अटल व्योम
+setup_rx_reqs(काष्ठा prपूर्णांकer_dev *dev)
+अणु
+	काष्ठा usb_request              *req;
 
-	while (likely(!list_empty(&dev->rx_reqs))) {
-		int error;
+	जबतक (likely(!list_empty(&dev->rx_reqs))) अणु
+		पूर्णांक error;
 
 		req = container_of(dev->rx_reqs.next,
-				struct usb_request, list);
+				काष्ठा usb_request, list);
 		list_del_init(&req->list);
 
 		/* The USB Host sends us whatever amount of data it wants to
-		 * so we always set the length field to the full USB_BUFSIZE.
-		 * If the amount of data is more than the read() caller asked
-		 * for it will be stored in the request buffer until it is
-		 * asked for by read().
+		 * so we always set the length field to the full USB_बफ_मानE.
+		 * If the amount of data is more than the पढ़ो() caller asked
+		 * क्रम it will be stored in the request buffer until it is
+		 * asked क्रम by पढ़ो().
 		 */
-		req->length = USB_BUFSIZE;
+		req->length = USB_बफ_मानE;
 		req->complete = rx_complete;
 
-		/* here, we unlock, and only unlock, to avoid deadlock. */
+		/* here, we unlock, and only unlock, to aव्योम deadlock. */
 		spin_unlock(&dev->lock);
 		error = usb_ep_queue(dev->out_ep, req, GFP_ATOMIC);
 		spin_lock(&dev->lock);
-		if (error) {
+		अगर (error) अणु
 			DBG(dev, "rx submit --> %d\n", error);
 			list_add(&req->list, &dev->rx_reqs);
-			break;
-		}
-		/* if the req is empty, then add it into dev->rx_reqs_active. */
-		else if (list_empty(&req->list))
+			अवरोध;
+		पूर्ण
+		/* अगर the req is empty, then add it पूर्णांकo dev->rx_reqs_active. */
+		अन्यथा अगर (list_empty(&req->list))
 			list_add(&req->list, &dev->rx_reqs_active);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static ssize_t
-printer_read(struct file *fd, char __user *buf, size_t len, loff_t *ptr)
-{
-	struct printer_dev		*dev = fd->private_data;
-	unsigned long			flags;
-	size_t				size;
-	size_t				bytes_copied;
-	struct usb_request		*req;
-	/* This is a pointer to the current USB rx request. */
-	struct usb_request		*current_rx_req;
+अटल sमाप_प्रकार
+prपूर्णांकer_पढ़ो(काष्ठा file *fd, अक्षर __user *buf, माप_प्रकार len, loff_t *ptr)
+अणु
+	काष्ठा prपूर्णांकer_dev		*dev = fd->निजी_data;
+	अचिन्हित दीर्घ			flags;
+	माप_प्रकार				size;
+	माप_प्रकार				bytes_copied;
+	काष्ठा usb_request		*req;
+	/* This is a poपूर्णांकer to the current USB rx request. */
+	काष्ठा usb_request		*current_rx_req;
 	/* This is the number of bytes in the current rx buffer. */
-	size_t				current_rx_bytes;
-	/* This is a pointer to the current rx buffer. */
+	माप_प्रकार				current_rx_bytes;
+	/* This is a poपूर्णांकer to the current rx buffer. */
 	u8				*current_rx_buf;
 
-	if (len == 0)
-		return -EINVAL;
+	अगर (len == 0)
+		वापस -EINVAL;
 
-	DBG(dev, "printer_read trying to read %d bytes\n", (int)len);
+	DBG(dev, "printer_read trying to read %d bytes\n", (पूर्णांक)len);
 
-	mutex_lock(&dev->lock_printer_io);
+	mutex_lock(&dev->lock_prपूर्णांकer_io);
 	spin_lock_irqsave(&dev->lock, flags);
 
-	if (dev->interface < 0) {
+	अगर (dev->पूर्णांकerface < 0) अणु
 		spin_unlock_irqrestore(&dev->lock, flags);
-		mutex_unlock(&dev->lock_printer_io);
-		return -ENODEV;
-	}
+		mutex_unlock(&dev->lock_prपूर्णांकer_io);
+		वापस -ENODEV;
+	पूर्ण
 
-	/* We will use this flag later to check if a printer reset happened
-	 * after we turn interrupts back on.
+	/* We will use this flag later to check अगर a prपूर्णांकer reset happened
+	 * after we turn पूर्णांकerrupts back on.
 	 */
-	dev->reset_printer = 0;
+	dev->reset_prपूर्णांकer = 0;
 
 	setup_rx_reqs(dev);
 
@@ -464,60 +465,60 @@ printer_read(struct file *fd, char __user *buf, size_t len, loff_t *ptr)
 	current_rx_req = dev->current_rx_req;
 	current_rx_bytes = dev->current_rx_bytes;
 	current_rx_buf = dev->current_rx_buf;
-	dev->current_rx_req = NULL;
+	dev->current_rx_req = शून्य;
 	dev->current_rx_bytes = 0;
-	dev->current_rx_buf = NULL;
+	dev->current_rx_buf = शून्य;
 
-	/* Check if there is any data in the read buffers. Please note that
+	/* Check अगर there is any data in the पढ़ो buffers. Please note that
 	 * current_rx_bytes is the number of bytes in the current rx buffer.
-	 * If it is zero then check if there are any other rx_buffers that
-	 * are on the completed list. We are only out of data if all rx
+	 * If it is zero then check अगर there are any other rx_buffers that
+	 * are on the completed list. We are only out of data अगर all rx
 	 * buffers are empty.
 	 */
-	if ((current_rx_bytes == 0) &&
-			(likely(list_empty(&dev->rx_buffers)))) {
-		/* Turn interrupts back on before sleeping. */
+	अगर ((current_rx_bytes == 0) &&
+			(likely(list_empty(&dev->rx_buffers)))) अणु
+		/* Turn पूर्णांकerrupts back on beक्रमe sleeping. */
 		spin_unlock_irqrestore(&dev->lock, flags);
 
 		/*
-		 * If no data is available check if this is a NON-Blocking
+		 * If no data is available check अगर this is a NON-Blocking
 		 * call or not.
 		 */
-		if (fd->f_flags & (O_NONBLOCK|O_NDELAY)) {
-			mutex_unlock(&dev->lock_printer_io);
-			return -EAGAIN;
-		}
+		अगर (fd->f_flags & (O_NONBLOCK|O_NDELAY)) अणु
+			mutex_unlock(&dev->lock_prपूर्णांकer_io);
+			वापस -EAGAIN;
+		पूर्ण
 
 		/* Sleep until data is available */
-		wait_event_interruptible(dev->rx_wait,
+		रुको_event_पूर्णांकerruptible(dev->rx_रुको,
 				(likely(!list_empty(&dev->rx_buffers))));
 		spin_lock_irqsave(&dev->lock, flags);
-	}
+	पूर्ण
 
-	/* We have data to return then copy it to the caller's buffer.*/
-	while ((current_rx_bytes || likely(!list_empty(&dev->rx_buffers)))
-			&& len) {
-		if (current_rx_bytes == 0) {
+	/* We have data to वापस then copy it to the caller's buffer.*/
+	जबतक ((current_rx_bytes || likely(!list_empty(&dev->rx_buffers)))
+			&& len) अणु
+		अगर (current_rx_bytes == 0) अणु
 			req = container_of(dev->rx_buffers.next,
-					struct usb_request, list);
+					काष्ठा usb_request, list);
 			list_del_init(&req->list);
 
-			if (req->actual && req->buf) {
+			अगर (req->actual && req->buf) अणु
 				current_rx_req = req;
 				current_rx_bytes = req->actual;
 				current_rx_buf = req->buf;
-			} else {
+			पूर्ण अन्यथा अणु
 				list_add(&req->list, &dev->rx_reqs);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
-		/* Don't leave irqs off while doing memory copies */
+		/* Don't leave irqs off जबतक करोing memory copies */
 		spin_unlock_irqrestore(&dev->lock, flags);
 
-		if (len > current_rx_bytes)
+		अगर (len > current_rx_bytes)
 			size = current_rx_bytes;
-		else
+		अन्यथा
 			size = len;
 
 		size -= copy_to_user(buf, current_rx_buf, size);
@@ -527,124 +528,124 @@ printer_read(struct file *fd, char __user *buf, size_t len, loff_t *ptr)
 
 		spin_lock_irqsave(&dev->lock, flags);
 
-		/* We've disconnected or reset so return. */
-		if (dev->reset_printer) {
+		/* We've disconnected or reset so वापस. */
+		अगर (dev->reset_prपूर्णांकer) अणु
 			list_add(&current_rx_req->list, &dev->rx_reqs);
 			spin_unlock_irqrestore(&dev->lock, flags);
-			mutex_unlock(&dev->lock_printer_io);
-			return -EAGAIN;
-		}
+			mutex_unlock(&dev->lock_prपूर्णांकer_io);
+			वापस -EAGAIN;
+		पूर्ण
 
-		/* If we not returning all the data left in this RX request
+		/* If we not वापसing all the data left in this RX request
 		 * buffer then adjust the amount of data left in the buffer.
-		 * Othewise if we are done with this RX request buffer then
+		 * Othewise अगर we are करोne with this RX request buffer then
 		 * requeue it to get any incoming data from the USB host.
 		 */
-		if (size < current_rx_bytes) {
+		अगर (size < current_rx_bytes) अणु
 			current_rx_bytes -= size;
 			current_rx_buf += size;
-		} else {
+		पूर्ण अन्यथा अणु
 			list_add(&current_rx_req->list, &dev->rx_reqs);
 			current_rx_bytes = 0;
-			current_rx_buf = NULL;
-			current_rx_req = NULL;
-		}
-	}
+			current_rx_buf = शून्य;
+			current_rx_req = शून्य;
+		पूर्ण
+	पूर्ण
 
 	dev->current_rx_req = current_rx_req;
 	dev->current_rx_bytes = current_rx_bytes;
 	dev->current_rx_buf = current_rx_buf;
 
 	spin_unlock_irqrestore(&dev->lock, flags);
-	mutex_unlock(&dev->lock_printer_io);
+	mutex_unlock(&dev->lock_prपूर्णांकer_io);
 
-	DBG(dev, "printer_read returned %d bytes\n", (int)bytes_copied);
+	DBG(dev, "printer_read returned %d bytes\n", (पूर्णांक)bytes_copied);
 
-	if (bytes_copied)
-		return bytes_copied;
-	else
-		return -EAGAIN;
-}
+	अगर (bytes_copied)
+		वापस bytes_copied;
+	अन्यथा
+		वापस -EAGAIN;
+पूर्ण
 
-static ssize_t
-printer_write(struct file *fd, const char __user *buf, size_t len, loff_t *ptr)
-{
-	struct printer_dev	*dev = fd->private_data;
-	unsigned long		flags;
-	size_t			size;	/* Amount of data in a TX request. */
-	size_t			bytes_copied = 0;
-	struct usb_request	*req;
-	int			value;
+अटल sमाप_प्रकार
+prपूर्णांकer_ग_लिखो(काष्ठा file *fd, स्थिर अक्षर __user *buf, माप_प्रकार len, loff_t *ptr)
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev = fd->निजी_data;
+	अचिन्हित दीर्घ		flags;
+	माप_प्रकार			size;	/* Amount of data in a TX request. */
+	माप_प्रकार			bytes_copied = 0;
+	काष्ठा usb_request	*req;
+	पूर्णांक			value;
 
-	DBG(dev, "printer_write trying to send %d bytes\n", (int)len);
+	DBG(dev, "printer_write trying to send %d bytes\n", (पूर्णांक)len);
 
-	if (len == 0)
-		return -EINVAL;
+	अगर (len == 0)
+		वापस -EINVAL;
 
-	mutex_lock(&dev->lock_printer_io);
+	mutex_lock(&dev->lock_prपूर्णांकer_io);
 	spin_lock_irqsave(&dev->lock, flags);
 
-	if (dev->interface < 0) {
+	अगर (dev->पूर्णांकerface < 0) अणु
 		spin_unlock_irqrestore(&dev->lock, flags);
-		mutex_unlock(&dev->lock_printer_io);
-		return -ENODEV;
-	}
+		mutex_unlock(&dev->lock_prपूर्णांकer_io);
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Check if a printer reset happens while we have interrupts on */
-	dev->reset_printer = 0;
+	/* Check अगर a prपूर्णांकer reset happens जबतक we have पूर्णांकerrupts on */
+	dev->reset_prपूर्णांकer = 0;
 
-	/* Check if there is any available write buffers */
-	if (likely(list_empty(&dev->tx_reqs))) {
-		/* Turn interrupts back on before sleeping. */
+	/* Check अगर there is any available ग_लिखो buffers */
+	अगर (likely(list_empty(&dev->tx_reqs))) अणु
+		/* Turn पूर्णांकerrupts back on beक्रमe sleeping. */
 		spin_unlock_irqrestore(&dev->lock, flags);
 
 		/*
-		 * If write buffers are available check if this is
+		 * If ग_लिखो buffers are available check अगर this is
 		 * a NON-Blocking call or not.
 		 */
-		if (fd->f_flags & (O_NONBLOCK|O_NDELAY)) {
-			mutex_unlock(&dev->lock_printer_io);
-			return -EAGAIN;
-		}
+		अगर (fd->f_flags & (O_NONBLOCK|O_NDELAY)) अणु
+			mutex_unlock(&dev->lock_prपूर्णांकer_io);
+			वापस -EAGAIN;
+		पूर्ण
 
-		/* Sleep until a write buffer is available */
-		wait_event_interruptible(dev->tx_wait,
+		/* Sleep until a ग_लिखो buffer is available */
+		रुको_event_पूर्णांकerruptible(dev->tx_रुको,
 				(likely(!list_empty(&dev->tx_reqs))));
 		spin_lock_irqsave(&dev->lock, flags);
-	}
+	पूर्ण
 
-	while (likely(!list_empty(&dev->tx_reqs)) && len) {
+	जबतक (likely(!list_empty(&dev->tx_reqs)) && len) अणु
 
-		if (len > USB_BUFSIZE)
-			size = USB_BUFSIZE;
-		else
+		अगर (len > USB_बफ_मानE)
+			size = USB_बफ_मानE;
+		अन्यथा
 			size = len;
 
-		req = container_of(dev->tx_reqs.next, struct usb_request,
+		req = container_of(dev->tx_reqs.next, काष्ठा usb_request,
 				list);
 		list_del_init(&req->list);
 
 		req->complete = tx_complete;
 		req->length = size;
 
-		/* Check if we need to send a zero length packet. */
-		if (len > size)
+		/* Check अगर we need to send a zero length packet. */
+		अगर (len > size)
 			/* They will be more TX requests so no yet. */
 			req->zero = 0;
-		else
+		अन्यथा
 			/* If the data amount is not a multiple of the
 			 * maxpacket size then send a zero length packet.
 			 */
 			req->zero = ((len % dev->in_ep->maxpacket) == 0);
 
-		/* Don't leave irqs off while doing memory copies */
+		/* Don't leave irqs off जबतक करोing memory copies */
 		spin_unlock_irqrestore(&dev->lock, flags);
 
-		if (copy_from_user(req->buf, buf, size)) {
+		अगर (copy_from_user(req->buf, buf, size)) अणु
 			list_add(&req->list, &dev->tx_reqs);
-			mutex_unlock(&dev->lock_printer_io);
-			return bytes_copied;
-		}
+			mutex_unlock(&dev->lock_prपूर्णांकer_io);
+			वापस bytes_copied;
+		पूर्ण
 
 		bytes_copied += size;
 		len -= size;
@@ -652,112 +653,112 @@ printer_write(struct file *fd, const char __user *buf, size_t len, loff_t *ptr)
 
 		spin_lock_irqsave(&dev->lock, flags);
 
-		/* We've disconnected or reset so free the req and buffer */
-		if (dev->reset_printer) {
+		/* We've disconnected or reset so मुक्त the req and buffer */
+		अगर (dev->reset_prपूर्णांकer) अणु
 			list_add(&req->list, &dev->tx_reqs);
 			spin_unlock_irqrestore(&dev->lock, flags);
-			mutex_unlock(&dev->lock_printer_io);
-			return -EAGAIN;
-		}
+			mutex_unlock(&dev->lock_prपूर्णांकer_io);
+			वापस -EAGAIN;
+		पूर्ण
 
 		list_add(&req->list, &dev->tx_reqs_active);
 
-		/* here, we unlock, and only unlock, to avoid deadlock. */
+		/* here, we unlock, and only unlock, to aव्योम deadlock. */
 		spin_unlock(&dev->lock);
 		value = usb_ep_queue(dev->in_ep, req, GFP_ATOMIC);
 		spin_lock(&dev->lock);
-		if (value) {
+		अगर (value) अणु
 			list_del(&req->list);
 			list_add(&req->list, &dev->tx_reqs);
 			spin_unlock_irqrestore(&dev->lock, flags);
-			mutex_unlock(&dev->lock_printer_io);
-			return -EAGAIN;
-		}
-	}
+			mutex_unlock(&dev->lock_prपूर्णांकer_io);
+			वापस -EAGAIN;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&dev->lock, flags);
-	mutex_unlock(&dev->lock_printer_io);
+	mutex_unlock(&dev->lock_prपूर्णांकer_io);
 
-	DBG(dev, "printer_write sent %d bytes\n", (int)bytes_copied);
+	DBG(dev, "printer_write sent %d bytes\n", (पूर्णांक)bytes_copied);
 
-	if (bytes_copied)
-		return bytes_copied;
-	else
-		return -EAGAIN;
-}
+	अगर (bytes_copied)
+		वापस bytes_copied;
+	अन्यथा
+		वापस -EAGAIN;
+पूर्ण
 
-static int
-printer_fsync(struct file *fd, loff_t start, loff_t end, int datasync)
-{
-	struct printer_dev	*dev = fd->private_data;
-	struct inode *inode = file_inode(fd);
-	unsigned long		flags;
-	int			tx_list_empty;
+अटल पूर्णांक
+prपूर्णांकer_fsync(काष्ठा file *fd, loff_t start, loff_t end, पूर्णांक datasync)
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev = fd->निजी_data;
+	काष्ठा inode *inode = file_inode(fd);
+	अचिन्हित दीर्घ		flags;
+	पूर्णांक			tx_list_empty;
 
 	inode_lock(inode);
 	spin_lock_irqsave(&dev->lock, flags);
 
-	if (dev->interface < 0) {
+	अगर (dev->पूर्णांकerface < 0) अणु
 		spin_unlock_irqrestore(&dev->lock, flags);
 		inode_unlock(inode);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	tx_list_empty = (likely(list_empty(&dev->tx_reqs)));
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	if (!tx_list_empty) {
+	अगर (!tx_list_empty) अणु
 		/* Sleep until all data has been sent */
-		wait_event_interruptible(dev->tx_flush_wait,
+		रुको_event_पूर्णांकerruptible(dev->tx_flush_रुको,
 				(likely(list_empty(&dev->tx_reqs_active))));
-	}
+	पूर्ण
 	inode_unlock(inode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __poll_t
-printer_poll(struct file *fd, poll_table *wait)
-{
-	struct printer_dev	*dev = fd->private_data;
-	unsigned long		flags;
+अटल __poll_t
+prपूर्णांकer_poll(काष्ठा file *fd, poll_table *रुको)
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev = fd->निजी_data;
+	अचिन्हित दीर्घ		flags;
 	__poll_t		status = 0;
 
-	mutex_lock(&dev->lock_printer_io);
+	mutex_lock(&dev->lock_prपूर्णांकer_io);
 	spin_lock_irqsave(&dev->lock, flags);
 
-	if (dev->interface < 0) {
+	अगर (dev->पूर्णांकerface < 0) अणु
 		spin_unlock_irqrestore(&dev->lock, flags);
-		mutex_unlock(&dev->lock_printer_io);
-		return EPOLLERR | EPOLLHUP;
-	}
+		mutex_unlock(&dev->lock_prपूर्णांकer_io);
+		वापस EPOLLERR | EPOLLHUP;
+	पूर्ण
 
 	setup_rx_reqs(dev);
 	spin_unlock_irqrestore(&dev->lock, flags);
-	mutex_unlock(&dev->lock_printer_io);
+	mutex_unlock(&dev->lock_prपूर्णांकer_io);
 
-	poll_wait(fd, &dev->rx_wait, wait);
-	poll_wait(fd, &dev->tx_wait, wait);
+	poll_रुको(fd, &dev->rx_रुको, रुको);
+	poll_रुको(fd, &dev->tx_रुको, रुको);
 
 	spin_lock_irqsave(&dev->lock, flags);
-	if (likely(!list_empty(&dev->tx_reqs)))
+	अगर (likely(!list_empty(&dev->tx_reqs)))
 		status |= EPOLLOUT | EPOLLWRNORM;
 
-	if (likely(dev->current_rx_bytes) ||
+	अगर (likely(dev->current_rx_bytes) ||
 			likely(!list_empty(&dev->rx_buffers)))
 		status |= EPOLLIN | EPOLLRDNORM;
 
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static long
-printer_ioctl(struct file *fd, unsigned int code, unsigned long arg)
-{
-	struct printer_dev	*dev = fd->private_data;
-	unsigned long		flags;
-	int			status = 0;
+अटल दीर्घ
+prपूर्णांकer_ioctl(काष्ठा file *fd, अचिन्हित पूर्णांक code, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev = fd->निजी_data;
+	अचिन्हित दीर्घ		flags;
+	पूर्णांक			status = 0;
 
 	DBG(dev, "printer_ioctl: cmd=0x%4.4x, arg=%lu\n", code, arg);
 
@@ -765,49 +766,49 @@ printer_ioctl(struct file *fd, unsigned int code, unsigned long arg)
 
 	spin_lock_irqsave(&dev->lock, flags);
 
-	if (dev->interface < 0) {
+	अगर (dev->पूर्णांकerface < 0) अणु
 		spin_unlock_irqrestore(&dev->lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	switch (code) {
-	case GADGET_GET_PRINTER_STATUS:
-		status = (int)dev->printer_status;
-		break;
-	case GADGET_SET_PRINTER_STATUS:
-		dev->printer_status = (u8)arg;
-		break;
-	default:
+	चयन (code) अणु
+	हाल GADGET_GET_PRINTER_STATUS:
+		status = (पूर्णांक)dev->prपूर्णांकer_status;
+		अवरोध;
+	हाल GADGET_SET_PRINTER_STATUS:
+		dev->prपूर्णांकer_status = (u8)arg;
+		अवरोध;
+	शेष:
 		/* could not handle ioctl */
 		DBG(dev, "printer_ioctl: ERROR cmd=0x%4.4xis not supported\n",
 				code);
 		status = -ENOTTY;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* used after endpoint configuration */
-static const struct file_operations printer_io_operations = {
+/* used after endpoपूर्णांक configuration */
+अटल स्थिर काष्ठा file_operations prपूर्णांकer_io_operations = अणु
 	.owner =	THIS_MODULE,
-	.open =		printer_open,
-	.read =		printer_read,
-	.write =	printer_write,
-	.fsync =	printer_fsync,
-	.poll =		printer_poll,
-	.unlocked_ioctl = printer_ioctl,
-	.release =	printer_close,
+	.खोलो =		prपूर्णांकer_खोलो,
+	.पढ़ो =		prपूर्णांकer_पढ़ो,
+	.ग_लिखो =	prपूर्णांकer_ग_लिखो,
+	.fsync =	prपूर्णांकer_fsync,
+	.poll =		prपूर्णांकer_poll,
+	.unlocked_ioctl = prपूर्णांकer_ioctl,
+	.release =	prपूर्णांकer_बंद,
 	.llseek =	noop_llseek,
-};
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-static int
-set_printer_interface(struct printer_dev *dev)
-{
-	int			result = 0;
+अटल पूर्णांक
+set_prपूर्णांकer_पूर्णांकerface(काष्ठा prपूर्णांकer_dev *dev)
+अणु
+	पूर्णांक			result = 0;
 
 	dev->in_ep->desc = ep_desc(dev->gadget, &fs_ep_in_desc, &hs_ep_in_desc,
 				&ss_ep_in_desc);
@@ -818,174 +819,174 @@ set_printer_interface(struct printer_dev *dev)
 	dev->out_ep->driver_data = dev;
 
 	result = usb_ep_enable(dev->in_ep);
-	if (result != 0) {
+	अगर (result != 0) अणु
 		DBG(dev, "enable %s --> %d\n", dev->in_ep->name, result);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	result = usb_ep_enable(dev->out_ep);
-	if (result != 0) {
+	अगर (result != 0) अणु
 		DBG(dev, "enable %s --> %d\n", dev->out_ep->name, result);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-done:
-	/* on error, disable any endpoints  */
-	if (result != 0) {
-		(void) usb_ep_disable(dev->in_ep);
-		(void) usb_ep_disable(dev->out_ep);
-		dev->in_ep->desc = NULL;
-		dev->out_ep->desc = NULL;
-	}
+करोne:
+	/* on error, disable any endpoपूर्णांकs  */
+	अगर (result != 0) अणु
+		(व्योम) usb_ep_disable(dev->in_ep);
+		(व्योम) usb_ep_disable(dev->out_ep);
+		dev->in_ep->desc = शून्य;
+		dev->out_ep->desc = शून्य;
+	पूर्ण
 
-	/* caller is responsible for cleanup on error */
-	return result;
-}
+	/* caller is responsible क्रम cleanup on error */
+	वापस result;
+पूर्ण
 
-static void printer_reset_interface(struct printer_dev *dev)
-{
-	unsigned long	flags;
+अटल व्योम prपूर्णांकer_reset_पूर्णांकerface(काष्ठा prपूर्णांकer_dev *dev)
+अणु
+	अचिन्हित दीर्घ	flags;
 
-	if (dev->interface < 0)
-		return;
+	अगर (dev->पूर्णांकerface < 0)
+		वापस;
 
 	DBG(dev, "%s\n", __func__);
 
-	if (dev->in_ep->desc)
+	अगर (dev->in_ep->desc)
 		usb_ep_disable(dev->in_ep);
 
-	if (dev->out_ep->desc)
+	अगर (dev->out_ep->desc)
 		usb_ep_disable(dev->out_ep);
 
 	spin_lock_irqsave(&dev->lock, flags);
-	dev->in_ep->desc = NULL;
-	dev->out_ep->desc = NULL;
-	dev->interface = -1;
+	dev->in_ep->desc = शून्य;
+	dev->out_ep->desc = शून्य;
+	dev->पूर्णांकerface = -1;
 	spin_unlock_irqrestore(&dev->lock, flags);
-}
+पूर्ण
 
 /* Change our operational Interface. */
-static int set_interface(struct printer_dev *dev, unsigned number)
-{
-	int			result = 0;
+अटल पूर्णांक set_पूर्णांकerface(काष्ठा prपूर्णांकer_dev *dev, अचिन्हित number)
+अणु
+	पूर्णांक			result = 0;
 
-	/* Free the current interface */
-	printer_reset_interface(dev);
+	/* Free the current पूर्णांकerface */
+	prपूर्णांकer_reset_पूर्णांकerface(dev);
 
-	result = set_printer_interface(dev);
-	if (result)
-		printer_reset_interface(dev);
-	else
-		dev->interface = number;
+	result = set_prपूर्णांकer_पूर्णांकerface(dev);
+	अगर (result)
+		prपूर्णांकer_reset_पूर्णांकerface(dev);
+	अन्यथा
+		dev->पूर्णांकerface = number;
 
-	if (!result)
+	अगर (!result)
 		INFO(dev, "Using interface %x\n", number);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void printer_soft_reset(struct printer_dev *dev)
-{
-	struct usb_request	*req;
+अटल व्योम prपूर्णांकer_soft_reset(काष्ठा prपूर्णांकer_dev *dev)
+अणु
+	काष्ठा usb_request	*req;
 
 	INFO(dev, "Received Printer Reset Request\n");
 
-	if (usb_ep_disable(dev->in_ep))
+	अगर (usb_ep_disable(dev->in_ep))
 		DBG(dev, "Failed to disable USB in_ep\n");
-	if (usb_ep_disable(dev->out_ep))
+	अगर (usb_ep_disable(dev->out_ep))
 		DBG(dev, "Failed to disable USB out_ep\n");
 
-	if (dev->current_rx_req != NULL) {
+	अगर (dev->current_rx_req != शून्य) अणु
 		list_add(&dev->current_rx_req->list, &dev->rx_reqs);
-		dev->current_rx_req = NULL;
-	}
+		dev->current_rx_req = शून्य;
+	पूर्ण
 	dev->current_rx_bytes = 0;
-	dev->current_rx_buf = NULL;
-	dev->reset_printer = 1;
+	dev->current_rx_buf = शून्य;
+	dev->reset_prपूर्णांकer = 1;
 
-	while (likely(!(list_empty(&dev->rx_buffers)))) {
-		req = container_of(dev->rx_buffers.next, struct usb_request,
+	जबतक (likely(!(list_empty(&dev->rx_buffers)))) अणु
+		req = container_of(dev->rx_buffers.next, काष्ठा usb_request,
 				list);
 		list_del_init(&req->list);
 		list_add(&req->list, &dev->rx_reqs);
-	}
+	पूर्ण
 
-	while (likely(!(list_empty(&dev->rx_reqs_active)))) {
-		req = container_of(dev->rx_buffers.next, struct usb_request,
+	जबतक (likely(!(list_empty(&dev->rx_reqs_active)))) अणु
+		req = container_of(dev->rx_buffers.next, काष्ठा usb_request,
 				list);
 		list_del_init(&req->list);
 		list_add(&req->list, &dev->rx_reqs);
-	}
+	पूर्ण
 
-	while (likely(!(list_empty(&dev->tx_reqs_active)))) {
+	जबतक (likely(!(list_empty(&dev->tx_reqs_active)))) अणु
 		req = container_of(dev->tx_reqs_active.next,
-				struct usb_request, list);
+				काष्ठा usb_request, list);
 		list_del_init(&req->list);
 		list_add(&req->list, &dev->tx_reqs);
-	}
+	पूर्ण
 
-	if (usb_ep_enable(dev->in_ep))
+	अगर (usb_ep_enable(dev->in_ep))
 		DBG(dev, "Failed to enable USB in_ep\n");
-	if (usb_ep_enable(dev->out_ep))
+	अगर (usb_ep_enable(dev->out_ep))
 		DBG(dev, "Failed to enable USB out_ep\n");
 
-	wake_up_interruptible(&dev->rx_wait);
-	wake_up_interruptible(&dev->tx_wait);
-	wake_up_interruptible(&dev->tx_flush_wait);
-}
+	wake_up_पूर्णांकerruptible(&dev->rx_रुको);
+	wake_up_पूर्णांकerruptible(&dev->tx_रुको);
+	wake_up_पूर्णांकerruptible(&dev->tx_flush_रुको);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static bool gprinter_req_match(struct usb_function *f,
-			       const struct usb_ctrlrequest *ctrl,
+अटल bool gprपूर्णांकer_req_match(काष्ठा usb_function *f,
+			       स्थिर काष्ठा usb_ctrlrequest *ctrl,
 			       bool config0)
-{
-	struct printer_dev	*dev = func_to_printer(f);
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev = func_to_prपूर्णांकer(f);
 	u16			w_index = le16_to_cpu(ctrl->wIndex);
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u16			w_length = le16_to_cpu(ctrl->wLength);
 
-	if (config0)
-		return false;
+	अगर (config0)
+		वापस false;
 
-	if ((ctrl->bRequestType & USB_RECIP_MASK) != USB_RECIP_INTERFACE ||
+	अगर ((ctrl->bRequestType & USB_RECIP_MASK) != USB_RECIP_INTERFACE ||
 	    (ctrl->bRequestType & USB_TYPE_MASK) != USB_TYPE_CLASS)
-		return false;
+		वापस false;
 
-	switch (ctrl->bRequest) {
-	case GET_DEVICE_ID:
+	चयन (ctrl->bRequest) अणु
+	हाल GET_DEVICE_ID:
 		w_index >>= 8;
-		if (USB_DIR_IN & ctrl->bRequestType)
-			break;
-		return false;
-	case GET_PORT_STATUS:
-		if (!w_value && w_length == 1 &&
-		    (USB_DIR_IN & ctrl->bRequestType))
-			break;
-		return false;
-	case SOFT_RESET:
-		if (!w_value && !w_length &&
-		   !(USB_DIR_IN & ctrl->bRequestType))
-			break;
+		अगर (USB_सूची_IN & ctrl->bRequestType)
+			अवरोध;
+		वापस false;
+	हाल GET_PORT_STATUS:
+		अगर (!w_value && w_length == 1 &&
+		    (USB_सूची_IN & ctrl->bRequestType))
+			अवरोध;
+		वापस false;
+	हाल SOFT_RESET:
+		अगर (!w_value && !w_length &&
+		   !(USB_सूची_IN & ctrl->bRequestType))
+			अवरोध;
 		fallthrough;
-	default:
-		return false;
-	}
-	return w_index == dev->interface;
-}
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस w_index == dev->पूर्णांकerface;
+पूर्ण
 
 /*
  * The setup() callback implements all the ep0 functionality that's not
- * handled lower down.
+ * handled lower करोwn.
  */
-static int printer_func_setup(struct usb_function *f,
-		const struct usb_ctrlrequest *ctrl)
-{
-	struct printer_dev *dev = func_to_printer(f);
-	struct usb_composite_dev *cdev = f->config->cdev;
-	struct usb_request	*req = cdev->req;
+अटल पूर्णांक prपूर्णांकer_func_setup(काष्ठा usb_function *f,
+		स्थिर काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा prपूर्णांकer_dev *dev = func_to_prपूर्णांकer(f);
+	काष्ठा usb_composite_dev *cdev = f->config->cdev;
+	काष्ठा usb_request	*req = cdev->req;
 	u8			*buf = req->buf;
-	int			value = -EOPNOTSUPP;
+	पूर्णांक			value = -EOPNOTSUPP;
 	u16			wIndex = le16_to_cpu(ctrl->wIndex);
 	u16			wValue = le16_to_cpu(ctrl->wValue);
 	u16			wLength = le16_to_cpu(ctrl->wLength);
@@ -993,263 +994,263 @@ static int printer_func_setup(struct usb_function *f,
 	DBG(dev, "ctrl req%02x.%02x v%04x i%04x l%d\n",
 		ctrl->bRequestType, ctrl->bRequest, wValue, wIndex, wLength);
 
-	switch (ctrl->bRequestType&USB_TYPE_MASK) {
-	case USB_TYPE_CLASS:
-		switch (ctrl->bRequest) {
-		case GET_DEVICE_ID: /* Get the IEEE-1284 PNP String */
-			/* Only one printer interface is supported. */
-			if ((wIndex>>8) != dev->interface)
-				break;
+	चयन (ctrl->bRequestType&USB_TYPE_MASK) अणु
+	हाल USB_TYPE_CLASS:
+		चयन (ctrl->bRequest) अणु
+		हाल GET_DEVICE_ID: /* Get the IEEE-1284 PNP String */
+			/* Only one prपूर्णांकer पूर्णांकerface is supported. */
+			अगर ((wIndex>>8) != dev->पूर्णांकerface)
+				अवरोध;
 
-			if (!dev->pnp_string) {
+			अगर (!dev->pnp_string) अणु
 				value = 0;
-				break;
-			}
-			value = strlen(dev->pnp_string);
+				अवरोध;
+			पूर्ण
+			value = म_माप(dev->pnp_string);
 			buf[0] = (value >> 8) & 0xFF;
 			buf[1] = value & 0xFF;
-			memcpy(buf + 2, dev->pnp_string, value);
+			स_नकल(buf + 2, dev->pnp_string, value);
 			DBG(dev, "1284 PNP String: %x %s\n", value,
 			    dev->pnp_string);
-			break;
+			अवरोध;
 
-		case GET_PORT_STATUS: /* Get Port Status */
-			/* Only one printer interface is supported. */
-			if (wIndex != dev->interface)
-				break;
+		हाल GET_PORT_STATUS: /* Get Port Status */
+			/* Only one prपूर्णांकer पूर्णांकerface is supported. */
+			अगर (wIndex != dev->पूर्णांकerface)
+				अवरोध;
 
-			buf[0] = dev->printer_status;
+			buf[0] = dev->prपूर्णांकer_status;
 			value = min_t(u16, wLength, 1);
-			break;
+			अवरोध;
 
-		case SOFT_RESET: /* Soft Reset */
-			/* Only one printer interface is supported. */
-			if (wIndex != dev->interface)
-				break;
+		हाल SOFT_RESET: /* Soft Reset */
+			/* Only one prपूर्णांकer पूर्णांकerface is supported. */
+			अगर (wIndex != dev->पूर्णांकerface)
+				अवरोध;
 
-			printer_soft_reset(dev);
+			prपूर्णांकer_soft_reset(dev);
 
 			value = 0;
-			break;
+			अवरोध;
 
-		default:
-			goto unknown;
-		}
-		break;
+		शेष:
+			जाओ unknown;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 unknown:
 		VDBG(dev,
 			"unknown ctrl req%02x.%02x v%04x i%04x l%d\n",
 			ctrl->bRequestType, ctrl->bRequest,
 			wValue, wIndex, wLength);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	/* host either stalls (value < 0) or reports success */
-	if (value >= 0) {
+	अगर (value >= 0) अणु
 		req->length = value;
 		req->zero = value < wLength;
 		value = usb_ep_queue(cdev->gadget->ep0, req, GFP_ATOMIC);
-		if (value < 0) {
+		अगर (value < 0) अणु
 			ERROR(dev, "%s:%d Error!\n", __func__, __LINE__);
 			req->status = 0;
-		}
-	}
-	return value;
-}
+		पूर्ण
+	पूर्ण
+	वापस value;
+पूर्ण
 
-static int printer_func_bind(struct usb_configuration *c,
-		struct usb_function *f)
-{
-	struct usb_gadget *gadget = c->cdev->gadget;
-	struct printer_dev *dev = func_to_printer(f);
-	struct device *pdev;
-	struct usb_composite_dev *cdev = c->cdev;
-	struct usb_ep *in_ep;
-	struct usb_ep *out_ep = NULL;
-	struct usb_request *req;
+अटल पूर्णांक prपूर्णांकer_func_bind(काष्ठा usb_configuration *c,
+		काष्ठा usb_function *f)
+अणु
+	काष्ठा usb_gadget *gadget = c->cdev->gadget;
+	काष्ठा prपूर्णांकer_dev *dev = func_to_prपूर्णांकer(f);
+	काष्ठा device *pdev;
+	काष्ठा usb_composite_dev *cdev = c->cdev;
+	काष्ठा usb_ep *in_ep;
+	काष्ठा usb_ep *out_ep = शून्य;
+	काष्ठा usb_request *req;
 	dev_t devt;
-	int id;
-	int ret;
+	पूर्णांक id;
+	पूर्णांक ret;
 	u32 i;
 
-	id = usb_interface_id(c, f);
-	if (id < 0)
-		return id;
-	intf_desc.bInterfaceNumber = id;
+	id = usb_पूर्णांकerface_id(c, f);
+	अगर (id < 0)
+		वापस id;
+	पूर्णांकf_desc.bInterfaceNumber = id;
 
 	/* finish hookup to lower layer ... */
 	dev->gadget = gadget;
 
 	/* all we really need is bulk IN/OUT */
-	in_ep = usb_ep_autoconfig(cdev->gadget, &fs_ep_in_desc);
-	if (!in_ep) {
-autoconf_fail:
+	in_ep = usb_ep_स्वतःconfig(cdev->gadget, &fs_ep_in_desc);
+	अगर (!in_ep) अणु
+स्वतःconf_fail:
 		dev_err(&cdev->gadget->dev, "can't autoconfigure on %s\n",
 			cdev->gadget->name);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	out_ep = usb_ep_autoconfig(cdev->gadget, &fs_ep_out_desc);
-	if (!out_ep)
-		goto autoconf_fail;
+	out_ep = usb_ep_स्वतःconfig(cdev->gadget, &fs_ep_out_desc);
+	अगर (!out_ep)
+		जाओ स्वतःconf_fail;
 
-	/* assumes that all endpoints are dual-speed */
-	hs_ep_in_desc.bEndpointAddress = fs_ep_in_desc.bEndpointAddress;
-	hs_ep_out_desc.bEndpointAddress = fs_ep_out_desc.bEndpointAddress;
-	ss_ep_in_desc.bEndpointAddress = fs_ep_in_desc.bEndpointAddress;
-	ss_ep_out_desc.bEndpointAddress = fs_ep_out_desc.bEndpointAddress;
+	/* assumes that all endpoपूर्णांकs are dual-speed */
+	hs_ep_in_desc.bEndpoपूर्णांकAddress = fs_ep_in_desc.bEndpoपूर्णांकAddress;
+	hs_ep_out_desc.bEndpoपूर्णांकAddress = fs_ep_out_desc.bEndpoपूर्णांकAddress;
+	ss_ep_in_desc.bEndpoपूर्णांकAddress = fs_ep_in_desc.bEndpoपूर्णांकAddress;
+	ss_ep_out_desc.bEndpoपूर्णांकAddress = fs_ep_out_desc.bEndpoपूर्णांकAddress;
 
-	ret = usb_assign_descriptors(f, fs_printer_function,
-			hs_printer_function, ss_printer_function,
-			ss_printer_function);
-	if (ret)
-		return ret;
+	ret = usb_assign_descriptors(f, fs_prपूर्णांकer_function,
+			hs_prपूर्णांकer_function, ss_prपूर्णांकer_function,
+			ss_prपूर्णांकer_function);
+	अगर (ret)
+		वापस ret;
 
 	dev->in_ep = in_ep;
 	dev->out_ep = out_ep;
 
 	ret = -ENOMEM;
-	for (i = 0; i < dev->q_len; i++) {
-		req = printer_req_alloc(dev->in_ep, USB_BUFSIZE, GFP_KERNEL);
-		if (!req)
-			goto fail_tx_reqs;
+	क्रम (i = 0; i < dev->q_len; i++) अणु
+		req = prपूर्णांकer_req_alloc(dev->in_ep, USB_बफ_मानE, GFP_KERNEL);
+		अगर (!req)
+			जाओ fail_tx_reqs;
 		list_add(&req->list, &dev->tx_reqs);
-	}
+	पूर्ण
 
-	for (i = 0; i < dev->q_len; i++) {
-		req = printer_req_alloc(dev->out_ep, USB_BUFSIZE, GFP_KERNEL);
-		if (!req)
-			goto fail_rx_reqs;
+	क्रम (i = 0; i < dev->q_len; i++) अणु
+		req = prपूर्णांकer_req_alloc(dev->out_ep, USB_बफ_मानE, GFP_KERNEL);
+		अगर (!req)
+			जाओ fail_rx_reqs;
 		list_add(&req->list, &dev->rx_reqs);
-	}
+	पूर्ण
 
-	/* Setup the sysfs files for the printer gadget. */
+	/* Setup the sysfs files क्रम the prपूर्णांकer gadget. */
 	devt = MKDEV(major, dev->minor);
-	pdev = device_create(usb_gadget_class, NULL, devt,
-				  NULL, "g_printer%d", dev->minor);
-	if (IS_ERR(pdev)) {
+	pdev = device_create(usb_gadget_class, शून्य, devt,
+				  शून्य, "g_printer%d", dev->minor);
+	अगर (IS_ERR(pdev)) अणु
 		ERROR(dev, "Failed to create device: g_printer\n");
 		ret = PTR_ERR(pdev);
-		goto fail_rx_reqs;
-	}
+		जाओ fail_rx_reqs;
+	पूर्ण
 
 	/*
-	 * Register a character device as an interface to a user mode
-	 * program that handles the printer specific functionality.
+	 * Register a अक्षरacter device as an पूर्णांकerface to a user mode
+	 * program that handles the prपूर्णांकer specअगरic functionality.
 	 */
-	cdev_init(&dev->printer_cdev, &printer_io_operations);
-	dev->printer_cdev.owner = THIS_MODULE;
-	ret = cdev_add(&dev->printer_cdev, devt, 1);
-	if (ret) {
+	cdev_init(&dev->prपूर्णांकer_cdev, &prपूर्णांकer_io_operations);
+	dev->prपूर्णांकer_cdev.owner = THIS_MODULE;
+	ret = cdev_add(&dev->prपूर्णांकer_cdev, devt, 1);
+	अगर (ret) अणु
 		ERROR(dev, "Failed to open char device\n");
-		goto fail_cdev_add;
-	}
+		जाओ fail_cdev_add;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail_cdev_add:
 	device_destroy(usb_gadget_class, devt);
 
 fail_rx_reqs:
-	while (!list_empty(&dev->rx_reqs)) {
-		req = container_of(dev->rx_reqs.next, struct usb_request, list);
+	जबतक (!list_empty(&dev->rx_reqs)) अणु
+		req = container_of(dev->rx_reqs.next, काष्ठा usb_request, list);
 		list_del(&req->list);
-		printer_req_free(dev->out_ep, req);
-	}
+		prपूर्णांकer_req_मुक्त(dev->out_ep, req);
+	पूर्ण
 
 fail_tx_reqs:
-	while (!list_empty(&dev->tx_reqs)) {
-		req = container_of(dev->tx_reqs.next, struct usb_request, list);
+	जबतक (!list_empty(&dev->tx_reqs)) अणु
+		req = container_of(dev->tx_reqs.next, काष्ठा usb_request, list);
 		list_del(&req->list);
-		printer_req_free(dev->in_ep, req);
-	}
+		prपूर्णांकer_req_मुक्त(dev->in_ep, req);
+	पूर्ण
 
-	usb_free_all_descriptors(f);
-	return ret;
+	usb_मुक्त_all_descriptors(f);
+	वापस ret;
 
-}
+पूर्ण
 
-static int printer_func_set_alt(struct usb_function *f,
-		unsigned intf, unsigned alt)
-{
-	struct printer_dev *dev = func_to_printer(f);
-	int ret = -ENOTSUPP;
+अटल पूर्णांक prपूर्णांकer_func_set_alt(काष्ठा usb_function *f,
+		अचिन्हित पूर्णांकf, अचिन्हित alt)
+अणु
+	काष्ठा prपूर्णांकer_dev *dev = func_to_prपूर्णांकer(f);
+	पूर्णांक ret = -ENOTSUPP;
 
-	if (!alt)
-		ret = set_interface(dev, intf);
+	अगर (!alt)
+		ret = set_पूर्णांकerface(dev, पूर्णांकf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void printer_func_disable(struct usb_function *f)
-{
-	struct printer_dev *dev = func_to_printer(f);
+अटल व्योम prपूर्णांकer_func_disable(काष्ठा usb_function *f)
+अणु
+	काष्ठा prपूर्णांकer_dev *dev = func_to_prपूर्णांकer(f);
 
 	DBG(dev, "%s\n", __func__);
 
-	printer_reset_interface(dev);
-}
+	prपूर्णांकer_reset_पूर्णांकerface(dev);
+पूर्ण
 
-static inline struct f_printer_opts
-*to_f_printer_opts(struct config_item *item)
-{
-	return container_of(to_config_group(item), struct f_printer_opts,
+अटल अंतरभूत काष्ठा f_prपूर्णांकer_opts
+*to_f_prपूर्णांकer_opts(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_config_group(item), काष्ठा f_prपूर्णांकer_opts,
 			    func_inst.group);
-}
+पूर्ण
 
-static void printer_attr_release(struct config_item *item)
-{
-	struct f_printer_opts *opts = to_f_printer_opts(item);
+अटल व्योम prपूर्णांकer_attr_release(काष्ठा config_item *item)
+अणु
+	काष्ठा f_prपूर्णांकer_opts *opts = to_f_prपूर्णांकer_opts(item);
 
 	usb_put_function_instance(&opts->func_inst);
-}
+पूर्ण
 
-static struct configfs_item_operations printer_item_ops = {
-	.release	= printer_attr_release,
-};
+अटल काष्ठा configfs_item_operations prपूर्णांकer_item_ops = अणु
+	.release	= prपूर्णांकer_attr_release,
+पूर्ण;
 
-static ssize_t f_printer_opts_pnp_string_show(struct config_item *item,
-					      char *page)
-{
-	struct f_printer_opts *opts = to_f_printer_opts(item);
-	int result = 0;
+अटल sमाप_प्रकार f_prपूर्णांकer_opts_pnp_string_show(काष्ठा config_item *item,
+					      अक्षर *page)
+अणु
+	काष्ठा f_prपूर्णांकer_opts *opts = to_f_prपूर्णांकer_opts(item);
+	पूर्णांक result = 0;
 
 	mutex_lock(&opts->lock);
-	if (!opts->pnp_string)
-		goto unlock;
+	अगर (!opts->pnp_string)
+		जाओ unlock;
 
 	result = strlcpy(page, opts->pnp_string, PAGE_SIZE);
-	if (result >= PAGE_SIZE) {
+	अगर (result >= PAGE_SIZE) अणु
 		result = PAGE_SIZE;
-	} else if (page[result - 1] != '\n' && result + 1 < PAGE_SIZE) {
+	पूर्ण अन्यथा अगर (page[result - 1] != '\n' && result + 1 < PAGE_SIZE) अणु
 		page[result++] = '\n';
 		page[result] = '\0';
-	}
+	पूर्ण
 
 unlock:
 	mutex_unlock(&opts->lock);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static ssize_t f_printer_opts_pnp_string_store(struct config_item *item,
-					       const char *page, size_t len)
-{
-	struct f_printer_opts *opts = to_f_printer_opts(item);
-	char *new_pnp;
-	int result;
+अटल sमाप_प्रकार f_prपूर्णांकer_opts_pnp_string_store(काष्ठा config_item *item,
+					       स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	काष्ठा f_prपूर्णांकer_opts *opts = to_f_prपूर्णांकer_opts(item);
+	अक्षर *new_pnp;
+	पूर्णांक result;
 
 	mutex_lock(&opts->lock);
 
 	new_pnp = kstrndup(page, len, GFP_KERNEL);
-	if (!new_pnp) {
+	अगर (!new_pnp) अणु
 		result = -ENOMEM;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	if (opts->pnp_string_allocated)
-		kfree(opts->pnp_string);
+	अगर (opts->pnp_string_allocated)
+		kमुक्त(opts->pnp_string);
 
 	opts->pnp_string_allocated = true;
 	opts->pnp_string = new_pnp;
@@ -1257,221 +1258,221 @@ static ssize_t f_printer_opts_pnp_string_store(struct config_item *item,
 unlock:
 	mutex_unlock(&opts->lock);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-CONFIGFS_ATTR(f_printer_opts_, pnp_string);
+CONFIGFS_ATTR(f_prपूर्णांकer_opts_, pnp_string);
 
-static ssize_t f_printer_opts_q_len_show(struct config_item *item,
-					 char *page)
-{
-	struct f_printer_opts *opts = to_f_printer_opts(item);
-	int result;
+अटल sमाप_प्रकार f_prपूर्णांकer_opts_q_len_show(काष्ठा config_item *item,
+					 अक्षर *page)
+अणु
+	काष्ठा f_prपूर्णांकer_opts *opts = to_f_prपूर्णांकer_opts(item);
+	पूर्णांक result;
 
 	mutex_lock(&opts->lock);
-	result = sprintf(page, "%d\n", opts->q_len);
+	result = प्र_लिखो(page, "%d\n", opts->q_len);
 	mutex_unlock(&opts->lock);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static ssize_t f_printer_opts_q_len_store(struct config_item *item,
-					  const char *page, size_t len)
-{
-	struct f_printer_opts *opts = to_f_printer_opts(item);
-	int ret;
+अटल sमाप_प्रकार f_prपूर्णांकer_opts_q_len_store(काष्ठा config_item *item,
+					  स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	काष्ठा f_prपूर्णांकer_opts *opts = to_f_prपूर्णांकer_opts(item);
+	पूर्णांक ret;
 	u16 num;
 
 	mutex_lock(&opts->lock);
-	if (opts->refcnt) {
+	अगर (opts->refcnt) अणु
 		ret = -EBUSY;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	ret = kstrtou16(page, 0, &num);
-	if (ret)
-		goto end;
+	अगर (ret)
+		जाओ end;
 
-	opts->q_len = (unsigned)num;
+	opts->q_len = (अचिन्हित)num;
 	ret = len;
 end:
 	mutex_unlock(&opts->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-CONFIGFS_ATTR(f_printer_opts_, q_len);
+CONFIGFS_ATTR(f_prपूर्णांकer_opts_, q_len);
 
-static struct configfs_attribute *printer_attrs[] = {
-	&f_printer_opts_attr_pnp_string,
-	&f_printer_opts_attr_q_len,
-	NULL,
-};
+अटल काष्ठा configfs_attribute *prपूर्णांकer_attrs[] = अणु
+	&f_prपूर्णांकer_opts_attr_pnp_string,
+	&f_prपूर्णांकer_opts_attr_q_len,
+	शून्य,
+पूर्ण;
 
-static const struct config_item_type printer_func_type = {
-	.ct_item_ops	= &printer_item_ops,
-	.ct_attrs	= printer_attrs,
+अटल स्थिर काष्ठा config_item_type prपूर्णांकer_func_type = अणु
+	.ct_item_ops	= &prपूर्णांकer_item_ops,
+	.ct_attrs	= prपूर्णांकer_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static inline int gprinter_get_minor(void)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक gprपूर्णांकer_get_minor(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = ida_simple_get(&printer_ida, 0, 0, GFP_KERNEL);
-	if (ret >= PRINTER_MINORS) {
-		ida_simple_remove(&printer_ida, ret);
+	ret = ida_simple_get(&prपूर्णांकer_ida, 0, 0, GFP_KERNEL);
+	अगर (ret >= PRINTER_MINORS) अणु
+		ida_simple_हटाओ(&prपूर्णांकer_ida, ret);
 		ret = -ENODEV;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void gprinter_put_minor(int minor)
-{
-	ida_simple_remove(&printer_ida, minor);
-}
+अटल अंतरभूत व्योम gprपूर्णांकer_put_minor(पूर्णांक minor)
+अणु
+	ida_simple_हटाओ(&prपूर्णांकer_ida, minor);
+पूर्ण
 
-static int gprinter_setup(int);
-static void gprinter_cleanup(void);
+अटल पूर्णांक gprपूर्णांकer_setup(पूर्णांक);
+अटल व्योम gprपूर्णांकer_cleanup(व्योम);
 
-static void gprinter_free_inst(struct usb_function_instance *f)
-{
-	struct f_printer_opts *opts;
+अटल व्योम gprपूर्णांकer_मुक्त_inst(काष्ठा usb_function_instance *f)
+अणु
+	काष्ठा f_prपूर्णांकer_opts *opts;
 
-	opts = container_of(f, struct f_printer_opts, func_inst);
+	opts = container_of(f, काष्ठा f_prपूर्णांकer_opts, func_inst);
 
-	mutex_lock(&printer_ida_lock);
+	mutex_lock(&prपूर्णांकer_ida_lock);
 
-	gprinter_put_minor(opts->minor);
-	if (ida_is_empty(&printer_ida))
-		gprinter_cleanup();
+	gprपूर्णांकer_put_minor(opts->minor);
+	अगर (ida_is_empty(&prपूर्णांकer_ida))
+		gprपूर्णांकer_cleanup();
 
-	mutex_unlock(&printer_ida_lock);
+	mutex_unlock(&prपूर्णांकer_ida_lock);
 
-	if (opts->pnp_string_allocated)
-		kfree(opts->pnp_string);
-	kfree(opts);
-}
+	अगर (opts->pnp_string_allocated)
+		kमुक्त(opts->pnp_string);
+	kमुक्त(opts);
+पूर्ण
 
-static struct usb_function_instance *gprinter_alloc_inst(void)
-{
-	struct f_printer_opts *opts;
-	struct usb_function_instance *ret;
-	int status = 0;
+अटल काष्ठा usb_function_instance *gprपूर्णांकer_alloc_inst(व्योम)
+अणु
+	काष्ठा f_prपूर्णांकer_opts *opts;
+	काष्ठा usb_function_instance *ret;
+	पूर्णांक status = 0;
 
-	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
-	if (!opts)
-		return ERR_PTR(-ENOMEM);
+	opts = kzalloc(माप(*opts), GFP_KERNEL);
+	अगर (!opts)
+		वापस ERR_PTR(-ENOMEM);
 
 	mutex_init(&opts->lock);
-	opts->func_inst.free_func_inst = gprinter_free_inst;
+	opts->func_inst.मुक्त_func_inst = gprपूर्णांकer_मुक्त_inst;
 	ret = &opts->func_inst;
 
-	/* Make sure q_len is initialized, otherwise the bound device can't support read/write! */
+	/* Make sure q_len is initialized, otherwise the bound device can't support पढ़ो/ग_लिखो! */
 	opts->q_len = DEFAULT_Q_LEN;
 
-	mutex_lock(&printer_ida_lock);
+	mutex_lock(&prपूर्णांकer_ida_lock);
 
-	if (ida_is_empty(&printer_ida)) {
-		status = gprinter_setup(PRINTER_MINORS);
-		if (status) {
+	अगर (ida_is_empty(&prपूर्णांकer_ida)) अणु
+		status = gprपूर्णांकer_setup(PRINTER_MINORS);
+		अगर (status) अणु
 			ret = ERR_PTR(status);
-			kfree(opts);
-			goto unlock;
-		}
-	}
+			kमुक्त(opts);
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
-	opts->minor = gprinter_get_minor();
-	if (opts->minor < 0) {
+	opts->minor = gprपूर्णांकer_get_minor();
+	अगर (opts->minor < 0) अणु
 		ret = ERR_PTR(opts->minor);
-		kfree(opts);
-		if (ida_is_empty(&printer_ida))
-			gprinter_cleanup();
-		goto unlock;
-	}
+		kमुक्त(opts);
+		अगर (ida_is_empty(&prपूर्णांकer_ida))
+			gprपूर्णांकer_cleanup();
+		जाओ unlock;
+	पूर्ण
 	config_group_init_type_name(&opts->func_inst.group, "",
-				    &printer_func_type);
+				    &prपूर्णांकer_func_type);
 
 unlock:
-	mutex_unlock(&printer_ida_lock);
-	return ret;
-}
+	mutex_unlock(&prपूर्णांकer_ida_lock);
+	वापस ret;
+पूर्ण
 
-static void gprinter_free(struct usb_function *f)
-{
-	struct printer_dev *dev = func_to_printer(f);
-	struct f_printer_opts *opts;
+अटल व्योम gprपूर्णांकer_मुक्त(काष्ठा usb_function *f)
+अणु
+	काष्ठा prपूर्णांकer_dev *dev = func_to_prपूर्णांकer(f);
+	काष्ठा f_prपूर्णांकer_opts *opts;
 
-	opts = container_of(f->fi, struct f_printer_opts, func_inst);
+	opts = container_of(f->fi, काष्ठा f_prपूर्णांकer_opts, func_inst);
 
-	kref_put(&dev->kref, printer_dev_free);
+	kref_put(&dev->kref, prपूर्णांकer_dev_मुक्त);
 	mutex_lock(&opts->lock);
 	--opts->refcnt;
 	mutex_unlock(&opts->lock);
-}
+पूर्ण
 
-static void printer_func_unbind(struct usb_configuration *c,
-		struct usb_function *f)
-{
-	struct printer_dev	*dev;
-	struct usb_request	*req;
+अटल व्योम prपूर्णांकer_func_unbind(काष्ठा usb_configuration *c,
+		काष्ठा usb_function *f)
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev;
+	काष्ठा usb_request	*req;
 
-	dev = func_to_printer(f);
+	dev = func_to_prपूर्णांकer(f);
 
 	device_destroy(usb_gadget_class, MKDEV(major, dev->minor));
 
 	/* Remove Character Device */
-	cdev_del(&dev->printer_cdev);
+	cdev_del(&dev->prपूर्णांकer_cdev);
 
-	/* we must already have been disconnected ... no i/o may be active */
+	/* we must alपढ़ोy have been disconnected ... no i/o may be active */
 	WARN_ON(!list_empty(&dev->tx_reqs_active));
 	WARN_ON(!list_empty(&dev->rx_reqs_active));
 
-	/* Free all memory for this driver. */
-	while (!list_empty(&dev->tx_reqs)) {
-		req = container_of(dev->tx_reqs.next, struct usb_request,
+	/* Free all memory क्रम this driver. */
+	जबतक (!list_empty(&dev->tx_reqs)) अणु
+		req = container_of(dev->tx_reqs.next, काष्ठा usb_request,
 				list);
 		list_del(&req->list);
-		printer_req_free(dev->in_ep, req);
-	}
+		prपूर्णांकer_req_मुक्त(dev->in_ep, req);
+	पूर्ण
 
-	if (dev->current_rx_req != NULL)
-		printer_req_free(dev->out_ep, dev->current_rx_req);
+	अगर (dev->current_rx_req != शून्य)
+		prपूर्णांकer_req_मुक्त(dev->out_ep, dev->current_rx_req);
 
-	while (!list_empty(&dev->rx_reqs)) {
+	जबतक (!list_empty(&dev->rx_reqs)) अणु
 		req = container_of(dev->rx_reqs.next,
-				struct usb_request, list);
+				काष्ठा usb_request, list);
 		list_del(&req->list);
-		printer_req_free(dev->out_ep, req);
-	}
+		prपूर्णांकer_req_मुक्त(dev->out_ep, req);
+	पूर्ण
 
-	while (!list_empty(&dev->rx_buffers)) {
+	जबतक (!list_empty(&dev->rx_buffers)) अणु
 		req = container_of(dev->rx_buffers.next,
-				struct usb_request, list);
+				काष्ठा usb_request, list);
 		list_del(&req->list);
-		printer_req_free(dev->out_ep, req);
-	}
-	usb_free_all_descriptors(f);
-}
+		prपूर्णांकer_req_मुक्त(dev->out_ep, req);
+	पूर्ण
+	usb_मुक्त_all_descriptors(f);
+पूर्ण
 
-static struct usb_function *gprinter_alloc(struct usb_function_instance *fi)
-{
-	struct printer_dev	*dev;
-	struct f_printer_opts	*opts;
+अटल काष्ठा usb_function *gprपूर्णांकer_alloc(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा prपूर्णांकer_dev	*dev;
+	काष्ठा f_prपूर्णांकer_opts	*opts;
 
-	opts = container_of(fi, struct f_printer_opts, func_inst);
+	opts = container_of(fi, काष्ठा f_prपूर्णांकer_opts, func_inst);
 
 	mutex_lock(&opts->lock);
-	if (opts->minor >= minors) {
+	अगर (opts->minor >= minors) अणु
 		mutex_unlock(&opts->lock);
-		return ERR_PTR(-ENOENT);
-	}
+		वापस ERR_PTR(-ENOENT);
+	पूर्ण
 
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev) {
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev) अणु
 		mutex_unlock(&opts->lock);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	kref_init(&dev->kref);
 	++opts->refcnt;
@@ -1481,13 +1482,13 @@ static struct usb_function *gprinter_alloc(struct usb_function_instance *fi)
 	mutex_unlock(&opts->lock);
 
 	dev->function.name = "printer";
-	dev->function.bind = printer_func_bind;
-	dev->function.setup = printer_func_setup;
-	dev->function.unbind = printer_func_unbind;
-	dev->function.set_alt = printer_func_set_alt;
-	dev->function.disable = printer_func_disable;
-	dev->function.req_match = gprinter_req_match;
-	dev->function.free_func = gprinter_free;
+	dev->function.bind = prपूर्णांकer_func_bind;
+	dev->function.setup = prपूर्णांकer_func_setup;
+	dev->function.unbind = prपूर्णांकer_func_unbind;
+	dev->function.set_alt = prपूर्णांकer_func_set_alt;
+	dev->function.disable = prपूर्णांकer_func_disable;
+	dev->function.req_match = gprपूर्णांकer_req_match;
+	dev->function.मुक्त_func = gprपूर्णांकer_मुक्त;
 
 	INIT_LIST_HEAD(&dev->tx_reqs);
 	INIT_LIST_HEAD(&dev->rx_reqs);
@@ -1496,58 +1497,58 @@ static struct usb_function *gprinter_alloc(struct usb_function_instance *fi)
 	INIT_LIST_HEAD(&dev->rx_reqs_active);
 
 	spin_lock_init(&dev->lock);
-	mutex_init(&dev->lock_printer_io);
-	init_waitqueue_head(&dev->rx_wait);
-	init_waitqueue_head(&dev->tx_wait);
-	init_waitqueue_head(&dev->tx_flush_wait);
+	mutex_init(&dev->lock_prपूर्णांकer_io);
+	init_रुकोqueue_head(&dev->rx_रुको);
+	init_रुकोqueue_head(&dev->tx_रुको);
+	init_रुकोqueue_head(&dev->tx_flush_रुको);
 
-	dev->interface = -1;
-	dev->printer_cdev_open = 0;
-	dev->printer_status = PRINTER_NOT_ERROR;
-	dev->current_rx_req = NULL;
+	dev->पूर्णांकerface = -1;
+	dev->prपूर्णांकer_cdev_खोलो = 0;
+	dev->prपूर्णांकer_status = PRINTER_NOT_ERROR;
+	dev->current_rx_req = शून्य;
 	dev->current_rx_bytes = 0;
-	dev->current_rx_buf = NULL;
+	dev->current_rx_buf = शून्य;
 
-	return &dev->function;
-}
+	वापस &dev->function;
+पूर्ण
 
-DECLARE_USB_FUNCTION_INIT(printer, gprinter_alloc_inst, gprinter_alloc);
+DECLARE_USB_FUNCTION_INIT(prपूर्णांकer, gprपूर्णांकer_alloc_inst, gprपूर्णांकer_alloc);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Craig Nadler");
 
-static int gprinter_setup(int count)
-{
-	int status;
+अटल पूर्णांक gprपूर्णांकer_setup(पूर्णांक count)
+अणु
+	पूर्णांक status;
 	dev_t devt;
 
 	usb_gadget_class = class_create(THIS_MODULE, "usb_printer_gadget");
-	if (IS_ERR(usb_gadget_class)) {
+	अगर (IS_ERR(usb_gadget_class)) अणु
 		status = PTR_ERR(usb_gadget_class);
-		usb_gadget_class = NULL;
+		usb_gadget_class = शून्य;
 		pr_err("unable to create usb_gadget class %d\n", status);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
 	status = alloc_chrdev_region(&devt, 0, count, "USB printer gadget");
-	if (status) {
+	अगर (status) अणु
 		pr_err("alloc_chrdev_region %d\n", status);
 		class_destroy(usb_gadget_class);
-		usb_gadget_class = NULL;
-		return status;
-	}
+		usb_gadget_class = शून्य;
+		वापस status;
+	पूर्ण
 
 	major = MAJOR(devt);
 	minors = count;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void gprinter_cleanup(void)
-{
-	if (major) {
-		unregister_chrdev_region(MKDEV(major, 0), minors);
+अटल व्योम gprपूर्णांकer_cleanup(व्योम)
+अणु
+	अगर (major) अणु
+		unरेजिस्टर_chrdev_region(MKDEV(major, 0), minors);
 		major = minors = 0;
-	}
+	पूर्ण
 	class_destroy(usb_gadget_class);
-	usb_gadget_class = NULL;
-}
+	usb_gadget_class = शून्य;
+पूर्ण

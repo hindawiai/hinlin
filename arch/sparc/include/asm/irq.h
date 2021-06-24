@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ___ASM_SPARC_IRQ_H
-#define ___ASM_SPARC_IRQ_H
-#if defined(__sparc__) && defined(__arch64__)
-#include <asm/irq_64.h>
-#else
-#include <asm/irq_32.h>
-#endif
-#endif
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ___ASM_SPARC_IRQ_H
+#घोषणा ___ASM_SPARC_IRQ_H
+#अगर defined(__sparc__) && defined(__arch64__)
+#समावेश <यंत्र/irq_64.h>
+#अन्यथा
+#समावेश <यंत्र/irq_32.h>
+#पूर्ण_अगर
+#पूर्ण_अगर

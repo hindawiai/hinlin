@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-/* drivers/input/touchscreen/zforce.c
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* drivers/input/touchscreen/zक्रमce.c
  *
- * Copyright (C) 2012-2013 MundoReader S.L.
+ * Copyright (C) 2012-2013 MunकरोReader S.L.
  */
 
-#ifndef _LINUX_INPUT_ZFORCE_TS_H
-#define _LINUX_INPUT_ZFORCE_TS_H
+#अगर_अघोषित _LINUX_INPUT_ZFORCE_TS_H
+#घोषणा _LINUX_INPUT_ZFORCE_TS_H
 
-struct zforce_ts_platdata {
-	unsigned int x_max;
-	unsigned int y_max;
-};
+काष्ठा zक्रमce_ts_platdata अणु
+	अचिन्हित पूर्णांक x_max;
+	अचिन्हित पूर्णांक y_max;
+पूर्ण;
 
-#endif /* _LINUX_INPUT_ZFORCE_TS_H */
+#पूर्ण_अगर /* _LINUX_INPUT_ZFORCE_TS_H */

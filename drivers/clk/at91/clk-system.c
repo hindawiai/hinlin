@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2013 Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/clk/at91_pmc.h>
-#include <linux/of.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk/at91_pmc.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
 
-#include "pmc.h"
+#समावेश "pmc.h"
 
-#define SYSTEM_MAX_ID		31
+#घोषणा SYSTEM_MAX_ID		31
 
-#define SYSTEM_MAX_NAME_SZ	32
+#घोषणा SYSTEM_MAX_NAME_SZ	32
 
-#define to_clk_system(hw) container_of(hw, struct clk_system, hw)
-struct clk_system {
-	struct clk_hw hw;
-	struct regmap *regmap;
+#घोषणा to_clk_प्रणाली(hw) container_of(hw, काष्ठा clk_प्रणाली, hw)
+काष्ठा clk_प्रणाली अणु
+	काष्ठा clk_hw hw;
+	काष्ठा regmap *regmap;
 	u8 id;
-};
+पूर्ण;
 
-static inline int is_pck(int id)
-{
-	return (id >= 8) && (id <= 15);
-}
+अटल अंतरभूत पूर्णांक is_pck(पूर्णांक id)
+अणु
+	वापस (id >= 8) && (id <= 15);
+पूर्ण
 
-static inline bool clk_system_ready(struct regmap *regmap, int id)
-{
-	unsigned int status;
+अटल अंतरभूत bool clk_प्रणाली_पढ़ोy(काष्ठा regmap *regmap, पूर्णांक id)
+अणु
+	अचिन्हित पूर्णांक status;
 
-	regmap_read(regmap, AT91_PMC_SR, &status);
+	regmap_पढ़ो(regmap, AT91_PMC_SR, &status);
 
-	return !!(status & (1 << id));
-}
+	वापस !!(status & (1 << id));
+पूर्ण
 
-static int clk_system_prepare(struct clk_hw *hw)
-{
-	struct clk_system *sys = to_clk_system(hw);
+अटल पूर्णांक clk_प्रणाली_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_प्रणाली *sys = to_clk_प्रणाली(hw);
 
-	regmap_write(sys->regmap, AT91_PMC_SCER, 1 << sys->id);
+	regmap_ग_लिखो(sys->regmap, AT91_PMC_SCER, 1 << sys->id);
 
-	if (!is_pck(sys->id))
-		return 0;
+	अगर (!is_pck(sys->id))
+		वापस 0;
 
-	while (!clk_system_ready(sys->regmap, sys->id))
+	जबतक (!clk_प्रणाली_पढ़ोy(sys->regmap, sys->id))
 		cpu_relax();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_system_unprepare(struct clk_hw *hw)
-{
-	struct clk_system *sys = to_clk_system(hw);
+अटल व्योम clk_प्रणाली_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_प्रणाली *sys = to_clk_प्रणाली(hw);
 
-	regmap_write(sys->regmap, AT91_PMC_SCDR, 1 << sys->id);
-}
+	regmap_ग_लिखो(sys->regmap, AT91_PMC_SCDR, 1 << sys->id);
+पूर्ण
 
-static int clk_system_is_prepared(struct clk_hw *hw)
-{
-	struct clk_system *sys = to_clk_system(hw);
-	unsigned int status;
+अटल पूर्णांक clk_प्रणाली_is_prepared(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_प्रणाली *sys = to_clk_प्रणाली(hw);
+	अचिन्हित पूर्णांक status;
 
-	regmap_read(sys->regmap, AT91_PMC_SCSR, &status);
+	regmap_पढ़ो(sys->regmap, AT91_PMC_SCSR, &status);
 
-	if (!(status & (1 << sys->id)))
-		return 0;
+	अगर (!(status & (1 << sys->id)))
+		वापस 0;
 
-	if (!is_pck(sys->id))
-		return 1;
+	अगर (!is_pck(sys->id))
+		वापस 1;
 
-	regmap_read(sys->regmap, AT91_PMC_SR, &status);
+	regmap_पढ़ो(sys->regmap, AT91_PMC_SR, &status);
 
-	return !!(status & (1 << sys->id));
-}
+	वापस !!(status & (1 << sys->id));
+पूर्ण
 
-static const struct clk_ops system_ops = {
-	.prepare = clk_system_prepare,
-	.unprepare = clk_system_unprepare,
-	.is_prepared = clk_system_is_prepared,
-};
+अटल स्थिर काष्ठा clk_ops प्रणाली_ops = अणु
+	.prepare = clk_प्रणाली_prepare,
+	.unprepare = clk_प्रणाली_unprepare,
+	.is_prepared = clk_प्रणाली_is_prepared,
+पूर्ण;
 
-struct clk_hw * __init
-at91_clk_register_system(struct regmap *regmap, const char *name,
-			 const char *parent_name, u8 id)
-{
-	struct clk_system *sys;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+काष्ठा clk_hw * __init
+at91_clk_रेजिस्टर_प्रणाली(काष्ठा regmap *regmap, स्थिर अक्षर *name,
+			 स्थिर अक्षर *parent_name, u8 id)
+अणु
+	काष्ठा clk_प्रणाली *sys;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	if (!parent_name || id > SYSTEM_MAX_ID)
-		return ERR_PTR(-EINVAL);
+	अगर (!parent_name || id > SYSTEM_MAX_ID)
+		वापस ERR_PTR(-EINVAL);
 
-	sys = kzalloc(sizeof(*sys), GFP_KERNEL);
-	if (!sys)
-		return ERR_PTR(-ENOMEM);
+	sys = kzalloc(माप(*sys), GFP_KERNEL);
+	अगर (!sys)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
-	init.ops = &system_ops;
+	init.ops = &प्रणाली_ops;
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 	init.flags = CLK_SET_RATE_PARENT;
@@ -110,11 +111,11 @@ at91_clk_register_system(struct regmap *regmap, const char *name,
 	sys->regmap = regmap;
 
 	hw = &sys->hw;
-	ret = clk_hw_register(NULL, &sys->hw);
-	if (ret) {
-		kfree(sys);
+	ret = clk_hw_रेजिस्टर(शून्य, &sys->hw);
+	अगर (ret) अणु
+		kमुक्त(sys);
 		hw = ERR_PTR(ret);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण

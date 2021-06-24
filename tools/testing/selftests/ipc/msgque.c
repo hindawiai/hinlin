@@ -1,255 +1,256 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/msg.h>
-#include <fcntl.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <sys/msg.h>
+#समावेश <fcntl.h>
 
-#include "../kselftest.h"
+#समावेश "../kselftest.h"
 
-#define MAX_MSG_SIZE		32
+#घोषणा MAX_MSG_SIZE		32
 
-struct msg1 {
-	int msize;
-	long mtype;
-	char mtext[MAX_MSG_SIZE];
-};
+काष्ठा msg1 अणु
+	पूर्णांक msize;
+	दीर्घ mtype;
+	अक्षर mtext[MAX_MSG_SIZE];
+पूर्ण;
 
-#define TEST_STRING "Test sysv5 msg"
-#define MSG_TYPE 1
+#घोषणा TEST_STRING "Test sysv5 msg"
+#घोषणा MSG_TYPE 1
 
-#define ANOTHER_TEST_STRING "Yet another test sysv5 msg"
-#define ANOTHER_MSG_TYPE 26538
+#घोषणा ANOTHER_TEST_STRING "Yet another test sysv5 msg"
+#घोषणा ANOTHER_MSG_TYPE 26538
 
-struct msgque_data {
+काष्ठा msgque_data अणु
 	key_t key;
-	int msq_id;
-	int qbytes;
-	int qnum;
-	int mode;
-	struct msg1 *messages;
-};
+	पूर्णांक msq_id;
+	पूर्णांक qbytes;
+	पूर्णांक qnum;
+	पूर्णांक mode;
+	काष्ठा msg1 *messages;
+पूर्ण;
 
-int restore_queue(struct msgque_data *msgque)
-{
-	int fd, ret, id, i;
-	char buf[32];
+पूर्णांक restore_queue(काष्ठा msgque_data *msgque)
+अणु
+	पूर्णांक fd, ret, id, i;
+	अक्षर buf[32];
 
-	fd = open("/proc/sys/kernel/msg_next_id", O_WRONLY);
-	if (fd == -1) {
-		printf("Failed to open /proc/sys/kernel/msg_next_id\n");
-		return -errno;
-	}
-	sprintf(buf, "%d", msgque->msq_id);
+	fd = खोलो("/proc/sys/kernel/msg_next_id", O_WRONLY);
+	अगर (fd == -1) अणु
+		म_लिखो("Failed to open /proc/sys/kernel/msg_next_id\n");
+		वापस -त्रुटि_सं;
+	पूर्ण
+	प्र_लिखो(buf, "%d", msgque->msq_id);
 
-	ret = write(fd, buf, strlen(buf));
-	if (ret != strlen(buf)) {
-		printf("Failed to write to /proc/sys/kernel/msg_next_id\n");
-		return -errno;
-	}
+	ret = ग_लिखो(fd, buf, म_माप(buf));
+	अगर (ret != म_माप(buf)) अणु
+		म_लिखो("Failed to write to /proc/sys/kernel/msg_next_id\n");
+		वापस -त्रुटि_सं;
+	पूर्ण
 
 	id = msgget(msgque->key, msgque->mode | IPC_CREAT | IPC_EXCL);
-	if (id == -1) {
-		printf("Failed to create queue\n");
-		return -errno;
-	}
+	अगर (id == -1) अणु
+		म_लिखो("Failed to create queue\n");
+		वापस -त्रुटि_सं;
+	पूर्ण
 
-	if (id != msgque->msq_id) {
-		printf("Restored queue has wrong id (%d instead of %d)\n",
+	अगर (id != msgque->msq_id) अणु
+		म_लिखो("Restored queue has wrong id (%d instead of %d)\n",
 							id, msgque->msq_id);
 		ret = -EFAULT;
-		goto destroy;
-	}
+		जाओ destroy;
+	पूर्ण
 
-	for (i = 0; i < msgque->qnum; i++) {
-		if (msgsnd(msgque->msq_id, &msgque->messages[i].mtype,
-			   msgque->messages[i].msize, IPC_NOWAIT) != 0) {
-			printf("msgsnd failed (%m)\n");
-			ret = -errno;
-			goto destroy;
-		}
-	}
-	return 0;
+	क्रम (i = 0; i < msgque->qnum; i++) अणु
+		अगर (msgsnd(msgque->msq_id, &msgque->messages[i].mtype,
+			   msgque->messages[i].msize, IPC_NOWAIT) != 0) अणु
+			म_लिखो("msgsnd failed (%m)\n");
+			ret = -त्रुटि_सं;
+			जाओ destroy;
+		पूर्ण
+	पूर्ण
+	वापस 0;
 
 destroy:
-	if (msgctl(id, IPC_RMID, NULL))
-		printf("Failed to destroy queue: %d\n", -errno);
-	return ret;
-}
+	अगर (msgctl(id, IPC_RMID, शून्य))
+		म_लिखो("Failed to destroy queue: %d\n", -त्रुटि_सं);
+	वापस ret;
+पूर्ण
 
-int check_and_destroy_queue(struct msgque_data *msgque)
-{
-	struct msg1 message;
-	int cnt = 0, ret;
+पूर्णांक check_and_destroy_queue(काष्ठा msgque_data *msgque)
+अणु
+	काष्ठा msg1 message;
+	पूर्णांक cnt = 0, ret;
 
-	while (1) {
+	जबतक (1) अणु
 		ret = msgrcv(msgque->msq_id, &message.mtype, MAX_MSG_SIZE,
 				0, IPC_NOWAIT);
-		if (ret < 0) {
-			if (errno == ENOMSG)
-				break;
-			printf("Failed to read IPC message: %m\n");
-			ret = -errno;
-			goto err;
-		}
-		if (ret != msgque->messages[cnt].msize) {
-			printf("Wrong message size: %d (expected %d)\n", ret,
+		अगर (ret < 0) अणु
+			अगर (त्रुटि_सं == ENOMSG)
+				अवरोध;
+			म_लिखो("Failed to read IPC message: %m\n");
+			ret = -त्रुटि_सं;
+			जाओ err;
+		पूर्ण
+		अगर (ret != msgque->messages[cnt].msize) अणु
+			म_लिखो("Wrong message size: %d (expected %d)\n", ret,
 						msgque->messages[cnt].msize);
 			ret = -EINVAL;
-			goto err;
-		}
-		if (message.mtype != msgque->messages[cnt].mtype) {
-			printf("Wrong message type\n");
+			जाओ err;
+		पूर्ण
+		अगर (message.mtype != msgque->messages[cnt].mtype) अणु
+			म_लिखो("Wrong message type\n");
 			ret = -EINVAL;
-			goto err;
-		}
-		if (memcmp(message.mtext, msgque->messages[cnt].mtext, ret)) {
-			printf("Wrong message content\n");
+			जाओ err;
+		पूर्ण
+		अगर (स_भेद(message.mtext, msgque->messages[cnt].mtext, ret)) अणु
+			म_लिखो("Wrong message content\n");
 			ret = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		cnt++;
-	}
+	पूर्ण
 
-	if (cnt != msgque->qnum) {
-		printf("Wrong message number\n");
+	अगर (cnt != msgque->qnum) अणु
+		म_लिखो("Wrong message number\n");
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = 0;
 err:
-	if (msgctl(msgque->msq_id, IPC_RMID, NULL)) {
-		printf("Failed to destroy queue: %d\n", -errno);
-		return -errno;
-	}
-	return ret;
-}
+	अगर (msgctl(msgque->msq_id, IPC_RMID, शून्य)) अणु
+		म_लिखो("Failed to destroy queue: %d\n", -त्रुटि_सं);
+		वापस -त्रुटि_सं;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int dump_queue(struct msgque_data *msgque)
-{
-	struct msqid_ds ds;
-	int kern_id;
-	int i, ret;
+पूर्णांक dump_queue(काष्ठा msgque_data *msgque)
+अणु
+	काष्ठा msqid_ds ds;
+	पूर्णांक kern_id;
+	पूर्णांक i, ret;
 
-	for (kern_id = 0; kern_id < 256; kern_id++) {
+	क्रम (kern_id = 0; kern_id < 256; kern_id++) अणु
 		ret = msgctl(kern_id, MSG_STAT, &ds);
-		if (ret < 0) {
-			if (errno == EINVAL)
-				continue;
-			printf("Failed to get stats for IPC queue with id %d\n",
+		अगर (ret < 0) अणु
+			अगर (त्रुटि_सं == EINVAL)
+				जारी;
+			म_लिखो("Failed to get stats for IPC queue with id %d\n",
 					kern_id);
-			return -errno;
-		}
+			वापस -त्रुटि_सं;
+		पूर्ण
 
-		if (ret == msgque->msq_id)
-			break;
-	}
+		अगर (ret == msgque->msq_id)
+			अवरोध;
+	पूर्ण
 
-	msgque->messages = malloc(sizeof(struct msg1) * ds.msg_qnum);
-	if (msgque->messages == NULL) {
-		printf("Failed to get stats for IPC queue\n");
-		return -ENOMEM;
-	}
+	msgque->messages = दो_स्मृति(माप(काष्ठा msg1) * ds.msg_qnum);
+	अगर (msgque->messages == शून्य) अणु
+		म_लिखो("Failed to get stats for IPC queue\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	msgque->qnum = ds.msg_qnum;
 	msgque->mode = ds.msg_perm.mode;
 	msgque->qbytes = ds.msg_qbytes;
 
-	for (i = 0; i < msgque->qnum; i++) {
+	क्रम (i = 0; i < msgque->qnum; i++) अणु
 		ret = msgrcv(msgque->msq_id, &msgque->messages[i].mtype,
 				MAX_MSG_SIZE, i, IPC_NOWAIT | MSG_COPY);
-		if (ret < 0) {
-			printf("Failed to copy IPC message: %m (%d)\n", errno);
-			return -errno;
-		}
+		अगर (ret < 0) अणु
+			म_लिखो("Failed to copy IPC message: %m (%d)\n", त्रुटि_सं);
+			वापस -त्रुटि_सं;
+		पूर्ण
 		msgque->messages[i].msize = ret;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int fill_msgque(struct msgque_data *msgque)
-{
-	struct msg1 msgbuf;
+पूर्णांक fill_msgque(काष्ठा msgque_data *msgque)
+अणु
+	काष्ठा msg1 msgbuf;
 
 	msgbuf.mtype = MSG_TYPE;
-	memcpy(msgbuf.mtext, TEST_STRING, sizeof(TEST_STRING));
-	if (msgsnd(msgque->msq_id, &msgbuf.mtype, sizeof(TEST_STRING),
-				IPC_NOWAIT) != 0) {
-		printf("First message send failed (%m)\n");
-		return -errno;
-	}
+	स_नकल(msgbuf.mtext, TEST_STRING, माप(TEST_STRING));
+	अगर (msgsnd(msgque->msq_id, &msgbuf.mtype, माप(TEST_STRING),
+				IPC_NOWAIT) != 0) अणु
+		म_लिखो("First message send failed (%m)\n");
+		वापस -त्रुटि_सं;
+	पूर्ण
 
 	msgbuf.mtype = ANOTHER_MSG_TYPE;
-	memcpy(msgbuf.mtext, ANOTHER_TEST_STRING, sizeof(ANOTHER_TEST_STRING));
-	if (msgsnd(msgque->msq_id, &msgbuf.mtype, sizeof(ANOTHER_TEST_STRING),
-				IPC_NOWAIT) != 0) {
-		printf("Second message send failed (%m)\n");
-		return -errno;
-	}
-	return 0;
-}
+	स_नकल(msgbuf.mtext, ANOTHER_TEST_STRING, माप(ANOTHER_TEST_STRING));
+	अगर (msgsnd(msgque->msq_id, &msgbuf.mtype, माप(ANOTHER_TEST_STRING),
+				IPC_NOWAIT) != 0) अणु
+		म_लिखो("Second message send failed (%m)\n");
+		वापस -त्रुटि_सं;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	int msg, pid, err;
-	struct msgque_data msgque;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक msg, pid, err;
+	काष्ठा msgque_data msgque;
 
-	if (getuid() != 0)
-		return ksft_exit_skip(
+	अगर (getuid() != 0)
+		वापस ksft_निकास_skip(
 				"Please run the test as root - Exiting.\n");
 
 	msgque.key = ftok(argv[0], 822155650);
-	if (msgque.key == -1) {
-		printf("Can't make key: %d\n", -errno);
-		return ksft_exit_fail();
-	}
+	अगर (msgque.key == -1) अणु
+		म_लिखो("Can't make key: %d\n", -त्रुटि_सं);
+		वापस ksft_निकास_fail();
+	पूर्ण
 
 	msgque.msq_id = msgget(msgque.key, IPC_CREAT | IPC_EXCL | 0666);
-	if (msgque.msq_id == -1) {
-		err = -errno;
-		printf("Can't create queue: %d\n", err);
-		goto err_out;
-	}
+	अगर (msgque.msq_id == -1) अणु
+		err = -त्रुटि_सं;
+		म_लिखो("Can't create queue: %d\n", err);
+		जाओ err_out;
+	पूर्ण
 
 	err = fill_msgque(&msgque);
-	if (err) {
-		printf("Failed to fill queue: %d\n", err);
-		goto err_destroy;
-	}
+	अगर (err) अणु
+		म_लिखो("Failed to fill queue: %d\n", err);
+		जाओ err_destroy;
+	पूर्ण
 
 	err = dump_queue(&msgque);
-	if (err) {
-		printf("Failed to dump queue: %d\n", err);
-		goto err_destroy;
-	}
+	अगर (err) अणु
+		म_लिखो("Failed to dump queue: %d\n", err);
+		जाओ err_destroy;
+	पूर्ण
 
 	err = check_and_destroy_queue(&msgque);
-	if (err) {
-		printf("Failed to check and destroy queue: %d\n", err);
-		goto err_out;
-	}
+	अगर (err) अणु
+		म_लिखो("Failed to check and destroy queue: %d\n", err);
+		जाओ err_out;
+	पूर्ण
 
 	err = restore_queue(&msgque);
-	if (err) {
-		printf("Failed to restore queue: %d\n", err);
-		goto err_destroy;
-	}
+	अगर (err) अणु
+		म_लिखो("Failed to restore queue: %d\n", err);
+		जाओ err_destroy;
+	पूर्ण
 
 	err = check_and_destroy_queue(&msgque);
-	if (err) {
-		printf("Failed to test queue: %d\n", err);
-		goto err_out;
-	}
-	return ksft_exit_pass();
+	अगर (err) अणु
+		म_लिखो("Failed to test queue: %d\n", err);
+		जाओ err_out;
+	पूर्ण
+	वापस ksft_निकास_pass();
 
 err_destroy:
-	if (msgctl(msgque.msq_id, IPC_RMID, NULL)) {
-		printf("Failed to destroy queue: %d\n", -errno);
-		return ksft_exit_fail();
-	}
+	अगर (msgctl(msgque.msq_id, IPC_RMID, शून्य)) अणु
+		म_लिखो("Failed to destroy queue: %d\n", -त्रुटि_सं);
+		वापस ksft_निकास_fail();
+	पूर्ण
 err_out:
-	return ksft_exit_fail();
-}
+	वापस ksft_निकास_fail();
+पूर्ण

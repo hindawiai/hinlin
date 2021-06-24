@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-int ce_aes_setkey(struct crypto_tfm *tfm, const u8 *in_key,
-		  unsigned int key_len);
-int ce_aes_expandkey(struct crypto_aes_ctx *ctx, const u8 *in_key,
-		     unsigned int key_len);
+पूर्णांक ce_aes_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *in_key,
+		  अचिन्हित पूर्णांक key_len);
+पूर्णांक ce_aes_expandkey(काष्ठा crypto_aes_ctx *ctx, स्थिर u8 *in_key,
+		     अचिन्हित पूर्णांक key_len);

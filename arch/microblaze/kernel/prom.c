@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Procedures for creating, accessing and interpreting the device tree.
+ * Procedures क्रम creating, accessing and पूर्णांकerpreting the device tree.
  *
  * Paul Mackerras	August 1996.
  * Copyright (C) 1996-2005 Paul Mackerras.
  *
- *  Adapted for 64bit PowerPC by Dave Engebretsen and Peter Bergner.
- *    {engebret|bergner}@us.ibm.com
+ *  Adapted क्रम 64bit PowerPC by Dave Engebretsen and Peter Bergner.
+ *    अणुengebret|bergnerपूर्ण@us.ibm.com
  */
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/memblock.h>
-#include <linux/of_fdt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/memblock.h>
+#समावेश <linux/of_fdt.h>
 
-void __init early_init_devtree(void *params)
-{
+व्योम __init early_init_devtree(व्योम *params)
+अणु
 	pr_debug(" -> early_init_devtree(%p)\n", params);
 
 	early_init_dt_scan(params);
-	if (!strlen(boot_command_line))
+	अगर (!म_माप(boot_command_line))
 		strlcpy(boot_command_line, cmd_line, COMMAND_LINE_SIZE);
 
 	memblock_allow_resize();
 
-	pr_debug("Phys. mem: %lx\n", (unsigned long) memblock_phys_mem_size());
+	pr_debug("Phys. mem: %lx\n", (अचिन्हित दीर्घ) memblock_phys_mem_size());
 
 	pr_debug(" <- early_init_devtree()\n");
-}
+पूर्ण

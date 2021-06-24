@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  linux/drivers/video/console/sticon.c - console driver using HP's STI firmware
  *
@@ -14,7 +15,7 @@
  *	Copyright (C) 1995 Geert Uytterhoeven
  *	Copyright (C) 1993 Bjoern Brauel
  *			   Roman Hodek
- *	Copyright (C) 1993 Hamish Macdonald
+ *	Copyright (C) 1993 Hamish Macकरोnald
  *			   Greg Harp
  *	Copyright (C) 1994 David Carter [carter@compsci.bristol.ac.uk]
  *
@@ -30,221 +31,221 @@
  *			   Martin Mares <mj@ucw.cz>
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of this archive for
+ *  License.  See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  *
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/console.h>
-#include <linux/errno.h>
-#include <linux/vt_kern.h>
-#include <linux/kd.h>
-#include <linux/selection.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/font.h>
-#include <linux/crc32.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/console.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/vt_kern.h>
+#समावेश <linux/kd.h>
+#समावेश <linux/selection.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/font.h>
+#समावेश <linux/crc32.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#include "../fbdev/sticore.h"
+#समावेश "../fbdev/sticore.h"
 
-/* switching to graphics mode */
-#define BLANK 0
-static int vga_is_gfx;
+/* चयनing to graphics mode */
+#घोषणा BLANK 0
+अटल पूर्णांक vga_is_gfx;
 
-#define STI_DEF_FONT	sticon_sti->font
+#घोषणा STI_DEF_FONT	sticon_sti->font
 
 /* borrowed from fbcon.c */
-#define FNTREFCOUNT(fd)	(fd->refcount)
-#define FNTCRC(fd)	(fd->crc)
-static struct sti_cooked_font *font_data[MAX_NR_CONSOLES];
+#घोषणा FNTREFCOUNT(fd)	(fd->refcount)
+#घोषणा FNTCRC(fd)	(fd->crc)
+अटल काष्ठा sti_cooked_font *font_data[MAX_NR_CONSOLES];
 
-/* this is the sti_struct used for this console */
-static struct sti_struct *sticon_sti;
+/* this is the sti_काष्ठा used क्रम this console */
+अटल काष्ठा sti_काष्ठा *sticon_sti;
 
-static const char *sticon_startup(void)
-{
-    return "STI console";
-}
+अटल स्थिर अक्षर *sticon_startup(व्योम)
+अणु
+    वापस "STI console";
+पूर्ण
 
-static void sticon_putc(struct vc_data *conp, int c, int ypos, int xpos)
-{
-    if (vga_is_gfx || console_blanked)
-	    return;
+अटल व्योम sticon_अ_दो(काष्ठा vc_data *conp, पूर्णांक c, पूर्णांक ypos, पूर्णांक xpos)
+अणु
+    अगर (vga_is_gfx || console_blanked)
+	    वापस;
 
-    if (conp->vc_mode != KD_TEXT)
-    	    return;
+    अगर (conp->vc_mode != KD_TEXT)
+    	    वापस;
 
-    sti_putc(sticon_sti, c, ypos, xpos, font_data[conp->vc_num]);
-}
+    sti_अ_दो(sticon_sti, c, ypos, xpos, font_data[conp->vc_num]);
+पूर्ण
 
-static void sticon_putcs(struct vc_data *conp, const unsigned short *s,
-			 int count, int ypos, int xpos)
-{
-    if (vga_is_gfx || console_blanked)
-	    return;
+अटल व्योम sticon_अ_दोs(काष्ठा vc_data *conp, स्थिर अचिन्हित लघु *s,
+			 पूर्णांक count, पूर्णांक ypos, पूर्णांक xpos)
+अणु
+    अगर (vga_is_gfx || console_blanked)
+	    वापस;
 
-    if (conp->vc_mode != KD_TEXT)
-    	    return;
+    अगर (conp->vc_mode != KD_TEXT)
+    	    वापस;
 
-    while (count--) {
-	sti_putc(sticon_sti, scr_readw(s++), ypos, xpos++,
+    जबतक (count--) अणु
+	sti_अ_दो(sticon_sti, scr_पढ़ोw(s++), ypos, xpos++,
 		 font_data[conp->vc_num]);
-    }
-}
+    पूर्ण
+पूर्ण
 
-static void sticon_cursor(struct vc_data *conp, int mode)
-{
-    unsigned short car1;
+अटल व्योम sticon_cursor(काष्ठा vc_data *conp, पूर्णांक mode)
+अणु
+    अचिन्हित लघु car1;
 
-    /* no cursor update if screen is blanked */
-    if (vga_is_gfx || console_blanked)
-	return;
+    /* no cursor update अगर screen is blanked */
+    अगर (vga_is_gfx || console_blanked)
+	वापस;
 
     car1 = conp->vc_screenbuf[conp->state.x + conp->state.y * conp->vc_cols];
-    switch (mode) {
-    case CM_ERASE:
-	sti_putc(sticon_sti, car1, conp->state.y, conp->state.x,
+    चयन (mode) अणु
+    हाल CM_ERASE:
+	sti_अ_दो(sticon_sti, car1, conp->state.y, conp->state.x,
 		 font_data[conp->vc_num]);
-	break;
-    case CM_MOVE:
-    case CM_DRAW:
-	switch (CUR_SIZE(conp->vc_cursor_type)) {
-	case CUR_UNDERLINE:
-	case CUR_LOWER_THIRD:
-	case CUR_LOWER_HALF:
-	case CUR_TWO_THIRDS:
-	case CUR_BLOCK:
-	    sti_putc(sticon_sti, (car1 & 255) + (0 << 8) + (7 << 11),
+	अवरोध;
+    हाल CM_MOVE:
+    हाल CM_DRAW:
+	चयन (CUR_SIZE(conp->vc_cursor_type)) अणु
+	हाल CUR_UNDERLINE:
+	हाल CUR_LOWER_THIRD:
+	हाल CUR_LOWER_HALF:
+	हाल CUR_TWO_THIRDS:
+	हाल CUR_BLOCK:
+	    sti_अ_दो(sticon_sti, (car1 & 255) + (0 << 8) + (7 << 11),
 		     conp->state.y, conp->state.x, font_data[conp->vc_num]);
-	    break;
-	}
-	break;
-    }
-}
+	    अवरोध;
+	पूर्ण
+	अवरोध;
+    पूर्ण
+पूर्ण
 
-static bool sticon_scroll(struct vc_data *conp, unsigned int t,
-		unsigned int b, enum con_scroll dir, unsigned int count)
-{
-    struct sti_struct *sti = sticon_sti;
+अटल bool sticon_scroll(काष्ठा vc_data *conp, अचिन्हित पूर्णांक t,
+		अचिन्हित पूर्णांक b, क्रमागत con_scroll dir, अचिन्हित पूर्णांक count)
+अणु
+    काष्ठा sti_काष्ठा *sti = sticon_sti;
 
-    if (vga_is_gfx)
-        return false;
+    अगर (vga_is_gfx)
+        वापस false;
 
     sticon_cursor(conp, CM_ERASE);
 
-    switch (dir) {
-    case SM_UP:
+    चयन (dir) अणु
+    हाल SM_UP:
 	sti_bmove(sti, t + count, 0, t, 0, b - t - count, conp->vc_cols,
 		  font_data[conp->vc_num]);
 	sti_clear(sti, b - count, 0, count, conp->vc_cols,
-		  conp->vc_video_erase_char, font_data[conp->vc_num]);
-	break;
+		  conp->vc_video_erase_अक्षर, font_data[conp->vc_num]);
+	अवरोध;
 
-    case SM_DOWN:
+    हाल SM_DOWN:
 	sti_bmove(sti, t, 0, t + count, 0, b - t - count, conp->vc_cols,
 		  font_data[conp->vc_num]);
 	sti_clear(sti, t, 0, count, conp->vc_cols,
-		  conp->vc_video_erase_char, font_data[conp->vc_num]);
-	break;
-    }
+		  conp->vc_video_erase_अक्षर, font_data[conp->vc_num]);
+	अवरोध;
+    पूर्ण
 
-    return false;
-}
+    वापस false;
+पूर्ण
 
-static int sticon_set_def_font(int unit, struct console_font *op)
-{
-	if (font_data[unit] != STI_DEF_FONT) {
-		if (--FNTREFCOUNT(font_data[unit]) == 0) {
-			kfree(font_data[unit]->raw_ptr);
-			kfree(font_data[unit]);
-		}
+अटल पूर्णांक sticon_set_def_font(पूर्णांक unit, काष्ठा console_font *op)
+अणु
+	अगर (font_data[unit] != STI_DEF_FONT) अणु
+		अगर (--FNTREFCOUNT(font_data[unit]) == 0) अणु
+			kमुक्त(font_data[unit]->raw_ptr);
+			kमुक्त(font_data[unit]);
+		पूर्ण
 		font_data[unit] = STI_DEF_FONT;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sticon_set_font(struct vc_data *vc, struct console_font *op)
-{
-	struct sti_struct *sti = sticon_sti;
-	int vc_cols, vc_rows, vc_old_cols, vc_old_rows;
-	int unit = vc->vc_num;
-	int w = op->width;
-	int h = op->height;
-	int size, i, bpc, pitch;
-	struct sti_rom_font *new_font;
-	struct sti_cooked_font *cooked_font;
-	unsigned char *data = op->data, *p;
+अटल पूर्णांक sticon_set_font(काष्ठा vc_data *vc, काष्ठा console_font *op)
+अणु
+	काष्ठा sti_काष्ठा *sti = sticon_sti;
+	पूर्णांक vc_cols, vc_rows, vc_old_cols, vc_old_rows;
+	पूर्णांक unit = vc->vc_num;
+	पूर्णांक w = op->width;
+	पूर्णांक h = op->height;
+	पूर्णांक size, i, bpc, pitch;
+	काष्ठा sti_rom_font *new_font;
+	काष्ठा sti_cooked_font *cooked_font;
+	अचिन्हित अक्षर *data = op->data, *p;
 
-	if ((w < 6) || (h < 6) || (w > 32) || (h > 32)
-	    || (op->charcount != 256 && op->charcount != 512))
-		return -EINVAL;
+	अगर ((w < 6) || (h < 6) || (w > 32) || (h > 32)
+	    || (op->अक्षरcount != 256 && op->अक्षरcount != 512))
+		वापस -EINVAL;
 	pitch = ALIGN(w, 8) / 8;
 	bpc = pitch * h;
-	size = bpc * op->charcount;
+	size = bpc * op->अक्षरcount;
 
-	new_font = kmalloc(sizeof(*new_font) + size, STI_LOWMEM);
-	if (!new_font)
-		return -ENOMEM;
+	new_font = kदो_स्मृति(माप(*new_font) + size, STI_LOWMEM);
+	अगर (!new_font)
+		वापस -ENOMEM;
 
-	new_font->first_char = 0;
-	new_font->last_char = op->charcount - 1;
+	new_font->first_अक्षर = 0;
+	new_font->last_अक्षर = op->अक्षरcount - 1;
 	new_font->width = w;
 	new_font->height = h;
 	new_font->font_type = STI_FONT_HPROMAN8;
-	new_font->bytes_per_char = bpc;
+	new_font->bytes_per_अक्षर = bpc;
 	new_font->underline_height = 0;
 	new_font->underline_pos = 0;
 
-	cooked_font = kzalloc(sizeof(*cooked_font), GFP_KERNEL);
-	if (!cooked_font) {
-		kfree(new_font);
-		return -ENOMEM;
-	}
+	cooked_font = kzalloc(माप(*cooked_font), GFP_KERNEL);
+	अगर (!cooked_font) अणु
+		kमुक्त(new_font);
+		वापस -ENOMEM;
+	पूर्ण
 	cooked_font->raw = new_font;
 	cooked_font->raw_ptr = new_font;
 	cooked_font->width = w;
 	cooked_font->height = h;
 	FNTREFCOUNT(cooked_font) = 0;	/* usage counter */
 
-	p = (unsigned char *) new_font;
-	p += sizeof(*new_font);
-	for (i = 0; i < op->charcount; i++) {
-		memcpy(p, data, bpc);
+	p = (अचिन्हित अक्षर *) new_font;
+	p += माप(*new_font);
+	क्रम (i = 0; i < op->अक्षरcount; i++) अणु
+		स_नकल(p, data, bpc);
 		data += pitch*32;
 		p += bpc;
-	}
-	FNTCRC(cooked_font) = crc32(0, new_font, size + sizeof(*new_font));
+	पूर्ण
+	FNTCRC(cooked_font) = crc32(0, new_font, size + माप(*new_font));
 	sti_font_convert_bytemode(sti, cooked_font);
 	new_font = cooked_font->raw_ptr;
 
-	/* check if font is already used by other console */
-	for (i = 0; i < MAX_NR_CONSOLES; i++) {
-		if (font_data[i] != STI_DEF_FONT
-		    && (FNTCRC(font_data[i]) == FNTCRC(cooked_font))) {
-			kfree(new_font);
-			kfree(cooked_font);
+	/* check अगर font is alपढ़ोy used by other console */
+	क्रम (i = 0; i < MAX_NR_CONSOLES; i++) अणु
+		अगर (font_data[i] != STI_DEF_FONT
+		    && (FNTCRC(font_data[i]) == FNTCRC(cooked_font))) अणु
+			kमुक्त(new_font);
+			kमुक्त(cooked_font);
 			/* current font is the same as the new one */
-			if (i == unit)
-				return 0;
+			अगर (i == unit)
+				वापस 0;
 			cooked_font = font_data[i];
 			new_font = cooked_font->raw_ptr;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* clear screen with old font: we now may have less rows */
 	vc_old_rows = vc->vc_rows;
 	vc_old_cols = vc->vc_cols;
 	sti_clear(sticon_sti, 0, 0, vc_old_rows, vc_old_cols,
-		  vc->vc_video_erase_char, font_data[vc->vc_num]);
+		  vc->vc_video_erase_अक्षर, font_data[vc->vc_num]);
 
-	/* delete old font in case it is a user font */
-	sticon_set_def_font(unit, NULL);
+	/* delete old font in हाल it is a user font */
+	sticon_set_def_font(unit, शून्य);
 
 	FNTREFCOUNT(cooked_font)++;
 	font_data[unit] = cooked_font;
@@ -253,153 +254,153 @@ static int sticon_set_font(struct vc_data *vc, struct console_font *op)
 	vc_rows = sti_onscreen_y(sti) / cooked_font->height;
 	vc_resize(vc, vc_cols, vc_rows);
 
-	/* need to repaint screen if cols & rows are same as old font */
-	if (vc_cols == vc_old_cols && vc_rows == vc_old_rows)
+	/* need to repaपूर्णांक screen अगर cols & rows are same as old font */
+	अगर (vc_cols == vc_old_cols && vc_rows == vc_old_rows)
 		update_screen(vc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sticon_font_default(struct vc_data *vc, struct console_font *op, char *name)
-{
-	return sticon_set_def_font(vc->vc_num, op);
-}
+अटल पूर्णांक sticon_font_शेष(काष्ठा vc_data *vc, काष्ठा console_font *op, अक्षर *name)
+अणु
+	वापस sticon_set_def_font(vc->vc_num, op);
+पूर्ण
 
-static int sticon_font_set(struct vc_data *vc, struct console_font *font,
-			   unsigned int flags)
-{
-	return sticon_set_font(vc, font);
-}
+अटल पूर्णांक sticon_font_set(काष्ठा vc_data *vc, काष्ठा console_font *font,
+			   अचिन्हित पूर्णांक flags)
+अणु
+	वापस sticon_set_font(vc, font);
+पूर्ण
 
-static void sticon_init(struct vc_data *c, int init)
-{
-    struct sti_struct *sti = sticon_sti;
-    int vc_cols, vc_rows;
+अटल व्योम sticon_init(काष्ठा vc_data *c, पूर्णांक init)
+अणु
+    काष्ठा sti_काष्ठा *sti = sticon_sti;
+    पूर्णांक vc_cols, vc_rows;
 
     sti_set(sti, 0, 0, sti_onscreen_y(sti), sti_onscreen_x(sti), 0);
     vc_cols = sti_onscreen_x(sti) / sti->font->width;
     vc_rows = sti_onscreen_y(sti) / sti->font->height;
-    c->vc_can_do_color = 1;
+    c->vc_can_करो_color = 1;
     
-    if (init) {
+    अगर (init) अणु
 	c->vc_cols = vc_cols;
 	c->vc_rows = vc_rows;
-    } else {
+    पूर्ण अन्यथा अणु
 	vc_resize(c, vc_cols, vc_rows);
-    }
-}
+    पूर्ण
+पूर्ण
 
-static void sticon_deinit(struct vc_data *c)
-{
-    int i;
+अटल व्योम sticon_deinit(काष्ठा vc_data *c)
+अणु
+    पूर्णांक i;
 
-    /* free memory used by user font */
-    for (i = 0; i < MAX_NR_CONSOLES; i++)
-	sticon_set_def_font(i, NULL);
-}
+    /* मुक्त memory used by user font */
+    क्रम (i = 0; i < MAX_NR_CONSOLES; i++)
+	sticon_set_def_font(i, शून्य);
+पूर्ण
 
-static void sticon_clear(struct vc_data *conp, int sy, int sx, int height,
-			 int width)
-{
-    if (!height || !width)
-	return;
+अटल व्योम sticon_clear(काष्ठा vc_data *conp, पूर्णांक sy, पूर्णांक sx, पूर्णांक height,
+			 पूर्णांक width)
+अणु
+    अगर (!height || !width)
+	वापस;
 
     sti_clear(sticon_sti, sy, sx, height, width,
-	      conp->vc_video_erase_char, font_data[conp->vc_num]);
-}
+	      conp->vc_video_erase_अक्षर, font_data[conp->vc_num]);
+पूर्ण
 
-static int sticon_switch(struct vc_data *conp)
-{
-    return 1;	/* needs refreshing */
-}
+अटल पूर्णांक sticon_चयन(काष्ठा vc_data *conp)
+अणु
+    वापस 1;	/* needs refreshing */
+पूर्ण
 
-static int sticon_blank(struct vc_data *c, int blank, int mode_switch)
-{
-    if (blank == 0) {
-	if (mode_switch)
+अटल पूर्णांक sticon_blank(काष्ठा vc_data *c, पूर्णांक blank, पूर्णांक mode_चयन)
+अणु
+    अगर (blank == 0) अणु
+	अगर (mode_चयन)
 	    vga_is_gfx = 0;
-	return 1;
-    }
+	वापस 1;
+    पूर्ण
     sti_clear(sticon_sti, 0, 0, c->vc_rows, c->vc_cols, BLANK,
 	      font_data[c->vc_num]);
-    if (mode_switch)
+    अगर (mode_चयन)
 	vga_is_gfx = 1;
-    return 1;
-}
+    वापस 1;
+पूर्ण
 
-static u8 sticon_build_attr(struct vc_data *conp, u8 color,
-			    enum vc_intensity intens,
+अटल u8 sticon_build_attr(काष्ठा vc_data *conp, u8 color,
+			    क्रमागत vc_पूर्णांकensity पूर्णांकens,
 			    bool blink, bool underline, bool reverse,
 			    bool italic)
-{
+अणु
     u8 attr = ((color & 0x70) >> 1) | ((color & 7));
 
-    if (reverse) {
+    अगर (reverse) अणु
 	color = ((color >> 3) & 0x7) | ((color & 0x7) << 3);
-    }
+    पूर्ण
 
-    return attr;
-}
+    वापस attr;
+पूर्ण
 
-static void sticon_invert_region(struct vc_data *conp, u16 *p, int count)
-{
-    int col = 1; /* vga_can_do_color; */
+अटल व्योम sticon_invert_region(काष्ठा vc_data *conp, u16 *p, पूर्णांक count)
+अणु
+    पूर्णांक col = 1; /* vga_can_करो_color; */
 
-    while (count--) {
-	u16 a = scr_readw(p);
+    जबतक (count--) अणु
+	u16 a = scr_पढ़ोw(p);
 
-	if (col)
+	अगर (col)
 		a = ((a) & 0x88ff) | (((a) & 0x7000) >> 4) | (((a) & 0x0700) << 4);
-	else
+	अन्यथा
 		a = ((a & 0x0700) == 0x0100) ? 0x7000 : 0x7700;
 
-	scr_writew(a, p++);
-    }
-}
+	scr_ग_लिखोw(a, p++);
+    पूर्ण
+पूर्ण
 
-static const struct consw sti_con = {
+अटल स्थिर काष्ठा consw sti_con = अणु
 	.owner			= THIS_MODULE,
 	.con_startup		= sticon_startup,
 	.con_init		= sticon_init,
 	.con_deinit		= sticon_deinit,
 	.con_clear		= sticon_clear,
-	.con_putc		= sticon_putc,
-	.con_putcs		= sticon_putcs,
+	.con_अ_दो		= sticon_अ_दो,
+	.con_अ_दोs		= sticon_अ_दोs,
 	.con_cursor		= sticon_cursor,
 	.con_scroll		= sticon_scroll,
-	.con_switch		= sticon_switch,
+	.con_चयन		= sticon_चयन,
 	.con_blank		= sticon_blank,
 	.con_font_set		= sticon_font_set,
-	.con_font_default	= sticon_font_default,
+	.con_font_शेष	= sticon_font_शेष,
 	.con_build_attr		= sticon_build_attr,
 	.con_invert_region	= sticon_invert_region, 
-};
+पूर्ण;
 
 
 
-static int __init sticonsole_init(void)
-{
-    int err, i;
+अटल पूर्णांक __init sticonsole_init(व्योम)
+अणु
+    पूर्णांक err, i;
 
-    /* already initialized ? */
-    if (sticon_sti)
-	 return 0;
+    /* alपढ़ोy initialized ? */
+    अगर (sticon_sti)
+	 वापस 0;
 
     sticon_sti = sti_get_rom(0);
-    if (!sticon_sti)
-	return -ENODEV;
+    अगर (!sticon_sti)
+	वापस -ENODEV;
 
-    for (i = 0; i < MAX_NR_CONSOLES; i++)
+    क्रम (i = 0; i < MAX_NR_CONSOLES; i++)
 	font_data[i] = STI_DEF_FONT;
 
     pr_info("sticon: Initializing STI text console.\n");
     console_lock();
-    err = do_take_over_console(&sti_con, 0, MAX_NR_CONSOLES - 1,
+    err = करो_take_over_console(&sti_con, 0, MAX_NR_CONSOLES - 1,
 		PAGE0->mem_cons.cl_class != CL_DUPLEX);
     console_unlock();
 
-    return err;
-}
+    वापस err;
+पूर्ण
 
 module_init(sticonsole_init);
 MODULE_LICENSE("GPL");

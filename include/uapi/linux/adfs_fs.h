@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_ADFS_FS_H
-#define _UAPI_ADFS_FS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_ADFS_FS_H
+#घोषणा _UAPI_ADFS_FS_H
 
-#include <linux/types.h>
-#include <linux/magic.h>
+#समावेश <linux/types.h>
+#समावेश <linux/magic.h>
 
 /*
  * Disc Record at disc address 0xc00
  */
-struct adfs_discrecord {
+काष्ठा adfs_discrecord अणु
     __u8  log2secsize;
     __u8  secspertrack;
     __u8  heads;
@@ -32,14 +33,14 @@ struct adfs_discrecord {
     __u8  unused41:7;
     __u8  nzones_high;
     __u8  reserved43;
-    __le32 format_version;
+    __le32 क्रमmat_version;
     __le32 root_size;
     __u8  unused52[60 - 52];
-} __attribute__((packed, aligned(4)));
+पूर्ण __attribute__((packed, aligned(4)));
 
-#define ADFS_DISCRECORD		(0xc00)
-#define ADFS_DR_OFFSET		(0x1c0)
-#define ADFS_DR_SIZE		 60
-#define ADFS_DR_SIZE_BITS	(ADFS_DR_SIZE << 3)
+#घोषणा ADFS_DISCRECORD		(0xc00)
+#घोषणा ADFS_DR_OFFSET		(0x1c0)
+#घोषणा ADFS_DR_SIZE		 60
+#घोषणा ADFS_DR_SIZE_BITS	(ADFS_DR_SIZE << 3)
 
-#endif /* _UAPI_ADFS_FS_H */
+#पूर्ण_अगर /* _UAPI_ADFS_FS_H */

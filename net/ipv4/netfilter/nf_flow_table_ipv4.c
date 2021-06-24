@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netfilter.h>
-#include <net/netfilter/nf_flow_table.h>
-#include <net/netfilter/nf_tables.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netfilter.h>
+#समावेश <net/netfilter/nf_flow_table.h>
+#समावेश <net/netfilter/nf_tables.h>
 
-static struct nf_flowtable_type flowtable_ipv4 = {
+अटल काष्ठा nf_flowtable_type flowtable_ipv4 = अणु
 	.family		= NFPROTO_IPV4,
 	.init		= nf_flow_table_init,
 	.setup		= nf_flow_table_offload_setup,
 	.action		= nf_flow_rule_route_ipv4,
-	.free		= nf_flow_table_free,
+	.मुक्त		= nf_flow_table_मुक्त,
 	.hook		= nf_flow_offload_ip_hook,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init nf_flow_ipv4_module_init(void)
-{
-	nft_register_flowtable_type(&flowtable_ipv4);
+अटल पूर्णांक __init nf_flow_ipv4_module_init(व्योम)
+अणु
+	nft_रेजिस्टर_flowtable_type(&flowtable_ipv4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit nf_flow_ipv4_module_exit(void)
-{
-	nft_unregister_flowtable_type(&flowtable_ipv4);
-}
+अटल व्योम __निकास nf_flow_ipv4_module_निकास(व्योम)
+अणु
+	nft_unरेजिस्टर_flowtable_type(&flowtable_ipv4);
+पूर्ण
 
 module_init(nf_flow_ipv4_module_init);
-module_exit(nf_flow_ipv4_module_exit);
+module_निकास(nf_flow_ipv4_module_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pablo Neira Ayuso <pablo@netfilter.org>");

@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2009 Francisco Jerez.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,33 +25,33 @@
  *
  */
 
-#ifndef __NV17_TV_H__
-#define __NV17_TV_H__
+#अगर_अघोषित __NV17_TV_H__
+#घोषणा __NV17_TV_H__
 
-struct nv17_tv_state {
-	uint8_t tv_enc[0x40];
+काष्ठा nv17_tv_state अणु
+	uपूर्णांक8_t tv_enc[0x40];
 
-	uint32_t hfilter[4][7];
-	uint32_t hfilter2[4][7];
-	uint32_t vfilter[4][7];
+	uपूर्णांक32_t hfilter[4][7];
+	uपूर्णांक32_t hfilter2[4][7];
+	uपूर्णांक32_t vfilter[4][7];
 
-	uint32_t ptv_200;
-	uint32_t ptv_204;
-	uint32_t ptv_208;
-	uint32_t ptv_20c;
-	uint32_t ptv_304;
-	uint32_t ptv_500;
-	uint32_t ptv_504;
-	uint32_t ptv_508;
-	uint32_t ptv_600;
-	uint32_t ptv_604;
-	uint32_t ptv_608;
-	uint32_t ptv_60c;
-	uint32_t ptv_610;
-	uint32_t ptv_614;
-};
+	uपूर्णांक32_t ptv_200;
+	uपूर्णांक32_t ptv_204;
+	uपूर्णांक32_t ptv_208;
+	uपूर्णांक32_t ptv_20c;
+	uपूर्णांक32_t ptv_304;
+	uपूर्णांक32_t ptv_500;
+	uपूर्णांक32_t ptv_504;
+	uपूर्णांक32_t ptv_508;
+	uपूर्णांक32_t ptv_600;
+	uपूर्णांक32_t ptv_604;
+	uपूर्णांक32_t ptv_608;
+	uपूर्णांक32_t ptv_60c;
+	uपूर्णांक32_t ptv_610;
+	uपूर्णांक32_t ptv_614;
+पूर्ण;
 
-enum nv17_tv_norm{
+क्रमागत nv17_tv_normअणु
 	TV_NORM_PAL,
 	TV_NORM_PAL_M,
 	TV_NORM_PAL_N,
@@ -65,99 +66,99 @@ enum nv17_tv_norm{
 	TV_NORM_HD720P,
 	TV_NORM_HD1080I,
 	NUM_TV_NORMS
-};
+पूर्ण;
 
-struct nv17_tv_encoder {
-	struct nouveau_encoder base;
+काष्ठा nv17_tv_encoder अणु
+	काष्ठा nouveau_encoder base;
 
-	struct nv17_tv_state state;
-	struct nv17_tv_state saved_state;
+	काष्ठा nv17_tv_state state;
+	काष्ठा nv17_tv_state saved_state;
 
-	int overscan;
-	int flicker;
-	int saturation;
-	int hue;
-	enum nv17_tv_norm tv_norm;
-	int subconnector;
-	int select_subconnector;
-	uint32_t pin_mask;
-};
-#define to_tv_enc(x) container_of(nouveau_encoder(x),		\
-				  struct nv17_tv_encoder, base)
+	पूर्णांक overscan;
+	पूर्णांक flicker;
+	पूर्णांक saturation;
+	पूर्णांक hue;
+	क्रमागत nv17_tv_norm tv_norm;
+	पूर्णांक subconnector;
+	पूर्णांक select_subconnector;
+	uपूर्णांक32_t pin_mask;
+पूर्ण;
+#घोषणा to_tv_enc(x) container_of(nouveau_encoder(x),		\
+				  काष्ठा nv17_tv_encoder, base)
 
-extern const char * const nv17_tv_norm_names[NUM_TV_NORMS];
+बाह्य स्थिर अक्षर * स्थिर nv17_tv_norm_names[NUM_TV_NORMS];
 
-extern struct nv17_tv_norm_params {
-	enum {
+बाह्य काष्ठा nv17_tv_norm_params अणु
+	क्रमागत अणु
 		TV_ENC_MODE,
 		CTV_ENC_MODE,
-	} kind;
+	पूर्ण kind;
 
-	union {
-		struct {
-			int hdisplay;
-			int vdisplay;
-			int vrefresh; /* mHz */
+	जोड़ अणु
+		काष्ठा अणु
+			पूर्णांक hdisplay;
+			पूर्णांक vdisplay;
+			पूर्णांक vrefresh; /* mHz */
 
-			uint8_t tv_enc[0x40];
-		} tv_enc_mode;
+			uपूर्णांक8_t tv_enc[0x40];
+		पूर्ण tv_enc_mode;
 
-		struct {
-			struct drm_display_mode mode;
+		काष्ठा अणु
+			काष्ठा drm_display_mode mode;
 
-			uint32_t ctv_regs[38];
-		} ctv_enc_mode;
-	};
+			uपूर्णांक32_t ctv_regs[38];
+		पूर्ण ctv_enc_mode;
+	पूर्ण;
 
-} nv17_tv_norms[NUM_TV_NORMS];
-#define get_tv_norm(enc) (&nv17_tv_norms[to_tv_enc(enc)->tv_norm])
+पूर्ण nv17_tv_norms[NUM_TV_NORMS];
+#घोषणा get_tv_norm(enc) (&nv17_tv_norms[to_tv_enc(enc)->tv_norm])
 
-extern const struct drm_display_mode nv17_tv_modes[];
+बाह्य स्थिर काष्ठा drm_display_mode nv17_tv_modes[];
 
-static inline int interpolate(int y0, int y1, int y2, int x)
-{
-	return y1 + (x < 50 ? y1 - y0 : y2 - y1) * (x - 50) / 50;
-}
+अटल अंतरभूत पूर्णांक पूर्णांकerpolate(पूर्णांक y0, पूर्णांक y1, पूर्णांक y2, पूर्णांक x)
+अणु
+	वापस y1 + (x < 50 ? y1 - y0 : y2 - y1) * (x - 50) / 50;
+पूर्ण
 
-void nv17_tv_state_save(struct drm_device *dev, struct nv17_tv_state *state);
-void nv17_tv_state_load(struct drm_device *dev, struct nv17_tv_state *state);
-void nv17_tv_update_properties(struct drm_encoder *encoder);
-void nv17_tv_update_rescaler(struct drm_encoder *encoder);
-void nv17_ctv_update_rescaler(struct drm_encoder *encoder);
+व्योम nv17_tv_state_save(काष्ठा drm_device *dev, काष्ठा nv17_tv_state *state);
+व्योम nv17_tv_state_load(काष्ठा drm_device *dev, काष्ठा nv17_tv_state *state);
+व्योम nv17_tv_update_properties(काष्ठा drm_encoder *encoder);
+व्योम nv17_tv_update_rescaler(काष्ठा drm_encoder *encoder);
+व्योम nv17_ctv_update_rescaler(काष्ठा drm_encoder *encoder);
 
 /* TV hardware access functions */
 
-static inline void nv_write_ptv(struct drm_device *dev, uint32_t reg,
-				uint32_t val)
-{
-	struct nvif_device *device = &nouveau_drm(dev)->client.device;
-	nvif_wr32(&device->object, reg, val);
-}
+अटल अंतरभूत व्योम nv_ग_लिखो_ptv(काष्ठा drm_device *dev, uपूर्णांक32_t reg,
+				uपूर्णांक32_t val)
+अणु
+	काष्ठा nvअगर_device *device = &nouveau_drm(dev)->client.device;
+	nvअगर_wr32(&device->object, reg, val);
+पूर्ण
 
-static inline uint32_t nv_read_ptv(struct drm_device *dev, uint32_t reg)
-{
-	struct nvif_device *device = &nouveau_drm(dev)->client.device;
-	return nvif_rd32(&device->object, reg);
-}
+अटल अंतरभूत uपूर्णांक32_t nv_पढ़ो_ptv(काष्ठा drm_device *dev, uपूर्णांक32_t reg)
+अणु
+	काष्ठा nvअगर_device *device = &nouveau_drm(dev)->client.device;
+	वापस nvअगर_rd32(&device->object, reg);
+पूर्ण
 
-static inline void nv_write_tv_enc(struct drm_device *dev, uint8_t reg,
-				   uint8_t val)
-{
-	nv_write_ptv(dev, NV_PTV_TV_INDEX, reg);
-	nv_write_ptv(dev, NV_PTV_TV_DATA, val);
-}
+अटल अंतरभूत व्योम nv_ग_लिखो_tv_enc(काष्ठा drm_device *dev, uपूर्णांक8_t reg,
+				   uपूर्णांक8_t val)
+अणु
+	nv_ग_लिखो_ptv(dev, NV_PTV_TV_INDEX, reg);
+	nv_ग_लिखो_ptv(dev, NV_PTV_TV_DATA, val);
+पूर्ण
 
-static inline uint8_t nv_read_tv_enc(struct drm_device *dev, uint8_t reg)
-{
-	nv_write_ptv(dev, NV_PTV_TV_INDEX, reg);
-	return nv_read_ptv(dev, NV_PTV_TV_DATA);
-}
+अटल अंतरभूत uपूर्णांक8_t nv_पढ़ो_tv_enc(काष्ठा drm_device *dev, uपूर्णांक8_t reg)
+अणु
+	nv_ग_लिखो_ptv(dev, NV_PTV_TV_INDEX, reg);
+	वापस nv_पढ़ो_ptv(dev, NV_PTV_TV_DATA);
+पूर्ण
 
-#define nv_load_ptv(dev, state, reg) \
-	nv_write_ptv(dev, NV_PTV_OFFSET + 0x##reg, state->ptv_##reg)
-#define nv_save_ptv(dev, state, reg) \
-	state->ptv_##reg = nv_read_ptv(dev, NV_PTV_OFFSET + 0x##reg)
-#define nv_load_tv_enc(dev, state, reg) \
-	nv_write_tv_enc(dev, 0x##reg, state->tv_enc[0x##reg])
+#घोषणा nv_load_ptv(dev, state, reg) \
+	nv_ग_लिखो_ptv(dev, NV_PTV_OFFSET + 0x##reg, state->ptv_##reg)
+#घोषणा nv_save_ptv(dev, state, reg) \
+	state->ptv_##reg = nv_पढ़ो_ptv(dev, NV_PTV_OFFSET + 0x##reg)
+#घोषणा nv_load_tv_enc(dev, state, reg) \
+	nv_ग_लिखो_tv_enc(dev, 0x##reg, state->tv_enc[0x##reg])
 
-#endif
+#पूर्ण_अगर

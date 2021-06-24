@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  PS3 address space management.
  *
@@ -6,106 +7,106 @@
  *  Copyright 2006 Sony Corp.
  */
 
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/memblock.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/slab.h>
 
-#include <asm/cell-regs.h>
-#include <asm/firmware.h>
-#include <asm/prom.h>
-#include <asm/udbg.h>
-#include <asm/lv1call.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/cell-regs.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/udbg.h>
+#समावेश <यंत्र/lv1call.h>
+#समावेश <यंत्र/setup.h>
 
-#include "platform.h"
+#समावेश "platform.h"
 
-#if defined(DEBUG)
-#define DBG udbg_printf
-#else
-#define DBG pr_devel
-#endif
+#अगर defined(DEBUG)
+#घोषणा DBG udbg_म_लिखो
+#अन्यथा
+#घोषणा DBG pr_devel
+#पूर्ण_अगर
 
-enum {
-#if defined(CONFIG_PS3_DYNAMIC_DMA)
+क्रमागत अणु
+#अगर defined(CONFIG_PS3_DYNAMIC_DMA)
 	USE_DYNAMIC_DMA = 1,
-#else
+#अन्यथा
 	USE_DYNAMIC_DMA = 0,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PAGE_SHIFT_4K = 12U,
 	PAGE_SHIFT_64K = 16U,
 	PAGE_SHIFT_16M = 24U,
-};
+पूर्ण;
 
-static unsigned long make_page_sizes(unsigned long a, unsigned long b)
-{
-	return (a << 56) | (b << 48);
-}
+अटल अचिन्हित दीर्घ make_page_sizes(अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
+अणु
+	वापस (a << 56) | (b << 48);
+पूर्ण
 
-enum {
+क्रमागत अणु
 	ALLOCATE_MEMORY_TRY_ALT_UNIT = 0X04,
 	ALLOCATE_MEMORY_ADDR_ZERO = 0X08,
-};
+पूर्ण;
 
-/* valid htab sizes are {18,19,20} = 256K, 512K, 1M */
+/* valid htab sizes are अणु18,19,20पूर्ण = 256K, 512K, 1M */
 
-enum {
+क्रमागत अणु
 	HTAB_SIZE_MAX = 20U, /* HV limit of 1MB */
 	HTAB_SIZE_MIN = 18U, /* CPU limit of 256KB */
-};
+पूर्ण;
 
 /*============================================================================*/
-/* virtual address space routines                                             */
+/* भव address space routines                                             */
 /*============================================================================*/
 
 /**
- * struct mem_region - memory region structure
+ * काष्ठा mem_region - memory region काष्ठाure
  * @base: base address
  * @size: size in bytes
- * @offset: difference between base and rm.size
- * @destroy: flag if region should be destroyed upon shutdown
+ * @offset: dअगरference between base and rm.size
+ * @destroy: flag अगर region should be destroyed upon shutकरोwn
  */
 
-struct mem_region {
+काष्ठा mem_region अणु
 	u64 base;
 	u64 size;
-	unsigned long offset;
-	int destroy;
-};
+	अचिन्हित दीर्घ offset;
+	पूर्णांक destroy;
+पूर्ण;
 
 /**
- * struct map - address space state variables holder
+ * काष्ठा map - address space state variables holder
  * @total: total memory available as reported by HV
- * @vas_id - HV virtual address space id
+ * @vas_id - HV भव address space id
  * @htab_size: htab size in bytes
  *
- * The HV virtual address space (vas) allows for hotplug memory regions.
- * Memory regions can be created and destroyed in the vas at runtime.
- * @rm: real mode (bootmem) region
+ * The HV भव address space (vas) allows क्रम hotplug memory regions.
+ * Memory regions can be created and destroyed in the vas at runसमय.
+ * @rm: real mode (booपंचांगem) region
  * @r1: highmem region(s)
  *
  * ps3 addresses
  * virt_addr: a cpu 'translated' effective address
  * phys_addr: an address in what Linux thinks is the physical address space
- * lpar_addr: an address in the HV virtual address space
+ * lpar_addr: an address in the HV भव address space
  * bus_addr: an io controller 'translated' address on a device bus
  */
 
-struct map {
+काष्ठा map अणु
 	u64 total;
 	u64 vas_id;
 	u64 htab_size;
-	struct mem_region rm;
-	struct mem_region r1;
-};
+	काष्ठा mem_region rm;
+	काष्ठा mem_region r1;
+पूर्ण;
 
-#define debug_dump_map(x) _debug_dump_map(x, __func__, __LINE__)
-static void __maybe_unused _debug_dump_map(const struct map *m,
-	const char *func, int line)
-{
+#घोषणा debug_dump_map(x) _debug_dump_map(x, __func__, __LINE__)
+अटल व्योम __maybe_unused _debug_dump_map(स्थिर काष्ठा map *m,
+	स्थिर अक्षर *func, पूर्णांक line)
+अणु
 	DBG("%s:%d: map.total     = %llxh\n", func, line, m->total);
 	DBG("%s:%d: map.rm.size   = %llxh\n", func, line, m->rm.size);
 	DBG("%s:%d: map.vas_id    = %llu\n", func, line, m->vas_id);
@@ -113,31 +114,31 @@ static void __maybe_unused _debug_dump_map(const struct map *m,
 	DBG("%s:%d: map.r1.base   = %llxh\n", func, line, m->r1.base);
 	DBG("%s:%d: map.r1.offset = %lxh\n", func, line, m->r1.offset);
 	DBG("%s:%d: map.r1.size   = %llxh\n", func, line, m->r1.size);
-}
+पूर्ण
 
-static struct map map;
+अटल काष्ठा map map;
 
 /**
  * ps3_mm_phys_to_lpar - translate a linux physical address to lpar address
  * @phys_addr: linux physical address
  */
 
-unsigned long ps3_mm_phys_to_lpar(unsigned long phys_addr)
-{
+अचिन्हित दीर्घ ps3_mm_phys_to_lpar(अचिन्हित दीर्घ phys_addr)
+अणु
 	BUG_ON(is_kernel_addr(phys_addr));
-	return (phys_addr < map.rm.size || phys_addr >= map.total)
+	वापस (phys_addr < map.rm.size || phys_addr >= map.total)
 		? phys_addr : phys_addr + map.r1.offset;
-}
+पूर्ण
 
 EXPORT_SYMBOL(ps3_mm_phys_to_lpar);
 
 /**
- * ps3_mm_vas_create - create the virtual address space
+ * ps3_mm_vas_create - create the भव address space
  */
 
-void __init ps3_mm_vas_create(unsigned long* htab_size)
-{
-	int result;
+व्योम __init ps3_mm_vas_create(अचिन्हित दीर्घ* htab_size)
+अणु
+	पूर्णांक result;
 	u64 start_address;
 	u64 size;
 	u64 access_right;
@@ -148,120 +149,120 @@ void __init ps3_mm_vas_create(unsigned long* htab_size)
 		&start_address, &size, &access_right, &max_page_size,
 		&flags);
 
-	if (result) {
+	अगर (result) अणु
 		DBG("%s:%d: lv1_query_logical_partition_address_region_info "
 			"failed: %s\n", __func__, __LINE__,
 			ps3_result(result));
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (max_page_size < PAGE_SHIFT_16M) {
+	अगर (max_page_size < PAGE_SHIFT_16M) अणु
 		DBG("%s:%d: bad max_page_size %llxh\n", __func__, __LINE__,
 			max_page_size);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	BUILD_BUG_ON(CONFIG_PS3_HTAB_SIZE > HTAB_SIZE_MAX);
 	BUILD_BUG_ON(CONFIG_PS3_HTAB_SIZE < HTAB_SIZE_MIN);
 
-	result = lv1_construct_virtual_address_space(CONFIG_PS3_HTAB_SIZE,
+	result = lv1_स्थिरruct_भव_address_space(CONFIG_PS3_HTAB_SIZE,
 			2, make_page_sizes(PAGE_SHIFT_16M, PAGE_SHIFT_64K),
 			&map.vas_id, &map.htab_size);
 
-	if (result) {
+	अगर (result) अणु
 		DBG("%s:%d: lv1_construct_virtual_address_space failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	result = lv1_select_virtual_address_space(map.vas_id);
+	result = lv1_select_भव_address_space(map.vas_id);
 
-	if (result) {
+	अगर (result) अणु
 		DBG("%s:%d: lv1_select_virtual_address_space failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	*htab_size = map.htab_size;
 
 	debug_dump_map(&map);
 
-	return;
+	वापस;
 
 fail:
 	panic("ps3_mm_vas_create failed");
-}
+पूर्ण
 
 /**
  * ps3_mm_vas_destroy -
  */
 
-void ps3_mm_vas_destroy(void)
-{
-	int result;
+व्योम ps3_mm_vas_destroy(व्योम)
+अणु
+	पूर्णांक result;
 
-	if (map.vas_id) {
-		result = lv1_select_virtual_address_space(0);
-		result += lv1_destruct_virtual_address_space(map.vas_id);
+	अगर (map.vas_id) अणु
+		result = lv1_select_भव_address_space(0);
+		result += lv1_deकाष्ठा_भव_address_space(map.vas_id);
 
-		if (result) {
+		अगर (result) अणु
 			lv1_panic(0);
-		}
+		पूर्ण
 
 		map.vas_id = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ps3_mm_get_repository_highmem(struct mem_region *r)
-{
-	int result;
+अटल पूर्णांक ps3_mm_get_repository_highmem(काष्ठा mem_region *r)
+अणु
+	पूर्णांक result;
 
 	/* Assume a single highmem region. */
 
-	result = ps3_repository_read_highmem_info(0, &r->base, &r->size);
+	result = ps3_repository_पढ़ो_highmem_info(0, &r->base, &r->size);
 
-	if (result)
-		goto zero_region;
+	अगर (result)
+		जाओ zero_region;
 
-	if (!r->base || !r->size) {
+	अगर (!r->base || !r->size) अणु
 		result = -1;
-		goto zero_region;
-	}
+		जाओ zero_region;
+	पूर्ण
 
 	r->offset = r->base - map.rm.size;
 
 	DBG("%s:%d: Found high region in repository: %llxh %llxh\n",
 	    __func__, __LINE__, r->base, r->size);
 
-	return 0;
+	वापस 0;
 
 zero_region:
 	DBG("%s:%d: No high region in repository.\n", __func__, __LINE__);
 
 	r->size = r->base = r->offset = 0;
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int ps3_mm_set_repository_highmem(const struct mem_region *r)
-{
+अटल पूर्णांक ps3_mm_set_repository_highmem(स्थिर काष्ठा mem_region *r)
+अणु
 	/* Assume a single highmem region. */
 
-	return r ? ps3_repository_write_highmem_info(0, r->base, r->size) :
-		ps3_repository_write_highmem_info(0, 0, 0);
-}
+	वापस r ? ps3_repository_ग_लिखो_highmem_info(0, r->base, r->size) :
+		ps3_repository_ग_लिखो_highmem_info(0, 0, 0);
+पूर्ण
 
 /**
  * ps3_mm_region_create - create a memory region in the vas
- * @r: pointer to a struct mem_region to accept initialized values
+ * @r: poपूर्णांकer to a काष्ठा mem_region to accept initialized values
  * @size: requested region size
  *
  * This implementation creates the region with the vas large page size.
- * @size is rounded down to a multiple of the vas large page size.
+ * @size is rounded करोwn to a multiple of the vas large page size.
  */
 
-static int ps3_mm_region_create(struct mem_region *r, unsigned long size)
-{
-	int result;
+अटल पूर्णांक ps3_mm_region_create(काष्ठा mem_region *r, अचिन्हित दीर्घ size)
+अणु
+	पूर्णांक result;
 	u64 muid;
 
 	r->size = ALIGN_DOWN(size, 1 << PAGE_SHIFT_16M);
@@ -271,56 +272,56 @@ static int ps3_mm_region_create(struct mem_region *r, unsigned long size)
 	DBG("%s:%d difference %llxh (%lluMB)\n", __func__, __LINE__,
 		size - r->size, (size - r->size) / 1024 / 1024);
 
-	if (r->size == 0) {
+	अगर (r->size == 0) अणु
 		DBG("%s:%d: size == 0\n", __func__, __LINE__);
 		result = -1;
-		goto zero_region;
-	}
+		जाओ zero_region;
+	पूर्ण
 
 	result = lv1_allocate_memory(r->size, PAGE_SHIFT_16M, 0,
 		ALLOCATE_MEMORY_TRY_ALT_UNIT, &r->base, &muid);
 
-	if (result || r->base < map.rm.size) {
+	अगर (result || r->base < map.rm.size) अणु
 		DBG("%s:%d: lv1_allocate_memory failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		goto zero_region;
-	}
+		जाओ zero_region;
+	पूर्ण
 
 	r->destroy = 1;
 	r->offset = r->base - map.rm.size;
-	return result;
+	वापस result;
 
 zero_region:
 	r->size = r->base = r->offset = 0;
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * ps3_mm_region_destroy - destroy a memory region
- * @r: pointer to struct mem_region
+ * @r: poपूर्णांकer to काष्ठा mem_region
  */
 
-static void ps3_mm_region_destroy(struct mem_region *r)
-{
-	int result;
+अटल व्योम ps3_mm_region_destroy(काष्ठा mem_region *r)
+अणु
+	पूर्णांक result;
 
-	if (!r->destroy) {
-		return;
-	}
+	अगर (!r->destroy) अणु
+		वापस;
+	पूर्ण
 
-	if (r->base) {
+	अगर (r->base) अणु
 		result = lv1_release_memory(r->base);
 
-		if (result) {
+		अगर (result) अणु
 			lv1_panic(0);
-		}
+		पूर्ण
 
 		r->size = r->base = r->offset = 0;
 		map.total = map.rm.size;
-	}
+	पूर्ण
 
-	ps3_mm_set_repository_highmem(NULL);
-}
+	ps3_mm_set_repository_highmem(शून्य);
+पूर्ण
 
 /*============================================================================*/
 /* dma routines                                                               */
@@ -328,31 +329,31 @@ static void ps3_mm_region_destroy(struct mem_region *r)
 
 /**
  * dma_sb_lpar_to_bus - Translate an lpar address to ioc mapped bus address.
- * @r: pointer to dma region structure
+ * @r: poपूर्णांकer to dma region काष्ठाure
  * @lpar_addr: HV lpar address
  */
 
-static unsigned long dma_sb_lpar_to_bus(struct ps3_dma_region *r,
-	unsigned long lpar_addr)
-{
-	if (lpar_addr >= map.rm.size)
+अटल अचिन्हित दीर्घ dma_sb_lpar_to_bus(काष्ठा ps3_dma_region *r,
+	अचिन्हित दीर्घ lpar_addr)
+अणु
+	अगर (lpar_addr >= map.rm.size)
 		lpar_addr -= map.r1.offset;
 	BUG_ON(lpar_addr < r->offset);
 	BUG_ON(lpar_addr >= r->offset + r->len);
-	return r->bus_addr + lpar_addr - r->offset;
-}
+	वापस r->bus_addr + lpar_addr - r->offset;
+पूर्ण
 
-#define dma_dump_region(_a) _dma_dump_region(_a, __func__, __LINE__)
-static void  __maybe_unused _dma_dump_region(const struct ps3_dma_region *r,
-	const char *func, int line)
-{
+#घोषणा dma_dump_region(_a) _dma_dump_region(_a, __func__, __LINE__)
+अटल व्योम  __maybe_unused _dma_dump_region(स्थिर काष्ठा ps3_dma_region *r,
+	स्थिर अक्षर *func, पूर्णांक line)
+अणु
 	DBG("%s:%d: dev        %llu:%llu\n", func, line, r->dev->bus_id,
 		r->dev->dev_id);
 	DBG("%s:%d: page_size  %u\n", func, line, r->page_size);
 	DBG("%s:%d: bus_addr   %lxh\n", func, line, r->bus_addr);
 	DBG("%s:%d: len        %lxh\n", func, line, r->len);
 	DBG("%s:%d: offset     %lxh\n", func, line, r->offset);
-}
+पूर्ण
 
   /**
  * dma_chunk - A chunk of dma pages mapped by the io controller.
@@ -360,27 +361,27 @@ static void  __maybe_unused _dma_dump_region(const struct ps3_dma_region *r,
  * @lpar_addr: Starting lpar address of the area to map.
  * @bus_addr: Starting ioc bus address of the area to map.
  * @len: Length in bytes of the area to map.
- * @link: A struct list_head used with struct ps3_dma_region.chunk_list, the
+ * @link: A काष्ठा list_head used with काष्ठा ps3_dma_region.chunk_list, the
  * list of all chuncks owned by the region.
  *
  * This implementation uses a very simple dma page manager
- * based on the dma_chunk structure.  This scheme assumes
+ * based on the dma_chunk काष्ठाure.  This scheme assumes
  * that all drivers use very well behaved dma ops.
  */
 
-struct dma_chunk {
-	struct ps3_dma_region *region;
-	unsigned long lpar_addr;
-	unsigned long bus_addr;
-	unsigned long len;
-	struct list_head link;
-	unsigned int usage_count;
-};
+काष्ठा dma_chunk अणु
+	काष्ठा ps3_dma_region *region;
+	अचिन्हित दीर्घ lpar_addr;
+	अचिन्हित दीर्घ bus_addr;
+	अचिन्हित दीर्घ len;
+	काष्ठा list_head link;
+	अचिन्हित पूर्णांक usage_count;
+पूर्ण;
 
-#define dma_dump_chunk(_a) _dma_dump_chunk(_a, __func__, __LINE__)
-static void _dma_dump_chunk (const struct dma_chunk* c, const char* func,
-	int line)
-{
+#घोषणा dma_dump_chunk(_a) _dma_dump_chunk(_a, __func__, __LINE__)
+अटल व्योम _dma_dump_chunk (स्थिर काष्ठा dma_chunk* c, स्थिर अक्षर* func,
+	पूर्णांक line)
+अणु
 	DBG("%s:%d: r.dev        %llu:%llu\n", func, line,
 		c->region->dev->bus_id, c->region->dev->dev_id);
 	DBG("%s:%d: r.bus_addr   %lxh\n", func, line, c->region->bus_addr);
@@ -390,91 +391,91 @@ static void _dma_dump_chunk (const struct dma_chunk* c, const char* func,
 	DBG("%s:%d: c.lpar_addr  %lxh\n", func, line, c->lpar_addr);
 	DBG("%s:%d: c.bus_addr   %lxh\n", func, line, c->bus_addr);
 	DBG("%s:%d: c.len        %lxh\n", func, line, c->len);
-}
+पूर्ण
 
-static struct dma_chunk * dma_find_chunk(struct ps3_dma_region *r,
-	unsigned long bus_addr, unsigned long len)
-{
-	struct dma_chunk *c;
-	unsigned long aligned_bus = ALIGN_DOWN(bus_addr, 1 << r->page_size);
-	unsigned long aligned_len = ALIGN(len+bus_addr-aligned_bus,
+अटल काष्ठा dma_chunk * dma_find_chunk(काष्ठा ps3_dma_region *r,
+	अचिन्हित दीर्घ bus_addr, अचिन्हित दीर्घ len)
+अणु
+	काष्ठा dma_chunk *c;
+	अचिन्हित दीर्घ aligned_bus = ALIGN_DOWN(bus_addr, 1 << r->page_size);
+	अचिन्हित दीर्घ aligned_len = ALIGN(len+bus_addr-aligned_bus,
 					      1 << r->page_size);
 
-	list_for_each_entry(c, &r->chunk_list.head, link) {
-		/* intersection */
-		if (aligned_bus >= c->bus_addr &&
+	list_क्रम_each_entry(c, &r->chunk_list.head, link) अणु
+		/* पूर्णांकersection */
+		अगर (aligned_bus >= c->bus_addr &&
 		    aligned_bus + aligned_len <= c->bus_addr + c->len)
-			return c;
+			वापस c;
 
 		/* below */
-		if (aligned_bus + aligned_len <= c->bus_addr)
-			continue;
+		अगर (aligned_bus + aligned_len <= c->bus_addr)
+			जारी;
 
 		/* above */
-		if (aligned_bus >= c->bus_addr + c->len)
-			continue;
+		अगर (aligned_bus >= c->bus_addr + c->len)
+			जारी;
 
-		/* we don't handle the multi-chunk case for now */
+		/* we करोn't handle the multi-chunk हाल क्रम now */
 		dma_dump_chunk(c);
 		BUG();
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct dma_chunk *dma_find_chunk_lpar(struct ps3_dma_region *r,
-	unsigned long lpar_addr, unsigned long len)
-{
-	struct dma_chunk *c;
-	unsigned long aligned_lpar = ALIGN_DOWN(lpar_addr, 1 << r->page_size);
-	unsigned long aligned_len = ALIGN(len + lpar_addr - aligned_lpar,
+अटल काष्ठा dma_chunk *dma_find_chunk_lpar(काष्ठा ps3_dma_region *r,
+	अचिन्हित दीर्घ lpar_addr, अचिन्हित दीर्घ len)
+अणु
+	काष्ठा dma_chunk *c;
+	अचिन्हित दीर्घ aligned_lpar = ALIGN_DOWN(lpar_addr, 1 << r->page_size);
+	अचिन्हित दीर्घ aligned_len = ALIGN(len + lpar_addr - aligned_lpar,
 					      1 << r->page_size);
 
-	list_for_each_entry(c, &r->chunk_list.head, link) {
-		/* intersection */
-		if (c->lpar_addr <= aligned_lpar &&
-		    aligned_lpar < c->lpar_addr + c->len) {
-			if (aligned_lpar + aligned_len <= c->lpar_addr + c->len)
-				return c;
-			else {
+	list_क्रम_each_entry(c, &r->chunk_list.head, link) अणु
+		/* पूर्णांकersection */
+		अगर (c->lpar_addr <= aligned_lpar &&
+		    aligned_lpar < c->lpar_addr + c->len) अणु
+			अगर (aligned_lpar + aligned_len <= c->lpar_addr + c->len)
+				वापस c;
+			अन्यथा अणु
 				dma_dump_chunk(c);
 				BUG();
-			}
-		}
+			पूर्ण
+		पूर्ण
 		/* below */
-		if (aligned_lpar + aligned_len <= c->lpar_addr) {
-			continue;
-		}
+		अगर (aligned_lpar + aligned_len <= c->lpar_addr) अणु
+			जारी;
+		पूर्ण
 		/* above */
-		if (c->lpar_addr + c->len <= aligned_lpar) {
-			continue;
-		}
-	}
-	return NULL;
-}
+		अगर (c->lpar_addr + c->len <= aligned_lpar) अणु
+			जारी;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int dma_sb_free_chunk(struct dma_chunk *c)
-{
-	int result = 0;
+अटल पूर्णांक dma_sb_मुक्त_chunk(काष्ठा dma_chunk *c)
+अणु
+	पूर्णांक result = 0;
 
-	if (c->bus_addr) {
+	अगर (c->bus_addr) अणु
 		result = lv1_unmap_device_dma_region(c->region->dev->bus_id,
 			c->region->dev->dev_id, c->bus_addr, c->len);
 		BUG_ON(result);
-	}
+	पूर्ण
 
-	kfree(c);
-	return result;
-}
+	kमुक्त(c);
+	वापस result;
+पूर्ण
 
-static int dma_ioc0_free_chunk(struct dma_chunk *c)
-{
-	int result = 0;
-	int iopage;
-	unsigned long offset;
-	struct ps3_dma_region *r = c->region;
+अटल पूर्णांक dma_ioc0_मुक्त_chunk(काष्ठा dma_chunk *c)
+अणु
+	पूर्णांक result = 0;
+	पूर्णांक iopage;
+	अचिन्हित दीर्घ offset;
+	काष्ठा ps3_dma_region *r = c->region;
 
 	DBG("%s:start\n", __func__);
-	for (iopage = 0; iopage < (c->len >> r->page_size); iopage++) {
+	क्रम (iopage = 0; iopage < (c->len >> r->page_size); iopage++) अणु
 		offset = (1 << r->page_size) * iopage;
 		/* put INVALID entry */
 		result = lv1_put_iopte(0,
@@ -487,38 +488,38 @@ static int dma_ioc0_free_chunk(struct dma_chunk *c)
 		    c->lpar_addr + offset,
 		    r->ioid);
 
-		if (result) {
+		अगर (result) अणु
 			DBG("%s:%d: lv1_put_iopte failed: %s\n", __func__,
 			    __LINE__, ps3_result(result));
-		}
-	}
-	kfree(c);
+		पूर्ण
+	पूर्ण
+	kमुक्त(c);
 	DBG("%s:end\n", __func__);
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * dma_sb_map_pages - Maps dma pages into the io controller bus address space.
- * @r: Pointer to a struct ps3_dma_region.
+ * dma_sb_map_pages - Maps dma pages पूर्णांकo the io controller bus address space.
+ * @r: Poपूर्णांकer to a काष्ठा ps3_dma_region.
  * @phys_addr: Starting physical address of the area to map.
  * @len: Length in bytes of the area to map.
- * c_out: A pointer to receive an allocated struct dma_chunk for this area.
+ * c_out: A poपूर्णांकer to receive an allocated काष्ठा dma_chunk क्रम this area.
  *
  * This is the lowest level dma mapping routine, and is the one that will
- * make the HV call to add the pages into the io controller address space.
+ * make the HV call to add the pages पूर्णांकo the io controller address space.
  */
 
-static int dma_sb_map_pages(struct ps3_dma_region *r, unsigned long phys_addr,
-	    unsigned long len, struct dma_chunk **c_out, u64 iopte_flag)
-{
-	int result;
-	struct dma_chunk *c;
+अटल पूर्णांक dma_sb_map_pages(काष्ठा ps3_dma_region *r, अचिन्हित दीर्घ phys_addr,
+	    अचिन्हित दीर्घ len, काष्ठा dma_chunk **c_out, u64 iopte_flag)
+अणु
+	पूर्णांक result;
+	काष्ठा dma_chunk *c;
 
-	c = kzalloc(sizeof(*c), GFP_ATOMIC);
-	if (!c) {
+	c = kzalloc(माप(*c), GFP_ATOMIC);
+	अगर (!c) अणु
 		result = -ENOMEM;
-		goto fail_alloc;
-	}
+		जाओ fail_alloc;
+	पूर्ण
 
 	c->region = r;
 	c->lpar_addr = ps3_mm_phys_to_lpar(phys_addr);
@@ -529,124 +530,124 @@ static int dma_sb_map_pages(struct ps3_dma_region *r, unsigned long phys_addr,
 	result = lv1_map_device_dma_region(c->region->dev->bus_id,
 					   c->region->dev->dev_id, c->lpar_addr,
 					   c->bus_addr, c->len, iopte_flag);
-	if (result) {
+	अगर (result) अणु
 		DBG("%s:%d: lv1_map_device_dma_region failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
-		goto fail_map;
-	}
+		जाओ fail_map;
+	पूर्ण
 
 	list_add(&c->link, &r->chunk_list.head);
 
 	*c_out = c;
-	return 0;
+	वापस 0;
 
 fail_map:
-	kfree(c);
+	kमुक्त(c);
 fail_alloc:
-	*c_out = NULL;
+	*c_out = शून्य;
 	DBG(" <- %s:%d\n", __func__, __LINE__);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int dma_ioc0_map_pages(struct ps3_dma_region *r, unsigned long phys_addr,
-			      unsigned long len, struct dma_chunk **c_out,
+अटल पूर्णांक dma_ioc0_map_pages(काष्ठा ps3_dma_region *r, अचिन्हित दीर्घ phys_addr,
+			      अचिन्हित दीर्घ len, काष्ठा dma_chunk **c_out,
 			      u64 iopte_flag)
-{
-	int result;
-	struct dma_chunk *c, *last;
-	int iopage, pages;
-	unsigned long offset;
+अणु
+	पूर्णांक result;
+	काष्ठा dma_chunk *c, *last;
+	पूर्णांक iopage, pages;
+	अचिन्हित दीर्घ offset;
 
 	DBG(KERN_ERR "%s: phy=%#lx, lpar%#lx, len=%#lx\n", __func__,
 	    phys_addr, ps3_mm_phys_to_lpar(phys_addr), len);
-	c = kzalloc(sizeof(*c), GFP_ATOMIC);
-	if (!c) {
+	c = kzalloc(माप(*c), GFP_ATOMIC);
+	अगर (!c) अणु
 		result = -ENOMEM;
-		goto fail_alloc;
-	}
+		जाओ fail_alloc;
+	पूर्ण
 
 	c->region = r;
 	c->len = len;
 	c->lpar_addr = ps3_mm_phys_to_lpar(phys_addr);
 	/* allocate IO address */
-	if (list_empty(&r->chunk_list.head)) {
+	अगर (list_empty(&r->chunk_list.head)) अणु
 		/* first one */
 		c->bus_addr = r->bus_addr;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* derive from last bus addr*/
 		last  = list_entry(r->chunk_list.head.next,
-				   struct dma_chunk, link);
+				   काष्ठा dma_chunk, link);
 		c->bus_addr = last->bus_addr + last->len;
 		DBG("%s: last bus=%#lx, len=%#lx\n", __func__,
 		    last->bus_addr, last->len);
-	}
+	पूर्ण
 
 	/* FIXME: check whether length exceeds region size */
 
-	/* build ioptes for the area */
+	/* build ioptes क्रम the area */
 	pages = len >> r->page_size;
 	DBG("%s: pgsize=%#x len=%#lx pages=%#x iopteflag=%#llx\n", __func__,
 	    r->page_size, r->len, pages, iopte_flag);
-	for (iopage = 0; iopage < pages; iopage++) {
+	क्रम (iopage = 0; iopage < pages; iopage++) अणु
 		offset = (1 << r->page_size) * iopage;
 		result = lv1_put_iopte(0,
 				       c->bus_addr + offset,
 				       c->lpar_addr + offset,
 				       r->ioid,
 				       iopte_flag);
-		if (result) {
+		अगर (result) अणु
 			pr_warn("%s:%d: lv1_put_iopte failed: %s\n",
 				__func__, __LINE__, ps3_result(result));
-			goto fail_map;
-		}
+			जाओ fail_map;
+		पूर्ण
 		DBG("%s: pg=%d bus=%#lx, lpar=%#lx, ioid=%#x\n", __func__,
 		    iopage, c->bus_addr + offset, c->lpar_addr + offset,
 		    r->ioid);
-	}
+	पूर्ण
 
 	/* be sure that last allocated one is inserted at head */
 	list_add(&c->link, &r->chunk_list.head);
 
 	*c_out = c;
 	DBG("%s: end\n", __func__);
-	return 0;
+	वापस 0;
 
 fail_map:
-	for (iopage--; 0 <= iopage; iopage--) {
+	क्रम (iopage--; 0 <= iopage; iopage--) अणु
 		lv1_put_iopte(0,
 			      c->bus_addr + offset,
 			      c->lpar_addr + offset,
 			      r->ioid,
 			      0);
-	}
-	kfree(c);
+	पूर्ण
+	kमुक्त(c);
 fail_alloc:
-	*c_out = NULL;
-	return result;
-}
+	*c_out = शून्य;
+	वापस result;
+पूर्ण
 
 /**
  * dma_sb_region_create - Create a device dma region.
- * @r: Pointer to a struct ps3_dma_region.
+ * @r: Poपूर्णांकer to a काष्ठा ps3_dma_region.
  *
  * This is the lowest level dma region create routine, and is the one that
  * will make the HV call to create the region.
  */
 
-static int dma_sb_region_create(struct ps3_dma_region *r)
-{
-	int result;
+अटल पूर्णांक dma_sb_region_create(काष्ठा ps3_dma_region *r)
+अणु
+	पूर्णांक result;
 	u64 bus_addr;
 
 	DBG(" -> %s:%d:\n", __func__, __LINE__);
 
 	BUG_ON(!r);
 
-	if (!r->dev->bus_id) {
+	अगर (!r->dev->bus_id) अणु
 		pr_info("%s:%d: %llu:%llu no dma\n", __func__, __LINE__,
 			r->dev->bus_id, r->dev->dev_id);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	DBG("%s:%u: len = 0x%lx, page_size = %u, offset = 0x%lx\n", __func__,
 	    __LINE__, r->len, r->page_size, r->offset);
@@ -659,22 +660,22 @@ static int dma_sb_region_create(struct ps3_dma_region *r)
 	spin_lock_init(&r->chunk_list.lock);
 
 	result = lv1_allocate_device_dma_region(r->dev->bus_id, r->dev->dev_id,
-		roundup_pow_of_two(r->len), r->page_size, r->region_type,
+		roundup_घात_of_two(r->len), r->page_size, r->region_type,
 		&bus_addr);
 	r->bus_addr = bus_addr;
 
-	if (result) {
+	अगर (result) अणु
 		DBG("%s:%d: lv1_allocate_device_dma_region failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 		r->len = r->bus_addr = 0;
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int dma_ioc0_region_create(struct ps3_dma_region *r)
-{
-	int result;
+अटल पूर्णांक dma_ioc0_region_create(काष्ठा ps3_dma_region *r)
+अणु
+	पूर्णांक result;
 	u64 bus_addr;
 
 	INIT_LIST_HEAD(&r->chunk_list.head);
@@ -685,105 +686,105 @@ static int dma_ioc0_region_create(struct ps3_dma_region *r)
 					 r->page_size,
 					 &bus_addr);
 	r->bus_addr = bus_addr;
-	if (result) {
+	अगर (result) अणु
 		DBG("%s:%d: lv1_allocate_io_segment failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 		r->len = r->bus_addr = 0;
-	}
+	पूर्ण
 	DBG("%s: len=%#lx, pg=%d, bus=%#lx\n", __func__,
 	    r->len, r->page_size, r->bus_addr);
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * dma_region_free - Free a device dma region.
- * @r: Pointer to a struct ps3_dma_region.
+ * dma_region_मुक्त - Free a device dma region.
+ * @r: Poपूर्णांकer to a काष्ठा ps3_dma_region.
  *
- * This is the lowest level dma region free routine, and is the one that
- * will make the HV call to free the region.
+ * This is the lowest level dma region मुक्त routine, and is the one that
+ * will make the HV call to मुक्त the region.
  */
 
-static int dma_sb_region_free(struct ps3_dma_region *r)
-{
-	int result;
-	struct dma_chunk *c;
-	struct dma_chunk *tmp;
+अटल पूर्णांक dma_sb_region_मुक्त(काष्ठा ps3_dma_region *r)
+अणु
+	पूर्णांक result;
+	काष्ठा dma_chunk *c;
+	काष्ठा dma_chunk *पंचांगp;
 
 	BUG_ON(!r);
 
-	if (!r->dev->bus_id) {
+	अगर (!r->dev->bus_id) अणु
 		pr_info("%s:%d: %llu:%llu no dma\n", __func__, __LINE__,
 			r->dev->bus_id, r->dev->dev_id);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	list_for_each_entry_safe(c, tmp, &r->chunk_list.head, link) {
+	list_क्रम_each_entry_safe(c, पंचांगp, &r->chunk_list.head, link) अणु
 		list_del(&c->link);
-		dma_sb_free_chunk(c);
-	}
+		dma_sb_मुक्त_chunk(c);
+	पूर्ण
 
-	result = lv1_free_device_dma_region(r->dev->bus_id, r->dev->dev_id,
+	result = lv1_मुक्त_device_dma_region(r->dev->bus_id, r->dev->dev_id,
 		r->bus_addr);
 
-	if (result)
+	अगर (result)
 		DBG("%s:%d: lv1_free_device_dma_region failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 
 	r->bus_addr = 0;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int dma_ioc0_region_free(struct ps3_dma_region *r)
-{
-	int result;
-	struct dma_chunk *c, *n;
+अटल पूर्णांक dma_ioc0_region_मुक्त(काष्ठा ps3_dma_region *r)
+अणु
+	पूर्णांक result;
+	काष्ठा dma_chunk *c, *n;
 
 	DBG("%s: start\n", __func__);
-	list_for_each_entry_safe(c, n, &r->chunk_list.head, link) {
+	list_क्रम_each_entry_safe(c, n, &r->chunk_list.head, link) अणु
 		list_del(&c->link);
-		dma_ioc0_free_chunk(c);
-	}
+		dma_ioc0_मुक्त_chunk(c);
+	पूर्ण
 
 	result = lv1_release_io_segment(0, r->bus_addr);
 
-	if (result)
+	अगर (result)
 		DBG("%s:%d: lv1_free_device_dma_region failed: %s\n",
 			__func__, __LINE__, ps3_result(result));
 
 	r->bus_addr = 0;
 	DBG("%s: end\n", __func__);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * dma_sb_map_area - Map an area of memory into a device dma region.
- * @r: Pointer to a struct ps3_dma_region.
- * @virt_addr: Starting virtual address of the area to map.
+ * dma_sb_map_area - Map an area of memory पूर्णांकo a device dma region.
+ * @r: Poपूर्णांकer to a काष्ठा ps3_dma_region.
+ * @virt_addr: Starting भव address of the area to map.
  * @len: Length in bytes of the area to map.
- * @bus_addr: A pointer to return the starting ioc bus address of the area to
+ * @bus_addr: A poपूर्णांकer to वापस the starting ioc bus address of the area to
  * map.
  *
  * This is the common dma mapping routine.
  */
 
-static int dma_sb_map_area(struct ps3_dma_region *r, unsigned long virt_addr,
-	   unsigned long len, dma_addr_t *bus_addr,
+अटल पूर्णांक dma_sb_map_area(काष्ठा ps3_dma_region *r, अचिन्हित दीर्घ virt_addr,
+	   अचिन्हित दीर्घ len, dma_addr_t *bus_addr,
 	   u64 iopte_flag)
-{
-	int result;
-	unsigned long flags;
-	struct dma_chunk *c;
-	unsigned long phys_addr = is_kernel_addr(virt_addr) ? __pa(virt_addr)
+अणु
+	पूर्णांक result;
+	अचिन्हित दीर्घ flags;
+	काष्ठा dma_chunk *c;
+	अचिन्हित दीर्घ phys_addr = is_kernel_addr(virt_addr) ? __pa(virt_addr)
 		: virt_addr;
-	unsigned long aligned_phys = ALIGN_DOWN(phys_addr, 1 << r->page_size);
-	unsigned long aligned_len = ALIGN(len + phys_addr - aligned_phys,
+	अचिन्हित दीर्घ aligned_phys = ALIGN_DOWN(phys_addr, 1 << r->page_size);
+	अचिन्हित दीर्घ aligned_len = ALIGN(len + phys_addr - aligned_phys,
 					      1 << r->page_size);
 	*bus_addr = dma_sb_lpar_to_bus(r, ps3_mm_phys_to_lpar(phys_addr));
 
-	if (!USE_DYNAMIC_DMA) {
-		unsigned long lpar_addr = ps3_mm_phys_to_lpar(phys_addr);
+	अगर (!USE_DYNAMIC_DMA) अणु
+		अचिन्हित दीर्घ lpar_addr = ps3_mm_phys_to_lpar(phys_addr);
 		DBG(" -> %s:%d\n", __func__, __LINE__);
 		DBG("%s:%d virt_addr %lxh\n", __func__, __LINE__,
 			virt_addr);
@@ -794,46 +795,46 @@ static int dma_sb_map_area(struct ps3_dma_region *r, unsigned long virt_addr,
 		DBG("%s:%d len       %lxh\n", __func__, __LINE__, len);
 		DBG("%s:%d bus_addr  %llxh (%lxh)\n", __func__, __LINE__,
 		*bus_addr, len);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&r->chunk_list.lock, flags);
 	c = dma_find_chunk(r, *bus_addr, len);
 
-	if (c) {
+	अगर (c) अणु
 		DBG("%s:%d: reusing mapped chunk", __func__, __LINE__);
 		dma_dump_chunk(c);
 		c->usage_count++;
 		spin_unlock_irqrestore(&r->chunk_list.lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	result = dma_sb_map_pages(r, aligned_phys, aligned_len, &c, iopte_flag);
 
-	if (result) {
+	अगर (result) अणु
 		*bus_addr = 0;
 		DBG("%s:%d: dma_sb_map_pages failed (%d)\n",
 			__func__, __LINE__, result);
 		spin_unlock_irqrestore(&r->chunk_list.lock, flags);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	c->usage_count = 1;
 
 	spin_unlock_irqrestore(&r->chunk_list.lock, flags);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int dma_ioc0_map_area(struct ps3_dma_region *r, unsigned long virt_addr,
-	     unsigned long len, dma_addr_t *bus_addr,
+अटल पूर्णांक dma_ioc0_map_area(काष्ठा ps3_dma_region *r, अचिन्हित दीर्घ virt_addr,
+	     अचिन्हित दीर्घ len, dma_addr_t *bus_addr,
 	     u64 iopte_flag)
-{
-	int result;
-	unsigned long flags;
-	struct dma_chunk *c;
-	unsigned long phys_addr = is_kernel_addr(virt_addr) ? __pa(virt_addr)
+अणु
+	पूर्णांक result;
+	अचिन्हित दीर्घ flags;
+	काष्ठा dma_chunk *c;
+	अचिन्हित दीर्घ phys_addr = is_kernel_addr(virt_addr) ? __pa(virt_addr)
 		: virt_addr;
-	unsigned long aligned_phys = ALIGN_DOWN(phys_addr, 1 << r->page_size);
-	unsigned long aligned_len = ALIGN(len + phys_addr - aligned_phys,
+	अचिन्हित दीर्घ aligned_phys = ALIGN_DOWN(phys_addr, 1 << r->page_size);
+	अचिन्हित दीर्घ aligned_len = ALIGN(len + phys_addr - aligned_phys,
 					      1 << r->page_size);
 
 	DBG(KERN_ERR "%s: vaddr=%#lx, len=%#lx\n", __func__,
@@ -844,56 +845,56 @@ static int dma_ioc0_map_area(struct ps3_dma_region *r, unsigned long virt_addr,
 	spin_lock_irqsave(&r->chunk_list.lock, flags);
 	c = dma_find_chunk_lpar(r, ps3_mm_phys_to_lpar(phys_addr), len);
 
-	if (c) {
+	अगर (c) अणु
 		/* FIXME */
 		BUG();
 		*bus_addr = c->bus_addr + phys_addr - aligned_phys;
 		c->usage_count++;
 		spin_unlock_irqrestore(&r->chunk_list.lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	result = dma_ioc0_map_pages(r, aligned_phys, aligned_len, &c,
 				    iopte_flag);
 
-	if (result) {
+	अगर (result) अणु
 		*bus_addr = 0;
 		DBG("%s:%d: dma_ioc0_map_pages failed (%d)\n",
 			__func__, __LINE__, result);
 		spin_unlock_irqrestore(&r->chunk_list.lock, flags);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 	*bus_addr = c->bus_addr + phys_addr - aligned_phys;
 	DBG("%s: va=%#lx pa=%#lx a_pa=%#lx bus=%#llx\n", __func__,
 	    virt_addr, phys_addr, aligned_phys, *bus_addr);
 	c->usage_count = 1;
 
 	spin_unlock_irqrestore(&r->chunk_list.lock, flags);
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * dma_sb_unmap_area - Unmap an area of memory from a device dma region.
- * @r: Pointer to a struct ps3_dma_region.
+ * @r: Poपूर्णांकer to a काष्ठा ps3_dma_region.
  * @bus_addr: The starting ioc bus address of the area to unmap.
  * @len: Length in bytes of the area to unmap.
  *
  * This is the common dma unmap routine.
  */
 
-static int dma_sb_unmap_area(struct ps3_dma_region *r, dma_addr_t bus_addr,
-	unsigned long len)
-{
-	unsigned long flags;
-	struct dma_chunk *c;
+अटल पूर्णांक dma_sb_unmap_area(काष्ठा ps3_dma_region *r, dma_addr_t bus_addr,
+	अचिन्हित दीर्घ len)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा dma_chunk *c;
 
 	spin_lock_irqsave(&r->chunk_list.lock, flags);
 	c = dma_find_chunk(r, bus_addr, len);
 
-	if (!c) {
-		unsigned long aligned_bus = ALIGN_DOWN(bus_addr,
+	अगर (!c) अणु
+		अचिन्हित दीर्घ aligned_bus = ALIGN_DOWN(bus_addr,
 			1 << r->page_size);
-		unsigned long aligned_len = ALIGN(len + bus_addr
+		अचिन्हित दीर्घ aligned_len = ALIGN(len + bus_addr
 			- aligned_bus, 1 << r->page_size);
 		DBG("%s:%d: not found: bus_addr %llxh\n",
 			__func__, __LINE__, bus_addr);
@@ -904,33 +905,33 @@ static int dma_sb_unmap_area(struct ps3_dma_region *r, dma_addr_t bus_addr,
 		DBG("%s:%d: not found: aligned_len %lxh\n",
 			__func__, __LINE__, aligned_len);
 		BUG();
-	}
+	पूर्ण
 
 	c->usage_count--;
 
-	if (!c->usage_count) {
+	अगर (!c->usage_count) अणु
 		list_del(&c->link);
-		dma_sb_free_chunk(c);
-	}
+		dma_sb_मुक्त_chunk(c);
+	पूर्ण
 
 	spin_unlock_irqrestore(&r->chunk_list.lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dma_ioc0_unmap_area(struct ps3_dma_region *r,
-			dma_addr_t bus_addr, unsigned long len)
-{
-	unsigned long flags;
-	struct dma_chunk *c;
+अटल पूर्णांक dma_ioc0_unmap_area(काष्ठा ps3_dma_region *r,
+			dma_addr_t bus_addr, अचिन्हित दीर्घ len)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा dma_chunk *c;
 
 	DBG("%s: start a=%#llx l=%#lx\n", __func__, bus_addr, len);
 	spin_lock_irqsave(&r->chunk_list.lock, flags);
 	c = dma_find_chunk(r, bus_addr, len);
 
-	if (!c) {
-		unsigned long aligned_bus = ALIGN_DOWN(bus_addr,
+	अगर (!c) अणु
+		अचिन्हित दीर्घ aligned_bus = ALIGN_DOWN(bus_addr,
 							1 << r->page_size);
-		unsigned long aligned_len = ALIGN(len + bus_addr
+		अचिन्हित दीर्घ aligned_len = ALIGN(len + bus_addr
 						      - aligned_bus,
 						      1 << r->page_size);
 		DBG("%s:%d: not found: bus_addr %llxh\n",
@@ -942,182 +943,182 @@ static int dma_ioc0_unmap_area(struct ps3_dma_region *r,
 		DBG("%s:%d: not found: aligned_len %lxh\n",
 		    __func__, __LINE__, aligned_len);
 		BUG();
-	}
+	पूर्ण
 
 	c->usage_count--;
 
-	if (!c->usage_count) {
+	अगर (!c->usage_count) अणु
 		list_del(&c->link);
-		dma_ioc0_free_chunk(c);
-	}
+		dma_ioc0_मुक्त_chunk(c);
+	पूर्ण
 
 	spin_unlock_irqrestore(&r->chunk_list.lock, flags);
 	DBG("%s: end\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * dma_sb_region_create_linear - Setup a linear dma mapping for a device.
- * @r: Pointer to a struct ps3_dma_region.
+ * dma_sb_region_create_linear - Setup a linear dma mapping क्रम a device.
+ * @r: Poपूर्णांकer to a काष्ठा ps3_dma_region.
  *
- * This routine creates an HV dma region for the device and maps all available
- * ram into the io controller bus address space.
+ * This routine creates an HV dma region क्रम the device and maps all available
+ * ram पूर्णांकo the io controller bus address space.
  */
 
-static int dma_sb_region_create_linear(struct ps3_dma_region *r)
-{
-	int result;
-	unsigned long virt_addr, len;
-	dma_addr_t tmp;
+अटल पूर्णांक dma_sb_region_create_linear(काष्ठा ps3_dma_region *r)
+अणु
+	पूर्णांक result;
+	अचिन्हित दीर्घ virt_addr, len;
+	dma_addr_t पंचांगp;
 
-	if (r->len > 16*1024*1024) {	/* FIXME: need proper fix */
-		/* force 16M dma pages for linear mapping */
-		if (r->page_size != PS3_DMA_16M) {
+	अगर (r->len > 16*1024*1024) अणु	/* FIXME: need proper fix */
+		/* क्रमce 16M dma pages क्रम linear mapping */
+		अगर (r->page_size != PS3_DMA_16M) अणु
 			pr_info("%s:%d: forcing 16M pages for linear map\n",
 				__func__, __LINE__);
 			r->page_size = PS3_DMA_16M;
 			r->len = ALIGN(r->len, 1 << r->page_size);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	result = dma_sb_region_create(r);
 	BUG_ON(result);
 
-	if (r->offset < map.rm.size) {
+	अगर (r->offset < map.rm.size) अणु
 		/* Map (part of) 1st RAM chunk */
 		virt_addr = map.rm.base + r->offset;
 		len = map.rm.size - r->offset;
-		if (len > r->len)
+		अगर (len > r->len)
 			len = r->len;
-		result = dma_sb_map_area(r, virt_addr, len, &tmp,
+		result = dma_sb_map_area(r, virt_addr, len, &पंचांगp,
 			CBE_IOPTE_PP_W | CBE_IOPTE_PP_R | CBE_IOPTE_SO_RW |
 			CBE_IOPTE_M);
 		BUG_ON(result);
-	}
+	पूर्ण
 
-	if (r->offset + r->len > map.rm.size) {
+	अगर (r->offset + r->len > map.rm.size) अणु
 		/* Map (part of) 2nd RAM chunk */
 		virt_addr = map.rm.size;
 		len = r->len;
-		if (r->offset >= map.rm.size)
+		अगर (r->offset >= map.rm.size)
 			virt_addr += r->offset - map.rm.size;
-		else
+		अन्यथा
 			len -= map.rm.size - r->offset;
-		result = dma_sb_map_area(r, virt_addr, len, &tmp,
+		result = dma_sb_map_area(r, virt_addr, len, &पंचांगp,
 			CBE_IOPTE_PP_W | CBE_IOPTE_PP_R | CBE_IOPTE_SO_RW |
 			CBE_IOPTE_M);
 		BUG_ON(result);
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * dma_sb_region_free_linear - Free a linear dma mapping for a device.
- * @r: Pointer to a struct ps3_dma_region.
+ * dma_sb_region_मुक्त_linear - Free a linear dma mapping क्रम a device.
+ * @r: Poपूर्णांकer to a काष्ठा ps3_dma_region.
  *
- * This routine will unmap all mapped areas and free the HV dma region.
+ * This routine will unmap all mapped areas and मुक्त the HV dma region.
  */
 
-static int dma_sb_region_free_linear(struct ps3_dma_region *r)
-{
-	int result;
+अटल पूर्णांक dma_sb_region_मुक्त_linear(काष्ठा ps3_dma_region *r)
+अणु
+	पूर्णांक result;
 	dma_addr_t bus_addr;
-	unsigned long len, lpar_addr;
+	अचिन्हित दीर्घ len, lpar_addr;
 
-	if (r->offset < map.rm.size) {
+	अगर (r->offset < map.rm.size) अणु
 		/* Unmap (part of) 1st RAM chunk */
 		lpar_addr = map.rm.base + r->offset;
 		len = map.rm.size - r->offset;
-		if (len > r->len)
+		अगर (len > r->len)
 			len = r->len;
 		bus_addr = dma_sb_lpar_to_bus(r, lpar_addr);
 		result = dma_sb_unmap_area(r, bus_addr, len);
 		BUG_ON(result);
-	}
+	पूर्ण
 
-	if (r->offset + r->len > map.rm.size) {
+	अगर (r->offset + r->len > map.rm.size) अणु
 		/* Unmap (part of) 2nd RAM chunk */
 		lpar_addr = map.r1.base;
 		len = r->len;
-		if (r->offset >= map.rm.size)
+		अगर (r->offset >= map.rm.size)
 			lpar_addr += r->offset - map.rm.size;
-		else
+		अन्यथा
 			len -= map.rm.size - r->offset;
 		bus_addr = dma_sb_lpar_to_bus(r, lpar_addr);
 		result = dma_sb_unmap_area(r, bus_addr, len);
 		BUG_ON(result);
-	}
+	पूर्ण
 
-	result = dma_sb_region_free(r);
+	result = dma_sb_region_मुक्त(r);
 	BUG_ON(result);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * dma_sb_map_area_linear - Map an area of memory into a device dma region.
- * @r: Pointer to a struct ps3_dma_region.
- * @virt_addr: Starting virtual address of the area to map.
+ * dma_sb_map_area_linear - Map an area of memory पूर्णांकo a device dma region.
+ * @r: Poपूर्णांकer to a काष्ठा ps3_dma_region.
+ * @virt_addr: Starting भव address of the area to map.
  * @len: Length in bytes of the area to map.
- * @bus_addr: A pointer to return the starting ioc bus address of the area to
+ * @bus_addr: A poपूर्णांकer to वापस the starting ioc bus address of the area to
  * map.
  *
- * This routine just returns the corresponding bus address.  Actual mapping
+ * This routine just वापसs the corresponding bus address.  Actual mapping
  * occurs in dma_region_create_linear().
  */
 
-static int dma_sb_map_area_linear(struct ps3_dma_region *r,
-	unsigned long virt_addr, unsigned long len, dma_addr_t *bus_addr,
+अटल पूर्णांक dma_sb_map_area_linear(काष्ठा ps3_dma_region *r,
+	अचिन्हित दीर्घ virt_addr, अचिन्हित दीर्घ len, dma_addr_t *bus_addr,
 	u64 iopte_flag)
-{
-	unsigned long phys_addr = is_kernel_addr(virt_addr) ? __pa(virt_addr)
+अणु
+	अचिन्हित दीर्घ phys_addr = is_kernel_addr(virt_addr) ? __pa(virt_addr)
 		: virt_addr;
 	*bus_addr = dma_sb_lpar_to_bus(r, ps3_mm_phys_to_lpar(phys_addr));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * dma_unmap_area_linear - Unmap an area of memory from a device dma region.
- * @r: Pointer to a struct ps3_dma_region.
+ * @r: Poपूर्णांकer to a काष्ठा ps3_dma_region.
  * @bus_addr: The starting ioc bus address of the area to unmap.
  * @len: Length in bytes of the area to unmap.
  *
- * This routine does nothing.  Unmapping occurs in dma_sb_region_free_linear().
+ * This routine करोes nothing.  Unmapping occurs in dma_sb_region_मुक्त_linear().
  */
 
-static int dma_sb_unmap_area_linear(struct ps3_dma_region *r,
-	dma_addr_t bus_addr, unsigned long len)
-{
-	return 0;
-};
+अटल पूर्णांक dma_sb_unmap_area_linear(काष्ठा ps3_dma_region *r,
+	dma_addr_t bus_addr, अचिन्हित दीर्घ len)
+अणु
+	वापस 0;
+पूर्ण;
 
-static const struct ps3_dma_region_ops ps3_dma_sb_region_ops =  {
+अटल स्थिर काष्ठा ps3_dma_region_ops ps3_dma_sb_region_ops =  अणु
 	.create = dma_sb_region_create,
-	.free = dma_sb_region_free,
+	.मुक्त = dma_sb_region_मुक्त,
 	.map = dma_sb_map_area,
 	.unmap = dma_sb_unmap_area
-};
+पूर्ण;
 
-static const struct ps3_dma_region_ops ps3_dma_sb_region_linear_ops = {
+अटल स्थिर काष्ठा ps3_dma_region_ops ps3_dma_sb_region_linear_ops = अणु
 	.create = dma_sb_region_create_linear,
-	.free = dma_sb_region_free_linear,
+	.मुक्त = dma_sb_region_मुक्त_linear,
 	.map = dma_sb_map_area_linear,
 	.unmap = dma_sb_unmap_area_linear
-};
+पूर्ण;
 
-static const struct ps3_dma_region_ops ps3_dma_ioc0_region_ops = {
+अटल स्थिर काष्ठा ps3_dma_region_ops ps3_dma_ioc0_region_ops = अणु
 	.create = dma_ioc0_region_create,
-	.free = dma_ioc0_region_free,
+	.मुक्त = dma_ioc0_region_मुक्त,
 	.map = dma_ioc0_map_area,
 	.unmap = dma_ioc0_unmap_area
-};
+पूर्ण;
 
-int ps3_dma_region_init(struct ps3_system_bus_device *dev,
-	struct ps3_dma_region *r, enum ps3_dma_page_size page_size,
-	enum ps3_dma_region_type region_type, void *addr, unsigned long len)
-{
-	unsigned long lpar_addr;
+पूर्णांक ps3_dma_region_init(काष्ठा ps3_प्रणाली_bus_device *dev,
+	काष्ठा ps3_dma_region *r, क्रमागत ps3_dma_page_size page_size,
+	क्रमागत ps3_dma_region_type region_type, व्योम *addr, अचिन्हित दीर्घ len)
+अणु
+	अचिन्हित दीर्घ lpar_addr;
 
 	lpar_addr = addr ? ps3_mm_phys_to_lpar(__pa(addr)) : 0;
 
@@ -1125,76 +1126,76 @@ int ps3_dma_region_init(struct ps3_system_bus_device *dev,
 	r->page_size = page_size;
 	r->region_type = region_type;
 	r->offset = lpar_addr;
-	if (r->offset >= map.rm.size)
+	अगर (r->offset >= map.rm.size)
 		r->offset -= map.r1.offset;
 	r->len = len ? len : ALIGN(map.total, 1 << r->page_size);
 
-	switch (dev->dev_type) {
-	case PS3_DEVICE_TYPE_SB:
+	चयन (dev->dev_type) अणु
+	हाल PS3_DEVICE_TYPE_SB:
 		r->region_ops =  (USE_DYNAMIC_DMA)
 			? &ps3_dma_sb_region_ops
 			: &ps3_dma_sb_region_linear_ops;
-		break;
-	case PS3_DEVICE_TYPE_IOC0:
+		अवरोध;
+	हाल PS3_DEVICE_TYPE_IOC0:
 		r->region_ops = &ps3_dma_ioc0_region_ops;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ps3_dma_region_init);
 
-int ps3_dma_region_create(struct ps3_dma_region *r)
-{
+पूर्णांक ps3_dma_region_create(काष्ठा ps3_dma_region *r)
+अणु
 	BUG_ON(!r);
 	BUG_ON(!r->region_ops);
 	BUG_ON(!r->region_ops->create);
-	return r->region_ops->create(r);
-}
+	वापस r->region_ops->create(r);
+पूर्ण
 EXPORT_SYMBOL(ps3_dma_region_create);
 
-int ps3_dma_region_free(struct ps3_dma_region *r)
-{
+पूर्णांक ps3_dma_region_मुक्त(काष्ठा ps3_dma_region *r)
+अणु
 	BUG_ON(!r);
 	BUG_ON(!r->region_ops);
-	BUG_ON(!r->region_ops->free);
-	return r->region_ops->free(r);
-}
-EXPORT_SYMBOL(ps3_dma_region_free);
+	BUG_ON(!r->region_ops->मुक्त);
+	वापस r->region_ops->मुक्त(r);
+पूर्ण
+EXPORT_SYMBOL(ps3_dma_region_मुक्त);
 
-int ps3_dma_map(struct ps3_dma_region *r, unsigned long virt_addr,
-	unsigned long len, dma_addr_t *bus_addr,
+पूर्णांक ps3_dma_map(काष्ठा ps3_dma_region *r, अचिन्हित दीर्घ virt_addr,
+	अचिन्हित दीर्घ len, dma_addr_t *bus_addr,
 	u64 iopte_flag)
-{
-	return r->region_ops->map(r, virt_addr, len, bus_addr, iopte_flag);
-}
+अणु
+	वापस r->region_ops->map(r, virt_addr, len, bus_addr, iopte_flag);
+पूर्ण
 
-int ps3_dma_unmap(struct ps3_dma_region *r, dma_addr_t bus_addr,
-	unsigned long len)
-{
-	return r->region_ops->unmap(r, bus_addr, len);
-}
+पूर्णांक ps3_dma_unmap(काष्ठा ps3_dma_region *r, dma_addr_t bus_addr,
+	अचिन्हित दीर्घ len)
+अणु
+	वापस r->region_ops->unmap(r, bus_addr, len);
+पूर्ण
 
 /*============================================================================*/
-/* system startup routines                                                    */
+/* प्रणाली startup routines                                                    */
 /*============================================================================*/
 
 /**
  * ps3_mm_init - initialize the address space state variables
  */
 
-void __init ps3_mm_init(void)
-{
-	int result;
+व्योम __init ps3_mm_init(व्योम)
+अणु
+	पूर्णांक result;
 
 	DBG(" -> %s:%d\n", __func__, __LINE__);
 
-	result = ps3_repository_read_mm_info(&map.rm.base, &map.rm.size,
+	result = ps3_repository_पढ़ो_mm_info(&map.rm.base, &map.rm.size,
 		&map.total);
 
-	if (result)
+	अगर (result)
 		panic("ps3_repository_read_mm_info() failed");
 
 	map.rm.offset = map.rm.base;
@@ -1205,35 +1206,35 @@ void __init ps3_mm_init(void)
 	BUG_ON(map.rm.base);
 	BUG_ON(!map.rm.size);
 
-	/* Check if we got the highmem region from an earlier boot step */
+	/* Check अगर we got the highmem region from an earlier boot step */
 
-	if (ps3_mm_get_repository_highmem(&map.r1)) {
+	अगर (ps3_mm_get_repository_highmem(&map.r1)) अणु
 		result = ps3_mm_region_create(&map.r1, map.total - map.rm.size);
 
-		if (!result)
+		अगर (!result)
 			ps3_mm_set_repository_highmem(&map.r1);
-	}
+	पूर्ण
 
-	/* correct map.total for the real total amount of memory we use */
+	/* correct map.total क्रम the real total amount of memory we use */
 	map.total = map.rm.size + map.r1.size;
 
-	if (!map.r1.size) {
+	अगर (!map.r1.size) अणु
 		DBG("%s:%d: No highmem region found\n", __func__, __LINE__);
-	} else {
+	पूर्ण अन्यथा अणु
 		DBG("%s:%d: Adding highmem region: %llxh %llxh\n",
 			__func__, __LINE__, map.rm.size,
 			map.total - map.rm.size);
 		memblock_add(map.rm.size, map.total - map.rm.size);
-	}
+	पूर्ण
 
 	DBG(" <- %s:%d\n", __func__, __LINE__);
-}
+पूर्ण
 
 /**
- * ps3_mm_shutdown - final cleanup of address space
+ * ps3_mm_shutकरोwn - final cleanup of address space
  */
 
-void ps3_mm_shutdown(void)
-{
+व्योम ps3_mm_shutकरोwn(व्योम)
+अणु
 	ps3_mm_region_destroy(&map.r1);
-}
+पूर्ण

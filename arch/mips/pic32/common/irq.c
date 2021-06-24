@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Joshua Henderson <joshua.henderson@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
-#include <linux/init.h>
-#include <linux/irqchip.h>
-#include <asm/irq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irqchip.h>
+#समावेश <यंत्र/irq.h>
 
-void __init arch_init_irq(void)
-{
+व्योम __init arch_init_irq(व्योम)
+अणु
 	irqchip_init();
-}
+पूर्ण

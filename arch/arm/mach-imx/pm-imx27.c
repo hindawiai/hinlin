@@ -1,52 +1,53 @@
+<शैली गुरु>
 /*
  * i.MX27 Power Management Routines
  *
  * Based on Freescale's BSP
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License.
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License.
  */
 
-#include <linux/of_address.h>
-#include <linux/kernel.h>
-#include <linux/suspend.h>
-#include <linux/io.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/पन.स>
 
-#include "common.h"
-#include "hardware.h"
+#समावेश "common.h"
+#समावेश "hardware.h"
 
-static int mx27_suspend_enter(suspend_state_t state)
-{
-	void __iomem *ccm_base;
-	struct device_node *np;
+अटल पूर्णांक mx27_suspend_enter(suspend_state_t state)
+अणु
+	व्योम __iomem *ccm_base;
+	काष्ठा device_node *np;
 	u32 cscr;
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,imx27-ccm");
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,imx27-ccm");
 	ccm_base = of_iomap(np, 0);
 	BUG_ON(!ccm_base);
 
-	switch (state) {
-	case PM_SUSPEND_MEM:
+	चयन (state) अणु
+	हाल PM_SUSPEND_MEM:
 		/* Clear MPEN and SPEN to disable MPLL/SPLL */
-		cscr = imx_readl(ccm_base);
+		cscr = imx_पढ़ोl(ccm_base);
 		cscr &= 0xFFFFFFFC;
-		imx_writel(cscr, ccm_base);
+		imx_ग_लिखोl(cscr, ccm_base);
 		/* Executes WFI */
-		cpu_do_idle();
-		break;
+		cpu_करो_idle();
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct platform_suspend_ops mx27_suspend_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops mx27_suspend_ops = अणु
 	.enter = mx27_suspend_enter,
 	.valid = suspend_valid_only_mem,
-};
+पूर्ण;
 
-void __init imx27_pm_init(void)
-{
+व्योम __init imx27_pm_init(व्योम)
+अणु
 	suspend_set_ops(&mx27_suspend_ops);
-}
+पूर्ण

@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/task_stack.h>
-#include <linux/delay.h>
-#include <linux/kallsyms.h>
-#include <linux/uaccess.h>
-#include <asm/elf.h>
-#include <asm/proc-fns.h>
-#include <asm/fpu.h>
-#include <linux/ptrace.h>
-#include <linux/reboot.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/elf.h>
+#समावेश <यंत्र/proc-fns.h>
+#समावेश <यंत्र/fpu.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/reboot.h>
 
-#if IS_ENABLED(CONFIG_LAZY_FPU)
-struct task_struct *last_task_used_math;
-#endif
+#अगर IS_ENABLED(CONFIG_LAZY_FPU)
+काष्ठा task_काष्ठा *last_task_used_math;
+#पूर्ण_अगर
 
-extern void setup_mm_for_reboot(char mode);
+बाह्य व्योम setup_mm_क्रम_reboot(अक्षर mode);
 
-extern inline void arch_reset(char mode)
-{
-	if (mode == 's') {
+बाह्य अंतरभूत व्योम arch_reset(अक्षर mode)
+अणु
+	अगर (mode == 's') अणु
 		/* Use cpu handler, jump to 0 */
 		cpu_reset(0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void (*pm_power_off) (void);
-EXPORT_SYMBOL(pm_power_off);
+व्योम (*pm_घातer_off) (व्योम);
+EXPORT_SYMBOL(pm_घातer_off);
 
-static char reboot_mode_nds32 = 'h';
+अटल अक्षर reboot_mode_nds32 = 'h';
 
-int __init reboot_setup(char *str)
-{
+पूर्णांक __init reboot_setup(अक्षर *str)
+अणु
 	reboot_mode_nds32 = str[0];
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int cpub_pwroff(void)
-{
-	return 0;
-}
+अटल पूर्णांक cpub_pwroff(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
 __setup("reboot=", reboot_setup);
 
-void machine_halt(void)
-{
+व्योम machine_halt(व्योम)
+अणु
 	cpub_pwroff();
-}
+पूर्ण
 
 EXPORT_SYMBOL(machine_halt);
 
-void machine_power_off(void)
-{
-	if (pm_power_off)
-		pm_power_off();
-}
+व्योम machine_घातer_off(व्योम)
+अणु
+	अगर (pm_घातer_off)
+		pm_घातer_off();
+पूर्ण
 
-EXPORT_SYMBOL(machine_power_off);
+EXPORT_SYMBOL(machine_घातer_off);
 
-void machine_restart(char *cmd)
-{
+व्योम machine_restart(अक्षर *cmd)
+अणु
 	/*
-	 * Clean and disable cache, and turn off interrupts
+	 * Clean and disable cache, and turn off पूर्णांकerrupts
 	 */
 	cpu_proc_fin();
 
 	/*
-	 * Tell the mm system that we are going to reboot -
+	 * Tell the mm प्रणाली that we are going to reboot -
 	 * we may need it to insert some 1:1 mappings so that
 	 * soft boot works.
 	 */
-	setup_mm_for_reboot(reboot_mode_nds32);
+	setup_mm_क्रम_reboot(reboot_mode_nds32);
 
 	/* Execute kernel restart handler call chain */
-	do_kernel_restart(cmd);
+	करो_kernel_restart(cmd);
 
 	/*
-	 * Now call the architecture specific reboot code.
+	 * Now call the architecture specअगरic reboot code.
 	 */
 	arch_reset(reboot_mode_nds32);
 
@@ -88,19 +89,19 @@ void machine_restart(char *cmd)
 	 */
 	mdelay(1000);
 	pr_info("Reboot failed -- System halted\n");
-	while (1) ;
-}
+	जबतक (1) ;
+पूर्ण
 
 EXPORT_SYMBOL(machine_restart);
 
-void show_regs(struct pt_regs *regs)
-{
-	printk("PC is at %pS\n", (void *)instruction_pointer(regs));
-	printk("LP is at %pS\n", (void *)regs->lp);
+व्योम show_regs(काष्ठा pt_regs *regs)
+अणु
+	prपूर्णांकk("PC is at %pS\n", (व्योम *)inकाष्ठाion_poपूर्णांकer(regs));
+	prपूर्णांकk("LP is at %pS\n", (व्योम *)regs->lp);
 	pr_info("pc : [<%08lx>]    lp : [<%08lx>]    %s\n"
 		"sp : %08lx  fp : %08lx  gp : %08lx\n",
-		instruction_pointer(regs),
-		regs->lp, print_tainted(), regs->sp, regs->fp, regs->gp);
+		inकाष्ठाion_poपूर्णांकer(regs),
+		regs->lp, prपूर्णांक_taपूर्णांकed(), regs->sp, regs->fp, regs->gp);
 	pr_info("r25: %08lx  r24: %08lx\n", regs->uregs[25], regs->uregs[24]);
 
 	pr_info("r23: %08lx  r22: %08lx  r21: %08lx  r20: %08lx\n",
@@ -120,143 +121,143 @@ void show_regs(struct pt_regs *regs)
 	pr_info("r3 : %08lx  r2 : %08lx  r1 : %08lx  r0 : %08lx\n",
 		regs->uregs[3], regs->uregs[2], regs->uregs[1], regs->uregs[0]);
 	pr_info("  IRQs o%s  Segment %s\n",
-		interrupts_enabled(regs) ? "n" : "ff",
+		पूर्णांकerrupts_enabled(regs) ? "n" : "ff",
 		uaccess_kernel() ? "kernel" : "user");
-}
+पूर्ण
 
 EXPORT_SYMBOL(show_regs);
 
-void exit_thread(struct task_struct *tsk)
-{
-#if defined(CONFIG_FPU) && defined(CONFIG_LAZY_FPU)
-	if (last_task_used_math == tsk)
-		last_task_used_math = NULL;
-#endif
-}
+व्योम निकास_thपढ़ो(काष्ठा task_काष्ठा *tsk)
+अणु
+#अगर defined(CONFIG_FPU) && defined(CONFIG_LAZY_FPU)
+	अगर (last_task_used_math == tsk)
+		last_task_used_math = शून्य;
+#पूर्ण_अगर
+पूर्ण
 
-void flush_thread(void)
-{
-#if defined(CONFIG_FPU)
+व्योम flush_thपढ़ो(व्योम)
+अणु
+#अगर defined(CONFIG_FPU)
 	clear_fpu(task_pt_regs(current));
 	clear_used_math();
-# ifdef CONFIG_LAZY_FPU
-	if (last_task_used_math == current)
-		last_task_used_math = NULL;
-# endif
-#endif
-}
+# अगरdef CONFIG_LAZY_FPU
+	अगर (last_task_used_math == current)
+		last_task_used_math = शून्य;
+# endअगर
+#पूर्ण_अगर
+पूर्ण
 
-DEFINE_PER_CPU(struct task_struct *, __entry_task);
+DEFINE_PER_CPU(काष्ठा task_काष्ठा *, __entry_task);
 
-asmlinkage void ret_from_fork(void) __asm__("ret_from_fork");
-int copy_thread(unsigned long clone_flags, unsigned long stack_start,
-		unsigned long stk_sz, struct task_struct *p, unsigned long tls)
-{
-	struct pt_regs *childregs = task_pt_regs(p);
+यंत्रlinkage व्योम ret_from_विभाजन(व्योम) __यंत्र__("ret_from_fork");
+पूर्णांक copy_thपढ़ो(अचिन्हित दीर्घ clone_flags, अचिन्हित दीर्घ stack_start,
+		अचिन्हित दीर्घ stk_sz, काष्ठा task_काष्ठा *p, अचिन्हित दीर्घ tls)
+अणु
+	काष्ठा pt_regs *childregs = task_pt_regs(p);
 
-	memset(&p->thread.cpu_context, 0, sizeof(struct cpu_context));
+	स_रखो(&p->thपढ़ो.cpu_context, 0, माप(काष्ठा cpu_context));
 
-	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
-		memset(childregs, 0, sizeof(struct pt_regs));
-		/* kernel thread fn */
-		p->thread.cpu_context.r6 = stack_start;
-		/* kernel thread argument */
-		p->thread.cpu_context.r7 = stk_sz;
-	} else {
+	अगर (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) अणु
+		स_रखो(childregs, 0, माप(काष्ठा pt_regs));
+		/* kernel thपढ़ो fn */
+		p->thपढ़ो.cpu_context.r6 = stack_start;
+		/* kernel thपढ़ो argument */
+		p->thपढ़ो.cpu_context.r7 = stk_sz;
+	पूर्ण अन्यथा अणु
 		*childregs = *current_pt_regs();
-		if (stack_start)
+		अगर (stack_start)
 			childregs->sp = stack_start;
 		/* child get zero as ret. */
 		childregs->uregs[0] = 0;
 		childregs->osp = 0;
-		if (clone_flags & CLONE_SETTLS)
+		अगर (clone_flags & CLONE_SETTLS)
 			childregs->uregs[25] = tls;
-	}
-	/* cpu context switching  */
-	p->thread.cpu_context.pc = (unsigned long)ret_from_fork;
-	p->thread.cpu_context.sp = (unsigned long)childregs;
+	पूर्ण
+	/* cpu context चयनing  */
+	p->thपढ़ो.cpu_context.pc = (अचिन्हित दीर्घ)ret_from_विभाजन;
+	p->thपढ़ो.cpu_context.sp = (अचिन्हित दीर्घ)childregs;
 
-#if IS_ENABLED(CONFIG_FPU)
-	if (used_math()) {
-# if !IS_ENABLED(CONFIG_LAZY_FPU)
+#अगर IS_ENABLED(CONFIG_FPU)
+	अगर (used_math()) अणु
+# अगर !IS_ENABLED(CONFIG_LAZY_FPU)
 		unlazy_fpu(current);
-# else
+# अन्यथा
 		preempt_disable();
-		if (last_task_used_math == current)
+		अगर (last_task_used_math == current)
 			save_fpu(current);
 		preempt_enable();
-# endif
-		p->thread.fpu = current->thread.fpu;
+# endअगर
+		p->thपढ़ो.fpu = current->thपढ़ो.fpu;
 		clear_fpu(task_pt_regs(p));
 		set_stopped_child_used_math(p);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_HWZOL
+#अगर_घोषित CONFIG_HWZOL
 	childregs->lb = 0;
 	childregs->le = 0;
 	childregs->lc = 0;
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_FPU)
-struct task_struct *_switch_fpu(struct task_struct *prev, struct task_struct *next)
-{
-#if !IS_ENABLED(CONFIG_LAZY_FPU)
+#अगर IS_ENABLED(CONFIG_FPU)
+काष्ठा task_काष्ठा *_चयन_fpu(काष्ठा task_काष्ठा *prev, काष्ठा task_काष्ठा *next)
+अणु
+#अगर !IS_ENABLED(CONFIG_LAZY_FPU)
 	unlazy_fpu(prev);
-#endif
-	if (!(next->flags & PF_KTHREAD))
+#पूर्ण_अगर
+	अगर (!(next->flags & PF_KTHREAD))
 		clear_fpu(task_pt_regs(next));
-	return prev;
-}
-#endif
+	वापस prev;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * fill in the fpe structure for a core dump...
+ * fill in the fpe काष्ठाure क्रम a core dump...
  */
-int dump_fpu(struct pt_regs *regs, elf_fpregset_t * fpu)
-{
-	int fpvalid = 0;
-#if IS_ENABLED(CONFIG_FPU)
-	struct task_struct *tsk = current;
+पूर्णांक dump_fpu(काष्ठा pt_regs *regs, elf_fpregset_t * fpu)
+अणु
+	पूर्णांक fpvalid = 0;
+#अगर IS_ENABLED(CONFIG_FPU)
+	काष्ठा task_काष्ठा *tsk = current;
 
 	fpvalid = tsk_used_math(tsk);
-	if (fpvalid) {
+	अगर (fpvalid) अणु
 		lose_fpu();
-		memcpy(fpu, &tsk->thread.fpu, sizeof(*fpu));
-	}
-#endif
-	return fpvalid;
-}
+		स_नकल(fpu, &tsk->thपढ़ो.fpu, माप(*fpu));
+	पूर्ण
+#पूर्ण_अगर
+	वापस fpvalid;
+पूर्ण
 
 EXPORT_SYMBOL(dump_fpu);
 
-unsigned long get_wchan(struct task_struct *p)
-{
-	unsigned long fp, lr;
-	unsigned long stack_start, stack_end;
-	int count = 0;
+अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p)
+अणु
+	अचिन्हित दीर्घ fp, lr;
+	अचिन्हित दीर्घ stack_start, stack_end;
+	पूर्णांक count = 0;
 
-	if (!p || p == current || p->state == TASK_RUNNING)
-		return 0;
+	अगर (!p || p == current || p->state == TASK_RUNNING)
+		वापस 0;
 
-	if (IS_ENABLED(CONFIG_FRAME_POINTER)) {
-		stack_start = (unsigned long)end_of_stack(p);
-		stack_end = (unsigned long)task_stack_page(p) + THREAD_SIZE;
+	अगर (IS_ENABLED(CONFIG_FRAME_POINTER)) अणु
+		stack_start = (अचिन्हित दीर्घ)end_of_stack(p);
+		stack_end = (अचिन्हित दीर्घ)task_stack_page(p) + THREAD_SIZE;
 
-		fp = thread_saved_fp(p);
-		do {
-			if (fp < stack_start || fp > stack_end)
-				return 0;
-			lr = ((unsigned long *)fp)[0];
-			if (!in_sched_functions(lr))
-				return lr;
-			fp = *(unsigned long *)(fp + 4);
-		} while (count++ < 16);
-	}
-	return 0;
-}
+		fp = thपढ़ो_saved_fp(p);
+		करो अणु
+			अगर (fp < stack_start || fp > stack_end)
+				वापस 0;
+			lr = ((अचिन्हित दीर्घ *)fp)[0];
+			अगर (!in_sched_functions(lr))
+				वापस lr;
+			fp = *(अचिन्हित दीर्घ *)(fp + 4);
+		पूर्ण जबतक (count++ < 16);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL(get_wchan);

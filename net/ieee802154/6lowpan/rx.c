@@ -1,214 +1,215 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include <linux/if_arp.h>
+#समावेश <linux/अगर_arp.h>
 
-#include <net/6lowpan.h>
-#include <net/mac802154.h>
-#include <net/ieee802154_netdev.h>
+#समावेश <net/6lowpan.h>
+#समावेश <net/mac802154.h>
+#समावेश <net/ieee802154_netdev.h>
 
-#include "6lowpan_i.h"
+#समावेश "6lowpan_i.h"
 
-#define LOWPAN_DISPATCH_FIRST		0xc0
-#define LOWPAN_DISPATCH_FRAG_MASK	0xf8
+#घोषणा LOWPAN_DISPATCH_FIRST		0xc0
+#घोषणा LOWPAN_DISPATCH_FRAG_MASK	0xf8
 
-#define LOWPAN_DISPATCH_NALP		0x00
-#define LOWPAN_DISPATCH_ESC		0x40
-#define LOWPAN_DISPATCH_HC1		0x42
-#define LOWPAN_DISPATCH_DFF		0x43
-#define LOWPAN_DISPATCH_BC0		0x50
-#define LOWPAN_DISPATCH_MESH		0x80
+#घोषणा LOWPAN_DISPATCH_NALP		0x00
+#घोषणा LOWPAN_DISPATCH_ESC		0x40
+#घोषणा LOWPAN_DISPATCH_HC1		0x42
+#घोषणा LOWPAN_DISPATCH_DFF		0x43
+#घोषणा LOWPAN_DISPATCH_BC0		0x50
+#घोषणा LOWPAN_DISPATCH_MESH		0x80
 
-static int lowpan_give_skb_to_device(struct sk_buff *skb)
-{
+अटल पूर्णांक lowpan_give_skb_to_device(काष्ठा sk_buff *skb)
+अणु
 	skb->protocol = htons(ETH_P_IPV6);
 	skb->dev->stats.rx_packets++;
 	skb->dev->stats.rx_bytes += skb->len;
 
-	return netif_rx(skb);
-}
+	वापस netअगर_rx(skb);
+पूर्ण
 
-static int lowpan_rx_handlers_result(struct sk_buff *skb, lowpan_rx_result res)
-{
-	switch (res) {
-	case RX_CONTINUE:
+अटल पूर्णांक lowpan_rx_handlers_result(काष्ठा sk_buff *skb, lowpan_rx_result res)
+अणु
+	चयन (res) अणु
+	हाल RX_CONTINUE:
 		/* nobody cared about this packet */
 		net_warn_ratelimited("%s: received unknown dispatch\n",
 				     __func__);
 
 		fallthrough;
-	case RX_DROP_UNUSABLE:
-		kfree_skb(skb);
+	हाल RX_DROP_UNUSABLE:
+		kमुक्त_skb(skb);
 
 		fallthrough;
-	case RX_DROP:
-		return NET_RX_DROP;
-	case RX_QUEUED:
-		return lowpan_give_skb_to_device(skb);
-	default:
-		break;
-	}
+	हाल RX_DROP:
+		वापस NET_RX_DROP;
+	हाल RX_QUEUED:
+		वापस lowpan_give_skb_to_device(skb);
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return NET_RX_DROP;
-}
+	वापस NET_RX_DROP;
+पूर्ण
 
-static inline bool lowpan_is_frag1(u8 dispatch)
-{
-	return (dispatch & LOWPAN_DISPATCH_FRAG_MASK) == LOWPAN_DISPATCH_FRAG1;
-}
+अटल अंतरभूत bool lowpan_is_frag1(u8 dispatch)
+अणु
+	वापस (dispatch & LOWPAN_DISPATCH_FRAG_MASK) == LOWPAN_DISPATCH_FRAG1;
+पूर्ण
 
-static inline bool lowpan_is_fragn(u8 dispatch)
-{
-	return (dispatch & LOWPAN_DISPATCH_FRAG_MASK) == LOWPAN_DISPATCH_FRAGN;
-}
+अटल अंतरभूत bool lowpan_is_fragn(u8 dispatch)
+अणु
+	वापस (dispatch & LOWPAN_DISPATCH_FRAG_MASK) == LOWPAN_DISPATCH_FRAGN;
+पूर्ण
 
-static lowpan_rx_result lowpan_rx_h_frag(struct sk_buff *skb)
-{
-	int ret;
+अटल lowpan_rx_result lowpan_rx_h_frag(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
 
-	if (!(lowpan_is_frag1(*skb_network_header(skb)) ||
+	अगर (!(lowpan_is_frag1(*skb_network_header(skb)) ||
 	      lowpan_is_fragn(*skb_network_header(skb))))
-		return RX_CONTINUE;
+		वापस RX_CONTINUE;
 
 	ret = lowpan_frag_rcv(skb, *skb_network_header(skb) &
 			      LOWPAN_DISPATCH_FRAG_MASK);
-	if (ret == 1)
-		return RX_QUEUED;
+	अगर (ret == 1)
+		वापस RX_QUEUED;
 
-	/* Packet is freed by lowpan_frag_rcv on error or put into the frag
+	/* Packet is मुक्तd by lowpan_frag_rcv on error or put पूर्णांकo the frag
 	 * bucket.
 	 */
-	return RX_DROP;
-}
+	वापस RX_DROP;
+पूर्ण
 
-int lowpan_iphc_decompress(struct sk_buff *skb)
-{
-	struct ieee802154_hdr hdr;
+पूर्णांक lowpan_iphc_decompress(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee802154_hdr hdr;
 
-	if (ieee802154_hdr_peek_addrs(skb, &hdr) < 0)
-		return -EINVAL;
+	अगर (ieee802154_hdr_peek_addrs(skb, &hdr) < 0)
+		वापस -EINVAL;
 
-	return lowpan_header_decompress(skb, skb->dev, &hdr.dest, &hdr.source);
-}
+	वापस lowpan_header_decompress(skb, skb->dev, &hdr.dest, &hdr.source);
+पूर्ण
 
-static lowpan_rx_result lowpan_rx_h_iphc(struct sk_buff *skb)
-{
-	int ret;
+अटल lowpan_rx_result lowpan_rx_h_iphc(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
 
-	if (!lowpan_is_iphc(*skb_network_header(skb)))
-		return RX_CONTINUE;
+	अगर (!lowpan_is_iphc(*skb_network_header(skb)))
+		वापस RX_CONTINUE;
 
 	/* Setting datagram_offset to zero indicates non frag handling
-	 * while doing lowpan_header_decompress.
+	 * जबतक करोing lowpan_header_decompress.
 	 */
 	lowpan_802154_cb(skb)->d_size = 0;
 
 	ret = lowpan_iphc_decompress(skb);
-	if (ret < 0)
-		return RX_DROP_UNUSABLE;
+	अगर (ret < 0)
+		वापस RX_DROP_UNUSABLE;
 
-	return RX_QUEUED;
-}
+	वापस RX_QUEUED;
+पूर्ण
 
-lowpan_rx_result lowpan_rx_h_ipv6(struct sk_buff *skb)
-{
-	if (!lowpan_is_ipv6(*skb_network_header(skb)))
-		return RX_CONTINUE;
+lowpan_rx_result lowpan_rx_h_ipv6(काष्ठा sk_buff *skb)
+अणु
+	अगर (!lowpan_is_ipv6(*skb_network_header(skb)))
+		वापस RX_CONTINUE;
 
 	/* Pull off the 1-byte of 6lowpan header. */
 	skb_pull(skb, 1);
-	return RX_QUEUED;
-}
+	वापस RX_QUEUED;
+पूर्ण
 
-static inline bool lowpan_is_esc(u8 dispatch)
-{
-	return dispatch == LOWPAN_DISPATCH_ESC;
-}
+अटल अंतरभूत bool lowpan_is_esc(u8 dispatch)
+अणु
+	वापस dispatch == LOWPAN_DISPATCH_ESC;
+पूर्ण
 
-static lowpan_rx_result lowpan_rx_h_esc(struct sk_buff *skb)
-{
-	if (!lowpan_is_esc(*skb_network_header(skb)))
-		return RX_CONTINUE;
+अटल lowpan_rx_result lowpan_rx_h_esc(काष्ठा sk_buff *skb)
+अणु
+	अगर (!lowpan_is_esc(*skb_network_header(skb)))
+		वापस RX_CONTINUE;
 
 	net_warn_ratelimited("%s: %s\n", skb->dev->name,
 			     "6LoWPAN ESC not supported\n");
 
-	return RX_DROP_UNUSABLE;
-}
+	वापस RX_DROP_UNUSABLE;
+पूर्ण
 
-static inline bool lowpan_is_hc1(u8 dispatch)
-{
-	return dispatch == LOWPAN_DISPATCH_HC1;
-}
+अटल अंतरभूत bool lowpan_is_hc1(u8 dispatch)
+अणु
+	वापस dispatch == LOWPAN_DISPATCH_HC1;
+पूर्ण
 
-static lowpan_rx_result lowpan_rx_h_hc1(struct sk_buff *skb)
-{
-	if (!lowpan_is_hc1(*skb_network_header(skb)))
-		return RX_CONTINUE;
+अटल lowpan_rx_result lowpan_rx_h_hc1(काष्ठा sk_buff *skb)
+अणु
+	अगर (!lowpan_is_hc1(*skb_network_header(skb)))
+		वापस RX_CONTINUE;
 
 	net_warn_ratelimited("%s: %s\n", skb->dev->name,
 			     "6LoWPAN HC1 not supported\n");
 
-	return RX_DROP_UNUSABLE;
-}
+	वापस RX_DROP_UNUSABLE;
+पूर्ण
 
-static inline bool lowpan_is_dff(u8 dispatch)
-{
-	return dispatch == LOWPAN_DISPATCH_DFF;
-}
+अटल अंतरभूत bool lowpan_is_dff(u8 dispatch)
+अणु
+	वापस dispatch == LOWPAN_DISPATCH_DFF;
+पूर्ण
 
-static lowpan_rx_result lowpan_rx_h_dff(struct sk_buff *skb)
-{
-	if (!lowpan_is_dff(*skb_network_header(skb)))
-		return RX_CONTINUE;
+अटल lowpan_rx_result lowpan_rx_h_dff(काष्ठा sk_buff *skb)
+अणु
+	अगर (!lowpan_is_dff(*skb_network_header(skb)))
+		वापस RX_CONTINUE;
 
 	net_warn_ratelimited("%s: %s\n", skb->dev->name,
 			     "6LoWPAN DFF not supported\n");
 
-	return RX_DROP_UNUSABLE;
-}
+	वापस RX_DROP_UNUSABLE;
+पूर्ण
 
-static inline bool lowpan_is_bc0(u8 dispatch)
-{
-	return dispatch == LOWPAN_DISPATCH_BC0;
-}
+अटल अंतरभूत bool lowpan_is_bc0(u8 dispatch)
+अणु
+	वापस dispatch == LOWPAN_DISPATCH_BC0;
+पूर्ण
 
-static lowpan_rx_result lowpan_rx_h_bc0(struct sk_buff *skb)
-{
-	if (!lowpan_is_bc0(*skb_network_header(skb)))
-		return RX_CONTINUE;
+अटल lowpan_rx_result lowpan_rx_h_bc0(काष्ठा sk_buff *skb)
+अणु
+	अगर (!lowpan_is_bc0(*skb_network_header(skb)))
+		वापस RX_CONTINUE;
 
 	net_warn_ratelimited("%s: %s\n", skb->dev->name,
 			     "6LoWPAN BC0 not supported\n");
 
-	return RX_DROP_UNUSABLE;
-}
+	वापस RX_DROP_UNUSABLE;
+पूर्ण
 
-static inline bool lowpan_is_mesh(u8 dispatch)
-{
-	return (dispatch & LOWPAN_DISPATCH_FIRST) == LOWPAN_DISPATCH_MESH;
-}
+अटल अंतरभूत bool lowpan_is_mesh(u8 dispatch)
+अणु
+	वापस (dispatch & LOWPAN_DISPATCH_FIRST) == LOWPAN_DISPATCH_MESH;
+पूर्ण
 
-static lowpan_rx_result lowpan_rx_h_mesh(struct sk_buff *skb)
-{
-	if (!lowpan_is_mesh(*skb_network_header(skb)))
-		return RX_CONTINUE;
+अटल lowpan_rx_result lowpan_rx_h_mesh(काष्ठा sk_buff *skb)
+अणु
+	अगर (!lowpan_is_mesh(*skb_network_header(skb)))
+		वापस RX_CONTINUE;
 
 	net_warn_ratelimited("%s: %s\n", skb->dev->name,
 			     "6LoWPAN MESH not supported\n");
 
-	return RX_DROP_UNUSABLE;
-}
+	वापस RX_DROP_UNUSABLE;
+पूर्ण
 
-static int lowpan_invoke_rx_handlers(struct sk_buff *skb)
-{
+अटल पूर्णांक lowpan_invoke_rx_handlers(काष्ठा sk_buff *skb)
+अणु
 	lowpan_rx_result res;
 
-#define CALL_RXH(rxh)			\
-	do {				\
+#घोषणा CALL_RXH(rxh)			\
+	करो अणु				\
 		res = rxh(skb);	\
-		if (res != RX_CONTINUE)	\
-			goto rxh_next;	\
-	} while (0)
+		अगर (res != RX_CONTINUE)	\
+			जाओ rxh_next;	\
+	पूर्ण जबतक (0)
 
 	/* likely at first */
 	CALL_RXH(lowpan_rx_h_iphc);
@@ -221,103 +222,103 @@ static int lowpan_invoke_rx_handlers(struct sk_buff *skb)
 	CALL_RXH(lowpan_rx_h_mesh);
 
 rxh_next:
-	return lowpan_rx_handlers_result(skb, res);
-#undef CALL_RXH
-}
+	वापस lowpan_rx_handlers_result(skb, res);
+#अघोषित CALL_RXH
+पूर्ण
 
-static inline bool lowpan_is_nalp(u8 dispatch)
-{
-	return (dispatch & LOWPAN_DISPATCH_FIRST) == LOWPAN_DISPATCH_NALP;
-}
+अटल अंतरभूत bool lowpan_is_nalp(u8 dispatch)
+अणु
+	वापस (dispatch & LOWPAN_DISPATCH_FIRST) == LOWPAN_DISPATCH_NALP;
+पूर्ण
 
-/* Lookup for reserved dispatch values at:
- * https://www.iana.org/assignments/_6lowpan-parameters/_6lowpan-parameters.xhtml#_6lowpan-parameters-1
+/* Lookup क्रम reserved dispatch values at:
+ * https://www.iana.org/assignments/_6lowpan-parameters/_6lowpan-parameters.xhपंचांगl#_6lowpan-parameters-1
  *
  * Last Updated: 2015-01-22
  */
-static inline bool lowpan_is_reserved(u8 dispatch)
-{
-	return ((dispatch >= 0x44 && dispatch <= 0x4F) ||
+अटल अंतरभूत bool lowpan_is_reserved(u8 dispatch)
+अणु
+	वापस ((dispatch >= 0x44 && dispatch <= 0x4F) ||
 		(dispatch >= 0x51 && dispatch <= 0x5F) ||
 		(dispatch >= 0xc8 && dispatch <= 0xdf) ||
 		dispatch >= 0xe8);
-}
+पूर्ण
 
 /* lowpan_rx_h_check checks on generic 6LoWPAN requirements
  * in MAC and 6LoWPAN header.
  *
  * Don't manipulate the skb here, it could be shared buffer.
  */
-static inline bool lowpan_rx_h_check(struct sk_buff *skb)
-{
+अटल अंतरभूत bool lowpan_rx_h_check(काष्ठा sk_buff *skb)
+अणु
 	__le16 fc = ieee802154_get_fc_from_skb(skb);
 
-	/* check on ieee802154 conform 6LoWPAN header */
-	if (!ieee802154_is_data(fc) ||
-	    !ieee802154_skb_is_intra_pan_addressing(fc, skb))
-		return false;
+	/* check on ieee802154 conक्रमm 6LoWPAN header */
+	अगर (!ieee802154_is_data(fc) ||
+	    !ieee802154_skb_is_पूर्णांकra_pan_addressing(fc, skb))
+		वापस false;
 
-	/* check if we can dereference the dispatch */
-	if (unlikely(!skb->len))
-		return false;
+	/* check अगर we can dereference the dispatch */
+	अगर (unlikely(!skb->len))
+		वापस false;
 
-	if (lowpan_is_nalp(*skb_network_header(skb)) ||
+	अगर (lowpan_is_nalp(*skb_network_header(skb)) ||
 	    lowpan_is_reserved(*skb_network_header(skb)))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int lowpan_rcv(struct sk_buff *skb, struct net_device *wdev,
-		      struct packet_type *pt, struct net_device *orig_wdev)
-{
-	struct net_device *ldev;
+अटल पूर्णांक lowpan_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *wdev,
+		      काष्ठा packet_type *pt, काष्ठा net_device *orig_wdev)
+अणु
+	काष्ठा net_device *ldev;
 
-	if (wdev->type != ARPHRD_IEEE802154 ||
+	अगर (wdev->type != ARPHRD_IEEE802154 ||
 	    skb->pkt_type == PACKET_OTHERHOST ||
 	    !lowpan_rx_h_check(skb))
-		goto drop;
+		जाओ drop;
 
 	ldev = wdev->ieee802154_ptr->lowpan_dev;
-	if (!ldev || !netif_running(ldev))
-		goto drop;
+	अगर (!ldev || !netअगर_running(ldev))
+		जाओ drop;
 
 	/* Replacing skb->dev and followed rx handlers will manipulate skb. */
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 	skb->dev = ldev;
 
 	/* When receive frag1 it's likely that we manipulate the buffer.
 	 * When recevie iphc we manipulate the data buffer. So we need
 	 * to unshare the buffer.
 	 */
-	if (lowpan_is_frag1(*skb_network_header(skb)) ||
-	    lowpan_is_iphc(*skb_network_header(skb))) {
+	अगर (lowpan_is_frag1(*skb_network_header(skb)) ||
+	    lowpan_is_iphc(*skb_network_header(skb))) अणु
 		skb = skb_unshare(skb, GFP_ATOMIC);
-		if (!skb)
-			goto out;
-	}
+		अगर (!skb)
+			जाओ out;
+	पूर्ण
 
-	return lowpan_invoke_rx_handlers(skb);
+	वापस lowpan_invoke_rx_handlers(skb);
 
 drop:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 out:
-	return NET_RX_DROP;
-}
+	वापस NET_RX_DROP;
+पूर्ण
 
-static struct packet_type lowpan_packet_type = {
+अटल काष्ठा packet_type lowpan_packet_type = अणु
 	.type = htons(ETH_P_IEEE802154),
 	.func = lowpan_rcv,
-};
+पूर्ण;
 
-void lowpan_rx_init(void)
-{
+व्योम lowpan_rx_init(व्योम)
+अणु
 	dev_add_pack(&lowpan_packet_type);
-}
+पूर्ण
 
-void lowpan_rx_exit(void)
-{
-	dev_remove_pack(&lowpan_packet_type);
-}
+व्योम lowpan_rx_निकास(व्योम)
+अणु
+	dev_हटाओ_pack(&lowpan_packet_type);
+पूर्ण

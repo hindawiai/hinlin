@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * LP55XX Common Driver Header
  *
@@ -9,203 +10,203 @@
  * Derived from leds-lp5521.c, leds-lp5523.c
  */
 
-#ifndef _LEDS_LP55XX_COMMON_H
-#define _LEDS_LP55XX_COMMON_H
+#अगर_अघोषित _LEDS_LP55XX_COMMON_H
+#घोषणा _LEDS_LP55XX_COMMON_H
 
-#include <linux/led-class-multicolor.h>
+#समावेश <linux/led-class-multicolor.h>
 
-enum lp55xx_engine_index {
+क्रमागत lp55xx_engine_index अणु
 	LP55XX_ENGINE_INVALID,
 	LP55XX_ENGINE_1,
 	LP55XX_ENGINE_2,
 	LP55XX_ENGINE_3,
 	LP55XX_ENGINE_MAX = LP55XX_ENGINE_3,
-};
+पूर्ण;
 
-enum lp55xx_engine_mode {
+क्रमागत lp55xx_engine_mode अणु
 	LP55XX_ENGINE_DISABLED,
 	LP55XX_ENGINE_LOAD,
 	LP55XX_ENGINE_RUN,
-};
+पूर्ण;
 
-#define LP55XX_DEV_ATTR_RW(name, show, store)	\
+#घोषणा LP55XX_DEV_ATTR_RW(name, show, store)	\
 	DEVICE_ATTR(name, S_IRUGO | S_IWUSR, show, store)
-#define LP55XX_DEV_ATTR_RO(name, show)		\
-	DEVICE_ATTR(name, S_IRUGO, show, NULL)
-#define LP55XX_DEV_ATTR_WO(name, store)		\
-	DEVICE_ATTR(name, S_IWUSR, NULL, store)
+#घोषणा LP55XX_DEV_ATTR_RO(name, show)		\
+	DEVICE_ATTR(name, S_IRUGO, show, शून्य)
+#घोषणा LP55XX_DEV_ATTR_WO(name, store)		\
+	DEVICE_ATTR(name, S_IWUSR, शून्य, store)
 
-#define show_mode(nr)							\
-static ssize_t show_engine##nr##_mode(struct device *dev,		\
-				    struct device_attribute *attr,	\
-				    char *buf)				\
-{									\
-	return show_engine_mode(dev, attr, buf, nr);			\
-}
+#घोषणा show_mode(nr)							\
+अटल sमाप_प्रकार show_engine##nr##_mode(काष्ठा device *dev,		\
+				    काष्ठा device_attribute *attr,	\
+				    अक्षर *buf)				\
+अणु									\
+	वापस show_engine_mode(dev, attr, buf, nr);			\
+पूर्ण
 
-#define store_mode(nr)							\
-static ssize_t store_engine##nr##_mode(struct device *dev,		\
-				     struct device_attribute *attr,	\
-				     const char *buf, size_t len)	\
-{									\
-	return store_engine_mode(dev, attr, buf, len, nr);		\
-}
+#घोषणा store_mode(nr)							\
+अटल sमाप_प्रकार store_engine##nr##_mode(काष्ठा device *dev,		\
+				     काष्ठा device_attribute *attr,	\
+				     स्थिर अक्षर *buf, माप_प्रकार len)	\
+अणु									\
+	वापस store_engine_mode(dev, attr, buf, len, nr);		\
+पूर्ण
 
-#define show_leds(nr)							\
-static ssize_t show_engine##nr##_leds(struct device *dev,		\
-			    struct device_attribute *attr,		\
-			    char *buf)					\
-{									\
-	return show_engine_leds(dev, attr, buf, nr);			\
-}
+#घोषणा show_leds(nr)							\
+अटल sमाप_प्रकार show_engine##nr##_leds(काष्ठा device *dev,		\
+			    काष्ठा device_attribute *attr,		\
+			    अक्षर *buf)					\
+अणु									\
+	वापस show_engine_leds(dev, attr, buf, nr);			\
+पूर्ण
 
-#define store_leds(nr)						\
-static ssize_t store_engine##nr##_leds(struct device *dev,	\
-			     struct device_attribute *attr,	\
-			     const char *buf, size_t len)	\
-{								\
-	return store_engine_leds(dev, attr, buf, len, nr);	\
-}
+#घोषणा store_leds(nr)						\
+अटल sमाप_प्रकार store_engine##nr##_leds(काष्ठा device *dev,	\
+			     काष्ठा device_attribute *attr,	\
+			     स्थिर अक्षर *buf, माप_प्रकार len)	\
+अणु								\
+	वापस store_engine_leds(dev, attr, buf, len, nr);	\
+पूर्ण
 
-#define store_load(nr)							\
-static ssize_t store_engine##nr##_load(struct device *dev,		\
-				     struct device_attribute *attr,	\
-				     const char *buf, size_t len)	\
-{									\
-	return store_engine_load(dev, attr, buf, len, nr);		\
-}
+#घोषणा store_load(nr)							\
+अटल sमाप_प्रकार store_engine##nr##_load(काष्ठा device *dev,		\
+				     काष्ठा device_attribute *attr,	\
+				     स्थिर अक्षर *buf, माप_प्रकार len)	\
+अणु									\
+	वापस store_engine_load(dev, attr, buf, len, nr);		\
+पूर्ण
 
-struct lp55xx_led;
-struct lp55xx_chip;
+काष्ठा lp55xx_led;
+काष्ठा lp55xx_chip;
 
 /*
- * struct lp55xx_reg
+ * काष्ठा lp55xx_reg
  * @addr : Register address
  * @val  : Register value
  */
-struct lp55xx_reg {
+काष्ठा lp55xx_reg अणु
 	u8 addr;
 	u8 val;
-};
+पूर्ण;
 
 /*
- * struct lp55xx_device_config
- * @reset              : Chip specific reset command
- * @enable             : Chip specific enable command
+ * काष्ठा lp55xx_device_config
+ * @reset              : Chip specअगरic reset command
+ * @enable             : Chip specअगरic enable command
  * @max_channel        : Maximum number of channels
- * @post_init_device   : Chip specific initialization code
+ * @post_init_device   : Chip specअगरic initialization code
  * @brightness_fn      : Brightness function
  * @multicolor_brightness_fn : Multicolor brightness function
  * @set_led_current    : LED current set function
  * @firmware_cb        : Call function when the firmware is loaded
- * @run_engine         : Run internal engine for pattern
- * @dev_attr_group     : Device specific attributes
+ * @run_engine         : Run पूर्णांकernal engine क्रम pattern
+ * @dev_attr_group     : Device specअगरic attributes
  */
-struct lp55xx_device_config {
-	const struct lp55xx_reg reset;
-	const struct lp55xx_reg enable;
-	const int max_channel;
+काष्ठा lp55xx_device_config अणु
+	स्थिर काष्ठा lp55xx_reg reset;
+	स्थिर काष्ठा lp55xx_reg enable;
+	स्थिर पूर्णांक max_channel;
 
-	/* define if the device has specific initialization process */
-	int (*post_init_device) (struct lp55xx_chip *chip);
+	/* define अगर the device has specअगरic initialization process */
+	पूर्णांक (*post_init_device) (काष्ठा lp55xx_chip *chip);
 
 	/* set LED brightness */
-	int (*brightness_fn)(struct lp55xx_led *led);
+	पूर्णांक (*brightness_fn)(काष्ठा lp55xx_led *led);
 
 	/* set multicolor LED brightness */
-	int (*multicolor_brightness_fn)(struct lp55xx_led *led);
+	पूर्णांक (*multicolor_brightness_fn)(काष्ठा lp55xx_led *led);
 
 	/* current setting function */
-	void (*set_led_current) (struct lp55xx_led *led, u8 led_current);
+	व्योम (*set_led_current) (काष्ठा lp55xx_led *led, u8 led_current);
 
 	/* access program memory when the firmware is loaded */
-	void (*firmware_cb)(struct lp55xx_chip *chip);
+	व्योम (*firmware_cb)(काष्ठा lp55xx_chip *chip);
 
-	/* used for running firmware LED patterns */
-	void (*run_engine) (struct lp55xx_chip *chip, bool start);
+	/* used क्रम running firmware LED patterns */
+	व्योम (*run_engine) (काष्ठा lp55xx_chip *chip, bool start);
 
-	/* additional device specific attributes */
-	const struct attribute_group *dev_attr_group;
-};
+	/* additional device specअगरic attributes */
+	स्थिर काष्ठा attribute_group *dev_attr_group;
+पूर्ण;
 
 /*
- * struct lp55xx_engine
+ * काष्ठा lp55xx_engine
  * @mode       : Engine mode
- * @led_mux    : Mux bits for LED selection. Only used in LP5523
+ * @led_mux    : Mux bits क्रम LED selection. Only used in LP5523
  */
-struct lp55xx_engine {
-	enum lp55xx_engine_mode mode;
+काष्ठा lp55xx_engine अणु
+	क्रमागत lp55xx_engine_mode mode;
 	u16 led_mux;
-};
+पूर्ण;
 
 /*
- * struct lp55xx_chip
- * @cl         : I2C communication for access registers
- * @pdata      : Platform specific data
- * @lock       : Lock for user-space interface
- * @num_leds   : Number of registered LEDs
- * @cfg        : Device specific configuration data
+ * काष्ठा lp55xx_chip
+ * @cl         : I2C communication क्रम access रेजिस्टरs
+ * @pdata      : Platक्रमm specअगरic data
+ * @lock       : Lock क्रम user-space पूर्णांकerface
+ * @num_leds   : Number of रेजिस्टरed LEDs
+ * @cfg        : Device specअगरic configuration data
  * @engine_idx : Selected engine number
- * @engines    : Engine structure for the device attribute R/W interface
- * @fw         : Firmware data for running a LED pattern
+ * @engines    : Engine काष्ठाure क्रम the device attribute R/W पूर्णांकerface
+ * @fw         : Firmware data क्रम running a LED pattern
  */
-struct lp55xx_chip {
-	struct i2c_client *cl;
-	struct clk *clk;
-	struct lp55xx_platform_data *pdata;
-	struct mutex lock;	/* lock for user-space interface */
-	int num_leds;
-	struct lp55xx_device_config *cfg;
-	enum lp55xx_engine_index engine_idx;
-	struct lp55xx_engine engines[LP55XX_ENGINE_MAX];
-	const struct firmware *fw;
-};
+काष्ठा lp55xx_chip अणु
+	काष्ठा i2c_client *cl;
+	काष्ठा clk *clk;
+	काष्ठा lp55xx_platक्रमm_data *pdata;
+	काष्ठा mutex lock;	/* lock क्रम user-space पूर्णांकerface */
+	पूर्णांक num_leds;
+	काष्ठा lp55xx_device_config *cfg;
+	क्रमागत lp55xx_engine_index engine_idx;
+	काष्ठा lp55xx_engine engines[LP55XX_ENGINE_MAX];
+	स्थिर काष्ठा firmware *fw;
+पूर्ण;
 
 /*
- * struct lp55xx_led
+ * काष्ठा lp55xx_led
  * @chan_nr         : Channel number
  * @cdev            : LED class device
  * @mc_cdev         : Multi color class device
- * @color_components: Multi color LED map information
+ * @color_components: Multi color LED map inक्रमmation
  * @led_current     : Current setting at each led channel
  * @max_current     : Maximun current at each led channel
  * @brightness      : Brightness value
  * @chip            : The lp55xx chip data
  */
-struct lp55xx_led {
-	int chan_nr;
-	struct led_classdev cdev;
-	struct led_classdev_mc mc_cdev;
+काष्ठा lp55xx_led अणु
+	पूर्णांक chan_nr;
+	काष्ठा led_classdev cdev;
+	काष्ठा led_classdev_mc mc_cdev;
 	u8 led_current;
 	u8 max_current;
 	u8 brightness;
-	struct lp55xx_chip *chip;
-};
+	काष्ठा lp55xx_chip *chip;
+पूर्ण;
 
-/* register access */
-extern int lp55xx_write(struct lp55xx_chip *chip, u8 reg, u8 val);
-extern int lp55xx_read(struct lp55xx_chip *chip, u8 reg, u8 *val);
-extern int lp55xx_update_bits(struct lp55xx_chip *chip, u8 reg,
+/* रेजिस्टर access */
+बाह्य पूर्णांक lp55xx_ग_लिखो(काष्ठा lp55xx_chip *chip, u8 reg, u8 val);
+बाह्य पूर्णांक lp55xx_पढ़ो(काष्ठा lp55xx_chip *chip, u8 reg, u8 *val);
+बाह्य पूर्णांक lp55xx_update_bits(काष्ठा lp55xx_chip *chip, u8 reg,
 			u8 mask, u8 val);
 
-/* external clock detection */
-extern bool lp55xx_is_extclk_used(struct lp55xx_chip *chip);
+/* बाह्यal घड़ी detection */
+बाह्य bool lp55xx_is_extclk_used(काष्ठा lp55xx_chip *chip);
 
 /* common device init/deinit functions */
-extern int lp55xx_init_device(struct lp55xx_chip *chip);
-extern void lp55xx_deinit_device(struct lp55xx_chip *chip);
+बाह्य पूर्णांक lp55xx_init_device(काष्ठा lp55xx_chip *chip);
+बाह्य व्योम lp55xx_deinit_device(काष्ठा lp55xx_chip *chip);
 
 /* common LED class device functions */
-extern int lp55xx_register_leds(struct lp55xx_led *led,
-				struct lp55xx_chip *chip);
+बाह्य पूर्णांक lp55xx_रेजिस्टर_leds(काष्ठा lp55xx_led *led,
+				काष्ठा lp55xx_chip *chip);
 
 /* common device attributes functions */
-extern int lp55xx_register_sysfs(struct lp55xx_chip *chip);
-extern void lp55xx_unregister_sysfs(struct lp55xx_chip *chip);
+बाह्य पूर्णांक lp55xx_रेजिस्टर_sysfs(काष्ठा lp55xx_chip *chip);
+बाह्य व्योम lp55xx_unरेजिस्टर_sysfs(काष्ठा lp55xx_chip *chip);
 
 /* common device tree population function */
-extern struct lp55xx_platform_data
-*lp55xx_of_populate_pdata(struct device *dev, struct device_node *np,
-			  struct lp55xx_chip *chip);
+बाह्य काष्ठा lp55xx_platक्रमm_data
+*lp55xx_of_populate_pdata(काष्ठा device *dev, काष्ठा device_node *np,
+			  काष्ठा lp55xx_chip *chip);
 
-#endif /* _LEDS_LP55XX_COMMON_H */
+#पूर्ण_अगर /* _LEDS_LP55XX_COMMON_H */

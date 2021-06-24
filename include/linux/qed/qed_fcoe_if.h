@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /* Copyright (c) 2019-2020 Marvell International Ltd. */
 
-#ifndef _QED_FCOE_IF_H
-#define _QED_FCOE_IF_H
-#include <linux/types.h>
-#include <linux/qed/qed_if.h>
-struct qed_fcoe_stats {
+#अगर_अघोषित _QED_FCOE_IF_H
+#घोषणा _QED_FCOE_IF_H
+#समावेश <linux/types.h>
+#समावेश <linux/qed/qed_अगर.h>
+काष्ठा qed_fcoe_stats अणु
 	u64 fcoe_rx_byte_cnt;
 	u64 fcoe_rx_data_pkt_cnt;
 	u64 fcoe_rx_xfer_pkt_cnt;
@@ -20,21 +21,21 @@ struct qed_fcoe_stats {
 	u64 fcoe_tx_data_pkt_cnt;
 	u64 fcoe_tx_xfer_pkt_cnt;
 	u64 fcoe_tx_other_pkt_cnt;
-};
+पूर्ण;
 
-struct qed_dev_fcoe_info {
-	struct qed_dev_info common;
+काष्ठा qed_dev_fcoe_info अणु
+	काष्ठा qed_dev_info common;
 
-	void __iomem *primary_dbq_rq_addr;
-	void __iomem *secondary_bdq_rq_addr;
+	व्योम __iomem *primary_dbq_rq_addr;
+	व्योम __iomem *secondary_bdq_rq_addr;
 
 	u64 wwpn;
 	u64 wwnn;
 
 	u8 num_cqs;
-};
+पूर्ण;
 
-struct qed_fcoe_params_offload {
+काष्ठा qed_fcoe_params_offload अणु
 	dma_addr_t sq_pbl_addr;
 	dma_addr_t sq_curr_page_addr;
 	dma_addr_t sq_next_page_addr;
@@ -43,111 +44,111 @@ struct qed_fcoe_params_offload {
 	u8 dst_mac[ETH_ALEN];
 
 	u16 tx_max_fc_pay_len;
-	u16 e_d_tov_timer_val;
-	u16 rec_tov_timer_val;
+	u16 e_d_tov_समयr_val;
+	u16 rec_tov_समयr_val;
 	u16 rx_max_fc_pay_len;
 	u16 vlan_tag;
 
-	struct fc_addr_nw s_id;
+	काष्ठा fc_addr_nw s_id;
 	u8 max_conc_seqs_c3;
-	struct fc_addr_nw d_id;
+	काष्ठा fc_addr_nw d_id;
 	u8 flags;
 	u8 def_q_idx;
-};
+पूर्ण;
 
-#define MAX_TID_BLOCKS_FCOE (512)
-struct qed_fcoe_tid {
+#घोषणा MAX_TID_BLOCKS_FCOE (512)
+काष्ठा qed_fcoe_tid अणु
 	u32 size;		/* In bytes per task */
 	u32 num_tids_per_block;
 	u8 *blocks[MAX_TID_BLOCKS_FCOE];
-};
+पूर्ण;
 
-struct qed_fcoe_cb_ops {
-	struct qed_common_cb_ops common;
-	 u32 (*get_login_failures)(void *cookie);
-};
+काष्ठा qed_fcoe_cb_ops अणु
+	काष्ठा qed_common_cb_ops common;
+	 u32 (*get_login_failures)(व्योम *cookie);
+पूर्ण;
 
-void qed_fcoe_set_pf_params(struct qed_dev *cdev,
-			    struct qed_fcoe_pf_params *params);
+व्योम qed_fcoe_set_pf_params(काष्ठा qed_dev *cdev,
+			    काष्ठा qed_fcoe_pf_params *params);
 
 /**
- * struct qed_fcoe_ops - qed FCoE operations.
- * @common:		common operations pointer
- * @fill_dev_info:	fills FCoE specific information
+ * काष्ठा qed_fcoe_ops - qed FCoE operations.
+ * @common:		common operations poपूर्णांकer
+ * @fill_dev_info:	fills FCoE specअगरic inक्रमmation
  *			@param cdev
  *			@param info
- *			@return 0 on sucesss, otherwise error value.
- * @register_ops:	register FCoE operations
+ *			@वापस 0 on sucesss, otherwise error value.
+ * @रेजिस्टर_ops:	रेजिस्टर FCoE operations
  *			@param cdev
- *			@param ops - specified using qed_iscsi_cb_ops
- *			@param cookie - driver private
- * @ll2:		light L2 operations pointer
+ *			@param ops - specअगरied using qed_iscsi_cb_ops
+ *			@param cookie - driver निजी
+ * @ll2:		light L2 operations poपूर्णांकer
  * @start:		fcoe in FW
  *			@param cdev
- *			@param tasks - qed will fill information about tasks
- *			return 0 on success, otherwise error value.
+ *			@param tasks - qed will fill inक्रमmation about tasks
+ *			वापस 0 on success, otherwise error value.
  * @stop:		stops fcoe in FW
  *			@param cdev
- *			return 0 on success, otherwise error value.
+ *			वापस 0 on success, otherwise error value.
  * @acquire_conn:	acquire a new fcoe connection
  *			@param cdev
  *			@param handle - qed will fill handle that should be
- *				used henceforth as identifier of the
+ *				used henceक्रमth as identअगरier of the
  *				connection.
- *			@param p_doorbell - qed will fill the address of the
- *				doorbell.
- *			return 0 on sucesss, otherwise error value.
+ *			@param p_करोorbell - qed will fill the address of the
+ *				करोorbell.
+ *			वापस 0 on sucesss, otherwise error value.
  * @release_conn:	release a previously acquired fcoe connection
  *			@param cdev
  *			@param handle - the connection handle.
- *			return 0 on success, otherwise error value.
+ *			वापस 0 on success, otherwise error value.
  * @offload_conn:	configures an offloaded connection
  *			@param cdev
  *			@param handle - the connection handle.
- *			@param conn_info - the configuration to use for the
+ *			@param conn_info - the configuration to use क्रम the
  *				offload.
- *			return 0 on success, otherwise error value.
+ *			वापस 0 on success, otherwise error value.
  * @destroy_conn:	stops an offloaded connection
  *			@param cdev
  *			@param handle - the connection handle.
  *			@param terminate_params
- *			return 0 on success, otherwise error value.
- * @get_stats:		gets FCoE related statistics
+ *			वापस 0 on success, otherwise error value.
+ * @get_stats:		माला_लो FCoE related statistics
  *			@param cdev
- *			@param stats - pointer to struck that would be filled
+ *			@param stats - poपूर्णांकer to struck that would be filled
  *				we stats
- *			return 0 on success, error otherwise.
+ *			वापस 0 on success, error otherwise.
  */
-struct qed_fcoe_ops {
-	const struct qed_common_ops *common;
+काष्ठा qed_fcoe_ops अणु
+	स्थिर काष्ठा qed_common_ops *common;
 
-	int (*fill_dev_info)(struct qed_dev *cdev,
-			     struct qed_dev_fcoe_info *info);
+	पूर्णांक (*fill_dev_info)(काष्ठा qed_dev *cdev,
+			     काष्ठा qed_dev_fcoe_info *info);
 
-	void (*register_ops)(struct qed_dev *cdev,
-			     struct qed_fcoe_cb_ops *ops, void *cookie);
+	व्योम (*रेजिस्टर_ops)(काष्ठा qed_dev *cdev,
+			     काष्ठा qed_fcoe_cb_ops *ops, व्योम *cookie);
 
-	const struct qed_ll2_ops *ll2;
+	स्थिर काष्ठा qed_ll2_ops *ll2;
 
-	int (*start)(struct qed_dev *cdev, struct qed_fcoe_tid *tasks);
+	पूर्णांक (*start)(काष्ठा qed_dev *cdev, काष्ठा qed_fcoe_tid *tasks);
 
-	int (*stop)(struct qed_dev *cdev);
+	पूर्णांक (*stop)(काष्ठा qed_dev *cdev);
 
-	int (*acquire_conn)(struct qed_dev *cdev,
+	पूर्णांक (*acquire_conn)(काष्ठा qed_dev *cdev,
 			    u32 *handle,
-			    u32 *fw_cid, void __iomem **p_doorbell);
+			    u32 *fw_cid, व्योम __iomem **p_करोorbell);
 
-	int (*release_conn)(struct qed_dev *cdev, u32 handle);
+	पूर्णांक (*release_conn)(काष्ठा qed_dev *cdev, u32 handle);
 
-	int (*offload_conn)(struct qed_dev *cdev,
+	पूर्णांक (*offload_conn)(काष्ठा qed_dev *cdev,
 			    u32 handle,
-			    struct qed_fcoe_params_offload *conn_info);
-	int (*destroy_conn)(struct qed_dev *cdev,
+			    काष्ठा qed_fcoe_params_offload *conn_info);
+	पूर्णांक (*destroy_conn)(काष्ठा qed_dev *cdev,
 			    u32 handle, dma_addr_t terminate_params);
 
-	int (*get_stats)(struct qed_dev *cdev, struct qed_fcoe_stats *stats);
-};
+	पूर्णांक (*get_stats)(काष्ठा qed_dev *cdev, काष्ठा qed_fcoe_stats *stats);
+पूर्ण;
 
-const struct qed_fcoe_ops *qed_get_fcoe_ops(void);
-void qed_put_fcoe_ops(void);
-#endif
+स्थिर काष्ठा qed_fcoe_ops *qed_get_fcoe_ops(व्योम);
+व्योम qed_put_fcoe_ops(व्योम);
+#पूर्ण_अगर

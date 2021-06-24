@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * HID  descriptor stuructures
  * Copyright 2020 Advanced Micro Devices, Inc.
@@ -6,11 +7,11 @@
  *	    Sandeep Singh <Sandeep.singh@amd.com>
  */
 
-#ifndef AMD_SFH_HID_REPORT_DESCRIPTOR_H
-#define AMD_SFH_HID_REPORT_DESCRIPTOR_H
+#अगर_अघोषित AMD_SFH_HID_REPORT_DESCRIPTOR_H
+#घोषणा AMD_SFH_HID_REPORT_DESCRIPTOR_H
 
 // Accelerometer 3D Sensor
-static const u8 accel3_report_descriptor[] = {
+अटल स्थिर u8 accel3_report_descriptor[] = अणु
 0x05, 0x20,          /* Usage page */
 0x09, 0x73,          /* Motion type Accel 3D */
 0xA1, 0x00,          /* HID Collection (Physical) */
@@ -24,9 +25,9 @@ static const u8 accel3_report_descriptor[] = {
 0x75, 8,	   /* HID report size(8) */
 0x95, 1,	   /* HID report count(1) */
 0xA1, 0x02,	   /* HID collection (logical) */
-0x0A, 0x30, 0x08, /* Sensor property connection type intergated sel*/
+0x0A, 0x30, 0x08, /* Sensor property connection type पूर्णांकergated sel*/
 0x0A, 0x31, 0x08, /* Sensor property connection type attached sel */
-0x0A, 0x32, 0x08, /* Sensor property connection type external sel */
+0x0A, 0x32, 0x08, /* Sensor property connection type बाह्यal sel */
 0xB1, 0x00,       /* HID feature (Data_Arr_Abs) */
 0xC0,		  /* HID end collection */
 0x0A, 0x16, 0x03, /* HID usage sensor property reporting state */
@@ -43,18 +44,18 @@ static const u8 accel3_report_descriptor[] = {
 0x0A, 0x45, 0x08, /* Sensor property report state threshold events wake sel */
 0xB1, 0x00,	  /* HID feature (Data_Arr_Abs) */
 0xC0,		  /* HID end collection */
-0x0A, 0x19, 0x03, /* HID usage sensor property power state */
+0x0A, 0x19, 0x03, /* HID usage sensor property घातer state */
 0x15, 0,	  /* HID logical Min_8(0) */
 0x25, 5,	  /* HID logical Max_8(5) */
 0x75, 8,	  /* HID report size(8) */
 0x95, 1,	  /* HID report count(1) */
 0xA1, 0x02,	  /* HID collection(logical) */
-0x0A, 0x50, 0x08, /* Sensor property power state undefined sel */
-0x0A, 0x51, 0x08, /* Sensor property power state D0 full power  sel */
-0x0A, 0x52, 0x08, /* Sensor property power state D1 low power sel */
-0x0A, 0x53, 0x08, /* Sensor property power state D2 standby with wake sel */
-0x0A, 0x54, 0x08, /* Sensor property power state D3 sleep with wake  sel */
-0x0A, 0x55, 0x08, /* Sensor property power state D4 power off sel */
+0x0A, 0x50, 0x08, /* Sensor property घातer state undefined sel */
+0x0A, 0x51, 0x08, /* Sensor property घातer state D0 full घातer  sel */
+0x0A, 0x52, 0x08, /* Sensor property घातer state D1 low घातer sel */
+0x0A, 0x53, 0x08, /* Sensor property घातer state D2 standby with wake sel */
+0x0A, 0x54, 0x08, /* Sensor property घातer state D3 sleep with wake  sel */
+0x0A, 0x55, 0x08, /* Sensor property घातer state D4 घातer off sel */
 0xB1, 0x00,       /* HID feature (Data_Arr_Abs) */
 0xC0,		  /* HID end collection */
 0x0A, 0x01, 0x02, /* HID usage sensor state */
@@ -64,7 +65,7 @@ static const u8 accel3_report_descriptor[] = {
 0x95, 1,	  /* HID report count(1) */
 0xA1, 0x02,	  /* HID collection(logical) */
 0x0A, 0x00, 0x08, /* HID usage sensor state unknown sel */
-0x0A, 0x01, 0x08, /* HID usage sensor state ready sel */
+0x0A, 0x01, 0x08, /* HID usage sensor state पढ़ोy sel */
 0x0A, 0x02, 0x08, /* HID usage sensor state not available sel */
 0x0A, 0x03, 0x08, /* HID usage sensor state no data sel */
 0x0A, 0x04, 0x08, /* HID usage sensor state initializing sel */
@@ -72,7 +73,7 @@ static const u8 accel3_report_descriptor[] = {
 0x0A, 0x06, 0x08, /* HID usage sensor state error sel */
 0xB1, 0x00,	  /* HID feature (Data_Arr_Abs) */
 0xC0,		  /* HID end collection */
-0x0A, 0x0E, 0x03, /* HID usage sensor property report interval */
+0x0A, 0x0E, 0x03, /* HID usage sensor property report पूर्णांकerval */
 0x15, 0,	  /* HID logical Min_8(0) */
 0x27, 0xFF, 0xFF, 0xFF, 0xFF, /* HID logical Max_32 */
 
@@ -119,7 +120,7 @@ static const u8 accel3_report_descriptor[] = {
 0x95, 1,		 /* HID report count (1) */
 0xA1, 0x02,		 /* HID end collection (logical) */
 0x0A, 0x00, 0x08,	 /* HID usage sensor state unknown sel */
-0x0A, 0x01, 0x08,	 /* HID usage sensor state ready sel */
+0x0A, 0x01, 0x08,	 /* HID usage sensor state पढ़ोy sel */
 0x0A, 0x02, 0x08,	 /* HID usage sensor state not available sel */
 0x0A, 0x03, 0x08,	 /* HID usage sensor state no data sel */
 0x0A, 0x04, 0x08,	 /* HID usage sensor state initializing sel */
@@ -176,9 +177,9 @@ static const u8 accel3_report_descriptor[] = {
 0x95, 1,		/* HID report count (1) */
 0X81, 0x02,		/* HID Input (Data_Arr_Abs) */
 0xC0			/* HID end collection */
-};
+पूर्ण;
 
-const u8 gyro3_report_descriptor[] = {
+स्थिर u8 gyro3_report_descriptor[] = अणु
 0x05, 0x20,		/* Usage page */
 0x09, 0x76,		/* Motion type Gyro3D */
 0xA1, 0x00,		/* HID Collection (Physical) */
@@ -191,9 +192,9 @@ const u8 gyro3_report_descriptor[] = {
 0x75, 8,		/* HID report size(8) */
 0x95, 1,		/* HID report count(1) */
 0xA1, 0x02,		/* HID collection (logical) */
-0x0A, 0x30, 0x08,	/* Sensor property connection type intergated sel */
+0x0A, 0x30, 0x08,	/* Sensor property connection type पूर्णांकergated sel */
 0x0A, 0x31, 0x08,	/* Sensor property connection type attached sel */
-0x0A, 0x32, 0x08,	/* Sensor property connection type external sel */
+0x0A, 0x32, 0x08,	/* Sensor property connection type बाह्यal sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
 0x0A, 0x16, 0x03,	/* HID usage sensor property reporting state */
@@ -210,18 +211,18 @@ const u8 gyro3_report_descriptor[] = {
 0x0A, 0x45, 0x08,	/* Sensor reporting state threshold events wake sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
-0x0A, 0x19, 0x03,	/* HID usage sensor property power state */
+0x0A, 0x19, 0x03,	/* HID usage sensor property घातer state */
 0x15, 0,		/* HID logical Min_8(0) */
 0x25, 5,		/* HID logical Max_8(5) */
 0x75, 8,		/* HID report size(8) */
 0x95, 1,		/* HID report count(1) */
 0xA1, 0x02,		/* HID collection(logical) */
-0x0A, 0x50, 0x08,	/* Sensor  power state undefined sel */
-0x0A, 0x51, 0x08,	/* Sensor  power state D0 full power  sel */
-0x0A, 0x52, 0x08,	/* Sensor  power state D1 low power sel */
-0x0A, 0x53, 0x08,	/* Sensor  power state D2 standby with wake sel */
-0x0A, 0x54, 0x08,	/* Sensor  power state D3 sleep with wake  sel */
-0x0A, 0x55, 0x08,	/* Sensor  power state D4 power off sel */
+0x0A, 0x50, 0x08,	/* Sensor  घातer state undefined sel */
+0x0A, 0x51, 0x08,	/* Sensor  घातer state D0 full घातer  sel */
+0x0A, 0x52, 0x08,	/* Sensor  घातer state D1 low घातer sel */
+0x0A, 0x53, 0x08,	/* Sensor  घातer state D2 standby with wake sel */
+0x0A, 0x54, 0x08,	/* Sensor  घातer state D3 sleep with wake  sel */
+0x0A, 0x55, 0x08,	/* Sensor  घातer state D4 घातer off sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
 0x0A, 0x01, 0x02,	/* HID usage sensor state */
@@ -231,7 +232,7 @@ const u8 gyro3_report_descriptor[] = {
 0x95, 1,		/* HID report count(1) */
 0xA1, 0x02,		/* HID collection(logical) */
 0x0A, 0x00, 0x08,	/* HID usage sensor state unknown sel */
-0x0A, 0x01, 0x08,	/* HID usage sensor state ready sel */
+0x0A, 0x01, 0x08,	/* HID usage sensor state पढ़ोy sel */
 0x0A, 0x02, 0x08,	/* HID usage sensor state not available sel */
 0x0A, 0x03, 0x08,	/* HID usage sensor state no data sel */
 0x0A, 0x04, 0x08,	/* HID usage sensor state initializing sel */
@@ -239,7 +240,7 @@ const u8 gyro3_report_descriptor[] = {
 0x0A, 0x06, 0x08,	/* HID usage sensor state error sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
-0x0A, 0x0E, 0x03,	/* HID usage sensor property report interval */
+0x0A, 0x0E, 0x03,	/* HID usage sensor property report पूर्णांकerval */
 0x15, 0,		/* HID logical Min_8(0) */
 0x27, 0xFF, 0xFF, 0xFF, 0xFF,	/* HID logical Max_32 */
 
@@ -286,7 +287,7 @@ const u8 gyro3_report_descriptor[] = {
 0x95, 1,		/* HID report count (1) */
 0xA1, 0x02,		/* HID end collection (logical) */
 0x0A, 0x00, 0x08,	/* HID usage sensor state unknown sel */
-0x0A, 0x01, 0x08,	/* HID usage sensor state ready sel */
+0x0A, 0x01, 0x08,	/* HID usage sensor state पढ़ोy sel */
 0x0A, 0x02, 0x08,	/* HID usage sensor state not available sel */
 0x0A, 0x03, 0x08,	/* HID usage sensor state no data sel */
 0x0A, 0x04, 0x08,	/* HID usage sensor state initializing sel */
@@ -337,9 +338,9 @@ const u8 gyro3_report_descriptor[] = {
 0X81, 0x02,		/* HID Input (Data_Arr_Abs) */
 
 0xC0,			/* HID end collection */
-};
+पूर्ण;
 
-const u8 comp3_report_descriptor[] = {
+स्थिर u8 comp3_report_descriptor[] = अणु
 0x05, 0x20,		/* Usage page */
 0x09, 0x83,		/* Motion type Orientation compass 3D */
 0xA1, 0x00,		/* HID Collection (Physical) */
@@ -352,9 +353,9 @@ const u8 comp3_report_descriptor[] = {
 0x75, 8,		/* HID report size(8) */
 0x95, 1,		/* HID report count(1) */
 0xA1, 0x02,		/* HID collection (logical) */
-0x0A, 0x30, 0x08,	/* Sensor property connection type intergated sel */
+0x0A, 0x30, 0x08,	/* Sensor property connection type पूर्णांकergated sel */
 0x0A, 0x31, 0x08,	/* Sensor property connection type attached sel */
-0x0A, 0x32, 0x08,	/* Sensor property connection type external sel */
+0x0A, 0x32, 0x08,	/* Sensor property connection type बाह्यal sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
 0x0A, 0x16, 0x03,	/* HID usage sensor property reporting state */
@@ -371,18 +372,18 @@ const u8 comp3_report_descriptor[] = {
 0x0A, 0x45, 0x08,	/* Sensor reporting state threshold events wake sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
-0x0A, 0x19, 0x03,       /* HID usage sensor property power state */
+0x0A, 0x19, 0x03,       /* HID usage sensor property घातer state */
 0x15, 0,		/* HID logical Min_8(0) */
 0x25, 5,		/* HID logical Max_8(5) */
 0x75, 8,		/* HID report size(8) */
 0x95, 1,		/* HID report count(1) */
 0xA1, 0x02,		/* HID collection(logical) */
-0x0A, 0x50, 0x08,	/* Sensor power state undefined sel */
-0x0A, 0x51, 0x08,	/* Sensor power state D0 full power  sel */
-0x0A, 0x52, 0x08,	/* Sensor power state D1 low power sel */
-0x0A, 0x53, 0x08,	/* Sensor power state D2 standby with wake sel */
-0x0A, 0x54, 0x08,	/* Sensor power state D3 sleep with wake  sel */
-0x0A, 0x55, 0x08,	/* Sensor power state D4 power off sel */
+0x0A, 0x50, 0x08,	/* Sensor घातer state undefined sel */
+0x0A, 0x51, 0x08,	/* Sensor घातer state D0 full घातer  sel */
+0x0A, 0x52, 0x08,	/* Sensor घातer state D1 low घातer sel */
+0x0A, 0x53, 0x08,	/* Sensor घातer state D2 standby with wake sel */
+0x0A, 0x54, 0x08,	/* Sensor घातer state D3 sleep with wake  sel */
+0x0A, 0x55, 0x08,	/* Sensor घातer state D4 घातer off sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
 0x0A, 0x01, 0x02,	/* HID usage sensor state */
@@ -392,7 +393,7 @@ const u8 comp3_report_descriptor[] = {
 0x95, 1,		/* HID report count(1) */
 0xA1, 0x02,		/* HID collection(logical) */
 0x0A, 0x00, 0x08,       /* HID usage sensor state unknown sel */
-0x0A, 0x01, 0x08,       /* HID usage sensor state ready sel */
+0x0A, 0x01, 0x08,       /* HID usage sensor state पढ़ोy sel */
 0x0A, 0x02, 0x08,       /* HID usage sensor state not available sel */
 0x0A, 0x03, 0x08,       /* HID usage sensor state no data sel */
 0x0A, 0x04, 0x08,       /* HID usage sensor state initializing sel */
@@ -400,7 +401,7 @@ const u8 comp3_report_descriptor[] = {
 0x0A, 0x06, 0x08,       /* HID usage sensor state error sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
-0x0A, 0x0E, 0x03,	/* HID usage sensor property report interval */
+0x0A, 0x0E, 0x03,	/* HID usage sensor property report पूर्णांकerval */
 0x15, 0,		/* HID logical Min_8(0) */
 0x27, 0xFF, 0xFF, 0xFF, 0xFF,	/* HID logical Max_32 */
 0x75, 32,		/* HID report size(32) */
@@ -459,7 +460,7 @@ const u8 comp3_report_descriptor[] = {
 0x95, 1,		/* HID report count (1) */
 0xA1, 0x02,		/* HID end collection (logical) */
 0x0A, 0x00, 0x08,	/* HID usage sensor state unknown sel */
-0x0A, 0x01, 0x08,	/* HID usage sensor state ready sel */
+0x0A, 0x01, 0x08,	/* HID usage sensor state पढ़ोy sel */
 0x0A, 0x02, 0x08,	/* HID usage sensor state not available sel */
 0x0A, 0x03, 0x08,	/* HID usage sensor state no data sel */
 0x0A, 0x04, 0x08,	/* HID usage sensor state initializing sel */
@@ -509,9 +510,9 @@ const u8 comp3_report_descriptor[] = {
 0x95, 1,			/* HID report count (1) */
 0X81, 0x02,			/* HID Input (Data_Arr_Abs) */
 0xC0				/* HID end collection */
-};
+पूर्ण;
 
-const u8 als_report_descriptor[] = {
+स्थिर u8 als_report_descriptor[] = अणु
 0x05, 0x20,	/* HID usage page sensor */
 0x09, 0x41,	/* HID usage sensor type Ambientlight  */
 0xA1, 0x00,	/* HID Collection (Physical) */
@@ -525,9 +526,9 @@ const u8 als_report_descriptor[] = {
 0x75, 8,		/* HID report size(8) */
 0x95, 1,		/* HID report count(1) */
 0xA1, 0x02,		/* HID collection (logical) */
-0x0A, 0x30, 0x08,	/* Sensor property connection type intergated sel */
+0x0A, 0x30, 0x08,	/* Sensor property connection type पूर्णांकergated sel */
 0x0A, 0x31, 0x08,	/* Sensor property connection type attached sel */
-0x0A, 0x32, 0x08,	/* Sensor property connection type external sel */
+0x0A, 0x32, 0x08,	/* Sensor property connection type बाह्यal sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
 0x0A, 0x16, 0x03,	/* HID usage sensor property reporting state */
@@ -544,18 +545,18 @@ const u8 als_report_descriptor[] = {
 0x0A, 0x45, 0x08,	/* Sensor reporting state threshold events wake sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
-0x0A, 0x19, 0x03,	/* HID usage sensor property power state */
+0x0A, 0x19, 0x03,	/* HID usage sensor property घातer state */
 0x15, 0,		/* HID logical Min_8(0) */
 0x25, 5,		/* HID logical Max_8(5) */
 0x75, 8,		/* HID report size(8) */
 0x95, 1,		/* HID report count(1) */
 0xA1, 0x02,		/* HID collection(logical) */
-0x0A, 0x50, 0x08,	/* Sensor power state undefined sel */
-0x0A, 0x51, 0x08,	/* Sensor power state D0 full power  sel */
-0x0A, 0x52, 0x08,	/* Sensor power state D1 low power sel */
-0x0A, 0x53, 0x08,	/* Sensor power state D2 standby with wake sel */
-0x0A, 0x54, 0x08,	/* Sensor power state D3 sleep with wake  sel */
-0x0A, 0x55, 0x08,	/* Sensor power state D4 power off sel */
+0x0A, 0x50, 0x08,	/* Sensor घातer state undefined sel */
+0x0A, 0x51, 0x08,	/* Sensor घातer state D0 full घातer  sel */
+0x0A, 0x52, 0x08,	/* Sensor घातer state D1 low घातer sel */
+0x0A, 0x53, 0x08,	/* Sensor घातer state D2 standby with wake sel */
+0x0A, 0x54, 0x08,	/* Sensor घातer state D3 sleep with wake  sel */
+0x0A, 0x55, 0x08,	/* Sensor घातer state D4 घातer off sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
 0x0A, 0x01, 0x02,	/* HID usage sensor state */
@@ -565,7 +566,7 @@ const u8 als_report_descriptor[] = {
 0x95, 1,		/* HID report count(1) */
 0xA1, 0x02,		/* HID collection(logical) */
 0x0A, 0x00, 0x08,	/* HID usage sensor state unknown sel */
-0x0A, 0x01, 0x08,	/* HID usage sensor state ready sel */
+0x0A, 0x01, 0x08,	/* HID usage sensor state पढ़ोy sel */
 0x0A, 0x02, 0x08,	/* HID usage sensor state not available sel */
 0x0A, 0x03, 0x08,	/* HID usage sensor state no data sel */
 0x0A, 0x04, 0x08,	/* HID usage sensor state initializing sel */
@@ -573,7 +574,7 @@ const u8 als_report_descriptor[] = {
 0x0A, 0x06, 0x08,	/* HID usage sensor state error sel */
 0xB1, 0x00,		/* HID feature (Data_Arr_Abs) */
 0xC0,			/* HID end collection */
-0x0A, 0x0E, 0x03,	/* HID usage sensor property report interval */
+0x0A, 0x0E, 0x03,	/* HID usage sensor property report पूर्णांकerval */
 0x15, 0,		/* HID logical Min_8(0) */
 0x27, 0xFF, 0xFF, 0xFF, 0xFF,	/* HID logical Max_32 */
 0x75, 32,		/* HID report size(32) */
@@ -611,7 +612,7 @@ const u8 als_report_descriptor[] = {
 0x95, 1,		/* HID report count (1) */
 0xA1, 0x02,		/* HID end collection (logical) */
 0x0A, 0x00, 0x08,	/* HID usage sensor state unknown sel */
-0x0A, 0x01, 0x08,	/* HID usage sensor state ready sel */
+0x0A, 0x01, 0x08,	/* HID usage sensor state पढ़ोy sel */
 0x0A, 0x02, 0x08,	/* HID usage sensor state not available sel */
 0x0A, 0x03, 0x08,	/* HID usage sensor state no data sel */
 0x0A, 0x04, 0x08,	/* HID usage sensor state initializing sel */
@@ -641,5 +642,5 @@ const u8 als_report_descriptor[] = {
 0x95, 1,		/* HID report count (1) */
 0X81, 0x02,		/* HID Input (Data_Arr_Abs) */
 0xC0			/* HID end collection */
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर

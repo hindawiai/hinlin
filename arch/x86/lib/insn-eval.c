@@ -1,868 +1,869 @@
+<शैली गुरु>
 /*
- * Utility functions for x86 operand and address decoding
+ * Utility functions क्रम x86 opeअक्रम and address decoding
  *
  * Copyright (C) Intel Corporation 2017
  */
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/ratelimit.h>
-#include <linux/mmu_context.h>
-#include <asm/desc_defs.h>
-#include <asm/desc.h>
-#include <asm/inat.h>
-#include <asm/insn.h>
-#include <asm/insn-eval.h>
-#include <asm/ldt.h>
-#include <asm/vm86.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/mmu_context.h>
+#समावेश <यंत्र/desc_defs.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/inat.h>
+#समावेश <यंत्र/insn.h>
+#समावेश <यंत्र/insn-eval.h>
+#समावेश <यंत्र/ldt.h>
+#समावेश <यंत्र/vm86.h>
 
-#undef pr_fmt
-#define pr_fmt(fmt) "insn: " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) "insn: " fmt
 
-enum reg_type {
+क्रमागत reg_type अणु
 	REG_TYPE_RM = 0,
 	REG_TYPE_REG,
 	REG_TYPE_INDEX,
 	REG_TYPE_BASE,
-};
+पूर्ण;
 
 /**
- * is_string_insn() - Determine if instruction is a string instruction
- * @insn:	Instruction containing the opcode to inspect
+ * is_string_insn() - Determine अगर inकाष्ठाion is a string inकाष्ठाion
+ * @insn:	Inकाष्ठाion containing the opcode to inspect
  *
  * Returns:
  *
- * true if the instruction, determined by the opcode, is any of the
- * string instructions as defined in the Intel Software Development manual.
+ * true अगर the inकाष्ठाion, determined by the opcode, is any of the
+ * string inकाष्ठाions as defined in the Intel Software Development manual.
  * False otherwise.
  */
-static bool is_string_insn(struct insn *insn)
-{
+अटल bool is_string_insn(काष्ठा insn *insn)
+अणु
 	insn_get_opcode(insn);
 
-	/* All string instructions have a 1-byte opcode. */
-	if (insn->opcode.nbytes != 1)
-		return false;
+	/* All string inकाष्ठाions have a 1-byte opcode. */
+	अगर (insn->opcode.nbytes != 1)
+		वापस false;
 
-	switch (insn->opcode.bytes[0]) {
-	case 0x6c ... 0x6f:	/* INS, OUTS */
-	case 0xa4 ... 0xa7:	/* MOVS, CMPS */
-	case 0xaa ... 0xaf:	/* STOS, LODS, SCAS */
-		return true;
-	default:
-		return false;
-	}
-}
+	चयन (insn->opcode.bytes[0]) अणु
+	हाल 0x6c ... 0x6f:	/* INS, OUTS */
+	हाल 0xa4 ... 0xa7:	/* MOVS, CMPS */
+	हाल 0xaa ... 0xaf:	/* STOS, LODS, SCAS */
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
 /**
- * insn_has_rep_prefix() - Determine if instruction has a REP prefix
- * @insn:	Instruction containing the prefix to inspect
+ * insn_has_rep_prefix() - Determine अगर inकाष्ठाion has a REP prefix
+ * @insn:	Inकाष्ठाion containing the prefix to inspect
  *
  * Returns:
  *
- * true if the instruction has a REP prefix, false if not.
+ * true अगर the inकाष्ठाion has a REP prefix, false अगर not.
  */
-bool insn_has_rep_prefix(struct insn *insn)
-{
+bool insn_has_rep_prefix(काष्ठा insn *insn)
+अणु
 	insn_byte_t p;
-	int i;
+	पूर्णांक i;
 
 	insn_get_prefixes(insn);
 
-	for_each_insn_prefix(insn, i, p) {
-		if (p == 0xf2 || p == 0xf3)
-			return true;
-	}
+	क्रम_each_insn_prefix(insn, i, p) अणु
+		अगर (p == 0xf2 || p == 0xf3)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * get_seg_reg_override_idx() - obtain segment register override index
- * @insn:	Valid instruction with segment override prefixes
+ * get_seg_reg_override_idx() - obtain segment रेजिस्टर override index
+ * @insn:	Valid inकाष्ठाion with segment override prefixes
  *
- * Inspect the instruction prefixes in @insn and find segment overrides, if any.
+ * Inspect the inकाष्ठाion prefixes in @insn and find segment overrides, अगर any.
  *
  * Returns:
  *
- * A constant identifying the segment register to use, among CS, SS, DS,
- * ES, FS, or GS. INAT_SEG_REG_DEFAULT is returned if no segment override
+ * A स्थिरant identअगरying the segment रेजिस्टर to use, among CS, SS, DS,
+ * ES, FS, or GS. INAT_SEG_REG_DEFAULT is वापसed अगर no segment override
  * prefixes were found.
  *
- * -EINVAL in case of error.
+ * -EINVAL in हाल of error.
  */
-static int get_seg_reg_override_idx(struct insn *insn)
-{
-	int idx = INAT_SEG_REG_DEFAULT;
-	int num_overrides = 0, i;
+अटल पूर्णांक get_seg_reg_override_idx(काष्ठा insn *insn)
+अणु
+	पूर्णांक idx = INAT_SEG_REG_DEFAULT;
+	पूर्णांक num_overrides = 0, i;
 	insn_byte_t p;
 
 	insn_get_prefixes(insn);
 
-	/* Look for any segment override prefixes. */
-	for_each_insn_prefix(insn, i, p) {
+	/* Look क्रम any segment override prefixes. */
+	क्रम_each_insn_prefix(insn, i, p) अणु
 		insn_attr_t attr;
 
 		attr = inat_get_opcode_attribute(p);
-		switch (attr) {
-		case INAT_MAKE_PREFIX(INAT_PFX_CS):
+		चयन (attr) अणु
+		हाल INAT_MAKE_PREFIX(INAT_PFX_CS):
 			idx = INAT_SEG_REG_CS;
 			num_overrides++;
-			break;
-		case INAT_MAKE_PREFIX(INAT_PFX_SS):
+			अवरोध;
+		हाल INAT_MAKE_PREFIX(INAT_PFX_SS):
 			idx = INAT_SEG_REG_SS;
 			num_overrides++;
-			break;
-		case INAT_MAKE_PREFIX(INAT_PFX_DS):
+			अवरोध;
+		हाल INAT_MAKE_PREFIX(INAT_PFX_DS):
 			idx = INAT_SEG_REG_DS;
 			num_overrides++;
-			break;
-		case INAT_MAKE_PREFIX(INAT_PFX_ES):
+			अवरोध;
+		हाल INAT_MAKE_PREFIX(INAT_PFX_ES):
 			idx = INAT_SEG_REG_ES;
 			num_overrides++;
-			break;
-		case INAT_MAKE_PREFIX(INAT_PFX_FS):
+			अवरोध;
+		हाल INAT_MAKE_PREFIX(INAT_PFX_FS):
 			idx = INAT_SEG_REG_FS;
 			num_overrides++;
-			break;
-		case INAT_MAKE_PREFIX(INAT_PFX_GS):
+			अवरोध;
+		हाल INAT_MAKE_PREFIX(INAT_PFX_GS):
 			idx = INAT_SEG_REG_GS;
 			num_overrides++;
-			break;
-		/* No default action needed. */
-		}
-	}
+			अवरोध;
+		/* No शेष action needed. */
+		पूर्ण
+	पूर्ण
 
 	/* More than one segment override prefix leads to undefined behavior. */
-	if (num_overrides > 1)
-		return -EINVAL;
+	अगर (num_overrides > 1)
+		वापस -EINVAL;
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
 /**
- * check_seg_overrides() - check if segment override prefixes are allowed
- * @insn:	Valid instruction with segment override prefixes
- * @regoff:	Operand offset, in pt_regs, for which the check is performed
+ * check_seg_overrides() - check अगर segment override prefixes are allowed
+ * @insn:	Valid inकाष्ठाion with segment override prefixes
+ * @regoff:	Opeअक्रम offset, in pt_regs, क्रम which the check is perक्रमmed
  *
- * For a particular register used in register-indirect addressing, determine if
- * segment override prefixes can be used. Specifically, no overrides are allowed
- * for rDI if used with a string instruction.
+ * For a particular रेजिस्टर used in रेजिस्टर-indirect addressing, determine अगर
+ * segment override prefixes can be used. Specअगरically, no overrides are allowed
+ * क्रम rDI अगर used with a string inकाष्ठाion.
  *
  * Returns:
  *
- * True if segment override prefixes can be used with the register indicated
- * in @regoff. False if otherwise.
+ * True अगर segment override prefixes can be used with the रेजिस्टर indicated
+ * in @regoff. False अगर otherwise.
  */
-static bool check_seg_overrides(struct insn *insn, int regoff)
-{
-	if (regoff == offsetof(struct pt_regs, di) && is_string_insn(insn))
-		return false;
+अटल bool check_seg_overrides(काष्ठा insn *insn, पूर्णांक regoff)
+अणु
+	अगर (regoff == दुरत्व(काष्ठा pt_regs, di) && is_string_insn(insn))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * resolve_default_seg() - resolve default segment register index for an operand
- * @insn:	Instruction with opcode and address size. Must be valid.
+ * resolve_शेष_seg() - resolve शेष segment रेजिस्टर index क्रम an opeअक्रम
+ * @insn:	Inकाष्ठाion with opcode and address size. Must be valid.
  * @regs:	Register values as seen when entering kernel mode
- * @off:	Operand offset, in pt_regs, for which resolution is needed
+ * @off:	Opeअक्रम offset, in pt_regs, क्रम which resolution is needed
  *
- * Resolve the default segment register index associated with the instruction
- * operand register indicated by @off. Such index is resolved based on defaults
+ * Resolve the शेष segment रेजिस्टर index associated with the inकाष्ठाion
+ * opeअक्रम रेजिस्टर indicated by @off. Such index is resolved based on शेषs
  * described in the Intel Software Development Manual.
  *
  * Returns:
  *
- * If in protected mode, a constant identifying the segment register to use,
- * among CS, SS, ES or DS. If in long mode, INAT_SEG_REG_IGNORE.
+ * If in रक्षित mode, a स्थिरant identअगरying the segment रेजिस्टर to use,
+ * among CS, SS, ES or DS. If in दीर्घ mode, INAT_SEG_REG_IGNORE.
  *
- * -EINVAL in case of error.
+ * -EINVAL in हाल of error.
  */
-static int resolve_default_seg(struct insn *insn, struct pt_regs *regs, int off)
-{
-	if (any_64bit_mode(regs))
-		return INAT_SEG_REG_IGNORE;
+अटल पूर्णांक resolve_शेष_seg(काष्ठा insn *insn, काष्ठा pt_regs *regs, पूर्णांक off)
+अणु
+	अगर (any_64bit_mode(regs))
+		वापस INAT_SEG_REG_IGNORE;
 	/*
-	 * Resolve the default segment register as described in Section 3.7.4
+	 * Resolve the शेष segment रेजिस्टर as described in Section 3.7.4
 	 * of the Intel Software Development Manual Vol. 1:
 	 *
-	 *  + DS for all references involving r[ABCD]X, and rSI.
-	 *  + If used in a string instruction, ES for rDI. Otherwise, DS.
-	 *  + AX, CX and DX are not valid register operands in 16-bit address
-	 *    encodings but are valid for 32-bit and 64-bit encodings.
-	 *  + -EDOM is reserved to identify for cases in which no register
+	 *  + DS क्रम all references involving r[ABCD]X, and rSI.
+	 *  + If used in a string inकाष्ठाion, ES क्रम rDI. Otherwise, DS.
+	 *  + AX, CX and DX are not valid रेजिस्टर opeअक्रमs in 16-bit address
+	 *    encodings but are valid क्रम 32-bit and 64-bit encodings.
+	 *  + -गलत_तर्क is reserved to identअगरy क्रम हालs in which no रेजिस्टर
 	 *    is used (i.e., displacement-only addressing). Use DS.
-	 *  + SS for rSP or rBP.
-	 *  + CS for rIP.
+	 *  + SS क्रम rSP or rBP.
+	 *  + CS क्रम rIP.
 	 */
 
-	switch (off) {
-	case offsetof(struct pt_regs, ax):
-	case offsetof(struct pt_regs, cx):
-	case offsetof(struct pt_regs, dx):
-		/* Need insn to verify address size. */
-		if (insn->addr_bytes == 2)
-			return -EINVAL;
+	चयन (off) अणु
+	हाल दुरत्व(काष्ठा pt_regs, ax):
+	हाल दुरत्व(काष्ठा pt_regs, cx):
+	हाल दुरत्व(काष्ठा pt_regs, dx):
+		/* Need insn to verअगरy address size. */
+		अगर (insn->addr_bytes == 2)
+			वापस -EINVAL;
 
 		fallthrough;
 
-	case -EDOM:
-	case offsetof(struct pt_regs, bx):
-	case offsetof(struct pt_regs, si):
-		return INAT_SEG_REG_DS;
+	हाल -गलत_तर्क:
+	हाल दुरत्व(काष्ठा pt_regs, bx):
+	हाल दुरत्व(काष्ठा pt_regs, si):
+		वापस INAT_SEG_REG_DS;
 
-	case offsetof(struct pt_regs, di):
-		if (is_string_insn(insn))
-			return INAT_SEG_REG_ES;
-		return INAT_SEG_REG_DS;
+	हाल दुरत्व(काष्ठा pt_regs, di):
+		अगर (is_string_insn(insn))
+			वापस INAT_SEG_REG_ES;
+		वापस INAT_SEG_REG_DS;
 
-	case offsetof(struct pt_regs, bp):
-	case offsetof(struct pt_regs, sp):
-		return INAT_SEG_REG_SS;
+	हाल दुरत्व(काष्ठा pt_regs, bp):
+	हाल दुरत्व(काष्ठा pt_regs, sp):
+		वापस INAT_SEG_REG_SS;
 
-	case offsetof(struct pt_regs, ip):
-		return INAT_SEG_REG_CS;
+	हाल दुरत्व(काष्ठा pt_regs, ip):
+		वापस INAT_SEG_REG_CS;
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /**
- * resolve_seg_reg() - obtain segment register index
- * @insn:	Instruction with operands
+ * resolve_seg_reg() - obtain segment रेजिस्टर index
+ * @insn:	Inकाष्ठाion with opeअक्रमs
  * @regs:	Register values as seen when entering kernel mode
- * @regoff:	Operand offset, in pt_regs, used to determine segment register
+ * @regoff:	Opeअक्रम offset, in pt_regs, used to determine segment रेजिस्टर
  *
- * Determine the segment register associated with the operands and, if
- * applicable, prefixes and the instruction pointed by @insn.
+ * Determine the segment रेजिस्टर associated with the opeअक्रमs and, अगर
+ * applicable, prefixes and the inकाष्ठाion poपूर्णांकed by @insn.
  *
- * The segment register associated to an operand used in register-indirect
+ * The segment रेजिस्टर associated to an opeअक्रम used in रेजिस्टर-indirect
  * addressing depends on:
  *
- * a) Whether running in long mode (in such a case segments are ignored, except
- * if FS or GS are used).
+ * a) Whether running in दीर्घ mode (in such a हाल segments are ignored, except
+ * अगर FS or GS are used).
  *
- * b) Whether segment override prefixes can be used. Certain instructions and
- *    registers do not allow override prefixes.
+ * b) Whether segment override prefixes can be used. Certain inकाष्ठाions and
+ *    रेजिस्टरs करो not allow override prefixes.
  *
- * c) Whether segment overrides prefixes are found in the instruction prefixes.
+ * c) Whether segment overrides prefixes are found in the inकाष्ठाion prefixes.
  *
  * d) If there are not segment override prefixes or they cannot be used, the
- *    default segment register associated with the operand register is used.
+ *    शेष segment रेजिस्टर associated with the opeअक्रम रेजिस्टर is used.
  *
- * The function checks first if segment override prefixes can be used with the
- * operand indicated by @regoff. If allowed, obtain such overridden segment
- * register index. Lastly, if not prefixes were found or cannot be used, resolve
- * the segment register index to use based on the defaults described in the
- * Intel documentation. In long mode, all segment register indexes will be
- * ignored, except if overrides were found for FS or GS. All these operations
- * are done using helper functions.
+ * The function checks first अगर segment override prefixes can be used with the
+ * opeअक्रम indicated by @regoff. If allowed, obtain such overridden segment
+ * रेजिस्टर index. Lastly, अगर not prefixes were found or cannot be used, resolve
+ * the segment रेजिस्टर index to use based on the शेषs described in the
+ * Intel करोcumentation. In दीर्घ mode, all segment रेजिस्टर indexes will be
+ * ignored, except अगर overrides were found क्रम FS or GS. All these operations
+ * are करोne using helper functions.
  *
- * The operand register, @regoff, is represented as the offset from the base of
+ * The opeअक्रम रेजिस्टर, @regoff, is represented as the offset from the base of
  * pt_regs.
  *
- * As stated, the main use of this function is to determine the segment register
- * index based on the instruction, its operands and prefixes. Hence, @insn
- * must be valid. However, if @regoff indicates rIP, we don't need to inspect
- * @insn at all as in this case CS is used in all cases. This case is checked
- * before proceeding further.
+ * As stated, the मुख्य use of this function is to determine the segment रेजिस्टर
+ * index based on the inकाष्ठाion, its opeअक्रमs and prefixes. Hence, @insn
+ * must be valid. However, अगर @regoff indicates rIP, we करोn't need to inspect
+ * @insn at all as in this हाल CS is used in all हालs. This हाल is checked
+ * beक्रमe proceeding further.
  *
- * Please note that this function does not return the value in the segment
- * register (i.e., the segment selector) but our defined index. The segment
+ * Please note that this function करोes not वापस the value in the segment
+ * रेजिस्टर (i.e., the segment selector) but our defined index. The segment
  * selector needs to be obtained using get_segment_selector() and passing the
- * segment register index resolved by this function.
+ * segment रेजिस्टर index resolved by this function.
  *
  * Returns:
  *
- * An index identifying the segment register to use, among CS, SS, DS,
- * ES, FS, or GS. INAT_SEG_REG_IGNORE is returned if running in long mode.
+ * An index identअगरying the segment रेजिस्टर to use, among CS, SS, DS,
+ * ES, FS, or GS. INAT_SEG_REG_IGNORE is वापसed अगर running in दीर्घ mode.
  *
- * -EINVAL in case of error.
+ * -EINVAL in हाल of error.
  */
-static int resolve_seg_reg(struct insn *insn, struct pt_regs *regs, int regoff)
-{
-	int idx;
+अटल पूर्णांक resolve_seg_reg(काष्ठा insn *insn, काष्ठा pt_regs *regs, पूर्णांक regoff)
+अणु
+	पूर्णांक idx;
 
 	/*
-	 * In the unlikely event of having to resolve the segment register
-	 * index for rIP, do it first. Segment override prefixes should not
-	 * be used. Hence, it is not necessary to inspect the instruction,
-	 * which may be invalid at this point.
+	 * In the unlikely event of having to resolve the segment रेजिस्टर
+	 * index क्रम rIP, करो it first. Segment override prefixes should not
+	 * be used. Hence, it is not necessary to inspect the inकाष्ठाion,
+	 * which may be invalid at this poपूर्णांक.
 	 */
-	if (regoff == offsetof(struct pt_regs, ip)) {
-		if (any_64bit_mode(regs))
-			return INAT_SEG_REG_IGNORE;
-		else
-			return INAT_SEG_REG_CS;
-	}
+	अगर (regoff == दुरत्व(काष्ठा pt_regs, ip)) अणु
+		अगर (any_64bit_mode(regs))
+			वापस INAT_SEG_REG_IGNORE;
+		अन्यथा
+			वापस INAT_SEG_REG_CS;
+	पूर्ण
 
-	if (!insn)
-		return -EINVAL;
+	अगर (!insn)
+		वापस -EINVAL;
 
-	if (!check_seg_overrides(insn, regoff))
-		return resolve_default_seg(insn, regs, regoff);
+	अगर (!check_seg_overrides(insn, regoff))
+		वापस resolve_शेष_seg(insn, regs, regoff);
 
 	idx = get_seg_reg_override_idx(insn);
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 
-	if (idx == INAT_SEG_REG_DEFAULT)
-		return resolve_default_seg(insn, regs, regoff);
+	अगर (idx == INAT_SEG_REG_DEFAULT)
+		वापस resolve_शेष_seg(insn, regs, regoff);
 
 	/*
-	 * In long mode, segment override prefixes are ignored, except for
-	 * overrides for FS and GS.
+	 * In दीर्घ mode, segment override prefixes are ignored, except क्रम
+	 * overrides क्रम FS and GS.
 	 */
-	if (any_64bit_mode(regs)) {
-		if (idx != INAT_SEG_REG_FS &&
+	अगर (any_64bit_mode(regs)) अणु
+		अगर (idx != INAT_SEG_REG_FS &&
 		    idx != INAT_SEG_REG_GS)
 			idx = INAT_SEG_REG_IGNORE;
-	}
+	पूर्ण
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
 /**
  * get_segment_selector() - obtain segment selector
  * @regs:		Register values as seen when entering kernel mode
- * @seg_reg_idx:	Segment register index to use
+ * @seg_reg_idx:	Segment रेजिस्टर index to use
  *
  * Obtain the segment selector from any of the CS, SS, DS, ES, FS, GS segment
- * registers. In CONFIG_X86_32, the segment is obtained from either pt_regs or
+ * रेजिस्टरs. In CONFIG_X86_32, the segment is obtained from either pt_regs or
  * kernel_vm86_regs as applicable. In CONFIG_X86_64, CS and SS are obtained
- * from pt_regs. DS, ES, FS and GS are obtained by reading the actual CPU
- * registers. This done for only for completeness as in CONFIG_X86_64 segment
- * registers are ignored.
+ * from pt_regs. DS, ES, FS and GS are obtained by पढ़ोing the actual CPU
+ * रेजिस्टरs. This करोne क्रम only क्रम completeness as in CONFIG_X86_64 segment
+ * रेजिस्टरs are ignored.
  *
  * Returns:
  *
  * Value of the segment selector, including null when running in
- * long mode.
+ * दीर्घ mode.
  *
  * -EINVAL on error.
  */
-static short get_segment_selector(struct pt_regs *regs, int seg_reg_idx)
-{
-#ifdef CONFIG_X86_64
-	unsigned short sel;
+अटल लघु get_segment_selector(काष्ठा pt_regs *regs, पूर्णांक seg_reg_idx)
+अणु
+#अगर_घोषित CONFIG_X86_64
+	अचिन्हित लघु sel;
 
-	switch (seg_reg_idx) {
-	case INAT_SEG_REG_IGNORE:
-		return 0;
-	case INAT_SEG_REG_CS:
-		return (unsigned short)(regs->cs & 0xffff);
-	case INAT_SEG_REG_SS:
-		return (unsigned short)(regs->ss & 0xffff);
-	case INAT_SEG_REG_DS:
+	चयन (seg_reg_idx) अणु
+	हाल INAT_SEG_REG_IGNORE:
+		वापस 0;
+	हाल INAT_SEG_REG_CS:
+		वापस (अचिन्हित लघु)(regs->cs & 0xffff);
+	हाल INAT_SEG_REG_SS:
+		वापस (अचिन्हित लघु)(regs->ss & 0xffff);
+	हाल INAT_SEG_REG_DS:
 		savesegment(ds, sel);
-		return sel;
-	case INAT_SEG_REG_ES:
+		वापस sel;
+	हाल INAT_SEG_REG_ES:
 		savesegment(es, sel);
-		return sel;
-	case INAT_SEG_REG_FS:
+		वापस sel;
+	हाल INAT_SEG_REG_FS:
 		savesegment(fs, sel);
-		return sel;
-	case INAT_SEG_REG_GS:
+		वापस sel;
+	हाल INAT_SEG_REG_GS:
 		savesegment(gs, sel);
-		return sel;
-	default:
-		return -EINVAL;
-	}
-#else /* CONFIG_X86_32 */
-	struct kernel_vm86_regs *vm86regs = (struct kernel_vm86_regs *)regs;
+		वापस sel;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+#अन्यथा /* CONFIG_X86_32 */
+	काष्ठा kernel_vm86_regs *vm86regs = (काष्ठा kernel_vm86_regs *)regs;
 
-	if (v8086_mode(regs)) {
-		switch (seg_reg_idx) {
-		case INAT_SEG_REG_CS:
-			return (unsigned short)(regs->cs & 0xffff);
-		case INAT_SEG_REG_SS:
-			return (unsigned short)(regs->ss & 0xffff);
-		case INAT_SEG_REG_DS:
-			return vm86regs->ds;
-		case INAT_SEG_REG_ES:
-			return vm86regs->es;
-		case INAT_SEG_REG_FS:
-			return vm86regs->fs;
-		case INAT_SEG_REG_GS:
-			return vm86regs->gs;
-		case INAT_SEG_REG_IGNORE:
-		default:
-			return -EINVAL;
-		}
-	}
+	अगर (v8086_mode(regs)) अणु
+		चयन (seg_reg_idx) अणु
+		हाल INAT_SEG_REG_CS:
+			वापस (अचिन्हित लघु)(regs->cs & 0xffff);
+		हाल INAT_SEG_REG_SS:
+			वापस (अचिन्हित लघु)(regs->ss & 0xffff);
+		हाल INAT_SEG_REG_DS:
+			वापस vm86regs->ds;
+		हाल INAT_SEG_REG_ES:
+			वापस vm86regs->es;
+		हाल INAT_SEG_REG_FS:
+			वापस vm86regs->fs;
+		हाल INAT_SEG_REG_GS:
+			वापस vm86regs->gs;
+		हाल INAT_SEG_REG_IGNORE:
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	switch (seg_reg_idx) {
-	case INAT_SEG_REG_CS:
-		return (unsigned short)(regs->cs & 0xffff);
-	case INAT_SEG_REG_SS:
-		return (unsigned short)(regs->ss & 0xffff);
-	case INAT_SEG_REG_DS:
-		return (unsigned short)(regs->ds & 0xffff);
-	case INAT_SEG_REG_ES:
-		return (unsigned short)(regs->es & 0xffff);
-	case INAT_SEG_REG_FS:
-		return (unsigned short)(regs->fs & 0xffff);
-	case INAT_SEG_REG_GS:
-		return get_user_gs(regs);
-	case INAT_SEG_REG_IGNORE:
-	default:
-		return -EINVAL;
-	}
-#endif /* CONFIG_X86_64 */
-}
+	चयन (seg_reg_idx) अणु
+	हाल INAT_SEG_REG_CS:
+		वापस (अचिन्हित लघु)(regs->cs & 0xffff);
+	हाल INAT_SEG_REG_SS:
+		वापस (अचिन्हित लघु)(regs->ss & 0xffff);
+	हाल INAT_SEG_REG_DS:
+		वापस (अचिन्हित लघु)(regs->ds & 0xffff);
+	हाल INAT_SEG_REG_ES:
+		वापस (अचिन्हित लघु)(regs->es & 0xffff);
+	हाल INAT_SEG_REG_FS:
+		वापस (अचिन्हित लघु)(regs->fs & 0xffff);
+	हाल INAT_SEG_REG_GS:
+		वापस get_user_gs(regs);
+	हाल INAT_SEG_REG_IGNORE:
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_X86_64 */
+पूर्ण
 
-static int get_reg_offset(struct insn *insn, struct pt_regs *regs,
-			  enum reg_type type)
-{
-	int regno = 0;
+अटल पूर्णांक get_reg_offset(काष्ठा insn *insn, काष्ठा pt_regs *regs,
+			  क्रमागत reg_type type)
+अणु
+	पूर्णांक regno = 0;
 
-	static const int regoff[] = {
-		offsetof(struct pt_regs, ax),
-		offsetof(struct pt_regs, cx),
-		offsetof(struct pt_regs, dx),
-		offsetof(struct pt_regs, bx),
-		offsetof(struct pt_regs, sp),
-		offsetof(struct pt_regs, bp),
-		offsetof(struct pt_regs, si),
-		offsetof(struct pt_regs, di),
-#ifdef CONFIG_X86_64
-		offsetof(struct pt_regs, r8),
-		offsetof(struct pt_regs, r9),
-		offsetof(struct pt_regs, r10),
-		offsetof(struct pt_regs, r11),
-		offsetof(struct pt_regs, r12),
-		offsetof(struct pt_regs, r13),
-		offsetof(struct pt_regs, r14),
-		offsetof(struct pt_regs, r15),
-#endif
-	};
-	int nr_registers = ARRAY_SIZE(regoff);
+	अटल स्थिर पूर्णांक regoff[] = अणु
+		दुरत्व(काष्ठा pt_regs, ax),
+		दुरत्व(काष्ठा pt_regs, cx),
+		दुरत्व(काष्ठा pt_regs, dx),
+		दुरत्व(काष्ठा pt_regs, bx),
+		दुरत्व(काष्ठा pt_regs, sp),
+		दुरत्व(काष्ठा pt_regs, bp),
+		दुरत्व(काष्ठा pt_regs, si),
+		दुरत्व(काष्ठा pt_regs, di),
+#अगर_घोषित CONFIG_X86_64
+		दुरत्व(काष्ठा pt_regs, r8),
+		दुरत्व(काष्ठा pt_regs, r9),
+		दुरत्व(काष्ठा pt_regs, r10),
+		दुरत्व(काष्ठा pt_regs, r11),
+		दुरत्व(काष्ठा pt_regs, r12),
+		दुरत्व(काष्ठा pt_regs, r13),
+		दुरत्व(काष्ठा pt_regs, r14),
+		दुरत्व(काष्ठा pt_regs, r15),
+#पूर्ण_अगर
+	पूर्ण;
+	पूर्णांक nr_रेजिस्टरs = ARRAY_SIZE(regoff);
 	/*
-	 * Don't possibly decode a 32-bit instructions as
-	 * reading a 64-bit-only register.
+	 * Don't possibly decode a 32-bit inकाष्ठाions as
+	 * पढ़ोing a 64-bit-only रेजिस्टर.
 	 */
-	if (IS_ENABLED(CONFIG_X86_64) && !insn->x86_64)
-		nr_registers -= 8;
+	अगर (IS_ENABLED(CONFIG_X86_64) && !insn->x86_64)
+		nr_रेजिस्टरs -= 8;
 
-	switch (type) {
-	case REG_TYPE_RM:
+	चयन (type) अणु
+	हाल REG_TYPE_RM:
 		regno = X86_MODRM_RM(insn->modrm.value);
 
 		/*
 		 * ModRM.mod == 0 and ModRM.rm == 5 means a 32-bit displacement
 		 * follows the ModRM byte.
 		 */
-		if (!X86_MODRM_MOD(insn->modrm.value) && regno == 5)
-			return -EDOM;
+		अगर (!X86_MODRM_MOD(insn->modrm.value) && regno == 5)
+			वापस -गलत_तर्क;
 
-		if (X86_REX_B(insn->rex_prefix.value))
+		अगर (X86_REX_B(insn->rex_prefix.value))
 			regno += 8;
-		break;
+		अवरोध;
 
-	case REG_TYPE_REG:
+	हाल REG_TYPE_REG:
 		regno = X86_MODRM_REG(insn->modrm.value);
 
-		if (X86_REX_R(insn->rex_prefix.value))
+		अगर (X86_REX_R(insn->rex_prefix.value))
 			regno += 8;
-		break;
+		अवरोध;
 
-	case REG_TYPE_INDEX:
+	हाल REG_TYPE_INDEX:
 		regno = X86_SIB_INDEX(insn->sib.value);
-		if (X86_REX_X(insn->rex_prefix.value))
+		अगर (X86_REX_X(insn->rex_prefix.value))
 			regno += 8;
 
 		/*
 		 * If ModRM.mod != 3 and SIB.index = 4 the scale*index
 		 * portion of the address computation is null. This is
-		 * true only if REX.X is 0. In such a case, the SIB index
+		 * true only अगर REX.X is 0. In such a हाल, the SIB index
 		 * is used in the address computation.
 		 */
-		if (X86_MODRM_MOD(insn->modrm.value) != 3 && regno == 4)
-			return -EDOM;
-		break;
+		अगर (X86_MODRM_MOD(insn->modrm.value) != 3 && regno == 4)
+			वापस -गलत_तर्क;
+		अवरोध;
 
-	case REG_TYPE_BASE:
+	हाल REG_TYPE_BASE:
 		regno = X86_SIB_BASE(insn->sib.value);
 		/*
 		 * If ModRM.mod is 0 and SIB.base == 5, the base of the
-		 * register-indirect addressing is 0. In this case, a
+		 * रेजिस्टर-indirect addressing is 0. In this हाल, a
 		 * 32-bit displacement follows the SIB byte.
 		 */
-		if (!X86_MODRM_MOD(insn->modrm.value) && regno == 5)
-			return -EDOM;
+		अगर (!X86_MODRM_MOD(insn->modrm.value) && regno == 5)
+			वापस -गलत_तर्क;
 
-		if (X86_REX_B(insn->rex_prefix.value))
+		अगर (X86_REX_B(insn->rex_prefix.value))
 			regno += 8;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_err_ratelimited("invalid register type: %d\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (regno >= nr_registers) {
+	अगर (regno >= nr_रेजिस्टरs) अणु
 		WARN_ONCE(1, "decoded an instruction with an invalid register");
-		return -EINVAL;
-	}
-	return regoff[regno];
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस regoff[regno];
+पूर्ण
 
 /**
- * get_reg_offset_16() - Obtain offset of register indicated by instruction
- * @insn:	Instruction containing ModRM byte
+ * get_reg_offset_16() - Obtain offset of रेजिस्टर indicated by inकाष्ठाion
+ * @insn:	Inकाष्ठाion containing ModRM byte
  * @regs:	Register values as seen when entering kernel mode
- * @offs1:	Offset of the first operand register
- * @offs2:	Offset of the second operand register, if applicable
+ * @offs1:	Offset of the first opeअक्रम रेजिस्टर
+ * @offs2:	Offset of the second opeअक्रम रेजिस्टर, अगर applicable
  *
- * Obtain the offset, in pt_regs, of the registers indicated by the ModRM byte
+ * Obtain the offset, in pt_regs, of the रेजिस्टरs indicated by the ModRM byte
  * in @insn. This function is to be used with 16-bit address encodings. The
- * @offs1 and @offs2 will be written with the offset of the two registers
- * indicated by the instruction. In cases where any of the registers is not
- * referenced by the instruction, the value will be set to -EDOM.
+ * @offs1 and @offs2 will be written with the offset of the two रेजिस्टरs
+ * indicated by the inकाष्ठाion. In हालs where any of the रेजिस्टरs is not
+ * referenced by the inकाष्ठाion, the value will be set to -गलत_तर्क.
  *
  * Returns:
  *
  * 0 on success, -EINVAL on error.
  */
-static int get_reg_offset_16(struct insn *insn, struct pt_regs *regs,
-			     int *offs1, int *offs2)
-{
+अटल पूर्णांक get_reg_offset_16(काष्ठा insn *insn, काष्ठा pt_regs *regs,
+			     पूर्णांक *offs1, पूर्णांक *offs2)
+अणु
 	/*
-	 * 16-bit addressing can use one or two registers. Specifics of
+	 * 16-bit addressing can use one or two रेजिस्टरs. Specअगरics of
 	 * encodings are given in Table 2-1. "16-Bit Addressing Forms with the
 	 * ModR/M Byte" of the Intel Software Development Manual.
 	 */
-	static const int regoff1[] = {
-		offsetof(struct pt_regs, bx),
-		offsetof(struct pt_regs, bx),
-		offsetof(struct pt_regs, bp),
-		offsetof(struct pt_regs, bp),
-		offsetof(struct pt_regs, si),
-		offsetof(struct pt_regs, di),
-		offsetof(struct pt_regs, bp),
-		offsetof(struct pt_regs, bx),
-	};
+	अटल स्थिर पूर्णांक regoff1[] = अणु
+		दुरत्व(काष्ठा pt_regs, bx),
+		दुरत्व(काष्ठा pt_regs, bx),
+		दुरत्व(काष्ठा pt_regs, bp),
+		दुरत्व(काष्ठा pt_regs, bp),
+		दुरत्व(काष्ठा pt_regs, si),
+		दुरत्व(काष्ठा pt_regs, di),
+		दुरत्व(काष्ठा pt_regs, bp),
+		दुरत्व(काष्ठा pt_regs, bx),
+	पूर्ण;
 
-	static const int regoff2[] = {
-		offsetof(struct pt_regs, si),
-		offsetof(struct pt_regs, di),
-		offsetof(struct pt_regs, si),
-		offsetof(struct pt_regs, di),
-		-EDOM,
-		-EDOM,
-		-EDOM,
-		-EDOM,
-	};
+	अटल स्थिर पूर्णांक regoff2[] = अणु
+		दुरत्व(काष्ठा pt_regs, si),
+		दुरत्व(काष्ठा pt_regs, di),
+		दुरत्व(काष्ठा pt_regs, si),
+		दुरत्व(काष्ठा pt_regs, di),
+		-गलत_तर्क,
+		-गलत_तर्क,
+		-गलत_तर्क,
+		-गलत_तर्क,
+	पूर्ण;
 
-	if (!offs1 || !offs2)
-		return -EINVAL;
+	अगर (!offs1 || !offs2)
+		वापस -EINVAL;
 
-	/* Operand is a register, use the generic function. */
-	if (X86_MODRM_MOD(insn->modrm.value) == 3) {
+	/* Opeअक्रम is a रेजिस्टर, use the generic function. */
+	अगर (X86_MODRM_MOD(insn->modrm.value) == 3) अणु
 		*offs1 = insn_get_modrm_rm_off(insn, regs);
-		*offs2 = -EDOM;
-		return 0;
-	}
+		*offs2 = -गलत_तर्क;
+		वापस 0;
+	पूर्ण
 
 	*offs1 = regoff1[X86_MODRM_RM(insn->modrm.value)];
 	*offs2 = regoff2[X86_MODRM_RM(insn->modrm.value)];
 
 	/*
 	 * If ModRM.mod is 0 and ModRM.rm is 110b, then we use displacement-
-	 * only addressing. This means that no registers are involved in
+	 * only addressing. This means that no रेजिस्टरs are involved in
 	 * computing the effective address. Thus, ensure that the first
-	 * register offset is invalid. The second register offset is already
-	 * invalid under the aforementioned conditions.
+	 * रेजिस्टर offset is invalid. The second रेजिस्टर offset is alपढ़ोy
+	 * invalid under the aक्रमementioned conditions.
 	 */
-	if ((X86_MODRM_MOD(insn->modrm.value) == 0) &&
+	अगर ((X86_MODRM_MOD(insn->modrm.value) == 0) &&
 	    (X86_MODRM_RM(insn->modrm.value) == 6))
-		*offs1 = -EDOM;
+		*offs1 = -गलत_तर्क;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * get_desc() - Obtain contents of a segment descriptor
  * @out:	Segment descriptor contents on success
  * @sel:	Segment selector
  *
- * Given a segment selector, obtain a pointer to the segment descriptor.
+ * Given a segment selector, obtain a poपूर्णांकer to the segment descriptor.
  * Both global and local descriptor tables are supported.
  *
  * Returns:
  *
  * True on success, false on failure.
  *
- * NULL on error.
+ * शून्य on error.
  */
-static bool get_desc(struct desc_struct *out, unsigned short sel)
-{
-	struct desc_ptr gdt_desc = {0, 0};
-	unsigned long desc_base;
+अटल bool get_desc(काष्ठा desc_काष्ठा *out, अचिन्हित लघु sel)
+अणु
+	काष्ठा desc_ptr gdt_desc = अणु0, 0पूर्ण;
+	अचिन्हित दीर्घ desc_base;
 
-#ifdef CONFIG_MODIFY_LDT_SYSCALL
-	if ((sel & SEGMENT_TI_MASK) == SEGMENT_LDT) {
+#अगर_घोषित CONFIG_MODIFY_LDT_SYSCALL
+	अगर ((sel & SEGMENT_TI_MASK) == SEGMENT_LDT) अणु
 		bool success = false;
-		struct ldt_struct *ldt;
+		काष्ठा ldt_काष्ठा *ldt;
 
 		/* Bits [15:3] contain the index of the desired entry. */
 		sel >>= 3;
 
 		mutex_lock(&current->active_mm->context.lock);
 		ldt = current->active_mm->context.ldt;
-		if (ldt && sel < ldt->nr_entries) {
+		अगर (ldt && sel < ldt->nr_entries) अणु
 			*out = ldt->entries[sel];
 			success = true;
-		}
+		पूर्ण
 
 		mutex_unlock(&current->active_mm->context.lock);
 
-		return success;
-	}
-#endif
+		वापस success;
+	पूर्ण
+#पूर्ण_अगर
 	native_store_gdt(&gdt_desc);
 
 	/*
 	 * Segment descriptors have a size of 8 bytes. Thus, the index is
 	 * multiplied by 8 to obtain the memory offset of the desired descriptor
 	 * from the base of the GDT. As bits [15:3] of the segment selector
-	 * contain the index, it can be regarded as multiplied by 8 already.
-	 * All that remains is to clear bits [2:0].
+	 * contain the index, it can be regarded as multiplied by 8 alपढ़ोy.
+	 * All that reमुख्यs is to clear bits [2:0].
 	 */
 	desc_base = sel & ~(SEGMENT_RPL_MASK | SEGMENT_TI_MASK);
 
-	if (desc_base > gdt_desc.size)
-		return false;
+	अगर (desc_base > gdt_desc.size)
+		वापस false;
 
-	*out = *(struct desc_struct *)(gdt_desc.address + desc_base);
-	return true;
-}
+	*out = *(काष्ठा desc_काष्ठा *)(gdt_desc.address + desc_base);
+	वापस true;
+पूर्ण
 
 /**
  * insn_get_seg_base() - Obtain base address of segment descriptor.
  * @regs:		Register values as seen when entering kernel mode
- * @seg_reg_idx:	Index of the segment register pointing to seg descriptor
+ * @seg_reg_idx:	Index of the segment रेजिस्टर poपूर्णांकing to seg descriptor
  *
  * Obtain the base address of the segment as indicated by the segment descriptor
- * pointed by the segment selector. The segment selector is obtained from the
- * input segment register index @seg_reg_idx.
+ * poपूर्णांकed by the segment selector. The segment selector is obtained from the
+ * input segment रेजिस्टर index @seg_reg_idx.
  *
  * Returns:
  *
- * In protected mode, base address of the segment. Zero in long mode,
- * except when FS or GS are used. In virtual-8086 mode, the segment
- * selector shifted 4 bits to the right.
+ * In रक्षित mode, base address of the segment. Zero in दीर्घ mode,
+ * except when FS or GS are used. In भव-8086 mode, the segment
+ * selector shअगरted 4 bits to the right.
  *
- * -1L in case of error.
+ * -1L in हाल of error.
  */
-unsigned long insn_get_seg_base(struct pt_regs *regs, int seg_reg_idx)
-{
-	struct desc_struct desc;
-	short sel;
+अचिन्हित दीर्घ insn_get_seg_base(काष्ठा pt_regs *regs, पूर्णांक seg_reg_idx)
+अणु
+	काष्ठा desc_काष्ठा desc;
+	लघु sel;
 
 	sel = get_segment_selector(regs, seg_reg_idx);
-	if (sel < 0)
-		return -1L;
+	अगर (sel < 0)
+		वापस -1L;
 
-	if (v8086_mode(regs))
+	अगर (v8086_mode(regs))
 		/*
-		 * Base is simply the segment selector shifted 4
+		 * Base is simply the segment selector shअगरted 4
 		 * bits to the right.
 		 */
-		return (unsigned long)(sel << 4);
+		वापस (अचिन्हित दीर्घ)(sel << 4);
 
-	if (any_64bit_mode(regs)) {
+	अगर (any_64bit_mode(regs)) अणु
 		/*
 		 * Only FS or GS will have a base address, the rest of
-		 * the segments' bases are forced to 0.
+		 * the segments' bases are क्रमced to 0.
 		 */
-		unsigned long base;
+		अचिन्हित दीर्घ base;
 
-		if (seg_reg_idx == INAT_SEG_REG_FS) {
+		अगर (seg_reg_idx == INAT_SEG_REG_FS) अणु
 			rdmsrl(MSR_FS_BASE, base);
-		} else if (seg_reg_idx == INAT_SEG_REG_GS) {
+		पूर्ण अन्यथा अगर (seg_reg_idx == INAT_SEG_REG_GS) अणु
 			/*
-			 * swapgs was called at the kernel entry point. Thus,
+			 * swapgs was called at the kernel entry poपूर्णांक. Thus,
 			 * MSR_KERNEL_GS_BASE will have the user-space GS base.
 			 */
-			if (user_mode(regs))
+			अगर (user_mode(regs))
 				rdmsrl(MSR_KERNEL_GS_BASE, base);
-			else
+			अन्यथा
 				rdmsrl(MSR_GS_BASE, base);
-		} else {
+		पूर्ण अन्यथा अणु
 			base = 0;
-		}
-		return base;
-	}
+		पूर्ण
+		वापस base;
+	पूर्ण
 
-	/* In protected mode the segment selector cannot be null. */
-	if (!sel)
-		return -1L;
+	/* In रक्षित mode the segment selector cannot be null. */
+	अगर (!sel)
+		वापस -1L;
 
-	if (!get_desc(&desc, sel))
-		return -1L;
+	अगर (!get_desc(&desc, sel))
+		वापस -1L;
 
-	return get_desc_base(&desc);
-}
+	वापस get_desc_base(&desc);
+पूर्ण
 
 /**
  * get_seg_limit() - Obtain the limit of a segment descriptor
  * @regs:		Register values as seen when entering kernel mode
- * @seg_reg_idx:	Index of the segment register pointing to seg descriptor
+ * @seg_reg_idx:	Index of the segment रेजिस्टर poपूर्णांकing to seg descriptor
  *
  * Obtain the limit of the segment as indicated by the segment descriptor
- * pointed by the segment selector. The segment selector is obtained from the
- * input segment register index @seg_reg_idx.
+ * poपूर्णांकed by the segment selector. The segment selector is obtained from the
+ * input segment रेजिस्टर index @seg_reg_idx.
  *
  * Returns:
  *
- * In protected mode, the limit of the segment descriptor in bytes.
- * In long mode and virtual-8086 mode, segment limits are not enforced. Thus,
- * limit is returned as -1L to imply a limit-less segment.
+ * In रक्षित mode, the limit of the segment descriptor in bytes.
+ * In दीर्घ mode and भव-8086 mode, segment limits are not enक्रमced. Thus,
+ * limit is वापसed as -1L to imply a limit-less segment.
  *
- * Zero is returned on error.
+ * Zero is वापसed on error.
  */
-static unsigned long get_seg_limit(struct pt_regs *regs, int seg_reg_idx)
-{
-	struct desc_struct desc;
-	unsigned long limit;
-	short sel;
+अटल अचिन्हित दीर्घ get_seg_limit(काष्ठा pt_regs *regs, पूर्णांक seg_reg_idx)
+अणु
+	काष्ठा desc_काष्ठा desc;
+	अचिन्हित दीर्घ limit;
+	लघु sel;
 
 	sel = get_segment_selector(regs, seg_reg_idx);
-	if (sel < 0)
-		return 0;
+	अगर (sel < 0)
+		वापस 0;
 
-	if (any_64bit_mode(regs) || v8086_mode(regs))
-		return -1L;
+	अगर (any_64bit_mode(regs) || v8086_mode(regs))
+		वापस -1L;
 
-	if (!sel)
-		return 0;
+	अगर (!sel)
+		वापस 0;
 
-	if (!get_desc(&desc, sel))
-		return 0;
+	अगर (!get_desc(&desc, sel))
+		वापस 0;
 
 	/*
 	 * If the granularity bit is set, the limit is given in multiples
-	 * of 4096. This also means that the 12 least significant bits are
+	 * of 4096. This also means that the 12 least signअगरicant bits are
 	 * not tested when checking the segment limits. In practice,
 	 * this means that the segment ends in (limit << 12) + 0xfff.
 	 */
 	limit = get_desc_limit(&desc);
-	if (desc.g)
+	अगर (desc.g)
 		limit = (limit << 12) + 0xfff;
 
-	return limit;
-}
+	वापस limit;
+पूर्ण
 
 /**
  * insn_get_code_seg_params() - Obtain code segment parameters
- * @regs:	Structure with register values as seen when entering kernel mode
+ * @regs:	Structure with रेजिस्टर values as seen when entering kernel mode
  *
- * Obtain address and operand sizes of the code segment. It is obtained from the
- * selector contained in the CS register in regs. In protected mode, the default
+ * Obtain address and opeअक्रम sizes of the code segment. It is obtained from the
+ * selector contained in the CS रेजिस्टर in regs. In रक्षित mode, the शेष
  * address is determined by inspecting the L and D bits of the segment
- * descriptor. In virtual-8086 mode, the default is always two bytes for both
- * address and operand sizes.
+ * descriptor. In भव-8086 mode, the शेष is always two bytes क्रम both
+ * address and opeअक्रम sizes.
  *
  * Returns:
  *
- * An int containing ORed-in default parameters on success.
+ * An पूर्णांक containing ORed-in शेष parameters on success.
  *
  * -EINVAL on error.
  */
-int insn_get_code_seg_params(struct pt_regs *regs)
-{
-	struct desc_struct desc;
-	short sel;
+पूर्णांक insn_get_code_seg_params(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा desc_काष्ठा desc;
+	लघु sel;
 
-	if (v8086_mode(regs))
-		/* Address and operand size are both 16-bit. */
-		return INSN_CODE_SEG_PARAMS(2, 2);
+	अगर (v8086_mode(regs))
+		/* Address and opeअक्रम size are both 16-bit. */
+		वापस INSN_CODE_SEG_PARAMS(2, 2);
 
 	sel = get_segment_selector(regs, INAT_SEG_REG_CS);
-	if (sel < 0)
-		return sel;
+	अगर (sel < 0)
+		वापस sel;
 
-	if (!get_desc(&desc, sel))
-		return -EINVAL;
+	अगर (!get_desc(&desc, sel))
+		वापस -EINVAL;
 
 	/*
-	 * The most significant byte of the Type field of the segment descriptor
+	 * The most signअगरicant byte of the Type field of the segment descriptor
 	 * determines whether a segment contains data or code. If this is a data
-	 * segment, return error.
+	 * segment, वापस error.
 	 */
-	if (!(desc.type & BIT(3)))
-		return -EINVAL;
+	अगर (!(desc.type & BIT(3)))
+		वापस -EINVAL;
 
-	switch ((desc.l << 1) | desc.d) {
-	case 0: /*
-		 * Legacy mode. CS.L=0, CS.D=0. Address and operand size are
+	चयन ((desc.l << 1) | desc.d) अणु
+	हाल 0: /*
+		 * Legacy mode. CS.L=0, CS.D=0. Address and opeअक्रम size are
 		 * both 16-bit.
 		 */
-		return INSN_CODE_SEG_PARAMS(2, 2);
-	case 1: /*
-		 * Legacy mode. CS.L=0, CS.D=1. Address and operand size are
+		वापस INSN_CODE_SEG_PARAMS(2, 2);
+	हाल 1: /*
+		 * Legacy mode. CS.L=0, CS.D=1. Address and opeअक्रम size are
 		 * both 32-bit.
 		 */
-		return INSN_CODE_SEG_PARAMS(4, 4);
-	case 2: /*
+		वापस INSN_CODE_SEG_PARAMS(4, 4);
+	हाल 2: /*
 		 * IA-32e 64-bit mode. CS.L=1, CS.D=0. Address size is 64-bit;
-		 * operand size is 32-bit.
+		 * opeअक्रम size is 32-bit.
 		 */
-		return INSN_CODE_SEG_PARAMS(4, 8);
-	case 3: /* Invalid setting. CS.L=1, CS.D=1 */
+		वापस INSN_CODE_SEG_PARAMS(4, 8);
+	हाल 3: /* Invalid setting. CS.L=1, CS.D=1 */
 		fallthrough;
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /**
- * insn_get_modrm_rm_off() - Obtain register in r/m part of the ModRM byte
- * @insn:	Instruction containing the ModRM byte
+ * insn_get_modrm_rm_off() - Obtain रेजिस्टर in r/m part of the ModRM byte
+ * @insn:	Inकाष्ठाion containing the ModRM byte
  * @regs:	Register values as seen when entering kernel mode
  *
  * Returns:
  *
- * The register indicated by the r/m part of the ModRM byte. The
- * register is obtained as an offset from the base of pt_regs. In specific
- * cases, the returned value can be -EDOM to indicate that the particular value
- * of ModRM does not refer to a register and shall be ignored.
+ * The रेजिस्टर indicated by the r/m part of the ModRM byte. The
+ * रेजिस्टर is obtained as an offset from the base of pt_regs. In specअगरic
+ * हालs, the वापसed value can be -गलत_तर्क to indicate that the particular value
+ * of ModRM करोes not refer to a रेजिस्टर and shall be ignored.
  */
-int insn_get_modrm_rm_off(struct insn *insn, struct pt_regs *regs)
-{
-	return get_reg_offset(insn, regs, REG_TYPE_RM);
-}
+पूर्णांक insn_get_modrm_rm_off(काष्ठा insn *insn, काष्ठा pt_regs *regs)
+अणु
+	वापस get_reg_offset(insn, regs, REG_TYPE_RM);
+पूर्ण
 
 /**
- * insn_get_modrm_reg_off() - Obtain register in reg part of the ModRM byte
- * @insn:	Instruction containing the ModRM byte
+ * insn_get_modrm_reg_off() - Obtain रेजिस्टर in reg part of the ModRM byte
+ * @insn:	Inकाष्ठाion containing the ModRM byte
  * @regs:	Register values as seen when entering kernel mode
  *
  * Returns:
  *
- * The register indicated by the reg part of the ModRM byte. The
- * register is obtained as an offset from the base of pt_regs.
+ * The रेजिस्टर indicated by the reg part of the ModRM byte. The
+ * रेजिस्टर is obtained as an offset from the base of pt_regs.
  */
-int insn_get_modrm_reg_off(struct insn *insn, struct pt_regs *regs)
-{
-	return get_reg_offset(insn, regs, REG_TYPE_REG);
-}
+पूर्णांक insn_get_modrm_reg_off(काष्ठा insn *insn, काष्ठा pt_regs *regs)
+अणु
+	वापस get_reg_offset(insn, regs, REG_TYPE_REG);
+पूर्ण
 
 /**
  * get_seg_base_limit() - obtain base address and limit of a segment
- * @insn:	Instruction. Must be valid.
+ * @insn:	Inकाष्ठाion. Must be valid.
  * @regs:	Register values as seen when entering kernel mode
- * @regoff:	Operand offset, in pt_regs, used to resolve segment descriptor
+ * @regoff:	Opeअक्रम offset, in pt_regs, used to resolve segment descriptor
  * @base:	Obtained segment base
  * @limit:	Obtained segment limit
  *
- * Obtain the base address and limit of the segment associated with the operand
- * @regoff and, if any or allowed, override prefixes in @insn. This function is
- * different from insn_get_seg_base() as the latter does not resolve the segment
- * associated with the instruction operand. If a limit is not needed (e.g.,
- * when running in long mode), @limit can be NULL.
+ * Obtain the base address and limit of the segment associated with the opeअक्रम
+ * @regoff and, अगर any or allowed, override prefixes in @insn. This function is
+ * dअगरferent from insn_get_seg_base() as the latter करोes not resolve the segment
+ * associated with the inकाष्ठाion opeअक्रम. If a limit is not needed (e.g.,
+ * when running in दीर्घ mode), @limit can be शून्य.
  *
  * Returns:
  *
@@ -871,291 +872,291 @@ int insn_get_modrm_reg_off(struct insn *insn, struct pt_regs *regs)
  *
  * -EINVAL on error.
  */
-static int get_seg_base_limit(struct insn *insn, struct pt_regs *regs,
-			      int regoff, unsigned long *base,
-			      unsigned long *limit)
-{
-	int seg_reg_idx;
+अटल पूर्णांक get_seg_base_limit(काष्ठा insn *insn, काष्ठा pt_regs *regs,
+			      पूर्णांक regoff, अचिन्हित दीर्घ *base,
+			      अचिन्हित दीर्घ *limit)
+अणु
+	पूर्णांक seg_reg_idx;
 
-	if (!base)
-		return -EINVAL;
+	अगर (!base)
+		वापस -EINVAL;
 
 	seg_reg_idx = resolve_seg_reg(insn, regs, regoff);
-	if (seg_reg_idx < 0)
-		return seg_reg_idx;
+	अगर (seg_reg_idx < 0)
+		वापस seg_reg_idx;
 
 	*base = insn_get_seg_base(regs, seg_reg_idx);
-	if (*base == -1L)
-		return -EINVAL;
+	अगर (*base == -1L)
+		वापस -EINVAL;
 
-	if (!limit)
-		return 0;
+	अगर (!limit)
+		वापस 0;
 
 	*limit = get_seg_limit(regs, seg_reg_idx);
-	if (!(*limit))
-		return -EINVAL;
+	अगर (!(*limit))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * get_eff_addr_reg() - Obtain effective address from register operand
- * @insn:	Instruction. Must be valid.
+ * get_eff_addr_reg() - Obtain effective address from रेजिस्टर opeअक्रम
+ * @insn:	Inकाष्ठाion. Must be valid.
  * @regs:	Register values as seen when entering kernel mode
- * @regoff:	Obtained operand offset, in pt_regs, with the effective address
+ * @regoff:	Obtained opeअक्रम offset, in pt_regs, with the effective address
  * @eff_addr:	Obtained effective address
  *
- * Obtain the effective address stored in the register operand as indicated by
- * the ModRM byte. This function is to be used only with register addressing
+ * Obtain the effective address stored in the रेजिस्टर opeअक्रम as indicated by
+ * the ModRM byte. This function is to be used only with रेजिस्टर addressing
  * (i.e.,  ModRM.mod is 3). The effective address is saved in @eff_addr. The
- * register operand, as an offset from the base of pt_regs, is saved in @regoff;
+ * रेजिस्टर opeअक्रम, as an offset from the base of pt_regs, is saved in @regoff;
  * such offset can then be used to resolve the segment associated with the
- * operand. This function can be used with any of the supported address sizes
+ * opeअक्रम. This function can be used with any of the supported address sizes
  * in x86.
  *
  * Returns:
  *
  * 0 on success. @eff_addr will have the effective address stored in the
- * operand indicated by ModRM. @regoff will have such operand as an offset from
+ * opeअक्रम indicated by ModRM. @regoff will have such opeअक्रम as an offset from
  * the base of pt_regs.
  *
  * -EINVAL on error.
  */
-static int get_eff_addr_reg(struct insn *insn, struct pt_regs *regs,
-			    int *regoff, long *eff_addr)
-{
-	int ret;
+अटल पूर्णांक get_eff_addr_reg(काष्ठा insn *insn, काष्ठा pt_regs *regs,
+			    पूर्णांक *regoff, दीर्घ *eff_addr)
+अणु
+	पूर्णांक ret;
 
 	ret = insn_get_modrm(insn);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (X86_MODRM_MOD(insn->modrm.value) != 3)
-		return -EINVAL;
+	अगर (X86_MODRM_MOD(insn->modrm.value) != 3)
+		वापस -EINVAL;
 
 	*regoff = get_reg_offset(insn, regs, REG_TYPE_RM);
-	if (*regoff < 0)
-		return -EINVAL;
+	अगर (*regoff < 0)
+		वापस -EINVAL;
 
 	/* Ignore bytes that are outside the address size. */
-	if (insn->addr_bytes == 2)
-		*eff_addr = regs_get_register(regs, *regoff) & 0xffff;
-	else if (insn->addr_bytes == 4)
-		*eff_addr = regs_get_register(regs, *regoff) & 0xffffffff;
-	else /* 64-bit address */
-		*eff_addr = regs_get_register(regs, *regoff);
+	अगर (insn->addr_bytes == 2)
+		*eff_addr = regs_get_रेजिस्टर(regs, *regoff) & 0xffff;
+	अन्यथा अगर (insn->addr_bytes == 4)
+		*eff_addr = regs_get_रेजिस्टर(regs, *regoff) & 0xffffffff;
+	अन्यथा /* 64-bit address */
+		*eff_addr = regs_get_रेजिस्टर(regs, *regoff);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * get_eff_addr_modrm() - Obtain referenced effective address via ModRM
- * @insn:	Instruction. Must be valid.
+ * @insn:	Inकाष्ठाion. Must be valid.
  * @regs:	Register values as seen when entering kernel mode
- * @regoff:	Obtained operand offset, in pt_regs, associated with segment
+ * @regoff:	Obtained opeअक्रम offset, in pt_regs, associated with segment
  * @eff_addr:	Obtained effective address
  *
  * Obtain the effective address referenced by the ModRM byte of @insn. After
- * identifying the registers involved in the register-indirect memory reference,
- * its value is obtained from the operands in @regs. The computed address is
- * stored @eff_addr. Also, the register operand that indicates the associated
+ * identअगरying the रेजिस्टरs involved in the रेजिस्टर-indirect memory reference,
+ * its value is obtained from the opeअक्रमs in @regs. The computed address is
+ * stored @eff_addr. Also, the रेजिस्टर opeअक्रम that indicates the associated
  * segment is stored in @regoff, this parameter can later be used to determine
  * such segment.
  *
  * Returns:
  *
  * 0 on success. @eff_addr will have the referenced effective address. @regoff
- * will have a register, as an offset from the base of pt_regs, that can be used
+ * will have a रेजिस्टर, as an offset from the base of pt_regs, that can be used
  * to resolve the associated segment.
  *
  * -EINVAL on error.
  */
-static int get_eff_addr_modrm(struct insn *insn, struct pt_regs *regs,
-			      int *regoff, long *eff_addr)
-{
-	long tmp;
-	int ret;
+अटल पूर्णांक get_eff_addr_modrm(काष्ठा insn *insn, काष्ठा pt_regs *regs,
+			      पूर्णांक *regoff, दीर्घ *eff_addr)
+अणु
+	दीर्घ पंचांगp;
+	पूर्णांक ret;
 
-	if (insn->addr_bytes != 8 && insn->addr_bytes != 4)
-		return -EINVAL;
+	अगर (insn->addr_bytes != 8 && insn->addr_bytes != 4)
+		वापस -EINVAL;
 
 	ret = insn_get_modrm(insn);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (X86_MODRM_MOD(insn->modrm.value) > 2)
-		return -EINVAL;
+	अगर (X86_MODRM_MOD(insn->modrm.value) > 2)
+		वापस -EINVAL;
 
 	*regoff = get_reg_offset(insn, regs, REG_TYPE_RM);
 
 	/*
-	 * -EDOM means that we must ignore the address_offset. In such a case,
+	 * -गलत_तर्क means that we must ignore the address_offset. In such a हाल,
 	 * in 64-bit mode the effective address relative to the rIP of the
-	 * following instruction.
+	 * following inकाष्ठाion.
 	 */
-	if (*regoff == -EDOM) {
-		if (any_64bit_mode(regs))
-			tmp = regs->ip + insn->length;
-		else
-			tmp = 0;
-	} else if (*regoff < 0) {
-		return -EINVAL;
-	} else {
-		tmp = regs_get_register(regs, *regoff);
-	}
+	अगर (*regoff == -गलत_तर्क) अणु
+		अगर (any_64bit_mode(regs))
+			पंचांगp = regs->ip + insn->length;
+		अन्यथा
+			पंचांगp = 0;
+	पूर्ण अन्यथा अगर (*regoff < 0) अणु
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		पंचांगp = regs_get_रेजिस्टर(regs, *regoff);
+	पूर्ण
 
-	if (insn->addr_bytes == 4) {
-		int addr32 = (int)(tmp & 0xffffffff) + insn->displacement.value;
+	अगर (insn->addr_bytes == 4) अणु
+		पूर्णांक addr32 = (पूर्णांक)(पंचांगp & 0xffffffff) + insn->displacement.value;
 
 		*eff_addr = addr32 & 0xffffffff;
-	} else {
-		*eff_addr = tmp + insn->displacement.value;
-	}
+	पूर्ण अन्यथा अणु
+		*eff_addr = पंचांगp + insn->displacement.value;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * get_eff_addr_modrm_16() - Obtain referenced effective address via ModRM
- * @insn:	Instruction. Must be valid.
+ * @insn:	Inकाष्ठाion. Must be valid.
  * @regs:	Register values as seen when entering kernel mode
- * @regoff:	Obtained operand offset, in pt_regs, associated with segment
+ * @regoff:	Obtained opeअक्रम offset, in pt_regs, associated with segment
  * @eff_addr:	Obtained effective address
  *
  * Obtain the 16-bit effective address referenced by the ModRM byte of @insn.
- * After identifying the registers involved in the register-indirect memory
- * reference, its value is obtained from the operands in @regs. The computed
- * address is stored @eff_addr. Also, the register operand that indicates
+ * After identअगरying the रेजिस्टरs involved in the रेजिस्टर-indirect memory
+ * reference, its value is obtained from the opeअक्रमs in @regs. The computed
+ * address is stored @eff_addr. Also, the रेजिस्टर opeअक्रम that indicates
  * the associated segment is stored in @regoff, this parameter can later be used
  * to determine such segment.
  *
  * Returns:
  *
  * 0 on success. @eff_addr will have the referenced effective address. @regoff
- * will have a register, as an offset from the base of pt_regs, that can be used
+ * will have a रेजिस्टर, as an offset from the base of pt_regs, that can be used
  * to resolve the associated segment.
  *
  * -EINVAL on error.
  */
-static int get_eff_addr_modrm_16(struct insn *insn, struct pt_regs *regs,
-				 int *regoff, short *eff_addr)
-{
-	int addr_offset1, addr_offset2, ret;
-	short addr1 = 0, addr2 = 0, displacement;
+अटल पूर्णांक get_eff_addr_modrm_16(काष्ठा insn *insn, काष्ठा pt_regs *regs,
+				 पूर्णांक *regoff, लघु *eff_addr)
+अणु
+	पूर्णांक addr_offset1, addr_offset2, ret;
+	लघु addr1 = 0, addr2 = 0, displacement;
 
-	if (insn->addr_bytes != 2)
-		return -EINVAL;
+	अगर (insn->addr_bytes != 2)
+		वापस -EINVAL;
 
 	insn_get_modrm(insn);
 
-	if (!insn->modrm.nbytes)
-		return -EINVAL;
+	अगर (!insn->modrm.nbytes)
+		वापस -EINVAL;
 
-	if (X86_MODRM_MOD(insn->modrm.value) > 2)
-		return -EINVAL;
+	अगर (X86_MODRM_MOD(insn->modrm.value) > 2)
+		वापस -EINVAL;
 
 	ret = get_reg_offset_16(insn, regs, &addr_offset1, &addr_offset2);
-	if (ret < 0)
-		return -EINVAL;
+	अगर (ret < 0)
+		वापस -EINVAL;
 
 	/*
 	 * Don't fail on invalid offset values. They might be invalid because
-	 * they cannot be used for this particular value of ModRM. Instead, use
-	 * them in the computation only if they contain a valid value.
+	 * they cannot be used क्रम this particular value of ModRM. Instead, use
+	 * them in the computation only अगर they contain a valid value.
 	 */
-	if (addr_offset1 != -EDOM)
-		addr1 = regs_get_register(regs, addr_offset1) & 0xffff;
+	अगर (addr_offset1 != -गलत_तर्क)
+		addr1 = regs_get_रेजिस्टर(regs, addr_offset1) & 0xffff;
 
-	if (addr_offset2 != -EDOM)
-		addr2 = regs_get_register(regs, addr_offset2) & 0xffff;
+	अगर (addr_offset2 != -गलत_तर्क)
+		addr2 = regs_get_रेजिस्टर(regs, addr_offset2) & 0xffff;
 
 	displacement = insn->displacement.value & 0xffff;
 	*eff_addr = addr1 + addr2 + displacement;
 
 	/*
-	 * The first operand register could indicate to use of either SS or DS
-	 * registers to obtain the segment selector.  The second operand
-	 * register can only indicate the use of DS. Thus, the first operand
+	 * The first opeअक्रम रेजिस्टर could indicate to use of either SS or DS
+	 * रेजिस्टरs to obtain the segment selector.  The second opeअक्रम
+	 * रेजिस्टर can only indicate the use of DS. Thus, the first opeअक्रम
 	 * will be used to obtain the segment selector.
 	 */
 	*regoff = addr_offset1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * get_eff_addr_sib() - Obtain referenced effective address via SIB
- * @insn:	Instruction. Must be valid.
+ * @insn:	Inकाष्ठाion. Must be valid.
  * @regs:	Register values as seen when entering kernel mode
- * @regoff:	Obtained operand offset, in pt_regs, associated with segment
+ * @regoff:	Obtained opeअक्रम offset, in pt_regs, associated with segment
  * @eff_addr:	Obtained effective address
  *
  * Obtain the effective address referenced by the SIB byte of @insn. After
- * identifying the registers involved in the indexed, register-indirect memory
- * reference, its value is obtained from the operands in @regs. The computed
- * address is stored @eff_addr. Also, the register operand that indicates the
+ * identअगरying the रेजिस्टरs involved in the indexed, रेजिस्टर-indirect memory
+ * reference, its value is obtained from the opeअक्रमs in @regs. The computed
+ * address is stored @eff_addr. Also, the रेजिस्टर opeअक्रम that indicates the
  * associated segment is stored in @regoff, this parameter can later be used to
  * determine such segment.
  *
  * Returns:
  *
  * 0 on success. @eff_addr will have the referenced effective address.
- * @base_offset will have a register, as an offset from the base of pt_regs,
+ * @base_offset will have a रेजिस्टर, as an offset from the base of pt_regs,
  * that can be used to resolve the associated segment.
  *
  * Negative value on error.
  */
-static int get_eff_addr_sib(struct insn *insn, struct pt_regs *regs,
-			    int *base_offset, long *eff_addr)
-{
-	long base, indx;
-	int indx_offset;
-	int ret;
+अटल पूर्णांक get_eff_addr_sib(काष्ठा insn *insn, काष्ठा pt_regs *regs,
+			    पूर्णांक *base_offset, दीर्घ *eff_addr)
+अणु
+	दीर्घ base, indx;
+	पूर्णांक indx_offset;
+	पूर्णांक ret;
 
-	if (insn->addr_bytes != 8 && insn->addr_bytes != 4)
-		return -EINVAL;
+	अगर (insn->addr_bytes != 8 && insn->addr_bytes != 4)
+		वापस -EINVAL;
 
 	ret = insn_get_modrm(insn);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!insn->modrm.nbytes)
-		return -EINVAL;
+	अगर (!insn->modrm.nbytes)
+		वापस -EINVAL;
 
-	if (X86_MODRM_MOD(insn->modrm.value) > 2)
-		return -EINVAL;
+	अगर (X86_MODRM_MOD(insn->modrm.value) > 2)
+		वापस -EINVAL;
 
 	ret = insn_get_sib(insn);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!insn->sib.nbytes)
-		return -EINVAL;
+	अगर (!insn->sib.nbytes)
+		वापस -EINVAL;
 
 	*base_offset = get_reg_offset(insn, regs, REG_TYPE_BASE);
 	indx_offset = get_reg_offset(insn, regs, REG_TYPE_INDEX);
 
 	/*
 	 * Negative values in the base and index offset means an error when
-	 * decoding the SIB byte. Except -EDOM, which means that the registers
+	 * decoding the SIB byte. Except -गलत_तर्क, which means that the रेजिस्टरs
 	 * should not be used in the address computation.
 	 */
-	if (*base_offset == -EDOM)
+	अगर (*base_offset == -गलत_तर्क)
 		base = 0;
-	else if (*base_offset < 0)
-		return -EINVAL;
-	else
-		base = regs_get_register(regs, *base_offset);
+	अन्यथा अगर (*base_offset < 0)
+		वापस -EINVAL;
+	अन्यथा
+		base = regs_get_रेजिस्टर(regs, *base_offset);
 
-	if (indx_offset == -EDOM)
+	अगर (indx_offset == -गलत_तर्क)
 		indx = 0;
-	else if (indx_offset < 0)
-		return -EINVAL;
-	else
-		indx = regs_get_register(regs, indx_offset);
+	अन्यथा अगर (indx_offset < 0)
+		वापस -EINVAL;
+	अन्यथा
+		indx = regs_get_रेजिस्टर(regs, indx_offset);
 
-	if (insn->addr_bytes == 4) {
-		int addr32, base32, idx32;
+	अगर (insn->addr_bytes == 4) अणु
+		पूर्णांक addr32, base32, idx32;
 
 		base32 = base & 0xffffffff;
 		idx32 = indx & 0xffffffff;
@@ -1164,378 +1165,378 @@ static int get_eff_addr_sib(struct insn *insn, struct pt_regs *regs,
 		addr32 += insn->displacement.value;
 
 		*eff_addr = addr32 & 0xffffffff;
-	} else {
+	पूर्ण अन्यथा अणु
 		*eff_addr = base + indx * (1 << X86_SIB_SCALE(insn->sib.value));
 		*eff_addr += insn->displacement.value;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * get_addr_ref_16() - Obtain the 16-bit address referred by instruction
- * @insn:	Instruction containing ModRM byte and displacement
+ * get_addr_ref_16() - Obtain the 16-bit address referred by inकाष्ठाion
+ * @insn:	Inकाष्ठाion containing ModRM byte and displacement
  * @regs:	Register values as seen when entering kernel mode
  *
  * This function is to be used with 16-bit address encodings. Obtain the memory
- * address referred by the instruction's ModRM and displacement bytes. Also, the
+ * address referred by the inकाष्ठाion's ModRM and displacement bytes. Also, the
  * segment used as base is determined by either any segment override prefixes in
- * @insn or the default segment of the registers involved in the address
- * computation. In protected mode, segment limits are enforced.
+ * @insn or the शेष segment of the रेजिस्टरs involved in the address
+ * computation. In रक्षित mode, segment limits are enक्रमced.
  *
  * Returns:
  *
- * Linear address referenced by the instruction operands on success.
+ * Linear address referenced by the inकाष्ठाion opeअक्रमs on success.
  *
  * -1L on error.
  */
-static void __user *get_addr_ref_16(struct insn *insn, struct pt_regs *regs)
-{
-	unsigned long linear_addr = -1L, seg_base, seg_limit;
-	int ret, regoff;
-	short eff_addr;
-	long tmp;
+अटल व्योम __user *get_addr_ref_16(काष्ठा insn *insn, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ linear_addr = -1L, seg_base, seg_limit;
+	पूर्णांक ret, regoff;
+	लघु eff_addr;
+	दीर्घ पंचांगp;
 
-	if (insn_get_displacement(insn))
-		goto out;
+	अगर (insn_get_displacement(insn))
+		जाओ out;
 
-	if (insn->addr_bytes != 2)
-		goto out;
+	अगर (insn->addr_bytes != 2)
+		जाओ out;
 
-	if (X86_MODRM_MOD(insn->modrm.value) == 3) {
-		ret = get_eff_addr_reg(insn, regs, &regoff, &tmp);
-		if (ret)
-			goto out;
+	अगर (X86_MODRM_MOD(insn->modrm.value) == 3) अणु
+		ret = get_eff_addr_reg(insn, regs, &regoff, &पंचांगp);
+		अगर (ret)
+			जाओ out;
 
-		eff_addr = tmp;
-	} else {
+		eff_addr = पंचांगp;
+	पूर्ण अन्यथा अणु
 		ret = get_eff_addr_modrm_16(insn, regs, &regoff, &eff_addr);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	ret = get_seg_base_limit(insn, regs, regoff, &seg_base, &seg_limit);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/*
-	 * Before computing the linear address, make sure the effective address
-	 * is within the limits of the segment. In virtual-8086 mode, segment
-	 * limits are not enforced. In such a case, the segment limit is -1L to
+	 * Beक्रमe computing the linear address, make sure the effective address
+	 * is within the limits of the segment. In भव-8086 mode, segment
+	 * limits are not enक्रमced. In such a हाल, the segment limit is -1L to
 	 * reflect this fact.
 	 */
-	if ((unsigned long)(eff_addr & 0xffff) > seg_limit)
-		goto out;
+	अगर ((अचिन्हित दीर्घ)(eff_addr & 0xffff) > seg_limit)
+		जाओ out;
 
-	linear_addr = (unsigned long)(eff_addr & 0xffff) + seg_base;
+	linear_addr = (अचिन्हित दीर्घ)(eff_addr & 0xffff) + seg_base;
 
 	/* Limit linear address to 20 bits */
-	if (v8086_mode(regs))
+	अगर (v8086_mode(regs))
 		linear_addr &= 0xfffff;
 
 out:
-	return (void __user *)linear_addr;
-}
+	वापस (व्योम __user *)linear_addr;
+पूर्ण
 
 /**
  * get_addr_ref_32() - Obtain a 32-bit linear address
- * @insn:	Instruction with ModRM, SIB bytes and displacement
+ * @insn:	Inकाष्ठाion with ModRM, SIB bytes and displacement
  * @regs:	Register values as seen when entering kernel mode
  *
  * This function is to be used with 32-bit address encodings to obtain the
- * linear memory address referred by the instruction's ModRM, SIB,
- * displacement bytes and segment base address, as applicable. If in protected
- * mode, segment limits are enforced.
+ * linear memory address referred by the inकाष्ठाion's ModRM, SIB,
+ * displacement bytes and segment base address, as applicable. If in रक्षित
+ * mode, segment limits are enक्रमced.
  *
  * Returns:
  *
- * Linear address referenced by instruction and registers on success.
+ * Linear address referenced by inकाष्ठाion and रेजिस्टरs on success.
  *
  * -1L on error.
  */
-static void __user *get_addr_ref_32(struct insn *insn, struct pt_regs *regs)
-{
-	unsigned long linear_addr = -1L, seg_base, seg_limit;
-	int eff_addr, regoff;
-	long tmp;
-	int ret;
+अटल व्योम __user *get_addr_ref_32(काष्ठा insn *insn, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ linear_addr = -1L, seg_base, seg_limit;
+	पूर्णांक eff_addr, regoff;
+	दीर्घ पंचांगp;
+	पूर्णांक ret;
 
-	if (insn->addr_bytes != 4)
-		goto out;
+	अगर (insn->addr_bytes != 4)
+		जाओ out;
 
-	if (X86_MODRM_MOD(insn->modrm.value) == 3) {
-		ret = get_eff_addr_reg(insn, regs, &regoff, &tmp);
-		if (ret)
-			goto out;
+	अगर (X86_MODRM_MOD(insn->modrm.value) == 3) अणु
+		ret = get_eff_addr_reg(insn, regs, &regoff, &पंचांगp);
+		अगर (ret)
+			जाओ out;
 
-		eff_addr = tmp;
+		eff_addr = पंचांगp;
 
-	} else {
-		if (insn->sib.nbytes) {
-			ret = get_eff_addr_sib(insn, regs, &regoff, &tmp);
-			if (ret)
-				goto out;
+	पूर्ण अन्यथा अणु
+		अगर (insn->sib.nbytes) अणु
+			ret = get_eff_addr_sib(insn, regs, &regoff, &पंचांगp);
+			अगर (ret)
+				जाओ out;
 
-			eff_addr = tmp;
-		} else {
-			ret = get_eff_addr_modrm(insn, regs, &regoff, &tmp);
-			if (ret)
-				goto out;
+			eff_addr = पंचांगp;
+		पूर्ण अन्यथा अणु
+			ret = get_eff_addr_modrm(insn, regs, &regoff, &पंचांगp);
+			अगर (ret)
+				जाओ out;
 
-			eff_addr = tmp;
-		}
-	}
+			eff_addr = पंचांगp;
+		पूर्ण
+	पूर्ण
 
 	ret = get_seg_base_limit(insn, regs, regoff, &seg_base, &seg_limit);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/*
-	 * In protected mode, before computing the linear address, make sure
+	 * In रक्षित mode, beक्रमe computing the linear address, make sure
 	 * the effective address is within the limits of the segment.
-	 * 32-bit addresses can be used in long and virtual-8086 modes if an
-	 * address override prefix is used. In such cases, segment limits are
-	 * not enforced. When in virtual-8086 mode, the segment limit is -1L
+	 * 32-bit addresses can be used in दीर्घ and भव-8086 modes अगर an
+	 * address override prefix is used. In such हालs, segment limits are
+	 * not enक्रमced. When in भव-8086 mode, the segment limit is -1L
 	 * to reflect this situation.
 	 *
-	 * After computed, the effective address is treated as an unsigned
+	 * After computed, the effective address is treated as an अचिन्हित
 	 * quantity.
 	 */
-	if (!any_64bit_mode(regs) && ((unsigned int)eff_addr > seg_limit))
-		goto out;
+	अगर (!any_64bit_mode(regs) && ((अचिन्हित पूर्णांक)eff_addr > seg_limit))
+		जाओ out;
 
 	/*
-	 * Even though 32-bit address encodings are allowed in virtual-8086
+	 * Even though 32-bit address encodings are allowed in भव-8086
 	 * mode, the address range is still limited to [0x-0xffff].
 	 */
-	if (v8086_mode(regs) && (eff_addr & ~0xffff))
-		goto out;
+	अगर (v8086_mode(regs) && (eff_addr & ~0xffff))
+		जाओ out;
 
 	/*
-	 * Data type long could be 64 bits in size. Ensure that our 32-bit
+	 * Data type दीर्घ could be 64 bits in size. Ensure that our 32-bit
 	 * effective address is not sign-extended when computing the linear
 	 * address.
 	 */
-	linear_addr = (unsigned long)(eff_addr & 0xffffffff) + seg_base;
+	linear_addr = (अचिन्हित दीर्घ)(eff_addr & 0xffffffff) + seg_base;
 
 	/* Limit linear address to 20 bits */
-	if (v8086_mode(regs))
+	अगर (v8086_mode(regs))
 		linear_addr &= 0xfffff;
 
 out:
-	return (void __user *)linear_addr;
-}
+	वापस (व्योम __user *)linear_addr;
+पूर्ण
 
 /**
  * get_addr_ref_64() - Obtain a 64-bit linear address
- * @insn:	Instruction struct with ModRM and SIB bytes and displacement
- * @regs:	Structure with register values as seen when entering kernel mode
+ * @insn:	Inकाष्ठाion काष्ठा with ModRM and SIB bytes and displacement
+ * @regs:	Structure with रेजिस्टर values as seen when entering kernel mode
  *
  * This function is to be used with 64-bit address encodings to obtain the
- * linear memory address referred by the instruction's ModRM, SIB,
+ * linear memory address referred by the inकाष्ठाion's ModRM, SIB,
  * displacement bytes and segment base address, as applicable.
  *
  * Returns:
  *
- * Linear address referenced by instruction and registers on success.
+ * Linear address referenced by inकाष्ठाion and रेजिस्टरs on success.
  *
  * -1L on error.
  */
-#ifndef CONFIG_X86_64
-static void __user *get_addr_ref_64(struct insn *insn, struct pt_regs *regs)
-{
-	return (void __user *)-1L;
-}
-#else
-static void __user *get_addr_ref_64(struct insn *insn, struct pt_regs *regs)
-{
-	unsigned long linear_addr = -1L, seg_base;
-	int regoff, ret;
-	long eff_addr;
+#अगर_अघोषित CONFIG_X86_64
+अटल व्योम __user *get_addr_ref_64(काष्ठा insn *insn, काष्ठा pt_regs *regs)
+अणु
+	वापस (व्योम __user *)-1L;
+पूर्ण
+#अन्यथा
+अटल व्योम __user *get_addr_ref_64(काष्ठा insn *insn, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ linear_addr = -1L, seg_base;
+	पूर्णांक regoff, ret;
+	दीर्घ eff_addr;
 
-	if (insn->addr_bytes != 8)
-		goto out;
+	अगर (insn->addr_bytes != 8)
+		जाओ out;
 
-	if (X86_MODRM_MOD(insn->modrm.value) == 3) {
+	अगर (X86_MODRM_MOD(insn->modrm.value) == 3) अणु
 		ret = get_eff_addr_reg(insn, regs, &regoff, &eff_addr);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
-	} else {
-		if (insn->sib.nbytes) {
+	पूर्ण अन्यथा अणु
+		अगर (insn->sib.nbytes) अणु
 			ret = get_eff_addr_sib(insn, regs, &regoff, &eff_addr);
-			if (ret)
-				goto out;
-		} else {
+			अगर (ret)
+				जाओ out;
+		पूर्ण अन्यथा अणु
 			ret = get_eff_addr_modrm(insn, regs, &regoff, &eff_addr);
-			if (ret)
-				goto out;
-		}
+			अगर (ret)
+				जाओ out;
+		पूर्ण
 
-	}
+	पूर्ण
 
-	ret = get_seg_base_limit(insn, regs, regoff, &seg_base, NULL);
-	if (ret)
-		goto out;
+	ret = get_seg_base_limit(insn, regs, regoff, &seg_base, शून्य);
+	अगर (ret)
+		जाओ out;
 
-	linear_addr = (unsigned long)eff_addr + seg_base;
+	linear_addr = (अचिन्हित दीर्घ)eff_addr + seg_base;
 
 out:
-	return (void __user *)linear_addr;
-}
-#endif /* CONFIG_X86_64 */
+	वापस (व्योम __user *)linear_addr;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_X86_64 */
 
 /**
- * insn_get_addr_ref() - Obtain the linear address referred by instruction
- * @insn:	Instruction structure containing ModRM byte and displacement
- * @regs:	Structure with register values as seen when entering kernel mode
+ * insn_get_addr_ref() - Obtain the linear address referred by inकाष्ठाion
+ * @insn:	Inकाष्ठाion काष्ठाure containing ModRM byte and displacement
+ * @regs:	Structure with रेजिस्टर values as seen when entering kernel mode
  *
- * Obtain the linear address referred by the instruction's ModRM, SIB and
- * displacement bytes, and segment base, as applicable. In protected mode,
- * segment limits are enforced.
+ * Obtain the linear address referred by the inकाष्ठाion's ModRM, SIB and
+ * displacement bytes, and segment base, as applicable. In रक्षित mode,
+ * segment limits are enक्रमced.
  *
  * Returns:
  *
- * Linear address referenced by instruction and registers on success.
+ * Linear address referenced by inकाष्ठाion and रेजिस्टरs on success.
  *
  * -1L on error.
  */
-void __user *insn_get_addr_ref(struct insn *insn, struct pt_regs *regs)
-{
-	if (!insn || !regs)
-		return (void __user *)-1L;
+व्योम __user *insn_get_addr_ref(काष्ठा insn *insn, काष्ठा pt_regs *regs)
+अणु
+	अगर (!insn || !regs)
+		वापस (व्योम __user *)-1L;
 
-	switch (insn->addr_bytes) {
-	case 2:
-		return get_addr_ref_16(insn, regs);
-	case 4:
-		return get_addr_ref_32(insn, regs);
-	case 8:
-		return get_addr_ref_64(insn, regs);
-	default:
-		return (void __user *)-1L;
-	}
-}
+	चयन (insn->addr_bytes) अणु
+	हाल 2:
+		वापस get_addr_ref_16(insn, regs);
+	हाल 4:
+		वापस get_addr_ref_32(insn, regs);
+	हाल 8:
+		वापस get_addr_ref_64(insn, regs);
+	शेष:
+		वापस (व्योम __user *)-1L;
+	पूर्ण
+पूर्ण
 
-static unsigned long insn_get_effective_ip(struct pt_regs *regs)
-{
-	unsigned long seg_base = 0;
+अटल अचिन्हित दीर्घ insn_get_effective_ip(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ seg_base = 0;
 
 	/*
-	 * If not in user-space long mode, a custom code segment could be in
-	 * use. This is true in protected mode (if the process defined a local
-	 * descriptor table), or virtual-8086 mode. In most of the cases
+	 * If not in user-space दीर्घ mode, a custom code segment could be in
+	 * use. This is true in रक्षित mode (अगर the process defined a local
+	 * descriptor table), or भव-8086 mode. In most of the हालs
 	 * seg_base will be zero as in USER_CS.
 	 */
-	if (!user_64bit_mode(regs)) {
+	अगर (!user_64bit_mode(regs)) अणु
 		seg_base = insn_get_seg_base(regs, INAT_SEG_REG_CS);
-		if (seg_base == -1L)
-			return 0;
-	}
+		अगर (seg_base == -1L)
+			वापस 0;
+	पूर्ण
 
-	return seg_base + regs->ip;
-}
+	वापस seg_base + regs->ip;
+पूर्ण
 
 /**
- * insn_fetch_from_user() - Copy instruction bytes from user-space memory
- * @regs:	Structure with register values as seen when entering kernel mode
- * @buf:	Array to store the fetched instruction
+ * insn_fetch_from_user() - Copy inकाष्ठाion bytes from user-space memory
+ * @regs:	Structure with रेजिस्टर values as seen when entering kernel mode
+ * @buf:	Array to store the fetched inकाष्ठाion
  *
- * Gets the linear address of the instruction and copies the instruction bytes
+ * Gets the linear address of the inकाष्ठाion and copies the inकाष्ठाion bytes
  * to the buf.
  *
  * Returns:
  *
- * Number of instruction bytes copied.
+ * Number of inकाष्ठाion bytes copied.
  *
- * 0 if nothing was copied.
+ * 0 अगर nothing was copied.
  */
-int insn_fetch_from_user(struct pt_regs *regs, unsigned char buf[MAX_INSN_SIZE])
-{
-	unsigned long ip;
-	int not_copied;
+पूर्णांक insn_fetch_from_user(काष्ठा pt_regs *regs, अचिन्हित अक्षर buf[MAX_INSN_SIZE])
+अणु
+	अचिन्हित दीर्घ ip;
+	पूर्णांक not_copied;
 
 	ip = insn_get_effective_ip(regs);
-	if (!ip)
-		return 0;
+	अगर (!ip)
+		वापस 0;
 
-	not_copied = copy_from_user(buf, (void __user *)ip, MAX_INSN_SIZE);
+	not_copied = copy_from_user(buf, (व्योम __user *)ip, MAX_INSN_SIZE);
 
-	return MAX_INSN_SIZE - not_copied;
-}
+	वापस MAX_INSN_SIZE - not_copied;
+पूर्ण
 
 /**
- * insn_fetch_from_user_inatomic() - Copy instruction bytes from user-space memory
- *                                   while in atomic code
- * @regs:	Structure with register values as seen when entering kernel mode
- * @buf:	Array to store the fetched instruction
+ * insn_fetch_from_user_inatomic() - Copy inकाष्ठाion bytes from user-space memory
+ *                                   जबतक in atomic code
+ * @regs:	Structure with रेजिस्टर values as seen when entering kernel mode
+ * @buf:	Array to store the fetched inकाष्ठाion
  *
- * Gets the linear address of the instruction and copies the instruction bytes
+ * Gets the linear address of the inकाष्ठाion and copies the inकाष्ठाion bytes
  * to the buf. This function must be used in atomic context.
  *
  * Returns:
  *
- * Number of instruction bytes copied.
+ * Number of inकाष्ठाion bytes copied.
  *
- * 0 if nothing was copied.
+ * 0 अगर nothing was copied.
  */
-int insn_fetch_from_user_inatomic(struct pt_regs *regs, unsigned char buf[MAX_INSN_SIZE])
-{
-	unsigned long ip;
-	int not_copied;
+पूर्णांक insn_fetch_from_user_inatomic(काष्ठा pt_regs *regs, अचिन्हित अक्षर buf[MAX_INSN_SIZE])
+अणु
+	अचिन्हित दीर्घ ip;
+	पूर्णांक not_copied;
 
 	ip = insn_get_effective_ip(regs);
-	if (!ip)
-		return 0;
+	अगर (!ip)
+		वापस 0;
 
-	not_copied = __copy_from_user_inatomic(buf, (void __user *)ip, MAX_INSN_SIZE);
+	not_copied = __copy_from_user_inatomic(buf, (व्योम __user *)ip, MAX_INSN_SIZE);
 
-	return MAX_INSN_SIZE - not_copied;
-}
+	वापस MAX_INSN_SIZE - not_copied;
+पूर्ण
 
 /**
- * insn_decode_from_regs() - Decode an instruction
- * @insn:	Structure to store decoded instruction
- * @regs:	Structure with register values as seen when entering kernel mode
- * @buf:	Buffer containing the instruction bytes
- * @buf_size:   Number of instruction bytes available in buf
+ * insn_decode_from_regs() - Decode an inकाष्ठाion
+ * @insn:	Structure to store decoded inकाष्ठाion
+ * @regs:	Structure with रेजिस्टर values as seen when entering kernel mode
+ * @buf:	Buffer containing the inकाष्ठाion bytes
+ * @buf_size:   Number of inकाष्ठाion bytes available in buf
  *
- * Decodes the instruction provided in buf and stores the decoding results in
- * insn. Also determines the correct address and operand sizes.
+ * Decodes the inकाष्ठाion provided in buf and stores the decoding results in
+ * insn. Also determines the correct address and opeअक्रम sizes.
  *
  * Returns:
  *
- * True if instruction was decoded, False otherwise.
+ * True अगर inकाष्ठाion was decoded, False otherwise.
  */
-bool insn_decode_from_regs(struct insn *insn, struct pt_regs *regs,
-			   unsigned char buf[MAX_INSN_SIZE], int buf_size)
-{
-	int seg_defs;
+bool insn_decode_from_regs(काष्ठा insn *insn, काष्ठा pt_regs *regs,
+			   अचिन्हित अक्षर buf[MAX_INSN_SIZE], पूर्णांक buf_size)
+अणु
+	पूर्णांक seg_defs;
 
 	insn_init(insn, buf, buf_size, user_64bit_mode(regs));
 
 	/*
-	 * Override the default operand and address sizes with what is specified
-	 * in the code segment descriptor. The instruction decoder only sets
-	 * the address size it to either 4 or 8 address bytes and does nothing
-	 * for the operand bytes. This OK for most of the cases, but we could
-	 * have special cases where, for instance, a 16-bit code segment
+	 * Override the शेष opeअक्रम and address sizes with what is specअगरied
+	 * in the code segment descriptor. The inकाष्ठाion decoder only sets
+	 * the address size it to either 4 or 8 address bytes and करोes nothing
+	 * क्रम the opeअक्रम bytes. This OK क्रम most of the हालs, but we could
+	 * have special हालs where, क्रम instance, a 16-bit code segment
 	 * descriptor is used.
-	 * If there is an address override prefix, the instruction decoder
-	 * correctly updates these values, even for 16-bit defaults.
+	 * If there is an address override prefix, the inकाष्ठाion decoder
+	 * correctly updates these values, even क्रम 16-bit शेषs.
 	 */
 	seg_defs = insn_get_code_seg_params(regs);
-	if (seg_defs == -EINVAL)
-		return false;
+	अगर (seg_defs == -EINVAL)
+		वापस false;
 
 	insn->addr_bytes = INSN_CODE_SEG_ADDR_SZ(seg_defs);
 	insn->opnd_bytes = INSN_CODE_SEG_OPND_SZ(seg_defs);
 
-	if (insn_get_length(insn))
-		return false;
+	अगर (insn_get_length(insn))
+		वापस false;
 
-	if (buf_size < insn->length)
-		return false;
+	अगर (buf_size < insn->length)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण

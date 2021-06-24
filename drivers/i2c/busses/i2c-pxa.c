@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  i2c_adap_pxa.c
  *
- *  I2C adapter for the PXA I2C bus access.
+ *  I2C adapter क्रम the PXA I2C bus access.
  *
  *  Copyright (C) 2002 Intrinsyc Software Inc.
  *  Copyright (C) 2004-2005 Deep Blue Solutions Ltd.
@@ -10,117 +11,117 @@
  *  History:
  *    Apr 2002: Initial version [CS]
  *    Jun 2002: Properly separated algo/adap [FB]
- *    Jan 2003: Fixed several bugs concerning interrupt handling [Kai-Uwe Bloem]
- *    Jan 2003: added limited signal handling [Kai-Uwe Bloem]
+ *    Jan 2003: Fixed several bugs concerning पूर्णांकerrupt handling [Kai-Uwe Bloem]
+ *    Jan 2003: added limited संकेत handling [Kai-Uwe Bloem]
  *    Sep 2004: Major rework to ensure efficient bus handling [RMK]
- *    Dec 2004: Added support for PXA27x and slave device probing [Liam Girdwood]
+ *    Dec 2004: Added support क्रम PXA27x and slave device probing [Liam Girdwood]
  *    Feb 2005: Rework slave mode handling [RMK]
  */
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/platform_data/i2c-pxa.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
+#समावेश <linux/slab.h>
 
-/* I2C register field definitions */
-#define IBMR_SDAS	(1 << 0)
-#define IBMR_SCLS	(1 << 1)
+/* I2C रेजिस्टर field definitions */
+#घोषणा IBMR_SDAS	(1 << 0)
+#घोषणा IBMR_SCLS	(1 << 1)
 
-#define ICR_START	(1 << 0)	   /* start bit */
-#define ICR_STOP	(1 << 1)	   /* stop bit */
-#define ICR_ACKNAK	(1 << 2)	   /* send ACK(0) or NAK(1) */
-#define ICR_TB		(1 << 3)	   /* transfer byte bit */
-#define ICR_MA		(1 << 4)	   /* master abort */
-#define ICR_SCLE	(1 << 5)	   /* master clock enable */
-#define ICR_IUE		(1 << 6)	   /* unit enable */
-#define ICR_GCD		(1 << 7)	   /* general call disable */
-#define ICR_ITEIE	(1 << 8)	   /* enable tx interrupts */
-#define ICR_IRFIE	(1 << 9)	   /* enable rx interrupts */
-#define ICR_BEIE	(1 << 10)	   /* enable bus error ints */
-#define ICR_SSDIE	(1 << 11)	   /* slave STOP detected int enable */
-#define ICR_ALDIE	(1 << 12)	   /* enable arbitration interrupt */
-#define ICR_SADIE	(1 << 13)	   /* slave address detected int enable */
-#define ICR_UR		(1 << 14)	   /* unit reset */
-#define ICR_FM		(1 << 15)	   /* fast mode */
-#define ICR_HS		(1 << 16)	   /* High Speed mode */
-#define ICR_A3700_FM	(1 << 16)	   /* fast mode for armada-3700 */
-#define ICR_A3700_HS	(1 << 17)	   /* high speed mode for armada-3700 */
-#define ICR_GPIOEN	(1 << 19)	   /* enable GPIO mode for SCL in HS */
+#घोषणा ICR_START	(1 << 0)	   /* start bit */
+#घोषणा ICR_STOP	(1 << 1)	   /* stop bit */
+#घोषणा ICR_ACKNAK	(1 << 2)	   /* send ACK(0) or NAK(1) */
+#घोषणा ICR_TB		(1 << 3)	   /* transfer byte bit */
+#घोषणा ICR_MA		(1 << 4)	   /* master पात */
+#घोषणा ICR_SCLE	(1 << 5)	   /* master घड़ी enable */
+#घोषणा ICR_IUE		(1 << 6)	   /* unit enable */
+#घोषणा ICR_GCD		(1 << 7)	   /* general call disable */
+#घोषणा ICR_ITEIE	(1 << 8)	   /* enable tx पूर्णांकerrupts */
+#घोषणा ICR_IRFIE	(1 << 9)	   /* enable rx पूर्णांकerrupts */
+#घोषणा ICR_BEIE	(1 << 10)	   /* enable bus error पूर्णांकs */
+#घोषणा ICR_SSDIE	(1 << 11)	   /* slave STOP detected पूर्णांक enable */
+#घोषणा ICR_ALDIE	(1 << 12)	   /* enable arbitration पूर्णांकerrupt */
+#घोषणा ICR_SADIE	(1 << 13)	   /* slave address detected पूर्णांक enable */
+#घोषणा ICR_UR		(1 << 14)	   /* unit reset */
+#घोषणा ICR_FM		(1 << 15)	   /* fast mode */
+#घोषणा ICR_HS		(1 << 16)	   /* High Speed mode */
+#घोषणा ICR_A3700_FM	(1 << 16)	   /* fast mode क्रम armada-3700 */
+#घोषणा ICR_A3700_HS	(1 << 17)	   /* high speed mode क्रम armada-3700 */
+#घोषणा ICR_GPIOEN	(1 << 19)	   /* enable GPIO mode क्रम SCL in HS */
 
-#define ISR_RWM		(1 << 0)	   /* read/write mode */
-#define ISR_ACKNAK	(1 << 1)	   /* ack/nak status */
-#define ISR_UB		(1 << 2)	   /* unit busy */
-#define ISR_IBB		(1 << 3)	   /* bus busy */
-#define ISR_SSD		(1 << 4)	   /* slave stop detected */
-#define ISR_ALD		(1 << 5)	   /* arbitration loss detected */
-#define ISR_ITE		(1 << 6)	   /* tx buffer empty */
-#define ISR_IRF		(1 << 7)	   /* rx buffer full */
-#define ISR_GCAD	(1 << 8)	   /* general call address detected */
-#define ISR_SAD		(1 << 9)	   /* slave address detected */
-#define ISR_BED		(1 << 10)	   /* bus error no ACK/NAK */
+#घोषणा ISR_RWM		(1 << 0)	   /* पढ़ो/ग_लिखो mode */
+#घोषणा ISR_ACKNAK	(1 << 1)	   /* ack/nak status */
+#घोषणा ISR_UB		(1 << 2)	   /* unit busy */
+#घोषणा ISR_IBB		(1 << 3)	   /* bus busy */
+#घोषणा ISR_SSD		(1 << 4)	   /* slave stop detected */
+#घोषणा ISR_ALD		(1 << 5)	   /* arbitration loss detected */
+#घोषणा ISR_ITE		(1 << 6)	   /* tx buffer empty */
+#घोषणा ISR_IRF		(1 << 7)	   /* rx buffer full */
+#घोषणा ISR_GCAD	(1 << 8)	   /* general call address detected */
+#घोषणा ISR_SAD		(1 << 9)	   /* slave address detected */
+#घोषणा ISR_BED		(1 << 10)	   /* bus error no ACK/NAK */
 
-#define ILCR_SLV_SHIFT		0
-#define ILCR_SLV_MASK		(0x1FF << ILCR_SLV_SHIFT)
-#define ILCR_FLV_SHIFT		9
-#define ILCR_FLV_MASK		(0x1FF << ILCR_FLV_SHIFT)
-#define ILCR_HLVL_SHIFT		18
-#define ILCR_HLVL_MASK		(0x1FF << ILCR_HLVL_SHIFT)
-#define ILCR_HLVH_SHIFT		27
-#define ILCR_HLVH_MASK		(0x1F << ILCR_HLVH_SHIFT)
+#घोषणा ILCR_SLV_SHIFT		0
+#घोषणा ILCR_SLV_MASK		(0x1FF << ILCR_SLV_SHIFT)
+#घोषणा ILCR_FLV_SHIFT		9
+#घोषणा ILCR_FLV_MASK		(0x1FF << ILCR_FLV_SHIFT)
+#घोषणा ILCR_HLVL_SHIFT		18
+#घोषणा ILCR_HLVL_MASK		(0x1FF << ILCR_HLVL_SHIFT)
+#घोषणा ILCR_HLVH_SHIFT		27
+#घोषणा ILCR_HLVH_MASK		(0x1F << ILCR_HLVH_SHIFT)
 
-#define IWCR_CNT_SHIFT		0
-#define IWCR_CNT_MASK		(0x1F << IWCR_CNT_SHIFT)
-#define IWCR_HS_CNT1_SHIFT	5
-#define IWCR_HS_CNT1_MASK	(0x1F << IWCR_HS_CNT1_SHIFT)
-#define IWCR_HS_CNT2_SHIFT	10
-#define IWCR_HS_CNT2_MASK	(0x1F << IWCR_HS_CNT2_SHIFT)
+#घोषणा IWCR_CNT_SHIFT		0
+#घोषणा IWCR_CNT_MASK		(0x1F << IWCR_CNT_SHIFT)
+#घोषणा IWCR_HS_CNT1_SHIFT	5
+#घोषणा IWCR_HS_CNT1_MASK	(0x1F << IWCR_HS_CNT1_SHIFT)
+#घोषणा IWCR_HS_CNT2_SHIFT	10
+#घोषणा IWCR_HS_CNT2_MASK	(0x1F << IWCR_HS_CNT2_SHIFT)
 
-/* need a longer timeout if we're dealing with the fact we may well be
+/* need a दीर्घer समयout अगर we're dealing with the fact we may well be
  * looking at a multi-master environment
  */
-#define DEF_TIMEOUT             32
+#घोषणा DEF_TIMEOUT             32
 
-#define NO_SLAVE		(-ENXIO)
-#define BUS_ERROR               (-EREMOTEIO)
-#define XFER_NAKED              (-ECONNREFUSED)
-#define I2C_RETRY               (-2000) /* an error has occurred retry transmit */
+#घोषणा NO_SLAVE		(-ENXIO)
+#घोषणा BUS_ERROR               (-EREMOTEIO)
+#घोषणा XFER_NAKED              (-ECONNREFUSED)
+#घोषणा I2C_RETRY               (-2000) /* an error has occurred retry transmit */
 
 /* ICR initialize bit values
  *
  * 15 FM     0 (100 kHz operation)
  * 14 UR     0 (No unit reset)
- * 13 SADIE  0 (Disables the unit from interrupting on slave addresses
+ * 13 SADIE  0 (Disables the unit from पूर्णांकerrupting on slave addresses
  *              matching its slave address)
- * 12 ALDIE  0 (Disables the unit from interrupt when it loses arbitration
+ * 12 ALDIE  0 (Disables the unit from पूर्णांकerrupt when it loses arbitration
  *              in master mode)
- * 11 SSDIE  0 (Disables interrupts from a slave stop detected, in slave mode)
- * 10 BEIE   1 (Enable interrupts from detected bus errors, no ACK sent)
- *  9 IRFIE  1 (Enable interrupts from full buffer received)
- *  8 ITEIE  1 (Enables the I2C unit to interrupt when transmit buffer empty)
+ * 11 SSDIE  0 (Disables पूर्णांकerrupts from a slave stop detected, in slave mode)
+ * 10 BEIE   1 (Enable पूर्णांकerrupts from detected bus errors, no ACK sent)
+ *  9 IRFIE  1 (Enable पूर्णांकerrupts from full buffer received)
+ *  8 ITEIE  1 (Enables the I2C unit to पूर्णांकerrupt when transmit buffer empty)
  *  7 GCD    1 (Disables i2c unit response to general call messages as a slave)
  *  6 IUE    0 (Disable unit until we change settings)
- *  5 SCLE   1 (Enables the i2c clock output for master mode (drives SCL)
+ *  5 SCLE   1 (Enables the i2c घड़ी output क्रम master mode (drives SCL)
  *  4 MA     0 (Only send stop with the ICR stop bit)
  *  3 TB     0 (We are not transmitting a byte initially)
  *  2 ACKNAK 0 (Send an ACK after the unit receives a byte)
  *  1 STOP   0 (Do not send a STOP)
  *  0 START  0 (Do not send a START)
  */
-#define I2C_ICR_INIT	(ICR_BEIE | ICR_IRFIE | ICR_ITEIE | ICR_GCD | ICR_SCLE)
+#घोषणा I2C_ICR_INIT	(ICR_BEIE | ICR_IRFIE | ICR_ITEIE | ICR_GCD | ICR_SCLE)
 
-/* I2C status register init values
+/* I2C status रेजिस्टर init values
  *
  * 10 BED    1 (Clear bus error detected)
  *  9 SAD    1 (Clear slave address detected)
@@ -129,9 +130,9 @@
  *  5 ALD    1 (Clear Arbitration Loss Detected)
  *  4 SSD    1 (Clear Slave Stop Detected)
  */
-#define I2C_ISR_INIT	0x7FF  /* status register init */
+#घोषणा I2C_ISR_INIT	0x7FF  /* status रेजिस्टर init */
 
-struct pxa_reg_layout {
+काष्ठा pxa_reg_layout अणु
 	u32 ibmr;
 	u32 idbr;
 	u32 icr;
@@ -141,19 +142,19 @@ struct pxa_reg_layout {
 	u32 iwcr;
 	u32 fm;
 	u32 hs;
-};
+पूर्ण;
 
-enum pxa_i2c_types {
+क्रमागत pxa_i2c_types अणु
 	REGS_PXA2XX,
 	REGS_PXA3XX,
 	REGS_CE4100,
 	REGS_PXA910,
 	REGS_A3700,
-};
+पूर्ण;
 
-/* I2C register layout definitions */
-static struct pxa_reg_layout pxa_reg_layout[] = {
-	[REGS_PXA2XX] = {
+/* I2C रेजिस्टर layout definitions */
+अटल काष्ठा pxa_reg_layout pxa_reg_layout[] = अणु
+	[REGS_PXA2XX] = अणु
 		.ibmr =	0x00,
 		.idbr =	0x08,
 		.icr =	0x10,
@@ -161,8 +162,8 @@ static struct pxa_reg_layout pxa_reg_layout[] = {
 		.isar =	0x20,
 		.fm = ICR_FM,
 		.hs = ICR_HS,
-	},
-	[REGS_PXA3XX] = {
+	पूर्ण,
+	[REGS_PXA3XX] = अणु
 		.ibmr =	0x00,
 		.idbr =	0x04,
 		.icr =	0x08,
@@ -170,17 +171,17 @@ static struct pxa_reg_layout pxa_reg_layout[] = {
 		.isar =	0x10,
 		.fm = ICR_FM,
 		.hs = ICR_HS,
-	},
-	[REGS_CE4100] = {
+	पूर्ण,
+	[REGS_CE4100] = अणु
 		.ibmr =	0x14,
 		.idbr =	0x0c,
 		.icr =	0x00,
 		.isr =	0x04,
-		/* no isar register */
+		/* no isar रेजिस्टर */
 		.fm = ICR_FM,
 		.hs = ICR_HS,
-	},
-	[REGS_PXA910] = {
+	पूर्ण,
+	[REGS_PXA910] = अणु
 		.ibmr = 0x00,
 		.idbr = 0x08,
 		.icr =	0x10,
@@ -190,8 +191,8 @@ static struct pxa_reg_layout pxa_reg_layout[] = {
 		.iwcr = 0x30,
 		.fm = ICR_FM,
 		.hs = ICR_HS,
-	},
-	[REGS_A3700] = {
+	पूर्ण,
+	[REGS_A3700] = अणु
 		.ibmr =	0x00,
 		.idbr =	0x04,
 		.icr =	0x08,
@@ -199,719 +200,719 @@ static struct pxa_reg_layout pxa_reg_layout[] = {
 		.isar =	0x10,
 		.fm = ICR_A3700_FM,
 		.hs = ICR_A3700_HS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct of_device_id i2c_pxa_dt_ids[] = {
-	{ .compatible = "mrvl,pxa-i2c", .data = (void *)REGS_PXA2XX },
-	{ .compatible = "mrvl,pwri2c", .data = (void *)REGS_PXA3XX },
-	{ .compatible = "mrvl,mmp-twsi", .data = (void *)REGS_PXA910 },
-	{ .compatible = "marvell,armada-3700-i2c", .data = (void *)REGS_A3700 },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id i2c_pxa_dt_ids[] = अणु
+	अणु .compatible = "mrvl,pxa-i2c", .data = (व्योम *)REGS_PXA2XX पूर्ण,
+	अणु .compatible = "mrvl,pwri2c", .data = (व्योम *)REGS_PXA3XX पूर्ण,
+	अणु .compatible = "mrvl,mmp-twsi", .data = (व्योम *)REGS_PXA910 पूर्ण,
+	अणु .compatible = "marvell,armada-3700-i2c", .data = (व्योम *)REGS_A3700 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, i2c_pxa_dt_ids);
 
-static const struct platform_device_id i2c_pxa_id_table[] = {
-	{ "pxa2xx-i2c",		REGS_PXA2XX },
-	{ "pxa3xx-pwri2c",	REGS_PXA3XX },
-	{ "ce4100-i2c",		REGS_CE4100 },
-	{ "pxa910-i2c",		REGS_PXA910 },
-	{ "armada-3700-i2c",	REGS_A3700  },
-	{ },
-};
-MODULE_DEVICE_TABLE(platform, i2c_pxa_id_table);
+अटल स्थिर काष्ठा platक्रमm_device_id i2c_pxa_id_table[] = अणु
+	अणु "pxa2xx-i2c",		REGS_PXA2XX पूर्ण,
+	अणु "pxa3xx-pwri2c",	REGS_PXA3XX पूर्ण,
+	अणु "ce4100-i2c",		REGS_CE4100 पूर्ण,
+	अणु "pxa910-i2c",		REGS_PXA910 पूर्ण,
+	अणु "armada-3700-i2c",	REGS_A3700  पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, i2c_pxa_id_table);
 
-struct pxa_i2c {
+काष्ठा pxa_i2c अणु
 	spinlock_t		lock;
-	wait_queue_head_t	wait;
-	struct i2c_msg		*msg;
-	unsigned int		msg_num;
-	unsigned int		msg_idx;
-	unsigned int		msg_ptr;
-	unsigned int		slave_addr;
-	unsigned int		req_slave_addr;
+	रुको_queue_head_t	रुको;
+	काष्ठा i2c_msg		*msg;
+	अचिन्हित पूर्णांक		msg_num;
+	अचिन्हित पूर्णांक		msg_idx;
+	अचिन्हित पूर्णांक		msg_ptr;
+	अचिन्हित पूर्णांक		slave_addr;
+	अचिन्हित पूर्णांक		req_slave_addr;
 
-	struct i2c_adapter	adap;
-	struct clk		*clk;
-#ifdef CONFIG_I2C_PXA_SLAVE
-	struct i2c_client	*slave;
-#endif
+	काष्ठा i2c_adapter	adap;
+	काष्ठा clk		*clk;
+#अगर_घोषित CONFIG_I2C_PXA_SLAVE
+	काष्ठा i2c_client	*slave;
+#पूर्ण_अगर
 
-	unsigned int		irqlogidx;
+	अचिन्हित पूर्णांक		irqlogidx;
 	u32			isrlog[32];
 	u32			icrlog[32];
 
-	void __iomem		*reg_base;
-	void __iomem		*reg_ibmr;
-	void __iomem		*reg_idbr;
-	void __iomem		*reg_icr;
-	void __iomem		*reg_isr;
-	void __iomem		*reg_isar;
-	void __iomem		*reg_ilcr;
-	void __iomem		*reg_iwcr;
+	व्योम __iomem		*reg_base;
+	व्योम __iomem		*reg_ibmr;
+	व्योम __iomem		*reg_idbr;
+	व्योम __iomem		*reg_icr;
+	व्योम __iomem		*reg_isr;
+	व्योम __iomem		*reg_isar;
+	व्योम __iomem		*reg_ilcr;
+	व्योम __iomem		*reg_iwcr;
 
-	unsigned long		iobase;
-	unsigned long		iosize;
+	अचिन्हित दीर्घ		iobase;
+	अचिन्हित दीर्घ		iosize;
 
-	int			irq;
-	unsigned int		use_pio :1;
-	unsigned int		fast_mode :1;
-	unsigned int		high_mode:1;
-	unsigned char		master_code;
-	unsigned long		rate;
+	पूर्णांक			irq;
+	अचिन्हित पूर्णांक		use_pio :1;
+	अचिन्हित पूर्णांक		fast_mode :1;
+	अचिन्हित पूर्णांक		high_mode:1;
+	अचिन्हित अक्षर		master_code;
+	अचिन्हित दीर्घ		rate;
 	bool			highmode_enter;
 	u32			fm_mask;
 	u32			hs_mask;
 
-	struct i2c_bus_recovery_info recovery;
-};
+	काष्ठा i2c_bus_recovery_info recovery;
+पूर्ण;
 
-#define _IBMR(i2c)	((i2c)->reg_ibmr)
-#define _IDBR(i2c)	((i2c)->reg_idbr)
-#define _ICR(i2c)	((i2c)->reg_icr)
-#define _ISR(i2c)	((i2c)->reg_isr)
-#define _ISAR(i2c)	((i2c)->reg_isar)
-#define _ILCR(i2c)	((i2c)->reg_ilcr)
-#define _IWCR(i2c)	((i2c)->reg_iwcr)
+#घोषणा _IBMR(i2c)	((i2c)->reg_ibmr)
+#घोषणा _IDBR(i2c)	((i2c)->reg_idbr)
+#घोषणा _ICR(i2c)	((i2c)->reg_icr)
+#घोषणा _ISR(i2c)	((i2c)->reg_isr)
+#घोषणा _ISAR(i2c)	((i2c)->reg_isar)
+#घोषणा _ILCR(i2c)	((i2c)->reg_ilcr)
+#घोषणा _IWCR(i2c)	((i2c)->reg_iwcr)
 
 /*
  * I2C Slave mode address
  */
-#define I2C_PXA_SLAVE_ADDR      0x1
+#घोषणा I2C_PXA_SLAVE_ADDR      0x1
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 
-struct bits {
+काष्ठा bits अणु
 	u32	mask;
-	const char *set;
-	const char *unset;
-};
-#define PXA_BIT(m, s, u)	{ .mask = m, .set = s, .unset = u }
+	स्थिर अक्षर *set;
+	स्थिर अक्षर *unset;
+पूर्ण;
+#घोषणा PXA_BIT(m, s, u)	अणु .mask = m, .set = s, .unset = u पूर्ण
 
-static inline void
-decode_bits(const char *prefix, const struct bits *bits, int num, u32 val)
-{
-	printk("%s %08x:", prefix, val);
-	while (num--) {
-		const char *str = val & bits->mask ? bits->set : bits->unset;
-		if (str)
+अटल अंतरभूत व्योम
+decode_bits(स्थिर अक्षर *prefix, स्थिर काष्ठा bits *bits, पूर्णांक num, u32 val)
+अणु
+	prपूर्णांकk("%s %08x:", prefix, val);
+	जबतक (num--) अणु
+		स्थिर अक्षर *str = val & bits->mask ? bits->set : bits->unset;
+		अगर (str)
 			pr_cont(" %s", str);
 		bits++;
-	}
+	पूर्ण
 	pr_cont("\n");
-}
+पूर्ण
 
-static const struct bits isr_bits[] = {
+अटल स्थिर काष्ठा bits isr_bits[] = अणु
 	PXA_BIT(ISR_RWM,	"RX",		"TX"),
 	PXA_BIT(ISR_ACKNAK,	"NAK",		"ACK"),
 	PXA_BIT(ISR_UB,		"Bsy",		"Rdy"),
 	PXA_BIT(ISR_IBB,	"BusBsy",	"BusRdy"),
-	PXA_BIT(ISR_SSD,	"SlaveStop",	NULL),
-	PXA_BIT(ISR_ALD,	"ALD",		NULL),
-	PXA_BIT(ISR_ITE,	"TxEmpty",	NULL),
-	PXA_BIT(ISR_IRF,	"RxFull",	NULL),
-	PXA_BIT(ISR_GCAD,	"GenCall",	NULL),
-	PXA_BIT(ISR_SAD,	"SlaveAddr",	NULL),
-	PXA_BIT(ISR_BED,	"BusErr",	NULL),
-};
+	PXA_BIT(ISR_SSD,	"SlaveStop",	शून्य),
+	PXA_BIT(ISR_ALD,	"ALD",		शून्य),
+	PXA_BIT(ISR_ITE,	"TxEmpty",	शून्य),
+	PXA_BIT(ISR_IRF,	"RxFull",	शून्य),
+	PXA_BIT(ISR_GCAD,	"GenCall",	शून्य),
+	PXA_BIT(ISR_SAD,	"SlaveAddr",	शून्य),
+	PXA_BIT(ISR_BED,	"BusErr",	शून्य),
+पूर्ण;
 
-static void decode_ISR(unsigned int val)
-{
+अटल व्योम decode_ISR(अचिन्हित पूर्णांक val)
+अणु
 	decode_bits(KERN_DEBUG "ISR", isr_bits, ARRAY_SIZE(isr_bits), val);
-}
+पूर्ण
 
-static const struct bits icr_bits[] = {
-	PXA_BIT(ICR_START,  "START",	NULL),
-	PXA_BIT(ICR_STOP,   "STOP",	NULL),
-	PXA_BIT(ICR_ACKNAK, "ACKNAK",	NULL),
-	PXA_BIT(ICR_TB,     "TB",	NULL),
-	PXA_BIT(ICR_MA,     "MA",	NULL),
+अटल स्थिर काष्ठा bits icr_bits[] = अणु
+	PXA_BIT(ICR_START,  "START",	शून्य),
+	PXA_BIT(ICR_STOP,   "STOP",	शून्य),
+	PXA_BIT(ICR_ACKNAK, "ACKNAK",	शून्य),
+	PXA_BIT(ICR_TB,     "TB",	शून्य),
+	PXA_BIT(ICR_MA,     "MA",	शून्य),
 	PXA_BIT(ICR_SCLE,   "SCLE",	"scle"),
 	PXA_BIT(ICR_IUE,    "IUE",	"iue"),
-	PXA_BIT(ICR_GCD,    "GCD",	NULL),
-	PXA_BIT(ICR_ITEIE,  "ITEIE",	NULL),
-	PXA_BIT(ICR_IRFIE,  "IRFIE",	NULL),
-	PXA_BIT(ICR_BEIE,   "BEIE",	NULL),
-	PXA_BIT(ICR_SSDIE,  "SSDIE",	NULL),
-	PXA_BIT(ICR_ALDIE,  "ALDIE",	NULL),
-	PXA_BIT(ICR_SADIE,  "SADIE",	NULL),
+	PXA_BIT(ICR_GCD,    "GCD",	शून्य),
+	PXA_BIT(ICR_ITEIE,  "ITEIE",	शून्य),
+	PXA_BIT(ICR_IRFIE,  "IRFIE",	शून्य),
+	PXA_BIT(ICR_BEIE,   "BEIE",	शून्य),
+	PXA_BIT(ICR_SSDIE,  "SSDIE",	शून्य),
+	PXA_BIT(ICR_ALDIE,  "ALDIE",	शून्य),
+	PXA_BIT(ICR_SADIE,  "SADIE",	शून्य),
 	PXA_BIT(ICR_UR,     "UR",		"ur"),
-};
+पूर्ण;
 
-#ifdef CONFIG_I2C_PXA_SLAVE
-static void decode_ICR(unsigned int val)
-{
+#अगर_घोषित CONFIG_I2C_PXA_SLAVE
+अटल व्योम decode_ICR(अचिन्हित पूर्णांक val)
+अणु
 	decode_bits(KERN_DEBUG "ICR", icr_bits, ARRAY_SIZE(icr_bits), val);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static unsigned int i2c_debug = DEBUG;
+अटल अचिन्हित पूर्णांक i2c_debug = DEBUG;
 
-static void i2c_pxa_show_state(struct pxa_i2c *i2c, int lno, const char *fname)
-{
+अटल व्योम i2c_pxa_show_state(काष्ठा pxa_i2c *i2c, पूर्णांक lno, स्थिर अक्षर *fname)
+अणु
 	dev_dbg(&i2c->adap.dev, "state:%s:%d: ISR=%08x, ICR=%08x, IBMR=%02x\n", fname, lno,
-		readl(_ISR(i2c)), readl(_ICR(i2c)), readl(_IBMR(i2c)));
-}
+		पढ़ोl(_ISR(i2c)), पढ़ोl(_ICR(i2c)), पढ़ोl(_IBMR(i2c)));
+पूर्ण
 
-#define show_state(i2c) i2c_pxa_show_state(i2c, __LINE__, __func__)
+#घोषणा show_state(i2c) i2c_pxa_show_state(i2c, __LINE__, __func__)
 
-static void i2c_pxa_scream_blue_murder(struct pxa_i2c *i2c, const char *why)
-{
-	unsigned int i;
-	struct device *dev = &i2c->adap.dev;
+अटल व्योम i2c_pxa_scream_blue_murder(काष्ठा pxa_i2c *i2c, स्थिर अक्षर *why)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा device *dev = &i2c->adap.dev;
 
 	dev_err(dev, "slave_0x%x error: %s\n",
 		i2c->req_slave_addr >> 1, why);
 	dev_err(dev, "msg_num: %d msg_idx: %d msg_ptr: %d\n",
 		i2c->msg_num, i2c->msg_idx, i2c->msg_ptr);
 	dev_err(dev, "IBMR: %08x IDBR: %08x ICR: %08x ISR: %08x\n",
-		readl(_IBMR(i2c)), readl(_IDBR(i2c)), readl(_ICR(i2c)),
-		readl(_ISR(i2c)));
+		पढ़ोl(_IBMR(i2c)), पढ़ोl(_IDBR(i2c)), पढ़ोl(_ICR(i2c)),
+		पढ़ोl(_ISR(i2c)));
 	dev_err(dev, "log:");
-	for (i = 0; i < i2c->irqlogidx; i++)
+	क्रम (i = 0; i < i2c->irqlogidx; i++)
 		pr_cont(" [%03x:%05x]", i2c->isrlog[i], i2c->icrlog[i]);
 	pr_cont("\n");
-}
+पूर्ण
 
-#else /* ifdef DEBUG */
+#अन्यथा /* अगरdef DEBUG */
 
-#define i2c_debug	0
+#घोषणा i2c_debug	0
 
-#define show_state(i2c) do { } while (0)
-#define decode_ISR(val) do { } while (0)
-#define decode_ICR(val) do { } while (0)
-#define i2c_pxa_scream_blue_murder(i2c, why) do { } while (0)
+#घोषणा show_state(i2c) करो अणु पूर्ण जबतक (0)
+#घोषणा decode_ISR(val) करो अणु पूर्ण जबतक (0)
+#घोषणा decode_ICR(val) करो अणु पूर्ण जबतक (0)
+#घोषणा i2c_pxa_scream_blue_murder(i2c, why) करो अणु पूर्ण जबतक (0)
 
-#endif /* ifdef DEBUG / else */
+#पूर्ण_अगर /* अगरdef DEBUG / अन्यथा */
 
-static void i2c_pxa_master_complete(struct pxa_i2c *i2c, int ret);
+अटल व्योम i2c_pxa_master_complete(काष्ठा pxa_i2c *i2c, पूर्णांक ret);
 
-static inline int i2c_pxa_is_slavemode(struct pxa_i2c *i2c)
-{
-	return !(readl(_ICR(i2c)) & ICR_SCLE);
-}
+अटल अंतरभूत पूर्णांक i2c_pxa_is_slavemode(काष्ठा pxa_i2c *i2c)
+अणु
+	वापस !(पढ़ोl(_ICR(i2c)) & ICR_SCLE);
+पूर्ण
 
-static void i2c_pxa_abort(struct pxa_i2c *i2c)
-{
-	int i = 250;
+अटल व्योम i2c_pxa_पात(काष्ठा pxa_i2c *i2c)
+अणु
+	पूर्णांक i = 250;
 
-	if (i2c_pxa_is_slavemode(i2c)) {
+	अगर (i2c_pxa_is_slavemode(i2c)) अणु
 		dev_dbg(&i2c->adap.dev, "%s: called in slave mode\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while ((i > 0) && (readl(_IBMR(i2c)) & IBMR_SDAS) == 0) {
-		unsigned long icr = readl(_ICR(i2c));
+	जबतक ((i > 0) && (पढ़ोl(_IBMR(i2c)) & IBMR_SDAS) == 0) अणु
+		अचिन्हित दीर्घ icr = पढ़ोl(_ICR(i2c));
 
 		icr &= ~ICR_START;
 		icr |= ICR_ACKNAK | ICR_STOP | ICR_TB;
 
-		writel(icr, _ICR(i2c));
+		ग_लिखोl(icr, _ICR(i2c));
 
 		show_state(i2c);
 
 		mdelay(1);
 		i --;
-	}
+	पूर्ण
 
-	writel(readl(_ICR(i2c)) & ~(ICR_MA | ICR_START | ICR_STOP),
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) & ~(ICR_MA | ICR_START | ICR_STOP),
 	       _ICR(i2c));
-}
+पूर्ण
 
-static int i2c_pxa_wait_bus_not_busy(struct pxa_i2c *i2c)
-{
-	int timeout = DEF_TIMEOUT;
+अटल पूर्णांक i2c_pxa_रुको_bus_not_busy(काष्ठा pxa_i2c *i2c)
+अणु
+	पूर्णांक समयout = DEF_TIMEOUT;
 	u32 isr;
 
-	while (1) {
-		isr = readl(_ISR(i2c));
-		if (!(isr & (ISR_IBB | ISR_UB)))
-			return 0;
+	जबतक (1) अणु
+		isr = पढ़ोl(_ISR(i2c));
+		अगर (!(isr & (ISR_IBB | ISR_UB)))
+			वापस 0;
 
-		if (isr & ISR_SAD)
-			timeout += 4;
+		अगर (isr & ISR_SAD)
+			समयout += 4;
 
-		if (!timeout--)
-			break;
+		अगर (!समयout--)
+			अवरोध;
 
 		msleep(2);
 		show_state(i2c);
-	}
+	पूर्ण
 
 	show_state(i2c);
 
-	return I2C_RETRY;
-}
+	वापस I2C_RETRY;
+पूर्ण
 
-static int i2c_pxa_wait_master(struct pxa_i2c *i2c)
-{
-	unsigned long timeout = jiffies + HZ*4;
+अटल पूर्णांक i2c_pxa_रुको_master(काष्ठा pxa_i2c *i2c)
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + HZ*4;
 
-	while (time_before(jiffies, timeout)) {
-		if (i2c_debug > 1)
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		अगर (i2c_debug > 1)
 			dev_dbg(&i2c->adap.dev, "%s: %ld: ISR=%08x, ICR=%08x, IBMR=%02x\n",
-				__func__, (long)jiffies, readl(_ISR(i2c)), readl(_ICR(i2c)), readl(_IBMR(i2c)));
+				__func__, (दीर्घ)jअगरfies, पढ़ोl(_ISR(i2c)), पढ़ोl(_ICR(i2c)), पढ़ोl(_IBMR(i2c)));
 
-		if (readl(_ISR(i2c)) & ISR_SAD) {
-			if (i2c_debug > 0)
+		अगर (पढ़ोl(_ISR(i2c)) & ISR_SAD) अणु
+			अगर (i2c_debug > 0)
 				dev_dbg(&i2c->adap.dev, "%s: Slave detected\n", __func__);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* wait for unit and bus being not busy, and we also do a
+		/* रुको क्रम unit and bus being not busy, and we also करो a
 		 * quick check of the i2c lines themselves to ensure they've
 		 * gone high...
 		 */
-		if ((readl(_ISR(i2c)) & (ISR_UB | ISR_IBB)) == 0 &&
-		    readl(_IBMR(i2c)) == (IBMR_SCLS | IBMR_SDAS)) {
-			if (i2c_debug > 0)
+		अगर ((पढ़ोl(_ISR(i2c)) & (ISR_UB | ISR_IBB)) == 0 &&
+		    पढ़ोl(_IBMR(i2c)) == (IBMR_SCLS | IBMR_SDAS)) अणु
+			अगर (i2c_debug > 0)
 				dev_dbg(&i2c->adap.dev, "%s: done\n", __func__);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		msleep(1);
-	}
+	पूर्ण
 
-	if (i2c_debug > 0)
+	अगर (i2c_debug > 0)
 		dev_dbg(&i2c->adap.dev, "%s: did not free\n", __func__);
  out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_pxa_set_master(struct pxa_i2c *i2c)
-{
-	if (i2c_debug)
+अटल पूर्णांक i2c_pxa_set_master(काष्ठा pxa_i2c *i2c)
+अणु
+	अगर (i2c_debug)
 		dev_dbg(&i2c->adap.dev, "setting to bus master\n");
 
-	if ((readl(_ISR(i2c)) & (ISR_UB | ISR_IBB)) != 0) {
+	अगर ((पढ़ोl(_ISR(i2c)) & (ISR_UB | ISR_IBB)) != 0) अणु
 		dev_dbg(&i2c->adap.dev, "%s: unit is busy\n", __func__);
-		if (!i2c_pxa_wait_master(i2c)) {
+		अगर (!i2c_pxa_रुको_master(i2c)) अणु
 			dev_dbg(&i2c->adap.dev, "%s: error: unit busy\n", __func__);
-			return I2C_RETRY;
-		}
-	}
+			वापस I2C_RETRY;
+		पूर्ण
+	पूर्ण
 
-	writel(readl(_ICR(i2c)) | ICR_SCLE, _ICR(i2c));
-	return 0;
-}
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) | ICR_SCLE, _ICR(i2c));
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_I2C_PXA_SLAVE
-static int i2c_pxa_wait_slave(struct pxa_i2c *i2c)
-{
-	unsigned long timeout = jiffies + HZ*1;
+#अगर_घोषित CONFIG_I2C_PXA_SLAVE
+अटल पूर्णांक i2c_pxa_रुको_slave(काष्ठा pxa_i2c *i2c)
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + HZ*1;
 
-	/* wait for stop */
+	/* रुको क्रम stop */
 
 	show_state(i2c);
 
-	while (time_before(jiffies, timeout)) {
-		if (i2c_debug > 1)
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		अगर (i2c_debug > 1)
 			dev_dbg(&i2c->adap.dev, "%s: %ld: ISR=%08x, ICR=%08x, IBMR=%02x\n",
-				__func__, (long)jiffies, readl(_ISR(i2c)), readl(_ICR(i2c)), readl(_IBMR(i2c)));
+				__func__, (दीर्घ)jअगरfies, पढ़ोl(_ISR(i2c)), पढ़ोl(_ICR(i2c)), पढ़ोl(_IBMR(i2c)));
 
-		if ((readl(_ISR(i2c)) & (ISR_UB|ISR_IBB)) == 0 ||
-		    (readl(_ISR(i2c)) & ISR_SAD) != 0 ||
-		    (readl(_ICR(i2c)) & ICR_SCLE) == 0) {
-			if (i2c_debug > 1)
+		अगर ((पढ़ोl(_ISR(i2c)) & (ISR_UB|ISR_IBB)) == 0 ||
+		    (पढ़ोl(_ISR(i2c)) & ISR_SAD) != 0 ||
+		    (पढ़ोl(_ICR(i2c)) & ICR_SCLE) == 0) अणु
+			अगर (i2c_debug > 1)
 				dev_dbg(&i2c->adap.dev, "%s: done\n", __func__);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		msleep(1);
-	}
+	पूर्ण
 
-	if (i2c_debug > 0)
+	अगर (i2c_debug > 0)
 		dev_dbg(&i2c->adap.dev, "%s: did not free\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * clear the hold on the bus, and take of anything else
+ * clear the hold on the bus, and take of anything अन्यथा
  * that has been configured
  */
-static void i2c_pxa_set_slave(struct pxa_i2c *i2c, int errcode)
-{
+अटल व्योम i2c_pxa_set_slave(काष्ठा pxa_i2c *i2c, पूर्णांक errcode)
+अणु
 	show_state(i2c);
 
-	if (errcode < 0) {
+	अगर (errcode < 0) अणु
 		udelay(100);   /* simple delay */
-	} else {
-		/* we need to wait for the stop condition to end */
+	पूर्ण अन्यथा अणु
+		/* we need to रुको क्रम the stop condition to end */
 
-		/* if we where in stop, then clear... */
-		if (readl(_ICR(i2c)) & ICR_STOP) {
+		/* अगर we where in stop, then clear... */
+		अगर (पढ़ोl(_ICR(i2c)) & ICR_STOP) अणु
 			udelay(100);
-			writel(readl(_ICR(i2c)) & ~ICR_STOP, _ICR(i2c));
-		}
+			ग_लिखोl(पढ़ोl(_ICR(i2c)) & ~ICR_STOP, _ICR(i2c));
+		पूर्ण
 
-		if (!i2c_pxa_wait_slave(i2c)) {
+		अगर (!i2c_pxa_रुको_slave(i2c)) अणु
 			dev_err(&i2c->adap.dev, "%s: wait timedout\n",
 				__func__);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	writel(readl(_ICR(i2c)) & ~(ICR_STOP|ICR_ACKNAK|ICR_MA), _ICR(i2c));
-	writel(readl(_ICR(i2c)) & ~ICR_SCLE, _ICR(i2c));
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) & ~(ICR_STOP|ICR_ACKNAK|ICR_MA), _ICR(i2c));
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) & ~ICR_SCLE, _ICR(i2c));
 
-	if (i2c_debug) {
-		dev_dbg(&i2c->adap.dev, "ICR now %08x, ISR %08x\n", readl(_ICR(i2c)), readl(_ISR(i2c)));
-		decode_ICR(readl(_ICR(i2c)));
-	}
-}
-#else
-#define i2c_pxa_set_slave(i2c, err)	do { } while (0)
-#endif
+	अगर (i2c_debug) अणु
+		dev_dbg(&i2c->adap.dev, "ICR now %08x, ISR %08x\n", पढ़ोl(_ICR(i2c)), पढ़ोl(_ISR(i2c)));
+		decode_ICR(पढ़ोl(_ICR(i2c)));
+	पूर्ण
+पूर्ण
+#अन्यथा
+#घोषणा i2c_pxa_set_slave(i2c, err)	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-static void i2c_pxa_do_reset(struct pxa_i2c *i2c)
-{
+अटल व्योम i2c_pxa_करो_reset(काष्ठा pxa_i2c *i2c)
+अणु
 	/* reset according to 9.8 */
-	writel(ICR_UR, _ICR(i2c));
-	writel(I2C_ISR_INIT, _ISR(i2c));
-	writel(readl(_ICR(i2c)) & ~ICR_UR, _ICR(i2c));
+	ग_लिखोl(ICR_UR, _ICR(i2c));
+	ग_लिखोl(I2C_ISR_INIT, _ISR(i2c));
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) & ~ICR_UR, _ICR(i2c));
 
-	if (i2c->reg_isar && IS_ENABLED(CONFIG_I2C_PXA_SLAVE))
-		writel(i2c->slave_addr, _ISAR(i2c));
+	अगर (i2c->reg_isar && IS_ENABLED(CONFIG_I2C_PXA_SLAVE))
+		ग_लिखोl(i2c->slave_addr, _ISAR(i2c));
 
-	/* set control register values */
-	writel(I2C_ICR_INIT | (i2c->fast_mode ? i2c->fm_mask : 0), _ICR(i2c));
-	writel(readl(_ICR(i2c)) | (i2c->high_mode ? i2c->hs_mask : 0), _ICR(i2c));
+	/* set control रेजिस्टर values */
+	ग_लिखोl(I2C_ICR_INIT | (i2c->fast_mode ? i2c->fm_mask : 0), _ICR(i2c));
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) | (i2c->high_mode ? i2c->hs_mask : 0), _ICR(i2c));
 
-#ifdef CONFIG_I2C_PXA_SLAVE
+#अगर_घोषित CONFIG_I2C_PXA_SLAVE
 	dev_info(&i2c->adap.dev, "Enabling slave mode\n");
-	writel(readl(_ICR(i2c)) | ICR_SADIE | ICR_ALDIE | ICR_SSDIE, _ICR(i2c));
-#endif
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) | ICR_SADIE | ICR_ALDIE | ICR_SSDIE, _ICR(i2c));
+#पूर्ण_अगर
 
 	i2c_pxa_set_slave(i2c, 0);
-}
+पूर्ण
 
-static void i2c_pxa_enable(struct pxa_i2c *i2c)
-{
+अटल व्योम i2c_pxa_enable(काष्ठा pxa_i2c *i2c)
+अणु
 	/* enable unit */
-	writel(readl(_ICR(i2c)) | ICR_IUE, _ICR(i2c));
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) | ICR_IUE, _ICR(i2c));
 	udelay(100);
-}
+पूर्ण
 
-static void i2c_pxa_reset(struct pxa_i2c *i2c)
-{
+अटल व्योम i2c_pxa_reset(काष्ठा pxa_i2c *i2c)
+अणु
 	pr_debug("Resetting I2C Controller Unit\n");
 
-	/* abort any transfer currently under way */
-	i2c_pxa_abort(i2c);
-	i2c_pxa_do_reset(i2c);
+	/* पात any transfer currently under way */
+	i2c_pxa_पात(i2c);
+	i2c_pxa_करो_reset(i2c);
 	i2c_pxa_enable(i2c);
-}
+पूर्ण
 
 
-#ifdef CONFIG_I2C_PXA_SLAVE
+#अगर_घोषित CONFIG_I2C_PXA_SLAVE
 /*
  * PXA I2C Slave mode
  */
 
-static void i2c_pxa_slave_txempty(struct pxa_i2c *i2c, u32 isr)
-{
-	if (isr & ISR_BED) {
-		/* what should we do here? */
-	} else {
+अटल व्योम i2c_pxa_slave_txempty(काष्ठा pxa_i2c *i2c, u32 isr)
+अणु
+	अगर (isr & ISR_BED) अणु
+		/* what should we करो here? */
+	पूर्ण अन्यथा अणु
 		u8 byte = 0;
 
-		if (i2c->slave != NULL)
+		अगर (i2c->slave != शून्य)
 			i2c_slave_event(i2c->slave, I2C_SLAVE_READ_PROCESSED,
 					&byte);
 
-		writel(byte, _IDBR(i2c));
-		writel(readl(_ICR(i2c)) | ICR_TB, _ICR(i2c));   /* allow next byte */
-	}
-}
+		ग_लिखोl(byte, _IDBR(i2c));
+		ग_लिखोl(पढ़ोl(_ICR(i2c)) | ICR_TB, _ICR(i2c));   /* allow next byte */
+	पूर्ण
+पूर्ण
 
-static void i2c_pxa_slave_rxfull(struct pxa_i2c *i2c, u32 isr)
-{
-	u8 byte = readl(_IDBR(i2c));
+अटल व्योम i2c_pxa_slave_rxfull(काष्ठा pxa_i2c *i2c, u32 isr)
+अणु
+	u8 byte = पढ़ोl(_IDBR(i2c));
 
-	if (i2c->slave != NULL)
+	अगर (i2c->slave != शून्य)
 		i2c_slave_event(i2c->slave, I2C_SLAVE_WRITE_RECEIVED, &byte);
 
-	writel(readl(_ICR(i2c)) | ICR_TB, _ICR(i2c));
-}
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) | ICR_TB, _ICR(i2c));
+पूर्ण
 
-static void i2c_pxa_slave_start(struct pxa_i2c *i2c, u32 isr)
-{
-	int timeout;
+अटल व्योम i2c_pxa_slave_start(काष्ठा pxa_i2c *i2c, u32 isr)
+अणु
+	पूर्णांक समयout;
 
-	if (i2c_debug > 0)
+	अगर (i2c_debug > 0)
 		dev_dbg(&i2c->adap.dev, "SAD, mode is slave-%cx\n",
 		       (isr & ISR_RWM) ? 'r' : 't');
 
-	if (i2c->slave != NULL) {
-		if (isr & ISR_RWM) {
+	अगर (i2c->slave != शून्य) अणु
+		अगर (isr & ISR_RWM) अणु
 			u8 byte = 0;
 
 			i2c_slave_event(i2c->slave, I2C_SLAVE_READ_REQUESTED,
 					&byte);
-			writel(byte, _IDBR(i2c));
-		} else {
+			ग_लिखोl(byte, _IDBR(i2c));
+		पूर्ण अन्यथा अणु
 			i2c_slave_event(i2c->slave, I2C_SLAVE_WRITE_REQUESTED,
-					NULL);
-		}
-	}
+					शून्य);
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * slave could interrupt in the middle of us generating a
-	 * start condition... if this happens, we'd better back off
+	 * slave could पूर्णांकerrupt in the middle of us generating a
+	 * start condition... अगर this happens, we'd better back off
 	 * and stop holding the poor thing up
 	 */
-	writel(readl(_ICR(i2c)) & ~(ICR_START|ICR_STOP), _ICR(i2c));
-	writel(readl(_ICR(i2c)) | ICR_TB, _ICR(i2c));
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) & ~(ICR_START|ICR_STOP), _ICR(i2c));
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) | ICR_TB, _ICR(i2c));
 
-	timeout = 0x10000;
+	समयout = 0x10000;
 
-	while (1) {
-		if ((readl(_IBMR(i2c)) & IBMR_SCLS) == IBMR_SCLS)
-			break;
+	जबतक (1) अणु
+		अगर ((पढ़ोl(_IBMR(i2c)) & IBMR_SCLS) == IBMR_SCLS)
+			अवरोध;
 
-		timeout--;
+		समयout--;
 
-		if (timeout <= 0) {
+		अगर (समयout <= 0) अणु
 			dev_err(&i2c->adap.dev, "timeout waiting for SCL high\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	writel(readl(_ICR(i2c)) & ~ICR_SCLE, _ICR(i2c));
-}
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) & ~ICR_SCLE, _ICR(i2c));
+पूर्ण
 
-static void i2c_pxa_slave_stop(struct pxa_i2c *i2c)
-{
-	if (i2c_debug > 2)
+अटल व्योम i2c_pxa_slave_stop(काष्ठा pxa_i2c *i2c)
+अणु
+	अगर (i2c_debug > 2)
 		dev_dbg(&i2c->adap.dev, "ISR: SSD (Slave Stop)\n");
 
-	if (i2c->slave != NULL)
-		i2c_slave_event(i2c->slave, I2C_SLAVE_STOP, NULL);
+	अगर (i2c->slave != शून्य)
+		i2c_slave_event(i2c->slave, I2C_SLAVE_STOP, शून्य);
 
-	if (i2c_debug > 2)
+	अगर (i2c_debug > 2)
 		dev_dbg(&i2c->adap.dev, "ISR: SSD (Slave Stop) acked\n");
 
 	/*
-	 * If we have a master-mode message waiting,
+	 * If we have a master-mode message रुकोing,
 	 * kick it off now that the slave has completed.
 	 */
-	if (i2c->msg)
+	अगर (i2c->msg)
 		i2c_pxa_master_complete(i2c, I2C_RETRY);
-}
+पूर्ण
 
-static int i2c_pxa_slave_reg(struct i2c_client *slave)
-{
-	struct pxa_i2c *i2c = slave->adapter->algo_data;
+अटल पूर्णांक i2c_pxa_slave_reg(काष्ठा i2c_client *slave)
+अणु
+	काष्ठा pxa_i2c *i2c = slave->adapter->algo_data;
 
-	if (i2c->slave)
-		return -EBUSY;
+	अगर (i2c->slave)
+		वापस -EBUSY;
 
-	if (!i2c->reg_isar)
-		return -EAFNOSUPPORT;
+	अगर (!i2c->reg_isar)
+		वापस -EAFNOSUPPORT;
 
 	i2c->slave = slave;
 	i2c->slave_addr = slave->addr;
 
-	writel(i2c->slave_addr, _ISAR(i2c));
+	ग_लिखोl(i2c->slave_addr, _ISAR(i2c));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_pxa_slave_unreg(struct i2c_client *slave)
-{
-	struct pxa_i2c *i2c = slave->adapter->algo_data;
+अटल पूर्णांक i2c_pxa_slave_unreg(काष्ठा i2c_client *slave)
+अणु
+	काष्ठा pxa_i2c *i2c = slave->adapter->algo_data;
 
 	WARN_ON(!i2c->slave);
 
 	i2c->slave_addr = I2C_PXA_SLAVE_ADDR;
-	writel(i2c->slave_addr, _ISAR(i2c));
+	ग_लिखोl(i2c->slave_addr, _ISAR(i2c));
 
-	i2c->slave = NULL;
+	i2c->slave = शून्य;
 
-	return 0;
-}
-#else
-static void i2c_pxa_slave_txempty(struct pxa_i2c *i2c, u32 isr)
-{
-	if (isr & ISR_BED) {
-		/* what should we do here? */
-	} else {
-		writel(0, _IDBR(i2c));
-		writel(readl(_ICR(i2c)) | ICR_TB, _ICR(i2c));
-	}
-}
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल व्योम i2c_pxa_slave_txempty(काष्ठा pxa_i2c *i2c, u32 isr)
+अणु
+	अगर (isr & ISR_BED) अणु
+		/* what should we करो here? */
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(0, _IDBR(i2c));
+		ग_लिखोl(पढ़ोl(_ICR(i2c)) | ICR_TB, _ICR(i2c));
+	पूर्ण
+पूर्ण
 
-static void i2c_pxa_slave_rxfull(struct pxa_i2c *i2c, u32 isr)
-{
-	writel(readl(_ICR(i2c)) | ICR_TB | ICR_ACKNAK, _ICR(i2c));
-}
+अटल व्योम i2c_pxa_slave_rxfull(काष्ठा pxa_i2c *i2c, u32 isr)
+अणु
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) | ICR_TB | ICR_ACKNAK, _ICR(i2c));
+पूर्ण
 
-static void i2c_pxa_slave_start(struct pxa_i2c *i2c, u32 isr)
-{
-	int timeout;
+अटल व्योम i2c_pxa_slave_start(काष्ठा pxa_i2c *i2c, u32 isr)
+अणु
+	पूर्णांक समयout;
 
 	/*
-	 * slave could interrupt in the middle of us generating a
-	 * start condition... if this happens, we'd better back off
+	 * slave could पूर्णांकerrupt in the middle of us generating a
+	 * start condition... अगर this happens, we'd better back off
 	 * and stop holding the poor thing up
 	 */
-	writel(readl(_ICR(i2c)) & ~(ICR_START|ICR_STOP), _ICR(i2c));
-	writel(readl(_ICR(i2c)) | ICR_TB | ICR_ACKNAK, _ICR(i2c));
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) & ~(ICR_START|ICR_STOP), _ICR(i2c));
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) | ICR_TB | ICR_ACKNAK, _ICR(i2c));
 
-	timeout = 0x10000;
+	समयout = 0x10000;
 
-	while (1) {
-		if ((readl(_IBMR(i2c)) & IBMR_SCLS) == IBMR_SCLS)
-			break;
+	जबतक (1) अणु
+		अगर ((पढ़ोl(_IBMR(i2c)) & IBMR_SCLS) == IBMR_SCLS)
+			अवरोध;
 
-		timeout--;
+		समयout--;
 
-		if (timeout <= 0) {
+		अगर (समयout <= 0) अणु
 			dev_err(&i2c->adap.dev, "timeout waiting for SCL high\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	writel(readl(_ICR(i2c)) & ~ICR_SCLE, _ICR(i2c));
-}
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) & ~ICR_SCLE, _ICR(i2c));
+पूर्ण
 
-static void i2c_pxa_slave_stop(struct pxa_i2c *i2c)
-{
-	if (i2c->msg)
+अटल व्योम i2c_pxa_slave_stop(काष्ठा pxa_i2c *i2c)
+अणु
+	अगर (i2c->msg)
 		i2c_pxa_master_complete(i2c, I2C_RETRY);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * PXA I2C Master mode
  */
 
-static inline void i2c_pxa_start_message(struct pxa_i2c *i2c)
-{
+अटल अंतरभूत व्योम i2c_pxa_start_message(काष्ठा pxa_i2c *i2c)
+अणु
 	u32 icr;
 
 	/*
-	 * Step 1: target slave address into IDBR
+	 * Step 1: target slave address पूर्णांकo IDBR
 	 */
 	i2c->req_slave_addr = i2c_8bit_addr_from_msg(i2c->msg);
-	writel(i2c->req_slave_addr, _IDBR(i2c));
+	ग_लिखोl(i2c->req_slave_addr, _IDBR(i2c));
 
 	/*
-	 * Step 2: initiate the write.
+	 * Step 2: initiate the ग_लिखो.
 	 */
-	icr = readl(_ICR(i2c)) & ~(ICR_STOP | ICR_ALDIE);
-	writel(icr | ICR_START | ICR_TB, _ICR(i2c));
-}
+	icr = पढ़ोl(_ICR(i2c)) & ~(ICR_STOP | ICR_ALDIE);
+	ग_लिखोl(icr | ICR_START | ICR_TB, _ICR(i2c));
+पूर्ण
 
-static inline void i2c_pxa_stop_message(struct pxa_i2c *i2c)
-{
+अटल अंतरभूत व्योम i2c_pxa_stop_message(काष्ठा pxa_i2c *i2c)
+अणु
 	u32 icr;
 
 	/* Clear the START, STOP, ACK, TB and MA flags */
-	icr = readl(_ICR(i2c));
+	icr = पढ़ोl(_ICR(i2c));
 	icr &= ~(ICR_START | ICR_STOP | ICR_ACKNAK | ICR_TB | ICR_MA);
-	writel(icr, _ICR(i2c));
-}
+	ग_लिखोl(icr, _ICR(i2c));
+पूर्ण
 
 /*
  * PXA I2C send master code
  * 1. Load master code to IDBR and send it.
- *    Note for HS mode, set ICR [GPIOEN].
+ *    Note क्रम HS mode, set ICR [GPIOEN].
  * 2. Wait until win arbitration.
  */
-static int i2c_pxa_send_mastercode(struct pxa_i2c *i2c)
-{
+अटल पूर्णांक i2c_pxa_send_mastercode(काष्ठा pxa_i2c *i2c)
+अणु
 	u32 icr;
-	long timeout;
+	दीर्घ समयout;
 
 	spin_lock_irq(&i2c->lock);
 	i2c->highmode_enter = true;
-	writel(i2c->master_code, _IDBR(i2c));
+	ग_लिखोl(i2c->master_code, _IDBR(i2c));
 
-	icr = readl(_ICR(i2c)) & ~(ICR_STOP | ICR_ALDIE);
+	icr = पढ़ोl(_ICR(i2c)) & ~(ICR_STOP | ICR_ALDIE);
 	icr |= ICR_GPIOEN | ICR_START | ICR_TB | ICR_ITEIE;
-	writel(icr, _ICR(i2c));
+	ग_लिखोl(icr, _ICR(i2c));
 
 	spin_unlock_irq(&i2c->lock);
-	timeout = wait_event_timeout(i2c->wait,
+	समयout = रुको_event_समयout(i2c->रुको,
 			i2c->highmode_enter == false, HZ * 1);
 
 	i2c->highmode_enter = false;
 
-	return (timeout == 0) ? I2C_RETRY : 0;
-}
+	वापस (समयout == 0) ? I2C_RETRY : 0;
+पूर्ण
 
 /*
  * i2c_pxa_master_complete - complete the message and wake up.
  */
-static void i2c_pxa_master_complete(struct pxa_i2c *i2c, int ret)
-{
+अटल व्योम i2c_pxa_master_complete(काष्ठा pxa_i2c *i2c, पूर्णांक ret)
+अणु
 	i2c->msg_ptr = 0;
-	i2c->msg = NULL;
+	i2c->msg = शून्य;
 	i2c->msg_idx ++;
 	i2c->msg_num = 0;
-	if (ret)
+	अगर (ret)
 		i2c->msg_idx = ret;
-	if (!i2c->use_pio)
-		wake_up(&i2c->wait);
-}
+	अगर (!i2c->use_pio)
+		wake_up(&i2c->रुको);
+पूर्ण
 
-static void i2c_pxa_irq_txempty(struct pxa_i2c *i2c, u32 isr)
-{
-	u32 icr = readl(_ICR(i2c)) & ~(ICR_START|ICR_STOP|ICR_ACKNAK|ICR_TB);
+अटल व्योम i2c_pxa_irq_txempty(काष्ठा pxa_i2c *i2c, u32 isr)
+अणु
+	u32 icr = पढ़ोl(_ICR(i2c)) & ~(ICR_START|ICR_STOP|ICR_ACKNAK|ICR_TB);
 
  again:
 	/*
 	 * If ISR_ALD is set, we lost arbitration.
 	 */
-	if (isr & ISR_ALD) {
+	अगर (isr & ISR_ALD) अणु
 		/*
-		 * Do we need to do anything here?  The PXA docs
+		 * Do we need to करो anything here?  The PXA करोcs
 		 * are vague about what happens.
 		 */
 		i2c_pxa_scream_blue_murder(i2c, "ALD set");
 
 		/*
 		 * We ignore this error.  We seem to see spurious ALDs
-		 * for seemingly no reason.  If we handle them as I think
+		 * क्रम seemingly no reason.  If we handle them as I think
 		 * they should, we end up causing an I2C error, which
-		 * is painful for some systems.
+		 * is painful क्रम some प्रणालीs.
 		 */
-		return; /* ignore */
-	}
+		वापस; /* ignore */
+	पूर्ण
 
-	if ((isr & ISR_BED) &&
+	अगर ((isr & ISR_BED) &&
 		(!((i2c->msg->flags & I2C_M_IGNORE_NAK) &&
-			(isr & ISR_ACKNAK)))) {
-		int ret = BUS_ERROR;
+			(isr & ISR_ACKNAK)))) अणु
+		पूर्णांक ret = BUS_ERROR;
 
 		/*
 		 * I2C bus error - either the device NAK'd us, or
 		 * something more serious happened.  If we were NAK'd
 		 * on the initial address phase, we can retry.
 		 */
-		if (isr & ISR_ACKNAK) {
-			if (i2c->msg_ptr == 0 && i2c->msg_idx == 0)
+		अगर (isr & ISR_ACKNAK) अणु
+			अगर (i2c->msg_ptr == 0 && i2c->msg_idx == 0)
 				ret = NO_SLAVE;
-			else
+			अन्यथा
 				ret = XFER_NAKED;
-		}
+		पूर्ण
 		i2c_pxa_master_complete(i2c, ret);
-	} else if (isr & ISR_RWM) {
+	पूर्ण अन्यथा अगर (isr & ISR_RWM) अणु
 		/*
 		 * Read mode.  We have just sent the address byte, and
 		 * now we must initiate the transfer.
 		 */
-		if (i2c->msg_ptr == i2c->msg->len - 1 &&
+		अगर (i2c->msg_ptr == i2c->msg->len - 1 &&
 		    i2c->msg_idx == i2c->msg_num - 1)
 			icr |= ICR_STOP | ICR_ACKNAK;
 
 		icr |= ICR_ALDIE | ICR_TB;
-	} else if (i2c->msg_ptr < i2c->msg->len) {
+	पूर्ण अन्यथा अगर (i2c->msg_ptr < i2c->msg->len) अणु
 		/*
 		 * Write mode.  Write the next data byte.
 		 */
-		writel(i2c->msg->buf[i2c->msg_ptr++], _IDBR(i2c));
+		ग_लिखोl(i2c->msg->buf[i2c->msg_ptr++], _IDBR(i2c));
 
 		icr |= ICR_ALDIE | ICR_TB;
 
@@ -919,12 +920,12 @@ static void i2c_pxa_irq_txempty(struct pxa_i2c *i2c, u32 isr)
 		 * If this is the last byte of the last message or last byte
 		 * of any message with I2C_M_STOP (e.g. SCCB), send a STOP.
 		 */
-		if ((i2c->msg_ptr == i2c->msg->len) &&
+		अगर ((i2c->msg_ptr == i2c->msg->len) &&
 			((i2c->msg->flags & I2C_M_STOP) ||
 			(i2c->msg_idx == i2c->msg_num - 1)))
 				icr |= ICR_STOP;
 
-	} else if (i2c->msg_idx < i2c->msg_num - 1) {
+	पूर्ण अन्यथा अगर (i2c->msg_idx < i2c->msg_num - 1) अणु
 		/*
 		 * Next segment of the message.
 		 */
@@ -933,80 +934,80 @@ static void i2c_pxa_irq_txempty(struct pxa_i2c *i2c, u32 isr)
 		i2c->msg++;
 
 		/*
-		 * If we aren't doing a repeated start and address,
+		 * If we aren't करोing a repeated start and address,
 		 * go back and try to send the next byte.  Note that
-		 * we do not support switching the R/W direction here.
+		 * we करो not support चयनing the R/W direction here.
 		 */
-		if (i2c->msg->flags & I2C_M_NOSTART)
-			goto again;
+		अगर (i2c->msg->flags & I2C_M_NOSTART)
+			जाओ again;
 
 		/*
 		 * Write the next address.
 		 */
 		i2c->req_slave_addr = i2c_8bit_addr_from_msg(i2c->msg);
-		writel(i2c->req_slave_addr, _IDBR(i2c));
+		ग_लिखोl(i2c->req_slave_addr, _IDBR(i2c));
 
 		/*
 		 * And trigger a repeated start, and send the byte.
 		 */
 		icr &= ~ICR_ALDIE;
 		icr |= ICR_START | ICR_TB;
-	} else {
-		if (i2c->msg->len == 0)
+	पूर्ण अन्यथा अणु
+		अगर (i2c->msg->len == 0)
 			icr |= ICR_MA;
 		i2c_pxa_master_complete(i2c, 0);
-	}
+	पूर्ण
 
 	i2c->icrlog[i2c->irqlogidx-1] = icr;
 
-	writel(icr, _ICR(i2c));
+	ग_लिखोl(icr, _ICR(i2c));
 	show_state(i2c);
-}
+पूर्ण
 
-static void i2c_pxa_irq_rxfull(struct pxa_i2c *i2c, u32 isr)
-{
-	u32 icr = readl(_ICR(i2c)) & ~(ICR_START|ICR_STOP|ICR_ACKNAK|ICR_TB);
+अटल व्योम i2c_pxa_irq_rxfull(काष्ठा pxa_i2c *i2c, u32 isr)
+अणु
+	u32 icr = पढ़ोl(_ICR(i2c)) & ~(ICR_START|ICR_STOP|ICR_ACKNAK|ICR_TB);
 
 	/*
 	 * Read the byte.
 	 */
-	i2c->msg->buf[i2c->msg_ptr++] = readl(_IDBR(i2c));
+	i2c->msg->buf[i2c->msg_ptr++] = पढ़ोl(_IDBR(i2c));
 
-	if (i2c->msg_ptr < i2c->msg->len) {
+	अगर (i2c->msg_ptr < i2c->msg->len) अणु
 		/*
 		 * If this is the last byte of the last
 		 * message, send a STOP.
 		 */
-		if (i2c->msg_ptr == i2c->msg->len - 1)
+		अगर (i2c->msg_ptr == i2c->msg->len - 1)
 			icr |= ICR_STOP | ICR_ACKNAK;
 
 		icr |= ICR_ALDIE | ICR_TB;
-	} else {
+	पूर्ण अन्यथा अणु
 		i2c_pxa_master_complete(i2c, 0);
-	}
+	पूर्ण
 
 	i2c->icrlog[i2c->irqlogidx-1] = icr;
 
-	writel(icr, _ICR(i2c));
-}
+	ग_लिखोl(icr, _ICR(i2c));
+पूर्ण
 
-#define VALID_INT_SOURCE	(ISR_SSD | ISR_ALD | ISR_ITE | ISR_IRF | \
+#घोषणा VALID_INT_SOURCE	(ISR_SSD | ISR_ALD | ISR_ITE | ISR_IRF | \
 				ISR_SAD | ISR_BED)
-static irqreturn_t i2c_pxa_handler(int this_irq, void *dev_id)
-{
-	struct pxa_i2c *i2c = dev_id;
-	u32 isr = readl(_ISR(i2c));
+अटल irqवापस_t i2c_pxa_handler(पूर्णांक this_irq, व्योम *dev_id)
+अणु
+	काष्ठा pxa_i2c *i2c = dev_id;
+	u32 isr = पढ़ोl(_ISR(i2c));
 
-	if (!(isr & VALID_INT_SOURCE))
-		return IRQ_NONE;
+	अगर (!(isr & VALID_INT_SOURCE))
+		वापस IRQ_NONE;
 
-	if (i2c_debug > 2 && 0) {
+	अगर (i2c_debug > 2 && 0) अणु
 		dev_dbg(&i2c->adap.dev, "%s: ISR=%08x, ICR=%08x, IBMR=%02x\n",
-			__func__, isr, readl(_ICR(i2c)), readl(_IBMR(i2c)));
+			__func__, isr, पढ़ोl(_ICR(i2c)), पढ़ोl(_IBMR(i2c)));
 		decode_ISR(isr);
-	}
+	पूर्ण
 
-	if (i2c->irqlogidx < ARRAY_SIZE(i2c->isrlog))
+	अगर (i2c->irqlogidx < ARRAY_SIZE(i2c->isrlog))
 		i2c->isrlog[i2c->irqlogidx++] = isr;
 
 	show_state(i2c);
@@ -1014,67 +1015,67 @@ static irqreturn_t i2c_pxa_handler(int this_irq, void *dev_id)
 	/*
 	 * Always clear all pending IRQs.
 	 */
-	writel(isr & VALID_INT_SOURCE, _ISR(i2c));
+	ग_लिखोl(isr & VALID_INT_SOURCE, _ISR(i2c));
 
-	if (isr & ISR_SAD)
+	अगर (isr & ISR_SAD)
 		i2c_pxa_slave_start(i2c, isr);
-	if (isr & ISR_SSD)
+	अगर (isr & ISR_SSD)
 		i2c_pxa_slave_stop(i2c);
 
-	if (i2c_pxa_is_slavemode(i2c)) {
-		if (isr & ISR_ITE)
+	अगर (i2c_pxa_is_slavemode(i2c)) अणु
+		अगर (isr & ISR_ITE)
 			i2c_pxa_slave_txempty(i2c, isr);
-		if (isr & ISR_IRF)
+		अगर (isr & ISR_IRF)
 			i2c_pxa_slave_rxfull(i2c, isr);
-	} else if (i2c->msg && (!i2c->highmode_enter)) {
-		if (isr & ISR_ITE)
+	पूर्ण अन्यथा अगर (i2c->msg && (!i2c->highmode_enter)) अणु
+		अगर (isr & ISR_ITE)
 			i2c_pxa_irq_txempty(i2c, isr);
-		if (isr & ISR_IRF)
+		अगर (isr & ISR_IRF)
 			i2c_pxa_irq_rxfull(i2c, isr);
-	} else if ((isr & ISR_ITE) && i2c->highmode_enter) {
+	पूर्ण अन्यथा अगर ((isr & ISR_ITE) && i2c->highmode_enter) अणु
 		i2c->highmode_enter = false;
-		wake_up(&i2c->wait);
-	} else {
+		wake_up(&i2c->रुको);
+	पूर्ण अन्यथा अणु
 		i2c_pxa_scream_blue_murder(i2c, "spurious irq");
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * We are protected by the adapter bus mutex.
+ * We are रक्षित by the adapter bus mutex.
  */
-static int i2c_pxa_do_xfer(struct pxa_i2c *i2c, struct i2c_msg *msg, int num)
-{
-	long timeout;
-	int ret;
+अटल पूर्णांक i2c_pxa_करो_xfer(काष्ठा pxa_i2c *i2c, काष्ठा i2c_msg *msg, पूर्णांक num)
+अणु
+	दीर्घ समयout;
+	पूर्णांक ret;
 
 	/*
-	 * Wait for the bus to become free.
+	 * Wait क्रम the bus to become मुक्त.
 	 */
-	ret = i2c_pxa_wait_bus_not_busy(i2c);
-	if (ret) {
+	ret = i2c_pxa_रुको_bus_not_busy(i2c);
+	अगर (ret) अणु
 		dev_err(&i2c->adap.dev, "i2c_pxa: timeout waiting for bus free\n");
 		i2c_recover_bus(&i2c->adap);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Set master mode.
 	 */
 	ret = i2c_pxa_set_master(i2c);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&i2c->adap.dev, "i2c_pxa_set_master: error %d\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (i2c->high_mode) {
+	अगर (i2c->high_mode) अणु
 		ret = i2c_pxa_send_mastercode(i2c);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&i2c->adap.dev, "i2c_pxa_send_mastercode timeout\n");
-			goto out;
-			}
-	}
+			जाओ out;
+			पूर्ण
+	पूर्ण
 
 	spin_lock_irq(&i2c->lock);
 
@@ -1089,111 +1090,111 @@ static int i2c_pxa_do_xfer(struct pxa_i2c *i2c, struct i2c_msg *msg, int num)
 	spin_unlock_irq(&i2c->lock);
 
 	/*
-	 * The rest of the processing occurs in the interrupt handler.
+	 * The rest of the processing occurs in the पूर्णांकerrupt handler.
 	 */
-	timeout = wait_event_timeout(i2c->wait, i2c->msg_num == 0, HZ * 5);
+	समयout = रुको_event_समयout(i2c->रुको, i2c->msg_num == 0, HZ * 5);
 	i2c_pxa_stop_message(i2c);
 
 	/*
-	 * We place the return code in i2c->msg_idx.
+	 * We place the वापस code in i2c->msg_idx.
 	 */
 	ret = i2c->msg_idx;
 
-	if (!timeout && i2c->msg_num) {
+	अगर (!समयout && i2c->msg_num) अणु
 		i2c_pxa_scream_blue_murder(i2c, "timeout with active message");
 		i2c_recover_bus(&i2c->adap);
 		ret = I2C_RETRY;
-	}
+	पूर्ण
 
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i2c_pxa_internal_xfer(struct pxa_i2c *i2c,
-				 struct i2c_msg *msgs, int num,
-				 int (*xfer)(struct pxa_i2c *,
-					     struct i2c_msg *, int num))
-{
-	int ret, i;
+अटल पूर्णांक i2c_pxa_पूर्णांकernal_xfer(काष्ठा pxa_i2c *i2c,
+				 काष्ठा i2c_msg *msgs, पूर्णांक num,
+				 पूर्णांक (*xfer)(काष्ठा pxa_i2c *,
+					     काष्ठा i2c_msg *, पूर्णांक num))
+अणु
+	पूर्णांक ret, i;
 
-	for (i = 0; ; ) {
+	क्रम (i = 0; ; ) अणु
 		ret = xfer(i2c, msgs, num);
-		if (ret != I2C_RETRY && ret != NO_SLAVE)
-			goto out;
-		if (++i >= i2c->adap.retries)
-			break;
+		अगर (ret != I2C_RETRY && ret != NO_SLAVE)
+			जाओ out;
+		अगर (++i >= i2c->adap.retries)
+			अवरोध;
 
-		if (i2c_debug)
+		अगर (i2c_debug)
 			dev_dbg(&i2c->adap.dev, "Retrying transmission\n");
 		udelay(100);
-	}
-	if (ret != NO_SLAVE)
+	पूर्ण
+	अगर (ret != NO_SLAVE)
 		i2c_pxa_scream_blue_murder(i2c, "exhausted retries");
 	ret = -EREMOTEIO;
  out:
 	i2c_pxa_set_slave(i2c, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i2c_pxa_xfer(struct i2c_adapter *adap,
-			struct i2c_msg msgs[], int num)
-{
-	struct pxa_i2c *i2c = adap->algo_data;
+अटल पूर्णांक i2c_pxa_xfer(काष्ठा i2c_adapter *adap,
+			काष्ठा i2c_msg msgs[], पूर्णांक num)
+अणु
+	काष्ठा pxa_i2c *i2c = adap->algo_data;
 
-	return i2c_pxa_internal_xfer(i2c, msgs, num, i2c_pxa_do_xfer);
-}
+	वापस i2c_pxa_पूर्णांकernal_xfer(i2c, msgs, num, i2c_pxa_करो_xfer);
+पूर्ण
 
-static u32 i2c_pxa_functionality(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL |
+अटल u32 i2c_pxa_functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL |
 		I2C_FUNC_PROTOCOL_MANGLING | I2C_FUNC_NOSTART;
-}
+पूर्ण
 
-static const struct i2c_algorithm i2c_pxa_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm i2c_pxa_algorithm = अणु
 	.master_xfer	= i2c_pxa_xfer,
 	.functionality	= i2c_pxa_functionality,
-#ifdef CONFIG_I2C_PXA_SLAVE
+#अगर_घोषित CONFIG_I2C_PXA_SLAVE
 	.reg_slave	= i2c_pxa_slave_reg,
 	.unreg_slave	= i2c_pxa_slave_unreg,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-/* Non-interrupt mode support */
-static int i2c_pxa_pio_set_master(struct pxa_i2c *i2c)
-{
-	/* make timeout the same as for interrupt based functions */
-	long timeout = 2 * DEF_TIMEOUT;
+/* Non-पूर्णांकerrupt mode support */
+अटल पूर्णांक i2c_pxa_pio_set_master(काष्ठा pxa_i2c *i2c)
+अणु
+	/* make समयout the same as क्रम पूर्णांकerrupt based functions */
+	दीर्घ समयout = 2 * DEF_TIMEOUT;
 
 	/*
-	 * Wait for the bus to become free.
+	 * Wait क्रम the bus to become मुक्त.
 	 */
-	while (timeout-- && readl(_ISR(i2c)) & (ISR_IBB | ISR_UB))
+	जबतक (समयout-- && पढ़ोl(_ISR(i2c)) & (ISR_IBB | ISR_UB))
 		udelay(1000);
 
-	if (timeout < 0) {
+	अगर (समयout < 0) अणु
 		show_state(i2c);
 		dev_err(&i2c->adap.dev,
 			"i2c_pxa: timeout waiting for bus free (set_master)\n");
-		return I2C_RETRY;
-	}
+		वापस I2C_RETRY;
+	पूर्ण
 
 	/*
 	 * Set master mode.
 	 */
-	writel(readl(_ICR(i2c)) | ICR_SCLE, _ICR(i2c));
+	ग_लिखोl(पढ़ोl(_ICR(i2c)) | ICR_SCLE, _ICR(i2c));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_pxa_do_pio_xfer(struct pxa_i2c *i2c,
-			       struct i2c_msg *msg, int num)
-{
-	unsigned long timeout = 500000; /* 5 seconds */
-	int ret = 0;
+अटल पूर्णांक i2c_pxa_करो_pio_xfer(काष्ठा pxa_i2c *i2c,
+			       काष्ठा i2c_msg *msg, पूर्णांक num)
+अणु
+	अचिन्हित दीर्घ समयout = 500000; /* 5 seconds */
+	पूर्णांक ret = 0;
 
 	ret = i2c_pxa_pio_set_master(i2c);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	i2c->msg = msg;
 	i2c->msg_num = num;
@@ -1203,173 +1204,173 @@ static int i2c_pxa_do_pio_xfer(struct pxa_i2c *i2c,
 
 	i2c_pxa_start_message(i2c);
 
-	while (i2c->msg_num > 0 && --timeout) {
+	जबतक (i2c->msg_num > 0 && --समयout) अणु
 		i2c_pxa_handler(0, i2c);
 		udelay(10);
-	}
+	पूर्ण
 
 	i2c_pxa_stop_message(i2c);
 
 	/*
-	 * We place the return code in i2c->msg_idx.
+	 * We place the वापस code in i2c->msg_idx.
 	 */
 	ret = i2c->msg_idx;
 
 out:
-	if (timeout == 0) {
+	अगर (समयout == 0) अणु
 		i2c_pxa_scream_blue_murder(i2c, "timeout (do_pio_xfer)");
 		ret = I2C_RETRY;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i2c_pxa_pio_xfer(struct i2c_adapter *adap,
-			    struct i2c_msg msgs[], int num)
-{
-	struct pxa_i2c *i2c = adap->algo_data;
+अटल पूर्णांक i2c_pxa_pio_xfer(काष्ठा i2c_adapter *adap,
+			    काष्ठा i2c_msg msgs[], पूर्णांक num)
+अणु
+	काष्ठा pxa_i2c *i2c = adap->algo_data;
 
 	/* If the I2C controller is disabled we need to reset it
-	  (probably due to a suspend/resume destroying state). We do
-	  this here as we can then avoid worrying about resuming the
-	  controller before its users. */
-	if (!(readl(_ICR(i2c)) & ICR_IUE))
+	  (probably due to a suspend/resume destroying state). We करो
+	  this here as we can then aव्योम worrying about resuming the
+	  controller beक्रमe its users. */
+	अगर (!(पढ़ोl(_ICR(i2c)) & ICR_IUE))
 		i2c_pxa_reset(i2c);
 
-	return i2c_pxa_internal_xfer(i2c, msgs, num, i2c_pxa_do_pio_xfer);
-}
+	वापस i2c_pxa_पूर्णांकernal_xfer(i2c, msgs, num, i2c_pxa_करो_pio_xfer);
+पूर्ण
 
-static const struct i2c_algorithm i2c_pxa_pio_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm i2c_pxa_pio_algorithm = अणु
 	.master_xfer	= i2c_pxa_pio_xfer,
 	.functionality	= i2c_pxa_functionality,
-#ifdef CONFIG_I2C_PXA_SLAVE
+#अगर_घोषित CONFIG_I2C_PXA_SLAVE
 	.reg_slave	= i2c_pxa_slave_reg,
 	.unreg_slave	= i2c_pxa_slave_unreg,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int i2c_pxa_probe_dt(struct platform_device *pdev, struct pxa_i2c *i2c,
-			    enum pxa_i2c_types *i2c_types)
-{
-	struct device_node *np = pdev->dev.of_node;
-	const struct of_device_id *of_id =
+अटल पूर्णांक i2c_pxa_probe_dt(काष्ठा platक्रमm_device *pdev, काष्ठा pxa_i2c *i2c,
+			    क्रमागत pxa_i2c_types *i2c_types)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	स्थिर काष्ठा of_device_id *of_id =
 			of_match_device(i2c_pxa_dt_ids, &pdev->dev);
 
-	if (!of_id)
-		return 1;
+	अगर (!of_id)
+		वापस 1;
 
-	/* For device tree we always use the dynamic or alias-assigned ID */
+	/* For device tree we always use the dynamic or alias-asचिन्हित ID */
 	i2c->adap.nr = -1;
 
-	if (of_get_property(np, "mrvl,i2c-polling", NULL))
+	अगर (of_get_property(np, "mrvl,i2c-polling", शून्य))
 		i2c->use_pio = 1;
-	if (of_get_property(np, "mrvl,i2c-fast-mode", NULL))
+	अगर (of_get_property(np, "mrvl,i2c-fast-mode", शून्य))
 		i2c->fast_mode = 1;
 
-	*i2c_types = (enum pxa_i2c_types)(of_id->data);
+	*i2c_types = (क्रमागत pxa_i2c_types)(of_id->data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_pxa_probe_pdata(struct platform_device *pdev,
-			       struct pxa_i2c *i2c,
-			       enum pxa_i2c_types *i2c_types)
-{
-	struct i2c_pxa_platform_data *plat = dev_get_platdata(&pdev->dev);
-	const struct platform_device_id *id = platform_get_device_id(pdev);
+अटल पूर्णांक i2c_pxa_probe_pdata(काष्ठा platक्रमm_device *pdev,
+			       काष्ठा pxa_i2c *i2c,
+			       क्रमागत pxa_i2c_types *i2c_types)
+अणु
+	काष्ठा i2c_pxa_platक्रमm_data *plat = dev_get_platdata(&pdev->dev);
+	स्थिर काष्ठा platक्रमm_device_id *id = platक्रमm_get_device_id(pdev);
 
 	*i2c_types = id->driver_data;
-	if (plat) {
+	अगर (plat) अणु
 		i2c->use_pio = plat->use_pio;
 		i2c->fast_mode = plat->fast_mode;
 		i2c->high_mode = plat->high_mode;
 		i2c->master_code = plat->master_code;
-		if (!i2c->master_code)
+		अगर (!i2c->master_code)
 			i2c->master_code = 0xe;
 		i2c->rate = plat->rate;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void i2c_pxa_prepare_recovery(struct i2c_adapter *adap)
-{
-	struct pxa_i2c *i2c = adap->algo_data;
-	u32 ibmr = readl(_IBMR(i2c));
+अटल व्योम i2c_pxa_prepare_recovery(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा pxa_i2c *i2c = adap->algo_data;
+	u32 ibmr = पढ़ोl(_IBMR(i2c));
 
 	/*
-	 * Program the GPIOs to reflect the current I2C bus state while
-	 * we transition to recovery; this avoids glitching the bus.
+	 * Program the GPIOs to reflect the current I2C bus state जबतक
+	 * we transition to recovery; this aव्योमs glitching the bus.
 	 */
 	gpiod_set_value(i2c->recovery.scl_gpiod, ibmr & IBMR_SCLS);
 	gpiod_set_value(i2c->recovery.sda_gpiod, ibmr & IBMR_SDAS);
-}
+पूर्ण
 
-static void i2c_pxa_unprepare_recovery(struct i2c_adapter *adap)
-{
-	struct pxa_i2c *i2c = adap->algo_data;
-	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
+अटल व्योम i2c_pxa_unprepare_recovery(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा pxa_i2c *i2c = adap->algo_data;
+	काष्ठा i2c_bus_recovery_info *bri = adap->bus_recovery_info;
 	u32 isr;
 
 	/*
-	 * The bus should now be free. Clear up the I2C controller before
-	 * handing control of the bus back to avoid the bus changing state.
+	 * The bus should now be मुक्त. Clear up the I2C controller beक्रमe
+	 * handing control of the bus back to aव्योम the bus changing state.
 	 */
-	isr = readl(_ISR(i2c));
-	if (isr & (ISR_UB | ISR_IBB)) {
+	isr = पढ़ोl(_ISR(i2c));
+	अगर (isr & (ISR_UB | ISR_IBB)) अणु
 		dev_dbg(&i2c->adap.dev,
 			"recovery: resetting controller, ISR=0x%08x\n", isr);
-		i2c_pxa_do_reset(i2c);
-	}
+		i2c_pxa_करो_reset(i2c);
+	पूर्ण
 
-	WARN_ON(pinctrl_select_state(bri->pinctrl, bri->pins_default));
+	WARN_ON(pinctrl_select_state(bri->pinctrl, bri->pins_शेष));
 
 	dev_dbg(&i2c->adap.dev, "recovery: IBMR 0x%08x ISR 0x%08x\n",
-	        readl(_IBMR(i2c)), readl(_ISR(i2c)));
+	        पढ़ोl(_IBMR(i2c)), पढ़ोl(_ISR(i2c)));
 
 	i2c_pxa_enable(i2c);
-}
+पूर्ण
 
-static int i2c_pxa_init_recovery(struct pxa_i2c *i2c)
-{
-	struct i2c_bus_recovery_info *bri = &i2c->recovery;
-	struct device *dev = i2c->adap.dev.parent;
+अटल पूर्णांक i2c_pxa_init_recovery(काष्ठा pxa_i2c *i2c)
+अणु
+	काष्ठा i2c_bus_recovery_info *bri = &i2c->recovery;
+	काष्ठा device *dev = i2c->adap.dev.parent;
 
 	/*
 	 * When slave mode is enabled, we are not the only master on the bus.
-	 * Bus recovery can only be performed when we are the master, which
-	 * we can't be certain of. Therefore, when slave mode is enabled, do
+	 * Bus recovery can only be perक्रमmed when we are the master, which
+	 * we can't be certain of. Thereक्रमe, when slave mode is enabled, करो
 	 * not configure bus recovery.
 	 */
-	if (IS_ENABLED(CONFIG_I2C_PXA_SLAVE))
-		return 0;
+	अगर (IS_ENABLED(CONFIG_I2C_PXA_SLAVE))
+		वापस 0;
 
 	bri->pinctrl = devm_pinctrl_get(dev);
-	if (PTR_ERR(bri->pinctrl) == -ENODEV) {
-		bri->pinctrl = NULL;
-		return 0;
-	}
-	if (IS_ERR(bri->pinctrl))
-		return PTR_ERR(bri->pinctrl);
+	अगर (PTR_ERR(bri->pinctrl) == -ENODEV) अणु
+		bri->pinctrl = शून्य;
+		वापस 0;
+	पूर्ण
+	अगर (IS_ERR(bri->pinctrl))
+		वापस PTR_ERR(bri->pinctrl);
 
 	bri->prepare_recovery = i2c_pxa_prepare_recovery;
 	bri->unprepare_recovery = i2c_pxa_unprepare_recovery;
 
 	i2c->adap.bus_recovery_info = bri;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_pxa_probe(struct platform_device *dev)
-{
-	struct i2c_pxa_platform_data *plat = dev_get_platdata(&dev->dev);
-	enum pxa_i2c_types i2c_type;
-	struct pxa_i2c *i2c;
-	struct resource *res = NULL;
-	int ret, irq;
+अटल पूर्णांक i2c_pxa_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा i2c_pxa_platक्रमm_data *plat = dev_get_platdata(&dev->dev);
+	क्रमागत pxa_i2c_types i2c_type;
+	काष्ठा pxa_i2c *i2c;
+	काष्ठा resource *res = शून्य;
+	पूर्णांक ret, irq;
 
-	i2c = devm_kzalloc(&dev->dev, sizeof(struct pxa_i2c), GFP_KERNEL);
-	if (!i2c)
-		return -ENOMEM;
+	i2c = devm_kzalloc(&dev->dev, माप(काष्ठा pxa_i2c), GFP_KERNEL);
+	अगर (!i2c)
+		वापस -ENOMEM;
 
 	/* Default adapter num to device id; i2c_pxa_probe_dt can override. */
 	i2c->adap.nr = dev->id;
@@ -1377,39 +1378,39 @@ static int i2c_pxa_probe(struct platform_device *dev)
 	i2c->adap.retries = 5;
 	i2c->adap.algo_data = i2c;
 	i2c->adap.dev.parent = &dev->dev;
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 	i2c->adap.dev.of_node = dev->dev.of_node;
-#endif
+#पूर्ण_अगर
 
-	res = platform_get_resource(dev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
 	i2c->reg_base = devm_ioremap_resource(&dev->dev, res);
-	if (IS_ERR(i2c->reg_base))
-		return PTR_ERR(i2c->reg_base);
+	अगर (IS_ERR(i2c->reg_base))
+		वापस PTR_ERR(i2c->reg_base);
 
-	irq = platform_get_irq(dev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(dev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	ret = i2c_pxa_init_recovery(i2c);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = i2c_pxa_probe_dt(dev, i2c, &i2c_type);
-	if (ret > 0)
+	अगर (ret > 0)
 		ret = i2c_pxa_probe_pdata(dev, i2c, &i2c_type);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	spin_lock_init(&i2c->lock);
-	init_waitqueue_head(&i2c->wait);
+	init_रुकोqueue_head(&i2c->रुको);
 
-	strlcpy(i2c->adap.name, "pxa_i2c-i2c", sizeof(i2c->adap.name));
+	strlcpy(i2c->adap.name, "pxa_i2c-i2c", माप(i2c->adap.name));
 
-	i2c->clk = devm_clk_get(&dev->dev, NULL);
-	if (IS_ERR(i2c->clk)) {
+	i2c->clk = devm_clk_get(&dev->dev, शून्य);
+	अगर (IS_ERR(i2c->clk)) अणु
 		dev_err(&dev->dev, "failed to get the clk: %ld\n", PTR_ERR(i2c->clk));
-		return PTR_ERR(i2c->clk);
-	}
+		वापस PTR_ERR(i2c->clk);
+	पूर्ण
 
 	i2c->reg_ibmr = i2c->reg_base + pxa_reg_layout[i2c_type].ibmr;
 	i2c->reg_idbr = i2c->reg_base + pxa_reg_layout[i2c_type].idbr;
@@ -1418,13 +1419,13 @@ static int i2c_pxa_probe(struct platform_device *dev)
 	i2c->fm_mask = pxa_reg_layout[i2c_type].fm;
 	i2c->hs_mask = pxa_reg_layout[i2c_type].hs;
 
-	if (i2c_type != REGS_CE4100)
+	अगर (i2c_type != REGS_CE4100)
 		i2c->reg_isar = i2c->reg_base + pxa_reg_layout[i2c_type].isar;
 
-	if (i2c_type == REGS_PXA910) {
+	अगर (i2c_type == REGS_PXA910) अणु
 		i2c->reg_ilcr = i2c->reg_base + pxa_reg_layout[i2c_type].ilcr;
 		i2c->reg_iwcr = i2c->reg_base + pxa_reg_layout[i2c_type].iwcr;
-	}
+	पूर्ण
 
 	i2c->iobase = res->start;
 	i2c->iosize = resource_size(res);
@@ -1434,120 +1435,120 @@ static int i2c_pxa_probe(struct platform_device *dev)
 	i2c->slave_addr = I2C_PXA_SLAVE_ADDR;
 	i2c->highmode_enter = false;
 
-	if (plat) {
+	अगर (plat) अणु
 		i2c->adap.class = plat->class;
-	}
+	पूर्ण
 
-	if (i2c->high_mode) {
-		if (i2c->rate) {
+	अगर (i2c->high_mode) अणु
+		अगर (i2c->rate) अणु
 			clk_set_rate(i2c->clk, i2c->rate);
 			pr_info("i2c: <%s> set rate to %ld\n",
 				i2c->adap.name, clk_get_rate(i2c->clk));
-		} else
+		पूर्ण अन्यथा
 			pr_warn("i2c: <%s> clock rate not set\n",
 				i2c->adap.name);
-	}
+	पूर्ण
 
 	clk_prepare_enable(i2c->clk);
 
-	if (i2c->use_pio) {
+	अगर (i2c->use_pio) अणु
 		i2c->adap.algo = &i2c_pxa_pio_algorithm;
-	} else {
+	पूर्ण अन्यथा अणु
 		i2c->adap.algo = &i2c_pxa_algorithm;
 		ret = devm_request_irq(&dev->dev, irq, i2c_pxa_handler,
 				IRQF_SHARED | IRQF_NO_SUSPEND,
 				dev_name(&dev->dev), i2c);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&dev->dev, "failed to request irq: %d\n", ret);
-			goto ereqirq;
-		}
-	}
+			जाओ ereqirq;
+		पूर्ण
+	पूर्ण
 
 	i2c_pxa_reset(i2c);
 
 	ret = i2c_add_numbered_adapter(&i2c->adap);
-	if (ret < 0)
-		goto ereqirq;
+	अगर (ret < 0)
+		जाओ ereqirq;
 
-	platform_set_drvdata(dev, i2c);
+	platक्रमm_set_drvdata(dev, i2c);
 
-#ifdef CONFIG_I2C_PXA_SLAVE
+#अगर_घोषित CONFIG_I2C_PXA_SLAVE
 	dev_info(&i2c->adap.dev, " PXA I2C adapter, slave address %d\n",
 		i2c->slave_addr);
-#else
+#अन्यथा
 	dev_info(&i2c->adap.dev, " PXA I2C adapter\n");
-#endif
-	return 0;
+#पूर्ण_अगर
+	वापस 0;
 
 ereqirq:
 	clk_disable_unprepare(i2c->clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i2c_pxa_remove(struct platform_device *dev)
-{
-	struct pxa_i2c *i2c = platform_get_drvdata(dev);
+अटल पूर्णांक i2c_pxa_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा pxa_i2c *i2c = platक्रमm_get_drvdata(dev);
 
 	i2c_del_adapter(&i2c->adap);
 
 	clk_disable_unprepare(i2c->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int i2c_pxa_suspend_noirq(struct device *dev)
-{
-	struct pxa_i2c *i2c = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक i2c_pxa_suspend_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा pxa_i2c *i2c = dev_get_drvdata(dev);
 
 	clk_disable(i2c->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_pxa_resume_noirq(struct device *dev)
-{
-	struct pxa_i2c *i2c = dev_get_drvdata(dev);
+अटल पूर्णांक i2c_pxa_resume_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा pxa_i2c *i2c = dev_get_drvdata(dev);
 
 	clk_enable(i2c->clk);
 	i2c_pxa_reset(i2c);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops i2c_pxa_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops i2c_pxa_dev_pm_ops = अणु
 	.suspend_noirq = i2c_pxa_suspend_noirq,
 	.resume_noirq = i2c_pxa_resume_noirq,
-};
+पूर्ण;
 
-#define I2C_PXA_DEV_PM_OPS (&i2c_pxa_dev_pm_ops)
-#else
-#define I2C_PXA_DEV_PM_OPS NULL
-#endif
+#घोषणा I2C_PXA_DEV_PM_OPS (&i2c_pxa_dev_pm_ops)
+#अन्यथा
+#घोषणा I2C_PXA_DEV_PM_OPS शून्य
+#पूर्ण_अगर
 
-static struct platform_driver i2c_pxa_driver = {
+अटल काष्ठा platक्रमm_driver i2c_pxa_driver = अणु
 	.probe		= i2c_pxa_probe,
-	.remove		= i2c_pxa_remove,
-	.driver		= {
+	.हटाओ		= i2c_pxa_हटाओ,
+	.driver		= अणु
 		.name	= "pxa2xx-i2c",
 		.pm	= I2C_PXA_DEV_PM_OPS,
 		.of_match_table = i2c_pxa_dt_ids,
-	},
+	पूर्ण,
 	.id_table	= i2c_pxa_id_table,
-};
+पूर्ण;
 
-static int __init i2c_adap_pxa_init(void)
-{
-	return platform_driver_register(&i2c_pxa_driver);
-}
+अटल पूर्णांक __init i2c_adap_pxa_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&i2c_pxa_driver);
+पूर्ण
 
-static void __exit i2c_adap_pxa_exit(void)
-{
-	platform_driver_unregister(&i2c_pxa_driver);
-}
+अटल व्योम __निकास i2c_adap_pxa_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&i2c_pxa_driver);
+पूर्ण
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:pxa2xx-i2c");
 
 subsys_initcall(i2c_adap_pxa_init);
-module_exit(i2c_adap_pxa_exit);
+module_निकास(i2c_adap_pxa_निकास);

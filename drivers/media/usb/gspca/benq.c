@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Benq DC E300 subdriver
  *
- * Copyright (C) 2009 Jean-Francois Moine (http://moinejf.free.fr)
+ * Copyright (C) 2009 Jean-Francois Moine (http://moinejf.मुक्त.fr)
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#define MODULE_NAME "benq"
+#घोषणा MODULE_NAME "benq"
 
-#include "gspca.h"
+#समावेश "gspca.h"
 
 MODULE_AUTHOR("Jean-Francois Moine <http://moinejf.free.fr>");
 MODULE_DESCRIPTION("Benq DC E300 USB Camera Driver");
 MODULE_LICENSE("GPL");
 
-/* specific webcam descriptor */
-struct sd {
-	struct gspca_dev gspca_dev;	/* !! must be the first item */
-};
+/* specअगरic webcam descriptor */
+काष्ठा sd अणु
+	काष्ठा gspca_dev gspca_dev;	/* !! must be the first item */
+पूर्ण;
 
-static const struct v4l2_pix_format vga_mode[] = {
-	{320, 240, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
+अटल स्थिर काष्ठा v4l2_pix_क्रमmat vga_mode[] = अणु
+	अणु320, 240, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
 		.bytesperline = 320,
 		.sizeimage = 320 * 240 * 3 / 8 + 590,
-		.colorspace = V4L2_COLORSPACE_JPEG},
-};
+		.colorspace = V4L2_COLORSPACE_JPEGपूर्ण,
+पूर्ण;
 
-static void sd_isoc_irq(struct urb *urb);
+अटल व्योम sd_isoc_irq(काष्ठा urb *urb);
 
-/* -- write a register -- */
-static void reg_w(struct gspca_dev *gspca_dev,
+/* -- ग_लिखो a रेजिस्टर -- */
+अटल व्योम reg_w(काष्ठा gspca_dev *gspca_dev,
 			u16 value, u16 index)
-{
-	struct usb_device *dev = gspca_dev->dev;
-	int ret;
+अणु
+	काष्ठा usb_device *dev = gspca_dev->dev;
+	पूर्णांक ret;
 
-	if (gspca_dev->usb_err < 0)
-		return;
+	अगर (gspca_dev->usb_err < 0)
+		वापस;
 	ret = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			0x02,
-			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			value,
 			index,
-			NULL,
+			शून्य,
 			0,
 			500);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("reg_w err %d\n", ret);
 		gspca_dev->usb_err = ret;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* this function is called at probe time */
-static int sd_config(struct gspca_dev *gspca_dev,
-			const struct usb_device_id *id)
-{
+/* this function is called at probe समय */
+अटल पूर्णांक sd_config(काष्ठा gspca_dev *gspca_dev,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
 	gspca_dev->cam.cam_mode = vga_mode;
 	gspca_dev->cam.nmodes = ARRAY_SIZE(vga_mode);
 	gspca_dev->cam.no_urb_create = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* this function is called at probe and resume time */
-static int sd_init(struct gspca_dev *gspca_dev)
-{
-	return 0;
-}
+/* this function is called at probe and resume समय */
+अटल पूर्णांक sd_init(काष्ठा gspca_dev *gspca_dev)
+अणु
+	वापस 0;
+पूर्ण
 
 /* -- start the camera -- */
-static int sd_start(struct gspca_dev *gspca_dev)
-{
-	struct urb *urb;
-	int i, n;
+अटल पूर्णांक sd_start(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा urb *urb;
+	पूर्णांक i, n;
 
-	/* create 4 URBs - 2 on endpoint 0x83 and 2 on 0x082 */
-#if MAX_NURBS < 4
-#error "Not enough URBs in the gspca table"
-#endif
-#define SD_PKT_SZ 64
-#define SD_NPKT 32
-	for (n = 0; n < 4; n++) {
+	/* create 4 URBs - 2 on endpoपूर्णांक 0x83 and 2 on 0x082 */
+#अगर MAX_NURBS < 4
+#त्रुटि "Not enough URBs in the gspca table"
+#पूर्ण_अगर
+#घोषणा SD_PKT_SZ 64
+#घोषणा SD_NPKT 32
+	क्रम (n = 0; n < 4; n++) अणु
 		urb = usb_alloc_urb(SD_NPKT, GFP_KERNEL);
-		if (!urb)
-			return -ENOMEM;
+		अगर (!urb)
+			वापस -ENOMEM;
 		gspca_dev->urb[n] = urb;
 		urb->transfer_buffer = usb_alloc_coherent(gspca_dev->dev,
 						SD_PKT_SZ * SD_NPKT,
 						GFP_KERNEL,
 						&urb->transfer_dma);
 
-		if (urb->transfer_buffer == NULL) {
+		अगर (urb->transfer_buffer == शून्य) अणु
 			pr_err("usb_alloc_coherent failed\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		urb->dev = gspca_dev->dev;
 		urb->context = gspca_dev;
 		urb->transfer_buffer_length = SD_PKT_SZ * SD_NPKT;
@@ -101,21 +102,21 @@ static int sd_start(struct gspca_dev *gspca_dev)
 					n & 1 ? 0x82 : 0x83);
 		urb->transfer_flags = URB_ISO_ASAP
 					| URB_NO_TRANSFER_DMA_MAP;
-		urb->interval = 1;
+		urb->पूर्णांकerval = 1;
 		urb->complete = sd_isoc_irq;
 		urb->number_of_packets = SD_NPKT;
-		for (i = 0; i < SD_NPKT; i++) {
+		क्रम (i = 0; i < SD_NPKT; i++) अणु
 			urb->iso_frame_desc[i].length = SD_PKT_SZ;
 			urb->iso_frame_desc[i].offset = SD_PKT_SZ * i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return gspca_dev->usb_err;
-}
+	वापस gspca_dev->usb_err;
+पूर्ण
 
-static void sd_stopN(struct gspca_dev *gspca_dev)
-{
-	struct usb_interface *intf;
+अटल व्योम sd_stopN(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
 
 	reg_w(gspca_dev, 0x003c, 0x0003);
 	reg_w(gspca_dev, 0x003c, 0x0004);
@@ -123,76 +124,76 @@ static void sd_stopN(struct gspca_dev *gspca_dev)
 	reg_w(gspca_dev, 0x003c, 0x0006);
 	reg_w(gspca_dev, 0x003c, 0x0007);
 
-	intf = usb_ifnum_to_if(gspca_dev->dev, gspca_dev->iface);
-	usb_set_interface(gspca_dev->dev, gspca_dev->iface,
-					intf->num_altsetting - 1);
-}
+	पूर्णांकf = usb_अगरnum_to_अगर(gspca_dev->dev, gspca_dev->अगरace);
+	usb_set_पूर्णांकerface(gspca_dev->dev, gspca_dev->अगरace,
+					पूर्णांकf->num_altsetting - 1);
+पूर्ण
 
-static void sd_pkt_scan(struct gspca_dev *gspca_dev,
+अटल व्योम sd_pkt_scan(काष्ठा gspca_dev *gspca_dev,
 			u8 *data,		/* isoc packet */
-			int len)		/* iso packet length */
-{
+			पूर्णांक len)		/* iso packet length */
+अणु
 	/* unused */
-}
+पूर्ण
 
 /* reception of an URB */
-static void sd_isoc_irq(struct urb *urb)
-{
-	struct gspca_dev *gspca_dev = (struct gspca_dev *) urb->context;
-	struct urb *urb0;
+अटल व्योम sd_isoc_irq(काष्ठा urb *urb)
+अणु
+	काष्ठा gspca_dev *gspca_dev = (काष्ठा gspca_dev *) urb->context;
+	काष्ठा urb *urb0;
 	u8 *data;
-	int i, st;
+	पूर्णांक i, st;
 
 	gspca_dbg(gspca_dev, D_PACK, "sd isoc irq\n");
-	if (!gspca_dev->streaming)
-		return;
-	if (urb->status != 0) {
-		if (urb->status == -ESHUTDOWN)
-			return;		/* disconnection */
-#ifdef CONFIG_PM
-		if (gspca_dev->frozen)
-			return;
-#endif
+	अगर (!gspca_dev->streaming)
+		वापस;
+	अगर (urb->status != 0) अणु
+		अगर (urb->status == -ESHUTDOWN)
+			वापस;		/* disconnection */
+#अगर_घोषित CONFIG_PM
+		अगर (gspca_dev->frozen)
+			वापस;
+#पूर्ण_अगर
 		pr_err("urb status: %d\n", urb->status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* if this is a control URN (ep 0x83), wait */
-	if (urb == gspca_dev->urb[0] || urb == gspca_dev->urb[2])
-		return;
+	/* अगर this is a control URN (ep 0x83), रुको */
+	अगर (urb == gspca_dev->urb[0] || urb == gspca_dev->urb[2])
+		वापस;
 
 	/* scan both received URBs */
-	if (urb == gspca_dev->urb[1])
+	अगर (urb == gspca_dev->urb[1])
 		urb0 = gspca_dev->urb[0];
-	else
+	अन्यथा
 		urb0 = gspca_dev->urb[2];
-	for (i = 0; i < urb->number_of_packets; i++) {
+	क्रम (i = 0; i < urb->number_of_packets; i++) अणु
 
 		/* check the packet status and length */
-		if (urb0->iso_frame_desc[i].actual_length != SD_PKT_SZ
-		    || urb->iso_frame_desc[i].actual_length != SD_PKT_SZ) {
+		अगर (urb0->iso_frame_desc[i].actual_length != SD_PKT_SZ
+		    || urb->iso_frame_desc[i].actual_length != SD_PKT_SZ) अणु
 			gspca_err(gspca_dev, "ISOC bad lengths %d / %d\n",
 				  urb0->iso_frame_desc[i].actual_length,
 				  urb->iso_frame_desc[i].actual_length);
 			gspca_dev->last_packet_type = DISCARD_PACKET;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		st = urb0->iso_frame_desc[i].status;
-		if (st == 0)
+		अगर (st == 0)
 			st = urb->iso_frame_desc[i].status;
-		if (st) {
+		अगर (st) अणु
 			pr_err("ISOC data error: [%d] status=%d\n",
 				i, st);
 			gspca_dev->last_packet_type = DISCARD_PACKET;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * The images are received in URBs of different endpoints
+		 * The images are received in URBs of dअगरferent endpoपूर्णांकs
 		 * (0x83 and 0x82).
 		 * Image pieces in URBs of ep 0x83 are continuated in URBs of
 		 * ep 0x82 of the same index.
-		 * The packets in the URBs of endpoint 0x83 start with:
+		 * The packets in the URBs of endpoपूर्णांक 0x83 start with:
 		 *	- 80 ba/bb 00 00 = start of image followed by 'ff d8'
 		 *	- 04 ba/bb oo oo = image piece
 		 *		where 'oo oo' is the image offset
@@ -205,70 +206,70 @@ static void sd_isoc_irq(struct urb *urb)
 		 */
 		data = (u8 *) urb0->transfer_buffer
 					+ urb0->iso_frame_desc[i].offset;
-		if (data[0] == 0x80 && (data[1] & 0xfe) == 0xba) {
+		अगर (data[0] == 0x80 && (data[1] & 0xfe) == 0xba) अणु
 
 			/* new image */
 			gspca_frame_add(gspca_dev, LAST_PACKET,
-					NULL, 0);
+					शून्य, 0);
 			gspca_frame_add(gspca_dev, FIRST_PACKET,
 					data + 4, SD_PKT_SZ - 4);
-		} else if (data[0] == 0x04 && (data[1] & 0xfe) == 0xba) {
+		पूर्ण अन्यथा अगर (data[0] == 0x04 && (data[1] & 0xfe) == 0xba) अणु
 			gspca_frame_add(gspca_dev, INTER_PACKET,
 					data + 4, SD_PKT_SZ - 4);
-		} else {
+		पूर्ण अन्यथा अणु
 			gspca_dev->last_packet_type = DISCARD_PACKET;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		data = (u8 *) urb->transfer_buffer
 					+ urb->iso_frame_desc[i].offset;
 		gspca_frame_add(gspca_dev, INTER_PACKET,
 				data, SD_PKT_SZ);
-	}
+	पूर्ण
 
 	/* resubmit the URBs */
 	st = usb_submit_urb(urb0, GFP_ATOMIC);
-	if (st < 0)
+	अगर (st < 0)
 		pr_err("usb_submit_urb(0) ret %d\n", st);
 	st = usb_submit_urb(urb, GFP_ATOMIC);
-	if (st < 0)
+	अगर (st < 0)
 		pr_err("usb_submit_urb() ret %d\n", st);
-}
+पूर्ण
 
 /* sub-driver description */
-static const struct sd_desc sd_desc = {
+अटल स्थिर काष्ठा sd_desc sd_desc = अणु
 	.name = MODULE_NAME,
 	.config = sd_config,
 	.init = sd_init,
 	.start = sd_start,
 	.stopN = sd_stopN,
 	.pkt_scan = sd_pkt_scan,
-};
+पूर्ण;
 
 /* -- module initialisation -- */
-static const struct usb_device_id device_table[] = {
-	{USB_DEVICE(0x04a5, 0x3035)},
-	{}
-};
+अटल स्थिर काष्ठा usb_device_id device_table[] = अणु
+	अणुUSB_DEVICE(0x04a5, 0x3035)पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, device_table);
 
 /* -- device connect -- */
-static int sd_probe(struct usb_interface *intf,
-			const struct usb_device_id *id)
-{
-	return gspca_dev_probe(intf, id, &sd_desc, sizeof(struct sd),
+अटल पूर्णांक sd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	वापस gspca_dev_probe(पूर्णांकf, id, &sd_desc, माप(काष्ठा sd),
 				THIS_MODULE);
-}
+पूर्ण
 
-static struct usb_driver sd_driver = {
+अटल काष्ठा usb_driver sd_driver = अणु
 	.name = MODULE_NAME,
 	.id_table = device_table,
 	.probe = sd_probe,
 	.disconnect = gspca_disconnect,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend = gspca_suspend,
 	.resume = gspca_resume,
 	.reset_resume = gspca_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_usb_driver(sd_driver);

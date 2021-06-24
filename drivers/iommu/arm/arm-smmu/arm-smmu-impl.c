@@ -1,223 +1,224 @@
-// SPDX-License-Identifier: GPL-2.0-only
-// Miscellaneous Arm SMMU implementation and integration quirks
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+// Miscellaneous Arm SMMU implementation and पूर्णांकegration quirks
 // Copyright (C) 2019 Arm Limited
 
-#define pr_fmt(fmt) "arm-smmu: " fmt
+#घोषणा pr_fmt(fmt) "arm-smmu: " fmt
 
-#include <linux/bitfield.h>
-#include <linux/of.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/of.h>
 
-#include "arm-smmu.h"
+#समावेश "arm-smmu.h"
 
 
-static int arm_smmu_gr0_ns(int offset)
-{
-	switch (offset) {
-	case ARM_SMMU_GR0_sCR0:
-	case ARM_SMMU_GR0_sACR:
-	case ARM_SMMU_GR0_sGFSR:
-	case ARM_SMMU_GR0_sGFSYNR0:
-	case ARM_SMMU_GR0_sGFSYNR1:
-	case ARM_SMMU_GR0_sGFSYNR2:
-		return offset + 0x400;
-	default:
-		return offset;
-	}
-}
+अटल पूर्णांक arm_smmu_gr0_ns(पूर्णांक offset)
+अणु
+	चयन (offset) अणु
+	हाल ARM_SMMU_GR0_sCR0:
+	हाल ARM_SMMU_GR0_sACR:
+	हाल ARM_SMMU_GR0_sGFSR:
+	हाल ARM_SMMU_GR0_sGFSYNR0:
+	हाल ARM_SMMU_GR0_sGFSYNR1:
+	हाल ARM_SMMU_GR0_sGFSYNR2:
+		वापस offset + 0x400;
+	शेष:
+		वापस offset;
+	पूर्ण
+पूर्ण
 
-static u32 arm_smmu_read_ns(struct arm_smmu_device *smmu, int page,
-			    int offset)
-{
-	if (page == ARM_SMMU_GR0)
+अटल u32 arm_smmu_पढ़ो_ns(काष्ठा arm_smmu_device *smmu, पूर्णांक page,
+			    पूर्णांक offset)
+अणु
+	अगर (page == ARM_SMMU_GR0)
 		offset = arm_smmu_gr0_ns(offset);
-	return readl_relaxed(arm_smmu_page(smmu, page) + offset);
-}
+	वापस पढ़ोl_relaxed(arm_smmu_page(smmu, page) + offset);
+पूर्ण
 
-static void arm_smmu_write_ns(struct arm_smmu_device *smmu, int page,
-			      int offset, u32 val)
-{
-	if (page == ARM_SMMU_GR0)
+अटल व्योम arm_smmu_ग_लिखो_ns(काष्ठा arm_smmu_device *smmu, पूर्णांक page,
+			      पूर्णांक offset, u32 val)
+अणु
+	अगर (page == ARM_SMMU_GR0)
 		offset = arm_smmu_gr0_ns(offset);
-	writel_relaxed(val, arm_smmu_page(smmu, page) + offset);
-}
+	ग_लिखोl_relaxed(val, arm_smmu_page(smmu, page) + offset);
+पूर्ण
 
-/* Since we don't care for sGFAR, we can do without 64-bit accessors */
-static const struct arm_smmu_impl calxeda_impl = {
-	.read_reg = arm_smmu_read_ns,
-	.write_reg = arm_smmu_write_ns,
-};
+/* Since we करोn't care क्रम sGFAR, we can करो without 64-bit accessors */
+अटल स्थिर काष्ठा arm_smmu_impl calxeda_impl = अणु
+	.पढ़ो_reg = arm_smmu_पढ़ो_ns,
+	.ग_लिखो_reg = arm_smmu_ग_लिखो_ns,
+पूर्ण;
 
 
-struct cavium_smmu {
-	struct arm_smmu_device smmu;
+काष्ठा cavium_smmu अणु
+	काष्ठा arm_smmu_device smmu;
 	u32 id_base;
-};
+पूर्ण;
 
-static int cavium_cfg_probe(struct arm_smmu_device *smmu)
-{
-	static atomic_t context_count = ATOMIC_INIT(0);
-	struct cavium_smmu *cs = container_of(smmu, struct cavium_smmu, smmu);
+अटल पूर्णांक cavium_cfg_probe(काष्ठा arm_smmu_device *smmu)
+अणु
+	अटल atomic_t context_count = ATOMIC_INIT(0);
+	काष्ठा cavium_smmu *cs = container_of(smmu, काष्ठा cavium_smmu, smmu);
 	/*
 	 * Cavium CN88xx erratum #27704.
 	 * Ensure ASID and VMID allocation is unique across all SMMUs in
-	 * the system.
+	 * the प्रणाली.
 	 */
 	cs->id_base = atomic_fetch_add(smmu->num_context_banks, &context_count);
 	dev_notice(smmu->dev, "\tenabling workaround for Cavium erratum 27704\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cavium_init_context(struct arm_smmu_domain *smmu_domain,
-		struct io_pgtable_cfg *pgtbl_cfg, struct device *dev)
-{
-	struct cavium_smmu *cs = container_of(smmu_domain->smmu,
-					      struct cavium_smmu, smmu);
+अटल पूर्णांक cavium_init_context(काष्ठा arm_smmu_करोमुख्य *smmu_करोमुख्य,
+		काष्ठा io_pgtable_cfg *pgtbl_cfg, काष्ठा device *dev)
+अणु
+	काष्ठा cavium_smmu *cs = container_of(smmu_करोमुख्य->smmu,
+					      काष्ठा cavium_smmu, smmu);
 
-	if (smmu_domain->stage == ARM_SMMU_DOMAIN_S2)
-		smmu_domain->cfg.vmid += cs->id_base;
-	else
-		smmu_domain->cfg.asid += cs->id_base;
+	अगर (smmu_करोमुख्य->stage == ARM_SMMU_DOMAIN_S2)
+		smmu_करोमुख्य->cfg.vmid += cs->id_base;
+	अन्यथा
+		smmu_करोमुख्य->cfg.asid += cs->id_base;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct arm_smmu_impl cavium_impl = {
+अटल स्थिर काष्ठा arm_smmu_impl cavium_impl = अणु
 	.cfg_probe = cavium_cfg_probe,
 	.init_context = cavium_init_context,
-};
+पूर्ण;
 
-static struct arm_smmu_device *cavium_smmu_impl_init(struct arm_smmu_device *smmu)
-{
-	struct cavium_smmu *cs;
+अटल काष्ठा arm_smmu_device *cavium_smmu_impl_init(काष्ठा arm_smmu_device *smmu)
+अणु
+	काष्ठा cavium_smmu *cs;
 
-	cs = devm_krealloc(smmu->dev, smmu, sizeof(*cs), GFP_KERNEL);
-	if (!cs)
-		return ERR_PTR(-ENOMEM);
+	cs = devm_kपुनः_स्मृति(smmu->dev, smmu, माप(*cs), GFP_KERNEL);
+	अगर (!cs)
+		वापस ERR_PTR(-ENOMEM);
 
 	cs->smmu.impl = &cavium_impl;
 
-	return &cs->smmu;
-}
+	वापस &cs->smmu;
+पूर्ण
 
 
-#define ARM_MMU500_ACTLR_CPRE		(1 << 1)
+#घोषणा ARM_MMU500_ACTLR_CPRE		(1 << 1)
 
-#define ARM_MMU500_ACR_CACHE_LOCK	(1 << 26)
-#define ARM_MMU500_ACR_S2CRB_TLBEN	(1 << 10)
-#define ARM_MMU500_ACR_SMTNMB_TLBEN	(1 << 8)
+#घोषणा ARM_MMU500_ACR_CACHE_LOCK	(1 << 26)
+#घोषणा ARM_MMU500_ACR_S2CRB_TLBEN	(1 << 10)
+#घोषणा ARM_MMU500_ACR_SMTNMB_TLBEN	(1 << 8)
 
-int arm_mmu500_reset(struct arm_smmu_device *smmu)
-{
+पूर्णांक arm_mmu500_reset(काष्ठा arm_smmu_device *smmu)
+अणु
 	u32 reg, major;
-	int i;
+	पूर्णांक i;
 	/*
-	 * On MMU-500 r2p0 onwards we need to clear ACR.CACHE_LOCK before
-	 * writes to the context bank ACTLRs will stick. And we just hope that
-	 * Secure has also cleared SACR.CACHE_LOCK for this to take effect...
+	 * On MMU-500 r2p0 onwards we need to clear ACR.CACHE_LOCK beक्रमe
+	 * ग_लिखोs to the context bank ACTLRs will stick. And we just hope that
+	 * Secure has also cleared SACR.CACHE_LOCK क्रम this to take effect...
 	 */
-	reg = arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_ID7);
+	reg = arm_smmu_gr0_पढ़ो(smmu, ARM_SMMU_GR0_ID7);
 	major = FIELD_GET(ARM_SMMU_ID7_MAJOR, reg);
-	reg = arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_sACR);
-	if (major >= 2)
+	reg = arm_smmu_gr0_पढ़ो(smmu, ARM_SMMU_GR0_sACR);
+	अगर (major >= 2)
 		reg &= ~ARM_MMU500_ACR_CACHE_LOCK;
 	/*
 	 * Allow unmatched Stream IDs to allocate bypass
-	 * TLB entries for reduced latency.
+	 * TLB entries क्रम reduced latency.
 	 */
 	reg |= ARM_MMU500_ACR_SMTNMB_TLBEN | ARM_MMU500_ACR_S2CRB_TLBEN;
-	arm_smmu_gr0_write(smmu, ARM_SMMU_GR0_sACR, reg);
+	arm_smmu_gr0_ग_लिखो(smmu, ARM_SMMU_GR0_sACR, reg);
 
 	/*
 	 * Disable MMU-500's not-particularly-beneficial next-page
-	 * prefetcher for the sake of errata #841119 and #826419.
+	 * prefetcher क्रम the sake of errata #841119 and #826419.
 	 */
-	for (i = 0; i < smmu->num_context_banks; ++i) {
-		reg = arm_smmu_cb_read(smmu, i, ARM_SMMU_CB_ACTLR);
+	क्रम (i = 0; i < smmu->num_context_banks; ++i) अणु
+		reg = arm_smmu_cb_पढ़ो(smmu, i, ARM_SMMU_CB_ACTLR);
 		reg &= ~ARM_MMU500_ACTLR_CPRE;
-		arm_smmu_cb_write(smmu, i, ARM_SMMU_CB_ACTLR, reg);
-	}
+		arm_smmu_cb_ग_लिखो(smmu, i, ARM_SMMU_CB_ACTLR, reg);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct arm_smmu_impl arm_mmu500_impl = {
+अटल स्थिर काष्ठा arm_smmu_impl arm_mmu500_impl = अणु
 	.reset = arm_mmu500_reset,
-};
+पूर्ण;
 
-static u64 mrvl_mmu500_readq(struct arm_smmu_device *smmu, int page, int off)
-{
+अटल u64 mrvl_mmu500_पढ़ोq(काष्ठा arm_smmu_device *smmu, पूर्णांक page, पूर्णांक off)
+अणु
 	/*
 	 * Marvell Armada-AP806 erratum #582743.
-	 * Split all the readq to double readl
+	 * Split all the पढ़ोq to द्विगुन पढ़ोl
 	 */
-	return hi_lo_readq_relaxed(arm_smmu_page(smmu, page) + off);
-}
+	वापस hi_lo_पढ़ोq_relaxed(arm_smmu_page(smmu, page) + off);
+पूर्ण
 
-static void mrvl_mmu500_writeq(struct arm_smmu_device *smmu, int page, int off,
+अटल व्योम mrvl_mmu500_ग_लिखोq(काष्ठा arm_smmu_device *smmu, पूर्णांक page, पूर्णांक off,
 			       u64 val)
-{
+अणु
 	/*
 	 * Marvell Armada-AP806 erratum #582743.
-	 * Split all the writeq to double writel
+	 * Split all the ग_लिखोq to द्विगुन ग_लिखोl
 	 */
-	hi_lo_writeq_relaxed(val, arm_smmu_page(smmu, page) + off);
-}
+	hi_lo_ग_लिखोq_relaxed(val, arm_smmu_page(smmu, page) + off);
+पूर्ण
 
-static int mrvl_mmu500_cfg_probe(struct arm_smmu_device *smmu)
-{
+अटल पूर्णांक mrvl_mmu500_cfg_probe(काष्ठा arm_smmu_device *smmu)
+अणु
 
 	/*
 	 * Armada-AP806 erratum #582743.
 	 * Hide the SMMU_IDR2.PTFSv8 fields to sidestep the AArch64
-	 * formats altogether and allow using 32 bits access on the
-	 * interconnect.
+	 * क्रमmats altogether and allow using 32 bits access on the
+	 * पूर्णांकerconnect.
 	 */
 	smmu->features &= ~(ARM_SMMU_FEAT_FMT_AARCH64_4K |
 			    ARM_SMMU_FEAT_FMT_AARCH64_16K |
 			    ARM_SMMU_FEAT_FMT_AARCH64_64K);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct arm_smmu_impl mrvl_mmu500_impl = {
-	.read_reg64 = mrvl_mmu500_readq,
-	.write_reg64 = mrvl_mmu500_writeq,
+अटल स्थिर काष्ठा arm_smmu_impl mrvl_mmu500_impl = अणु
+	.पढ़ो_reg64 = mrvl_mmu500_पढ़ोq,
+	.ग_लिखो_reg64 = mrvl_mmu500_ग_लिखोq,
 	.cfg_probe = mrvl_mmu500_cfg_probe,
 	.reset = arm_mmu500_reset,
-};
+पूर्ण;
 
 
-struct arm_smmu_device *arm_smmu_impl_init(struct arm_smmu_device *smmu)
-{
-	const struct device_node *np = smmu->dev->of_node;
+काष्ठा arm_smmu_device *arm_smmu_impl_init(काष्ठा arm_smmu_device *smmu)
+अणु
+	स्थिर काष्ठा device_node *np = smmu->dev->of_node;
 
 	/*
-	 * Set the impl for model-specific implementation quirks first,
-	 * such that platform integration quirks can pick it up and
-	 * inherit from it if necessary.
+	 * Set the impl क्रम model-specअगरic implementation quirks first,
+	 * such that platक्रमm पूर्णांकegration quirks can pick it up and
+	 * inherit from it अगर necessary.
 	 */
-	switch (smmu->model) {
-	case ARM_MMU500:
+	चयन (smmu->model) अणु
+	हाल ARM_MMU500:
 		smmu->impl = &arm_mmu500_impl;
-		break;
-	case CAVIUM_SMMUV2:
-		return cavium_smmu_impl_init(smmu);
-	default:
-		break;
-	}
+		अवरोध;
+	हाल CAVIUM_SMMUV2:
+		वापस cavium_smmu_impl_init(smmu);
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* This is implicitly MMU-400 */
-	if (of_property_read_bool(np, "calxeda,smmu-secure-config-access"))
+	अगर (of_property_पढ़ो_bool(np, "calxeda,smmu-secure-config-access"))
 		smmu->impl = &calxeda_impl;
 
-	if (of_device_is_compatible(np, "nvidia,tegra194-smmu"))
-		return nvidia_smmu_impl_init(smmu);
+	अगर (of_device_is_compatible(np, "nvidia,tegra194-smmu"))
+		वापस nvidia_smmu_impl_init(smmu);
 
 	smmu = qcom_smmu_impl_init(smmu);
 
-	if (of_device_is_compatible(np, "marvell,ap806-smmu-500"))
+	अगर (of_device_is_compatible(np, "marvell,ap806-smmu-500"))
 		smmu->impl = &mrvl_mmu500_impl;
 
-	return smmu;
-}
+	वापस smmu;
+पूर्ण

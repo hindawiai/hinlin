@@ -1,196 +1,197 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2009 Nokia Corporation
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#define DSS_SUBSYS_NAME "DSI"
+#घोषणा DSS_SUBSYS_NAME "DSI"
 
-#include <linux/kernel.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/semaphore.h>
-#include <linux/seq_file.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/wait.h>
-#include <linux/workqueue.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/debugfs.h>
-#include <linux/pm_runtime.h>
-#include <linux/of.h>
-#include <linux/of_graph.h>
-#include <linux/of_platform.h>
-#include <linux/component.h>
-#include <linux/sys_soc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/component.h>
+#समावेश <linux/sys_soc.h>
 
-#include <drm/drm_bridge.h>
-#include <drm/drm_mipi_dsi.h>
-#include <drm/drm_panel.h>
-#include <video/mipi_display.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <video/mipi_display.h>
 
-#include "omapdss.h"
-#include "dss.h"
+#समावेश "omapdss.h"
+#समावेश "dss.h"
 
-#define DSI_CATCH_MISSING_TE
+#घोषणा DSI_CATCH_MISSING_TE
 
-#include "dsi.h"
+#समावेश "dsi.h"
 
-#define REG_GET(dsi, idx, start, end) \
-	FLD_GET(dsi_read_reg(dsi, idx), start, end)
+#घोषणा REG_GET(dsi, idx, start, end) \
+	FLD_GET(dsi_पढ़ो_reg(dsi, idx), start, end)
 
-#define REG_FLD_MOD(dsi, idx, val, start, end) \
-	dsi_write_reg(dsi, idx, FLD_MOD(dsi_read_reg(dsi, idx), val, start, end))
+#घोषणा REG_FLD_MOD(dsi, idx, val, start, end) \
+	dsi_ग_लिखो_reg(dsi, idx, FLD_MOD(dsi_पढ़ो_reg(dsi, idx), val, start, end))
 
-static int dsi_init_dispc(struct dsi_data *dsi);
-static void dsi_uninit_dispc(struct dsi_data *dsi);
+अटल पूर्णांक dsi_init_dispc(काष्ठा dsi_data *dsi);
+अटल व्योम dsi_uninit_dispc(काष्ठा dsi_data *dsi);
 
-static int dsi_vc_send_null(struct dsi_data *dsi, int vc, int channel);
+अटल पूर्णांक dsi_vc_send_null(काष्ठा dsi_data *dsi, पूर्णांक vc, पूर्णांक channel);
 
-static ssize_t _omap_dsi_host_transfer(struct dsi_data *dsi, int vc,
-				       const struct mipi_dsi_msg *msg);
+अटल sमाप_प्रकार _omap_dsi_host_transfer(काष्ठा dsi_data *dsi, पूर्णांक vc,
+				       स्थिर काष्ठा mipi_dsi_msg *msg);
 
-#ifdef DSI_PERF_MEASURE
-static bool dsi_perf;
+#अगर_घोषित DSI_PERF_MEASURE
+अटल bool dsi_perf;
 module_param(dsi_perf, bool, 0644);
-#endif
+#पूर्ण_अगर
 
-/* Note: for some reason video mode seems to work only if VC_VIDEO is 0 */
-#define VC_VIDEO	0
-#define VC_CMD		1
+/* Note: क्रम some reason video mode seems to work only अगर VC_VIDEO is 0 */
+#घोषणा VC_VIDEO	0
+#घोषणा VC_CMD		1
 
-#define drm_bridge_to_dsi(bridge) \
-	container_of(bridge, struct dsi_data, bridge)
+#घोषणा drm_bridge_to_dsi(bridge) \
+	container_of(bridge, काष्ठा dsi_data, bridge)
 
-static inline struct dsi_data *to_dsi_data(struct omap_dss_device *dssdev)
-{
-	return dev_get_drvdata(dssdev->dev);
-}
+अटल अंतरभूत काष्ठा dsi_data *to_dsi_data(काष्ठा omap_dss_device *dssdev)
+अणु
+	वापस dev_get_drvdata(dssdev->dev);
+पूर्ण
 
-static inline struct dsi_data *host_to_omap(struct mipi_dsi_host *host)
-{
-	return container_of(host, struct dsi_data, host);
-}
+अटल अंतरभूत काष्ठा dsi_data *host_to_omap(काष्ठा mipi_dsi_host *host)
+अणु
+	वापस container_of(host, काष्ठा dsi_data, host);
+पूर्ण
 
-static inline void dsi_write_reg(struct dsi_data *dsi,
-				 const struct dsi_reg idx, u32 val)
-{
-	void __iomem *base;
+अटल अंतरभूत व्योम dsi_ग_लिखो_reg(काष्ठा dsi_data *dsi,
+				 स्थिर काष्ठा dsi_reg idx, u32 val)
+अणु
+	व्योम __iomem *base;
 
-	switch(idx.module) {
-		case DSI_PROTO: base = dsi->proto_base; break;
-		case DSI_PHY: base = dsi->phy_base; break;
-		case DSI_PLL: base = dsi->pll_base; break;
-		default: return;
-	}
+	चयन(idx.module) अणु
+		हाल DSI_PROTO: base = dsi->proto_base; अवरोध;
+		हाल DSI_PHY: base = dsi->phy_base; अवरोध;
+		हाल DSI_PLL: base = dsi->pll_base; अवरोध;
+		शेष: वापस;
+	पूर्ण
 
-	__raw_writel(val, base + idx.idx);
-}
+	__raw_ग_लिखोl(val, base + idx.idx);
+पूर्ण
 
-static inline u32 dsi_read_reg(struct dsi_data *dsi, const struct dsi_reg idx)
-{
-	void __iomem *base;
+अटल अंतरभूत u32 dsi_पढ़ो_reg(काष्ठा dsi_data *dsi, स्थिर काष्ठा dsi_reg idx)
+अणु
+	व्योम __iomem *base;
 
-	switch(idx.module) {
-		case DSI_PROTO: base = dsi->proto_base; break;
-		case DSI_PHY: base = dsi->phy_base; break;
-		case DSI_PLL: base = dsi->pll_base; break;
-		default: return 0;
-	}
+	चयन(idx.module) अणु
+		हाल DSI_PROTO: base = dsi->proto_base; अवरोध;
+		हाल DSI_PHY: base = dsi->phy_base; अवरोध;
+		हाल DSI_PLL: base = dsi->pll_base; अवरोध;
+		शेष: वापस 0;
+	पूर्ण
 
-	return __raw_readl(base + idx.idx);
-}
+	वापस __raw_पढ़ोl(base + idx.idx);
+पूर्ण
 
-static void dsi_bus_lock(struct dsi_data *dsi)
-{
-	down(&dsi->bus_lock);
-}
+अटल व्योम dsi_bus_lock(काष्ठा dsi_data *dsi)
+अणु
+	करोwn(&dsi->bus_lock);
+पूर्ण
 
-static void dsi_bus_unlock(struct dsi_data *dsi)
-{
+अटल व्योम dsi_bus_unlock(काष्ठा dsi_data *dsi)
+अणु
 	up(&dsi->bus_lock);
-}
+पूर्ण
 
-static bool dsi_bus_is_locked(struct dsi_data *dsi)
-{
-	return dsi->bus_lock.count == 0;
-}
+अटल bool dsi_bus_is_locked(काष्ठा dsi_data *dsi)
+अणु
+	वापस dsi->bus_lock.count == 0;
+पूर्ण
 
-static void dsi_completion_handler(void *data, u32 mask)
-{
-	complete((struct completion *)data);
-}
+अटल व्योम dsi_completion_handler(व्योम *data, u32 mask)
+अणु
+	complete((काष्ठा completion *)data);
+पूर्ण
 
-static inline bool wait_for_bit_change(struct dsi_data *dsi,
-				       const struct dsi_reg idx,
-				       int bitnum, int value)
-{
-	unsigned long timeout;
-	ktime_t wait;
-	int t;
+अटल अंतरभूत bool रुको_क्रम_bit_change(काष्ठा dsi_data *dsi,
+				       स्थिर काष्ठा dsi_reg idx,
+				       पूर्णांक bitnum, पूर्णांक value)
+अणु
+	अचिन्हित दीर्घ समयout;
+	kसमय_प्रकार रुको;
+	पूर्णांक t;
 
-	/* first busyloop to see if the bit changes right away */
+	/* first busyloop to see अगर the bit changes right away */
 	t = 100;
-	while (t-- > 0) {
-		if (REG_GET(dsi, idx, bitnum, bitnum) == value)
-			return true;
-	}
+	जबतक (t-- > 0) अणु
+		अगर (REG_GET(dsi, idx, bitnum, bitnum) == value)
+			वापस true;
+	पूर्ण
 
-	/* then loop for 500ms, sleeping for 1ms in between */
-	timeout = jiffies + msecs_to_jiffies(500);
-	while (time_before(jiffies, timeout)) {
-		if (REG_GET(dsi, idx, bitnum, bitnum) == value)
-			return true;
+	/* then loop क्रम 500ms, sleeping क्रम 1ms in between */
+	समयout = jअगरfies + msecs_to_jअगरfies(500);
+	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
+		अगर (REG_GET(dsi, idx, bitnum, bitnum) == value)
+			वापस true;
 
-		wait = ns_to_ktime(1000 * 1000);
+		रुको = ns_to_kसमय(1000 * 1000);
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		schedule_hrtimeout(&wait, HRTIMER_MODE_REL);
-	}
+		schedule_hrसमयout(&रुको, HRTIMER_MODE_REL);
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#ifdef DSI_PERF_MEASURE
-static void dsi_perf_mark_setup(struct dsi_data *dsi)
-{
-	dsi->perf_setup_time = ktime_get();
-}
+#अगर_घोषित DSI_PERF_MEASURE
+अटल व्योम dsi_perf_mark_setup(काष्ठा dsi_data *dsi)
+अणु
+	dsi->perf_setup_समय = kसमय_get();
+पूर्ण
 
-static void dsi_perf_mark_start(struct dsi_data *dsi)
-{
-	dsi->perf_start_time = ktime_get();
-}
+अटल व्योम dsi_perf_mark_start(काष्ठा dsi_data *dsi)
+अणु
+	dsi->perf_start_समय = kसमय_get();
+पूर्ण
 
-static void dsi_perf_show(struct dsi_data *dsi, const char *name)
-{
-	ktime_t t, setup_time, trans_time;
+अटल व्योम dsi_perf_show(काष्ठा dsi_data *dsi, स्थिर अक्षर *name)
+अणु
+	kसमय_प्रकार t, setup_समय, trans_समय;
 	u32 total_bytes;
 	u32 setup_us, trans_us, total_us;
 
-	if (!dsi_perf)
-		return;
+	अगर (!dsi_perf)
+		वापस;
 
-	t = ktime_get();
+	t = kसमय_get();
 
-	setup_time = ktime_sub(dsi->perf_start_time, dsi->perf_setup_time);
-	setup_us = (u32)ktime_to_us(setup_time);
-	if (setup_us == 0)
+	setup_समय = kसमय_sub(dsi->perf_start_समय, dsi->perf_setup_समय);
+	setup_us = (u32)kसमय_प्रकारo_us(setup_समय);
+	अगर (setup_us == 0)
 		setup_us = 1;
 
-	trans_time = ktime_sub(t, dsi->perf_start_time);
-	trans_us = (u32)ktime_to_us(trans_time);
-	if (trans_us == 0)
+	trans_समय = kसमय_sub(t, dsi->perf_start_समय);
+	trans_us = (u32)kसमय_प्रकारo_us(trans_समय);
+	अगर (trans_us == 0)
 		trans_us = 1;
 
 	total_us = setup_us + trans_us;
@@ -205,32 +206,32 @@ static void dsi_perf_show(struct dsi_data *dsi, const char *name)
 		1000 * 1000 / total_us,
 		total_bytes,
 		total_bytes * 1000 / total_us);
-}
-#else
-static inline void dsi_perf_mark_setup(struct dsi_data *dsi)
-{
-}
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम dsi_perf_mark_setup(काष्ठा dsi_data *dsi)
+अणु
+पूर्ण
 
-static inline void dsi_perf_mark_start(struct dsi_data *dsi)
-{
-}
+अटल अंतरभूत व्योम dsi_perf_mark_start(काष्ठा dsi_data *dsi)
+अणु
+पूर्ण
 
-static inline void dsi_perf_show(struct dsi_data *dsi, const char *name)
-{
-}
-#endif
+अटल अंतरभूत व्योम dsi_perf_show(काष्ठा dsi_data *dsi, स्थिर अक्षर *name)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int verbose_irq;
+अटल पूर्णांक verbose_irq;
 
-static void print_irq_status(u32 status)
-{
-	if (status == 0)
-		return;
+अटल व्योम prपूर्णांक_irq_status(u32 status)
+अणु
+	अगर (status == 0)
+		वापस;
 
-	if (!verbose_irq && (status & ~DSI_IRQ_CHANNEL_MASK) == 0)
-		return;
+	अगर (!verbose_irq && (status & ~DSI_IRQ_CHANNEL_MASK) == 0)
+		वापस;
 
-#define PIS(x) (status & DSI_IRQ_##x) ? (#x " ") : ""
+#घोषणा PIS(x) (status & DSI_IRQ_##x) ? (#x " ") : ""
 
 	pr_debug("DSI IRQ: 0x%x: %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 		status,
@@ -251,18 +252,18 @@ static void print_irq_status(u32 status)
 		PIS(SYNC_LOST),
 		PIS(LDO_POWER_GOOD),
 		PIS(TA_TIMEOUT));
-#undef PIS
-}
+#अघोषित PIS
+पूर्ण
 
-static void print_irq_status_vc(int vc, u32 status)
-{
-	if (status == 0)
-		return;
+अटल व्योम prपूर्णांक_irq_status_vc(पूर्णांक vc, u32 status)
+अणु
+	अगर (status == 0)
+		वापस;
 
-	if (!verbose_irq && (status & ~DSI_VC_IRQ_PACKET_SENT) == 0)
-		return;
+	अगर (!verbose_irq && (status & ~DSI_VC_IRQ_PACKET_SENT) == 0)
+		वापस;
 
-#define PIS(x) (status & DSI_VC_IRQ_##x) ? (#x " ") : ""
+#घोषणा PIS(x) (status & DSI_VC_IRQ_##x) ? (#x " ") : ""
 
 	pr_debug("DSI VC(%d) IRQ 0x%x: %s%s%s%s%s%s%s%s%s\n",
 		vc,
@@ -276,15 +277,15 @@ static void print_irq_status_vc(int vc, u32 status)
 		PIS(FIFO_RX_OVF),
 		PIS(FIFO_TX_UDF),
 		PIS(PP_BUSY_CHANGE));
-#undef PIS
-}
+#अघोषित PIS
+पूर्ण
 
-static void print_irq_status_cio(u32 status)
-{
-	if (status == 0)
-		return;
+अटल व्योम prपूर्णांक_irq_status_cio(u32 status)
+अणु
+	अगर (status == 0)
+		वापस;
 
-#define PIS(x) (status & DSI_CIO_IRQ_##x) ? (#x " ") : ""
+#घोषणा PIS(x) (status & DSI_CIO_IRQ_##x) ? (#x " ") : ""
 
 	pr_debug("DSI CIO IRQ 0x%x: %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 		status,
@@ -308,157 +309,157 @@ static void print_irq_status_cio(u32 status)
 		PIS(ERRCONTENTIONLP1_3),
 		PIS(ULPSACTIVENOT_ALL0),
 		PIS(ULPSACTIVENOT_ALL1));
-#undef PIS
-}
+#अघोषित PIS
+पूर्ण
 
-#ifdef CONFIG_OMAP2_DSS_COLLECT_IRQ_STATS
-static void dsi_collect_irq_stats(struct dsi_data *dsi, u32 irqstatus,
+#अगर_घोषित CONFIG_OMAP2_DSS_COLLECT_IRQ_STATS
+अटल व्योम dsi_collect_irq_stats(काष्ठा dsi_data *dsi, u32 irqstatus,
 				  u32 *vcstatus, u32 ciostatus)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
 	spin_lock(&dsi->irq_stats_lock);
 
 	dsi->irq_stats.irq_count++;
 	dss_collect_irq_stats(irqstatus, dsi->irq_stats.dsi_irqs);
 
-	for (i = 0; i < 4; ++i)
+	क्रम (i = 0; i < 4; ++i)
 		dss_collect_irq_stats(vcstatus[i], dsi->irq_stats.vc_irqs[i]);
 
 	dss_collect_irq_stats(ciostatus, dsi->irq_stats.cio_irqs);
 
 	spin_unlock(&dsi->irq_stats_lock);
-}
-#else
-#define dsi_collect_irq_stats(dsi, irqstatus, vcstatus, ciostatus)
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा dsi_collect_irq_stats(dsi, irqstatus, vcstatus, ciostatus)
+#पूर्ण_अगर
 
-static int debug_irq;
+अटल पूर्णांक debug_irq;
 
-static void dsi_handle_irq_errors(struct dsi_data *dsi, u32 irqstatus,
+अटल व्योम dsi_handle_irq_errors(काष्ठा dsi_data *dsi, u32 irqstatus,
 				  u32 *vcstatus, u32 ciostatus)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	if (irqstatus & DSI_IRQ_ERROR_MASK) {
+	अगर (irqstatus & DSI_IRQ_ERROR_MASK) अणु
 		DSSERR("DSI error, irqstatus %x\n", irqstatus);
-		print_irq_status(irqstatus);
+		prपूर्णांक_irq_status(irqstatus);
 		spin_lock(&dsi->errors_lock);
 		dsi->errors |= irqstatus & DSI_IRQ_ERROR_MASK;
 		spin_unlock(&dsi->errors_lock);
-	} else if (debug_irq) {
-		print_irq_status(irqstatus);
-	}
+	पूर्ण अन्यथा अगर (debug_irq) अणु
+		prपूर्णांक_irq_status(irqstatus);
+	पूर्ण
 
-	for (i = 0; i < 4; ++i) {
-		if (vcstatus[i] & DSI_VC_IRQ_ERROR_MASK) {
+	क्रम (i = 0; i < 4; ++i) अणु
+		अगर (vcstatus[i] & DSI_VC_IRQ_ERROR_MASK) अणु
 			DSSERR("DSI VC(%d) error, vc irqstatus %x\n",
 				       i, vcstatus[i]);
-			print_irq_status_vc(i, vcstatus[i]);
-		} else if (debug_irq) {
-			print_irq_status_vc(i, vcstatus[i]);
-		}
-	}
+			prपूर्णांक_irq_status_vc(i, vcstatus[i]);
+		पूर्ण अन्यथा अगर (debug_irq) अणु
+			prपूर्णांक_irq_status_vc(i, vcstatus[i]);
+		पूर्ण
+	पूर्ण
 
-	if (ciostatus & DSI_CIO_IRQ_ERROR_MASK) {
+	अगर (ciostatus & DSI_CIO_IRQ_ERROR_MASK) अणु
 		DSSERR("DSI CIO error, cio irqstatus %x\n", ciostatus);
-		print_irq_status_cio(ciostatus);
-	} else if (debug_irq) {
-		print_irq_status_cio(ciostatus);
-	}
-}
+		prपूर्णांक_irq_status_cio(ciostatus);
+	पूर्ण अन्यथा अगर (debug_irq) अणु
+		prपूर्णांक_irq_status_cio(ciostatus);
+	पूर्ण
+पूर्ण
 
-static void dsi_call_isrs(struct dsi_isr_data *isr_array,
-		unsigned int isr_array_size, u32 irqstatus)
-{
-	struct dsi_isr_data *isr_data;
-	int i;
+अटल व्योम dsi_call_isrs(काष्ठा dsi_isr_data *isr_array,
+		अचिन्हित पूर्णांक isr_array_size, u32 irqstatus)
+अणु
+	काष्ठा dsi_isr_data *isr_data;
+	पूर्णांक i;
 
-	for (i = 0; i < isr_array_size; i++) {
+	क्रम (i = 0; i < isr_array_size; i++) अणु
 		isr_data = &isr_array[i];
-		if (isr_data->isr && isr_data->mask & irqstatus)
+		अगर (isr_data->isr && isr_data->mask & irqstatus)
 			isr_data->isr(isr_data->arg, irqstatus);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dsi_handle_isrs(struct dsi_isr_tables *isr_tables,
+अटल व्योम dsi_handle_isrs(काष्ठा dsi_isr_tables *isr_tables,
 		u32 irqstatus, u32 *vcstatus, u32 ciostatus)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
 	dsi_call_isrs(isr_tables->isr_table,
 			ARRAY_SIZE(isr_tables->isr_table),
 			irqstatus);
 
-	for (i = 0; i < 4; ++i) {
-		if (vcstatus[i] == 0)
-			continue;
+	क्रम (i = 0; i < 4; ++i) अणु
+		अगर (vcstatus[i] == 0)
+			जारी;
 		dsi_call_isrs(isr_tables->isr_table_vc[i],
 				ARRAY_SIZE(isr_tables->isr_table_vc[i]),
 				vcstatus[i]);
-	}
+	पूर्ण
 
-	if (ciostatus != 0)
+	अगर (ciostatus != 0)
 		dsi_call_isrs(isr_tables->isr_table_cio,
 				ARRAY_SIZE(isr_tables->isr_table_cio),
 				ciostatus);
-}
+पूर्ण
 
-static irqreturn_t omap_dsi_irq_handler(int irq, void *arg)
-{
-	struct dsi_data *dsi = arg;
+अटल irqवापस_t omap_dsi_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा dsi_data *dsi = arg;
 	u32 irqstatus, vcstatus[4], ciostatus;
-	int i;
+	पूर्णांक i;
 
-	if (!dsi->is_enabled)
-		return IRQ_NONE;
+	अगर (!dsi->is_enabled)
+		वापस IRQ_NONE;
 
 	spin_lock(&dsi->irq_lock);
 
-	irqstatus = dsi_read_reg(dsi, DSI_IRQSTATUS);
+	irqstatus = dsi_पढ़ो_reg(dsi, DSI_IRQSTATUS);
 
-	/* IRQ is not for us */
-	if (!irqstatus) {
+	/* IRQ is not क्रम us */
+	अगर (!irqstatus) अणु
 		spin_unlock(&dsi->irq_lock);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	dsi_write_reg(dsi, DSI_IRQSTATUS, irqstatus & ~DSI_IRQ_CHANNEL_MASK);
-	/* flush posted write */
-	dsi_read_reg(dsi, DSI_IRQSTATUS);
+	dsi_ग_लिखो_reg(dsi, DSI_IRQSTATUS, irqstatus & ~DSI_IRQ_CHANNEL_MASK);
+	/* flush posted ग_लिखो */
+	dsi_पढ़ो_reg(dsi, DSI_IRQSTATUS);
 
-	for (i = 0; i < 4; ++i) {
-		if ((irqstatus & (1 << i)) == 0) {
+	क्रम (i = 0; i < 4; ++i) अणु
+		अगर ((irqstatus & (1 << i)) == 0) अणु
 			vcstatus[i] = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		vcstatus[i] = dsi_read_reg(dsi, DSI_VC_IRQSTATUS(i));
+		vcstatus[i] = dsi_पढ़ो_reg(dsi, DSI_VC_IRQSTATUS(i));
 
-		dsi_write_reg(dsi, DSI_VC_IRQSTATUS(i), vcstatus[i]);
-		/* flush posted write */
-		dsi_read_reg(dsi, DSI_VC_IRQSTATUS(i));
-	}
+		dsi_ग_लिखो_reg(dsi, DSI_VC_IRQSTATUS(i), vcstatus[i]);
+		/* flush posted ग_लिखो */
+		dsi_पढ़ो_reg(dsi, DSI_VC_IRQSTATUS(i));
+	पूर्ण
 
-	if (irqstatus & DSI_IRQ_COMPLEXIO_ERR) {
-		ciostatus = dsi_read_reg(dsi, DSI_COMPLEXIO_IRQ_STATUS);
+	अगर (irqstatus & DSI_IRQ_COMPLEXIO_ERR) अणु
+		ciostatus = dsi_पढ़ो_reg(dsi, DSI_COMPLEXIO_IRQ_STATUS);
 
-		dsi_write_reg(dsi, DSI_COMPLEXIO_IRQ_STATUS, ciostatus);
-		/* flush posted write */
-		dsi_read_reg(dsi, DSI_COMPLEXIO_IRQ_STATUS);
-	} else {
+		dsi_ग_लिखो_reg(dsi, DSI_COMPLEXIO_IRQ_STATUS, ciostatus);
+		/* flush posted ग_लिखो */
+		dsi_पढ़ो_reg(dsi, DSI_COMPLEXIO_IRQ_STATUS);
+	पूर्ण अन्यथा अणु
 		ciostatus = 0;
-	}
+	पूर्ण
 
-#ifdef DSI_CATCH_MISSING_TE
-	if (irqstatus & DSI_IRQ_TE_TRIGGER)
-		del_timer(&dsi->te_timer);
-#endif
+#अगर_घोषित DSI_CATCH_MISSING_TE
+	अगर (irqstatus & DSI_IRQ_TE_TRIGGER)
+		del_समयr(&dsi->te_समयr);
+#पूर्ण_अगर
 
-	/* make a copy and unlock, so that isrs can unregister
+	/* make a copy and unlock, so that isrs can unरेजिस्टर
 	 * themselves */
-	memcpy(&dsi->isr_tables_copy, &dsi->isr_tables,
-		sizeof(dsi->isr_tables));
+	स_नकल(&dsi->isr_tables_copy, &dsi->isr_tables,
+		माप(dsi->isr_tables));
 
 	spin_unlock(&dsi->irq_lock);
 
@@ -468,281 +469,281 @@ static irqreturn_t omap_dsi_irq_handler(int irq, void *arg)
 
 	dsi_collect_irq_stats(dsi, irqstatus, vcstatus, ciostatus);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* dsi->irq_lock has to be locked by the caller */
-static void _omap_dsi_configure_irqs(struct dsi_data *dsi,
-				     struct dsi_isr_data *isr_array,
-				     unsigned int isr_array_size,
-				     u32 default_mask,
-				     const struct dsi_reg enable_reg,
-				     const struct dsi_reg status_reg)
-{
-	struct dsi_isr_data *isr_data;
+अटल व्योम _omap_dsi_configure_irqs(काष्ठा dsi_data *dsi,
+				     काष्ठा dsi_isr_data *isr_array,
+				     अचिन्हित पूर्णांक isr_array_size,
+				     u32 शेष_mask,
+				     स्थिर काष्ठा dsi_reg enable_reg,
+				     स्थिर काष्ठा dsi_reg status_reg)
+अणु
+	काष्ठा dsi_isr_data *isr_data;
 	u32 mask;
 	u32 old_mask;
-	int i;
+	पूर्णांक i;
 
-	mask = default_mask;
+	mask = शेष_mask;
 
-	for (i = 0; i < isr_array_size; i++) {
+	क्रम (i = 0; i < isr_array_size; i++) अणु
 		isr_data = &isr_array[i];
 
-		if (isr_data->isr == NULL)
-			continue;
+		अगर (isr_data->isr == शून्य)
+			जारी;
 
 		mask |= isr_data->mask;
-	}
+	पूर्ण
 
-	old_mask = dsi_read_reg(dsi, enable_reg);
-	/* clear the irqstatus for newly enabled irqs */
-	dsi_write_reg(dsi, status_reg, (mask ^ old_mask) & mask);
-	dsi_write_reg(dsi, enable_reg, mask);
+	old_mask = dsi_पढ़ो_reg(dsi, enable_reg);
+	/* clear the irqstatus क्रम newly enabled irqs */
+	dsi_ग_लिखो_reg(dsi, status_reg, (mask ^ old_mask) & mask);
+	dsi_ग_लिखो_reg(dsi, enable_reg, mask);
 
-	/* flush posted writes */
-	dsi_read_reg(dsi, enable_reg);
-	dsi_read_reg(dsi, status_reg);
-}
+	/* flush posted ग_लिखोs */
+	dsi_पढ़ो_reg(dsi, enable_reg);
+	dsi_पढ़ो_reg(dsi, status_reg);
+पूर्ण
 
 /* dsi->irq_lock has to be locked by the caller */
-static void _omap_dsi_set_irqs(struct dsi_data *dsi)
-{
+अटल व्योम _omap_dsi_set_irqs(काष्ठा dsi_data *dsi)
+अणु
 	u32 mask = DSI_IRQ_ERROR_MASK;
-#ifdef DSI_CATCH_MISSING_TE
+#अगर_घोषित DSI_CATCH_MISSING_TE
 	mask |= DSI_IRQ_TE_TRIGGER;
-#endif
+#पूर्ण_अगर
 	_omap_dsi_configure_irqs(dsi, dsi->isr_tables.isr_table,
 			ARRAY_SIZE(dsi->isr_tables.isr_table), mask,
 			DSI_IRQENABLE, DSI_IRQSTATUS);
-}
+पूर्ण
 
 /* dsi->irq_lock has to be locked by the caller */
-static void _omap_dsi_set_irqs_vc(struct dsi_data *dsi, int vc)
-{
+अटल व्योम _omap_dsi_set_irqs_vc(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
 	_omap_dsi_configure_irqs(dsi, dsi->isr_tables.isr_table_vc[vc],
 			ARRAY_SIZE(dsi->isr_tables.isr_table_vc[vc]),
 			DSI_VC_IRQ_ERROR_MASK,
 			DSI_VC_IRQENABLE(vc), DSI_VC_IRQSTATUS(vc));
-}
+पूर्ण
 
 /* dsi->irq_lock has to be locked by the caller */
-static void _omap_dsi_set_irqs_cio(struct dsi_data *dsi)
-{
+अटल व्योम _omap_dsi_set_irqs_cio(काष्ठा dsi_data *dsi)
+अणु
 	_omap_dsi_configure_irqs(dsi, dsi->isr_tables.isr_table_cio,
 			ARRAY_SIZE(dsi->isr_tables.isr_table_cio),
 			DSI_CIO_IRQ_ERROR_MASK,
 			DSI_COMPLEXIO_IRQ_ENABLE, DSI_COMPLEXIO_IRQ_STATUS);
-}
+पूर्ण
 
-static void _dsi_initialize_irq(struct dsi_data *dsi)
-{
-	unsigned long flags;
-	int vc;
+अटल व्योम _dsi_initialize_irq(काष्ठा dsi_data *dsi)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक vc;
 
 	spin_lock_irqsave(&dsi->irq_lock, flags);
 
-	memset(&dsi->isr_tables, 0, sizeof(dsi->isr_tables));
+	स_रखो(&dsi->isr_tables, 0, माप(dsi->isr_tables));
 
 	_omap_dsi_set_irqs(dsi);
-	for (vc = 0; vc < 4; ++vc)
+	क्रम (vc = 0; vc < 4; ++vc)
 		_omap_dsi_set_irqs_vc(dsi, vc);
 	_omap_dsi_set_irqs_cio(dsi);
 
 	spin_unlock_irqrestore(&dsi->irq_lock, flags);
-}
+पूर्ण
 
-static int _dsi_register_isr(omap_dsi_isr_t isr, void *arg, u32 mask,
-		struct dsi_isr_data *isr_array, unsigned int isr_array_size)
-{
-	struct dsi_isr_data *isr_data;
-	int free_idx;
-	int i;
+अटल पूर्णांक _dsi_रेजिस्टर_isr(omap_dsi_isr_t isr, व्योम *arg, u32 mask,
+		काष्ठा dsi_isr_data *isr_array, अचिन्हित पूर्णांक isr_array_size)
+अणु
+	काष्ठा dsi_isr_data *isr_data;
+	पूर्णांक मुक्त_idx;
+	पूर्णांक i;
 
-	BUG_ON(isr == NULL);
+	BUG_ON(isr == शून्य);
 
-	/* check for duplicate entry and find a free slot */
-	free_idx = -1;
-	for (i = 0; i < isr_array_size; i++) {
+	/* check क्रम duplicate entry and find a मुक्त slot */
+	मुक्त_idx = -1;
+	क्रम (i = 0; i < isr_array_size; i++) अणु
 		isr_data = &isr_array[i];
 
-		if (isr_data->isr == isr && isr_data->arg == arg &&
-				isr_data->mask == mask) {
-			return -EINVAL;
-		}
+		अगर (isr_data->isr == isr && isr_data->arg == arg &&
+				isr_data->mask == mask) अणु
+			वापस -EINVAL;
+		पूर्ण
 
-		if (isr_data->isr == NULL && free_idx == -1)
-			free_idx = i;
-	}
+		अगर (isr_data->isr == शून्य && मुक्त_idx == -1)
+			मुक्त_idx = i;
+	पूर्ण
 
-	if (free_idx == -1)
-		return -EBUSY;
+	अगर (मुक्त_idx == -1)
+		वापस -EBUSY;
 
-	isr_data = &isr_array[free_idx];
+	isr_data = &isr_array[मुक्त_idx];
 	isr_data->isr = isr;
 	isr_data->arg = arg;
 	isr_data->mask = mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _dsi_unregister_isr(omap_dsi_isr_t isr, void *arg, u32 mask,
-		struct dsi_isr_data *isr_array, unsigned int isr_array_size)
-{
-	struct dsi_isr_data *isr_data;
-	int i;
+अटल पूर्णांक _dsi_unरेजिस्टर_isr(omap_dsi_isr_t isr, व्योम *arg, u32 mask,
+		काष्ठा dsi_isr_data *isr_array, अचिन्हित पूर्णांक isr_array_size)
+अणु
+	काष्ठा dsi_isr_data *isr_data;
+	पूर्णांक i;
 
-	for (i = 0; i < isr_array_size; i++) {
+	क्रम (i = 0; i < isr_array_size; i++) अणु
 		isr_data = &isr_array[i];
-		if (isr_data->isr != isr || isr_data->arg != arg ||
+		अगर (isr_data->isr != isr || isr_data->arg != arg ||
 				isr_data->mask != mask)
-			continue;
+			जारी;
 
-		isr_data->isr = NULL;
-		isr_data->arg = NULL;
+		isr_data->isr = शून्य;
+		isr_data->arg = शून्य;
 		isr_data->mask = 0;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int dsi_register_isr(struct dsi_data *dsi, omap_dsi_isr_t isr,
-			    void *arg, u32 mask)
-{
-	unsigned long flags;
-	int r;
+अटल पूर्णांक dsi_रेजिस्टर_isr(काष्ठा dsi_data *dsi, omap_dsi_isr_t isr,
+			    व्योम *arg, u32 mask)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक r;
 
 	spin_lock_irqsave(&dsi->irq_lock, flags);
 
-	r = _dsi_register_isr(isr, arg, mask, dsi->isr_tables.isr_table,
+	r = _dsi_रेजिस्टर_isr(isr, arg, mask, dsi->isr_tables.isr_table,
 			ARRAY_SIZE(dsi->isr_tables.isr_table));
 
-	if (r == 0)
+	अगर (r == 0)
 		_omap_dsi_set_irqs(dsi);
 
 	spin_unlock_irqrestore(&dsi->irq_lock, flags);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dsi_unregister_isr(struct dsi_data *dsi, omap_dsi_isr_t isr,
-			      void *arg, u32 mask)
-{
-	unsigned long flags;
-	int r;
+अटल पूर्णांक dsi_unरेजिस्टर_isr(काष्ठा dsi_data *dsi, omap_dsi_isr_t isr,
+			      व्योम *arg, u32 mask)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक r;
 
 	spin_lock_irqsave(&dsi->irq_lock, flags);
 
-	r = _dsi_unregister_isr(isr, arg, mask, dsi->isr_tables.isr_table,
+	r = _dsi_unरेजिस्टर_isr(isr, arg, mask, dsi->isr_tables.isr_table,
 			ARRAY_SIZE(dsi->isr_tables.isr_table));
 
-	if (r == 0)
+	अगर (r == 0)
 		_omap_dsi_set_irqs(dsi);
 
 	spin_unlock_irqrestore(&dsi->irq_lock, flags);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dsi_register_isr_vc(struct dsi_data *dsi, int vc,
-			       omap_dsi_isr_t isr, void *arg, u32 mask)
-{
-	unsigned long flags;
-	int r;
+अटल पूर्णांक dsi_रेजिस्टर_isr_vc(काष्ठा dsi_data *dsi, पूर्णांक vc,
+			       omap_dsi_isr_t isr, व्योम *arg, u32 mask)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक r;
 
 	spin_lock_irqsave(&dsi->irq_lock, flags);
 
-	r = _dsi_register_isr(isr, arg, mask,
+	r = _dsi_रेजिस्टर_isr(isr, arg, mask,
 			dsi->isr_tables.isr_table_vc[vc],
 			ARRAY_SIZE(dsi->isr_tables.isr_table_vc[vc]));
 
-	if (r == 0)
+	अगर (r == 0)
 		_omap_dsi_set_irqs_vc(dsi, vc);
 
 	spin_unlock_irqrestore(&dsi->irq_lock, flags);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dsi_unregister_isr_vc(struct dsi_data *dsi, int vc,
-				 omap_dsi_isr_t isr, void *arg, u32 mask)
-{
-	unsigned long flags;
-	int r;
+अटल पूर्णांक dsi_unरेजिस्टर_isr_vc(काष्ठा dsi_data *dsi, पूर्णांक vc,
+				 omap_dsi_isr_t isr, व्योम *arg, u32 mask)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक r;
 
 	spin_lock_irqsave(&dsi->irq_lock, flags);
 
-	r = _dsi_unregister_isr(isr, arg, mask,
+	r = _dsi_unरेजिस्टर_isr(isr, arg, mask,
 			dsi->isr_tables.isr_table_vc[vc],
 			ARRAY_SIZE(dsi->isr_tables.isr_table_vc[vc]));
 
-	if (r == 0)
+	अगर (r == 0)
 		_omap_dsi_set_irqs_vc(dsi, vc);
 
 	spin_unlock_irqrestore(&dsi->irq_lock, flags);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static u32 dsi_get_errors(struct dsi_data *dsi)
-{
-	unsigned long flags;
+अटल u32 dsi_get_errors(काष्ठा dsi_data *dsi)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 e;
 
 	spin_lock_irqsave(&dsi->errors_lock, flags);
 	e = dsi->errors;
 	dsi->errors = 0;
 	spin_unlock_irqrestore(&dsi->errors_lock, flags);
-	return e;
-}
+	वापस e;
+पूर्ण
 
-static int dsi_runtime_get(struct dsi_data *dsi)
-{
-	int r;
+अटल पूर्णांक dsi_runसमय_get(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक r;
 
 	DSSDBG("dsi_runtime_get\n");
 
-	r = pm_runtime_get_sync(dsi->dev);
-	if (WARN_ON(r < 0)) {
-		pm_runtime_put_noidle(dsi->dev);
-		return r;
-	}
-	return 0;
-}
+	r = pm_runसमय_get_sync(dsi->dev);
+	अगर (WARN_ON(r < 0)) अणु
+		pm_runसमय_put_noidle(dsi->dev);
+		वापस r;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void dsi_runtime_put(struct dsi_data *dsi)
-{
-	int r;
+अटल व्योम dsi_runसमय_put(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक r;
 
 	DSSDBG("dsi_runtime_put\n");
 
-	r = pm_runtime_put_sync(dsi->dev);
+	r = pm_runसमय_put_sync(dsi->dev);
 	WARN_ON(r < 0 && r != -ENOSYS);
-}
+पूर्ण
 
-static void _dsi_print_reset_status(struct dsi_data *dsi)
-{
-	int b0, b1, b2;
+अटल व्योम _dsi_prपूर्णांक_reset_status(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक b0, b1, b2;
 
-	/* A dummy read using the SCP interface to any DSIPHY register is
+	/* A dummy पढ़ो using the SCP पूर्णांकerface to any DSIPHY रेजिस्टर is
 	 * required after DSIPHY reset to complete the reset of the DSI complex
 	 * I/O. */
-	dsi_read_reg(dsi, DSI_DSIPHY_CFG5);
+	dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG5);
 
-	if (dsi->data->quirks & DSI_QUIRK_REVERSE_TXCLKESC) {
+	अगर (dsi->data->quirks & DSI_QUIRK_REVERSE_TXCLKESC) अणु
 		b0 = 28;
 		b1 = 27;
 		b2 = 26;
-	} else {
+	पूर्ण अन्यथा अणु
 		b0 = 24;
 		b1 = 25;
 		b2 = 26;
-	}
+	पूर्ण
 
-#define DSI_FLD_GET(fld, start, end)\
-	FLD_GET(dsi_read_reg(dsi, DSI_##fld), start, end)
+#घोषणा DSI_FLD_GET(fld, start, end)\
+	FLD_GET(dsi_पढ़ो_reg(dsi, DSI_##fld), start, end)
 
 	pr_debug("DSI resets: PLL (%d) CIO (%d) PHY (%x%x%x, %d, %d, %d)\n",
 		DSI_FLD_GET(PLL_STATUS, 0, 0),
@@ -754,131 +755,131 @@ static void _dsi_print_reset_status(struct dsi_data *dsi)
 		DSI_FLD_GET(DSIPHY_CFG5, 30, 30),
 		DSI_FLD_GET(DSIPHY_CFG5, 31, 31));
 
-#undef DSI_FLD_GET
-}
+#अघोषित DSI_FLD_GET
+पूर्ण
 
-static inline int dsi_if_enable(struct dsi_data *dsi, bool enable)
-{
+अटल अंतरभूत पूर्णांक dsi_अगर_enable(काष्ठा dsi_data *dsi, bool enable)
+अणु
 	DSSDBG("dsi_if_enable(%d)\n", enable);
 
 	enable = enable ? 1 : 0;
 	REG_FLD_MOD(dsi, DSI_CTRL, enable, 0, 0); /* IF_EN */
 
-	if (!wait_for_bit_change(dsi, DSI_CTRL, 0, enable)) {
+	अगर (!रुको_क्रम_bit_change(dsi, DSI_CTRL, 0, enable)) अणु
 		DSSERR("Failed to set dsi_if_enable to %d\n", enable);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long dsi_get_pll_hsdiv_dispc_rate(struct dsi_data *dsi)
-{
-	return dsi->pll.cinfo.clkout[HSDIV_DISPC];
-}
+अटल अचिन्हित दीर्घ dsi_get_pll_hsभाग_dispc_rate(काष्ठा dsi_data *dsi)
+अणु
+	वापस dsi->pll.cinfo.clkout[HSDIV_DISPC];
+पूर्ण
 
-static unsigned long dsi_get_pll_hsdiv_dsi_rate(struct dsi_data *dsi)
-{
-	return dsi->pll.cinfo.clkout[HSDIV_DSI];
-}
+अटल अचिन्हित दीर्घ dsi_get_pll_hsभाग_dsi_rate(काष्ठा dsi_data *dsi)
+अणु
+	वापस dsi->pll.cinfo.clkout[HSDIV_DSI];
+पूर्ण
 
-static unsigned long dsi_get_txbyteclkhs(struct dsi_data *dsi)
-{
-	return dsi->pll.cinfo.clkdco / 16;
-}
+अटल अचिन्हित दीर्घ dsi_get_txbyteclkhs(काष्ठा dsi_data *dsi)
+अणु
+	वापस dsi->pll.cinfo.clkdco / 16;
+पूर्ण
 
-static unsigned long dsi_fclk_rate(struct dsi_data *dsi)
-{
-	unsigned long r;
-	enum dss_clk_source source;
+अटल अचिन्हित दीर्घ dsi_fclk_rate(काष्ठा dsi_data *dsi)
+अणु
+	अचिन्हित दीर्घ r;
+	क्रमागत dss_clk_source source;
 
 	source = dss_get_dsi_clk_source(dsi->dss, dsi->module_id);
-	if (source == DSS_CLK_SRC_FCK) {
+	अगर (source == DSS_CLK_SRC_FCK) अणु
 		/* DSI FCLK source is DSS_CLK_FCK */
 		r = clk_get_rate(dsi->dss_clk);
-	} else {
-		/* DSI FCLK source is dsi_pll_hsdiv_dsi_clk */
-		r = dsi_get_pll_hsdiv_dsi_rate(dsi);
-	}
+	पूर्ण अन्यथा अणु
+		/* DSI FCLK source is dsi_pll_hsभाग_dsi_clk */
+		r = dsi_get_pll_hsभाग_dsi_rate(dsi);
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dsi_lp_clock_calc(unsigned long dsi_fclk,
-		unsigned long lp_clk_min, unsigned long lp_clk_max,
-		struct dsi_lp_clock_info *lp_cinfo)
-{
-	unsigned int lp_clk_div;
-	unsigned long lp_clk;
+अटल पूर्णांक dsi_lp_घड़ी_calc(अचिन्हित दीर्घ dsi_fclk,
+		अचिन्हित दीर्घ lp_clk_min, अचिन्हित दीर्घ lp_clk_max,
+		काष्ठा dsi_lp_घड़ी_info *lp_cinfo)
+अणु
+	अचिन्हित पूर्णांक lp_clk_भाग;
+	अचिन्हित दीर्घ lp_clk;
 
-	lp_clk_div = DIV_ROUND_UP(dsi_fclk, lp_clk_max * 2);
-	lp_clk = dsi_fclk / 2 / lp_clk_div;
+	lp_clk_भाग = DIV_ROUND_UP(dsi_fclk, lp_clk_max * 2);
+	lp_clk = dsi_fclk / 2 / lp_clk_भाग;
 
-	if (lp_clk < lp_clk_min || lp_clk > lp_clk_max)
-		return -EINVAL;
+	अगर (lp_clk < lp_clk_min || lp_clk > lp_clk_max)
+		वापस -EINVAL;
 
-	lp_cinfo->lp_clk_div = lp_clk_div;
+	lp_cinfo->lp_clk_भाग = lp_clk_भाग;
 	lp_cinfo->lp_clk = lp_clk;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_set_lp_clk_divisor(struct dsi_data *dsi)
-{
-	unsigned long dsi_fclk;
-	unsigned int lp_clk_div;
-	unsigned long lp_clk;
-	unsigned int lpdiv_max = dsi->data->max_pll_lpdiv;
+अटल पूर्णांक dsi_set_lp_clk_भागisor(काष्ठा dsi_data *dsi)
+अणु
+	अचिन्हित दीर्घ dsi_fclk;
+	अचिन्हित पूर्णांक lp_clk_भाग;
+	अचिन्हित दीर्घ lp_clk;
+	अचिन्हित पूर्णांक lpभाग_max = dsi->data->max_pll_lpभाग;
 
 
-	lp_clk_div = dsi->user_lp_cinfo.lp_clk_div;
+	lp_clk_भाग = dsi->user_lp_cinfo.lp_clk_भाग;
 
-	if (lp_clk_div == 0 || lp_clk_div > lpdiv_max)
-		return -EINVAL;
+	अगर (lp_clk_भाग == 0 || lp_clk_भाग > lpभाग_max)
+		वापस -EINVAL;
 
 	dsi_fclk = dsi_fclk_rate(dsi);
 
-	lp_clk = dsi_fclk / 2 / lp_clk_div;
+	lp_clk = dsi_fclk / 2 / lp_clk_भाग;
 
-	DSSDBG("LP_CLK_DIV %u, LP_CLK %lu\n", lp_clk_div, lp_clk);
+	DSSDBG("LP_CLK_DIV %u, LP_CLK %lu\n", lp_clk_भाग, lp_clk);
 	dsi->current_lp_cinfo.lp_clk = lp_clk;
-	dsi->current_lp_cinfo.lp_clk_div = lp_clk_div;
+	dsi->current_lp_cinfo.lp_clk_भाग = lp_clk_भाग;
 
 	/* LP_CLK_DIVISOR */
-	REG_FLD_MOD(dsi, DSI_CLK_CTRL, lp_clk_div, 12, 0);
+	REG_FLD_MOD(dsi, DSI_CLK_CTRL, lp_clk_भाग, 12, 0);
 
 	/* LP_RX_SYNCHRO_ENABLE */
 	REG_FLD_MOD(dsi, DSI_CLK_CTRL, dsi_fclk > 30000000 ? 1 : 0, 21, 21);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_enable_scp_clk(struct dsi_data *dsi)
-{
-	if (dsi->scp_clk_refcount++ == 0)
+अटल व्योम dsi_enable_scp_clk(काष्ठा dsi_data *dsi)
+अणु
+	अगर (dsi->scp_clk_refcount++ == 0)
 		REG_FLD_MOD(dsi, DSI_CLK_CTRL, 1, 14, 14); /* CIO_CLK_ICG */
-}
+पूर्ण
 
-static void dsi_disable_scp_clk(struct dsi_data *dsi)
-{
+अटल व्योम dsi_disable_scp_clk(काष्ठा dsi_data *dsi)
+अणु
 	WARN_ON(dsi->scp_clk_refcount == 0);
-	if (--dsi->scp_clk_refcount == 0)
+	अगर (--dsi->scp_clk_refcount == 0)
 		REG_FLD_MOD(dsi, DSI_CLK_CTRL, 0, 14, 14); /* CIO_CLK_ICG */
-}
+पूर्ण
 
-enum dsi_pll_power_state {
+क्रमागत dsi_pll_घातer_state अणु
 	DSI_PLL_POWER_OFF	= 0x0,
 	DSI_PLL_POWER_ON_HSCLK	= 0x1,
 	DSI_PLL_POWER_ON_ALL	= 0x2,
 	DSI_PLL_POWER_ON_DIV	= 0x3,
-};
+पूर्ण;
 
-static int dsi_pll_power(struct dsi_data *dsi, enum dsi_pll_power_state state)
-{
-	int t = 0;
+अटल पूर्णांक dsi_pll_घातer(काष्ठा dsi_data *dsi, क्रमागत dsi_pll_घातer_state state)
+अणु
+	पूर्णांक t = 0;
 
-	/* DSI-PLL power command 0x3 is not working */
-	if ((dsi->data->quirks & DSI_QUIRK_PLL_PWR_BUG) &&
+	/* DSI-PLL घातer command 0x3 is not working */
+	अगर ((dsi->data->quirks & DSI_QUIRK_PLL_PWR_BUG) &&
 	    state == DSI_PLL_POWER_ON_DIV)
 		state = DSI_PLL_POWER_ON_ALL;
 
@@ -886,40 +887,40 @@ static int dsi_pll_power(struct dsi_data *dsi, enum dsi_pll_power_state state)
 	REG_FLD_MOD(dsi, DSI_CLK_CTRL, state, 31, 30);
 
 	/* PLL_PWR_STATUS */
-	while (FLD_GET(dsi_read_reg(dsi, DSI_CLK_CTRL), 29, 28) != state) {
-		if (++t > 1000) {
+	जबतक (FLD_GET(dsi_पढ़ो_reg(dsi, DSI_CLK_CTRL), 29, 28) != state) अणु
+		अगर (++t > 1000) अणु
 			DSSERR("Failed to set DSI PLL power mode to %d\n",
 					state);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 		udelay(1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void dsi_pll_calc_dsi_fck(struct dsi_data *dsi,
-				 struct dss_pll_clock_info *cinfo)
-{
-	unsigned long max_dsi_fck;
+अटल व्योम dsi_pll_calc_dsi_fck(काष्ठा dsi_data *dsi,
+				 काष्ठा dss_pll_घड़ी_info *cinfo)
+अणु
+	अचिन्हित दीर्घ max_dsi_fck;
 
 	max_dsi_fck = dsi->data->max_fck_freq;
 
 	cinfo->mX[HSDIV_DSI] = DIV_ROUND_UP(cinfo->clkdco, max_dsi_fck);
 	cinfo->clkout[HSDIV_DSI] = cinfo->clkdco / cinfo->mX[HSDIV_DSI];
-}
+पूर्ण
 
-static int dsi_pll_enable(struct dss_pll *pll)
-{
-	struct dsi_data *dsi = container_of(pll, struct dsi_data, pll);
-	int r = 0;
+अटल पूर्णांक dsi_pll_enable(काष्ठा dss_pll *pll)
+अणु
+	काष्ठा dsi_data *dsi = container_of(pll, काष्ठा dsi_data, pll);
+	पूर्णांक r = 0;
 
 	DSSDBG("PLL init\n");
 
-	r = dsi_runtime_get(dsi);
-	if (r)
-		return r;
+	r = dsi_runसमय_get(dsi);
+	अगर (r)
+		वापस r;
 
 	/*
 	 * Note: SCP CLK is not required on OMAP3, but it is required on OMAP4.
@@ -927,77 +928,77 @@ static int dsi_pll_enable(struct dss_pll *pll)
 	dsi_enable_scp_clk(dsi);
 
 	r = regulator_enable(dsi->vdds_dsi_reg);
-	if (r)
-		goto err0;
+	अगर (r)
+		जाओ err0;
 
-	/* XXX PLL does not come out of reset without this... */
-	dispc_pck_free_enable(dsi->dss->dispc, 1);
+	/* XXX PLL करोes not come out of reset without this... */
+	dispc_pck_मुक्त_enable(dsi->dss->dispc, 1);
 
-	if (!wait_for_bit_change(dsi, DSI_PLL_STATUS, 0, 1)) {
+	अगर (!रुको_क्रम_bit_change(dsi, DSI_PLL_STATUS, 0, 1)) अणु
 		DSSERR("PLL not coming out of reset.\n");
 		r = -ENODEV;
-		dispc_pck_free_enable(dsi->dss->dispc, 0);
-		goto err1;
-	}
+		dispc_pck_मुक्त_enable(dsi->dss->dispc, 0);
+		जाओ err1;
+	पूर्ण
 
-	/* XXX ... but if left on, we get problems when planes do not
+	/* XXX ... but अगर left on, we get problems when planes करो not
 	 * fill the whole display. No idea about this */
-	dispc_pck_free_enable(dsi->dss->dispc, 0);
+	dispc_pck_मुक्त_enable(dsi->dss->dispc, 0);
 
-	r = dsi_pll_power(dsi, DSI_PLL_POWER_ON_ALL);
+	r = dsi_pll_घातer(dsi, DSI_PLL_POWER_ON_ALL);
 
-	if (r)
-		goto err1;
+	अगर (r)
+		जाओ err1;
 
 	DSSDBG("PLL init done\n");
 
-	return 0;
+	वापस 0;
 err1:
 	regulator_disable(dsi->vdds_dsi_reg);
 err0:
 	dsi_disable_scp_clk(dsi);
-	dsi_runtime_put(dsi);
-	return r;
-}
+	dsi_runसमय_put(dsi);
+	वापस r;
+पूर्ण
 
-static void dsi_pll_disable(struct dss_pll *pll)
-{
-	struct dsi_data *dsi = container_of(pll, struct dsi_data, pll);
+अटल व्योम dsi_pll_disable(काष्ठा dss_pll *pll)
+अणु
+	काष्ठा dsi_data *dsi = container_of(pll, काष्ठा dsi_data, pll);
 
-	dsi_pll_power(dsi, DSI_PLL_POWER_OFF);
+	dsi_pll_घातer(dsi, DSI_PLL_POWER_OFF);
 
 	regulator_disable(dsi->vdds_dsi_reg);
 
 	dsi_disable_scp_clk(dsi);
-	dsi_runtime_put(dsi);
+	dsi_runसमय_put(dsi);
 
 	DSSDBG("PLL disable done\n");
-}
+पूर्ण
 
-static int dsi_dump_dsi_clocks(struct seq_file *s, void *p)
-{
-	struct dsi_data *dsi = s->private;
-	struct dss_pll_clock_info *cinfo = &dsi->pll.cinfo;
-	enum dss_clk_source dispc_clk_src, dsi_clk_src;
-	int dsi_module = dsi->module_id;
-	struct dss_pll *pll = &dsi->pll;
+अटल पूर्णांक dsi_dump_dsi_घड़ीs(काष्ठा seq_file *s, व्योम *p)
+अणु
+	काष्ठा dsi_data *dsi = s->निजी;
+	काष्ठा dss_pll_घड़ी_info *cinfo = &dsi->pll.cinfo;
+	क्रमागत dss_clk_source dispc_clk_src, dsi_clk_src;
+	पूर्णांक dsi_module = dsi->module_id;
+	काष्ठा dss_pll *pll = &dsi->pll;
 
 	dispc_clk_src = dss_get_dispc_clk_source(dsi->dss);
 	dsi_clk_src = dss_get_dsi_clk_source(dsi->dss, dsi_module);
 
-	if (dsi_runtime_get(dsi))
-		return 0;
+	अगर (dsi_runसमय_get(dsi))
+		वापस 0;
 
-	seq_printf(s,	"- DSI%d PLL -\n", dsi_module + 1);
+	seq_म_लिखो(s,	"- DSI%d PLL -\n", dsi_module + 1);
 
-	seq_printf(s,	"dsi pll clkin\t%lu\n", clk_get_rate(pll->clkin));
+	seq_म_लिखो(s,	"dsi pll clkin\t%lu\n", clk_get_rate(pll->clkin));
 
-	seq_printf(s,	"Fint\t\t%-16lun %u\n", cinfo->fint, cinfo->n);
+	seq_म_लिखो(s,	"Fint\t\t%-16lun %u\n", cinfo->fपूर्णांक, cinfo->n);
 
-	seq_printf(s,	"CLKIN4DDR\t%-16lum %u\n",
+	seq_म_लिखो(s,	"CLKIN4DDR\t%-16lum %u\n",
 			cinfo->clkdco, cinfo->m);
 
-	seq_printf(s,	"DSI_PLL_HSDIV_DISPC (%s)\t%-16lum_dispc %u\t(%s)\n",
+	seq_म_लिखो(s,	"DSI_PLL_HSDIV_DISPC (%s)\t%-16lum_dispc %u\t(%s)\n",
 			dss_get_clk_source_name(dsi_module == 0 ?
 				DSS_CLK_SRC_PLL1_1 :
 				DSS_CLK_SRC_PLL2_1),
@@ -1006,7 +1007,7 @@ static int dsi_dump_dsi_clocks(struct seq_file *s, void *p)
 			dispc_clk_src == DSS_CLK_SRC_FCK ?
 			"off" : "on");
 
-	seq_printf(s,	"DSI_PLL_HSDIV_DSI (%s)\t%-16lum_dsi %u\t(%s)\n",
+	seq_म_लिखो(s,	"DSI_PLL_HSDIV_DSI (%s)\t%-16lum_dsi %u\t(%s)\n",
 			dss_get_clk_source_name(dsi_module == 0 ?
 				DSS_CLK_SRC_PLL1_2 :
 				DSS_CLK_SRC_PLL2_2),
@@ -1015,48 +1016,48 @@ static int dsi_dump_dsi_clocks(struct seq_file *s, void *p)
 			dsi_clk_src == DSS_CLK_SRC_FCK ?
 			"off" : "on");
 
-	seq_printf(s,	"- DSI%d -\n", dsi_module + 1);
+	seq_म_लिखो(s,	"- DSI%d -\n", dsi_module + 1);
 
-	seq_printf(s,	"dsi fclk source = %s\n",
+	seq_म_लिखो(s,	"dsi fclk source = %s\n",
 			dss_get_clk_source_name(dsi_clk_src));
 
-	seq_printf(s,	"DSI_FCLK\t%lu\n", dsi_fclk_rate(dsi));
+	seq_म_लिखो(s,	"DSI_FCLK\t%lu\n", dsi_fclk_rate(dsi));
 
-	seq_printf(s,	"DDR_CLK\t\t%lu\n",
+	seq_म_लिखो(s,	"DDR_CLK\t\t%lu\n",
 			cinfo->clkdco / 4);
 
-	seq_printf(s,	"TxByteClkHS\t%lu\n", dsi_get_txbyteclkhs(dsi));
+	seq_म_लिखो(s,	"TxByteClkHS\t%lu\n", dsi_get_txbyteclkhs(dsi));
 
-	seq_printf(s,	"LP_CLK\t\t%lu\n", dsi->current_lp_cinfo.lp_clk);
+	seq_म_लिखो(s,	"LP_CLK\t\t%lu\n", dsi->current_lp_cinfo.lp_clk);
 
-	dsi_runtime_put(dsi);
+	dsi_runसमय_put(dsi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OMAP2_DSS_COLLECT_IRQ_STATS
-static int dsi_dump_dsi_irqs(struct seq_file *s, void *p)
-{
-	struct dsi_data *dsi = s->private;
-	unsigned long flags;
-	struct dsi_irq_stats stats;
+#अगर_घोषित CONFIG_OMAP2_DSS_COLLECT_IRQ_STATS
+अटल पूर्णांक dsi_dump_dsi_irqs(काष्ठा seq_file *s, व्योम *p)
+अणु
+	काष्ठा dsi_data *dsi = s->निजी;
+	अचिन्हित दीर्घ flags;
+	काष्ठा dsi_irq_stats stats;
 
 	spin_lock_irqsave(&dsi->irq_stats_lock, flags);
 
 	stats = dsi->irq_stats;
-	memset(&dsi->irq_stats, 0, sizeof(dsi->irq_stats));
-	dsi->irq_stats.last_reset = jiffies;
+	स_रखो(&dsi->irq_stats, 0, माप(dsi->irq_stats));
+	dsi->irq_stats.last_reset = jअगरfies;
 
 	spin_unlock_irqrestore(&dsi->irq_stats_lock, flags);
 
-	seq_printf(s, "period %u ms\n",
-			jiffies_to_msecs(jiffies - stats.last_reset));
+	seq_म_लिखो(s, "period %u ms\n",
+			jअगरfies_to_msecs(jअगरfies - stats.last_reset));
 
-	seq_printf(s, "irqs %d\n", stats.irq_count);
-#define PIS(x) \
-	seq_printf(s, "%-20s %10d\n", #x, stats.dsi_irqs[ffs(DSI_IRQ_##x)-1]);
+	seq_म_लिखो(s, "irqs %d\n", stats.irq_count);
+#घोषणा PIS(x) \
+	seq_म_लिखो(s, "%-20s %10d\n", #x, stats.dsi_irqs[ffs(DSI_IRQ_##x)-1]);
 
-	seq_printf(s, "-- DSI%d interrupts --\n", dsi->module_id + 1);
+	seq_म_लिखो(s, "-- DSI%d interrupts --\n", dsi->module_id + 1);
 	PIS(VC0);
 	PIS(VC1);
 	PIS(VC2);
@@ -1074,16 +1075,16 @@ static int dsi_dump_dsi_irqs(struct seq_file *s, void *p)
 	PIS(SYNC_LOST);
 	PIS(LDO_POWER_GOOD);
 	PIS(TA_TIMEOUT);
-#undef PIS
+#अघोषित PIS
 
-#define PIS(x) \
-	seq_printf(s, "%-20s %10d %10d %10d %10d\n", #x, \
+#घोषणा PIS(x) \
+	seq_म_लिखो(s, "%-20s %10d %10d %10d %10d\n", #x, \
 			stats.vc_irqs[0][ffs(DSI_VC_IRQ_##x)-1], \
 			stats.vc_irqs[1][ffs(DSI_VC_IRQ_##x)-1], \
 			stats.vc_irqs[2][ffs(DSI_VC_IRQ_##x)-1], \
 			stats.vc_irqs[3][ffs(DSI_VC_IRQ_##x)-1]);
 
-	seq_printf(s, "-- VC interrupts --\n");
+	seq_म_लिखो(s, "-- VC interrupts --\n");
 	PIS(CS);
 	PIS(ECC_CORR);
 	PIS(PACKET_SENT);
@@ -1093,13 +1094,13 @@ static int dsi_dump_dsi_irqs(struct seq_file *s, void *p)
 	PIS(ECC_NO_CORR);
 	PIS(FIFO_TX_UDF);
 	PIS(PP_BUSY_CHANGE);
-#undef PIS
+#अघोषित PIS
 
-#define PIS(x) \
-	seq_printf(s, "%-20s %10d\n", #x, \
+#घोषणा PIS(x) \
+	seq_म_लिखो(s, "%-20s %10d\n", #x, \
 			stats.cio_irqs[ffs(DSI_CIO_IRQ_##x)-1]);
 
-	seq_printf(s, "-- CIO interrupts --\n");
+	seq_म_लिखो(s, "-- CIO interrupts --\n");
 	PIS(ERRSYNCESC1);
 	PIS(ERRSYNCESC2);
 	PIS(ERRSYNCESC3);
@@ -1120,21 +1121,21 @@ static int dsi_dump_dsi_irqs(struct seq_file *s, void *p)
 	PIS(ERRCONTENTIONLP1_3);
 	PIS(ULPSACTIVENOT_ALL0);
 	PIS(ULPSACTIVENOT_ALL1);
-#undef PIS
+#अघोषित PIS
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int dsi_dump_dsi_regs(struct seq_file *s, void *p)
-{
-	struct dsi_data *dsi = s->private;
+अटल पूर्णांक dsi_dump_dsi_regs(काष्ठा seq_file *s, व्योम *p)
+अणु
+	काष्ठा dsi_data *dsi = s->निजी;
 
-	if (dsi_runtime_get(dsi))
-		return 0;
+	अगर (dsi_runसमय_get(dsi))
+		वापस 0;
 	dsi_enable_scp_clk(dsi);
 
-#define DUMPREG(r) seq_printf(s, "%-35s %08x\n", #r, dsi_read_reg(dsi, r))
+#घोषणा DUMPREG(r) seq_म_लिखो(s, "%-35s %08x\n", #r, dsi_पढ़ो_reg(dsi, r))
 	DUMPREG(DSI_REVISION);
 	DUMPREG(DSI_SYSCONFIG);
 	DUMPREG(DSI_SYSSTATUS);
@@ -1204,141 +1205,141 @@ static int dsi_dump_dsi_regs(struct seq_file *s, void *p)
 	DUMPREG(DSI_PLL_GO);
 	DUMPREG(DSI_PLL_CONFIGURATION1);
 	DUMPREG(DSI_PLL_CONFIGURATION2);
-#undef DUMPREG
+#अघोषित DUMPREG
 
 	dsi_disable_scp_clk(dsi);
-	dsi_runtime_put(dsi);
+	dsi_runसमय_put(dsi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-enum dsi_cio_power_state {
+क्रमागत dsi_cio_घातer_state अणु
 	DSI_COMPLEXIO_POWER_OFF		= 0x0,
 	DSI_COMPLEXIO_POWER_ON		= 0x1,
 	DSI_COMPLEXIO_POWER_ULPS	= 0x2,
-};
+पूर्ण;
 
-static int dsi_cio_power(struct dsi_data *dsi, enum dsi_cio_power_state state)
-{
-	int t = 0;
+अटल पूर्णांक dsi_cio_घातer(काष्ठा dsi_data *dsi, क्रमागत dsi_cio_घातer_state state)
+अणु
+	पूर्णांक t = 0;
 
 	/* PWR_CMD */
 	REG_FLD_MOD(dsi, DSI_COMPLEXIO_CFG1, state, 28, 27);
 
 	/* PWR_STATUS */
-	while (FLD_GET(dsi_read_reg(dsi, DSI_COMPLEXIO_CFG1),
-			26, 25) != state) {
-		if (++t > 1000) {
+	जबतक (FLD_GET(dsi_पढ़ो_reg(dsi, DSI_COMPLEXIO_CFG1),
+			26, 25) != state) अणु
+		अगर (++t > 1000) अणु
 			DSSERR("failed to set complexio power state to "
 					"%d\n", state);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 		udelay(1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int dsi_get_line_buf_size(struct dsi_data *dsi)
-{
-	int val;
+अटल अचिन्हित पूर्णांक dsi_get_line_buf_size(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक val;
 
 	/* line buffer on OMAP3 is 1024 x 24bits */
-	/* XXX: for some reason using full buffer size causes
-	 * considerable TX slowdown with update sizes that fill the
+	/* XXX: क्रम some reason using full buffer size causes
+	 * considerable TX slowकरोwn with update sizes that fill the
 	 * whole buffer */
-	if (!(dsi->data->quirks & DSI_QUIRK_GNQ))
-		return 1023 * 3;
+	अगर (!(dsi->data->quirks & DSI_QUIRK_GNQ))
+		वापस 1023 * 3;
 
 	val = REG_GET(dsi, DSI_GNQ, 14, 12); /* VP1_LINE_BUFFER_SIZE */
 
-	switch (val) {
-	case 1:
-		return 512 * 3;		/* 512x24 bits */
-	case 2:
-		return 682 * 3;		/* 682x24 bits */
-	case 3:
-		return 853 * 3;		/* 853x24 bits */
-	case 4:
-		return 1024 * 3;	/* 1024x24 bits */
-	case 5:
-		return 1194 * 3;	/* 1194x24 bits */
-	case 6:
-		return 1365 * 3;	/* 1365x24 bits */
-	case 7:
-		return 1920 * 3;	/* 1920x24 bits */
-	default:
+	चयन (val) अणु
+	हाल 1:
+		वापस 512 * 3;		/* 512x24 bits */
+	हाल 2:
+		वापस 682 * 3;		/* 682x24 bits */
+	हाल 3:
+		वापस 853 * 3;		/* 853x24 bits */
+	हाल 4:
+		वापस 1024 * 3;	/* 1024x24 bits */
+	हाल 5:
+		वापस 1194 * 3;	/* 1194x24 bits */
+	हाल 6:
+		वापस 1365 * 3;	/* 1365x24 bits */
+	हाल 7:
+		वापस 1920 * 3;	/* 1920x24 bits */
+	शेष:
 		BUG();
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int dsi_set_lane_config(struct dsi_data *dsi)
-{
-	static const u8 offsets[] = { 0, 4, 8, 12, 16 };
-	static const enum dsi_lane_function functions[] = {
+अटल पूर्णांक dsi_set_lane_config(काष्ठा dsi_data *dsi)
+अणु
+	अटल स्थिर u8 offsets[] = अणु 0, 4, 8, 12, 16 पूर्ण;
+	अटल स्थिर क्रमागत dsi_lane_function functions[] = अणु
 		DSI_LANE_CLK,
 		DSI_LANE_DATA1,
 		DSI_LANE_DATA2,
 		DSI_LANE_DATA3,
 		DSI_LANE_DATA4,
-	};
+	पूर्ण;
 	u32 r;
-	int i;
+	पूर्णांक i;
 
-	r = dsi_read_reg(dsi, DSI_COMPLEXIO_CFG1);
+	r = dsi_पढ़ो_reg(dsi, DSI_COMPLEXIO_CFG1);
 
-	for (i = 0; i < dsi->num_lanes_used; ++i) {
-		unsigned int offset = offsets[i];
-		unsigned int polarity, lane_number;
-		unsigned int t;
+	क्रम (i = 0; i < dsi->num_lanes_used; ++i) अणु
+		अचिन्हित पूर्णांक offset = offsets[i];
+		अचिन्हित पूर्णांक polarity, lane_number;
+		अचिन्हित पूर्णांक t;
 
-		for (t = 0; t < dsi->num_lanes_supported; ++t)
-			if (dsi->lanes[t].function == functions[i])
-				break;
+		क्रम (t = 0; t < dsi->num_lanes_supported; ++t)
+			अगर (dsi->lanes[t].function == functions[i])
+				अवरोध;
 
-		if (t == dsi->num_lanes_supported)
-			return -EINVAL;
+		अगर (t == dsi->num_lanes_supported)
+			वापस -EINVAL;
 
 		lane_number = t;
 		polarity = dsi->lanes[t].polarity;
 
 		r = FLD_MOD(r, lane_number + 1, offset + 2, offset);
 		r = FLD_MOD(r, polarity, offset + 3, offset + 3);
-	}
+	पूर्ण
 
 	/* clear the unused lanes */
-	for (; i < dsi->num_lanes_supported; ++i) {
-		unsigned int offset = offsets[i];
+	क्रम (; i < dsi->num_lanes_supported; ++i) अणु
+		अचिन्हित पूर्णांक offset = offsets[i];
 
 		r = FLD_MOD(r, 0, offset + 2, offset);
 		r = FLD_MOD(r, 0, offset + 3, offset + 3);
-	}
+	पूर्ण
 
-	dsi_write_reg(dsi, DSI_COMPLEXIO_CFG1, r);
+	dsi_ग_लिखो_reg(dsi, DSI_COMPLEXIO_CFG1, r);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline unsigned int ns2ddr(struct dsi_data *dsi, unsigned int ns)
-{
-	/* convert time in ns to ddr ticks, rounding up */
-	unsigned long ddr_clk = dsi->pll.cinfo.clkdco / 4;
+अटल अंतरभूत अचिन्हित पूर्णांक ns2ddr(काष्ठा dsi_data *dsi, अचिन्हित पूर्णांक ns)
+अणु
+	/* convert समय in ns to ddr ticks, rounding up */
+	अचिन्हित दीर्घ ddr_clk = dsi->pll.cinfo.clkdco / 4;
 
-	return (ns * (ddr_clk / 1000 / 1000) + 999) / 1000;
-}
+	वापस (ns * (ddr_clk / 1000 / 1000) + 999) / 1000;
+पूर्ण
 
-static inline unsigned int ddr2ns(struct dsi_data *dsi, unsigned int ddr)
-{
-	unsigned long ddr_clk = dsi->pll.cinfo.clkdco / 4;
+अटल अंतरभूत अचिन्हित पूर्णांक ddr2ns(काष्ठा dsi_data *dsi, अचिन्हित पूर्णांक ddr)
+अणु
+	अचिन्हित दीर्घ ddr_clk = dsi->pll.cinfo.clkdco / 4;
 
-	return ddr * 1000 * 1000 / (ddr_clk / 1000);
-}
+	वापस ddr * 1000 * 1000 / (ddr_clk / 1000);
+पूर्ण
 
-static void dsi_cio_timings(struct dsi_data *dsi)
-{
+अटल व्योम dsi_cio_timings(काष्ठा dsi_data *dsi)
+अणु
 	u32 r;
-	u32 ths_prepare, ths_prepare_ths_zero, ths_trail, ths_exit;
+	u32 ths_prepare, ths_prepare_ths_zero, ths_trail, ths_निकास;
 	u32 tlpx_half, tclk_trail, tclk_zero;
 	u32 tclk_prepare;
 
@@ -1356,7 +1357,7 @@ static void dsi_cio_timings(struct dsi_data *dsi)
 	ths_trail = ns2ddr(dsi, 60) + 5;
 
 	/* min 100ns */
-	ths_exit = ns2ddr(dsi, 145);
+	ths_निकास = ns2ddr(dsi, 145);
 
 	/* tlpx min 50n */
 	tlpx_half = ns2ddr(dsi, 25);
@@ -1375,7 +1376,7 @@ static void dsi_cio_timings(struct dsi_data *dsi)
 		ths_prepare_ths_zero, ddr2ns(dsi, ths_prepare_ths_zero));
 	DSSDBG("ths_trail %u (%uns), ths_exit %u (%uns)\n",
 			ths_trail, ddr2ns(dsi, ths_trail),
-			ths_exit, ddr2ns(dsi, ths_exit));
+			ths_निकास, ddr2ns(dsi, ths_निकास));
 
 	DSSDBG("tlpx_half %u (%uns), tclk_trail %u (%uns), "
 			"tclk_zero %u (%uns)\n",
@@ -1387,222 +1388,222 @@ static void dsi_cio_timings(struct dsi_data *dsi)
 
 	/* program timings */
 
-	r = dsi_read_reg(dsi, DSI_DSIPHY_CFG0);
+	r = dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG0);
 	r = FLD_MOD(r, ths_prepare, 31, 24);
 	r = FLD_MOD(r, ths_prepare_ths_zero, 23, 16);
 	r = FLD_MOD(r, ths_trail, 15, 8);
-	r = FLD_MOD(r, ths_exit, 7, 0);
-	dsi_write_reg(dsi, DSI_DSIPHY_CFG0, r);
+	r = FLD_MOD(r, ths_निकास, 7, 0);
+	dsi_ग_लिखो_reg(dsi, DSI_DSIPHY_CFG0, r);
 
-	r = dsi_read_reg(dsi, DSI_DSIPHY_CFG1);
+	r = dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG1);
 	r = FLD_MOD(r, tlpx_half, 20, 16);
 	r = FLD_MOD(r, tclk_trail, 15, 8);
 	r = FLD_MOD(r, tclk_zero, 7, 0);
 
-	if (dsi->data->quirks & DSI_QUIRK_PHY_DCC) {
+	अगर (dsi->data->quirks & DSI_QUIRK_PHY_DCC) अणु
 		r = FLD_MOD(r, 0, 21, 21);	/* DCCEN = disable */
 		r = FLD_MOD(r, 1, 22, 22);	/* CLKINP_DIVBY2EN = enable */
 		r = FLD_MOD(r, 1, 23, 23);	/* CLKINP_SEL = enable */
-	}
+	पूर्ण
 
-	dsi_write_reg(dsi, DSI_DSIPHY_CFG1, r);
+	dsi_ग_लिखो_reg(dsi, DSI_DSIPHY_CFG1, r);
 
-	r = dsi_read_reg(dsi, DSI_DSIPHY_CFG2);
+	r = dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG2);
 	r = FLD_MOD(r, tclk_prepare, 7, 0);
-	dsi_write_reg(dsi, DSI_DSIPHY_CFG2, r);
-}
+	dsi_ग_लिखो_reg(dsi, DSI_DSIPHY_CFG2, r);
+पूर्ण
 
-static int dsi_cio_wait_tx_clk_esc_reset(struct dsi_data *dsi)
-{
-	int t, i;
+अटल पूर्णांक dsi_cio_रुको_tx_clk_esc_reset(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक t, i;
 	bool in_use[DSI_MAX_NR_LANES];
-	static const u8 offsets_old[] = { 28, 27, 26 };
-	static const u8 offsets_new[] = { 24, 25, 26, 27, 28 };
-	const u8 *offsets;
+	अटल स्थिर u8 offsets_old[] = अणु 28, 27, 26 पूर्ण;
+	अटल स्थिर u8 offsets_new[] = अणु 24, 25, 26, 27, 28 पूर्ण;
+	स्थिर u8 *offsets;
 
-	if (dsi->data->quirks & DSI_QUIRK_REVERSE_TXCLKESC)
+	अगर (dsi->data->quirks & DSI_QUIRK_REVERSE_TXCLKESC)
 		offsets = offsets_old;
-	else
+	अन्यथा
 		offsets = offsets_new;
 
-	for (i = 0; i < dsi->num_lanes_supported; ++i)
+	क्रम (i = 0; i < dsi->num_lanes_supported; ++i)
 		in_use[i] = dsi->lanes[i].function != DSI_LANE_UNUSED;
 
 	t = 100000;
-	while (true) {
+	जबतक (true) अणु
 		u32 l;
-		int ok;
+		पूर्णांक ok;
 
-		l = dsi_read_reg(dsi, DSI_DSIPHY_CFG5);
+		l = dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG5);
 
 		ok = 0;
-		for (i = 0; i < dsi->num_lanes_supported; ++i) {
-			if (!in_use[i] || (l & (1 << offsets[i])))
+		क्रम (i = 0; i < dsi->num_lanes_supported; ++i) अणु
+			अगर (!in_use[i] || (l & (1 << offsets[i])))
 				ok++;
-		}
+		पूर्ण
 
-		if (ok == dsi->num_lanes_supported)
-			break;
+		अगर (ok == dsi->num_lanes_supported)
+			अवरोध;
 
-		if (--t == 0) {
-			for (i = 0; i < dsi->num_lanes_supported; ++i) {
-				if (!in_use[i] || (l & (1 << offsets[i])))
-					continue;
+		अगर (--t == 0) अणु
+			क्रम (i = 0; i < dsi->num_lanes_supported; ++i) अणु
+				अगर (!in_use[i] || (l & (1 << offsets[i])))
+					जारी;
 
 				DSSERR("CIO TXCLKESC%d domain not coming " \
 						"out of reset\n", i);
-			}
-			return -EIO;
-		}
-	}
+			पूर्ण
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* return bitmask of enabled lanes, lane0 being the lsb */
-static unsigned int dsi_get_lane_mask(struct dsi_data *dsi)
-{
-	unsigned int mask = 0;
-	int i;
+/* वापस biपंचांगask of enabled lanes, lane0 being the lsb */
+अटल अचिन्हित पूर्णांक dsi_get_lane_mask(काष्ठा dsi_data *dsi)
+अणु
+	अचिन्हित पूर्णांक mask = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < dsi->num_lanes_supported; ++i) {
-		if (dsi->lanes[i].function != DSI_LANE_UNUSED)
+	क्रम (i = 0; i < dsi->num_lanes_supported; ++i) अणु
+		अगर (dsi->lanes[i].function != DSI_LANE_UNUSED)
 			mask |= 1 << i;
-	}
+	पूर्ण
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 /* OMAP4 CONTROL_DSIPHY */
-#define OMAP4_DSIPHY_SYSCON_OFFSET			0x78
+#घोषणा OMAP4_DSIPHY_SYSCON_OFFSET			0x78
 
-#define OMAP4_DSI2_LANEENABLE_SHIFT			29
-#define OMAP4_DSI2_LANEENABLE_MASK			(0x7 << 29)
-#define OMAP4_DSI1_LANEENABLE_SHIFT			24
-#define OMAP4_DSI1_LANEENABLE_MASK			(0x1f << 24)
-#define OMAP4_DSI1_PIPD_SHIFT				19
-#define OMAP4_DSI1_PIPD_MASK				(0x1f << 19)
-#define OMAP4_DSI2_PIPD_SHIFT				14
-#define OMAP4_DSI2_PIPD_MASK				(0x1f << 14)
+#घोषणा OMAP4_DSI2_LANEENABLE_SHIFT			29
+#घोषणा OMAP4_DSI2_LANEENABLE_MASK			(0x7 << 29)
+#घोषणा OMAP4_DSI1_LANEENABLE_SHIFT			24
+#घोषणा OMAP4_DSI1_LANEENABLE_MASK			(0x1f << 24)
+#घोषणा OMAP4_DSI1_PIPD_SHIFT				19
+#घोषणा OMAP4_DSI1_PIPD_MASK				(0x1f << 19)
+#घोषणा OMAP4_DSI2_PIPD_SHIFT				14
+#घोषणा OMAP4_DSI2_PIPD_MASK				(0x1f << 14)
 
-static int dsi_omap4_mux_pads(struct dsi_data *dsi, unsigned int lanes)
-{
-	u32 enable_mask, enable_shift;
-	u32 pipd_mask, pipd_shift;
+अटल पूर्णांक dsi_omap4_mux_pads(काष्ठा dsi_data *dsi, अचिन्हित पूर्णांक lanes)
+अणु
+	u32 enable_mask, enable_shअगरt;
+	u32 pipd_mask, pipd_shअगरt;
 
-	if (dsi->module_id == 0) {
+	अगर (dsi->module_id == 0) अणु
 		enable_mask = OMAP4_DSI1_LANEENABLE_MASK;
-		enable_shift = OMAP4_DSI1_LANEENABLE_SHIFT;
+		enable_shअगरt = OMAP4_DSI1_LANEENABLE_SHIFT;
 		pipd_mask = OMAP4_DSI1_PIPD_MASK;
-		pipd_shift = OMAP4_DSI1_PIPD_SHIFT;
-	} else if (dsi->module_id == 1) {
+		pipd_shअगरt = OMAP4_DSI1_PIPD_SHIFT;
+	पूर्ण अन्यथा अगर (dsi->module_id == 1) अणु
 		enable_mask = OMAP4_DSI2_LANEENABLE_MASK;
-		enable_shift = OMAP4_DSI2_LANEENABLE_SHIFT;
+		enable_shअगरt = OMAP4_DSI2_LANEENABLE_SHIFT;
 		pipd_mask = OMAP4_DSI2_PIPD_MASK;
-		pipd_shift = OMAP4_DSI2_PIPD_SHIFT;
-	} else {
-		return -ENODEV;
-	}
+		pipd_shअगरt = OMAP4_DSI2_PIPD_SHIFT;
+	पूर्ण अन्यथा अणु
+		वापस -ENODEV;
+	पूर्ण
 
-	return regmap_update_bits(dsi->syscon, OMAP4_DSIPHY_SYSCON_OFFSET,
+	वापस regmap_update_bits(dsi->syscon, OMAP4_DSIPHY_SYSCON_OFFSET,
 		enable_mask | pipd_mask,
-		(lanes << enable_shift) | (lanes << pipd_shift));
-}
+		(lanes << enable_shअगरt) | (lanes << pipd_shअगरt));
+पूर्ण
 
 /* OMAP5 CONTROL_DSIPHY */
 
-#define OMAP5_DSIPHY_SYSCON_OFFSET	0x74
+#घोषणा OMAP5_DSIPHY_SYSCON_OFFSET	0x74
 
-#define OMAP5_DSI1_LANEENABLE_SHIFT	24
-#define OMAP5_DSI2_LANEENABLE_SHIFT	19
-#define OMAP5_DSI_LANEENABLE_MASK	0x1f
+#घोषणा OMAP5_DSI1_LANEENABLE_SHIFT	24
+#घोषणा OMAP5_DSI2_LANEENABLE_SHIFT	19
+#घोषणा OMAP5_DSI_LANEENABLE_MASK	0x1f
 
-static int dsi_omap5_mux_pads(struct dsi_data *dsi, unsigned int lanes)
-{
-	u32 enable_shift;
+अटल पूर्णांक dsi_omap5_mux_pads(काष्ठा dsi_data *dsi, अचिन्हित पूर्णांक lanes)
+अणु
+	u32 enable_shअगरt;
 
-	if (dsi->module_id == 0)
-		enable_shift = OMAP5_DSI1_LANEENABLE_SHIFT;
-	else if (dsi->module_id == 1)
-		enable_shift = OMAP5_DSI2_LANEENABLE_SHIFT;
-	else
-		return -ENODEV;
+	अगर (dsi->module_id == 0)
+		enable_shअगरt = OMAP5_DSI1_LANEENABLE_SHIFT;
+	अन्यथा अगर (dsi->module_id == 1)
+		enable_shअगरt = OMAP5_DSI2_LANEENABLE_SHIFT;
+	अन्यथा
+		वापस -ENODEV;
 
-	return regmap_update_bits(dsi->syscon, OMAP5_DSIPHY_SYSCON_OFFSET,
-		OMAP5_DSI_LANEENABLE_MASK << enable_shift,
-		lanes << enable_shift);
-}
+	वापस regmap_update_bits(dsi->syscon, OMAP5_DSIPHY_SYSCON_OFFSET,
+		OMAP5_DSI_LANEENABLE_MASK << enable_shअगरt,
+		lanes << enable_shअगरt);
+पूर्ण
 
-static int dsi_enable_pads(struct dsi_data *dsi, unsigned int lane_mask)
-{
-	if (dsi->data->model == DSI_MODEL_OMAP4)
-		return dsi_omap4_mux_pads(dsi, lane_mask);
-	if (dsi->data->model == DSI_MODEL_OMAP5)
-		return dsi_omap5_mux_pads(dsi, lane_mask);
-	return 0;
-}
+अटल पूर्णांक dsi_enable_pads(काष्ठा dsi_data *dsi, अचिन्हित पूर्णांक lane_mask)
+अणु
+	अगर (dsi->data->model == DSI_MODEL_OMAP4)
+		वापस dsi_omap4_mux_pads(dsi, lane_mask);
+	अगर (dsi->data->model == DSI_MODEL_OMAP5)
+		वापस dsi_omap5_mux_pads(dsi, lane_mask);
+	वापस 0;
+पूर्ण
 
-static void dsi_disable_pads(struct dsi_data *dsi)
-{
-	if (dsi->data->model == DSI_MODEL_OMAP4)
+अटल व्योम dsi_disable_pads(काष्ठा dsi_data *dsi)
+अणु
+	अगर (dsi->data->model == DSI_MODEL_OMAP4)
 		dsi_omap4_mux_pads(dsi, 0);
-	else if (dsi->data->model == DSI_MODEL_OMAP5)
+	अन्यथा अगर (dsi->data->model == DSI_MODEL_OMAP5)
 		dsi_omap5_mux_pads(dsi, 0);
-}
+पूर्ण
 
-static int dsi_cio_init(struct dsi_data *dsi)
-{
-	int r;
+अटल पूर्णांक dsi_cio_init(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक r;
 	u32 l;
 
 	DSSDBG("DSI CIO init starts");
 
 	r = dsi_enable_pads(dsi, dsi_get_lane_mask(dsi));
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	dsi_enable_scp_clk(dsi);
 
-	/* A dummy read using the SCP interface to any DSIPHY register is
+	/* A dummy पढ़ो using the SCP पूर्णांकerface to any DSIPHY रेजिस्टर is
 	 * required after DSIPHY reset to complete the reset of the DSI complex
 	 * I/O. */
-	dsi_read_reg(dsi, DSI_DSIPHY_CFG5);
+	dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG5);
 
-	if (!wait_for_bit_change(dsi, DSI_DSIPHY_CFG5, 30, 1)) {
+	अगर (!रुको_क्रम_bit_change(dsi, DSI_DSIPHY_CFG5, 30, 1)) अणु
 		DSSERR("CIO SCP Clock domain not coming out of reset.\n");
 		r = -EIO;
-		goto err_scp_clk_dom;
-	}
+		जाओ err_scp_clk_करोm;
+	पूर्ण
 
 	r = dsi_set_lane_config(dsi);
-	if (r)
-		goto err_scp_clk_dom;
+	अगर (r)
+		जाओ err_scp_clk_करोm;
 
-	/* set TX STOP MODE timer to maximum for this operation */
-	l = dsi_read_reg(dsi, DSI_TIMING1);
+	/* set TX STOP MODE समयr to maximum क्रम this operation */
+	l = dsi_पढ़ो_reg(dsi, DSI_TIMING1);
 	l = FLD_MOD(l, 1, 15, 15);	/* FORCE_TX_STOP_MODE_IO */
 	l = FLD_MOD(l, 1, 14, 14);	/* STOP_STATE_X16_IO */
 	l = FLD_MOD(l, 1, 13, 13);	/* STOP_STATE_X4_IO */
 	l = FLD_MOD(l, 0x1fff, 12, 0);	/* STOP_STATE_COUNTER_IO */
-	dsi_write_reg(dsi, DSI_TIMING1, l);
+	dsi_ग_लिखो_reg(dsi, DSI_TIMING1, l);
 
-	r = dsi_cio_power(dsi, DSI_COMPLEXIO_POWER_ON);
-	if (r)
-		goto err_cio_pwr;
+	r = dsi_cio_घातer(dsi, DSI_COMPLEXIO_POWER_ON);
+	अगर (r)
+		जाओ err_cio_pwr;
 
-	if (!wait_for_bit_change(dsi, DSI_COMPLEXIO_CFG1, 29, 1)) {
+	अगर (!रुको_क्रम_bit_change(dsi, DSI_COMPLEXIO_CFG1, 29, 1)) अणु
 		DSSERR("CIO PWR clock domain not coming out of reset.\n");
 		r = -ENODEV;
-		goto err_cio_pwr_dom;
-	}
+		जाओ err_cio_pwr_करोm;
+	पूर्ण
 
-	dsi_if_enable(dsi, true);
-	dsi_if_enable(dsi, false);
+	dsi_अगर_enable(dsi, true);
+	dsi_अगर_enable(dsi, false);
 	REG_FLD_MOD(dsi, DSI_CLK_CTRL, 1, 20, 20); /* LP_CLK_ENABLE */
 
-	r = dsi_cio_wait_tx_clk_esc_reset(dsi);
-	if (r)
-		goto err_tx_clk_esc_rst;
+	r = dsi_cio_रुको_tx_clk_esc_reset(dsi);
+	अगर (r)
+		जाओ err_tx_clk_esc_rst;
 
 	/* FORCE_TX_STOP_MODE_IO */
 	REG_FLD_MOD(dsi, DSI_TIMING1, 0, 15, 15);
@@ -1616,232 +1617,232 @@ static int dsi_cio_init(struct dsi_data *dsi)
 
 	DSSDBG("CIO init done\n");
 
-	return 0;
+	वापस 0;
 
 err_tx_clk_esc_rst:
 	REG_FLD_MOD(dsi, DSI_CLK_CTRL, 0, 20, 20); /* LP_CLK_ENABLE */
-err_cio_pwr_dom:
-	dsi_cio_power(dsi, DSI_COMPLEXIO_POWER_OFF);
+err_cio_pwr_करोm:
+	dsi_cio_घातer(dsi, DSI_COMPLEXIO_POWER_OFF);
 err_cio_pwr:
-err_scp_clk_dom:
+err_scp_clk_करोm:
 	dsi_disable_scp_clk(dsi);
 	dsi_disable_pads(dsi);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void dsi_cio_uninit(struct dsi_data *dsi)
-{
+अटल व्योम dsi_cio_uninit(काष्ठा dsi_data *dsi)
+अणु
 	/* DDR_CLK_ALWAYS_ON */
 	REG_FLD_MOD(dsi, DSI_CLK_CTRL, 0, 13, 13);
 
-	dsi_cio_power(dsi, DSI_COMPLEXIO_POWER_OFF);
+	dsi_cio_घातer(dsi, DSI_COMPLEXIO_POWER_OFF);
 	dsi_disable_scp_clk(dsi);
 	dsi_disable_pads(dsi);
-}
+पूर्ण
 
-static void dsi_config_tx_fifo(struct dsi_data *dsi,
-			       enum fifo_size size1, enum fifo_size size2,
-			       enum fifo_size size3, enum fifo_size size4)
-{
+अटल व्योम dsi_config_tx_fअगरo(काष्ठा dsi_data *dsi,
+			       क्रमागत fअगरo_size size1, क्रमागत fअगरo_size size2,
+			       क्रमागत fअगरo_size size3, क्रमागत fअगरo_size size4)
+अणु
 	u32 r = 0;
-	int add = 0;
-	int i;
+	पूर्णांक add = 0;
+	पूर्णांक i;
 
-	dsi->vc[0].tx_fifo_size = size1;
-	dsi->vc[1].tx_fifo_size = size2;
-	dsi->vc[2].tx_fifo_size = size3;
-	dsi->vc[3].tx_fifo_size = size4;
+	dsi->vc[0].tx_fअगरo_size = size1;
+	dsi->vc[1].tx_fअगरo_size = size2;
+	dsi->vc[2].tx_fअगरo_size = size3;
+	dsi->vc[3].tx_fअगरo_size = size4;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		u8 v;
-		int size = dsi->vc[i].tx_fifo_size;
+		पूर्णांक size = dsi->vc[i].tx_fअगरo_size;
 
-		if (add + size > 4) {
+		अगर (add + size > 4) अणु
 			DSSERR("Illegal FIFO configuration\n");
 			BUG();
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		v = FLD_VAL(add, 2, 0) | FLD_VAL(size, 7, 4);
 		r |= v << (8 * i);
 		/*DSSDBG("TX FIFO vc %d: size %d, add %d\n", i, size, add); */
 		add += size;
-	}
+	पूर्ण
 
-	dsi_write_reg(dsi, DSI_TX_FIFO_VC_SIZE, r);
-}
+	dsi_ग_लिखो_reg(dsi, DSI_TX_FIFO_VC_SIZE, r);
+पूर्ण
 
-static void dsi_config_rx_fifo(struct dsi_data *dsi,
-		enum fifo_size size1, enum fifo_size size2,
-		enum fifo_size size3, enum fifo_size size4)
-{
+अटल व्योम dsi_config_rx_fअगरo(काष्ठा dsi_data *dsi,
+		क्रमागत fअगरo_size size1, क्रमागत fअगरo_size size2,
+		क्रमागत fअगरo_size size3, क्रमागत fअगरo_size size4)
+अणु
 	u32 r = 0;
-	int add = 0;
-	int i;
+	पूर्णांक add = 0;
+	पूर्णांक i;
 
-	dsi->vc[0].rx_fifo_size = size1;
-	dsi->vc[1].rx_fifo_size = size2;
-	dsi->vc[2].rx_fifo_size = size3;
-	dsi->vc[3].rx_fifo_size = size4;
+	dsi->vc[0].rx_fअगरo_size = size1;
+	dsi->vc[1].rx_fअगरo_size = size2;
+	dsi->vc[2].rx_fअगरo_size = size3;
+	dsi->vc[3].rx_fअगरo_size = size4;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		u8 v;
-		int size = dsi->vc[i].rx_fifo_size;
+		पूर्णांक size = dsi->vc[i].rx_fअगरo_size;
 
-		if (add + size > 4) {
+		अगर (add + size > 4) अणु
 			DSSERR("Illegal FIFO configuration\n");
 			BUG();
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		v = FLD_VAL(add, 2, 0) | FLD_VAL(size, 7, 4);
 		r |= v << (8 * i);
 		/*DSSDBG("RX FIFO vc %d: size %d, add %d\n", i, size, add); */
 		add += size;
-	}
+	पूर्ण
 
-	dsi_write_reg(dsi, DSI_RX_FIFO_VC_SIZE, r);
-}
+	dsi_ग_लिखो_reg(dsi, DSI_RX_FIFO_VC_SIZE, r);
+पूर्ण
 
-static int dsi_force_tx_stop_mode_io(struct dsi_data *dsi)
-{
+अटल पूर्णांक dsi_क्रमce_tx_stop_mode_io(काष्ठा dsi_data *dsi)
+अणु
 	u32 r;
 
-	r = dsi_read_reg(dsi, DSI_TIMING1);
+	r = dsi_पढ़ो_reg(dsi, DSI_TIMING1);
 	r = FLD_MOD(r, 1, 15, 15);	/* FORCE_TX_STOP_MODE_IO */
-	dsi_write_reg(dsi, DSI_TIMING1, r);
+	dsi_ग_लिखो_reg(dsi, DSI_TIMING1, r);
 
-	if (!wait_for_bit_change(dsi, DSI_TIMING1, 15, 0)) {
+	अगर (!रुको_क्रम_bit_change(dsi, DSI_TIMING1, 15, 0)) अणु
 		DSSERR("TX_STOP bit not going down\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool dsi_vc_is_enabled(struct dsi_data *dsi, int vc)
-{
-	return REG_GET(dsi, DSI_VC_CTRL(vc), 0, 0);
-}
+अटल bool dsi_vc_is_enabled(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
+	वापस REG_GET(dsi, DSI_VC_CTRL(vc), 0, 0);
+पूर्ण
 
-static void dsi_packet_sent_handler_vp(void *data, u32 mask)
-{
-	struct dsi_packet_sent_handler_data *vp_data =
-		(struct dsi_packet_sent_handler_data *) data;
-	struct dsi_data *dsi = vp_data->dsi;
-	const int vc = dsi->update_vc;
+अटल व्योम dsi_packet_sent_handler_vp(व्योम *data, u32 mask)
+अणु
+	काष्ठा dsi_packet_sent_handler_data *vp_data =
+		(काष्ठा dsi_packet_sent_handler_data *) data;
+	काष्ठा dsi_data *dsi = vp_data->dsi;
+	स्थिर पूर्णांक vc = dsi->update_vc;
 	u8 bit = dsi->te_enabled ? 30 : 31;
 
-	if (REG_GET(dsi, DSI_VC_TE(vc), bit, bit) == 0)
+	अगर (REG_GET(dsi, DSI_VC_TE(vc), bit, bit) == 0)
 		complete(vp_data->completion);
-}
+पूर्ण
 
-static int dsi_sync_vc_vp(struct dsi_data *dsi, int vc)
-{
+अटल पूर्णांक dsi_sync_vc_vp(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
 	DECLARE_COMPLETION_ONSTACK(completion);
-	struct dsi_packet_sent_handler_data vp_data = {
+	काष्ठा dsi_packet_sent_handler_data vp_data = अणु
 		.dsi = dsi,
 		.completion = &completion
-	};
-	int r = 0;
+	पूर्ण;
+	पूर्णांक r = 0;
 	u8 bit;
 
 	bit = dsi->te_enabled ? 30 : 31;
 
-	r = dsi_register_isr_vc(dsi, vc, dsi_packet_sent_handler_vp,
+	r = dsi_रेजिस्टर_isr_vc(dsi, vc, dsi_packet_sent_handler_vp,
 		&vp_data, DSI_VC_IRQ_PACKET_SENT);
-	if (r)
-		goto err0;
+	अगर (r)
+		जाओ err0;
 
-	/* Wait for completion only if TE_EN/TE_START is still set */
-	if (REG_GET(dsi, DSI_VC_TE(vc), bit, bit)) {
-		if (wait_for_completion_timeout(&completion,
-				msecs_to_jiffies(10)) == 0) {
+	/* Wait क्रम completion only अगर TE_EN/TE_START is still set */
+	अगर (REG_GET(dsi, DSI_VC_TE(vc), bit, bit)) अणु
+		अगर (रुको_क्रम_completion_समयout(&completion,
+				msecs_to_jअगरfies(10)) == 0) अणु
 			DSSERR("Failed to complete previous frame transfer\n");
 			r = -EIO;
-			goto err1;
-		}
-	}
+			जाओ err1;
+		पूर्ण
+	पूर्ण
 
-	dsi_unregister_isr_vc(dsi, vc, dsi_packet_sent_handler_vp,
+	dsi_unरेजिस्टर_isr_vc(dsi, vc, dsi_packet_sent_handler_vp,
 		&vp_data, DSI_VC_IRQ_PACKET_SENT);
 
-	return 0;
+	वापस 0;
 err1:
-	dsi_unregister_isr_vc(dsi, vc, dsi_packet_sent_handler_vp,
+	dsi_unरेजिस्टर_isr_vc(dsi, vc, dsi_packet_sent_handler_vp,
 		&vp_data, DSI_VC_IRQ_PACKET_SENT);
 err0:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void dsi_packet_sent_handler_l4(void *data, u32 mask)
-{
-	struct dsi_packet_sent_handler_data *l4_data =
-		(struct dsi_packet_sent_handler_data *) data;
-	struct dsi_data *dsi = l4_data->dsi;
-	const int vc = dsi->update_vc;
+अटल व्योम dsi_packet_sent_handler_l4(व्योम *data, u32 mask)
+अणु
+	काष्ठा dsi_packet_sent_handler_data *l4_data =
+		(काष्ठा dsi_packet_sent_handler_data *) data;
+	काष्ठा dsi_data *dsi = l4_data->dsi;
+	स्थिर पूर्णांक vc = dsi->update_vc;
 
-	if (REG_GET(dsi, DSI_VC_CTRL(vc), 5, 5) == 0)
+	अगर (REG_GET(dsi, DSI_VC_CTRL(vc), 5, 5) == 0)
 		complete(l4_data->completion);
-}
+पूर्ण
 
-static int dsi_sync_vc_l4(struct dsi_data *dsi, int vc)
-{
+अटल पूर्णांक dsi_sync_vc_l4(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
 	DECLARE_COMPLETION_ONSTACK(completion);
-	struct dsi_packet_sent_handler_data l4_data = {
+	काष्ठा dsi_packet_sent_handler_data l4_data = अणु
 		.dsi = dsi,
 		.completion = &completion
-	};
-	int r = 0;
+	पूर्ण;
+	पूर्णांक r = 0;
 
-	r = dsi_register_isr_vc(dsi, vc, dsi_packet_sent_handler_l4,
+	r = dsi_रेजिस्टर_isr_vc(dsi, vc, dsi_packet_sent_handler_l4,
 		&l4_data, DSI_VC_IRQ_PACKET_SENT);
-	if (r)
-		goto err0;
+	अगर (r)
+		जाओ err0;
 
-	/* Wait for completion only if TX_FIFO_NOT_EMPTY is still set */
-	if (REG_GET(dsi, DSI_VC_CTRL(vc), 5, 5)) {
-		if (wait_for_completion_timeout(&completion,
-				msecs_to_jiffies(10)) == 0) {
+	/* Wait क्रम completion only अगर TX_FIFO_NOT_EMPTY is still set */
+	अगर (REG_GET(dsi, DSI_VC_CTRL(vc), 5, 5)) अणु
+		अगर (रुको_क्रम_completion_समयout(&completion,
+				msecs_to_jअगरfies(10)) == 0) अणु
 			DSSERR("Failed to complete previous l4 transfer\n");
 			r = -EIO;
-			goto err1;
-		}
-	}
+			जाओ err1;
+		पूर्ण
+	पूर्ण
 
-	dsi_unregister_isr_vc(dsi, vc, dsi_packet_sent_handler_l4,
+	dsi_unरेजिस्टर_isr_vc(dsi, vc, dsi_packet_sent_handler_l4,
 		&l4_data, DSI_VC_IRQ_PACKET_SENT);
 
-	return 0;
+	वापस 0;
 err1:
-	dsi_unregister_isr_vc(dsi, vc, dsi_packet_sent_handler_l4,
+	dsi_unरेजिस्टर_isr_vc(dsi, vc, dsi_packet_sent_handler_l4,
 		&l4_data, DSI_VC_IRQ_PACKET_SENT);
 err0:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dsi_sync_vc(struct dsi_data *dsi, int vc)
-{
+अटल पूर्णांक dsi_sync_vc(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
 	WARN_ON(!dsi_bus_is_locked(dsi));
 
-	WARN_ON(in_interrupt());
+	WARN_ON(in_पूर्णांकerrupt());
 
-	if (!dsi_vc_is_enabled(dsi, vc))
-		return 0;
+	अगर (!dsi_vc_is_enabled(dsi, vc))
+		वापस 0;
 
-	switch (dsi->vc[vc].source) {
-	case DSI_VC_SOURCE_VP:
-		return dsi_sync_vc_vp(dsi, vc);
-	case DSI_VC_SOURCE_L4:
-		return dsi_sync_vc_l4(dsi, vc);
-	default:
+	चयन (dsi->vc[vc].source) अणु
+	हाल DSI_VC_SOURCE_VP:
+		वापस dsi_sync_vc_vp(dsi, vc);
+	हाल DSI_VC_SOURCE_L4:
+		वापस dsi_sync_vc_l4(dsi, vc);
+	शेष:
 		BUG();
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int dsi_vc_enable(struct dsi_data *dsi, int vc, bool enable)
-{
+अटल पूर्णांक dsi_vc_enable(काष्ठा dsi_data *dsi, पूर्णांक vc, bool enable)
+अणु
 	DSSDBG("dsi_vc_enable vc %d, enable %d\n",
 			vc, enable);
 
@@ -1849,23 +1850,23 @@ static int dsi_vc_enable(struct dsi_data *dsi, int vc, bool enable)
 
 	REG_FLD_MOD(dsi, DSI_VC_CTRL(vc), enable, 0, 0);
 
-	if (!wait_for_bit_change(dsi, DSI_VC_CTRL(vc), 0, enable)) {
+	अगर (!रुको_क्रम_bit_change(dsi, DSI_VC_CTRL(vc), 0, enable)) अणु
 		DSSERR("Failed to set dsi_vc_enable to %d\n", enable);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_vc_initial_config(struct dsi_data *dsi, int vc)
-{
+अटल व्योम dsi_vc_initial_config(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
 	u32 r;
 
 	DSSDBG("Initial config of VC %d", vc);
 
-	r = dsi_read_reg(dsi, DSI_VC_CTRL(vc));
+	r = dsi_पढ़ो_reg(dsi, DSI_VC_CTRL(vc));
 
-	if (FLD_GET(r, 15, 15)) /* VC_BUSY */
+	अगर (FLD_GET(r, 15, 15)) /* VC_BUSY */
 		DSSERR("VC(%d) busy when trying to configure it!\n",
 				vc);
 
@@ -1876,188 +1877,188 @@ static void dsi_vc_initial_config(struct dsi_data *dsi, int vc)
 	r = FLD_MOD(r, 1, 7, 7); /* CS_TX_EN */
 	r = FLD_MOD(r, 1, 8, 8); /* ECC_TX_EN */
 	r = FLD_MOD(r, 0, 9, 9); /* MODE_SPEED, high speed on/off */
-	if (dsi->data->quirks & DSI_QUIRK_VC_OCP_WIDTH)
+	अगर (dsi->data->quirks & DSI_QUIRK_VC_OCP_WIDTH)
 		r = FLD_MOD(r, 3, 11, 10);	/* OCP_WIDTH = 32 bit */
 
 	r = FLD_MOD(r, 4, 29, 27); /* DMA_RX_REQ_NB = no dma */
 	r = FLD_MOD(r, 4, 23, 21); /* DMA_TX_REQ_NB = no dma */
 
-	dsi_write_reg(dsi, DSI_VC_CTRL(vc), r);
+	dsi_ग_लिखो_reg(dsi, DSI_VC_CTRL(vc), r);
 
 	dsi->vc[vc].source = DSI_VC_SOURCE_L4;
-}
+पूर्ण
 
-static void dsi_vc_enable_hs(struct omap_dss_device *dssdev, int vc,
+अटल व्योम dsi_vc_enable_hs(काष्ठा omap_dss_device *dssdev, पूर्णांक vc,
 		bool enable)
-{
-	struct dsi_data *dsi = to_dsi_data(dssdev);
+अणु
+	काष्ठा dsi_data *dsi = to_dsi_data(dssdev);
 
 	DSSDBG("dsi_vc_enable_hs(%d, %d)\n", vc, enable);
 
-	if (REG_GET(dsi, DSI_VC_CTRL(vc), 9, 9) == enable)
-		return;
+	अगर (REG_GET(dsi, DSI_VC_CTRL(vc), 9, 9) == enable)
+		वापस;
 
 	WARN_ON(!dsi_bus_is_locked(dsi));
 
 	dsi_vc_enable(dsi, vc, 0);
-	dsi_if_enable(dsi, 0);
+	dsi_अगर_enable(dsi, 0);
 
 	REG_FLD_MOD(dsi, DSI_VC_CTRL(vc), enable, 9, 9);
 
 	dsi_vc_enable(dsi, vc, 1);
-	dsi_if_enable(dsi, 1);
+	dsi_अगर_enable(dsi, 1);
 
-	dsi_force_tx_stop_mode_io(dsi);
-}
+	dsi_क्रमce_tx_stop_mode_io(dsi);
+पूर्ण
 
-static void dsi_vc_flush_long_data(struct dsi_data *dsi, int vc)
-{
-	while (REG_GET(dsi, DSI_VC_CTRL(vc), 20, 20)) {
+अटल व्योम dsi_vc_flush_दीर्घ_data(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
+	जबतक (REG_GET(dsi, DSI_VC_CTRL(vc), 20, 20)) अणु
 		u32 val;
-		val = dsi_read_reg(dsi, DSI_VC_SHORT_PACKET_HEADER(vc));
+		val = dsi_पढ़ो_reg(dsi, DSI_VC_SHORT_PACKET_HEADER(vc));
 		DSSDBG("\t\tb1 %#02x b2 %#02x b3 %#02x b4 %#02x\n",
 				(val >> 0) & 0xff,
 				(val >> 8) & 0xff,
 				(val >> 16) & 0xff,
 				(val >> 24) & 0xff);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dsi_show_rx_ack_with_err(u16 err)
-{
+अटल व्योम dsi_show_rx_ack_with_err(u16 err)
+अणु
 	DSSERR("\tACK with ERROR (%#x):\n", err);
-	if (err & (1 << 0))
+	अगर (err & (1 << 0))
 		DSSERR("\t\tSoT Error\n");
-	if (err & (1 << 1))
+	अगर (err & (1 << 1))
 		DSSERR("\t\tSoT Sync Error\n");
-	if (err & (1 << 2))
+	अगर (err & (1 << 2))
 		DSSERR("\t\tEoT Sync Error\n");
-	if (err & (1 << 3))
+	अगर (err & (1 << 3))
 		DSSERR("\t\tEscape Mode Entry Command Error\n");
-	if (err & (1 << 4))
+	अगर (err & (1 << 4))
 		DSSERR("\t\tLP Transmit Sync Error\n");
-	if (err & (1 << 5))
+	अगर (err & (1 << 5))
 		DSSERR("\t\tHS Receive Timeout Error\n");
-	if (err & (1 << 6))
+	अगर (err & (1 << 6))
 		DSSERR("\t\tFalse Control Error\n");
-	if (err & (1 << 7))
+	अगर (err & (1 << 7))
 		DSSERR("\t\t(reserved7)\n");
-	if (err & (1 << 8))
+	अगर (err & (1 << 8))
 		DSSERR("\t\tECC Error, single-bit (corrected)\n");
-	if (err & (1 << 9))
+	अगर (err & (1 << 9))
 		DSSERR("\t\tECC Error, multi-bit (not corrected)\n");
-	if (err & (1 << 10))
+	अगर (err & (1 << 10))
 		DSSERR("\t\tChecksum Error\n");
-	if (err & (1 << 11))
+	अगर (err & (1 << 11))
 		DSSERR("\t\tData type not recognized\n");
-	if (err & (1 << 12))
+	अगर (err & (1 << 12))
 		DSSERR("\t\tInvalid VC ID\n");
-	if (err & (1 << 13))
+	अगर (err & (1 << 13))
 		DSSERR("\t\tInvalid Transmission Length\n");
-	if (err & (1 << 14))
+	अगर (err & (1 << 14))
 		DSSERR("\t\t(reserved14)\n");
-	if (err & (1 << 15))
+	अगर (err & (1 << 15))
 		DSSERR("\t\tDSI Protocol Violation\n");
-}
+पूर्ण
 
-static u16 dsi_vc_flush_receive_data(struct dsi_data *dsi, int vc)
-{
+अटल u16 dsi_vc_flush_receive_data(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
 	/* RX_FIFO_NOT_EMPTY */
-	while (REG_GET(dsi, DSI_VC_CTRL(vc), 20, 20)) {
+	जबतक (REG_GET(dsi, DSI_VC_CTRL(vc), 20, 20)) अणु
 		u32 val;
 		u8 dt;
-		val = dsi_read_reg(dsi, DSI_VC_SHORT_PACKET_HEADER(vc));
+		val = dsi_पढ़ो_reg(dsi, DSI_VC_SHORT_PACKET_HEADER(vc));
 		DSSERR("\trawval %#08x\n", val);
 		dt = FLD_GET(val, 5, 0);
-		if (dt == MIPI_DSI_RX_ACKNOWLEDGE_AND_ERROR_REPORT) {
+		अगर (dt == MIPI_DSI_RX_ACKNOWLEDGE_AND_ERROR_REPORT) अणु
 			u16 err = FLD_GET(val, 23, 8);
 			dsi_show_rx_ack_with_err(err);
-		} else if (dt == MIPI_DSI_RX_DCS_SHORT_READ_RESPONSE_1BYTE) {
+		पूर्ण अन्यथा अगर (dt == MIPI_DSI_RX_DCS_SHORT_READ_RESPONSE_1BYTE) अणु
 			DSSERR("\tDCS short response, 1 byte: %#x\n",
 					FLD_GET(val, 23, 8));
-		} else if (dt == MIPI_DSI_RX_DCS_SHORT_READ_RESPONSE_2BYTE) {
+		पूर्ण अन्यथा अगर (dt == MIPI_DSI_RX_DCS_SHORT_READ_RESPONSE_2BYTE) अणु
 			DSSERR("\tDCS short response, 2 byte: %#x\n",
 					FLD_GET(val, 23, 8));
-		} else if (dt == MIPI_DSI_RX_DCS_LONG_READ_RESPONSE) {
+		पूर्ण अन्यथा अगर (dt == MIPI_DSI_RX_DCS_LONG_READ_RESPONSE) अणु
 			DSSERR("\tDCS long response, len %d\n",
 					FLD_GET(val, 23, 8));
-			dsi_vc_flush_long_data(dsi, vc);
-		} else {
+			dsi_vc_flush_दीर्घ_data(dsi, vc);
+		पूर्ण अन्यथा अणु
 			DSSERR("\tunknown datatype 0x%02x\n", dt);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dsi_vc_send_bta(struct dsi_data *dsi, int vc)
-{
-	if (dsi->debug_write || dsi->debug_read)
+अटल पूर्णांक dsi_vc_send_bta(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
+	अगर (dsi->debug_ग_लिखो || dsi->debug_पढ़ो)
 		DSSDBG("dsi_vc_send_bta %d\n", vc);
 
 	WARN_ON(!dsi_bus_is_locked(dsi));
 
 	/* RX_FIFO_NOT_EMPTY */
-	if (REG_GET(dsi, DSI_VC_CTRL(vc), 20, 20)) {
+	अगर (REG_GET(dsi, DSI_VC_CTRL(vc), 20, 20)) अणु
 		DSSERR("rx fifo not empty when sending BTA, dumping data:\n");
 		dsi_vc_flush_receive_data(dsi, vc);
-	}
+	पूर्ण
 
 	REG_FLD_MOD(dsi, DSI_VC_CTRL(vc), 1, 6, 6); /* BTA_EN */
 
-	/* flush posted write */
-	dsi_read_reg(dsi, DSI_VC_CTRL(vc));
+	/* flush posted ग_लिखो */
+	dsi_पढ़ो_reg(dsi, DSI_VC_CTRL(vc));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_vc_send_bta_sync(struct omap_dss_device *dssdev, int vc)
-{
-	struct dsi_data *dsi = to_dsi_data(dssdev);
+अटल पूर्णांक dsi_vc_send_bta_sync(काष्ठा omap_dss_device *dssdev, पूर्णांक vc)
+अणु
+	काष्ठा dsi_data *dsi = to_dsi_data(dssdev);
 	DECLARE_COMPLETION_ONSTACK(completion);
-	int r = 0;
+	पूर्णांक r = 0;
 	u32 err;
 
-	r = dsi_register_isr_vc(dsi, vc, dsi_completion_handler,
+	r = dsi_रेजिस्टर_isr_vc(dsi, vc, dsi_completion_handler,
 			&completion, DSI_VC_IRQ_BTA);
-	if (r)
-		goto err0;
+	अगर (r)
+		जाओ err0;
 
-	r = dsi_register_isr(dsi, dsi_completion_handler, &completion,
+	r = dsi_रेजिस्टर_isr(dsi, dsi_completion_handler, &completion,
 			DSI_IRQ_ERROR_MASK);
-	if (r)
-		goto err1;
+	अगर (r)
+		जाओ err1;
 
 	r = dsi_vc_send_bta(dsi, vc);
-	if (r)
-		goto err2;
+	अगर (r)
+		जाओ err2;
 
-	if (wait_for_completion_timeout(&completion,
-				msecs_to_jiffies(500)) == 0) {
+	अगर (रुको_क्रम_completion_समयout(&completion,
+				msecs_to_jअगरfies(500)) == 0) अणु
 		DSSERR("Failed to receive BTA\n");
 		r = -EIO;
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
 	err = dsi_get_errors(dsi);
-	if (err) {
+	अगर (err) अणु
 		DSSERR("Error while sending BTA: %x\n", err);
 		r = -EIO;
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 err2:
-	dsi_unregister_isr(dsi, dsi_completion_handler, &completion,
+	dsi_unरेजिस्टर_isr(dsi, dsi_completion_handler, &completion,
 			DSI_IRQ_ERROR_MASK);
 err1:
-	dsi_unregister_isr_vc(dsi, vc, dsi_completion_handler,
+	dsi_unरेजिस्टर_isr_vc(dsi, vc, dsi_completion_handler,
 			&completion, DSI_VC_IRQ_BTA);
 err0:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static inline void dsi_vc_write_long_header(struct dsi_data *dsi, int vc,
-					    int channel, u8 data_type, u16 len,
+अटल अंतरभूत व्योम dsi_vc_ग_लिखो_दीर्घ_header(काष्ठा dsi_data *dsi, पूर्णांक vc,
+					    पूर्णांक channel, u8 data_type, u16 len,
 					    u8 ecc)
-{
+अणु
 	u32 val;
 	u8 data_id;
 
@@ -2068,12 +2069,12 @@ static inline void dsi_vc_write_long_header(struct dsi_data *dsi, int vc,
 	val = FLD_VAL(data_id, 7, 0) | FLD_VAL(len, 23, 8) |
 		FLD_VAL(ecc, 31, 24);
 
-	dsi_write_reg(dsi, DSI_VC_LONG_PACKET_HEADER(vc), val);
-}
+	dsi_ग_लिखो_reg(dsi, DSI_VC_LONG_PACKET_HEADER(vc), val);
+पूर्ण
 
-static inline void dsi_vc_write_long_payload(struct dsi_data *dsi, int vc,
+अटल अंतरभूत व्योम dsi_vc_ग_लिखो_दीर्घ_payload(काष्ठा dsi_data *dsi, पूर्णांक vc,
 					     u8 b1, u8 b2, u8 b3, u8 b4)
-{
+अणु
 	u32 val;
 
 	val = b4 << 24 | b3 << 16 | b2 << 8  | b1 << 0;
@@ -2081,32 +2082,32 @@ static inline void dsi_vc_write_long_payload(struct dsi_data *dsi, int vc,
 /*	DSSDBG("\twriting %02x, %02x, %02x, %02x (%#010x)\n",
 			b1, b2, b3, b4, val); */
 
-	dsi_write_reg(dsi, DSI_VC_LONG_PACKET_PAYLOAD(vc), val);
-}
+	dsi_ग_लिखो_reg(dsi, DSI_VC_LONG_PACKET_PAYLOAD(vc), val);
+पूर्ण
 
-static int dsi_vc_send_long(struct dsi_data *dsi, int vc,
-			    const struct mipi_dsi_msg *msg)
-{
+अटल पूर्णांक dsi_vc_send_दीर्घ(काष्ठा dsi_data *dsi, पूर्णांक vc,
+			    स्थिर काष्ठा mipi_dsi_msg *msg)
+अणु
 	/*u32 val; */
-	int i;
-	const u8 *p;
-	int r = 0;
+	पूर्णांक i;
+	स्थिर u8 *p;
+	पूर्णांक r = 0;
 	u8 b1, b2, b3, b4;
 
-	if (dsi->debug_write)
+	अगर (dsi->debug_ग_लिखो)
 		DSSDBG("dsi_vc_send_long, %d bytes\n", msg->tx_len);
 
 	/* len + header */
-	if (dsi->vc[vc].tx_fifo_size * 32 * 4 < msg->tx_len + 4) {
+	अगर (dsi->vc[vc].tx_fअगरo_size * 32 * 4 < msg->tx_len + 4) अणु
 		DSSERR("unable to send long packet: packet too long.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dsi_vc_write_long_header(dsi, vc, msg->channel, msg->type, msg->tx_len, 0);
+	dsi_vc_ग_लिखो_दीर्घ_header(dsi, vc, msg->channel, msg->type, msg->tx_len, 0);
 
 	p = msg->tx_buf;
-	for (i = 0; i < msg->tx_len >> 2; i++) {
-		if (dsi->debug_write)
+	क्रम (i = 0; i < msg->tx_len >> 2; i++) अणु
+		अगर (dsi->debug_ग_लिखो)
 			DSSDBG("\tsending full packet %d\n", i);
 
 		b1 = *p++;
@@ -2114,291 +2115,291 @@ static int dsi_vc_send_long(struct dsi_data *dsi, int vc,
 		b3 = *p++;
 		b4 = *p++;
 
-		dsi_vc_write_long_payload(dsi, vc, b1, b2, b3, b4);
-	}
+		dsi_vc_ग_लिखो_दीर्घ_payload(dsi, vc, b1, b2, b3, b4);
+	पूर्ण
 
 	i = msg->tx_len % 4;
-	if (i) {
+	अगर (i) अणु
 		b1 = 0; b2 = 0; b3 = 0;
 
-		if (dsi->debug_write)
+		अगर (dsi->debug_ग_लिखो)
 			DSSDBG("\tsending remainder bytes %d\n", i);
 
-		switch (i) {
-		case 3:
+		चयन (i) अणु
+		हाल 3:
 			b1 = *p++;
 			b2 = *p++;
 			b3 = *p++;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			b1 = *p++;
 			b2 = *p++;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			b1 = *p++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		dsi_vc_write_long_payload(dsi, vc, b1, b2, b3, 0);
-	}
+		dsi_vc_ग_लिखो_दीर्घ_payload(dsi, vc, b1, b2, b3, 0);
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dsi_vc_send_short(struct dsi_data *dsi, int vc,
-			     const struct mipi_dsi_msg *msg)
-{
-	struct mipi_dsi_packet pkt;
-	int ret;
+अटल पूर्णांक dsi_vc_send_लघु(काष्ठा dsi_data *dsi, पूर्णांक vc,
+			     स्थिर काष्ठा mipi_dsi_msg *msg)
+अणु
+	काष्ठा mipi_dsi_packet pkt;
+	पूर्णांक ret;
 	u32 r;
 
 	ret = mipi_dsi_create_packet(&pkt, msg);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	WARN_ON(!dsi_bus_is_locked(dsi));
 
-	if (dsi->debug_write)
+	अगर (dsi->debug_ग_लिखो)
 		DSSDBG("dsi_vc_send_short(vc%d, dt %#x, b1 %#x, b2 %#x)\n",
 		       vc, msg->type, pkt.header[1], pkt.header[2]);
 
-	if (FLD_GET(dsi_read_reg(dsi, DSI_VC_CTRL(vc)), 16, 16)) {
+	अगर (FLD_GET(dsi_पढ़ो_reg(dsi, DSI_VC_CTRL(vc)), 16, 16)) अणु
 		DSSERR("ERROR FIFO FULL, aborting transfer\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	r = pkt.header[3] << 24 | pkt.header[2] << 16 | pkt.header[1] << 8 |
 	    pkt.header[0];
 
-	dsi_write_reg(dsi, DSI_VC_SHORT_PACKET_HEADER(vc), r);
+	dsi_ग_लिखो_reg(dsi, DSI_VC_SHORT_PACKET_HEADER(vc), r);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_vc_send_null(struct dsi_data *dsi, int vc, int channel)
-{
-	const struct mipi_dsi_msg msg = {
+अटल पूर्णांक dsi_vc_send_null(काष्ठा dsi_data *dsi, पूर्णांक vc, पूर्णांक channel)
+अणु
+	स्थिर काष्ठा mipi_dsi_msg msg = अणु
 		.channel = channel,
-		.type = MIPI_DSI_NULL_PACKET,
-	};
+		.type = MIPI_DSI_शून्य_PACKET,
+	पूर्ण;
 
-	return dsi_vc_send_long(dsi, vc, &msg);
-}
+	वापस dsi_vc_send_दीर्घ(dsi, vc, &msg);
+पूर्ण
 
-static int dsi_vc_write_common(struct omap_dss_device *dssdev, int vc,
-			       const struct mipi_dsi_msg *msg)
-{
-	struct dsi_data *dsi = to_dsi_data(dssdev);
-	int r;
+अटल पूर्णांक dsi_vc_ग_लिखो_common(काष्ठा omap_dss_device *dssdev, पूर्णांक vc,
+			       स्थिर काष्ठा mipi_dsi_msg *msg)
+अणु
+	काष्ठा dsi_data *dsi = to_dsi_data(dssdev);
+	पूर्णांक r;
 
-	if (mipi_dsi_packet_format_is_short(msg->type))
-		r = dsi_vc_send_short(dsi, vc, msg);
-	else
-		r = dsi_vc_send_long(dsi, vc, msg);
+	अगर (mipi_dsi_packet_क्रमmat_is_लघु(msg->type))
+		r = dsi_vc_send_लघु(dsi, vc, msg);
+	अन्यथा
+		r = dsi_vc_send_दीर्घ(dsi, vc, msg);
 
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	/*
-	 * TODO: we do not always have to do the BTA sync, for example
-	 * we can improve performance by setting the update window
-	 * information without sending BTA sync between the commands.
-	 * In that case we can return early.
+	 * TODO: we करो not always have to करो the BTA sync, क्रम example
+	 * we can improve perक्रमmance by setting the update winकरोw
+	 * inक्रमmation without sending BTA sync between the commands.
+	 * In that हाल we can वापस early.
 	 */
 
 	r = dsi_vc_send_bta_sync(dssdev, vc);
-	if (r) {
+	अगर (r) अणु
 		DSSERR("bta sync failed\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	/* RX_FIFO_NOT_EMPTY */
-	if (REG_GET(dsi, DSI_VC_CTRL(vc), 20, 20)) {
+	अगर (REG_GET(dsi, DSI_VC_CTRL(vc), 20, 20)) अणु
 		DSSERR("rx fifo not empty after write, dumping data:\n");
 		dsi_vc_flush_receive_data(dsi, vc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_vc_read_rx_fifo(struct dsi_data *dsi, int vc, u8 *buf,
-			       int buflen, enum dss_dsi_content_type type)
-{
+अटल पूर्णांक dsi_vc_पढ़ो_rx_fअगरo(काष्ठा dsi_data *dsi, पूर्णांक vc, u8 *buf,
+			       पूर्णांक buflen, क्रमागत dss_dsi_content_type type)
+अणु
 	u32 val;
 	u8 dt;
-	int r;
+	पूर्णांक r;
 
 	/* RX_FIFO_NOT_EMPTY */
-	if (REG_GET(dsi, DSI_VC_CTRL(vc), 20, 20) == 0) {
+	अगर (REG_GET(dsi, DSI_VC_CTRL(vc), 20, 20) == 0) अणु
 		DSSERR("RX fifo empty when trying to read.\n");
 		r = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	val = dsi_read_reg(dsi, DSI_VC_SHORT_PACKET_HEADER(vc));
-	if (dsi->debug_read)
+	val = dsi_पढ़ो_reg(dsi, DSI_VC_SHORT_PACKET_HEADER(vc));
+	अगर (dsi->debug_पढ़ो)
 		DSSDBG("\theader: %08x\n", val);
 	dt = FLD_GET(val, 5, 0);
-	if (dt == MIPI_DSI_RX_ACKNOWLEDGE_AND_ERROR_REPORT) {
+	अगर (dt == MIPI_DSI_RX_ACKNOWLEDGE_AND_ERROR_REPORT) अणु
 		u16 err = FLD_GET(val, 23, 8);
 		dsi_show_rx_ack_with_err(err);
 		r = -EIO;
-		goto err;
+		जाओ err;
 
-	} else if (dt == (type == DSS_DSI_CONTENT_GENERIC ?
+	पूर्ण अन्यथा अगर (dt == (type == DSS_DSI_CONTENT_GENERIC ?
 			MIPI_DSI_RX_GENERIC_SHORT_READ_RESPONSE_1BYTE :
-			MIPI_DSI_RX_DCS_SHORT_READ_RESPONSE_1BYTE)) {
+			MIPI_DSI_RX_DCS_SHORT_READ_RESPONSE_1BYTE)) अणु
 		u8 data = FLD_GET(val, 15, 8);
-		if (dsi->debug_read)
+		अगर (dsi->debug_पढ़ो)
 			DSSDBG("\t%s short response, 1 byte: %02x\n",
 				type == DSS_DSI_CONTENT_GENERIC ? "GENERIC" :
 				"DCS", data);
 
-		if (buflen < 1) {
+		अगर (buflen < 1) अणु
 			r = -EIO;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		buf[0] = data;
 
-		return 1;
-	} else if (dt == (type == DSS_DSI_CONTENT_GENERIC ?
+		वापस 1;
+	पूर्ण अन्यथा अगर (dt == (type == DSS_DSI_CONTENT_GENERIC ?
 			MIPI_DSI_RX_GENERIC_SHORT_READ_RESPONSE_2BYTE :
-			MIPI_DSI_RX_DCS_SHORT_READ_RESPONSE_2BYTE)) {
+			MIPI_DSI_RX_DCS_SHORT_READ_RESPONSE_2BYTE)) अणु
 		u16 data = FLD_GET(val, 23, 8);
-		if (dsi->debug_read)
+		अगर (dsi->debug_पढ़ो)
 			DSSDBG("\t%s short response, 2 byte: %04x\n",
 				type == DSS_DSI_CONTENT_GENERIC ? "GENERIC" :
 				"DCS", data);
 
-		if (buflen < 2) {
+		अगर (buflen < 2) अणु
 			r = -EIO;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		buf[0] = data & 0xff;
 		buf[1] = (data >> 8) & 0xff;
 
-		return 2;
-	} else if (dt == (type == DSS_DSI_CONTENT_GENERIC ?
+		वापस 2;
+	पूर्ण अन्यथा अगर (dt == (type == DSS_DSI_CONTENT_GENERIC ?
 			MIPI_DSI_RX_GENERIC_LONG_READ_RESPONSE :
-			MIPI_DSI_RX_DCS_LONG_READ_RESPONSE)) {
-		int w;
-		int len = FLD_GET(val, 23, 8);
-		if (dsi->debug_read)
+			MIPI_DSI_RX_DCS_LONG_READ_RESPONSE)) अणु
+		पूर्णांक w;
+		पूर्णांक len = FLD_GET(val, 23, 8);
+		अगर (dsi->debug_पढ़ो)
 			DSSDBG("\t%s long response, len %d\n",
 				type == DSS_DSI_CONTENT_GENERIC ? "GENERIC" :
 				"DCS", len);
 
-		if (len > buflen) {
+		अगर (len > buflen) अणु
 			r = -EIO;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		/* two byte checksum ends the packet, not included in len */
-		for (w = 0; w < len + 2;) {
-			int b;
-			val = dsi_read_reg(dsi,
+		क्रम (w = 0; w < len + 2;) अणु
+			पूर्णांक b;
+			val = dsi_पढ़ो_reg(dsi,
 				DSI_VC_SHORT_PACKET_HEADER(vc));
-			if (dsi->debug_read)
+			अगर (dsi->debug_पढ़ो)
 				DSSDBG("\t\t%02x %02x %02x %02x\n",
 						(val >> 0) & 0xff,
 						(val >> 8) & 0xff,
 						(val >> 16) & 0xff,
 						(val >> 24) & 0xff);
 
-			for (b = 0; b < 4; ++b) {
-				if (w < len)
+			क्रम (b = 0; b < 4; ++b) अणु
+				अगर (w < len)
 					buf[w] = (val >> (b * 8)) & 0xff;
 				/* we discard the 2 byte checksum */
 				++w;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		return len;
-	} else {
+		वापस len;
+	पूर्ण अन्यथा अणु
 		DSSERR("\tunknown datatype 0x%02x\n", dt);
 		r = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 err:
 	DSSERR("dsi_vc_read_rx_fifo(vc %d type %s) failed\n", vc,
 		type == DSS_DSI_CONTENT_GENERIC ? "GENERIC" : "DCS");
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dsi_vc_dcs_read(struct omap_dss_device *dssdev, int vc,
-			   const struct mipi_dsi_msg *msg)
-{
-	struct dsi_data *dsi = to_dsi_data(dssdev);
+अटल पूर्णांक dsi_vc_dcs_पढ़ो(काष्ठा omap_dss_device *dssdev, पूर्णांक vc,
+			   स्थिर काष्ठा mipi_dsi_msg *msg)
+अणु
+	काष्ठा dsi_data *dsi = to_dsi_data(dssdev);
 	u8 cmd = ((u8 *)msg->tx_buf)[0];
-	int r;
+	पूर्णांक r;
 
-	if (dsi->debug_read)
+	अगर (dsi->debug_पढ़ो)
 		DSSDBG("%s(vc %d, cmd %x)\n", __func__, vc, cmd);
 
-	r = dsi_vc_send_short(dsi, vc, msg);
-	if (r)
-		goto err;
+	r = dsi_vc_send_लघु(dsi, vc, msg);
+	अगर (r)
+		जाओ err;
 
 	r = dsi_vc_send_bta_sync(dssdev, vc);
-	if (r)
-		goto err;
+	अगर (r)
+		जाओ err;
 
-	r = dsi_vc_read_rx_fifo(dsi, vc, msg->rx_buf, msg->rx_len,
+	r = dsi_vc_पढ़ो_rx_fअगरo(dsi, vc, msg->rx_buf, msg->rx_len,
 		DSS_DSI_CONTENT_DCS);
-	if (r < 0)
-		goto err;
+	अगर (r < 0)
+		जाओ err;
 
-	if (r != msg->rx_len) {
+	अगर (r != msg->rx_len) अणु
 		r = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
 	DSSERR("%s(vc %d, cmd 0x%02x) failed\n", __func__,  vc, cmd);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dsi_vc_generic_read(struct omap_dss_device *dssdev, int vc,
-			       const struct mipi_dsi_msg *msg)
-{
-	struct dsi_data *dsi = to_dsi_data(dssdev);
-	int r;
+अटल पूर्णांक dsi_vc_generic_पढ़ो(काष्ठा omap_dss_device *dssdev, पूर्णांक vc,
+			       स्थिर काष्ठा mipi_dsi_msg *msg)
+अणु
+	काष्ठा dsi_data *dsi = to_dsi_data(dssdev);
+	पूर्णांक r;
 
-	r = dsi_vc_send_short(dsi, vc, msg);
-	if (r)
-		goto err;
+	r = dsi_vc_send_लघु(dsi, vc, msg);
+	अगर (r)
+		जाओ err;
 
 	r = dsi_vc_send_bta_sync(dssdev, vc);
-	if (r)
-		goto err;
+	अगर (r)
+		जाओ err;
 
-	r = dsi_vc_read_rx_fifo(dsi, vc, msg->rx_buf, msg->rx_len,
+	r = dsi_vc_पढ़ो_rx_fअगरo(dsi, vc, msg->rx_buf, msg->rx_len,
 		DSS_DSI_CONTENT_GENERIC);
-	if (r < 0)
-		goto err;
+	अगर (r < 0)
+		जाओ err;
 
-	if (r != msg->rx_len) {
+	अगर (r != msg->rx_len) अणु
 		r = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
 	DSSERR("%s(vc %d, reqlen %d) failed\n", __func__,  vc, msg->tx_len);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void dsi_set_lp_rx_timeout(struct dsi_data *dsi, unsigned int ticks,
+अटल व्योम dsi_set_lp_rx_समयout(काष्ठा dsi_data *dsi, अचिन्हित पूर्णांक ticks,
 				  bool x4, bool x16)
-{
-	unsigned long fck;
-	unsigned long total_ticks;
+अणु
+	अचिन्हित दीर्घ fck;
+	अचिन्हित दीर्घ total_ticks;
 	u32 r;
 
 	BUG_ON(ticks > 0x1fff);
@@ -2406,12 +2407,12 @@ static void dsi_set_lp_rx_timeout(struct dsi_data *dsi, unsigned int ticks,
 	/* ticks in DSI_FCK */
 	fck = dsi_fclk_rate(dsi);
 
-	r = dsi_read_reg(dsi, DSI_TIMING2);
+	r = dsi_पढ़ो_reg(dsi, DSI_TIMING2);
 	r = FLD_MOD(r, 1, 15, 15);	/* LP_RX_TO */
 	r = FLD_MOD(r, x16 ? 1 : 0, 14, 14);	/* LP_RX_TO_X16 */
 	r = FLD_MOD(r, x4 ? 1 : 0, 13, 13);	/* LP_RX_TO_X4 */
 	r = FLD_MOD(r, ticks, 12, 0);	/* LP_RX_COUNTER */
-	dsi_write_reg(dsi, DSI_TIMING2, r);
+	dsi_ग_लिखो_reg(dsi, DSI_TIMING2, r);
 
 	total_ticks = ticks * (x16 ? 16 : 1) * (x4 ? 4 : 1);
 
@@ -2419,13 +2420,13 @@ static void dsi_set_lp_rx_timeout(struct dsi_data *dsi, unsigned int ticks,
 			total_ticks,
 			ticks, x4 ? " x4" : "", x16 ? " x16" : "",
 			(total_ticks * 1000) / (fck / 1000 / 1000));
-}
+पूर्ण
 
-static void dsi_set_ta_timeout(struct dsi_data *dsi, unsigned int ticks,
+अटल व्योम dsi_set_ta_समयout(काष्ठा dsi_data *dsi, अचिन्हित पूर्णांक ticks,
 			       bool x8, bool x16)
-{
-	unsigned long fck;
-	unsigned long total_ticks;
+अणु
+	अचिन्हित दीर्घ fck;
+	अचिन्हित दीर्घ total_ticks;
 	u32 r;
 
 	BUG_ON(ticks > 0x1fff);
@@ -2433,12 +2434,12 @@ static void dsi_set_ta_timeout(struct dsi_data *dsi, unsigned int ticks,
 	/* ticks in DSI_FCK */
 	fck = dsi_fclk_rate(dsi);
 
-	r = dsi_read_reg(dsi, DSI_TIMING1);
+	r = dsi_पढ़ो_reg(dsi, DSI_TIMING1);
 	r = FLD_MOD(r, 1, 31, 31);	/* TA_TO */
 	r = FLD_MOD(r, x16 ? 1 : 0, 30, 30);	/* TA_TO_X16 */
 	r = FLD_MOD(r, x8 ? 1 : 0, 29, 29);	/* TA_TO_X8 */
 	r = FLD_MOD(r, ticks, 28, 16);	/* TA_TO_COUNTER */
-	dsi_write_reg(dsi, DSI_TIMING1, r);
+	dsi_ग_लिखो_reg(dsi, DSI_TIMING1, r);
 
 	total_ticks = ticks * (x16 ? 16 : 1) * (x8 ? 8 : 1);
 
@@ -2446,13 +2447,13 @@ static void dsi_set_ta_timeout(struct dsi_data *dsi, unsigned int ticks,
 			total_ticks,
 			ticks, x8 ? " x8" : "", x16 ? " x16" : "",
 			(total_ticks * 1000) / (fck / 1000 / 1000));
-}
+पूर्ण
 
-static void dsi_set_stop_state_counter(struct dsi_data *dsi, unsigned int ticks,
+अटल व्योम dsi_set_stop_state_counter(काष्ठा dsi_data *dsi, अचिन्हित पूर्णांक ticks,
 				       bool x4, bool x16)
-{
-	unsigned long fck;
-	unsigned long total_ticks;
+अणु
+	अचिन्हित दीर्घ fck;
+	अचिन्हित दीर्घ total_ticks;
 	u32 r;
 
 	BUG_ON(ticks > 0x1fff);
@@ -2460,12 +2461,12 @@ static void dsi_set_stop_state_counter(struct dsi_data *dsi, unsigned int ticks,
 	/* ticks in DSI_FCK */
 	fck = dsi_fclk_rate(dsi);
 
-	r = dsi_read_reg(dsi, DSI_TIMING1);
+	r = dsi_पढ़ो_reg(dsi, DSI_TIMING1);
 	r = FLD_MOD(r, 1, 15, 15);	/* FORCE_TX_STOP_MODE_IO */
 	r = FLD_MOD(r, x16 ? 1 : 0, 14, 14);	/* STOP_STATE_X16_IO */
 	r = FLD_MOD(r, x4 ? 1 : 0, 13, 13);	/* STOP_STATE_X4_IO */
 	r = FLD_MOD(r, ticks, 12, 0);	/* STOP_STATE_COUNTER_IO */
-	dsi_write_reg(dsi, DSI_TIMING1, r);
+	dsi_ग_लिखो_reg(dsi, DSI_TIMING1, r);
 
 	total_ticks = ticks * (x16 ? 16 : 1) * (x4 ? 4 : 1);
 
@@ -2473,13 +2474,13 @@ static void dsi_set_stop_state_counter(struct dsi_data *dsi, unsigned int ticks,
 			total_ticks,
 			ticks, x4 ? " x4" : "", x16 ? " x16" : "",
 			(total_ticks * 1000) / (fck / 1000 / 1000));
-}
+पूर्ण
 
-static void dsi_set_hs_tx_timeout(struct dsi_data *dsi, unsigned int ticks,
+अटल व्योम dsi_set_hs_tx_समयout(काष्ठा dsi_data *dsi, अचिन्हित पूर्णांक ticks,
 				  bool x4, bool x16)
-{
-	unsigned long fck;
-	unsigned long total_ticks;
+अणु
+	अचिन्हित दीर्घ fck;
+	अचिन्हित दीर्घ total_ticks;
 	u32 r;
 
 	BUG_ON(ticks > 0x1fff);
@@ -2487,12 +2488,12 @@ static void dsi_set_hs_tx_timeout(struct dsi_data *dsi, unsigned int ticks,
 	/* ticks in TxByteClkHS */
 	fck = dsi_get_txbyteclkhs(dsi);
 
-	r = dsi_read_reg(dsi, DSI_TIMING2);
+	r = dsi_पढ़ो_reg(dsi, DSI_TIMING2);
 	r = FLD_MOD(r, 1, 31, 31);	/* HS_TX_TO */
 	r = FLD_MOD(r, x16 ? 1 : 0, 30, 30);	/* HS_TX_TO_X16 */
 	r = FLD_MOD(r, x4 ? 1 : 0, 29, 29);	/* HS_TX_TO_X8 (4 really) */
 	r = FLD_MOD(r, ticks, 28, 16);	/* HS_TX_TO_COUNTER */
-	dsi_write_reg(dsi, DSI_TIMING2, r);
+	dsi_ग_लिखो_reg(dsi, DSI_TIMING2, r);
 
 	total_ticks = ticks * (x16 ? 16 : 1) * (x4 ? 4 : 1);
 
@@ -2500,43 +2501,43 @@ static void dsi_set_hs_tx_timeout(struct dsi_data *dsi, unsigned int ticks,
 			total_ticks,
 			ticks, x4 ? " x4" : "", x16 ? " x16" : "",
 			(total_ticks * 1000) / (fck / 1000 / 1000));
-}
+पूर्ण
 
-static void dsi_config_vp_num_line_buffers(struct dsi_data *dsi)
-{
-	int num_line_buffers;
+अटल व्योम dsi_config_vp_num_line_buffers(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक num_line_buffers;
 
-	if (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE) {
-		int bpp = mipi_dsi_pixel_format_to_bpp(dsi->pix_fmt);
-		const struct videomode *vm = &dsi->vm;
+	अगर (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE) अणु
+		पूर्णांक bpp = mipi_dsi_pixel_क्रमmat_to_bpp(dsi->pix_fmt);
+		स्थिर काष्ठा videomode *vm = &dsi->vm;
 		/*
-		 * Don't use line buffers if width is greater than the video
+		 * Don't use line buffers अगर width is greater than the video
 		 * port's line buffer size
 		 */
-		if (dsi->line_buffer_size <= vm->hactive * bpp / 8)
+		अगर (dsi->line_buffer_size <= vm->hactive * bpp / 8)
 			num_line_buffers = 0;
-		else
+		अन्यथा
 			num_line_buffers = 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Use maximum number of line buffers in command mode */
 		num_line_buffers = 2;
-	}
+	पूर्ण
 
 	/* LINE_BUFFER */
 	REG_FLD_MOD(dsi, DSI_CTRL, num_line_buffers, 13, 12);
-}
+पूर्ण
 
-static void dsi_config_vp_sync_events(struct dsi_data *dsi)
-{
+अटल व्योम dsi_config_vp_sync_events(काष्ठा dsi_data *dsi)
+अणु
 	bool sync_end;
 	u32 r;
 
-	if (dsi->vm_timings.trans_mode == OMAP_DSS_DSI_PULSE_MODE)
+	अगर (dsi->vm_timings.trans_mode == OMAP_DSS_DSI_PULSE_MODE)
 		sync_end = true;
-	else
+	अन्यथा
 		sync_end = false;
 
-	r = dsi_read_reg(dsi, DSI_CTRL);
+	r = dsi_पढ़ो_reg(dsi, DSI_CTRL);
 	r = FLD_MOD(r, 1, 9, 9);		/* VP_DE_POL */
 	r = FLD_MOD(r, 1, 10, 10);		/* VP_HSYNC_POL */
 	r = FLD_MOD(r, 1, 11, 11);		/* VP_VSYNC_POL */
@@ -2544,244 +2545,244 @@ static void dsi_config_vp_sync_events(struct dsi_data *dsi)
 	r = FLD_MOD(r, sync_end, 16, 16);	/* VP_VSYNC_END */
 	r = FLD_MOD(r, 1, 17, 17);		/* VP_HSYNC_START */
 	r = FLD_MOD(r, sync_end, 18, 18);	/* VP_HSYNC_END */
-	dsi_write_reg(dsi, DSI_CTRL, r);
-}
+	dsi_ग_लिखो_reg(dsi, DSI_CTRL, r);
+पूर्ण
 
-static void dsi_config_blanking_modes(struct dsi_data *dsi)
-{
-	int blanking_mode = dsi->vm_timings.blanking_mode;
-	int hfp_blanking_mode = dsi->vm_timings.hfp_blanking_mode;
-	int hbp_blanking_mode = dsi->vm_timings.hbp_blanking_mode;
-	int hsa_blanking_mode = dsi->vm_timings.hsa_blanking_mode;
+अटल व्योम dsi_config_blanking_modes(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक blanking_mode = dsi->vm_timings.blanking_mode;
+	पूर्णांक hfp_blanking_mode = dsi->vm_timings.hfp_blanking_mode;
+	पूर्णांक hbp_blanking_mode = dsi->vm_timings.hbp_blanking_mode;
+	पूर्णांक hsa_blanking_mode = dsi->vm_timings.hsa_blanking_mode;
 	u32 r;
 
 	/*
 	 * 0 = TX FIFO packets sent or LPS in corresponding blanking periods
 	 * 1 = Long blanking packets are sent in corresponding blanking periods
 	 */
-	r = dsi_read_reg(dsi, DSI_CTRL);
+	r = dsi_पढ़ो_reg(dsi, DSI_CTRL);
 	r = FLD_MOD(r, blanking_mode, 20, 20);		/* BLANKING_MODE */
 	r = FLD_MOD(r, hfp_blanking_mode, 21, 21);	/* HFP_BLANKING */
 	r = FLD_MOD(r, hbp_blanking_mode, 22, 22);	/* HBP_BLANKING */
 	r = FLD_MOD(r, hsa_blanking_mode, 23, 23);	/* HSA_BLANKING */
-	dsi_write_reg(dsi, DSI_CTRL, r);
-}
+	dsi_ग_लिखो_reg(dsi, DSI_CTRL, r);
+पूर्ण
 
 /*
  * According to section 'HS Command Mode Interleaving' in OMAP TRM, Scenario 3
- * results in maximum transition time for data and clock lanes to enter and
- * exit HS mode. Hence, this is the scenario where the least amount of command
- * mode data can be interleaved. We program the minimum amount of TXBYTECLKHS
- * clock cycles that can be used to interleave command mode data in HS so that
+ * results in maximum transition समय क्रम data and घड़ी lanes to enter and
+ * निकास HS mode. Hence, this is the scenario where the least amount of command
+ * mode data can be पूर्णांकerleaved. We program the minimum amount of TXBYTECLKHS
+ * घड़ी cycles that can be used to पूर्णांकerleave command mode data in HS so that
  * all scenarios are satisfied.
  */
-static int dsi_compute_interleave_hs(int blank, bool ddr_alwon, int enter_hs,
-		int exit_hs, int exiths_clk, int ddr_pre, int ddr_post)
-{
-	int transition;
+अटल पूर्णांक dsi_compute_पूर्णांकerleave_hs(पूर्णांक blank, bool ddr_alwon, पूर्णांक enter_hs,
+		पूर्णांक निकास_hs, पूर्णांक निकासhs_clk, पूर्णांक ddr_pre, पूर्णांक ddr_post)
+अणु
+	पूर्णांक transition;
 
 	/*
 	 * If DDR_CLK_ALWAYS_ON is set, we need to consider HS mode transition
-	 * time of data lanes only, if it isn't set, we need to consider HS
-	 * transition time of both data and clock lanes. HS transition time
+	 * समय of data lanes only, अगर it isn't set, we need to consider HS
+	 * transition समय of both data and घड़ी lanes. HS transition समय
 	 * of Scenario 3 is considered.
 	 */
-	if (ddr_alwon) {
-		transition = enter_hs + exit_hs + max(enter_hs, 2) + 1;
-	} else {
-		int trans1, trans2;
-		trans1 = ddr_pre + enter_hs + exit_hs + max(enter_hs, 2) + 1;
-		trans2 = ddr_pre + enter_hs + exiths_clk + ddr_post + ddr_pre +
+	अगर (ddr_alwon) अणु
+		transition = enter_hs + निकास_hs + max(enter_hs, 2) + 1;
+	पूर्ण अन्यथा अणु
+		पूर्णांक trans1, trans2;
+		trans1 = ddr_pre + enter_hs + निकास_hs + max(enter_hs, 2) + 1;
+		trans2 = ddr_pre + enter_hs + निकासhs_clk + ddr_post + ddr_pre +
 				enter_hs + 1;
 		transition = max(trans1, trans2);
-	}
+	पूर्ण
 
-	return blank > transition ? blank - transition : 0;
-}
+	वापस blank > transition ? blank - transition : 0;
+पूर्ण
 
 /*
  * According to section 'LP Command Mode Interleaving' in OMAP TRM, Scenario 1
- * results in maximum transition time for data lanes to enter and exit LP mode.
+ * results in maximum transition समय क्रम data lanes to enter and निकास LP mode.
  * Hence, this is the scenario where the least amount of command mode data can
- * be interleaved. We program the minimum amount of bytes that can be
- * interleaved in LP so that all scenarios are satisfied.
+ * be पूर्णांकerleaved. We program the minimum amount of bytes that can be
+ * पूर्णांकerleaved in LP so that all scenarios are satisfied.
  */
-static int dsi_compute_interleave_lp(int blank, int enter_hs, int exit_hs,
-		int lp_clk_div, int tdsi_fclk)
-{
-	int trans_lp;	/* time required for a LP transition, in TXBYTECLKHS */
-	int tlp_avail;	/* time left for interleaving commands, in CLKIN4DDR */
-	int ttxclkesc;	/* period of LP transmit escape clock, in CLKIN4DDR */
-	int thsbyte_clk = 16;	/* Period of TXBYTECLKHS clock, in CLKIN4DDR */
-	int lp_inter;	/* cmd mode data that can be interleaved, in bytes */
+अटल पूर्णांक dsi_compute_पूर्णांकerleave_lp(पूर्णांक blank, पूर्णांक enter_hs, पूर्णांक निकास_hs,
+		पूर्णांक lp_clk_भाग, पूर्णांक tdsi_fclk)
+अणु
+	पूर्णांक trans_lp;	/* समय required क्रम a LP transition, in TXBYTECLKHS */
+	पूर्णांक tlp_avail;	/* समय left क्रम पूर्णांकerleaving commands, in CLKIN4DDR */
+	पूर्णांक ttxclkesc;	/* period of LP transmit escape घड़ी, in CLKIN4DDR */
+	पूर्णांक thsbyte_clk = 16;	/* Period of TXBYTECLKHS घड़ी, in CLKIN4DDR */
+	पूर्णांक lp_पूर्णांकer;	/* cmd mode data that can be पूर्णांकerleaved, in bytes */
 
-	/* maximum LP transition time according to Scenario 1 */
-	trans_lp = exit_hs + max(enter_hs, 2) + 1;
+	/* maximum LP transition समय according to Scenario 1 */
+	trans_lp = निकास_hs + max(enter_hs, 2) + 1;
 
 	/* CLKIN4DDR = 16 * TXBYTECLKHS */
 	tlp_avail = thsbyte_clk * (blank - trans_lp);
 
-	ttxclkesc = tdsi_fclk * lp_clk_div;
+	ttxclkesc = tdsi_fclk * lp_clk_भाग;
 
-	lp_inter = ((tlp_avail - 8 * thsbyte_clk - 5 * tdsi_fclk) / ttxclkesc -
+	lp_पूर्णांकer = ((tlp_avail - 8 * thsbyte_clk - 5 * tdsi_fclk) / ttxclkesc -
 			26) / 16;
 
-	return max(lp_inter, 0);
-}
+	वापस max(lp_पूर्णांकer, 0);
+पूर्ण
 
-static void dsi_config_cmd_mode_interleaving(struct dsi_data *dsi)
-{
-	int blanking_mode;
-	int hfp_blanking_mode, hbp_blanking_mode, hsa_blanking_mode;
-	int hsa, hfp, hbp, width_bytes, bllp, lp_clk_div;
-	int ddr_clk_pre, ddr_clk_post, enter_hs_mode_lat, exit_hs_mode_lat;
-	int tclk_trail, ths_exit, exiths_clk;
+अटल व्योम dsi_config_cmd_mode_पूर्णांकerleaving(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक blanking_mode;
+	पूर्णांक hfp_blanking_mode, hbp_blanking_mode, hsa_blanking_mode;
+	पूर्णांक hsa, hfp, hbp, width_bytes, bllp, lp_clk_भाग;
+	पूर्णांक ddr_clk_pre, ddr_clk_post, enter_hs_mode_lat, निकास_hs_mode_lat;
+	पूर्णांक tclk_trail, ths_निकास, निकासhs_clk;
 	bool ddr_alwon;
-	const struct videomode *vm = &dsi->vm;
-	int bpp = mipi_dsi_pixel_format_to_bpp(dsi->pix_fmt);
-	int ndl = dsi->num_lanes_used - 1;
-	int dsi_fclk_hsdiv = dsi->user_dsi_cinfo.mX[HSDIV_DSI] + 1;
-	int hsa_interleave_hs = 0, hsa_interleave_lp = 0;
-	int hfp_interleave_hs = 0, hfp_interleave_lp = 0;
-	int hbp_interleave_hs = 0, hbp_interleave_lp = 0;
-	int bl_interleave_hs = 0, bl_interleave_lp = 0;
+	स्थिर काष्ठा videomode *vm = &dsi->vm;
+	पूर्णांक bpp = mipi_dsi_pixel_क्रमmat_to_bpp(dsi->pix_fmt);
+	पूर्णांक ndl = dsi->num_lanes_used - 1;
+	पूर्णांक dsi_fclk_hsभाग = dsi->user_dsi_cinfo.mX[HSDIV_DSI] + 1;
+	पूर्णांक hsa_पूर्णांकerleave_hs = 0, hsa_पूर्णांकerleave_lp = 0;
+	पूर्णांक hfp_पूर्णांकerleave_hs = 0, hfp_पूर्णांकerleave_lp = 0;
+	पूर्णांक hbp_पूर्णांकerleave_hs = 0, hbp_पूर्णांकerleave_lp = 0;
+	पूर्णांक bl_पूर्णांकerleave_hs = 0, bl_पूर्णांकerleave_lp = 0;
 	u32 r;
 
-	r = dsi_read_reg(dsi, DSI_CTRL);
+	r = dsi_पढ़ो_reg(dsi, DSI_CTRL);
 	blanking_mode = FLD_GET(r, 20, 20);
 	hfp_blanking_mode = FLD_GET(r, 21, 21);
 	hbp_blanking_mode = FLD_GET(r, 22, 22);
 	hsa_blanking_mode = FLD_GET(r, 23, 23);
 
-	r = dsi_read_reg(dsi, DSI_VM_TIMING1);
+	r = dsi_पढ़ो_reg(dsi, DSI_VM_TIMING1);
 	hbp = FLD_GET(r, 11, 0);
 	hfp = FLD_GET(r, 23, 12);
 	hsa = FLD_GET(r, 31, 24);
 
-	r = dsi_read_reg(dsi, DSI_CLK_TIMING);
+	r = dsi_पढ़ो_reg(dsi, DSI_CLK_TIMING);
 	ddr_clk_post = FLD_GET(r, 7, 0);
 	ddr_clk_pre = FLD_GET(r, 15, 8);
 
-	r = dsi_read_reg(dsi, DSI_VM_TIMING7);
-	exit_hs_mode_lat = FLD_GET(r, 15, 0);
+	r = dsi_पढ़ो_reg(dsi, DSI_VM_TIMING7);
+	निकास_hs_mode_lat = FLD_GET(r, 15, 0);
 	enter_hs_mode_lat = FLD_GET(r, 31, 16);
 
-	r = dsi_read_reg(dsi, DSI_CLK_CTRL);
-	lp_clk_div = FLD_GET(r, 12, 0);
+	r = dsi_पढ़ो_reg(dsi, DSI_CLK_CTRL);
+	lp_clk_भाग = FLD_GET(r, 12, 0);
 	ddr_alwon = FLD_GET(r, 13, 13);
 
-	r = dsi_read_reg(dsi, DSI_DSIPHY_CFG0);
-	ths_exit = FLD_GET(r, 7, 0);
+	r = dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG0);
+	ths_निकास = FLD_GET(r, 7, 0);
 
-	r = dsi_read_reg(dsi, DSI_DSIPHY_CFG1);
+	r = dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG1);
 	tclk_trail = FLD_GET(r, 15, 8);
 
-	exiths_clk = ths_exit + tclk_trail;
+	निकासhs_clk = ths_निकास + tclk_trail;
 
 	width_bytes = DIV_ROUND_UP(vm->hactive * bpp, 8);
 	bllp = hbp + hfp + hsa + DIV_ROUND_UP(width_bytes + 6, ndl);
 
-	if (!hsa_blanking_mode) {
-		hsa_interleave_hs = dsi_compute_interleave_hs(hsa, ddr_alwon,
-					enter_hs_mode_lat, exit_hs_mode_lat,
-					exiths_clk, ddr_clk_pre, ddr_clk_post);
-		hsa_interleave_lp = dsi_compute_interleave_lp(hsa,
-					enter_hs_mode_lat, exit_hs_mode_lat,
-					lp_clk_div, dsi_fclk_hsdiv);
-	}
+	अगर (!hsa_blanking_mode) अणु
+		hsa_पूर्णांकerleave_hs = dsi_compute_पूर्णांकerleave_hs(hsa, ddr_alwon,
+					enter_hs_mode_lat, निकास_hs_mode_lat,
+					निकासhs_clk, ddr_clk_pre, ddr_clk_post);
+		hsa_पूर्णांकerleave_lp = dsi_compute_पूर्णांकerleave_lp(hsa,
+					enter_hs_mode_lat, निकास_hs_mode_lat,
+					lp_clk_भाग, dsi_fclk_hsभाग);
+	पूर्ण
 
-	if (!hfp_blanking_mode) {
-		hfp_interleave_hs = dsi_compute_interleave_hs(hfp, ddr_alwon,
-					enter_hs_mode_lat, exit_hs_mode_lat,
-					exiths_clk, ddr_clk_pre, ddr_clk_post);
-		hfp_interleave_lp = dsi_compute_interleave_lp(hfp,
-					enter_hs_mode_lat, exit_hs_mode_lat,
-					lp_clk_div, dsi_fclk_hsdiv);
-	}
+	अगर (!hfp_blanking_mode) अणु
+		hfp_पूर्णांकerleave_hs = dsi_compute_पूर्णांकerleave_hs(hfp, ddr_alwon,
+					enter_hs_mode_lat, निकास_hs_mode_lat,
+					निकासhs_clk, ddr_clk_pre, ddr_clk_post);
+		hfp_पूर्णांकerleave_lp = dsi_compute_पूर्णांकerleave_lp(hfp,
+					enter_hs_mode_lat, निकास_hs_mode_lat,
+					lp_clk_भाग, dsi_fclk_hsभाग);
+	पूर्ण
 
-	if (!hbp_blanking_mode) {
-		hbp_interleave_hs = dsi_compute_interleave_hs(hbp, ddr_alwon,
-					enter_hs_mode_lat, exit_hs_mode_lat,
-					exiths_clk, ddr_clk_pre, ddr_clk_post);
+	अगर (!hbp_blanking_mode) अणु
+		hbp_पूर्णांकerleave_hs = dsi_compute_पूर्णांकerleave_hs(hbp, ddr_alwon,
+					enter_hs_mode_lat, निकास_hs_mode_lat,
+					निकासhs_clk, ddr_clk_pre, ddr_clk_post);
 
-		hbp_interleave_lp = dsi_compute_interleave_lp(hbp,
-					enter_hs_mode_lat, exit_hs_mode_lat,
-					lp_clk_div, dsi_fclk_hsdiv);
-	}
+		hbp_पूर्णांकerleave_lp = dsi_compute_पूर्णांकerleave_lp(hbp,
+					enter_hs_mode_lat, निकास_hs_mode_lat,
+					lp_clk_भाग, dsi_fclk_hsभाग);
+	पूर्ण
 
-	if (!blanking_mode) {
-		bl_interleave_hs = dsi_compute_interleave_hs(bllp, ddr_alwon,
-					enter_hs_mode_lat, exit_hs_mode_lat,
-					exiths_clk, ddr_clk_pre, ddr_clk_post);
+	अगर (!blanking_mode) अणु
+		bl_पूर्णांकerleave_hs = dsi_compute_पूर्णांकerleave_hs(bllp, ddr_alwon,
+					enter_hs_mode_lat, निकास_hs_mode_lat,
+					निकासhs_clk, ddr_clk_pre, ddr_clk_post);
 
-		bl_interleave_lp = dsi_compute_interleave_lp(bllp,
-					enter_hs_mode_lat, exit_hs_mode_lat,
-					lp_clk_div, dsi_fclk_hsdiv);
-	}
+		bl_पूर्णांकerleave_lp = dsi_compute_पूर्णांकerleave_lp(bllp,
+					enter_hs_mode_lat, निकास_hs_mode_lat,
+					lp_clk_भाग, dsi_fclk_hsभाग);
+	पूर्ण
 
 	DSSDBG("DSI HS interleaving(TXBYTECLKHS) HSA %d, HFP %d, HBP %d, BLLP %d\n",
-		hsa_interleave_hs, hfp_interleave_hs, hbp_interleave_hs,
-		bl_interleave_hs);
+		hsa_पूर्णांकerleave_hs, hfp_पूर्णांकerleave_hs, hbp_पूर्णांकerleave_hs,
+		bl_पूर्णांकerleave_hs);
 
 	DSSDBG("DSI LP interleaving(bytes) HSA %d, HFP %d, HBP %d, BLLP %d\n",
-		hsa_interleave_lp, hfp_interleave_lp, hbp_interleave_lp,
-		bl_interleave_lp);
+		hsa_पूर्णांकerleave_lp, hfp_पूर्णांकerleave_lp, hbp_पूर्णांकerleave_lp,
+		bl_पूर्णांकerleave_lp);
 
-	r = dsi_read_reg(dsi, DSI_VM_TIMING4);
-	r = FLD_MOD(r, hsa_interleave_hs, 23, 16);
-	r = FLD_MOD(r, hfp_interleave_hs, 15, 8);
-	r = FLD_MOD(r, hbp_interleave_hs, 7, 0);
-	dsi_write_reg(dsi, DSI_VM_TIMING4, r);
+	r = dsi_पढ़ो_reg(dsi, DSI_VM_TIMING4);
+	r = FLD_MOD(r, hsa_पूर्णांकerleave_hs, 23, 16);
+	r = FLD_MOD(r, hfp_पूर्णांकerleave_hs, 15, 8);
+	r = FLD_MOD(r, hbp_पूर्णांकerleave_hs, 7, 0);
+	dsi_ग_लिखो_reg(dsi, DSI_VM_TIMING4, r);
 
-	r = dsi_read_reg(dsi, DSI_VM_TIMING5);
-	r = FLD_MOD(r, hsa_interleave_lp, 23, 16);
-	r = FLD_MOD(r, hfp_interleave_lp, 15, 8);
-	r = FLD_MOD(r, hbp_interleave_lp, 7, 0);
-	dsi_write_reg(dsi, DSI_VM_TIMING5, r);
+	r = dsi_पढ़ो_reg(dsi, DSI_VM_TIMING5);
+	r = FLD_MOD(r, hsa_पूर्णांकerleave_lp, 23, 16);
+	r = FLD_MOD(r, hfp_पूर्णांकerleave_lp, 15, 8);
+	r = FLD_MOD(r, hbp_पूर्णांकerleave_lp, 7, 0);
+	dsi_ग_लिखो_reg(dsi, DSI_VM_TIMING5, r);
 
-	r = dsi_read_reg(dsi, DSI_VM_TIMING6);
-	r = FLD_MOD(r, bl_interleave_hs, 31, 15);
-	r = FLD_MOD(r, bl_interleave_lp, 16, 0);
-	dsi_write_reg(dsi, DSI_VM_TIMING6, r);
-}
+	r = dsi_पढ़ो_reg(dsi, DSI_VM_TIMING6);
+	r = FLD_MOD(r, bl_पूर्णांकerleave_hs, 31, 15);
+	r = FLD_MOD(r, bl_पूर्णांकerleave_lp, 16, 0);
+	dsi_ग_लिखो_reg(dsi, DSI_VM_TIMING6, r);
+पूर्ण
 
-static int dsi_proto_config(struct dsi_data *dsi)
-{
+अटल पूर्णांक dsi_proto_config(काष्ठा dsi_data *dsi)
+अणु
 	u32 r;
-	int buswidth = 0;
+	पूर्णांक buswidth = 0;
 
-	dsi_config_tx_fifo(dsi, DSI_FIFO_SIZE_32,
+	dsi_config_tx_fअगरo(dsi, DSI_FIFO_SIZE_32,
 			DSI_FIFO_SIZE_32,
 			DSI_FIFO_SIZE_32,
 			DSI_FIFO_SIZE_32);
 
-	dsi_config_rx_fifo(dsi, DSI_FIFO_SIZE_32,
+	dsi_config_rx_fअगरo(dsi, DSI_FIFO_SIZE_32,
 			DSI_FIFO_SIZE_32,
 			DSI_FIFO_SIZE_32,
 			DSI_FIFO_SIZE_32);
 
-	/* XXX what values for the timeouts? */
+	/* XXX what values क्रम the समयouts? */
 	dsi_set_stop_state_counter(dsi, 0x1000, false, false);
-	dsi_set_ta_timeout(dsi, 0x1fff, true, true);
-	dsi_set_lp_rx_timeout(dsi, 0x1fff, true, true);
-	dsi_set_hs_tx_timeout(dsi, 0x1fff, true, true);
+	dsi_set_ta_समयout(dsi, 0x1fff, true, true);
+	dsi_set_lp_rx_समयout(dsi, 0x1fff, true, true);
+	dsi_set_hs_tx_समयout(dsi, 0x1fff, true, true);
 
-	switch (mipi_dsi_pixel_format_to_bpp(dsi->pix_fmt)) {
-	case 16:
+	चयन (mipi_dsi_pixel_क्रमmat_to_bpp(dsi->pix_fmt)) अणु
+	हाल 16:
 		buswidth = 0;
-		break;
-	case 18:
+		अवरोध;
+	हाल 18:
 		buswidth = 1;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		buswidth = 2;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	r = dsi_read_reg(dsi, DSI_CTRL);
+	r = dsi_पढ़ो_reg(dsi, DSI_CTRL);
 	r = FLD_MOD(r, 1, 1, 1);	/* CS_RX_EN */
 	r = FLD_MOD(r, 1, 2, 2);	/* ECC_RX_EN */
 	r = FLD_MOD(r, 1, 3, 3);	/* TX_FIFO_ARBITRATION */
@@ -2790,54 +2791,54 @@ static int dsi_proto_config(struct dsi_data *dsi)
 	r = FLD_MOD(r, 0, 8, 8);	/* VP_CLK_POL */
 	r = FLD_MOD(r, 1, 14, 14);	/* TRIGGER_RESET_MODE */
 	r = FLD_MOD(r, 1, 19, 19);	/* EOT_ENABLE */
-	if (!(dsi->data->quirks & DSI_QUIRK_DCS_CMD_CONFIG_VC)) {
+	अगर (!(dsi->data->quirks & DSI_QUIRK_DCS_CMD_CONFIG_VC)) अणु
 		r = FLD_MOD(r, 1, 24, 24);	/* DCS_CMD_ENABLE */
-		/* DCS_CMD_CODE, 1=start, 0=continue */
+		/* DCS_CMD_CODE, 1=start, 0=जारी */
 		r = FLD_MOD(r, 0, 25, 25);
-	}
+	पूर्ण
 
-	dsi_write_reg(dsi, DSI_CTRL, r);
+	dsi_ग_लिखो_reg(dsi, DSI_CTRL, r);
 
 	dsi_config_vp_num_line_buffers(dsi);
 
-	if (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE) {
+	अगर (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE) अणु
 		dsi_config_vp_sync_events(dsi);
 		dsi_config_blanking_modes(dsi);
-		dsi_config_cmd_mode_interleaving(dsi);
-	}
+		dsi_config_cmd_mode_पूर्णांकerleaving(dsi);
+	पूर्ण
 
 	dsi_vc_initial_config(dsi, 0);
 	dsi_vc_initial_config(dsi, 1);
 	dsi_vc_initial_config(dsi, 2);
 	dsi_vc_initial_config(dsi, 3);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_proto_timings(struct dsi_data *dsi)
-{
-	unsigned int tlpx, tclk_zero, tclk_prepare;
-	unsigned int tclk_pre, tclk_post;
-	unsigned int ths_prepare, ths_prepare_ths_zero, ths_zero;
-	unsigned int ths_trail, ths_exit;
-	unsigned int ddr_clk_pre, ddr_clk_post;
-	unsigned int enter_hs_mode_lat, exit_hs_mode_lat;
-	unsigned int ths_eot;
-	int ndl = dsi->num_lanes_used - 1;
+अटल व्योम dsi_proto_timings(काष्ठा dsi_data *dsi)
+अणु
+	अचिन्हित पूर्णांक tlpx, tclk_zero, tclk_prepare;
+	अचिन्हित पूर्णांक tclk_pre, tclk_post;
+	अचिन्हित पूर्णांक ths_prepare, ths_prepare_ths_zero, ths_zero;
+	अचिन्हित पूर्णांक ths_trail, ths_निकास;
+	अचिन्हित पूर्णांक ddr_clk_pre, ddr_clk_post;
+	अचिन्हित पूर्णांक enter_hs_mode_lat, निकास_hs_mode_lat;
+	अचिन्हित पूर्णांक ths_eot;
+	पूर्णांक ndl = dsi->num_lanes_used - 1;
 	u32 r;
 
-	r = dsi_read_reg(dsi, DSI_DSIPHY_CFG0);
+	r = dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG0);
 	ths_prepare = FLD_GET(r, 31, 24);
 	ths_prepare_ths_zero = FLD_GET(r, 23, 16);
 	ths_zero = ths_prepare_ths_zero - ths_prepare;
 	ths_trail = FLD_GET(r, 15, 8);
-	ths_exit = FLD_GET(r, 7, 0);
+	ths_निकास = FLD_GET(r, 7, 0);
 
-	r = dsi_read_reg(dsi, DSI_DSIPHY_CFG1);
+	r = dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG1);
 	tlpx = FLD_GET(r, 20, 16) * 2;
 	tclk_zero = FLD_GET(r, 7, 0);
 
-	r = dsi_read_reg(dsi, DSI_DSIPHY_CFG2);
+	r = dsi_पढ़ो_reg(dsi, DSI_DSIPHY_CFG2);
 	tclk_prepare = FLD_GET(r, 7, 0);
 
 	/* min 8*UI */
@@ -2854,10 +2855,10 @@ static void dsi_proto_timings(struct dsi_data *dsi)
 	BUG_ON(ddr_clk_pre == 0 || ddr_clk_pre > 255);
 	BUG_ON(ddr_clk_post == 0 || ddr_clk_post > 255);
 
-	r = dsi_read_reg(dsi, DSI_CLK_TIMING);
+	r = dsi_पढ़ो_reg(dsi, DSI_CLK_TIMING);
 	r = FLD_MOD(r, ddr_clk_pre, 15, 8);
 	r = FLD_MOD(r, ddr_clk_post, 7, 0);
-	dsi_write_reg(dsi, DSI_CLK_TIMING, r);
+	dsi_ग_लिखो_reg(dsi, DSI_CLK_TIMING, r);
 
 	DSSDBG("ddr_clk_pre %u, ddr_clk_post %u\n",
 			ddr_clk_pre,
@@ -2867,28 +2868,28 @@ static void dsi_proto_timings(struct dsi_data *dsi)
 		DIV_ROUND_UP(ths_prepare, 4) +
 		DIV_ROUND_UP(ths_zero + 3, 4);
 
-	exit_hs_mode_lat = DIV_ROUND_UP(ths_trail + ths_exit, 4) + 1 + ths_eot;
+	निकास_hs_mode_lat = DIV_ROUND_UP(ths_trail + ths_निकास, 4) + 1 + ths_eot;
 
 	r = FLD_VAL(enter_hs_mode_lat, 31, 16) |
-		FLD_VAL(exit_hs_mode_lat, 15, 0);
-	dsi_write_reg(dsi, DSI_VM_TIMING7, r);
+		FLD_VAL(निकास_hs_mode_lat, 15, 0);
+	dsi_ग_लिखो_reg(dsi, DSI_VM_TIMING7, r);
 
 	DSSDBG("enter_hs_mode_lat %u, exit_hs_mode_lat %u\n",
-			enter_hs_mode_lat, exit_hs_mode_lat);
+			enter_hs_mode_lat, निकास_hs_mode_lat);
 
-	 if (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE) {
+	 अगर (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE) अणु
 		/* TODO: Implement a video mode check_timings function */
-		int hsa = dsi->vm_timings.hsa;
-		int hfp = dsi->vm_timings.hfp;
-		int hbp = dsi->vm_timings.hbp;
-		int vsa = dsi->vm_timings.vsa;
-		int vfp = dsi->vm_timings.vfp;
-		int vbp = dsi->vm_timings.vbp;
-		int window_sync = dsi->vm_timings.window_sync;
+		पूर्णांक hsa = dsi->vm_timings.hsa;
+		पूर्णांक hfp = dsi->vm_timings.hfp;
+		पूर्णांक hbp = dsi->vm_timings.hbp;
+		पूर्णांक vsa = dsi->vm_timings.vsa;
+		पूर्णांक vfp = dsi->vm_timings.vfp;
+		पूर्णांक vbp = dsi->vm_timings.vbp;
+		पूर्णांक winकरोw_sync = dsi->vm_timings.winकरोw_sync;
 		bool hsync_end;
-		const struct videomode *vm = &dsi->vm;
-		int bpp = mipi_dsi_pixel_format_to_bpp(dsi->pix_fmt);
-		int tl, t_he, width_bytes;
+		स्थिर काष्ठा videomode *vm = &dsi->vm;
+		पूर्णांक bpp = mipi_dsi_pixel_क्रमmat_to_bpp(dsi->pix_fmt);
+		पूर्णांक tl, t_he, width_bytes;
 
 		hsync_end = dsi->vm_timings.trans_mode == OMAP_DSS_DSI_PULSE_MODE;
 		t_he = hsync_end ?
@@ -2896,7 +2897,7 @@ static void dsi_proto_timings(struct dsi_data *dsi)
 
 		width_bytes = DIV_ROUND_UP(vm->hactive * bpp, 8);
 
-		/* TL = t_HS + HSA + t_HE + HFP + ceil((WC + 6) / NDL) + HBP */
+		/* TL = t_HS + HSA + t_HE + HFP + उच्चमान((WC + 6) / NDL) + HBP */
 		tl = DIV_ROUND_UP(4, ndl) + (hsync_end ? hsa : 0) + t_he + hfp +
 			DIV_ROUND_UP(width_bytes + 6, ndl) + hbp;
 
@@ -2905,110 +2906,110 @@ static void dsi_proto_timings(struct dsi_data *dsi)
 		DSSDBG("VBP: %d, VFP: %d, VSA: %d, VACT: %d lines\n", vbp, vfp,
 			vsa, vm->vactive);
 
-		r = dsi_read_reg(dsi, DSI_VM_TIMING1);
+		r = dsi_पढ़ो_reg(dsi, DSI_VM_TIMING1);
 		r = FLD_MOD(r, hbp, 11, 0);	/* HBP */
 		r = FLD_MOD(r, hfp, 23, 12);	/* HFP */
 		r = FLD_MOD(r, hsync_end ? hsa : 0, 31, 24);	/* HSA */
-		dsi_write_reg(dsi, DSI_VM_TIMING1, r);
+		dsi_ग_लिखो_reg(dsi, DSI_VM_TIMING1, r);
 
-		r = dsi_read_reg(dsi, DSI_VM_TIMING2);
+		r = dsi_पढ़ो_reg(dsi, DSI_VM_TIMING2);
 		r = FLD_MOD(r, vbp, 7, 0);	/* VBP */
 		r = FLD_MOD(r, vfp, 15, 8);	/* VFP */
 		r = FLD_MOD(r, vsa, 23, 16);	/* VSA */
-		r = FLD_MOD(r, window_sync, 27, 24);	/* WINDOW_SYNC */
-		dsi_write_reg(dsi, DSI_VM_TIMING2, r);
+		r = FLD_MOD(r, winकरोw_sync, 27, 24);	/* WINDOW_SYNC */
+		dsi_ग_लिखो_reg(dsi, DSI_VM_TIMING2, r);
 
-		r = dsi_read_reg(dsi, DSI_VM_TIMING3);
+		r = dsi_पढ़ो_reg(dsi, DSI_VM_TIMING3);
 		r = FLD_MOD(r, vm->vactive, 14, 0);	/* VACT */
 		r = FLD_MOD(r, tl, 31, 16);		/* TL */
-		dsi_write_reg(dsi, DSI_VM_TIMING3, r);
-	}
-}
+		dsi_ग_लिखो_reg(dsi, DSI_VM_TIMING3, r);
+	पूर्ण
+पूर्ण
 
-static int dsi_configure_pins(struct dsi_data *dsi,
-		int num_pins, const u32 *pins)
-{
-	struct dsi_lane_config lanes[DSI_MAX_NR_LANES];
-	int num_lanes;
-	int i;
+अटल पूर्णांक dsi_configure_pins(काष्ठा dsi_data *dsi,
+		पूर्णांक num_pins, स्थिर u32 *pins)
+अणु
+	काष्ठा dsi_lane_config lanes[DSI_MAX_NR_LANES];
+	पूर्णांक num_lanes;
+	पूर्णांक i;
 
-	static const enum dsi_lane_function functions[] = {
+	अटल स्थिर क्रमागत dsi_lane_function functions[] = अणु
 		DSI_LANE_CLK,
 		DSI_LANE_DATA1,
 		DSI_LANE_DATA2,
 		DSI_LANE_DATA3,
 		DSI_LANE_DATA4,
-	};
+	पूर्ण;
 
-	if (num_pins < 4 || num_pins > dsi->num_lanes_supported * 2
+	अगर (num_pins < 4 || num_pins > dsi->num_lanes_supported * 2
 			|| num_pins % 2 != 0)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	for (i = 0; i < DSI_MAX_NR_LANES; ++i)
+	क्रम (i = 0; i < DSI_MAX_NR_LANES; ++i)
 		lanes[i].function = DSI_LANE_UNUSED;
 
 	num_lanes = 0;
 
-	for (i = 0; i < num_pins; i += 2) {
+	क्रम (i = 0; i < num_pins; i += 2) अणु
 		u8 lane, pol;
 		u32 dx, dy;
 
 		dx = pins[i];
 		dy = pins[i + 1];
 
-		if (dx >= dsi->num_lanes_supported * 2)
-			return -EINVAL;
+		अगर (dx >= dsi->num_lanes_supported * 2)
+			वापस -EINVAL;
 
-		if (dy >= dsi->num_lanes_supported * 2)
-			return -EINVAL;
+		अगर (dy >= dsi->num_lanes_supported * 2)
+			वापस -EINVAL;
 
-		if (dx & 1) {
-			if (dy != dx - 1)
-				return -EINVAL;
+		अगर (dx & 1) अणु
+			अगर (dy != dx - 1)
+				वापस -EINVAL;
 			pol = 1;
-		} else {
-			if (dy != dx + 1)
-				return -EINVAL;
+		पूर्ण अन्यथा अणु
+			अगर (dy != dx + 1)
+				वापस -EINVAL;
 			pol = 0;
-		}
+		पूर्ण
 
 		lane = dx / 2;
 
 		lanes[lane].function = functions[i / 2];
 		lanes[lane].polarity = pol;
 		num_lanes++;
-	}
+	पूर्ण
 
-	memcpy(dsi->lanes, lanes, sizeof(dsi->lanes));
+	स_नकल(dsi->lanes, lanes, माप(dsi->lanes));
 	dsi->num_lanes_used = num_lanes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_enable_video_mode(struct dsi_data *dsi, int vc)
-{
-	int bpp = mipi_dsi_pixel_format_to_bpp(dsi->pix_fmt);
+अटल पूर्णांक dsi_enable_video_mode(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
+	पूर्णांक bpp = mipi_dsi_pixel_क्रमmat_to_bpp(dsi->pix_fmt);
 	u8 data_type;
 	u16 word_count;
 
-	switch (dsi->pix_fmt) {
-	case MIPI_DSI_FMT_RGB888:
+	चयन (dsi->pix_fmt) अणु
+	हाल MIPI_DSI_FMT_RGB888:
 		data_type = MIPI_DSI_PACKED_PIXEL_STREAM_24;
-		break;
-	case MIPI_DSI_FMT_RGB666:
+		अवरोध;
+	हाल MIPI_DSI_FMT_RGB666:
 		data_type = MIPI_DSI_PIXEL_STREAM_3BYTE_18;
-		break;
-	case MIPI_DSI_FMT_RGB666_PACKED:
+		अवरोध;
+	हाल MIPI_DSI_FMT_RGB666_PACKED:
 		data_type = MIPI_DSI_PACKED_PIXEL_STREAM_18;
-		break;
-	case MIPI_DSI_FMT_RGB565:
+		अवरोध;
+	हाल MIPI_DSI_FMT_RGB565:
 		data_type = MIPI_DSI_PACKED_PIXEL_STREAM_16;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	dsi_if_enable(dsi, false);
+	dsi_अगर_enable(dsi, false);
 	dsi_vc_enable(dsi, vc, false);
 
 	/* MODE, 1 = video mode */
@@ -3016,421 +3017,421 @@ static int dsi_enable_video_mode(struct dsi_data *dsi, int vc)
 
 	word_count = DIV_ROUND_UP(dsi->vm.hactive * bpp, 8);
 
-	dsi_vc_write_long_header(dsi, vc, dsi->dsidev->channel, data_type,
+	dsi_vc_ग_लिखो_दीर्घ_header(dsi, vc, dsi->dsidev->channel, data_type,
 			word_count, 0);
 
 	dsi_vc_enable(dsi, vc, true);
-	dsi_if_enable(dsi, true);
+	dsi_अगर_enable(dsi, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_disable_video_mode(struct dsi_data *dsi, int vc)
-{
-	dsi_if_enable(dsi, false);
+अटल व्योम dsi_disable_video_mode(काष्ठा dsi_data *dsi, पूर्णांक vc)
+अणु
+	dsi_अगर_enable(dsi, false);
 	dsi_vc_enable(dsi, vc, false);
 
 	/* MODE, 0 = command mode */
 	REG_FLD_MOD(dsi, DSI_VC_CTRL(vc), 0, 4, 4);
 
 	dsi_vc_enable(dsi, vc, true);
-	dsi_if_enable(dsi, true);
-}
+	dsi_अगर_enable(dsi, true);
+पूर्ण
 
-static void dsi_enable_video_output(struct omap_dss_device *dssdev, int vc)
-{
-	struct dsi_data *dsi = to_dsi_data(dssdev);
-	int r;
+अटल व्योम dsi_enable_video_output(काष्ठा omap_dss_device *dssdev, पूर्णांक vc)
+अणु
+	काष्ठा dsi_data *dsi = to_dsi_data(dssdev);
+	पूर्णांक r;
 
 	r = dsi_init_dispc(dsi);
-	if (r) {
+	अगर (r) अणु
 		dev_err(dsi->dev, "failed to init dispc!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE) {
+	अगर (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE) अणु
 		r = dsi_enable_video_mode(dsi, vc);
-		if (r)
-			goto err_video_mode;
-	}
+		अगर (r)
+			जाओ err_video_mode;
+	पूर्ण
 
 	r = dss_mgr_enable(&dsi->output);
-	if (r)
-		goto err_mgr_enable;
+	अगर (r)
+		जाओ err_mgr_enable;
 
-	return;
+	वापस;
 
 err_mgr_enable:
-	if (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE) {
-		dsi_if_enable(dsi, false);
+	अगर (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE) अणु
+		dsi_अगर_enable(dsi, false);
 		dsi_vc_enable(dsi, vc, false);
-	}
+	पूर्ण
 err_video_mode:
 	dsi_uninit_dispc(dsi);
 	dev_err(dsi->dev, "failed to enable DSI encoder!\n");
-	return;
-}
+	वापस;
+पूर्ण
 
-static void dsi_disable_video_output(struct omap_dss_device *dssdev, int vc)
-{
-	struct dsi_data *dsi = to_dsi_data(dssdev);
+अटल व्योम dsi_disable_video_output(काष्ठा omap_dss_device *dssdev, पूर्णांक vc)
+अणु
+	काष्ठा dsi_data *dsi = to_dsi_data(dssdev);
 
-	if (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE)
+	अगर (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE)
 		dsi_disable_video_mode(dsi, vc);
 
 	dss_mgr_disable(&dsi->output);
 
 	dsi_uninit_dispc(dsi);
-}
+पूर्ण
 
-static void dsi_update_screen_dispc(struct dsi_data *dsi)
-{
-	unsigned int bytespp;
-	unsigned int bytespl;
-	unsigned int bytespf;
-	unsigned int total_len;
-	unsigned int packet_payload;
-	unsigned int packet_len;
+अटल व्योम dsi_update_screen_dispc(काष्ठा dsi_data *dsi)
+अणु
+	अचिन्हित पूर्णांक bytespp;
+	अचिन्हित पूर्णांक bytespl;
+	अचिन्हित पूर्णांक bytespf;
+	अचिन्हित पूर्णांक total_len;
+	अचिन्हित पूर्णांक packet_payload;
+	अचिन्हित पूर्णांक packet_len;
 	u32 l;
-	int r;
-	const unsigned vc = dsi->update_vc;
-	const unsigned int line_buf_size = dsi->line_buffer_size;
+	पूर्णांक r;
+	स्थिर अचिन्हित vc = dsi->update_vc;
+	स्थिर अचिन्हित पूर्णांक line_buf_size = dsi->line_buffer_size;
 	u16 w = dsi->vm.hactive;
 	u16 h = dsi->vm.vactive;
 
 	DSSDBG("dsi_update_screen_dispc(%dx%d)\n", w, h);
 
-	bytespp	= mipi_dsi_pixel_format_to_bpp(dsi->pix_fmt) / 8;
+	bytespp	= mipi_dsi_pixel_क्रमmat_to_bpp(dsi->pix_fmt) / 8;
 	bytespl = w * bytespp;
 	bytespf = bytespl * h;
 
 	/* NOTE: packet_payload has to be equal to N * bytespl, where N is
 	 * number of lines in a packet.  See errata about VP_CLK_RATIO */
 
-	if (bytespf < line_buf_size)
+	अगर (bytespf < line_buf_size)
 		packet_payload = bytespf;
-	else
+	अन्यथा
 		packet_payload = (line_buf_size) / bytespl * bytespl;
 
-	packet_len = packet_payload + 1;	/* 1 byte for DCS cmd */
+	packet_len = packet_payload + 1;	/* 1 byte क्रम DCS cmd */
 	total_len = (bytespf / packet_payload) * packet_len;
 
-	if (bytespf % packet_payload)
+	अगर (bytespf % packet_payload)
 		total_len += (bytespf % packet_payload) + 1;
 
 	l = FLD_VAL(total_len, 23, 0); /* TE_SIZE */
-	dsi_write_reg(dsi, DSI_VC_TE(vc), l);
+	dsi_ग_लिखो_reg(dsi, DSI_VC_TE(vc), l);
 
-	dsi_vc_write_long_header(dsi, vc, dsi->dsidev->channel, MIPI_DSI_DCS_LONG_WRITE,
+	dsi_vc_ग_लिखो_दीर्घ_header(dsi, vc, dsi->dsidev->channel, MIPI_DSI_DCS_LONG_WRITE,
 		packet_len, 0);
 
-	if (dsi->te_enabled)
+	अगर (dsi->te_enabled)
 		l = FLD_MOD(l, 1, 30, 30); /* TE_EN */
-	else
+	अन्यथा
 		l = FLD_MOD(l, 1, 31, 31); /* TE_START */
-	dsi_write_reg(dsi, DSI_VC_TE(vc), l);
+	dsi_ग_लिखो_reg(dsi, DSI_VC_TE(vc), l);
 
-	/* We put SIDLEMODE to no-idle for the duration of the transfer,
-	 * because DSS interrupts are not capable of waking up the CPU and the
-	 * framedone interrupt could be delayed for quite a long time. I think
-	 * the same goes for any DSS interrupts, but for some reason I have not
-	 * seen the problem anywhere else than here.
+	/* We put SIDLEMODE to no-idle क्रम the duration of the transfer,
+	 * because DSS पूर्णांकerrupts are not capable of waking up the CPU and the
+	 * frameकरोne पूर्णांकerrupt could be delayed क्रम quite a दीर्घ समय. I think
+	 * the same goes क्रम any DSS पूर्णांकerrupts, but क्रम some reason I have not
+	 * seen the problem anywhere अन्यथा than here.
 	 */
 	dispc_disable_sidle(dsi->dss->dispc);
 
 	dsi_perf_mark_start(dsi);
 
-	r = schedule_delayed_work(&dsi->framedone_timeout_work,
-		msecs_to_jiffies(250));
+	r = schedule_delayed_work(&dsi->frameकरोne_समयout_work,
+		msecs_to_jअगरfies(250));
 	BUG_ON(r == 0);
 
 	dss_mgr_start_update(&dsi->output);
 
-	if (dsi->te_enabled) {
-		/* disable LP_RX_TO, so that we can receive TE.  Time to wait
-		 * for TE is longer than the timer allows */
+	अगर (dsi->te_enabled) अणु
+		/* disable LP_RX_TO, so that we can receive TE.  Time to रुको
+		 * क्रम TE is दीर्घer than the समयr allows */
 		REG_FLD_MOD(dsi, DSI_TIMING2, 0, 15, 15); /* LP_RX_TO */
 
 		dsi_vc_send_bta(dsi, vc);
 
-#ifdef DSI_CATCH_MISSING_TE
-		mod_timer(&dsi->te_timer, jiffies + msecs_to_jiffies(250));
-#endif
-	}
-}
+#अगर_घोषित DSI_CATCH_MISSING_TE
+		mod_समयr(&dsi->te_समयr, jअगरfies + msecs_to_jअगरfies(250));
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-#ifdef DSI_CATCH_MISSING_TE
-static void dsi_te_timeout(struct timer_list *unused)
-{
+#अगर_घोषित DSI_CATCH_MISSING_TE
+अटल व्योम dsi_te_समयout(काष्ठा समयr_list *unused)
+अणु
 	DSSERR("TE not received for 250ms!\n");
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void dsi_handle_framedone(struct dsi_data *dsi, int error)
-{
+अटल व्योम dsi_handle_frameकरोne(काष्ठा dsi_data *dsi, पूर्णांक error)
+अणु
 	/* SIDLEMODE back to smart-idle */
 	dispc_enable_sidle(dsi->dss->dispc);
 
-	if (dsi->te_enabled) {
+	अगर (dsi->te_enabled) अणु
 		/* enable LP_RX_TO again after the TE */
 		REG_FLD_MOD(dsi, DSI_TIMING2, 1, 15, 15); /* LP_RX_TO */
-	}
+	पूर्ण
 
 	dsi_bus_unlock(dsi);
 
-	if (!error)
+	अगर (!error)
 		dsi_perf_show(dsi, "DISPC");
-}
+पूर्ण
 
-static void dsi_framedone_timeout_work_callback(struct work_struct *work)
-{
-	struct dsi_data *dsi = container_of(work, struct dsi_data,
-			framedone_timeout_work.work);
-	/* XXX While extremely unlikely, we could get FRAMEDONE interrupt after
-	 * 250ms which would conflict with this timeout work. What should be
-	 * done is first cancel the transfer on the HW, and then cancel the
-	 * possibly scheduled framedone work. However, cancelling the transfer
+अटल व्योम dsi_frameकरोne_समयout_work_callback(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dsi_data *dsi = container_of(work, काष्ठा dsi_data,
+			frameकरोne_समयout_work.work);
+	/* XXX While extremely unlikely, we could get FRAMEDONE पूर्णांकerrupt after
+	 * 250ms which would conflict with this समयout work. What should be
+	 * करोne is first cancel the transfer on the HW, and then cancel the
+	 * possibly scheduled frameकरोne work. However, cancelling the transfer
 	 * on the HW is buggy, and would probably require resetting the whole
 	 * DSI */
 
 	DSSERR("Framedone not received for 250ms!\n");
 
-	dsi_handle_framedone(dsi, -ETIMEDOUT);
-}
+	dsi_handle_frameकरोne(dsi, -ETIMEDOUT);
+पूर्ण
 
-static void dsi_framedone_irq_callback(void *data)
-{
-	struct dsi_data *dsi = data;
+अटल व्योम dsi_frameकरोne_irq_callback(व्योम *data)
+अणु
+	काष्ठा dsi_data *dsi = data;
 
 	/* Note: We get FRAMEDONE when DISPC has finished sending pixels and
 	 * turns itself off. However, DSI still has the pixels in its buffers,
 	 * and is sending the data.
 	 */
 
-	cancel_delayed_work(&dsi->framedone_timeout_work);
+	cancel_delayed_work(&dsi->frameकरोne_समयout_work);
 
 	DSSDBG("Framedone received!\n");
 
-	dsi_handle_framedone(dsi, 0);
-}
+	dsi_handle_frameकरोne(dsi, 0);
+पूर्ण
 
-static int _dsi_update(struct dsi_data *dsi)
-{
+अटल पूर्णांक _dsi_update(काष्ठा dsi_data *dsi)
+अणु
 	dsi_perf_mark_setup(dsi);
 
-#ifdef DSI_PERF_MEASURE
+#अगर_घोषित DSI_PERF_MEASURE
 	dsi->update_bytes = dsi->vm.hactive * dsi->vm.vactive *
-		mipi_dsi_pixel_format_to_bpp(dsi->pix_fmt) / 8;
-#endif
+		mipi_dsi_pixel_क्रमmat_to_bpp(dsi->pix_fmt) / 8;
+#पूर्ण_अगर
 	dsi_update_screen_dispc(dsi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _dsi_send_nop(struct dsi_data *dsi, int vc, int channel)
-{
-	const u8 payload[] = { MIPI_DCS_NOP };
-	const struct mipi_dsi_msg msg = {
+अटल पूर्णांक _dsi_send_nop(काष्ठा dsi_data *dsi, पूर्णांक vc, पूर्णांक channel)
+अणु
+	स्थिर u8 payload[] = अणु MIPI_DCS_NOP पूर्ण;
+	स्थिर काष्ठा mipi_dsi_msg msg = अणु
 		.channel = channel,
 		.type = MIPI_DSI_DCS_SHORT_WRITE,
 		.tx_len = 1,
 		.tx_buf = payload,
-	};
+	पूर्ण;
 
 	WARN_ON(!dsi_bus_is_locked(dsi));
 
-	return _omap_dsi_host_transfer(dsi, vc, &msg);
-}
+	वापस _omap_dsi_host_transfer(dsi, vc, &msg);
+पूर्ण
 
-static int dsi_update_channel(struct omap_dss_device *dssdev, int vc)
-{
-	struct dsi_data *dsi = to_dsi_data(dssdev);
-	int r;
+अटल पूर्णांक dsi_update_channel(काष्ठा omap_dss_device *dssdev, पूर्णांक vc)
+अणु
+	काष्ठा dsi_data *dsi = to_dsi_data(dssdev);
+	पूर्णांक r;
 
 	dsi_bus_lock(dsi);
 
-	if (!dsi->video_enabled) {
+	अगर (!dsi->video_enabled) अणु
 		r = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (dsi->vm.hactive == 0 || dsi->vm.vactive == 0) {
+	अगर (dsi->vm.hactive == 0 || dsi->vm.vactive == 0) अणु
 		r = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	DSSDBG("dsi_update_channel: %d", vc);
 
 	/*
-	 * Send NOP between the frames. If we don't send something here, the
+	 * Send NOP between the frames. If we करोn't send something here, the
 	 * updates stop working. This is probably related to DSI spec stating
 	 * that the DSI host should transition to LP at least once per frame.
 	 */
 	r = _dsi_send_nop(dsi, VC_CMD, dsi->dsidev->channel);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		DSSWARN("failed to send nop between frames: %d\n", r);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	dsi->update_vc = vc;
 
-	if (dsi->te_enabled && dsi->te_gpio) {
-		schedule_delayed_work(&dsi->te_timeout_work,
-				      msecs_to_jiffies(250));
-		atomic_set(&dsi->do_ext_te_update, 1);
-	} else {
+	अगर (dsi->te_enabled && dsi->te_gpio) अणु
+		schedule_delayed_work(&dsi->te_समयout_work,
+				      msecs_to_jअगरfies(250));
+		atomic_set(&dsi->करो_ext_te_update, 1);
+	पूर्ण अन्यथा अणु
 		_dsi_update(dsi);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
 	dsi_bus_unlock(dsi);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dsi_update_all(struct omap_dss_device *dssdev)
-{
-	return dsi_update_channel(dssdev, VC_VIDEO);
-}
+अटल पूर्णांक dsi_update_all(काष्ठा omap_dss_device *dssdev)
+अणु
+	वापस dsi_update_channel(dssdev, VC_VIDEO);
+पूर्ण
 
 /* Display funcs */
 
-static int dsi_configure_dispc_clocks(struct dsi_data *dsi)
-{
-	struct dispc_clock_info dispc_cinfo;
-	int r;
-	unsigned long fck;
+अटल पूर्णांक dsi_configure_dispc_घड़ीs(काष्ठा dsi_data *dsi)
+अणु
+	काष्ठा dispc_घड़ी_info dispc_cinfo;
+	पूर्णांक r;
+	अचिन्हित दीर्घ fck;
 
-	fck = dsi_get_pll_hsdiv_dispc_rate(dsi);
+	fck = dsi_get_pll_hsभाग_dispc_rate(dsi);
 
-	dispc_cinfo.lck_div = dsi->user_dispc_cinfo.lck_div;
-	dispc_cinfo.pck_div = dsi->user_dispc_cinfo.pck_div;
+	dispc_cinfo.lck_भाग = dsi->user_dispc_cinfo.lck_भाग;
+	dispc_cinfo.pck_भाग = dsi->user_dispc_cinfo.pck_भाग;
 
-	r = dispc_calc_clock_rates(dsi->dss->dispc, fck, &dispc_cinfo);
-	if (r) {
+	r = dispc_calc_घड़ी_rates(dsi->dss->dispc, fck, &dispc_cinfo);
+	अगर (r) अणु
 		DSSERR("Failed to calc dispc clocks\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	dsi->mgr_config.clock_info = dispc_cinfo;
+	dsi->mgr_config.घड़ी_info = dispc_cinfo;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_init_dispc(struct dsi_data *dsi)
-{
-	enum omap_channel dispc_channel = dsi->output.dispc_channel;
-	int r;
+अटल पूर्णांक dsi_init_dispc(काष्ठा dsi_data *dsi)
+अणु
+	क्रमागत omap_channel dispc_channel = dsi->output.dispc_channel;
+	पूर्णांक r;
 
 	dss_select_lcd_clk_source(dsi->dss, dispc_channel, dsi->module_id == 0 ?
 			DSS_CLK_SRC_PLL1_1 :
 			DSS_CLK_SRC_PLL2_1);
 
-	if (dsi->mode == OMAP_DSS_DSI_CMD_MODE) {
-		r = dss_mgr_register_framedone_handler(&dsi->output,
-				dsi_framedone_irq_callback, dsi);
-		if (r) {
+	अगर (dsi->mode == OMAP_DSS_DSI_CMD_MODE) अणु
+		r = dss_mgr_रेजिस्टर_frameकरोne_handler(&dsi->output,
+				dsi_frameकरोne_irq_callback, dsi);
+		अगर (r) अणु
 			DSSERR("can't register FRAMEDONE handler\n");
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		dsi->mgr_config.stallmode = true;
-		dsi->mgr_config.fifohandcheck = true;
-	} else {
+		dsi->mgr_config.fअगरohandcheck = true;
+	पूर्ण अन्यथा अणु
 		dsi->mgr_config.stallmode = false;
-		dsi->mgr_config.fifohandcheck = false;
-	}
+		dsi->mgr_config.fअगरohandcheck = false;
+	पूर्ण
 
-	r = dsi_configure_dispc_clocks(dsi);
-	if (r)
-		goto err1;
+	r = dsi_configure_dispc_घड़ीs(dsi);
+	अगर (r)
+		जाओ err1;
 
 	dsi->mgr_config.io_pad_mode = DSS_IO_PAD_MODE_BYPASS;
 	dsi->mgr_config.video_port_width =
-			mipi_dsi_pixel_format_to_bpp(dsi->pix_fmt);
+			mipi_dsi_pixel_क्रमmat_to_bpp(dsi->pix_fmt);
 	dsi->mgr_config.lcden_sig_polarity = 0;
 
 	dss_mgr_set_lcd_config(&dsi->output, &dsi->mgr_config);
 
-	return 0;
+	वापस 0;
 err1:
-	if (dsi->mode == OMAP_DSS_DSI_CMD_MODE)
-		dss_mgr_unregister_framedone_handler(&dsi->output,
-				dsi_framedone_irq_callback, dsi);
+	अगर (dsi->mode == OMAP_DSS_DSI_CMD_MODE)
+		dss_mgr_unरेजिस्टर_frameकरोne_handler(&dsi->output,
+				dsi_frameकरोne_irq_callback, dsi);
 err:
 	dss_select_lcd_clk_source(dsi->dss, dispc_channel, DSS_CLK_SRC_FCK);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void dsi_uninit_dispc(struct dsi_data *dsi)
-{
-	enum omap_channel dispc_channel = dsi->output.dispc_channel;
+अटल व्योम dsi_uninit_dispc(काष्ठा dsi_data *dsi)
+अणु
+	क्रमागत omap_channel dispc_channel = dsi->output.dispc_channel;
 
-	if (dsi->mode == OMAP_DSS_DSI_CMD_MODE)
-		dss_mgr_unregister_framedone_handler(&dsi->output,
-				dsi_framedone_irq_callback, dsi);
+	अगर (dsi->mode == OMAP_DSS_DSI_CMD_MODE)
+		dss_mgr_unरेजिस्टर_frameकरोne_handler(&dsi->output,
+				dsi_frameकरोne_irq_callback, dsi);
 
 	dss_select_lcd_clk_source(dsi->dss, dispc_channel, DSS_CLK_SRC_FCK);
-}
+पूर्ण
 
-static int dsi_configure_dsi_clocks(struct dsi_data *dsi)
-{
-	struct dss_pll_clock_info cinfo;
-	int r;
+अटल पूर्णांक dsi_configure_dsi_घड़ीs(काष्ठा dsi_data *dsi)
+अणु
+	काष्ठा dss_pll_घड़ी_info cinfo;
+	पूर्णांक r;
 
 	cinfo = dsi->user_dsi_cinfo;
 
 	r = dss_pll_set_config(&dsi->pll, &cinfo);
-	if (r) {
+	अगर (r) अणु
 		DSSERR("Failed to set dsi clocks\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_setup_dsi_vcs(struct dsi_data *dsi)
-{
-	/* Setup VC_CMD for LP and cpu transfers */
+अटल व्योम dsi_setup_dsi_vcs(काष्ठा dsi_data *dsi)
+अणु
+	/* Setup VC_CMD क्रम LP and cpu transfers */
 	REG_FLD_MOD(dsi, DSI_VC_CTRL(VC_CMD), 0, 9, 9); /* LP */
 
 	REG_FLD_MOD(dsi, DSI_VC_CTRL(VC_CMD), 0, 1, 1); /* SOURCE_L4 */
 	dsi->vc[VC_CMD].source = DSI_VC_SOURCE_L4;
 
-	/* Setup VC_VIDEO for HS and dispc transfers */
+	/* Setup VC_VIDEO क्रम HS and dispc transfers */
 	REG_FLD_MOD(dsi, DSI_VC_CTRL(VC_VIDEO), 1, 9, 9); /* HS */
 
 	REG_FLD_MOD(dsi, DSI_VC_CTRL(VC_VIDEO), 1, 1, 1); /* SOURCE_VP */
 	dsi->vc[VC_VIDEO].source = DSI_VC_SOURCE_VP;
 
-	if ((dsi->data->quirks & DSI_QUIRK_DCS_CMD_CONFIG_VC) &&
+	अगर ((dsi->data->quirks & DSI_QUIRK_DCS_CMD_CONFIG_VC) &&
 	    !(dsi->dsidev->mode_flags & MIPI_DSI_MODE_VIDEO))
 		REG_FLD_MOD(dsi, DSI_VC_CTRL(VC_VIDEO), 1, 30, 30); /* DCS_CMD_ENABLE */
 
 	dsi_vc_enable(dsi, VC_CMD, 1);
 	dsi_vc_enable(dsi, VC_VIDEO, 1);
 
-	dsi_if_enable(dsi, 1);
+	dsi_अगर_enable(dsi, 1);
 
-	dsi_force_tx_stop_mode_io(dsi);
+	dsi_क्रमce_tx_stop_mode_io(dsi);
 
-	/* start the DDR clock by sending a NULL packet */
-	if (!(dsi->dsidev->mode_flags & MIPI_DSI_CLOCK_NON_CONTINUOUS))
+	/* start the DDR घड़ी by sending a शून्य packet */
+	अगर (!(dsi->dsidev->mode_flags & MIPI_DSI_CLOCK_NON_CONTINUOUS))
 		dsi_vc_send_null(dsi, VC_CMD, dsi->dsidev->channel);
-}
+पूर्ण
 
-static int dsi_init_dsi(struct dsi_data *dsi)
-{
-	int r;
+अटल पूर्णांक dsi_init_dsi(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक r;
 
 	r = dss_pll_enable(&dsi->pll);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	r = dsi_configure_dsi_clocks(dsi);
-	if (r)
-		goto err0;
+	r = dsi_configure_dsi_घड़ीs(dsi);
+	अगर (r)
+		जाओ err0;
 
 	dss_select_dsi_clk_source(dsi->dss, dsi->module_id,
 				  dsi->module_id == 0 ?
@@ -3438,33 +3439,33 @@ static int dsi_init_dsi(struct dsi_data *dsi)
 
 	DSSDBG("PLL OK\n");
 
-	if (!dsi->vdds_dsi_enabled) {
+	अगर (!dsi->vdds_dsi_enabled) अणु
 		r = regulator_enable(dsi->vdds_dsi_reg);
-		if (r)
-			goto err1;
+		अगर (r)
+			जाओ err1;
 
 		dsi->vdds_dsi_enabled = true;
-	}
+	पूर्ण
 
 	r = dsi_cio_init(dsi);
-	if (r)
-		goto err2;
+	अगर (r)
+		जाओ err2;
 
-	_dsi_print_reset_status(dsi);
+	_dsi_prपूर्णांक_reset_status(dsi);
 
 	dsi_proto_timings(dsi);
-	dsi_set_lp_clk_divisor(dsi);
+	dsi_set_lp_clk_भागisor(dsi);
 
-	if (1)
-		_dsi_print_reset_status(dsi);
+	अगर (1)
+		_dsi_prपूर्णांक_reset_status(dsi);
 
 	r = dsi_proto_config(dsi);
-	if (r)
-		goto err3;
+	अगर (r)
+		जाओ err3;
 
 	dsi_setup_dsi_vcs(dsi);
 
-	return 0;
+	वापस 0;
 err3:
 	dsi_cio_uninit(dsi);
 err2:
@@ -3475,13 +3476,13 @@ err1:
 err0:
 	dss_pll_disable(&dsi->pll);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void dsi_uninit_dsi(struct dsi_data *dsi)
-{
-	/* disable interface */
-	dsi_if_enable(dsi, 0);
+अटल व्योम dsi_uninit_dsi(काष्ठा dsi_data *dsi)
+अणु
+	/* disable पूर्णांकerface */
+	dsi_अगर_enable(dsi, 0);
 	dsi_vc_enable(dsi, 0, 0);
 	dsi_vc_enable(dsi, 1, 0);
 	dsi_vc_enable(dsi, 2, 0);
@@ -3493,48 +3494,48 @@ static void dsi_uninit_dsi(struct dsi_data *dsi)
 
 	regulator_disable(dsi->vdds_dsi_reg);
 	dsi->vdds_dsi_enabled = false;
-}
+पूर्ण
 
-static void dsi_enable(struct dsi_data *dsi)
-{
-	int r;
+अटल व्योम dsi_enable(काष्ठा dsi_data *dsi)
+अणु
+	पूर्णांक r;
 
 	WARN_ON(!dsi_bus_is_locked(dsi));
 
-	if (WARN_ON(dsi->iface_enabled))
-		return;
+	अगर (WARN_ON(dsi->अगरace_enabled))
+		वापस;
 
 	mutex_lock(&dsi->lock);
 
-	r = dsi_runtime_get(dsi);
-	if (r)
-		goto err_get_dsi;
+	r = dsi_runसमय_get(dsi);
+	अगर (r)
+		जाओ err_get_dsi;
 
 	_dsi_initialize_irq(dsi);
 
 	r = dsi_init_dsi(dsi);
-	if (r)
-		goto err_init_dsi;
+	अगर (r)
+		जाओ err_init_dsi;
 
-	dsi->iface_enabled = true;
+	dsi->अगरace_enabled = true;
 
 	mutex_unlock(&dsi->lock);
 
-	return;
+	वापस;
 
 err_init_dsi:
-	dsi_runtime_put(dsi);
+	dsi_runसमय_put(dsi);
 err_get_dsi:
 	mutex_unlock(&dsi->lock);
 	DSSDBG("dsi_enable FAILED\n");
-}
+पूर्ण
 
-static void dsi_disable(struct dsi_data *dsi)
-{
+अटल व्योम dsi_disable(काष्ठा dsi_data *dsi)
+अणु
 	WARN_ON(!dsi_bus_is_locked(dsi));
 
-	if (WARN_ON(!dsi->iface_enabled))
-		return;
+	अगर (WARN_ON(!dsi->अगरace_enabled))
+		वापस;
 
 	mutex_lock(&dsi->lock);
 
@@ -3545,40 +3546,40 @@ static void dsi_disable(struct dsi_data *dsi)
 
 	dsi_uninit_dsi(dsi);
 
-	dsi_runtime_put(dsi);
+	dsi_runसमय_put(dsi);
 
-	dsi->iface_enabled = false;
+	dsi->अगरace_enabled = false;
 
 	mutex_unlock(&dsi->lock);
-}
+पूर्ण
 
-static int dsi_enable_te(struct dsi_data *dsi, bool enable)
-{
+अटल पूर्णांक dsi_enable_te(काष्ठा dsi_data *dsi, bool enable)
+अणु
 	dsi->te_enabled = enable;
 
-	if (dsi->te_gpio) {
-		if (enable)
+	अगर (dsi->te_gpio) अणु
+		अगर (enable)
 			enable_irq(dsi->te_irq);
-		else
+		अन्यथा
 			disable_irq(dsi->te_irq);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef PRINT_VERBOSE_VM_TIMINGS
-static void print_dsi_vm(const char *str,
-		const struct omap_dss_dsi_videomode_timings *t)
-{
-	unsigned long byteclk = t->hsclk / 4;
-	int bl, wc, pps, tot;
+#अगर_घोषित PRINT_VERBOSE_VM_TIMINGS
+अटल व्योम prपूर्णांक_dsi_vm(स्थिर अक्षर *str,
+		स्थिर काष्ठा omap_dss_dsi_videomode_timings *t)
+अणु
+	अचिन्हित दीर्घ byteclk = t->hsclk / 4;
+	पूर्णांक bl, wc, pps, tot;
 
 	wc = DIV_ROUND_UP(t->hact * t->bitspp, 8);
 	pps = DIV_ROUND_UP(wc + 6, t->ndl); /* pixel packet size */
 	bl = t->hss + t->hsa + t->hse + t->hbp + t->hfp;
 	tot = bl + pps;
 
-#define TO_DSI_T(x) ((u32)div64_u64((u64)x * 1000000000llu, byteclk))
+#घोषणा TO_DSI_T(x) ((u32)भाग64_u64((u64)x * 1000000000llu, byteclk))
 
 	pr_debug("%s bck %lu, %u/%u/%u/%u/%u/%u = %u+%u = %u, "
 			"%u/%u/%u/%u/%u/%u = %u + %u = %u\n",
@@ -3597,19 +3598,19 @@ static void print_dsi_vm(const char *str,
 			TO_DSI_T(pps),
 
 			TO_DSI_T(tot));
-#undef TO_DSI_T
-}
+#अघोषित TO_DSI_T
+पूर्ण
 
-static void print_dispc_vm(const char *str, const struct videomode *vm)
-{
-	unsigned long pck = vm->pixelclock;
-	int hact, bl, tot;
+अटल व्योम prपूर्णांक_dispc_vm(स्थिर अक्षर *str, स्थिर काष्ठा videomode *vm)
+अणु
+	अचिन्हित दीर्घ pck = vm->pixelघड़ी;
+	पूर्णांक hact, bl, tot;
 
 	hact = vm->hactive;
 	bl = vm->hsync_len + vm->hback_porch + vm->hfront_porch;
 	tot = hact + bl;
 
-#define TO_DISPC_T(x) ((u32)div64_u64((u64)x * 1000000000llu, pck))
+#घोषणा TO_DISPC_T(x) ((u32)भाग64_u64((u64)x * 1000000000llu, pck))
 
 	pr_debug("%s pck %lu, %u/%u/%u/%u = %u+%u = %u, "
 			"%u/%u/%u/%u = %u + %u = %u\n",
@@ -3624,108 +3625,108 @@ static void print_dispc_vm(const char *str, const struct videomode *vm)
 			TO_DISPC_T(bl),
 			TO_DISPC_T(hact),
 			TO_DISPC_T(tot));
-#undef TO_DISPC_T
-}
+#अघोषित TO_DISPC_T
+पूर्ण
 
 /* note: this is not quite accurate */
-static void print_dsi_dispc_vm(const char *str,
-		const struct omap_dss_dsi_videomode_timings *t)
-{
-	struct videomode vm = { 0 };
-	unsigned long byteclk = t->hsclk / 4;
-	unsigned long pck;
+अटल व्योम prपूर्णांक_dsi_dispc_vm(स्थिर अक्षर *str,
+		स्थिर काष्ठा omap_dss_dsi_videomode_timings *t)
+अणु
+	काष्ठा videomode vm = अणु 0 पूर्ण;
+	अचिन्हित दीर्घ byteclk = t->hsclk / 4;
+	अचिन्हित दीर्घ pck;
 	u64 dsi_tput;
-	int dsi_hact, dsi_htot;
+	पूर्णांक dsi_hact, dsi_htot;
 
 	dsi_tput = (u64)byteclk * t->ndl * 8;
-	pck = (u32)div64_u64(dsi_tput, t->bitspp);
+	pck = (u32)भाग64_u64(dsi_tput, t->bitspp);
 	dsi_hact = DIV_ROUND_UP(DIV_ROUND_UP(t->hact * t->bitspp, 8) + 6, t->ndl);
 	dsi_htot = t->hss + t->hsa + t->hse + t->hbp + dsi_hact + t->hfp;
 
-	vm.pixelclock = pck;
-	vm.hsync_len = div64_u64((u64)(t->hsa + t->hse) * pck, byteclk);
-	vm.hback_porch = div64_u64((u64)t->hbp * pck, byteclk);
-	vm.hfront_porch = div64_u64((u64)t->hfp * pck, byteclk);
+	vm.pixelघड़ी = pck;
+	vm.hsync_len = भाग64_u64((u64)(t->hsa + t->hse) * pck, byteclk);
+	vm.hback_porch = भाग64_u64((u64)t->hbp * pck, byteclk);
+	vm.hfront_porch = भाग64_u64((u64)t->hfp * pck, byteclk);
 	vm.hactive = t->hact;
 
-	print_dispc_vm(str, &vm);
-}
-#endif /* PRINT_VERBOSE_VM_TIMINGS */
+	prपूर्णांक_dispc_vm(str, &vm);
+पूर्ण
+#पूर्ण_अगर /* PRINT_VERBOSE_VM_TIMINGS */
 
-static bool dsi_cm_calc_dispc_cb(int lckd, int pckd, unsigned long lck,
-		unsigned long pck, void *data)
-{
-	struct dsi_clk_calc_ctx *ctx = data;
-	struct videomode *vm = &ctx->vm;
+अटल bool dsi_cm_calc_dispc_cb(पूर्णांक lckd, पूर्णांक pckd, अचिन्हित दीर्घ lck,
+		अचिन्हित दीर्घ pck, व्योम *data)
+अणु
+	काष्ठा dsi_clk_calc_ctx *ctx = data;
+	काष्ठा videomode *vm = &ctx->vm;
 
-	ctx->dispc_cinfo.lck_div = lckd;
-	ctx->dispc_cinfo.pck_div = pckd;
+	ctx->dispc_cinfo.lck_भाग = lckd;
+	ctx->dispc_cinfo.pck_भाग = pckd;
 	ctx->dispc_cinfo.lck = lck;
 	ctx->dispc_cinfo.pck = pck;
 
 	*vm = *ctx->config->vm;
-	vm->pixelclock = pck;
+	vm->pixelघड़ी = pck;
 	vm->hactive = ctx->config->vm->hactive;
 	vm->vactive = ctx->config->vm->vactive;
 	vm->hsync_len = vm->hfront_porch = vm->hback_porch = vm->vsync_len = 1;
 	vm->vfront_porch = vm->vback_porch = 0;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool dsi_cm_calc_hsdiv_cb(int m_dispc, unsigned long dispc,
-		void *data)
-{
-	struct dsi_clk_calc_ctx *ctx = data;
+अटल bool dsi_cm_calc_hsभाग_cb(पूर्णांक m_dispc, अचिन्हित दीर्घ dispc,
+		व्योम *data)
+अणु
+	काष्ठा dsi_clk_calc_ctx *ctx = data;
 
 	ctx->dsi_cinfo.mX[HSDIV_DISPC] = m_dispc;
 	ctx->dsi_cinfo.clkout[HSDIV_DISPC] = dispc;
 
-	return dispc_div_calc(ctx->dsi->dss->dispc, dispc,
+	वापस dispc_भाग_calc(ctx->dsi->dss->dispc, dispc,
 			      ctx->req_pck_min, ctx->req_pck_max,
 			      dsi_cm_calc_dispc_cb, ctx);
-}
+पूर्ण
 
-static bool dsi_cm_calc_pll_cb(int n, int m, unsigned long fint,
-		unsigned long clkdco, void *data)
-{
-	struct dsi_clk_calc_ctx *ctx = data;
-	struct dsi_data *dsi = ctx->dsi;
+अटल bool dsi_cm_calc_pll_cb(पूर्णांक n, पूर्णांक m, अचिन्हित दीर्घ fपूर्णांक,
+		अचिन्हित दीर्घ clkdco, व्योम *data)
+अणु
+	काष्ठा dsi_clk_calc_ctx *ctx = data;
+	काष्ठा dsi_data *dsi = ctx->dsi;
 
 	ctx->dsi_cinfo.n = n;
 	ctx->dsi_cinfo.m = m;
-	ctx->dsi_cinfo.fint = fint;
+	ctx->dsi_cinfo.fपूर्णांक = fपूर्णांक;
 	ctx->dsi_cinfo.clkdco = clkdco;
 
-	return dss_pll_hsdiv_calc_a(ctx->pll, clkdco, ctx->req_pck_min,
+	वापस dss_pll_hsभाग_calc_a(ctx->pll, clkdco, ctx->req_pck_min,
 			dsi->data->max_fck_freq,
-			dsi_cm_calc_hsdiv_cb, ctx);
-}
+			dsi_cm_calc_hsभाग_cb, ctx);
+पूर्ण
 
-static bool dsi_cm_calc(struct dsi_data *dsi,
-		const struct omap_dss_dsi_config *cfg,
-		struct dsi_clk_calc_ctx *ctx)
-{
-	unsigned long clkin;
-	int bitspp, ndl;
-	unsigned long pll_min, pll_max;
-	unsigned long pck, txbyteclk;
+अटल bool dsi_cm_calc(काष्ठा dsi_data *dsi,
+		स्थिर काष्ठा omap_dss_dsi_config *cfg,
+		काष्ठा dsi_clk_calc_ctx *ctx)
+अणु
+	अचिन्हित दीर्घ clkin;
+	पूर्णांक bitspp, ndl;
+	अचिन्हित दीर्घ pll_min, pll_max;
+	अचिन्हित दीर्घ pck, txbyteclk;
 
 	clkin = clk_get_rate(dsi->pll.clkin);
-	bitspp = mipi_dsi_pixel_format_to_bpp(cfg->pixel_format);
+	bitspp = mipi_dsi_pixel_क्रमmat_to_bpp(cfg->pixel_क्रमmat);
 	ndl = dsi->num_lanes_used - 1;
 
 	/*
 	 * Here we should calculate minimum txbyteclk to be able to send the
-	 * frame in time, and also to handle TE. That's not very simple, though,
+	 * frame in समय, and also to handle TE. That's not very simple, though,
 	 * especially as we go to LP between each pixel packet due to HW
 	 * "feature". So let's just estimate very roughly and multiply by 1.5.
 	 */
-	pck = cfg->vm->pixelclock;
+	pck = cfg->vm->pixelघड़ी;
 	pck = pck * 3 / 2;
 	txbyteclk = pck * bitspp / 8 / ndl;
 
-	memset(ctx, 0, sizeof(*ctx));
+	स_रखो(ctx, 0, माप(*ctx));
 	ctx->dsi = dsi;
 	ctx->pll = &dsi->pll;
 	ctx->config = cfg;
@@ -3736,29 +3737,29 @@ static bool dsi_cm_calc(struct dsi_data *dsi,
 	pll_min = max(cfg->hs_clk_min * 4, txbyteclk * 4 * 4);
 	pll_max = cfg->hs_clk_max * 4;
 
-	return dss_pll_calc_a(ctx->pll, clkin,
+	वापस dss_pll_calc_a(ctx->pll, clkin,
 			pll_min, pll_max,
 			dsi_cm_calc_pll_cb, ctx);
-}
+पूर्ण
 
-static bool dsi_vm_calc_blanking(struct dsi_clk_calc_ctx *ctx)
-{
-	struct dsi_data *dsi = ctx->dsi;
-	const struct omap_dss_dsi_config *cfg = ctx->config;
-	int bitspp = mipi_dsi_pixel_format_to_bpp(cfg->pixel_format);
-	int ndl = dsi->num_lanes_used - 1;
-	unsigned long hsclk = ctx->dsi_cinfo.clkdco / 4;
-	unsigned long byteclk = hsclk / 4;
+अटल bool dsi_vm_calc_blanking(काष्ठा dsi_clk_calc_ctx *ctx)
+अणु
+	काष्ठा dsi_data *dsi = ctx->dsi;
+	स्थिर काष्ठा omap_dss_dsi_config *cfg = ctx->config;
+	पूर्णांक bitspp = mipi_dsi_pixel_क्रमmat_to_bpp(cfg->pixel_क्रमmat);
+	पूर्णांक ndl = dsi->num_lanes_used - 1;
+	अचिन्हित दीर्घ hsclk = ctx->dsi_cinfo.clkdco / 4;
+	अचिन्हित दीर्घ byteclk = hsclk / 4;
 
-	unsigned long dispc_pck, req_pck_min, req_pck_nom, req_pck_max;
-	int xres;
-	int panel_htot, panel_hbl; /* pixels */
-	int dispc_htot, dispc_hbl; /* pixels */
-	int dsi_htot, dsi_hact, dsi_hbl, hss, hse; /* byteclks */
-	int hfp, hsa, hbp;
-	const struct videomode *req_vm;
-	struct videomode *dispc_vm;
-	struct omap_dss_dsi_videomode_timings *dsi_vm;
+	अचिन्हित दीर्घ dispc_pck, req_pck_min, req_pck_nom, req_pck_max;
+	पूर्णांक xres;
+	पूर्णांक panel_htot, panel_hbl; /* pixels */
+	पूर्णांक dispc_htot, dispc_hbl; /* pixels */
+	पूर्णांक dsi_htot, dsi_hact, dsi_hbl, hss, hse; /* byteclks */
+	पूर्णांक hfp, hsa, hbp;
+	स्थिर काष्ठा videomode *req_vm;
+	काष्ठा videomode *dispc_vm;
+	काष्ठा omap_dss_dsi_videomode_timings *dsi_vm;
 	u64 dsi_tput, dispc_tput;
 
 	dsi_tput = (u64)byteclk * ndl * 8;
@@ -3783,95 +3784,95 @@ static bool dsi_vm_calc_blanking(struct dsi_clk_calc_ctx *ctx)
 	 * When there are no line buffers, DISPC and DSI must have the
 	 * same tput. Otherwise DISPC tput needs to be higher than DSI's.
 	 */
-	if (dsi->line_buffer_size < xres * bitspp / 8) {
-		if (dispc_tput != dsi_tput)
-			return false;
-	} else {
-		if (dispc_tput < dsi_tput)
-			return false;
-	}
+	अगर (dsi->line_buffer_size < xres * bitspp / 8) अणु
+		अगर (dispc_tput != dsi_tput)
+			वापस false;
+	पूर्ण अन्यथा अणु
+		अगर (dispc_tput < dsi_tput)
+			वापस false;
+	पूर्ण
 
 	/* DSI tput must be over the min requirement */
-	if (dsi_tput < (u64)bitspp * req_pck_min)
-		return false;
+	अगर (dsi_tput < (u64)bitspp * req_pck_min)
+		वापस false;
 
 	/* When non-burst mode, DSI tput must be below max requirement. */
-	if (cfg->trans_mode != OMAP_DSS_DSI_BURST_MODE) {
-		if (dsi_tput > (u64)bitspp * req_pck_max)
-			return false;
-	}
+	अगर (cfg->trans_mode != OMAP_DSS_DSI_BURST_MODE) अणु
+		अगर (dsi_tput > (u64)bitspp * req_pck_max)
+			वापस false;
+	पूर्ण
 
 	hss = DIV_ROUND_UP(4, ndl);
 
-	if (cfg->trans_mode == OMAP_DSS_DSI_PULSE_MODE) {
-		if (ndl == 3 && req_vm->hsync_len == 0)
+	अगर (cfg->trans_mode == OMAP_DSS_DSI_PULSE_MODE) अणु
+		अगर (ndl == 3 && req_vm->hsync_len == 0)
 			hse = 1;
-		else
+		अन्यथा
 			hse = DIV_ROUND_UP(4, ndl);
-	} else {
+	पूर्ण अन्यथा अणु
 		hse = 0;
-	}
+	पूर्ण
 
 	/* DSI htot to match the panel's nominal pck */
-	dsi_htot = div64_u64((u64)panel_htot * byteclk, req_pck_nom);
+	dsi_htot = भाग64_u64((u64)panel_htot * byteclk, req_pck_nom);
 
-	/* fail if there would be no time for blanking */
-	if (dsi_htot < hss + hse + dsi_hact)
-		return false;
+	/* fail अगर there would be no समय क्रम blanking */
+	अगर (dsi_htot < hss + hse + dsi_hact)
+		वापस false;
 
 	/* total DSI blanking needed to achieve panel's TL */
 	dsi_hbl = dsi_htot - dsi_hact;
 
 	/* DISPC htot to match the DSI TL */
-	dispc_htot = div64_u64((u64)dsi_htot * dispc_pck, byteclk);
+	dispc_htot = भाग64_u64((u64)dsi_htot * dispc_pck, byteclk);
 
-	/* verify that the DSI and DISPC TLs are the same */
-	if ((u64)dsi_htot * dispc_pck != (u64)dispc_htot * byteclk)
-		return false;
+	/* verअगरy that the DSI and DISPC TLs are the same */
+	अगर ((u64)dsi_htot * dispc_pck != (u64)dispc_htot * byteclk)
+		वापस false;
 
 	dispc_hbl = dispc_htot - xres;
 
 	/* setup DSI videomode */
 
 	dsi_vm = &ctx->dsi_vm;
-	memset(dsi_vm, 0, sizeof(*dsi_vm));
+	स_रखो(dsi_vm, 0, माप(*dsi_vm));
 
 	dsi_vm->hsclk = hsclk;
 
 	dsi_vm->ndl = ndl;
 	dsi_vm->bitspp = bitspp;
 
-	if (cfg->trans_mode != OMAP_DSS_DSI_PULSE_MODE) {
+	अगर (cfg->trans_mode != OMAP_DSS_DSI_PULSE_MODE) अणु
 		hsa = 0;
-	} else if (ndl == 3 && req_vm->hsync_len == 0) {
+	पूर्ण अन्यथा अगर (ndl == 3 && req_vm->hsync_len == 0) अणु
 		hsa = 0;
-	} else {
-		hsa = div64_u64((u64)req_vm->hsync_len * byteclk, req_pck_nom);
+	पूर्ण अन्यथा अणु
+		hsa = भाग64_u64((u64)req_vm->hsync_len * byteclk, req_pck_nom);
 		hsa = max(hsa - hse, 1);
-	}
+	पूर्ण
 
-	hbp = div64_u64((u64)req_vm->hback_porch * byteclk, req_pck_nom);
+	hbp = भाग64_u64((u64)req_vm->hback_porch * byteclk, req_pck_nom);
 	hbp = max(hbp, 1);
 
 	hfp = dsi_hbl - (hss + hsa + hse + hbp);
-	if (hfp < 1) {
-		int t;
+	अगर (hfp < 1) अणु
+		पूर्णांक t;
 		/* we need to take cycles from hbp */
 
 		t = 1 - hfp;
 		hbp = max(hbp - t, 1);
 		hfp = dsi_hbl - (hss + hsa + hse + hbp);
 
-		if (hfp < 1 && hsa > 0) {
+		अगर (hfp < 1 && hsa > 0) अणु
 			/* we need to take cycles from hsa */
 			t = 1 - hfp;
 			hsa = max(hsa - t, 1);
 			hfp = dsi_hbl - (hss + hsa + hse + hbp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (hfp < 1)
-		return false;
+	अगर (hfp < 1)
+		वापस false;
 
 	dsi_vm->hss = hss;
 	dsi_vm->hsa = hsa;
@@ -3892,212 +3893,212 @@ static bool dsi_vm_calc_blanking(struct dsi_clk_calc_ctx *ctx)
 	dsi_vm->hfp_blanking_mode = 1;
 	dsi_vm->hbp_blanking_mode = 1;
 
-	dsi_vm->window_sync = 4;
+	dsi_vm->winकरोw_sync = 4;
 
 	/* setup DISPC videomode */
 
 	dispc_vm = &ctx->vm;
 	*dispc_vm = *req_vm;
-	dispc_vm->pixelclock = dispc_pck;
+	dispc_vm->pixelघड़ी = dispc_pck;
 
-	if (cfg->trans_mode == OMAP_DSS_DSI_PULSE_MODE) {
-		hsa = div64_u64((u64)req_vm->hsync_len * dispc_pck,
+	अगर (cfg->trans_mode == OMAP_DSS_DSI_PULSE_MODE) अणु
+		hsa = भाग64_u64((u64)req_vm->hsync_len * dispc_pck,
 				req_pck_nom);
 		hsa = max(hsa, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		hsa = 1;
-	}
+	पूर्ण
 
-	hbp = div64_u64((u64)req_vm->hback_porch * dispc_pck, req_pck_nom);
+	hbp = भाग64_u64((u64)req_vm->hback_porch * dispc_pck, req_pck_nom);
 	hbp = max(hbp, 1);
 
 	hfp = dispc_hbl - hsa - hbp;
-	if (hfp < 1) {
-		int t;
+	अगर (hfp < 1) अणु
+		पूर्णांक t;
 		/* we need to take cycles from hbp */
 
 		t = 1 - hfp;
 		hbp = max(hbp - t, 1);
 		hfp = dispc_hbl - hsa - hbp;
 
-		if (hfp < 1) {
+		अगर (hfp < 1) अणु
 			/* we need to take cycles from hsa */
 			t = 1 - hfp;
 			hsa = max(hsa - t, 1);
 			hfp = dispc_hbl - hsa - hbp;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (hfp < 1)
-		return false;
+	अगर (hfp < 1)
+		वापस false;
 
 	dispc_vm->hfront_porch = hfp;
 	dispc_vm->hsync_len = hsa;
 	dispc_vm->hback_porch = hbp;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
-static bool dsi_vm_calc_dispc_cb(int lckd, int pckd, unsigned long lck,
-		unsigned long pck, void *data)
-{
-	struct dsi_clk_calc_ctx *ctx = data;
+अटल bool dsi_vm_calc_dispc_cb(पूर्णांक lckd, पूर्णांक pckd, अचिन्हित दीर्घ lck,
+		अचिन्हित दीर्घ pck, व्योम *data)
+अणु
+	काष्ठा dsi_clk_calc_ctx *ctx = data;
 
-	ctx->dispc_cinfo.lck_div = lckd;
-	ctx->dispc_cinfo.pck_div = pckd;
+	ctx->dispc_cinfo.lck_भाग = lckd;
+	ctx->dispc_cinfo.pck_भाग = pckd;
 	ctx->dispc_cinfo.lck = lck;
 	ctx->dispc_cinfo.pck = pck;
 
-	if (dsi_vm_calc_blanking(ctx) == false)
-		return false;
+	अगर (dsi_vm_calc_blanking(ctx) == false)
+		वापस false;
 
-#ifdef PRINT_VERBOSE_VM_TIMINGS
-	print_dispc_vm("dispc", &ctx->vm);
-	print_dsi_vm("dsi  ", &ctx->dsi_vm);
-	print_dispc_vm("req  ", ctx->config->vm);
-	print_dsi_dispc_vm("act  ", &ctx->dsi_vm);
-#endif
+#अगर_घोषित PRINT_VERBOSE_VM_TIMINGS
+	prपूर्णांक_dispc_vm("dispc", &ctx->vm);
+	prपूर्णांक_dsi_vm("dsi  ", &ctx->dsi_vm);
+	prपूर्णांक_dispc_vm("req  ", ctx->config->vm);
+	prपूर्णांक_dsi_dispc_vm("act  ", &ctx->dsi_vm);
+#पूर्ण_अगर
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool dsi_vm_calc_hsdiv_cb(int m_dispc, unsigned long dispc,
-		void *data)
-{
-	struct dsi_clk_calc_ctx *ctx = data;
-	unsigned long pck_max;
+अटल bool dsi_vm_calc_hsभाग_cb(पूर्णांक m_dispc, अचिन्हित दीर्घ dispc,
+		व्योम *data)
+अणु
+	काष्ठा dsi_clk_calc_ctx *ctx = data;
+	अचिन्हित दीर्घ pck_max;
 
 	ctx->dsi_cinfo.mX[HSDIV_DISPC] = m_dispc;
 	ctx->dsi_cinfo.clkout[HSDIV_DISPC] = dispc;
 
 	/*
 	 * In burst mode we can let the dispc pck be arbitrarily high, but it
-	 * limits our scaling abilities. So for now, don't aim too high.
+	 * limits our scaling abilities. So क्रम now, करोn't aim too high.
 	 */
 
-	if (ctx->config->trans_mode == OMAP_DSS_DSI_BURST_MODE)
+	अगर (ctx->config->trans_mode == OMAP_DSS_DSI_BURST_MODE)
 		pck_max = ctx->req_pck_max + 10000000;
-	else
+	अन्यथा
 		pck_max = ctx->req_pck_max;
 
-	return dispc_div_calc(ctx->dsi->dss->dispc, dispc,
+	वापस dispc_भाग_calc(ctx->dsi->dss->dispc, dispc,
 			      ctx->req_pck_min, pck_max,
 			      dsi_vm_calc_dispc_cb, ctx);
-}
+पूर्ण
 
-static bool dsi_vm_calc_pll_cb(int n, int m, unsigned long fint,
-		unsigned long clkdco, void *data)
-{
-	struct dsi_clk_calc_ctx *ctx = data;
-	struct dsi_data *dsi = ctx->dsi;
+अटल bool dsi_vm_calc_pll_cb(पूर्णांक n, पूर्णांक m, अचिन्हित दीर्घ fपूर्णांक,
+		अचिन्हित दीर्घ clkdco, व्योम *data)
+अणु
+	काष्ठा dsi_clk_calc_ctx *ctx = data;
+	काष्ठा dsi_data *dsi = ctx->dsi;
 
 	ctx->dsi_cinfo.n = n;
 	ctx->dsi_cinfo.m = m;
-	ctx->dsi_cinfo.fint = fint;
+	ctx->dsi_cinfo.fपूर्णांक = fपूर्णांक;
 	ctx->dsi_cinfo.clkdco = clkdco;
 
-	return dss_pll_hsdiv_calc_a(ctx->pll, clkdco, ctx->req_pck_min,
+	वापस dss_pll_hsभाग_calc_a(ctx->pll, clkdco, ctx->req_pck_min,
 			dsi->data->max_fck_freq,
-			dsi_vm_calc_hsdiv_cb, ctx);
-}
+			dsi_vm_calc_hsभाग_cb, ctx);
+पूर्ण
 
-static bool dsi_vm_calc(struct dsi_data *dsi,
-		const struct omap_dss_dsi_config *cfg,
-		struct dsi_clk_calc_ctx *ctx)
-{
-	const struct videomode *vm = cfg->vm;
-	unsigned long clkin;
-	unsigned long pll_min;
-	unsigned long pll_max;
-	int ndl = dsi->num_lanes_used - 1;
-	int bitspp = mipi_dsi_pixel_format_to_bpp(cfg->pixel_format);
-	unsigned long byteclk_min;
+अटल bool dsi_vm_calc(काष्ठा dsi_data *dsi,
+		स्थिर काष्ठा omap_dss_dsi_config *cfg,
+		काष्ठा dsi_clk_calc_ctx *ctx)
+अणु
+	स्थिर काष्ठा videomode *vm = cfg->vm;
+	अचिन्हित दीर्घ clkin;
+	अचिन्हित दीर्घ pll_min;
+	अचिन्हित दीर्घ pll_max;
+	पूर्णांक ndl = dsi->num_lanes_used - 1;
+	पूर्णांक bitspp = mipi_dsi_pixel_क्रमmat_to_bpp(cfg->pixel_क्रमmat);
+	अचिन्हित दीर्घ byteclk_min;
 
 	clkin = clk_get_rate(dsi->pll.clkin);
 
-	memset(ctx, 0, sizeof(*ctx));
+	स_रखो(ctx, 0, माप(*ctx));
 	ctx->dsi = dsi;
 	ctx->pll = &dsi->pll;
 	ctx->config = cfg;
 
 	/* these limits should come from the panel driver */
-	ctx->req_pck_min = vm->pixelclock - 1000;
-	ctx->req_pck_nom = vm->pixelclock;
-	ctx->req_pck_max = vm->pixelclock + 1000;
+	ctx->req_pck_min = vm->pixelघड़ी - 1000;
+	ctx->req_pck_nom = vm->pixelघड़ी;
+	ctx->req_pck_max = vm->pixelघड़ी + 1000;
 
-	byteclk_min = div64_u64((u64)ctx->req_pck_min * bitspp, ndl * 8);
+	byteclk_min = भाग64_u64((u64)ctx->req_pck_min * bitspp, ndl * 8);
 	pll_min = max(cfg->hs_clk_min * 4, byteclk_min * 4 * 4);
 
-	if (cfg->trans_mode == OMAP_DSS_DSI_BURST_MODE) {
+	अगर (cfg->trans_mode == OMAP_DSS_DSI_BURST_MODE) अणु
 		pll_max = cfg->hs_clk_max * 4;
-	} else {
-		unsigned long byteclk_max;
-		byteclk_max = div64_u64((u64)ctx->req_pck_max * bitspp,
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ byteclk_max;
+		byteclk_max = भाग64_u64((u64)ctx->req_pck_max * bitspp,
 				ndl * 8);
 
 		pll_max = byteclk_max * 4 * 4;
-	}
+	पूर्ण
 
-	return dss_pll_calc_a(ctx->pll, clkin,
+	वापस dss_pll_calc_a(ctx->pll, clkin,
 			pll_min, pll_max,
 			dsi_vm_calc_pll_cb, ctx);
-}
+पूर्ण
 
-static bool dsi_is_video_mode(struct omap_dss_device *dssdev)
-{
-	struct dsi_data *dsi = to_dsi_data(dssdev);
+अटल bool dsi_is_video_mode(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा dsi_data *dsi = to_dsi_data(dssdev);
 
-	return dsi->mode == OMAP_DSS_DSI_VIDEO_MODE;
-}
+	वापस dsi->mode == OMAP_DSS_DSI_VIDEO_MODE;
+पूर्ण
 
-static int __dsi_calc_config(struct dsi_data *dsi,
-		const struct drm_display_mode *mode,
-		struct dsi_clk_calc_ctx *ctx)
-{
-	struct omap_dss_dsi_config cfg = dsi->config;
-	struct videomode vm;
+अटल पूर्णांक __dsi_calc_config(काष्ठा dsi_data *dsi,
+		स्थिर काष्ठा drm_display_mode *mode,
+		काष्ठा dsi_clk_calc_ctx *ctx)
+अणु
+	काष्ठा omap_dss_dsi_config cfg = dsi->config;
+	काष्ठा videomode vm;
 	bool ok;
-	int r;
+	पूर्णांक r;
 
 	drm_display_mode_to_videomode(mode, &vm);
 
 	cfg.vm = &vm;
 	cfg.mode = dsi->mode;
-	cfg.pixel_format = dsi->pix_fmt;
+	cfg.pixel_क्रमmat = dsi->pix_fmt;
 
-	if (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE)
+	अगर (dsi->mode == OMAP_DSS_DSI_VIDEO_MODE)
 		ok = dsi_vm_calc(dsi, &cfg, ctx);
-	else
+	अन्यथा
 		ok = dsi_cm_calc(dsi, &cfg, ctx);
 
-	if (!ok)
-		return -EINVAL;
+	अगर (!ok)
+		वापस -EINVAL;
 
 	dsi_pll_calc_dsi_fck(dsi, &ctx->dsi_cinfo);
 
-	r = dsi_lp_clock_calc(ctx->dsi_cinfo.clkout[HSDIV_DSI],
+	r = dsi_lp_घड़ी_calc(ctx->dsi_cinfo.clkout[HSDIV_DSI],
 		cfg.lp_clk_min, cfg.lp_clk_max, &ctx->lp_cinfo);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_set_config(struct omap_dss_device *dssdev,
-		const struct drm_display_mode *mode)
-{
-	struct dsi_data *dsi = to_dsi_data(dssdev);
-	struct dsi_clk_calc_ctx ctx;
-	int r;
+अटल पूर्णांक dsi_set_config(काष्ठा omap_dss_device *dssdev,
+		स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा dsi_data *dsi = to_dsi_data(dssdev);
+	काष्ठा dsi_clk_calc_ctx ctx;
+	पूर्णांक r;
 
 	mutex_lock(&dsi->lock);
 
 	r = __dsi_calc_config(dsi, mode, &ctx);
-	if (r) {
+	अगर (r) अणु
 		DSSERR("failed to find suitable DSI clock settings\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	dsi->user_lp_cinfo = ctx.lp_cinfo;
 	dsi->user_dsi_cinfo = ctx.dsi_cinfo;
@@ -4106,8 +4107,8 @@ static int dsi_set_config(struct omap_dss_device *dssdev,
 	dsi->vm = ctx.vm;
 
 	/*
-	 * override interlace, logic level and edge related parameters in
-	 * videomode with default values
+	 * override पूर्णांकerlace, logic level and edge related parameters in
+	 * videomode with शेष values
 	 */
 	dsi->vm.flags &= ~DISPLAY_FLAGS_INTERLACED;
 	dsi->vm.flags &= ~DISPLAY_FLAGS_HSYNC_LOW;
@@ -4132,320 +4133,320 @@ static int dsi_set_config(struct omap_dss_device *dssdev,
 
 	mutex_unlock(&dsi->lock);
 
-	return 0;
+	वापस 0;
 err:
 	mutex_unlock(&dsi->lock);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * Return a hardcoded dispc channel for the DSI output. This should work for
- * current use cases, but this can be later expanded to either resolve
+ * Return a hardcoded dispc channel क्रम the DSI output. This should work क्रम
+ * current use हालs, but this can be later expanded to either resolve
  * the channel in some more dynamic manner, or get the channel as a user
  * parameter.
  */
-static enum omap_channel dsi_get_dispc_channel(struct dsi_data *dsi)
-{
-	switch (dsi->data->model) {
-	case DSI_MODEL_OMAP3:
-		return OMAP_DSS_CHANNEL_LCD;
+अटल क्रमागत omap_channel dsi_get_dispc_channel(काष्ठा dsi_data *dsi)
+अणु
+	चयन (dsi->data->model) अणु
+	हाल DSI_MODEL_OMAP3:
+		वापस OMAP_DSS_CHANNEL_LCD;
 
-	case DSI_MODEL_OMAP4:
-		switch (dsi->module_id) {
-		case 0:
-			return OMAP_DSS_CHANNEL_LCD;
-		case 1:
-			return OMAP_DSS_CHANNEL_LCD2;
-		default:
+	हाल DSI_MODEL_OMAP4:
+		चयन (dsi->module_id) अणु
+		हाल 0:
+			वापस OMAP_DSS_CHANNEL_LCD;
+		हाल 1:
+			वापस OMAP_DSS_CHANNEL_LCD2;
+		शेष:
 			DSSWARN("unsupported module id\n");
-			return OMAP_DSS_CHANNEL_LCD;
-		}
+			वापस OMAP_DSS_CHANNEL_LCD;
+		पूर्ण
 
-	case DSI_MODEL_OMAP5:
-		switch (dsi->module_id) {
-		case 0:
-			return OMAP_DSS_CHANNEL_LCD;
-		case 1:
-			return OMAP_DSS_CHANNEL_LCD3;
-		default:
+	हाल DSI_MODEL_OMAP5:
+		चयन (dsi->module_id) अणु
+		हाल 0:
+			वापस OMAP_DSS_CHANNEL_LCD;
+		हाल 1:
+			वापस OMAP_DSS_CHANNEL_LCD3;
+		शेष:
 			DSSWARN("unsupported module id\n");
-			return OMAP_DSS_CHANNEL_LCD;
-		}
+			वापस OMAP_DSS_CHANNEL_LCD;
+		पूर्ण
 
-	default:
+	शेष:
 		DSSWARN("unsupported DSS version\n");
-		return OMAP_DSS_CHANNEL_LCD;
-	}
-}
+		वापस OMAP_DSS_CHANNEL_LCD;
+	पूर्ण
+पूर्ण
 
-static ssize_t _omap_dsi_host_transfer(struct dsi_data *dsi, int vc,
-				       const struct mipi_dsi_msg *msg)
-{
-	struct omap_dss_device *dssdev = &dsi->output;
-	int r;
+अटल sमाप_प्रकार _omap_dsi_host_transfer(काष्ठा dsi_data *dsi, पूर्णांक vc,
+				       स्थिर काष्ठा mipi_dsi_msg *msg)
+अणु
+	काष्ठा omap_dss_device *dssdev = &dsi->output;
+	पूर्णांक r;
 
 	dsi_vc_enable_hs(dssdev, vc, !(msg->flags & MIPI_DSI_MSG_USE_LPM));
 
-	switch (msg->type) {
-	case MIPI_DSI_GENERIC_SHORT_WRITE_0_PARAM:
-	case MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM:
-	case MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM:
-	case MIPI_DSI_GENERIC_LONG_WRITE:
-	case MIPI_DSI_DCS_SHORT_WRITE:
-	case MIPI_DSI_DCS_SHORT_WRITE_PARAM:
-	case MIPI_DSI_DCS_LONG_WRITE:
-	case MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE:
-	case MIPI_DSI_NULL_PACKET:
-		r = dsi_vc_write_common(dssdev, vc, msg);
-		break;
-	case MIPI_DSI_GENERIC_READ_REQUEST_0_PARAM:
-	case MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM:
-	case MIPI_DSI_GENERIC_READ_REQUEST_2_PARAM:
-		r = dsi_vc_generic_read(dssdev, vc, msg);
-		break;
-	case MIPI_DSI_DCS_READ:
-		r = dsi_vc_dcs_read(dssdev, vc, msg);
-		break;
-	default:
+	चयन (msg->type) अणु
+	हाल MIPI_DSI_GENERIC_SHORT_WRITE_0_PARAM:
+	हाल MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM:
+	हाल MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM:
+	हाल MIPI_DSI_GENERIC_LONG_WRITE:
+	हाल MIPI_DSI_DCS_SHORT_WRITE:
+	हाल MIPI_DSI_DCS_SHORT_WRITE_PARAM:
+	हाल MIPI_DSI_DCS_LONG_WRITE:
+	हाल MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE:
+	हाल MIPI_DSI_शून्य_PACKET:
+		r = dsi_vc_ग_लिखो_common(dssdev, vc, msg);
+		अवरोध;
+	हाल MIPI_DSI_GENERIC_READ_REQUEST_0_PARAM:
+	हाल MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM:
+	हाल MIPI_DSI_GENERIC_READ_REQUEST_2_PARAM:
+		r = dsi_vc_generic_पढ़ो(dssdev, vc, msg);
+		अवरोध;
+	हाल MIPI_DSI_DCS_READ:
+		r = dsi_vc_dcs_पढ़ो(dssdev, vc, msg);
+		अवरोध;
+	शेष:
 		r = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	if (msg->type == MIPI_DSI_DCS_SHORT_WRITE ||
-	    msg->type == MIPI_DSI_DCS_SHORT_WRITE_PARAM) {
+	अगर (msg->type == MIPI_DSI_DCS_SHORT_WRITE ||
+	    msg->type == MIPI_DSI_DCS_SHORT_WRITE_PARAM) अणु
 		u8 cmd = ((u8 *)msg->tx_buf)[0];
 
-		if (cmd == MIPI_DCS_SET_TEAR_OFF)
+		अगर (cmd == MIPI_DCS_SET_TEAR_OFF)
 			dsi_enable_te(dsi, false);
-		else if (cmd == MIPI_DCS_SET_TEAR_ON)
+		अन्यथा अगर (cmd == MIPI_DCS_SET_TEAR_ON)
 			dsi_enable_te(dsi, true);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t omap_dsi_host_transfer(struct mipi_dsi_host *host,
-				      const struct mipi_dsi_msg *msg)
-{
-	struct dsi_data *dsi = host_to_omap(host);
-	int r;
-	int vc = VC_CMD;
+अटल sमाप_प्रकार omap_dsi_host_transfer(काष्ठा mipi_dsi_host *host,
+				      स्थिर काष्ठा mipi_dsi_msg *msg)
+अणु
+	काष्ठा dsi_data *dsi = host_to_omap(host);
+	पूर्णांक r;
+	पूर्णांक vc = VC_CMD;
 
 	dsi_bus_lock(dsi);
 
-	if (!dsi->iface_enabled) {
+	अगर (!dsi->अगरace_enabled) अणु
 		dsi_enable(dsi);
-		schedule_delayed_work(&dsi->dsi_disable_work, msecs_to_jiffies(2000));
-	}
+		schedule_delayed_work(&dsi->dsi_disable_work, msecs_to_jअगरfies(2000));
+	पूर्ण
 
 	r = _omap_dsi_host_transfer(dsi, vc, msg);
 
 	dsi_bus_unlock(dsi);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dsi_get_clocks(struct dsi_data *dsi)
-{
-	struct clk *clk;
+अटल पूर्णांक dsi_get_घड़ीs(काष्ठा dsi_data *dsi)
+अणु
+	काष्ठा clk *clk;
 
 	clk = devm_clk_get(dsi->dev, "fck");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		DSSERR("can't get fck\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	dsi->dss_clk = clk;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct omapdss_dsi_ops dsi_ops = {
+अटल स्थिर काष्ठा omapdss_dsi_ops dsi_ops = अणु
 	.update = dsi_update_all,
 	.is_video_mode = dsi_is_video_mode,
-};
+पूर्ण;
 
-static irqreturn_t omap_dsi_te_irq_handler(int irq, void *dev_id)
-{
-	struct dsi_data *dsi = (struct dsi_data *)dev_id;
-	int old;
+अटल irqवापस_t omap_dsi_te_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा dsi_data *dsi = (काष्ठा dsi_data *)dev_id;
+	पूर्णांक old;
 
-	old = atomic_cmpxchg(&dsi->do_ext_te_update, 1, 0);
-	if (old) {
-		cancel_delayed_work(&dsi->te_timeout_work);
+	old = atomic_cmpxchg(&dsi->करो_ext_te_update, 1, 0);
+	अगर (old) अणु
+		cancel_delayed_work(&dsi->te_समयout_work);
 		_dsi_update(dsi);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void omap_dsi_te_timeout_work_callback(struct work_struct *work)
-{
-	struct dsi_data *dsi =
-		container_of(work, struct dsi_data, te_timeout_work.work);
-	int old;
+अटल व्योम omap_dsi_te_समयout_work_callback(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dsi_data *dsi =
+		container_of(work, काष्ठा dsi_data, te_समयout_work.work);
+	पूर्णांक old;
 
-	old = atomic_cmpxchg(&dsi->do_ext_te_update, 1, 0);
-	if (old) {
+	old = atomic_cmpxchg(&dsi->करो_ext_te_update, 1, 0);
+	अगर (old) अणु
 		dev_err(dsi->dev, "TE not received for 250ms!\n");
 		_dsi_update(dsi);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int omap_dsi_register_te_irq(struct dsi_data *dsi,
-				    struct mipi_dsi_device *client)
-{
-	int err;
-	int te_irq;
+अटल पूर्णांक omap_dsi_रेजिस्टर_te_irq(काष्ठा dsi_data *dsi,
+				    काष्ठा mipi_dsi_device *client)
+अणु
+	पूर्णांक err;
+	पूर्णांक te_irq;
 
 	dsi->te_gpio = gpiod_get(&client->dev, "te-gpios", GPIOD_IN);
-	if (IS_ERR(dsi->te_gpio)) {
+	अगर (IS_ERR(dsi->te_gpio)) अणु
 		err = PTR_ERR(dsi->te_gpio);
 
-		if (err == -ENOENT) {
-			dsi->te_gpio = NULL;
-			return 0;
-		}
+		अगर (err == -ENOENT) अणु
+			dsi->te_gpio = शून्य;
+			वापस 0;
+		पूर्ण
 
 		dev_err(dsi->dev, "Could not get TE gpio: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	te_irq = gpiod_to_irq(dsi->te_gpio);
-	if (te_irq < 0) {
+	अगर (te_irq < 0) अणु
 		gpiod_put(dsi->te_gpio);
-		dsi->te_gpio = NULL;
-		return -EINVAL;
-	}
+		dsi->te_gpio = शून्य;
+		वापस -EINVAL;
+	पूर्ण
 
 	dsi->te_irq = te_irq;
 
 	irq_set_status_flags(te_irq, IRQ_NOAUTOEN);
 
-	err = request_threaded_irq(te_irq, NULL, omap_dsi_te_irq_handler,
+	err = request_thपढ़ोed_irq(te_irq, शून्य, omap_dsi_te_irq_handler,
 				   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 				   "TE", dsi);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dsi->dev, "request irq failed with %d\n", err);
 		gpiod_put(dsi->te_gpio);
-		dsi->te_gpio = NULL;
-		return err;
-	}
+		dsi->te_gpio = शून्य;
+		वापस err;
+	पूर्ण
 
-	INIT_DEFERRABLE_WORK(&dsi->te_timeout_work,
-			     omap_dsi_te_timeout_work_callback);
+	INIT_DEFERRABLE_WORK(&dsi->te_समयout_work,
+			     omap_dsi_te_समयout_work_callback);
 
 	dev_dbg(dsi->dev, "Using GPIO TE\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void omap_dsi_unregister_te_irq(struct dsi_data *dsi)
-{
-	if (dsi->te_gpio) {
-		free_irq(dsi->te_irq, dsi);
-		cancel_delayed_work(&dsi->te_timeout_work);
+अटल व्योम omap_dsi_unरेजिस्टर_te_irq(काष्ठा dsi_data *dsi)
+अणु
+	अगर (dsi->te_gpio) अणु
+		मुक्त_irq(dsi->te_irq, dsi);
+		cancel_delayed_work(&dsi->te_समयout_work);
 		gpiod_put(dsi->te_gpio);
-		dsi->te_gpio = NULL;
-	}
-}
+		dsi->te_gpio = शून्य;
+	पूर्ण
+पूर्ण
 
-static int omap_dsi_host_attach(struct mipi_dsi_host *host,
-				struct mipi_dsi_device *client)
-{
-	struct dsi_data *dsi = host_to_omap(host);
-	int r;
+अटल पूर्णांक omap_dsi_host_attach(काष्ठा mipi_dsi_host *host,
+				काष्ठा mipi_dsi_device *client)
+अणु
+	काष्ठा dsi_data *dsi = host_to_omap(host);
+	पूर्णांक r;
 
-	if (dsi->dsidev) {
+	अगर (dsi->dsidev) अणु
 		DSSERR("dsi client already attached\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (mipi_dsi_pixel_format_to_bpp(client->format) < 0) {
+	अगर (mipi_dsi_pixel_क्रमmat_to_bpp(client->क्रमmat) < 0) अणु
 		DSSERR("invalid pixel format\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	atomic_set(&dsi->do_ext_te_update, 0);
+	atomic_set(&dsi->करो_ext_te_update, 0);
 
-	if (client->mode_flags & MIPI_DSI_MODE_VIDEO) {
+	अगर (client->mode_flags & MIPI_DSI_MODE_VIDEO) अणु
 		dsi->mode = OMAP_DSS_DSI_VIDEO_MODE;
-	} else {
-		r = omap_dsi_register_te_irq(dsi, client);
-		if (r)
-			return r;
+	पूर्ण अन्यथा अणु
+		r = omap_dsi_रेजिस्टर_te_irq(dsi, client);
+		अगर (r)
+			वापस r;
 
 		dsi->mode = OMAP_DSS_DSI_CMD_MODE;
-	}
+	पूर्ण
 
 	dsi->dsidev = client;
-	dsi->pix_fmt = client->format;
+	dsi->pix_fmt = client->क्रमmat;
 
 	dsi->config.hs_clk_min = 150000000; // TODO: get from client?
 	dsi->config.hs_clk_max = client->hs_rate;
 	dsi->config.lp_clk_min = 7000000; // TODO: get from client?
 	dsi->config.lp_clk_max = client->lp_rate;
 
-	if (client->mode_flags & MIPI_DSI_MODE_VIDEO_BURST)
+	अगर (client->mode_flags & MIPI_DSI_MODE_VIDEO_BURST)
 		dsi->config.trans_mode = OMAP_DSS_DSI_BURST_MODE;
-	else if (client->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
+	अन्यथा अगर (client->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
 		dsi->config.trans_mode = OMAP_DSS_DSI_PULSE_MODE;
-	else
+	अन्यथा
 		dsi->config.trans_mode = OMAP_DSS_DSI_EVENT_MODE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_dsi_host_detach(struct mipi_dsi_host *host,
-				struct mipi_dsi_device *client)
-{
-	struct dsi_data *dsi = host_to_omap(host);
+अटल पूर्णांक omap_dsi_host_detach(काष्ठा mipi_dsi_host *host,
+				काष्ठा mipi_dsi_device *client)
+अणु
+	काष्ठा dsi_data *dsi = host_to_omap(host);
 
-	if (WARN_ON(dsi->dsidev != client))
-		return -EINVAL;
+	अगर (WARN_ON(dsi->dsidev != client))
+		वापस -EINVAL;
 
 	cancel_delayed_work_sync(&dsi->dsi_disable_work);
 
 	dsi_bus_lock(dsi);
 
-	if (dsi->iface_enabled)
+	अगर (dsi->अगरace_enabled)
 		dsi_disable(dsi);
 
 	dsi_bus_unlock(dsi);
 
-	omap_dsi_unregister_te_irq(dsi);
-	dsi->dsidev = NULL;
-	return 0;
-}
+	omap_dsi_unरेजिस्टर_te_irq(dsi);
+	dsi->dsidev = शून्य;
+	वापस 0;
+पूर्ण
 
-static const struct mipi_dsi_host_ops omap_dsi_host_ops = {
+अटल स्थिर काष्ठा mipi_dsi_host_ops omap_dsi_host_ops = अणु
 	.attach = omap_dsi_host_attach,
 	.detach = omap_dsi_host_detach,
 	.transfer = omap_dsi_host_transfer,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * PLL
  */
 
-static const struct dss_pll_ops dsi_pll_ops = {
+अटल स्थिर काष्ठा dss_pll_ops dsi_pll_ops = अणु
 	.enable = dsi_pll_enable,
 	.disable = dsi_pll_disable,
-	.set_config = dss_pll_write_config_type_a,
-};
+	.set_config = dss_pll_ग_लिखो_config_type_a,
+पूर्ण;
 
-static const struct dss_pll_hw dss_omap3_dsi_pll_hw = {
+अटल स्थिर काष्ठा dss_pll_hw dss_omap3_dsi_pll_hw = अणु
 	.type = DSS_PLL_TYPE_A,
 
 	.n_max = (1 << 7) - 1,
 	.m_max = (1 << 11) - 1,
 	.mX_max = (1 << 4) - 1,
-	.fint_min = 750000,
-	.fint_max = 2100000,
+	.fपूर्णांक_min = 750000,
+	.fपूर्णांक_max = 2100000,
 	.clkdco_low = 1000000000,
 	.clkdco_max = 1800000000,
 
@@ -4463,16 +4464,16 @@ static const struct dss_pll_hw dss_omap3_dsi_pll_hw = {
 	.has_freqsel = true,
 	.has_selfreqdco = false,
 	.has_refsel = false,
-};
+पूर्ण;
 
-static const struct dss_pll_hw dss_omap4_dsi_pll_hw = {
+अटल स्थिर काष्ठा dss_pll_hw dss_omap4_dsi_pll_hw = अणु
 	.type = DSS_PLL_TYPE_A,
 
 	.n_max = (1 << 8) - 1,
 	.m_max = (1 << 12) - 1,
 	.mX_max = (1 << 5) - 1,
-	.fint_min = 500000,
-	.fint_max = 2500000,
+	.fपूर्णांक_min = 500000,
+	.fपूर्णांक_max = 2500000,
 	.clkdco_low = 1000000000,
 	.clkdco_max = 1800000000,
 
@@ -4490,16 +4491,16 @@ static const struct dss_pll_hw dss_omap4_dsi_pll_hw = {
 	.has_freqsel = false,
 	.has_selfreqdco = false,
 	.has_refsel = false,
-};
+पूर्ण;
 
-static const struct dss_pll_hw dss_omap5_dsi_pll_hw = {
+अटल स्थिर काष्ठा dss_pll_hw dss_omap5_dsi_pll_hw = अणु
 	.type = DSS_PLL_TYPE_A,
 
 	.n_max = (1 << 8) - 1,
 	.m_max = (1 << 12) - 1,
 	.mX_max = (1 << 5) - 1,
-	.fint_min = 150000,
-	.fint_max = 52000000,
+	.fपूर्णांक_min = 150000,
+	.fपूर्णांक_max = 52000000,
 	.clkdco_low = 1000000000,
 	.clkdco_max = 1800000000,
 
@@ -4517,19 +4518,19 @@ static const struct dss_pll_hw dss_omap5_dsi_pll_hw = {
 	.has_freqsel = false,
 	.has_selfreqdco = true,
 	.has_refsel = true,
-};
+पूर्ण;
 
-static int dsi_init_pll_data(struct dss_device *dss, struct dsi_data *dsi)
-{
-	struct dss_pll *pll = &dsi->pll;
-	struct clk *clk;
-	int r;
+अटल पूर्णांक dsi_init_pll_data(काष्ठा dss_device *dss, काष्ठा dsi_data *dsi)
+अणु
+	काष्ठा dss_pll *pll = &dsi->pll;
+	काष्ठा clk *clk;
+	पूर्णांक r;
 
 	clk = devm_clk_get(dsi->dev, "sys_clk");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		DSSERR("can't get sys_clk\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	pll->name = dsi->module_id == 0 ? "dsi0" : "dsi1";
 	pll->id = dsi->module_id == 0 ? DSS_PLL_DSI1 : DSS_PLL_DSI2;
@@ -4538,125 +4539,125 @@ static int dsi_init_pll_data(struct dss_device *dss, struct dsi_data *dsi)
 	pll->hw = dsi->data->pll_hw;
 	pll->ops = &dsi_pll_ops;
 
-	r = dss_pll_register(dss, pll);
-	if (r)
-		return r;
+	r = dss_pll_रेजिस्टर(dss, pll);
+	अगर (r)
+		वापस r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Component Bind & Unbind
  */
 
-static int dsi_bind(struct device *dev, struct device *master, void *data)
-{
-	struct dss_device *dss = dss_get_device(master);
-	struct dsi_data *dsi = dev_get_drvdata(dev);
-	char name[10];
+अटल पूर्णांक dsi_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा dss_device *dss = dss_get_device(master);
+	काष्ठा dsi_data *dsi = dev_get_drvdata(dev);
+	अक्षर name[10];
 	u32 rev;
-	int r;
+	पूर्णांक r;
 
 	dsi->dss = dss;
 
 	dsi_init_pll_data(dss, dsi);
 
-	r = dsi_runtime_get(dsi);
-	if (r)
-		return r;
+	r = dsi_runसमय_get(dsi);
+	अगर (r)
+		वापस r;
 
-	rev = dsi_read_reg(dsi, DSI_REVISION);
+	rev = dsi_पढ़ो_reg(dsi, DSI_REVISION);
 	dev_dbg(dev, "OMAP DSI rev %d.%d\n",
 	       FLD_GET(rev, 7, 4), FLD_GET(rev, 3, 0));
 
 	dsi->line_buffer_size = dsi_get_line_buf_size(dsi);
 
-	dsi_runtime_put(dsi);
+	dsi_runसमय_put(dsi);
 
-	snprintf(name, sizeof(name), "dsi%u_regs", dsi->module_id + 1);
+	snम_लिखो(name, माप(name), "dsi%u_regs", dsi->module_id + 1);
 	dsi->debugfs.regs = dss_debugfs_create_file(dss, name,
 						    dsi_dump_dsi_regs, dsi);
-#ifdef CONFIG_OMAP2_DSS_COLLECT_IRQ_STATS
-	snprintf(name, sizeof(name), "dsi%u_irqs", dsi->module_id + 1);
+#अगर_घोषित CONFIG_OMAP2_DSS_COLLECT_IRQ_STATS
+	snम_लिखो(name, माप(name), "dsi%u_irqs", dsi->module_id + 1);
 	dsi->debugfs.irqs = dss_debugfs_create_file(dss, name,
 						    dsi_dump_dsi_irqs, dsi);
-#endif
-	snprintf(name, sizeof(name), "dsi%u_clks", dsi->module_id + 1);
+#पूर्ण_अगर
+	snम_लिखो(name, माप(name), "dsi%u_clks", dsi->module_id + 1);
 	dsi->debugfs.clks = dss_debugfs_create_file(dss, name,
-						    dsi_dump_dsi_clocks, dsi);
+						    dsi_dump_dsi_घड़ीs, dsi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_unbind(struct device *dev, struct device *master, void *data)
-{
-	struct dsi_data *dsi = dev_get_drvdata(dev);
+अटल व्योम dsi_unbind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा dsi_data *dsi = dev_get_drvdata(dev);
 
-	dss_debugfs_remove_file(dsi->debugfs.clks);
-	dss_debugfs_remove_file(dsi->debugfs.irqs);
-	dss_debugfs_remove_file(dsi->debugfs.regs);
+	dss_debugfs_हटाओ_file(dsi->debugfs.clks);
+	dss_debugfs_हटाओ_file(dsi->debugfs.irqs);
+	dss_debugfs_हटाओ_file(dsi->debugfs.regs);
 
 	WARN_ON(dsi->scp_clk_refcount > 0);
 
-	dss_pll_unregister(&dsi->pll);
-}
+	dss_pll_unरेजिस्टर(&dsi->pll);
+पूर्ण
 
-static const struct component_ops dsi_component_ops = {
+अटल स्थिर काष्ठा component_ops dsi_component_ops = अणु
 	.bind	= dsi_bind,
 	.unbind	= dsi_unbind,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * DRM Bridge Operations
  */
 
-static int dsi_bridge_attach(struct drm_bridge *bridge,
-			     enum drm_bridge_attach_flags flags)
-{
-	struct dsi_data *dsi = drm_bridge_to_dsi(bridge);
+अटल पूर्णांक dsi_bridge_attach(काष्ठा drm_bridge *bridge,
+			     क्रमागत drm_bridge_attach_flags flags)
+अणु
+	काष्ठा dsi_data *dsi = drm_bridge_to_dsi(bridge);
 
-	if (!(flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR))
-		return -EINVAL;
+	अगर (!(flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR))
+		वापस -EINVAL;
 
-	return drm_bridge_attach(bridge->encoder, dsi->output.next_bridge,
+	वापस drm_bridge_attach(bridge->encoder, dsi->output.next_bridge,
 				 bridge, flags);
-}
+पूर्ण
 
-static enum drm_mode_status
-dsi_bridge_mode_valid(struct drm_bridge *bridge,
-		      const struct drm_display_info *info,
-		      const struct drm_display_mode *mode)
-{
-	struct dsi_data *dsi = drm_bridge_to_dsi(bridge);
-	struct dsi_clk_calc_ctx ctx;
-	int r;
+अटल क्रमागत drm_mode_status
+dsi_bridge_mode_valid(काष्ठा drm_bridge *bridge,
+		      स्थिर काष्ठा drm_display_info *info,
+		      स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा dsi_data *dsi = drm_bridge_to_dsi(bridge);
+	काष्ठा dsi_clk_calc_ctx ctx;
+	पूर्णांक r;
 
 	mutex_lock(&dsi->lock);
 	r = __dsi_calc_config(dsi, mode, &ctx);
 	mutex_unlock(&dsi->lock);
 
-	return r ? MODE_CLOCK_RANGE : MODE_OK;
-}
+	वापस r ? MODE_CLOCK_RANGE : MODE_OK;
+पूर्ण
 
-static void dsi_bridge_mode_set(struct drm_bridge *bridge,
-				const struct drm_display_mode *mode,
-				const struct drm_display_mode *adjusted_mode)
-{
-	struct dsi_data *dsi = drm_bridge_to_dsi(bridge);
+अटल व्योम dsi_bridge_mode_set(काष्ठा drm_bridge *bridge,
+				स्थिर काष्ठा drm_display_mode *mode,
+				स्थिर काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा dsi_data *dsi = drm_bridge_to_dsi(bridge);
 
 	dsi_set_config(&dsi->output, adjusted_mode);
-}
+पूर्ण
 
-static void dsi_bridge_enable(struct drm_bridge *bridge)
-{
-	struct dsi_data *dsi = drm_bridge_to_dsi(bridge);
-	struct omap_dss_device *dssdev = &dsi->output;
+अटल व्योम dsi_bridge_enable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा dsi_data *dsi = drm_bridge_to_dsi(bridge);
+	काष्ठा omap_dss_device *dssdev = &dsi->output;
 
 	cancel_delayed_work_sync(&dsi->dsi_disable_work);
 
 	dsi_bus_lock(dsi);
 
-	if (!dsi->iface_enabled)
+	अगर (!dsi->अगरace_enabled)
 		dsi_enable(dsi);
 
 	dsi_enable_video_output(dssdev, VC_VIDEO);
@@ -4664,12 +4665,12 @@ static void dsi_bridge_enable(struct drm_bridge *bridge)
 	dsi->video_enabled = true;
 
 	dsi_bus_unlock(dsi);
-}
+पूर्ण
 
-static void dsi_bridge_disable(struct drm_bridge *bridge)
-{
-	struct dsi_data *dsi = drm_bridge_to_dsi(bridge);
-	struct omap_dss_device *dssdev = &dsi->output;
+अटल व्योम dsi_bridge_disable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा dsi_data *dsi = drm_bridge_to_dsi(bridge);
+	काष्ठा omap_dss_device *dssdev = &dsi->output;
 
 	cancel_delayed_work_sync(&dsi->dsi_disable_work);
 
@@ -4682,38 +4683,38 @@ static void dsi_bridge_disable(struct drm_bridge *bridge)
 	dsi_disable(dsi);
 
 	dsi_bus_unlock(dsi);
-}
+पूर्ण
 
-static const struct drm_bridge_funcs dsi_bridge_funcs = {
+अटल स्थिर काष्ठा drm_bridge_funcs dsi_bridge_funcs = अणु
 	.attach = dsi_bridge_attach,
 	.mode_valid = dsi_bridge_mode_valid,
 	.mode_set = dsi_bridge_mode_set,
 	.enable = dsi_bridge_enable,
 	.disable = dsi_bridge_disable,
-};
+पूर्ण;
 
-static void dsi_bridge_init(struct dsi_data *dsi)
-{
+अटल व्योम dsi_bridge_init(काष्ठा dsi_data *dsi)
+अणु
 	dsi->bridge.funcs = &dsi_bridge_funcs;
 	dsi->bridge.of_node = dsi->host.dev->of_node;
 	dsi->bridge.type = DRM_MODE_CONNECTOR_DSI;
 
 	drm_bridge_add(&dsi->bridge);
-}
+पूर्ण
 
-static void dsi_bridge_cleanup(struct dsi_data *dsi)
-{
-	drm_bridge_remove(&dsi->bridge);
-}
+अटल व्योम dsi_bridge_cleanup(काष्ठा dsi_data *dsi)
+अणु
+	drm_bridge_हटाओ(&dsi->bridge);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Probe & Remove, Suspend & Resume
  */
 
-static int dsi_init_output(struct dsi_data *dsi)
-{
-	struct omap_dss_device *out = &dsi->output;
-	int r;
+अटल पूर्णांक dsi_init_output(काष्ठा dsi_data *dsi)
+अणु
+	काष्ठा omap_dss_device *out = &dsi->output;
+	पूर्णांक r;
 
 	dsi_bridge_init(dsi);
 
@@ -4731,166 +4732,166 @@ static int dsi_init_output(struct dsi_data *dsi)
 		       | DRM_BUS_FLAG_SYNC_DRIVE_NEGEDGE;
 
 	r = omapdss_device_init_output(out, &dsi->bridge);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		dsi_bridge_cleanup(dsi);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	omapdss_device_register(out);
+	omapdss_device_रेजिस्टर(out);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dsi_uninit_output(struct dsi_data *dsi)
-{
-	struct omap_dss_device *out = &dsi->output;
+अटल व्योम dsi_uninit_output(काष्ठा dsi_data *dsi)
+अणु
+	काष्ठा omap_dss_device *out = &dsi->output;
 
-	omapdss_device_unregister(out);
+	omapdss_device_unरेजिस्टर(out);
 	omapdss_device_cleanup_output(out);
 	dsi_bridge_cleanup(dsi);
-}
+पूर्ण
 
-static int dsi_probe_of(struct dsi_data *dsi)
-{
-	struct device_node *node = dsi->dev->of_node;
-	struct property *prop;
+अटल पूर्णांक dsi_probe_of(काष्ठा dsi_data *dsi)
+अणु
+	काष्ठा device_node *node = dsi->dev->of_node;
+	काष्ठा property *prop;
 	u32 lane_arr[10];
-	int len, num_pins;
-	int r;
-	struct device_node *ep;
+	पूर्णांक len, num_pins;
+	पूर्णांक r;
+	काष्ठा device_node *ep;
 
-	ep = of_graph_get_endpoint_by_regs(node, 0, 0);
-	if (!ep)
-		return 0;
+	ep = of_graph_get_endpoपूर्णांक_by_regs(node, 0, 0);
+	अगर (!ep)
+		वापस 0;
 
 	prop = of_find_property(ep, "lanes", &len);
-	if (prop == NULL) {
+	अगर (prop == शून्य) अणु
 		dev_err(dsi->dev, "failed to find lane data\n");
 		r = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	num_pins = len / sizeof(u32);
+	num_pins = len / माप(u32);
 
-	if (num_pins < 4 || num_pins % 2 != 0 ||
-		num_pins > dsi->num_lanes_supported * 2) {
+	अगर (num_pins < 4 || num_pins % 2 != 0 ||
+		num_pins > dsi->num_lanes_supported * 2) अणु
 		dev_err(dsi->dev, "bad number of lanes\n");
 		r = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	r = of_property_read_u32_array(ep, "lanes", lane_arr, num_pins);
-	if (r) {
+	r = of_property_पढ़ो_u32_array(ep, "lanes", lane_arr, num_pins);
+	अगर (r) अणु
 		dev_err(dsi->dev, "failed to read lane data\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	r = dsi_configure_pins(dsi, num_pins, lane_arr);
-	if (r) {
+	अगर (r) अणु
 		dev_err(dsi->dev, "failed to configure pins");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	of_node_put(ep);
 
-	return 0;
+	वापस 0;
 
 err:
 	of_node_put(ep);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static const struct dsi_of_data dsi_of_data_omap34xx = {
+अटल स्थिर काष्ठा dsi_of_data dsi_of_data_omap34xx = अणु
 	.model = DSI_MODEL_OMAP3,
 	.pll_hw = &dss_omap3_dsi_pll_hw,
-	.modules = (const struct dsi_module_id_data[]) {
-		{ .address = 0x4804fc00, .id = 0, },
-		{ },
-	},
+	.modules = (स्थिर काष्ठा dsi_module_id_data[]) अणु
+		अणु .address = 0x4804fc00, .id = 0, पूर्ण,
+		अणु पूर्ण,
+	पूर्ण,
 	.max_fck_freq = 173000000,
-	.max_pll_lpdiv = (1 << 13) - 1,
+	.max_pll_lpभाग = (1 << 13) - 1,
 	.quirks = DSI_QUIRK_REVERSE_TXCLKESC,
-};
+पूर्ण;
 
-static const struct dsi_of_data dsi_of_data_omap36xx = {
+अटल स्थिर काष्ठा dsi_of_data dsi_of_data_omap36xx = अणु
 	.model = DSI_MODEL_OMAP3,
 	.pll_hw = &dss_omap3_dsi_pll_hw,
-	.modules = (const struct dsi_module_id_data[]) {
-		{ .address = 0x4804fc00, .id = 0, },
-		{ },
-	},
+	.modules = (स्थिर काष्ठा dsi_module_id_data[]) अणु
+		अणु .address = 0x4804fc00, .id = 0, पूर्ण,
+		अणु पूर्ण,
+	पूर्ण,
 	.max_fck_freq = 173000000,
-	.max_pll_lpdiv = (1 << 13) - 1,
+	.max_pll_lpभाग = (1 << 13) - 1,
 	.quirks = DSI_QUIRK_PLL_PWR_BUG,
-};
+पूर्ण;
 
-static const struct dsi_of_data dsi_of_data_omap4 = {
+अटल स्थिर काष्ठा dsi_of_data dsi_of_data_omap4 = अणु
 	.model = DSI_MODEL_OMAP4,
 	.pll_hw = &dss_omap4_dsi_pll_hw,
-	.modules = (const struct dsi_module_id_data[]) {
-		{ .address = 0x58004000, .id = 0, },
-		{ .address = 0x58005000, .id = 1, },
-		{ },
-	},
+	.modules = (स्थिर काष्ठा dsi_module_id_data[]) अणु
+		अणु .address = 0x58004000, .id = 0, पूर्ण,
+		अणु .address = 0x58005000, .id = 1, पूर्ण,
+		अणु पूर्ण,
+	पूर्ण,
 	.max_fck_freq = 170000000,
-	.max_pll_lpdiv = (1 << 13) - 1,
+	.max_pll_lpभाग = (1 << 13) - 1,
 	.quirks = DSI_QUIRK_DCS_CMD_CONFIG_VC | DSI_QUIRK_VC_OCP_WIDTH
 		| DSI_QUIRK_GNQ,
-};
+पूर्ण;
 
-static const struct dsi_of_data dsi_of_data_omap5 = {
+अटल स्थिर काष्ठा dsi_of_data dsi_of_data_omap5 = अणु
 	.model = DSI_MODEL_OMAP5,
 	.pll_hw = &dss_omap5_dsi_pll_hw,
-	.modules = (const struct dsi_module_id_data[]) {
-		{ .address = 0x58004000, .id = 0, },
-		{ .address = 0x58009000, .id = 1, },
-		{ },
-	},
+	.modules = (स्थिर काष्ठा dsi_module_id_data[]) अणु
+		अणु .address = 0x58004000, .id = 0, पूर्ण,
+		अणु .address = 0x58009000, .id = 1, पूर्ण,
+		अणु पूर्ण,
+	पूर्ण,
 	.max_fck_freq = 209250000,
-	.max_pll_lpdiv = (1 << 13) - 1,
+	.max_pll_lpभाग = (1 << 13) - 1,
 	.quirks = DSI_QUIRK_DCS_CMD_CONFIG_VC | DSI_QUIRK_VC_OCP_WIDTH
 		| DSI_QUIRK_GNQ | DSI_QUIRK_PHY_DCC,
-};
+पूर्ण;
 
-static const struct of_device_id dsi_of_match[] = {
-	{ .compatible = "ti,omap3-dsi", .data = &dsi_of_data_omap36xx, },
-	{ .compatible = "ti,omap4-dsi", .data = &dsi_of_data_omap4, },
-	{ .compatible = "ti,omap5-dsi", .data = &dsi_of_data_omap5, },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id dsi_of_match[] = अणु
+	अणु .compatible = "ti,omap3-dsi", .data = &dsi_of_data_omap36xx, पूर्ण,
+	अणु .compatible = "ti,omap4-dsi", .data = &dsi_of_data_omap4, पूर्ण,
+	अणु .compatible = "ti,omap5-dsi", .data = &dsi_of_data_omap5, पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct soc_device_attribute dsi_soc_devices[] = {
-	{ .machine = "OMAP3[45]*",	.data = &dsi_of_data_omap34xx },
-	{ .machine = "AM35*",		.data = &dsi_of_data_omap34xx },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा soc_device_attribute dsi_soc_devices[] = अणु
+	अणु .machine = "OMAP3[45]*",	.data = &dsi_of_data_omap34xx पूर्ण,
+	अणु .machine = "AM35*",		.data = &dsi_of_data_omap34xx पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static void omap_dsi_disable_work_callback(struct work_struct *work)
-{
-	struct dsi_data *dsi = container_of(work, struct dsi_data, dsi_disable_work.work);
+अटल व्योम omap_dsi_disable_work_callback(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dsi_data *dsi = container_of(work, काष्ठा dsi_data, dsi_disable_work.work);
 
 	dsi_bus_lock(dsi);
 
-	if (dsi->iface_enabled && !dsi->video_enabled)
+	अगर (dsi->अगरace_enabled && !dsi->video_enabled)
 		dsi_disable(dsi);
 
 	dsi_bus_unlock(dsi);
-}
+पूर्ण
 
-static int dsi_probe(struct platform_device *pdev)
-{
-	const struct soc_device_attribute *soc;
-	const struct dsi_module_id_data *d;
-	struct device *dev = &pdev->dev;
-	struct dsi_data *dsi;
-	struct resource *dsi_mem;
-	struct resource *res;
-	unsigned int i;
-	int r;
+अटल पूर्णांक dsi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा soc_device_attribute *soc;
+	स्थिर काष्ठा dsi_module_id_data *d;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा dsi_data *dsi;
+	काष्ठा resource *dsi_mem;
+	काष्ठा resource *res;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक r;
 
-	dsi = devm_kzalloc(dev, sizeof(*dsi), GFP_KERNEL);
-	if (!dsi)
-		return -ENOMEM;
+	dsi = devm_kzalloc(dev, माप(*dsi), GFP_KERNEL);
+	अगर (!dsi)
+		वापस -ENOMEM;
 
 	dsi->dev = dev;
 	dev_set_drvdata(dev, dsi);
@@ -4899,205 +4900,205 @@ static int dsi_probe(struct platform_device *pdev)
 	spin_lock_init(&dsi->errors_lock);
 	dsi->errors = 0;
 
-#ifdef CONFIG_OMAP2_DSS_COLLECT_IRQ_STATS
+#अगर_घोषित CONFIG_OMAP2_DSS_COLLECT_IRQ_STATS
 	spin_lock_init(&dsi->irq_stats_lock);
-	dsi->irq_stats.last_reset = jiffies;
-#endif
+	dsi->irq_stats.last_reset = jअगरfies;
+#पूर्ण_अगर
 
 	mutex_init(&dsi->lock);
 	sema_init(&dsi->bus_lock, 1);
 
-	INIT_DEFERRABLE_WORK(&dsi->framedone_timeout_work,
-			     dsi_framedone_timeout_work_callback);
+	INIT_DEFERRABLE_WORK(&dsi->frameकरोne_समयout_work,
+			     dsi_frameकरोne_समयout_work_callback);
 
 	INIT_DEFERRABLE_WORK(&dsi->dsi_disable_work, omap_dsi_disable_work_callback);
 
-#ifdef DSI_CATCH_MISSING_TE
-	timer_setup(&dsi->te_timer, dsi_te_timeout, 0);
-#endif
+#अगर_घोषित DSI_CATCH_MISSING_TE
+	समयr_setup(&dsi->te_समयr, dsi_te_समयout, 0);
+#पूर्ण_अगर
 
-	dsi_mem = platform_get_resource_byname(pdev, IORESOURCE_MEM, "proto");
+	dsi_mem = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "proto");
 	dsi->proto_base = devm_ioremap_resource(dev, dsi_mem);
-	if (IS_ERR(dsi->proto_base))
-		return PTR_ERR(dsi->proto_base);
+	अगर (IS_ERR(dsi->proto_base))
+		वापस PTR_ERR(dsi->proto_base);
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "phy");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "phy");
 	dsi->phy_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(dsi->phy_base))
-		return PTR_ERR(dsi->phy_base);
+	अगर (IS_ERR(dsi->phy_base))
+		वापस PTR_ERR(dsi->phy_base);
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "pll");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "pll");
 	dsi->pll_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(dsi->pll_base))
-		return PTR_ERR(dsi->pll_base);
+	अगर (IS_ERR(dsi->pll_base))
+		वापस PTR_ERR(dsi->pll_base);
 
-	dsi->irq = platform_get_irq(pdev, 0);
-	if (dsi->irq < 0) {
+	dsi->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (dsi->irq < 0) अणु
 		DSSERR("platform_get_irq failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	r = devm_request_irq(dev, dsi->irq, omap_dsi_irq_handler,
 			     IRQF_SHARED, dev_name(dev), dsi);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		DSSERR("request_irq failed\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	dsi->vdds_dsi_reg = devm_regulator_get(dev, "vdd");
-	if (IS_ERR(dsi->vdds_dsi_reg)) {
-		if (PTR_ERR(dsi->vdds_dsi_reg) != -EPROBE_DEFER)
+	अगर (IS_ERR(dsi->vdds_dsi_reg)) अणु
+		अगर (PTR_ERR(dsi->vdds_dsi_reg) != -EPROBE_DEFER)
 			DSSERR("can't get DSI VDD regulator\n");
-		return PTR_ERR(dsi->vdds_dsi_reg);
-	}
+		वापस PTR_ERR(dsi->vdds_dsi_reg);
+	पूर्ण
 
 	soc = soc_device_match(dsi_soc_devices);
-	if (soc)
+	अगर (soc)
 		dsi->data = soc->data;
-	else
+	अन्यथा
 		dsi->data = of_match_node(dsi_of_match, dev->of_node)->data;
 
 	d = dsi->data->modules;
-	while (d->address != 0 && d->address != dsi_mem->start)
+	जबतक (d->address != 0 && d->address != dsi_mem->start)
 		d++;
 
-	if (d->address == 0) {
+	अगर (d->address == 0) अणु
 		DSSERR("unsupported DSI module\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dsi->module_id = d->id;
 
-	if (dsi->data->model == DSI_MODEL_OMAP4 ||
-	    dsi->data->model == DSI_MODEL_OMAP5) {
-		struct device_node *np;
+	अगर (dsi->data->model == DSI_MODEL_OMAP4 ||
+	    dsi->data->model == DSI_MODEL_OMAP5) अणु
+		काष्ठा device_node *np;
 
 		/*
-		 * The OMAP4/5 display DT bindings don't reference the padconf
+		 * The OMAP4/5 display DT bindings करोn't reference the padconf
 		 * syscon. Our only option to retrieve it is to find it by name.
 		 */
-		np = of_find_node_by_name(NULL,
+		np = of_find_node_by_name(शून्य,
 			dsi->data->model == DSI_MODEL_OMAP4 ?
 			"omap4_padconf_global" : "omap5_padconf_global");
-		if (!np)
-			return -ENODEV;
+		अगर (!np)
+			वापस -ENODEV;
 
 		dsi->syscon = syscon_node_to_regmap(np);
 		of_node_put(np);
-	}
+	पूर्ण
 
 	/* DSI VCs initialization */
-	for (i = 0; i < ARRAY_SIZE(dsi->vc); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(dsi->vc); i++)
 		dsi->vc[i].source = DSI_VC_SOURCE_L4;
 
-	r = dsi_get_clocks(dsi);
-	if (r)
-		return r;
+	r = dsi_get_घड़ीs(dsi);
+	अगर (r)
+		वापस r;
 
-	pm_runtime_enable(dev);
+	pm_runसमय_enable(dev);
 
-	/* DSI on OMAP3 doesn't have register DSI_GNQ, set number
-	 * of data to 3 by default */
-	if (dsi->data->quirks & DSI_QUIRK_GNQ) {
-		dsi_runtime_get(dsi);
+	/* DSI on OMAP3 करोesn't have रेजिस्टर DSI_GNQ, set number
+	 * of data to 3 by शेष */
+	अगर (dsi->data->quirks & DSI_QUIRK_GNQ) अणु
+		dsi_runसमय_get(dsi);
 		/* NB_DATA_LANES */
 		dsi->num_lanes_supported = 1 + REG_GET(dsi, DSI_GNQ, 11, 9);
-		dsi_runtime_put(dsi);
-	} else {
+		dsi_runसमय_put(dsi);
+	पूर्ण अन्यथा अणु
 		dsi->num_lanes_supported = 3;
-	}
+	पूर्ण
 
 	dsi->host.ops = &omap_dsi_host_ops;
 	dsi->host.dev = &pdev->dev;
 
 	r = dsi_probe_of(dsi);
-	if (r) {
+	अगर (r) अणु
 		DSSERR("Invalid DSI DT data\n");
-		goto err_pm_disable;
-	}
+		जाओ err_pm_disable;
+	पूर्ण
 
-	r = mipi_dsi_host_register(&dsi->host);
-	if (r < 0) {
+	r = mipi_dsi_host_रेजिस्टर(&dsi->host);
+	अगर (r < 0) अणु
 		dev_err(&pdev->dev, "failed to register DSI host: %d\n", r);
-		goto err_pm_disable;
-	}
+		जाओ err_pm_disable;
+	पूर्ण
 
 	r = dsi_init_output(dsi);
-	if (r)
-		goto err_dsi_host_unregister;
+	अगर (r)
+		जाओ err_dsi_host_unरेजिस्टर;
 
 	r = component_add(&pdev->dev, &dsi_component_ops);
-	if (r)
-		goto err_uninit_output;
+	अगर (r)
+		जाओ err_uninit_output;
 
-	return 0;
+	वापस 0;
 
 err_uninit_output:
 	dsi_uninit_output(dsi);
-err_dsi_host_unregister:
-	mipi_dsi_host_unregister(&dsi->host);
+err_dsi_host_unरेजिस्टर:
+	mipi_dsi_host_unरेजिस्टर(&dsi->host);
 err_pm_disable:
-	pm_runtime_disable(dev);
-	return r;
-}
+	pm_runसमय_disable(dev);
+	वापस r;
+पूर्ण
 
-static int dsi_remove(struct platform_device *pdev)
-{
-	struct dsi_data *dsi = platform_get_drvdata(pdev);
+अटल पूर्णांक dsi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dsi_data *dsi = platक्रमm_get_drvdata(pdev);
 
 	component_del(&pdev->dev, &dsi_component_ops);
 
 	dsi_uninit_output(dsi);
 
-	mipi_dsi_host_unregister(&dsi->host);
+	mipi_dsi_host_unरेजिस्टर(&dsi->host);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	if (dsi->vdds_dsi_reg != NULL && dsi->vdds_dsi_enabled) {
+	अगर (dsi->vdds_dsi_reg != शून्य && dsi->vdds_dsi_enabled) अणु
 		regulator_disable(dsi->vdds_dsi_reg);
 		dsi->vdds_dsi_enabled = false;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_runtime_suspend(struct device *dev)
-{
-	struct dsi_data *dsi = dev_get_drvdata(dev);
+अटल पूर्णांक dsi_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा dsi_data *dsi = dev_get_drvdata(dev);
 
 	dsi->is_enabled = false;
 	/* ensure the irq handler sees the is_enabled value */
 	smp_wmb();
-	/* wait for current handler to finish before turning the DSI off */
+	/* रुको क्रम current handler to finish beक्रमe turning the DSI off */
 	synchronize_irq(dsi->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsi_runtime_resume(struct device *dev)
-{
-	struct dsi_data *dsi = dev_get_drvdata(dev);
+अटल पूर्णांक dsi_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा dsi_data *dsi = dev_get_drvdata(dev);
 
 	dsi->is_enabled = true;
 	/* ensure the irq handler sees the is_enabled value */
 	smp_wmb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops dsi_pm_ops = {
-	.runtime_suspend = dsi_runtime_suspend,
-	.runtime_resume = dsi_runtime_resume,
-	SET_LATE_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend, pm_runtime_force_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops dsi_pm_ops = अणु
+	.runसमय_suspend = dsi_runसमय_suspend,
+	.runसमय_resume = dsi_runसमय_resume,
+	SET_LATE_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend, pm_runसमय_क्रमce_resume)
+पूर्ण;
 
-struct platform_driver omap_dsihw_driver = {
+काष्ठा platक्रमm_driver omap_dsihw_driver = अणु
 	.probe		= dsi_probe,
-	.remove		= dsi_remove,
-	.driver         = {
+	.हटाओ		= dsi_हटाओ,
+	.driver         = अणु
 		.name   = "omapdss_dsi",
 		.pm	= &dsi_pm_ops,
 		.of_match_table = dsi_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
+	पूर्ण,
+पूर्ण;

@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * TI DA850/OMAP-L138 chip specific setup
+ * TI DA850/OMAP-L138 chip specअगरic setup
  *
  * Copyright (C) 2009 Texas Instruments Incorporated - https://www.ti.com/
  *
@@ -12,49 +13,49 @@
  * or implied.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clk/davinci.h>
-#include <linux/clkdev.h>
-#include <linux/cpufreq.h>
-#include <linux/gpio.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/irqchip/irq-davinci-cp-intc.h>
-#include <linux/mfd/da8xx-cfgchip.h>
-#include <linux/platform_data/clk-da8xx-cfgchip.h>
-#include <linux/platform_data/clk-davinci-pll.h>
-#include <linux/platform_data/davinci-cpufreq.h>
-#include <linux/platform_data/gpio-davinci.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clk/davinci.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqchip/irq-davinci-cp-पूर्णांकc.h>
+#समावेश <linux/mfd/da8xx-cfgchip.h>
+#समावेश <linux/platक्रमm_data/clk-da8xx-cfgchip.h>
+#समावेश <linux/platक्रमm_data/clk-davinci-pll.h>
+#समावेश <linux/platक्रमm_data/davinci-cpufreq.h>
+#समावेश <linux/platक्रमm_data/gpio-davinci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include <mach/common.h>
-#include <mach/cputype.h>
-#include <mach/da8xx.h>
-#include <mach/pm.h>
+#समावेश <mach/common.h>
+#समावेश <mach/cputype.h>
+#समावेश <mach/da8xx.h>
+#समावेश <mach/pm.h>
 
-#include <clocksource/timer-davinci.h>
+#समावेश <घड़ीsource/समयr-davinci.h>
 
-#include "irqs.h"
-#include "mux.h"
+#समावेश "irqs.h"
+#समावेश "mux.h"
 
-#define DA850_PLL1_BASE		0x01e1a000
-#define DA850_TIMER64P2_BASE	0x01f0c000
-#define DA850_TIMER64P3_BASE	0x01f0d000
+#घोषणा DA850_PLL1_BASE		0x01e1a000
+#घोषणा DA850_TIMER64P2_BASE	0x01f0c000
+#घोषणा DA850_TIMER64P3_BASE	0x01f0d000
 
-#define DA850_REF_FREQ		24000000
+#घोषणा DA850_REF_FREQ		24000000
 
 /*
- * Device specific mux setup
+ * Device specअगरic mux setup
  *
  *		soc	description	mux	mode	mode	mux	dbg
  *					reg	offset	mask	mode
  */
-static const struct mux_config da850_pins[] = {
-#ifdef CONFIG_DAVINCI_MUX
+अटल स्थिर काष्ठा mux_config da850_pins[] = अणु
+#अगर_घोषित CONFIG_DAVINCI_MUX
 	/* UART0 function */
 	MUX_CFG(DA850, NUART0_CTS,	3,	24,	15,	2,	false)
 	MUX_CFG(DA850, NUART0_RTS,	3,	28,	15,	2,	false)
@@ -259,29 +260,29 @@ static const struct mux_config da850_pins[] = {
 	MUX_CFG(DA850, VPIF_DOUT15,	17,	8,	15,	1,	false)
 	MUX_CFG(DA850, VPIF_CLKO2,	19,	12,	15,	1,	false)
 	MUX_CFG(DA850, VPIF_CLKO3,	19,	20,	15,	1,	false)
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-const short da850_i2c0_pins[] __initconst = {
+स्थिर लघु da850_i2c0_pins[] __initस्थिर = अणु
 	DA850_I2C0_SDA, DA850_I2C0_SCL,
 	-1
-};
+पूर्ण;
 
-const short da850_i2c1_pins[] __initconst = {
+स्थिर लघु da850_i2c1_pins[] __initस्थिर = अणु
 	DA850_I2C1_SCL, DA850_I2C1_SDA,
 	-1
-};
+पूर्ण;
 
-const short da850_lcdcntl_pins[] __initconst = {
+स्थिर लघु da850_lcdcntl_pins[] __initस्थिर = अणु
 	DA850_LCD_D_0, DA850_LCD_D_1, DA850_LCD_D_2, DA850_LCD_D_3,
 	DA850_LCD_D_4, DA850_LCD_D_5, DA850_LCD_D_6, DA850_LCD_D_7,
 	DA850_LCD_D_8, DA850_LCD_D_9, DA850_LCD_D_10, DA850_LCD_D_11,
 	DA850_LCD_D_12, DA850_LCD_D_13, DA850_LCD_D_14, DA850_LCD_D_15,
 	DA850_LCD_PCLK, DA850_LCD_HSYNC, DA850_LCD_VSYNC, DA850_NLCD_AC_ENB_CS,
 	-1
-};
+पूर्ण;
 
-const short da850_vpif_capture_pins[] __initconst = {
+स्थिर लघु da850_vpअगर_capture_pins[] __initस्थिर = अणु
 	DA850_VPIF_DIN0, DA850_VPIF_DIN1, DA850_VPIF_DIN2, DA850_VPIF_DIN3,
 	DA850_VPIF_DIN4, DA850_VPIF_DIN5, DA850_VPIF_DIN6, DA850_VPIF_DIN7,
 	DA850_VPIF_DIN8, DA850_VPIF_DIN9, DA850_VPIF_DIN10, DA850_VPIF_DIN11,
@@ -289,9 +290,9 @@ const short da850_vpif_capture_pins[] __initconst = {
 	DA850_VPIF_CLKIN0, DA850_VPIF_CLKIN1, DA850_VPIF_CLKIN2,
 	DA850_VPIF_CLKIN3,
 	-1
-};
+पूर्ण;
 
-const short da850_vpif_display_pins[] __initconst = {
+स्थिर लघु da850_vpअगर_display_pins[] __initस्थिर = अणु
 	DA850_VPIF_DOUT0, DA850_VPIF_DOUT1, DA850_VPIF_DOUT2, DA850_VPIF_DOUT3,
 	DA850_VPIF_DOUT4, DA850_VPIF_DOUT5, DA850_VPIF_DOUT6, DA850_VPIF_DOUT7,
 	DA850_VPIF_DOUT8, DA850_VPIF_DOUT9, DA850_VPIF_DOUT10,
@@ -299,313 +300,313 @@ const short da850_vpif_display_pins[] __initconst = {
 	DA850_VPIF_DOUT14, DA850_VPIF_DOUT15, DA850_VPIF_CLKO2,
 	DA850_VPIF_CLKO3,
 	-1
-};
+पूर्ण;
 
-static struct map_desc da850_io_desc[] = {
-	{
-		.virtual	= IO_VIRT,
+अटल काष्ठा map_desc da850_io_desc[] = अणु
+	अणु
+		.भव	= IO_VIRT,
 		.pfn		= __phys_to_pfn(IO_PHYS),
 		.length		= IO_SIZE,
 		.type		= MT_DEVICE
-	},
-	{
-		.virtual	= DA8XX_CP_INTC_VIRT,
+	पूर्ण,
+	अणु
+		.भव	= DA8XX_CP_INTC_VIRT,
 		.pfn		= __phys_to_pfn(DA8XX_CP_INTC_BASE),
 		.length		= DA8XX_CP_INTC_SIZE,
 		.type		= MT_DEVICE
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* Contents of JTAG ID register used to identify exact cpu type */
-static struct davinci_id da850_ids[] = {
-	{
+/* Contents of JTAG ID रेजिस्टर used to identअगरy exact cpu type */
+अटल काष्ठा davinci_id da850_ids[] = अणु
+	अणु
 		.variant	= 0x0,
 		.part_no	= 0xb7d1,
 		.manufacturer	= 0x017,	/* 0x02f >> 1 */
 		.cpu_id		= DAVINCI_CPU_ID_DA850,
 		.name		= "da850/omap-l138",
-	},
-	{
+	पूर्ण,
+	अणु
 		.variant	= 0x1,
 		.part_no	= 0xb7d1,
 		.manufacturer	= 0x017,	/* 0x02f >> 1 */
 		.cpu_id		= DAVINCI_CPU_ID_DA850,
 		.name		= "da850/omap-l138/am18x",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * Bottom half of timer 0 is used for clock_event, top half for
- * clocksource.
+ * Bottom half of समयr 0 is used क्रम घड़ी_event, top half क्रम
+ * घड़ीsource.
  */
-static const struct davinci_timer_cfg da850_timer_cfg = {
+अटल स्थिर काष्ठा davinci_समयr_cfg da850_समयr_cfg = अणु
 	.reg = DEFINE_RES_IO(DA8XX_TIMER64P0_BASE, SZ_4K),
-	.irq = {
+	.irq = अणु
 		DEFINE_RES_IRQ(DAVINCI_INTC_IRQ(IRQ_DA8XX_TINT12_0)),
 		DEFINE_RES_IRQ(DAVINCI_INTC_IRQ(IRQ_DA8XX_TINT34_0)),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_CPU_FREQ
+#अगर_घोषित CONFIG_CPU_FREQ
 /*
  * Notes:
- * According to the TRM, minimum PLLM results in maximum power savings.
+ * According to the TRM, minimum PLLM results in maximum घातer savings.
  * The OPP definitions below should keep the PLLM as low as possible.
  *
  * The output of the PLLM must be between 300 to 600 MHz.
  */
-struct da850_opp {
-	unsigned int	freq;	/* in KHz */
-	unsigned int	prediv;
-	unsigned int	mult;
-	unsigned int	postdiv;
-	unsigned int	cvdd_min; /* in uV */
-	unsigned int	cvdd_max; /* in uV */
-};
+काष्ठा da850_opp अणु
+	अचिन्हित पूर्णांक	freq;	/* in KHz */
+	अचिन्हित पूर्णांक	preभाग;
+	अचिन्हित पूर्णांक	mult;
+	अचिन्हित पूर्णांक	postभाग;
+	अचिन्हित पूर्णांक	cvdd_min; /* in uV */
+	अचिन्हित पूर्णांक	cvdd_max; /* in uV */
+पूर्ण;
 
-static const struct da850_opp da850_opp_456 = {
+अटल स्थिर काष्ठा da850_opp da850_opp_456 = अणु
 	.freq		= 456000,
-	.prediv		= 1,
+	.preभाग		= 1,
 	.mult		= 19,
-	.postdiv	= 1,
+	.postभाग	= 1,
 	.cvdd_min	= 1300000,
 	.cvdd_max	= 1350000,
-};
+पूर्ण;
 
-static const struct da850_opp da850_opp_408 = {
+अटल स्थिर काष्ठा da850_opp da850_opp_408 = अणु
 	.freq		= 408000,
-	.prediv		= 1,
+	.preभाग		= 1,
 	.mult		= 17,
-	.postdiv	= 1,
+	.postभाग	= 1,
 	.cvdd_min	= 1300000,
 	.cvdd_max	= 1350000,
-};
+पूर्ण;
 
-static const struct da850_opp da850_opp_372 = {
+अटल स्थिर काष्ठा da850_opp da850_opp_372 = अणु
 	.freq		= 372000,
-	.prediv		= 2,
+	.preभाग		= 2,
 	.mult		= 31,
-	.postdiv	= 1,
+	.postभाग	= 1,
 	.cvdd_min	= 1200000,
 	.cvdd_max	= 1320000,
-};
+पूर्ण;
 
-static const struct da850_opp da850_opp_300 = {
+अटल स्थिर काष्ठा da850_opp da850_opp_300 = अणु
 	.freq		= 300000,
-	.prediv		= 1,
+	.preभाग		= 1,
 	.mult		= 25,
-	.postdiv	= 2,
+	.postभाग	= 2,
 	.cvdd_min	= 1200000,
 	.cvdd_max	= 1320000,
-};
+पूर्ण;
 
-static const struct da850_opp da850_opp_200 = {
+अटल स्थिर काष्ठा da850_opp da850_opp_200 = अणु
 	.freq		= 200000,
-	.prediv		= 1,
+	.preभाग		= 1,
 	.mult		= 25,
-	.postdiv	= 3,
+	.postभाग	= 3,
 	.cvdd_min	= 1100000,
 	.cvdd_max	= 1160000,
-};
+पूर्ण;
 
-static const struct da850_opp da850_opp_96 = {
+अटल स्थिर काष्ठा da850_opp da850_opp_96 = अणु
 	.freq		= 96000,
-	.prediv		= 1,
+	.preभाग		= 1,
 	.mult		= 20,
-	.postdiv	= 5,
+	.postभाग	= 5,
 	.cvdd_min	= 1000000,
 	.cvdd_max	= 1050000,
-};
+पूर्ण;
 
-#define OPP(freq) 		\
-	{				\
-		.driver_data = (unsigned int) &da850_opp_##freq,	\
+#घोषणा OPP(freq) 		\
+	अणु				\
+		.driver_data = (अचिन्हित पूर्णांक) &da850_opp_##freq,	\
 		.frequency = freq * 1000, \
-	}
+	पूर्ण
 
-static struct cpufreq_frequency_table da850_freq_table[] = {
+अटल काष्ठा cpufreq_frequency_table da850_freq_table[] = अणु
 	OPP(456),
 	OPP(408),
 	OPP(372),
 	OPP(300),
 	OPP(200),
 	OPP(96),
-	{
+	अणु
 		.driver_data		= 0,
 		.frequency	= CPUFREQ_TABLE_END,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_REGULATOR
-static int da850_set_voltage(unsigned int index);
-static int da850_regulator_init(void);
-#endif
+#अगर_घोषित CONFIG_REGULATOR
+अटल पूर्णांक da850_set_voltage(अचिन्हित पूर्णांक index);
+अटल पूर्णांक da850_regulator_init(व्योम);
+#पूर्ण_अगर
 
-static struct davinci_cpufreq_config cpufreq_info = {
+अटल काष्ठा davinci_cpufreq_config cpufreq_info = अणु
 	.freq_table = da850_freq_table,
-#ifdef CONFIG_REGULATOR
+#अगर_घोषित CONFIG_REGULATOR
 	.init = da850_regulator_init,
 	.set_voltage = da850_set_voltage,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_REGULATOR
-static struct regulator *cvdd;
+#अगर_घोषित CONFIG_REGULATOR
+अटल काष्ठा regulator *cvdd;
 
-static int da850_set_voltage(unsigned int index)
-{
-	struct da850_opp *opp;
+अटल पूर्णांक da850_set_voltage(अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा da850_opp *opp;
 
-	if (!cvdd)
-		return -ENODEV;
+	अगर (!cvdd)
+		वापस -ENODEV;
 
-	opp = (struct da850_opp *) cpufreq_info.freq_table[index].driver_data;
+	opp = (काष्ठा da850_opp *) cpufreq_info.freq_table[index].driver_data;
 
-	return regulator_set_voltage(cvdd, opp->cvdd_min, opp->cvdd_max);
-}
+	वापस regulator_set_voltage(cvdd, opp->cvdd_min, opp->cvdd_max);
+पूर्ण
 
-static int da850_regulator_init(void)
-{
-	cvdd = regulator_get(NULL, "cvdd");
-	if (WARN(IS_ERR(cvdd), "Unable to obtain voltage regulator for CVDD;"
-					" voltage scaling unsupported\n")) {
-		return PTR_ERR(cvdd);
-	}
+अटल पूर्णांक da850_regulator_init(व्योम)
+अणु
+	cvdd = regulator_get(शून्य, "cvdd");
+	अगर (WARN(IS_ERR(cvdd), "Unable to obtain voltage regulator for CVDD;"
+					" voltage scaling unsupported\n")) अणु
+		वापस PTR_ERR(cvdd);
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static struct platform_device da850_cpufreq_device = {
+अटल काष्ठा platक्रमm_device da850_cpufreq_device = अणु
 	.name			= "cpufreq-davinci",
-	.dev = {
-		.platform_data	= &cpufreq_info,
-	},
+	.dev = अणु
+		.platक्रमm_data	= &cpufreq_info,
+	पूर्ण,
 	.id = -1,
-};
+पूर्ण;
 
-unsigned int da850_max_speed = 300000;
+अचिन्हित पूर्णांक da850_max_speed = 300000;
 
-int da850_register_cpufreq(char *async_clk)
-{
-	int i;
+पूर्णांक da850_रेजिस्टर_cpufreq(अक्षर *async_clk)
+अणु
+	पूर्णांक i;
 
-	/* cpufreq driver can help keep an "async" clock constant */
-	if (async_clk)
+	/* cpufreq driver can help keep an "async" घड़ी स्थिरant */
+	अगर (async_clk)
 		clk_add_alias("async", da850_cpufreq_device.name,
-							async_clk, NULL);
-	for (i = 0; i < ARRAY_SIZE(da850_freq_table); i++) {
-		if (da850_freq_table[i].frequency <= da850_max_speed) {
+							async_clk, शून्य);
+	क्रम (i = 0; i < ARRAY_SIZE(da850_freq_table); i++) अणु
+		अगर (da850_freq_table[i].frequency <= da850_max_speed) अणु
 			cpufreq_info.freq_table = &da850_freq_table[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return platform_device_register(&da850_cpufreq_device);
-}
-#else
-int __init da850_register_cpufreq(char *async_clk)
-{
-	return 0;
-}
-#endif
+	वापस platक्रमm_device_रेजिस्टर(&da850_cpufreq_device);
+पूर्ण
+#अन्यथा
+पूर्णांक __init da850_रेजिस्टर_cpufreq(अक्षर *async_clk)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-/* VPIF resource, platform data */
-static u64 da850_vpif_dma_mask = DMA_BIT_MASK(32);
+/* VPIF resource, platक्रमm data */
+अटल u64 da850_vpअगर_dma_mask = DMA_BIT_MASK(32);
 
-static struct resource da850_vpif_resource[] = {
-	{
+अटल काष्ठा resource da850_vpअगर_resource[] = अणु
+	अणु
 		.start = DA8XX_VPIF_BASE,
 		.end   = DA8XX_VPIF_BASE + 0xfff,
 		.flags = IORESOURCE_MEM,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device da850_vpif_dev = {
+अटल काष्ठा platक्रमm_device da850_vpअगर_dev = अणु
 	.name		= "vpif",
 	.id		= -1,
-	.dev		= {
-		.dma_mask		= &da850_vpif_dma_mask,
+	.dev		= अणु
+		.dma_mask		= &da850_vpअगर_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-	.resource	= da850_vpif_resource,
-	.num_resources	= ARRAY_SIZE(da850_vpif_resource),
-};
+	पूर्ण,
+	.resource	= da850_vpअगर_resource,
+	.num_resources	= ARRAY_SIZE(da850_vpअगर_resource),
+पूर्ण;
 
-static struct resource da850_vpif_display_resource[] = {
-	{
+अटल काष्ठा resource da850_vpअगर_display_resource[] = अणु
+	अणु
 		.start = DAVINCI_INTC_IRQ(IRQ_DA850_VPIFINT),
 		.end   = DAVINCI_INTC_IRQ(IRQ_DA850_VPIFINT),
 		.flags = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device da850_vpif_display_dev = {
+अटल काष्ठा platक्रमm_device da850_vpअगर_display_dev = अणु
 	.name		= "vpif_display",
 	.id		= -1,
-	.dev		= {
-		.dma_mask		= &da850_vpif_dma_mask,
+	.dev		= अणु
+		.dma_mask		= &da850_vpअगर_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-	.resource       = da850_vpif_display_resource,
-	.num_resources  = ARRAY_SIZE(da850_vpif_display_resource),
-};
+	पूर्ण,
+	.resource       = da850_vpअगर_display_resource,
+	.num_resources  = ARRAY_SIZE(da850_vpअगर_display_resource),
+पूर्ण;
 
-static struct resource da850_vpif_capture_resource[] = {
-	{
+अटल काष्ठा resource da850_vpअगर_capture_resource[] = अणु
+	अणु
 		.start = DAVINCI_INTC_IRQ(IRQ_DA850_VPIFINT),
 		.end   = DAVINCI_INTC_IRQ(IRQ_DA850_VPIFINT),
 		.flags = IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start = DAVINCI_INTC_IRQ(IRQ_DA850_VPIFINT),
 		.end   = DAVINCI_INTC_IRQ(IRQ_DA850_VPIFINT),
 		.flags = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device da850_vpif_capture_dev = {
+अटल काष्ठा platक्रमm_device da850_vpअगर_capture_dev = अणु
 	.name		= "vpif_capture",
 	.id		= -1,
-	.dev		= {
-		.dma_mask		= &da850_vpif_dma_mask,
+	.dev		= अणु
+		.dma_mask		= &da850_vpअगर_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-	.resource       = da850_vpif_capture_resource,
-	.num_resources  = ARRAY_SIZE(da850_vpif_capture_resource),
-};
+	पूर्ण,
+	.resource       = da850_vpअगर_capture_resource,
+	.num_resources  = ARRAY_SIZE(da850_vpअगर_capture_resource),
+पूर्ण;
 
-int __init da850_register_vpif(void)
-{
-	return platform_device_register(&da850_vpif_dev);
-}
+पूर्णांक __init da850_रेजिस्टर_vpअगर(व्योम)
+अणु
+	वापस platक्रमm_device_रेजिस्टर(&da850_vpअगर_dev);
+पूर्ण
 
-int __init da850_register_vpif_display(struct vpif_display_config
+पूर्णांक __init da850_रेजिस्टर_vpअगर_display(काष्ठा vpअगर_display_config
 						*display_config)
-{
-	da850_vpif_display_dev.dev.platform_data = display_config;
-	return platform_device_register(&da850_vpif_display_dev);
-}
+अणु
+	da850_vpअगर_display_dev.dev.platक्रमm_data = display_config;
+	वापस platक्रमm_device_रेजिस्टर(&da850_vpअगर_display_dev);
+पूर्ण
 
-int __init da850_register_vpif_capture(struct vpif_capture_config
+पूर्णांक __init da850_रेजिस्टर_vpअगर_capture(काष्ठा vpअगर_capture_config
 							*capture_config)
-{
-	da850_vpif_capture_dev.dev.platform_data = capture_config;
-	return platform_device_register(&da850_vpif_capture_dev);
-}
+अणु
+	da850_vpअगर_capture_dev.dev.platक्रमm_data = capture_config;
+	वापस platक्रमm_device_रेजिस्टर(&da850_vpअगर_capture_dev);
+पूर्ण
 
-static struct davinci_gpio_platform_data da850_gpio_platform_data = {
-	.no_auto_base	= true,
+अटल काष्ठा davinci_gpio_platक्रमm_data da850_gpio_platक्रमm_data = अणु
+	.no_स्वतः_base	= true,
 	.base		= 0,
 	.ngpio		= 144,
-};
+पूर्ण;
 
-int __init da850_register_gpio(void)
-{
-	return da8xx_register_gpio(&da850_gpio_platform_data);
-}
+पूर्णांक __init da850_रेजिस्टर_gpio(व्योम)
+अणु
+	वापस da8xx_रेजिस्टर_gpio(&da850_gpio_platक्रमm_data);
+पूर्ण
 
-static const struct davinci_soc_info davinci_soc_info_da850 = {
+अटल स्थिर काष्ठा davinci_soc_info davinci_soc_info_da850 = अणु
 	.io_desc		= da850_io_desc,
 	.io_desc_num		= ARRAY_SIZE(da850_io_desc),
 	.jtag_id_reg		= DA8XX_SYSCFG0_BASE + DA8XX_JTAG_ID_REG,
@@ -617,155 +618,155 @@ static const struct davinci_soc_info davinci_soc_info_da850 = {
 	.emac_pdata		= &da8xx_emac_pdata,
 	.sram_dma		= DA8XX_SHARED_RAM_BASE,
 	.sram_len		= SZ_128K,
-};
+पूर्ण;
 
-void __init da850_init(void)
-{
+व्योम __init da850_init(व्योम)
+अणु
 	davinci_common_init(&davinci_soc_info_da850);
 
 	da8xx_syscfg0_base = ioremap(DA8XX_SYSCFG0_BASE, SZ_4K);
-	if (WARN(!da8xx_syscfg0_base, "Unable to map syscfg0 module"))
-		return;
+	अगर (WARN(!da8xx_syscfg0_base, "Unable to map syscfg0 module"))
+		वापस;
 
 	da8xx_syscfg1_base = ioremap(DA8XX_SYSCFG1_BASE, SZ_4K);
 	WARN(!da8xx_syscfg1_base, "Unable to map syscfg1 module");
-}
+पूर्ण
 
-static const struct davinci_cp_intc_config da850_cp_intc_config = {
-	.reg = {
+अटल स्थिर काष्ठा davinci_cp_पूर्णांकc_config da850_cp_पूर्णांकc_config = अणु
+	.reg = अणु
 		.start		= DA8XX_CP_INTC_BASE,
 		.end		= DA8XX_CP_INTC_BASE + SZ_8K - 1,
 		.flags		= IORESOURCE_MEM,
-	},
+	पूर्ण,
 	.num_irqs		= DA850_N_CP_INTC_IRQ,
-};
+पूर्ण;
 
-void __init da850_init_irq(void)
-{
-	davinci_cp_intc_init(&da850_cp_intc_config);
-}
+व्योम __init da850_init_irq(व्योम)
+अणु
+	davinci_cp_पूर्णांकc_init(&da850_cp_पूर्णांकc_config);
+पूर्ण
 
-void __init da850_init_time(void)
-{
-	void __iomem *pll0;
-	struct regmap *cfgchip;
-	struct clk *clk;
-	int rv;
+व्योम __init da850_init_समय(व्योम)
+अणु
+	व्योम __iomem *pll0;
+	काष्ठा regmap *cfgchip;
+	काष्ठा clk *clk;
+	पूर्णांक rv;
 
-	clk_register_fixed_rate(NULL, "ref_clk", NULL, 0, DA850_REF_FREQ);
+	clk_रेजिस्टर_fixed_rate(शून्य, "ref_clk", शून्य, 0, DA850_REF_FREQ);
 
 	pll0 = ioremap(DA8XX_PLL0_BASE, SZ_4K);
 	cfgchip = da8xx_get_cfgchip();
 
-	da850_pll0_init(NULL, pll0, cfgchip);
+	da850_pll0_init(शून्य, pll0, cfgchip);
 
-	clk = clk_get(NULL, "timer0");
-	if (WARN_ON(IS_ERR(clk))) {
+	clk = clk_get(शून्य, "timer0");
+	अगर (WARN_ON(IS_ERR(clk))) अणु
 		pr_err("Unable to get the timer clock\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	rv = davinci_timer_register(clk, &da850_timer_cfg);
+	rv = davinci_समयr_रेजिस्टर(clk, &da850_समयr_cfg);
 	WARN(rv, "Unable to register the timer: %d\n", rv);
-}
+पूर्ण
 
-static struct resource da850_pll1_resources[] = {
-	{
+अटल काष्ठा resource da850_pll1_resources[] = अणु
+	अणु
 		.start	= DA850_PLL1_BASE,
 		.end	= DA850_PLL1_BASE + SZ_4K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct davinci_pll_platform_data da850_pll1_pdata;
+अटल काष्ठा davinci_pll_platक्रमm_data da850_pll1_pdata;
 
-static struct platform_device da850_pll1_device = {
+अटल काष्ठा platक्रमm_device da850_pll1_device = अणु
 	.name		= "da850-pll1",
 	.id		= -1,
 	.resource	= da850_pll1_resources,
 	.num_resources	= ARRAY_SIZE(da850_pll1_resources),
-	.dev		= {
-		.platform_data	= &da850_pll1_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &da850_pll1_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct resource da850_psc0_resources[] = {
-	{
+अटल काष्ठा resource da850_psc0_resources[] = अणु
+	अणु
 		.start	= DA8XX_PSC0_BASE,
 		.end	= DA8XX_PSC0_BASE + SZ_4K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device da850_psc0_device = {
+अटल काष्ठा platक्रमm_device da850_psc0_device = अणु
 	.name		= "da850-psc0",
 	.id		= -1,
 	.resource	= da850_psc0_resources,
 	.num_resources	= ARRAY_SIZE(da850_psc0_resources),
-};
+पूर्ण;
 
-static struct resource da850_psc1_resources[] = {
-	{
+अटल काष्ठा resource da850_psc1_resources[] = अणु
+	अणु
 		.start	= DA8XX_PSC1_BASE,
 		.end	= DA8XX_PSC1_BASE + SZ_4K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device da850_psc1_device = {
+अटल काष्ठा platक्रमm_device da850_psc1_device = अणु
 	.name		= "da850-psc1",
 	.id		= -1,
 	.resource	= da850_psc1_resources,
 	.num_resources	= ARRAY_SIZE(da850_psc1_resources),
-};
+पूर्ण;
 
-static struct da8xx_cfgchip_clk_platform_data da850_async1_pdata;
+अटल काष्ठा da8xx_cfgchip_clk_platक्रमm_data da850_async1_pdata;
 
-static struct platform_device da850_async1_clksrc_device = {
+अटल काष्ठा platक्रमm_device da850_async1_clksrc_device = अणु
 	.name		= "da850-async1-clksrc",
 	.id		= -1,
-	.dev		= {
-		.platform_data	= &da850_async1_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &da850_async1_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct da8xx_cfgchip_clk_platform_data da850_async3_pdata;
+अटल काष्ठा da8xx_cfgchip_clk_platक्रमm_data da850_async3_pdata;
 
-static struct platform_device da850_async3_clksrc_device = {
+अटल काष्ठा platक्रमm_device da850_async3_clksrc_device = अणु
 	.name		= "da850-async3-clksrc",
 	.id		= -1,
-	.dev		= {
-		.platform_data	= &da850_async3_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &da850_async3_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct da8xx_cfgchip_clk_platform_data da850_tbclksync_pdata;
+अटल काष्ठा da8xx_cfgchip_clk_platक्रमm_data da850_tbclksync_pdata;
 
-static struct platform_device da850_tbclksync_device = {
+अटल काष्ठा platक्रमm_device da850_tbclksync_device = अणु
 	.name		= "da830-tbclksync",
 	.id		= -1,
-	.dev		= {
-		.platform_data	= &da850_tbclksync_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &da850_tbclksync_pdata,
+	पूर्ण,
+पूर्ण;
 
-void __init da850_register_clocks(void)
-{
-	/* PLL0 is registered in da850_init_time() */
+व्योम __init da850_रेजिस्टर_घड़ीs(व्योम)
+अणु
+	/* PLL0 is रेजिस्टरed in da850_init_समय() */
 
 	da850_pll1_pdata.cfgchip = da8xx_get_cfgchip();
-	platform_device_register(&da850_pll1_device);
+	platक्रमm_device_रेजिस्टर(&da850_pll1_device);
 
 	da850_async1_pdata.cfgchip = da8xx_get_cfgchip();
-	platform_device_register(&da850_async1_clksrc_device);
+	platक्रमm_device_रेजिस्टर(&da850_async1_clksrc_device);
 
 	da850_async3_pdata.cfgchip = da8xx_get_cfgchip();
-	platform_device_register(&da850_async3_clksrc_device);
+	platक्रमm_device_रेजिस्टर(&da850_async3_clksrc_device);
 
-	platform_device_register(&da850_psc0_device);
+	platक्रमm_device_रेजिस्टर(&da850_psc0_device);
 
-	platform_device_register(&da850_psc1_device);
+	platक्रमm_device_रेजिस्टर(&da850_psc1_device);
 
 	da850_tbclksync_pdata.cfgchip = da8xx_get_cfgchip();
-	platform_device_register(&da850_tbclksync_device);
-}
+	platक्रमm_device_रेजिस्टर(&da850_tbclksync_device);
+पूर्ण

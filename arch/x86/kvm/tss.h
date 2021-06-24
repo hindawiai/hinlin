@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __TSS_SEGMENT_H
-#define __TSS_SEGMENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __TSS_SEGMENT_H
+#घोषणा __TSS_SEGMENT_H
 
-struct tss_segment_32 {
+काष्ठा tss_segment_32 अणु
 	u32 prev_task_link;
 	u32 esp0;
 	u32 ss0;
@@ -30,9 +31,9 @@ struct tss_segment_32 {
 	u32 ldt_selector;
 	u16 t;
 	u16 io_map;
-};
+पूर्ण;
 
-struct tss_segment_16 {
+काष्ठा tss_segment_16 अणु
 	u16 prev_task_link;
 	u16 sp0;
 	u16 ss0;
@@ -55,6 +56,6 @@ struct tss_segment_16 {
 	u16 ss;
 	u16 ds;
 	u16 ldt;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

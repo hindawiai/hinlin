@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Landlock LSM - Security framework setup
  *
- * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
- * Copyright © 2018-2020 ANSSI
+ * Copyright तऊ 2016-2020 Mickaथ+l Salaथञn <mic@digikod.net>
+ * Copyright तऊ 2018-2020 ANSSI
  */
 
-#ifndef _SECURITY_LANDLOCK_SETUP_H
-#define _SECURITY_LANDLOCK_SETUP_H
+#अगर_अघोषित _SECURITY_LANDLOCK_SETUP_H
+#घोषणा _SECURITY_LANDLOCK_SETUP_H
 
-#include <linux/lsm_hooks.h>
+#समावेश <linux/lsm_hooks.h>
 
-extern bool landlock_initialized;
+बाह्य bool landlock_initialized;
 
-extern struct lsm_blob_sizes landlock_blob_sizes;
+बाह्य काष्ठा lsm_blob_sizes landlock_blob_sizes;
 
-#endif /* _SECURITY_LANDLOCK_SETUP_H */
+#पूर्ण_अगर /* _SECURITY_LANDLOCK_SETUP_H */

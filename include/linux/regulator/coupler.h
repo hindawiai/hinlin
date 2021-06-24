@@ -1,105 +1,106 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * coupler.h -- SoC Regulator support, coupler API.
  *
  * Regulator Coupler Interface.
  */
 
-#ifndef __LINUX_REGULATOR_COUPLER_H_
-#define __LINUX_REGULATOR_COUPLER_H_
+#अगर_अघोषित __LINUX_REGULATOR_COUPLER_H_
+#घोषणा __LINUX_REGULATOR_COUPLER_H_
 
-#include <linux/kernel.h>
-#include <linux/suspend.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/suspend.h>
 
-struct regulator_coupler;
-struct regulator_dev;
+काष्ठा regulator_coupler;
+काष्ठा regulator_dev;
 
 /**
- * struct regulator_coupler - customized regulator's coupler
+ * काष्ठा regulator_coupler - customized regulator's coupler
  *
  * Regulator's coupler allows to customize coupling algorithm.
  *
  * @list: couplers list entry
  * @attach_regulator: Callback invoked on creation of a coupled regulator,
- *                    couples are unresolved at this point. The callee should
- *                    check that it could handle the regulator and return 0 on
- *                    success, -errno on failure and 1 if given regulator is
- *                    not suitable for this coupler (case of having multiple
- *                    regulators in a system). Callback shall be implemented.
- * @detach_regulator: Callback invoked on destruction of a coupled regulator.
- *                    This callback is optional and could be NULL.
+ *                    couples are unresolved at this poपूर्णांक. The callee should
+ *                    check that it could handle the regulator and वापस 0 on
+ *                    success, -त्रुटि_सं on failure and 1 अगर given regulator is
+ *                    not suitable क्रम this coupler (हाल of having multiple
+ *                    regulators in a प्रणाली). Callback shall be implemented.
+ * @detach_regulator: Callback invoked on deकाष्ठाion of a coupled regulator.
+ *                    This callback is optional and could be शून्य.
  * @balance_voltage: Callback invoked when voltage of a coupled regulator is
  *                   changing. Called with all of the coupled rdev's being held
- *                   under "consumer lock". The callee should perform voltage
+ *                   under "consumer lock". The callee should perक्रमm voltage
  *                   balancing, changing voltage of the coupled regulators as
- *                   needed. It's up to the coupler to verify the voltage
- *                   before changing it in hardware, i.e. coupler should
+ *                   needed. It's up to the coupler to verअगरy the voltage
+ *                   beक्रमe changing it in hardware, i.e. coupler should
  *                   check consumer's min/max and etc. This callback is
- *                   optional and could be NULL, in which case a generic
+ *                   optional and could be शून्य, in which हाल a generic
  *                   voltage balancer will be used.
  */
-struct regulator_coupler {
-	struct list_head list;
+काष्ठा regulator_coupler अणु
+	काष्ठा list_head list;
 
-	int (*attach_regulator)(struct regulator_coupler *coupler,
-				struct regulator_dev *rdev);
-	int (*detach_regulator)(struct regulator_coupler *coupler,
-				struct regulator_dev *rdev);
-	int (*balance_voltage)(struct regulator_coupler *coupler,
-			       struct regulator_dev *rdev,
+	पूर्णांक (*attach_regulator)(काष्ठा regulator_coupler *coupler,
+				काष्ठा regulator_dev *rdev);
+	पूर्णांक (*detach_regulator)(काष्ठा regulator_coupler *coupler,
+				काष्ठा regulator_dev *rdev);
+	पूर्णांक (*balance_voltage)(काष्ठा regulator_coupler *coupler,
+			       काष्ठा regulator_dev *rdev,
 			       suspend_state_t state);
-};
+पूर्ण;
 
-#ifdef CONFIG_REGULATOR
-int regulator_coupler_register(struct regulator_coupler *coupler);
-const char *rdev_get_name(struct regulator_dev *rdev);
-int regulator_check_consumers(struct regulator_dev *rdev,
-			      int *min_uV, int *max_uV,
+#अगर_घोषित CONFIG_REGULATOR
+पूर्णांक regulator_coupler_रेजिस्टर(काष्ठा regulator_coupler *coupler);
+स्थिर अक्षर *rdev_get_name(काष्ठा regulator_dev *rdev);
+पूर्णांक regulator_check_consumers(काष्ठा regulator_dev *rdev,
+			      पूर्णांक *min_uV, पूर्णांक *max_uV,
 			      suspend_state_t state);
-int regulator_check_voltage(struct regulator_dev *rdev,
-			    int *min_uV, int *max_uV);
-int regulator_get_voltage_rdev(struct regulator_dev *rdev);
-int regulator_set_voltage_rdev(struct regulator_dev *rdev,
-			       int min_uV, int max_uV,
+पूर्णांक regulator_check_voltage(काष्ठा regulator_dev *rdev,
+			    पूर्णांक *min_uV, पूर्णांक *max_uV);
+पूर्णांक regulator_get_voltage_rdev(काष्ठा regulator_dev *rdev);
+पूर्णांक regulator_set_voltage_rdev(काष्ठा regulator_dev *rdev,
+			       पूर्णांक min_uV, पूर्णांक max_uV,
 			       suspend_state_t state);
-int regulator_do_balance_voltage(struct regulator_dev *rdev,
+पूर्णांक regulator_करो_balance_voltage(काष्ठा regulator_dev *rdev,
 				 suspend_state_t state, bool skip_coupled);
-#else
-static inline int regulator_coupler_register(struct regulator_coupler *coupler)
-{
-	return 0;
-}
-static inline const char *rdev_get_name(struct regulator_dev *rdev)
-{
-	return NULL;
-}
-static inline int regulator_check_consumers(struct regulator_dev *rdev,
-					    int *min_uV, int *max_uV,
+#अन्यथा
+अटल अंतरभूत पूर्णांक regulator_coupler_रेजिस्टर(काष्ठा regulator_coupler *coupler)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत स्थिर अक्षर *rdev_get_name(काष्ठा regulator_dev *rdev)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत पूर्णांक regulator_check_consumers(काष्ठा regulator_dev *rdev,
+					    पूर्णांक *min_uV, पूर्णांक *max_uV,
 					    suspend_state_t state)
-{
-	return -EINVAL;
-}
-static inline int regulator_check_voltage(struct regulator_dev *rdev,
-					  int *min_uV, int *max_uV)
-{
-	return -EINVAL;
-}
-static inline int regulator_get_voltage_rdev(struct regulator_dev *rdev)
-{
-	return -EINVAL;
-}
-static inline int regulator_set_voltage_rdev(struct regulator_dev *rdev,
-					     int min_uV, int max_uV,
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक regulator_check_voltage(काष्ठा regulator_dev *rdev,
+					  पूर्णांक *min_uV, पूर्णांक *max_uV)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक regulator_get_voltage_rdev(काष्ठा regulator_dev *rdev)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक regulator_set_voltage_rdev(काष्ठा regulator_dev *rdev,
+					     पूर्णांक min_uV, पूर्णांक max_uV,
 					     suspend_state_t state)
-{
-	return -EINVAL;
-}
-static inline int regulator_do_balance_voltage(struct regulator_dev *rdev,
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक regulator_करो_balance_voltage(काष्ठा regulator_dev *rdev,
 					       suspend_state_t state,
 					       bool skip_coupled)
-{
-	return -EINVAL;
-}
-#endif
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,138 +1,139 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BLKTRACE_H
-#define BLKTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BLKTRACE_H
+#घोषणा BLKTRACE_H
 
-#include <linux/blkdev.h>
-#include <linux/relay.h>
-#include <linux/compat.h>
-#include <uapi/linux/blktrace_api.h>
-#include <linux/list.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/relay.h>
+#समावेश <linux/compat.h>
+#समावेश <uapi/linux/blktrace_api.h>
+#समावेश <linux/list.h>
 
-#if defined(CONFIG_BLK_DEV_IO_TRACE)
+#अगर defined(CONFIG_BLK_DEV_IO_TRACE)
 
-#include <linux/sysfs.h>
+#समावेश <linux/sysfs.h>
 
-struct blk_trace {
-	int trace_state;
-	struct rchan *rchan;
-	unsigned long __percpu *sequence;
-	unsigned char __percpu *msg_data;
+काष्ठा blk_trace अणु
+	पूर्णांक trace_state;
+	काष्ठा rchan *rchan;
+	अचिन्हित दीर्घ __percpu *sequence;
+	अचिन्हित अक्षर __percpu *msg_data;
 	u16 act_mask;
 	u64 start_lba;
 	u64 end_lba;
 	u32 pid;
 	u32 dev;
-	struct dentry *dir;
-	struct list_head running_list;
+	काष्ठा dentry *dir;
+	काष्ठा list_head running_list;
 	atomic_t dropped;
-};
+पूर्ण;
 
-struct blkcg;
+काष्ठा blkcg;
 
-extern int blk_trace_ioctl(struct block_device *, unsigned, char __user *);
-extern void blk_trace_shutdown(struct request_queue *);
-extern __printf(3, 4)
-void __trace_note_message(struct blk_trace *, struct blkcg *blkcg, const char *fmt, ...);
+बाह्य पूर्णांक blk_trace_ioctl(काष्ठा block_device *, अचिन्हित, अक्षर __user *);
+बाह्य व्योम blk_trace_shutकरोwn(काष्ठा request_queue *);
+बाह्य __म_लिखो(3, 4)
+व्योम __trace_note_message(काष्ठा blk_trace *, काष्ठा blkcg *blkcg, स्थिर अक्षर *fmt, ...);
 
 /**
  * blk_add_trace_msg - Add a (simple) message to the blktrace stream
- * @q:		queue the io is for
- * @fmt:	format to print message in
- * args...	Variable argument list for format
+ * @q:		queue the io is क्रम
+ * @fmt:	क्रमmat to prपूर्णांक message in
+ * args...	Variable argument list क्रम क्रमmat
  *
  * Description:
  *     Records a (simple) message onto the blktrace stream.
  *
- *     NOTE: BLK_TN_MAX_MSG characters are output at most.
+ *     NOTE: BLK_TN_MAX_MSG अक्षरacters are output at most.
  *     NOTE: Can not use 'static inline' due to presence of var args...
  *
  **/
-#define blk_add_cgroup_trace_msg(q, cg, fmt, ...)			\
-	do {								\
-		struct blk_trace *bt;					\
+#घोषणा blk_add_cgroup_trace_msg(q, cg, fmt, ...)			\
+	करो अणु								\
+		काष्ठा blk_trace *bt;					\
 									\
-		rcu_read_lock();					\
+		rcu_पढ़ो_lock();					\
 		bt = rcu_dereference((q)->blk_trace);			\
-		if (unlikely(bt))					\
+		अगर (unlikely(bt))					\
 			__trace_note_message(bt, cg, fmt, ##__VA_ARGS__);\
-		rcu_read_unlock();					\
-	} while (0)
-#define blk_add_trace_msg(q, fmt, ...)					\
-	blk_add_cgroup_trace_msg(q, NULL, fmt, ##__VA_ARGS__)
-#define BLK_TN_MAX_MSG		128
+		rcu_पढ़ो_unlock();					\
+	पूर्ण जबतक (0)
+#घोषणा blk_add_trace_msg(q, fmt, ...)					\
+	blk_add_cgroup_trace_msg(q, शून्य, fmt, ##__VA_ARGS__)
+#घोषणा BLK_TN_MAX_MSG		128
 
-static inline bool blk_trace_note_message_enabled(struct request_queue *q)
-{
-	struct blk_trace *bt;
+अटल अंतरभूत bool blk_trace_note_message_enabled(काष्ठा request_queue *q)
+अणु
+	काष्ठा blk_trace *bt;
 	bool ret;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	bt = rcu_dereference(q->blk_trace);
 	ret = bt && (bt->act_mask & BLK_TC_NOTIFY);
-	rcu_read_unlock();
-	return ret;
-}
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
-extern void blk_add_driver_data(struct request *rq, void *data, size_t len);
-extern int blk_trace_setup(struct request_queue *q, char *name, dev_t dev,
-			   struct block_device *bdev,
-			   char __user *arg);
-extern int blk_trace_startstop(struct request_queue *q, int start);
-extern int blk_trace_remove(struct request_queue *q);
-extern void blk_trace_remove_sysfs(struct device *dev);
-extern int blk_trace_init_sysfs(struct device *dev);
+बाह्य व्योम blk_add_driver_data(काष्ठा request *rq, व्योम *data, माप_प्रकार len);
+बाह्य पूर्णांक blk_trace_setup(काष्ठा request_queue *q, अक्षर *name, dev_t dev,
+			   काष्ठा block_device *bdev,
+			   अक्षर __user *arg);
+बाह्य पूर्णांक blk_trace_startstop(काष्ठा request_queue *q, पूर्णांक start);
+बाह्य पूर्णांक blk_trace_हटाओ(काष्ठा request_queue *q);
+बाह्य व्योम blk_trace_हटाओ_sysfs(काष्ठा device *dev);
+बाह्य पूर्णांक blk_trace_init_sysfs(काष्ठा device *dev);
 
-extern struct attribute_group blk_trace_attr_group;
+बाह्य काष्ठा attribute_group blk_trace_attr_group;
 
-#else /* !CONFIG_BLK_DEV_IO_TRACE */
+#अन्यथा /* !CONFIG_BLK_DEV_IO_TRACE */
 # define blk_trace_ioctl(bdev, cmd, arg)		(-ENOTTY)
-# define blk_trace_shutdown(q)				do { } while (0)
-# define blk_add_driver_data(rq, data, len)		do {} while (0)
+# define blk_trace_shutकरोwn(q)				करो अणु पूर्ण जबतक (0)
+# define blk_add_driver_data(rq, data, len)		करो अणुपूर्ण जबतक (0)
 # define blk_trace_setup(q, name, dev, bdev, arg)	(-ENOTTY)
 # define blk_trace_startstop(q, start)			(-ENOTTY)
-# define blk_trace_remove(q)				(-ENOTTY)
-# define blk_add_trace_msg(q, fmt, ...)			do { } while (0)
-# define blk_add_cgroup_trace_msg(q, cg, fmt, ...)	do { } while (0)
-# define blk_trace_remove_sysfs(dev)			do { } while (0)
+# define blk_trace_हटाओ(q)				(-ENOTTY)
+# define blk_add_trace_msg(q, fmt, ...)			करो अणु पूर्ण जबतक (0)
+# define blk_add_cgroup_trace_msg(q, cg, fmt, ...)	करो अणु पूर्ण जबतक (0)
+# define blk_trace_हटाओ_sysfs(dev)			करो अणु पूर्ण जबतक (0)
 # define blk_trace_note_message_enabled(q)		(false)
-static inline int blk_trace_init_sysfs(struct device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक blk_trace_init_sysfs(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_BLK_DEV_IO_TRACE */
+#पूर्ण_अगर /* CONFIG_BLK_DEV_IO_TRACE */
 
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 
-struct compat_blk_user_trace_setup {
-	char name[BLKTRACE_BDEV_SIZE];
+काष्ठा compat_blk_user_trace_setup अणु
+	अक्षर name[BLKTRACE_BDEV_SIZE];
 	u16 act_mask;
 	u32 buf_size;
 	u32 buf_nr;
 	compat_u64 start_lba;
 	compat_u64 end_lba;
 	u32 pid;
-};
-#define BLKTRACESETUP32 _IOWR(0x12, 115, struct compat_blk_user_trace_setup)
+पूर्ण;
+#घोषणा BLKTRACESETUP32 _IOWR(0x12, 115, काष्ठा compat_blk_user_trace_setup)
 
-#endif
+#पूर्ण_अगर
 
-void blk_fill_rwbs(char *rwbs, unsigned int op);
+व्योम blk_fill_rwbs(अक्षर *rwbs, अचिन्हित पूर्णांक op);
 
-static inline sector_t blk_rq_trace_sector(struct request *rq)
-{
+अटल अंतरभूत sector_t blk_rq_trace_sector(काष्ठा request *rq)
+अणु
 	/*
-	 * Tracing should ignore starting sector for passthrough requests and
+	 * Tracing should ignore starting sector क्रम passthrough requests and
 	 * requests where starting sector didn't get set.
 	 */
-	if (blk_rq_is_passthrough(rq) || blk_rq_pos(rq) == (sector_t)-1)
-		return 0;
-	return blk_rq_pos(rq);
-}
+	अगर (blk_rq_is_passthrough(rq) || blk_rq_pos(rq) == (sector_t)-1)
+		वापस 0;
+	वापस blk_rq_pos(rq);
+पूर्ण
 
-static inline unsigned int blk_rq_trace_nr_sectors(struct request *rq)
-{
-	return blk_rq_is_passthrough(rq) ? 0 : blk_rq_sectors(rq);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक blk_rq_trace_nr_sectors(काष्ठा request *rq)
+अणु
+	वापस blk_rq_is_passthrough(rq) ? 0 : blk_rq_sectors(rq);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

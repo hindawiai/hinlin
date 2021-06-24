@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Karol Herbst
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,72 +22,72 @@
  *
  * Authors: Karol Herbst
  */
-#include <subdev/bios.h>
-#include <subdev/bios/bit.h>
-#include <subdev/bios/power_budget.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/bit.h>
+#समावेश <subdev/bios/घातer_budget.h>
 
-static u32
-nvbios_power_budget_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt,
+अटल u32
+nvbios_घातer_budget_table(काष्ठा nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt,
 			  u8 *len)
-{
-	struct bit_entry bit_P;
-	u32 power_budget;
+अणु
+	काष्ठा bit_entry bit_P;
+	u32 घातer_budget;
 
-	if (bit_entry(bios, 'P', &bit_P) || bit_P.version != 2 ||
+	अगर (bit_entry(bios, 'P', &bit_P) || bit_P.version != 2 ||
 	    bit_P.length < 0x30)
-		return 0;
+		वापस 0;
 
-	power_budget = nvbios_rd32(bios, bit_P.offset + 0x2c);
-	if (!power_budget)
-		return 0;
+	घातer_budget = nvbios_rd32(bios, bit_P.offset + 0x2c);
+	अगर (!घातer_budget)
+		वापस 0;
 
-	*ver = nvbios_rd08(bios, power_budget);
-	switch (*ver) {
-	case 0x20:
-	case 0x30:
-		*hdr = nvbios_rd08(bios, power_budget + 0x1);
-		*len = nvbios_rd08(bios, power_budget + 0x2);
-		*cnt = nvbios_rd08(bios, power_budget + 0x3);
-		return power_budget;
-	default:
-		break;
-	}
+	*ver = nvbios_rd08(bios, घातer_budget);
+	चयन (*ver) अणु
+	हाल 0x20:
+	हाल 0x30:
+		*hdr = nvbios_rd08(bios, घातer_budget + 0x1);
+		*len = nvbios_rd08(bios, घातer_budget + 0x2);
+		*cnt = nvbios_rd08(bios, घातer_budget + 0x3);
+		वापस घातer_budget;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvbios_power_budget_header(struct nvkm_bios *bios,
-                           struct nvbios_power_budget *budget)
-{
-	struct nvkm_subdev *subdev = &bios->subdev;
+पूर्णांक
+nvbios_घातer_budget_header(काष्ठा nvkm_bios *bios,
+                           काष्ठा nvbios_घातer_budget *budget)
+अणु
+	काष्ठा nvkm_subdev *subdev = &bios->subdev;
 	u8 ver, hdr, cnt, len, cap_entry;
 	u32 header;
 
-	if (!bios || !budget)
-		return -EINVAL;
+	अगर (!bios || !budget)
+		वापस -EINVAL;
 
-	header = nvbios_power_budget_table(bios, &ver, &hdr, &cnt, &len);
-	if (!header || !cnt)
-		return -ENODEV;
+	header = nvbios_घातer_budget_table(bios, &ver, &hdr, &cnt, &len);
+	अगर (!header || !cnt)
+		वापस -ENODEV;
 
-	switch (ver) {
-	case 0x20:
+	चयन (ver) अणु
+	हाल 0x20:
 		cap_entry = nvbios_rd08(bios, header + 0x9);
-		break;
-	case 0x30:
+		अवरोध;
+	हाल 0x30:
 		cap_entry = nvbios_rd08(bios, header + 0xa);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		cap_entry = 0xff;
-	}
+	पूर्ण
 
-	if (cap_entry >= cnt && cap_entry != 0xff) {
+	अगर (cap_entry >= cnt && cap_entry != 0xff) अणु
 		nvkm_warn(subdev,
 		          "invalid cap_entry in power budget table found\n");
 		budget->cap_entry = 0xff;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	budget->offset = header;
 	budget->ver = ver;
@@ -96,31 +97,31 @@ nvbios_power_budget_header(struct nvkm_bios *bios,
 
 	budget->cap_entry = cap_entry;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvbios_power_budget_entry(struct nvkm_bios *bios,
-                          struct nvbios_power_budget *budget,
-                          u8 idx, struct nvbios_power_budget_entry *entry)
-{
+पूर्णांक
+nvbios_घातer_budget_entry(काष्ठा nvkm_bios *bios,
+                          काष्ठा nvbios_घातer_budget *budget,
+                          u8 idx, काष्ठा nvbios_घातer_budget_entry *entry)
+अणु
 	u32 entry_offset;
 
-	if (!bios || !budget || !budget->offset || idx >= budget->ecount
+	अगर (!bios || !budget || !budget->offset || idx >= budget->ecount
 		|| !entry)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	entry_offset = budget->offset + budget->hlen + idx * budget->elen;
 
-	if (budget->ver >= 0x20) {
+	अगर (budget->ver >= 0x20) अणु
 		entry->min_w = nvbios_rd32(bios, entry_offset + 0x2);
 		entry->avg_w = nvbios_rd32(bios, entry_offset + 0x6);
 		entry->max_w = nvbios_rd32(bios, entry_offset + 0xa);
-	} else {
+	पूर्ण अन्यथा अणु
 		entry->min_w = 0;
 		entry->max_w = nvbios_rd32(bios, entry_offset + 0x2);
 		entry->avg_w = entry->max_w;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

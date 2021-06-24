@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Device driver for the Cuda and Egret system controllers found on PowerMacs
+ * Device driver क्रम the Cuda and Egret प्रणाली controllers found on PowerMacs
  * and 68k Macs.
  *
- * The Cuda or Egret is a 6805 microcontroller interfaced to the 6522 VIA.
- * This MCU controls system power, Parameter RAM, Real Time Clock and the
+ * The Cuda or Egret is a 6805 microcontroller पूर्णांकerfaced to the 6522 VIA.
+ * This MCU controls प्रणाली घातer, Parameter RAM, Real Time Clock and the
  * Apple Desktop Bus (ADB) that connects to the keyboard and mouse.
  *
  * Copyright (C) 1996 Paul Mackerras.
  */
-#include <stdarg.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/adb.h>
-#include <linux/cuda.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#ifdef CONFIG_PPC
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#else
-#include <asm/macintosh.h>
-#include <asm/macints.h>
-#include <asm/mac_via.h>
-#endif
-#include <asm/io.h>
-#include <linux/init.h>
+#समावेश <मानकतर्क.स>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/adb.h>
+#समावेश <linux/cuda.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#अगर_घोषित CONFIG_PPC
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#अन्यथा
+#समावेश <यंत्र/macपूर्णांकosh.h>
+#समावेश <यंत्र/macपूर्णांकs.h>
+#समावेश <यंत्र/mac_via.h>
+#पूर्ण_अगर
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/init.h>
 
-static volatile unsigned char __iomem *via;
-static DEFINE_SPINLOCK(cuda_lock);
+अटल अस्थिर अचिन्हित अक्षर __iomem *via;
+अटल DEFINE_SPINLOCK(cuda_lock);
 
-/* VIA registers - spaced 0x200 bytes apart */
-#define RS		0x200		/* skip between registers */
-#define B		0		/* B-side data */
-#define A		RS		/* A-side data */
-#define DIRB		(2*RS)		/* B-side direction (1=output) */
-#define DIRA		(3*RS)		/* A-side direction (1=output) */
-#define T1CL		(4*RS)		/* Timer 1 ctr/latch (low 8 bits) */
-#define T1CH		(5*RS)		/* Timer 1 counter (high 8 bits) */
-#define T1LL		(6*RS)		/* Timer 1 latch (low 8 bits) */
-#define T1LH		(7*RS)		/* Timer 1 latch (high 8 bits) */
-#define T2CL		(8*RS)		/* Timer 2 ctr/latch (low 8 bits) */
-#define T2CH		(9*RS)		/* Timer 2 counter (high 8 bits) */
-#define SR		(10*RS)		/* Shift register */
-#define ACR		(11*RS)		/* Auxiliary control register */
-#define PCR		(12*RS)		/* Peripheral control register */
-#define IFR		(13*RS)		/* Interrupt flag register */
-#define IER		(14*RS)		/* Interrupt enable register */
-#define ANH		(15*RS)		/* A-side data, no handshake */
+/* VIA रेजिस्टरs - spaced 0x200 bytes apart */
+#घोषणा RS		0x200		/* skip between रेजिस्टरs */
+#घोषणा B		0		/* B-side data */
+#घोषणा A		RS		/* A-side data */
+#घोषणा सूचीB		(2*RS)		/* B-side direction (1=output) */
+#घोषणा सूचीA		(3*RS)		/* A-side direction (1=output) */
+#घोषणा T1CL		(4*RS)		/* Timer 1 ctr/latch (low 8 bits) */
+#घोषणा T1CH		(5*RS)		/* Timer 1 counter (high 8 bits) */
+#घोषणा T1LL		(6*RS)		/* Timer 1 latch (low 8 bits) */
+#घोषणा T1LH		(7*RS)		/* Timer 1 latch (high 8 bits) */
+#घोषणा T2CL		(8*RS)		/* Timer 2 ctr/latch (low 8 bits) */
+#घोषणा T2CH		(9*RS)		/* Timer 2 counter (high 8 bits) */
+#घोषणा SR		(10*RS)		/* Shअगरt रेजिस्टर */
+#घोषणा ACR		(11*RS)		/* Auxiliary control रेजिस्टर */
+#घोषणा PCR		(12*RS)		/* Peripheral control रेजिस्टर */
+#घोषणा IFR		(13*RS)		/* Interrupt flag रेजिस्टर */
+#घोषणा IER		(14*RS)		/* Interrupt enable रेजिस्टर */
+#घोषणा ANH		(15*RS)		/* A-side data, no handshake */
 
 /*
- * When the Cuda design replaced the Egret, some signal names and
+ * When the Cuda design replaced the Egret, some संकेत names and
  * logic sense changed. They all serve the same purposes, however.
  *
  *   VIA pin       |  Egret pin
@@ -68,738 +69,738 @@ static DEFINE_SPINLOCK(cuda_lock);
  *   PB5 (output)  |  Transfer in progress  (active low)
  */
 
-/* Bits in Port B data register */
-#define TREQ		0x08		/* Transfer request */
-#define TACK		0x10		/* Transfer acknowledge */
-#define TIP		0x20		/* Transfer in progress */
+/* Bits in Port B data रेजिस्टर */
+#घोषणा TREQ		0x08		/* Transfer request */
+#घोषणा TACK		0x10		/* Transfer acknowledge */
+#घोषणा TIP		0x20		/* Transfer in progress */
 
 /* Bits in ACR */
-#define SR_CTRL		0x1c		/* Shift register control bits */
-#define SR_EXT		0x0c		/* Shift on external clock */
-#define SR_OUT		0x10		/* Shift out if 1 */
+#घोषणा SR_CTRL		0x1c		/* Shअगरt रेजिस्टर control bits */
+#घोषणा SR_EXT		0x0c		/* Shअगरt on बाह्यal घड़ी */
+#घोषणा SR_OUT		0x10		/* Shअगरt out अगर 1 */
 
 /* Bits in IFR and IER */
-#define IER_SET		0x80		/* set bits in IER */
-#define IER_CLR		0		/* clear bits in IER */
-#define SR_INT		0x04		/* Shift register full/empty */
+#घोषणा IER_SET		0x80		/* set bits in IER */
+#घोषणा IER_CLR		0		/* clear bits in IER */
+#घोषणा SR_INT		0x04		/* Shअगरt रेजिस्टर full/empty */
 
 /* Duration of byte acknowledgement pulse (us) */
-#define EGRET_TACK_ASSERTED_DELAY	300
-#define EGRET_TACK_NEGATED_DELAY	400
+#घोषणा EGRET_TACK_ASSERTED_DELAY	300
+#घोषणा EGRET_TACK_NEGATED_DELAY	400
 
-/* Interval from interrupt to start of session (us) */
-#define EGRET_SESSION_DELAY		450
+/* Interval from पूर्णांकerrupt to start of session (us) */
+#घोषणा EGRET_SESSION_DELAY		450
 
-#ifdef CONFIG_PPC
-#define mcu_is_egret	false
-#else
-static bool mcu_is_egret;
-#endif
+#अगर_घोषित CONFIG_PPC
+#घोषणा mcu_is_egret	false
+#अन्यथा
+अटल bool mcu_is_egret;
+#पूर्ण_अगर
 
-static inline bool TREQ_asserted(u8 portb)
-{
-	return !(portb & TREQ);
-}
+अटल अंतरभूत bool TREQ_निश्चितed(u8 portb)
+अणु
+	वापस !(portb & TREQ);
+पूर्ण
 
-static inline void assert_TIP(void)
-{
-	if (mcu_is_egret) {
+अटल अंतरभूत व्योम निश्चित_TIP(व्योम)
+अणु
+	अगर (mcu_is_egret) अणु
 		udelay(EGRET_SESSION_DELAY);
 		out_8(&via[B], in_8(&via[B]) | TIP);
-	} else
+	पूर्ण अन्यथा
 		out_8(&via[B], in_8(&via[B]) & ~TIP);
-}
+पूर्ण
 
-static inline void assert_TIP_and_TACK(void)
-{
-	if (mcu_is_egret) {
+अटल अंतरभूत व्योम निश्चित_TIP_and_TACK(व्योम)
+अणु
+	अगर (mcu_is_egret) अणु
 		udelay(EGRET_SESSION_DELAY);
 		out_8(&via[B], in_8(&via[B]) | TIP | TACK);
-	} else
+	पूर्ण अन्यथा
 		out_8(&via[B], in_8(&via[B]) & ~(TIP | TACK));
-}
+पूर्ण
 
-static inline void assert_TACK(void)
-{
-	if (mcu_is_egret) {
+अटल अंतरभूत व्योम निश्चित_TACK(व्योम)
+अणु
+	अगर (mcu_is_egret) अणु
 		udelay(EGRET_TACK_NEGATED_DELAY);
 		out_8(&via[B], in_8(&via[B]) | TACK);
-	} else
+	पूर्ण अन्यथा
 		out_8(&via[B], in_8(&via[B]) & ~TACK);
-}
+पूर्ण
 
-static inline void toggle_TACK(void)
-{
+अटल अंतरभूत व्योम toggle_TACK(व्योम)
+अणु
 	out_8(&via[B], in_8(&via[B]) ^ TACK);
-}
+पूर्ण
 
-static inline void negate_TACK(void)
-{
-	if (mcu_is_egret) {
+अटल अंतरभूत व्योम negate_TACK(व्योम)
+अणु
+	अगर (mcu_is_egret) अणु
 		udelay(EGRET_TACK_ASSERTED_DELAY);
 		out_8(&via[B], in_8(&via[B]) & ~TACK);
-	} else
+	पूर्ण अन्यथा
 		out_8(&via[B], in_8(&via[B]) | TACK);
-}
+पूर्ण
 
-static inline void negate_TIP_and_TACK(void)
-{
-	if (mcu_is_egret) {
+अटल अंतरभूत व्योम negate_TIP_and_TACK(व्योम)
+अणु
+	अगर (mcu_is_egret) अणु
 		udelay(EGRET_TACK_ASSERTED_DELAY);
 		out_8(&via[B], in_8(&via[B]) & ~(TIP | TACK));
-	} else
+	पूर्ण अन्यथा
 		out_8(&via[B], in_8(&via[B]) | TIP | TACK);
-}
+पूर्ण
 
-static enum cuda_state {
+अटल क्रमागत cuda_state अणु
     idle,
     sent_first_byte,
     sending,
-    reading,
-    read_done,
-    awaiting_reply
-} cuda_state;
+    पढ़ोing,
+    पढ़ो_करोne,
+    aरुकोing_reply
+पूर्ण cuda_state;
 
-static struct adb_request *current_req;
-static struct adb_request *last_req;
-static unsigned char cuda_rbuf[16];
-static unsigned char *reply_ptr;
-static int reading_reply;
-static int data_index;
-static int cuda_irq;
-#ifdef CONFIG_PPC
-static struct device_node *vias;
-#endif
-static int cuda_fully_inited;
+अटल काष्ठा adb_request *current_req;
+अटल काष्ठा adb_request *last_req;
+अटल अचिन्हित अक्षर cuda_rbuf[16];
+अटल अचिन्हित अक्षर *reply_ptr;
+अटल पूर्णांक पढ़ोing_reply;
+अटल पूर्णांक data_index;
+अटल पूर्णांक cuda_irq;
+#अगर_घोषित CONFIG_PPC
+अटल काष्ठा device_node *vias;
+#पूर्ण_अगर
+अटल पूर्णांक cuda_fully_inited;
 
-#ifdef CONFIG_ADB
-static int cuda_probe(void);
-static int cuda_send_request(struct adb_request *req, int sync);
-static int cuda_adb_autopoll(int devs);
-static int cuda_reset_adb_bus(void);
-#endif /* CONFIG_ADB */
+#अगर_घोषित CONFIG_ADB
+अटल पूर्णांक cuda_probe(व्योम);
+अटल पूर्णांक cuda_send_request(काष्ठा adb_request *req, पूर्णांक sync);
+अटल पूर्णांक cuda_adb_स्वतःpoll(पूर्णांक devs);
+अटल पूर्णांक cuda_reset_adb_bus(व्योम);
+#पूर्ण_अगर /* CONFIG_ADB */
 
-static int cuda_init_via(void);
-static void cuda_start(void);
-static irqreturn_t cuda_interrupt(int irq, void *arg);
-static void cuda_input(unsigned char *buf, int nb);
-void cuda_poll(void);
-static int cuda_write(struct adb_request *req);
+अटल पूर्णांक cuda_init_via(व्योम);
+अटल व्योम cuda_start(व्योम);
+अटल irqवापस_t cuda_पूर्णांकerrupt(पूर्णांक irq, व्योम *arg);
+अटल व्योम cuda_input(अचिन्हित अक्षर *buf, पूर्णांक nb);
+व्योम cuda_poll(व्योम);
+अटल पूर्णांक cuda_ग_लिखो(काष्ठा adb_request *req);
 
-int cuda_request(struct adb_request *req,
-		 void (*done)(struct adb_request *), int nbytes, ...);
+पूर्णांक cuda_request(काष्ठा adb_request *req,
+		 व्योम (*करोne)(काष्ठा adb_request *), पूर्णांक nbytes, ...);
 
-#ifdef CONFIG_ADB
-struct adb_driver via_cuda_driver = {
+#अगर_घोषित CONFIG_ADB
+काष्ठा adb_driver via_cuda_driver = अणु
 	.name         = "CUDA",
 	.probe        = cuda_probe,
 	.send_request = cuda_send_request,
-	.autopoll     = cuda_adb_autopoll,
+	.स्वतःpoll     = cuda_adb_स्वतःpoll,
 	.poll         = cuda_poll,
 	.reset_bus    = cuda_reset_adb_bus,
-};
-#endif /* CONFIG_ADB */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_ADB */
 
-#ifdef CONFIG_MAC
-int __init find_via_cuda(void)
-{
-    struct adb_request req;
-    int err;
+#अगर_घोषित CONFIG_MAC
+पूर्णांक __init find_via_cuda(व्योम)
+अणु
+    काष्ठा adb_request req;
+    पूर्णांक err;
 
-    if (macintosh_config->adb_type != MAC_ADB_CUDA &&
-        macintosh_config->adb_type != MAC_ADB_EGRET)
-	return 0;
+    अगर (macपूर्णांकosh_config->adb_type != MAC_ADB_CUDA &&
+        macपूर्णांकosh_config->adb_type != MAC_ADB_EGRET)
+	वापस 0;
 
     via = via1;
     cuda_state = idle;
-    mcu_is_egret = macintosh_config->adb_type == MAC_ADB_EGRET;
+    mcu_is_egret = macपूर्णांकosh_config->adb_type == MAC_ADB_EGRET;
 
     err = cuda_init_via();
-    if (err) {
-	printk(KERN_ERR "cuda_init_via() failed\n");
-	via = NULL;
-	return 0;
-    }
+    अगर (err) अणु
+	prपूर्णांकk(KERN_ERR "cuda_init_via() failed\n");
+	via = शून्य;
+	वापस 0;
+    पूर्ण
 
-    /* enable autopoll */
-    cuda_request(&req, NULL, 3, CUDA_PACKET, CUDA_AUTOPOLL, 1);
-    while (!req.complete)
+    /* enable स्वतःpoll */
+    cuda_request(&req, शून्य, 3, CUDA_PACKET, CUDA_AUTOPOLL, 1);
+    जबतक (!req.complete)
 	cuda_poll();
 
-    return 1;
-}
-#else
-int __init find_via_cuda(void)
-{
-    struct adb_request req;
+    वापस 1;
+पूर्ण
+#अन्यथा
+पूर्णांक __init find_via_cuda(व्योम)
+अणु
+    काष्ठा adb_request req;
     phys_addr_t taddr;
-    const u32 *reg;
-    int err;
+    स्थिर u32 *reg;
+    पूर्णांक err;
 
-    if (vias != 0)
-	return 1;
-    vias = of_find_node_by_name(NULL, "via-cuda");
-    if (vias == 0)
-	return 0;
+    अगर (vias != 0)
+	वापस 1;
+    vias = of_find_node_by_name(शून्य, "via-cuda");
+    अगर (vias == 0)
+	वापस 0;
 
-    reg = of_get_property(vias, "reg", NULL);
-    if (reg == NULL) {
-	    printk(KERN_ERR "via-cuda: No \"reg\" property !\n");
-	    goto fail;
-    }
+    reg = of_get_property(vias, "reg", शून्य);
+    अगर (reg == शून्य) अणु
+	    prपूर्णांकk(KERN_ERR "via-cuda: No \"reg\" property !\n");
+	    जाओ fail;
+    पूर्ण
     taddr = of_translate_address(vias, reg);
-    if (taddr == 0) {
-	    printk(KERN_ERR "via-cuda: Can't translate address !\n");
-	    goto fail;
-    }
+    अगर (taddr == 0) अणु
+	    prपूर्णांकk(KERN_ERR "via-cuda: Can't translate address !\n");
+	    जाओ fail;
+    पूर्ण
     via = ioremap(taddr, 0x2000);
-    if (via == NULL) {
-	    printk(KERN_ERR "via-cuda: Can't map address !\n");
-	    goto fail;
-    }
+    अगर (via == शून्य) अणु
+	    prपूर्णांकk(KERN_ERR "via-cuda: Can't map address !\n");
+	    जाओ fail;
+    पूर्ण
 
     cuda_state = idle;
     sys_ctrler = SYS_CTRLER_CUDA;
 
     err = cuda_init_via();
-    if (err) {
-	printk(KERN_ERR "cuda_init_via() failed\n");
-	via = NULL;
-	return 0;
-    }
+    अगर (err) अणु
+	prपूर्णांकk(KERN_ERR "cuda_init_via() failed\n");
+	via = शून्य;
+	वापस 0;
+    पूर्ण
 
-    /* Clear and enable interrupts, but only on PPC. On 68K it's done  */
-    /* for us by the main VIA driver in arch/m68k/mac/via.c        */
+    /* Clear and enable पूर्णांकerrupts, but only on PPC. On 68K it's करोne  */
+    /* क्रम us by the मुख्य VIA driver in arch/m68k/mac/via.c        */
 
-    out_8(&via[IFR], 0x7f);	/* clear interrupts by writing 1s */
-    out_8(&via[IER], IER_SET|SR_INT); /* enable interrupt from SR */
+    out_8(&via[IFR], 0x7f);	/* clear पूर्णांकerrupts by writing 1s */
+    out_8(&via[IER], IER_SET|SR_INT); /* enable पूर्णांकerrupt from SR */
 
-    /* enable autopoll */
-    cuda_request(&req, NULL, 3, CUDA_PACKET, CUDA_AUTOPOLL, 1);
-    while (!req.complete)
+    /* enable स्वतःpoll */
+    cuda_request(&req, शून्य, 3, CUDA_PACKET, CUDA_AUTOPOLL, 1);
+    जबतक (!req.complete)
 	cuda_poll();
 
-    return 1;
+    वापस 1;
 
  fail:
     of_node_put(vias);
-    vias = NULL;
-    return 0;
-}
-#endif /* !defined CONFIG_MAC */
+    vias = शून्य;
+    वापस 0;
+पूर्ण
+#पूर्ण_अगर /* !defined CONFIG_MAC */
 
-static int __init via_cuda_start(void)
-{
-    if (via == NULL)
-	return -ENODEV;
+अटल पूर्णांक __init via_cuda_start(व्योम)
+अणु
+    अगर (via == शून्य)
+	वापस -ENODEV;
 
-#ifdef CONFIG_MAC
+#अगर_घोषित CONFIG_MAC
     cuda_irq = IRQ_MAC_ADB;
-#else
+#अन्यथा
     cuda_irq = irq_of_parse_and_map(vias, 0);
-    if (!cuda_irq) {
-	printk(KERN_ERR "via-cuda: can't map interrupts for %pOF\n",
+    अगर (!cuda_irq) अणु
+	prपूर्णांकk(KERN_ERR "via-cuda: can't map interrupts for %pOF\n",
 	       vias);
-	return -ENODEV;
-    }
-#endif
+	वापस -ENODEV;
+    पूर्ण
+#पूर्ण_अगर
 
-    if (request_irq(cuda_irq, cuda_interrupt, 0, "ADB", cuda_interrupt)) {
-	printk(KERN_ERR "via-cuda: can't request irq %d\n", cuda_irq);
-	return -EAGAIN;
-    }
+    अगर (request_irq(cuda_irq, cuda_पूर्णांकerrupt, 0, "ADB", cuda_पूर्णांकerrupt)) अणु
+	prपूर्णांकk(KERN_ERR "via-cuda: can't request irq %d\n", cuda_irq);
+	वापस -EAGAIN;
+    पूर्ण
 
     pr_info("Macintosh Cuda and Egret driver.\n");
 
     cuda_fully_inited = 1;
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 device_initcall(via_cuda_start);
 
-#ifdef CONFIG_ADB
-static int
-cuda_probe(void)
-{
-#ifdef CONFIG_PPC
-    if (sys_ctrler != SYS_CTRLER_CUDA)
-	return -ENODEV;
-#else
-    if (macintosh_config->adb_type != MAC_ADB_CUDA &&
-        macintosh_config->adb_type != MAC_ADB_EGRET)
-	return -ENODEV;
-#endif
-    if (via == NULL)
-	return -ENODEV;
-    return 0;
-}
-#endif /* CONFIG_ADB */
+#अगर_घोषित CONFIG_ADB
+अटल पूर्णांक
+cuda_probe(व्योम)
+अणु
+#अगर_घोषित CONFIG_PPC
+    अगर (sys_ctrler != SYS_CTRLER_CUDA)
+	वापस -ENODEV;
+#अन्यथा
+    अगर (macपूर्णांकosh_config->adb_type != MAC_ADB_CUDA &&
+        macपूर्णांकosh_config->adb_type != MAC_ADB_EGRET)
+	वापस -ENODEV;
+#पूर्ण_अगर
+    अगर (via == शून्य)
+	वापस -ENODEV;
+    वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ADB */
 
-static int __init sync_egret(void)
-{
-	if (TREQ_asserted(in_8(&via[B]))) {
+अटल पूर्णांक __init sync_egret(व्योम)
+अणु
+	अगर (TREQ_निश्चितed(in_8(&via[B]))) अणु
 		/* Complete the inbound transfer */
-		assert_TIP_and_TACK();
-		while (1) {
+		निश्चित_TIP_and_TACK();
+		जबतक (1) अणु
 			negate_TACK();
 			mdelay(1);
-			(void)in_8(&via[SR]);
-			assert_TACK();
-			if (!TREQ_asserted(in_8(&via[B])))
-				break;
-		}
+			(व्योम)in_8(&via[SR]);
+			निश्चित_TACK();
+			अगर (!TREQ_निश्चितed(in_8(&via[B])))
+				अवरोध;
+		पूर्ण
 		negate_TIP_and_TACK();
-	} else if (in_8(&via[B]) & TIP) {
+	पूर्ण अन्यथा अगर (in_8(&via[B]) & TIP) अणु
 		/* Terminate the outbound transfer */
 		negate_TACK();
-		assert_TACK();
+		निश्चित_TACK();
 		mdelay(1);
 		negate_TIP_and_TACK();
-	}
-	/* Clear shift register interrupt */
-	if (in_8(&via[IFR]) & SR_INT)
-		(void)in_8(&via[SR]);
-	return 0;
-}
+	पूर्ण
+	/* Clear shअगरt रेजिस्टर पूर्णांकerrupt */
+	अगर (in_8(&via[IFR]) & SR_INT)
+		(व्योम)in_8(&via[SR]);
+	वापस 0;
+पूर्ण
 
-#define WAIT_FOR(cond, what)					\
-    do {                                                        \
-    	int x;							\
-	for (x = 1000; !(cond); --x) {				\
-	    if (x == 0) {					\
+#घोषणा WAIT_FOR(cond, what)					\
+    करो अणु                                                        \
+    	पूर्णांक x;							\
+	क्रम (x = 1000; !(cond); --x) अणु				\
+	    अगर (x == 0) अणु					\
 		pr_err("Timeout waiting for " what "\n");	\
-		return -ENXIO;					\
-	    }							\
+		वापस -ENXIO;					\
+	    पूर्ण							\
 	    udelay(100);					\
-	}							\
-    } while (0)
+	पूर्ण							\
+    पूर्ण जबतक (0)
 
-static int
-__init cuda_init_via(void)
-{
-#ifdef CONFIG_PPC
-    out_8(&via[IER], 0x7f);					/* disable interrupts from VIA */
-    (void)in_8(&via[IER]);
-#else
-    out_8(&via[IER], SR_INT);					/* disable SR interrupt from VIA */
-#endif
+अटल पूर्णांक
+__init cuda_init_via(व्योम)
+अणु
+#अगर_घोषित CONFIG_PPC
+    out_8(&via[IER], 0x7f);					/* disable पूर्णांकerrupts from VIA */
+    (व्योम)in_8(&via[IER]);
+#अन्यथा
+    out_8(&via[IER], SR_INT);					/* disable SR पूर्णांकerrupt from VIA */
+#पूर्ण_अगर
 
-    out_8(&via[DIRB], (in_8(&via[DIRB]) | TACK | TIP) & ~TREQ);	/* TACK & TIP out */
+    out_8(&via[सूचीB], (in_8(&via[सूचीB]) | TACK | TIP) & ~TREQ);	/* TACK & TIP out */
     out_8(&via[ACR], (in_8(&via[ACR]) & ~SR_CTRL) | SR_EXT);	/* SR data in */
-    (void)in_8(&via[SR]);					/* clear any left-over data */
+    (व्योम)in_8(&via[SR]);					/* clear any left-over data */
 
-    if (mcu_is_egret)
-	return sync_egret();
+    अगर (mcu_is_egret)
+	वापस sync_egret();
 
     negate_TIP_and_TACK();
 
-    /* delay 4ms and then clear any pending interrupt */
+    /* delay 4ms and then clear any pending पूर्णांकerrupt */
     mdelay(4);
-    (void)in_8(&via[SR]);
+    (व्योम)in_8(&via[SR]);
     out_8(&via[IFR], SR_INT);
 
-    /* sync with the CUDA - assert TACK without TIP */
-    assert_TACK();
+    /* sync with the CUDA - निश्चित TACK without TIP */
+    निश्चित_TACK();
 
-    /* wait for the CUDA to assert TREQ in response */
-    WAIT_FOR(TREQ_asserted(in_8(&via[B])), "CUDA response to sync");
+    /* रुको क्रम the CUDA to निश्चित TREQ in response */
+    WAIT_FOR(TREQ_निश्चितed(in_8(&via[B])), "CUDA response to sync");
 
-    /* wait for the interrupt and then clear it */
+    /* रुको क्रम the पूर्णांकerrupt and then clear it */
     WAIT_FOR(in_8(&via[IFR]) & SR_INT, "CUDA response to sync (2)");
-    (void)in_8(&via[SR]);
+    (व्योम)in_8(&via[SR]);
     out_8(&via[IFR], SR_INT);
 
     /* finish the sync by negating TACK */
     negate_TACK();
 
-    /* wait for the CUDA to negate TREQ and the corresponding interrupt */
-    WAIT_FOR(!TREQ_asserted(in_8(&via[B])), "CUDA response to sync (3)");
+    /* रुको क्रम the CUDA to negate TREQ and the corresponding पूर्णांकerrupt */
+    WAIT_FOR(!TREQ_निश्चितed(in_8(&via[B])), "CUDA response to sync (3)");
     WAIT_FOR(in_8(&via[IFR]) & SR_INT, "CUDA response to sync (4)");
-    (void)in_8(&via[SR]);
+    (व्योम)in_8(&via[SR]);
     out_8(&via[IFR], SR_INT);
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
-#ifdef CONFIG_ADB
+#अगर_घोषित CONFIG_ADB
 /* Send an ADB command */
-static int
-cuda_send_request(struct adb_request *req, int sync)
-{
-    int i;
+अटल पूर्णांक
+cuda_send_request(काष्ठा adb_request *req, पूर्णांक sync)
+अणु
+    पूर्णांक i;
 
-    if ((via == NULL) || !cuda_fully_inited) {
+    अगर ((via == शून्य) || !cuda_fully_inited) अणु
 	req->complete = 1;
-	return -ENXIO;
-    }
+	वापस -ENXIO;
+    पूर्ण
   
     req->reply_expected = 1;
 
-    i = cuda_write(req);
-    if (i)
-	return i;
+    i = cuda_ग_लिखो(req);
+    अगर (i)
+	वापस i;
 
-    if (sync) {
-	while (!req->complete)
+    अगर (sync) अणु
+	जबतक (!req->complete)
 	    cuda_poll();
-    }
-    return 0;
-}
+    पूर्ण
+    वापस 0;
+पूर्ण
 
 
-/* Enable/disable autopolling */
-static int
-cuda_adb_autopoll(int devs)
-{
-    struct adb_request req;
+/* Enable/disable स्वतःpolling */
+अटल पूर्णांक
+cuda_adb_स्वतःpoll(पूर्णांक devs)
+अणु
+    काष्ठा adb_request req;
 
-    if ((via == NULL) || !cuda_fully_inited)
-	return -ENXIO;
+    अगर ((via == शून्य) || !cuda_fully_inited)
+	वापस -ENXIO;
 
-    cuda_request(&req, NULL, 3, CUDA_PACKET, CUDA_AUTOPOLL, (devs? 1: 0));
-    while (!req.complete)
+    cuda_request(&req, शून्य, 3, CUDA_PACKET, CUDA_AUTOPOLL, (devs? 1: 0));
+    जबतक (!req.complete)
 	cuda_poll();
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
-/* Reset adb bus - how do we do this?? */
-static int
-cuda_reset_adb_bus(void)
-{
-    struct adb_request req;
+/* Reset adb bus - how करो we करो this?? */
+अटल पूर्णांक
+cuda_reset_adb_bus(व्योम)
+अणु
+    काष्ठा adb_request req;
 
-    if ((via == NULL) || !cuda_fully_inited)
-	return -ENXIO;
+    अगर ((via == शून्य) || !cuda_fully_inited)
+	वापस -ENXIO;
 
-    cuda_request(&req, NULL, 2, ADB_PACKET, 0);		/* maybe? */
-    while (!req.complete)
+    cuda_request(&req, शून्य, 2, ADB_PACKET, 0);		/* maybe? */
+    जबतक (!req.complete)
 	cuda_poll();
-    return 0;
-}
-#endif /* CONFIG_ADB */
+    वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ADB */
 
-/* Construct and send a cuda request */
-int
-cuda_request(struct adb_request *req, void (*done)(struct adb_request *),
-	     int nbytes, ...)
-{
-    va_list list;
-    int i;
+/* Conकाष्ठा and send a cuda request */
+पूर्णांक
+cuda_request(काष्ठा adb_request *req, व्योम (*करोne)(काष्ठा adb_request *),
+	     पूर्णांक nbytes, ...)
+अणु
+    बहु_सूची list;
+    पूर्णांक i;
 
-    if (via == NULL) {
+    अगर (via == शून्य) अणु
 	req->complete = 1;
-	return -ENXIO;
-    }
+	वापस -ENXIO;
+    पूर्ण
 
     req->nbytes = nbytes;
-    req->done = done;
-    va_start(list, nbytes);
-    for (i = 0; i < nbytes; ++i)
-	req->data[i] = va_arg(list, int);
-    va_end(list);
+    req->करोne = करोne;
+    बहु_शुरू(list, nbytes);
+    क्रम (i = 0; i < nbytes; ++i)
+	req->data[i] = बहु_तर्क(list, पूर्णांक);
+    बहु_पूर्ण(list);
     req->reply_expected = 1;
-    return cuda_write(req);
-}
+    वापस cuda_ग_लिखो(req);
+पूर्ण
 EXPORT_SYMBOL(cuda_request);
 
-static int
-cuda_write(struct adb_request *req)
-{
-    unsigned long flags;
+अटल पूर्णांक
+cuda_ग_लिखो(काष्ठा adb_request *req)
+अणु
+    अचिन्हित दीर्घ flags;
 
-    if (req->nbytes < 2 || req->data[0] > CUDA_PACKET) {
+    अगर (req->nbytes < 2 || req->data[0] > CUDA_PACKET) अणु
 	req->complete = 1;
-	return -EINVAL;
-    }
-    req->next = NULL;
+	वापस -EINVAL;
+    पूर्ण
+    req->next = शून्य;
     req->sent = 0;
     req->complete = 0;
     req->reply_len = 0;
 
     spin_lock_irqsave(&cuda_lock, flags);
-    if (current_req != 0) {
+    अगर (current_req != 0) अणु
 	last_req->next = req;
 	last_req = req;
-    } else {
+    पूर्ण अन्यथा अणु
 	current_req = req;
 	last_req = req;
-	if (cuda_state == idle)
+	अगर (cuda_state == idle)
 	    cuda_start();
-    }
+    पूर्ण
     spin_unlock_irqrestore(&cuda_lock, flags);
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
-static void
-cuda_start(void)
-{
-    /* assert cuda_state == idle */
-    if (current_req == NULL)
-	return;
+अटल व्योम
+cuda_start(व्योम)
+अणु
+    /* निश्चित cuda_state == idle */
+    अगर (current_req == शून्य)
+	वापस;
     data_index = 0;
-    if (TREQ_asserted(in_8(&via[B])))
-	return;			/* a byte is coming in from the CUDA */
+    अगर (TREQ_निश्चितed(in_8(&via[B])))
+	वापस;			/* a byte is coming in from the CUDA */
 
-    /* set the shift register to shift out and send a byte */
+    /* set the shअगरt रेजिस्टर to shअगरt out and send a byte */
     out_8(&via[ACR], in_8(&via[ACR]) | SR_OUT);
     out_8(&via[SR], current_req->data[data_index++]);
-    if (mcu_is_egret)
-	assert_TIP_and_TACK();
-    else
-	assert_TIP();
+    अगर (mcu_is_egret)
+	निश्चित_TIP_and_TACK();
+    अन्यथा
+	निश्चित_TIP();
     cuda_state = sent_first_byte;
-}
+पूर्ण
 
-void
-cuda_poll(void)
-{
-	cuda_interrupt(0, NULL);
-}
+व्योम
+cuda_poll(व्योम)
+अणु
+	cuda_पूर्णांकerrupt(0, शून्य);
+पूर्ण
 EXPORT_SYMBOL(cuda_poll);
 
-#define ARRAY_FULL(a, p)	((p) - (a) == ARRAY_SIZE(a))
+#घोषणा ARRAY_FULL(a, p)	((p) - (a) == ARRAY_SIZE(a))
 
-static irqreturn_t
-cuda_interrupt(int irq, void *arg)
-{
-    unsigned long flags;
+अटल irqवापस_t
+cuda_पूर्णांकerrupt(पूर्णांक irq, व्योम *arg)
+अणु
+    अचिन्हित दीर्घ flags;
     u8 status;
-    struct adb_request *req = NULL;
-    unsigned char ibuf[16];
-    int ibuf_len = 0;
-    int complete = 0;
+    काष्ठा adb_request *req = शून्य;
+    अचिन्हित अक्षर ibuf[16];
+    पूर्णांक ibuf_len = 0;
+    पूर्णांक complete = 0;
     bool full;
     
     spin_lock_irqsave(&cuda_lock, flags);
 
-    /* On powermacs, this handler is registered for the VIA IRQ. But they use
-     * just the shift register IRQ -- other VIA interrupt sources are disabled.
-     * On m68k macs, the VIA IRQ sources are dispatched individually. Unless
-     * we are polling, the shift register IRQ flag has already been cleared.
+    /* On घातermacs, this handler is रेजिस्टरed क्रम the VIA IRQ. But they use
+     * just the shअगरt रेजिस्टर IRQ -- other VIA पूर्णांकerrupt sources are disabled.
+     * On m68k macs, the VIA IRQ sources are dispatched inभागidually. Unless
+     * we are polling, the shअगरt रेजिस्टर IRQ flag has alपढ़ोy been cleared.
      */
 
-#ifdef CONFIG_MAC
-    if (!arg)
-#endif
-    {
-        if ((in_8(&via[IFR]) & SR_INT) == 0) {
+#अगर_घोषित CONFIG_MAC
+    अगर (!arg)
+#पूर्ण_अगर
+    अणु
+        अगर ((in_8(&via[IFR]) & SR_INT) == 0) अणु
             spin_unlock_irqrestore(&cuda_lock, flags);
-            return IRQ_NONE;
-        } else {
+            वापस IRQ_NONE;
+        पूर्ण अन्यथा अणु
             out_8(&via[IFR], SR_INT);
-        }
-    }
+        पूर्ण
+    पूर्ण
 
     status = in_8(&via[B]) & (TIP | TACK | TREQ);
 
-    switch (cuda_state) {
-    case idle:
-	/* System controller has unsolicited data for us */
-	(void)in_8(&via[SR]);
+    चयन (cuda_state) अणु
+    हाल idle:
+	/* System controller has unsolicited data क्रम us */
+	(व्योम)in_8(&via[SR]);
 idle_state:
-	assert_TIP();
-	cuda_state = reading;
+	निश्चित_TIP();
+	cuda_state = पढ़ोing;
 	reply_ptr = cuda_rbuf;
-	reading_reply = 0;
-	break;
+	पढ़ोing_reply = 0;
+	अवरोध;
 
-    case awaiting_reply:
-	/* System controller has reply data for us */
-	(void)in_8(&via[SR]);
-	assert_TIP();
-	cuda_state = reading;
+    हाल aरुकोing_reply:
+	/* System controller has reply data क्रम us */
+	(व्योम)in_8(&via[SR]);
+	निश्चित_TIP();
+	cuda_state = पढ़ोing;
 	reply_ptr = current_req->reply;
-	reading_reply = 1;
-	break;
+	पढ़ोing_reply = 1;
+	अवरोध;
 
-    case sent_first_byte:
-	if (TREQ_asserted(status)) {
+    हाल sent_first_byte:
+	अगर (TREQ_निश्चितed(status)) अणु
 	    /* collision */
 	    out_8(&via[ACR], in_8(&via[ACR]) & ~SR_OUT);
-	    (void)in_8(&via[SR]);
+	    (व्योम)in_8(&via[SR]);
 	    negate_TIP_and_TACK();
 	    cuda_state = idle;
-	    /* Egret does not raise an "aborted" interrupt */
-	    if (mcu_is_egret)
-		goto idle_state;
-	} else {
+	    /* Egret करोes not उठाओ an "aborted" पूर्णांकerrupt */
+	    अगर (mcu_is_egret)
+		जाओ idle_state;
+	पूर्ण अन्यथा अणु
 	    out_8(&via[SR], current_req->data[data_index++]);
 	    toggle_TACK();
-	    if (mcu_is_egret)
-		assert_TACK();
+	    अगर (mcu_is_egret)
+		निश्चित_TACK();
 	    cuda_state = sending;
-	}
-	break;
+	पूर्ण
+	अवरोध;
 
-    case sending:
+    हाल sending:
 	req = current_req;
-	if (data_index >= req->nbytes) {
+	अगर (data_index >= req->nbytes) अणु
 	    out_8(&via[ACR], in_8(&via[ACR]) & ~SR_OUT);
-	    (void)in_8(&via[SR]);
+	    (व्योम)in_8(&via[SR]);
 	    negate_TIP_and_TACK();
 	    req->sent = 1;
-	    if (req->reply_expected) {
-		cuda_state = awaiting_reply;
-	    } else {
+	    अगर (req->reply_expected) अणु
+		cuda_state = aरुकोing_reply;
+	    पूर्ण अन्यथा अणु
 		current_req = req->next;
 		complete = 1;
 		/* not sure about this */
 		cuda_state = idle;
 		cuda_start();
-	    }
-	} else {
+	    पूर्ण
+	पूर्ण अन्यथा अणु
 	    out_8(&via[SR], req->data[data_index++]);
 	    toggle_TACK();
-	    if (mcu_is_egret)
-		assert_TACK();
-	}
-	break;
+	    अगर (mcu_is_egret)
+		निश्चित_TACK();
+	पूर्ण
+	अवरोध;
 
-    case reading:
-	full = reading_reply ? ARRAY_FULL(current_req->reply, reply_ptr)
+    हाल पढ़ोing:
+	full = पढ़ोing_reply ? ARRAY_FULL(current_req->reply, reply_ptr)
 	                     : ARRAY_FULL(cuda_rbuf, reply_ptr);
-	if (full)
-	    (void)in_8(&via[SR]);
-	else
+	अगर (full)
+	    (व्योम)in_8(&via[SR]);
+	अन्यथा
 	    *reply_ptr++ = in_8(&via[SR]);
-	if (!TREQ_asserted(status) || full) {
-	    if (mcu_is_egret)
-		assert_TACK();
+	अगर (!TREQ_निश्चितed(status) || full) अणु
+	    अगर (mcu_is_egret)
+		निश्चित_TACK();
 	    /* that's all folks */
 	    negate_TIP_and_TACK();
-	    cuda_state = read_done;
-	    /* Egret does not raise a "read done" interrupt */
-	    if (mcu_is_egret)
-		goto read_done_state;
-	} else {
+	    cuda_state = पढ़ो_करोne;
+	    /* Egret करोes not उठाओ a "read done" पूर्णांकerrupt */
+	    अगर (mcu_is_egret)
+		जाओ पढ़ो_करोne_state;
+	पूर्ण अन्यथा अणु
 	    toggle_TACK();
-	    if (mcu_is_egret)
+	    अगर (mcu_is_egret)
 		negate_TACK();
-	}
-	break;
+	पूर्ण
+	अवरोध;
 
-    case read_done:
-	(void)in_8(&via[SR]);
-read_done_state:
-	if (reading_reply) {
+    हाल पढ़ो_करोne:
+	(व्योम)in_8(&via[SR]);
+पढ़ो_करोne_state:
+	अगर (पढ़ोing_reply) अणु
 	    req = current_req;
 	    req->reply_len = reply_ptr - req->reply;
-	    if (req->data[0] == ADB_PACKET) {
+	    अगर (req->data[0] == ADB_PACKET) अणु
 		/* Have to adjust the reply from ADB commands */
-		if (req->reply_len <= 2 || (req->reply[1] & 2) != 0) {
+		अगर (req->reply_len <= 2 || (req->reply[1] & 2) != 0) अणु
 		    /* the 0x2 bit indicates no response */
 		    req->reply_len = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 		    /* leave just the command and result bytes in the reply */
 		    req->reply_len -= 2;
-		    memmove(req->reply, req->reply + 2, req->reply_len);
-		}
-	    }
+		    स_हटाओ(req->reply, req->reply + 2, req->reply_len);
+		पूर्ण
+	    पूर्ण
 	    current_req = req->next;
 	    complete = 1;
-	    reading_reply = 0;
-	} else {
-	    /* This is tricky. We must break the spinlock to call
-	     * cuda_input. However, doing so means we might get
-	     * re-entered from another CPU getting an interrupt
+	    पढ़ोing_reply = 0;
+	पूर्ण अन्यथा अणु
+	    /* This is tricky. We must अवरोध the spinlock to call
+	     * cuda_input. However, करोing so means we might get
+	     * re-entered from another CPU getting an पूर्णांकerrupt
 	     * or calling cuda_poll(). I ended up using the stack
-	     * (it's only for 16 bytes) and moving the actual
+	     * (it's only क्रम 16 bytes) and moving the actual
 	     * call to cuda_input to outside of the lock.
 	     */
 	    ibuf_len = reply_ptr - cuda_rbuf;
-	    memcpy(ibuf, cuda_rbuf, ibuf_len);
-	}
+	    स_नकल(ibuf, cuda_rbuf, ibuf_len);
+	पूर्ण
 	reply_ptr = cuda_rbuf;
 	cuda_state = idle;
 	cuda_start();
-	if (cuda_state == idle && TREQ_asserted(in_8(&via[B]))) {
-	    assert_TIP();
-	    cuda_state = reading;
-	}
-	break;
+	अगर (cuda_state == idle && TREQ_निश्चितed(in_8(&via[B]))) अणु
+	    निश्चित_TIP();
+	    cuda_state = पढ़ोing;
+	पूर्ण
+	अवरोध;
 
-    default:
+    शेष:
 	pr_err("cuda_interrupt: unknown cuda_state %d?\n", cuda_state);
-    }
+    पूर्ण
     spin_unlock_irqrestore(&cuda_lock, flags);
-    if (complete && req) {
-    	void (*done)(struct adb_request *) = req->done;
+    अगर (complete && req) अणु
+    	व्योम (*करोne)(काष्ठा adb_request *) = req->करोne;
     	mb();
     	req->complete = 1;
-    	/* Here, we assume that if the request has a done member, the
-    	 * struct request will survive to setting req->complete to 1
+    	/* Here, we assume that अगर the request has a करोne member, the
+    	 * काष्ठा request will survive to setting req->complete to 1
     	 */
-    	if (done)
-		(*done)(req);
-    }
-    if (ibuf_len)
+    	अगर (करोne)
+		(*करोne)(req);
+    पूर्ण
+    अगर (ibuf_len)
 	cuda_input(ibuf, ibuf_len);
-    return IRQ_HANDLED;
-}
+    वापस IRQ_HANDLED;
+पूर्ण
 
-static void
-cuda_input(unsigned char *buf, int nb)
-{
-    switch (buf[0]) {
-    case ADB_PACKET:
-#ifdef CONFIG_XMON
-	if (nb == 5 && buf[2] == 0x2c) {
-	    extern int xmon_wants_key, xmon_adb_keycode;
-	    if (xmon_wants_key) {
+अटल व्योम
+cuda_input(अचिन्हित अक्षर *buf, पूर्णांक nb)
+अणु
+    चयन (buf[0]) अणु
+    हाल ADB_PACKET:
+#अगर_घोषित CONFIG_XMON
+	अगर (nb == 5 && buf[2] == 0x2c) अणु
+	    बाह्य पूर्णांक xmon_wants_key, xmon_adb_keycode;
+	    अगर (xmon_wants_key) अणु
 		xmon_adb_keycode = buf[3];
-		return;
-	    }
-	}
-#endif /* CONFIG_XMON */
-#ifdef CONFIG_ADB
+		वापस;
+	    पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_XMON */
+#अगर_घोषित CONFIG_ADB
 	adb_input(buf+2, nb-2, buf[1] & 0x40);
-#endif /* CONFIG_ADB */
-	break;
+#पूर्ण_अगर /* CONFIG_ADB */
+	अवरोध;
 
-    case TIMER_PACKET:
+    हाल TIMER_PACKET:
 	/* Egret sends these periodically. Might be useful as a 'heartbeat'
-	 * to trigger a recovery for the VIA shift register errata.
+	 * to trigger a recovery क्रम the VIA shअगरt रेजिस्टर errata.
 	 */
-	break;
+	अवरोध;
 
-    default:
-	print_hex_dump(KERN_INFO, "cuda_input: ", DUMP_PREFIX_NONE, 32, 1,
+    शेष:
+	prपूर्णांक_hex_dump(KERN_INFO, "cuda_input: ", DUMP_PREFIX_NONE, 32, 1,
 	               buf, nb, false);
-    }
-}
+    पूर्ण
+पूर्ण
 
-/* Offset between Unix time (1970-based) and Mac time (1904-based) */
-#define RTC_OFFSET	2082844800
+/* Offset between Unix समय (1970-based) and Mac समय (1904-based) */
+#घोषणा RTC_OFFSET	2082844800
 
-time64_t cuda_get_time(void)
-{
-	struct adb_request req;
+समय64_t cuda_get_समय(व्योम)
+अणु
+	काष्ठा adb_request req;
 	u32 now;
 
-	if (cuda_request(&req, NULL, 2, CUDA_PACKET, CUDA_GET_TIME) < 0)
-		return 0;
-	while (!req.complete)
+	अगर (cuda_request(&req, शून्य, 2, CUDA_PACKET, CUDA_GET_TIME) < 0)
+		वापस 0;
+	जबतक (!req.complete)
 		cuda_poll();
-	if (req.reply_len != 7)
+	अगर (req.reply_len != 7)
 		pr_err("%s: got %d byte reply\n", __func__, req.reply_len);
 	now = (req.reply[3] << 24) + (req.reply[4] << 16) +
 	      (req.reply[5] << 8) + req.reply[6];
-	return (time64_t)now - RTC_OFFSET;
-}
+	वापस (समय64_t)now - RTC_OFFSET;
+पूर्ण
 
-int cuda_set_rtc_time(struct rtc_time *tm)
-{
+पूर्णांक cuda_set_rtc_समय(काष्ठा rtc_समय *पंचांग)
+अणु
 	u32 now;
-	struct adb_request req;
+	काष्ठा adb_request req;
 
-	now = lower_32_bits(rtc_tm_to_time64(tm) + RTC_OFFSET);
-	if (cuda_request(&req, NULL, 6, CUDA_PACKET, CUDA_SET_TIME,
+	now = lower_32_bits(rtc_पंचांग_to_समय64(पंचांग) + RTC_OFFSET);
+	अगर (cuda_request(&req, शून्य, 6, CUDA_PACKET, CUDA_SET_TIME,
 	                 now >> 24, now >> 16, now >> 8, now) < 0)
-		return -ENXIO;
-	while (!req.complete)
+		वापस -ENXIO;
+	जबतक (!req.complete)
 		cuda_poll();
-	if ((req.reply_len != 3) && (req.reply_len != 7))
+	अगर ((req.reply_len != 3) && (req.reply_len != 7))
 		pr_err("%s: got %d byte reply\n", __func__, req.reply_len);
-	return 0;
-}
+	वापस 0;
+पूर्ण

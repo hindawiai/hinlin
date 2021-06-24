@@ -1,67 +1,68 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_IRQ_WORK_H
-#define _LINUX_IRQ_WORK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_IRQ_WORK_H
+#घोषणा _LINUX_IRQ_WORK_H
 
-#include <linux/smp_types.h>
+#समावेश <linux/smp_types.h>
 
 /*
  * An entry can be in one of four states:
  *
- * free	     NULL, 0 -> {claimed}       : free to be used
- * claimed   NULL, 3 -> {pending}       : claimed to be enqueued
- * pending   next, 3 -> {busy}          : queued, pending callback
- * busy      NULL, 2 -> {free, claimed} : callback in progress, can be claimed
+ * मुक्त	     शून्य, 0 -> अणुclaimedपूर्ण       : मुक्त to be used
+ * claimed   शून्य, 3 -> अणुpendingपूर्ण       : claimed to be enqueued
+ * pending   next, 3 -> अणुbusyपूर्ण          : queued, pending callback
+ * busy      शून्य, 2 -> अणुमुक्त, claimedपूर्ण : callback in progress, can be claimed
  */
 
-struct irq_work {
-	struct __call_single_node node;
-	void (*func)(struct irq_work *);
-};
+काष्ठा irq_work अणु
+	काष्ठा __call_single_node node;
+	व्योम (*func)(काष्ठा irq_work *);
+पूर्ण;
 
-#define __IRQ_WORK_INIT(_func, _flags) (struct irq_work){	\
-	.node = { .u_flags = (_flags), },			\
+#घोषणा __IRQ_WORK_INIT(_func, _flags) (काष्ठा irq_work)अणु	\
+	.node = अणु .u_flags = (_flags), पूर्ण,			\
 	.func = (_func),					\
-}
+पूर्ण
 
-#define IRQ_WORK_INIT(_func) __IRQ_WORK_INIT(_func, 0)
-#define IRQ_WORK_INIT_LAZY(_func) __IRQ_WORK_INIT(_func, IRQ_WORK_LAZY)
-#define IRQ_WORK_INIT_HARD(_func) __IRQ_WORK_INIT(_func, IRQ_WORK_HARD_IRQ)
+#घोषणा IRQ_WORK_INIT(_func) __IRQ_WORK_INIT(_func, 0)
+#घोषणा IRQ_WORK_INIT_LAZY(_func) __IRQ_WORK_INIT(_func, IRQ_WORK_LAZY)
+#घोषणा IRQ_WORK_INIT_HARD(_func) __IRQ_WORK_INIT(_func, IRQ_WORK_HARD_IRQ)
 
-#define DEFINE_IRQ_WORK(name, _f)				\
-	struct irq_work name = IRQ_WORK_INIT(_f)
+#घोषणा DEFINE_IRQ_WORK(name, _f)				\
+	काष्ठा irq_work name = IRQ_WORK_INIT(_f)
 
-static inline
-void init_irq_work(struct irq_work *work, void (*func)(struct irq_work *))
-{
+अटल अंतरभूत
+व्योम init_irq_work(काष्ठा irq_work *work, व्योम (*func)(काष्ठा irq_work *))
+अणु
 	*work = IRQ_WORK_INIT(func);
-}
+पूर्ण
 
-static inline bool irq_work_is_pending(struct irq_work *work)
-{
-	return atomic_read(&work->node.a_flags) & IRQ_WORK_PENDING;
-}
+अटल अंतरभूत bool irq_work_is_pending(काष्ठा irq_work *work)
+अणु
+	वापस atomic_पढ़ो(&work->node.a_flags) & IRQ_WORK_PENDING;
+पूर्ण
 
-static inline bool irq_work_is_busy(struct irq_work *work)
-{
-	return atomic_read(&work->node.a_flags) & IRQ_WORK_BUSY;
-}
+अटल अंतरभूत bool irq_work_is_busy(काष्ठा irq_work *work)
+अणु
+	वापस atomic_पढ़ो(&work->node.a_flags) & IRQ_WORK_BUSY;
+पूर्ण
 
-bool irq_work_queue(struct irq_work *work);
-bool irq_work_queue_on(struct irq_work *work, int cpu);
+bool irq_work_queue(काष्ठा irq_work *work);
+bool irq_work_queue_on(काष्ठा irq_work *work, पूर्णांक cpu);
 
-void irq_work_tick(void);
-void irq_work_sync(struct irq_work *work);
+व्योम irq_work_tick(व्योम);
+व्योम irq_work_sync(काष्ठा irq_work *work);
 
-#ifdef CONFIG_IRQ_WORK
-#include <asm/irq_work.h>
+#अगर_घोषित CONFIG_IRQ_WORK
+#समावेश <यंत्र/irq_work.h>
 
-void irq_work_run(void);
-bool irq_work_needs_cpu(void);
-void irq_work_single(void *arg);
-#else
-static inline bool irq_work_needs_cpu(void) { return false; }
-static inline void irq_work_run(void) { }
-static inline void irq_work_single(void *arg) { }
-#endif
+व्योम irq_work_run(व्योम);
+bool irq_work_needs_cpu(व्योम);
+व्योम irq_work_single(व्योम *arg);
+#अन्यथा
+अटल अंतरभूत bool irq_work_needs_cpu(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम irq_work_run(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम irq_work_single(व्योम *arg) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_IRQ_WORK_H */
+#पूर्ण_अगर /* _LINUX_IRQ_WORK_H */

@@ -1,223 +1,224 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * AD7091RX Analog to Digital converter driver
  *
  * Copyright 2014-2019 Analog Devices Inc.
  */
 
-#include <linux/bitops.h>
-#include <linux/iio/events.h>
-#include <linux/iio/iio.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/iio/events.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include "ad7091r-base.h"
+#समावेश "ad7091r-base.h"
 
-#define AD7091R_REG_RESULT  0
-#define AD7091R_REG_CHANNEL 1
-#define AD7091R_REG_CONF    2
-#define AD7091R_REG_ALERT   3
-#define AD7091R_REG_CH_LOW_LIMIT(ch) ((ch) * 3 + 4)
-#define AD7091R_REG_CH_HIGH_LIMIT(ch) ((ch) * 3 + 5)
-#define AD7091R_REG_CH_HYSTERESIS(ch) ((ch) * 3 + 6)
+#घोषणा AD7091R_REG_RESULT  0
+#घोषणा AD7091R_REG_CHANNEL 1
+#घोषणा AD7091R_REG_CONF    2
+#घोषणा AD7091R_REG_ALERT   3
+#घोषणा AD7091R_REG_CH_LOW_LIMIT(ch) ((ch) * 3 + 4)
+#घोषणा AD7091R_REG_CH_HIGH_LIMIT(ch) ((ch) * 3 + 5)
+#घोषणा AD7091R_REG_CH_HYSTERESIS(ch) ((ch) * 3 + 6)
 
 /* AD7091R_REG_RESULT */
-#define AD7091R_REG_RESULT_CH_ID(x)	    (((x) >> 13) & 0x3)
-#define AD7091R_REG_RESULT_CONV_RESULT(x)   ((x) & 0xfff)
+#घोषणा AD7091R_REG_RESULT_CH_ID(x)	    (((x) >> 13) & 0x3)
+#घोषणा AD7091R_REG_RESULT_CONV_RESULT(x)   ((x) & 0xfff)
 
 /* AD7091R_REG_CONF */
-#define AD7091R_REG_CONF_AUTO   BIT(8)
-#define AD7091R_REG_CONF_CMD    BIT(10)
+#घोषणा AD7091R_REG_CONF_AUTO   BIT(8)
+#घोषणा AD7091R_REG_CONF_CMD    BIT(10)
 
-#define AD7091R_REG_CONF_MODE_MASK  \
+#घोषणा AD7091R_REG_CONF_MODE_MASK  \
 	(AD7091R_REG_CONF_AUTO | AD7091R_REG_CONF_CMD)
 
-enum ad7091r_mode {
+क्रमागत ad7091r_mode अणु
 	AD7091R_MODE_SAMPLE,
 	AD7091R_MODE_COMMAND,
 	AD7091R_MODE_AUTOCYCLE,
-};
+पूर्ण;
 
-struct ad7091r_state {
-	struct device *dev;
-	struct regmap *map;
-	struct regulator *vref;
-	const struct ad7091r_chip_info *chip_info;
-	enum ad7091r_mode mode;
-	struct mutex lock; /*lock to prevent concurent reads */
-};
+काष्ठा ad7091r_state अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *map;
+	काष्ठा regulator *vref;
+	स्थिर काष्ठा ad7091r_chip_info *chip_info;
+	क्रमागत ad7091r_mode mode;
+	काष्ठा mutex lock; /*lock to prevent concurent पढ़ोs */
+पूर्ण;
 
-static int ad7091r_set_mode(struct ad7091r_state *st, enum ad7091r_mode mode)
-{
-	int ret, conf;
+अटल पूर्णांक ad7091r_set_mode(काष्ठा ad7091r_state *st, क्रमागत ad7091r_mode mode)
+अणु
+	पूर्णांक ret, conf;
 
-	switch (mode) {
-	case AD7091R_MODE_SAMPLE:
+	चयन (mode) अणु
+	हाल AD7091R_MODE_SAMPLE:
 		conf = 0;
-		break;
-	case AD7091R_MODE_COMMAND:
+		अवरोध;
+	हाल AD7091R_MODE_COMMAND:
 		conf = AD7091R_REG_CONF_CMD;
-		break;
-	case AD7091R_MODE_AUTOCYCLE:
+		अवरोध;
+	हाल AD7091R_MODE_AUTOCYCLE:
 		conf = AD7091R_REG_CONF_AUTO;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = regmap_update_bits(st->map, AD7091R_REG_CONF,
 				 AD7091R_REG_CONF_MODE_MASK, conf);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	st->mode = mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad7091r_set_channel(struct ad7091r_state *st, unsigned int channel)
-{
-	unsigned int dummy;
-	int ret;
+अटल पूर्णांक ad7091r_set_channel(काष्ठा ad7091r_state *st, अचिन्हित पूर्णांक channel)
+अणु
+	अचिन्हित पूर्णांक dummy;
+	पूर्णांक ret;
 
-	/* AD7091R_REG_CHANNEL specified which channels to be converted */
-	ret = regmap_write(st->map, AD7091R_REG_CHANNEL,
+	/* AD7091R_REG_CHANNEL specअगरied which channels to be converted */
+	ret = regmap_ग_लिखो(st->map, AD7091R_REG_CHANNEL,
 			BIT(channel) | (BIT(channel) << 8));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * There is a latency of one conversion before the channel conversion
+	 * There is a latency of one conversion beक्रमe the channel conversion
 	 * sequence is updated
 	 */
-	return regmap_read(st->map, AD7091R_REG_RESULT, &dummy);
-}
+	वापस regmap_पढ़ो(st->map, AD7091R_REG_RESULT, &dummy);
+पूर्ण
 
-static int ad7091r_read_one(struct iio_dev *iio_dev,
-		unsigned int channel, unsigned int *read_val)
-{
-	struct ad7091r_state *st = iio_priv(iio_dev);
-	unsigned int val;
-	int ret;
+अटल पूर्णांक ad7091r_पढ़ो_one(काष्ठा iio_dev *iio_dev,
+		अचिन्हित पूर्णांक channel, अचिन्हित पूर्णांक *पढ़ो_val)
+अणु
+	काष्ठा ad7091r_state *st = iio_priv(iio_dev);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
 	ret = ad7091r_set_channel(st, channel);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(st->map, AD7091R_REG_RESULT, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(st->map, AD7091R_REG_RESULT, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (AD7091R_REG_RESULT_CH_ID(val) != channel)
-		return -EIO;
+	अगर (AD7091R_REG_RESULT_CH_ID(val) != channel)
+		वापस -EIO;
 
-	*read_val = AD7091R_REG_RESULT_CONV_RESULT(val);
+	*पढ़ो_val = AD7091R_REG_RESULT_CONV_RESULT(val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad7091r_read_raw(struct iio_dev *iio_dev,
-			   struct iio_chan_spec const *chan,
-			   int *val, int *val2, long m)
-{
-	struct ad7091r_state *st = iio_priv(iio_dev);
-	unsigned int read_val;
-	int ret;
+अटल पूर्णांक ad7091r_पढ़ो_raw(काष्ठा iio_dev *iio_dev,
+			   काष्ठा iio_chan_spec स्थिर *chan,
+			   पूर्णांक *val, पूर्णांक *val2, दीर्घ m)
+अणु
+	काष्ठा ad7091r_state *st = iio_priv(iio_dev);
+	अचिन्हित पूर्णांक पढ़ो_val;
+	पूर्णांक ret;
 
 	mutex_lock(&st->lock);
 
-	switch (m) {
-	case IIO_CHAN_INFO_RAW:
-		if (st->mode != AD7091R_MODE_COMMAND) {
+	चयन (m) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		अगर (st->mode != AD7091R_MODE_COMMAND) अणु
 			ret = -EBUSY;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
-		ret = ad7091r_read_one(iio_dev, chan->channel, &read_val);
-		if (ret)
-			goto unlock;
+		ret = ad7091r_पढ़ो_one(iio_dev, chan->channel, &पढ़ो_val);
+		अगर (ret)
+			जाओ unlock;
 
-		*val = read_val;
+		*val = पढ़ो_val;
 		ret = IIO_VAL_INT;
-		break;
+		अवरोध;
 
-	case IIO_CHAN_INFO_SCALE:
-		if (st->vref) {
+	हाल IIO_CHAN_INFO_SCALE:
+		अगर (st->vref) अणु
 			ret = regulator_get_voltage(st->vref);
-			if (ret < 0)
-				goto unlock;
+			अगर (ret < 0)
+				जाओ unlock;
 
 			*val = ret / 1000;
-		} else {
+		पूर्ण अन्यथा अणु
 			*val = st->chip_info->vref_mV;
-		}
+		पूर्ण
 
 		*val2 = chan->scan_type.realbits;
 		ret = IIO_VAL_FRACTIONAL_LOG2;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 unlock:
 	mutex_unlock(&st->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct iio_info ad7091r_info = {
-	.read_raw = ad7091r_read_raw,
-};
+अटल स्थिर काष्ठा iio_info ad7091r_info = अणु
+	.पढ़ो_raw = ad7091r_पढ़ो_raw,
+पूर्ण;
 
-static irqreturn_t ad7091r_event_handler(int irq, void *private)
-{
-	struct ad7091r_state *st = (struct ad7091r_state *) private;
-	struct iio_dev *iio_dev = dev_get_drvdata(st->dev);
-	unsigned int i, read_val;
-	int ret;
-	s64 timestamp = iio_get_time_ns(iio_dev);
+अटल irqवापस_t ad7091r_event_handler(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा ad7091r_state *st = (काष्ठा ad7091r_state *) निजी;
+	काष्ठा iio_dev *iio_dev = dev_get_drvdata(st->dev);
+	अचिन्हित पूर्णांक i, पढ़ो_val;
+	पूर्णांक ret;
+	s64 बारtamp = iio_get_समय_ns(iio_dev);
 
-	ret = regmap_read(st->map, AD7091R_REG_ALERT, &read_val);
-	if (ret)
-		return IRQ_HANDLED;
+	ret = regmap_पढ़ो(st->map, AD7091R_REG_ALERT, &पढ़ो_val);
+	अगर (ret)
+		वापस IRQ_HANDLED;
 
-	for (i = 0; i < st->chip_info->num_channels; i++) {
-		if (read_val & BIT(i * 2))
+	क्रम (i = 0; i < st->chip_info->num_channels; i++) अणु
+		अगर (पढ़ो_val & BIT(i * 2))
 			iio_push_event(iio_dev,
 					IIO_UNMOD_EVENT_CODE(IIO_VOLTAGE, i,
 						IIO_EV_TYPE_THRESH,
-						IIO_EV_DIR_RISING), timestamp);
-		if (read_val & BIT(i * 2 + 1))
+						IIO_EV_सूची_RISING), बारtamp);
+		अगर (पढ़ो_val & BIT(i * 2 + 1))
 			iio_push_event(iio_dev,
 					IIO_UNMOD_EVENT_CODE(IIO_VOLTAGE, i,
 						IIO_EV_TYPE_THRESH,
-						IIO_EV_DIR_FALLING), timestamp);
-	}
+						IIO_EV_सूची_FALLING), बारtamp);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void ad7091r_remove(void *data)
-{
-	struct ad7091r_state *st = data;
+अटल व्योम ad7091r_हटाओ(व्योम *data)
+अणु
+	काष्ठा ad7091r_state *st = data;
 
 	regulator_disable(st->vref);
-}
+पूर्ण
 
-int ad7091r_probe(struct device *dev, const char *name,
-		const struct ad7091r_chip_info *chip_info,
-		struct regmap *map, int irq)
-{
-	struct iio_dev *iio_dev;
-	struct ad7091r_state *st;
-	int ret;
+पूर्णांक ad7091r_probe(काष्ठा device *dev, स्थिर अक्षर *name,
+		स्थिर काष्ठा ad7091r_chip_info *chip_info,
+		काष्ठा regmap *map, पूर्णांक irq)
+अणु
+	काष्ठा iio_dev *iio_dev;
+	काष्ठा ad7091r_state *st;
+	पूर्णांक ret;
 
-	iio_dev = devm_iio_device_alloc(dev, sizeof(*st));
-	if (!iio_dev)
-		return -ENOMEM;
+	iio_dev = devm_iio_device_alloc(dev, माप(*st));
+	अगर (!iio_dev)
+		वापस -ENOMEM;
 
 	st = iio_priv(iio_dev);
 	st->dev = dev;
@@ -226,70 +227,70 @@ int ad7091r_probe(struct device *dev, const char *name,
 
 	iio_dev->name = name;
 	iio_dev->info = &ad7091r_info;
-	iio_dev->modes = INDIO_DIRECT_MODE;
+	iio_dev->modes = INDIO_सूचीECT_MODE;
 
 	iio_dev->num_channels = chip_info->num_channels;
 	iio_dev->channels = chip_info->channels;
 
-	if (irq) {
-		ret = devm_request_threaded_irq(dev, irq, NULL,
+	अगर (irq) अणु
+		ret = devm_request_thपढ़ोed_irq(dev, irq, शून्य,
 				ad7091r_event_handler,
 				IRQF_TRIGGER_FALLING | IRQF_ONESHOT, name, st);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	st->vref = devm_regulator_get_optional(dev, "vref");
-	if (IS_ERR(st->vref)) {
-		if (PTR_ERR(st->vref) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
-		st->vref = NULL;
-	} else {
+	अगर (IS_ERR(st->vref)) अणु
+		अगर (PTR_ERR(st->vref) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
+		st->vref = शून्य;
+	पूर्ण अन्यथा अणु
 		ret = regulator_enable(st->vref);
-		if (ret)
-			return ret;
-		ret = devm_add_action_or_reset(dev, ad7091r_remove, st);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+		ret = devm_add_action_or_reset(dev, ad7091r_हटाओ, st);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* Use command mode by default to convert only desired channels*/
+	/* Use command mode by शेष to convert only desired channels*/
 	ret = ad7091r_set_mode(st, AD7091R_MODE_COMMAND);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return devm_iio_device_register(dev, iio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(dev, iio_dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(ad7091r_probe);
 
-static bool ad7091r_writeable_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case AD7091R_REG_RESULT:
-	case AD7091R_REG_ALERT:
-		return false;
-	default:
-		return true;
-	}
-}
+अटल bool ad7091r_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल AD7091R_REG_RESULT:
+	हाल AD7091R_REG_ALERT:
+		वापस false;
+	शेष:
+		वापस true;
+	पूर्ण
+पूर्ण
 
-static bool ad7091r_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case AD7091R_REG_RESULT:
-	case AD7091R_REG_ALERT:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool ad7091r_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल AD7091R_REG_RESULT:
+	हाल AD7091R_REG_ALERT:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-const struct regmap_config ad7091r_regmap_config = {
+स्थिर काष्ठा regmap_config ad7091r_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 16,
-	.writeable_reg = ad7091r_writeable_reg,
-	.volatile_reg = ad7091r_volatile_reg,
-};
+	.ग_लिखोable_reg = ad7091r_ग_लिखोable_reg,
+	.अस्थिर_reg = ad7091r_अस्थिर_reg,
+पूर्ण;
 EXPORT_SYMBOL_GPL(ad7091r_regmap_config);
 
 MODULE_AUTHOR("Beniamin Bia <beniamin.bia@analog.com>");

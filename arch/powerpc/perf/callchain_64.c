@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Performance counter callchain support - powerpc architecture code
+ * Perक्रमmance counter callchain support - घातerpc architecture code
  *
- * Copyright © 2009 Paul Mackerras, IBM Corporation.
+ * Copyright तऊ 2009 Paul Mackerras, IBM Corporation.
  */
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/perf_event.h>
-#include <linux/percpu.h>
-#include <linux/uaccess.h>
-#include <linux/mm.h>
-#include <asm/ptrace.h>
-#include <asm/sigcontext.h>
-#include <asm/ucontext.h>
-#include <asm/vdso.h>
-#include <asm/pte-walk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/sigcontext.h>
+#समावेश <यंत्र/ucontext.h>
+#समावेश <यंत्र/vdso.h>
+#समावेश <यंत्र/pte-walk.h>
 
-#include "callchain.h"
+#समावेश "callchain.h"
 
 /*
- * On 64-bit we don't want to invoke hash_page on user addresses from
- * interrupt context, so if the access faults, we read the page tables
- * to find which page (if any) is mapped and access it directly. Radix
- * has no need for this so it doesn't use read_user_stack_slow.
+ * On 64-bit we करोn't want to invoke hash_page on user addresses from
+ * पूर्णांकerrupt context, so अगर the access faults, we पढ़ो the page tables
+ * to find which page (अगर any) is mapped and access it directly. Radix
+ * has no need क्रम this so it करोesn't use पढ़ो_user_stack_slow.
  */
-int read_user_stack_slow(const void __user *ptr, void *buf, int nb)
-{
+पूर्णांक पढ़ो_user_stack_slow(स्थिर व्योम __user *ptr, व्योम *buf, पूर्णांक nb)
+अणु
 
-	unsigned long addr = (unsigned long) ptr;
-	unsigned long offset;
-	struct page *page;
-	void *kaddr;
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ) ptr;
+	अचिन्हित दीर्घ offset;
+	काष्ठा page *page;
+	व्योम *kaddr;
 
-	if (get_user_page_fast_only(addr, FOLL_WRITE, &page)) {
+	अगर (get_user_page_fast_only(addr, FOLL_WRITE, &page)) अणु
 		kaddr = page_address(page);
 
 		/* align address to page boundary */
 		offset = addr & ~PAGE_MASK;
 
-		memcpy(buf, kaddr + offset, nb);
+		स_नकल(buf, kaddr + offset, nb);
 		put_page(page);
-		return 0;
-	}
-	return -EFAULT;
-}
+		वापस 0;
+	पूर्ण
+	वापस -EFAULT;
+पूर्ण
 
-static int read_user_stack_64(const unsigned long __user *ptr, unsigned long *ret)
-{
-	return __read_user_stack(ptr, ret, sizeof(*ret));
-}
+अटल पूर्णांक पढ़ो_user_stack_64(स्थिर अचिन्हित दीर्घ __user *ptr, अचिन्हित दीर्घ *ret)
+अणु
+	वापस __पढ़ो_user_stack(ptr, ret, माप(*ret));
+पूर्ण
 
 /*
- * 64-bit user processes use the same stack frame for RT and non-RT signals.
+ * 64-bit user processes use the same stack frame क्रम RT and non-RT संकेतs.
  */
-struct signal_frame_64 {
-	char		dummy[__SIGNAL_FRAMESIZE];
-	struct ucontext	uc;
-	unsigned long	unused[2];
-	unsigned int	tramp[6];
-	struct siginfo	*pinfo;
-	void		*puc;
-	struct siginfo	info;
-	char		abigap[288];
-};
+काष्ठा संकेत_frame_64 अणु
+	अक्षर		dummy[__SIGNAL_FRAMESIZE];
+	काष्ठा ucontext	uc;
+	अचिन्हित दीर्घ	unused[2];
+	अचिन्हित पूर्णांक	tramp[6];
+	काष्ठा siginfo	*pinfo;
+	व्योम		*puc;
+	काष्ठा siginfo	info;
+	अक्षर		abigap[288];
+पूर्ण;
 
-static int is_sigreturn_64_address(unsigned long nip, unsigned long fp)
-{
-	if (nip == fp + offsetof(struct signal_frame_64, tramp))
-		return 1;
-	if (current->mm->context.vdso &&
+अटल पूर्णांक is_sigवापस_64_address(अचिन्हित दीर्घ nip, अचिन्हित दीर्घ fp)
+अणु
+	अगर (nip == fp + दुरत्व(काष्ठा संकेत_frame_64, tramp))
+		वापस 1;
+	अगर (current->mm->context.vdso &&
 	    nip == VDSO64_SYMBOL(current->mm->context.vdso, sigtramp_rt64))
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /*
- * Do some sanity checking on the signal frame pointed to by sp.
- * We check the pinfo and puc pointers in the frame.
+ * Do some sanity checking on the संकेत frame poपूर्णांकed to by sp.
+ * We check the pinfo and puc poपूर्णांकers in the frame.
  */
-static int sane_signal_64_frame(unsigned long sp)
-{
-	struct signal_frame_64 __user *sf;
-	unsigned long pinfo, puc;
+अटल पूर्णांक sane_संकेत_64_frame(अचिन्हित दीर्घ sp)
+अणु
+	काष्ठा संकेत_frame_64 __user *sf;
+	अचिन्हित दीर्घ pinfo, puc;
 
-	sf = (struct signal_frame_64 __user *) sp;
-	if (read_user_stack_64((unsigned long __user *) &sf->pinfo, &pinfo) ||
-	    read_user_stack_64((unsigned long __user *) &sf->puc, &puc))
-		return 0;
-	return pinfo == (unsigned long) &sf->info &&
-		puc == (unsigned long) &sf->uc;
-}
+	sf = (काष्ठा संकेत_frame_64 __user *) sp;
+	अगर (पढ़ो_user_stack_64((अचिन्हित दीर्घ __user *) &sf->pinfo, &pinfo) ||
+	    पढ़ो_user_stack_64((अचिन्हित दीर्घ __user *) &sf->puc, &puc))
+		वापस 0;
+	वापस pinfo == (अचिन्हित दीर्घ) &sf->info &&
+		puc == (अचिन्हित दीर्घ) &sf->uc;
+पूर्ण
 
-void perf_callchain_user_64(struct perf_callchain_entry_ctx *entry,
-			    struct pt_regs *regs)
-{
-	unsigned long sp, next_sp;
-	unsigned long next_ip;
-	unsigned long lr;
-	long level = 0;
-	struct signal_frame_64 __user *sigframe;
-	unsigned long __user *fp, *uregs;
+व्योम perf_callchain_user_64(काष्ठा perf_callchain_entry_ctx *entry,
+			    काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ sp, next_sp;
+	अचिन्हित दीर्घ next_ip;
+	अचिन्हित दीर्घ lr;
+	दीर्घ level = 0;
+	काष्ठा संकेत_frame_64 __user *sigframe;
+	अचिन्हित दीर्घ __user *fp, *uregs;
 
-	next_ip = perf_instruction_pointer(regs);
+	next_ip = perf_inकाष्ठाion_poपूर्णांकer(regs);
 	lr = regs->link;
 	sp = regs->gpr[1];
 	perf_callchain_store(entry, next_ip);
 
-	while (entry->nr < entry->max_stack) {
-		fp = (unsigned long __user *) sp;
-		if (invalid_user_sp(sp) || read_user_stack_64(fp, &next_sp))
-			return;
-		if (level > 0 && read_user_stack_64(&fp[2], &next_ip))
-			return;
+	जबतक (entry->nr < entry->max_stack) अणु
+		fp = (अचिन्हित दीर्घ __user *) sp;
+		अगर (invalid_user_sp(sp) || पढ़ो_user_stack_64(fp, &next_sp))
+			वापस;
+		अगर (level > 0 && पढ़ो_user_stack_64(&fp[2], &next_ip))
+			वापस;
 
 		/*
-		 * Note: the next_sp - sp >= signal frame size check
+		 * Note: the next_sp - sp >= संकेत frame size check
 		 * is true when next_sp < sp, which can happen when
-		 * transitioning from an alternate signal stack to the
+		 * transitioning from an alternate संकेत stack to the
 		 * normal stack.
 		 */
-		if (next_sp - sp >= sizeof(struct signal_frame_64) &&
-		    (is_sigreturn_64_address(next_ip, sp) ||
-		     (level <= 1 && is_sigreturn_64_address(lr, sp))) &&
-		    sane_signal_64_frame(sp)) {
+		अगर (next_sp - sp >= माप(काष्ठा संकेत_frame_64) &&
+		    (is_sigवापस_64_address(next_ip, sp) ||
+		     (level <= 1 && is_sigवापस_64_address(lr, sp))) &&
+		    sane_संकेत_64_frame(sp)) अणु
 			/*
-			 * This looks like an signal frame
+			 * This looks like an संकेत frame
 			 */
-			sigframe = (struct signal_frame_64 __user *) sp;
+			sigframe = (काष्ठा संकेत_frame_64 __user *) sp;
 			uregs = sigframe->uc.uc_mcontext.gp_regs;
-			if (read_user_stack_64(&uregs[PT_NIP], &next_ip) ||
-			    read_user_stack_64(&uregs[PT_LNK], &lr) ||
-			    read_user_stack_64(&uregs[PT_R1], &sp))
-				return;
+			अगर (पढ़ो_user_stack_64(&uregs[PT_NIP], &next_ip) ||
+			    पढ़ो_user_stack_64(&uregs[PT_LNK], &lr) ||
+			    पढ़ो_user_stack_64(&uregs[PT_R1], &sp))
+				वापस;
 			level = 0;
 			perf_callchain_store_context(entry, PERF_CONTEXT_USER);
 			perf_callchain_store(entry, next_ip);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (level == 0)
+		अगर (level == 0)
 			next_ip = lr;
 		perf_callchain_store(entry, next_ip);
 		++level;
 		sp = next_sp;
-	}
-}
+	पूर्ण
+पूर्ण

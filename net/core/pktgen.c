@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Authors:
  * Copyright 2001, 2002 by Robert Olsson <robert.olsson@its.uu.se>
@@ -7,13 +8,13 @@
  *
  * Alexey Kuznetsov  <kuznet@ms2.inr.ac.ru>
  * Ben Greear <greearb@candelatech.com>
- * Jens Låås <jens.laas@data.slu.se>
+ * Jens Lथआथआs <jens.laas@data.slu.se>
  *
- * A tool for loading the network with preconfigurated packets.
+ * A tool क्रम loading the network with preconfigurated packets.
  * The tool is implemented as a linux module.  Parameters are output
  * device, delay (to hard_xmit), number of packets, and whether
  * to use multiple SKBs or just the same one.
- * pktgen uses the installed interface's output routine.
+ * pktgen uses the installed पूर्णांकerface's output routine.
  *
  * Additional hacking by:
  *
@@ -24,260 +25,260 @@
  * Integrated.  020301 --DaveM
  * Added multiskb option 020301 --DaveM
  * Scaling of results. 020417--sigurdur@linpro.no
- * Significant re-work of the module:
- *   *  Convert to threaded model to more efficiently be able to transmit
- *       and receive on multiple interfaces at once.
- *   *  Converted many counters to __u64 to allow longer runs.
+ * Signअगरicant re-work of the module:
+ *   *  Convert to thपढ़ोed model to more efficiently be able to transmit
+ *       and receive on multiple पूर्णांकerfaces at once.
+ *   *  Converted many counters to __u64 to allow दीर्घer runs.
  *   *  Allow configuration of ranges, like min/max IP address, MACs,
- *       and UDP-ports, for both source and destination, and can
- *       set to use a random distribution or sequentially walk the range.
+ *       and UDP-ports, क्रम both source and destination, and can
+ *       set to use a अक्रमom distribution or sequentially walk the range.
  *   *  Can now change most values after starting.
  *   *  Place 12-byte packet in UDP payload with magic number,
- *       sequence number, and timestamp.
+ *       sequence number, and बारtamp.
  *   *  Add receiver code that detects dropped pkts, re-ordered pkts, and
  *       latencies (with micro-second) precision.
- *   *  Add IOCTL interface to easily get counters & configuration.
+ *   *  Add IOCTL पूर्णांकerface to easily get counters & configuration.
  *   --Ben Greear <greearb@candelatech.com>
  *
- * Renamed multiskb to clone_skb and cleaned up sending core for two distinct
- * skb modes. A clone_skb=0 mode for Ben "ranges" work and a clone_skb != 0
+ * Renamed multiskb to clone_skb and cleaned up sending core क्रम two distinct
+ * skb modes. A clone_skb=0 mode क्रम Ben "ranges" work and a clone_skb != 0
  * as a "fastpath" with a configurable number of clones after alloc's.
- * clone_skb=0 means all packets are allocated this also means ranges time
- * stamps etc can be used. clone_skb=100 means 1 malloc is followed by 100
+ * clone_skb=0 means all packets are allocated this also means ranges समय
+ * stamps etc can be used. clone_skb=100 means 1 दो_स्मृति is followed by 100
  * clones.
  *
  * Also moved to /proc/net/pktgen/
  * --ro
  *
- * Sept 10:  Fixed threading/locking.  Lots of bone-headed and more clever
+ * Sept 10:  Fixed thपढ़ोing/locking.  Lots of bone-headed and more clever
  *    mistakes.  Also merged in DaveM's patch in the -pre6 patch.
  * --Ben Greear <greearb@candelatech.com>
  *
  * Integrated to 2.5.x 021029 --Lucio Maciel (luciomaciel@zipmail.com.br)
  *
- * 021124 Finished major redesign and rewrite for new functionality.
- * See Documentation/networking/pktgen.rst for how to use this.
+ * 021124 Finished major redesign and reग_लिखो क्रम new functionality.
+ * See Documentation/networking/pktgen.rst क्रम how to use this.
  *
  * The new operation:
- * For each CPU one thread/process is created at start. This process checks
- * for running devices in the if_list and sends packets until count is 0 it
- * also the thread checks the thread->control which is used for inter-process
- * communication. controlling process "posts" operations to the threads this
+ * For each CPU one thपढ़ो/process is created at start. This process checks
+ * क्रम running devices in the अगर_list and sends packets until count is 0 it
+ * also the thपढ़ो checks the thपढ़ो->control which is used क्रम पूर्णांकer-process
+ * communication. controlling process "posts" operations to the thपढ़ोs this
  * way.
- * The if_list is RCU protected, and the if_lock remains to protect updating
- * of if_list, from "add_device" as it invoked from userspace (via proc write).
+ * The अगर_list is RCU रक्षित, and the अगर_lock reमुख्यs to protect updating
+ * of अगर_list, from "add_device" as it invoked from userspace (via proc ग_लिखो).
  *
  * By design there should only be *one* "controlling" process. In practice
- * multiple write accesses gives unpredictable result. Understood by "write"
- * to /proc gives result code thats should be read be the "writer".
+ * multiple ग_लिखो accesses gives unpredictable result. Understood by "write"
+ * to /proc gives result code thats should be पढ़ो be the "writer".
  * For practical use this should be no problem.
  *
- * Note when adding devices to a specific CPU there good idea to also assign
- * /proc/irq/XX/smp_affinity so TX-interrupts gets bound to the same CPU.
+ * Note when adding devices to a specअगरic CPU there good idea to also assign
+ * /proc/irq/XX/smp_affinity so TX-पूर्णांकerrupts माला_लो bound to the same CPU.
  * --ro
  *
- * Fix refcount off by one if first packet fails, potential null deref,
+ * Fix refcount off by one अगर first packet fails, potential null deref,
  * memleak 030710- KJP
  *
- * First "ranges" functionality for ipv6 030726 --ro
+ * First "ranges" functionality क्रम ipv6 030726 --ro
  *
  * Included flow support. 030802 ANK.
  *
  * Fixed unaligned access on IA-64 Grant Grundler <grundler@parisc-linux.org>
  *
- * Remove if fix from added Harald Welte <laforge@netfilter.org> 040419
- * ia64 compilation fix from  Aron Griffis <aron@hp.com> 040604
+ * Remove अगर fix from added Harald Welte <laक्रमge@netfilter.org> 040419
+ * ia64 compilation fix from  Aron Grअगरfis <aron@hp.com> 040604
  *
- * New xmit() return, do_div and misc clean up by Stephen Hemminger
+ * New xmit() वापस, करो_भाग and misc clean up by Stephen Hemminger
  * <shemminger@osdl.org> 040923
  *
- * Randy Dunlap fixed u64 printk compiler warning
+ * Randy Dunlap fixed u64 prपूर्णांकk compiler warning
  *
  * Remove FCS from BW calculation.  Lennert Buytenhek <buytenh@wantstofly.org>
- * New time handling. Lennert Buytenhek <buytenh@wantstofly.org> 041213
+ * New समय handling. Lennert Buytenhek <buytenh@wantstofly.org> 041213
  *
  * Corrections from Nikolai Malykh (nmalykh@bilim.com)
  * Removed unused flags F_SET_SRCMAC & F_SET_SRCIP 041230
  *
- * interruptible_sleep_on_timeout() replaced Nishanth Aravamudan <nacc@us.ibm.com>
+ * पूर्णांकerruptible_sleep_on_समयout() replaced Nishanth Aravamudan <nacc@us.ibm.com>
  * 050103
  *
  * MPLS support by Steven Whitehouse <steve@chygwyn.com>
  *
  * 802.1Q/Q-in-Q support by Francesco Fondelli (FF) <francesco.fondelli@gmail.com>
  *
- * Fixed src_mac command to set source mac of packet to value specified in
- * command by Adit Ranadive <adit.262@gmail.com>
+ * Fixed src_mac command to set source mac of packet to value specअगरied in
+ * command by Adit Ranaभागe <adit.262@gmail.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/sys.h>
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/mutex.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/unistd.h>
-#include <linux/string.h>
-#include <linux/ptrace.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/capability.h>
-#include <linux/hrtimer.h>
-#include <linux/freezer.h>
-#include <linux/delay.h>
-#include <linux/timer.h>
-#include <linux/list.h>
-#include <linux/init.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/inet.h>
-#include <linux/inetdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/if_arp.h>
-#include <linux/if_vlan.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/udp.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/wait.h>
-#include <linux/etherdevice.h>
-#include <linux/kthread.h>
-#include <linux/prefetch.h>
-#include <linux/mmzone.h>
-#include <net/net_namespace.h>
-#include <net/checksum.h>
-#include <net/ipv6.h>
-#include <net/udp.h>
-#include <net/ip6_checksum.h>
-#include <net/addrconf.h>
-#ifdef CONFIG_XFRM
-#include <net/xfrm.h>
-#endif
-#include <net/netns/generic.h>
-#include <asm/byteorder.h>
-#include <linux/rcupdate.h>
-#include <linux/bitops.h>
-#include <linux/io.h>
-#include <linux/timex.h>
-#include <linux/uaccess.h>
-#include <asm/dma.h>
-#include <asm/div64.h>		/* do_div */
+#समावेश <linux/sys.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/list.h>
+#समावेश <linux/init.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/mmzone.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/checksum.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/udp.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <net/addrconf.h>
+#अगर_घोषित CONFIG_XFRM
+#समावेश <net/xfrm.h>
+#पूर्ण_अगर
+#समावेश <net/netns/generic.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/समयx.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/भाग64.h>		/* करो_भाग */
 
-#define VERSION	"2.75"
-#define IP_NAME_SZ 32
-#define MAX_MPLS_LABELS 16 /* This is the max label stack depth */
-#define MPLS_STACK_BOTTOM htonl(0x00000100)
+#घोषणा VERSION	"2.75"
+#घोषणा IP_NAME_SZ 32
+#घोषणा MAX_MPLS_LABELS 16 /* This is the max label stack depth */
+#घोषणा MPLS_STACK_BOTTOM htonl(0x00000100)
 
-#define func_enter() pr_debug("entering %s\n", __func__);
+#घोषणा func_enter() pr_debug("entering %s\n", __func__);
 
-#define PKT_FLAGS							\
+#घोषणा PKT_FLAGS							\
 	pf(IPV6)		/* Interface in IPV6 Mode */		\
-	pf(IPSRC_RND)		/* IP-Src Random  */			\
-	pf(IPDST_RND)		/* IP-Dst Random  */			\
-	pf(TXSIZE_RND)		/* Transmit size is random */		\
-	pf(UDPSRC_RND)		/* UDP-Src Random */			\
-	pf(UDPDST_RND)		/* UDP-Dst Random */			\
+	pf(IPSRC_RND)		/* IP-Src Ranकरोm  */			\
+	pf(IPDST_RND)		/* IP-Dst Ranकरोm  */			\
+	pf(TXSIZE_RND)		/* Transmit size is अक्रमom */		\
+	pf(UDPSRC_RND)		/* UDP-Src Ranकरोm */			\
+	pf(UDPDST_RND)		/* UDP-Dst Ranकरोm */			\
 	pf(UDPCSUM)		/* Include UDP checksum */		\
-	pf(NO_TIMESTAMP)	/* Don't timestamp packets (default TS) */ \
-	pf(MPLS_RND)		/* Random MPLS labels */		\
-	pf(QUEUE_MAP_RND)	/* queue map Random */			\
+	pf(NO_TIMESTAMP)	/* Don't बारtamp packets (शेष TS) */ \
+	pf(MPLS_RND)		/* Ranकरोm MPLS labels */		\
+	pf(QUEUE_MAP_RND)	/* queue map Ranकरोm */			\
 	pf(QUEUE_MAP_CPU)	/* queue map mirrors smp_processor_id() */ \
 	pf(FLOW_SEQ)		/* Sequential flows */			\
-	pf(IPSEC)		/* ipsec on for flows */		\
-	pf(MACSRC_RND)		/* MAC-Src Random */			\
-	pf(MACDST_RND)		/* MAC-Dst Random */			\
-	pf(VID_RND)		/* Random VLAN ID */			\
-	pf(SVID_RND)		/* Random SVLAN ID */			\
+	pf(IPSEC)		/* ipsec on क्रम flows */		\
+	pf(MACSRC_RND)		/* MAC-Src Ranकरोm */			\
+	pf(MACDST_RND)		/* MAC-Dst Ranकरोm */			\
+	pf(VID_RND)		/* Ranकरोm VLAN ID */			\
+	pf(SVID_RND)		/* Ranकरोm SVLAN ID */			\
 	pf(NODE)		/* Node memory alloc*/			\
 
-#define pf(flag)		flag##_SHIFT,
-enum pkt_flags {
+#घोषणा pf(flag)		flag##_SHIFT,
+क्रमागत pkt_flags अणु
 	PKT_FLAGS
-};
-#undef pf
+पूर्ण;
+#अघोषित pf
 
 /* Device flag bits */
-#define pf(flag)		static const __u32 F_##flag = (1<<flag##_SHIFT);
+#घोषणा pf(flag)		अटल स्थिर __u32 F_##flag = (1<<flag##_SHIFT);
 PKT_FLAGS
-#undef pf
+#अघोषित pf
 
-#define pf(flag)		__stringify(flag),
-static char *pkt_flag_names[] = {
+#घोषणा pf(flag)		__stringअगरy(flag),
+अटल अक्षर *pkt_flag_names[] = अणु
 	PKT_FLAGS
-};
-#undef pf
+पूर्ण;
+#अघोषित pf
 
-#define NR_PKT_FLAGS		ARRAY_SIZE(pkt_flag_names)
+#घोषणा NR_PKT_FLAGS		ARRAY_SIZE(pkt_flag_names)
 
-/* Thread control flag bits */
-#define T_STOP        (1<<0)	/* Stop run */
-#define T_RUN         (1<<1)	/* Start run */
-#define T_REMDEVALL   (1<<2)	/* Remove all devs */
-#define T_REMDEV      (1<<3)	/* Remove one dev */
+/* Thपढ़ो control flag bits */
+#घोषणा T_STOP        (1<<0)	/* Stop run */
+#घोषणा T_RUN         (1<<1)	/* Start run */
+#घोषणा T_REMDEVALL   (1<<2)	/* Remove all devs */
+#घोषणा T_REMDEV      (1<<3)	/* Remove one dev */
 
 /* Xmit modes */
-#define M_START_XMIT		0	/* Default normal TX */
-#define M_NETIF_RECEIVE 	1	/* Inject packets into stack */
-#define M_QUEUE_XMIT		2	/* Inject packet into qdisc */
+#घोषणा M_START_XMIT		0	/* Default normal TX */
+#घोषणा M_NETIF_RECEIVE 	1	/* Inject packets पूर्णांकo stack */
+#घोषणा M_QUEUE_XMIT		2	/* Inject packet पूर्णांकo qdisc */
 
-/* If lock -- protects updating of if_list */
-#define   if_lock(t)           mutex_lock(&(t->if_lock));
-#define   if_unlock(t)           mutex_unlock(&(t->if_lock));
+/* If lock -- protects updating of अगर_list */
+#घोषणा   अगर_lock(t)           mutex_lock(&(t->अगर_lock));
+#घोषणा   अगर_unlock(t)           mutex_unlock(&(t->अगर_lock));
 
 /* Used to help with determining the pkts on receive */
-#define PKTGEN_MAGIC 0xbe9be955
-#define PG_PROC_DIR "pktgen"
-#define PGCTRL	    "pgctrl"
+#घोषणा PKTGEN_MAGIC 0xbe9be955
+#घोषणा PG_PROC_सूची "pktgen"
+#घोषणा PGCTRL	    "pgctrl"
 
-#define MAX_CFLOWS  65536
+#घोषणा MAX_CFLOWS  65536
 
-#define VLAN_TAG_SIZE(x) ((x)->vlan_id == 0xffff ? 0 : 4)
-#define SVLAN_TAG_SIZE(x) ((x)->svlan_id == 0xffff ? 0 : 4)
+#घोषणा VLAN_TAG_SIZE(x) ((x)->vlan_id == 0xffff ? 0 : 4)
+#घोषणा SVLAN_TAG_SIZE(x) ((x)->svlan_id == 0xffff ? 0 : 4)
 
-struct flow_state {
+काष्ठा flow_state अणु
 	__be32 cur_daddr;
-	int count;
-#ifdef CONFIG_XFRM
-	struct xfrm_state *x;
-#endif
+	पूर्णांक count;
+#अगर_घोषित CONFIG_XFRM
+	काष्ठा xfrm_state *x;
+#पूर्ण_अगर
 	__u32 flags;
-};
+पूर्ण;
 
 /* flow flag bits */
-#define F_INIT   (1<<0)		/* flow has been initialized */
+#घोषणा F_INIT   (1<<0)		/* flow has been initialized */
 
-struct pktgen_dev {
+काष्ठा pktgen_dev अणु
 	/*
 	 * Try to keep frequent/infrequent used vars. separated.
 	 */
-	struct proc_dir_entry *entry;	/* proc file */
-	struct pktgen_thread *pg_thread;/* the owner */
-	struct list_head list;		/* chaining in the thread's run-queue */
-	struct rcu_head	 rcu;		/* freed by RCU */
+	काष्ठा proc_dir_entry *entry;	/* proc file */
+	काष्ठा pktgen_thपढ़ो *pg_thपढ़ो;/* the owner */
+	काष्ठा list_head list;		/* chaining in the thपढ़ो's run-queue */
+	काष्ठा rcu_head	 rcu;		/* मुक्तd by RCU */
 
-	int running;		/* if false, the test will stop */
+	पूर्णांक running;		/* अगर false, the test will stop */
 
-	/* If min != max, then we will either do a linear iteration, or
-	 * we will do a random selection from within the range.
+	/* If min != max, then we will either करो a linear iteration, or
+	 * we will करो a अक्रमom selection from within the range.
 	 */
 	__u32 flags;
-	int xmit_mode;
-	int min_pkt_size;
-	int max_pkt_size;
-	int pkt_overhead;	/* overhead for MPLS, VLANs, IPSEC etc */
-	int nfrags;
-	int removal_mark;	/* non-zero => the device is marked for
-				 * removal by worker thread */
+	पूर्णांक xmit_mode;
+	पूर्णांक min_pkt_size;
+	पूर्णांक max_pkt_size;
+	पूर्णांक pkt_overhead;	/* overhead क्रम MPLS, VLANs, IPSEC etc */
+	पूर्णांक nfrags;
+	पूर्णांक removal_mark;	/* non-zero => the device is marked क्रम
+				 * removal by worker thपढ़ो */
 
-	struct page *page;
+	काष्ठा page *page;
 	u64 delay;		/* nano-seconds */
 
 	__u64 count;		/* Default No packets to send */
@@ -285,47 +286,47 @@ struct pktgen_dev {
 	__u64 tx_bytes;		/* How many bytes we've transmitted */
 	__u64 errors;		/* Errors when trying to transmit, */
 
-	/* runtime counters relating to clone_skb */
+	/* runसमय counters relating to clone_skb */
 
 	__u32 clone_count;
-	int last_ok;		/* Was last skb sent?
+	पूर्णांक last_ok;		/* Was last skb sent?
 				 * Or a failed transmit of some sort?
 				 * This will keep sequence numbers in order
 				 */
-	ktime_t next_tx;
-	ktime_t started_at;
-	ktime_t stopped_at;
+	kसमय_प्रकार next_tx;
+	kसमय_प्रकार started_at;
+	kसमय_प्रकार stopped_at;
 	u64	idle_acc;	/* nano-seconds */
 
 	__u32 seq_num;
 
-	int clone_skb;		/*
+	पूर्णांक clone_skb;		/*
 				 * Use multiple SKBs during packet gen.
 				 * If this number is greater than 1, then
 				 * that many copies of the same packet will be
-				 * sent before a new packet is allocated.
+				 * sent beक्रमe a new packet is allocated.
 				 * If you want to send 1024 identical packets
-				 * before creating a new packet,
+				 * beक्रमe creating a new packet,
 				 * set clone_skb to 1024.
 				 */
 
-	char dst_min[IP_NAME_SZ];	/* IP, ie 1.2.3.4 */
-	char dst_max[IP_NAME_SZ];	/* IP, ie 1.2.3.4 */
-	char src_min[IP_NAME_SZ];	/* IP, ie 1.2.3.4 */
-	char src_max[IP_NAME_SZ];	/* IP, ie 1.2.3.4 */
+	अक्षर dst_min[IP_NAME_SZ];	/* IP, ie 1.2.3.4 */
+	अक्षर dst_max[IP_NAME_SZ];	/* IP, ie 1.2.3.4 */
+	अक्षर src_min[IP_NAME_SZ];	/* IP, ie 1.2.3.4 */
+	अक्षर src_max[IP_NAME_SZ];	/* IP, ie 1.2.3.4 */
 
-	struct in6_addr in6_saddr;
-	struct in6_addr in6_daddr;
-	struct in6_addr cur_in6_daddr;
-	struct in6_addr cur_in6_saddr;
+	काष्ठा in6_addr in6_saddr;
+	काष्ठा in6_addr in6_daddr;
+	काष्ठा in6_addr cur_in6_daddr;
+	काष्ठा in6_addr cur_in6_saddr;
 	/* For ranges */
-	struct in6_addr min_in6_daddr;
-	struct in6_addr max_in6_daddr;
-	struct in6_addr min_in6_saddr;
-	struct in6_addr max_in6_saddr;
+	काष्ठा in6_addr min_in6_daddr;
+	काष्ठा in6_addr max_in6_daddr;
+	काष्ठा in6_addr min_in6_saddr;
+	काष्ठा in6_addr max_in6_saddr;
 
-	/* If we're doing ranges, random or incremental, then this
-	 * defines the min/max for those ranges.
+	/* If we're करोing ranges, अक्रमom or incremental, then this
+	 * defines the min/max क्रम those ranges.
 	 */
 	__be32 saddr_min;	/* inclusive, source IP address */
 	__be32 saddr_max;	/* exclusive, source IP address */
@@ -338,13 +339,13 @@ struct pktgen_dev {
 	__u16 udp_dst_max;	/* exclusive, dest UDP port */
 
 	/* DSCP + ECN */
-	__u8 tos;            /* six MSB of (former) IPv4 TOS
-				are for dscp codepoint */
-	__u8 traffic_class;  /* ditto for the (former) Traffic Class in IPv6
+	__u8 tos;            /* six MSB of (क्रमmer) IPv4 TOS
+				are क्रम dscp codepoपूर्णांक */
+	__u8 traffic_class;  /* ditto क्रम the (क्रमmer) Traffic Class in IPv6
 				(see RFC 3260, sec. 4) */
 
 	/* MPLS */
-	unsigned int nr_labels;	/* Depth of stack, 0 = no MPLS */
+	अचिन्हित पूर्णांक nr_labels;	/* Depth of stack, 0 = no MPLS */
 	__be32 labels[MAX_MPLS_LABELS];
 
 	/* VLAN/SVLAN (802.1Q/Q-in-Q) */
@@ -359,8 +360,8 @@ struct pktgen_dev {
 	__u32 src_mac_count;	/* How many MACs to iterate through */
 	__u32 dst_mac_count;	/* How many MACs to iterate through */
 
-	unsigned char dst_mac[ETH_ALEN];
-	unsigned char src_mac[ETH_ALEN];
+	अचिन्हित अक्षर dst_mac[ETH_ALEN];
+	अचिन्हित अक्षर src_mac[ETH_ALEN];
 
 	__u32 cur_dst_mac_offset;
 	__u32 cur_src_mac_offset;
@@ -374,865 +375,865 @@ struct pktgen_dev {
 	__u32 last_pkt_size;
 
 	__u8 hh[14];
-	/* = {
+	/* = अणु
 	   0x00, 0x80, 0xC8, 0x79, 0xB3, 0xCB,
 
 	   We fill in SRC address later
 	   0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	   0x08, 0x00
-	   };
+	   पूर्ण;
 	 */
-	__u16 pad;		/* pad out the hh struct to an even 16 bytes */
+	__u16 pad;		/* pad out the hh काष्ठा to an even 16 bytes */
 
-	struct sk_buff *skb;	/* skb we are to transmit next, used for when we
-				 * are transmitting the same one multiple times
+	काष्ठा sk_buff *skb;	/* skb we are to transmit next, used क्रम when we
+				 * are transmitting the same one multiple बार
 				 */
-	struct net_device *odev; /* The out-going device.
+	काष्ठा net_device *odev; /* The out-going device.
 				  * Note that the device should have it's
-				  * pg_info pointer pointing back to this
+				  * pg_info poपूर्णांकer poपूर्णांकing back to this
 				  * device.
-				  * Set when the user specifies the out-going
+				  * Set when the user specअगरies the out-going
 				  * device name (not when the inject is
-				  * started as it used to do.)
+				  * started as it used to करो.)
 				  */
-	char odevname[32];
-	struct flow_state *flows;
-	unsigned int cflows;	/* Concurrent flows (config) */
-	unsigned int lflow;		/* Flow length  (config) */
-	unsigned int nflows;	/* accumulated flows (stats) */
-	unsigned int curfl;		/* current sequenced flow (state)*/
+	अक्षर odevname[32];
+	काष्ठा flow_state *flows;
+	अचिन्हित पूर्णांक cflows;	/* Concurrent flows (config) */
+	अचिन्हित पूर्णांक lflow;		/* Flow length  (config) */
+	अचिन्हित पूर्णांक nflows;	/* accumulated flows (stats) */
+	अचिन्हित पूर्णांक curfl;		/* current sequenced flow (state)*/
 
 	u16 queue_map_min;
 	u16 queue_map_max;
 	__u32 skb_priority;	/* skb priority field */
-	unsigned int burst;	/* number of duplicated packets to burst */
-	int node;               /* Memory node */
+	अचिन्हित पूर्णांक burst;	/* number of duplicated packets to burst */
+	पूर्णांक node;               /* Memory node */
 
-#ifdef CONFIG_XFRM
+#अगर_घोषित CONFIG_XFRM
 	__u8	ipsmode;		/* IPSEC mode (config) */
 	__u8	ipsproto;		/* IPSEC type (config) */
 	__u32	spi;
-	struct xfrm_dst xdst;
-	struct dst_ops dstops;
-#endif
-	char result[512];
-};
+	काष्ठा xfrm_dst xdst;
+	काष्ठा dst_ops dstops;
+#पूर्ण_अगर
+	अक्षर result[512];
+पूर्ण;
 
-struct pktgen_hdr {
+काष्ठा pktgen_hdr अणु
 	__be32 pgh_magic;
 	__be32 seq_num;
 	__be32 tv_sec;
 	__be32 tv_usec;
-};
+पूर्ण;
 
 
-static unsigned int pg_net_id __read_mostly;
+अटल अचिन्हित पूर्णांक pg_net_id __पढ़ो_mostly;
 
-struct pktgen_net {
-	struct net		*net;
-	struct proc_dir_entry	*proc_dir;
-	struct list_head	pktgen_threads;
-	bool			pktgen_exiting;
-};
+काष्ठा pktgen_net अणु
+	काष्ठा net		*net;
+	काष्ठा proc_dir_entry	*proc_dir;
+	काष्ठा list_head	pktgen_thपढ़ोs;
+	bool			pktgen_निकासing;
+पूर्ण;
 
-struct pktgen_thread {
-	struct mutex if_lock;		/* for list of devices */
-	struct list_head if_list;	/* All device here */
-	struct list_head th_list;
-	struct task_struct *tsk;
-	char result[512];
+काष्ठा pktgen_thपढ़ो अणु
+	काष्ठा mutex अगर_lock;		/* क्रम list of devices */
+	काष्ठा list_head अगर_list;	/* All device here */
+	काष्ठा list_head th_list;
+	काष्ठा task_काष्ठा *tsk;
+	अक्षर result[512];
 
-	/* Field for thread to receive "posted" events terminate,
-	   stop ifs etc. */
+	/* Field क्रम thपढ़ो to receive "posted" events terminate,
+	   stop अगरs etc. */
 
 	u32 control;
-	int cpu;
+	पूर्णांक cpu;
 
-	wait_queue_head_t queue;
-	struct completion start_done;
-	struct pktgen_net *net;
-};
+	रुको_queue_head_t queue;
+	काष्ठा completion start_करोne;
+	काष्ठा pktgen_net *net;
+पूर्ण;
 
-#define REMOVE 1
-#define FIND   0
+#घोषणा REMOVE 1
+#घोषणा FIND   0
 
-static const char version[] =
+अटल स्थिर अक्षर version[] =
 	"Packet Generator for packet performance testing. "
 	"Version: " VERSION "\n";
 
-static int pktgen_remove_device(struct pktgen_thread *t, struct pktgen_dev *i);
-static int pktgen_add_device(struct pktgen_thread *t, const char *ifname);
-static struct pktgen_dev *pktgen_find_dev(struct pktgen_thread *t,
-					  const char *ifname, bool exact);
-static int pktgen_device_event(struct notifier_block *, unsigned long, void *);
-static void pktgen_run_all_threads(struct pktgen_net *pn);
-static void pktgen_reset_all_threads(struct pktgen_net *pn);
-static void pktgen_stop_all_threads_ifs(struct pktgen_net *pn);
+अटल पूर्णांक pktgen_हटाओ_device(काष्ठा pktgen_thपढ़ो *t, काष्ठा pktgen_dev *i);
+अटल पूर्णांक pktgen_add_device(काष्ठा pktgen_thपढ़ो *t, स्थिर अक्षर *अगरname);
+अटल काष्ठा pktgen_dev *pktgen_find_dev(काष्ठा pktgen_thपढ़ो *t,
+					  स्थिर अक्षर *अगरname, bool exact);
+अटल पूर्णांक pktgen_device_event(काष्ठा notअगरier_block *, अचिन्हित दीर्घ, व्योम *);
+अटल व्योम pktgen_run_all_thपढ़ोs(काष्ठा pktgen_net *pn);
+अटल व्योम pktgen_reset_all_thपढ़ोs(काष्ठा pktgen_net *pn);
+अटल व्योम pktgen_stop_all_thपढ़ोs_अगरs(काष्ठा pktgen_net *pn);
 
-static void pktgen_stop(struct pktgen_thread *t);
-static void pktgen_clear_counters(struct pktgen_dev *pkt_dev);
+अटल व्योम pktgen_stop(काष्ठा pktgen_thपढ़ो *t);
+अटल व्योम pktgen_clear_counters(काष्ठा pktgen_dev *pkt_dev);
 
-/* Module parameters, defaults. */
-static int pg_count_d __read_mostly = 1000;
-static int pg_delay_d __read_mostly;
-static int pg_clone_skb_d  __read_mostly;
-static int debug  __read_mostly;
+/* Module parameters, शेषs. */
+अटल पूर्णांक pg_count_d __पढ़ो_mostly = 1000;
+अटल पूर्णांक pg_delay_d __पढ़ो_mostly;
+अटल पूर्णांक pg_clone_skb_d  __पढ़ो_mostly;
+अटल पूर्णांक debug  __पढ़ो_mostly;
 
-static DEFINE_MUTEX(pktgen_thread_lock);
+अटल DEFINE_MUTEX(pktgen_thपढ़ो_lock);
 
-static struct notifier_block pktgen_notifier_block = {
-	.notifier_call = pktgen_device_event,
-};
+अटल काष्ठा notअगरier_block pktgen_notअगरier_block = अणु
+	.notअगरier_call = pktgen_device_event,
+पूर्ण;
 
 /*
  * /proc handling functions
  *
  */
 
-static int pgctrl_show(struct seq_file *seq, void *v)
-{
-	seq_puts(seq, version);
-	return 0;
-}
+अटल पूर्णांक pgctrl_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	seq_माला_दो(seq, version);
+	वापस 0;
+पूर्ण
 
-static ssize_t pgctrl_write(struct file *file, const char __user *buf,
-			    size_t count, loff_t *ppos)
-{
-	char data[128];
-	struct pktgen_net *pn = net_generic(current->nsproxy->net_ns, pg_net_id);
+अटल sमाप_प्रकार pgctrl_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर data[128];
+	काष्ठा pktgen_net *pn = net_generic(current->nsproxy->net_ns, pg_net_id);
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (count == 0)
-		return -EINVAL;
+	अगर (count == 0)
+		वापस -EINVAL;
 
-	if (count > sizeof(data))
-		count = sizeof(data);
+	अगर (count > माप(data))
+		count = माप(data);
 
-	if (copy_from_user(data, buf, count))
-		return -EFAULT;
+	अगर (copy_from_user(data, buf, count))
+		वापस -EFAULT;
 
 	data[count - 1] = 0;	/* Strip trailing '\n' and terminate string */
 
-	if (!strcmp(data, "stop"))
-		pktgen_stop_all_threads_ifs(pn);
+	अगर (!म_भेद(data, "stop"))
+		pktgen_stop_all_thपढ़ोs_अगरs(pn);
 
-	else if (!strcmp(data, "start"))
-		pktgen_run_all_threads(pn);
+	अन्यथा अगर (!म_भेद(data, "start"))
+		pktgen_run_all_thपढ़ोs(pn);
 
-	else if (!strcmp(data, "reset"))
-		pktgen_reset_all_threads(pn);
+	अन्यथा अगर (!म_भेद(data, "reset"))
+		pktgen_reset_all_thपढ़ोs(pn);
 
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int pgctrl_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, pgctrl_show, PDE_DATA(inode));
-}
+अटल पूर्णांक pgctrl_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, pgctrl_show, PDE_DATA(inode));
+पूर्ण
 
-static const struct proc_ops pktgen_proc_ops = {
-	.proc_open	= pgctrl_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops pktgen_proc_ops = अणु
+	.proc_खोलो	= pgctrl_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
-	.proc_write	= pgctrl_write,
+	.proc_ग_लिखो	= pgctrl_ग_लिखो,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static int pktgen_if_show(struct seq_file *seq, void *v)
-{
-	const struct pktgen_dev *pkt_dev = seq->private;
-	ktime_t stopped;
-	unsigned int i;
+अटल पूर्णांक pktgen_अगर_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	स्थिर काष्ठा pktgen_dev *pkt_dev = seq->निजी;
+	kसमय_प्रकार stopped;
+	अचिन्हित पूर्णांक i;
 	u64 idle;
 
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "Params: count %llu  min_pkt_size: %u  max_pkt_size: %u\n",
-		   (unsigned long long)pkt_dev->count, pkt_dev->min_pkt_size,
+		   (अचिन्हित दीर्घ दीर्घ)pkt_dev->count, pkt_dev->min_pkt_size,
 		   pkt_dev->max_pkt_size);
 
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "     frags: %d  delay: %llu  clone_skb: %d  ifname: %s\n",
-		   pkt_dev->nfrags, (unsigned long long) pkt_dev->delay,
+		   pkt_dev->nfrags, (अचिन्हित दीर्घ दीर्घ) pkt_dev->delay,
 		   pkt_dev->clone_skb, pkt_dev->odevname);
 
-	seq_printf(seq, "     flows: %u flowlen: %u\n", pkt_dev->cflows,
+	seq_म_लिखो(seq, "     flows: %u flowlen: %u\n", pkt_dev->cflows,
 		   pkt_dev->lflow);
 
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "     queue_map_min: %u  queue_map_max: %u\n",
 		   pkt_dev->queue_map_min,
 		   pkt_dev->queue_map_max);
 
-	if (pkt_dev->skb_priority)
-		seq_printf(seq, "     skb_priority: %u\n",
+	अगर (pkt_dev->skb_priority)
+		seq_म_लिखो(seq, "     skb_priority: %u\n",
 			   pkt_dev->skb_priority);
 
-	if (pkt_dev->flags & F_IPV6) {
-		seq_printf(seq,
+	अगर (pkt_dev->flags & F_IPV6) अणु
+		seq_म_लिखो(seq,
 			   "     saddr: %pI6c  min_saddr: %pI6c  max_saddr: %pI6c\n"
 			   "     daddr: %pI6c  min_daddr: %pI6c  max_daddr: %pI6c\n",
 			   &pkt_dev->in6_saddr,
 			   &pkt_dev->min_in6_saddr, &pkt_dev->max_in6_saddr,
 			   &pkt_dev->in6_daddr,
 			   &pkt_dev->min_in6_daddr, &pkt_dev->max_in6_daddr);
-	} else {
-		seq_printf(seq,
+	पूर्ण अन्यथा अणु
+		seq_म_लिखो(seq,
 			   "     dst_min: %s  dst_max: %s\n",
 			   pkt_dev->dst_min, pkt_dev->dst_max);
-		seq_printf(seq,
+		seq_म_लिखो(seq,
 			   "     src_min: %s  src_max: %s\n",
 			   pkt_dev->src_min, pkt_dev->src_max);
-	}
+	पूर्ण
 
-	seq_puts(seq, "     src_mac: ");
+	seq_माला_दो(seq, "     src_mac: ");
 
-	seq_printf(seq, "%pM ",
+	seq_म_लिखो(seq, "%pM ",
 		   is_zero_ether_addr(pkt_dev->src_mac) ?
 			     pkt_dev->odev->dev_addr : pkt_dev->src_mac);
 
-	seq_puts(seq, "dst_mac: ");
-	seq_printf(seq, "%pM\n", pkt_dev->dst_mac);
+	seq_माला_दो(seq, "dst_mac: ");
+	seq_म_लिखो(seq, "%pM\n", pkt_dev->dst_mac);
 
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "     udp_src_min: %d  udp_src_max: %d"
 		   "  udp_dst_min: %d  udp_dst_max: %d\n",
 		   pkt_dev->udp_src_min, pkt_dev->udp_src_max,
 		   pkt_dev->udp_dst_min, pkt_dev->udp_dst_max);
 
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "     src_mac_count: %d  dst_mac_count: %d\n",
 		   pkt_dev->src_mac_count, pkt_dev->dst_mac_count);
 
-	if (pkt_dev->nr_labels) {
-		seq_puts(seq, "     mpls: ");
-		for (i = 0; i < pkt_dev->nr_labels; i++)
-			seq_printf(seq, "%08x%s", ntohl(pkt_dev->labels[i]),
+	अगर (pkt_dev->nr_labels) अणु
+		seq_माला_दो(seq, "     mpls: ");
+		क्रम (i = 0; i < pkt_dev->nr_labels; i++)
+			seq_म_लिखो(seq, "%08x%s", ntohl(pkt_dev->labels[i]),
 				   i == pkt_dev->nr_labels-1 ? "\n" : ", ");
-	}
+	पूर्ण
 
-	if (pkt_dev->vlan_id != 0xffff)
-		seq_printf(seq, "     vlan_id: %u  vlan_p: %u  vlan_cfi: %u\n",
+	अगर (pkt_dev->vlan_id != 0xffff)
+		seq_म_लिखो(seq, "     vlan_id: %u  vlan_p: %u  vlan_cfi: %u\n",
 			   pkt_dev->vlan_id, pkt_dev->vlan_p,
 			   pkt_dev->vlan_cfi);
 
-	if (pkt_dev->svlan_id != 0xffff)
-		seq_printf(seq, "     svlan_id: %u  vlan_p: %u  vlan_cfi: %u\n",
+	अगर (pkt_dev->svlan_id != 0xffff)
+		seq_म_लिखो(seq, "     svlan_id: %u  vlan_p: %u  vlan_cfi: %u\n",
 			   pkt_dev->svlan_id, pkt_dev->svlan_p,
 			   pkt_dev->svlan_cfi);
 
-	if (pkt_dev->tos)
-		seq_printf(seq, "     tos: 0x%02x\n", pkt_dev->tos);
+	अगर (pkt_dev->tos)
+		seq_म_लिखो(seq, "     tos: 0x%02x\n", pkt_dev->tos);
 
-	if (pkt_dev->traffic_class)
-		seq_printf(seq, "     traffic_class: 0x%02x\n", pkt_dev->traffic_class);
+	अगर (pkt_dev->traffic_class)
+		seq_म_लिखो(seq, "     traffic_class: 0x%02x\n", pkt_dev->traffic_class);
 
-	if (pkt_dev->burst > 1)
-		seq_printf(seq, "     burst: %d\n", pkt_dev->burst);
+	अगर (pkt_dev->burst > 1)
+		seq_म_लिखो(seq, "     burst: %d\n", pkt_dev->burst);
 
-	if (pkt_dev->node >= 0)
-		seq_printf(seq, "     node: %d\n", pkt_dev->node);
+	अगर (pkt_dev->node >= 0)
+		seq_म_लिखो(seq, "     node: %d\n", pkt_dev->node);
 
-	if (pkt_dev->xmit_mode == M_NETIF_RECEIVE)
-		seq_puts(seq, "     xmit_mode: netif_receive\n");
-	else if (pkt_dev->xmit_mode == M_QUEUE_XMIT)
-		seq_puts(seq, "     xmit_mode: xmit_queue\n");
+	अगर (pkt_dev->xmit_mode == M_NETIF_RECEIVE)
+		seq_माला_दो(seq, "     xmit_mode: netif_receive\n");
+	अन्यथा अगर (pkt_dev->xmit_mode == M_QUEUE_XMIT)
+		seq_माला_दो(seq, "     xmit_mode: xmit_queue\n");
 
-	seq_puts(seq, "     Flags: ");
+	seq_माला_दो(seq, "     Flags: ");
 
-	for (i = 0; i < NR_PKT_FLAGS; i++) {
-		if (i == F_FLOW_SEQ)
-			if (!pkt_dev->cflows)
-				continue;
+	क्रम (i = 0; i < NR_PKT_FLAGS; i++) अणु
+		अगर (i == F_FLOW_SEQ)
+			अगर (!pkt_dev->cflows)
+				जारी;
 
-		if (pkt_dev->flags & (1 << i))
-			seq_printf(seq, "%s  ", pkt_flag_names[i]);
-		else if (i == F_FLOW_SEQ)
-			seq_puts(seq, "FLOW_RND  ");
+		अगर (pkt_dev->flags & (1 << i))
+			seq_म_लिखो(seq, "%s  ", pkt_flag_names[i]);
+		अन्यथा अगर (i == F_FLOW_SEQ)
+			seq_माला_दो(seq, "FLOW_RND  ");
 
-#ifdef CONFIG_XFRM
-		if (i == F_IPSEC && pkt_dev->spi)
-			seq_printf(seq, "spi:%u", pkt_dev->spi);
-#endif
-	}
+#अगर_घोषित CONFIG_XFRM
+		अगर (i == F_IPSEC && pkt_dev->spi)
+			seq_म_लिखो(seq, "spi:%u", pkt_dev->spi);
+#पूर्ण_अगर
+	पूर्ण
 
-	seq_puts(seq, "\n");
+	seq_माला_दो(seq, "\n");
 
 	/* not really stopped, more like last-running-at */
-	stopped = pkt_dev->running ? ktime_get() : pkt_dev->stopped_at;
+	stopped = pkt_dev->running ? kसमय_get() : pkt_dev->stopped_at;
 	idle = pkt_dev->idle_acc;
-	do_div(idle, NSEC_PER_USEC);
+	करो_भाग(idle, NSEC_PER_USEC);
 
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "Current:\n     pkts-sofar: %llu  errors: %llu\n",
-		   (unsigned long long)pkt_dev->sofar,
-		   (unsigned long long)pkt_dev->errors);
+		   (अचिन्हित दीर्घ दीर्घ)pkt_dev->sofar,
+		   (अचिन्हित दीर्घ दीर्घ)pkt_dev->errors);
 
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "     started: %lluus  stopped: %lluus idle: %lluus\n",
-		   (unsigned long long) ktime_to_us(pkt_dev->started_at),
-		   (unsigned long long) ktime_to_us(stopped),
-		   (unsigned long long) idle);
+		   (अचिन्हित दीर्घ दीर्घ) kसमय_प्रकारo_us(pkt_dev->started_at),
+		   (अचिन्हित दीर्घ दीर्घ) kसमय_प्रकारo_us(stopped),
+		   (अचिन्हित दीर्घ दीर्घ) idle);
 
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "     seq_num: %d  cur_dst_mac_offset: %d  cur_src_mac_offset: %d\n",
 		   pkt_dev->seq_num, pkt_dev->cur_dst_mac_offset,
 		   pkt_dev->cur_src_mac_offset);
 
-	if (pkt_dev->flags & F_IPV6) {
-		seq_printf(seq, "     cur_saddr: %pI6c  cur_daddr: %pI6c\n",
+	अगर (pkt_dev->flags & F_IPV6) अणु
+		seq_म_लिखो(seq, "     cur_saddr: %pI6c  cur_daddr: %pI6c\n",
 				&pkt_dev->cur_in6_saddr,
 				&pkt_dev->cur_in6_daddr);
-	} else
-		seq_printf(seq, "     cur_saddr: %pI4  cur_daddr: %pI4\n",
+	पूर्ण अन्यथा
+		seq_म_लिखो(seq, "     cur_saddr: %pI4  cur_daddr: %pI4\n",
 			   &pkt_dev->cur_saddr, &pkt_dev->cur_daddr);
 
-	seq_printf(seq, "     cur_udp_dst: %d  cur_udp_src: %d\n",
+	seq_म_लिखो(seq, "     cur_udp_dst: %d  cur_udp_src: %d\n",
 		   pkt_dev->cur_udp_dst, pkt_dev->cur_udp_src);
 
-	seq_printf(seq, "     cur_queue_map: %u\n", pkt_dev->cur_queue_map);
+	seq_म_लिखो(seq, "     cur_queue_map: %u\n", pkt_dev->cur_queue_map);
 
-	seq_printf(seq, "     flows: %u\n", pkt_dev->nflows);
+	seq_म_लिखो(seq, "     flows: %u\n", pkt_dev->nflows);
 
-	if (pkt_dev->result[0])
-		seq_printf(seq, "Result: %s\n", pkt_dev->result);
-	else
-		seq_puts(seq, "Result: Idle\n");
+	अगर (pkt_dev->result[0])
+		seq_म_लिखो(seq, "Result: %s\n", pkt_dev->result);
+	अन्यथा
+		seq_माला_दो(seq, "Result: Idle\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int hex32_arg(const char __user *user_buffer, unsigned long maxlen,
+अटल पूर्णांक hex32_arg(स्थिर अक्षर __user *user_buffer, अचिन्हित दीर्घ maxlen,
 		     __u32 *num)
-{
-	int i = 0;
+अणु
+	पूर्णांक i = 0;
 	*num = 0;
 
-	for (; i < maxlen; i++) {
-		int value;
-		char c;
+	क्रम (; i < maxlen; i++) अणु
+		पूर्णांक value;
+		अक्षर c;
 		*num <<= 4;
-		if (get_user(c, &user_buffer[i]))
-			return -EFAULT;
+		अगर (get_user(c, &user_buffer[i]))
+			वापस -EFAULT;
 		value = hex_to_bin(c);
-		if (value >= 0)
+		अगर (value >= 0)
 			*num |= value;
-		else
-			break;
-	}
-	return i;
-}
+		अन्यथा
+			अवरोध;
+	पूर्ण
+	वापस i;
+पूर्ण
 
-static int count_trail_chars(const char __user * user_buffer,
-			     unsigned int maxlen)
-{
-	int i;
+अटल पूर्णांक count_trail_अक्षरs(स्थिर अक्षर __user * user_buffer,
+			     अचिन्हित पूर्णांक maxlen)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < maxlen; i++) {
-		char c;
-		if (get_user(c, &user_buffer[i]))
-			return -EFAULT;
-		switch (c) {
-		case '\"':
-		case '\n':
-		case '\r':
-		case '\t':
-		case ' ':
-		case '=':
-			break;
-		default:
-			goto done;
-		}
-	}
-done:
-	return i;
-}
+	क्रम (i = 0; i < maxlen; i++) अणु
+		अक्षर c;
+		अगर (get_user(c, &user_buffer[i]))
+			वापस -EFAULT;
+		चयन (c) अणु
+		हाल '\"':
+		हाल '\n':
+		हाल '\r':
+		हाल '\t':
+		हाल ' ':
+		हाल '=':
+			अवरोध;
+		शेष:
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
+करोne:
+	वापस i;
+पूर्ण
 
-static long num_arg(const char __user *user_buffer, unsigned long maxlen,
-				unsigned long *num)
-{
-	int i;
+अटल दीर्घ num_arg(स्थिर अक्षर __user *user_buffer, अचिन्हित दीर्घ maxlen,
+				अचिन्हित दीर्घ *num)
+अणु
+	पूर्णांक i;
 	*num = 0;
 
-	for (i = 0; i < maxlen; i++) {
-		char c;
-		if (get_user(c, &user_buffer[i]))
-			return -EFAULT;
-		if ((c >= '0') && (c <= '9')) {
+	क्रम (i = 0; i < maxlen; i++) अणु
+		अक्षर c;
+		अगर (get_user(c, &user_buffer[i]))
+			वापस -EFAULT;
+		अगर ((c >= '0') && (c <= '9')) अणु
 			*num *= 10;
 			*num += c - '0';
-		} else
-			break;
-	}
-	return i;
-}
+		पूर्ण अन्यथा
+			अवरोध;
+	पूर्ण
+	वापस i;
+पूर्ण
 
-static int strn_len(const char __user * user_buffer, unsigned int maxlen)
-{
-	int i;
+अटल पूर्णांक strn_len(स्थिर अक्षर __user * user_buffer, अचिन्हित पूर्णांक maxlen)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < maxlen; i++) {
-		char c;
-		if (get_user(c, &user_buffer[i]))
-			return -EFAULT;
-		switch (c) {
-		case '\"':
-		case '\n':
-		case '\r':
-		case '\t':
-		case ' ':
-			goto done_str;
-		default:
-			break;
-		}
-	}
-done_str:
-	return i;
-}
+	क्रम (i = 0; i < maxlen; i++) अणु
+		अक्षर c;
+		अगर (get_user(c, &user_buffer[i]))
+			वापस -EFAULT;
+		चयन (c) अणु
+		हाल '\"':
+		हाल '\n':
+		हाल '\r':
+		हाल '\t':
+		हाल ' ':
+			जाओ करोne_str;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+करोne_str:
+	वापस i;
+पूर्ण
 
-static ssize_t get_labels(const char __user *buffer, struct pktgen_dev *pkt_dev)
-{
-	unsigned int n = 0;
-	char c;
-	ssize_t i = 0;
-	int len;
+अटल sमाप_प्रकार get_labels(स्थिर अक्षर __user *buffer, काष्ठा pktgen_dev *pkt_dev)
+अणु
+	अचिन्हित पूर्णांक n = 0;
+	अक्षर c;
+	sमाप_प्रकार i = 0;
+	पूर्णांक len;
 
 	pkt_dev->nr_labels = 0;
-	do {
-		__u32 tmp;
-		len = hex32_arg(&buffer[i], 8, &tmp);
-		if (len <= 0)
-			return len;
-		pkt_dev->labels[n] = htonl(tmp);
-		if (pkt_dev->labels[n] & MPLS_STACK_BOTTOM)
+	करो अणु
+		__u32 पंचांगp;
+		len = hex32_arg(&buffer[i], 8, &पंचांगp);
+		अगर (len <= 0)
+			वापस len;
+		pkt_dev->labels[n] = htonl(पंचांगp);
+		अगर (pkt_dev->labels[n] & MPLS_STACK_BOTTOM)
 			pkt_dev->flags |= F_MPLS_RND;
 		i += len;
-		if (get_user(c, &buffer[i]))
-			return -EFAULT;
+		अगर (get_user(c, &buffer[i]))
+			वापस -EFAULT;
 		i++;
 		n++;
-		if (n >= MAX_MPLS_LABELS)
-			return -E2BIG;
-	} while (c == ',');
+		अगर (n >= MAX_MPLS_LABELS)
+			वापस -E2BIG;
+	पूर्ण जबतक (c == ',');
 
 	pkt_dev->nr_labels = n;
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static __u32 pktgen_read_flag(const char *f, bool *disable)
-{
+अटल __u32 pktgen_पढ़ो_flag(स्थिर अक्षर *f, bool *disable)
+अणु
 	__u32 i;
 
-	if (f[0] == '!') {
+	अगर (f[0] == '!') अणु
 		*disable = true;
 		f++;
-	}
+	पूर्ण
 
-	for (i = 0; i < NR_PKT_FLAGS; i++) {
-		if (!IS_ENABLED(CONFIG_XFRM) && i == IPSEC_SHIFT)
-			continue;
+	क्रम (i = 0; i < NR_PKT_FLAGS; i++) अणु
+		अगर (!IS_ENABLED(CONFIG_XFRM) && i == IPSEC_SHIFT)
+			जारी;
 
 		/* allow only disabling ipv6 flag */
-		if (!*disable && i == IPV6_SHIFT)
-			continue;
+		अगर (!*disable && i == IPV6_SHIFT)
+			जारी;
 
-		if (strcmp(f, pkt_flag_names[i]) == 0)
-			return 1 << i;
-	}
+		अगर (म_भेद(f, pkt_flag_names[i]) == 0)
+			वापस 1 << i;
+	पूर्ण
 
-	if (strcmp(f, "FLOW_RND") == 0) {
+	अगर (म_भेद(f, "FLOW_RND") == 0) अणु
 		*disable = !*disable;
-		return F_FLOW_SEQ;
-	}
+		वापस F_FLOW_SEQ;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t pktgen_if_write(struct file *file,
-			       const char __user * user_buffer, size_t count,
+अटल sमाप_प्रकार pktgen_अगर_ग_लिखो(काष्ठा file *file,
+			       स्थिर अक्षर __user * user_buffer, माप_प्रकार count,
 			       loff_t * offset)
-{
-	struct seq_file *seq = file->private_data;
-	struct pktgen_dev *pkt_dev = seq->private;
-	int i, max, len;
-	char name[16], valstr[32];
-	unsigned long value = 0;
-	char *pg_result = NULL;
-	int tmp = 0;
-	char buf[128];
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा pktgen_dev *pkt_dev = seq->निजी;
+	पूर्णांक i, max, len;
+	अक्षर name[16], valstr[32];
+	अचिन्हित दीर्घ value = 0;
+	अक्षर *pg_result = शून्य;
+	पूर्णांक पंचांगp = 0;
+	अक्षर buf[128];
 
 	pg_result = &(pkt_dev->result[0]);
 
-	if (count < 1) {
+	अगर (count < 1) अणु
 		pr_warn("wrong command format\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	max = count;
-	tmp = count_trail_chars(user_buffer, max);
-	if (tmp < 0) {
+	पंचांगp = count_trail_अक्षरs(user_buffer, max);
+	अगर (पंचांगp < 0) अणु
 		pr_warn("illegal format\n");
-		return tmp;
-	}
-	i = tmp;
+		वापस पंचांगp;
+	पूर्ण
+	i = पंचांगp;
 
 	/* Read variable name */
 
-	len = strn_len(&user_buffer[i], sizeof(name) - 1);
-	if (len < 0)
-		return len;
+	len = strn_len(&user_buffer[i], माप(name) - 1);
+	अगर (len < 0)
+		वापस len;
 
-	memset(name, 0, sizeof(name));
-	if (copy_from_user(name, &user_buffer[i], len))
-		return -EFAULT;
+	स_रखो(name, 0, माप(name));
+	अगर (copy_from_user(name, &user_buffer[i], len))
+		वापस -EFAULT;
 	i += len;
 
 	max = count - i;
-	len = count_trail_chars(&user_buffer[i], max);
-	if (len < 0)
-		return len;
+	len = count_trail_अक्षरs(&user_buffer[i], max);
+	अगर (len < 0)
+		वापस len;
 
 	i += len;
 
-	if (debug) {
-		size_t copy = min_t(size_t, count + 1, 1024);
-		char *tp = strndup_user(user_buffer, copy);
+	अगर (debug) अणु
+		माप_प्रकार copy = min_t(माप_प्रकार, count + 1, 1024);
+		अक्षर *tp = strndup_user(user_buffer, copy);
 
-		if (IS_ERR(tp))
-			return PTR_ERR(tp);
+		अगर (IS_ERR(tp))
+			वापस PTR_ERR(tp);
 
 		pr_debug("%s,%zu  buffer -:%s:-\n", name, count, tp);
-		kfree(tp);
-	}
+		kमुक्त(tp);
+	पूर्ण
 
-	if (!strcmp(name, "min_pkt_size")) {
+	अगर (!म_भेद(name, "min_pkt_size")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (value < 14 + 20 + 8)
+		अगर (value < 14 + 20 + 8)
 			value = 14 + 20 + 8;
-		if (value != pkt_dev->min_pkt_size) {
+		अगर (value != pkt_dev->min_pkt_size) अणु
 			pkt_dev->min_pkt_size = value;
 			pkt_dev->cur_pkt_size = value;
-		}
-		sprintf(pg_result, "OK: min_pkt_size=%d",
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: min_pkt_size=%d",
 			pkt_dev->min_pkt_size);
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "max_pkt_size")) {
+	अगर (!म_भेद(name, "max_pkt_size")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (value < 14 + 20 + 8)
+		अगर (value < 14 + 20 + 8)
 			value = 14 + 20 + 8;
-		if (value != pkt_dev->max_pkt_size) {
+		अगर (value != pkt_dev->max_pkt_size) अणु
 			pkt_dev->max_pkt_size = value;
 			pkt_dev->cur_pkt_size = value;
-		}
-		sprintf(pg_result, "OK: max_pkt_size=%d",
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: max_pkt_size=%d",
 			pkt_dev->max_pkt_size);
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	/* Shortcut for min = max */
+	/* Shortcut क्रम min = max */
 
-	if (!strcmp(name, "pkt_size")) {
+	अगर (!म_भेद(name, "pkt_size")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (value < 14 + 20 + 8)
+		अगर (value < 14 + 20 + 8)
 			value = 14 + 20 + 8;
-		if (value != pkt_dev->min_pkt_size) {
+		अगर (value != pkt_dev->min_pkt_size) अणु
 			pkt_dev->min_pkt_size = value;
 			pkt_dev->max_pkt_size = value;
 			pkt_dev->cur_pkt_size = value;
-		}
-		sprintf(pg_result, "OK: pkt_size=%d", pkt_dev->min_pkt_size);
-		return count;
-	}
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: pkt_size=%d", pkt_dev->min_pkt_size);
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "debug")) {
+	अगर (!म_भेद(name, "debug")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
 		debug = value;
-		sprintf(pg_result, "OK: debug=%u", debug);
-		return count;
-	}
+		प्र_लिखो(pg_result, "OK: debug=%u", debug);
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "frags")) {
+	अगर (!म_भेद(name, "frags")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
 		pkt_dev->nfrags = value;
-		sprintf(pg_result, "OK: frags=%d", pkt_dev->nfrags);
-		return count;
-	}
-	if (!strcmp(name, "delay")) {
+		प्र_लिखो(pg_result, "OK: frags=%d", pkt_dev->nfrags);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "delay")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (value == 0x7FFFFFFF)
-			pkt_dev->delay = ULLONG_MAX;
-		else
+		अगर (value == 0x7FFFFFFF)
+			pkt_dev->delay = ULदीर्घ_उच्च;
+		अन्यथा
 			pkt_dev->delay = (u64)value;
 
-		sprintf(pg_result, "OK: delay=%llu",
-			(unsigned long long) pkt_dev->delay);
-		return count;
-	}
-	if (!strcmp(name, "rate")) {
+		प्र_लिखो(pg_result, "OK: delay=%llu",
+			(अचिन्हित दीर्घ दीर्घ) pkt_dev->delay);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "rate")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (!value)
-			return len;
+		अगर (!value)
+			वापस len;
 		pkt_dev->delay = pkt_dev->min_pkt_size*8*NSEC_PER_USEC/value;
-		if (debug)
+		अगर (debug)
 			pr_info("Delay set at: %llu ns\n", pkt_dev->delay);
 
-		sprintf(pg_result, "OK: rate=%lu", value);
-		return count;
-	}
-	if (!strcmp(name, "ratep")) {
+		प्र_लिखो(pg_result, "OK: rate=%lu", value);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "ratep")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (!value)
-			return len;
+		अगर (!value)
+			वापस len;
 		pkt_dev->delay = NSEC_PER_SEC/value;
-		if (debug)
+		अगर (debug)
 			pr_info("Delay set at: %llu ns\n", pkt_dev->delay);
 
-		sprintf(pg_result, "OK: rate=%lu", value);
-		return count;
-	}
-	if (!strcmp(name, "udp_src_min")) {
+		प्र_लिखो(pg_result, "OK: rate=%lu", value);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "udp_src_min")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (value != pkt_dev->udp_src_min) {
+		अगर (value != pkt_dev->udp_src_min) अणु
 			pkt_dev->udp_src_min = value;
 			pkt_dev->cur_udp_src = value;
-		}
-		sprintf(pg_result, "OK: udp_src_min=%u", pkt_dev->udp_src_min);
-		return count;
-	}
-	if (!strcmp(name, "udp_dst_min")) {
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: udp_src_min=%u", pkt_dev->udp_src_min);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "udp_dst_min")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (value != pkt_dev->udp_dst_min) {
+		अगर (value != pkt_dev->udp_dst_min) अणु
 			pkt_dev->udp_dst_min = value;
 			pkt_dev->cur_udp_dst = value;
-		}
-		sprintf(pg_result, "OK: udp_dst_min=%u", pkt_dev->udp_dst_min);
-		return count;
-	}
-	if (!strcmp(name, "udp_src_max")) {
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: udp_dst_min=%u", pkt_dev->udp_dst_min);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "udp_src_max")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (value != pkt_dev->udp_src_max) {
+		अगर (value != pkt_dev->udp_src_max) अणु
 			pkt_dev->udp_src_max = value;
 			pkt_dev->cur_udp_src = value;
-		}
-		sprintf(pg_result, "OK: udp_src_max=%u", pkt_dev->udp_src_max);
-		return count;
-	}
-	if (!strcmp(name, "udp_dst_max")) {
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: udp_src_max=%u", pkt_dev->udp_src_max);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "udp_dst_max")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (value != pkt_dev->udp_dst_max) {
+		अगर (value != pkt_dev->udp_dst_max) अणु
 			pkt_dev->udp_dst_max = value;
 			pkt_dev->cur_udp_dst = value;
-		}
-		sprintf(pg_result, "OK: udp_dst_max=%u", pkt_dev->udp_dst_max);
-		return count;
-	}
-	if (!strcmp(name, "clone_skb")) {
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: udp_dst_max=%u", pkt_dev->udp_dst_max);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "clone_skb")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
-		if ((value > 0) &&
+		अगर (len < 0)
+			वापस len;
+		अगर ((value > 0) &&
 		    ((pkt_dev->xmit_mode == M_NETIF_RECEIVE) ||
 		     !(pkt_dev->odev->priv_flags & IFF_TX_SKB_SHARING)))
-			return -ENOTSUPP;
+			वापस -ENOTSUPP;
 		i += len;
 		pkt_dev->clone_skb = value;
 
-		sprintf(pg_result, "OK: clone_skb=%d", pkt_dev->clone_skb);
-		return count;
-	}
-	if (!strcmp(name, "count")) {
+		प्र_लिखो(pg_result, "OK: clone_skb=%d", pkt_dev->clone_skb);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "count")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
 		pkt_dev->count = value;
-		sprintf(pg_result, "OK: count=%llu",
-			(unsigned long long)pkt_dev->count);
-		return count;
-	}
-	if (!strcmp(name, "src_mac_count")) {
+		प्र_लिखो(pg_result, "OK: count=%llu",
+			(अचिन्हित दीर्घ दीर्घ)pkt_dev->count);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "src_mac_count")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (pkt_dev->src_mac_count != value) {
+		अगर (pkt_dev->src_mac_count != value) अणु
 			pkt_dev->src_mac_count = value;
 			pkt_dev->cur_src_mac_offset = 0;
-		}
-		sprintf(pg_result, "OK: src_mac_count=%d",
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: src_mac_count=%d",
 			pkt_dev->src_mac_count);
-		return count;
-	}
-	if (!strcmp(name, "dst_mac_count")) {
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "dst_mac_count")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (pkt_dev->dst_mac_count != value) {
+		अगर (pkt_dev->dst_mac_count != value) अणु
 			pkt_dev->dst_mac_count = value;
 			pkt_dev->cur_dst_mac_offset = 0;
-		}
-		sprintf(pg_result, "OK: dst_mac_count=%d",
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: dst_mac_count=%d",
 			pkt_dev->dst_mac_count);
-		return count;
-	}
-	if (!strcmp(name, "burst")) {
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "burst")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if ((value > 1) &&
+		अगर ((value > 1) &&
 		    ((pkt_dev->xmit_mode == M_QUEUE_XMIT) ||
 		     ((pkt_dev->xmit_mode == M_START_XMIT) &&
 		     (!(pkt_dev->odev->priv_flags & IFF_TX_SKB_SHARING)))))
-			return -ENOTSUPP;
+			वापस -ENOTSUPP;
 		pkt_dev->burst = value < 1 ? 1 : value;
-		sprintf(pg_result, "OK: burst=%u", pkt_dev->burst);
-		return count;
-	}
-	if (!strcmp(name, "node")) {
+		प्र_लिखो(pg_result, "OK: burst=%u", pkt_dev->burst);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "node")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
 
-		if (node_possible(value)) {
+		अगर (node_possible(value)) अणु
 			pkt_dev->node = value;
-			sprintf(pg_result, "OK: node=%d", pkt_dev->node);
-			if (pkt_dev->page) {
+			प्र_लिखो(pg_result, "OK: node=%d", pkt_dev->node);
+			अगर (pkt_dev->page) अणु
 				put_page(pkt_dev->page);
-				pkt_dev->page = NULL;
-			}
-		}
-		else
-			sprintf(pg_result, "ERROR: node not possible");
-		return count;
-	}
-	if (!strcmp(name, "xmit_mode")) {
-		char f[32];
+				pkt_dev->page = शून्य;
+			पूर्ण
+		पूर्ण
+		अन्यथा
+			प्र_लिखो(pg_result, "ERROR: node not possible");
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "xmit_mode")) अणु
+		अक्षर f[32];
 
-		memset(f, 0, 32);
-		len = strn_len(&user_buffer[i], sizeof(f) - 1);
-		if (len < 0)
-			return len;
+		स_रखो(f, 0, 32);
+		len = strn_len(&user_buffer[i], माप(f) - 1);
+		अगर (len < 0)
+			वापस len;
 
-		if (copy_from_user(f, &user_buffer[i], len))
-			return -EFAULT;
+		अगर (copy_from_user(f, &user_buffer[i], len))
+			वापस -EFAULT;
 		i += len;
 
-		if (strcmp(f, "start_xmit") == 0) {
+		अगर (म_भेद(f, "start_xmit") == 0) अणु
 			pkt_dev->xmit_mode = M_START_XMIT;
-		} else if (strcmp(f, "netif_receive") == 0) {
+		पूर्ण अन्यथा अगर (म_भेद(f, "netif_receive") == 0) अणु
 			/* clone_skb set earlier, not supported in this mode */
-			if (pkt_dev->clone_skb > 0)
-				return -ENOTSUPP;
+			अगर (pkt_dev->clone_skb > 0)
+				वापस -ENOTSUPP;
 
 			pkt_dev->xmit_mode = M_NETIF_RECEIVE;
 
-			/* make sure new packet is allocated every time
+			/* make sure new packet is allocated every समय
 			 * pktgen_xmit() is called
 			 */
 			pkt_dev->last_ok = 1;
 
-			/* override clone_skb if user passed default value
-			 * at module loading time
+			/* override clone_skb अगर user passed शेष value
+			 * at module loading समय
 			 */
 			pkt_dev->clone_skb = 0;
-		} else if (strcmp(f, "queue_xmit") == 0) {
+		पूर्ण अन्यथा अगर (म_भेद(f, "queue_xmit") == 0) अणु
 			pkt_dev->xmit_mode = M_QUEUE_XMIT;
 			pkt_dev->last_ok = 1;
-		} else {
-			sprintf(pg_result,
+		पूर्ण अन्यथा अणु
+			प्र_लिखो(pg_result,
 				"xmit_mode -:%s:- unknown\nAvailable modes: %s",
 				f, "start_xmit, netif_receive\n");
-			return count;
-		}
-		sprintf(pg_result, "OK: xmit_mode=%s", f);
-		return count;
-	}
-	if (!strcmp(name, "flag")) {
+			वापस count;
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: xmit_mode=%s", f);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "flag")) अणु
 		__u32 flag;
-		char f[32];
+		अक्षर f[32];
 		bool disable = false;
 
-		memset(f, 0, 32);
-		len = strn_len(&user_buffer[i], sizeof(f) - 1);
-		if (len < 0)
-			return len;
+		स_रखो(f, 0, 32);
+		len = strn_len(&user_buffer[i], माप(f) - 1);
+		अगर (len < 0)
+			वापस len;
 
-		if (copy_from_user(f, &user_buffer[i], len))
-			return -EFAULT;
+		अगर (copy_from_user(f, &user_buffer[i], len))
+			वापस -EFAULT;
 		i += len;
 
-		flag = pktgen_read_flag(f, &disable);
+		flag = pktgen_पढ़ो_flag(f, &disable);
 
-		if (flag) {
-			if (disable)
+		अगर (flag) अणु
+			अगर (disable)
 				pkt_dev->flags &= ~flag;
-			else
+			अन्यथा
 				pkt_dev->flags |= flag;
-		} else {
-			sprintf(pg_result,
+		पूर्ण अन्यथा अणु
+			प्र_लिखो(pg_result,
 				"Flag -:%s:- unknown\nAvailable flags, (prepend ! to un-set flag):\n%s",
 				f,
 				"IPSRC_RND, IPDST_RND, UDPSRC_RND, UDPDST_RND, "
@@ -1240,904 +1241,904 @@ static ssize_t pktgen_if_write(struct file *file,
 				"MPLS_RND, VID_RND, SVID_RND, FLOW_SEQ, "
 				"QUEUE_MAP_RND, QUEUE_MAP_CPU, UDPCSUM, "
 				"NO_TIMESTAMP, "
-#ifdef CONFIG_XFRM
+#अगर_घोषित CONFIG_XFRM
 				"IPSEC, "
-#endif
+#पूर्ण_अगर
 				"NODE_ALLOC\n");
-			return count;
-		}
-		sprintf(pg_result, "OK: flags=0x%x", pkt_dev->flags);
-		return count;
-	}
-	if (!strcmp(name, "dst_min") || !strcmp(name, "dst")) {
-		len = strn_len(&user_buffer[i], sizeof(pkt_dev->dst_min) - 1);
-		if (len < 0)
-			return len;
+			वापस count;
+		पूर्ण
+		प्र_लिखो(pg_result, "OK: flags=0x%x", pkt_dev->flags);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "dst_min") || !म_भेद(name, "dst")) अणु
+		len = strn_len(&user_buffer[i], माप(pkt_dev->dst_min) - 1);
+		अगर (len < 0)
+			वापस len;
 
-		if (copy_from_user(buf, &user_buffer[i], len))
-			return -EFAULT;
+		अगर (copy_from_user(buf, &user_buffer[i], len))
+			वापस -EFAULT;
 		buf[len] = 0;
-		if (strcmp(buf, pkt_dev->dst_min) != 0) {
-			memset(pkt_dev->dst_min, 0, sizeof(pkt_dev->dst_min));
-			strcpy(pkt_dev->dst_min, buf);
+		अगर (म_भेद(buf, pkt_dev->dst_min) != 0) अणु
+			स_रखो(pkt_dev->dst_min, 0, माप(pkt_dev->dst_min));
+			म_नकल(pkt_dev->dst_min, buf);
 			pkt_dev->daddr_min = in_aton(pkt_dev->dst_min);
 			pkt_dev->cur_daddr = pkt_dev->daddr_min;
-		}
-		if (debug)
+		पूर्ण
+		अगर (debug)
 			pr_debug("dst_min set to: %s\n", pkt_dev->dst_min);
 		i += len;
-		sprintf(pg_result, "OK: dst_min=%s", pkt_dev->dst_min);
-		return count;
-	}
-	if (!strcmp(name, "dst_max")) {
-		len = strn_len(&user_buffer[i], sizeof(pkt_dev->dst_max) - 1);
-		if (len < 0)
-			return len;
+		प्र_लिखो(pg_result, "OK: dst_min=%s", pkt_dev->dst_min);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "dst_max")) अणु
+		len = strn_len(&user_buffer[i], माप(pkt_dev->dst_max) - 1);
+		अगर (len < 0)
+			वापस len;
 
-		if (copy_from_user(buf, &user_buffer[i], len))
-			return -EFAULT;
+		अगर (copy_from_user(buf, &user_buffer[i], len))
+			वापस -EFAULT;
 		buf[len] = 0;
-		if (strcmp(buf, pkt_dev->dst_max) != 0) {
-			memset(pkt_dev->dst_max, 0, sizeof(pkt_dev->dst_max));
-			strcpy(pkt_dev->dst_max, buf);
+		अगर (म_भेद(buf, pkt_dev->dst_max) != 0) अणु
+			स_रखो(pkt_dev->dst_max, 0, माप(pkt_dev->dst_max));
+			म_नकल(pkt_dev->dst_max, buf);
 			pkt_dev->daddr_max = in_aton(pkt_dev->dst_max);
 			pkt_dev->cur_daddr = pkt_dev->daddr_max;
-		}
-		if (debug)
+		पूर्ण
+		अगर (debug)
 			pr_debug("dst_max set to: %s\n", pkt_dev->dst_max);
 		i += len;
-		sprintf(pg_result, "OK: dst_max=%s", pkt_dev->dst_max);
-		return count;
-	}
-	if (!strcmp(name, "dst6")) {
-		len = strn_len(&user_buffer[i], sizeof(buf) - 1);
-		if (len < 0)
-			return len;
+		प्र_लिखो(pg_result, "OK: dst_max=%s", pkt_dev->dst_max);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "dst6")) अणु
+		len = strn_len(&user_buffer[i], माप(buf) - 1);
+		अगर (len < 0)
+			वापस len;
 
 		pkt_dev->flags |= F_IPV6;
 
-		if (copy_from_user(buf, &user_buffer[i], len))
-			return -EFAULT;
+		अगर (copy_from_user(buf, &user_buffer[i], len))
+			वापस -EFAULT;
 		buf[len] = 0;
 
-		in6_pton(buf, -1, pkt_dev->in6_daddr.s6_addr, -1, NULL);
-		snprintf(buf, sizeof(buf), "%pI6c", &pkt_dev->in6_daddr);
+		in6_pton(buf, -1, pkt_dev->in6_daddr.s6_addr, -1, शून्य);
+		snम_लिखो(buf, माप(buf), "%pI6c", &pkt_dev->in6_daddr);
 
 		pkt_dev->cur_in6_daddr = pkt_dev->in6_daddr;
 
-		if (debug)
+		अगर (debug)
 			pr_debug("dst6 set to: %s\n", buf);
 
 		i += len;
-		sprintf(pg_result, "OK: dst6=%s", buf);
-		return count;
-	}
-	if (!strcmp(name, "dst6_min")) {
-		len = strn_len(&user_buffer[i], sizeof(buf) - 1);
-		if (len < 0)
-			return len;
+		प्र_लिखो(pg_result, "OK: dst6=%s", buf);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "dst6_min")) अणु
+		len = strn_len(&user_buffer[i], माप(buf) - 1);
+		अगर (len < 0)
+			वापस len;
 
 		pkt_dev->flags |= F_IPV6;
 
-		if (copy_from_user(buf, &user_buffer[i], len))
-			return -EFAULT;
+		अगर (copy_from_user(buf, &user_buffer[i], len))
+			वापस -EFAULT;
 		buf[len] = 0;
 
-		in6_pton(buf, -1, pkt_dev->min_in6_daddr.s6_addr, -1, NULL);
-		snprintf(buf, sizeof(buf), "%pI6c", &pkt_dev->min_in6_daddr);
+		in6_pton(buf, -1, pkt_dev->min_in6_daddr.s6_addr, -1, शून्य);
+		snम_लिखो(buf, माप(buf), "%pI6c", &pkt_dev->min_in6_daddr);
 
 		pkt_dev->cur_in6_daddr = pkt_dev->min_in6_daddr;
-		if (debug)
+		अगर (debug)
 			pr_debug("dst6_min set to: %s\n", buf);
 
 		i += len;
-		sprintf(pg_result, "OK: dst6_min=%s", buf);
-		return count;
-	}
-	if (!strcmp(name, "dst6_max")) {
-		len = strn_len(&user_buffer[i], sizeof(buf) - 1);
-		if (len < 0)
-			return len;
+		प्र_लिखो(pg_result, "OK: dst6_min=%s", buf);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "dst6_max")) अणु
+		len = strn_len(&user_buffer[i], माप(buf) - 1);
+		अगर (len < 0)
+			वापस len;
 
 		pkt_dev->flags |= F_IPV6;
 
-		if (copy_from_user(buf, &user_buffer[i], len))
-			return -EFAULT;
+		अगर (copy_from_user(buf, &user_buffer[i], len))
+			वापस -EFAULT;
 		buf[len] = 0;
 
-		in6_pton(buf, -1, pkt_dev->max_in6_daddr.s6_addr, -1, NULL);
-		snprintf(buf, sizeof(buf), "%pI6c", &pkt_dev->max_in6_daddr);
+		in6_pton(buf, -1, pkt_dev->max_in6_daddr.s6_addr, -1, शून्य);
+		snम_लिखो(buf, माप(buf), "%pI6c", &pkt_dev->max_in6_daddr);
 
-		if (debug)
+		अगर (debug)
 			pr_debug("dst6_max set to: %s\n", buf);
 
 		i += len;
-		sprintf(pg_result, "OK: dst6_max=%s", buf);
-		return count;
-	}
-	if (!strcmp(name, "src6")) {
-		len = strn_len(&user_buffer[i], sizeof(buf) - 1);
-		if (len < 0)
-			return len;
+		प्र_लिखो(pg_result, "OK: dst6_max=%s", buf);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "src6")) अणु
+		len = strn_len(&user_buffer[i], माप(buf) - 1);
+		अगर (len < 0)
+			वापस len;
 
 		pkt_dev->flags |= F_IPV6;
 
-		if (copy_from_user(buf, &user_buffer[i], len))
-			return -EFAULT;
+		अगर (copy_from_user(buf, &user_buffer[i], len))
+			वापस -EFAULT;
 		buf[len] = 0;
 
-		in6_pton(buf, -1, pkt_dev->in6_saddr.s6_addr, -1, NULL);
-		snprintf(buf, sizeof(buf), "%pI6c", &pkt_dev->in6_saddr);
+		in6_pton(buf, -1, pkt_dev->in6_saddr.s6_addr, -1, शून्य);
+		snम_लिखो(buf, माप(buf), "%pI6c", &pkt_dev->in6_saddr);
 
 		pkt_dev->cur_in6_saddr = pkt_dev->in6_saddr;
 
-		if (debug)
+		अगर (debug)
 			pr_debug("src6 set to: %s\n", buf);
 
 		i += len;
-		sprintf(pg_result, "OK: src6=%s", buf);
-		return count;
-	}
-	if (!strcmp(name, "src_min")) {
-		len = strn_len(&user_buffer[i], sizeof(pkt_dev->src_min) - 1);
-		if (len < 0)
-			return len;
+		प्र_लिखो(pg_result, "OK: src6=%s", buf);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "src_min")) अणु
+		len = strn_len(&user_buffer[i], माप(pkt_dev->src_min) - 1);
+		अगर (len < 0)
+			वापस len;
 
-		if (copy_from_user(buf, &user_buffer[i], len))
-			return -EFAULT;
+		अगर (copy_from_user(buf, &user_buffer[i], len))
+			वापस -EFAULT;
 		buf[len] = 0;
-		if (strcmp(buf, pkt_dev->src_min) != 0) {
-			memset(pkt_dev->src_min, 0, sizeof(pkt_dev->src_min));
-			strcpy(pkt_dev->src_min, buf);
+		अगर (म_भेद(buf, pkt_dev->src_min) != 0) अणु
+			स_रखो(pkt_dev->src_min, 0, माप(pkt_dev->src_min));
+			म_नकल(pkt_dev->src_min, buf);
 			pkt_dev->saddr_min = in_aton(pkt_dev->src_min);
 			pkt_dev->cur_saddr = pkt_dev->saddr_min;
-		}
-		if (debug)
+		पूर्ण
+		अगर (debug)
 			pr_debug("src_min set to: %s\n", pkt_dev->src_min);
 		i += len;
-		sprintf(pg_result, "OK: src_min=%s", pkt_dev->src_min);
-		return count;
-	}
-	if (!strcmp(name, "src_max")) {
-		len = strn_len(&user_buffer[i], sizeof(pkt_dev->src_max) - 1);
-		if (len < 0)
-			return len;
+		प्र_लिखो(pg_result, "OK: src_min=%s", pkt_dev->src_min);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "src_max")) अणु
+		len = strn_len(&user_buffer[i], माप(pkt_dev->src_max) - 1);
+		अगर (len < 0)
+			वापस len;
 
-		if (copy_from_user(buf, &user_buffer[i], len))
-			return -EFAULT;
+		अगर (copy_from_user(buf, &user_buffer[i], len))
+			वापस -EFAULT;
 		buf[len] = 0;
-		if (strcmp(buf, pkt_dev->src_max) != 0) {
-			memset(pkt_dev->src_max, 0, sizeof(pkt_dev->src_max));
-			strcpy(pkt_dev->src_max, buf);
+		अगर (म_भेद(buf, pkt_dev->src_max) != 0) अणु
+			स_रखो(pkt_dev->src_max, 0, माप(pkt_dev->src_max));
+			म_नकल(pkt_dev->src_max, buf);
 			pkt_dev->saddr_max = in_aton(pkt_dev->src_max);
 			pkt_dev->cur_saddr = pkt_dev->saddr_max;
-		}
-		if (debug)
+		पूर्ण
+		अगर (debug)
 			pr_debug("src_max set to: %s\n", pkt_dev->src_max);
 		i += len;
-		sprintf(pg_result, "OK: src_max=%s", pkt_dev->src_max);
-		return count;
-	}
-	if (!strcmp(name, "dst_mac")) {
-		len = strn_len(&user_buffer[i], sizeof(valstr) - 1);
-		if (len < 0)
-			return len;
+		प्र_लिखो(pg_result, "OK: src_max=%s", pkt_dev->src_max);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "dst_mac")) अणु
+		len = strn_len(&user_buffer[i], माप(valstr) - 1);
+		अगर (len < 0)
+			वापस len;
 
-		memset(valstr, 0, sizeof(valstr));
-		if (copy_from_user(valstr, &user_buffer[i], len))
-			return -EFAULT;
+		स_रखो(valstr, 0, माप(valstr));
+		अगर (copy_from_user(valstr, &user_buffer[i], len))
+			वापस -EFAULT;
 
-		if (!mac_pton(valstr, pkt_dev->dst_mac))
-			return -EINVAL;
+		अगर (!mac_pton(valstr, pkt_dev->dst_mac))
+			वापस -EINVAL;
 		/* Set up Dest MAC */
 		ether_addr_copy(&pkt_dev->hh[0], pkt_dev->dst_mac);
 
-		sprintf(pg_result, "OK: dstmac %pM", pkt_dev->dst_mac);
-		return count;
-	}
-	if (!strcmp(name, "src_mac")) {
-		len = strn_len(&user_buffer[i], sizeof(valstr) - 1);
-		if (len < 0)
-			return len;
+		प्र_लिखो(pg_result, "OK: dstmac %pM", pkt_dev->dst_mac);
+		वापस count;
+	पूर्ण
+	अगर (!म_भेद(name, "src_mac")) अणु
+		len = strn_len(&user_buffer[i], माप(valstr) - 1);
+		अगर (len < 0)
+			वापस len;
 
-		memset(valstr, 0, sizeof(valstr));
-		if (copy_from_user(valstr, &user_buffer[i], len))
-			return -EFAULT;
+		स_रखो(valstr, 0, माप(valstr));
+		अगर (copy_from_user(valstr, &user_buffer[i], len))
+			वापस -EFAULT;
 
-		if (!mac_pton(valstr, pkt_dev->src_mac))
-			return -EINVAL;
+		अगर (!mac_pton(valstr, pkt_dev->src_mac))
+			वापस -EINVAL;
 		/* Set up Src MAC */
 		ether_addr_copy(&pkt_dev->hh[6], pkt_dev->src_mac);
 
-		sprintf(pg_result, "OK: srcmac %pM", pkt_dev->src_mac);
-		return count;
-	}
+		प्र_लिखो(pg_result, "OK: srcmac %pM", pkt_dev->src_mac);
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "clear_counters")) {
+	अगर (!म_भेद(name, "clear_counters")) अणु
 		pktgen_clear_counters(pkt_dev);
-		sprintf(pg_result, "OK: Clearing counters.\n");
-		return count;
-	}
+		प्र_लिखो(pg_result, "OK: Clearing counters.\n");
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "flows")) {
+	अगर (!म_भेद(name, "flows")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (value > MAX_CFLOWS)
+		अगर (value > MAX_CFLOWS)
 			value = MAX_CFLOWS;
 
 		pkt_dev->cflows = value;
-		sprintf(pg_result, "OK: flows=%u", pkt_dev->cflows);
-		return count;
-	}
-#ifdef CONFIG_XFRM
-	if (!strcmp(name, "spi")) {
+		प्र_लिखो(pg_result, "OK: flows=%u", pkt_dev->cflows);
+		वापस count;
+	पूर्ण
+#अगर_घोषित CONFIG_XFRM
+	अगर (!म_भेद(name, "spi")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
 		pkt_dev->spi = value;
-		sprintf(pg_result, "OK: spi=%u", pkt_dev->spi);
-		return count;
-	}
-#endif
-	if (!strcmp(name, "flowlen")) {
+		प्र_लिखो(pg_result, "OK: spi=%u", pkt_dev->spi);
+		वापस count;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (!म_भेद(name, "flowlen")) अणु
 		len = num_arg(&user_buffer[i], 10, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
 		pkt_dev->lflow = value;
-		sprintf(pg_result, "OK: flowlen=%u", pkt_dev->lflow);
-		return count;
-	}
+		प्र_लिखो(pg_result, "OK: flowlen=%u", pkt_dev->lflow);
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "queue_map_min")) {
+	अगर (!म_भेद(name, "queue_map_min")) अणु
 		len = num_arg(&user_buffer[i], 5, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
 		pkt_dev->queue_map_min = value;
-		sprintf(pg_result, "OK: queue_map_min=%u", pkt_dev->queue_map_min);
-		return count;
-	}
+		प्र_लिखो(pg_result, "OK: queue_map_min=%u", pkt_dev->queue_map_min);
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "queue_map_max")) {
+	अगर (!म_भेद(name, "queue_map_max")) अणु
 		len = num_arg(&user_buffer[i], 5, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
 		pkt_dev->queue_map_max = value;
-		sprintf(pg_result, "OK: queue_map_max=%u", pkt_dev->queue_map_max);
-		return count;
-	}
+		प्र_लिखो(pg_result, "OK: queue_map_max=%u", pkt_dev->queue_map_max);
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "mpls")) {
-		unsigned int n, cnt;
+	अगर (!म_भेद(name, "mpls")) अणु
+		अचिन्हित पूर्णांक n, cnt;
 
 		len = get_labels(&user_buffer[i], pkt_dev);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 		i += len;
-		cnt = sprintf(pg_result, "OK: mpls=");
-		for (n = 0; n < pkt_dev->nr_labels; n++)
-			cnt += sprintf(pg_result + cnt,
+		cnt = प्र_लिखो(pg_result, "OK: mpls=");
+		क्रम (n = 0; n < pkt_dev->nr_labels; n++)
+			cnt += प्र_लिखो(pg_result + cnt,
 				       "%08x%s", ntohl(pkt_dev->labels[n]),
 				       n == pkt_dev->nr_labels-1 ? "" : ",");
 
-		if (pkt_dev->nr_labels && pkt_dev->vlan_id != 0xffff) {
+		अगर (pkt_dev->nr_labels && pkt_dev->vlan_id != 0xffff) अणु
 			pkt_dev->vlan_id = 0xffff; /* turn off VLAN/SVLAN */
 			pkt_dev->svlan_id = 0xffff;
 
-			if (debug)
+			अगर (debug)
 				pr_debug("VLAN/SVLAN auto turned off\n");
-		}
-		return count;
-	}
+		पूर्ण
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "vlan_id")) {
+	अगर (!म_भेद(name, "vlan_id")) अणु
 		len = num_arg(&user_buffer[i], 4, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (value <= 4095) {
+		अगर (value <= 4095) अणु
 			pkt_dev->vlan_id = value;  /* turn on VLAN */
 
-			if (debug)
+			अगर (debug)
 				pr_debug("VLAN turned on\n");
 
-			if (debug && pkt_dev->nr_labels)
+			अगर (debug && pkt_dev->nr_labels)
 				pr_debug("MPLS auto turned off\n");
 
 			pkt_dev->nr_labels = 0;    /* turn off MPLS */
-			sprintf(pg_result, "OK: vlan_id=%u", pkt_dev->vlan_id);
-		} else {
+			प्र_लिखो(pg_result, "OK: vlan_id=%u", pkt_dev->vlan_id);
+		पूर्ण अन्यथा अणु
 			pkt_dev->vlan_id = 0xffff; /* turn off VLAN/SVLAN */
 			pkt_dev->svlan_id = 0xffff;
 
-			if (debug)
+			अगर (debug)
 				pr_debug("VLAN/SVLAN turned off\n");
-		}
-		return count;
-	}
+		पूर्ण
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "vlan_p")) {
+	अगर (!म_भेद(name, "vlan_p")) अणु
 		len = num_arg(&user_buffer[i], 1, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if ((value <= 7) && (pkt_dev->vlan_id != 0xffff)) {
+		अगर ((value <= 7) && (pkt_dev->vlan_id != 0xffff)) अणु
 			pkt_dev->vlan_p = value;
-			sprintf(pg_result, "OK: vlan_p=%u", pkt_dev->vlan_p);
-		} else {
-			sprintf(pg_result, "ERROR: vlan_p must be 0-7");
-		}
-		return count;
-	}
+			प्र_लिखो(pg_result, "OK: vlan_p=%u", pkt_dev->vlan_p);
+		पूर्ण अन्यथा अणु
+			प्र_लिखो(pg_result, "ERROR: vlan_p must be 0-7");
+		पूर्ण
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "vlan_cfi")) {
+	अगर (!म_भेद(name, "vlan_cfi")) अणु
 		len = num_arg(&user_buffer[i], 1, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if ((value <= 1) && (pkt_dev->vlan_id != 0xffff)) {
+		अगर ((value <= 1) && (pkt_dev->vlan_id != 0xffff)) अणु
 			pkt_dev->vlan_cfi = value;
-			sprintf(pg_result, "OK: vlan_cfi=%u", pkt_dev->vlan_cfi);
-		} else {
-			sprintf(pg_result, "ERROR: vlan_cfi must be 0-1");
-		}
-		return count;
-	}
+			प्र_लिखो(pg_result, "OK: vlan_cfi=%u", pkt_dev->vlan_cfi);
+		पूर्ण अन्यथा अणु
+			प्र_लिखो(pg_result, "ERROR: vlan_cfi must be 0-1");
+		पूर्ण
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "svlan_id")) {
+	अगर (!म_भेद(name, "svlan_id")) अणु
 		len = num_arg(&user_buffer[i], 4, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if ((value <= 4095) && ((pkt_dev->vlan_id != 0xffff))) {
+		अगर ((value <= 4095) && ((pkt_dev->vlan_id != 0xffff))) अणु
 			pkt_dev->svlan_id = value;  /* turn on SVLAN */
 
-			if (debug)
+			अगर (debug)
 				pr_debug("SVLAN turned on\n");
 
-			if (debug && pkt_dev->nr_labels)
+			अगर (debug && pkt_dev->nr_labels)
 				pr_debug("MPLS auto turned off\n");
 
 			pkt_dev->nr_labels = 0;    /* turn off MPLS */
-			sprintf(pg_result, "OK: svlan_id=%u", pkt_dev->svlan_id);
-		} else {
+			प्र_लिखो(pg_result, "OK: svlan_id=%u", pkt_dev->svlan_id);
+		पूर्ण अन्यथा अणु
 			pkt_dev->vlan_id = 0xffff; /* turn off VLAN/SVLAN */
 			pkt_dev->svlan_id = 0xffff;
 
-			if (debug)
+			अगर (debug)
 				pr_debug("VLAN/SVLAN turned off\n");
-		}
-		return count;
-	}
+		पूर्ण
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "svlan_p")) {
+	अगर (!म_भेद(name, "svlan_p")) अणु
 		len = num_arg(&user_buffer[i], 1, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if ((value <= 7) && (pkt_dev->svlan_id != 0xffff)) {
+		अगर ((value <= 7) && (pkt_dev->svlan_id != 0xffff)) अणु
 			pkt_dev->svlan_p = value;
-			sprintf(pg_result, "OK: svlan_p=%u", pkt_dev->svlan_p);
-		} else {
-			sprintf(pg_result, "ERROR: svlan_p must be 0-7");
-		}
-		return count;
-	}
+			प्र_लिखो(pg_result, "OK: svlan_p=%u", pkt_dev->svlan_p);
+		पूर्ण अन्यथा अणु
+			प्र_लिखो(pg_result, "ERROR: svlan_p must be 0-7");
+		पूर्ण
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "svlan_cfi")) {
+	अगर (!म_भेद(name, "svlan_cfi")) अणु
 		len = num_arg(&user_buffer[i], 1, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if ((value <= 1) && (pkt_dev->svlan_id != 0xffff)) {
+		अगर ((value <= 1) && (pkt_dev->svlan_id != 0xffff)) अणु
 			pkt_dev->svlan_cfi = value;
-			sprintf(pg_result, "OK: svlan_cfi=%u", pkt_dev->svlan_cfi);
-		} else {
-			sprintf(pg_result, "ERROR: svlan_cfi must be 0-1");
-		}
-		return count;
-	}
+			प्र_लिखो(pg_result, "OK: svlan_cfi=%u", pkt_dev->svlan_cfi);
+		पूर्ण अन्यथा अणु
+			प्र_लिखो(pg_result, "ERROR: svlan_cfi must be 0-1");
+		पूर्ण
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "tos")) {
-		__u32 tmp_value = 0;
-		len = hex32_arg(&user_buffer[i], 2, &tmp_value);
-		if (len < 0)
-			return len;
-
-		i += len;
-		if (len == 2) {
-			pkt_dev->tos = tmp_value;
-			sprintf(pg_result, "OK: tos=0x%02x", pkt_dev->tos);
-		} else {
-			sprintf(pg_result, "ERROR: tos must be 00-ff");
-		}
-		return count;
-	}
-
-	if (!strcmp(name, "traffic_class")) {
-		__u32 tmp_value = 0;
-		len = hex32_arg(&user_buffer[i], 2, &tmp_value);
-		if (len < 0)
-			return len;
+	अगर (!म_भेद(name, "tos")) अणु
+		__u32 पंचांगp_value = 0;
+		len = hex32_arg(&user_buffer[i], 2, &पंचांगp_value);
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
-		if (len == 2) {
-			pkt_dev->traffic_class = tmp_value;
-			sprintf(pg_result, "OK: traffic_class=0x%02x", pkt_dev->traffic_class);
-		} else {
-			sprintf(pg_result, "ERROR: traffic_class must be 00-ff");
-		}
-		return count;
-	}
+		अगर (len == 2) अणु
+			pkt_dev->tos = पंचांगp_value;
+			प्र_लिखो(pg_result, "OK: tos=0x%02x", pkt_dev->tos);
+		पूर्ण अन्यथा अणु
+			प्र_लिखो(pg_result, "ERROR: tos must be 00-ff");
+		पूर्ण
+		वापस count;
+	पूर्ण
 
-	if (!strcmp(name, "skb_priority")) {
+	अगर (!म_भेद(name, "traffic_class")) अणु
+		__u32 पंचांगp_value = 0;
+		len = hex32_arg(&user_buffer[i], 2, &पंचांगp_value);
+		अगर (len < 0)
+			वापस len;
+
+		i += len;
+		अगर (len == 2) अणु
+			pkt_dev->traffic_class = पंचांगp_value;
+			प्र_लिखो(pg_result, "OK: traffic_class=0x%02x", pkt_dev->traffic_class);
+		पूर्ण अन्यथा अणु
+			प्र_लिखो(pg_result, "ERROR: traffic_class must be 00-ff");
+		पूर्ण
+		वापस count;
+	पूर्ण
+
+	अगर (!म_भेद(name, "skb_priority")) अणु
 		len = num_arg(&user_buffer[i], 9, &value);
-		if (len < 0)
-			return len;
+		अगर (len < 0)
+			वापस len;
 
 		i += len;
 		pkt_dev->skb_priority = value;
-		sprintf(pg_result, "OK: skb_priority=%i",
+		प्र_लिखो(pg_result, "OK: skb_priority=%i",
 			pkt_dev->skb_priority);
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	sprintf(pkt_dev->result, "No such parameter \"%s\"", name);
-	return -EINVAL;
-}
+	प्र_लिखो(pkt_dev->result, "No such parameter \"%s\"", name);
+	वापस -EINVAL;
+पूर्ण
 
-static int pktgen_if_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, pktgen_if_show, PDE_DATA(inode));
-}
+अटल पूर्णांक pktgen_अगर_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, pktgen_अगर_show, PDE_DATA(inode));
+पूर्ण
 
-static const struct proc_ops pktgen_if_proc_ops = {
-	.proc_open	= pktgen_if_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops pktgen_अगर_proc_ops = अणु
+	.proc_खोलो	= pktgen_अगर_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
-	.proc_write	= pktgen_if_write,
+	.proc_ग_लिखो	= pktgen_अगर_ग_लिखो,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-static int pktgen_thread_show(struct seq_file *seq, void *v)
-{
-	struct pktgen_thread *t = seq->private;
-	const struct pktgen_dev *pkt_dev;
+अटल पूर्णांक pktgen_thपढ़ो_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा pktgen_thपढ़ो *t = seq->निजी;
+	स्थिर काष्ठा pktgen_dev *pkt_dev;
 
 	BUG_ON(!t);
 
-	seq_puts(seq, "Running: ");
+	seq_माला_दो(seq, "Running: ");
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(pkt_dev, &t->if_list, list)
-		if (pkt_dev->running)
-			seq_printf(seq, "%s ", pkt_dev->odevname);
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(pkt_dev, &t->अगर_list, list)
+		अगर (pkt_dev->running)
+			seq_म_लिखो(seq, "%s ", pkt_dev->odevname);
 
-	seq_puts(seq, "\nStopped: ");
+	seq_माला_दो(seq, "\nStopped: ");
 
-	list_for_each_entry_rcu(pkt_dev, &t->if_list, list)
-		if (!pkt_dev->running)
-			seq_printf(seq, "%s ", pkt_dev->odevname);
+	list_क्रम_each_entry_rcu(pkt_dev, &t->अगर_list, list)
+		अगर (!pkt_dev->running)
+			seq_म_लिखो(seq, "%s ", pkt_dev->odevname);
 
-	if (t->result[0])
-		seq_printf(seq, "\nResult: %s\n", t->result);
-	else
-		seq_puts(seq, "\nResult: NA\n");
+	अगर (t->result[0])
+		seq_म_लिखो(seq, "\nResult: %s\n", t->result);
+	अन्यथा
+		seq_माला_दो(seq, "\nResult: NA\n");
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t pktgen_thread_write(struct file *file,
-				   const char __user * user_buffer,
-				   size_t count, loff_t * offset)
-{
-	struct seq_file *seq = file->private_data;
-	struct pktgen_thread *t = seq->private;
-	int i, max, len, ret;
-	char name[40];
-	char *pg_result;
+अटल sमाप_प्रकार pktgen_thपढ़ो_ग_लिखो(काष्ठा file *file,
+				   स्थिर अक्षर __user * user_buffer,
+				   माप_प्रकार count, loff_t * offset)
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा pktgen_thपढ़ो *t = seq->निजी;
+	पूर्णांक i, max, len, ret;
+	अक्षर name[40];
+	अक्षर *pg_result;
 
-	if (count < 1) {
-		//      sprintf(pg_result, "Wrong command format");
-		return -EINVAL;
-	}
+	अगर (count < 1) अणु
+		//      प्र_लिखो(pg_result, "Wrong command format");
+		वापस -EINVAL;
+	पूर्ण
 
 	max = count;
-	len = count_trail_chars(user_buffer, max);
-	if (len < 0)
-		return len;
+	len = count_trail_अक्षरs(user_buffer, max);
+	अगर (len < 0)
+		वापस len;
 
 	i = len;
 
 	/* Read variable name */
 
-	len = strn_len(&user_buffer[i], sizeof(name) - 1);
-	if (len < 0)
-		return len;
+	len = strn_len(&user_buffer[i], माप(name) - 1);
+	अगर (len < 0)
+		वापस len;
 
-	memset(name, 0, sizeof(name));
-	if (copy_from_user(name, &user_buffer[i], len))
-		return -EFAULT;
+	स_रखो(name, 0, माप(name));
+	अगर (copy_from_user(name, &user_buffer[i], len))
+		वापस -EFAULT;
 	i += len;
 
 	max = count - i;
-	len = count_trail_chars(&user_buffer[i], max);
-	if (len < 0)
-		return len;
+	len = count_trail_अक्षरs(&user_buffer[i], max);
+	अगर (len < 0)
+		वापस len;
 
 	i += len;
 
-	if (debug)
-		pr_debug("t=%s, count=%lu\n", name, (unsigned long)count);
+	अगर (debug)
+		pr_debug("t=%s, count=%lu\n", name, (अचिन्हित दीर्घ)count);
 
-	if (!t) {
+	अगर (!t) अणु
 		pr_err("ERROR: No thread\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pg_result = &(t->result[0]);
 
-	if (!strcmp(name, "add_device")) {
-		char f[32];
-		memset(f, 0, 32);
-		len = strn_len(&user_buffer[i], sizeof(f) - 1);
-		if (len < 0) {
+	अगर (!म_भेद(name, "add_device")) अणु
+		अक्षर f[32];
+		स_रखो(f, 0, 32);
+		len = strn_len(&user_buffer[i], माप(f) - 1);
+		अगर (len < 0) अणु
 			ret = len;
-			goto out;
-		}
-		if (copy_from_user(f, &user_buffer[i], len))
-			return -EFAULT;
+			जाओ out;
+		पूर्ण
+		अगर (copy_from_user(f, &user_buffer[i], len))
+			वापस -EFAULT;
 		i += len;
-		mutex_lock(&pktgen_thread_lock);
+		mutex_lock(&pktgen_thपढ़ो_lock);
 		ret = pktgen_add_device(t, f);
-		mutex_unlock(&pktgen_thread_lock);
-		if (!ret) {
+		mutex_unlock(&pktgen_thपढ़ो_lock);
+		अगर (!ret) अणु
 			ret = count;
-			sprintf(pg_result, "OK: add_device=%s", f);
-		} else
-			sprintf(pg_result, "ERROR: can not add device %s", f);
-		goto out;
-	}
+			प्र_लिखो(pg_result, "OK: add_device=%s", f);
+		पूर्ण अन्यथा
+			प्र_लिखो(pg_result, "ERROR: can not add device %s", f);
+		जाओ out;
+	पूर्ण
 
-	if (!strcmp(name, "rem_device_all")) {
-		mutex_lock(&pktgen_thread_lock);
+	अगर (!म_भेद(name, "rem_device_all")) अणु
+		mutex_lock(&pktgen_thपढ़ो_lock);
 		t->control |= T_REMDEVALL;
-		mutex_unlock(&pktgen_thread_lock);
-		schedule_timeout_interruptible(msecs_to_jiffies(125));	/* Propagate thread->control  */
+		mutex_unlock(&pktgen_thपढ़ो_lock);
+		schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(125));	/* Propagate thपढ़ो->control  */
 		ret = count;
-		sprintf(pg_result, "OK: rem_device_all");
-		goto out;
-	}
+		प्र_लिखो(pg_result, "OK: rem_device_all");
+		जाओ out;
+	पूर्ण
 
-	if (!strcmp(name, "max_before_softirq")) {
-		sprintf(pg_result, "OK: Note! max_before_softirq is obsoleted -- Do not use");
+	अगर (!म_भेद(name, "max_before_softirq")) अणु
+		प्र_लिखो(pg_result, "OK: Note! max_before_softirq is obsoleted -- Do not use");
 		ret = count;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = -EINVAL;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pktgen_thread_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, pktgen_thread_show, PDE_DATA(inode));
-}
+अटल पूर्णांक pktgen_thपढ़ो_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, pktgen_thपढ़ो_show, PDE_DATA(inode));
+पूर्ण
 
-static const struct proc_ops pktgen_thread_proc_ops = {
-	.proc_open	= pktgen_thread_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops pktgen_thपढ़ो_proc_ops = अणु
+	.proc_खोलो	= pktgen_thपढ़ो_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
-	.proc_write	= pktgen_thread_write,
+	.proc_ग_लिखो	= pktgen_thपढ़ो_ग_लिखो,
 	.proc_release	= single_release,
-};
+पूर्ण;
 
-/* Think find or remove for NN */
-static struct pktgen_dev *__pktgen_NN_threads(const struct pktgen_net *pn,
-					      const char *ifname, int remove)
-{
-	struct pktgen_thread *t;
-	struct pktgen_dev *pkt_dev = NULL;
-	bool exact = (remove == FIND);
+/* Think find or हटाओ क्रम NN */
+अटल काष्ठा pktgen_dev *__pktgen_NN_thपढ़ोs(स्थिर काष्ठा pktgen_net *pn,
+					      स्थिर अक्षर *अगरname, पूर्णांक हटाओ)
+अणु
+	काष्ठा pktgen_thपढ़ो *t;
+	काष्ठा pktgen_dev *pkt_dev = शून्य;
+	bool exact = (हटाओ == FIND);
 
-	list_for_each_entry(t, &pn->pktgen_threads, th_list) {
-		pkt_dev = pktgen_find_dev(t, ifname, exact);
-		if (pkt_dev) {
-			if (remove) {
+	list_क्रम_each_entry(t, &pn->pktgen_thपढ़ोs, th_list) अणु
+		pkt_dev = pktgen_find_dev(t, अगरname, exact);
+		अगर (pkt_dev) अणु
+			अगर (हटाओ) अणु
 				pkt_dev->removal_mark = 1;
 				t->control |= T_REMDEV;
-			}
-			break;
-		}
-	}
-	return pkt_dev;
-}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस pkt_dev;
+पूर्ण
 
 /*
- * mark a device for removal
+ * mark a device क्रम removal
  */
-static void pktgen_mark_device(const struct pktgen_net *pn, const char *ifname)
-{
-	struct pktgen_dev *pkt_dev = NULL;
-	const int max_tries = 10, msec_per_try = 125;
-	int i = 0;
+अटल व्योम pktgen_mark_device(स्थिर काष्ठा pktgen_net *pn, स्थिर अक्षर *अगरname)
+अणु
+	काष्ठा pktgen_dev *pkt_dev = शून्य;
+	स्थिर पूर्णांक max_tries = 10, msec_per_try = 125;
+	पूर्णांक i = 0;
 
-	mutex_lock(&pktgen_thread_lock);
-	pr_debug("%s: marking %s for removal\n", __func__, ifname);
+	mutex_lock(&pktgen_thपढ़ो_lock);
+	pr_debug("%s: marking %s for removal\n", __func__, अगरname);
 
-	while (1) {
+	जबतक (1) अणु
 
-		pkt_dev = __pktgen_NN_threads(pn, ifname, REMOVE);
-		if (pkt_dev == NULL)
-			break;	/* success */
+		pkt_dev = __pktgen_NN_thपढ़ोs(pn, अगरname, REMOVE);
+		अगर (pkt_dev == शून्य)
+			अवरोध;	/* success */
 
-		mutex_unlock(&pktgen_thread_lock);
+		mutex_unlock(&pktgen_thपढ़ो_lock);
 		pr_debug("%s: waiting for %s to disappear....\n",
-			 __func__, ifname);
-		schedule_timeout_interruptible(msecs_to_jiffies(msec_per_try));
-		mutex_lock(&pktgen_thread_lock);
+			 __func__, अगरname);
+		schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(msec_per_try));
+		mutex_lock(&pktgen_thपढ़ो_lock);
 
-		if (++i >= max_tries) {
+		अगर (++i >= max_tries) अणु
 			pr_err("%s: timed out after waiting %d msec for device %s to be removed\n",
-			       __func__, msec_per_try * i, ifname);
-			break;
-		}
+			       __func__, msec_per_try * i, अगरname);
+			अवरोध;
+		पूर्ण
 
-	}
+	पूर्ण
 
-	mutex_unlock(&pktgen_thread_lock);
-}
+	mutex_unlock(&pktgen_thपढ़ो_lock);
+पूर्ण
 
-static void pktgen_change_name(const struct pktgen_net *pn, struct net_device *dev)
-{
-	struct pktgen_thread *t;
+अटल व्योम pktgen_change_name(स्थिर काष्ठा pktgen_net *pn, काष्ठा net_device *dev)
+अणु
+	काष्ठा pktgen_thपढ़ो *t;
 
-	mutex_lock(&pktgen_thread_lock);
+	mutex_lock(&pktgen_thपढ़ो_lock);
 
-	list_for_each_entry(t, &pn->pktgen_threads, th_list) {
-		struct pktgen_dev *pkt_dev;
+	list_क्रम_each_entry(t, &pn->pktgen_thपढ़ोs, th_list) अणु
+		काष्ठा pktgen_dev *pkt_dev;
 
-		if_lock(t);
-		list_for_each_entry(pkt_dev, &t->if_list, list) {
-			if (pkt_dev->odev != dev)
-				continue;
+		अगर_lock(t);
+		list_क्रम_each_entry(pkt_dev, &t->अगर_list, list) अणु
+			अगर (pkt_dev->odev != dev)
+				जारी;
 
-			proc_remove(pkt_dev->entry);
+			proc_हटाओ(pkt_dev->entry);
 
 			pkt_dev->entry = proc_create_data(dev->name, 0600,
 							  pn->proc_dir,
-							  &pktgen_if_proc_ops,
+							  &pktgen_अगर_proc_ops,
 							  pkt_dev);
-			if (!pkt_dev->entry)
+			अगर (!pkt_dev->entry)
 				pr_err("can't move proc entry for '%s'\n",
 				       dev->name);
-			break;
-		}
-		if_unlock(t);
-	}
-	mutex_unlock(&pktgen_thread_lock);
-}
+			अवरोध;
+		पूर्ण
+		अगर_unlock(t);
+	पूर्ण
+	mutex_unlock(&pktgen_thपढ़ो_lock);
+पूर्ण
 
-static int pktgen_device_event(struct notifier_block *unused,
-			       unsigned long event, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct pktgen_net *pn = net_generic(dev_net(dev), pg_net_id);
+अटल पूर्णांक pktgen_device_event(काष्ठा notअगरier_block *unused,
+			       अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा pktgen_net *pn = net_generic(dev_net(dev), pg_net_id);
 
-	if (pn->pktgen_exiting)
-		return NOTIFY_DONE;
+	अगर (pn->pktgen_निकासing)
+		वापस NOTIFY_DONE;
 
-	/* It is OK that we do not hold the group lock right now,
+	/* It is OK that we करो not hold the group lock right now,
 	 * as we run under the RTNL lock.
 	 */
 
-	switch (event) {
-	case NETDEV_CHANGENAME:
+	चयन (event) अणु
+	हाल NETDEV_CHANGENAME:
 		pktgen_change_name(pn, dev);
-		break;
+		अवरोध;
 
-	case NETDEV_UNREGISTER:
+	हाल NETDEV_UNREGISTER:
 		pktgen_mark_device(pn, dev->name);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct net_device *pktgen_dev_get_by_name(const struct pktgen_net *pn,
-						 struct pktgen_dev *pkt_dev,
-						 const char *ifname)
-{
-	char b[IFNAMSIZ+5];
-	int i;
+अटल काष्ठा net_device *pktgen_dev_get_by_name(स्थिर काष्ठा pktgen_net *pn,
+						 काष्ठा pktgen_dev *pkt_dev,
+						 स्थिर अक्षर *अगरname)
+अणु
+	अक्षर b[IFNAMSIZ+5];
+	पूर्णांक i;
 
-	for (i = 0; ifname[i] != '@'; i++) {
-		if (i == IFNAMSIZ)
-			break;
+	क्रम (i = 0; अगरname[i] != '@'; i++) अणु
+		अगर (i == IFNAMSIZ)
+			अवरोध;
 
-		b[i] = ifname[i];
-	}
+		b[i] = अगरname[i];
+	पूर्ण
 	b[i] = 0;
 
-	return dev_get_by_name(pn->net, b);
-}
+	वापस dev_get_by_name(pn->net, b);
+पूर्ण
 
 
 /* Associate pktgen_dev with a device. */
 
-static int pktgen_setup_dev(const struct pktgen_net *pn,
-			    struct pktgen_dev *pkt_dev, const char *ifname)
-{
-	struct net_device *odev;
-	int err;
+अटल पूर्णांक pktgen_setup_dev(स्थिर काष्ठा pktgen_net *pn,
+			    काष्ठा pktgen_dev *pkt_dev, स्थिर अक्षर *अगरname)
+अणु
+	काष्ठा net_device *odev;
+	पूर्णांक err;
 
 	/* Clean old setups */
-	if (pkt_dev->odev) {
+	अगर (pkt_dev->odev) अणु
 		dev_put(pkt_dev->odev);
-		pkt_dev->odev = NULL;
-	}
+		pkt_dev->odev = शून्य;
+	पूर्ण
 
-	odev = pktgen_dev_get_by_name(pn, pkt_dev, ifname);
-	if (!odev) {
-		pr_err("no such netdevice: \"%s\"\n", ifname);
-		return -ENODEV;
-	}
+	odev = pktgen_dev_get_by_name(pn, pkt_dev, अगरname);
+	अगर (!odev) अणु
+		pr_err("no such netdevice: \"%s\"\n", अगरname);
+		वापस -ENODEV;
+	पूर्ण
 
-	if (odev->type != ARPHRD_ETHER && odev->type != ARPHRD_LOOPBACK) {
-		pr_err("not an ethernet or loopback device: \"%s\"\n", ifname);
+	अगर (odev->type != ARPHRD_ETHER && odev->type != ARPHRD_LOOPBACK) अणु
+		pr_err("not an ethernet or loopback device: \"%s\"\n", अगरname);
 		err = -EINVAL;
-	} else if (!netif_running(odev)) {
-		pr_err("device is down: \"%s\"\n", ifname);
+	पूर्ण अन्यथा अगर (!netअगर_running(odev)) अणु
+		pr_err("device is down: \"%s\"\n", अगरname);
 		err = -ENETDOWN;
-	} else {
+	पूर्ण अन्यथा अणु
 		pkt_dev->odev = odev;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_put(odev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Read pkt_dev from the interface and set up internal pktgen_dev
- * structure to have the right information to create/send packets
+/* Read pkt_dev from the पूर्णांकerface and set up पूर्णांकernal pktgen_dev
+ * काष्ठाure to have the right inक्रमmation to create/send packets
  */
-static void pktgen_setup_inject(struct pktgen_dev *pkt_dev)
-{
-	int ntxq;
+अटल व्योम pktgen_setup_inject(काष्ठा pktgen_dev *pkt_dev)
+अणु
+	पूर्णांक ntxq;
 
-	if (!pkt_dev->odev) {
+	अगर (!pkt_dev->odev) अणु
 		pr_err("ERROR: pkt_dev->odev == NULL in setup_inject\n");
-		sprintf(pkt_dev->result,
+		प्र_लिखो(pkt_dev->result,
 			"ERROR: pkt_dev->odev == NULL in setup_inject.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* make sure that we don't pick a non-existing transmit queue */
+	/* make sure that we करोn't pick a non-existing transmit queue */
 	ntxq = pkt_dev->odev->real_num_tx_queues;
 
-	if (ntxq <= pkt_dev->queue_map_min) {
+	अगर (ntxq <= pkt_dev->queue_map_min) अणु
 		pr_warn("WARNING: Requested queue_map_min (zero-based) (%d) exceeds valid range [0 - %d] for (%d) queues on %s, resetting\n",
 			pkt_dev->queue_map_min, (ntxq ?: 1) - 1, ntxq,
 			pkt_dev->odevname);
 		pkt_dev->queue_map_min = (ntxq ?: 1) - 1;
-	}
-	if (pkt_dev->queue_map_max >= ntxq) {
+	पूर्ण
+	अगर (pkt_dev->queue_map_max >= ntxq) अणु
 		pr_warn("WARNING: Requested queue_map_max (zero-based) (%d) exceeds valid range [0 - %d] for (%d) queues on %s, resetting\n",
 			pkt_dev->queue_map_max, (ntxq ?: 1) - 1, ntxq,
 			pkt_dev->odevname);
 		pkt_dev->queue_map_max = (ntxq ?: 1) - 1;
-	}
+	पूर्ण
 
-	/* Default to the interface's mac if not explicitly set. */
+	/* Default to the पूर्णांकerface's mac अगर not explicitly set. */
 
-	if (is_zero_ether_addr(pkt_dev->src_mac))
+	अगर (is_zero_ether_addr(pkt_dev->src_mac))
 		ether_addr_copy(&(pkt_dev->hh[6]), pkt_dev->odev->dev_addr);
 
 	/* Set up Dest MAC */
 	ether_addr_copy(&(pkt_dev->hh[0]), pkt_dev->dst_mac);
 
-	if (pkt_dev->flags & F_IPV6) {
-		int i, set = 0, err = 1;
-		struct inet6_dev *idev;
+	अगर (pkt_dev->flags & F_IPV6) अणु
+		पूर्णांक i, set = 0, err = 1;
+		काष्ठा inet6_dev *idev;
 
-		if (pkt_dev->min_pkt_size == 0) {
-			pkt_dev->min_pkt_size = 14 + sizeof(struct ipv6hdr)
-						+ sizeof(struct udphdr)
-						+ sizeof(struct pktgen_hdr)
+		अगर (pkt_dev->min_pkt_size == 0) अणु
+			pkt_dev->min_pkt_size = 14 + माप(काष्ठा ipv6hdr)
+						+ माप(काष्ठा udphdr)
+						+ माप(काष्ठा pktgen_hdr)
 						+ pkt_dev->pkt_overhead;
-		}
+		पूर्ण
 
-		for (i = 0; i < sizeof(struct in6_addr); i++)
-			if (pkt_dev->cur_in6_saddr.s6_addr[i]) {
+		क्रम (i = 0; i < माप(काष्ठा in6_addr); i++)
+			अगर (pkt_dev->cur_in6_saddr.s6_addr[i]) अणु
 				set = 1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		if (!set) {
+		अगर (!set) अणु
 
 			/*
-			 * Use linklevel address if unconfigured.
+			 * Use linklevel address अगर unconfigured.
 			 *
-			 * use ipv6_get_lladdr if/when it's get exported
+			 * use ipv6_get_lladdr अगर/when it's get exported
 			 */
 
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			idev = __in6_dev_get(pkt_dev->odev);
-			if (idev) {
-				struct inet6_ifaddr *ifp;
+			अगर (idev) अणु
+				काष्ठा inet6_अगरaddr *अगरp;
 
-				read_lock_bh(&idev->lock);
-				list_for_each_entry(ifp, &idev->addr_list, if_list) {
-					if ((ifp->scope & IFA_LINK) &&
-					    !(ifp->flags & IFA_F_TENTATIVE)) {
-						pkt_dev->cur_in6_saddr = ifp->addr;
+				पढ़ो_lock_bh(&idev->lock);
+				list_क्रम_each_entry(अगरp, &idev->addr_list, अगर_list) अणु
+					अगर ((अगरp->scope & IFA_LINK) &&
+					    !(अगरp->flags & IFA_F_TENTATIVE)) अणु
+						pkt_dev->cur_in6_saddr = अगरp->addr;
 						err = 0;
-						break;
-					}
-				}
-				read_unlock_bh(&idev->lock);
-			}
-			rcu_read_unlock();
-			if (err)
+						अवरोध;
+					पूर्ण
+				पूर्ण
+				पढ़ो_unlock_bh(&idev->lock);
+			पूर्ण
+			rcu_पढ़ो_unlock();
+			अगर (err)
 				pr_err("ERROR: IPv6 link address not available\n");
-		}
-	} else {
-		if (pkt_dev->min_pkt_size == 0) {
-			pkt_dev->min_pkt_size = 14 + sizeof(struct iphdr)
-						+ sizeof(struct udphdr)
-						+ sizeof(struct pktgen_hdr)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (pkt_dev->min_pkt_size == 0) अणु
+			pkt_dev->min_pkt_size = 14 + माप(काष्ठा iphdr)
+						+ माप(काष्ठा udphdr)
+						+ माप(काष्ठा pktgen_hdr)
 						+ pkt_dev->pkt_overhead;
-		}
+		पूर्ण
 
 		pkt_dev->saddr_min = 0;
 		pkt_dev->saddr_max = 0;
-		if (strlen(pkt_dev->src_min) == 0) {
+		अगर (म_माप(pkt_dev->src_min) == 0) अणु
 
-			struct in_device *in_dev;
+			काष्ठा in_device *in_dev;
 
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			in_dev = __in_dev_get_rcu(pkt_dev->odev);
-			if (in_dev) {
-				const struct in_ifaddr *ifa;
+			अगर (in_dev) अणु
+				स्थिर काष्ठा in_अगरaddr *अगरa;
 
-				ifa = rcu_dereference(in_dev->ifa_list);
-				if (ifa) {
-					pkt_dev->saddr_min = ifa->ifa_address;
+				अगरa = rcu_dereference(in_dev->अगरa_list);
+				अगर (अगरa) अणु
+					pkt_dev->saddr_min = अगरa->अगरa_address;
 					pkt_dev->saddr_max = pkt_dev->saddr_min;
-				}
-			}
-			rcu_read_unlock();
-		} else {
+				पूर्ण
+			पूर्ण
+			rcu_पढ़ो_unlock();
+		पूर्ण अन्यथा अणु
 			pkt_dev->saddr_min = in_aton(pkt_dev->src_min);
 			pkt_dev->saddr_max = in_aton(pkt_dev->src_max);
-		}
+		पूर्ण
 
 		pkt_dev->daddr_min = in_aton(pkt_dev->dst_min);
 		pkt_dev->daddr_max = in_aton(pkt_dev->dst_max);
-	}
+	पूर्ण
 	/* Initialize current values. */
 	pkt_dev->cur_pkt_size = pkt_dev->min_pkt_size;
-	if (pkt_dev->min_pkt_size > pkt_dev->max_pkt_size)
+	अगर (pkt_dev->min_pkt_size > pkt_dev->max_pkt_size)
 		pkt_dev->max_pkt_size = pkt_dev->min_pkt_size;
 
 	pkt_dev->cur_dst_mac_offset = 0;
@@ -2147,595 +2148,595 @@ static void pktgen_setup_inject(struct pktgen_dev *pkt_dev)
 	pkt_dev->cur_udp_dst = pkt_dev->udp_dst_min;
 	pkt_dev->cur_udp_src = pkt_dev->udp_src_min;
 	pkt_dev->nflows = 0;
-}
+पूर्ण
 
 
-static void spin(struct pktgen_dev *pkt_dev, ktime_t spin_until)
-{
-	ktime_t start_time, end_time;
-	s64 remaining;
-	struct hrtimer_sleeper t;
+अटल व्योम spin(काष्ठा pktgen_dev *pkt_dev, kसमय_प्रकार spin_until)
+अणु
+	kसमय_प्रकार start_समय, end_समय;
+	s64 reमुख्यing;
+	काष्ठा hrसमयr_sleeper t;
 
-	hrtimer_init_sleeper_on_stack(&t, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-	hrtimer_set_expires(&t.timer, spin_until);
+	hrसमयr_init_sleeper_on_stack(&t, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
+	hrसमयr_set_expires(&t.समयr, spin_until);
 
-	remaining = ktime_to_ns(hrtimer_expires_remaining(&t.timer));
-	if (remaining <= 0)
-		goto out;
+	reमुख्यing = kसमय_प्रकारo_ns(hrसमयr_expires_reमुख्यing(&t.समयr));
+	अगर (reमुख्यing <= 0)
+		जाओ out;
 
-	start_time = ktime_get();
-	if (remaining < 100000) {
-		/* for small delays (<100us), just loop until limit is reached */
-		do {
-			end_time = ktime_get();
-		} while (ktime_compare(end_time, spin_until) < 0);
-	} else {
-		do {
+	start_समय = kसमय_get();
+	अगर (reमुख्यing < 100000) अणु
+		/* क्रम small delays (<100us), just loop until limit is reached */
+		करो अणु
+			end_समय = kसमय_get();
+		पूर्ण जबतक (kसमय_compare(end_समय, spin_until) < 0);
+	पूर्ण अन्यथा अणु
+		करो अणु
 			set_current_state(TASK_INTERRUPTIBLE);
-			hrtimer_sleeper_start_expires(&t, HRTIMER_MODE_ABS);
+			hrसमयr_sleeper_start_expires(&t, HRTIMER_MODE_ABS);
 
-			if (likely(t.task))
+			अगर (likely(t.task))
 				schedule();
 
-			hrtimer_cancel(&t.timer);
-		} while (t.task && pkt_dev->running && !signal_pending(current));
+			hrसमयr_cancel(&t.समयr);
+		पूर्ण जबतक (t.task && pkt_dev->running && !संकेत_pending(current));
 		__set_current_state(TASK_RUNNING);
-		end_time = ktime_get();
-	}
+		end_समय = kसमय_get();
+	पूर्ण
 
-	pkt_dev->idle_acc += ktime_to_ns(ktime_sub(end_time, start_time));
+	pkt_dev->idle_acc += kसमय_प्रकारo_ns(kसमय_sub(end_समय, start_समय));
 out:
-	pkt_dev->next_tx = ktime_add_ns(spin_until, pkt_dev->delay);
-	destroy_hrtimer_on_stack(&t.timer);
-}
+	pkt_dev->next_tx = kसमय_add_ns(spin_until, pkt_dev->delay);
+	destroy_hrसमयr_on_stack(&t.समयr);
+पूर्ण
 
-static inline void set_pkt_overhead(struct pktgen_dev *pkt_dev)
-{
+अटल अंतरभूत व्योम set_pkt_overhead(काष्ठा pktgen_dev *pkt_dev)
+अणु
 	pkt_dev->pkt_overhead = 0;
-	pkt_dev->pkt_overhead += pkt_dev->nr_labels*sizeof(u32);
+	pkt_dev->pkt_overhead += pkt_dev->nr_labels*माप(u32);
 	pkt_dev->pkt_overhead += VLAN_TAG_SIZE(pkt_dev);
 	pkt_dev->pkt_overhead += SVLAN_TAG_SIZE(pkt_dev);
-}
+पूर्ण
 
-static inline int f_seen(const struct pktgen_dev *pkt_dev, int flow)
-{
-	return !!(pkt_dev->flows[flow].flags & F_INIT);
-}
+अटल अंतरभूत पूर्णांक f_seen(स्थिर काष्ठा pktgen_dev *pkt_dev, पूर्णांक flow)
+अणु
+	वापस !!(pkt_dev->flows[flow].flags & F_INIT);
+पूर्ण
 
-static inline int f_pick(struct pktgen_dev *pkt_dev)
-{
-	int flow = pkt_dev->curfl;
+अटल अंतरभूत पूर्णांक f_pick(काष्ठा pktgen_dev *pkt_dev)
+अणु
+	पूर्णांक flow = pkt_dev->curfl;
 
-	if (pkt_dev->flags & F_FLOW_SEQ) {
-		if (pkt_dev->flows[flow].count >= pkt_dev->lflow) {
-			/* reset time */
+	अगर (pkt_dev->flags & F_FLOW_SEQ) अणु
+		अगर (pkt_dev->flows[flow].count >= pkt_dev->lflow) अणु
+			/* reset समय */
 			pkt_dev->flows[flow].count = 0;
 			pkt_dev->flows[flow].flags = 0;
 			pkt_dev->curfl += 1;
-			if (pkt_dev->curfl >= pkt_dev->cflows)
+			अगर (pkt_dev->curfl >= pkt_dev->cflows)
 				pkt_dev->curfl = 0; /*reset */
-		}
-	} else {
-		flow = prandom_u32() % pkt_dev->cflows;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		flow = pअक्रमom_u32() % pkt_dev->cflows;
 		pkt_dev->curfl = flow;
 
-		if (pkt_dev->flows[flow].count > pkt_dev->lflow) {
+		अगर (pkt_dev->flows[flow].count > pkt_dev->lflow) अणु
 			pkt_dev->flows[flow].count = 0;
 			pkt_dev->flows[flow].flags = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return pkt_dev->curfl;
-}
+	वापस pkt_dev->curfl;
+पूर्ण
 
 
-#ifdef CONFIG_XFRM
-/* If there was already an IPSEC SA, we keep it as is, else
- * we go look for it ...
+#अगर_घोषित CONFIG_XFRM
+/* If there was alपढ़ोy an IPSEC SA, we keep it as is, अन्यथा
+ * we go look क्रम it ...
 */
-#define DUMMY_MARK 0
-static void get_ipsec_sa(struct pktgen_dev *pkt_dev, int flow)
-{
-	struct xfrm_state *x = pkt_dev->flows[flow].x;
-	struct pktgen_net *pn = net_generic(dev_net(pkt_dev->odev), pg_net_id);
-	if (!x) {
+#घोषणा DUMMY_MARK 0
+अटल व्योम get_ipsec_sa(काष्ठा pktgen_dev *pkt_dev, पूर्णांक flow)
+अणु
+	काष्ठा xfrm_state *x = pkt_dev->flows[flow].x;
+	काष्ठा pktgen_net *pn = net_generic(dev_net(pkt_dev->odev), pg_net_id);
+	अगर (!x) अणु
 
-		if (pkt_dev->spi) {
+		अगर (pkt_dev->spi) अणु
 			/* We need as quick as possible to find the right SA
 			 * Searching with minimum criteria to archieve this.
 			 */
 			x = xfrm_state_lookup_byspi(pn->net, htonl(pkt_dev->spi), AF_INET);
-		} else {
-			/* slow path: we dont already have xfrm_state */
+		पूर्ण अन्यथा अणु
+			/* slow path: we करोnt alपढ़ोy have xfrm_state */
 			x = xfrm_stateonly_find(pn->net, DUMMY_MARK, 0,
 						(xfrm_address_t *)&pkt_dev->cur_daddr,
 						(xfrm_address_t *)&pkt_dev->cur_saddr,
 						AF_INET,
 						pkt_dev->ipsmode,
 						pkt_dev->ipsproto, 0);
-		}
-		if (x) {
+		पूर्ण
+		अगर (x) अणु
 			pkt_dev->flows[flow].x = x;
 			set_pkt_overhead(pkt_dev);
 			pkt_dev->pkt_overhead += x->props.header_len;
-		}
+		पूर्ण
 
-	}
-}
-#endif
-static void set_cur_queue_map(struct pktgen_dev *pkt_dev)
-{
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
+अटल व्योम set_cur_queue_map(काष्ठा pktgen_dev *pkt_dev)
+अणु
 
-	if (pkt_dev->flags & F_QUEUE_MAP_CPU)
+	अगर (pkt_dev->flags & F_QUEUE_MAP_CPU)
 		pkt_dev->cur_queue_map = smp_processor_id();
 
-	else if (pkt_dev->queue_map_min <= pkt_dev->queue_map_max) {
+	अन्यथा अगर (pkt_dev->queue_map_min <= pkt_dev->queue_map_max) अणु
 		__u16 t;
-		if (pkt_dev->flags & F_QUEUE_MAP_RND) {
-			t = prandom_u32() %
+		अगर (pkt_dev->flags & F_QUEUE_MAP_RND) अणु
+			t = pअक्रमom_u32() %
 				(pkt_dev->queue_map_max -
 				 pkt_dev->queue_map_min + 1)
 				+ pkt_dev->queue_map_min;
-		} else {
+		पूर्ण अन्यथा अणु
 			t = pkt_dev->cur_queue_map + 1;
-			if (t > pkt_dev->queue_map_max)
+			अगर (t > pkt_dev->queue_map_max)
 				t = pkt_dev->queue_map_min;
-		}
+		पूर्ण
 		pkt_dev->cur_queue_map = t;
-	}
+	पूर्ण
 	pkt_dev->cur_queue_map  = pkt_dev->cur_queue_map % pkt_dev->odev->real_num_tx_queues;
-}
+पूर्ण
 
-/* Increment/randomize headers according to flags and current values
- * for IP src/dest, UDP src/dst port, MAC-Addr src/dst
+/* Increment/अक्रमomize headers according to flags and current values
+ * क्रम IP src/dest, UDP src/dst port, MAC-Addr src/dst
  */
-static void mod_cur_headers(struct pktgen_dev *pkt_dev)
-{
+अटल व्योम mod_cur_headers(काष्ठा pktgen_dev *pkt_dev)
+अणु
 	__u32 imn;
 	__u32 imx;
-	int flow = 0;
+	पूर्णांक flow = 0;
 
-	if (pkt_dev->cflows)
+	अगर (pkt_dev->cflows)
 		flow = f_pick(pkt_dev);
 
 	/*  Deal with source MAC */
-	if (pkt_dev->src_mac_count > 1) {
+	अगर (pkt_dev->src_mac_count > 1) अणु
 		__u32 mc;
-		__u32 tmp;
+		__u32 पंचांगp;
 
-		if (pkt_dev->flags & F_MACSRC_RND)
-			mc = prandom_u32() % pkt_dev->src_mac_count;
-		else {
+		अगर (pkt_dev->flags & F_MACSRC_RND)
+			mc = pअक्रमom_u32() % pkt_dev->src_mac_count;
+		अन्यथा अणु
 			mc = pkt_dev->cur_src_mac_offset++;
-			if (pkt_dev->cur_src_mac_offset >=
+			अगर (pkt_dev->cur_src_mac_offset >=
 			    pkt_dev->src_mac_count)
 				pkt_dev->cur_src_mac_offset = 0;
-		}
+		पूर्ण
 
-		tmp = pkt_dev->src_mac[5] + (mc & 0xFF);
-		pkt_dev->hh[11] = tmp;
-		tmp = (pkt_dev->src_mac[4] + ((mc >> 8) & 0xFF) + (tmp >> 8));
-		pkt_dev->hh[10] = tmp;
-		tmp = (pkt_dev->src_mac[3] + ((mc >> 16) & 0xFF) + (tmp >> 8));
-		pkt_dev->hh[9] = tmp;
-		tmp = (pkt_dev->src_mac[2] + ((mc >> 24) & 0xFF) + (tmp >> 8));
-		pkt_dev->hh[8] = tmp;
-		tmp = (pkt_dev->src_mac[1] + (tmp >> 8));
-		pkt_dev->hh[7] = tmp;
-	}
+		पंचांगp = pkt_dev->src_mac[5] + (mc & 0xFF);
+		pkt_dev->hh[11] = पंचांगp;
+		पंचांगp = (pkt_dev->src_mac[4] + ((mc >> 8) & 0xFF) + (पंचांगp >> 8));
+		pkt_dev->hh[10] = पंचांगp;
+		पंचांगp = (pkt_dev->src_mac[3] + ((mc >> 16) & 0xFF) + (पंचांगp >> 8));
+		pkt_dev->hh[9] = पंचांगp;
+		पंचांगp = (pkt_dev->src_mac[2] + ((mc >> 24) & 0xFF) + (पंचांगp >> 8));
+		pkt_dev->hh[8] = पंचांगp;
+		पंचांगp = (pkt_dev->src_mac[1] + (पंचांगp >> 8));
+		pkt_dev->hh[7] = पंचांगp;
+	पूर्ण
 
 	/*  Deal with Destination MAC */
-	if (pkt_dev->dst_mac_count > 1) {
+	अगर (pkt_dev->dst_mac_count > 1) अणु
 		__u32 mc;
-		__u32 tmp;
+		__u32 पंचांगp;
 
-		if (pkt_dev->flags & F_MACDST_RND)
-			mc = prandom_u32() % pkt_dev->dst_mac_count;
+		अगर (pkt_dev->flags & F_MACDST_RND)
+			mc = pअक्रमom_u32() % pkt_dev->dst_mac_count;
 
-		else {
+		अन्यथा अणु
 			mc = pkt_dev->cur_dst_mac_offset++;
-			if (pkt_dev->cur_dst_mac_offset >=
-			    pkt_dev->dst_mac_count) {
+			अगर (pkt_dev->cur_dst_mac_offset >=
+			    pkt_dev->dst_mac_count) अणु
 				pkt_dev->cur_dst_mac_offset = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		tmp = pkt_dev->dst_mac[5] + (mc & 0xFF);
-		pkt_dev->hh[5] = tmp;
-		tmp = (pkt_dev->dst_mac[4] + ((mc >> 8) & 0xFF) + (tmp >> 8));
-		pkt_dev->hh[4] = tmp;
-		tmp = (pkt_dev->dst_mac[3] + ((mc >> 16) & 0xFF) + (tmp >> 8));
-		pkt_dev->hh[3] = tmp;
-		tmp = (pkt_dev->dst_mac[2] + ((mc >> 24) & 0xFF) + (tmp >> 8));
-		pkt_dev->hh[2] = tmp;
-		tmp = (pkt_dev->dst_mac[1] + (tmp >> 8));
-		pkt_dev->hh[1] = tmp;
-	}
+		पंचांगp = pkt_dev->dst_mac[5] + (mc & 0xFF);
+		pkt_dev->hh[5] = पंचांगp;
+		पंचांगp = (pkt_dev->dst_mac[4] + ((mc >> 8) & 0xFF) + (पंचांगp >> 8));
+		pkt_dev->hh[4] = पंचांगp;
+		पंचांगp = (pkt_dev->dst_mac[3] + ((mc >> 16) & 0xFF) + (पंचांगp >> 8));
+		pkt_dev->hh[3] = पंचांगp;
+		पंचांगp = (pkt_dev->dst_mac[2] + ((mc >> 24) & 0xFF) + (पंचांगp >> 8));
+		pkt_dev->hh[2] = पंचांगp;
+		पंचांगp = (pkt_dev->dst_mac[1] + (पंचांगp >> 8));
+		pkt_dev->hh[1] = पंचांगp;
+	पूर्ण
 
-	if (pkt_dev->flags & F_MPLS_RND) {
-		unsigned int i;
-		for (i = 0; i < pkt_dev->nr_labels; i++)
-			if (pkt_dev->labels[i] & MPLS_STACK_BOTTOM)
+	अगर (pkt_dev->flags & F_MPLS_RND) अणु
+		अचिन्हित पूर्णांक i;
+		क्रम (i = 0; i < pkt_dev->nr_labels; i++)
+			अगर (pkt_dev->labels[i] & MPLS_STACK_BOTTOM)
 				pkt_dev->labels[i] = MPLS_STACK_BOTTOM |
-					     ((__force __be32)prandom_u32() &
+					     ((__क्रमce __be32)pअक्रमom_u32() &
 						      htonl(0x000fffff));
-	}
+	पूर्ण
 
-	if ((pkt_dev->flags & F_VID_RND) && (pkt_dev->vlan_id != 0xffff)) {
-		pkt_dev->vlan_id = prandom_u32() & (4096 - 1);
-	}
+	अगर ((pkt_dev->flags & F_VID_RND) && (pkt_dev->vlan_id != 0xffff)) अणु
+		pkt_dev->vlan_id = pअक्रमom_u32() & (4096 - 1);
+	पूर्ण
 
-	if ((pkt_dev->flags & F_SVID_RND) && (pkt_dev->svlan_id != 0xffff)) {
-		pkt_dev->svlan_id = prandom_u32() & (4096 - 1);
-	}
+	अगर ((pkt_dev->flags & F_SVID_RND) && (pkt_dev->svlan_id != 0xffff)) अणु
+		pkt_dev->svlan_id = pअक्रमom_u32() & (4096 - 1);
+	पूर्ण
 
-	if (pkt_dev->udp_src_min < pkt_dev->udp_src_max) {
-		if (pkt_dev->flags & F_UDPSRC_RND)
-			pkt_dev->cur_udp_src = prandom_u32() %
+	अगर (pkt_dev->udp_src_min < pkt_dev->udp_src_max) अणु
+		अगर (pkt_dev->flags & F_UDPSRC_RND)
+			pkt_dev->cur_udp_src = pअक्रमom_u32() %
 				(pkt_dev->udp_src_max - pkt_dev->udp_src_min)
 				+ pkt_dev->udp_src_min;
 
-		else {
+		अन्यथा अणु
 			pkt_dev->cur_udp_src++;
-			if (pkt_dev->cur_udp_src >= pkt_dev->udp_src_max)
+			अगर (pkt_dev->cur_udp_src >= pkt_dev->udp_src_max)
 				pkt_dev->cur_udp_src = pkt_dev->udp_src_min;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pkt_dev->udp_dst_min < pkt_dev->udp_dst_max) {
-		if (pkt_dev->flags & F_UDPDST_RND) {
-			pkt_dev->cur_udp_dst = prandom_u32() %
+	अगर (pkt_dev->udp_dst_min < pkt_dev->udp_dst_max) अणु
+		अगर (pkt_dev->flags & F_UDPDST_RND) अणु
+			pkt_dev->cur_udp_dst = pअक्रमom_u32() %
 				(pkt_dev->udp_dst_max - pkt_dev->udp_dst_min)
 				+ pkt_dev->udp_dst_min;
-		} else {
+		पूर्ण अन्यथा अणु
 			pkt_dev->cur_udp_dst++;
-			if (pkt_dev->cur_udp_dst >= pkt_dev->udp_dst_max)
+			अगर (pkt_dev->cur_udp_dst >= pkt_dev->udp_dst_max)
 				pkt_dev->cur_udp_dst = pkt_dev->udp_dst_min;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!(pkt_dev->flags & F_IPV6)) {
+	अगर (!(pkt_dev->flags & F_IPV6)) अणु
 
 		imn = ntohl(pkt_dev->saddr_min);
 		imx = ntohl(pkt_dev->saddr_max);
-		if (imn < imx) {
+		अगर (imn < imx) अणु
 			__u32 t;
-			if (pkt_dev->flags & F_IPSRC_RND)
-				t = prandom_u32() % (imx - imn) + imn;
-			else {
+			अगर (pkt_dev->flags & F_IPSRC_RND)
+				t = pअक्रमom_u32() % (imx - imn) + imn;
+			अन्यथा अणु
 				t = ntohl(pkt_dev->cur_saddr);
 				t++;
-				if (t > imx)
+				अगर (t > imx)
 					t = imn;
 
-			}
+			पूर्ण
 			pkt_dev->cur_saddr = htonl(t);
-		}
+		पूर्ण
 
-		if (pkt_dev->cflows && f_seen(pkt_dev, flow)) {
+		अगर (pkt_dev->cflows && f_seen(pkt_dev, flow)) अणु
 			pkt_dev->cur_daddr = pkt_dev->flows[flow].cur_daddr;
-		} else {
+		पूर्ण अन्यथा अणु
 			imn = ntohl(pkt_dev->daddr_min);
 			imx = ntohl(pkt_dev->daddr_max);
-			if (imn < imx) {
+			अगर (imn < imx) अणु
 				__u32 t;
 				__be32 s;
-				if (pkt_dev->flags & F_IPDST_RND) {
+				अगर (pkt_dev->flags & F_IPDST_RND) अणु
 
-					do {
-						t = prandom_u32() %
+					करो अणु
+						t = pअक्रमom_u32() %
 							(imx - imn) + imn;
 						s = htonl(t);
-					} while (ipv4_is_loopback(s) ||
+					पूर्ण जबतक (ipv4_is_loopback(s) ||
 						ipv4_is_multicast(s) ||
 						ipv4_is_lbcast(s) ||
 						ipv4_is_zeronet(s) ||
 						ipv4_is_local_multicast(s));
 					pkt_dev->cur_daddr = s;
-				} else {
+				पूर्ण अन्यथा अणु
 					t = ntohl(pkt_dev->cur_daddr);
 					t++;
-					if (t > imx) {
+					अगर (t > imx) अणु
 						t = imn;
-					}
+					पूर्ण
 					pkt_dev->cur_daddr = htonl(t);
-				}
-			}
-			if (pkt_dev->cflows) {
+				पूर्ण
+			पूर्ण
+			अगर (pkt_dev->cflows) अणु
 				pkt_dev->flows[flow].flags |= F_INIT;
 				pkt_dev->flows[flow].cur_daddr =
 				    pkt_dev->cur_daddr;
-#ifdef CONFIG_XFRM
-				if (pkt_dev->flags & F_IPSEC)
+#अगर_घोषित CONFIG_XFRM
+				अगर (pkt_dev->flags & F_IPSEC)
 					get_ipsec_sa(pkt_dev, flow);
-#endif
+#पूर्ण_अगर
 				pkt_dev->nflows++;
-			}
-		}
-	} else {		/* IPV6 * */
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु		/* IPV6 * */
 
-		if (!ipv6_addr_any(&pkt_dev->min_in6_daddr)) {
-			int i;
+		अगर (!ipv6_addr_any(&pkt_dev->min_in6_daddr)) अणु
+			पूर्णांक i;
 
-			/* Only random destinations yet */
+			/* Only अक्रमom destinations yet */
 
-			for (i = 0; i < 4; i++) {
+			क्रम (i = 0; i < 4; i++) अणु
 				pkt_dev->cur_in6_daddr.s6_addr32[i] =
-				    (((__force __be32)prandom_u32() |
+				    (((__क्रमce __be32)pअक्रमom_u32() |
 				      pkt_dev->min_in6_daddr.s6_addr32[i]) &
 				     pkt_dev->max_in6_daddr.s6_addr32[i]);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (pkt_dev->min_pkt_size < pkt_dev->max_pkt_size) {
+	अगर (pkt_dev->min_pkt_size < pkt_dev->max_pkt_size) अणु
 		__u32 t;
-		if (pkt_dev->flags & F_TXSIZE_RND) {
-			t = prandom_u32() %
+		अगर (pkt_dev->flags & F_TXSIZE_RND) अणु
+			t = pअक्रमom_u32() %
 				(pkt_dev->max_pkt_size - pkt_dev->min_pkt_size)
 				+ pkt_dev->min_pkt_size;
-		} else {
+		पूर्ण अन्यथा अणु
 			t = pkt_dev->cur_pkt_size + 1;
-			if (t > pkt_dev->max_pkt_size)
+			अगर (t > pkt_dev->max_pkt_size)
 				t = pkt_dev->min_pkt_size;
-		}
+		पूर्ण
 		pkt_dev->cur_pkt_size = t;
-	}
+	पूर्ण
 
 	set_cur_queue_map(pkt_dev);
 
 	pkt_dev->flows[flow].count++;
-}
+पूर्ण
 
 
-#ifdef CONFIG_XFRM
-static u32 pktgen_dst_metrics[RTAX_MAX + 1] = {
+#अगर_घोषित CONFIG_XFRM
+अटल u32 pktgen_dst_metrics[RTAX_MAX + 1] = अणु
 
-	[RTAX_HOPLIMIT] = 0x5, /* Set a static hoplimit */
-};
+	[RTAX_HOPLIMIT] = 0x5, /* Set a अटल hoplimit */
+पूर्ण;
 
-static int pktgen_output_ipsec(struct sk_buff *skb, struct pktgen_dev *pkt_dev)
-{
-	struct xfrm_state *x = pkt_dev->flows[pkt_dev->curfl].x;
-	int err = 0;
-	struct net *net = dev_net(pkt_dev->odev);
+अटल पूर्णांक pktgen_output_ipsec(काष्ठा sk_buff *skb, काष्ठा pktgen_dev *pkt_dev)
+अणु
+	काष्ठा xfrm_state *x = pkt_dev->flows[pkt_dev->curfl].x;
+	पूर्णांक err = 0;
+	काष्ठा net *net = dev_net(pkt_dev->odev);
 
-	if (!x)
-		return 0;
-	/* XXX: we dont support tunnel mode for now until
+	अगर (!x)
+		वापस 0;
+	/* XXX: we करोnt support tunnel mode क्रम now until
 	 * we resolve the dst issue */
-	if ((x->props.mode != XFRM_MODE_TRANSPORT) && (pkt_dev->spi == 0))
-		return 0;
+	अगर ((x->props.mode != XFRM_MODE_TRANSPORT) && (pkt_dev->spi == 0))
+		वापस 0;
 
-	/* But when user specify an valid SPI, transformation
+	/* But when user specअगरy an valid SPI, transक्रमmation
 	 * supports both transport/tunnel mode + ESP/AH type.
 	 */
-	if ((x->props.mode == XFRM_MODE_TUNNEL) && (pkt_dev->spi != 0))
-		skb->_skb_refdst = (unsigned long)&pkt_dev->xdst.u.dst | SKB_DST_NOREF;
+	अगर ((x->props.mode == XFRM_MODE_TUNNEL) && (pkt_dev->spi != 0))
+		skb->_skb_refdst = (अचिन्हित दीर्घ)&pkt_dev->xdst.u.dst | SKB_DST_NOREF;
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 	err = pktgen_xfrm_outer_mode_output(x, skb);
-	rcu_read_unlock_bh();
-	if (err) {
+	rcu_पढ़ो_unlock_bh();
+	अगर (err) अणु
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTSTATEMODEERROR);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	err = x->type->output(x, skb);
-	if (err) {
+	अगर (err) अणु
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTSTATEPROTOERROR);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	spin_lock_bh(&x->lock);
 	x->curlft.bytes += skb->len;
 	x->curlft.packets++;
 	spin_unlock_bh(&x->lock);
 error:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void free_SAs(struct pktgen_dev *pkt_dev)
-{
-	if (pkt_dev->cflows) {
-		/* let go of the SAs if we have them */
-		int i;
-		for (i = 0; i < pkt_dev->cflows; i++) {
-			struct xfrm_state *x = pkt_dev->flows[i].x;
-			if (x) {
+अटल व्योम मुक्त_SAs(काष्ठा pktgen_dev *pkt_dev)
+अणु
+	अगर (pkt_dev->cflows) अणु
+		/* let go of the SAs अगर we have them */
+		पूर्णांक i;
+		क्रम (i = 0; i < pkt_dev->cflows; i++) अणु
+			काष्ठा xfrm_state *x = pkt_dev->flows[i].x;
+			अगर (x) अणु
 				xfrm_state_put(x);
-				pkt_dev->flows[i].x = NULL;
-			}
-		}
-	}
-}
+				pkt_dev->flows[i].x = शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int process_ipsec(struct pktgen_dev *pkt_dev,
-			      struct sk_buff *skb, __be16 protocol)
-{
-	if (pkt_dev->flags & F_IPSEC) {
-		struct xfrm_state *x = pkt_dev->flows[pkt_dev->curfl].x;
-		int nhead = 0;
-		if (x) {
-			struct ethhdr *eth;
-			struct iphdr *iph;
-			int ret;
+अटल पूर्णांक process_ipsec(काष्ठा pktgen_dev *pkt_dev,
+			      काष्ठा sk_buff *skb, __be16 protocol)
+अणु
+	अगर (pkt_dev->flags & F_IPSEC) अणु
+		काष्ठा xfrm_state *x = pkt_dev->flows[pkt_dev->curfl].x;
+		पूर्णांक nhead = 0;
+		अगर (x) अणु
+			काष्ठा ethhdr *eth;
+			काष्ठा iphdr *iph;
+			पूर्णांक ret;
 
 			nhead = x->props.header_len - skb_headroom(skb);
-			if (nhead > 0) {
+			अगर (nhead > 0) अणु
 				ret = pskb_expand_head(skb, nhead, 0, GFP_ATOMIC);
-				if (ret < 0) {
+				अगर (ret < 0) अणु
 					pr_err("Error expanding ipsec packet %d\n",
 					       ret);
-					goto err;
-				}
-			}
+					जाओ err;
+				पूर्ण
+			पूर्ण
 
 			/* ipsec is not expecting ll header */
 			skb_pull(skb, ETH_HLEN);
 			ret = pktgen_output_ipsec(skb, pkt_dev);
-			if (ret) {
+			अगर (ret) अणु
 				pr_err("Error creating ipsec packet %d\n", ret);
-				goto err;
-			}
+				जाओ err;
+			पूर्ण
 			/* restore ll */
 			eth = skb_push(skb, ETH_HLEN);
-			memcpy(eth, pkt_dev->hh, 2 * ETH_ALEN);
+			स_नकल(eth, pkt_dev->hh, 2 * ETH_ALEN);
 			eth->h_proto = protocol;
 
 			/* Update IPv4 header len as well as checksum value */
 			iph = ip_hdr(skb);
 			iph->tot_len = htons(skb->len - ETH_HLEN);
 			ip_send_check(iph);
-		}
-	}
-	return 1;
+		पूर्ण
+	पूर्ण
+	वापस 1;
 err:
-	kfree_skb(skb);
-	return 0;
-}
-#endif
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static void mpls_push(__be32 *mpls, struct pktgen_dev *pkt_dev)
-{
-	unsigned int i;
-	for (i = 0; i < pkt_dev->nr_labels; i++)
+अटल व्योम mpls_push(__be32 *mpls, काष्ठा pktgen_dev *pkt_dev)
+अणु
+	अचिन्हित पूर्णांक i;
+	क्रम (i = 0; i < pkt_dev->nr_labels; i++)
 		*mpls++ = pkt_dev->labels[i] & ~MPLS_STACK_BOTTOM;
 
 	mpls--;
 	*mpls |= MPLS_STACK_BOTTOM;
-}
+पूर्ण
 
-static inline __be16 build_tci(unsigned int id, unsigned int cfi,
-			       unsigned int prio)
-{
-	return htons(id | (cfi << 12) | (prio << 13));
-}
+अटल अंतरभूत __be16 build_tci(अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक cfi,
+			       अचिन्हित पूर्णांक prio)
+अणु
+	वापस htons(id | (cfi << 12) | (prio << 13));
+पूर्ण
 
-static void pktgen_finalize_skb(struct pktgen_dev *pkt_dev, struct sk_buff *skb,
-				int datalen)
-{
-	struct timespec64 timestamp;
-	struct pktgen_hdr *pgh;
+अटल व्योम pktgen_finalize_skb(काष्ठा pktgen_dev *pkt_dev, काष्ठा sk_buff *skb,
+				पूर्णांक datalen)
+अणु
+	काष्ठा बारpec64 बारtamp;
+	काष्ठा pktgen_hdr *pgh;
 
-	pgh = skb_put(skb, sizeof(*pgh));
-	datalen -= sizeof(*pgh);
+	pgh = skb_put(skb, माप(*pgh));
+	datalen -= माप(*pgh);
 
-	if (pkt_dev->nfrags <= 0) {
+	अगर (pkt_dev->nfrags <= 0) अणु
 		skb_put_zero(skb, datalen);
-	} else {
-		int frags = pkt_dev->nfrags;
-		int i, len;
-		int frag_len;
+	पूर्ण अन्यथा अणु
+		पूर्णांक frags = pkt_dev->nfrags;
+		पूर्णांक i, len;
+		पूर्णांक frag_len;
 
 
-		if (frags > MAX_SKB_FRAGS)
+		अगर (frags > MAX_SKB_FRAGS)
 			frags = MAX_SKB_FRAGS;
 		len = datalen - frags * PAGE_SIZE;
-		if (len > 0) {
+		अगर (len > 0) अणु
 			skb_put_zero(skb, len);
 			datalen = frags * PAGE_SIZE;
-		}
+		पूर्ण
 
 		i = 0;
 		frag_len = (datalen/frags) < PAGE_SIZE ?
 			   (datalen/frags) : PAGE_SIZE;
-		while (datalen > 0) {
-			if (unlikely(!pkt_dev->page)) {
-				int node = numa_node_id();
+		जबतक (datalen > 0) अणु
+			अगर (unlikely(!pkt_dev->page)) अणु
+				पूर्णांक node = numa_node_id();
 
-				if (pkt_dev->node >= 0 && (pkt_dev->flags & F_NODE))
+				अगर (pkt_dev->node >= 0 && (pkt_dev->flags & F_NODE))
 					node = pkt_dev->node;
 				pkt_dev->page = alloc_pages_node(node, GFP_KERNEL | __GFP_ZERO, 0);
-				if (!pkt_dev->page)
-					break;
-			}
+				अगर (!pkt_dev->page)
+					अवरोध;
+			पूर्ण
 			get_page(pkt_dev->page);
 			skb_frag_set_page(skb, i, pkt_dev->page);
 			skb_frag_off_set(&skb_shinfo(skb)->frags[i], 0);
 			/*last fragment, fill rest of data*/
-			if (i == (frags - 1))
+			अगर (i == (frags - 1))
 				skb_frag_size_set(&skb_shinfo(skb)->frags[i],
 				    (datalen < PAGE_SIZE ? datalen : PAGE_SIZE));
-			else
+			अन्यथा
 				skb_frag_size_set(&skb_shinfo(skb)->frags[i], frag_len);
 			datalen -= skb_frag_size(&skb_shinfo(skb)->frags[i]);
 			skb->len += skb_frag_size(&skb_shinfo(skb)->frags[i]);
 			skb->data_len += skb_frag_size(&skb_shinfo(skb)->frags[i]);
 			i++;
 			skb_shinfo(skb)->nr_frags = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Stamp the time, and sequence number,
+	/* Stamp the समय, and sequence number,
 	 * convert them to network byte order
 	 */
 	pgh->pgh_magic = htonl(PKTGEN_MAGIC);
 	pgh->seq_num = htonl(pkt_dev->seq_num);
 
-	if (pkt_dev->flags & F_NO_TIMESTAMP) {
+	अगर (pkt_dev->flags & F_NO_TIMESTAMP) अणु
 		pgh->tv_sec = 0;
 		pgh->tv_usec = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * pgh->tv_sec wraps in y2106 when interpreted as unsigned
-		 * as done by wireshark, or y2038 when interpreted as signed.
-		 * This is probably harmless, but if anyone wants to improve
-		 * it, we could introduce a variant that puts 64-bit nanoseconds
-		 * into the respective header bytes.
-		 * This would also be slightly faster to read.
+		 * pgh->tv_sec wraps in y2106 when पूर्णांकerpreted as अचिन्हित
+		 * as करोne by wireshark, or y2038 when पूर्णांकerpreted as चिन्हित.
+		 * This is probably harmless, but अगर anyone wants to improve
+		 * it, we could पूर्णांकroduce a variant that माला_दो 64-bit nanoseconds
+		 * पूर्णांकo the respective header bytes.
+		 * This would also be slightly faster to पढ़ो.
 		 */
-		ktime_get_real_ts64(&timestamp);
-		pgh->tv_sec = htonl(timestamp.tv_sec);
-		pgh->tv_usec = htonl(timestamp.tv_nsec / NSEC_PER_USEC);
-	}
-}
+		kसमय_get_real_ts64(&बारtamp);
+		pgh->tv_sec = htonl(बारtamp.tv_sec);
+		pgh->tv_usec = htonl(बारtamp.tv_nsec / NSEC_PER_USEC);
+	पूर्ण
+पूर्ण
 
-static struct sk_buff *pktgen_alloc_skb(struct net_device *dev,
-					struct pktgen_dev *pkt_dev)
-{
-	unsigned int extralen = LL_RESERVED_SPACE(dev);
-	struct sk_buff *skb = NULL;
-	unsigned int size;
+अटल काष्ठा sk_buff *pktgen_alloc_skb(काष्ठा net_device *dev,
+					काष्ठा pktgen_dev *pkt_dev)
+अणु
+	अचिन्हित पूर्णांक extralen = LL_RESERVED_SPACE(dev);
+	काष्ठा sk_buff *skb = शून्य;
+	अचिन्हित पूर्णांक size;
 
 	size = pkt_dev->cur_pkt_size + 64 + extralen + pkt_dev->pkt_overhead;
-	if (pkt_dev->flags & F_NODE) {
-		int node = pkt_dev->node >= 0 ? pkt_dev->node : numa_node_id();
+	अगर (pkt_dev->flags & F_NODE) अणु
+		पूर्णांक node = pkt_dev->node >= 0 ? pkt_dev->node : numa_node_id();
 
 		skb = __alloc_skb(NET_SKB_PAD + size, GFP_NOWAIT, 0, node);
-		if (likely(skb)) {
+		अगर (likely(skb)) अणु
 			skb_reserve(skb, NET_SKB_PAD);
 			skb->dev = dev;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		 skb = __netdev_alloc_skb(dev, size, GFP_NOWAIT);
-	}
+	पूर्ण
 
-	/* the caller pre-fetches from skb->data and reserves for the mac hdr */
-	if (likely(skb))
+	/* the caller pre-fetches from skb->data and reserves क्रम the mac hdr */
+	अगर (likely(skb))
 		skb_reserve(skb, extralen - 16);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *fill_packet_ipv4(struct net_device *odev,
-					struct pktgen_dev *pkt_dev)
-{
-	struct sk_buff *skb = NULL;
+अटल काष्ठा sk_buff *fill_packet_ipv4(काष्ठा net_device *odev,
+					काष्ठा pktgen_dev *pkt_dev)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
 	__u8 *eth;
-	struct udphdr *udph;
-	int datalen, iplen;
-	struct iphdr *iph;
+	काष्ठा udphdr *udph;
+	पूर्णांक datalen, iplen;
+	काष्ठा iphdr *iph;
 	__be16 protocol = htons(ETH_P_IP);
 	__be32 *mpls;
-	__be16 *vlan_tci = NULL;                 /* Encapsulates priority and VLAN ID */
-	__be16 *vlan_encapsulated_proto = NULL;  /* packet type ID field (or len) for VLAN tag */
-	__be16 *svlan_tci = NULL;                /* Encapsulates priority and SVLAN ID */
-	__be16 *svlan_encapsulated_proto = NULL; /* packet type ID field (or len) for SVLAN tag */
+	__be16 *vlan_tci = शून्य;                 /* Encapsulates priority and VLAN ID */
+	__be16 *vlan_encapsulated_proto = शून्य;  /* packet type ID field (or len) क्रम VLAN tag */
+	__be16 *svlan_tci = शून्य;                /* Encapsulates priority and SVLAN ID */
+	__be16 *svlan_encapsulated_proto = शून्य; /* packet type ID field (or len) क्रम SVLAN tag */
 	u16 queue_map;
 
-	if (pkt_dev->nr_labels)
+	अगर (pkt_dev->nr_labels)
 		protocol = htons(ETH_P_MPLS_UC);
 
-	if (pkt_dev->vlan_id != 0xffff)
+	अगर (pkt_dev->vlan_id != 0xffff)
 		protocol = htons(ETH_P_8021Q);
 
 	/* Update any of the values, used when we're incrementing various
@@ -2745,55 +2746,55 @@ static struct sk_buff *fill_packet_ipv4(struct net_device *odev,
 	queue_map = pkt_dev->cur_queue_map;
 
 	skb = pktgen_alloc_skb(odev, pkt_dev);
-	if (!skb) {
-		sprintf(pkt_dev->result, "No memory");
-		return NULL;
-	}
+	अगर (!skb) अणु
+		प्र_लिखो(pkt_dev->result, "No memory");
+		वापस शून्य;
+	पूर्ण
 
 	prefetchw(skb->data);
 	skb_reserve(skb, 16);
 
-	/*  Reserve for ethernet and IP header  */
+	/*  Reserve क्रम ethernet and IP header  */
 	eth = skb_push(skb, 14);
-	mpls = skb_put(skb, pkt_dev->nr_labels * sizeof(__u32));
-	if (pkt_dev->nr_labels)
+	mpls = skb_put(skb, pkt_dev->nr_labels * माप(__u32));
+	अगर (pkt_dev->nr_labels)
 		mpls_push(mpls, pkt_dev);
 
-	if (pkt_dev->vlan_id != 0xffff) {
-		if (pkt_dev->svlan_id != 0xffff) {
-			svlan_tci = skb_put(skb, sizeof(__be16));
+	अगर (pkt_dev->vlan_id != 0xffff) अणु
+		अगर (pkt_dev->svlan_id != 0xffff) अणु
+			svlan_tci = skb_put(skb, माप(__be16));
 			*svlan_tci = build_tci(pkt_dev->svlan_id,
 					       pkt_dev->svlan_cfi,
 					       pkt_dev->svlan_p);
 			svlan_encapsulated_proto = skb_put(skb,
-							   sizeof(__be16));
+							   माप(__be16));
 			*svlan_encapsulated_proto = htons(ETH_P_8021Q);
-		}
-		vlan_tci = skb_put(skb, sizeof(__be16));
+		पूर्ण
+		vlan_tci = skb_put(skb, माप(__be16));
 		*vlan_tci = build_tci(pkt_dev->vlan_id,
 				      pkt_dev->vlan_cfi,
 				      pkt_dev->vlan_p);
-		vlan_encapsulated_proto = skb_put(skb, sizeof(__be16));
+		vlan_encapsulated_proto = skb_put(skb, माप(__be16));
 		*vlan_encapsulated_proto = htons(ETH_P_IP);
-	}
+	पूर्ण
 
 	skb_reset_mac_header(skb);
 	skb_set_network_header(skb, skb->len);
-	iph = skb_put(skb, sizeof(struct iphdr));
+	iph = skb_put(skb, माप(काष्ठा iphdr));
 
 	skb_set_transport_header(skb, skb->len);
-	udph = skb_put(skb, sizeof(struct udphdr));
+	udph = skb_put(skb, माप(काष्ठा udphdr));
 	skb_set_queue_mapping(skb, queue_map);
 	skb->priority = pkt_dev->skb_priority;
 
-	memcpy(eth, pkt_dev->hh, 12);
+	स_नकल(eth, pkt_dev->hh, 12);
 	*(__be16 *) & eth[12] = protocol;
 
 	/* Eth + IPh + UDPh + mpls */
 	datalen = pkt_dev->cur_pkt_size - 14 - 20 - 8 -
 		  pkt_dev->pkt_overhead;
-	if (datalen < 0 || datalen < sizeof(struct pktgen_hdr))
-		datalen = sizeof(struct pktgen_hdr);
+	अगर (datalen < 0 || datalen < माप(काष्ठा pktgen_hdr))
+		datalen = माप(काष्ठा pktgen_hdr);
 
 	udph->source = htons(pkt_dev->cur_udp_src);
 	udph->dest = htons(pkt_dev->cur_udp_dst);
@@ -2819,51 +2820,51 @@ static struct sk_buff *fill_packet_ipv4(struct net_device *odev,
 
 	pktgen_finalize_skb(pkt_dev, skb, datalen);
 
-	if (!(pkt_dev->flags & F_UDPCSUM)) {
+	अगर (!(pkt_dev->flags & F_UDPCSUM)) अणु
 		skb->ip_summed = CHECKSUM_NONE;
-	} else if (odev->features & (NETIF_F_HW_CSUM | NETIF_F_IP_CSUM)) {
+	पूर्ण अन्यथा अगर (odev->features & (NETIF_F_HW_CSUM | NETIF_F_IP_CSUM)) अणु
 		skb->ip_summed = CHECKSUM_PARTIAL;
 		skb->csum = 0;
 		udp4_hwcsum(skb, iph->saddr, iph->daddr);
-	} else {
+	पूर्ण अन्यथा अणु
 		__wsum csum = skb_checksum(skb, skb_transport_offset(skb), datalen + 8, 0);
 
-		/* add protocol-dependent pseudo-header */
+		/* add protocol-dependent pseuकरो-header */
 		udph->check = csum_tcpudp_magic(iph->saddr, iph->daddr,
 						datalen + 8, IPPROTO_UDP, csum);
 
-		if (udph->check == 0)
+		अगर (udph->check == 0)
 			udph->check = CSUM_MANGLED_0;
-	}
+	पूर्ण
 
-#ifdef CONFIG_XFRM
-	if (!process_ipsec(pkt_dev, skb, protocol))
-		return NULL;
-#endif
+#अगर_घोषित CONFIG_XFRM
+	अगर (!process_ipsec(pkt_dev, skb, protocol))
+		वापस शून्य;
+#पूर्ण_अगर
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *fill_packet_ipv6(struct net_device *odev,
-					struct pktgen_dev *pkt_dev)
-{
-	struct sk_buff *skb = NULL;
+अटल काष्ठा sk_buff *fill_packet_ipv6(काष्ठा net_device *odev,
+					काष्ठा pktgen_dev *pkt_dev)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
 	__u8 *eth;
-	struct udphdr *udph;
-	int datalen, udplen;
-	struct ipv6hdr *iph;
+	काष्ठा udphdr *udph;
+	पूर्णांक datalen, udplen;
+	काष्ठा ipv6hdr *iph;
 	__be16 protocol = htons(ETH_P_IPV6);
 	__be32 *mpls;
-	__be16 *vlan_tci = NULL;                 /* Encapsulates priority and VLAN ID */
-	__be16 *vlan_encapsulated_proto = NULL;  /* packet type ID field (or len) for VLAN tag */
-	__be16 *svlan_tci = NULL;                /* Encapsulates priority and SVLAN ID */
-	__be16 *svlan_encapsulated_proto = NULL; /* packet type ID field (or len) for SVLAN tag */
+	__be16 *vlan_tci = शून्य;                 /* Encapsulates priority and VLAN ID */
+	__be16 *vlan_encapsulated_proto = शून्य;  /* packet type ID field (or len) क्रम VLAN tag */
+	__be16 *svlan_tci = शून्य;                /* Encapsulates priority and SVLAN ID */
+	__be16 *svlan_encapsulated_proto = शून्य; /* packet type ID field (or len) क्रम SVLAN tag */
 	u16 queue_map;
 
-	if (pkt_dev->nr_labels)
+	अगर (pkt_dev->nr_labels)
 		protocol = htons(ETH_P_MPLS_UC);
 
-	if (pkt_dev->vlan_id != 0xffff)
+	अगर (pkt_dev->vlan_id != 0xffff)
 		protocol = htons(ETH_P_8021Q);
 
 	/* Update any of the values, used when we're incrementing various
@@ -2873,61 +2874,61 @@ static struct sk_buff *fill_packet_ipv6(struct net_device *odev,
 	queue_map = pkt_dev->cur_queue_map;
 
 	skb = pktgen_alloc_skb(odev, pkt_dev);
-	if (!skb) {
-		sprintf(pkt_dev->result, "No memory");
-		return NULL;
-	}
+	अगर (!skb) अणु
+		प्र_लिखो(pkt_dev->result, "No memory");
+		वापस शून्य;
+	पूर्ण
 
 	prefetchw(skb->data);
 	skb_reserve(skb, 16);
 
-	/*  Reserve for ethernet and IP header  */
+	/*  Reserve क्रम ethernet and IP header  */
 	eth = skb_push(skb, 14);
-	mpls = skb_put(skb, pkt_dev->nr_labels * sizeof(__u32));
-	if (pkt_dev->nr_labels)
+	mpls = skb_put(skb, pkt_dev->nr_labels * माप(__u32));
+	अगर (pkt_dev->nr_labels)
 		mpls_push(mpls, pkt_dev);
 
-	if (pkt_dev->vlan_id != 0xffff) {
-		if (pkt_dev->svlan_id != 0xffff) {
-			svlan_tci = skb_put(skb, sizeof(__be16));
+	अगर (pkt_dev->vlan_id != 0xffff) अणु
+		अगर (pkt_dev->svlan_id != 0xffff) अणु
+			svlan_tci = skb_put(skb, माप(__be16));
 			*svlan_tci = build_tci(pkt_dev->svlan_id,
 					       pkt_dev->svlan_cfi,
 					       pkt_dev->svlan_p);
 			svlan_encapsulated_proto = skb_put(skb,
-							   sizeof(__be16));
+							   माप(__be16));
 			*svlan_encapsulated_proto = htons(ETH_P_8021Q);
-		}
-		vlan_tci = skb_put(skb, sizeof(__be16));
+		पूर्ण
+		vlan_tci = skb_put(skb, माप(__be16));
 		*vlan_tci = build_tci(pkt_dev->vlan_id,
 				      pkt_dev->vlan_cfi,
 				      pkt_dev->vlan_p);
-		vlan_encapsulated_proto = skb_put(skb, sizeof(__be16));
+		vlan_encapsulated_proto = skb_put(skb, माप(__be16));
 		*vlan_encapsulated_proto = htons(ETH_P_IPV6);
-	}
+	पूर्ण
 
 	skb_reset_mac_header(skb);
 	skb_set_network_header(skb, skb->len);
-	iph = skb_put(skb, sizeof(struct ipv6hdr));
+	iph = skb_put(skb, माप(काष्ठा ipv6hdr));
 
 	skb_set_transport_header(skb, skb->len);
-	udph = skb_put(skb, sizeof(struct udphdr));
+	udph = skb_put(skb, माप(काष्ठा udphdr));
 	skb_set_queue_mapping(skb, queue_map);
 	skb->priority = pkt_dev->skb_priority;
 
-	memcpy(eth, pkt_dev->hh, 12);
+	स_नकल(eth, pkt_dev->hh, 12);
 	*(__be16 *) &eth[12] = protocol;
 
 	/* Eth + IPh + UDPh + mpls */
 	datalen = pkt_dev->cur_pkt_size - 14 -
-		  sizeof(struct ipv6hdr) - sizeof(struct udphdr) -
+		  माप(काष्ठा ipv6hdr) - माप(काष्ठा udphdr) -
 		  pkt_dev->pkt_overhead;
 
-	if (datalen < 0 || datalen < sizeof(struct pktgen_hdr)) {
-		datalen = sizeof(struct pktgen_hdr);
+	अगर (datalen < 0 || datalen < माप(काष्ठा pktgen_hdr)) अणु
+		datalen = माप(काष्ठा pktgen_hdr);
 		net_info_ratelimited("increased datalen to %d\n", datalen);
-	}
+	पूर्ण
 
-	udplen = datalen + sizeof(struct udphdr);
+	udplen = datalen + माप(काष्ठा udphdr);
 	udph->source = htons(pkt_dev->cur_udp_src);
 	udph->dest = htons(pkt_dev->cur_udp_dst);
 	udph->len = htons(udplen);
@@ -2935,10 +2936,10 @@ static struct sk_buff *fill_packet_ipv6(struct net_device *odev,
 
 	*(__be32 *) iph = htonl(0x60000000);	/* Version + flow */
 
-	if (pkt_dev->traffic_class) {
+	अगर (pkt_dev->traffic_class) अणु
 		/* Version + traffic class + flow (0) */
 		*(__be32 *)iph |= htonl(0x60000000 | (pkt_dev->traffic_class << 20));
-	}
+	पूर्ण
 
 	iph->hop_limit = 32;
 
@@ -2954,448 +2955,448 @@ static struct sk_buff *fill_packet_ipv6(struct net_device *odev,
 
 	pktgen_finalize_skb(pkt_dev, skb, datalen);
 
-	if (!(pkt_dev->flags & F_UDPCSUM)) {
+	अगर (!(pkt_dev->flags & F_UDPCSUM)) अणु
 		skb->ip_summed = CHECKSUM_NONE;
-	} else if (odev->features & (NETIF_F_HW_CSUM | NETIF_F_IPV6_CSUM)) {
+	पूर्ण अन्यथा अगर (odev->features & (NETIF_F_HW_CSUM | NETIF_F_IPV6_CSUM)) अणु
 		skb->ip_summed = CHECKSUM_PARTIAL;
 		skb->csum_start = skb_transport_header(skb) - skb->head;
-		skb->csum_offset = offsetof(struct udphdr, check);
+		skb->csum_offset = दुरत्व(काष्ठा udphdr, check);
 		udph->check = ~csum_ipv6_magic(&iph->saddr, &iph->daddr, udplen, IPPROTO_UDP, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		__wsum csum = skb_checksum(skb, skb_transport_offset(skb), udplen, 0);
 
-		/* add protocol-dependent pseudo-header */
+		/* add protocol-dependent pseuकरो-header */
 		udph->check = csum_ipv6_magic(&iph->saddr, &iph->daddr, udplen, IPPROTO_UDP, csum);
 
-		if (udph->check == 0)
+		अगर (udph->check == 0)
 			udph->check = CSUM_MANGLED_0;
-	}
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *fill_packet(struct net_device *odev,
-				   struct pktgen_dev *pkt_dev)
-{
-	if (pkt_dev->flags & F_IPV6)
-		return fill_packet_ipv6(odev, pkt_dev);
-	else
-		return fill_packet_ipv4(odev, pkt_dev);
-}
+अटल काष्ठा sk_buff *fill_packet(काष्ठा net_device *odev,
+				   काष्ठा pktgen_dev *pkt_dev)
+अणु
+	अगर (pkt_dev->flags & F_IPV6)
+		वापस fill_packet_ipv6(odev, pkt_dev);
+	अन्यथा
+		वापस fill_packet_ipv4(odev, pkt_dev);
+पूर्ण
 
-static void pktgen_clear_counters(struct pktgen_dev *pkt_dev)
-{
+अटल व्योम pktgen_clear_counters(काष्ठा pktgen_dev *pkt_dev)
+अणु
 	pkt_dev->seq_num = 1;
 	pkt_dev->idle_acc = 0;
 	pkt_dev->sofar = 0;
 	pkt_dev->tx_bytes = 0;
 	pkt_dev->errors = 0;
-}
+पूर्ण
 
-/* Set up structure for sending pkts, clear counters */
+/* Set up काष्ठाure क्रम sending pkts, clear counters */
 
-static void pktgen_run(struct pktgen_thread *t)
-{
-	struct pktgen_dev *pkt_dev;
-	int started = 0;
+अटल व्योम pktgen_run(काष्ठा pktgen_thपढ़ो *t)
+अणु
+	काष्ठा pktgen_dev *pkt_dev;
+	पूर्णांक started = 0;
 
 	func_enter();
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(pkt_dev, &t->if_list, list) {
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(pkt_dev, &t->अगर_list, list) अणु
 
 		/*
 		 * setup odev and create initial packet.
 		 */
 		pktgen_setup_inject(pkt_dev);
 
-		if (pkt_dev->odev) {
+		अगर (pkt_dev->odev) अणु
 			pktgen_clear_counters(pkt_dev);
-			pkt_dev->skb = NULL;
-			pkt_dev->started_at = pkt_dev->next_tx = ktime_get();
+			pkt_dev->skb = शून्य;
+			pkt_dev->started_at = pkt_dev->next_tx = kसमय_get();
 
 			set_pkt_overhead(pkt_dev);
 
-			strcpy(pkt_dev->result, "Starting");
+			म_नकल(pkt_dev->result, "Starting");
 			pkt_dev->running = 1;	/* Cranke yeself! */
 			started++;
-		} else
-			strcpy(pkt_dev->result, "Error starting");
-	}
-	rcu_read_unlock();
-	if (started)
+		पूर्ण अन्यथा
+			म_नकल(pkt_dev->result, "Error starting");
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	अगर (started)
 		t->control &= ~(T_STOP);
-}
+पूर्ण
 
-static void pktgen_stop_all_threads_ifs(struct pktgen_net *pn)
-{
-	struct pktgen_thread *t;
+अटल व्योम pktgen_stop_all_thपढ़ोs_अगरs(काष्ठा pktgen_net *pn)
+अणु
+	काष्ठा pktgen_thपढ़ो *t;
 
 	func_enter();
 
-	mutex_lock(&pktgen_thread_lock);
+	mutex_lock(&pktgen_thपढ़ो_lock);
 
-	list_for_each_entry(t, &pn->pktgen_threads, th_list)
+	list_क्रम_each_entry(t, &pn->pktgen_thपढ़ोs, th_list)
 		t->control |= T_STOP;
 
-	mutex_unlock(&pktgen_thread_lock);
-}
+	mutex_unlock(&pktgen_thपढ़ो_lock);
+पूर्ण
 
-static int thread_is_running(const struct pktgen_thread *t)
-{
-	const struct pktgen_dev *pkt_dev;
+अटल पूर्णांक thपढ़ो_is_running(स्थिर काष्ठा pktgen_thपढ़ो *t)
+अणु
+	स्थिर काष्ठा pktgen_dev *pkt_dev;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(pkt_dev, &t->if_list, list)
-		if (pkt_dev->running) {
-			rcu_read_unlock();
-			return 1;
-		}
-	rcu_read_unlock();
-	return 0;
-}
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(pkt_dev, &t->अगर_list, list)
+		अगर (pkt_dev->running) अणु
+			rcu_पढ़ो_unlock();
+			वापस 1;
+		पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस 0;
+पूर्ण
 
-static int pktgen_wait_thread_run(struct pktgen_thread *t)
-{
-	while (thread_is_running(t)) {
+अटल पूर्णांक pktgen_रुको_thपढ़ो_run(काष्ठा pktgen_thपढ़ो *t)
+अणु
+	जबतक (thपढ़ो_is_running(t)) अणु
 
 		/* note: 't' will still be around even after the unlock/lock
-		 * cycle because pktgen_thread threads are only cleared at
-		 * net exit
+		 * cycle because pktgen_thपढ़ो thपढ़ोs are only cleared at
+		 * net निकास
 		 */
-		mutex_unlock(&pktgen_thread_lock);
-		msleep_interruptible(100);
-		mutex_lock(&pktgen_thread_lock);
+		mutex_unlock(&pktgen_thपढ़ो_lock);
+		msleep_पूर्णांकerruptible(100);
+		mutex_lock(&pktgen_thपढ़ो_lock);
 
-		if (signal_pending(current))
-			goto signal;
-	}
-	return 1;
-signal:
-	return 0;
-}
+		अगर (संकेत_pending(current))
+			जाओ संकेत;
+	पूर्ण
+	वापस 1;
+संकेत:
+	वापस 0;
+पूर्ण
 
-static int pktgen_wait_all_threads_run(struct pktgen_net *pn)
-{
-	struct pktgen_thread *t;
-	int sig = 1;
+अटल पूर्णांक pktgen_रुको_all_thपढ़ोs_run(काष्ठा pktgen_net *pn)
+अणु
+	काष्ठा pktgen_thपढ़ो *t;
+	पूर्णांक sig = 1;
 
 	/* prevent from racing with rmmod */
-	if (!try_module_get(THIS_MODULE))
-		return sig;
+	अगर (!try_module_get(THIS_MODULE))
+		वापस sig;
 
-	mutex_lock(&pktgen_thread_lock);
+	mutex_lock(&pktgen_thपढ़ो_lock);
 
-	list_for_each_entry(t, &pn->pktgen_threads, th_list) {
-		sig = pktgen_wait_thread_run(t);
-		if (sig == 0)
-			break;
-	}
+	list_क्रम_each_entry(t, &pn->pktgen_thपढ़ोs, th_list) अणु
+		sig = pktgen_रुको_thपढ़ो_run(t);
+		अगर (sig == 0)
+			अवरोध;
+	पूर्ण
 
-	if (sig == 0)
-		list_for_each_entry(t, &pn->pktgen_threads, th_list)
+	अगर (sig == 0)
+		list_क्रम_each_entry(t, &pn->pktgen_thपढ़ोs, th_list)
 			t->control |= (T_STOP);
 
-	mutex_unlock(&pktgen_thread_lock);
+	mutex_unlock(&pktgen_thपढ़ो_lock);
 	module_put(THIS_MODULE);
-	return sig;
-}
+	वापस sig;
+पूर्ण
 
-static void pktgen_run_all_threads(struct pktgen_net *pn)
-{
-	struct pktgen_thread *t;
+अटल व्योम pktgen_run_all_thपढ़ोs(काष्ठा pktgen_net *pn)
+अणु
+	काष्ठा pktgen_thपढ़ो *t;
 
 	func_enter();
 
-	mutex_lock(&pktgen_thread_lock);
+	mutex_lock(&pktgen_thपढ़ो_lock);
 
-	list_for_each_entry(t, &pn->pktgen_threads, th_list)
+	list_क्रम_each_entry(t, &pn->pktgen_thपढ़ोs, th_list)
 		t->control |= (T_RUN);
 
-	mutex_unlock(&pktgen_thread_lock);
+	mutex_unlock(&pktgen_thपढ़ो_lock);
 
-	/* Propagate thread->control  */
-	schedule_timeout_interruptible(msecs_to_jiffies(125));
+	/* Propagate thपढ़ो->control  */
+	schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(125));
 
-	pktgen_wait_all_threads_run(pn);
-}
+	pktgen_रुको_all_thपढ़ोs_run(pn);
+पूर्ण
 
-static void pktgen_reset_all_threads(struct pktgen_net *pn)
-{
-	struct pktgen_thread *t;
+अटल व्योम pktgen_reset_all_thपढ़ोs(काष्ठा pktgen_net *pn)
+अणु
+	काष्ठा pktgen_thपढ़ो *t;
 
 	func_enter();
 
-	mutex_lock(&pktgen_thread_lock);
+	mutex_lock(&pktgen_thपढ़ो_lock);
 
-	list_for_each_entry(t, &pn->pktgen_threads, th_list)
+	list_क्रम_each_entry(t, &pn->pktgen_thपढ़ोs, th_list)
 		t->control |= (T_REMDEVALL);
 
-	mutex_unlock(&pktgen_thread_lock);
+	mutex_unlock(&pktgen_thपढ़ो_lock);
 
-	/* Propagate thread->control  */
-	schedule_timeout_interruptible(msecs_to_jiffies(125));
+	/* Propagate thपढ़ो->control  */
+	schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(125));
 
-	pktgen_wait_all_threads_run(pn);
-}
+	pktgen_रुको_all_thपढ़ोs_run(pn);
+पूर्ण
 
-static void show_results(struct pktgen_dev *pkt_dev, int nr_frags)
-{
+अटल व्योम show_results(काष्ठा pktgen_dev *pkt_dev, पूर्णांक nr_frags)
+अणु
 	__u64 bps, mbps, pps;
-	char *p = pkt_dev->result;
-	ktime_t elapsed = ktime_sub(pkt_dev->stopped_at,
+	अक्षर *p = pkt_dev->result;
+	kसमय_प्रकार elapsed = kसमय_sub(pkt_dev->stopped_at,
 				    pkt_dev->started_at);
-	ktime_t idle = ns_to_ktime(pkt_dev->idle_acc);
+	kसमय_प्रकार idle = ns_to_kसमय(pkt_dev->idle_acc);
 
-	p += sprintf(p, "OK: %llu(c%llu+d%llu) usec, %llu (%dbyte,%dfrags)\n",
-		     (unsigned long long)ktime_to_us(elapsed),
-		     (unsigned long long)ktime_to_us(ktime_sub(elapsed, idle)),
-		     (unsigned long long)ktime_to_us(idle),
-		     (unsigned long long)pkt_dev->sofar,
+	p += प्र_लिखो(p, "OK: %llu(c%llu+d%llu) usec, %llu (%dbyte,%dfrags)\n",
+		     (अचिन्हित दीर्घ दीर्घ)kसमय_प्रकारo_us(elapsed),
+		     (अचिन्हित दीर्घ दीर्घ)kसमय_प्रकारo_us(kसमय_sub(elapsed, idle)),
+		     (अचिन्हित दीर्घ दीर्घ)kसमय_प्रकारo_us(idle),
+		     (अचिन्हित दीर्घ दीर्घ)pkt_dev->sofar,
 		     pkt_dev->cur_pkt_size, nr_frags);
 
-	pps = div64_u64(pkt_dev->sofar * NSEC_PER_SEC,
-			ktime_to_ns(elapsed));
+	pps = भाग64_u64(pkt_dev->sofar * NSEC_PER_SEC,
+			kसमय_प्रकारo_ns(elapsed));
 
 	bps = pps * 8 * pkt_dev->cur_pkt_size;
 
 	mbps = bps;
-	do_div(mbps, 1000000);
-	p += sprintf(p, "  %llupps %lluMb/sec (%llubps) errors: %llu",
-		     (unsigned long long)pps,
-		     (unsigned long long)mbps,
-		     (unsigned long long)bps,
-		     (unsigned long long)pkt_dev->errors);
-}
+	करो_भाग(mbps, 1000000);
+	p += प्र_लिखो(p, "  %llupps %lluMb/sec (%llubps) errors: %llu",
+		     (अचिन्हित दीर्घ दीर्घ)pps,
+		     (अचिन्हित दीर्घ दीर्घ)mbps,
+		     (अचिन्हित दीर्घ दीर्घ)bps,
+		     (अचिन्हित दीर्घ दीर्घ)pkt_dev->errors);
+पूर्ण
 
-/* Set stopped-at timer, remove from running list, do counters & statistics */
-static int pktgen_stop_device(struct pktgen_dev *pkt_dev)
-{
-	int nr_frags = pkt_dev->skb ? skb_shinfo(pkt_dev->skb)->nr_frags : -1;
+/* Set stopped-at समयr, हटाओ from running list, करो counters & statistics */
+अटल पूर्णांक pktgen_stop_device(काष्ठा pktgen_dev *pkt_dev)
+अणु
+	पूर्णांक nr_frags = pkt_dev->skb ? skb_shinfo(pkt_dev->skb)->nr_frags : -1;
 
-	if (!pkt_dev->running) {
+	अगर (!pkt_dev->running) अणु
 		pr_warn("interface: %s is already stopped\n",
 			pkt_dev->odevname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pkt_dev->running = 0;
-	kfree_skb(pkt_dev->skb);
-	pkt_dev->skb = NULL;
-	pkt_dev->stopped_at = ktime_get();
+	kमुक्त_skb(pkt_dev->skb);
+	pkt_dev->skb = शून्य;
+	pkt_dev->stopped_at = kसमय_get();
 
 	show_results(pkt_dev, nr_frags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pktgen_dev *next_to_run(struct pktgen_thread *t)
-{
-	struct pktgen_dev *pkt_dev, *best = NULL;
+अटल काष्ठा pktgen_dev *next_to_run(काष्ठा pktgen_thपढ़ो *t)
+अणु
+	काष्ठा pktgen_dev *pkt_dev, *best = शून्य;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(pkt_dev, &t->if_list, list) {
-		if (!pkt_dev->running)
-			continue;
-		if (best == NULL)
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(pkt_dev, &t->अगर_list, list) अणु
+		अगर (!pkt_dev->running)
+			जारी;
+		अगर (best == शून्य)
 			best = pkt_dev;
-		else if (ktime_compare(pkt_dev->next_tx, best->next_tx) < 0)
+		अन्यथा अगर (kसमय_compare(pkt_dev->next_tx, best->next_tx) < 0)
 			best = pkt_dev;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return best;
-}
+	वापस best;
+पूर्ण
 
-static void pktgen_stop(struct pktgen_thread *t)
-{
-	struct pktgen_dev *pkt_dev;
+अटल व्योम pktgen_stop(काष्ठा pktgen_thपढ़ो *t)
+अणु
+	काष्ठा pktgen_dev *pkt_dev;
 
 	func_enter();
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(pkt_dev, &t->if_list, list) {
+	list_क्रम_each_entry_rcu(pkt_dev, &t->अगर_list, list) अणु
 		pktgen_stop_device(pkt_dev);
-	}
+	पूर्ण
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /*
- * one of our devices needs to be removed - find it
- * and remove it
+ * one of our devices needs to be हटाओd - find it
+ * and हटाओ it
  */
-static void pktgen_rem_one_if(struct pktgen_thread *t)
-{
-	struct list_head *q, *n;
-	struct pktgen_dev *cur;
+अटल व्योम pktgen_rem_one_अगर(काष्ठा pktgen_thपढ़ो *t)
+अणु
+	काष्ठा list_head *q, *n;
+	काष्ठा pktgen_dev *cur;
 
 	func_enter();
 
-	list_for_each_safe(q, n, &t->if_list) {
-		cur = list_entry(q, struct pktgen_dev, list);
+	list_क्रम_each_safe(q, n, &t->अगर_list) अणु
+		cur = list_entry(q, काष्ठा pktgen_dev, list);
 
-		if (!cur->removal_mark)
-			continue;
+		अगर (!cur->removal_mark)
+			जारी;
 
-		kfree_skb(cur->skb);
-		cur->skb = NULL;
+		kमुक्त_skb(cur->skb);
+		cur->skb = शून्य;
 
-		pktgen_remove_device(t, cur);
+		pktgen_हटाओ_device(t, cur);
 
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void pktgen_rem_all_ifs(struct pktgen_thread *t)
-{
-	struct list_head *q, *n;
-	struct pktgen_dev *cur;
+अटल व्योम pktgen_rem_all_अगरs(काष्ठा pktgen_thपढ़ो *t)
+अणु
+	काष्ठा list_head *q, *n;
+	काष्ठा pktgen_dev *cur;
 
 	func_enter();
 
-	/* Remove all devices, free mem */
+	/* Remove all devices, मुक्त mem */
 
-	list_for_each_safe(q, n, &t->if_list) {
-		cur = list_entry(q, struct pktgen_dev, list);
+	list_क्रम_each_safe(q, n, &t->अगर_list) अणु
+		cur = list_entry(q, काष्ठा pktgen_dev, list);
 
-		kfree_skb(cur->skb);
-		cur->skb = NULL;
+		kमुक्त_skb(cur->skb);
+		cur->skb = शून्य;
 
-		pktgen_remove_device(t, cur);
-	}
-}
+		pktgen_हटाओ_device(t, cur);
+	पूर्ण
+पूर्ण
 
-static void pktgen_rem_thread(struct pktgen_thread *t)
-{
-	/* Remove from the thread list */
-	remove_proc_entry(t->tsk->comm, t->net->proc_dir);
-}
+अटल व्योम pktgen_rem_thपढ़ो(काष्ठा pktgen_thपढ़ो *t)
+अणु
+	/* Remove from the thपढ़ो list */
+	हटाओ_proc_entry(t->tsk->comm, t->net->proc_dir);
+पूर्ण
 
-static void pktgen_resched(struct pktgen_dev *pkt_dev)
-{
-	ktime_t idle_start = ktime_get();
+अटल व्योम pktgen_resched(काष्ठा pktgen_dev *pkt_dev)
+अणु
+	kसमय_प्रकार idle_start = kसमय_get();
 	schedule();
-	pkt_dev->idle_acc += ktime_to_ns(ktime_sub(ktime_get(), idle_start));
-}
+	pkt_dev->idle_acc += kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(), idle_start));
+पूर्ण
 
-static void pktgen_wait_for_skb(struct pktgen_dev *pkt_dev)
-{
-	ktime_t idle_start = ktime_get();
+अटल व्योम pktgen_रुको_क्रम_skb(काष्ठा pktgen_dev *pkt_dev)
+अणु
+	kसमय_प्रकार idle_start = kसमय_get();
 
-	while (refcount_read(&(pkt_dev->skb->users)) != 1) {
-		if (signal_pending(current))
-			break;
+	जबतक (refcount_पढ़ो(&(pkt_dev->skb->users)) != 1) अणु
+		अगर (संकेत_pending(current))
+			अवरोध;
 
-		if (need_resched())
+		अगर (need_resched())
 			pktgen_resched(pkt_dev);
-		else
+		अन्यथा
 			cpu_relax();
-	}
-	pkt_dev->idle_acc += ktime_to_ns(ktime_sub(ktime_get(), idle_start));
-}
+	पूर्ण
+	pkt_dev->idle_acc += kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(), idle_start));
+पूर्ण
 
-static void pktgen_xmit(struct pktgen_dev *pkt_dev)
-{
-	unsigned int burst = READ_ONCE(pkt_dev->burst);
-	struct net_device *odev = pkt_dev->odev;
-	struct netdev_queue *txq;
-	struct sk_buff *skb;
-	int ret;
+अटल व्योम pktgen_xmit(काष्ठा pktgen_dev *pkt_dev)
+अणु
+	अचिन्हित पूर्णांक burst = READ_ONCE(pkt_dev->burst);
+	काष्ठा net_device *odev = pkt_dev->odev;
+	काष्ठा netdev_queue *txq;
+	काष्ठा sk_buff *skb;
+	पूर्णांक ret;
 
-	/* If device is offline, then don't send */
-	if (unlikely(!netif_running(odev) || !netif_carrier_ok(odev))) {
+	/* If device is offline, then करोn't send */
+	अगर (unlikely(!netअगर_running(odev) || !netअगर_carrier_ok(odev))) अणु
 		pktgen_stop_device(pkt_dev);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* This is max DELAY, this has special meaning of
 	 * "never transmit"
 	 */
-	if (unlikely(pkt_dev->delay == ULLONG_MAX)) {
-		pkt_dev->next_tx = ktime_add_ns(ktime_get(), ULONG_MAX);
-		return;
-	}
+	अगर (unlikely(pkt_dev->delay == ULदीर्घ_उच्च)) अणु
+		pkt_dev->next_tx = kसमय_add_ns(kसमय_get(), अच_दीर्घ_उच्च);
+		वापस;
+	पूर्ण
 
 	/* If no skb or clone count exhausted then get new one */
-	if (!pkt_dev->skb || (pkt_dev->last_ok &&
-			      ++pkt_dev->clone_count >= pkt_dev->clone_skb)) {
+	अगर (!pkt_dev->skb || (pkt_dev->last_ok &&
+			      ++pkt_dev->clone_count >= pkt_dev->clone_skb)) अणु
 		/* build a new pkt */
-		kfree_skb(pkt_dev->skb);
+		kमुक्त_skb(pkt_dev->skb);
 
 		pkt_dev->skb = fill_packet(odev, pkt_dev);
-		if (pkt_dev->skb == NULL) {
+		अगर (pkt_dev->skb == शून्य) अणु
 			pr_err("ERROR: couldn't allocate skb in fill_packet\n");
 			schedule();
 			pkt_dev->clone_count--;	/* back out increment, OOM */
-			return;
-		}
+			वापस;
+		पूर्ण
 		pkt_dev->last_pkt_size = pkt_dev->skb->len;
 		pkt_dev->clone_count = 0;	/* reset counter */
-	}
+	पूर्ण
 
-	if (pkt_dev->delay && pkt_dev->last_ok)
+	अगर (pkt_dev->delay && pkt_dev->last_ok)
 		spin(pkt_dev, pkt_dev->next_tx);
 
-	if (pkt_dev->xmit_mode == M_NETIF_RECEIVE) {
+	अगर (pkt_dev->xmit_mode == M_NETIF_RECEIVE) अणु
 		skb = pkt_dev->skb;
 		skb->protocol = eth_type_trans(skb, skb->dev);
 		refcount_add(burst, &skb->users);
 		local_bh_disable();
-		do {
-			ret = netif_receive_skb(skb);
-			if (ret == NET_RX_DROP)
+		करो अणु
+			ret = netअगर_receive_skb(skb);
+			अगर (ret == NET_RX_DROP)
 				pkt_dev->errors++;
 			pkt_dev->sofar++;
 			pkt_dev->seq_num++;
-			if (refcount_read(&skb->users) != burst) {
+			अगर (refcount_पढ़ो(&skb->users) != burst) अणु
 				/* skb was queued by rps/rfs or taps,
 				 * so cannot reuse this skb
 				 */
 				WARN_ON(refcount_sub_and_test(burst - 1, &skb->users));
-				/* get out of the loop and wait
+				/* get out of the loop and रुको
 				 * until skb is consumed
 				 */
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			/* skb was 'freed' by stack, so clean few
 			 * bits and reuse it
 			 */
 			skb_reset_redirect(skb);
-		} while (--burst > 0);
-		goto out; /* Skips xmit_mode M_START_XMIT */
-	} else if (pkt_dev->xmit_mode == M_QUEUE_XMIT) {
+		पूर्ण जबतक (--burst > 0);
+		जाओ out; /* Skips xmit_mode M_START_XMIT */
+	पूर्ण अन्यथा अगर (pkt_dev->xmit_mode == M_QUEUE_XMIT) अणु
 		local_bh_disable();
 		refcount_inc(&pkt_dev->skb->users);
 
 		ret = dev_queue_xmit(pkt_dev->skb);
-		switch (ret) {
-		case NET_XMIT_SUCCESS:
+		चयन (ret) अणु
+		हाल NET_XMIT_SUCCESS:
 			pkt_dev->sofar++;
 			pkt_dev->seq_num++;
 			pkt_dev->tx_bytes += pkt_dev->last_pkt_size;
-			break;
-		case NET_XMIT_DROP:
-		case NET_XMIT_CN:
-		/* These are all valid return codes for a qdisc but
+			अवरोध;
+		हाल NET_XMIT_DROP:
+		हाल NET_XMIT_CN:
+		/* These are all valid वापस codes क्रम a qdisc but
 		 * indicate packets are being dropped or will likely
 		 * be dropped soon.
 		 */
-		case NETDEV_TX_BUSY:
-		/* qdisc may call dev_hard_start_xmit directly in cases
-		 * where no queues exist e.g. loopback device, virtual
-		 * devices, etc. In this case we need to handle
+		हाल NETDEV_TX_BUSY:
+		/* qdisc may call dev_hard_start_xmit directly in हालs
+		 * where no queues exist e.g. loopback device, भव
+		 * devices, etc. In this हाल we need to handle
 		 * NETDEV_TX_ codes.
 		 */
-		default:
+		शेष:
 			pkt_dev->errors++;
 			net_info_ratelimited("%s xmit error: %d\n",
 					     pkt_dev->odevname, ret);
-			break;
-		}
-		goto out;
-	}
+			अवरोध;
+		पूर्ण
+		जाओ out;
+	पूर्ण
 
 	txq = skb_get_tx_queue(odev, pkt_dev->skb);
 
@@ -3403,40 +3404,40 @@ static void pktgen_xmit(struct pktgen_dev *pkt_dev)
 
 	HARD_TX_LOCK(odev, txq, smp_processor_id());
 
-	if (unlikely(netif_xmit_frozen_or_drv_stopped(txq))) {
+	अगर (unlikely(netअगर_xmit_frozen_or_drv_stopped(txq))) अणु
 		pkt_dev->last_ok = 0;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 	refcount_add(burst, &pkt_dev->skb->users);
 
 xmit_more:
 	ret = netdev_start_xmit(pkt_dev->skb, odev, txq, --burst > 0);
 
-	switch (ret) {
-	case NETDEV_TX_OK:
+	चयन (ret) अणु
+	हाल NETDEV_TX_OK:
 		pkt_dev->last_ok = 1;
 		pkt_dev->sofar++;
 		pkt_dev->seq_num++;
 		pkt_dev->tx_bytes += pkt_dev->last_pkt_size;
-		if (burst > 0 && !netif_xmit_frozen_or_drv_stopped(txq))
-			goto xmit_more;
-		break;
-	case NET_XMIT_DROP:
-	case NET_XMIT_CN:
+		अगर (burst > 0 && !netअगर_xmit_frozen_or_drv_stopped(txq))
+			जाओ xmit_more;
+		अवरोध;
+	हाल NET_XMIT_DROP:
+	हाल NET_XMIT_CN:
 		/* skb has been consumed */
 		pkt_dev->errors++;
-		break;
-	default: /* Drivers are not supposed to return other values! */
+		अवरोध;
+	शेष: /* Drivers are not supposed to वापस other values! */
 		net_info_ratelimited("%s xmit error: %d\n",
 				     pkt_dev->odevname, ret);
 		pkt_dev->errors++;
 		fallthrough;
-	case NETDEV_TX_BUSY:
-		/* Retry it next time */
+	हाल NETDEV_TX_BUSY:
+		/* Retry it next समय */
 		refcount_dec(&(pkt_dev->skb->users));
 		pkt_dev->last_ok = 0;
-	}
-	if (unlikely(burst))
+	पूर्ण
+	अगर (unlikely(burst))
 		WARN_ON(refcount_sub_and_test(burst, &pkt_dev->skb->users));
 unlock:
 	HARD_TX_UNLOCK(odev, txq);
@@ -3444,174 +3445,174 @@ unlock:
 out:
 	local_bh_enable();
 
-	/* If pkt_dev->count is zero, then run forever */
-	if ((pkt_dev->count != 0) && (pkt_dev->sofar >= pkt_dev->count)) {
-		pktgen_wait_for_skb(pkt_dev);
+	/* If pkt_dev->count is zero, then run क्रमever */
+	अगर ((pkt_dev->count != 0) && (pkt_dev->sofar >= pkt_dev->count)) अणु
+		pktgen_रुको_क्रम_skb(pkt_dev);
 
 		/* Done with this */
 		pktgen_stop_device(pkt_dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Main loop of the thread goes here
+ * Main loop of the thपढ़ो goes here
  */
 
-static int pktgen_thread_worker(void *arg)
-{
-	DEFINE_WAIT(wait);
-	struct pktgen_thread *t = arg;
-	struct pktgen_dev *pkt_dev = NULL;
-	int cpu = t->cpu;
+अटल पूर्णांक pktgen_thपढ़ो_worker(व्योम *arg)
+अणु
+	DEFINE_WAIT(रुको);
+	काष्ठा pktgen_thपढ़ो *t = arg;
+	काष्ठा pktgen_dev *pkt_dev = शून्य;
+	पूर्णांक cpu = t->cpu;
 
 	WARN_ON(smp_processor_id() != cpu);
 
-	init_waitqueue_head(&t->queue);
-	complete(&t->start_done);
+	init_रुकोqueue_head(&t->queue);
+	complete(&t->start_करोne);
 
 	pr_debug("starting pktgen/%d:  pid=%d\n", cpu, task_pid_nr(current));
 
-	set_freezable();
+	set_मुक्तzable();
 
-	while (!kthread_should_stop()) {
+	जबतक (!kthपढ़ो_should_stop()) अणु
 		pkt_dev = next_to_run(t);
 
-		if (unlikely(!pkt_dev && t->control == 0)) {
-			if (t->net->pktgen_exiting)
-				break;
-			wait_event_interruptible_timeout(t->queue,
+		अगर (unlikely(!pkt_dev && t->control == 0)) अणु
+			अगर (t->net->pktgen_निकासing)
+				अवरोध;
+			रुको_event_पूर्णांकerruptible_समयout(t->queue,
 							 t->control != 0,
 							 HZ/10);
-			try_to_freeze();
-			continue;
-		}
+			try_to_मुक्तze();
+			जारी;
+		पूर्ण
 
-		if (likely(pkt_dev)) {
+		अगर (likely(pkt_dev)) अणु
 			pktgen_xmit(pkt_dev);
 
-			if (need_resched())
+			अगर (need_resched())
 				pktgen_resched(pkt_dev);
-			else
+			अन्यथा
 				cpu_relax();
-		}
+		पूर्ण
 
-		if (t->control & T_STOP) {
+		अगर (t->control & T_STOP) अणु
 			pktgen_stop(t);
 			t->control &= ~(T_STOP);
-		}
+		पूर्ण
 
-		if (t->control & T_RUN) {
+		अगर (t->control & T_RUN) अणु
 			pktgen_run(t);
 			t->control &= ~(T_RUN);
-		}
+		पूर्ण
 
-		if (t->control & T_REMDEVALL) {
-			pktgen_rem_all_ifs(t);
+		अगर (t->control & T_REMDEVALL) अणु
+			pktgen_rem_all_अगरs(t);
 			t->control &= ~(T_REMDEVALL);
-		}
+		पूर्ण
 
-		if (t->control & T_REMDEV) {
-			pktgen_rem_one_if(t);
+		अगर (t->control & T_REMDEV) अणु
+			pktgen_rem_one_अगर(t);
 			t->control &= ~(T_REMDEV);
-		}
+		पूर्ण
 
-		try_to_freeze();
-	}
+		try_to_मुक्तze();
+	पूर्ण
 
 	pr_debug("%s stopping all device\n", t->tsk->comm);
 	pktgen_stop(t);
 
 	pr_debug("%s removing all device\n", t->tsk->comm);
-	pktgen_rem_all_ifs(t);
+	pktgen_rem_all_अगरs(t);
 
 	pr_debug("%s removing thread\n", t->tsk->comm);
-	pktgen_rem_thread(t);
+	pktgen_rem_thपढ़ो(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pktgen_dev *pktgen_find_dev(struct pktgen_thread *t,
-					  const char *ifname, bool exact)
-{
-	struct pktgen_dev *p, *pkt_dev = NULL;
-	size_t len = strlen(ifname);
+अटल काष्ठा pktgen_dev *pktgen_find_dev(काष्ठा pktgen_thपढ़ो *t,
+					  स्थिर अक्षर *अगरname, bool exact)
+अणु
+	काष्ठा pktgen_dev *p, *pkt_dev = शून्य;
+	माप_प्रकार len = म_माप(अगरname);
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(p, &t->if_list, list)
-		if (strncmp(p->odevname, ifname, len) == 0) {
-			if (p->odevname[len]) {
-				if (exact || p->odevname[len] != '@')
-					continue;
-			}
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(p, &t->अगर_list, list)
+		अगर (म_भेदन(p->odevname, अगरname, len) == 0) अणु
+			अगर (p->odevname[len]) अणु
+				अगर (exact || p->odevname[len] != '@')
+					जारी;
+			पूर्ण
 			pkt_dev = p;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	rcu_read_unlock();
-	pr_debug("find_dev(%s) returning %p\n", ifname, pkt_dev);
-	return pkt_dev;
-}
+	rcu_पढ़ो_unlock();
+	pr_debug("find_dev(%s) returning %p\n", अगरname, pkt_dev);
+	वापस pkt_dev;
+पूर्ण
 
 /*
- * Adds a dev at front of if_list.
+ * Adds a dev at front of अगर_list.
  */
 
-static int add_dev_to_thread(struct pktgen_thread *t,
-			     struct pktgen_dev *pkt_dev)
-{
-	int rv = 0;
+अटल पूर्णांक add_dev_to_thपढ़ो(काष्ठा pktgen_thपढ़ो *t,
+			     काष्ठा pktgen_dev *pkt_dev)
+अणु
+	पूर्णांक rv = 0;
 
 	/* This function cannot be called concurrently, as its called
-	 * under pktgen_thread_lock mutex, but it can run from
-	 * userspace on another CPU than the kthread.  The if_lock()
+	 * under pktgen_thपढ़ो_lock mutex, but it can run from
+	 * userspace on another CPU than the kthपढ़ो.  The अगर_lock()
 	 * is used here to sync with concurrent instances of
-	 * _rem_dev_from_if_list() invoked via kthread, which is also
-	 * updating the if_list */
-	if_lock(t);
+	 * _rem_dev_from_अगर_list() invoked via kthपढ़ो, which is also
+	 * updating the अगर_list */
+	अगर_lock(t);
 
-	if (pkt_dev->pg_thread) {
+	अगर (pkt_dev->pg_thपढ़ो) अणु
 		pr_err("ERROR: already assigned to a thread\n");
 		rv = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pkt_dev->running = 0;
-	pkt_dev->pg_thread = t;
-	list_add_rcu(&pkt_dev->list, &t->if_list);
+	pkt_dev->pg_thपढ़ो = t;
+	list_add_rcu(&pkt_dev->list, &t->अगर_list);
 
 out:
-	if_unlock(t);
-	return rv;
-}
+	अगर_unlock(t);
+	वापस rv;
+पूर्ण
 
-/* Called under thread lock */
+/* Called under thपढ़ो lock */
 
-static int pktgen_add_device(struct pktgen_thread *t, const char *ifname)
-{
-	struct pktgen_dev *pkt_dev;
-	int err;
-	int node = cpu_to_node(t->cpu);
+अटल पूर्णांक pktgen_add_device(काष्ठा pktgen_thपढ़ो *t, स्थिर अक्षर *अगरname)
+अणु
+	काष्ठा pktgen_dev *pkt_dev;
+	पूर्णांक err;
+	पूर्णांक node = cpu_to_node(t->cpu);
 
-	/* We don't allow a device to be on several threads */
+	/* We करोn't allow a device to be on several thपढ़ोs */
 
-	pkt_dev = __pktgen_NN_threads(t->net, ifname, FIND);
-	if (pkt_dev) {
+	pkt_dev = __pktgen_NN_thपढ़ोs(t->net, अगरname, FIND);
+	अगर (pkt_dev) अणु
 		pr_err("ERROR: interface already used\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	pkt_dev = kzalloc_node(sizeof(struct pktgen_dev), GFP_KERNEL, node);
-	if (!pkt_dev)
-		return -ENOMEM;
+	pkt_dev = kzalloc_node(माप(काष्ठा pktgen_dev), GFP_KERNEL, node);
+	अगर (!pkt_dev)
+		वापस -ENOMEM;
 
-	strcpy(pkt_dev->odevname, ifname);
+	म_नकल(pkt_dev->odevname, अगरname);
 	pkt_dev->flows = vzalloc_node(array_size(MAX_CFLOWS,
-						 sizeof(struct flow_state)),
+						 माप(काष्ठा flow_state)),
 				      node);
-	if (pkt_dev->flows == NULL) {
-		kfree(pkt_dev);
-		return -ENOMEM;
-	}
+	अगर (pkt_dev->flows == शून्य) अणु
+		kमुक्त(pkt_dev);
+		वापस -ENOMEM;
+	पूर्ण
 
 	pkt_dev->removal_mark = 0;
 	pkt_dev->nfrags = 0;
@@ -3631,266 +3632,266 @@ static int pktgen_add_device(struct pktgen_thread *t, const char *ifname)
 	pkt_dev->burst = 1;
 	pkt_dev->node = NUMA_NO_NODE;
 
-	err = pktgen_setup_dev(t->net, pkt_dev, ifname);
-	if (err)
-		goto out1;
-	if (pkt_dev->odev->priv_flags & IFF_TX_SKB_SHARING)
+	err = pktgen_setup_dev(t->net, pkt_dev, अगरname);
+	अगर (err)
+		जाओ out1;
+	अगर (pkt_dev->odev->priv_flags & IFF_TX_SKB_SHARING)
 		pkt_dev->clone_skb = pg_clone_skb_d;
 
-	pkt_dev->entry = proc_create_data(ifname, 0600, t->net->proc_dir,
-					  &pktgen_if_proc_ops, pkt_dev);
-	if (!pkt_dev->entry) {
+	pkt_dev->entry = proc_create_data(अगरname, 0600, t->net->proc_dir,
+					  &pktgen_अगर_proc_ops, pkt_dev);
+	अगर (!pkt_dev->entry) अणु
 		pr_err("cannot create %s/%s procfs entry\n",
-		       PG_PROC_DIR, ifname);
+		       PG_PROC_सूची, अगरname);
 		err = -EINVAL;
-		goto out2;
-	}
-#ifdef CONFIG_XFRM
+		जाओ out2;
+	पूर्ण
+#अगर_घोषित CONFIG_XFRM
 	pkt_dev->ipsmode = XFRM_MODE_TRANSPORT;
 	pkt_dev->ipsproto = IPPROTO_ESP;
 
 	/* xfrm tunnel mode needs additional dst to extract outter
 	 * ip header protocol/ttl/id field, here creat a phony one.
-	 * instead of looking for a valid rt, which definitely hurting
-	 * performance under such circumstance.
+	 * instead of looking क्रम a valid rt, which definitely hurting
+	 * perक्रमmance under such circumstance.
 	 */
 	pkt_dev->dstops.family = AF_INET;
 	pkt_dev->xdst.u.dst.dev = pkt_dev->odev;
 	dst_init_metrics(&pkt_dev->xdst.u.dst, pktgen_dst_metrics, false);
 	pkt_dev->xdst.child = &pkt_dev->xdst.u.dst;
 	pkt_dev->xdst.u.dst.ops = &pkt_dev->dstops;
-#endif
+#पूर्ण_अगर
 
-	return add_dev_to_thread(t, pkt_dev);
+	वापस add_dev_to_thपढ़ो(t, pkt_dev);
 out2:
 	dev_put(pkt_dev->odev);
 out1:
-#ifdef CONFIG_XFRM
-	free_SAs(pkt_dev);
-#endif
-	vfree(pkt_dev->flows);
-	kfree(pkt_dev);
-	return err;
-}
+#अगर_घोषित CONFIG_XFRM
+	मुक्त_SAs(pkt_dev);
+#पूर्ण_अगर
+	vमुक्त(pkt_dev->flows);
+	kमुक्त(pkt_dev);
+	वापस err;
+पूर्ण
 
-static int __net_init pktgen_create_thread(int cpu, struct pktgen_net *pn)
-{
-	struct pktgen_thread *t;
-	struct proc_dir_entry *pe;
-	struct task_struct *p;
+अटल पूर्णांक __net_init pktgen_create_thपढ़ो(पूर्णांक cpu, काष्ठा pktgen_net *pn)
+अणु
+	काष्ठा pktgen_thपढ़ो *t;
+	काष्ठा proc_dir_entry *pe;
+	काष्ठा task_काष्ठा *p;
 
-	t = kzalloc_node(sizeof(struct pktgen_thread), GFP_KERNEL,
+	t = kzalloc_node(माप(काष्ठा pktgen_thपढ़ो), GFP_KERNEL,
 			 cpu_to_node(cpu));
-	if (!t) {
+	अगर (!t) अणु
 		pr_err("ERROR: out of memory, can't create new thread\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	mutex_init(&t->if_lock);
+	mutex_init(&t->अगर_lock);
 	t->cpu = cpu;
 
-	INIT_LIST_HEAD(&t->if_list);
+	INIT_LIST_HEAD(&t->अगर_list);
 
-	list_add_tail(&t->th_list, &pn->pktgen_threads);
-	init_completion(&t->start_done);
+	list_add_tail(&t->th_list, &pn->pktgen_thपढ़ोs);
+	init_completion(&t->start_करोne);
 
-	p = kthread_create_on_node(pktgen_thread_worker,
+	p = kthपढ़ो_create_on_node(pktgen_thपढ़ो_worker,
 				   t,
 				   cpu_to_node(cpu),
 				   "kpktgend_%d", cpu);
-	if (IS_ERR(p)) {
+	अगर (IS_ERR(p)) अणु
 		pr_err("kthread_create_on_node() failed for cpu %d\n", t->cpu);
 		list_del(&t->th_list);
-		kfree(t);
-		return PTR_ERR(p);
-	}
-	kthread_bind(p, cpu);
+		kमुक्त(t);
+		वापस PTR_ERR(p);
+	पूर्ण
+	kthपढ़ो_bind(p, cpu);
 	t->tsk = p;
 
 	pe = proc_create_data(t->tsk->comm, 0600, pn->proc_dir,
-			      &pktgen_thread_proc_ops, t);
-	if (!pe) {
+			      &pktgen_thपढ़ो_proc_ops, t);
+	अगर (!pe) अणु
 		pr_err("cannot create %s/%s procfs entry\n",
-		       PG_PROC_DIR, t->tsk->comm);
-		kthread_stop(p);
+		       PG_PROC_सूची, t->tsk->comm);
+		kthपढ़ो_stop(p);
 		list_del(&t->th_list);
-		kfree(t);
-		return -EINVAL;
-	}
+		kमुक्त(t);
+		वापस -EINVAL;
+	पूर्ण
 
 	t->net = pn;
-	get_task_struct(p);
+	get_task_काष्ठा(p);
 	wake_up_process(p);
-	wait_for_completion(&t->start_done);
+	रुको_क्रम_completion(&t->start_करोne);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Removes a device from the thread if_list.
+ * Removes a device from the thपढ़ो अगर_list.
  */
-static void _rem_dev_from_if_list(struct pktgen_thread *t,
-				  struct pktgen_dev *pkt_dev)
-{
-	struct list_head *q, *n;
-	struct pktgen_dev *p;
+अटल व्योम _rem_dev_from_अगर_list(काष्ठा pktgen_thपढ़ो *t,
+				  काष्ठा pktgen_dev *pkt_dev)
+अणु
+	काष्ठा list_head *q, *n;
+	काष्ठा pktgen_dev *p;
 
-	if_lock(t);
-	list_for_each_safe(q, n, &t->if_list) {
-		p = list_entry(q, struct pktgen_dev, list);
-		if (p == pkt_dev)
+	अगर_lock(t);
+	list_क्रम_each_safe(q, n, &t->अगर_list) अणु
+		p = list_entry(q, काष्ठा pktgen_dev, list);
+		अगर (p == pkt_dev)
 			list_del_rcu(&p->list);
-	}
-	if_unlock(t);
-}
+	पूर्ण
+	अगर_unlock(t);
+पूर्ण
 
-static int pktgen_remove_device(struct pktgen_thread *t,
-				struct pktgen_dev *pkt_dev)
-{
+अटल पूर्णांक pktgen_हटाओ_device(काष्ठा pktgen_thपढ़ो *t,
+				काष्ठा pktgen_dev *pkt_dev)
+अणु
 	pr_debug("remove_device pkt_dev=%p\n", pkt_dev);
 
-	if (pkt_dev->running) {
+	अगर (pkt_dev->running) अणु
 		pr_warn("WARNING: trying to remove a running interface, stopping it now\n");
 		pktgen_stop_device(pkt_dev);
-	}
+	पूर्ण
 
-	/* Dis-associate from the interface */
+	/* Dis-associate from the पूर्णांकerface */
 
-	if (pkt_dev->odev) {
+	अगर (pkt_dev->odev) अणु
 		dev_put(pkt_dev->odev);
-		pkt_dev->odev = NULL;
-	}
+		pkt_dev->odev = शून्य;
+	पूर्ण
 
-	/* Remove proc before if_list entry, because add_device uses
-	 * list to determine if interface already exist, avoid race
+	/* Remove proc beक्रमe अगर_list entry, because add_device uses
+	 * list to determine अगर पूर्णांकerface alपढ़ोy exist, aव्योम race
 	 * with proc_create_data() */
-	proc_remove(pkt_dev->entry);
+	proc_हटाओ(pkt_dev->entry);
 
-	/* And update the thread if_list */
-	_rem_dev_from_if_list(t, pkt_dev);
+	/* And update the thपढ़ो अगर_list */
+	_rem_dev_from_अगर_list(t, pkt_dev);
 
-#ifdef CONFIG_XFRM
-	free_SAs(pkt_dev);
-#endif
-	vfree(pkt_dev->flows);
-	if (pkt_dev->page)
+#अगर_घोषित CONFIG_XFRM
+	मुक्त_SAs(pkt_dev);
+#पूर्ण_अगर
+	vमुक्त(pkt_dev->flows);
+	अगर (pkt_dev->page)
 		put_page(pkt_dev->page);
-	kfree_rcu(pkt_dev, rcu);
-	return 0;
-}
+	kमुक्त_rcu(pkt_dev, rcu);
+	वापस 0;
+पूर्ण
 
-static int __net_init pg_net_init(struct net *net)
-{
-	struct pktgen_net *pn = net_generic(net, pg_net_id);
-	struct proc_dir_entry *pe;
-	int cpu, ret = 0;
+अटल पूर्णांक __net_init pg_net_init(काष्ठा net *net)
+अणु
+	काष्ठा pktgen_net *pn = net_generic(net, pg_net_id);
+	काष्ठा proc_dir_entry *pe;
+	पूर्णांक cpu, ret = 0;
 
 	pn->net = net;
-	INIT_LIST_HEAD(&pn->pktgen_threads);
-	pn->pktgen_exiting = false;
-	pn->proc_dir = proc_mkdir(PG_PROC_DIR, pn->net->proc_net);
-	if (!pn->proc_dir) {
-		pr_warn("cannot create /proc/net/%s\n", PG_PROC_DIR);
-		return -ENODEV;
-	}
+	INIT_LIST_HEAD(&pn->pktgen_thपढ़ोs);
+	pn->pktgen_निकासing = false;
+	pn->proc_dir = proc_सूची_गढ़ो(PG_PROC_सूची, pn->net->proc_net);
+	अगर (!pn->proc_dir) अणु
+		pr_warn("cannot create /proc/net/%s\n", PG_PROC_सूची);
+		वापस -ENODEV;
+	पूर्ण
 	pe = proc_create(PGCTRL, 0600, pn->proc_dir, &pktgen_proc_ops);
-	if (pe == NULL) {
+	अगर (pe == शून्य) अणु
 		pr_err("cannot create %s procfs entry\n", PGCTRL);
 		ret = -EINVAL;
-		goto remove;
-	}
+		जाओ हटाओ;
+	पूर्ण
 
-	for_each_online_cpu(cpu) {
-		int err;
+	क्रम_each_online_cpu(cpu) अणु
+		पूर्णांक err;
 
-		err = pktgen_create_thread(cpu, pn);
-		if (err)
+		err = pktgen_create_thपढ़ो(cpu, pn);
+		अगर (err)
 			pr_warn("Cannot create thread for cpu %d (%d)\n",
 				   cpu, err);
-	}
+	पूर्ण
 
-	if (list_empty(&pn->pktgen_threads)) {
+	अगर (list_empty(&pn->pktgen_thपढ़ोs)) अणु
 		pr_err("Initialization failed for all threads\n");
 		ret = -ENODEV;
-		goto remove_entry;
-	}
+		जाओ हटाओ_entry;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-remove_entry:
-	remove_proc_entry(PGCTRL, pn->proc_dir);
-remove:
-	remove_proc_entry(PG_PROC_DIR, pn->net->proc_net);
-	return ret;
-}
+हटाओ_entry:
+	हटाओ_proc_entry(PGCTRL, pn->proc_dir);
+हटाओ:
+	हटाओ_proc_entry(PG_PROC_सूची, pn->net->proc_net);
+	वापस ret;
+पूर्ण
 
-static void __net_exit pg_net_exit(struct net *net)
-{
-	struct pktgen_net *pn = net_generic(net, pg_net_id);
-	struct pktgen_thread *t;
-	struct list_head *q, *n;
+अटल व्योम __net_निकास pg_net_निकास(काष्ठा net *net)
+अणु
+	काष्ठा pktgen_net *pn = net_generic(net, pg_net_id);
+	काष्ठा pktgen_thपढ़ो *t;
+	काष्ठा list_head *q, *n;
 	LIST_HEAD(list);
 
-	/* Stop all interfaces & threads */
-	pn->pktgen_exiting = true;
+	/* Stop all पूर्णांकerfaces & thपढ़ोs */
+	pn->pktgen_निकासing = true;
 
-	mutex_lock(&pktgen_thread_lock);
-	list_splice_init(&pn->pktgen_threads, &list);
-	mutex_unlock(&pktgen_thread_lock);
+	mutex_lock(&pktgen_thपढ़ो_lock);
+	list_splice_init(&pn->pktgen_thपढ़ोs, &list);
+	mutex_unlock(&pktgen_thपढ़ो_lock);
 
-	list_for_each_safe(q, n, &list) {
-		t = list_entry(q, struct pktgen_thread, th_list);
+	list_क्रम_each_safe(q, n, &list) अणु
+		t = list_entry(q, काष्ठा pktgen_thपढ़ो, th_list);
 		list_del(&t->th_list);
-		kthread_stop(t->tsk);
-		put_task_struct(t->tsk);
-		kfree(t);
-	}
+		kthपढ़ो_stop(t->tsk);
+		put_task_काष्ठा(t->tsk);
+		kमुक्त(t);
+	पूर्ण
 
-	remove_proc_entry(PGCTRL, pn->proc_dir);
-	remove_proc_entry(PG_PROC_DIR, pn->net->proc_net);
-}
+	हटाओ_proc_entry(PGCTRL, pn->proc_dir);
+	हटाओ_proc_entry(PG_PROC_सूची, pn->net->proc_net);
+पूर्ण
 
-static struct pernet_operations pg_net_ops = {
+अटल काष्ठा pernet_operations pg_net_ops = अणु
 	.init = pg_net_init,
-	.exit = pg_net_exit,
+	.निकास = pg_net_निकास,
 	.id   = &pg_net_id,
-	.size = sizeof(struct pktgen_net),
-};
+	.size = माप(काष्ठा pktgen_net),
+पूर्ण;
 
-static int __init pg_init(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init pg_init(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
 	pr_info("%s", version);
-	ret = register_pernet_subsys(&pg_net_ops);
-	if (ret)
-		return ret;
-	ret = register_netdevice_notifier(&pktgen_notifier_block);
-	if (ret)
-		unregister_pernet_subsys(&pg_net_ops);
+	ret = रेजिस्टर_pernet_subsys(&pg_net_ops);
+	अगर (ret)
+		वापस ret;
+	ret = रेजिस्टर_netdevice_notअगरier(&pktgen_notअगरier_block);
+	अगर (ret)
+		unरेजिस्टर_pernet_subsys(&pg_net_ops);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit pg_cleanup(void)
-{
-	unregister_netdevice_notifier(&pktgen_notifier_block);
-	unregister_pernet_subsys(&pg_net_ops);
-	/* Don't need rcu_barrier() due to use of kfree_rcu() */
-}
+अटल व्योम __निकास pg_cleanup(व्योम)
+अणु
+	unरेजिस्टर_netdevice_notअगरier(&pktgen_notअगरier_block);
+	unरेजिस्टर_pernet_subsys(&pg_net_ops);
+	/* Don't need rcu_barrier() due to use of kमुक्त_rcu() */
+पूर्ण
 
 module_init(pg_init);
-module_exit(pg_cleanup);
+module_निकास(pg_cleanup);
 
 MODULE_AUTHOR("Robert Olsson <robert.olsson@its.uu.se>");
 MODULE_DESCRIPTION("Packet Generator tool");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(VERSION);
-module_param(pg_count_d, int, 0);
+module_param(pg_count_d, पूर्णांक, 0);
 MODULE_PARM_DESC(pg_count_d, "Default number of packets to inject");
-module_param(pg_delay_d, int, 0);
+module_param(pg_delay_d, पूर्णांक, 0);
 MODULE_PARM_DESC(pg_delay_d, "Default delay between packets (nanoseconds)");
-module_param(pg_clone_skb_d, int, 0);
+module_param(pg_clone_skb_d, पूर्णांक, 0);
 MODULE_PARM_DESC(pg_clone_skb_d, "Default number of copies of the same packet");
-module_param(debug, int, 0);
+module_param(debug, पूर्णांक, 0);
 MODULE_PARM_DESC(debug, "Enable debugging of pktgen module");

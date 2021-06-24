@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * vsp1_drm.h  --  R-Car VSP1 DRM/KMS Interface
  *
  * Copyright (C) 2015 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
-#ifndef __VSP1_DRM_H__
-#define __VSP1_DRM_H__
+#अगर_अघोषित __VSP1_DRM_H__
+#घोषणा __VSP1_DRM_H__
 
-#include <linux/mutex.h>
-#include <linux/videodev2.h>
-#include <linux/wait.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/रुको.h>
 
-#include <media/vsp1.h>
+#समावेश <media/vsp1.h>
 
-#include "vsp1_pipe.h"
+#समावेश "vsp1_pipe.h"
 
 /**
- * struct vsp1_drm_pipeline - State for the API exposed to the DRM driver
- * @pipe: the VSP1 pipeline used for display
+ * काष्ठा vsp1_drm_pipeline - State क्रम the API exposed to the DRM driver
+ * @pipe: the VSP1 pipeline used क्रम display
  * @width: output display width
  * @height: output display height
- * @force_brx_release: when set, release the BRx during the next reconfiguration
- * @wait_queue: wait queue to wait for BRx release completion
- * @uif: UIF entity if available for the pipeline
+ * @क्रमce_brx_release: when set, release the BRx during the next reconfiguration
+ * @रुको_queue: रुको queue to रुको क्रम BRx release completion
+ * @uअगर: UIF entity अगर available क्रम the pipeline
  * @crc: CRC computation configuration
- * @du_complete: frame completion callback for the DU driver (optional)
- * @du_private: data to be passed to the du_complete callback
+ * @du_complete: frame completion callback क्रम the DU driver (optional)
+ * @du_निजी: data to be passed to the du_complete callback
  */
-struct vsp1_drm_pipeline {
-	struct vsp1_pipeline pipe;
+काष्ठा vsp1_drm_pipeline अणु
+	काष्ठा vsp1_pipeline pipe;
 
-	unsigned int width;
-	unsigned int height;
+	अचिन्हित पूर्णांक width;
+	अचिन्हित पूर्णांक height;
 
-	bool force_brx_release;
-	wait_queue_head_t wait_queue;
+	bool क्रमce_brx_release;
+	रुको_queue_head_t रुको_queue;
 
-	struct vsp1_entity *uif;
-	struct vsp1_du_crc_config crc;
+	काष्ठा vsp1_entity *uअगर;
+	काष्ठा vsp1_du_crc_config crc;
 
 	/* Frame synchronisation */
-	void (*du_complete)(void *data, unsigned int status, u32 crc);
-	void *du_private;
-};
+	व्योम (*du_complete)(व्योम *data, अचिन्हित पूर्णांक status, u32 crc);
+	व्योम *du_निजी;
+पूर्ण;
 
 /**
- * struct vsp1_drm - State for the API exposed to the DRM driver
- * @pipe: the VSP1 DRM pipeline used for display
+ * काष्ठा vsp1_drm - State क्रम the API exposed to the DRM driver
+ * @pipe: the VSP1 DRM pipeline used क्रम display
  * @lock: protects the BRU and BRS allocation
- * @inputs: source crop rectangle, destination compose rectangle and z-order
- *	position for every input (indexed by RPF index)
+ * @inमाला_दो: source crop rectangle, destination compose rectangle and z-order
+ *	position क्रम every input (indexed by RPF index)
  */
-struct vsp1_drm {
-	struct vsp1_drm_pipeline pipe[VSP1_MAX_LIF];
-	struct mutex lock;
+काष्ठा vsp1_drm अणु
+	काष्ठा vsp1_drm_pipeline pipe[VSP1_MAX_LIF];
+	काष्ठा mutex lock;
 
-	struct {
-		struct v4l2_rect crop;
-		struct v4l2_rect compose;
-		unsigned int zpos;
-	} inputs[VSP1_MAX_RPF];
-};
+	काष्ठा अणु
+		काष्ठा v4l2_rect crop;
+		काष्ठा v4l2_rect compose;
+		अचिन्हित पूर्णांक zpos;
+	पूर्ण inमाला_दो[VSP1_MAX_RPF];
+पूर्ण;
 
-static inline struct vsp1_drm_pipeline *
-to_vsp1_drm_pipeline(struct vsp1_pipeline *pipe)
-{
-	return container_of(pipe, struct vsp1_drm_pipeline, pipe);
-}
+अटल अंतरभूत काष्ठा vsp1_drm_pipeline *
+to_vsp1_drm_pipeline(काष्ठा vsp1_pipeline *pipe)
+अणु
+	वापस container_of(pipe, काष्ठा vsp1_drm_pipeline, pipe);
+पूर्ण
 
-int vsp1_drm_init(struct vsp1_device *vsp1);
-void vsp1_drm_cleanup(struct vsp1_device *vsp1);
+पूर्णांक vsp1_drm_init(काष्ठा vsp1_device *vsp1);
+व्योम vsp1_drm_cleanup(काष्ठा vsp1_device *vsp1);
 
-#endif /* __VSP1_DRM_H__ */
+#पूर्ण_अगर /* __VSP1_DRM_H__ */

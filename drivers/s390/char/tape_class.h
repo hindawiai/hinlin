@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright IBM Corp. 2004   All Rights Reserved.
  *
@@ -7,53 +8,53 @@
  * Author: Stefan Bader <shbader@de.ibm.com>
  * Based on simple class device code by Greg K-H
  */
-#ifndef __TAPE_CLASS_H__
-#define __TAPE_CLASS_H__
+#अगर_अघोषित __TAPE_CLASS_H__
+#घोषणा __TAPE_CLASS_H__
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/major.h>
-#include <linux/cdev.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/major.h>
+#समावेश <linux/cdev.h>
 
-#include <linux/device.h>
-#include <linux/kdev_t.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kdev_t.h>
 
-#define TAPECLASS_NAME_LEN	32
+#घोषणा TAPECLASS_NAME_LEN	32
 
-struct tape_class_device {
-	struct cdev		*char_device;
-	struct device		*class_device;
-	char			device_name[TAPECLASS_NAME_LEN];
-	char			mode_name[TAPECLASS_NAME_LEN];
-};
+काष्ठा tape_class_device अणु
+	काष्ठा cdev		*अक्षर_device;
+	काष्ठा device		*class_device;
+	अक्षर			device_name[TAPECLASS_NAME_LEN];
+	अक्षर			mode_name[TAPECLASS_NAME_LEN];
+पूर्ण;
 
 /*
- * Register a tape device and return a pointer to the tape class device
+ * Register a tape device and वापस a poपूर्णांकer to the tape class device
  * created by the call.
  *
  * device
- *	The pointer to the struct device of the physical (base) device.
+ *	The poपूर्णांकer to the काष्ठा device of the physical (base) device.
  * dev
- *	The intended major/minor number. The major number may be 0 to
+ *	The पूर्णांकended major/minor number. The major number may be 0 to
  *	get a dynamic major number.
  * fops
- *	The pointer to the drivers file operations for the tape device.
+ *	The poपूर्णांकer to the drivers file operations क्रम the tape device.
  * device_name
- *	Pointer to the logical device name (will also be used as kobject name
+ *	Poपूर्णांकer to the logical device name (will also be used as kobject name
  *	of the cdev). This can also be called the name of the tape class
  *	device.
  * mode_name
- *	Points to the name of the tape mode. This creates a link with that
+ *	Poपूर्णांकs to the name of the tape mode. This creates a link with that
  *	name from the physical device to the logical device (class).
  */
-struct tape_class_device *register_tape_dev(
-	struct device *		device,
+काष्ठा tape_class_device *रेजिस्टर_tape_dev(
+	काष्ठा device *		device,
 	dev_t			dev,
-	const struct file_operations *fops,
-	char *			device_name,
-	char *			node_name
+	स्थिर काष्ठा file_operations *fops,
+	अक्षर *			device_name,
+	अक्षर *			node_name
 );
-void unregister_tape_dev(struct device *device, struct tape_class_device *tcd);
+व्योम unरेजिस्टर_tape_dev(काष्ठा device *device, काष्ठा tape_class_device *tcd);
 
-#endif /* __TAPE_CLASS_H__ */
+#पूर्ण_अगर /* __TAPE_CLASS_H__ */

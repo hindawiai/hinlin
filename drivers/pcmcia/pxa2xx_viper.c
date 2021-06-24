@@ -1,182 +1,183 @@
+<शैली गुरु>
 /*
  * Viper/Zeus PCMCIA support
  *   Copyright 2004 Arcom Control Systems
  *
- * Maintained by Marc Zyngier <maz@misterjones.org>
+ * Maपूर्णांकained by Marc Zyngier <maz@misterjones.org>
  *
  * Based on:
  *   iPAQ h2200 PCMCIA support
  *   Copyright 2004 Koen Kooi <koen@vestingbar.nl>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive for
+ * License.  See the file COPYING in the मुख्य directory of this archive क्रम
  * more details.
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/gpio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/gpपन.स>
 
-#include <pcmcia/ss.h>
+#समावेश <pcmcia/ss.h>
 
-#include <asm/irq.h>
+#समावेश <यंत्र/irq.h>
 
-#include <linux/platform_data/pcmcia-pxa2xx_viper.h>
+#समावेश <linux/platक्रमm_data/pcmcia-pxa2xx_viper.h>
 
-#include "soc_common.h"
-#include "pxa2xx_base.h"
+#समावेश "soc_common.h"
+#समावेश "pxa2xx_base.h"
 
-static struct platform_device *arcom_pcmcia_dev;
+अटल काष्ठा platक्रमm_device *arcom_pcmcia_dev;
 
-static inline struct arcom_pcmcia_pdata *viper_get_pdata(void)
-{
-	return arcom_pcmcia_dev->dev.platform_data;
-}
+अटल अंतरभूत काष्ठा arcom_pcmcia_pdata *viper_get_pdata(व्योम)
+अणु
+	वापस arcom_pcmcia_dev->dev.platक्रमm_data;
+पूर्ण
 
-static int viper_pcmcia_hw_init(struct soc_pcmcia_socket *skt)
-{
-	struct arcom_pcmcia_pdata *pdata = viper_get_pdata();
-	unsigned long flags;
+अटल पूर्णांक viper_pcmcia_hw_init(काष्ठा soc_pcmcia_socket *skt)
+अणु
+	काष्ठा arcom_pcmcia_pdata *pdata = viper_get_pdata();
+	अचिन्हित दीर्घ flags;
 
 	skt->stat[SOC_STAT_CD].gpio = pdata->cd_gpio;
 	skt->stat[SOC_STAT_CD].name = "PCMCIA_CD";
 	skt->stat[SOC_STAT_RDY].gpio = pdata->rdy_gpio;
 	skt->stat[SOC_STAT_RDY].name = "CF ready";
 
-	if (gpio_request(pdata->pwr_gpio, "CF power"))
-		goto err_request_pwr;
+	अगर (gpio_request(pdata->pwr_gpio, "CF power"))
+		जाओ err_request_pwr;
 
 	local_irq_save(flags);
 
-	if (gpio_direction_output(pdata->pwr_gpio, 0)) {
+	अगर (gpio_direction_output(pdata->pwr_gpio, 0)) अणु
 		local_irq_restore(flags);
-		goto err_dir;
-	}
+		जाओ err_dir;
+	पूर्ण
 
 	local_irq_restore(flags);
 
-	return 0;
+	वापस 0;
 
 err_dir:
-	gpio_free(pdata->pwr_gpio);
+	gpio_मुक्त(pdata->pwr_gpio);
 err_request_pwr:
 	dev_err(&arcom_pcmcia_dev->dev, "Failed to setup PCMCIA GPIOs\n");
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
  * Release all resources.
  */
-static void viper_pcmcia_hw_shutdown(struct soc_pcmcia_socket *skt)
-{
-	struct arcom_pcmcia_pdata *pdata = viper_get_pdata();
+अटल व्योम viper_pcmcia_hw_shutकरोwn(काष्ठा soc_pcmcia_socket *skt)
+अणु
+	काष्ठा arcom_pcmcia_pdata *pdata = viper_get_pdata();
 
-	gpio_free(pdata->pwr_gpio);
-}
+	gpio_मुक्त(pdata->pwr_gpio);
+पूर्ण
 
-static void viper_pcmcia_socket_state(struct soc_pcmcia_socket *skt,
-				      struct pcmcia_state *state)
-{
+अटल व्योम viper_pcmcia_socket_state(काष्ठा soc_pcmcia_socket *skt,
+				      काष्ठा pcmcia_state *state)
+अणु
 	state->vs_3v  = 1; /* Can only apply 3.3V */
 	state->vs_Xv  = 0;
-}
+पूर्ण
 
-static int viper_pcmcia_configure_socket(struct soc_pcmcia_socket *skt,
-					 const socket_state_t *state)
-{
-	struct arcom_pcmcia_pdata *pdata = viper_get_pdata();
+अटल पूर्णांक viper_pcmcia_configure_socket(काष्ठा soc_pcmcia_socket *skt,
+					 स्थिर socket_state_t *state)
+अणु
+	काष्ठा arcom_pcmcia_pdata *pdata = viper_get_pdata();
 
 	/* Silently ignore Vpp, output enable, speaker enable. */
 	pdata->reset(state->flags & SS_RESET);
 
 	/* Apply socket voltage */
-	switch (state->Vcc) {
-	case 0:
+	चयन (state->Vcc) अणु
+	हाल 0:
 		gpio_set_value(pdata->pwr_gpio, 0);
-		break;
-	case 33:
+		अवरोध;
+	हाल 33:
 		gpio_set_value(pdata->pwr_gpio, 1);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&arcom_pcmcia_dev->dev, "Unsupported Vcc:%d\n", state->Vcc);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pcmcia_low_level viper_pcmcia_ops = {
+अटल काष्ठा pcmcia_low_level viper_pcmcia_ops = अणु
 	.owner          	= THIS_MODULE,
 	.hw_init        	= viper_pcmcia_hw_init,
-	.hw_shutdown		= viper_pcmcia_hw_shutdown,
+	.hw_shutकरोwn		= viper_pcmcia_hw_shutकरोwn,
 	.socket_state		= viper_pcmcia_socket_state,
 	.configure_socket	= viper_pcmcia_configure_socket,
 	.nr         		= 1,
-};
+पूर्ण;
 
-static struct platform_device *viper_pcmcia_device;
+अटल काष्ठा platक्रमm_device *viper_pcmcia_device;
 
-static int viper_pcmcia_probe(struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक viper_pcmcia_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 
 	/* I can't imagine more than one device, but you never know... */
-	if (arcom_pcmcia_dev)
-		return -EEXIST;
+	अगर (arcom_pcmcia_dev)
+		वापस -EEXIST;
 
-	if (!pdev->dev.platform_data)
-		return -EINVAL;
+	अगर (!pdev->dev.platक्रमm_data)
+		वापस -EINVAL;
 
-	viper_pcmcia_device = platform_device_alloc("pxa2xx-pcmcia", -1);
-	if (!viper_pcmcia_device)
-		return -ENOMEM;
+	viper_pcmcia_device = platक्रमm_device_alloc("pxa2xx-pcmcia", -1);
+	अगर (!viper_pcmcia_device)
+		वापस -ENOMEM;
 
 	arcom_pcmcia_dev = pdev;
 
 	viper_pcmcia_device->dev.parent = &pdev->dev;
 
-	ret = platform_device_add_data(viper_pcmcia_device,
+	ret = platक्रमm_device_add_data(viper_pcmcia_device,
 				       &viper_pcmcia_ops,
-				       sizeof(viper_pcmcia_ops));
+				       माप(viper_pcmcia_ops));
 
-	if (!ret)
-		ret = platform_device_add(viper_pcmcia_device);
+	अगर (!ret)
+		ret = platक्रमm_device_add(viper_pcmcia_device);
 
-	if (ret) {
-		platform_device_put(viper_pcmcia_device);
-		arcom_pcmcia_dev = NULL;
-	}
+	अगर (ret) अणु
+		platक्रमm_device_put(viper_pcmcia_device);
+		arcom_pcmcia_dev = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int viper_pcmcia_remove(struct platform_device *pdev)
-{
-	platform_device_unregister(viper_pcmcia_device);
-	arcom_pcmcia_dev = NULL;
-	return 0;
-}
+अटल पूर्णांक viper_pcmcia_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	platक्रमm_device_unरेजिस्टर(viper_pcmcia_device);
+	arcom_pcmcia_dev = शून्य;
+	वापस 0;
+पूर्ण
 
-static struct platform_device_id viper_pcmcia_id_table[] = {
-	{ .name = "viper-pcmcia", },
-	{ .name = "zeus-pcmcia",  },
-	{ },
-};
+अटल काष्ठा platक्रमm_device_id viper_pcmcia_id_table[] = अणु
+	अणु .name = "viper-pcmcia", पूर्ण,
+	अणु .name = "zeus-pcmcia",  पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver viper_pcmcia_driver = {
+अटल काष्ठा platक्रमm_driver viper_pcmcia_driver = अणु
 	.probe		= viper_pcmcia_probe,
-	.remove		= viper_pcmcia_remove,
-	.driver		= {
+	.हटाओ		= viper_pcmcia_हटाओ,
+	.driver		= अणु
 		.name	= "arcom-pcmcia",
-	},
+	पूर्ण,
 	.id_table	= viper_pcmcia_id_table,
-};
+पूर्ण;
 
-module_platform_driver(viper_pcmcia_driver);
+module_platक्रमm_driver(viper_pcmcia_driver);
 
-MODULE_DEVICE_TABLE(platform, viper_pcmcia_id_table);
+MODULE_DEVICE_TABLE(platक्रमm, viper_pcmcia_id_table);
 MODULE_LICENSE("GPL");

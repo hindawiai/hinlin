@@ -1,952 +1,953 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2019 Bootlin
  */
 
-#define pr_fmt(fmt) "drm_cmdline: " fmt
+#घोषणा pr_fmt(fmt) "drm_cmdline: " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include <drm/drm_connector.h>
-#include <drm/drm_modes.h>
+#समावेश <drm/drm_connector.h>
+#समावेश <drm/drm_modes.h>
 
-#define TESTS "drm_cmdline_selftests.h"
-#include "drm_selftest.h"
-#include "test-drm_modeset_common.h"
+#घोषणा TESTS "drm_cmdline_selftests.h"
+#समावेश "drm_selftest.h"
+#समावेश "test-drm_modeset_common.h"
 
-static const struct drm_connector no_connector = {};
+अटल स्थिर काष्ठा drm_connector no_connector = अणुपूर्ण;
 
-static int drm_cmdline_test_force_e_only(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_क्रमce_e_only(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("e",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("e",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(mode.specified);
-	FAIL_ON(mode.refresh_specified);
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.specअगरied);
+	FAIL_ON(mode.refresh_specअगरied);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_force_D_only_not_digital(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_क्रमce_D_only_not_digital(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("D",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("D",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(mode.specified);
-	FAIL_ON(mode.refresh_specified);
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.specअगरied);
+	FAIL_ON(mode.refresh_specअगरied);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_connector connector_hdmi = {
+अटल स्थिर काष्ठा drm_connector connector_hdmi = अणु
 	.connector_type	= DRM_MODE_CONNECTOR_HDMIB,
-};
+पूर्ण;
 
-static int drm_cmdline_test_force_D_only_hdmi(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_क्रमce_D_only_hdmi(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("D",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("D",
 							   &connector_hdmi,
 							   &mode));
-	FAIL_ON(mode.specified);
-	FAIL_ON(mode.refresh_specified);
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.specअगरied);
+	FAIL_ON(mode.refresh_specअगरied);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON_DIGITAL);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON_DIGITAL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_connector connector_dvi = {
+अटल स्थिर काष्ठा drm_connector connector_dvi = अणु
 	.connector_type	= DRM_MODE_CONNECTOR_DVII,
-};
+पूर्ण;
 
-static int drm_cmdline_test_force_D_only_dvi(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_क्रमce_D_only_dvi(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("D",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("D",
 							   &connector_dvi,
 							   &mode));
-	FAIL_ON(mode.specified);
-	FAIL_ON(mode.refresh_specified);
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.specअगरied);
+	FAIL_ON(mode.refresh_specअगरied);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON_DIGITAL);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON_DIGITAL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_force_d_only(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_क्रमce_d_only(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("d",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("d",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(mode.specified);
-	FAIL_ON(mode.refresh_specified);
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.specअगरied);
+	FAIL_ON(mode.refresh_specअगरied);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_OFF);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_OFF);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_margin_only(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_margin_only(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("m",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("m",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_interlace_only(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_पूर्णांकerlace_only(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("i",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("i",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_missing_x(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_missing_x(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("x480",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("x480",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_missing_y(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_missing_y(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("1024x",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("1024x",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bad_y(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bad_y(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("1024xtest",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("1024xtest",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_missing_y_bpp(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_missing_y_bpp(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("1024x-24",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("1024x-24",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_vesa(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_vesa(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480M",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480M",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(!mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_vesa_rblank(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_vesa_rblank(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480MR",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480MR",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(!mode.rb);
 	FAIL_ON(!mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_rblank(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_rblank(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480R",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480R",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(!mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bpp(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480-24",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480-24",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bad_bpp(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bad_bpp(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("720x480-test",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("720x480-test",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_refresh(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_refresh(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480@60",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480@60",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(!mode.refresh_specified);
+	FAIL_ON(!mode.refresh_specअगरied);
 	FAIL_ON(mode.refresh != 60);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bad_refresh(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bad_refresh(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("720x480@refresh",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("720x480@refresh",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp_refresh(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bpp_refresh(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480-24@60",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480-24@60",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(!mode.refresh_specified);
+	FAIL_ON(!mode.refresh_specअगरied);
 	FAIL_ON(mode.refresh != 60);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp_refresh_interlaced(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bpp_refresh_पूर्णांकerlaced(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480-24@60i",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480-24@60i",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(!mode.refresh_specified);
+	FAIL_ON(!mode.refresh_specअगरied);
 	FAIL_ON(mode.refresh != 60);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(!mode.interlace);
+	FAIL_ON(!mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp_refresh_margins(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bpp_refresh_margins(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480-24@60m",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480-24@60m",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(!mode.refresh_specified);
+	FAIL_ON(!mode.refresh_specअगरied);
 	FAIL_ON(mode.refresh != 60);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(!mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp_refresh_force_off(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bpp_refresh_क्रमce_off(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480-24@60d",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480-24@60d",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(!mode.refresh_specified);
+	FAIL_ON(!mode.refresh_specअगरied);
 	FAIL_ON(mode.refresh != 60);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_OFF);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_OFF);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp_refresh_force_on_off(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bpp_refresh_क्रमce_on_off(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("720x480-24@60de",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("720x480-24@60de",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp_refresh_force_on(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bpp_refresh_क्रमce_on(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480-24@60e",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480-24@60e",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(!mode.refresh_specified);
+	FAIL_ON(!mode.refresh_specअगरied);
 	FAIL_ON(mode.refresh != 60);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp_refresh_force_on_analog(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bpp_refresh_क्रमce_on_analog(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480-24@60D",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480-24@60D",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(!mode.refresh_specified);
+	FAIL_ON(!mode.refresh_specअगरied);
 	FAIL_ON(mode.refresh != 60);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp_refresh_force_on_digital(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
-	static const struct drm_connector connector = {
+अटल पूर्णांक drm_cmdline_test_res_bpp_refresh_क्रमce_on_digital(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
+	अटल स्थिर काष्ठा drm_connector connector = अणु
 		.connector_type = DRM_MODE_CONNECTOR_DVII,
-	};
+	पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480-24@60D",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480-24@60D",
 							   &connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(!mode.refresh_specified);
+	FAIL_ON(!mode.refresh_specअगरied);
 	FAIL_ON(mode.refresh != 60);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON_DIGITAL);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON_DIGITAL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp_refresh_interlaced_margins_force_on(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bpp_refresh_पूर्णांकerlaced_margins_क्रमce_on(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480-24@60ime",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480-24@60ime",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(!mode.refresh_specified);
+	FAIL_ON(!mode.refresh_specअगरied);
 	FAIL_ON(mode.refresh != 60);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(!mode.interlace);
+	FAIL_ON(!mode.पूर्णांकerlace);
 	FAIL_ON(!mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_margins_force_on(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_margins_क्रमce_on(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480me",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480me",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(!mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_vesa_margins(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_vesa_margins(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480Mm",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480Mm",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(!mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(!mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_invalid_mode(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_invalid_mode(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("720x480f",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("720x480f",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_res_bpp_wrong_place_mode(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_res_bpp_wrong_place_mode(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("720x480e-24",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("720x480e-24",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_name(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_name(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("NTSC",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("NTSC",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(strcmp(mode.name, "NTSC"));
-	FAIL_ON(mode.refresh_specified);
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(म_भेद(mode.name, "NTSC"));
+	FAIL_ON(mode.refresh_specअगरied);
+	FAIL_ON(mode.bpp_specअगरied);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_name_bpp(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_name_bpp(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("NTSC-24",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("NTSC-24",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(strcmp(mode.name, "NTSC"));
+	FAIL_ON(म_भेद(mode.name, "NTSC"));
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_name_bpp_refresh(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_name_bpp_refresh(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("NTSC-24@60",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("NTSC-24@60",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_name_refresh(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_name_refresh(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("NTSC@60",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("NTSC@60",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_name_refresh_wrong_mode(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_name_refresh_wrong_mode(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("NTSC@60m",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("NTSC@60m",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_name_refresh_invalid_mode(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_name_refresh_invalid_mode(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("NTSC@60f",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("NTSC@60f",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_name_option(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_name_option(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("NTSC,rotate=180",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("NTSC,rotate=180",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
-	FAIL_ON(strcmp(mode.name, "NTSC"));
+	FAIL_ON(!mode.specअगरied);
+	FAIL_ON(म_भेद(mode.name, "NTSC"));
 	FAIL_ON(mode.rotation_reflection != DRM_MODE_ROTATE_180);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_name_bpp_option(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_name_bpp_option(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("NTSC-24,rotate=180",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("NTSC-24,rotate=180",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
-	FAIL_ON(strcmp(mode.name, "NTSC"));
+	FAIL_ON(!mode.specअगरied);
+	FAIL_ON(म_भेद(mode.name, "NTSC"));
 	FAIL_ON(mode.rotation_reflection != DRM_MODE_ROTATE_180);
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_rotate_0(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_rotate_0(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480,rotate=0",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480,rotate=0",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 	FAIL_ON(mode.rotation_reflection != DRM_MODE_ROTATE_0);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_rotate_90(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_rotate_90(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480,rotate=90",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480,rotate=90",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 	FAIL_ON(mode.rotation_reflection != DRM_MODE_ROTATE_90);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_rotate_180(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_rotate_180(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480,rotate=180",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480,rotate=180",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 	FAIL_ON(mode.rotation_reflection != DRM_MODE_ROTATE_180);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_rotate_270(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_rotate_270(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480,rotate=270",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480,rotate=270",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 	FAIL_ON(mode.rotation_reflection != DRM_MODE_ROTATE_270);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_rotate_multiple(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_rotate_multiple(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("720x480,rotate=0,rotate=90",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("720x480,rotate=0,rotate=90",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_rotate_invalid_val(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_rotate_invalid_val(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("720x480,rotate=42",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("720x480,rotate=42",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_rotate_truncated(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_rotate_truncated(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("720x480,rotate=",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("720x480,rotate=",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_hmirror(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_hmirror(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480,reflect_x",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480,reflect_x",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 	FAIL_ON(mode.rotation_reflection != (DRM_MODE_ROTATE_0 | DRM_MODE_REFLECT_X));
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_vmirror(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_vmirror(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480,reflect_y",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480,reflect_y",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 	FAIL_ON(mode.rotation_reflection != (DRM_MODE_ROTATE_0 | DRM_MODE_REFLECT_Y));
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_margin_options(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_margin_options(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480,margin_right=14,margin_left=24,margin_bottom=36,margin_top=42",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480,margin_right=14,margin_left=24,margin_bottom=36,margin_top=42",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 	FAIL_ON(mode.tv_margins.right != 14);
@@ -954,115 +955,115 @@ static int drm_cmdline_test_margin_options(void *ignored)
 	FAIL_ON(mode.tv_margins.bottom != 36);
 	FAIL_ON(mode.tv_margins.top != 42);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_multiple_options(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_multiple_options(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480,rotate=270,reflect_x",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480,rotate=270,reflect_x",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 	FAIL_ON(mode.rotation_reflection != (DRM_MODE_ROTATE_270 | DRM_MODE_REFLECT_X));
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_invalid_option(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_invalid_option(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(drm_mode_parse_command_line_for_connector("720x480,test=42",
+	FAIL_ON(drm_mode_parse_command_line_क्रम_connector("720x480,test=42",
 							  &no_connector,
 							  &mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_bpp_extra_and_option(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_bpp_extra_and_option(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480-24e,rotate=180",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480-24e,rotate=180",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 	FAIL_ON(mode.rotation_reflection != DRM_MODE_ROTATE_180);
 
-	FAIL_ON(mode.refresh_specified);
+	FAIL_ON(mode.refresh_specअगरied);
 
-	FAIL_ON(!mode.bpp_specified);
+	FAIL_ON(!mode.bpp_specअगरied);
 	FAIL_ON(mode.bpp != 24);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_extra_and_option(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_extra_and_option(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("720x480e,rotate=180",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("720x480e,rotate=180",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(!mode.specified);
+	FAIL_ON(!mode.specअगरied);
 	FAIL_ON(mode.xres != 720);
 	FAIL_ON(mode.yres != 480);
 	FAIL_ON(mode.rotation_reflection != DRM_MODE_ROTATE_180);
 
-	FAIL_ON(mode.refresh_specified);
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.refresh_specअगरied);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_freestanding_options(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_मुक्तstanding_options(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("margin_right=14,margin_left=24,margin_bottom=36,margin_top=42",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("margin_right=14,margin_left=24,margin_bottom=36,margin_top=42",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(mode.specified);
-	FAIL_ON(mode.refresh_specified);
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.specअगरied);
+	FAIL_ON(mode.refresh_specअगरied);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.tv_margins.right != 14);
 	FAIL_ON(mode.tv_margins.left != 24);
@@ -1071,23 +1072,23 @@ static int drm_cmdline_test_freestanding_options(void *ignored)
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_freestanding_force_e_and_options(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_मुक्तstanding_क्रमce_e_and_options(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("e,margin_right=14,margin_left=24,margin_bottom=36,margin_top=42",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("e,margin_right=14,margin_left=24,margin_bottom=36,margin_top=42",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(mode.specified);
-	FAIL_ON(mode.refresh_specified);
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.specअगरied);
+	FAIL_ON(mode.refresh_specअगरied);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.tv_margins.right != 14);
 	FAIL_ON(mode.tv_margins.left != 24);
@@ -1096,45 +1097,45 @@ static int drm_cmdline_test_freestanding_force_e_and_options(void *ignored)
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_ON);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drm_cmdline_test_panel_orientation(void *ignored)
-{
-	struct drm_cmdline_mode mode = { };
+अटल पूर्णांक drm_cmdline_test_panel_orientation(व्योम *ignored)
+अणु
+	काष्ठा drm_cmdline_mode mode = अणु पूर्ण;
 
-	FAIL_ON(!drm_mode_parse_command_line_for_connector("panel_orientation=upside_down",
+	FAIL_ON(!drm_mode_parse_command_line_क्रम_connector("panel_orientation=upside_down",
 							   &no_connector,
 							   &mode));
-	FAIL_ON(mode.specified);
-	FAIL_ON(mode.refresh_specified);
-	FAIL_ON(mode.bpp_specified);
+	FAIL_ON(mode.specअगरied);
+	FAIL_ON(mode.refresh_specअगरied);
+	FAIL_ON(mode.bpp_specअगरied);
 
 	FAIL_ON(mode.panel_orientation != DRM_MODE_PANEL_ORIENTATION_BOTTOM_UP);
 
 	FAIL_ON(mode.rb);
 	FAIL_ON(mode.cvt);
-	FAIL_ON(mode.interlace);
+	FAIL_ON(mode.पूर्णांकerlace);
 	FAIL_ON(mode.margins);
-	FAIL_ON(mode.force != DRM_FORCE_UNSPECIFIED);
+	FAIL_ON(mode.क्रमce != DRM_FORCE_UNSPECIFIED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#include "drm_selftest.c"
+#समावेश "drm_selftest.c"
 
-static int __init test_drm_cmdline_init(void)
-{
-	int err;
+अटल पूर्णांक __init test_drm_cmdline_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = run_selftests(selftests, ARRAY_SIZE(selftests), NULL);
+	err = run_selftests(selftests, ARRAY_SIZE(selftests), शून्य);
 
-	return err > 0 ? 0 : err;
-}
+	वापस err > 0 ? 0 : err;
+पूर्ण
 module_init(test_drm_cmdline_init);
 
 MODULE_AUTHOR("Maxime Ripard <maxime.ripard@bootlin.com>");

@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *  Pvpanic Device Support
  *
  *  Copyright (C) 2021 Oracle.
  */
 
-#ifndef PVPANIC_H_
-#define PVPANIC_H_
+#अगर_अघोषित PVPANIC_H_
+#घोषणा PVPANIC_H_
 
-struct pvpanic_instance {
-	void __iomem *base;
-	unsigned int capability;
-	unsigned int events;
-	struct list_head list;
-};
+काष्ठा pvpanic_instance अणु
+	व्योम __iomem *base;
+	अचिन्हित पूर्णांक capability;
+	अचिन्हित पूर्णांक events;
+	काष्ठा list_head list;
+पूर्ण;
 
-int pvpanic_probe(struct pvpanic_instance *pi);
-void pvpanic_remove(struct pvpanic_instance *pi);
+पूर्णांक pvpanic_probe(काष्ठा pvpanic_instance *pi);
+व्योम pvpanic_हटाओ(काष्ठा pvpanic_instance *pi);
 
-#endif /* PVPANIC_H_ */
+#पूर्ण_अगर /* PVPANIC_H_ */

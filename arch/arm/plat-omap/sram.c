@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/plat-omap/sram.c
  *
@@ -10,66 +11,66 @@
  * Copyright (C) 2009-2012 Texas Instruments
  * Added OMAP4/5 support - Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
 
-#include <asm/fncpy.h>
-#include <asm/tlb.h>
-#include <asm/cacheflush.h>
-#include <asm/set_memory.h>
+#समावेश <यंत्र/fncpy.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/set_memory.h>
 
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include <plat/sram.h>
+#समावेश <plat/sram.h>
 
-#define ROUND_DOWN(value,boundary)	((value) & (~((boundary)-1)))
+#घोषणा ROUND_DOWN(value,boundary)	((value) & (~((boundary)-1)))
 
-static void __iomem *omap_sram_base;
-static unsigned long omap_sram_skip;
-static unsigned long omap_sram_size;
-static void __iomem *omap_sram_ceil;
+अटल व्योम __iomem *omap_sram_base;
+अटल अचिन्हित दीर्घ omap_sram_skip;
+अटल अचिन्हित दीर्घ omap_sram_size;
+अटल व्योम __iomem *omap_sram_उच्चमान;
 
 /*
- * Memory allocator for SRAM: calculates the new ceiling address
- * for pushing a function using the fncpy API.
+ * Memory allocator क्रम SRAM: calculates the new उच्चमानing address
+ * क्रम pushing a function using the fncpy API.
  *
- * Note that fncpy requires the returned address to be aligned
+ * Note that fncpy requires the वापसed address to be aligned
  * to an 8-byte boundary.
  */
-static void *omap_sram_push_address(unsigned long size)
-{
-	unsigned long available, new_ceil = (unsigned long)omap_sram_ceil;
+अटल व्योम *omap_sram_push_address(अचिन्हित दीर्घ size)
+अणु
+	अचिन्हित दीर्घ available, new_उच्चमान = (अचिन्हित दीर्घ)omap_sram_उच्चमान;
 
-	available = omap_sram_ceil - (omap_sram_base + omap_sram_skip);
+	available = omap_sram_उच्चमान - (omap_sram_base + omap_sram_skip);
 
-	if (size > available) {
+	अगर (size > available) अणु
 		pr_err("Not enough space in SRAM\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	new_ceil -= size;
-	new_ceil = ROUND_DOWN(new_ceil, FNCPY_ALIGN);
-	omap_sram_ceil = IOMEM(new_ceil);
+	new_उच्चमान -= size;
+	new_उच्चमान = ROUND_DOWN(new_उच्चमान, FNCPY_ALIGN);
+	omap_sram_उच्चमान = IOMEM(new_उच्चमान);
 
-	return (void *)omap_sram_ceil;
-}
+	वापस (व्योम *)omap_sram_उच्चमान;
+पूर्ण
 
-void *omap_sram_push(void *funcp, unsigned long size)
-{
-	void *sram;
-	unsigned long base;
-	int pages;
-	void *dst = NULL;
+व्योम *omap_sram_push(व्योम *funcp, अचिन्हित दीर्घ size)
+अणु
+	व्योम *sram;
+	अचिन्हित दीर्घ base;
+	पूर्णांक pages;
+	व्योम *dst = शून्य;
 
 	sram = omap_sram_push_address(size);
-	if (!sram)
-		return NULL;
+	अगर (!sram)
+		वापस शून्य;
 
-	base = (unsigned long)sram & PAGE_MASK;
+	base = (अचिन्हित दीर्घ)sram & PAGE_MASK;
 	pages = PAGE_ALIGN(size) / PAGE_SIZE;
 
 	set_memory_rw(base, pages);
@@ -79,51 +80,51 @@ void *omap_sram_push(void *funcp, unsigned long size)
 	set_memory_ro(base, pages);
 	set_memory_x(base, pages);
 
-	return dst;
-}
+	वापस dst;
+पूर्ण
 
 /*
  * The SRAM context is lost during off-idle and stack
  * needs to be reset.
  */
-void omap_sram_reset(void)
-{
-	omap_sram_ceil = omap_sram_base + omap_sram_size;
-}
+व्योम omap_sram_reset(व्योम)
+अणु
+	omap_sram_उच्चमान = omap_sram_base + omap_sram_size;
+पूर्ण
 
 /*
- * Note that we cannot use ioremap for SRAM, as clock init needs SRAM early.
+ * Note that we cannot use ioremap क्रम SRAM, as घड़ी init needs SRAM early.
  */
-void __init omap_map_sram(unsigned long start, unsigned long size,
-				 unsigned long skip, int cached)
-{
-	unsigned long base;
-	int pages;
+व्योम __init omap_map_sram(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size,
+				 अचिन्हित दीर्घ skip, पूर्णांक cached)
+अणु
+	अचिन्हित दीर्घ base;
+	पूर्णांक pages;
 
-	if (size == 0)
-		return;
+	अगर (size == 0)
+		वापस;
 
 	start = ROUND_DOWN(start, PAGE_SIZE);
 	omap_sram_size = size;
 	omap_sram_skip = skip;
 	omap_sram_base = __arm_ioremap_exec(start, size, cached);
-	if (!omap_sram_base) {
+	अगर (!omap_sram_base) अणु
 		pr_err("SRAM: Could not map\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	omap_sram_reset();
 
 	/*
 	 * Looks like we need to preserve some bootloader code at the
-	 * beginning of SRAM for jumping to flash for reboot to work...
+	 * beginning of SRAM क्रम jumping to flash क्रम reboot to work...
 	 */
-	memset_io(omap_sram_base + omap_sram_skip, 0,
+	स_रखो_io(omap_sram_base + omap_sram_skip, 0,
 		  omap_sram_size - omap_sram_skip);
 
-	base = (unsigned long)omap_sram_base;
+	base = (अचिन्हित दीर्घ)omap_sram_base;
 	pages = PAGE_ALIGN(omap_sram_size) / PAGE_SIZE;
 
 	set_memory_ro(base, pages);
 	set_memory_x(base, pages);
-}
+पूर्ण

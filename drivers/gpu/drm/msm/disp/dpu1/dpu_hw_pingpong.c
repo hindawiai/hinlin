@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/iopoll.h>
+#समावेश <linux/iopoll.h>
 
-#include "dpu_hw_mdss.h"
-#include "dpu_hwio.h"
-#include "dpu_hw_catalog.h"
-#include "dpu_hw_pingpong.h"
-#include "dpu_kms.h"
-#include "dpu_trace.h"
+#समावेश "dpu_hw_mdss.h"
+#समावेश "dpu_hwio.h"
+#समावेश "dpu_hw_catalog.h"
+#समावेश "dpu_hw_pingpong.h"
+#समावेश "dpu_kms.h"
+#समावेश "dpu_trace.h"
 
-#define PP_TEAR_CHECK_EN                0x000
-#define PP_SYNC_CONFIG_VSYNC            0x004
-#define PP_SYNC_CONFIG_HEIGHT           0x008
-#define PP_SYNC_WRCOUNT                 0x00C
-#define PP_VSYNC_INIT_VAL               0x010
-#define PP_INT_COUNT_VAL                0x014
-#define PP_SYNC_THRESH                  0x018
-#define PP_START_POS                    0x01C
-#define PP_RD_PTR_IRQ                   0x020
-#define PP_WR_PTR_IRQ                   0x024
-#define PP_OUT_LINE_COUNT               0x028
-#define PP_LINE_COUNT                   0x02C
-#define PP_AUTOREFRESH_CONFIG           0x030
+#घोषणा PP_TEAR_CHECK_EN                0x000
+#घोषणा PP_SYNC_CONFIG_VSYNC            0x004
+#घोषणा PP_SYNC_CONFIG_HEIGHT           0x008
+#घोषणा PP_SYNC_WRCOUNT                 0x00C
+#घोषणा PP_VSYNC_INIT_VAL               0x010
+#घोषणा PP_INT_COUNT_VAL                0x014
+#घोषणा PP_SYNC_THRESH                  0x018
+#घोषणा PP_START_POS                    0x01C
+#घोषणा PP_RD_PTR_IRQ                   0x020
+#घोषणा PP_WR_PTR_IRQ                   0x024
+#घोषणा PP_OUT_LINE_COUNT               0x028
+#घोषणा PP_LINE_COUNT                   0x02C
+#घोषणा PP_AUTOREFRESH_CONFIG           0x030
 
-#define PP_FBC_MODE                     0x034
-#define PP_FBC_BUDGET_CTL               0x038
-#define PP_FBC_LOSSY_MODE               0x03C
+#घोषणा PP_FBC_MODE                     0x034
+#घोषणा PP_FBC_BUDGET_CTL               0x038
+#घोषणा PP_FBC_LOSSY_MODE               0x03C
 
-#define PP_DITHER_EN			0x000
-#define PP_DITHER_BITDEPTH		0x004
-#define PP_DITHER_MATRIX		0x008
+#घोषणा PP_DITHER_EN			0x000
+#घोषणा PP_DITHER_BITDEPTH		0x004
+#घोषणा PP_DITHER_MATRIX		0x008
 
-#define DITHER_DEPTH_MAP_INDEX 9
+#घोषणा DITHER_DEPTH_MAP_INDEX 9
 
-static u32 dither_depth_map[DITHER_DEPTH_MAP_INDEX] = {
+अटल u32 dither_depth_map[DITHER_DEPTH_MAP_INDEX] = अणु
 	0, 0, 0, 0, 0, 0, 0, 1, 2
-};
+पूर्ण;
 
-static const struct dpu_pingpong_cfg *_pingpong_offset(enum dpu_pingpong pp,
-		const struct dpu_mdss_cfg *m,
-		void __iomem *addr,
-		struct dpu_hw_blk_reg_map *b)
-{
-	int i;
+अटल स्थिर काष्ठा dpu_pingpong_cfg *_pingpong_offset(क्रमागत dpu_pingpong pp,
+		स्थिर काष्ठा dpu_mdss_cfg *m,
+		व्योम __iomem *addr,
+		काष्ठा dpu_hw_blk_reg_map *b)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < m->pingpong_count; i++) {
-		if (pp == m->pingpong[i].id) {
+	क्रम (i = 0; i < m->pingpong_count; i++) अणु
+		अगर (pp == m->pingpong[i].id) अणु
 			b->base_off = addr;
 			b->blk_off = m->pingpong[i].base;
 			b->length = m->pingpong[i].len;
 			b->hwversion = m->hwversion;
 			b->log_mask = DPU_DBG_MASK_PINGPONG;
-			return &m->pingpong[i];
-		}
-	}
+			वापस &m->pingpong[i];
+		पूर्ण
+	पूर्ण
 
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static void dpu_hw_pp_setup_dither(struct dpu_hw_pingpong *pp,
-				    struct dpu_hw_dither_cfg *cfg)
-{
-	struct dpu_hw_blk_reg_map *c;
+अटल व्योम dpu_hw_pp_setup_dither(काष्ठा dpu_hw_pingpong *pp,
+				    काष्ठा dpu_hw_dither_cfg *cfg)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c;
 	u32 i, base, data = 0;
 
 	c = &pp->hw;
 	base = pp->caps->sblk->dither.base;
-	if (!cfg) {
+	अगर (!cfg) अणु
 		DPU_REG_WRITE(c, base + PP_DITHER_EN, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	data = dither_depth_map[cfg->c0_bitdepth] & REG_MASK(2);
 	data |= (dither_depth_map[cfg->c1_bitdepth] & REG_MASK(2)) << 2;
@@ -81,28 +82,28 @@ static void dpu_hw_pp_setup_dither(struct dpu_hw_pingpong *pp,
 
 	DPU_REG_WRITE(c, base + PP_DITHER_BITDEPTH, data);
 
-	for (i = 0; i < DITHER_MATRIX_SZ - 3; i += 4) {
+	क्रम (i = 0; i < DITHER_MATRIX_SZ - 3; i += 4) अणु
 		data = (cfg->matrix[i] & REG_MASK(4)) |
 			((cfg->matrix[i + 1] & REG_MASK(4)) << 4) |
 			((cfg->matrix[i + 2] & REG_MASK(4)) << 8) |
 			((cfg->matrix[i + 3] & REG_MASK(4)) << 12);
 		DPU_REG_WRITE(c, base + PP_DITHER_MATRIX + i, data);
-	}
+	पूर्ण
 	DPU_REG_WRITE(c, base + PP_DITHER_EN, 1);
-}
+पूर्ण
 
-static int dpu_hw_pp_setup_te_config(struct dpu_hw_pingpong *pp,
-		struct dpu_hw_tear_check *te)
-{
-	struct dpu_hw_blk_reg_map *c;
-	int cfg;
+अटल पूर्णांक dpu_hw_pp_setup_te_config(काष्ठा dpu_hw_pingpong *pp,
+		काष्ठा dpu_hw_tear_check *te)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c;
+	पूर्णांक cfg;
 
-	if (!pp || !te)
-		return -EINVAL;
+	अगर (!pp || !te)
+		वापस -EINVAL;
 	c = &pp->hw;
 
 	cfg = BIT(19); /*VSYNC_COUNTER_EN */
-	if (te->hw_vsync_mode)
+	अगर (te->hw_vsync_mode)
 		cfg |= BIT(20);
 
 	cfg |= te->vsync_count;
@@ -113,97 +114,97 @@ static int dpu_hw_pp_setup_te_config(struct dpu_hw_pingpong *pp,
 	DPU_REG_WRITE(c, PP_RD_PTR_IRQ, te->rd_ptr_irq);
 	DPU_REG_WRITE(c, PP_START_POS, te->start_pos);
 	DPU_REG_WRITE(c, PP_SYNC_THRESH,
-			((te->sync_threshold_continue << 16) |
+			((te->sync_threshold_जारी << 16) |
 			 te->sync_threshold_start));
 	DPU_REG_WRITE(c, PP_SYNC_WRCOUNT,
 			(te->start_pos + te->sync_threshold_start + 1));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dpu_hw_pp_setup_autorefresh_config(struct dpu_hw_pingpong *pp,
+अटल व्योम dpu_hw_pp_setup_स्वतःrefresh_config(काष्ठा dpu_hw_pingpong *pp,
 					       u32 frame_count, bool enable)
-{
+अणु
 	DPU_REG_WRITE(&pp->hw, PP_AUTOREFRESH_CONFIG,
 		      enable ? (BIT(31) | frame_count) : 0);
-}
+पूर्ण
 
 /*
- * dpu_hw_pp_get_autorefresh_config - Get autorefresh config from HW
- * @pp:          DPU pingpong structure
- * @frame_count: Used to return the current frame count from hw
+ * dpu_hw_pp_get_स्वतःrefresh_config - Get स्वतःrefresh config from HW
+ * @pp:          DPU pingpong काष्ठाure
+ * @frame_count: Used to वापस the current frame count from hw
  *
- * Returns: True if autorefresh enabled, false if disabled.
+ * Returns: True अगर स्वतःrefresh enabled, false अगर disabled.
  */
-static bool dpu_hw_pp_get_autorefresh_config(struct dpu_hw_pingpong *pp,
+अटल bool dpu_hw_pp_get_स्वतःrefresh_config(काष्ठा dpu_hw_pingpong *pp,
 					     u32 *frame_count)
-{
+अणु
 	u32 val = DPU_REG_READ(&pp->hw, PP_AUTOREFRESH_CONFIG);
-	if (frame_count != NULL)
+	अगर (frame_count != शून्य)
 		*frame_count = val & 0xffff;
-	return !!((val & BIT(31)) >> 31);
-}
+	वापस !!((val & BIT(31)) >> 31);
+पूर्ण
 
-static int dpu_hw_pp_poll_timeout_wr_ptr(struct dpu_hw_pingpong *pp,
-		u32 timeout_us)
-{
-	struct dpu_hw_blk_reg_map *c;
+अटल पूर्णांक dpu_hw_pp_poll_समयout_wr_ptr(काष्ठा dpu_hw_pingpong *pp,
+		u32 समयout_us)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c;
 	u32 val;
-	int rc;
+	पूर्णांक rc;
 
-	if (!pp)
-		return -EINVAL;
+	अगर (!pp)
+		वापस -EINVAL;
 
 	c = &pp->hw;
-	rc = readl_poll_timeout(c->base_off + c->blk_off + PP_LINE_COUNT,
-			val, (val & 0xffff) >= 1, 10, timeout_us);
+	rc = पढ़ोl_poll_समयout(c->base_off + c->blk_off + PP_LINE_COUNT,
+			val, (val & 0xffff) >= 1, 10, समयout_us);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int dpu_hw_pp_enable_te(struct dpu_hw_pingpong *pp, bool enable)
-{
-	struct dpu_hw_blk_reg_map *c;
+अटल पूर्णांक dpu_hw_pp_enable_te(काष्ठा dpu_hw_pingpong *pp, bool enable)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c;
 
-	if (!pp)
-		return -EINVAL;
+	अगर (!pp)
+		वापस -EINVAL;
 	c = &pp->hw;
 
 	DPU_REG_WRITE(c, PP_TEAR_CHECK_EN, enable);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dpu_hw_pp_connect_external_te(struct dpu_hw_pingpong *pp,
-		bool enable_external_te)
-{
-	struct dpu_hw_blk_reg_map *c = &pp->hw;
+अटल पूर्णांक dpu_hw_pp_connect_बाह्यal_te(काष्ठा dpu_hw_pingpong *pp,
+		bool enable_बाह्यal_te)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c = &pp->hw;
 	u32 cfg;
-	int orig;
+	पूर्णांक orig;
 
-	if (!pp)
-		return -EINVAL;
+	अगर (!pp)
+		वापस -EINVAL;
 
 	c = &pp->hw;
 	cfg = DPU_REG_READ(c, PP_SYNC_CONFIG_VSYNC);
 	orig = (bool)(cfg & BIT(20));
-	if (enable_external_te)
+	अगर (enable_बाह्यal_te)
 		cfg |= BIT(20);
-	else
+	अन्यथा
 		cfg &= ~BIT(20);
 	DPU_REG_WRITE(c, PP_SYNC_CONFIG_VSYNC, cfg);
 	trace_dpu_pp_connect_ext_te(pp->idx - PINGPONG_0, cfg);
 
-	return orig;
-}
+	वापस orig;
+पूर्ण
 
-static int dpu_hw_pp_get_vsync_info(struct dpu_hw_pingpong *pp,
-		struct dpu_hw_pp_vsync_info *info)
-{
-	struct dpu_hw_blk_reg_map *c;
+अटल पूर्णांक dpu_hw_pp_get_vsync_info(काष्ठा dpu_hw_pingpong *pp,
+		काष्ठा dpu_hw_pp_vsync_info *info)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c;
 	u32 val;
 
-	if (!pp || !info)
-		return -EINVAL;
+	अगर (!pp || !info)
+		वापस -EINVAL;
 	c = &pp->hw;
 
 	val = DPU_REG_READ(c, PP_VSYNC_INIT_VAL);
@@ -216,69 +217,69 @@ static int dpu_hw_pp_get_vsync_info(struct dpu_hw_pingpong *pp,
 	val = DPU_REG_READ(c, PP_LINE_COUNT);
 	info->wr_ptr_line_count = val & 0xffff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 dpu_hw_pp_get_line_count(struct dpu_hw_pingpong *pp)
-{
-	struct dpu_hw_blk_reg_map *c = &pp->hw;
+अटल u32 dpu_hw_pp_get_line_count(काष्ठा dpu_hw_pingpong *pp)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c = &pp->hw;
 	u32 height, init;
 	u32 line = 0xFFFF;
 
-	if (!pp)
-		return 0;
+	अगर (!pp)
+		वापस 0;
 	c = &pp->hw;
 
 	init = DPU_REG_READ(c, PP_VSYNC_INIT_VAL) & 0xFFFF;
 	height = DPU_REG_READ(c, PP_SYNC_CONFIG_HEIGHT) & 0xFFFF;
 
-	if (height < init)
-		return line;
+	अगर (height < init)
+		वापस line;
 
 	line = DPU_REG_READ(c, PP_INT_COUNT_VAL) & 0xFFFF;
 
-	if (line < init)
+	अगर (line < init)
 		line += (0xFFFF - init);
-	else
+	अन्यथा
 		line -= init;
 
-	return line;
-}
+	वापस line;
+पूर्ण
 
-static void _setup_pingpong_ops(struct dpu_hw_pingpong *c,
-				unsigned long features)
-{
+अटल व्योम _setup_pingpong_ops(काष्ठा dpu_hw_pingpong *c,
+				अचिन्हित दीर्घ features)
+अणु
 	c->ops.setup_tearcheck = dpu_hw_pp_setup_te_config;
 	c->ops.enable_tearcheck = dpu_hw_pp_enable_te;
-	c->ops.connect_external_te = dpu_hw_pp_connect_external_te;
+	c->ops.connect_बाह्यal_te = dpu_hw_pp_connect_बाह्यal_te;
 	c->ops.get_vsync_info = dpu_hw_pp_get_vsync_info;
-	c->ops.setup_autorefresh = dpu_hw_pp_setup_autorefresh_config;
-	c->ops.get_autorefresh = dpu_hw_pp_get_autorefresh_config;
-	c->ops.poll_timeout_wr_ptr = dpu_hw_pp_poll_timeout_wr_ptr;
+	c->ops.setup_स्वतःrefresh = dpu_hw_pp_setup_स्वतःrefresh_config;
+	c->ops.get_स्वतःrefresh = dpu_hw_pp_get_स्वतःrefresh_config;
+	c->ops.poll_समयout_wr_ptr = dpu_hw_pp_poll_समयout_wr_ptr;
 	c->ops.get_line_count = dpu_hw_pp_get_line_count;
 
-	if (test_bit(DPU_PINGPONG_DITHER, &features))
+	अगर (test_bit(DPU_PINGPONG_DITHER, &features))
 		c->ops.setup_dither = dpu_hw_pp_setup_dither;
-};
+पूर्ण;
 
-static struct dpu_hw_blk_ops dpu_hw_ops;
+अटल काष्ठा dpu_hw_blk_ops dpu_hw_ops;
 
-struct dpu_hw_pingpong *dpu_hw_pingpong_init(enum dpu_pingpong idx,
-		void __iomem *addr,
-		const struct dpu_mdss_cfg *m)
-{
-	struct dpu_hw_pingpong *c;
-	const struct dpu_pingpong_cfg *cfg;
+काष्ठा dpu_hw_pingpong *dpu_hw_pingpong_init(क्रमागत dpu_pingpong idx,
+		व्योम __iomem *addr,
+		स्थिर काष्ठा dpu_mdss_cfg *m)
+अणु
+	काष्ठा dpu_hw_pingpong *c;
+	स्थिर काष्ठा dpu_pingpong_cfg *cfg;
 
-	c = kzalloc(sizeof(*c), GFP_KERNEL);
-	if (!c)
-		return ERR_PTR(-ENOMEM);
+	c = kzalloc(माप(*c), GFP_KERNEL);
+	अगर (!c)
+		वापस ERR_PTR(-ENOMEM);
 
 	cfg = _pingpong_offset(idx, m, addr, &c->hw);
-	if (IS_ERR_OR_NULL(cfg)) {
-		kfree(c);
-		return ERR_PTR(-EINVAL);
-	}
+	अगर (IS_ERR_OR_शून्य(cfg)) अणु
+		kमुक्त(c);
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	c->idx = idx;
 	c->caps = cfg;
@@ -286,12 +287,12 @@ struct dpu_hw_pingpong *dpu_hw_pingpong_init(enum dpu_pingpong idx,
 
 	dpu_hw_blk_init(&c->base, DPU_HW_BLK_PINGPONG, idx, &dpu_hw_ops);
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-void dpu_hw_pingpong_destroy(struct dpu_hw_pingpong *pp)
-{
-	if (pp)
+व्योम dpu_hw_pingpong_destroy(काष्ठा dpu_hw_pingpong *pp)
+अणु
+	अगर (pp)
 		dpu_hw_blk_destroy(&pp->base);
-	kfree(pp);
-}
+	kमुक्त(pp);
+पूर्ण

@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright 2011 Florian Tobias Schandinat <FlorianSchandinat@gmx.de>
  */
 /*
- * infrastructure for devices connected via I2C
+ * infraकाष्ठाure क्रम devices connected via I2C
  */
 
-#ifndef __VIA_AUX_H__
-#define __VIA_AUX_H__
+#अगर_अघोषित __VIA_AUX_H__
+#घोषणा __VIA_AUX_H__
 
 
-#include <linux/list.h>
-#include <linux/i2c.h>
-#include <linux/fb.h>
+#समावेश <linux/list.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/fb.h>
 
 
-struct via_aux_bus {
-	struct i2c_adapter *adap;	/* the I2C device to access the bus */
-	struct list_head drivers;	/* drivers for devices on this bus */
-};
+काष्ठा via_aux_bus अणु
+	काष्ठा i2c_adapter *adap;	/* the I2C device to access the bus */
+	काष्ठा list_head drivers;	/* drivers क्रम devices on this bus */
+पूर्ण;
 
-struct via_aux_drv {
-	struct list_head chain;		/* chain to support multiple drivers */
+काष्ठा via_aux_drv अणु
+	काष्ठा list_head chain;		/* chain to support multiple drivers */
 
-	struct via_aux_bus *bus;	/* the I2C bus used */
+	काष्ठा via_aux_bus *bus;	/* the I2C bus used */
 	u8 addr;			/* the I2C slave address */
 
-	const char *name;	/* human readable name of the driver */
-	void *data;		/* private data of this driver */
+	स्थिर अक्षर *name;	/* human पढ़ोable name of the driver */
+	व्योम *data;		/* निजी data of this driver */
 
-	void (*cleanup)(struct via_aux_drv *drv);
-	const struct fb_videomode* (*get_preferred_mode)
-		(struct via_aux_drv *drv);
-};
-
-
-struct via_aux_bus *via_aux_probe(struct i2c_adapter *adap);
-void via_aux_free(struct via_aux_bus *bus);
-const struct fb_videomode *via_aux_get_preferred_mode(struct via_aux_bus *bus);
+	व्योम (*cleanup)(काष्ठा via_aux_drv *drv);
+	स्थिर काष्ठा fb_videomode* (*get_preferred_mode)
+		(काष्ठा via_aux_drv *drv);
+पूर्ण;
 
 
-static inline bool via_aux_add(struct via_aux_drv *drv)
-{
-	struct via_aux_drv *data = kmalloc(sizeof(*data), GFP_KERNEL);
+काष्ठा via_aux_bus *via_aux_probe(काष्ठा i2c_adapter *adap);
+व्योम via_aux_मुक्त(काष्ठा via_aux_bus *bus);
+स्थिर काष्ठा fb_videomode *via_aux_get_preferred_mode(काष्ठा via_aux_bus *bus);
 
-	if (!data)
-		return false;
+
+अटल अंतरभूत bool via_aux_add(काष्ठा via_aux_drv *drv)
+अणु
+	काष्ठा via_aux_drv *data = kदो_स्मृति(माप(*data), GFP_KERNEL);
+
+	अगर (!data)
+		वापस false;
 
 	*data = *drv;
 	list_add_tail(&data->chain, &data->bus->drivers);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool via_aux_read(struct via_aux_drv *drv, u8 start, u8 *buf,
+अटल अंतरभूत bool via_aux_पढ़ो(काष्ठा via_aux_drv *drv, u8 start, u8 *buf,
 	u8 len)
-{
-	struct i2c_msg msg[2] = {
-		{.addr = drv->addr, .flags = 0, .len = 1, .buf = &start},
-		{.addr = drv->addr, .flags = I2C_M_RD, .len = len, .buf = buf} };
+अणु
+	काष्ठा i2c_msg msg[2] = अणु
+		अणु.addr = drv->addr, .flags = 0, .len = 1, .buf = &startपूर्ण,
+		अणु.addr = drv->addr, .flags = I2C_M_RD, .len = len, .buf = bufपूर्ण पूर्ण;
 
-	return i2c_transfer(drv->bus->adap, msg, 2) == 2;
-}
+	वापस i2c_transfer(drv->bus->adap, msg, 2) == 2;
+पूर्ण
 
 
 /* probe functions of existing drivers - should only be called in via_aux.c */
-void via_aux_ch7301_probe(struct via_aux_bus *bus);
-void via_aux_edid_probe(struct via_aux_bus *bus);
-void via_aux_sii164_probe(struct via_aux_bus *bus);
-void via_aux_vt1636_probe(struct via_aux_bus *bus);
-void via_aux_vt1632_probe(struct via_aux_bus *bus);
-void via_aux_vt1631_probe(struct via_aux_bus *bus);
-void via_aux_vt1625_probe(struct via_aux_bus *bus);
-void via_aux_vt1622_probe(struct via_aux_bus *bus);
-void via_aux_vt1621_probe(struct via_aux_bus *bus);
+व्योम via_aux_ch7301_probe(काष्ठा via_aux_bus *bus);
+व्योम via_aux_edid_probe(काष्ठा via_aux_bus *bus);
+व्योम via_aux_sii164_probe(काष्ठा via_aux_bus *bus);
+व्योम via_aux_vt1636_probe(काष्ठा via_aux_bus *bus);
+व्योम via_aux_vt1632_probe(काष्ठा via_aux_bus *bus);
+व्योम via_aux_vt1631_probe(काष्ठा via_aux_bus *bus);
+व्योम via_aux_vt1625_probe(काष्ठा via_aux_bus *bus);
+व्योम via_aux_vt1622_probe(काष्ठा via_aux_bus *bus);
+व्योम via_aux_vt1621_probe(काष्ठा via_aux_bus *bus);
 
 
-#endif /* __VIA_AUX_H__ */
+#पूर्ण_अगर /* __VIA_AUX_H__ */

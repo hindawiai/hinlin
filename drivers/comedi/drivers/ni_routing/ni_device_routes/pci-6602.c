@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* vim: set ts=8 sw=8 noet tw=80 nowrap: */
 /*
  *  comedi/drivers/ni_routing/ni_device_routes/pci-6602.c
- *  List of valid routes for specific NI boards.
+ *  List of valid routes क्रम specअगरic NI boards.
  *
  *  COMEDI - Linux Control and Measurement Device Interface
  *  Copyright (C) 2016 Spencer E. Olson <olsonse@umich.edu>
  *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is मुक्त software; you can redistribute it and/or modअगरy
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -15,60 +16,60 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  GNU General Public License क्रम more details.
  */
 
 /*
  * The contents of this file are generated using the tools in
  * comedi/drivers/ni_routing/tools
  *
- * Please use those tools to help maintain the contents of this file.
+ * Please use those tools to help मुख्यtain the contents of this file.
  */
 
-#include "../ni_device_routes.h"
-#include "all.h"
+#समावेश "../ni_device_routes.h"
+#समावेश "all.h"
 
-struct ni_device_routes ni_pci_6602_device_routes = {
+काष्ठा ni_device_routes ni_pci_6602_device_routes = अणु
 	.device = "pci-6602",
-	.routes = (struct ni_route_set[]){
-		{
+	.routes = (काष्ठा ni_route_set[])अणु
+		अणु
 			.dest = NI_PFI(2),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_80MHzTimebase,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(3),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_100kHzTimebase,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(4),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_20MHzTimebase,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(6),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_80MHzTimebase,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(7),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				TRIGGER_LINE(7),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(8),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(7),
 				NI_PFI(15),
 				NI_PFI(23),
@@ -93,11 +94,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(9),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(7),
 				NI_PFI(15),
 				NI_PFI(23),
@@ -122,27 +123,27 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(10),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrGate(7),
 				NI_LogicLow,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(11),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrSource(7),
 				NI_LogicLow,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(12),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(6),
 				NI_PFI(14),
 				NI_PFI(22),
@@ -167,11 +168,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(13),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(6),
 				NI_PFI(14),
 				NI_PFI(22),
@@ -196,27 +197,27 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(14),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrGate(6),
 				NI_LogicLow,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(15),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrSource(6),
 				NI_LogicLow,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(16),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(5),
 				NI_PFI(13),
 				NI_PFI(21),
@@ -241,11 +242,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(17),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(5),
 				NI_PFI(13),
 				NI_PFI(21),
@@ -270,26 +271,26 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(18),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrGate(5),
 				NI_LogicLow,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(19),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrSource(5),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(20),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(4),
 				NI_PFI(12),
 				NI_PFI(28),
@@ -313,11 +314,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(21),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(4),
 				NI_PFI(12),
 				NI_PFI(20),
@@ -342,26 +343,26 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(22),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrGate(4),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(23),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrSource(4),
 				NI_LogicLow,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(24),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(3),
 				NI_PFI(11),
 				NI_PFI(19),
@@ -390,11 +391,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(25),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(3),
 				NI_PFI(11),
 				NI_PFI(19),
@@ -423,25 +424,25 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(26),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrGate(3),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(27),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrSource(3),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(28),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(2),
 				NI_PFI(10),
 				NI_PFI(18),
@@ -469,11 +470,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(29),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(2),
 				NI_PFI(10),
 				NI_PFI(18),
@@ -501,25 +502,25 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(30),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrGate(2),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(31),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrSource(2),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(32),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(1),
 				NI_PFI(9),
 				NI_PFI(17),
@@ -547,11 +548,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(33),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(1),
 				NI_PFI(9),
 				NI_PFI(17),
@@ -578,25 +579,25 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(34),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrGate(1),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(35),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrSource(1),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(36),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -658,11 +659,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(37),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -724,25 +725,25 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(38),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrGate(0),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_PFI(39),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_CtrSource(0),
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(0),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -810,11 +811,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(1),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -882,11 +883,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(2),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -954,11 +955,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(3),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1026,11 +1027,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(4),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1098,11 +1099,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(5),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1170,11 +1171,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(6),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1242,18 +1243,18 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = TRIGGER_LINE(7),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_20MHzTimebase,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrSource(0),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1317,11 +1318,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrSource(1),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1385,11 +1386,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrSource(2),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1453,11 +1454,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrSource(3),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1521,11 +1522,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrSource(4),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1589,11 +1590,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrSource(5),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1657,11 +1658,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrSource(6),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1725,11 +1726,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrSource(7),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1793,11 +1794,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrGate(0),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1858,11 +1859,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrGate(1),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1923,11 +1924,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrGate(2),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -1988,11 +1989,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrGate(3),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2053,11 +2054,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrGate(4),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2118,11 +2119,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrGate(5),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2183,11 +2184,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrGate(6),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2248,11 +2249,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrGate(7),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2313,11 +2314,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrAux(0),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2379,11 +2380,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrAux(1),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2445,11 +2446,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrAux(2),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2511,11 +2512,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrAux(3),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2577,11 +2578,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrAux(4),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2643,11 +2644,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrAux(5),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2709,11 +2710,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrAux(6),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2775,11 +2776,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrAux(7),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2841,11 +2842,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrArmStartTrigger(0),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2906,11 +2907,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrArmStartTrigger(1),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -2971,11 +2972,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrArmStartTrigger(2),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -3036,11 +3037,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrArmStartTrigger(3),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -3101,11 +3102,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrArmStartTrigger(4),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -3166,11 +3167,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrArmStartTrigger(5),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -3231,11 +3232,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrArmStartTrigger(6),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -3296,11 +3297,11 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_CtrArmStartTrigger(7),
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				NI_PFI(0),
 				NI_PFI(1),
 				NI_PFI(2),
@@ -3361,18 +3362,18 @@ struct ni_device_routes ni_pci_6602_device_routes = {
 				NI_LogicLow,
 				NI_LogicHigh,
 				0, /* Termination */
-			}
-		},
-		{
+			पूर्ण
+		पूर्ण,
+		अणु
 			.dest = NI_MasterTimebase,
-			.src = (int[]){
+			.src = (पूर्णांक[])अणु
 				TRIGGER_LINE(7),
 				NI_20MHzTimebase,
 				0, /* Termination */
-			}
-		},
-		{ /* Termination of list */
+			पूर्ण
+		पूर्ण,
+		अणु /* Termination of list */
 			.dest = 0,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;

@@ -1,34 +1,35 @@
+<शैली गुरु>
 /*
- * include/asm-mips/txx9irq.h
- * TX39/TX49 interrupt controller definitions.
+ * include/यंत्र-mips/txx9irq.h
+ * TX39/TX49 पूर्णांकerrupt controller definitions.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#ifndef __ASM_TXX9IRQ_H
-#define __ASM_TXX9IRQ_H
+#अगर_अघोषित __ASM_TXX9IRQ_H
+#घोषणा __ASM_TXX9IRQ_H
 
-#include <irq.h>
+#समावेश <irq.h>
 
-#ifdef CONFIG_IRQ_MIPS_CPU
-#define TXX9_IRQ_BASE	(MIPS_CPU_IRQ_BASE + 8)
-#else
-#ifdef CONFIG_I8259
-#define TXX9_IRQ_BASE	(I8259A_IRQ_BASE + 16)
-#else
-#define TXX9_IRQ_BASE	0
-#endif
-#endif
+#अगर_घोषित CONFIG_IRQ_MIPS_CPU
+#घोषणा TXX9_IRQ_BASE	(MIPS_CPU_IRQ_BASE + 8)
+#अन्यथा
+#अगर_घोषित CONFIG_I8259
+#घोषणा TXX9_IRQ_BASE	(I8259A_IRQ_BASE + 16)
+#अन्यथा
+#घोषणा TXX9_IRQ_BASE	0
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_TX39XX
-#define TXx9_MAX_IR 16
-#else
-#define TXx9_MAX_IR 32
-#endif
+#अगर_घोषित CONFIG_CPU_TX39XX
+#घोषणा TXx9_MAX_IR 16
+#अन्यथा
+#घोषणा TXx9_MAX_IR 32
+#पूर्ण_अगर
 
-void txx9_irq_init(unsigned long baseaddr);
-int txx9_irq(void);
-int txx9_irq_set_pri(int irc_irq, int new_pri);
+व्योम txx9_irq_init(अचिन्हित दीर्घ baseaddr);
+पूर्णांक txx9_irq(व्योम);
+पूर्णांक txx9_irq_set_pri(पूर्णांक irc_irq, पूर्णांक new_pri);
 
-#endif /* __ASM_TXX9IRQ_H */
+#पूर्ण_अगर /* __ASM_TXX9IRQ_H */

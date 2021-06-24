@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
-#include "flow.h"
-#include "datapath.h"
-#include "flow_netlink.h"
-#include <linux/uaccess.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/if_ether.h>
-#include <linux/if_vlan.h>
-#include <net/llc_pdu.h>
-#include <linux/kernel.h>
-#include <linux/jhash.h>
-#include <linux/jiffies.h>
-#include <linux/llc.h>
-#include <linux/module.h>
-#include <linux/in.h>
-#include <linux/rcupdate.h>
-#include <linux/cpumask.h>
-#include <linux/if_arp.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/sctp.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/icmp.h>
-#include <linux/icmpv6.h>
-#include <linux/rculist.h>
-#include <linux/sort.h>
-#include <net/ip.h>
-#include <net/ipv6.h>
-#include <net/ndisc.h>
+#समावेश "flow.h"
+#समावेश "datapath.h"
+#समावेश "flow_netlink.h"
+#समावेश <linux/uaccess.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/llc_pdu.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/llc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/in.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/sctp.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/sort.h>
+#समावेश <net/ip.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/ndisc.h>
 
-#define TBL_MIN_BUCKETS		1024
-#define MASK_ARRAY_SIZE_MIN	16
-#define REHASH_INTERVAL		(10 * 60 * HZ)
+#घोषणा TBL_MIN_BUCKETS		1024
+#घोषणा MASK_ARRAY_SIZE_MIN	16
+#घोषणा REHASH_INTERVAL		(10 * 60 * HZ)
 
-#define MC_DEFAULT_HASH_ENTRIES	256
-#define MC_HASH_SHIFT		8
-#define MC_HASH_SEGS		((sizeof(uint32_t) * 8) / MC_HASH_SHIFT)
+#घोषणा MC_DEFAULT_HASH_ENTRIES	256
+#घोषणा MC_HASH_SHIFT		8
+#घोषणा MC_HASH_SEGS		((माप(uपूर्णांक32_t) * 8) / MC_HASH_SHIFT)
 
-static struct kmem_cache *flow_cache;
-struct kmem_cache *flow_stats_cache __read_mostly;
+अटल काष्ठा kmem_cache *flow_cache;
+काष्ठा kmem_cache *flow_stats_cache __पढ़ो_mostly;
 
-static u16 range_n_bytes(const struct sw_flow_key_range *range)
-{
-	return range->end - range->start;
-}
+अटल u16 range_n_bytes(स्थिर काष्ठा sw_flow_key_range *range)
+अणु
+	वापस range->end - range->start;
+पूर्ण
 
-void ovs_flow_mask_key(struct sw_flow_key *dst, const struct sw_flow_key *src,
-		       bool full, const struct sw_flow_mask *mask)
-{
-	int start = full ? 0 : mask->range.start;
-	int len = full ? sizeof *dst : range_n_bytes(&mask->range);
-	const long *m = (const long *)((const u8 *)&mask->key + start);
-	const long *s = (const long *)((const u8 *)src + start);
-	long *d = (long *)((u8 *)dst + start);
-	int i;
+व्योम ovs_flow_mask_key(काष्ठा sw_flow_key *dst, स्थिर काष्ठा sw_flow_key *src,
+		       bool full, स्थिर काष्ठा sw_flow_mask *mask)
+अणु
+	पूर्णांक start = full ? 0 : mask->range.start;
+	पूर्णांक len = full ? माप *dst : range_n_bytes(&mask->range);
+	स्थिर दीर्घ *m = (स्थिर दीर्घ *)((स्थिर u8 *)&mask->key + start);
+	स्थिर दीर्घ *s = (स्थिर दीर्घ *)((स्थिर u8 *)src + start);
+	दीर्घ *d = (दीर्घ *)((u8 *)dst + start);
+	पूर्णांक i;
 
 	/* If 'full' is true then all of 'dst' is fully initialized. Otherwise,
-	 * if 'full' is false the memory outside of the 'mask->range' is left
+	 * अगर 'full' is false the memory outside of the 'mask->range' is left
 	 * uninitialized. This can be used as an optimization when further
 	 * operations on 'dst' only use contents within 'mask->range'.
 	 */
-	for (i = 0; i < len; i += sizeof(long))
+	क्रम (i = 0; i < len; i += माप(दीर्घ))
 		*d++ = *s++ & *m++;
-}
+पूर्ण
 
-struct sw_flow *ovs_flow_alloc(void)
-{
-	struct sw_flow *flow;
-	struct sw_flow_stats *stats;
+काष्ठा sw_flow *ovs_flow_alloc(व्योम)
+अणु
+	काष्ठा sw_flow *flow;
+	काष्ठा sw_flow_stats *stats;
 
 	flow = kmem_cache_zalloc(flow_cache, GFP_KERNEL);
-	if (!flow)
-		return ERR_PTR(-ENOMEM);
+	अगर (!flow)
+		वापस ERR_PTR(-ENOMEM);
 
-	flow->stats_last_writer = -1;
+	flow->stats_last_ग_लिखोr = -1;
 
-	/* Initialize the default stat node. */
+	/* Initialize the शेष stat node. */
 	stats = kmem_cache_alloc_node(flow_stats_cache,
 				      GFP_KERNEL | __GFP_ZERO,
 				      node_online(0) ? 0 : NUMA_NO_NODE);
-	if (!stats)
-		goto err;
+	अगर (!stats)
+		जाओ err;
 
 	spin_lock_init(&stats->lock);
 
@@ -93,246 +94,246 @@ struct sw_flow *ovs_flow_alloc(void)
 
 	cpumask_set_cpu(0, &flow->cpu_used_mask);
 
-	return flow;
+	वापस flow;
 err:
-	kmem_cache_free(flow_cache, flow);
-	return ERR_PTR(-ENOMEM);
-}
+	kmem_cache_मुक्त(flow_cache, flow);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
-int ovs_flow_tbl_count(const struct flow_table *table)
-{
-	return table->count;
-}
+पूर्णांक ovs_flow_tbl_count(स्थिर काष्ठा flow_table *table)
+अणु
+	वापस table->count;
+पूर्ण
 
-static void flow_free(struct sw_flow *flow)
-{
-	int cpu;
+अटल व्योम flow_मुक्त(काष्ठा sw_flow *flow)
+अणु
+	पूर्णांक cpu;
 
-	if (ovs_identifier_is_key(&flow->id))
-		kfree(flow->id.unmasked_key);
-	if (flow->sf_acts)
-		ovs_nla_free_flow_actions((struct sw_flow_actions __force *)
+	अगर (ovs_identअगरier_is_key(&flow->id))
+		kमुक्त(flow->id.unmasked_key);
+	अगर (flow->sf_acts)
+		ovs_nla_मुक्त_flow_actions((काष्ठा sw_flow_actions __क्रमce *)
 					  flow->sf_acts);
-	/* We open code this to make sure cpu 0 is always considered */
-	for (cpu = 0; cpu < nr_cpu_ids;
-	     cpu = cpumask_next(cpu, &flow->cpu_used_mask)) {
-		if (flow->stats[cpu])
-			kmem_cache_free(flow_stats_cache,
-					(struct sw_flow_stats __force *)flow->stats[cpu]);
-	}
+	/* We खोलो code this to make sure cpu 0 is always considered */
+	क्रम (cpu = 0; cpu < nr_cpu_ids;
+	     cpu = cpumask_next(cpu, &flow->cpu_used_mask)) अणु
+		अगर (flow->stats[cpu])
+			kmem_cache_मुक्त(flow_stats_cache,
+					(काष्ठा sw_flow_stats __क्रमce *)flow->stats[cpu]);
+	पूर्ण
 
-	kmem_cache_free(flow_cache, flow);
-}
+	kmem_cache_मुक्त(flow_cache, flow);
+पूर्ण
 
-static void rcu_free_flow_callback(struct rcu_head *rcu)
-{
-	struct sw_flow *flow = container_of(rcu, struct sw_flow, rcu);
+अटल व्योम rcu_मुक्त_flow_callback(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा sw_flow *flow = container_of(rcu, काष्ठा sw_flow, rcu);
 
-	flow_free(flow);
-}
+	flow_मुक्त(flow);
+पूर्ण
 
-void ovs_flow_free(struct sw_flow *flow, bool deferred)
-{
-	if (!flow)
-		return;
+व्योम ovs_flow_मुक्त(काष्ठा sw_flow *flow, bool deferred)
+अणु
+	अगर (!flow)
+		वापस;
 
-	if (deferred)
-		call_rcu(&flow->rcu, rcu_free_flow_callback);
-	else
-		flow_free(flow);
-}
+	अगर (deferred)
+		call_rcu(&flow->rcu, rcu_मुक्त_flow_callback);
+	अन्यथा
+		flow_मुक्त(flow);
+पूर्ण
 
-static void __table_instance_destroy(struct table_instance *ti)
-{
-	kvfree(ti->buckets);
-	kfree(ti);
-}
+अटल व्योम __table_instance_destroy(काष्ठा table_instance *ti)
+अणु
+	kvमुक्त(ti->buckets);
+	kमुक्त(ti);
+पूर्ण
 
-static struct table_instance *table_instance_alloc(int new_size)
-{
-	struct table_instance *ti = kmalloc(sizeof(*ti), GFP_KERNEL);
-	int i;
+अटल काष्ठा table_instance *table_instance_alloc(पूर्णांक new_size)
+अणु
+	काष्ठा table_instance *ti = kदो_स्मृति(माप(*ti), GFP_KERNEL);
+	पूर्णांक i;
 
-	if (!ti)
-		return NULL;
+	अगर (!ti)
+		वापस शून्य;
 
-	ti->buckets = kvmalloc_array(new_size, sizeof(struct hlist_head),
+	ti->buckets = kvदो_स्मृति_array(new_size, माप(काष्ठा hlist_head),
 				     GFP_KERNEL);
-	if (!ti->buckets) {
-		kfree(ti);
-		return NULL;
-	}
+	अगर (!ti->buckets) अणु
+		kमुक्त(ti);
+		वापस शून्य;
+	पूर्ण
 
-	for (i = 0; i < new_size; i++)
+	क्रम (i = 0; i < new_size; i++)
 		INIT_HLIST_HEAD(&ti->buckets[i]);
 
 	ti->n_buckets = new_size;
 	ti->node_ver = 0;
-	get_random_bytes(&ti->hash_seed, sizeof(u32));
+	get_अक्रमom_bytes(&ti->hash_seed, माप(u32));
 
-	return ti;
-}
+	वापस ti;
+पूर्ण
 
-static void __mask_array_destroy(struct mask_array *ma)
-{
-	free_percpu(ma->masks_usage_stats);
-	kfree(ma);
-}
+अटल व्योम __mask_array_destroy(काष्ठा mask_array *ma)
+अणु
+	मुक्त_percpu(ma->masks_usage_stats);
+	kमुक्त(ma);
+पूर्ण
 
-static void mask_array_rcu_cb(struct rcu_head *rcu)
-{
-	struct mask_array *ma = container_of(rcu, struct mask_array, rcu);
+अटल व्योम mask_array_rcu_cb(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा mask_array *ma = container_of(rcu, काष्ठा mask_array, rcu);
 
 	__mask_array_destroy(ma);
-}
+पूर्ण
 
-static void tbl_mask_array_reset_counters(struct mask_array *ma)
-{
-	int i, cpu;
+अटल व्योम tbl_mask_array_reset_counters(काष्ठा mask_array *ma)
+अणु
+	पूर्णांक i, cpu;
 
 	/* As the per CPU counters are not atomic we can not go ahead and
 	 * reset them from another CPU. To be able to still have an approximate
 	 * zero based counter we store the value at reset, and subtract it
 	 * later when processing.
 	 */
-	for (i = 0; i < ma->max; i++) {
+	क्रम (i = 0; i < ma->max; i++) अणु
 		ma->masks_usage_zero_cntr[i] = 0;
 
-		for_each_possible_cpu(cpu) {
-			struct mask_array_stats *stats;
-			unsigned int start;
+		क्रम_each_possible_cpu(cpu) अणु
+			काष्ठा mask_array_stats *stats;
+			अचिन्हित पूर्णांक start;
 			u64 counter;
 
 			stats = per_cpu_ptr(ma->masks_usage_stats, cpu);
-			do {
+			करो अणु
 				start = u64_stats_fetch_begin_irq(&stats->syncp);
 				counter = stats->usage_cntrs[i];
-			} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
+			पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
 			ma->masks_usage_zero_cntr[i] += counter;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static struct mask_array *tbl_mask_array_alloc(int size)
-{
-	struct mask_array *new;
+अटल काष्ठा mask_array *tbl_mask_array_alloc(पूर्णांक size)
+अणु
+	काष्ठा mask_array *new;
 
 	size = max(MASK_ARRAY_SIZE_MIN, size);
-	new = kzalloc(sizeof(struct mask_array) +
-		      sizeof(struct sw_flow_mask *) * size +
-		      sizeof(u64) * size, GFP_KERNEL);
-	if (!new)
-		return NULL;
+	new = kzalloc(माप(काष्ठा mask_array) +
+		      माप(काष्ठा sw_flow_mask *) * size +
+		      माप(u64) * size, GFP_KERNEL);
+	अगर (!new)
+		वापस शून्य;
 
 	new->masks_usage_zero_cntr = (u64 *)((u8 *)new +
-					     sizeof(struct mask_array) +
-					     sizeof(struct sw_flow_mask *) *
+					     माप(काष्ठा mask_array) +
+					     माप(काष्ठा sw_flow_mask *) *
 					     size);
 
-	new->masks_usage_stats = __alloc_percpu(sizeof(struct mask_array_stats) +
-						sizeof(u64) * size,
+	new->masks_usage_stats = __alloc_percpu(माप(काष्ठा mask_array_stats) +
+						माप(u64) * size,
 						__alignof__(u64));
-	if (!new->masks_usage_stats) {
-		kfree(new);
-		return NULL;
-	}
+	अगर (!new->masks_usage_stats) अणु
+		kमुक्त(new);
+		वापस शून्य;
+	पूर्ण
 
 	new->count = 0;
 	new->max = size;
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
-static int tbl_mask_array_realloc(struct flow_table *tbl, int size)
-{
-	struct mask_array *old;
-	struct mask_array *new;
+अटल पूर्णांक tbl_mask_array_पुनः_स्मृति(काष्ठा flow_table *tbl, पूर्णांक size)
+अणु
+	काष्ठा mask_array *old;
+	काष्ठा mask_array *new;
 
 	new = tbl_mask_array_alloc(size);
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 
 	old = ovsl_dereference(tbl->mask_array);
-	if (old) {
-		int i;
+	अगर (old) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < old->max; i++) {
-			if (ovsl_dereference(old->masks[i]))
+		क्रम (i = 0; i < old->max; i++) अणु
+			अगर (ovsl_dereference(old->masks[i]))
 				new->masks[new->count++] = old->masks[i];
-		}
+		पूर्ण
 		call_rcu(&old->rcu, mask_array_rcu_cb);
-	}
+	पूर्ण
 
-	rcu_assign_pointer(tbl->mask_array, new);
+	rcu_assign_poपूर्णांकer(tbl->mask_array, new);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tbl_mask_array_add_mask(struct flow_table *tbl,
-				   struct sw_flow_mask *new)
-{
-	struct mask_array *ma = ovsl_dereference(tbl->mask_array);
-	int err, ma_count = READ_ONCE(ma->count);
+अटल पूर्णांक tbl_mask_array_add_mask(काष्ठा flow_table *tbl,
+				   काष्ठा sw_flow_mask *new)
+अणु
+	काष्ठा mask_array *ma = ovsl_dereference(tbl->mask_array);
+	पूर्णांक err, ma_count = READ_ONCE(ma->count);
 
-	if (ma_count >= ma->max) {
-		err = tbl_mask_array_realloc(tbl, ma->max +
+	अगर (ma_count >= ma->max) अणु
+		err = tbl_mask_array_पुनः_स्मृति(tbl, ma->max +
 						  MASK_ARRAY_SIZE_MIN);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		ma = ovsl_dereference(tbl->mask_array);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* On every add or delete we need to reset the counters so
-		 * every new mask gets a fair chance of being prioritized.
+		 * every new mask माला_लो a fair chance of being prioritized.
 		 */
 		tbl_mask_array_reset_counters(ma);
-	}
+	पूर्ण
 
 	BUG_ON(ovsl_dereference(ma->masks[ma_count]));
 
-	rcu_assign_pointer(ma->masks[ma_count], new);
+	rcu_assign_poपूर्णांकer(ma->masks[ma_count], new);
 	WRITE_ONCE(ma->count, ma_count + 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tbl_mask_array_del_mask(struct flow_table *tbl,
-				    struct sw_flow_mask *mask)
-{
-	struct mask_array *ma = ovsl_dereference(tbl->mask_array);
-	int i, ma_count = READ_ONCE(ma->count);
+अटल व्योम tbl_mask_array_del_mask(काष्ठा flow_table *tbl,
+				    काष्ठा sw_flow_mask *mask)
+अणु
+	काष्ठा mask_array *ma = ovsl_dereference(tbl->mask_array);
+	पूर्णांक i, ma_count = READ_ONCE(ma->count);
 
-	/* Remove the deleted mask pointers from the array */
-	for (i = 0; i < ma_count; i++) {
-		if (mask == ovsl_dereference(ma->masks[i]))
-			goto found;
-	}
+	/* Remove the deleted mask poपूर्णांकers from the array */
+	क्रम (i = 0; i < ma_count; i++) अणु
+		अगर (mask == ovsl_dereference(ma->masks[i]))
+			जाओ found;
+	पूर्ण
 
 	BUG();
-	return;
+	वापस;
 
 found:
 	WRITE_ONCE(ma->count, ma_count - 1);
 
-	rcu_assign_pointer(ma->masks[i], ma->masks[ma_count - 1]);
-	RCU_INIT_POINTER(ma->masks[ma_count - 1], NULL);
+	rcu_assign_poपूर्णांकer(ma->masks[i], ma->masks[ma_count - 1]);
+	RCU_INIT_POINTER(ma->masks[ma_count - 1], शून्य);
 
-	kfree_rcu(mask, rcu);
+	kमुक्त_rcu(mask, rcu);
 
-	/* Shrink the mask array if necessary. */
-	if (ma->max >= (MASK_ARRAY_SIZE_MIN * 2) &&
+	/* Shrink the mask array अगर necessary. */
+	अगर (ma->max >= (MASK_ARRAY_SIZE_MIN * 2) &&
 	    ma_count <= (ma->max / 3))
-		tbl_mask_array_realloc(tbl, ma->max / 2);
-	else
+		tbl_mask_array_पुनः_स्मृति(tbl, ma->max / 2);
+	अन्यथा
 		tbl_mask_array_reset_counters(ma);
 
-}
+पूर्ण
 
-/* Remove 'mask' from the mask list, if it is not needed any more. */
-static void flow_mask_remove(struct flow_table *tbl, struct sw_flow_mask *mask)
-{
-	if (mask) {
+/* Remove 'mask' from the mask list, अगर it is not needed any more. */
+अटल व्योम flow_mask_हटाओ(काष्ठा flow_table *tbl, काष्ठा sw_flow_mask *mask)
+अणु
+	अगर (mask) अणु
 		/* ovs-lock is required to protect mask-refcount and
 		 * mask list.
 		 */
@@ -340,883 +341,883 @@ static void flow_mask_remove(struct flow_table *tbl, struct sw_flow_mask *mask)
 		BUG_ON(!mask->ref_count);
 		mask->ref_count--;
 
-		if (!mask->ref_count)
+		अगर (!mask->ref_count)
 			tbl_mask_array_del_mask(tbl, mask);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __mask_cache_destroy(struct mask_cache *mc)
-{
-	free_percpu(mc->mask_cache);
-	kfree(mc);
-}
+अटल व्योम __mask_cache_destroy(काष्ठा mask_cache *mc)
+अणु
+	मुक्त_percpu(mc->mask_cache);
+	kमुक्त(mc);
+पूर्ण
 
-static void mask_cache_rcu_cb(struct rcu_head *rcu)
-{
-	struct mask_cache *mc = container_of(rcu, struct mask_cache, rcu);
+अटल व्योम mask_cache_rcu_cb(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा mask_cache *mc = container_of(rcu, काष्ठा mask_cache, rcu);
 
 	__mask_cache_destroy(mc);
-}
+पूर्ण
 
-static struct mask_cache *tbl_mask_cache_alloc(u32 size)
-{
-	struct mask_cache_entry __percpu *cache = NULL;
-	struct mask_cache *new;
+अटल काष्ठा mask_cache *tbl_mask_cache_alloc(u32 size)
+अणु
+	काष्ठा mask_cache_entry __percpu *cache = शून्य;
+	काष्ठा mask_cache *new;
 
-	/* Only allow size to be 0, or a power of 2, and does not exceed
+	/* Only allow size to be 0, or a घातer of 2, and करोes not exceed
 	 * percpu allocation size.
 	 */
-	if ((!is_power_of_2(size) && size != 0) ||
-	    (size * sizeof(struct mask_cache_entry)) > PCPU_MIN_UNIT_SIZE)
-		return NULL;
+	अगर ((!is_घातer_of_2(size) && size != 0) ||
+	    (size * माप(काष्ठा mask_cache_entry)) > PCPU_MIN_UNIT_SIZE)
+		वापस शून्य;
 
-	new = kzalloc(sizeof(*new), GFP_KERNEL);
-	if (!new)
-		return NULL;
+	new = kzalloc(माप(*new), GFP_KERNEL);
+	अगर (!new)
+		वापस शून्य;
 
 	new->cache_size = size;
-	if (new->cache_size > 0) {
-		cache = __alloc_percpu(array_size(sizeof(struct mask_cache_entry),
+	अगर (new->cache_size > 0) अणु
+		cache = __alloc_percpu(array_size(माप(काष्ठा mask_cache_entry),
 						  new->cache_size),
-				       __alignof__(struct mask_cache_entry));
-		if (!cache) {
-			kfree(new);
-			return NULL;
-		}
-	}
+				       __alignof__(काष्ठा mask_cache_entry));
+		अगर (!cache) अणु
+			kमुक्त(new);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
 	new->mask_cache = cache;
-	return new;
-}
-int ovs_flow_tbl_masks_cache_resize(struct flow_table *table, u32 size)
-{
-	struct mask_cache *mc = rcu_dereference_ovsl(table->mask_cache);
-	struct mask_cache *new;
+	वापस new;
+पूर्ण
+पूर्णांक ovs_flow_tbl_masks_cache_resize(काष्ठा flow_table *table, u32 size)
+अणु
+	काष्ठा mask_cache *mc = rcu_dereference_ovsl(table->mask_cache);
+	काष्ठा mask_cache *new;
 
-	if (size == mc->cache_size)
-		return 0;
+	अगर (size == mc->cache_size)
+		वापस 0;
 
-	if ((!is_power_of_2(size) && size != 0) ||
-	    (size * sizeof(struct mask_cache_entry)) > PCPU_MIN_UNIT_SIZE)
-		return -EINVAL;
+	अगर ((!is_घातer_of_2(size) && size != 0) ||
+	    (size * माप(काष्ठा mask_cache_entry)) > PCPU_MIN_UNIT_SIZE)
+		वापस -EINVAL;
 
 	new = tbl_mask_cache_alloc(size);
-	if (!new)
-		return -ENOMEM;
+	अगर (!new)
+		वापस -ENOMEM;
 
-	rcu_assign_pointer(table->mask_cache, new);
+	rcu_assign_poपूर्णांकer(table->mask_cache, new);
 	call_rcu(&mc->rcu, mask_cache_rcu_cb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ovs_flow_tbl_init(struct flow_table *table)
-{
-	struct table_instance *ti, *ufid_ti;
-	struct mask_cache *mc;
-	struct mask_array *ma;
+पूर्णांक ovs_flow_tbl_init(काष्ठा flow_table *table)
+अणु
+	काष्ठा table_instance *ti, *ufid_ti;
+	काष्ठा mask_cache *mc;
+	काष्ठा mask_array *ma;
 
 	mc = tbl_mask_cache_alloc(MC_DEFAULT_HASH_ENTRIES);
-	if (!mc)
-		return -ENOMEM;
+	अगर (!mc)
+		वापस -ENOMEM;
 
 	ma = tbl_mask_array_alloc(MASK_ARRAY_SIZE_MIN);
-	if (!ma)
-		goto free_mask_cache;
+	अगर (!ma)
+		जाओ मुक्त_mask_cache;
 
 	ti = table_instance_alloc(TBL_MIN_BUCKETS);
-	if (!ti)
-		goto free_mask_array;
+	अगर (!ti)
+		जाओ मुक्त_mask_array;
 
 	ufid_ti = table_instance_alloc(TBL_MIN_BUCKETS);
-	if (!ufid_ti)
-		goto free_ti;
+	अगर (!ufid_ti)
+		जाओ मुक्त_ti;
 
-	rcu_assign_pointer(table->ti, ti);
-	rcu_assign_pointer(table->ufid_ti, ufid_ti);
-	rcu_assign_pointer(table->mask_array, ma);
-	rcu_assign_pointer(table->mask_cache, mc);
-	table->last_rehash = jiffies;
+	rcu_assign_poपूर्णांकer(table->ti, ti);
+	rcu_assign_poपूर्णांकer(table->ufid_ti, ufid_ti);
+	rcu_assign_poपूर्णांकer(table->mask_array, ma);
+	rcu_assign_poपूर्णांकer(table->mask_cache, mc);
+	table->last_rehash = jअगरfies;
 	table->count = 0;
 	table->ufid_count = 0;
-	return 0;
+	वापस 0;
 
-free_ti:
+मुक्त_ti:
 	__table_instance_destroy(ti);
-free_mask_array:
+मुक्त_mask_array:
 	__mask_array_destroy(ma);
-free_mask_cache:
+मुक्त_mask_cache:
 	__mask_cache_destroy(mc);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void flow_tbl_destroy_rcu_cb(struct rcu_head *rcu)
-{
-	struct table_instance *ti;
+अटल व्योम flow_tbl_destroy_rcu_cb(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा table_instance *ti;
 
-	ti = container_of(rcu, struct table_instance, rcu);
+	ti = container_of(rcu, काष्ठा table_instance, rcu);
 	__table_instance_destroy(ti);
-}
+पूर्ण
 
-static void table_instance_flow_free(struct flow_table *table,
-				     struct table_instance *ti,
-				     struct table_instance *ufid_ti,
-				     struct sw_flow *flow)
-{
+अटल व्योम table_instance_flow_मुक्त(काष्ठा flow_table *table,
+				     काष्ठा table_instance *ti,
+				     काष्ठा table_instance *ufid_ti,
+				     काष्ठा sw_flow *flow)
+अणु
 	hlist_del_rcu(&flow->flow_table.node[ti->node_ver]);
 	table->count--;
 
-	if (ovs_identifier_is_ufid(&flow->id)) {
+	अगर (ovs_identअगरier_is_ufid(&flow->id)) अणु
 		hlist_del_rcu(&flow->ufid_table.node[ufid_ti->node_ver]);
 		table->ufid_count--;
-	}
+	पूर्ण
 
-	flow_mask_remove(table, flow->mask);
-}
+	flow_mask_हटाओ(table, flow->mask);
+पूर्ण
 
 /* Must be called with OVS mutex held. */
-void table_instance_flow_flush(struct flow_table *table,
-			       struct table_instance *ti,
-			       struct table_instance *ufid_ti)
-{
-	int i;
+व्योम table_instance_flow_flush(काष्ठा flow_table *table,
+			       काष्ठा table_instance *ti,
+			       काष्ठा table_instance *ufid_ti)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ti->n_buckets; i++) {
-		struct hlist_head *head = &ti->buckets[i];
-		struct hlist_node *n;
-		struct sw_flow *flow;
+	क्रम (i = 0; i < ti->n_buckets; i++) अणु
+		काष्ठा hlist_head *head = &ti->buckets[i];
+		काष्ठा hlist_node *n;
+		काष्ठा sw_flow *flow;
 
-		hlist_for_each_entry_safe(flow, n, head,
-					  flow_table.node[ti->node_ver]) {
+		hlist_क्रम_each_entry_safe(flow, n, head,
+					  flow_table.node[ti->node_ver]) अणु
 
-			table_instance_flow_free(table, ti, ufid_ti,
+			table_instance_flow_मुक्त(table, ti, ufid_ti,
 						 flow);
-			ovs_flow_free(flow, true);
-		}
-	}
+			ovs_flow_मुक्त(flow, true);
+		पूर्ण
+	पूर्ण
 
-	if (WARN_ON(table->count != 0 ||
-		    table->ufid_count != 0)) {
+	अगर (WARN_ON(table->count != 0 ||
+		    table->ufid_count != 0)) अणु
 		table->count = 0;
 		table->ufid_count = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void table_instance_destroy(struct table_instance *ti,
-				   struct table_instance *ufid_ti)
-{
+अटल व्योम table_instance_destroy(काष्ठा table_instance *ti,
+				   काष्ठा table_instance *ufid_ti)
+अणु
 	call_rcu(&ti->rcu, flow_tbl_destroy_rcu_cb);
 	call_rcu(&ufid_ti->rcu, flow_tbl_destroy_rcu_cb);
-}
+पूर्ण
 
-/* No need for locking this function is called from RCU callback or
+/* No need क्रम locking this function is called from RCU callback or
  * error path.
  */
-void ovs_flow_tbl_destroy(struct flow_table *table)
-{
-	struct table_instance *ti = rcu_dereference_raw(table->ti);
-	struct table_instance *ufid_ti = rcu_dereference_raw(table->ufid_ti);
-	struct mask_cache *mc = rcu_dereference_raw(table->mask_cache);
-	struct mask_array *ma = rcu_dereference_raw(table->mask_array);
+व्योम ovs_flow_tbl_destroy(काष्ठा flow_table *table)
+अणु
+	काष्ठा table_instance *ti = rcu_dereference_raw(table->ti);
+	काष्ठा table_instance *ufid_ti = rcu_dereference_raw(table->ufid_ti);
+	काष्ठा mask_cache *mc = rcu_dereference_raw(table->mask_cache);
+	काष्ठा mask_array *ma = rcu_dereference_raw(table->mask_array);
 
 	call_rcu(&mc->rcu, mask_cache_rcu_cb);
 	call_rcu(&ma->rcu, mask_array_rcu_cb);
 	table_instance_destroy(ti, ufid_ti);
-}
+पूर्ण
 
-struct sw_flow *ovs_flow_tbl_dump_next(struct table_instance *ti,
+काष्ठा sw_flow *ovs_flow_tbl_dump_next(काष्ठा table_instance *ti,
 				       u32 *bucket, u32 *last)
-{
-	struct sw_flow *flow;
-	struct hlist_head *head;
-	int ver;
-	int i;
+अणु
+	काष्ठा sw_flow *flow;
+	काष्ठा hlist_head *head;
+	पूर्णांक ver;
+	पूर्णांक i;
 
 	ver = ti->node_ver;
-	while (*bucket < ti->n_buckets) {
+	जबतक (*bucket < ti->n_buckets) अणु
 		i = 0;
 		head = &ti->buckets[*bucket];
-		hlist_for_each_entry_rcu(flow, head, flow_table.node[ver]) {
-			if (i < *last) {
+		hlist_क्रम_each_entry_rcu(flow, head, flow_table.node[ver]) अणु
+			अगर (i < *last) अणु
 				i++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			*last = i + 1;
-			return flow;
-		}
+			वापस flow;
+		पूर्ण
 		(*bucket)++;
 		*last = 0;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct hlist_head *find_bucket(struct table_instance *ti, u32 hash)
-{
+अटल काष्ठा hlist_head *find_bucket(काष्ठा table_instance *ti, u32 hash)
+अणु
 	hash = jhash_1word(hash, ti->hash_seed);
-	return &ti->buckets[hash & (ti->n_buckets - 1)];
-}
+	वापस &ti->buckets[hash & (ti->n_buckets - 1)];
+पूर्ण
 
-static void table_instance_insert(struct table_instance *ti,
-				  struct sw_flow *flow)
-{
-	struct hlist_head *head;
+अटल व्योम table_instance_insert(काष्ठा table_instance *ti,
+				  काष्ठा sw_flow *flow)
+अणु
+	काष्ठा hlist_head *head;
 
 	head = find_bucket(ti, flow->flow_table.hash);
 	hlist_add_head_rcu(&flow->flow_table.node[ti->node_ver], head);
-}
+पूर्ण
 
-static void ufid_table_instance_insert(struct table_instance *ti,
-				       struct sw_flow *flow)
-{
-	struct hlist_head *head;
+अटल व्योम ufid_table_instance_insert(काष्ठा table_instance *ti,
+				       काष्ठा sw_flow *flow)
+अणु
+	काष्ठा hlist_head *head;
 
 	head = find_bucket(ti, flow->ufid_table.hash);
 	hlist_add_head_rcu(&flow->ufid_table.node[ti->node_ver], head);
-}
+पूर्ण
 
-static void flow_table_copy_flows(struct table_instance *old,
-				  struct table_instance *new, bool ufid)
-{
-	int old_ver;
-	int i;
+अटल व्योम flow_table_copy_flows(काष्ठा table_instance *old,
+				  काष्ठा table_instance *new, bool ufid)
+अणु
+	पूर्णांक old_ver;
+	पूर्णांक i;
 
 	old_ver = old->node_ver;
 	new->node_ver = !old_ver;
 
 	/* Insert in new table. */
-	for (i = 0; i < old->n_buckets; i++) {
-		struct sw_flow *flow;
-		struct hlist_head *head = &old->buckets[i];
+	क्रम (i = 0; i < old->n_buckets; i++) अणु
+		काष्ठा sw_flow *flow;
+		काष्ठा hlist_head *head = &old->buckets[i];
 
-		if (ufid)
-			hlist_for_each_entry_rcu(flow, head,
+		अगर (ufid)
+			hlist_क्रम_each_entry_rcu(flow, head,
 						 ufid_table.node[old_ver],
 						 lockdep_ovsl_is_held())
 				ufid_table_instance_insert(new, flow);
-		else
-			hlist_for_each_entry_rcu(flow, head,
+		अन्यथा
+			hlist_क्रम_each_entry_rcu(flow, head,
 						 flow_table.node[old_ver],
 						 lockdep_ovsl_is_held())
 				table_instance_insert(new, flow);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct table_instance *table_instance_rehash(struct table_instance *ti,
-						    int n_buckets, bool ufid)
-{
-	struct table_instance *new_ti;
+अटल काष्ठा table_instance *table_instance_rehash(काष्ठा table_instance *ti,
+						    पूर्णांक n_buckets, bool ufid)
+अणु
+	काष्ठा table_instance *new_ti;
 
 	new_ti = table_instance_alloc(n_buckets);
-	if (!new_ti)
-		return NULL;
+	अगर (!new_ti)
+		वापस शून्य;
 
 	flow_table_copy_flows(ti, new_ti, ufid);
 
-	return new_ti;
-}
+	वापस new_ti;
+पूर्ण
 
-int ovs_flow_tbl_flush(struct flow_table *flow_table)
-{
-	struct table_instance *old_ti, *new_ti;
-	struct table_instance *old_ufid_ti, *new_ufid_ti;
+पूर्णांक ovs_flow_tbl_flush(काष्ठा flow_table *flow_table)
+अणु
+	काष्ठा table_instance *old_ti, *new_ti;
+	काष्ठा table_instance *old_ufid_ti, *new_ufid_ti;
 
 	new_ti = table_instance_alloc(TBL_MIN_BUCKETS);
-	if (!new_ti)
-		return -ENOMEM;
+	अगर (!new_ti)
+		वापस -ENOMEM;
 	new_ufid_ti = table_instance_alloc(TBL_MIN_BUCKETS);
-	if (!new_ufid_ti)
-		goto err_free_ti;
+	अगर (!new_ufid_ti)
+		जाओ err_मुक्त_ti;
 
 	old_ti = ovsl_dereference(flow_table->ti);
 	old_ufid_ti = ovsl_dereference(flow_table->ufid_ti);
 
-	rcu_assign_pointer(flow_table->ti, new_ti);
-	rcu_assign_pointer(flow_table->ufid_ti, new_ufid_ti);
-	flow_table->last_rehash = jiffies;
+	rcu_assign_poपूर्णांकer(flow_table->ti, new_ti);
+	rcu_assign_poपूर्णांकer(flow_table->ufid_ti, new_ufid_ti);
+	flow_table->last_rehash = jअगरfies;
 
 	table_instance_flow_flush(flow_table, old_ti, old_ufid_ti);
 	table_instance_destroy(old_ti, old_ufid_ti);
-	return 0;
+	वापस 0;
 
-err_free_ti:
+err_मुक्त_ti:
 	__table_instance_destroy(new_ti);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static u32 flow_hash(const struct sw_flow_key *key,
-		     const struct sw_flow_key_range *range)
-{
-	const u32 *hash_key = (const u32 *)((const u8 *)key + range->start);
+अटल u32 flow_hash(स्थिर काष्ठा sw_flow_key *key,
+		     स्थिर काष्ठा sw_flow_key_range *range)
+अणु
+	स्थिर u32 *hash_key = (स्थिर u32 *)((स्थिर u8 *)key + range->start);
 
 	/* Make sure number of hash bytes are multiple of u32. */
-	int hash_u32s = range_n_bytes(range) >> 2;
+	पूर्णांक hash_u32s = range_n_bytes(range) >> 2;
 
-	return jhash2(hash_key, hash_u32s, 0);
-}
+	वापस jhash2(hash_key, hash_u32s, 0);
+पूर्ण
 
-static int flow_key_start(const struct sw_flow_key *key)
-{
-	if (key->tun_proto)
-		return 0;
-	else
-		return rounddown(offsetof(struct sw_flow_key, phy),
-				 sizeof(long));
-}
+अटल पूर्णांक flow_key_start(स्थिर काष्ठा sw_flow_key *key)
+अणु
+	अगर (key->tun_proto)
+		वापस 0;
+	अन्यथा
+		वापस roundकरोwn(दुरत्व(काष्ठा sw_flow_key, phy),
+				 माप(दीर्घ));
+पूर्ण
 
-static bool cmp_key(const struct sw_flow_key *key1,
-		    const struct sw_flow_key *key2,
-		    int key_start, int key_end)
-{
-	const long *cp1 = (const long *)((const u8 *)key1 + key_start);
-	const long *cp2 = (const long *)((const u8 *)key2 + key_start);
-	long diffs = 0;
-	int i;
+अटल bool cmp_key(स्थिर काष्ठा sw_flow_key *key1,
+		    स्थिर काष्ठा sw_flow_key *key2,
+		    पूर्णांक key_start, पूर्णांक key_end)
+अणु
+	स्थिर दीर्घ *cp1 = (स्थिर दीर्घ *)((स्थिर u8 *)key1 + key_start);
+	स्थिर दीर्घ *cp2 = (स्थिर दीर्घ *)((स्थिर u8 *)key2 + key_start);
+	दीर्घ dअगरfs = 0;
+	पूर्णांक i;
 
-	for (i = key_start; i < key_end; i += sizeof(long))
-		diffs |= *cp1++ ^ *cp2++;
+	क्रम (i = key_start; i < key_end; i += माप(दीर्घ))
+		dअगरfs |= *cp1++ ^ *cp2++;
 
-	return diffs == 0;
-}
+	वापस dअगरfs == 0;
+पूर्ण
 
-static bool flow_cmp_masked_key(const struct sw_flow *flow,
-				const struct sw_flow_key *key,
-				const struct sw_flow_key_range *range)
-{
-	return cmp_key(&flow->key, key, range->start, range->end);
-}
+अटल bool flow_cmp_masked_key(स्थिर काष्ठा sw_flow *flow,
+				स्थिर काष्ठा sw_flow_key *key,
+				स्थिर काष्ठा sw_flow_key_range *range)
+अणु
+	वापस cmp_key(&flow->key, key, range->start, range->end);
+पूर्ण
 
-static bool ovs_flow_cmp_unmasked_key(const struct sw_flow *flow,
-				      const struct sw_flow_match *match)
-{
-	struct sw_flow_key *key = match->key;
-	int key_start = flow_key_start(key);
-	int key_end = match->range.end;
+अटल bool ovs_flow_cmp_unmasked_key(स्थिर काष्ठा sw_flow *flow,
+				      स्थिर काष्ठा sw_flow_match *match)
+अणु
+	काष्ठा sw_flow_key *key = match->key;
+	पूर्णांक key_start = flow_key_start(key);
+	पूर्णांक key_end = match->range.end;
 
-	BUG_ON(ovs_identifier_is_ufid(&flow->id));
-	return cmp_key(flow->id.unmasked_key, key, key_start, key_end);
-}
+	BUG_ON(ovs_identअगरier_is_ufid(&flow->id));
+	वापस cmp_key(flow->id.unmasked_key, key, key_start, key_end);
+पूर्ण
 
-static struct sw_flow *masked_flow_lookup(struct table_instance *ti,
-					  const struct sw_flow_key *unmasked,
-					  const struct sw_flow_mask *mask,
+अटल काष्ठा sw_flow *masked_flow_lookup(काष्ठा table_instance *ti,
+					  स्थिर काष्ठा sw_flow_key *unmasked,
+					  स्थिर काष्ठा sw_flow_mask *mask,
 					  u32 *n_mask_hit)
-{
-	struct sw_flow *flow;
-	struct hlist_head *head;
+अणु
+	काष्ठा sw_flow *flow;
+	काष्ठा hlist_head *head;
 	u32 hash;
-	struct sw_flow_key masked_key;
+	काष्ठा sw_flow_key masked_key;
 
 	ovs_flow_mask_key(&masked_key, unmasked, false, mask);
 	hash = flow_hash(&masked_key, &mask->range);
 	head = find_bucket(ti, hash);
 	(*n_mask_hit)++;
 
-	hlist_for_each_entry_rcu(flow, head, flow_table.node[ti->node_ver],
-				 lockdep_ovsl_is_held()) {
-		if (flow->mask == mask && flow->flow_table.hash == hash &&
+	hlist_क्रम_each_entry_rcu(flow, head, flow_table.node[ti->node_ver],
+				 lockdep_ovsl_is_held()) अणु
+		अगर (flow->mask == mask && flow->flow_table.hash == hash &&
 		    flow_cmp_masked_key(flow, &masked_key, &mask->range))
-			return flow;
-	}
-	return NULL;
-}
+			वापस flow;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-/* Flow lookup does full lookup on flow table. It starts with
+/* Flow lookup करोes full lookup on flow table. It starts with
  * mask from index passed in *index.
  * This function MUST be called with BH disabled due to the use
- * of CPU specific variables.
+ * of CPU specअगरic variables.
  */
-static struct sw_flow *flow_lookup(struct flow_table *tbl,
-				   struct table_instance *ti,
-				   struct mask_array *ma,
-				   const struct sw_flow_key *key,
+अटल काष्ठा sw_flow *flow_lookup(काष्ठा flow_table *tbl,
+				   काष्ठा table_instance *ti,
+				   काष्ठा mask_array *ma,
+				   स्थिर काष्ठा sw_flow_key *key,
 				   u32 *n_mask_hit,
 				   u32 *n_cache_hit,
 				   u32 *index)
-{
-	struct mask_array_stats *stats = this_cpu_ptr(ma->masks_usage_stats);
-	struct sw_flow *flow;
-	struct sw_flow_mask *mask;
-	int i;
+अणु
+	काष्ठा mask_array_stats *stats = this_cpu_ptr(ma->masks_usage_stats);
+	काष्ठा sw_flow *flow;
+	काष्ठा sw_flow_mask *mask;
+	पूर्णांक i;
 
-	if (likely(*index < ma->max)) {
+	अगर (likely(*index < ma->max)) अणु
 		mask = rcu_dereference_ovsl(ma->masks[*index]);
-		if (mask) {
+		अगर (mask) अणु
 			flow = masked_flow_lookup(ti, key, mask, n_mask_hit);
-			if (flow) {
+			अगर (flow) अणु
 				u64_stats_update_begin(&stats->syncp);
 				stats->usage_cntrs[*index]++;
 				u64_stats_update_end(&stats->syncp);
 				(*n_cache_hit)++;
-				return flow;
-			}
-		}
-	}
+				वापस flow;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < ma->max; i++)  {
+	क्रम (i = 0; i < ma->max; i++)  अणु
 
-		if (i == *index)
-			continue;
+		अगर (i == *index)
+			जारी;
 
 		mask = rcu_dereference_ovsl(ma->masks[i]);
-		if (unlikely(!mask))
-			break;
+		अगर (unlikely(!mask))
+			अवरोध;
 
 		flow = masked_flow_lookup(ti, key, mask, n_mask_hit);
-		if (flow) { /* Found */
+		अगर (flow) अणु /* Found */
 			*index = i;
 			u64_stats_update_begin(&stats->syncp);
 			stats->usage_cntrs[*index]++;
 			u64_stats_update_end(&stats->syncp);
-			return flow;
-		}
-	}
+			वापस flow;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * mask_cache maps flow to probable mask. This cache is not tightly
  * coupled cache, It means updates to  mask list can result in inconsistent
  * cache entry in mask cache.
- * This is per cpu cache and is divided in MC_HASH_SEGS segments.
- * In case of a hash collision the entry is hashed in next segment.
+ * This is per cpu cache and is भागided in MC_HASH_SEGS segments.
+ * In हाल of a hash collision the entry is hashed in next segment.
  * */
-struct sw_flow *ovs_flow_tbl_lookup_stats(struct flow_table *tbl,
-					  const struct sw_flow_key *key,
+काष्ठा sw_flow *ovs_flow_tbl_lookup_stats(काष्ठा flow_table *tbl,
+					  स्थिर काष्ठा sw_flow_key *key,
 					  u32 skb_hash,
 					  u32 *n_mask_hit,
 					  u32 *n_cache_hit)
-{
-	struct mask_cache *mc = rcu_dereference(tbl->mask_cache);
-	struct mask_array *ma = rcu_dereference(tbl->mask_array);
-	struct table_instance *ti = rcu_dereference(tbl->ti);
-	struct mask_cache_entry *entries, *ce;
-	struct sw_flow *flow;
+अणु
+	काष्ठा mask_cache *mc = rcu_dereference(tbl->mask_cache);
+	काष्ठा mask_array *ma = rcu_dereference(tbl->mask_array);
+	काष्ठा table_instance *ti = rcu_dereference(tbl->ti);
+	काष्ठा mask_cache_entry *entries, *ce;
+	काष्ठा sw_flow *flow;
 	u32 hash;
-	int seg;
+	पूर्णांक seg;
 
 	*n_mask_hit = 0;
 	*n_cache_hit = 0;
-	if (unlikely(!skb_hash || mc->cache_size == 0)) {
+	अगर (unlikely(!skb_hash || mc->cache_size == 0)) अणु
 		u32 mask_index = 0;
 		u32 cache = 0;
 
-		return flow_lookup(tbl, ti, ma, key, n_mask_hit, &cache,
+		वापस flow_lookup(tbl, ti, ma, key, n_mask_hit, &cache,
 				   &mask_index);
-	}
+	पूर्ण
 
 	/* Pre and post recirulation flows usually have the same skb_hash
-	 * value. To avoid hash collisions, rehash the 'skb_hash' with
+	 * value. To aव्योम hash collisions, rehash the 'skb_hash' with
 	 * 'recirc_id'.  */
-	if (key->recirc_id)
+	अगर (key->recirc_id)
 		skb_hash = jhash_1word(skb_hash, key->recirc_id);
 
-	ce = NULL;
+	ce = शून्य;
 	hash = skb_hash;
 	entries = this_cpu_ptr(mc->mask_cache);
 
 	/* Find the cache entry 'ce' to operate on. */
-	for (seg = 0; seg < MC_HASH_SEGS; seg++) {
-		int index = hash & (mc->cache_size - 1);
-		struct mask_cache_entry *e;
+	क्रम (seg = 0; seg < MC_HASH_SEGS; seg++) अणु
+		पूर्णांक index = hash & (mc->cache_size - 1);
+		काष्ठा mask_cache_entry *e;
 
 		e = &entries[index];
-		if (e->skb_hash == skb_hash) {
+		अगर (e->skb_hash == skb_hash) अणु
 			flow = flow_lookup(tbl, ti, ma, key, n_mask_hit,
 					   n_cache_hit, &e->mask_index);
-			if (!flow)
+			अगर (!flow)
 				e->skb_hash = 0;
-			return flow;
-		}
+			वापस flow;
+		पूर्ण
 
-		if (!ce || e->skb_hash < ce->skb_hash)
+		अगर (!ce || e->skb_hash < ce->skb_hash)
 			ce = e;  /* A better replacement cache candidate. */
 
 		hash >>= MC_HASH_SHIFT;
-	}
+	पूर्ण
 
-	/* Cache miss, do full lookup. */
+	/* Cache miss, करो full lookup. */
 	flow = flow_lookup(tbl, ti, ma, key, n_mask_hit, n_cache_hit,
 			   &ce->mask_index);
-	if (flow)
+	अगर (flow)
 		ce->skb_hash = skb_hash;
 
 	*n_cache_hit = 0;
-	return flow;
-}
+	वापस flow;
+पूर्ण
 
-struct sw_flow *ovs_flow_tbl_lookup(struct flow_table *tbl,
-				    const struct sw_flow_key *key)
-{
-	struct table_instance *ti = rcu_dereference_ovsl(tbl->ti);
-	struct mask_array *ma = rcu_dereference_ovsl(tbl->mask_array);
+काष्ठा sw_flow *ovs_flow_tbl_lookup(काष्ठा flow_table *tbl,
+				    स्थिर काष्ठा sw_flow_key *key)
+अणु
+	काष्ठा table_instance *ti = rcu_dereference_ovsl(tbl->ti);
+	काष्ठा mask_array *ma = rcu_dereference_ovsl(tbl->mask_array);
 	u32 __always_unused n_mask_hit;
 	u32 __always_unused n_cache_hit;
-	struct sw_flow *flow;
+	काष्ठा sw_flow *flow;
 	u32 index = 0;
 
-	/* This function gets called trough the netlink interface and therefore
+	/* This function माला_लो called trough the netlink पूर्णांकerface and thereक्रमe
 	 * is preemptible. However, flow_lookup() function needs to be called
-	 * with BH disabled due to CPU specific variables.
+	 * with BH disabled due to CPU specअगरic variables.
 	 */
 	local_bh_disable();
 	flow = flow_lookup(tbl, ti, ma, key, &n_mask_hit, &n_cache_hit, &index);
 	local_bh_enable();
-	return flow;
-}
+	वापस flow;
+पूर्ण
 
-struct sw_flow *ovs_flow_tbl_lookup_exact(struct flow_table *tbl,
-					  const struct sw_flow_match *match)
-{
-	struct mask_array *ma = ovsl_dereference(tbl->mask_array);
-	int i;
+काष्ठा sw_flow *ovs_flow_tbl_lookup_exact(काष्ठा flow_table *tbl,
+					  स्थिर काष्ठा sw_flow_match *match)
+अणु
+	काष्ठा mask_array *ma = ovsl_dereference(tbl->mask_array);
+	पूर्णांक i;
 
 	/* Always called under ovs-mutex. */
-	for (i = 0; i < ma->max; i++) {
-		struct table_instance *ti = rcu_dereference_ovsl(tbl->ti);
+	क्रम (i = 0; i < ma->max; i++) अणु
+		काष्ठा table_instance *ti = rcu_dereference_ovsl(tbl->ti);
 		u32 __always_unused n_mask_hit;
-		struct sw_flow_mask *mask;
-		struct sw_flow *flow;
+		काष्ठा sw_flow_mask *mask;
+		काष्ठा sw_flow *flow;
 
 		mask = ovsl_dereference(ma->masks[i]);
-		if (!mask)
-			continue;
+		अगर (!mask)
+			जारी;
 
 		flow = masked_flow_lookup(ti, match->key, mask, &n_mask_hit);
-		if (flow && ovs_identifier_is_key(&flow->id) &&
-		    ovs_flow_cmp_unmasked_key(flow, match)) {
-			return flow;
-		}
-	}
+		अगर (flow && ovs_identअगरier_is_key(&flow->id) &&
+		    ovs_flow_cmp_unmasked_key(flow, match)) अणु
+			वापस flow;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static u32 ufid_hash(const struct sw_flow_id *sfid)
-{
-	return jhash(sfid->ufid, sfid->ufid_len, 0);
-}
+अटल u32 ufid_hash(स्थिर काष्ठा sw_flow_id *sfid)
+अणु
+	वापस jhash(sfid->ufid, sfid->ufid_len, 0);
+पूर्ण
 
-static bool ovs_flow_cmp_ufid(const struct sw_flow *flow,
-			      const struct sw_flow_id *sfid)
-{
-	if (flow->id.ufid_len != sfid->ufid_len)
-		return false;
+अटल bool ovs_flow_cmp_ufid(स्थिर काष्ठा sw_flow *flow,
+			      स्थिर काष्ठा sw_flow_id *sfid)
+अणु
+	अगर (flow->id.ufid_len != sfid->ufid_len)
+		वापस false;
 
-	return !memcmp(flow->id.ufid, sfid->ufid, sfid->ufid_len);
-}
+	वापस !स_भेद(flow->id.ufid, sfid->ufid, sfid->ufid_len);
+पूर्ण
 
-bool ovs_flow_cmp(const struct sw_flow *flow,
-		  const struct sw_flow_match *match)
-{
-	if (ovs_identifier_is_ufid(&flow->id))
-		return flow_cmp_masked_key(flow, match->key, &match->range);
+bool ovs_flow_cmp(स्थिर काष्ठा sw_flow *flow,
+		  स्थिर काष्ठा sw_flow_match *match)
+अणु
+	अगर (ovs_identअगरier_is_ufid(&flow->id))
+		वापस flow_cmp_masked_key(flow, match->key, &match->range);
 
-	return ovs_flow_cmp_unmasked_key(flow, match);
-}
+	वापस ovs_flow_cmp_unmasked_key(flow, match);
+पूर्ण
 
-struct sw_flow *ovs_flow_tbl_lookup_ufid(struct flow_table *tbl,
-					 const struct sw_flow_id *ufid)
-{
-	struct table_instance *ti = rcu_dereference_ovsl(tbl->ufid_ti);
-	struct sw_flow *flow;
-	struct hlist_head *head;
+काष्ठा sw_flow *ovs_flow_tbl_lookup_ufid(काष्ठा flow_table *tbl,
+					 स्थिर काष्ठा sw_flow_id *ufid)
+अणु
+	काष्ठा table_instance *ti = rcu_dereference_ovsl(tbl->ufid_ti);
+	काष्ठा sw_flow *flow;
+	काष्ठा hlist_head *head;
 	u32 hash;
 
 	hash = ufid_hash(ufid);
 	head = find_bucket(ti, hash);
-	hlist_for_each_entry_rcu(flow, head, ufid_table.node[ti->node_ver],
-				 lockdep_ovsl_is_held()) {
-		if (flow->ufid_table.hash == hash &&
+	hlist_क्रम_each_entry_rcu(flow, head, ufid_table.node[ti->node_ver],
+				 lockdep_ovsl_is_held()) अणु
+		अगर (flow->ufid_table.hash == hash &&
 		    ovs_flow_cmp_ufid(flow, ufid))
-			return flow;
-	}
-	return NULL;
-}
+			वापस flow;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-int ovs_flow_tbl_num_masks(const struct flow_table *table)
-{
-	struct mask_array *ma = rcu_dereference_ovsl(table->mask_array);
-	return READ_ONCE(ma->count);
-}
+पूर्णांक ovs_flow_tbl_num_masks(स्थिर काष्ठा flow_table *table)
+अणु
+	काष्ठा mask_array *ma = rcu_dereference_ovsl(table->mask_array);
+	वापस READ_ONCE(ma->count);
+पूर्ण
 
-u32 ovs_flow_tbl_masks_cache_size(const struct flow_table *table)
-{
-	struct mask_cache *mc = rcu_dereference_ovsl(table->mask_cache);
+u32 ovs_flow_tbl_masks_cache_size(स्थिर काष्ठा flow_table *table)
+अणु
+	काष्ठा mask_cache *mc = rcu_dereference_ovsl(table->mask_cache);
 
-	return READ_ONCE(mc->cache_size);
-}
+	वापस READ_ONCE(mc->cache_size);
+पूर्ण
 
-static struct table_instance *table_instance_expand(struct table_instance *ti,
+अटल काष्ठा table_instance *table_instance_expand(काष्ठा table_instance *ti,
 						    bool ufid)
-{
-	return table_instance_rehash(ti, ti->n_buckets * 2, ufid);
-}
+अणु
+	वापस table_instance_rehash(ti, ti->n_buckets * 2, ufid);
+पूर्ण
 
 /* Must be called with OVS mutex held. */
-void ovs_flow_tbl_remove(struct flow_table *table, struct sw_flow *flow)
-{
-	struct table_instance *ti = ovsl_dereference(table->ti);
-	struct table_instance *ufid_ti = ovsl_dereference(table->ufid_ti);
+व्योम ovs_flow_tbl_हटाओ(काष्ठा flow_table *table, काष्ठा sw_flow *flow)
+अणु
+	काष्ठा table_instance *ti = ovsl_dereference(table->ti);
+	काष्ठा table_instance *ufid_ti = ovsl_dereference(table->ufid_ti);
 
 	BUG_ON(table->count == 0);
-	table_instance_flow_free(table, ti, ufid_ti, flow);
-}
+	table_instance_flow_मुक्त(table, ti, ufid_ti, flow);
+पूर्ण
 
-static struct sw_flow_mask *mask_alloc(void)
-{
-	struct sw_flow_mask *mask;
+अटल काष्ठा sw_flow_mask *mask_alloc(व्योम)
+अणु
+	काष्ठा sw_flow_mask *mask;
 
-	mask = kmalloc(sizeof(*mask), GFP_KERNEL);
-	if (mask)
+	mask = kदो_स्मृति(माप(*mask), GFP_KERNEL);
+	अगर (mask)
 		mask->ref_count = 1;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static bool mask_equal(const struct sw_flow_mask *a,
-		       const struct sw_flow_mask *b)
-{
-	const u8 *a_ = (const u8 *)&a->key + a->range.start;
-	const u8 *b_ = (const u8 *)&b->key + b->range.start;
+अटल bool mask_equal(स्थिर काष्ठा sw_flow_mask *a,
+		       स्थिर काष्ठा sw_flow_mask *b)
+अणु
+	स्थिर u8 *a_ = (स्थिर u8 *)&a->key + a->range.start;
+	स्थिर u8 *b_ = (स्थिर u8 *)&b->key + b->range.start;
 
-	return  (a->range.end == b->range.end)
+	वापस  (a->range.end == b->range.end)
 		&& (a->range.start == b->range.start)
-		&& (memcmp(a_, b_, range_n_bytes(&a->range)) == 0);
-}
+		&& (स_भेद(a_, b_, range_n_bytes(&a->range)) == 0);
+पूर्ण
 
-static struct sw_flow_mask *flow_mask_find(const struct flow_table *tbl,
-					   const struct sw_flow_mask *mask)
-{
-	struct mask_array *ma;
-	int i;
+अटल काष्ठा sw_flow_mask *flow_mask_find(स्थिर काष्ठा flow_table *tbl,
+					   स्थिर काष्ठा sw_flow_mask *mask)
+अणु
+	काष्ठा mask_array *ma;
+	पूर्णांक i;
 
 	ma = ovsl_dereference(tbl->mask_array);
-	for (i = 0; i < ma->max; i++) {
-		struct sw_flow_mask *t;
+	क्रम (i = 0; i < ma->max; i++) अणु
+		काष्ठा sw_flow_mask *t;
 		t = ovsl_dereference(ma->masks[i]);
 
-		if (t && mask_equal(mask, t))
-			return t;
-	}
+		अगर (t && mask_equal(mask, t))
+			वापस t;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* Add 'mask' into the mask list, if it is not already there. */
-static int flow_mask_insert(struct flow_table *tbl, struct sw_flow *flow,
-			    const struct sw_flow_mask *new)
-{
-	struct sw_flow_mask *mask;
+/* Add 'mask' पूर्णांकo the mask list, अगर it is not alपढ़ोy there. */
+अटल पूर्णांक flow_mask_insert(काष्ठा flow_table *tbl, काष्ठा sw_flow *flow,
+			    स्थिर काष्ठा sw_flow_mask *new)
+अणु
+	काष्ठा sw_flow_mask *mask;
 
 	mask = flow_mask_find(tbl, new);
-	if (!mask) {
-		/* Allocate a new mask if none exsits. */
+	अगर (!mask) अणु
+		/* Allocate a new mask अगर none exsits. */
 		mask = mask_alloc();
-		if (!mask)
-			return -ENOMEM;
+		अगर (!mask)
+			वापस -ENOMEM;
 		mask->key = new->key;
 		mask->range = new->range;
 
 		/* Add mask to mask-list. */
-		if (tbl_mask_array_add_mask(tbl, mask)) {
-			kfree(mask);
-			return -ENOMEM;
-		}
-	} else {
+		अगर (tbl_mask_array_add_mask(tbl, mask)) अणु
+			kमुक्त(mask);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		BUG_ON(!mask->ref_count);
 		mask->ref_count++;
-	}
+	पूर्ण
 
 	flow->mask = mask;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Must be called with OVS mutex held. */
-static void flow_key_insert(struct flow_table *table, struct sw_flow *flow)
-{
-	struct table_instance *new_ti = NULL;
-	struct table_instance *ti;
+अटल व्योम flow_key_insert(काष्ठा flow_table *table, काष्ठा sw_flow *flow)
+अणु
+	काष्ठा table_instance *new_ti = शून्य;
+	काष्ठा table_instance *ti;
 
 	flow->flow_table.hash = flow_hash(&flow->key, &flow->mask->range);
 	ti = ovsl_dereference(table->ti);
 	table_instance_insert(ti, flow);
 	table->count++;
 
-	/* Expand table, if necessary, to make room. */
-	if (table->count > ti->n_buckets)
+	/* Expand table, अगर necessary, to make room. */
+	अगर (table->count > ti->n_buckets)
 		new_ti = table_instance_expand(ti, false);
-	else if (time_after(jiffies, table->last_rehash + REHASH_INTERVAL))
+	अन्यथा अगर (समय_after(jअगरfies, table->last_rehash + REHASH_INTERVAL))
 		new_ti = table_instance_rehash(ti, ti->n_buckets, false);
 
-	if (new_ti) {
-		rcu_assign_pointer(table->ti, new_ti);
+	अगर (new_ti) अणु
+		rcu_assign_poपूर्णांकer(table->ti, new_ti);
 		call_rcu(&ti->rcu, flow_tbl_destroy_rcu_cb);
-		table->last_rehash = jiffies;
-	}
-}
+		table->last_rehash = jअगरfies;
+	पूर्ण
+पूर्ण
 
 /* Must be called with OVS mutex held. */
-static void flow_ufid_insert(struct flow_table *table, struct sw_flow *flow)
-{
-	struct table_instance *ti;
+अटल व्योम flow_ufid_insert(काष्ठा flow_table *table, काष्ठा sw_flow *flow)
+अणु
+	काष्ठा table_instance *ti;
 
 	flow->ufid_table.hash = ufid_hash(&flow->id);
 	ti = ovsl_dereference(table->ufid_ti);
 	ufid_table_instance_insert(ti, flow);
 	table->ufid_count++;
 
-	/* Expand table, if necessary, to make room. */
-	if (table->ufid_count > ti->n_buckets) {
-		struct table_instance *new_ti;
+	/* Expand table, अगर necessary, to make room. */
+	अगर (table->ufid_count > ti->n_buckets) अणु
+		काष्ठा table_instance *new_ti;
 
 		new_ti = table_instance_expand(ti, true);
-		if (new_ti) {
-			rcu_assign_pointer(table->ufid_ti, new_ti);
+		अगर (new_ti) अणु
+			rcu_assign_poपूर्णांकer(table->ufid_ti, new_ti);
 			call_rcu(&ti->rcu, flow_tbl_destroy_rcu_cb);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* Must be called with OVS mutex held. */
-int ovs_flow_tbl_insert(struct flow_table *table, struct sw_flow *flow,
-			const struct sw_flow_mask *mask)
-{
-	int err;
+पूर्णांक ovs_flow_tbl_insert(काष्ठा flow_table *table, काष्ठा sw_flow *flow,
+			स्थिर काष्ठा sw_flow_mask *mask)
+अणु
+	पूर्णांक err;
 
 	err = flow_mask_insert(table, flow, mask);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	flow_key_insert(table, flow);
-	if (ovs_identifier_is_ufid(&flow->id))
+	अगर (ovs_identअगरier_is_ufid(&flow->id))
 		flow_ufid_insert(table, flow);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int compare_mask_and_count(const void *a, const void *b)
-{
-	const struct mask_count *mc_a = a;
-	const struct mask_count *mc_b = b;
+अटल पूर्णांक compare_mask_and_count(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	स्थिर काष्ठा mask_count *mc_a = a;
+	स्थिर काष्ठा mask_count *mc_b = b;
 
-	return (s64)mc_b->counter - (s64)mc_a->counter;
-}
+	वापस (s64)mc_b->counter - (s64)mc_a->counter;
+पूर्ण
 
 /* Must be called with OVS mutex held. */
-void ovs_flow_masks_rebalance(struct flow_table *table)
-{
-	struct mask_array *ma = rcu_dereference_ovsl(table->mask_array);
-	struct mask_count *masks_and_count;
-	struct mask_array *new;
-	int masks_entries = 0;
-	int i;
+व्योम ovs_flow_masks_rebalance(काष्ठा flow_table *table)
+अणु
+	काष्ठा mask_array *ma = rcu_dereference_ovsl(table->mask_array);
+	काष्ठा mask_count *masks_and_count;
+	काष्ठा mask_array *new;
+	पूर्णांक masks_entries = 0;
+	पूर्णांक i;
 
 	/* Build array of all current entries with use counters. */
-	masks_and_count = kmalloc_array(ma->max, sizeof(*masks_and_count),
+	masks_and_count = kदो_स्मृति_array(ma->max, माप(*masks_and_count),
 					GFP_KERNEL);
-	if (!masks_and_count)
-		return;
+	अगर (!masks_and_count)
+		वापस;
 
-	for (i = 0; i < ma->max; i++) {
-		struct sw_flow_mask *mask;
-		int cpu;
+	क्रम (i = 0; i < ma->max; i++) अणु
+		काष्ठा sw_flow_mask *mask;
+		पूर्णांक cpu;
 
 		mask = rcu_dereference_ovsl(ma->masks[i]);
-		if (unlikely(!mask))
-			break;
+		अगर (unlikely(!mask))
+			अवरोध;
 
 		masks_and_count[i].index = i;
 		masks_and_count[i].counter = 0;
 
-		for_each_possible_cpu(cpu) {
-			struct mask_array_stats *stats;
-			unsigned int start;
+		क्रम_each_possible_cpu(cpu) अणु
+			काष्ठा mask_array_stats *stats;
+			अचिन्हित पूर्णांक start;
 			u64 counter;
 
 			stats = per_cpu_ptr(ma->masks_usage_stats, cpu);
-			do {
+			करो अणु
 				start = u64_stats_fetch_begin_irq(&stats->syncp);
 				counter = stats->usage_cntrs[i];
-			} while (u64_stats_fetch_retry_irq(&stats->syncp,
+			पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp,
 							   start));
 
 			masks_and_count[i].counter += counter;
-		}
+		पूर्ण
 
 		/* Subtract the zero count value. */
 		masks_and_count[i].counter -= ma->masks_usage_zero_cntr[i];
 
 		/* Rather than calling tbl_mask_array_reset_counters()
-		 * below when no change is needed, do it inline here.
+		 * below when no change is needed, करो it अंतरभूत here.
 		 */
 		ma->masks_usage_zero_cntr[i] += masks_and_count[i].counter;
-	}
+	पूर्ण
 
-	if (i == 0)
-		goto free_mask_entries;
+	अगर (i == 0)
+		जाओ मुक्त_mask_entries;
 
 	/* Sort the entries */
 	masks_entries = i;
-	sort(masks_and_count, masks_entries, sizeof(*masks_and_count),
-	     compare_mask_and_count, NULL);
+	sort(masks_and_count, masks_entries, माप(*masks_and_count),
+	     compare_mask_and_count, शून्य);
 
-	/* If the order is the same, nothing to do... */
-	for (i = 0; i < masks_entries; i++) {
-		if (i != masks_and_count[i].index)
-			break;
-	}
-	if (i == masks_entries)
-		goto free_mask_entries;
+	/* If the order is the same, nothing to करो... */
+	क्रम (i = 0; i < masks_entries; i++) अणु
+		अगर (i != masks_and_count[i].index)
+			अवरोध;
+	पूर्ण
+	अगर (i == masks_entries)
+		जाओ मुक्त_mask_entries;
 
 	/* Rebuilt the new list in order of usage. */
 	new = tbl_mask_array_alloc(ma->max);
-	if (!new)
-		goto free_mask_entries;
+	अगर (!new)
+		जाओ मुक्त_mask_entries;
 
-	for (i = 0; i < masks_entries; i++) {
-		int index = masks_and_count[i].index;
+	क्रम (i = 0; i < masks_entries; i++) अणु
+		पूर्णांक index = masks_and_count[i].index;
 
-		if (ovsl_dereference(ma->masks[index]))
+		अगर (ovsl_dereference(ma->masks[index]))
 			new->masks[new->count++] = ma->masks[index];
-	}
+	पूर्ण
 
-	rcu_assign_pointer(table->mask_array, new);
+	rcu_assign_poपूर्णांकer(table->mask_array, new);
 	call_rcu(&ma->rcu, mask_array_rcu_cb);
 
-free_mask_entries:
-	kfree(masks_and_count);
-}
+मुक्त_mask_entries:
+	kमुक्त(masks_and_count);
+पूर्ण
 
 /* Initializes the flow module.
- * Returns zero if successful or a negative error code. */
-int ovs_flow_init(void)
-{
-	BUILD_BUG_ON(__alignof__(struct sw_flow_key) % __alignof__(long));
-	BUILD_BUG_ON(sizeof(struct sw_flow_key) % sizeof(long));
+ * Returns zero अगर successful or a negative error code. */
+पूर्णांक ovs_flow_init(व्योम)
+अणु
+	BUILD_BUG_ON(__alignof__(काष्ठा sw_flow_key) % __alignof__(दीर्घ));
+	BUILD_BUG_ON(माप(काष्ठा sw_flow_key) % माप(दीर्घ));
 
-	flow_cache = kmem_cache_create("sw_flow", sizeof(struct sw_flow)
+	flow_cache = kmem_cache_create("sw_flow", माप(काष्ठा sw_flow)
 				       + (nr_cpu_ids
-					  * sizeof(struct sw_flow_stats *)),
-				       0, 0, NULL);
-	if (flow_cache == NULL)
-		return -ENOMEM;
+					  * माप(काष्ठा sw_flow_stats *)),
+				       0, 0, शून्य);
+	अगर (flow_cache == शून्य)
+		वापस -ENOMEM;
 
 	flow_stats_cache
-		= kmem_cache_create("sw_flow_stats", sizeof(struct sw_flow_stats),
-				    0, SLAB_HWCACHE_ALIGN, NULL);
-	if (flow_stats_cache == NULL) {
+		= kmem_cache_create("sw_flow_stats", माप(काष्ठा sw_flow_stats),
+				    0, SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (flow_stats_cache == शून्य) अणु
 		kmem_cache_destroy(flow_cache);
-		flow_cache = NULL;
-		return -ENOMEM;
-	}
+		flow_cache = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Uninitializes the flow module. */
-void ovs_flow_exit(void)
-{
+व्योम ovs_flow_निकास(व्योम)
+अणु
 	kmem_cache_destroy(flow_stats_cache);
 	kmem_cache_destroy(flow_cache);
-}
+पूर्ण

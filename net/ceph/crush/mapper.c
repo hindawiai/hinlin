@@ -1,58 +1,59 @@
+<शैली गुरु>
 /*
- * Ceph - scalable distributed file system
+ * Ceph - scalable distributed file प्रणाली
  *
  * Copyright (C) 2015 Intel Corporation All Rights Reserved
  *
- * This is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
+ * This is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU Lesser General Public
  * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
  *
  */
 
-#ifdef __KERNEL__
-# include <linux/string.h>
+#अगर_घोषित __KERNEL__
+# include <linux/माला.स>
 # include <linux/slab.h>
 # include <linux/bug.h>
 # include <linux/kernel.h>
 # include <linux/crush/crush.h>
 # include <linux/crush/hash.h>
 # include <linux/crush/mapper.h>
-#else
+#अन्यथा
 # include "crush_compat.h"
 # include "crush.h"
 # include "hash.h"
 # include "mapper.h"
-#endif
-#include "crush_ln_table.h"
+#पूर्ण_अगर
+#समावेश "crush_ln_table.h"
 
-#define dprintk(args...) /* printf(args) */
+#घोषणा dprपूर्णांकk(args...) /* म_लिखो(args) */
 
 /*
  * Implement the core CRUSH mapping algorithm.
  */
 
 /**
- * crush_find_rule - find a crush_rule id for a given ruleset, type, and size.
+ * crush_find_rule - find a crush_rule id क्रम a given ruleset, type, and size.
  * @map: the crush_map
  * @ruleset: the storage ruleset id (user defined)
  * @type: storage ruleset type (user defined)
  * @size: output set size
  */
-int crush_find_rule(const struct crush_map *map, int ruleset, int type, int size)
-{
+पूर्णांक crush_find_rule(स्थिर काष्ठा crush_map *map, पूर्णांक ruleset, पूर्णांक type, पूर्णांक size)
+अणु
 	__u32 i;
 
-	for (i = 0; i < map->max_rules; i++) {
-		if (map->rules[i] &&
+	क्रम (i = 0; i < map->max_rules; i++) अणु
+		अगर (map->rules[i] &&
 		    map->rules[i]->mask.ruleset == ruleset &&
 		    map->rules[i]->mask.type == type &&
 		    map->rules[i]->mask.min_size <= size &&
 		    map->rules[i]->mask.max_size >= size)
-			return i;
-	}
-	return -1;
-}
+			वापस i;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
 /*
  * bucket choose methods
@@ -63,149 +64,149 @@ int crush_find_rule(const struct crush_map *map, int ruleset, int type, int size
  */
 
 /*
- * Choose based on a random permutation of the bucket.
+ * Choose based on a अक्रमom permutation of the bucket.
  *
- * We used to use some prime number arithmetic to do this, but it
- * wasn't very random, and had some other bad behaviors.  Instead, we
- * calculate an actual random permutation of the bucket members.
- * Since this is expensive, we optimize for the r=0 case, which
+ * We used to use some prime number arithmetic to करो this, but it
+ * wasn't very अक्रमom, and had some other bad behaviors.  Instead, we
+ * calculate an actual अक्रमom permutation of the bucket members.
+ * Since this is expensive, we optimize क्रम the r=0 हाल, which
  * captures the vast majority of calls.
  */
-static int bucket_perm_choose(const struct crush_bucket *bucket,
-			      struct crush_work_bucket *work,
-			      int x, int r)
-{
-	unsigned int pr = r % bucket->size;
-	unsigned int i, s;
+अटल पूर्णांक bucket_perm_choose(स्थिर काष्ठा crush_bucket *bucket,
+			      काष्ठा crush_work_bucket *work,
+			      पूर्णांक x, पूर्णांक r)
+अणु
+	अचिन्हित पूर्णांक pr = r % bucket->size;
+	अचिन्हित पूर्णांक i, s;
 
-	/* start a new permutation if @x has changed */
-	if (work->perm_x != (__u32)x || work->perm_n == 0) {
-		dprintk("bucket %d new x=%d\n", bucket->id, x);
+	/* start a new permutation अगर @x has changed */
+	अगर (work->perm_x != (__u32)x || work->perm_n == 0) अणु
+		dprपूर्णांकk("bucket %d new x=%d\n", bucket->id, x);
 		work->perm_x = x;
 
-		/* optimize common r=0 case */
-		if (pr == 0) {
+		/* optimize common r=0 हाल */
+		अगर (pr == 0) अणु
 			s = crush_hash32_3(bucket->hash, x, bucket->id, 0) %
 				bucket->size;
 			work->perm[0] = s;
 			work->perm_n = 0xffff;   /* magic value, see below */
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (i = 0; i < bucket->size; i++)
+		क्रम (i = 0; i < bucket->size; i++)
 			work->perm[i] = i;
 		work->perm_n = 0;
-	} else if (work->perm_n == 0xffff) {
-		/* clean up after the r=0 case above */
-		for (i = 1; i < bucket->size; i++)
+	पूर्ण अन्यथा अगर (work->perm_n == 0xffff) अणु
+		/* clean up after the r=0 हाल above */
+		क्रम (i = 1; i < bucket->size; i++)
 			work->perm[i] = i;
 		work->perm[work->perm[0]] = 0;
 		work->perm_n = 1;
-	}
+	पूर्ण
 
 	/* calculate permutation up to pr */
-	for (i = 0; i < work->perm_n; i++)
-		dprintk(" perm_choose have %d: %d\n", i, work->perm[i]);
-	while (work->perm_n <= pr) {
-		unsigned int p = work->perm_n;
-		/* no point in swapping the final entry */
-		if (p < bucket->size - 1) {
+	क्रम (i = 0; i < work->perm_n; i++)
+		dprपूर्णांकk(" perm_choose have %d: %d\n", i, work->perm[i]);
+	जबतक (work->perm_n <= pr) अणु
+		अचिन्हित पूर्णांक p = work->perm_n;
+		/* no poपूर्णांक in swapping the final entry */
+		अगर (p < bucket->size - 1) अणु
 			i = crush_hash32_3(bucket->hash, x, bucket->id, p) %
 				(bucket->size - p);
-			if (i) {
-				unsigned int t = work->perm[p + i];
+			अगर (i) अणु
+				अचिन्हित पूर्णांक t = work->perm[p + i];
 				work->perm[p + i] = work->perm[p];
 				work->perm[p] = t;
-			}
-			dprintk(" perm_choose swap %d with %d\n", p, p+i);
-		}
+			पूर्ण
+			dprपूर्णांकk(" perm_choose swap %d with %d\n", p, p+i);
+		पूर्ण
 		work->perm_n++;
-	}
-	for (i = 0; i < bucket->size; i++)
-		dprintk(" perm_choose  %d: %d\n", i, work->perm[i]);
+	पूर्ण
+	क्रम (i = 0; i < bucket->size; i++)
+		dprपूर्णांकk(" perm_choose  %d: %d\n", i, work->perm[i]);
 
 	s = work->perm[pr];
 out:
-	dprintk(" perm_choose %d sz=%d x=%d r=%d (%d) s=%d\n", bucket->id,
+	dprपूर्णांकk(" perm_choose %d sz=%d x=%d r=%d (%d) s=%d\n", bucket->id,
 		bucket->size, x, r, pr, s);
-	return bucket->items[s];
-}
+	वापस bucket->items[s];
+पूर्ण
 
-/* uniform */
-static int bucket_uniform_choose(const struct crush_bucket_uniform *bucket,
-				 struct crush_work_bucket *work, int x, int r)
-{
-	return bucket_perm_choose(&bucket->h, work, x, r);
-}
+/* unअगरorm */
+अटल पूर्णांक bucket_unअगरorm_choose(स्थिर काष्ठा crush_bucket_unअगरorm *bucket,
+				 काष्ठा crush_work_bucket *work, पूर्णांक x, पूर्णांक r)
+अणु
+	वापस bucket_perm_choose(&bucket->h, work, x, r);
+पूर्ण
 
 /* list */
-static int bucket_list_choose(const struct crush_bucket_list *bucket,
-			      int x, int r)
-{
-	int i;
+अटल पूर्णांक bucket_list_choose(स्थिर काष्ठा crush_bucket_list *bucket,
+			      पूर्णांक x, पूर्णांक r)
+अणु
+	पूर्णांक i;
 
-	for (i = bucket->h.size-1; i >= 0; i--) {
+	क्रम (i = bucket->h.size-1; i >= 0; i--) अणु
 		__u64 w = crush_hash32_4(bucket->h.hash, x, bucket->h.items[i],
 					 r, bucket->h.id);
 		w &= 0xffff;
-		dprintk("list_choose i=%d x=%d r=%d item %d weight %x "
+		dprपूर्णांकk("list_choose i=%d x=%d r=%d item %d weight %x "
 			"sw %x rand %llx",
 			i, x, r, bucket->h.items[i], bucket->item_weights[i],
 			bucket->sum_weights[i], w);
 		w *= bucket->sum_weights[i];
 		w = w >> 16;
-		/*dprintk(" scaled %llx\n", w);*/
-		if (w < bucket->item_weights[i]) {
-			return bucket->h.items[i];
-		}
-	}
+		/*dprपूर्णांकk(" scaled %llx\n", w);*/
+		अगर (w < bucket->item_weights[i]) अणु
+			वापस bucket->h.items[i];
+		पूर्ण
+	पूर्ण
 
-	dprintk("bad list sums for bucket %d\n", bucket->h.id);
-	return bucket->h.items[0];
-}
+	dprपूर्णांकk("bad list sums for bucket %d\n", bucket->h.id);
+	वापस bucket->h.items[0];
+पूर्ण
 
 
 /* (binary) tree */
-static int height(int n)
-{
-	int h = 0;
-	while ((n & 1) == 0) {
+अटल पूर्णांक height(पूर्णांक n)
+अणु
+	पूर्णांक h = 0;
+	जबतक ((n & 1) == 0) अणु
 		h++;
 		n = n >> 1;
-	}
-	return h;
-}
+	पूर्ण
+	वापस h;
+पूर्ण
 
-static int left(int x)
-{
-	int h = height(x);
-	return x - (1 << (h-1));
-}
+अटल पूर्णांक left(पूर्णांक x)
+अणु
+	पूर्णांक h = height(x);
+	वापस x - (1 << (h-1));
+पूर्ण
 
-static int right(int x)
-{
-	int h = height(x);
-	return x + (1 << (h-1));
-}
+अटल पूर्णांक right(पूर्णांक x)
+अणु
+	पूर्णांक h = height(x);
+	वापस x + (1 << (h-1));
+पूर्ण
 
-static int terminal(int x)
-{
-	return x & 1;
-}
+अटल पूर्णांक terminal(पूर्णांक x)
+अणु
+	वापस x & 1;
+पूर्ण
 
-static int bucket_tree_choose(const struct crush_bucket_tree *bucket,
-			      int x, int r)
-{
-	int n;
+अटल पूर्णांक bucket_tree_choose(स्थिर काष्ठा crush_bucket_tree *bucket,
+			      पूर्णांक x, पूर्णांक r)
+अणु
+	पूर्णांक n;
 	__u32 w;
 	__u64 t;
 
 	/* start at root */
 	n = bucket->num_nodes >> 1;
 
-	while (!terminal(n)) {
-		int l;
-		/* pick point in [0, w) */
+	जबतक (!terminal(n)) अणु
+		पूर्णांक l;
+		/* pick poपूर्णांक in [0, w) */
 		w = bucket->node_weights[n];
 		t = (__u64)crush_hash32_4(bucket->h.hash, x, n, r,
 					  bucket->h.id) * (__u64)w;
@@ -213,43 +214,43 @@ static int bucket_tree_choose(const struct crush_bucket_tree *bucket,
 
 		/* descend to the left or right? */
 		l = left(n);
-		if (t < bucket->node_weights[l])
+		अगर (t < bucket->node_weights[l])
 			n = l;
-		else
+		अन्यथा
 			n = right(n);
-	}
+	पूर्ण
 
-	return bucket->h.items[n >> 1];
-}
+	वापस bucket->h.items[n >> 1];
+पूर्ण
 
 
 /* straw */
 
-static int bucket_straw_choose(const struct crush_bucket_straw *bucket,
-			       int x, int r)
-{
+अटल पूर्णांक bucket_straw_choose(स्थिर काष्ठा crush_bucket_straw *bucket,
+			       पूर्णांक x, पूर्णांक r)
+अणु
 	__u32 i;
-	int high = 0;
+	पूर्णांक high = 0;
 	__u64 high_draw = 0;
 	__u64 draw;
 
-	for (i = 0; i < bucket->h.size; i++) {
+	क्रम (i = 0; i < bucket->h.size; i++) अणु
 		draw = crush_hash32_3(bucket->h.hash, x, bucket->h.items[i], r);
 		draw &= 0xffff;
 		draw *= bucket->straws[i];
-		if (i == 0 || draw > high_draw) {
+		अगर (i == 0 || draw > high_draw) अणु
 			high = i;
 			high_draw = draw;
-		}
-	}
-	return bucket->h.items[high];
-}
+		पूर्ण
+	पूर्ण
+	वापस bucket->h.items[high];
+पूर्ण
 
 /* compute 2^44*log2(input+1) */
-static __u64 crush_ln(unsigned int xin)
-{
-	unsigned int x = xin;
-	int iexpon, index1, index2;
+अटल __u64 crush_ln(अचिन्हित पूर्णांक xin)
+अणु
+	अचिन्हित पूर्णांक x = xin;
+	पूर्णांक iexpon, index1, index2;
 	__u64 RH, LH, LL, xl64, result;
 
 	x++;
@@ -258,14 +259,14 @@ static __u64 crush_ln(unsigned int xin)
 	iexpon = 15;
 
 	/*
-	 * figure out number of bits we need to shift and
-	 * do it in one step instead of iteratively
+	 * figure out number of bits we need to shअगरt and
+	 * करो it in one step instead of iteratively
 	 */
-	if (!(x & 0x18000)) {
-		int bits = __builtin_clz(x & 0x1FFFF) - 16;
+	अगर (!(x & 0x18000)) अणु
+		पूर्णांक bits = __builtin_clz(x & 0x1FFFF) - 16;
 		x <<= bits;
 		iexpon = 15 - bits;
-	}
+	पूर्ण
 
 	index1 = (x >> 8) << 1;
 	/* RH ~ 2^56/index1 */
@@ -289,59 +290,59 @@ static __u64 crush_ln(unsigned int xin)
 	LH >>= (48 - 12 - 32);
 	result += LH;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 
 /*
  * straw2
  *
- * for reference, see:
+ * क्रम reference, see:
  *
- * https://en.wikipedia.org/wiki/Exponential_distribution#Distribution_of_the_minimum_of_exponential_random_variables
+ * https://en.wikipedia.org/wiki/Exponential_distribution#Distribution_of_the_minimum_of_exponential_अक्रमom_variables
  *
  */
 
-static __u32 *get_choose_arg_weights(const struct crush_bucket_straw2 *bucket,
-				     const struct crush_choose_arg *arg,
-				     int position)
-{
-	if (!arg || !arg->weight_set)
-		return bucket->item_weights;
+अटल __u32 *get_choose_arg_weights(स्थिर काष्ठा crush_bucket_straw2 *bucket,
+				     स्थिर काष्ठा crush_choose_arg *arg,
+				     पूर्णांक position)
+अणु
+	अगर (!arg || !arg->weight_set)
+		वापस bucket->item_weights;
 
-	if (position >= arg->weight_set_size)
+	अगर (position >= arg->weight_set_size)
 		position = arg->weight_set_size - 1;
-	return arg->weight_set[position].weights;
-}
+	वापस arg->weight_set[position].weights;
+पूर्ण
 
-static __s32 *get_choose_arg_ids(const struct crush_bucket_straw2 *bucket,
-				 const struct crush_choose_arg *arg)
-{
-	if (!arg || !arg->ids)
-		return bucket->h.items;
+अटल __s32 *get_choose_arg_ids(स्थिर काष्ठा crush_bucket_straw2 *bucket,
+				 स्थिर काष्ठा crush_choose_arg *arg)
+अणु
+	अगर (!arg || !arg->ids)
+		वापस bucket->h.items;
 
-	return arg->ids;
-}
+	वापस arg->ids;
+पूर्ण
 
-static int bucket_straw2_choose(const struct crush_bucket_straw2 *bucket,
-				int x, int r,
-				const struct crush_choose_arg *arg,
-				int position)
-{
-	unsigned int i, high = 0;
-	unsigned int u;
+अटल पूर्णांक bucket_straw2_choose(स्थिर काष्ठा crush_bucket_straw2 *bucket,
+				पूर्णांक x, पूर्णांक r,
+				स्थिर काष्ठा crush_choose_arg *arg,
+				पूर्णांक position)
+अणु
+	अचिन्हित पूर्णांक i, high = 0;
+	अचिन्हित पूर्णांक u;
 	__s64 ln, draw, high_draw = 0;
 	__u32 *weights = get_choose_arg_weights(bucket, arg, position);
 	__s32 *ids = get_choose_arg_ids(bucket, arg);
 
-	for (i = 0; i < bucket->h.size; i++) {
-		dprintk("weight 0x%x item %d\n", weights[i], ids[i]);
-		if (weights[i]) {
+	क्रम (i = 0; i < bucket->h.size; i++) अणु
+		dprपूर्णांकk("weight 0x%x item %d\n", weights[i], ids[i]);
+		अगर (weights[i]) अणु
 			u = crush_hash32_3(bucket->h.hash, x, ids[i], r);
 			u &= 0xffff;
 
 			/*
-			 * for some reason slightly less than 0x10000 produces
+			 * क्रम some reason slightly less than 0x10000 produces
 			 * a slightly more accurate distribution... probably a
 			 * rounding effect.
 			 *
@@ -353,78 +354,78 @@ static int bucket_straw2_choose(const struct crush_bucket_straw2 *bucket,
 			ln = crush_ln(u) - 0x1000000000000ll;
 
 			/*
-			 * divide by 16.16 fixed-point weight.  note
+			 * भागide by 16.16 fixed-poपूर्णांक weight.  note
 			 * that the ln value is negative, so a larger
 			 * weight means a larger (less negative) value
-			 * for draw.
+			 * क्रम draw.
 			 */
-			draw = div64_s64(ln, weights[i]);
-		} else {
+			draw = भाग64_s64(ln, weights[i]);
+		पूर्ण अन्यथा अणु
 			draw = S64_MIN;
-		}
+		पूर्ण
 
-		if (i == 0 || draw > high_draw) {
+		अगर (i == 0 || draw > high_draw) अणु
 			high = i;
 			high_draw = draw;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return bucket->h.items[high];
-}
+	वापस bucket->h.items[high];
+पूर्ण
 
 
-static int crush_bucket_choose(const struct crush_bucket *in,
-			       struct crush_work_bucket *work,
-			       int x, int r,
-			       const struct crush_choose_arg *arg,
-			       int position)
-{
-	dprintk(" crush_bucket_choose %d x=%d r=%d\n", in->id, x, r);
+अटल पूर्णांक crush_bucket_choose(स्थिर काष्ठा crush_bucket *in,
+			       काष्ठा crush_work_bucket *work,
+			       पूर्णांक x, पूर्णांक r,
+			       स्थिर काष्ठा crush_choose_arg *arg,
+			       पूर्णांक position)
+अणु
+	dprपूर्णांकk(" crush_bucket_choose %d x=%d r=%d\n", in->id, x, r);
 	BUG_ON(in->size == 0);
-	switch (in->alg) {
-	case CRUSH_BUCKET_UNIFORM:
-		return bucket_uniform_choose(
-			(const struct crush_bucket_uniform *)in,
+	चयन (in->alg) अणु
+	हाल CRUSH_BUCKET_UNIFORM:
+		वापस bucket_unअगरorm_choose(
+			(स्थिर काष्ठा crush_bucket_unअगरorm *)in,
 			work, x, r);
-	case CRUSH_BUCKET_LIST:
-		return bucket_list_choose((const struct crush_bucket_list *)in,
+	हाल CRUSH_BUCKET_LIST:
+		वापस bucket_list_choose((स्थिर काष्ठा crush_bucket_list *)in,
 					  x, r);
-	case CRUSH_BUCKET_TREE:
-		return bucket_tree_choose((const struct crush_bucket_tree *)in,
+	हाल CRUSH_BUCKET_TREE:
+		वापस bucket_tree_choose((स्थिर काष्ठा crush_bucket_tree *)in,
 					  x, r);
-	case CRUSH_BUCKET_STRAW:
-		return bucket_straw_choose(
-			(const struct crush_bucket_straw *)in,
+	हाल CRUSH_BUCKET_STRAW:
+		वापस bucket_straw_choose(
+			(स्थिर काष्ठा crush_bucket_straw *)in,
 			x, r);
-	case CRUSH_BUCKET_STRAW2:
-		return bucket_straw2_choose(
-			(const struct crush_bucket_straw2 *)in,
+	हाल CRUSH_BUCKET_STRAW2:
+		वापस bucket_straw2_choose(
+			(स्थिर काष्ठा crush_bucket_straw2 *)in,
 			x, r, arg, position);
-	default:
-		dprintk("unknown bucket %d alg %d\n", in->id, in->alg);
-		return in->items[0];
-	}
-}
+	शेष:
+		dprपूर्णांकk("unknown bucket %d alg %d\n", in->id, in->alg);
+		वापस in->items[0];
+	पूर्ण
+पूर्ण
 
 /*
- * true if device is marked "out" (failed, fully offloaded)
+ * true अगर device is marked "out" (failed, fully offloaded)
  * of the cluster
  */
-static int is_out(const struct crush_map *map,
-		  const __u32 *weight, int weight_max,
-		  int item, int x)
-{
-	if (item >= weight_max)
-		return 1;
-	if (weight[item] >= 0x10000)
-		return 0;
-	if (weight[item] == 0)
-		return 1;
-	if ((crush_hash32_2(CRUSH_HASH_RJENKINS1, x, item) & 0xffff)
+अटल पूर्णांक is_out(स्थिर काष्ठा crush_map *map,
+		  स्थिर __u32 *weight, पूर्णांक weight_max,
+		  पूर्णांक item, पूर्णांक x)
+अणु
+	अगर (item >= weight_max)
+		वापस 1;
+	अगर (weight[item] >= 0x10000)
+		वापस 0;
+	अगर (weight[item] == 0)
+		वापस 1;
+	अगर ((crush_hash32_2(CRUSH_HASH_RJENKINS1, x, item) & 0xffff)
 	    < weight[item])
-		return 0;
-	return 1;
-}
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 /**
  * crush_choose_firstn - choose numrep distinct items of given type
@@ -433,65 +434,65 @@ static int is_out(const struct crush_map *map,
  * @x: crush input value
  * @numrep: the number of items to choose
  * @type: the type of item to choose
- * @out: pointer to output vector
+ * @out: poपूर्णांकer to output vector
  * @outpos: our position in that vector
  * @out_size: size of the out vector
  * @tries: number of attempts to make
  * @recurse_tries: number of attempts to have recursive chooseleaf make
  * @local_retries: localized retries
  * @local_fallback_retries: localized fallback retries
- * @recurse_to_leaf: true if we want one device under each item of given type (chooseleaf instead of choose)
- * @stable: stable mode starts rep=0 in the recursive call for all replicas
+ * @recurse_to_leaf: true अगर we want one device under each item of given type (chooseleaf instead of choose)
+ * @stable: stable mode starts rep=0 in the recursive call क्रम all replicas
  * @vary_r: pass r to recursive calls
- * @out2: second output vector for leaf items (if @recurse_to_leaf)
+ * @out2: second output vector क्रम leaf items (अगर @recurse_to_leaf)
  * @parent_r: r value passed from the parent
  */
-static int crush_choose_firstn(const struct crush_map *map,
-			       struct crush_work *work,
-			       const struct crush_bucket *bucket,
-			       const __u32 *weight, int weight_max,
-			       int x, int numrep, int type,
-			       int *out, int outpos,
-			       int out_size,
-			       unsigned int tries,
-			       unsigned int recurse_tries,
-			       unsigned int local_retries,
-			       unsigned int local_fallback_retries,
-			       int recurse_to_leaf,
-			       unsigned int vary_r,
-			       unsigned int stable,
-			       int *out2,
-			       int parent_r,
-			       const struct crush_choose_arg *choose_args)
-{
-	int rep;
-	unsigned int ftotal, flocal;
-	int retry_descent, retry_bucket, skip_rep;
-	const struct crush_bucket *in = bucket;
-	int r;
-	int i;
-	int item = 0;
-	int itemtype;
-	int collide, reject;
-	int count = out_size;
+अटल पूर्णांक crush_choose_firstn(स्थिर काष्ठा crush_map *map,
+			       काष्ठा crush_work *work,
+			       स्थिर काष्ठा crush_bucket *bucket,
+			       स्थिर __u32 *weight, पूर्णांक weight_max,
+			       पूर्णांक x, पूर्णांक numrep, पूर्णांक type,
+			       पूर्णांक *out, पूर्णांक outpos,
+			       पूर्णांक out_size,
+			       अचिन्हित पूर्णांक tries,
+			       अचिन्हित पूर्णांक recurse_tries,
+			       अचिन्हित पूर्णांक local_retries,
+			       अचिन्हित पूर्णांक local_fallback_retries,
+			       पूर्णांक recurse_to_leaf,
+			       अचिन्हित पूर्णांक vary_r,
+			       अचिन्हित पूर्णांक stable,
+			       पूर्णांक *out2,
+			       पूर्णांक parent_r,
+			       स्थिर काष्ठा crush_choose_arg *choose_args)
+अणु
+	पूर्णांक rep;
+	अचिन्हित पूर्णांक ftotal, flocal;
+	पूर्णांक retry_descent, retry_bucket, skip_rep;
+	स्थिर काष्ठा crush_bucket *in = bucket;
+	पूर्णांक r;
+	पूर्णांक i;
+	पूर्णांक item = 0;
+	पूर्णांक itemtype;
+	पूर्णांक collide, reject;
+	पूर्णांक count = out_size;
 
-	dprintk("CHOOSE%s bucket %d x %d outpos %d numrep %d tries %d recurse_tries %d local_retries %d local_fallback_retries %d parent_r %d stable %d\n",
+	dprपूर्णांकk("CHOOSE%s bucket %d x %d outpos %d numrep %d tries %d recurse_tries %d local_retries %d local_fallback_retries %d parent_r %d stable %d\n",
 		recurse_to_leaf ? "_LEAF" : "",
 		bucket->id, x, outpos, numrep,
 		tries, recurse_tries, local_retries, local_fallback_retries,
 		parent_r, stable);
 
-	for (rep = stable ? 0 : outpos; rep < numrep && count > 0 ; rep++) {
+	क्रम (rep = stable ? 0 : outpos; rep < numrep && count > 0 ; rep++) अणु
 		/* keep trying until we get a non-out, non-colliding item */
 		ftotal = 0;
 		skip_rep = 0;
-		do {
+		करो अणु
 			retry_descent = 0;
 			in = bucket;               /* initial bucket */
 
-			/* choose through intervening buckets */
+			/* choose through पूर्णांकervening buckets */
 			flocal = 0;
-			do {
+			करो अणु
 				collide = 0;
 				retry_bucket = 0;
 				r = rep + parent_r;
@@ -499,66 +500,66 @@ static int crush_choose_firstn(const struct crush_map *map,
 				r += ftotal;
 
 				/* bucket choose */
-				if (in->size == 0) {
+				अगर (in->size == 0) अणु
 					reject = 1;
-					goto reject;
-				}
-				if (local_fallback_retries > 0 &&
+					जाओ reject;
+				पूर्ण
+				अगर (local_fallback_retries > 0 &&
 				    flocal >= (in->size>>1) &&
 				    flocal > local_fallback_retries)
 					item = bucket_perm_choose(
 						in, work->work[-1-in->id],
 						x, r);
-				else
+				अन्यथा
 					item = crush_bucket_choose(
 						in, work->work[-1-in->id],
 						x, r,
 						(choose_args ?
-						 &choose_args[-1-in->id] : NULL),
+						 &choose_args[-1-in->id] : शून्य),
 						outpos);
-				if (item >= map->max_devices) {
-					dprintk("   bad item %d\n", item);
+				अगर (item >= map->max_devices) अणु
+					dprपूर्णांकk("   bad item %d\n", item);
 					skip_rep = 1;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				/* desired type? */
-				if (item < 0)
+				अगर (item < 0)
 					itemtype = map->buckets[-1-item]->type;
-				else
+				अन्यथा
 					itemtype = 0;
-				dprintk("  item %d type %d\n", item, itemtype);
+				dprपूर्णांकk("  item %d type %d\n", item, itemtype);
 
 				/* keep going? */
-				if (itemtype != type) {
-					if (item >= 0 ||
-					    (-1-item) >= map->max_buckets) {
-						dprintk("   bad item type %d\n", type);
+				अगर (itemtype != type) अणु
+					अगर (item >= 0 ||
+					    (-1-item) >= map->max_buckets) अणु
+						dprपूर्णांकk("   bad item type %d\n", type);
 						skip_rep = 1;
-						break;
-					}
+						अवरोध;
+					पूर्ण
 					in = map->buckets[-1-item];
 					retry_bucket = 1;
-					continue;
-				}
+					जारी;
+				पूर्ण
 
 				/* collision? */
-				for (i = 0; i < outpos; i++) {
-					if (out[i] == item) {
+				क्रम (i = 0; i < outpos; i++) अणु
+					अगर (out[i] == item) अणु
 						collide = 1;
-						break;
-					}
-				}
+						अवरोध;
+					पूर्ण
+				पूर्ण
 
 				reject = 0;
-				if (!collide && recurse_to_leaf) {
-					if (item < 0) {
-						int sub_r;
-						if (vary_r)
+				अगर (!collide && recurse_to_leaf) अणु
+					अगर (item < 0) अणु
+						पूर्णांक sub_r;
+						अगर (vary_r)
 							sub_r = r >> (vary_r-1);
-						else
+						अन्यथा
 							sub_r = 0;
-						if (crush_choose_firstn(
+						अगर (crush_choose_firstn(
 							    map,
 							    work,
 							    map->buckets[-1-item],
@@ -571,207 +572,207 @@ static int crush_choose_firstn(const struct crush_map *map,
 							    0,
 							    vary_r,
 							    stable,
-							    NULL,
+							    शून्य,
 							    sub_r,
 							    choose_args) <= outpos)
 							/* didn't get leaf */
 							reject = 1;
-					} else {
-						/* we already have a leaf! */
+					पूर्ण अन्यथा अणु
+						/* we alपढ़ोy have a leaf! */
 						out2[outpos] = item;
-					}
-				}
+					पूर्ण
+				पूर्ण
 
-				if (!reject && !collide) {
+				अगर (!reject && !collide) अणु
 					/* out? */
-					if (itemtype == 0)
+					अगर (itemtype == 0)
 						reject = is_out(map, weight,
 								weight_max,
 								item, x);
-				}
+				पूर्ण
 
 reject:
-				if (reject || collide) {
+				अगर (reject || collide) अणु
 					ftotal++;
 					flocal++;
 
-					if (collide && flocal <= local_retries)
-						/* retry locally a few times */
+					अगर (collide && flocal <= local_retries)
+						/* retry locally a few बार */
 						retry_bucket = 1;
-					else if (local_fallback_retries > 0 &&
+					अन्यथा अगर (local_fallback_retries > 0 &&
 						 flocal <= in->size + local_fallback_retries)
 						/* exhaustive bucket search */
 						retry_bucket = 1;
-					else if (ftotal < tries)
+					अन्यथा अगर (ftotal < tries)
 						/* then retry descent */
 						retry_descent = 1;
-					else
-						/* else give up */
+					अन्यथा
+						/* अन्यथा give up */
 						skip_rep = 1;
-					dprintk("  reject %d  collide %d  "
+					dprपूर्णांकk("  reject %d  collide %d  "
 						"ftotal %u  flocal %u\n",
 						reject, collide, ftotal,
 						flocal);
-				}
-			} while (retry_bucket);
-		} while (retry_descent);
+				पूर्ण
+			पूर्ण जबतक (retry_bucket);
+		पूर्ण जबतक (retry_descent);
 
-		if (skip_rep) {
-			dprintk("skip rep\n");
-			continue;
-		}
+		अगर (skip_rep) अणु
+			dprपूर्णांकk("skip rep\n");
+			जारी;
+		पूर्ण
 
-		dprintk("CHOOSE got %d\n", item);
+		dprपूर्णांकk("CHOOSE got %d\n", item);
 		out[outpos] = item;
 		outpos++;
 		count--;
-#ifndef __KERNEL__
-		if (map->choose_tries && ftotal <= map->choose_total_tries)
+#अगर_अघोषित __KERNEL__
+		अगर (map->choose_tries && ftotal <= map->choose_total_tries)
 			map->choose_tries[ftotal]++;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	dprintk("CHOOSE returns %d\n", outpos);
-	return outpos;
-}
+	dprपूर्णांकk("CHOOSE returns %d\n", outpos);
+	वापस outpos;
+पूर्ण
 
 
 /**
- * crush_choose_indep: alternative breadth-first positionally stable mapping
+ * crush_choose_indep: alternative bपढ़ोth-first positionally stable mapping
  *
  */
-static void crush_choose_indep(const struct crush_map *map,
-			       struct crush_work *work,
-			       const struct crush_bucket *bucket,
-			       const __u32 *weight, int weight_max,
-			       int x, int left, int numrep, int type,
-			       int *out, int outpos,
-			       unsigned int tries,
-			       unsigned int recurse_tries,
-			       int recurse_to_leaf,
-			       int *out2,
-			       int parent_r,
-			       const struct crush_choose_arg *choose_args)
-{
-	const struct crush_bucket *in = bucket;
-	int endpos = outpos + left;
-	int rep;
-	unsigned int ftotal;
-	int r;
-	int i;
-	int item = 0;
-	int itemtype;
-	int collide;
+अटल व्योम crush_choose_indep(स्थिर काष्ठा crush_map *map,
+			       काष्ठा crush_work *work,
+			       स्थिर काष्ठा crush_bucket *bucket,
+			       स्थिर __u32 *weight, पूर्णांक weight_max,
+			       पूर्णांक x, पूर्णांक left, पूर्णांक numrep, पूर्णांक type,
+			       पूर्णांक *out, पूर्णांक outpos,
+			       अचिन्हित पूर्णांक tries,
+			       अचिन्हित पूर्णांक recurse_tries,
+			       पूर्णांक recurse_to_leaf,
+			       पूर्णांक *out2,
+			       पूर्णांक parent_r,
+			       स्थिर काष्ठा crush_choose_arg *choose_args)
+अणु
+	स्थिर काष्ठा crush_bucket *in = bucket;
+	पूर्णांक endpos = outpos + left;
+	पूर्णांक rep;
+	अचिन्हित पूर्णांक ftotal;
+	पूर्णांक r;
+	पूर्णांक i;
+	पूर्णांक item = 0;
+	पूर्णांक itemtype;
+	पूर्णांक collide;
 
-	dprintk("CHOOSE%s INDEP bucket %d x %d outpos %d numrep %d\n", recurse_to_leaf ? "_LEAF" : "",
+	dprपूर्णांकk("CHOOSE%s INDEP bucket %d x %d outpos %d numrep %d\n", recurse_to_leaf ? "_LEAF" : "",
 		bucket->id, x, outpos, numrep);
 
 	/* initially my result is undefined */
-	for (rep = outpos; rep < endpos; rep++) {
+	क्रम (rep = outpos; rep < endpos; rep++) अणु
 		out[rep] = CRUSH_ITEM_UNDEF;
-		if (out2)
+		अगर (out2)
 			out2[rep] = CRUSH_ITEM_UNDEF;
-	}
+	पूर्ण
 
-	for (ftotal = 0; left > 0 && ftotal < tries; ftotal++) {
-#ifdef DEBUG_INDEP
-		if (out2 && ftotal) {
-			dprintk("%u %d a: ", ftotal, left);
-			for (rep = outpos; rep < endpos; rep++) {
-				dprintk(" %d", out[rep]);
-			}
-			dprintk("\n");
-			dprintk("%u %d b: ", ftotal, left);
-			for (rep = outpos; rep < endpos; rep++) {
-				dprintk(" %d", out2[rep]);
-			}
-			dprintk("\n");
-		}
-#endif
-		for (rep = outpos; rep < endpos; rep++) {
-			if (out[rep] != CRUSH_ITEM_UNDEF)
-				continue;
+	क्रम (ftotal = 0; left > 0 && ftotal < tries; ftotal++) अणु
+#अगर_घोषित DEBUG_INDEP
+		अगर (out2 && ftotal) अणु
+			dprपूर्णांकk("%u %d a: ", ftotal, left);
+			क्रम (rep = outpos; rep < endpos; rep++) अणु
+				dprपूर्णांकk(" %d", out[rep]);
+			पूर्ण
+			dprपूर्णांकk("\n");
+			dprपूर्णांकk("%u %d b: ", ftotal, left);
+			क्रम (rep = outpos; rep < endpos; rep++) अणु
+				dprपूर्णांकk(" %d", out2[rep]);
+			पूर्ण
+			dprपूर्णांकk("\n");
+		पूर्ण
+#पूर्ण_अगर
+		क्रम (rep = outpos; rep < endpos; rep++) अणु
+			अगर (out[rep] != CRUSH_ITEM_UNDEF)
+				जारी;
 
 			in = bucket;  /* initial bucket */
 
-			/* choose through intervening buckets */
-			for (;;) {
+			/* choose through पूर्णांकervening buckets */
+			क्रम (;;) अणु
 				/* note: we base the choice on the position
 				 * even in the nested call.  that means that
-				 * if the first layer chooses the same bucket
-				 * in a different position, we will tend to
-				 * choose a different item in that bucket.
+				 * अगर the first layer chooses the same bucket
+				 * in a dअगरferent position, we will tend to
+				 * choose a dअगरferent item in that bucket.
 				 * this will involve more devices in data
 				 * movement and tend to distribute the load.
 				 */
 				r = rep + parent_r;
 
 				/* be careful */
-				if (in->alg == CRUSH_BUCKET_UNIFORM &&
+				अगर (in->alg == CRUSH_BUCKET_UNIFORM &&
 				    in->size % numrep == 0)
 					/* r'=r+(n+1)*f_total */
 					r += (numrep+1) * ftotal;
-				else
+				अन्यथा
 					/* r' = r + n*f_total */
 					r += numrep * ftotal;
 
 				/* bucket choose */
-				if (in->size == 0) {
-					dprintk("   empty bucket\n");
-					break;
-				}
+				अगर (in->size == 0) अणु
+					dprपूर्णांकk("   empty bucket\n");
+					अवरोध;
+				पूर्ण
 
 				item = crush_bucket_choose(
 					in, work->work[-1-in->id],
 					x, r,
 					(choose_args ?
-					 &choose_args[-1-in->id] : NULL),
+					 &choose_args[-1-in->id] : शून्य),
 					outpos);
-				if (item >= map->max_devices) {
-					dprintk("   bad item %d\n", item);
+				अगर (item >= map->max_devices) अणु
+					dprपूर्णांकk("   bad item %d\n", item);
 					out[rep] = CRUSH_ITEM_NONE;
-					if (out2)
+					अगर (out2)
 						out2[rep] = CRUSH_ITEM_NONE;
 					left--;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				/* desired type? */
-				if (item < 0)
+				अगर (item < 0)
 					itemtype = map->buckets[-1-item]->type;
-				else
+				अन्यथा
 					itemtype = 0;
-				dprintk("  item %d type %d\n", item, itemtype);
+				dprपूर्णांकk("  item %d type %d\n", item, itemtype);
 
 				/* keep going? */
-				if (itemtype != type) {
-					if (item >= 0 ||
-					    (-1-item) >= map->max_buckets) {
-						dprintk("   bad item type %d\n", type);
+				अगर (itemtype != type) अणु
+					अगर (item >= 0 ||
+					    (-1-item) >= map->max_buckets) अणु
+						dprपूर्णांकk("   bad item type %d\n", type);
 						out[rep] = CRUSH_ITEM_NONE;
-						if (out2)
+						अगर (out2)
 							out2[rep] =
 								CRUSH_ITEM_NONE;
 						left--;
-						break;
-					}
+						अवरोध;
+					पूर्ण
 					in = map->buckets[-1-item];
-					continue;
-				}
+					जारी;
+				पूर्ण
 
 				/* collision? */
 				collide = 0;
-				for (i = outpos; i < endpos; i++) {
-					if (out[i] == item) {
+				क्रम (i = outpos; i < endpos; i++) अणु
+					अगर (out[i] == item) अणु
 						collide = 1;
-						break;
-					}
-				}
-				if (collide)
-					break;
+						अवरोध;
+					पूर्ण
+				पूर्ण
+				अगर (collide)
+					अवरोध;
 
-				if (recurse_to_leaf) {
-					if (item < 0) {
+				अगर (recurse_to_leaf) अणु
+					अगर (item < 0) अणु
 						crush_choose_indep(
 							map,
 							work,
@@ -780,218 +781,218 @@ static void crush_choose_indep(const struct crush_map *map,
 							x, 1, numrep, 0,
 							out2, rep,
 							recurse_tries, 0,
-							0, NULL, r,
+							0, शून्य, r,
 							choose_args);
-						if (out2[rep] == CRUSH_ITEM_NONE) {
+						अगर (out2[rep] == CRUSH_ITEM_NONE) अणु
 							/* placed nothing; no leaf */
-							break;
-						}
-					} else {
-						/* we already have a leaf! */
+							अवरोध;
+						पूर्ण
+					पूर्ण अन्यथा अणु
+						/* we alपढ़ोy have a leaf! */
 						out2[rep] = item;
-					}
-				}
+					पूर्ण
+				पूर्ण
 
 				/* out? */
-				if (itemtype == 0 &&
+				अगर (itemtype == 0 &&
 				    is_out(map, weight, weight_max, item, x))
-					break;
+					अवरोध;
 
 				/* yay! */
 				out[rep] = item;
 				left--;
-				break;
-			}
-		}
-	}
-	for (rep = outpos; rep < endpos; rep++) {
-		if (out[rep] == CRUSH_ITEM_UNDEF) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	क्रम (rep = outpos; rep < endpos; rep++) अणु
+		अगर (out[rep] == CRUSH_ITEM_UNDEF) अणु
 			out[rep] = CRUSH_ITEM_NONE;
-		}
-		if (out2 && out2[rep] == CRUSH_ITEM_UNDEF) {
+		पूर्ण
+		अगर (out2 && out2[rep] == CRUSH_ITEM_UNDEF) अणु
 			out2[rep] = CRUSH_ITEM_NONE;
-		}
-	}
-#ifndef __KERNEL__
-	if (map->choose_tries && ftotal <= map->choose_total_tries)
+		पूर्ण
+	पूर्ण
+#अगर_अघोषित __KERNEL__
+	अगर (map->choose_tries && ftotal <= map->choose_total_tries)
 		map->choose_tries[ftotal]++;
-#endif
-#ifdef DEBUG_INDEP
-	if (out2) {
-		dprintk("%u %d a: ", ftotal, left);
-		for (rep = outpos; rep < endpos; rep++) {
-			dprintk(" %d", out[rep]);
-		}
-		dprintk("\n");
-		dprintk("%u %d b: ", ftotal, left);
-		for (rep = outpos; rep < endpos; rep++) {
-			dprintk(" %d", out2[rep]);
-		}
-		dprintk("\n");
-	}
-#endif
-}
+#पूर्ण_अगर
+#अगर_घोषित DEBUG_INDEP
+	अगर (out2) अणु
+		dprपूर्णांकk("%u %d a: ", ftotal, left);
+		क्रम (rep = outpos; rep < endpos; rep++) अणु
+			dprपूर्णांकk(" %d", out[rep]);
+		पूर्ण
+		dprपूर्णांकk("\n");
+		dprपूर्णांकk("%u %d b: ", ftotal, left);
+		क्रम (rep = outpos; rep < endpos; rep++) अणु
+			dprपूर्णांकk(" %d", out2[rep]);
+		पूर्ण
+		dprपूर्णांकk("\n");
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 
 /*
  * This takes a chunk of memory and sets it up to be a shiny new
- * working area for a CRUSH placement computation. It must be called
- * on any newly allocated memory before passing it in to
- * crush_do_rule. It may be used repeatedly after that, so long as the
+ * working area क्रम a CRUSH placement computation. It must be called
+ * on any newly allocated memory beक्रमe passing it in to
+ * crush_करो_rule. It may be used repeatedly after that, so दीर्घ as the
  * map has not changed. If the map /has/ changed, you must make sure
  * the working size is no smaller than what was allocated and re-run
  * crush_init_workspace.
  *
- * If you do retain the working space between calls to crush, make it
- * thread-local.
+ * If you करो retain the working space between calls to crush, make it
+ * thपढ़ो-local.
  */
-void crush_init_workspace(const struct crush_map *map, void *v)
-{
-	struct crush_work *w = v;
+व्योम crush_init_workspace(स्थिर काष्ठा crush_map *map, व्योम *v)
+अणु
+	काष्ठा crush_work *w = v;
 	__s32 b;
 
 	/*
 	 * We work by moving through the available space and setting
-	 * values and pointers as we go.
+	 * values and poपूर्णांकers as we go.
 	 *
 	 * It's a bit like Forth's use of the 'allot' word since we
-	 * set the pointer first and then reserve the space for it to
-	 * point to by incrementing the point.
+	 * set the poपूर्णांकer first and then reserve the space क्रम it to
+	 * poपूर्णांक to by incrementing the poपूर्णांक.
 	 */
-	v += sizeof(struct crush_work);
+	v += माप(काष्ठा crush_work);
 	w->work = v;
-	v += map->max_buckets * sizeof(struct crush_work_bucket *);
-	for (b = 0; b < map->max_buckets; ++b) {
-		if (!map->buckets[b])
-			continue;
+	v += map->max_buckets * माप(काष्ठा crush_work_bucket *);
+	क्रम (b = 0; b < map->max_buckets; ++b) अणु
+		अगर (!map->buckets[b])
+			जारी;
 
 		w->work[b] = v;
-		switch (map->buckets[b]->alg) {
-		default:
-			v += sizeof(struct crush_work_bucket);
-			break;
-		}
+		चयन (map->buckets[b]->alg) अणु
+		शेष:
+			v += माप(काष्ठा crush_work_bucket);
+			अवरोध;
+		पूर्ण
 		w->work[b]->perm_x = 0;
 		w->work[b]->perm_n = 0;
 		w->work[b]->perm = v;
-		v += map->buckets[b]->size * sizeof(__u32);
-	}
-	BUG_ON(v - (void *)w != map->working_size);
-}
+		v += map->buckets[b]->size * माप(__u32);
+	पूर्ण
+	BUG_ON(v - (व्योम *)w != map->working_size);
+पूर्ण
 
 /**
- * crush_do_rule - calculate a mapping with the given input and rule
+ * crush_करो_rule - calculate a mapping with the given input and rule
  * @map: the crush_map
  * @ruleno: the rule id
  * @x: hash input
- * @result: pointer to result vector
+ * @result: poपूर्णांकer to result vector
  * @result_max: maximum result size
- * @weight: weight vector (for map leaves)
+ * @weight: weight vector (क्रम map leaves)
  * @weight_max: size of weight vector
- * @cwin: pointer to at least crush_work_size() bytes of memory
- * @choose_args: weights and ids for each known bucket
+ * @cwin: poपूर्णांकer to at least crush_work_size() bytes of memory
+ * @choose_args: weights and ids क्रम each known bucket
  */
-int crush_do_rule(const struct crush_map *map,
-		  int ruleno, int x, int *result, int result_max,
-		  const __u32 *weight, int weight_max,
-		  void *cwin, const struct crush_choose_arg *choose_args)
-{
-	int result_len;
-	struct crush_work *cw = cwin;
-	int *a = cwin + map->working_size;
-	int *b = a + result_max;
-	int *c = b + result_max;
-	int *w = a;
-	int *o = b;
-	int recurse_to_leaf;
-	int wsize = 0;
-	int osize;
-	int *tmp;
-	const struct crush_rule *rule;
+पूर्णांक crush_करो_rule(स्थिर काष्ठा crush_map *map,
+		  पूर्णांक ruleno, पूर्णांक x, पूर्णांक *result, पूर्णांक result_max,
+		  स्थिर __u32 *weight, पूर्णांक weight_max,
+		  व्योम *cwin, स्थिर काष्ठा crush_choose_arg *choose_args)
+अणु
+	पूर्णांक result_len;
+	काष्ठा crush_work *cw = cwin;
+	पूर्णांक *a = cwin + map->working_size;
+	पूर्णांक *b = a + result_max;
+	पूर्णांक *c = b + result_max;
+	पूर्णांक *w = a;
+	पूर्णांक *o = b;
+	पूर्णांक recurse_to_leaf;
+	पूर्णांक wsize = 0;
+	पूर्णांक osize;
+	पूर्णांक *पंचांगp;
+	स्थिर काष्ठा crush_rule *rule;
 	__u32 step;
-	int i, j;
-	int numrep;
-	int out_size;
+	पूर्णांक i, j;
+	पूर्णांक numrep;
+	पूर्णांक out_size;
 	/*
 	 * the original choose_total_tries value was off by one (it
 	 * counted "retries" and not "tries").  add one.
 	 */
-	int choose_tries = map->choose_total_tries + 1;
-	int choose_leaf_tries = 0;
+	पूर्णांक choose_tries = map->choose_total_tries + 1;
+	पूर्णांक choose_leaf_tries = 0;
 	/*
 	 * the local tries values were counted as "retries", though,
-	 * and need no adjustment
+	 * and need no adjusपंचांगent
 	 */
-	int choose_local_retries = map->choose_local_tries;
-	int choose_local_fallback_retries = map->choose_local_fallback_tries;
+	पूर्णांक choose_local_retries = map->choose_local_tries;
+	पूर्णांक choose_local_fallback_retries = map->choose_local_fallback_tries;
 
-	int vary_r = map->chooseleaf_vary_r;
-	int stable = map->chooseleaf_stable;
+	पूर्णांक vary_r = map->chooseleaf_vary_r;
+	पूर्णांक stable = map->chooseleaf_stable;
 
-	if ((__u32)ruleno >= map->max_rules) {
-		dprintk(" bad ruleno %d\n", ruleno);
-		return 0;
-	}
+	अगर ((__u32)ruleno >= map->max_rules) अणु
+		dprपूर्णांकk(" bad ruleno %d\n", ruleno);
+		वापस 0;
+	पूर्ण
 
 	rule = map->rules[ruleno];
 	result_len = 0;
 
-	for (step = 0; step < rule->len; step++) {
-		int firstn = 0;
-		const struct crush_rule_step *curstep = &rule->steps[step];
+	क्रम (step = 0; step < rule->len; step++) अणु
+		पूर्णांक firstn = 0;
+		स्थिर काष्ठा crush_rule_step *curstep = &rule->steps[step];
 
-		switch (curstep->op) {
-		case CRUSH_RULE_TAKE:
-			if ((curstep->arg1 >= 0 &&
+		चयन (curstep->op) अणु
+		हाल CRUSH_RULE_TAKE:
+			अगर ((curstep->arg1 >= 0 &&
 			     curstep->arg1 < map->max_devices) ||
 			    (-1-curstep->arg1 >= 0 &&
 			     -1-curstep->arg1 < map->max_buckets &&
-			     map->buckets[-1-curstep->arg1])) {
+			     map->buckets[-1-curstep->arg1])) अणु
 				w[0] = curstep->arg1;
 				wsize = 1;
-			} else {
-				dprintk(" bad take value %d\n", curstep->arg1);
-			}
-			break;
+			पूर्ण अन्यथा अणु
+				dprपूर्णांकk(" bad take value %d\n", curstep->arg1);
+			पूर्ण
+			अवरोध;
 
-		case CRUSH_RULE_SET_CHOOSE_TRIES:
-			if (curstep->arg1 > 0)
+		हाल CRUSH_RULE_SET_CHOOSE_TRIES:
+			अगर (curstep->arg1 > 0)
 				choose_tries = curstep->arg1;
-			break;
+			अवरोध;
 
-		case CRUSH_RULE_SET_CHOOSELEAF_TRIES:
-			if (curstep->arg1 > 0)
+		हाल CRUSH_RULE_SET_CHOOSELEAF_TRIES:
+			अगर (curstep->arg1 > 0)
 				choose_leaf_tries = curstep->arg1;
-			break;
+			अवरोध;
 
-		case CRUSH_RULE_SET_CHOOSE_LOCAL_TRIES:
-			if (curstep->arg1 >= 0)
+		हाल CRUSH_RULE_SET_CHOOSE_LOCAL_TRIES:
+			अगर (curstep->arg1 >= 0)
 				choose_local_retries = curstep->arg1;
-			break;
+			अवरोध;
 
-		case CRUSH_RULE_SET_CHOOSE_LOCAL_FALLBACK_TRIES:
-			if (curstep->arg1 >= 0)
+		हाल CRUSH_RULE_SET_CHOOSE_LOCAL_FALLBACK_TRIES:
+			अगर (curstep->arg1 >= 0)
 				choose_local_fallback_retries = curstep->arg1;
-			break;
+			अवरोध;
 
-		case CRUSH_RULE_SET_CHOOSELEAF_VARY_R:
-			if (curstep->arg1 >= 0)
+		हाल CRUSH_RULE_SET_CHOOSELEAF_VARY_R:
+			अगर (curstep->arg1 >= 0)
 				vary_r = curstep->arg1;
-			break;
+			अवरोध;
 
-		case CRUSH_RULE_SET_CHOOSELEAF_STABLE:
-			if (curstep->arg1 >= 0)
+		हाल CRUSH_RULE_SET_CHOOSELEAF_STABLE:
+			अगर (curstep->arg1 >= 0)
 				stable = curstep->arg1;
-			break;
+			अवरोध;
 
-		case CRUSH_RULE_CHOOSELEAF_FIRSTN:
-		case CRUSH_RULE_CHOOSE_FIRSTN:
+		हाल CRUSH_RULE_CHOOSELEAF_FIRSTN:
+		हाल CRUSH_RULE_CHOOSE_FIRSTN:
 			firstn = 1;
 			fallthrough;
-		case CRUSH_RULE_CHOOSELEAF_INDEP:
-		case CRUSH_RULE_CHOOSE_INDEP:
-			if (wsize == 0)
-				break;
+		हाल CRUSH_RULE_CHOOSELEAF_INDEP:
+		हाल CRUSH_RULE_CHOOSE_INDEP:
+			अगर (wsize == 0)
+				अवरोध;
 
 			recurse_to_leaf =
 				curstep->op ==
@@ -1002,30 +1003,30 @@ int crush_do_rule(const struct crush_map *map,
 			/* reset output */
 			osize = 0;
 
-			for (i = 0; i < wsize; i++) {
-				int bno;
+			क्रम (i = 0; i < wsize; i++) अणु
+				पूर्णांक bno;
 				numrep = curstep->arg1;
-				if (numrep <= 0) {
+				अगर (numrep <= 0) अणु
 					numrep += result_max;
-					if (numrep <= 0)
-						continue;
-				}
+					अगर (numrep <= 0)
+						जारी;
+				पूर्ण
 				j = 0;
 				/* make sure bucket id is valid */
 				bno = -1 - w[i];
-				if (bno < 0 || bno >= map->max_buckets) {
+				अगर (bno < 0 || bno >= map->max_buckets) अणु
 					/* w[i] is probably CRUSH_ITEM_NONE */
-					dprintk("  bad w[i] %d\n", w[i]);
-					continue;
-				}
-				if (firstn) {
-					int recurse_tries;
-					if (choose_leaf_tries)
+					dprपूर्णांकk("  bad w[i] %d\n", w[i]);
+					जारी;
+				पूर्ण
+				अगर (firstn) अणु
+					पूर्णांक recurse_tries;
+					अगर (choose_leaf_tries)
 						recurse_tries =
 							choose_leaf_tries;
-					else if (map->chooseleaf_descend_once)
+					अन्यथा अगर (map->chooseleaf_descend_once)
 						recurse_tries = 1;
-					else
+					अन्यथा
 						recurse_tries = choose_tries;
 					osize += crush_choose_firstn(
 						map,
@@ -1046,7 +1047,7 @@ int crush_do_rule(const struct crush_map *map,
 						c+osize,
 						0,
 						choose_args);
-				} else {
+				पूर्ण अन्यथा अणु
 					out_size = ((numrep < (result_max-osize)) ?
 						    numrep : (result_max-osize));
 					crush_choose_indep(
@@ -1065,35 +1066,35 @@ int crush_do_rule(const struct crush_map *map,
 						0,
 						choose_args);
 					osize += out_size;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if (recurse_to_leaf)
+			अगर (recurse_to_leaf)
 				/* copy final _leaf_ values to output set */
-				memcpy(o, c, osize*sizeof(*o));
+				स_नकल(o, c, osize*माप(*o));
 
 			/* swap o and w arrays */
-			tmp = o;
+			पंचांगp = o;
 			o = w;
-			w = tmp;
+			w = पंचांगp;
 			wsize = osize;
-			break;
+			अवरोध;
 
 
-		case CRUSH_RULE_EMIT:
-			for (i = 0; i < wsize && result_len < result_max; i++) {
+		हाल CRUSH_RULE_EMIT:
+			क्रम (i = 0; i < wsize && result_len < result_max; i++) अणु
 				result[result_len] = w[i];
 				result_len++;
-			}
+			पूर्ण
 			wsize = 0;
-			break;
+			अवरोध;
 
-		default:
-			dprintk(" unknown op %d at step %d\n",
+		शेष:
+			dprपूर्णांकk(" unknown op %d at step %d\n",
 				curstep->op, step);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return result_len;
-}
+	वापस result_len;
+पूर्ण

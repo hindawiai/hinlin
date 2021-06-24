@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Hyper-V specific APIC code.
+ * Hyper-V specअगरic APIC code.
  *
  * Copyright (C) 2018, Microsoft, Inc.
  *
  * Author : K. Y. Srinivasan <kys@microsoft.com>
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
- * NON INFRINGEMENT.  See the GNU General Public License for more
+ * NON INFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  *
  */
 
-#include <linux/types.h>
-#include <linux/vmalloc.h>
-#include <linux/mm.h>
-#include <linux/clockchips.h>
-#include <linux/hyperv.h>
-#include <linux/slab.h>
-#include <linux/cpuhotplug.h>
-#include <asm/hypervisor.h>
-#include <asm/mshyperv.h>
-#include <asm/apic.h>
+#समावेश <linux/types.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/hyperv.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cpuhotplug.h>
+#समावेश <यंत्र/hypervisor.h>
+#समावेश <यंत्र/mshyperv.h>
+#समावेश <यंत्र/apic.h>
 
-#include <asm/trace/hyperv.h>
+#समावेश <यंत्र/trace/hyperv.h>
 
-static struct apic orig_apic;
+अटल काष्ठा apic orig_apic;
 
-static u64 hv_apic_icr_read(void)
-{
+अटल u64 hv_apic_icr_पढ़ो(व्योम)
+अणु
 	u64 reg_val;
 
 	rdmsrl(HV_X64_MSR_ICR, reg_val);
-	return reg_val;
-}
+	वापस reg_val;
+पूर्ण
 
-static void hv_apic_icr_write(u32 low, u32 id)
-{
+अटल व्योम hv_apic_icr_ग_लिखो(u32 low, u32 id)
+अणु
 	u64 reg_val;
 
 	reg_val = SET_APIC_DEST_FIELD(id);
@@ -51,217 +52,217 @@ static void hv_apic_icr_write(u32 low, u32 id)
 	reg_val |= low;
 
 	wrmsrl(HV_X64_MSR_ICR, reg_val);
-}
+पूर्ण
 
-static u32 hv_apic_read(u32 reg)
-{
+अटल u32 hv_apic_पढ़ो(u32 reg)
+अणु
 	u32 reg_val, hi;
 
-	switch (reg) {
-	case APIC_EOI:
+	चयन (reg) अणु
+	हाल APIC_EOI:
 		rdmsr(HV_X64_MSR_EOI, reg_val, hi);
-		(void)hi;
-		return reg_val;
-	case APIC_TASKPRI:
+		(व्योम)hi;
+		वापस reg_val;
+	हाल APIC_TASKPRI:
 		rdmsr(HV_X64_MSR_TPR, reg_val, hi);
-		(void)hi;
-		return reg_val;
+		(व्योम)hi;
+		वापस reg_val;
 
-	default:
-		return native_apic_mem_read(reg);
-	}
-}
+	शेष:
+		वापस native_apic_mem_पढ़ो(reg);
+	पूर्ण
+पूर्ण
 
-static void hv_apic_write(u32 reg, u32 val)
-{
-	switch (reg) {
-	case APIC_EOI:
+अटल व्योम hv_apic_ग_लिखो(u32 reg, u32 val)
+अणु
+	चयन (reg) अणु
+	हाल APIC_EOI:
 		wrmsr(HV_X64_MSR_EOI, val, 0);
-		break;
-	case APIC_TASKPRI:
+		अवरोध;
+	हाल APIC_TASKPRI:
 		wrmsr(HV_X64_MSR_TPR, val, 0);
-		break;
-	default:
-		native_apic_mem_write(reg, val);
-	}
-}
+		अवरोध;
+	शेष:
+		native_apic_mem_ग_लिखो(reg, val);
+	पूर्ण
+पूर्ण
 
-static void hv_apic_eoi_write(u32 reg, u32 val)
-{
-	struct hv_vp_assist_page *hvp = hv_vp_assist_page[smp_processor_id()];
+अटल व्योम hv_apic_eoi_ग_लिखो(u32 reg, u32 val)
+अणु
+	काष्ठा hv_vp_assist_page *hvp = hv_vp_assist_page[smp_processor_id()];
 
-	if (hvp && (xchg(&hvp->apic_assist, 0) & 0x1))
-		return;
+	अगर (hvp && (xchg(&hvp->apic_assist, 0) & 0x1))
+		वापस;
 
 	wrmsr(HV_X64_MSR_EOI, val, 0);
-}
+पूर्ण
 
 /*
  * IPI implementation on Hyper-V.
  */
-static bool __send_ipi_mask_ex(const struct cpumask *mask, int vector)
-{
-	struct hv_send_ipi_ex **arg;
-	struct hv_send_ipi_ex *ipi_arg;
-	unsigned long flags;
-	int nr_bank = 0;
+अटल bool __send_ipi_mask_ex(स्थिर काष्ठा cpumask *mask, पूर्णांक vector)
+अणु
+	काष्ठा hv_send_ipi_ex **arg;
+	काष्ठा hv_send_ipi_ex *ipi_arg;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक nr_bank = 0;
 	u64 status = HV_STATUS_INVALID_PARAMETER;
 
-	if (!(ms_hyperv.hints & HV_X64_EX_PROCESSOR_MASKS_RECOMMENDED))
-		return false;
+	अगर (!(ms_hyperv.hपूर्णांकs & HV_X64_EX_PROCESSOR_MASKS_RECOMMENDED))
+		वापस false;
 
 	local_irq_save(flags);
-	arg = (struct hv_send_ipi_ex **)this_cpu_ptr(hyperv_pcpu_input_arg);
+	arg = (काष्ठा hv_send_ipi_ex **)this_cpu_ptr(hyperv_pcpu_input_arg);
 
 	ipi_arg = *arg;
-	if (unlikely(!ipi_arg))
-		goto ipi_mask_ex_done;
+	अगर (unlikely(!ipi_arg))
+		जाओ ipi_mask_ex_करोne;
 
 	ipi_arg->vector = vector;
 	ipi_arg->reserved = 0;
 	ipi_arg->vp_set.valid_bank_mask = 0;
 
-	if (!cpumask_equal(mask, cpu_present_mask)) {
-		ipi_arg->vp_set.format = HV_GENERIC_SET_SPARSE_4K;
+	अगर (!cpumask_equal(mask, cpu_present_mask)) अणु
+		ipi_arg->vp_set.क्रमmat = HV_GENERIC_SET_SPARSE_4K;
 		nr_bank = cpumask_to_vpset(&(ipi_arg->vp_set), mask);
-	}
-	if (nr_bank < 0)
-		goto ipi_mask_ex_done;
-	if (!nr_bank)
-		ipi_arg->vp_set.format = HV_GENERIC_SET_ALL;
+	पूर्ण
+	अगर (nr_bank < 0)
+		जाओ ipi_mask_ex_करोne;
+	अगर (!nr_bank)
+		ipi_arg->vp_set.क्रमmat = HV_GENERIC_SET_ALL;
 
-	status = hv_do_rep_hypercall(HVCALL_SEND_IPI_EX, 0, nr_bank,
-			      ipi_arg, NULL);
+	status = hv_करो_rep_hypercall(HVCALL_SEND_IPI_EX, 0, nr_bank,
+			      ipi_arg, शून्य);
 
-ipi_mask_ex_done:
+ipi_mask_ex_करोne:
 	local_irq_restore(flags);
-	return hv_result_success(status);
-}
+	वापस hv_result_success(status);
+पूर्ण
 
-static bool __send_ipi_mask(const struct cpumask *mask, int vector)
-{
-	int cur_cpu, vcpu;
-	struct hv_send_ipi ipi_arg;
+अटल bool __send_ipi_mask(स्थिर काष्ठा cpumask *mask, पूर्णांक vector)
+अणु
+	पूर्णांक cur_cpu, vcpu;
+	काष्ठा hv_send_ipi ipi_arg;
 	u64 status;
 
 	trace_hyperv_send_ipi_mask(mask, vector);
 
-	if (cpumask_empty(mask))
-		return true;
+	अगर (cpumask_empty(mask))
+		वापस true;
 
-	if (!hv_hypercall_pg)
-		return false;
+	अगर (!hv_hypercall_pg)
+		वापस false;
 
-	if ((vector < HV_IPI_LOW_VECTOR) || (vector > HV_IPI_HIGH_VECTOR))
-		return false;
+	अगर ((vector < HV_IPI_LOW_VECTOR) || (vector > HV_IPI_HIGH_VECTOR))
+		वापस false;
 
 	/*
-	 * From the supplied CPU set we need to figure out if we can get away
+	 * From the supplied CPU set we need to figure out अगर we can get away
 	 * with cheaper HVCALL_SEND_IPI hypercall. This is possible when the
 	 * highest VP number in the set is < 64. As VP numbers are usually in
 	 * ascending order and match Linux CPU ids, here is an optimization:
-	 * we check the VP number for the highest bit in the supplied set first
-	 * so we can quickly find out if using HVCALL_SEND_IPI_EX hypercall is
+	 * we check the VP number क्रम the highest bit in the supplied set first
+	 * so we can quickly find out अगर using HVCALL_SEND_IPI_EX hypercall is
 	 * a must. We will also check all VP numbers when walking the supplied
-	 * CPU set to remain correct in all cases.
+	 * CPU set to reमुख्य correct in all हालs.
 	 */
-	if (hv_cpu_number_to_vp_number(cpumask_last(mask)) >= 64)
-		goto do_ex_hypercall;
+	अगर (hv_cpu_number_to_vp_number(cpumask_last(mask)) >= 64)
+		जाओ करो_ex_hypercall;
 
 	ipi_arg.vector = vector;
 	ipi_arg.cpu_mask = 0;
 
-	for_each_cpu(cur_cpu, mask) {
+	क्रम_each_cpu(cur_cpu, mask) अणु
 		vcpu = hv_cpu_number_to_vp_number(cur_cpu);
-		if (vcpu == VP_INVAL)
-			return false;
+		अगर (vcpu == VP_INVAL)
+			वापस false;
 
 		/*
 		 * This particular version of the IPI hypercall can
 		 * only target upto 64 CPUs.
 		 */
-		if (vcpu >= 64)
-			goto do_ex_hypercall;
+		अगर (vcpu >= 64)
+			जाओ करो_ex_hypercall;
 
-		__set_bit(vcpu, (unsigned long *)&ipi_arg.cpu_mask);
-	}
+		__set_bit(vcpu, (अचिन्हित दीर्घ *)&ipi_arg.cpu_mask);
+	पूर्ण
 
-	status = hv_do_fast_hypercall16(HVCALL_SEND_IPI, ipi_arg.vector,
+	status = hv_करो_fast_hypercall16(HVCALL_SEND_IPI, ipi_arg.vector,
 				     ipi_arg.cpu_mask);
-	return hv_result_success(status);
+	वापस hv_result_success(status);
 
-do_ex_hypercall:
-	return __send_ipi_mask_ex(mask, vector);
-}
+करो_ex_hypercall:
+	वापस __send_ipi_mask_ex(mask, vector);
+पूर्ण
 
-static bool __send_ipi_one(int cpu, int vector)
-{
-	int vp = hv_cpu_number_to_vp_number(cpu);
+अटल bool __send_ipi_one(पूर्णांक cpu, पूर्णांक vector)
+अणु
+	पूर्णांक vp = hv_cpu_number_to_vp_number(cpu);
 	u64 status;
 
 	trace_hyperv_send_ipi_one(cpu, vector);
 
-	if (!hv_hypercall_pg || (vp == VP_INVAL))
-		return false;
+	अगर (!hv_hypercall_pg || (vp == VP_INVAL))
+		वापस false;
 
-	if ((vector < HV_IPI_LOW_VECTOR) || (vector > HV_IPI_HIGH_VECTOR))
-		return false;
+	अगर ((vector < HV_IPI_LOW_VECTOR) || (vector > HV_IPI_HIGH_VECTOR))
+		वापस false;
 
-	if (vp >= 64)
-		return __send_ipi_mask_ex(cpumask_of(cpu), vector);
+	अगर (vp >= 64)
+		वापस __send_ipi_mask_ex(cpumask_of(cpu), vector);
 
-	status = hv_do_fast_hypercall16(HVCALL_SEND_IPI, vector, BIT_ULL(vp));
-	return hv_result_success(status);
-}
+	status = hv_करो_fast_hypercall16(HVCALL_SEND_IPI, vector, BIT_ULL(vp));
+	वापस hv_result_success(status);
+पूर्ण
 
-static void hv_send_ipi(int cpu, int vector)
-{
-	if (!__send_ipi_one(cpu, vector))
+अटल व्योम hv_send_ipi(पूर्णांक cpu, पूर्णांक vector)
+अणु
+	अगर (!__send_ipi_one(cpu, vector))
 		orig_apic.send_IPI(cpu, vector);
-}
+पूर्ण
 
-static void hv_send_ipi_mask(const struct cpumask *mask, int vector)
-{
-	if (!__send_ipi_mask(mask, vector))
+अटल व्योम hv_send_ipi_mask(स्थिर काष्ठा cpumask *mask, पूर्णांक vector)
+अणु
+	अगर (!__send_ipi_mask(mask, vector))
 		orig_apic.send_IPI_mask(mask, vector);
-}
+पूर्ण
 
-static void hv_send_ipi_mask_allbutself(const struct cpumask *mask, int vector)
-{
-	unsigned int this_cpu = smp_processor_id();
-	struct cpumask new_mask;
-	const struct cpumask *local_mask;
+अटल व्योम hv_send_ipi_mask_allbutself(स्थिर काष्ठा cpumask *mask, पूर्णांक vector)
+अणु
+	अचिन्हित पूर्णांक this_cpu = smp_processor_id();
+	काष्ठा cpumask new_mask;
+	स्थिर काष्ठा cpumask *local_mask;
 
 	cpumask_copy(&new_mask, mask);
 	cpumask_clear_cpu(this_cpu, &new_mask);
 	local_mask = &new_mask;
-	if (!__send_ipi_mask(local_mask, vector))
+	अगर (!__send_ipi_mask(local_mask, vector))
 		orig_apic.send_IPI_mask_allbutself(mask, vector);
-}
+पूर्ण
 
-static void hv_send_ipi_allbutself(int vector)
-{
+अटल व्योम hv_send_ipi_allbutself(पूर्णांक vector)
+अणु
 	hv_send_ipi_mask_allbutself(cpu_online_mask, vector);
-}
+पूर्ण
 
-static void hv_send_ipi_all(int vector)
-{
-	if (!__send_ipi_mask(cpu_online_mask, vector))
+अटल व्योम hv_send_ipi_all(पूर्णांक vector)
+अणु
+	अगर (!__send_ipi_mask(cpu_online_mask, vector))
 		orig_apic.send_IPI_all(vector);
-}
+पूर्ण
 
-static void hv_send_ipi_self(int vector)
-{
-	if (!__send_ipi_one(smp_processor_id(), vector))
+अटल व्योम hv_send_ipi_self(पूर्णांक vector)
+अणु
+	अगर (!__send_ipi_one(smp_processor_id(), vector))
 		orig_apic.send_IPI_self(vector);
-}
+पूर्ण
 
-void __init hv_apic_init(void)
-{
-	if (ms_hyperv.hints & HV_X64_CLUSTER_IPI_RECOMMENDED) {
+व्योम __init hv_apic_init(व्योम)
+अणु
+	अगर (ms_hyperv.hपूर्णांकs & HV_X64_CLUSTER_IPI_RECOMMENDED) अणु
 		pr_info("Hyper-V: Using IPI hypercalls\n");
 		/*
-		 * Set the IPI entry points.
+		 * Set the IPI entry poपूर्णांकs.
 		 */
 		orig_apic = *apic;
 
@@ -271,28 +272,28 @@ void __init hv_apic_init(void)
 		apic->send_IPI_allbutself = hv_send_ipi_allbutself;
 		apic->send_IPI_all = hv_send_ipi_all;
 		apic->send_IPI_self = hv_send_ipi_self;
-	}
+	पूर्ण
 
-	if (ms_hyperv.hints & HV_X64_APIC_ACCESS_RECOMMENDED) {
+	अगर (ms_hyperv.hपूर्णांकs & HV_X64_APIC_ACCESS_RECOMMENDED) अणु
 		pr_info("Hyper-V: Using enlightened APIC (%s mode)",
 			x2apic_enabled() ? "x2apic" : "xapic");
 		/*
-		 * When in x2apic mode, don't use the Hyper-V specific APIC
-		 * accessors since the field layout in the ICR register is
-		 * different in x2apic mode. Furthermore, the architectural
+		 * When in x2apic mode, करोn't use the Hyper-V specअगरic APIC
+		 * accessors since the field layout in the ICR रेजिस्टर is
+		 * dअगरferent in x2apic mode. Furthermore, the architectural
 		 * x2apic MSRs function just as well as the Hyper-V
 		 * synthetic APIC MSRs, so there's no benefit in having
-		 * separate Hyper-V accessors for x2apic mode. The only
-		 * exception is hv_apic_eoi_write, because it benefits from
-		 * lazy EOI when available, but the same accessor works for
+		 * separate Hyper-V accessors क्रम x2apic mode. The only
+		 * exception is hv_apic_eoi_ग_लिखो, because it benefits from
+		 * lazy EOI when available, but the same accessor works क्रम
 		 * both xapic and x2apic because the field layout is the same.
 		 */
-		apic_set_eoi_write(hv_apic_eoi_write);
-		if (!x2apic_enabled()) {
-			apic->read      = hv_apic_read;
-			apic->write     = hv_apic_write;
-			apic->icr_write = hv_apic_icr_write;
-			apic->icr_read  = hv_apic_icr_read;
-		}
-	}
-}
+		apic_set_eoi_ग_लिखो(hv_apic_eoi_ग_लिखो);
+		अगर (!x2apic_enabled()) अणु
+			apic->पढ़ो      = hv_apic_पढ़ो;
+			apic->ग_लिखो     = hv_apic_ग_लिखो;
+			apic->icr_ग_लिखो = hv_apic_icr_ग_लिखो;
+			apic->icr_पढ़ो  = hv_apic_icr_पढ़ो;
+		पूर्ण
+	पूर्ण
+पूर्ण

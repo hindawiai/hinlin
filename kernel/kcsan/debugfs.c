@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * KCSAN debugfs interface.
+ * KCSAN debugfs पूर्णांकerface.
  *
  * Copyright (C) 2019, Google LLC.
  */
 
-#define pr_fmt(fmt) "kcsan: " fmt
+#घोषणा pr_fmt(fmt) "kcsan: " fmt
 
-#include <linux/atomic.h>
-#include <linux/bsearch.h>
-#include <linux/bug.h>
-#include <linux/debugfs.h>
-#include <linux/init.h>
-#include <linux/kallsyms.h>
-#include <linux/sched.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/sort.h>
-#include <linux/string.h>
-#include <linux/uaccess.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/द्वा_खोज.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/uaccess.h>
 
-#include "kcsan.h"
+#समावेश "kcsan.h"
 
-atomic_long_t kcsan_counters[KCSAN_COUNTER_COUNT];
-static const char *const counter_names[] = {
+atomic_दीर्घ_t kcsan_counters[KCSAN_COUNTER_COUNT];
+अटल स्थिर अक्षर *स्थिर counter_names[] = अणु
 	[KCSAN_COUNTER_USED_WATCHPOINTS]		= "used_watchpoints",
 	[KCSAN_COUNTER_SETUP_WATCHPOINTS]		= "setup_watchpoints",
 	[KCSAN_COUNTER_DATA_RACES]			= "data_races",
@@ -33,56 +34,56 @@ static const char *const counter_names[] = {
 	[KCSAN_COUNTER_RACES_UNKNOWN_ORIGIN]		= "races_unknown_origin",
 	[KCSAN_COUNTER_UNENCODABLE_ACCESSES]		= "unencodable_accesses",
 	[KCSAN_COUNTER_ENCODING_FALSE_POSITIVES]	= "encoding_false_positives",
-};
-static_assert(ARRAY_SIZE(counter_names) == KCSAN_COUNTER_COUNT);
+पूर्ण;
+अटल_निश्चित(ARRAY_SIZE(counter_names) == KCSAN_COUNTER_COUNT);
 
 /*
- * Addresses for filtering functions from reporting. This list can be used as a
+ * Addresses क्रम filtering functions from reporting. This list can be used as a
  * whitelist or blacklist.
  */
-static struct {
-	unsigned long	*addrs;		/* array of addresses */
-	size_t		size;		/* current size */
-	int		used;		/* number of elements used */
-	bool		sorted;		/* if elements are sorted */
-	bool		whitelist;	/* if list is a blacklist or whitelist */
-} report_filterlist = {
-	.addrs		= NULL,
+अटल काष्ठा अणु
+	अचिन्हित दीर्घ	*addrs;		/* array of addresses */
+	माप_प्रकार		size;		/* current size */
+	पूर्णांक		used;		/* number of elements used */
+	bool		sorted;		/* अगर elements are sorted */
+	bool		whitelist;	/* अगर list is a blacklist or whitelist */
+पूर्ण report_filterlist = अणु
+	.addrs		= शून्य,
 	.size		= 8,		/* small initial size */
 	.used		= 0,
 	.sorted		= false,
-	.whitelist	= false,	/* default is blacklist */
-};
-static DEFINE_SPINLOCK(report_filterlist_lock);
+	.whitelist	= false,	/* शेष is blacklist */
+पूर्ण;
+अटल DEFINE_SPINLOCK(report_filterlist_lock);
 
 /*
- * The microbenchmark allows benchmarking KCSAN core runtime only. To run
- * multiple threads, pipe 'microbench=<iters>' from multiple tasks into the
+ * The microbenchmark allows benchmarking KCSAN core runसमय only. To run
+ * multiple thपढ़ोs, pipe 'microbench=<iters>' from multiple tasks पूर्णांकo the
  * debugfs file. This will not generate any conflicts, and tests fast-path only.
  */
-static noinline void microbenchmark(unsigned long iters)
-{
-	const struct kcsan_ctx ctx_save = current->kcsan_ctx;
-	const bool was_enabled = READ_ONCE(kcsan_enabled);
+अटल noअंतरभूत व्योम microbenchmark(अचिन्हित दीर्घ iters)
+अणु
+	स्थिर काष्ठा kcsan_ctx ctx_save = current->kcsan_ctx;
+	स्थिर bool was_enabled = READ_ONCE(kcsan_enabled);
 	cycles_t cycles;
 
 	/* We may have been called from an atomic region; reset context. */
-	memset(&current->kcsan_ctx, 0, sizeof(current->kcsan_ctx));
+	स_रखो(&current->kcsan_ctx, 0, माप(current->kcsan_ctx));
 	/*
-	 * Disable to benchmark fast-path for all accesses, and (expected
-	 * negligible) call into slow-path, but never set up watchpoints.
+	 * Disable to benchmark fast-path क्रम all accesses, and (expected
+	 * negligible) call पूर्णांकo slow-path, but never set up watchpoपूर्णांकs.
 	 */
 	WRITE_ONCE(kcsan_enabled, false);
 
 	pr_info("%s begin | iters: %lu\n", __func__, iters);
 
 	cycles = get_cycles();
-	while (iters--) {
-		unsigned long addr = iters & ((PAGE_SIZE << 8) - 1);
-		int type = !(iters & 0x7f) ? KCSAN_ACCESS_ATOMIC :
+	जबतक (iters--) अणु
+		अचिन्हित दीर्घ addr = iters & ((PAGE_SIZE << 8) - 1);
+		पूर्णांक type = !(iters & 0x7f) ? KCSAN_ACCESS_ATOMIC :
 				(!(iters & 0xf) ? KCSAN_ACCESS_WRITE : 0);
-		__kcsan_check_access((void *)addr, sizeof(long), type);
-	}
+		__kcsan_check_access((व्योम *)addr, माप(दीर्घ), type);
+	पूर्ण
 	cycles = get_cycles() - cycles;
 
 	pr_info("%s end   | cycles: %llu\n", __func__, cycles);
@@ -90,97 +91,97 @@ static noinline void microbenchmark(unsigned long iters)
 	WRITE_ONCE(kcsan_enabled, was_enabled);
 	/* restore context */
 	current->kcsan_ctx = ctx_save;
-}
+पूर्ण
 
-static int cmp_filterlist_addrs(const void *rhs, const void *lhs)
-{
-	const unsigned long a = *(const unsigned long *)rhs;
-	const unsigned long b = *(const unsigned long *)lhs;
+अटल पूर्णांक cmp_filterlist_addrs(स्थिर व्योम *rhs, स्थिर व्योम *lhs)
+अणु
+	स्थिर अचिन्हित दीर्घ a = *(स्थिर अचिन्हित दीर्घ *)rhs;
+	स्थिर अचिन्हित दीर्घ b = *(स्थिर अचिन्हित दीर्घ *)lhs;
 
-	return a < b ? -1 : a == b ? 0 : 1;
-}
+	वापस a < b ? -1 : a == b ? 0 : 1;
+पूर्ण
 
-bool kcsan_skip_report_debugfs(unsigned long func_addr)
-{
-	unsigned long symbolsize, offset;
-	unsigned long flags;
+bool kcsan_skip_report_debugfs(अचिन्हित दीर्घ func_addr)
+अणु
+	अचिन्हित दीर्घ symbolsize, offset;
+	अचिन्हित दीर्घ flags;
 	bool ret = false;
 
-	if (!kallsyms_lookup_size_offset(func_addr, &symbolsize, &offset))
-		return false;
+	अगर (!kallsyms_lookup_size_offset(func_addr, &symbolsize, &offset))
+		वापस false;
 	func_addr -= offset; /* Get function start */
 
 	spin_lock_irqsave(&report_filterlist_lock, flags);
-	if (report_filterlist.used == 0)
-		goto out;
+	अगर (report_filterlist.used == 0)
+		जाओ out;
 
-	/* Sort array if it is unsorted, and then do a binary search. */
-	if (!report_filterlist.sorted) {
+	/* Sort array अगर it is unsorted, and then करो a binary search. */
+	अगर (!report_filterlist.sorted) अणु
 		sort(report_filterlist.addrs, report_filterlist.used,
-		     sizeof(unsigned long), cmp_filterlist_addrs, NULL);
+		     माप(अचिन्हित दीर्घ), cmp_filterlist_addrs, शून्य);
 		report_filterlist.sorted = true;
-	}
-	ret = !!bsearch(&func_addr, report_filterlist.addrs,
-			report_filterlist.used, sizeof(unsigned long),
+	पूर्ण
+	ret = !!द्वा_खोज(&func_addr, report_filterlist.addrs,
+			report_filterlist.used, माप(अचिन्हित दीर्घ),
 			cmp_filterlist_addrs);
-	if (report_filterlist.whitelist)
+	अगर (report_filterlist.whitelist)
 		ret = !ret;
 
 out:
 	spin_unlock_irqrestore(&report_filterlist_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void set_report_filterlist_whitelist(bool whitelist)
-{
-	unsigned long flags;
+अटल व्योम set_report_filterlist_whitelist(bool whitelist)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&report_filterlist_lock, flags);
 	report_filterlist.whitelist = whitelist;
 	spin_unlock_irqrestore(&report_filterlist_lock, flags);
-}
+पूर्ण
 
 /* Returns 0 on success, error-code otherwise. */
-static ssize_t insert_report_filterlist(const char *func)
-{
-	unsigned long flags;
-	unsigned long addr = kallsyms_lookup_name(func);
-	ssize_t ret = 0;
+अटल sमाप_प्रकार insert_report_filterlist(स्थिर अक्षर *func)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ addr = kallsyms_lookup_name(func);
+	sमाप_प्रकार ret = 0;
 
-	if (!addr) {
+	अगर (!addr) अणु
 		pr_err("could not find function: '%s'\n", func);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	spin_lock_irqsave(&report_filterlist_lock, flags);
 
-	if (report_filterlist.addrs == NULL) {
+	अगर (report_filterlist.addrs == शून्य) अणु
 		/* initial allocation */
 		report_filterlist.addrs =
-			kmalloc_array(report_filterlist.size,
-				      sizeof(unsigned long), GFP_ATOMIC);
-		if (report_filterlist.addrs == NULL) {
+			kदो_स्मृति_array(report_filterlist.size,
+				      माप(अचिन्हित दीर्घ), GFP_ATOMIC);
+		अगर (report_filterlist.addrs == शून्य) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
-	} else if (report_filterlist.used == report_filterlist.size) {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अगर (report_filterlist.used == report_filterlist.size) अणु
 		/* resize filterlist */
-		size_t new_size = report_filterlist.size * 2;
-		unsigned long *new_addrs =
-			krealloc(report_filterlist.addrs,
-				 new_size * sizeof(unsigned long), GFP_ATOMIC);
+		माप_प्रकार new_size = report_filterlist.size * 2;
+		अचिन्हित दीर्घ *new_addrs =
+			kपुनः_स्मृति(report_filterlist.addrs,
+				 new_size * माप(अचिन्हित दीर्घ), GFP_ATOMIC);
 
-		if (new_addrs == NULL) {
+		अगर (new_addrs == शून्य) अणु
 			/* leave filterlist itself untouched */
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		report_filterlist.size = new_size;
 		report_filterlist.addrs = new_addrs;
-	}
+	पूर्ण
 
-	/* Note: deduplicating should be done in userspace. */
+	/* Note: deduplicating should be करोne in userspace. */
 	report_filterlist.addrs[report_filterlist.used++] =
 		kallsyms_lookup_name(func);
 	report_filterlist.sorted = false;
@@ -188,88 +189,88 @@ static ssize_t insert_report_filterlist(const char *func)
 out:
 	spin_unlock_irqrestore(&report_filterlist_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int show_info(struct seq_file *file, void *v)
-{
-	int i;
-	unsigned long flags;
+अटल पूर्णांक show_info(काष्ठा seq_file *file, व्योम *v)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
 	/* show stats */
-	seq_printf(file, "enabled: %i\n", READ_ONCE(kcsan_enabled));
-	for (i = 0; i < KCSAN_COUNTER_COUNT; ++i) {
-		seq_printf(file, "%s: %ld\n", counter_names[i],
-			   atomic_long_read(&kcsan_counters[i]));
-	}
+	seq_म_लिखो(file, "enabled: %i\n", READ_ONCE(kcsan_enabled));
+	क्रम (i = 0; i < KCSAN_COUNTER_COUNT; ++i) अणु
+		seq_म_लिखो(file, "%s: %ld\n", counter_names[i],
+			   atomic_दीर्घ_पढ़ो(&kcsan_counters[i]));
+	पूर्ण
 
 	/* show filter functions, and filter type */
 	spin_lock_irqsave(&report_filterlist_lock, flags);
-	seq_printf(file, "\n%s functions: %s\n",
+	seq_म_लिखो(file, "\n%s functions: %s\n",
 		   report_filterlist.whitelist ? "whitelisted" : "blacklisted",
 		   report_filterlist.used == 0 ? "none" : "");
-	for (i = 0; i < report_filterlist.used; ++i)
-		seq_printf(file, " %ps\n", (void *)report_filterlist.addrs[i]);
+	क्रम (i = 0; i < report_filterlist.used; ++i)
+		seq_म_लिखो(file, " %ps\n", (व्योम *)report_filterlist.addrs[i]);
 	spin_unlock_irqrestore(&report_filterlist_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int debugfs_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, show_info, NULL);
-}
+अटल पूर्णांक debugfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, show_info, शून्य);
+पूर्ण
 
-static ssize_t
-debugfs_write(struct file *file, const char __user *buf, size_t count, loff_t *off)
-{
-	char kbuf[KSYM_NAME_LEN];
-	char *arg;
-	int read_len = count < (sizeof(kbuf) - 1) ? count : (sizeof(kbuf) - 1);
+अटल sमाप_प्रकार
+debugfs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *off)
+अणु
+	अक्षर kbuf[KSYM_NAME_LEN];
+	अक्षर *arg;
+	पूर्णांक पढ़ो_len = count < (माप(kbuf) - 1) ? count : (माप(kbuf) - 1);
 
-	if (copy_from_user(kbuf, buf, read_len))
-		return -EFAULT;
-	kbuf[read_len] = '\0';
-	arg = strstrip(kbuf);
+	अगर (copy_from_user(kbuf, buf, पढ़ो_len))
+		वापस -EFAULT;
+	kbuf[पढ़ो_len] = '\0';
+	arg = म_मालाip(kbuf);
 
-	if (!strcmp(arg, "on")) {
+	अगर (!म_भेद(arg, "on")) अणु
 		WRITE_ONCE(kcsan_enabled, true);
-	} else if (!strcmp(arg, "off")) {
+	पूर्ण अन्यथा अगर (!म_भेद(arg, "off")) अणु
 		WRITE_ONCE(kcsan_enabled, false);
-	} else if (str_has_prefix(arg, "microbench=")) {
-		unsigned long iters;
+	पूर्ण अन्यथा अगर (str_has_prefix(arg, "microbench=")) अणु
+		अचिन्हित दीर्घ iters;
 
-		if (kstrtoul(&arg[strlen("microbench=")], 0, &iters))
-			return -EINVAL;
+		अगर (kम_से_अदीर्घ(&arg[म_माप("microbench=")], 0, &iters))
+			वापस -EINVAL;
 		microbenchmark(iters);
-	} else if (!strcmp(arg, "whitelist")) {
+	पूर्ण अन्यथा अगर (!म_भेद(arg, "whitelist")) अणु
 		set_report_filterlist_whitelist(true);
-	} else if (!strcmp(arg, "blacklist")) {
+	पूर्ण अन्यथा अगर (!म_भेद(arg, "blacklist")) अणु
 		set_report_filterlist_whitelist(false);
-	} else if (arg[0] == '!') {
-		ssize_t ret = insert_report_filterlist(&arg[1]);
+	पूर्ण अन्यथा अगर (arg[0] == '!') अणु
+		sमाप_प्रकार ret = insert_report_filterlist(&arg[1]);
 
-		if (ret < 0)
-			return ret;
-	} else {
-		return -EINVAL;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations debugfs_ops =
-{
-	.read	 = seq_read,
-	.open	 = debugfs_open,
-	.write	 = debugfs_write,
+अटल स्थिर काष्ठा file_operations debugfs_ops =
+अणु
+	.पढ़ो	 = seq_पढ़ो,
+	.खोलो	 = debugfs_खोलो,
+	.ग_लिखो	 = debugfs_ग_लिखो,
 	.release = single_release
-};
+पूर्ण;
 
-static int __init kcsan_debugfs_init(void)
-{
-	debugfs_create_file("kcsan", 0644, NULL, NULL, &debugfs_ops);
-	return 0;
-}
+अटल पूर्णांक __init kcsan_debugfs_init(व्योम)
+अणु
+	debugfs_create_file("kcsan", 0644, शून्य, शून्य, &debugfs_ops);
+	वापस 0;
+पूर्ण
 
 late_initcall(kcsan_debugfs_init);

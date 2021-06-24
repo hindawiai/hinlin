@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * I/O remap functions for Hexagon
+ * I/O remap functions क्रम Hexagon
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/io.h>
-#include <linux/vmalloc.h>
-#include <linux/mm.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mm.h>
 
-void __iomem *ioremap(unsigned long phys_addr, unsigned long size)
-{
-	unsigned long last_addr, addr;
-	unsigned long offset = phys_addr & ~PAGE_MASK;
-	struct vm_struct *area;
+व्योम __iomem *ioremap(अचिन्हित दीर्घ phys_addr, अचिन्हित दीर्घ size)
+अणु
+	अचिन्हित दीर्घ last_addr, addr;
+	अचिन्हित दीर्घ offset = phys_addr & ~PAGE_MASK;
+	काष्ठा vm_काष्ठा *area;
 
 	pgprot_t prot = __pgprot(_PAGE_PRESENT|_PAGE_READ|_PAGE_WRITE
 					|(__HEXAGON_C_DEV << 6));
@@ -21,24 +22,24 @@ void __iomem *ioremap(unsigned long phys_addr, unsigned long size)
 	last_addr = phys_addr + size - 1;
 
 	/*  Wrapping not allowed  */
-	if (!size || (last_addr < phys_addr))
-		return NULL;
+	अगर (!size || (last_addr < phys_addr))
+		वापस शून्य;
 
 	/*  Rounds up to next page size, including whole-page offset */
 	size = PAGE_ALIGN(offset + size);
 
 	area = get_vm_area(size, VM_IOREMAP);
-	addr = (unsigned long)area->addr;
+	addr = (अचिन्हित दीर्घ)area->addr;
 
-	if (ioremap_page_range(addr, addr+size, phys_addr, prot)) {
-		vunmap((void *)addr);
-		return NULL;
-	}
+	अगर (ioremap_page_range(addr, addr+size, phys_addr, prot)) अणु
+		vunmap((व्योम *)addr);
+		वापस शून्य;
+	पूर्ण
 
-	return (void __iomem *) (offset + addr);
-}
+	वापस (व्योम __iomem *) (offset + addr);
+पूर्ण
 
-void iounmap(const volatile void __iomem *addr)
-{
-	vunmap((void *) ((unsigned long) addr & PAGE_MASK));
-}
+व्योम iounmap(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	vunmap((व्योम *) ((अचिन्हित दीर्घ) addr & PAGE_MASK));
+पूर्ण

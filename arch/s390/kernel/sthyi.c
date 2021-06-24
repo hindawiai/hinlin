@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * store hypervisor information instruction emulation functions.
+ * store hypervisor inक्रमmation inकाष्ठाion emulation functions.
  *
  * Copyright IBM Corp. 2016
  * Author(s): Janosch Frank <frankja@linux.vnet.ibm.com>
  */
-#include <linux/errno.h>
-#include <linux/pagemap.h>
-#include <linux/vmalloc.h>
-#include <linux/syscalls.h>
-#include <linux/mutex.h>
-#include <asm/asm-offsets.h>
-#include <asm/sclp.h>
-#include <asm/diag.h>
-#include <asm/sysinfo.h>
-#include <asm/ebcdic.h>
-#include <asm/facility.h>
-#include <asm/sthyi.h>
-#include "entry.h"
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/mutex.h>
+#समावेश <यंत्र/यंत्र-offsets.h>
+#समावेश <यंत्र/sclp.h>
+#समावेश <यंत्र/diag.h>
+#समावेश <यंत्र/sysinfo.h>
+#समावेश <यंत्र/ebcdic.h>
+#समावेश <यंत्र/facility.h>
+#समावेश <यंत्र/sthyi.h>
+#समावेश "entry.h"
 
-#define DED_WEIGHT 0xffff
+#घोषणा DED_WEIGHT 0xffff
 /*
  * CP and IFL as EBCDIC strings, SP/0x40 determines the end of string
- * as they are justified with spaces.
+ * as they are justअगरied with spaces.
  */
-#define CP  0xc3d7404040404040UL
-#define IFL 0xc9c6d34040404040UL
+#घोषणा CP  0xc3d7404040404040UL
+#घोषणा IFL 0xc9c6d34040404040UL
 
-enum hdr_flags {
+क्रमागत hdr_flags अणु
 	HDR_NOT_LPAR   = 0x10,
 	HDR_STACK_INCM = 0x20,
 	HDR_STSI_UNAV  = 0x40,
 	HDR_PERF_UNAV  = 0x80,
-};
+पूर्ण;
 
-enum mac_validity {
+क्रमागत mac_validity अणु
 	MAC_NAME_VLD = 0x20,
 	MAC_ID_VLD   = 0x40,
 	MAC_CNT_VLD  = 0x80,
-};
+पूर्ण;
 
-enum par_flag {
+क्रमागत par_flag अणु
 	PAR_MT_EN = 0x80,
-};
+पूर्ण;
 
-enum par_validity {
+क्रमागत par_validity अणु
 	PAR_GRP_VLD  = 0x08,
 	PAR_ID_VLD   = 0x10,
 	PAR_ABS_VLD  = 0x20,
 	PAR_WGHT_VLD = 0x40,
 	PAR_PCNT_VLD  = 0x80,
-};
+पूर्ण;
 
-struct hdr_sctn {
+काष्ठा hdr_sctn अणु
 	u8 infhflg1;
 	u8 infhflg2; /* reserved */
 	u8 infhval1; /* reserved */
@@ -78,26 +79,26 @@ struct hdr_sctn {
 	u16 infgoff3;
 	u16 infglen3;
 	u8 reserved2[4];
-} __packed;
+पूर्ण __packed;
 
-struct mac_sctn {
+काष्ठा mac_sctn अणु
 	u8 infmflg1; /* reserved */
 	u8 infmflg2; /* reserved */
 	u8 infmval1;
 	u8 infmval2; /* reserved */
 	u16 infmscps;
 	u16 infmdcps;
-	u16 infmsifl;
-	u16 infmdifl;
-	char infmname[8];
-	char infmtype[4];
-	char infmmanu[16];
-	char infmseq[16];
-	char infmpman[4];
+	u16 infmsअगरl;
+	u16 infmdअगरl;
+	अक्षर infmname[8];
+	अक्षर infmtype[4];
+	अक्षर infmmanu[16];
+	अक्षर infmseq[16];
+	अक्षर infmpman[4];
 	u8 reserved[4];
-} __packed;
+पूर्ण __packed;
 
-struct par_sctn {
+काष्ठा par_sctn अणु
 	u8 infpflg1;
 	u8 infpflg2; /* reserved */
 	u8 infpval1;
@@ -105,302 +106,302 @@ struct par_sctn {
 	u16 infppnum;
 	u16 infpscps;
 	u16 infpdcps;
-	u16 infpsifl;
-	u16 infpdifl;
+	u16 infpsअगरl;
+	u16 infpdअगरl;
 	u16 reserved;
-	char infppnam[8];
+	अक्षर infppnam[8];
 	u32 infpwbcp;
 	u32 infpabcp;
-	u32 infpwbif;
-	u32 infpabif;
-	char infplgnm[8];
+	u32 infpwbअगर;
+	u32 infpabअगर;
+	अक्षर infplgnm[8];
 	u32 infplgcp;
-	u32 infplgif;
-} __packed;
+	u32 infplgअगर;
+पूर्ण __packed;
 
-struct sthyi_sctns {
-	struct hdr_sctn hdr;
-	struct mac_sctn mac;
-	struct par_sctn par;
-} __packed;
+काष्ठा sthyi_sctns अणु
+	काष्ठा hdr_sctn hdr;
+	काष्ठा mac_sctn mac;
+	काष्ठा par_sctn par;
+पूर्ण __packed;
 
-struct cpu_inf {
+काष्ठा cpu_inf अणु
 	u64 lpar_cap;
 	u64 lpar_grp_cap;
 	u64 lpar_weight;
 	u64 all_weight;
-	int cpu_num_ded;
-	int cpu_num_shd;
-};
+	पूर्णांक cpu_num_ded;
+	पूर्णांक cpu_num_shd;
+पूर्ण;
 
-struct lpar_cpu_inf {
-	struct cpu_inf cp;
-	struct cpu_inf ifl;
-};
+काष्ठा lpar_cpu_inf अणु
+	काष्ठा cpu_inf cp;
+	काष्ठा cpu_inf अगरl;
+पूर्ण;
 
 /*
  * STHYI requires extensive locking in the higher hypervisors
- * and is very computational/memory expensive. Therefore we
+ * and is very computational/memory expensive. Thereक्रमe we
  * cache the retrieved data whose valid period is 1s.
  */
-#define CACHE_VALID_JIFFIES	HZ
+#घोषणा CACHE_VALID_JIFFIES	HZ
 
-struct sthyi_info {
-	void *info;
-	unsigned long end;
-};
+काष्ठा sthyi_info अणु
+	व्योम *info;
+	अचिन्हित दीर्घ end;
+पूर्ण;
 
-static DEFINE_MUTEX(sthyi_mutex);
-static struct sthyi_info sthyi_cache;
+अटल DEFINE_MUTEX(sthyi_mutex);
+अटल काष्ठा sthyi_info sthyi_cache;
 
-static inline u64 cpu_id(u8 ctidx, void *diag224_buf)
-{
-	return *((u64 *)(diag224_buf + (ctidx + 1) * DIAG204_CPU_NAME_LEN));
-}
+अटल अंतरभूत u64 cpu_id(u8 ctidx, व्योम *diag224_buf)
+अणु
+	वापस *((u64 *)(diag224_buf + (ctidx + 1) * DIAG204_CPU_NAME_LEN));
+पूर्ण
 
 /*
  * Scales the cpu capping from the lpar range to the one expected in
  * sthyi data.
  *
  * diag204 reports a cap in hundredths of processor units.
- * z/VM's range for one core is 0 - 0x10000.
+ * z/VM's range क्रम one core is 0 - 0x10000.
  */
-static u32 scale_cap(u32 in)
-{
-	return (0x10000 * in) / 100;
-}
+अटल u32 scale_cap(u32 in)
+अणु
+	वापस (0x10000 * in) / 100;
+पूर्ण
 
-static void fill_hdr(struct sthyi_sctns *sctns)
-{
-	sctns->hdr.infhdln = sizeof(sctns->hdr);
-	sctns->hdr.infmoff = sizeof(sctns->hdr);
-	sctns->hdr.infmlen = sizeof(sctns->mac);
-	sctns->hdr.infplen = sizeof(sctns->par);
+अटल व्योम fill_hdr(काष्ठा sthyi_sctns *sctns)
+अणु
+	sctns->hdr.infhdln = माप(sctns->hdr);
+	sctns->hdr.infmoff = माप(sctns->hdr);
+	sctns->hdr.infmlen = माप(sctns->mac);
+	sctns->hdr.infplen = माप(sctns->par);
 	sctns->hdr.infpoff = sctns->hdr.infhdln + sctns->hdr.infmlen;
 	sctns->hdr.infhtotl = sctns->hdr.infpoff + sctns->hdr.infplen;
-}
+पूर्ण
 
-static void fill_stsi_mac(struct sthyi_sctns *sctns,
-			  struct sysinfo_1_1_1 *sysinfo)
-{
+अटल व्योम fill_stsi_mac(काष्ठा sthyi_sctns *sctns,
+			  काष्ठा sysinfo_1_1_1 *sysinfo)
+अणु
 	sclp_ocf_cpc_name_copy(sctns->mac.infmname);
-	if (*(u64 *)sctns->mac.infmname != 0)
+	अगर (*(u64 *)sctns->mac.infmname != 0)
 		sctns->mac.infmval1 |= MAC_NAME_VLD;
 
-	if (stsi(sysinfo, 1, 1, 1))
-		return;
+	अगर (stsi(sysinfo, 1, 1, 1))
+		वापस;
 
-	memcpy(sctns->mac.infmtype, sysinfo->type, sizeof(sctns->mac.infmtype));
-	memcpy(sctns->mac.infmmanu, sysinfo->manufacturer, sizeof(sctns->mac.infmmanu));
-	memcpy(sctns->mac.infmpman, sysinfo->plant, sizeof(sctns->mac.infmpman));
-	memcpy(sctns->mac.infmseq, sysinfo->sequence, sizeof(sctns->mac.infmseq));
+	स_नकल(sctns->mac.infmtype, sysinfo->type, माप(sctns->mac.infmtype));
+	स_नकल(sctns->mac.infmmanu, sysinfo->manufacturer, माप(sctns->mac.infmmanu));
+	स_नकल(sctns->mac.infmpman, sysinfo->plant, माप(sctns->mac.infmpman));
+	स_नकल(sctns->mac.infmseq, sysinfo->sequence, माप(sctns->mac.infmseq));
 
 	sctns->mac.infmval1 |= MAC_ID_VLD;
-}
+पूर्ण
 
-static void fill_stsi_par(struct sthyi_sctns *sctns,
-			  struct sysinfo_2_2_2 *sysinfo)
-{
-	if (stsi(sysinfo, 2, 2, 2))
-		return;
+अटल व्योम fill_stsi_par(काष्ठा sthyi_sctns *sctns,
+			  काष्ठा sysinfo_2_2_2 *sysinfo)
+अणु
+	अगर (stsi(sysinfo, 2, 2, 2))
+		वापस;
 
 	sctns->par.infppnum = sysinfo->lpar_number;
-	memcpy(sctns->par.infppnam, sysinfo->name, sizeof(sctns->par.infppnam));
+	स_नकल(sctns->par.infppnam, sysinfo->name, माप(sctns->par.infppnam));
 
 	sctns->par.infpval1 |= PAR_ID_VLD;
-}
+पूर्ण
 
-static void fill_stsi(struct sthyi_sctns *sctns)
-{
-	void *sysinfo;
+अटल व्योम fill_stsi(काष्ठा sthyi_sctns *sctns)
+अणु
+	व्योम *sysinfo;
 
 	/* Errors are handled through the validity bits in the response. */
-	sysinfo = (void *)__get_free_page(GFP_KERNEL);
-	if (!sysinfo)
-		return;
+	sysinfo = (व्योम *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!sysinfo)
+		वापस;
 
 	fill_stsi_mac(sctns, sysinfo);
 	fill_stsi_par(sctns, sysinfo);
 
-	free_pages((unsigned long)sysinfo, 0);
-}
+	मुक्त_pages((अचिन्हित दीर्घ)sysinfo, 0);
+पूर्ण
 
-static void fill_diag_mac(struct sthyi_sctns *sctns,
-			  struct diag204_x_phys_block *block,
-			  void *diag224_buf)
-{
-	int i;
+अटल व्योम fill_diag_mac(काष्ठा sthyi_sctns *sctns,
+			  काष्ठा diag204_x_phys_block *block,
+			  व्योम *diag224_buf)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < block->hdr.cpus; i++) {
-		switch (cpu_id(block->cpus[i].ctidx, diag224_buf)) {
-		case CP:
-			if (block->cpus[i].weight == DED_WEIGHT)
+	क्रम (i = 0; i < block->hdr.cpus; i++) अणु
+		चयन (cpu_id(block->cpus[i].ctidx, diag224_buf)) अणु
+		हाल CP:
+			अगर (block->cpus[i].weight == DED_WEIGHT)
 				sctns->mac.infmdcps++;
-			else
+			अन्यथा
 				sctns->mac.infmscps++;
-			break;
-		case IFL:
-			if (block->cpus[i].weight == DED_WEIGHT)
-				sctns->mac.infmdifl++;
-			else
-				sctns->mac.infmsifl++;
-			break;
-		}
-	}
+			अवरोध;
+		हाल IFL:
+			अगर (block->cpus[i].weight == DED_WEIGHT)
+				sctns->mac.infmdअगरl++;
+			अन्यथा
+				sctns->mac.infmsअगरl++;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	sctns->mac.infmval1 |= MAC_CNT_VLD;
-}
+पूर्ण
 
-/* Returns a pointer to the the next partition block. */
-static struct diag204_x_part_block *lpar_cpu_inf(struct lpar_cpu_inf *part_inf,
+/* Returns a poपूर्णांकer to the the next partition block. */
+अटल काष्ठा diag204_x_part_block *lpar_cpu_inf(काष्ठा lpar_cpu_inf *part_inf,
 						 bool this_lpar,
-						 void *diag224_buf,
-						 struct diag204_x_part_block *block)
-{
-	int i, capped = 0, weight_cp = 0, weight_ifl = 0;
-	struct cpu_inf *cpu_inf;
+						 व्योम *diag224_buf,
+						 काष्ठा diag204_x_part_block *block)
+अणु
+	पूर्णांक i, capped = 0, weight_cp = 0, weight_अगरl = 0;
+	काष्ठा cpu_inf *cpu_inf;
 
-	for (i = 0; i < block->hdr.rcpus; i++) {
-		if (!(block->cpus[i].cflag & DIAG204_CPU_ONLINE))
-			continue;
+	क्रम (i = 0; i < block->hdr.rcpus; i++) अणु
+		अगर (!(block->cpus[i].cflag & DIAG204_CPU_ONLINE))
+			जारी;
 
-		switch (cpu_id(block->cpus[i].ctidx, diag224_buf)) {
-		case CP:
+		चयन (cpu_id(block->cpus[i].ctidx, diag224_buf)) अणु
+		हाल CP:
 			cpu_inf = &part_inf->cp;
-			if (block->cpus[i].cur_weight < DED_WEIGHT)
+			अगर (block->cpus[i].cur_weight < DED_WEIGHT)
 				weight_cp |= block->cpus[i].cur_weight;
-			break;
-		case IFL:
-			cpu_inf = &part_inf->ifl;
-			if (block->cpus[i].cur_weight < DED_WEIGHT)
-				weight_ifl |= block->cpus[i].cur_weight;
-			break;
-		default:
-			continue;
-		}
+			अवरोध;
+		हाल IFL:
+			cpu_inf = &part_inf->अगरl;
+			अगर (block->cpus[i].cur_weight < DED_WEIGHT)
+				weight_अगरl |= block->cpus[i].cur_weight;
+			अवरोध;
+		शेष:
+			जारी;
+		पूर्ण
 
-		if (!this_lpar)
-			continue;
+		अगर (!this_lpar)
+			जारी;
 
 		capped |= block->cpus[i].cflag & DIAG204_CPU_CAPPED;
 		cpu_inf->lpar_cap |= block->cpus[i].cpu_type_cap;
 		cpu_inf->lpar_grp_cap |= block->cpus[i].group_cpu_type_cap;
 
-		if (block->cpus[i].weight == DED_WEIGHT)
+		अगर (block->cpus[i].weight == DED_WEIGHT)
 			cpu_inf->cpu_num_ded += 1;
-		else
+		अन्यथा
 			cpu_inf->cpu_num_shd += 1;
-	}
+	पूर्ण
 
-	if (this_lpar && capped) {
+	अगर (this_lpar && capped) अणु
 		part_inf->cp.lpar_weight = weight_cp;
-		part_inf->ifl.lpar_weight = weight_ifl;
-	}
+		part_inf->अगरl.lpar_weight = weight_अगरl;
+	पूर्ण
 	part_inf->cp.all_weight += weight_cp;
-	part_inf->ifl.all_weight += weight_ifl;
-	return (struct diag204_x_part_block *)&block->cpus[i];
-}
+	part_inf->अगरl.all_weight += weight_अगरl;
+	वापस (काष्ठा diag204_x_part_block *)&block->cpus[i];
+पूर्ण
 
-static void fill_diag(struct sthyi_sctns *sctns)
-{
-	int i, r, pages;
+अटल व्योम fill_diag(काष्ठा sthyi_sctns *sctns)
+अणु
+	पूर्णांक i, r, pages;
 	bool this_lpar;
-	void *diag204_buf;
-	void *diag224_buf = NULL;
-	struct diag204_x_info_blk_hdr *ti_hdr;
-	struct diag204_x_part_block *part_block;
-	struct diag204_x_phys_block *phys_block;
-	struct lpar_cpu_inf lpar_inf = {};
+	व्योम *diag204_buf;
+	व्योम *diag224_buf = शून्य;
+	काष्ठा diag204_x_info_blk_hdr *ti_hdr;
+	काष्ठा diag204_x_part_block *part_block;
+	काष्ठा diag204_x_phys_block *phys_block;
+	काष्ठा lpar_cpu_inf lpar_inf = अणुपूर्ण;
 
 	/* Errors are handled through the validity bits in the response. */
-	pages = diag204((unsigned long)DIAG204_SUBC_RSI |
-			(unsigned long)DIAG204_INFO_EXT, 0, NULL);
-	if (pages <= 0)
-		return;
+	pages = diag204((अचिन्हित दीर्घ)DIAG204_SUBC_RSI |
+			(अचिन्हित दीर्घ)DIAG204_INFO_EXT, 0, शून्य);
+	अगर (pages <= 0)
+		वापस;
 
-	diag204_buf = vmalloc(array_size(pages, PAGE_SIZE));
-	if (!diag204_buf)
-		return;
+	diag204_buf = vदो_स्मृति(array_size(pages, PAGE_SIZE));
+	अगर (!diag204_buf)
+		वापस;
 
-	r = diag204((unsigned long)DIAG204_SUBC_STIB7 |
-		    (unsigned long)DIAG204_INFO_EXT, pages, diag204_buf);
-	if (r < 0)
-		goto out;
+	r = diag204((अचिन्हित दीर्घ)DIAG204_SUBC_STIB7 |
+		    (अचिन्हित दीर्घ)DIAG204_INFO_EXT, pages, diag204_buf);
+	अगर (r < 0)
+		जाओ out;
 
-	diag224_buf = (void *)__get_free_page(GFP_KERNEL | GFP_DMA);
-	if (!diag224_buf || diag224(diag224_buf))
-		goto out;
+	diag224_buf = (व्योम *)__get_मुक्त_page(GFP_KERNEL | GFP_DMA);
+	अगर (!diag224_buf || diag224(diag224_buf))
+		जाओ out;
 
 	ti_hdr = diag204_buf;
-	part_block = diag204_buf + sizeof(*ti_hdr);
+	part_block = diag204_buf + माप(*ti_hdr);
 
-	for (i = 0; i < ti_hdr->npar; i++) {
+	क्रम (i = 0; i < ti_hdr->npar; i++) अणु
 		/*
 		 * For the calling lpar we also need to get the cpu
-		 * caps and weights. The time information block header
-		 * specifies the offset to the partition block of the
+		 * caps and weights. The समय inक्रमmation block header
+		 * specअगरies the offset to the partition block of the
 		 * caller lpar, so we know when we process its data.
 		 */
-		this_lpar = (void *)part_block - diag204_buf == ti_hdr->this_part;
+		this_lpar = (व्योम *)part_block - diag204_buf == ti_hdr->this_part;
 		part_block = lpar_cpu_inf(&lpar_inf, this_lpar, diag224_buf,
 					  part_block);
-	}
+	पूर्ण
 
-	phys_block = (struct diag204_x_phys_block *)part_block;
+	phys_block = (काष्ठा diag204_x_phys_block *)part_block;
 	part_block = diag204_buf + ti_hdr->this_part;
-	if (part_block->hdr.mtid)
+	अगर (part_block->hdr.mtid)
 		sctns->par.infpflg1 = PAR_MT_EN;
 
 	sctns->par.infpval1 |= PAR_GRP_VLD;
 	sctns->par.infplgcp = scale_cap(lpar_inf.cp.lpar_grp_cap);
-	sctns->par.infplgif = scale_cap(lpar_inf.ifl.lpar_grp_cap);
-	memcpy(sctns->par.infplgnm, part_block->hdr.hardware_group_name,
-	       sizeof(sctns->par.infplgnm));
+	sctns->par.infplgअगर = scale_cap(lpar_inf.अगरl.lpar_grp_cap);
+	स_नकल(sctns->par.infplgnm, part_block->hdr.hardware_group_name,
+	       माप(sctns->par.infplgnm));
 
 	sctns->par.infpscps = lpar_inf.cp.cpu_num_shd;
 	sctns->par.infpdcps = lpar_inf.cp.cpu_num_ded;
-	sctns->par.infpsifl = lpar_inf.ifl.cpu_num_shd;
-	sctns->par.infpdifl = lpar_inf.ifl.cpu_num_ded;
+	sctns->par.infpsअगरl = lpar_inf.अगरl.cpu_num_shd;
+	sctns->par.infpdअगरl = lpar_inf.अगरl.cpu_num_ded;
 	sctns->par.infpval1 |= PAR_PCNT_VLD;
 
 	sctns->par.infpabcp = scale_cap(lpar_inf.cp.lpar_cap);
-	sctns->par.infpabif = scale_cap(lpar_inf.ifl.lpar_cap);
+	sctns->par.infpabअगर = scale_cap(lpar_inf.अगरl.lpar_cap);
 	sctns->par.infpval1 |= PAR_ABS_VLD;
 
 	/*
-	 * Everything below needs global performance data to be
+	 * Everything below needs global perक्रमmance data to be
 	 * meaningful.
 	 */
-	if (!(ti_hdr->flags & DIAG204_LPAR_PHYS_FLG)) {
+	अगर (!(ti_hdr->flags & DIAG204_LPAR_PHYS_FLG)) अणु
 		sctns->hdr.infhflg1 |= HDR_PERF_UNAV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	fill_diag_mac(sctns, phys_block, diag224_buf);
 
-	if (lpar_inf.cp.lpar_weight) {
+	अगर (lpar_inf.cp.lpar_weight) अणु
 		sctns->par.infpwbcp = sctns->mac.infmscps * 0x10000 *
 			lpar_inf.cp.lpar_weight / lpar_inf.cp.all_weight;
-	}
+	पूर्ण
 
-	if (lpar_inf.ifl.lpar_weight) {
-		sctns->par.infpwbif = sctns->mac.infmsifl * 0x10000 *
-			lpar_inf.ifl.lpar_weight / lpar_inf.ifl.all_weight;
-	}
+	अगर (lpar_inf.अगरl.lpar_weight) अणु
+		sctns->par.infpwbअगर = sctns->mac.infmsअगरl * 0x10000 *
+			lpar_inf.अगरl.lpar_weight / lpar_inf.अगरl.all_weight;
+	पूर्ण
 	sctns->par.infpval1 |= PAR_WGHT_VLD;
 
 out:
-	free_page((unsigned long)diag224_buf);
-	vfree(diag204_buf);
-}
+	मुक्त_page((अचिन्हित दीर्घ)diag224_buf);
+	vमुक्त(diag204_buf);
+पूर्ण
 
-static int sthyi(u64 vaddr, u64 *rc)
-{
-	register u64 code asm("0") = 0;
-	register u64 addr asm("2") = vaddr;
-	register u64 rcode asm("3");
-	int cc;
+अटल पूर्णांक sthyi(u64 vaddr, u64 *rc)
+अणु
+	रेजिस्टर u64 code यंत्र("0") = 0;
+	रेजिस्टर u64 addr यंत्र("2") = vaddr;
+	रेजिस्टर u64 rcode यंत्र("3");
+	पूर्णांक cc;
 
-	asm volatile(
+	यंत्र अस्थिर(
 		".insn   rre,0xB2560000,%[code],%[addr]\n"
 		"ipm     %[cc]\n"
 		"srl     %[cc],28\n"
@@ -408,109 +409,109 @@ static int sthyi(u64 vaddr, u64 *rc)
 		: [code] "d" (code), [addr] "a" (addr)
 		: "memory", "cc");
 	*rc = rcode;
-	return cc;
-}
+	वापस cc;
+पूर्ण
 
-static int fill_dst(void *dst, u64 *rc)
-{
-	struct sthyi_sctns *sctns = (struct sthyi_sctns *)dst;
+अटल पूर्णांक fill_dst(व्योम *dst, u64 *rc)
+अणु
+	काष्ठा sthyi_sctns *sctns = (काष्ठा sthyi_sctns *)dst;
 
 	/*
-	 * If the facility is on, we don't want to emulate the instruction.
+	 * If the facility is on, we करोn't want to emulate the inकाष्ठाion.
 	 * We ask the hypervisor to provide the data.
 	 */
-	if (test_facility(74))
-		return sthyi((u64)dst, rc);
+	अगर (test_facility(74))
+		वापस sthyi((u64)dst, rc);
 
 	fill_hdr(sctns);
 	fill_stsi(sctns);
 	fill_diag(sctns);
 	*rc = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sthyi_init_cache(void)
-{
-	if (sthyi_cache.info)
-		return 0;
-	sthyi_cache.info = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!sthyi_cache.info)
-		return -ENOMEM;
-	sthyi_cache.end = jiffies - 1; /* expired */
-	return 0;
-}
+अटल पूर्णांक sthyi_init_cache(व्योम)
+अणु
+	अगर (sthyi_cache.info)
+		वापस 0;
+	sthyi_cache.info = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!sthyi_cache.info)
+		वापस -ENOMEM;
+	sthyi_cache.end = jअगरfies - 1; /* expired */
+	वापस 0;
+पूर्ण
 
-static int sthyi_update_cache(u64 *rc)
-{
-	int r;
+अटल पूर्णांक sthyi_update_cache(u64 *rc)
+अणु
+	पूर्णांक r;
 
-	memset(sthyi_cache.info, 0, PAGE_SIZE);
+	स_रखो(sthyi_cache.info, 0, PAGE_SIZE);
 	r = fill_dst(sthyi_cache.info, rc);
-	if (r)
-		return r;
-	sthyi_cache.end = jiffies + CACHE_VALID_JIFFIES;
-	return r;
-}
+	अगर (r)
+		वापस r;
+	sthyi_cache.end = jअगरfies + CACHE_VALID_JIFFIES;
+	वापस r;
+पूर्ण
 
 /*
- * sthyi_fill - Fill page with data returned by the STHYI instruction
+ * sthyi_fill - Fill page with data वापसed by the STHYI inकाष्ठाion
  *
- * @dst: Pointer to zeroed page
- * @rc:  Pointer for storing the return code of the instruction
+ * @dst: Poपूर्णांकer to zeroed page
+ * @rc:  Poपूर्णांकer क्रम storing the वापस code of the inकाष्ठाion
  *
- * Fills the destination with system information returned by the STHYI
- * instruction. The data is generated by emulation or execution of STHYI,
- * if available. The return value is the condition code that would be
- * returned, the rc parameter is the return code which is passed in
- * register R2 + 1.
+ * Fills the destination with प्रणाली inक्रमmation वापसed by the STHYI
+ * inकाष्ठाion. The data is generated by emulation or execution of STHYI,
+ * अगर available. The वापस value is the condition code that would be
+ * वापसed, the rc parameter is the वापस code which is passed in
+ * रेजिस्टर R2 + 1.
  */
-int sthyi_fill(void *dst, u64 *rc)
-{
-	int r;
+पूर्णांक sthyi_fill(व्योम *dst, u64 *rc)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&sthyi_mutex);
 	r = sthyi_init_cache();
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 
-	if (time_is_before_jiffies(sthyi_cache.end)) {
+	अगर (समय_is_beक्रमe_jअगरfies(sthyi_cache.end)) अणु
 		/* cache expired */
 		r = sthyi_update_cache(rc);
-		if (r)
-			goto out;
-	}
+		अगर (r)
+			जाओ out;
+	पूर्ण
 	*rc = 0;
-	memcpy(dst, sthyi_cache.info, PAGE_SIZE);
+	स_नकल(dst, sthyi_cache.info, PAGE_SIZE);
 out:
 	mutex_unlock(&sthyi_mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL_GPL(sthyi_fill);
 
-SYSCALL_DEFINE4(s390_sthyi, unsigned long, function_code, void __user *, buffer,
-		u64 __user *, return_code, unsigned long, flags)
-{
+SYSCALL_DEFINE4(s390_sthyi, अचिन्हित दीर्घ, function_code, व्योम __user *, buffer,
+		u64 __user *, वापस_code, अचिन्हित दीर्घ, flags)
+अणु
 	u64 sthyi_rc;
-	void *info;
-	int r;
+	व्योम *info;
+	पूर्णांक r;
 
-	if (flags)
-		return -EINVAL;
-	if (function_code != STHYI_FC_CP_IFL_CAP)
-		return -EOPNOTSUPP;
-	info = (void *)get_zeroed_page(GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	अगर (flags)
+		वापस -EINVAL;
+	अगर (function_code != STHYI_FC_CP_IFL_CAP)
+		वापस -EOPNOTSUPP;
+	info = (व्योम *)get_zeroed_page(GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 	r = sthyi_fill(info, &sthyi_rc);
-	if (r < 0)
-		goto out;
-	if (return_code && put_user(sthyi_rc, return_code)) {
+	अगर (r < 0)
+		जाओ out;
+	अगर (वापस_code && put_user(sthyi_rc, वापस_code)) अणु
 		r = -EFAULT;
-		goto out;
-	}
-	if (copy_to_user(buffer, info, PAGE_SIZE))
+		जाओ out;
+	पूर्ण
+	अगर (copy_to_user(buffer, info, PAGE_SIZE))
 		r = -EFAULT;
 out:
-	free_page((unsigned long)info);
-	return r;
-}
+	मुक्त_page((अचिन्हित दीर्घ)info);
+	वापस r;
+पूर्ण

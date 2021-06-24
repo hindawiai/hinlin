@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2004 Topspin Communications. All rights reserved.
  * Copyright (c) 2005 - 2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006 - 2007 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2020 NVIDIA CORPORATION. All rights reserved.
  */
 
-#include "dr_types.h"
+#समावेश "dr_types.h"
 
-int mlx5dr_buddy_init(struct mlx5dr_icm_buddy_mem *buddy,
-		      unsigned int max_order)
-{
-	int i;
+पूर्णांक mlx5dr_buddy_init(काष्ठा mlx5dr_icm_buddy_mem *buddy,
+		      अचिन्हित पूर्णांक max_order)
+अणु
+	पूर्णांक i;
 
 	buddy->max_order = max_order;
 
@@ -18,153 +19,153 @@ int mlx5dr_buddy_init(struct mlx5dr_icm_buddy_mem *buddy,
 	INIT_LIST_HEAD(&buddy->used_list);
 	INIT_LIST_HEAD(&buddy->hot_list);
 
-	buddy->bitmap = kcalloc(buddy->max_order + 1,
-				sizeof(*buddy->bitmap),
+	buddy->biपंचांगap = kसुस्मृति(buddy->max_order + 1,
+				माप(*buddy->biपंचांगap),
 				GFP_KERNEL);
-	buddy->num_free = kcalloc(buddy->max_order + 1,
-				  sizeof(*buddy->num_free),
+	buddy->num_मुक्त = kसुस्मृति(buddy->max_order + 1,
+				  माप(*buddy->num_मुक्त),
 				  GFP_KERNEL);
 
-	if (!buddy->bitmap || !buddy->num_free)
-		goto err_free_all;
+	अगर (!buddy->biपंचांगap || !buddy->num_मुक्त)
+		जाओ err_मुक्त_all;
 
-	/* Allocating max_order bitmaps, one for each order */
+	/* Allocating max_order biपंचांगaps, one क्रम each order */
 
-	for (i = 0; i <= buddy->max_order; ++i) {
-		unsigned int size = 1 << (buddy->max_order - i);
+	क्रम (i = 0; i <= buddy->max_order; ++i) अणु
+		अचिन्हित पूर्णांक size = 1 << (buddy->max_order - i);
 
-		buddy->bitmap[i] = bitmap_zalloc(size, GFP_KERNEL);
-		if (!buddy->bitmap[i])
-			goto err_out_free_each_bit_per_order;
-	}
+		buddy->biपंचांगap[i] = biपंचांगap_zalloc(size, GFP_KERNEL);
+		अगर (!buddy->biपंचांगap[i])
+			जाओ err_out_मुक्त_each_bit_per_order;
+	पूर्ण
 
-	/* In the beginning, we have only one order that is available for
-	 * use (the biggest one), so mark the first bit in both bitmaps.
+	/* In the beginning, we have only one order that is available क्रम
+	 * use (the biggest one), so mark the first bit in both biपंचांगaps.
 	 */
 
-	bitmap_set(buddy->bitmap[buddy->max_order], 0, 1);
+	biपंचांगap_set(buddy->biपंचांगap[buddy->max_order], 0, 1);
 
-	buddy->num_free[buddy->max_order] = 1;
+	buddy->num_मुक्त[buddy->max_order] = 1;
 
-	return 0;
+	वापस 0;
 
-err_out_free_each_bit_per_order:
-	for (i = 0; i <= buddy->max_order; ++i)
-		bitmap_free(buddy->bitmap[i]);
+err_out_मुक्त_each_bit_per_order:
+	क्रम (i = 0; i <= buddy->max_order; ++i)
+		biपंचांगap_मुक्त(buddy->biपंचांगap[i]);
 
-err_free_all:
-	kfree(buddy->num_free);
-	kfree(buddy->bitmap);
-	return -ENOMEM;
-}
+err_मुक्त_all:
+	kमुक्त(buddy->num_मुक्त);
+	kमुक्त(buddy->biपंचांगap);
+	वापस -ENOMEM;
+पूर्ण
 
-void mlx5dr_buddy_cleanup(struct mlx5dr_icm_buddy_mem *buddy)
-{
-	int i;
+व्योम mlx5dr_buddy_cleanup(काष्ठा mlx5dr_icm_buddy_mem *buddy)
+अणु
+	पूर्णांक i;
 
 	list_del(&buddy->list_node);
 
-	for (i = 0; i <= buddy->max_order; ++i)
-		bitmap_free(buddy->bitmap[i]);
+	क्रम (i = 0; i <= buddy->max_order; ++i)
+		biपंचांगap_मुक्त(buddy->biपंचांगap[i]);
 
-	kfree(buddy->num_free);
-	kfree(buddy->bitmap);
-}
+	kमुक्त(buddy->num_मुक्त);
+	kमुक्त(buddy->biपंचांगap);
+पूर्ण
 
-static int dr_buddy_find_free_seg(struct mlx5dr_icm_buddy_mem *buddy,
-				  unsigned int start_order,
-				  unsigned int *segment,
-				  unsigned int *order)
-{
-	unsigned int seg, order_iter, m;
+अटल पूर्णांक dr_buddy_find_मुक्त_seg(काष्ठा mlx5dr_icm_buddy_mem *buddy,
+				  अचिन्हित पूर्णांक start_order,
+				  अचिन्हित पूर्णांक *segment,
+				  अचिन्हित पूर्णांक *order)
+अणु
+	अचिन्हित पूर्णांक seg, order_iter, m;
 
-	for (order_iter = start_order;
-	     order_iter <= buddy->max_order; ++order_iter) {
-		if (!buddy->num_free[order_iter])
-			continue;
+	क्रम (order_iter = start_order;
+	     order_iter <= buddy->max_order; ++order_iter) अणु
+		अगर (!buddy->num_मुक्त[order_iter])
+			जारी;
 
 		m = 1 << (buddy->max_order - order_iter);
-		seg = find_first_bit(buddy->bitmap[order_iter], m);
+		seg = find_first_bit(buddy->biपंचांगap[order_iter], m);
 
-		if (WARN(seg >= m,
+		अगर (WARN(seg >= m,
 			 "ICM Buddy: failed finding free mem for order %d\n",
 			 order_iter))
-			return -ENOMEM;
+			वापस -ENOMEM;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (order_iter > buddy->max_order)
-		return -ENOMEM;
+	अगर (order_iter > buddy->max_order)
+		वापस -ENOMEM;
 
 	*segment = seg;
 	*order = order_iter;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mlx5dr_buddy_alloc_mem() - Update second level bitmap.
+ * mlx5dr_buddy_alloc_mem() - Update second level biपंचांगap.
  * @buddy: Buddy to update.
  * @order: Order of the buddy to update.
  * @segment: Segment number.
  *
  * This function finds the first area of the ICM memory managed by this buddy.
- * It uses the data structures of the buddy system in order to find the first
- * area of free place, starting from the current order till the maximum order
- * in the system.
+ * It uses the data काष्ठाures of the buddy प्रणाली in order to find the first
+ * area of मुक्त place, starting from the current order till the maximum order
+ * in the प्रणाली.
  *
  * Return: 0 when segment is set, non-zero error status otherwise.
  *
- * The function returns the location (segment) in the whole buddy ICM memory
- * area - the index of the memory segment that is available for use.
+ * The function वापसs the location (segment) in the whole buddy ICM memory
+ * area - the index of the memory segment that is available क्रम use.
  */
-int mlx5dr_buddy_alloc_mem(struct mlx5dr_icm_buddy_mem *buddy,
-			   unsigned int order,
-			   unsigned int *segment)
-{
-	unsigned int seg, order_iter;
-	int err;
+पूर्णांक mlx5dr_buddy_alloc_mem(काष्ठा mlx5dr_icm_buddy_mem *buddy,
+			   अचिन्हित पूर्णांक order,
+			   अचिन्हित पूर्णांक *segment)
+अणु
+	अचिन्हित पूर्णांक seg, order_iter;
+	पूर्णांक err;
 
-	err = dr_buddy_find_free_seg(buddy, order, &seg, &order_iter);
-	if (err)
-		return err;
+	err = dr_buddy_find_मुक्त_seg(buddy, order, &seg, &order_iter);
+	अगर (err)
+		वापस err;
 
-	bitmap_clear(buddy->bitmap[order_iter], seg, 1);
-	--buddy->num_free[order_iter];
+	biपंचांगap_clear(buddy->biपंचांगap[order_iter], seg, 1);
+	--buddy->num_मुक्त[order_iter];
 
-	/* If we found free memory in some order that is bigger than the
+	/* If we found मुक्त memory in some order that is bigger than the
 	 * required order, we need to split every order between the required
-	 * order and the order that we found into two parts, and mark accordingly.
+	 * order and the order that we found पूर्णांकo two parts, and mark accordingly.
 	 */
-	while (order_iter > order) {
+	जबतक (order_iter > order) अणु
 		--order_iter;
 		seg <<= 1;
-		bitmap_set(buddy->bitmap[order_iter], seg ^ 1, 1);
-		++buddy->num_free[order_iter];
-	}
+		biपंचांगap_set(buddy->biपंचांगap[order_iter], seg ^ 1, 1);
+		++buddy->num_मुक्त[order_iter];
+	पूर्ण
 
 	seg <<= order;
 	*segment = seg;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mlx5dr_buddy_free_mem(struct mlx5dr_icm_buddy_mem *buddy,
-			   unsigned int seg, unsigned int order)
-{
+व्योम mlx5dr_buddy_मुक्त_mem(काष्ठा mlx5dr_icm_buddy_mem *buddy,
+			   अचिन्हित पूर्णांक seg, अचिन्हित पूर्णांक order)
+अणु
 	seg >>= order;
 
-	/* Whenever a segment is free,
+	/* Whenever a segment is मुक्त,
 	 * the mem is added to the buddy that gave it.
 	 */
-	while (test_bit(seg ^ 1, buddy->bitmap[order])) {
-		bitmap_clear(buddy->bitmap[order], seg ^ 1, 1);
-		--buddy->num_free[order];
+	जबतक (test_bit(seg ^ 1, buddy->biपंचांगap[order])) अणु
+		biपंचांगap_clear(buddy->biपंचांगap[order], seg ^ 1, 1);
+		--buddy->num_मुक्त[order];
 		seg >>= 1;
 		++order;
-	}
-	bitmap_set(buddy->bitmap[order], seg, 1);
+	पूर्ण
+	biपंचांगap_set(buddy->biपंचांगap[order], seg, 1);
 
-	++buddy->num_free[order];
-}
+	++buddy->num_मुक्त[order];
+पूर्ण
 

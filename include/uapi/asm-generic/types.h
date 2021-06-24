@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_GENERIC_TYPES_H
-#define _ASM_GENERIC_TYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_GENERIC_TYPES_H
+#घोषणा _ASM_GENERIC_TYPES_H
 /*
- * int-ll64 is used everywhere now.
+ * पूर्णांक-ll64 is used everywhere now.
  */
-#include <asm-generic/int-ll64.h>
+#समावेश <यंत्र-generic/पूर्णांक-ll64.h>
 
-#endif /* _ASM_GENERIC_TYPES_H */
+#पूर्ण_अगर /* _ASM_GENERIC_TYPES_H */

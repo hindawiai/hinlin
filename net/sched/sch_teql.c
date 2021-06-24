@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* net/sched/sch_teql.c	"True" (or "trivial") link equalizer.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/if_arp.h>
-#include <linux/netdevice.h>
-#include <linux/init.h>
-#include <linux/skbuff.h>
-#include <linux/moduleparam.h>
-#include <net/dst.h>
-#include <net/neighbour.h>
-#include <net/pkt_sched.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/init.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <net/dst.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/pkt_sched.h>
 
 /*
    How to setup it.
@@ -35,254 +36,254 @@
    Applicability.
    --------------
 
-   1. Slave devices MUST be active devices, i.e., they must raise the tbusy
-      signal and generate EOI events. If you want to equalize virtual devices
+   1. Slave devices MUST be active devices, i.e., they must उठाओ the tbusy
+      संकेत and generate EOI events. If you want to equalize भव devices
       like tunnels, use a normal eql device.
-   2. This device puts no limitations on physical slave characteristics
+   2. This device माला_दो no limitations on physical slave अक्षरacteristics
       f.e. it will equalize 9600baud line and 100Mb ethernet perfectly :-)
-      Certainly, large difference in link speeds will make the resulting
+      Certainly, large dअगरference in link speeds will make the resulting
       eqalized link unusable, because of huge packet reordering.
-      I estimate an upper useful difference as ~10 times.
+      I estimate an upper useful dअगरference as ~10 बार.
    3. If the slave requires address resolution, only protocols using
       neighbour cache (IPv4/IPv6) will work over the equalized link.
       Other protocols are still allowed to use the slave device directly,
-      which will not break load balancing, though native slave
+      which will not अवरोध load balancing, though native slave
       traffic will have the highest priority.  */
 
-struct teql_master {
-	struct Qdisc_ops qops;
-	struct net_device *dev;
-	struct Qdisc *slaves;
-	struct list_head master_list;
-	unsigned long	tx_bytes;
-	unsigned long	tx_packets;
-	unsigned long	tx_errors;
-	unsigned long	tx_dropped;
-};
+काष्ठा teql_master अणु
+	काष्ठा Qdisc_ops qops;
+	काष्ठा net_device *dev;
+	काष्ठा Qdisc *slaves;
+	काष्ठा list_head master_list;
+	अचिन्हित दीर्घ	tx_bytes;
+	अचिन्हित दीर्घ	tx_packets;
+	अचिन्हित दीर्घ	tx_errors;
+	अचिन्हित दीर्घ	tx_dropped;
+पूर्ण;
 
-struct teql_sched_data {
-	struct Qdisc *next;
-	struct teql_master *m;
-	struct sk_buff_head q;
-};
+काष्ठा teql_sched_data अणु
+	काष्ठा Qdisc *next;
+	काष्ठा teql_master *m;
+	काष्ठा sk_buff_head q;
+पूर्ण;
 
-#define NEXT_SLAVE(q) (((struct teql_sched_data *)qdisc_priv(q))->next)
+#घोषणा NEXT_SLAVE(q) (((काष्ठा teql_sched_data *)qdisc_priv(q))->next)
 
-#define FMASK (IFF_BROADCAST | IFF_POINTOPOINT)
+#घोषणा FMASK (IFF_BROADCAST | IFF_POINTOPOINT)
 
 /* "teql*" qdisc routines */
 
-static int
-teql_enqueue(struct sk_buff *skb, struct Qdisc *sch, struct sk_buff **to_free)
-{
-	struct net_device *dev = qdisc_dev(sch);
-	struct teql_sched_data *q = qdisc_priv(sch);
+अटल पूर्णांक
+teql_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch, काष्ठा sk_buff **to_मुक्त)
+अणु
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा teql_sched_data *q = qdisc_priv(sch);
 
-	if (q->q.qlen < dev->tx_queue_len) {
+	अगर (q->q.qlen < dev->tx_queue_len) अणु
 		__skb_queue_tail(&q->q, skb);
-		return NET_XMIT_SUCCESS;
-	}
+		वापस NET_XMIT_SUCCESS;
+	पूर्ण
 
-	return qdisc_drop(skb, sch, to_free);
-}
+	वापस qdisc_drop(skb, sch, to_मुक्त);
+पूर्ण
 
-static struct sk_buff *
-teql_dequeue(struct Qdisc *sch)
-{
-	struct teql_sched_data *dat = qdisc_priv(sch);
-	struct netdev_queue *dat_queue;
-	struct sk_buff *skb;
-	struct Qdisc *q;
+अटल काष्ठा sk_buff *
+teql_dequeue(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा teql_sched_data *dat = qdisc_priv(sch);
+	काष्ठा netdev_queue *dat_queue;
+	काष्ठा sk_buff *skb;
+	काष्ठा Qdisc *q;
 
 	skb = __skb_dequeue(&dat->q);
 	dat_queue = netdev_get_tx_queue(dat->m->dev, 0);
 	q = rcu_dereference_bh(dat_queue->qdisc);
 
-	if (skb == NULL) {
-		struct net_device *m = qdisc_dev(q);
-		if (m) {
+	अगर (skb == शून्य) अणु
+		काष्ठा net_device *m = qdisc_dev(q);
+		अगर (m) अणु
 			dat->m->slaves = sch;
-			netif_wake_queue(m);
-		}
-	} else {
+			netअगर_wake_queue(m);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		qdisc_bstats_update(sch, skb);
-	}
+	पूर्ण
 	sch->q.qlen = dat->q.qlen + q->q.qlen;
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *
-teql_peek(struct Qdisc *sch)
-{
+अटल काष्ठा sk_buff *
+teql_peek(काष्ठा Qdisc *sch)
+अणु
 	/* teql is meant to be used as root qdisc */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void
-teql_reset(struct Qdisc *sch)
-{
-	struct teql_sched_data *dat = qdisc_priv(sch);
+अटल व्योम
+teql_reset(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा teql_sched_data *dat = qdisc_priv(sch);
 
 	skb_queue_purge(&dat->q);
 	sch->q.qlen = 0;
-}
+पूर्ण
 
-static void
-teql_destroy(struct Qdisc *sch)
-{
-	struct Qdisc *q, *prev;
-	struct teql_sched_data *dat = qdisc_priv(sch);
-	struct teql_master *master = dat->m;
+अटल व्योम
+teql_destroy(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा Qdisc *q, *prev;
+	काष्ठा teql_sched_data *dat = qdisc_priv(sch);
+	काष्ठा teql_master *master = dat->m;
 
-	if (!master)
-		return;
+	अगर (!master)
+		वापस;
 
 	prev = master->slaves;
-	if (prev) {
-		do {
+	अगर (prev) अणु
+		करो अणु
 			q = NEXT_SLAVE(prev);
-			if (q == sch) {
+			अगर (q == sch) अणु
 				NEXT_SLAVE(prev) = NEXT_SLAVE(q);
-				if (q == master->slaves) {
+				अगर (q == master->slaves) अणु
 					master->slaves = NEXT_SLAVE(q);
-					if (q == master->slaves) {
-						struct netdev_queue *txq;
+					अगर (q == master->slaves) अणु
+						काष्ठा netdev_queue *txq;
 						spinlock_t *root_lock;
 
 						txq = netdev_get_tx_queue(master->dev, 0);
-						master->slaves = NULL;
+						master->slaves = शून्य;
 
 						root_lock = qdisc_root_sleeping_lock(rtnl_dereference(txq->qdisc));
 						spin_lock_bh(root_lock);
 						qdisc_reset(rtnl_dereference(txq->qdisc));
 						spin_unlock_bh(root_lock);
-					}
-				}
+					पूर्ण
+				पूर्ण
 				skb_queue_purge(&dat->q);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-		} while ((prev = q) != master->slaves);
-	}
-}
+		पूर्ण जबतक ((prev = q) != master->slaves);
+	पूर्ण
+पूर्ण
 
-static int teql_qdisc_init(struct Qdisc *sch, struct nlattr *opt,
-			   struct netlink_ext_ack *extack)
-{
-	struct net_device *dev = qdisc_dev(sch);
-	struct teql_master *m = (struct teql_master *)sch->ops;
-	struct teql_sched_data *q = qdisc_priv(sch);
+अटल पूर्णांक teql_qdisc_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा teql_master *m = (काष्ठा teql_master *)sch->ops;
+	काष्ठा teql_sched_data *q = qdisc_priv(sch);
 
-	if (dev->hard_header_len > m->dev->hard_header_len)
-		return -EINVAL;
+	अगर (dev->hard_header_len > m->dev->hard_header_len)
+		वापस -EINVAL;
 
-	if (m->dev == dev)
-		return -ELOOP;
+	अगर (m->dev == dev)
+		वापस -ELOOP;
 
 	q->m = m;
 
 	skb_queue_head_init(&q->q);
 
-	if (m->slaves) {
-		if (m->dev->flags & IFF_UP) {
-			if ((m->dev->flags & IFF_POINTOPOINT &&
+	अगर (m->slaves) अणु
+		अगर (m->dev->flags & IFF_UP) अणु
+			अगर ((m->dev->flags & IFF_POINTOPOINT &&
 			     !(dev->flags & IFF_POINTOPOINT)) ||
 			    (m->dev->flags & IFF_BROADCAST &&
 			     !(dev->flags & IFF_BROADCAST)) ||
 			    (m->dev->flags & IFF_MULTICAST &&
 			     !(dev->flags & IFF_MULTICAST)) ||
 			    dev->mtu < m->dev->mtu)
-				return -EINVAL;
-		} else {
-			if (!(dev->flags&IFF_POINTOPOINT))
+				वापस -EINVAL;
+		पूर्ण अन्यथा अणु
+			अगर (!(dev->flags&IFF_POINTOPOINT))
 				m->dev->flags &= ~IFF_POINTOPOINT;
-			if (!(dev->flags&IFF_BROADCAST))
+			अगर (!(dev->flags&IFF_BROADCAST))
 				m->dev->flags &= ~IFF_BROADCAST;
-			if (!(dev->flags&IFF_MULTICAST))
+			अगर (!(dev->flags&IFF_MULTICAST))
 				m->dev->flags &= ~IFF_MULTICAST;
-			if (dev->mtu < m->dev->mtu)
+			अगर (dev->mtu < m->dev->mtu)
 				m->dev->mtu = dev->mtu;
-		}
+		पूर्ण
 		q->next = NEXT_SLAVE(m->slaves);
 		NEXT_SLAVE(m->slaves) = sch;
-	} else {
+	पूर्ण अन्यथा अणु
 		q->next = sch;
 		m->slaves = sch;
 		m->dev->mtu = dev->mtu;
 		m->dev->flags = (m->dev->flags&~FMASK)|(dev->flags&FMASK);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-static int
-__teql_resolve(struct sk_buff *skb, struct sk_buff *skb_res,
-	       struct net_device *dev, struct netdev_queue *txq,
-	       struct dst_entry *dst)
-{
-	struct neighbour *n;
-	int err = 0;
+अटल पूर्णांक
+__teql_resolve(काष्ठा sk_buff *skb, काष्ठा sk_buff *skb_res,
+	       काष्ठा net_device *dev, काष्ठा netdev_queue *txq,
+	       काष्ठा dst_entry *dst)
+अणु
+	काष्ठा neighbour *n;
+	पूर्णांक err = 0;
 
 	n = dst_neigh_lookup_skb(dst, skb);
-	if (!n)
-		return -ENOENT;
+	अगर (!n)
+		वापस -ENOENT;
 
-	if (dst->dev != dev) {
-		struct neighbour *mn;
+	अगर (dst->dev != dev) अणु
+		काष्ठा neighbour *mn;
 
-		mn = __neigh_lookup_errno(n->tbl, n->primary_key, dev);
+		mn = __neigh_lookup_त्रुटि_सं(n->tbl, n->primary_key, dev);
 		neigh_release(n);
-		if (IS_ERR(mn))
-			return PTR_ERR(mn);
+		अगर (IS_ERR(mn))
+			वापस PTR_ERR(mn);
 		n = mn;
-	}
+	पूर्ण
 
-	if (neigh_event_send(n, skb_res) == 0) {
-		int err;
-		char haddr[MAX_ADDR_LEN];
+	अगर (neigh_event_send(n, skb_res) == 0) अणु
+		पूर्णांक err;
+		अक्षर haddr[MAX_ADDR_LEN];
 
 		neigh_ha_snapshot(haddr, n, dev);
 		err = dev_hard_header(skb, dev, ntohs(skb_protocol(skb, false)),
-				      haddr, NULL, skb->len);
+				      haddr, शून्य, skb->len);
 
-		if (err < 0)
+		अगर (err < 0)
 			err = -EINVAL;
-	} else {
-		err = (skb_res == NULL) ? -EAGAIN : 1;
-	}
+	पूर्ण अन्यथा अणु
+		err = (skb_res == शून्य) ? -EAGAIN : 1;
+	पूर्ण
 	neigh_release(n);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int teql_resolve(struct sk_buff *skb,
-			       struct sk_buff *skb_res,
-			       struct net_device *dev,
-			       struct netdev_queue *txq)
-{
-	struct dst_entry *dst = skb_dst(skb);
-	int res;
+अटल अंतरभूत पूर्णांक teql_resolve(काष्ठा sk_buff *skb,
+			       काष्ठा sk_buff *skb_res,
+			       काष्ठा net_device *dev,
+			       काष्ठा netdev_queue *txq)
+अणु
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	पूर्णांक res;
 
-	if (rcu_access_pointer(txq->qdisc) == &noop_qdisc)
-		return -ENODEV;
+	अगर (rcu_access_poपूर्णांकer(txq->qdisc) == &noop_qdisc)
+		वापस -ENODEV;
 
-	if (!dev->header_ops || !dst)
-		return 0;
+	अगर (!dev->header_ops || !dst)
+		वापस 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	res = __teql_resolve(skb, skb_res, dev, txq, dst);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static netdev_tx_t teql_master_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct teql_master *master = netdev_priv(dev);
-	struct Qdisc *start, *q;
-	int busy;
-	int nores;
-	int subq = skb_get_queue_mapping(skb);
-	struct sk_buff *skb_res = NULL;
+अटल netdev_tx_t teql_master_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा teql_master *master = netdev_priv(dev);
+	काष्ठा Qdisc *start, *q;
+	पूर्णांक busy;
+	पूर्णांक nores;
+	पूर्णांक subq = skb_get_queue_mapping(skb);
+	काष्ठा sk_buff *skb_res = शून्य;
 
 	start = master->slaves;
 
@@ -291,159 +292,159 @@ restart:
 	busy = 0;
 
 	q = start;
-	if (!q)
-		goto drop;
+	अगर (!q)
+		जाओ drop;
 
-	do {
-		struct net_device *slave = qdisc_dev(q);
-		struct netdev_queue *slave_txq = netdev_get_tx_queue(slave, 0);
+	करो अणु
+		काष्ठा net_device *slave = qdisc_dev(q);
+		काष्ठा netdev_queue *slave_txq = netdev_get_tx_queue(slave, 0);
 
-		if (slave_txq->qdisc_sleeping != q)
-			continue;
-		if (netif_xmit_stopped(netdev_get_tx_queue(slave, subq)) ||
-		    !netif_running(slave)) {
+		अगर (slave_txq->qdisc_sleeping != q)
+			जारी;
+		अगर (netअगर_xmit_stopped(netdev_get_tx_queue(slave, subq)) ||
+		    !netअगर_running(slave)) अणु
 			busy = 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		switch (teql_resolve(skb, skb_res, slave, slave_txq)) {
-		case 0:
-			if (__netif_tx_trylock(slave_txq)) {
-				unsigned int length = qdisc_pkt_len(skb);
+		चयन (teql_resolve(skb, skb_res, slave, slave_txq)) अणु
+		हाल 0:
+			अगर (__netअगर_tx_trylock(slave_txq)) अणु
+				अचिन्हित पूर्णांक length = qdisc_pkt_len(skb);
 
-				if (!netif_xmit_frozen_or_stopped(slave_txq) &&
+				अगर (!netअगर_xmit_frozen_or_stopped(slave_txq) &&
 				    netdev_start_xmit(skb, slave, slave_txq, false) ==
-				    NETDEV_TX_OK) {
-					__netif_tx_unlock(slave_txq);
+				    NETDEV_TX_OK) अणु
+					__netअगर_tx_unlock(slave_txq);
 					master->slaves = NEXT_SLAVE(q);
-					netif_wake_queue(dev);
+					netअगर_wake_queue(dev);
 					master->tx_packets++;
 					master->tx_bytes += length;
-					return NETDEV_TX_OK;
-				}
-				__netif_tx_unlock(slave_txq);
-			}
-			if (netif_xmit_stopped(netdev_get_tx_queue(dev, 0)))
+					वापस NETDEV_TX_OK;
+				पूर्ण
+				__netअगर_tx_unlock(slave_txq);
+			पूर्ण
+			अगर (netअगर_xmit_stopped(netdev_get_tx_queue(dev, 0)))
 				busy = 1;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			master->slaves = NEXT_SLAVE(q);
-			return NETDEV_TX_OK;
-		default:
+			वापस NETDEV_TX_OK;
+		शेष:
 			nores = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		__skb_pull(skb, skb_network_offset(skb));
-	} while ((q = NEXT_SLAVE(q)) != start);
+	पूर्ण जबतक ((q = NEXT_SLAVE(q)) != start);
 
-	if (nores && skb_res == NULL) {
+	अगर (nores && skb_res == शून्य) अणु
 		skb_res = skb;
-		goto restart;
-	}
+		जाओ restart;
+	पूर्ण
 
-	if (busy) {
-		netif_stop_queue(dev);
-		return NETDEV_TX_BUSY;
-	}
+	अगर (busy) अणु
+		netअगर_stop_queue(dev);
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 	master->tx_errors++;
 
 drop:
 	master->tx_dropped++;
-	dev_kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int teql_master_open(struct net_device *dev)
-{
-	struct Qdisc *q;
-	struct teql_master *m = netdev_priv(dev);
-	int mtu = 0xFFFE;
-	unsigned int flags = IFF_NOARP | IFF_MULTICAST;
+अटल पूर्णांक teql_master_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा Qdisc *q;
+	काष्ठा teql_master *m = netdev_priv(dev);
+	पूर्णांक mtu = 0xFFFE;
+	अचिन्हित पूर्णांक flags = IFF_NOARP | IFF_MULTICAST;
 
-	if (m->slaves == NULL)
-		return -EUNATCH;
+	अगर (m->slaves == शून्य)
+		वापस -EUNATCH;
 
 	flags = FMASK;
 
 	q = m->slaves;
-	do {
-		struct net_device *slave = qdisc_dev(q);
+	करो अणु
+		काष्ठा net_device *slave = qdisc_dev(q);
 
-		if (slave == NULL)
-			return -EUNATCH;
+		अगर (slave == शून्य)
+			वापस -EUNATCH;
 
-		if (slave->mtu < mtu)
+		अगर (slave->mtu < mtu)
 			mtu = slave->mtu;
-		if (slave->hard_header_len > LL_MAX_HEADER)
-			return -EINVAL;
+		अगर (slave->hard_header_len > LL_MAX_HEADER)
+			वापस -EINVAL;
 
 		/* If all the slaves are BROADCAST, master is BROADCAST
 		   If all the slaves are PtP, master is PtP
 		   Otherwise, master is NBMA.
 		 */
-		if (!(slave->flags&IFF_POINTOPOINT))
+		अगर (!(slave->flags&IFF_POINTOPOINT))
 			flags &= ~IFF_POINTOPOINT;
-		if (!(slave->flags&IFF_BROADCAST))
+		अगर (!(slave->flags&IFF_BROADCAST))
 			flags &= ~IFF_BROADCAST;
-		if (!(slave->flags&IFF_MULTICAST))
+		अगर (!(slave->flags&IFF_MULTICAST))
 			flags &= ~IFF_MULTICAST;
-	} while ((q = NEXT_SLAVE(q)) != m->slaves);
+	पूर्ण जबतक ((q = NEXT_SLAVE(q)) != m->slaves);
 
 	m->dev->mtu = mtu;
 	m->dev->flags = (m->dev->flags&~FMASK) | flags;
-	netif_start_queue(m->dev);
-	return 0;
-}
+	netअगर_start_queue(m->dev);
+	वापस 0;
+पूर्ण
 
-static int teql_master_close(struct net_device *dev)
-{
-	netif_stop_queue(dev);
-	return 0;
-}
+अटल पूर्णांक teql_master_बंद(काष्ठा net_device *dev)
+अणु
+	netअगर_stop_queue(dev);
+	वापस 0;
+पूर्ण
 
-static void teql_master_stats64(struct net_device *dev,
-				struct rtnl_link_stats64 *stats)
-{
-	struct teql_master *m = netdev_priv(dev);
+अटल व्योम teql_master_stats64(काष्ठा net_device *dev,
+				काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा teql_master *m = netdev_priv(dev);
 
 	stats->tx_packets	= m->tx_packets;
 	stats->tx_bytes		= m->tx_bytes;
 	stats->tx_errors	= m->tx_errors;
 	stats->tx_dropped	= m->tx_dropped;
-}
+पूर्ण
 
-static int teql_master_mtu(struct net_device *dev, int new_mtu)
-{
-	struct teql_master *m = netdev_priv(dev);
-	struct Qdisc *q;
+अटल पूर्णांक teql_master_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
+अणु
+	काष्ठा teql_master *m = netdev_priv(dev);
+	काष्ठा Qdisc *q;
 
 	q = m->slaves;
-	if (q) {
-		do {
-			if (new_mtu > qdisc_dev(q)->mtu)
-				return -EINVAL;
-		} while ((q = NEXT_SLAVE(q)) != m->slaves);
-	}
+	अगर (q) अणु
+		करो अणु
+			अगर (new_mtu > qdisc_dev(q)->mtu)
+				वापस -EINVAL;
+		पूर्ण जबतक ((q = NEXT_SLAVE(q)) != m->slaves);
+	पूर्ण
 
 	dev->mtu = new_mtu;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops teql_netdev_ops = {
-	.ndo_open	= teql_master_open,
-	.ndo_stop	= teql_master_close,
-	.ndo_start_xmit	= teql_master_xmit,
-	.ndo_get_stats64 = teql_master_stats64,
-	.ndo_change_mtu	= teql_master_mtu,
-};
+अटल स्थिर काष्ठा net_device_ops teql_netdev_ops = अणु
+	.nकरो_खोलो	= teql_master_खोलो,
+	.nकरो_stop	= teql_master_बंद,
+	.nकरो_start_xmit	= teql_master_xmit,
+	.nकरो_get_stats64 = teql_master_stats64,
+	.nकरो_change_mtu	= teql_master_mtu,
+पूर्ण;
 
-static __init void teql_master_setup(struct net_device *dev)
-{
-	struct teql_master *master = netdev_priv(dev);
-	struct Qdisc_ops *ops = &master->qops;
+अटल __init व्योम teql_master_setup(काष्ठा net_device *dev)
+अणु
+	काष्ठा teql_master *master = netdev_priv(dev);
+	काष्ठा Qdisc_ops *ops = &master->qops;
 
 	master->dev	= dev;
-	ops->priv_size  = sizeof(struct teql_sched_data);
+	ops->priv_size  = माप(काष्ठा teql_sched_data);
 
 	ops->enqueue	=	teql_enqueue;
 	ops->dequeue	=	teql_dequeue;
@@ -461,66 +462,66 @@ static __init void teql_master_setup(struct net_device *dev)
 	dev->tx_queue_len	= 100;
 	dev->flags		= IFF_NOARP;
 	dev->hard_header_len	= LL_MAX_HEADER;
-	netif_keep_dst(dev);
-}
+	netअगर_keep_dst(dev);
+पूर्ण
 
-static LIST_HEAD(master_dev_list);
-static int max_equalizers = 1;
-module_param(max_equalizers, int, 0);
+अटल LIST_HEAD(master_dev_list);
+अटल पूर्णांक max_equalizers = 1;
+module_param(max_equalizers, पूर्णांक, 0);
 MODULE_PARM_DESC(max_equalizers, "Max number of link equalizers");
 
-static int __init teql_init(void)
-{
-	int i;
-	int err = -ENODEV;
+अटल पूर्णांक __init teql_init(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक err = -ENODEV;
 
-	for (i = 0; i < max_equalizers; i++) {
-		struct net_device *dev;
-		struct teql_master *master;
+	क्रम (i = 0; i < max_equalizers; i++) अणु
+		काष्ठा net_device *dev;
+		काष्ठा teql_master *master;
 
-		dev = alloc_netdev(sizeof(struct teql_master), "teql%d",
+		dev = alloc_netdev(माप(काष्ठा teql_master), "teql%d",
 				   NET_NAME_UNKNOWN, teql_master_setup);
-		if (!dev) {
+		अगर (!dev) अणु
 			err = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if ((err = register_netdev(dev))) {
-			free_netdev(dev);
-			break;
-		}
+		अगर ((err = रेजिस्टर_netdev(dev))) अणु
+			मुक्त_netdev(dev);
+			अवरोध;
+		पूर्ण
 
 		master = netdev_priv(dev);
 
 		strlcpy(master->qops.id, dev->name, IFNAMSIZ);
-		err = register_qdisc(&master->qops);
+		err = रेजिस्टर_qdisc(&master->qops);
 
-		if (err) {
-			unregister_netdev(dev);
-			free_netdev(dev);
-			break;
-		}
+		अगर (err) अणु
+			unरेजिस्टर_netdev(dev);
+			मुक्त_netdev(dev);
+			अवरोध;
+		पूर्ण
 
 		list_add_tail(&master->master_list, &master_dev_list);
-	}
-	return i ? 0 : err;
-}
+	पूर्ण
+	वापस i ? 0 : err;
+पूर्ण
 
-static void __exit teql_exit(void)
-{
-	struct teql_master *master, *nxt;
+अटल व्योम __निकास teql_निकास(व्योम)
+अणु
+	काष्ठा teql_master *master, *nxt;
 
-	list_for_each_entry_safe(master, nxt, &master_dev_list, master_list) {
+	list_क्रम_each_entry_safe(master, nxt, &master_dev_list, master_list) अणु
 
 		list_del(&master->master_list);
 
-		unregister_qdisc(&master->qops);
-		unregister_netdev(master->dev);
-		free_netdev(master->dev);
-	}
-}
+		unरेजिस्टर_qdisc(&master->qops);
+		unरेजिस्टर_netdev(master->dev);
+		मुक्त_netdev(master->dev);
+	पूर्ण
+पूर्ण
 
 module_init(teql_init);
-module_exit(teql_exit);
+module_निकास(teql_निकास);
 
 MODULE_LICENSE("GPL");

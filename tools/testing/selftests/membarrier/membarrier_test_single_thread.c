@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
-#include <linux/membarrier.h>
-#include <syscall.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <pthread.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
+#समावेश <linux/membarrier.h>
+#समावेश <syscall.h>
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <माला.स>
+#समावेश <pthपढ़ो.h>
 
-#include "membarrier_test_impl.h"
+#समावेश "membarrier_test_impl.h"
 
-int main(int argc, char **argv)
-{
-	ksft_print_header();
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	ksft_prपूर्णांक_header();
 	ksft_set_plan(13);
 
 	test_membarrier_query();
@@ -20,5 +21,5 @@ int main(int argc, char **argv)
 
 	test_membarrier_success();
 
-	return ksft_exit_pass();
-}
+	वापस ksft_निकास_pass();
+पूर्ण

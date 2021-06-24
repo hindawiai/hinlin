@@ -1,336 +1,337 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2012-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/etherdevice.h>
-#include <linux/rtnetlink.h>
-#include "wil6210.h"
-#include "txrx.h"
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश "wil6210.h"
+#समावेश "txrx.h"
 
-bool wil_has_other_active_ifaces(struct wil6210_priv *wil,
-				 struct net_device *ndev, bool up, bool ok)
-{
-	int i;
-	struct wil6210_vif *vif;
-	struct net_device *ndev_i;
+bool wil_has_other_active_अगरaces(काष्ठा wil6210_priv *wil,
+				 काष्ठा net_device *ndev, bool up, bool ok)
+अणु
+	पूर्णांक i;
+	काष्ठा wil6210_vअगर *vअगर;
+	काष्ठा net_device *ndev_i;
 
-	for (i = 0; i < GET_MAX_VIFS(wil); i++) {
-		vif = wil->vifs[i];
-		if (vif) {
-			ndev_i = vif_to_ndev(vif);
-			if (ndev_i != ndev)
-				if ((up && (ndev_i->flags & IFF_UP)) ||
-				    (ok && netif_carrier_ok(ndev_i)))
-					return true;
-		}
-	}
+	क्रम (i = 0; i < GET_MAX_VIFS(wil); i++) अणु
+		vअगर = wil->vअगरs[i];
+		अगर (vअगर) अणु
+			ndev_i = vअगर_to_ndev(vअगर);
+			अगर (ndev_i != ndev)
+				अगर ((up && (ndev_i->flags & IFF_UP)) ||
+				    (ok && netअगर_carrier_ok(ndev_i)))
+					वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool wil_has_active_ifaces(struct wil6210_priv *wil, bool up, bool ok)
-{
-	/* use NULL ndev argument to check all interfaces */
-	return wil_has_other_active_ifaces(wil, NULL, up, ok);
-}
+bool wil_has_active_अगरaces(काष्ठा wil6210_priv *wil, bool up, bool ok)
+अणु
+	/* use शून्य ndev argument to check all पूर्णांकerfaces */
+	वापस wil_has_other_active_अगरaces(wil, शून्य, up, ok);
+पूर्ण
 
-static int wil_open(struct net_device *ndev)
-{
-	struct wil6210_priv *wil = ndev_to_wil(ndev);
-	int rc = 0;
+अटल पूर्णांक wil_खोलो(काष्ठा net_device *ndev)
+अणु
+	काष्ठा wil6210_priv *wil = ndev_to_wil(ndev);
+	पूर्णांक rc = 0;
 
 	wil_dbg_misc(wil, "open\n");
 
-	if (debug_fw ||
-	    test_bit(WMI_FW_CAPABILITY_WMI_ONLY, wil->fw_capabilities)) {
+	अगर (debug_fw ||
+	    test_bit(WMI_FW_CAPABILITY_WMI_ONLY, wil->fw_capabilities)) अणु
 		wil_err(wil, "while in debug_fw or wmi_only mode\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!wil_has_other_active_ifaces(wil, ndev, true, false)) {
+	अगर (!wil_has_other_active_अगरaces(wil, ndev, true, false)) अणु
 		wil_dbg_misc(wil, "open, first iface\n");
-		rc = wil_pm_runtime_get(wil);
-		if (rc < 0)
-			return rc;
+		rc = wil_pm_runसमय_get(wil);
+		अगर (rc < 0)
+			वापस rc;
 
 		rc = wil_up(wil);
-		if (rc)
-			wil_pm_runtime_put(wil);
-	}
+		अगर (rc)
+			wil_pm_runसमय_put(wil);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int wil_stop(struct net_device *ndev)
-{
-	struct wil6210_priv *wil = ndev_to_wil(ndev);
-	int rc = 0;
+अटल पूर्णांक wil_stop(काष्ठा net_device *ndev)
+अणु
+	काष्ठा wil6210_priv *wil = ndev_to_wil(ndev);
+	पूर्णांक rc = 0;
 
 	wil_dbg_misc(wil, "stop\n");
 
-	if (!wil_has_other_active_ifaces(wil, ndev, true, false)) {
+	अगर (!wil_has_other_active_अगरaces(wil, ndev, true, false)) अणु
 		wil_dbg_misc(wil, "stop, last iface\n");
-		rc = wil_down(wil);
-		if (!rc)
-			wil_pm_runtime_put(wil);
-	}
+		rc = wil_करोwn(wil);
+		अगर (!rc)
+			wil_pm_runसमय_put(wil);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct net_device_ops wil_netdev_ops = {
-	.ndo_open		= wil_open,
-	.ndo_stop		= wil_stop,
-	.ndo_start_xmit		= wil_start_xmit,
-	.ndo_set_mac_address	= eth_mac_addr,
-	.ndo_validate_addr	= eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops wil_netdev_ops = अणु
+	.nकरो_खोलो		= wil_खोलो,
+	.nकरो_stop		= wil_stop,
+	.nकरो_start_xmit		= wil_start_xmit,
+	.nकरो_set_mac_address	= eth_mac_addr,
+	.nकरो_validate_addr	= eth_validate_addr,
+पूर्ण;
 
-static int wil6210_netdev_poll_rx(struct napi_struct *napi, int budget)
-{
-	struct wil6210_priv *wil = container_of(napi, struct wil6210_priv,
+अटल पूर्णांक wil6210_netdev_poll_rx(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा wil6210_priv *wil = container_of(napi, काष्ठा wil6210_priv,
 						napi_rx);
-	int quota = budget;
-	int done;
+	पूर्णांक quota = budget;
+	पूर्णांक करोne;
 
 	wil_rx_handle(wil, &quota);
-	done = budget - quota;
+	करोne = budget - quota;
 
-	if (done < budget) {
-		napi_complete_done(napi, done);
+	अगर (करोne < budget) अणु
+		napi_complete_करोne(napi, करोne);
 		wil6210_unmask_irq_rx(wil);
 		wil_dbg_txrx(wil, "NAPI RX complete\n");
-	}
+	पूर्ण
 
-	wil_dbg_txrx(wil, "NAPI RX poll(%d) done %d\n", budget, done);
+	wil_dbg_txrx(wil, "NAPI RX poll(%d) done %d\n", budget, करोne);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-static int wil6210_netdev_poll_rx_edma(struct napi_struct *napi, int budget)
-{
-	struct wil6210_priv *wil = container_of(napi, struct wil6210_priv,
+अटल पूर्णांक wil6210_netdev_poll_rx_edma(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा wil6210_priv *wil = container_of(napi, काष्ठा wil6210_priv,
 						napi_rx);
-	int quota = budget;
-	int done;
+	पूर्णांक quota = budget;
+	पूर्णांक करोne;
 
 	wil_rx_handle_edma(wil, &quota);
-	done = budget - quota;
+	करोne = budget - quota;
 
-	if (done < budget) {
-		napi_complete_done(napi, done);
+	अगर (करोne < budget) अणु
+		napi_complete_करोne(napi, करोne);
 		wil6210_unmask_irq_rx_edma(wil);
 		wil_dbg_txrx(wil, "NAPI RX complete\n");
-	}
+	पूर्ण
 
-	wil_dbg_txrx(wil, "NAPI RX poll(%d) done %d\n", budget, done);
+	wil_dbg_txrx(wil, "NAPI RX poll(%d) done %d\n", budget, करोne);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-static int wil6210_netdev_poll_tx(struct napi_struct *napi, int budget)
-{
-	struct wil6210_priv *wil = container_of(napi, struct wil6210_priv,
+अटल पूर्णांक wil6210_netdev_poll_tx(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा wil6210_priv *wil = container_of(napi, काष्ठा wil6210_priv,
 						napi_tx);
-	int tx_done = 0;
-	uint i;
+	पूर्णांक tx_करोne = 0;
+	uपूर्णांक i;
 
 	/* always process ALL Tx complete, regardless budget - it is fast */
-	for (i = 0; i < WIL6210_MAX_TX_RINGS; i++) {
-		struct wil_ring *ring = &wil->ring_tx[i];
-		struct wil_ring_tx_data *txdata = &wil->ring_tx_data[i];
-		struct wil6210_vif *vif;
+	क्रम (i = 0; i < WIL6210_MAX_TX_RINGS; i++) अणु
+		काष्ठा wil_ring *ring = &wil->ring_tx[i];
+		काष्ठा wil_ring_tx_data *txdata = &wil->ring_tx_data[i];
+		काष्ठा wil6210_vअगर *vअगर;
 
-		if (!ring->va || !txdata->enabled ||
+		अगर (!ring->va || !txdata->enabled ||
 		    txdata->mid >= GET_MAX_VIFS(wil))
-			continue;
+			जारी;
 
-		vif = wil->vifs[txdata->mid];
-		if (unlikely(!vif)) {
+		vअगर = wil->vअगरs[txdata->mid];
+		अगर (unlikely(!vअगर)) अणु
 			wil_dbg_txrx(wil, "Invalid MID %d\n", txdata->mid);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		tx_done += wil_tx_complete(vif, i);
-	}
+		tx_करोne += wil_tx_complete(vअगर, i);
+	पूर्ण
 
-	if (tx_done < budget) {
+	अगर (tx_करोne < budget) अणु
 		napi_complete(napi);
 		wil6210_unmask_irq_tx(wil);
 		wil_dbg_txrx(wil, "NAPI TX complete\n");
-	}
+	पूर्ण
 
-	wil_dbg_txrx(wil, "NAPI TX poll(%d) done %d\n", budget, tx_done);
+	wil_dbg_txrx(wil, "NAPI TX poll(%d) done %d\n", budget, tx_करोne);
 
-	return min(tx_done, budget);
-}
+	वापस min(tx_करोne, budget);
+पूर्ण
 
-static int wil6210_netdev_poll_tx_edma(struct napi_struct *napi, int budget)
-{
-	struct wil6210_priv *wil = container_of(napi, struct wil6210_priv,
+अटल पूर्णांक wil6210_netdev_poll_tx_edma(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा wil6210_priv *wil = container_of(napi, काष्ठा wil6210_priv,
 						napi_tx);
-	int tx_done;
+	पूर्णांक tx_करोne;
 	/* There is only one status TX ring */
-	struct wil_status_ring *sring = &wil->srings[wil->tx_sring_idx];
+	काष्ठा wil_status_ring *sring = &wil->srings[wil->tx_sring_idx];
 
-	if (!sring->va)
-		return 0;
+	अगर (!sring->va)
+		वापस 0;
 
-	tx_done = wil_tx_sring_handler(wil, sring);
+	tx_करोne = wil_tx_sring_handler(wil, sring);
 
-	if (tx_done < budget) {
+	अगर (tx_करोne < budget) अणु
 		napi_complete(napi);
 		wil6210_unmask_irq_tx_edma(wil);
 		wil_dbg_txrx(wil, "NAPI TX complete\n");
-	}
+	पूर्ण
 
-	wil_dbg_txrx(wil, "NAPI TX poll(%d) done %d\n", budget, tx_done);
+	wil_dbg_txrx(wil, "NAPI TX poll(%d) done %d\n", budget, tx_करोne);
 
-	return min(tx_done, budget);
-}
+	वापस min(tx_करोne, budget);
+पूर्ण
 
-static void wil_dev_setup(struct net_device *dev)
-{
+अटल व्योम wil_dev_setup(काष्ठा net_device *dev)
+अणु
 	ether_setup(dev);
 	dev->max_mtu = mtu_max;
 	dev->tx_queue_len = WIL_TX_Q_LEN_DEFAULT;
-}
+पूर्ण
 
-static void wil_vif_deinit(struct wil6210_vif *vif)
-{
-	del_timer_sync(&vif->scan_timer);
-	del_timer_sync(&vif->p2p.discovery_timer);
-	cancel_work_sync(&vif->disconnect_worker);
-	cancel_work_sync(&vif->p2p.discovery_expired_work);
-	cancel_work_sync(&vif->p2p.delayed_listen_work);
-	wil_probe_client_flush(vif);
-	cancel_work_sync(&vif->probe_client_worker);
-	cancel_work_sync(&vif->enable_tx_key_worker);
-}
+अटल व्योम wil_vअगर_deinit(काष्ठा wil6210_vअगर *vअगर)
+अणु
+	del_समयr_sync(&vअगर->scan_समयr);
+	del_समयr_sync(&vअगर->p2p.discovery_समयr);
+	cancel_work_sync(&vअगर->disconnect_worker);
+	cancel_work_sync(&vअगर->p2p.discovery_expired_work);
+	cancel_work_sync(&vअगर->p2p.delayed_listen_work);
+	wil_probe_client_flush(vअगर);
+	cancel_work_sync(&vअगर->probe_client_worker);
+	cancel_work_sync(&vअगर->enable_tx_key_worker);
+पूर्ण
 
-void wil_vif_free(struct wil6210_vif *vif)
-{
-	struct net_device *ndev = vif_to_ndev(vif);
+व्योम wil_vअगर_मुक्त(काष्ठा wil6210_vअगर *vअगर)
+अणु
+	काष्ठा net_device *ndev = vअगर_to_ndev(vअगर);
 
-	wil_vif_deinit(vif);
-	free_netdev(ndev);
-}
+	wil_vअगर_deinit(vअगर);
+	मुक्त_netdev(ndev);
+पूर्ण
 
-static void wil_ndev_destructor(struct net_device *ndev)
-{
-	struct wil6210_vif *vif = ndev_to_vif(ndev);
+अटल व्योम wil_ndev_deकाष्ठाor(काष्ठा net_device *ndev)
+अणु
+	काष्ठा wil6210_vअगर *vअगर = ndev_to_vअगर(ndev);
 
-	wil_vif_deinit(vif);
-}
+	wil_vअगर_deinit(vअगर);
+पूर्ण
 
-static void wil_connect_timer_fn(struct timer_list *t)
-{
-	struct wil6210_vif *vif = from_timer(vif, t, connect_timer);
-	struct wil6210_priv *wil = vif_to_wil(vif);
+अटल व्योम wil_connect_समयr_fn(काष्ठा समयr_list *t)
+अणु
+	काष्ठा wil6210_vअगर *vअगर = from_समयr(vअगर, t, connect_समयr);
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
 	bool q;
 
 	wil_err(wil, "Connect timeout detected, disconnect station\n");
 
-	/* reschedule to thread context - disconnect won't
+	/* reschedule to thपढ़ो context - disconnect won't
 	 * run from atomic context.
 	 * queue on wmi_wq to prevent race with connect event.
 	 */
-	q = queue_work(wil->wmi_wq, &vif->disconnect_worker);
+	q = queue_work(wil->wmi_wq, &vअगर->disconnect_worker);
 	wil_dbg_wmi(wil, "queue_work of disconnect_worker -> %d\n", q);
-}
+पूर्ण
 
-static void wil_scan_timer_fn(struct timer_list *t)
-{
-	struct wil6210_vif *vif = from_timer(vif, t, scan_timer);
-	struct wil6210_priv *wil = vif_to_wil(vif);
+अटल व्योम wil_scan_समयr_fn(काष्ठा समयr_list *t)
+अणु
+	काष्ठा wil6210_vअगर *vअगर = from_समयr(vअगर, t, scan_समयr);
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
 
-	clear_bit(wil_status_fwready, wil->status);
+	clear_bit(wil_status_fwपढ़ोy, wil->status);
 	wil_err(wil, "Scan timeout detected, start fw error recovery\n");
 	wil_fw_error_recovery(wil);
-}
+पूर्ण
 
-static void wil_p2p_discovery_timer_fn(struct timer_list *t)
-{
-	struct wil6210_vif *vif = from_timer(vif, t, p2p.discovery_timer);
-	struct wil6210_priv *wil = vif_to_wil(vif);
+अटल व्योम wil_p2p_discovery_समयr_fn(काष्ठा समयr_list *t)
+अणु
+	काष्ठा wil6210_vअगर *vअगर = from_समयr(vअगर, t, p2p.discovery_समयr);
+	काष्ठा wil6210_priv *wil = vअगर_to_wil(vअगर);
 
 	wil_dbg_misc(wil, "p2p_discovery_timer_fn\n");
 
-	schedule_work(&vif->p2p.discovery_expired_work);
-}
+	schedule_work(&vअगर->p2p.discovery_expired_work);
+पूर्ण
 
-static void wil_vif_init(struct wil6210_vif *vif)
-{
-	vif->bcast_ring = -1;
+अटल व्योम wil_vअगर_init(काष्ठा wil6210_vअगर *vअगर)
+अणु
+	vअगर->bcast_ring = -1;
 
-	mutex_init(&vif->probe_client_mutex);
+	mutex_init(&vअगर->probe_client_mutex);
 
-	timer_setup(&vif->connect_timer, wil_connect_timer_fn, 0);
-	timer_setup(&vif->scan_timer, wil_scan_timer_fn, 0);
-	timer_setup(&vif->p2p.discovery_timer, wil_p2p_discovery_timer_fn, 0);
+	समयr_setup(&vअगर->connect_समयr, wil_connect_समयr_fn, 0);
+	समयr_setup(&vअगर->scan_समयr, wil_scan_समयr_fn, 0);
+	समयr_setup(&vअगर->p2p.discovery_समयr, wil_p2p_discovery_समयr_fn, 0);
 
-	INIT_WORK(&vif->probe_client_worker, wil_probe_client_worker);
-	INIT_WORK(&vif->disconnect_worker, wil_disconnect_worker);
-	INIT_WORK(&vif->p2p.discovery_expired_work, wil_p2p_listen_expired);
-	INIT_WORK(&vif->p2p.delayed_listen_work, wil_p2p_delayed_listen_work);
-	INIT_WORK(&vif->enable_tx_key_worker, wil_enable_tx_key_worker);
+	INIT_WORK(&vअगर->probe_client_worker, wil_probe_client_worker);
+	INIT_WORK(&vअगर->disconnect_worker, wil_disconnect_worker);
+	INIT_WORK(&vअगर->p2p.discovery_expired_work, wil_p2p_listen_expired);
+	INIT_WORK(&vअगर->p2p.delayed_listen_work, wil_p2p_delayed_listen_work);
+	INIT_WORK(&vअगर->enable_tx_key_worker, wil_enable_tx_key_worker);
 
-	INIT_LIST_HEAD(&vif->probe_client_pending);
+	INIT_LIST_HEAD(&vअगर->probe_client_pending);
 
-	vif->net_queue_stopped = 1;
-}
+	vअगर->net_queue_stopped = 1;
+पूर्ण
 
-static u8 wil_vif_find_free_mid(struct wil6210_priv *wil)
-{
+अटल u8 wil_vअगर_find_मुक्त_mid(काष्ठा wil6210_priv *wil)
+अणु
 	u8 i;
 
-	for (i = 0; i < GET_MAX_VIFS(wil); i++) {
-		if (!wil->vifs[i])
-			return i;
-	}
+	क्रम (i = 0; i < GET_MAX_VIFS(wil); i++) अणु
+		अगर (!wil->vअगरs[i])
+			वापस i;
+	पूर्ण
 
-	return U8_MAX;
-}
+	वापस U8_MAX;
+पूर्ण
 
-struct wil6210_vif *
-wil_vif_alloc(struct wil6210_priv *wil, const char *name,
-	      unsigned char name_assign_type, enum nl80211_iftype iftype)
-{
-	struct net_device *ndev;
-	struct wireless_dev *wdev;
-	struct wil6210_vif *vif;
+काष्ठा wil6210_vअगर *
+wil_vअगर_alloc(काष्ठा wil6210_priv *wil, स्थिर अक्षर *name,
+	      अचिन्हित अक्षर name_assign_type, क्रमागत nl80211_अगरtype अगरtype)
+अणु
+	काष्ठा net_device *ndev;
+	काष्ठा wireless_dev *wdev;
+	काष्ठा wil6210_vअगर *vअगर;
 	u8 mid;
 
-	mid = wil_vif_find_free_mid(wil);
-	if (mid == U8_MAX) {
+	mid = wil_vअगर_find_मुक्त_mid(wil);
+	अगर (mid == U8_MAX) अणु
 		wil_err(wil, "no available virtual interface\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	ndev = alloc_netdev(sizeof(*vif), name, name_assign_type,
+	ndev = alloc_netdev(माप(*vअगर), name, name_assign_type,
 			    wil_dev_setup);
-	if (!ndev) {
+	अगर (!ndev) अणु
 		dev_err(wil_to_dev(wil), "alloc_netdev failed\n");
-		return ERR_PTR(-ENOMEM);
-	}
-	if (mid == 0) {
-		wil->main_ndev = ndev;
-	} else {
-		ndev->priv_destructor = wil_ndev_destructor;
-		ndev->needs_free_netdev = true;
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
+	अगर (mid == 0) अणु
+		wil->मुख्य_ndev = ndev;
+	पूर्ण अन्यथा अणु
+		ndev->priv_deकाष्ठाor = wil_ndev_deकाष्ठाor;
+		ndev->needs_मुक्त_netdev = true;
+	पूर्ण
 
-	vif = ndev_to_vif(ndev);
-	vif->ndev = ndev;
-	vif->wil = wil;
-	vif->mid = mid;
-	wil_vif_init(vif);
+	vअगर = ndev_to_vअगर(ndev);
+	vअगर->ndev = ndev;
+	vअगर->wil = wil;
+	vअगर->mid = mid;
+	wil_vअगर_init(vअगर);
 
-	wdev = &vif->wdev;
+	wdev = &vअगर->wdev;
 	wdev->wiphy = wil->wiphy;
-	wdev->iftype = iftype;
+	wdev->अगरtype = अगरtype;
 
 	ndev->netdev_ops = &wil_netdev_ops;
 	wil_set_ethtoolops(ndev);
@@ -342,40 +343,40 @@ wil_vif_alloc(struct wil6210_priv *wil, const char *name,
 	ndev->features |= ndev->hw_features;
 	SET_NETDEV_DEV(ndev, wiphy_dev(wdev->wiphy));
 	wdev->netdev = ndev;
-	return vif;
-}
+	वापस vअगर;
+पूर्ण
 
-void *wil_if_alloc(struct device *dev)
-{
-	struct wil6210_priv *wil;
-	struct wil6210_vif *vif;
-	int rc = 0;
+व्योम *wil_अगर_alloc(काष्ठा device *dev)
+अणु
+	काष्ठा wil6210_priv *wil;
+	काष्ठा wil6210_vअगर *vअगर;
+	पूर्णांक rc = 0;
 
 	wil = wil_cfg80211_init(dev);
-	if (IS_ERR(wil)) {
+	अगर (IS_ERR(wil)) अणु
 		dev_err(dev, "wil_cfg80211_init failed\n");
-		return wil;
-	}
+		वापस wil;
+	पूर्ण
 
 	rc = wil_priv_init(wil);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(dev, "wil_priv_init failed\n");
-		goto out_cfg;
-	}
+		जाओ out_cfg;
+	पूर्ण
 
 	wil_dbg_misc(wil, "if_alloc\n");
 
-	vif = wil_vif_alloc(wil, "wlan%d", NET_NAME_UNKNOWN,
+	vअगर = wil_vअगर_alloc(wil, "wlan%d", NET_NAME_UNKNOWN,
 			    NL80211_IFTYPE_STATION);
-	if (IS_ERR(vif)) {
+	अगर (IS_ERR(vअगर)) अणु
 		dev_err(dev, "wil_vif_alloc failed\n");
 		rc = -ENOMEM;
-		goto out_priv;
-	}
+		जाओ out_priv;
+	पूर्ण
 
-	wil->radio_wdev = vif_to_wdev(vif);
+	wil->radio_wdev = vअगर_to_wdev(vअगर);
 
-	return wil;
+	वापस wil;
 
 out_priv:
 	wil_priv_deinit(wil);
@@ -383,180 +384,180 @@ out_priv:
 out_cfg:
 	wil_cfg80211_deinit(wil);
 
-	return ERR_PTR(rc);
-}
+	वापस ERR_PTR(rc);
+पूर्ण
 
-void wil_if_free(struct wil6210_priv *wil)
-{
-	struct net_device *ndev = wil->main_ndev;
+व्योम wil_अगर_मुक्त(काष्ठा wil6210_priv *wil)
+अणु
+	काष्ठा net_device *ndev = wil->मुख्य_ndev;
 
 	wil_dbg_misc(wil, "if_free\n");
 
-	if (!ndev)
-		return;
+	अगर (!ndev)
+		वापस;
 
 	wil_priv_deinit(wil);
 
-	wil->main_ndev = NULL;
-	wil_ndev_destructor(ndev);
-	free_netdev(ndev);
+	wil->मुख्य_ndev = शून्य;
+	wil_ndev_deकाष्ठाor(ndev);
+	मुक्त_netdev(ndev);
 
 	wil_cfg80211_deinit(wil);
-}
+पूर्ण
 
-int wil_vif_add(struct wil6210_priv *wil, struct wil6210_vif *vif)
-{
-	struct net_device *ndev = vif_to_ndev(vif);
-	struct wireless_dev *wdev = vif_to_wdev(vif);
-	bool any_active = wil_has_active_ifaces(wil, true, false);
-	int rc;
+पूर्णांक wil_vअगर_add(काष्ठा wil6210_priv *wil, काष्ठा wil6210_vअगर *vअगर)
+अणु
+	काष्ठा net_device *ndev = vअगर_to_ndev(vअगर);
+	काष्ठा wireless_dev *wdev = vअगर_to_wdev(vअगर);
+	bool any_active = wil_has_active_अगरaces(wil, true, false);
+	पूर्णांक rc;
 
 	ASSERT_RTNL();
 
-	if (wil->vifs[vif->mid]) {
+	अगर (wil->vअगरs[vअगर->mid]) अणु
 		dev_err(&ndev->dev, "VIF with mid %d already in use\n",
-			vif->mid);
-		return -EEXIST;
-	}
-	if (any_active && vif->mid != 0) {
-		rc = wmi_port_allocate(wil, vif->mid, ndev->dev_addr,
-				       wdev->iftype);
-		if (rc)
-			return rc;
-	}
-	rc = cfg80211_register_netdevice(ndev);
-	if (rc < 0) {
+			vअगर->mid);
+		वापस -EEXIST;
+	पूर्ण
+	अगर (any_active && vअगर->mid != 0) अणु
+		rc = wmi_port_allocate(wil, vअगर->mid, ndev->dev_addr,
+				       wdev->अगरtype);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
+	rc = cfg80211_रेजिस्टर_netdevice(ndev);
+	अगर (rc < 0) अणु
 		dev_err(&ndev->dev, "Failed to register netdev: %d\n", rc);
-		if (any_active && vif->mid != 0)
-			wmi_port_delete(wil, vif->mid);
-		return rc;
-	}
+		अगर (any_active && vअगर->mid != 0)
+			wmi_port_delete(wil, vअगर->mid);
+		वापस rc;
+	पूर्ण
 
-	wil->vifs[vif->mid] = vif;
-	return 0;
-}
+	wil->vअगरs[vअगर->mid] = vअगर;
+	वापस 0;
+पूर्ण
 
-int wil_if_add(struct wil6210_priv *wil)
-{
-	struct wiphy *wiphy = wil->wiphy;
-	struct net_device *ndev = wil->main_ndev;
-	struct wil6210_vif *vif = ndev_to_vif(ndev);
-	int rc;
+पूर्णांक wil_अगर_add(काष्ठा wil6210_priv *wil)
+अणु
+	काष्ठा wiphy *wiphy = wil->wiphy;
+	काष्ठा net_device *ndev = wil->मुख्य_ndev;
+	काष्ठा wil6210_vअगर *vअगर = ndev_to_vअगर(ndev);
+	पूर्णांक rc;
 
 	wil_dbg_misc(wil, "entered");
 
-	strlcpy(wiphy->fw_version, wil->fw_version, sizeof(wiphy->fw_version));
+	strlcpy(wiphy->fw_version, wil->fw_version, माप(wiphy->fw_version));
 
-	rc = wiphy_register(wiphy);
-	if (rc < 0) {
+	rc = wiphy_रेजिस्टर(wiphy);
+	अगर (rc < 0) अणु
 		wil_err(wil, "failed to register wiphy, err %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	init_dummy_netdev(&wil->napi_ndev);
-	if (wil->use_enhanced_dma_hw) {
-		netif_napi_add(&wil->napi_ndev, &wil->napi_rx,
+	अगर (wil->use_enhanced_dma_hw) अणु
+		netअगर_napi_add(&wil->napi_ndev, &wil->napi_rx,
 			       wil6210_netdev_poll_rx_edma,
 			       WIL6210_NAPI_BUDGET);
-		netif_tx_napi_add(&wil->napi_ndev,
+		netअगर_tx_napi_add(&wil->napi_ndev,
 				  &wil->napi_tx, wil6210_netdev_poll_tx_edma,
 				  WIL6210_NAPI_BUDGET);
-	} else {
-		netif_napi_add(&wil->napi_ndev, &wil->napi_rx,
+	पूर्ण अन्यथा अणु
+		netअगर_napi_add(&wil->napi_ndev, &wil->napi_rx,
 			       wil6210_netdev_poll_rx,
 			       WIL6210_NAPI_BUDGET);
-		netif_tx_napi_add(&wil->napi_ndev,
+		netअगर_tx_napi_add(&wil->napi_ndev,
 				  &wil->napi_tx, wil6210_netdev_poll_tx,
 				  WIL6210_NAPI_BUDGET);
-	}
+	पूर्ण
 
-	wil_update_net_queues_bh(wil, vif, NULL, true);
+	wil_update_net_queues_bh(wil, vअगर, शून्य, true);
 
 	rtnl_lock();
 	wiphy_lock(wiphy);
-	rc = wil_vif_add(wil, vif);
+	rc = wil_vअगर_add(wil, vअगर);
 	wiphy_unlock(wiphy);
 	rtnl_unlock();
-	if (rc < 0)
-		goto out_wiphy;
+	अगर (rc < 0)
+		जाओ out_wiphy;
 
-	return 0;
+	वापस 0;
 
 out_wiphy:
-	wiphy_unregister(wiphy);
-	return rc;
-}
+	wiphy_unरेजिस्टर(wiphy);
+	वापस rc;
+पूर्ण
 
-void wil_vif_remove(struct wil6210_priv *wil, u8 mid)
-{
-	struct wil6210_vif *vif;
-	struct net_device *ndev;
-	bool any_active = wil_has_active_ifaces(wil, true, false);
+व्योम wil_vअगर_हटाओ(काष्ठा wil6210_priv *wil, u8 mid)
+अणु
+	काष्ठा wil6210_vअगर *vअगर;
+	काष्ठा net_device *ndev;
+	bool any_active = wil_has_active_अगरaces(wil, true, false);
 
 	ASSERT_RTNL();
-	if (mid >= GET_MAX_VIFS(wil)) {
+	अगर (mid >= GET_MAX_VIFS(wil)) अणु
 		wil_err(wil, "invalid MID: %d\n", mid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	vif = wil->vifs[mid];
-	if (!vif) {
+	vअगर = wil->vअगरs[mid];
+	अगर (!vअगर) अणु
 		wil_err(wil, "MID %d not registered\n", mid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&wil->mutex);
-	wil6210_disconnect(vif, NULL, WLAN_REASON_DEAUTH_LEAVING);
+	wil6210_disconnect(vअगर, शून्य, WLAN_REASON_DEAUTH_LEAVING);
 	mutex_unlock(&wil->mutex);
 
-	ndev = vif_to_ndev(vif);
-	/* during unregister_netdevice cfg80211_leave may perform operations
+	ndev = vअगर_to_ndev(vअगर);
+	/* during unरेजिस्टर_netdevice cfg80211_leave may perक्रमm operations
 	 * such as stop AP, disconnect, so we only clear the VIF afterwards
 	 */
-	cfg80211_unregister_netdevice(ndev);
+	cfg80211_unरेजिस्टर_netdevice(ndev);
 
-	if (any_active && vif->mid != 0)
-		wmi_port_delete(wil, vif->mid);
+	अगर (any_active && vअगर->mid != 0)
+		wmi_port_delete(wil, vअगर->mid);
 
-	/* make sure no one is accessing the VIF before removing */
-	mutex_lock(&wil->vif_mutex);
-	wil->vifs[mid] = NULL;
-	/* ensure NAPI code will see the NULL VIF */
+	/* make sure no one is accessing the VIF beक्रमe removing */
+	mutex_lock(&wil->vअगर_mutex);
+	wil->vअगरs[mid] = शून्य;
+	/* ensure NAPI code will see the शून्य VIF */
 	wmb();
-	if (test_bit(wil_status_napi_en, wil->status)) {
+	अगर (test_bit(wil_status_napi_en, wil->status)) अणु
 		napi_synchronize(&wil->napi_rx);
 		napi_synchronize(&wil->napi_tx);
-	}
-	mutex_unlock(&wil->vif_mutex);
+	पूर्ण
+	mutex_unlock(&wil->vअगर_mutex);
 
 	flush_work(&wil->wmi_event_worker);
-	del_timer_sync(&vif->connect_timer);
-	cancel_work_sync(&vif->disconnect_worker);
-	wil_probe_client_flush(vif);
-	cancel_work_sync(&vif->probe_client_worker);
-	cancel_work_sync(&vif->enable_tx_key_worker);
-	/* for VIFs, ndev will be freed by destructor after RTNL is unlocked.
-	 * the main interface will be freed in wil_if_free, we need to keep it
-	 * a bit longer so logging macros will work.
+	del_समयr_sync(&vअगर->connect_समयr);
+	cancel_work_sync(&vअगर->disconnect_worker);
+	wil_probe_client_flush(vअगर);
+	cancel_work_sync(&vअगर->probe_client_worker);
+	cancel_work_sync(&vअगर->enable_tx_key_worker);
+	/* क्रम VIFs, ndev will be मुक्तd by deकाष्ठाor after RTNL is unlocked.
+	 * the मुख्य पूर्णांकerface will be मुक्तd in wil_अगर_मुक्त, we need to keep it
+	 * a bit दीर्घer so logging macros will work.
 	 */
-}
+पूर्ण
 
-void wil_if_remove(struct wil6210_priv *wil)
-{
-	struct net_device *ndev = wil->main_ndev;
-	struct wireless_dev *wdev = ndev->ieee80211_ptr;
-	struct wiphy *wiphy = wdev->wiphy;
+व्योम wil_अगर_हटाओ(काष्ठा wil6210_priv *wil)
+अणु
+	काष्ठा net_device *ndev = wil->मुख्य_ndev;
+	काष्ठा wireless_dev *wdev = ndev->ieee80211_ptr;
+	काष्ठा wiphy *wiphy = wdev->wiphy;
 
 	wil_dbg_misc(wil, "if_remove\n");
 
 	rtnl_lock();
 	wiphy_lock(wiphy);
-	wil_vif_remove(wil, 0);
+	wil_vअगर_हटाओ(wil, 0);
 	wiphy_unlock(wiphy);
 	rtnl_unlock();
 
-	netif_napi_del(&wil->napi_tx);
-	netif_napi_del(&wil->napi_rx);
+	netअगर_napi_del(&wil->napi_tx);
+	netअगर_napi_del(&wil->napi_rx);
 
-	wiphy_unregister(wiphy);
-}
+	wiphy_unरेजिस्टर(wiphy);
+पूर्ण

@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/jump_label.h>
-#include <asm/patch.h>
-#include <asm/insn.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/jump_label.h>
+#समावेश <यंत्र/patch.h>
+#समावेश <यंत्र/insn.h>
 
-static void __arch_jump_label_transform(struct jump_entry *entry,
-					enum jump_label_type type,
-					bool is_static)
-{
-	void *addr = (void *)entry->code;
-	unsigned int insn;
+अटल व्योम __arch_jump_label_transक्रमm(काष्ठा jump_entry *entry,
+					क्रमागत jump_label_type type,
+					bool is_अटल)
+अणु
+	व्योम *addr = (व्योम *)entry->code;
+	अचिन्हित पूर्णांक insn;
 
-	if (type == JUMP_LABEL_JMP)
+	अगर (type == JUMP_LABEL_JMP)
 		insn = arm_gen_branch(entry->code, entry->target);
-	else
+	अन्यथा
 		insn = arm_gen_nop();
 
-	if (is_static)
+	अगर (is_अटल)
 		__patch_text_early(addr, insn);
-	else
+	अन्यथा
 		patch_text(addr, insn);
-}
+पूर्ण
 
-void arch_jump_label_transform(struct jump_entry *entry,
-			       enum jump_label_type type)
-{
-	__arch_jump_label_transform(entry, type, false);
-}
+व्योम arch_jump_label_transक्रमm(काष्ठा jump_entry *entry,
+			       क्रमागत jump_label_type type)
+अणु
+	__arch_jump_label_transक्रमm(entry, type, false);
+पूर्ण
 
-void arch_jump_label_transform_static(struct jump_entry *entry,
-				      enum jump_label_type type)
-{
-	__arch_jump_label_transform(entry, type, true);
-}
+व्योम arch_jump_label_transक्रमm_अटल(काष्ठा jump_entry *entry,
+				      क्रमागत jump_label_type type)
+अणु
+	__arch_jump_label_transक्रमm(entry, type, true);
+पूर्ण

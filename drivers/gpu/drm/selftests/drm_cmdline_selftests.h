@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* List each unit test as selftest(function)
  *
- * The name is used as both an enum and expanded as igt__name to create
- * a module parameter. It must be unique and legal for a C identifier.
+ * The name is used as both an क्रमागत and expanded as igt__name to create
+ * a module parameter. It must be unique and legal क्रम a C identअगरier.
  *
  * Tests are executed in order by igt/drm_mm
  */
 
-#define cmdline_test(test)	selftest(test, test)
+#घोषणा cmdline_test(test)	selftest(test, test)
 
-cmdline_test(drm_cmdline_test_force_d_only)
-cmdline_test(drm_cmdline_test_force_D_only_dvi)
-cmdline_test(drm_cmdline_test_force_D_only_hdmi)
-cmdline_test(drm_cmdline_test_force_D_only_not_digital)
-cmdline_test(drm_cmdline_test_force_e_only)
+cmdline_test(drm_cmdline_test_क्रमce_d_only)
+cmdline_test(drm_cmdline_test_क्रमce_D_only_dvi)
+cmdline_test(drm_cmdline_test_क्रमce_D_only_hdmi)
+cmdline_test(drm_cmdline_test_क्रमce_D_only_not_digital)
+cmdline_test(drm_cmdline_test_क्रमce_e_only)
 cmdline_test(drm_cmdline_test_margin_only)
-cmdline_test(drm_cmdline_test_interlace_only)
+cmdline_test(drm_cmdline_test_पूर्णांकerlace_only)
 cmdline_test(drm_cmdline_test_res)
 cmdline_test(drm_cmdline_test_res_missing_x)
 cmdline_test(drm_cmdline_test_res_missing_y)
@@ -29,15 +30,15 @@ cmdline_test(drm_cmdline_test_res_bad_bpp)
 cmdline_test(drm_cmdline_test_res_refresh)
 cmdline_test(drm_cmdline_test_res_bad_refresh)
 cmdline_test(drm_cmdline_test_res_bpp_refresh)
-cmdline_test(drm_cmdline_test_res_bpp_refresh_interlaced)
+cmdline_test(drm_cmdline_test_res_bpp_refresh_पूर्णांकerlaced)
 cmdline_test(drm_cmdline_test_res_bpp_refresh_margins)
-cmdline_test(drm_cmdline_test_res_bpp_refresh_force_off)
-cmdline_test(drm_cmdline_test_res_bpp_refresh_force_on_off)
-cmdline_test(drm_cmdline_test_res_bpp_refresh_force_on)
-cmdline_test(drm_cmdline_test_res_bpp_refresh_force_on_analog)
-cmdline_test(drm_cmdline_test_res_bpp_refresh_force_on_digital)
-cmdline_test(drm_cmdline_test_res_bpp_refresh_interlaced_margins_force_on)
-cmdline_test(drm_cmdline_test_res_margins_force_on)
+cmdline_test(drm_cmdline_test_res_bpp_refresh_क्रमce_off)
+cmdline_test(drm_cmdline_test_res_bpp_refresh_क्रमce_on_off)
+cmdline_test(drm_cmdline_test_res_bpp_refresh_क्रमce_on)
+cmdline_test(drm_cmdline_test_res_bpp_refresh_क्रमce_on_analog)
+cmdline_test(drm_cmdline_test_res_bpp_refresh_क्रमce_on_digital)
+cmdline_test(drm_cmdline_test_res_bpp_refresh_पूर्णांकerlaced_margins_क्रमce_on)
+cmdline_test(drm_cmdline_test_res_margins_क्रमce_on)
 cmdline_test(drm_cmdline_test_res_vesa_margins)
 cmdline_test(drm_cmdline_test_res_invalid_mode)
 cmdline_test(drm_cmdline_test_res_bpp_wrong_place_mode)
@@ -63,6 +64,6 @@ cmdline_test(drm_cmdline_test_multiple_options)
 cmdline_test(drm_cmdline_test_invalid_option)
 cmdline_test(drm_cmdline_test_bpp_extra_and_option)
 cmdline_test(drm_cmdline_test_extra_and_option)
-cmdline_test(drm_cmdline_test_freestanding_options)
-cmdline_test(drm_cmdline_test_freestanding_force_e_and_options)
+cmdline_test(drm_cmdline_test_मुक्तstanding_options)
+cmdline_test(drm_cmdline_test_मुक्तstanding_क्रमce_e_and_options)
 cmdline_test(drm_cmdline_test_panel_orientation)

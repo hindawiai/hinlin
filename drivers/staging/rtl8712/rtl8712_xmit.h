@@ -1,81 +1,82 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
  *
- * Modifications for inclusion into the Linux staging tree are
+ * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact information:
+ * Contact inक्रमmation:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
-#ifndef _RTL8712_XMIT_H_
-#define _RTL8712_XMIT_H_
+#अगर_अघोषित _RTL8712_XMIT_H_
+#घोषणा _RTL8712_XMIT_H_
 
-#define HWXMIT_ENTRY	4
+#घोषणा HWXMIT_ENTRY	4
 
-#define VO_QUEUE_INX	0
-#define VI_QUEUE_INX	1
-#define BE_QUEUE_INX	2
-#define BK_QUEUE_INX	3
-#define TS_QUEUE_INX	4
-#define MGT_QUEUE_INX	5
-#define BMC_QUEUE_INX	6
-#define BCN_QUEUE_INX	7
+#घोषणा VO_QUEUE_INX	0
+#घोषणा VI_QUEUE_INX	1
+#घोषणा BE_QUEUE_INX	2
+#घोषणा BK_QUEUE_INX	3
+#घोषणा TS_QUEUE_INX	4
+#घोषणा MGT_QUEUE_INX	5
+#घोषणा BMC_QUEUE_INX	6
+#घोषणा BCN_QUEUE_INX	7
 
-#define HW_QUEUE_ENTRY	8
+#घोषणा HW_QUEUE_ENTRY	8
 
-#define TXDESC_SIZE 32
-#define TXDESC_OFFSET TXDESC_SIZE
+#घोषणा TXDESC_SIZE 32
+#घोषणा TXDESC_OFFSET TXDESC_SIZE
 
-#define NR_AMSDU_XMITFRAME 8
-#define NR_TXAGG_XMITFRAME 8
+#घोषणा NR_AMSDU_XMITFRAME 8
+#घोषणा NR_TXAGG_XMITFRAME 8
 
-#define MAX_AMSDU_XMITBUF_SZ 8704
-#define MAX_TXAGG_XMITBUF_SZ 16384 /*16k*/
+#घोषणा MAX_AMSDU_XMITBUF_SZ 8704
+#घोषणा MAX_TXAGG_XMITBUF_SZ 16384 /*16k*/
 
-#define tx_cmd tx_desc
+#घोषणा tx_cmd tx_desc
 
 /*
- *defined for TX DESC Operation
+ *defined क्रम TX DESC Operation
  */
 
-#define MAX_TID (15)
+#घोषणा MAX_TID (15)
 
 /*OFFSET 0*/
-#define OFFSET_SZ (0)
-#define OFFSET_SHT (16)
-#define OWN	BIT(31)
-#define FSG	BIT(27)
-#define LSG	BIT(26)
-#define TYPE_SHT (24)
-#define TYPE_MSK (0x03000000)
+#घोषणा OFFSET_SZ (0)
+#घोषणा OFFSET_SHT (16)
+#घोषणा OWN	BIT(31)
+#घोषणा FSG	BIT(27)
+#घोषणा LSG	BIT(26)
+#घोषणा TYPE_SHT (24)
+#घोषणा TYPE_MSK (0x03000000)
 
 /*OFFSET 4*/
-#define PKT_OFFSET_SZ (0)
-#define QSEL_SHT (8)
-#define HWPC BIT(31)
+#घोषणा PKT_OFFSET_SZ (0)
+#घोषणा QSEL_SHT (8)
+#घोषणा HWPC BIT(31)
 
 /*OFFSET 8*/
-#define BMC BIT(7)
-#define BK BIT(30)
-#define AGG_EN BIT(29)
-#define RTS_RC_SHT (16)
+#घोषणा BMC BIT(7)
+#घोषणा BK BIT(30)
+#घोषणा AGG_EN BIT(29)
+#घोषणा RTS_RC_SHT (16)
 
 /*OFFSET 12*/
-#define SEQ_SHT (16)
+#घोषणा SEQ_SHT (16)
 
 /*OFFSET 16*/
-#define TXBW BIT(18)
+#घोषणा TXBW BIT(18)
 
 /*OFFSET 20*/
-#define DISFB BIT(15)
-#define RSVD6_MSK (0x00E00000)
-#define RSVD6_SHT (21)
+#घोषणा DISFB BIT(15)
+#घोषणा RSVD6_MSK (0x00E00000)
+#घोषणा RSVD6_SHT (21)
 
-struct tx_desc {
+काष्ठा tx_desc अणु
 	/*DWORD 0*/
 	__le32 txdw0;
 	__le32 txdw1;
@@ -85,24 +86,24 @@ struct tx_desc {
 	__le32 txdw5;
 	__le32 txdw6;
 	__le32 txdw7;
-};
+पूर्ण;
 
-union txdesc {
-	struct tx_desc txdesc;
-	unsigned int value[TXDESC_SIZE >> 2];
-};
+जोड़ txdesc अणु
+	काष्ठा tx_desc txdesc;
+	अचिन्हित पूर्णांक value[TXDESC_SIZE >> 2];
+पूर्ण;
 
-int r8712_xmitframe_complete(struct _adapter *padapter,
-			     struct xmit_priv *pxmitpriv,
-			     struct xmit_buf *pxmitbuf);
-void r8712_do_queue_select(struct _adapter *padapter,
-			   struct pkt_attrib *pattrib);
+पूर्णांक r8712_xmitframe_complete(काष्ठा _adapter *padapter,
+			     काष्ठा xmit_priv *pxmitpriv,
+			     काष्ठा xmit_buf *pxmitbuf);
+व्योम r8712_करो_queue_select(काष्ठा _adapter *padapter,
+			   काष्ठा pkt_attrib *pattrib);
 
-#ifdef CONFIG_R8712_TX_AGGR
-void r8712_xmitframe_aggr_1st(struct xmit_buf *pxmitbuf,
-			      struct xmit_frame *pxmitframe);
-void r8712_dump_aggr_xframe(struct xmit_buf *pxmitbuf,
-			    struct xmit_frame *pxmitframe);
-#endif
+#अगर_घोषित CONFIG_R8712_TX_AGGR
+व्योम r8712_xmitframe_aggr_1st(काष्ठा xmit_buf *pxmitbuf,
+			      काष्ठा xmit_frame *pxmitframe);
+व्योम r8712_dump_aggr_xframe(काष्ठा xmit_buf *pxmitbuf,
+			    काष्ठा xmit_frame *pxmitframe);
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

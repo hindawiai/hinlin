@@ -1,204 +1,205 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _DVB_USB_CXUSB_H_
-#define _DVB_USB_CXUSB_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _DVB_USB_CXUSB_H_
+#घोषणा _DVB_USB_CXUSB_H_
 
-#include <linux/completion.h>
-#include <linux/i2c.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/usb.h>
-#include <linux/workqueue.h>
-#include <media/v4l2-common.h>
-#include <media/v4l2-dev.h>
-#include <media/v4l2-device.h>
-#include <media/videobuf2-core.h>
-#include <media/videobuf2-v4l2.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/workqueue.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-dev.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/videobuf2-core.h>
+#समावेश <media/videobuf2-v4l2.h>
 
-#define DVB_USB_LOG_PREFIX "cxusb"
-#include "dvb-usb.h"
+#घोषणा DVB_USB_LOG_PREFIX "cxusb"
+#समावेश "dvb-usb.h"
 
-#define CXUSB_VIDEO_URBS (5)
-#define CXUSB_VIDEO_URB_MAX_SIZE (512 * 1024)
+#घोषणा CXUSB_VIDEO_URBS (5)
+#घोषणा CXUSB_VIDEO_URB_MAX_SIZE (512 * 1024)
 
-#define CXUSB_VIDEO_PKT_SIZE 3030
-#define CXUSB_VIDEO_MAX_FRAME_PKTS 346
-#define CXUSB_VIDEO_MAX_FRAME_SIZE (CXUSB_VIDEO_MAX_FRAME_PKTS * \
+#घोषणा CXUSB_VIDEO_PKT_SIZE 3030
+#घोषणा CXUSB_VIDEO_MAX_FRAME_PKTS 346
+#घोषणा CXUSB_VIDEO_MAX_FRAME_SIZE (CXUSB_VIDEO_MAX_FRAME_PKTS * \
 					CXUSB_VIDEO_PKT_SIZE)
 
-/* usb commands - some of it are guesses, don't have a reference yet */
-#define CMD_BLUEBIRD_GPIO_RW 0x05
+/* usb commands - some of it are guesses, करोn't have a reference yet */
+#घोषणा CMD_BLUEBIRD_GPIO_RW 0x05
 
-#define CMD_I2C_WRITE     0x08
-#define CMD_I2C_READ      0x09
+#घोषणा CMD_I2C_WRITE     0x08
+#घोषणा CMD_I2C_READ      0x09
 
-#define CMD_GPIO_READ     0x0d
-#define CMD_GPIO_WRITE    0x0e
-#define     GPIO_TUNER         0x02
+#घोषणा CMD_GPIO_READ     0x0d
+#घोषणा CMD_GPIO_WRITE    0x0e
+#घोषणा     GPIO_TUNER         0x02
 
-#define CMD_POWER_OFF     0xdc
-#define CMD_POWER_ON      0xde
+#घोषणा CMD_POWER_OFF     0xdc
+#घोषणा CMD_POWER_ON      0xde
 
-#define CMD_STREAMING_ON  0x36
-#define CMD_STREAMING_OFF 0x37
+#घोषणा CMD_STREAMING_ON  0x36
+#घोषणा CMD_STREAMING_OFF 0x37
 
-#define CMD_AVER_STREAM_ON  0x18
-#define CMD_AVER_STREAM_OFF 0x19
+#घोषणा CMD_AVER_STREAM_ON  0x18
+#घोषणा CMD_AVER_STREAM_OFF 0x19
 
-#define CMD_GET_IR_CODE   0x47
+#घोषणा CMD_GET_IR_CODE   0x47
 
-#define CMD_ANALOG        0x50
-#define CMD_DIGITAL       0x51
+#घोषणा CMD_ANALOG        0x50
+#घोषणा CMD_DIGITAL       0x51
 
-#define CXUSB_BT656_PREAMBLE ((const u8 *)"\xff\x00\x00")
+#घोषणा CXUSB_BT656_PREAMBLE ((स्थिर u8 *)"\xff\x00\x00")
 
-#define CXUSB_BT656_FIELD_MASK BIT(6)
-#define CXUSB_BT656_FIELD_1 0
-#define CXUSB_BT656_FIELD_2 BIT(6)
+#घोषणा CXUSB_BT656_FIELD_MASK BIT(6)
+#घोषणा CXUSB_BT656_FIELD_1 0
+#घोषणा CXUSB_BT656_FIELD_2 BIT(6)
 
-#define CXUSB_BT656_VBI_MASK BIT(5)
-#define CXUSB_BT656_VBI_ON BIT(5)
-#define CXUSB_BT656_VBI_OFF 0
+#घोषणा CXUSB_BT656_VBI_MASK BIT(5)
+#घोषणा CXUSB_BT656_VBI_ON BIT(5)
+#घोषणा CXUSB_BT656_VBI_OFF 0
 
-#define CXUSB_BT656_SEAV_MASK BIT(4)
-#define CXUSB_BT656_SEAV_EAV BIT(4)
-#define CXUSB_BT656_SEAV_SAV 0
+#घोषणा CXUSB_BT656_SEAV_MASK BIT(4)
+#घोषणा CXUSB_BT656_SEAV_EAV BIT(4)
+#घोषणा CXUSB_BT656_SEAV_SAV 0
 
-/* Max transfer size done by I2C transfer functions */
-#define MAX_XFER_SIZE  80
+/* Max transfer size करोne by I2C transfer functions */
+#घोषणा MAX_XFER_SIZE  80
 
-struct cxusb_state {
-	u8 gpio_write_state[3];
-	bool gpio_write_refresh[3];
-	struct i2c_client *i2c_client_demod;
-	struct i2c_client *i2c_client_tuner;
+काष्ठा cxusb_state अणु
+	u8 gpio_ग_लिखो_state[3];
+	bool gpio_ग_लिखो_refresh[3];
+	काष्ठा i2c_client *i2c_client_demod;
+	काष्ठा i2c_client *i2c_client_tuner;
 
-	unsigned char data[MAX_XFER_SIZE];
+	अचिन्हित अक्षर data[MAX_XFER_SIZE];
 
-	struct mutex stream_mutex;
+	काष्ठा mutex stream_mutex;
 	u8 last_lock;
-	int (*fe_read_status)(struct dvb_frontend *fe,
-			      enum fe_status *status);
-};
+	पूर्णांक (*fe_पढ़ो_status)(काष्ठा dvb_frontend *fe,
+			      क्रमागत fe_status *status);
+पूर्ण;
 
-enum cxusb_open_type {
+क्रमागत cxusb_खोलो_type अणु
 	CXUSB_OPEN_INIT,
 	CXUSB_OPEN_NONE,
 	CXUSB_OPEN_ANALOG,
 	CXUSB_OPEN_DIGITAL
-};
+पूर्ण;
 
-struct cxusb_medion_auxbuf {
+काष्ठा cxusb_medion_auxbuf अणु
 	u8 *buf;
-	unsigned int len;
-	unsigned int paylen;
-};
+	अचिन्हित पूर्णांक len;
+	अचिन्हित पूर्णांक paylen;
+पूर्ण;
 
-enum cxusb_bt656_mode {
+क्रमागत cxusb_bt656_mode अणु
 	NEW_FRAME, FIRST_FIELD, SECOND_FIELD
-};
+पूर्ण;
 
-enum cxusb_bt656_fmode {
+क्रमागत cxusb_bt656_भ_शेषe अणु
 	START_SEARCH, LINE_SAMPLES, VBI_SAMPLES
-};
+पूर्ण;
 
-struct cxusb_bt656_params {
-	enum cxusb_bt656_mode mode;
-	enum cxusb_bt656_fmode fmode;
-	unsigned int pos;
-	unsigned int line;
-	unsigned int linesamples;
+काष्ठा cxusb_bt656_params अणु
+	क्रमागत cxusb_bt656_mode mode;
+	क्रमागत cxusb_bt656_भ_शेषe भ_शेषe;
+	अचिन्हित पूर्णांक pos;
+	अचिन्हित पूर्णांक line;
+	अचिन्हित पूर्णांक linesamples;
 	u8 *buf;
-};
+पूर्ण;
 
-struct cxusb_medion_dev {
+काष्ठा cxusb_medion_dev अणु
 	/* has to be the first one */
-	struct cxusb_state state;
+	काष्ठा cxusb_state state;
 
-	struct dvb_usb_device *dvbdev;
+	काष्ठा dvb_usb_device *dvbdev;
 
-	enum cxusb_open_type open_type;
-	unsigned int open_ctr;
-	struct mutex open_lock;
+	क्रमागत cxusb_खोलो_type खोलो_type;
+	अचिन्हित पूर्णांक खोलो_ctr;
+	काष्ठा mutex खोलो_lock;
 
-#ifdef CONFIG_DVB_USB_CXUSB_ANALOG
-	struct v4l2_device v4l2dev;
-	struct v4l2_subdev *cx25840;
-	struct v4l2_subdev *tuner;
-	struct v4l2_subdev *tda9887;
-	struct video_device *videodev, *radiodev;
-	struct mutex dev_lock;
+#अगर_घोषित CONFIG_DVB_USB_CXUSB_ANALOG
+	काष्ठा v4l2_device v4l2dev;
+	काष्ठा v4l2_subdev *cx25840;
+	काष्ठा v4l2_subdev *tuner;
+	काष्ठा v4l2_subdev *tda9887;
+	काष्ठा video_device *videodev, *radiodev;
+	काष्ठा mutex dev_lock;
 
-	struct vb2_queue videoqueue;
+	काष्ठा vb2_queue videoqueue;
 	u32 input;
 	bool stop_streaming;
 	u32 width, height;
 	u32 field_order;
-	struct cxusb_medion_auxbuf auxbuf;
+	काष्ठा cxusb_medion_auxbuf auxbuf;
 	v4l2_std_id norm;
 
-	struct urb *streamurbs[CXUSB_VIDEO_URBS];
-	unsigned long urbcomplete;
-	struct work_struct urbwork;
-	unsigned int nexturb;
+	काष्ठा urb *streamurbs[CXUSB_VIDEO_URBS];
+	अचिन्हित दीर्घ urbcomplete;
+	काष्ठा work_काष्ठा urbwork;
+	अचिन्हित पूर्णांक nexturb;
 
-	struct cxusb_bt656_params bt656;
-	struct cxusb_medion_vbuffer *vbuf;
+	काष्ठा cxusb_bt656_params bt656;
+	काष्ठा cxusb_medion_vbuffer *vbuf;
 	__u32 vbuf_sequence;
 
-	struct list_head buflist;
+	काष्ठा list_head buflist;
 
-	struct completion v4l2_release;
-#endif
-};
+	काष्ठा completion v4l2_release;
+#पूर्ण_अगर
+पूर्ण;
 
-struct cxusb_medion_vbuffer {
-	struct vb2_v4l2_buffer vb2;
-	struct list_head list;
-};
+काष्ठा cxusb_medion_vbuffer अणु
+	काष्ठा vb2_v4l2_buffer vb2;
+	काष्ठा list_head list;
+पूर्ण;
 
-/* defines for "debug" module parameter */
-#define CXUSB_DBG_RC BIT(0)
-#define CXUSB_DBG_I2C BIT(1)
-#define CXUSB_DBG_MISC BIT(2)
-#define CXUSB_DBG_BT656 BIT(3)
-#define CXUSB_DBG_URB BIT(4)
-#define CXUSB_DBG_OPS BIT(5)
-#define CXUSB_DBG_AUXB BIT(6)
+/* defines क्रम "debug" module parameter */
+#घोषणा CXUSB_DBG_RC BIT(0)
+#घोषणा CXUSB_DBG_I2C BIT(1)
+#घोषणा CXUSB_DBG_MISC BIT(2)
+#घोषणा CXUSB_DBG_BT656 BIT(3)
+#घोषणा CXUSB_DBG_URB BIT(4)
+#घोषणा CXUSB_DBG_OPS BIT(5)
+#घोषणा CXUSB_DBG_AUXB BIT(6)
 
-extern int dvb_usb_cxusb_debug;
+बाह्य पूर्णांक dvb_usb_cxusb_debug;
 
-#define cxusb_vprintk(dvbdev, lvl, ...) do {				\
-		struct cxusb_medion_dev *_cxdev = (dvbdev)->priv;	\
-		if (dvb_usb_cxusb_debug & CXUSB_DBG_##lvl)		\
-			v4l2_printk(KERN_DEBUG,			\
+#घोषणा cxusb_vprपूर्णांकk(dvbdev, lvl, ...) करो अणु				\
+		काष्ठा cxusb_medion_dev *_cxdev = (dvbdev)->priv;	\
+		अगर (dvb_usb_cxusb_debug & CXUSB_DBG_##lvl)		\
+			v4l2_prपूर्णांकk(KERN_DEBUG,			\
 				    &_cxdev->v4l2dev, __VA_ARGS__);	\
-	} while (0)
+	पूर्ण जबतक (0)
 
-int cxusb_ctrl_msg(struct dvb_usb_device *d,
-		   u8 cmd, const u8 *wbuf, int wlen, u8 *rbuf, int rlen);
+पूर्णांक cxusb_ctrl_msg(काष्ठा dvb_usb_device *d,
+		   u8 cmd, स्थिर u8 *wbuf, पूर्णांक wlen, u8 *rbuf, पूर्णांक rlen);
 
-#ifdef CONFIG_DVB_USB_CXUSB_ANALOG
-int cxusb_medion_analog_init(struct dvb_usb_device *dvbdev);
-int cxusb_medion_register_analog(struct dvb_usb_device *dvbdev);
-void cxusb_medion_unregister_analog(struct dvb_usb_device *dvbdev);
-#else
-static inline int cxusb_medion_analog_init(struct dvb_usb_device *dvbdev)
-{
-	return -EINVAL;
-}
+#अगर_घोषित CONFIG_DVB_USB_CXUSB_ANALOG
+पूर्णांक cxusb_medion_analog_init(काष्ठा dvb_usb_device *dvbdev);
+पूर्णांक cxusb_medion_रेजिस्टर_analog(काष्ठा dvb_usb_device *dvbdev);
+व्योम cxusb_medion_unरेजिस्टर_analog(काष्ठा dvb_usb_device *dvbdev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक cxusb_medion_analog_init(काष्ठा dvb_usb_device *dvbdev)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int cxusb_medion_register_analog(struct dvb_usb_device *dvbdev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक cxusb_medion_रेजिस्टर_analog(काष्ठा dvb_usb_device *dvbdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void cxusb_medion_unregister_analog(struct dvb_usb_device *dvbdev)
-{
-}
-#endif
+अटल अंतरभूत व्योम cxusb_medion_unरेजिस्टर_analog(काष्ठा dvb_usb_device *dvbdev)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-int cxusb_medion_get(struct dvb_usb_device *dvbdev,
-		     enum cxusb_open_type open_type);
-void cxusb_medion_put(struct dvb_usb_device *dvbdev);
+पूर्णांक cxusb_medion_get(काष्ठा dvb_usb_device *dvbdev,
+		     क्रमागत cxusb_खोलो_type खोलो_type);
+व्योम cxusb_medion_put(काष्ठा dvb_usb_device *dvbdev);
 
-#endif
+#पूर्ण_अगर

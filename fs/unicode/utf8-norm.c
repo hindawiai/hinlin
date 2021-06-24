@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014 SGI.
  * All rights reserved.
  */
 
-#include "utf8n.h"
+#समावेश "utf8n.h"
 
-struct utf8data {
-	unsigned int maxage;
-	unsigned int offset;
-};
+काष्ठा utf8data अणु
+	अचिन्हित पूर्णांक maxage;
+	अचिन्हित पूर्णांक offset;
+पूर्ण;
 
-#define __INCLUDED_FROM_UTF8NORM_C__
-#include "utf8data.h"
-#undef __INCLUDED_FROM_UTF8NORM_C__
+#घोषणा __INCLUDED_FROM_UTF8NORM_C__
+#समावेश "utf8data.h"
+#अघोषित __INCLUDED_FROM_UTF8NORM_C__
 
-int utf8version_is_supported(u8 maj, u8 min, u8 rev)
-{
-	int i = ARRAY_SIZE(utf8agetab) - 1;
-	unsigned int sb_utf8version = UNICODE_AGE(maj, min, rev);
+पूर्णांक utf8version_is_supported(u8 maj, u8 min, u8 rev)
+अणु
+	पूर्णांक i = ARRAY_SIZE(utf8agetab) - 1;
+	अचिन्हित पूर्णांक sb_utf8version = UNICODE_AGE(maj, min, rev);
 
-	while (i >= 0 && utf8agetab[i] != 0) {
-		if (sb_utf8version == utf8agetab[i])
-			return 1;
+	जबतक (i >= 0 && utf8agetab[i] != 0) अणु
+		अगर (sb_utf8version == utf8agetab[i])
+			वापस 1;
 		i--;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(utf8version_is_supported);
 
-int utf8version_latest(void)
-{
-	return utf8vers;
-}
+पूर्णांक utf8version_latest(व्योम)
+अणु
+	वापस utf8vers;
+पूर्ण
 EXPORT_SYMBOL(utf8version_latest);
 
 /*
  * UTF-8 valid ranges.
  *
- * The UTF-8 encoding spreads the bits of a 32bit word over several
+ * The UTF-8 encoding spपढ़ोs the bits of a 32bit word over several
  * bytes. This table gives the ranges that can be held and how they'd
  * be represented.
  *
@@ -50,8 +51,8 @@ EXPORT_SYMBOL(utf8version_latest);
  * 0x00000000 0x7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
  *
  * There is an additional requirement on UTF-8, in that only the
- * shortest representation of a 32bit value is to be used.  A decoder
- * must not decode sequences that do not satisfy this requirement.
+ * लघुest representation of a 32bit value is to be used.  A decoder
+ * must not decode sequences that करो not satisfy this requirement.
  * Thus the allowed ranges have a lower bound.
  *
  * 0x00000000 0x0000007F: 0xxxxxxx
@@ -61,7 +62,7 @@ EXPORT_SYMBOL(utf8version_latest);
  * 0x00200000 0x03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
  * 0x04000000 0x7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
  *
- * Actual unicode characters are limited to the range 0x0 - 0x10FFFF,
+ * Actual unicode अक्षरacters are limited to the range 0x0 - 0x10FFFF,
  * 17 planes of 65536 values.  This limits the sequences actually seen
  * even more, to just the following.
  *
@@ -72,36 +73,36 @@ EXPORT_SYMBOL(utf8version_latest);
  *
  * Within those ranges the surrogates 0xD800 - 0xDFFF are not allowed.
  *
- * Note that the longest sequence seen with valid usage is 4 bytes,
- * the same a single UTF-32 character.  This makes the UTF-8
+ * Note that the दीर्घest sequence seen with valid usage is 4 bytes,
+ * the same a single UTF-32 अक्षरacter.  This makes the UTF-8
  * representation of Unicode strictly smaller than UTF-32.
  *
- * The shortest sequence requirement was introduced by:
+ * The लघुest sequence requirement was पूर्णांकroduced by:
  *    Corrigendum #1: UTF-8 Shortest Form
  * It can be found here:
- *    http://www.unicode.org/versions/corrigendum1.html
+ *    http://www.unicode.org/versions/corrigendum1.hपंचांगl
  *
  */
 
 /*
  * Return the number of bytes used by the current UTF-8 sequence.
- * Assumes the input points to the first byte of a valid UTF-8
+ * Assumes the input poपूर्णांकs to the first byte of a valid UTF-8
  * sequence.
  */
-static inline int utf8clen(const char *s)
-{
-	unsigned char c = *s;
+अटल अंतरभूत पूर्णांक utf8clen(स्थिर अक्षर *s)
+अणु
+	अचिन्हित अक्षर c = *s;
 
-	return 1 + (c >= 0xC0) + (c >= 0xE0) + (c >= 0xF0);
-}
+	वापस 1 + (c >= 0xC0) + (c >= 0xE0) + (c >= 0xF0);
+पूर्ण
 
 /*
  * Decode a 3-byte UTF-8 sequence.
  */
-static unsigned int
-utf8decode3(const char *str)
-{
-	unsigned int		uc;
+अटल अचिन्हित पूर्णांक
+utf8decode3(स्थिर अक्षर *str)
+अणु
+	अचिन्हित पूर्णांक		uc;
 
 	uc = *str++ & 0x0F;
 	uc <<= 6;
@@ -109,110 +110,110 @@ utf8decode3(const char *str)
 	uc <<= 6;
 	uc |= *str++ & 0x3F;
 
-	return uc;
-}
+	वापस uc;
+पूर्ण
 
 /*
  * Encode a 3-byte UTF-8 sequence.
  */
-static int
-utf8encode3(char *str, unsigned int val)
-{
+अटल पूर्णांक
+utf8encode3(अक्षर *str, अचिन्हित पूर्णांक val)
+अणु
 	str[2] = (val & 0x3F) | 0x80;
 	val >>= 6;
 	str[1] = (val & 0x3F) | 0x80;
 	val >>= 6;
 	str[0] = val | 0xE0;
 
-	return 3;
-}
+	वापस 3;
+पूर्ण
 
 /*
  * utf8trie_t
  *
- * A compact binary tree, used to decode UTF-8 characters.
+ * A compact binary tree, used to decode UTF-8 अक्षरacters.
  *
- * Internal nodes are one byte for the node itself, and up to three
- * bytes for an offset into the tree.  The first byte contains the
- * following information:
- *  NEXTBYTE  - flag        - advance to next byte if set
+ * Internal nodes are one byte क्रम the node itself, and up to three
+ * bytes क्रम an offset पूर्णांकo the tree.  The first byte contains the
+ * following inक्रमmation:
+ *  NEXTBYTE  - flag        - advance to next byte अगर set
  *  BITNUM    - 3 bit field - the bit number to tested
  *  OFFLEN    - 2 bit field - number of bytes in the offset
- * if offlen == 0 (non-branching node)
- *  RIGHTPATH - 1 bit field - set if the following node is for the
+ * अगर offlen == 0 (non-branching node)
+ *  RIGHTPATH - 1 bit field - set अगर the following node is क्रम the
  *                            right-hand path (tested bit is set)
- *  TRIENODE  - 1 bit field - set if the following node is an internal
+ *  TRIENODE  - 1 bit field - set अगर the following node is an पूर्णांकernal
  *                            node, otherwise it is a leaf node
- * if offlen != 0 (branching node)
- *  LEFTNODE  - 1 bit field - set if the left-hand node is internal
- *  RIGHTNODE - 1 bit field - set if the right-hand node is internal
+ * अगर offlen != 0 (branching node)
+ *  LEFTNODE  - 1 bit field - set अगर the left-hand node is पूर्णांकernal
+ *  RIGHTNODE - 1 bit field - set अगर the right-hand node is पूर्णांकernal
  *
  * Due to the way utf8 works, there cannot be branching nodes with
  * NEXTBYTE set, and moreover those nodes always have a righthand
  * descendant.
  */
-typedef const unsigned char utf8trie_t;
-#define BITNUM		0x07
-#define NEXTBYTE	0x08
-#define OFFLEN		0x30
-#define OFFLEN_SHIFT	4
-#define RIGHTPATH	0x40
-#define TRIENODE	0x80
-#define RIGHTNODE	0x40
-#define LEFTNODE	0x80
+प्रकार स्थिर अचिन्हित अक्षर utf8trie_t;
+#घोषणा BITNUM		0x07
+#घोषणा NEXTBYTE	0x08
+#घोषणा OFFLEN		0x30
+#घोषणा OFFLEN_SHIFT	4
+#घोषणा RIGHTPATH	0x40
+#घोषणा TRIENODE	0x80
+#घोषणा RIGHTNODE	0x40
+#घोषणा LEFTNODE	0x80
 
 /*
  * utf8leaf_t
  *
  * The leaves of the trie are embedded in the trie, and so the same
- * underlying datatype: unsigned char.
+ * underlying datatype: अचिन्हित अक्षर.
  *
  * leaf[0]: The unicode version, stored as a generation number that is
- *          an index into utf8agetab[].  With this we can filter code
- *          points based on the unicode version in which they were
- *          defined.  The CCC of a non-defined code point is 0.
+ *          an index पूर्णांकo utf8agetab[].  With this we can filter code
+ *          poपूर्णांकs based on the unicode version in which they were
+ *          defined.  The CCC of a non-defined code poपूर्णांक is 0.
  * leaf[1]: Canonical Combining Class. During normalization, we need
- *          to do a stable sort into ascending order of all characters
- *          with a non-zero CCC that occur between two characters with
+ *          to करो a stable sort पूर्णांकo ascending order of all अक्षरacters
+ *          with a non-zero CCC that occur between two अक्षरacters with
  *          a CCC of 0, or at the begin or end of a string.
  *          The unicode standard guarantees that all CCC values are
  *          between 0 and 254 inclusive, which leaves 255 available as
  *          a special value.
- *          Code points with CCC 0 are known as stoppers.
+ *          Code poपूर्णांकs with CCC 0 are known as stoppers.
  * leaf[2]: Decomposition. If leaf[1] == 255, then leaf[2] is the
  *          start of a NUL-terminated string that is the decomposition
- *          of the character.
- *          The CCC of a decomposable character is the same as the CCC
- *          of the first character of its decomposition.
- *          Some characters decompose as the empty string: these are
- *          characters with the Default_Ignorable_Code_Point property.
- *          These do affect normalization, as they all have CCC 0.
+ *          of the अक्षरacter.
+ *          The CCC of a decomposable अक्षरacter is the same as the CCC
+ *          of the first अक्षरacter of its decomposition.
+ *          Some अक्षरacters decompose as the empty string: these are
+ *          अक्षरacters with the Default_Ignorable_Code_Poपूर्णांक property.
+ *          These करो affect normalization, as they all have CCC 0.
  *
  * The decompositions in the trie have been fully expanded, with the
  * exception of Hangul syllables, which are decomposed algorithmically.
  *
- * Casefolding, if applicable, is also done using decompositions.
+ * Casefolding, अगर applicable, is also करोne using decompositions.
  *
- * The trie is constructed in such a way that leaves exist for all
+ * The trie is स्थिरructed in such a way that leaves exist क्रम all
  * UTF-8 sequences that match the criteria from the "UTF-8 valid
- * ranges" comment above, and only for those sequences.  Therefore a
+ * ranges" comment above, and only क्रम those sequences.  Thereक्रमe a
  * lookup in the trie can be used to validate the UTF-8 input.
  */
-typedef const unsigned char utf8leaf_t;
+प्रकार स्थिर अचिन्हित अक्षर utf8leaf_t;
 
-#define LEAF_GEN(LEAF)	((LEAF)[0])
-#define LEAF_CCC(LEAF)	((LEAF)[1])
-#define LEAF_STR(LEAF)	((const char *)((LEAF) + 2))
+#घोषणा LEAF_GEN(LEAF)	((LEAF)[0])
+#घोषणा LEAF_CCC(LEAF)	((LEAF)[1])
+#घोषणा LEAF_STR(LEAF)	((स्थिर अक्षर *)((LEAF) + 2))
 
-#define MINCCC		(0)
-#define MAXCCC		(254)
-#define STOPPER		(0)
-#define	DECOMPOSE	(255)
+#घोषणा MINCCC		(0)
+#घोषणा MAXCCC		(254)
+#घोषणा STOPPER		(0)
+#घोषणा	DECOMPOSE	(255)
 
-/* Marker for hangul syllable decomposition. */
-#define HANGUL		((char)(255))
-/* Size of the synthesized leaf used for Hangul syllable decomposition. */
-#define UTF8HANGULLEAF	(12)
+/* Marker क्रम hangul syllable decomposition. */
+#घोषणा HANGUL		((अक्षर)(255))
+/* Size of the synthesized leaf used क्रम Hangul syllable decomposition. */
+#घोषणा UTF8HANGULLEAF	(12)
 
 /*
  * Hangul decomposition (algorithm from Section 3.12 of Unicode 6.3.0)
@@ -251,34 +252,34 @@ typedef const unsigned char utf8leaf_t;
  *   TIndex = (Sindex % TCount)
  *   LPart = LBase + LIndex
  *   VPart = VBase + VIndex
- *   if (TIndex == 0) {
+ *   अगर (TIndex == 0) अणु
  *          d = <LPart, VPart>
- *   } else {
+ *   पूर्ण अन्यथा अणु
  *          TPart = TBase + TIndex
  *          d = <LPart, TPart, VPart>
- *   }
+ *   पूर्ण
  */
 
 /* Constants */
-#define SB	(0xAC00)
-#define LB	(0x1100)
-#define VB	(0x1161)
-#define TB	(0x11A7)
-#define LC	(19)
-#define VC	(21)
-#define TC	(28)
-#define NC	(VC * TC)
-#define SC	(LC * NC)
+#घोषणा SB	(0xAC00)
+#घोषणा LB	(0x1100)
+#घोषणा VB	(0x1161)
+#घोषणा TB	(0x11A7)
+#घोषणा LC	(19)
+#घोषणा VC	(21)
+#घोषणा TC	(28)
+#घोषणा NC	(VC * TC)
+#घोषणा SC	(LC * NC)
 
 /* Algorithmic decomposition of hangul syllable. */
-static utf8leaf_t *
-utf8hangul(const char *str, unsigned char *hangul)
-{
-	unsigned int	si;
-	unsigned int	li;
-	unsigned int	vi;
-	unsigned int	ti;
-	unsigned char	*h;
+अटल utf8leaf_t *
+utf8hangul(स्थिर अक्षर *str, अचिन्हित अक्षर *hangul)
+अणु
+	अचिन्हित पूर्णांक	si;
+	अचिन्हित पूर्णांक	li;
+	अचिन्हित पूर्णांक	vi;
+	अचिन्हित पूर्णांक	ti;
+	अचिन्हित अक्षर	*h;
 
 	/* Calculate the SI, LI, VI, and TI values. */
 	si = utf8decode3(str) - SB;
@@ -293,445 +294,445 @@ utf8hangul(const char *str, unsigned char *hangul)
 	h += 2;
 
 	/* Add LPart, a 3-byte UTF-8 sequence. */
-	h += utf8encode3((char *)h, li + LB);
+	h += utf8encode3((अक्षर *)h, li + LB);
 
 	/* Add VPart, a 3-byte UTF-8 sequence. */
-	h += utf8encode3((char *)h, vi + VB);
+	h += utf8encode3((अक्षर *)h, vi + VB);
 
-	/* Add TPart if required, also a 3-byte UTF-8 sequence. */
-	if (ti)
-		h += utf8encode3((char *)h, ti + TB);
+	/* Add TPart अगर required, also a 3-byte UTF-8 sequence. */
+	अगर (ti)
+		h += utf8encode3((अक्षर *)h, ti + TB);
 
 	/* Terminate string. */
 	h[0] = '\0';
 
-	return hangul;
-}
+	वापस hangul;
+पूर्ण
 
 /*
  * Use trie to scan s, touching at most len bytes.
- * Returns the leaf if one exists, NULL otherwise.
+ * Returns the leaf अगर one exists, शून्य otherwise.
  *
- * A non-NULL return guarantees that the UTF-8 sequence starting at s
- * is well-formed and corresponds to a known unicode code point.  The
- * shorthand for this will be "is valid UTF-8 unicode".
+ * A non-शून्य वापस guarantees that the UTF-8 sequence starting at s
+ * is well-क्रमmed and corresponds to a known unicode code poपूर्णांक.  The
+ * लघुhand क्रम this will be "is valid UTF-8 unicode".
  */
-static utf8leaf_t *utf8nlookup(const struct utf8data *data,
-			       unsigned char *hangul, const char *s, size_t len)
-{
-	utf8trie_t	*trie = NULL;
-	int		offlen;
-	int		offset;
-	int		mask;
-	int		node;
+अटल utf8leaf_t *utf8nlookup(स्थिर काष्ठा utf8data *data,
+			       अचिन्हित अक्षर *hangul, स्थिर अक्षर *s, माप_प्रकार len)
+अणु
+	utf8trie_t	*trie = शून्य;
+	पूर्णांक		offlen;
+	पूर्णांक		offset;
+	पूर्णांक		mask;
+	पूर्णांक		node;
 
-	if (!data)
-		return NULL;
-	if (len == 0)
-		return NULL;
+	अगर (!data)
+		वापस शून्य;
+	अगर (len == 0)
+		वापस शून्य;
 
 	trie = utf8data + data->offset;
 	node = 1;
-	while (node) {
+	जबतक (node) अणु
 		offlen = (*trie & OFFLEN) >> OFFLEN_SHIFT;
-		if (*trie & NEXTBYTE) {
-			if (--len == 0)
-				return NULL;
+		अगर (*trie & NEXTBYTE) अणु
+			अगर (--len == 0)
+				वापस शून्य;
 			s++;
-		}
+		पूर्ण
 		mask = 1 << (*trie & BITNUM);
-		if (*s & mask) {
+		अगर (*s & mask) अणु
 			/* Right leg */
-			if (offlen) {
+			अगर (offlen) अणु
 				/* Right node at offset of trie */
 				node = (*trie & RIGHTNODE);
 				offset = trie[offlen];
-				while (--offlen) {
+				जबतक (--offlen) अणु
 					offset <<= 8;
 					offset |= trie[offlen];
-				}
+				पूर्ण
 				trie += offset;
-			} else if (*trie & RIGHTPATH) {
+			पूर्ण अन्यथा अगर (*trie & RIGHTPATH) अणु
 				/* Right node after this node */
 				node = (*trie & TRIENODE);
 				trie++;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* No right node. */
-				return NULL;
-			}
-		} else {
+				वापस शून्य;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* Left leg */
-			if (offlen) {
+			अगर (offlen) अणु
 				/* Left node after this node. */
 				node = (*trie & LEFTNODE);
 				trie += offlen + 1;
-			} else if (*trie & RIGHTPATH) {
+			पूर्ण अन्यथा अगर (*trie & RIGHTPATH) अणु
 				/* No left node. */
-				return NULL;
-			} else {
+				वापस शून्य;
+			पूर्ण अन्यथा अणु
 				/* Left node after this node */
 				node = (*trie & TRIENODE);
 				trie++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	/*
-	 * Hangul decomposition is done algorithmically. These are the
-	 * codepoints >= 0xAC00 and <= 0xD7A3. Their UTF-8 encoding is
-	 * always 3 bytes long, so s has been advanced twice, and the
+	 * Hangul decomposition is करोne algorithmically. These are the
+	 * codepoपूर्णांकs >= 0xAC00 and <= 0xD7A3. Their UTF-8 encoding is
+	 * always 3 bytes दीर्घ, so s has been advanced twice, and the
 	 * start of the sequence is at s-2.
 	 */
-	if (LEAF_CCC(trie) == DECOMPOSE && LEAF_STR(trie)[0] == HANGUL)
+	अगर (LEAF_CCC(trie) == DECOMPOSE && LEAF_STR(trie)[0] == HANGUL)
 		trie = utf8hangul(s - 2, hangul);
-	return trie;
-}
+	वापस trie;
+पूर्ण
 
 /*
  * Use trie to scan s.
- * Returns the leaf if one exists, NULL otherwise.
+ * Returns the leaf अगर one exists, शून्य otherwise.
  *
  * Forwards to utf8nlookup().
  */
-static utf8leaf_t *utf8lookup(const struct utf8data *data,
-			      unsigned char *hangul, const char *s)
-{
-	return utf8nlookup(data, hangul, s, (size_t)-1);
-}
+अटल utf8leaf_t *utf8lookup(स्थिर काष्ठा utf8data *data,
+			      अचिन्हित अक्षर *hangul, स्थिर अक्षर *s)
+अणु
+	वापस utf8nlookup(data, hangul, s, (माप_प्रकार)-1);
+पूर्ण
 
 /*
- * Maximum age of any character in s.
- * Return -1 if s is not valid UTF-8 unicode.
- * Return 0 if only non-assigned code points are used.
+ * Maximum age of any अक्षरacter in s.
+ * Return -1 अगर s is not valid UTF-8 unicode.
+ * Return 0 अगर only non-asचिन्हित code poपूर्णांकs are used.
  */
-int utf8agemax(const struct utf8data *data, const char *s)
-{
+पूर्णांक utf8agemax(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s)
+अणु
 	utf8leaf_t	*leaf;
-	int		age = 0;
-	int		leaf_age;
-	unsigned char	hangul[UTF8HANGULLEAF];
+	पूर्णांक		age = 0;
+	पूर्णांक		leaf_age;
+	अचिन्हित अक्षर	hangul[UTF8HANGULLEAF];
 
-	if (!data)
-		return -1;
+	अगर (!data)
+		वापस -1;
 
-	while (*s) {
+	जबतक (*s) अणु
 		leaf = utf8lookup(data, hangul, s);
-		if (!leaf)
-			return -1;
+		अगर (!leaf)
+			वापस -1;
 
 		leaf_age = utf8agetab[LEAF_GEN(leaf)];
-		if (leaf_age <= data->maxage && leaf_age > age)
+		अगर (leaf_age <= data->maxage && leaf_age > age)
 			age = leaf_age;
 		s += utf8clen(s);
-	}
-	return age;
-}
+	पूर्ण
+	वापस age;
+पूर्ण
 EXPORT_SYMBOL(utf8agemax);
 
 /*
- * Minimum age of any character in s.
- * Return -1 if s is not valid UTF-8 unicode.
- * Return 0 if non-assigned code points are used.
+ * Minimum age of any अक्षरacter in s.
+ * Return -1 अगर s is not valid UTF-8 unicode.
+ * Return 0 अगर non-asचिन्हित code poपूर्णांकs are used.
  */
-int utf8agemin(const struct utf8data *data, const char *s)
-{
+पूर्णांक utf8agemin(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s)
+अणु
 	utf8leaf_t	*leaf;
-	int		age;
-	int		leaf_age;
-	unsigned char	hangul[UTF8HANGULLEAF];
+	पूर्णांक		age;
+	पूर्णांक		leaf_age;
+	अचिन्हित अक्षर	hangul[UTF8HANGULLEAF];
 
-	if (!data)
-		return -1;
+	अगर (!data)
+		वापस -1;
 	age = data->maxage;
-	while (*s) {
+	जबतक (*s) अणु
 		leaf = utf8lookup(data, hangul, s);
-		if (!leaf)
-			return -1;
+		अगर (!leaf)
+			वापस -1;
 		leaf_age = utf8agetab[LEAF_GEN(leaf)];
-		if (leaf_age <= data->maxage && leaf_age < age)
+		अगर (leaf_age <= data->maxage && leaf_age < age)
 			age = leaf_age;
 		s += utf8clen(s);
-	}
-	return age;
-}
+	पूर्ण
+	वापस age;
+पूर्ण
 EXPORT_SYMBOL(utf8agemin);
 
 /*
- * Maximum age of any character in s, touch at most len bytes.
- * Return -1 if s is not valid UTF-8 unicode.
+ * Maximum age of any अक्षरacter in s, touch at most len bytes.
+ * Return -1 अगर s is not valid UTF-8 unicode.
  */
-int utf8nagemax(const struct utf8data *data, const char *s, size_t len)
-{
+पूर्णांक utf8nagemax(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s, माप_प्रकार len)
+अणु
 	utf8leaf_t	*leaf;
-	int		age = 0;
-	int		leaf_age;
-	unsigned char	hangul[UTF8HANGULLEAF];
+	पूर्णांक		age = 0;
+	पूर्णांक		leaf_age;
+	अचिन्हित अक्षर	hangul[UTF8HANGULLEAF];
 
-	if (!data)
-		return -1;
+	अगर (!data)
+		वापस -1;
 
-	while (len && *s) {
+	जबतक (len && *s) अणु
 		leaf = utf8nlookup(data, hangul, s, len);
-		if (!leaf)
-			return -1;
+		अगर (!leaf)
+			वापस -1;
 		leaf_age = utf8agetab[LEAF_GEN(leaf)];
-		if (leaf_age <= data->maxage && leaf_age > age)
+		अगर (leaf_age <= data->maxage && leaf_age > age)
 			age = leaf_age;
 		len -= utf8clen(s);
 		s += utf8clen(s);
-	}
-	return age;
-}
+	पूर्ण
+	वापस age;
+पूर्ण
 EXPORT_SYMBOL(utf8nagemax);
 
 /*
- * Maximum age of any character in s, touch at most len bytes.
- * Return -1 if s is not valid UTF-8 unicode.
+ * Maximum age of any अक्षरacter in s, touch at most len bytes.
+ * Return -1 अगर s is not valid UTF-8 unicode.
  */
-int utf8nagemin(const struct utf8data *data, const char *s, size_t len)
-{
+पूर्णांक utf8nagemin(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s, माप_प्रकार len)
+अणु
 	utf8leaf_t	*leaf;
-	int		leaf_age;
-	int		age;
-	unsigned char	hangul[UTF8HANGULLEAF];
+	पूर्णांक		leaf_age;
+	पूर्णांक		age;
+	अचिन्हित अक्षर	hangul[UTF8HANGULLEAF];
 
-	if (!data)
-		return -1;
+	अगर (!data)
+		वापस -1;
 	age = data->maxage;
-	while (len && *s) {
+	जबतक (len && *s) अणु
 		leaf = utf8nlookup(data, hangul, s, len);
-		if (!leaf)
-			return -1;
+		अगर (!leaf)
+			वापस -1;
 		leaf_age = utf8agetab[LEAF_GEN(leaf)];
-		if (leaf_age <= data->maxage && leaf_age < age)
+		अगर (leaf_age <= data->maxage && leaf_age < age)
 			age = leaf_age;
 		len -= utf8clen(s);
 		s += utf8clen(s);
-	}
-	return age;
-}
+	पूर्ण
+	वापस age;
+पूर्ण
 EXPORT_SYMBOL(utf8nagemin);
 
 /*
  * Length of the normalization of s.
- * Return -1 if s is not valid UTF-8 unicode.
+ * Return -1 अगर s is not valid UTF-8 unicode.
  *
- * A string of Default_Ignorable_Code_Point has length 0.
+ * A string of Default_Ignorable_Code_Poपूर्णांक has length 0.
  */
-ssize_t utf8len(const struct utf8data *data, const char *s)
-{
+sमाप_प्रकार utf8len(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s)
+अणु
 	utf8leaf_t	*leaf;
-	size_t		ret = 0;
-	unsigned char	hangul[UTF8HANGULLEAF];
+	माप_प्रकार		ret = 0;
+	अचिन्हित अक्षर	hangul[UTF8HANGULLEAF];
 
-	if (!data)
-		return -1;
-	while (*s) {
+	अगर (!data)
+		वापस -1;
+	जबतक (*s) अणु
 		leaf = utf8lookup(data, hangul, s);
-		if (!leaf)
-			return -1;
-		if (utf8agetab[LEAF_GEN(leaf)] > data->maxage)
+		अगर (!leaf)
+			वापस -1;
+		अगर (utf8agetab[LEAF_GEN(leaf)] > data->maxage)
 			ret += utf8clen(s);
-		else if (LEAF_CCC(leaf) == DECOMPOSE)
-			ret += strlen(LEAF_STR(leaf));
-		else
+		अन्यथा अगर (LEAF_CCC(leaf) == DECOMPOSE)
+			ret += म_माप(LEAF_STR(leaf));
+		अन्यथा
 			ret += utf8clen(s);
 		s += utf8clen(s);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(utf8len);
 
 /*
  * Length of the normalization of s, touch at most len bytes.
- * Return -1 if s is not valid UTF-8 unicode.
+ * Return -1 अगर s is not valid UTF-8 unicode.
  */
-ssize_t utf8nlen(const struct utf8data *data, const char *s, size_t len)
-{
+sमाप_प्रकार utf8nlen(स्थिर काष्ठा utf8data *data, स्थिर अक्षर *s, माप_प्रकार len)
+अणु
 	utf8leaf_t	*leaf;
-	size_t		ret = 0;
-	unsigned char	hangul[UTF8HANGULLEAF];
+	माप_प्रकार		ret = 0;
+	अचिन्हित अक्षर	hangul[UTF8HANGULLEAF];
 
-	if (!data)
-		return -1;
-	while (len && *s) {
+	अगर (!data)
+		वापस -1;
+	जबतक (len && *s) अणु
 		leaf = utf8nlookup(data, hangul, s, len);
-		if (!leaf)
-			return -1;
-		if (utf8agetab[LEAF_GEN(leaf)] > data->maxage)
+		अगर (!leaf)
+			वापस -1;
+		अगर (utf8agetab[LEAF_GEN(leaf)] > data->maxage)
 			ret += utf8clen(s);
-		else if (LEAF_CCC(leaf) == DECOMPOSE)
-			ret += strlen(LEAF_STR(leaf));
-		else
+		अन्यथा अगर (LEAF_CCC(leaf) == DECOMPOSE)
+			ret += म_माप(LEAF_STR(leaf));
+		अन्यथा
 			ret += utf8clen(s);
 		len -= utf8clen(s);
 		s += utf8clen(s);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(utf8nlen);
 
 /*
- * Set up an utf8cursor for use by utf8byte().
+ * Set up an utf8cursor क्रम use by utf8byte().
  *
- *   u8c    : pointer to cursor.
- *   data   : const struct utf8data to use for normalization.
+ *   u8c    : poपूर्णांकer to cursor.
+ *   data   : स्थिर काष्ठा utf8data to use क्रम normalization.
  *   s      : string.
  *   len    : length of s.
  *
  * Returns -1 on error, 0 on success.
  */
-int utf8ncursor(struct utf8cursor *u8c, const struct utf8data *data,
-		const char *s, size_t len)
-{
-	if (!data)
-		return -1;
-	if (!s)
-		return -1;
+पूर्णांक utf8ncursor(काष्ठा utf8cursor *u8c, स्थिर काष्ठा utf8data *data,
+		स्थिर अक्षर *s, माप_प्रकार len)
+अणु
+	अगर (!data)
+		वापस -1;
+	अगर (!s)
+		वापस -1;
 	u8c->data = data;
 	u8c->s = s;
-	u8c->p = NULL;
-	u8c->ss = NULL;
-	u8c->sp = NULL;
+	u8c->p = शून्य;
+	u8c->ss = शून्य;
+	u8c->sp = शून्य;
 	u8c->len = len;
 	u8c->slen = 0;
 	u8c->ccc = STOPPER;
 	u8c->nccc = STOPPER;
 	/* Check we didn't clobber the maximum length. */
-	if (u8c->len != len)
-		return -1;
+	अगर (u8c->len != len)
+		वापस -1;
 	/* The first byte of s may not be an utf8 continuation. */
-	if (len > 0 && (*s & 0xC0) == 0x80)
-		return -1;
-	return 0;
-}
+	अगर (len > 0 && (*s & 0xC0) == 0x80)
+		वापस -1;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(utf8ncursor);
 
 /*
- * Set up an utf8cursor for use by utf8byte().
+ * Set up an utf8cursor क्रम use by utf8byte().
  *
- *   u8c    : pointer to cursor.
- *   data   : const struct utf8data to use for normalization.
+ *   u8c    : poपूर्णांकer to cursor.
+ *   data   : स्थिर काष्ठा utf8data to use क्रम normalization.
  *   s      : NUL-terminated string.
  *
  * Returns -1 on error, 0 on success.
  */
-int utf8cursor(struct utf8cursor *u8c, const struct utf8data *data,
-	       const char *s)
-{
-	return utf8ncursor(u8c, data, s, (unsigned int)-1);
-}
+पूर्णांक utf8cursor(काष्ठा utf8cursor *u8c, स्थिर काष्ठा utf8data *data,
+	       स्थिर अक्षर *s)
+अणु
+	वापस utf8ncursor(u8c, data, s, (अचिन्हित पूर्णांक)-1);
+पूर्ण
 EXPORT_SYMBOL(utf8cursor);
 
 /*
- * Get one byte from the normalized form of the string described by u8c.
+ * Get one byte from the normalized क्रमm of the string described by u8c.
  *
- * Returns the byte cast to an unsigned char on succes, and -1 on failure.
+ * Returns the byte cast to an अचिन्हित अक्षर on succes, and -1 on failure.
  *
  * The cursor keeps track of the location in the string in u8c->s.
- * When a character is decomposed, the current location is stored in
+ * When a अक्षरacter is decomposed, the current location is stored in
  * u8c->p, and u8c->s is set to the start of the decomposition. Note
- * that bytes from a decomposition do not count against u8c->len.
+ * that bytes from a decomposition करो not count against u8c->len.
  *
- * Characters are emitted if they match the current CCC in u8c->ccc.
- * Hitting end-of-string while u8c->ccc == STOPPER means we're done,
- * and the function returns 0 in that case.
+ * Characters are emitted अगर they match the current CCC in u8c->ccc.
+ * Hitting end-of-string जबतक u8c->ccc == STOPPER means we're करोne,
+ * and the function वापसs 0 in that हाल.
  *
- * Sorting by CCC is done by repeatedly scanning the string.  The
+ * Sorting by CCC is करोne by repeatedly scanning the string.  The
  * values of u8c->s and u8c->p are stored in u8c->ss and u8c->sp at
  * the start of the scan.  The first pass finds the lowest CCC to be
  * emitted and stores it in u8c->nccc, the second pass emits the
- * characters with this CCC and finds the next lowest CCC. This limits
- * the number of passes to 1 + the number of different CCCs in the
+ * अक्षरacters with this CCC and finds the next lowest CCC. This limits
+ * the number of passes to 1 + the number of dअगरferent CCCs in the
  * sequence being scanned.
  *
- * Therefore:
- *  u8c->p  != NULL -> a decomposition is being scanned.
- *  u8c->ss != NULL -> this is a repeating scan.
+ * Thereक्रमe:
+ *  u8c->p  != शून्य -> a decomposition is being scanned.
+ *  u8c->ss != शून्य -> this is a repeating scan.
  *  u8c->ccc == -1   -> this is the first scan of a repeating scan.
  */
-int utf8byte(struct utf8cursor *u8c)
-{
+पूर्णांक utf8byte(काष्ठा utf8cursor *u8c)
+अणु
 	utf8leaf_t *leaf;
-	int ccc;
+	पूर्णांक ccc;
 
-	for (;;) {
-		/* Check for the end of a decomposed character. */
-		if (u8c->p && *u8c->s == '\0') {
+	क्रम (;;) अणु
+		/* Check क्रम the end of a decomposed अक्षरacter. */
+		अगर (u8c->p && *u8c->s == '\0') अणु
 			u8c->s = u8c->p;
-			u8c->p = NULL;
-		}
+			u8c->p = शून्य;
+		पूर्ण
 
-		/* Check for end-of-string. */
-		if (!u8c->p && (u8c->len == 0 || *u8c->s == '\0')) {
+		/* Check क्रम end-of-string. */
+		अगर (!u8c->p && (u8c->len == 0 || *u8c->s == '\0')) अणु
 			/* There is no next byte. */
-			if (u8c->ccc == STOPPER)
-				return 0;
+			अगर (u8c->ccc == STOPPER)
+				वापस 0;
 			/* End-of-string during a scan counts as a stopper. */
 			ccc = STOPPER;
-			goto ccc_mismatch;
-		} else if ((*u8c->s & 0xC0) == 0x80) {
-			/* This is a continuation of the current character. */
-			if (!u8c->p)
+			जाओ ccc_mismatch;
+		पूर्ण अन्यथा अगर ((*u8c->s & 0xC0) == 0x80) अणु
+			/* This is a continuation of the current अक्षरacter. */
+			अगर (!u8c->p)
 				u8c->len--;
-			return (unsigned char)*u8c->s++;
-		}
+			वापस (अचिन्हित अक्षर)*u8c->s++;
+		पूर्ण
 
-		/* Look up the data for the current character. */
-		if (u8c->p) {
+		/* Look up the data क्रम the current अक्षरacter. */
+		अगर (u8c->p) अणु
 			leaf = utf8lookup(u8c->data, u8c->hangul, u8c->s);
-		} else {
+		पूर्ण अन्यथा अणु
 			leaf = utf8nlookup(u8c->data, u8c->hangul,
 					   u8c->s, u8c->len);
-		}
+		पूर्ण
 
 		/* No leaf found implies that the input is a binary blob. */
-		if (!leaf)
-			return -1;
+		अगर (!leaf)
+			वापस -1;
 
 		ccc = LEAF_CCC(leaf);
 		/* Characters that are too new have CCC 0. */
-		if (utf8agetab[LEAF_GEN(leaf)] > u8c->data->maxage) {
+		अगर (utf8agetab[LEAF_GEN(leaf)] > u8c->data->maxage) अणु
 			ccc = STOPPER;
-		} else if (ccc == DECOMPOSE) {
+		पूर्ण अन्यथा अगर (ccc == DECOMPOSE) अणु
 			u8c->len -= utf8clen(u8c->s);
 			u8c->p = u8c->s + utf8clen(u8c->s);
 			u8c->s = LEAF_STR(leaf);
 			/* Empty decomposition implies CCC 0. */
-			if (*u8c->s == '\0') {
-				if (u8c->ccc == STOPPER)
-					continue;
+			अगर (*u8c->s == '\0') अणु
+				अगर (u8c->ccc == STOPPER)
+					जारी;
 				ccc = STOPPER;
-				goto ccc_mismatch;
-			}
+				जाओ ccc_mismatch;
+			पूर्ण
 
 			leaf = utf8lookup(u8c->data, u8c->hangul, u8c->s);
-			if (!leaf)
-				return -1;
+			अगर (!leaf)
+				वापस -1;
 			ccc = LEAF_CCC(leaf);
-		}
+		पूर्ण
 
 		/*
-		 * If this is not a stopper, then see if it updates
+		 * If this is not a stopper, then see अगर it updates
 		 * the next canonical class to be emitted.
 		 */
-		if (ccc != STOPPER && u8c->ccc < ccc && ccc < u8c->nccc)
+		अगर (ccc != STOPPER && u8c->ccc < ccc && ccc < u8c->nccc)
 			u8c->nccc = ccc;
 
 		/*
-		 * Return the current byte if this is the current
+		 * Return the current byte अगर this is the current
 		 * combining class.
 		 */
-		if (ccc == u8c->ccc) {
-			if (!u8c->p)
+		अगर (ccc == u8c->ccc) अणु
+			अगर (!u8c->p)
 				u8c->len--;
-			return (unsigned char)*u8c->s++;
-		}
+			वापस (अचिन्हित अक्षर)*u8c->s++;
+		पूर्ण
 
 		/* Current combining class mismatch. */
 ccc_mismatch:
-		if (u8c->nccc == STOPPER) {
+		अगर (u8c->nccc == STOPPER) अणु
 			/*
-			 * Scan forward for the first canonical class
+			 * Scan क्रमward क्रम the first canonical class
 			 * to be emitted.  Save the position from
 			 * which to restart.
 			 */
@@ -740,53 +741,53 @@ ccc_mismatch:
 			u8c->sp = u8c->p;
 			u8c->ss = u8c->s;
 			u8c->slen = u8c->len;
-			if (!u8c->p)
+			अगर (!u8c->p)
 				u8c->len -= utf8clen(u8c->s);
 			u8c->s += utf8clen(u8c->s);
-		} else if (ccc != STOPPER) {
+		पूर्ण अन्यथा अगर (ccc != STOPPER) अणु
 			/* Not a stopper, and not the ccc we're emitting. */
-			if (!u8c->p)
+			अगर (!u8c->p)
 				u8c->len -= utf8clen(u8c->s);
 			u8c->s += utf8clen(u8c->s);
-		} else if (u8c->nccc != MAXCCC + 1) {
-			/* At a stopper, restart for next ccc. */
+		पूर्ण अन्यथा अगर (u8c->nccc != MAXCCC + 1) अणु
+			/* At a stopper, restart क्रम next ccc. */
 			u8c->ccc = u8c->nccc;
 			u8c->nccc = MAXCCC + 1;
 			u8c->s = u8c->ss;
 			u8c->p = u8c->sp;
 			u8c->len = u8c->slen;
-		} else {
-			/* All done, proceed from here. */
+		पूर्ण अन्यथा अणु
+			/* All करोne, proceed from here. */
 			u8c->ccc = STOPPER;
 			u8c->nccc = STOPPER;
-			u8c->sp = NULL;
-			u8c->ss = NULL;
+			u8c->sp = शून्य;
+			u8c->ss = शून्य;
 			u8c->slen = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(utf8byte);
 
-const struct utf8data *utf8nfdi(unsigned int maxage)
-{
-	int i = ARRAY_SIZE(utf8nfdidata) - 1;
+स्थिर काष्ठा utf8data *utf8nfdi(अचिन्हित पूर्णांक maxage)
+अणु
+	पूर्णांक i = ARRAY_SIZE(utf8nfdidata) - 1;
 
-	while (maxage < utf8nfdidata[i].maxage)
+	जबतक (maxage < utf8nfdidata[i].maxage)
 		i--;
-	if (maxage > utf8nfdidata[i].maxage)
-		return NULL;
-	return &utf8nfdidata[i];
-}
+	अगर (maxage > utf8nfdidata[i].maxage)
+		वापस शून्य;
+	वापस &utf8nfdidata[i];
+पूर्ण
 EXPORT_SYMBOL(utf8nfdi);
 
-const struct utf8data *utf8nfdicf(unsigned int maxage)
-{
-	int i = ARRAY_SIZE(utf8nfdicfdata) - 1;
+स्थिर काष्ठा utf8data *utf8nfdicf(अचिन्हित पूर्णांक maxage)
+अणु
+	पूर्णांक i = ARRAY_SIZE(utf8nfdicfdata) - 1;
 
-	while (maxage < utf8nfdicfdata[i].maxage)
+	जबतक (maxage < utf8nfdicfdata[i].maxage)
 		i--;
-	if (maxage > utf8nfdicfdata[i].maxage)
-		return NULL;
-	return &utf8nfdicfdata[i];
-}
+	अगर (maxage > utf8nfdicfdata[i].maxage)
+		वापस शून्य;
+	वापस &utf8nfdicfdata[i];
+पूर्ण
 EXPORT_SYMBOL(utf8nfdicf);

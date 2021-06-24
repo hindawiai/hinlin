@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * CNS3xxx common devices
  *
@@ -8,10 +9,10 @@
  *		  Anton Vorontsov <avorontsov@mvista.com>
  */
 
-#ifndef __CNS3XXX_DEVICES_H_
-#define __CNS3XXX_DEVICES_H_
+#अगर_अघोषित __CNS3XXX_DEVICES_H_
+#घोषणा __CNS3XXX_DEVICES_H_
 
-void __init cns3xxx_ahci_init(void);
-void __init cns3xxx_sdhci_init(void);
+व्योम __init cns3xxx_ahci_init(व्योम);
+व्योम __init cns3xxx_sdhci_init(व्योम);
 
-#endif /* __CNS3XXX_DEVICES_H_ */
+#पूर्ण_अगर /* __CNS3XXX_DEVICES_H_ */

@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * phy.c -- USB phy handling
  *
  * Copyright (C) 2004-2013 Texas Instruments
  */
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/err.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/of.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/err.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
 
-#include <linux/usb/phy.h>
+#समावेश <linux/usb/phy.h>
 
-/* Default current range by charger type. */
-#define DEFAULT_SDP_CUR_MIN	2
-#define DEFAULT_SDP_CUR_MAX	500
-#define DEFAULT_SDP_CUR_MIN_SS	150
-#define DEFAULT_SDP_CUR_MAX_SS	900
-#define DEFAULT_DCP_CUR_MIN	500
-#define DEFAULT_DCP_CUR_MAX	5000
-#define DEFAULT_CDP_CUR_MIN	1500
-#define DEFAULT_CDP_CUR_MAX	5000
-#define DEFAULT_ACA_CUR_MIN	1500
-#define DEFAULT_ACA_CUR_MAX	5000
+/* Default current range by अक्षरger type. */
+#घोषणा DEFAULT_SDP_CUR_MIN	2
+#घोषणा DEFAULT_SDP_CUR_MAX	500
+#घोषणा DEFAULT_SDP_CUR_MIN_SS	150
+#घोषणा DEFAULT_SDP_CUR_MAX_SS	900
+#घोषणा DEFAULT_DCP_CUR_MIN	500
+#घोषणा DEFAULT_DCP_CUR_MAX	5000
+#घोषणा DEFAULT_CDP_CUR_MIN	1500
+#घोषणा DEFAULT_CDP_CUR_MAX	5000
+#घोषणा DEFAULT_ACA_CUR_MIN	1500
+#घोषणा DEFAULT_ACA_CUR_MAX	5000
 
-static LIST_HEAD(phy_list);
-static DEFINE_SPINLOCK(phy_lock);
+अटल LIST_HEAD(phy_list);
+अटल DEFINE_SPINLOCK(phy_lock);
 
-struct phy_devm {
-	struct usb_phy *phy;
-	struct notifier_block *nb;
-};
+काष्ठा phy_devm अणु
+	काष्ठा usb_phy *phy;
+	काष्ठा notअगरier_block *nb;
+पूर्ण;
 
-static const char *const usb_chger_type[] = {
+अटल स्थिर अक्षर *स्थिर usb_chger_type[] = अणु
 	[UNKNOWN_TYPE]			= "USB_CHARGER_UNKNOWN_TYPE",
 	[SDP_TYPE]			= "USB_CHARGER_SDP_TYPE",
 	[CDP_TYPE]			= "USB_CHARGER_CDP_TYPE",
 	[DCP_TYPE]			= "USB_CHARGER_DCP_TYPE",
 	[ACA_TYPE]			= "USB_CHARGER_ACA_TYPE",
-};
+पूर्ण;
 
-static struct usb_phy *__usb_find_phy(struct list_head *list,
-	enum usb_phy_type type)
-{
-	struct usb_phy  *phy = NULL;
+अटल काष्ठा usb_phy *__usb_find_phy(काष्ठा list_head *list,
+	क्रमागत usb_phy_type type)
+अणु
+	काष्ठा usb_phy  *phy = शून्य;
 
-	list_for_each_entry(phy, list, head) {
-		if (phy->type != type)
-			continue;
+	list_क्रम_each_entry(phy, list, head) अणु
+		अगर (phy->type != type)
+			जारी;
 
-		return phy;
-	}
+		वापस phy;
+	पूर्ण
 
-	return ERR_PTR(-ENODEV);
-}
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static struct usb_phy *__of_usb_find_phy(struct device_node *node)
-{
-	struct usb_phy  *phy;
+अटल काष्ठा usb_phy *__of_usb_find_phy(काष्ठा device_node *node)
+अणु
+	काष्ठा usb_phy  *phy;
 
-	if (!of_device_is_available(node))
-		return ERR_PTR(-ENODEV);
+	अगर (!of_device_is_available(node))
+		वापस ERR_PTR(-ENODEV);
 
-	list_for_each_entry(phy, &phy_list, head) {
-		if (node != phy->dev->of_node)
-			continue;
+	list_क्रम_each_entry(phy, &phy_list, head) अणु
+		अगर (node != phy->dev->of_node)
+			जारी;
 
-		return phy;
-	}
+		वापस phy;
+	पूर्ण
 
-	return ERR_PTR(-EPROBE_DEFER);
-}
+	वापस ERR_PTR(-EPROBE_DEFER);
+पूर्ण
 
-static void usb_phy_set_default_current(struct usb_phy *usb_phy)
-{
+अटल व्योम usb_phy_set_शेष_current(काष्ठा usb_phy *usb_phy)
+अणु
 	usb_phy->chg_cur.sdp_min = DEFAULT_SDP_CUR_MIN;
 	usb_phy->chg_cur.sdp_max = DEFAULT_SDP_CUR_MAX;
 	usb_phy->chg_cur.dcp_min = DEFAULT_DCP_CUR_MIN;
@@ -84,333 +85,333 @@ static void usb_phy_set_default_current(struct usb_phy *usb_phy)
 	usb_phy->chg_cur.cdp_max = DEFAULT_CDP_CUR_MAX;
 	usb_phy->chg_cur.aca_min = DEFAULT_ACA_CUR_MIN;
 	usb_phy->chg_cur.aca_max = DEFAULT_ACA_CUR_MAX;
-}
+पूर्ण
 
 /**
- * usb_phy_notify_charger_work - notify the USB charger state
- * @work: the charger work to notify the USB charger state
+ * usb_phy_notअगरy_अक्षरger_work - notअगरy the USB अक्षरger state
+ * @work: the अक्षरger work to notअगरy the USB अक्षरger state
  *
- * This work can be issued when USB charger state has been changed or
- * USB charger current has been changed, then we can notify the current
- * what can be drawn to power user and the charger state to userspace.
+ * This work can be issued when USB अक्षरger state has been changed or
+ * USB अक्षरger current has been changed, then we can notअगरy the current
+ * what can be drawn to घातer user and the अक्षरger state to userspace.
  *
- * If we get the charger type from extcon subsystem, we can notify the
- * charger state to power user automatically by usb_phy_get_charger_type()
- * issuing from extcon subsystem.
+ * If we get the अक्षरger type from extcon subप्रणाली, we can notअगरy the
+ * अक्षरger state to घातer user स्वतःmatically by usb_phy_get_अक्षरger_type()
+ * issuing from extcon subप्रणाली.
  *
- * If we get the charger type from ->charger_detect() instead of extcon
- * subsystem, the usb phy driver should issue usb_phy_set_charger_state()
- * to set charger state when the charger state has been changed.
+ * If we get the अक्षरger type from ->अक्षरger_detect() instead of extcon
+ * subप्रणाली, the usb phy driver should issue usb_phy_set_अक्षरger_state()
+ * to set अक्षरger state when the अक्षरger state has been changed.
  */
-static void usb_phy_notify_charger_work(struct work_struct *work)
-{
-	struct usb_phy *usb_phy = container_of(work, struct usb_phy, chg_work);
-	char uchger_state[50] = { 0 };
-	char uchger_type[50] = { 0 };
-	char *envp[] = { uchger_state, uchger_type, NULL };
-	unsigned int min, max;
+अटल व्योम usb_phy_notअगरy_अक्षरger_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा usb_phy *usb_phy = container_of(work, काष्ठा usb_phy, chg_work);
+	अक्षर uchger_state[50] = अणु 0 पूर्ण;
+	अक्षर uchger_type[50] = अणु 0 पूर्ण;
+	अक्षर *envp[] = अणु uchger_state, uchger_type, शून्य पूर्ण;
+	अचिन्हित पूर्णांक min, max;
 
-	switch (usb_phy->chg_state) {
-	case USB_CHARGER_PRESENT:
-		usb_phy_get_charger_current(usb_phy, &min, &max);
+	चयन (usb_phy->chg_state) अणु
+	हाल USB_CHARGER_PRESENT:
+		usb_phy_get_अक्षरger_current(usb_phy, &min, &max);
 
-		atomic_notifier_call_chain(&usb_phy->notifier, max, usb_phy);
-		snprintf(uchger_state, ARRAY_SIZE(uchger_state),
+		atomic_notअगरier_call_chain(&usb_phy->notअगरier, max, usb_phy);
+		snम_लिखो(uchger_state, ARRAY_SIZE(uchger_state),
 			 "USB_CHARGER_STATE=%s", "USB_CHARGER_PRESENT");
-		break;
-	case USB_CHARGER_ABSENT:
-		usb_phy_set_default_current(usb_phy);
+		अवरोध;
+	हाल USB_CHARGER_ABSENT:
+		usb_phy_set_शेष_current(usb_phy);
 
-		atomic_notifier_call_chain(&usb_phy->notifier, 0, usb_phy);
-		snprintf(uchger_state, ARRAY_SIZE(uchger_state),
+		atomic_notअगरier_call_chain(&usb_phy->notअगरier, 0, usb_phy);
+		snम_लिखो(uchger_state, ARRAY_SIZE(uchger_state),
 			 "USB_CHARGER_STATE=%s", "USB_CHARGER_ABSENT");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_warn(usb_phy->dev, "Unknown USB charger state: %d\n",
 			 usb_phy->chg_state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	snprintf(uchger_type, ARRAY_SIZE(uchger_type),
+	snम_लिखो(uchger_type, ARRAY_SIZE(uchger_type),
 		 "USB_CHARGER_TYPE=%s", usb_chger_type[usb_phy->chg_type]);
 	kobject_uevent_env(&usb_phy->dev->kobj, KOBJ_CHANGE, envp);
-}
+पूर्ण
 
-static void __usb_phy_get_charger_type(struct usb_phy *usb_phy)
-{
-	if (extcon_get_state(usb_phy->edev, EXTCON_CHG_USB_SDP) > 0) {
+अटल व्योम __usb_phy_get_अक्षरger_type(काष्ठा usb_phy *usb_phy)
+अणु
+	अगर (extcon_get_state(usb_phy->edev, EXTCON_CHG_USB_SDP) > 0) अणु
 		usb_phy->chg_type = SDP_TYPE;
 		usb_phy->chg_state = USB_CHARGER_PRESENT;
-	} else if (extcon_get_state(usb_phy->edev, EXTCON_CHG_USB_CDP) > 0) {
+	पूर्ण अन्यथा अगर (extcon_get_state(usb_phy->edev, EXTCON_CHG_USB_CDP) > 0) अणु
 		usb_phy->chg_type = CDP_TYPE;
 		usb_phy->chg_state = USB_CHARGER_PRESENT;
-	} else if (extcon_get_state(usb_phy->edev, EXTCON_CHG_USB_DCP) > 0) {
+	पूर्ण अन्यथा अगर (extcon_get_state(usb_phy->edev, EXTCON_CHG_USB_DCP) > 0) अणु
 		usb_phy->chg_type = DCP_TYPE;
 		usb_phy->chg_state = USB_CHARGER_PRESENT;
-	} else if (extcon_get_state(usb_phy->edev, EXTCON_CHG_USB_ACA) > 0) {
+	पूर्ण अन्यथा अगर (extcon_get_state(usb_phy->edev, EXTCON_CHG_USB_ACA) > 0) अणु
 		usb_phy->chg_type = ACA_TYPE;
 		usb_phy->chg_state = USB_CHARGER_PRESENT;
-	} else {
+	पूर्ण अन्यथा अणु
 		usb_phy->chg_type = UNKNOWN_TYPE;
 		usb_phy->chg_state = USB_CHARGER_ABSENT;
-	}
+	पूर्ण
 
 	schedule_work(&usb_phy->chg_work);
-}
+पूर्ण
 
 /**
- * usb_phy_get_charger_type - get charger type from extcon subsystem
- * @nb: the notifier block to determine charger type
+ * usb_phy_get_अक्षरger_type - get अक्षरger type from extcon subप्रणाली
+ * @nb: the notअगरier block to determine अक्षरger type
  * @state: the cable state
- * @data: private data
+ * @data: निजी data
  *
- * Determin the charger type from extcon subsystem which also means the
- * charger state has been chaned, then we should notify this event.
+ * Determin the अक्षरger type from extcon subप्रणाली which also means the
+ * अक्षरger state has been chaned, then we should notअगरy this event.
  */
-static int usb_phy_get_charger_type(struct notifier_block *nb,
-				    unsigned long state, void *data)
-{
-	struct usb_phy *usb_phy = container_of(nb, struct usb_phy, type_nb);
+अटल पूर्णांक usb_phy_get_अक्षरger_type(काष्ठा notअगरier_block *nb,
+				    अचिन्हित दीर्घ state, व्योम *data)
+अणु
+	काष्ठा usb_phy *usb_phy = container_of(nb, काष्ठा usb_phy, type_nb);
 
-	__usb_phy_get_charger_type(usb_phy);
-	return NOTIFY_OK;
-}
+	__usb_phy_get_अक्षरger_type(usb_phy);
+	वापस NOTIFY_OK;
+पूर्ण
 
 /**
- * usb_phy_set_charger_current - set the USB charger current
+ * usb_phy_set_अक्षरger_current - set the USB अक्षरger current
  * @usb_phy: the USB phy to be used
  * @mA: the current need to be set
  *
- * Usually we only change the charger default current when USB finished the
- * enumeration as one SDP charger. As one SDP charger, usb_phy_set_power()
- * will issue this function to change charger current when after setting USB
- * configuration, or suspend/resume USB. For other type charger, we should
- * use the default charger current and we do not suggest to issue this function
- * to change the charger current.
+ * Usually we only change the अक्षरger शेष current when USB finished the
+ * क्रमागतeration as one SDP अक्षरger. As one SDP अक्षरger, usb_phy_set_घातer()
+ * will issue this function to change अक्षरger current when after setting USB
+ * configuration, or suspend/resume USB. For other type अक्षरger, we should
+ * use the शेष अक्षरger current and we करो not suggest to issue this function
+ * to change the अक्षरger current.
  *
- * When USB charger current has been changed, we need to notify the power users.
+ * When USB अक्षरger current has been changed, we need to notअगरy the घातer users.
  */
-void usb_phy_set_charger_current(struct usb_phy *usb_phy, unsigned int mA)
-{
-	switch (usb_phy->chg_type) {
-	case SDP_TYPE:
-		if (usb_phy->chg_cur.sdp_max == mA)
-			return;
+व्योम usb_phy_set_अक्षरger_current(काष्ठा usb_phy *usb_phy, अचिन्हित पूर्णांक mA)
+अणु
+	चयन (usb_phy->chg_type) अणु
+	हाल SDP_TYPE:
+		अगर (usb_phy->chg_cur.sdp_max == mA)
+			वापस;
 
 		usb_phy->chg_cur.sdp_max = (mA > DEFAULT_SDP_CUR_MAX_SS) ?
 			DEFAULT_SDP_CUR_MAX_SS : mA;
-		break;
-	case DCP_TYPE:
-		if (usb_phy->chg_cur.dcp_max == mA)
-			return;
+		अवरोध;
+	हाल DCP_TYPE:
+		अगर (usb_phy->chg_cur.dcp_max == mA)
+			वापस;
 
 		usb_phy->chg_cur.dcp_max = (mA > DEFAULT_DCP_CUR_MAX) ?
 			DEFAULT_DCP_CUR_MAX : mA;
-		break;
-	case CDP_TYPE:
-		if (usb_phy->chg_cur.cdp_max == mA)
-			return;
+		अवरोध;
+	हाल CDP_TYPE:
+		अगर (usb_phy->chg_cur.cdp_max == mA)
+			वापस;
 
 		usb_phy->chg_cur.cdp_max = (mA > DEFAULT_CDP_CUR_MAX) ?
 			DEFAULT_CDP_CUR_MAX : mA;
-		break;
-	case ACA_TYPE:
-		if (usb_phy->chg_cur.aca_max == mA)
-			return;
+		अवरोध;
+	हाल ACA_TYPE:
+		अगर (usb_phy->chg_cur.aca_max == mA)
+			वापस;
 
 		usb_phy->chg_cur.aca_max = (mA > DEFAULT_ACA_CUR_MAX) ?
 			DEFAULT_ACA_CUR_MAX : mA;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	schedule_work(&usb_phy->chg_work);
-}
-EXPORT_SYMBOL_GPL(usb_phy_set_charger_current);
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_phy_set_अक्षरger_current);
 
 /**
- * usb_phy_get_charger_current - get the USB charger current
+ * usb_phy_get_अक्षरger_current - get the USB अक्षरger current
  * @usb_phy: the USB phy to be used
  * @min: the minimum current
  * @max: the maximum current
  *
- * Usually we will notify the maximum current to power user, but for some
- * special case, power user also need the minimum current value. Then the
- * power user can issue this function to get the suitable current.
+ * Usually we will notअगरy the maximum current to घातer user, but क्रम some
+ * special हाल, घातer user also need the minimum current value. Then the
+ * घातer user can issue this function to get the suitable current.
  */
-void usb_phy_get_charger_current(struct usb_phy *usb_phy,
-				 unsigned int *min, unsigned int *max)
-{
-	switch (usb_phy->chg_type) {
-	case SDP_TYPE:
+व्योम usb_phy_get_अक्षरger_current(काष्ठा usb_phy *usb_phy,
+				 अचिन्हित पूर्णांक *min, अचिन्हित पूर्णांक *max)
+अणु
+	चयन (usb_phy->chg_type) अणु
+	हाल SDP_TYPE:
 		*min = usb_phy->chg_cur.sdp_min;
 		*max = usb_phy->chg_cur.sdp_max;
-		break;
-	case DCP_TYPE:
+		अवरोध;
+	हाल DCP_TYPE:
 		*min = usb_phy->chg_cur.dcp_min;
 		*max = usb_phy->chg_cur.dcp_max;
-		break;
-	case CDP_TYPE:
+		अवरोध;
+	हाल CDP_TYPE:
 		*min = usb_phy->chg_cur.cdp_min;
 		*max = usb_phy->chg_cur.cdp_max;
-		break;
-	case ACA_TYPE:
+		अवरोध;
+	हाल ACA_TYPE:
 		*min = usb_phy->chg_cur.aca_min;
 		*max = usb_phy->chg_cur.aca_max;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*min = 0;
 		*max = 0;
-		break;
-	}
-}
-EXPORT_SYMBOL_GPL(usb_phy_get_charger_current);
+		अवरोध;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_phy_get_अक्षरger_current);
 
 /**
- * usb_phy_set_charger_state - set the USB charger state
+ * usb_phy_set_अक्षरger_state - set the USB अक्षरger state
  * @usb_phy: the USB phy to be used
- * @state: the new state need to be set for charger
+ * @state: the new state need to be set क्रम अक्षरger
  *
  * The usb phy driver can issue this function when the usb phy driver
- * detected the charger state has been changed, in this case the charger
- * type should be get from ->charger_detect().
+ * detected the अक्षरger state has been changed, in this हाल the अक्षरger
+ * type should be get from ->अक्षरger_detect().
  */
-void usb_phy_set_charger_state(struct usb_phy *usb_phy,
-			       enum usb_charger_state state)
-{
-	if (usb_phy->chg_state == state || !usb_phy->charger_detect)
-		return;
+व्योम usb_phy_set_अक्षरger_state(काष्ठा usb_phy *usb_phy,
+			       क्रमागत usb_अक्षरger_state state)
+अणु
+	अगर (usb_phy->chg_state == state || !usb_phy->अक्षरger_detect)
+		वापस;
 
 	usb_phy->chg_state = state;
-	if (usb_phy->chg_state == USB_CHARGER_PRESENT)
-		usb_phy->chg_type = usb_phy->charger_detect(usb_phy);
-	else
+	अगर (usb_phy->chg_state == USB_CHARGER_PRESENT)
+		usb_phy->chg_type = usb_phy->अक्षरger_detect(usb_phy);
+	अन्यथा
 		usb_phy->chg_type = UNKNOWN_TYPE;
 
 	schedule_work(&usb_phy->chg_work);
-}
-EXPORT_SYMBOL_GPL(usb_phy_set_charger_state);
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_phy_set_अक्षरger_state);
 
-static void devm_usb_phy_release(struct device *dev, void *res)
-{
-	struct usb_phy *phy = *(struct usb_phy **)res;
+अटल व्योम devm_usb_phy_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा usb_phy *phy = *(काष्ठा usb_phy **)res;
 
 	usb_put_phy(phy);
-}
+पूर्ण
 
-static void devm_usb_phy_release2(struct device *dev, void *_res)
-{
-	struct phy_devm *res = _res;
+अटल व्योम devm_usb_phy_release2(काष्ठा device *dev, व्योम *_res)
+अणु
+	काष्ठा phy_devm *res = _res;
 
-	if (res->nb)
-		usb_unregister_notifier(res->phy, res->nb);
+	अगर (res->nb)
+		usb_unरेजिस्टर_notअगरier(res->phy, res->nb);
 	usb_put_phy(res->phy);
-}
+पूर्ण
 
-static int devm_usb_phy_match(struct device *dev, void *res, void *match_data)
-{
-	struct usb_phy **phy = res;
+अटल पूर्णांक devm_usb_phy_match(काष्ठा device *dev, व्योम *res, व्योम *match_data)
+अणु
+	काष्ठा usb_phy **phy = res;
 
-	return *phy == match_data;
-}
+	वापस *phy == match_data;
+पूर्ण
 
-static void usb_charger_init(struct usb_phy *usb_phy)
-{
+अटल व्योम usb_अक्षरger_init(काष्ठा usb_phy *usb_phy)
+अणु
 	usb_phy->chg_type = UNKNOWN_TYPE;
 	usb_phy->chg_state = USB_CHARGER_DEFAULT;
-	usb_phy_set_default_current(usb_phy);
-	INIT_WORK(&usb_phy->chg_work, usb_phy_notify_charger_work);
-}
+	usb_phy_set_शेष_current(usb_phy);
+	INIT_WORK(&usb_phy->chg_work, usb_phy_notअगरy_अक्षरger_work);
+पूर्ण
 
-static int usb_add_extcon(struct usb_phy *x)
-{
-	int ret;
+अटल पूर्णांक usb_add_extcon(काष्ठा usb_phy *x)
+अणु
+	पूर्णांक ret;
 
-	if (of_property_read_bool(x->dev->of_node, "extcon")) {
+	अगर (of_property_पढ़ो_bool(x->dev->of_node, "extcon")) अणु
 		x->edev = extcon_get_edev_by_phandle(x->dev, 0);
-		if (IS_ERR(x->edev))
-			return PTR_ERR(x->edev);
+		अगर (IS_ERR(x->edev))
+			वापस PTR_ERR(x->edev);
 
 		x->id_edev = extcon_get_edev_by_phandle(x->dev, 1);
-		if (IS_ERR(x->id_edev)) {
-			x->id_edev = NULL;
+		अगर (IS_ERR(x->id_edev)) अणु
+			x->id_edev = शून्य;
 			dev_info(x->dev, "No separate ID extcon device\n");
-		}
+		पूर्ण
 
-		if (x->vbus_nb.notifier_call) {
-			ret = devm_extcon_register_notifier(x->dev, x->edev,
+		अगर (x->vbus_nb.notअगरier_call) अणु
+			ret = devm_extcon_रेजिस्टर_notअगरier(x->dev, x->edev,
 							    EXTCON_USB,
 							    &x->vbus_nb);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(x->dev,
 					"register VBUS notifier failed\n");
-				return ret;
-			}
-		} else {
-			x->type_nb.notifier_call = usb_phy_get_charger_type;
+				वापस ret;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			x->type_nb.notअगरier_call = usb_phy_get_अक्षरger_type;
 
-			ret = devm_extcon_register_notifier(x->dev, x->edev,
+			ret = devm_extcon_रेजिस्टर_notअगरier(x->dev, x->edev,
 							    EXTCON_CHG_USB_SDP,
 							    &x->type_nb);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(x->dev,
 					"register extcon USB SDP failed.\n");
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
-			ret = devm_extcon_register_notifier(x->dev, x->edev,
+			ret = devm_extcon_रेजिस्टर_notअगरier(x->dev, x->edev,
 							    EXTCON_CHG_USB_CDP,
 							    &x->type_nb);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(x->dev,
 					"register extcon USB CDP failed.\n");
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
-			ret = devm_extcon_register_notifier(x->dev, x->edev,
+			ret = devm_extcon_रेजिस्टर_notअगरier(x->dev, x->edev,
 							    EXTCON_CHG_USB_DCP,
 							    &x->type_nb);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(x->dev,
 					"register extcon USB DCP failed.\n");
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
-			ret = devm_extcon_register_notifier(x->dev, x->edev,
+			ret = devm_extcon_रेजिस्टर_notअगरier(x->dev, x->edev,
 							    EXTCON_CHG_USB_ACA,
 							    &x->type_nb);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(x->dev,
 					"register extcon USB ACA failed.\n");
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
-		if (x->id_nb.notifier_call) {
-			struct extcon_dev *id_ext;
+		अगर (x->id_nb.notअगरier_call) अणु
+			काष्ठा extcon_dev *id_ext;
 
-			if (x->id_edev)
+			अगर (x->id_edev)
 				id_ext = x->id_edev;
-			else
+			अन्यथा
 				id_ext = x->edev;
 
-			ret = devm_extcon_register_notifier(x->dev, id_ext,
+			ret = devm_extcon_रेजिस्टर_notअगरier(x->dev, id_ext,
 							    EXTCON_USB_HOST,
 							    &x->id_nb);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(x->dev,
 					"register ID notifier failed\n");
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (x->type_nb.notifier_call)
-		__usb_phy_get_charger_type(x);
+	अगर (x->type_nb.notअगरier_call)
+		__usb_phy_get_अक्षरger_type(x);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * devm_usb_get_phy - find the USB PHY
@@ -419,27 +420,27 @@ static int usb_add_extcon(struct usb_phy *x)
  *
  * Gets the phy using usb_get_phy(), and associates a device with it using
  * devres. On driver detach, release function is invoked on the devres data,
- * then, devres data is freed.
+ * then, devres data is मुक्तd.
  *
  * For use by USB host and peripheral drivers.
  */
-struct usb_phy *devm_usb_get_phy(struct device *dev, enum usb_phy_type type)
-{
-	struct usb_phy **ptr, *phy;
+काष्ठा usb_phy *devm_usb_get_phy(काष्ठा device *dev, क्रमागत usb_phy_type type)
+अणु
+	काष्ठा usb_phy **ptr, *phy;
 
-	ptr = devres_alloc(devm_usb_phy_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_usb_phy_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
 	phy = usb_get_phy(type);
-	if (!IS_ERR(phy)) {
+	अगर (!IS_ERR(phy)) अणु
 		*ptr = phy;
 		devres_add(dev, ptr);
-	} else
-		devres_free(ptr);
+	पूर्ण अन्यथा
+		devres_मुक्त(ptr);
 
-	return phy;
-}
+	वापस phy;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_usb_get_phy);
 
 /**
@@ -447,82 +448,82 @@ EXPORT_SYMBOL_GPL(devm_usb_get_phy);
  * @type: the type of the phy the controller requires
  *
  * Returns the phy driver, after getting a refcount to it; or
- * -ENODEV if there is no such phy.  The caller is responsible for
+ * -ENODEV अगर there is no such phy.  The caller is responsible क्रम
  * calling usb_put_phy() to release that count.
  *
  * For use by USB host and peripheral drivers.
  */
-struct usb_phy *usb_get_phy(enum usb_phy_type type)
-{
-	struct usb_phy	*phy = NULL;
-	unsigned long	flags;
+काष्ठा usb_phy *usb_get_phy(क्रमागत usb_phy_type type)
+अणु
+	काष्ठा usb_phy	*phy = शून्य;
+	अचिन्हित दीर्घ	flags;
 
 	spin_lock_irqsave(&phy_lock, flags);
 
 	phy = __usb_find_phy(&phy_list, type);
-	if (IS_ERR(phy) || !try_module_get(phy->dev->driver->owner)) {
+	अगर (IS_ERR(phy) || !try_module_get(phy->dev->driver->owner)) अणु
 		pr_debug("PHY: unable to find transceiver of type %s\n",
 			usb_phy_type_string(type));
-		if (!IS_ERR(phy))
+		अगर (!IS_ERR(phy))
 			phy = ERR_PTR(-ENODEV);
 
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
 	get_device(phy->dev);
 
 err0:
 	spin_unlock_irqrestore(&phy_lock, flags);
 
-	return phy;
-}
+	वापस phy;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_get_phy);
 
 /**
  * devm_usb_get_phy_by_node - find the USB PHY by device_node
  * @dev: device that requests this phy
- * @node: the device_node for the phy device.
- * @nb: a notifier_block to register with the phy.
+ * @node: the device_node क्रम the phy device.
+ * @nb: a notअगरier_block to रेजिस्टर with the phy.
  *
  * Returns the phy driver associated with the given device_node,
- * after getting a refcount to it, -ENODEV if there is no such phy or
- * -EPROBE_DEFER if the device is not yet loaded. While at that, it
+ * after getting a refcount to it, -ENODEV अगर there is no such phy or
+ * -EPROBE_DEFER अगर the device is not yet loaded. While at that, it
  * also associates the device with
  * the phy using devres. On driver detach, release function is invoked
- * on the devres data, then, devres data is freed.
+ * on the devres data, then, devres data is मुक्तd.
  *
- * For use by peripheral drivers for devices related to a phy,
- * such as a charger.
+ * For use by peripheral drivers क्रम devices related to a phy,
+ * such as a अक्षरger.
  */
-struct  usb_phy *devm_usb_get_phy_by_node(struct device *dev,
-					  struct device_node *node,
-					  struct notifier_block *nb)
-{
-	struct usb_phy	*phy = ERR_PTR(-ENOMEM);
-	struct phy_devm	*ptr;
-	unsigned long	flags;
+काष्ठा  usb_phy *devm_usb_get_phy_by_node(काष्ठा device *dev,
+					  काष्ठा device_node *node,
+					  काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा usb_phy	*phy = ERR_PTR(-ENOMEM);
+	काष्ठा phy_devm	*ptr;
+	अचिन्हित दीर्घ	flags;
 
-	ptr = devres_alloc(devm_usb_phy_release2, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr) {
+	ptr = devres_alloc(devm_usb_phy_release2, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr) अणु
 		dev_dbg(dev, "failed to allocate memory for devres\n");
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
 	spin_lock_irqsave(&phy_lock, flags);
 
 	phy = __of_usb_find_phy(node);
-	if (IS_ERR(phy)) {
-		devres_free(ptr);
-		goto err1;
-	}
+	अगर (IS_ERR(phy)) अणु
+		devres_मुक्त(ptr);
+		जाओ err1;
+	पूर्ण
 
-	if (!try_module_get(phy->dev->driver->owner)) {
+	अगर (!try_module_get(phy->dev->driver->owner)) अणु
 		phy = ERR_PTR(-ENODEV);
-		devres_free(ptr);
-		goto err1;
-	}
-	if (nb)
-		usb_register_notifier(phy, nb);
+		devres_मुक्त(ptr);
+		जाओ err1;
+	पूर्ण
+	अगर (nb)
+		usb_रेजिस्टर_notअगरier(phy, nb);
 	ptr->phy = phy;
 	ptr->nb = nb;
 	devres_add(dev, ptr);
@@ -534,8 +535,8 @@ err1:
 
 err0:
 
-	return phy;
-}
+	वापस phy;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_usb_get_phy_by_node);
 
 /**
@@ -545,181 +546,181 @@ EXPORT_SYMBOL_GPL(devm_usb_get_phy_by_node);
  * @index: the index of the phy
  *
  * Returns the phy driver associated with the given phandle value,
- * after getting a refcount to it, -ENODEV if there is no such phy or
- * -EPROBE_DEFER if there is a phandle to the phy, but the device is
+ * after getting a refcount to it, -ENODEV अगर there is no such phy or
+ * -EPROBE_DEFER अगर there is a phandle to the phy, but the device is
  * not yet loaded. While at that, it also associates the device with
  * the phy using devres. On driver detach, release function is invoked
- * on the devres data, then, devres data is freed.
+ * on the devres data, then, devres data is मुक्तd.
  *
  * For use by USB host and peripheral drivers.
  */
-struct usb_phy *devm_usb_get_phy_by_phandle(struct device *dev,
-	const char *phandle, u8 index)
-{
-	struct device_node *node;
-	struct usb_phy	*phy;
+काष्ठा usb_phy *devm_usb_get_phy_by_phandle(काष्ठा device *dev,
+	स्थिर अक्षर *phandle, u8 index)
+अणु
+	काष्ठा device_node *node;
+	काष्ठा usb_phy	*phy;
 
-	if (!dev->of_node) {
+	अगर (!dev->of_node) अणु
 		dev_dbg(dev, "device does not have a device node entry\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	node = of_parse_phandle(dev->of_node, phandle, index);
-	if (!node) {
+	अगर (!node) अणु
 		dev_dbg(dev, "failed to get %s phandle in %pOF node\n", phandle,
 			dev->of_node);
-		return ERR_PTR(-ENODEV);
-	}
-	phy = devm_usb_get_phy_by_node(dev, node, NULL);
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
+	phy = devm_usb_get_phy_by_node(dev, node, शून्य);
 	of_node_put(node);
-	return phy;
-}
+	वापस phy;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_usb_get_phy_by_phandle);
 
 /**
  * devm_usb_put_phy - release the USB PHY
  * @dev: device that wants to release this phy
- * @phy: the phy returned by devm_usb_get_phy()
+ * @phy: the phy वापसed by devm_usb_get_phy()
  *
  * destroys the devres associated with this phy and invokes usb_put_phy
  * to release the phy.
  *
  * For use by USB host and peripheral drivers.
  */
-void devm_usb_put_phy(struct device *dev, struct usb_phy *phy)
-{
-	int r;
+व्योम devm_usb_put_phy(काष्ठा device *dev, काष्ठा usb_phy *phy)
+अणु
+	पूर्णांक r;
 
 	r = devres_destroy(dev, devm_usb_phy_release, devm_usb_phy_match, phy);
 	dev_WARN_ONCE(dev, r, "couldn't find PHY resource\n");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_usb_put_phy);
 
 /**
  * usb_put_phy - release the USB PHY
- * @x: the phy returned by usb_get_phy()
+ * @x: the phy वापसed by usb_get_phy()
  *
  * Releases a refcount the caller received from usb_get_phy().
  *
  * For use by USB host and peripheral drivers.
  */
-void usb_put_phy(struct usb_phy *x)
-{
-	if (x) {
-		struct module *owner = x->dev->driver->owner;
+व्योम usb_put_phy(काष्ठा usb_phy *x)
+अणु
+	अगर (x) अणु
+		काष्ठा module *owner = x->dev->driver->owner;
 
 		put_device(x->dev);
 		module_put(owner);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_put_phy);
 
 /**
  * usb_add_phy: declare the USB PHY
- * @x: the USB phy to be used; or NULL
+ * @x: the USB phy to be used; or शून्य
  * @type: the type of this PHY
  *
- * This call is exclusively for use by phy drivers, which
- * coordinate the activities of drivers for host and peripheral
- * controllers, and in some cases for VBUS current regulation.
+ * This call is exclusively क्रम use by phy drivers, which
+ * coordinate the activities of drivers क्रम host and peripheral
+ * controllers, and in some हालs क्रम VBUS current regulation.
  */
-int usb_add_phy(struct usb_phy *x, enum usb_phy_type type)
-{
-	int		ret = 0;
-	unsigned long	flags;
-	struct usb_phy	*phy;
+पूर्णांक usb_add_phy(काष्ठा usb_phy *x, क्रमागत usb_phy_type type)
+अणु
+	पूर्णांक		ret = 0;
+	अचिन्हित दीर्घ	flags;
+	काष्ठा usb_phy	*phy;
 
-	if (x->type != USB_PHY_TYPE_UNDEFINED) {
+	अगर (x->type != USB_PHY_TYPE_UNDEFINED) अणु
 		dev_err(x->dev, "not accepting initialized PHY %s\n", x->label);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	usb_charger_init(x);
+	usb_अक्षरger_init(x);
 	ret = usb_add_extcon(x);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ATOMIC_INIT_NOTIFIER_HEAD(&x->notifier);
+	ATOMIC_INIT_NOTIFIER_HEAD(&x->notअगरier);
 
 	spin_lock_irqsave(&phy_lock, flags);
 
-	list_for_each_entry(phy, &phy_list, head) {
-		if (phy->type == type) {
+	list_क्रम_each_entry(phy, &phy_list, head) अणु
+		अगर (phy->type == type) अणु
 			ret = -EBUSY;
 			dev_err(x->dev, "transceiver type %s already exists\n",
 						usb_phy_type_string(type));
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	x->type = type;
 	list_add_tail(&x->head, &phy_list);
 
 out:
 	spin_unlock_irqrestore(&phy_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_add_phy);
 
 /**
  * usb_add_phy_dev - declare the USB PHY
- * @x: the USB phy to be used; or NULL
+ * @x: the USB phy to be used; or शून्य
  *
- * This call is exclusively for use by phy drivers, which
- * coordinate the activities of drivers for host and peripheral
- * controllers, and in some cases for VBUS current regulation.
+ * This call is exclusively क्रम use by phy drivers, which
+ * coordinate the activities of drivers क्रम host and peripheral
+ * controllers, and in some हालs क्रम VBUS current regulation.
  */
-int usb_add_phy_dev(struct usb_phy *x)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक usb_add_phy_dev(काष्ठा usb_phy *x)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (!x->dev) {
+	अगर (!x->dev) अणु
 		dev_err(x->dev, "no device provided for PHY\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	usb_charger_init(x);
+	usb_अक्षरger_init(x);
 	ret = usb_add_extcon(x);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ATOMIC_INIT_NOTIFIER_HEAD(&x->notifier);
+	ATOMIC_INIT_NOTIFIER_HEAD(&x->notअगरier);
 
 	spin_lock_irqsave(&phy_lock, flags);
 	list_add_tail(&x->head, &phy_list);
 	spin_unlock_irqrestore(&phy_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_add_phy_dev);
 
 /**
- * usb_remove_phy - remove the OTG PHY
- * @x: the USB OTG PHY to be removed;
+ * usb_हटाओ_phy - हटाओ the OTG PHY
+ * @x: the USB OTG PHY to be हटाओd;
  *
  * This reverts the effects of usb_add_phy
  */
-void usb_remove_phy(struct usb_phy *x)
-{
-	unsigned long	flags;
+व्योम usb_हटाओ_phy(काष्ठा usb_phy *x)
+अणु
+	अचिन्हित दीर्घ	flags;
 
 	spin_lock_irqsave(&phy_lock, flags);
-	if (x)
+	अगर (x)
 		list_del(&x->head);
 	spin_unlock_irqrestore(&phy_lock, flags);
-}
-EXPORT_SYMBOL_GPL(usb_remove_phy);
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_हटाओ_phy);
 
 /**
  * usb_phy_set_event - set event to phy event
- * @x: the phy returned by usb_get_phy();
+ * @x: the phy वापसed by usb_get_phy();
  * @event: event to set
  *
  * This sets event to phy event
  */
-void usb_phy_set_event(struct usb_phy *x, unsigned long event)
-{
+व्योम usb_phy_set_event(काष्ठा usb_phy *x, अचिन्हित दीर्घ event)
+अणु
 	x->last_event = event;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_phy_set_event);

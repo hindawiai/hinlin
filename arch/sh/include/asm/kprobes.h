@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_KPROBES_H
-#define __ASM_SH_KPROBES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_KPROBES_H
+#घोषणा __ASM_SH_KPROBES_H
 
-#include <asm-generic/kprobes.h>
+#समावेश <यंत्र-generic/kprobes.h>
 
-#define BREAKPOINT_INSTRUCTION	0xc33a
+#घोषणा BREAKPOINT_INSTRUCTION	0xc33a
 
-#ifdef CONFIG_KPROBES
+#अगर_घोषित CONFIG_KPROBES
 
-#include <linux/types.h>
-#include <linux/ptrace.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ptrace.h>
 
-typedef insn_size_t kprobe_opcode_t;
+प्रकार insn_माप_प्रकार kprobe_opcode_t;
 
-#define MAX_INSN_SIZE 16
-#define MAX_STACK_SIZE 64
-#define MIN_STACK_SIZE(ADDR) (((MAX_STACK_SIZE) < \
-	(((unsigned long)current_thread_info()) + THREAD_SIZE - (ADDR))) \
+#घोषणा MAX_INSN_SIZE 16
+#घोषणा MAX_STACK_SIZE 64
+#घोषणा MIN_STACK_SIZE(ADDR) (((MAX_STACK_SIZE) < \
+	(((अचिन्हित दीर्घ)current_thपढ़ो_info()) + THREAD_SIZE - (ADDR))) \
 	? (MAX_STACK_SIZE) \
-	: (((unsigned long)current_thread_info()) + THREAD_SIZE - (ADDR)))
+	: (((अचिन्हित दीर्घ)current_thपढ़ो_info()) + THREAD_SIZE - (ADDR)))
 
-#define flush_insn_slot(p)		do { } while (0)
-#define kretprobe_blacklist_size	0
+#घोषणा flush_insn_slot(p)		करो अणु पूर्ण जबतक (0)
+#घोषणा kretprobe_blacklist_size	0
 
-struct kprobe;
+काष्ठा kprobe;
 
-void arch_remove_kprobe(struct kprobe *);
-void kretprobe_trampoline(void);
+व्योम arch_हटाओ_kprobe(काष्ठा kprobe *);
+व्योम kretprobe_trampoline(व्योम);
 
-/* Architecture specific copy of original instruction*/
-struct arch_specific_insn {
-	/* copy of the original instruction */
+/* Architecture specअगरic copy of original inकाष्ठाion*/
+काष्ठा arch_specअगरic_insn अणु
+	/* copy of the original inकाष्ठाion */
 	kprobe_opcode_t insn[MAX_INSN_SIZE];
-};
+पूर्ण;
 
-struct prev_kprobe {
-	struct kprobe *kp;
-	unsigned long status;
-};
+काष्ठा prev_kprobe अणु
+	काष्ठा kprobe *kp;
+	अचिन्हित दीर्घ status;
+पूर्ण;
 
 /* per-cpu kprobe control block */
-struct kprobe_ctlblk {
-	unsigned long kprobe_status;
-	struct prev_kprobe prev_kprobe;
-};
+काष्ठा kprobe_ctlblk अणु
+	अचिन्हित दीर्घ kprobe_status;
+	काष्ठा prev_kprobe prev_kprobe;
+पूर्ण;
 
-extern int kprobe_fault_handler(struct pt_regs *regs, int trapnr);
-extern int kprobe_exceptions_notify(struct notifier_block *self,
-				    unsigned long val, void *data);
-extern int kprobe_handle_illslot(unsigned long pc);
-#else
+बाह्य पूर्णांक kprobe_fault_handler(काष्ठा pt_regs *regs, पूर्णांक trapnr);
+बाह्य पूर्णांक kprobe_exceptions_notअगरy(काष्ठा notअगरier_block *self,
+				    अचिन्हित दीर्घ val, व्योम *data);
+बाह्य पूर्णांक kprobe_handle_illslot(अचिन्हित दीर्घ pc);
+#अन्यथा
 
-#define kprobe_handle_illslot(pc)	(-1)
+#घोषणा kprobe_handle_illslot(pc)	(-1)
 
-#endif /* CONFIG_KPROBES */
-#endif /* __ASM_SH_KPROBES_H */
+#पूर्ण_अगर /* CONFIG_KPROBES */
+#पूर्ण_अगर /* __ASM_SH_KPROBES_H */

@@ -1,26 +1,27 @@
+<शैली गुरु>
 /* Copyright (c) 2016 Facebook
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  */
-#define KBUILD_MODNAME "foo"
-#include <uapi/linux/if_ether.h>
-#include <uapi/linux/in6.h>
-#include <uapi/linux/ipv6.h>
-#include <uapi/linux/pkt_cls.h>
-#include <uapi/linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#घोषणा KBUILD_MODNAME "foo"
+#समावेश <uapi/linux/अगर_ether.h>
+#समावेश <uapi/linux/in6.h>
+#समावेश <uapi/linux/ipv6.h>
+#समावेश <uapi/linux/pkt_cls.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
 /* copy of 'struct ethhdr' without __packed */
-struct eth_hdr {
-	unsigned char   h_dest[ETH_ALEN];
-	unsigned char   h_source[ETH_ALEN];
-	unsigned short  h_proto;
-};
+काष्ठा eth_hdr अणु
+	अचिन्हित अक्षर   h_dest[ETH_ALEN];
+	अचिन्हित अक्षर   h_source[ETH_ALEN];
+	अचिन्हित लघु  h_proto;
+पूर्ण;
 
-#define PIN_GLOBAL_NS		2
-struct bpf_elf_map {
+#घोषणा PIN_GLOBAL_NS		2
+काष्ठा bpf_elf_map अणु
 	__u32 type;
 	__u32 size_key;
 	__u32 size_value;
@@ -28,43 +29,43 @@ struct bpf_elf_map {
 	__u32 flags;
 	__u32 id;
 	__u32 pinning;
-};
+पूर्ण;
 
-struct bpf_elf_map SEC("maps") test_cgrp2_array_pin = {
+काष्ठा bpf_elf_map SEC("maps") test_cgrp2_array_pin = अणु
 	.type		= BPF_MAP_TYPE_CGROUP_ARRAY,
-	.size_key	= sizeof(uint32_t),
-	.size_value	= sizeof(uint32_t),
+	.size_key	= माप(uपूर्णांक32_t),
+	.size_value	= माप(uपूर्णांक32_t),
 	.pinning	= PIN_GLOBAL_NS,
 	.max_elem	= 1,
-};
+पूर्ण;
 
 SEC("filter")
-int handle_egress(struct __sk_buff *skb)
-{
-	void *data = (void *)(long)skb->data;
-	struct eth_hdr *eth = data;
-	struct ipv6hdr *ip6h = data + sizeof(*eth);
-	void *data_end = (void *)(long)skb->data_end;
-	char dont_care_msg[] = "dont care %04x %d\n";
-	char pass_msg[] = "pass\n";
-	char reject_msg[] = "reject\n";
+पूर्णांक handle_egress(काष्ठा __sk_buff *skb)
+अणु
+	व्योम *data = (व्योम *)(दीर्घ)skb->data;
+	काष्ठा eth_hdr *eth = data;
+	काष्ठा ipv6hdr *ip6h = data + माप(*eth);
+	व्योम *data_end = (व्योम *)(दीर्घ)skb->data_end;
+	अक्षर करोnt_care_msg[] = "dont care %04x %d\n";
+	अक्षर pass_msg[] = "pass\n";
+	अक्षर reject_msg[] = "reject\n";
 
 	/* single length check */
-	if (data + sizeof(*eth) + sizeof(*ip6h) > data_end)
-		return TC_ACT_OK;
+	अगर (data + माप(*eth) + माप(*ip6h) > data_end)
+		वापस TC_ACT_OK;
 
-	if (eth->h_proto != htons(ETH_P_IPV6) ||
-	    ip6h->nexthdr != IPPROTO_ICMPV6) {
-		bpf_trace_printk(dont_care_msg, sizeof(dont_care_msg),
+	अगर (eth->h_proto != htons(ETH_P_IPV6) ||
+	    ip6h->nexthdr != IPPROTO_ICMPV6) अणु
+		bpf_trace_prपूर्णांकk(करोnt_care_msg, माप(करोnt_care_msg),
 				 eth->h_proto, ip6h->nexthdr);
-		return TC_ACT_OK;
-	} else if (bpf_skb_under_cgroup(skb, &test_cgrp2_array_pin, 0) != 1) {
-		bpf_trace_printk(pass_msg, sizeof(pass_msg));
-		return TC_ACT_OK;
-	} else {
-		bpf_trace_printk(reject_msg, sizeof(reject_msg));
-		return TC_ACT_SHOT;
-	}
-}
+		वापस TC_ACT_OK;
+	पूर्ण अन्यथा अगर (bpf_skb_under_cgroup(skb, &test_cgrp2_array_pin, 0) != 1) अणु
+		bpf_trace_prपूर्णांकk(pass_msg, माप(pass_msg));
+		वापस TC_ACT_OK;
+	पूर्ण अन्यथा अणु
+		bpf_trace_prपूर्णांकk(reject_msg, माप(reject_msg));
+		वापस TC_ACT_SHOT;
+	पूर्ण
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

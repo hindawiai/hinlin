@@ -1,99 +1,100 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2017 Texas Instruments Incorporated - http://www.ti.com/
  *	Keerthy <j-keerthy@ti.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2 as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether expressed or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License version 2 for more details.
+ * GNU General Public License version 2 क्रम more details.
  *
  * Based on the LP873X driver
  */
 
-#include <linux/gpio/driver.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#include <linux/mfd/lp87565.h>
+#समावेश <linux/mfd/lp87565.h>
 
-struct lp87565_gpio {
-	struct gpio_chip chip;
-	struct regmap *map;
-};
+काष्ठा lp87565_gpio अणु
+	काष्ठा gpio_chip chip;
+	काष्ठा regmap *map;
+पूर्ण;
 
-static int lp87565_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct lp87565_gpio *gpio = gpiochip_get_data(chip);
-	int ret, val;
+अटल पूर्णांक lp87565_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा lp87565_gpio *gpio = gpiochip_get_data(chip);
+	पूर्णांक ret, val;
 
-	ret = regmap_read(gpio->map, LP87565_REG_GPIO_IN, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(gpio->map, LP87565_REG_GPIO_IN, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return !!(val & BIT(offset));
-}
+	वापस !!(val & BIT(offset));
+पूर्ण
 
-static void lp87565_gpio_set(struct gpio_chip *chip, unsigned int offset,
-			     int value)
-{
-	struct lp87565_gpio *gpio = gpiochip_get_data(chip);
+अटल व्योम lp87565_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+			     पूर्णांक value)
+अणु
+	काष्ठा lp87565_gpio *gpio = gpiochip_get_data(chip);
 
 	regmap_update_bits(gpio->map, LP87565_REG_GPIO_OUT,
 			   BIT(offset), value ? BIT(offset) : 0);
-}
+पूर्ण
 
-static int lp87565_gpio_get_direction(struct gpio_chip *chip,
-				      unsigned int offset)
-{
-	struct lp87565_gpio *gpio = gpiochip_get_data(chip);
-	int ret, val;
+अटल पूर्णांक lp87565_gpio_get_direction(काष्ठा gpio_chip *chip,
+				      अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा lp87565_gpio *gpio = gpiochip_get_data(chip);
+	पूर्णांक ret, val;
 
-	ret = regmap_read(gpio->map, LP87565_REG_GPIO_CONFIG, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(gpio->map, LP87565_REG_GPIO_CONFIG, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (val & BIT(offset))
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (val & BIT(offset))
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int lp87565_gpio_direction_input(struct gpio_chip *chip,
-					unsigned int offset)
-{
-	struct lp87565_gpio *gpio = gpiochip_get_data(chip);
+अटल पूर्णांक lp87565_gpio_direction_input(काष्ठा gpio_chip *chip,
+					अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा lp87565_gpio *gpio = gpiochip_get_data(chip);
 
-	return regmap_update_bits(gpio->map,
+	वापस regmap_update_bits(gpio->map,
 				  LP87565_REG_GPIO_CONFIG,
 				  BIT(offset), 0);
-}
+पूर्ण
 
-static int lp87565_gpio_direction_output(struct gpio_chip *chip,
-					 unsigned int offset, int value)
-{
-	struct lp87565_gpio *gpio = gpiochip_get_data(chip);
+अटल पूर्णांक lp87565_gpio_direction_output(काष्ठा gpio_chip *chip,
+					 अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा lp87565_gpio *gpio = gpiochip_get_data(chip);
 
 	lp87565_gpio_set(chip, offset, value);
 
-	return regmap_update_bits(gpio->map,
+	वापस regmap_update_bits(gpio->map,
 				  LP87565_REG_GPIO_CONFIG,
 				  BIT(offset), BIT(offset));
-}
+पूर्ण
 
-static int lp87565_gpio_request(struct gpio_chip *gc, unsigned int offset)
-{
-	struct lp87565_gpio *gpio = gpiochip_get_data(gc);
-	int ret;
+अटल पूर्णांक lp87565_gpio_request(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा lp87565_gpio *gpio = gpiochip_get_data(gc);
+	पूर्णांक ret;
 
-	switch (offset) {
-	case 0:
-	case 1:
-	case 2:
+	चयन (offset) अणु
+	हाल 0:
+	हाल 1:
+	हाल 2:
 		/*
 		 * MUX can program the pin to be in EN1/2/3 pin mode
 		 * Or GPIO1/2/3 mode.
@@ -102,41 +103,41 @@ static int lp87565_gpio_request(struct gpio_chip *gc, unsigned int offset)
 		ret = regmap_update_bits(gpio->map,
 					 LP87565_REG_PIN_FUNCTION,
 					 BIT(offset), BIT(offset));
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp87565_gpio_set_config(struct gpio_chip *gc, unsigned int offset,
-				   unsigned long config)
-{
-	struct lp87565_gpio *gpio = gpiochip_get_data(gc);
+अटल पूर्णांक lp87565_gpio_set_config(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset,
+				   अचिन्हित दीर्घ config)
+अणु
+	काष्ठा lp87565_gpio *gpio = gpiochip_get_data(gc);
 
-	switch (pinconf_to_config_param(config)) {
-	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
-		return regmap_update_bits(gpio->map,
+	चयन (pinconf_to_config_param(config)) अणु
+	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		वापस regmap_update_bits(gpio->map,
 					  LP87565_REG_GPIO_CONFIG,
 					  BIT(offset +
 					      __ffs(LP87565_GOIO1_OD)),
 					  BIT(offset +
 					      __ffs(LP87565_GOIO1_OD)));
-	case PIN_CONFIG_DRIVE_PUSH_PULL:
-		return regmap_update_bits(gpio->map,
+	हाल PIN_CONFIG_DRIVE_PUSH_PULL:
+		वापस regmap_update_bits(gpio->map,
 					  LP87565_REG_GPIO_CONFIG,
 					  BIT(offset +
 					      __ffs(LP87565_GOIO1_OD)), 0);
-	default:
-		return -ENOTSUPP;
-	}
-}
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
+पूर्ण
 
-static const struct gpio_chip template_chip = {
+अटल स्थिर काष्ठा gpio_chip ढाँचा_chip = अणु
 	.label			= "lp87565-gpio",
 	.owner			= THIS_MODULE,
 	.request		= lp87565_gpio_request,
@@ -149,46 +150,46 @@ static const struct gpio_chip template_chip = {
 	.base			= -1,
 	.ngpio			= 3,
 	.can_sleep		= true,
-};
+पूर्ण;
 
-static int lp87565_gpio_probe(struct platform_device *pdev)
-{
-	struct lp87565_gpio *gpio;
-	struct lp87565 *lp87565;
-	int ret;
+अटल पूर्णांक lp87565_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lp87565_gpio *gpio;
+	काष्ठा lp87565 *lp87565;
+	पूर्णांक ret;
 
-	gpio = devm_kzalloc(&pdev->dev, sizeof(*gpio), GFP_KERNEL);
-	if (!gpio)
-		return -ENOMEM;
+	gpio = devm_kzalloc(&pdev->dev, माप(*gpio), GFP_KERNEL);
+	अगर (!gpio)
+		वापस -ENOMEM;
 
 	lp87565 = dev_get_drvdata(pdev->dev.parent);
-	gpio->chip = template_chip;
+	gpio->chip = ढाँचा_chip;
 	gpio->chip.parent = lp87565->dev;
 	gpio->map = lp87565->regmap;
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &gpio->chip, gpio);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Could not register gpiochip, %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id lp87565_gpio_id_table[] = {
-	{ "lp87565-q1-gpio", },
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(platform, lp87565_gpio_id_table);
+अटल स्थिर काष्ठा platक्रमm_device_id lp87565_gpio_id_table[] = अणु
+	अणु "lp87565-q1-gpio", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, lp87565_gpio_id_table);
 
-static struct platform_driver lp87565_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver lp87565_gpio_driver = अणु
+	.driver = अणु
 		.name = "lp87565-gpio",
-	},
+	पूर्ण,
 	.probe = lp87565_gpio_probe,
 	.id_table = lp87565_gpio_id_table,
-};
-module_platform_driver(lp87565_gpio_driver);
+पूर्ण;
+module_platक्रमm_driver(lp87565_gpio_driver);
 
 MODULE_AUTHOR("Keerthy <j-keerthy@ti.com>");
 MODULE_DESCRIPTION("LP87565 GPIO driver");

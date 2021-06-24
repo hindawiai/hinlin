@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  Omnitek Scatter-Gather DMA Controller
  *
@@ -6,13 +7,13 @@
  *  All rights reserved.
  */
 
-#ifndef COBALT_OMNITEK_H
-#define COBALT_OMNITEK_H
+#अगर_अघोषित COBALT_OMNITEK_H
+#घोषणा COBALT_OMNITEK_H
 
-#include <linux/scatterlist.h>
-#include "cobalt-driver.h"
+#समावेश <linux/scatterlist.h>
+#समावेश "cobalt-driver.h"
 
-struct sg_dma_descriptor {
+काष्ठा sg_dma_descriptor अणु
 	u32 pci_l;
 	u32 pci_h;
 
@@ -24,27 +25,27 @@ struct sg_dma_descriptor {
 
 	u32 bytes;
 	u32 reserved1;
-};
+पूर्ण;
 
-int omni_sg_dma_init(struct cobalt *cobalt);
-void omni_sg_dma_abort_channel(struct cobalt_stream *s);
-void omni_sg_dma_start(struct cobalt_stream *s, struct sg_dma_desc_info *desc);
-bool is_dma_done(struct cobalt_stream *s);
+पूर्णांक omni_sg_dma_init(काष्ठा cobalt *cobalt);
+व्योम omni_sg_dma_पात_channel(काष्ठा cobalt_stream *s);
+व्योम omni_sg_dma_start(काष्ठा cobalt_stream *s, काष्ठा sg_dma_desc_info *desc);
+bool is_dma_करोne(काष्ठा cobalt_stream *s);
 
-int descriptor_list_create(struct cobalt *cobalt,
-	struct scatterlist *scatter_list, bool to_pci, unsigned sglen,
-	unsigned size, unsigned width, unsigned stride,
-	struct sg_dma_desc_info *desc);
+पूर्णांक descriptor_list_create(काष्ठा cobalt *cobalt,
+	काष्ठा scatterlist *scatter_list, bool to_pci, अचिन्हित sglen,
+	अचिन्हित size, अचिन्हित width, अचिन्हित stride,
+	काष्ठा sg_dma_desc_info *desc);
 
-void descriptor_list_chain(struct sg_dma_desc_info *this,
-			   struct sg_dma_desc_info *next);
-void descriptor_list_loopback(struct sg_dma_desc_info *desc);
-void descriptor_list_end_of_chain(struct sg_dma_desc_info *desc);
+व्योम descriptor_list_chain(काष्ठा sg_dma_desc_info *this,
+			   काष्ठा sg_dma_desc_info *next);
+व्योम descriptor_list_loopback(काष्ठा sg_dma_desc_info *desc);
+व्योम descriptor_list_end_of_chain(काष्ठा sg_dma_desc_info *desc);
 
-void *descriptor_list_allocate(struct sg_dma_desc_info *desc, size_t bytes);
-void descriptor_list_free(struct sg_dma_desc_info *desc);
+व्योम *descriptor_list_allocate(काष्ठा sg_dma_desc_info *desc, माप_प्रकार bytes);
+व्योम descriptor_list_मुक्त(काष्ठा sg_dma_desc_info *desc);
 
-void descriptor_list_interrupt_enable(struct sg_dma_desc_info *desc);
-void descriptor_list_interrupt_disable(struct sg_dma_desc_info *desc);
+व्योम descriptor_list_पूर्णांकerrupt_enable(काष्ठा sg_dma_desc_info *desc);
+व्योम descriptor_list_पूर्णांकerrupt_disable(काष्ठा sg_dma_desc_info *desc);
 
-#endif
+#पूर्ण_अगर

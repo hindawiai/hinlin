@@ -1,24 +1,25 @@
-#include <linux/dcache.h>
-#include "internal.h"
+<शैली गुरु>
+#समावेश <linux/dcache.h>
+#समावेश "internal.h"
 
-unsigned name_to_int(const struct qstr *qstr)
-{
-	const char *name = qstr->name;
-	int len = qstr->len;
-	unsigned n = 0;
+अचिन्हित name_to_पूर्णांक(स्थिर काष्ठा qstr *qstr)
+अणु
+	स्थिर अक्षर *name = qstr->name;
+	पूर्णांक len = qstr->len;
+	अचिन्हित n = 0;
 
-	if (len > 1 && *name == '0')
-		goto out;
-	do {
-		unsigned c = *name++ - '0';
-		if (c > 9)
-			goto out;
-		if (n >= (~0U-9)/10)
-			goto out;
+	अगर (len > 1 && *name == '0')
+		जाओ out;
+	करो अणु
+		अचिन्हित c = *name++ - '0';
+		अगर (c > 9)
+			जाओ out;
+		अगर (n >= (~0U-9)/10)
+			जाओ out;
 		n *= 10;
 		n += c;
-	} while (--len > 0);
-	return n;
+	पूर्ण जबतक (--len > 0);
+	वापस n;
 out:
-	return ~0U;
-}
+	वापस ~0U;
+पूर्ण

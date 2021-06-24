@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AK4641 ALSA SoC Codec driver
  *
  * Copyright 2009 Philipp Zabel
  */
 
-#ifndef __AK4641_H
-#define __AK4641_H
+#अगर_अघोषित __AK4641_H
+#घोषणा __AK4641_H
 
 /**
- * struct ak4641_platform_data - platform specific AK4641 configuration
- * @gpio_power:	GPIO to control external power to AK4641
+ * काष्ठा ak4641_platक्रमm_data - platक्रमm specअगरic AK4641 configuration
+ * @gpio_घातer:	GPIO to control बाह्यal घातer to AK4641
  * @gpio_npdn:	GPIO connected to AK4641 nPDN pin
  *
  * Both GPIO parameters are optional.
  */
-struct ak4641_platform_data {
-	int gpio_power;
-	int gpio_npdn;
-};
+काष्ठा ak4641_platक्रमm_data अणु
+	पूर्णांक gpio_घातer;
+	पूर्णांक gpio_npdn;
+पूर्ण;
 
-#endif /* __AK4641_H */
+#पूर्ण_अगर /* __AK4641_H */

@@ -1,195 +1,196 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  hdac-ext-bus.c - HD-audio extended core bus functions.
  *
  *  Copyright (C) 2014-2015 Intel Corp
- *  Author: Jeeja KP <jeeja.kp@intel.com>
+ *  Author: Jeeja KP <jeeja.kp@पूर्णांकel.com>
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <sound/hdaudio_ext.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <sound/hdaudio_ext.h>
 
 MODULE_DESCRIPTION("HDA extended core");
 MODULE_LICENSE("GPL v2");
 
 /**
  * snd_hdac_ext_bus_init - initialize a HD-audio extended bus
- * @bus: the pointer to HDAC bus object
- * @dev: device pointer
- * @ops: bus verb operators
- * @ext_ops: operators used for ASoC HDA codec drivers
+ * @bus: the poपूर्णांकer to HDAC bus object
+ * @dev: device poपूर्णांकer
+ * @ops: bus verb चालकs
+ * @ext_ops: चालकs used क्रम ASoC HDA codec drivers
  *
- * Returns 0 if successful, or a negative error code.
+ * Returns 0 अगर successful, or a negative error code.
  */
-int snd_hdac_ext_bus_init(struct hdac_bus *bus, struct device *dev,
-			const struct hdac_bus_ops *ops,
-			const struct hdac_ext_bus_ops *ext_ops)
-{
-	int ret;
+पूर्णांक snd_hdac_ext_bus_init(काष्ठा hdac_bus *bus, काष्ठा device *dev,
+			स्थिर काष्ठा hdac_bus_ops *ops,
+			स्थिर काष्ठा hdac_ext_bus_ops *ext_ops)
+अणु
+	पूर्णांक ret;
 
 	ret = snd_hdac_bus_init(bus, dev, ops);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	bus->ext_ops = ext_ops;
 	/* FIXME:
-	 * Currently only one bus is supported, if there is device with more
+	 * Currently only one bus is supported, अगर there is device with more
 	 * buses, bus->idx should be greater than 0, but there needs to be a
 	 * reliable way to always assign same number.
 	 */
 	bus->idx = 0;
 	bus->cmd_dma_state = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_init);
 
 /**
- * snd_hdac_ext_bus_exit - clean up a HD-audio extended bus
- * @bus: the pointer to HDAC bus object
+ * snd_hdac_ext_bus_निकास - clean up a HD-audio extended bus
+ * @bus: the poपूर्णांकer to HDAC bus object
  */
-void snd_hdac_ext_bus_exit(struct hdac_bus *bus)
-{
-	snd_hdac_bus_exit(bus);
+व्योम snd_hdac_ext_bus_निकास(काष्ठा hdac_bus *bus)
+अणु
+	snd_hdac_bus_निकास(bus);
 	WARN_ON(!list_empty(&bus->hlink_list));
-}
-EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_exit);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_निकास);
 
-static void default_release(struct device *dev)
-{
-	snd_hdac_ext_bus_device_exit(dev_to_hdac_dev(dev));
-}
+अटल व्योम शेष_release(काष्ठा device *dev)
+अणु
+	snd_hdac_ext_bus_device_निकास(dev_to_hdac_dev(dev));
+पूर्ण
 
 /**
  * snd_hdac_ext_bus_device_init - initialize the HDA extended codec base device
  * @bus: hdac bus to attach to
  * @addr: codec address
  * @hdev: hdac device to init
- * @type: codec type (HDAC_DEV_*) to use for this device
+ * @type: codec type (HDAC_DEV_*) to use क्रम this device
  *
- * Returns zero for success or a negative error code.
+ * Returns zero क्रम success or a negative error code.
  */
-int snd_hdac_ext_bus_device_init(struct hdac_bus *bus, int addr,
-				 struct hdac_device *hdev, int type)
-{
-	char name[15];
-	int ret;
+पूर्णांक snd_hdac_ext_bus_device_init(काष्ठा hdac_bus *bus, पूर्णांक addr,
+				 काष्ठा hdac_device *hdev, पूर्णांक type)
+अणु
+	अक्षर name[15];
+	पूर्णांक ret;
 
 	hdev->bus = bus;
 
-	snprintf(name, sizeof(name), "ehdaudio%dD%d", bus->idx, addr);
+	snम_लिखो(name, माप(name), "ehdaudio%dD%d", bus->idx, addr);
 
 	ret  = snd_hdac_device_init(hdev, bus, name, addr);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "device init failed for hdac device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	hdev->type = type;
-	hdev->dev.release = default_release;
+	hdev->dev.release = शेष_release;
 
-	ret = snd_hdac_device_register(hdev);
-	if (ret) {
+	ret = snd_hdac_device_रेजिस्टर(hdev);
+	अगर (ret) अणु
 		dev_err(bus->dev, "failed to register hdac device\n");
-		snd_hdac_ext_bus_device_exit(hdev);
-		return ret;
-	}
+		snd_hdac_ext_bus_device_निकास(hdev);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_device_init);
 
 /**
- * snd_hdac_ext_bus_device_exit - clean up a HD-audio extended codec base device
+ * snd_hdac_ext_bus_device_निकास - clean up a HD-audio extended codec base device
  * @hdev: hdac device to clean up
  */
-void snd_hdac_ext_bus_device_exit(struct hdac_device *hdev)
-{
-	snd_hdac_device_exit(hdev);
-}
-EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_device_exit);
+व्योम snd_hdac_ext_bus_device_निकास(काष्ठा hdac_device *hdev)
+अणु
+	snd_hdac_device_निकास(hdev);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_device_निकास);
 
 /**
- * snd_hdac_ext_bus_device_remove - remove HD-audio extended codec base devices
+ * snd_hdac_ext_bus_device_हटाओ - हटाओ HD-audio extended codec base devices
  *
- * @bus: the pointer to HDAC bus object
+ * @bus: the poपूर्णांकer to HDAC bus object
  */
-void snd_hdac_ext_bus_device_remove(struct hdac_bus *bus)
-{
-	struct hdac_device *codec, *__codec;
+व्योम snd_hdac_ext_bus_device_हटाओ(काष्ठा hdac_bus *bus)
+अणु
+	काष्ठा hdac_device *codec, *__codec;
 	/*
-	 * we need to remove all the codec devices objects created in the
+	 * we need to हटाओ all the codec devices objects created in the
 	 * snd_hdac_ext_bus_device_init
 	 */
-	list_for_each_entry_safe(codec, __codec, &bus->codec_list, list) {
-		snd_hdac_device_unregister(codec);
+	list_क्रम_each_entry_safe(codec, __codec, &bus->codec_list, list) अणु
+		snd_hdac_device_unरेजिस्टर(codec);
 		put_device(&codec->dev);
-	}
-}
-EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_device_remove);
-#define dev_to_hdac(dev) (container_of((dev), \
-			struct hdac_device, dev))
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_ext_bus_device_हटाओ);
+#घोषणा dev_to_hdac(dev) (container_of((dev), \
+			काष्ठा hdac_device, dev))
 
-static inline struct hdac_driver *get_hdrv(struct device *dev)
-{
-	struct hdac_driver *hdrv = drv_to_hdac_driver(dev->driver);
-	return hdrv;
-}
+अटल अंतरभूत काष्ठा hdac_driver *get_hdrv(काष्ठा device *dev)
+अणु
+	काष्ठा hdac_driver *hdrv = drv_to_hdac_driver(dev->driver);
+	वापस hdrv;
+पूर्ण
 
-static inline struct hdac_device *get_hdev(struct device *dev)
-{
-	struct hdac_device *hdev = dev_to_hdac_dev(dev);
-	return hdev;
-}
+अटल अंतरभूत काष्ठा hdac_device *get_hdev(काष्ठा device *dev)
+अणु
+	काष्ठा hdac_device *hdev = dev_to_hdac_dev(dev);
+	वापस hdev;
+पूर्ण
 
-static int hda_ext_drv_probe(struct device *dev)
-{
-	return (get_hdrv(dev))->probe(get_hdev(dev));
-}
+अटल पूर्णांक hda_ext_drv_probe(काष्ठा device *dev)
+अणु
+	वापस (get_hdrv(dev))->probe(get_hdev(dev));
+पूर्ण
 
-static int hdac_ext_drv_remove(struct device *dev)
-{
-	return (get_hdrv(dev))->remove(get_hdev(dev));
-}
+अटल पूर्णांक hdac_ext_drv_हटाओ(काष्ठा device *dev)
+अणु
+	वापस (get_hdrv(dev))->हटाओ(get_hdev(dev));
+पूर्ण
 
-static void hdac_ext_drv_shutdown(struct device *dev)
-{
-	return (get_hdrv(dev))->shutdown(get_hdev(dev));
-}
+अटल व्योम hdac_ext_drv_shutकरोwn(काष्ठा device *dev)
+अणु
+	वापस (get_hdrv(dev))->shutकरोwn(get_hdev(dev));
+पूर्ण
 
 /**
- * snd_hda_ext_driver_register - register a driver for ext hda devices
+ * snd_hda_ext_driver_रेजिस्टर - रेजिस्टर a driver क्रम ext hda devices
  *
- * @drv: ext hda driver structure
+ * @drv: ext hda driver काष्ठाure
  */
-int snd_hda_ext_driver_register(struct hdac_driver *drv)
-{
+पूर्णांक snd_hda_ext_driver_रेजिस्टर(काष्ठा hdac_driver *drv)
+अणु
 	drv->type = HDA_DEV_ASOC;
 	drv->driver.bus = &snd_hda_bus_type;
-	/* we use default match */
+	/* we use शेष match */
 
-	if (drv->probe)
+	अगर (drv->probe)
 		drv->driver.probe = hda_ext_drv_probe;
-	if (drv->remove)
-		drv->driver.remove = hdac_ext_drv_remove;
-	if (drv->shutdown)
-		drv->driver.shutdown = hdac_ext_drv_shutdown;
+	अगर (drv->हटाओ)
+		drv->driver.हटाओ = hdac_ext_drv_हटाओ;
+	अगर (drv->shutकरोwn)
+		drv->driver.shutकरोwn = hdac_ext_drv_shutकरोwn;
 
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(snd_hda_ext_driver_register);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hda_ext_driver_रेजिस्टर);
 
 /**
- * snd_hda_ext_driver_unregister - unregister a driver for ext hda devices
+ * snd_hda_ext_driver_unरेजिस्टर - unरेजिस्टर a driver क्रम ext hda devices
  *
- * @drv: ext hda driver structure
+ * @drv: ext hda driver काष्ठाure
  */
-void snd_hda_ext_driver_unregister(struct hdac_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(snd_hda_ext_driver_unregister);
+व्योम snd_hda_ext_driver_unरेजिस्टर(काष्ठा hdac_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hda_ext_driver_unरेजिस्टर);

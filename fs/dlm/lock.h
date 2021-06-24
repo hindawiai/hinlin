@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /******************************************************************************
 *******************************************************************************
 **
@@ -8,71 +9,71 @@
 *******************************************************************************
 ******************************************************************************/
 
-#ifndef __LOCK_DOT_H__
-#define __LOCK_DOT_H__
+#अगर_अघोषित __LOCK_DOT_H__
+#घोषणा __LOCK_DOT_H__
 
-void dlm_dump_rsb(struct dlm_rsb *r);
-void dlm_dump_rsb_name(struct dlm_ls *ls, char *name, int len);
-void dlm_print_lkb(struct dlm_lkb *lkb);
-void dlm_receive_message_saved(struct dlm_ls *ls, struct dlm_message *ms,
-			       uint32_t saved_seq);
-void dlm_receive_buffer(union dlm_packet *p, int nodeid);
-int dlm_modes_compat(int mode1, int mode2);
-void dlm_put_rsb(struct dlm_rsb *r);
-void dlm_hold_rsb(struct dlm_rsb *r);
-int dlm_put_lkb(struct dlm_lkb *lkb);
-void dlm_scan_rsbs(struct dlm_ls *ls);
-int dlm_lock_recovery_try(struct dlm_ls *ls);
-void dlm_unlock_recovery(struct dlm_ls *ls);
-void dlm_scan_waiters(struct dlm_ls *ls);
-void dlm_scan_timeout(struct dlm_ls *ls);
-void dlm_adjust_timeouts(struct dlm_ls *ls);
-int dlm_master_lookup(struct dlm_ls *ls, int nodeid, char *name, int len,
-		      unsigned int flags, int *r_nodeid, int *result);
+व्योम dlm_dump_rsb(काष्ठा dlm_rsb *r);
+व्योम dlm_dump_rsb_name(काष्ठा dlm_ls *ls, अक्षर *name, पूर्णांक len);
+व्योम dlm_prपूर्णांक_lkb(काष्ठा dlm_lkb *lkb);
+व्योम dlm_receive_message_saved(काष्ठा dlm_ls *ls, काष्ठा dlm_message *ms,
+			       uपूर्णांक32_t saved_seq);
+व्योम dlm_receive_buffer(जोड़ dlm_packet *p, पूर्णांक nodeid);
+पूर्णांक dlm_modes_compat(पूर्णांक mode1, पूर्णांक mode2);
+व्योम dlm_put_rsb(काष्ठा dlm_rsb *r);
+व्योम dlm_hold_rsb(काष्ठा dlm_rsb *r);
+पूर्णांक dlm_put_lkb(काष्ठा dlm_lkb *lkb);
+व्योम dlm_scan_rsbs(काष्ठा dlm_ls *ls);
+पूर्णांक dlm_lock_recovery_try(काष्ठा dlm_ls *ls);
+व्योम dlm_unlock_recovery(काष्ठा dlm_ls *ls);
+व्योम dlm_scan_रुकोers(काष्ठा dlm_ls *ls);
+व्योम dlm_scan_समयout(काष्ठा dlm_ls *ls);
+व्योम dlm_adjust_समयouts(काष्ठा dlm_ls *ls);
+पूर्णांक dlm_master_lookup(काष्ठा dlm_ls *ls, पूर्णांक nodeid, अक्षर *name, पूर्णांक len,
+		      अचिन्हित पूर्णांक flags, पूर्णांक *r_nodeid, पूर्णांक *result);
 
-int dlm_search_rsb_tree(struct rb_root *tree, char *name, int len,
-			struct dlm_rsb **r_ret);
+पूर्णांक dlm_search_rsb_tree(काष्ठा rb_root *tree, अक्षर *name, पूर्णांक len,
+			काष्ठा dlm_rsb **r_ret);
 
-void dlm_recover_purge(struct dlm_ls *ls);
-void dlm_purge_mstcpy_locks(struct dlm_rsb *r);
-void dlm_recover_grant(struct dlm_ls *ls);
-int dlm_recover_waiters_post(struct dlm_ls *ls);
-void dlm_recover_waiters_pre(struct dlm_ls *ls);
-int dlm_recover_master_copy(struct dlm_ls *ls, struct dlm_rcom *rc);
-int dlm_recover_process_copy(struct dlm_ls *ls, struct dlm_rcom *rc);
+व्योम dlm_recover_purge(काष्ठा dlm_ls *ls);
+व्योम dlm_purge_mstcpy_locks(काष्ठा dlm_rsb *r);
+व्योम dlm_recover_grant(काष्ठा dlm_ls *ls);
+पूर्णांक dlm_recover_रुकोers_post(काष्ठा dlm_ls *ls);
+व्योम dlm_recover_रुकोers_pre(काष्ठा dlm_ls *ls);
+पूर्णांक dlm_recover_master_copy(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc);
+पूर्णांक dlm_recover_process_copy(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc);
 
-int dlm_user_request(struct dlm_ls *ls, struct dlm_user_args *ua, int mode,
-	uint32_t flags, void *name, unsigned int namelen,
-	unsigned long timeout_cs);
-int dlm_user_convert(struct dlm_ls *ls, struct dlm_user_args *ua_tmp,
-	int mode, uint32_t flags, uint32_t lkid, char *lvb_in,
-	unsigned long timeout_cs);
-int dlm_user_adopt_orphan(struct dlm_ls *ls, struct dlm_user_args *ua_tmp,
-	int mode, uint32_t flags, void *name, unsigned int namelen,
-	unsigned long timeout_cs, uint32_t *lkid);
-int dlm_user_unlock(struct dlm_ls *ls, struct dlm_user_args *ua_tmp,
-	uint32_t flags, uint32_t lkid, char *lvb_in);
-int dlm_user_cancel(struct dlm_ls *ls,  struct dlm_user_args *ua_tmp,
-	uint32_t flags, uint32_t lkid);
-int dlm_user_purge(struct dlm_ls *ls, struct dlm_user_proc *proc,
-	int nodeid, int pid);
-int dlm_user_deadlock(struct dlm_ls *ls, uint32_t flags, uint32_t lkid);
-void dlm_clear_proc_locks(struct dlm_ls *ls, struct dlm_user_proc *proc);
+पूर्णांक dlm_user_request(काष्ठा dlm_ls *ls, काष्ठा dlm_user_args *ua, पूर्णांक mode,
+	uपूर्णांक32_t flags, व्योम *name, अचिन्हित पूर्णांक namelen,
+	अचिन्हित दीर्घ समयout_cs);
+पूर्णांक dlm_user_convert(काष्ठा dlm_ls *ls, काष्ठा dlm_user_args *ua_पंचांगp,
+	पूर्णांक mode, uपूर्णांक32_t flags, uपूर्णांक32_t lkid, अक्षर *lvb_in,
+	अचिन्हित दीर्घ समयout_cs);
+पूर्णांक dlm_user_aकरोpt_orphan(काष्ठा dlm_ls *ls, काष्ठा dlm_user_args *ua_पंचांगp,
+	पूर्णांक mode, uपूर्णांक32_t flags, व्योम *name, अचिन्हित पूर्णांक namelen,
+	अचिन्हित दीर्घ समयout_cs, uपूर्णांक32_t *lkid);
+पूर्णांक dlm_user_unlock(काष्ठा dlm_ls *ls, काष्ठा dlm_user_args *ua_पंचांगp,
+	uपूर्णांक32_t flags, uपूर्णांक32_t lkid, अक्षर *lvb_in);
+पूर्णांक dlm_user_cancel(काष्ठा dlm_ls *ls,  काष्ठा dlm_user_args *ua_पंचांगp,
+	uपूर्णांक32_t flags, uपूर्णांक32_t lkid);
+पूर्णांक dlm_user_purge(काष्ठा dlm_ls *ls, काष्ठा dlm_user_proc *proc,
+	पूर्णांक nodeid, पूर्णांक pid);
+पूर्णांक dlm_user_deadlock(काष्ठा dlm_ls *ls, uपूर्णांक32_t flags, uपूर्णांक32_t lkid);
+व्योम dlm_clear_proc_locks(काष्ठा dlm_ls *ls, काष्ठा dlm_user_proc *proc);
 
-static inline int is_master(struct dlm_rsb *r)
-{
-	return !r->res_nodeid;
-}
+अटल अंतरभूत पूर्णांक is_master(काष्ठा dlm_rsb *r)
+अणु
+	वापस !r->res_nodeid;
+पूर्ण
 
-static inline void lock_rsb(struct dlm_rsb *r)
-{
+अटल अंतरभूत व्योम lock_rsb(काष्ठा dlm_rsb *r)
+अणु
 	mutex_lock(&r->res_mutex);
-}
+पूर्ण
 
-static inline void unlock_rsb(struct dlm_rsb *r)
-{
+अटल अंतरभूत व्योम unlock_rsb(काष्ठा dlm_rsb *r)
+अणु
 	mutex_unlock(&r->res_mutex);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * File: socket.c
  *
@@ -7,186 +8,186 @@
  * Copyright (C) 2008 Nokia Corporation.
  *
  * Authors: Sakari Ailus <sakari.ailus@nokia.com>
- *          Rémi Denis-Courmont
+ *          Rथऊmi Denis-Courmont
  */
 
-#include <linux/gfp.h>
-#include <linux/kernel.h>
-#include <linux/net.h>
-#include <linux/poll.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/net.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <net/sock.h>
-#include <net/tcp_states.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
 
-#include <linux/phonet.h>
-#include <linux/export.h>
-#include <net/phonet/phonet.h>
-#include <net/phonet/pep.h>
-#include <net/phonet/pn_dev.h>
+#समावेश <linux/phonet.h>
+#समावेश <linux/export.h>
+#समावेश <net/phonet/phonet.h>
+#समावेश <net/phonet/pep.h>
+#समावेश <net/phonet/pn_dev.h>
 
-static int pn_socket_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
+अटल पूर्णांक pn_socket_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	if (sk) {
-		sock->sk = NULL;
-		sk->sk_prot->close(sk, 0);
-	}
-	return 0;
-}
+	अगर (sk) अणु
+		sock->sk = शून्य;
+		sk->sk_prot->बंद(sk, 0);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define PN_HASHSIZE	16
-#define PN_HASHMASK	(PN_HASHSIZE-1)
+#घोषणा PN_HASHSIZE	16
+#घोषणा PN_HASHMASK	(PN_HASHSIZE-1)
 
 
-static struct  {
-	struct hlist_head hlist[PN_HASHSIZE];
-	struct mutex lock;
-} pnsocks;
+अटल काष्ठा  अणु
+	काष्ठा hlist_head hlist[PN_HASHSIZE];
+	काष्ठा mutex lock;
+पूर्ण pnsocks;
 
-void __init pn_sock_init(void)
-{
-	unsigned int i;
+व्योम __init pn_sock_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < PN_HASHSIZE; i++)
+	क्रम (i = 0; i < PN_HASHSIZE; i++)
 		INIT_HLIST_HEAD(pnsocks.hlist + i);
 	mutex_init(&pnsocks.lock);
-}
+पूर्ण
 
-static struct hlist_head *pn_hash_list(u16 obj)
-{
-	return pnsocks.hlist + (obj & PN_HASHMASK);
-}
+अटल काष्ठा hlist_head *pn_hash_list(u16 obj)
+अणु
+	वापस pnsocks.hlist + (obj & PN_HASHMASK);
+पूर्ण
 
 /*
  * Find address based on socket address, match only certain fields.
- * Also grab sock if it was found. Remember to sock_put it later.
+ * Also grab sock अगर it was found. Remember to sock_put it later.
  */
-struct sock *pn_find_sock_by_sa(struct net *net, const struct sockaddr_pn *spn)
-{
-	struct sock *sknode;
-	struct sock *rval = NULL;
+काष्ठा sock *pn_find_sock_by_sa(काष्ठा net *net, स्थिर काष्ठा sockaddr_pn *spn)
+अणु
+	काष्ठा sock *sknode;
+	काष्ठा sock *rval = शून्य;
 	u16 obj = pn_sockaddr_get_object(spn);
 	u8 res = spn->spn_resource;
-	struct hlist_head *hlist = pn_hash_list(obj);
+	काष्ठा hlist_head *hlist = pn_hash_list(obj);
 
-	rcu_read_lock();
-	sk_for_each_rcu(sknode, hlist) {
-		struct pn_sock *pn = pn_sk(sknode);
+	rcu_पढ़ो_lock();
+	sk_क्रम_each_rcu(sknode, hlist) अणु
+		काष्ठा pn_sock *pn = pn_sk(sknode);
 		BUG_ON(!pn->sobject); /* unbound socket */
 
-		if (!net_eq(sock_net(sknode), net))
-			continue;
-		if (pn_port(obj)) {
+		अगर (!net_eq(sock_net(sknode), net))
+			जारी;
+		अगर (pn_port(obj)) अणु
 			/* Look up socket by port */
-			if (pn_port(pn->sobject) != pn_port(obj))
-				continue;
-		} else {
+			अगर (pn_port(pn->sobject) != pn_port(obj))
+				जारी;
+		पूर्ण अन्यथा अणु
 			/* If port is zero, look up by resource */
-			if (pn->resource != res)
-				continue;
-		}
-		if (pn_addr(pn->sobject) &&
+			अगर (pn->resource != res)
+				जारी;
+		पूर्ण
+		अगर (pn_addr(pn->sobject) &&
 		    pn_addr(pn->sobject) != pn_addr(obj))
-			continue;
+			जारी;
 
 		rval = sknode;
 		sock_hold(sknode);
-		break;
-	}
-	rcu_read_unlock();
+		अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 /* Deliver a broadcast packet (only in bottom-half) */
-void pn_deliver_sock_broadcast(struct net *net, struct sk_buff *skb)
-{
-	struct hlist_head *hlist = pnsocks.hlist;
-	unsigned int h;
+व्योम pn_deliver_sock_broadcast(काष्ठा net *net, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा hlist_head *hlist = pnsocks.hlist;
+	अचिन्हित पूर्णांक h;
 
-	rcu_read_lock();
-	for (h = 0; h < PN_HASHSIZE; h++) {
-		struct sock *sknode;
+	rcu_पढ़ो_lock();
+	क्रम (h = 0; h < PN_HASHSIZE; h++) अणु
+		काष्ठा sock *sknode;
 
-		sk_for_each(sknode, hlist) {
-			struct sk_buff *clone;
+		sk_क्रम_each(sknode, hlist) अणु
+			काष्ठा sk_buff *clone;
 
-			if (!net_eq(sock_net(sknode), net))
-				continue;
-			if (!sock_flag(sknode, SOCK_BROADCAST))
-				continue;
+			अगर (!net_eq(sock_net(sknode), net))
+				जारी;
+			अगर (!sock_flag(sknode, SOCK_BROADCAST))
+				जारी;
 
 			clone = skb_clone(skb, GFP_ATOMIC);
-			if (clone) {
+			अगर (clone) अणु
 				sock_hold(sknode);
 				sk_receive_skb(sknode, clone, 0);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		hlist++;
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-int pn_sock_hash(struct sock *sk)
-{
-	struct hlist_head *hlist = pn_hash_list(pn_sk(sk)->sobject);
+पूर्णांक pn_sock_hash(काष्ठा sock *sk)
+अणु
+	काष्ठा hlist_head *hlist = pn_hash_list(pn_sk(sk)->sobject);
 
 	mutex_lock(&pnsocks.lock);
 	sk_add_node_rcu(sk, hlist);
 	mutex_unlock(&pnsocks.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(pn_sock_hash);
 
-void pn_sock_unhash(struct sock *sk)
-{
+व्योम pn_sock_unhash(काष्ठा sock *sk)
+अणु
 	mutex_lock(&pnsocks.lock);
 	sk_del_node_init_rcu(sk);
 	mutex_unlock(&pnsocks.lock);
 	pn_sock_unbind_all_res(sk);
 	synchronize_rcu();
-}
+पूर्ण
 EXPORT_SYMBOL(pn_sock_unhash);
 
-static DEFINE_MUTEX(port_mutex);
+अटल DEFINE_MUTEX(port_mutex);
 
-static int pn_socket_bind(struct socket *sock, struct sockaddr *addr, int len)
-{
-	struct sock *sk = sock->sk;
-	struct pn_sock *pn = pn_sk(sk);
-	struct sockaddr_pn *spn = (struct sockaddr_pn *)addr;
-	int err;
+अटल पूर्णांक pn_socket_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक len)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा pn_sock *pn = pn_sk(sk);
+	काष्ठा sockaddr_pn *spn = (काष्ठा sockaddr_pn *)addr;
+	पूर्णांक err;
 	u16 handle;
 	u8 saddr;
 
-	if (sk->sk_prot->bind)
-		return sk->sk_prot->bind(sk, addr, len);
+	अगर (sk->sk_prot->bind)
+		वापस sk->sk_prot->bind(sk, addr, len);
 
-	if (len < sizeof(struct sockaddr_pn))
-		return -EINVAL;
-	if (spn->spn_family != AF_PHONET)
-		return -EAFNOSUPPORT;
+	अगर (len < माप(काष्ठा sockaddr_pn))
+		वापस -EINVAL;
+	अगर (spn->spn_family != AF_PHONET)
+		वापस -EAFNOSUPPORT;
 
-	handle = pn_sockaddr_get_object((struct sockaddr_pn *)addr);
+	handle = pn_sockaddr_get_object((काष्ठा sockaddr_pn *)addr);
 	saddr = pn_addr(handle);
-	if (saddr && phonet_address_lookup(sock_net(sk), saddr))
-		return -EADDRNOTAVAIL;
+	अगर (saddr && phonet_address_lookup(sock_net(sk), saddr))
+		वापस -EADDRNOTAVAIL;
 
 	lock_sock(sk);
-	if (sk->sk_state != TCP_CLOSE || pn_port(pn->sobject)) {
+	अगर (sk->sk_state != TCP_CLOSE || pn_port(pn->sobject)) अणु
 		err = -EINVAL; /* attempt to rebind */
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	WARN_ON(sk_hashed(sk));
 	mutex_lock(&port_mutex);
 	err = sk->sk_prot->get_port(sk, pn_port(handle));
-	if (err)
-		goto out_port;
+	अगर (err)
+		जाओ out_port;
 
-	/* get_port() sets the port, bind() sets the address if applicable */
+	/* get_port() sets the port, bind() sets the address अगर applicable */
 	pn->sobject = pn_object(saddr, pn_port(pn->sobject));
 	pn->resource = spn->spn_resource;
 
@@ -196,237 +197,237 @@ out_port:
 	mutex_unlock(&port_mutex);
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pn_socket_autobind(struct socket *sock)
-{
-	struct sockaddr_pn sa;
-	int err;
+अटल पूर्णांक pn_socket_स्वतःbind(काष्ठा socket *sock)
+अणु
+	काष्ठा sockaddr_pn sa;
+	पूर्णांक err;
 
-	memset(&sa, 0, sizeof(sa));
+	स_रखो(&sa, 0, माप(sa));
 	sa.spn_family = AF_PHONET;
-	err = pn_socket_bind(sock, (struct sockaddr *)&sa,
-				sizeof(struct sockaddr_pn));
-	if (err != -EINVAL)
-		return err;
+	err = pn_socket_bind(sock, (काष्ठा sockaddr *)&sa,
+				माप(काष्ठा sockaddr_pn));
+	अगर (err != -EINVAL)
+		वापस err;
 	BUG_ON(!pn_port(pn_sk(sock->sk)->sobject));
-	return 0; /* socket was already bound */
-}
+	वापस 0; /* socket was alपढ़ोy bound */
+पूर्ण
 
-static int pn_socket_connect(struct socket *sock, struct sockaddr *addr,
-		int len, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct pn_sock *pn = pn_sk(sk);
-	struct sockaddr_pn *spn = (struct sockaddr_pn *)addr;
-	struct task_struct *tsk = current;
-	long timeo = sock_rcvtimeo(sk, flags & O_NONBLOCK);
-	int err;
+अटल पूर्णांक pn_socket_connect(काष्ठा socket *sock, काष्ठा sockaddr *addr,
+		पूर्णांक len, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा pn_sock *pn = pn_sk(sk);
+	काष्ठा sockaddr_pn *spn = (काष्ठा sockaddr_pn *)addr;
+	काष्ठा task_काष्ठा *tsk = current;
+	दीर्घ समयo = sock_rcvसमयo(sk, flags & O_NONBLOCK);
+	पूर्णांक err;
 
-	if (pn_socket_autobind(sock))
-		return -ENOBUFS;
-	if (len < sizeof(struct sockaddr_pn))
-		return -EINVAL;
-	if (spn->spn_family != AF_PHONET)
-		return -EAFNOSUPPORT;
+	अगर (pn_socket_स्वतःbind(sock))
+		वापस -ENOBUFS;
+	अगर (len < माप(काष्ठा sockaddr_pn))
+		वापस -EINVAL;
+	अगर (spn->spn_family != AF_PHONET)
+		वापस -EAFNOSUPPORT;
 
 	lock_sock(sk);
 
-	switch (sock->state) {
-	case SS_UNCONNECTED:
-		if (sk->sk_state != TCP_CLOSE) {
+	चयन (sock->state) अणु
+	हाल SS_UNCONNECTED:
+		अगर (sk->sk_state != TCP_CLOSE) अणु
 			err = -EISCONN;
-			goto out;
-		}
-		break;
-	case SS_CONNECTING:
+			जाओ out;
+		पूर्ण
+		अवरोध;
+	हाल SS_CONNECTING:
 		err = -EALREADY;
-		goto out;
-	default:
+		जाओ out;
+	शेष:
 		err = -EISCONN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	pn->dobject = pn_sockaddr_get_object(spn);
+	pn->करोbject = pn_sockaddr_get_object(spn);
 	pn->resource = pn_sockaddr_get_resource(spn);
 	sock->state = SS_CONNECTING;
 
 	err = sk->sk_prot->connect(sk, addr, len);
-	if (err) {
+	अगर (err) अणु
 		sock->state = SS_UNCONNECTED;
-		pn->dobject = 0;
-		goto out;
-	}
+		pn->करोbject = 0;
+		जाओ out;
+	पूर्ण
 
-	while (sk->sk_state == TCP_SYN_SENT) {
-		DEFINE_WAIT(wait);
+	जबतक (sk->sk_state == TCP_SYN_SENT) अणु
+		DEFINE_WAIT(रुको);
 
-		if (!timeo) {
+		अगर (!समयo) अणु
 			err = -EINPROGRESS;
-			goto out;
-		}
-		if (signal_pending(tsk)) {
-			err = sock_intr_errno(timeo);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
+		अगर (संकेत_pending(tsk)) अणु
+			err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+			जाओ out;
+		पूर्ण
 
-		prepare_to_wait_exclusive(sk_sleep(sk), &wait,
+		prepare_to_रुको_exclusive(sk_sleep(sk), &रुको,
 						TASK_INTERRUPTIBLE);
 		release_sock(sk);
-		timeo = schedule_timeout(timeo);
+		समयo = schedule_समयout(समयo);
 		lock_sock(sk);
-		finish_wait(sk_sleep(sk), &wait);
-	}
+		finish_रुको(sk_sleep(sk), &रुको);
+	पूर्ण
 
-	if ((1 << sk->sk_state) & (TCPF_SYN_RECV|TCPF_ESTABLISHED))
+	अगर ((1 << sk->sk_state) & (TCPF_SYN_RECV|TCPF_ESTABLISHED))
 		err = 0;
-	else if (sk->sk_state == TCP_CLOSE_WAIT)
+	अन्यथा अगर (sk->sk_state == TCP_CLOSE_WAIT)
 		err = -ECONNRESET;
-	else
+	अन्यथा
 		err = -ECONNREFUSED;
 	sock->state = err ? SS_UNCONNECTED : SS_CONNECTED;
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pn_socket_accept(struct socket *sock, struct socket *newsock,
-			    int flags, bool kern)
-{
-	struct sock *sk = sock->sk;
-	struct sock *newsk;
-	int err;
+अटल पूर्णांक pn_socket_accept(काष्ठा socket *sock, काष्ठा socket *newsock,
+			    पूर्णांक flags, bool kern)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sock *newsk;
+	पूर्णांक err;
 
-	if (unlikely(sk->sk_state != TCP_LISTEN))
-		return -EINVAL;
+	अगर (unlikely(sk->sk_state != TCP_LISTEN))
+		वापस -EINVAL;
 
 	newsk = sk->sk_prot->accept(sk, flags, &err, kern);
-	if (!newsk)
-		return err;
+	अगर (!newsk)
+		वापस err;
 
 	lock_sock(newsk);
 	sock_graft(newsk, newsock);
 	newsock->state = SS_CONNECTED;
 	release_sock(newsk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pn_socket_getname(struct socket *sock, struct sockaddr *addr,
-				int peer)
-{
-	struct sock *sk = sock->sk;
-	struct pn_sock *pn = pn_sk(sk);
+अटल पूर्णांक pn_socket_getname(काष्ठा socket *sock, काष्ठा sockaddr *addr,
+				पूर्णांक peer)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा pn_sock *pn = pn_sk(sk);
 
-	memset(addr, 0, sizeof(struct sockaddr_pn));
+	स_रखो(addr, 0, माप(काष्ठा sockaddr_pn));
 	addr->sa_family = AF_PHONET;
-	if (!peer) /* Race with bind() here is userland's problem. */
-		pn_sockaddr_set_object((struct sockaddr_pn *)addr,
+	अगर (!peer) /* Race with bind() here is userland's problem. */
+		pn_sockaddr_set_object((काष्ठा sockaddr_pn *)addr,
 					pn->sobject);
 
-	return sizeof(struct sockaddr_pn);
-}
+	वापस माप(काष्ठा sockaddr_pn);
+पूर्ण
 
-static __poll_t pn_socket_poll(struct file *file, struct socket *sock,
-					poll_table *wait)
-{
-	struct sock *sk = sock->sk;
-	struct pep_sock *pn = pep_sk(sk);
+अटल __poll_t pn_socket_poll(काष्ठा file *file, काष्ठा socket *sock,
+					poll_table *रुको)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा pep_sock *pn = pep_sk(sk);
 	__poll_t mask = 0;
 
-	poll_wait(file, sk_sleep(sk), wait);
+	poll_रुको(file, sk_sleep(sk), रुको);
 
-	if (sk->sk_state == TCP_CLOSE)
-		return EPOLLERR;
-	if (!skb_queue_empty_lockless(&sk->sk_receive_queue))
+	अगर (sk->sk_state == TCP_CLOSE)
+		वापस EPOLLERR;
+	अगर (!skb_queue_empty_lockless(&sk->sk_receive_queue))
 		mask |= EPOLLIN | EPOLLRDNORM;
-	if (!skb_queue_empty_lockless(&pn->ctrlreq_queue))
+	अगर (!skb_queue_empty_lockless(&pn->ctrlreq_queue))
 		mask |= EPOLLPRI;
-	if (!mask && sk->sk_state == TCP_CLOSE_WAIT)
-		return EPOLLHUP;
+	अगर (!mask && sk->sk_state == TCP_CLOSE_WAIT)
+		वापस EPOLLHUP;
 
-	if (sk->sk_state == TCP_ESTABLISHED &&
-		refcount_read(&sk->sk_wmem_alloc) < sk->sk_sndbuf &&
-		atomic_read(&pn->tx_credits))
+	अगर (sk->sk_state == TCP_ESTABLISHED &&
+		refcount_पढ़ो(&sk->sk_wmem_alloc) < sk->sk_sndbuf &&
+		atomic_पढ़ो(&pn->tx_credits))
 		mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int pn_socket_ioctl(struct socket *sock, unsigned int cmd,
-				unsigned long arg)
-{
-	struct sock *sk = sock->sk;
-	struct pn_sock *pn = pn_sk(sk);
+अटल पूर्णांक pn_socket_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd,
+				अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा pn_sock *pn = pn_sk(sk);
 
-	if (cmd == SIOCPNGETOBJECT) {
-		struct net_device *dev;
+	अगर (cmd == SIOCPNGETOBJECT) अणु
+		काष्ठा net_device *dev;
 		u16 handle;
 		u8 saddr;
 
-		if (get_user(handle, (__u16 __user *)arg))
-			return -EFAULT;
+		अगर (get_user(handle, (__u16 __user *)arg))
+			वापस -EFAULT;
 
 		lock_sock(sk);
-		if (sk->sk_bound_dev_if)
+		अगर (sk->sk_bound_dev_अगर)
 			dev = dev_get_by_index(sock_net(sk),
-						sk->sk_bound_dev_if);
-		else
+						sk->sk_bound_dev_अगर);
+		अन्यथा
 			dev = phonet_device_get(sock_net(sk));
-		if (dev && (dev->flags & IFF_UP))
+		अगर (dev && (dev->flags & IFF_UP))
 			saddr = phonet_address_get(dev, pn_addr(handle));
-		else
+		अन्यथा
 			saddr = PN_NO_ADDR;
 		release_sock(sk);
 
-		if (dev)
+		अगर (dev)
 			dev_put(dev);
-		if (saddr == PN_NO_ADDR)
-			return -EHOSTUNREACH;
+		अगर (saddr == PN_NO_ADDR)
+			वापस -EHOSTUNREACH;
 
 		handle = pn_object(saddr, pn_port(pn->sobject));
-		return put_user(handle, (__u16 __user *)arg);
-	}
+		वापस put_user(handle, (__u16 __user *)arg);
+	पूर्ण
 
-	return sk->sk_prot->ioctl(sk, cmd, arg);
-}
+	वापस sk->sk_prot->ioctl(sk, cmd, arg);
+पूर्ण
 
-static int pn_socket_listen(struct socket *sock, int backlog)
-{
-	struct sock *sk = sock->sk;
-	int err = 0;
+अटल पूर्णांक pn_socket_listen(काष्ठा socket *sock, पूर्णांक backlog)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक err = 0;
 
-	if (pn_socket_autobind(sock))
-		return -ENOBUFS;
+	अगर (pn_socket_स्वतःbind(sock))
+		वापस -ENOBUFS;
 
 	lock_sock(sk);
-	if (sock->state != SS_UNCONNECTED) {
+	अगर (sock->state != SS_UNCONNECTED) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (sk->sk_state != TCP_LISTEN) {
+	अगर (sk->sk_state != TCP_LISTEN) अणु
 		sk->sk_state = TCP_LISTEN;
 		sk->sk_ack_backlog = 0;
-	}
+	पूर्ण
 	sk->sk_max_ack_backlog = backlog;
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pn_socket_sendmsg(struct socket *sock, struct msghdr *m,
-			     size_t total_len)
-{
-	struct sock *sk = sock->sk;
+अटल पूर्णांक pn_socket_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *m,
+			     माप_प्रकार total_len)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	if (pn_socket_autobind(sock))
-		return -EAGAIN;
+	अगर (pn_socket_स्वतःbind(sock))
+		वापस -EAGAIN;
 
-	return sk->sk_prot->sendmsg(sk, m, total_len);
-}
+	वापस sk->sk_prot->sendmsg(sk, m, total_len);
+पूर्ण
 
-const struct proto_ops phonet_dgram_ops = {
+स्थिर काष्ठा proto_ops phonet_dgram_ops = अणु
 	.family		= AF_PHONET,
 	.owner		= THIS_MODULE,
 	.release	= pn_socket_release,
@@ -438,14 +439,14 @@ const struct proto_ops phonet_dgram_ops = {
 	.poll		= datagram_poll,
 	.ioctl		= pn_socket_ioctl,
 	.listen		= sock_no_listen,
-	.shutdown	= sock_no_shutdown,
+	.shutकरोwn	= sock_no_shutकरोwn,
 	.sendmsg	= pn_socket_sendmsg,
 	.recvmsg	= sock_common_recvmsg,
 	.mmap		= sock_no_mmap,
 	.sendpage	= sock_no_sendpage,
-};
+पूर्ण;
 
-const struct proto_ops phonet_stream_ops = {
+स्थिर काष्ठा proto_ops phonet_stream_ops = अणु
 	.family		= AF_PHONET,
 	.owner		= THIS_MODULE,
 	.release	= pn_socket_release,
@@ -457,319 +458,319 @@ const struct proto_ops phonet_stream_ops = {
 	.poll		= pn_socket_poll,
 	.ioctl		= pn_socket_ioctl,
 	.listen		= pn_socket_listen,
-	.shutdown	= sock_no_shutdown,
+	.shutकरोwn	= sock_no_shutकरोwn,
 	.setsockopt	= sock_common_setsockopt,
-	.getsockopt	= sock_common_getsockopt,
+	.माला_लोockopt	= sock_common_माला_लोockopt,
 	.sendmsg	= pn_socket_sendmsg,
 	.recvmsg	= sock_common_recvmsg,
 	.mmap		= sock_no_mmap,
 	.sendpage	= sock_no_sendpage,
-};
+पूर्ण;
 EXPORT_SYMBOL(phonet_stream_ops);
 
-/* allocate port for a socket */
-int pn_sock_get_port(struct sock *sk, unsigned short sport)
-{
-	static int port_cur;
-	struct net *net = sock_net(sk);
-	struct pn_sock *pn = pn_sk(sk);
-	struct sockaddr_pn try_sa;
-	struct sock *tmpsk;
+/* allocate port क्रम a socket */
+पूर्णांक pn_sock_get_port(काष्ठा sock *sk, अचिन्हित लघु sport)
+अणु
+	अटल पूर्णांक port_cur;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा pn_sock *pn = pn_sk(sk);
+	काष्ठा sockaddr_pn try_sa;
+	काष्ठा sock *पंचांगpsk;
 
-	memset(&try_sa, 0, sizeof(struct sockaddr_pn));
+	स_रखो(&try_sa, 0, माप(काष्ठा sockaddr_pn));
 	try_sa.spn_family = AF_PHONET;
 	WARN_ON(!mutex_is_locked(&port_mutex));
-	if (!sport) {
-		/* search free port */
-		int port, pmin, pmax;
+	अगर (!sport) अणु
+		/* search मुक्त port */
+		पूर्णांक port, pmin, pmax;
 
 		phonet_get_local_port_range(&pmin, &pmax);
-		for (port = pmin; port <= pmax; port++) {
+		क्रम (port = pmin; port <= pmax; port++) अणु
 			port_cur++;
-			if (port_cur < pmin || port_cur > pmax)
+			अगर (port_cur < pmin || port_cur > pmax)
 				port_cur = pmin;
 
 			pn_sockaddr_set_port(&try_sa, port_cur);
-			tmpsk = pn_find_sock_by_sa(net, &try_sa);
-			if (tmpsk == NULL) {
+			पंचांगpsk = pn_find_sock_by_sa(net, &try_sa);
+			अगर (पंचांगpsk == शून्य) अणु
 				sport = port_cur;
-				goto found;
-			} else
-				sock_put(tmpsk);
-		}
-	} else {
-		/* try to find specific port */
+				जाओ found;
+			पूर्ण अन्यथा
+				sock_put(पंचांगpsk);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* try to find specअगरic port */
 		pn_sockaddr_set_port(&try_sa, sport);
-		tmpsk = pn_find_sock_by_sa(net, &try_sa);
-		if (tmpsk == NULL)
+		पंचांगpsk = pn_find_sock_by_sa(net, &try_sa);
+		अगर (पंचांगpsk == शून्य)
 			/* No sock there! We can use that port... */
-			goto found;
-		else
-			sock_put(tmpsk);
-	}
-	/* the port must be in use already */
-	return -EADDRINUSE;
+			जाओ found;
+		अन्यथा
+			sock_put(पंचांगpsk);
+	पूर्ण
+	/* the port must be in use alपढ़ोy */
+	वापस -EADDRINUSE;
 
 found:
 	pn->sobject = pn_object(pn_addr(pn->sobject), sport);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(pn_sock_get_port);
 
-#ifdef CONFIG_PROC_FS
-static struct sock *pn_sock_get_idx(struct seq_file *seq, loff_t pos)
-{
-	struct net *net = seq_file_net(seq);
-	struct hlist_head *hlist = pnsocks.hlist;
-	struct sock *sknode;
-	unsigned int h;
+#अगर_घोषित CONFIG_PROC_FS
+अटल काष्ठा sock *pn_sock_get_idx(काष्ठा seq_file *seq, loff_t pos)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा hlist_head *hlist = pnsocks.hlist;
+	काष्ठा sock *sknode;
+	अचिन्हित पूर्णांक h;
 
-	for (h = 0; h < PN_HASHSIZE; h++) {
-		sk_for_each_rcu(sknode, hlist) {
-			if (!net_eq(net, sock_net(sknode)))
-				continue;
-			if (!pos)
-				return sknode;
+	क्रम (h = 0; h < PN_HASHSIZE; h++) अणु
+		sk_क्रम_each_rcu(sknode, hlist) अणु
+			अगर (!net_eq(net, sock_net(sknode)))
+				जारी;
+			अगर (!pos)
+				वापस sknode;
 			pos--;
-		}
+		पूर्ण
 		hlist++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct sock *pn_sock_get_next(struct seq_file *seq, struct sock *sk)
-{
-	struct net *net = seq_file_net(seq);
+अटल काष्ठा sock *pn_sock_get_next(काष्ठा seq_file *seq, काष्ठा sock *sk)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
 
-	do
+	करो
 		sk = sk_next(sk);
-	while (sk && !net_eq(net, sock_net(sk)));
+	जबतक (sk && !net_eq(net, sock_net(sk)));
 
-	return sk;
-}
+	वापस sk;
+पूर्ण
 
-static void *pn_sock_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *pn_sock_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(rcu)
-{
-	rcu_read_lock();
-	return *pos ? pn_sock_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
-}
+अणु
+	rcu_पढ़ो_lock();
+	वापस *pos ? pn_sock_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
+पूर्ण
 
-static void *pn_sock_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct sock *sk;
+अटल व्योम *pn_sock_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा sock *sk;
 
-	if (v == SEQ_START_TOKEN)
+	अगर (v == SEQ_START_TOKEN)
 		sk = pn_sock_get_idx(seq, 0);
-	else
+	अन्यथा
 		sk = pn_sock_get_next(seq, v);
 	(*pos)++;
-	return sk;
-}
+	वापस sk;
+पूर्ण
 
-static void pn_sock_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम pn_sock_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(rcu)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int pn_sock_seq_show(struct seq_file *seq, void *v)
-{
+अटल पूर्णांक pn_sock_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
 	seq_setwidth(seq, 127);
-	if (v == SEQ_START_TOKEN)
-		seq_puts(seq, "pt  loc  rem rs st tx_queue rx_queue "
+	अगर (v == SEQ_START_TOKEN)
+		seq_माला_दो(seq, "pt  loc  rem rs st tx_queue rx_queue "
 			"  uid inode ref pointer drops");
-	else {
-		struct sock *sk = v;
-		struct pn_sock *pn = pn_sk(sk);
+	अन्यथा अणु
+		काष्ठा sock *sk = v;
+		काष्ठा pn_sock *pn = pn_sk(sk);
 
-		seq_printf(seq, "%2d %04X:%04X:%02X %02X %08X:%08X %5d %lu "
+		seq_म_लिखो(seq, "%2d %04X:%04X:%02X %02X %08X:%08X %5d %lu "
 			"%d %pK %u",
-			sk->sk_protocol, pn->sobject, pn->dobject,
+			sk->sk_protocol, pn->sobject, pn->करोbject,
 			pn->resource, sk->sk_state,
 			sk_wmem_alloc_get(sk), sk_rmem_alloc_get(sk),
 			from_kuid_munged(seq_user_ns(seq), sock_i_uid(sk)),
 			sock_i_ino(sk),
-			refcount_read(&sk->sk_refcnt), sk,
-			atomic_read(&sk->sk_drops));
-	}
+			refcount_पढ़ो(&sk->sk_refcnt), sk,
+			atomic_पढ़ो(&sk->sk_drops));
+	पूर्ण
 	seq_pad(seq, '\n');
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct seq_operations pn_sock_seq_ops = {
+स्थिर काष्ठा seq_operations pn_sock_seq_ops = अणु
 	.start = pn_sock_seq_start,
 	.next = pn_sock_seq_next,
 	.stop = pn_sock_seq_stop,
 	.show = pn_sock_seq_show,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static struct  {
-	struct sock *sk[256];
-} pnres;
+अटल काष्ठा  अणु
+	काष्ठा sock *sk[256];
+पूर्ण pnres;
 
 /*
  * Find and hold socket based on resource.
  */
-struct sock *pn_find_sock_by_res(struct net *net, u8 res)
-{
-	struct sock *sk;
+काष्ठा sock *pn_find_sock_by_res(काष्ठा net *net, u8 res)
+अणु
+	काष्ठा sock *sk;
 
-	if (!net_eq(net, &init_net))
-		return NULL;
+	अगर (!net_eq(net, &init_net))
+		वापस शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	sk = rcu_dereference(pnres.sk[res]);
-	if (sk)
+	अगर (sk)
 		sock_hold(sk);
-	rcu_read_unlock();
-	return sk;
-}
+	rcu_पढ़ो_unlock();
+	वापस sk;
+पूर्ण
 
-static DEFINE_MUTEX(resource_mutex);
+अटल DEFINE_MUTEX(resource_mutex);
 
-int pn_sock_bind_res(struct sock *sk, u8 res)
-{
-	int ret = -EADDRINUSE;
+पूर्णांक pn_sock_bind_res(काष्ठा sock *sk, u8 res)
+अणु
+	पूर्णांक ret = -EADDRINUSE;
 
-	if (!net_eq(sock_net(sk), &init_net))
-		return -ENOIOCTLCMD;
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
-	if (pn_socket_autobind(sk->sk_socket))
-		return -EAGAIN;
+	अगर (!net_eq(sock_net(sk), &init_net))
+		वापस -ENOIOCTLCMD;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
+	अगर (pn_socket_स्वतःbind(sk->sk_socket))
+		वापस -EAGAIN;
 
 	mutex_lock(&resource_mutex);
-	if (pnres.sk[res] == NULL) {
+	अगर (pnres.sk[res] == शून्य) अणु
 		sock_hold(sk);
-		rcu_assign_pointer(pnres.sk[res], sk);
+		rcu_assign_poपूर्णांकer(pnres.sk[res], sk);
 		ret = 0;
-	}
+	पूर्ण
 	mutex_unlock(&resource_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int pn_sock_unbind_res(struct sock *sk, u8 res)
-{
-	int ret = -ENOENT;
+पूर्णांक pn_sock_unbind_res(काष्ठा sock *sk, u8 res)
+अणु
+	पूर्णांक ret = -ENOENT;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
 	mutex_lock(&resource_mutex);
-	if (pnres.sk[res] == sk) {
-		RCU_INIT_POINTER(pnres.sk[res], NULL);
+	अगर (pnres.sk[res] == sk) अणु
+		RCU_INIT_POINTER(pnres.sk[res], शून्य);
 		ret = 0;
-	}
+	पूर्ण
 	mutex_unlock(&resource_mutex);
 
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		synchronize_rcu();
 		sock_put(sk);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void pn_sock_unbind_all_res(struct sock *sk)
-{
-	unsigned int res, match = 0;
+व्योम pn_sock_unbind_all_res(काष्ठा sock *sk)
+अणु
+	अचिन्हित पूर्णांक res, match = 0;
 
 	mutex_lock(&resource_mutex);
-	for (res = 0; res < 256; res++) {
-		if (pnres.sk[res] == sk) {
-			RCU_INIT_POINTER(pnres.sk[res], NULL);
+	क्रम (res = 0; res < 256; res++) अणु
+		अगर (pnres.sk[res] == sk) अणु
+			RCU_INIT_POINTER(pnres.sk[res], शून्य);
 			match++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&resource_mutex);
 
-	while (match > 0) {
+	जबतक (match > 0) अणु
 		__sock_put(sk);
 		match--;
-	}
-	/* Caller is responsible for RCU sync before final sock_put() */
-}
+	पूर्ण
+	/* Caller is responsible क्रम RCU sync beक्रमe final sock_put() */
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-static struct sock **pn_res_get_idx(struct seq_file *seq, loff_t pos)
-{
-	struct net *net = seq_file_net(seq);
-	unsigned int i;
+#अगर_घोषित CONFIG_PROC_FS
+अटल काष्ठा sock **pn_res_get_idx(काष्ठा seq_file *seq, loff_t pos)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	अचिन्हित पूर्णांक i;
 
-	if (!net_eq(net, &init_net))
-		return NULL;
+	अगर (!net_eq(net, &init_net))
+		वापस शून्य;
 
-	for (i = 0; i < 256; i++) {
-		if (pnres.sk[i] == NULL)
-			continue;
-		if (!pos)
-			return pnres.sk + i;
+	क्रम (i = 0; i < 256; i++) अणु
+		अगर (pnres.sk[i] == शून्य)
+			जारी;
+		अगर (!pos)
+			वापस pnres.sk + i;
 		pos--;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct sock **pn_res_get_next(struct seq_file *seq, struct sock **sk)
-{
-	struct net *net = seq_file_net(seq);
-	unsigned int i;
+अटल काष्ठा sock **pn_res_get_next(काष्ठा seq_file *seq, काष्ठा sock **sk)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	अचिन्हित पूर्णांक i;
 
 	BUG_ON(!net_eq(net, &init_net));
 
-	for (i = (sk - pnres.sk) + 1; i < 256; i++)
-		if (pnres.sk[i])
-			return pnres.sk + i;
-	return NULL;
-}
+	क्रम (i = (sk - pnres.sk) + 1; i < 256; i++)
+		अगर (pnres.sk[i])
+			वापस pnres.sk + i;
+	वापस शून्य;
+पूर्ण
 
-static void *pn_res_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *pn_res_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(resource_mutex)
-{
+अणु
 	mutex_lock(&resource_mutex);
-	return *pos ? pn_res_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
-}
+	वापस *pos ? pn_res_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
+पूर्ण
 
-static void *pn_res_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct sock **sk;
+अटल व्योम *pn_res_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा sock **sk;
 
-	if (v == SEQ_START_TOKEN)
+	अगर (v == SEQ_START_TOKEN)
 		sk = pn_res_get_idx(seq, 0);
-	else
+	अन्यथा
 		sk = pn_res_get_next(seq, v);
 	(*pos)++;
-	return sk;
-}
+	वापस sk;
+पूर्ण
 
-static void pn_res_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम pn_res_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(resource_mutex)
-{
+अणु
 	mutex_unlock(&resource_mutex);
-}
+पूर्ण
 
-static int pn_res_seq_show(struct seq_file *seq, void *v)
-{
+अटल पूर्णांक pn_res_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
 	seq_setwidth(seq, 63);
-	if (v == SEQ_START_TOKEN)
-		seq_puts(seq, "rs   uid inode");
-	else {
-		struct sock **psk = v;
-		struct sock *sk = *psk;
+	अगर (v == SEQ_START_TOKEN)
+		seq_माला_दो(seq, "rs   uid inode");
+	अन्यथा अणु
+		काष्ठा sock **psk = v;
+		काष्ठा sock *sk = *psk;
 
-		seq_printf(seq, "%02X %5u %lu",
-			   (int) (psk - pnres.sk),
+		seq_म_लिखो(seq, "%02X %5u %lu",
+			   (पूर्णांक) (psk - pnres.sk),
 			   from_kuid_munged(seq_user_ns(seq), sock_i_uid(sk)),
 			   sock_i_ino(sk));
-	}
+	पूर्ण
 	seq_pad(seq, '\n');
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct seq_operations pn_res_seq_ops = {
+स्थिर काष्ठा seq_operations pn_res_seq_ops = अणु
 	.start = pn_res_seq_start,
 	.next = pn_res_seq_next,
 	.stop = pn_res_seq_stop,
 	.show = pn_res_seq_show,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर

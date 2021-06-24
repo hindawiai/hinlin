@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  IOMMU helpers in MMU context.
  *
- *  Copyright (C) 2015 IBM Corp. <aik@ozlabs.ru>
+ *  Copyright (C) 2015 IBM Corp. <aik@ozद_असल.ru>
  */
 
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
-#include <linux/rculist.h>
-#include <linux/vmalloc.h>
-#include <linux/mutex.h>
-#include <linux/migrate.h>
-#include <linux/hugetlb.h>
-#include <linux/swap.h>
-#include <linux/sizes.h>
-#include <linux/mm.h>
-#include <asm/mmu_context.h>
-#include <asm/pte-walk.h>
-#include <linux/mm_inline.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/migrate.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/pte-walk.h>
+#समावेश <linux/mm_अंतरभूत.h>
 
-static DEFINE_MUTEX(mem_list_mutex);
+अटल DEFINE_MUTEX(mem_list_mutex);
 
-#define MM_IOMMU_TABLE_GROUP_PAGE_DIRTY	0x1
-#define MM_IOMMU_TABLE_GROUP_PAGE_MASK	~(SZ_4K - 1)
+#घोषणा MM_IOMMU_TABLE_GROUP_PAGE_सूचीTY	0x1
+#घोषणा MM_IOMMU_TABLE_GROUP_PAGE_MASK	~(SZ_4K - 1)
 
-struct mm_iommu_table_group_mem_t {
-	struct list_head next;
-	struct rcu_head rcu;
-	unsigned long used;
+काष्ठा mm_iommu_table_group_mem_t अणु
+	काष्ठा list_head next;
+	काष्ठा rcu_head rcu;
+	अचिन्हित दीर्घ used;
 	atomic64_t mapped;
-	unsigned int pageshift;
+	अचिन्हित पूर्णांक pageshअगरt;
 	u64 ua;			/* userspace address */
 	u64 entries;		/* number of entries in hpas/hpages[] */
 	/*
 	 * in mm_iommu_get we temporarily use this to store
-	 * struct page address.
+	 * काष्ठा page address.
 	 *
 	 * We need to convert ua to hpa in real mode. Make it
 	 * simpler by storing physical address.
 	 */
-	union {
-		struct page **hpages;	/* vmalloc'ed */
+	जोड़ अणु
+		काष्ठा page **hpages;	/* vदो_स्मृति'ed */
 		phys_addr_t *hpas;
-	};
-#define MM_IOMMU_TABLE_INVALID_HPA	((uint64_t)-1)
+	पूर्ण;
+#घोषणा MM_IOMMU_TABLE_INVALID_HPA	((uपूर्णांक64_t)-1)
 	u64 dev_hpa;		/* Device memory base address */
-};
+पूर्ण;
 
-bool mm_iommu_preregistered(struct mm_struct *mm)
-{
-	return !list_empty(&mm->context.iommu_group_mem_list);
-}
-EXPORT_SYMBOL_GPL(mm_iommu_preregistered);
+bool mm_iommu_preरेजिस्टरed(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस !list_empty(&mm->context.iommu_group_mem_list);
+पूर्ण
+EXPORT_SYMBOL_GPL(mm_iommu_preरेजिस्टरed);
 
-static long mm_iommu_do_alloc(struct mm_struct *mm, unsigned long ua,
-			      unsigned long entries, unsigned long dev_hpa,
-			      struct mm_iommu_table_group_mem_t **pmem)
-{
-	struct mm_iommu_table_group_mem_t *mem, *mem2;
-	long i, ret, locked_entries = 0, pinned = 0;
-	unsigned int pageshift;
-	unsigned long entry, chunk;
+अटल दीर्घ mm_iommu_करो_alloc(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ua,
+			      अचिन्हित दीर्घ entries, अचिन्हित दीर्घ dev_hpa,
+			      काष्ठा mm_iommu_table_group_mem_t **pmem)
+अणु
+	काष्ठा mm_iommu_table_group_mem_t *mem, *mem2;
+	दीर्घ i, ret, locked_entries = 0, pinned = 0;
+	अचिन्हित पूर्णांक pageshअगरt;
+	अचिन्हित दीर्घ entry, chunk;
 
-	if (dev_hpa == MM_IOMMU_TABLE_INVALID_HPA) {
+	अगर (dev_hpa == MM_IOMMU_TABLE_INVALID_HPA) अणु
 		ret = account_locked_vm(mm, entries, true);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		locked_entries = entries;
-	}
+	पूर्ण
 
-	mem = kzalloc(sizeof(*mem), GFP_KERNEL);
-	if (!mem) {
+	mem = kzalloc(माप(*mem), GFP_KERNEL);
+	अगर (!mem) अणु
 		ret = -ENOMEM;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
-	if (dev_hpa != MM_IOMMU_TABLE_INVALID_HPA) {
-		mem->pageshift = __ffs(dev_hpa | (entries << PAGE_SHIFT));
+	अगर (dev_hpa != MM_IOMMU_TABLE_INVALID_HPA) अणु
+		mem->pageshअगरt = __ffs(dev_hpa | (entries << PAGE_SHIFT));
 		mem->dev_hpa = dev_hpa;
-		goto good_exit;
-	}
+		जाओ good_निकास;
+	पूर्ण
 	mem->dev_hpa = MM_IOMMU_TABLE_INVALID_HPA;
 
 	/*
-	 * For a starting point for a maximum page size calculation
+	 * For a starting poपूर्णांक क्रम a maximum page size calculation
 	 * we use @ua and @entries natural alignment to allow IOMMU pages
 	 * smaller than huge pages but still bigger than PAGE_SIZE.
 	 */
-	mem->pageshift = __ffs(ua | (entries << PAGE_SHIFT));
-	mem->hpas = vzalloc(array_size(entries, sizeof(mem->hpas[0])));
-	if (!mem->hpas) {
-		kfree(mem);
+	mem->pageshअगरt = __ffs(ua | (entries << PAGE_SHIFT));
+	mem->hpas = vzalloc(array_size(entries, माप(mem->hpas[0])));
+	अगर (!mem->hpas) अणु
+		kमुक्त(mem);
 		ret = -ENOMEM;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
-	mmap_read_lock(mm);
+	mmap_पढ़ो_lock(mm);
 	chunk = (1UL << (PAGE_SHIFT + MAX_ORDER - 1)) /
-			sizeof(struct vm_area_struct *);
+			माप(काष्ठा vm_area_काष्ठा *);
 	chunk = min(chunk, entries);
-	for (entry = 0; entry < entries; entry += chunk) {
-		unsigned long n = min(entries - entry, chunk);
+	क्रम (entry = 0; entry < entries; entry += chunk) अणु
+		अचिन्हित दीर्घ n = min(entries - entry, chunk);
 
 		ret = pin_user_pages(ua + (entry << PAGE_SHIFT), n,
 				FOLL_WRITE | FOLL_LONGTERM,
-				mem->hpages + entry, NULL);
-		if (ret == n) {
+				mem->hpages + entry, शून्य);
+		अगर (ret == n) अणु
 			pinned += n;
-			continue;
-		}
-		if (ret > 0)
+			जारी;
+		पूर्ण
+		अगर (ret > 0)
 			pinned += ret;
-		break;
-	}
-	mmap_read_unlock(mm);
-	if (pinned != entries) {
-		if (!ret)
+		अवरोध;
+	पूर्ण
+	mmap_पढ़ो_unlock(mm);
+	अगर (pinned != entries) अणु
+		अगर (!ret)
 			ret = -EFAULT;
-		goto free_exit;
-	}
+		जाओ मुक्त_निकास;
+	पूर्ण
 
-good_exit:
+good_निकास:
 	atomic64_set(&mem->mapped, 1);
 	mem->used = 1;
 	mem->ua = ua;
@@ -129,38 +130,38 @@ good_exit:
 
 	mutex_lock(&mem_list_mutex);
 
-	list_for_each_entry_rcu(mem2, &mm->context.iommu_group_mem_list, next,
-				lockdep_is_held(&mem_list_mutex)) {
+	list_क्रम_each_entry_rcu(mem2, &mm->context.iommu_group_mem_list, next,
+				lockdep_is_held(&mem_list_mutex)) अणु
 		/* Overlap? */
-		if ((mem2->ua < (ua + (entries << PAGE_SHIFT))) &&
+		अगर ((mem2->ua < (ua + (entries << PAGE_SHIFT))) &&
 				(ua < (mem2->ua +
-				       (mem2->entries << PAGE_SHIFT)))) {
+				       (mem2->entries << PAGE_SHIFT)))) अणु
 			ret = -EINVAL;
 			mutex_unlock(&mem_list_mutex);
-			goto free_exit;
-		}
-	}
+			जाओ मुक्त_निकास;
+		पूर्ण
+	पूर्ण
 
-	if (mem->dev_hpa == MM_IOMMU_TABLE_INVALID_HPA) {
+	अगर (mem->dev_hpa == MM_IOMMU_TABLE_INVALID_HPA) अणु
 		/*
-		 * Allow to use larger than 64k IOMMU pages. Only do that
-		 * if we are backed by hugetlb. Skip device memory as it is not
-		 * backed with page structs.
+		 * Allow to use larger than 64k IOMMU pages. Only करो that
+		 * अगर we are backed by hugetlb. Skip device memory as it is not
+		 * backed with page काष्ठाs.
 		 */
-		pageshift = PAGE_SHIFT;
-		for (i = 0; i < entries; ++i) {
-			struct page *page = mem->hpages[i];
+		pageshअगरt = PAGE_SHIFT;
+		क्रम (i = 0; i < entries; ++i) अणु
+			काष्ठा page *page = mem->hpages[i];
 
-			if ((mem->pageshift > PAGE_SHIFT) && PageHuge(page))
-				pageshift = page_shift(compound_head(page));
-			mem->pageshift = min(mem->pageshift, pageshift);
+			अगर ((mem->pageshअगरt > PAGE_SHIFT) && PageHuge(page))
+				pageshअगरt = page_shअगरt(compound_head(page));
+			mem->pageshअगरt = min(mem->pageshअगरt, pageshअगरt);
 			/*
-			 * We don't need struct page reference any more, switch
+			 * We करोn't need काष्ठा page reference any more, चयन
 			 * to physical address.
 			 */
 			mem->hpas[i] = page_to_pfn(page) << PAGE_SHIFT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	list_add_rcu(&mem->next, &mm->context.iommu_group_mem_list);
 
@@ -168,303 +169,303 @@ good_exit:
 
 	*pmem = mem;
 
-	return 0;
+	वापस 0;
 
-free_exit:
-	/* free the references taken */
+मुक्त_निकास:
+	/* मुक्त the references taken */
 	unpin_user_pages(mem->hpages, pinned);
 
-	vfree(mem->hpas);
-	kfree(mem);
+	vमुक्त(mem->hpas);
+	kमुक्त(mem);
 
-unlock_exit:
+unlock_निकास:
 	account_locked_vm(mm, locked_entries, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-long mm_iommu_new(struct mm_struct *mm, unsigned long ua, unsigned long entries,
-		struct mm_iommu_table_group_mem_t **pmem)
-{
-	return mm_iommu_do_alloc(mm, ua, entries, MM_IOMMU_TABLE_INVALID_HPA,
+दीर्घ mm_iommu_new(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ua, अचिन्हित दीर्घ entries,
+		काष्ठा mm_iommu_table_group_mem_t **pmem)
+अणु
+	वापस mm_iommu_करो_alloc(mm, ua, entries, MM_IOMMU_TABLE_INVALID_HPA,
 			pmem);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mm_iommu_new);
 
-long mm_iommu_newdev(struct mm_struct *mm, unsigned long ua,
-		unsigned long entries, unsigned long dev_hpa,
-		struct mm_iommu_table_group_mem_t **pmem)
-{
-	return mm_iommu_do_alloc(mm, ua, entries, dev_hpa, pmem);
-}
+दीर्घ mm_iommu_newdev(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ua,
+		अचिन्हित दीर्घ entries, अचिन्हित दीर्घ dev_hpa,
+		काष्ठा mm_iommu_table_group_mem_t **pmem)
+अणु
+	वापस mm_iommu_करो_alloc(mm, ua, entries, dev_hpa, pmem);
+पूर्ण
 EXPORT_SYMBOL_GPL(mm_iommu_newdev);
 
-static void mm_iommu_unpin(struct mm_iommu_table_group_mem_t *mem)
-{
-	long i;
-	struct page *page = NULL;
+अटल व्योम mm_iommu_unpin(काष्ठा mm_iommu_table_group_mem_t *mem)
+अणु
+	दीर्घ i;
+	काष्ठा page *page = शून्य;
 
-	if (!mem->hpas)
-		return;
+	अगर (!mem->hpas)
+		वापस;
 
-	for (i = 0; i < mem->entries; ++i) {
-		if (!mem->hpas[i])
-			continue;
+	क्रम (i = 0; i < mem->entries; ++i) अणु
+		अगर (!mem->hpas[i])
+			जारी;
 
 		page = pfn_to_page(mem->hpas[i] >> PAGE_SHIFT);
-		if (!page)
-			continue;
+		अगर (!page)
+			जारी;
 
-		if (mem->hpas[i] & MM_IOMMU_TABLE_GROUP_PAGE_DIRTY)
+		अगर (mem->hpas[i] & MM_IOMMU_TABLE_GROUP_PAGE_सूचीTY)
 			SetPageDirty(page);
 
 		unpin_user_page(page);
 
 		mem->hpas[i] = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mm_iommu_do_free(struct mm_iommu_table_group_mem_t *mem)
-{
+अटल व्योम mm_iommu_करो_मुक्त(काष्ठा mm_iommu_table_group_mem_t *mem)
+अणु
 
 	mm_iommu_unpin(mem);
-	vfree(mem->hpas);
-	kfree(mem);
-}
+	vमुक्त(mem->hpas);
+	kमुक्त(mem);
+पूर्ण
 
-static void mm_iommu_free(struct rcu_head *head)
-{
-	struct mm_iommu_table_group_mem_t *mem = container_of(head,
-			struct mm_iommu_table_group_mem_t, rcu);
+अटल व्योम mm_iommu_मुक्त(काष्ठा rcu_head *head)
+अणु
+	काष्ठा mm_iommu_table_group_mem_t *mem = container_of(head,
+			काष्ठा mm_iommu_table_group_mem_t, rcu);
 
-	mm_iommu_do_free(mem);
-}
+	mm_iommu_करो_मुक्त(mem);
+पूर्ण
 
-static void mm_iommu_release(struct mm_iommu_table_group_mem_t *mem)
-{
+अटल व्योम mm_iommu_release(काष्ठा mm_iommu_table_group_mem_t *mem)
+अणु
 	list_del_rcu(&mem->next);
-	call_rcu(&mem->rcu, mm_iommu_free);
-}
+	call_rcu(&mem->rcu, mm_iommu_मुक्त);
+पूर्ण
 
-long mm_iommu_put(struct mm_struct *mm, struct mm_iommu_table_group_mem_t *mem)
-{
-	long ret = 0;
-	unsigned long unlock_entries = 0;
+दीर्घ mm_iommu_put(काष्ठा mm_काष्ठा *mm, काष्ठा mm_iommu_table_group_mem_t *mem)
+अणु
+	दीर्घ ret = 0;
+	अचिन्हित दीर्घ unlock_entries = 0;
 
 	mutex_lock(&mem_list_mutex);
 
-	if (mem->used == 0) {
+	अगर (mem->used == 0) अणु
 		ret = -ENOENT;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
 	--mem->used;
-	/* There are still users, exit */
-	if (mem->used)
-		goto unlock_exit;
+	/* There are still users, निकास */
+	अगर (mem->used)
+		जाओ unlock_निकास;
 
 	/* Are there still mappings? */
-	if (atomic64_cmpxchg(&mem->mapped, 1, 0) != 1) {
+	अगर (atomic64_cmpxchg(&mem->mapped, 1, 0) != 1) अणु
 		++mem->used;
 		ret = -EBUSY;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
-	if (mem->dev_hpa == MM_IOMMU_TABLE_INVALID_HPA)
+	अगर (mem->dev_hpa == MM_IOMMU_TABLE_INVALID_HPA)
 		unlock_entries = mem->entries;
 
 	/* @mapped became 0 so now mappings are disabled, release the region */
 	mm_iommu_release(mem);
 
-unlock_exit:
+unlock_निकास:
 	mutex_unlock(&mem_list_mutex);
 
 	account_locked_vm(mm, unlock_entries, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mm_iommu_put);
 
-struct mm_iommu_table_group_mem_t *mm_iommu_lookup(struct mm_struct *mm,
-		unsigned long ua, unsigned long size)
-{
-	struct mm_iommu_table_group_mem_t *mem, *ret = NULL;
+काष्ठा mm_iommu_table_group_mem_t *mm_iommu_lookup(काष्ठा mm_काष्ठा *mm,
+		अचिन्हित दीर्घ ua, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा mm_iommu_table_group_mem_t *mem, *ret = शून्य;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(mem, &mm->context.iommu_group_mem_list, next) {
-		if ((mem->ua <= ua) &&
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(mem, &mm->context.iommu_group_mem_list, next) अणु
+		अगर ((mem->ua <= ua) &&
 				(ua + size <= mem->ua +
-				 (mem->entries << PAGE_SHIFT))) {
+				 (mem->entries << PAGE_SHIFT))) अणु
 			ret = mem;
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mm_iommu_lookup);
 
-struct mm_iommu_table_group_mem_t *mm_iommu_lookup_rm(struct mm_struct *mm,
-		unsigned long ua, unsigned long size)
-{
-	struct mm_iommu_table_group_mem_t *mem, *ret = NULL;
+काष्ठा mm_iommu_table_group_mem_t *mm_iommu_lookup_rm(काष्ठा mm_काष्ठा *mm,
+		अचिन्हित दीर्घ ua, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा mm_iommu_table_group_mem_t *mem, *ret = शून्य;
 
-	list_for_each_entry_lockless(mem, &mm->context.iommu_group_mem_list,
-			next) {
-		if ((mem->ua <= ua) &&
+	list_क्रम_each_entry_lockless(mem, &mm->context.iommu_group_mem_list,
+			next) अणु
+		अगर ((mem->ua <= ua) &&
 				(ua + size <= mem->ua +
-				 (mem->entries << PAGE_SHIFT))) {
+				 (mem->entries << PAGE_SHIFT))) अणु
 			ret = mem;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct mm_iommu_table_group_mem_t *mm_iommu_get(struct mm_struct *mm,
-		unsigned long ua, unsigned long entries)
-{
-	struct mm_iommu_table_group_mem_t *mem, *ret = NULL;
+काष्ठा mm_iommu_table_group_mem_t *mm_iommu_get(काष्ठा mm_काष्ठा *mm,
+		अचिन्हित दीर्घ ua, अचिन्हित दीर्घ entries)
+अणु
+	काष्ठा mm_iommu_table_group_mem_t *mem, *ret = शून्य;
 
 	mutex_lock(&mem_list_mutex);
 
-	list_for_each_entry_rcu(mem, &mm->context.iommu_group_mem_list, next,
-				lockdep_is_held(&mem_list_mutex)) {
-		if ((mem->ua == ua) && (mem->entries == entries)) {
+	list_क्रम_each_entry_rcu(mem, &mm->context.iommu_group_mem_list, next,
+				lockdep_is_held(&mem_list_mutex)) अणु
+		अगर ((mem->ua == ua) && (mem->entries == entries)) अणु
 			ret = mem;
 			++mem->used;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&mem_list_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mm_iommu_get);
 
-long mm_iommu_ua_to_hpa(struct mm_iommu_table_group_mem_t *mem,
-		unsigned long ua, unsigned int pageshift, unsigned long *hpa)
-{
-	const long entry = (ua - mem->ua) >> PAGE_SHIFT;
+दीर्घ mm_iommu_ua_to_hpa(काष्ठा mm_iommu_table_group_mem_t *mem,
+		अचिन्हित दीर्घ ua, अचिन्हित पूर्णांक pageshअगरt, अचिन्हित दीर्घ *hpa)
+अणु
+	स्थिर दीर्घ entry = (ua - mem->ua) >> PAGE_SHIFT;
 	u64 *va;
 
-	if (entry >= mem->entries)
-		return -EFAULT;
+	अगर (entry >= mem->entries)
+		वापस -EFAULT;
 
-	if (pageshift > mem->pageshift)
-		return -EFAULT;
+	अगर (pageshअगरt > mem->pageshअगरt)
+		वापस -EFAULT;
 
-	if (!mem->hpas) {
+	अगर (!mem->hpas) अणु
 		*hpa = mem->dev_hpa + (ua - mem->ua);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	va = &mem->hpas[entry];
 	*hpa = (*va & MM_IOMMU_TABLE_GROUP_PAGE_MASK) | (ua & ~PAGE_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mm_iommu_ua_to_hpa);
 
-long mm_iommu_ua_to_hpa_rm(struct mm_iommu_table_group_mem_t *mem,
-		unsigned long ua, unsigned int pageshift, unsigned long *hpa)
-{
-	const long entry = (ua - mem->ua) >> PAGE_SHIFT;
-	unsigned long *pa;
+दीर्घ mm_iommu_ua_to_hpa_rm(काष्ठा mm_iommu_table_group_mem_t *mem,
+		अचिन्हित दीर्घ ua, अचिन्हित पूर्णांक pageshअगरt, अचिन्हित दीर्घ *hpa)
+अणु
+	स्थिर दीर्घ entry = (ua - mem->ua) >> PAGE_SHIFT;
+	अचिन्हित दीर्घ *pa;
 
-	if (entry >= mem->entries)
-		return -EFAULT;
+	अगर (entry >= mem->entries)
+		वापस -EFAULT;
 
-	if (pageshift > mem->pageshift)
-		return -EFAULT;
+	अगर (pageshअगरt > mem->pageshअगरt)
+		वापस -EFAULT;
 
-	if (!mem->hpas) {
+	अगर (!mem->hpas) अणु
 		*hpa = mem->dev_hpa + (ua - mem->ua);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	pa = (void *) vmalloc_to_phys(&mem->hpas[entry]);
-	if (!pa)
-		return -EFAULT;
+	pa = (व्योम *) vदो_स्मृति_to_phys(&mem->hpas[entry]);
+	अगर (!pa)
+		वापस -EFAULT;
 
 	*hpa = (*pa & MM_IOMMU_TABLE_GROUP_PAGE_MASK) | (ua & ~PAGE_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-extern void mm_iommu_ua_mark_dirty_rm(struct mm_struct *mm, unsigned long ua)
-{
-	struct mm_iommu_table_group_mem_t *mem;
-	long entry;
-	void *va;
-	unsigned long *pa;
+बाह्य व्योम mm_iommu_ua_mark_dirty_rm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ ua)
+अणु
+	काष्ठा mm_iommu_table_group_mem_t *mem;
+	दीर्घ entry;
+	व्योम *va;
+	अचिन्हित दीर्घ *pa;
 
 	mem = mm_iommu_lookup_rm(mm, ua, PAGE_SIZE);
-	if (!mem)
-		return;
+	अगर (!mem)
+		वापस;
 
-	if (mem->dev_hpa != MM_IOMMU_TABLE_INVALID_HPA)
-		return;
+	अगर (mem->dev_hpa != MM_IOMMU_TABLE_INVALID_HPA)
+		वापस;
 
 	entry = (ua - mem->ua) >> PAGE_SHIFT;
 	va = &mem->hpas[entry];
 
-	pa = (void *) vmalloc_to_phys(va);
-	if (!pa)
-		return;
+	pa = (व्योम *) vदो_स्मृति_to_phys(va);
+	अगर (!pa)
+		वापस;
 
-	*pa |= MM_IOMMU_TABLE_GROUP_PAGE_DIRTY;
-}
+	*pa |= MM_IOMMU_TABLE_GROUP_PAGE_सूचीTY;
+पूर्ण
 
-bool mm_iommu_is_devmem(struct mm_struct *mm, unsigned long hpa,
-		unsigned int pageshift, unsigned long *size)
-{
-	struct mm_iommu_table_group_mem_t *mem;
-	unsigned long end;
+bool mm_iommu_is_devmem(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ hpa,
+		अचिन्हित पूर्णांक pageshअगरt, अचिन्हित दीर्घ *size)
+अणु
+	काष्ठा mm_iommu_table_group_mem_t *mem;
+	अचिन्हित दीर्घ end;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(mem, &mm->context.iommu_group_mem_list, next) {
-		if (mem->dev_hpa == MM_IOMMU_TABLE_INVALID_HPA)
-			continue;
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(mem, &mm->context.iommu_group_mem_list, next) अणु
+		अगर (mem->dev_hpa == MM_IOMMU_TABLE_INVALID_HPA)
+			जारी;
 
 		end = mem->dev_hpa + (mem->entries << PAGE_SHIFT);
-		if ((mem->dev_hpa <= hpa) && (hpa < end)) {
+		अगर ((mem->dev_hpa <= hpa) && (hpa < end)) अणु
 			/*
 			 * Since the IOMMU page size might be bigger than
-			 * PAGE_SIZE, the amount of preregistered memory
-			 * starting from @hpa might be smaller than 1<<pageshift
+			 * PAGE_SIZE, the amount of preरेजिस्टरed memory
+			 * starting from @hpa might be smaller than 1<<pageshअगरt
 			 * and the caller needs to distinguish this situation.
 			 */
-			*size = min(1UL << pageshift, end - hpa);
-			return true;
-		}
-	}
-	rcu_read_unlock();
+			*size = min(1UL << pageshअगरt, end - hpa);
+			वापस true;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(mm_iommu_is_devmem);
 
-long mm_iommu_mapped_inc(struct mm_iommu_table_group_mem_t *mem)
-{
-	if (atomic64_inc_not_zero(&mem->mapped))
-		return 0;
+दीर्घ mm_iommu_mapped_inc(काष्ठा mm_iommu_table_group_mem_t *mem)
+अणु
+	अगर (atomic64_inc_not_zero(&mem->mapped))
+		वापस 0;
 
 	/* Last mm_iommu_put() has been called, no more mappings allowed() */
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 EXPORT_SYMBOL_GPL(mm_iommu_mapped_inc);
 
-void mm_iommu_mapped_dec(struct mm_iommu_table_group_mem_t *mem)
-{
+व्योम mm_iommu_mapped_dec(काष्ठा mm_iommu_table_group_mem_t *mem)
+अणु
 	atomic64_add_unless(&mem->mapped, -1, 1);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mm_iommu_mapped_dec);
 
-void mm_iommu_init(struct mm_struct *mm)
-{
+व्योम mm_iommu_init(काष्ठा mm_काष्ठा *mm)
+अणु
 	INIT_LIST_HEAD_RCU(&mm->context.iommu_group_mem_list);
-}
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2010 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,40 +22,40 @@
  *
  * Authors: Ben Skeggs
  */
-#define NVIF_DEBUG_PRINT_DISABLE
-#include "nouveau_drv.h"
-#include "nouveau_dma.h"
-#include "nouveau_fbcon.h"
-#include "nouveau_vmm.h"
+#घोषणा NVIF_DEBUG_PRINT_DISABLE
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_dma.h"
+#समावेश "nouveau_fbcon.h"
+#समावेश "nouveau_vmm.h"
 
-#include <nvif/push906f.h>
+#समावेश <nvअगर/push906f.h>
 
-#include <nvhw/class/cl902d.h>
+#समावेश <nvhw/class/cl902d.h>
 
-int
-nvc0_fbcon_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
-{
-	struct nouveau_fbdev *nfbdev = info->par;
-	struct nouveau_drm *drm = nouveau_drm(nfbdev->helper.dev);
-	struct nouveau_channel *chan = drm->channel;
-	struct nvif_push *push = chan->chan.push;
+पूर्णांक
+nvc0_fbcon_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	काष्ठा nouveau_fbdev *nfbdev = info->par;
+	काष्ठा nouveau_drm *drm = nouveau_drm(nfbdev->helper.dev);
+	काष्ठा nouveau_channel *chan = drm->channel;
+	काष्ठा nvअगर_push *push = chan->chan.push;
 	u32 colour;
-	int ret;
+	पूर्णांक ret;
 
-	if (info->fix.visual == FB_VISUAL_TRUECOLOR ||
-	    info->fix.visual == FB_VISUAL_DIRECTCOLOR)
-		colour = ((uint32_t *)info->pseudo_palette)[rect->color];
-	else
+	अगर (info->fix.visual == FB_VISUAL_TRUECOLOR ||
+	    info->fix.visual == FB_VISUAL_सूचीECTCOLOR)
+		colour = ((uपूर्णांक32_t *)info->pseuकरो_palette)[rect->color];
+	अन्यथा
 		colour = rect->color;
 
 	ret = PUSH_WAIT(push, rect->rop == ROP_COPY ? 7 : 9);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (rect->rop != ROP_COPY) {
+	अगर (rect->rop != ROP_COPY) अणु
 		PUSH_IMMD(push, NV902D, SET_OPERATION,
 			  NVDEF(NV902D, SET_OPERATION, V, ROP_AND));
-	}
+	पूर्ण
 
 	PUSH_MTHD(push, NV902D, SET_RENDER_SOLID_PRIM_COLOR, colour);
 
@@ -63,27 +64,27 @@ nvc0_fbcon_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 				RENDER_SOLID_PRIM_POINT_SET_X(1), rect->dx + rect->width,
 				RENDER_SOLID_PRIM_POINT_Y(1), rect->dy + rect->height);
 
-	if (rect->rop != ROP_COPY) {
+	अगर (rect->rop != ROP_COPY) अणु
 		PUSH_IMMD(push, NV902D, SET_OPERATION,
 			  NVDEF(NV902D, SET_OPERATION, V, SRCCOPY));
-	}
+	पूर्ण
 
 	PUSH_KICK(push);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvc0_fbcon_copyarea(struct fb_info *info, const struct fb_copyarea *region)
-{
-	struct nouveau_fbdev *nfbdev = info->par;
-	struct nouveau_drm *drm = nouveau_drm(nfbdev->helper.dev);
-	struct nouveau_channel *chan = drm->channel;
-	struct nvif_push *push = chan->chan.push;
-	int ret;
+पूर्णांक
+nvc0_fbcon_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *region)
+अणु
+	काष्ठा nouveau_fbdev *nfbdev = info->par;
+	काष्ठा nouveau_drm *drm = nouveau_drm(nfbdev->helper.dev);
+	काष्ठा nouveau_channel *chan = drm->channel;
+	काष्ठा nvअगर_push *push = chan->chan.push;
+	पूर्णांक ret;
 
 	ret = PUSH_WAIT(push, 11);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	PUSH_IMMD(push, NV902D, WAIT_FOR_IDLE, 0);
 
@@ -97,36 +98,36 @@ nvc0_fbcon_copyarea(struct fb_info *info, const struct fb_copyarea *region)
 				SET_PIXELS_FROM_MEMORY_SRC_Y0_FRAC, 0,
 				PIXELS_FROM_MEMORY_SRC_Y0_INT, region->sy);
 	PUSH_KICK(push);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvc0_fbcon_imageblit(struct fb_info *info, const struct fb_image *image)
-{
-	struct nouveau_fbdev *nfbdev = info->par;
-	struct nouveau_drm *drm = nouveau_drm(nfbdev->helper.dev);
-	struct nouveau_channel *chan = drm->channel;
-	struct nvif_push *push = chan->chan.push;
-	uint32_t dwords, *data = (uint32_t *)image->data;
-	uint32_t mask = ~(~0 >> (32 - info->var.bits_per_pixel));
-	uint32_t *palette = info->pseudo_palette, bg, fg;
-	int ret;
+पूर्णांक
+nvc0_fbcon_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
+अणु
+	काष्ठा nouveau_fbdev *nfbdev = info->par;
+	काष्ठा nouveau_drm *drm = nouveau_drm(nfbdev->helper.dev);
+	काष्ठा nouveau_channel *chan = drm->channel;
+	काष्ठा nvअगर_push *push = chan->chan.push;
+	uपूर्णांक32_t dwords, *data = (uपूर्णांक32_t *)image->data;
+	uपूर्णांक32_t mask = ~(~0 >> (32 - info->var.bits_per_pixel));
+	uपूर्णांक32_t *palette = info->pseuकरो_palette, bg, fg;
+	पूर्णांक ret;
 
-	if (image->depth != 1)
-		return -ENODEV;
+	अगर (image->depth != 1)
+		वापस -ENODEV;
 
-	if (info->fix.visual == FB_VISUAL_TRUECOLOR ||
-	    info->fix.visual == FB_VISUAL_DIRECTCOLOR) {
+	अगर (info->fix.visual == FB_VISUAL_TRUECOLOR ||
+	    info->fix.visual == FB_VISUAL_सूचीECTCOLOR) अणु
 		bg = palette[image->bg_color] | mask;
 		fg = palette[image->fg_color] | mask;
-	} else {
+	पूर्ण अन्यथा अणु
 		bg = image->bg_color;
 		fg = image->fg_color;
-	}
+	पूर्ण
 
 	ret = PUSH_WAIT(push, 11);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	PUSH_MTHD(push, NV902D, SET_PIXELS_FROM_CPU_COLOR0, bg,
 				SET_PIXELS_FROM_CPU_COLOR1, fg);
@@ -140,83 +141,83 @@ nvc0_fbcon_imageblit(struct fb_info *info, const struct fb_image *image)
 				SET_PIXELS_FROM_CPU_DST_Y0_INT, image->dy);
 
 	dwords = ALIGN(ALIGN(image->width, 8) * image->height, 32) >> 5;
-	while (dwords) {
-		int count = dwords > 2047 ? 2047 : dwords;
+	जबतक (dwords) अणु
+		पूर्णांक count = dwords > 2047 ? 2047 : dwords;
 
 		ret = PUSH_WAIT(push, count + 1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		dwords -= count;
 
 		PUSH_NINC(push, NV902D, PIXELS_FROM_CPU_DATA, data, count);
 		data += count;
-	}
+	पूर्ण
 
 	PUSH_KICK(push);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvc0_fbcon_accel_init(struct fb_info *info)
-{
-	struct nouveau_fbdev *nfbdev = info->par;
-	struct drm_device *dev = nfbdev->helper.dev;
-	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nouveau_channel *chan = drm->channel;
-	struct nvif_push *push = chan->chan.push;
-	int ret, format;
+पूर्णांक
+nvc0_fbcon_accel_init(काष्ठा fb_info *info)
+अणु
+	काष्ठा nouveau_fbdev *nfbdev = info->par;
+	काष्ठा drm_device *dev = nfbdev->helper.dev;
+	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+	काष्ठा nouveau_channel *chan = drm->channel;
+	काष्ठा nvअगर_push *push = chan->chan.push;
+	पूर्णांक ret, क्रमmat;
 
-	ret = nvif_object_ctor(&chan->user, "fbconTwoD", 0x902d, 0x902d,
-			       NULL, 0, &nfbdev->twod);
-	if (ret)
-		return ret;
+	ret = nvअगर_object_ctor(&chan->user, "fbconTwoD", 0x902d, 0x902d,
+			       शून्य, 0, &nfbdev->twod);
+	अगर (ret)
+		वापस ret;
 
-	switch (info->var.bits_per_pixel) {
-	case 8:
-		format = NV902D_SET_DST_FORMAT_V_Y8;
-		break;
-	case 15:
-		format = NV902D_SET_DST_FORMAT_V_X1R5G5B5;
-		break;
-	case 16:
-		format = NV902D_SET_DST_FORMAT_V_R5G6B5;
-		break;
-	case 32:
-		switch (info->var.transp.length) {
-		case 0: /* depth 24 */
-		case 8: /* depth 32, just use 24.. */
-			format = NV902D_SET_DST_FORMAT_V_X8R8G8B8;
-			break;
-		case 2: /* depth 30 */
-			format = NV902D_SET_DST_FORMAT_V_A2B10G10R10;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (info->var.bits_per_pixel) अणु
+	हाल 8:
+		क्रमmat = NV902D_SET_DST_FORMAT_V_Y8;
+		अवरोध;
+	हाल 15:
+		क्रमmat = NV902D_SET_DST_FORMAT_V_X1R5G5B5;
+		अवरोध;
+	हाल 16:
+		क्रमmat = NV902D_SET_DST_FORMAT_V_R5G6B5;
+		अवरोध;
+	हाल 32:
+		चयन (info->var.transp.length) अणु
+		हाल 0: /* depth 24 */
+		हाल 8: /* depth 32, just use 24.. */
+			क्रमmat = NV902D_SET_DST_FORMAT_V_X8R8G8B8;
+			अवरोध;
+		हाल 2: /* depth 30 */
+			क्रमmat = NV902D_SET_DST_FORMAT_V_A2B10G10R10;
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = PUSH_WAIT(push, 52);
-	if (ret) {
+	अगर (ret) अणु
 		WARN_ON(1);
 		nouveau_fbcon_gpu_lockup(info);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	PUSH_MTHD(push, NV902D, SET_OBJECT, nfbdev->twod.handle);
 
 	PUSH_MTHD(push, NV902D, SET_DST_FORMAT,
-		  NVVAL(NV902D, SET_DST_FORMAT, V, format),
+		  NVVAL(NV902D, SET_DST_FORMAT, V, क्रमmat),
 
 				SET_DST_MEMORY_LAYOUT,
 		  NVDEF(NV902D, SET_DST_MEMORY_LAYOUT, V, PITCH));
 
 	PUSH_MTHD(push, NV902D, SET_DST_PITCH, info->fix.line_length,
-				SET_DST_WIDTH, info->var.xres_virtual,
-				SET_DST_HEIGHT, info->var.yres_virtual,
+				SET_DST_WIDTH, info->var.xres_भव,
+				SET_DST_HEIGHT, info->var.yres_भव,
 
 				SET_DST_OFFSET_UPPER,
 		  NVVAL(NV902D, SET_DST_OFFSET_UPPER, V, upper_32_bits(nfbdev->vma->addr)),
@@ -225,14 +226,14 @@ nvc0_fbcon_accel_init(struct fb_info *info)
 		  NVVAL(NV902D, SET_DST_OFFSET_LOWER, V, lower_32_bits(nfbdev->vma->addr)));
 
 	PUSH_MTHD(push, NV902D, SET_SRC_FORMAT,
-		  NVVAL(NV902D, SET_SRC_FORMAT, V, format),
+		  NVVAL(NV902D, SET_SRC_FORMAT, V, क्रमmat),
 
 				SET_SRC_MEMORY_LAYOUT,
 		  NVDEF(NV902D, SET_SRC_MEMORY_LAYOUT, V, PITCH));
 
 	PUSH_MTHD(push, NV902D, SET_SRC_PITCH, info->fix.line_length,
-				SET_SRC_WIDTH, info->var.xres_virtual,
-				SET_SRC_HEIGHT, info->var.yres_virtual,
+				SET_SRC_WIDTH, info->var.xres_भव,
+				SET_SRC_HEIGHT, info->var.yres_भव,
 
 				SET_SRC_OFFSET_UPPER,
 		  NVVAL(NV902D, SET_SRC_OFFSET_UPPER, V, upper_32_bits(nfbdev->vma->addr)),
@@ -259,13 +260,13 @@ nvc0_fbcon_accel_init(struct fb_info *info)
 		  NVDEF(NV902D, RENDER_SOLID_PRIM_MODE, V, RECTS),
 
 				SET_RENDER_SOLID_PRIM_COLOR_FORMAT,
-		  NVVAL(NV902D, SET_RENDER_SOLID_PRIM_COLOR_FORMAT, V, format));
+		  NVVAL(NV902D, SET_RENDER_SOLID_PRIM_COLOR_FORMAT, V, क्रमmat));
 
 	PUSH_MTHD(push, NV902D, SET_PIXELS_FROM_CPU_DATA_TYPE,
 		  NVDEF(NV902D, SET_PIXELS_FROM_CPU_DATA_TYPE, V, INDEX),
 
 				SET_PIXELS_FROM_CPU_COLOR_FORMAT,
-		  NVVAL(NV902D, SET_PIXELS_FROM_CPU_COLOR_FORMAT, V, format),
+		  NVVAL(NV902D, SET_PIXELS_FROM_CPU_COLOR_FORMAT, V, क्रमmat),
 
 				SET_PIXELS_FROM_CPU_INDEX_FORMAT,
 		  NVDEF(NV902D, SET_PIXELS_FROM_CPU_INDEX_FORMAT, V, I1),
@@ -292,6 +293,6 @@ nvc0_fbcon_accel_init(struct fb_info *info)
 				SET_PIXELS_FROM_MEMORY_DV_DY_FRAC, 0,
 				SET_PIXELS_FROM_MEMORY_DV_DY_INT, 1);
 	PUSH_KICK(push);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

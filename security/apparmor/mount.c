@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AppArmor security module
  *
@@ -8,175 +9,175 @@
  * Copyright 2009-2017 Canonical Ltd.
  */
 
-#include <linux/fs.h>
-#include <linux/mount.h>
-#include <linux/namei.h>
-#include <uapi/linux/mount.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/namei.h>
+#समावेश <uapi/linux/mount.h>
 
-#include "include/apparmor.h"
-#include "include/audit.h"
-#include "include/cred.h"
-#include "include/domain.h"
-#include "include/file.h"
-#include "include/match.h"
-#include "include/mount.h"
-#include "include/path.h"
-#include "include/policy.h"
+#समावेश "include/apparmor.h"
+#समावेश "include/audit.h"
+#समावेश "include/cred.h"
+#समावेश "include/domain.h"
+#समावेश "include/file.h"
+#समावेश "include/match.h"
+#समावेश "include/mount.h"
+#समावेश "include/path.h"
+#समावेश "include/policy.h"
 
 
-static void audit_mnt_flags(struct audit_buffer *ab, unsigned long flags)
-{
-	if (flags & MS_RDONLY)
-		audit_log_format(ab, "ro");
-	else
-		audit_log_format(ab, "rw");
-	if (flags & MS_NOSUID)
-		audit_log_format(ab, ", nosuid");
-	if (flags & MS_NODEV)
-		audit_log_format(ab, ", nodev");
-	if (flags & MS_NOEXEC)
-		audit_log_format(ab, ", noexec");
-	if (flags & MS_SYNCHRONOUS)
-		audit_log_format(ab, ", sync");
-	if (flags & MS_REMOUNT)
-		audit_log_format(ab, ", remount");
-	if (flags & MS_MANDLOCK)
-		audit_log_format(ab, ", mand");
-	if (flags & MS_DIRSYNC)
-		audit_log_format(ab, ", dirsync");
-	if (flags & MS_NOATIME)
-		audit_log_format(ab, ", noatime");
-	if (flags & MS_NODIRATIME)
-		audit_log_format(ab, ", nodiratime");
-	if (flags & MS_BIND)
-		audit_log_format(ab, flags & MS_REC ? ", rbind" : ", bind");
-	if (flags & MS_MOVE)
-		audit_log_format(ab, ", move");
-	if (flags & MS_SILENT)
-		audit_log_format(ab, ", silent");
-	if (flags & MS_POSIXACL)
-		audit_log_format(ab, ", acl");
-	if (flags & MS_UNBINDABLE)
-		audit_log_format(ab, flags & MS_REC ? ", runbindable" :
+अटल व्योम audit_mnt_flags(काष्ठा audit_buffer *ab, अचिन्हित दीर्घ flags)
+अणु
+	अगर (flags & MS_RDONLY)
+		audit_log_क्रमmat(ab, "ro");
+	अन्यथा
+		audit_log_क्रमmat(ab, "rw");
+	अगर (flags & MS_NOSUID)
+		audit_log_क्रमmat(ab, ", nosuid");
+	अगर (flags & MS_NODEV)
+		audit_log_क्रमmat(ab, ", nodev");
+	अगर (flags & MS_NOEXEC)
+		audit_log_क्रमmat(ab, ", noexec");
+	अगर (flags & MS_SYNCHRONOUS)
+		audit_log_क्रमmat(ab, ", sync");
+	अगर (flags & MS_REMOUNT)
+		audit_log_क्रमmat(ab, ", remount");
+	अगर (flags & MS_MANDLOCK)
+		audit_log_क्रमmat(ab, ", mand");
+	अगर (flags & MS_सूचीSYNC)
+		audit_log_क्रमmat(ab, ", dirsync");
+	अगर (flags & MS_NOATIME)
+		audit_log_क्रमmat(ab, ", noatime");
+	अगर (flags & MS_NOसूचीATIME)
+		audit_log_क्रमmat(ab, ", nodiratime");
+	अगर (flags & MS_BIND)
+		audit_log_क्रमmat(ab, flags & MS_REC ? ", rbind" : ", bind");
+	अगर (flags & MS_MOVE)
+		audit_log_क्रमmat(ab, ", move");
+	अगर (flags & MS_SILENT)
+		audit_log_क्रमmat(ab, ", silent");
+	अगर (flags & MS_POSIXACL)
+		audit_log_क्रमmat(ab, ", acl");
+	अगर (flags & MS_UNBINDABLE)
+		audit_log_क्रमmat(ab, flags & MS_REC ? ", runbindable" :
 				 ", unbindable");
-	if (flags & MS_PRIVATE)
-		audit_log_format(ab, flags & MS_REC ? ", rprivate" :
+	अगर (flags & MS_PRIVATE)
+		audit_log_क्रमmat(ab, flags & MS_REC ? ", rprivate" :
 				 ", private");
-	if (flags & MS_SLAVE)
-		audit_log_format(ab, flags & MS_REC ? ", rslave" :
+	अगर (flags & MS_SLAVE)
+		audit_log_क्रमmat(ab, flags & MS_REC ? ", rslave" :
 				 ", slave");
-	if (flags & MS_SHARED)
-		audit_log_format(ab, flags & MS_REC ? ", rshared" :
+	अगर (flags & MS_SHARED)
+		audit_log_क्रमmat(ab, flags & MS_REC ? ", rshared" :
 				 ", shared");
-	if (flags & MS_RELATIME)
-		audit_log_format(ab, ", relatime");
-	if (flags & MS_I_VERSION)
-		audit_log_format(ab, ", iversion");
-	if (flags & MS_STRICTATIME)
-		audit_log_format(ab, ", strictatime");
-	if (flags & MS_NOUSER)
-		audit_log_format(ab, ", nouser");
-}
+	अगर (flags & MS_RELATIME)
+		audit_log_क्रमmat(ab, ", relatime");
+	अगर (flags & MS_I_VERSION)
+		audit_log_क्रमmat(ab, ", iversion");
+	अगर (flags & MS_STRICTATIME)
+		audit_log_क्रमmat(ab, ", strictatime");
+	अगर (flags & MS_NOUSER)
+		audit_log_क्रमmat(ab, ", nouser");
+पूर्ण
 
 /**
- * audit_cb - call back for mount specific audit fields
- * @ab: audit_buffer  (NOT NULL)
- * @va: audit struct to audit values of  (NOT NULL)
+ * audit_cb - call back क्रम mount specअगरic audit fields
+ * @ab: audit_buffer  (NOT शून्य)
+ * @va: audit काष्ठा to audit values of  (NOT शून्य)
  */
-static void audit_cb(struct audit_buffer *ab, void *va)
-{
-	struct common_audit_data *sa = va;
+अटल व्योम audit_cb(काष्ठा audit_buffer *ab, व्योम *va)
+अणु
+	काष्ठा common_audit_data *sa = va;
 
-	if (aad(sa)->mnt.type) {
-		audit_log_format(ab, " fstype=");
+	अगर (aad(sa)->mnt.type) अणु
+		audit_log_क्रमmat(ab, " fstype=");
 		audit_log_untrustedstring(ab, aad(sa)->mnt.type);
-	}
-	if (aad(sa)->mnt.src_name) {
-		audit_log_format(ab, " srcname=");
+	पूर्ण
+	अगर (aad(sa)->mnt.src_name) अणु
+		audit_log_क्रमmat(ab, " srcname=");
 		audit_log_untrustedstring(ab, aad(sa)->mnt.src_name);
-	}
-	if (aad(sa)->mnt.trans) {
-		audit_log_format(ab, " trans=");
+	पूर्ण
+	अगर (aad(sa)->mnt.trans) अणु
+		audit_log_क्रमmat(ab, " trans=");
 		audit_log_untrustedstring(ab, aad(sa)->mnt.trans);
-	}
-	if (aad(sa)->mnt.flags) {
-		audit_log_format(ab, " flags=\"");
+	पूर्ण
+	अगर (aad(sa)->mnt.flags) अणु
+		audit_log_क्रमmat(ab, " flags=\"");
 		audit_mnt_flags(ab, aad(sa)->mnt.flags);
-		audit_log_format(ab, "\"");
-	}
-	if (aad(sa)->mnt.data) {
-		audit_log_format(ab, " options=");
+		audit_log_क्रमmat(ab, "\"");
+	पूर्ण
+	अगर (aad(sa)->mnt.data) अणु
+		audit_log_क्रमmat(ab, " options=");
 		audit_log_untrustedstring(ab, aad(sa)->mnt.data);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * audit_mount - handle the auditing of mount operations
- * @profile: the profile being enforced  (NOT NULL)
- * @op: operation being mediated (NOT NULL)
- * @name: name of object being mediated (MAYBE NULL)
- * @src_name: src_name of object being mediated (MAYBE_NULL)
- * @type: type of filesystem (MAYBE_NULL)
- * @trans: name of trans (MAYBE NULL)
- * @flags: filesystem independent mount flags
- * @data: filesystem mount flags
+ * @profile: the profile being enक्रमced  (NOT शून्य)
+ * @op: operation being mediated (NOT शून्य)
+ * @name: name of object being mediated (MAYBE शून्य)
+ * @src_name: src_name of object being mediated (MAYBE_शून्य)
+ * @type: type of fileप्रणाली (MAYBE_शून्य)
+ * @trans: name of trans (MAYBE शून्य)
+ * @flags: fileप्रणाली independent mount flags
+ * @data: fileप्रणाली mount flags
  * @request: permissions requested
- * @perms: the permissions computed for the request (NOT NULL)
- * @info: extra information message (MAYBE NULL)
- * @error: 0 if operation allowed else failure error code
+ * @perms: the permissions computed क्रम the request (NOT शून्य)
+ * @info: extra inक्रमmation message (MAYBE शून्य)
+ * @error: 0 अगर operation allowed अन्यथा failure error code
  *
  * Returns: %0 or error on failure
  */
-static int audit_mount(struct aa_profile *profile, const char *op,
-		       const char *name, const char *src_name,
-		       const char *type, const char *trans,
-		       unsigned long flags, const void *data, u32 request,
-		       struct aa_perms *perms, const char *info, int error)
-{
-	int audit_type = AUDIT_APPARMOR_AUTO;
+अटल पूर्णांक audit_mount(काष्ठा aa_profile *profile, स्थिर अक्षर *op,
+		       स्थिर अक्षर *name, स्थिर अक्षर *src_name,
+		       स्थिर अक्षर *type, स्थिर अक्षर *trans,
+		       अचिन्हित दीर्घ flags, स्थिर व्योम *data, u32 request,
+		       काष्ठा aa_perms *perms, स्थिर अक्षर *info, पूर्णांक error)
+अणु
+	पूर्णांक audit_type = AUDIT_APPARMOR_AUTO;
 	DEFINE_AUDIT_DATA(sa, LSM_AUDIT_DATA_NONE, op);
 
-	if (likely(!error)) {
+	अगर (likely(!error)) अणु
 		u32 mask = perms->audit;
 
-		if (unlikely(AUDIT_MODE(profile) == AUDIT_ALL))
+		अगर (unlikely(AUDIT_MODE(profile) == AUDIT_ALL))
 			mask = 0xffff;
 
-		/* mask off perms that are not being force audited */
+		/* mask off perms that are not being क्रमce audited */
 		request &= mask;
 
-		if (likely(!request))
-			return 0;
+		अगर (likely(!request))
+			वापस 0;
 		audit_type = AUDIT_APPARMOR_AUDIT;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* only report permissions that were denied */
 		request = request & ~perms->allow;
 
-		if (request & perms->kill)
+		अगर (request & perms->समाप्त)
 			audit_type = AUDIT_APPARMOR_KILL;
 
-		/* quiet known rejects, assumes quiet and kill do not overlap */
-		if ((request & perms->quiet) &&
+		/* quiet known rejects, assumes quiet and समाप्त करो not overlap */
+		अगर ((request & perms->quiet) &&
 		    AUDIT_MODE(profile) != AUDIT_NOQUIET &&
 		    AUDIT_MODE(profile) != AUDIT_ALL)
 			request &= ~perms->quiet;
 
-		if (!request)
-			return error;
-	}
+		अगर (!request)
+			वापस error;
+	पूर्ण
 
 	aad(&sa)->name = name;
 	aad(&sa)->mnt.src_name = src_name;
 	aad(&sa)->mnt.type = type;
 	aad(&sa)->mnt.trans = trans;
 	aad(&sa)->mnt.flags = flags;
-	if (data && (perms->audit & AA_AUDIT_DATA))
+	अगर (data && (perms->audit & AA_AUDIT_DATA))
 		aad(&sa)->mnt.data = data;
 	aad(&sa)->info = info;
 	aad(&sa)->error = error;
 
-	return aa_audit(audit_type, profile, &sa, audit_cb);
-}
+	वापस aa_audit(audit_type, profile, &sa, audit_cb);
+पूर्ण
 
 /**
  * match_mnt_flags - Do an ordered match on mount flags
@@ -184,224 +185,224 @@ static int audit_mount(struct aa_profile *profile, const char *op,
  * @state: state to start in
  * @flags: mount flags to match against
  *
- * Mount flags are encoded as an ordered match. This is done instead of
- * checking against a simple bitmask, to allow for logical operations
+ * Mount flags are encoded as an ordered match. This is करोne instead of
+ * checking against a simple biपंचांगask, to allow क्रम logical operations
  * on the flags.
  *
  * Returns: next state after flags match
  */
-static unsigned int match_mnt_flags(struct aa_dfa *dfa, unsigned int state,
-				    unsigned long flags)
-{
-	unsigned int i;
+अटल अचिन्हित पूर्णांक match_mnt_flags(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक state,
+				    अचिन्हित दीर्घ flags)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i <= 31 ; ++i) {
-		if ((1 << i) & flags)
+	क्रम (i = 0; i <= 31 ; ++i) अणु
+		अगर ((1 << i) & flags)
 			state = aa_dfa_next(dfa, state, i + 1);
-	}
+	पूर्ण
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
 /**
  * compute_mnt_perms - compute mount permission associated with @state
- * @dfa: dfa to match against (NOT NULL)
+ * @dfa: dfa to match against (NOT शून्य)
  * @state: state match finished in
  *
  * Returns: mount permissions
  */
-static struct aa_perms compute_mnt_perms(struct aa_dfa *dfa,
-					   unsigned int state)
-{
-	struct aa_perms perms = {
+अटल काष्ठा aa_perms compute_mnt_perms(काष्ठा aa_dfa *dfa,
+					   अचिन्हित पूर्णांक state)
+अणु
+	काष्ठा aa_perms perms = अणु
 		.allow = dfa_user_allow(dfa, state),
 		.audit = dfa_user_audit(dfa, state),
 		.quiet = dfa_user_quiet(dfa, state),
 		.xindex = dfa_user_xindex(dfa, state),
-	};
+	पूर्ण;
 
-	return perms;
-}
+	वापस perms;
+पूर्ण
 
-static const char * const mnt_info_table[] = {
+अटल स्थिर अक्षर * स्थिर mnt_info_table[] = अणु
 	"match succeeded",
 	"failed mntpnt match",
 	"failed srcname match",
 	"failed type match",
 	"failed flags match",
 	"failed data match"
-};
+पूर्ण;
 
 /*
- * Returns 0 on success else element that match failed in, this is the
- * index into the mnt_info_table above
+ * Returns 0 on success अन्यथा element that match failed in, this is the
+ * index पूर्णांकo the mnt_info_table above
  */
-static int do_match_mnt(struct aa_dfa *dfa, unsigned int start,
-			const char *mntpnt, const char *devname,
-			const char *type, unsigned long flags,
-			void *data, bool binary, struct aa_perms *perms)
-{
-	unsigned int state;
+अटल पूर्णांक करो_match_mnt(काष्ठा aa_dfa *dfa, अचिन्हित पूर्णांक start,
+			स्थिर अक्षर *mntpnt, स्थिर अक्षर *devname,
+			स्थिर अक्षर *type, अचिन्हित दीर्घ flags,
+			व्योम *data, bool binary, काष्ठा aa_perms *perms)
+अणु
+	अचिन्हित पूर्णांक state;
 
 	AA_BUG(!dfa);
 	AA_BUG(!perms);
 
 	state = aa_dfa_match(dfa, start, mntpnt);
 	state = aa_dfa_null_transition(dfa, state);
-	if (!state)
-		return 1;
+	अगर (!state)
+		वापस 1;
 
-	if (devname)
+	अगर (devname)
 		state = aa_dfa_match(dfa, state, devname);
 	state = aa_dfa_null_transition(dfa, state);
-	if (!state)
-		return 2;
+	अगर (!state)
+		वापस 2;
 
-	if (type)
+	अगर (type)
 		state = aa_dfa_match(dfa, state, type);
 	state = aa_dfa_null_transition(dfa, state);
-	if (!state)
-		return 3;
+	अगर (!state)
+		वापस 3;
 
 	state = match_mnt_flags(dfa, state, flags);
-	if (!state)
-		return 4;
+	अगर (!state)
+		वापस 4;
 	*perms = compute_mnt_perms(dfa, state);
-	if (perms->allow & AA_MAY_MOUNT)
-		return 0;
+	अगर (perms->allow & AA_MAY_MOUNT)
+		वापस 0;
 
-	/* only match data if not binary and the DFA flags data is expected */
-	if (data && !binary && (perms->allow & AA_MNT_CONT_MATCH)) {
+	/* only match data अगर not binary and the DFA flags data is expected */
+	अगर (data && !binary && (perms->allow & AA_MNT_CONT_MATCH)) अणु
 		state = aa_dfa_null_transition(dfa, state);
-		if (!state)
-			return 4;
+		अगर (!state)
+			वापस 4;
 
 		state = aa_dfa_match(dfa, state, data);
-		if (!state)
-			return 5;
+		अगर (!state)
+			वापस 5;
 		*perms = compute_mnt_perms(dfa, state);
-		if (perms->allow & AA_MAY_MOUNT)
-			return 0;
-	}
+		अगर (perms->allow & AA_MAY_MOUNT)
+			वापस 0;
+	पूर्ण
 
 	/* failed at end of flags match */
-	return 4;
-}
+	वापस 4;
+पूर्ण
 
 
-static int path_flags(struct aa_profile *profile, const struct path *path)
-{
+अटल पूर्णांक path_flags(काष्ठा aa_profile *profile, स्थिर काष्ठा path *path)
+अणु
 	AA_BUG(!profile);
 	AA_BUG(!path);
 
-	return profile->path_flags |
-		(S_ISDIR(path->dentry->d_inode->i_mode) ? PATH_IS_DIR : 0);
-}
+	वापस profile->path_flags |
+		(S_ISसूची(path->dentry->d_inode->i_mode) ? PATH_IS_सूची : 0);
+पूर्ण
 
 /**
- * match_mnt_path_str - handle path matching for mount
+ * match_mnt_path_str - handle path matching क्रम mount
  * @profile: the confining profile
- * @mntpath: for the mntpnt (NOT NULL)
+ * @mntpath: क्रम the mntpnt (NOT शून्य)
  * @buffer: buffer to be used to lookup mntpath
- * @devnme: string for the devname/src_name (MAY BE NULL OR ERRPTR)
- * @type: string for the dev type (MAYBE NULL)
+ * @devnme: string क्रम the devname/src_name (MAY BE शून्य OR ERRPTR)
+ * @type: string क्रम the dev type (MAYBE शून्य)
  * @flags: mount flags to match
- * @data: fs mount data (MAYBE NULL)
+ * @data: fs mount data (MAYBE शून्य)
  * @binary: whether @data is binary
- * @devinfo: error str if (IS_ERR(@devname))
+ * @devinfo: error str अगर (IS_ERR(@devname))
  *
- * Returns: 0 on success else error
+ * Returns: 0 on success अन्यथा error
  */
-static int match_mnt_path_str(struct aa_profile *profile,
-			      const struct path *mntpath, char *buffer,
-			      const char *devname, const char *type,
-			      unsigned long flags, void *data, bool binary,
-			      const char *devinfo)
-{
-	struct aa_perms perms = { };
-	const char *mntpnt = NULL, *info = NULL;
-	int pos, error;
+अटल पूर्णांक match_mnt_path_str(काष्ठा aa_profile *profile,
+			      स्थिर काष्ठा path *mntpath, अक्षर *buffer,
+			      स्थिर अक्षर *devname, स्थिर अक्षर *type,
+			      अचिन्हित दीर्घ flags, व्योम *data, bool binary,
+			      स्थिर अक्षर *devinfo)
+अणु
+	काष्ठा aa_perms perms = अणु पूर्ण;
+	स्थिर अक्षर *mntpnt = शून्य, *info = शून्य;
+	पूर्णांक pos, error;
 
 	AA_BUG(!profile);
 	AA_BUG(!mntpath);
 	AA_BUG(!buffer);
 
-	if (!PROFILE_MEDIATES(profile, AA_CLASS_MOUNT))
-		return 0;
+	अगर (!PROखाता_MEDIATES(profile, AA_CLASS_MOUNT))
+		वापस 0;
 
 	error = aa_path_name(mntpath, path_flags(profile, mntpath), buffer,
 			     &mntpnt, &info, profile->disconnected);
-	if (error)
-		goto audit;
-	if (IS_ERR(devname)) {
+	अगर (error)
+		जाओ audit;
+	अगर (IS_ERR(devname)) अणु
 		error = PTR_ERR(devname);
-		devname = NULL;
+		devname = शून्य;
 		info = devinfo;
-		goto audit;
-	}
+		जाओ audit;
+	पूर्ण
 
 	error = -EACCES;
-	pos = do_match_mnt(profile->policy.dfa,
+	pos = करो_match_mnt(profile->policy.dfa,
 			   profile->policy.start[AA_CLASS_MOUNT],
 			   mntpnt, devname, type, flags, data, binary, &perms);
-	if (pos) {
+	अगर (pos) अणु
 		info = mnt_info_table[pos];
-		goto audit;
-	}
+		जाओ audit;
+	पूर्ण
 	error = 0;
 
 audit:
-	return audit_mount(profile, OP_MOUNT, mntpnt, devname, type, NULL,
+	वापस audit_mount(profile, OP_MOUNT, mntpnt, devname, type, शून्य,
 			   flags, data, AA_MAY_MOUNT, &perms, info, error);
-}
+पूर्ण
 
 /**
- * match_mnt - handle path matching for mount
+ * match_mnt - handle path matching क्रम mount
  * @profile: the confining profile
- * @mntpath: for the mntpnt (NOT NULL)
+ * @mntpath: क्रम the mntpnt (NOT शून्य)
  * @buffer: buffer to be used to lookup mntpath
- * @devpath: path devname/src_name (MAYBE NULL)
+ * @devpath: path devname/src_name (MAYBE शून्य)
  * @devbuffer: buffer to be used to lookup devname/src_name
- * @type: string for the dev type (MAYBE NULL)
+ * @type: string क्रम the dev type (MAYBE शून्य)
  * @flags: mount flags to match
- * @data: fs mount data (MAYBE NULL)
+ * @data: fs mount data (MAYBE शून्य)
  * @binary: whether @data is binary
  *
- * Returns: 0 on success else error
+ * Returns: 0 on success अन्यथा error
  */
-static int match_mnt(struct aa_profile *profile, const struct path *path,
-		     char *buffer, const struct path *devpath, char *devbuffer,
-		     const char *type, unsigned long flags, void *data,
+अटल पूर्णांक match_mnt(काष्ठा aa_profile *profile, स्थिर काष्ठा path *path,
+		     अक्षर *buffer, स्थिर काष्ठा path *devpath, अक्षर *devbuffer,
+		     स्थिर अक्षर *type, अचिन्हित दीर्घ flags, व्योम *data,
 		     bool binary)
-{
-	const char *devname = NULL, *info = NULL;
-	int error = -EACCES;
+अणु
+	स्थिर अक्षर *devname = शून्य, *info = शून्य;
+	पूर्णांक error = -EACCES;
 
 	AA_BUG(!profile);
 	AA_BUG(devpath && !devbuffer);
 
-	if (!PROFILE_MEDIATES(profile, AA_CLASS_MOUNT))
-		return 0;
+	अगर (!PROखाता_MEDIATES(profile, AA_CLASS_MOUNT))
+		वापस 0;
 
-	if (devpath) {
+	अगर (devpath) अणु
 		error = aa_path_name(devpath, path_flags(profile, devpath),
 				     devbuffer, &devname, &info,
 				     profile->disconnected);
-		if (error)
+		अगर (error)
 			devname = ERR_PTR(error);
-	}
+	पूर्ण
 
-	return match_mnt_path_str(profile, path, buffer, devname, type, flags,
+	वापस match_mnt_path_str(profile, path, buffer, devname, type, flags,
 				  data, binary, info);
-}
+पूर्ण
 
-int aa_remount(struct aa_label *label, const struct path *path,
-	       unsigned long flags, void *data)
-{
-	struct aa_profile *profile;
-	char *buffer = NULL;
+पूर्णांक aa_remount(काष्ठा aa_label *label, स्थिर काष्ठा path *path,
+	       अचिन्हित दीर्घ flags, व्योम *data)
+अणु
+	काष्ठा aa_profile *profile;
+	अक्षर *buffer = शून्य;
 	bool binary;
-	int error;
+	पूर्णांक error;
 
 	AA_BUG(!label);
 	AA_BUG(!path);
@@ -409,262 +410,262 @@ int aa_remount(struct aa_label *label, const struct path *path,
 	binary = path->dentry->d_sb->s_type->fs_flags & FS_BINARY_MOUNTDATA;
 
 	buffer = aa_get_buffer(false);
-	if (!buffer)
-		return -ENOMEM;
-	error = fn_for_each_confined(label, profile,
-			match_mnt(profile, path, buffer, NULL, NULL, NULL,
+	अगर (!buffer)
+		वापस -ENOMEM;
+	error = fn_क्रम_each_confined(label, profile,
+			match_mnt(profile, path, buffer, शून्य, शून्य, शून्य,
 				  flags, data, binary));
 	aa_put_buffer(buffer);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int aa_bind_mount(struct aa_label *label, const struct path *path,
-		  const char *dev_name, unsigned long flags)
-{
-	struct aa_profile *profile;
-	char *buffer = NULL, *old_buffer = NULL;
-	struct path old_path;
-	int error;
+पूर्णांक aa_bind_mount(काष्ठा aa_label *label, स्थिर काष्ठा path *path,
+		  स्थिर अक्षर *dev_name, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा aa_profile *profile;
+	अक्षर *buffer = शून्य, *old_buffer = शून्य;
+	काष्ठा path old_path;
+	पूर्णांक error;
 
 	AA_BUG(!label);
 	AA_BUG(!path);
 
-	if (!dev_name || !*dev_name)
-		return -EINVAL;
+	अगर (!dev_name || !*dev_name)
+		वापस -EINVAL;
 
 	flags &= MS_REC | MS_BIND;
 
 	error = kern_path(dev_name, LOOKUP_FOLLOW|LOOKUP_AUTOMOUNT, &old_path);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	buffer = aa_get_buffer(false);
 	old_buffer = aa_get_buffer(false);
 	error = -ENOMEM;
-	if (!buffer || !old_buffer)
-		goto out;
+	अगर (!buffer || !old_buffer)
+		जाओ out;
 
-	error = fn_for_each_confined(label, profile,
+	error = fn_क्रम_each_confined(label, profile,
 			match_mnt(profile, path, buffer, &old_path, old_buffer,
-				  NULL, flags, NULL, false));
+				  शून्य, flags, शून्य, false));
 out:
 	aa_put_buffer(buffer);
 	aa_put_buffer(old_buffer);
 	path_put(&old_path);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int aa_mount_change_type(struct aa_label *label, const struct path *path,
-			 unsigned long flags)
-{
-	struct aa_profile *profile;
-	char *buffer = NULL;
-	int error;
+पूर्णांक aa_mount_change_type(काष्ठा aa_label *label, स्थिर काष्ठा path *path,
+			 अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा aa_profile *profile;
+	अक्षर *buffer = शून्य;
+	पूर्णांक error;
 
 	AA_BUG(!label);
 	AA_BUG(!path);
 
-	/* These are the flags allowed by do_change_type() */
+	/* These are the flags allowed by करो_change_type() */
 	flags &= (MS_REC | MS_SILENT | MS_SHARED | MS_PRIVATE | MS_SLAVE |
 		  MS_UNBINDABLE);
 
 	buffer = aa_get_buffer(false);
-	if (!buffer)
-		return -ENOMEM;
-	error = fn_for_each_confined(label, profile,
-			match_mnt(profile, path, buffer, NULL, NULL, NULL,
-				  flags, NULL, false));
+	अगर (!buffer)
+		वापस -ENOMEM;
+	error = fn_क्रम_each_confined(label, profile,
+			match_mnt(profile, path, buffer, शून्य, शून्य, शून्य,
+				  flags, शून्य, false));
 	aa_put_buffer(buffer);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int aa_move_mount(struct aa_label *label, const struct path *path,
-		  const char *orig_name)
-{
-	struct aa_profile *profile;
-	char *buffer = NULL, *old_buffer = NULL;
-	struct path old_path;
-	int error;
+पूर्णांक aa_move_mount(काष्ठा aa_label *label, स्थिर काष्ठा path *path,
+		  स्थिर अक्षर *orig_name)
+अणु
+	काष्ठा aa_profile *profile;
+	अक्षर *buffer = शून्य, *old_buffer = शून्य;
+	काष्ठा path old_path;
+	पूर्णांक error;
 
 	AA_BUG(!label);
 	AA_BUG(!path);
 
-	if (!orig_name || !*orig_name)
-		return -EINVAL;
+	अगर (!orig_name || !*orig_name)
+		वापस -EINVAL;
 
 	error = kern_path(orig_name, LOOKUP_FOLLOW, &old_path);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	buffer = aa_get_buffer(false);
 	old_buffer = aa_get_buffer(false);
 	error = -ENOMEM;
-	if (!buffer || !old_buffer)
-		goto out;
-	error = fn_for_each_confined(label, profile,
+	अगर (!buffer || !old_buffer)
+		जाओ out;
+	error = fn_क्रम_each_confined(label, profile,
 			match_mnt(profile, path, buffer, &old_path, old_buffer,
-				  NULL, MS_MOVE, NULL, false));
+				  शून्य, MS_MOVE, शून्य, false));
 out:
 	aa_put_buffer(buffer);
 	aa_put_buffer(old_buffer);
 	path_put(&old_path);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int aa_new_mount(struct aa_label *label, const char *dev_name,
-		 const struct path *path, const char *type, unsigned long flags,
-		 void *data)
-{
-	struct aa_profile *profile;
-	char *buffer = NULL, *dev_buffer = NULL;
+पूर्णांक aa_new_mount(काष्ठा aa_label *label, स्थिर अक्षर *dev_name,
+		 स्थिर काष्ठा path *path, स्थिर अक्षर *type, अचिन्हित दीर्घ flags,
+		 व्योम *data)
+अणु
+	काष्ठा aa_profile *profile;
+	अक्षर *buffer = शून्य, *dev_buffer = शून्य;
 	bool binary = true;
-	int error;
-	int requires_dev = 0;
-	struct path tmp_path, *dev_path = NULL;
+	पूर्णांक error;
+	पूर्णांक requires_dev = 0;
+	काष्ठा path पंचांगp_path, *dev_path = शून्य;
 
 	AA_BUG(!label);
 	AA_BUG(!path);
 
-	if (type) {
-		struct file_system_type *fstype;
+	अगर (type) अणु
+		काष्ठा file_प्रणाली_type *fstype;
 
 		fstype = get_fs_type(type);
-		if (!fstype)
-			return -ENODEV;
+		अगर (!fstype)
+			वापस -ENODEV;
 		binary = fstype->fs_flags & FS_BINARY_MOUNTDATA;
 		requires_dev = fstype->fs_flags & FS_REQUIRES_DEV;
-		put_filesystem(fstype);
+		put_fileप्रणाली(fstype);
 
-		if (requires_dev) {
-			if (!dev_name || !*dev_name)
-				return -ENOENT;
+		अगर (requires_dev) अणु
+			अगर (!dev_name || !*dev_name)
+				वापस -ENOENT;
 
-			error = kern_path(dev_name, LOOKUP_FOLLOW, &tmp_path);
-			if (error)
-				return error;
-			dev_path = &tmp_path;
-		}
-	}
+			error = kern_path(dev_name, LOOKUP_FOLLOW, &पंचांगp_path);
+			अगर (error)
+				वापस error;
+			dev_path = &पंचांगp_path;
+		पूर्ण
+	पूर्ण
 
 	buffer = aa_get_buffer(false);
-	if (!buffer) {
+	अगर (!buffer) अणु
 		error = -ENOMEM;
-		goto out;
-	}
-	if (dev_path) {
+		जाओ out;
+	पूर्ण
+	अगर (dev_path) अणु
 		dev_buffer = aa_get_buffer(false);
-		if (!dev_buffer) {
+		अगर (!dev_buffer) अणु
 			error = -ENOMEM;
-			goto out;
-		}
-		error = fn_for_each_confined(label, profile,
+			जाओ out;
+		पूर्ण
+		error = fn_क्रम_each_confined(label, profile,
 			match_mnt(profile, path, buffer, dev_path, dev_buffer,
 				  type, flags, data, binary));
-	} else {
-		error = fn_for_each_confined(label, profile,
+	पूर्ण अन्यथा अणु
+		error = fn_क्रम_each_confined(label, profile,
 			match_mnt_path_str(profile, path, buffer, dev_name,
-					   type, flags, data, binary, NULL));
-	}
+					   type, flags, data, binary, शून्य));
+	पूर्ण
 
 out:
 	aa_put_buffer(buffer);
 	aa_put_buffer(dev_buffer);
-	if (dev_path)
+	अगर (dev_path)
 		path_put(dev_path);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int profile_umount(struct aa_profile *profile, const struct path *path,
-			  char *buffer)
-{
-	struct aa_perms perms = { };
-	const char *name = NULL, *info = NULL;
-	unsigned int state;
-	int error;
+अटल पूर्णांक profile_umount(काष्ठा aa_profile *profile, स्थिर काष्ठा path *path,
+			  अक्षर *buffer)
+अणु
+	काष्ठा aa_perms perms = अणु पूर्ण;
+	स्थिर अक्षर *name = शून्य, *info = शून्य;
+	अचिन्हित पूर्णांक state;
+	पूर्णांक error;
 
 	AA_BUG(!profile);
 	AA_BUG(!path);
 
-	if (!PROFILE_MEDIATES(profile, AA_CLASS_MOUNT))
-		return 0;
+	अगर (!PROखाता_MEDIATES(profile, AA_CLASS_MOUNT))
+		वापस 0;
 
 	error = aa_path_name(path, path_flags(profile, path), buffer, &name,
 			     &info, profile->disconnected);
-	if (error)
-		goto audit;
+	अगर (error)
+		जाओ audit;
 
 	state = aa_dfa_match(profile->policy.dfa,
 			     profile->policy.start[AA_CLASS_MOUNT],
 			     name);
 	perms = compute_mnt_perms(profile->policy.dfa, state);
-	if (AA_MAY_UMOUNT & ~perms.allow)
+	अगर (AA_MAY_UMOUNT & ~perms.allow)
 		error = -EACCES;
 
 audit:
-	return audit_mount(profile, OP_UMOUNT, name, NULL, NULL, NULL, 0, NULL,
+	वापस audit_mount(profile, OP_UMOUNT, name, शून्य, शून्य, शून्य, 0, शून्य,
 			   AA_MAY_UMOUNT, &perms, info, error);
-}
+पूर्ण
 
-int aa_umount(struct aa_label *label, struct vfsmount *mnt, int flags)
-{
-	struct aa_profile *profile;
-	char *buffer = NULL;
-	int error;
-	struct path path = { .mnt = mnt, .dentry = mnt->mnt_root };
+पूर्णांक aa_umount(काष्ठा aa_label *label, काष्ठा vfsmount *mnt, पूर्णांक flags)
+अणु
+	काष्ठा aa_profile *profile;
+	अक्षर *buffer = शून्य;
+	पूर्णांक error;
+	काष्ठा path path = अणु .mnt = mnt, .dentry = mnt->mnt_root पूर्ण;
 
 	AA_BUG(!label);
 	AA_BUG(!mnt);
 
 	buffer = aa_get_buffer(false);
-	if (!buffer)
-		return -ENOMEM;
+	अगर (!buffer)
+		वापस -ENOMEM;
 
-	error = fn_for_each_confined(label, profile,
+	error = fn_क्रम_each_confined(label, profile,
 			profile_umount(profile, &path, buffer));
 	aa_put_buffer(buffer);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-/* helper fn for transition on pivotroot
+/* helper fn क्रम transition on pivotroot
  *
- * Returns: label for transition or ERR_PTR. Does not return NULL
+ * Returns: label क्रम transition or ERR_PTR. Does not वापस शून्य
  */
-static struct aa_label *build_pivotroot(struct aa_profile *profile,
-					const struct path *new_path,
-					char *new_buffer,
-					const struct path *old_path,
-					char *old_buffer)
-{
-	const char *old_name, *new_name = NULL, *info = NULL;
-	const char *trans_name = NULL;
-	struct aa_perms perms = { };
-	unsigned int state;
-	int error;
+अटल काष्ठा aa_label *build_pivotroot(काष्ठा aa_profile *profile,
+					स्थिर काष्ठा path *new_path,
+					अक्षर *new_buffer,
+					स्थिर काष्ठा path *old_path,
+					अक्षर *old_buffer)
+अणु
+	स्थिर अक्षर *old_name, *new_name = शून्य, *info = शून्य;
+	स्थिर अक्षर *trans_name = शून्य;
+	काष्ठा aa_perms perms = अणु पूर्ण;
+	अचिन्हित पूर्णांक state;
+	पूर्णांक error;
 
 	AA_BUG(!profile);
 	AA_BUG(!new_path);
 	AA_BUG(!old_path);
 
-	if (profile_unconfined(profile) ||
-	    !PROFILE_MEDIATES(profile, AA_CLASS_MOUNT))
-		return aa_get_newest_label(&profile->label);
+	अगर (profile_unconfined(profile) ||
+	    !PROखाता_MEDIATES(profile, AA_CLASS_MOUNT))
+		वापस aa_get_newest_label(&profile->label);
 
 	error = aa_path_name(old_path, path_flags(profile, old_path),
 			     old_buffer, &old_name, &info,
 			     profile->disconnected);
-	if (error)
-		goto audit;
+	अगर (error)
+		जाओ audit;
 	error = aa_path_name(new_path, path_flags(profile, new_path),
 			     new_buffer, &new_name, &info,
 			     profile->disconnected);
-	if (error)
-		goto audit;
+	अगर (error)
+		जाओ audit;
 
 	error = -EACCES;
 	state = aa_dfa_match(profile->policy.dfa,
@@ -674,26 +675,26 @@ static struct aa_label *build_pivotroot(struct aa_profile *profile,
 	state = aa_dfa_match(profile->policy.dfa, state, old_name);
 	perms = compute_mnt_perms(profile->policy.dfa, state);
 
-	if (AA_MAY_PIVOTROOT & perms.allow)
+	अगर (AA_MAY_PIVOTROOT & perms.allow)
 		error = 0;
 
 audit:
 	error = audit_mount(profile, OP_PIVOTROOT, new_name, old_name,
-			    NULL, trans_name, 0, NULL, AA_MAY_PIVOTROOT,
+			    शून्य, trans_name, 0, शून्य, AA_MAY_PIVOTROOT,
 			    &perms, info, error);
-	if (error)
-		return ERR_PTR(error);
+	अगर (error)
+		वापस ERR_PTR(error);
 
-	return aa_get_newest_label(&profile->label);
-}
+	वापस aa_get_newest_label(&profile->label);
+पूर्ण
 
-int aa_pivotroot(struct aa_label *label, const struct path *old_path,
-		 const struct path *new_path)
-{
-	struct aa_profile *profile;
-	struct aa_label *target = NULL;
-	char *old_buffer = NULL, *new_buffer = NULL, *info = NULL;
-	int error;
+पूर्णांक aa_pivotroot(काष्ठा aa_label *label, स्थिर काष्ठा path *old_path,
+		 स्थिर काष्ठा path *new_path)
+अणु
+	काष्ठा aa_profile *profile;
+	काष्ठा aa_label *target = शून्य;
+	अक्षर *old_buffer = शून्य, *new_buffer = शून्य, *info = शून्य;
+	पूर्णांक error;
 
 	AA_BUG(!label);
 	AA_BUG(!old_path);
@@ -702,38 +703,38 @@ int aa_pivotroot(struct aa_label *label, const struct path *old_path,
 	old_buffer = aa_get_buffer(false);
 	new_buffer = aa_get_buffer(false);
 	error = -ENOMEM;
-	if (!old_buffer || !new_buffer)
-		goto out;
+	अगर (!old_buffer || !new_buffer)
+		जाओ out;
 	target = fn_label_build(label, profile, GFP_KERNEL,
 			build_pivotroot(profile, new_path, new_buffer,
 					old_path, old_buffer));
-	if (!target) {
+	अगर (!target) अणु
 		info = "label build failed";
 		error = -ENOMEM;
-		goto fail;
-	} else if (!IS_ERR(target)) {
+		जाओ fail;
+	पूर्ण अन्यथा अगर (!IS_ERR(target)) अणु
 		error = aa_replace_current_label(target);
-		if (error) {
+		अगर (error) अणु
 			/* TODO: audit target */
 			aa_put_label(target);
-			goto out;
-		}
-	} else
-		/* already audited error */
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा
+		/* alपढ़ोy audited error */
 		error = PTR_ERR(target);
 out:
 	aa_put_buffer(old_buffer);
 	aa_put_buffer(new_buffer);
 
-	return error;
+	वापस error;
 
 fail:
 	/* TODO: add back in auditing of new_name and old_name */
-	error = fn_for_each(label, profile,
-			audit_mount(profile, OP_PIVOTROOT, NULL /*new_name */,
-				    NULL /* old_name */,
-				    NULL, NULL,
-				    0, NULL, AA_MAY_PIVOTROOT, &nullperms, info,
+	error = fn_क्रम_each(label, profile,
+			audit_mount(profile, OP_PIVOTROOT, शून्य /*new_name */,
+				    शून्य /* old_name */,
+				    शून्य, शून्य,
+				    0, शून्य, AA_MAY_PIVOTROOT, &nullperms, info,
 				    error));
-	goto out;
-}
+	जाओ out;
+पूर्ण

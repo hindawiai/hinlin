@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * kexec for arm64
+ * kexec क्रम arm64
  *
  * Copyright (C) Linaro.
  * Copyright (C) Huawei Futurewei Technologies.
  */
 
-#ifndef _ARM64_KEXEC_H
-#define _ARM64_KEXEC_H
+#अगर_अघोषित _ARM64_KEXEC_H
+#घोषणा _ARM64_KEXEC_H
 
 /* Maximum physical address we can use pages from */
 
-#define KEXEC_SOURCE_MEMORY_LIMIT (-1UL)
+#घोषणा KEXEC_SOURCE_MEMORY_LIMIT (-1UL)
 
 /* Maximum address we can reach in physical address mode */
 
-#define KEXEC_DESTINATION_MEMORY_LIMIT (-1UL)
+#घोषणा KEXEC_DESTINATION_MEMORY_LIMIT (-1UL)
 
-/* Maximum address we can use for the control code buffer */
+/* Maximum address we can use क्रम the control code buffer */
 
-#define KEXEC_CONTROL_MEMORY_LIMIT (-1UL)
+#घोषणा KEXEC_CONTROL_MEMORY_LIMIT (-1UL)
 
-#define KEXEC_CONTROL_PAGE_SIZE 4096
+#घोषणा KEXEC_CONTROL_PAGE_SIZE 4096
 
-#define KEXEC_ARCH KEXEC_ARCH_AARCH64
+#घोषणा KEXEC_ARCH KEXEC_ARCH_AARCH64
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
 /**
- * crash_setup_regs() - save registers for the panic kernel
+ * crash_setup_regs() - save रेजिस्टरs क्रम the panic kernel
  *
- * @newregs: registers are saved here
- * @oldregs: registers to be saved (may be %NULL)
+ * @newregs: रेजिस्टरs are saved here
+ * @oldregs: रेजिस्टरs to be saved (may be %शून्य)
  */
 
-static inline void crash_setup_regs(struct pt_regs *newregs,
-				    struct pt_regs *oldregs)
-{
-	if (oldregs) {
-		memcpy(newregs, oldregs, sizeof(*newregs));
-	} else {
-		u64 tmp1, tmp2;
+अटल अंतरभूत व्योम crash_setup_regs(काष्ठा pt_regs *newregs,
+				    काष्ठा pt_regs *oldregs)
+अणु
+	अगर (oldregs) अणु
+		स_नकल(newregs, oldregs, माप(*newregs));
+	पूर्ण अन्यथा अणु
+		u64 पंचांगp1, पंचांगp2;
 
-		__asm__ __volatile__ (
+		__यंत्र__ __अस्थिर__ (
 			"stp	 x0,   x1, [%2, #16 *  0]\n"
 			"stp	 x2,   x3, [%2, #16 *  1]\n"
 			"stp	 x4,   x5, [%2, #16 *  2]\n"
@@ -73,43 +74,43 @@ static inline void crash_setup_regs(struct pt_regs *newregs,
 			"adr	 %1, 1f\n"
 		"1:\n"
 			"stp	 %1, %0,   [%2, #16 * 16]\n"
-			: "=&r" (tmp1), "=&r" (tmp2)
+			: "=&r" (पंचांगp1), "=&r" (पंचांगp2)
 			: "r" (newregs)
 			: "memory"
 		);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_KEXEC_CORE) && defined(CONFIG_HIBERNATION)
-extern bool crash_is_nosave(unsigned long pfn);
-extern void crash_prepare_suspend(void);
-extern void crash_post_resume(void);
-#else
-static inline bool crash_is_nosave(unsigned long pfn) {return false; }
-static inline void crash_prepare_suspend(void) {}
-static inline void crash_post_resume(void) {}
-#endif
+#अगर defined(CONFIG_KEXEC_CORE) && defined(CONFIG_HIBERNATION)
+बाह्य bool crash_is_nosave(अचिन्हित दीर्घ pfn);
+बाह्य व्योम crash_prepare_suspend(व्योम);
+बाह्य व्योम crash_post_resume(व्योम);
+#अन्यथा
+अटल अंतरभूत bool crash_is_nosave(अचिन्हित दीर्घ pfn) अणुवापस false; पूर्ण
+अटल अंतरभूत व्योम crash_prepare_suspend(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम crash_post_resume(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#define ARCH_HAS_KIMAGE_ARCH
+#घोषणा ARCH_HAS_KIMAGE_ARCH
 
-struct kimage_arch {
-	void *dtb;
+काष्ठा kimage_arch अणु
+	व्योम *dtb;
 	phys_addr_t dtb_mem;
 	phys_addr_t kern_reloc;
-};
+पूर्ण;
 
-#ifdef CONFIG_KEXEC_FILE
-extern const struct kexec_file_ops kexec_image_ops;
+#अगर_घोषित CONFIG_KEXEC_खाता
+बाह्य स्थिर काष्ठा kexec_file_ops kexec_image_ops;
 
-struct kimage;
+काष्ठा kimage;
 
-extern int arch_kimage_file_post_load_cleanup(struct kimage *image);
-extern int load_other_segments(struct kimage *image,
-		unsigned long kernel_load_addr, unsigned long kernel_size,
-		char *initrd, unsigned long initrd_len,
-		char *cmdline);
-#endif
+बाह्य पूर्णांक arch_kimage_file_post_load_cleanup(काष्ठा kimage *image);
+बाह्य पूर्णांक load_other_segments(काष्ठा kimage *image,
+		अचिन्हित दीर्घ kernel_load_addr, अचिन्हित दीर्घ kernel_size,
+		अक्षर *initrd, अचिन्हित दीर्घ initrd_len,
+		अक्षर *cmdline);
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

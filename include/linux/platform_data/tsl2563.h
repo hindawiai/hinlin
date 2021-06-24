@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_TSL2563_H
-#define __LINUX_TSL2563_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_TSL2563_H
+#घोषणा __LINUX_TSL2563_H
 
-struct tsl2563_platform_data {
-	int cover_comp_gain;
-};
+काष्ठा tsl2563_platक्रमm_data अणु
+	पूर्णांक cover_comp_gain;
+पूर्ण;
 
-#endif /* __LINUX_TSL2563_H */
+#पूर्ण_अगर /* __LINUX_TSL2563_H */

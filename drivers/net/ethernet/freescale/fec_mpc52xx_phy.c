@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Driver for the MPC5200 Fast Ethernet Controller - MDIO bus driver
+ * Driver क्रम the MPC5200 Fast Ethernet Controller - MDIO bus driver
  *
  * Copyright (C) 2007  Domen Puncer, Telargo, Inc.
  * Copyright (C) 2008  Wolfram Sang, Pengutronix
@@ -9,27 +10,27 @@
  * kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/phy.h>
-#include <linux/of_platform.h>
-#include <linux/slab.h>
-#include <linux/of_mdio.h>
-#include <asm/io.h>
-#include <asm/mpc52xx.h>
-#include "fec_mpc52xx.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/mpc52xx.h>
+#समावेश "fec_mpc52xx.h"
 
-struct mpc52xx_fec_mdio_priv {
-	struct mpc52xx_fec __iomem *regs;
-};
+काष्ठा mpc52xx_fec_mdio_priv अणु
+	काष्ठा mpc52xx_fec __iomem *regs;
+पूर्ण;
 
-static int mpc52xx_fec_mdio_transfer(struct mii_bus *bus, int phy_id,
-		int reg, u32 value)
-{
-	struct mpc52xx_fec_mdio_priv *priv = bus->priv;
-	struct mpc52xx_fec __iomem *fec = priv->regs;
-	int tries = 3;
+अटल पूर्णांक mpc52xx_fec_mdio_transfer(काष्ठा mii_bus *bus, पूर्णांक phy_id,
+		पूर्णांक reg, u32 value)
+अणु
+	काष्ठा mpc52xx_fec_mdio_priv *priv = bus->priv;
+	काष्ठा mpc52xx_fec __iomem *fec = priv->regs;
+	पूर्णांक tries = 3;
 
 	value |= (phy_id << FEC_MII_DATA_PA_SHIFT) & FEC_MII_DATA_PA_MSK;
 	value |= (reg << FEC_MII_DATA_RA_SHIFT) & FEC_MII_DATA_RA_MSK;
@@ -37,62 +38,62 @@ static int mpc52xx_fec_mdio_transfer(struct mii_bus *bus, int phy_id,
 	out_be32(&fec->ievent, FEC_IEVENT_MII);
 	out_be32(&fec->mii_data, value);
 
-	/* wait for it to finish, this takes about 23 us on lite5200b */
-	while (!(in_be32(&fec->ievent) & FEC_IEVENT_MII) && --tries)
+	/* रुको क्रम it to finish, this takes about 23 us on lite5200b */
+	जबतक (!(in_be32(&fec->ievent) & FEC_IEVENT_MII) && --tries)
 		msleep(1);
 
-	if (!tries)
-		return -ETIMEDOUT;
+	अगर (!tries)
+		वापस -ETIMEDOUT;
 
-	return value & FEC_MII_DATA_OP_RD ?
+	वापस value & FEC_MII_DATA_OP_RD ?
 		in_be32(&fec->mii_data) & FEC_MII_DATA_DATAMSK : 0;
-}
+पूर्ण
 
-static int mpc52xx_fec_mdio_read(struct mii_bus *bus, int phy_id, int reg)
-{
-	return mpc52xx_fec_mdio_transfer(bus, phy_id, reg, FEC_MII_READ_FRAME);
-}
+अटल पूर्णांक mpc52xx_fec_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg)
+अणु
+	वापस mpc52xx_fec_mdio_transfer(bus, phy_id, reg, FEC_MII_READ_FRAME);
+पूर्ण
 
-static int mpc52xx_fec_mdio_write(struct mii_bus *bus, int phy_id, int reg,
+अटल पूर्णांक mpc52xx_fec_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg,
 		u16 data)
-{
-	return mpc52xx_fec_mdio_transfer(bus, phy_id, reg,
+अणु
+	वापस mpc52xx_fec_mdio_transfer(bus, phy_id, reg,
 		data | FEC_MII_WRITE_FRAME);
-}
+पूर्ण
 
-static int mpc52xx_fec_mdio_probe(struct platform_device *of)
-{
-	struct device *dev = &of->dev;
-	struct device_node *np = of->dev.of_node;
-	struct mii_bus *bus;
-	struct mpc52xx_fec_mdio_priv *priv;
-	struct resource res;
-	int err;
+अटल पूर्णांक mpc52xx_fec_mdio_probe(काष्ठा platक्रमm_device *of)
+अणु
+	काष्ठा device *dev = &of->dev;
+	काष्ठा device_node *np = of->dev.of_node;
+	काष्ठा mii_bus *bus;
+	काष्ठा mpc52xx_fec_mdio_priv *priv;
+	काष्ठा resource res;
+	पूर्णांक err;
 
 	bus = mdiobus_alloc();
-	if (bus == NULL)
-		return -ENOMEM;
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (priv == NULL) {
+	अगर (bus == शून्य)
+		वापस -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (priv == शून्य) अणु
 		err = -ENOMEM;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	bus->name = "mpc52xx MII bus";
-	bus->read = mpc52xx_fec_mdio_read;
-	bus->write = mpc52xx_fec_mdio_write;
+	bus->पढ़ो = mpc52xx_fec_mdio_पढ़ो;
+	bus->ग_लिखो = mpc52xx_fec_mdio_ग_लिखो;
 
-	/* setup registers */
+	/* setup रेजिस्टरs */
 	err = of_address_to_resource(np, 0, &res);
-	if (err)
-		goto out_free;
+	अगर (err)
+		जाओ out_मुक्त;
 	priv->regs = ioremap(res.start, resource_size(&res));
-	if (priv->regs == NULL) {
+	अगर (priv->regs == शून्य) अणु
 		err = -ENOMEM;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	snprintf(bus->id, MII_BUS_ID_SIZE, "%x", res.start);
+	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "%x", res.start);
 	bus->priv = priv;
 
 	bus->parent = dev;
@@ -102,53 +103,53 @@ static int mpc52xx_fec_mdio_probe(struct platform_device *of)
 	out_be32(&priv->regs->mii_speed,
 		((mpc5xxx_get_bus_frequency(of->dev.of_node) >> 20) / 5) << 1);
 
-	err = of_mdiobus_register(bus, np);
-	if (err)
-		goto out_unmap;
+	err = of_mdiobus_रेजिस्टर(bus, np);
+	अगर (err)
+		जाओ out_unmap;
 
-	return 0;
+	वापस 0;
 
  out_unmap:
 	iounmap(priv->regs);
- out_free:
-	kfree(priv);
-	mdiobus_free(bus);
+ out_मुक्त:
+	kमुक्त(priv);
+	mdiobus_मुक्त(bus);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mpc52xx_fec_mdio_remove(struct platform_device *of)
-{
-	struct mii_bus *bus = platform_get_drvdata(of);
-	struct mpc52xx_fec_mdio_priv *priv = bus->priv;
+अटल पूर्णांक mpc52xx_fec_mdio_हटाओ(काष्ठा platक्रमm_device *of)
+अणु
+	काष्ठा mii_bus *bus = platक्रमm_get_drvdata(of);
+	काष्ठा mpc52xx_fec_mdio_priv *priv = bus->priv;
 
-	mdiobus_unregister(bus);
+	mdiobus_unरेजिस्टर(bus);
 	iounmap(priv->regs);
-	kfree(priv);
-	mdiobus_free(bus);
+	kमुक्त(priv);
+	mdiobus_मुक्त(bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mpc52xx_fec_mdio_match[] = {
-	{ .compatible = "fsl,mpc5200b-mdio", },
-	{ .compatible = "fsl,mpc5200-mdio", },
-	{ .compatible = "mpc5200b-fec-phy", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id mpc52xx_fec_mdio_match[] = अणु
+	अणु .compatible = "fsl,mpc5200b-mdio", पूर्ण,
+	अणु .compatible = "fsl,mpc5200-mdio", पूर्ण,
+	अणु .compatible = "mpc5200b-fec-phy", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mpc52xx_fec_mdio_match);
 
-struct platform_driver mpc52xx_fec_mdio_driver = {
-	.driver = {
+काष्ठा platक्रमm_driver mpc52xx_fec_mdio_driver = अणु
+	.driver = अणु
 		.name = "mpc5200b-fec-phy",
 		.owner = THIS_MODULE,
 		.of_match_table = mpc52xx_fec_mdio_match,
-	},
+	पूर्ण,
 	.probe = mpc52xx_fec_mdio_probe,
-	.remove = mpc52xx_fec_mdio_remove,
-};
+	.हटाओ = mpc52xx_fec_mdio_हटाओ,
+पूर्ण;
 
-/* let fec driver call it, since this has to be registered before it */
+/* let fec driver call it, since this has to be रेजिस्टरed beक्रमe it */
 EXPORT_SYMBOL_GPL(mpc52xx_fec_mdio_driver);
 
 MODULE_LICENSE("Dual BSD/GPL");

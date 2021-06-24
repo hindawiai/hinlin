@@ -1,14 +1,15 @@
-#ifndef __NVKM_UMMU_H__
-#define __NVKM_UMMU_H__
-#define nvkm_ummu(p) container_of((p), struct nvkm_ummu, object)
-#include <core/object.h>
-#include "priv.h"
+<शैली गुरु>
+#अगर_अघोषित __NVKM_UMMU_H__
+#घोषणा __NVKM_UMMU_H__
+#घोषणा nvkm_ummu(p) container_of((p), काष्ठा nvkm_ummu, object)
+#समावेश <core/object.h>
+#समावेश "priv.h"
 
-struct nvkm_ummu {
-	struct nvkm_object object;
-	struct nvkm_mmu *mmu;
-};
+काष्ठा nvkm_ummu अणु
+	काष्ठा nvkm_object object;
+	काष्ठा nvkm_mmu *mmu;
+पूर्ण;
 
-int nvkm_ummu_new(struct nvkm_device *, const struct nvkm_oclass *,
-		  void *argv, u32 argc, struct nvkm_object **);
-#endif
+पूर्णांक nvkm_ummu_new(काष्ठा nvkm_device *, स्थिर काष्ठा nvkm_oclass *,
+		  व्योम *argv, u32 argc, काष्ठा nvkm_object **);
+#पूर्ण_अगर

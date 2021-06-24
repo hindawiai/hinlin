@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  Copyright (c) 2018  Vincent Pelletier
  */
 /*
  */
-#ifndef __CCID_H
-#define __CCID_H
+#अगर_अघोषित __CCID_H
+#घोषणा __CCID_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define USB_INTERFACE_CLASS_CCID 0x0b
+#घोषणा USB_INTERFACE_CLASS_CCID 0x0b
 
-struct ccid_descriptor {
+काष्ठा ccid_descriptor अणु
 	__u8  bLength;
 	__u8  bDescriptorType;
 	__le16 bcdCCID;
@@ -34,6 +35,6 @@ struct ccid_descriptor {
 	__le16 wLcdLayout;
 	__u8  bPINSupport;
 	__u8  bMaxCCIDBusySlots;
-} __attribute__ ((packed));
+पूर्ण __attribute__ ((packed));
 
-#endif /* __CCID_H */
+#पूर्ण_अगर /* __CCID_H */

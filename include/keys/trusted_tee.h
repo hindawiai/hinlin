@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019-2021 Linaro Ltd.
  *
@@ -6,11 +7,11 @@
  * Sumit Garg <sumit.garg@linaro.org>
  */
 
-#ifndef __TEE_TRUSTED_KEY_H
-#define __TEE_TRUSTED_KEY_H
+#अगर_अघोषित __TEE_TRUSTED_KEY_H
+#घोषणा __TEE_TRUSTED_KEY_H
 
-#include <keys/trusted-type.h>
+#समावेश <keys/trusted-type.h>
 
-extern struct trusted_key_ops trusted_key_tee_ops;
+बाह्य काष्ठा trusted_key_ops trusted_key_tee_ops;
 
-#endif
+#पूर्ण_अगर

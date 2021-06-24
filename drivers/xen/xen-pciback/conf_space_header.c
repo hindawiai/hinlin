@@ -1,386 +1,387 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCI Backend - Handles the virtual fields in the configuration space headers.
+ * PCI Backend - Handles the भव fields in the configuration space headers.
  *
  * Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#define dev_fmt pr_fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा dev_fmt pr_fmt
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include "pciback.h"
-#include "conf_space.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश "pciback.h"
+#समावेश "conf_space.h"
 
-struct pci_cmd_info {
+काष्ठा pci_cmd_info अणु
 	u16 val;
-};
+पूर्ण;
 
-struct pci_bar_info {
+काष्ठा pci_bar_info अणु
 	u32 val;
 	u32 len_val;
-	int which;
-};
+	पूर्णांक which;
+पूर्ण;
 
-#define is_enable_cmd(value) ((value)&(PCI_COMMAND_MEMORY|PCI_COMMAND_IO))
-#define is_master_cmd(value) ((value)&PCI_COMMAND_MASTER)
+#घोषणा is_enable_cmd(value) ((value)&(PCI_COMMAND_MEMORY|PCI_COMMAND_IO))
+#घोषणा is_master_cmd(value) ((value)&PCI_COMMAND_MASTER)
 
 /* Bits guests are allowed to control in permissive mode. */
-#define PCI_COMMAND_GUEST (PCI_COMMAND_MASTER|PCI_COMMAND_SPECIAL| \
+#घोषणा PCI_COMMAND_GUEST (PCI_COMMAND_MASTER|PCI_COMMAND_SPECIAL| \
 			   PCI_COMMAND_INVALIDATE|PCI_COMMAND_VGA_PALETTE| \
 			   PCI_COMMAND_WAIT|PCI_COMMAND_FAST_BACK)
 
-static void *command_init(struct pci_dev *dev, int offset)
-{
-	struct pci_cmd_info *cmd = kmalloc(sizeof(*cmd), GFP_KERNEL);
-	int err;
+अटल व्योम *command_init(काष्ठा pci_dev *dev, पूर्णांक offset)
+अणु
+	काष्ठा pci_cmd_info *cmd = kदो_स्मृति(माप(*cmd), GFP_KERNEL);
+	पूर्णांक err;
 
-	if (!cmd)
-		return ERR_PTR(-ENOMEM);
+	अगर (!cmd)
+		वापस ERR_PTR(-ENOMEM);
 
-	err = pci_read_config_word(dev, PCI_COMMAND, &cmd->val);
-	if (err) {
-		kfree(cmd);
-		return ERR_PTR(err);
-	}
+	err = pci_पढ़ो_config_word(dev, PCI_COMMAND, &cmd->val);
+	अगर (err) अणु
+		kमुक्त(cmd);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return cmd;
-}
+	वापस cmd;
+पूर्ण
 
-static int command_read(struct pci_dev *dev, int offset, u16 *value, void *data)
-{
-	int ret = pci_read_config_word(dev, offset, value);
-	const struct pci_cmd_info *cmd = data;
+अटल पूर्णांक command_पढ़ो(काष्ठा pci_dev *dev, पूर्णांक offset, u16 *value, व्योम *data)
+अणु
+	पूर्णांक ret = pci_पढ़ो_config_word(dev, offset, value);
+	स्थिर काष्ठा pci_cmd_info *cmd = data;
 
 	*value &= PCI_COMMAND_GUEST;
 	*value |= cmd->val & ~PCI_COMMAND_GUEST;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int command_write(struct pci_dev *dev, int offset, u16 value, void *data)
-{
-	struct xen_pcibk_dev_data *dev_data;
-	int err;
+अटल पूर्णांक command_ग_लिखो(काष्ठा pci_dev *dev, पूर्णांक offset, u16 value, व्योम *data)
+अणु
+	काष्ठा xen_pcibk_dev_data *dev_data;
+	पूर्णांक err;
 	u16 val;
-	struct pci_cmd_info *cmd = data;
+	काष्ठा pci_cmd_info *cmd = data;
 
 	dev_data = pci_get_drvdata(dev);
-	if (!pci_is_enabled(dev) && is_enable_cmd(value)) {
+	अगर (!pci_is_enabled(dev) && is_enable_cmd(value)) अणु
 		dev_dbg(&dev->dev, "enable\n");
 		err = pci_enable_device(dev);
-		if (err)
-			return err;
-		if (dev_data)
-			dev_data->enable_intx = 1;
-	} else if (pci_is_enabled(dev) && !is_enable_cmd(value)) {
+		अगर (err)
+			वापस err;
+		अगर (dev_data)
+			dev_data->enable_पूर्णांकx = 1;
+	पूर्ण अन्यथा अगर (pci_is_enabled(dev) && !is_enable_cmd(value)) अणु
 		dev_dbg(&dev->dev, "disable\n");
 		pci_disable_device(dev);
-		if (dev_data)
-			dev_data->enable_intx = 0;
-	}
+		अगर (dev_data)
+			dev_data->enable_पूर्णांकx = 0;
+	पूर्ण
 
-	if (!dev->is_busmaster && is_master_cmd(value)) {
+	अगर (!dev->is_busmaster && is_master_cmd(value)) अणु
 		dev_dbg(&dev->dev, "set bus master\n");
 		pci_set_master(dev);
-	} else if (dev->is_busmaster && !is_master_cmd(value)) {
+	पूर्ण अन्यथा अगर (dev->is_busmaster && !is_master_cmd(value)) अणु
 		dev_dbg(&dev->dev, "clear bus master\n");
 		pci_clear_master(dev);
-	}
+	पूर्ण
 
-	if (!(cmd->val & PCI_COMMAND_INVALIDATE) &&
-	    (value & PCI_COMMAND_INVALIDATE)) {
+	अगर (!(cmd->val & PCI_COMMAND_INVALIDATE) &&
+	    (value & PCI_COMMAND_INVALIDATE)) अणु
 		dev_dbg(&dev->dev, "enable memory-write-invalidate\n");
 		err = pci_set_mwi(dev);
-		if (err) {
+		अगर (err) अणु
 			dev_warn(&dev->dev, "cannot enable memory-write-invalidate (%d)\n",
 				err);
 			value &= ~PCI_COMMAND_INVALIDATE;
-		}
-	} else if ((cmd->val & PCI_COMMAND_INVALIDATE) &&
-		   !(value & PCI_COMMAND_INVALIDATE)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर ((cmd->val & PCI_COMMAND_INVALIDATE) &&
+		   !(value & PCI_COMMAND_INVALIDATE)) अणु
 		dev_dbg(&dev->dev, "disable memory-write-invalidate\n");
 		pci_clear_mwi(dev);
-	}
+	पूर्ण
 
-	if (dev_data && dev_data->allow_interrupt_control) {
-		if ((cmd->val ^ value) & PCI_COMMAND_INTX_DISABLE) {
-			if (value & PCI_COMMAND_INTX_DISABLE) {
-				pci_intx(dev, 0);
-			} else {
+	अगर (dev_data && dev_data->allow_पूर्णांकerrupt_control) अणु
+		अगर ((cmd->val ^ value) & PCI_COMMAND_INTX_DISABLE) अणु
+			अगर (value & PCI_COMMAND_INTX_DISABLE) अणु
+				pci_पूर्णांकx(dev, 0);
+			पूर्ण अन्यथा अणु
 				/* Do not allow enabling INTx together with MSI or MSI-X. */
-				switch (xen_pcibk_get_interrupt_type(dev)) {
-				case INTERRUPT_TYPE_NONE:
-					pci_intx(dev, 1);
-					break;
-				case INTERRUPT_TYPE_INTX:
-					break;
-				default:
-					return PCIBIOS_SET_FAILED;
-				}
-			}
-		}
-	}
+				चयन (xen_pcibk_get_पूर्णांकerrupt_type(dev)) अणु
+				हाल INTERRUPT_TYPE_NONE:
+					pci_पूर्णांकx(dev, 1);
+					अवरोध;
+				हाल INTERRUPT_TYPE_INTX:
+					अवरोध;
+				शेष:
+					वापस PCIBIOS_SET_FAILED;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	cmd->val = value;
 
-	if (!xen_pcibk_permissive && (!dev_data || !dev_data->permissive))
-		return 0;
+	अगर (!xen_pcibk_permissive && (!dev_data || !dev_data->permissive))
+		वापस 0;
 
 	/* Only allow the guest to control certain bits. */
-	err = pci_read_config_word(dev, offset, &val);
-	if (err || val == value)
-		return err;
+	err = pci_पढ़ो_config_word(dev, offset, &val);
+	अगर (err || val == value)
+		वापस err;
 
 	value &= PCI_COMMAND_GUEST;
 	value |= val & ~PCI_COMMAND_GUEST;
 
-	return pci_write_config_word(dev, offset, value);
-}
+	वापस pci_ग_लिखो_config_word(dev, offset, value);
+पूर्ण
 
-static int rom_write(struct pci_dev *dev, int offset, u32 value, void *data)
-{
-	struct pci_bar_info *bar = data;
+अटल पूर्णांक rom_ग_लिखो(काष्ठा pci_dev *dev, पूर्णांक offset, u32 value, व्योम *data)
+अणु
+	काष्ठा pci_bar_info *bar = data;
 
-	if (unlikely(!bar)) {
+	अगर (unlikely(!bar)) अणु
 		dev_warn(&dev->dev, "driver data not found\n");
-		return XEN_PCI_ERR_op_failed;
-	}
+		वापस XEN_PCI_ERR_op_failed;
+	पूर्ण
 
-	/* A write to obtain the length must happen as a 32-bit write.
-	 * This does not (yet) support writing individual bytes
+	/* A ग_लिखो to obtain the length must happen as a 32-bit ग_लिखो.
+	 * This करोes not (yet) support writing inभागidual bytes
 	 */
-	if ((value | ~PCI_ROM_ADDRESS_MASK) == ~0U)
+	अगर ((value | ~PCI_ROM_ADDRESS_MASK) == ~0U)
 		bar->which = 1;
-	else {
-		u32 tmpval;
-		pci_read_config_dword(dev, offset, &tmpval);
-		if (tmpval != bar->val && value == bar->val) {
+	अन्यथा अणु
+		u32 पंचांगpval;
+		pci_पढ़ो_config_dword(dev, offset, &पंचांगpval);
+		अगर (पंचांगpval != bar->val && value == bar->val) अणु
 			/* Allow restoration of bar value. */
-			pci_write_config_dword(dev, offset, bar->val);
-		}
+			pci_ग_लिखो_config_dword(dev, offset, bar->val);
+		पूर्ण
 		bar->which = 0;
-	}
+	पूर्ण
 
 	/* Do we need to support enabling/disabling the rom address here? */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* For the BARs, only allow writes which write ~0 or
- * the correct resource information
- * (Needed for when the driver probes the resource usage)
+/* For the BARs, only allow ग_लिखोs which ग_लिखो ~0 or
+ * the correct resource inक्रमmation
+ * (Needed क्रम when the driver probes the resource usage)
  */
-static int bar_write(struct pci_dev *dev, int offset, u32 value, void *data)
-{
-	struct pci_bar_info *bar = data;
-	unsigned int pos = (offset - PCI_BASE_ADDRESS_0) / 4;
-	const struct resource *res = dev->resource;
+अटल पूर्णांक bar_ग_लिखो(काष्ठा pci_dev *dev, पूर्णांक offset, u32 value, व्योम *data)
+अणु
+	काष्ठा pci_bar_info *bar = data;
+	अचिन्हित पूर्णांक pos = (offset - PCI_BASE_ADDRESS_0) / 4;
+	स्थिर काष्ठा resource *res = dev->resource;
 	u32 mask;
 
-	if (unlikely(!bar)) {
+	अगर (unlikely(!bar)) अणु
 		dev_warn(&dev->dev, "driver data not found\n");
-		return XEN_PCI_ERR_op_failed;
-	}
+		वापस XEN_PCI_ERR_op_failed;
+	पूर्ण
 
-	/* A write to obtain the length must happen as a 32-bit write.
-	 * This does not (yet) support writing individual bytes
+	/* A ग_लिखो to obtain the length must happen as a 32-bit ग_लिखो.
+	 * This करोes not (yet) support writing inभागidual bytes
 	 */
-	if (res[pos].flags & IORESOURCE_IO)
+	अगर (res[pos].flags & IORESOURCE_IO)
 		mask = ~PCI_BASE_ADDRESS_IO_MASK;
-	else if (pos && (res[pos - 1].flags & IORESOURCE_MEM_64))
+	अन्यथा अगर (pos && (res[pos - 1].flags & IORESOURCE_MEM_64))
 		mask = 0;
-	else
+	अन्यथा
 		mask = ~PCI_BASE_ADDRESS_MEM_MASK;
-	if ((value | mask) == ~0U)
+	अगर ((value | mask) == ~0U)
 		bar->which = 1;
-	else {
-		u32 tmpval;
-		pci_read_config_dword(dev, offset, &tmpval);
-		if (tmpval != bar->val && value == bar->val) {
+	अन्यथा अणु
+		u32 पंचांगpval;
+		pci_पढ़ो_config_dword(dev, offset, &पंचांगpval);
+		अगर (पंचांगpval != bar->val && value == bar->val) अणु
 			/* Allow restoration of bar value. */
-			pci_write_config_dword(dev, offset, bar->val);
-		}
+			pci_ग_लिखो_config_dword(dev, offset, bar->val);
+		पूर्ण
 		bar->which = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bar_read(struct pci_dev *dev, int offset, u32 * value, void *data)
-{
-	struct pci_bar_info *bar = data;
+अटल पूर्णांक bar_पढ़ो(काष्ठा pci_dev *dev, पूर्णांक offset, u32 * value, व्योम *data)
+अणु
+	काष्ठा pci_bar_info *bar = data;
 
-	if (unlikely(!bar)) {
+	अगर (unlikely(!bar)) अणु
 		dev_warn(&dev->dev, "driver data not found\n");
-		return XEN_PCI_ERR_op_failed;
-	}
+		वापस XEN_PCI_ERR_op_failed;
+	पूर्ण
 
 	*value = bar->which ? bar->len_val : bar->val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *bar_init(struct pci_dev *dev, int offset)
-{
-	unsigned int pos;
-	const struct resource *res = dev->resource;
-	struct pci_bar_info *bar = kzalloc(sizeof(*bar), GFP_KERNEL);
+अटल व्योम *bar_init(काष्ठा pci_dev *dev, पूर्णांक offset)
+अणु
+	अचिन्हित पूर्णांक pos;
+	स्थिर काष्ठा resource *res = dev->resource;
+	काष्ठा pci_bar_info *bar = kzalloc(माप(*bar), GFP_KERNEL);
 
-	if (!bar)
-		return ERR_PTR(-ENOMEM);
+	अगर (!bar)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (offset == PCI_ROM_ADDRESS || offset == PCI_ROM_ADDRESS1)
+	अगर (offset == PCI_ROM_ADDRESS || offset == PCI_ROM_ADDRESS1)
 		pos = PCI_ROM_RESOURCE;
-	else {
+	अन्यथा अणु
 		pos = (offset - PCI_BASE_ADDRESS_0) / 4;
-		if (pos && (res[pos - 1].flags & IORESOURCE_MEM_64)) {
+		अगर (pos && (res[pos - 1].flags & IORESOURCE_MEM_64)) अणु
 			bar->val = res[pos - 1].start >> 32;
 			bar->len_val = -resource_size(&res[pos - 1]) >> 32;
-			return bar;
-		}
-	}
+			वापस bar;
+		पूर्ण
+	पूर्ण
 
-	if (!res[pos].flags ||
+	अगर (!res[pos].flags ||
 	    (res[pos].flags & (IORESOURCE_DISABLED | IORESOURCE_UNSET |
 			       IORESOURCE_BUSY)))
-		return bar;
+		वापस bar;
 
 	bar->val = res[pos].start |
 		   (res[pos].flags & PCI_REGION_FLAG_MASK);
 	bar->len_val = -resource_size(&res[pos]) |
 		       (res[pos].flags & PCI_REGION_FLAG_MASK);
 
-	return bar;
-}
+	वापस bar;
+पूर्ण
 
-static void bar_reset(struct pci_dev *dev, int offset, void *data)
-{
-	struct pci_bar_info *bar = data;
+अटल व्योम bar_reset(काष्ठा pci_dev *dev, पूर्णांक offset, व्योम *data)
+अणु
+	काष्ठा pci_bar_info *bar = data;
 
 	bar->which = 0;
-}
+पूर्ण
 
-static void bar_release(struct pci_dev *dev, int offset, void *data)
-{
-	kfree(data);
-}
+अटल व्योम bar_release(काष्ठा pci_dev *dev, पूर्णांक offset, व्योम *data)
+अणु
+	kमुक्त(data);
+पूर्ण
 
-static int xen_pcibk_read_vendor(struct pci_dev *dev, int offset,
-			       u16 *value, void *data)
-{
-	*value = dev->vendor;
+अटल पूर्णांक xen_pcibk_पढ़ो_venकरोr(काष्ठा pci_dev *dev, पूर्णांक offset,
+			       u16 *value, व्योम *data)
+अणु
+	*value = dev->venकरोr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xen_pcibk_read_device(struct pci_dev *dev, int offset,
-			       u16 *value, void *data)
-{
+अटल पूर्णांक xen_pcibk_पढ़ो_device(काष्ठा pci_dev *dev, पूर्णांक offset,
+			       u16 *value, व्योम *data)
+अणु
 	*value = dev->device;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int interrupt_read(struct pci_dev *dev, int offset, u8 * value,
-			  void *data)
-{
+अटल पूर्णांक पूर्णांकerrupt_पढ़ो(काष्ठा pci_dev *dev, पूर्णांक offset, u8 * value,
+			  व्योम *data)
+अणु
 	*value = (u8) dev->irq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bist_write(struct pci_dev *dev, int offset, u8 value, void *data)
-{
+अटल पूर्णांक bist_ग_लिखो(काष्ठा pci_dev *dev, पूर्णांक offset, u8 value, व्योम *data)
+अणु
 	u8 cur_value;
-	int err;
+	पूर्णांक err;
 
-	err = pci_read_config_byte(dev, offset, &cur_value);
-	if (err)
-		goto out;
+	err = pci_पढ़ो_config_byte(dev, offset, &cur_value);
+	अगर (err)
+		जाओ out;
 
-	if ((cur_value & ~PCI_BIST_START) == (value & ~PCI_BIST_START)
+	अगर ((cur_value & ~PCI_BIST_START) == (value & ~PCI_BIST_START)
 	    || value == PCI_BIST_START)
-		err = pci_write_config_byte(dev, offset, value);
+		err = pci_ग_लिखो_config_byte(dev, offset, value);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct config_field header_common[] = {
-	{
+अटल स्थिर काष्ठा config_field header_common[] = अणु
+	अणु
 	 .offset    = PCI_VENDOR_ID,
 	 .size      = 2,
-	 .u.w.read  = xen_pcibk_read_vendor,
-	},
-	{
+	 .u.w.पढ़ो  = xen_pcibk_पढ़ो_venकरोr,
+	पूर्ण,
+	अणु
 	 .offset    = PCI_DEVICE_ID,
 	 .size      = 2,
-	 .u.w.read  = xen_pcibk_read_device,
-	},
-	{
+	 .u.w.पढ़ो  = xen_pcibk_पढ़ो_device,
+	पूर्ण,
+	अणु
 	 .offset    = PCI_COMMAND,
 	 .size      = 2,
 	 .init      = command_init,
 	 .release   = bar_release,
-	 .u.w.read  = command_read,
-	 .u.w.write = command_write,
-	},
-	{
+	 .u.w.पढ़ो  = command_पढ़ो,
+	 .u.w.ग_लिखो = command_ग_लिखो,
+	पूर्ण,
+	अणु
 	 .offset    = PCI_INTERRUPT_LINE,
 	 .size      = 1,
-	 .u.b.read  = interrupt_read,
-	},
-	{
+	 .u.b.पढ़ो  = पूर्णांकerrupt_पढ़ो,
+	पूर्ण,
+	अणु
 	 .offset    = PCI_INTERRUPT_PIN,
 	 .size      = 1,
-	 .u.b.read  = xen_pcibk_read_config_byte,
-	},
-	{
-	 /* Any side effects of letting driver domain control cache line? */
+	 .u.b.पढ़ो  = xen_pcibk_पढ़ो_config_byte,
+	पूर्ण,
+	अणु
+	 /* Any side effects of letting driver करोमुख्य control cache line? */
 	 .offset    = PCI_CACHE_LINE_SIZE,
 	 .size      = 1,
-	 .u.b.read  = xen_pcibk_read_config_byte,
-	 .u.b.write = xen_pcibk_write_config_byte,
-	},
-	{
+	 .u.b.पढ़ो  = xen_pcibk_पढ़ो_config_byte,
+	 .u.b.ग_लिखो = xen_pcibk_ग_लिखो_config_byte,
+	पूर्ण,
+	अणु
 	 .offset    = PCI_LATENCY_TIMER,
 	 .size      = 1,
-	 .u.b.read  = xen_pcibk_read_config_byte,
-	},
-	{
+	 .u.b.पढ़ो  = xen_pcibk_पढ़ो_config_byte,
+	पूर्ण,
+	अणु
 	 .offset    = PCI_BIST,
 	 .size      = 1,
-	 .u.b.read  = xen_pcibk_read_config_byte,
-	 .u.b.write = bist_write,
-	},
-	{}
-};
+	 .u.b.पढ़ो  = xen_pcibk_पढ़ो_config_byte,
+	 .u.b.ग_लिखो = bist_ग_लिखो,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-#define CFG_FIELD_BAR(reg_offset)			\
-	{						\
+#घोषणा CFG_FIELD_BAR(reg_offset)			\
+	अणु						\
 	.offset     = reg_offset,			\
 	.size       = 4,				\
 	.init       = bar_init,				\
 	.reset      = bar_reset,			\
 	.release    = bar_release,			\
-	.u.dw.read  = bar_read,				\
-	.u.dw.write = bar_write,			\
-	}
+	.u.dw.पढ़ो  = bar_पढ़ो,				\
+	.u.dw.ग_लिखो = bar_ग_लिखो,			\
+	पूर्ण
 
-#define CFG_FIELD_ROM(reg_offset)			\
-	{						\
+#घोषणा CFG_FIELD_ROM(reg_offset)			\
+	अणु						\
 	.offset     = reg_offset,			\
 	.size       = 4,				\
 	.init       = bar_init,				\
 	.reset      = bar_reset,			\
 	.release    = bar_release,			\
-	.u.dw.read  = bar_read,				\
-	.u.dw.write = rom_write,			\
-	}
+	.u.dw.पढ़ो  = bar_पढ़ो,				\
+	.u.dw.ग_लिखो = rom_ग_लिखो,			\
+	पूर्ण
 
-static const struct config_field header_0[] = {
+अटल स्थिर काष्ठा config_field header_0[] = अणु
 	CFG_FIELD_BAR(PCI_BASE_ADDRESS_0),
 	CFG_FIELD_BAR(PCI_BASE_ADDRESS_1),
 	CFG_FIELD_BAR(PCI_BASE_ADDRESS_2),
@@ -388,40 +389,40 @@ static const struct config_field header_0[] = {
 	CFG_FIELD_BAR(PCI_BASE_ADDRESS_4),
 	CFG_FIELD_BAR(PCI_BASE_ADDRESS_5),
 	CFG_FIELD_ROM(PCI_ROM_ADDRESS),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static const struct config_field header_1[] = {
+अटल स्थिर काष्ठा config_field header_1[] = अणु
 	CFG_FIELD_BAR(PCI_BASE_ADDRESS_0),
 	CFG_FIELD_BAR(PCI_BASE_ADDRESS_1),
 	CFG_FIELD_ROM(PCI_ROM_ADDRESS1),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-int xen_pcibk_config_header_add_fields(struct pci_dev *dev)
-{
-	int err;
+पूर्णांक xen_pcibk_config_header_add_fields(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक err;
 
 	err = xen_pcibk_config_add_fields(dev, header_common);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	switch (dev->hdr_type) {
-	case PCI_HEADER_TYPE_NORMAL:
+	चयन (dev->hdr_type) अणु
+	हाल PCI_HEADER_TYPE_NORMAL:
 		err = xen_pcibk_config_add_fields(dev, header_0);
-		break;
+		अवरोध;
 
-	case PCI_HEADER_TYPE_BRIDGE:
+	हाल PCI_HEADER_TYPE_BRIDGE:
 		err = xen_pcibk_config_add_fields(dev, header_1);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -EINVAL;
 		dev_err(&dev->dev, "Unsupported header type %d!\n",
 			dev->hdr_type);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण

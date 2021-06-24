@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *	Local APIC handling, local APIC timers
+ *	Local APIC handling, local APIC समयrs
  *
  *	(c) 1999, 2000, 2009 Ingo Molnar <mingo@redhat.com>
  *
  *	Fixes
- *	Maciej W. Rozycki	:	Bits for genuine 82489DX APICs;
+ *	Maciej W. Rozycki	:	Bits क्रम genuine 82489DX APICs;
  *					thanks to Eric Gilmore
  *					and Rolf G. Tews
- *					for testing these extensively.
+ *					क्रम testing these extensively.
  *	Maciej W. Rozycki	:	Various updates and fixes.
- *	Mikael Pettersson	:	Power Management for UP-APIC.
+ *	Mikael Pettersson	:	Power Management क्रम UP-APIC.
  *	Pavel Machek and
  *	Mikael Pettersson	:	PM converted to driver model.
  */
 
-#include <linux/perf_event.h>
-#include <linux/kernel_stat.h>
-#include <linux/mc146818rtc.h>
-#include <linux/acpi_pmtmr.h>
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/memblock.h>
-#include <linux/ftrace.h>
-#include <linux/ioport.h>
-#include <linux/export.h>
-#include <linux/syscore_ops.h>
-#include <linux/delay.h>
-#include <linux/timex.h>
-#include <linux/i8253.h>
-#include <linux/dmar.h>
-#include <linux/init.h>
-#include <linux/cpu.h>
-#include <linux/dmi.h>
-#include <linux/smp.h>
-#include <linux/mm.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/mc146818rtc.h>
+#समावेश <linux/acpi_pmपंचांगr.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/export.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/i8253.h>
+#समावेश <linux/dmar.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/mm.h>
 
-#include <asm/trace/irq_vectors.h>
-#include <asm/irq_remapping.h>
-#include <asm/perf_event.h>
-#include <asm/x86_init.h>
-#include <linux/atomic.h>
-#include <asm/barrier.h>
-#include <asm/mpspec.h>
-#include <asm/i8259.h>
-#include <asm/proto.h>
-#include <asm/traps.h>
-#include <asm/apic.h>
-#include <asm/acpi.h>
-#include <asm/io_apic.h>
-#include <asm/desc.h>
-#include <asm/hpet.h>
-#include <asm/mtrr.h>
-#include <asm/time.h>
-#include <asm/smp.h>
-#include <asm/mce.h>
-#include <asm/tsc.h>
-#include <asm/hypervisor.h>
-#include <asm/cpu_device_id.h>
-#include <asm/intel-family.h>
-#include <asm/irq_regs.h>
+#समावेश <यंत्र/trace/irq_vectors.h>
+#समावेश <यंत्र/irq_remapping.h>
+#समावेश <यंत्र/perf_event.h>
+#समावेश <यंत्र/x86_init.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/mpspec.h>
+#समावेश <यंत्र/i8259.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/acpi.h>
+#समावेश <यंत्र/io_apic.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/hpet.h>
+#समावेश <यंत्र/mtrr.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/mce.h>
+#समावेश <यंत्र/tsc.h>
+#समावेश <यंत्र/hypervisor.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
+#समावेश <यंत्र/irq_regs.h>
 
-unsigned int num_processors;
+अचिन्हित पूर्णांक num_processors;
 
-unsigned disabled_cpus;
+अचिन्हित disabled_cpus;
 
-/* Processor that is doing the boot up */
-unsigned int boot_cpu_physical_apicid __ro_after_init = -1U;
+/* Processor that is करोing the boot up */
+अचिन्हित पूर्णांक boot_cpu_physical_apicid __ro_after_init = -1U;
 EXPORT_SYMBOL_GPL(boot_cpu_physical_apicid);
 
 u8 boot_cpu_apic_version __ro_after_init;
 
 /*
- * The highest APIC ID seen during enumeration.
+ * The highest APIC ID seen during क्रमागतeration.
  */
-static unsigned int max_physical_apicid;
+अटल अचिन्हित पूर्णांक max_physical_apicid;
 
 /*
- * Bitmask of physically existing CPUs:
+ * Biपंचांगask of physically existing CPUs:
  */
 physid_mask_t phys_cpu_present_map;
 
 /*
- * Processor to be disabled specified by kernel parameter
- * disable_cpu_apicid=<int>, mostly used for the kdump 2nd kernel to
- * avoid undefined behaviour caused by sending INIT from AP to BSP.
+ * Processor to be disabled specअगरied by kernel parameter
+ * disable_cpu_apicid=<पूर्णांक>, mostly used क्रम the kdump 2nd kernel to
+ * aव्योम undefined behaviour caused by sending INIT from AP to BSP.
  */
-static unsigned int disabled_cpu_apicid __ro_after_init = BAD_APICID;
+अटल अचिन्हित पूर्णांक disabled_cpu_apicid __ro_after_init = BAD_APICID;
 
 /*
- * This variable controls which CPUs receive external NMIs.  By default,
- * external NMIs are delivered only to the BSP.
+ * This variable controls which CPUs receive बाह्यal NMIs.  By शेष,
+ * बाह्यal NMIs are delivered only to the BSP.
  */
-static int apic_extnmi __ro_after_init = APIC_EXTNMI_BSP;
+अटल पूर्णांक apic_extnmi __ro_after_init = APIC_EXTNMI_BSP;
 
 /*
  * Hypervisor supports 15 bits of APIC ID in MSI Extended Destination ID
  */
-static bool virt_ext_dest_id __ro_after_init;
+अटल bool virt_ext_dest_id __ro_after_init;
 
 /*
  * Map cpu index to physical APIC ID
@@ -109,373 +110,373 @@ EXPORT_EARLY_PER_CPU_SYMBOL(x86_cpu_to_apicid);
 EXPORT_EARLY_PER_CPU_SYMBOL(x86_bios_cpu_apicid);
 EXPORT_EARLY_PER_CPU_SYMBOL(x86_cpu_to_acpiid);
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 
 /*
  * On x86_32, the mapping between cpu and logical apicid may vary
  * depending on apic in use.  The following early percpu variable is
- * used for the mapping.  This is where the behaviors of x86_64 and 32
- * actually diverge.  Let's keep it ugly for now.
+ * used क्रम the mapping.  This is where the behaviors of x86_64 and 32
+ * actually भागerge.  Let's keep it ugly क्रम now.
  */
-DEFINE_EARLY_PER_CPU_READ_MOSTLY(int, x86_cpu_to_logical_apicid, BAD_APICID);
+DEFINE_EARLY_PER_CPU_READ_MOSTLY(पूर्णांक, x86_cpu_to_logical_apicid, BAD_APICID);
 
 /* Local APIC was disabled by the BIOS and enabled by the kernel */
-static int enabled_via_apicbase __ro_after_init;
+अटल पूर्णांक enabled_via_apicbase __ro_after_init;
 
 /*
- * Handle interrupt mode configuration register (IMCR).
- * This register controls whether the interrupt signals
+ * Handle पूर्णांकerrupt mode configuration रेजिस्टर (IMCR).
+ * This रेजिस्टर controls whether the पूर्णांकerrupt संकेतs
  * that reach the BSP come from the master PIC or from the
- * local APIC. Before entering Symmetric I/O Mode, either
- * the BIOS or the operating system must switch out of
+ * local APIC. Beक्रमe entering Symmetric I/O Mode, either
+ * the BIOS or the operating प्रणाली must चयन out of
  * PIC Mode by changing the IMCR.
  */
-static inline void imcr_pic_to_apic(void)
-{
-	/* select IMCR register */
+अटल अंतरभूत व्योम imcr_pic_to_apic(व्योम)
+अणु
+	/* select IMCR रेजिस्टर */
 	outb(0x70, 0x22);
 	/* NMI and 8259 INTR go through APIC */
 	outb(0x01, 0x23);
-}
+पूर्ण
 
-static inline void imcr_apic_to_pic(void)
-{
-	/* select IMCR register */
+अटल अंतरभूत व्योम imcr_apic_to_pic(व्योम)
+अणु
+	/* select IMCR रेजिस्टर */
 	outb(0x70, 0x22);
 	/* NMI and 8259 INTR go directly to BSP */
 	outb(0x00, 0x23);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Knob to control our willingness to enable the local APIC.
  *
- * +1=force-enable
+ * +1=क्रमce-enable
  */
-static int force_enable_local_apic __initdata;
+अटल पूर्णांक क्रमce_enable_local_apic __initdata;
 
 /*
  * APIC command line parameters
  */
-static int __init parse_lapic(char *arg)
-{
-	if (IS_ENABLED(CONFIG_X86_32) && !arg)
-		force_enable_local_apic = 1;
-	else if (arg && !strncmp(arg, "notscdeadline", 13))
+अटल पूर्णांक __init parse_lapic(अक्षर *arg)
+अणु
+	अगर (IS_ENABLED(CONFIG_X86_32) && !arg)
+		क्रमce_enable_local_apic = 1;
+	अन्यथा अगर (arg && !म_भेदन(arg, "notscdeadline", 13))
 		setup_clear_cpu_cap(X86_FEATURE_TSC_DEADLINE_TIMER);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("lapic", parse_lapic);
 
-#ifdef CONFIG_X86_64
-static int apic_calibrate_pmtmr __initdata;
-static __init int setup_apicpmtimer(char *s)
-{
-	apic_calibrate_pmtmr = 1;
-	notsc_setup(NULL);
-	return 0;
-}
-__setup("apicpmtimer", setup_apicpmtimer);
-#endif
+#अगर_घोषित CONFIG_X86_64
+अटल पूर्णांक apic_calibrate_pmपंचांगr __initdata;
+अटल __init पूर्णांक setup_apicpmसमयr(अक्षर *s)
+अणु
+	apic_calibrate_pmपंचांगr = 1;
+	notsc_setup(शून्य);
+	वापस 0;
+पूर्ण
+__setup("apicpmtimer", setup_apicpmसमयr);
+#पूर्ण_अगर
 
-unsigned long mp_lapic_addr __ro_after_init;
-int disable_apic __ro_after_init;
-/* Disable local APIC timer from the kernel commandline or via dmi quirk */
-static int disable_apic_timer __initdata;
-/* Local APIC timer works in C2 */
-int local_apic_timer_c2_ok __ro_after_init;
-EXPORT_SYMBOL_GPL(local_apic_timer_c2_ok);
+अचिन्हित दीर्घ mp_lapic_addr __ro_after_init;
+पूर्णांक disable_apic __ro_after_init;
+/* Disable local APIC समयr from the kernel commandline or via dmi quirk */
+अटल पूर्णांक disable_apic_समयr __initdata;
+/* Local APIC समयr works in C2 */
+पूर्णांक local_apic_समयr_c2_ok __ro_after_init;
+EXPORT_SYMBOL_GPL(local_apic_समयr_c2_ok);
 
 /*
- * Debug level, exported for io_apic.c
+ * Debug level, exported क्रम io_apic.c
  */
-int apic_verbosity __ro_after_init;
+पूर्णांक apic_verbosity __ro_after_init;
 
-int pic_mode __ro_after_init;
+पूर्णांक pic_mode __ro_after_init;
 
 /* Have we found an MP table */
-int smp_found_config __ro_after_init;
+पूर्णांक smp_found_config __ro_after_init;
 
-static struct resource lapic_resource = {
+अटल काष्ठा resource lapic_resource = अणु
 	.name = "Local APIC",
 	.flags = IORESOURCE_MEM | IORESOURCE_BUSY,
-};
+पूर्ण;
 
-unsigned int lapic_timer_period = 0;
+अचिन्हित पूर्णांक lapic_समयr_period = 0;
 
-static void apic_pm_activate(void);
+अटल व्योम apic_pm_activate(व्योम);
 
-static unsigned long apic_phys __ro_after_init;
+अटल अचिन्हित दीर्घ apic_phys __ro_after_init;
 
 /*
  * Get the LAPIC version
  */
-static inline int lapic_get_version(void)
-{
-	return GET_APIC_VERSION(apic_read(APIC_LVR));
-}
+अटल अंतरभूत पूर्णांक lapic_get_version(व्योम)
+अणु
+	वापस GET_APIC_VERSION(apic_पढ़ो(APIC_LVR));
+पूर्ण
 
 /*
- * Check, if the APIC is integrated or a separate chip
+ * Check, अगर the APIC is पूर्णांकegrated or a separate chip
  */
-static inline int lapic_is_integrated(void)
-{
-	return APIC_INTEGRATED(lapic_get_version());
-}
+अटल अंतरभूत पूर्णांक lapic_is_पूर्णांकegrated(व्योम)
+अणु
+	वापस APIC_INTEGRATED(lapic_get_version());
+पूर्ण
 
 /*
  * Check, whether this is a modern or a first generation APIC
  */
-static int modern_apic(void)
-{
-	/* AMD systems use old APIC versions, so check the CPU */
-	if (boot_cpu_data.x86_vendor == X86_VENDOR_AMD &&
+अटल पूर्णांक modern_apic(व्योम)
+अणु
+	/* AMD प्रणालीs use old APIC versions, so check the CPU */
+	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_AMD &&
 	    boot_cpu_data.x86 >= 0xf)
-		return 1;
+		वापस 1;
 
-	/* Hygon systems use modern APIC */
-	if (boot_cpu_data.x86_vendor == X86_VENDOR_HYGON)
-		return 1;
+	/* Hygon प्रणालीs use modern APIC */
+	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_HYGON)
+		वापस 1;
 
-	return lapic_get_version() >= 0x14;
-}
+	वापस lapic_get_version() >= 0x14;
+पूर्ण
 
 /*
  * right after this call apic become NOOP driven
- * so apic->write/read doesn't do anything
+ * so apic->ग_लिखो/पढ़ो करोesn't करो anything
  */
-static void __init apic_disable(void)
-{
+अटल व्योम __init apic_disable(व्योम)
+अणु
 	pr_info("APIC: switched to apic NOOP\n");
 	apic = &apic_noop;
-}
+पूर्ण
 
-void native_apic_wait_icr_idle(void)
-{
-	while (apic_read(APIC_ICR) & APIC_ICR_BUSY)
+व्योम native_apic_रुको_icr_idle(व्योम)
+अणु
+	जबतक (apic_पढ़ो(APIC_ICR) & APIC_ICR_BUSY)
 		cpu_relax();
-}
+पूर्ण
 
-u32 native_safe_apic_wait_icr_idle(void)
-{
+u32 native_safe_apic_रुको_icr_idle(व्योम)
+अणु
 	u32 send_status;
-	int timeout;
+	पूर्णांक समयout;
 
-	timeout = 0;
-	do {
-		send_status = apic_read(APIC_ICR) & APIC_ICR_BUSY;
-		if (!send_status)
-			break;
-		inc_irq_stat(icr_read_retry_count);
+	समयout = 0;
+	करो अणु
+		send_status = apic_पढ़ो(APIC_ICR) & APIC_ICR_BUSY;
+		अगर (!send_status)
+			अवरोध;
+		inc_irq_stat(icr_पढ़ो_retry_count);
 		udelay(100);
-	} while (timeout++ < 1000);
+	पूर्ण जबतक (समयout++ < 1000);
 
-	return send_status;
-}
+	वापस send_status;
+पूर्ण
 
-void native_apic_icr_write(u32 low, u32 id)
-{
-	unsigned long flags;
+व्योम native_apic_icr_ग_लिखो(u32 low, u32 id)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	apic_write(APIC_ICR2, SET_APIC_DEST_FIELD(id));
-	apic_write(APIC_ICR, low);
+	apic_ग_लिखो(APIC_ICR2, SET_APIC_DEST_FIELD(id));
+	apic_ग_लिखो(APIC_ICR, low);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-u64 native_apic_icr_read(void)
-{
+u64 native_apic_icr_पढ़ो(व्योम)
+अणु
 	u32 icr1, icr2;
 
-	icr2 = apic_read(APIC_ICR2);
-	icr1 = apic_read(APIC_ICR);
+	icr2 = apic_पढ़ो(APIC_ICR2);
+	icr1 = apic_पढ़ो(APIC_ICR);
 
-	return icr1 | ((u64)icr2 << 32);
-}
+	वापस icr1 | ((u64)icr2 << 32);
+पूर्ण
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 /**
  * get_physical_broadcast - Get number of physical broadcast IDs
  */
-int get_physical_broadcast(void)
-{
-	return modern_apic() ? 0xff : 0xf;
-}
-#endif
+पूर्णांक get_physical_broadcast(व्योम)
+अणु
+	वापस modern_apic() ? 0xff : 0xf;
+पूर्ण
+#पूर्ण_अगर
 
 /**
  * lapic_get_maxlvt - get the maximum number of local vector table entries
  */
-int lapic_get_maxlvt(void)
-{
+पूर्णांक lapic_get_maxlvt(व्योम)
+अणु
 	/*
-	 * - we always have APIC integrated on 64bit mode
-	 * - 82489DXs do not report # of LVT entries
+	 * - we always have APIC पूर्णांकegrated on 64bit mode
+	 * - 82489DXs करो not report # of LVT entries
 	 */
-	return lapic_is_integrated() ? GET_APIC_MAXLVT(apic_read(APIC_LVR)) : 2;
-}
+	वापस lapic_is_पूर्णांकegrated() ? GET_APIC_MAXLVT(apic_पढ़ो(APIC_LVR)) : 2;
+पूर्ण
 
 /*
- * Local APIC timer
+ * Local APIC समयr
  */
 
-/* Clock divisor */
-#define APIC_DIVISOR 16
-#define TSC_DIVISOR  8
+/* Clock भागisor */
+#घोषणा APIC_DIVISOR 16
+#घोषणा TSC_DIVISOR  8
 
 /*
- * This function sets up the local APIC timer, with a timeout of
- * 'clocks' APIC bus clock. During calibration we actually call
- * this function twice on the boot CPU, once with a bogus timeout
- * value, second time for real. The other (noncalibrating) CPUs
+ * This function sets up the local APIC समयr, with a समयout of
+ * 'clocks' APIC bus घड़ी. During calibration we actually call
+ * this function twice on the boot CPU, once with a bogus समयout
+ * value, second समय क्रम real. The other (noncalibrating) CPUs
  * call this function only once, with the real, calibrated value.
  *
- * We do reads before writes even if unnecessary, to get around the
- * P5 APIC double write bug.
+ * We करो पढ़ोs beक्रमe ग_लिखोs even अगर unnecessary, to get around the
+ * P5 APIC द्विगुन ग_लिखो bug.
  */
-static void __setup_APIC_LVTT(unsigned int clocks, int oneshot, int irqen)
-{
-	unsigned int lvtt_value, tmp_value;
+अटल व्योम __setup_APIC_LVTT(अचिन्हित पूर्णांक घड़ीs, पूर्णांक oneshot, पूर्णांक irqen)
+अणु
+	अचिन्हित पूर्णांक lvtt_value, पंचांगp_value;
 
 	lvtt_value = LOCAL_TIMER_VECTOR;
-	if (!oneshot)
+	अगर (!oneshot)
 		lvtt_value |= APIC_LVT_TIMER_PERIODIC;
-	else if (boot_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
+	अन्यथा अगर (boot_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
 		lvtt_value |= APIC_LVT_TIMER_TSCDEADLINE;
 
-	if (!lapic_is_integrated())
+	अगर (!lapic_is_पूर्णांकegrated())
 		lvtt_value |= SET_APIC_TIMER_BASE(APIC_TIMER_BASE_DIV);
 
-	if (!irqen)
+	अगर (!irqen)
 		lvtt_value |= APIC_LVT_MASKED;
 
-	apic_write(APIC_LVTT, lvtt_value);
+	apic_ग_लिखो(APIC_LVTT, lvtt_value);
 
-	if (lvtt_value & APIC_LVT_TIMER_TSCDEADLINE) {
+	अगर (lvtt_value & APIC_LVT_TIMER_TSCDEADLINE) अणु
 		/*
 		 * See Intel SDM: TSC-Deadline Mode chapter. In xAPIC mode,
 		 * writing to the APIC LVTT and TSC_DEADLINE MSR isn't serialized.
-		 * According to Intel, MFENCE can do the serialization here.
+		 * According to Intel, MFENCE can करो the serialization here.
 		 */
-		asm volatile("mfence" : : : "memory");
-		return;
-	}
+		यंत्र अस्थिर("mfence" : : : "memory");
+		वापस;
+	पूर्ण
 
 	/*
 	 * Divide PICLK by 16
 	 */
-	tmp_value = apic_read(APIC_TDCR);
-	apic_write(APIC_TDCR,
-		(tmp_value & ~(APIC_TDR_DIV_1 | APIC_TDR_DIV_TMBASE)) |
+	पंचांगp_value = apic_पढ़ो(APIC_TDCR);
+	apic_ग_लिखो(APIC_TDCR,
+		(पंचांगp_value & ~(APIC_TDR_DIV_1 | APIC_TDR_DIV_TMBASE)) |
 		APIC_TDR_DIV_16);
 
-	if (!oneshot)
-		apic_write(APIC_TMICT, clocks / APIC_DIVISOR);
-}
+	अगर (!oneshot)
+		apic_ग_लिखो(APIC_TMICT, घड़ीs / APIC_DIVISOR);
+पूर्ण
 
 /*
- * Setup extended LVT, AMD specific
+ * Setup extended LVT, AMD specअगरic
  *
  * Software should use the LVT offsets the BIOS provides.  The offsets
- * are determined by the subsystems using it like those for MCE
- * threshold or IBS.  On K8 only offset 0 (APIC500) and MCE interrupts
+ * are determined by the subप्रणालीs using it like those क्रम MCE
+ * threshold or IBS.  On K8 only offset 0 (APIC500) and MCE पूर्णांकerrupts
  * are supported. Beginning with family 10h at least 4 offsets are
  * available.
  *
- * Since the offsets must be consistent for all cores, we keep track
- * of the LVT offsets in software and reserve the offset for the same
- * vector also to be used on other cores. An offset is freed by
+ * Since the offsets must be consistent क्रम all cores, we keep track
+ * of the LVT offsets in software and reserve the offset क्रम the same
+ * vector also to be used on other cores. An offset is मुक्तd by
  * setting the entry to APIC_EILVT_MASKED.
  *
  * If the BIOS is right, there should be no conflicts. Otherwise a
- * "[Firmware Bug]: ..." error message is generated. However, if
- * software does not properly determines the offsets, it is not
+ * "[Firmware Bug]: ..." error message is generated. However, अगर
+ * software करोes not properly determines the offsets, it is not
  * necessarily a BIOS bug.
  */
 
-static atomic_t eilvt_offsets[APIC_EILVT_NR_MAX];
+अटल atomic_t eilvt_offsets[APIC_EILVT_NR_MAX];
 
-static inline int eilvt_entry_is_changeable(unsigned int old, unsigned int new)
-{
-	return (old & APIC_EILVT_MASKED)
+अटल अंतरभूत पूर्णांक eilvt_entry_is_changeable(अचिन्हित पूर्णांक old, अचिन्हित पूर्णांक new)
+अणु
+	वापस (old & APIC_EILVT_MASKED)
 		|| (new == APIC_EILVT_MASKED)
 		|| ((new & ~APIC_EILVT_MASKED) == old);
-}
+पूर्ण
 
-static unsigned int reserve_eilvt_offset(int offset, unsigned int new)
-{
-	unsigned int rsvd, vector;
+अटल अचिन्हित पूर्णांक reserve_eilvt_offset(पूर्णांक offset, अचिन्हित पूर्णांक new)
+अणु
+	अचिन्हित पूर्णांक rsvd, vector;
 
-	if (offset >= APIC_EILVT_NR_MAX)
-		return ~0;
+	अगर (offset >= APIC_EILVT_NR_MAX)
+		वापस ~0;
 
-	rsvd = atomic_read(&eilvt_offsets[offset]);
-	do {
-		vector = rsvd & ~APIC_EILVT_MASKED;	/* 0: unassigned */
-		if (vector && !eilvt_entry_is_changeable(vector, new))
-			/* may not change if vectors are different */
-			return rsvd;
+	rsvd = atomic_पढ़ो(&eilvt_offsets[offset]);
+	करो अणु
+		vector = rsvd & ~APIC_EILVT_MASKED;	/* 0: unasचिन्हित */
+		अगर (vector && !eilvt_entry_is_changeable(vector, new))
+			/* may not change अगर vectors are dअगरferent */
+			वापस rsvd;
 		rsvd = atomic_cmpxchg(&eilvt_offsets[offset], rsvd, new);
-	} while (rsvd != new);
+	पूर्ण जबतक (rsvd != new);
 
 	rsvd &= ~APIC_EILVT_MASKED;
-	if (rsvd && rsvd != vector)
+	अगर (rsvd && rsvd != vector)
 		pr_info("LVT offset %d assigned for vector 0x%02x\n",
 			offset, rsvd);
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
 /*
- * If mask=1, the LVT entry does not generate interrupts while mask=0
+ * If mask=1, the LVT entry करोes not generate पूर्णांकerrupts जबतक mask=0
  * enables the vector. See also the BKDGs. Must be called with
  * preemption disabled.
  */
 
-int setup_APIC_eilvt(u8 offset, u8 vector, u8 msg_type, u8 mask)
-{
-	unsigned long reg = APIC_EILVTn(offset);
-	unsigned int new, old, reserved;
+पूर्णांक setup_APIC_eilvt(u8 offset, u8 vector, u8 msg_type, u8 mask)
+अणु
+	अचिन्हित दीर्घ reg = APIC_EILVTn(offset);
+	अचिन्हित पूर्णांक new, old, reserved;
 
 	new = (mask << 16) | (msg_type << 8) | vector;
-	old = apic_read(reg);
+	old = apic_पढ़ो(reg);
 	reserved = reserve_eilvt_offset(offset, new);
 
-	if (reserved != new) {
+	अगर (reserved != new) अणु
 		pr_err(FW_BUG "cpu %d, try to use APIC%lX (LVT offset %d) for "
 		       "vector 0x%x, but the register is already in use for "
 		       "vector 0x%x on another cpu\n",
 		       smp_processor_id(), reg, offset, new, reserved);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!eilvt_entry_is_changeable(old, new)) {
+	अगर (!eilvt_entry_is_changeable(old, new)) अणु
 		pr_err(FW_BUG "cpu %d, try to use APIC%lX (LVT offset %d) for "
 		       "vector 0x%x, but the register is already in use for "
 		       "vector 0x%x on this cpu\n",
 		       smp_processor_id(), reg, offset, new, old);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	apic_write(reg, new);
+	apic_ग_लिखो(reg, new);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(setup_APIC_eilvt);
 
 /*
  * Program the next event, relative to now
  */
-static int lapic_next_event(unsigned long delta,
-			    struct clock_event_device *evt)
-{
-	apic_write(APIC_TMICT, delta);
-	return 0;
-}
+अटल पूर्णांक lapic_next_event(अचिन्हित दीर्घ delta,
+			    काष्ठा घड़ी_event_device *evt)
+अणु
+	apic_ग_लिखो(APIC_TMICT, delta);
+	वापस 0;
+पूर्ण
 
-static int lapic_next_deadline(unsigned long delta,
-			       struct clock_event_device *evt)
-{
+अटल पूर्णांक lapic_next_deadline(अचिन्हित दीर्घ delta,
+			       काष्ठा घड़ी_event_device *evt)
+अणु
 	u64 tsc;
 
 	/* This MSR is special and need a special fence: */
@@ -483,77 +484,77 @@ static int lapic_next_deadline(unsigned long delta,
 
 	tsc = rdtsc();
 	wrmsrl(MSR_IA32_TSC_DEADLINE, tsc + (((u64) delta) * TSC_DIVISOR));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lapic_timer_shutdown(struct clock_event_device *evt)
-{
-	unsigned int v;
+अटल पूर्णांक lapic_समयr_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	अचिन्हित पूर्णांक v;
 
-	/* Lapic used as dummy for broadcast ? */
-	if (evt->features & CLOCK_EVT_FEAT_DUMMY)
-		return 0;
+	/* Lapic used as dummy क्रम broadcast ? */
+	अगर (evt->features & CLOCK_EVT_FEAT_DUMMY)
+		वापस 0;
 
-	v = apic_read(APIC_LVTT);
+	v = apic_पढ़ो(APIC_LVTT);
 	v |= (APIC_LVT_MASKED | LOCAL_TIMER_VECTOR);
-	apic_write(APIC_LVTT, v);
-	apic_write(APIC_TMICT, 0);
-	return 0;
-}
+	apic_ग_लिखो(APIC_LVTT, v);
+	apic_ग_लिखो(APIC_TMICT, 0);
+	वापस 0;
+पूर्ण
 
-static inline int
-lapic_timer_set_periodic_oneshot(struct clock_event_device *evt, bool oneshot)
-{
-	/* Lapic used as dummy for broadcast ? */
-	if (evt->features & CLOCK_EVT_FEAT_DUMMY)
-		return 0;
+अटल अंतरभूत पूर्णांक
+lapic_समयr_set_periodic_oneshot(काष्ठा घड़ी_event_device *evt, bool oneshot)
+अणु
+	/* Lapic used as dummy क्रम broadcast ? */
+	अगर (evt->features & CLOCK_EVT_FEAT_DUMMY)
+		वापस 0;
 
-	__setup_APIC_LVTT(lapic_timer_period, oneshot, 1);
-	return 0;
-}
+	__setup_APIC_LVTT(lapic_समयr_period, oneshot, 1);
+	वापस 0;
+पूर्ण
 
-static int lapic_timer_set_periodic(struct clock_event_device *evt)
-{
-	return lapic_timer_set_periodic_oneshot(evt, false);
-}
+अटल पूर्णांक lapic_समयr_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	वापस lapic_समयr_set_periodic_oneshot(evt, false);
+पूर्ण
 
-static int lapic_timer_set_oneshot(struct clock_event_device *evt)
-{
-	return lapic_timer_set_periodic_oneshot(evt, true);
-}
+अटल पूर्णांक lapic_समयr_set_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	वापस lapic_समयr_set_periodic_oneshot(evt, true);
+पूर्ण
 
 /*
- * Local APIC timer broadcast function
+ * Local APIC समयr broadcast function
  */
-static void lapic_timer_broadcast(const struct cpumask *mask)
-{
-#ifdef CONFIG_SMP
+अटल व्योम lapic_समयr_broadcast(स्थिर काष्ठा cpumask *mask)
+अणु
+#अगर_घोषित CONFIG_SMP
 	apic->send_IPI_mask(mask, LOCAL_TIMER_VECTOR);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 
 /*
- * The local apic timer can be used for any function which is CPU local.
+ * The local apic समयr can be used क्रम any function which is CPU local.
  */
-static struct clock_event_device lapic_clockevent = {
+अटल काष्ठा घड़ी_event_device lapic_घड़ीevent = अणु
 	.name				= "lapic",
 	.features			= CLOCK_EVT_FEAT_PERIODIC |
 					  CLOCK_EVT_FEAT_ONESHOT | CLOCK_EVT_FEAT_C3STOP
 					  | CLOCK_EVT_FEAT_DUMMY,
-	.shift				= 32,
-	.set_state_shutdown		= lapic_timer_shutdown,
-	.set_state_periodic		= lapic_timer_set_periodic,
-	.set_state_oneshot		= lapic_timer_set_oneshot,
-	.set_state_oneshot_stopped	= lapic_timer_shutdown,
+	.shअगरt				= 32,
+	.set_state_shutकरोwn		= lapic_समयr_shutकरोwn,
+	.set_state_periodic		= lapic_समयr_set_periodic,
+	.set_state_oneshot		= lapic_समयr_set_oneshot,
+	.set_state_oneshot_stopped	= lapic_समयr_shutकरोwn,
 	.set_next_event			= lapic_next_event,
-	.broadcast			= lapic_timer_broadcast,
+	.broadcast			= lapic_समयr_broadcast,
 	.rating				= 100,
 	.irq				= -1,
-};
-static DEFINE_PER_CPU(struct clock_event_device, lapic_events);
+पूर्ण;
+अटल DEFINE_PER_CPU(काष्ठा घड़ी_event_device, lapic_events);
 
-static const struct x86_cpu_id deadline_match[] __initconst = {
+अटल स्थिर काष्ठा x86_cpu_id deadline_match[] __initस्थिर = अणु
 	X86_MATCH_INTEL_FAM6_MODEL_STEPPINGS(HASWELL_X, X86_STEPPINGS(0x2, 0x2), 0x3a), /* EP */
 	X86_MATCH_INTEL_FAM6_MODEL_STEPPINGS(HASWELL_X, X86_STEPPINGS(0x4, 0x4), 0x0f), /* EX */
 
@@ -581,289 +582,289 @@ static const struct x86_cpu_id deadline_match[] __initconst = {
 	X86_MATCH_INTEL_FAM6_MODEL( KABYLAKE_L,		0x52),
 	X86_MATCH_INTEL_FAM6_MODEL( KABYLAKE,		0x52),
 
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-static __init bool apic_validate_deadline_timer(void)
-{
-	const struct x86_cpu_id *m;
+अटल __init bool apic_validate_deadline_समयr(व्योम)
+अणु
+	स्थिर काष्ठा x86_cpu_id *m;
 	u32 rev;
 
-	if (!boot_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
-		return false;
-	if (boot_cpu_has(X86_FEATURE_HYPERVISOR))
-		return true;
+	अगर (!boot_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
+		वापस false;
+	अगर (boot_cpu_has(X86_FEATURE_HYPERVISOR))
+		वापस true;
 
 	m = x86_match_cpu(deadline_match);
-	if (!m)
-		return true;
+	अगर (!m)
+		वापस true;
 
 	rev = (u32)m->driver_data;
 
-	if (boot_cpu_data.microcode >= rev)
-		return true;
+	अगर (boot_cpu_data.microcode >= rev)
+		वापस true;
 
 	setup_clear_cpu_cap(X86_FEATURE_TSC_DEADLINE_TIMER);
 	pr_err(FW_BUG "TSC_DEADLINE disabled due to Errata; "
 	       "please update microcode to version: 0x%x (or later)\n", rev);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Setup the local APIC timer for this CPU. Copy the initialized values
- * of the boot CPU and register the clock event in the framework.
+ * Setup the local APIC समयr क्रम this CPU. Copy the initialized values
+ * of the boot CPU and रेजिस्टर the घड़ी event in the framework.
  */
-static void setup_APIC_timer(void)
-{
-	struct clock_event_device *levt = this_cpu_ptr(&lapic_events);
+अटल व्योम setup_APIC_समयr(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *levt = this_cpu_ptr(&lapic_events);
 
-	if (this_cpu_has(X86_FEATURE_ARAT)) {
-		lapic_clockevent.features &= ~CLOCK_EVT_FEAT_C3STOP;
-		/* Make LAPIC timer preferable over percpu HPET */
-		lapic_clockevent.rating = 150;
-	}
+	अगर (this_cpu_has(X86_FEATURE_ARAT)) अणु
+		lapic_घड़ीevent.features &= ~CLOCK_EVT_FEAT_C3STOP;
+		/* Make LAPIC समयr preferable over percpu HPET */
+		lapic_घड़ीevent.rating = 150;
+	पूर्ण
 
-	memcpy(levt, &lapic_clockevent, sizeof(*levt));
+	स_नकल(levt, &lapic_घड़ीevent, माप(*levt));
 	levt->cpumask = cpumask_of(smp_processor_id());
 
-	if (this_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER)) {
+	अगर (this_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER)) अणु
 		levt->name = "lapic-deadline";
 		levt->features &= ~(CLOCK_EVT_FEAT_PERIODIC |
 				    CLOCK_EVT_FEAT_DUMMY);
 		levt->set_next_event = lapic_next_deadline;
-		clockevents_config_and_register(levt,
+		घड़ीevents_config_and_रेजिस्टर(levt,
 						tsc_khz * (1000 / TSC_DIVISOR),
 						0xF, ~0UL);
-	} else
-		clockevents_register_device(levt);
-}
+	पूर्ण अन्यथा
+		घड़ीevents_रेजिस्टर_device(levt);
+पूर्ण
 
 /*
  * Install the updated TSC frequency from recalibration at the TSC
- * deadline clockevent devices.
+ * deadline घड़ीevent devices.
  */
-static void __lapic_update_tsc_freq(void *info)
-{
-	struct clock_event_device *levt = this_cpu_ptr(&lapic_events);
+अटल व्योम __lapic_update_tsc_freq(व्योम *info)
+अणु
+	काष्ठा घड़ी_event_device *levt = this_cpu_ptr(&lapic_events);
 
-	if (!this_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
-		return;
+	अगर (!this_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
+		वापस;
 
-	clockevents_update_freq(levt, tsc_khz * (1000 / TSC_DIVISOR));
-}
+	घड़ीevents_update_freq(levt, tsc_khz * (1000 / TSC_DIVISOR));
+पूर्ण
 
-void lapic_update_tsc_freq(void)
-{
+व्योम lapic_update_tsc_freq(व्योम)
+अणु
 	/*
-	 * The clockevent device's ->mult and ->shift can both be
-	 * changed. In order to avoid races, schedule the frequency
+	 * The घड़ीevent device's ->mult and ->shअगरt can both be
+	 * changed. In order to aव्योम races, schedule the frequency
 	 * update code on each CPU.
 	 */
-	on_each_cpu(__lapic_update_tsc_freq, NULL, 0);
-}
+	on_each_cpu(__lapic_update_tsc_freq, शून्य, 0);
+पूर्ण
 
 /*
- * In this functions we calibrate APIC bus clocks to the external timer.
+ * In this functions we calibrate APIC bus घड़ीs to the बाह्यal समयr.
  *
- * We want to do the calibration only once since we want to have local timer
+ * We want to करो the calibration only once since we want to have local समयr
  * irqs synchronous. CPUs connected by the same APIC bus have the very same bus
  * frequency.
  *
- * This was previously done by reading the PIT/HPET and waiting for a wrap
+ * This was previously करोne by पढ़ोing the PIT/HPET and रुकोing क्रम a wrap
  * around to find out, that a tick has elapsed. I have a box, where the PIT
- * readout is broken, so it never gets out of the wait loop again. This was
+ * पढ़ोout is broken, so it never माला_लो out of the रुको loop again. This was
  * also reported by others.
  *
- * Monitoring the jiffies value is inaccurate and the clockevents
- * infrastructure allows us to do a simple substitution of the interrupt
+ * Monitoring the jअगरfies value is inaccurate and the घड़ीevents
+ * infraकाष्ठाure allows us to करो a simple substitution of the पूर्णांकerrupt
  * handler.
  *
- * The calibration routine also uses the pm_timer when possible, as the PIT
+ * The calibration routine also uses the pm_समयr when possible, as the PIT
  * happens to run way too slow (factor 2.3 on my VAIO CoreDuo, which goes
  * back to normal later in the boot process).
  */
 
-#define LAPIC_CAL_LOOPS		(HZ/10)
+#घोषणा LAPIC_CAL_LOOPS		(HZ/10)
 
-static __initdata int lapic_cal_loops = -1;
-static __initdata long lapic_cal_t1, lapic_cal_t2;
-static __initdata unsigned long long lapic_cal_tsc1, lapic_cal_tsc2;
-static __initdata unsigned long lapic_cal_pm1, lapic_cal_pm2;
-static __initdata unsigned long lapic_cal_j1, lapic_cal_j2;
+अटल __initdata पूर्णांक lapic_cal_loops = -1;
+अटल __initdata दीर्घ lapic_cal_t1, lapic_cal_t2;
+अटल __initdata अचिन्हित दीर्घ दीर्घ lapic_cal_tsc1, lapic_cal_tsc2;
+अटल __initdata अचिन्हित दीर्घ lapic_cal_pm1, lapic_cal_pm2;
+अटल __initdata अचिन्हित दीर्घ lapic_cal_j1, lapic_cal_j2;
 
 /*
- * Temporary interrupt handler and polled calibration function.
+ * Temporary पूर्णांकerrupt handler and polled calibration function.
  */
-static void __init lapic_cal_handler(struct clock_event_device *dev)
-{
-	unsigned long long tsc = 0;
-	long tapic = apic_read(APIC_TMCCT);
-	unsigned long pm = acpi_pm_read_early();
+अटल व्योम __init lapic_cal_handler(काष्ठा घड़ी_event_device *dev)
+अणु
+	अचिन्हित दीर्घ दीर्घ tsc = 0;
+	दीर्घ tapic = apic_पढ़ो(APIC_TMCCT);
+	अचिन्हित दीर्घ pm = acpi_pm_पढ़ो_early();
 
-	if (boot_cpu_has(X86_FEATURE_TSC))
+	अगर (boot_cpu_has(X86_FEATURE_TSC))
 		tsc = rdtsc();
 
-	switch (lapic_cal_loops++) {
-	case 0:
+	चयन (lapic_cal_loops++) अणु
+	हाल 0:
 		lapic_cal_t1 = tapic;
 		lapic_cal_tsc1 = tsc;
 		lapic_cal_pm1 = pm;
-		lapic_cal_j1 = jiffies;
-		break;
+		lapic_cal_j1 = jअगरfies;
+		अवरोध;
 
-	case LAPIC_CAL_LOOPS:
+	हाल LAPIC_CAL_LOOPS:
 		lapic_cal_t2 = tapic;
 		lapic_cal_tsc2 = tsc;
-		if (pm < lapic_cal_pm1)
+		अगर (pm < lapic_cal_pm1)
 			pm += ACPI_PM_OVRRUN;
 		lapic_cal_pm2 = pm;
-		lapic_cal_j2 = jiffies;
-		break;
-	}
-}
+		lapic_cal_j2 = jअगरfies;
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int __init
-calibrate_by_pmtimer(long deltapm, long *delta, long *deltatsc)
-{
-	const long pm_100ms = PMTMR_TICKS_PER_SEC / 10;
-	const long pm_thresh = pm_100ms / 100;
-	unsigned long mult;
+अटल पूर्णांक __init
+calibrate_by_pmसमयr(दीर्घ deltapm, दीर्घ *delta, दीर्घ *deltatsc)
+अणु
+	स्थिर दीर्घ pm_100ms = PMTMR_TICKS_PER_SEC / 10;
+	स्थिर दीर्घ pm_thresh = pm_100ms / 100;
+	अचिन्हित दीर्घ mult;
 	u64 res;
 
-#ifndef CONFIG_X86_PM_TIMER
-	return -1;
-#endif
+#अगर_अघोषित CONFIG_X86_PM_TIMER
+	वापस -1;
+#पूर्ण_अगर
 
-	apic_printk(APIC_VERBOSE, "... PM-Timer delta = %ld\n", deltapm);
+	apic_prपूर्णांकk(APIC_VERBOSE, "... PM-Timer delta = %ld\n", deltapm);
 
-	/* Check, if the PM timer is available */
-	if (!deltapm)
-		return -1;
+	/* Check, अगर the PM समयr is available */
+	अगर (!deltapm)
+		वापस -1;
 
-	mult = clocksource_hz2mult(PMTMR_TICKS_PER_SEC, 22);
+	mult = घड़ीsource_hz2mult(PMTMR_TICKS_PER_SEC, 22);
 
-	if (deltapm > (pm_100ms - pm_thresh) &&
-	    deltapm < (pm_100ms + pm_thresh)) {
-		apic_printk(APIC_VERBOSE, "... PM-Timer result ok\n");
-		return 0;
-	}
+	अगर (deltapm > (pm_100ms - pm_thresh) &&
+	    deltapm < (pm_100ms + pm_thresh)) अणु
+		apic_prपूर्णांकk(APIC_VERBOSE, "... PM-Timer result ok\n");
+		वापस 0;
+	पूर्ण
 
 	res = (((u64)deltapm) *  mult) >> 22;
-	do_div(res, 1000000);
+	करो_भाग(res, 1000000);
 	pr_warn("APIC calibration not consistent "
-		"with PM-Timer: %ldms instead of 100ms\n", (long)res);
+		"with PM-Timer: %ldms instead of 100ms\n", (दीर्घ)res);
 
 	/* Correct the lapic counter value */
 	res = (((u64)(*delta)) * pm_100ms);
-	do_div(res, deltapm);
+	करो_भाग(res, deltapm);
 	pr_info("APIC delta adjusted to PM-Timer: "
-		"%lu (%ld)\n", (unsigned long)res, *delta);
-	*delta = (long)res;
+		"%lu (%ld)\n", (अचिन्हित दीर्घ)res, *delta);
+	*delta = (दीर्घ)res;
 
 	/* Correct the tsc counter value */
-	if (boot_cpu_has(X86_FEATURE_TSC)) {
+	अगर (boot_cpu_has(X86_FEATURE_TSC)) अणु
 		res = (((u64)(*deltatsc)) * pm_100ms);
-		do_div(res, deltapm);
-		apic_printk(APIC_VERBOSE, "TSC delta adjusted to "
+		करो_भाग(res, deltapm);
+		apic_prपूर्णांकk(APIC_VERBOSE, "TSC delta adjusted to "
 					  "PM-Timer: %lu (%ld)\n",
-					(unsigned long)res, *deltatsc);
-		*deltatsc = (long)res;
-	}
+					(अचिन्हित दीर्घ)res, *deltatsc);
+		*deltatsc = (दीर्घ)res;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init lapic_init_clockevent(void)
-{
-	if (!lapic_timer_period)
-		return -1;
+अटल पूर्णांक __init lapic_init_घड़ीevent(व्योम)
+अणु
+	अगर (!lapic_समयr_period)
+		वापस -1;
 
 	/* Calculate the scaled math multiplication factor */
-	lapic_clockevent.mult = div_sc(lapic_timer_period/APIC_DIVISOR,
-					TICK_NSEC, lapic_clockevent.shift);
-	lapic_clockevent.max_delta_ns =
-		clockevent_delta2ns(0x7FFFFFFF, &lapic_clockevent);
-	lapic_clockevent.max_delta_ticks = 0x7FFFFFFF;
-	lapic_clockevent.min_delta_ns =
-		clockevent_delta2ns(0xF, &lapic_clockevent);
-	lapic_clockevent.min_delta_ticks = 0xF;
+	lapic_घड़ीevent.mult = भाग_sc(lapic_समयr_period/APIC_DIVISOR,
+					TICK_NSEC, lapic_घड़ीevent.shअगरt);
+	lapic_घड़ीevent.max_delta_ns =
+		घड़ीevent_delta2ns(0x7FFFFFFF, &lapic_घड़ीevent);
+	lapic_घड़ीevent.max_delta_ticks = 0x7FFFFFFF;
+	lapic_घड़ीevent.min_delta_ns =
+		घड़ीevent_delta2ns(0xF, &lapic_घड़ीevent);
+	lapic_घड़ीevent.min_delta_ticks = 0xF;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool __init apic_needs_pit(void)
-{
+bool __init apic_needs_pit(व्योम)
+अणु
 	/*
-	 * If the frequencies are not known, PIT is required for both TSC
-	 * and apic timer calibration.
+	 * If the frequencies are not known, PIT is required क्रम both TSC
+	 * and apic समयr calibration.
 	 */
-	if (!tsc_khz || !cpu_khz)
-		return true;
+	अगर (!tsc_khz || !cpu_khz)
+		वापस true;
 
 	/* Is there an APIC at all or is it disabled? */
-	if (!boot_cpu_has(X86_FEATURE_APIC) || disable_apic)
-		return true;
+	अगर (!boot_cpu_has(X86_FEATURE_APIC) || disable_apic)
+		वापस true;
 
 	/*
-	 * If interrupt delivery mode is legacy PIC or virtual wire without
-	 * configuration, the local APIC timer wont be set up. Make sure
+	 * If पूर्णांकerrupt delivery mode is legacy PIC or भव wire without
+	 * configuration, the local APIC समयr wont be set up. Make sure
 	 * that the PIT is initialized.
 	 */
-	if (apic_intr_mode == APIC_PIC ||
-	    apic_intr_mode == APIC_VIRTUAL_WIRE_NO_CONFIG)
-		return true;
+	अगर (apic_पूर्णांकr_mode == APIC_PIC ||
+	    apic_पूर्णांकr_mode == APIC_VIRTUAL_WIRE_NO_CONFIG)
+		वापस true;
 
 	/* Virt guests may lack ARAT, but still have DEADLINE */
-	if (!boot_cpu_has(X86_FEATURE_ARAT))
-		return true;
+	अगर (!boot_cpu_has(X86_FEATURE_ARAT))
+		वापस true;
 
-	/* Deadline timer is based on TSC so no further PIT action required */
-	if (boot_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
-		return false;
+	/* Deadline समयr is based on TSC so no further PIT action required */
+	अगर (boot_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
+		वापस false;
 
-	/* APIC timer disabled? */
-	if (disable_apic_timer)
-		return true;
+	/* APIC समयr disabled? */
+	अगर (disable_apic_समयr)
+		वापस true;
 	/*
-	 * The APIC timer frequency is known already, no PIT calibration
+	 * The APIC समयr frequency is known alपढ़ोy, no PIT calibration
 	 * required. If unknown, let the PIT be initialized.
 	 */
-	return lapic_timer_period == 0;
-}
+	वापस lapic_समयr_period == 0;
+पूर्ण
 
-static int __init calibrate_APIC_clock(void)
-{
-	struct clock_event_device *levt = this_cpu_ptr(&lapic_events);
+अटल पूर्णांक __init calibrate_APIC_घड़ी(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *levt = this_cpu_ptr(&lapic_events);
 	u64 tsc_perj = 0, tsc_start = 0;
-	unsigned long jif_start;
-	unsigned long deltaj;
-	long delta, deltatsc;
-	int pm_referenced = 0;
+	अचिन्हित दीर्घ jअगर_start;
+	अचिन्हित दीर्घ deltaj;
+	दीर्घ delta, deltatsc;
+	पूर्णांक pm_referenced = 0;
 
-	if (boot_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
-		return 0;
+	अगर (boot_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
+		वापस 0;
 
 	/*
-	 * Check if lapic timer has already been calibrated by platform
-	 * specific routine, such as tsc calibration code. If so just fill
-	 * in the clockevent structure and return.
+	 * Check अगर lapic समयr has alपढ़ोy been calibrated by platक्रमm
+	 * specअगरic routine, such as tsc calibration code. If so just fill
+	 * in the घड़ीevent काष्ठाure and वापस.
 	 */
-	if (!lapic_init_clockevent()) {
-		apic_printk(APIC_VERBOSE, "lapic timer already calibrated %d\n",
-			    lapic_timer_period);
+	अगर (!lapic_init_घड़ीevent()) अणु
+		apic_prपूर्णांकk(APIC_VERBOSE, "lapic timer already calibrated %d\n",
+			    lapic_समयr_period);
 		/*
 		 * Direct calibration methods must have an always running
-		 * local APIC timer, no need for broadcast timer.
+		 * local APIC समयr, no need क्रम broadcast समयr.
 		 */
-		lapic_clockevent.features &= ~CLOCK_EVT_FEAT_DUMMY;
-		return 0;
-	}
+		lapic_घड़ीevent.features &= ~CLOCK_EVT_FEAT_DUMMY;
+		वापस 0;
+	पूर्ण
 
-	apic_printk(APIC_VERBOSE, "Using local APIC timer interrupts.\n"
+	apic_prपूर्णांकk(APIC_VERBOSE, "Using local APIC timer interrupts.\n"
 		    "calibrating APIC timer ...\n");
 
 	/*
-	 * There are platforms w/o global clockevent devices. Instead of
+	 * There are platक्रमms w/o global घड़ीevent devices. Instead of
 	 * making the calibration conditional on that, use a polling based
 	 * approach everywhere.
 	 */
@@ -871,508 +872,508 @@ static int __init calibrate_APIC_clock(void)
 
 	/*
 	 * Setup the APIC counter to maximum. There is no way the lapic
-	 * can underflow in the 100ms detection time frame
+	 * can underflow in the 100ms detection समय frame
 	 */
 	__setup_APIC_LVTT(0xffffffff, 0, 0);
 
 	/*
 	 * Methods to terminate the calibration loop:
-	 *  1) Global clockevent if available (jiffies)
-	 *  2) TSC if available and frequency is known
+	 *  1) Global घड़ीevent अगर available (jअगरfies)
+	 *  2) TSC अगर available and frequency is known
 	 */
-	jif_start = READ_ONCE(jiffies);
+	jअगर_start = READ_ONCE(jअगरfies);
 
-	if (tsc_khz) {
+	अगर (tsc_khz) अणु
 		tsc_start = rdtsc();
-		tsc_perj = div_u64((u64)tsc_khz * 1000, HZ);
-	}
+		tsc_perj = भाग_u64((u64)tsc_khz * 1000, HZ);
+	पूर्ण
 
 	/*
-	 * Enable interrupts so the tick can fire, if a global
-	 * clockevent device is available
+	 * Enable पूर्णांकerrupts so the tick can fire, अगर a global
+	 * घड़ीevent device is available
 	 */
 	local_irq_enable();
 
-	while (lapic_cal_loops <= LAPIC_CAL_LOOPS) {
-		/* Wait for a tick to elapse */
-		while (1) {
-			if (tsc_khz) {
+	जबतक (lapic_cal_loops <= LAPIC_CAL_LOOPS) अणु
+		/* Wait क्रम a tick to elapse */
+		जबतक (1) अणु
+			अगर (tsc_khz) अणु
 				u64 tsc_now = rdtsc();
-				if ((tsc_now - tsc_start) >= tsc_perj) {
+				अगर ((tsc_now - tsc_start) >= tsc_perj) अणु
 					tsc_start += tsc_perj;
-					break;
-				}
-			} else {
-				unsigned long jif_now = READ_ONCE(jiffies);
+					अवरोध;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अचिन्हित दीर्घ jअगर_now = READ_ONCE(jअगरfies);
 
-				if (time_after(jif_now, jif_start)) {
-					jif_start = jif_now;
-					break;
-				}
-			}
+				अगर (समय_after(jअगर_now, jअगर_start)) अणु
+					jअगर_start = jअगर_now;
+					अवरोध;
+				पूर्ण
+			पूर्ण
 			cpu_relax();
-		}
+		पूर्ण
 
 		/* Invoke the calibration routine */
 		local_irq_disable();
-		lapic_cal_handler(NULL);
+		lapic_cal_handler(शून्य);
 		local_irq_enable();
-	}
+	पूर्ण
 
 	local_irq_disable();
 
-	/* Build delta t1-t2 as apic timer counts down */
+	/* Build delta t1-t2 as apic समयr counts करोwn */
 	delta = lapic_cal_t1 - lapic_cal_t2;
-	apic_printk(APIC_VERBOSE, "... lapic delta = %ld\n", delta);
+	apic_prपूर्णांकk(APIC_VERBOSE, "... lapic delta = %ld\n", delta);
 
-	deltatsc = (long)(lapic_cal_tsc2 - lapic_cal_tsc1);
+	deltatsc = (दीर्घ)(lapic_cal_tsc2 - lapic_cal_tsc1);
 
-	/* we trust the PM based calibration if possible */
-	pm_referenced = !calibrate_by_pmtimer(lapic_cal_pm2 - lapic_cal_pm1,
+	/* we trust the PM based calibration अगर possible */
+	pm_referenced = !calibrate_by_pmसमयr(lapic_cal_pm2 - lapic_cal_pm1,
 					&delta, &deltatsc);
 
-	lapic_timer_period = (delta * APIC_DIVISOR) / LAPIC_CAL_LOOPS;
-	lapic_init_clockevent();
+	lapic_समयr_period = (delta * APIC_DIVISOR) / LAPIC_CAL_LOOPS;
+	lapic_init_घड़ीevent();
 
-	apic_printk(APIC_VERBOSE, "..... delta %ld\n", delta);
-	apic_printk(APIC_VERBOSE, "..... mult: %u\n", lapic_clockevent.mult);
-	apic_printk(APIC_VERBOSE, "..... calibration result: %u\n",
-		    lapic_timer_period);
+	apic_prपूर्णांकk(APIC_VERBOSE, "..... delta %ld\n", delta);
+	apic_prपूर्णांकk(APIC_VERBOSE, "..... mult: %u\n", lapic_घड़ीevent.mult);
+	apic_prपूर्णांकk(APIC_VERBOSE, "..... calibration result: %u\n",
+		    lapic_समयr_period);
 
-	if (boot_cpu_has(X86_FEATURE_TSC)) {
-		apic_printk(APIC_VERBOSE, "..... CPU clock speed is "
+	अगर (boot_cpu_has(X86_FEATURE_TSC)) अणु
+		apic_prपूर्णांकk(APIC_VERBOSE, "..... CPU clock speed is "
 			    "%ld.%04ld MHz.\n",
 			    (deltatsc / LAPIC_CAL_LOOPS) / (1000000 / HZ),
 			    (deltatsc / LAPIC_CAL_LOOPS) % (1000000 / HZ));
-	}
+	पूर्ण
 
-	apic_printk(APIC_VERBOSE, "..... host bus clock speed is "
+	apic_prपूर्णांकk(APIC_VERBOSE, "..... host bus clock speed is "
 		    "%u.%04u MHz.\n",
-		    lapic_timer_period / (1000000 / HZ),
-		    lapic_timer_period % (1000000 / HZ));
+		    lapic_समयr_period / (1000000 / HZ),
+		    lapic_समयr_period % (1000000 / HZ));
 
 	/*
 	 * Do a sanity check on the APIC calibration result
 	 */
-	if (lapic_timer_period < (1000000 / HZ)) {
+	अगर (lapic_समयr_period < (1000000 / HZ)) अणु
 		local_irq_enable();
 		pr_warn("APIC frequency too slow, disabling apic timer\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	levt->features &= ~CLOCK_EVT_FEAT_DUMMY;
 
 	/*
-	 * PM timer calibration failed or not turned on so lets try APIC
-	 * timer based calibration, if a global clockevent device is
+	 * PM समयr calibration failed or not turned on so lets try APIC
+	 * समयr based calibration, अगर a global घड़ीevent device is
 	 * available.
 	 */
-	if (!pm_referenced && global_clock_event) {
-		apic_printk(APIC_VERBOSE, "... verify APIC timer\n");
+	अगर (!pm_referenced && global_घड़ी_event) अणु
+		apic_prपूर्णांकk(APIC_VERBOSE, "... verify APIC timer\n");
 
 		/*
-		 * Setup the apic timer manually
+		 * Setup the apic समयr manually
 		 */
 		levt->event_handler = lapic_cal_handler;
-		lapic_timer_set_periodic(levt);
+		lapic_समयr_set_periodic(levt);
 		lapic_cal_loops = -1;
 
-		/* Let the interrupts run */
+		/* Let the पूर्णांकerrupts run */
 		local_irq_enable();
 
-		while (lapic_cal_loops <= LAPIC_CAL_LOOPS)
+		जबतक (lapic_cal_loops <= LAPIC_CAL_LOOPS)
 			cpu_relax();
 
-		/* Stop the lapic timer */
+		/* Stop the lapic समयr */
 		local_irq_disable();
-		lapic_timer_shutdown(levt);
+		lapic_समयr_shutकरोwn(levt);
 
-		/* Jiffies delta */
+		/* Jअगरfies delta */
 		deltaj = lapic_cal_j2 - lapic_cal_j1;
-		apic_printk(APIC_VERBOSE, "... jiffies delta = %lu\n", deltaj);
+		apic_prपूर्णांकk(APIC_VERBOSE, "... jiffies delta = %lu\n", deltaj);
 
-		/* Check, if the jiffies result is consistent */
-		if (deltaj >= LAPIC_CAL_LOOPS-2 && deltaj <= LAPIC_CAL_LOOPS+2)
-			apic_printk(APIC_VERBOSE, "... jiffies result ok\n");
-		else
+		/* Check, अगर the jअगरfies result is consistent */
+		अगर (deltaj >= LAPIC_CAL_LOOPS-2 && deltaj <= LAPIC_CAL_LOOPS+2)
+			apic_prपूर्णांकk(APIC_VERBOSE, "... jiffies result ok\n");
+		अन्यथा
 			levt->features |= CLOCK_EVT_FEAT_DUMMY;
-	}
+	पूर्ण
 	local_irq_enable();
 
-	if (levt->features & CLOCK_EVT_FEAT_DUMMY) {
+	अगर (levt->features & CLOCK_EVT_FEAT_DUMMY) अणु
 		pr_warn("APIC timer disabled due to verification failure\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Setup the boot APIC
  *
- * Calibrate and verify the result.
+ * Calibrate and verअगरy the result.
  */
-void __init setup_boot_APIC_clock(void)
-{
+व्योम __init setup_boot_APIC_घड़ी(व्योम)
+अणु
 	/*
-	 * The local apic timer can be disabled via the kernel
+	 * The local apic समयr can be disabled via the kernel
 	 * commandline or from the CPU detection code. Register the lapic
-	 * timer as a dummy clock event source on SMP systems, so the
-	 * broadcast mechanism is used. On UP systems simply ignore it.
+	 * समयr as a dummy घड़ी event source on SMP प्रणालीs, so the
+	 * broadcast mechanism is used. On UP प्रणालीs simply ignore it.
 	 */
-	if (disable_apic_timer) {
+	अगर (disable_apic_समयr) अणु
 		pr_info("Disabling APIC timer\n");
 		/* No broadcast on UP ! */
-		if (num_possible_cpus() > 1) {
-			lapic_clockevent.mult = 1;
-			setup_APIC_timer();
-		}
-		return;
-	}
+		अगर (num_possible_cpus() > 1) अणु
+			lapic_घड़ीevent.mult = 1;
+			setup_APIC_समयr();
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	if (calibrate_APIC_clock()) {
+	अगर (calibrate_APIC_घड़ी()) अणु
 		/* No broadcast on UP ! */
-		if (num_possible_cpus() > 1)
-			setup_APIC_timer();
-		return;
-	}
+		अगर (num_possible_cpus() > 1)
+			setup_APIC_समयr();
+		वापस;
+	पूर्ण
 
 	/*
-	 * If nmi_watchdog is set to IO_APIC, we need the
-	 * PIT/HPET going.  Otherwise register lapic as a dummy
+	 * If nmi_watchकरोg is set to IO_APIC, we need the
+	 * PIT/HPET going.  Otherwise रेजिस्टर lapic as a dummy
 	 * device.
 	 */
-	lapic_clockevent.features &= ~CLOCK_EVT_FEAT_DUMMY;
+	lapic_घड़ीevent.features &= ~CLOCK_EVT_FEAT_DUMMY;
 
 	/* Setup the lapic or request the broadcast */
-	setup_APIC_timer();
+	setup_APIC_समयr();
 	amd_e400_c1e_apic_setup();
-}
+पूर्ण
 
-void setup_secondary_APIC_clock(void)
-{
-	setup_APIC_timer();
+व्योम setup_secondary_APIC_घड़ी(व्योम)
+अणु
+	setup_APIC_समयr();
 	amd_e400_c1e_apic_setup();
-}
+पूर्ण
 
 /*
- * The guts of the apic timer interrupt
+ * The guts of the apic समयr पूर्णांकerrupt
  */
-static void local_apic_timer_interrupt(void)
-{
-	struct clock_event_device *evt = this_cpu_ptr(&lapic_events);
+अटल व्योम local_apic_समयr_पूर्णांकerrupt(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *evt = this_cpu_ptr(&lapic_events);
 
 	/*
 	 * Normally we should not be here till LAPIC has been initialized but
-	 * in some cases like kdump, its possible that there is a pending LAPIC
-	 * timer interrupt from previous kernel's context and is delivered in
-	 * new kernel the moment interrupts are enabled.
+	 * in some हालs like kdump, its possible that there is a pending LAPIC
+	 * समयr पूर्णांकerrupt from previous kernel's context and is delivered in
+	 * new kernel the moment पूर्णांकerrupts are enabled.
 	 *
 	 * Interrupts are enabled early and LAPIC is setup much later, hence
-	 * its possible that when we get here evt->event_handler is NULL.
-	 * Check for event_handler being NULL and discard the interrupt as
+	 * its possible that when we get here evt->event_handler is शून्य.
+	 * Check क्रम event_handler being शून्य and discard the पूर्णांकerrupt as
 	 * spurious.
 	 */
-	if (!evt->event_handler) {
+	अगर (!evt->event_handler) अणु
 		pr_warn("Spurious LAPIC timer interrupt on cpu %d\n",
 			smp_processor_id());
 		/* Switch it off */
-		lapic_timer_shutdown(evt);
-		return;
-	}
+		lapic_समयr_shutकरोwn(evt);
+		वापस;
+	पूर्ण
 
 	/*
 	 * the NMI deadlock-detector uses this.
 	 */
-	inc_irq_stat(apic_timer_irqs);
+	inc_irq_stat(apic_समयr_irqs);
 
 	evt->event_handler(evt);
-}
+पूर्ण
 
 /*
- * Local APIC timer interrupt. This is the most natural way for doing
- * local interrupts, but local timer interrupts can be emulated by
- * broadcast interrupts too. [in case the hw doesn't support APIC timers]
+ * Local APIC समयr पूर्णांकerrupt. This is the most natural way क्रम करोing
+ * local पूर्णांकerrupts, but local समयr पूर्णांकerrupts can be emulated by
+ * broadcast पूर्णांकerrupts too. [in हाल the hw करोesn't support APIC समयrs]
  *
- * [ if a single-CPU system runs an SMP kernel then we call the local
- *   interrupt as well. Thus we cannot inline the local irq ... ]
+ * [ अगर a single-CPU प्रणाली runs an SMP kernel then we call the local
+ *   पूर्णांकerrupt as well. Thus we cannot अंतरभूत the local irq ... ]
  */
-DEFINE_IDTENTRY_SYSVEC(sysvec_apic_timer_interrupt)
-{
-	struct pt_regs *old_regs = set_irq_regs(regs);
+DEFINE_IDTENTRY_SYSVEC(sysvec_apic_समयr_पूर्णांकerrupt)
+अणु
+	काष्ठा pt_regs *old_regs = set_irq_regs(regs);
 
 	ack_APIC_irq();
-	trace_local_timer_entry(LOCAL_TIMER_VECTOR);
-	local_apic_timer_interrupt();
-	trace_local_timer_exit(LOCAL_TIMER_VECTOR);
+	trace_local_समयr_entry(LOCAL_TIMER_VECTOR);
+	local_apic_समयr_पूर्णांकerrupt();
+	trace_local_समयr_निकास(LOCAL_TIMER_VECTOR);
 
 	set_irq_regs(old_regs);
-}
+पूर्ण
 
-int setup_profiling_timer(unsigned int multiplier)
-{
-	return -EINVAL;
-}
+पूर्णांक setup_profiling_समयr(अचिन्हित पूर्णांक multiplier)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
 /*
- * Local APIC start and shutdown
+ * Local APIC start and shutकरोwn
  */
 
 /**
- * clear_local_APIC - shutdown the local APIC
+ * clear_local_APIC - shutकरोwn the local APIC
  *
- * This is called, when a CPU is disabled and before rebooting, so the state of
+ * This is called, when a CPU is disabled and beक्रमe rebooting, so the state of
  * the local APIC has no dangling leftovers. Also used to cleanout any BIOS
  * leftovers during boot.
  */
-void clear_local_APIC(void)
-{
-	int maxlvt;
+व्योम clear_local_APIC(व्योम)
+अणु
+	पूर्णांक maxlvt;
 	u32 v;
 
 	/* APIC hasn't been mapped yet */
-	if (!x2apic_mode && !apic_phys)
-		return;
+	अगर (!x2apic_mode && !apic_phys)
+		वापस;
 
 	maxlvt = lapic_get_maxlvt();
 	/*
 	 * Masking an LVT entry can trigger a local APIC error
-	 * if the vector is zero. Mask LVTERR first to prevent this.
+	 * अगर the vector is zero. Mask LVTERR first to prevent this.
 	 */
-	if (maxlvt >= 3) {
-		v = ERROR_APIC_VECTOR; /* any non-zero vector will do */
-		apic_write(APIC_LVTERR, v | APIC_LVT_MASKED);
-	}
+	अगर (maxlvt >= 3) अणु
+		v = ERROR_APIC_VECTOR; /* any non-zero vector will करो */
+		apic_ग_लिखो(APIC_LVTERR, v | APIC_LVT_MASKED);
+	पूर्ण
 	/*
-	 * Careful: we have to set masks only first to deassert
+	 * Careful: we have to set masks only first to deनिश्चित
 	 * any level-triggered sources.
 	 */
-	v = apic_read(APIC_LVTT);
-	apic_write(APIC_LVTT, v | APIC_LVT_MASKED);
-	v = apic_read(APIC_LVT0);
-	apic_write(APIC_LVT0, v | APIC_LVT_MASKED);
-	v = apic_read(APIC_LVT1);
-	apic_write(APIC_LVT1, v | APIC_LVT_MASKED);
-	if (maxlvt >= 4) {
-		v = apic_read(APIC_LVTPC);
-		apic_write(APIC_LVTPC, v | APIC_LVT_MASKED);
-	}
+	v = apic_पढ़ो(APIC_LVTT);
+	apic_ग_लिखो(APIC_LVTT, v | APIC_LVT_MASKED);
+	v = apic_पढ़ो(APIC_LVT0);
+	apic_ग_लिखो(APIC_LVT0, v | APIC_LVT_MASKED);
+	v = apic_पढ़ो(APIC_LVT1);
+	apic_ग_लिखो(APIC_LVT1, v | APIC_LVT_MASKED);
+	अगर (maxlvt >= 4) अणु
+		v = apic_पढ़ो(APIC_LVTPC);
+		apic_ग_लिखो(APIC_LVTPC, v | APIC_LVT_MASKED);
+	पूर्ण
 
-	/* lets not touch this if we didn't frob it */
-#ifdef CONFIG_X86_THERMAL_VECTOR
-	if (maxlvt >= 5) {
-		v = apic_read(APIC_LVTTHMR);
-		apic_write(APIC_LVTTHMR, v | APIC_LVT_MASKED);
-	}
-#endif
-#ifdef CONFIG_X86_MCE_INTEL
-	if (maxlvt >= 6) {
-		v = apic_read(APIC_LVTCMCI);
-		if (!(v & APIC_LVT_MASKED))
-			apic_write(APIC_LVTCMCI, v | APIC_LVT_MASKED);
-	}
-#endif
+	/* lets not touch this अगर we didn't frob it */
+#अगर_घोषित CONFIG_X86_THERMAL_VECTOR
+	अगर (maxlvt >= 5) अणु
+		v = apic_पढ़ो(APIC_LVTTHMR);
+		apic_ग_लिखो(APIC_LVTTHMR, v | APIC_LVT_MASKED);
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_X86_MCE_INTEL
+	अगर (maxlvt >= 6) अणु
+		v = apic_पढ़ो(APIC_LVTCMCI);
+		अगर (!(v & APIC_LVT_MASKED))
+			apic_ग_लिखो(APIC_LVTCMCI, v | APIC_LVT_MASKED);
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
-	 * Clean APIC state for other OSs:
+	 * Clean APIC state क्रम other OSs:
 	 */
-	apic_write(APIC_LVTT, APIC_LVT_MASKED);
-	apic_write(APIC_LVT0, APIC_LVT_MASKED);
-	apic_write(APIC_LVT1, APIC_LVT_MASKED);
-	if (maxlvt >= 3)
-		apic_write(APIC_LVTERR, APIC_LVT_MASKED);
-	if (maxlvt >= 4)
-		apic_write(APIC_LVTPC, APIC_LVT_MASKED);
+	apic_ग_लिखो(APIC_LVTT, APIC_LVT_MASKED);
+	apic_ग_लिखो(APIC_LVT0, APIC_LVT_MASKED);
+	apic_ग_लिखो(APIC_LVT1, APIC_LVT_MASKED);
+	अगर (maxlvt >= 3)
+		apic_ग_लिखो(APIC_LVTERR, APIC_LVT_MASKED);
+	अगर (maxlvt >= 4)
+		apic_ग_लिखो(APIC_LVTPC, APIC_LVT_MASKED);
 
 	/* Integrated APIC (!82489DX) ? */
-	if (lapic_is_integrated()) {
-		if (maxlvt > 3)
+	अगर (lapic_is_पूर्णांकegrated()) अणु
+		अगर (maxlvt > 3)
 			/* Clear ESR due to Pentium errata 3AP and 11AP */
-			apic_write(APIC_ESR, 0);
-		apic_read(APIC_ESR);
-	}
-}
+			apic_ग_लिखो(APIC_ESR, 0);
+		apic_पढ़ो(APIC_ESR);
+	पूर्ण
+पूर्ण
 
 /**
  * apic_soft_disable - Clears and software disables the local APIC on hotplug
  *
- * Contrary to disable_local_APIC() this does not touch the enable bit in
- * MSR_IA32_APICBASE. Clearing that bit on systems based on the 3 wire APIC
+ * Contrary to disable_local_APIC() this करोes not touch the enable bit in
+ * MSR_IA32_APICBASE. Clearing that bit on प्रणालीs based on the 3 wire APIC
  * bus would require a hardware reset as the APIC would lose track of bus
- * arbitration. On systems with FSB delivery APICBASE could be disabled,
- * but it has to be guaranteed that no interrupt is sent to the APIC while
+ * arbitration. On प्रणालीs with FSB delivery APICBASE could be disabled,
+ * but it has to be guaranteed that no पूर्णांकerrupt is sent to the APIC जबतक
  * in that state and it's not clear from the SDM whether it still responds
  * to INIT/SIPI messages. Stay on the safe side and use software disable.
  */
-void apic_soft_disable(void)
-{
+व्योम apic_soft_disable(व्योम)
+अणु
 	u32 value;
 
 	clear_local_APIC();
 
-	/* Soft disable APIC (implies clearing of registers for 82489DX!). */
-	value = apic_read(APIC_SPIV);
+	/* Soft disable APIC (implies clearing of रेजिस्टरs क्रम 82489DX!). */
+	value = apic_पढ़ो(APIC_SPIV);
 	value &= ~APIC_SPIV_APIC_ENABLED;
-	apic_write(APIC_SPIV, value);
-}
+	apic_ग_लिखो(APIC_SPIV, value);
+पूर्ण
 
 /**
  * disable_local_APIC - clear and disable the local APIC
  */
-void disable_local_APIC(void)
-{
+व्योम disable_local_APIC(व्योम)
+अणु
 	/* APIC hasn't been mapped yet */
-	if (!x2apic_mode && !apic_phys)
-		return;
+	अगर (!x2apic_mode && !apic_phys)
+		वापस;
 
 	apic_soft_disable();
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	/*
 	 * When LAPIC was disabled by the BIOS and enabled by the kernel,
 	 * restore the disabled state.
 	 */
-	if (enabled_via_apicbase) {
-		unsigned int l, h;
+	अगर (enabled_via_apicbase) अणु
+		अचिन्हित पूर्णांक l, h;
 
 		rdmsr(MSR_IA32_APICBASE, l, h);
 		l &= ~MSR_IA32_APICBASE_ENABLE;
 		wrmsr(MSR_IA32_APICBASE, l, h);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * If Linux enabled the LAPIC against the BIOS default disable it down before
- * re-entering the BIOS on shutdown.  Otherwise the BIOS may get confused and
- * not power-off.  Additionally clear all LVT entries before disable_local_APIC
- * for the case where Linux didn't enable the LAPIC.
+ * If Linux enabled the LAPIC against the BIOS शेष disable it करोwn beक्रमe
+ * re-entering the BIOS on shutकरोwn.  Otherwise the BIOS may get confused and
+ * not घातer-off.  Additionally clear all LVT entries beक्रमe disable_local_APIC
+ * क्रम the हाल where Linux didn't enable the LAPIC.
  */
-void lapic_shutdown(void)
-{
-	unsigned long flags;
+व्योम lapic_shutकरोwn(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!boot_cpu_has(X86_FEATURE_APIC) && !apic_from_smp_config())
-		return;
+	अगर (!boot_cpu_has(X86_FEATURE_APIC) && !apic_from_smp_config())
+		वापस;
 
 	local_irq_save(flags);
 
-#ifdef CONFIG_X86_32
-	if (!enabled_via_apicbase)
+#अगर_घोषित CONFIG_X86_32
+	अगर (!enabled_via_apicbase)
 		clear_local_APIC();
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 		disable_local_APIC();
 
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /**
  * sync_Arb_IDs - synchronize APIC bus arbitration IDs
  */
-void __init sync_Arb_IDs(void)
-{
+व्योम __init sync_Arb_IDs(व्योम)
+अणु
 	/*
 	 * Unsupported on P4 - see Intel Dev. Manual Vol. 3, Ch. 8.6.1 And not
 	 * needed on AMD.
 	 */
-	if (modern_apic() || boot_cpu_data.x86_vendor == X86_VENDOR_AMD)
-		return;
+	अगर (modern_apic() || boot_cpu_data.x86_venकरोr == X86_VENDOR_AMD)
+		वापस;
 
 	/*
-	 * Wait for idle.
+	 * Wait क्रम idle.
 	 */
-	apic_wait_icr_idle();
+	apic_रुको_icr_idle();
 
-	apic_printk(APIC_DEBUG, "Synchronizing Arb IDs.\n");
-	apic_write(APIC_ICR, APIC_DEST_ALLINC |
+	apic_prपूर्णांकk(APIC_DEBUG, "Synchronizing Arb IDs.\n");
+	apic_ग_लिखो(APIC_ICR, APIC_DEST_ALLINC |
 			APIC_INT_LEVELTRIG | APIC_DM_INIT);
-}
+पूर्ण
 
-enum apic_intr_mode_id apic_intr_mode __ro_after_init;
+क्रमागत apic_पूर्णांकr_mode_id apic_पूर्णांकr_mode __ro_after_init;
 
-static int __init __apic_intr_mode_select(void)
-{
+अटल पूर्णांक __init __apic_पूर्णांकr_mode_select(व्योम)
+अणु
 	/* Check kernel option */
-	if (disable_apic) {
+	अगर (disable_apic) अणु
 		pr_info("APIC disabled via kernel command line\n");
-		return APIC_PIC;
-	}
+		वापस APIC_PIC;
+	पूर्ण
 
 	/* Check BIOS */
-#ifdef CONFIG_X86_64
-	/* On 64-bit, the APIC must be integrated, Check local APIC only */
-	if (!boot_cpu_has(X86_FEATURE_APIC)) {
+#अगर_घोषित CONFIG_X86_64
+	/* On 64-bit, the APIC must be पूर्णांकegrated, Check local APIC only */
+	अगर (!boot_cpu_has(X86_FEATURE_APIC)) अणु
 		disable_apic = 1;
 		pr_info("APIC disabled by BIOS\n");
-		return APIC_PIC;
-	}
-#else
-	/* On 32-bit, the APIC may be integrated APIC or 82489DX */
+		वापस APIC_PIC;
+	पूर्ण
+#अन्यथा
+	/* On 32-bit, the APIC may be पूर्णांकegrated APIC or 82489DX */
 
-	/* Neither 82489DX nor integrated APIC ? */
-	if (!boot_cpu_has(X86_FEATURE_APIC) && !smp_found_config) {
+	/* Neither 82489DX nor पूर्णांकegrated APIC ? */
+	अगर (!boot_cpu_has(X86_FEATURE_APIC) && !smp_found_config) अणु
 		disable_apic = 1;
-		return APIC_PIC;
-	}
+		वापस APIC_PIC;
+	पूर्ण
 
-	/* If the BIOS pretends there is an integrated APIC ? */
-	if (!boot_cpu_has(X86_FEATURE_APIC) &&
-		APIC_INTEGRATED(boot_cpu_apic_version)) {
+	/* If the BIOS pretends there is an पूर्णांकegrated APIC ? */
+	अगर (!boot_cpu_has(X86_FEATURE_APIC) &&
+		APIC_INTEGRATED(boot_cpu_apic_version)) अणु
 		disable_apic = 1;
 		pr_err(FW_BUG "Local APIC %d not detected, force emulation\n",
 				       boot_cpu_physical_apicid);
-		return APIC_PIC;
-	}
-#endif
+		वापस APIC_PIC;
+	पूर्ण
+#पूर्ण_अगर
 
 	/* Check MP table or ACPI MADT configuration */
-	if (!smp_found_config) {
+	अगर (!smp_found_config) अणु
 		disable_ioapic_support();
-		if (!acpi_lapic) {
+		अगर (!acpi_lapic) अणु
 			pr_info("APIC: ACPI MADT or MP tables are not detected\n");
-			return APIC_VIRTUAL_WIRE_NO_CONFIG;
-		}
-		return APIC_VIRTUAL_WIRE;
-	}
+			वापस APIC_VIRTUAL_WIRE_NO_CONFIG;
+		पूर्ण
+		वापस APIC_VIRTUAL_WIRE;
+	पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	/* If SMP should be disabled, then really disable it! */
-	if (!setup_max_cpus) {
+	अगर (!setup_max_cpus) अणु
 		pr_info("APIC: SMP mode deactivated\n");
-		return APIC_SYMMETRIC_IO_NO_ROUTING;
-	}
+		वापस APIC_SYMMETRIC_IO_NO_ROUTING;
+	पूर्ण
 
-	if (read_apic_id() != boot_cpu_physical_apicid) {
+	अगर (पढ़ो_apic_id() != boot_cpu_physical_apicid) अणु
 		panic("Boot APIC ID in local APIC unexpected (%d vs %d)",
-		     read_apic_id(), boot_cpu_physical_apicid);
-		/* Or can we switch back to PIC here? */
-	}
-#endif
+		     पढ़ो_apic_id(), boot_cpu_physical_apicid);
+		/* Or can we चयन back to PIC here? */
+	पूर्ण
+#पूर्ण_अगर
 
-	return APIC_SYMMETRIC_IO;
-}
+	वापस APIC_SYMMETRIC_IO;
+पूर्ण
 
-/* Select the interrupt delivery mode for the BSP */
-void __init apic_intr_mode_select(void)
-{
-	apic_intr_mode = __apic_intr_mode_select();
-}
+/* Select the पूर्णांकerrupt delivery mode क्रम the BSP */
+व्योम __init apic_पूर्णांकr_mode_select(व्योम)
+अणु
+	apic_पूर्णांकr_mode = __apic_पूर्णांकr_mode_select();
+पूर्ण
 
 /*
- * An initial setup of the virtual wire mode.
+ * An initial setup of the भव wire mode.
  */
-void __init init_bsp_APIC(void)
-{
-	unsigned int value;
+व्योम __init init_bsp_APIC(व्योम)
+अणु
+	अचिन्हित पूर्णांक value;
 
 	/*
-	 * Don't do the setup now if we have a SMP BIOS as the
-	 * through-I/O-APIC virtual wire mode might be active.
+	 * Don't करो the setup now अगर we have a SMP BIOS as the
+	 * through-I/O-APIC भव wire mode might be active.
 	 */
-	if (smp_found_config || !boot_cpu_has(X86_FEATURE_APIC))
-		return;
+	अगर (smp_found_config || !boot_cpu_has(X86_FEATURE_APIC))
+		वापस;
 
 	/*
 	 * Do not trust the local APIC being empty at bootup.
@@ -1382,226 +1383,226 @@ void __init init_bsp_APIC(void)
 	/*
 	 * Enable APIC.
 	 */
-	value = apic_read(APIC_SPIV);
+	value = apic_पढ़ो(APIC_SPIV);
 	value &= ~APIC_VECTOR_MASK;
 	value |= APIC_SPIV_APIC_ENABLED;
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	/* This bit is reserved on P4/Xeon and should be cleared */
-	if ((boot_cpu_data.x86_vendor == X86_VENDOR_INTEL) &&
+	अगर ((boot_cpu_data.x86_venकरोr == X86_VENDOR_INTEL) &&
 	    (boot_cpu_data.x86 == 15))
 		value &= ~APIC_SPIV_FOCUS_DISABLED;
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 		value |= APIC_SPIV_FOCUS_DISABLED;
 	value |= SPURIOUS_APIC_VECTOR;
-	apic_write(APIC_SPIV, value);
+	apic_ग_लिखो(APIC_SPIV, value);
 
 	/*
-	 * Set up the virtual wire mode.
+	 * Set up the भव wire mode.
 	 */
-	apic_write(APIC_LVT0, APIC_DM_EXTINT);
+	apic_ग_लिखो(APIC_LVT0, APIC_DM_EXTINT);
 	value = APIC_DM_NMI;
-	if (!lapic_is_integrated())		/* 82489DX */
+	अगर (!lapic_is_पूर्णांकegrated())		/* 82489DX */
 		value |= APIC_LVT_LEVEL_TRIGGER;
-	if (apic_extnmi == APIC_EXTNMI_NONE)
+	अगर (apic_extnmi == APIC_EXTNMI_NONE)
 		value |= APIC_LVT_MASKED;
-	apic_write(APIC_LVT1, value);
-}
+	apic_ग_लिखो(APIC_LVT1, value);
+पूर्ण
 
-static void __init apic_bsp_setup(bool upmode);
+अटल व्योम __init apic_bsp_setup(bool upmode);
 
-/* Init the interrupt delivery mode for the BSP */
-void __init apic_intr_mode_init(void)
-{
+/* Init the पूर्णांकerrupt delivery mode क्रम the BSP */
+व्योम __init apic_पूर्णांकr_mode_init(व्योम)
+अणु
 	bool upmode = IS_ENABLED(CONFIG_UP_LATE_INIT);
 
-	switch (apic_intr_mode) {
-	case APIC_PIC:
+	चयन (apic_पूर्णांकr_mode) अणु
+	हाल APIC_PIC:
 		pr_info("APIC: Keep in PIC mode(8259)\n");
-		return;
-	case APIC_VIRTUAL_WIRE:
+		वापस;
+	हाल APIC_VIRTUAL_WIRE:
 		pr_info("APIC: Switch to virtual wire mode setup\n");
-		default_setup_apic_routing();
-		break;
-	case APIC_VIRTUAL_WIRE_NO_CONFIG:
+		शेष_setup_apic_routing();
+		अवरोध;
+	हाल APIC_VIRTUAL_WIRE_NO_CONFIG:
 		pr_info("APIC: Switch to virtual wire mode setup with no configuration\n");
 		upmode = true;
-		default_setup_apic_routing();
-		break;
-	case APIC_SYMMETRIC_IO:
+		शेष_setup_apic_routing();
+		अवरोध;
+	हाल APIC_SYMMETRIC_IO:
 		pr_info("APIC: Switch to symmetric I/O mode setup\n");
-		default_setup_apic_routing();
-		break;
-	case APIC_SYMMETRIC_IO_NO_ROUTING:
+		शेष_setup_apic_routing();
+		अवरोध;
+	हाल APIC_SYMMETRIC_IO_NO_ROUTING:
 		pr_info("APIC: Switch to symmetric I/O mode setup in no SMP routine\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (x86_platform.apic_post_init)
-		x86_platform.apic_post_init();
+	अगर (x86_platक्रमm.apic_post_init)
+		x86_platक्रमm.apic_post_init();
 
 	apic_bsp_setup(upmode);
-}
+पूर्ण
 
-static void lapic_setup_esr(void)
-{
-	unsigned int oldvalue, value, maxlvt;
+अटल व्योम lapic_setup_esr(व्योम)
+अणु
+	अचिन्हित पूर्णांक oldvalue, value, maxlvt;
 
-	if (!lapic_is_integrated()) {
+	अगर (!lapic_is_पूर्णांकegrated()) अणु
 		pr_info("No ESR for 82489DX.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (apic->disable_esr) {
+	अगर (apic->disable_esr) अणु
 		/*
-		 * Something untraceable is creating bad interrupts on
-		 * secondary quads ... for the moment, just leave the
-		 * ESR disabled - we can't do anything useful with the
+		 * Something untraceable is creating bad पूर्णांकerrupts on
+		 * secondary quads ... क्रम the moment, just leave the
+		 * ESR disabled - we can't करो anything useful with the
 		 * errors anyway - mbligh
 		 */
 		pr_info("Leaving ESR disabled.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	maxlvt = lapic_get_maxlvt();
-	if (maxlvt > 3)		/* Due to the Pentium erratum 3AP. */
-		apic_write(APIC_ESR, 0);
-	oldvalue = apic_read(APIC_ESR);
+	अगर (maxlvt > 3)		/* Due to the Pentium erratum 3AP. */
+		apic_ग_लिखो(APIC_ESR, 0);
+	oldvalue = apic_पढ़ो(APIC_ESR);
 
 	/* enables sending errors */
 	value = ERROR_APIC_VECTOR;
-	apic_write(APIC_LVTERR, value);
+	apic_ग_लिखो(APIC_LVTERR, value);
 
 	/*
 	 * spec says clear errors after enabling vector.
 	 */
-	if (maxlvt > 3)
-		apic_write(APIC_ESR, 0);
-	value = apic_read(APIC_ESR);
-	if (value != oldvalue)
-		apic_printk(APIC_VERBOSE, "ESR value before enabling "
+	अगर (maxlvt > 3)
+		apic_ग_लिखो(APIC_ESR, 0);
+	value = apic_पढ़ो(APIC_ESR);
+	अगर (value != oldvalue)
+		apic_prपूर्णांकk(APIC_VERBOSE, "ESR value before enabling "
 			"vector: 0x%08x  after: 0x%08x\n",
 			oldvalue, value);
-}
+पूर्ण
 
-#define APIC_IR_REGS		APIC_ISR_NR
-#define APIC_IR_BITS		(APIC_IR_REGS * 32)
-#define APIC_IR_MAPSIZE		(APIC_IR_BITS / BITS_PER_LONG)
+#घोषणा APIC_IR_REGS		APIC_ISR_NR
+#घोषणा APIC_IR_BITS		(APIC_IR_REGS * 32)
+#घोषणा APIC_IR_MAPSIZE		(APIC_IR_BITS / BITS_PER_LONG)
 
-union apic_ir {
-	unsigned long	map[APIC_IR_MAPSIZE];
+जोड़ apic_ir अणु
+	अचिन्हित दीर्घ	map[APIC_IR_MAPSIZE];
 	u32		regs[APIC_IR_REGS];
-};
+पूर्ण;
 
-static bool apic_check_and_ack(union apic_ir *irr, union apic_ir *isr)
-{
-	int i, bit;
+अटल bool apic_check_and_ack(जोड़ apic_ir *irr, जोड़ apic_ir *isr)
+अणु
+	पूर्णांक i, bit;
 
 	/* Read the IRRs */
-	for (i = 0; i < APIC_IR_REGS; i++)
-		irr->regs[i] = apic_read(APIC_IRR + i * 0x10);
+	क्रम (i = 0; i < APIC_IR_REGS; i++)
+		irr->regs[i] = apic_पढ़ो(APIC_IRR + i * 0x10);
 
 	/* Read the ISRs */
-	for (i = 0; i < APIC_IR_REGS; i++)
-		isr->regs[i] = apic_read(APIC_ISR + i * 0x10);
+	क्रम (i = 0; i < APIC_IR_REGS; i++)
+		isr->regs[i] = apic_पढ़ो(APIC_ISR + i * 0x10);
 
 	/*
 	 * If the ISR map is not empty. ACK the APIC and run another round
-	 * to verify whether a pending IRR has been unblocked and turned
-	 * into a ISR.
+	 * to verअगरy whether a pending IRR has been unblocked and turned
+	 * पूर्णांकo a ISR.
 	 */
-	if (!bitmap_empty(isr->map, APIC_IR_BITS)) {
+	अगर (!biपंचांगap_empty(isr->map, APIC_IR_BITS)) अणु
 		/*
 		 * There can be multiple ISR bits set when a high priority
-		 * interrupt preempted a lower priority one. Issue an ACK
+		 * पूर्णांकerrupt preempted a lower priority one. Issue an ACK
 		 * per set bit.
 		 */
-		for_each_set_bit(bit, isr->map, APIC_IR_BITS)
+		क्रम_each_set_bit(bit, isr->map, APIC_IR_BITS)
 			ack_APIC_irq();
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return !bitmap_empty(irr->map, APIC_IR_BITS);
-}
+	वापस !biपंचांगap_empty(irr->map, APIC_IR_BITS);
+पूर्ण
 
 /*
- * After a crash, we no longer service the interrupts and a pending
- * interrupt from previous kernel might still have ISR bit set.
+ * After a crash, we no दीर्घer service the पूर्णांकerrupts and a pending
+ * पूर्णांकerrupt from previous kernel might still have ISR bit set.
  *
- * Most probably by now the CPU has serviced that pending interrupt and it
- * might not have done the ack_APIC_irq() because it thought, interrupt
- * came from i8259 as ExtInt. LAPIC did not get EOI so it does not clear
- * the ISR bit and cpu thinks it has already serviced the interrupt. Hence
- * a vector might get locked. It was noticed for timer irq (vector
+ * Most probably by now the CPU has serviced that pending पूर्णांकerrupt and it
+ * might not have करोne the ack_APIC_irq() because it thought, पूर्णांकerrupt
+ * came from i8259 as ExtInt. LAPIC did not get EOI so it करोes not clear
+ * the ISR bit and cpu thinks it has alपढ़ोy serviced the पूर्णांकerrupt. Hence
+ * a vector might get locked. It was noticed क्रम समयr irq (vector
  * 0x31). Issue an extra EOI to clear ISR.
  *
- * If there are pending IRR bits they turn into ISR bits after a higher
+ * If there are pending IRR bits they turn पूर्णांकo ISR bits after a higher
  * priority ISR bit has been acked.
  */
-static void apic_pending_intr_clear(void)
-{
-	union apic_ir irr, isr;
-	unsigned int i;
+अटल व्योम apic_pending_पूर्णांकr_clear(व्योम)
+अणु
+	जोड़ apic_ir irr, isr;
+	अचिन्हित पूर्णांक i;
 
 	/* 512 loops are way oversized and give the APIC a chance to obey. */
-	for (i = 0; i < 512; i++) {
-		if (!apic_check_and_ack(&irr, &isr))
-			return;
-	}
-	/* Dump the IRR/ISR content if that failed */
+	क्रम (i = 0; i < 512; i++) अणु
+		अगर (!apic_check_and_ack(&irr, &isr))
+			वापस;
+	पूर्ण
+	/* Dump the IRR/ISR content अगर that failed */
 	pr_warn("APIC: Stale IRR: %256pb ISR: %256pb\n", irr.map, isr.map);
-}
+पूर्ण
 
 /**
  * setup_local_APIC - setup the local APIC
  *
- * Used to setup local APIC while initializing BSP or bringing up APs.
+ * Used to setup local APIC जबतक initializing BSP or bringing up APs.
  * Always called with preemption disabled.
  */
-static void setup_local_APIC(void)
-{
-	int cpu = smp_processor_id();
-	unsigned int value;
+अटल व्योम setup_local_APIC(व्योम)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	अचिन्हित पूर्णांक value;
 
-	if (disable_apic) {
+	अगर (disable_apic) अणु
 		disable_ioapic_support();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * If this comes from kexec/kcrash the APIC might be enabled in
-	 * SPIV. Soft disable it before doing further initialization.
+	 * SPIV. Soft disable it beक्रमe करोing further initialization.
 	 */
-	value = apic_read(APIC_SPIV);
+	value = apic_पढ़ो(APIC_SPIV);
 	value &= ~APIC_SPIV_APIC_ENABLED;
-	apic_write(APIC_SPIV, value);
+	apic_ग_लिखो(APIC_SPIV, value);
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	/* Pound the ESR really hard over the head with a big hammer - mbligh */
-	if (lapic_is_integrated() && apic->disable_esr) {
-		apic_write(APIC_ESR, 0);
-		apic_write(APIC_ESR, 0);
-		apic_write(APIC_ESR, 0);
-		apic_write(APIC_ESR, 0);
-	}
-#endif
+	अगर (lapic_is_पूर्णांकegrated() && apic->disable_esr) अणु
+		apic_ग_लिखो(APIC_ESR, 0);
+		apic_ग_लिखो(APIC_ESR, 0);
+		apic_ग_लिखो(APIC_ESR, 0);
+		apic_ग_लिखो(APIC_ESR, 0);
+	पूर्ण
+#पूर्ण_अगर
 	/*
-	 * Double-check whether this APIC is really registered.
+	 * Double-check whether this APIC is really रेजिस्टरed.
 	 * This is meaningless in clustered apic mode, so we skip it.
 	 */
-	BUG_ON(!apic->apic_id_registered());
+	BUG_ON(!apic->apic_id_रेजिस्टरed());
 
 	/*
-	 * Intel recommends to set DFR, LDR and TPR before enabling
+	 * Intel recommends to set DFR, LDR and TPR beक्रमe enabling
 	 * an APIC.  See e.g. "AP-388 82489DX User's Manual" (Intel
-	 * document number 292116).  So here it goes...
+	 * करोcument number 292116).  So here it goes...
 	 */
 	apic->init_apic_ldr();
 
-#ifdef CONFIG_X86_32
-	if (apic->dest_mode_logical) {
-		int logical_apicid, ldr_apicid;
+#अगर_घोषित CONFIG_X86_32
+	अगर (apic->dest_mode_logical) अणु
+		पूर्णांक logical_apicid, ldr_apicid;
 
 		/*
 		 * APIC LDR is initialized.  If logical_apicid mapping was
@@ -1609,45 +1610,45 @@ static void setup_local_APIC(void)
 		 * the actual value.
 		 */
 		logical_apicid = early_per_cpu(x86_cpu_to_logical_apicid, cpu);
-		ldr_apicid = GET_APIC_LOGICAL_ID(apic_read(APIC_LDR));
-		if (logical_apicid != BAD_APICID)
+		ldr_apicid = GET_APIC_LOGICAL_ID(apic_पढ़ो(APIC_LDR));
+		अगर (logical_apicid != BAD_APICID)
 			WARN_ON(logical_apicid != ldr_apicid);
 		/* Always use the value from LDR. */
 		early_per_cpu(x86_cpu_to_logical_apicid, cpu) = ldr_apicid;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
 	 * Set Task Priority to 'accept all except vectors 0-31'.  An APIC
-	 * vector in the 16-31 range could be delivered if TPR == 0, but we
+	 * vector in the 16-31 range could be delivered अगर TPR == 0, but we
 	 * would think it's an exception and terrible things will happen.  We
 	 * never change this later on.
 	 */
-	value = apic_read(APIC_TASKPRI);
+	value = apic_पढ़ो(APIC_TASKPRI);
 	value &= ~APIC_TPRI_MASK;
 	value |= 0x10;
-	apic_write(APIC_TASKPRI, value);
+	apic_ग_लिखो(APIC_TASKPRI, value);
 
 	/* Clear eventually stale ISR/IRR bits */
-	apic_pending_intr_clear();
+	apic_pending_पूर्णांकr_clear();
 
 	/*
 	 * Now that we are all set up, enable the APIC
 	 */
-	value = apic_read(APIC_SPIV);
+	value = apic_पढ़ो(APIC_SPIV);
 	value &= ~APIC_VECTOR_MASK;
 	/*
 	 * Enable APIC
 	 */
 	value |= APIC_SPIV_APIC_ENABLED;
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	/*
 	 * Some unknown Intel IO/APIC (or APIC) errata is biting us with
-	 * certain networking cards. If high frequency interrupts are
+	 * certain networking cards. If high frequency पूर्णांकerrupts are
 	 * happening on a particular IOAPIC pin, plus the IOAPIC routing
 	 * entry is masked/unmasked at a high rate as well then sooner or
-	 * later IOAPIC line gets 'stuck', no more interrupts are received
+	 * later IOAPIC line माला_लो 'stuck', no more पूर्णांकerrupts are received
 	 * from the device. If focus CPU is disabled then the hang goes
 	 * away, oh well :-(
 	 *
@@ -1657,8 +1658,8 @@ static void setup_local_APIC(void)
 	 */
 	/*
 	 * Actually disabling the focus CPU check just makes the hang less
-	 * frequent as it makes the interrupt distribution model be more
-	 * like LRU than MRU (the short-term load is more even across CPUs).
+	 * frequent as it makes the पूर्णांकerrupt distribution model be more
+	 * like LRU than MRU (the लघु-term load is more even across CPUs).
 	 */
 
 	/*
@@ -1667,13 +1668,13 @@ static void setup_local_APIC(void)
 	 *   so no need to set it
 	 */
 	value &= ~APIC_SPIV_FOCUS_DISABLED;
-#endif
+#पूर्ण_अगर
 
 	/*
 	 * Set spurious IRQ vector
 	 */
 	value |= SPURIOUS_APIC_VECTOR;
-	apic_write(APIC_SPIV, value);
+	apic_ग_लिखो(APIC_SPIV, value);
 
 	perf_events_lapic_init();
 
@@ -1681,197 +1682,197 @@ static void setup_local_APIC(void)
 	 * Set up LVT0, LVT1:
 	 *
 	 * set up through-local-APIC on the boot CPU's LINT0. This is not
-	 * strictly necessary in pure symmetric-IO mode, but sometimes
-	 * we delegate interrupts to the 8259A.
+	 * strictly necessary in pure symmetric-IO mode, but someबार
+	 * we delegate पूर्णांकerrupts to the 8259A.
 	 */
 	/*
 	 * TODO: set up through-local-APIC from through-I/O-APIC? --macro
 	 */
-	value = apic_read(APIC_LVT0) & APIC_LVT_MASKED;
-	if (!cpu && (pic_mode || !value || skip_ioapic_setup)) {
+	value = apic_पढ़ो(APIC_LVT0) & APIC_LVT_MASKED;
+	अगर (!cpu && (pic_mode || !value || skip_ioapic_setup)) अणु
 		value = APIC_DM_EXTINT;
-		apic_printk(APIC_VERBOSE, "enabled ExtINT on CPU#%d\n", cpu);
-	} else {
+		apic_prपूर्णांकk(APIC_VERBOSE, "enabled ExtINT on CPU#%d\n", cpu);
+	पूर्ण अन्यथा अणु
 		value = APIC_DM_EXTINT | APIC_LVT_MASKED;
-		apic_printk(APIC_VERBOSE, "masked ExtINT on CPU#%d\n", cpu);
-	}
-	apic_write(APIC_LVT0, value);
+		apic_prपूर्णांकk(APIC_VERBOSE, "masked ExtINT on CPU#%d\n", cpu);
+	पूर्ण
+	apic_ग_लिखो(APIC_LVT0, value);
 
 	/*
-	 * Only the BSP sees the LINT1 NMI signal by default. This can be
-	 * modified by apic_extnmi= boot option.
+	 * Only the BSP sees the LINT1 NMI संकेत by शेष. This can be
+	 * modअगरied by apic_extnmi= boot option.
 	 */
-	if ((!cpu && apic_extnmi != APIC_EXTNMI_NONE) ||
+	अगर ((!cpu && apic_extnmi != APIC_EXTNMI_NONE) ||
 	    apic_extnmi == APIC_EXTNMI_ALL)
 		value = APIC_DM_NMI;
-	else
+	अन्यथा
 		value = APIC_DM_NMI | APIC_LVT_MASKED;
 
 	/* Is 82489DX ? */
-	if (!lapic_is_integrated())
+	अगर (!lapic_is_पूर्णांकegrated())
 		value |= APIC_LVT_LEVEL_TRIGGER;
-	apic_write(APIC_LVT1, value);
+	apic_ग_लिखो(APIC_LVT1, value);
 
-#ifdef CONFIG_X86_MCE_INTEL
-	/* Recheck CMCI information after local APIC is up on CPU #0 */
-	if (!cpu)
+#अगर_घोषित CONFIG_X86_MCE_INTEL
+	/* Recheck CMCI inक्रमmation after local APIC is up on CPU #0 */
+	अगर (!cpu)
 		cmci_recheck();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void end_local_APIC_setup(void)
-{
+अटल व्योम end_local_APIC_setup(व्योम)
+अणु
 	lapic_setup_esr();
 
-#ifdef CONFIG_X86_32
-	{
-		unsigned int value;
-		/* Disable the local apic timer */
-		value = apic_read(APIC_LVTT);
+#अगर_घोषित CONFIG_X86_32
+	अणु
+		अचिन्हित पूर्णांक value;
+		/* Disable the local apic समयr */
+		value = apic_पढ़ो(APIC_LVTT);
 		value |= (APIC_LVT_MASKED | LOCAL_TIMER_VECTOR);
-		apic_write(APIC_LVTT, value);
-	}
-#endif
+		apic_ग_लिखो(APIC_LVTT, value);
+	पूर्ण
+#पूर्ण_अगर
 
 	apic_pm_activate();
-}
+पूर्ण
 
 /*
- * APIC setup function for application processors. Called from smpboot.c
+ * APIC setup function क्रम application processors. Called from smpboot.c
  */
-void apic_ap_setup(void)
-{
+व्योम apic_ap_setup(व्योम)
+अणु
 	setup_local_APIC();
 	end_local_APIC_setup();
-}
+पूर्ण
 
-#ifdef CONFIG_X86_X2APIC
-int x2apic_mode;
+#अगर_घोषित CONFIG_X86_X2APIC
+पूर्णांक x2apic_mode;
 EXPORT_SYMBOL_GPL(x2apic_mode);
 
-enum {
+क्रमागत अणु
 	X2APIC_OFF,
 	X2APIC_ON,
 	X2APIC_DISABLED,
-};
-static int x2apic_state;
+पूर्ण;
+अटल पूर्णांक x2apic_state;
 
-static void __x2apic_disable(void)
-{
+अटल व्योम __x2apic_disable(व्योम)
+अणु
 	u64 msr;
 
-	if (!boot_cpu_has(X86_FEATURE_APIC))
-		return;
+	अगर (!boot_cpu_has(X86_FEATURE_APIC))
+		वापस;
 
 	rdmsrl(MSR_IA32_APICBASE, msr);
-	if (!(msr & X2APIC_ENABLE))
-		return;
+	अगर (!(msr & X2APIC_ENABLE))
+		वापस;
 	/* Disable xapic and x2apic first and then reenable xapic mode */
 	wrmsrl(MSR_IA32_APICBASE, msr & ~(X2APIC_ENABLE | XAPIC_ENABLE));
 	wrmsrl(MSR_IA32_APICBASE, msr & ~X2APIC_ENABLE);
-	printk_once(KERN_INFO "x2apic disabled\n");
-}
+	prपूर्णांकk_once(KERN_INFO "x2apic disabled\n");
+पूर्ण
 
-static void __x2apic_enable(void)
-{
+अटल व्योम __x2apic_enable(व्योम)
+अणु
 	u64 msr;
 
 	rdmsrl(MSR_IA32_APICBASE, msr);
-	if (msr & X2APIC_ENABLE)
-		return;
+	अगर (msr & X2APIC_ENABLE)
+		वापस;
 	wrmsrl(MSR_IA32_APICBASE, msr | X2APIC_ENABLE);
-	printk_once(KERN_INFO "x2apic enabled\n");
-}
+	prपूर्णांकk_once(KERN_INFO "x2apic enabled\n");
+पूर्ण
 
-static int __init setup_nox2apic(char *str)
-{
-	if (x2apic_enabled()) {
-		int apicid = native_apic_msr_read(APIC_ID);
+अटल पूर्णांक __init setup_nox2apic(अक्षर *str)
+अणु
+	अगर (x2apic_enabled()) अणु
+		पूर्णांक apicid = native_apic_msr_पढ़ो(APIC_ID);
 
-		if (apicid >= 255) {
+		अगर (apicid >= 255) अणु
 			pr_warn("Apicid: %08x, cannot enforce nox2apic\n",
 				apicid);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		pr_warn("x2apic already enabled.\n");
 		__x2apic_disable();
-	}
+	पूर्ण
 	setup_clear_cpu_cap(X86_FEATURE_X2APIC);
 	x2apic_state = X2APIC_DISABLED;
 	x2apic_mode = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("nox2apic", setup_nox2apic);
 
 /* Called from cpu_init() to enable x2apic on (secondary) cpus */
-void x2apic_setup(void)
-{
+व्योम x2apic_setup(व्योम)
+अणु
 	/*
-	 * If x2apic is not in ON state, disable it if already enabled
+	 * If x2apic is not in ON state, disable it अगर alपढ़ोy enabled
 	 * from BIOS.
 	 */
-	if (x2apic_state != X2APIC_ON) {
+	अगर (x2apic_state != X2APIC_ON) अणु
 		__x2apic_disable();
-		return;
-	}
+		वापस;
+	पूर्ण
 	__x2apic_enable();
-}
+पूर्ण
 
-static __init void x2apic_disable(void)
-{
+अटल __init व्योम x2apic_disable(व्योम)
+अणु
 	u32 x2apic_id, state = x2apic_state;
 
 	x2apic_mode = 0;
 	x2apic_state = X2APIC_DISABLED;
 
-	if (state != X2APIC_ON)
-		return;
+	अगर (state != X2APIC_ON)
+		वापस;
 
-	x2apic_id = read_apic_id();
-	if (x2apic_id >= 255)
+	x2apic_id = पढ़ो_apic_id();
+	अगर (x2apic_id >= 255)
 		panic("Cannot disable x2apic, id: %08x\n", x2apic_id);
 
 	__x2apic_disable();
-	register_lapic_address(mp_lapic_addr);
-}
+	रेजिस्टर_lapic_address(mp_lapic_addr);
+पूर्ण
 
-static __init void x2apic_enable(void)
-{
-	if (x2apic_state != X2APIC_OFF)
-		return;
+अटल __init व्योम x2apic_enable(व्योम)
+अणु
+	अगर (x2apic_state != X2APIC_OFF)
+		वापस;
 
 	x2apic_mode = 1;
 	x2apic_state = X2APIC_ON;
 	__x2apic_enable();
-}
+पूर्ण
 
-static __init void try_to_enable_x2apic(int remap_mode)
-{
-	if (x2apic_state == X2APIC_DISABLED)
-		return;
+अटल __init व्योम try_to_enable_x2apic(पूर्णांक remap_mode)
+अणु
+	अगर (x2apic_state == X2APIC_DISABLED)
+		वापस;
 
-	if (remap_mode != IRQ_REMAP_X2APIC_MODE) {
+	अगर (remap_mode != IRQ_REMAP_X2APIC_MODE) अणु
 		u32 apic_limit = 255;
 
 		/*
 		 * Using X2APIC without IR is not architecturally supported
 		 * on bare metal but may be supported in guests.
 		 */
-		if (!x86_init.hyper.x2apic_available()) {
+		अगर (!x86_init.hyper.x2apic_available()) अणु
 			pr_info("x2apic: IRQ remapping doesn't support X2APIC mode\n");
 			x2apic_disable();
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/*
 		 * If the hypervisor supports extended destination ID in
 		 * MSI, that increases the maximum APIC ID that can be
-		 * used for non-remapped IRQ domains.
+		 * used क्रम non-remapped IRQ करोमुख्यs.
 		 */
-		if (x86_init.hyper.msi_ext_dest_id()) {
+		अगर (x86_init.hyper.msi_ext_dest_id()) अणु
 			virt_ext_dest_id = 1;
 			apic_limit = 32767;
-		}
+		पूर्ण
 
 		/*
 		 * Without IR, all CPUs can be addressed by IOAPIC/MSI only
@@ -1880,93 +1881,93 @@ static __init void try_to_enable_x2apic(int remap_mode)
 		 */
 		x2apic_set_max_apicid(apic_limit);
 		x2apic_phys = 1;
-	}
+	पूर्ण
 	x2apic_enable();
-}
+पूर्ण
 
-void __init check_x2apic(void)
-{
-	if (x2apic_enabled()) {
+व्योम __init check_x2apic(व्योम)
+अणु
+	अगर (x2apic_enabled()) अणु
 		pr_info("x2apic: enabled by BIOS, switching to x2apic ops\n");
 		x2apic_mode = 1;
 		x2apic_state = X2APIC_ON;
-	} else if (!boot_cpu_has(X86_FEATURE_X2APIC)) {
+	पूर्ण अन्यथा अगर (!boot_cpu_has(X86_FEATURE_X2APIC)) अणु
 		x2apic_state = X2APIC_DISABLED;
-	}
-}
-#else /* CONFIG_X86_X2APIC */
-static int __init validate_x2apic(void)
-{
-	if (!apic_is_x2apic_enabled())
-		return 0;
+	पूर्ण
+पूर्ण
+#अन्यथा /* CONFIG_X86_X2APIC */
+अटल पूर्णांक __init validate_x2apic(व्योम)
+अणु
+	अगर (!apic_is_x2apic_enabled())
+		वापस 0;
 	/*
 	 * Checkme: Can we simply turn off x2apic here instead of panic?
 	 */
 	panic("BIOS has enabled x2apic but kernel doesn't support x2apic, please disable x2apic in BIOS.\n");
-}
+पूर्ण
 early_initcall(validate_x2apic);
 
-static inline void try_to_enable_x2apic(int remap_mode) { }
-static inline void __x2apic_enable(void) { }
-#endif /* !CONFIG_X86_X2APIC */
+अटल अंतरभूत व्योम try_to_enable_x2apic(पूर्णांक remap_mode) अणु पूर्ण
+अटल अंतरभूत व्योम __x2apic_enable(व्योम) अणु पूर्ण
+#पूर्ण_अगर /* !CONFIG_X86_X2APIC */
 
-void __init enable_IR_x2apic(void)
-{
-	unsigned long flags;
-	int ret, ir_stat;
+व्योम __init enable_IR_x2apic(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret, ir_stat;
 
-	if (skip_ioapic_setup) {
+	अगर (skip_ioapic_setup) अणु
 		pr_info("Not enabling interrupt remapping due to skipped IO-APIC setup\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ir_stat = irq_remapping_prepare();
-	if (ir_stat < 0 && !x2apic_supported())
-		return;
+	अगर (ir_stat < 0 && !x2apic_supported())
+		वापस;
 
 	ret = save_ioapic_entries();
-	if (ret) {
+	अगर (ret) अणु
 		pr_info("Saving IO-APIC state failed: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	local_irq_save(flags);
 	legacy_pic->mask_all();
 	mask_ioapic_entries();
 
 	/* If irq_remapping_prepare() succeeded, try to enable it */
-	if (ir_stat >= 0)
+	अगर (ir_stat >= 0)
 		ir_stat = irq_remapping_enable();
 	/* ir_stat contains the remap mode or an error code */
 	try_to_enable_x2apic(ir_stat);
 
-	if (ir_stat < 0)
+	अगर (ir_stat < 0)
 		restore_ioapic_entries();
 	legacy_pic->restore_mask();
 	local_irq_restore(flags);
-}
+पूर्ण
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 /*
  * Detect and enable local APICs on non-SMP boards.
  * Original code written by Keir Fraser.
- * On AMD64 we trust the BIOS - if it says no APIC it is likely
- * not correctly set up (usually the APIC timer won't work etc.)
+ * On AMD64 we trust the BIOS - अगर it says no APIC it is likely
+ * not correctly set up (usually the APIC समयr won't work etc.)
  */
-static int __init detect_init_APIC(void)
-{
-	if (!boot_cpu_has(X86_FEATURE_APIC)) {
+अटल पूर्णांक __init detect_init_APIC(व्योम)
+अणु
+	अगर (!boot_cpu_has(X86_FEATURE_APIC)) अणु
 		pr_info("No local APIC present\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	mp_lapic_addr = APIC_DEFAULT_PHYS_BASE;
-	return 0;
-}
-#else
+	वापस 0;
+पूर्ण
+#अन्यथा
 
-static int __init apic_verify(void)
-{
+अटल पूर्णांक __init apic_verअगरy(व्योम)
+अणु
 	u32 features, h, l;
 
 	/*
@@ -1974,176 +1975,176 @@ static int __init apic_verify(void)
 	 * in `cpuid'
 	 */
 	features = cpuid_edx(1);
-	if (!(features & (1 << X86_FEATURE_APIC))) {
+	अगर (!(features & (1 << X86_FEATURE_APIC))) अणु
 		pr_warn("Could not enable APIC!\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	set_cpu_cap(&boot_cpu_data, X86_FEATURE_APIC);
 	mp_lapic_addr = APIC_DEFAULT_PHYS_BASE;
 
 	/* The BIOS may have set up the APIC at some other address */
-	if (boot_cpu_data.x86 >= 6) {
+	अगर (boot_cpu_data.x86 >= 6) अणु
 		rdmsr(MSR_IA32_APICBASE, l, h);
-		if (l & MSR_IA32_APICBASE_ENABLE)
+		अगर (l & MSR_IA32_APICBASE_ENABLE)
 			mp_lapic_addr = l & MSR_IA32_APICBASE_BASE;
-	}
+	पूर्ण
 
 	pr_info("Found and enabled local APIC!\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init apic_force_enable(unsigned long addr)
-{
+पूर्णांक __init apic_क्रमce_enable(अचिन्हित दीर्घ addr)
+अणु
 	u32 h, l;
 
-	if (disable_apic)
-		return -1;
+	अगर (disable_apic)
+		वापस -1;
 
 	/*
 	 * Some BIOSes disable the local APIC in the APIC_BASE
-	 * MSR. This can only be done in software for Intel P6 or later
+	 * MSR. This can only be करोne in software क्रम Intel P6 or later
 	 * and AMD K7 (Model > 1) or later.
 	 */
-	if (boot_cpu_data.x86 >= 6) {
+	अगर (boot_cpu_data.x86 >= 6) अणु
 		rdmsr(MSR_IA32_APICBASE, l, h);
-		if (!(l & MSR_IA32_APICBASE_ENABLE)) {
+		अगर (!(l & MSR_IA32_APICBASE_ENABLE)) अणु
 			pr_info("Local APIC disabled by BIOS -- reenabling.\n");
 			l &= ~MSR_IA32_APICBASE_BASE;
 			l |= MSR_IA32_APICBASE_ENABLE | addr;
 			wrmsr(MSR_IA32_APICBASE, l, h);
 			enabled_via_apicbase = 1;
-		}
-	}
-	return apic_verify();
-}
+		पूर्ण
+	पूर्ण
+	वापस apic_verअगरy();
+पूर्ण
 
 /*
  * Detect and initialize APIC
  */
-static int __init detect_init_APIC(void)
-{
+अटल पूर्णांक __init detect_init_APIC(व्योम)
+अणु
 	/* Disabled by kernel option? */
-	if (disable_apic)
-		return -1;
+	अगर (disable_apic)
+		वापस -1;
 
-	switch (boot_cpu_data.x86_vendor) {
-	case X86_VENDOR_AMD:
-		if ((boot_cpu_data.x86 == 6 && boot_cpu_data.x86_model > 1) ||
+	चयन (boot_cpu_data.x86_venकरोr) अणु
+	हाल X86_VENDOR_AMD:
+		अगर ((boot_cpu_data.x86 == 6 && boot_cpu_data.x86_model > 1) ||
 		    (boot_cpu_data.x86 >= 15))
-			break;
-		goto no_apic;
-	case X86_VENDOR_HYGON:
-		break;
-	case X86_VENDOR_INTEL:
-		if (boot_cpu_data.x86 == 6 || boot_cpu_data.x86 == 15 ||
+			अवरोध;
+		जाओ no_apic;
+	हाल X86_VENDOR_HYGON:
+		अवरोध;
+	हाल X86_VENDOR_INTEL:
+		अगर (boot_cpu_data.x86 == 6 || boot_cpu_data.x86 == 15 ||
 		    (boot_cpu_data.x86 == 5 && boot_cpu_has(X86_FEATURE_APIC)))
-			break;
-		goto no_apic;
-	default:
-		goto no_apic;
-	}
+			अवरोध;
+		जाओ no_apic;
+	शेष:
+		जाओ no_apic;
+	पूर्ण
 
-	if (!boot_cpu_has(X86_FEATURE_APIC)) {
+	अगर (!boot_cpu_has(X86_FEATURE_APIC)) अणु
 		/*
-		 * Over-ride BIOS and try to enable the local APIC only if
-		 * "lapic" specified.
+		 * Over-ride BIOS and try to enable the local APIC only अगर
+		 * "lapic" specअगरied.
 		 */
-		if (!force_enable_local_apic) {
+		अगर (!क्रमce_enable_local_apic) अणु
 			pr_info("Local APIC disabled by BIOS -- "
 				"you can enable it with \"lapic\"\n");
-			return -1;
-		}
-		if (apic_force_enable(APIC_DEFAULT_PHYS_BASE))
-			return -1;
-	} else {
-		if (apic_verify())
-			return -1;
-	}
+			वापस -1;
+		पूर्ण
+		अगर (apic_क्रमce_enable(APIC_DEFAULT_PHYS_BASE))
+			वापस -1;
+	पूर्ण अन्यथा अणु
+		अगर (apic_verअगरy())
+			वापस -1;
+	पूर्ण
 
 	apic_pm_activate();
 
-	return 0;
+	वापस 0;
 
 no_apic:
 	pr_info("No local APIC present or hardware disabled\n");
-	return -1;
-}
-#endif
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
 
 /**
  * init_apic_mappings - initialize APIC mappings
  */
-void __init init_apic_mappings(void)
-{
-	unsigned int new_apicid;
+व्योम __init init_apic_mappings(व्योम)
+अणु
+	अचिन्हित पूर्णांक new_apicid;
 
-	if (apic_validate_deadline_timer())
+	अगर (apic_validate_deadline_समयr())
 		pr_info("TSC deadline timer available\n");
 
-	if (x2apic_mode) {
-		boot_cpu_physical_apicid = read_apic_id();
-		return;
-	}
+	अगर (x2apic_mode) अणु
+		boot_cpu_physical_apicid = पढ़ो_apic_id();
+		वापस;
+	पूर्ण
 
-	/* If no local APIC can be found return early */
-	if (!smp_found_config && detect_init_APIC()) {
-		/* lets NOP'ify apic operations */
+	/* If no local APIC can be found वापस early */
+	अगर (!smp_found_config && detect_init_APIC()) अणु
+		/* lets NOP'अगरy apic operations */
 		pr_info("APIC: disable apic facility\n");
 		apic_disable();
-	} else {
+	पूर्ण अन्यथा अणु
 		apic_phys = mp_lapic_addr;
 
 		/*
-		 * If the system has ACPI MADT tables or MP info, the LAPIC
-		 * address is already registered.
+		 * If the प्रणाली has ACPI MADT tables or MP info, the LAPIC
+		 * address is alपढ़ोy रेजिस्टरed.
 		 */
-		if (!acpi_lapic && !smp_found_config)
-			register_lapic_address(apic_phys);
-	}
+		अगर (!acpi_lapic && !smp_found_config)
+			रेजिस्टर_lapic_address(apic_phys);
+	पूर्ण
 
 	/*
-	 * Fetch the APIC ID of the BSP in case we have a
-	 * default configuration (or the MP table is broken).
+	 * Fetch the APIC ID of the BSP in हाल we have a
+	 * शेष configuration (or the MP table is broken).
 	 */
-	new_apicid = read_apic_id();
-	if (boot_cpu_physical_apicid != new_apicid) {
+	new_apicid = पढ़ो_apic_id();
+	अगर (boot_cpu_physical_apicid != new_apicid) अणु
 		boot_cpu_physical_apicid = new_apicid;
 		/*
 		 * yeah -- we lie about apic_version
-		 * in case if apic was disabled via boot option
-		 * but it's not a problem for SMP compiled kernel
-		 * since apic_intr_mode_select is prepared for such
-		 * a case and disable smp mode
+		 * in हाल अगर apic was disabled via boot option
+		 * but it's not a problem क्रम SMP compiled kernel
+		 * since apic_पूर्णांकr_mode_select is prepared क्रम such
+		 * a हाल and disable smp mode
 		 */
-		boot_cpu_apic_version = GET_APIC_VERSION(apic_read(APIC_LVR));
-	}
-}
+		boot_cpu_apic_version = GET_APIC_VERSION(apic_पढ़ो(APIC_LVR));
+	पूर्ण
+पूर्ण
 
-void __init register_lapic_address(unsigned long address)
-{
+व्योम __init रेजिस्टर_lapic_address(अचिन्हित दीर्घ address)
+अणु
 	mp_lapic_addr = address;
 
-	if (!x2apic_mode) {
+	अगर (!x2apic_mode) अणु
 		set_fixmap_nocache(FIX_APIC_BASE, address);
-		apic_printk(APIC_VERBOSE, "mapped APIC to %16lx (%16lx)\n",
+		apic_prपूर्णांकk(APIC_VERBOSE, "mapped APIC to %16lx (%16lx)\n",
 			    APIC_BASE, address);
-	}
-	if (boot_cpu_physical_apicid == -1U) {
-		boot_cpu_physical_apicid  = read_apic_id();
-		boot_cpu_apic_version = GET_APIC_VERSION(apic_read(APIC_LVR));
-	}
-}
+	पूर्ण
+	अगर (boot_cpu_physical_apicid == -1U) अणु
+		boot_cpu_physical_apicid  = पढ़ो_apic_id();
+		boot_cpu_apic_version = GET_APIC_VERSION(apic_पढ़ो(APIC_LVR));
+	पूर्ण
+पूर्ण
 
 /*
- * Local APIC interrupts
+ * Local APIC पूर्णांकerrupts
  */
 
 /*
- * Common handling code for spurious_interrupt and spurious_vector entry
- * points below. No point in allowing the compiler to inline it twice.
+ * Common handling code क्रम spurious_पूर्णांकerrupt and spurious_vector entry
+ * poपूर्णांकs below. No poपूर्णांक in allowing the compiler to अंतरभूत it twice.
  */
-static noinline void handle_spurious_interrupt(u8 vector)
-{
+अटल noअंतरभूत व्योम handle_spurious_पूर्णांकerrupt(u8 vector)
+अणु
 	u32 v;
 
 	trace_spurious_apic_entry(vector);
@@ -2151,57 +2152,57 @@ static noinline void handle_spurious_interrupt(u8 vector)
 	inc_irq_stat(irq_spurious_count);
 
 	/*
-	 * If this is a spurious interrupt then do not acknowledge
+	 * If this is a spurious पूर्णांकerrupt then करो not acknowledge
 	 */
-	if (vector == SPURIOUS_APIC_VECTOR) {
+	अगर (vector == SPURIOUS_APIC_VECTOR) अणु
 		/* See SDM vol 3 */
 		pr_info("Spurious APIC interrupt (vector 0xFF) on CPU#%d, should never happen.\n",
 			smp_processor_id());
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * If it is a vectored one, verify it's set in the ISR. If set,
+	 * If it is a vectored one, verअगरy it's set in the ISR. If set,
 	 * acknowledge it.
 	 */
-	v = apic_read(APIC_ISR + ((vector & ~0x1f) >> 1));
-	if (v & (1 << (vector & 0x1f))) {
+	v = apic_पढ़ो(APIC_ISR + ((vector & ~0x1f) >> 1));
+	अगर (v & (1 << (vector & 0x1f))) अणु
 		pr_info("Spurious interrupt (vector 0x%02x) on CPU#%d. Acked\n",
 			vector, smp_processor_id());
 		ack_APIC_irq();
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_info("Spurious interrupt (vector 0x%02x) on CPU#%d. Not pending!\n",
 			vector, smp_processor_id());
-	}
+	पूर्ण
 out:
-	trace_spurious_apic_exit(vector);
-}
+	trace_spurious_apic_निकास(vector);
+पूर्ण
 
 /**
- * spurious_interrupt - Catch all for interrupts raised on unused vectors
- * @regs:	Pointer to pt_regs on stack
+ * spurious_पूर्णांकerrupt - Catch all क्रम पूर्णांकerrupts उठाओd on unused vectors
+ * @regs:	Poपूर्णांकer to pt_regs on stack
  * @vector:	The vector number
  *
- * This is invoked from ASM entry code to catch all interrupts which
+ * This is invoked from ASM entry code to catch all पूर्णांकerrupts which
  * trigger on an entry which is routed to the common_spurious idtentry
- * point.
+ * poपूर्णांक.
  */
-DEFINE_IDTENTRY_IRQ(spurious_interrupt)
-{
-	handle_spurious_interrupt(vector);
-}
+DEFINE_IDTENTRY_IRQ(spurious_पूर्णांकerrupt)
+अणु
+	handle_spurious_पूर्णांकerrupt(vector);
+पूर्ण
 
-DEFINE_IDTENTRY_SYSVEC(sysvec_spurious_apic_interrupt)
-{
-	handle_spurious_interrupt(SPURIOUS_APIC_VECTOR);
-}
+DEFINE_IDTENTRY_SYSVEC(sysvec_spurious_apic_पूर्णांकerrupt)
+अणु
+	handle_spurious_पूर्णांकerrupt(SPURIOUS_APIC_VECTOR);
+पूर्ण
 
 /*
- * This interrupt should never happen with our APIC/SMP architecture
+ * This पूर्णांकerrupt should never happen with our APIC/SMP architecture
  */
-DEFINE_IDTENTRY_SYSVEC(sysvec_error_interrupt)
-{
-	static const char * const error_interrupt_reason[] = {
+DEFINE_IDTENTRY_SYSVEC(sysvec_error_पूर्णांकerrupt)
+अणु
+	अटल स्थिर अक्षर * स्थिर error_पूर्णांकerrupt_reason[] = अणु
 		"Send CS error",		/* APIC Error Bit 0 */
 		"Receive CS error",		/* APIC Error Bit 1 */
 		"Send accept error",		/* APIC Error Bit 2 */
@@ -2210,41 +2211,41 @@ DEFINE_IDTENTRY_SYSVEC(sysvec_error_interrupt)
 		"Send illegal vector",		/* APIC Error Bit 5 */
 		"Received illegal vector",	/* APIC Error Bit 6 */
 		"Illegal register address",	/* APIC Error Bit 7 */
-	};
+	पूर्ण;
 	u32 v, i = 0;
 
 	trace_error_apic_entry(ERROR_APIC_VECTOR);
 
 	/* First tickle the hardware, only then report what went on. -- REW */
-	if (lapic_get_maxlvt() > 3)	/* Due to the Pentium erratum 3AP. */
-		apic_write(APIC_ESR, 0);
-	v = apic_read(APIC_ESR);
+	अगर (lapic_get_maxlvt() > 3)	/* Due to the Pentium erratum 3AP. */
+		apic_ग_लिखो(APIC_ESR, 0);
+	v = apic_पढ़ो(APIC_ESR);
 	ack_APIC_irq();
 	atomic_inc(&irq_err_count);
 
-	apic_printk(APIC_DEBUG, KERN_DEBUG "APIC error on CPU%d: %02x",
+	apic_prपूर्णांकk(APIC_DEBUG, KERN_DEBUG "APIC error on CPU%d: %02x",
 		    smp_processor_id(), v);
 
 	v &= 0xff;
-	while (v) {
-		if (v & 0x1)
-			apic_printk(APIC_DEBUG, KERN_CONT " : %s", error_interrupt_reason[i]);
+	जबतक (v) अणु
+		अगर (v & 0x1)
+			apic_prपूर्णांकk(APIC_DEBUG, KERN_CONT " : %s", error_पूर्णांकerrupt_reason[i]);
 		i++;
 		v >>= 1;
-	}
+	पूर्ण
 
-	apic_printk(APIC_DEBUG, KERN_CONT "\n");
+	apic_prपूर्णांकk(APIC_DEBUG, KERN_CONT "\n");
 
-	trace_error_apic_exit(ERROR_APIC_VECTOR);
-}
+	trace_error_apic_निकास(ERROR_APIC_VECTOR);
+पूर्ण
 
 /**
- * connect_bsp_APIC - attach the APIC to the interrupt system
+ * connect_bsp_APIC - attach the APIC to the पूर्णांकerrupt प्रणाली
  */
-static void __init connect_bsp_APIC(void)
-{
-#ifdef CONFIG_X86_32
-	if (pic_mode) {
+अटल व्योम __init connect_bsp_APIC(व्योम)
+अणु
+#अगर_घोषित CONFIG_X86_32
+	अगर (pic_mode) अणु
 		/*
 		 * Do not trust the local APIC being empty at bootup.
 		 */
@@ -2253,77 +2254,77 @@ static void __init connect_bsp_APIC(void)
 		 * PIC mode, enable APIC mode in the IMCR, i.e.  connect BSP's
 		 * local APIC to INT and NMI lines.
 		 */
-		apic_printk(APIC_VERBOSE, "leaving PIC mode, "
+		apic_prपूर्णांकk(APIC_VERBOSE, "leaving PIC mode, "
 				"enabling APIC mode.\n");
 		imcr_pic_to_apic();
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /**
- * disconnect_bsp_APIC - detach the APIC from the interrupt system
- * @virt_wire_setup:	indicates, whether virtual wire mode is selected
+ * disconnect_bsp_APIC - detach the APIC from the पूर्णांकerrupt प्रणाली
+ * @virt_wire_setup:	indicates, whether भव wire mode is selected
  *
- * Virtual wire mode is necessary to deliver legacy interrupts even when the
+ * Virtual wire mode is necessary to deliver legacy पूर्णांकerrupts even when the
  * APIC is disabled.
  */
-void disconnect_bsp_APIC(int virt_wire_setup)
-{
-	unsigned int value;
+व्योम disconnect_bsp_APIC(पूर्णांक virt_wire_setup)
+अणु
+	अचिन्हित पूर्णांक value;
 
-#ifdef CONFIG_X86_32
-	if (pic_mode) {
+#अगर_घोषित CONFIG_X86_32
+	अगर (pic_mode) अणु
 		/*
-		 * Put the board back into PIC mode (has an effect only on
-		 * certain older boards).  Note that APIC interrupts, including
-		 * IPIs, won't work beyond this point!  The only exception are
+		 * Put the board back पूर्णांकo PIC mode (has an effect only on
+		 * certain older boards).  Note that APIC पूर्णांकerrupts, including
+		 * IPIs, won't work beyond this poपूर्णांक!  The only exception are
 		 * INIT IPIs.
 		 */
-		apic_printk(APIC_VERBOSE, "disabling APIC mode, "
+		apic_prपूर्णांकk(APIC_VERBOSE, "disabling APIC mode, "
 				"entering PIC mode.\n");
 		imcr_apic_to_pic();
-		return;
-	}
-#endif
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
 
 	/* Go back to Virtual Wire compatibility mode */
 
-	/* For the spurious interrupt use vector F, and enable it */
-	value = apic_read(APIC_SPIV);
+	/* For the spurious पूर्णांकerrupt use vector F, and enable it */
+	value = apic_पढ़ो(APIC_SPIV);
 	value &= ~APIC_VECTOR_MASK;
 	value |= APIC_SPIV_APIC_ENABLED;
 	value |= 0xf;
-	apic_write(APIC_SPIV, value);
+	apic_ग_लिखो(APIC_SPIV, value);
 
-	if (!virt_wire_setup) {
+	अगर (!virt_wire_setup) अणु
 		/*
 		 * For LVT0 make it edge triggered, active high,
-		 * external and enabled
+		 * बाह्यal and enabled
 		 */
-		value = apic_read(APIC_LVT0);
+		value = apic_पढ़ो(APIC_LVT0);
 		value &= ~(APIC_MODE_MASK | APIC_SEND_PENDING |
 			APIC_INPUT_POLARITY | APIC_LVT_REMOTE_IRR |
 			APIC_LVT_LEVEL_TRIGGER | APIC_LVT_MASKED);
 		value |= APIC_LVT_REMOTE_IRR | APIC_SEND_PENDING;
 		value = SET_APIC_DELIVERY_MODE(value, APIC_MODE_EXTINT);
-		apic_write(APIC_LVT0, value);
-	} else {
+		apic_ग_लिखो(APIC_LVT0, value);
+	पूर्ण अन्यथा अणु
 		/* Disable LVT0 */
-		apic_write(APIC_LVT0, APIC_LVT_MASKED);
-	}
+		apic_ग_लिखो(APIC_LVT0, APIC_LVT_MASKED);
+	पूर्ण
 
 	/*
 	 * For LVT1 make it edge triggered, active high,
 	 * nmi and enabled
 	 */
-	value = apic_read(APIC_LVT1);
+	value = apic_पढ़ो(APIC_LVT1);
 	value &= ~(APIC_MODE_MASK | APIC_SEND_PENDING |
 			APIC_INPUT_POLARITY | APIC_LVT_REMOTE_IRR |
 			APIC_LVT_LEVEL_TRIGGER | APIC_LVT_MASKED);
 	value |= APIC_LVT_REMOTE_IRR | APIC_SEND_PENDING;
 	value = SET_APIC_DELIVERY_MODE(value, APIC_MODE_NMI);
-	apic_write(APIC_LVT1, value);
-}
+	apic_ग_लिखो(APIC_LVT1, value);
+पूर्ण
 
 /*
  * The number of allocated logical CPU IDs. Since logical CPU IDs are allocated
@@ -2331,193 +2332,193 @@ void disconnect_bsp_APIC(int virt_wire_setup)
  * All allocated CPU IDs should be in the [0, nr_logical_cpuids) range,
  * so the maximum of nr_logical_cpuids is nr_cpu_ids.
  *
- * NOTE: Reserve 0 for BSP.
+ * NOTE: Reserve 0 क्रम BSP.
  */
-static int nr_logical_cpuids = 1;
+अटल पूर्णांक nr_logical_cpuids = 1;
 
 /*
  * Used to store mapping between logical CPU IDs and APIC IDs.
  */
-static int cpuid_to_apicid[] = {
+अटल पूर्णांक cpuid_to_apicid[] = अणु
 	[0 ... NR_CPUS - 1] = -1,
-};
+पूर्ण;
 
-bool arch_match_cpu_phys_id(int cpu, u64 phys_id)
-{
-	return phys_id == cpuid_to_apicid[cpu];
-}
+bool arch_match_cpu_phys_id(पूर्णांक cpu, u64 phys_id)
+अणु
+	वापस phys_id == cpuid_to_apicid[cpu];
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 /**
- * apic_id_is_primary_thread - Check whether APIC ID belongs to a primary thread
+ * apic_id_is_primary_thपढ़ो - Check whether APIC ID beदीर्घs to a primary thपढ़ो
  * @apicid: APIC ID to check
  */
-bool apic_id_is_primary_thread(unsigned int apicid)
-{
+bool apic_id_is_primary_thपढ़ो(अचिन्हित पूर्णांक apicid)
+अणु
 	u32 mask;
 
-	if (smp_num_siblings == 1)
-		return true;
-	/* Isolate the SMT bit(s) in the APICID and check for 0 */
+	अगर (smp_num_siblings == 1)
+		वापस true;
+	/* Isolate the SMT bit(s) in the APICID and check क्रम 0 */
 	mask = (1U << (fls(smp_num_siblings) - 1)) - 1;
-	return !(apicid & mask);
-}
-#endif
+	वापस !(apicid & mask);
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Should use this API to allocate logical CPU IDs to keep nr_logical_cpuids
  * and cpuid_to_apicid[] synchronized.
  */
-static int allocate_logical_cpuid(int apicid)
-{
-	int i;
+अटल पूर्णांक allocate_logical_cpuid(पूर्णांक apicid)
+अणु
+	पूर्णांक i;
 
 	/*
 	 * cpuid <-> apicid mapping is persistent, so when a cpu is up,
-	 * check if the kernel has allocated a cpuid for it.
+	 * check अगर the kernel has allocated a cpuid क्रम it.
 	 */
-	for (i = 0; i < nr_logical_cpuids; i++) {
-		if (cpuid_to_apicid[i] == apicid)
-			return i;
-	}
+	क्रम (i = 0; i < nr_logical_cpuids; i++) अणु
+		अगर (cpuid_to_apicid[i] == apicid)
+			वापस i;
+	पूर्ण
 
 	/* Allocate a new cpuid. */
-	if (nr_logical_cpuids >= nr_cpu_ids) {
+	अगर (nr_logical_cpuids >= nr_cpu_ids) अणु
 		WARN_ONCE(1, "APIC: NR_CPUS/possible_cpus limit of %u reached. "
 			     "Processor %d/0x%x and the rest are ignored.\n",
 			     nr_cpu_ids, nr_logical_cpuids, apicid);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	cpuid_to_apicid[nr_logical_cpuids] = apicid;
-	return nr_logical_cpuids++;
-}
+	वापस nr_logical_cpuids++;
+पूर्ण
 
-int generic_processor_info(int apicid, int version)
-{
-	int cpu, max = nr_cpu_ids;
+पूर्णांक generic_processor_info(पूर्णांक apicid, पूर्णांक version)
+अणु
+	पूर्णांक cpu, max = nr_cpu_ids;
 	bool boot_cpu_detected = physid_isset(boot_cpu_physical_apicid,
 				phys_cpu_present_map);
 
 	/*
-	 * boot_cpu_physical_apicid is designed to have the apicid
-	 * returned by read_apic_id(), i.e, the apicid of the
-	 * currently booting-up processor. However, on some platforms,
-	 * it is temporarily modified by the apicid reported as BSP
+	 * boot_cpu_physical_apicid is deचिन्हित to have the apicid
+	 * वापसed by पढ़ो_apic_id(), i.e, the apicid of the
+	 * currently booting-up processor. However, on some platक्रमms,
+	 * it is temporarily modअगरied by the apicid reported as BSP
 	 * through MP table. Concretely:
 	 *
 	 * - arch/x86/kernel/mpparse.c: MP_processor_info()
 	 * - arch/x86/mm/amdtopology.c: amd_numa_init()
 	 *
-	 * This function is executed with the modified
+	 * This function is executed with the modअगरied
 	 * boot_cpu_physical_apicid. So, disabled_cpu_apicid kernel
-	 * parameter doesn't work to disable APs on kdump 2nd kernel.
+	 * parameter करोesn't work to disable APs on kdump 2nd kernel.
 	 *
 	 * Since fixing handling of boot_cpu_physical_apicid requires
-	 * another discussion and tests on each platform, we leave it
-	 * for now and here we use read_apic_id() directly in this
+	 * another discussion and tests on each platक्रमm, we leave it
+	 * क्रम now and here we use पढ़ो_apic_id() directly in this
 	 * function, generic_processor_info().
 	 */
-	if (disabled_cpu_apicid != BAD_APICID &&
-	    disabled_cpu_apicid != read_apic_id() &&
-	    disabled_cpu_apicid == apicid) {
-		int thiscpu = num_processors + disabled_cpus;
+	अगर (disabled_cpu_apicid != BAD_APICID &&
+	    disabled_cpu_apicid != पढ़ो_apic_id() &&
+	    disabled_cpu_apicid == apicid) अणु
+		पूर्णांक thiscpu = num_processors + disabled_cpus;
 
 		pr_warn("APIC: Disabling requested cpu."
 			" Processor %d/0x%x ignored.\n", thiscpu, apicid);
 
 		disabled_cpus++;
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
 	 * If boot cpu has not been detected yet, then only allow upto
-	 * nr_cpu_ids - 1 processors and keep one slot free for boot cpu
+	 * nr_cpu_ids - 1 processors and keep one slot मुक्त क्रम boot cpu
 	 */
-	if (!boot_cpu_detected && num_processors >= nr_cpu_ids - 1 &&
-	    apicid != boot_cpu_physical_apicid) {
-		int thiscpu = max + disabled_cpus - 1;
+	अगर (!boot_cpu_detected && num_processors >= nr_cpu_ids - 1 &&
+	    apicid != boot_cpu_physical_apicid) अणु
+		पूर्णांक thiscpu = max + disabled_cpus - 1;
 
 		pr_warn("APIC: NR_CPUS/possible_cpus limit of %i almost"
 			" reached. Keeping one slot for boot cpu."
 			"  Processor %d/0x%x ignored.\n", max, thiscpu, apicid);
 
 		disabled_cpus++;
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (num_processors >= nr_cpu_ids) {
-		int thiscpu = max + disabled_cpus;
+	अगर (num_processors >= nr_cpu_ids) अणु
+		पूर्णांक thiscpu = max + disabled_cpus;
 
 		pr_warn("APIC: NR_CPUS/possible_cpus limit of %i reached. "
 			"Processor %d/0x%x ignored.\n", max, thiscpu, apicid);
 
 		disabled_cpus++;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (apicid == boot_cpu_physical_apicid) {
+	अगर (apicid == boot_cpu_physical_apicid) अणु
 		/*
 		 * x86_bios_cpu_apicid is required to have processors listed
 		 * in same order as logical cpu numbers. Hence the first
 		 * entry is BSP, and so on.
-		 * boot_cpu_init() already hold bit 0 in cpu_present_mask
-		 * for BSP.
+		 * boot_cpu_init() alपढ़ोy hold bit 0 in cpu_present_mask
+		 * क्रम BSP.
 		 */
 		cpu = 0;
 
-		/* Logical cpuid 0 is reserved for BSP. */
+		/* Logical cpuid 0 is reserved क्रम BSP. */
 		cpuid_to_apicid[0] = apicid;
-	} else {
+	पूर्ण अन्यथा अणु
 		cpu = allocate_logical_cpuid(apicid);
-		if (cpu < 0) {
+		अगर (cpu < 0) अणु
 			disabled_cpus++;
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Validate version
 	 */
-	if (version == 0x0) {
+	अगर (version == 0x0) अणु
 		pr_warn("BIOS bug: APIC version is 0 for CPU %d/0x%x, fixing up to 0x10\n",
 			cpu, apicid);
 		version = 0x10;
-	}
+	पूर्ण
 
-	if (version != boot_cpu_apic_version) {
+	अगर (version != boot_cpu_apic_version) अणु
 		pr_warn("BIOS bug: APIC version mismatch, boot CPU: %x, CPU %d: version %x\n",
 			boot_cpu_apic_version, cpu, version);
-	}
+	पूर्ण
 
-	if (apicid > max_physical_apicid)
+	अगर (apicid > max_physical_apicid)
 		max_physical_apicid = apicid;
 
-#if defined(CONFIG_SMP) || defined(CONFIG_X86_64)
+#अगर defined(CONFIG_SMP) || defined(CONFIG_X86_64)
 	early_per_cpu(x86_cpu_to_apicid, cpu) = apicid;
 	early_per_cpu(x86_bios_cpu_apicid, cpu) = apicid;
-#endif
-#ifdef CONFIG_X86_32
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_X86_32
 	early_per_cpu(x86_cpu_to_logical_apicid, cpu) =
 		apic->x86_32_early_logical_apicid(cpu);
-#endif
+#पूर्ण_अगर
 	set_cpu_possible(cpu, true);
 	physid_set(apicid, phys_cpu_present_map);
 	set_cpu_present(cpu, true);
 	num_processors++;
 
-	return cpu;
-}
+	वापस cpu;
+पूर्ण
 
-int hard_smp_processor_id(void)
-{
-	return read_apic_id();
-}
+पूर्णांक hard_smp_processor_id(व्योम)
+अणु
+	वापस पढ़ो_apic_id();
+पूर्ण
 
-void __irq_msi_compose_msg(struct irq_cfg *cfg, struct msi_msg *msg,
+व्योम __irq_msi_compose_msg(काष्ठा irq_cfg *cfg, काष्ठा msi_msg *msg,
 			   bool dmar)
-{
-	memset(msg, 0, sizeof(*msg));
+अणु
+	स_रखो(msg, 0, माप(*msg));
 
 	msg->arch_addr_lo.base_address = X86_MSI_BASE_ADDRESS_LOW;
 	msg->arch_addr_lo.dest_mode_logical = apic->dest_mode_logical;
@@ -2529,74 +2530,74 @@ void __irq_msi_compose_msg(struct irq_cfg *cfg, struct msi_msg *msg,
 	msg->address_hi = X86_MSI_BASE_ADDRESS_HIGH;
 	/*
 	 * Only the IOMMU itself can use the trick of putting destination
-	 * APIC ID into the high bits of the address. Anything else would
-	 * just be writing to memory if it tried that, and needs IR to
+	 * APIC ID पूर्णांकo the high bits of the address. Anything अन्यथा would
+	 * just be writing to memory अगर it tried that, and needs IR to
 	 * address APICs which can't be addressed in the normal 32-bit
 	 * address range at 0xFFExxxxx. That is typically just 8 bits, but
 	 * some hypervisors allow the extended destination ID field in bits
-	 * 5-11 to be used, giving support for 15 bits of APIC IDs in total.
+	 * 5-11 to be used, giving support क्रम 15 bits of APIC IDs in total.
 	 */
-	if (dmar)
+	अगर (dmar)
 		msg->arch_addr_hi.destid_8_31 = cfg->dest_apicid >> 8;
-	else if (virt_ext_dest_id && cfg->dest_apicid < 0x8000)
+	अन्यथा अगर (virt_ext_dest_id && cfg->dest_apicid < 0x8000)
 		msg->arch_addr_lo.virt_destid_8_14 = cfg->dest_apicid >> 8;
-	else
+	अन्यथा
 		WARN_ON_ONCE(cfg->dest_apicid > 0xFF);
-}
+पूर्ण
 
-u32 x86_msi_msg_get_destid(struct msi_msg *msg, bool extid)
-{
+u32 x86_msi_msg_get_destid(काष्ठा msi_msg *msg, bool extid)
+अणु
 	u32 dest = msg->arch_addr_lo.destid_0_7;
 
-	if (extid)
+	अगर (extid)
 		dest |= msg->arch_addr_hi.destid_8_31 << 8;
-	return dest;
-}
+	वापस dest;
+पूर्ण
 EXPORT_SYMBOL_GPL(x86_msi_msg_get_destid);
 
 /*
  * Override the generic EOI implementation with an optimized version.
  * Only called during early boot when only one CPU is active and with
- * interrupts disabled, so we know this does not race with actual APIC driver
+ * पूर्णांकerrupts disabled, so we know this करोes not race with actual APIC driver
  * use.
  */
-void __init apic_set_eoi_write(void (*eoi_write)(u32 reg, u32 v))
-{
-	struct apic **drv;
+व्योम __init apic_set_eoi_ग_लिखो(व्योम (*eoi_ग_लिखो)(u32 reg, u32 v))
+अणु
+	काष्ठा apic **drv;
 
-	for (drv = __apicdrivers; drv < __apicdrivers_end; drv++) {
-		/* Should happen once for each apic */
-		WARN_ON((*drv)->eoi_write == eoi_write);
-		(*drv)->native_eoi_write = (*drv)->eoi_write;
-		(*drv)->eoi_write = eoi_write;
-	}
-}
+	क्रम (drv = __apicdrivers; drv < __apicdrivers_end; drv++) अणु
+		/* Should happen once क्रम each apic */
+		WARN_ON((*drv)->eoi_ग_लिखो == eoi_ग_लिखो);
+		(*drv)->native_eoi_ग_लिखो = (*drv)->eoi_ग_लिखो;
+		(*drv)->eoi_ग_लिखो = eoi_ग_लिखो;
+	पूर्ण
+पूर्ण
 
-static void __init apic_bsp_up_setup(void)
-{
-#ifdef CONFIG_X86_64
-	apic_write(APIC_ID, apic->set_apic_id(boot_cpu_physical_apicid));
-#else
+अटल व्योम __init apic_bsp_up_setup(व्योम)
+अणु
+#अगर_घोषित CONFIG_X86_64
+	apic_ग_लिखो(APIC_ID, apic->set_apic_id(boot_cpu_physical_apicid));
+#अन्यथा
 	/*
-	 * Hack: In case of kdump, after a crash, kernel might be booting
+	 * Hack: In हाल of kdump, after a crash, kernel might be booting
 	 * on a cpu with non-zero lapic id. But boot_cpu_physical_apicid
-	 * might be zero if read from MP tables. Get it from LAPIC.
+	 * might be zero अगर पढ़ो from MP tables. Get it from LAPIC.
 	 */
-# ifdef CONFIG_CRASH_DUMP
-	boot_cpu_physical_apicid = read_apic_id();
-# endif
-#endif
+# अगरdef CONFIG_CRASH_DUMP
+	boot_cpu_physical_apicid = पढ़ो_apic_id();
+# endअगर
+#पूर्ण_अगर
 	physid_set_mask_of_physid(boot_cpu_physical_apicid, &phys_cpu_present_map);
-}
+पूर्ण
 
 /**
- * apic_bsp_setup - Setup function for local apic and io-apic
- * @upmode:		Force UP mode (for APIC_init_uniprocessor)
+ * apic_bsp_setup - Setup function क्रम local apic and io-apic
+ * @upmode:		Force UP mode (क्रम APIC_init_uniprocessor)
  */
-static void __init apic_bsp_setup(bool upmode)
-{
+अटल व्योम __init apic_bsp_setup(bool upmode)
+अणु
 	connect_bsp_APIC();
-	if (upmode)
+	अगर (upmode)
 		apic_bsp_up_setup();
 	setup_local_APIC();
 
@@ -2605,84 +2606,84 @@ static void __init apic_bsp_setup(bool upmode)
 	irq_remap_enable_fault_handling();
 	setup_IO_APIC();
 	lapic_update_legacy_vectors();
-}
+पूर्ण
 
-#ifdef CONFIG_UP_LATE_INIT
-void __init up_late_init(void)
-{
-	if (apic_intr_mode == APIC_PIC)
-		return;
+#अगर_घोषित CONFIG_UP_LATE_INIT
+व्योम __init up_late_init(व्योम)
+अणु
+	अगर (apic_पूर्णांकr_mode == APIC_PIC)
+		वापस;
 
-	/* Setup local timer */
-	x86_init.timers.setup_percpu_clockev();
-}
-#endif
+	/* Setup local समयr */
+	x86_init.समयrs.setup_percpu_घड़ीev();
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Power management
  */
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static struct {
+अटल काष्ठा अणु
 	/*
-	 * 'active' is true if the local APIC was enabled by us and
-	 * not the BIOS; this signifies that we are also responsible
-	 * for disabling it before entering apm/acpi suspend
+	 * 'active' is true अगर the local APIC was enabled by us and
+	 * not the BIOS; this signअगरies that we are also responsible
+	 * क्रम disabling it beक्रमe entering apm/acpi suspend
 	 */
-	int active;
+	पूर्णांक active;
 	/* r/w apic fields */
-	unsigned int apic_id;
-	unsigned int apic_taskpri;
-	unsigned int apic_ldr;
-	unsigned int apic_dfr;
-	unsigned int apic_spiv;
-	unsigned int apic_lvtt;
-	unsigned int apic_lvtpc;
-	unsigned int apic_lvt0;
-	unsigned int apic_lvt1;
-	unsigned int apic_lvterr;
-	unsigned int apic_tmict;
-	unsigned int apic_tdcr;
-	unsigned int apic_thmr;
-	unsigned int apic_cmci;
-} apic_pm_state;
+	अचिन्हित पूर्णांक apic_id;
+	अचिन्हित पूर्णांक apic_taskpri;
+	अचिन्हित पूर्णांक apic_ldr;
+	अचिन्हित पूर्णांक apic_dfr;
+	अचिन्हित पूर्णांक apic_spiv;
+	अचिन्हित पूर्णांक apic_lvtt;
+	अचिन्हित पूर्णांक apic_lvtpc;
+	अचिन्हित पूर्णांक apic_lvt0;
+	अचिन्हित पूर्णांक apic_lvt1;
+	अचिन्हित पूर्णांक apic_lvterr;
+	अचिन्हित पूर्णांक apic_पंचांगict;
+	अचिन्हित पूर्णांक apic_tdcr;
+	अचिन्हित पूर्णांक apic_thmr;
+	अचिन्हित पूर्णांक apic_cmci;
+पूर्ण apic_pm_state;
 
-static int lapic_suspend(void)
-{
-	unsigned long flags;
-	int maxlvt;
+अटल पूर्णांक lapic_suspend(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक maxlvt;
 
-	if (!apic_pm_state.active)
-		return 0;
+	अगर (!apic_pm_state.active)
+		वापस 0;
 
 	maxlvt = lapic_get_maxlvt();
 
-	apic_pm_state.apic_id = apic_read(APIC_ID);
-	apic_pm_state.apic_taskpri = apic_read(APIC_TASKPRI);
-	apic_pm_state.apic_ldr = apic_read(APIC_LDR);
-	apic_pm_state.apic_dfr = apic_read(APIC_DFR);
-	apic_pm_state.apic_spiv = apic_read(APIC_SPIV);
-	apic_pm_state.apic_lvtt = apic_read(APIC_LVTT);
-	if (maxlvt >= 4)
-		apic_pm_state.apic_lvtpc = apic_read(APIC_LVTPC);
-	apic_pm_state.apic_lvt0 = apic_read(APIC_LVT0);
-	apic_pm_state.apic_lvt1 = apic_read(APIC_LVT1);
-	apic_pm_state.apic_lvterr = apic_read(APIC_LVTERR);
-	apic_pm_state.apic_tmict = apic_read(APIC_TMICT);
-	apic_pm_state.apic_tdcr = apic_read(APIC_TDCR);
-#ifdef CONFIG_X86_THERMAL_VECTOR
-	if (maxlvt >= 5)
-		apic_pm_state.apic_thmr = apic_read(APIC_LVTTHMR);
-#endif
-#ifdef CONFIG_X86_MCE_INTEL
-	if (maxlvt >= 6)
-		apic_pm_state.apic_cmci = apic_read(APIC_LVTCMCI);
-#endif
+	apic_pm_state.apic_id = apic_पढ़ो(APIC_ID);
+	apic_pm_state.apic_taskpri = apic_पढ़ो(APIC_TASKPRI);
+	apic_pm_state.apic_ldr = apic_पढ़ो(APIC_LDR);
+	apic_pm_state.apic_dfr = apic_पढ़ो(APIC_DFR);
+	apic_pm_state.apic_spiv = apic_पढ़ो(APIC_SPIV);
+	apic_pm_state.apic_lvtt = apic_पढ़ो(APIC_LVTT);
+	अगर (maxlvt >= 4)
+		apic_pm_state.apic_lvtpc = apic_पढ़ो(APIC_LVTPC);
+	apic_pm_state.apic_lvt0 = apic_पढ़ो(APIC_LVT0);
+	apic_pm_state.apic_lvt1 = apic_पढ़ो(APIC_LVT1);
+	apic_pm_state.apic_lvterr = apic_पढ़ो(APIC_LVTERR);
+	apic_pm_state.apic_पंचांगict = apic_पढ़ो(APIC_TMICT);
+	apic_pm_state.apic_tdcr = apic_पढ़ो(APIC_TDCR);
+#अगर_घोषित CONFIG_X86_THERMAL_VECTOR
+	अगर (maxlvt >= 5)
+		apic_pm_state.apic_thmr = apic_पढ़ो(APIC_LVTTHMR);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_X86_MCE_INTEL
+	अगर (maxlvt >= 6)
+		apic_pm_state.apic_cmci = apic_पढ़ो(APIC_LVTCMCI);
+#पूर्ण_अगर
 
 	local_irq_save(flags);
 
 	/*
-	 * Mask IOAPIC before disabling the local APIC to prevent stale IRR
+	 * Mask IOAPIC beक्रमe disabling the local APIC to prevent stale IRR
 	 * entries on some implementations.
 	 */
 	mask_ioapic_entries();
@@ -2692,239 +2693,239 @@ static int lapic_suspend(void)
 	irq_remapping_disable();
 
 	local_irq_restore(flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lapic_resume(void)
-{
-	unsigned int l, h;
-	unsigned long flags;
-	int maxlvt;
+अटल व्योम lapic_resume(व्योम)
+अणु
+	अचिन्हित पूर्णांक l, h;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक maxlvt;
 
-	if (!apic_pm_state.active)
-		return;
+	अगर (!apic_pm_state.active)
+		वापस;
 
 	local_irq_save(flags);
 
 	/*
 	 * IO-APIC and PIC have their own resume routines.
-	 * We just mask them here to make sure the interrupt
-	 * subsystem is completely quiet while we enable x2apic
-	 * and interrupt-remapping.
+	 * We just mask them here to make sure the पूर्णांकerrupt
+	 * subप्रणाली is completely quiet जबतक we enable x2apic
+	 * and पूर्णांकerrupt-remapping.
 	 */
 	mask_ioapic_entries();
 	legacy_pic->mask_all();
 
-	if (x2apic_mode) {
+	अगर (x2apic_mode) अणु
 		__x2apic_enable();
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Make sure the APICBASE points to the right address
+		 * Make sure the APICBASE poपूर्णांकs to the right address
 		 *
-		 * FIXME! This will be wrong if we ever support suspend on
-		 * SMP! We'll need to do this as part of the CPU restore!
+		 * FIXME! This will be wrong अगर we ever support suspend on
+		 * SMP! We'll need to करो this as part of the CPU restore!
 		 */
-		if (boot_cpu_data.x86 >= 6) {
+		अगर (boot_cpu_data.x86 >= 6) अणु
 			rdmsr(MSR_IA32_APICBASE, l, h);
 			l &= ~MSR_IA32_APICBASE_BASE;
 			l |= MSR_IA32_APICBASE_ENABLE | mp_lapic_addr;
 			wrmsr(MSR_IA32_APICBASE, l, h);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	maxlvt = lapic_get_maxlvt();
-	apic_write(APIC_LVTERR, ERROR_APIC_VECTOR | APIC_LVT_MASKED);
-	apic_write(APIC_ID, apic_pm_state.apic_id);
-	apic_write(APIC_DFR, apic_pm_state.apic_dfr);
-	apic_write(APIC_LDR, apic_pm_state.apic_ldr);
-	apic_write(APIC_TASKPRI, apic_pm_state.apic_taskpri);
-	apic_write(APIC_SPIV, apic_pm_state.apic_spiv);
-	apic_write(APIC_LVT0, apic_pm_state.apic_lvt0);
-	apic_write(APIC_LVT1, apic_pm_state.apic_lvt1);
-#ifdef CONFIG_X86_THERMAL_VECTOR
-	if (maxlvt >= 5)
-		apic_write(APIC_LVTTHMR, apic_pm_state.apic_thmr);
-#endif
-#ifdef CONFIG_X86_MCE_INTEL
-	if (maxlvt >= 6)
-		apic_write(APIC_LVTCMCI, apic_pm_state.apic_cmci);
-#endif
-	if (maxlvt >= 4)
-		apic_write(APIC_LVTPC, apic_pm_state.apic_lvtpc);
-	apic_write(APIC_LVTT, apic_pm_state.apic_lvtt);
-	apic_write(APIC_TDCR, apic_pm_state.apic_tdcr);
-	apic_write(APIC_TMICT, apic_pm_state.apic_tmict);
-	apic_write(APIC_ESR, 0);
-	apic_read(APIC_ESR);
-	apic_write(APIC_LVTERR, apic_pm_state.apic_lvterr);
-	apic_write(APIC_ESR, 0);
-	apic_read(APIC_ESR);
+	apic_ग_लिखो(APIC_LVTERR, ERROR_APIC_VECTOR | APIC_LVT_MASKED);
+	apic_ग_लिखो(APIC_ID, apic_pm_state.apic_id);
+	apic_ग_लिखो(APIC_DFR, apic_pm_state.apic_dfr);
+	apic_ग_लिखो(APIC_LDR, apic_pm_state.apic_ldr);
+	apic_ग_लिखो(APIC_TASKPRI, apic_pm_state.apic_taskpri);
+	apic_ग_लिखो(APIC_SPIV, apic_pm_state.apic_spiv);
+	apic_ग_लिखो(APIC_LVT0, apic_pm_state.apic_lvt0);
+	apic_ग_लिखो(APIC_LVT1, apic_pm_state.apic_lvt1);
+#अगर_घोषित CONFIG_X86_THERMAL_VECTOR
+	अगर (maxlvt >= 5)
+		apic_ग_लिखो(APIC_LVTTHMR, apic_pm_state.apic_thmr);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_X86_MCE_INTEL
+	अगर (maxlvt >= 6)
+		apic_ग_लिखो(APIC_LVTCMCI, apic_pm_state.apic_cmci);
+#पूर्ण_अगर
+	अगर (maxlvt >= 4)
+		apic_ग_लिखो(APIC_LVTPC, apic_pm_state.apic_lvtpc);
+	apic_ग_लिखो(APIC_LVTT, apic_pm_state.apic_lvtt);
+	apic_ग_लिखो(APIC_TDCR, apic_pm_state.apic_tdcr);
+	apic_ग_लिखो(APIC_TMICT, apic_pm_state.apic_पंचांगict);
+	apic_ग_लिखो(APIC_ESR, 0);
+	apic_पढ़ो(APIC_ESR);
+	apic_ग_लिखो(APIC_LVTERR, apic_pm_state.apic_lvterr);
+	apic_ग_लिखो(APIC_ESR, 0);
+	apic_पढ़ो(APIC_ESR);
 
 	irq_remapping_reenable(x2apic_mode);
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /*
- * This device has no shutdown method - fully functioning local APICs
- * are needed on every CPU up until machine_halt/restart/poweroff.
+ * This device has no shutकरोwn method - fully functioning local APICs
+ * are needed on every CPU up until machine_halt/restart/घातeroff.
  */
 
-static struct syscore_ops lapic_syscore_ops = {
+अटल काष्ठा syscore_ops lapic_syscore_ops = अणु
 	.resume		= lapic_resume,
 	.suspend	= lapic_suspend,
-};
+पूर्ण;
 
-static void apic_pm_activate(void)
-{
+अटल व्योम apic_pm_activate(व्योम)
+अणु
 	apic_pm_state.active = 1;
-}
+पूर्ण
 
-static int __init init_lapic_sysfs(void)
-{
-	/* XXX: remove suspend/resume procs if !apic_pm_state.active? */
-	if (boot_cpu_has(X86_FEATURE_APIC))
-		register_syscore_ops(&lapic_syscore_ops);
+अटल पूर्णांक __init init_lapic_sysfs(व्योम)
+अणु
+	/* XXX: हटाओ suspend/resume procs अगर !apic_pm_state.active? */
+	अगर (boot_cpu_has(X86_FEATURE_APIC))
+		रेजिस्टर_syscore_ops(&lapic_syscore_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* local apic needs to resume before other devices access its registers. */
+/* local apic needs to resume beक्रमe other devices access its रेजिस्टरs. */
 core_initcall(init_lapic_sysfs);
 
-#else	/* CONFIG_PM */
+#अन्यथा	/* CONFIG_PM */
 
-static void apic_pm_activate(void) { }
+अटल व्योम apic_pm_activate(व्योम) अणु पूर्ण
 
-#endif	/* CONFIG_PM */
+#पूर्ण_अगर	/* CONFIG_PM */
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 
-static int multi_checked;
-static int multi;
+अटल पूर्णांक multi_checked;
+अटल पूर्णांक multi;
 
-static int set_multi(const struct dmi_system_id *d)
-{
-	if (multi)
-		return 0;
+अटल पूर्णांक set_multi(स्थिर काष्ठा dmi_प्रणाली_id *d)
+अणु
+	अगर (multi)
+		वापस 0;
 	pr_info("APIC: %s detected, Multi Chassis\n", d->ident);
 	multi = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dmi_system_id multi_dmi_table[] = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id multi_dmi_table[] = अणु
+	अणु
 		.callback = set_multi,
 		.ident = "IBM System Summit2",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "IBM"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Summit2"),
-		},
-	},
-	{}
-};
+		पूर्ण,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void dmi_check_multi(void)
-{
-	if (multi_checked)
-		return;
+अटल व्योम dmi_check_multi(व्योम)
+अणु
+	अगर (multi_checked)
+		वापस;
 
-	dmi_check_system(multi_dmi_table);
+	dmi_check_प्रणाली(multi_dmi_table);
 	multi_checked = 1;
-}
+पूर्ण
 
 /*
- * apic_is_clustered_box() -- Check if we can expect good TSC
+ * apic_is_clustered_box() -- Check अगर we can expect good TSC
  *
  * Thus far, the major user of this is IBM's Summit2 series:
- * Clustered boxes may have unsynced TSC problems if they are
+ * Clustered boxes may have unsynced TSC problems अगर they are
  * multi-chassis.
  * Use DMI to check them
  */
-int apic_is_clustered_box(void)
-{
+पूर्णांक apic_is_clustered_box(व्योम)
+अणु
 	dmi_check_multi();
-	return multi;
-}
-#endif
+	वापस multi;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * APIC command line parameters
  */
-static int __init setup_disableapic(char *arg)
-{
+अटल पूर्णांक __init setup_disableapic(अक्षर *arg)
+अणु
 	disable_apic = 1;
 	setup_clear_cpu_cap(X86_FEATURE_APIC);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("disableapic", setup_disableapic);
 
-/* same as disableapic, for compatibility */
-static int __init setup_nolapic(char *arg)
-{
-	return setup_disableapic(arg);
-}
+/* same as disableapic, क्रम compatibility */
+अटल पूर्णांक __init setup_nolapic(अक्षर *arg)
+अणु
+	वापस setup_disableapic(arg);
+पूर्ण
 early_param("nolapic", setup_nolapic);
 
-static int __init parse_lapic_timer_c2_ok(char *arg)
-{
-	local_apic_timer_c2_ok = 1;
-	return 0;
-}
-early_param("lapic_timer_c2_ok", parse_lapic_timer_c2_ok);
+अटल पूर्णांक __init parse_lapic_समयr_c2_ok(अक्षर *arg)
+अणु
+	local_apic_समयr_c2_ok = 1;
+	वापस 0;
+पूर्ण
+early_param("lapic_timer_c2_ok", parse_lapic_समयr_c2_ok);
 
-static int __init parse_disable_apic_timer(char *arg)
-{
-	disable_apic_timer = 1;
-	return 0;
-}
-early_param("noapictimer", parse_disable_apic_timer);
+अटल पूर्णांक __init parse_disable_apic_समयr(अक्षर *arg)
+अणु
+	disable_apic_समयr = 1;
+	वापस 0;
+पूर्ण
+early_param("noapictimer", parse_disable_apic_समयr);
 
-static int __init parse_nolapic_timer(char *arg)
-{
-	disable_apic_timer = 1;
-	return 0;
-}
-early_param("nolapic_timer", parse_nolapic_timer);
+अटल पूर्णांक __init parse_nolapic_समयr(अक्षर *arg)
+अणु
+	disable_apic_समयr = 1;
+	वापस 0;
+पूर्ण
+early_param("nolapic_timer", parse_nolapic_समयr);
 
-static int __init apic_set_verbosity(char *arg)
-{
-	if (!arg)  {
-#ifdef CONFIG_X86_64
+अटल पूर्णांक __init apic_set_verbosity(अक्षर *arg)
+अणु
+	अगर (!arg)  अणु
+#अगर_घोषित CONFIG_X86_64
 		skip_ioapic_setup = 0;
-		return 0;
-#endif
-		return -EINVAL;
-	}
+		वापस 0;
+#पूर्ण_अगर
+		वापस -EINVAL;
+	पूर्ण
 
-	if (strcmp("debug", arg) == 0)
+	अगर (म_भेद("debug", arg) == 0)
 		apic_verbosity = APIC_DEBUG;
-	else if (strcmp("verbose", arg) == 0)
+	अन्यथा अगर (म_भेद("verbose", arg) == 0)
 		apic_verbosity = APIC_VERBOSE;
-#ifdef CONFIG_X86_64
-	else {
+#अगर_घोषित CONFIG_X86_64
+	अन्यथा अणु
 		pr_warn("APIC Verbosity level %s not recognised"
 			" use apic=verbose or apic=debug\n", arg);
-		return -EINVAL;
-	}
-#endif
+		वापस -EINVAL;
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("apic", apic_set_verbosity);
 
-static int __init lapic_insert_resource(void)
-{
-	if (!apic_phys)
-		return -1;
+अटल पूर्णांक __init lapic_insert_resource(व्योम)
+अणु
+	अगर (!apic_phys)
+		वापस -1;
 
-	/* Put local APIC into the resource map. */
+	/* Put local APIC पूर्णांकo the resource map. */
 	lapic_resource.start = apic_phys;
 	lapic_resource.end = lapic_resource.start + PAGE_SIZE - 1;
 	insert_resource(&iomem_resource, &lapic_resource);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * need call insert after e820__reserve_resources()
@@ -2932,31 +2933,31 @@ static int __init lapic_insert_resource(void)
  */
 late_initcall(lapic_insert_resource);
 
-static int __init apic_set_disabled_cpu_apicid(char *arg)
-{
-	if (!arg || !get_option(&arg, &disabled_cpu_apicid))
-		return -EINVAL;
+अटल पूर्णांक __init apic_set_disabled_cpu_apicid(अक्षर *arg)
+अणु
+	अगर (!arg || !get_option(&arg, &disabled_cpu_apicid))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("disable_cpu_apicid", apic_set_disabled_cpu_apicid);
 
-static int __init apic_set_extnmi(char *arg)
-{
-	if (!arg)
-		return -EINVAL;
+अटल पूर्णांक __init apic_set_extnmi(अक्षर *arg)
+अणु
+	अगर (!arg)
+		वापस -EINVAL;
 
-	if (!strncmp("all", arg, 3))
+	अगर (!म_भेदन("all", arg, 3))
 		apic_extnmi = APIC_EXTNMI_ALL;
-	else if (!strncmp("none", arg, 4))
+	अन्यथा अगर (!म_भेदन("none", arg, 4))
 		apic_extnmi = APIC_EXTNMI_NONE;
-	else if (!strncmp("bsp", arg, 3))
+	अन्यथा अगर (!म_भेदन("bsp", arg, 3))
 		apic_extnmi = APIC_EXTNMI_BSP;
-	else {
+	अन्यथा अणु
 		pr_warn("Unknown external NMI delivery mode `%s' ignored\n", arg);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("apic_extnmi", apic_set_extnmi);

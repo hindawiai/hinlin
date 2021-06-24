@@ -1,186 +1,187 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2011-2012 Calxeda, Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
 
-#define HB_PLL_LOCK_500		0x20000000
-#define HB_PLL_LOCK		0x10000000
-#define HB_PLL_DIVF_SHIFT	20
-#define HB_PLL_DIVF_MASK	0x0ff00000
-#define HB_PLL_DIVQ_SHIFT	16
-#define HB_PLL_DIVQ_MASK	0x00070000
-#define HB_PLL_DIVR_SHIFT	8
-#define HB_PLL_DIVR_MASK	0x00001f00
-#define HB_PLL_RANGE_SHIFT	4
-#define HB_PLL_RANGE_MASK	0x00000070
-#define HB_PLL_BYPASS		0x00000008
-#define HB_PLL_RESET		0x00000004
-#define HB_PLL_EXT_BYPASS	0x00000002
-#define HB_PLL_EXT_ENA		0x00000001
+#घोषणा HB_PLL_LOCK_500		0x20000000
+#घोषणा HB_PLL_LOCK		0x10000000
+#घोषणा HB_PLL_DIVF_SHIFT	20
+#घोषणा HB_PLL_DIVF_MASK	0x0ff00000
+#घोषणा HB_PLL_DIVQ_SHIFT	16
+#घोषणा HB_PLL_DIVQ_MASK	0x00070000
+#घोषणा HB_PLL_DIVR_SHIFT	8
+#घोषणा HB_PLL_DIVR_MASK	0x00001f00
+#घोषणा HB_PLL_RANGE_SHIFT	4
+#घोषणा HB_PLL_RANGE_MASK	0x00000070
+#घोषणा HB_PLL_BYPASS		0x00000008
+#घोषणा HB_PLL_RESET		0x00000004
+#घोषणा HB_PLL_EXT_BYPASS	0x00000002
+#घोषणा HB_PLL_EXT_ENA		0x00000001
 
-#define HB_PLL_VCO_MIN_FREQ	2133000000
-#define HB_PLL_MAX_FREQ		HB_PLL_VCO_MIN_FREQ
-#define HB_PLL_MIN_FREQ		(HB_PLL_VCO_MIN_FREQ / 64)
+#घोषणा HB_PLL_VCO_MIN_FREQ	2133000000
+#घोषणा HB_PLL_MAX_FREQ		HB_PLL_VCO_MIN_FREQ
+#घोषणा HB_PLL_MIN_FREQ		(HB_PLL_VCO_MIN_FREQ / 64)
 
-#define HB_A9_BCLK_DIV_MASK	0x00000006
-#define HB_A9_BCLK_DIV_SHIFT	1
-#define HB_A9_PCLK_DIV		0x00000001
+#घोषणा HB_A9_BCLK_DIV_MASK	0x00000006
+#घोषणा HB_A9_BCLK_DIV_SHIFT	1
+#घोषणा HB_A9_PCLK_DIV		0x00000001
 
-struct hb_clk {
-        struct clk_hw	hw;
-	void __iomem	*reg;
-	char *parent_name;
-};
-#define to_hb_clk(p) container_of(p, struct hb_clk, hw)
+काष्ठा hb_clk अणु
+        काष्ठा clk_hw	hw;
+	व्योम __iomem	*reg;
+	अक्षर *parent_name;
+पूर्ण;
+#घोषणा to_hb_clk(p) container_of(p, काष्ठा hb_clk, hw)
 
-static int clk_pll_prepare(struct clk_hw *hwclk)
-	{
-	struct hb_clk *hbclk = to_hb_clk(hwclk);
+अटल पूर्णांक clk_pll_prepare(काष्ठा clk_hw *hwclk)
+	अणु
+	काष्ठा hb_clk *hbclk = to_hb_clk(hwclk);
 	u32 reg;
 
-	reg = readl(hbclk->reg);
+	reg = पढ़ोl(hbclk->reg);
 	reg &= ~HB_PLL_RESET;
-	writel(reg, hbclk->reg);
+	ग_लिखोl(reg, hbclk->reg);
 
-	while ((readl(hbclk->reg) & HB_PLL_LOCK) == 0)
+	जबतक ((पढ़ोl(hbclk->reg) & HB_PLL_LOCK) == 0)
 		;
-	while ((readl(hbclk->reg) & HB_PLL_LOCK_500) == 0)
+	जबतक ((पढ़ोl(hbclk->reg) & HB_PLL_LOCK_500) == 0)
 		;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_pll_unprepare(struct clk_hw *hwclk)
-{
-	struct hb_clk *hbclk = to_hb_clk(hwclk);
+अटल व्योम clk_pll_unprepare(काष्ठा clk_hw *hwclk)
+अणु
+	काष्ठा hb_clk *hbclk = to_hb_clk(hwclk);
 	u32 reg;
 
-	reg = readl(hbclk->reg);
+	reg = पढ़ोl(hbclk->reg);
 	reg |= HB_PLL_RESET;
-	writel(reg, hbclk->reg);
-}
+	ग_लिखोl(reg, hbclk->reg);
+पूर्ण
 
-static int clk_pll_enable(struct clk_hw *hwclk)
-{
-	struct hb_clk *hbclk = to_hb_clk(hwclk);
+अटल पूर्णांक clk_pll_enable(काष्ठा clk_hw *hwclk)
+अणु
+	काष्ठा hb_clk *hbclk = to_hb_clk(hwclk);
 	u32 reg;
 
-	reg = readl(hbclk->reg);
+	reg = पढ़ोl(hbclk->reg);
 	reg |= HB_PLL_EXT_ENA;
-	writel(reg, hbclk->reg);
+	ग_लिखोl(reg, hbclk->reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_pll_disable(struct clk_hw *hwclk)
-{
-	struct hb_clk *hbclk = to_hb_clk(hwclk);
+अटल व्योम clk_pll_disable(काष्ठा clk_hw *hwclk)
+अणु
+	काष्ठा hb_clk *hbclk = to_hb_clk(hwclk);
 	u32 reg;
 
-	reg = readl(hbclk->reg);
+	reg = पढ़ोl(hbclk->reg);
 	reg &= ~HB_PLL_EXT_ENA;
-	writel(reg, hbclk->reg);
-}
+	ग_लिखोl(reg, hbclk->reg);
+पूर्ण
 
-static unsigned long clk_pll_recalc_rate(struct clk_hw *hwclk,
-					 unsigned long parent_rate)
-{
-	struct hb_clk *hbclk = to_hb_clk(hwclk);
-	unsigned long divf, divq, vco_freq, reg;
+अटल अचिन्हित दीर्घ clk_pll_recalc_rate(काष्ठा clk_hw *hwclk,
+					 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा hb_clk *hbclk = to_hb_clk(hwclk);
+	अचिन्हित दीर्घ भागf, भागq, vco_freq, reg;
 
-	reg = readl(hbclk->reg);
-	if (reg & HB_PLL_EXT_BYPASS)
-		return parent_rate;
+	reg = पढ़ोl(hbclk->reg);
+	अगर (reg & HB_PLL_EXT_BYPASS)
+		वापस parent_rate;
 
-	divf = (reg & HB_PLL_DIVF_MASK) >> HB_PLL_DIVF_SHIFT;
-	divq = (reg & HB_PLL_DIVQ_MASK) >> HB_PLL_DIVQ_SHIFT;
-	vco_freq = parent_rate * (divf + 1);
+	भागf = (reg & HB_PLL_DIVF_MASK) >> HB_PLL_DIVF_SHIFT;
+	भागq = (reg & HB_PLL_DIVQ_MASK) >> HB_PLL_DIVQ_SHIFT;
+	vco_freq = parent_rate * (भागf + 1);
 
-	return vco_freq / (1 << divq);
-}
+	वापस vco_freq / (1 << भागq);
+पूर्ण
 
-static void clk_pll_calc(unsigned long rate, unsigned long ref_freq,
-			u32 *pdivq, u32 *pdivf)
-{
-	u32 divq, divf;
-	unsigned long vco_freq;
+अटल व्योम clk_pll_calc(अचिन्हित दीर्घ rate, अचिन्हित दीर्घ ref_freq,
+			u32 *pभागq, u32 *pभागf)
+अणु
+	u32 भागq, भागf;
+	अचिन्हित दीर्घ vco_freq;
 
-	if (rate < HB_PLL_MIN_FREQ)
+	अगर (rate < HB_PLL_MIN_FREQ)
 		rate = HB_PLL_MIN_FREQ;
-	if (rate > HB_PLL_MAX_FREQ)
+	अगर (rate > HB_PLL_MAX_FREQ)
 		rate = HB_PLL_MAX_FREQ;
 
-	for (divq = 1; divq <= 6; divq++) {
-		if ((rate * (1 << divq)) >= HB_PLL_VCO_MIN_FREQ)
-			break;
-	}
+	क्रम (भागq = 1; भागq <= 6; भागq++) अणु
+		अगर ((rate * (1 << भागq)) >= HB_PLL_VCO_MIN_FREQ)
+			अवरोध;
+	पूर्ण
 
-	vco_freq = rate * (1 << divq);
-	divf = (vco_freq + (ref_freq / 2)) / ref_freq;
-	divf--;
+	vco_freq = rate * (1 << भागq);
+	भागf = (vco_freq + (ref_freq / 2)) / ref_freq;
+	भागf--;
 
-	*pdivq = divq;
-	*pdivf = divf;
-}
+	*pभागq = भागq;
+	*pभागf = भागf;
+पूर्ण
 
-static long clk_pll_round_rate(struct clk_hw *hwclk, unsigned long rate,
-			       unsigned long *parent_rate)
-{
-	u32 divq, divf;
-	unsigned long ref_freq = *parent_rate;
+अटल दीर्घ clk_pll_round_rate(काष्ठा clk_hw *hwclk, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ *parent_rate)
+अणु
+	u32 भागq, भागf;
+	अचिन्हित दीर्घ ref_freq = *parent_rate;
 
-	clk_pll_calc(rate, ref_freq, &divq, &divf);
+	clk_pll_calc(rate, ref_freq, &भागq, &भागf);
 
-	return (ref_freq * (divf + 1)) / (1 << divq);
-}
+	वापस (ref_freq * (भागf + 1)) / (1 << भागq);
+पूर्ण
 
-static int clk_pll_set_rate(struct clk_hw *hwclk, unsigned long rate,
-			    unsigned long parent_rate)
-{
-	struct hb_clk *hbclk = to_hb_clk(hwclk);
-	u32 divq, divf;
+अटल पूर्णांक clk_pll_set_rate(काष्ठा clk_hw *hwclk, अचिन्हित दीर्घ rate,
+			    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा hb_clk *hbclk = to_hb_clk(hwclk);
+	u32 भागq, भागf;
 	u32 reg;
 
-	clk_pll_calc(rate, parent_rate, &divq, &divf);
+	clk_pll_calc(rate, parent_rate, &भागq, &भागf);
 
-	reg = readl(hbclk->reg);
-	if (divf != ((reg & HB_PLL_DIVF_MASK) >> HB_PLL_DIVF_SHIFT)) {
-		/* Need to re-lock PLL, so put it into bypass mode */
+	reg = पढ़ोl(hbclk->reg);
+	अगर (भागf != ((reg & HB_PLL_DIVF_MASK) >> HB_PLL_DIVF_SHIFT)) अणु
+		/* Need to re-lock PLL, so put it पूर्णांकo bypass mode */
 		reg |= HB_PLL_EXT_BYPASS;
-		writel(reg | HB_PLL_EXT_BYPASS, hbclk->reg);
+		ग_लिखोl(reg | HB_PLL_EXT_BYPASS, hbclk->reg);
 
-		writel(reg | HB_PLL_RESET, hbclk->reg);
+		ग_लिखोl(reg | HB_PLL_RESET, hbclk->reg);
 		reg &= ~(HB_PLL_DIVF_MASK | HB_PLL_DIVQ_MASK);
-		reg |= (divf << HB_PLL_DIVF_SHIFT) | (divq << HB_PLL_DIVQ_SHIFT);
-		writel(reg | HB_PLL_RESET, hbclk->reg);
-		writel(reg, hbclk->reg);
+		reg |= (भागf << HB_PLL_DIVF_SHIFT) | (भागq << HB_PLL_DIVQ_SHIFT);
+		ग_लिखोl(reg | HB_PLL_RESET, hbclk->reg);
+		ग_लिखोl(reg, hbclk->reg);
 
-		while ((readl(hbclk->reg) & HB_PLL_LOCK) == 0)
+		जबतक ((पढ़ोl(hbclk->reg) & HB_PLL_LOCK) == 0)
 			;
-		while ((readl(hbclk->reg) & HB_PLL_LOCK_500) == 0)
+		जबतक ((पढ़ोl(hbclk->reg) & HB_PLL_LOCK_500) == 0)
 			;
 		reg |= HB_PLL_EXT_ENA;
 		reg &= ~HB_PLL_EXT_BYPASS;
-	} else {
-		writel(reg | HB_PLL_EXT_BYPASS, hbclk->reg);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(reg | HB_PLL_EXT_BYPASS, hbclk->reg);
 		reg &= ~HB_PLL_DIVQ_MASK;
-		reg |= divq << HB_PLL_DIVQ_SHIFT;
-		writel(reg | HB_PLL_EXT_BYPASS, hbclk->reg);
-	}
-	writel(reg, hbclk->reg);
+		reg |= भागq << HB_PLL_DIVQ_SHIFT;
+		ग_लिखोl(reg | HB_PLL_EXT_BYPASS, hbclk->reg);
+	पूर्ण
+	ग_लिखोl(reg, hbclk->reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops clk_pll_ops = {
+अटल स्थिर काष्ठा clk_ops clk_pll_ops = अणु
 	.prepare = clk_pll_prepare,
 	.unprepare = clk_pll_unprepare,
 	.enable = clk_pll_enable,
@@ -188,104 +189,104 @@ static const struct clk_ops clk_pll_ops = {
 	.recalc_rate = clk_pll_recalc_rate,
 	.round_rate = clk_pll_round_rate,
 	.set_rate = clk_pll_set_rate,
-};
+पूर्ण;
 
-static unsigned long clk_cpu_periphclk_recalc_rate(struct clk_hw *hwclk,
-						   unsigned long parent_rate)
-{
-	struct hb_clk *hbclk = to_hb_clk(hwclk);
-	u32 div = (readl(hbclk->reg) & HB_A9_PCLK_DIV) ? 8 : 4;
-	return parent_rate / div;
-}
+अटल अचिन्हित दीर्घ clk_cpu_periphclk_recalc_rate(काष्ठा clk_hw *hwclk,
+						   अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा hb_clk *hbclk = to_hb_clk(hwclk);
+	u32 भाग = (पढ़ोl(hbclk->reg) & HB_A9_PCLK_DIV) ? 8 : 4;
+	वापस parent_rate / भाग;
+पूर्ण
 
-static const struct clk_ops a9periphclk_ops = {
+अटल स्थिर काष्ठा clk_ops a9periphclk_ops = अणु
 	.recalc_rate = clk_cpu_periphclk_recalc_rate,
-};
+पूर्ण;
 
-static unsigned long clk_cpu_a9bclk_recalc_rate(struct clk_hw *hwclk,
-						unsigned long parent_rate)
-{
-	struct hb_clk *hbclk = to_hb_clk(hwclk);
-	u32 div = (readl(hbclk->reg) & HB_A9_BCLK_DIV_MASK) >> HB_A9_BCLK_DIV_SHIFT;
+अटल अचिन्हित दीर्घ clk_cpu_a9bclk_recalc_rate(काष्ठा clk_hw *hwclk,
+						अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा hb_clk *hbclk = to_hb_clk(hwclk);
+	u32 भाग = (पढ़ोl(hbclk->reg) & HB_A9_BCLK_DIV_MASK) >> HB_A9_BCLK_DIV_SHIFT;
 
-	return parent_rate / (div + 2);
-}
+	वापस parent_rate / (भाग + 2);
+पूर्ण
 
-static const struct clk_ops a9bclk_ops = {
+अटल स्थिर काष्ठा clk_ops a9bclk_ops = अणु
 	.recalc_rate = clk_cpu_a9bclk_recalc_rate,
-};
+पूर्ण;
 
-static unsigned long clk_periclk_recalc_rate(struct clk_hw *hwclk,
-					     unsigned long parent_rate)
-{
-	struct hb_clk *hbclk = to_hb_clk(hwclk);
-	u32 div;
+अटल अचिन्हित दीर्घ clk_periclk_recalc_rate(काष्ठा clk_hw *hwclk,
+					     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा hb_clk *hbclk = to_hb_clk(hwclk);
+	u32 भाग;
 
-	div = readl(hbclk->reg) & 0x1f;
-	div++;
-	div *= 2;
+	भाग = पढ़ोl(hbclk->reg) & 0x1f;
+	भाग++;
+	भाग *= 2;
 
-	return parent_rate / div;
-}
+	वापस parent_rate / भाग;
+पूर्ण
 
-static long clk_periclk_round_rate(struct clk_hw *hwclk, unsigned long rate,
-				   unsigned long *parent_rate)
-{
-	u32 div;
+अटल दीर्घ clk_periclk_round_rate(काष्ठा clk_hw *hwclk, अचिन्हित दीर्घ rate,
+				   अचिन्हित दीर्घ *parent_rate)
+अणु
+	u32 भाग;
 
-	div = *parent_rate / rate;
-	div++;
-	div &= ~0x1;
+	भाग = *parent_rate / rate;
+	भाग++;
+	भाग &= ~0x1;
 
-	return *parent_rate / div;
-}
+	वापस *parent_rate / भाग;
+पूर्ण
 
-static int clk_periclk_set_rate(struct clk_hw *hwclk, unsigned long rate,
-				unsigned long parent_rate)
-{
-	struct hb_clk *hbclk = to_hb_clk(hwclk);
-	u32 div;
+अटल पूर्णांक clk_periclk_set_rate(काष्ठा clk_hw *hwclk, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा hb_clk *hbclk = to_hb_clk(hwclk);
+	u32 भाग;
 
-	div = parent_rate / rate;
-	if (div & 0x1)
-		return -EINVAL;
+	भाग = parent_rate / rate;
+	अगर (भाग & 0x1)
+		वापस -EINVAL;
 
-	writel(div >> 1, hbclk->reg);
-	return 0;
-}
+	ग_लिखोl(भाग >> 1, hbclk->reg);
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops periclk_ops = {
+अटल स्थिर काष्ठा clk_ops periclk_ops = अणु
 	.recalc_rate = clk_periclk_recalc_rate,
 	.round_rate = clk_periclk_round_rate,
 	.set_rate = clk_periclk_set_rate,
-};
+पूर्ण;
 
-static void __init hb_clk_init(struct device_node *node, const struct clk_ops *ops, unsigned long clkflags)
-{
+अटल व्योम __init hb_clk_init(काष्ठा device_node *node, स्थिर काष्ठा clk_ops *ops, अचिन्हित दीर्घ clkflags)
+अणु
 	u32 reg;
-	struct hb_clk *hb_clk;
-	const char *clk_name = node->name;
-	const char *parent_name;
-	struct clk_init_data init;
-	struct device_node *srnp;
-	int rc;
+	काष्ठा hb_clk *hb_clk;
+	स्थिर अक्षर *clk_name = node->name;
+	स्थिर अक्षर *parent_name;
+	काष्ठा clk_init_data init;
+	काष्ठा device_node *srnp;
+	पूर्णांक rc;
 
-	rc = of_property_read_u32(node, "reg", &reg);
-	if (WARN_ON(rc))
-		return;
+	rc = of_property_पढ़ो_u32(node, "reg", &reg);
+	अगर (WARN_ON(rc))
+		वापस;
 
-	hb_clk = kzalloc(sizeof(*hb_clk), GFP_KERNEL);
-	if (WARN_ON(!hb_clk))
-		return;
+	hb_clk = kzalloc(माप(*hb_clk), GFP_KERNEL);
+	अगर (WARN_ON(!hb_clk))
+		वापस;
 
-	/* Map system registers */
-	srnp = of_find_compatible_node(NULL, NULL, "calxeda,hb-sregs");
+	/* Map प्रणाली रेजिस्टरs */
+	srnp = of_find_compatible_node(शून्य, शून्य, "calxeda,hb-sregs");
 	hb_clk->reg = of_iomap(srnp, 0);
 	of_node_put(srnp);
 	BUG_ON(!hb_clk->reg);
 	hb_clk->reg += reg;
 
-	of_property_read_string(node, "clock-output-names", &clk_name);
+	of_property_पढ़ो_string(node, "clock-output-names", &clk_name);
 
 	init.name = clk_name;
 	init.ops = ops;
@@ -296,34 +297,34 @@ static void __init hb_clk_init(struct device_node *node, const struct clk_ops *o
 
 	hb_clk->hw.init = &init;
 
-	rc = clk_hw_register(NULL, &hb_clk->hw);
-	if (WARN_ON(rc)) {
-		kfree(hb_clk);
-		return;
-	}
+	rc = clk_hw_रेजिस्टर(शून्य, &hb_clk->hw);
+	अगर (WARN_ON(rc)) अणु
+		kमुक्त(hb_clk);
+		वापस;
+	पूर्ण
 	of_clk_add_hw_provider(node, of_clk_hw_simple_get, &hb_clk->hw);
-}
+पूर्ण
 
-static void __init hb_pll_init(struct device_node *node)
-{
+अटल व्योम __init hb_pll_init(काष्ठा device_node *node)
+अणु
 	hb_clk_init(node, &clk_pll_ops, 0);
-}
+पूर्ण
 CLK_OF_DECLARE(hb_pll, "calxeda,hb-pll-clock", hb_pll_init);
 
-static void __init hb_a9periph_init(struct device_node *node)
-{
+अटल व्योम __init hb_a9periph_init(काष्ठा device_node *node)
+अणु
 	hb_clk_init(node, &a9periphclk_ops, 0);
-}
+पूर्ण
 CLK_OF_DECLARE(hb_a9periph, "calxeda,hb-a9periph-clock", hb_a9periph_init);
 
-static void __init hb_a9bus_init(struct device_node *node)
-{
+अटल व्योम __init hb_a9bus_init(काष्ठा device_node *node)
+अणु
 	hb_clk_init(node, &a9bclk_ops, CLK_IS_CRITICAL);
-}
+पूर्ण
 CLK_OF_DECLARE(hb_a9bus, "calxeda,hb-a9bus-clock", hb_a9bus_init);
 
-static void __init hb_emmc_init(struct device_node *node)
-{
+अटल व्योम __init hb_emmc_init(काष्ठा device_node *node)
+अणु
 	hb_clk_init(node, &periclk_ops, 0);
-}
+पूर्ण
 CLK_OF_DECLARE(hb_emmc, "calxeda,hb-emmc-clock", hb_emmc_init);

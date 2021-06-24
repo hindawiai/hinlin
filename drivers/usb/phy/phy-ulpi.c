@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Generic ULPI USB transceiver support
  *
@@ -10,201 +11,201 @@
  *   Freescale Semiconductors
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/usb.h>
-#include <linux/usb/otg.h>
-#include <linux/usb/ulpi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/otg.h>
+#समावेश <linux/usb/ulpi.h>
 
 
-struct ulpi_info {
-	unsigned int	id;
-	char		*name;
-};
+काष्ठा ulpi_info अणु
+	अचिन्हित पूर्णांक	id;
+	अक्षर		*name;
+पूर्ण;
 
-#define ULPI_ID(vendor, product) (((vendor) << 16) | (product))
-#define ULPI_INFO(_id, _name)		\
-	{				\
+#घोषणा ULPI_ID(venकरोr, product) (((venकरोr) << 16) | (product))
+#घोषणा ULPI_INFO(_id, _name)		\
+	अणु				\
 		.id	= (_id),	\
 		.name	= (_name),	\
-	}
+	पूर्ण
 
-/* ULPI hardcoded IDs, used for probing */
-static struct ulpi_info ulpi_ids[] = {
+/* ULPI hardcoded IDs, used क्रम probing */
+अटल काष्ठा ulpi_info ulpi_ids[] = अणु
 	ULPI_INFO(ULPI_ID(0x04cc, 0x1504), "NXP ISP1504"),
 	ULPI_INFO(ULPI_ID(0x0424, 0x0006), "SMSC USB331x"),
 	ULPI_INFO(ULPI_ID(0x0424, 0x0007), "SMSC USB3320"),
 	ULPI_INFO(ULPI_ID(0x0424, 0x0009), "SMSC USB334x"),
 	ULPI_INFO(ULPI_ID(0x0451, 0x1507), "TI TUSB1210"),
-};
+पूर्ण;
 
-static int ulpi_set_otg_flags(struct usb_phy *phy)
-{
-	unsigned int flags = ULPI_OTG_CTRL_DP_PULLDOWN |
+अटल पूर्णांक ulpi_set_otg_flags(काष्ठा usb_phy *phy)
+अणु
+	अचिन्हित पूर्णांक flags = ULPI_OTG_CTRL_DP_PULLDOWN |
 			     ULPI_OTG_CTRL_DM_PULLDOWN;
 
-	if (phy->flags & ULPI_OTG_ID_PULLUP)
+	अगर (phy->flags & ULPI_OTG_ID_PULLUP)
 		flags |= ULPI_OTG_CTRL_ID_PULLUP;
 
 	/*
-	 * ULPI Specification rev.1.1 default
-	 * for Dp/DmPulldown is enabled.
+	 * ULPI Specअगरication rev.1.1 शेष
+	 * क्रम Dp/DmPullकरोwn is enabled.
 	 */
-	if (phy->flags & ULPI_OTG_DP_PULLDOWN_DIS)
+	अगर (phy->flags & ULPI_OTG_DP_PULLDOWN_DIS)
 		flags &= ~ULPI_OTG_CTRL_DP_PULLDOWN;
 
-	if (phy->flags & ULPI_OTG_DM_PULLDOWN_DIS)
+	अगर (phy->flags & ULPI_OTG_DM_PULLDOWN_DIS)
 		flags &= ~ULPI_OTG_CTRL_DM_PULLDOWN;
 
-	if (phy->flags & ULPI_OTG_EXTVBUSIND)
+	अगर (phy->flags & ULPI_OTG_EXTVBUSIND)
 		flags |= ULPI_OTG_CTRL_EXTVBUSIND;
 
-	return usb_phy_io_write(phy, flags, ULPI_OTG_CTRL);
-}
+	वापस usb_phy_io_ग_लिखो(phy, flags, ULPI_OTG_CTRL);
+पूर्ण
 
-static int ulpi_set_fc_flags(struct usb_phy *phy)
-{
-	unsigned int flags = 0;
+अटल पूर्णांक ulpi_set_fc_flags(काष्ठा usb_phy *phy)
+अणु
+	अचिन्हित पूर्णांक flags = 0;
 
 	/*
-	 * ULPI Specification rev.1.1 default
-	 * for XcvrSelect is Full Speed.
+	 * ULPI Specअगरication rev.1.1 शेष
+	 * क्रम XcvrSelect is Full Speed.
 	 */
-	if (phy->flags & ULPI_FC_HS)
+	अगर (phy->flags & ULPI_FC_HS)
 		flags |= ULPI_FUNC_CTRL_HIGH_SPEED;
-	else if (phy->flags & ULPI_FC_LS)
+	अन्यथा अगर (phy->flags & ULPI_FC_LS)
 		flags |= ULPI_FUNC_CTRL_LOW_SPEED;
-	else if (phy->flags & ULPI_FC_FS4LS)
+	अन्यथा अगर (phy->flags & ULPI_FC_FS4LS)
 		flags |= ULPI_FUNC_CTRL_FS4LS;
-	else
+	अन्यथा
 		flags |= ULPI_FUNC_CTRL_FULL_SPEED;
 
-	if (phy->flags & ULPI_FC_TERMSEL)
+	अगर (phy->flags & ULPI_FC_TERMSEL)
 		flags |= ULPI_FUNC_CTRL_TERMSELECT;
 
 	/*
-	 * ULPI Specification rev.1.1 default
-	 * for OpMode is Normal Operation.
+	 * ULPI Specअगरication rev.1.1 शेष
+	 * क्रम OpMode is Normal Operation.
 	 */
-	if (phy->flags & ULPI_FC_OP_NODRV)
+	अगर (phy->flags & ULPI_FC_OP_NODRV)
 		flags |= ULPI_FUNC_CTRL_OPMODE_NONDRIVING;
-	else if (phy->flags & ULPI_FC_OP_DIS_NRZI)
+	अन्यथा अगर (phy->flags & ULPI_FC_OP_DIS_NRZI)
 		flags |= ULPI_FUNC_CTRL_OPMODE_DISABLE_NRZI;
-	else if (phy->flags & ULPI_FC_OP_NSYNC_NEOP)
+	अन्यथा अगर (phy->flags & ULPI_FC_OP_NSYNC_NEOP)
 		flags |= ULPI_FUNC_CTRL_OPMODE_NOSYNC_NOEOP;
-	else
+	अन्यथा
 		flags |= ULPI_FUNC_CTRL_OPMODE_NORMAL;
 
 	/*
-	 * ULPI Specification rev.1.1 default
-	 * for SuspendM is Powered.
+	 * ULPI Specअगरication rev.1.1 शेष
+	 * क्रम SuspendM is Powered.
 	 */
 	flags |= ULPI_FUNC_CTRL_SUSPENDM;
 
-	return usb_phy_io_write(phy, flags, ULPI_FUNC_CTRL);
-}
+	वापस usb_phy_io_ग_लिखो(phy, flags, ULPI_FUNC_CTRL);
+पूर्ण
 
-static int ulpi_set_ic_flags(struct usb_phy *phy)
-{
-	unsigned int flags = 0;
+अटल पूर्णांक ulpi_set_ic_flags(काष्ठा usb_phy *phy)
+अणु
+	अचिन्हित पूर्णांक flags = 0;
 
-	if (phy->flags & ULPI_IC_AUTORESUME)
+	अगर (phy->flags & ULPI_IC_AUTORESUME)
 		flags |= ULPI_IFC_CTRL_AUTORESUME;
 
-	if (phy->flags & ULPI_IC_EXTVBUS_INDINV)
+	अगर (phy->flags & ULPI_IC_EXTVBUS_INDINV)
 		flags |= ULPI_IFC_CTRL_EXTERNAL_VBUS;
 
-	if (phy->flags & ULPI_IC_IND_PASSTHRU)
+	अगर (phy->flags & ULPI_IC_IND_PASSTHRU)
 		flags |= ULPI_IFC_CTRL_PASSTHRU;
 
-	if (phy->flags & ULPI_IC_PROTECT_DIS)
+	अगर (phy->flags & ULPI_IC_PROTECT_DIS)
 		flags |= ULPI_IFC_CTRL_PROTECT_IFC_DISABLE;
 
-	return usb_phy_io_write(phy, flags, ULPI_IFC_CTRL);
-}
+	वापस usb_phy_io_ग_लिखो(phy, flags, ULPI_IFC_CTRL);
+पूर्ण
 
-static int ulpi_set_flags(struct usb_phy *phy)
-{
-	int ret;
+अटल पूर्णांक ulpi_set_flags(काष्ठा usb_phy *phy)
+अणु
+	पूर्णांक ret;
 
 	ret = ulpi_set_otg_flags(phy);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ulpi_set_ic_flags(phy);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ulpi_set_fc_flags(phy);
-}
+	वापस ulpi_set_fc_flags(phy);
+पूर्ण
 
-static int ulpi_check_integrity(struct usb_phy *phy)
-{
-	int ret, i;
-	unsigned int val = 0x55;
+अटल पूर्णांक ulpi_check_पूर्णांकegrity(काष्ठा usb_phy *phy)
+अणु
+	पूर्णांक ret, i;
+	अचिन्हित पूर्णांक val = 0x55;
 
-	for (i = 0; i < 2; i++) {
-		ret = usb_phy_io_write(phy, val, ULPI_SCRATCH);
-		if (ret < 0)
-			return ret;
+	क्रम (i = 0; i < 2; i++) अणु
+		ret = usb_phy_io_ग_लिखो(phy, val, ULPI_SCRATCH);
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = usb_phy_io_read(phy, ULPI_SCRATCH);
-		if (ret < 0)
-			return ret;
+		ret = usb_phy_io_पढ़ो(phy, ULPI_SCRATCH);
+		अगर (ret < 0)
+			वापस ret;
 
-		if (ret != val) {
+		अगर (ret != val) अणु
 			pr_err("ULPI integrity check: failed!");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 		val = val << 1;
-	}
+	पूर्ण
 
 	pr_info("ULPI integrity check: passed.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ulpi_init(struct usb_phy *phy)
-{
-	int i, vid, pid, ret;
+अटल पूर्णांक ulpi_init(काष्ठा usb_phy *phy)
+अणु
+	पूर्णांक i, vid, pid, ret;
 	u32 ulpi_id = 0;
 
-	for (i = 0; i < 4; i++) {
-		ret = usb_phy_io_read(phy, ULPI_PRODUCT_ID_HIGH - i);
-		if (ret < 0)
-			return ret;
+	क्रम (i = 0; i < 4; i++) अणु
+		ret = usb_phy_io_पढ़ो(phy, ULPI_PRODUCT_ID_HIGH - i);
+		अगर (ret < 0)
+			वापस ret;
 		ulpi_id = (ulpi_id << 8) | ret;
-	}
+	पूर्ण
 	vid = ulpi_id & 0xffff;
 	pid = ulpi_id >> 16;
 
 	pr_info("ULPI transceiver vendor/product ID 0x%04x/0x%04x\n", vid, pid);
 
-	for (i = 0; i < ARRAY_SIZE(ulpi_ids); i++) {
-		if (ulpi_ids[i].id == ULPI_ID(vid, pid)) {
+	क्रम (i = 0; i < ARRAY_SIZE(ulpi_ids); i++) अणु
+		अगर (ulpi_ids[i].id == ULPI_ID(vid, pid)) अणु
 			pr_info("Found %s ULPI transceiver.\n",
 				ulpi_ids[i].name);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	ret = ulpi_check_integrity(phy);
-	if (ret)
-		return ret;
+	ret = ulpi_check_पूर्णांकegrity(phy);
+	अगर (ret)
+		वापस ret;
 
-	return ulpi_set_flags(phy);
-}
+	वापस ulpi_set_flags(phy);
+पूर्ण
 
-static int ulpi_set_host(struct usb_otg *otg, struct usb_bus *host)
-{
-	struct usb_phy *phy = otg->usb_phy;
-	unsigned int flags = usb_phy_io_read(phy, ULPI_IFC_CTRL);
+अटल पूर्णांक ulpi_set_host(काष्ठा usb_otg *otg, काष्ठा usb_bus *host)
+अणु
+	काष्ठा usb_phy *phy = otg->usb_phy;
+	अचिन्हित पूर्णांक flags = usb_phy_io_पढ़ो(phy, ULPI_IFC_CTRL);
 
-	if (!host) {
-		otg->host = NULL;
-		return 0;
-	}
+	अगर (!host) अणु
+		otg->host = शून्य;
+		वापस 0;
+	पूर्ण
 
 	otg->host = host;
 
@@ -212,38 +213,38 @@ static int ulpi_set_host(struct usb_otg *otg, struct usb_bus *host)
 		   ULPI_IFC_CTRL_3_PIN_SERIAL_MODE |
 		   ULPI_IFC_CTRL_CARKITMODE);
 
-	if (phy->flags & ULPI_IC_6PIN_SERIAL)
+	अगर (phy->flags & ULPI_IC_6PIN_SERIAL)
 		flags |= ULPI_IFC_CTRL_6_PIN_SERIAL_MODE;
-	else if (phy->flags & ULPI_IC_3PIN_SERIAL)
+	अन्यथा अगर (phy->flags & ULPI_IC_3PIN_SERIAL)
 		flags |= ULPI_IFC_CTRL_3_PIN_SERIAL_MODE;
-	else if (phy->flags & ULPI_IC_CARKIT)
+	अन्यथा अगर (phy->flags & ULPI_IC_CARKIT)
 		flags |= ULPI_IFC_CTRL_CARKITMODE;
 
-	return usb_phy_io_write(phy, flags, ULPI_IFC_CTRL);
-}
+	वापस usb_phy_io_ग_लिखो(phy, flags, ULPI_IFC_CTRL);
+पूर्ण
 
-static int ulpi_set_vbus(struct usb_otg *otg, bool on)
-{
-	struct usb_phy *phy = otg->usb_phy;
-	unsigned int flags = usb_phy_io_read(phy, ULPI_OTG_CTRL);
+अटल पूर्णांक ulpi_set_vbus(काष्ठा usb_otg *otg, bool on)
+अणु
+	काष्ठा usb_phy *phy = otg->usb_phy;
+	अचिन्हित पूर्णांक flags = usb_phy_io_पढ़ो(phy, ULPI_OTG_CTRL);
 
 	flags &= ~(ULPI_OTG_CTRL_DRVVBUS | ULPI_OTG_CTRL_DRVVBUS_EXT);
 
-	if (on) {
-		if (phy->flags & ULPI_OTG_DRVVBUS)
+	अगर (on) अणु
+		अगर (phy->flags & ULPI_OTG_DRVVBUS)
 			flags |= ULPI_OTG_CTRL_DRVVBUS;
 
-		if (phy->flags & ULPI_OTG_DRVVBUS_EXT)
+		अगर (phy->flags & ULPI_OTG_DRVVBUS_EXT)
 			flags |= ULPI_OTG_CTRL_DRVVBUS_EXT;
-	}
+	पूर्ण
 
-	return usb_phy_io_write(phy, flags, ULPI_OTG_CTRL);
-}
+	वापस usb_phy_io_ग_लिखो(phy, flags, ULPI_OTG_CTRL);
+पूर्ण
 
-static void otg_ulpi_init(struct usb_phy *phy, struct usb_otg *otg,
-			  struct usb_phy_io_ops *ops,
-			  unsigned int flags)
-{
+अटल व्योम otg_ulpi_init(काष्ठा usb_phy *phy, काष्ठा usb_otg *otg,
+			  काष्ठा usb_phy_io_ops *ops,
+			  अचिन्हित पूर्णांक flags)
+अणु
 	phy->label	= "ULPI";
 	phy->flags	= flags;
 	phy->io_ops	= ops;
@@ -253,51 +254,51 @@ static void otg_ulpi_init(struct usb_phy *phy, struct usb_otg *otg,
 	otg->usb_phy	= phy;
 	otg->set_host	= ulpi_set_host;
 	otg->set_vbus	= ulpi_set_vbus;
-}
+पूर्ण
 
-struct usb_phy *
-otg_ulpi_create(struct usb_phy_io_ops *ops,
-		unsigned int flags)
-{
-	struct usb_phy *phy;
-	struct usb_otg *otg;
+काष्ठा usb_phy *
+otg_ulpi_create(काष्ठा usb_phy_io_ops *ops,
+		अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा usb_phy *phy;
+	काष्ठा usb_otg *otg;
 
-	phy = kzalloc(sizeof(*phy), GFP_KERNEL);
-	if (!phy)
-		return NULL;
+	phy = kzalloc(माप(*phy), GFP_KERNEL);
+	अगर (!phy)
+		वापस शून्य;
 
-	otg = kzalloc(sizeof(*otg), GFP_KERNEL);
-	if (!otg) {
-		kfree(phy);
-		return NULL;
-	}
+	otg = kzalloc(माप(*otg), GFP_KERNEL);
+	अगर (!otg) अणु
+		kमुक्त(phy);
+		वापस शून्य;
+	पूर्ण
 
 	otg_ulpi_init(phy, otg, ops, flags);
 
-	return phy;
-}
+	वापस phy;
+पूर्ण
 EXPORT_SYMBOL_GPL(otg_ulpi_create);
 
-struct usb_phy *
-devm_otg_ulpi_create(struct device *dev,
-		     struct usb_phy_io_ops *ops,
-		     unsigned int flags)
-{
-	struct usb_phy *phy;
-	struct usb_otg *otg;
+काष्ठा usb_phy *
+devm_otg_ulpi_create(काष्ठा device *dev,
+		     काष्ठा usb_phy_io_ops *ops,
+		     अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा usb_phy *phy;
+	काष्ठा usb_otg *otg;
 
-	phy = devm_kzalloc(dev, sizeof(*phy), GFP_KERNEL);
-	if (!phy)
-		return NULL;
+	phy = devm_kzalloc(dev, माप(*phy), GFP_KERNEL);
+	अगर (!phy)
+		वापस शून्य;
 
-	otg = devm_kzalloc(dev, sizeof(*otg), GFP_KERNEL);
-	if (!otg) {
-		devm_kfree(dev, phy);
-		return NULL;
-	}
+	otg = devm_kzalloc(dev, माप(*otg), GFP_KERNEL);
+	अगर (!otg) अणु
+		devm_kमुक्त(dev, phy);
+		वापस शून्य;
+	पूर्ण
 
 	otg_ulpi_init(phy, otg, ops, flags);
 
-	return phy;
-}
+	वापस phy;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_otg_ulpi_create);

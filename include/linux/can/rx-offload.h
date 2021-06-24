@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * linux/can/rx-offload.h
  *
@@ -6,59 +7,59 @@
  * Copyright (c) 2014-2017 Pengutronix, Marc Kleine-Budde <kernel@pengutronix.de>
  */
 
-#ifndef _CAN_RX_OFFLOAD_H
-#define _CAN_RX_OFFLOAD_H
+#अगर_अघोषित _CAN_RX_OFFLOAD_H
+#घोषणा _CAN_RX_OFFLOAD_H
 
-#include <linux/netdevice.h>
-#include <linux/can.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/can.h>
 
-struct can_rx_offload {
-	struct net_device *dev;
+काष्ठा can_rx_offload अणु
+	काष्ठा net_device *dev;
 
-	struct sk_buff *(*mailbox_read)(struct can_rx_offload *offload,
-					unsigned int mb, u32 *timestamp,
+	काष्ठा sk_buff *(*mailbox_पढ़ो)(काष्ठा can_rx_offload *offload,
+					अचिन्हित पूर्णांक mb, u32 *बारtamp,
 					bool drop);
 
-	struct sk_buff_head skb_queue;
+	काष्ठा sk_buff_head skb_queue;
 	u32 skb_queue_len_max;
 
-	unsigned int mb_first;
-	unsigned int mb_last;
+	अचिन्हित पूर्णांक mb_first;
+	अचिन्हित पूर्णांक mb_last;
 
-	struct napi_struct napi;
+	काष्ठा napi_काष्ठा napi;
 
 	bool inc;
-};
+पूर्ण;
 
-int can_rx_offload_add_timestamp(struct net_device *dev,
-				 struct can_rx_offload *offload);
-int can_rx_offload_add_fifo(struct net_device *dev,
-			    struct can_rx_offload *offload,
-			    unsigned int weight);
-int can_rx_offload_add_manual(struct net_device *dev,
-			      struct can_rx_offload *offload,
-			      unsigned int weight);
-int can_rx_offload_irq_offload_timestamp(struct can_rx_offload *offload,
+पूर्णांक can_rx_offload_add_बारtamp(काष्ठा net_device *dev,
+				 काष्ठा can_rx_offload *offload);
+पूर्णांक can_rx_offload_add_fअगरo(काष्ठा net_device *dev,
+			    काष्ठा can_rx_offload *offload,
+			    अचिन्हित पूर्णांक weight);
+पूर्णांक can_rx_offload_add_manual(काष्ठा net_device *dev,
+			      काष्ठा can_rx_offload *offload,
+			      अचिन्हित पूर्णांक weight);
+पूर्णांक can_rx_offload_irq_offload_बारtamp(काष्ठा can_rx_offload *offload,
 					 u64 reg);
-int can_rx_offload_irq_offload_fifo(struct can_rx_offload *offload);
-int can_rx_offload_queue_sorted(struct can_rx_offload *offload,
-				struct sk_buff *skb, u32 timestamp);
-unsigned int can_rx_offload_get_echo_skb(struct can_rx_offload *offload,
-					 unsigned int idx, u32 timestamp,
-					 unsigned int *frame_len_ptr);
-int can_rx_offload_queue_tail(struct can_rx_offload *offload,
-			      struct sk_buff *skb);
-void can_rx_offload_del(struct can_rx_offload *offload);
-void can_rx_offload_enable(struct can_rx_offload *offload);
+पूर्णांक can_rx_offload_irq_offload_fअगरo(काष्ठा can_rx_offload *offload);
+पूर्णांक can_rx_offload_queue_sorted(काष्ठा can_rx_offload *offload,
+				काष्ठा sk_buff *skb, u32 बारtamp);
+अचिन्हित पूर्णांक can_rx_offload_get_echo_skb(काष्ठा can_rx_offload *offload,
+					 अचिन्हित पूर्णांक idx, u32 बारtamp,
+					 अचिन्हित पूर्णांक *frame_len_ptr);
+पूर्णांक can_rx_offload_queue_tail(काष्ठा can_rx_offload *offload,
+			      काष्ठा sk_buff *skb);
+व्योम can_rx_offload_del(काष्ठा can_rx_offload *offload);
+व्योम can_rx_offload_enable(काष्ठा can_rx_offload *offload);
 
-static inline void can_rx_offload_schedule(struct can_rx_offload *offload)
-{
+अटल अंतरभूत व्योम can_rx_offload_schedule(काष्ठा can_rx_offload *offload)
+अणु
 	napi_schedule(&offload->napi);
-}
+पूर्ण
 
-static inline void can_rx_offload_disable(struct can_rx_offload *offload)
-{
+अटल अंतरभूत व्योम can_rx_offload_disable(काष्ठा can_rx_offload *offload)
+अणु
 	napi_disable(&offload->napi);
-}
+पूर्ण
 
-#endif /* !_CAN_RX_OFFLOAD_H */
+#पूर्ण_अगर /* !_CAN_RX_OFFLOAD_H */

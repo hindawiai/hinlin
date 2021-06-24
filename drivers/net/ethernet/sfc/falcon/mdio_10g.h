@@ -1,108 +1,109 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2006-2011 Solarflare Communications Inc.
  */
 
-#ifndef EF4_MDIO_10G_H
-#define EF4_MDIO_10G_H
+#अगर_अघोषित EF4_MDIO_10G_H
+#घोषणा EF4_MDIO_10G_H
 
-#include <linux/mdio.h>
+#समावेश <linux/mdपन.स>
 
 /*
- * Helper functions for doing 10G MDIO as specified in IEEE 802.3 clause 45.
+ * Helper functions क्रम करोing 10G MDIO as specअगरied in IEEE 802.3 clause 45.
  */
 
-#include "efx.h"
+#समावेश "efx.h"
 
-static inline unsigned ef4_mdio_id_rev(u32 id) { return id & 0xf; }
-static inline unsigned ef4_mdio_id_model(u32 id) { return (id >> 4) & 0x3f; }
-unsigned ef4_mdio_id_oui(u32 id);
+अटल अंतरभूत अचिन्हित ef4_mdio_id_rev(u32 id) अणु वापस id & 0xf; पूर्ण
+अटल अंतरभूत अचिन्हित ef4_mdio_id_model(u32 id) अणु वापस (id >> 4) & 0x3f; पूर्ण
+अचिन्हित ef4_mdio_id_oui(u32 id);
 
-static inline int ef4_mdio_read(struct ef4_nic *efx, int devad, int addr)
-{
-	return efx->mdio.mdio_read(efx->net_dev, efx->mdio.prtad, devad, addr);
-}
+अटल अंतरभूत पूर्णांक ef4_mdio_पढ़ो(काष्ठा ef4_nic *efx, पूर्णांक devad, पूर्णांक addr)
+अणु
+	वापस efx->mdio.mdio_पढ़ो(efx->net_dev, efx->mdio.prtad, devad, addr);
+पूर्ण
 
-static inline void
-ef4_mdio_write(struct ef4_nic *efx, int devad, int addr, int value)
-{
-	efx->mdio.mdio_write(efx->net_dev, efx->mdio.prtad, devad, addr, value);
-}
+अटल अंतरभूत व्योम
+ef4_mdio_ग_लिखो(काष्ठा ef4_nic *efx, पूर्णांक devad, पूर्णांक addr, पूर्णांक value)
+अणु
+	efx->mdio.mdio_ग_लिखो(efx->net_dev, efx->mdio.prtad, devad, addr, value);
+पूर्ण
 
-static inline u32 ef4_mdio_read_id(struct ef4_nic *efx, int mmd)
-{
-	u16 id_low = ef4_mdio_read(efx, mmd, MDIO_DEVID2);
-	u16 id_hi = ef4_mdio_read(efx, mmd, MDIO_DEVID1);
-	return (id_hi << 16) | (id_low);
-}
+अटल अंतरभूत u32 ef4_mdio_पढ़ो_id(काष्ठा ef4_nic *efx, पूर्णांक mmd)
+अणु
+	u16 id_low = ef4_mdio_पढ़ो(efx, mmd, MDIO_DEVID2);
+	u16 id_hi = ef4_mdio_पढ़ो(efx, mmd, MDIO_DEVID1);
+	वापस (id_hi << 16) | (id_low);
+पूर्ण
 
-static inline bool ef4_mdio_phyxgxs_lane_sync(struct ef4_nic *efx)
-{
-	int i, lane_status;
+अटल अंतरभूत bool ef4_mdio_phyxgxs_lane_sync(काष्ठा ef4_nic *efx)
+अणु
+	पूर्णांक i, lane_status;
 	bool sync;
 
-	for (i = 0; i < 2; ++i)
-		lane_status = ef4_mdio_read(efx, MDIO_MMD_PHYXS,
+	क्रम (i = 0; i < 2; ++i)
+		lane_status = ef4_mdio_पढ़ो(efx, MDIO_MMD_PHYXS,
 					    MDIO_PHYXS_LNSTAT);
 
 	sync = !!(lane_status & MDIO_PHYXS_LNSTAT_ALIGN);
-	if (!sync)
-		netif_dbg(efx, hw, efx->net_dev, "XGXS lane status: %x\n",
+	अगर (!sync)
+		netअगर_dbg(efx, hw, efx->net_dev, "XGXS lane status: %x\n",
 			  lane_status);
-	return sync;
-}
+	वापस sync;
+पूर्ण
 
-const char *ef4_mdio_mmd_name(int mmd);
+स्थिर अक्षर *ef4_mdio_mmd_name(पूर्णांक mmd);
 
 /*
- * Reset a specific MMD and wait for reset to clear.
+ * Reset a specअगरic MMD and रुको क्रम reset to clear.
  * Return number of spins left (>0) on success, -%ETIMEDOUT on failure.
  *
  * This function will sleep
  */
-int ef4_mdio_reset_mmd(struct ef4_nic *efx, int mmd, int spins, int spintime);
+पूर्णांक ef4_mdio_reset_mmd(काष्ठा ef4_nic *efx, पूर्णांक mmd, पूर्णांक spins, पूर्णांक spपूर्णांकime);
 
-/* As ef4_mdio_check_mmd but for multiple MMDs */
-int ef4_mdio_check_mmds(struct ef4_nic *efx, unsigned int mmd_mask);
+/* As ef4_mdio_check_mmd but क्रम multiple MMDs */
+पूर्णांक ef4_mdio_check_mmds(काष्ठा ef4_nic *efx, अचिन्हित पूर्णांक mmd_mask);
 
-/* Check the link status of specified mmds in bit mask */
-bool ef4_mdio_links_ok(struct ef4_nic *efx, unsigned int mmd_mask);
+/* Check the link status of specअगरied mmds in bit mask */
+bool ef4_mdio_links_ok(काष्ठा ef4_nic *efx, अचिन्हित पूर्णांक mmd_mask);
 
 /* Generic transmit disable support though PMAPMD */
-void ef4_mdio_transmit_disable(struct ef4_nic *efx);
+व्योम ef4_mdio_transmit_disable(काष्ठा ef4_nic *efx);
 
 /* Generic part of reconfigure: set/clear loopback bits */
-void ef4_mdio_phy_reconfigure(struct ef4_nic *efx);
+व्योम ef4_mdio_phy_reconfigure(काष्ठा ef4_nic *efx);
 
-/* Set the power state of the specified MMDs */
-void ef4_mdio_set_mmds_lpower(struct ef4_nic *efx, int low_power,
-			      unsigned int mmd_mask);
+/* Set the घातer state of the specअगरied MMDs */
+व्योम ef4_mdio_set_mmds_lघातer(काष्ठा ef4_nic *efx, पूर्णांक low_घातer,
+			      अचिन्हित पूर्णांक mmd_mask);
 
 /* Set (some of) the PHY settings over MDIO */
-int ef4_mdio_set_link_ksettings(struct ef4_nic *efx,
-				const struct ethtool_link_ksettings *cmd);
+पूर्णांक ef4_mdio_set_link_ksettings(काष्ठा ef4_nic *efx,
+				स्थिर काष्ठा ethtool_link_ksettings *cmd);
 
-/* Push advertising flags and restart autonegotiation */
-void ef4_mdio_an_reconfigure(struct ef4_nic *efx);
+/* Push advertising flags and restart स्वतःnegotiation */
+व्योम ef4_mdio_an_reconfigure(काष्ठा ef4_nic *efx);
 
-/* Get pause parameters from AN if available (otherwise return
- * requested pause parameters)
+/* Get छोड़ो parameters from AN अगर available (otherwise वापस
+ * requested छोड़ो parameters)
  */
-u8 ef4_mdio_get_pause(struct ef4_nic *efx);
+u8 ef4_mdio_get_छोड़ो(काष्ठा ef4_nic *efx);
 
-/* Wait for specified MMDs to exit reset within a timeout */
-int ef4_mdio_wait_reset_mmds(struct ef4_nic *efx, unsigned int mmd_mask);
+/* Wait क्रम specअगरied MMDs to निकास reset within a समयout */
+पूर्णांक ef4_mdio_रुको_reset_mmds(काष्ठा ef4_nic *efx, अचिन्हित पूर्णांक mmd_mask);
 
 /* Set or clear flag, debouncing */
-static inline void
-ef4_mdio_set_flag(struct ef4_nic *efx, int devad, int addr,
-		  int mask, bool state)
-{
+अटल अंतरभूत व्योम
+ef4_mdio_set_flag(काष्ठा ef4_nic *efx, पूर्णांक devad, पूर्णांक addr,
+		  पूर्णांक mask, bool state)
+अणु
 	mdio_set_flag(&efx->mdio, efx->mdio.prtad, devad, addr, mask, state);
-}
+पूर्ण
 
-/* Liveness self-test for MDIO PHYs */
-int ef4_mdio_test_alive(struct ef4_nic *efx);
+/* Liveness self-test क्रम MDIO PHYs */
+पूर्णांक ef4_mdio_test_alive(काष्ठा ef4_nic *efx);
 
-#endif /* EF4_MDIO_10G_H */
+#पूर्ण_अगर /* EF4_MDIO_10G_H */

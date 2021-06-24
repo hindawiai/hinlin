@@ -1,173 +1,174 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include "mt76x02.h"
-#include "mt76x02_phy.h"
+#समावेश "mt76x02.h"
+#समावेश "mt76x02_phy.h"
 
-void mt76x02_phy_set_rxpath(struct mt76x02_dev *dev)
-{
+व्योम mt76x02_phy_set_rxpath(काष्ठा mt76x02_dev *dev)
+अणु
 	u32 val;
 
 	val = mt76_rr(dev, MT_BBP(AGC, 0));
 	val &= ~BIT(4);
 
-	switch (dev->mphy.chainmask & 0xf) {
-	case 2:
+	चयन (dev->mphy.chainmask & 0xf) अणु
+	हाल 2:
 		val |= BIT(3);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val &= ~BIT(3);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mt76_wr(dev, MT_BBP(AGC, 0), val);
 	mb();
 	val = mt76_rr(dev, MT_BBP(AGC, 0));
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_phy_set_rxpath);
 
-void mt76x02_phy_set_txdac(struct mt76x02_dev *dev)
-{
-	int txpath;
+व्योम mt76x02_phy_set_txdac(काष्ठा mt76x02_dev *dev)
+अणु
+	पूर्णांक txpath;
 
 	txpath = (dev->mphy.chainmask >> 8) & 0xf;
-	switch (txpath) {
-	case 2:
+	चयन (txpath) अणु
+	हाल 2:
 		mt76_set(dev, MT_BBP(TXBE, 5), 0x3);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		mt76_clear(dev, MT_BBP(TXBE, 5), 0x3);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_phy_set_txdac);
 
-static u32
-mt76x02_tx_power_mask(u8 v1, u8 v2, u8 v3, u8 v4)
-{
+अटल u32
+mt76x02_tx_घातer_mask(u8 v1, u8 v2, u8 v3, u8 v4)
+अणु
 	u32 val = 0;
 
 	val |= (v1 & (BIT(6) - 1)) << 0;
 	val |= (v2 & (BIT(6) - 1)) << 8;
 	val |= (v3 & (BIT(6) - 1)) << 16;
 	val |= (v4 & (BIT(6) - 1)) << 24;
-	return val;
-}
+	वापस val;
+पूर्ण
 
-int mt76x02_get_max_rate_power(struct mt76_rate_power *r)
-{
+पूर्णांक mt76x02_get_max_rate_घातer(काष्ठा mt76_rate_घातer *r)
+अणु
 	s8 ret = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < sizeof(r->all); i++)
+	क्रम (i = 0; i < माप(r->all); i++)
 		ret = max(ret, r->all[i]);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(mt76x02_get_max_rate_power);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(mt76x02_get_max_rate_घातer);
 
-void mt76x02_limit_rate_power(struct mt76_rate_power *r, int limit)
-{
-	int i;
+व्योम mt76x02_limit_rate_घातer(काष्ठा mt76_rate_घातer *r, पूर्णांक limit)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < sizeof(r->all); i++)
-		if (r->all[i] > limit)
+	क्रम (i = 0; i < माप(r->all); i++)
+		अगर (r->all[i] > limit)
 			r->all[i] = limit;
-}
-EXPORT_SYMBOL_GPL(mt76x02_limit_rate_power);
+पूर्ण
+EXPORT_SYMBOL_GPL(mt76x02_limit_rate_घातer);
 
-void mt76x02_add_rate_power_offset(struct mt76_rate_power *r, int offset)
-{
-	int i;
+व्योम mt76x02_add_rate_घातer_offset(काष्ठा mt76_rate_घातer *r, पूर्णांक offset)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < sizeof(r->all); i++)
+	क्रम (i = 0; i < माप(r->all); i++)
 		r->all[i] += offset;
-}
-EXPORT_SYMBOL_GPL(mt76x02_add_rate_power_offset);
+पूर्ण
+EXPORT_SYMBOL_GPL(mt76x02_add_rate_घातer_offset);
 
-void mt76x02_phy_set_txpower(struct mt76x02_dev *dev, int txp_0, int txp_1)
-{
-	struct mt76_rate_power *t = &dev->mt76.rate_power;
+व्योम mt76x02_phy_set_txघातer(काष्ठा mt76x02_dev *dev, पूर्णांक txp_0, पूर्णांक txp_1)
+अणु
+	काष्ठा mt76_rate_घातer *t = &dev->mt76.rate_घातer;
 
 	mt76_rmw_field(dev, MT_TX_ALC_CFG_0, MT_TX_ALC_CFG_0_CH_INIT_0, txp_0);
 	mt76_rmw_field(dev, MT_TX_ALC_CFG_0, MT_TX_ALC_CFG_0_CH_INIT_1, txp_1);
 
 	mt76_wr(dev, MT_TX_PWR_CFG_0,
-		mt76x02_tx_power_mask(t->cck[0], t->cck[2], t->ofdm[0],
+		mt76x02_tx_घातer_mask(t->cck[0], t->cck[2], t->ofdm[0],
 				      t->ofdm[2]));
 	mt76_wr(dev, MT_TX_PWR_CFG_1,
-		mt76x02_tx_power_mask(t->ofdm[4], t->ofdm[6], t->ht[0],
+		mt76x02_tx_घातer_mask(t->ofdm[4], t->ofdm[6], t->ht[0],
 				      t->ht[2]));
 	mt76_wr(dev, MT_TX_PWR_CFG_2,
-		mt76x02_tx_power_mask(t->ht[4], t->ht[6], t->ht[8],
+		mt76x02_tx_घातer_mask(t->ht[4], t->ht[6], t->ht[8],
 				      t->ht[10]));
 	mt76_wr(dev, MT_TX_PWR_CFG_3,
-		mt76x02_tx_power_mask(t->ht[12], t->ht[14], t->stbc[0],
+		mt76x02_tx_घातer_mask(t->ht[12], t->ht[14], t->stbc[0],
 				      t->stbc[2]));
 	mt76_wr(dev, MT_TX_PWR_CFG_4,
-		mt76x02_tx_power_mask(t->stbc[4], t->stbc[6], 0, 0));
+		mt76x02_tx_घातer_mask(t->stbc[4], t->stbc[6], 0, 0));
 	mt76_wr(dev, MT_TX_PWR_CFG_7,
-		mt76x02_tx_power_mask(t->ofdm[7], t->vht[8], t->ht[7],
+		mt76x02_tx_घातer_mask(t->ofdm[7], t->vht[8], t->ht[7],
 				      t->vht[9]));
 	mt76_wr(dev, MT_TX_PWR_CFG_8,
-		mt76x02_tx_power_mask(t->ht[14], 0, t->vht[8], t->vht[9]));
+		mt76x02_tx_घातer_mask(t->ht[14], 0, t->vht[8], t->vht[9]));
 	mt76_wr(dev, MT_TX_PWR_CFG_9,
-		mt76x02_tx_power_mask(t->ht[7], 0, t->stbc[8], t->stbc[9]));
-}
-EXPORT_SYMBOL_GPL(mt76x02_phy_set_txpower);
+		mt76x02_tx_घातer_mask(t->ht[7], 0, t->stbc[8], t->stbc[9]));
+पूर्ण
+EXPORT_SYMBOL_GPL(mt76x02_phy_set_txघातer);
 
-void mt76x02_phy_set_bw(struct mt76x02_dev *dev, int width, u8 ctrl)
-{
-	int core_val, agc_val;
+व्योम mt76x02_phy_set_bw(काष्ठा mt76x02_dev *dev, पूर्णांक width, u8 ctrl)
+अणु
+	पूर्णांक core_val, agc_val;
 
-	switch (width) {
-	case NL80211_CHAN_WIDTH_80:
+	चयन (width) अणु
+	हाल NL80211_CHAN_WIDTH_80:
 		core_val = 3;
 		agc_val = 7;
-		break;
-	case NL80211_CHAN_WIDTH_40:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_40:
 		core_val = 2;
 		agc_val = 3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		core_val = 0;
 		agc_val = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mt76_rmw_field(dev, MT_BBP(CORE, 1), MT_BBP_CORE_R1_BW, core_val);
 	mt76_rmw_field(dev, MT_BBP(AGC, 0), MT_BBP_AGC_R0_BW, agc_val);
 	mt76_rmw_field(dev, MT_BBP(AGC, 0), MT_BBP_AGC_R0_CTRL_CHAN, ctrl);
 	mt76_rmw_field(dev, MT_BBP(TXBE, 0), MT_BBP_TXBE_R0_CTRL_CHAN, ctrl);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_phy_set_bw);
 
-void mt76x02_phy_set_band(struct mt76x02_dev *dev, int band,
+व्योम mt76x02_phy_set_band(काष्ठा mt76x02_dev *dev, पूर्णांक band,
 			  bool primary_upper)
-{
-	switch (band) {
-	case NL80211_BAND_2GHZ:
+अणु
+	चयन (band) अणु
+	हाल NL80211_BAND_2GHZ:
 		mt76_set(dev, MT_TX_BAND_CFG, MT_TX_BAND_CFG_2G);
 		mt76_clear(dev, MT_TX_BAND_CFG, MT_TX_BAND_CFG_5G);
-		break;
-	case NL80211_BAND_5GHZ:
+		अवरोध;
+	हाल NL80211_BAND_5GHZ:
 		mt76_clear(dev, MT_TX_BAND_CFG, MT_TX_BAND_CFG_2G);
 		mt76_set(dev, MT_TX_BAND_CFG, MT_TX_BAND_CFG_5G);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mt76_rmw_field(dev, MT_TX_BAND_CFG, MT_TX_BAND_CFG_UPPER_40M,
 		       primary_upper);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_phy_set_band);
 
-bool mt76x02_phy_adjust_vga_gain(struct mt76x02_dev *dev)
-{
+bool mt76x02_phy_adjust_vga_gain(काष्ठा mt76x02_dev *dev)
+अणु
 	u8 limit = dev->cal.low_gain > 0 ? 16 : 4;
 	bool ret = false;
 	u32 false_cca;
@@ -175,30 +176,30 @@ bool mt76x02_phy_adjust_vga_gain(struct mt76x02_dev *dev)
 	false_cca = FIELD_GET(MT_RX_STAT_1_CCA_ERRORS,
 			      mt76_rr(dev, MT_RX_STAT_1));
 	dev->cal.false_cca = false_cca;
-	if (false_cca > 800 && dev->cal.agc_gain_adjust < limit) {
+	अगर (false_cca > 800 && dev->cal.agc_gain_adjust < limit) अणु
 		dev->cal.agc_gain_adjust += 2;
 		ret = true;
-	} else if ((false_cca < 10 && dev->cal.agc_gain_adjust > 0) ||
-		   (dev->cal.agc_gain_adjust >= limit && false_cca < 500)) {
+	पूर्ण अन्यथा अगर ((false_cca < 10 && dev->cal.agc_gain_adjust > 0) ||
+		   (dev->cal.agc_gain_adjust >= limit && false_cca < 500)) अणु
 		dev->cal.agc_gain_adjust -= 2;
 		ret = true;
-	}
+	पूर्ण
 
 	dev->cal.agc_lowest_gain = dev->cal.agc_gain_adjust >= limit;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_phy_adjust_vga_gain);
 
-void mt76x02_init_agc_gain(struct mt76x02_dev *dev)
-{
+व्योम mt76x02_init_agc_gain(काष्ठा mt76x02_dev *dev)
+अणु
 	dev->cal.agc_gain_init[0] = mt76_get_field(dev, MT_BBP(AGC, 8),
 						   MT_BBP_AGC_GAIN);
 	dev->cal.agc_gain_init[1] = mt76_get_field(dev, MT_BBP(AGC, 9),
 						   MT_BBP_AGC_GAIN);
-	memcpy(dev->cal.agc_gain_cur, dev->cal.agc_gain_init,
-	       sizeof(dev->cal.agc_gain_cur));
+	स_नकल(dev->cal.agc_gain_cur, dev->cal.agc_gain_init,
+	       माप(dev->cal.agc_gain_cur));
 	dev->cal.low_gain = -1;
-	dev->cal.gain_init_done = true;
-}
+	dev->cal.gain_init_करोne = true;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_init_agc_gain);

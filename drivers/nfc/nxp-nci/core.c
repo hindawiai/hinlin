@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Generic driver for NXP NCI NFC chips
+ * Generic driver क्रम NXP NCI NFC chips
  *
  * Copyright (C) 2014  NXP Semiconductors  All rights reserved.
  *
- * Authors: Clément Perrochaud <clement.perrochaud@nxp.com>
+ * Authors: Clथऊment Perrochaud <clement.perrochaud@nxp.com>
  *
  * Derived from PN544 device driver:
  * Copyright (C) 2012  Intel Corporation. All rights reserved.
  */
 
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/nfc.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nfc.h>
 
-#include <net/nfc/nci_core.h>
+#समावेश <net/nfc/nci_core.h>
 
-#include "nxp-nci.h"
+#समावेश "nxp-nci.h"
 
-#define NXP_NCI_HDR_LEN	4
+#घोषणा NXP_NCI_HDR_LEN	4
 
-#define NXP_NCI_NFC_PROTOCOLS (NFC_PROTO_JEWEL_MASK | \
+#घोषणा NXP_NCI_NFC_PROTOCOLS (NFC_PROTO_JEWEL_MASK | \
 			       NFC_PROTO_MIFARE_MASK | \
 			       NFC_PROTO_FELICA_MASK | \
 			       NFC_PROTO_ISO14443_MASK | \
 			       NFC_PROTO_ISO14443_B_MASK | \
 			       NFC_PROTO_NFC_DEP_MASK)
 
-static int nxp_nci_open(struct nci_dev *ndev)
-{
-	struct nxp_nci_info *info = nci_get_drvdata(ndev);
-	int r = 0;
+अटल पूर्णांक nxp_nci_खोलो(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा nxp_nci_info *info = nci_get_drvdata(ndev);
+	पूर्णांक r = 0;
 
 	mutex_lock(&info->info_lock);
 
-	if (info->mode != NXP_NCI_MODE_COLD) {
+	अगर (info->mode != NXP_NCI_MODE_COLD) अणु
 		r = -EBUSY;
-		goto open_exit;
-	}
+		जाओ खोलो_निकास;
+	पूर्ण
 
-	if (info->phy_ops->set_mode)
+	अगर (info->phy_ops->set_mode)
 		r = info->phy_ops->set_mode(info->phy_id, NXP_NCI_MODE_NCI);
 
 	info->mode = NXP_NCI_MODE_NCI;
 
-open_exit:
+खोलो_निकास:
 	mutex_unlock(&info->info_lock);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int nxp_nci_close(struct nci_dev *ndev)
-{
-	struct nxp_nci_info *info = nci_get_drvdata(ndev);
-	int r = 0;
+अटल पूर्णांक nxp_nci_बंद(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा nxp_nci_info *info = nci_get_drvdata(ndev);
+	पूर्णांक r = 0;
 
 	mutex_lock(&info->info_lock);
 
-	if (info->phy_ops->set_mode)
+	अगर (info->phy_ops->set_mode)
 		r = info->phy_ops->set_mode(info->phy_id, NXP_NCI_MODE_COLD);
 
 	info->mode = NXP_NCI_MODE_COLD;
 
 	mutex_unlock(&info->info_lock);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int nxp_nci_send(struct nci_dev *ndev, struct sk_buff *skb)
-{
-	struct nxp_nci_info *info = nci_get_drvdata(ndev);
-	int r;
+अटल पूर्णांक nxp_nci_send(काष्ठा nci_dev *ndev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nxp_nci_info *info = nci_get_drvdata(ndev);
+	पूर्णांक r;
 
-	if (!info->phy_ops->write) {
+	अगर (!info->phy_ops->ग_लिखो) अणु
 		r = -ENOTSUPP;
-		goto send_exit;
-	}
+		जाओ send_निकास;
+	पूर्ण
 
-	if (info->mode != NXP_NCI_MODE_NCI) {
+	अगर (info->mode != NXP_NCI_MODE_NCI) अणु
 		r = -EINVAL;
-		goto send_exit;
-	}
+		जाओ send_निकास;
+	पूर्ण
 
-	r = info->phy_ops->write(info->phy_id, skb);
-	if (r < 0)
-		kfree_skb(skb);
+	r = info->phy_ops->ग_लिखो(info->phy_id, skb);
+	अगर (r < 0)
+		kमुक्त_skb(skb);
 
-send_exit:
-	return r;
-}
+send_निकास:
+	वापस r;
+पूर्ण
 
-static struct nci_ops nxp_nci_ops = {
-	.open = nxp_nci_open,
-	.close = nxp_nci_close,
+अटल काष्ठा nci_ops nxp_nci_ops = अणु
+	.खोलो = nxp_nci_खोलो,
+	.बंद = nxp_nci_बंद,
 	.send = nxp_nci_send,
-	.fw_download = nxp_nci_fw_download,
-};
+	.fw_करोwnload = nxp_nci_fw_करोwnload,
+पूर्ण;
 
-int nxp_nci_probe(void *phy_id, struct device *pdev,
-		  const struct nxp_nci_phy_ops *phy_ops,
-		  unsigned int max_payload,
-		  struct nci_dev **ndev)
-{
-	struct nxp_nci_info *info;
-	int r;
+पूर्णांक nxp_nci_probe(व्योम *phy_id, काष्ठा device *pdev,
+		  स्थिर काष्ठा nxp_nci_phy_ops *phy_ops,
+		  अचिन्हित पूर्णांक max_payload,
+		  काष्ठा nci_dev **ndev)
+अणु
+	काष्ठा nxp_nci_info *info;
+	पूर्णांक r;
 
-	info = devm_kzalloc(pdev, sizeof(struct nxp_nci_info), GFP_KERNEL);
-	if (!info) {
+	info = devm_kzalloc(pdev, माप(काष्ठा nxp_nci_info), GFP_KERNEL);
+	अगर (!info) अणु
 		r = -ENOMEM;
-		goto probe_exit;
-	}
+		जाओ probe_निकास;
+	पूर्ण
 
 	info->phy_id = phy_id;
 	info->pdev = pdev;
@@ -117,58 +118,58 @@ int nxp_nci_probe(void *phy_id, struct device *pdev,
 	init_completion(&info->fw_info.cmd_completion);
 	mutex_init(&info->info_lock);
 
-	if (info->phy_ops->set_mode) {
+	अगर (info->phy_ops->set_mode) अणु
 		r = info->phy_ops->set_mode(info->phy_id, NXP_NCI_MODE_COLD);
-		if (r < 0)
-			goto probe_exit;
-	}
+		अगर (r < 0)
+			जाओ probe_निकास;
+	पूर्ण
 
 	info->mode = NXP_NCI_MODE_COLD;
 
 	info->ndev = nci_allocate_device(&nxp_nci_ops, NXP_NCI_NFC_PROTOCOLS,
 					 NXP_NCI_HDR_LEN, 0);
-	if (!info->ndev) {
+	अगर (!info->ndev) अणु
 		r = -ENOMEM;
-		goto probe_exit;
-	}
+		जाओ probe_निकास;
+	पूर्ण
 
 	nci_set_parent_dev(info->ndev, pdev);
 	nci_set_drvdata(info->ndev, info);
-	r = nci_register_device(info->ndev);
-	if (r < 0)
-		goto probe_exit_free_nci;
+	r = nci_रेजिस्टर_device(info->ndev);
+	अगर (r < 0)
+		जाओ probe_निकास_मुक्त_nci;
 
 	*ndev = info->ndev;
 
-	goto probe_exit;
+	जाओ probe_निकास;
 
-probe_exit_free_nci:
-	nci_free_device(info->ndev);
-probe_exit:
-	return r;
-}
+probe_निकास_मुक्त_nci:
+	nci_मुक्त_device(info->ndev);
+probe_निकास:
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL(nxp_nci_probe);
 
-void nxp_nci_remove(struct nci_dev *ndev)
-{
-	struct nxp_nci_info *info = nci_get_drvdata(ndev);
+व्योम nxp_nci_हटाओ(काष्ठा nci_dev *ndev)
+अणु
+	काष्ठा nxp_nci_info *info = nci_get_drvdata(ndev);
 
-	if (info->mode == NXP_NCI_MODE_FW)
+	अगर (info->mode == NXP_NCI_MODE_FW)
 		nxp_nci_fw_work_complete(info, -ESHUTDOWN);
 	cancel_work_sync(&info->fw_info.work);
 
 	mutex_lock(&info->info_lock);
 
-	if (info->phy_ops->set_mode)
+	अगर (info->phy_ops->set_mode)
 		info->phy_ops->set_mode(info->phy_id, NXP_NCI_MODE_COLD);
 
-	nci_unregister_device(ndev);
-	nci_free_device(ndev);
+	nci_unरेजिस्टर_device(ndev);
+	nci_मुक्त_device(ndev);
 
 	mutex_unlock(&info->info_lock);
-}
-EXPORT_SYMBOL(nxp_nci_remove);
+पूर्ण
+EXPORT_SYMBOL(nxp_nci_हटाओ);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("NXP NCI NFC driver");
-MODULE_AUTHOR("Clément Perrochaud <clement.perrochaud@nxp.com>");
+MODULE_AUTHOR("Clथऊment Perrochaud <clement.perrochaud@nxp.com>");

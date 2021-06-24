@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018-2019 SiFive, Inc.
  * Wesley Terpstra
@@ -6,59 +7,59 @@
  *
  * This library supports configuration parsing and reprogramming of
  * the CLN28HPC variant of the Analog Bits Wide Range PLL.  The
- * intention is for this library to be reusable for any device that
- * integrates this PLL; thus the register structure and programming
+ * पूर्णांकention is क्रम this library to be reusable क्रम any device that
+ * पूर्णांकegrates this PLL; thus the रेजिस्टर काष्ठाure and programming
  * details are expected to be provided by a separate IP block driver.
  *
- * The bulk of this code is primarily useful for clock configurations
- * that must operate at arbitrary rates, as opposed to clock configurations
+ * The bulk of this code is primarily useful क्रम घड़ी configurations
+ * that must operate at arbitrary rates, as opposed to घड़ी configurations
  * that are restricted by software or manufacturer guidance to a small,
- * pre-determined set of performance points.
+ * pre-determined set of perक्रमmance poपूर्णांकs.
  *
  * References:
  * - Analog Bits "Wide Range PLL Datasheet", version 2015.10.01
  * - SiFive FU540-C000 Manual v1p0, Chapter 7 "Clocking and Reset"
- *   https://static.dev.sifive.com/FU540-C000-v1.0.pdf
+ *   https://अटल.dev.sअगरive.com/FU540-C000-v1.0.pdf
  */
 
-#include <linux/bug.h>
-#include <linux/err.h>
-#include <linux/log2.h>
-#include <linux/math64.h>
-#include <linux/clk/analogbits-wrpll-cln28hpc.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/err.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/math64.h>
+#समावेश <linux/clk/analogbits-wrpll-cln28hpc.h>
 
-/* MIN_INPUT_FREQ: minimum input clock frequency, in Hz (Fref_min) */
-#define MIN_INPUT_FREQ			7000000
+/* MIN_INPUT_FREQ: minimum input घड़ी frequency, in Hz (Fref_min) */
+#घोषणा MIN_INPUT_FREQ			7000000
 
-/* MAX_INPUT_FREQ: maximum input clock frequency, in Hz (Fref_max) */
-#define MAX_INPUT_FREQ			600000000
+/* MAX_INPUT_FREQ: maximum input घड़ी frequency, in Hz (Fref_max) */
+#घोषणा MAX_INPUT_FREQ			600000000
 
-/* MIN_POST_DIVIDE_REF_FREQ: minimum post-divider reference frequency, in Hz */
-#define MIN_POST_DIVR_FREQ		7000000
+/* MIN_POST_DIVIDE_REF_FREQ: minimum post-भागider reference frequency, in Hz */
+#घोषणा MIN_POST_DIVR_FREQ		7000000
 
-/* MAX_POST_DIVIDE_REF_FREQ: maximum post-divider reference frequency, in Hz */
-#define MAX_POST_DIVR_FREQ		200000000
+/* MAX_POST_DIVIDE_REF_FREQ: maximum post-भागider reference frequency, in Hz */
+#घोषणा MAX_POST_DIVR_FREQ		200000000
 
 /* MIN_VCO_FREQ: minimum VCO frequency, in Hz (Fvco_min) */
-#define MIN_VCO_FREQ			2400000000UL
+#घोषणा MIN_VCO_FREQ			2400000000UL
 
 /* MAX_VCO_FREQ: maximum VCO frequency, in Hz (Fvco_max) */
-#define MAX_VCO_FREQ			4800000000ULL
+#घोषणा MAX_VCO_FREQ			4800000000ULL
 
-/* MAX_DIVQ_DIVISOR: maximum output divisor.  Selected by DIVQ = 6 */
-#define MAX_DIVQ_DIVISOR		64
+/* MAX_DIVQ_DIVISOR: maximum output भागisor.  Selected by DIVQ = 6 */
+#घोषणा MAX_DIVQ_DIVISOR		64
 
-/* MAX_DIVR_DIVISOR: maximum reference divisor.  Selected by DIVR = 63 */
-#define MAX_DIVR_DIVISOR		64
+/* MAX_DIVR_DIVISOR: maximum reference भागisor.  Selected by DIVR = 63 */
+#घोषणा MAX_DIVR_DIVISOR		64
 
-/* MAX_LOCK_US: maximum PLL lock time, in microseconds (tLOCK_max) */
-#define MAX_LOCK_US			70
+/* MAX_LOCK_US: maximum PLL lock समय, in microseconds (tLOCK_max) */
+#घोषणा MAX_LOCK_US			70
 
 /*
- * ROUND_SHIFT: number of bits to shift to avoid precision loss in the rounding
+ * ROUND_SHIFT: number of bits to shअगरt to aव्योम precision loss in the rounding
  *              algorithm
  */
-#define ROUND_SHIFT			20
+#घोषणा ROUND_SHIFT			20
 
 /*
  * Private functions
@@ -66,299 +67,299 @@
 
 /**
  * __wrpll_calc_filter_range() - determine PLL loop filter bandwidth
- * @post_divr_freq: input clock rate after the R divider
+ * @post_भागr_freq: input घड़ी rate after the R भागider
  *
- * Select the value to be presented to the PLL RANGE input signals, based
- * on the input clock frequency after the post-R-divider @post_divr_freq.
- * This code follows the recommendations in the PLL datasheet for filter
+ * Select the value to be presented to the PLL RANGE input संकेतs, based
+ * on the input घड़ी frequency after the post-R-भागider @post_भागr_freq.
+ * This code follows the recommendations in the PLL datasheet क्रम filter
  * range selection.
  *
- * Return: The RANGE value to be presented to the PLL configuration inputs,
- *         or a negative return code upon error.
+ * Return: The RANGE value to be presented to the PLL configuration inमाला_दो,
+ *         or a negative वापस code upon error.
  */
-static int __wrpll_calc_filter_range(unsigned long post_divr_freq)
-{
-	if (post_divr_freq < MIN_POST_DIVR_FREQ ||
-	    post_divr_freq > MAX_POST_DIVR_FREQ) {
+अटल पूर्णांक __wrpll_calc_filter_range(अचिन्हित दीर्घ post_भागr_freq)
+अणु
+	अगर (post_भागr_freq < MIN_POST_DIVR_FREQ ||
+	    post_भागr_freq > MAX_POST_DIVR_FREQ) अणु
 		WARN(1, "%s: post-divider reference freq out of range: %lu",
-		     __func__, post_divr_freq);
-		return -ERANGE;
-	}
+		     __func__, post_भागr_freq);
+		वापस -दुस्फल;
+	पूर्ण
 
-	switch (post_divr_freq) {
-	case 0 ... 10999999:
-		return 1;
-	case 11000000 ... 17999999:
-		return 2;
-	case 18000000 ... 29999999:
-		return 3;
-	case 30000000 ... 49999999:
-		return 4;
-	case 50000000 ... 79999999:
-		return 5;
-	case 80000000 ... 129999999:
-		return 6;
-	}
+	चयन (post_भागr_freq) अणु
+	हाल 0 ... 10999999:
+		वापस 1;
+	हाल 11000000 ... 17999999:
+		वापस 2;
+	हाल 18000000 ... 29999999:
+		वापस 3;
+	हाल 30000000 ... 49999999:
+		वापस 4;
+	हाल 50000000 ... 79999999:
+		वापस 5;
+	हाल 80000000 ... 129999999:
+		वापस 6;
+	पूर्ण
 
-	return 7;
-}
+	वापस 7;
+पूर्ण
 
 /**
- * __wrpll_calc_fbdiv() - return feedback fixed divide value
- * @c: ptr to a struct wrpll_cfg record to read from
+ * __wrpll_calc_fbभाग() - वापस feedback fixed भागide value
+ * @c: ptr to a काष्ठा wrpll_cfg record to पढ़ो from
  *
- * The internal feedback path includes a fixed by-two divider; the
- * external feedback path does not.  Return the appropriate divider
- * value (2 or 1) depending on whether internal or external feedback
- * is enabled.  This code doesn't test for invalid configurations
+ * The पूर्णांकernal feedback path includes a fixed by-two भागider; the
+ * बाह्यal feedback path करोes not.  Return the appropriate भागider
+ * value (2 or 1) depending on whether पूर्णांकernal or बाह्यal feedback
+ * is enabled.  This code करोesn't test क्रम invalid configurations
  * (e.g. both or neither of WRPLL_FLAGS_*_FEEDBACK are set); it relies
- * on the caller to do so.
+ * on the caller to करो so.
  *
- * Context: Any context.  Caller must protect the memory pointed to by
- *          @c from simultaneous modification.
+ * Context: Any context.  Caller must protect the memory poपूर्णांकed to by
+ *          @c from simultaneous modअगरication.
  *
- * Return: 2 if internal feedback is enabled or 1 if external feedback
+ * Return: 2 अगर पूर्णांकernal feedback is enabled or 1 अगर बाह्यal feedback
  *         is enabled.
  */
-static u8 __wrpll_calc_fbdiv(const struct wrpll_cfg *c)
-{
-	return (c->flags & WRPLL_FLAGS_INT_FEEDBACK_MASK) ? 2 : 1;
-}
+अटल u8 __wrpll_calc_fbभाग(स्थिर काष्ठा wrpll_cfg *c)
+अणु
+	वापस (c->flags & WRPLL_FLAGS_INT_FEEDBACK_MASK) ? 2 : 1;
+पूर्ण
 
 /**
- * __wrpll_calc_divq() - determine DIVQ based on target PLL output clock rate
- * @target_rate: target PLL output clock rate
- * @vco_rate: pointer to a u64 to store the computed VCO rate into
+ * __wrpll_calc_भागq() - determine DIVQ based on target PLL output घड़ी rate
+ * @target_rate: target PLL output घड़ी rate
+ * @vco_rate: poपूर्णांकer to a u64 to store the computed VCO rate पूर्णांकo
  *
- * Determine a reasonable value for the PLL Q post-divider, based on the
- * target output rate @target_rate for the PLL.  Along with returning the
- * computed Q divider value as the return value, this function stores the
- * desired target VCO rate into the variable pointed to by @vco_rate.
+ * Determine a reasonable value क्रम the PLL Q post-भागider, based on the
+ * target output rate @target_rate क्रम the PLL.  Aदीर्घ with वापसing the
+ * computed Q भागider value as the वापस value, this function stores the
+ * desired target VCO rate पूर्णांकo the variable poपूर्णांकed to by @vco_rate.
  *
- * Context: Any context.  Caller must protect the memory pointed to by
- *          @vco_rate from simultaneous access or modification.
+ * Context: Any context.  Caller must protect the memory poपूर्णांकed to by
+ *          @vco_rate from simultaneous access or modअगरication.
  *
- * Return: a positive integer DIVQ value to be programmed into the hardware
+ * Return: a positive पूर्णांकeger DIVQ value to be programmed पूर्णांकo the hardware
  *         upon success, or 0 upon error (since 0 is an invalid DIVQ value)
  */
-static u8 __wrpll_calc_divq(u32 target_rate, u64 *vco_rate)
-{
+अटल u8 __wrpll_calc_भागq(u32 target_rate, u64 *vco_rate)
+अणु
 	u64 s;
-	u8 divq = 0;
+	u8 भागq = 0;
 
-	if (!vco_rate) {
+	अगर (!vco_rate) अणु
 		WARN_ON(1);
-		goto wcd_out;
-	}
+		जाओ wcd_out;
+	पूर्ण
 
-	s = div_u64(MAX_VCO_FREQ, target_rate);
-	if (s <= 1) {
-		divq = 1;
+	s = भाग_u64(MAX_VCO_FREQ, target_rate);
+	अगर (s <= 1) अणु
+		भागq = 1;
 		*vco_rate = MAX_VCO_FREQ;
-	} else if (s > MAX_DIVQ_DIVISOR) {
-		divq = ilog2(MAX_DIVQ_DIVISOR);
+	पूर्ण अन्यथा अगर (s > MAX_DIVQ_DIVISOR) अणु
+		भागq = ilog2(MAX_DIVQ_DIVISOR);
 		*vco_rate = MIN_VCO_FREQ;
-	} else {
-		divq = ilog2(s);
-		*vco_rate = (u64)target_rate << divq;
-	}
+	पूर्ण अन्यथा अणु
+		भागq = ilog2(s);
+		*vco_rate = (u64)target_rate << भागq;
+	पूर्ण
 
 wcd_out:
-	return divq;
-}
+	वापस भागq;
+पूर्ण
 
 /**
  * __wrpll_update_parent_rate() - update PLL data when parent rate changes
- * @c: ptr to a struct wrpll_cfg record to write PLL data to
- * @parent_rate: PLL input refclk rate (pre-R-divider)
+ * @c: ptr to a काष्ठा wrpll_cfg record to ग_लिखो PLL data to
+ * @parent_rate: PLL input refclk rate (pre-R-भागider)
  *
  * Pre-compute some data used by the PLL configuration algorithm when
- * the PLL's reference clock rate changes.  The intention is to avoid
- * computation when the parent rate remains constant - expected to be
- * the common case.
+ * the PLL's reference घड़ी rate changes.  The पूर्णांकention is to aव्योम
+ * computation when the parent rate reमुख्यs स्थिरant - expected to be
+ * the common हाल.
  *
- * Returns: 0 upon success or -ERANGE if the reference clock rate is
+ * Returns: 0 upon success or -दुस्फल अगर the reference घड़ी rate is
  * out of range.
  */
-static int __wrpll_update_parent_rate(struct wrpll_cfg *c,
-				      unsigned long parent_rate)
-{
-	u8 max_r_for_parent;
+अटल पूर्णांक __wrpll_update_parent_rate(काष्ठा wrpll_cfg *c,
+				      अचिन्हित दीर्घ parent_rate)
+अणु
+	u8 max_r_क्रम_parent;
 
-	if (parent_rate > MAX_INPUT_FREQ || parent_rate < MIN_POST_DIVR_FREQ)
-		return -ERANGE;
+	अगर (parent_rate > MAX_INPUT_FREQ || parent_rate < MIN_POST_DIVR_FREQ)
+		वापस -दुस्फल;
 
 	c->parent_rate = parent_rate;
-	max_r_for_parent = div_u64(parent_rate, MIN_POST_DIVR_FREQ);
-	c->max_r = min_t(u8, MAX_DIVR_DIVISOR, max_r_for_parent);
+	max_r_क्रम_parent = भाग_u64(parent_rate, MIN_POST_DIVR_FREQ);
+	c->max_r = min_t(u8, MAX_DIVR_DIVISOR, max_r_क्रम_parent);
 
 	c->init_r = DIV_ROUND_UP_ULL(parent_rate, MAX_POST_DIVR_FREQ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * wrpll_configure() - compute PLL configuration for a target rate
- * @c: ptr to a struct wrpll_cfg record to write into
- * @target_rate: target PLL output clock rate (post-Q-divider)
- * @parent_rate: PLL input refclk rate (pre-R-divider)
+ * wrpll_configure() - compute PLL configuration क्रम a target rate
+ * @c: ptr to a काष्ठा wrpll_cfg record to ग_लिखो पूर्णांकo
+ * @target_rate: target PLL output घड़ी rate (post-Q-भागider)
+ * @parent_rate: PLL input refclk rate (pre-R-भागider)
  *
- * Compute the appropriate PLL signal configuration values and store
+ * Compute the appropriate PLL संकेत configuration values and store
  * in PLL context @c.  PLL reprogramming is not glitchless, so the
- * caller should switch any downstream logic to a different clock
- * source or clock-gate it before presenting these values to the PLL
- * configuration signals.
+ * caller should चयन any करोwnstream logic to a dअगरferent घड़ी
+ * source or घड़ी-gate it beक्रमe presenting these values to the PLL
+ * configuration संकेतs.
  *
- * The caller must pass this function a pre-initialized struct
+ * The caller must pass this function a pre-initialized काष्ठा
  * wrpll_cfg record: either initialized to zero (with the
- * exception of the .name and .flags fields) or read from the PLL.
+ * exception of the .name and .flags fields) or पढ़ो from the PLL.
  *
- * Context: Any context.  Caller must protect the memory pointed to by @c
- *          from simultaneous access or modification.
+ * Context: Any context.  Caller must protect the memory poपूर्णांकed to by @c
+ *          from simultaneous access or modअगरication.
  *
- * Return: 0 upon success; anything else upon failure.
+ * Return: 0 upon success; anything अन्यथा upon failure.
  */
-int wrpll_configure_for_rate(struct wrpll_cfg *c, u32 target_rate,
-			     unsigned long parent_rate)
-{
-	unsigned long ratio;
-	u64 target_vco_rate, delta, best_delta, f_pre_div, vco, vco_pre;
-	u32 best_f, f, post_divr_freq;
-	u8 fbdiv, divq, best_r, r;
-	int range;
+पूर्णांक wrpll_configure_क्रम_rate(काष्ठा wrpll_cfg *c, u32 target_rate,
+			     अचिन्हित दीर्घ parent_rate)
+अणु
+	अचिन्हित दीर्घ ratio;
+	u64 target_vco_rate, delta, best_delta, f_pre_भाग, vco, vco_pre;
+	u32 best_f, f, post_भागr_freq;
+	u8 fbभाग, भागq, best_r, r;
+	पूर्णांक range;
 
-	if (c->flags == 0) {
+	अगर (c->flags == 0) अणु
 		WARN(1, "%s called with uninitialized PLL config", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Initialize rounding data if it hasn't been initialized already */
-	if (parent_rate != c->parent_rate) {
-		if (__wrpll_update_parent_rate(c, parent_rate)) {
+	/* Initialize rounding data अगर it hasn't been initialized alपढ़ोy */
+	अगर (parent_rate != c->parent_rate) अणु
+		अगर (__wrpll_update_parent_rate(c, parent_rate)) अणु
 			pr_err("%s: PLL input rate is out of range\n",
 			       __func__);
-			return -ERANGE;
-		}
-	}
+			वापस -दुस्फल;
+		पूर्ण
+	पूर्ण
 
 	c->flags &= ~WRPLL_FLAGS_RESET_MASK;
 
-	/* Put the PLL into bypass if the user requests the parent clock rate */
-	if (target_rate == parent_rate) {
+	/* Put the PLL पूर्णांकo bypass अगर the user requests the parent घड़ी rate */
+	अगर (target_rate == parent_rate) अणु
 		c->flags |= WRPLL_FLAGS_BYPASS_MASK;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	c->flags &= ~WRPLL_FLAGS_BYPASS_MASK;
 
-	/* Calculate the Q shift and target VCO rate */
-	divq = __wrpll_calc_divq(target_rate, &target_vco_rate);
-	if (!divq)
-		return -1;
-	c->divq = divq;
+	/* Calculate the Q shअगरt and target VCO rate */
+	भागq = __wrpll_calc_भागq(target_rate, &target_vco_rate);
+	अगर (!भागq)
+		वापस -1;
+	c->भागq = भागq;
 
-	/* Precalculate the pre-Q divider target ratio */
-	ratio = div64_u64((target_vco_rate << ROUND_SHIFT), parent_rate);
+	/* Precalculate the pre-Q भागider target ratio */
+	ratio = भाग64_u64((target_vco_rate << ROUND_SHIFT), parent_rate);
 
-	fbdiv = __wrpll_calc_fbdiv(c);
+	fbभाग = __wrpll_calc_fbभाग(c);
 	best_r = 0;
 	best_f = 0;
 	best_delta = MAX_VCO_FREQ;
 
 	/*
-	 * Consider all values for R which land within
+	 * Consider all values क्रम R which land within
 	 * [MIN_POST_DIVR_FREQ, MAX_POST_DIVR_FREQ]; prefer smaller R
 	 */
-	for (r = c->init_r; r <= c->max_r; ++r) {
-		f_pre_div = ratio * r;
-		f = (f_pre_div + (1 << ROUND_SHIFT)) >> ROUND_SHIFT;
-		f >>= (fbdiv - 1);
+	क्रम (r = c->init_r; r <= c->max_r; ++r) अणु
+		f_pre_भाग = ratio * r;
+		f = (f_pre_भाग + (1 << ROUND_SHIFT)) >> ROUND_SHIFT;
+		f >>= (fbभाग - 1);
 
-		post_divr_freq = div_u64(parent_rate, r);
-		vco_pre = fbdiv * post_divr_freq;
+		post_भागr_freq = भाग_u64(parent_rate, r);
+		vco_pre = fbभाग * post_भागr_freq;
 		vco = vco_pre * f;
 
 		/* Ensure rounding didn't take us out of range */
-		if (vco > target_vco_rate) {
+		अगर (vco > target_vco_rate) अणु
 			--f;
 			vco = vco_pre * f;
-		} else if (vco < MIN_VCO_FREQ) {
+		पूर्ण अन्यथा अगर (vco < MIN_VCO_FREQ) अणु
 			++f;
 			vco = vco_pre * f;
-		}
+		पूर्ण
 
-		delta = abs(target_rate - vco);
-		if (delta < best_delta) {
+		delta = असल(target_rate - vco);
+		अगर (delta < best_delta) अणु
 			best_delta = delta;
 			best_r = r;
 			best_f = f;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	c->divr = best_r - 1;
-	c->divf = best_f - 1;
+	c->भागr = best_r - 1;
+	c->भागf = best_f - 1;
 
-	post_divr_freq = div_u64(parent_rate, best_r);
+	post_भागr_freq = भाग_u64(parent_rate, best_r);
 
 	/* Pick the best PLL jitter filter */
-	range = __wrpll_calc_filter_range(post_divr_freq);
-	if (range < 0)
-		return range;
+	range = __wrpll_calc_filter_range(post_भागr_freq);
+	अगर (range < 0)
+		वापस range;
 	c->range = range;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * wrpll_calc_output_rate() - calculate the PLL's target output rate
- * @c: ptr to a struct wrpll_cfg record to read from
+ * @c: ptr to a काष्ठा wrpll_cfg record to पढ़ो from
  * @parent_rate: PLL refclk rate
  *
- * Given a pointer to the PLL's current input configuration @c and the
- * PLL's input reference clock rate @parent_rate (before the R
- * pre-divider), calculate the PLL's output clock rate (after the Q
- * post-divider).
+ * Given a poपूर्णांकer to the PLL's current input configuration @c and the
+ * PLL's input reference घड़ी rate @parent_rate (beक्रमe the R
+ * pre-भागider), calculate the PLL's output घड़ी rate (after the Q
+ * post-भागider).
  *
- * Context: Any context.  Caller must protect the memory pointed to by @c
- *          from simultaneous modification.
+ * Context: Any context.  Caller must protect the memory poपूर्णांकed to by @c
+ *          from simultaneous modअगरication.
  *
- * Return: the PLL's output clock rate, in Hz.  The return value from
- *         this function is intended to be convenient to pass directly
- *         to the Linux clock framework; thus there is no explicit
- *         error return value.
+ * Return: the PLL's output घड़ी rate, in Hz.  The वापस value from
+ *         this function is पूर्णांकended to be convenient to pass directly
+ *         to the Linux घड़ी framework; thus there is no explicit
+ *         error वापस value.
  */
-unsigned long wrpll_calc_output_rate(const struct wrpll_cfg *c,
-				     unsigned long parent_rate)
-{
-	u8 fbdiv;
+अचिन्हित दीर्घ wrpll_calc_output_rate(स्थिर काष्ठा wrpll_cfg *c,
+				     अचिन्हित दीर्घ parent_rate)
+अणु
+	u8 fbभाग;
 	u64 n;
 
-	if (c->flags & WRPLL_FLAGS_EXT_FEEDBACK_MASK) {
+	अगर (c->flags & WRPLL_FLAGS_EXT_FEEDBACK_MASK) अणु
 		WARN(1, "external feedback mode not yet supported");
-		return ULONG_MAX;
-	}
+		वापस अच_दीर्घ_उच्च;
+	पूर्ण
 
-	fbdiv = __wrpll_calc_fbdiv(c);
-	n = parent_rate * fbdiv * (c->divf + 1);
-	n = div_u64(n, c->divr + 1);
-	n >>= c->divq;
+	fbभाग = __wrpll_calc_fbभाग(c);
+	n = parent_rate * fbभाग * (c->भागf + 1);
+	n = भाग_u64(n, c->भागr + 1);
+	n >>= c->भागq;
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
 /**
- * wrpll_calc_max_lock_us() - return the time for the PLL to lock
- * @c: ptr to a struct wrpll_cfg record to read from
+ * wrpll_calc_max_lock_us() - वापस the समय क्रम the PLL to lock
+ * @c: ptr to a काष्ठा wrpll_cfg record to पढ़ो from
  *
- * Return the minimum amount of time (in microseconds) that the caller
- * must wait after reprogramming the PLL to ensure that it is locked
+ * Return the minimum amount of समय (in microseconds) that the caller
+ * must रुको after reprogramming the PLL to ensure that it is locked
  * to the input frequency and stable.  This is likely to depend on the DIVR
  * value; this is under discussion with the manufacturer.
  *
- * Return: the minimum amount of time the caller must wait for the PLL
+ * Return: the minimum amount of समय the caller must रुको क्रम the PLL
  *         to lock (in microseconds)
  */
-unsigned int wrpll_calc_max_lock_us(const struct wrpll_cfg *c)
-{
-	return MAX_LOCK_US;
-}
+अचिन्हित पूर्णांक wrpll_calc_max_lock_us(स्थिर काष्ठा wrpll_cfg *c)
+अणु
+	वापस MAX_LOCK_US;
+पूर्ण

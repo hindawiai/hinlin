@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __QCOM_RPM_H__
-#define __QCOM_RPM_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __QCOM_RPM_H__
+#घोषणा __QCOM_RPM_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct qcom_rpm;
+काष्ठा qcom_rpm;
 
-#define QCOM_RPM_ACTIVE_STATE	0
-#define QCOM_RPM_SLEEP_STATE	1
+#घोषणा QCOM_RPM_ACTIVE_STATE	0
+#घोषणा QCOM_RPM_SLEEP_STATE	1
 
-int qcom_rpm_write(struct qcom_rpm *rpm, int state, int resource, u32 *buf, size_t count);
+पूर्णांक qcom_rpm_ग_लिखो(काष्ठा qcom_rpm *rpm, पूर्णांक state, पूर्णांक resource, u32 *buf, माप_प्रकार count);
 
-#endif
+#पूर्ण_अगर

@@ -1,139 +1,140 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// ASoC machine driver for Snow boards
+// ASoC machine driver क्रम Snow boards
 
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
 
-#include "i2s.h"
+#समावेश "i2s.h"
 
-#define FIN_PLL_RATE		24000000
+#घोषणा FIN_PLL_RATE		24000000
 
 SND_SOC_DAILINK_DEFS(links,
 	DAILINK_COMP_ARRAY(COMP_EMPTY()),
 	DAILINK_COMP_ARRAY(COMP_EMPTY()),
 	DAILINK_COMP_ARRAY(COMP_EMPTY()));
 
-struct snow_priv {
-	struct snd_soc_dai_link dai_link;
-	struct clk *clk_i2s_bus;
-};
+काष्ठा snow_priv अणु
+	काष्ठा snd_soc_dai_link dai_link;
+	काष्ठा clk *clk_i2s_bus;
+पूर्ण;
 
-static int snow_card_hw_params(struct snd_pcm_substream *substream,
-				      struct snd_pcm_hw_params *params)
-{
-	static const unsigned int pll_rate[] = {
+अटल पूर्णांक snow_card_hw_params(काष्ठा snd_pcm_substream *substream,
+				      काष्ठा snd_pcm_hw_params *params)
+अणु
+	अटल स्थिर अचिन्हित पूर्णांक pll_rate[] = अणु
 		73728000U, 67737602U, 49152000U, 45158401U, 32768001U
-	};
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct snow_priv *priv = snd_soc_card_get_drvdata(rtd->card);
-	int bfs, psr, rfs, bitwidth;
-	unsigned long int rclk;
-	long int freq = -EINVAL;
-	int ret, i;
+	पूर्ण;
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा snow_priv *priv = snd_soc_card_get_drvdata(rtd->card);
+	पूर्णांक bfs, psr, rfs, bitwidth;
+	अचिन्हित दीर्घ पूर्णांक rclk;
+	दीर्घ पूर्णांक freq = -EINVAL;
+	पूर्णांक ret, i;
 
-	bitwidth = snd_pcm_format_width(params_format(params));
-	if (bitwidth < 0) {
+	bitwidth = snd_pcm_क्रमmat_width(params_क्रमmat(params));
+	अगर (bitwidth < 0) अणु
 		dev_err(rtd->card->dev, "Invalid bit-width: %d\n", bitwidth);
-		return bitwidth;
-	}
+		वापस bitwidth;
+	पूर्ण
 
-	if (bitwidth != 16 && bitwidth != 24) {
+	अगर (bitwidth != 16 && bitwidth != 24) अणु
 		dev_err(rtd->card->dev, "Unsupported bit-width: %d\n", bitwidth);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bfs = 2 * bitwidth;
 
-	switch (params_rate(params)) {
-	case 16000:
-	case 22050:
-	case 24000:
-	case 32000:
-	case 44100:
-	case 48000:
-	case 88200:
-	case 96000:
+	चयन (params_rate(params)) अणु
+	हाल 16000:
+	हाल 22050:
+	हाल 24000:
+	हाल 32000:
+	हाल 44100:
+	हाल 48000:
+	हाल 88200:
+	हाल 96000:
 		rfs = 8 * bfs;
-		break;
-	case 64000:
+		अवरोध;
+	हाल 64000:
 		rfs = 384;
-		break;
-	case 8000:
-	case 11025:
-	case 12000:
+		अवरोध;
+	हाल 8000:
+	हाल 11025:
+	हाल 12000:
 		rfs = 16 * bfs;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	rclk = params_rate(params) * rfs;
 
-	for (psr = 8; psr > 0; psr /= 2) {
-		for (i = 0; i < ARRAY_SIZE(pll_rate); i++) {
-			if ((pll_rate[i] - rclk * psr) <= 2) {
+	क्रम (psr = 8; psr > 0; psr /= 2) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(pll_rate); i++) अणु
+			अगर ((pll_rate[i] - rclk * psr) <= 2) अणु
 				freq = pll_rate[i];
-				break;
-			}
-		}
-	}
-	if (freq < 0) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (freq < 0) अणु
 		dev_err(rtd->card->dev, "Unsupported RCLK rate: %lu\n", rclk);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = clk_set_rate(priv->clk_i2s_bus, freq);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(rtd->card->dev, "I2S bus clock rate set failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_ops snow_card_ops = {
+अटल स्थिर काष्ठा snd_soc_ops snow_card_ops = अणु
 	.hw_params = snow_card_hw_params,
-};
+पूर्ण;
 
-static int snow_late_probe(struct snd_soc_card *card)
-{
-	struct snd_soc_pcm_runtime *rtd;
-	struct snd_soc_dai *codec_dai;
+अटल पूर्णांक snow_late_probe(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	काष्ठा snd_soc_dai *codec_dai;
 
-	rtd = snd_soc_get_pcm_runtime(card, &card->dai_link[0]);
+	rtd = snd_soc_get_pcm_runसमय(card, &card->dai_link[0]);
 
-	/* In the multi-codec case codec_dais 0 is MAX98095 and 1 is HDMI. */
+	/* In the multi-codec हाल codec_dais 0 is MAX98095 and 1 is HDMI. */
 	codec_dai = asoc_rtd_to_codec(rtd, 0);
 
-	/* Set the MCLK rate for the codec */
-	return snd_soc_dai_set_sysclk(codec_dai, 0,
+	/* Set the MCLK rate क्रम the codec */
+	वापस snd_soc_dai_set_sysclk(codec_dai, 0,
 				FIN_PLL_RATE, SND_SOC_CLOCK_IN);
-}
+पूर्ण
 
-static struct snd_soc_card snow_snd = {
+अटल काष्ठा snd_soc_card snow_snd = अणु
 	.name = "Snow-I2S",
 	.owner = THIS_MODULE,
 	.late_probe = snow_late_probe,
-};
+पूर्ण;
 
-static int snow_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct snd_soc_card *card = &snow_snd;
-	struct device_node *cpu, *codec;
-	struct snd_soc_dai_link *link;
-	struct snow_priv *priv;
-	int ret;
+अटल पूर्णांक snow_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा snd_soc_card *card = &snow_snd;
+	काष्ठा device_node *cpu, *codec;
+	काष्ठा snd_soc_dai_link *link;
+	काष्ठा snow_priv *priv;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	link = &priv->dai_link;
 
@@ -147,8 +148,8 @@ static int snow_probe(struct platform_device *pdev)
 	link->num_cpus = ARRAY_SIZE(links_cpus);
 	link->codecs = links_codecs;
 	link->num_codecs = ARRAY_SIZE(links_codecs);
-	link->platforms = links_platforms;
-	link->num_platforms = ARRAY_SIZE(links_platforms);
+	link->platक्रमms = links_platक्रमms;
+	link->num_platक्रमms = ARRAY_SIZE(links_platक्रमms);
 
 	card->dai_link = link;
 	card->num_links = 1;
@@ -157,75 +158,75 @@ static int snow_probe(struct platform_device *pdev)
 	/* Try new DT bindings with HDMI support first. */
 	cpu = of_get_child_by_name(dev->of_node, "cpu");
 
-	if (cpu) {
+	अगर (cpu) अणु
 		link->ops = &snow_card_ops;
 
 		link->cpus->of_node = of_parse_phandle(cpu, "sound-dai", 0);
 		of_node_put(cpu);
 
-		if (!link->cpus->of_node) {
+		अगर (!link->cpus->of_node) अणु
 			dev_err(dev, "Failed parsing cpu/sound-dai property\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		codec = of_get_child_by_name(dev->of_node, "codec");
 		ret = snd_soc_of_get_dai_link_codecs(dev, codec, link);
 		of_node_put(codec);
 
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			of_node_put(link->cpus->of_node);
 			dev_err(dev, "Failed parsing codec node\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		priv->clk_i2s_bus = of_clk_get_by_name(link->cpus->of_node,
 						       "i2s_opclk0");
-		if (IS_ERR(priv->clk_i2s_bus)) {
+		अगर (IS_ERR(priv->clk_i2s_bus)) अणु
 			snd_soc_of_put_dai_link_codecs(link);
 			of_node_put(link->cpus->of_node);
-			return PTR_ERR(priv->clk_i2s_bus);
-		}
-	} else {
+			वापस PTR_ERR(priv->clk_i2s_bus);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		link->codecs->dai_name = "HiFi";
 
 		link->cpus->of_node = of_parse_phandle(dev->of_node,
 						"samsung,i2s-controller", 0);
-		if (!link->cpus->of_node) {
+		अगर (!link->cpus->of_node) अणु
 			dev_err(dev, "i2s-controller property parse error\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		link->codecs->of_node = of_parse_phandle(dev->of_node,
 						"samsung,audio-codec", 0);
-		if (!link->codecs->of_node) {
+		अगर (!link->codecs->of_node) अणु
 			of_node_put(link->cpus->of_node);
 			dev_err(dev, "audio-codec property parse error\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	link->platforms->of_node = link->cpus->of_node;
+	link->platक्रमms->of_node = link->cpus->of_node;
 
-	/* Update card-name if provided through DT, else use default name */
+	/* Update card-name अगर provided through DT, अन्यथा use शेष name */
 	snd_soc_of_parse_card_name(card, "samsung,model");
 
 	snd_soc_card_set_drvdata(card, priv);
 
-	ret = devm_snd_soc_register_card(dev, card);
-	if (ret) {
-		if (ret != -EPROBE_DEFER)
+	ret = devm_snd_soc_रेजिस्टर_card(dev, card);
+	अगर (ret) अणु
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(&pdev->dev,
 				"snd_soc_register_card failed (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int snow_remove(struct platform_device *pdev)
-{
-	struct snow_priv *priv = platform_get_drvdata(pdev);
-	struct snd_soc_dai_link *link = &priv->dai_link;
+अटल पूर्णांक snow_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snow_priv *priv = platक्रमm_get_drvdata(pdev);
+	काष्ठा snd_soc_dai_link *link = &priv->dai_link;
 
 	of_node_put(link->cpus->of_node);
 	of_node_put(link->codecs->of_node);
@@ -233,28 +234,28 @@ static int snow_remove(struct platform_device *pdev)
 
 	clk_put(priv->clk_i2s_bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id snow_of_match[] = {
-	{ .compatible = "google,snow-audio-max98090", },
-	{ .compatible = "google,snow-audio-max98091", },
-	{ .compatible = "google,snow-audio-max98095", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id snow_of_match[] = अणु
+	अणु .compatible = "google,snow-audio-max98090", पूर्ण,
+	अणु .compatible = "google,snow-audio-max98091", पूर्ण,
+	अणु .compatible = "google,snow-audio-max98095", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, snow_of_match);
 
-static struct platform_driver snow_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver snow_driver = अणु
+	.driver = अणु
 		.name = "snow-audio",
 		.pm = &snd_soc_pm_ops,
 		.of_match_table = snow_of_match,
-	},
+	पूर्ण,
 	.probe = snow_probe,
-	.remove = snow_remove,
-};
+	.हटाओ = snow_हटाओ,
+पूर्ण;
 
-module_platform_driver(snow_driver);
+module_platक्रमm_driver(snow_driver);
 
 MODULE_DESCRIPTION("ALSA SoC Audio machine driver for Snow");
 MODULE_LICENSE("GPL");
